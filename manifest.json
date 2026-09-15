@@ -1,0 +1,12 @@
+{
+    "display_name": "Blue Lemonade",
+    "description": "읽기 편한 실리태번 테마. 파란 형광펜과 레몬 강조, 언어별 글꼴, 에셋 이미지를 한 화면에서 고칠 수 있음.",
+    "loading_order": 20,
+    "requires": [],
+    "optional": [],
+    "js": "index.js",
+    "css": "style.css",
+    "author": "드림주",
+    "version": "2.7.9",
+    "auto_update": false
+}
