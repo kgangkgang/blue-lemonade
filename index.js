@@ -12,7 +12,7 @@ import { startGutterWatch } from './src/gutter.js';
 import { startSelectPop } from './src/selects.js';
 import { startInlineTone, retoneAll } from './src/tone.js';
 import { mountPanel, refreshPanels } from './src/panel.js';
-import { deferPreviewRules, restorePreviewRules, deferredPreviewRuleCount, startMenuOpenMark } from './src/lite.js';
+import { deferPreviewRules, restorePreviewRules, deferredPreviewRuleCount, startMenuOpenMark, deferPanelHasRules, panelHasRuleCount, panelCssEnabled } from './src/lite.js';
 
 function mountDrawer() {
     const host = document.getElementById('extensions_settings2') || document.getElementById('extensions_settings');
@@ -76,10 +76,11 @@ if (dropStaleOverrides(settings)) saveSettings();
 applyAll();
 
 // 콘솔·테스트용
-window.Salty = { getSettings, applyAll, refreshPanels, openPopup, restorePreviewRules, deferredPreviewRuleCount };
+window.Salty = { getSettings, applyAll, refreshPanels, openPopup, restorePreviewRules, deferredPreviewRuleCount, panelHasRuleCount, panelCssEnabled };
 
 jQuery(() => {
     deferPreviewRules(); // 설정창 미리보기 전용 규칙은 설정창을 열 때까지 시트에서 빼 둠 (lite.js)
+    deferPanelHasRules(); // 서랍 · 팝업 전용 :has() 규칙은 서랍 · 팝업이 열려 있을 때만 (lite.js, 2.8.4)
     startMenuOpenMark(); // ··· 메뉴가 열린 메시지에 bl-menu-open (style.css 의 :has() 대신, lite.js)
     mountDrawer();
     addMenuItem();
