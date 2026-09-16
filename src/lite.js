@@ -5,7 +5,7 @@
 // 이 규칙들은 설정창 밖에서는 절대 맞지 않으면서도 매번 견줘진다 (PC 에서 스타일 계산의 약 1/4). 그래서 시트에서 떼어 뒀다가
 // 설정 서랍을 펴거나 설정 팝업을 열 때 <style> 로 되돌린다. style.css 자체는 건드리지 않는다 (미리보기 생성 블록 그대로).
 const PREVIEW = /#salty-nochat|\.salty-preview|\.salty-sample/;
-let deferred = [];     // [{ text, wrappers: ['@media (…)', …] }]
+let deferred = [];     // 제자리에서 꺼 둔 CSSMediaRule 들 (parkRule)
 let restored = false;
 
 function themeSheet() {
@@ -48,17 +48,29 @@ function previewOnly(selectorText) {
     return splitTop(selectorText).flatMap(expand).every(p => PREVIEW.test(p));
 }
 
-function pull(list, owner, wrappers) {
+/**
+ * 규칙을 제자리에서 `@media not all { … }` 로 감싸 꺼 둔다. 돌려받은 CSSMediaRule 의 mediaText 를 'all' 로 바꾸면 다시 켜진다.
+ * 2.9.1: 예전에는 떼어 낸 규칙을 <style> 로 문서 맨 뒤에 붙였는데, 그러면 style.css 안에서 그 뒤에 오던 같은 세기의 규칙보다
+ * 나중이 되어 덮어쓰기가 뒤집혔다 (월드인포 줄마다 덮어쓰기 칸이 2열 · 세로 대신 옛 한 줄 규칙으로 깨짐).
+ * 제자리에 두면 순서가 그대로다. 안 맞는 @media 안의 규칙은 브라우저가 규칙 목록에 넣지 않으니 :has() 비용도 똑같이 빠진다.
+ */
+function parkRule(owner, index) {
+    const text = owner.cssRules[index].cssText;
+    owner.insertRule(`@media not all {\n${text}\n}`, index); // 먼저 넣고 원래 것을 지운다 — 넣기가 실패해도 규칙이 사라지지 않게
+    owner.deleteRule(index + 1);
+    return owner.cssRules[index];
+}
+
+function pull(list, owner) {
     for (let i = list.length - 1; i >= 0; i--) {
         const rule = list[i];
         if (rule.cssRules && rule.type !== CSSRule.STYLE_RULE) {
-            const head = rule.cssText.slice(0, rule.cssText.indexOf('{')).trim();   // '@media (max-width: 1000px)'
-            pull(rule.cssRules, rule, [...wrappers, head]);
+            if (rule.type === CSSRule.MEDIA_RULE && rule.media.mediaText === 'not all') continue; // 이미 꺼 둔 것
+            pull(rule.cssRules, rule);
             continue;
         }
         if (rule.type !== CSSRule.STYLE_RULE || !previewOnly(rule.selectorText)) continue;
-        deferred.push({ text: rule.cssText, wrappers });
-        owner.deleteRule(i);
+        deferred.push(parkRule(owner, i));
     }
 }
 
@@ -71,23 +83,18 @@ export function deferPreviewRules(tries = 25) {
         return;
     }
     try {
-        pull(sheet.cssRules, sheet, []);
+        pull(sheet.cssRules, sheet);
     } catch (err) {
         console.warn('[Blue Lemonade] 미리보기 규칙 분리 실패 — 그대로 둠', err);
         restorePreviewRules();
     }
 }
 
-/** 설정창을 열 때: 떼어 둔 규칙을 원래 @media 껍데기째 <style> 로 되돌린다 (한 번만). */
+/** 설정창을 열 때: 꺼 둔 규칙을 제자리에서 다시 켠다 (한 번만). */
 export function restorePreviewRules() {
     if (restored) return;
     restored = true;
-    if (!deferred.length) return;
-    const style = document.createElement('style');
-    style.id = 'salty-preview-css';
-    style.textContent = deferred.map(({ text, wrappers }) =>
-        wrappers.reduceRight((inner, head) => `${head} {\n${inner}\n}`, text)).join('\n');
-    document.head.append(style);
+    for (const block of deferred) block.media.mediaText = 'all';
     deferred = [];
 }
 
@@ -101,11 +108,14 @@ export function deferredPreviewRuleCount() {
 // 그중 14ms 가 설정 서랍 · 팝업 안에서만 맞는 :has() 규칙 206개 몫이다 — 서랍이 display:none 이라 맞을 일이 없는데도
 // 브라우저는 인라인 style 이 바뀔 때마다 :has() 규칙들을 다시 따진다. 폰에서는 몇 배라 빨리 치면 글자가 빠졌다
 // (사용자: "빨리 치면 글자가 떨어지네"). 채팅 · 입력칸 · 환영 화면의 :has() 는 그대로 둔다.
-// 이 규칙들을 <style id="salty-panel-css"> 로 옮겨 두고, 서랍(.openDrawer)이나 팝업(dialog[open] · 옛 팝업 div)이
-// 하나라도 보이면 켜고(media="") 아니면 끈다(media="not all"). 켜고 끄는 건 MutationObserver 마이크로태스크라 그리기 전에 끝난다.
+// 이 규칙들을 제자리에서 @media not all 로 감싸 두고(parkRule), 서랍(.openDrawer)이나 팝업(dialog[open] · 옛 팝업 div)이
+// 하나라도 보이면 켜고('all') 아니면 끈다('not all'). 켜고 끄는 건 MutationObserver 마이크로태스크라 그리기 전에 끝난다.
+// 2.9.1: 2.8.4 는 이 규칙들을 <style id="salty-panel-css"> 로 문서 맨 뒤에 옮겼다 — 순서가 바뀌어 뒤에서 덮던 규칙이 져서
+// 월드인포 편집 칸이 깨졌다. 이제 순서는 style.css 그대로다.
 const PANEL = /#left-nav-panel|#right-nav-panel|#WorldInfo|#rm_|#extensions|#user-settings|#PersonaManagement|#completion_prompt_manager|#tavern_helper|\.TH-custom-tailwind|#openai_api|\.popup|dialog|drawer-content|#AdvancedFormatting|#floatingPrompt|#character_popup|#world_popup|#select_chat_popup|#shadow_popup|\.salty-panel|#salty-drawer|\.inline-drawer|\.range-block|#range_block|#top-settings-holder|#character_search_bar|#rm_print_characters_block|\.wi-|\.world_entry|#logprobs|\.avatar-container|#CharListButtonAndHotSwaps|#avatar_div|#persona|\.flex-container:has|\.salty-prevbox|#left-nav|#right-nav/;
 const LEGACY_POPUPS = '#character_popup, #world_popup, #select_chat_popup, #shadow_popup, #dialogue_popup, #export_format_popup';
-let panelStyle = null;
+let panelBlocks = null;  // 꺼 둔 규칙을 감싼 CSSMediaRule 들
+let panelOn = false;
 let panelCount = 0;
 
 function styleRulesOf(rule) {
@@ -122,37 +132,38 @@ function uiOpen() {
     return false;
 }
 function syncPanelCss() {
-    if (!panelStyle) return;
-    const want = uiOpen() ? '' : 'not all';
-    if (panelStyle.media !== want) panelStyle.media = want;
+    if (!panelBlocks) return;
+    const want = uiOpen();
+    if (want === panelOn) return;
+    panelOn = want;
+    const text = want ? 'all' : 'not all';
+    for (const block of panelBlocks) block.media.mediaText = text;
 }
 
-/** 시트에서 서랍 · 팝업 전용 :has() 규칙을 떼어 <style> 로 옮기고, 열림 상태를 지켜본다. */
+/** 시트의 서랍 · 팝업 전용 :has() 규칙을 제자리에서 꺼 두고, 열림 상태를 지켜본다. */
 export function deferPanelHasRules(tries = 25) {
-    if (panelStyle) return;
+    if (panelBlocks) return;
     const sheet = themeSheet();
     if (!sheet || !sheet.cssRules.length) {
         if (tries > 0) setTimeout(() => deferPanelHasRules(tries - 1), 200);
         return;
     }
-    const moved = [];
+    const parked = [];
     try {
         for (let i = sheet.cssRules.length - 1; i >= 0; i--) {
             const rule = sheet.cssRules[i];
+            if (rule.type === CSSRule.MEDIA_RULE && rule.media.mediaText === 'not all') continue; // 미리보기 규칙으로 이미 꺼 둔 것
             if (!panelHasOnly(rule)) continue;
-            moved.push(rule.cssText);
-            sheet.deleteRule(i);
+            parked.push(parkRule(sheet, i));
         }
     } catch (err) {
-        console.warn('[Blue Lemonade] 서랍 :has 규칙 분리 실패 — 그대로 둠', err);
+        console.warn('[Blue Lemonade] 서랍 :has 규칙 분리 실패 — 켜 둠', err);
+        for (const block of parked) block.media.mediaText = 'all';
         return;
     }
-    panelCount = moved.length;
-    panelStyle = document.createElement('style');
-    panelStyle.id = 'salty-panel-css';
-    panelStyle.textContent = moved.reverse().join('\n');
-    panelStyle.media = 'not all';
-    document.head.append(panelStyle);
+    panelCount = parked.length;
+    panelBlocks = parked;
+    panelOn = false;
     syncPanelCss();
     new MutationObserver((list) => {
         for (const m of list) {
@@ -171,7 +182,7 @@ export function panelHasRuleCount() {
 }
 
 export function panelCssEnabled() {
-    return !!panelStyle && panelStyle.media !== 'not all';
+    return !!panelBlocks && panelOn;
 }
 
 // 메시지 ··· 메뉴가 열린 메시지 표시 (2.5.3): style.css 가 `.mes:has(.extraMesButtons.visible)` 로 알아내던 것.
