@@ -6,6 +6,7 @@ import { PALETTES, PALETTE_FAMILIES, paletteFamily, paletteVariant, TOKEN_GROUPS
 import { GROUPS, LANGS, SAMPLES, fontsFor, findFont, previewStack, queuePreview, isPreviewReady, isPreviewBlank, addGoogleFont, addCssFont, uploadFont, removeCustomFont } from './fonts.js';
 import { applyAll, syncSamples } from './apply.js';
 import { getIssues } from './checks.js';
+import { applySillyTavernTheme, saveAsSillyTavernTheme, alreadyMatches } from './sttheme.js';
 import { classifyAll } from './assets.js';
 
 // 브랜드 레몬 — ✦ 메뉴 · 확장 서랍 · 스플래시와 같은 속찬 레몬(폰트어썸 fa-lemon U+F094) 윤곽 그대로
@@ -641,7 +642,10 @@ function tabTheme(s, sub) {
 }
 
 function tabBackup() {
+    const matched = alreadyMatches();
     return `<div class="salty-group">
+            ${row('실리태번 설정', `<button class="salty-btn" data-act="st-theme">${matched ? '다시 맞추기' : '맞추기'}</button>`,
+        matched ? '지금 이 테마에 맞게 돼 있어요' : '흐림 · 그림자 · 말풍선 모양을 이 테마에 맞춰요')}
             ${row('설정 파일', '<span class="salty-btns"><button class="salty-btn" data-act="export">내보내기</button><button class="salty-btn" data-act="import">가져오기</button></span>')}
             ${row('처음 설정으로', '<button class="salty-btn salty-btn-danger" data-act="reset">되돌리기</button>', '내 글꼴 목록은 남아요')}
         </div>
@@ -1403,6 +1407,19 @@ function bind(root) {
                 case 'import':
                     root.querySelector('input[data-file="settings"]')?.click();
                     break;
+                case 'st-theme': {
+                    // 실리태번 쪽 값(흐림 · 그림자 · 말풍선 모양 · 글자 배율)을 이 테마에 맞추고, 같은 값을 테마 파일로도 남긴다
+                    const changed = applySillyTavernTheme();
+                    const name = `Blue Lemonade · ${PALETTES[getSettings().palette]?.label || '테마'}`;
+                    try {
+                        await saveAsSillyTavernTheme(name);
+                        toastr.success(changed ? `${changed}개를 맞추고 "${name}" 테마로 저장했어요.` : `이미 맞춰져 있어요. "${name}" 테마로 저장했어요.`, 'Blue Lemonade');
+                    } catch (error) {
+                        toastr.warning(`설정은 맞췄지만 테마 파일로는 못 남겼어요: ${error.message}`, 'Blue Lemonade');
+                    }
+                    refreshPanels();
+                    break;
+                }
                 case 'reset':
                     if (!confirm('테마 설정을 처음 상태로 돌릴까요? (내 글꼴 목록은 남아요)')) return;
                     resetSettings();
