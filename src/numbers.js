@@ -86,7 +86,10 @@ export function startNumberDisplay() {
     // 숫자 칸은 서랍 · 팝업 안에만 있다. 채팅 본문 · 입력줄 안의 변화(답변이 한 글자씩 자라는 것)는 숫자 칸과 무관하므로
     // 거기서 온 변화는 아예 받지 않는다 — 폰에서 답변마다 문서 전체 강제 레이아웃이 돌던 것 (2.5.2)
     const CHAT = '#chat, #send_form, #form_sheld';
-    const inChat = (node) => (node?.nodeType === 1 ? node : node?.parentElement)?.closest?.(CHAT);
+    // 2.9.4: 문서에서 이미 떨어져 나간 노드의 변화도 관찰자에게 온다 (스트리밍 중 페이드 인 조각 · 그림 태그 자리를 갈아 끼울 때).
+    // 그런 노드는 closest 로 #chat 을 못 찾아 '채팅 밖 변화'로 쳐져서, 답변 뒷부분 내내 0.8초마다 숫자 칸 전체를 다시 쟀다
+    // (강제 레이아웃 포함, 4배 느린 CPU 에서 한 번에 25ms). 떨어져 나간 노드는 숫자 칸 표시와 상관없으니 채팅 쪽과 같이 넘긴다.
+    const inChat = (node) => !node?.isConnected || (node?.nodeType === 1 ? node : node?.parentElement)?.closest?.(CHAT);
     const onMutations = (list) => { if (!list.every(m => inChat(m.target))) schedule(); };
     // 굴리는 동안 프레임마다 다시 잴 필요는 없다 (이제 화면 밖 칸도 같이 재 둔다) — 멈춘 뒤 한 번 (2.9.2)
     let scrollTimer = 0;

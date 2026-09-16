@@ -12,7 +12,7 @@ import { startGutterWatch } from './src/gutter.js';
 import { startSelectPop } from './src/selects.js';
 import { startInlineTone, retoneAll } from './src/tone.js';
 import { mountPanel, refreshPanels } from './src/panel.js';
-import { deferPreviewRules, restorePreviewRules, deferredPreviewRuleCount, startMenuOpenMark, deferPanelHasRules, panelHasRuleCount, panelCssEnabled } from './src/lite.js';
+import { deferPreviewRules, restorePreviewRules, deferredPreviewRuleCount, startMenuOpenMark, startAnchorGate, widenSelectorCache, deferPanelHasRules, panelHasRuleCount, panelCssEnabled } from './src/lite.js';
 
 function mountDrawer() {
     const host = document.getElementById('extensions_settings2') || document.getElementById('extensions_settings');
@@ -79,9 +79,11 @@ applyAll();
 window.Salty = { getSettings, applyAll, refreshPanels, openPopup, restorePreviewRules, deferredPreviewRuleCount, panelHasRuleCount, panelCssEnabled };
 
 jQuery(() => {
+    widenSelectorCache(); // 실리태번의 위임 핸들러 선택자를 jQuery 가 매번 다시 컴파일하지 않게 (2.9.4, lite.js)
     deferPreviewRules(); // 설정창 미리보기 전용 규칙은 설정창을 열 때까지 시트에서 빼 둠 (lite.js)
     deferPanelHasRules(); // 서랍 · 팝업 전용 :has() 규칙은 서랍 · 팝업이 열려 있을 때만 (lite.js, 2.8.4)
     startMenuOpenMark(); // ··· 메뉴가 열린 메시지에 bl-menu-open (style.css 의 :has() 대신, lite.js)
+    startAnchorGate();   // ≡ · ✦ 메뉴가 열려 있을 때만 입력판에 앵커 이름 (2.9.4, lite.js)
     mountDrawer();
     addMenuItem();
     startAssetWatcher();

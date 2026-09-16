@@ -26,9 +26,16 @@ export function startGutterWatch() {
     const schedule = () => { if (!pending && !phone.matches) { pending = true; setTimeout(check, 0); } };
     // 채팅 본문 · 입력줄 안의 변화는 서랍 스크롤과 무관 — 답변이 한 글자씩 자라는 동안 재지 않는다
     const inChat = (node) => (node?.nodeType === 1 ? node : node?.parentElement)?.closest?.('#chat, #send_form, #form_sheld');
-    new MutationObserver((list) => { if (!list.every(m => inChat(m.target))) schedule(); }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
+    const observer = new MutationObserver((list) => { if (!list.every(m => inChat(m.target))) schedule(); });
+    // 2.9.4: 폰에서는 schedule 이 아무것도 안 하므로 감시 자체를 걸지 않는다 — 걸어 두면 답변이 자라는 동안 바뀌는 요소마다
+    // 변화 기록이 만들어지고 콜백이 돌았다 (4배 느린 CPU 에서 12초에 8ms). 폭이 1000px 을 넘나들면 그때 걸거나 뗀다.
+    const watch = () => {
+        if (phone.matches) observer.disconnect();
+        else observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
+    };
+    watch();
     window.addEventListener('resize', schedule);
-    phone.addEventListener('change', schedule);
+    phone.addEventListener('change', () => { watch(); schedule(); });
     setInterval(schedule, 1000); // 서랍 안 내용이 자라는 경우(목록 채우기)도 놓치지 않게
     schedule();
 }

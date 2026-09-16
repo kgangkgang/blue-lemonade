@@ -52,7 +52,14 @@ body.salty .menu_button:is(.disabled, [disabled]):not(#salty-none) {
   opacity: 0.45 !important;
   filter: grayscale(1) !important;
 }
-body.salty ::selection {
+/* 2.9.4: 선택 색은 body 한 곳에만 — 자식 요소들은 브라우저가 ::selection 을 부모에게서 물려받는다(highlight inheritance).
+   예전의 `body.salty ::selection` 은 모든 요소마다 body 까지 조상을 거슬러 올라가 맞춰 봐서, 스트리밍으로 글자가 들어올 때
+   (페이드 인이면 단어마다 span — 데우스 답장 하나에 1만 개) 한 단계의 스타일 계산이 4배 느린 CPU 에서 240 → 208ms 였다.
+   코드 블록은 실리태번의 `.hljs ::selection`(회색)이 직접 맞아 물려받기보다 앞서므로, 전처럼 테마 색이 이기게 따로 적는다.
+   문단 · 입력칸 · 코드 · 대사를 선택한 스크린샷이 픽셀까지 같음을 확인했다 */
+body.salty::selection,
+body.salty .hljs::selection,
+body.salty .hljs ::selection {
   background: var(--salty-accent-28);
 }
 body.salty ::-webkit-scrollbar {
@@ -1048,7 +1055,9 @@ body.salty #nonQRFormItems > #rightSendForm {
 
 /* ≡ · ✦ 메뉴: 버튼 위가 아니라 입력판 위 가장자리에 맞춰 열림 (실리태번 Popper 위치를 덮어씀) */
 @supports (anchor-name: --a) {
-  body.salty #send_form {
+  /* 2.9.4: 앵커 이름은 ≡ · ✦ 메뉴가 열려 있는 동안만 (lite.js startAnchorGate 가 bl-send-menu-open 을 붙임).
+     늘 붙어 있으면 입력칸에 글자 하나 칠 때마다 문서 전체 레이아웃이 다시 돌았다 — 4배 느린 CPU 에서 글자당 8ms → 0.4ms */
+  body.salty #send_form.bl-send-menu-open {
     anchor-name: --salty-send-form;
   }
   body.salty :is(#options, #extensionsMenu) {
@@ -1782,7 +1791,9 @@ body.salty #chat .mes.bl-menu-open :is(.swipe_left, .swipe_right) {
 /* 위 · 아래 고르기: 버튼 줄에 앵커 → 채팅 칸(입력창 위) 안에 들어가면 아래, 모자라면 이름 줄 위로
    (앵커 위치를 모르는 브라우저는 늘 아래) */
 @supports (position-try-fallbacks: flip-block) and (position-anchor: --a) {
-  body.salty:not(.expandMessageActions) #chat {
+  /* 2.9.4: ··· 메뉴가 열린 메시지가 있을 때만 (lite.js 가 #chat 에 bl-mes-menu-open) — 늘 붙어 있으면 답변이 자랄 때마다
+     레이아웃이 문서 전체로 번졌다 (스트리밍 한 단계 레이아웃 25ms → 5ms, 4배 느린 CPU) */
+  body.salty:not(.expandMessageActions) #chat.bl-mes-menu-open {
     anchor-name: --salty-chat;
   }
   body.salty:not(.expandMessageActions) #chat .mes .mes_buttons:has(> .extraMesButtons.visible) {
