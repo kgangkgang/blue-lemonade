@@ -14987,6 +14987,19 @@ body.salty :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes_text :is(.cu
   body.salty :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery) > :is([class*="__item--date"], [class*="__item--weather"]) [class*="__value"] { overflow-wrap: break-word !important; word-break: keep-all !important; }
 }
 
+/* ---------- 데우스 카드 안은 본문 조판을 따르지 않음 (2.9.3, 폰 점검에서 찾음) ----------
+   양쪽 정렬 · 한글 글자 사이 끊기(justify-break) · 첫 줄 들여쓰기는 긴 본문 문단을 위한 설정인데, 카드 안의 짧은 칸까지 물려받았다.
+   그래서 트래커 장소가 "H.A.L.O.   Headquarters   →   7F" 처럼 낱말 사이가 벌어지고, 씬 플랜 · 심리 상태 줄에서
+   "드/림주" · "저/녁" 처럼 낱말이 갈리고, 갈등 카드 문단이 한 칸 들여 써졌다 (테마를 끄면 없음).
+   카드 · 트래커 안은 왼쪽 정렬 + 낱말 단위 줄바꿈 + 들여쓰기 없음. 본문 문단은 그대로 */
+:is(body.salty #chat .mes .mes_text, .salty-sample) :is(details[class*="custom-dem-card"], .custom-dem-track, .custom-dem-track-recovery) {
+  text-align: start;
+  word-break: keep-all;
+}
+:is(body.salty.salty-indent #chat .mes .mes_text, .salty-sample.salty-indent) :is(details[class*="custom-dem-card"], .custom-dem-track, .custom-dem-track-recovery) p {
+  text-indent: 0;
+}
+
 /* ---------- 프롬프트 목록 ☰ 손잡이 (2.7.6, 제보: 좁은 폰에서 📌 과 ☰ 이 겹침) ----------
    1) 자리 비우기 규칙이 `li:has(> .drag-handle.ui-sortable-handle)` 로 '바로 아래 자식' 만 봤다 — 실리태번 판에 따라 손잡이가 한 겹 안에
       들어가면 손잡이는 보이는데 이름이 안 밀려 겹쳤다. 실리태번 자체 규칙처럼 자손이면 다 잡는다.
