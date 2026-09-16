@@ -750,10 +750,13 @@ function tabChat(s, sub) {
         </div>`;
     }
     if (sub === 'screen') {
+        const stFade = !!SillyTavern.getContext().powerUserSettings?.stream_fade_in; // 실리태번 쪽 페이드 인 (무거움) — 켜져 있으면 끄는 줄을 같이 보여 줌
         return `${chatPreview()}<div class="salty-group">
             ${stack('아이콘', seg('chat.icons', [['line', '선 아이콘'], ['default', '기본']]))}
             ${row('배경 이미지 비치기', toggle('chat.bgImage', s.chat.bgImage), '끄면 깨끗한 종이색 바탕')}
             ${row('고르기 목록 팝업', toggle('chat.selectPop', s.chat.selectPop !== false), '모델 · 프리셋 같은 목록을 테마가 그린 팝업으로 (끄면 폰 기본 목록)')}
+            ${row('가벼운 페이드 인', toggle('chat.streamFade', !!s.chat.streamFade), '스트리밍 중 새 글자만 스며들게')}
+            ${s.chat.streamFade && stFade ? row('실리태번 페이드 인', toggle('st.streamFadeIn', true), '끄면 빨라지고 위 옵션이 대신해요') : ''}
         </div>`;
     }
     const hideAvatars = document.getElementById('hideChatAvatarsEnabled')?.checked ?? false;
@@ -1487,6 +1490,11 @@ function bind(root) {
         }
         if (target.matches('input[data-toggle]')) {
             const path = target.dataset.toggle;
+            if (path === 'st.streamFadeIn') {
+                $('#stream_fade_in').prop('checked', target.checked).trigger('input');
+                refreshPanels();
+                return;
+            }
             if (path === 'st.hideAvatars') {
                 $('#hideChatAvatarsEnabled').prop('checked', target.checked).trigger('input').trigger('change');
                 return;
@@ -1500,7 +1508,7 @@ function bind(root) {
             // 자동 색은 켜고 끌 때 테두리 설명(edgeHint) 문구가 바뀌니 창을 다시 그린다
             // 2.9.2: 본문 색 지정 → '글자색 톤 맞추기' 줄, 톤 맞추기 → 톤 값 슬라이더 넷, 투명 그림도 똑같이 → 설명 문구가 스위치에 따라
             // 보였다 안 보였다 하는데 다시 그리지 않아, 끈 뒤에도 슬라이더가 남아 있었다
-            update(st => setPath(st, path, target.checked), ['enabled', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame'].includes(path));
+            update(st => setPath(st, path, target.checked), ['enabled', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade'].includes(path));
             return;
         }
         if (target.matches('input[data-file="font"]') && target.files?.[0]) {

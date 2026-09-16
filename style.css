@@ -15054,3 +15054,19 @@ body.salty.salty-fade-off :is(#chat, #salty-nochat, .salty-preview) .mes_text :i
   -webkit-mask-image: none;
   mask-image: none;
 }
+
+/* ---------- 가벼운 페이드 인 (2.9.5, src/streamfade.js) ----------
+   스트리밍 중인 답변에서 방금 붙은 글자 조각만 <bl-fade> 로 감싸 투명도만 0 → 1 (레이아웃 · 글자 모양은 그대로).
+   길이와 음수 지연(도착한 뒤 지난 시간)은 JS 가 요소마다 적는다 — 실리태번이 걸음마다 innerHTML 을 새로 써도 페이드가 이어짐.
+   backwards: 끝난 뒤에는 아무 효과도 남기지 않음 (감싼 요소는 스트림이 끝나고 JS 가 풀어 줌). 기기 '동작 줄이기'면 JS 도 안 붙고 CSS 도 한 번 더 막음 */
+@media (prefers-reduced-motion: no-preference) {
+  #chat .mes_text bl-fade {
+    animation-name: bl-fade-in;
+    animation-timing-function: ease-out;
+    animation-fill-mode: backwards;
+    will-change: opacity; /* 조각을 따로 합성해 프레임마다 레이아웃 · 페인트를 다시 안 함 (4배 느린 CPU 에서 3회 모두 메인 스레드 약 1%p ↓) */
+  }
+}
+@keyframes bl-fade-in {
+  from { opacity: 0; }
+}

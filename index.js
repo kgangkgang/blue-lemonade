@@ -11,6 +11,7 @@ import { startNameMarquee } from './src/marquee.js';
 import { startGutterWatch } from './src/gutter.js';
 import { startSelectPop } from './src/selects.js';
 import { startInlineTone, retoneAll } from './src/tone.js';
+import { startStreamFade, streamFadeState } from './src/streamfade.js';
 import { mountPanel, refreshPanels } from './src/panel.js';
 import { deferPreviewRules, restorePreviewRules, deferredPreviewRuleCount, startMenuOpenMark, startAnchorGate, widenSelectorCache, deferPanelHasRules, panelHasRuleCount, panelCssEnabled } from './src/lite.js';
 
@@ -76,7 +77,7 @@ if (dropStaleOverrides(settings)) saveSettings();
 applyAll();
 
 // 콘솔·테스트용
-window.Salty = { getSettings, applyAll, refreshPanels, openPopup, restorePreviewRules, deferredPreviewRuleCount, panelHasRuleCount, panelCssEnabled };
+window.Salty = { getSettings, applyAll, refreshPanels, openPopup, restorePreviewRules, deferredPreviewRuleCount, panelHasRuleCount, panelCssEnabled, streamFadeState };
 
 jQuery(() => {
     widenSelectorCache(); // 실리태번의 위임 핸들러 선택자를 jQuery 가 매번 다시 컴파일하지 않게 (2.9.4, lite.js)
@@ -96,6 +97,7 @@ jQuery(() => {
     startGutterWatch(); // 스크롤하는 칸에만 양쪽 스크롤바 홈 (PC)
     startSelectPop();   // select 를 테마가 그린 목록 팝업으로 (2.5.0)
     startInlineTone();  // 본문 글자색의 채도 · 밝기 맞춤 (2.6.0)
+    startStreamFade();  // 스트리밍 중 새 글자만 가볍게 페이드 인 (2.9.5)
     $(document).on('change', 'input[data-toggle="chat.toneInline"], input[data-toggle="chat.unifyInline"]', () => setTimeout(retoneAll, 50));
 
     const { eventSource, event_types } = SillyTavern.getContext();
@@ -103,7 +105,7 @@ jQuery(() => {
 
     // 실리태번 쪽 설정이 바뀌면 설정 점검을 다시
     let refreshTimer = null;
-    $(document).on('change input', '#chat_display, #hideChatAvatarsEnabled, #customCSS', () => {
+    $(document).on('change input', '#chat_display, #hideChatAvatarsEnabled, #customCSS, #stream_fade_in', () => {
         clearTimeout(refreshTimer);
         refreshTimer = setTimeout(refreshPanels, 400);
     });
