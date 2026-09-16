@@ -54,23 +54,39 @@ function sourceColor(el) {
     return m ? m[1].trim() : '';
 }
 
-function tone(el) {
-    const src = sourceColor(el);
-    if (!src || el.dataset.blToned === src) return;
-    el.dataset.blToned = src;
+// 같은 색 표기는 같은 결과 — 퍼스널 컬러는 메시지마다 되풀이되니 한 번만 잰다
+const measured = new Map(); // src → { h, s } | null
+function hueOf(src) {
+    if (measured.has(src)) return measured.get(src);
     const rgb = toRgb(src);
-    if (!rgb) return;
-    const { h, s } = hueSat(rgb);
-    if (s < GREY) { el.classList.add('bl-tone-grey'); el.style.removeProperty('--bl-hue'); }
-    else { el.classList.remove('bl-tone-grey'); el.style.setProperty('--bl-hue', String(h)); }
+    const hs = rgb ? hueSat(rgb) : null;
+    // var(--…) · currentColor 같은 것은 테마를 바꾸면 달라지니 기억하지 않음
+    if (!/var\(|currentcolor|inherit|initial|unset|revert/i.test(src)) {
+        if (measured.size > 300) measured.clear();
+        measured.set(src, hs);
+    }
+    return hs;
 }
 
 /** 채팅(· 북마크 창) 안의 색 글자를 전부 잰다 — 새 메시지 · 다시 그린 메시지만 실제로 계산(같은 색은 건너뜀) */
+// 2.9.2: 예전에는 글자 하나마다 [잰다(getComputedStyle) → --bl-hue 를 쓴다] 를 번갈아 해서, 쓸 때마다 다음 재기가
+// 스타일 재계산을 강제했다 — 답변이 끝날 때 색 글자 8개에 45ms (PC, 글자당 6ms). 이제 전부 잰 다음 한꺼번에 쓴다
 export function retoneAll() {
     if (!enabled()) return;
+    const todo = [];
     // 설정창의 정규식 카드 미리보기(.salty-preview)도 — 슬라이더를 밀 때 그 자리에서 보이게
     for (const root of document.querySelectorAll('#chat, .cg-root, .salty-preview')) {
-        root.querySelectorAll(SEL).forEach(tone);
+        for (const el of root.querySelectorAll(SEL)) {
+            const src = sourceColor(el);
+            if (!src || el.dataset.blToned === src) continue;
+            todo.push([el, src, hueOf(src)]); // 읽기만
+        }
+    }
+    for (const [el, src, hs] of todo) { // 쓰기만
+        el.dataset.blToned = src;
+        if (!hs) continue;
+        if (hs.s < GREY) { el.classList.add('bl-tone-grey'); el.style.removeProperty('--bl-hue'); }
+        else { el.classList.remove('bl-tone-grey'); el.style.setProperty('--bl-hue', String(hs.h)); }
     }
 }
 
@@ -80,7 +96,8 @@ export function startInlineTone() {
     retoneAll();
     // 답변이 한 글자씩 자랄 때마다 도는 것을 막으려 0.4초 묶음 — 스트리밍 중엔 마지막 메시지만 늦게 칠해진다
     new MutationObserver(() => {
-        if (!enabled()) return;
+        // 답변이 자라는 동안 조각마다 불린다 — 설정을 다시 읽지 않고 apply.js 가 붙인 body.salty-tone 으로 (켜짐 조건이 같음, 2.9.2)
+        if (!document.body.classList.contains('salty-tone')) return;
         clearTimeout(timer);
         timer = setTimeout(retoneAll, 400);
     }).observe(chat, { childList: true, subtree: true });

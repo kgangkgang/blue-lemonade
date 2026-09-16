@@ -21,45 +21,64 @@ export function startNumberDisplay() {
         else el.style.removeProperty('background-image');
         decorated.delete(el);
     }
-    function paint(el, text) {
+    // 그릴 그림(SVG 주소)만 계산한다 — 여기서는 읽기만 (못 그리는 상태면 '')
+    function measure(el, text) {
         const rect = el.getBoundingClientRect();
-        if (!rect.width || !rect.height || rect.bottom < 0 || rect.top > innerHeight) return;
+        if (!rect.width || !rect.height) return '';
         const cs = getComputedStyle(el);
-        if (cs.visibility !== 'visible' || el.closest('[hidden]')) return;
+        if (cs.visibility !== 'visible' || el.closest('[hidden]')) return '';
         const left = parseFloat(cs.paddingLeft) || 0, right = parseFloat(cs.paddingRight) || 0;
         const align = cs.textAlign;
         const anchor = align === 'center' ? 'middle' : /right|end/.test(align) ? 'end' : 'start';
         const x = anchor === 'middle' ? (rect.width + left - right) / 2 : anchor === 'end' ? rect.width - right : left;
         const size = Math.min(parseFloat(cs.fontSize), Math.max(10, (rect.width - left - right) / (text.length * .57)));
         const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${rect.height}" viewBox="0 0 ${rect.width} ${rect.height}"><text x="${x}" y="50%" dy=".35em" text-anchor="${anchor}" fill="${xml(cs.color)}" font-family="system-ui, sans-serif" font-weight="${xml(cs.fontWeight)}" font-size="${size}">${xml(text)}</text></svg>`;
-        decorated.set(el, {image:el.style.getPropertyValue('background-image'), priority:el.style.getPropertyPriority('background-image')});
-        el.style.setProperty('background-image', `url("data:image/svg+xml,${encodeURIComponent(svg)}")`, 'important');
-        el.classList.add('bl-grouped-number');
+        return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
     }
+    function paint(el, url) {
+        const old = decorated.get(el);
+        // 같은 그림이 그대로 붙어 있으면 손대지 않음 (스타일을 건드리면 다시 계산이 돈다) — 다른 코드가 style 을 갈아엎었으면 다시 칠함
+        if (old?.url === url && el.classList.contains('bl-grouped-number') && el.style.getPropertyValue('background-image') === old.css) return;
+        const saved = old || {image:el.style.getPropertyValue('background-image'), priority:el.style.getPropertyPriority('background-image')};
+        el.style.setProperty('background-image', url, 'important');
+        el.classList.add('bl-grouped-number');
+        decorated.set(el, {image: saved.image, priority: saved.priority, url, css: el.style.getPropertyValue('background-image')});
+    }
+    // 2.9.2: 예전에는 부를 때마다 표시를 전부 지우고 칸마다 [잰다 → 칠한다] 를 번갈아 했다. 칠할 때마다 스타일이 바뀌어
+    // 다음 칸을 잴 때 문서 전체의 강제 재계산이 돌았고(서랍이 열려 있으면 한 번에 수십 ms), 이 함수는 서랍 스크롤 한 프레임마다 ·
+    // 서랍이 열려 있는 동안 1.5초마다 불린다 — 측정: 프리셋 서랍을 150프레임 굴리는 데 13초, 그중 11초가 여기, 가만히 둬도 6초에 0.6초.
+    // 이제 먼저 전부 재고(읽기만), 바뀐 칸만 칠하거나 지운다(쓰기만). 바뀐 게 없으면 아무것도 쓰지 않는다.
     function refresh() {
         pending = false;
-        for (const el of decorated.keys()) clear(el);
-        if (!document.body.classList.contains('salty') || document.hidden) return;
-        for (const el of document.querySelectorAll(INPUTS)) {
-            if (el === document.activeElement || !el.value || el.validity.badInput) continue;
-            const formatted = groupedNumber(el.value);
-            if (formatted !== el.value) paint(el, formatted);
-        }
-        // 토큰 셀의 경고 아이콘은 그대로 두고, 숫자 텍스트만 별도 표시 칸으로 만든다.
-        for (const cell of document.querySelectorAll('.prompt_manager_prompt_tokens')) {
-            for (const node of [...cell.childNodes]) {
-                if (node.nodeType !== 3 || groupedNumber(node.textContent) === node.textContent.trim()) continue;
-                const span = document.createElement('span'); span.className = 'bl-token-number';
-                span.style.display = 'inline-block';
-                span.style.minWidth = (groupedNumber(node.textContent).length * .62) + 'em';
-                node.replaceWith(span); span.append(node);
+        const want = new Map();
+        if (document.body.classList.contains('salty') && !document.hidden) {
+            // 토큰 셀의 경고 아이콘은 그대로 두고, 숫자 텍스트만 별도 표시 칸으로 만든다. (DOM 쓰기라 재기 전에)
+            for (const cell of document.querySelectorAll('.prompt_manager_prompt_tokens')) {
+                for (const node of [...cell.childNodes]) {
+                    if (node.nodeType !== 3 || groupedNumber(node.textContent) === node.textContent.trim()) continue;
+                    const span = document.createElement('span'); span.className = 'bl-token-number';
+                    span.style.display = 'inline-block';
+                    span.style.minWidth = (groupedNumber(node.textContent).length * .62) + 'em';
+                    node.replaceWith(span); span.append(node);
+                }
+            }
+            for (const el of document.querySelectorAll(INPUTS)) {
+                if (el === document.activeElement || !el.value || el.validity.badInput) continue;
+                const formatted = groupedNumber(el.value);
+                if (formatted === el.value) continue;
+                const url = measure(el, formatted);
+                if (url) want.set(el, url);
+            }
+            for (const el of document.querySelectorAll(TOKENS)) {
+                if (el.children.length) continue;
+                const raw = el.textContent.trim(), formatted = groupedNumber(raw);
+                if (formatted === raw) continue;
+                const url = measure(el, formatted);
+                if (url) want.set(el, url);
             }
         }
-        for (const el of document.querySelectorAll(TOKENS)) {
-            if (el.children.length) continue;
-            const raw = el.textContent.trim(), formatted = groupedNumber(raw);
-            if (formatted !== raw) paint(el, formatted);
-        }
+        for (const el of [...decorated.keys()]) if (!want.has(el)) clear(el);
+        for (const [el, url] of want) paint(el, url);
     }
     function schedule() {
         if (!pending) { pending = true; requestAnimationFrame(refresh); }
@@ -69,7 +88,9 @@ export function startNumberDisplay() {
     const CHAT = '#chat, #send_form, #form_sheld';
     const inChat = (node) => (node?.nodeType === 1 ? node : node?.parentElement)?.closest?.(CHAT);
     const onMutations = (list) => { if (!list.every(m => inChat(m.target))) schedule(); };
-    const onScroll = (e) => { if (!inChat(e.target)) schedule(); };
+    // 굴리는 동안 프레임마다 다시 잴 필요는 없다 (이제 화면 밖 칸도 같이 재 둔다) — 멈춘 뒤 한 번 (2.9.2)
+    let scrollTimer = 0;
+    const onScroll = (e) => { if (!inChat(e.target)) { clearTimeout(scrollTimer); scrollTimer = setTimeout(schedule, 150); } };
     document.addEventListener('focusin', e => { clear(e.target); schedule(); });
     for (const name of ['input', 'change', 'focusout', 'click']) document.addEventListener(name, (e) => { if (!inChat(e.target)) schedule(); });
     window.addEventListener('resize', schedule);

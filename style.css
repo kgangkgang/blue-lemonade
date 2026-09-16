@@ -14978,8 +14978,13 @@ body.salty :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes_text :is(.cu
   body.salty :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery) > [class*="__item--location"] { flex: 1 1 100% !important; }
   /* 2.7.5: 날씨는 늘 첫 줄 오른쪽 — 날짜가 길면 날씨가 둘째 줄로 밀리던 것(같은 정규식, 글자 수 차이). 날짜 칸이 남는 폭을 먹고 안에서 줄바꿈 */
   body.salty :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery) > [class*="__item--time"] { flex: 0 0 auto !important; }
-  body.salty :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery) > [class*="__item--date"] { flex: 1 1 0 !important; min-width: 0; }
-  body.salty :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery) > [class*="__item--weather"] { flex: 0 0 auto !important; }
+  /* 2.9.2: 영어 원문에서 날짜가 글자 단위로 쪼개졌다 (사용자: "영문일때 정규식 이렇게 보이는거") — 날씨 "Controlled Atmospheric Pressure" 가
+     줄어들지 않는 칸이라 날짜 칸이 한 줌만 남았고, DEM 값의 overflow-wrap:anywhere 가 단어 한가운데서 끊었다.
+     이제 두 칸 모두 가장 긴 낱말보다는 안 좁아지고(min-content), 낱말 사이에서만 줄을 바꾼다. 한국어처럼 짧으면 예전처럼 한 줄,
+     다 안 들어가면 날씨가 둘째 줄로 내려간다. */
+  body.salty :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery) > [class*="__item--date"] { flex: 1 1 0 !important; min-width: min-content !important; }
+  body.salty :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery) > [class*="__item--weather"] { flex: 0 1 auto !important; min-width: min-content !important; }
+  body.salty :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery) > :is([class*="__item--date"], [class*="__item--weather"]) [class*="__value"] { overflow-wrap: break-word !important; word-break: keep-all !important; }
 }
 
 /* ---------- 프롬프트 목록 ☰ 손잡이 (2.7.6, 제보: 좁은 폰에서 📌 과 ☰ 이 겹침) ----------

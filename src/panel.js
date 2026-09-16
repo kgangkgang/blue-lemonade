@@ -1498,7 +1498,9 @@ function bind(root) {
                 return;
             }
             // 자동 색은 켜고 끌 때 테두리 설명(edgeHint) 문구가 바뀌니 창을 다시 그린다
-            update(st => setPath(st, path, target.checked), path === 'enabled' || path === 'chat.bgImage' || path === 'em.italic' || path === 'image.edgeAuto' || path === 'shadow.on');
+            // 2.9.2: 본문 색 지정 → '글자색 톤 맞추기' 줄, 톤 맞추기 → 톤 값 슬라이더 넷, 투명 그림도 똑같이 → 설명 문구가 스위치에 따라
+            // 보였다 안 보였다 하는데 다시 그리지 않아, 끈 뒤에도 슬라이더가 남아 있었다
+            update(st => setPath(st, path, target.checked), ['enabled', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame'].includes(path));
             return;
         }
         if (target.matches('input[data-file="font"]') && target.files?.[0]) {

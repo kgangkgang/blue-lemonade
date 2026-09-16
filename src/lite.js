@@ -122,9 +122,30 @@ function styleRulesOf(rule) {
     if (rule.type === CSSRule.STYLE_RULE) return [rule];
     return rule.cssRules ? [...rule.cssRules].flatMap(styleRulesOf) : [];
 }
+// :not( … ) 의 안을 비운다. 2.9.2: 빼는 목록에 적힌 이름은 그 규칙이 어디서 먹는지와 상관없다 —
+// `.menu_button:is(…):where(:not(.popup-controls *))` · `#nonQRFormItems > :where(:not(… [role="dialog"] …))` ·
+// `#leftSendForm > :where(div:not(#extensionsMenuButton))` 가 안에 든 .popup · dialog · #extensions 때문에 서랍 규칙으로 잘못 분류돼
+// 서랍이 닫혀 있는 동안(= 채팅하는 내내) 꺼져 있었다: 다른 확장이 입력줄에 단 아이콘 단추가 테마 크기를 잃고 서랍을 열 때만 돌아옴,
+// 시작 화면 최근 채팅의 아이콘 색이 달라짐 (12개 규칙)
+function stripNot(selector) {
+    let out = '', i = 0;
+    while (i < selector.length) {
+        const at = selector.indexOf(':not(', i);
+        if (at < 0) { out += selector.slice(i); break; }
+        out += selector.slice(i, at + 5);
+        let depth = 1, j = at + 5;
+        for (; j < selector.length && depth; j++) {
+            if (selector[j] === '(') depth++;
+            else if (selector[j] === ')') depth--;
+        }
+        out += ')';
+        i = j;
+    }
+    return out;
+}
 function panelHasOnly(rule) {
     const list = styleRulesOf(rule);
-    return list.length > 0 && list.every(r => r.selectorText.includes(':has(') && splitTop(r.selectorText).flatMap(expand).every(p => PANEL.test(p)));
+    return list.length > 0 && list.every(r => r.selectorText.includes(':has(') && splitTop(stripNot(r.selectorText)).flatMap(expand).every(p => PANEL.test(p)));
 }
 function uiOpen() {
     if (document.querySelector('.openDrawer, dialog[open]')) return true;
@@ -165,10 +186,22 @@ export function deferPanelHasRules(tries = 25) {
     panelBlocks = parked;
     panelOn = false;
     syncPanelCss();
+    // 2.9.2: 채팅 밖 변화마다 uiOpen() 을 불렀는데, 옛 팝업 검사의 getClientRects() 가 그때마다 문서 전체 강제 레이아웃이었다.
+    // 답변 생성 · 채팅 바꾸기 때 프롬프트 관리자 · 확장 칸이 다시 그려지며 여러 번 돌아서, 측정에서 테마 JS 가운데 가장 비쌌다
+    // (답변 한 번 169ms · 채팅 전환 156ms, PC). 이제 아무것도 안 열려 있을 때는 '무언가 열렸을 수 있는' 변화에만 다시 본다 —
+    // 서랍에 openDrawer 가 붙음 · dialog 의 open · 옛 팝업(이나 그 겉 칸)의 style/class · 그런 것이 새로 붙음. 열려 있을 때는 예전처럼.
+    const OPENERS = `.openDrawer, dialog, ${LEGACY_POPUPS}`;
+    const mayOpen = (m) => {
+        const t = m.target;
+        if (m.type === 'childList') return [...m.addedNodes].some(n => n.nodeType === 1 && (n.matches(OPENERS) || !!n.querySelector(OPENERS)));
+        if (m.attributeName === 'open' || t.classList.contains('openDrawer')) return true;
+        return t !== document.body && (t.matches(LEGACY_POPUPS) || !!t.querySelector(LEGACY_POPUPS));
+    };
     new MutationObserver((list) => {
         for (const m of list) {
             const t = m.target;
             if (t.nodeType !== 1 || t.closest?.('#chat, #form_sheld')) continue;
+            if (!panelOn && !mayOpen(m)) continue;
             syncPanelCss();
             return;
         }

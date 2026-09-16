@@ -118,6 +118,10 @@ function open(sel) {
     const host = sel.closest('dialog[open]') || document.body;
     layer = document.createElement('div');
     layer.className = 'salty-pick-layer';
+    // 2.9.2: 실리태번은 html 에 transform(translateZ) 을 걸어 두어 fixed 요소의 기준이 화면이 아니라 높이 0 인 html 이 된다.
+    // 그래서 CSS 의 inset: 0 만으로는 층 높이가 0 — 목록 밖을 눌러도 닫히지 않고 그 뒤의 단추(API '연결' 등)가 눌렸다.
+    // 크기를 화면 단위로 직접 준다 (lvh 를 모르는 브라우저는 뒤 선언을 버리고 100vh)
+    layer.style.cssText = 'top:0;left:0;width:100vw;height:100vh;height:100lvh';
     const search = sel.options.length > SEARCH_FROM;
     layer.innerHTML = `<div class="salty-pick salty-pick-float" role="listbox">
         ${search ? '<div class="salty-pick-search"><input type="search" placeholder="찾기" autocomplete="off" spellcheck="false"></div>' : ''}

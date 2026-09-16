@@ -65,6 +65,11 @@ export function applySillyTavernTheme() {
     }
     syncControls(values);
     applyPowerUserSettings();
+    // 2.9.2: applyPowerUserSettings 는 메시지 모양(chat_display) · 움직임 줄이기 · 좁은 입력칸을 화면에 칠하지 않는다 —
+    // 값만 바뀌고 말풍선 · 애니메이션 · 넓은 입력칸이 새로 고칠 때까지 남았다. 실리태번 자기 칸의 핸들러로 그 자리에서 적용 (값은 syncControls 가 넣음)
+    $('#chat_display').trigger('change');
+    $('#reduced_motion').trigger('input');
+    $('#compact_input_area').trigger('input');
     saveSettingsDebounced();
     return changed;
 }

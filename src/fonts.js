@@ -300,7 +300,9 @@ export async function buildComposite(slot, set, hanja, depth = 0) {
     for (const lang of ['ko', 'en', 'ja', 'zh']) {
         const font = lang === 'ko' ? ko : (set[lang] && set[lang] !== 'auto' ? findFont(set[lang]) : null);
         if (!font || !ranges[lang].length) continue;
-        const blank = await blankScripts(font);
+        // 2.9.2: 검사가 글꼴 CSS 를 못 받아오면(폰이 막 깨어나 인터넷이 늦게 붙음) 예외가 여기서 새어 나가 이 칸 전체가 빠지고,
+        // failed 도 비어 다시 시도조차 안 했다 → 검사는 건너뛰고 아래 facesFor 가 실패를 failed 로 남기게 한다 (다음 적용 때 검사도 다시)
+        const blank = await blankScripts(font).catch(() => []);
         if (blank.length) ranges[lang] = subtract(ranges[lang], union(...blank.map(script => SCRIPT_RANGES[script])));
     }
     const parts = [];
