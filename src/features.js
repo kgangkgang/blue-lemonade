@@ -1,5 +1,7 @@
 // 켜야 쓰는 기능 (3.1.0): 몰입 읽기 · 한 손 버튼 줄 · 데우스 카드 스킨 · 캐릭터별 스타일 · (3.2.0) 화이트/나이트 자동의 코드는 켤 때 처음 불러온다.
 // 꺼 두면 파일도 받지 않고 이벤트도 걸지 않는다 — 테마가 무거워지지 않게. 한 번 불러온 뒤 끄면 그 모듈이 스스로 정리한다.
+import { syncSplash } from './splash.js';
+
 const modules = {};
 let hooks = { applyAll: null, refreshPanels: null };
 
@@ -29,6 +31,8 @@ export function syncFeatures(s) {
     if (weather || modules.weather) load('weather', './weather.js').then(m => m?.syncWeather(weather, weatherChat));
     const dem = on && !!s.deus?.on && !!s.chat?.demSkin;
     if (dem || modules.dem) load('dem', './demskin.js').then(m => m?.syncDemSkin(dem, s.chat));
+    // 3.5.1 새로고침 첫 화면 파일 (user.css 에 줄이 있을 때만 씀 — splash.js)
+    syncSplash(s, () => hooks.refreshPanels?.());
     // 캐릭터별 스타일: 이어 둔 캐릭터가 있을 때만. 입혀 둔 동안 바꾼 모습은 그 스타일에 적음
     const chars = Object.keys(s.charStyles || {}).length > 0 || !!s.activeStyle;
     if (chars || modules.charstyle) {

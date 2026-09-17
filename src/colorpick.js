@@ -92,6 +92,137 @@ function swatchList() {
 
 const swatchButtons = (list, kind) => list.map(c => `<button type="button" class="bl-cp-sw" data-sw="${c}" data-kind="${kind}" style="--c:${c}" aria-label="${c}"></button>`).join('');
 
+// ───────── 이미지에서 색 따기 (3.5.1) ─────────
+// 사용자: "갤러리에서 이미지 가져와서 스포이드로 콕 찍어 색만 빼오는 거". 고른 이미지는 긴 변 1024px 캔버스로 줄여
+// 이 페이지에서만 기억한다 (저장 안 함 — 다른 색 칸을 열어도 그대로, 새로 고치면 사라짐). 누른 자리 3×3 평균 색,
+// 손가락에 가리지 않게 위에 확대경. 이미지의 대표 색 8개는 따로 한 줄.
+const PIC_MAX = 1024;
+let picture = null;    // { canvas, ctx, colors }
+let pictureView = false; // 마지막에 이미지 화면이었나 (다음에 열 때도 이미지로)
+
+async function decodeImage(file) {
+    try {
+        return await createImageBitmap(file);
+    } catch {
+        return await new Promise((resolve, reject) => {
+            const url = URL.createObjectURL(file);
+            const img = new Image();
+            img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+            img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('decode')); };
+            img.src = url;
+        });
+    }
+}
+
+function dominantColors(source, max = 8) {
+    const k = Math.min(1, 64 / Math.max(source.width, source.height));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(source.width * k));
+    c.height = Math.max(1, Math.round(source.height * k));
+    const x = c.getContext('2d', { willReadFrequently: true });
+    x.drawImage(source, 0, 0, c.width, c.height);
+    const d = x.getImageData(0, 0, c.width, c.height).data;
+    const buckets = new Map();
+    for (let i = 0; i < d.length; i += 4) {
+        if (d[i + 3] < 128) continue;
+        const key = ((d[i] >> 4) << 8) | ((d[i + 1] >> 4) << 4) | (d[i + 2] >> 4);
+        let b = buckets.get(key);
+        if (!b) buckets.set(key, (b = [0, 0, 0, 0]));
+        b[0] += d[i]; b[1] += d[i + 1]; b[2] += d[i + 2]; b[3]++;
+    }
+    // 많이 쓰인 색부터, 채도가 있는 색은 조금 더 쳐줌 (배경 회색만 잔뜩 나오지 않게), 서로 비슷한 색은 건너뜀
+    const list = [...buckets.values()].map(([r, g, b, n]) => {
+        const rgb = [r / n, g / n, b / n];
+        const hi = Math.max(...rgb), lo = Math.min(...rgb);
+        return { rgb, score: n * (1 + 1.5 * (hi ? (hi - lo) / hi : 0)) };
+    }).sort((a, b) => b.score - a.score);
+    const out = [];
+    for (const { rgb } of list) {
+        if (out.every(o => (o[0] - rgb[0]) ** 2 + (o[1] - rgb[1]) ** 2 + (o[2] - rgb[2]) ** 2 > 42 * 42)) out.push(rgb);
+        if (out.length >= max) break;
+    }
+    return out.map(hexOf);
+}
+
+async function loadPicture(file) {
+    const bitmap = await decodeImage(file);
+    const w0 = bitmap.width, h0 = bitmap.height;
+    if (!w0 || !h0) throw new Error('empty');
+    const k = Math.min(1, PIC_MAX / Math.max(w0, h0));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(w0 * k));
+    canvas.height = Math.max(1, Math.round(h0 * k));
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close?.();
+    return { canvas, ctx, colors: dominantColors(canvas) };
+}
+
+/** 이미지 화면 그리기 (고른 직후 · 이미지가 있는 채로 열 때) */
+function showPicture(box) {
+    if (!picture) return;
+    const wrap = box.querySelector('.bl-cp-pic');
+    const view = wrap.querySelector('.bl-cp-pic-canvas');
+    if (view._src !== picture.canvas) {
+        view.width = picture.canvas.width;
+        view.height = picture.canvas.height;
+        view.getContext('2d').drawImage(picture.canvas, 0, 0);
+        view._src = picture.canvas;
+        wrap.classList.remove('has-point');
+    }
+    box.classList.add('pic-on', 'has-pic');
+    pictureView = true;
+    const width = wrap.clientWidth || box.clientWidth - 20;
+    const maxH = window.innerWidth < 600 ? 230 : 200;
+    const k = Math.min(width / view.width, maxH / view.height);
+    view.style.width = `${Math.max(1, Math.round(view.width * k))}px`;
+    view.style.height = `${Math.max(1, Math.round(view.height * k))}px`;
+    box.querySelector('.bl-cp-imgsws').innerHTML = swatchButtons(picture.colors, 'image');
+}
+
+function hidePicture(box) {
+    box.classList.remove('pic-on');
+    pictureView = false;
+}
+
+/** 이미지 위 한 점: 3×3 평균 색 + 고리 · 확대경 자리 */
+function pickFromPicture(box, ev) {
+    const wrap = box.querySelector('.bl-cp-pic');
+    const view = wrap.querySelector('.bl-cp-pic-canvas');
+    const rect = view.getBoundingClientRect();
+    if (!picture || !rect.width || !rect.height) return;
+    const fx = clamp((ev.clientX - rect.left) / rect.width, 0, 0.9999);
+    const fy = clamp((ev.clientY - rect.top) / rect.height, 0, 0.9999);
+    const { canvas, ctx } = picture;
+    const px = Math.floor(fx * canvas.width), py = Math.floor(fy * canvas.height);
+    const x0 = clamp(px - 1, 0, Math.max(0, canvas.width - 3)), y0 = clamp(py - 1, 0, Math.max(0, canvas.height - 3));
+    const d = ctx.getImageData(x0, y0, Math.min(3, canvas.width), Math.min(3, canvas.height)).data;
+    let r = 0, g = 0, b = 0, n = 0;
+    for (let i = 0; i < d.length; i += 4) {
+        if (d[i + 3] < 16) continue;
+        r += d[i]; g += d[i + 1]; b += d[i + 2]; n++;
+    }
+    const wr = wrap.getBoundingClientRect();
+    const x = rect.left - wr.left + fx * rect.width, y = rect.top - wr.top + fy * rect.height;
+    wrap.style.setProperty('--px', `${x}px`);
+    wrap.style.setProperty('--py', `${y}px`);
+    wrap.classList.add('has-point');
+    wrap.classList.toggle('loupe-down', ev.clientY < 110);
+    const loupe = wrap.querySelector('.bl-cp-loupe');
+    const lx = loupe.getContext('2d');
+    lx.imageSmoothingEnabled = false;
+    lx.clearRect(0, 0, loupe.width, loupe.height);
+    lx.drawImage(canvas, px - 4, py - 4, 9, 9, 0, 0, loupe.width, loupe.height);
+    const cell = loupe.width / 9;
+    lx.strokeStyle = '#fff';
+    lx.lineWidth = 2;
+    lx.strokeRect(cell * 4, cell * 4, cell, cell);
+    if (!n) return; // 투명한 곳
+    setFrom([r / n, g / n, b / n, session.state.a]);
+    render(session.state);
+    emit();
+}
+
 function place(box, anchor) {
     const r = anchor.getBoundingClientRect();
     const v = viewport();
@@ -252,6 +383,16 @@ export function openColorPick({ anchor, value, alpha = false, onInput, onClose }
     layer.style.cssText = 'top:0;left:0;width:100vw;height:100vh;height:100lvh';
     layer.innerHTML = `<div class="bl-cp" role="dialog" aria-label="색 고르기">
         <div class="bl-cp-board" tabindex="0" role="slider" aria-label="채도 · 밝기"><i></i></div>
+        <div class="bl-cp-pic">
+            <canvas class="bl-cp-pic-canvas" aria-label="이미지에서 색 따기"></canvas>
+            <i class="bl-cp-pic-ring"></i>
+            <canvas class="bl-cp-loupe" width="72" height="72"></canvas>
+            <div class="bl-cp-pic-tools">
+                <button type="button" data-act="pic-change" aria-label="다른 이미지"><i class="fa-solid fa-images" aria-hidden="true"></i></button>
+                <button type="button" data-act="pic-close" aria-label="색 판으로"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </div>
+        </div>
+        <input type="file" class="bl-cp-file" accept="image/*">
         <div class="bl-cp-mid">
             <button type="button" class="bl-cp-cmp" data-act="revert" aria-label="처음 색으로" style="--was:${original}"><i></i><b></b></button>
             <div class="bl-cp-bars">
@@ -261,8 +402,10 @@ export function openColorPick({ anchor, value, alpha = false, onInput, onClose }
         </div>
         <div class="bl-cp-code">
             <input type="text" class="bl-cp-hex" maxlength="9" spellcheck="false" autocomplete="off" aria-label="색 코드">
+            <button type="button" class="bl-cp-drop" data-act="pic" aria-label="이미지에서 색 따기"><i class="fa-solid fa-image" aria-hidden="true"></i></button>
             ${'EyeDropper' in window ? '<button type="button" class="bl-cp-drop" data-act="drop" aria-label="화면에서 색 따기"><i class="fa-solid fa-eye-dropper" aria-hidden="true"></i></button>' : ''}
         </div>
+        <div class="bl-cp-sws bl-cp-imgsws"></div>
         <div class="bl-cp-sws">${swatchButtons(theme, 'theme')}</div>
         ${recent.length ? `<div class="bl-cp-sws bl-cp-recent">${swatchButtons(recent, 'recent')}</div>` : ''}
     </div>`;
@@ -294,6 +437,47 @@ export function openColorPick({ anchor, value, alpha = false, onInput, onClose }
     });
     input.addEventListener('blur', () => { if (session) render(session.state); });
 
+    // 이미지: 누르고 끄는 동안 확대경, 뗄 때 확정
+    const picCanvas = box.querySelector('.bl-cp-pic-canvas');
+    const picWrap = box.querySelector('.bl-cp-pic');
+    const fileInput = box.querySelector('.bl-cp-file');
+    picCanvas.addEventListener('pointerdown', (e) => {
+        if (e.button > 0 || !picture) return;
+        e.preventDefault();
+        try { picCanvas.setPointerCapture(e.pointerId); } catch { /* 합성 누름 */ }
+        picWrap.classList.add('picking');
+        const move = ev => pickFromPicture(box, ev);
+        move(e);
+        const up = () => {
+            picCanvas.removeEventListener('pointermove', move);
+            picCanvas.removeEventListener('pointerup', up);
+            picCanvas.removeEventListener('pointercancel', up);
+            picWrap.classList.remove('picking');
+            emit(true);
+        };
+        picCanvas.addEventListener('pointermove', move);
+        picCanvas.addEventListener('pointerup', up);
+        picCanvas.addEventListener('pointercancel', up);
+    });
+    fileInput.addEventListener('change', async () => {
+        const file = fileInput.files?.[0];
+        fileInput.value = '';
+        if (!file) return;
+        box.classList.add('pic-loading');
+        try {
+            picture = await loadPicture(file);
+        } catch (error) {
+            console.warn('[블루 레몬에이드] 이미지를 못 읽음', error);
+            window.toastr?.warning?.('이미지를 읽지 못했어요');
+            return;
+        } finally {
+            box.classList.remove('pic-loading');
+        }
+        if (!session || !box.isConnected) return;
+        showPicture(box);
+        place(box, session.anchor);
+    });
+
     // 바깥을 누르면 닫힘. 층 안의 누름은 문서로 올려 보내지 않음 — 실리태번이 html touchstart · mousedown 에서 서랍을 닫는다
     layer.addEventListener('pointerdown', (e) => { if (e.target === layer) { e.preventDefault(); closeColorPick(); } });
     for (const type of ['touchstart', 'touchend', 'mousedown', 'mouseup', 'pointerdown', 'pointerup']) {
@@ -304,13 +488,24 @@ export function openColorPick({ anchor, value, alpha = false, onInput, onClose }
         const sw = e.target.closest('[data-sw]');
         if (sw) {
             const parsed = parseColor(sw.dataset.sw);
-            if (!alpha) parsed[3] = 1;
+            // 불투명한 견본은 지금 투명도를 둔다 (형광펜처럼 반투명 칸에 이미지 색을 넣어도 덮어 칠하지 않게)
+            parsed[3] = !alpha ? 1 : parsed[3] < 1 ? parsed[3] : session.state.a;
             setFrom(parsed);
             render(session.state);
             emit(true);
             return;
         }
         const act = e.target.closest('[data-act]')?.dataset.act;
+        // 파일 고르기는 누른 그 순간(사용자 동작 안)에 열어야 함 — await 앞
+        if (act === 'pic') {
+            if (!picture) fileInput.click();
+            else if (box.classList.contains('pic-on')) hidePicture(box);
+            else showPicture(box);
+            if (picture) place(box, session.anchor);
+            return;
+        }
+        if (act === 'pic-change') { fileInput.click(); return; }
+        if (act === 'pic-close') { hidePicture(box); place(box, session.anchor); return; }
         if (act === 'revert') {
             setFrom(parseColor(original));
             render(session.state);
@@ -339,7 +534,16 @@ export function openColorPick({ anchor, value, alpha = false, onInput, onClose }
         layer.style.top = `${-origin.top}px`;
     }
     render(session.state);
-    place(box, anchor);
+    if (picture) {
+        // 이미지를 고른 적이 있으면 대표 색 줄은 늘, 마지막에 이미지 화면이었으면 이미지로 연다 (여러 칸을 같은 그림에서 따기)
+        box.classList.add('has-pic');
+        box.querySelector('.bl-cp-imgsws').innerHTML = swatchButtons(picture.colors, 'image');
+    }
+    place(box, anchor); // 폭이 정해진 뒤에 이미지 크기를 잰다
+    if (picture && pictureView) {
+        showPicture(box);
+        place(box, anchor);
+    }
     window.addEventListener('resize', onResize);
     window.visualViewport?.addEventListener('resize', onResize);
     const mouse = matchMedia('(hover: hover) and (pointer: fine)').matches && !(navigator.maxTouchPoints > 0);

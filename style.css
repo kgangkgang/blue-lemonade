@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 36개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 5978e0529a86) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 36개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build e98703b157cc) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 10px;
@@ -14229,6 +14229,34 @@ body.salty .salty-preview.bl-weather-pv-on > .mes {
     align-self: start;
   }
 }
+@media (min-width: 1001px) {
+  .salty-panel.in-popup .salty-row:is(.salty-color, :has(> input[type="color"])) {
+    gap: 16px;
+  }
+  .salty-panel.in-popup .salty-row:is(.salty-color, :has(> input[type="color"])) > span {
+    flex: 1 1 0;
+  }
+  .salty-panel.in-popup .salty-row.salty-color > toolcool-color-picker {
+    --bl-sw-w: 100%;
+    --bl-sw-h: 34px;
+    --bl-sw-p: 0;
+    --tool-cool-color-picker-btn-border-radius-inner: 8px;
+    --tool-cool-color-picker-btn-border-color-inner: color-mix(in srgb, var(--salty-text) 14%, transparent);
+    display: block;
+    flex: 0 0 50%;
+    min-width: 0;
+    height: 34px;
+    line-height: 0;
+    border-radius: 8px;
+    box-shadow: none;
+  }
+  .salty-panel.in-popup .salty-row > input[type="color"][data-color-path] {
+    flex: 0 0 50%;
+    width: auto;
+    min-width: 0;
+    height: 34px;
+  }
+}
 body.salty :is(#salty-nochat, .salty-preview):not([data-prev="img"]),
 .salty-prevbox > :is(.salty-sample, .salty-uisample) {
   scrollbar-color: color-mix(in srgb, var(--salty-text) 26%, transparent) transparent;
@@ -14440,6 +14468,102 @@ body.salty .bl-cp-sw:hover {
 }
 @media (max-width: 599px) {
   body.salty .bl-cp-sws { grid-template-columns: repeat(auto-fill, minmax(28px, 1fr)); gap: 8px; }
+}
+body.salty .bl-cp-file {
+  display: none;
+}
+body.salty .bl-cp-pic {
+  position: relative;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  min-height: 96px;
+  border-radius: 10px;
+  background: var(--checker), var(--salty-shade);
+}
+body.salty .bl-cp.pic-on .bl-cp-pic {
+  display: flex;
+}
+body.salty .bl-cp.pic-on .bl-cp-board {
+  display: none;
+}
+body.salty .bl-cp-pic-canvas {
+  display: block;
+  max-width: 100%;
+  border-radius: 8px;
+  cursor: crosshair;
+  touch-action: none;
+}
+body.salty .bl-cp-pic-ring {
+  position: absolute;
+  left: var(--px);
+  top: var(--py);
+  display: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: rgb(var(--rgb));
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.4), 0 1px 4px rgb(0 0 0 / 0.35);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+body.salty .bl-cp-pic.has-point .bl-cp-pic-ring {
+  display: block;
+}
+body.salty .bl-cp-loupe {
+  position: absolute;
+  z-index: 1;
+  left: var(--px);
+  top: var(--py);
+  display: none;
+  width: 72px;
+  height: 72px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--salty-shade);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.35), 0 6px 16px rgb(0 0 0 / 0.35);
+  transform: translate(-50%, calc(-100% - 20px));
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+body.salty .bl-cp-pic.loupe-down .bl-cp-loupe {
+  transform: translate(-50%, 20px);
+}
+body.salty .bl-cp-pic.picking .bl-cp-loupe {
+  display: block;
+}
+body.salty .bl-cp-pic-tools {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 4px;
+}
+body.salty .bl-cp-pic-tools button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.5);
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+body.salty .bl-cp.pic-on .bl-cp-drop[data-act="pic"] {
+  background: color-mix(in srgb, var(--salty-accent) 22%, transparent);
+  color: var(--salty-accent);
+}
+body.salty .bl-cp.pic-loading .bl-cp-drop[data-act="pic"] {
+  opacity: 0.5;
+  pointer-events: none;
+}
+body.salty .bl-cp-imgsws:empty {
+  display: none;
 }
 /* css/99-lazy-panel.css */
 #salty-lazy-panel-start {}

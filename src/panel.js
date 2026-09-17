@@ -11,6 +11,7 @@ import { classifyAll } from './assets.js';
 import { openNotice, currentVersion, hasUnseenNotice } from './notice.js';
 import { PRESETS, MAX_STYLES, captureStyle, applyStyleData, sameStyle, sharePayload, encodeStyle, decodeStyle, newStyleId, uniqueName, mergeFonts, currentKey, keyLabel } from './styles.js';
 import { charStyleModule } from './features.js';
+import { splashState, checkSplash, SPLASH_COMMAND, SPLASH_IMPORT } from './splash.js';
 
 // 브랜드 레몬 — ✦ 메뉴 · 확장 서랍 · 스플래시와 같은 속찬 레몬(폰트어썸 fa-lemon U+F094) 윤곽 그대로
 export const MARK = '<svg viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path transform="translate(0 448) scale(1 -1)" d="M448 352Q447 379 429 397Q411 415 384 416Q374 416 365 413Q348 407 330 404Q311 400 294 404Q237 418 180 399Q124 379 80 336Q37 292 17 236Q-2 179 12 122Q16 105 12 86Q9 68 3 51Q0 42 0 32Q1 5 19 -13Q37 -31 64 -32Q74 -32 83 -29Q100 -23 118 -20Q137 -16 154 -20Q211 -34 268 -15Q324 5 368 48Q411 92 431 148Q450 205 436 262Q432 279 436 298Q439 316 445 333Q448 342 448 352ZM213 321Q171 308 139 277Q108 245 95 203Q90 190 76 193Q62 198 65 212Q80 262 117 299Q154 336 204 351Q218 354 223 340Q226 326 213 321Z"/></svg>';
@@ -131,6 +132,18 @@ function toggle(path, checked) {
     return `<label class="salty-switch"><input type="checkbox" data-toggle="${path}" ${checked ? 'checked' : ''}><span></span></label>`;
 }
 
+// 3.5.1 새로고침 첫 화면: user.css 에 한 줄이 있으면 실리태번 뇌 로고 없이 처음부터 레몬 (splash.js)
+function splashRow() {
+    const state = splashState();
+    if (state === null) checkSplash(refreshPanels);
+    const note = state === 'on' ? '처음부터 레몬으로 떠요'
+        : state === 'late' ? 'user.css 맨 위로 줄을 옮겨 주세요'
+            : '실리태번 뇌 로고 없이 처음부터 레몬 — 명령을 한 번 실행';
+    return row('새로고침 화면', state === 'on'
+        ? '<span class="salty-splash-on"><i class="fa-solid fa-check" aria-hidden="true"></i></span>'
+        : '<button class="salty-btn" data-act="splash-copy">명령 복사</button>', note);
+}
+
 function row(label, control, note = '') {
     return `<div class="salty-row"><span>${label}${note ? `<small>${note}</small>` : ''}</span>${control}</div>`;
 }
@@ -156,8 +169,9 @@ function mdLabel(text) {
 function color(token, label, note = '') {
     const pal = paletteColors(getSettings());
     // 투명한 색은 스와치가 빈 칸처럼 보여서 뒤에 투명 격자를 깔아 줌 (CSS .clear)
+    // 견본 크기는 CSS 변수로 (3.5.1 — PC 팝업에서는 이름 옆을 다 채우는 긴 막대, 33-panel-columns)
     const clear = parseColor(pal[token])[3] < 0.1 ? ' clear' : '';
-    return `<div class="salty-row salty-color${clear}"><span>${mdLabel(label)}${note ? `<small>${note}</small>` : ''}</span><toolcool-color-picker data-token="${token}" color="${esc(pal[token])}"></toolcool-color-picker></div>`;
+    return `<div class="salty-row salty-color${clear}"><span>${mdLabel(label)}${note ? `<small>${note}</small>` : ''}</span><toolcool-color-picker data-token="${token}" color="${esc(pal[token])}" button-width="var(--bl-sw-w, 3rem)" button-height="var(--bl-sw-h, 1.5rem)" button-padding="var(--bl-sw-p, .25rem)"></toolcool-color-picker></div>`;
 }
 
 const fill = (value, min, max) => `${((value - min) / (max - min)) * 100}%`;
@@ -921,6 +935,7 @@ function tabChat(s, sub) {
             ${row('배경 이미지 비치기', toggle('chat.bgImage', s.chat.bgImage), '끄면 깨끗한 종이색 바탕')}
             ${row('고르기 목록 팝업', toggle('chat.selectPop', s.chat.selectPop !== false), '모델 · 프리셋 같은 목록을 테마가 그린 팝업으로 (끄면 폰 기본 목록)')}
             ${row('색 고르기 팝업', toggle('chat.colorPop', s.chat.colorPop !== false), '실리태번 색 칸도 테마 색 고르기로')}
+            ${splashRow()}
             ${row('가벼운 페이드 인', toggle('chat.streamFade', !!s.chat.streamFade), '스트리밍 중 새 글자만 스며들게')}
             ${s.chat.streamFade && stFade ? row('실리태번 페이드 인', toggle('st.streamFadeIn', true), '끄면 빨라지고 위 옵션이 대신해요') : ''}
         </div>
@@ -1770,6 +1785,10 @@ function bind(root) {
                     const name = await ask('새 이름', style.name);
                     if (name === null || !String(name).trim()) break;
                     update((st) => { const target = st.styles.find(x => x.id === style.id); if (target) target.name = uniqueName(name, st.styles, style.id); });
+                    break;
+                }
+                case 'splash-copy': {
+                    if (await copyText(SPLASH_COMMAND)) toastr.success(`Termux 에 붙여 넣고 실리태번을 다시 켜 주세요. PC 는 data/_css/user.css 맨 위에 ${SPLASH_IMPORT}`, 'Blue Lemonade', { timeOut: 9000 });
                     break;
                 }
                 case 'style-copy': {
