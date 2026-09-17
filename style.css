@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 33개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 10833fcc2b27) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 35개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 839df354a41e) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 10px;
@@ -13708,6 +13708,9 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.cu
   body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) > :is(.custom-dem-track__item--time, .custom-dem-track__item--weather) {
     flex: none !important;
   }
+  body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track-recovery:not(.bl-dem-shown) > .custom-dem-track-recovery__item:last-child {
+    flex: none !important;
+  }
   body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) > .custom-dem-track__item--location {
     flex: 1 1 0 !important;
     order: 2 !important;
@@ -14074,6 +14077,71 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.cu
 }
 body.salty .salty-preview .thk-fold {
   display: none !important;
+}
+/* css/32-weather.css */
+body.salty.bl-weather-on #chat {
+  background: transparent !important;
+}
+body.salty.bl-weather-on #sheld {
+  background: var(--salty-bg) !important;
+}
+body.salty.salty-bgimg.bl-weather-on #sheld {
+  background: var(--salty-bg-82) !important;
+}
+body.salty #sheld > canvas.bl-weather {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+body.salty .salty-preview > canvas.bl-weather-pv {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+body.salty .salty-preview.bl-weather-pv-on > .mes {
+  position: relative;
+  z-index: 1;
+}
+/* css/33-panel-columns.css */
+@media (max-width: 1000px) {
+  .salty-panel .salty-group:has(> .salty-slider + .salty-slider) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 14px;
+  }
+  .salty-panel .salty-group:has(> .salty-slider + .salty-slider) > :not(.salty-slider),
+  .salty-panel .salty-group:has(> .salty-slider + .salty-slider) > .salty-slider:not(.salty-slider + *):not(:has(+ .salty-slider)) {
+    grid-column: 1 / -1;
+  }
+  .salty-panel .salty-group:has(> .salty-slider + .salty-slider) > .salty-slider header {
+    gap: 6px;
+  }
+}
+@media (min-width: 1001px) {
+  .salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+  }
+  .salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > :not(.salty-row, .salty-slider),
+  .salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > :is(.salty-row, .salty-slider):not(:is(.salty-row, .salty-slider) + *):not(:has(+ :is(.salty-row, .salty-slider))) {
+    grid-column: 1 / -1;
+  }
+}
+body.salty :is(#salty-nochat, .salty-preview):not([data-prev="img"]),
+.salty-prevbox > :is(.salty-sample, .salty-uisample) {
+  scrollbar-color: color-mix(in srgb, var(--salty-text) 26%, transparent) transparent;
+}
+.salty-panel .salty-num input[type="number"][data-num] {
+  width: calc(var(--num-ch, 4) * 1ch + 20px) !important;
+  min-width: 3.4em;
+  max-width: 8em;
 }
 /* css/99-lazy-panel.css */
 #salty-lazy-panel-start {}

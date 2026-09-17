@@ -205,6 +205,9 @@ const NUM = {
     'shadow.blur': { unit: 'px' },
 };
 const numText = (path, v) => String(Number((Number(v) / (NUM[path]?.scale || 1)).toFixed(4)));
+// 숫자칸 폭 = 값 글자 수 (3.3.0 — 자간 -0.0075 같은 긴 값이 잘리지 않게). CSS 가 1ch 단위로 폭을 잡는다
+const numChars = text => Math.max(3, String(text).length);
+const fitNum = (input) => input.style.setProperty('--num-ch', numChars(input.value));
 
 /** 숫자 칸 · 슬라이드바 부품 (설정에 값이 아직 없으면 def) */
 function sliderParts(path, min, max, step, def) {
@@ -212,7 +215,7 @@ function sliderParts(path, min, max, step, def) {
     const value = isNum(raw) ? raw : (isNum(def) ? def : (min + max) / 2);
     const n = NUM[path] || {};
     return {
-        num: `<span class="salty-num">${n.pre ? `<i>${n.pre}</i>` : ''}<input type="number" step="any" data-num="${path}" data-min="${min}" data-max="${max}" data-def="${value}" value="${numText(path, value)}"><i class="salty-unit">${n.unit || ''}</i></span>`,
+        num: `<span class="salty-num">${n.pre ? `<i>${n.pre}</i>` : ''}<input type="number" step="any" data-num="${path}" data-min="${min}" data-max="${max}" data-def="${value}" value="${numText(path, value)}" style="--num-ch:${numChars(numText(path, value))}"><i class="salty-unit">${n.unit || ''}</i></span>`,
         range: `<input type="range" data-range="${path}" min="${min}" max="${max}" step="${step}" value="${value}" style="--fill:${fill(snap(value, min, max, step), min, max)}">`,
     };
 }
@@ -528,7 +531,11 @@ function fillPreviews(root) {
             box.append(stage);
             // .salty-asset · .salty-cutout · --salty-ar/iw/ih/imin 은 실제 채팅과 같은 코드가 붙인다.
             // 떨어졌다 다시 붙은 무대는 ResizeObserver 가 스스로 빠져 있으니 꽂을 때마다 한 번 더 부름
-            if (kind === 'chat') prevFaces(stage);
+            if (kind === 'chat') {
+                prevFaces(stage);
+                const chatSettings = getSettings().chat;
+                if ((chatSettings.weather && chatSettings.weather !== 'off' && getSettings().enabled) || stage._blWeather) import('./weather.js').then(m => m.previewWeather(stage, getSettings().enabled ? chatSettings : { weather: 'off' })).catch(() => {});
+            }
             else if (kind !== 'regex') classifyAll(stage);
         }
     }
@@ -907,6 +914,10 @@ function tabChat(s, sub) {
             ${row('고르기 목록 팝업', toggle('chat.selectPop', s.chat.selectPop !== false), '모델 · 프리셋 같은 목록을 테마가 그린 팝업으로 (끄면 폰 기본 목록)')}
             ${row('가벼운 페이드 인', toggle('chat.streamFade', !!s.chat.streamFade), '스트리밍 중 새 글자만 스며들게')}
             ${s.chat.streamFade && stFade ? row('실리태번 페이드 인', toggle('st.streamFadeIn', true), '끄면 빨라지고 위 옵션이 대신해요') : ''}
+        </div>
+        ${cap('날씨')}<div class="salty-group">
+            ${stack('채팅 뒤 효과', seg('chat.weather', [['off', '끔'], ['rain', '비'], ['snow', '눈'], ['tracker', '트래커 따라']]), s.chat.weather === 'tracker' ? '데우스 트래커 날씨가 비 · 눈이면 내려요' : '')}
+            ${s.chat.weather && s.chat.weather !== 'off' ? stack('세기', seg('chat.weatherLevel', [[1, '약하게'], [2, '보통'], [3, '강하게']])) : ''}
         </div>
         ${cap('폰')}<div class="salty-group">
             ${phoneMock(s)}
@@ -1728,7 +1739,7 @@ function bind(root) {
         range.style.setProperty('--fill', fill(value, Number(range.min), Number(range.max)));
         update(st => setPath(st, path, value), false);
         const num = root.querySelector(`input[data-num="${path}"]`);
-        if (num && document.activeElement !== num) num.value = numText(path, value);
+        if (num && document.activeElement !== num) { num.value = numText(path, value); fitNum(num); }
     });
 
     root.addEventListener('change', async (event) => {
@@ -1744,6 +1755,7 @@ function bind(root) {
             if (!Number.isFinite(value)) value = min;
             value = Number(Math.min(max, Math.max(min, value)).toFixed(4));
             target.value = numText(path, value);
+            fitNum(target);
             const range = root.querySelector(`input[data-range="${path}"]`);
             if (range) {
                 range.value = value;

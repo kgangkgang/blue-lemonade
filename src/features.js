@@ -22,6 +22,9 @@ export function syncFeatures(s) {
     if (onehand || modules.onehand) load('onehand', './onehand.js').then(m => m?.syncOneHand(onehand, s.onehand));
     const auto = on && !!s.auto?.on;
     if (auto || modules.auto) load('auto', './automode.js').then(m => m?.syncAutoMode(auto, hooks));
+    // 3.3.0 날씨 효과 (weather.js — 그리기는 워커)
+    const weather = on && !!s.chat?.weather && s.chat.weather !== 'off';
+    if (weather || modules.weather) load('weather', './weather.js').then(m => m?.syncWeather(weather, s.chat));
     const dem = on && !!s.chat?.demSkin;
     if (dem || modules.dem) load('dem', './demskin.js').then(m => m?.syncDemSkin(dem, s.chat));
     // 캐릭터별 스타일: 이어 둔 캐릭터가 있을 때만. 입혀 둔 동안 바꾼 모습은 그 스타일에 적음
