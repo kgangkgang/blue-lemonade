@@ -281,7 +281,14 @@ function paintPick(img, host, rec) {
     const rect = cropRect(img, rec.cutout);
     const sig = `${rect.gx},${rect.gy},${rect.gw},${rect.gh}`;
     if (rec.sig !== sig || !rec.raw) {
-        rec.raw = pickRaw(rec.grid, rect); // 격자에서 다시 뽑을 뿐이라 getImageData 는 다시 안 부름
+        // 3.6.1: 캐릭터 에셋이 답변 중에 같은 그림을 새 <img> 로 다시 그리면, 처음엔 크기를 몰라 전체 격자 → 크기를 받으면 잘린 범위로
+        // 매번 두 번씩 다시 투표했다 (폰 리그 답변 한 번 0.15초). 범위별 결과를 그림 기록에 몇 개 기억해 둔다
+        const raws = rec.raws || (rec.raws = new Map());
+        if (!raws.has(sig)) {
+            raws.set(sig, pickRaw(rec.grid, rect)); // 격자에서 다시 뽑을 뿐이라 getImageData 는 다시 안 부름
+            if (raws.size > 6) raws.delete(raws.keys().next().value);
+        }
+        rec.raw = raws.get(sig);
         rec.sig = sig;
     }
     applyPick(host, rec.raw);

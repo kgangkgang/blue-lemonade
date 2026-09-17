@@ -120,7 +120,18 @@ export function startCompactLayout() {
             bar.setAttribute('aria-label', '빠른 답장');
         }
         syncQrFind(bar, enabled);
-        updateQrEdges(bar);
+        scheduleQrEdges();
+    }
+    // 3.6.1: 몸 클래스 · 입력판이 바뀔 때마다 그 자리에서 재면, 답변이 자라는 도중에 문서 전체 강제 레이아웃이 돌았다
+    // (폰 리그 답변 한 번에 0.25초 — 실리태번이 스트리밍 중 hideAllSwipeButtons 를 붙였다 뗌). 다음 프레임 직전에 한 번만 잰다:
+    // 그때는 그 프레임의 레이아웃을 어차피 해야 하고, 값이 같으면 아무것도 안 써서 다시 계산도 없다. 넘기기(scroll)는 그대로 바로
+    let qrEdgeFrame = 0;
+    function scheduleQrEdges() {
+        if (qrEdgeFrame) return;
+        qrEdgeFrame = requestAnimationFrame(() => {
+            qrEdgeFrame = 0;
+            updateQrEdges(sendForm?.querySelector('#qr--bar'));
+        });
     }
     // 3.5.3 QR 줄 앞 돋보기: 모든 퀵 리플라이를 목록으로 찾기 (qrfind.js — 처음 누를 때 불러옴). 확장이 줄을 다시 그리면 다시 붙임
     function syncQrFind(bar, enabled) {
@@ -145,7 +156,7 @@ export function startCompactLayout() {
     }
     // QR 줄 흐림 · 스냅 · 휠 · 끌기는 아래 모듈 함수 (설정 창 미리보기 줄도 같이 씀)
     sendForm?.addEventListener('scroll', (event) => { if (event.target.id === 'qr--bar') updateQrEdges(event.target); }, true);
-    window.addEventListener('resize', () => updateQrEdges(sendForm?.querySelector('#qr--bar')));
+    window.addEventListener('resize', scheduleQrEdges);
     placeQuickReplies();
     if (sendForm) new MutationObserver(placeQuickReplies).observe(sendForm, { childList: true, subtree: true });
     sendForm?.addEventListener('wheel', event => qrWheel(event, event.target.closest?.('#qr--bar')), { passive: false });

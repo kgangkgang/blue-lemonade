@@ -217,6 +217,10 @@ export function panelHasRuleCount() {
 export function panelCssEnabled() {
     return !!panelStyle && panelOn;
 }
+/** 서랍 · 팝업이 열려 있나 — 게으른 칸을 지켜보는 중이면 그 값(문서를 다시 훑지 않음), 아직 아니면 null (3.6.1, numbers.js) */
+export function uiOpenKnown() {
+    return panelStyle ? panelOn : null;
+}
 
 // 메시지 ··· 메뉴가 열린 메시지 표시 (2.5.3): style.css 가 `.mes:has(.extraMesButtons.visible)` 로 알아내던 것.
 // :has() 는 메뉴 하나가 열릴 때 그 메시지 안 요소 전부(긴 답변이면 수백 개)를 다시 계산하게 만들어 ··· 탭이 굼떴다.

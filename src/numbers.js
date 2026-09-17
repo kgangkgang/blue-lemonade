@@ -1,4 +1,5 @@
 // 표시만 쉼표로 묶는다. input의 type/value, min/max/step, 저장 이벤트는 바꾸지 않는다.
+import { uiOpenKnown } from './lite.js';
 export function groupedNumber(value) {
     const raw = String(value).trim();
     if (!/^[+-]?\d+(?:\.\d+)?$/.test(raw)) return raw;
@@ -50,6 +51,9 @@ export function startNumberDisplay() {
     // 이제 먼저 전부 재고(읽기만), 바뀐 칸만 칠하거나 지운다(쓰기만). 바뀐 게 없으면 아무것도 쓰지 않는다.
     function refresh() {
         pending = false;
+        // 3.6.1: 서랍 · 팝업이 하나도 안 열려 있으면 숫자 칸이 다 가려져 있다 — 재지도 지우지도 않고 둔다 (열 때 클릭 · 1.5초 확인으로 다시 맞춤).
+        // 답변 중 서랍 밖 변화(프롬프트 목록 다시 그리기 등)마다 숨은 숫자 칸 전부를 다시 재던 것 (폰 리그 답변 한 번 0.1초)
+        if (document.body.classList.contains('salty') && !anyOpen()) return;
         const want = new Map();
         if (document.body.classList.contains('salty') && !document.hidden) {
             // 토큰 셀의 경고 아이콘은 그대로 두고, 숫자 텍스트만 별도 표시 칸으로 만든다. (DOM 쓰기라 재기 전에)
@@ -91,6 +95,9 @@ export function startNumberDisplay() {
     // (강제 레이아웃 포함, 4배 느린 CPU 에서 한 번에 25ms). 떨어져 나간 노드는 숫자 칸 표시와 상관없으니 채팅 쪽과 같이 넘긴다.
     const inChat = (node) => !node?.isConnected || (node?.nodeType === 1 ? node : node?.parentElement)?.closest?.(CHAT);
     const onMutations = (list) => { if (!list.every(m => inChat(m.target))) schedule(); };
+    // 3.6.1: 서랍 · 팝업이 열려 있나 — lite.js 가 게으른 칸을 켜고 끄려고 이미 지켜보는 값을 쓴다 (못 쓰면 예전처럼 문서에서 찾기).
+    // 예전엔 1.5초마다 문서 전체를 querySelector 로 훑었는데, 아무것도 안 열려 있으면 끝까지 훑어 폰 리그 답변 한 번에 0.1초였다
+    const anyOpen = () => uiOpenKnown() ?? !!document.querySelector('.openDrawer, dialog.popup[open]');
     // 굴리는 동안 프레임마다 다시 잴 필요는 없다 (이제 화면 밖 칸도 같이 재 둔다) — 멈춘 뒤 한 번 (2.9.2)
     let scrollTimer = 0;
     const onScroll = (e) => { if (!inChat(e.target)) { clearTimeout(scrollTimer); scrollTimer = setTimeout(schedule, 150); } };
@@ -102,6 +109,6 @@ export function startNumberDisplay() {
     new MutationObserver(onMutations).observe(document.body, {childList:true, subtree:true, characterData:true});
     new MutationObserver(onMutations).observe(document.body, {attributes:true, attributeFilter:['class','style']});
     // value 속성만 바뀌면 MutationObserver에 전달되지 않는다. 서랍 · 팝업이 하나도 안 열려 있으면 볼 숫자 칸도 없다
-    setInterval(() => { if (!document.hidden && document.querySelector('.openDrawer, dialog.popup[open]')) schedule(); }, 1500);
+    setInterval(() => { if (!document.hidden && anyOpen()) schedule(); }, 1500);
     schedule();
 }
