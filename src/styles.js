@@ -6,7 +6,7 @@
 import { getSettings, DEFAULTS, FONT_SET } from './settings.js';
 
 export const STYLE_KEYS = ['palette', 'customName', 'colorOverrides', 'fonts', 'type', 'dialogue', 'ui', 'code', 'em', 'strong', 'shadow', 'chat', 'image'];
-const CHAT_BEHAVIOR = ['selectPop', 'streamFade', 'demFold'];
+const CHAT_BEHAVIOR = ['selectPop', 'colorPop', 'streamFade', 'demFold'];
 export const MAX_STYLES = 20;
 const CODE_PREFIX = 'BLS1.';     // deflate-raw + base64url
 const PLAIN_PREFIX = 'BLS0.';    // 압축 못 하는 브라우저: base64url 만

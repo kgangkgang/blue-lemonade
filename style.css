@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 35개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build bd7daf453c4e) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 36개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 5978e0529a86) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 10px;
@@ -10163,6 +10163,30 @@ body.salty-dark .salty-panel {
   margin: 4px 0;
   line-height: 1.55;
 }
+body.salty .popup:has(.salty-notice) {
+  width: min(640px, calc(100vw - 32px)) !important;
+  max-width: min(640px, calc(100vw - 32px)) !important;
+  height: min(640px, calc(100dvh - 32px)) !important;
+  padding-inline: 12px !important;
+}
+body.salty .popup:has(.salty-notice) .popup-body {
+  padding-inline: 0 !important;
+  scrollbar-gutter: auto !important;
+}
+body.salty .popup:has(.salty-notice) .popup-content {
+  padding-inline: 4px !important;
+}
+@media (max-width: 1000px) {
+  html body.salty .popup:has(.salty-notice) {
+    width: calc(100vw - 12px) !important;
+    max-width: calc(100vw - 12px) !important;
+    height: auto !important;
+    padding-inline: 6px !important;
+  }
+  html body.salty .popup:has(.salty-notice) .popup-content {
+    padding-inline: 0 !important;
+  }
+}
 .salty-sub {
   font-size: var(--fs-small);
   color: var(--salty-muted);
@@ -14201,6 +14225,9 @@ body.salty .salty-preview.bl-weather-pv-on > .mes {
   .salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > :is(.salty-row, .salty-slider):not(:is(.salty-row, .salty-slider) + *):not(:has(+ :is(.salty-row, .salty-slider))) {
     grid-column: 1 / -1;
   }
+  .salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > .salty-row {
+    align-self: start;
+  }
 }
 body.salty :is(#salty-nochat, .salty-preview):not([data-prev="img"]),
 .salty-prevbox > :is(.salty-sample, .salty-uisample) {
@@ -14210,6 +14237,209 @@ body.salty :is(#salty-nochat, .salty-preview):not([data-prev="img"]),
   width: calc(var(--num-ch, 4) * 1ch + 20px) !important;
   min-width: 3.4em;
   max-width: 8em;
+}
+/* css/34-color-pick.css */
+body.salty .bl-cp-layer {
+  position: fixed;
+  z-index: 100001;
+  background: transparent;
+}
+body.salty .bl-cp {
+  --chk: color-mix(in srgb, var(--salty-text) 14%, transparent);
+  --checker: repeating-conic-gradient(var(--chk) 0 25%, transparent 0 50%) 0 0 / 10px 10px;
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+  padding: 10px;
+  border-radius: 16px;
+  background: var(--bl-card, var(--salty-surface));
+  color: var(--salty-text);
+  box-shadow: var(--bl-e4, 0 12px 32px rgb(0 0 0 / 0.28)), 0 0 0 1px color-mix(in srgb, var(--salty-text) 8%, transparent);
+  font-family: var(--salty-font-ui, inherit);
+  font-size: 13px;
+  animation: bl-cp-in 0.14s ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+body.salty .bl-cp.up {
+  animation-name: bl-cp-in-up;
+}
+@keyframes bl-cp-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@keyframes bl-cp-in-up { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  body.salty .bl-cp { animation: none; }
+}
+body.salty .bl-cp *,
+body.salty .bl-cp *::before,
+body.salty .bl-cp *::after {
+  box-sizing: border-box;
+}
+body.salty .bl-cp :focus-visible {
+  outline: 2px solid var(--salty-accent);
+  outline-offset: 2px;
+}
+body.salty .bl-cp-board {
+  position: relative;
+  height: 148px;
+  border-radius: 10px;
+  background:
+    linear-gradient(to top, #000, transparent),
+    linear-gradient(to right, #fff, var(--hue));
+  cursor: crosshair;
+  touch-action: none;
+  outline-offset: 2px;
+}
+@media (max-width: 599px) {
+  body.salty .bl-cp-board { height: 168px; }
+}
+body.salty .bl-cp :is(.bl-cp-board, .bl-cp-hue, .bl-cp-alpha) > i {
+  position: absolute;
+  left: var(--x);
+  top: var(--y, 50%);
+  width: 18px;
+  height: 18px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: rgb(var(--rgb));
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.35), 0 1px 4px rgb(0 0 0 / 0.35);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+body.salty .bl-cp-mid {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+body.salty .bl-cp-cmp {
+  position: relative;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 50%;
+  background: var(--checker);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--salty-text) 18%, transparent);
+  cursor: pointer;
+}
+body.salty .bl-cp-cmp i,
+body.salty .bl-cp-cmp b {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+}
+body.salty .bl-cp-cmp i { left: 0; background: var(--was); }
+body.salty .bl-cp-cmp b { right: 0; background: var(--now); }
+body.salty .bl-cp-bars {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 0 9px;
+}
+body.salty .bl-cp :is(.bl-cp-hue, .bl-cp-alpha) {
+  position: relative;
+  height: 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: none;
+}
+body.salty .bl-cp :is(.bl-cp-hue, .bl-cp-alpha)::before {
+  content: '';
+  position: absolute;
+  inset: -8px -9px;
+}
+body.salty .bl-cp-hue {
+  background: linear-gradient(to right, #f00 0%, #ff0 16.66%, #0f0 33.33%, #0ff 50%, #00f 66.66%, #f0f 83.33%, #f00 100%);
+}
+body.salty .bl-cp-alpha {
+  background: linear-gradient(to right, transparent, rgb(var(--rgb))), var(--checker);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--salty-text) 12%, transparent);
+}
+body.salty .bl-cp :is(.bl-cp-hue, .bl-cp-alpha) > i {
+  top: 50%;
+}
+body.salty .bl-cp-hue > i {
+  background: var(--hue);
+}
+body.salty .bl-cp-alpha > i {
+  background: linear-gradient(var(--now), var(--now)), #fff;
+}
+body.salty .bl-cp-code {
+  display: flex;
+  gap: 6px;
+}
+body.salty .bl-cp .bl-cp-hex {
+  flex: 1;
+  min-width: 0;
+  height: 34px !important;
+  margin: 0 !important;
+  padding: 0 10px !important;
+  border: 0 !important;
+  border-radius: 9px !important;
+  background: var(--salty-shade) !important;
+  color: var(--salty-text) !important;
+  font: 500 13px/34px ui-monospace, 'SFMono-Regular', Consolas, monospace !important;
+  letter-spacing: 0.04em;
+  text-align: center;
+  box-shadow: none !important;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+body.salty .bl-cp .bl-cp-hex:focus {
+  box-shadow: inset 0 0 0 1.5px var(--salty-accent) !important;
+}
+body.salty .bl-cp .bl-cp-hex[aria-invalid="true"] {
+  box-shadow: inset 0 0 0 1.5px var(--salty-danger, #e5484d) !important;
+}
+body.salty .bl-cp-drop {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: var(--salty-shade);
+  color: var(--salty-muted);
+  cursor: pointer;
+}
+body.salty .bl-cp-drop:hover {
+  color: var(--salty-text);
+}
+body.salty .bl-cp-sws {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(22px, 1fr));
+  gap: 6px;
+}
+body.salty .bl-cp-recent {
+  padding-top: 8px;
+  border-top: 1px solid color-mix(in srgb, var(--salty-text) 9%, transparent);
+}
+body.salty .bl-cp-sw {
+  aspect-ratio: 1;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: linear-gradient(var(--c), var(--c)), var(--checker);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--salty-text) 16%, transparent);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+body.salty .bl-cp-sw:hover {
+  transform: scale(1.08);
+}
+@media (max-width: 599px) {
+  body.salty .bl-cp-sws { grid-template-columns: repeat(auto-fill, minmax(28px, 1fr)); gap: 8px; }
 }
 /* css/99-lazy-panel.css */
 #salty-lazy-panel-start {}

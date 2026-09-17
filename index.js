@@ -10,6 +10,7 @@ import { startNumberDisplay } from './src/numbers.js';
 import { startNameMarquee } from './src/marquee.js';
 import { startGutterWatch } from './src/gutter.js';
 import { startSelectPop } from './src/selects.js';
+import { startColorPop } from './src/colorpop.js';
 import { startInlineTone, retoneAll } from './src/tone.js';
 import { startStreamFade, streamFadeState } from './src/streamfade.js';
 import { mountPanel, refreshPanels, noticeSeenChanged } from './src/panel.js';
@@ -110,6 +111,7 @@ jQuery(() => {
     startNameMarquee(); // 헬퍼 스크립트 이름: 눌러서 긴 이름 끝까지 보기
     startGutterWatch(); // 스크롤하는 칸에만 양쪽 스크롤바 홈 (PC)
     startSelectPop();   // select 를 테마가 그린 목록 팝업으로 (2.5.0)
+    startColorPop();    // 색 칸을 테마 색 고르기로 (3.5.0)
     startInlineTone();  // 본문 글자색의 채도 · 밝기 맞춤 (2.6.0)
     startStreamFade();  // 스트리밍 중 새 글자만 가볍게 페이드 인 (2.9.5)
     $(document).on('change', 'input[data-toggle="chat.toneInline"], input[data-toggle="chat.unifyInline"]', () => setTimeout(retoneAll, 50));

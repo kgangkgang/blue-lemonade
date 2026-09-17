@@ -920,6 +920,7 @@ function tabChat(s, sub) {
             ${stack('아이콘', seg('chat.icons', [['line', '선 아이콘'], ['default', '기본']]))}
             ${row('배경 이미지 비치기', toggle('chat.bgImage', s.chat.bgImage), '끄면 깨끗한 종이색 바탕')}
             ${row('고르기 목록 팝업', toggle('chat.selectPop', s.chat.selectPop !== false), '모델 · 프리셋 같은 목록을 테마가 그린 팝업으로 (끄면 폰 기본 목록)')}
+            ${row('색 고르기 팝업', toggle('chat.colorPop', s.chat.colorPop !== false), '실리태번 색 칸도 테마 색 고르기로')}
             ${row('가벼운 페이드 인', toggle('chat.streamFade', !!s.chat.streamFade), '스트리밍 중 새 글자만 스며들게')}
             ${s.chat.streamFade && stFade ? row('실리태번 페이드 인', toggle('st.streamFadeIn', true), '끄면 빨라지고 위 옵션이 대신해요') : ''}
         </div>
