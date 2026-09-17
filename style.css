@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 33개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 91df5aa1b11a) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 33개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 10833fcc2b27) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 10px;
@@ -12308,6 +12308,24 @@ body.salty :is(#salty-nochat, .salty-preview)[data-prev="img"][data-sub="size"][
 }
 body.salty :is(#salty-nochat, .salty-preview)[data-prev="img"] .mes .mes_block {
   padding-left: 0 !important;
+}
+body.salty :is(#salty-nochat, .salty-preview):not([data-prev="img"]) {
+  max-height: min(28svh, 230px) !important;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  pointer-events: auto;
+  touch-action: pan-y;
+  scrollbar-width: thin;
+}
+body.salty :is(#salty-nochat, .salty-preview):not([data-prev="img"]) > * {
+  pointer-events: none;
+}
+.salty-prevbox > :is(.salty-sample, .salty-uisample) {
+  max-height: min(28svh, 230px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
 }
 /* css/25-palette-maker.css */
 .salty-panel .salty-palette-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 5px 1px 12px; min-height: 38px; }
