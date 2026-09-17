@@ -50,6 +50,8 @@ export const DEFAULTS = {
     chat: { user: 'bubble', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, streamFade: false, demSkin: false, demFold: true, weather: 'off', weatherLevel: 2, weatherOpacity: 100, weatherSize: 100, weatherSpeed: 100, weatherAngle: -9, weatherImage: '', weatherImageId: '', toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } } }, // streamFade: 스트리밍 중 새 글자만 가볍게 페이드 인 (2.9.5, streamfade.js — 실리태번 페이드 인이 켜져 있으면 쉼) · tone: 톤 맞추기의 채도 · 밝기(%) 화이트/나이트 따로 (2.6.1) · toneInline: 본문 글자색의 색상만 두고 채도 · 밝기를 테마에 맞춤 (2.6.0, unifyInline 이 꺼져 있을 때) · selectPop: 실리태번 select 를 테마가 그린 목록 팝업으로 (2.5.0) · regexIcons: 정규식 카드 제목 앞 이모티콘 보이기 · unifyRegex: 프리셋 정규식 카드(DEM 등)의 모듈별 색 → 포인트색 하나 · unifyInline: 메시지에 적힌 글자색(<font color> · style) 무시
     // 3.1.0: 몰입 읽기(폰 — 아래로 밀면 위 바 · 입력창 숨김, reader.js) · 한 손 버튼 줄(입력판 위 ‹ › 사칭 · 이어 쓰기 · 다시 생성, onehand.js)
     reader: { autoHide: false },
+    // 3.4.0 프롬프트 호환: 데우스 엑스 마키나 2.3 — 끄면 카드 스킨 · 폰 접기 · 카드 색 통일 · 카드 이모티콘 · 트래커 날씨가 모두 쉰다 (값은 남음)
+    deus: { on: false },
     // 3.2.0 화이트 · 나이트 자동: by = system(기기 다크 모드) | time(night 부터 day 까지 나이트) — automode.js
     auto: { on: false, by: 'system', night: '20:00', day: '07:00' },
     // 3.3.1 날씨 효과의 내 그림 목록 [{ id, name, data }] — 스타일에는 안 담김 (고른 그림만 chat.weatherImage)
@@ -204,6 +206,8 @@ function tidyStyles(s) {
 function tidyFlags(s) {
     if (!isObj(s.reader)) s.reader = structuredClone(DEFAULTS.reader);
     s.reader.autoHide = flag(s.reader.autoHide, false);
+    if (!isObj(s.deus)) s.deus = structuredClone(DEFAULTS.deus);
+    s.deus.on = flag(s.deus.on, false);
     if (!isObj(s.auto)) s.auto = structuredClone(DEFAULTS.auto);
     s.auto.on = flag(s.auto.on, false);
     if (!['system', 'time'].includes(s.auto.by)) s.auto.by = 'system';
@@ -282,6 +286,8 @@ export function getSettings() {
     const ext = SillyTavern.getContext().extensionSettings;
     if (!ext[KEY]) ext[KEY] = structuredClone(DEFAULTS);
     migrate(ext[KEY]);
+    // 3.4.0 전 설정: 데우스 카드 스킨이나 트래커 날씨를 쓰던 사람이면 호환을 켠 채로 시작 (한 번만)
+    const firstDeus = ext[KEY].deus === undefined;
     const s = fill(ext[KEY], DEFAULTS);
     if (TILT_RENAME[s.dialogue?.tilt]) s.dialogue.tilt = TILT_RENAME[s.dialogue.tilt];
     if (isObj(s.dialogue)) tidyDialogue(s.dialogue);
@@ -298,6 +304,7 @@ export function getSettings() {
     s.noticeSeen = typeof s.noticeSeen === 'string' ? s.noticeSeen.slice(0, 20) : '';
     tidyFlags(s);
     tidyStyles(s);
+    if (firstDeus) s.deus.on = !!(s.chat?.demSkin || s.chat?.weather === 'tracker');
     for (const id of Object.keys(s.colorOverrides || {})) if (!PALETTES[id]) delete s.colorOverrides[id];
     return s;
 }

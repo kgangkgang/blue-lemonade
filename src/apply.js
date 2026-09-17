@@ -487,12 +487,13 @@ export function applyAll() {
         if (s.chat.icons === 'line') want.add('salty-icons-line');
         shadowClasses(s).forEach(c => want.add(c)); // 글자 그림자 대상별 클래스 (style.css 끝 규칙)
         if (s.chat.bgImage) want.add('salty-bgimg');
-        if (s.chat.unifyRegex) want.add('salty-unify-regex');   // 정규식 카드 색 통일 (style.css '색 통일' 블록)
+        const deus = !!s.deus?.on; // 3.4.0 프롬프트 › 데우스 엑스 마키나 2.3 호환 — 끄면 아래 데우스 카드 클래스가 모두 빠진다
+        if (deus && s.chat.unifyRegex) want.add('salty-unify-regex');   // 정규식 카드 색 통일 (style.css '색 통일' 블록)
         if (s.chat.unifyInline) want.add('salty-unify-inline'); // 본문에 적힌 글자색 무시
         else if (s.chat.toneInline) want.add('salty-tone');     // 글자색의 색상만 두고 채도 · 밝기 맞춤 (tone.js + style.css 끝 규칙)
-        if (!s.chat.regexIcons) want.add('salty-regex-noicons'); // 정규식 카드의 이모티콘 숨김
-        if (s.chat.demSkin) want.add('salty-dem-skin');          // 3.1.0 데우스 카드 스킨 (css/30-dem-skin.css)
-        if (s.chat.demSkin && s.chat.demFold !== false) want.add('salty-dem-fold'); // 폰: 트래커 한 줄 · 펼쳐 오는 카드 접기 (demskin.js)
+        if (deus && !s.chat.regexIcons) want.add('salty-regex-noicons'); // 정규식 카드의 이모티콘 숨김
+        if (deus && s.chat.demSkin) want.add('salty-dem-skin');          // 3.1.0 데우스 카드 스킨 (css/30-dem-skin.css)
+        if (deus && s.chat.demSkin && s.chat.demFold !== false) want.add('salty-dem-fold'); // 폰: 트래커 한 줄 · 펼쳐 오는 카드 접기 (demskin.js)
         if (s.type.indent) want.add('salty-indent');
         want.add(`salty-align-${s.type.align}`);
         if (mode === 'light' && s.image.blendWhite && !s.chat.bgImage) want.add('salty-blend');

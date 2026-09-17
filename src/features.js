@@ -23,9 +23,11 @@ export function syncFeatures(s) {
     const auto = on && !!s.auto?.on;
     if (auto || modules.auto) load('auto', './automode.js').then(m => m?.syncAutoMode(auto, hooks));
     // 3.3.0 날씨 효과 (weather.js — 그리기는 워커)
-    const weather = on && !!s.chat?.weather && s.chat.weather !== 'off';
-    if (weather || modules.weather) load('weather', './weather.js').then(m => m?.syncWeather(weather, s.chat));
-    const dem = on && !!s.chat?.demSkin;
+    // 트래커 따라는 데우스 호환이 켜졌을 때만 (3.4.0)
+    const weatherChat = s.chat?.weather === 'tracker' && !s.deus?.on ? { ...s.chat, weather: 'off' } : s.chat;
+    const weather = on && !!weatherChat?.weather && weatherChat.weather !== 'off';
+    if (weather || modules.weather) load('weather', './weather.js').then(m => m?.syncWeather(weather, weatherChat));
+    const dem = on && !!s.deus?.on && !!s.chat?.demSkin;
     if (dem || modules.dem) load('dem', './demskin.js').then(m => m?.syncDemSkin(dem, s.chat));
     // 캐릭터별 스타일: 이어 둔 캐릭터가 있을 때만. 입혀 둔 동안 바꾼 모습은 그 스타일에 적음
     const chars = Object.keys(s.charStyles || {}).length > 0 || !!s.activeStyle;

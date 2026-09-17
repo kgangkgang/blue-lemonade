@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 35개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 36c7e1b109b7) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 35개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 6e3c2cf3e81f) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 10px;
@@ -12329,6 +12329,12 @@ body.salty :is(#salty-nochat, .salty-preview):not([data-prev="img"]) > * {
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
+}
+body.salty :is(#salty-nochat, .salty-preview)[data-prev="color"] .mes {
+  padding-block: 10px 6px !important;
+}
+body.salty :is(#salty-nochat, .salty-preview)[data-prev="color"] .mes_text > p:last-child {
+  margin-bottom: 0 !important;
 }
 /* css/25-palette-maker.css */
 .salty-panel .salty-palette-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 5px 1px 12px; min-height: 38px; }

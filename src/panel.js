@@ -18,12 +18,13 @@ const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 
 // 대분류 탭 · 소분류 칩 — id 는 저장돼 있으니(localStorage) 바꾸지 말 것
 // 2.7.0: 글꼴 탭을 글자 탭에 합침 — 역할(본문 · 대사 · 메뉴 · 속마음 · 강조 · 코드)마다 한 화면에서 글꼴 · 크기 · 굵기 · 자간을 다 만짐
-const TABS = [['theme', '테마'], ['text', '글자'], ['chat', '채팅'], ['image', '이미지']];
+const TABS = [['theme', '테마'], ['text', '글자'], ['chat', '채팅'], ['image', '이미지'], ['prompt', '프롬프트']];
 const SUBS = {
     theme: [['palette', '색'], ['colors', '색 고치기'], ['styles', '스타일'], ['backup', '백업']],
     text: [['text', '본문'], ['dialogue', '대사'], ['ui', '메뉴'], ['em', '속마음'], ['strong', '강조'], ['code', '코드'], ['para', '문단'], ['shadow', '그림자']],
     chat: [['message', '메시지'], ['screen', '화면'], ['etc', '기타']],
     image: [['layout', '배치'], ['shape', '모양'], ['size', '크기'], ['fade', '흐림']],
+    prompt: [['deus', '데우스 엑스 마키나']], // 3.4.0 프리셋 호환 — 다른 프리셋이 생기면 여기에
 };
 
 const panels = new Set();
@@ -358,6 +359,17 @@ function regexPreview() {
     return getSettings().enabled ? prevBox('data-pv="regex"') : '';
 }
 
+// 3.4.0 채팅 › 기타 표본: 모델이 색을 칠한 글자만 (데우스 카드는 프롬프트 탭으로)
+function colorPreview() {
+    return getSettings().enabled ? prevBox('data-pv="color"') : '';
+}
+
+function colorStage() {
+    return `<div class="salty-preview" data-prev="color" aria-hidden="true">
+        ${prevMes('false', '아린', '<p><font color="#e64553">붉게 칠한 글자</font>와 <span style="color:#40a02b">초록으로 칠한 글자</span>, <q>「그리고 대사.」</q></p><p><span style="color:#7c6cf0">보라색 혼잣말</span>이 <font color="#df8e1d">노랗게</font> 끝났다.</p>')}
+    </div>`;
+}
+
 function imagePreview(s, sub) {
     if (!s.enabled) return '';
     // 표본 선택은 그림 밖 도구 줄에 두어 효과를 가리지 않는다.
@@ -512,12 +524,12 @@ function prevFaces(stage) {
 function fillPreviews(root) {
     root._pv ??= {};
     for (const box of root.querySelectorAll('.salty-prevbox[data-pv]')) {
-        const kinds = box.dataset.pv === 'regex' ? ['regex'] : box.dataset.pv !== 'img' ? ['chat'] : [box.dataset.kind || 'photo'];
+        const kinds = box.dataset.pv === 'regex' ? ['regex'] : box.dataset.pv === 'color' ? ['color'] : box.dataset.pv !== 'img' ? ['chat'] : [box.dataset.kind || 'photo'];
         for (const kind of kinds) {
             let stage = root._pv[kind];
             if (!stage) {
                 const holder = document.createElement('div');
-                holder.innerHTML = kind === 'chat' ? chatStage() : kind === 'regex' ? regexStage() : imgStage(kind);
+                holder.innerHTML = kind === 'chat' ? chatStage() : kind === 'regex' ? regexStage() : kind === 'color' ? colorStage() : imgStage(kind);
                 stage = root._pv[kind] = holder.firstElementChild;
             }
             // 표본 고르기가 바뀌면 그림만 갈아 끼운다 (무대는 그대로 — 깜빡임 없음).
@@ -537,7 +549,7 @@ function fillPreviews(root) {
                 const chatSettings = getSettings().chat;
                 if ((chatSettings.weather && chatSettings.weather !== 'off' && getSettings().enabled) || stage._blWeather) import('./weather.js').then(m => m.previewWeather(stage, getSettings().enabled ? chatSettings : { weather: 'off' })).catch(() => {});
             }
-            else if (kind !== 'regex') classifyAll(stage);
+            else if (kind !== 'regex' && kind !== 'color') classifyAll(stage);
         }
     }
 }
@@ -890,8 +902,7 @@ function roleType(label, controls, hint = '') {
 // ───────── 채팅 ─────────
 function tabChat(s, sub) {
     if (sub === 'etc') {
-        return `${regexPreview()}${cap('색 통일')}<div class="salty-group">
-            ${row('정규식 카드', toggle('chat.unifyRegex', s.chat.unifyRegex), '상태창 · 씬플랜 같은 카드의 모듈별 색을 포인트색 하나로')}
+        return `${colorPreview()}${cap('색 통일')}<div class="salty-group">
             ${row('본문 색 지정', toggle('chat.unifyInline', s.chat.unifyInline), '메시지에 적힌 글자색을 무시하고 테마 글자색으로')}
             ${s.chat.unifyInline ? '' : row('글자색 톤 맞추기', toggle('chat.toneInline', s.chat.toneInline), '색은 그대로 두고 채도 · 밝기만 테마에 맞춤 — 퍼스널 컬러가 들쭉날쭉할 때')}
         </div>
@@ -900,12 +911,7 @@ function tabChat(s, sub) {
             ${slider('chat.tone.light.l', '화이트 밝기', 10, 90, 1)}
             ${slider('chat.tone.dark.s', '나이트 채도', 0, 100, 1)}
             ${slider('chat.tone.dark.l', '나이트 밝기', 10, 90, 1)}
-        </div>` : ''}
-        ${cap('정규식 카드')}<div class="salty-group">
-            ${row('이모티콘', toggle('chat.regexIcons', s.chat.regexIcons), '끄면 카드 제목 앞 그림 없이 글자만')}
-            ${row('데우스 카드 스킨', toggle('chat.demSkin', !!s.chat.demSkin), '트래커 · 장면 계획 같은 카드를 테마 모양으로')}
-            ${s.chat.demSkin ? row('폰에서 접어 두기', toggle('chat.demFold', s.chat.demFold !== false), '트래커는 한 줄, 펼쳐져 오는 카드는 제목만 · 누르면 펼쳐요') : ''}
-        </div>`;
+        </div>` : ''}`;
     }
     if (sub === 'screen') {
         const stFade = !!SillyTavern.getContext().powerUserSettings?.stream_fade_in; // 실리태번 쪽 페이드 인 (무거움) — 켜져 있으면 끄는 줄을 같이 보여 줌
@@ -917,11 +923,11 @@ function tabChat(s, sub) {
             ${s.chat.streamFade && stFade ? row('실리태번 페이드 인', toggle('st.streamFadeIn', true), '끄면 빨라지고 위 옵션이 대신해요') : ''}
         </div>
         ${cap('날씨')}<div class="salty-group">
-            ${stack('채팅 뒤 효과', seg('chat.weather', [['off', '끔'], ['rain', '비'], ['snow', '눈'], ['custom', '내 그림'], ['tracker', '트래커 따라']]), s.chat.weather === 'tracker' ? '데우스 트래커 날씨가 비 · 눈이면 내려요' : '')}
-            ${s.chat.weather === 'custom' ? weatherImageControls(s) : ''}
-            ${s.chat.weather && s.chat.weather !== 'off' ? stack('세기', seg('chat.weatherLevel', [[1, '약하게'], [2, '보통'], [3, '강하게']])) : ''}
+            ${stack('채팅 뒤 효과', weatherSeg(s), weatherMode(s) === 'tracker' ? '데우스 트래커 날씨가 비 · 눈이면 내려요' : '')}
+            ${weatherMode(s) === 'custom' ? weatherImageControls(s) : ''}
+            ${weatherMode(s) !== 'off' ? stack('세기', seg('chat.weatherLevel', [[1, '약하게'], [2, '보통'], [3, '강하게']])) : ''}
         </div>
-        ${s.chat.weather && s.chat.weather !== 'off' ? `<div class="salty-group">
+        ${weatherMode(s) !== 'off' ? `<div class="salty-group">
             ${slider('chat.weatherOpacity', '투명도', 10, 100, 1, 100)}
             ${slider('chat.weatherSize', '크기', 40, 250, 1, 100)}
             ${slider('chat.weatherSpeed', '속도', 20, 250, 1, 100)}
@@ -1004,6 +1010,40 @@ function maskControls(s) {
         <input type="file" accept="image/*" hidden data-file="mask">
         ${has ? stack('맞추는 법', seg('image.maskFit', [['stretch', '늘리기'], ['contain', '맞추기']]), '늘리기: 도형을 그림 상자에 가득 · 맞추기: 도형 비율 그대로 가운데') : ''}
         <p class="salty-note">배경이 투명한 PNG 의 <b>불투명한 부분</b>만 그림이 보여요. 폰에서는 갤러리에서 바로 고를 수 있어요. 512px 로 줄여 설정에 저장돼요.${has && !current ? ' <b>저장</b>을 누르면 목록에 커스텀 1 · 2 … 로 남아 나중에 골라 쓸 수 있어요.' : ''}</p>`;
+}
+
+/** 지금 실제로 쓰이는 날씨 (3.4.0): 트래커 따라는 데우스 호환이 꺼져 있으면 끔으로 보인다 (값은 남음) */
+function weatherMode(s) {
+    const mode = s.chat.weather || 'off';
+    return mode === 'tracker' && !s.deus?.on ? 'off' : mode;
+}
+
+/** 날씨 고르기 — 트래커 따라는 데우스 호환을 켰을 때만 */
+function weatherSeg(s) {
+    const options = [['off', '끔'], ['rain', '비'], ['snow', '눈'], ['custom', '내 그림'], ...(s.deus?.on ? [['tracker', '트래커 따라']] : [])];
+    const current = weatherMode(s);
+    return `<div class="salty-seg">${options.map(([value, label]) =>
+        `<button data-act="seg" data-path="chat.weather" data-value="${value}" class="${current === value ? 'on' : ''}">${label}</button>`).join('')}</div>`;
+}
+
+// ───────── 프롬프트 (3.4.0) ─────────
+// 프리셋마다 한 칸. 지금은 데우스 엑스 마키나 2.3 — 호환을 켜야 카드 표본 · 카드 설정 · 트래커 설정이 보이고 적용된다
+function tabPrompt(s) {
+    const on = !!s.deus?.on;
+    const head = `${cap('데우스 엑스 마키나 2.3')}<div class="salty-group">
+            ${row('프롬프트 호환', toggle('deus.on', on), '이 프리셋의 트래커 · 장면 계획 · 상태 카드를 테마에 맞춰요')}
+        </div>`;
+    if (!on) return `${head}<p class="salty-note">데우스 엑스 마키나 프리셋을 쓸 때만 켜 주세요. 끄면 아래 설정이 모두 쉬어요 (고른 값은 남아요).</p>`;
+    return `${regexPreview()}${head}
+        ${cap('카드')}<div class="salty-group">
+            ${row('카드 스킨', toggle('chat.demSkin', !!s.chat.demSkin), '트래커 · 장면 계획 같은 카드를 테마 모양으로')}
+            ${s.chat.demSkin ? row('폰에서 접어 두기', toggle('chat.demFold', s.chat.demFold !== false), '트래커는 한 줄, 펼쳐져 오는 카드는 제목만 · 누르면 펼쳐요') : ''}
+            ${row('카드 색 통일', toggle('chat.unifyRegex', s.chat.unifyRegex), '카드의 모듈별 색을 포인트색 하나로')}
+            ${row('카드 이모티콘', toggle('chat.regexIcons', s.chat.regexIcons), '끄면 카드 제목 앞 그림 없이 글자만')}
+        </div>
+        ${cap('트래커')}<div class="salty-group">
+            ${row('트래커 날씨로 날씨 효과', toggle('deus.weather', s.chat.weather === 'tracker'), '트래커 날씨가 비 · 눈이면 채팅 뒤에 내려요 · 세기 · 크기는 채팅 › 화면 › 날씨')}
+        </div>`;
 }
 
 /** 날씨 효과 내 그림 (3.3.1): 저장한 그림 목록 + 고르기 · 저장 · 바꾸기 · 삭제 — 이미지 탭 커스텀 도형과 같은 모양 */
@@ -1142,7 +1182,7 @@ function render(root) {
     const s = getSettings();
     const issues = getIssues();
     root._issues = issues;
-    const body = { theme: tabTheme, text: tabText, chat: tabChat, image: tabImage };
+    const body = { theme: tabTheme, text: tabText, chat: tabChat, image: tabImage, prompt: tabPrompt };
     if (!body[ui.tab]) ui.tab = 'theme';
     const sub = subOf(ui.tab);
     // 2.4.1: 대분류는 위 가로 탭 그대로, 소분류는 칩 줄 대신 드롭다운 하나 — 폰에서는 실리태번 모델 고르기처럼 팝업 목록으로 뜬다
@@ -1860,6 +1900,10 @@ function bind(root) {
                 refreshPanels();
                 return;
             }
+            if (path === 'deus.weather') { // 3.4.0 프롬프트 › 트래커 날씨 — 끄면 날씨 효과 끔
+                update(st => { st.chat.weather = target.checked ? 'tracker' : 'off'; });
+                return;
+            }
             if (path === 'st.hideAvatars') {
                 $('#hideChatAvatarsEnabled').prop('checked', target.checked).trigger('input').trigger('change');
                 return;
@@ -1873,7 +1917,7 @@ function bind(root) {
             // 자동 색은 켜고 끌 때 테두리 설명(edgeHint) 문구가 바뀌니 창을 다시 그린다
             // 2.9.2: 본문 색 지정 → '글자색 톤 맞추기' 줄, 톤 맞추기 → 톤 값 슬라이더 넷, 투명 그림도 똑같이 → 설명 문구가 스위치에 따라
             // 보였다 안 보였다 하는데 다시 그리지 않아, 끈 뒤에도 슬라이더가 남아 있었다
-            update(st => setPath(st, path, target.checked), ['enabled', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold'].includes(path));
+            update(st => setPath(st, path, target.checked), ['enabled', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on'].includes(path));
             return;
         }
         if (target.matches('input[data-file="font"]') && target.files?.[0]) {
