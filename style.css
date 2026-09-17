@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 37개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 461c314dd22a) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 37개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 17558b0b49d3) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 10px;
@@ -9076,6 +9076,17 @@ body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2)
   body.salty #rm_extensions_block .extensions_block > .flex-container:first-child > .menu_button {
     flex: 1 1 auto;
     white-space: nowrap;
+  }
+  body.salty #rm_extensions_block .extensions_block > .flex-container:first-child > .menu_button:has(> span) {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  body.salty #rm_extensions_block .extensions_block > .flex-container:first-child > .menu_button > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  body.salty #rm_extensions_block .extensions_block > .flex-container:first-child > .menu_button:not(:has(> span)) {
+    flex: 0 0 auto;
   }
   body.salty #user-settings-block #movingUIreset > span {
     display: none;
