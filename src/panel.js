@@ -8,6 +8,7 @@ import { applyAll, syncSamples } from './apply.js';
 import { getIssues } from './checks.js';
 import { applySillyTavernTheme, saveAsSillyTavernTheme, alreadyMatches } from './sttheme.js';
 import { classifyAll } from './assets.js';
+import { openNotice, currentVersion, hasUnseenNotice } from './notice.js';
 
 // 브랜드 레몬 — ✦ 메뉴 · 확장 서랍 · 스플래시와 같은 속찬 레몬(폰트어썸 fa-lemon U+F094) 윤곽 그대로
 export const MARK = '<svg viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path transform="translate(0 448) scale(1 -1)" d="M448 352Q447 379 429 397Q411 415 384 416Q374 416 365 413Q348 407 330 404Q311 400 294 404Q237 418 180 399Q124 379 80 336Q37 292 17 236Q-2 179 12 122Q16 105 12 86Q9 68 3 51Q0 42 0 32Q1 5 19 -13Q37 -31 64 -32Q74 -32 83 -29Q100 -23 118 -20Q137 -16 154 -20Q211 -34 268 -15Q324 5 368 48Q411 92 431 148Q450 205 436 262Q432 279 436 298Q439 316 445 333Q448 342 448 352ZM213 321Q171 308 139 277Q108 245 95 203Q90 190 76 193Q62 198 65 212Q80 262 117 299Q154 336 204 351Q218 354 223 340Q226 326 213 321Z"/></svg>';
@@ -80,6 +81,13 @@ export function mountPanel(container, { popup = false } = {}) {
     bind(root);
     render(root);
     return root;
+}
+
+/** 공지를 본 뒤: 설정 창 알약은 다시 그리고, 확장 서랍 머리의 버전 알약도 보통 모양으로 (3.0.0) */
+export function noticeSeenChanged() {
+    const unseen = hasUnseenNotice();
+    document.querySelectorAll('#salty-drawer .bl-version').forEach(badge => badge.classList.toggle('is-new', unseen));
+    refreshPanels();
 }
 
 export function refreshPanels() {
@@ -939,7 +947,7 @@ function render(root) {
     const head = root.classList.contains('in-popup')
         ? `<div class="salty-head">
             <div class="salty-mark">${MARK}</div>
-            <div><div class="salty-title">Blue Lemonade</div><div class="salty-sub">읽기 편한 테마</div></div>
+            <div><div class="salty-title">Blue Lemonade${currentVersion() ? ` <button type="button" class="salty-ver${hasUnseenNotice() ? ' is-new' : ''}" data-act="notice" aria-label="공지사항">v${currentVersion()}</button>` : ''}</div><div class="salty-sub">읽기 편한 테마</div></div>
             <label class="salty-switch" title="테마 켜기"><input type="checkbox" data-toggle="enabled" ${s.enabled ? 'checked' : ''}><span></span></label>
         </div>`
         : `<div class="salty-head salty-head-slim"><span>테마 켜기</span>${toggle('enabled', s.enabled)}</div>`;
@@ -1185,6 +1193,9 @@ function bind(root) {
         const { act } = el.dataset;
         try {
             switch (act) {
+                case 'notice': // 3.0.0 제목 옆 버전 알약 → 공지사항 (열면 본 것으로 적고 알약들을 보통 모양으로)
+                    await openNotice(noticeSeenChanged);
+                    break;
                 case 'tab':
                     ui.tab = el.dataset.tab;
                     ui.picker = null;

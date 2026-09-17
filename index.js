@@ -12,7 +12,8 @@ import { startGutterWatch } from './src/gutter.js';
 import { startSelectPop } from './src/selects.js';
 import { startInlineTone, retoneAll } from './src/tone.js';
 import { startStreamFade, streamFadeState } from './src/streamfade.js';
-import { mountPanel, refreshPanels } from './src/panel.js';
+import { mountPanel, refreshPanels, noticeSeenChanged } from './src/panel.js';
+import { loadVersion, hasUnseenNotice, openNotice } from './src/notice.js';
 import { deferPreviewRules, restorePreviewRules, deferredPreviewRuleCount, startMenuOpenMark, startAnchorGate, widenSelectorCache, deferPanelHasRules, panelHasRuleCount, panelCssEnabled } from './src/lite.js';
 
 function mountDrawer() {
@@ -37,15 +38,25 @@ function mountDrawer() {
 }
 
 // 버전 배지는 manifest.json 을 읽어서 적음 (버전을 코드에 두 번 적지 않게)
+// 3.0.0: 누르면 공지사항 — 안 본 업데이트가 있으면 빛남(is-new). 서랍 머리를 누른 것으로 치지 않게 전파를 막는다
 async function showVersion(badge) {
     if (!badge) return;
-    try {
-        const res = await fetch(new URL('./manifest.json', import.meta.url));
-        const version = (await res.json())?.version;
-        if (!version) return;
-        badge.textContent = `v${version}`;
-        badge.hidden = false;
-    } catch (err) { /* 못 읽으면 배지 없이 그대로 */ }
+    const version = await loadVersion();
+    if (!version) return; // 못 읽으면 배지 없이 그대로
+    badge.textContent = `v${version}`;
+    badge.hidden = false;
+    badge.classList.toggle('is-new', hasUnseenNotice());
+    badge.setAttribute('role', 'button');
+    badge.tabIndex = 0;
+    badge.setAttribute('aria-label', '공지사항');
+    const open = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        openNotice(noticeSeenChanged);
+    };
+    badge.addEventListener('click', open);
+    badge.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') open(event); });
+    refreshPanels(); // 설정 창이 버전을 읽기 전에 그려졌으면 알약을 붙여 다시 그림
 }
 
 async function openPopup() {
@@ -75,6 +86,7 @@ function addMenuItem() {
 const settings = getSettings();
 if (dropStaleOverrides(settings)) saveSettings();
 applyAll();
+loadVersion().then(() => refreshPanels()); // 설정 창 제목 옆 공지사항 알약에 쓸 버전 (3.0.0)
 
 // 콘솔·테스트용
 window.Salty = { getSettings, applyAll, refreshPanels, openPopup, restorePreviewRules, deferredPreviewRuleCount, panelHasRuleCount, panelCssEnabled, streamFadeState };
