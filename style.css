@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 36개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build f805963d08d5) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 37개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 8a6b4b2737d5) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 10px;
@@ -11344,13 +11344,16 @@ body.salty #send_form #qr--bar:focus-visible { outline: 2px solid var(--salty-ac
 body.salty #send_form #qr--bar:not(:has(.qr--button, #qr--popoutTrigger)) { display: none; }
 body.salty #send_form #qr--bar #bl-qr-find { position: sticky; left: 0; z-index: 1; flex-shrink: 0; order: -1; display: grid; place-items: center; min-width: 30px; min-height: 30px; margin: 0; padding: 0 8px; border: 0; border-radius: 7px;  color: var(--salty-muted); box-shadow: none; font-size: 12px; cursor: pointer; }
 body.salty #send_form #qr--bar #bl-qr-find:hover { color: var(--salty-text); }
-body.salty #send_form #qr--bar :is(#bl-qr-find, #qr--popoutTrigger) { z-index: 2; background: linear-gradient(var(--bl-hover), var(--bl-hover)), var(--salty-surface) !important; }
-body.salty #send_form #qr--bar::before,
-body.salty #send_form #qr--bar::after { content: ''; position: sticky; z-index: 1; flex: 0 0 28px; align-self: stretch; pointer-events: none; opacity: 0; transition: opacity 0.15s ease; }
-body.salty #send_form #qr--bar::before { left: var(--bl-qr-lead, 0px); margin-right: -33px; background: linear-gradient(to right, var(--salty-surface), transparent); }
-body.salty #send_form #qr--bar::after { right: 0; margin-left: -33px; background: linear-gradient(to left, var(--salty-surface), transparent); }
-body.salty #send_form #qr--bar.bl-qr-more-left::before,
+body.salty #send_form #qr--bar :is(#bl-qr-find, #qr--popoutTrigger) { z-index: 2; background: linear-gradient(var(--bl-hover), var(--bl-hover)), var(--salty-surface) !important; box-shadow: 0 0 0 4px var(--salty-surface) !important;  }
+body.salty #send_form #qr--bar::after { content: ''; position: sticky; right: 0; z-index: 1; flex: 0 0 28px; align-self: stretch; margin-left: -33px; background: linear-gradient(to left, var(--salty-surface), transparent); pointer-events: none; opacity: 0; transition: opacity 0.15s ease; }
 body.salty #send_form #qr--bar.bl-qr-more-right::after { opacity: 1; }
+body.salty #send_form #qr--bar { scroll-snap-type: x proximity; scroll-padding-left: var(--bl-qr-snap, 0px); }
+body.salty #send_form #qr--bar .qr--button { scroll-snap-align: start; }
+body.salty #send_form #qr--bar :is(#bl-qr-find, #qr--popoutTrigger)::before { content: ''; position: absolute; top: -4px; bottom: -4px; right: 100%; width: 8px; background: var(--salty-surface); pointer-events: none; }
+body.salty #send_form #qr--bar #bl-qr-find::after { content: ''; position: absolute; top: -4px; bottom: -4px; left: 100%; width: 29px; background: linear-gradient(to right, var(--salty-surface) 5px, transparent); pointer-events: none; opacity: 0; transition: opacity 0.12s ease; }
+body.salty #send_form #qr--bar.bl-qr-cut-left #bl-qr-find::after { opacity: 1; }
+body.salty #send_form #qr--bar.bl-qr-dragging { scroll-snap-type: none; }
+body.salty #send_form #qr--bar.bl-qr-dragging .qr--button { transform: none !important; background: var(--bl-hover) !important; box-shadow: none !important; transition: none !important; }
 @media (hover: hover) and (pointer: fine) {
   body.salty #send_form #qr--bar:is(.bl-qr-more-left, .bl-qr-more-right) { cursor: grab; }
   body.salty #send_form #qr--bar.bl-qr-dragging, body.salty #send_form #qr--bar.bl-qr-dragging * { cursor: grabbing !important; user-select: none; }
@@ -14601,6 +14604,139 @@ body.salty .bl-cp.pic-loading .bl-cp-drop[data-act="pic"] i {
 }
 @keyframes bl-cp-pulse {
   50% { opacity: 0.3; }
+}
+/* css/35-qr-bar.css */
+.salty-panel .bl-qr-sample-wrap {
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--salty-surface);
+  box-shadow: inset 0 0 0 1px var(--salty-shade-2, rgba(0, 0, 0, 0.08));
+}
+.salty-panel .bl-qr-sample {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 2px 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+  scroll-padding-left: var(--bl-qr-snap, 0px);
+  outline: none;
+}
+.salty-panel .bl-qr-sample::-webkit-scrollbar {
+  display: none;
+}
+.salty-panel .bl-qr-sample > .qr--buttons {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  gap: 5px;
+  width: max-content;
+}
+.salty-panel .bl-qr-sample .qr--button {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  min-height: 30px;
+  padding: 4px 9px;
+  border-radius: 7px;
+  background: var(--bl-hover, rgba(127, 127, 127, 0.1));
+  color: var(--salty-text);
+  font-size: 11px;
+  white-space: nowrap;
+  scroll-snap-align: start;
+  user-select: none;
+}
+.salty-panel .bl-qr-sample .bl-qr-find-sample {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  display: grid;
+  flex-shrink: 0;
+  order: -1;
+  place-items: center;
+  min-width: 30px;
+  min-height: 30px;
+  padding: 0 8px;
+  border-radius: 7px;
+  background: linear-gradient(var(--bl-hover, rgba(127, 127, 127, 0.1)), var(--bl-hover, rgba(127, 127, 127, 0.1))), var(--salty-surface);
+  box-shadow: 0 0 0 4px var(--salty-surface);
+  color: var(--salty-muted);
+  font-size: 12px;
+}
+.salty-panel .bl-qr-sample .bl-qr-find-sample::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  right: 100%;
+  width: 8px;
+  background: var(--salty-surface);
+  pointer-events: none;
+}
+.salty-panel .bl-qr-sample .bl-qr-find-sample::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  left: 100%;
+  width: 29px;
+  background: linear-gradient(to right, var(--salty-surface) 5px, transparent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.salty-panel .bl-qr-sample.bl-qr-cut-left .bl-qr-find-sample::after {
+  opacity: 1;
+}
+.salty-panel .bl-qr-sample::after {
+  content: '';
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  flex: 0 0 28px;
+  align-self: stretch;
+  margin-left: -33px;
+  background: linear-gradient(to left, var(--salty-surface), transparent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.salty-panel .bl-qr-sample.bl-qr-more-right::after {
+  opacity: 1;
+}
+.salty-panel .bl-qr-sample.bl-qr-dragging {
+  scroll-snap-type: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .salty-panel .bl-qr-sample:is(.bl-qr-more-left, .bl-qr-more-right) { cursor: grab; }
+  .salty-panel .bl-qr-sample.bl-qr-dragging { cursor: grabbing; }
+}
+body.salty.salty-qr-y :is(#send_form #qr--bar, .salty-panel .bl-qr-sample) {
+  flex-wrap: wrap;
+  align-content: flex-start;
+  max-height: calc(var(--bl-qr-rows, 2) * 35px - 1px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-snap-type: y proximity;
+  scroll-padding-top: 2px;
+}
+body.salty.salty-qr-y :is(#send_form #qr--bar, .salty-panel .bl-qr-sample) > .qr--buttons {
+  display: contents;
+}
+body.salty.salty-qr-y :is(#send_form #qr--bar, .salty-panel .bl-qr-sample)::after,
+body.salty.salty-qr-y :is(#send_form #qr--bar, .salty-panel .bl-qr-sample) :is(#bl-qr-find, .bl-qr-find-sample)::after {
+  display: none;
+}
+body.salty.salty-qr-y :is(#send_form #qr--bar, .salty-panel .bl-qr-sample) > :is(#bl-qr-find, #qr--popoutTrigger, .bl-qr-find-sample) {
+  position: relative;
+  left: auto !important;
 }
 /* css/99-lazy-panel.css */
 #salty-lazy-panel-start {}

@@ -425,7 +425,8 @@ export function applyAll() {
         '--salty-code-weight': s.code?.weight ? String(s.code.weight) : 'inherit',
         '--salty-code-ls': roleSpacing(s.code?.letterSpacing),
         '--salty-user-scale': String(Number(((s.chat.userSize ?? 100) / 100).toFixed(3))), // 내 메시지 크기 (본문 대비)
-        '--salty-user-ink': `${s.chat.userInk ?? 100}%`,                                     // 내 메시지 글자 진하기
+        '--salty-user-ink': `${s.chat.userInk ?? 100}%`,
+        '--bl-qr-rows': String(s.chat.qrRows ?? 2), // 3.5.4 세로 스크롤일 때 보이는 퀵 리플라이 줄 수                                     // 내 메시지 글자 진하기
         '--salty-ui-weight': s.ui?.weight ? String(s.ui.weight) : 'normal',
         '--salty-ui-ls': roleSpacing(s.ui?.letterSpacing, 'normal'),
         '--salty-img-radius': `${s.image.radius}px`,
@@ -489,6 +490,7 @@ export function applyAll() {
         if (s.chat.icons === 'line') want.add('salty-icons-line');
         shadowClasses(s).forEach(c => want.add(c)); // 글자 그림자 대상별 클래스 (style.css 끝 규칙)
         if (s.chat.bgImage) want.add('salty-bgimg');
+        if (s.chat.qrScroll === 'y') want.add('salty-qr-y'); // 3.5.4 퀵 리플라이 세로 스크롤 (css/35-qr-bar.css)
         const deus = !!s.deus?.on; // 3.4.0 프롬프트 › 데우스 엑스 마키나 2.3 호환 — 끄면 아래 데우스 카드 클래스가 모두 빠진다
         if (deus && s.chat.unifyRegex) want.add('salty-unify-regex');   // 정규식 카드 색 통일 (style.css '색 통일' 블록)
         if (s.chat.unifyInline) want.add('salty-unify-inline'); // 본문에 적힌 글자색 무시

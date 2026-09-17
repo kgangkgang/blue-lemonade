@@ -13,6 +13,7 @@ import { PRESETS, MAX_STYLES, captureStyle, applyStyleData, sameStyle, sharePayl
 import { charStyleModule } from './features.js';
 import { splashState, checkSplash, SPLASH_COMMAND, SPLASH_IMPORT } from './splash.js';
 import { decodeAnyImage, imageWidth, imageHeight, IMAGE_ACCEPT } from './imagedecode.js';
+import { bindQrScroller } from './layout.js';
 
 // 브랜드 레몬 — ✦ 메뉴 · 확장 서랍 · 스플래시와 같은 속찬 레몬(폰트어썸 fa-lemon U+F094) 윤곽 그대로
 export const MARK = '<svg viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path transform="translate(0 448) scale(1 -1)" d="M448 352Q447 379 429 397Q411 415 384 416Q374 416 365 413Q348 407 330 404Q311 400 294 404Q237 418 180 399Q124 379 80 336Q37 292 17 236Q-2 179 12 122Q16 105 12 86Q9 68 3 51Q0 42 0 32Q1 5 19 -13Q37 -31 64 -32Q74 -32 83 -29Q100 -23 118 -20Q137 -16 154 -20Q211 -34 268 -15Q324 5 368 48Q411 92 431 148Q450 205 436 262Q432 279 436 298Q439 316 445 333Q448 342 448 352ZM213 321Q171 308 139 277Q108 245 95 203Q90 190 76 193Q62 198 65 212Q80 262 117 299Q154 336 204 351Q218 354 223 340Q226 326 213 321Z"/></svg>';
@@ -143,6 +144,24 @@ function splashRow() {
     return row('새로고침 화면', state === 'on'
         ? '<span class="salty-splash-on"><i class="fa-solid fa-check" aria-hidden="true"></i></span>'
         : '<button class="salty-btn" data-act="splash-copy">명령 복사</button>', note);
+}
+
+// 3.5.4 퀵 리플라이 줄 미리보기: 내 QR 이름(보이는 세트 세 개, 열 개씩)으로, 없으면 예시 이름. 입력판 줄과 같은 규칙 · 휠 · 끌기 · 스냅
+function qrSample() {
+    const MAX = 24;
+    const EXAMPLES = ['인사', '상황 정리', '다음 장면', '요약해 줘', '속마음', '시간 흐름', '비 오는 밤', '카페', '회상', '전화', '편지 쓰기', '잠들기 전', '산책', '싸움', '화해', '고백'];
+    const settings = globalThis.quickReplyApi?.settings;
+    const groups = [];
+    let count = 0;
+    // 내 QR: 보이는 세트 차례대로 모두 모아 24개까지 (세트 하나에 한두 개뿐이어도 넘길 거리가 되게)
+    for (const link of settings ? [settings.config, settings.chatConfig, settings.charConfig].flatMap(c => c?.setList || []) : []) {
+        if (count >= MAX || !link?.isVisible || !link.set) continue;
+        const labels = (link.set.qrList || []).filter(q => !q.isHidden).map(q => q.label || '').filter(Boolean).slice(0, MAX - count);
+        if (labels.length) { groups.push(labels); count += labels.length; }
+    }
+    // 모자라면 예시 이름으로 채움 — 줄이 넘쳐야 가로 · 세로 넘기기가 보임
+    if (count < 16) groups.push(EXAMPLES.slice(0, 16 - count));
+    return `<div class="bl-qr-sample-wrap"><div class="bl-qr-sample" data-qr-sample tabindex="0" aria-label="퀵 리플라이 미리보기"><span class="bl-qr-find-sample" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>${groups.map(g => `<div class="qr--buttons">${g.map(label => `<div class="qr--button"><div class="qr--button-label">${esc(label)}</div></div>`).join('')}</div>`).join('')}</div></div>`;
 }
 
 function row(label, control, note = '') {
@@ -940,6 +959,11 @@ function tabChat(s, sub) {
             ${row('가벼운 페이드 인', toggle('chat.streamFade', !!s.chat.streamFade), '스트리밍 중 새 글자만 스며들게')}
             ${s.chat.streamFade && stFade ? row('실리태번 페이드 인', toggle('st.streamFadeIn', true), '끄면 빨라지고 위 옵션이 대신해요') : ''}
         </div>
+        ${cap('퀵 리플라이')}<div class="salty-group">
+            ${qrSample()}
+            ${stack('넘기기', seg('chat.qrScroll', [['x', '가로 스크롤'], ['y', '세로 스크롤']]))}
+            ${s.chat.qrScroll === 'y' ? slider('chat.qrRows', '보이는 줄', 1, 4, 1, 2) : ''}
+        </div>
         ${cap('날씨')}<div class="salty-group">
             ${stack('채팅 뒤 효과', weatherSeg(s), weatherMode(s) === 'tracker' ? '데우스 트래커 날씨가 비 · 눈이면 내려요' : '')}
             ${weatherMode(s) === 'custom' ? weatherImageControls(s) : ''}
@@ -1227,6 +1251,7 @@ function render(root) {
         </div>
         <section class="salty-sec" data-tab="${ui.tab}" data-sub="${sub}">${body[ui.tab](s, sub)}</section>`;
     bindCustomBuilder(root);
+    root.querySelectorAll('[data-qr-sample]').forEach(bindQrScroller); // 3.5.4 퀵 리플라이 미리보기 줄
     fillPreviews(root); // 미리보기 무대 다시 꽂기 (만들지 않고 옮겨 담기만)
     syncSamples(s); // 미리보기 문단 클래스 맞추기
 

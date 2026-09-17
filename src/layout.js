@@ -143,75 +143,13 @@ export function startCompactLayout() {
         const wanted = pop ? pop.nextElementSibling : bar.firstElementChild;
         if (wanted !== find) (pop ? pop.after(find) : bar.prepend(find));
     }
-    // 3.5.3 넘치는 쪽 끝을 흐리게 (더 있다는 표시). 앞에 붙은 버튼(창 띄우기 · 돋보기) 폭만큼은 흐리지 않음
-    function updateQrEdges(bar) {
-        if (!bar || !document.body.classList.contains('salty')) return;
-        const max = bar.scrollWidth - bar.clientWidth;
-        bar.classList.toggle('bl-qr-more-left', max > 2 && bar.scrollLeft > 2);
-        bar.classList.toggle('bl-qr-more-right', max > 2 && bar.scrollLeft < max - 2);
-        const leads = [...bar.querySelectorAll(':scope > #qr--popoutTrigger, :scope > #bl-qr-find')];
-        // sticky 의 left 는 줄의 안쪽 여백 안쪽부터 잰다 → 여백 · 테두리를 뺌 (폰 줄은 좌우 4px — 안 빼면 흐림이 4px 떨어져 그 틈으로 글자가 보임)
-        const cs = getComputedStyle(bar);
-        const origin = bar.getBoundingClientRect().left + parseFloat(cs.borderLeftWidth) + parseFloat(cs.paddingLeft);
-        const lead = leads.length ? Math.max(...leads.map(el => el.getBoundingClientRect().right)) - origin : 0;
-        bar.style.setProperty('--bl-qr-lead', `${Math.max(0, Math.round(lead))}px`);
-        const pop = bar.querySelector(':scope > #qr--popoutTrigger');
-        const find = bar.querySelector(':scope > #bl-qr-find');
-        if (find) find.style.left = pop ? `${Math.round(pop.getBoundingClientRect().width) + 5}px` : '0px';
-    }
+    // QR 줄 흐림 · 스냅 · 휠 · 끌기는 아래 모듈 함수 (설정 창 미리보기 줄도 같이 씀)
     sendForm?.addEventListener('scroll', (event) => { if (event.target.id === 'qr--bar') updateQrEdges(event.target); }, true);
     window.addEventListener('resize', () => updateQrEdges(sendForm?.querySelector('#qr--bar')));
     placeQuickReplies();
     if (sendForm) new MutationObserver(placeQuickReplies).observe(sendForm, { childList: true, subtree: true });
-    // 3.5.2 퀵 리플라이 줄은 가로 한 줄이라 마우스 휠(세로)로는 안 움직이고 Shift+휠이어야 넘어갔다 (사용자: "그냥 마우스 스크롤하면
-    // 옆으로 넘어가게"). 줄이 넘칠 때 세로 휠을 가로로 바꿔 준다 — 줄이 다시 그려져도 되게 입력판에 한 번만 건다.
-    // 휠 한 칸씩 부드럽게 가되 빨리 돌리면 목표를 이어 붙인다 (smooth 를 매번 새로 부르면 남은 거리를 잃음)
-    let qrTarget = null;
-    let qrIdle = 0;
-    sendForm?.addEventListener('wheel', (event) => {
-        if (!document.body.classList.contains('salty') || event.ctrlKey) return;
-        const bar = event.target.closest?.('#qr--bar');
-        if (!bar || bar.scrollWidth <= bar.clientWidth + 1) return;
-        const dy = event.deltaY * (event.deltaMode === 1 ? 32 : event.deltaMode === 2 ? bar.clientWidth : 1);
-        if (!dy || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return; // 가로 휠 · 트랙패드 옆으로 밀기는 브라우저가 알아서
-        event.preventDefault();
-        const max = bar.scrollWidth - bar.clientWidth;
-        qrTarget = Math.max(0, Math.min(max, (qrTarget ?? bar.scrollLeft) + dy));
-        bar.scrollTo({ left: qrTarget, behavior: Math.abs(dy) >= 40 ? 'smooth' : 'auto' });
-        clearTimeout(qrIdle);
-        qrIdle = setTimeout(() => { qrTarget = null; }, 250);
-    }, { passive: false });
-    // 3.5.3 PC 에서 QR 줄을 마우스로 잡아 끌어 넘기기. 6px 넘게 움직였을 때만 끌기 — 그 뒤 따라오는 click 은 삼켜 버튼이 눌리지 않게
-    let qrDrag = null;
-    sendForm?.addEventListener('pointerdown', (event) => {
-        if (event.pointerType !== 'mouse' || event.button !== 0 || !document.body.classList.contains('salty')) return;
-        const bar = event.target.closest?.('#qr--bar');
-        if (!bar || bar.scrollWidth <= bar.clientWidth + 1 || event.target.closest('#bl-qr-find, #qr--popoutTrigger')) return;
-        qrDrag = { bar, x: event.clientX, left: bar.scrollLeft, moved: false, id: event.pointerId };
-    });
-    window.addEventListener('pointermove', (event) => {
-        if (!qrDrag || event.pointerId !== qrDrag.id) return;
-        const dx = event.clientX - qrDrag.x;
-        if (!qrDrag.moved && Math.abs(dx) < 6) return;
-        if (!qrDrag.moved) {
-            qrDrag.moved = true;
-            qrDrag.bar.classList.add('bl-qr-dragging');
-            qrTarget = null;
-        }
-        qrDrag.bar.scrollLeft = qrDrag.left - dx;
-    });
-    const endDrag = () => {
-        if (!qrDrag) return;
-        const { bar, moved } = qrDrag;
-        qrDrag = null;
-        bar.classList.remove('bl-qr-dragging');
-        if (!moved) return;
-        const swallow = (e) => { e.preventDefault(); e.stopPropagation(); };
-        window.addEventListener('click', swallow, { capture: true, once: true });
-        setTimeout(() => window.removeEventListener('click', swallow, { capture: true }), 0);
-    };
-    window.addEventListener('pointerup', endDrag);
-    window.addEventListener('pointercancel', endDrag);
+    sendForm?.addEventListener('wheel', event => qrWheel(event, event.target.closest?.('#qr--bar')), { passive: false });
+    sendForm?.addEventListener('pointerdown', event => qrPointerDown(event, event.target.closest?.('#qr--bar')));
     new MutationObserver(() => { placeQuickReplies(); refreshWorld(); refreshPersonaTitle(); }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
     mobile.addEventListener('change', placeQuickReplies);
     // 실리태번이 최근 대화 화면을 다시 그려도 버전 전체를 두 줄로 유지한다.
@@ -250,4 +188,106 @@ export function startCompactLayout() {
             menu.querySelector('summary').focus();
         }
     });
+}
+
+// ───────── 퀵 리플라이 줄 (3.5.2~3.5.4) — 입력판의 #qr--bar 와 설정 창 미리보기(.bl-qr-sample)가 같이 씀 ─────────
+const QR_LEADS = ':scope > #qr--popoutTrigger, :scope > #bl-qr-find, :scope > .bl-qr-find-sample';
+
+// 3.5.3 넘치는 쪽 끝 흐림 + 스냅 자리. 앞에 붙은 단추(창 띄우기 · 돋보기) 폭만큼은 빼고 잰다
+export function updateQrEdges(bar) {
+    if (!bar || !document.body.classList.contains('salty')) return;
+    const max = bar.scrollWidth - bar.clientWidth;
+    bar.classList.toggle('bl-qr-more-left', max > 2 && bar.scrollLeft > 2);
+    bar.classList.toggle('bl-qr-more-right', max > 2 && bar.scrollLeft < max - 2);
+    const leads = [...bar.querySelectorAll(QR_LEADS)];
+    // sticky 의 left 는 줄의 안쪽 여백 안쪽부터 잰다 → 여백 · 테두리를 뺌 (폰 줄은 좌우 4px — 안 빼면 4px 틈으로 글자가 보임)
+    const cs = getComputedStyle(bar);
+    const box = bar.getBoundingClientRect();
+    const right = leads.length ? Math.max(...leads.map(el => el.getBoundingClientRect().right)) : 0;
+    const lead = leads.length ? right - (box.left + parseFloat(cs.borderLeftWidth) + parseFloat(cs.paddingLeft)) : 0;
+    bar.style.setProperty('--bl-qr-lead', `${Math.max(0, Math.round(lead))}px`);
+    // 스냅 자리: 스크롤 칸(안쪽 여백 포함) 왼쪽 끝부터 앞 단추 오른쪽 + 간격 (앞 단추가 없으면 안쪽 여백만)
+    const gap = parseFloat(cs.columnGap) || 0;
+    const snap = leads.length ? right - (box.left + parseFloat(cs.borderLeftWidth)) + gap : parseFloat(cs.paddingLeft);
+    bar.style.setProperty('--bl-qr-snap', `${Math.max(0, Math.round(snap))}px`);
+    const pop = bar.querySelector(':scope > #qr--popoutTrigger');
+    const find = bar.querySelector(':scope > #bl-qr-find, :scope > .bl-qr-find-sample');
+    if (find) find.style.left = pop ? `${Math.round(pop.getBoundingClientRect().width) + 5}px` : '0px';
+    // 3.5.4 왼쪽 흐림은 버튼이 앞 단추 밑으로 반쯤 걸려 있을 때만 (넘기는 중) — 멈추면 스냅으로 딱 붙어 흐림도 꺼짐.
+    // 늘 켜 두면 스냅된 첫 버튼 왼쪽이 흐려져 밝은 조각처럼 보였다 (사용자: "흰색 네모" · "흐림은 있는 게 낫다")
+    let cut = false;
+    if (leads.length && bar.scrollLeft > 2 && max > 2) {
+        const edge = box.left + parseFloat(cs.borderLeftWidth) + snap;
+        for (const pill of bar.querySelectorAll('.qr--button')) {
+            const r = pill.getBoundingClientRect();
+            if (r.right <= edge - gap + 1) continue; // 앞 단추 밑에 다 숨은 것
+            cut = r.left < edge - 1.5;
+            break;
+        }
+    }
+    bar.classList.toggle('bl-qr-cut-left', cut);
+}
+
+// 3.5.2 줄이 가로로 넘칠 때 세로 휠을 가로로 (Shift 없이). 휠 한 칸씩 부드럽게, 빨리 돌리면 목표를 이어 붙임.
+// 세로 스크롤 모드(가로로 안 넘침)면 손대지 않음 — 브라우저가 위아래로
+let qrTarget = null;
+let qrIdle = 0;
+function qrWheel(event, bar) {
+    if (!bar || !document.body.classList.contains('salty') || event.ctrlKey) return;
+    if (bar.scrollWidth <= bar.clientWidth + 1) return;
+    const dy = event.deltaY * (event.deltaMode === 1 ? 32 : event.deltaMode === 2 ? bar.clientWidth : 1);
+    if (!dy || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return; // 가로 휠 · 트랙패드 옆으로 밀기는 브라우저가 알아서
+    event.preventDefault();
+    const max = bar.scrollWidth - bar.clientWidth;
+    qrTarget = Math.max(0, Math.min(max, (qrTarget ?? bar.scrollLeft) + dy));
+    bar.scrollTo({ left: qrTarget, behavior: Math.abs(dy) >= 40 ? 'smooth' : 'auto' });
+    clearTimeout(qrIdle);
+    qrIdle = setTimeout(() => { qrTarget = null; }, 250);
+}
+
+// 3.5.3 PC 마우스로 잡아 끌기. 6px 넘게 움직였을 때만 — 그 뒤 따라오는 click 은 삼켜 버튼이 눌리지 않게
+let qrDrag = null;
+let dragHooked = false;
+function qrPointerDown(event, bar) {
+    if (!bar || event.pointerType !== 'mouse' || event.button !== 0 || !document.body.classList.contains('salty')) return;
+    if (bar.scrollWidth <= bar.clientWidth + 1 || event.target.closest('#bl-qr-find, #qr--popoutTrigger, .bl-qr-find-sample')) return;
+    hookDrag();
+    qrDrag = { bar, x: event.clientX, left: bar.scrollLeft, moved: false, id: event.pointerId };
+}
+function hookDrag() {
+    if (dragHooked) return;
+    dragHooked = true;
+    window.addEventListener('pointermove', (event) => {
+        if (!qrDrag || event.pointerId !== qrDrag.id) return;
+        const dx = event.clientX - qrDrag.x;
+        if (!qrDrag.moved && Math.abs(dx) < 6) return;
+        if (!qrDrag.moved) {
+            qrDrag.moved = true;
+            qrDrag.bar.classList.add('bl-qr-dragging');
+            qrTarget = null;
+        }
+        qrDrag.bar.scrollLeft = qrDrag.left - dx;
+    });
+    const endDrag = () => {
+        if (!qrDrag) return;
+        const { bar, moved } = qrDrag;
+        qrDrag = null;
+        bar.classList.remove('bl-qr-dragging');
+        if (!moved) return;
+        const swallow = (e) => { e.preventDefault(); e.stopPropagation(); };
+        window.addEventListener('click', swallow, { capture: true, once: true });
+        setTimeout(() => window.removeEventListener('click', swallow, { capture: true }), 0);
+    };
+    window.addEventListener('pointerup', endDrag);
+    window.addEventListener('pointercancel', endDrag);
+}
+
+/** 3.5.4 설정 창 미리보기 줄에 입력판 QR 줄과 같은 휠 · 끌기 · 흐림 · 스냅 */
+export function bindQrScroller(el) {
+    if (!el || el._blQr) return;
+    el._blQr = true;
+    el.addEventListener('wheel', event => qrWheel(event, el), { passive: false });
+    el.addEventListener('pointerdown', event => qrPointerDown(event, el));
+    el.addEventListener('scroll', () => updateQrEdges(el), { passive: true });
+    requestAnimationFrame(() => updateQrEdges(el));
 }
