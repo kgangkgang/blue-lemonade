@@ -108,6 +108,16 @@ export function refreshPanels() {
     }
 }
 
+// 3.6.2: 날씨 값(투명도 · 크기 · 속도 · 각도)은 판을 다시 그리지 않고 바꾸니(슬라이드바 · 숫자 칸) 미리보기에 따로 알린다.
+// 예전에는 다른 칸을 눌러 판이 다시 그려질 때까지 미리보기가 옛 값으로 내렸다 (사용자: "비 눈 트래커 미리보기에 파라미터 바로 반영 안 된다")
+function syncWeatherPreview(root, path) {
+    if (!String(path).startsWith('chat.weather')) return;
+    const stage = root?._pv?.chat;
+    if (!stage?.isConnected) return;
+    const s = getSettings();
+    import('./weather.js').then(m => m.previewWeather(stage, s.enabled ? s.chat : { weather: 'off' })).catch(() => {});
+}
+
 function update(mutator, rerender = true) {
     mutator(getSettings());
     saveSoon();
@@ -1908,6 +1918,7 @@ function bind(root) {
         const value = Number(range.value);
         range.style.setProperty('--fill', fill(value, Number(range.min), Number(range.max)));
         update(st => setPath(st, path, value), false);
+        syncWeatherPreview(root, path);
         const num = root.querySelector(`input[data-num="${path}"]`);
         if (num && document.activeElement !== num) { num.value = numText(path, value); fitNum(num); }
     });
@@ -1931,7 +1942,10 @@ function bind(root) {
                 range.value = value;
                 range.style.setProperty('--fill', fill(Number(range.value), min, max)); // 칸 사이 값이면 슬라이드바는 가까운 칸에 섬 → 그 자리까지 채움
             }
-            if (value !== current) update(st => setPath(st, path, value), false);
+            if (value !== current) {
+                update(st => setPath(st, path, value), false);
+                syncWeatherPreview(root, path);
+            }
             return;
         }
         if (target.matches('input[data-toggle]')) {
