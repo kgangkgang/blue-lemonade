@@ -59,10 +59,37 @@ function collect() {
     return out;
 }
 
-function row(item, index) {
+// 3.5.5 찾은 글자에 테마 형광펜 (사용자: "검색어가 제목인지 본문인지 알 수 있게") — 이름 줄 · 내용 줄 어디에 걸렸는지 보임
+function marked(text, q) {
+    if (!q) return esc(text);
+    const lower = text.toLowerCase();
+    let out = '', at = 0, hit;
+    while ((hit = lower.indexOf(q, at)) >= 0) {
+        out += `${esc(text.slice(at, hit))}<mark>${esc(text.slice(hit, hit + q.length))}</mark>`;
+        at = hit + q.length;
+    }
+    return out + esc(text.slice(at));
+}
+
+// 내용 줄: 찾기 중이면 검색어가 든 곳(제목 · 내용 · 세트 이름) 근처를 잘라 보여 줌 — 90자 앞쪽만 보이면 뒤에 걸린 검색어가 안 보임
+function snippet(text, q, max = 90) {
+    const flat = text.replace(/\s+/g, ' ').trim();
+    const hit = q ? flat.toLowerCase().indexOf(q) : -1;
+    if (hit < 0 || hit + q.length <= max) return flat.slice(0, max) + (flat.length > max ? '…' : '');
+    const start = Math.max(0, hit - 24);
+    return `…${flat.slice(start, start + max)}${start + max < flat.length ? '…' : ''}`;
+}
+
+function row(item, index, q = '') {
     const icon = item.icon ? `<i class="fa-solid ${esc(item.icon)}" aria-hidden="true"></i>` : '';
-    const preview = item.text && item.text !== item.label ? `<small>${esc(item.text.replace(/\s+/g, ' ').slice(0, 90))}</small>` : '';
-    return `<button type="button" role="option" data-i="${index}"><span class="bl-qrf-name">${icon}<b>${esc(item.label || item.text.slice(0, 30) || '(이름 없음)')}</b></span>${preview}</button>`;
+    const name = item.label || item.text.slice(0, 30) || '(이름 없음)';
+    let line = item.text && item.text !== item.label ? item.text : '';
+    if (q && !name.toLowerCase().includes(q) && !line.toLowerCase().includes(q)) {
+        if (item.body.toLowerCase().includes(q)) line = item.body;              // 제목(툴팁) 말고 안의 내용에 걸림
+        else if (item.set.toLowerCase().includes(q)) line = `세트 · ${item.set}`; // 세트 이름에만 걸림
+    }
+    const preview = line ? `<small>${marked(snippet(line, q), q)}</small>` : '';
+    return `<button type="button" role="option" data-i="${index}"><span class="bl-qrf-name">${icon}<b>${marked(name, q)}</b></span>${preview}</button>`;
 }
 
 function rowsHtml(query) {
@@ -72,7 +99,7 @@ function rowsHtml(query) {
         if (!hits.length) return '<div class="salty-pick-empty">없음</div>';
         // 이름에 든 것을 먼저
         hits.sort((a, b) => Number(!a[0].label.toLowerCase().includes(q)) - Number(!b[0].label.toLowerCase().includes(q)));
-        return hits.map(([item, i]) => row(item, i)).join('');
+        return hits.map(([item, i]) => row(item, i, q)).join('');
     }
     const parts = [];
     const recent = readRecent().map(key => items.findIndex(item => item.key === key)).filter(i => i >= 0);
