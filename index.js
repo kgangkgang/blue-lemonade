@@ -14,6 +14,7 @@ import { startInlineTone, retoneAll } from './src/tone.js';
 import { startStreamFade, streamFadeState } from './src/streamfade.js';
 import { mountPanel, refreshPanels, noticeSeenChanged } from './src/panel.js';
 import { loadVersion, hasUnseenNotice, openNotice } from './src/notice.js';
+import { setFeatureHooks } from './src/features.js';
 import { deferPreviewRules, restorePreviewRules, deferredPreviewRuleCount, startMenuOpenMark, startAnchorGate, widenSelectorCache, deferPanelHasRules, panelHasRuleCount, panelCssEnabled } from './src/lite.js';
 
 function mountDrawer() {
@@ -83,6 +84,7 @@ function addMenuItem() {
 }
 
 // 테마는 가능한 한 빨리 (깜빡임 줄이기)
+setFeatureHooks({ applyAll, refreshPanels }); // 켤 때만 불러오는 기능이 설정 적용 · 창 다시 그리기를 부를 수 있게 (3.1.0)
 const settings = getSettings();
 if (dropStaleOverrides(settings)) saveSettings();
 applyAll();

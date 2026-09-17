@@ -5,6 +5,7 @@ import { PALETTES, LEGACY, TOKEN_KEYS, paletteColors, parseColor, sameColor, onC
 import { buildComposite, slotStack, findFont } from './fonts.js';
 import { iconsCss } from './icons.js';
 import { classifyAll } from './assets.js';
+import { syncFeatures } from './features.js';
 
 function styleTag(id) {
     let el = document.getElementById(id);
@@ -490,6 +491,8 @@ export function applyAll() {
         if (s.chat.unifyInline) want.add('salty-unify-inline'); // 본문에 적힌 글자색 무시
         else if (s.chat.toneInline) want.add('salty-tone');     // 글자색의 색상만 두고 채도 · 밝기 맞춤 (tone.js + style.css 끝 규칙)
         if (!s.chat.regexIcons) want.add('salty-regex-noicons'); // 정규식 카드의 이모티콘 숨김
+        if (s.chat.demSkin) want.add('salty-dem-skin');          // 3.1.0 데우스 카드 스킨 (css/30-dem-skin.css)
+        if (s.chat.demSkin && s.chat.demFold !== false) want.add('salty-dem-fold'); // 폰: 트래커 한 줄 · 펼쳐 오는 카드 접기 (demskin.js)
         if (s.type.indent) want.add('salty-indent');
         want.add(`salty-align-${s.type.align}`);
         if (mode === 'light' && s.image.blendWhite && !s.chat.bgImage) want.add('salty-blend');
@@ -510,4 +513,5 @@ export function applyAll() {
     syncSamples(s);
 
     applyFonts(s);
+    syncFeatures(s); // 3.1.0 켤 때만 불러오는 기능 (features.js)
 }

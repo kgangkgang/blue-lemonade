@@ -9,6 +9,8 @@ import { getIssues } from './checks.js';
 import { applySillyTavernTheme, saveAsSillyTavernTheme, alreadyMatches } from './sttheme.js';
 import { classifyAll } from './assets.js';
 import { openNotice, currentVersion, hasUnseenNotice } from './notice.js';
+import { PRESETS, MAX_STYLES, captureStyle, applyStyleData, sameStyle, sharePayload, encodeStyle, decodeStyle, newStyleId, uniqueName, mergeFonts, currentKey, keyLabel } from './styles.js';
+import { charStyleModule } from './features.js';
 
 // 브랜드 레몬 — ✦ 메뉴 · 확장 서랍 · 스플래시와 같은 속찬 레몬(폰트어썸 fa-lemon U+F094) 윤곽 그대로
 export const MARK = '<svg viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path transform="translate(0 448) scale(1 -1)" d="M448 352Q447 379 429 397Q411 415 384 416Q374 416 365 413Q348 407 330 404Q311 400 294 404Q237 418 180 399Q124 379 80 336Q37 292 17 236Q-2 179 12 122Q16 105 12 86Q9 68 3 51Q0 42 0 32Q1 5 19 -13Q37 -31 64 -32Q74 -32 83 -29Q100 -23 118 -20Q137 -16 154 -20Q211 -34 268 -15Q324 5 368 48Q411 92 431 148Q450 205 436 262Q432 279 436 298Q439 316 445 333Q448 342 448 352ZM213 321Q171 308 139 277Q108 245 95 203Q90 190 76 193Q62 198 65 212Q80 262 117 299Q154 336 204 351Q218 354 223 340Q226 326 213 321Z"/></svg>';
@@ -18,7 +20,7 @@ const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 // 2.7.0: 글꼴 탭을 글자 탭에 합침 — 역할(본문 · 대사 · 메뉴 · 속마음 · 강조 · 코드)마다 한 화면에서 글꼴 · 크기 · 굵기 · 자간을 다 만짐
 const TABS = [['theme', '테마'], ['text', '글자'], ['chat', '채팅'], ['image', '이미지']];
 const SUBS = {
-    theme: [['palette', '색'], ['colors', '색 고치기'], ['backup', '백업']],
+    theme: [['palette', '색'], ['colors', '색 고치기'], ['styles', '스타일'], ['backup', '백업']],
     text: [['text', '본문'], ['dialogue', '대사'], ['ui', '메뉴'], ['em', '속마음'], ['strong', '강조'], ['code', '코드'], ['para', '문단'], ['shadow', '그림자']],
     chat: [['message', '메시지'], ['screen', '화면'], ['etc', '기타']],
     image: [['layout', '배치'], ['shape', '모양'], ['size', '크기'], ['fade', '흐림']],
@@ -44,6 +46,8 @@ const ui = {
     picker: null,        // 열려 있는 글꼴 목록: { slot, lang }
     query: '',
     fontTag: 'all',      // 글꼴 목록 태그: 'all' | GROUPS 묶음
+    styleMenu: '',       // 3.1.0 도구를 펼친 내 스타일 id
+    styleUndo: null,     // 3.1.0 방금 입힌 스타일 전의 모습 (되돌리기, 이번 창에서만)
 };
 
 /** 그 탭에서 보고 있는 소분류 (저장된 값이 없거나 모르는 값이면 첫 칸) */
@@ -622,6 +626,7 @@ function fontBlock(s, slot) {
 function tabTheme(s, sub) {
     if (sub === 'custom') return customBuilder(s);
     if (sub === 'backup') return tabBackup();
+    if (sub === 'styles') return tabStyles(s);
     if (sub === 'colors') {
         const colors = TOKEN_GROUPS.map(([label, list]) =>
             `${cap(label)}<div class="salty-group">${list.map(([key, name]) => color(key, name)).join('')}</div>`).join('');
@@ -647,6 +652,102 @@ function tabTheme(s, sub) {
         : '<button type="button" class="salty-pal salty-pal-create" data-act="custom-open"><span class="salty-create-icon" aria-hidden="true">+</span><b>커스텀 에이드 만들기</b><small>나만의 색을 섞어 보세요</small></button>';
     return `<div class="salty-palette-toolbar"><span>${mode === 'light' ? '화이트' : '나이트'}${s.palette === 'night' ? ' · 블루 아워' : ''}</span><div class="salty-mode-switch" role="group" aria-label="테마 밝기">${['light', 'dark'].map(kind => `<button type="button" data-act="palette-mode" data-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'} 모드" title="${kind === 'light' ? '화이트' : '나이트'}" aria-pressed="${mode === kind}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}</div></div><div class="salty-palettes">${cards}${custom}</div>`;
 
+}
+
+// ───────── 스타일 (3.1.0) ─────────
+function tabStyles(s) {
+    const presets = PRESETS.map(p => `<button type="button" class="salty-preset" data-act="style-preset" data-id="${p.id}"><b>${esc(p.name)}</b><small>${esc(p.desc)}</small></button>`).join('');
+    const used = id => Object.values(s.charStyles).filter(x => x === id).length;
+    const mine = s.styles.map((st) => {
+        const on = s.activeStyle?.id === st.id;
+        const open = ui.styleMenu === st.id;
+        const meta = [on ? '지금 입힘' : '', used(st.id) ? `캐릭터 ${used(st.id)}` : ''].filter(Boolean).join(' · ');
+        return `<div class="salty-style${on ? ' on' : ''}${open ? ' open' : ''}">
+            <button type="button" class="salty-style-main" data-act="style-apply" data-id="${st.id}"><b>${esc(st.name)}</b>${meta ? `<small>${meta}</small>` : ''}</button>
+            <button type="button" class="salty-style-more" data-act="style-menu" data-id="${st.id}" aria-label="${esc(st.name)} 도구" aria-expanded="${open}"><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></button>
+            ${open ? `<div class="salty-style-tools">
+                <button class="salty-btn" data-act="style-overwrite" data-id="${st.id}">지금 모습으로</button>
+                <button class="salty-btn" data-act="style-rename" data-id="${st.id}">이름</button>
+                <button class="salty-btn" data-act="style-copy" data-id="${st.id}">코드 복사</button>
+                <button class="salty-btn" data-act="style-file" data-id="${st.id}">파일</button>
+                <button class="salty-btn salty-btn-danger" data-act="style-delete" data-id="${st.id}">지우기</button>
+            </div>` : ''}
+        </div>`;
+    }).join('');
+    const key = currentKey();
+    const linked = key ? s.charStyles[key] || '' : '';
+    const charBlock = key ? `${cap(esc(keyLabel(key)))}<div class="salty-group">
+            ${s.styles.length
+        ? stack('이 캐릭터 스타일', `<div class="salty-seg salty-wrap">${[['', '없음'], ...s.styles.map(st => [st.id, st.name])].map(([id, name]) =>
+            `<button data-act="char-style" data-id="${id}" class="${linked === id ? 'on' : ''}">${esc(name)}</button>`).join('')}</div>`, linked ? '이 채팅을 열면 이 스타일로 바뀌어요. 여기서 바꾼 모습은 이 스타일에 저장돼요' : '')
+        : '<p class="salty-note">스타일을 저장하면 캐릭터에 이어 둘 수 있어요.</p>'}
+        </div>` : '';
+    const others = Object.entries(s.charStyles).filter(([k]) => k !== key);
+    const linkList = others.length ? `${cap('이어 둔 캐릭터')}<div class="salty-group">${others.map(([k, id]) =>
+        row(esc(keyLabel(k)), `<span class="salty-btns"><span class="salty-hint">${esc(s.styles.find(x => x.id === id)?.name || '')}</span><button class="salty-btn" data-act="char-unlink" data-key="${esc(k)}">풀기</button></span>`)).join('')}</div>` : '';
+    return `${cap('완성된 스타일', '글자 · 채팅 모양만 — 색은 그대로')}<div class="salty-presets">${presets}</div>
+        ${ui.styleUndo ? '<div class="salty-btns salty-undo"><button class="salty-btn" data-act="style-undo">방금 입힌 것 되돌리기</button></div>' : ''}
+        ${cap('내 스타일', s.styles.length ? `${s.styles.length}/${MAX_STYLES}` : '')}
+        ${mine ? `<div class="salty-styles">${mine}</div>` : '<p class="salty-note">지금 모습(색 · 글꼴 · 글자 · 채팅 · 이미지)을 이름 붙여 두고 언제든 다시 입혀요.</p>'}
+        <div class="salty-btns salty-style-add">
+            <button class="salty-btn" data-act="style-save">+ 지금 모습 저장</button>
+            <button class="salty-btn" data-act="style-import-code">코드로 가져오기</button>
+            <button class="salty-btn" data-act="style-import-file">파일로 가져오기</button>
+        </div>
+        <input type="file" accept=".json,application/json,text/plain" hidden data-file="style">
+        ${charBlock}${linkList}`;
+}
+
+/** 을 · 를 (받침 따라, 한글이 아니면 을(를)) */
+const eulReul = (word) => {
+    const code = String(word).trim().slice(-1).charCodeAt(0);
+    if (code >= 0xAC00 && code <= 0xD7A3) return (code - 0xAC00) % 28 ? '을' : '를';
+    return ' 을(를)';
+};
+
+/** 스타일을 입히기 전 모습을 되돌리기용으로 남기고 입힌다 */
+function wearStyle(data, label) {
+    const before = captureStyle(getSettings());
+    update(st => applyStyleData(st, data));
+    if (sameStyle(before, captureStyle(getSettings()))) {
+        toastr.info('이미 그 모습이에요', 'Blue Lemonade');
+        return;
+    }
+    ui.styleUndo = before;
+    refreshPanels();
+    const active = getSettings().activeStyle;
+    toastr.success(active ? `${label}${eulReul(label)} 입혔어요. 이 캐릭터 스타일에 저장돼요` : `${label}${eulReul(label)} 입혔어요`, 'Blue Lemonade');
+}
+
+/** 받은 스타일(코드 · 파일) → 내 스타일 목록에 넣기 */
+function addReceivedStyle(received) {
+    const s = getSettings();
+    if (s.styles.length >= MAX_STYLES) throw new Error(`스타일은 ${MAX_STYLES}개까지예요. 안 쓰는 것을 지워 주세요`);
+    let name = '';
+    update((st) => {
+        name = uniqueName(received.name, st.styles);
+        st.styles.push({ id: newStyleId(), name, data: received.style });
+        mergeFonts(st, received.fonts);
+    });
+    toastr.success(`${name}${eulReul(name)} 내 스타일에 넣었어요. 눌러서 입혀 보세요`, 'Blue Lemonade');
+}
+
+/** 클립보드에 넣기 — 못 넣으면(권한 · 오래된 브라우저) 골라 복사할 수 있게 창에 띄움 */
+async function copyText(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+        return true;
+    } catch {
+        const ctx = SillyTavern.getContext();
+        const box = document.createElement('textarea');
+        box.className = 'text_pole salty-code-box';
+        box.value = text;
+        box.readOnly = true;
+        box.rows = 6;
+        setTimeout(() => { box.focus(); box.select(); }, 100);
+        await ctx.callGenericPopup(box, ctx.POPUP_TYPE.TEXT, '', { okButton: '닫기' });
+        return false;
+    }
 }
 
 function tabBackup() {
@@ -755,6 +856,8 @@ function tabChat(s, sub) {
         </div>` : ''}
         ${cap('정규식 카드')}<div class="salty-group">
             ${row('이모티콘', toggle('chat.regexIcons', s.chat.regexIcons), '끄면 카드 제목 앞 그림 없이 글자만')}
+            ${row('데우스 카드 스킨', toggle('chat.demSkin', !!s.chat.demSkin), '트래커 · 장면 계획 같은 카드를 테마 모양으로')}
+            ${s.chat.demSkin ? row('폰에서 접어 두기', toggle('chat.demFold', s.chat.demFold !== false), '트래커는 한 줄, 펼쳐져 오는 카드는 제목만 · 누르면 펼쳐요') : ''}
         </div>`;
     }
     if (sub === 'screen') {
@@ -765,6 +868,11 @@ function tabChat(s, sub) {
             ${row('고르기 목록 팝업', toggle('chat.selectPop', s.chat.selectPop !== false), '모델 · 프리셋 같은 목록을 테마가 그린 팝업으로 (끄면 폰 기본 목록)')}
             ${row('가벼운 페이드 인', toggle('chat.streamFade', !!s.chat.streamFade), '스트리밍 중 새 글자만 스며들게')}
             ${s.chat.streamFade && stFade ? row('실리태번 페이드 인', toggle('st.streamFadeIn', true), '끄면 빨라지고 위 옵션이 대신해요') : ''}
+        </div>
+        ${cap('폰')}<div class="salty-group">
+            ${row('스크롤하면 바 숨기기', toggle('reader.autoHide', !!s.reader?.autoHide), '아래로 읽으면 숨고, 살짝 올리거나 누르면 나와요')}
+            ${row('한 손 버튼 줄', toggle('onehand.on', !!s.onehand?.on), '입력창 위에 스와이프 · 사칭 · 이어 쓰기 · 다시 생성')}
+            ${s.onehand?.on ? stack('버튼', chips([['onehand.swipe', '스와이프'], ['onehand.imp', '사칭'], ['onehand.cont', '이어 쓰기'], ['onehand.regen', '다시 생성']])) : ''}
         </div>`;
     }
     const hideAvatars = document.getElementById('hideChatAvatarsEnabled')?.checked ?? false;
@@ -953,6 +1061,7 @@ function render(root) {
         : `<div class="salty-head salty-head-slim"><span>테마 켜기</span>${toggle('enabled', s.enabled)}</div>`;
     root.innerHTML = `
         ${head}
+        ${s.activeStyle ? `<div class="salty-style-note"><i class="fa-solid fa-masks-theater" aria-hidden="true"></i><span>${esc(keyLabel(s.activeStyle.key))} · ${esc(s.styles.find(x => x.id === s.activeStyle.id)?.name || '')} 스타일</span></div>` : ''}
         <div class="salty-checks">${issues.map((issue, i) =>
             `<div class="salty-check"><span>${issue.text}</span>${issue.fix ? `<button class="salty-btn" data-act="fix" data-i="${i}">${issue.fix}</button>` : ''}</div>`).join('')}</div>
         <div class="salty-nav">
@@ -1434,6 +1543,101 @@ function bind(root) {
                     refreshPanels();
                     break;
                 }
+                case 'style-preset': {
+                    const preset = PRESETS.find(x => x.id === el.dataset.id);
+                    if (preset) wearStyle(preset.data(), preset.name);
+                    break;
+                }
+                case 'style-apply': {
+                    const style = getSettings().styles.find(x => x.id === el.dataset.id);
+                    if (style) wearStyle(style.data, style.name);
+                    break;
+                }
+                case 'style-undo':
+                    if (!ui.styleUndo) break;
+                    update(st => applyStyleData(st, ui.styleUndo));
+                    ui.styleUndo = null;
+                    refreshPanels();
+                    break;
+                case 'style-menu':
+                    ui.styleMenu = ui.styleMenu === el.dataset.id ? '' : el.dataset.id;
+                    refreshPanels();
+                    break;
+                case 'style-save': {
+                    const s0 = getSettings();
+                    if (s0.styles.length >= MAX_STYLES) { toastr.warning(`스타일은 ${MAX_STYLES}개까지예요. 안 쓰는 것을 지워 주세요`, 'Blue Lemonade'); break; }
+                    const name = await ask('스타일 이름', uniqueName(`스타일 ${s0.styles.length + 1}`, s0.styles));
+                    if (name === null || !String(name).trim()) break;
+                    update(st => { st.styles.push({ id: newStyleId(), name: uniqueName(name, st.styles), data: captureStyle(st) }); });
+                    break;
+                }
+                case 'style-overwrite':
+                    update((st) => {
+                        const style = st.styles.find(x => x.id === el.dataset.id);
+                        if (style) style.data = captureStyle(st);
+                    });
+                    toastr.success('지금 모습으로 바꿔 저장했어요', 'Blue Lemonade');
+                    break;
+                case 'style-rename': {
+                    const style = getSettings().styles.find(x => x.id === el.dataset.id);
+                    if (!style) break;
+                    const name = await ask('새 이름', style.name);
+                    if (name === null || !String(name).trim()) break;
+                    update((st) => { const target = st.styles.find(x => x.id === style.id); if (target) target.name = uniqueName(name, st.styles, style.id); });
+                    break;
+                }
+                case 'style-copy': {
+                    const style = getSettings().styles.find(x => x.id === el.dataset.id);
+                    if (!style) break;
+                    const code = await encodeStyle(sharePayload(style.name, style.data));
+                    if (await copyText(code)) toastr.success(`${style.name} 코드를 복사했어요 (${code.length.toLocaleString()}자)`, 'Blue Lemonade');
+                    break;
+                }
+                case 'style-file': {
+                    const style = getSettings().styles.find(x => x.id === el.dataset.id);
+                    if (!style) break;
+                    const blob = new Blob([JSON.stringify(sharePayload(style.name, style.data), null, 2)], { type: 'application/json' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `blue-lemonade-style-${style.name.replace(/[\\/:*?"<>|\s]+/g, '-')}.json`;
+                    a.click();
+                    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+                    break;
+                }
+                case 'style-delete': {
+                    const style = getSettings().styles.find(x => x.id === el.dataset.id);
+                    if (!style || !confirm(`${style.name} 스타일을 지울까요?`)) return;
+                    const linkedOrActive = Object.values(getSettings().charStyles).includes(style.id) || getSettings().activeStyle?.id === style.id;
+                    if (linkedOrActive) (await charStyleModule())?.styleRemoved(style.id);
+                    update((st) => { st.styles = st.styles.filter(x => x.id !== style.id); });
+                    ui.styleMenu = '';
+                    break;
+                }
+                case 'style-import-code': {
+                    const code = await ask('스타일 코드를 붙여 넣어 주세요');
+                    if (!code) break;
+                    addReceivedStyle(await decodeStyle(code));
+                    break;
+                }
+                case 'style-import-file':
+                    root.querySelector('input[data-file="style"]')?.click();
+                    break;
+                case 'char-style': {
+                    const key = currentKey();
+                    if (!key) break;
+                    const id = el.dataset.id;
+                    update((st) => { if (id) st.charStyles[key] = id; else delete st.charStyles[key]; });
+                    (await charStyleModule())?.syncChat();
+                    refreshPanels();
+                    break;
+                }
+                case 'char-unlink': {
+                    const key = el.dataset.key;
+                    update((st) => { delete st.charStyles[key]; });
+                    (await charStyleModule())?.syncChat();
+                    refreshPanels();
+                    break;
+                }
                 case 'reset':
                     if (!confirm('테마 설정을 처음 상태로 돌릴까요? (내 글꼴 목록은 남아요)')) return;
                     resetSettings();
@@ -1519,7 +1723,7 @@ function bind(root) {
             // 자동 색은 켜고 끌 때 테두리 설명(edgeHint) 문구가 바뀌니 창을 다시 그린다
             // 2.9.2: 본문 색 지정 → '글자색 톤 맞추기' 줄, 톤 맞추기 → 톤 값 슬라이더 넷, 투명 그림도 똑같이 → 설명 문구가 스위치에 따라
             // 보였다 안 보였다 하는데 다시 그리지 않아, 끈 뒤에도 슬라이더가 남아 있었다
-            update(st => setPath(st, path, target.checked), ['enabled', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade'].includes(path));
+            update(st => setPath(st, path, target.checked), ['enabled', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin'].includes(path));
             return;
         }
         if (target.matches('input[data-file="font"]') && target.files?.[0]) {
@@ -1546,6 +1750,15 @@ function bind(root) {
                 });
             } catch (error) {
                 toastr.error(error.message, 'Blue Lemonade');
+            }
+            target.value = '';
+            return;
+        }
+        if (target.matches('input[data-file="style"]') && target.files?.[0]) {
+            try {
+                addReceivedStyle(await decodeStyle(await target.files[0].text()));
+            } catch (error) {
+                toastr.error(error.message || String(error), 'Blue Lemonade');
             }
             target.value = '';
             return;

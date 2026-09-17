@@ -47,7 +47,15 @@ export const DEFAULTS = {
     shadow: { on: false, targets: { text: false, dialogue: true, em: false, strong: false, code: false }, color: '#000000', alpha: 45, angle: 135, distance: 2, blur: 3 },   // style: marker | full | bold | tint | plain · tilt(형광펜 기울기): flat | slant | steep · markerThick(형광펜 두께): 글자 상자 높이 % · markerPos(위치): center 가운데 | bottom 아래(기울기를 눕혀 밑줄처럼 — 두께는 굵기 값 그대로)
     em: { italic: false, weight: 400, size: null, letterSpacing: null },   // *속마음* — 기울일지, 굵기, 크기(px · null = 본문과 같게), 자간(1/100 em · null = 본문과 같게)
     strong: { weight: 650, size: null, letterSpacing: null },              // **강조**
-    chat: { user: 'bubble', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, streamFade: false, toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } } }, // streamFade: 스트리밍 중 새 글자만 가볍게 페이드 인 (2.9.5, streamfade.js — 실리태번 페이드 인이 켜져 있으면 쉼) · tone: 톤 맞추기의 채도 · 밝기(%) 화이트/나이트 따로 (2.6.1) · toneInline: 본문 글자색의 색상만 두고 채도 · 밝기를 테마에 맞춤 (2.6.0, unifyInline 이 꺼져 있을 때) · selectPop: 실리태번 select 를 테마가 그린 목록 팝업으로 (2.5.0) · regexIcons: 정규식 카드 제목 앞 이모티콘 보이기 · unifyRegex: 프리셋 정규식 카드(DEM 등)의 모듈별 색 → 포인트색 하나 · unifyInline: 메시지에 적힌 글자색(<font color> · style) 무시
+    chat: { user: 'bubble', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, streamFade: false, demSkin: false, demFold: true, toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } } }, // streamFade: 스트리밍 중 새 글자만 가볍게 페이드 인 (2.9.5, streamfade.js — 실리태번 페이드 인이 켜져 있으면 쉼) · tone: 톤 맞추기의 채도 · 밝기(%) 화이트/나이트 따로 (2.6.1) · toneInline: 본문 글자색의 색상만 두고 채도 · 밝기를 테마에 맞춤 (2.6.0, unifyInline 이 꺼져 있을 때) · selectPop: 실리태번 select 를 테마가 그린 목록 팝업으로 (2.5.0) · regexIcons: 정규식 카드 제목 앞 이모티콘 보이기 · unifyRegex: 프리셋 정규식 카드(DEM 등)의 모듈별 색 → 포인트색 하나 · unifyInline: 메시지에 적힌 글자색(<font color> · style) 무시
+    // 3.1.0: 몰입 읽기(폰 — 아래로 밀면 위 바 · 입력창 숨김, reader.js) · 한 손 버튼 줄(입력판 위 ‹ › 사칭 · 이어 쓰기 · 다시 생성, onehand.js)
+    reader: { autoHide: false },
+    onehand: { on: false, swipe: true, imp: true, cont: true, regen: true },
+    // 3.1.0 스타일: 내 스타일 목록 [{ id, name, data }] · 캐릭터 연결 { 'c:아바타' | 'g:그룹': 스타일 id } · 지금 입힌 캐릭터 스타일 { id, key } · 그 전 원래 모습 (styles.js · charstyle.js)
+    styles: [],
+    charStyles: {},
+    activeStyle: null,
+    baseStyle: null,
     image: { layout: 'bleed', shape: 'rect', fit: 'ratio', maxh: 78, height: 40, blendWhite: true, cutoutSame: true, fade: 'soft', fadeY: 10, fadeX: 0, angle: 3, radius: 14, cornerCut: 10, scratchAmount: 45, scratchDirection: 'straight', scratchTexture: 'sharp', edge: 'none', edgeAuto: true, edgeSideTop: true, edgeSideRight: true, edgeSideBottom: true, edgeSideLeft: true, edgeThick: 1, edgeAlpha: 30, edgeGlow: 0, mask: '', maskFit: 'stretch', masks: [], maskId: '' }, // shape: rect | custom(mask = 투명 PNG data URL, maskFit: stretch | contain) — angle · cornerCut · scratch* 는 뺀 모양의 옛 값(CSS 는 남아 있음) · fit(크기): ratio 비율 유지(maxh = 최대 높이) | fixed 높이 맞춤(height = 높이), 둘 다 화면 높이 % · fade(흐림): off | soft | medium | strong · angle: 대각선 기울기(도)
 };
 
@@ -166,6 +174,35 @@ function tidyRoles(s) {
     }
 }
 const isObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
+const flag = (v, def) => (v === true || v === 'true' ? true : v === false || v === 'false' ? false : def);
+
+/** 3.1.0 스타일 목록 · 캐릭터 연결: 깨진 항목만 걸러 낸다 (멀쩡하면 배열을 새로 만들지 않음 — getSettings 는 자주 불림) */
+function tidyStyles(s) {
+    const okStyle = x => isObj(x) && typeof x.id === 'string' && x.id && isObj(x.data);
+    if (!Array.isArray(s.styles)) s.styles = [];
+    else if (s.styles.length > 20 || !s.styles.every(okStyle)) s.styles = s.styles.filter(okStyle).slice(0, 20);
+    for (const style of s.styles) {
+        if (typeof style.name !== 'string' || !style.name.trim() || style.name.length > 24) style.name = (typeof style.name === 'string' && style.name.trim() ? style.name.trim() : '스타일').slice(0, 24);
+    }
+    if (!isObj(s.charStyles)) s.charStyles = {};
+    for (const [key, id] of Object.entries(s.charStyles)) {
+        if (!/^[cg]:./.test(key) || typeof id !== 'string' || !s.styles.some(x => x.id === id)) delete s.charStyles[key];
+    }
+    if (s.activeStyle !== null && !(isObj(s.activeStyle) && typeof s.activeStyle.id === 'string' && typeof s.activeStyle.key === 'string')) s.activeStyle = null;
+    if (s.baseStyle !== null && !isObj(s.baseStyle)) s.baseStyle = null;
+}
+
+/** 3.1.0 켜고 끄는 값: 가져온 파일의 "false" 문자열 · 깨진 값 거르기 */
+function tidyFlags(s) {
+    if (!isObj(s.reader)) s.reader = structuredClone(DEFAULTS.reader);
+    s.reader.autoHide = flag(s.reader.autoHide, false);
+    if (!isObj(s.onehand)) s.onehand = structuredClone(DEFAULTS.onehand);
+    for (const key of Object.keys(DEFAULTS.onehand)) s.onehand[key] = flag(s.onehand[key], DEFAULTS.onehand[key]);
+    if (isObj(s.chat)) {
+        s.chat.demSkin = flag(s.chat.demSkin, false);
+        s.chat.demFold = flag(s.chat.demFold, true);
+    }
+}
 const clampTo = (v, [min, max]) => Math.min(max, Math.max(min, v));
 
 /** 글자 크기 · 정렬 정리. 1.4 까지의 양쪽 정렬 켜기/끄기 → 정렬 방식 (켜져 있었으면 지금과 같은 '낱말 안 끊음') */
@@ -237,6 +274,8 @@ export function getSettings() {
     delete s.pastel; // 1.8.2~1.9.1 의 파스텔 스위치 — 파스텔로 정착하며 없앰 (id 는 PALETTE_ALIASES 가 원래 id 로)
     s.customName = typeof s.customName === 'string' ? s.customName.trim().slice(0, 24) : '';
     s.noticeSeen = typeof s.noticeSeen === 'string' ? s.noticeSeen.slice(0, 20) : '';
+    tidyFlags(s);
+    tidyStyles(s);
     for (const id of Object.keys(s.colorOverrides || {})) if (!PALETTES[id]) delete s.colorOverrides[id];
     return s;
 }
@@ -249,9 +288,13 @@ export function resetSettings() {
     const ext = SillyTavern.getContext().extensionSettings;
     const keepFonts = ext[KEY]?.customFonts || [];
     const keepSeen = ext[KEY]?.noticeSeen || ''; // 초기화해도 이미 본 공지가 다시 빛나지 않게
+    const keepStyles = ext[KEY]?.styles || []; // 내 스타일 · 캐릭터 연결도 남김 (입혀 둔 캐릭터 스타일 상태는 비움)
+    const keepLinks = ext[KEY]?.charStyles || {};
     ext[KEY] = structuredClone(DEFAULTS);
     ext[KEY].customFonts = keepFonts;
     ext[KEY].noticeSeen = keepSeen;
+    ext[KEY].styles = keepStyles;
+    ext[KEY].charStyles = keepLinks;
     saveSettings();
     return ext[KEY];
 }
