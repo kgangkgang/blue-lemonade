@@ -24,6 +24,12 @@ let lastTop = 0;
 let travel = 0;
 let userUntil = 0;
 let lastScrollAt = 0;
+// 3.5.2 바를 숨기고 꺼낸 직후 · 입력창 높이가 바뀐 직후의 스크롤은 손으로 민 것이 아니다. 맨 아래에서 톡으로 숨기면 채팅 칸 아래
+// 여백(--bl-form-h)이 바뀌어 브라우저가 스크롤 위치를 끌어올렸고, 손가락이 막 닿은 뒤라 "위로 올림"으로 세어 바가 곧바로 다시 나왔다
+// (시험에서 가끔 "톡 → 숨음 X" — 숨김 19ms 뒤 스크롤 5377/5873 · 꺼냄 68ms)
+const SETTLE_MS = 400;
+let settleUntil = 0;
+const settle = () => { settleUntil = performance.now() + SETTLE_MS; };
 
 const root = document.documentElement;
 const body = document.body;
@@ -45,6 +51,7 @@ function hide() {
     if (hidden() || busy()) return;
     if (document.activeElement?.closest?.('#form_sheld')) document.activeElement.blur(); // 빈 입력칸 초점 → 키보드도 내림
     body.classList.add('bl-bars-hidden');
+    settle();
     // 숨긴 동안 서랍이 열리면(단축키 · 다른 확장) 바를 꺼낸다
     holderObserver ??= new MutationObserver(() => { if (document.querySelector('#top-settings-holder .openDrawer')) show(); });
     const holder = document.getElementById('top-settings-holder');
@@ -54,10 +61,12 @@ function hide() {
 function show() {
     if (!hidden()) return;
     body.classList.remove('bl-bars-hidden');
+    settle();
     holderObserver?.disconnect();
 }
 
 function onScroll() {
+    if (performance.now() < settleUntil) { lastTop = chat.scrollTop; travel = 0; return; }
     const top = chat.scrollTop;
     const delta = top - lastTop;
     lastTop = top;
@@ -90,7 +99,10 @@ function onFocusIn(event) {
 
 function measureForm() {
     if (!form) return;
-    root.style.setProperty('--bl-form-h', `${Math.round(form.getBoundingClientRect().height)}px`);
+    const next = `${Math.round(form.getBoundingClientRect().height)}px`;
+    if (root.style.getPropertyValue('--bl-form-h') === next) return;
+    root.style.setProperty('--bl-form-h', next);
+    settle();
 }
 
 function start() {

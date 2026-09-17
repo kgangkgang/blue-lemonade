@@ -5,6 +5,7 @@
 // 문서 갈고리는 colorpop.js (늘 로드), 이 파일은 처음 누를 때 불러온다.
 import { getSettings } from './settings.js';
 import { paletteColors, parseColor } from './palettes.js';
+import { decodeAnyImage, imageWidth, imageHeight, IMAGE_ACCEPT } from './imagedecode.js';
 
 const RECENT_KEY = 'bl-color-recent';
 const RECENT_MAX = 8;
@@ -100,20 +101,6 @@ const PIC_MAX = 1024;
 let picture = null;    // { canvas, ctx, colors }
 let pictureView = false; // 마지막에 이미지 화면이었나 (다음에 열 때도 이미지로)
 
-async function decodeImage(file) {
-    try {
-        return await createImageBitmap(file);
-    } catch {
-        return await new Promise((resolve, reject) => {
-            const url = URL.createObjectURL(file);
-            const img = new Image();
-            img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
-            img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('decode')); };
-            img.src = url;
-        });
-    }
-}
-
 function dominantColors(source, max = 8) {
     const k = Math.min(1, 64 / Math.max(source.width, source.height));
     const c = document.createElement('canvas');
@@ -144,9 +131,14 @@ function dominantColors(source, max = 8) {
     return out.map(hexOf);
 }
 
-async function loadPicture(file) {
-    const bitmap = await decodeImage(file);
-    const w0 = bitmap.width, h0 = bitmap.height;
+/** 변환기를 받아야 하는 형식일 때 한 줄 알림 (처음엔 몇 초 · 이후 캐시) */
+export function slowNotice(kind) {
+    window.toastr?.info?.(kind === 'heic' ? 'HEIC 사진을 바꾸는 중…' : '이 형식은 변환기로 여는 중… (처음 한 번만 약 15MB 받아요)', '', { timeOut: 3000 });
+}
+
+async function loadPicture(file, onSlow) {
+    const bitmap = await decodeAnyImage(file, { onSlow });
+    const w0 = imageWidth(bitmap), h0 = imageHeight(bitmap);
     if (!w0 || !h0) throw new Error('empty');
     const k = Math.min(1, PIC_MAX / Math.max(w0, h0));
     const canvas = document.createElement('canvas');
@@ -392,7 +384,7 @@ export function openColorPick({ anchor, value, alpha = false, onInput, onClose }
                 <button type="button" data-act="pic-close" aria-label="색 판으로"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
             </div>
         </div>
-        <input type="file" class="bl-cp-file" accept="image/*">
+        <input type="file" class="bl-cp-file" accept="${IMAGE_ACCEPT}">
         <div class="bl-cp-mid">
             <button type="button" class="bl-cp-cmp" data-act="revert" aria-label="처음 색으로" style="--was:${original}"><i></i><b></b></button>
             <div class="bl-cp-bars">
@@ -464,11 +456,13 @@ export function openColorPick({ anchor, value, alpha = false, onInput, onClose }
         fileInput.value = '';
         if (!file) return;
         box.classList.add('pic-loading');
+        let heif = false; // 변환기를 받아야 했던 형식
         try {
-            picture = await loadPicture(file);
+            // HEIC 는 변환기를 받아 푸느라 몇 초 걸림 — 그동안 알림 한 줄
+            picture = await loadPicture(file, (kind) => { heif = true; slowNotice(kind); });
         } catch (error) {
             console.warn('[블루 레몬에이드] 이미지를 못 읽음', error);
-            window.toastr?.warning?.('이미지를 읽지 못했어요');
+            window.toastr?.warning?.(heif ? '이미지를 읽지 못했어요 — 인터넷 연결을 확인해 주세요' : '이미지를 읽지 못했어요');
             return;
         } finally {
             box.classList.remove('pic-loading');

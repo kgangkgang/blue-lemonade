@@ -1,4 +1,4 @@
-// 새로고침 첫 화면 (3.5.1) — 실리태번 뇌 로고가 테마보다 먼저 뜨던 것 (사용자: "뇌 → 레몬 → 첫 화면, 뇌 안 보고 싶음").
+// 새로고침 첫 화면 (3.5.1 · 3.5.2 글꼴) — 실리태번 뇌 로고가 테마보다 먼저 뜨던 것 (사용자: "뇌 → 레몬 → 첫 화면, 뇌 안 보고 싶음").
 // 확장은 실리태번이 설정을 읽은 뒤에야 불리므로 그 전의 스플래시를 JS 로는 못 바꾼다. 실리태번 index.html 이 <head> 에서
 // 불러오는 /css/user.css (= data/_css/user.css) 만 그보다 먼저다. 확장은 그 파일을 쓸 수 없으니, 사용자가 한 번만 맨 위에
 //   @import url("/user/files/blue-lemonade-splash.css");
@@ -44,6 +44,39 @@ export function checkSplash(onChange) {
 
 const safeValue = (value, fallback) => (/^[#\w\s(),.%-]+$/.test(value) ? value : fallback);
 const safeFont = value => value.replace(/[{}<>;\\]/g, '').trim() || 'sans-serif';
+// 3.5.2 글꼴: 첫 화면 글(SillyTavern · 불러오는 중)이 대체 글꼴로 먼저 그려졌다가 테마가 글꼴을 걸면 바뀌었다 (사용자: "글꼴 바뀌는 게
+// 조금 아쉬움"). 메뉴 글꼴(--salty-font-ui) 가족의 @font-face 중 그 글자들에 닿는 것만 (굵기는 브라우저가 쓰는 것만 받음) 파일에 같이 적고
+// font-display: block — 첫 그림부터 글꼴 파일을 받기 시작하고, 한 번 받아 두면 캐시에서 바로 읽혀 바뀌는 순간이 없다
+const SPLASH_TEXT = 'SillyTavern불러오는중';
+
+function rangeCovers(range, codes) {
+    const spans = range.split(',').map((part) => {
+        const m = part.trim().match(/^U\+([0-9a-f?]+)(?:-([0-9a-f]+))?$/i);
+        if (!m) return null;
+        const lo = parseInt(m[1].replace(/\?/g, '0'), 16);
+        const hi = m[2] ? parseInt(m[2], 16) : parseInt(m[1].replace(/\?/g, 'f'), 16);
+        return [lo, hi];
+    }).filter(Boolean);
+    return codes.some(c => spans.some(([lo, hi]) => c >= lo && c <= hi));
+}
+
+function splashFaces(stack) {
+    const css = document.getElementById('salty-fontfaces')?.textContent || '';
+    if (!css) return '';
+    const families = new Set(stack.split(',').map(f => f.trim().replace(/^['"]|['"]$/g, '').toLowerCase()).filter(Boolean));
+    const codes = [...new Set([...SPLASH_TEXT])].map(c => c.codePointAt(0));
+    const out = [];
+    for (const m of css.matchAll(/@font-face\s*\{([^}]*)\}/g)) {
+        const body = m[1].trim();
+        const family = /font-family:\s*([^;]+)/i.exec(body)?.[1].trim().replace(/^['"]|['"]$/g, '').toLowerCase();
+        if (!family || !families.has(family)) continue;
+        const range = /unicode-range:\s*([^;]+)/i.exec(body)?.[1];
+        if (range && !rangeCovers(range, codes)) continue;
+        out.push(`@font-face { ${body.replace(/font-display:\s*[\w-]+;?/i, '').replace(/;?\s*$/, ';')} font-display: block; }`);
+    }
+    return out.join('\n');
+}
+
 // 파일은 ASCII 로 (글자 인코딩 머리가 없어도 깨지지 않게) — CSS 이스케이프
 const ascii = text => text.replace(/[^\x20-\x7e\n]/g, c => `\\${c.codePointAt(0).toString(16)} `);
 
@@ -59,10 +92,12 @@ function buildCss(s) {
     const muted = read('--salty-muted', dark ? '#9FB0C0' : '#5B6B7B');
     const pop = read('--bl-pop', dark ? '#FFE973' : '#428DF0');
     const font = safeFont(cs.getPropertyValue('--salty-font-ui'));
+    const faces = splashFaces(font);
     const lemon = dark ? '#FFE973' : '#E9BE00';
     const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 448 512'><path fill='${lemon}' transform='translate(0 448) scale(1 -1)' d='${LEMON_PATH}'/></svg>`;
     const logo = `data:image/svg+xml,${svg.replace(/</g, '%3C').replace(/>/g, '%3E').replace(/#/g, '%23')}`;
     return ascii(`/* blue-lemonade-splash: Blue Lemonade rewrites this file when the palette changes - do not edit */
+${faces}
 #preloader { background-color: ${bg} !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 .popup:has(#loader.splash-screen) { padding: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; }
 .popup:has(#loader.splash-screen)::backdrop { background: ${bg} !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }

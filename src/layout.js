@@ -122,6 +122,24 @@ export function startCompactLayout() {
     }
     placeQuickReplies();
     if (sendForm) new MutationObserver(placeQuickReplies).observe(sendForm, { childList: true, subtree: true });
+    // 3.5.2 퀵 리플라이 줄은 가로 한 줄이라 마우스 휠(세로)로는 안 움직이고 Shift+휠이어야 넘어갔다 (사용자: "그냥 마우스 스크롤하면
+    // 옆으로 넘어가게"). 줄이 넘칠 때 세로 휠을 가로로 바꿔 준다 — 줄이 다시 그려져도 되게 입력판에 한 번만 건다.
+    // 휠 한 칸씩 부드럽게 가되 빨리 돌리면 목표를 이어 붙인다 (smooth 를 매번 새로 부르면 남은 거리를 잃음)
+    let qrTarget = null;
+    let qrIdle = 0;
+    sendForm?.addEventListener('wheel', (event) => {
+        if (!document.body.classList.contains('salty') || event.ctrlKey) return;
+        const bar = event.target.closest?.('#qr--bar');
+        if (!bar || bar.scrollWidth <= bar.clientWidth + 1) return;
+        const dy = event.deltaY * (event.deltaMode === 1 ? 32 : event.deltaMode === 2 ? bar.clientWidth : 1);
+        if (!dy || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return; // 가로 휠 · 트랙패드 옆으로 밀기는 브라우저가 알아서
+        event.preventDefault();
+        const max = bar.scrollWidth - bar.clientWidth;
+        qrTarget = Math.max(0, Math.min(max, (qrTarget ?? bar.scrollLeft) + dy));
+        bar.scrollTo({ left: qrTarget, behavior: Math.abs(dy) >= 40 ? 'smooth' : 'auto' });
+        clearTimeout(qrIdle);
+        qrIdle = setTimeout(() => { qrTarget = null; }, 250);
+    }, { passive: false });
     new MutationObserver(() => { placeQuickReplies(); refreshWorld(); refreshPersonaTitle(); }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
     mobile.addEventListener('change', placeQuickReplies);
     // 실리태번이 최근 대화 화면을 다시 그려도 버전 전체를 두 줄로 유지한다.

@@ -12,6 +12,7 @@ import { openNotice, currentVersion, hasUnseenNotice } from './notice.js';
 import { PRESETS, MAX_STYLES, captureStyle, applyStyleData, sameStyle, sharePayload, encodeStyle, decodeStyle, newStyleId, uniqueName, mergeFonts, currentKey, keyLabel } from './styles.js';
 import { charStyleModule } from './features.js';
 import { splashState, checkSplash, SPLASH_COMMAND, SPLASH_IMPORT } from './splash.js';
+import { decodeAnyImage, imageWidth, imageHeight, IMAGE_ACCEPT } from './imagedecode.js';
 
 // 브랜드 레몬 — ✦ 메뉴 · 확장 서랍 · 스플래시와 같은 속찬 레몬(폰트어썸 fa-lemon U+F094) 윤곽 그대로
 export const MARK = '<svg viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path transform="translate(0 448) scale(1 -1)" d="M448 352Q447 379 429 397Q411 415 384 416Q374 416 365 413Q348 407 330 404Q311 400 294 404Q237 418 180 399Q124 379 80 336Q37 292 17 236Q-2 179 12 122Q16 105 12 86Q9 68 3 51Q0 42 0 32Q1 5 19 -13Q37 -31 64 -32Q74 -32 83 -29Q100 -23 118 -20Q137 -16 154 -20Q211 -34 268 -15Q324 5 368 48Q411 92 431 148Q450 205 436 262Q432 279 436 298Q439 316 445 333Q448 342 448 352ZM213 321Q171 308 139 277Q108 245 95 203Q90 190 76 193Q62 198 65 212Q80 262 117 299Q154 336 204 351Q218 354 223 340Q226 326 213 321Z"/></svg>';
@@ -1024,9 +1025,9 @@ function maskControls(s) {
                 ${has && !current ? '<button class="salty-btn" data-act="mask-clear">지우기</button>' : ''}
             </div>
         </div>
-        <input type="file" accept="image/*" hidden data-file="mask">
+        <input type="file" accept="${IMAGE_ACCEPT}" hidden data-file="mask">
         ${has ? stack('맞추는 법', seg('image.maskFit', [['stretch', '늘리기'], ['contain', '맞추기']]), '늘리기: 도형을 그림 상자에 가득 · 맞추기: 도형 비율 그대로 가운데') : ''}
-        <p class="salty-note">배경이 투명한 PNG 의 <b>불투명한 부분</b>만 그림이 보여요. 폰에서는 갤러리에서 바로 고를 수 있어요. 512px 로 줄여 설정에 저장돼요.${has && !current ? ' <b>저장</b>을 누르면 목록에 커스텀 1 · 2 … 로 남아 나중에 골라 쓸 수 있어요.' : ''}</p>`;
+        <p class="salty-note">배경이 투명한 그림의 <b>불투명한 부분</b>만 그림이 보여요. 폰에서는 갤러리에서 바로 고를 수 있어요. 512px 로 줄여 설정에 저장돼요.${has && !current ? ' <b>저장</b>을 누르면 목록에 커스텀 1 · 2 … 로 남아 나중에 골라 쓸 수 있어요.' : ''}</p>`;
 }
 
 /** 지금 실제로 쓰이는 날씨 (3.4.0): 트래커 따라는 데우스 호환이 꺼져 있으면 끔으로 보인다 (값은 남음) */
@@ -1081,30 +1082,33 @@ function weatherImageControls(s) {
                 ${saved ? `<button class="salty-btn" data-act="wimg-replace" data-id="${saved.id}">바꾸기</button><button class="salty-btn salty-btn-danger" data-act="wimg-delete" data-id="${saved.id}">삭제</button>` : ''}
             </div>
         </div>
-        <input type="file" accept="image/*" hidden data-file="weather">
-        <p class="salty-note">배경이 투명한 PNG 가 잘 어울려요 (꽃잎 · 하트 · 별 …). 128px 로 줄여 저장돼요.</p>`;
+        <input type="file" accept="${IMAGE_ACCEPT}" hidden data-file="weather">
+        <p class="salty-note">배경이 투명한 그림이 잘 어울려요 (꽃잎 · 하트 · 별 …). 128px 로 줄여 저장돼요.</p>`;
 }
 
 /** 고른 그림 → 긴 변 128px PNG data URL (투명도 유지) */
 async function readWeatherImage(file) {
-    if (!file.type.startsWith('image/')) throw new Error('이미지 파일이 아니에요');
-    const url = URL.createObjectURL(file);
+    // 3.5.2 확장자를 가리지 않음 (imagedecode.js — HEIC · TIFF · PSD · RAW …)
+    const img = await openImage(file);
+    const max = 128;
+    const scale = Math.min(1, max / Math.max(imageWidth(img) || 1, imageHeight(img) || 1));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round((imageWidth(img) || 1) * scale));
+    canvas.height = Math.max(1, Math.round((imageHeight(img) || 1) * scale));
+    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+    img.close?.();
+    return canvas.toDataURL('image/png');
+}
+
+/** 아무 이미지 파일 → 그릴 것. 변환기를 받아야 하는 형식은 알림 한 줄 */
+async function openImage(file) {
     try {
-        const img = await new Promise((resolve, reject) => {
-            const image = new Image();
-            image.onload = () => resolve(image);
-            image.onerror = () => reject(new Error('이미지를 읽지 못했어요'));
-            image.src = url;
+        return await decodeAnyImage(file, {
+            onSlow: kind => toastr.info(kind === 'heic' ? 'HEIC 사진을 바꾸는 중…' : '이 형식은 변환기로 여는 중… (처음 한 번만 약 15MB 받아요)', '', { timeOut: 3000 }),
         });
-        const max = 128;
-        const scale = Math.min(1, max / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.max(1, Math.round((img.naturalWidth || 1) * scale));
-        canvas.height = Math.max(1, Math.round((img.naturalHeight || 1) * scale));
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        return canvas.toDataURL('image/png');
-    } finally {
-        URL.revokeObjectURL(url);
+    } catch (error) {
+        console.warn('[Blue Lemonade] 이미지를 못 읽음', error);
+        throw new Error('이미지를 읽지 못했어요');
     }
 }
 
@@ -1126,30 +1130,21 @@ function shapePicker(current) {
  * 투명한 곳이 하나도 없으면(JPG 등) 오려질 데가 없어 알려 준다.
  */
 async function readMaskImage(file) {
-    if (!file.type.startsWith('image/')) throw new Error('이미지 파일이 아니에요');
-    const url = URL.createObjectURL(file);
-    try {
-        const img = await new Promise((resolve, reject) => {
-            const image = new Image();
-            image.onload = () => resolve(image);
-            image.onerror = () => reject(new Error('이미지를 읽지 못했어요'));
-            image.src = url;
-        });
-        const max = 512;
-        const scale = Math.min(1, max / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.max(1, Math.round((img.naturalWidth || 1) * scale));
-        canvas.height = Math.max(1, Math.round((img.naturalHeight || 1) * scale));
-        const g = canvas.getContext('2d');
-        g.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const data = g.getImageData(0, 0, canvas.width, canvas.height).data;
-        let clear = 0;
-        for (let i = 3; i < data.length; i += 4) if (data[i] < 128) clear++;
-        if (clear === 0) throw new Error('투명한 부분이 없는 그림이에요. 배경이 투명한 PNG 를 골라 주세요');
-        return canvas.toDataURL('image/png');
-    } finally {
-        URL.revokeObjectURL(url);
-    }
+    // 3.5.2 확장자를 가리지 않음 — 투명도가 있는 형식이면 무엇이든 (PNG · WebP · GIF · AVIF · HEIC · TIFF · PSD · TGA · QOI · SVG …)
+    const img = await openImage(file);
+    const max = 512;
+    const scale = Math.min(1, max / Math.max(imageWidth(img) || 1, imageHeight(img) || 1));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round((imageWidth(img) || 1) * scale));
+    canvas.height = Math.max(1, Math.round((imageHeight(img) || 1) * scale));
+    const g = canvas.getContext('2d', { willReadFrequently: true });
+    g.drawImage(img, 0, 0, canvas.width, canvas.height);
+    img.close?.();
+    const data = g.getImageData(0, 0, canvas.width, canvas.height).data;
+    let clear = 0;
+    for (let i = 3; i < data.length; i += 4) if (data[i] < 128) clear++;
+    if (clear === 0) throw new Error('투명한 부분이 없는 그림이에요. 배경이 투명한 그림을 골라 주세요');
+    return canvas.toDataURL('image/png');
 }
 
 function tabImage(s, sub) {

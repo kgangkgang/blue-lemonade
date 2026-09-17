@@ -6,6 +6,7 @@ import { buildComposite, slotStack, findFont } from './fonts.js';
 import { iconsCss } from './icons.js';
 import { classifyAll } from './assets.js';
 import { syncFeatures } from './features.js';
+import { syncSplash } from './splash.js';
 
 function styleTag(id) {
     let el = document.getElementById(id);
@@ -125,6 +126,7 @@ async function applyFonts(s) {
     if (css !== lastFaces) {
         styleTag('salty-fontfaces').textContent = css;
         lastFaces = css;
+        syncSplash(s); // 3.5.2 새로고침 첫 화면 파일에 메뉴 글꼴도 (글꼴 CSS 는 applyAll 보다 늦게 옴)
     }
     const failed = [...new Set(results.flatMap(r => r.failed))];
     if (failed.length && !applyFonts.warned) {
