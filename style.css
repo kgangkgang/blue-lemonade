@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 37개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 4ec616a67a9f) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 37개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 461c314dd22a) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 10px;
@@ -707,6 +707,14 @@ body.salty .select2-dropdown {
   background: var(--bl-overlay) !important;
   box-shadow: var(--bl-e4) !important;
   color: var(--salty-text) !important;
+}
+body.salty .select2-results__options {
+  max-height: min(300px, max(132px, 52svh)) !important;
+}
+@media (max-height: 620px) {
+  body.salty .select2-results__options {
+    max-height: max(96px, 34svh) !important;
+  }
 }
 body.salty .select2-results__option {
   padding: 10px var(--bl-s3) !important;
