@@ -93,6 +93,15 @@ function buildCss(s) {
     const pop = read('--bl-pop', dark ? '#FFE973' : '#428DF0');
     const font = safeFont(cs.getPropertyValue('--salty-font-ui'));
     const faces = splashFaces(font);
+    // 로딩 칸의 글자 크기 · 줄 간격도 (톱니가 1.7em 이라 테마가 팝업 글자를 --bl-fs-body · 1.55 로 바꾸는 순간 커져 레몬 · 글이 3px 밀렸음)
+    // 3.5.3 글자 크기는 px 로 박는다: 첫 화면 때는 실리태번 설정 전이라 --mainFontSize 가 기본값이라, 테마가 붙어 사용자 글자 크기로
+    // 다시 재면 "SillyTavern" 이 커지고 레몬이 몇 px 밀려 한 번 깜빡였다 (사용자: "새로고침하면 글꼴 바뀜" — 녹화로 보니 크기 차이)
+    const probe = document.createElement('span');
+    probe.style.cssText = 'position:absolute;visibility:hidden;font-size:var(--mainFontSize, 15px)';
+    document.body.append(probe);
+    const main = parseFloat(getComputedStyle(probe).fontSize) || 15;
+    probe.remove();
+    const px = k => `${Math.round(main * k * 100) / 100}px`;
     const lemon = dark ? '#FFE973' : '#E9BE00';
     const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 448 512'><path fill='${lemon}' transform='translate(0 448) scale(1 -1)' d='${LEMON_PATH}'/></svg>`;
     const logo = `data:image/svg+xml,${svg.replace(/</g, '%3C').replace(/>/g, '%3E').replace(/#/g, '%23')}`;
@@ -101,8 +110,8 @@ ${faces}
 #preloader { background-color: ${bg} !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 .popup:has(#loader.splash-screen) { padding: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; }
 .popup:has(#loader.splash-screen)::backdrop { background: ${bg} !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
-#loader.splash-screen { --bl-sp-title: calc(var(--mainFontSize, 15px) * 1.467); --bl-sp-sub: calc(var(--mainFontSize, 15px) * 0.867); gap: 20px !important; filter: none !important; }
-@media screen and (max-width: 1000px) { #loader.splash-screen { --bl-sp-title: calc(var(--mainFontSize, 15px) * 1.333); --bl-sp-sub: calc(var(--mainFontSize, 15px) * 0.833); } }
+#loader.splash-screen { --bl-sp-title: ${px(1.467)}; --bl-sp-sub: ${px(0.867)}; font-size: ${px(1)}; line-height: 1.55; gap: 20px !important; filter: none !important; }
+@media screen and (max-width: 1000px) { #loader.splash-screen { --bl-sp-title: ${px(1.333)}; --bl-sp-sub: ${px(0.833)}; font-size: ${px(0.933)}; } }
 #loader.splash-screen .splash-logo { order: 1; width: min(150px, 50%) !important; height: auto !important; filter: none !important; content: url("${logo}"); }
 #loader.splash-screen .splash-message { order: 2; display: block !important; margin: 0 !important; font-size: 0 !important; line-height: 0 !important; letter-spacing: 0 !important; opacity: 1 !important; text-align: center; }
 #loader.splash-screen .splash-message::before { content: "SillyTavern"; display: block; color: ${text}; font-family: ${font}; font-size: var(--bl-sp-title); font-weight: 700; line-height: 1.25; letter-spacing: 0.01em; }

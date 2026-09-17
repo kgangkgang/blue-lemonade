@@ -119,7 +119,48 @@ export function startCompactLayout() {
             if (!bar.hasAttribute('tabindex')) bar.tabIndex = 0;
             bar.setAttribute('aria-label', '빠른 답장');
         }
+        syncQrFind(bar, enabled);
+        updateQrEdges(bar);
     }
+    // 3.5.3 QR 줄 앞 돋보기: 모든 퀵 리플라이를 목록으로 찾기 (qrfind.js — 처음 누를 때 불러옴). 확장이 줄을 다시 그리면 다시 붙임
+    function syncQrFind(bar, enabled) {
+        let find = bar.querySelector(':scope > #bl-qr-find');
+        const hasButtons = !!bar.querySelector('.qr--button');
+        if (!enabled || !hasButtons) { find?.remove(); return; }
+        if (!find) {
+            find = document.createElement('button');
+            find.type = 'button';
+            find.id = 'bl-qr-find';
+            find.className = 'menu_button';
+            find.setAttribute('aria-label', '퀵 리플라이 찾기');
+            find.innerHTML = '<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>';
+            find.addEventListener('click', (event) => {
+                event.stopPropagation();
+                import('./qrfind.js').then(m => m.openQrFind(find)).catch(error => console.warn('[Blue Lemonade] 퀵 리플라이 찾기', error));
+            });
+        }
+        const pop = bar.querySelector(':scope > #qr--popoutTrigger');
+        const wanted = pop ? pop.nextElementSibling : bar.firstElementChild;
+        if (wanted !== find) (pop ? pop.after(find) : bar.prepend(find));
+    }
+    // 3.5.3 넘치는 쪽 끝을 흐리게 (더 있다는 표시). 앞에 붙은 버튼(창 띄우기 · 돋보기) 폭만큼은 흐리지 않음
+    function updateQrEdges(bar) {
+        if (!bar || !document.body.classList.contains('salty')) return;
+        const max = bar.scrollWidth - bar.clientWidth;
+        bar.classList.toggle('bl-qr-more-left', max > 2 && bar.scrollLeft > 2);
+        bar.classList.toggle('bl-qr-more-right', max > 2 && bar.scrollLeft < max - 2);
+        const leads = [...bar.querySelectorAll(':scope > #qr--popoutTrigger, :scope > #bl-qr-find')];
+        // sticky 의 left 는 줄의 안쪽 여백 안쪽부터 잰다 → 여백 · 테두리를 뺌 (폰 줄은 좌우 4px — 안 빼면 흐림이 4px 떨어져 그 틈으로 글자가 보임)
+        const cs = getComputedStyle(bar);
+        const origin = bar.getBoundingClientRect().left + parseFloat(cs.borderLeftWidth) + parseFloat(cs.paddingLeft);
+        const lead = leads.length ? Math.max(...leads.map(el => el.getBoundingClientRect().right)) - origin : 0;
+        bar.style.setProperty('--bl-qr-lead', `${Math.max(0, Math.round(lead))}px`);
+        const pop = bar.querySelector(':scope > #qr--popoutTrigger');
+        const find = bar.querySelector(':scope > #bl-qr-find');
+        if (find) find.style.left = pop ? `${Math.round(pop.getBoundingClientRect().width) + 5}px` : '0px';
+    }
+    sendForm?.addEventListener('scroll', (event) => { if (event.target.id === 'qr--bar') updateQrEdges(event.target); }, true);
+    window.addEventListener('resize', () => updateQrEdges(sendForm?.querySelector('#qr--bar')));
     placeQuickReplies();
     if (sendForm) new MutationObserver(placeQuickReplies).observe(sendForm, { childList: true, subtree: true });
     // 3.5.2 퀵 리플라이 줄은 가로 한 줄이라 마우스 휠(세로)로는 안 움직이고 Shift+휠이어야 넘어갔다 (사용자: "그냥 마우스 스크롤하면
@@ -140,6 +181,37 @@ export function startCompactLayout() {
         clearTimeout(qrIdle);
         qrIdle = setTimeout(() => { qrTarget = null; }, 250);
     }, { passive: false });
+    // 3.5.3 PC 에서 QR 줄을 마우스로 잡아 끌어 넘기기. 6px 넘게 움직였을 때만 끌기 — 그 뒤 따라오는 click 은 삼켜 버튼이 눌리지 않게
+    let qrDrag = null;
+    sendForm?.addEventListener('pointerdown', (event) => {
+        if (event.pointerType !== 'mouse' || event.button !== 0 || !document.body.classList.contains('salty')) return;
+        const bar = event.target.closest?.('#qr--bar');
+        if (!bar || bar.scrollWidth <= bar.clientWidth + 1 || event.target.closest('#bl-qr-find, #qr--popoutTrigger')) return;
+        qrDrag = { bar, x: event.clientX, left: bar.scrollLeft, moved: false, id: event.pointerId };
+    });
+    window.addEventListener('pointermove', (event) => {
+        if (!qrDrag || event.pointerId !== qrDrag.id) return;
+        const dx = event.clientX - qrDrag.x;
+        if (!qrDrag.moved && Math.abs(dx) < 6) return;
+        if (!qrDrag.moved) {
+            qrDrag.moved = true;
+            qrDrag.bar.classList.add('bl-qr-dragging');
+            qrTarget = null;
+        }
+        qrDrag.bar.scrollLeft = qrDrag.left - dx;
+    });
+    const endDrag = () => {
+        if (!qrDrag) return;
+        const { bar, moved } = qrDrag;
+        qrDrag = null;
+        bar.classList.remove('bl-qr-dragging');
+        if (!moved) return;
+        const swallow = (e) => { e.preventDefault(); e.stopPropagation(); };
+        window.addEventListener('click', swallow, { capture: true, once: true });
+        setTimeout(() => window.removeEventListener('click', swallow, { capture: true }), 0);
+    };
+    window.addEventListener('pointerup', endDrag);
+    window.addEventListener('pointercancel', endDrag);
     new MutationObserver(() => { placeQuickReplies(); refreshWorld(); refreshPersonaTitle(); }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
     mobile.addEventListener('change', placeQuickReplies);
     // 실리태번이 최근 대화 화면을 다시 그려도 버전 전체를 두 줄로 유지한다.

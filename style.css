@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 36개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 5ef1c33ecbab) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 36개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build f805963d08d5) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 10px;
@@ -11342,6 +11342,24 @@ body.salty #send_form #qr--bar .qr--button { flex-shrink: 0; min-height: 30px; p
 body.salty #send_form #qr--bar #qr--popoutTrigger { position: sticky; left: 0; flex-shrink: 0; order: -1; background: var(--bl-card); }
 body.salty #send_form #qr--bar:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: -2px; }
 body.salty #send_form #qr--bar:not(:has(.qr--button, #qr--popoutTrigger)) { display: none; }
+body.salty #send_form #qr--bar #bl-qr-find { position: sticky; left: 0; z-index: 1; flex-shrink: 0; order: -1; display: grid; place-items: center; min-width: 30px; min-height: 30px; margin: 0; padding: 0 8px; border: 0; border-radius: 7px;  color: var(--salty-muted); box-shadow: none; font-size: 12px; cursor: pointer; }
+body.salty #send_form #qr--bar #bl-qr-find:hover { color: var(--salty-text); }
+body.salty #send_form #qr--bar :is(#bl-qr-find, #qr--popoutTrigger) { z-index: 2; background: linear-gradient(var(--bl-hover), var(--bl-hover)), var(--salty-surface) !important; }
+body.salty #send_form #qr--bar::before,
+body.salty #send_form #qr--bar::after { content: ''; position: sticky; z-index: 1; flex: 0 0 28px; align-self: stretch; pointer-events: none; opacity: 0; transition: opacity 0.15s ease; }
+body.salty #send_form #qr--bar::before { left: var(--bl-qr-lead, 0px); margin-right: -33px; background: linear-gradient(to right, var(--salty-surface), transparent); }
+body.salty #send_form #qr--bar::after { right: 0; margin-left: -33px; background: linear-gradient(to left, var(--salty-surface), transparent); }
+body.salty #send_form #qr--bar.bl-qr-more-left::before,
+body.salty #send_form #qr--bar.bl-qr-more-right::after { opacity: 1; }
+@media (hover: hover) and (pointer: fine) {
+  body.salty #send_form #qr--bar:is(.bl-qr-more-left, .bl-qr-more-right) { cursor: grab; }
+  body.salty #send_form #qr--bar.bl-qr-dragging, body.salty #send_form #qr--bar.bl-qr-dragging * { cursor: grabbing !important; user-select: none; }
+}
+body.salty .bl-qrf .salty-pick-rows > button { flex-direction: column; align-items: stretch; justify-content: center; gap: 1px; padding: 6px 12px 6px 14px; }
+body.salty .bl-qrf .bl-qrf-name { display: flex; align-items: center; gap: 7px; min-width: 0; }
+body.salty .bl-qrf .bl-qrf-name b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.salty .bl-qrf .bl-qrf-name i { flex: none; width: 14px; color: var(--salty-muted); font-size: 12px; text-align: center; }
+body.salty .bl-qrf .salty-pick-rows > button small { overflow: hidden; color: var(--salty-muted); font-size: 11.5px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 1000px) {
   body.salty #nonQRFormItems > #qr--bar { order: 7; flex: 1 1 0 !important; width: 0; max-width: 100%; padding: 2px 4px; align-self: center; }
 }
@@ -12997,35 +13015,48 @@ body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar {
   box-shadow: var(--bl-e2);
 }
 body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) repeat(4, 34px);
-  gap: 6px 2px;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
-body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > :is(.standoutHeader, .standoutHeader + .flex-container),
-body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader > .flex-container,
-body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader + .flex-container > .flex-container {
-  display: contents;
+body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > :is(.standoutHeader, .standoutHeader + .flex-container) {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center;
+  gap: 2px !important;
+  min-width: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > :is(.standoutHeader, .standoutHeader + .flex-container) > :not(.flex-container) {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader > strong {
-  grid-area: 1 / 1;
-  min-width: 0;
   padding-left: 2px;
 }
-body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader > .flex-container > .menu_button {
-  grid-row: 1;
-  justify-self: center;
+body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader + .flex-container > :not(.flex-container) {
+  width: auto !important;
   margin: 0 !important;
 }
-body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader + .flex-container > select {
-  grid-area: 2 / 1 / 3 / 3;
-  width: auto !important;
+body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader + .flex-container > :not(.flex-container) :is(select, .select2-container) {
+  width: 100% !important;
+  max-width: 100%;
   min-width: 0;
   margin: 0 !important;
 }
-body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader + .flex-container > .flex-container > .menu_button {
-  grid-row: 2;
-  justify-self: center;
+body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > :is(.standoutHeader, .standoutHeader + .flex-container) > .flex-container {
+  display: flex !important;
+  flex: none;
+  flex-wrap: nowrap !important;
+  gap: 2px !important;
+  margin: 0 !important;
+}
+body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > :is(.standoutHeader, .standoutHeader + .flex-container) > .flex-container > :is(.menu_button, label.menu_button) {
+  flex: none;
+  justify-content: center;
+  width: 34px;
+  min-width: 34px;
   margin: 0 !important;
 }
 /* css/28-late-fixes.css */
