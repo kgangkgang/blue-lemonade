@@ -203,6 +203,7 @@ const NUM = {
     'shadow.angle': { unit: '도' },
     'shadow.distance': { unit: 'px' },
     'shadow.blur': { unit: 'px' },
+    'chat.weatherOpacity': { unit: '%' }, 'chat.weatherSize': { unit: '%' }, 'chat.weatherSpeed': { unit: '%' }, 'chat.weatherAngle': { unit: '도' },
 };
 const numText = (path, v) => String(Number((Number(v) / (NUM[path]?.scale || 1)).toFixed(4)));
 // 숫자칸 폭 = 값 글자 수 (3.3.0 — 자간 -0.0075 같은 긴 값이 잘리지 않게). CSS 가 1ch 단위로 폭을 잡는다
@@ -916,9 +917,16 @@ function tabChat(s, sub) {
             ${s.chat.streamFade && stFade ? row('실리태번 페이드 인', toggle('st.streamFadeIn', true), '끄면 빨라지고 위 옵션이 대신해요') : ''}
         </div>
         ${cap('날씨')}<div class="salty-group">
-            ${stack('채팅 뒤 효과', seg('chat.weather', [['off', '끔'], ['rain', '비'], ['snow', '눈'], ['tracker', '트래커 따라']]), s.chat.weather === 'tracker' ? '데우스 트래커 날씨가 비 · 눈이면 내려요' : '')}
+            ${stack('채팅 뒤 효과', seg('chat.weather', [['off', '끔'], ['rain', '비'], ['snow', '눈'], ['custom', '내 그림'], ['tracker', '트래커 따라']]), s.chat.weather === 'tracker' ? '데우스 트래커 날씨가 비 · 눈이면 내려요' : '')}
+            ${s.chat.weather === 'custom' ? weatherImageControls(s) : ''}
             ${s.chat.weather && s.chat.weather !== 'off' ? stack('세기', seg('chat.weatherLevel', [[1, '약하게'], [2, '보통'], [3, '강하게']])) : ''}
         </div>
+        ${s.chat.weather && s.chat.weather !== 'off' ? `<div class="salty-group">
+            ${slider('chat.weatherOpacity', '투명도', 10, 100, 1, 100)}
+            ${slider('chat.weatherSize', '크기', 40, 250, 1, 100)}
+            ${slider('chat.weatherSpeed', '속도', 20, 250, 1, 100)}
+            ${slider('chat.weatherAngle', '각도', -45, 45, 1, -9)}
+        </div>` : ''}
         ${cap('폰')}<div class="salty-group">
             ${phoneMock(s)}
             ${row('스크롤하면 바 숨기기', toggle('reader.autoHide', !!s.reader?.autoHide), '아래로 읽으면 숨고, 살짝 올리거나 누르면 나와요')}
@@ -996,6 +1004,51 @@ function maskControls(s) {
         <input type="file" accept="image/*" hidden data-file="mask">
         ${has ? stack('맞추는 법', seg('image.maskFit', [['stretch', '늘리기'], ['contain', '맞추기']]), '늘리기: 도형을 그림 상자에 가득 · 맞추기: 도형 비율 그대로 가운데') : ''}
         <p class="salty-note">배경이 투명한 PNG 의 <b>불투명한 부분</b>만 그림이 보여요. 폰에서는 갤러리에서 바로 고를 수 있어요. 512px 로 줄여 설정에 저장돼요.${has && !current ? ' <b>저장</b>을 누르면 목록에 커스텀 1 · 2 … 로 남아 나중에 골라 쓸 수 있어요.' : ''}</p>`;
+}
+
+/** 날씨 효과 내 그림 (3.3.1): 저장한 그림 목록 + 고르기 · 저장 · 바꾸기 · 삭제 — 이미지 탭 커스텀 도형과 같은 모양 */
+const WEATHER_IMAGE_SLOTS = 12;
+let weatherReplaceId = '';
+function weatherImageControls(s) {
+    const current = s.chat.weatherImage;
+    const saved = s.weatherImages.find(item => item.id === s.chat.weatherImageId) || null;
+    const thumb = data => `<span class="salty-weather-thumb" style="background-image:url(&quot;${data}&quot;)" aria-hidden="true"></span>`;
+    const library = s.weatherImages.length ? `<div class="salty-mask-lib" role="listbox" aria-label="저장한 그림">${s.weatherImages.map(item =>
+        `<button type="button" class="salty-mask-item${item.id === s.chat.weatherImageId ? ' on' : ''}" data-act="wimg-use" data-id="${item.id}" aria-pressed="${item.id === s.chat.weatherImageId}">${thumb(item.data)}<small>${esc(item.name)}</small></button>`).join('')}</div>` : '';
+    return `${library}
+        <div class="salty-mask-row">
+            ${current ? thumb(current) : '<span class="salty-weather-thumb" aria-hidden="true"></span>'}
+            <div class="salty-btns">
+                <button class="salty-btn" data-act="wimg-pick">${current ? '다른 그림 고르기' : '그림 고르기'}</button>
+                ${current && !saved ? '<button class="salty-btn" data-act="wimg-save">저장</button>' : ''}
+                ${saved ? `<button class="salty-btn" data-act="wimg-replace" data-id="${saved.id}">바꾸기</button><button class="salty-btn salty-btn-danger" data-act="wimg-delete" data-id="${saved.id}">삭제</button>` : ''}
+            </div>
+        </div>
+        <input type="file" accept="image/*" hidden data-file="weather">
+        <p class="salty-note">배경이 투명한 PNG 가 잘 어울려요 (꽃잎 · 하트 · 별 …). 128px 로 줄여 저장돼요.</p>`;
+}
+
+/** 고른 그림 → 긴 변 128px PNG data URL (투명도 유지) */
+async function readWeatherImage(file) {
+    if (!file.type.startsWith('image/')) throw new Error('이미지 파일이 아니에요');
+    const url = URL.createObjectURL(file);
+    try {
+        const img = await new Promise((resolve, reject) => {
+            const image = new Image();
+            image.onload = () => resolve(image);
+            image.onerror = () => reject(new Error('이미지를 읽지 못했어요'));
+            image.src = url;
+        });
+        const max = 128;
+        const scale = Math.min(1, max / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round((img.naturalWidth || 1) * scale));
+        canvas.height = Math.max(1, Math.round((img.naturalHeight || 1) * scale));
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL('image/png');
+    } finally {
+        URL.revokeObjectURL(url);
+    }
 }
 
 /** 새 칸 이름: 커스텀 1, 2 … (지운 번호는 안 다시 씀) */
@@ -1598,6 +1651,42 @@ function bind(root) {
                     refreshPanels();
                     break;
                 }
+                case 'wimg-pick':
+                    weatherReplaceId = '';
+                    root.querySelector('input[data-file="weather"]')?.click();
+                    break;
+                case 'wimg-replace':
+                    weatherReplaceId = el.dataset.id;
+                    root.querySelector('input[data-file="weather"]')?.click();
+                    break;
+                case 'wimg-save':
+                    update((st) => {
+                        if (!st.chat.weatherImage) return;
+                        if (st.weatherImages.length >= WEATHER_IMAGE_SLOTS) { toastr.warning(`그림은 ${WEATHER_IMAGE_SLOTS}개까지 저장할 수 있어요`, 'Blue Lemonade'); return; }
+                        const used = st.weatherImages.map(item => Number((/^그림 (\d+)$/.exec(item.name) || [])[1]) || 0);
+                        const item = { id: `w${Date.now().toString(36)}`, name: `그림 ${Math.max(0, ...used) + 1}`, data: st.chat.weatherImage };
+                        st.weatherImages.push(item);
+                        st.chat.weatherImageId = item.id;
+                    });
+                    break;
+                case 'wimg-use':
+                    update((st) => {
+                        const item = st.weatherImages.find(x => x.id === el.dataset.id);
+                        if (!item) return;
+                        st.chat.weatherImage = item.data;
+                        st.chat.weatherImageId = item.id;
+                        st.chat.weather = 'custom';
+                    });
+                    break;
+                case 'wimg-delete': {
+                    const item = getSettings().weatherImages.find(x => x.id === el.dataset.id);
+                    if (!item || !confirm(`${item.name}을(를) 지울까요?`)) return;
+                    update((st) => {
+                        st.weatherImages = st.weatherImages.filter(x => x.id !== item.id);
+                        if (st.chat.weatherImageId === item.id) { st.chat.weatherImageId = ''; st.chat.weatherImage = ''; }
+                    });
+                    break;
+                }
                 case 'style-preset': {
                     const preset = PRESETS.find(x => x.id === el.dataset.id);
                     if (preset) wearStyle(preset.data(), preset.name);
@@ -1811,6 +1900,23 @@ function bind(root) {
                 });
             } catch (error) {
                 toastr.error(error.message, 'Blue Lemonade');
+            }
+            target.value = '';
+            return;
+        }
+        if (target.matches('input[data-file="weather"]') && target.files?.[0]) {
+            try {
+                const data = await readWeatherImage(target.files[0]);
+                const replace = weatherReplaceId;
+                weatherReplaceId = '';
+                update((st) => {
+                    st.chat.weatherImage = data;
+                    st.chat.weather = 'custom';
+                    const slot = replace ? st.weatherImages.find(x => x.id === replace) : null;
+                    if (slot) { slot.data = data; st.chat.weatherImageId = slot.id; } else st.chat.weatherImageId = '';
+                });
+            } catch (error) {
+                toastr.error(error.message || String(error), 'Blue Lemonade');
             }
             target.value = '';
             return;

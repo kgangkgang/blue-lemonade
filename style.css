@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 35개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 839df354a41e) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 35개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 36c7e1b109b7) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 10px;
@@ -10009,6 +10009,9 @@ body.salty-dark .salty-panel {
   font-weight: 400;
   line-height: 1.6;
 }
+.salty-panel.in-popup > .salty-head {
+  padding-top: 8px;
+}
 .salty-ver:focus-visible {
   outline: none;
   box-shadow: var(--ring);
@@ -14107,6 +14110,19 @@ body.salty .salty-preview > canvas.bl-weather-pv {
 body.salty .salty-preview.bl-weather-pv-on > .mes {
   position: relative;
   z-index: 1;
+}
+.salty-weather-thumb {
+  display: inline-block;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--shade) center / contain no-repeat;
+  box-shadow: inset 0 0 0 1px var(--shade-2);
+}
+.salty-mask-item .salty-weather-thumb {
+  width: 36px;
+  height: 36px;
 }
 /* css/33-panel-columns.css */
 @media (max-width: 1000px) {

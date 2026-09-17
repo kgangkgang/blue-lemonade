@@ -20,6 +20,7 @@ export function captureStyle(s = getSettings()) {
     for (const key of CHAT_BEHAVIOR) delete data.chat[key];
     delete data.image.masks;
     if (data.image.maskId && s.image.masks?.some(m => m.id === data.image.maskId)) data.image.mask = '';
+    if (data.chat.weatherImageId && s.weatherImages?.some(w => w.id === data.chat.weatherImageId)) data.chat.weatherImage = '';
     return data;
 }
 
@@ -37,6 +38,10 @@ export function applyStyleData(s, data) {
             continue;
         }
         s[key] = structuredClone(value);
+    }
+    if (s.chat?.weatherImageId && !s.chat.weatherImage) {
+        const pic = s.weatherImages?.find(w => w.id === s.chat.weatherImageId);
+        if (pic) s.chat.weatherImage = pic.data;
     }
     // 도형 id 만 든 스타일: 내 도형 목록에서 그림을 찾아 채운다 (없으면 네모처럼 보임)
     if (s.image?.maskId && !s.image.mask) {
@@ -128,6 +133,11 @@ export function sharePayload(name, data, s = getSettings()) {
         if (mask) style.image.mask = mask.data;
     }
     if (style.image) style.image.maskId = '';
+    if (style.chat?.weatherImageId && !style.chat.weatherImage) {
+        const pic = s.weatherImages?.find(w => w.id === style.chat.weatherImageId);
+        if (pic) style.chat.weatherImage = pic.data;
+    }
+    if (style.chat) style.chat.weatherImageId = '';
     return { saltyStyle: 1, name: String(name || '스타일').slice(0, 24), style, fonts: usedCustomFonts(style, s) };
 }
 

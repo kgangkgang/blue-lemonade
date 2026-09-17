@@ -47,11 +47,13 @@ export const DEFAULTS = {
     shadow: { on: false, targets: { text: false, dialogue: true, em: false, strong: false, code: false }, color: '#000000', alpha: 45, angle: 135, distance: 2, blur: 3 },   // style: marker | full | bold | tint | plain · tilt(형광펜 기울기): flat | slant | steep · markerThick(형광펜 두께): 글자 상자 높이 % · markerPos(위치): center 가운데 | bottom 아래(기울기를 눕혀 밑줄처럼 — 두께는 굵기 값 그대로)
     em: { italic: false, weight: 400, size: null, letterSpacing: null },   // *속마음* — 기울일지, 굵기, 크기(px · null = 본문과 같게), 자간(1/100 em · null = 본문과 같게)
     strong: { weight: 650, size: null, letterSpacing: null },              // **강조**
-    chat: { user: 'bubble', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, streamFade: false, demSkin: false, demFold: true, weather: 'off', weatherLevel: 2, toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } } }, // streamFade: 스트리밍 중 새 글자만 가볍게 페이드 인 (2.9.5, streamfade.js — 실리태번 페이드 인이 켜져 있으면 쉼) · tone: 톤 맞추기의 채도 · 밝기(%) 화이트/나이트 따로 (2.6.1) · toneInline: 본문 글자색의 색상만 두고 채도 · 밝기를 테마에 맞춤 (2.6.0, unifyInline 이 꺼져 있을 때) · selectPop: 실리태번 select 를 테마가 그린 목록 팝업으로 (2.5.0) · regexIcons: 정규식 카드 제목 앞 이모티콘 보이기 · unifyRegex: 프리셋 정규식 카드(DEM 등)의 모듈별 색 → 포인트색 하나 · unifyInline: 메시지에 적힌 글자색(<font color> · style) 무시
+    chat: { user: 'bubble', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, streamFade: false, demSkin: false, demFold: true, weather: 'off', weatherLevel: 2, weatherOpacity: 100, weatherSize: 100, weatherSpeed: 100, weatherAngle: -9, weatherImage: '', weatherImageId: '', toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } } }, // streamFade: 스트리밍 중 새 글자만 가볍게 페이드 인 (2.9.5, streamfade.js — 실리태번 페이드 인이 켜져 있으면 쉼) · tone: 톤 맞추기의 채도 · 밝기(%) 화이트/나이트 따로 (2.6.1) · toneInline: 본문 글자색의 색상만 두고 채도 · 밝기를 테마에 맞춤 (2.6.0, unifyInline 이 꺼져 있을 때) · selectPop: 실리태번 select 를 테마가 그린 목록 팝업으로 (2.5.0) · regexIcons: 정규식 카드 제목 앞 이모티콘 보이기 · unifyRegex: 프리셋 정규식 카드(DEM 등)의 모듈별 색 → 포인트색 하나 · unifyInline: 메시지에 적힌 글자색(<font color> · style) 무시
     // 3.1.0: 몰입 읽기(폰 — 아래로 밀면 위 바 · 입력창 숨김, reader.js) · 한 손 버튼 줄(입력판 위 ‹ › 사칭 · 이어 쓰기 · 다시 생성, onehand.js)
     reader: { autoHide: false },
     // 3.2.0 화이트 · 나이트 자동: by = system(기기 다크 모드) | time(night 부터 day 까지 나이트) — automode.js
     auto: { on: false, by: 'system', night: '20:00', day: '07:00' },
+    // 3.3.1 날씨 효과의 내 그림 목록 [{ id, name, data }] — 스타일에는 안 담김 (고른 그림만 chat.weatherImage)
+    weatherImages: [],
     onehand: { on: false, swipe: true, imp: true, cont: true, regen: true },
     // 3.1.0 스타일: 내 스타일 목록 [{ id, name, data }] · 캐릭터 연결 { 'c:아바타' | 'g:그룹': 스타일 id } · 지금 입힌 캐릭터 스타일 { id, key } · 그 전 원래 모습 (styles.js · charstyle.js)
     styles: [],
@@ -192,6 +194,10 @@ function tidyStyles(s) {
     }
     if (s.activeStyle !== null && !(isObj(s.activeStyle) && typeof s.activeStyle.id === 'string' && typeof s.activeStyle.key === 'string')) s.activeStyle = null;
     if (s.baseStyle !== null && !isObj(s.baseStyle)) s.baseStyle = null;
+    // 3.3.1 날씨 그림 목록
+    const okImage = x => isObj(x) && typeof x.id === 'string' && x.id && typeof x.data === 'string' && x.data.startsWith('data:image/');
+    if (!Array.isArray(s.weatherImages)) s.weatherImages = [];
+    else if (s.weatherImages.length > 12 || !s.weatherImages.every(okImage)) s.weatherImages = s.weatherImages.filter(okImage).slice(0, 12);
 }
 
 /** 3.1.0 켜고 끄는 값: 가져온 파일의 "false" 문자열 · 깨진 값 거르기 */
@@ -208,8 +214,15 @@ function tidyFlags(s) {
         s.chat.demSkin = flag(s.chat.demSkin, false);
         s.chat.demFold = flag(s.chat.demFold, true);
         // 3.3.0 날씨 효과: off | rain | snow | tracker(데우스 트래커 날씨 따라) · 세기 1~3
-        if (!['off', 'rain', 'snow', 'tracker'].includes(s.chat.weather)) s.chat.weather = 'off';
+        if (!['off', 'rain', 'snow', 'custom', 'tracker'].includes(s.chat.weather)) s.chat.weather = 'off';
         s.chat.weatherLevel = [1, 2, 3].includes(Number(s.chat.weatherLevel)) ? Number(s.chat.weatherLevel) : 2;
+        const range = (key, min, max, def) => { const n = Number(s.chat[key]); s.chat[key] = Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : def; };
+        range('weatherOpacity', 10, 100, 100);
+        range('weatherSize', 40, 250, 100);
+        range('weatherSpeed', 20, 250, 100);
+        range('weatherAngle', -45, 45, -9);
+        if (typeof s.chat.weatherImage !== 'string' || (s.chat.weatherImage && !s.chat.weatherImage.startsWith('data:image/'))) s.chat.weatherImage = '';
+        if (typeof s.chat.weatherImageId !== 'string') s.chat.weatherImageId = '';
     }
 }
 const clampTo = (v, [min, max]) => Math.min(max, Math.max(min, v));

@@ -1,4 +1,5 @@
-// 날씨 효과 (3.3.0) — 채팅 글 뒤에 비 · 눈이 내린다. 채팅 › 화면 › 날씨 (chat.weather: off | rain | snow | tracker, chat.weatherLevel 1~3).
+// 날씨 효과 (3.3.0) — 채팅 글 뒤에 비 · 눈이 내린다. 채팅 › 화면 › 날씨 (chat.weather: off | rain | snow | custom | tracker, chat.weatherLevel 1~3).
+// 3.3.1: 투명도 · 크기 · 속도 · 각도 (chat.weatherOpacity · Size · Speed · Angle) · 내 그림(chat.weatherImage — 투명 PNG data URL, 목록은 weatherImages).
 //
 // 그리기는 워커 안의 OffscreenCanvas 에서 (weather-worker.js) — 메인 스레드는 크기 · 설정만 알려 준다. 워커를 못 쓰는 브라우저는 같은 엔진을 메인에서 돌린다.
 // 캔버스는 #sheld 맨 앞 자식(z-index -1)이라 채팅 글 뒤 · 채팅 바탕 앞에 그려진다 — 켜 두는 동안 채팅 칸 바탕을 투명하게 하고 같은 바탕색을 #sheld 에 옮긴다
@@ -44,7 +45,7 @@ async function createRenderer(canvas, init) {
             const offscreen = canvas.transferControlToOffscreen();
             const worker = new Worker(new URL('./weather-worker.js', import.meta.url), { type: 'module' });
             worker.postMessage({ type: 'init', canvas: offscreen, ...init }, [offscreen]);
-            return { post: message => worker.postMessage(message), stop: () => worker.terminate(), kind: 'worker' };
+            return { post: (message, transfer = []) => worker.postMessage(message, transfer), stop: () => worker.terminate(), kind: 'worker' };
         } catch (error) {
             console.info('[Blue Lemonade] 날씨 효과를 워커로 못 돌려 메인에서 그려요', error);
         }
@@ -73,6 +74,24 @@ async function createRenderer(canvas, init) {
 
 const ratio = () => Math.min(1.5, window.devicePixelRatio || 1);
 
+/** 설정의 날씨 값 → 엔진 값 (범위는 settings.js 가 이미 잡음) */
+function paramsFrom(chat = {}) {
+    return { opacity: Number(chat.weatherOpacity) || 100, size: Number(chat.weatherSize) || 100, speed: Number(chat.weatherSpeed) || 100, angle: Number.isFinite(Number(chat.weatherAngle)) ? Number(chat.weatherAngle) : -9 };
+}
+
+// 내 그림: data URL → ImageBitmap. 워커로 넘기면 원본이 비워지므로 보낼 때마다 새로 만든다 (Blob 만 들고 있음)
+const spriteBlobs = new Map();
+async function spriteBitmap(dataUrl) {
+    if (!dataUrl) return null;
+    let blob = spriteBlobs.get(dataUrl);
+    if (!blob) {
+        blob = await (await fetch(dataUrl)).blob();
+        spriteBlobs.clear();
+        spriteBlobs.set(dataUrl, blob);
+    }
+    return createImageBitmap(blob);
+}
+
 /** 한 자리(#sheld 또는 설정 표본)에 붙는 효과 */
 function createLayer(host, className) {
     const canvas = document.createElement('canvas');
@@ -82,6 +101,8 @@ function createLayer(host, className) {
     let renderer = null;
     let pending = null;
     let current = { mode: 'off', level: 2 };
+    let spriteKey = '';
+    let spriteGen = 0;
     const size = () => {
         const rect = host.getBoundingClientRect();
         return { w: Math.round(rect.width), h: Math.round(rect.height) };
@@ -97,9 +118,22 @@ function createLayer(host, className) {
     return {
         canvas,
         ready,
-        set(mode, level) {
-            current = { mode, level };
-            const message = { type: 'config', mode, level, colors: colorsNow() };
+        set(mode, level, params = {}, spriteData = '') {
+            current = { mode, level, ...params };
+            const message = { type: 'config', mode, level, colors: colorsNow(), ...params };
+            const wantKey = mode === 'custom' ? spriteData : '';
+            if (wantKey !== spriteKey) {
+                // 그림이 바뀌면 비트맵을 만든 뒤 한 번 더 보낸다 (그 사이 설정은 먼저 보냄)
+                spriteKey = wantKey;
+                const gen = ++spriteGen;
+                const send = (bitmap) => {
+                    if (gen !== spriteGen) { bitmap?.close?.(); return; }
+                    const withSprite = { ...message, sprite: bitmap };
+                    ready.then(r => r.post(withSprite, bitmap ? [bitmap] : []));
+                };
+                if (wantKey) spriteBitmap(wantKey).then(send, () => send(null));
+                else send(null);
+            }
             if (renderer) renderer.post(message);
             else pending = message;
         },
@@ -129,7 +163,7 @@ function trackerMode() {
 function refresh() {
     if (!layer) return;
     const mode = wanted.mode === 'tracker' ? trackerMode() : wanted.mode;
-    layer.set(mode, wanted.level);
+    layer.set(mode, wanted.level, wanted.params, wanted.sprite);
 }
 
 function scheduleTracker() {
@@ -156,9 +190,9 @@ function listen() {
 
 /** features.js 가 설정이 바뀔 때마다 부른다 */
 export function syncWeather(on, chat = {}) {
-    const mode = ['rain', 'snow', 'tracker'].includes(chat.weather) ? chat.weather : 'off';
+    const mode = ['rain', 'snow', 'custom', 'tracker'].includes(chat.weather) ? chat.weather : 'off';
     const level = [1, 2, 3].includes(Number(chat.weatherLevel)) ? Number(chat.weatherLevel) : 2;
-    wanted = { on: !!on && mode !== 'off', mode, level };
+    wanted = { on: !!on && mode !== 'off', mode, level, params: paramsFrom(chat), sprite: chat.weatherImage || '' };
     if (!wanted.on) {
         layer?.destroy();
         layer = null;
@@ -179,7 +213,7 @@ export function syncWeather(on, chat = {}) {
 // ───────── 설정 창 채팅 표본 ─────────
 /** 채팅 표본(.salty-preview[data-prev="chat"])에 작은 효과. 트래커 따라면 지금 채팅의 날씨, 없으면 비를 보여 준다 */
 export function previewWeather(stage, chat = {}) {
-    const mode = ['rain', 'snow', 'tracker'].includes(chat.weather) ? chat.weather : 'off';
+    const mode = ['rain', 'snow', 'custom', 'tracker'].includes(chat.weather) ? chat.weather : 'off';
     const level = [1, 2, 3].includes(Number(chat.weatherLevel)) ? Number(chat.weatherLevel) : 2;
     let preview = stage._blWeather;
     if (mode === 'off') {
@@ -200,7 +234,7 @@ export function previewWeather(stage, chat = {}) {
     }
     stage.classList.add('bl-weather-pv-on');
     const shown = mode === 'tracker' ? (trackerMode() === 'off' ? 'rain' : trackerMode()) : mode;
-    preview.set(shown, level);
+    preview.set(shown, level, paramsFrom(chat), chat.weatherImage || '');
 }
 
 /** 시험용 */
