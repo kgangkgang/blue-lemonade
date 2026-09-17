@@ -312,13 +312,27 @@ function imgStage(art) {
 // 실리태번이 메시지 안 클래스 앞에 custom- 을 붙이므로 여기도 custom-dem-… 으로 쓴다 — 색 통일 · 이모티콘 규칙이 그 이름을 본다.
 // 카드 속 모양(원래 색)은 style.css '정규식 카드 표본' 블록이 댄다
 function regexStage() {
+    // 3.2.0: 진짜 데우스 카드와 같은 마크업 — 카드는 details/summary, 트래커는 칸마다 __item. 그래야 데우스 카드 스킨 · 폰 접기 규칙이 표본에도 걸린다
+    const head = (icon, title, tag) => `<summary><span class="custom-dem-card__icon">${icon}</span><span class="custom-dem-card__title">${title}</span>${tag ? `<span class="custom-dem-card__tag">${tag}</span>` : ''}<span class="custom-dem-card__caret">▸</span></summary>`;
+    const item = (kind, icon, value, extra = '') => `<div class="custom-dem-track__item custom-dem-track__item--${kind}"><span class="custom-dem-track__icon">${icon}</span><span class="custom-dem-track__value">${value}</span>${extra}</div>`;
     return `<div class="salty-preview" data-prev="regex" aria-hidden="true">
-        ${prevMes('false', '아린', `<div class="custom-dem-card custom-dem-status"><div class="custom-dem-card__head"><span class="custom-dem-card__icon">📊</span><span class="custom-dem-card__title">Status</span><span class="custom-dem-card__tag">status</span></div>
-            <div class="custom-dem-status-row"><span class="custom-dem-status-row__name">아린</span> <span class="custom-dem-status-row__label custom-dem-status-row__label--physical">몸</span> <span class="custom-dem-status-row__label custom-dem-status-row__label--clothes">옷</span> <span class="custom-dem-status-row__label custom-dem-status-row__label--mental">마음</span> <span class="custom-dem-status-row__score">72</span></div></div>
-        <div class="custom-dem-card custom-dem-threads"><div class="custom-dem-card__head"><span class="custom-dem-card__icon">🧶</span><span class="custom-dem-card__title">Story Threads</span></div>
-            <div class="custom-dem-threads__body"><span class="custom-dem-thread-tag custom-dem-thread-tag--current">[Current]</span> <span class="custom-dem-thread-tag custom-dem-thread-tag--unresolved">[Unresolved]</span> <span class="custom-dem-thread-tag custom-dem-thread-tag--seed">[Seed]</span></div></div>
-        <div class="custom-dem-track"><span class="custom-dem-track__icon">🗓️</span><span class="custom-dem-track__value">3일째</span> <span class="custom-dem-track__icon">📍</span><span class="custom-dem-track__value">항구</span> <span class="custom-dem-track__temp">18°C</span></div>
+        ${prevMes('false', '아린', `<details class="custom-dem-card custom-dem-scene-plan">${head('🗺️', '장면 계획', '흐름도')}</details>
+        <div class="custom-dem-track">${item('time', '🕐', '오후 4:12')}${item('date', '🗓️', '3일째 · 목요일')}${item('location', '📍', '항구 → 등대 아래 찻집')}${item('weather', '⛅', '맑음', '<span class="custom-dem-track__temp">18°C</span>')}</div>
+        <details class="custom-dem-card custom-dem-status" open>${head('📊', 'Status', 'Live')}<div class="custom-dem-status__body"><div class="custom-dem-status-row"><strong class="custom-dem-status-row__name">아린</strong><span class="custom-dem-status-row__field"><span class="custom-dem-status-row__label custom-dem-status-row__label--physical">몸</span><span>나른함</span></span><span class="custom-dem-status-row__field"><span class="custom-dem-status-row__label custom-dem-status-row__label--mental">마음</span><span>기대</span></span><span class="custom-dem-status-row__field"><span class="custom-dem-status-row__label custom-dem-status-row__label--relationship">관계</span><span class="custom-dem-status-row__score">72/100</span></span></div></div></details>
+        <details class="custom-dem-card custom-dem-threads" open>${head('🧶', 'Story Threads', '')}<div class="custom-dem-threads__body"><div class="custom-dem-thread-row"><span class="custom-dem-thread-tag custom-dem-thread-tag--current">[Current]</span> 찻집의 약속</div><div class="custom-dem-thread-row"><span class="custom-dem-thread-tag custom-dem-thread-tag--seed">[Seed]</span> 등대지기의 편지</div></div></details>
         <p><font color="#e64553">붉게 칠한 글자</font>와 <span style="color:#40a02b">초록으로 칠한 글자</span>, <q>「그리고 대사.」</q></p>`)}
+    </div>`;
+}
+
+// 폰 화면 표본 (3.2.0, 채팅 › 화면 › 폰): 작은 폰 그림 — 몰입 읽기를 켜면 위 바 · 입력창이 비켜났다 돌아오는 것을 되풀이해 보여 주고,
+// 한 손 버튼 줄을 켜면 입력창 위에 버튼 알약이 선다. 모양은 팔레트 변수만 (css/31-styles-panel.css)
+function phoneMock(s) {
+    const lines = widths => `<p>${widths.map(w => (w < 0 ? `<i class="q" style="width:${-w}%"></i>` : `<i style="width:${w}%"></i>`)).join('')}</p>`;
+    const buttons = s.onehand?.on ? ['swipe', 'swipe', '', 'imp', 'cont', 'regen'].filter(key => !key || s.onehand[key] !== false).map(key => (key ? '<b></b>' : '<span></span>')).join('') : '';
+    return `<div class="salty-phonemock${s.reader?.autoHide ? ' is-reader' : ''}${s.onehand?.on ? ' is-onehand' : ''}" aria-hidden="true">
+        <div class="pm-body"><div class="pm-scroll">${lines([96, 90, 62])}${lines([-84, -58])}${lines([94, 88, 91, 40])}${lines([-76])}${lines([92, 86, 70])}${lines([95, 60])}</div></div>
+        <div class="pm-top"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="pm-form">${buttons ? `<div class="pm-onehand">${buttons}</div>` : ''}<div class="pm-input"><i></i><u></u></div></div>
     </div>`;
 }
 
@@ -630,7 +644,7 @@ function tabTheme(s, sub) {
     if (sub === 'colors') {
         const colors = TOKEN_GROUPS.map(([label, list]) =>
             `${cap(label)}<div class="salty-group">${list.map(([key, name]) => color(key, name)).join('')}</div>`).join('');
-        return `${colors}
+        return `${chatPreview()}${colors}
             <div class="salty-btns"><button class="salty-btn" data-act="reset-colors">${esc(PALETTES[s.palette]?.label || '이 테마')} 색 처음으로</button></div>
             <p class="salty-note">색은 테마마다 따로 저장돼요.</p>`;
     }
@@ -650,20 +664,25 @@ function tabTheme(s, sub) {
     const hasCustom = Boolean(s.customName || s.colorOverrides?.['custom-light'] || s.colorOverrides?.['custom-night']);
     const custom = hasCustom ? `<div class="salty-custom-card">${renderCard('custom', PALETTE_FAMILIES.custom)}<button type="button" class="salty-custom-edit" data-act="custom-open" aria-label="커스텀 에이드 편집"><i class="fa-solid fa-pen" aria-hidden="true"></i></button></div>`
         : '<button type="button" class="salty-pal salty-pal-create" data-act="custom-open"><span class="salty-create-icon" aria-hidden="true">+</span><b>커스텀 에이드 만들기</b><small>나만의 색을 섞어 보세요</small></button>';
-    return `<div class="salty-palette-toolbar"><span>${mode === 'light' ? '화이트' : '나이트'}${s.palette === 'night' ? ' · 블루 아워' : ''}</span><div class="salty-mode-switch" role="group" aria-label="테마 밝기">${['light', 'dark'].map(kind => `<button type="button" data-act="palette-mode" data-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'} 모드" title="${kind === 'light' ? '화이트' : '나이트'}" aria-pressed="${mode === kind}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}</div></div><div class="salty-palettes">${cards}${custom}</div>`;
+    const auto = !!s.auto?.on;
+    const autoOptions = auto ? `<div class="salty-group salty-auto">
+            ${stack('자동 기준', seg('auto.by', [['system', '기기 다크 모드'], ['time', '시간']]))}
+            ${s.auto.by === 'time' ? `<div class="salty-row"><span>나이트 시작</span><input type="time" class="salty-time" data-time-path="auto.night" value="${esc(s.auto.night)}" aria-label="나이트 시작"></div><div class="salty-row"><span>화이트 시작</span><input type="time" class="salty-time" data-time-path="auto.day" value="${esc(s.auto.day)}" aria-label="화이트 시작"></div>` : ''}
+        </div>` : '';
+    return `<div class="salty-palette-toolbar"><span>${auto ? '자동 · ' : ''}${mode === 'light' ? '화이트' : '나이트'}${s.palette === 'night' ? ' · 블루 아워' : ''}</span><div class="salty-mode-switch" role="group" aria-label="테마 밝기">${['light', 'dark'].map(kind => `<button type="button" data-act="palette-mode" data-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'} 모드" title="${kind === 'light' ? '화이트' : '나이트'}" aria-pressed="${!auto && mode === kind}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}<button type="button" data-act="palette-auto" aria-label="자동" title="자동" aria-pressed="${auto}"><i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i></button></div></div>${autoOptions}<div class="salty-palettes">${cards}${custom}</div>`;
 
 }
 
 // ───────── 스타일 (3.1.0) ─────────
 function tabStyles(s) {
-    const presets = PRESETS.map(p => `<button type="button" class="salty-preset" data-act="style-preset" data-id="${p.id}"><b>${esc(p.name)}</b><small>${esc(p.desc)}</small></button>`).join('');
+    const presets = PRESETS.map(p => `<button type="button" class="salty-preset" data-act="style-preset" data-id="${p.id}"><b>${esc(p.name)}</b>${styleSample(p.data(), s)}<small>${esc(p.desc)}</small></button>`).join('');
     const used = id => Object.values(s.charStyles).filter(x => x === id).length;
     const mine = s.styles.map((st) => {
         const on = s.activeStyle?.id === st.id;
         const open = ui.styleMenu === st.id;
         const meta = [on ? '지금 입힘' : '', used(st.id) ? `캐릭터 ${used(st.id)}` : ''].filter(Boolean).join(' · ');
         return `<div class="salty-style${on ? ' on' : ''}${open ? ' open' : ''}">
-            <button type="button" class="salty-style-main" data-act="style-apply" data-id="${st.id}"><b>${esc(st.name)}</b>${meta ? `<small>${meta}</small>` : ''}</button>
+            <button type="button" class="salty-style-main" data-act="style-apply" data-id="${st.id}">${styleSwatch(st.data)}<b>${esc(st.name)}</b>${meta ? `<small>${meta}</small>` : ''}</button>
             <button type="button" class="salty-style-more" data-act="style-menu" data-id="${st.id}" aria-label="${esc(st.name)} 도구" aria-expanded="${open}"><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></button>
             ${open ? `<div class="salty-style-tools">
                 <button class="salty-btn" data-act="style-overwrite" data-id="${st.id}">지금 모습으로</button>
@@ -685,7 +704,7 @@ function tabStyles(s) {
     const others = Object.entries(s.charStyles).filter(([k]) => k !== key);
     const linkList = others.length ? `${cap('이어 둔 캐릭터')}<div class="salty-group">${others.map(([k, id]) =>
         row(esc(keyLabel(k)), `<span class="salty-btns"><span class="salty-hint">${esc(s.styles.find(x => x.id === id)?.name || '')}</span><button class="salty-btn" data-act="char-unlink" data-key="${esc(k)}">풀기</button></span>`)).join('')}</div>` : '';
-    return `${cap('완성된 스타일', '글자 · 채팅 모양만 — 색은 그대로')}<div class="salty-presets">${presets}</div>
+    return `${chatPreview()}${cap('완성된 스타일', '글자 · 채팅 모양만 — 색은 그대로')}<div class="salty-presets">${presets}</div>
         ${ui.styleUndo ? '<div class="salty-btns salty-undo"><button class="salty-btn" data-act="style-undo">방금 입힌 것 되돌리기</button></div>' : ''}
         ${cap('내 스타일', s.styles.length ? `${s.styles.length}/${MAX_STYLES}` : '')}
         ${mine ? `<div class="salty-styles">${mine}</div>` : '<p class="salty-note">지금 모습(색 · 글꼴 · 글자 · 채팅 · 이미지)을 이름 붙여 두고 언제든 다시 입혀요.</p>'}
@@ -704,6 +723,26 @@ const eulReul = (word) => {
     if (code >= 0xAC00 && code <= 0xD7A3) return (code - 0xAC00) % 28 ? '을' : '를';
     return ' 을(를)';
 };
+
+/** 완성된 스타일 카드 속 글자 표본 (3.2.0): 그 스타일의 본문 글꼴 · 크기 · 줄 간격 · 대사 표시로 한 줄 — 색은 지금 팔레트 */
+function styleSample(data, s) {
+    const type = { ...s.type, ...(data.type || {}) };
+    const fontId = data.fonts?.text?.ko || s.fonts.text.ko;
+    const font = findFont(fontId);
+    if (font) queuePreview(font);
+    const family = font ? previewStack(font, 'ko') : 'inherit';
+    const dialogue = data.dialogue?.style || s.dialogue.style;
+    const size = Math.min(16, Math.max(11, Math.round(Number(type.size) * 0.8)));
+    const css = `font-family:${esc(family)};font-size:${size}px;line-height:${Number(type.lineHeight) || 1.6};letter-spacing:${(Number(type.letterSpacing) || 0) / 100}em;font-weight:${Number(type.weight) || 400};text-align:${type.align === 'left' ? 'left' : 'justify'}`;
+    return `<span class="salty-preset-sample${type.indent ? ' is-indent' : ''}" style="${css}"><q class="m-${esc(dialogue)}">「레몬 한 조각.」</q> 그는 잔을 밀었다.</span>`;
+}
+
+/** 내 스타일 줄 앞 색 점 (3.2.0): 그 스타일의 바탕 · 글자 · 포인트 · 형광펜 */
+function styleSwatch(data) {
+    const id = PALETTES[data?.palette] ? data.palette : 'salt';
+    const c = { ...PALETTES[id], ...(data?.colorOverrides?.[id] || {}) };
+    return `<span class="salty-style-swatch" style="--sw-bg:${safeColor(c.bg)};--sw-text:${safeColor(c.text)};--sw-accent:${safeColor(c.accent)};--sw-marker:${safeColor(c.marker)}" aria-hidden="true"><i></i><i></i></span>`;
+}
 
 /** 스타일을 입히기 전 모습을 되돌리기용으로 남기고 입힌다 */
 function wearStyle(data, label) {
@@ -870,6 +909,7 @@ function tabChat(s, sub) {
             ${s.chat.streamFade && stFade ? row('실리태번 페이드 인', toggle('st.streamFadeIn', true), '끄면 빨라지고 위 옵션이 대신해요') : ''}
         </div>
         ${cap('폰')}<div class="salty-group">
+            ${phoneMock(s)}
             ${row('스크롤하면 바 숨기기', toggle('reader.autoHide', !!s.reader?.autoHide), '아래로 읽으면 숨고, 살짝 올리거나 누르면 나와요')}
             ${row('한 손 버튼 줄', toggle('onehand.on', !!s.onehand?.on), '입력창 위에 스와이프 · 사칭 · 이어 쓰기 · 다시 생성')}
             ${s.onehand?.on ? stack('버튼', chips([['onehand.swipe', '스와이프'], ['onehand.imp', '사칭'], ['onehand.cont', '이어 쓰기'], ['onehand.regen', '다시 생성']])) : ''}
@@ -1334,7 +1374,11 @@ function bind(root) {
                     update(st => { st.palette = paletteVariant(el.dataset.family, PALETTES[st.palette]?.mode); });
                     break;
                 case 'palette-mode':
-                    update(st => { st.palette = paletteVariant(paletteFamily(st.palette), el.dataset.mode); });
+                    // 해 · 달을 직접 누르면 자동은 끈다 (3.2.0)
+                    update(st => { st.palette = paletteVariant(paletteFamily(st.palette), el.dataset.mode); if (st.auto) st.auto.on = false; });
+                    break;
+                case 'palette-auto':
+                    update(st => { st.auto.on = !st.auto.on; });
                     break;
                 case 'custom-open':
                     openCustomBuilder(getSettings(), PALETTES[getSettings().palette]?.mode);
@@ -1667,6 +1711,11 @@ function bind(root) {
             syncFontLists();
             return;
         }
+        const time = event.target.closest('input[data-time-path]');
+        if (time) {
+            if (/^([01]\d|2[0-3]):[0-5]\d$/.test(time.value)) update(st => setPath(st, time.dataset.timePath, time.value), false);
+            return;
+        }
         const picker = event.target.closest('input[data-color-path]');
         if (picker) {
             if (/^#[0-9a-f]{6}$/i.test(picker.value)) update(st => setPath(st, picker.dataset.colorPath, picker.value), false);
@@ -1723,7 +1772,7 @@ function bind(root) {
             // 자동 색은 켜고 끌 때 테두리 설명(edgeHint) 문구가 바뀌니 창을 다시 그린다
             // 2.9.2: 본문 색 지정 → '글자색 톤 맞추기' 줄, 톤 맞추기 → 톤 값 슬라이더 넷, 투명 그림도 똑같이 → 설명 문구가 스위치에 따라
             // 보였다 안 보였다 하는데 다시 그리지 않아, 끈 뒤에도 슬라이더가 남아 있었다
-            update(st => setPath(st, path, target.checked), ['enabled', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin'].includes(path));
+            update(st => setPath(st, path, target.checked), ['enabled', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold'].includes(path));
             return;
         }
         if (target.matches('input[data-file="font"]') && target.files?.[0]) {
