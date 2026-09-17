@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 35개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 6e3c2cf3e81f) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 35개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build bd7daf453c4e) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 10px;
@@ -2506,7 +2506,57 @@ body.salty :is(#salty-nochat, .salty-preview)[data-prev="regex"] {
   display: inline-flex;
   gap: 4px;
 }
-.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label--relationship { color: #fab387; }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label--relationship { color: color-mix(in srgb, #fab387 var(--bl-dem-ink, 74%), var(--salty-text)); }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-scene-plan__body {
+  counter-reset: bl-pv-step;
+  padding: 2px 10px 8px;
+}
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-scene-plan__phase {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 2px;
+  color: color-mix(in srgb, var(--dem-phase-accent) var(--bl-dem-ink, 74%), var(--salty-text));
+  font-size: .72em;
+  font-weight: 750;
+}
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-scene-plan__phase::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: color-mix(in srgb, var(--dem-phase-accent) 30%, transparent);
+}
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-scene-plan__step {
+  display: grid;
+  grid-template-columns: 1.8rem minmax(0, 1fr);
+  column-gap: 8px;
+  padding: 4px 0;
+  counter-increment: bl-pv-step;
+}
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-scene-plan__step::before {
+  content: counter(bl-pv-step, decimal-leading-zero);
+  grid-row: 1 / span 2;
+  display: grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--dem-accent) 14%, transparent);
+  color: color-mix(in srgb, var(--dem-accent) var(--bl-dem-ink, 74%), var(--salty-text));
+  font-size: .72em;
+  font-weight: 800;
+}
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-scene-plan__label {
+  color: color-mix(in srgb, var(--dem-accent) var(--bl-dem-ink, 74%), var(--salty-text));
+  font-size: .86em;
+  font-weight: 650;
+}
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-scene-plan__value {
+  font-size: .92em;
+}
+.salty-preview[data-prev="regex"] .mes_text :is(.custom-dem-scene-plan__phase--inputs, .custom-dem-scene-plan__step--inputs) { --dem-accent: #a6e3a1; --dem-phase-accent: #a6e3a1; }
+.salty-preview[data-prev="regex"] .mes_text :is(.custom-dem-scene-plan__phase--constraints, .custom-dem-scene-plan__step--constraints) { --dem-accent: #89b4fa; --dem-phase-accent: #89b4fa; }
+.salty-preview[data-prev="regex"] .mes_text :is(.custom-dem-scene-plan__phase--plan, .custom-dem-scene-plan__step--plan) { --dem-accent: #f9e2af; --dem-phase-accent: #f9e2af; }
 .salty-preview[data-prev="regex"] .mes_text .custom-dem-thread-row {
   padding: 2px 0;
 }
@@ -2516,11 +2566,11 @@ body.salty :is(#salty-nochat, .salty-preview)[data-prev="regex"] {
   align-items: center;
   gap: 4px;
 }
-.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__name { color: #cba6f7; font-weight: 700; }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__name { color: color-mix(in srgb, #cba6f7 var(--bl-dem-ink, 74%), var(--salty-text)); font-weight: 700; }
 .salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label { font-size: .86em; font-weight: 700; }
-.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label--physical { color: #f38ba8; }
-.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label--clothes { color: #f9e2af; }
-.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label--mental { color: #a6e3a1; }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label--physical { color: color-mix(in srgb, #f38ba8 var(--bl-dem-ink, 74%), var(--salty-text)); }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label--clothes { color: color-mix(in srgb, #f9e2af var(--bl-dem-ink, 74%), var(--salty-text)); }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label--mental { color: color-mix(in srgb, #a6e3a1 var(--bl-dem-ink, 74%), var(--salty-text)); }
 .salty-preview[data-prev="regex"] .mes_text :is(.custom-dem-status-row__score, .custom-dem-track__temp) {
   padding: 1px 8px;
   border-radius: 999px;
@@ -2530,7 +2580,7 @@ body.salty :is(#salty-nochat, .salty-preview)[data-prev="regex"] {
   border: 1px solid color-mix(in srgb, #fab387 28%, transparent);
 }
 .salty-preview[data-prev="regex"] .mes_text .custom-dem-track__temp {
-  color: #f9e2af;
+  color: color-mix(in srgb, #f9e2af var(--bl-dem-ink, 74%), var(--salty-text));
   background: color-mix(in srgb, #f9e2af 12%, transparent);
   border-color: color-mix(in srgb, #f9e2af 28%, transparent);
 }
@@ -2540,6 +2590,7 @@ body.salty :is(#salty-nochat, .salty-preview)[data-prev="regex"] {
   font-size: .82em;
   border: 1px solid var(--dem-thread-color);
   background: color-mix(in srgb, var(--dem-thread-color) 16%, transparent);
+  color: color-mix(in srgb, var(--dem-thread-color) var(--bl-dem-ink, 74%), var(--salty-text));
 }
 .salty-preview[data-prev="regex"] .mes_text .custom-dem-thread-tag--current { --dem-thread-color: #a6e3a1; }
 .salty-preview[data-prev="regex"] .mes_text .custom-dem-thread-tag--unresolved { --dem-thread-color: #f9e2af; }
@@ -2561,7 +2612,7 @@ body.salty :is(#salty-nochat, .salty-preview)[data-prev="regex"] .mes_text > p:l
   margin-bottom: 0 !important;
 }
 .salty-preview[data-prev="regex"] .mes_text .custom-dem-track__icon { display: inline-flex; width: 22px; justify-content: center; }
-.salty-preview[data-prev="regex"] .mes_text .custom-dem-track__value { color: var(--dem-accent); font-weight: 700; }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-track__value { color: color-mix(in srgb, var(--dem-accent) var(--bl-dem-ink, 74%), var(--salty-text)); font-weight: 700; }
 body.salty .select2-search--inline .select2-search__field {
   padding: 0 !important;
   line-height: normal !important;
@@ -13451,24 +13502,20 @@ body.salty #bl-onehand.is-busy .bl-onehand-btn {
   opacity: 0.45;
 }
 /* css/30-dem-skin.css */
-body.salty.salty-dem-skin:not(.salty-unify-regex) :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-scene-plan, .custom-dem-status, .custom-dem-track, .custom-dem-track-recovery) { --dem-accent: var(--salty-accent) !important; --dem-item-accent: var(--salty-accent) !important; }
-body.salty.salty-dem-skin:not(.salty-unify-regex) :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-threads { --dem-accent: var(--salty-em) !important; }
-body.salty.salty-dem-skin:not(.salty-unify-regex) :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-psychological-states { --dem-accent: var(--salty-strong) !important; }
-body.salty.salty-dem-skin:not(.salty-unify-regex) :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-momentum-engine { --dem-accent: var(--salty-pop) !important; }
-body.salty.salty-dem-skin:not(.salty-unify-regex) :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-conflict { --dem-accent: var(--salty-danger) !important; }
-body.salty.salty-dem-skin:not(.salty-unify-regex) :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-cyoa { --dem-accent: var(--salty-pop) !important; }
-body.salty.salty-dem-skin:not(.salty-unify-regex) :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__step--constraints { --dem-accent: var(--salty-em) !important; }
-body.salty.salty-dem-skin:not(.salty-unify-regex) :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__step--craft { --dem-accent: var(--salty-strong) !important; }
-body.salty.salty-dem-skin:not(.salty-unify-regex) :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__step--plan { --dem-accent: var(--salty-pop) !important; }
-body.salty.salty-dem-skin:not(.salty-unify-regex) :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-scene-plan__phase--inputs, .custom-dem-scene-plan__step--inputs) { --dem-accent: var(--salty-accent) !important; --dem-phase-accent: var(--salty-accent) !important; }
-body.salty.salty-dem-skin:not(.salty-unify-regex) :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__phase--constraints { --dem-phase-accent: var(--salty-em) !important; }
-body.salty.salty-dem-skin:not(.salty-unify-regex) :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__phase--craft { --dem-phase-accent: var(--salty-strong) !important; }
-body.salty.salty-dem-skin:not(.salty-unify-regex) :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__phase--plan { --dem-phase-accent: var(--salty-pop) !important; }
-body.salty.salty-dem-skin:not(.salty-unify-regex) :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-status-row__label, .custom-dem-psychological-state-row__label) { color: var(--dem-accent) !important; }
-body.salty.salty-dem-skin:not(.salty-unify-regex) :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-thread-tag--current { --dem-thread-color: var(--salty-accent) !important; }
-body.salty.salty-dem-skin:not(.salty-unify-regex) :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-thread-tag--unresolved { --dem-thread-color: var(--salty-pop) !important; }
-body.salty.salty-dem-skin:not(.salty-unify-regex) :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-thread-tag--possible { --dem-thread-color: var(--salty-strong) !important; }
-body.salty.salty-dem-skin:not(.salty-unify-regex) :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-thread-tag--seed { --dem-thread-color: var(--salty-em) !important; }
+body.salty {
+  --bl-dem-ink: 74%;
+}
+body.salty.salty-light {
+  --bl-dem-ink: 50%;
+}
+body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--physical { color: color-mix(in srgb, #f38ba8 var(--bl-dem-ink), var(--salty-text)); }
+body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--clothes { color: color-mix(in srgb, #f9e2af var(--bl-dem-ink), var(--salty-text)); }
+body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--mental { color: color-mix(in srgb, #a6e3a1 var(--bl-dem-ink), var(--salty-text)); }
+body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--location { color: color-mix(in srgb, #89b4fa var(--bl-dem-ink), var(--salty-text)); }
+body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--relationship { color: color-mix(in srgb, #fab387 var(--bl-dem-ink), var(--salty-text)); }
+body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--inventory { color: color-mix(in srgb, #94e2d5 var(--bl-dem-ink), var(--salty-text)); }
+body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-psychological-state-row__label--inner { color: color-mix(in srgb, #89dceb var(--bl-dem-ink), var(--salty-text)); }
+body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-psychological-state-row__label--motivation { color: color-mix(in srgb, #f9e2af var(--bl-dem-ink), var(--salty-text)); }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-card,
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery) {
   margin: 0 0 12px !important;
@@ -13548,7 +13595,7 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.cu
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__phase {
   margin: 14px 0 2px !important;
   padding: 0 !important;
-  color: var(--dem-phase-accent, var(--dem-accent)) !important;
+  color: color-mix(in srgb, var(--dem-phase-accent, var(--dem-accent)) var(--bl-dem-ink), var(--salty-text)) !important;
   font-size: 0.68em !important;
   font-weight: 700 !important;
   letter-spacing: 0.08em !important;
@@ -13579,7 +13626,7 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
   font-weight: 600 !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__label {
-  color: var(--dem-accent) !important;
+  color: color-mix(in srgb, var(--dem-accent) var(--bl-dem-ink), var(--salty-text)) !important;
   font-size: 0.84em !important;
   font-weight: 650 !important;
 }
@@ -13607,7 +13654,6 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.cu
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-status-row__label, .custom-dem-psychological-state-row__label) {
   margin-right: 2px;
-  color: var(--dem-accent) !important;
   font-size: 0.78em !important;
   font-weight: 700 !important;
 }
@@ -13638,7 +13684,7 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
   border: 0 !important;
   border-radius: 999px !important;
   background: color-mix(in srgb, var(--dem-thread-color, var(--salty-accent)) 18%, transparent) !important;
-  color: var(--salty-text) !important;
+  color: color-mix(in srgb, var(--dem-thread-color, var(--salty-accent)) var(--bl-dem-ink), var(--salty-text)) !important;
   font-size: 0.74em !important;
   font-weight: 650 !important;
 }
@@ -13651,13 +13697,13 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.cu
   border: 0 !important;
   border-radius: 50% !important;
   background: color-mix(in srgb, var(--dem-accent) 18%, transparent) !important;
-  color: var(--dem-accent) !important;
+  color: color-mix(in srgb, var(--dem-accent) var(--bl-dem-ink), var(--salty-text)) !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-choice__category, .custom-dem-momentum-engine__label) {
   border: 0 !important;
   border-radius: 999px !important;
   background: color-mix(in srgb, var(--dem-accent) 14%, transparent);
-  color: var(--dem-accent) !important;
+  color: color-mix(in srgb, var(--dem-accent) var(--bl-dem-ink), var(--salty-text)) !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-momentum-engine__label {
   display: inline-block !important;
