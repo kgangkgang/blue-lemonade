@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 30개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build afa37dbfd551) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 30개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 7954f6acf5b6) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 10px;
@@ -12450,6 +12450,16 @@ body.salty #regex_container :is(.delete_regex, #regex_preset_delete) { color: va
   body.salty #user-settings-block :is([name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > label.checkbox_label > :is(span,small) { font-size: 11px !important; line-height: 1.45; overflow-wrap: anywhere; }
   body.salty #user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container { padding-inline: 0 !important; gap: 4px !important; }
   body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .neo-range-input { width: 46px !important; min-width: 46px !important; font-size: 11px; }
+}
+@media (min-width: 1001px) {
+  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(max(260px, 45%), 1fr)); column-gap: 28px;
+  }
+  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > :is(h4, .inline-drawer, div:not(:has(> select))) { grid-column: 1 / -1; }
+  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > :is(.checkbox-container, h4 + div.flex-container) { display: contents; }
+  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > div:has(> select) { min-width: 0; gap: 8px; }
+  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > div:has(> select) > select { min-width: 0; max-width: 60%; }
+  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] :is(> label.checkbox_label, > .checkbox-container > label.checkbox_label) { min-width: 0; }
 }
 body.salty #WorldInfo #wiSliders { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px !important; }
 body.salty #WorldInfo #wiSliders > .flex-container { flex: none !important; width: auto; min-width: 0; }

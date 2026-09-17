@@ -8,6 +8,11 @@ import { getSettings, saveSettings } from './settings.js';
 
 export const NOTICES = [
     {
+        version: '3.0.1', date: '2026-09-17', items: [
+            'PC · 태블릿 폭에서 사용자 설정의 채팅/메시지 처리 칸을 두 열로 나눴어요. 스위치와 슬라이더가 나란히 놓여 덜 휑해요.',
+        ],
+    },
+    {
         version: '3.0.0', date: '2026-09-17', items: [
             '버전 알약을 누르면 이 공지사항이 떠요. 새 업데이트가 있으면 알약이 빛나요.',
             '테마 속 CSS 를 새로 짰어요. 화면은 그대로이고, 앞으로 고칠 때 설정 창 · 월드인포 같은 곳이 깨지는 일이 없게 했어요.',
