@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 48개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 5d6feb51f0e4) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 48개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 9c83d29503b0) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 10px;
@@ -17045,6 +17045,9 @@ body.salty.salty-user-profile-side-right.salty-user-profile-mode-small #chat .me
 body.salty.salty-user-profile-side-right.salty-user-profile-mode-small #chat .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .for_checkbox,
 body.salty.salty-user-profile-side-right.salty-user-profile-mode-small #chat .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .del_checkbox { grid-area: 1 / 6 !important; }
 body.salty:is(.salty-user-bubble, .salty-user-card).salty-user-profile-custom #chat .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mes_block { padding: 12px 16px 14px !important; }
+body.salty:is(.salty-user-bubble, .salty-user-card).salty-user-profile-mode-none #chat .mes[is_user="true"]:not([is_system="true"]) > .mes_block { padding-left: 16px !important; }
+body.salty.salty-user-card.salty-user-profile-mode-none #chat .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) { --salty-meta-inset: 16px; }
+body.salty.salty-user-card.salty-user-profile-mode-none #chat .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mes_block { margin-left: 0 !important; }
 /* css/44-settings-search.css */
 .bl-settings-search { position: relative; margin: 2px 0 10px; }
 .bl-search-field { display: flex; align-items: center; gap: 6px; border: 1px solid var(--salty-border); background: var(--bl-well); border-radius: 12px; padding: 0 8px; }
@@ -17074,8 +17077,8 @@ body.salty :where(.salty-preview):is(#bl-s, *):not([data-prev="img"]):where(.bl-
 .bl-view-scene > .salty-sample,
 .bl-view-scene > .salty-uisample { max-height:none; overflow:visible; margin-block:0; }
 .bl-inline-preview { min-width:0; width:100%; }
-.bl-view-resize { display:flex; align-items:center; gap:4px; height:28px; }
-.bl-view-grip { flex:1; display:grid; place-items:center; height:28px; touch-action:none; cursor:ns-resize; }
+.bl-view-resize { display:grid; grid-template-columns:32px minmax(0,1fr) 32px; align-items:center; gap:4px; height:28px; }
+.bl-view-grip { grid-column:2; display:grid; place-items:center; height:28px; touch-action:none; cursor:ns-resize; }
 .bl-view-grip i { display:block; width:42px; height:4px; border-radius:4px; background:var(--salty-muted); opacity:.45; }
 .bl-view-grip:is(:hover,:focus-visible) i { opacity:1; background:var(--salty-accent); }
 .salty-panel .bl-view-resize button { width:32px; height:28px; min-height:0; padding:0; margin:0; border:0; border-radius:8px; background:transparent; color:var(--salty-muted); font:18px/1 sans-serif; }
