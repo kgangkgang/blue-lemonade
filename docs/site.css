@@ -62,14 +62,14 @@ code{font-family:ui-monospace,SFMono-Regular,Consolas,'D2Coding',monospace;font-
 .top nav a:hover{color:var(--ink);background:var(--tint)}
 .top nav a[aria-current=true]{color:var(--ink);background:var(--tint)}
 .top-actions{display:flex;align-items:center;gap:8px}
-.icon-button{display:grid;place-items:center;width:38px;height:38px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line-strong);transition:background-color .2s,transform .4s var(--ease)}
+.icon-button{display:grid;place-items:center;width:38px;height:38px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line-strong);transition:background-color .2s,transform .4s var(--ease),scale .15s ease}
 .icon-button:hover{background:var(--tint)}
 .icon-button svg{width:18px;height:18px;transition:transform .5s var(--ease)}
 :root[data-theme=dark] .icon-button svg{transform:rotate(180deg)}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]) .icon-button svg{transform:rotate(180deg)}}
 
 /* buttons */
-.button{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:52px;padding:0 26px;border:0;border-radius:999px;font-size:15px;font-weight:650;letter-spacing:-.015em;white-space:nowrap;transition:transform .25s var(--ease),box-shadow .25s ease,background-color .2s ease}
+.button{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:52px;padding:0 26px;border:0;border-radius:999px;font-size:15px;font-weight:650;letter-spacing:-.015em;white-space:nowrap;transition:transform .25s var(--ease),box-shadow .25s ease,background-color .2s ease,scale .15s ease}
 .button.small{height:38px;padding:0 17px;font-size:14px}
 .primary{background:var(--blue);color:var(--on-blue);box-shadow:0 10px 24px -12px var(--blue)}
 .primary:hover{background:var(--blue-strong);transform:translateY(-1px);box-shadow:0 14px 28px -12px var(--blue)}
@@ -91,7 +91,7 @@ code{font-family:ui-monospace,SFMono-Regular,Consolas,'D2Coding',monospace;font-
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(234,179,8,.55)}70%,100%{box-shadow:0 0 0 9px rgba(234,179,8,0)}}
 h1{font-size:clamp(58px,7.6vw,108px);line-height:1.06;letter-spacing:-.058em;font-weight:820;margin:30px 0 30px}
 .mark{position:relative;z-index:0;white-space:nowrap}
-.mark::before{content:"";position:absolute;z-index:-1;left:.03em;right:-.1em;bottom:.08em;height:.36em;background:var(--marker-strong);border-radius:.08em .28em .16em .1em;transform:skewX(-14deg) scaleX(0);transform-origin:left center;animation:sweep .95s .5s cubic-bezier(.7,0,.25,1) forwards}
+.mark::before{content:"";position:absolute;z-index:-1;left:.03em;right:-.1em;bottom:.08em;height:.36em;background:var(--marker-strong);border-radius:.08em .28em .16em .1em;transform:skewX(-14deg) scaleX(0);transform-origin:left center;animation:sweep .95s .75s cubic-bezier(.7,0,.25,1) forwards}
 @keyframes sweep{to{transform:skewX(-14deg) scaleX(1)}}
 .dot{color:var(--lemon-deep)}
 .lead{font-size:clamp(18px,1.55vw,21px);line-height:1.65;letter-spacing:-.025em;color:var(--text);margin:0 0 14px}
@@ -114,7 +114,7 @@ h1{font-size:clamp(58px,7.6vw,108px);line-height:1.06;letter-spacing:-.058em;fon
 .gallery-heading h3{font-size:22px;line-height:1.35;letter-spacing:-.035em;font-weight:720;margin:0}
 .gallery-heading p{font-size:14px;color:var(--muted);margin:6px 0 0;line-height:1.6}
 .arrows{display:flex;gap:8px;flex:none}
-.arrows button{display:grid;place-items:center;width:42px;height:42px;padding:0;border:0;border-radius:50%;background:var(--surface);color:var(--ink);font-size:17px;box-shadow:inset 0 0 0 1px var(--line),var(--shadow-sm);transition:transform .2s var(--ease),background-color .2s}
+.arrows button{display:grid;place-items:center;width:42px;height:42px;padding:0;border:0;border-radius:50%;background:var(--surface);color:var(--ink);font-size:17px;box-shadow:inset 0 0 0 1px var(--line),var(--shadow-sm);transition:transform .2s var(--ease),background-color .2s,scale .15s ease}
 .arrows button:hover{transform:translateY(-1px)}
 .arrows button:disabled{opacity:.35;cursor:default;transform:none}
 .track{--edge:max(32px,calc(50vw - 568px));display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;margin-inline:calc(50% - 50vw);padding:6px var(--edge) 18px;scroll-padding-inline:var(--edge)}
@@ -153,12 +153,12 @@ h1{font-size:clamp(58px,7.6vw,108px);line-height:1.06;letter-spacing:-.058em;fon
 .note ul{margin:0;padding:0 8px 26px 98px;color:var(--text);font-size:15px;line-height:1.8}
 .note li{padding:0 0 10px 2px}
 .note li::marker{color:var(--faint)}
-.notes-more{display:flex;align-items:center;gap:8px;margin:28px 0 0;height:46px;padding:0 20px;border:0;border-radius:999px;background:transparent;color:var(--ink);font-size:14px;font-weight:650;box-shadow:inset 0 0 0 1.5px var(--line-strong);transition:background-color .2s}
+.notes-more{display:flex;align-items:center;gap:8px;margin:28px 0 0;height:46px;padding:0 20px;border:0;border-radius:999px;background:transparent;color:var(--ink);font-size:14px;font-weight:650;box-shadow:inset 0 0 0 1.5px var(--line-strong);transition:background-color .2s,scale .15s ease}
 .notes-more:hover{background:var(--tint)}
 
 /* install — night band */
 .install{position:relative;isolation:isolate;overflow:hidden;background:var(--band);color:var(--band-text);padding:136px 32px 128px;scroll-margin-top:0}
-.install::before{content:"";position:absolute;z-index:-1;width:min(960px,180%);height:560px;left:50%;top:-300px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(66,141,240,.34),transparent);filter:blur(12px)}
+.install::before{content:"";position:absolute;z-index:-1;width:min(960px,180%);height:560px;left:50%;top:-300px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(66,141,240,.34),transparent);filter:blur(12px);animation:glow-drift 16s ease-in-out infinite alternate}
 .install-inner{max-width:1136px;margin:auto;text-align:center}
 .install .eyebrow{color:var(--lemon)}
 .install h2{color:#fff}
@@ -171,7 +171,7 @@ h1{font-size:clamp(58px,7.6vw,108px);line-height:1.06;letter-spacing:-.058em;fon
 .install-grid code{color:#e6eef8;overflow-wrap:anywhere}
 .copy-row{width:100%;display:flex;align-items:center;gap:10px;padding:6px 6px 6px 16px;border-radius:14px;background:rgba(0,0,0,.28);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
 .copy-row code{flex:1;min-width:0;font-size:13px;color:#dbe7f5}
-.copy-row button{flex:none;height:38px;padding:0 16px;border:0;border-radius:10px;background:#fff;color:#11263c;font-size:13px;font-weight:700;transition:transform .2s var(--ease)}
+.copy-row button{flex:none;height:38px;padding:0 16px;border:0;border-radius:10px;background:#fff;color:#11263c;font-size:13px;font-weight:700;transition:transform .2s var(--ease),background-color .25s ease,color .25s ease,scale .15s ease}
 .copy-row button:hover{transform:translateY(-1px)}
 .install .text-link{margin-top:16px;color:#d6e7fb}
 .install-note{font-size:13px;margin:14px 0 0;color:#8397ae}
@@ -194,6 +194,38 @@ dialog p{text-align:center;font-size:14px;margin:14px 0 0;color:var(--ink);font-
 #toast{position:fixed;z-index:60;bottom:28px;left:50%;transform:translate(-50%,8px);background:var(--ink);color:var(--bg);border-radius:999px;padding:12px 22px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s var(--ease)}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 
+
+/* ---- motion ---- */
+@keyframes rise-in{from{opacity:0;translate:0 18px}}
+@keyframes pop-in{from{opacity:.15;translate:0 8px}}
+@keyframes card-in{from{opacity:0;translate:0 10px}}
+@keyframes glow-drift{to{translate:-14% 40px;scale:1.18}}
+@keyframes shimmer{0%,62%{translate:-130% 0}88%,100%{translate:130% 0}}
+@keyframes fade{from{opacity:0}}
+/* hero copy arrives line by line */
+.hero-copy>*{animation:rise-in .8s var(--ease) both}
+.hero-copy>:nth-child(2){animation-delay:.08s}
+.hero-copy>:nth-child(3){animation-delay:.22s}
+.hero-copy>:nth-child(4){animation-delay:.3s}
+.hero-copy>:nth-child(5){animation-delay:.38s}
+/* reading progress under the header; the lemon rolls along */
+.top .progress{position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--blue),var(--lemon-deep));transform-origin:left center;transform:scaleX(var(--p,0));opacity:.9;pointer-events:none}
+.top .lemon{rotate:calc(var(--p,0) * 1.5turn)}
+/* press */
+.button:active,.icon-button:active,.arrows button:active,.copy-row button:active,.notes-more:active{scale:.95}
+.copy-row button.done{background:var(--lemon);color:#2a2200}
+.citrus{position:relative;overflow:hidden;isolation:isolate}
+.citrus::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.7) 50%,transparent 65%);translate:-130% 0;animation:shimmer 5.5s ease-in-out 1.5s infinite;pointer-events:none}
+/* gallery cards slide in one after another */
+.js .gallery-block .card{opacity:0;translate:32px 0;transition:transform .35s var(--ease),box-shadow .35s ease,opacity .6s ease calc(var(--i,0) * 80ms),translate .85s var(--ease) calc(var(--i,0) * 80ms)}
+.js .gallery-block.in .card{opacity:1;translate:0 0}
+/* update notes */
+.note[open] li{animation:rise-in .45s var(--ease) both;animation-delay:calc(var(--i,0) * 45ms)}
+.note.appear{animation:rise-in .55s var(--ease) both;animation-delay:calc(var(--i,0) * 35ms)}
+dialog[open]::backdrop{animation:fade .3s ease}
+/* white / night: the new theme grows out of the toggle */
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
+.theme-swap *,.theme-swap *::before,.theme-swap *::after{transition:none!important}
 /* scroll reveal (only when JS is on) */
 .js .reveal{opacity:0;transform:translateY(26px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
 .js .reveal.in{opacity:1;transform:none}
@@ -240,4 +272,5 @@ dialog p{text-align:center;font-size:14px;margin:14px 0 0;color:var(--ink);font-
   *,*::before,*::after{animation:none!important;transition:none!important}
   .mark::before{transform:skewX(-14deg)}
   .js .reveal{opacity:1;transform:none}
+  .js .gallery-block .card,.js .palette-layout .palette-families button{opacity:1;translate:none}
 }

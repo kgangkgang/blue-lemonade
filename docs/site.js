@@ -67,7 +67,7 @@ for(const group of groups){
   const syncArrows=()=>{buttons[0].disabled=track.scrollLeft<4;buttons[1].disabled=track.scrollLeft+track.clientWidth>=track.scrollWidth-4;};
   track.addEventListener('scroll',syncArrows,{passive:true});addEventListener('resize',syncArrows);
   for(const [file,title,description,poster,gif] of group.cards){
-    const card=element('figure','card'), wrap=element('div','media-wrap'), caption=element('figcaption','',title);
+    const card=element('figure','card'), wrap=element('div','media-wrap'), caption=element('figcaption','',title); card.style.setProperty('--i',Math.min(track.children.length,6));
     if(file.endsWith('.mp4')){
       const video=element('video');video.preload='none';video.playsInline=true;video.muted=true;video.loop=true;video.src='media/'+file;video.poster='media/'+poster;video.setAttribute('aria-label',title);
       if(reduceMotion.matches)video.controls=true;
@@ -82,15 +82,15 @@ for(const group of groups){
 }
 lightbox.querySelector('.close').onclick=()=>lightbox.close();lightbox.onclick=e=>{if(e.target===lightbox)lightbox.close();};lightbox.addEventListener('close',()=>{lightbox.querySelector('img').src='';});
 const SHOWN_NOTES=5;
-fetch('release-notes.json').then(r=>{if(!r.ok)throw new Error('notes');return r.json();}).then(notes=>{$('#notes').replaceChildren();notes.forEach((note,i)=>{const d=element('details','note');d.open=i===0;d.hidden=i>=SHOWN_NOTES;const s=element('summary');s.append(element('span','num',note.version));if(i===0)s.append(element('span','tag','NEW'));s.append(element('span','date',note.date.replaceAll('-','.')),element('span','plus','+'));const ul=element('ul');note.items.forEach(t=>ul.append(element('li','',t)));d.append(s,ul);$('#notes').append(d);});
-  if(notes.length>SHOWN_NOTES){const more=element('button','notes-more',`이전 버전 ${notes.length-SHOWN_NOTES}개 더 보기`);more.type='button';more.onclick=()=>{document.querySelectorAll('.note[hidden]').forEach(n=>n.hidden=false);more.remove();};$('#notes').after(more);}
+fetch('release-notes.json').then(r=>{if(!r.ok)throw new Error('notes');return r.json();}).then(notes=>{$('#notes').replaceChildren();notes.forEach((note,i)=>{const d=element('details','note');d.open=i===0;d.hidden=i>=SHOWN_NOTES;const s=element('summary');s.append(element('span','num',note.version));if(i===0)s.append(element('span','tag','NEW'));s.append(element('span','date',note.date.replaceAll('-','.')),element('span','plus','+'));const ul=element('ul');note.items.forEach((t,k)=>{const li=element('li','',t);li.style.setProperty('--i',Math.min(k,10));ul.append(li);});d.append(s,ul);$('#notes').append(d);});
+  if(notes.length>SHOWN_NOTES){const more=element('button','notes-more',`이전 버전 ${notes.length-SHOWN_NOTES}개 더 보기`);more.type='button';more.onclick=()=>{document.querySelectorAll('.note[hidden]').forEach((n,k)=>{n.hidden=false;n.classList.add('appear');n.style.setProperty('--i',Math.min(k,12));});more.remove();};$('#notes').after(more);}
 }).catch(()=>{$('#notes').textContent='업데이트 내역을 불러오지 못했어요. 잠시 후 새로고침해 주세요.';});
-$('#copy-repo').onclick=async()=>{try{await navigator.clipboard.writeText($('#repo-url').textContent);$('#toast').textContent='설치 주소를 복사했어요.';$('#toast').classList.add('show');setTimeout(()=>$('#toast').classList.remove('show'),2200);}catch{$('#copy-repo').textContent='주소 선택';const r=document.createRange();r.selectNodeContents($('#repo-url'));const s=window.getSelection();s.removeAllRanges();s.addRange(r);}};
+$('#copy-repo').onclick=async()=>{try{await navigator.clipboard.writeText($('#repo-url').textContent);const cb=$('#copy-repo');cb.textContent='복사됨 ✓';cb.classList.add('done');setTimeout(()=>{cb.textContent='복사';cb.classList.remove('done');},1800);$('#toast').textContent='설치 주소를 복사했어요.';$('#toast').classList.add('show');setTimeout(()=>$('#toast').classList.remove('show'),2200);}catch{$('#copy-repo').textContent='주소 선택';const r=document.createRange();r.selectNodeContents($('#repo-url'));const s=window.getSelection();s.removeAllRanges();s.addRange(r);}};
 document.addEventListener('play',e=>{if(e.target.tagName==='VIDEO'&&e.target.controls)document.querySelectorAll('video').forEach(v=>{if(v!==e.target)v.pause();});},true);
 
 // header: hairline after scrolling, current section in the nav
 const header=$('.top');
-const onScroll=()=>header.classList.toggle('scrolled',scrollY>8);
+const onScroll=()=>{header.classList.toggle('scrolled',scrollY>8);const max=document.documentElement.scrollHeight-innerHeight;header.style.setProperty('--p',max>0?(scrollY/max).toFixed(4):0);};
 addEventListener('scroll',onScroll,{passive:true});onScroll();
 const navLinks=[...document.querySelectorAll('.top nav a')].map(a=>[a,document.querySelector(a.hash)]).filter(([,s])=>s);
 let spyFrame=0;
@@ -99,7 +99,10 @@ addEventListener('scroll',()=>{if(!spyFrame)spyFrame=requestAnimationFrame(spy);
 
 // white / night toggle — follows the device until the visitor picks one
 const root=document.documentElement, dark=matchMedia('(prefers-color-scheme: dark)');
-$('#theme-toggle').onclick=()=>{const next=(root.dataset.theme||(dark.matches?'dark':'light'))==='dark'?'light':'dark';root.dataset.theme=next;try{localStorage.setItem('bl-site-theme',next);}catch{}document.dispatchEvent(new CustomEvent('bl-theme',{detail:next}));};
+$('#theme-toggle').onclick=e=>{const next=(root.dataset.theme||(dark.matches?'dark':'light'))==='dark'?'light':'dark';const swap=()=>{root.dataset.theme=next;try{localStorage.setItem('bl-site-theme',next);}catch{}document.dispatchEvent(new CustomEvent('bl-theme',{detail:next}));};
+  if(!document.startViewTransition||reduceMotion.matches){swap();return;}
+  const b=e.currentTarget.getBoundingClientRect(),x=b.left+b.width/2,y=b.top+b.height/2,r=Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y));
+  root.classList.add('theme-swap');const vt=document.startViewTransition(swap);vt.finished.finally(()=>root.classList.remove('theme-swap'));vt.ready.then(()=>root.animate({clipPath:[`circle(0px at ${x}px ${y}px)`,`circle(${r}px at ${x}px ${y}px)`]},{duration:850,easing:'cubic-bezier(.45,0,.2,1)',pseudoElement:'::view-transition-new(root)'})).catch(()=>{});};
 
 // quiet fade-up as blocks enter
 const reveal=new IntersectionObserver(entries=>{for(const e of entries)if(e.isIntersecting){e.target.classList.add('in');reveal.unobserve(e.target);}},{rootMargin:'0px 0px -8% 0px'});

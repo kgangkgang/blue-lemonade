@@ -27,8 +27,9 @@
       const item = document.createElement('div'), chip = document.createElement('span'), name = document.createElement('span');
       chip.className = 'palette-chip'; chip.style.backgroundColor = palette[key]; chip.setAttribute('aria-hidden','true');
       name.textContent = label; item.title = `${label}: ${palette[key]}`;
-      item.append(chip, name); swatches.append(item);
+      item.style.setProperty('--i', swatches.children.length); item.append(chip, name); swatches.append(item);
     }
+    if (announce) { const chat = stage.querySelector('.palette-chat'); chat.classList.remove('swap'); void chat.offsetWidth; chat.classList.add('swap'); }
     if (announce) document.querySelector('#palette-announcement').textContent = `${family.label} ${mode === 'light' ? '화이트' : '나이트'} 미리보기`;
   }
   modes.forEach(button => button.addEventListener('click', () => { mode = button.dataset.mode; pickedMode = true; render(); }));
@@ -38,7 +39,7 @@
     families = data;
     for (const family of families) {
       const button = document.createElement('button'), dot = document.createElement('span'), label = document.createElement('span');
-      button.type = 'button'; button.dataset.family = family.id;
+      button.type = 'button'; button.dataset.family = family.id; button.style.setProperty('--i', choices.children.length);
       dot.className = 'palette-dot'; dot.setAttribute('aria-hidden','true'); label.textContent = family.label;
       button.append(dot, label); button.addEventListener('click', () => { selected = family.id; render(); }); choices.append(button);
     }
