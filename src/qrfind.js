@@ -28,6 +28,42 @@ function pushRecent(key) {
     } catch { /* 저장 못 해도 누르기는 됨 */ }
 }
 
+// 3.7.4 ⋮ 목록 속 QR 도 찾기 (사용자: "20 이란 QR 이 있는데 안 보이네" — ⋮ 목록으로만 단 세트의 QR 은 줄에 버튼이 없어 후보에서 빠졌다).
+// 실리태번 ⋮ 목록(quick-reply/src/ui/ctx/ContextMenu.js build)과 똑같이 모으고 실행한다: 자기 세트를 ⋮ 로 단 경우는 숨긴 것 중 아이콘 있는 것만,
+// '이어 실행'(isChained)이면 부모 내용을 ' | ' 로 앞에 붙이고, %%parent%% · %%parent-N%% 는 부모 이름으로, 실행은 그 세트의 execute.
+// 같은 세트로 되돌아가는 고리는 hierarchy 로 끊고, 목록이 터무니없이 커지지 않게 모두 합쳐 2000개까지.
+const CTX_MAX = 2000;
+function addContext(out, qr, path, parentMessage = null, hierarchy = [], labels = []) {
+    const message = (parentMessage && qr.message ? `${parentMessage} | ` : '') + (qr.message || '');
+    for (const cl of qr.contextList || []) {
+        const set = cl?.set;
+        if (!set || hierarchy.includes(set) || out.length >= CTX_MAX) continue;
+        const ownSet = (set.qrList || []).includes(qr);
+        const visible = sub => (ownSet ? sub.isHidden && !!sub.icon : !sub.isHidden);
+        const nextHierarchy = [...hierarchy, set];
+        const nextLabels = [...labels, qr.label];
+        const where = `${path} › ${qr.label || '⋮'} ⋮ ${set.name || ''}`;
+        for (const sub of (set.qrList || []).filter(visible)) {
+            if (out.length >= CTX_MAX) break;
+            const subMessage = (cl.isChained && message && sub.message ? `${message} | ` : '') + (sub.message || '');
+            out.push({
+                key: `ctx:${where}:${sub.label || sub.id}`,
+                set: where,
+                label: sub.label || '',
+                icon: sub.icon || '',
+                text: String(sub.title || sub.message || '').trim(),
+                body: String(sub.message || ''),
+                run: () => {
+                    const finalQr = Object.assign(Object.create(Object.getPrototypeOf(sub)), sub);
+                    finalQr.message = subMessage.replace(/%%parent(-\d+)?%%/g, (_, index) => nextLabels.slice(parseInt(index ?? '-1'))[0]);
+                    return set.execute(finalQr);
+                },
+            });
+            addContext(out, sub, where, cl.isChained ? message : null, nextHierarchy, nextLabels);
+        }
+    }
+}
+
 function collect() {
     const out = [];
     const settings = globalThis.quickReplyApi?.settings;
@@ -46,8 +82,9 @@ function collect() {
                     icon: qr.icon || '',
                     text: String(qr.title || qr.message || '').trim(),
                     body: String(qr.message || ''), // 찾기는 제목(툴팁)이 따로 있어도 안의 내용까지
-                    run: () => (qr.dom?.isConnected ? qr.dom.click() : qr.execute?.()),
+                    run: () => qr.execute?.(),
                 });
+                addContext(out, qr, link.set.name || '');
             }
         }
     }

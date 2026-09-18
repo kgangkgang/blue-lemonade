@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 40개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 4bcc2367c7c2) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 41개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 51fc90c06587) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 10px;
@@ -15770,6 +15770,160 @@ body.salty.salty-qr-y :is(#send_form #qr--bar, .salty-panel .bl-qr-sample) > :wh
   position: relative;
   left: auto !important;
 }
+body.salty #send_form #qr--bar .qr--button.qr--hasCtx,
+body.salty #qr--popout .qr--button.qr--hasCtx {
+  width: max-content !important;
+  min-width: 0;
+  flex: 0 0 auto;
+  gap: 0;
+  padding: 0 0 0 9px !important;
+}
+body.salty #send_form #qr--bar .qr--button.qr--hasCtx > .qr--button-expander,
+body.salty #qr--popout .qr--button.qr--hasCtx > .qr--button-expander {
+  display: grid !important;
+  place-items: center;
+  align-self: stretch;
+  flex: none;
+  box-sizing: border-box;
+  width: auto;
+  max-width: 14ch;
+  min-width: 0;
+  min-height: 30px;
+  margin: 0 0 0 8px;
+  padding: 0 9px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: 0 7px 7px 0;
+  border-left: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  font-size: 12px;
+  line-height: 1;
+}
+body.salty .ctx-blocker .ctx-menu {
+  box-sizing: border-box;
+  min-width: 88px;
+  max-width: min(280px, calc(100vw - 16px));
+  margin: 0 !important;
+  padding: 4px !important;
+  border: 0 !important;
+  border-radius: 12px;
+  background: var(--bl-overlay, var(--salty-surface)) !important;
+  box-shadow: var(--bl-e4, 0 8px 28px rgba(0, 0, 0, 0.28));
+}
+body.salty:not(#salty-none) .ctx-blocker > .ctx-menu {
+  max-height: min(var(--bl-ctx-max, 50svh), 50svh, 360px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--salty-accent) 55%, transparent) transparent;
+  touch-action: pan-y;
+  clip-path: inset(0 round 12px);
+}
+@supports selector(::-webkit-scrollbar) {
+  body.salty:not(#salty-none) .ctx-blocker > .ctx-menu {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+}
+body.salty:not(#salty-none) .ctx-blocker > .ctx-menu::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+  background: transparent;
+}
+body.salty:not(#salty-none) .ctx-blocker > .ctx-menu::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: 9px;
+}
+body.salty:not(#salty-none) .ctx-blocker > .ctx-menu::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--salty-accent) 55%, transparent);
+  border: 0;
+  border-radius: 999px;
+  min-height: 24px;
+}
+body.salty:not(#salty-none) .ctx-blocker > .ctx-menu::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+body.salty .ctx-blocker > .ctx-menu.bl-ctx-single > .ctx-header {
+  display: none;
+}
+body.salty .ctx-blocker .ctx-has-children {
+  flex-wrap: wrap;
+}
+body.salty .ctx-blocker .ctx-sub-menu {
+  position: static !important;
+  flex: 0 0 100%;
+  order: 1;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  max-height: none;
+  overflow: visible;
+  margin-top: 4px !important;
+  box-shadow: inset 2px 0 0 var(--bl-line, rgba(127, 127, 127, 0.2));
+}
+body.salty:not(#salty-none) .ctx-blocker .ctx-menu > .list-group-item.ctx-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+  min-height: 30px;
+  margin: 0 !important;
+  padding: 4px 10px !important;
+  border: 0 !important;
+  border-radius: 8px;
+  background: transparent !important;
+  color: var(--salty-text);
+  font-size: 13px;
+  line-height: 1.2;
+  text-align: center;
+}
+body.salty .ctx-blocker .ctx-menu > .ctx-item + .ctx-item {
+  margin-top: 1px !important;
+}
+@media (hover: hover) {
+  body.salty .ctx-blocker .ctx-menu > .list-group-item.ctx-item:hover {
+    background: var(--bl-hover) !important;
+  }
+}
+body.salty .ctx-blocker .ctx-menu > .list-group-item.ctx-item:active {
+  background: var(--bl-hover) !important;
+}
+body.salty .ctx-blocker .ctx-menu .ctx-item > .qr--button-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body.salty .ctx-blocker .ctx-menu .ctx-item > .qr--button-icon:not(.qr--hidden) {
+  flex: none;
+  margin: 0;
+}
+body.salty .ctx-blocker .ctx-menu .ctx-expander {
+  flex: none;
+  width: 14px;
+  margin-left: 4px;
+  padding-left: 5px;
+  border-left: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+}
+body.salty:not(#salty-none) .ctx-blocker .ctx-menu > .list-group-item.ctx-header {
+  justify-content: center;
+  text-align: center;
+  min-height: 0;
+  padding: 6px 10px 3px !important;
+  color: var(--salty-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+body.salty .ctx-blocker .ctx-menu > .ctx-item + .ctx-header {
+  margin-top: 4px !important;
+  border-top: 1px solid var(--bl-line, rgba(127, 127, 127, 0.2)) !important;
+}
 /* css/36-qr-place.css */
 body.salty.salty-qr-top #send_form > #qr--bar {
   order: -1;
@@ -15827,8 +15981,19 @@ body.salty.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#sal
   -webkit-text-fill-color: var(--salty-marker-ink, var(--salty-dialogue));
   background-color: currentColor !important;
   background-image: none !important;
-  -webkit-mask: var(--salty-marker-bg);
-  mask: var(--salty-marker-bg);
+}
+@supports (-webkit-mask-clip: text) {
+  body.salty.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q {
+    -webkit-mask: linear-gradient(#000 0 0), var(--salty-marker-bg);
+    -webkit-mask-clip: text, border-box;
+  }
+}
+@supports not (-webkit-mask-clip: text) {
+  body.salty.salty-dem-ink.salty-dem-ink-marker:not(.salty-dlg-full) :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q {
+    -webkit-text-fill-color: currentColor;
+    background: none !important;
+    padding: 0;
+  }
 }
 body.salty.salty-dlg-full.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q {
   -webkit-mask: none;
@@ -15869,6 +16034,29 @@ body.salty:is(.salty-outline, .salty-demink-outline) :is(#chat, .cg-root, #salty
 body.salty:is(.salty-outline, .salty-demink-outline) :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text .fa-brands,
 body.salty:is(.salty-outline, .salty-demink-outline) :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text [class*="custom-dem-"] {
   -webkit-text-stroke: 0;
+}
+/* css/39-baibai.css */
+body.salty:not(#salty-none) #WorldInfo .world_entry[data-bai-bai-world-info-mobile-header-layout="true"] > form > .inline-drawer > .inline-drawer-header {
+  display: block !important;
+  padding: 8px !important;
+}
+body.salty:not(#salty-none) #WorldInfo .bai-bai-wi-mobile-title-cell .WIEntryTitleAndStatus,
+body.salty:not(#salty-none) #WorldInfo .bai-bai-wi-mobile-title-cell .WIEntryTitleAndStatus > .flex-container {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  grid-area: auto;
+  width: 100% !important;
+  min-width: 0;
+}
+body.salty:not(#salty-none) #WorldInfo .bai-bai-wi-mobile-title-cell textarea[name="comment"] {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100%;
+}
+body.salty:not(#salty-none) #WorldInfo .bai-bai-wi-mobile-header .inline-drawer-toggle,
+body.salty:not(#salty-none) #WorldInfo .bai-bai-wi-mobile-header .killSwitch {
+  grid-area: auto;
 }
 /* css/99-lazy-panel.css */
 #salty-lazy-panel-start {}

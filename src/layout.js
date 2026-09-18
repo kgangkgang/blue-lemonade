@@ -123,7 +123,22 @@ export function startCompactLayout() {
             bar.setAttribute('aria-label', '빠른 답장');
         }
         syncQrFind(bar, enabled);
+        syncQrTitles(enabled);
         scheduleQrEdges();
+    }
+    function syncQrTitles(enabled = document.body.classList.contains('salty')) {
+        const settings = globalThis.quickReplyApi?.settings;
+        if (!settings) return;
+        const links = [settings.config, settings.chatConfig, settings.charConfig].flatMap(config => config?.setList || []);
+        for (const link of links) for (const qr of link.set?.qrList || []) {
+            const expander = qr.dom?.querySelector('.qr--button-expander');
+            if (!expander || !qr.hasContext) continue;
+            const names = [...new Set((qr.contextList || []).map(c => c.set?.name).filter(Boolean))];
+            const title = names.join(' · ');
+            const text = enabled && title ? title : '⋮';
+            if (expander.textContent !== text) expander.textContent = text;
+            expander.title = title ? `${title} 목록 열기` : '목록 열기';
+        }
     }
     // 3.6.1: 몸 클래스 · 입력판이 바뀔 때마다 그 자리에서 재면, 답변이 자라는 도중에 문서 전체 강제 레이아웃이 돌았다
     // (폰 리그 답변 한 번에 0.25초 — 실리태번이 스트리밍 중 hideAllSwipeButtons 를 붙였다 뗌). 다음 프레임 직전에 한 번만 잰다:
@@ -157,6 +172,59 @@ export function startCompactLayout() {
         const wanted = pop ? pop.nextElementSibling : bar.firstElementChild;
         if (wanted !== find) (pop ? pop.after(find) : bar.prepend(find));
     }
+    // 3.7.4 QR ⋮ 하위 목록: 실리태번은 누른 자리를 바닥으로 위로 키우고(bottom) 높이 제한이 없어, 항목이 많으면 화면 위로 솟구쳐
+    // 잘린 항목을 못 골랐다. 목록이 붙는 순간 누른 자리 위 남는 높이를 --bl-ctx-max 로 주고(넘치면 CSS 가 안에서 스크롤),
+    // 위가 너무 좁으면(160px 미만이고 아래가 더 넓음) 아래로 펼치고, 오른쪽으로 넘치면 안쪽으로 당긴다. 몸의 직계 자식만 본다(가벼움).
+    // Context QR buttons open their menu from the entire tile, including the label.
+    // Delegate to the native expander so chaining and menu execution stay in Quick Reply.
+    document.addEventListener('click', event => {
+        if (!document.body.classList.contains('salty')) return;
+        const button = event.target.closest?.('#qr--bar .qr--button.qr--hasCtx, #qr--popout .qr--button.qr--hasCtx');
+        if (!button || event.target.closest('.qr--button-expander')) return;
+        const expander = button.querySelector('.qr--button-expander');
+        if (!expander) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        const rect = button.getBoundingClientRect();
+        expander.dispatchEvent(new MouseEvent('click', {
+            bubbles: true, cancelable: true,
+            clientX: event.clientX || rect.left + rect.width / 2,
+            clientY: event.clientY || rect.top + rect.height / 2,
+        }));
+    }, true);
+    const fitQrMenu = (blocker) => {
+        const menu = blocker.querySelector(':scope > .ctx-menu');
+        if (!menu || !document.body.classList.contains('salty')) return;
+        menu.classList.toggle('bl-ctx-single', menu.querySelectorAll(':scope > .ctx-header').length === 1);
+        const vh = window.innerHeight, vw = window.innerWidth, gap = 8;
+        const bottom = parseFloat(menu.style.bottom);
+        if (Number.isFinite(bottom)) {
+            const tapY = vh - bottom;
+            const above = tapY - gap, below = vh - tapY - gap;
+            if (above < 160 && below > above) {
+                menu.style.bottom = 'auto';
+                menu.style.top = `${tapY}px`;
+                menu.style.setProperty('--bl-ctx-max', `${Math.max(120, below)}px`);
+            } else {
+                menu.style.setProperty('--bl-ctx-max', `${Math.max(120, above)}px`);
+            }
+        }
+        requestAnimationFrame(() => {
+            const rect = menu.getBoundingClientRect();
+            if (rect.right > vw - gap) menu.style.left = `${Math.max(gap, vw - gap - rect.width)}px`;
+        });
+    };
+    new MutationObserver((records) => {
+        for (const record of records) {
+            for (const node of record.addedNodes) {
+                if (node.nodeType === 1 && node.classList.contains('ctx-blocker')) fitQrMenu(node);
+                if (node.nodeType === 1 && node.id === 'qr--popout') {
+                    syncQrTitles();
+                    new MutationObserver(() => syncQrTitles()).observe(node, {childList: true, subtree: true});
+                }
+            }
+        }
+    }).observe(document.body, { childList: true });
     // QR 줄 흐림 · 스냅 · 휠 · 끌기는 아래 모듈 함수 (설정 창 미리보기 줄도 같이 씀)
     sendForm?.addEventListener('scroll', (event) => { if (event.target.id === 'qr--bar') updateQrEdges(event.target); }, true);
     window.addEventListener('resize', scheduleQrEdges);
