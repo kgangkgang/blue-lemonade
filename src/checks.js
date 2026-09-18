@@ -39,7 +39,7 @@ export function getIssues() {
             text: '사용자 설정의 커스텀 CSS에 예전 테마가 남아 있어요.',
             fix: '비우기',
             run: () => {
-                if (confirm('사용자 설정 → 커스텀 CSS 칸을 비울까요?\n(예전 Moonlit / Moonlit Slate 테마 CSS가 들어 있어요)')) {
+                if (confirm('사용자 설정 → 커스텀 CSS 칸을 비울까요?\n(예전 Moonlit / Moonlit Slate 테마 CSS가 들어 있어요)\n\n지우지 않고 꺼 두기만 하려면: 채팅 › 기타 › 커스텀 CSS 끄기')) {
                     $('#customCSS').val('').trigger('input');
                 }
             },

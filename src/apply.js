@@ -226,6 +226,32 @@ function textShadow(shadow) {
     return `${(Math.cos(rad) * d).toFixed(2)}px ${(Math.sin(rad) * d).toFixed(2)}px ${Number(shadow.blur) || 0}px rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
+/**
+ * 3.7.2 커스텀 CSS 끄기: 실리태번이 사용자 설정 › 커스텀 CSS 를 넣는 <style id="custom-style"> 을 media 로 끈다.
+ * 다른 테마를 쓰다 넘어오면 그 CSS 가 남아 월드북 · 버튼 모양을 덮는 일이 있어서 (제보 2026-09-18: 월드북 항목 제목이 안 보이고
+ * 누르면 켜기만 토글됨). 내용은 건드리지 않으니 끄면 그대로 돌아온다. 칸이 나중에 생기면 한 번 지켜봤다가 맞춘다.
+ */
+let customCssMuted = false;
+let customCssWatch = null;
+function syncCustomCss(mute) {
+    customCssMuted = mute;
+    const el = document.getElementById('custom-style');
+    if (el) {
+        const want = mute ? 'not all' : '';
+        if (el.media !== want) el.media = want;
+        return;
+    }
+    if (mute && !customCssWatch && document.head) {
+        customCssWatch = new MutationObserver(() => {
+            if (!document.getElementById('custom-style')) return;
+            customCssWatch.disconnect();
+            customCssWatch = null;
+            syncCustomCss(customCssMuted);
+        });
+        customCssWatch.observe(document.head, { childList: true });
+    }
+}
+
 /** 글자 외곽선 (3.7.0): -webkit-text-stroke 색 — 두께는 --salty-outline-w 로 따로 (끄면 0) */
 function outlineInk(outline) {
     const [r, g, b] = parseColor(outline?.color || '#000000');
@@ -535,6 +561,7 @@ export function applyAll() {
     if (cutoutBefore !== cls.contains('salty-cutout-same')) classifyAll();
 
     syncSamples(s);
+    syncCustomCss(!!(s.enabled && s.compat?.muteCustomCss));
 
     applyFonts(s);
     syncFeatures(s); // 3.1.0 켤 때만 불러오는 기능 (features.js)

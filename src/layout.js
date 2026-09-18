@@ -112,7 +112,10 @@ export function startCompactLayout() {
         const row = sendForm?.querySelector('#nonQRFormItems');
         if (!bar || !row) return;
         const enabled = document.body.classList.contains('salty');
-        const target = enabled && mobile.matches ? row : sendForm;
+        // 폰(1000px 이하)은 입력 줄의 남는 폭(아이콘 줄)에 끼워 넣는다. 단 '입력창 위'(3.7.1, body.salty-qr-top)를 골랐으면
+        // 끼워 넣지 않고 #send_form 에 두어 입력판 위 한 줄을 통째로 쓴다 — 아이콘을 많이 빼 둔 사람은 아이콘 줄이 좁아서 고른 설정이다
+        const top = enabled && document.body.classList.contains('salty-qr-top');
+        const target = enabled && mobile.matches && !top ? row : sendForm;
         if (bar.parentElement !== target) target.append(bar);
         if (!enabled && bar.nextElementSibling !== row) row.before(bar);
         if (enabled) {

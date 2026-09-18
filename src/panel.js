@@ -959,6 +959,10 @@ function roleType(label, controls, hint = '') {
 // ───────── 채팅 ─────────
 function tabChat(s, sub) {
     if (sub === 'etc') {
+        const customLines = (SillyTavern.getContext().powerUserSettings?.custom_css || '').split('\n').filter(line => line.trim()).length;
+        const customCss = `${cap('다른 CSS', customLines ? `커스텀 CSS ${customLines}줄` : '커스텀 CSS 없음')}<div class="salty-group">
+            ${row('커스텀 CSS 끄기', toggle('compat.muteCustomCss', !!s.compat?.muteCustomCss), '사용자 설정의 커스텀 CSS 를 테마가 켜진 동안 꺼요 · 지우지는 않아요')}
+        </div>`;
         return `${colorPreview()}${cap('색 통일')}<div class="salty-group">
             ${row('본문 색 지정', toggle('chat.unifyInline', s.chat.unifyInline), '메시지에 적힌 글자색을 무시하고 테마 글자색으로')}
             ${s.chat.unifyInline ? '' : row('글자색 톤 맞추기', toggle('chat.toneInline', s.chat.toneInline), '색은 그대로 두고 채도 · 밝기만 테마에 맞춤 — 퍼스널 컬러가 들쭉날쭉할 때')}
@@ -968,7 +972,8 @@ function tabChat(s, sub) {
             ${slider('chat.tone.light.l', '화이트 밝기', 10, 90, 1)}
             ${slider('chat.tone.dark.s', '나이트 채도', 0, 100, 1)}
             ${slider('chat.tone.dark.l', '나이트 밝기', 10, 90, 1)}
-        </div>` : ''}`;
+        </div>` : ''}
+        ${customCss}`;
     }
     if (sub === 'screen') {
         const stFade = !!SillyTavern.getContext().powerUserSettings?.stream_fade_in; // 실리태번 쪽 페이드 인 (무거움) — 켜져 있으면 끄는 줄을 같이 보여 줌

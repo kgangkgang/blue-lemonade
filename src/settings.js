@@ -56,6 +56,8 @@ export const DEFAULTS = {
     // 3.4.0 프롬프트 호환: 데우스 엑스 마키나 2.3 — 끄면 카드 스킨 · 폰 접기 · 카드 색 통일 · 카드 이모티콘 · 트래커 날씨가 모두 쉰다 (값은 남음)
     // 3.7.1 데우스 대사 색상 가독성 향상: 프롬프트가 칠한 글자(@Dialogue Color)에만 거는 외곽선 · 그림자.
     // 색에 따라 배경에 묻혀 안 읽히는 경우를 위해 — 둘 다 켜도 되고 하나만 켜도 된다. 파라미터는 전체 외곽선 · 글자 그림자와 같은 것들.
+    // 3.7.2 다른 CSS: 사용자 설정 › 커스텀 CSS 를 테마가 켜진 동안 꺼 둘지 (내용은 그대로 — 끄면 바로 돌아온다)
+    compat: { muteCustomCss: false },
     deus: {
         on: false,
         ink: {
@@ -340,6 +342,8 @@ export function getSettings() {
     if (isObj(s.dialogue)) tidyDialogue(s.dialogue);
     tidyShadow(s);
     tidyOutline(s);
+    if (!isObj(s.compat)) s.compat = structuredClone(DEFAULTS.compat);
+    s.compat.muteCustomCss = flag(s.compat.muteCustomCss, false);
     if (isObj(s.type)) tidyType(s.type);
     tidyRoles(s);
     if (isObj(s.fonts)) ['em', 'strong', 'code'].forEach(slot => tidyFontSlot(s.fonts, slot));
