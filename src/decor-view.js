@@ -1,8 +1,9 @@
 import { hasDecor } from './decor.js';
 const ASSET = '.mes_text :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img)';
 const PROFILE = '.mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar img';
+const USER_PROFILE = '.mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar img';
 const wrapped = new Map();
-let state = { image: false, profile: false }, observer = null, roots = [], frame = 0;
+let state = { image: false, profile: false, userProfile: false }, observer = null, roots = [], frame = 0;
 const dirty = new Set();
 const hasImage = node => node.nodeType === 1 && (node.tagName === 'IMG' || node.querySelector('img'));
 const maskCache = new Map(), maskSources = {};
@@ -35,33 +36,33 @@ function windowFor(mask) {
     maskCache.set(mask, job); return job;
 }
 function syncWindows(settings, enabled) {
-    for (const kind of ['image', 'profile']) {
+    for (const kind of ['image', 'profile', 'userProfile']) {
         const mask = enabled[kind] ? settings[kind].decor.mask : '';
         if (maskSources[kind] === mask) continue;
         maskSources[kind] = mask;
-        document.documentElement.style.removeProperty(`--bl-${kind}-decor-window`);
+        document.documentElement.style.removeProperty(`--bl-${kind === 'userProfile' ? 'user-profile' : kind}-decor-window`);
         if (mask) windowFor(mask).then(value => {
-            if (maskSources[kind] === mask) document.documentElement.style.setProperty(`--bl-${kind}-decor-window`, value);
+            if (maskSources[kind] === mask) document.documentElement.style.setProperty(`--bl-${kind === 'userProfile' ? 'user-profile' : kind}-decor-window`, value);
         });
     }
 }
 function undo(img, info) {
-    if (info.kind === 'profile') { info.slot.replaceWith(img); info.host.classList.remove('bl-art-frame'); delete info.host.dataset.blFrame; }
+    if (info.kind !== 'image') { info.slot.replaceWith(img); info.host.classList.remove('bl-art-frame'); delete info.host.dataset.blFrame; }
     else info.host.replaceWith(img);
     wrapped.delete(img);
 }
 function wrap(img, kind) {
     if (wrapped.has(img) || !img.parentElement) return;
-    const host = kind === 'profile' ? img.closest('.avatar') : document.createElement('span');
+    const host = kind !== 'image' ? img.closest('.avatar') : document.createElement('span');
     const slot = document.createElement('span'); slot.className = 'bl-art-photo';
     if (kind === 'image') img.replaceWith(host);
     host.classList.add('bl-art-frame'); host.dataset.blFrame = kind;
-    if (kind === 'profile') img.replaceWith(slot); else host.append(slot);
+    if (kind !== 'image') img.replaceWith(slot); else host.append(slot);
     slot.append(img); wrapped.set(img, { host, slot, kind });
 }
 function scan(root) {
     if (root.nodeType !== 1 || !root.isConnected) return;
-    for (const [kind, selector] of [['image', ASSET], ['profile', PROFILE]]) {
+    for (const [kind, selector] of [['image', ASSET], ['profile', PROFILE], ['userProfile', USER_PROFILE]]) {
         if (!state[kind]) continue;
         if (root.matches(selector)) wrap(root, kind);
         for (const img of root.querySelectorAll(selector)) wrap(img, kind);
@@ -79,7 +80,7 @@ function flush() {
             // An extension may replace/remove the photo itself. Preserve its new
             // nodes and remove our empty shell instead of resurrecting the old image.
             info.slot.replaceWith(...info.slot.childNodes);
-            if (info.kind === 'profile') { info.host.classList.remove('bl-art-frame'); delete info.host.dataset.blFrame; }
+            if (info.kind !== 'image') { info.host.classList.remove('bl-art-frame'); delete info.host.dataset.blFrame; }
             else info.host.replaceWith(...info.host.childNodes);
             wrapped.delete(img); continue;
         }
@@ -88,13 +89,13 @@ function flush() {
     }
     for (const root of dirty) scan(root);
     dirty.clear();
-    if (state.image || state.profile) listen();
+    if (state.image || state.profile || state.userProfile) listen();
 }
 export function syncDecorView(settings) {
-    const next = { image: settings.enabled && hasDecor(settings.image.decor), profile: settings.enabled && settings.profile.mode === 'banner' && hasDecor(settings.profile.decor) };
+    const next = { image: settings.enabled && hasDecor(settings.image.decor), profile: settings.enabled && settings.profile.mode === 'banner' && hasDecor(settings.profile.decor), userProfile: settings.enabled && settings.userProfile?.mode === 'banner' && hasDecor(settings.userProfile.decor) };
     syncWindows(settings, next);
     const nextRoots = [...document.querySelectorAll('#chat, .salty-preview')];
-    if (observer && next.image === state.image && next.profile === state.profile && nextRoots.length === roots.length && nextRoots.every((root, i) => root === roots[i])) return;
+    if (observer && next.image === state.image && next.profile === state.profile && next.userProfile === state.userProfile && nextRoots.length === roots.length && nextRoots.every((root, i) => root === roots[i])) return;
     state = next; roots = nextRoots;
     if (!observer) observer = new MutationObserver(records => {
         for (const rec of records) for (const node of rec.addedNodes) if (hasImage(node)) dirty.add(node);
@@ -102,6 +103,6 @@ export function syncDecorView(settings) {
         if (!frame && (dirty.size || records.some(rec => [...rec.removedNodes].some(hasImage)))) frame = requestAnimationFrame(flush);
     });
     cancelAnimationFrame(frame); frame = 0;
-    if (state.image || state.profile) for (const root of roots) dirty.add(root);
+    if (state.image || state.profile || state.userProfile) for (const root of roots) dirty.add(root);
     flush();
 }

@@ -29,7 +29,7 @@ const TABS = [['theme', '테마'], ['text', '글자'], ['chat', '채팅'], ['ima
 const SUBS = {
     theme: [['palette', '색'], ['colors', '색 고치기'], ['styles', '스타일'], ['backup', '백업']],
     text: [['text', '본문'], ['dialogue', '대사'], ['ui', '메뉴'], ['em', '속마음'], ['strong', '강조'], ['code', '코드'], ['para', '문단'], ['shadow', '그림자 · 외곽선']],
-    chat: [['message', '메시지'], ['profile', '프로필'], ['name', '이름·시간'], ['screen', '화면'], ['etc', '기타']],
+    chat: [['message', '메시지'], ['profile', '캐릭터 프로필'], ['user-profile', '내 프로필'], ['name', '캐릭터 이름·시간'], ['user-name', '내 이름·시간'], ['screen', '화면'], ['etc', '기타']],
     image: [['layout', '배치'], ['shape', '모양'], ['frame', '테두리'], ['size', '크기'], ['fade', '흐림']],
     prompt: [['deus', '데우스 엑스 마키나']], // 3.4.0 프리셋 호환 — 다른 프리셋이 생기면 여기에
 };
@@ -991,21 +991,21 @@ function decorControls(prefix, o) {
         ${selected ? `<div class="bl-frame-actions"><button type="button" class="salty-btn" data-act="frame-rename" data-owner="${prefix}" data-id="${selected.id}">이름 바꾸기</button><button type="button" class="salty-btn" data-act="frame-delete" data-id="${selected.id}">보관함에서 삭제</button></div>` : ''}
     </div>`;
 }
-function nameControls(s) {
-    const p = s.profile;
-    const range = (key, label, step = 1) => slider(`profile.${key}`, label, ...PROFILE_RANGE[key], step);
-    return `${chatPreview()}<p class="salty-note">상단 큰 프로필의 이름과 시간·버튼 배치예요. 프로필 탭에서 큰 사진을 켜 주세요.</p>
-    ${fontBlock(s, 'name')}${cap('이름 글자')}<div class="salty-group">
+function nameControls(s, prefix = 'profile') {
+    const p = s[prefix];
+    const range = (key, label, step = 1) => slider(`${prefix}.${key}`, label, ...PROFILE_RANGE[key], step);
+    return `${chatPreview()}<p class="salty-note">${prefix === 'userProfile' ? '내 메시지' : '캐릭터 메시지'}의 상단 큰 프로필 이름과 시간·버튼 배치예요. 프로필 탭에서 큰 사진을 켜 주세요.</p>
+    ${fontBlock(s, prefix === 'userProfile' ? 'userName' : 'name')}${cap('이름 글자')}<div class="salty-group">
         ${range('nameSize', '크기 (px)')}${range('nameWeight', '굵기', 50)}${range('nameSpacing', '자간 (1/100em)')}${range('nameHeight', '줄 높이', 0.1)}
-        ${stack('정보 정렬', seg('profile.nameAlign', [['left', '왼쪽'], ['center', '가운데'], ['right', '오른쪽']]), '이름·시간·버튼과 메시지 번호·생성 정보를 함께 맞춰요')}
-        ${row('테마 글자색', toggle('profile.nameAuto', p.nameAuto))}
-        ${!p.nameAuto ? frameColor('profile.nameColor', '이름 색', p.nameColor) : ''}
-        ${row('기울임', toggle('profile.nameItalic', p.nameItalic))}${row('밑줄', toggle('profile.nameUnderline', p.nameUnderline))}
-        ${range('nameOutline', '외곽선 두께 (px)', 0.1)}${frameColor('profile.nameOutlineColor', '외곽선 색', p.nameOutlineColor)}
-        ${row('이름 그림자', toggle('profile.nameShadow', p.nameShadow))}
+        ${stack('정보 정렬', seg(`${prefix}.nameAlign`, [['left', '왼쪽'], ['center', '가운데'], ['right', '오른쪽']]), '이름·시간·버튼과 메시지 번호·생성 정보를 함께 맞춰요')}
+        ${row('테마 글자색', toggle(`${prefix}.nameAuto`, p.nameAuto))}
+        ${!p.nameAuto ? frameColor(`${prefix}.nameColor`, '이름 색', p.nameColor) : ''}
+        ${row('기울임', toggle(`${prefix}.nameItalic`, p.nameItalic))}${row('밑줄', toggle(`${prefix}.nameUnderline`, p.nameUnderline))}
+        ${range('nameOutline', '외곽선 두께 (px)', 0.1)}${frameColor(`${prefix}.nameOutlineColor`, '외곽선 색', p.nameOutlineColor)}
+        ${row('이름 그림자', toggle(`${prefix}.nameShadow`, p.nameShadow))}
         ${p.nameShadow ? range('nameShadowY', '그림자 거리 (px)') + range('nameShadowBlur', '그림자 번짐 (px)') + range('nameShadowAlpha', '그림자 진하기 (%)') : ''}
     </div>${cap('시간 · 메뉴 · 편집 버튼')}<div class="salty-group">
-        ${stack('배치', seg('profile.headerLayout', [['side', '이름 옆 두 줄'], ['below-one', '이름 아래 한 줄'], ['below-two', '이름 아래 두 줄']]))}
+        ${stack('배치', seg(`${prefix}.headerLayout`, [['side', '이름 옆 두 줄'], ['below-one', '이름 아래 한 줄'], ['below-two', '이름 아래 두 줄']]))}
         ${range('headerGap', '줄 간격 (px)')}${range('metaSize', '시간 글자 크기 (px)')}${range('metaOpacity', '시간 진하기 (%)')}${range('buttonGap', '버튼 간격 (px)')}
     </div>`;
 }
@@ -1031,32 +1031,35 @@ function frameControls(prefix, o) {
             + range('edgeShadowBlur', '번짐') + range('edgeShadowSpread', '확장') : ''}
     </div>`;
 }
-function profileControls(s) {
-    const p = s.profile;
-    const range = (key, label, step = 1) => slider(`profile.${key}`, label, ...PROFILE_RANGE[key], step);
+function profileControls(s, prefix = 'profile') {
+    const p = s[prefix];
+    const range = (key, label, step = 1) => slider(`${prefix}.${key}`, label, ...PROFILE_RANGE[key], step);
     return `${chatPreview()}<div class="salty-group">
-        ${stack('캐릭터 프로필', seg('profile.mode', [['none', '프로필 없음'], ['small', '작은 프로필'], ['banner', '상단 큰 프로필']]), '캐릭터 메시지마다 사진이 위에, 글이 아래에 놓여요')}
+        ${stack(prefix === 'userProfile' ? '내 프로필' : '캐릭터 프로필', seg(`${prefix}.mode`, [...(prefix === 'userProfile' ? [['inherit', '기존 설정 유지']] : []), ['none', '프로필 없음'], ['small', '작은 프로필'], ['banner', '상단 큰 프로필']]), prefix === 'userProfile' ? '내가 보낸 메시지의 사진만 바꿔요. 기존 설정 유지는 실리태번의 아바타 숨김 설정을 따라요.' : '캐릭터 메시지마다 사진이 위에, 글이 아래에 놓여요')}
+    ${prefix === 'userProfile' && p.mode === 'small' ? stack('작은 사진 위치', seg(`${prefix}.side`, [['left', '왼쪽'], ['right', '오른쪽']])) : ''}
     </div>${p.mode === 'banner' ? `
     ${cap('사진 크기 · 위치')}<div class="salty-group">
-        ${stack('사진 배치', seg('profile.layout', [['column', '본문 폭'], ['bleed', '가로 꽉'], ['inset', '작게']]), '가로 꽉은 본문 좌우 여백까지 사진으로 채워요')}
+        ${stack('사진 배치', seg(`${prefix}.layout`, [['column', '본문 폭'], ['bleed', '가로 꽉'], ['inset', '작게']]), '가로 꽉은 본문 좌우 여백까지 사진으로 채워요')}
         ${p.layout === 'bleed' ? '' : range('width', '너비 (%)')}
-        ${stack('세로 크기', seg('profile.sizing', [['pixels', '픽셀'], ['screen', '화면 비율'], ['ratio', '사진 비율']]))}
+        ${stack('세로 크기', seg(`${prefix}.sizing`, [['pixels', '픽셀'], ['screen', '화면 비율'], ['ratio', '사진 비율']]))}
         ${p.sizing === 'pixels' ? range('height', '높이 (px)') : p.sizing === 'screen' ? range('screenHeight', '화면 높이 (%)') : ''}
         ${range('maxHeight', '최대 화면 높이 (%)')}
         ${range('visibleHeight', '세로로 남길 부분 (%)')}
         <p class="salty-note">100%면 전체를 사용해요. 줄이면 위아래를 잘라내며 ‘사진 위아래’로 남길 위치를 정해요. 장식 액자는 테두리 비율을 유지하고 안쪽 사진만 잘라요.</p>
-        ${stack('사진 맞추기', seg('profile.fit', [['cover', '가득 채우기'], ['contain', '전체 보이기']]))}
+        ${stack('사진 맞추기', seg(`${prefix}.fit`, [['cover', '가득 채우기'], ['contain', '전체 보이기']]))}
         ${range('positionX', '사진 좌우 (%)')}${range('positionY', '사진 위아래 (%)')}
         ${range('radius', '모서리 (px)')}${range('gap', '글과 간격 (px)')}
-        ${row('원본 화질', toggle('profile.original', p.original), '화면 가까이에 온 사진만 원본을 불러와요')}
+        ${row('원본 화질', toggle(`${prefix}.original`, p.original), '화면 가까이에 온 사진만 원본을 불러와요')}
     </div>${cap('흐림 · 투명도')}<div class="salty-group">
         ${range('fadeY', '위아래 가장자리 (%)')}${range('fadeX', '좌우 가장자리 (%)')}
         ${range('blur', '사진 흐림 (px)', 0.5)}${range('opacity', '사진 진하기 (%)')}
-    </div>${frameControls('profile', p)}` : ''}`;
+    </div>${frameControls(prefix, p)}` : ''}`;
 }
 
 function tabChat(s, sub) {
     if (sub === 'profile') return profileControls(s);
+    if (sub === 'user-profile') return profileControls(s, 'userProfile');
+    if (sub === 'user-name') return nameControls(s, 'userProfile');
     if (sub === 'name') return nameControls(s);
     if (sub === 'etc') {
         const customLines = (SillyTavern.getContext().powerUserSettings?.custom_css || '').split('\n').filter(line => line.trim()).length;
@@ -2055,7 +2058,7 @@ function bind(root) {
     root.addEventListener('change', async (event) => {
         const target = event.target;
         const designPath = target.dataset.range || target.dataset.colorPath;
-        if (designPath && /^(image|profile)\.decor\.(frameWidth|frameHeight|presetColor|presetAccent)$/.test(designPath)) {
+        if (designPath && /^(image|profile|userProfile)\.decor\.(frameWidth|frameHeight|presetColor|presetAccent)$/.test(designPath)) {
             update(st => refreshPreset(st[designPath.split('.')[0]].decor), false);
             return;
         }
@@ -2093,7 +2096,7 @@ function bind(root) {
             if (value !== current) {
                 update(st => {
                     setPath(st, path, value);
-                    if (/^(image|profile)\.decor\.(frameWidth|frameHeight)$/.test(path)) refreshPreset(st[path.split('.')[0]].decor);
+                    if (/^(image|profile|userProfile)\.decor\.(frameWidth|frameHeight)$/.test(path)) refreshPreset(st[path.split('.')[0]].decor);
                 }, false);
                 syncWeatherPreview(root, path);
             }
@@ -2123,7 +2126,7 @@ function bind(root) {
             // 자동 색은 켜고 끌 때 테두리 설명(edgeHint) 문구가 바뀌니 창을 다시 그린다
             // 2.9.2: 본문 색 지정 → '글자색 톤 맞추기' 줄, 톤 맞추기 → 톤 값 슬라이더 넷, 투명 그림도 똑같이 → 설명 문구가 스위치에 따라
             // 보였다 안 보였다 하는데 다시 그리지 않아, 끈 뒤에도 슬라이더가 남아 있었다
-            update(st => setPath(st, path, target.checked), ['enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on'].includes(path));
+            update(st => setPath(st, path, target.checked), ['enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on'].includes(path));
             return;
         }
         if (target.matches('input[data-file="font"]') && target.files?.[0]) {

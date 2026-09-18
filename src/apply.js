@@ -1,6 +1,7 @@
+import { syncFrameShadows } from './frame-shadow.js';
 import { syncMessageMenus } from './menu-position.js';
 import { syncProfileClip } from './profile-clip.js';
-import { decorVars, syncDecor } from './decor.js';
+import { decorVars, syncDecor, prepareDecor } from './decor.js';
 import { frameVars } from './frames.js';
 import { syncProfile } from './profile.js';
 import { scratchMask, slantGeometry } from './image-shapes.js';
@@ -12,6 +13,27 @@ import { iconsCss } from './icons.js';
 import { classifyAll } from './assets.js';
 import { syncFeatures } from './features.js';
 import { syncSplash } from './splash.js';
+
+function profileVars(p, pal, user = false) {
+    const vars = Object.assign(frameVars(p, 'profile', pal.accent), decorVars(p.decor, 'profile', p.radius), {
+        '--bl-name-size': `${p.nameSize}px`, '--bl-name-weight': String(p.nameWeight), '--bl-name-spacing': `${p.nameSpacing / 100}em`,
+        '--bl-name-height': String(p.nameHeight), '--bl-name-color': p.nameAuto ? pal.text : p.nameColor,
+        '--bl-name-align': p.nameAlign, '--bl-name-justify': p.nameAlign === 'left' ? 'start' : p.nameAlign === 'right' ? 'end' : 'center',
+        '--bl-meta-leading': p.nameAlign === 'left' ? '0px' : '1fr', '--bl-meta-trailing': p.nameAlign === 'right' ? '0px' : '1fr',
+        '--bl-name-style': p.nameItalic ? 'italic' : 'normal', '--bl-name-decoration': p.nameUnderline ? 'underline' : 'none',
+        '--bl-header-gap': `${p.headerGap}px`, '--bl-meta-size': `${p.metaSize}px`, '--bl-meta-opacity': String(p.metaOpacity / 100), '--bl-button-gap': `${p.buttonGap}px`,
+        '--bl-name-outline': `${p.nameOutline}px ${p.nameOutlineColor}`,
+        '--bl-name-shadow': p.nameShadow ? `0 ${p.nameShadowY}px ${p.nameShadowBlur}px rgba(0,0,0,${p.nameShadowAlpha / 100})` : 'none',
+        '--bl-profile-width': `${p.width}%`, '--bl-profile-height': p.sizing === 'screen' ? `${p.screenHeight}svh` : `${p.height}px`,
+        '--bl-profile-max-height': `${p.maxHeight}svh`,
+        '--bl-profile-crop': `inset(${(100 - p.visibleHeight) * p.positionY / 100}% 0 ${(100 - p.visibleHeight) * (100 - p.positionY) / 100}% 0)`,
+        '--bl-profile-fit': p.fit, '--bl-profile-position': `${p.positionX}% ${p.positionY}%`,
+        '--bl-profile-radius': `${p.radius}px`, '--bl-profile-gap': `${p.gap}px`,
+        '--bl-profile-blur': `${p.blur}px`, '--bl-profile-opacity': String(p.opacity / 100),
+        '--bl-profile-fade-y': `${p.fadeY}%`, '--bl-profile-fade-x': `${p.fadeX}%`,
+    });
+    return user ? Object.fromEntries(Object.entries(vars).map(([key, value]) => [key.replace('--bl-', '--bl-user-'), value])) : vars;
+}
 
 function styleTag(id) {
     let el = document.getElementById(id);
@@ -96,7 +118,7 @@ function fontVars(s) {
     for (const [slot, set] of Object.entries(sets)) {
         if (!set) {
             // 메뉴는 본문 글꼴, 대사 · 속마음 · 강조는 둘레 글꼴 그대로 (대사 안의 속마음이면 대사 글꼴)
-            vars[`--salty-font-${slot}`] = (slot === 'ui' || slot === 'name') ? 'var(--salty-font-text)' : 'inherit';
+            vars[`--salty-font-${slot}`] = (slot === 'ui' || slot === 'name' || slot === 'userName') ? 'var(--salty-font-text)' : 'inherit';
             continue;
         }
         vars[`--salty-font-${slot}`] = slotStack(slot, set);
@@ -351,6 +373,7 @@ function autocompleteVars(pal, mode) {
 // ───────── 전체 적용 ─────────
 export function applyAll() {
     const s = getSettings();
+    prepareDecor(s);
     const pal = paletteColors(s);
     const mode = (PALETTES[s.palette] || PALETTES.salt).mode;
 
@@ -490,23 +513,7 @@ export function applyAll() {
         '--salty-side-left': s.image.edgeSideLeft ? '1' : '0',
         '--salty-side-all': edgeSidesAll ? '1' : '0',
         '--salty-side-part': edgeSidesAll ? '0' : '1',
-    }, imageHeight(s.image), imageShape(s.image), frameVars(s.image, 'img', pal.accent), frameVars(s.profile, 'profile', pal.accent), decorVars(s.image.decor, 'image', s.image.radius), decorVars(s.profile.decor, 'profile', s.profile.radius), {
-        '--bl-name-size': `${s.profile.nameSize}px`, '--bl-name-weight': String(s.profile.nameWeight), '--bl-name-spacing': `${s.profile.nameSpacing / 100}em`,
-        '--bl-name-height': String(s.profile.nameHeight), '--bl-name-color': s.profile.nameAuto ? pal.text : s.profile.nameColor,
-        '--bl-name-align': s.profile.nameAlign, '--bl-name-justify': s.profile.nameAlign === 'left' ? 'start' : s.profile.nameAlign === 'right' ? 'end' : 'center',
-        '--bl-meta-leading': s.profile.nameAlign === 'left' ? '0px' : '1fr', '--bl-meta-trailing': s.profile.nameAlign === 'right' ? '0px' : '1fr',
-        '--bl-name-style': s.profile.nameItalic ? 'italic' : 'normal', '--bl-name-decoration': s.profile.nameUnderline ? 'underline' : 'none',
-        '--bl-header-gap': `${s.profile.headerGap}px`, '--bl-meta-size': `${s.profile.metaSize}px`, '--bl-meta-opacity': String(s.profile.metaOpacity / 100), '--bl-button-gap': `${s.profile.buttonGap}px`,
-        '--bl-name-outline': `${s.profile.nameOutline}px ${s.profile.nameOutlineColor}`,
-        '--bl-name-shadow': s.profile.nameShadow ? `0 ${s.profile.nameShadowY}px ${s.profile.nameShadowBlur}px rgba(0,0,0,${s.profile.nameShadowAlpha / 100})` : 'none',
-        '--bl-profile-width': `${s.profile.width}%`, '--bl-profile-height': s.profile.sizing === 'screen' ? `${s.profile.screenHeight}svh` : `${s.profile.height}px`,
-        '--bl-profile-max-height': `${s.profile.maxHeight}svh`,
-        '--bl-profile-crop': `inset(${(100 - s.profile.visibleHeight) * s.profile.positionY / 100}% 0 ${(100 - s.profile.visibleHeight) * (100 - s.profile.positionY) / 100}% 0)`,
-        '--bl-profile-fit': s.profile.fit, '--bl-profile-position': `${s.profile.positionX}% ${s.profile.positionY}%`,
-        '--bl-profile-radius': `${s.profile.radius}px`, '--bl-profile-gap': `${s.profile.gap}px`,
-        '--bl-profile-blur': `${s.profile.blur}px`, '--bl-profile-opacity': String(s.profile.opacity / 100),
-        '--bl-profile-fade-y': `${s.profile.fadeY}%`, '--bl-profile-fade-x': `${s.profile.fadeX}%`,
-    });
+    }, imageHeight(s.image), imageShape(s.image), frameVars(s.image, 'img', pal.accent), decorVars(s.image.decor, 'image', s.image.radius), profileVars(s.profile, pal), profileVars(s.userProfile, pal, true));
     // 테마를 끄면 토큰은 설정 창에만 — :root 에 두면 안 쓰는 변수가 문서 전체에 깔림 (설정 창은 꺼도 자기 색으로 보임)
     let css = `${s.enabled ? ':root' : '.salty-panel'} {\n${declarations(vars)}\n}`;
 
@@ -557,6 +564,10 @@ export function applyAll() {
         if (s.chat.bgImage) want.add('salty-bgimg');
         if (s.chat.qrFind === false) want.add('salty-qr-find-off');
         want.add(`salty-profile-mode-${s.profile.mode}`);
+        if (['small', 'banner'].includes(s.userProfile.mode)) want.add('salty-user-profile-custom');
+        want.add(`salty-user-profile-mode-${s.userProfile.mode}`);
+        want.add(`salty-user-profile-side-${s.userProfile.side}`);
+        if (s.userProfile.mode === 'banner') { want.add('salty-user-profile-banner'); want.add(`salty-user-profile-layout-${s.userProfile.layout}`); want.add(`salty-user-profile-sizing-${s.userProfile.sizing}`); want.add(`salty-user-profile-${s.userProfile.headerLayout}`); }
         if (s.profile.mode === 'banner') { want.add('salty-profile-banner'); want.add(`salty-profile-layout-${s.profile.layout}`); want.add(`salty-profile-sizing-${s.profile.sizing}`); want.add(`salty-profile-${s.profile.headerLayout}`); }
         if (s.chat.qrScroll === 'y') want.add('salty-qr-y'); // 3.5.4 퀵 리플라이 세로 스크롤 (css/35-qr-bar.css)
         if (s.chat.qrPlace === 'top') want.add('salty-qr-top'); // 3.7.0 퀵 리플라이 줄을 입력창 위로 (css/36-qr-place.css)
@@ -585,6 +596,7 @@ export function applyAll() {
     syncMessageMenus();
     syncProfileClip(s);
     syncDecor(s);
+    syncFrameShadows(s);
     // 바뀐 클래스만 만지기 (전부 뗐다 붙이면 매번 화면 전체를 다시 그림)
     const cls = document.body.classList;
     const cutoutBefore = cls.contains('salty-cutout-same');

@@ -1,6 +1,7 @@
 // 큰 프로필에서만, 화면 가까이에 온 캐릭터 사진을 원본으로 교체한다.
 // 작은 프로필·테마 끄기에서는 관찰자를 해제하고 기존 주소로 되돌린다.
-const SELECTOR = '.mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar img';
+const SELECTOR = '.mes:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar img';
+let active = { profile: false, userProfile: false };
 let enabled = false, chat = null, waiting = false;
 let changes = null, visible = null;
 const swapped = new Map();
@@ -8,11 +9,13 @@ let failed = new WeakMap();
 
 function source(img) {
     if (!img.matches(SELECTOR)) return null;
+    const user = img.closest('.mes')?.getAttribute('is_user') === 'true';
+    if (!active[user ? 'userProfile' : 'profile']) return null;
     try {
         const url = new URL(img.src, location.href);
         const file = url.searchParams.get('file');
-        if (url.origin !== location.origin || !url.pathname.endsWith('/thumbnail') || url.searchParams.get('type') !== 'avatar' || !file || /[/\\]/.test(file)) return null;
-        const full = new URL(`characters/${encodeURIComponent(file)}`, document.baseURI);
+        if (url.origin !== location.origin || !url.pathname.endsWith('/thumbnail') || url.searchParams.get('type') !== (user ? 'persona' : 'avatar') || !file || /[/\\]/.test(file)) return null;
+        const full = new URL(`${user ? 'User Avatars' : 'characters'}/${encodeURIComponent(file)}`, document.baseURI);
         for (const [key, value] of url.searchParams) if (key !== 'file' && key !== 'type') full.searchParams.set(key, value);
         return full.href;
     } catch { return null; }
@@ -72,8 +75,9 @@ function start() {
     scan(chat);
 }
 export function syncProfile(settings) {
-    const next = settings.enabled && settings.profile.mode === 'banner' && settings.profile.original;
-    if (next !== enabled) { enabled = next; if (!enabled) stop(); }
+    const owners = Object.fromEntries(['profile', 'userProfile'].map(owner => [owner, !!(settings.enabled && settings[owner]?.mode === 'banner' && settings[owner]?.original)]));
+    if (owners.profile !== active.profile || owners.userProfile !== active.userProfile) { stop(); active = owners; }
+    enabled = active.profile || active.userProfile;
     if (!enabled) return;
     if (document.readyState === 'loading' && !document.getElementById('chat')) {
         if (!waiting) { waiting = true; document.addEventListener('DOMContentLoaded', () => { waiting = false; start(); }, { once: true }); }

@@ -1,3 +1,4 @@
+import { drawPreset, FRAME_PRESETS } from './frame-presets.js';
 export const DECOR_DEFAULTS = { on: false, art: '', mask: '', ratio: 1, opacity: 100, zoom: 100, x: 50, y: 50, fit: 'cover', radius: null, frameWidth: 100, frameHeight: 100 };
 const validated = new WeakMap();
 export function tidyDecor(owner) {
@@ -19,21 +20,32 @@ export function decorVars(d, prefix, radius = 0) {
     return { [`--bl-${prefix}-decor-ratio`]: String(d.ratio * (d.frameWidth || 100) / (d.frameHeight || 100)), [`--bl-${prefix}-decor-opacity`]: String(d.opacity / 100),
         [`--bl-${prefix}-decor-zoom`]: String(d.zoom / 100), [`--bl-${prefix}-decor-position`]: `${d.x}% ${d.y}%`, [`--bl-${prefix}-decor-fit`]: d.fit, [`--bl-${prefix}-decor-radius`]: `${d.radius ?? radius}px` };
 }
+export function prepareDecor(settings) {
+    const owners = ['image', 'profile', 'userProfile'];
+    if (settings.enabled) for (const owner of owners) {
+        const d = settings[owner]?.decor;
+        if (d?.presetId && !d.libraryId && d.presetVersion !== 2 && FRAME_PRESETS.some(([id]) => id === d.presetId)) {
+            const next = drawPreset(d.presetId, d);
+            d.art = next.art; d.mask = next.mask; d.ratio = next.ratio; d.presetVersion = 2;
+        }
+    }
+}
 let moduleJob, latest, previousSources = [];
 export function syncDecor(settings) {
     latest = settings;
     // 큰 PNG 문자열은 슬라이더를 움직일 때마다 CSS로 다시 쓰지 않는다.
-    const sources = settings.enabled ? [settings.image.decor.art, settings.image.decor.mask, settings.profile.decor.art, settings.profile.decor.mask] : [];
+    const owners = ['image', 'profile', 'userProfile'];
+    const sources = settings.enabled ? owners.flatMap(owner => [settings[owner]?.decor.art || '', settings[owner]?.decor.mask || '']) : [];
     if (sources.length !== previousSources.length || sources.some((value, i) => value !== previousSources[i])) {
         let style = document.getElementById('bl-decor-data');
         if (!style) { style = document.createElement('style'); style.id = 'bl-decor-data'; document.head.append(style); }
-        style.textContent = ':root{' + ['image-art', 'image-mask', 'profile-art', 'profile-mask'].map((key, i) => {
+        style.textContent = ':root{' + ['image-art', 'image-mask', 'profile-art', 'profile-mask', 'userProfile-art', 'userProfile-mask'].map((key, i) => {
             const [owner, kind] = key.split('-');
-            return `--bl-${owner}-decor-${kind}:${sources[i] ? `url("${sources[i]}")` : 'none'};`;
+            return `--bl-${owner === 'userProfile' ? 'user-profile' : owner}-decor-${kind}:${sources[i] ? `url("${sources[i]}")` : 'none'};`;
         }).join('') + '}';
         previousSources = sources;
     }
-    if (!moduleJob && (!settings.enabled || (!hasDecor(settings.image.decor) && !(settings.profile.mode === 'banner' && hasDecor(settings.profile.decor))))) return;
+    if (!moduleJob && (!settings.enabled || (!hasDecor(settings.image.decor) && !(settings.profile.mode === 'banner' && hasDecor(settings.profile.decor)) && !(settings.userProfile?.mode === 'banner' && hasDecor(settings.userProfile.decor))))) return;
     moduleJob ||= import('./decor-view.js');
     moduleJob.then(m => m.syncDecorView(latest)).catch(error => { moduleJob = null; console.warn('[Blue Lemonade] 액자를 불러오지 못했어요', error); });
 }

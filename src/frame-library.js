@@ -33,11 +33,11 @@ export function useFrame(s, owner, id) {
 }
 export function deleteFrame(s, id) {
     s.frameLibrary = s.frameLibrary.filter(x => x.id !== id);
-    for (const owner of ['image', 'profile']) if (s[owner].decor.libraryId === id) delete s[owner].decor.libraryId;
+    for (const owner of ['image', 'profile', 'userProfile']) if (s[owner]?.decor.libraryId === id) delete s[owner].decor.libraryId;
 }
 export const presetFrame = (id, options) => drawPreset(id, options);
 export function refreshPreset(decor) {
     if (!FRAME_PRESETS.some(([id]) => id === decor.presetId)) return;
     const rendered = drawPreset(decor.presetId, decor);
-    for (const key of ['art', 'mask', 'ratio', 'presetColor', 'presetAccent', 'frameWidth', 'frameHeight']) decor[key] = rendered[key];
+    for (const key of ['art', 'mask', 'ratio', 'presetVersion', 'presetColor', 'presetAccent', 'frameWidth', 'frameHeight']) decor[key] = rendered[key];
 }

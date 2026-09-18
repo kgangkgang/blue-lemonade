@@ -4,15 +4,16 @@
 export const FRAME_PRESETS = [
     ['watercolor', '물든 수채화'], ['browser', '맥 브라우저'],
     ['scrapbook', '스크랩 다이어리'], ['ribbon', '리본 포스트'],
-    ['pop', '팝 스타'], ['notebook', '낙서 노트'],
+    ['pop', '겹친 메모지'], ['notebook', '낙서 노트'],
 ];
 const palettes = {
     watercolor: ['#8cadd0', '#e7a4b6'], browser: ['#dce3ed', '#65788e'],
     scrapbook: ['#eadfcf', '#899f83'], ribbon: ['#f4dce4', '#b86684'],
-    pop: ['#c4b7f0', '#ffca60'], notebook: ['#f4eedc', '#527bba'],
+    pop: ['#faf4e7', '#a9c4c3'], notebook: ['#f4eedc', '#527bba'],
 };
 export const presetColors = id => palettes[id] || palettes.watercolor;
 const cache = new Map();
+const thumbnails = new Map();
 export function drawPreset(id, options = {}) {
     if (!palettes[id]) throw new Error('알 수 없는 액자예요.');
     const color = /^#[a-f\d]{6}$/i.test(options.presetColor) ? options.presetColor : palettes[id][0];
@@ -20,8 +21,13 @@ export function drawPreset(id, options = {}) {
     const bound = v => Math.max(50, Math.min(200, Number(v) || 100));
     const frameWidth = bound(options.frameWidth), frameHeight = bound(options.frameHeight);
     const key = [id, color, accent, frameWidth, frameHeight].join('/');
-    if (cache.has(key)) return { ...cache.get(key) };
-    const w = Math.round(360 * frameWidth / 100), h = Math.round(480 * frameHeight / 100);
+    // Keep the six picker thumbnails out of the edit cache so changing several
+    // owners cannot evict them and redraw all six whenever the panel reopens.
+    const standard = color === palettes[id][0] && accent === palettes[id][1] && frameWidth === 100 && frameHeight === 100;
+    const store = standard ? thumbnails : cache;
+    if (store.has(key)) return { ...store.get(key) };
+    const baseWidth = id === 'watercolor' ? 420 : 360, baseHeight = id === 'watercolor' ? 420 : 480;
+    const w = Math.round(baseWidth * frameWidth / 100), h = Math.round(baseHeight * frameHeight / 100);
     const art = document.createElement('canvas'), mask = document.createElement('canvas');
     art.width = mask.width = w; art.height = mask.height = h;
     const c = art.getContext('2d'), m = mask.getContext('2d');
@@ -36,33 +42,46 @@ export function drawPreset(id, options = {}) {
         c.beginPath(); for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5 - Math.PI / 2, n = i % 2 ? r * .45 : r; c.lineTo(x + Math.cos(a) * n, y + Math.sin(a) * n); }
         c.closePath(); c.fillStyle = fill; c.fill();
     };
-    let window = [27, 27, w - 54, h - 54, 8];
+    let window = [27, 27, w - 54, h - 54, 8], customMask = false;
+    const overlays = [];
     c.lineJoin = c.lineCap = 'round';
     if (id === 'watercolor') {
-        window = [30, 30, w - 60, h - 60, 12];
-        // Layered translucent pigment, granulation and irregular wet edges.
-        for (let i = 0; i < 340; i++) {
-            const side = i % 4, t = random(), jitter = (random() - .5) * 15;
-            const x = side < 2 ? 21 + t * (w - 42) : side === 2 ? 22 + jitter : w - 22 + jitter;
-            const y = side >= 2 ? 21 + t * (h - 42) : side === 0 ? 22 + jitter : h - 22 + jitter;
-            c.fillStyle = random() < .6 ? color : accent; c.globalAlpha = .025 + random() * .045;
-            c.beginPath(); c.ellipse(x, y, 7 + random() * 17, 6 + random() * 17, random() * 3, 0, Math.PI * 2); c.fill();
+        customMask = true;
+        const points = Array.from({ length: 160 }, (_, i) => {
+            const angle = i * Math.PI * 2 / 160;
+            const r = .84 + .065 * Math.sin(angle * 3 + .9) + .05 * Math.cos(angle * 7) + .025 * Math.sin(angle * 17) + (random() - .5) * .04;
+            return [Math.cos(angle) * (w / 2 - 9) * r, Math.sin(angle) * (h / 2 - 9) * r];
+        });
+        const blot = (ctx, scale) => { ctx.beginPath(); for (const [x, y] of points) ctx.lineTo(w / 2 + x * scale, h / 2 + y * scale); ctx.closePath(); ctx.fill(); };
+        // Full photograph in a paint-shaped mask; only the irregular rim fades.
+        m.fillStyle = '#fff'; blot(m, .91);
+        for (let i = 0; i < 20; i++) { m.globalAlpha = .055; blot(m, .92 + i * .005); }
+        m.globalAlpha = 1;
+        // Dry-brush scratches follow the edge, keeping faces in the center clear.
+        m.globalCompositeOperation = 'destination-out'; m.strokeStyle = '#000';
+        for (let i = 0; i < 100; i++) {
+            const [x, y] = points[Math.floor(random() * points.length)], reach = .88 + random() * .1;
+            m.globalAlpha = .08 + random() * .28; m.lineWidth = .3 + random() * 1.8;
+            m.beginPath(); m.moveTo(w / 2 + x * reach, h / 2 + y * reach); m.lineTo(w / 2 + x * 1.035 + (random() - .5) * 9, h / 2 + y * 1.035); m.stroke();
         }
-        for (let i = 0; i < 550; i++) {
-            const x = random() * w, y = random() * h;
-            if (x > 39 && x < w - 39 && y > 39 && y < h - 39) continue;
-            c.globalAlpha = .05 + random() * .17; c.fillStyle = random() < .5 ? color : accent;
-            c.beginPath(); c.arc(x, y, .3 + random() * 1.4, 0, Math.PI * 2); c.fill();
-        }
-        c.globalAlpha = 1;
+        m.globalCompositeOperation = 'source-over'; m.globalAlpha = 1;
+        const wash = c.createLinearGradient(0, 0, w, h); wash.addColorStop(0, color); wash.addColorStop(1, accent);
+        c.fillStyle = wash;
+        for (let i = 0; i < 14; i++) { c.globalAlpha = .04; blot(c, .97 + i * .004); }
+        // Leave the photograph untinted; pigment only peeks outside its edge.
+        c.globalAlpha = 1; c.globalCompositeOperation = 'destination-out'; blot(c, .95); c.globalCompositeOperation = 'source-over';
     } else if (id === 'browser') {
-        window = [14, 62, w - 28, h - 77, 9];
-        c.fillStyle = color; round(c, 6, 6, w - 12, h - 12, 18, true);
-        c.strokeStyle = accent + '70'; c.lineWidth = 1; round(c, 6.5, 6.5, w - 13, h - 13, 18, false);
-        for (const [i, tint] of ['#ef7974', '#e9bd5c', '#79bc8e'].entries()) { c.fillStyle = tint; c.beginPath(); c.arc(24 + i * 16, 30, 4.5, 0, Math.PI * 2); c.fill(); }
-        c.fillStyle = '#ffffff80'; round(c, 80, 20, w - 102, 21, 6, true);
-        c.fillStyle = accent; c.font = '9px sans-serif'; c.textAlign = 'center'; c.fillText('your little world', (w + 58) / 2, 34, w - 118);
-        c.strokeStyle = accent + '40'; line(7, 52, w - 7, 52);
+        window = [12, 48, w - 24, h - 60, 9];
+        c.fillStyle = color; round(c, 7, 7, w - 14, h - 14, 15, true);
+        const shine = c.createLinearGradient(0, 7, 0, h); shine.addColorStop(0, '#ffffff70'); shine.addColorStop(1, '#ffffff00');
+        c.fillStyle = shine; round(c, 7, 7, w - 14, h - 14, 15, true);
+        c.strokeStyle = accent + '60'; c.lineWidth = .8; round(c, 7.5, 7.5, w - 15, h - 15, 15, false);
+        for (const [i, tint] of ['#e99a96', '#e4c281', '#9abfa0'].entries()) { c.fillStyle = tint; c.beginPath(); c.arc(22 + i * 13, 27, 3.5, 0, Math.PI * 2); c.fill(); }
+        c.fillStyle = '#ffffff70'; round(c, 74, 18, w - 95, 19, 5, true);
+        c.strokeStyle = accent + '25'; c.lineWidth = .6; round(c, 74, 18, w - 95, 19, 5, false);
+        c.strokeStyle = accent + '80'; c.lineWidth = 1;
+        const x = (w + 53) / 2; round(c, x - 2.5, 26, 5, 4, 1, false); c.beginPath(); c.arc(x, 26, 1.8, Math.PI, 0); c.stroke();
+        c.strokeStyle = accent + '20'; line(8, 42, w - 8, 42);
     } else if (id === 'scrapbook') {
         window = [30, 38, w - 60, h - 95, 2];
         c.fillStyle = color; c.beginPath();
@@ -74,24 +93,30 @@ export function drawPreset(id, options = {}) {
             c.save(); c.translate(x, y); c.rotate(a); c.fillStyle = accent + 'b0'; c.fillRect(-37, -9, 74, 18);
             c.strokeStyle = '#ffffff55'; c.lineWidth = 2; for (let j = -30; j < 40; j += 10) line(j, -9, j - 10, 9); c.restore();
         }
-        c.fillStyle = accent; c.font = 'italic 13px Georgia'; c.textAlign = 'center'; c.fillText('a moment to keep', w / 2, h - 32);
+
     } else if (id === 'ribbon') {
         window = [30, 43, w - 60, h - 77, 12];
         c.fillStyle = color; round(c, 15, 22, w - 30, h - 37, 20, true);
         c.strokeStyle = accent; c.lineWidth = 1; c.setLineDash([2, 5]); round(c, 22, 29, w - 44, h - 51, 16, false); c.setLineDash([]);
+        overlays.push(() => {
         const x = w / 2; c.fillStyle = accent;
         for (const s of [-1, 1]) { c.beginPath(); c.moveTo(x, 25); c.bezierCurveTo(x + s * 64, -6, x + s * 55, 48, x, 25); c.fill(); c.beginPath(); c.moveTo(x + s * 4, 28); c.lineTo(x + s * 26, 62); c.lineTo(x + s * 9, 53); c.lineTo(x, 32); c.fill(); }
         c.fillStyle = color; c.beginPath(); c.arc(x, 25, 4, 0, Math.PI * 2); c.fill();
+        });
     } else if (id === 'pop') {
-        window = [30, 31, w - 66, h - 66, 19];
-        c.fillStyle = accent; round(c, 21, 22, w - 32, h - 33, 25, true);
-        c.fillStyle = color; round(c, 9, 10, w - 32, h - 33, 25, true);
-        c.strokeStyle = '#353348'; c.lineWidth = 2; round(c, 9, 10, w - 32, h - 33, 25, false);
-        star(w - 38, 37, 29, '#fffaf1'); star(w - 38, 37, 22, accent);
-        star(28, h - 39, 23, '#fffaf1'); star(28, h - 39, 17, accent);
-        c.fillStyle = accent; c.beginPath(); c.arc(w - 38, h - 42, 16, 0, Math.PI * 2); c.fill();
-        c.strokeStyle = '#353348'; c.lineWidth = 1.7; line(w - 44, h - 47, w - 44, h - 44); line(w - 33, h - 47, w - 33, h - 44);
-        c.beginPath(); c.arc(w - 38, h - 42, 8, .15, Math.PI - .15); c.stroke();
+        customMask = true;
+        const tilt = (ctx, angle, draw) => { ctx.save(); ctx.translate(w / 2, h / 2); ctx.rotate(angle); ctx.translate(-w / 2, -h / 2); draw(); ctx.restore(); };
+        tilt(c, .045, () => { c.fillStyle = accent; round(c, 21, 23, w - 40, h - 44, 3, true); });
+        tilt(c, -.032, () => {
+            c.fillStyle = '#313a4015'; round(c, 20, 23, w - 47, h - 49, 3, true);
+            c.fillStyle = color; round(c, 16, 18, w - 47, h - 49, 3, true);
+            c.strokeStyle = '#75695930'; c.lineWidth = .7; round(c, 16, 18, w - 47, h - 49, 3, false);
+        });
+        m.fillStyle = '#fff'; tilt(m, -.032, () => round(m, 29, 31, w - 73, h - 83, 1, true));
+        overlays.push(() => {
+            star(w - 47, 39, 19, '#fffdf6'); star(w - 47, 39, 14, accent);
+            star(28, h - 45, 12, '#fffdf6'); star(28, h - 45, 8, accent);
+        });
     } else {
         window = [41, 34, w - 66, h - 72, 2];
         c.fillStyle = color; round(c, 16, 10, w - 27, h - 20, 6, true);
@@ -99,16 +124,22 @@ export function drawPreset(id, options = {}) {
         for (let y = 25; y < h - 10; y += 18) line(18, y, w - 13, y);
         c.strokeStyle = accent + '70'; line(36, 11, 36, h - 11);
         for (let y = 34; y < h - 16; y += 30) { c.strokeStyle = accent; c.lineWidth = 2; c.beginPath(); c.ellipse(18, y, 9, 4, -.2, .2, Math.PI * 1.8); c.stroke(); }
-        c.strokeStyle = accent; c.lineWidth = 1.5; c.beginPath(); c.moveTo(w - 53, h - 26); c.bezierCurveTo(w - 79, h - 43, w - 40, h - 51, w - 43, h - 33); c.bezierCurveTo(w - 28, h - 51, w - 13, h - 32, w - 53, h - 26); c.stroke();
-        c.fillStyle = accent; c.font = 'italic 11px Georgia'; c.fillText('dear diary,', 44, 25);
+        overlays.push(() => {
+            c.save(); c.translate(w - 27, h - 23); c.rotate(-.38);
+            c.fillStyle = '#fffdf5'; c.beginPath(); c.ellipse(0, 0, 24, 17, 0, 0, Math.PI * 2); c.fill();
+            c.fillStyle = '#eac747'; c.beginPath(); c.moveTo(-20, 0); c.bezierCurveTo(-15, -21, 15, -21, 20, 0); c.bezierCurveTo(15, 20, -15, 20, -20, 0); c.fill();
+            c.strokeStyle = '#fff6b4'; c.lineWidth = 2; c.beginPath(); c.arc(-1, 0, 10, Math.PI, Math.PI * 1.6); c.stroke();
+            c.fillStyle = accent; c.beginPath(); c.ellipse(15, -12, 8, 3.5, -.6, 0, Math.PI * 2); c.fill(); c.restore();
+        });
     }
-    m.fillStyle = '#fff'; round(m, ...window.slice(0, 4), window[4], true);
+    if (!customMask) { m.fillStyle = '#fff'; round(m, ...window.slice(0, 4), window[4], true); }
     // The interior stays transparent: never paint over the user's photograph.
-    c.globalCompositeOperation = 'destination-out'; c.drawImage(mask, 0, 0); c.globalCompositeOperation = 'source-over';
-    const result = { on: true, art: art.toDataURL('image/png'), mask: mask.toDataURL('image/png'), ratio: .75,
-        presetId: id, presetColor: color, presetAccent: accent, frameWidth, frameHeight,
+    if (id !== 'watercolor') { c.globalCompositeOperation = 'destination-out'; c.drawImage(mask, 0, 0); c.globalCompositeOperation = 'source-over'; }
+    for (const draw of overlays) draw();
+    const result = { on: true, art: art.toDataURL('image/png'), mask: mask.toDataURL('image/png'), ratio: baseWidth / baseHeight,
+        presetVersion: 2, presetId: id, presetColor: color, presetAccent: accent, frameWidth, frameHeight,
         radius: 0, opacity: 100, zoom: 100, x: 50, y: 50, fit: 'cover' };
     // Bounded cache: slider/color edits cannot retain an unlimited set of PNGs.
-    if (cache.size >= 8) cache.delete(cache.keys().next().value);
-    cache.set(key, result); art.width = mask.width = 1; return { ...result };
+    if (!standard && cache.size >= 8) cache.delete(cache.keys().next().value);
+    store.set(key, result); art.width = mask.width = 1; return { ...result };
 }

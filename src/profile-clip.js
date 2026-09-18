@@ -1,6 +1,8 @@
 // Round the painted photo, including contain-mode letterboxing, rather than its empty box.
-const selector = '.mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar img';
+const selector = '.mes:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar img';
 const tracked = new Set(), dirty = new Set();
+const ownerOf = img => img.closest('.mes')?.getAttribute('is_user') === 'true' ? 'userProfile' : 'profile';
+let active = { profile: false, userProfile: false };
 let roots = [], observer, resize, frame = 0, options, signature = '';
 export function photoBounds(width, height, ratio, x, y) {
     const w = Math.min(width, height * ratio), h = Math.min(height, width / ratio);
@@ -13,10 +15,11 @@ function flush() {
     const writes = [];
     for (const img of dirty) {
         if (!img.isConnected || img.closest('.bl-art-frame')) { writes.push([img, '']); continue; }
-        const ratio = img.naturalWidth / img.naturalHeight / (options.visibleHeight / 100);
+        const p = options[ownerOf(img)];
+        const ratio = img.naturalWidth / img.naturalHeight / (p.visibleHeight / 100);
         if (!Number.isFinite(ratio) || ratio <= 0) continue;
-        const bounds = photoBounds(img.clientWidth, img.clientHeight, ratio, options.positionX, options.positionY);
-        const radius = Math.max(0, options.radius - options.edgeGap);
+        const bounds = photoBounds(img.clientWidth, img.clientHeight, ratio, p.positionX, p.positionY);
+        const radius = Math.max(0, p.radius - p.edgeGap);
         writes.push([img, `inset(${bounds.map(n => `${n.toFixed(3)}px`).join(' ')} round ${radius}px)`]);
     }
     dirty.clear();
@@ -29,7 +32,7 @@ function queue(img) { if (img) dirty.add(img); if (!frame) frame = requestAnimat
 function scan(root) {
     if (root.nodeType !== 1 || (root.tagName !== 'IMG' && !root.querySelector('img'))) return;
     const imgs = [...root.querySelectorAll(selector)]; if (root.matches(selector)) imgs.push(root);
-    for (const img of imgs) { if (!tracked.has(img)) { tracked.add(img); resize.observe(img); } queue(img); }
+    for (const img of imgs) { if (!active[ownerOf(img)]) continue; if (!tracked.has(img)) { tracked.add(img); resize.observe(img); } queue(img); }
 }
 function loaded(event) { if (tracked.has(event.target)) queue(event.target); }
 function stop() {
@@ -39,9 +42,11 @@ function stop() {
     roots = []; tracked.clear(); dirty.clear(); signature = '';
 }
 export function syncProfileClip(settings) {
-    const p = settings.profile;
-    if (!settings.enabled || p.mode !== 'banner' || p.fit !== 'contain') { if (roots.length) stop(); return; }
-    options = p;
+    const nextActive = Object.fromEntries(['profile', 'userProfile'].map(owner => [owner, !!(settings.enabled && settings[owner]?.mode === 'banner' && settings[owner]?.fit === 'contain')]));
+    if (nextActive.profile !== active.profile || nextActive.userProfile !== active.userProfile) stop();
+    active = nextActive;
+    if (!active.profile && !active.userProfile) { if (roots.length) stop(); return; }
+    options = settings;
     const nextRoots = [...document.querySelectorAll('#chat, .salty-preview')];
     if (roots.length !== nextRoots.length || nextRoots.some((r, i) => r !== roots[i])) {
         stop(); roots = nextRoots;
@@ -52,6 +57,6 @@ export function syncProfileClip(settings) {
         });
         for (const root of roots) { observer.observe(root, { childList: true, subtree: true }); root.addEventListener('load', loaded, true); scan(root); }
     }
-    const next = [p.positionX, p.positionY, p.visibleHeight, p.radius, p.edgeGap, p.decor.on].join('/');
+    const next = ['profile', 'userProfile'].map(owner => { const p = settings[owner]; return p && active[owner] ? [p.positionX, p.positionY, p.visibleHeight, p.radius, p.edgeGap, p.decor.on].join('/') : ''; }).join('|');
     if (signature !== next) { signature = next; for (const img of tracked) queue(img); }
 }
