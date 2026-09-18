@@ -86,9 +86,10 @@ function saveSoon() {
     saveTimer = setTimeout(saveSettings, 300);
 }
 
-export function mountPanel(container, { popup = false } = {}) {
+export function mountPanel(container, { popup = false, onFullscreen = null } = {}) {
     const root = document.createElement('div');
     root.className = popup ? 'salty-panel in-popup' : 'salty-panel';
+    root._onFullscreen = onFullscreen;
     container.appendChild(root);
     panels.add(root);
     bind(root);
@@ -117,6 +118,36 @@ export function mountPanel(container, { popup = false } = {}) {
     return root;
 }
 
+export function setPanelFullscreen(root, enabled) {
+    const dialog = root.closest('dialog');
+    if (!dialog) return;
+    root._fullscreen = !!enabled;
+    dialog.classList.add('bl-settings-dialog');
+    dialog.classList.toggle('bl-settings-fullscreen', root._fullscreen);
+    const button = root.querySelector('[data-act="panel-fullscreen"]');
+    if (button) { button.textContent = enabled ? '작은 창' : '전체 화면'; button.setAttribute('aria-pressed', String(root._fullscreen)); }
+    root.dispatchEvent(new Event('bl:preview-resize'));
+}
+
+function setEditing(root, enabled) {
+    root._editing = !!enabled;
+    root.classList.toggle('bl-settings-editing', root._editing);
+    const button = root.querySelector('[data-act="panel-edit"]');
+    if (button) {
+        button.textContent = enabled ? '편집 모드 끄기' : '편집 모드';
+        button.setAttribute('aria-label', enabled ? '편집 모드 끄기' : '편집 모드 켜기');
+        button.setAttribute('aria-pressed', String(root._editing));
+    }
+    root.dispatchEvent(new Event('bl:preview-resize'));
+}
+
+export function unmountPanel(root) {
+    root._previewCleanup?.();
+    for (const key of ['_fontIO', '_rowsRO', '_navRO']) { root[key]?.disconnect(); root[key] = null; }
+    root.remove(); panels.delete(root); root._pv = {}; root._previewViews?.clear();
+    const settings = getSettings(); syncDecor(settings); syncProfileClip(settings);
+}
+
 /** 공지를 본 뒤: 설정 창 알약은 다시 그리고, 확장 서랍 머리의 버전 알약도 보통 모양으로 (3.0.0) */
 export function noticeSeenChanged() {
     const unseen = hasUnseenNotice();
@@ -127,8 +158,7 @@ export function noticeSeenChanged() {
 export function refreshPanels() {
     for (const root of panels) {
         if (!root.isConnected) {
-            root._previewCleanup?.();
-            panels.delete(root);
+            unmountPanel(root);
             continue;
         }
         render(root);
@@ -1355,6 +1385,7 @@ function tabImage(s, sub) {
 
 // ───────── 그리기 ─────────
 function render(root) {
+    root._fontIO?.disconnect(); root._fontIO = null;
     const s = getSettings();
     const issues = getIssues();
     root._issues = issues;
@@ -1392,7 +1423,7 @@ function render(root) {
         <div class="salty-checks">${issues.map((issue, i) =>
             `<div class="salty-check"><span>${issue.text}</span>${issue.fix ? `<button class="salty-btn" data-act="fix" data-i="${i}">${issue.fix}</button>` : ''}</div>`).join('')}</div>
         <div class="salty-nav">
-            ${searchMarkup(root._settingsQuery || '')}
+            <div class="bl-settings-toprow">${searchMarkup(root._settingsQuery || '')}<button type="button" class="bl-settings-expand" data-act="panel-fullscreen" aria-pressed="${!!root._fullscreen}">${root._fullscreen ? '작은 창' : '전체 화면'}</button><button type="button" class="bl-settings-edit" data-act="panel-edit" aria-pressed="${!!root._editing}" aria-label="${root._editing ? '편집 모드 끄기' : '편집 모드 켜기'}">${root._editing ? '편집 모드 끄기' : '편집 모드'}</button>${root.classList.contains('in-popup') ? '<button type="button" class="bl-settings-close" data-act="panel-close" aria-label="테마 설정 닫기" title="닫기">×</button>' : ''}</div>
             <div class="salty-tabs">${TABS.map(([id, label]) =>
         `<button data-act="tab" data-tab="${id}" class="${ui.tab === id ? 'on' : ''}" aria-pressed="${ui.tab === id}">${label}</button>`).join('')}</div>
             ${subSelect}
@@ -1445,7 +1476,7 @@ function render(root) {
     // 글꼴 목록: 보이는 항목의 미리보기만 불러오기
     const list = root.querySelector('.salty-fontscroll');
     if (list) {
-        const io = new IntersectionObserver((entries) => {
+        const io = root._fontIO = new IntersectionObserver((entries) => {
             for (const e of entries) {
                 if (!e.isIntersecting) continue;
                 queuePreview(findFont(e.target.dataset.preview));
@@ -1632,6 +1663,16 @@ function bind(root) {
         const { act } = el.dataset;
         try {
             switch (act) {
+                case 'panel-close':
+                    root._onClose?.();
+                    break;
+                case 'panel-fullscreen':
+                    if (root.classList.contains('in-popup')) setPanelFullscreen(root, !root._fullscreen);
+                    else root._onFullscreen?.();
+                    break;
+                case 'panel-edit':
+                    setEditing(root, !root._editing);
+                    break;
                 case 'notice': // 3.0.0 제목 옆 버전 알약 → 공지사항 (열면 본 것으로 적고 알약들을 보통 모양으로)
                     await openNotice(noticeSeenChanged);
                     break;

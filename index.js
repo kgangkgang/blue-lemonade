@@ -13,7 +13,7 @@ import { startSelectPop } from './src/selects.js';
 import { startColorPop } from './src/colorpop.js';
 import { startInlineTone, retoneAll } from './src/tone.js';
 import { startStreamFade, streamFadeState } from './src/streamfade.js';
-import { mountPanel, refreshPanels, noticeSeenChanged } from './src/panel.js';
+import { mountPanel, unmountPanel, setPanelFullscreen, refreshPanels, noticeSeenChanged } from './src/panel.js';
 import { loadVersion, hasUnseenNotice, openNotice } from './src/notice.js';
 import { setFeatureHooks } from './src/features.js';
 import { deferPreviewRules, restorePreviewRules, deferredPreviewRuleCount, startMenuOpenMark, startAnchorGate, widenSelectorCache, deferPanelHasRules, panelHasRuleCount, panelCssEnabled } from './src/lite.js';
@@ -36,7 +36,7 @@ function mountDrawer() {
     // 미리보기 CSS 는 서랍을 펼 때 되돌린다 (lite.js) — 실리태번의 토글 핸들러보다 먼저 받게 capture 로
     drawer.querySelector('.inline-drawer-toggle').addEventListener('click', restorePreviewRules, { capture: true });
     drawer.querySelector('.inline-drawer-toggle').addEventListener('click', () => setTimeout(retoneAll, 400)); // 서랍 미리보기도 톤 맞춤
-    mountPanel(drawer.querySelector('.inline-drawer-content'));
+    mountPanel(drawer.querySelector('.inline-drawer-content'), { onFullscreen: () => openPopup(true) });
 }
 
 // 버전 배지는 manifest.json 을 읽어서 적음 (버전을 코드에 두 번 적지 않게)
@@ -61,14 +61,19 @@ async function showVersion(badge) {
     refreshPanels(); // 설정 창이 버전을 읽기 전에 그려졌으면 알약을 붙여 다시 그림
 }
 
-async function openPopup() {
+async function openPopup(fullscreen = false) {
     restorePreviewRules();
     const ctx = SillyTavern.getContext();
     const wrap = document.createElement('div');
     wrap.style.textAlign = 'left';
-    mountPanel(wrap, { popup: true });
+    const panel = mountPanel(wrap, { popup: true });
     setTimeout(retoneAll, 400); // 정규식 카드 미리보기의 색 글자도 톤 맞춤 (tone.js)
-    await ctx.callGenericPopup(wrap, ctx.POPUP_TYPE.TEXT, '', { wide: true, allowVerticalScrolling: true, okButton: '닫기' });
+    try {
+        await ctx.callGenericPopup(wrap, ctx.POPUP_TYPE.TEXT, '', { wide: true, allowVerticalScrolling: true, okButton: false, onOpen: popup => {
+            panel._onClose = () => popup.completeAffirmative();
+            setPanelFullscreen(panel, fullscreen);
+        } });
+    } finally { unmountPanel(panel); }
 }
 
 function addMenuItem() {
@@ -80,7 +85,7 @@ function addMenuItem() {
     item.tabIndex = 0;
     // 옆 줄들과 같은 속찬 FA 레몬 — 20px 칸 안에서 크기·높이가 맞음
     item.innerHTML = `<div class="fa-fw fa-solid fa-lemon extensionsMenuExtensionButton"></div><span>Blue Lemonade</span>`;
-    item.addEventListener('click', openPopup);
+    item.addEventListener('click', () => openPopup());
     menu.appendChild(item);
 }
 

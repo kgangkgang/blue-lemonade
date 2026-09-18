@@ -463,6 +463,8 @@ export function applyAll() {
     // 네 면이 다 켜졌는지 — CSS 의 -all(감싸는 겹) · -part(빛의 방향 블룸) 두 스위치가 이 값을 쓴다
     const edgeSidesAll = s.image.edgeSideTop && s.image.edgeSideRight && s.image.edgeSideBottom && s.image.edgeSideLeft;
     Object.assign(vars, fontVars(s), typeVars(s.type), {
+        '--salty-panel-surface': `rgb(${parseColor(pal.surface).slice(0, 3).join(',')})`,
+        '--salty-panel-card': `rgb(${parseColor(vars['--salty-card']).slice(0, 3).join(',')})`,
         '--salty-lh': String(s.type.lineHeight),
         '--salty-ls': `${s.type.letterSpacing / 100}em`,
         '--salty-weight': String(s.type.weight),

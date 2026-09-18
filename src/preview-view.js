@@ -19,6 +19,23 @@ export function bindPreviewViews(root, section) {
         const [minus, plus, reset] = bar.querySelectorAll('button'), output = bar.querySelector('output');
         let width = 0, height = 0, viewHeight = 0, raf = 0;
         const pointers = new Map();
+        let resizeStart = null, grip;
+        const heightLimit = () => Math.max(48, Math.min(window.innerHeight * .7, window.innerHeight - (root.querySelector('.salty-nav')?.offsetHeight || 0) - bar.offsetHeight - (grip ? 48 : 0) - 120));
+        if (box.classList.contains('salty-prevbox')) {
+            const row = document.createElement('div'); row.className = 'bl-view-resize';
+            row.innerHTML = '<div class="bl-view-grip" role="separator" tabindex="0" aria-label="미리보기 높이 조절" aria-orientation="horizontal" title="위아래로 끌어서 높이 조절"><i></i></div><button type="button" aria-label="미리보기 기본 높이" title="기본 높이로">↺</button>';
+            box.append(row); grip = row.firstElementChild;
+            grip.onpointerdown = e => { if (e.button !== 0) return; resizeStart = { id: e.pointerId, y: e.clientY, height: viewHeight }; grip.setPointerCapture(e.pointerId); e.preventDefault(); };
+            grip.onpointermove = e => { if (resizeStart?.id !== e.pointerId) return; state.height = Math.max(48, Math.min(heightLimit(), resizeStart.height + e.clientY - resizeStart.y)); measure(); e.preventDefault(); };
+            grip.onpointerup = grip.onpointercancel = grip.onlostpointercapture = () => { resizeStart = null; };
+            grip.onkeydown = e => {
+                if (e.key === 'Home') state.height = null;
+                else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') state.height = Math.max(48, Math.min(heightLimit(), viewHeight + (e.key === 'ArrowUp' ? -16 : 16)));
+                else return;
+                measure(); e.preventDefault(); e.stopPropagation();
+            };
+            row.lastElementChild.onclick = () => { state.height = null; measure(); };
+        }
         function paint() {
             raf = 0;
             const extraX = Math.max(0, width * (state.scale - 1));
@@ -29,6 +46,27 @@ export function bindPreviewViews(root, section) {
             minus.disabled = state.scale <= .5; plus.disabled = state.scale >= 3;
         }
         const schedule = () => { if (!raf) raf = requestAnimationFrame(paint); };
+        const wheel = e => {
+            if (e.ctrlKey || e.metaKey) return;
+            const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? viewHeight : 1;
+            const dx = (e.shiftKey && !e.deltaX ? e.deltaY : e.deltaX) * unit;
+            const dy = (e.shiftKey && !e.deltaX ? 0 : e.deltaY) * unit;
+            const qr = state.scale === 1 && box.dataset.pv === 'qr' && scene.querySelector('[data-qr-sample]');
+            if (qr) {
+                const x = qr.scrollLeft, y = qr.scrollTop;
+                if (qr.scrollWidth > qr.clientWidth) qr.scrollLeft += dx || dy;
+                else qr.scrollTop += dy;
+                if (qr.scrollLeft === x && qr.scrollTop === y) return;
+            } else {
+                const maxX = Math.max(0, width * (state.scale - 1)) / 2;
+                const x = Math.max(-maxX, Math.min(maxX, state.x - dx));
+                const y = Math.max(Math.min(0, viewHeight - height * state.scale), Math.min(0, state.y - dy));
+                if (x === state.x && y === state.y) return;
+                state.x = x; state.y = y; schedule();
+            }
+            e.preventDefault(); e.stopPropagation();
+        };
+        viewport.addEventListener('wheel', wheel, { passive: false });
         function zoom(value, center = { x: width / 2, y: viewHeight / 2 }) {
             const next = Math.max(.5, Math.min(3, value)), ratio = next / state.scale;
             state.x = (state.x - (center.x - width / 2)) * ratio + center.x - width / 2;
@@ -72,14 +110,19 @@ export function bindPreviewViews(root, section) {
         viewport.onpointerup = viewport.onpointercancel = viewport.onlostpointercapture = e => pointers.delete(e.pointerId);
         const measure = () => {
             if (!box.isConnected) { dispose(); return; }
+            // Hidden drawers and folded previews have zero dimensions. Keep pan
+            // until the same view becomes visible again instead of clamping to 0.
+            if (!scene.offsetWidth || !scene.offsetHeight) return;
             width = scene.offsetWidth; height = scene.offsetHeight;
-            viewHeight = Math.min(height, Math.min(window.innerHeight * .28, 230));
+            viewHeight = Number.isFinite(state.height) ? Math.max(48, Math.min(state.height, heightLimit())) : Math.min(height, Math.min(window.innerHeight * .28, 230));
             viewport.style.height = `${viewHeight}px`; schedule();
+            if (grip) { grip.setAttribute('aria-valuemin', '48'); grip.setAttribute('aria-valuemax', String(Math.round(heightLimit()))); grip.setAttribute('aria-valuenow', String(Math.round(viewHeight))); }
         };
         const resize = new ResizeObserver(measure);
-        const dispose = () => { resize.disconnect(); cancelAnimationFrame(raf); pointers.clear(); window.removeEventListener('resize', measure); };
+        const dispose = () => { resize.disconnect(); cancelAnimationFrame(raf); pointers.clear(); resizeStart = null; window.removeEventListener('resize', measure); root.removeEventListener('bl:preview-resize', measure); };
         resize.observe(scene);
         window.addEventListener('resize', measure, { passive: true });
+        root.addEventListener('bl:preview-resize', measure);
         cleanups.push(dispose);
     }
 }

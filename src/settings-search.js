@@ -6,6 +6,7 @@ const rows = [
  ['theme','custom','직접 테마 만들기','커스텀 테마 만들기 새 팔레트 내 색 이름 저장 자동 색 조합'],
  ['theme','styles','스타일 저장·공유','프리셋 스타일 저장 불러오기 삭제 이름 변경 공유 코드 내보내기 가져오기 캐릭터별 연결 자동 적용 소설책 메신저 되돌리기'],
  ['theme','backup','설정 백업·복원','백업 복원 파일 json 내보내기 가져오기 초기화 리셋 설정 전체 저장'],
+ ['theme','palette','설정창 전체 화면·편집 모드·닫기','편집모드 편집 모드 집중 메뉴 숨기기 탭 감추기 전체화면 전체 화면 크게 넓게 설정창 팝업 작은창 작은 창 닫기 종료 나가기 엑스 x'],
  ['text','text','본문 글꼴과 크기','글자 글씨 폰트 글꼴 크기 굵기 자간 줄 높이 행간 언어 한글 영어 일본어 중국어 한자 구글 폰트 업로드 CSS 링크'],
  ['text','dialogue','대사·형광펜','대사 따옴표 형광펜 밑줄 기울기 대각선 위치 굵기 진하기 색 글자 폰트 자간 크기 전체 칠'],
  ['text','ui','메뉴 글자','메뉴 설정창 버튼 글자 글씨 크기 굵기 자간 폰트 글꼴'],
@@ -18,7 +19,7 @@ const rows = [
  ['chat','screen','퀵 리플라이 · QR','qr 큐알 퀵리플라이 퀵 리플라이 quick reply 빠른답장 빠른 답장 단축답장 편집 검색 돋보기 숨기기 끄기 켜기 토글 자리 위치 입력창 위 아래 가로 세로 스크롤 줄','퀵 리플라이'],
  ['chat','screen','채팅 화면·아이콘','아이콘 선 기본 배경 이미지 비치기 고르기 목록 팝업 색 고르기 팝업 모델 프리셋 선택창'],
  ['chat','screen','새로고침 화면','새로고침 시작 로딩 레몬 로고 뇌 splash', '새로고침 화면'],
- ['image','layout','미리보기 확대·축소·이동','미리보기 예시 확대 축소 돋보기 배율 원래 크기 초기 크기 이동 드래그 핀치 손가락 줌'],
+ ['image','layout','미리보기 확대·축소·이동','미리보기 예시 확대 축소 돋보기 배율 원래 크기 초기 크기 이동 드래그 핀치 손가락 줌 높이 가변 크기 손잡이 한줄 넓게 늘리기 줄이기 기본 높이'],
  ['chat','screen','가벼운 페이드 인','스트리밍 새 글자 페이드인 스며들기 빨라지기 속도 버벅임 애니메이션', '', 'chat.streamFade'],
  ['chat','screen','날씨 효과','날씨 비 눈 꽃잎 하트 별 배경 효과 세기 투명도 크기 속도 각도 이미지 내 그림 트래커','날씨'],
  ['chat','screen','모바일 바·한 손 버튼','폰 모바일 스크롤 바 숨기기 자동 숨김 몰입 읽기 한손 한 손 버튼 스와이프 사칭 이어쓰기 다시생성','폰'],
@@ -55,17 +56,21 @@ export const SEARCH_ENTRIES = rows.map(([tab,sub,title,aliases,anchor='',path=''
 export function searchSettings(query) {
  const q=normalize(String(query).slice(0,160)), compact=q.replaceAll(' ','');
  if(!compact)return [];
- const words=q.split(' ').map(w=>w.replace(/(?:으로|에서|하고|하게|좀|을|를|은|는)$/u,'' )).filter(w=>w.length>1&&!['설정','편집','변경','바꾸기','싶어','싶어요','어떻게','어디서','해줘'].includes(w));
- const mine=/(?:내|나의|유저|사용자|페르소나|깡캐)/.test(q), bot=/(?:캐릭터|봇|상대)/.test(q);
+ const tokens=q.split(' '), tokenSet=new Set(tokens);
+ const words=tokens.map(w=>w.replace(/(?:으로|에서|하고|하게|좀|을|를|은|는)$/u,'' )).filter(w=>w.length>1&&!['설정','편집','변경','바꾸기','싶어','싶어요','어떻게','어디서','해줘'].includes(w));
+ const mine=/(?:^|\s)(?:내(?!보내)|나의|유저|사용자|페르소나|깡캐)/.test(q), bot=/(?:캐릭터|봇|상대)/.test(q);
+ const frame=/액자/.test(q), transfer=/내보내|가져오|백업|복원|공유/.test(q);
  return SEARCH_ENTRIES.map(entry=>{
   let score=0, matches=0;
-  for(const w of entry.words){if((w.length>1&&compact.includes(w))||(w.length===1&&q.split(' ').includes(w))){score+=Math.min(w.length,6);matches++;}}
+  for(const w of entry.words){if((w.length>1&&compact.includes(w))||(w.length===1&&tokenSet.has(w))){score+=Math.min(w.length,6);matches++;}}
   for(const w of words)if(entry.compact.includes(w)){score+=10;matches++;}
   if(entry.compact.includes(compact))score+=12;
   if(!matches)return {entry,score:0};
   if(mine)score+=entry.sub.startsWith('user-')?30:entry.tab==='chat'&&['profile','name'].includes(entry.sub)?-25:0;
   if(bot&&!mine)score+=['profile','name'].includes(entry.sub)?20:entry.sub.startsWith('user-')?-20:0;
   if(/에셋/.test(q))score+=entry.tab==='image'?25:-15;
+  if(frame)score+=entry.title.includes('액자')?30:-10;
+  if(transfer&&!frame)score+=['styles','backup'].includes(entry.sub)?35:-10;
   return {entry,score};
  }).filter(r=>r.score>0).sort((a,b)=>b.score-a.score||a.entry.id-b.entry.id).slice(0,8).map(r=>r.entry);
 }

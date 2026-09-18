@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 47개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 0686058ff0e3) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 48개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 5d6feb51f0e4) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 10px;
@@ -17074,6 +17074,48 @@ body.salty :where(.salty-preview):is(#bl-s, *):not([data-prev="img"]):where(.bl-
 .bl-view-scene > .salty-sample,
 .bl-view-scene > .salty-uisample { max-height:none; overflow:visible; margin-block:0; }
 .bl-inline-preview { min-width:0; width:100%; }
+.bl-view-resize { display:flex; align-items:center; gap:4px; height:28px; }
+.bl-view-grip { flex:1; display:grid; place-items:center; height:28px; touch-action:none; cursor:ns-resize; }
+.bl-view-grip i { display:block; width:42px; height:4px; border-radius:4px; background:var(--salty-muted); opacity:.45; }
+.bl-view-grip:is(:hover,:focus-visible) i { opacity:1; background:var(--salty-accent); }
+.salty-panel .bl-view-resize button { width:32px; height:28px; min-height:0; padding:0; margin:0; border:0; border-radius:8px; background:transparent; color:var(--salty-muted); font:18px/1 sans-serif; }
+/* css/46-settings-window.css */
+.salty-panel { --bl-settings-cover: var(--salty-panel-surface, var(--salty-surface)); }
+.salty-panel.in-popup { --bl-settings-cover: var(--salty-panel-card, var(--bl-card, var(--salty-surface))); }
+.salty-panel .salty-nav { margin-bottom:0; padding-bottom:6px; }
+.salty-panel .salty-sec { padding-top:0; }
+.salty-panel .salty-nav,
+.salty-panel .salty-prevbox {
+  background:var(--bl-settings-cover) !important;
+  box-shadow:0 2px 0 var(--bl-settings-cover);
+}
+.bl-settings-toprow { display:flex; gap:6px; align-items:flex-start; margin:2px 0 8px; }
+.bl-settings-toprow .bl-settings-search { flex:1; min-width:0; margin:0; }
+.salty-panel .bl-settings-expand,
+.salty-panel .bl-settings-edit,
+.salty-panel .bl-settings-close { flex:none; min-height:42px; margin:0; padding:0 9px; border:0; border-radius:10px; background:var(--salty-shade); color:var(--salty-text); font:inherit; font-size:12px; white-space:nowrap; }
+.salty-panel .bl-settings-close { width:38px; padding:0; font:24px/1 sans-serif; }
+html body dialog.popup.bl-settings-dialog > .popup-button-close,
+html body dialog.popup.bl-settings-dialog .popup-controls { display:none !important; }
+html body dialog.popup.bl-settings-fullscreen:has(.salty-panel.in-popup) {
+  position:fixed !important; inset:0 !important; margin:0 !important;
+  width:100vw !important; width:100dvw !important; max-width:none !important;
+  height:100vh !important; height:100dvh !important; max-height:none !important; min-height:0 !important;
+  border:0 !important; border-radius:0 !important; transform:none !important;
+  padding:env(safe-area-inset-top, 0px) max(8px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(8px, env(safe-area-inset-left, 0px)) !important;
+}
+html body dialog.popup.bl-settings-fullscreen .popup-body { height:100%; min-height:0; max-height:100%; padding:0 !important; overflow:hidden; }
+html body dialog.popup.bl-settings-fullscreen .popup-content { flex:1; min-height:0; margin:0; padding:0 !important; overflow-y:auto; overscroll-behavior:contain; scrollbar-gutter:stable !important; }
+html body dialog.popup.bl-settings-fullscreen .salty-panel.in-popup { --pp:8px; padding:8px 8px 24px !important; }
+.salty-panel.bl-settings-editing > .salty-head,
+.salty-panel.bl-settings-editing > .salty-style-note,
+.salty-panel.bl-settings-editing > .salty-checks,
+.salty-panel.bl-settings-editing .salty-nav .bl-settings-search,
+.salty-panel.bl-settings-editing .salty-nav .salty-tabs,
+.salty-panel.bl-settings-editing .salty-nav .salty-subsel,
+.salty-panel.bl-settings-editing .salty-nav .bl-settings-expand { display:none !important; }
+.salty-panel.bl-settings-editing .bl-settings-toprow { justify-content:flex-end; margin-bottom:0; }
+.salty-panel .bl-settings-edit[aria-pressed="true"] { background:var(--salty-accent-soft,var(--salty-shade)); color:var(--salty-accent); }
 /* css/99-lazy-panel.css */
 #salty-lazy-panel-start {}
 body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > * {
