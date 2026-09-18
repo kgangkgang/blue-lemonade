@@ -3,13 +3,14 @@
 .palette-controls{position:sticky;top:96px}
 .palette-label{font-size:14px;font-weight:650;color:var(--ink);margin:0 0 12px}
 .palette-families{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:32px}
-.palette-families button{display:flex;align-items:center;gap:10px;min-height:54px;width:100%;padding:10px 12px;text-align:left;border:0;border-radius:15px;background:var(--surface);color:var(--text);font-size:13.5px;font-weight:600;line-height:1.35;letter-spacing:-.02em;box-shadow:inset 0 0 0 1px var(--line);transition:box-shadow .2s ease,transform .25s var(--ease),color .2s}
+.palette-families button{display:flex;align-items:center;gap:10px;min-height:54px;width:100%;padding:10px 12px;text-align:left;border:0;border-radius:15px;background:var(--surface);color:var(--text);font-size:13.5px;font-weight:600;line-height:1.35;letter-spacing:-.02em;box-shadow:inset 0 0 0 1px var(--line);transition:box-shadow .2s ease,transform .25s var(--ease),color .2s,scale .15s ease}
+.palette-families button:active,.palette-modes button:active{scale:.95}
 .palette-families button:hover{transform:translateY(-1px)}
 .palette-families button[aria-pressed=true]{color:var(--ink);box-shadow:inset 0 0 0 2px var(--blue),var(--shadow-sm)}
 .palette-dot{display:block;width:26px;height:26px;flex:none;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(20,49,78,.14);transition:transform .35s var(--ease)}
 .palette-families button[aria-pressed=true] .palette-dot{transform:rotate(180deg)}
 .palette-modes{display:flex;padding:4px;background:var(--tint);border-radius:14px;gap:4px}
-.palette-modes button{flex:1;height:44px;border:0;border-radius:10px;color:var(--muted);background:transparent;font-size:14px;font-weight:650;transition:background-color .2s,color .2s,box-shadow .2s}
+.palette-modes button{flex:1;height:44px;border:0;border-radius:10px;color:var(--muted);background:transparent;font-size:14px;font-weight:650;transition:background-color .2s,color .2s,box-shadow .2s,scale .15s ease}
 .palette-modes button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-sm)}
 .palette-help{font-size:13px;line-height:1.7;color:var(--muted);margin:18px 0 0}
 #palette-loading{color:var(--muted);font-size:14px}
@@ -58,3 +59,14 @@
   .palette-swatches{gap:12px}
   .palette-message-body em{font-size:13px}
 }
+
+/* the ade buttons arrive in a quick cascade; the sample chat re-pours when a flavor changes */
+.js .palette-layout .palette-families button{opacity:0;translate:0 12px;transition:box-shadow .2s ease,transform .25s var(--ease),color .2s,scale .15s ease,opacity .5s ease calc(var(--i,0) * 40ms),translate .6s var(--ease) calc(var(--i,0) * 40ms)}
+.js .palette-layout.in .palette-families button{opacity:1;translate:0 0}
+.palette-chat.swap>*{animation:pop-in .55s var(--ease) both}
+.palette-chat.swap>:nth-child(2){animation-delay:.07s}
+.palette-chat.swap>:nth-child(3){animation-delay:.14s}
+.palette-chat.swap>:nth-child(4){animation-delay:.21s}
+.palette-swatches>div{animation:pop-in .45s var(--ease) both;animation-delay:calc(var(--i,0) * 50ms)}
+
+@media (prefers-reduced-motion:reduce){.js .palette-layout .palette-families button{opacity:1;translate:none}.palette-chat.swap>*,.palette-swatches>div{animation:none}}

@@ -17,10 +17,16 @@
 :root[data-theme=dark] .fizz i{background:radial-gradient(circle at 34% 30%,rgba(255,255,255,.55),rgba(160,200,255,.12) 60%,transparent);box-shadow:inset 0 0 0 1px rgba(125,184,242,.3)}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]) .fizz i{background:radial-gradient(circle at 34% 30%,rgba(255,255,255,.55),rgba(160,200,255,.12) 60%,transparent);box-shadow:inset 0 0 0 1px rgba(125,184,242,.3)}}
 
-.hero-art .phone{--rest-angle:-7deg;position:absolute;z-index:2;width:236px;padding:18px 4px 13px;border:3px solid #d4dee8;border-radius:34px;background:linear-gradient(135deg,#fff,#e9eff5);box-shadow:inset 0 0 0 1px #fff,0 30px 60px -20px rgba(22,53,83,.35),0 12px 24px -12px rgba(22,53,83,.2);transform:perspective(900px) rotateX(var(--tilt-x,0deg)) rotateY(var(--tilt-y,0deg)) rotateZ(var(--rest-angle)) translateY(var(--lift,0px));transition:transform .35s var(--ease),box-shadow .35s ease;animation:float-in 1s var(--ease) both}
-.hero-art .phone.first{top:24px;left:4%}
-.hero-art .phone.second{--rest-angle:7deg;z-index:1;top:96px;right:2%;border-color:#8899aa;background:linear-gradient(135deg,#b5c1ce,#778899);box-shadow:inset 0 0 0 1px #d8e1ea,0 30px 60px -20px rgba(10,25,40,.45);animation-delay:.12s}
+.hero-art .phone{--rest-angle:-7deg;position:absolute;z-index:2;width:236px;padding:18px 4px 13px;border:3px solid #d4dee8;border-radius:34px;background:linear-gradient(135deg,#fff,#e9eff5);box-shadow:inset 0 0 0 1px #fff,0 30px 60px -20px rgba(22,53,83,.35),0 12px 24px -12px rgba(22,53,83,.2);transform:perspective(900px) rotateX(calc(var(--tilt-x,0deg) + var(--par-rx,0deg))) rotateY(var(--tilt-y,0deg)) rotateZ(var(--rest-angle)) translateY(calc(var(--lift,0px) + var(--par-y,0px) * var(--depth,1)));transition:transform .35s var(--ease),box-shadow .35s ease,scale .6s cubic-bezier(.34,1.56,.5,1);animation:float-in 1s var(--ease) both,bob var(--bob,6.5s) ease-in-out 1s infinite alternate;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.hero-art .phone.first{--depth:.55;top:24px;left:4%}
+.hero-art .phone.second{--rest-angle:7deg;z-index:1;top:96px;right:2%;border-color:#8899aa;background:linear-gradient(135deg,#b5c1ce,#778899);box-shadow:inset 0 0 0 1px #d8e1ea,0 30px 60px -20px rgba(10,25,40,.45);--depth:1.15;--bob:7.4s;animation-delay:.12s,1.5s}
 @keyframes float-in{from{opacity:0;translate:0 36px}}
+/* idle: a slow float with a little turn — stronger on touch screens, where there is no hover tilt */
+@keyframes bob{from{translate:0 0;rotate:y -2.5deg}to{translate:0 -9px;rotate:y 2.5deg}}
+@keyframes bob-touch{from{translate:0 0;rotate:y -9deg}to{translate:0 -14px;rotate:y 9deg}}
+@media (hover:none){.hero-art .phone{animation-name:float-in,bob-touch}}
+.hero-art .phone.front{z-index:3}
+.hero-art.idle .phone,.hero-art.idle .fizz i,.hero-art.idle .glow{animation-play-state:paused}
 .phone::before{content:"";position:absolute;width:34px;height:4px;top:7px;left:50%;transform:translateX(-50%);border-radius:9px;background:#77889b;box-shadow:43px 0 0 -1px #77889b}
 .phone::after{content:"";position:absolute;width:52px;height:3px;bottom:5px;left:50%;transform:translateX(-50%);border-radius:9px;background:#8d9bac}
 .phone.second::before,.phone.second::after{background:#35485d}

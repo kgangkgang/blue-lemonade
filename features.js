@@ -28,6 +28,7 @@
   const groups = [...document.querySelectorAll('.feature-group')];
   const cards = [...document.querySelectorAll('.feature-card')];
   const originalOpen = new Map();
+  groups.forEach(group => group.querySelectorAll('.feature-card').forEach((card, i) => card.style.setProperty('--i', Math.min(i, 12))));
   let searching = false;
   function filter() {
     const terms = query.value.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
