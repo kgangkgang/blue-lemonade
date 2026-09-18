@@ -1,2 +1,6 @@
 .claude/
 build-zip.ps1
+
+# Python QA cache
+__pycache__/
+*.pyc
