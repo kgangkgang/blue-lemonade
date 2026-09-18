@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 41개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 51fc90c06587) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 41개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build e0751e933e8a) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 10px;
@@ -1049,6 +1049,7 @@ body.salty #nonQRFormItems > #rightSendForm {
     resize: none !important;
   }
 }
+@media (max-width: 1000px) {
 @supports (anchor-name: --a) {
   body.salty #send_form.bl-send-menu-open {
     anchor-name: --salty-send-form;
@@ -1061,6 +1062,15 @@ body.salty #extensionsMenu {
     align-self: end;
     max-height: -webkit-fill-available;
     max-height: stretch;
+  }
+}
+}
+@media (min-width: 1001px) {
+  body.salty #options,
+body.salty #extensionsMenu {
+    max-height: calc(100dvh - var(--topBarBlockSize) - 12px);
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
   }
 }
 body.salty :is(#leftSendForm, #rightSendForm) > div:not(#send_but, #mes_stop) {

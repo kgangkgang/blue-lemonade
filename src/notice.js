@@ -8,6 +8,11 @@ import { getSettings, saveSettings } from './settings.js';
 
 export const NOTICES = [
     {
+        version: '3.7.8', date: '2026-09-18', items: [
+            'PC에서 입력창의 ≡ 메뉴가 화면 왼쪽으로 벗어나지 않고 버튼 위에 열리도록 위치 계산을 정리했어요.',
+        ],
+    },
+    {
         version: '3.7.7', date: '2026-09-18', items: [
             'PC QR 스크롤바의 위아래 삼각형을 없앴어요. 손잡이 끝을 둥글게 하고 위아래 여백을 두었어요.',
             '모바일 스크롤바가 QR 창의 둥근 모서리 밖으로 나오지 않도록 창 경계 안에 잘라 보여 줘요. 테마색 연동은 그대로예요.',
