@@ -18,6 +18,8 @@ export const DEFAULTS = {
     frameLibrary: [],
     noticeSeen: '', // 3.0.0: 공지사항을 열어 본 마지막 버전 — 지금 버전이 더 새것이면 버전 알약이 빛난다 (notice.js)
     palette: 'salt',
+    nightTint: 1,                // Stock night surfaces: theme-color mix, 1–20%.
+    lightTint: .5,               // Stock light surfaces: theme-color mix, 0.5–20%.
     customName: '', // 커스텀 에이드 이름. 색은 기존 colorOverrides에 모드별로 저장.
     colorOverrides: {},           // { [paletteId]: { token: color } }
     fonts: {
@@ -392,6 +394,8 @@ export function getSettings() {
     tidyFrameLibrary(s);
     if (PALETTE_ALIASES[s.palette]) s.palette = PALETTE_ALIASES[s.palette];
     if (!PALETTES[s.palette]) s.palette = 'salt';
+    s.nightTint = Number.isFinite(Number(s.nightTint)) ? Math.max(1, Math.min(20, Number(s.nightTint))) : 1;
+    s.lightTint = Number.isFinite(Number(s.lightTint)) ? Math.max(.5, Math.min(20, Number(s.lightTint))) : .5;
     delete s.pastel; // 1.8.2~1.9.1 의 파스텔 스위치 — 파스텔로 정착하며 없앰 (id 는 PALETTE_ALIASES 가 원래 id 로)
     s.customName = typeof s.customName === 'string' ? s.customName.trim().slice(0, 24) : '';
     s.noticeSeen = typeof s.noticeSeen === 'string' ? s.noticeSeen.slice(0, 20) : '';

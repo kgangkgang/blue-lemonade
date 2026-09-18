@@ -383,6 +383,9 @@ export function applyAll() {
 
     const vars = {};
     for (const key of TOKEN_KEYS) vars[`--salty-${key}`] = pal[key];
+    // Stock light bubbles follow the marker hue; explicit raised colors and custom palettes remain authoritative.
+    vars['--salty-user-bg'] = mode === 'light' && !s.palette.startsWith('custom-') && !s.colorOverrides?.[s.palette]?.raised
+        ? mix(pal.marker, pal.surface, 0.16) : pal.raised;
     vars['--salty-on-accent'] = onColor(pal.accent); // 포인트색 위 글자색 (밝은 포인트면 어두운 글자)
     // 두 번째 포인트(지금 있는 곳 · 고른 것): 블루 아워는 레몬, 없으면 포인트색. 밝은 pop 위 글자는 어두운 테마면 바탕 남색
     const pop = pal.pop || pal.accent;

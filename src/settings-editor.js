@@ -48,7 +48,10 @@ export function arrangeEditor(root, route, title) {
     if (preview) {
         const stage = document.createElement('div'); stage.className = 'bl-editor-stage';
         const caption = document.createElement('div'); caption.className = 'bl-editor-caption'; caption.textContent = '미리보기';
-        stage.append(caption, preview); workspace.append(stage);
+        stage.append(caption, preview);
+        const tint = section.querySelector(':scope > .bl-palette-tint');
+        if (tint) stage.append(tint);
+        workspace.append(stage);
     } else workspace.classList.add('bl-editor-no-preview');
     workspace.append(section);
     workspace.inert = !!root._catalogOpen;
@@ -81,5 +84,4 @@ export function arrangeEditor(root, route, title) {
         group.querySelector('.bl-editor-group-toggle').setAttribute('aria-expanded', String(open));
         group.querySelector('.bl-editor-group-body').hidden = !open;
     }
-    section.scrollTop = root._editorScroll.get(route) || 0;
 }

@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 49개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build dc31ca21abdb) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 49개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build ee0edc1839dd) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 10px;
@@ -2281,7 +2281,7 @@ body.salty.salty-user-bubble #chat .mes[is_user="true"] .mes_block {
   max-width: 86% !important;
   margin-left: auto !important;
   padding: 10px 16px 13px !important;
-  background: var(--salty-raised) !important;
+  background: var(--salty-user-bg, var(--salty-raised)) !important;
   border-radius: var(--r-lg) var(--r-lg) 6px var(--r-lg) !important;
   box-shadow: var(--bl-e1) !important;
 }
@@ -2302,7 +2302,7 @@ body.salty.salty-user-bubble #chat .mes[is_user="true"] .timestamp {
 }
 body.salty.salty-user-card #chat .mes[is_user="true"] .mes_block {
   padding: 12px 16px 14px !important;
-  background: var(--salty-raised) !important;
+  background: var(--salty-user-bg, var(--salty-raised)) !important;
   border-radius: var(--r-md) !important;
   box-shadow: var(--bl-e1) !important;
 }
@@ -2342,8 +2342,8 @@ body.salty.salty-user-table #chat .mes[is_user="true"]::before {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: var(--salty-raised);
-  box-shadow: 0 0 0 100vmax var(--salty-raised);
+  background: var(--salty-user-bg, var(--salty-raised));
+  box-shadow: 0 0 0 100vmax var(--salty-user-bg, var(--salty-raised));
   clip-path: inset(0 -100vmax);
   pointer-events: none;
 }
@@ -10537,6 +10537,26 @@ html body.salty .TH-custom-tailwind .TH-radio-button--selected {
 html body.salty.salty-dark .TH-custom-tailwind .TH-radio-button--selected {
   background: color-mix(in srgb, var(--salty-text) 18%, var(--salty-surface));
 }
+body.salty .rl-root,
+body.salty .rl-settings {
+  --rl-text: var(--salty-text);
+  --rl-muted: var(--salty-muted);
+  --rl-faint: var(--salty-muted);
+  --rl-line: var(--salty-line);
+  --rl-hover: var(--salty-shade);
+  --rl-accent: var(--salty-accent);
+  --rl-accent-soft: var(--salty-surface-shade);
+}
+body.salty :is(.rl-root, .rl-settings) .rl-tab[aria-pressed="true"],
+body.salty :is(.rl-root, .rl-settings) .rl-chip[aria-pressed="true"] {
+  background: var(--salty-tint-14);
+  color: var(--salty-text) !important;
+  border-color: var(--salty-accent-28);
+}
+body.salty .rl-root .rl-tile,
+body.salty .rl-root .rl-balance {
+  background: var(--salty-surface-shade);
+}
 /* css/20-panel.css */
 .salty-panel {
   --r-sm: 8px;
@@ -12670,7 +12690,7 @@ body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="tr
   max-width: 86% !important;
   margin-left: auto !important;
   padding: 10px 16px 13px !important;
-  background: var(--salty-raised) !important;
+  background: var(--salty-user-bg, var(--salty-raised)) !important;
   border-radius: var(--r-lg) var(--r-lg) 6px var(--r-lg) !important;
   box-shadow: var(--bl-e1) !important;
 }
@@ -12691,7 +12711,7 @@ body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="tr
 }
 body.salty.salty-user-card :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .mes_block {
   padding: 12px 16px 14px !important;
-  background: var(--salty-raised) !important;
+  background: var(--salty-user-bg, var(--salty-raised)) !important;
   border-radius: var(--r-md) !important;
   box-shadow: var(--bl-e1) !important;
 }
@@ -12731,8 +12751,8 @@ body.salty.salty-user-table :is(#salty-nochat, .salty-preview) .mes[is_user="tru
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: var(--salty-raised);
-  box-shadow: 0 0 0 100vmax var(--salty-raised);
+  background: var(--salty-user-bg, var(--salty-raised));
+  box-shadow: 0 0 0 100vmax var(--salty-user-bg, var(--salty-raised));
   clip-path: inset(0 -100vmax);
   pointer-events: none;
 }
@@ -13795,6 +13815,15 @@ body.salty.salty-user-profile-side-right.salty-user-profile-mode-small :is(#salt
 }
 body.salty:is(.salty-user-bubble, .salty-user-card).salty-user-profile-custom :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mes_block {
   padding: 12px 16px 14px !important;
+}
+body.salty:is(.salty-user-bubble, .salty-user-card).salty-user-profile-mode-none :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]) > .mes_block {
+  padding-left: 16px !important;
+}
+body.salty.salty-user-card.salty-user-profile-mode-none :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) {
+  --salty-meta-inset: 16px;
+}
+body.salty.salty-user-card.salty-user-profile-mode-none :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mes_block {
+  margin-left: 0 !important;
 }
 /* css/24-previewbox.css */
 .salty-prevbox {
@@ -17095,7 +17124,6 @@ body.salty :where(.salty-preview):is(#bl-s, *):not([data-prev="img"]):where(.bl-
 .bl-settings-toprow { display:flex; gap:6px; align-items:flex-start; margin:2px 0 8px; }
 .bl-settings-toprow .bl-settings-search { flex:1; min-width:0; margin:0; }
 .salty-panel .bl-settings-expand,
-.salty-panel .bl-settings-edit,
 .salty-panel .bl-settings-close { flex:none; min-height:42px; margin:0; padding:0 9px; border:0; border-radius:10px; background:var(--salty-shade); color:var(--salty-text); font:inherit; font-size:12px; white-space:nowrap; }
 .salty-panel .bl-settings-close { width:38px; padding:0; font:24px/1 sans-serif; }
 html body dialog.popup.bl-settings-dialog > .popup-button-close,
@@ -17110,17 +17138,8 @@ html body dialog.popup.bl-settings-fullscreen:has(.salty-panel.in-popup) {
 html body dialog.popup.bl-settings-fullscreen .popup-body { height:100%; min-height:0; max-height:100%; padding:0 !important; overflow:hidden; }
 html body dialog.popup.bl-settings-fullscreen .popup-content { flex:1; min-height:0; margin:0; padding:0 !important; overflow-y:auto; overscroll-behavior:contain; scrollbar-gutter:stable !important; }
 html body dialog.popup.bl-settings-fullscreen .salty-panel.in-popup { --pp:8px; padding:8px 8px 24px !important; }
-.salty-panel.bl-settings-editing > .salty-head,
-.salty-panel.bl-settings-editing > .salty-style-note,
-.salty-panel.bl-settings-editing > .salty-checks,
-.salty-panel.bl-settings-editing .salty-nav .bl-settings-search,
-.salty-panel.bl-settings-editing .salty-nav .salty-tabs,
-.salty-panel.bl-settings-editing .salty-nav .salty-subsel,
-.salty-panel.bl-settings-editing .salty-nav .bl-settings-expand { display:none !important; }
-.salty-panel.bl-settings-editing .bl-settings-toprow { justify-content:flex-end; margin-bottom:0; }
-.salty-panel .bl-settings-edit[aria-pressed="true"] { background:var(--salty-accent-soft,var(--salty-shade)); color:var(--salty-accent); }
 /* css/47-settings-editor.css */
-html body .salty-panel.bl-editor { position:relative; display:flex; flex-direction:column; container:bl-editor / inline-size; height:min(780px,82dvh); min-height:320px; min-width:0; padding:0 !important; overflow:hidden; --pp:0px; --bl-editor-line:var(--salty-line); background:var(--bl-settings-cover); }
+html body .salty-panel.bl-editor { position:relative; display:flex; flex-direction:column; container:bl-editor / inline-size; height:min(780px,82dvh); min-height:320px; min-width:0; padding:0 !important; overflow:hidden; --pp:0px; --salty-navh:0px; --bl-editor-line:var(--salty-line); background:var(--bl-settings-cover); }
 html body dialog.popup.bl-settings-dialog:not(.bl-settings-fullscreen):has(.salty-panel.in-popup) { width:min(1120px,96vw) !important; max-width:96vw !important; height:min(880px,92dvh) !important; max-height:92dvh !important; padding:0 !important; }
 html body dialog.bl-settings-dialog .popup-body { height:100%; min-height:0; padding:0 !important; overflow:hidden; }
 html body dialog.bl-settings-dialog .popup-content { flex:1; height:100%; min-height:0; overflow:hidden !important; padding:0 !important; margin:0; scrollbar-gutter:auto !important; }
@@ -17158,8 +17177,6 @@ html body .bl-editor .bl-editor-group-body > .salty-fontrows:not(.bl-decor-contr
 .bl-editor .bl-view-tools small { display:none; }
 .bl-editor .bl-view-tools button { min-height:30px; }
 .bl-editor .salty-pvfold { left:0; right:0; }
-.bl-editor.bl-settings-editing .bl-editor-choose,.bl-editor.bl-settings-editing .bl-editor-search-button { display:none !important; }
-.bl-editor.bl-settings-editing .bl-editor-actions { margin-left:auto; }
 .bl-editor-catalog { position:absolute; inset:0; z-index:20; min-width:0; }
 .bl-editor-scrim { position:absolute; inset:0; width:100%; height:100%; margin:0; padding:0; border:0; background:rgb(0 0 0 / .28); }
 .bl-editor-directory { position:absolute; inset:0 auto 0 0; display:flex; flex-direction:column; width:min(340px,100%); padding:18px; background:var(--salty-panel-card,var(--salty-surface)); border-right:1px solid var(--bl-editor-line); box-shadow:12px 0 32px #0002; }
@@ -17169,7 +17186,7 @@ html body .bl-editor .bl-editor-group-body > .salty-fontrows:not(.bl-decor-contr
 .bl-editor-directory .bl-search-results { position:static; max-height:55dvh; margin-top:8px; box-shadow:none; }
 .bl-editor-directory-list { min-height:0; overflow:auto; overscroll-behavior:contain; }
 .bl-editor-directory:has(.bl-search-results:not([hidden])) .bl-editor-directory-list { display:none; }
-.bl-editor-category h4 { margin:16px 8px 5px; color:var(--salty-muted); font-size:12px; font-weight:500; }
+.bl-editor-category h4 { margin:22px 4px 8px; padding:9px 10px; border-left:3px solid var(--salty-accent); border-bottom:1px solid var(--bl-editor-line); border-radius:4px; background:var(--salty-shade); color:var(--salty-text); font-size:15px; font-weight:750; line-height:1.4; }
 .bl-editor-category button { display:block; width:100%; margin:2px 0; padding:10px 12px; border:0; border-radius:8px; text-align:left; background:transparent; color:var(--salty-text); font:inherit; font-size:14px; }
 .bl-editor-category button:is(:hover,[aria-current="page"]) { background:var(--salty-shade); color:var(--salty-accent); }
 .bl-editor-directory .salty-head { margin-top:20px; border-top:1px solid var(--bl-editor-line); padding-top:18px; }
@@ -17183,6 +17200,11 @@ html body .bl-editor .bl-editor-group-body > .salty-fontrows:not(.bl-decor-contr
   .bl-editor .bl-editor-caption { margin-bottom:18px; }
   .bl-editor .bl-editor-stage .salty-prevbox { margin-block:auto; }
 }
+.bl-editor-stage .bl-palette-tint { flex:none; width:100%; padding:10px 0 14px; }
+.bl-palette-tint small { display:block; color:var(--salty-muted); font-size:11px; line-height:1.5; margin-top:7px; }
+.bl-palette-tint .salty-slider { margin:0; }
+.bl-editor [data-act^="history-"]:disabled { opacity:.3; cursor:default; }
+.bl-history-notice { max-height:40vh; overflow:auto; line-height:1.6; overflow-wrap:anywhere; }
 /* css/99-lazy-panel.css */
 #salty-lazy-panel-start {}
 body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > * {

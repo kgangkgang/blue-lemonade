@@ -125,6 +125,7 @@ export function bindPreviewViews(root, section) {
         };
         const resize = new ResizeObserver(measure);
         const dispose = () => { resize.disconnect(); cancelAnimationFrame(raf); pointers.clear(); resizeStart = null; window.removeEventListener('resize', measure); root.removeEventListener('bl:preview-resize', measure); };
+        measure();
         resize.observe(scene);
         window.addEventListener('resize', measure, { passive: true });
         root.addEventListener('bl:preview-resize', measure);

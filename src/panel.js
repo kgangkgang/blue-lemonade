@@ -1,4 +1,5 @@
 import { bindEditor, openEditorCatalog, arrangeEditor, revealEditorTarget, selectEditorGroup } from './settings-editor.js';
+import { SettingsHistory } from './settings-history.js';
 import { syncProfileClip } from './profile-clip.js';
 import { refreshPreset, FRAME_PRESETS, FRAME_LIMIT, presetFrame, saveFrame, useFrame, deleteFrame } from './frame-library.js';
 import { syncDecor } from './decor.js';
@@ -79,6 +80,41 @@ function setPath(obj, path, value) {
 }
 const isNum = v => typeof v === 'number' && Number.isFinite(v);
 const isSet = v => !!v && typeof v === 'object'; // 글꼴 칸이 언어별 묶음인지 ('same' 이 아닌지)
+const history = new SettingsHistory();
+const historyLabels = new Map([['palette', '테마 색'], ['nightTint', '나이트 · 배경 테마색 농도'], ['lightTint', '화이트 · 배경 테마색 농도']]);
+const historyOptions = new Map();
+function labelHistoryControl(label, control) {
+    const path = control.match(/data-(?:path|toggle)="([^"]+)"/)?.[1];
+    if (path) historyLabels.set(path, label.replace(/<[^>]*>/g, ''));
+}
+function syncHistoryButtons() {
+    for (const panel of panels) {
+        const undo = panel.querySelector('[data-act="history-undo"]'), redo = panel.querySelector('[data-act="history-redo"]');
+        if (undo) undo.disabled = !history.pending && !history.undoStack.length;
+        if (redo) redo.disabled = !!history.pending || !history.redoStack.length;
+    }
+}
+function historyLabel(path) {
+    const scope = { profile: '캐릭터 프로필', userProfile: '내 프로필', image: '에셋 이미지', type: '본문', dialogue: '대사', em: '속마음', strong: '강조', chat: '채팅' }[path.split('.')[0]];
+    return [scope, historyLabels.get(path) || path].filter(Boolean).join(' · ');
+}
+function historyValue(value, path) {
+    if (value == null) return '기본값';
+    if (typeof value === 'boolean') return value ? '켜짐' : '꺼짐';
+    if (path === 'palette') return PALETTES[value]?.label || String(value);
+    if (historyOptions.has(`${path}:${value}`)) return historyOptions.get(`${path}:${value}`);
+    if (Array.isArray(value)) return `${value.length}개 항목`;
+    if (typeof value === 'object') return '사용자 설정';
+    if (typeof value === 'string' && (/^(data:|https?:)/.test(value) || value.length > 100)) return '이미지·사용자 자료';
+    return typeof value === 'number' ? `${numText(path, value)}${NUM[path]?.unit || ''}` : String(value);
+}
+function stepHistory(redo) {
+    const changes = history.step(getSettings(), redo);
+    if (!changes.length) { syncHistoryButtons(); return; }
+    saveSoon(); applyAll(); refreshPanels();
+    const rows = changes.slice(0, 8).map(c => `<div>${esc(historyLabel(c.path))}: <b>${esc(historyValue(c.from, c.path))}</b> → <b>${esc(historyValue(c.to, c.path))}</b></div>`).join('');
+    toastr.info(`<div class="bl-history-notice">${rows}${changes.length > 8 ? `<small>외 ${changes.length - 8}개 설정도 복원했어요.</small>` : ''}</div>`, redo ? '다시 실행했어요' : '되돌렸어요', { escapeHtml: false, closeButton: true, timeOut: 6500, extendedTimeOut: 10000 });
+}
 
 let saveTimer = null;
 function saveSoon() {
@@ -130,22 +166,9 @@ export function setPanelFullscreen(root, enabled) {
     root.dispatchEvent(new Event('bl:preview-resize'));
 }
 
-function setEditing(root, enabled) {
-    root._editing = !!enabled;
-    root.classList.toggle('bl-settings-editing', root._editing);
-    if (root._editing) openEditorCatalog(root, false);
-    const button = root.querySelector('[data-act="panel-edit"]');
-    if (button) {
-        button.textContent = enabled ? '편집 모드 끄기' : '편집 모드';
-        button.setAttribute('aria-label', enabled ? '편집 모드 끄기' : '편집 모드 켜기');
-        button.setAttribute('aria-pressed', String(root._editing));
-    }
-    root.dispatchEvent(new Event('bl:preview-resize'));
-}
-
 export function unmountPanel(root) {
     root._previewCleanup?.();
-    for (const key of ['_fontIO', '_rowsRO', '_navRO']) { root[key]?.disconnect(); root[key] = null; }
+    for (const key of ['_fontIO', '_rowsRO']) { root[key]?.disconnect(); root[key] = null; }
     root.remove(); panels.delete(root); root._pv = {}; root._previewViews?.clear();
     const settings = getSettings(); syncDecor(settings); syncProfileClip(settings);
 }
@@ -177,15 +200,25 @@ function syncWeatherPreview(root, path) {
     import('./weather.js').then(m => m.previewWeather(stage, s.enabled ? s.chat : { weather: 'off' })).catch(() => {});
 }
 
-function update(mutator, rerender = true) {
-    mutator(getSettings());
+function update(mutator, rerender = true, group = '') {
+    const oldTint = `${getSettings().nightTint}/${getSettings().lightTint}`;
+    history.run(getSettings(), mutator, group);
     saveSoon();
     applyAll();
     if (rerender) refreshPanels();
+    else if (oldTint !== `${getSettings().nightTint}/${getSettings().lightTint}`) {
+        const s = getSettings(), mode = PALETTES[s.palette]?.mode;
+        for (const panel of panels) for (const card of panel.querySelectorAll('.salty-pal[data-family]')) {
+            const colors = paletteColors({ ...s, palette: paletteVariant(card.dataset.family, mode) });
+            for (const key of ['bg', 'surface', 'raised']) card.style.setProperty(`--pal-${key}`, safeColor(colors[key]));
+        }
+    }
+    syncHistoryButtons();
 }
 
 // ───────── 조각들 ─────────
 function seg(path, options, fallback, cls = '') {
+    for (const [value, label] of options) historyOptions.set(`${path}:${value}`, label.replace(/<[^>]*>/g, ''));
     const value = getPath(getSettings(), path);
     const current = value === undefined || value === null ? fallback : value;
     return `<div class="salty-seg${cls ? ` ${cls}` : ''}">${options.map(([v, label]) =>
@@ -236,11 +269,13 @@ function qrSample(showFind = true) {
 }
 
 function row(label, control, note = '') {
+    labelHistoryControl(label, control);
     return `<div class="salty-row" data-search-anchor="${esc(label)}"><span>${label}${note ? `<small>${note}</small>` : ''}</span>${control}</div>`;
 }
 
 // 고르기 버튼이 길 때: 라벨 위, 버튼 아래
 function stack(label, control, note = '') {
+    labelHistoryControl(label, control);
     return `<div class="salty-stack"><span>${label}${note ? `<small>${note}</small>` : ''}</span>${control}</div>`;
 }
 
@@ -258,6 +293,7 @@ function mdLabel(text) {
 }
 
 function color(token, label, note = '') {
+    historyLabels.set(`colorOverrides.${getSettings().palette}.${token}`, `테마 색 · ${label.replace(/<[^>]*>/g, '')}`);
     const pal = paletteColors(getSettings());
     // 투명한 색은 스와치가 빈 칸처럼 보여서 뒤에 투명 격자를 깔아 줌 (CSS .clear)
     // 견본 크기는 CSS 변수로 (3.5.1 — PC 팝업에서는 이름 옆을 다 채우는 긴 막대, 33-panel-columns)
@@ -275,6 +311,8 @@ function snap(value, min, max, step) {
 
 // 슬라이드바 + 숫자 입력칸: 슬라이드는 한 칸(step)씩, 입력칸은 소수점까지 (범위 밖이면 끝값으로)
 const NUM = {
+    'nightTint': { unit: '%' },
+    'lightTint': { unit: '%' },
     'type.size': { unit: 'px' },
     'type.dialogueSize': { unit: 'px' },
     'type.uiSize': { unit: 'px' },
@@ -328,6 +366,7 @@ function sliderParts(path, min, max, step, def) {
 }
 
 function slider(path, label, min, max, step, def) {
+    if (!['nightTint', 'lightTint'].includes(path)) historyLabels.set(path, label.replace(/<[^>]*>/g, ''));
     const { num, range } = sliderParts(path, min, max, step, def);
     const aria = esc(label.replace(/<[^>]*>/g, ''));
     return `<div class="salty-slider"><header><span>${label}</span>${num.replace('<input ', `<input aria-label="${aria}" `)}</header>${range.replace('<input ', `<input aria-label="${aria}" `)}</div>`;
@@ -782,7 +821,7 @@ function tabTheme(s, sub) {
     const selected = paletteFamily(s.palette);
     const renderCard = (family, data) => {
         const id = paletteVariant(family, mode), p = PALETTES[id];
-        const c = { ...p, ...(s.colorOverrides?.[id] || {}) };
+        const c = paletteColors({ ...s, palette: id });
         const v = k => safeColor(c[k]);
         const label = family === 'custom' ? s.customName || data.label : data.label;
         return `<button type="button" class="salty-pal ${selected === family ? 'on' : ''}" data-act="palette" data-family="${family}" aria-pressed="${selected === family}"
@@ -799,7 +838,7 @@ function tabTheme(s, sub) {
             ${stack('자동 기준', seg('auto.by', [['system', '기기 다크 모드'], ['time', '시간']]))}
             ${s.auto.by === 'time' ? `<div class="salty-row"><span>나이트 시작</span><input type="time" class="salty-time" data-time-path="auto.night" value="${esc(s.auto.night)}" aria-label="나이트 시작"></div><div class="salty-row"><span>화이트 시작</span><input type="time" class="salty-time" data-time-path="auto.day" value="${esc(s.auto.day)}" aria-label="화이트 시작"></div>` : ''}
         </div>` : '';
-    return `${chatPreview()}<div class="salty-palette-toolbar"><span>${auto ? '자동 · ' : ''}${mode === 'light' ? '화이트' : '나이트'}</span><div class="salty-mode-switch" role="group" aria-label="테마 밝기">${['light', 'dark'].map(kind => `<button type="button" data-act="palette-mode" data-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'} 모드" title="${kind === 'light' ? '화이트' : '나이트'}" aria-pressed="${!auto && mode === kind}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}<button type="button" data-act="palette-auto" aria-label="자동" title="자동" aria-pressed="${auto}"><i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i></button></div></div>${autoOptions}<div class="salty-palettes">${cards}${custom}</div>`;
+    return `${chatPreview()}${selected !== 'custom' ? `<div class="bl-palette-tint">${slider(mode === 'dark' ? 'nightTint' : 'lightTint', '배경 테마색 농도', mode === 'dark' ? 1 : .5, 20, .5)}<small>${mode === 'dark' ? '기본 1% · 차콜' : '기본 0.5% · 화이트'}부터 20%까지. 직접 고친 배경색은 유지해요.</small></div>` : ''}<div class="salty-palette-toolbar"><span>${auto ? '자동 · ' : ''}${mode === 'light' ? '화이트' : '나이트'}</span><div class="salty-mode-switch" role="group" aria-label="테마 밝기">${['light', 'dark'].map(kind => `<button type="button" data-act="palette-mode" data-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'} 모드" title="${kind === 'light' ? '화이트' : '나이트'}" aria-pressed="${!auto && mode === kind}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}<button type="button" data-act="palette-auto" aria-label="자동" title="자동" aria-pressed="${auto}"><i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i></button></div></div>${autoOptions}<div class="salty-palettes">${cards}${custom}</div>`;
 
 }
 
@@ -1417,7 +1456,7 @@ function render(root) {
     root.innerHTML = `
         <div class="salty-nav"><div class="bl-settings-toprow">
             <button type="button" class="bl-editor-choose" data-act="editor-catalog" aria-label="설정 선택" aria-haspopup="dialog" aria-expanded="${!!root._catalogOpen}"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/></svg><span>${subLabel}</span></button>
-            <div class="bl-editor-actions"><button type="button" class="bl-editor-search-button" data-act="editor-search" aria-label="설정 검색"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="m13 13 4 4"/></svg></button><button type="button" class="bl-settings-expand" data-act="panel-fullscreen" aria-pressed="${!!root._fullscreen}">${root._fullscreen ? '작은 창' : '전체 화면'}</button><button type="button" class="bl-settings-edit" data-act="panel-edit" aria-pressed="${!!root._editing}" aria-label="${root._editing ? '편집 모드 끄기' : '편집 모드 켜기'}">${root._editing ? '편집 모드 끄기' : '편집 모드'}</button>${root.classList.contains('in-popup') ? '<button type="button" class="bl-settings-close" data-act="panel-close" aria-label="테마 설정 닫기" title="닫기">×</button>' : ''}</div>
+            <div class="bl-editor-actions"><button type="button" data-act="history-undo" aria-label="되돌리기" title="되돌리기" ${!history.pending && !history.undoStack.length ? 'disabled' : ''}><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4 3 8l4 4M3 8h8a5 5 0 0 1 0 10"/></svg></button><button type="button" data-act="history-redo" aria-label="다시 실행" title="앞으로 가기 · 다시 실행" ${history.pending || !history.redoStack.length ? 'disabled' : ''}><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m13 4 4 4-4 4m4-4H9a5 5 0 0 0 0 10"/></svg></button><button type="button" class="bl-editor-search-button" data-act="editor-search" aria-label="설정 검색"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="m13 13 4 4"/></svg></button><button type="button" class="bl-settings-expand" data-act="panel-fullscreen" aria-pressed="${!!root._fullscreen}">${root._fullscreen ? '작은 창' : '전체 화면'}</button>${root.classList.contains('in-popup') ? '<button type="button" class="bl-settings-close" data-act="panel-close" aria-label="테마 설정 닫기" title="닫기">×</button>' : ''}</div>
         </div></div>
         <section class="salty-sec" data-tab="${ui.tab}" data-sub="${sub}">${section}</section>
         <div class="bl-editor-catalog" role="dialog" aria-modal="true" aria-label="설정 선택 목록" ${root._catalogOpen ? '' : 'hidden'}>
@@ -1430,6 +1469,8 @@ function render(root) {
     fillPreviews(root); // 미리보기 무대 다시 꽂기 (만들지 않고 옮겨 담기만)
     bindPreviewViews(root, `${ui.tab}/${ui.subs[ui.tab]}`);
     syncSamples(s); // 미리보기 문단 클래스 맞추기
+    // Preview sizing changes the available scroll height; restore after it is measured.
+    root.querySelector('.salty-sec').scrollTop = root._editorScroll.get(root._editorRoute) || 0;
 
     // 색 고르기: 처음 그릴 때 나는 change 는 무시하고, 사용자가 만진 뒤부터 저장
     root.querySelectorAll('toolcool-color-picker[data-token]').forEach((picker) => {
@@ -1452,22 +1493,12 @@ function render(root) {
     // 글꼴 묶음 태그 줄: 밀면 끝 흐림, 고른 칩은 보이게 (팝업·접힌 서랍은 화면에 붙기 전에 그려지니 폭이 생길 때 다시)
     //   소분류 칩은 줄이 넘치면 다음 줄로 내려가니 여기 없음
     root._rowsRO?.disconnect();
-    root._rowsRO = new ResizeObserver(entries => entries.forEach(e => showTag(e.target)));
-    root.querySelectorAll('.salty-fonttags').forEach((chips) => {
+    const fontTags = root.querySelectorAll('.salty-fonttags');
+    root._rowsRO = fontTags.length ? new ResizeObserver(entries => entries.forEach(e => showTag(e.target))) : null;
+    fontTags.forEach((chips) => {
         chips.addEventListener('scroll', () => fadeTags(chips), { passive: true });
         root._rowsRO.observe(chips);
     });
-
-    // 탭 줄 높이를 변수로 내보냄: 글꼴 찾기 줄이 탭 줄 바로 아래에 붙어야 겹치지 않음
-    // (소분류 칩이 두 줄로 내려가면 높이가 달라지니 지켜봄)
-    const nav = root.querySelector('.salty-nav');
-    root._navRO?.disconnect();
-    if (nav) {
-        const setNavH = () => root.style.setProperty('--salty-navh', `${Math.round(nav.getBoundingClientRect().height)}px`);
-        setNavH();
-        root._navRO = new ResizeObserver(setNavH);
-        root._navRO.observe(nav);
-    }
 
     // 글꼴 목록: 보이는 항목의 미리보기만 불러오기
     const list = root.querySelector('.salty-fontscroll');
@@ -1632,6 +1663,7 @@ function pickFont(font) {
 }
 
 function bind(root) {
+    root.addEventListener('change', () => queueMicrotask(() => { history.flush(getSettings()); syncHistoryButtons(); }));
     root.addEventListener('click', async (event) => {
         const el = event.target.closest('[data-act]');
         if (!el || !root.contains(el)) return;
@@ -1640,6 +1672,8 @@ function bind(root) {
         const { act } = el.dataset;
         try {
             switch (act) {
+                case 'history-undo': stepHistory(false); break;
+                case 'history-redo': stepHistory(true); break;
                 case 'editor-catalog': openEditorCatalog(root, true); break;
                 case 'editor-search': openEditorCatalog(root, true, true); break;
                 case 'editor-catalog-close': openEditorCatalog(root, false); break;
@@ -1656,9 +1690,6 @@ function bind(root) {
                 case 'panel-fullscreen':
                     if (root.classList.contains('in-popup')) setPanelFullscreen(root, !root._fullscreen);
                     else root._onFullscreen?.();
-                    break;
-                case 'panel-edit':
-                    setEditing(root, !root._editing);
                     break;
                 case 'notice': // 3.0.0 제목 옆 버전 알약 → 공지사항 (열면 본 것으로 적고 알약들을 보통 모양으로)
                     await openNotice(noticeSeenChanged);
@@ -2048,9 +2079,11 @@ function bind(root) {
                 }
                 case 'reset':
                     if (!confirm('테마 설정을 처음 상태로 돌릴까요? (내 글꼴 목록은 남아요)')) return;
-                    resetSettings();
-                    applyAll();
-                    refreshPanels();
+                    update(st => {
+                        const fresh = resetSettings();
+                        for (const key of Object.keys(st)) delete st[key];
+                        Object.assign(st, fresh); SillyTavern.getContext().extensionSettings.salty = st;
+                    });
                     break;
             }
         } catch (error) {
@@ -2090,7 +2123,7 @@ function bind(root) {
         const path = range.dataset.range;
         const value = Number(range.value);
         range.style.setProperty('--fill', fill(value, Number(range.min), Number(range.max)));
-        update(st => setPath(st, path, value), false);
+        update(st => setPath(st, path, value), false, path);
         syncWeatherPreview(root, path);
         const num = root.querySelector(`input[data-num="${path}"]`);
         if (num && document.activeElement !== num) { num.value = numText(path, value); fitNum(num); }
@@ -2242,6 +2275,7 @@ function bind(root) {
                     applyAll();
                     throw new Error('설정 파일 내용이 이상해서 되돌렸어요: ' + (error.message || error));
                 }
+                history.run(backup, st => { for (const key of Object.keys(st)) delete st[key]; Object.assign(st, ext.salty); ext.salty = st; });
                 saveSettings();
                 refreshPanels();
                 toastr.success('설정을 가져왔어요', 'Blue Lemonade');
