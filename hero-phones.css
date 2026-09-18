@@ -1,0 +1,13 @@
+.hero-art{height:530px;min-height:530px;perspective:1100px}
+.hero-art .orb{width:460px;height:460px;top:35px}
+.hero-art .phone{--rest-angle:-8deg;width:215px;height:auto;padding:18px 4px 13px;border:3px solid #d4dee8;border-radius:31px;background:linear-gradient(135deg,#fff,#e9eff5);overflow:visible;box-shadow:inset 0 0 0 1px #fff,0 20px 50px #16355325;transform:perspective(900px) rotateX(var(--tilt-x,0deg)) rotateY(var(--tilt-y,0deg)) rotateZ(var(--rest-angle)) translateY(var(--lift,0px));transition:transform .3s ease,box-shadow .3s ease}
+.hero-art .phone.second{--rest-angle:8deg;border-color:#8899aa;background:linear-gradient(135deg,#b5c1ce,#778899);box-shadow:inset 0 0 0 1px #d8e1ea,0 20px 50px #16355330}
+.phone::before{content:"";position:absolute;width:34px;height:4px;top:7px;left:50%;transform:translateX(-50%);border-radius:9px;background:#77889b;box-shadow:43px 0 0 -1px #77889b}
+.phone::after{content:"";position:absolute;width:52px;height:3px;bottom:5px;left:50%;transform:translateX(-50%);border-radius:9px;background:#8d9bac}
+.phone.second::before,.phone.second::after{background:#35485d}
+.hero-art .phone img{display:block;width:100%;height:auto;aspect-ratio:412/900;border-radius:18px;user-select:none;-webkit-user-drag:none}
+@media(hover:hover) and (pointer:fine){.hero-art .phone:hover{box-shadow:inset 0 0 0 1px #fff,0 27px 55px #16355338;transition:transform .12s ease,box-shadow .3s ease}}
+@media(max-width:1200px){.hero-art{height:500px;min-height:500px}.hero-art .phone{width:195px}.hero-art .orb{width:390px;height:390px}}
+@media(max-width:760px){.hero-art{height:420px;min-height:0}.hero-art .phone{width:174px;border-radius:26px;padding:15px 3px 12px}.hero-art .phone img{border-radius:15px}.phone::before{top:6px;height:3px}.hero-art .orb{width:330px;height:330px;left:calc(50% - 165px);top:27px}}
+@media(max-width:380px){.hero-art .phone{width:160px}.hero-art .phone.first{left:6px}.hero-art .phone.second{right:6px}.hero-art{height:395px}.hero-art .orb{width:280px;height:280px;left:calc(50% - 140px)}}
+@media(prefers-reduced-motion:reduce){.hero-art .phone{transform:rotate(var(--rest-angle));transition:none}}
