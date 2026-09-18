@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 40개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 5aff1db4e0fc) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 40개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 4bcc2367c7c2) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 10px;
@@ -4998,6 +4998,7 @@ body.salty #WorldInfo .world_entry .inline-drawer-header > .move_entry_button {
 body.salty #WorldInfo .world_entry .killSwitch {
   order: 6;
   position: relative !important;
+  contain: layout !important;
   flex: none;
   margin: 0 2px 0 4px;
   border-radius: var(--bl-r-pill);
