@@ -20,7 +20,7 @@
     phone.addEventListener('pointercancel', () => reset(phone));
     // tap: the phone hops to the front with a small bounce
     phone.addEventListener('click', () => {
-      phones.forEach(p => p.classList.toggle('front', p === phone));
+      phones.forEach(p => p.parentElement.classList.toggle('front', p === phone));
       if (still.matches) return;
       phone.style.scale = '1.06';
       setTimeout(() => phone.style.removeProperty('scale'), 170);
@@ -29,19 +29,6 @@
   canTilt.addEventListener('change', () => phones.forEach(reset));
   window.addEventListener('blur', () => phones.forEach(reset));
 
-  // scroll depth: the two phones drift at different speeds and lean back as the hero leaves
-  if (!art) return;
-  let frame = 0, visible = true;
-  const paint = () => {
-    frame = 0;
-    if (still.matches) return;
-    const box = art.getBoundingClientRect();
-    const p = Math.max(-1, Math.min(1, (innerHeight / 2 - (box.top + box.height / 2)) / innerHeight));
-    art.style.setProperty('--par-y', `${(-p * 70).toFixed(1)}px`);
-    art.style.setProperty('--par-rx', `${(Math.max(0, p) * 10).toFixed(2)}deg`);
-  };
-  new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; art.classList.toggle('idle', !visible); if (visible) paint(); }).observe(art);
-  addEventListener('scroll', () => { if (visible && !frame) frame = requestAnimationFrame(paint); }, { passive: true });
-  addEventListener('resize', paint);
-  paint();
+  // pause the idle float, bubbles and glow while the hero is off screen
+  if (art) new IntersectionObserver(([entry]) => art.classList.toggle('idle', !entry.isIntersecting)).observe(art);
 })();

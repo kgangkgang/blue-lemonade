@@ -32,7 +32,7 @@
 .palette-message-body strong{font-weight:700;color:var(--preview-strong);background:linear-gradient(transparent 55%,var(--preview-gold) 55%,var(--preview-gold) 90%,transparent 90%)}
 .palette-message-body q{quotes:'「' '」';color:var(--preview-dialogue);background:linear-gradient(transparent 47%,var(--preview-marker) 47%,var(--preview-marker) 91%,transparent 91%);box-decoration-break:clone;-webkit-box-decoration-break:clone}
 .palette-message-body em{color:var(--preview-em);font-style:normal;font-size:14px}
-.palette-user{margin:22px 0 22px auto;max-width:80%;width:fit-content;border-radius:18px 18px 6px 18px;padding:12px 18px;background:var(--preview-raised)}
+.palette-user{margin:22px 0 22px auto;max-width:80%;width:fit-content;border-radius:18px 18px 6px 18px;padding:12px 18px;background:var(--preview-user,var(--preview-raised))}
 .palette-user small{font-size:11px;color:var(--preview-muted)}
 .palette-user p{margin:3px 0 0;font-size:14px;color:var(--preview-text)}
 .palette-compose{background:var(--preview-surface);border:1px solid var(--preview-line);box-shadow:0 3px 14px var(--preview-shadow);border-radius:16px;padding:11px 13px}
