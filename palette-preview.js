@@ -6,7 +6,8 @@
   const modes = [...document.querySelectorAll('.palette-modes button')];
   const swatches = document.querySelector('#palette-swatches');
   const tokens = ['bg','surface','raised','text','dialogue','em','strong','muted','accent','pop','marker','gold','line','shadow'];
-  let selected = 'blue', mode = 'light', families = [];
+  const siteTheme = () => document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  let selected = 'blue', mode = siteTheme(), families = [], pickedMode = false;
   function render(announce = true) {
     const family = families.find(f => f.id === selected);
     const palette = family[mode];
@@ -30,7 +31,9 @@
     }
     if (announce) document.querySelector('#palette-announcement').textContent = `${family.label} ${mode === 'light' ? '화이트' : '나이트'} 미리보기`;
   }
-  modes.forEach(button => button.addEventListener('click', () => { mode = button.dataset.mode; render(); }));
+  modes.forEach(button => button.addEventListener('click', () => { mode = button.dataset.mode; pickedMode = true; render(); }));
+  // the demo follows the site's white / night switch until a brightness is picked here
+  document.addEventListener('bl-theme', event => { if (pickedMode) return; mode = event.detail; if (families.length) render(false); });
   fetch('theme-palettes.json').then(r => { if (!r.ok) throw new Error('palettes'); return r.json(); }).then(data => {
     families = data;
     for (const family of families) {

@@ -56,5 +56,6 @@
   document.querySelector('#feature-clear').addEventListener('click', () => {
     query.value = ''; filter(); query.focus();
   });
+  filter();
   document.querySelector('.feature-search').hidden = false;
 })();
