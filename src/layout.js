@@ -130,14 +130,18 @@ export function startCompactLayout() {
         const settings = globalThis.quickReplyApi?.settings;
         if (!settings) return;
         const links = [settings.config, settings.chatConfig, settings.charConfig].flatMap(config => config?.setList || []);
+        const seen = new Set();
         for (const link of links) for (const qr of link.set?.qrList || []) {
+            if (seen.has(qr)) continue;
+            seen.add(qr);
             const expander = qr.dom?.querySelector('.qr--button-expander');
             if (!expander || !qr.hasContext) continue;
             const names = [...new Set((qr.contextList || []).map(c => c.set?.name).filter(Boolean))];
             const title = names.join(' · ');
             const text = enabled && title ? title : '⋮';
             if (expander.textContent !== text) expander.textContent = text;
-            expander.title = title ? `${title} 목록 열기` : '목록 열기';
+            const tooltip = title ? `${title} 목록 열기` : '목록 열기';
+            if (expander.title !== tooltip) expander.title = tooltip;
         }
     }
     // 3.6.1: 몸 클래스 · 입력판이 바뀔 때마다 그 자리에서 재면, 답변이 자라는 도중에 문서 전체 강제 레이아웃이 돌았다
@@ -152,10 +156,15 @@ export function startCompactLayout() {
         });
     }
     // 3.5.3 QR 줄 앞 돋보기: 모든 퀵 리플라이를 목록으로 찾기 (qrfind.js — 처음 누를 때 불러옴). 확장이 줄을 다시 그리면 다시 붙임
+    let qrFinderModule = null;
     function syncQrFind(bar, enabled) {
         let find = bar.querySelector(':scope > #bl-qr-find');
         const hasButtons = !!bar.querySelector('.qr--button');
-        if (!enabled || !hasButtons) { find?.remove(); return; }
+        if (!enabled || !hasButtons || document.body.classList.contains('salty-qr-find-off')) {
+            find?.remove();
+            qrFinderModule?.closeQrFind();
+            return;
+        }
         if (!find) {
             find = document.createElement('button');
             find.type = 'button';
@@ -165,7 +174,10 @@ export function startCompactLayout() {
             find.innerHTML = '<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>';
             find.addEventListener('click', (event) => {
                 event.stopPropagation();
-                import('./qrfind.js').then(m => m.openQrFind(find)).catch(error => console.warn('[Blue Lemonade] 퀵 리플라이 찾기', error));
+                import('./qrfind.js').then(m => {
+                    qrFinderModule = m;
+                    if (find.isConnected && !document.body.classList.contains('salty-qr-find-off')) m.openQrFind(find);
+                }).catch(error => console.warn('[Blue Lemonade] 퀵 리플라이 찾기', error));
             });
         }
         const pop = bar.querySelector(':scope > #qr--popoutTrigger');
@@ -214,15 +226,27 @@ export function startCompactLayout() {
             if (rect.right > vw - gap) menu.style.left = `${Math.max(gap, vw - gap - rect.width)}px`;
         });
     };
+    const qrPopoutObservers = new Map();
+    const watchQrPopout = node => {
+        if (qrPopoutObservers.has(node)) return;
+        syncQrTitles();
+        const observer = new MutationObserver(() => syncQrTitles());
+        observer.observe(node, {childList: true, subtree: true});
+        qrPopoutObservers.set(node, observer);
+    };
+    const initialPopout = document.getElementById('qr--popout');
+    if (initialPopout) watchQrPopout(initialPopout);
     new MutationObserver((records) => {
         for (const record of records) {
             for (const node of record.addedNodes) {
                 if (node.nodeType === 1 && node.classList.contains('ctx-blocker')) fitQrMenu(node);
                 if (node.nodeType === 1 && node.id === 'qr--popout') {
-                    syncQrTitles();
-                    new MutationObserver(() => syncQrTitles()).observe(node, {childList: true, subtree: true});
+                    watchQrPopout(node);
                 }
             }
+        }
+        for (const [node, observer] of qrPopoutObservers) {
+            if (!node.isConnected) { observer.disconnect(); qrPopoutObservers.delete(node); }
         }
     }).observe(document.body, { childList: true });
     // QR 줄 흐림 · 스냅 · 휠 · 끌기는 아래 모듈 함수 (설정 창 미리보기 줄도 같이 씀)
@@ -232,7 +256,20 @@ export function startCompactLayout() {
     if (sendForm) new MutationObserver(placeQuickReplies).observe(sendForm, { childList: true, subtree: true });
     sendForm?.addEventListener('wheel', event => qrWheel(event, event.target.closest?.('#qr--bar')), { passive: false });
     sendForm?.addEventListener('pointerdown', event => qrPointerDown(event, event.target.closest?.('#qr--bar')));
-    new MutationObserver(() => { placeQuickReplies(); refreshWorld(); refreshPersonaTitle(); }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    let wasEnabled = document.body.classList.contains('salty');
+    let wasQrTop = document.body.classList.contains('salty-qr-top');
+    let wasQrVertical = document.body.classList.contains('salty-qr-y');
+    let wasFindOff = document.body.classList.contains('salty-qr-find-off');
+    new MutationObserver(() => {
+        const enabled = document.body.classList.contains('salty');
+        const qrTop = document.body.classList.contains('salty-qr-top');
+        const qrVertical = document.body.classList.contains('salty-qr-y');
+        const findOff = document.body.classList.contains('salty-qr-find-off');
+        const themeChanged = enabled !== wasEnabled;
+        if (themeChanged || qrTop !== wasQrTop || qrVertical !== wasQrVertical || findOff !== wasFindOff) placeQuickReplies();
+        if (themeChanged) { refreshWorld(); refreshPersonaTitle(); }
+        wasEnabled = enabled; wasQrTop = qrTop; wasQrVertical = qrVertical; wasFindOff = findOff;
+    }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
     mobile.addEventListener('change', placeQuickReplies);
     // 실리태번이 최근 대화 화면을 다시 그려도 버전 전체를 두 줄로 유지한다.
     function refreshWelcome() {

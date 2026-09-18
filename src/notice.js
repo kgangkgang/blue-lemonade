@@ -8,6 +8,12 @@ import { getSettings, saveSettings } from './settings.js';
 
 export const NOTICES = [
     {
+        version: '3.7.9', date: '2026-09-18', items: [
+            "채팅 › 화면 › 퀵 리플라이에 QR 검색 버튼 스위치를 추가했어요. 빠른 답장을 켠 채 돋보기만 숨길 수 있어요.",
+            "QR 제목의 불필요한 갱신과 팝업 감시 중복을 줄이고, 검색창을 닫으면 검색 목록이 차지하던 메모리를 해제해요.",
+        ],
+    },
+    {
         version: '3.7.8', date: '2026-09-18', items: [
             'PC에서 입력창의 ≡ 메뉴가 화면 왼쪽으로 벗어나지 않고 버튼 위에 열리도록 위치 계산을 정리했어요.',
         ],

@@ -157,7 +157,7 @@ function splashRow() {
 }
 
 // 3.5.4 퀵 리플라이 줄 미리보기: 내 QR 이름(보이는 세트 세 개, 열 개씩)으로, 없으면 예시 이름. 입력판 줄과 같은 규칙 · 휠 · 끌기 · 스냅
-function qrSample() {
+function qrSample(showFind = true) {
     const MAX = 24;
     const EXAMPLES = ['인사', '상황 정리', '다음 장면', '요약해 줘', '속마음', '시간 흐름', '비 오는 밤', '카페', '회상', '전화', '편지 쓰기', '잠들기 전', '산책', '싸움', '화해', '고백'];
     const settings = globalThis.quickReplyApi?.settings;
@@ -173,7 +173,7 @@ function qrSample() {
     if (count < 16) groups.push(EXAMPLES.slice(0, 16 - count));
     // 3.7.1 입력창 모형을 같이 그린다 — '자리'(입력창 아래 · 위)가 미리보기에서 바로 보이게. 모형은 body.salty-qr-top 에 따라 순서가 바뀐다 (css/36-qr-place.css)
     const inputMock = '<div class="bl-qr-inputmock" aria-hidden="true"><span class="bl-qr-inputmock-box">메시지를 입력하세요…</span><span class="bl-qr-inputmock-btn"><i class="fa-solid fa-paper-plane"></i></span></div>';
-    return `<div class="bl-qr-sample-wrap"><div class="bl-qr-sample" data-qr-sample tabindex="0" aria-label="퀵 리플라이 미리보기"><span class="bl-qr-find-sample" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>${groups.map(g => `<div class="qr--buttons">${g.map(label => `<div class="qr--button"><div class="qr--button-label">${esc(label)}</div></div>`).join('')}</div>`).join('')}</div>${inputMock}</div>`;
+    return `<div class="bl-qr-sample-wrap"><div class="bl-qr-sample" data-qr-sample tabindex="0" aria-label="퀵 리플라이 미리보기">${showFind ? '<span class="bl-qr-find-sample" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>' : ''}${groups.map(g => `<div class="qr--buttons">${g.map(label => `<div class="qr--button"><div class="qr--button-label">${esc(label)}</div></div>`).join('')}</div>`).join('')}</div>${inputMock}</div>`;
 }
 
 function row(label, control, note = '') {
@@ -987,7 +987,8 @@ function tabChat(s, sub) {
             ${s.chat.streamFade && stFade ? row('실리태번 페이드 인', toggle('st.streamFadeIn', true), '끄면 빨라지고 위 옵션이 대신해요') : ''}
         </div>
         ${cap('퀵 리플라이')}<div class="salty-group">
-            ${qrSample()}
+            ${qrSample(s.chat.qrFind !== false)}
+            ${row('QR 검색 버튼', toggle('chat.qrFind', s.chat.qrFind !== false), '돋보기만 숨겨요. 빠른 답장 버튼은 그대로 사용할 수 있어요')}
             ${stack('자리', seg('chat.qrPlace', [['bottom', '입력창 아래'], ['top', '입력창 위']], 'bottom'), '입력창 옆에 아이콘이 많으면 위가 넓어요')}
             ${stack('넘기기', seg('chat.qrScroll', [['x', '가로 스크롤'], ['y', '세로 스크롤']]))}
             ${s.chat.qrScroll === 'y' ? slider('chat.qrRows', '보이는 줄', 1, 4, 1, 2) : ''}
@@ -2011,7 +2012,7 @@ function bind(root) {
             // 자동 색은 켜고 끌 때 테두리 설명(edgeHint) 문구가 바뀌니 창을 다시 그린다
             // 2.9.2: 본문 색 지정 → '글자색 톤 맞추기' 줄, 톤 맞추기 → 톤 값 슬라이더 넷, 투명 그림도 똑같이 → 설명 문구가 스위치에 따라
             // 보였다 안 보였다 하는데 다시 그리지 않아, 끈 뒤에도 슬라이더가 남아 있었다
-            update(st => setPath(st, path, target.checked), ['enabled', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on'].includes(path));
+            update(st => setPath(st, path, target.checked), ['enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on'].includes(path));
             return;
         }
         if (target.matches('input[data-file="font"]') && target.files?.[0]) {

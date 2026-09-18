@@ -236,6 +236,10 @@ let customCssWatch = null;
 function syncCustomCss(mute) {
     customCssMuted = mute;
     const el = document.getElementById('custom-style');
+    if ((!mute || el) && customCssWatch) {
+        customCssWatch.disconnect();
+        customCssWatch = null;
+    }
     if (el) {
         const want = mute ? 'not all' : '';
         if (el.media !== want) el.media = want;
@@ -516,7 +520,8 @@ export function applyAll() {
         // 자동완성 색은 실리태번이 body 에 박는 변수라 :root 로는 안 덮임 → body.salty 에
         css += `\nbody.salty {\n${declarations(autocompleteVars(pal, mode), true)}\n}`;
     }
-    styleTag('salty-vars').textContent = css;
+    const variables = styleTag('salty-vars');
+    if (variables.textContent !== css) variables.textContent = css;
 
     // 아이콘 CSS(15KB)도 테마를 끄면 비움 — body.salty 밖에선 쓸 데가 없음
     const icons = s.enabled ? styleTag('salty-icons') : document.getElementById('salty-icons');
@@ -529,6 +534,7 @@ export function applyAll() {
         if (s.chat.icons === 'line') want.add('salty-icons-line');
         shadowClasses(s).forEach(c => want.add(c)); // 글자 그림자 대상별 클래스 (style.css 끝 규칙)
         if (s.chat.bgImage) want.add('salty-bgimg');
+        if (s.chat.qrFind === false) want.add('salty-qr-find-off');
         if (s.chat.qrScroll === 'y') want.add('salty-qr-y'); // 3.5.4 퀵 리플라이 세로 스크롤 (css/35-qr-bar.css)
         if (s.chat.qrPlace === 'top') want.add('salty-qr-top'); // 3.7.0 퀵 리플라이 줄을 입력창 위로 (css/36-qr-place.css)
         if (s.outline?.on) want.add('salty-outline'); // 3.7.0 글자 외곽선 — 메시지 본문 전체 (css/38-outline.css)

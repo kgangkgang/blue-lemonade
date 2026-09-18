@@ -182,6 +182,7 @@ export function closeQrFind() {
     layer.remove();
     layer = null;
     anchor = null;
+    items = []; // Release collected QR bodies and execution closures when the finder closes.
     closedAt = Date.now();
 }
 
