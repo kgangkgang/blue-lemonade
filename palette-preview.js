@@ -7,11 +7,15 @@
   const swatches = document.querySelector('#palette-swatches');
   const tokens = ['bg','surface','raised','text','dialogue','em','strong','muted','accent','pop','marker','gold','line','shadow'];
   const siteTheme = () => document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const rgb = c => { const m = String(c).match(/rgba?\(([^)]+)\)/); if (m) return m[1].split(',').slice(0, 3).map(Number); const h = String(c).replace('#', ''); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); };
+  const mixRgb = (a, b, t) => { const x = rgb(a), y = rgb(b); return `rgb(${x.map((v, i) => Math.round(v * t + y[i] * (1 - t))).join(', ')})`; };
   let selected = 'blue', mode = siteTheme(), families = [], pickedMode = false;
   function render(announce = true) {
     const family = families.find(f => f.id === selected);
     const palette = family[mode];
     for (const key of tokens) stage.style.setProperty('--preview-' + key, palette[key]);
+    // like the theme (apply.js): light bubbles take 16% of the ade's marker hue over the surface; night keeps the raised color
+    stage.style.setProperty('--preview-user', mode === 'light' ? mixRgb(palette.marker, palette.surface, .16) : palette.raised);
     stage.style.colorScheme = mode;
     document.querySelector('#palette-name').textContent = family.label;
     document.querySelector('#palette-description').textContent = palette.desc;

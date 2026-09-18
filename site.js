@@ -57,7 +57,7 @@ function element(tag, cls, text) { const e=document.createElement(tag); if(cls)e
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
 document.documentElement.classList.add('js');
 const lightbox=$('#lightbox');
-const inView=new IntersectionObserver(entries=>{for(const {target,isIntersecting} of entries){if(reduceMotion.matches||target.dataset.userPaused)continue;if(isIntersecting)target.play().catch(()=>{});else target.pause();}},{threshold:.55});
+const inView=new IntersectionObserver(entries=>{for(const {target,isIntersecting} of entries){if(reduceMotion.matches||target.dataset.userPaused)continue;if(isIntersecting)target.play().catch(()=>{});else target.pause();}},{threshold:.5,rootMargin:'-15% 0px -15% 0px'});
 for(const group of groups){
   const block=element('section','gallery-block'), heading=element('div','gallery-heading'), label=element('div');
   label.append(element('h3','',group.title),element('p','',group.sub));heading.append(label);
@@ -90,12 +90,13 @@ document.addEventListener('play',e=>{if(e.target.tagName==='VIDEO'&&e.target.con
 
 // header: hairline after scrolling, current section in the nav
 const header=$('.top');
-const onScroll=()=>{header.classList.toggle('scrolled',scrollY>8);const max=document.documentElement.scrollHeight-innerHeight;header.style.setProperty('--p',max>0?(scrollY/max).toFixed(4):0);};
-addEventListener('scroll',onScroll,{passive:true});onScroll();
+let headerFrame=0;const onScroll=()=>{headerFrame=0;header.classList.toggle('scrolled',scrollY>8);};
+addEventListener('scroll',()=>{if(!headerFrame)headerFrame=requestAnimationFrame(onScroll);},{passive:true});onScroll();
 const navLinks=[...document.querySelectorAll('.top nav a')].map(a=>[a,document.querySelector(a.hash)]).filter(([,s])=>s);
-let spyFrame=0;
-const spy=()=>{spyFrame=0;const mid=innerHeight*.45;for(const [a,s] of navLinks){const r=s.getBoundingClientRect();a.setAttribute('aria-current',String(r.top<=mid&&r.bottom>mid));}};
-addEventListener('scroll',()=>{if(!spyFrame)spyFrame=requestAnimationFrame(spy);},{passive:true});spy();
+// which section is under the middle of the screen — the browser reports it, nothing is measured per frame
+let current=null;const setCurrent=id=>{current=id;for(const [a,s] of navLinks){const on=String(s.id===id);if(a.getAttribute('aria-current')!==on)a.setAttribute('aria-current',on);}};
+const spy=new IntersectionObserver(entries=>{for(const e of entries){if(e.isIntersecting)setCurrent(e.target.id);else if(current===e.target.id)setCurrent(null);}},{rootMargin:'-45% 0px -54% 0px'});
+navLinks.forEach(([,s])=>spy.observe(s));
 
 // white / night toggle — follows the device until the visitor picks one
 const root=document.documentElement, dark=matchMedia('(prefers-color-scheme: dark)');
