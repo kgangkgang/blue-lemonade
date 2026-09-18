@@ -15,7 +15,7 @@
 .reading-kicker{display:block;margin-bottom:28px;color:var(--blue);font-size:13px;font-weight:650;letter-spacing:.02em}
 #reading-sample{--read-size:16px;--read-spacing:-.01em;--read-line:1.8;--read-para:.9em;--read-gutter:20px;--read-indent:0;font-size:var(--read-size);letter-spacing:var(--read-spacing);line-height:var(--read-line);padding-inline:var(--read-gutter);color:var(--text);overflow-wrap:break-word;transition:font-size .25s ease,letter-spacing .25s ease,line-height .25s ease,padding .25s ease}
 #reading-sample p{font-size:inherit;line-height:inherit;margin:0 0 var(--read-para);text-indent:var(--read-indent);transition:margin .25s ease,text-indent .25s ease}
-#reading-sample q{quotes:'「' '」';color:var(--ink);background:linear-gradient(transparent 55%,var(--marker) 55%,var(--marker) 90%,transparent 90%);box-decoration-break:clone;-webkit-box-decoration-break:clone}
+#reading-sample q{quotes:'「' '」';color:var(--ink);background:var(--read-marker,linear-gradient(transparent 55%,var(--marker) 55%,var(--marker) 90%,transparent 90%));box-decoration-break:clone;-webkit-box-decoration-break:clone}
 .reading-footnote{display:block;margin-top:28px;padding-top:18px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);line-height:1.7}
 
 /* feature guide */
@@ -66,3 +66,15 @@
 
 /* feature cards come in one after another when a group opens (or a search brings them back) */
 .feature-group[open] .feature-card{animation:card-in .5s var(--ease) both;animation-delay:calc(var(--i,0) * 35ms)}
+
+/* dialogue highlighter controls (same geometry as the theme's apply.js) */
+.reading-marker{display:grid;gap:10px;margin:10px 0 6px;padding-top:16px;border-top:1px solid var(--line)}
+.reading-marker-title{margin:0 0 2px;font-size:14px;font-weight:650;color:var(--ink)}
+.reading-seg{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;gap:8px}
+.reading-seg>span{font-size:13px;color:var(--muted)}
+.seg{display:flex;gap:3px;padding:3px;border-radius:11px;background:var(--tint)}
+.seg button{flex:1;min-width:0;height:34px;padding:0 4px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-size:12.5px;font-weight:600;white-space:nowrap;transition:background-color .2s,color .2s,box-shadow .2s,opacity .2s,scale .15s ease}
+.seg button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-sm)}
+.seg button:active{scale:.95}
+.seg button:disabled{opacity:.38;cursor:default;scale:1}
+.reading-marker label{margin-top:2px}
