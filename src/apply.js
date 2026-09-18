@@ -1,3 +1,6 @@
+import { decorVars, syncDecor } from './decor.js';
+import { frameVars } from './frames.js';
+import { syncProfile } from './profile.js';
 import { scratchMask, slantGeometry } from './image-shapes.js';
 // 설정 → :root CSS 변수(--salty-*) + 실리태번 색 변수 덮기 + body 클래스 + 글꼴 합치기
 import { getSettings, fontSet, FONT_SLOTS, DEFAULTS } from './settings.js';
@@ -91,7 +94,7 @@ function fontVars(s) {
     for (const [slot, set] of Object.entries(sets)) {
         if (!set) {
             // 메뉴는 본문 글꼴, 대사 · 속마음 · 강조는 둘레 글꼴 그대로 (대사 안의 속마음이면 대사 글꼴)
-            vars[`--salty-font-${slot}`] = slot === 'ui' ? 'var(--salty-font-text)' : 'inherit';
+            vars[`--salty-font-${slot}`] = (slot === 'ui' || slot === 'name') ? 'var(--salty-font-text)' : 'inherit';
             continue;
         }
         vars[`--salty-font-${slot}`] = slotStack(slot, set);
@@ -485,7 +488,23 @@ export function applyAll() {
         '--salty-side-left': s.image.edgeSideLeft ? '1' : '0',
         '--salty-side-all': edgeSidesAll ? '1' : '0',
         '--salty-side-part': edgeSidesAll ? '0' : '1',
-    }, imageHeight(s.image), imageShape(s.image));
+    }, imageHeight(s.image), imageShape(s.image), frameVars(s.image, 'img', pal.accent), frameVars(s.profile, 'profile', pal.accent), decorVars(s.image.decor, 'image', s.image.radius), decorVars(s.profile.decor, 'profile', s.profile.radius), {
+        '--bl-name-size': `${s.profile.nameSize}px`, '--bl-name-weight': String(s.profile.nameWeight), '--bl-name-spacing': `${s.profile.nameSpacing / 100}em`,
+        '--bl-name-height': String(s.profile.nameHeight), '--bl-name-color': s.profile.nameAuto ? pal.text : s.profile.nameColor,
+        '--bl-name-align': s.profile.nameAlign, '--bl-name-justify': s.profile.nameAlign === 'left' ? 'start' : s.profile.nameAlign === 'right' ? 'end' : 'center',
+        '--bl-meta-leading': s.profile.nameAlign === 'left' ? '0px' : '1fr', '--bl-meta-trailing': s.profile.nameAlign === 'right' ? '0px' : '1fr',
+        '--bl-name-style': s.profile.nameItalic ? 'italic' : 'normal', '--bl-name-decoration': s.profile.nameUnderline ? 'underline' : 'none',
+        '--bl-header-gap': `${s.profile.headerGap}px`, '--bl-meta-size': `${s.profile.metaSize}px`, '--bl-meta-opacity': String(s.profile.metaOpacity / 100), '--bl-button-gap': `${s.profile.buttonGap}px`,
+        '--bl-name-outline': `${s.profile.nameOutline}px ${s.profile.nameOutlineColor}`,
+        '--bl-name-shadow': s.profile.nameShadow ? `0 ${s.profile.nameShadowY}px ${s.profile.nameShadowBlur}px rgba(0,0,0,${s.profile.nameShadowAlpha / 100})` : 'none',
+        '--bl-profile-width': `${s.profile.width}%`, '--bl-profile-height': s.profile.sizing === 'screen' ? `${s.profile.screenHeight}svh` : `${s.profile.height}px`,
+        '--bl-profile-max-height': `${s.profile.maxHeight}svh`,
+        '--bl-profile-crop': `inset(${(100 - s.profile.visibleHeight) * s.profile.positionY / 100}% 0 ${(100 - s.profile.visibleHeight) * (100 - s.profile.positionY) / 100}% 0)`,
+        '--bl-profile-fit': s.profile.fit, '--bl-profile-position': `${s.profile.positionX}% ${s.profile.positionY}%`,
+        '--bl-profile-radius': `${s.profile.radius}px`, '--bl-profile-gap': `${s.profile.gap}px`,
+        '--bl-profile-blur': `${s.profile.blur}px`, '--bl-profile-opacity': String(s.profile.opacity / 100),
+        '--bl-profile-fade-y': `${s.profile.fadeY}%`, '--bl-profile-fade-x': `${s.profile.fadeX}%`,
+    });
     // 테마를 끄면 토큰은 설정 창에만 — :root 에 두면 안 쓰는 변수가 문서 전체에 깔림 (설정 창은 꺼도 자기 색으로 보임)
     let css = `${s.enabled ? ':root' : '.salty-panel'} {\n${declarations(vars)}\n}`;
 
@@ -535,6 +554,7 @@ export function applyAll() {
         shadowClasses(s).forEach(c => want.add(c)); // 글자 그림자 대상별 클래스 (style.css 끝 규칙)
         if (s.chat.bgImage) want.add('salty-bgimg');
         if (s.chat.qrFind === false) want.add('salty-qr-find-off');
+        if (s.profile.mode === 'banner') { want.add('salty-profile-banner'); want.add(`salty-profile-layout-${s.profile.layout}`); want.add(`salty-profile-sizing-${s.profile.sizing}`); want.add(`salty-profile-${s.profile.headerLayout}`); }
         if (s.chat.qrScroll === 'y') want.add('salty-qr-y'); // 3.5.4 퀵 리플라이 세로 스크롤 (css/35-qr-bar.css)
         if (s.chat.qrPlace === 'top') want.add('salty-qr-top'); // 3.7.0 퀵 리플라이 줄을 입력창 위로 (css/36-qr-place.css)
         if (s.outline?.on) want.add('salty-outline'); // 3.7.0 글자 외곽선 — 메시지 본문 전체 (css/38-outline.css)
@@ -558,6 +578,8 @@ export function applyAll() {
         // assets.js 는 이 클래스와 무관하게 그림마다 --salty-pick-* 를 미리 칠해 두므로, 켜는 순간 다시 훑을 필요가 없다
         if (s.image.edge !== 'none' && s.image.edgeAuto && s.image.shape === 'rect') want.add('salty-edge-auto');
     }
+    syncProfile(s);
+    syncDecor(s);
     // 바뀐 클래스만 만지기 (전부 뗐다 붙이면 매번 화면 전체를 다시 그림)
     const cls = document.body.classList;
     const cutoutBefore = cls.contains('salty-cutout-same');

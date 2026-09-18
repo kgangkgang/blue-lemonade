@@ -72,10 +72,14 @@ function hueOf(src) {
 // 2.9.2: 예전에는 글자 하나마다 [잰다(getComputedStyle) → --bl-hue 를 쓴다] 를 번갈아 해서, 쓸 때마다 다음 재기가
 // 스타일 재계산을 강제했다 — 답변이 끝날 때 색 글자 8개에 45ms (PC, 글자당 6ms). 이제 전부 잰 다음 한꺼번에 쓴다
 export function retoneAll() {
+    retoneRoots(document.querySelectorAll('#chat, .cg-root, .salty-preview'));
+}
+
+function retoneRoots(roots) {
     if (!enabled()) return;
     const todo = [];
     // 설정창의 정규식 카드 미리보기(.salty-preview)도 — 슬라이더를 밀 때 그 자리에서 보이게
-    for (const root of document.querySelectorAll('#chat, .cg-root, .salty-preview')) {
+    for (const root of roots) {
         for (const el of root.querySelectorAll(SEL)) {
             const src = sourceColor(el);
             if (!src || el.dataset.blToned === src) continue;
@@ -91,14 +95,32 @@ export function retoneAll() {
 }
 
 export function startInlineTone() {
+    document.addEventListener('chat-bookmarks:render', event => {
+        const root = event.detail?.root;
+        if (root?.nodeType === 1 && root.isConnected) retoneRoots([root]);
+    });
     const chat = document.getElementById('chat');
     if (!chat) return;
     retoneAll();
     // 답변이 한 글자씩 자랄 때마다 도는 것을 막으려 0.4초 묶음 — 스트리밍 중엔 마지막 메시지만 늦게 칠해진다
-    new MutationObserver(() => {
+    const dirty = new Set();
+    new MutationObserver(records => {
         // 답변이 자라는 동안 조각마다 불린다 — 설정을 다시 읽지 않고 apply.js 가 붙인 body.salty-tone 으로 (켜짐 조건이 같음, 2.9.2)
         if (!document.body.classList.contains('salty-tone')) return;
+        for (const record of records) {
+            const mes = record.target.nodeType === 1 ? record.target.closest('.mes') : record.target.parentElement?.closest('.mes');
+            if (mes) dirty.add(mes);
+            for (const node of record.addedNodes) {
+                if (node.nodeType !== 1) continue;
+                if (node.matches('.mes')) dirty.add(node);
+                else if (!mes) for (const nested of node.querySelectorAll('.mes')) dirty.add(nested);
+            }
+        }
+        if (!dirty.size) return;
         clearTimeout(timer);
-        timer = setTimeout(retoneAll, 400);
+        timer = setTimeout(() => {
+            retoneRoots([...dirty].filter(el => el.isConnected));
+            dirty.clear();
+        }, 400);
     }).observe(chat, { childList: true, subtree: true });
 }

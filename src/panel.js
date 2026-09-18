@@ -1,7 +1,9 @@
+import { syncDecor } from './decor.js';
+import { FRAME_RANGE } from './frames.js';
 import { openCustomBuilder, customBuilder, bindCustomBuilder, setCustomMode, seedCustom, saveCustomPalette } from './custompalette.js';
 // 설정 창. 확장 서랍과 ✦ 메뉴 팝업 두 곳에 같은 창을 띄울 수 있음.
 // 위에서 대분류(탭) → 아래에서 소분류(칩)를 골라 한 번에 한 묶음만 보여 줌 (폰에서 창이 아래로 길어지지 않게)
-import { getSettings, saveSettings, resetSettings, FONT_SET, FONT_SLOTS, IMAGE_RANGE, TEXT_LIMIT, FADE_AMOUNT } from './settings.js';
+import { getSettings, saveSettings, resetSettings, FONT_SET, FONT_SLOTS, IMAGE_RANGE, PROFILE_RANGE, TEXT_LIMIT, FADE_AMOUNT } from './settings.js';
 import { PALETTES, PALETTE_FAMILIES, paletteFamily, paletteVariant, TOKEN_GROUPS, paletteColors, parseColor, sameColor, safeColor } from './palettes.js';
 import { GROUPS, LANGS, SAMPLES, fontsFor, findFont, previewStack, queuePreview, isPreviewReady, isPreviewBlank, addGoogleFont, addCssFont, uploadFont, removeCustomFont } from './fonts.js';
 import { applyAll, syncSamples } from './apply.js';
@@ -25,8 +27,8 @@ const TABS = [['theme', '테마'], ['text', '글자'], ['chat', '채팅'], ['ima
 const SUBS = {
     theme: [['palette', '색'], ['colors', '색 고치기'], ['styles', '스타일'], ['backup', '백업']],
     text: [['text', '본문'], ['dialogue', '대사'], ['ui', '메뉴'], ['em', '속마음'], ['strong', '강조'], ['code', '코드'], ['para', '문단'], ['shadow', '그림자 · 외곽선']],
-    chat: [['message', '메시지'], ['screen', '화면'], ['etc', '기타']],
-    image: [['layout', '배치'], ['shape', '모양'], ['size', '크기'], ['fade', '흐림']],
+    chat: [['message', '메시지'], ['profile', '프로필'], ['name', '이름·시간'], ['screen', '화면'], ['etc', '기타']],
+    image: [['layout', '배치'], ['shape', '모양'], ['frame', '테두리'], ['size', '크기'], ['fade', '흐림']],
     prompt: [['deus', '데우스 엑스 마키나']], // 3.4.0 프리셋 호환 — 다른 프리셋이 생기면 여기에
 };
 
@@ -270,7 +272,8 @@ function sliderParts(path, min, max, step, def) {
 
 function slider(path, label, min, max, step, def) {
     const { num, range } = sliderParts(path, min, max, step, def);
-    return `<div class="salty-slider"><header><span>${label}</span>${num}</header>${range}</div>`;
+    const aria = esc(label.replace(/<[^>]*>/g, ''));
+    return `<div class="salty-slider"><header><span>${label}</span>${num.replace('<input ', `<input aria-label="${aria}" `)}</header>${range.replace('<input ', `<input aria-label="${aria}" `)}</div>`;
 }
 
 // 대사 · 메뉴 글자 크기: '본문과 같게' · '기본'(따로 안 씀 = null) 아니면 직접
@@ -598,6 +601,7 @@ function fillPreviews(root) {
                 if ((chatSettings.weather && chatSettings.weather !== 'off' && getSettings().enabled) || stage._blWeather) import('./weather.js').then(m => m.previewWeather(stage, getSettings().enabled ? chatSettings : { weather: 'off' })).catch(() => {});
             }
             else if (kind !== 'regex' && kind !== 'color') classifyAll(stage);
+            syncDecor(getSettings());
         }
     }
 }
@@ -957,7 +961,87 @@ function roleType(label, controls, hint = '') {
 }
 
 // ───────── 채팅 ─────────
+const frameColor = (path, label, value) => `<div class="salty-row"><span>${label}</span><input type="color" data-color-path="${path}" value="${esc(value)}" aria-label="${label}"></div>`;
+function decorControls(prefix, o) {
+    const d = o.decor;
+    return `${cap('장식 액자', '테두리 그림을 그대로 얹고 안쪽에만 사진을 넣어요')}<div class="salty-group bl-decor-controls">
+        <button type="button" class="salty-btn bl-decor-upload" data-act="frame-upload" data-owner="${prefix}">${d.art ? '다른 액자 고르기' : '액자 그림 고르기'}</button><input type="file" data-frame-file="${prefix}" accept="${IMAGE_ACCEPT}" hidden>
+        ${d.art ? row('장식 액자 사용', toggle(`${prefix}.decor.on`, d.on), '끄면 보통 테두리 설정으로 돌아와요') : '<p class="salty-note">투명 PNG · 배경색 있는 그림 모두 가능해요. 안쪽 공간을 자동으로 찾고 직접 보정할 수 있어요.</p>'}
+        ${d.art && d.on ? `${slider(`${prefix}.decor.opacity`, '액자 진하기 (%)', 0, 100, 1)}
+            ${slider(`${prefix}.decor.radius`, '안쪽 사진 모서리 (px)', 0, 120, 1, o.radius)}
+            ${stack('안쪽 사진', seg(`${prefix}.decor.fit`, [['cover', '가득 채우기'], ['contain', '전체 보이기']]))}
+            ${slider(`${prefix}.decor.zoom`, '사진 확대 (%)', 100, 200, 1)}
+            ${slider(`${prefix}.decor.x`, '사진 좌우 (%)', 0, 100, 1)}${slider(`${prefix}.decor.y`, '사진 위아래 (%)', 0, 100, 1)}
+            <button class="salty-btn" data-act="frame-remove" data-owner="${prefix}">액자 지우기</button>` : ''}
+    </div>`;
+}
+function nameControls(s) {
+    const p = s.profile;
+    const range = (key, label, step = 1) => slider(`profile.${key}`, label, ...PROFILE_RANGE[key], step);
+    return `${chatPreview()}<p class="salty-note">상단 큰 프로필의 이름과 시간·버튼 배치예요. 프로필 탭에서 큰 사진을 켜 주세요.</p>
+    ${fontBlock(s, 'name')}${cap('이름 글자')}<div class="salty-group">
+        ${range('nameSize', '크기 (px)')}${range('nameWeight', '굵기', 50)}${range('nameSpacing', '자간 (1/100em)')}${range('nameHeight', '줄 높이', 0.1)}
+        ${stack('정보 정렬', seg('profile.nameAlign', [['left', '왼쪽'], ['center', '가운데'], ['right', '오른쪽']]), '이름·시간·버튼과 메시지 번호·생성 정보를 함께 맞춰요')}
+        ${row('테마 글자색', toggle('profile.nameAuto', p.nameAuto))}
+        ${!p.nameAuto ? frameColor('profile.nameColor', '이름 색', p.nameColor) : ''}
+        ${row('기울임', toggle('profile.nameItalic', p.nameItalic))}${row('밑줄', toggle('profile.nameUnderline', p.nameUnderline))}
+        ${range('nameOutline', '외곽선 두께 (px)', 0.1)}${frameColor('profile.nameOutlineColor', '외곽선 색', p.nameOutlineColor)}
+        ${row('이름 그림자', toggle('profile.nameShadow', p.nameShadow))}
+        ${p.nameShadow ? range('nameShadowY', '그림자 거리 (px)') + range('nameShadowBlur', '그림자 번짐 (px)') + range('nameShadowAlpha', '그림자 진하기 (%)') : ''}
+    </div>${cap('시간 · 메뉴 · 편집 버튼')}<div class="salty-group">
+        ${stack('배치', seg('profile.headerLayout', [['side', '이름 옆 두 줄'], ['below-one', '이름 아래 한 줄'], ['below-two', '이름 아래 두 줄']]))}
+        ${range('headerGap', '줄 간격 (px)')}${range('metaSize', '시간 글자 크기 (px)')}${range('metaOpacity', '시간 진하기 (%)')}${range('buttonGap', '버튼 간격 (px)')}
+    </div>`;
+}
+function frameControls(prefix, o) {
+    const range = (key, label, step = 1) => slider(`${prefix}.${key}`, label, ...FRAME_RANGE[key], step);
+    return `${decorControls(prefix, o)}${cap('테두리', '얇은 선에서 시작해 원하는 만큼 더해요')}<div class="salty-group">
+        ${stack('모양', seg(`${prefix}.edge`, [['none', '없음'], ['line', '얇은 선'], ['inset', '안쪽 선'], ['glow', '은은한 빛'], ['prism', '이중선']]))}
+        ${o.edge !== 'none' ? `
+            ${row('자동 색', toggle(`${prefix}.edgeAuto`, o.edgeAuto), prefix === 'image' ? '그림과 테마에 어울리는 색을 써요' : '테마 포인트색을 따라가요')}
+            ${!o.edgeAuto ? frameColor(`${prefix}.edgeColor`, '테두리 색', o.edgeColor) : ''}
+            ${stack('선 종류', seg(`${prefix}.edgeStyle`, [['solid', '실선'], ['dashed', '파선'], ['dotted', '점선']]))}
+            ${range('edgeThick', '두께', 0.25)}${range('edgeAlpha', '진하기')}
+            ${stack('보일 면', chips(['Top', 'Bottom', 'Left', 'Right'].map((side, i) => [`${prefix}.edgeSide${side}`, ['위', '아래', '왼쪽', '오른쪽'][i]])))}
+            ${o.edge === 'glow' ? range('edgeGlow', '빛 번짐') + range('edgeGlowAlpha', '빛 진하기') : ''}
+            ${o.edge === 'prism' ? range('edgeSecondGap', '두 선 간격') + range('edgeSecondAlpha', '바깥선 진하기') : ''}
+        ` : ''}
+        ${range('edgeGap', '안쪽 여백')}
+        ${prefix === 'image' ? '<p class="salty-note">가장자리 흐림은 선도 함께 부드럽게 녹여요. 빛과 이중선은 네 면을 모두 켜면 나타나요.</p>' : ''}
+    </div>${cap('그림자')}<div class="salty-group">
+        ${row('그림자', toggle(`${prefix}.edgeShadow`, o.edgeShadow), '테두리와 별도로 조절해요')}
+        ${o.edgeShadow ? frameColor(`${prefix}.edgeShadowColor`, '그림자 색', o.edgeShadowColor)
+            + range('edgeShadowAlpha', '진하기') + range('edgeShadowX', '좌우 거리') + range('edgeShadowY', '위아래 거리')
+            + range('edgeShadowBlur', '번짐') + range('edgeShadowSpread', '확장') : ''}
+    </div>`;
+}
+function profileControls(s) {
+    const p = s.profile;
+    const range = (key, label, step = 1) => slider(`profile.${key}`, label, ...PROFILE_RANGE[key], step);
+    return `${chatPreview()}<div class="salty-group">
+        ${stack('캐릭터 프로필', seg('profile.mode', [['small', '기존 작은 사진'], ['banner', '상단 큰 사진']]), '캐릭터 메시지마다 사진이 위에, 글이 아래에 놓여요')}
+    </div>${p.mode === 'banner' ? `
+    ${cap('사진 크기 · 위치')}<div class="salty-group">
+        ${stack('사진 배치', seg('profile.layout', [['column', '본문 폭'], ['bleed', '가로 꽉'], ['inset', '작게']]), '가로 꽉은 본문 좌우 여백까지 사진으로 채워요')}
+        ${p.layout === 'bleed' ? '' : range('width', '너비 (%)')}
+        ${stack('세로 크기', seg('profile.sizing', [['pixels', '픽셀'], ['screen', '화면 비율'], ['ratio', '사진 비율']]))}
+        ${p.sizing === 'pixels' ? range('height', '높이 (px)') : p.sizing === 'screen' ? range('screenHeight', '화면 높이 (%)') : ''}
+        ${range('maxHeight', '최대 화면 높이 (%)')}
+        ${range('visibleHeight', '세로로 남길 부분 (%)')}
+        <p class="salty-note">100%면 전체를 사용해요. 줄이면 위아래를 잘라내며 ‘사진 위아래’로 남길 위치를 정해요. 장식 액자는 테두리 비율을 유지하고 안쪽 사진만 잘라요.</p>
+        ${stack('사진 맞추기', seg('profile.fit', [['cover', '가득 채우기'], ['contain', '전체 보이기']]))}
+        ${range('positionX', '사진 좌우 (%)')}${range('positionY', '사진 위아래 (%)')}
+        ${range('radius', '모서리 (px)')}${range('gap', '글과 간격 (px)')}
+        ${row('원본 화질', toggle('profile.original', p.original), '화면 가까이에 온 사진만 원본을 불러와요')}
+    </div>${cap('흐림 · 투명도')}<div class="salty-group">
+        ${range('fadeY', '위아래 가장자리 (%)')}${range('fadeX', '좌우 가장자리 (%)')}
+        ${range('blur', '사진 흐림 (px)', 0.5)}${range('opacity', '사진 진하기 (%)')}
+    </div>${frameControls('profile', p)}` : ''}`;
+}
+
 function tabChat(s, sub) {
+    if (sub === 'profile') return profileControls(s);
+    if (sub === 'name') return nameControls(s);
     if (sub === 'etc') {
         const customLines = (SillyTavern.getContext().powerUserSettings?.custom_css || '').split('\n').filter(line => line.trim()).length;
         const customCss = `${cap('다른 CSS', customLines ? `커스텀 CSS ${customLines}줄` : '커스텀 CSS 없음')}<div class="salty-group">
@@ -1015,7 +1099,7 @@ function tabChat(s, sub) {
     return `${chatPreview()}<div class="salty-group">
         ${stack('내 메시지', seg('chat.user', [['bubble', '말풍선'], ['card', '카드'], ['table', '테이블'], ['plain', '글자만']]))}
         ${stack('이름 줄', seg('chat.header', [['full', '이름+시간'], ['name', '이름만'], ['none', '숨김']]))}
-        ${row('아바타 숨기기 (권장)', toggle('st.hideAvatars', hideAvatars), '숨기면 이미지가 화면 끝까지 넓어져요')}
+        ${row('작은 아바타 숨기기', toggle('st.hideAvatars', hideAvatars), '숨기면 이미지가 화면 끝까지 넓어져요')}
     </div>
     ${cap('내 메시지 글자', '100 = 캐릭터 글과 같게')}<div class="salty-group salty-sizes">
         ${slider('chat.userSize', '크기', 60, 140, 1, 100)}
@@ -1023,43 +1107,6 @@ function tabChat(s, sub) {
     </div>`;
 }
 
-// 테두리가 지금 설정에서 실제로 보이는지 알려 준다.
-// 흐림은 그림에 마스크를 씌우는데 마스크는 box-shadow 까지 지우고, 가로 꽉은 좌우가 화면 밖으로 나간다.
-// 그래서 '가로 꽉 + 흐림' 조합에서는 네 변 모두 보이지 않는다 — 그걸 모르면 "적용이 안 된다" 로 보인다.
-// 켠 면이 몇 개인지에 따라 한 줄 설명 — 두 면만 켜면 영화 같은 띠가 된다
-function sideHint(s) {
-    const on = ['Top', 'Bottom', 'Left', 'Right'].filter(f => s.image[`edgeSide${f}`]);
-    if (!on.length) return '네 면 다 꺼서 테두리가 안 보여요';
-    if (on.length === 4) return '';
-    if (on.length === 2 && s.image.edgeSideTop && s.image.edgeSideBottom) return '위 · 아래만 — 영화 화면처럼 보여요';
-    return '켠 면만 테두리가 나와요';
-}
-
-function edgeHint(s) {
-    if (s.image.edge === 'none') return '';
-    const bleed = s.image.layout === 'bleed';
-    const faded = s.image.fade !== 'off';
-    if (bleed && faded) return '지금은 <b>안 보여요</b> — 가로 꽉은 좌우가 화면 밖이고, 흐림이 위아래를 녹여요. 흐림을 끄거나 배치를 본문 폭으로 바꿔 주세요';
-    if (bleed) return '가로 꽉이라 위 · 아래 테두리만 보여요';
-    if (faded) return '흐림이 위아래를 녹이니 좌우 테두리가 보여요 (네 변 다 보려면 흐림 끔)';
-    // 자동 색은 그림에서 뽑은 색을 쓰니 테마 색 설명이 맞지 않는다 — 켜져 있으면 마지막 줄을 바꿔 준다
-    if (s.image.edgeAuto && s.image.edge !== 'none') return '자동 색: 그림 가장자리 색을 면마다 이어 써요';
-    return '위는 하늘빛 · 아래는 레몬빛 (프리즘은 네 면이 네 색)';
-}
-
-// ───────── 이미지 ─────────
-// 이미지 모양: [값, 이름, 작은 그림] — 그림은 currentColor 라 테마 색을 따라감
-const SHAPES = [
-    ['rect', '네모', '<svg viewBox="0 0 44 30" fill="currentColor" aria-hidden="true"><rect x="5" y="6" width="34" height="18" rx="2.5"/></svg>'],
-    // 2.2.1: 대각선 · 코너 컷 · 스크래치는 뺌 (사용자: "네모랑 커스텀만 두자") — CSS · 저장 키는 남아 있고 예전 값은 settings.js 가 네모로 돌림
-    ['custom', '커스텀', '<svg viewBox="0 0 44 30" fill="currentColor" aria-hidden="true"><path d="M22 4l4.6 8.4 9.4 1.6-6.6 6.9 1.4 9.4L22 26l-8.8 4.3 1.4-9.4L8 14l9.4-1.6Z"/></svg>'], // 내가 고른 투명 PNG 의 모양
-];
-
-/** 커스텀 도형 칸: 고른 도형 미리보기 + 이미지 고르기 · 지우기 + 맞추는 법 (투명 PNG 의 알파가 마스크) */
-/** 저장된 도형 목록 최대 (도형 하나가 설정에 수십 KB 로 들어가므로) */
-const MASK_SLOTS = 12;
-/** '바꾸기'를 누른 뒤 파일을 고르면 이 칸의 그림을 갈아 끼운다 (파일 창이 닫히면 비움) */
-let maskReplaceId = '';
 
 function maskControls(s) {
     const { mask, maskId, masks } = s.image;
@@ -1194,6 +1241,12 @@ function nextMaskName(masks) {
 // 흐림 단계: 강함이면 네 가장자리가 바탕에 녹아듦
 const FADES = [['off', '끔'], ['soft', '약함'], ['medium', '중간'], ['strong', '강함']];
 
+const SHAPES = [
+    ['rect', '네모', '<svg viewBox="0 0 44 30" fill="currentColor" aria-hidden="true"><rect x="5" y="6" width="34" height="18" rx="2.5"/></svg>'],
+    // 2.2.1: 대각선 · 코너 컷 · 스크래치는 뺌 (사용자: "네모랑 커스텀만 두자") — CSS · 저장 키는 남아 있고 예전 값은 settings.js 가 네모로 돌림
+    ['custom', '커스텀', '<svg viewBox="0 0 44 30" fill="currentColor" aria-hidden="true"><path d="M22 4l4.6 8.4 9.4 1.6-6.6 6.9 1.4 9.4L22 26l-8.8 4.3 1.4-9.4L8 14l9.4-1.6Z"/></svg>'], // 내가 고른 투명 PNG 의 모양
+];
+
 function shapePicker(current) {
     return `<div class="salty-shapes">${SHAPES.map(([value, label, svg]) =>
         `<button type="button" aria-pressed="${current === value}" data-act="seg" data-path="image.shape" data-value="${value}" class="${current === value ? 'on' : ''}">${svg}<span>${label}</span></button>`).join('')}</div>`;
@@ -1224,23 +1277,18 @@ async function readMaskImage(file) {
 function tabImage(s, sub) {
     const light = PALETTES[s.palette]?.mode === 'light';
     const { layout, shape, fit } = s.image;
+    if (sub === 'frame') return `${imagePreview(s, sub)}${frameControls('image', s.image)}`;
     // 모서리는 둥근 모서리가 보일 때만: 네모 · 아치 아래쪽 (가로 꽉이면 화면 끝까지라 모서리가 없음)
     const rounds = layout !== 'bleed' && shape === 'rect';
     if (sub === 'shape') {
         // 테두리는 네모 · 아치에만 (대각선 · 스크래치는 잘린 모양이라 사각 테가 남음)
         // 자동 색은 테두리를 켰을 때만 보여 준다 — '없음'에서는 뽑을 색이 쓰일 데가 없다 (apply.js 도 그때만 salty-edge-auto 를 붙임)
-        const edges = shape === 'rect';
         return `${imagePreview(s, sub)}<div class="salty-group">
             <div class="salty-stack">${shapePicker(shape)}</div>
             ${shape === 'custom' ? maskControls(s) : ''}
             ${row('투명 그림도 똑같이', toggle('image.cutoutSame', s.image.cutoutSame), s.image.cutoutSame ? '배경 없는 캐릭터 컷에도 모양 · 흐림 · 테두리가 그대로 걸려요' : '캐릭터 컷은 자르지 않고 아래만 살짝 흐려요')}
-            ${rounds ? slider('image.radius', '모서리', 0, 24, 1) : ''}
-            ${edges ? stack('테두리', seg('image.edge', [['none', '없음'], ['line', '선'], ['inset', '안쪽'], ['glow', '빛'], ['prism', '프리즘']]), edgeHint(s)) : ''}
-            ${edges && s.image.edge !== 'none' ? row('자동 색', toggle('image.edgeAuto', s.image.edgeAuto), '그림 가장자리에서 색을 뽑아 써요') : ''}
-            ${edges && s.image.edge !== 'none' ? stack('테두리 면', chips([['image.edgeSideTop', '위'], ['image.edgeSideBottom', '아래'], ['image.edgeSideLeft', '왼쪽'], ['image.edgeSideRight', '오른쪽']]), sideHint(s)) : ''}
-            ${edges && s.image.edge !== 'none' ? slider('image.edgeThick', '두께', ...IMAGE_RANGE.edgeThick, 1) : ''}
-            ${edges && s.image.edge !== 'none' ? slider('image.edgeAlpha', '진하기', ...IMAGE_RANGE.edgeAlpha, 1) : ''}
-            ${edges && (s.image.edge === 'glow' || s.image.edge === 'prism' || s.image.edge === 'inset') ? slider('image.edgeGlow', '번짐', ...IMAGE_RANGE.edgeGlow, 1) : ''}
+            ${rounds ? slider('image.radius', '모서리', 0, 80, 1) : ''}
+
         </div>`;
     }
     if (sub === 'size') {
@@ -1271,6 +1319,13 @@ function render(root) {
     const body = { theme: tabTheme, text: tabText, chat: tabChat, image: tabImage, prompt: tabPrompt };
     if (!body[ui.tab]) ui.tab = 'theme';
     const sub = subOf(ui.tab);
+    let section;
+    try {
+        section = body[ui.tab](s, sub);
+    } catch (error) {
+        console.error('[Blue Lemonade] Settings section failed', error);
+        section = `<p class="salty-note" role="alert">이 항목을 표시하지 못했어요. 다른 탭으로 이동할 수 있으며 저장된 설정은 유지됩니다.</p><button type="button" class="salty-btn" data-act="tab" data-tab="theme">테마 설정으로 돌아가기</button>`;
+    }
     // 2.4.1: 대분류는 위 가로 탭 그대로, 소분류는 칩 줄 대신 드롭다운 하나 — 폰에서는 실리태번 모델 고르기처럼 팝업 목록으로 뜬다
     // 2.4.2: OS 가 그리는 select 팝업은 못 꾸미므로 목록을 직접 그린다 — 단추 밑에 카드로 펼쳐지는 라디오 목록 (테마 색 · 글꼴)
     const subList = SUBS[ui.tab] || [];
@@ -1299,7 +1354,7 @@ function render(root) {
         `<button data-act="tab" data-tab="${id}" class="${ui.tab === id ? 'on' : ''}" aria-pressed="${ui.tab === id}">${label}</button>`).join('')}</div>
             ${subSelect}
         </div>
-        <section class="salty-sec" data-tab="${ui.tab}" data-sub="${sub}">${body[ui.tab](s, sub)}</section>`;
+        <section class="salty-sec" data-tab="${ui.tab}" data-sub="${sub}">${section}</section>`;
     bindCustomBuilder(root);
     root.querySelectorAll('[data-qr-sample]').forEach(bindQrScroller); // 3.5.4 퀵 리플라이 미리보기 줄
     fillPreviews(root); // 미리보기 무대 다시 꽂기 (만들지 않고 옮겨 담기만)
@@ -1561,6 +1616,12 @@ function bind(root) {
                     refreshPanels();
                     showSec(root);
                     break;
+                case 'frame-upload':
+                    root.querySelector(`[data-frame-file="${el.dataset.owner}"]`)?.click();
+                    break;
+                case 'frame-remove':
+                    update(st => { st[el.dataset.owner].decor = { on: false, art: '', mask: '' }; });
+                    break;
                 case 'palette':
                     update(st => { st.palette = paletteVariant(el.dataset.family, PALETTES[st.palette]?.mode); });
                     break;
@@ -1601,18 +1662,13 @@ function bind(root) {
                 case 'seg': {
                     // 테두리와 흐림은 원리상 양립 불가: 흐림 마스크가 box-shadow(테두리)까지 지운다.
                     // 그래서 테두리를 고르면 흐림을 끄고, 흐림을 켜면 테두리를 없앤다 — 고른 것이 바로 보이게.
-                    if (el.dataset.path === 'image.edge' && el.dataset.value !== 'none' && getSettings().image.fade !== 'off') {
-                        update(st => { setPath(st, 'image.edge', el.dataset.value); st.image.fade = 'off'; });
-                        break;
-                    }
                     if (el.dataset.path === 'image.fade') {
                         // 단계는 빠른 고르기 · 슬라이더는 미세 조정 — 단계를 고르면 그 단계 값으로 슬라이더를 채운다
                         const [fy, fx] = FADE_AMOUNT[el.dataset.value] || FADE_AMOUNT.off;
-                        const clash = el.dataset.value !== 'off' && getSettings().image.edge !== 'none';
                         update(st => {
                             setPath(st, 'image.fade', el.dataset.value);
                             if (el.dataset.value !== 'off') { st.image.fadeY = fy; st.image.fadeX = fx; }
-                            if (clash) st.image.edge = 'none'; // 흐림 마스크가 테두리 그림자까지 지운다 — 같이 켤 수 없음
+
                         });
                         break;
                     }
@@ -1965,6 +2021,16 @@ function bind(root) {
 
     root.addEventListener('change', async (event) => {
         const target = event.target;
+        if (target.matches('input[data-frame-file]') && target.files?.[0]) {
+            const owner = target.dataset.frameFile;
+            try {
+                const { editFrame } = await import('./frame-editor.js');
+                const result = await editFrame(target.files[0]);
+                if (result) update(st => { Object.assign(st[owner].decor, result); });
+            } catch (error) { toastr.error(error.message, '장식 액자'); }
+            target.value = '';
+            return;
+        }
         if (target.matches('input[data-num]')) {
             const path = target.dataset.num;
             const min = Number(target.dataset.min);
@@ -2003,7 +2069,7 @@ function bind(root) {
                 $('#hideChatAvatarsEnabled').prop('checked', target.checked).trigger('input').trigger('change');
                 return;
             }
-            const m = path.match(/^fonts\.(dialogue|ui|em|strong|code)\.same$/);
+            const m = path.match(/^fonts\.(dialogue|ui|em|strong|code|name)\.same$/);
             if (m) {
                 ui.picker = null;
                 update((st) => { st.fonts[m[1]] = target.checked ? 'same' : structuredClone(st.fonts.text); });
@@ -2012,7 +2078,7 @@ function bind(root) {
             // 자동 색은 켜고 끌 때 테두리 설명(edgeHint) 문구가 바뀌니 창을 다시 그린다
             // 2.9.2: 본문 색 지정 → '글자색 톤 맞추기' 줄, 톤 맞추기 → 톤 값 슬라이더 넷, 투명 그림도 똑같이 → 설명 문구가 스위치에 따라
             // 보였다 안 보였다 하는데 다시 그리지 않아, 끈 뒤에도 슬라이더가 남아 있었다
-            update(st => setPath(st, path, target.checked), ['enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on'].includes(path));
+            update(st => setPath(st, path, target.checked), ['enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on'].includes(path));
             return;
         }
         if (target.matches('input[data-file="font"]') && target.files?.[0]) {

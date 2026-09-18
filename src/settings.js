@@ -1,3 +1,5 @@
+import { DECOR_DEFAULTS, tidyDecor } from './decor.js';
+import { FRAME_DEFAULTS, FRAME_RANGE, tidyFrame } from './frames.js';
 // 설정 저장 칸: extension_settings.salty
 import { PALETTES, PALETTE_ALIASES } from './palettes.js';
 
@@ -7,7 +9,7 @@ export const VERSION = 3; // 설정 구조 버전 (1.0.0 = 1 · 1.4 = 2)
 // 언어별 글꼴 묶음. en/ja/zh 가 'auto' 면 한국어 글꼴이 그 글자도 맡음.
 export const FONT_SET = { ko: 'pretendard', en: 'auto', ja: 'auto', zh: 'auto' };
 // 글꼴 칸: 본문 · 대사 · 메뉴 · 속마음(*기울임*) · 강조(**굵게**) · 코드(`코드`)
-export const FONT_SLOTS = ['text', 'dialogue', 'ui', 'em', 'strong', 'code'];
+export const FONT_SLOTS = ['text', 'dialogue', 'ui', 'em', 'strong', 'code', 'name'];
 
 export const DEFAULTS = {
     version: VERSION,
@@ -23,6 +25,7 @@ export const DEFAULTS = {
         em: 'same',               // 속마음(*기울임*): 'same'(둘레 글꼴 그대로) | { ko, en, ja, zh }
         strong: 'same',           // 강조(**굵게**): 'same' | { ko, en, ja, zh }
         code: { ...FONT_SET, ko: 'neodgm' }, // 코드(`코드`): 기본은 도트 글꼴 Neo둥근모 — 'same' 이면 둘레 글꼴 그대로
+        name: 'same',
         hanja: 'auto',            // 한자(漢字)는 어느 글꼴로: auto | ko | ja | zh
     },
     customFonts: [],              // [{ id, label, family, group: 'custom', lang?, google? | css? | file? }]
@@ -75,8 +78,11 @@ export const DEFAULTS = {
     charStyles: {},
     activeStyle: null,
     baseStyle: null,
-    image: { layout: 'bleed', shape: 'rect', fit: 'ratio', maxh: 78, height: 40, blendWhite: true, cutoutSame: true, fade: 'soft', fadeY: 10, fadeX: 0, angle: 3, radius: 14, cornerCut: 10, scratchAmount: 45, scratchDirection: 'straight', scratchTexture: 'sharp', edge: 'none', edgeAuto: true, edgeSideTop: true, edgeSideRight: true, edgeSideBottom: true, edgeSideLeft: true, edgeThick: 1, edgeAlpha: 30, edgeGlow: 0, mask: '', maskFit: 'stretch', masks: [], maskId: '' }, // shape: rect | custom(mask = 투명 PNG data URL, maskFit: stretch | contain) — angle · cornerCut · scratch* 는 뺀 모양의 옛 값(CSS 는 남아 있음) · fit(크기): ratio 비율 유지(maxh = 최대 높이) | fixed 높이 맞춤(height = 높이), 둘 다 화면 높이 % · fade(흐림): off | soft | medium | strong · angle: 대각선 기울기(도)
+    profile: { decor: { ...DECOR_DEFAULTS }, nameSize: 24, nameWeight: 650, nameSpacing: 0, nameHeight: 1.3, nameColor: '#91a5ba', nameAuto: true, nameAlign: 'center', nameItalic: false, nameUnderline: false, headerLayout: 'below-two', headerGap: 8, metaSize: 12, metaOpacity: 70, buttonGap: 8, nameOutline: 0, nameOutlineColor: '#000000', nameShadow: false, nameShadowBlur: 4, nameShadowY: 1, nameShadowAlpha: 25, ...FRAME_DEFAULTS, mode: 'small', layout: 'column', sizing: 'pixels', screenHeight: 45, maxHeight: 70, visibleHeight: 100, width: 100, height: 320, fit: 'cover', positionX: 50, positionY: 35, radius: 18, gap: 20, blur: 0, opacity: 100, fadeY: 0, fadeX: 0, original: true },
+    image: { decor: { ...DECOR_DEFAULTS }, ...FRAME_DEFAULTS, layout: 'bleed', shape: 'rect', fit: 'ratio', maxh: 78, height: 40, blendWhite: true, cutoutSame: true, fade: 'soft', fadeY: 10, fadeX: 0, angle: 3, radius: 14, cornerCut: 10, scratchAmount: 45, scratchDirection: 'straight', scratchTexture: 'sharp', edge: 'none', edgeAuto: true, edgeSideTop: true, edgeSideRight: true, edgeSideBottom: true, edgeSideLeft: true, edgeThick: 1, edgeAlpha: 30, edgeGlow: 0, mask: '', maskFit: 'stretch', masks: [], maskId: '' }, // shape: rect | custom(mask = 투명 PNG data URL, maskFit: stretch | contain) — angle · cornerCut · scratch* 는 뺀 모양의 옛 값(CSS 는 남아 있음) · fit(크기): ratio 비율 유지(maxh = 최대 높이) | fixed 높이 맞춤(height = 높이), 둘 다 화면 높이 % · fade(흐림): off | soft | medium | strong · angle: 대각선 기울기(도)
 };
+
+export const PROFILE_RANGE = { screenHeight: [10, 100], maxHeight: [10, 100], visibleHeight: [10, 100], nameSize: [10, 60], nameWeight: [100, 900], nameSpacing: [-10, 30], nameHeight: [1, 2.5], headerGap: [0, 32], metaSize: [8, 24], metaOpacity: [20, 100], buttonGap: [0, 24], nameOutline: [0, 3], nameShadowBlur: [0, 20], nameShadowY: [-10, 10], nameShadowAlpha: [0, 100], width: [30, 100], height: [100, 720], positionX: [0, 100], positionY: [0, 100], radius: [0, 80], gap: [0, 64], blur: [0, 16], opacity: [20, 100], fadeY: [0, 45], fadeX: [0, 45] };
 
 function fill(target, defaults) {
     for (const [key, value] of Object.entries(defaults)) {
@@ -118,7 +124,7 @@ const IMAGE_FADES = ['off', 'soft', 'medium', 'strong']; // 에셋 이미지 흐
 // 네 단계는 CSS 클래스(salty-fade-*)의 출처로 남긴다 — 여백 · 마스크 모양이 단계별로 다르다.
 // 실제 번짐 폭은 fadeY · fadeX(%) 가 정하고, 단계를 고르면 그 값이 아래 표대로 채워진다
 export const FADE_AMOUNT = { off: [0, 0], soft: [10, 0], medium: [18, 6], strong: [30, 22] };
-export const IMAGE_RANGE = { maxh: [15, 100], height: [15, 90], angle: [-15, 15], cornerCut: [3, 25], scratchAmount: [0, 100], fadeY: [0, 45], fadeX: [0, 35], edgeThick: [1, 8], edgeAlpha: [10, 100], edgeGlow: [0, 40] }; // maxh · height = 화면 높이 %, angle = 대각선 기울기(도) — 설정 창 슬라이더도 이 범위를 씀
+export const IMAGE_RANGE = { radius: [0, 80], maxh: [15, 100], height: [15, 90], angle: [-15, 15], cornerCut: [3, 25], scratchAmount: [0, 100], fadeY: [0, 45], fadeX: [0, 35], ...FRAME_RANGE }; // maxh · height = 화면 높이 %, angle = 대각선 기울기(도) — 설정 창 슬라이더도 이 범위를 씀
 
 /** 1.4.0 까지의 위아래 흐림 %(0~20) → 가까운 단계 (약함 6 · 중간 12 · 강함 20 기준). 0 만 끔 — 조금이라도 켰으면 약함부터 */
 function fadeLevel(value) {
@@ -347,9 +353,26 @@ export function getSettings() {
     s.compat.muteCustomCss = flag(s.compat.muteCustomCss, false);
     if (isObj(s.type)) tidyType(s.type);
     tidyRoles(s);
-    if (isObj(s.fonts)) ['em', 'strong', 'code'].forEach(slot => tidyFontSlot(s.fonts, slot));
+    if (isObj(s.fonts)) ['em', 'strong', 'code', 'name'].forEach(slot => tidyFontSlot(s.fonts, slot));
     if (s.image && !IMAGE_SHAPES.includes(s.image.shape)) s.image.shape = 'rect'; // 모르는 모양(가져온 파일 · 뺀 유리 조각 · 물방울) → 네모
-    if (s.image) tidyImage(s.image);
+    if (s.image) { tidyImage(s.image); tidyFrame(s.image); }
+    if (!isObj(s.profile)) s.profile = structuredClone(DEFAULTS.profile);
+    fill(s.profile, DEFAULTS.profile);
+    tidyFrame(s.profile);
+    tidyDecor(s.image); tidyDecor(s.profile);
+    for (const key of ['nameAuto', 'nameItalic', 'nameUnderline', 'nameShadow']) s.profile[key] = flag(s.profile[key], DEFAULTS.profile[key]);
+    for (const key of ['nameColor', 'nameOutlineColor']) if (!/^#[a-f\d]{6}$/i.test(s.profile[key])) s.profile[key] = DEFAULTS.profile[key];
+    if (!['left', 'center', 'right'].includes(s.profile.nameAlign)) s.profile.nameAlign = 'center';
+    if (!['side', 'below-one', 'below-two'].includes(s.profile.headerLayout)) s.profile.headerLayout = 'below-two';
+    if (!['small', 'banner'].includes(s.profile.mode)) s.profile.mode = 'small';
+    if (!['cover', 'contain'].includes(s.profile.fit)) s.profile.fit = 'cover';
+    if (!['column', 'bleed', 'inset'].includes(s.profile.layout)) s.profile.layout = 'column';
+    if (!['pixels', 'screen', 'ratio'].includes(s.profile.sizing)) s.profile.sizing = 'pixels';
+    s.profile.original = flag(s.profile.original, true);
+    for (const [key, range] of Object.entries(PROFILE_RANGE)) {
+        const n = Number(s.profile[key]);
+        s.profile[key] = Number.isFinite(n) ? clampTo(n, range) : DEFAULTS.profile[key];
+    }
     if (PALETTE_ALIASES[s.palette]) s.palette = PALETTE_ALIASES[s.palette];
     if (!PALETTES[s.palette]) s.palette = 'salt';
     delete s.pastel; // 1.8.2~1.9.1 의 파스텔 스위치 — 파스텔로 정착하며 없앰 (id 는 PALETTE_ALIASES 가 원래 id 로)

@@ -88,7 +88,10 @@ function place(box, sel) {
 
 let closedAt = 0;       // 닫은 시각 — 바깥을 눌러 닫은 직후의 click 을 삼킴
 
+const ownerWatch = new MutationObserver(() => { if (owner && !owner.isConnected) close(); });
+
 function close() {
+    ownerWatch.disconnect();
     if (!layer) return;
     layer.remove();
     layer = null;
@@ -158,6 +161,7 @@ function open(sel) {
         }
     });
     host.append(layer);
+    ownerWatch.observe(document.body, { childList: true, subtree: true });
     place(box, sel);
     // 고른 줄이 보이게 — 목록 칸만 굴린다. scrollIntoView 는 조상(서랍)까지 굴려서, 항목이 많은 목록(번역기 모델 칸)이
     // 폰에서 서랍을 튕기고 scroll 로 스스로 닫혔다 (2.7.10). 폰(손가락 · 자판)에서는 찾기칸에 초점을 주지 않음
@@ -227,5 +231,5 @@ export function startSelectPop() {
     });
     document.addEventListener('scroll', (e) => { if (layer && !layer.contains(e.target) && Date.now() - openedAt > GRACE) close(); }, true);
     // 연 select 가 문서에서 빠지면(실리태번이 다시 그림) 닫음
-    new MutationObserver(() => { if (owner && !owner.isConnected) close(); }).observe(document.body, { childList: true, subtree: true });
+
 }
