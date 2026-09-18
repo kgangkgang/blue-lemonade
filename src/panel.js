@@ -24,7 +24,7 @@ const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 const TABS = [['theme', '테마'], ['text', '글자'], ['chat', '채팅'], ['image', '이미지'], ['prompt', '프롬프트']];
 const SUBS = {
     theme: [['palette', '색'], ['colors', '색 고치기'], ['styles', '스타일'], ['backup', '백업']],
-    text: [['text', '본문'], ['dialogue', '대사'], ['ui', '메뉴'], ['em', '속마음'], ['strong', '강조'], ['code', '코드'], ['para', '문단'], ['shadow', '그림자']],
+    text: [['text', '본문'], ['dialogue', '대사'], ['ui', '메뉴'], ['em', '속마음'], ['strong', '강조'], ['code', '코드'], ['para', '문단'], ['shadow', '그림자 · 외곽선']],
     chat: [['message', '메시지'], ['screen', '화면'], ['etc', '기타']],
     image: [['layout', '배치'], ['shape', '모양'], ['size', '크기'], ['fade', '흐림']],
     prompt: [['deus', '데우스 엑스 마키나']], // 3.4.0 프리셋 호환 — 다른 프리셋이 생기면 여기에
@@ -171,7 +171,9 @@ function qrSample() {
     }
     // 모자라면 예시 이름으로 채움 — 줄이 넘쳐야 가로 · 세로 넘기기가 보임
     if (count < 16) groups.push(EXAMPLES.slice(0, 16 - count));
-    return `<div class="bl-qr-sample-wrap"><div class="bl-qr-sample" data-qr-sample tabindex="0" aria-label="퀵 리플라이 미리보기"><span class="bl-qr-find-sample" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>${groups.map(g => `<div class="qr--buttons">${g.map(label => `<div class="qr--button"><div class="qr--button-label">${esc(label)}</div></div>`).join('')}</div>`).join('')}</div></div>`;
+    // 3.7.1 입력창 모형을 같이 그린다 — '자리'(입력창 아래 · 위)가 미리보기에서 바로 보이게. 모형은 body.salty-qr-top 에 따라 순서가 바뀐다 (css/36-qr-place.css)
+    const inputMock = '<div class="bl-qr-inputmock" aria-hidden="true"><span class="bl-qr-inputmock-box">메시지를 입력하세요…</span><span class="bl-qr-inputmock-btn"><i class="fa-solid fa-paper-plane"></i></span></div>';
+    return `<div class="bl-qr-sample-wrap"><div class="bl-qr-sample" data-qr-sample tabindex="0" aria-label="퀵 리플라이 미리보기"><span class="bl-qr-find-sample" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>${groups.map(g => `<div class="qr--buttons">${g.map(label => `<div class="qr--button"><div class="qr--button-label">${esc(label)}</div></div>`).join('')}</div>`).join('')}</div>${inputMock}</div>`;
 }
 
 function row(label, control, note = '') {
@@ -370,7 +372,8 @@ function regexStage() {
         <details class="custom-dem-card custom-dem-scene-plan" open>${head('🗺️', '장면 계획', '흐름도')}<div class="custom-dem-scene-plan__body">${step('inputs', 'Inputs', '상황 맥락', '찻집 약속 직전, 아린은 편지를 숨긴다.')}${step('constraints', 'Constraints', 'Character Realism', '들뜬 마음을 쉽게 드러내지 않는다.')}${step('plan', 'Plan', 'Prose Plan', '편지 이야기는 마지막 문단까지 아껴 둔다.')}</div></details>
         <details class="custom-dem-card custom-dem-status" open>${head('📊', 'Status', 'Live')}<div class="custom-dem-status__body"><div class="custom-dem-status-row"><strong class="custom-dem-status-row__name">아린</strong><span class="custom-dem-status-row__field"><span class="custom-dem-status-row__label custom-dem-status-row__label--physical">몸</span><span>나른함</span></span><span class="custom-dem-status-row__field"><span class="custom-dem-status-row__label custom-dem-status-row__label--clothes">옷</span><span>하늘색 원피스</span></span><span class="custom-dem-status-row__field"><span class="custom-dem-status-row__label custom-dem-status-row__label--mental">마음</span><span>기대</span></span><span class="custom-dem-status-row__field"><span class="custom-dem-status-row__label custom-dem-status-row__label--relationship">관계</span><span class="custom-dem-status-row__score">72/100</span></span></div></div></details>
         <details class="custom-dem-card custom-dem-threads" open>${head('🧶', 'Story Threads', '')}<div class="custom-dem-threads__body"><div class="custom-dem-thread-row"><span class="custom-dem-thread-tag custom-dem-thread-tag--current">[Current]</span> 찻집의 약속</div><div class="custom-dem-thread-row"><span class="custom-dem-thread-tag custom-dem-thread-tag--unresolved">[Unresolved]</span> 사라진 등대지기</div><div class="custom-dem-thread-row"><span class="custom-dem-thread-tag custom-dem-thread-tag--seed">[Seed]</span> 바다 건너온 편지</div></div></details>
-        <p><q>「오늘은 등대 아래 찻집에서.」</q> 아린은 편지를 가방 깊숙이 밀어 넣었다.</p>`)}
+        <p><q>「오늘은 등대 아래 찻집에서.」</q> 아린은 편지를 가방 깊숙이 밀어 넣었다.</p>
+        <p class="bl-ink-line"><font color="#e64553" class="bl-ink-sample" style="--bl-ink:#e64553"><q>「편지는 내가 가져갈게.」</q></font> <font color="#1e88c7" class="bl-ink-sample" style="--bl-ink:#1e88c7"><q>「…괜찮겠어?」</q></font> 프롬프트가 칠한 대사예요.</p>`)}
     </div>`;
 }
 
@@ -881,6 +884,7 @@ function tabText(s, sub) {
     } else if (sub === 'shadow') {
         // 글자 그림자 — 어디에(본문 · 대사 · 속마음 · 강조 · 코드) + 각도(0 = 오른쪽, 시계 방향) · 거리 · 퍼짐 · 색 · 투명도. 폰의 번짐 방지 규칙을 고른 대상에서만 푼다
         const sh = s.shadow;
+        const ol = s.outline || { on: false, scope: 'all', color: '#000000', width: 1, alpha: 100 };
         body = `${cap('글자 그림자')}
             <div class="salty-group">
                 ${row('그림자', toggle('shadow.on', sh.on), '글자 뒤에 그림자를 깔아요')}
@@ -891,7 +895,15 @@ function tabText(s, sub) {
                 ${sh.on ? slider('shadow.distance', '거리', 0, 12, 0.5) : ''}
                 ${sh.on ? slider('shadow.blur', '퍼짐', 0, 24, 0.5) : ''}
             </div>
-            ${sh.on ? '<p class="salty-note">각도는 그림자가 지는 방향(0 = 오른쪽, 90 = 아래), 거리는 글자에서 얼마나 떨어질지예요. 폰에서 글자가 번져 보이면 퍼짐을 줄이거나 꺼 주세요.</p>' : ''}`;
+            ${sh.on ? '<p class="salty-note">각도는 그림자가 지는 방향(0 = 오른쪽, 90 = 아래), 거리는 글자에서 얼마나 떨어질지예요. 폰에서 글자가 번져 보이면 퍼짐을 줄이거나 꺼 주세요.</p>' : ''}
+            ${cap('글자 외곽선')}
+            <div class="salty-group">
+                ${row('외곽선', toggle('outline.on', ol.on), '메시지 글자 둘레에 테두리를 둘러 배경과 섞이지 않게')}
+                ${ol.on ? `<div class="salty-row"><span>색</span><input type="color" data-color-path="outline.color" value="${esc(ol.color)}" aria-label="외곽선 색"></div>` : ''}
+                ${ol.on ? slider('outline.width', '두께', 0.2, 3, 0.1) : ''}
+                ${ol.on ? slider('outline.alpha', '진하기', 0, 100, 1) : ''}
+            </div>
+            ${ol.on ? '<p class="salty-note">메시지 본문 전체에 둘러요. 두께는 0.5 안팎이 자연스럽고, 크게 올리면 글자 속이 좁아 보여요. 데우스 대사 색상에만 두르려면 프롬프트 › 데우스 › 대사 색상 가독성 향상을 쓰세요.</p>' : ''}`;
     } else if (sub === 'dialogue') {
         // 대사: 표시 · 형광펜 모양 · 색 → 글자(크기 · 굵기 · 자간) → 글꼴. 2.7.0 부터 한 화면 (미리보기를 접을 수 있어 길어도 됨)
         const marker = s.dialogue.style === 'marker';
@@ -971,6 +983,7 @@ function tabChat(s, sub) {
         </div>
         ${cap('퀵 리플라이')}<div class="salty-group">
             ${qrSample()}
+            ${stack('자리', seg('chat.qrPlace', [['bottom', '입력창 아래'], ['top', '입력창 위']], 'bottom'), '입력창 옆에 아이콘이 많으면 위가 넓어요')}
             ${stack('넘기기', seg('chat.qrScroll', [['x', '가로 스크롤'], ['y', '세로 스크롤']]))}
             ${s.chat.qrScroll === 'y' ? slider('chat.qrRows', '보이는 줄', 1, 4, 1, 2) : ''}
         </div>
@@ -1082,6 +1095,9 @@ function weatherSeg(s) {
 // 프리셋마다 한 칸. 지금은 데우스 엑스 마키나 2.3 — 호환을 켜야 카드 표본 · 카드 설정 · 트래커 설정이 보이고 적용된다
 function tabPrompt(s) {
     const on = !!s.deus?.on;
+    const ink = s.deus?.ink || {};
+    const dio = ink.outline || { on: false, color: '#000000', width: 0.6, alpha: 100 };  // 데우스 대사 가독성: 외곽선
+    const dis = ink.shadow || { on: false, color: '#000000', alpha: 60, angle: 135, distance: 1.5, blur: 2 }; // 그림자
     const head = `${cap('데우스 엑스 마키나 2.3')}<div class="salty-group">
             ${row('프롬프트 호환', toggle('deus.on', on), '이 프리셋의 트래커 · 장면 계획 · 상태 카드를 테마에 맞춰요')}
         </div>`;
@@ -1093,6 +1109,24 @@ function tabPrompt(s) {
             ${row('카드 색 통일', toggle('chat.unifyRegex', s.chat.unifyRegex), '카드의 모듈별 색을 포인트색 하나로')}
             ${row('카드 이모티콘', toggle('chat.regexIcons', s.chat.regexIcons), '끄면 카드 제목 앞 그림 없이 글자만')}
         </div>
+        ${cap('대사 색상')}<div class="salty-group">
+            ${row('프롬프트 색 그대로', toggle('chat.demInk', !!s.chat.demInk), '프롬프트가 칠한 대사 색을 테마 대사색 · 형광펜보다 먼저')}
+            ${s.chat.demInk ? stack('색을 어디에', seg('chat.demInkMode', [['text', '글자 색'], ['marker', '형광펜 색']], 'text'), '형광펜 색: 글자는 테마 색 그대로 두고 띠만 프롬프트 색으로') : ''}
+        </div>
+        ${s.chat.demInk && s.chat.demInkMode === 'marker' && !['marker', 'full'].includes(s.dialogue.style) ? '<p class="salty-note">지금 대사 표시가 “' + ({ bold: '굵게', tint: '색', plain: '없음' }[s.dialogue.style] || s.dialogue.style) + '” 라 칠할 띠가 없어요. 글자 › 대사 › 표시를 형광펜이나 전체 칠로 바꾸면 띠에 색이 들어가요.</p>' : ''}
+        ${cap('대사 색상 가독성 향상', '프롬프트가 칠한 글자에만')}<div class="salty-group">
+            ${row('외곽선', toggle('deus.ink.outline.on', dio.on), '글자 둘레에 테두리 — 밝은 색이 밝은 배경에 묻힐 때')}
+            ${dio.on ? `<div class="salty-row"><span>외곽선 색</span><input type="color" data-color-path="deus.ink.outline.color" value="${esc(dio.color)}" aria-label="외곽선 색"></div>` : ''}
+            ${dio.on ? slider('deus.ink.outline.width', '외곽선 두께', 0.2, 3, 0.1) : ''}
+            ${dio.on ? slider('deus.ink.outline.alpha', '외곽선 진하기', 0, 100, 1) : ''}
+            ${row('그림자', toggle('deus.ink.shadow.on', dis.on), '글자 뒤에 그림자 — 배경 그림 위에서 읽기 좋아져요')}
+            ${dis.on ? `<div class="salty-row"><span>그림자 색</span><input type="color" data-color-path="deus.ink.shadow.color" value="${esc(dis.color)}" aria-label="그림자 색"></div>` : ''}
+            ${dis.on ? slider('deus.ink.shadow.alpha', '그림자 투명도', 0, 100, 1) : ''}
+            ${dis.on ? slider('deus.ink.shadow.angle', '그림자 각도', 0, 360, 1) : ''}
+            ${dis.on ? slider('deus.ink.shadow.distance', '그림자 거리', 0, 12, 0.5) : ''}
+            ${dis.on ? slider('deus.ink.shadow.blur', '그림자 퍼짐', 0, 24, 0.5) : ''}
+        </div>
+        <p class="salty-note">둘 다 켜도 되고 하나만 켜도 돼요. 프롬프트가 색칠하지 않은 보통 글자는 그대로예요.</p>
         ${cap('트래커')}<div class="salty-group">
             ${row('트래커 날씨로 날씨 효과', toggle('deus.weather', s.chat.weather === 'tracker'), '트래커 날씨가 비 · 눈이면 채팅 뒤에 내려요 · 세기 · 크기는 채팅 › 화면 › 날씨')}
         </div>`;
@@ -1972,7 +2006,7 @@ function bind(root) {
             // 자동 색은 켜고 끌 때 테두리 설명(edgeHint) 문구가 바뀌니 창을 다시 그린다
             // 2.9.2: 본문 색 지정 → '글자색 톤 맞추기' 줄, 톤 맞추기 → 톤 값 슬라이더 넷, 투명 그림도 똑같이 → 설명 문구가 스위치에 따라
             // 보였다 안 보였다 하는데 다시 그리지 않아, 끈 뒤에도 슬라이더가 남아 있었다
-            update(st => setPath(st, path, target.checked), ['enabled', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on'].includes(path));
+            update(st => setPath(st, path, target.checked), ['enabled', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on'].includes(path));
             return;
         }
         if (target.matches('input[data-file="font"]') && target.files?.[0]) {

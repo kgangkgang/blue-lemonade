@@ -45,13 +45,24 @@ export const DEFAULTS = {
     code: { weight: null, letterSpacing: null }, // 코드 글자 굵기 · 자간 — null = 둘레 글자 그대로 (2.7.0; 크기는 type.codeSize)
     // 글자 그림자 (2.4.0): 켬/끔 + 어디에(본문 · 대사 · 속마음 · 강조 · 코드) + 모양 하나. 기본 끔 — 폰에서 text-shadow 는 번질 수 있음. angle 도 · distance/blur px · alpha %
     shadow: { on: false, targets: { text: false, dialogue: true, em: false, strong: false, code: false }, color: '#000000', alpha: 45, angle: 135, distance: 2, blur: 3 },   // style: marker | full | bold | tint | plain · tilt(형광펜 기울기): flat | slant | steep · markerThick(형광펜 두께): 글자 상자 높이 % · markerPos(위치): center 가운데 | bottom 아래(기울기를 눕혀 밑줄처럼 — 두께는 굵기 값 그대로)
+    // 글자 외곽선 (3.7.0): 켬/끔 + 어디에(전체 · 데우스 프롬프트가 칠한 글자만) + 두께 · 색 · 진하기.
+    // 그림자와 달리 -webkit-text-stroke + paint-order 라 글자 속을 파먹지 않는다. 색이 진한 대사가 배경에 묻힐 때 읽히게 하는 용도
+    outline: { on: false, color: '#000000', alpha: 100, width: 1 },   // 전체(메시지 본문) 외곽선 · width: px(0.2~3) · alpha: %
     em: { italic: false, weight: 400, size: null, letterSpacing: null },   // *속마음* — 기울일지, 굵기, 크기(px · null = 본문과 같게), 자간(1/100 em · null = 본문과 같게)
     strong: { weight: 650, size: null, letterSpacing: null },              // **강조**
-    chat: { user: 'bubble', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, colorPop: true, streamFade: false, demSkin: false, demFold: true, weather: 'off', weatherLevel: 2, weatherOpacity: 100, weatherSize: 100, weatherSpeed: 100, weatherAngle: -9, weatherImage: '', weatherImageId: '', qrScroll: 'x', qrRows: 2, toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } } }, // streamFade: 스트리밍 중 새 글자만 가볍게 페이드 인 (2.9.5, streamfade.js — 실리태번 페이드 인이 켜져 있으면 쉼) · tone: 톤 맞추기의 채도 · 밝기(%) 화이트/나이트 따로 (2.6.1) · toneInline: 본문 글자색의 색상만 두고 채도 · 밝기를 테마에 맞춤 (2.6.0, unifyInline 이 꺼져 있을 때) · selectPop: 실리태번 select 를 테마가 그린 목록 팝업으로 (2.5.0) · colorPop: 설정 창 밖 색 칸도 테마 색 고르기로 (3.5.0, colorpop.js) · regexIcons: 정규식 카드 제목 앞 이모티콘 보이기 · unifyRegex: 프리셋 정규식 카드(DEM 등)의 모듈별 색 → 포인트색 하나 · unifyInline: 메시지에 적힌 글자색(<font color> · style) 무시
+    chat: { user: 'bubble', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, colorPop: true, streamFade: false, demSkin: false, demFold: true, weather: 'off', weatherLevel: 2, weatherOpacity: 100, weatherSize: 100, weatherSpeed: 100, weatherAngle: -9, weatherImage: '', weatherImageId: '', qrScroll: 'x', qrRows: 2, qrPlace: 'bottom', demInk: false, demInkMode: 'text', toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } } }, // streamFade: 스트리밍 중 새 글자만 가볍게 페이드 인 (2.9.5, streamfade.js — 실리태번 페이드 인이 켜져 있으면 쉼) · tone: 톤 맞추기의 채도 · 밝기(%) 화이트/나이트 따로 (2.6.1) · toneInline: 본문 글자색의 색상만 두고 채도 · 밝기를 테마에 맞춤 (2.6.0, unifyInline 이 꺼져 있을 때) · selectPop: 실리태번 select 를 테마가 그린 목록 팝업으로 (2.5.0) · colorPop: 설정 창 밖 색 칸도 테마 색 고르기로 (3.5.0, colorpop.js) · regexIcons: 정규식 카드 제목 앞 이모티콘 보이기 · unifyRegex: 프리셋 정규식 카드(DEM 등)의 모듈별 색 → 포인트색 하나 · unifyInline: 메시지에 적힌 글자색(<font color> · style) 무시
     // 3.1.0: 몰입 읽기(폰 — 아래로 밀면 위 바 · 입력창 숨김, reader.js) · 한 손 버튼 줄(입력판 위 ‹ › 사칭 · 이어 쓰기 · 다시 생성, onehand.js)
     reader: { autoHide: false },
     // 3.4.0 프롬프트 호환: 데우스 엑스 마키나 2.3 — 끄면 카드 스킨 · 폰 접기 · 카드 색 통일 · 카드 이모티콘 · 트래커 날씨가 모두 쉰다 (값은 남음)
-    deus: { on: false },
+    // 3.7.1 데우스 대사 색상 가독성 향상: 프롬프트가 칠한 글자(@Dialogue Color)에만 거는 외곽선 · 그림자.
+    // 색에 따라 배경에 묻혀 안 읽히는 경우를 위해 — 둘 다 켜도 되고 하나만 켜도 된다. 파라미터는 전체 외곽선 · 글자 그림자와 같은 것들.
+    deus: {
+        on: false,
+        ink: {
+            outline: { on: false, color: '#000000', alpha: 100, width: 0.6 },
+            shadow: { on: false, color: '#000000', alpha: 60, angle: 135, distance: 1.5, blur: 2 },
+        },
+    },
     // 3.2.0 화이트 · 나이트 자동: by = system(기기 다크 모드) | time(night 부터 day 까지 나이트) — automode.js
     auto: { on: false, by: 'system', night: '20:00', day: '07:00' },
     // 3.3.1 날씨 효과의 내 그림 목록 [{ id, name, data }] — 스타일에는 안 담김 (고른 그림만 chat.weatherImage)
@@ -228,6 +239,12 @@ function tidyFlags(s) {
         // 3.5.4 퀵 리플라이 줄: x 가로 스크롤 · y 세로 스크롤(보이는 줄 1~4)
         if (!['x', 'y'].includes(s.chat.qrScroll)) s.chat.qrScroll = 'x';
         range('qrRows', 1, 4, 2);
+        // 3.7.0 퀵 리플라이 줄 자리: bottom 입력창 아래(여태 모양) | top 입력창 위 (사용자 요청 — 입력창 옆에 아이콘을 많이 빼 두면 줄이 좁아서)
+        if (!['bottom', 'top'].includes(s.chat.qrPlace)) s.chat.qrPlace = 'bottom';
+        // 3.7.0 데우스 프롬프트가 칠한 대사 색 그대로 (형광펜 · 테마 대사색보다 먼저)
+        s.chat.demInk = flag(s.chat.demInk, false);
+        // 3.7.1 그 색을 어디에: text 글자 색 | marker 형광펜 띠 색 (글자는 테마 색 그대로)
+        if (!['text', 'marker'].includes(s.chat.demInkMode)) s.chat.demInkMode = 'text';
         if (typeof s.chat.weatherImage !== 'string' || (s.chat.weatherImage && !s.chat.weatherImage.startsWith('data:image/'))) s.chat.weatherImage = '';
         if (typeof s.chat.weatherImageId !== 'string') s.chat.weatherImageId = '';
     }
@@ -255,6 +272,33 @@ function tidyDialogue(d) {
     if (!MARKER_POSITIONS.includes(d.markerPos)) d.markerPos = 'center';
     const v = typeof d.markerThick === 'number' ? d.markerThick : parseFloat(d.markerThick);
     d.markerThick = Number.isFinite(v) ? clampTo(v, TEXT_LIMIT.markerThick) : DEFAULTS.dialogue.markerThick;
+}
+
+export const OUTLINE_LIMIT = { alpha: [0, 100], width: [0.2, 3] };
+export const INK_SHADOW_LIMIT = { alpha: [0, 100], angle: [0, 360], distance: [0, 12], blur: [0, 24] };
+
+/** 켬/끔 · 색 #rrggbb · 숫자는 범위 안 (전체 외곽선 · 데우스 가독성 외곽선 · 데우스 가독성 그림자가 같이 씀) */
+function tidyInkPart(part, defaults, limit) {
+    part.on = part.on === true || part.on === 'true';
+    if (!/^#[0-9a-f]{6}$/i.test(String(part.color))) part.color = defaults.color;
+    for (const [key, range] of Object.entries(limit)) {
+        const n = Number(part[key]);
+        part[key] = Number.isFinite(n) ? clampTo(n, range) : defaults[key];
+    }
+}
+
+/** 글자 외곽선 (3.7.0) + 데우스 대사 색상 가독성 향상 (3.7.1) */
+function tidyOutline(s) {
+    if (!isObj(s.outline)) s.outline = structuredClone(DEFAULTS.outline);
+    delete s.outline.scope; // 3.7.0 의 '어디에' — 데우스 쪽은 제 칸(deus.ink)으로 옮겼다
+    tidyInkPart(s.outline, DEFAULTS.outline, OUTLINE_LIMIT);
+
+    if (!isObj(s.deus)) s.deus = structuredClone(DEFAULTS.deus);
+    if (!isObj(s.deus.ink)) s.deus.ink = structuredClone(DEFAULTS.deus.ink);
+    if (!isObj(s.deus.ink.outline)) s.deus.ink.outline = structuredClone(DEFAULTS.deus.ink.outline);
+    if (!isObj(s.deus.ink.shadow)) s.deus.ink.shadow = structuredClone(DEFAULTS.deus.ink.shadow);
+    tidyInkPart(s.deus.ink.outline, DEFAULTS.deus.ink.outline, OUTLINE_LIMIT);
+    tidyInkPart(s.deus.ink.shadow, DEFAULTS.deus.ink.shadow, INK_SHADOW_LIMIT);
 }
 
 /** 글자 그림자: 켬/끔 · 대상은 불리언, 색은 #rrggbb, 숫자는 범위 안. 2.3.0 의 dialogue.shadow(대사만) 는 여기로 옮김 */
@@ -295,6 +339,7 @@ export function getSettings() {
     if (TILT_RENAME[s.dialogue?.tilt]) s.dialogue.tilt = TILT_RENAME[s.dialogue.tilt];
     if (isObj(s.dialogue)) tidyDialogue(s.dialogue);
     tidyShadow(s);
+    tidyOutline(s);
     if (isObj(s.type)) tidyType(s.type);
     tidyRoles(s);
     if (isObj(s.fonts)) ['em', 'strong', 'code'].forEach(slot => tidyFontSlot(s.fonts, slot));

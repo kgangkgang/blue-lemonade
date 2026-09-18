@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 37개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build f0adbf039452) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 40개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build a91e4687d805) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 10px;
@@ -2678,8 +2678,12 @@ body.salty.salty-unify-regex :is(#chat, .cg-root) .mes_text .custom-dem-track-re
   background: var(--salty-accent-13) !important;
   border-color: var(--salty-accent-28) !important;
 }
-body.salty.salty-unify-inline :is(#chat .mes, .cg-root) .mes_text font[color],
-body.salty.salty-unify-inline :is(#chat .mes, .cg-root) .mes_text [style*="color"]:is(bl-s, *) {
+body.salty.salty-unify-inline:not(.salty-dem-ink) :is(#chat .mes, .cg-root) .mes_text font[color],
+body.salty.salty-unify-inline:not(.salty-dem-ink) :is(#chat .mes, .cg-root) .mes_text [style*="color"]:is(bl-s, *) {
+  color: inherit !important;
+}
+body.salty.salty-unify-inline.salty-dem-ink :is(#chat .mes, .cg-root) .mes_text font[color]:not(:has(q)),
+body.salty.salty-unify-inline.salty-dem-ink :is(#chat .mes, .cg-root) .mes_text [style*="color"]:is(bl-s, *):not(:has(q)) {
   color: inherit !important;
 }
 body.salty.salty-regex-noicons :is(#chat, .cg-root) .mes_text [class*="custom-"][class*="__icon"] {
@@ -15764,6 +15768,106 @@ body.salty.salty-qr-y :is(#send_form #qr--bar, .salty-panel .bl-qr-sample) > #qr
 body.salty.salty-qr-y :is(#send_form #qr--bar, .salty-panel .bl-qr-sample) > :where(.bl-qr-find-sample):is(#bl-s, *) {
   position: relative;
   left: auto !important;
+}
+/* css/36-qr-place.css */
+body.salty.salty-qr-top #send_form > #qr--bar {
+  order: -1;
+  padding-bottom: 4px;
+}
+.salty-panel .bl-qr-sample-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.salty-panel .bl-qr-inputmock {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  order: -1;
+}
+body.salty.salty-qr-top .salty-panel .bl-qr-inputmock {
+  order: 1;
+}
+.salty-panel .bl-qr-inputmock-box {
+  flex: 1 1 auto;
+  padding: 6px 10px;
+  border-radius: 9px;
+  background: var(--bl-hover);
+  color: var(--salty-muted);
+  font-size: 11.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.salty-panel .bl-qr-inputmock-btn {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: var(--bl-card);
+  color: var(--salty-muted);
+  font-size: 11px;
+}
+/* css/37-prompt-ink.css */
+body.salty.salty-dem-ink :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q:is(bl-s, *),
+body.salty.salty-dem-ink :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) :is(q em),
+body.salty.salty-dem-ink :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) :is(q i),
+body.salty.salty-dem-ink :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) :is(q strong),
+body.salty.salty-dem-ink :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) :is(q b) {
+  color: inherit !important;
+}
+body.salty.salty-dem-ink:not(.salty-dem-ink-marker) :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q {
+  background: none !important;
+  padding: 0;
+}
+body.salty.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q {
+  -webkit-text-fill-color: var(--salty-marker-ink, var(--salty-dialogue));
+  background-color: currentColor !important;
+  background-image: none !important;
+  -webkit-mask: var(--salty-marker-bg);
+  mask: var(--salty-marker-bg);
+}
+body.salty.salty-dlg-full.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q {
+  -webkit-mask: none;
+  mask: none;
+  border-radius: 5px;
+}
+body.salty.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q q {
+  background-color: transparent !important;
+  -webkit-mask: none;
+  mask: none;
+}
+body.salty.salty-demink-outline :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text font[color],
+body.salty.salty-demink-outline :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text [style*="color"]:is(bl-s, *) {
+  -webkit-text-stroke: var(--salty-demink-outline-w, 0) var(--salty-demink-outline-c, transparent);
+  paint-order: stroke fill;
+}
+body.salty.salty-demink-shadow :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text font[color]:not(#salty-none),
+body.salty.salty-demink-shadow :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text [style*="color"]:is(bl-s, *):not(#salty-none),
+body.salty.salty-demink-shadow :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text :is(font[color], [style*="color"]) :not(#salty-none) {
+  text-shadow: var(--salty-demink-shadow, none) !important;
+}
+body.salty.salty-dem-ink :is(#salty-nochat, .salty-preview) .mes .mes_text font.bl-ink-sample[color] {
+  color: var(--bl-ink) !important;
+}
+.salty-panel .bl-ink-line {
+  margin-top: 6px;
+}
+/* css/38-outline.css */
+body.salty.salty-outline :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text,
+body.salty .salty-sample.salty-outline {
+  -webkit-text-stroke: var(--salty-outline-w, 0) var(--salty-outline-c, transparent);
+  paint-order: stroke fill;
+}
+body.salty:is(.salty-outline, .salty-demink-outline) :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text :where(code):is(.bl-s, *),
+body.salty:is(.salty-outline, .salty-demink-outline) :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text :where(pre):is(.bl-s, *),
+body.salty:is(.salty-outline, .salty-demink-outline) :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text .fa-solid,
+body.salty:is(.salty-outline, .salty-demink-outline) :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text .fa-regular,
+body.salty:is(.salty-outline, .salty-demink-outline) :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text .fa-brands,
+body.salty:is(.salty-outline, .salty-demink-outline) :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text [class*="custom-dem-"] {
+  -webkit-text-stroke: 0;
 }
 /* css/99-lazy-panel.css */
 #salty-lazy-panel-start {}

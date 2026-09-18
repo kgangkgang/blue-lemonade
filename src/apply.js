@@ -226,6 +226,13 @@ function textShadow(shadow) {
     return `${(Math.cos(rad) * d).toFixed(2)}px ${(Math.sin(rad) * d).toFixed(2)}px ${Number(shadow.blur) || 0}px rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
+/** 글자 외곽선 (3.7.0): -webkit-text-stroke 색 — 두께는 --salty-outline-w 로 따로 (끄면 0) */
+function outlineInk(outline) {
+    const [r, g, b] = parseColor(outline?.color || '#000000');
+    const a = Math.min(1, Math.max(0, (Number(outline?.alpha) ?? 100) / 100));
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
+
 /** 글자 그림자가 켜진 대상 → body · 미리보기 문단 클래스 (salty-shadow-text · -dialogue · -em · -strong · -code) */
 function shadowClasses(s) {
     const sh = s.shadow;
@@ -235,7 +242,7 @@ function shadowClasses(s) {
 
 /** 설정 창 미리보기 문단의 클래스를 설정에 맞춤 */
 export function syncSamples(s = getSettings()) {
-    const name = `salty-sample salty-dlg-${s.dialogue.style} salty-align-${s.type.align}${s.type.indent ? ' salty-indent' : ''}${shadowClasses(s).map(c => ` ${c}`).join('')}`;
+    const name = `salty-sample salty-dlg-${s.dialogue.style} salty-align-${s.type.align}${s.type.indent ? ' salty-indent' : ''}${shadowClasses(s).map(c => ` ${c}`).join('')}${s.outline?.on ? ' salty-outline' : ''}`; // 3.7.0 외곽선(전체)은 표본에도 — 데우스 가독성 향상은 표본에 색칠한 글자가 없어 안 보인다
     document.querySelectorAll('.salty-sample').forEach((el) => { if (el.className !== name) el.className = name; });
 }
 
@@ -408,6 +415,12 @@ export function applyAll() {
         '--salty-dialogue-weight': String(s.dialogue.weight),
         '--salty-marker-bg': markerBackground(s, pal.marker),
         '--salty-shadow': textShadow(s.shadow),
+        '--salty-outline-w': `${Number(s.outline?.width) || 0}px`, // 3.7.0 글자 외곽선 두께 (css/38-outline.css)
+        '--salty-outline-c': outlineInk(s.outline),
+        // 3.7.1 데우스 대사 색상 가독성 향상 — 프롬프트가 칠한 글자에만 (css/37-prompt-ink.css)
+        '--salty-demink-outline-w': `${Number(s.deus?.ink?.outline?.width) || 0}px`,
+        '--salty-demink-outline-c': outlineInk(s.deus?.ink?.outline),
+        '--salty-demink-shadow': textShadow(s.deus?.ink?.shadow),
         '--salty-marker-ink': pal.markerInk || pal.dialogue, // 형광펜 안 글자색 — 어두운 바탕에 밝은 레몬 띠(레몬 블루 나이트)는 어두운 글자
         // 글자색 톤 맞추기(tone.js)의 채도 · 밝기 — 지금 팔레트가 나이트면 dark 값 (2.6.1 슬라이더)
         '--bl-tone-s': `${(s.chat.tone?.[pal.mode === 'dark' ? 'dark' : 'light']?.s ?? (pal.mode === 'dark' ? 70 : 58))}%`,
@@ -491,11 +504,17 @@ export function applyAll() {
         shadowClasses(s).forEach(c => want.add(c)); // 글자 그림자 대상별 클래스 (style.css 끝 규칙)
         if (s.chat.bgImage) want.add('salty-bgimg');
         if (s.chat.qrScroll === 'y') want.add('salty-qr-y'); // 3.5.4 퀵 리플라이 세로 스크롤 (css/35-qr-bar.css)
+        if (s.chat.qrPlace === 'top') want.add('salty-qr-top'); // 3.7.0 퀵 리플라이 줄을 입력창 위로 (css/36-qr-place.css)
+        if (s.outline?.on) want.add('salty-outline'); // 3.7.0 글자 외곽선 — 메시지 본문 전체 (css/38-outline.css)
         const deus = !!s.deus?.on; // 3.4.0 프롬프트 › 데우스 엑스 마키나 2.3 호환 — 끄면 아래 데우스 카드 클래스가 모두 빠진다
         if (deus && s.chat.unifyRegex) want.add('salty-unify-regex');   // 정규식 카드 색 통일 (style.css '색 통일' 블록)
         if (s.chat.unifyInline) want.add('salty-unify-inline'); // 본문에 적힌 글자색 무시
         else if (s.chat.toneInline) want.add('salty-tone');     // 글자색의 색상만 두고 채도 · 밝기 맞춤 (tone.js + style.css 끝 규칙)
         if (deus && !s.chat.regexIcons) want.add('salty-regex-noicons'); // 정규식 카드의 이모티콘 숨김
+        if (deus && s.chat.demInk) want.add('salty-dem-ink');            // 3.7.0 프롬프트가 칠한 대사 색 그대로 (css/37-prompt-ink.css)
+        if (deus && s.chat.demInk && s.chat.demInkMode === 'marker') want.add('salty-dem-ink-marker'); // 3.7.1 그 색을 형광펜 띠에 (글자는 테마 색)
+        if (deus && s.deus?.ink?.outline?.on) want.add('salty-demink-outline'); // 3.7.1 데우스 대사 색상 가독성 향상 — 외곽선
+        if (deus && s.deus?.ink?.shadow?.on) want.add('salty-demink-shadow');   //                                  — 그림자
         if (deus && s.chat.demSkin) want.add('salty-dem-skin');          // 3.1.0 데우스 카드 스킨 (css/30-dem-skin.css)
         if (deus && s.chat.demSkin && s.chat.demFold !== false) want.add('salty-dem-fold'); // 폰: 트래커 한 줄 · 펼쳐 오는 카드 접기 (demskin.js)
         if (s.type.indent) want.add('salty-indent');
