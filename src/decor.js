@@ -24,9 +24,9 @@ export function prepareDecor(settings) {
     const owners = ['image', 'profile', 'userProfile'];
     if (settings.enabled) for (const owner of owners) {
         const d = settings[owner]?.decor;
-        if (d?.presetId && !d.libraryId && d.presetVersion !== 2 && FRAME_PRESETS.some(([id]) => id === d.presetId)) {
+        if (d?.presetId && !d.libraryId && d.presetVersion !== 3 && FRAME_PRESETS.some(([id]) => id === d.presetId)) {
             const next = drawPreset(d.presetId, d);
-            d.art = next.art; d.mask = next.mask; d.ratio = next.ratio; d.presetVersion = 2;
+            d.art = next.art; d.mask = next.mask; d.ratio = next.ratio; d.presetVersion = 3;
         }
     }
 }

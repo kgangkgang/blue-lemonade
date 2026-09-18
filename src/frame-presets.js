@@ -53,23 +53,23 @@ export function drawPreset(id, options = {}) {
             return [Math.cos(angle) * (w / 2 - 9) * r, Math.sin(angle) * (h / 2 - 9) * r];
         });
         const blot = (ctx, scale) => { ctx.beginPath(); for (const [x, y] of points) ctx.lineTo(w / 2 + x * scale, h / 2 + y * scale); ctx.closePath(); ctx.fill(); };
-        // Full photograph in a paint-shaped mask; only the irregular rim fades.
-        m.fillStyle = '#fff'; blot(m, .91);
-        for (let i = 0; i < 20; i++) { m.globalAlpha = .055; blot(m, .92 + i * .005); }
+        // Broad, translucent washes instead of a hard cut-out with a thin rim.
+        m.fillStyle = '#fff'; blot(m, .62);
+        for (let i = 0; i < 48; i++) { m.globalAlpha = .065; blot(m, .62 + i * .009); }
         m.globalAlpha = 1;
         // Dry-brush scratches follow the edge, keeping faces in the center clear.
         m.globalCompositeOperation = 'destination-out'; m.strokeStyle = '#000';
         for (let i = 0; i < 100; i++) {
-            const [x, y] = points[Math.floor(random() * points.length)], reach = .88 + random() * .1;
+            const [x, y] = points[Math.floor(random() * points.length)], reach = .73 + random() * .22;
             m.globalAlpha = .08 + random() * .28; m.lineWidth = .3 + random() * 1.8;
             m.beginPath(); m.moveTo(w / 2 + x * reach, h / 2 + y * reach); m.lineTo(w / 2 + x * 1.035 + (random() - .5) * 9, h / 2 + y * 1.035); m.stroke();
         }
         m.globalCompositeOperation = 'source-over'; m.globalAlpha = 1;
         const wash = c.createLinearGradient(0, 0, w, h); wash.addColorStop(0, color); wash.addColorStop(1, accent);
         c.fillStyle = wash;
-        for (let i = 0; i < 14; i++) { c.globalAlpha = .04; blot(c, .97 + i * .004); }
-        // Leave the photograph untinted; pigment only peeks outside its edge.
-        c.globalAlpha = 1; c.globalCompositeOperation = 'destination-out'; blot(c, .95); c.globalCompositeOperation = 'source-over';
+        for (let i = 0; i < 30; i++) { c.globalAlpha = .018; blot(c, .68 + i * .014); }
+        // Pigment diffuses into the translucent perimeter without a solid outline.
+        c.globalAlpha = 1; c.globalCompositeOperation = 'destination-out'; c.drawImage(mask, 0, 0); c.globalCompositeOperation = 'source-over';
     } else if (id === 'browser') {
         window = [12, 48, w - 24, h - 60, 9];
         c.fillStyle = color; round(c, 7, 7, w - 14, h - 14, 15, true);
@@ -137,7 +137,7 @@ export function drawPreset(id, options = {}) {
     if (id !== 'watercolor') { c.globalCompositeOperation = 'destination-out'; c.drawImage(mask, 0, 0); c.globalCompositeOperation = 'source-over'; }
     for (const draw of overlays) draw();
     const result = { on: true, art: art.toDataURL('image/png'), mask: mask.toDataURL('image/png'), ratio: baseWidth / baseHeight,
-        presetVersion: 2, presetId: id, presetColor: color, presetAccent: accent, frameWidth, frameHeight,
+        presetVersion: 3, presetId: id, presetColor: color, presetAccent: accent, frameWidth, frameHeight,
         radius: 0, opacity: 100, zoom: 100, x: 50, y: 50, fit: 'cover' };
     // Bounded cache: slider/color edits cannot retain an unlimited set of PNGs.
     if (!standard && cache.size >= 8) cache.delete(cache.keys().next().value);

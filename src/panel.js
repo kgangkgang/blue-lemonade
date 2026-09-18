@@ -17,7 +17,8 @@ import { PRESETS, MAX_STYLES, captureStyle, applyStyleData, sameStyle, sharePayl
 import { charStyleModule } from './features.js';
 import { splashState, checkSplash, SPLASH_COMMAND, SPLASH_IMPORT } from './splash.js';
 import { decodeAnyImage, imageWidth, imageHeight, IMAGE_ACCEPT } from './imagedecode.js';
-import { bindQrScroller } from './layout.js';
+import { bindSettingsSearch, searchMarkup, paintSettingsSearch } from './settings-search.js';
+import { bindPreviewViews } from './preview-view.js';
 
 // 브랜드 레몬 — ✦ 메뉴 · 확장 서랍 · 스플래시와 같은 속찬 레몬(폰트어썸 fa-lemon U+F094) 윤곽 그대로
 export const MARK = '<svg viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path transform="translate(0 448) scale(1 -1)" d="M448 352Q447 379 429 397Q411 415 384 416Q374 416 365 413Q348 407 330 404Q311 400 294 404Q237 418 180 399Q124 379 80 336Q37 292 17 236Q-2 179 12 122Q16 105 12 86Q9 68 3 51Q0 42 0 32Q1 5 19 -13Q37 -31 64 -32Q74 -32 83 -29Q100 -23 118 -20Q137 -16 154 -20Q211 -34 268 -15Q324 5 368 48Q411 92 431 148Q450 205 436 262Q432 279 436 298Q439 316 445 333Q448 342 448 352ZM213 321Q171 308 139 277Q108 245 95 203Q90 190 76 193Q62 198 65 212Q80 262 117 299Q154 336 204 351Q218 354 223 340Q226 326 213 321Z"/></svg>';
@@ -91,6 +92,27 @@ export function mountPanel(container, { popup = false } = {}) {
     container.appendChild(root);
     panels.add(root);
     bind(root);
+    bindSettingsSearch(root, entry => {
+        ui.tab = entry.tab; ui.subs[entry.tab] = entry.sub; ui.subOpen = false; ui.picker = null;
+        store('salty_tab', ui.tab); store('salty_subs', JSON.stringify(ui.subs));
+        refreshPanels();
+        const path = entry.path ? root.querySelector(`[data-toggle="${entry.path}"], [data-path="${entry.path}"]`) : null;
+        const label = entry.anchor ? [...root.querySelectorAll('[data-search-anchor]')].find(el => el.dataset.searchAnchor === entry.anchor) : null;
+        const target = path?.closest('.salty-row, .salty-stack') || label || root.querySelector('.salty-sec');
+        if (target) {
+            const box = scrollBox(root);
+            const nav = root.querySelector('.salty-nav');
+            target.classList.add('bl-search-target'); target.tabIndex = -1; target.focus({ preventScroll: true });
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                if (!target.isConnected) return;
+                const preview = target.matches('.salty-sec') ? null : root.querySelector('.salty-prevbox');
+                const offset = nav.offsetHeight + (preview?.offsetHeight || 0) + 12;
+                if (box) box.scrollTop += target.getBoundingClientRect().top - box.getBoundingClientRect().top - offset;
+                else window.scrollBy({ top: target.getBoundingClientRect().top - offset, behavior: 'instant' });
+            }));
+            setTimeout(() => target.classList.remove('bl-search-target'), 2200);
+        }
+    });
     render(root);
     return root;
 }
@@ -105,6 +127,7 @@ export function noticeSeenChanged() {
 export function refreshPanels() {
     for (const root of panels) {
         if (!root.isConnected) {
+            root._previewCleanup?.();
             panels.delete(root);
             continue;
         }
@@ -181,7 +204,7 @@ function qrSample(showFind = true) {
 }
 
 function row(label, control, note = '') {
-    return `<div class="salty-row"><span>${label}${note ? `<small>${note}</small>` : ''}</span>${control}</div>`;
+    return `<div class="salty-row" data-search-anchor="${esc(label)}"><span>${label}${note ? `<small>${note}</small>` : ''}</span>${control}</div>`;
 }
 
 // 고르기 버튼이 길 때: 라벨 위, 버튼 아래
@@ -191,7 +214,7 @@ function stack(label, control, note = '') {
 
 // 묶음 제목 (+ 옆에 옅은 예시)
 function cap(label, hint = '') {
-    return `<div class="salty-label">${label}${hint ? ` <span class="salty-hint">${hint}</span>` : ''}</div>`;
+    return `<div class="salty-label" data-search-anchor="${esc(label)}">${label}${hint ? ` <span class="salty-hint">${hint}</span>` : ''}</div>`;
 }
 
 // 라벨 속 *기울임* · **굵게**: 별표는 옅게 남기고 글자는 실제로 기울이거나 굵게 (먼저 이스케이프, 태그는 여기서만)
@@ -1035,7 +1058,7 @@ function profileControls(s, prefix = 'profile') {
     const p = s[prefix];
     const range = (key, label, step = 1) => slider(`${prefix}.${key}`, label, ...PROFILE_RANGE[key], step);
     return `${chatPreview()}<div class="salty-group">
-        ${stack(prefix === 'userProfile' ? '내 프로필' : '캐릭터 프로필', seg(`${prefix}.mode`, [...(prefix === 'userProfile' ? [['inherit', '기존 설정 유지']] : []), ['none', '프로필 없음'], ['small', '작은 프로필'], ['banner', '상단 큰 프로필']]), prefix === 'userProfile' ? '내가 보낸 메시지의 사진만 바꿔요. 기존 설정 유지는 실리태번의 아바타 숨김 설정을 따라요.' : '캐릭터 메시지마다 사진이 위에, 글이 아래에 놓여요')}
+        ${stack(prefix === 'userProfile' ? '내 프로필' : '캐릭터 프로필', seg(`${prefix}.mode`, [['none', '프로필 없음'], ['small', '작은 프로필'], ['banner', '상단 큰 프로필']]), prefix === 'userProfile' ? '내가 보낸 메시지의 사진만 바꿔요.' : '캐릭터 메시지마다 사진이 위에, 글이 아래에 놓여요')}
     ${prefix === 'userProfile' && p.mode === 'small' ? stack('작은 사진 위치', seg(`${prefix}.side`, [['left', '왼쪽'], ['right', '오른쪽']])) : ''}
     </div>${p.mode === 'banner' ? `
     ${cap('사진 크기 · 위치')}<div class="salty-group">
@@ -1090,7 +1113,7 @@ function tabChat(s, sub) {
             ${s.chat.streamFade && stFade ? row('실리태번 페이드 인', toggle('st.streamFadeIn', true), '끄면 빨라지고 위 옵션이 대신해요') : ''}
         </div>
         ${cap('퀵 리플라이')}<div class="salty-group">
-            ${qrSample(s.chat.qrFind !== false)}
+            <div class="bl-inline-preview" data-pv="qr">${qrSample(s.chat.qrFind !== false)}</div>
             ${row('QR 검색 버튼', toggle('chat.qrFind', s.chat.qrFind !== false), '돋보기만 숨겨요. 빠른 답장 버튼은 그대로 사용할 수 있어요')}
             ${stack('자리', seg('chat.qrPlace', [['bottom', '입력창 아래'], ['top', '입력창 위']], 'bottom'), '입력창 옆에 아이콘이 많으면 위가 넓어요')}
             ${stack('넘기기', seg('chat.qrScroll', [['x', '가로 스크롤'], ['y', '세로 스크롤']]))}
@@ -1108,7 +1131,7 @@ function tabChat(s, sub) {
             ${slider('chat.weatherAngle', '각도', -45, 45, 1, -9)}
         </div>` : ''}
         ${cap('폰')}<div class="salty-group">
-            ${phoneMock(s)}
+            <div class="bl-inline-preview" data-pv="phone">${phoneMock(s)}</div>
             ${row('스크롤하면 바 숨기기', toggle('reader.autoHide', !!s.reader?.autoHide), '아래로 읽으면 숨고, 살짝 올리거나 누르면 나와요')}
             ${row('한 손 버튼 줄', toggle('onehand.on', !!s.onehand?.on), '입력창 위에 스와이프 · 사칭 · 이어 쓰기 · 다시 생성')}
             ${s.onehand?.on ? stack('버튼', chips([['onehand.swipe', '스와이프'], ['onehand.imp', '사칭'], ['onehand.cont', '이어 쓰기'], ['onehand.regen', '다시 생성']])) : ''}
@@ -1369,14 +1392,16 @@ function render(root) {
         <div class="salty-checks">${issues.map((issue, i) =>
             `<div class="salty-check"><span>${issue.text}</span>${issue.fix ? `<button class="salty-btn" data-act="fix" data-i="${i}">${issue.fix}</button>` : ''}</div>`).join('')}</div>
         <div class="salty-nav">
+            ${searchMarkup(root._settingsQuery || '')}
             <div class="salty-tabs">${TABS.map(([id, label]) =>
         `<button data-act="tab" data-tab="${id}" class="${ui.tab === id ? 'on' : ''}" aria-pressed="${ui.tab === id}">${label}</button>`).join('')}</div>
             ${subSelect}
         </div>
         <section class="salty-sec" data-tab="${ui.tab}" data-sub="${sub}">${section}</section>`;
     bindCustomBuilder(root);
-    root.querySelectorAll('[data-qr-sample]').forEach(bindQrScroller); // 3.5.4 퀵 리플라이 미리보기 줄
+    paintSettingsSearch(root);
     fillPreviews(root); // 미리보기 무대 다시 꽂기 (만들지 않고 옮겨 담기만)
+    bindPreviewViews(root, `${ui.tab}/${ui.subs[ui.tab]}`);
     syncSamples(s); // 미리보기 문단 클래스 맞추기
 
     // 색 고르기: 처음 그릴 때 나는 change 는 무시하고, 사용자가 만진 뒤부터 저장

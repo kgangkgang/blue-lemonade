@@ -85,7 +85,7 @@ export const DEFAULTS = {
     image: { decor: { ...DECOR_DEFAULTS }, ...FRAME_DEFAULTS, layout: 'bleed', shape: 'rect', fit: 'ratio', maxh: 78, height: 40, blendWhite: true, cutoutSame: true, fade: 'soft', fadeY: 10, fadeX: 0, angle: 3, radius: 14, cornerCut: 10, scratchAmount: 45, scratchDirection: 'straight', scratchTexture: 'sharp', edge: 'none', edgeAuto: true, edgeSideTop: true, edgeSideRight: true, edgeSideBottom: true, edgeSideLeft: true, edgeThick: 1, edgeAlpha: 30, edgeGlow: 0, mask: '', maskFit: 'stretch', masks: [], maskId: '' }, // shape: rect | custom(mask = 투명 PNG data URL, maskFit: stretch | contain) — angle · cornerCut · scratch* 는 뺀 모양의 옛 값(CSS 는 남아 있음) · fit(크기): ratio 비율 유지(maxh = 최대 높이) | fixed 높이 맞춤(height = 높이), 둘 다 화면 높이 % · fade(흐림): off | soft | medium | strong · angle: 대각선 기울기(도)
 };
 
-DEFAULTS.userProfile = { ...structuredClone(DEFAULTS.profile), mode: 'inherit', side: 'left' };
+DEFAULTS.userProfile = { ...structuredClone(DEFAULTS.profile), mode: 'none', side: 'left' };
 
 export const PROFILE_RANGE = { screenHeight: [10, 100], maxHeight: [10, 100], visibleHeight: [10, 100], nameSize: [10, 60], nameWeight: [100, 900], nameSpacing: [-10, 30], nameHeight: [1, 2.5], headerGap: [0, 32], metaSize: [8, 24], metaOpacity: [20, 100], buttonGap: [0, 24], nameOutline: [0, 3], nameShadowBlur: [0, 20], nameShadowY: [-10, 10], nameShadowAlpha: [0, 100], width: [30, 100], height: [100, 720], positionX: [0, 100], positionY: [0, 100], radius: [0, 80], gap: [0, 64], blur: [0, 16], opacity: [20, 100], fadeY: [0, 45], fadeX: [0, 45] };
 
@@ -349,7 +349,9 @@ export function getSettings() {
     migrate(ext[KEY]);
     // 3.4.0 전 설정: 데우스 카드 스킨이나 트래커 날씨를 쓰던 사람이면 호환을 켠 채로 시작 (한 번만)
     const firstDeus = ext[KEY].deus === undefined;
+    const migrateUserMode = !ext[KEY].userProfile || ext[KEY].userProfile.mode === 'inherit';
     const s = fill(ext[KEY], DEFAULTS);
+    if (migrateUserMode) s.userProfile.mode = SillyTavern.getContext().powerUserSettings?.hideChatAvatars_enabled || s.chat.user === 'bubble' ? 'none' : 'small';
     if (TILT_RENAME[s.dialogue?.tilt]) s.dialogue.tilt = TILT_RENAME[s.dialogue.tilt];
     if (isObj(s.dialogue)) tidyDialogue(s.dialogue);
     tidyShadow(s);
@@ -375,7 +377,7 @@ export function getSettings() {
             if (s[owner].mode === 'small' && SillyTavern.getContext().powerUserSettings?.hideChatAvatars_enabled) s[owner].mode = 'none';
             s[owner].modeVersion = 1;
         }
-        if (![...['none', 'small', 'banner'], ...(owner === 'userProfile' ? ['inherit'] : [])].includes(s[owner].mode)) s[owner].mode = DEFAULTS[owner].mode;
+        if (!['none', 'small', 'banner'].includes(s[owner].mode)) s[owner].mode = DEFAULTS[owner].mode;
         if (owner === 'userProfile' && !['left', 'right'].includes(s[owner].side)) s[owner].side = 'left';
         if (!['cover', 'contain'].includes(s[owner].fit)) s[owner].fit = 'cover';
         if (!['column', 'bleed', 'inset'].includes(s[owner].layout)) s[owner].layout = 'column';
