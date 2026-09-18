@@ -8,6 +8,13 @@ import { getSettings, saveSettings } from './settings.js';
 
 export const NOTICES = [
 {
+    "version": "3.9.2",
+    "date": "2026-09-19",
+    "items": [
+        "되돌리기·다시 실행 알림의 닫기 ×를 없앴어요. 알림을 누르면 바로 닫히고, 시간이 지나면 자동으로 사라져요."
+    ]
+},
+{
     "version": "3.9.1",
     "date": "2026-09-19",
     "items": [

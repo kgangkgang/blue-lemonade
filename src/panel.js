@@ -125,7 +125,7 @@ function stepHistory(redo) {
     if (!changes.length) { syncHistoryButtons(); return; }
     saveSoon(); applyAll(); refreshPanels();
     const rows = changes.slice(0, 8).map(c => `<div>${esc(historyLabel(c.path))}: <b>${esc(historyValue(c.from, c.path))}</b> → <b>${esc(historyValue(c.to, c.path))}</b></div>`).join('');
-    toastr.info(`<div class="bl-history-notice">${rows}${changes.length > 8 ? `<small>외 ${changes.length - 8}개 설정도 복원했어요.</small>` : ''}</div>`, redo ? '다시 실행했어요' : '되돌렸어요', { escapeHtml: false, closeButton: true, timeOut: 6500, extendedTimeOut: 10000 });
+    toastr.info(`<div class="bl-history-notice">${rows}${changes.length > 8 ? `<small>외 ${changes.length - 8}개 설정도 복원했어요.</small>` : ''}</div>`, redo ? '다시 실행했어요' : '되돌렸어요', { escapeHtml: false, closeButton: false, tapToDismiss: true, timeOut: 6500, extendedTimeOut: 10000 });
 }
 
 function settingsChanges(s) {
