@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 44개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 9ea875aa2ad5) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 44개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build e006b194bf30) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 10px;
@@ -2054,6 +2054,14 @@ body.salty #chat .mes .mes_file_container {
   border-radius: var(--bl-r-md) !important;
   background: var(--bl-card) !important;
   box-shadow: var(--bl-e1) !important;
+}
+body.salty:not(.expandMessageActions) #chat .mes .extraMesButtons.bl-positioned-menu {
+  position: fixed !important; position-anchor: auto !important; position-try-fallbacks: none !important;
+  position-visibility: always !important; inset: auto !important;
+  left: var(--bl-menu-x, 8px) !important; top: var(--bl-menu-y, 8px) !important;
+  max-height: var(--bl-menu-height, calc(100dvh - 16px)) !important;
+  max-width: min(286px, calc(100dvw - 16px)) !important;
+  overflow: auto !important; overscroll-behavior: contain; border: 0;
 }
 /* css/06-chat-text.css */
 body.salty #chat .mes .mes_text {

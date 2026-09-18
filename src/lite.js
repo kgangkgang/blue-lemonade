@@ -1,3 +1,4 @@
+import { positionMessageMenu } from './menu-position.js';
 // 가볍게 (2.5.2): 테마 설정창 미리보기 전용 CSS 는 설정창을 열 때까지 빼 둔다.
 //
 // css/23-preview.gen.css (style.css 안의 미리보기 사본)는 #chat 규칙을 :is(#salty-nochat, .salty-preview) · .salty-sample 용으로 복사한 것이라
@@ -228,7 +229,7 @@ export function uiOpenKnown() {
 export function startMenuOpenMark() {
     const chat = document.getElementById('chat');
     if (!chat) return;
-    const sync = (el) => el.closest('.mes')?.classList.toggle('bl-menu-open', el.classList.contains('visible'));
+    const sync = (el) => { const visible = el.classList.contains('visible'); el.closest('.mes')?.classList.toggle('bl-menu-open', visible); positionMessageMenu(el, visible); };
     // 2.9.4: ··· 메뉴 위치가 쓰는 #chat 앵커(--salty-chat)는 열린 메뉴가 있을 때만 — style.css 가 #chat.bl-mes-menu-open 에만 이름을 준다
     const syncChat = () => chat.classList.toggle('bl-mes-menu-open', !!chat.querySelector(':scope > .mes.bl-menu-open'));
     chat.querySelectorAll('.extraMesButtons').forEach(sync);

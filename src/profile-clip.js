@@ -21,13 +21,13 @@ function flush() {
     }
     dirty.clear();
     for (const [img, clip] of writes) {
-        if (clip) img.style.setProperty('--bl-photo-clip', clip);
-        else img.style.removeProperty('--bl-photo-clip');
+        if (clip && img.style.getPropertyValue('--bl-photo-clip') !== clip) img.style.setProperty('--bl-photo-clip', clip);
+        else if (!clip) img.style.removeProperty('--bl-photo-clip');
     }
 }
 function queue(img) { if (img) dirty.add(img); if (!frame) frame = requestAnimationFrame(flush); }
 function scan(root) {
-    if (root.nodeType !== 1) return;
+    if (root.nodeType !== 1 || (root.tagName !== 'IMG' && !root.querySelector('img'))) return;
     const imgs = [...root.querySelectorAll(selector)]; if (root.matches(selector)) imgs.push(root);
     for (const img of imgs) { if (!tracked.has(img)) { tracked.add(img); resize.observe(img); } queue(img); }
 }
@@ -48,7 +48,7 @@ export function syncProfileClip(settings) {
         resize ||= new ResizeObserver(entries => entries.forEach(e => queue(e.target)));
         observer ||= new MutationObserver(records => {
             for (const rec of records) for (const node of rec.addedNodes) scan(node);
-            queue();
+            if (records.some(rec => [...rec.removedNodes].some(node => node.nodeType === 1 && (node.tagName === 'IMG' || node.querySelector('img'))))) queue();
         });
         for (const root of roots) { observer.observe(root, { childList: true, subtree: true }); root.addEventListener('load', loaded, true); scan(root); }
     }

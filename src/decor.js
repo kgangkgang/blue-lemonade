@@ -1,4 +1,4 @@
-export const DECOR_DEFAULTS = { on: false, art: '', mask: '', ratio: 1, opacity: 100, zoom: 100, x: 50, y: 50, fit: 'cover', radius: null };
+export const DECOR_DEFAULTS = { on: false, art: '', mask: '', ratio: 1, opacity: 100, zoom: 100, x: 50, y: 50, fit: 'cover', radius: null, frameWidth: 100, frameHeight: 100 };
 const validated = new WeakMap();
 export function tidyDecor(owner) {
     const d = owner.decor;
@@ -8,7 +8,7 @@ export function tidyDecor(owner) {
     const previous = validated.get(d);
     for (const key of ['art', 'mask']) if (d[key] !== previous?.[key] && (typeof d[key] !== 'string' || d[key].length > 4000000 || !/^data:image\/png;base64,[a-z\d+/=]+$/i.test(d[key]))) d[key] = '';
     if (!previous || previous.art !== d.art || previous.mask !== d.mask) validated.set(d, { art: d.art, mask: d.mask });
-    for (const [key, lo, hi] of [['ratio', 0.1, 10], ['opacity', 0, 100], ['zoom', 100, 200], ['x', 0, 100], ['y', 0, 100]]) {
+    for (const [key, lo, hi] of [['frameWidth', 50, 200], ['frameHeight', 50, 200], ['ratio', 0.1, 10], ['opacity', 0, 100], ['zoom', 100, 200], ['x', 0, 100], ['y', 0, 100]]) {
         const n = Number(d[key]); d[key] = Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : DECOR_DEFAULTS[key];
     }
     if (!['cover', 'contain'].includes(d.fit)) d.fit = 'cover';
@@ -16,7 +16,7 @@ export function tidyDecor(owner) {
 }
 export const hasDecor = d => !!(d?.on && d.art && d.mask);
 export function decorVars(d, prefix, radius = 0) {
-    return { [`--bl-${prefix}-decor-ratio`]: String(d.ratio), [`--bl-${prefix}-decor-opacity`]: String(d.opacity / 100),
+    return { [`--bl-${prefix}-decor-ratio`]: String(d.ratio * (d.frameWidth || 100) / (d.frameHeight || 100)), [`--bl-${prefix}-decor-opacity`]: String(d.opacity / 100),
         [`--bl-${prefix}-decor-zoom`]: String(d.zoom / 100), [`--bl-${prefix}-decor-position`]: `${d.x}% ${d.y}%`, [`--bl-${prefix}-decor-fit`]: d.fit, [`--bl-${prefix}-decor-radius`]: `${d.radius ?? radius}px` };
 }
 let moduleJob, latest, previousSources = [];

@@ -4,6 +4,7 @@ const PROFILE = '.mes:not([is_user="true"]):not([is_system="true"]):not(.smallSy
 const wrapped = new Map();
 let state = { image: false, profile: false }, observer = null, roots = [], frame = 0;
 const dirty = new Set();
+const hasImage = node => node.nodeType === 1 && (node.tagName === 'IMG' || node.querySelector('img'));
 const maskCache = new Map(), maskSources = {};
 function windowFor(mask) {
     if (maskCache.has(mask)) return maskCache.get(mask);
@@ -12,6 +13,7 @@ function windowFor(mask) {
         const image = new Image();
         image.onerror = () => resolve('0%');
         image.onload = () => {
+            try {
             // Legacy saved frames have only a PNG mask. Read its bounds once so
             // rounding clips the inner photo window, not the outer canvas.
             const scale = Math.min(1, 1200 / Math.max(image.naturalWidth, image.naturalHeight));
@@ -26,6 +28,7 @@ function windowFor(mask) {
             }
             resolve(right < 0 ? '0%' : `${top / h * 100}% ${(w - right - 1) / w * 100}% ${(h - bottom - 1) / h * 100}% ${left / w * 100}%`);
             canvas.width = canvas.height = 1;
+            } catch { resolve('0%'); }
         };
         image.src = mask;
     });
@@ -69,10 +72,17 @@ function flush() {
     frame = 0;
     // 직접 만든 감싸기 요소의 변경 알림은 남기지 않는다.
     const queued = observer?.takeRecords() || [];
-    for (const rec of queued) for (const node of rec.addedNodes) if (node.nodeType === 1) dirty.add(node);
+    for (const rec of queued) for (const node of rec.addedNodes) if (hasImage(node)) dirty.add(node);
     observer?.disconnect();
     for (const [img, info] of wrapped) {
-        if (!info.host.contains(img)) { wrapped.delete(img); continue; }
+        if (!info.host.contains(img)) {
+            // An extension may replace/remove the photo itself. Preserve its new
+            // nodes and remove our empty shell instead of resurrecting the old image.
+            info.slot.replaceWith(...info.slot.childNodes);
+            if (info.kind === 'profile') { info.host.classList.remove('bl-art-frame'); delete info.host.dataset.blFrame; }
+            else info.host.replaceWith(...info.host.childNodes);
+            wrapped.delete(img); continue;
+        }
         if (!img.isConnected) { undo(img, info); continue; }
         if (!state[info.kind]) undo(img, info);
     }
@@ -87,9 +97,9 @@ export function syncDecorView(settings) {
     if (observer && next.image === state.image && next.profile === state.profile && nextRoots.length === roots.length && nextRoots.every((root, i) => root === roots[i])) return;
     state = next; roots = nextRoots;
     if (!observer) observer = new MutationObserver(records => {
-        for (const rec of records) for (const node of rec.addedNodes) if (node.nodeType === 1) dirty.add(node);
+        for (const rec of records) for (const node of rec.addedNodes) if (hasImage(node)) dirty.add(node);
         // 삭제만 된 경우에도 참조를 해제한다.
-        if (!frame) frame = requestAnimationFrame(flush);
+        if (!frame && (dirty.size || records.some(rec => [...rec.removedNodes].some(hasImage)))) frame = requestAnimationFrame(flush);
     });
     cancelAnimationFrame(frame); frame = 0;
     if (state.image || state.profile) for (const root of roots) dirty.add(root);

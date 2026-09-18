@@ -1,3 +1,4 @@
+import { syncMessageMenus } from './menu-position.js';
 import { syncProfileClip } from './profile-clip.js';
 import { decorVars, syncDecor } from './decor.js';
 import { frameVars } from './frames.js';
@@ -581,6 +582,7 @@ export function applyAll() {
         if (s.image.edge !== 'none' && s.image.edgeAuto && s.image.shape === 'rect') want.add('salty-edge-auto');
     }
     syncProfile(s);
+    syncMessageMenus();
     syncProfileClip(s);
     syncDecor(s);
     // 바뀐 클래스만 만지기 (전부 뗐다 붙이면 매번 화면 전체를 다시 그림)

@@ -1,5 +1,5 @@
 import { syncProfileClip } from './profile-clip.js';
-import { FRAME_PRESETS, FRAME_LIMIT, presetFrame, saveFrame, useFrame, deleteFrame } from './frame-library.js';
+import { refreshPreset, FRAME_PRESETS, FRAME_LIMIT, presetFrame, saveFrame, useFrame, deleteFrame } from './frame-library.js';
 import { syncDecor } from './decor.js';
 import { FRAME_RANGE } from './frames.js';
 import { openCustomBuilder, customBuilder, bindCustomBuilder, setCustomMode, seedCustom, saveCustomPalette } from './custompalette.js';
@@ -971,10 +971,14 @@ function decorControls(prefix, o) {
     const thumb = (art, name) => `<img src="${esc(art)}" alt="" loading="lazy"><span>${esc(name)}</span>`;
     return `${cap('장식 액자', '테두리 그림을 그대로 얹고 안쪽에만 사진을 넣어요')}<div class="salty-group bl-decor-controls">
         <span class="bl-frame-label">기본 프리셋</span>
-        <div class="bl-frame-library" role="group" aria-label="액자 프리셋">${FRAME_PRESETS.map(([id, name]) => `<button type="button" data-act="frame-preset" data-owner="${prefix}" data-id="${id}">${thumb(presetFrame(id).art, name)}</button>`).join('')}</div>
+        <div class="bl-frame-library" role="group" aria-label="액자 프리셋">${FRAME_PRESETS.map(([id, name]) => `<button type="button" data-act="frame-preset" data-owner="${prefix}" data-id="${id}" aria-pressed="${d.on && d.presetId === id}">${thumb(presetFrame(id).art, name)}</button>`).join('')}</div>
         <div class="bl-frame-upload-row"><button type="button" class="salty-btn bl-decor-upload" data-act="frame-upload" data-owner="${prefix}">${d.art ? '다른 액자 고르기' : '액자 그림 고르기'}</button><input type="file" data-frame-file="${prefix}" accept="${IMAGE_ACCEPT}" hidden></div>
         ${d.art ? row('장식 액자 사용', toggle(`${prefix}.decor.on`, d.on), '끄면 보통 테두리 설정으로 돌아와요') : '<p class="salty-note">투명 PNG · 배경색 있는 그림 모두 가능해요. 안쪽 공간을 자동으로 찾고 직접 보정할 수 있어요.</p>'}
         ${d.art && d.on ? `${slider(`${prefix}.decor.opacity`, '액자 진하기 (%)', 0, 100, 1)}
+            ${d.presetId ? frameColor(`${prefix}.decor.presetColor`, '액자 바탕색', d.presetColor) + frameColor(`${prefix}.decor.presetAccent`, '액자 포인트색', d.presetAccent) : ''}
+            ${slider(`${prefix}.decor.frameWidth`, '액자 가로 비율 (%)', 50, 200, 1)}
+            ${slider(`${prefix}.decor.frameHeight`, '액자 세로 비율 (%)', 50, 200, 1)}
+            <p class="salty-note">색과 가로·세로를 따로 조절해요. 색 고르기를 닫거나 비율 조절을 마치면 프리셋 장식을 다시 그려요. 불러온 그림은 전체를 늘이거나 줄여요.</p>
             ${slider(`${prefix}.decor.radius`, '안쪽 사진 모서리 (px)', 0, 120, 1, o.radius)}
             ${stack('안쪽 사진', seg(`${prefix}.decor.fit`, [['cover', '가득 채우기'], ['contain', '전체 보이기']]))}
             ${slider(`${prefix}.decor.zoom`, '사진 확대 (%)', 100, 200, 1)}
@@ -2050,6 +2054,11 @@ function bind(root) {
 
     root.addEventListener('change', async (event) => {
         const target = event.target;
+        const designPath = target.dataset.range || target.dataset.colorPath;
+        if (designPath && /^(image|profile)\.decor\.(frameWidth|frameHeight|presetColor|presetAccent)$/.test(designPath)) {
+            update(st => refreshPreset(st[designPath.split('.')[0]].decor), false);
+            return;
+        }
         if (target.matches('input[data-frame-file]') && target.files?.[0]) {
             const owner = target.dataset.frameFile;
             try {
@@ -2082,7 +2091,10 @@ function bind(root) {
                 range.style.setProperty('--fill', fill(Number(range.value), min, max)); // 칸 사이 값이면 슬라이드바는 가까운 칸에 섬 → 그 자리까지 채움
             }
             if (value !== current) {
-                update(st => setPath(st, path, value), false);
+                update(st => {
+                    setPath(st, path, value);
+                    if (/^(image|profile)\.decor\.(frameWidth|frameHeight)$/.test(path)) refreshPreset(st[path.split('.')[0]].decor);
+                }, false);
                 syncWeatherPreview(root, path);
             }
             return;
