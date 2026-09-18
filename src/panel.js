@@ -1,3 +1,5 @@
+import { syncProfileClip } from './profile-clip.js';
+import { FRAME_PRESETS, FRAME_LIMIT, presetFrame, saveFrame, useFrame, deleteFrame } from './frame-library.js';
 import { syncDecor } from './decor.js';
 import { FRAME_RANGE } from './frames.js';
 import { openCustomBuilder, customBuilder, bindCustomBuilder, setCustomMode, seedCustom, saveCustomPalette } from './custompalette.js';
@@ -602,6 +604,7 @@ function fillPreviews(root) {
             }
             else if (kind !== 'regex' && kind !== 'color') classifyAll(stage);
             syncDecor(getSettings());
+            syncProfileClip(getSettings());
         }
     }
 }
@@ -963,9 +966,13 @@ function roleType(label, controls, hint = '') {
 // ───────── 채팅 ─────────
 const frameColor = (path, label, value) => `<div class="salty-row"><span>${label}</span><input type="color" data-color-path="${path}" value="${esc(value)}" aria-label="${label}"></div>`;
 function decorControls(prefix, o) {
-    const d = o.decor;
+    const d = o.decor, settings = getSettings();
+    const selected = settings.frameLibrary.find(item => item.id === d.libraryId);
+    const thumb = (art, name) => `<img src="${esc(art)}" alt="" loading="lazy"><span>${esc(name)}</span>`;
     return `${cap('장식 액자', '테두리 그림을 그대로 얹고 안쪽에만 사진을 넣어요')}<div class="salty-group bl-decor-controls">
-        <button type="button" class="salty-btn bl-decor-upload" data-act="frame-upload" data-owner="${prefix}">${d.art ? '다른 액자 고르기' : '액자 그림 고르기'}</button><input type="file" data-frame-file="${prefix}" accept="${IMAGE_ACCEPT}" hidden>
+        <span class="bl-frame-label">기본 프리셋</span>
+        <div class="bl-frame-library" role="group" aria-label="액자 프리셋">${FRAME_PRESETS.map(([id, name]) => `<button type="button" data-act="frame-preset" data-owner="${prefix}" data-id="${id}">${thumb(presetFrame(id).art, name)}</button>`).join('')}</div>
+        <div class="bl-frame-upload-row"><button type="button" class="salty-btn bl-decor-upload" data-act="frame-upload" data-owner="${prefix}">${d.art ? '다른 액자 고르기' : '액자 그림 고르기'}</button><input type="file" data-frame-file="${prefix}" accept="${IMAGE_ACCEPT}" hidden></div>
         ${d.art ? row('장식 액자 사용', toggle(`${prefix}.decor.on`, d.on), '끄면 보통 테두리 설정으로 돌아와요') : '<p class="salty-note">투명 PNG · 배경색 있는 그림 모두 가능해요. 안쪽 공간을 자동으로 찾고 직접 보정할 수 있어요.</p>'}
         ${d.art && d.on ? `${slider(`${prefix}.decor.opacity`, '액자 진하기 (%)', 0, 100, 1)}
             ${slider(`${prefix}.decor.radius`, '안쪽 사진 모서리 (px)', 0, 120, 1, o.radius)}
@@ -973,6 +980,11 @@ function decorControls(prefix, o) {
             ${slider(`${prefix}.decor.zoom`, '사진 확대 (%)', 100, 200, 1)}
             ${slider(`${prefix}.decor.x`, '사진 좌우 (%)', 0, 100, 1)}${slider(`${prefix}.decor.y`, '사진 위아래 (%)', 0, 100, 1)}
             <button class="salty-btn" data-act="frame-remove" data-owner="${prefix}">액자 지우기</button>` : ''}
+        ${d.art ? `<div class="bl-frame-save-row"><input type="text" data-frame-name="${prefix}" aria-label="액자 이름" maxlength="40" placeholder="액자 이름" value="${esc(selected?.name || '')}"><button type="button" class="salty-btn" data-act="frame-save" data-owner="${prefix}">새 액자로 저장</button></div>` : ''}
+        <span class="bl-frame-label">내 액자 ${settings.frameLibrary.length} / ${FRAME_LIMIT}</span>
+        <p class="salty-note">불러온 액자는 보관함에 저장돼요. 프로필과 에셋에서 함께 골라 쓸 수 있어요.</p>
+        ${settings.frameLibrary.length ? `<div class="bl-frame-library" role="group" aria-label="저장한 액자">${settings.frameLibrary.map(item => `<button type="button" data-act="frame-use" data-owner="${prefix}" data-id="${item.id}" aria-pressed="${d.libraryId === item.id}">${thumb(item.decor.art, item.name)}</button>`).join('')}</div>` : ''}
+        ${selected ? `<div class="bl-frame-actions"><button type="button" class="salty-btn" data-act="frame-rename" data-owner="${prefix}" data-id="${selected.id}">이름 바꾸기</button><button type="button" class="salty-btn" data-act="frame-delete" data-id="${selected.id}">보관함에서 삭제</button></div>` : ''}
     </div>`;
 }
 function nameControls(s) {
@@ -1019,7 +1031,7 @@ function profileControls(s) {
     const p = s.profile;
     const range = (key, label, step = 1) => slider(`profile.${key}`, label, ...PROFILE_RANGE[key], step);
     return `${chatPreview()}<div class="salty-group">
-        ${stack('캐릭터 프로필', seg('profile.mode', [['small', '기존 작은 사진'], ['banner', '상단 큰 사진']]), '캐릭터 메시지마다 사진이 위에, 글이 아래에 놓여요')}
+        ${stack('캐릭터 프로필', seg('profile.mode', [['none', '프로필 없음'], ['small', '작은 프로필'], ['banner', '상단 큰 프로필']]), '캐릭터 메시지마다 사진이 위에, 글이 아래에 놓여요')}
     </div>${p.mode === 'banner' ? `
     ${cap('사진 크기 · 위치')}<div class="salty-group">
         ${stack('사진 배치', seg('profile.layout', [['column', '본문 폭'], ['bleed', '가로 꽉'], ['inset', '작게']]), '가로 꽉은 본문 좌우 여백까지 사진으로 채워요')}
@@ -1616,6 +1628,23 @@ function bind(root) {
                     refreshPanels();
                     showSec(root);
                     break;
+                case 'frame-preset':
+                    update(st => { st[el.dataset.owner].decor = presetFrame(el.dataset.id); });
+                    break;
+                case 'frame-save':
+                    update(st => saveFrame(st, el.dataset.owner, root.querySelector(`[data-frame-name="${el.dataset.owner}"]`)?.value));
+                    break;
+                case 'frame-use':
+                    update(st => useFrame(st, el.dataset.owner, el.dataset.id));
+                    break;
+                case 'frame-rename': {
+                    const name = root.querySelector(`[data-frame-name="${el.dataset.owner}"]`)?.value.trim();
+                    if (name) update(st => { const item = st.frameLibrary.find(x => x.id === el.dataset.id); if (item) item.name = name.slice(0, 40); });
+                    break;
+                }
+                case 'frame-delete':
+                    update(st => deleteFrame(st, el.dataset.id));
+                    break;
                 case 'frame-upload':
                     root.querySelector(`[data-frame-file="${el.dataset.owner}"]`)?.click();
                     break;
@@ -2026,7 +2055,11 @@ function bind(root) {
             try {
                 const { editFrame } = await import('./frame-editor.js');
                 const result = await editFrame(target.files[0]);
-                if (result) update(st => { Object.assign(st[owner].decor, result); });
+                if (result) update(st => {
+                    st[owner].decor = result;
+                    try { saveFrame(st, owner, target.files[0].name.replace(/\.[^.]+$/, '')); }
+                    catch (error) { toastr.warning(error.message, '액자 보관함'); }
+                });
             } catch (error) { toastr.error(error.message, '장식 액자'); }
             target.value = '';
             return;

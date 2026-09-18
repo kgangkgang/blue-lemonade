@@ -1,3 +1,4 @@
+import { syncProfileClip } from './profile-clip.js';
 import { decorVars, syncDecor } from './decor.js';
 import { frameVars } from './frames.js';
 import { syncProfile } from './profile.js';
@@ -554,6 +555,7 @@ export function applyAll() {
         shadowClasses(s).forEach(c => want.add(c)); // 글자 그림자 대상별 클래스 (style.css 끝 규칙)
         if (s.chat.bgImage) want.add('salty-bgimg');
         if (s.chat.qrFind === false) want.add('salty-qr-find-off');
+        want.add(`salty-profile-mode-${s.profile.mode}`);
         if (s.profile.mode === 'banner') { want.add('salty-profile-banner'); want.add(`salty-profile-layout-${s.profile.layout}`); want.add(`salty-profile-sizing-${s.profile.sizing}`); want.add(`salty-profile-${s.profile.headerLayout}`); }
         if (s.chat.qrScroll === 'y') want.add('salty-qr-y'); // 3.5.4 퀵 리플라이 세로 스크롤 (css/35-qr-bar.css)
         if (s.chat.qrPlace === 'top') want.add('salty-qr-top'); // 3.7.0 퀵 리플라이 줄을 입력창 위로 (css/36-qr-place.css)
@@ -579,6 +581,7 @@ export function applyAll() {
         if (s.image.edge !== 'none' && s.image.edgeAuto && s.image.shape === 'rect') want.add('salty-edge-auto');
     }
     syncProfile(s);
+    syncProfileClip(s);
     syncDecor(s);
     // 바뀐 클래스만 만지기 (전부 뗐다 붙이면 매번 화면 전체를 다시 그림)
     const cls = document.body.classList;

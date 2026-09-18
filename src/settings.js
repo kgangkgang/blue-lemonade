@@ -1,3 +1,4 @@
+import { tidyFrameLibrary } from './frame-library.js';
 import { DECOR_DEFAULTS, tidyDecor } from './decor.js';
 import { FRAME_DEFAULTS, FRAME_RANGE, tidyFrame } from './frames.js';
 // 설정 저장 칸: extension_settings.salty
@@ -14,6 +15,7 @@ export const FONT_SLOTS = ['text', 'dialogue', 'ui', 'em', 'strong', 'code', 'na
 export const DEFAULTS = {
     version: VERSION,
     enabled: true,
+    frameLibrary: [],
     noticeSeen: '', // 3.0.0: 공지사항을 열어 본 마지막 버전 — 지금 버전이 더 새것이면 버전 알약이 빛난다 (notice.js)
     palette: 'salt',
     customName: '', // 커스텀 에이드 이름. 색은 기존 colorOverrides에 모드별로 저장.
@@ -364,7 +366,12 @@ export function getSettings() {
     for (const key of ['nameColor', 'nameOutlineColor']) if (!/^#[a-f\d]{6}$/i.test(s.profile[key])) s.profile[key] = DEFAULTS.profile[key];
     if (!['left', 'center', 'right'].includes(s.profile.nameAlign)) s.profile.nameAlign = 'center';
     if (!['side', 'below-one', 'below-two'].includes(s.profile.headerLayout)) s.profile.headerLayout = 'below-two';
-    if (!['small', 'banner'].includes(s.profile.mode)) s.profile.mode = 'small';
+    if (s.profile.modeVersion !== 1) {
+        if (s.profile.mode === 'small' && SillyTavern.getContext().powerUserSettings?.hideChatAvatars_enabled) s.profile.mode = 'none';
+        s.profile.modeVersion = 1;
+    }
+    tidyFrameLibrary(s);
+    if (!['none', 'small', 'banner'].includes(s.profile.mode)) s.profile.mode = 'small';
     if (!['cover', 'contain'].includes(s.profile.fit)) s.profile.fit = 'cover';
     if (!['column', 'bleed', 'inset'].includes(s.profile.layout)) s.profile.layout = 'column';
     if (!['pixels', 'screen', 'ratio'].includes(s.profile.sizing)) s.profile.sizing = 'pixels';
