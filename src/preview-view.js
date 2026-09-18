@@ -20,7 +20,12 @@ export function bindPreviewViews(root, section) {
         let width = 0, height = 0, viewHeight = 0, raf = 0;
         const pointers = new Map();
         let resizeStart = null, grip;
-        const heightLimit = () => Math.max(48, Math.min(window.innerHeight * .7, window.innerHeight - (root.querySelector('.salty-nav')?.offsetHeight || 0) - bar.offsetHeight - (grip ? 48 : 0) - 120));
+        const sideBySide = () => getComputedStyle(root.querySelector('.bl-editor-workspace') || root).display === 'grid';
+        const heightLimit = () => {
+            const work = root.querySelector('.bl-editor-workspace');
+            const available = work?.clientHeight || window.innerHeight - (root.querySelector('.salty-nav')?.offsetHeight || 0);
+            return Math.max(48, Math.min(window.innerHeight * .7, available - bar.offsetHeight - (grip ? 48 : 0) - (sideBySide() ? 80 : 150)));
+        };
         if (box.classList.contains('salty-prevbox')) {
             const row = document.createElement('div'); row.className = 'bl-view-resize';
             row.innerHTML = '<div class="bl-view-grip" role="separator" tabindex="0" aria-label="미리보기 높이 조절" aria-orientation="horizontal" title="위아래로 끌어서 높이 조절"><i></i></div><button type="button" aria-label="미리보기 기본 높이" title="기본 높이로">↺</button>';
@@ -114,7 +119,7 @@ export function bindPreviewViews(root, section) {
             // until the same view becomes visible again instead of clamping to 0.
             if (!scene.offsetWidth || !scene.offsetHeight) return;
             width = scene.offsetWidth; height = scene.offsetHeight;
-            viewHeight = Number.isFinite(state.height) ? Math.max(48, Math.min(state.height, heightLimit())) : Math.min(height, Math.min(window.innerHeight * .28, 230));
+            viewHeight = Number.isFinite(state.height) ? Math.max(48, Math.min(state.height, heightLimit())) : Math.min(height, heightLimit(), sideBySide() && grip ? heightLimit() : Math.min(window.innerHeight * .28, 230));
             viewport.style.height = `${viewHeight}px`; schedule();
             if (grip) { grip.setAttribute('aria-valuemin', '48'); grip.setAttribute('aria-valuemax', String(Math.round(heightLimit()))); grip.setAttribute('aria-valuenow', String(Math.round(viewHeight))); }
         };

@@ -1,3 +1,4 @@
+import { bindEditor, openEditorCatalog, arrangeEditor, revealEditorTarget, selectEditorGroup } from './settings-editor.js';
 import { syncProfileClip } from './profile-clip.js';
 import { refreshPreset, FRAME_PRESETS, FRAME_LIMIT, presetFrame, saveFrame, useFrame, deleteFrame } from './frame-library.js';
 import { syncDecor } from './decor.js';
@@ -44,7 +45,6 @@ const ui = {
     previewKind: "photo",
     pic: 0, // 이미지 미리보기에서 고른 표본 번호 (PHOTOS)
     tab: stored('salty_tab', 'theme'),
-    subOpen: false,      // 소분류 목록 팝업이 펼쳐져 있는지 (2.4.2)
     pvFold: stored('salty_pvfold', '0') === '1', // 붙어 있는 미리보기(예시)를 접어 둠 (2.4.4, 꺾쇠로 접기 · 펴기)
     subs: (() => {
         try {
@@ -88,26 +88,27 @@ function saveSoon() {
 
 export function mountPanel(container, { popup = false, onFullscreen = null } = {}) {
     const root = document.createElement('div');
-    root.className = popup ? 'salty-panel in-popup' : 'salty-panel';
+    root.className = popup ? 'salty-panel in-popup bl-editor' : 'salty-panel bl-editor';
     root._onFullscreen = onFullscreen;
     container.appendChild(root);
     panels.add(root);
     bind(root);
+    bindEditor(root);
     bindSettingsSearch(root, entry => {
-        ui.tab = entry.tab; ui.subs[entry.tab] = entry.sub; ui.subOpen = false; ui.picker = null;
+        root._catalogOpen = false;
+        ui.tab = entry.tab; ui.subs[entry.tab] = entry.sub; ui.picker = null;
         store('salty_tab', ui.tab); store('salty_subs', JSON.stringify(ui.subs));
         refreshPanels();
         const path = entry.path ? root.querySelector(`[data-toggle="${entry.path}"], [data-path="${entry.path}"]`) : null;
         const label = entry.anchor ? [...root.querySelectorAll('[data-search-anchor]')].find(el => el.dataset.searchAnchor === entry.anchor) : null;
         const target = path?.closest('.salty-row, .salty-stack') || label || root.querySelector('.salty-sec');
         if (target) {
-            const box = scrollBox(root);
-            const nav = root.querySelector('.salty-nav');
+            revealEditorTarget(root, target);
+            const box = root.querySelector('.salty-sec');
             target.classList.add('bl-search-target'); target.tabIndex = -1; target.focus({ preventScroll: true });
             requestAnimationFrame(() => requestAnimationFrame(() => {
                 if (!target.isConnected) return;
-                const preview = target.matches('.salty-sec') ? null : root.querySelector('.salty-prevbox');
-                const offset = nav.offsetHeight + (preview?.offsetHeight || 0) + 12;
+                const offset = 16;
                 if (box) box.scrollTop += target.getBoundingClientRect().top - box.getBoundingClientRect().top - offset;
                 else window.scrollBy({ top: target.getBoundingClientRect().top - offset, behavior: 'instant' });
             }));
@@ -132,6 +133,7 @@ export function setPanelFullscreen(root, enabled) {
 function setEditing(root, enabled) {
     root._editing = !!enabled;
     root.classList.toggle('bl-settings-editing', root._editing);
+    if (root._editing) openEditorCatalog(root, false);
     const button = root.querySelector('[data-act="panel-edit"]');
     if (button) {
         button.textContent = enabled ? '편집 모드 끄기' : '편집 모드';
@@ -786,18 +788,18 @@ function tabTheme(s, sub) {
         return `<button type="button" class="salty-pal ${selected === family ? 'on' : ''}" data-act="palette" data-family="${family}" aria-pressed="${selected === family}"
             style="--pal-bg:${v('bg')};--pal-surface:${v('surface')};--pal-raised:${v('raised')};--pal-text:${v('text')};--pal-muted:${v('muted')};--pal-accent:${v('accent')};--pal-marker:${v('marker')};--pal-gold:${v('gold')};--pal-strong:${v('strong')};--pal-pop:${safeColor(c.pop || c.accent)};--pal-marker-ink:${c.markerInk ? safeColor(c.markerInk) : 'inherit'};--pal-mark-top:${c.markerInk ? '8%' : '55%'}">
             <span class="salty-pal-page"><span><b>${esc(data.sample)}</b><br><mark>「에이드」</mark></span><i></i></span>
-            <b>${esc(label)}</b><small>${family === 'custom' ? '내가 만든 레시피' : esc(p.desc)}</small></button>`;
+            <b>${esc(label)}</b><small>${family === 'custom' ? '직접 설정' : esc(p.desc)}</small></button>`;
     };
     const cards = Object.entries(PALETTE_FAMILIES).filter(([family]) => family !== 'custom').map(([family, data]) => renderCard(family, data)).join('');
     const hasCustom = Boolean(s.customName || s.colorOverrides?.['custom-light'] || s.colorOverrides?.['custom-night']);
     const custom = hasCustom ? `<div class="salty-custom-card">${renderCard('custom', PALETTE_FAMILIES.custom)}<button type="button" class="salty-custom-edit" data-act="custom-open" aria-label="커스텀 에이드 편집"><i class="fa-solid fa-pen" aria-hidden="true"></i></button></div>`
-        : '<button type="button" class="salty-pal salty-pal-create" data-act="custom-open"><span class="salty-create-icon" aria-hidden="true">+</span><b>커스텀 에이드 만들기</b><small>나만의 색을 섞어 보세요</small></button>';
+        : '<button type="button" class="salty-pal salty-pal-create" data-act="custom-open"><span class="salty-create-icon" aria-hidden="true">+</span><b>커스텀 에이드 만들기</b><small>직접 설정</small></button>';
     const auto = !!s.auto?.on;
     const autoOptions = auto ? `<div class="salty-group salty-auto">
             ${stack('자동 기준', seg('auto.by', [['system', '기기 다크 모드'], ['time', '시간']]))}
             ${s.auto.by === 'time' ? `<div class="salty-row"><span>나이트 시작</span><input type="time" class="salty-time" data-time-path="auto.night" value="${esc(s.auto.night)}" aria-label="나이트 시작"></div><div class="salty-row"><span>화이트 시작</span><input type="time" class="salty-time" data-time-path="auto.day" value="${esc(s.auto.day)}" aria-label="화이트 시작"></div>` : ''}
         </div>` : '';
-    return `<div class="salty-palette-toolbar"><span>${auto ? '자동 · ' : ''}${mode === 'light' ? '화이트' : '나이트'}${s.palette === 'night' ? ' · 블루 아워' : ''}</span><div class="salty-mode-switch" role="group" aria-label="테마 밝기">${['light', 'dark'].map(kind => `<button type="button" data-act="palette-mode" data-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'} 모드" title="${kind === 'light' ? '화이트' : '나이트'}" aria-pressed="${!auto && mode === kind}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}<button type="button" data-act="palette-auto" aria-label="자동" title="자동" aria-pressed="${auto}"><i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i></button></div></div>${autoOptions}<div class="salty-palettes">${cards}${custom}</div>`;
+    return `${chatPreview()}<div class="salty-palette-toolbar"><span>${auto ? '자동 · ' : ''}${mode === 'light' ? '화이트' : '나이트'}</span><div class="salty-mode-switch" role="group" aria-label="테마 밝기">${['light', 'dark'].map(kind => `<button type="button" data-act="palette-mode" data-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'} 모드" title="${kind === 'light' ? '화이트' : '나이트'}" aria-pressed="${!auto && mode === kind}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}<button type="button" data-act="palette-auto" aria-label="자동" title="자동" aria-pressed="${auto}"><i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i></button></div></div>${autoOptions}<div class="salty-palettes">${cards}${custom}</div>`;
 
 }
 
@@ -971,7 +973,8 @@ function tabText(s, sub) {
         body = `${cap('대사', '"…"')}
             <div class="salty-group">
                 ${stack('표시', seg('dialogue.style', [['marker', '형광펜'], ['full', '전체 칠'], ['bold', '굵게'], ['tint', '색'], ['plain', '없음']]))}
-                ${marker ? stack('형광펜 기울기', seg('dialogue.tilt', [['flat', '일직선'], ['slant', '대각선'], ['steep', '완전 대각선']])) : ''}
+                ${marker ? stack('형광펜 모양', seg('dialogue.markerShape', [['stroke', '펜 자국'], ['rectangle', '직사각형']], 'stroke')) : ''}
+                ${marker && s.dialogue.markerShape !== 'rectangle' ? stack('형광펜 기울기', seg('dialogue.tilt', [['flat', '일직선'], ['slant', '대각선'], ['steep', '완전 대각선']])) : ''}
                 ${marker ? stack('형광펜 위치', seg('dialogue.markerPos', [['center', '가운데'], ['bottom', '아래']], 'center'), '아래: 밑줄 긋듯 글자 아랫부분에') : ''}
                 ${marker ? slider('dialogue.markerThick', '형광펜 굵기', ...TEXT_LIMIT.markerThick, 1, 54) : ''}
                 ${pen ? color('marker', '형광펜 색') : ''}
@@ -1385,6 +1388,8 @@ function tabImage(s, sub) {
 
 // ───────── 그리기 ─────────
 function render(root) {
+    const oldSection = root.querySelector('.salty-sec');
+    if (oldSection && root._editorRoute) root._editorScroll?.set(root._editorRoute, oldSection.scrollTop);
     root._fontIO?.disconnect(); root._fontIO = null;
     const s = getSettings();
     const issues = getIssues();
@@ -1399,16 +1404,8 @@ function render(root) {
         console.error('[Blue Lemonade] Settings section failed', error);
         section = `<p class="salty-note" role="alert">이 항목을 표시하지 못했어요. 다른 탭으로 이동할 수 있으며 저장된 설정은 유지됩니다.</p><button type="button" class="salty-btn" data-act="tab" data-tab="theme">테마 설정으로 돌아가기</button>`;
     }
-    // 2.4.1: 대분류는 위 가로 탭 그대로, 소분류는 칩 줄 대신 드롭다운 하나 — 폰에서는 실리태번 모델 고르기처럼 팝업 목록으로 뜬다
-    // 2.4.2: OS 가 그리는 select 팝업은 못 꾸미므로 목록을 직접 그린다 — 단추 밑에 카드로 펼쳐지는 라디오 목록 (테마 색 · 글꼴)
-    const subList = SUBS[ui.tab] || [];
-    const subNow = ui.tab === 'theme' && sub === 'custom' ? 'palette' : sub;
-    const subLabel = subList.find(([id]) => id === subNow)?.[1] ?? '';
-    const subSelect = subList.length ? `<div class="salty-subsel${ui.subOpen ? ' open' : ''}">
-            <button type="button" data-act="sub-open" aria-haspopup="listbox" aria-expanded="${ui.subOpen}"><span>${subLabel}</span><i aria-hidden="true"></i></button>
-            ${ui.subOpen ? `<div class="salty-pick" role="listbox" aria-label="세부 항목">${subList.map(([id, label]) =>
-        `<button type="button" role="option" data-act="sub-pick" data-sub="${id}" aria-selected="${subNow === id}" class="${subNow === id ? 'on' : ''}"><span>${label}</span><i aria-hidden="true"></i></button>`).join('')}</div>` : ''}
-        </div>` : '';
+    const subLabel = SUBS[ui.tab]?.find(([id]) => id === sub)?.[1] || '직접 테마 만들기';
+    const catalog = TABS.map(([tab, title]) => `<div class="bl-editor-category"><h4>${title}</h4>${(SUBS[tab] || []).map(([id, label]) => `<button type="button" data-act="editor-route" data-tab="${tab}" data-sub="${id}" aria-current="${ui.tab === tab && sub === id ? 'page' : 'false'}">${label}</button>`).join('')}</div>`).join('');
     // 서랍은 실리태번 머리에 이미 'Blue Lemonade' 가 있어서 켜기 한 줄만 (팝업은 머리가 없으니 제목을 그림)
     const head = root.classList.contains('in-popup')
         ? `<div class="salty-head">
@@ -1418,17 +1415,16 @@ function render(root) {
         </div>`
         : `<div class="salty-head salty-head-slim"><span>테마 켜기</span>${toggle('enabled', s.enabled)}</div>`;
     root.innerHTML = `
-        ${head}
-        ${s.activeStyle ? `<div class="salty-style-note"><i class="fa-solid fa-masks-theater" aria-hidden="true"></i><span>${esc(keyLabel(s.activeStyle.key))} · ${esc(s.styles.find(x => x.id === s.activeStyle.id)?.name || '')} 스타일</span></div>` : ''}
-        <div class="salty-checks">${issues.map((issue, i) =>
-            `<div class="salty-check"><span>${issue.text}</span>${issue.fix ? `<button class="salty-btn" data-act="fix" data-i="${i}">${issue.fix}</button>` : ''}</div>`).join('')}</div>
-        <div class="salty-nav">
-            <div class="bl-settings-toprow">${searchMarkup(root._settingsQuery || '')}<button type="button" class="bl-settings-expand" data-act="panel-fullscreen" aria-pressed="${!!root._fullscreen}">${root._fullscreen ? '작은 창' : '전체 화면'}</button><button type="button" class="bl-settings-edit" data-act="panel-edit" aria-pressed="${!!root._editing}" aria-label="${root._editing ? '편집 모드 끄기' : '편집 모드 켜기'}">${root._editing ? '편집 모드 끄기' : '편집 모드'}</button>${root.classList.contains('in-popup') ? '<button type="button" class="bl-settings-close" data-act="panel-close" aria-label="테마 설정 닫기" title="닫기">×</button>' : ''}</div>
-            <div class="salty-tabs">${TABS.map(([id, label]) =>
-        `<button data-act="tab" data-tab="${id}" class="${ui.tab === id ? 'on' : ''}" aria-pressed="${ui.tab === id}">${label}</button>`).join('')}</div>
-            ${subSelect}
-        </div>
-        <section class="salty-sec" data-tab="${ui.tab}" data-sub="${sub}">${section}</section>`;
+        <div class="salty-nav"><div class="bl-settings-toprow">
+            <button type="button" class="bl-editor-choose" data-act="editor-catalog" aria-label="설정 선택" aria-haspopup="dialog" aria-expanded="${!!root._catalogOpen}"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/></svg><span>${subLabel}</span></button>
+            <div class="bl-editor-actions"><button type="button" class="bl-editor-search-button" data-act="editor-search" aria-label="설정 검색"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="m13 13 4 4"/></svg></button><button type="button" class="bl-settings-expand" data-act="panel-fullscreen" aria-pressed="${!!root._fullscreen}">${root._fullscreen ? '작은 창' : '전체 화면'}</button><button type="button" class="bl-settings-edit" data-act="panel-edit" aria-pressed="${!!root._editing}" aria-label="${root._editing ? '편집 모드 끄기' : '편집 모드 켜기'}">${root._editing ? '편집 모드 끄기' : '편집 모드'}</button>${root.classList.contains('in-popup') ? '<button type="button" class="bl-settings-close" data-act="panel-close" aria-label="테마 설정 닫기" title="닫기">×</button>' : ''}</div>
+        </div></div>
+        <section class="salty-sec" data-tab="${ui.tab}" data-sub="${sub}">${section}</section>
+        <div class="bl-editor-catalog" role="dialog" aria-modal="true" aria-label="설정 선택 목록" ${root._catalogOpen ? '' : 'hidden'}>
+            <button type="button" class="bl-editor-scrim" data-act="editor-catalog-close" aria-label="설정 선택 닫기"></button>
+            <div class="bl-editor-directory"><div class="bl-editor-directory-head"><b>설정 선택</b><button type="button" data-act="editor-catalog-close" aria-label="설정 선택 닫기">×</button></div>${searchMarkup(root._settingsQuery || '')}<div class="bl-editor-directory-list">${catalog}${head}${s.activeStyle ? '<p class="salty-note">캐릭터 스타일 적용 중</p>' : ''}<div class="salty-checks">${issues.map((issue, i) => `<div class="salty-check"><span>${issue.text}</span>${issue.fix ? `<button class="salty-btn" data-act="fix" data-i="${i}">${issue.fix}</button>` : ''}</div>`).join('')}</div></div></div>
+        </div>`;
+    arrangeEditor(root, `${ui.tab}/${sub}`, subLabel);
     bindCustomBuilder(root);
     paintSettingsSearch(root);
     fillPreviews(root); // 미리보기 무대 다시 꽂기 (만들지 않고 옮겨 담기만)
@@ -1635,26 +1631,7 @@ function pickFont(font) {
     toastr.success(`${font.label} 글꼴을 쓸게요`, 'Blue Lemonade');
 }
 
-// 소분류 목록 팝업: 목록 밖을 누르거나 Esc 를 누르면 닫힘 (문서 전체에 한 번만 걸어 둠 — 팝업 · 서랍 어디서 열렸든)
-let subPickGuard = false;
-function guardSubPick() {
-    if (subPickGuard) return;
-    subPickGuard = true;
-    document.addEventListener('pointerdown', (event) => {
-        if (!ui.subOpen || event.target.closest?.('.salty-subsel')) return;
-        ui.subOpen = false;
-        refreshPanels();
-    }, true);
-    document.addEventListener('keydown', (event) => {
-        if (event.key !== 'Escape' || !ui.subOpen) return;
-        ui.subOpen = false;
-        refreshPanels();
-        event.stopPropagation();
-    }, true);
-}
-
 function bind(root) {
-    guardSubPick();
     root.addEventListener('click', async (event) => {
         const el = event.target.closest('[data-act]');
         if (!el || !root.contains(el)) return;
@@ -1663,6 +1640,16 @@ function bind(root) {
         const { act } = el.dataset;
         try {
             switch (act) {
+                case 'editor-catalog': openEditorCatalog(root, true); break;
+                case 'editor-search': openEditorCatalog(root, true, true); break;
+                case 'editor-catalog-close': openEditorCatalog(root, false); break;
+                case 'editor-group': selectEditorGroup(root, el.closest('.bl-editor-group'), true); break;
+                case 'editor-route':
+                    ui.tab = el.dataset.tab; ui.subs[ui.tab] = el.dataset.sub; ui.picker = null;
+                    root._catalogOpen = false; store('salty_tab', ui.tab); store('salty_subs', JSON.stringify(ui.subs));
+                    refreshPanels(); root.querySelector('.salty-sec').scrollTop = 0;
+                    root.querySelector('[data-act="editor-catalog"]')?.focus({ preventScroll: true });
+                    break;
                 case 'panel-close':
                     root._onClose?.();
                     break;
@@ -1679,7 +1666,7 @@ function bind(root) {
                 case 'tab':
                     ui.tab = el.dataset.tab;
                     ui.picker = null;
-                    ui.subOpen = false;
+
                     store('salty_tab', ui.tab);
                     refreshPanels();
                     showSec(root);
@@ -1688,18 +1675,6 @@ function bind(root) {
                     ui.pvFold = !ui.pvFold;
                     store('salty_pvfold', ui.pvFold ? '1' : '0');
                     refreshPanels();
-                    break;
-                case 'sub-open': // 소분류 목록 열기/닫기 (바깥을 누르면 closeSubPick 이 닫음)
-                    ui.subOpen = !ui.subOpen;
-                    refreshPanels();
-                    break;
-                case 'sub-pick':
-                    ui.subs[ui.tab] = el.dataset.sub;
-                    ui.picker = null;
-                    ui.subOpen = false;
-                    store('salty_subs', JSON.stringify(ui.subs));
-                    refreshPanels();
-                    showSec(root);
                     break;
                 case 'frame-preset':
                     update(st => { st[el.dataset.owner].decor = presetFrame(el.dataset.id); });

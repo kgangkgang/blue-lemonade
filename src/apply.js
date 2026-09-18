@@ -219,7 +219,7 @@ export function markerGeometry(d) {
 }
 
 export function markerBackground(s, color) {
-    const { T, l, r } = markerGeometry(s.dialogue);
+    const { T, l, r } = markerGeometry(s.dialogue.markerShape === 'rectangle' ? {...s.dialogue, tilt:'flat'} : s.dialogue);
     const lb = l + T;
     const rb = r + T;
     const w = Math.min(1.8, T * 0.07); // 위아래 물결 — 얇은 획은 덜 출렁이게
@@ -227,6 +227,10 @@ export function markerBackground(s, color) {
     const rgb = `rgb(${cr},${cg},${cb})`;
     const op = Math.min(1, ca);
     const n = v => Number(v.toFixed(2));
+    if (s.dialogue.markerShape === 'rectangle') {
+        const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><rect x='0' y='${n(l)}' width='100' height='${n(T)}' fill='${rgb}' fill-opacity='${n(op)}'/></svg>`;
+        return `url("data:image/svg+xml,${encodeURIComponent(svg)}") center / 100% 100% no-repeat`;
+    }
     // 획 하나: 시작은 펜촉처럼 비스듬히(위가 조금 오른쪽), 끝도 비스듬히 잘림(아래가 조금 왼쪽)
     const stroke = [
         `M0,${n(l + T * 0.22)}`, `L2.2,${n(l)}`,

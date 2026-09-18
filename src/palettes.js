@@ -1,28 +1,4 @@
-// 테마 색 묶음 — 에이드 색상별 화이트/나이트 (저장 키는 처음 그대로: salt · night · melon …).
-// 2026-09-14 파스텔로 정착: 화이트는 흰 바탕(명도 98)에 과일빛만, 나이트는 과일색이 스민 어두운 바탕(명도 8~13),
-//   글자 포인트는 회색을 섞지 않고 명도만 내려 대비(본문 7:1 · 속마음/보조/포인트 4.5:1 · 흐림 3:1)를 맞춤,
-//   버튼 · 열린 서랍(pop)은 밝은 과일색 — 파스텔 생성 규칙은 세션 scratch finalize-pastel.mjs (HSL 정의 → 이 파일에 씀).
-//   brand 가 없는 팔레트(블루)는 로고 레몬이 기본 노랑. 밝은 테마는 실리태번의 어두운 음영 변수(--black30a 등)도 밝게 바꿈 (apply.js)
-// 테마 색 묶음 — 에이드 색상별 화이트/나이트 (저장 키는 처음 그대로: salt · night · melon …).
-// 2026-09-14 파스텔로 정착: 화이트는 흰 바탕(명도 98)에 과일빛만, 나이트는 과일색이 스민 어두운 바탕(명도 8~13),
-//   글자 포인트는 회색을 섞지 않고 명도만 내려 대비(본문 7:1 · 속마음/보조/포인트 4.5:1 · 흐림 3:1)를 맞춤,
-//   버튼 · 열린 서랍(pop)은 밝은 과일색 — 파스텔 생성 규칙은 세션 scratch finalize-pastel.mjs (HSL 정의 → 이 파일에 씀).
-//   brand 가 없는 팔레트(블루)는 로고 레몬이 기본 노랑. 밝은 테마는 실리태번의 어두운 음영 변수(--black30a 등)도 밝게 바꿈 (apply.js)
-// 테마 색 묶음 — 에이드 색상별 화이트/나이트 (저장 키는 처음 그대로: salt · night · melon …).
-// 2026-09-14 파스텔로 정착: 화이트는 흰 바탕(명도 98)에 과일빛만, 나이트는 과일색이 스민 어두운 바탕(명도 8~13),
-//   글자 포인트는 회색을 섞지 않고 명도만 내려 대비(본문 7:1 · 속마음/보조/포인트 4.5:1 · 흐림 3:1)를 맞춤,
-//   버튼 · 열린 서랍(pop)은 밝은 과일색 — 파스텔 생성 규칙은 세션 scratch finalize-pastel.mjs (HSL 정의 → 이 파일에 씀).
-//   brand 가 없는 팔레트(블루)는 로고 레몬이 기본 노랑. 밝은 테마는 실리태번의 어두운 음영 변수(--black30a 등)도 밝게 바꿈 (apply.js)
-// 테마 색 묶음 — 에이드 색상별 화이트/나이트 (저장 키는 처음 그대로: salt · night · melon …).
-// 2026-09-14 파스텔로 정착: 화이트는 흰 바탕(명도 98)에 과일빛만, 나이트는 과일색이 스민 어두운 바탕(명도 8~13),
-//   글자 포인트는 회색을 섞지 않고 명도만 내려 대비(본문 7:1 · 속마음/보조/포인트 4.5:1 · 흐림 3:1)를 맞춤,
-//   버튼 · 열린 서랍(pop)은 밝은 과일색 — 파스텔 생성 규칙은 세션 scratch finalize-pastel.mjs (HSL 정의 → 이 파일에 씀).
-//   brand 가 없는 팔레트(블루)는 로고 레몬이 기본 노랑. 밝은 테마는 실리태번의 어두운 음영 변수(--black30a 등)도 밝게 바꿈 (apply.js)
-// 테마 색 묶음 — 에이드 색상별 화이트/나이트 (저장 키는 처음 그대로: salt · night · melon …).
-// 2026-09-14 파스텔로 정착: 화이트는 흰 바탕(명도 98)에 과일빛만, 나이트는 과일색이 스민 어두운 바탕(명도 8~13),
-//   글자 포인트는 회색을 섞지 않고 명도만 내려 대비(본문 7:1 · 속마음/보조/포인트 4.5:1 · 흐림 3:1)를 맞춤,
-//   버튼 · 열린 서랍(pop)은 밝은 과일색 — 파스텔 생성 규칙은 세션 scratch finalize-pastel.mjs (HSL 정의 → 이 파일에 씀).
-//   brand 가 없는 팔레트(블루)는 로고 레몬이 기본 노랑. 밝은 테마는 실리태번의 어두운 음영 변수(--black30a 등)도 밝게 바꿈 (apply.js)
+// 에이드 팔레트. 화이트/나이트 바탕을 공유하고 형광펜과 포인트색으로 구분한다.
 export const PALETTES = {
     salt: {
         label: '블루 레몬에이드 · 화이트', desc: '하늘빛 흰 종이 · 파란 형광펜', mode: 'light', bg: '#F9FCFF', surface: '#FDFEFF', raised: '#E5F1FF', text: '#222D3A', dialogue: '#141E2A', em: '#476990', strong: '#1F4E84', muted: '#5A6F87', faint: '#75889F', danger: '#E23B2E', accent: '#2775CE', pop: '#2775CE', marker: 'rgba(20, 165, 255, 0.24)', gold: 'rgba(255, 226, 60, 0.62)', line: 'rgba(31, 50, 71, 0.07)', shadow: 'rgba(35, 62, 92, 0.12)',
@@ -61,6 +37,48 @@ export const PALETTES = {
         label: '레몬 블루에이드 · 나이트', desc: '푸른 밤 · 레몬 형광펜 · 파란 강조', mode: 'dark', /* 대사 글자는 흰색(사용자: "글자가 노란색이라니까 흰색으로"), 레몬은 반투명 띠(블루 레몬에이드의 파란 띠와 같은 세기)에만 */ bg: '#141F2E', surface: '#1C293B', raised: '#28384D', text: '#DBE2EB', dialogue: '#F3F7FC', em: '#97AFCE', strong: '#7DB8F2', muted: '#ABBACE', faint: '#8596AD', danger: '#FF6F62', accent: '#7DB8F2', pop: '#FFE873', marker: 'rgba(255, 226, 60, 0.3)', gold: 'rgba(125, 184, 242, 0)', line: 'rgba(184, 201, 224, 0.08)', shadow: 'rgba(0, 0, 0, 0.6)',
     },
 };
+// Keep old stock surfaces identifiable when migrating saved default overrides.
+const previousSurfaces = {};
+const surfaceKeys = ['bg', 'surface', 'raised', 'line', 'shadow', 'text', 'dialogue', 'muted', 'faint'];
+const neutralNight = {bg:'#1B1C1F', surface:'#242529', raised:'#303136', line:'rgba(224, 224, 228, 0.09)', shadow:'rgba(0, 0, 0, 0.6)', text:'#E1E1E5', dialogue:'#F5F5F7', muted:'#B8B8C0', faint:'#95959F'};
+const markerNames = {salt:'파란',night:'파란','black-light':'차콜',black:'회색',melon:'라임','melon-night':'라임',grapefruit:'코럴','grapefruit-night':'코럴',peach:'피치','peach-night':'피치',lemon:'노란','lemon-night':'노란'};
+for (const [id, palette] of Object.entries(PALETTES)) {
+    previousSurfaces[id] = Object.fromEntries(surfaceKeys.map(key => [key, palette[key]]));
+    const base = palette.mode === 'dark' ? neutralNight : PALETTES.salt;
+    for (const key of surfaceKeys) palette[key] = base[key];
+    palette.desc = `${markerNames[id]} 형광펜`;
+}
+const newAdes = [
+    ['lavender','라벤더','보라','#7552B3','#BCA4ED','163, 127, 219'],
+    ['strawberry','딸기','분홍','#B63C72','#F19BBC','230, 112, 157'],
+    ['mint','민트','청록','#137B73','#76D6C7','72, 196, 177'],
+    ['orange','오렌지','주황','#B25B19','#F3B06F','244, 161, 81'],
+    ['wood','우드','갈색','#765D4C','#C6AD98','151, 119, 93'],
+    ['watermelon','수박','초록','#247345','#78C995','49, 171, 93'],
+];
+for (const [id, name, markerName, light, dark, rgb] of newAdes) {
+    for (const mode of ['light', 'dark']) {
+        const base = mode === 'dark' ? PALETTES.night : PALETTES.salt;
+        const accent = mode === 'dark' ? dark : light;
+        PALETTES[id + (mode === 'dark' ? '-night' : '')] = { ...base,
+            label: `${name} 에이드 · ${mode === 'dark' ? '나이트' : '화이트'}`, desc: `${markerName} 형광펜`,
+            accent, pop: accent, brand: accent, strong: accent, em: accent,
+            marker: `rgba(${rgb}, ${mode === 'dark' ? .32 : .28})`, gold: `rgba(${rgb}, ${mode === 'dark' ? .18 : .2})`,
+        };
+    }
+}
+Object.assign(PALETTES.watermelon, {strong:'#B83747', pop:'#CE4758', gold:'rgba(221, 70, 90, 0.22)'});
+Object.assign(PALETTES['watermelon-night'], {strong:'#F28B99', pop:'#F28B99', gold:'rgba(235, 99, 120, 0.20)'});
+PALETTES.night.label = '블루 레몬에이드 · 나이트';
+// Charcoal remains dominant: only 1% of the accent tints night surfaces.
+for (const palette of Object.values(PALETTES)) {
+    if (palette.mode !== 'dark') continue;
+    const tint = parseColor(palette.accent);
+    for (const key of ['bg', 'surface', 'raised']) {
+        const base = parseColor(neutralNight[key]);
+        palette[key] = '#' + base.slice(0,3).map((v,i) => Math.round(v * .99 + tint[i] * .01).toString(16).padStart(2,'0')).join('').toUpperCase();
+    }
+}
 PALETTES['custom-light'] = { ...PALETTES.salt, label: '커스텀 에이드 · 화이트' };
 PALETTES['custom-night'] = { ...PALETTES.night, label: '커스텀 에이드 · 나이트' };
 
@@ -73,6 +91,7 @@ export const PALETTE_FAMILIES = {
     melon: { label: '멜론 에이드', sample: '멜론', light: 'melon', dark: 'melon-night' },
     grapefruit: { label: '자몽 에이드', sample: '자몽', light: 'grapefruit', dark: 'grapefruit-night' },
     peach: { label: '피치 에이드', sample: '피치', light: 'peach', dark: 'peach-night' },
+    ...Object.fromEntries(newAdes.map(([id,name]) => [id,{label:`${name} 에이드`,sample:name,light:id,dark:id+'-night'}])),
     custom: { label: '커스텀 에이드', sample: '나만의', light: 'custom-light', dark: 'custom-night' },
 };
 
@@ -159,6 +178,8 @@ export const LEGACY = {
         { bg: '#141F2E', surface: '#1C293B', raised: '#28384D', text: '#DBE2EB', dialogue: '#F3F7FC', em: '#97AFCE', strong: '#7DB8F2', muted: '#ABBACE', faint: '#8596AD', danger: '#FF6F62', accent: '#7DB8F2', pop: '#FFE873', marker: 'rgba(255, 226, 60, 0.9)', markerInk: '#1B1A0B', gold: 'rgba(125, 184, 242, 0)', line: 'rgba(184, 201, 224, 0.08)', shadow: 'rgba(0, 0, 0, 0.6)' },
     ],
 };
+
+for (const [id, colors] of Object.entries(previousSurfaces)) (LEGACY[id] ??= []).push(colors);
 
 export const TOKEN_KEYS = ['bg', 'surface', 'raised', 'text', 'dialogue', 'em', 'strong', 'muted', 'faint', 'accent', 'marker', 'gold', 'line', 'shadow'];
 

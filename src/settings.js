@@ -46,7 +46,7 @@ export const DEFAULTS = {
         indent: false,
         align: 'left',            // left 왼쪽 | justify-word 양쪽(낱말 안 끊음) | justify-break 양쪽(한글도 음절 사이에서 끊음)
     },
-    dialogue: { style: 'marker', weight: 400, tilt: 'flat', markerThick: 54, markerPos: 'center', letterSpacing: null }, // letterSpacing: 1/100 em, null = 본문과 같게 (2.7.0)
+    dialogue: { style: 'marker', markerShape: 'stroke', weight: 400, tilt: 'flat', markerThick: 54, markerPos: 'center', letterSpacing: null }, // letterSpacing: 1/100 em, null = 본문과 같게 (2.7.0)
     ui: { weight: null, letterSpacing: null },   // 메뉴 글자 굵기 · 자간 — null = 실리태번 기본 (2.7.0; 크기는 type.uiSize)
     code: { weight: null, letterSpacing: null }, // 코드 글자 굵기 · 자간 — null = 둘레 글자 그대로 (2.7.0; 크기는 type.codeSize)
     // 글자 그림자 (2.4.0): 켬/끔 + 어디에(본문 · 대사 · 속마음 · 강조 · 코드) + 모양 하나. 기본 끔 — 폰에서 text-shadow 는 번질 수 있음. angle 도 · distance/blur px · alpha %
@@ -283,6 +283,7 @@ export const SHADOW_LIMIT = { alpha: [0, 100], angle: [0, 360], distance: [0, 12
 export const SHADOW_TARGETS = ['text', 'dialogue', 'em', 'strong', 'code'];
 
 function tidyDialogue(d) {
+    if (!['stroke', 'rectangle'].includes(d.markerShape)) d.markerShape = 'stroke';
     if (!MARKER_POSITIONS.includes(d.markerPos)) d.markerPos = 'center';
     const v = typeof d.markerThick === 'number' ? d.markerThick : parseFloat(d.markerThick);
     d.markerThick = Number.isFinite(v) ? clampTo(v, TEXT_LIMIT.markerThick) : DEFAULTS.dialogue.markerThick;
