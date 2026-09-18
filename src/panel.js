@@ -1,5 +1,8 @@
 import { bindEditor, openEditorCatalog, arrangeEditor, revealEditorTarget, selectEditorGroup } from './settings-editor.js';
 import { SettingsHistory } from './settings-history.js';
+import { bindTouchSliders } from './touch-sliders.js';
+import { changedSettings, settingChanged, settingDefault, resetSetting, settingRoute } from './settings-differences.js';
+import { SETTING_LABELS, SETTING_VALUES } from './settings-labels.js';
 import { syncProfileClip } from './profile-clip.js';
 import { refreshPreset, FRAME_PRESETS, FRAME_LIMIT, presetFrame, saveFrame, useFrame, deleteFrame } from './frame-library.js';
 import { syncDecor } from './decor.js';
@@ -30,7 +33,7 @@ const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 // 2.7.0: 글꼴 탭을 글자 탭에 합침 — 역할(본문 · 대사 · 메뉴 · 속마음 · 강조 · 코드)마다 한 화면에서 글꼴 · 크기 · 굵기 · 자간을 다 만짐
 const TABS = [['theme', '테마'], ['text', '글자'], ['chat', '채팅'], ['image', '이미지'], ['prompt', '프롬프트']];
 const SUBS = {
-    theme: [['palette', '색'], ['colors', '색 고치기'], ['styles', '스타일'], ['backup', '백업']],
+    theme: [['palette', '색'], ['colors', '색 고치기'], ['styles', '스타일'], ['changes', '변경한 설정'], ['backup', '백업']],
     text: [['text', '본문'], ['dialogue', '대사'], ['ui', '메뉴'], ['em', '속마음'], ['strong', '강조'], ['code', '코드'], ['para', '문단'], ['shadow', '그림자 · 외곽선']],
     chat: [['message', '메시지'], ['profile', '캐릭터 프로필'], ['user-profile', '내 프로필'], ['name', '캐릭터 이름·시간'], ['user-name', '내 이름·시간'], ['screen', '화면'], ['etc', '기타']],
     image: [['layout', '배치'], ['shape', '모양'], ['frame', '테두리'], ['size', '크기'], ['fade', '흐림']],
@@ -81,8 +84,8 @@ function setPath(obj, path, value) {
 const isNum = v => typeof v === 'number' && Number.isFinite(v);
 const isSet = v => !!v && typeof v === 'object'; // 글꼴 칸이 언어별 묶음인지 ('same' 이 아닌지)
 const history = new SettingsHistory();
-const historyLabels = new Map([['palette', '테마 색'], ['nightTint', '나이트 · 배경 테마색 농도'], ['lightTint', '화이트 · 배경 테마색 농도']]);
-const historyOptions = new Map();
+const historyLabels = new Map(Object.entries(SETTING_LABELS));
+const historyOptions = new Map(Object.entries(SETTING_VALUES));
 function labelHistoryControl(label, control) {
     const path = control.match(/data-(?:path|toggle)="([^"]+)"/)?.[1];
     if (path) historyLabels.set(path, label.replace(/<[^>]*>/g, ''));
@@ -96,15 +99,24 @@ function syncHistoryButtons() {
 }
 function historyLabel(path) {
     const scope = { profile: '캐릭터 프로필', userProfile: '내 프로필', image: '에셋 이미지', type: '본문', dialogue: '대사', em: '속마음', strong: '강조', chat: '채팅' }[path.split('.')[0]];
+    if (path.startsWith('colorOverrides.')) {
+        const [, palette, token] = path.split('.');
+        return `${PALETTES[palette]?.label || '테마'} · ${TOKEN_GROUPS.flatMap(([,list]) => list).find(([key]) => key === token)?.[1] || token}`;
+    }
     return [scope, historyLabels.get(path) || path].filter(Boolean).join(' · ');
 }
 function historyValue(value, path) {
     if (value == null) return '기본값';
     if (typeof value === 'boolean') return value ? '켜짐' : '꺼짐';
     if (path === 'palette') return PALETTES[value]?.label || String(value);
+    if (path.startsWith('fonts.') && typeof value === 'string') return ({same:'본문과 같게',auto:'자동'})[value] || findFont(value)?.label || value;
     if (historyOptions.has(`${path}:${value}`)) return historyOptions.get(`${path}:${value}`);
     if (Array.isArray(value)) return `${value.length}개 항목`;
-    if (typeof value === 'object') return '사용자 설정';
+    if (typeof value === 'object') {
+        if (path.endsWith('.decor')) return value.art ? FRAME_PRESETS.find(([id]) => id === value.presetId)?.[1] || '내 액자' : '없음';
+        if (path.startsWith('fonts.')) return Object.entries(value).map(([lang,id]) => `${lang}: ${findFont(id)?.label || id}`).join(' · ');
+        return '사용자 설정';
+    }
     if (typeof value === 'string' && (/^(data:|https?:)/.test(value) || value.length > 100)) return '이미지·사용자 자료';
     return typeof value === 'number' ? `${numText(path, value)}${NUM[path]?.unit || ''}` : String(value);
 }
@@ -114,6 +126,47 @@ function stepHistory(redo) {
     saveSoon(); applyAll(); refreshPanels();
     const rows = changes.slice(0, 8).map(c => `<div>${esc(historyLabel(c.path))}: <b>${esc(historyValue(c.from, c.path))}</b> → <b>${esc(historyValue(c.to, c.path))}</b></div>`).join('');
     toastr.info(`<div class="bl-history-notice">${rows}${changes.length > 8 ? `<small>외 ${changes.length - 8}개 설정도 복원했어요.</small>` : ''}</div>`, redo ? '다시 실행했어요' : '되돌렸어요', { escapeHtml: false, closeButton: true, timeOut: 6500, extendedTimeOut: 10000 });
+}
+
+function settingsChanges(s) {
+    const changes = changedSettings(s);
+    return `<p class="salty-note">기본값에서 바뀐 설정 ${changes.length}개예요. 저장한 액자·글꼴·스타일 보관함은 유지해요. 복원도 상단 화살표로 되돌릴 수 있어요.</p><div class="bl-changes-list">${changes.map(({path,before,value}) => `<article class="bl-setting-change"><b>${esc(historyLabel(path))}</b><small>기본 ${esc(historyValue(before,path))} → 현재 ${esc(historyValue(value,path))}</small><div><button type="button" class="salty-btn" data-act="setting-jump" data-setting="${esc(path)}">설정으로</button><button type="button" class="salty-btn" data-act="setting-reset" data-setting="${esc(path)}">기본값</button></div></article>`).join('') || '<p class="salty-note">모두 기본값을 사용하고 있어요.</p>'}</div>`;
+}
+function installSettingResets(root) {
+    const settings = getSettings();
+    for (const control of root.querySelectorAll('[data-range],[data-num],[data-path],[data-toggle],[data-color-path],[data-time-path],toolcool-color-picker[data-token]')) {
+        const path = control.dataset.range || control.dataset.num || control.dataset.path || control.dataset.toggle || control.dataset.colorPath || control.dataset.timePath || `colorOverrides.${settings.palette}.${control.dataset.token}`;
+        if (!settingDefault(settings, path).allowed) continue;
+        const row = control.closest('.salty-sizeopt,.salty-slider,.salty-row,.salty-stack');
+        const label = row?.querySelector(':scope > header > span,:scope > span,:scope > .salty-row > span');
+        if (!label || [...label.querySelectorAll('[data-act="setting-reset"]')].some(b => b.dataset.setting === path)) continue;
+        const button = document.createElement('button'); button.type = 'button'; button.className = 'bl-setting-reset'; button.dataset.act = 'setting-reset'; button.dataset.setting = path; button.textContent = '↺';
+        button.title = `${historyLabel(path)} · 기본값으로`; button.setAttribute('aria-label', button.title); label.append(button);
+    }
+    syncSettingResets();
+}
+function syncSettingResets() {
+    const settings = getSettings();
+    for (const panel of panels) for (const button of panel.querySelectorAll('.bl-setting-reset')) button.hidden = !settingChanged(settings, button.dataset.setting);
+}
+function jumpToSetting(root, path) {
+    if (!settingDefault(getSettings(),path).allowed) return;
+    const route = settingRoute(path);
+    root._catalogOpen = false; ui.tab = route.tab; ui.subs[route.tab] = route.sub; ui.picker = null;
+    // Inspecting an override for another palette should not silently change the active theme.
+    if (path.startsWith('colorOverrides.') && path.split('.')[1] !== getSettings().palette) {
+        toastr.info('이 색은 다른 테마에 저장돼 있어요. 색 목록에서 해당 테마를 선택해 주세요.', '저장된 테마 색');
+        ui.subs.theme = 'palette';
+    }
+    store('salty_tab',ui.tab); store('salty_subs',JSON.stringify(ui.subs)); refreshPanels();
+    const controls = [...root.querySelectorAll('[data-range],[data-num],[data-path],[data-toggle],[data-color-path],[data-time-path],toolcool-color-picker[data-token]')];
+    const found = controls.find(el => [el.dataset.range,el.dataset.num,el.dataset.path,el.dataset.toggle,el.dataset.colorPath,el.dataset.timePath].includes(path) || path.startsWith('colorOverrides.') && el.dataset.token === path.split('.')[2]);
+    const anchor = path.includes('.decor') ? '장식 액자' : path.includes('.edgeShadow') ? '그림자' : path.includes('.edge') ? '테두리' : path.startsWith('shadow.') ? '글자 그림자' : path.startsWith('outline.') ? '글자 외곽선' : path.startsWith('chat.weather') ? '날씨' : null;
+    const group = anchor ? [...root.querySelectorAll('[data-search-anchor]')].find(el => el.dataset.searchAnchor === anchor) : null;
+    const target = found?.closest('.salty-slider,.salty-row,.salty-stack') || group || root.querySelector('.salty-sec');
+    revealEditorTarget(root,target); target.classList.add('bl-search-target'); target.tabIndex = -1; target.focus({preventScroll:true});
+    requestAnimationFrame(() => { if (target.isConnected && target !== root.querySelector('.salty-sec')) { const section = root.querySelector('.salty-sec'); section.scrollTop += target.getBoundingClientRect().top - section.getBoundingClientRect().top - 16; } });
+    setTimeout(() => target.classList.remove('bl-search-target'),2200);
 }
 
 let saveTimer = null;
@@ -128,6 +181,7 @@ export function mountPanel(container, { popup = false, onFullscreen = null } = {
     root._onFullscreen = onFullscreen;
     container.appendChild(root);
     panels.add(root);
+    bindTouchSliders(root);
     bind(root);
     bindEditor(root);
     bindSettingsSearch(root, entry => {
@@ -214,6 +268,7 @@ function update(mutator, rerender = true, group = '') {
         }
     }
     syncHistoryButtons();
+    syncSettingResets();
 }
 
 // ───────── 조각들 ─────────
@@ -807,6 +862,7 @@ function fontBlock(s, slot) {
 
 // ───────── 테마 ─────────
 function tabTheme(s, sub) {
+    if (sub === 'changes') return settingsChanges(s);
     if (sub === 'custom') return customBuilder(s);
     if (sub === 'backup') return tabBackup();
     if (sub === 'styles') return tabStyles(s);
@@ -1012,8 +1068,8 @@ function tabText(s, sub) {
         body = `${cap('대사', '"…"')}
             <div class="salty-group">
                 ${stack('표시', seg('dialogue.style', [['marker', '형광펜'], ['full', '전체 칠'], ['bold', '굵게'], ['tint', '색'], ['plain', '없음']]))}
-                ${marker ? stack('형광펜 모양', seg('dialogue.markerShape', [['stroke', '펜 자국'], ['rectangle', '직사각형']], 'stroke')) : ''}
-                ${marker && s.dialogue.markerShape !== 'rectangle' ? stack('형광펜 기울기', seg('dialogue.tilt', [['flat', '일직선'], ['slant', '대각선'], ['steep', '완전 대각선']])) : ''}
+                ${marker ? stack('형광펜 모양', seg('dialogue.markerShape', [['stroke', '펜 자국'], ['rectangle', '직사각형'], ['pill', '알약']], 'stroke')) : ''}
+                ${marker && s.dialogue.markerShape === 'stroke' ? stack('형광펜 기울기', seg('dialogue.tilt', [['flat', '일직선'], ['slant', '대각선'], ['steep', '완전 대각선']])) : ''}
                 ${marker ? stack('형광펜 위치', seg('dialogue.markerPos', [['center', '가운데'], ['bottom', '아래']], 'center'), '아래: 밑줄 긋듯 글자 아랫부분에') : ''}
                 ${marker ? slider('dialogue.markerThick', '형광펜 굵기', ...TEXT_LIMIT.markerThick, 1, 54) : ''}
                 ${pen ? color('marker', '형광펜 색') : ''}
@@ -1469,6 +1525,7 @@ function render(root) {
     fillPreviews(root); // 미리보기 무대 다시 꽂기 (만들지 않고 옮겨 담기만)
     bindPreviewViews(root, `${ui.tab}/${ui.subs[ui.tab]}`);
     syncSamples(s); // 미리보기 문단 클래스 맞추기
+    installSettingResets(root);
     // Preview sizing changes the available scroll height; restore after it is measured.
     root.querySelector('.salty-sec').scrollTop = root._editorScroll.get(root._editorRoute) || 0;
 
@@ -1672,6 +1729,15 @@ function bind(root) {
         const { act } = el.dataset;
         try {
             switch (act) {
+                case 'setting-jump': jumpToSetting(root, el.dataset.setting); break;
+                case 'setting-reset': {
+                    const path = el.dataset.setting, settings = getSettings();
+                    if (!settingChanged(settings,path)) break;
+                    const before = historyValue(getPath(settings,path),path);
+                    update(st => { resetSetting(st,path); if (/^(image|profile|userProfile)\.decor\./.test(path)) refreshPreset(st[path.split('.')[0]].decor); });
+                    toastr.info(`${esc(historyLabel(path))}: ${esc(before)} → ${esc(historyValue(getPath(getSettings(),path),path))}`, '기본값으로 복원했어요', {escapeHtml:false});
+                    break;
+                }
                 case 'history-undo': stepHistory(false); break;
                 case 'history-redo': stepHistory(true); break;
                 case 'editor-catalog': openEditorCatalog(root, true); break;

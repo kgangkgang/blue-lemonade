@@ -285,7 +285,7 @@ export const SHADOW_LIMIT = { alpha: [0, 100], angle: [0, 360], distance: [0, 12
 export const SHADOW_TARGETS = ['text', 'dialogue', 'em', 'strong', 'code'];
 
 function tidyDialogue(d) {
-    if (!['stroke', 'rectangle'].includes(d.markerShape)) d.markerShape = 'stroke';
+    if (!['stroke', 'rectangle', 'pill'].includes(d.markerShape)) d.markerShape = 'stroke';
     if (!MARKER_POSITIONS.includes(d.markerPos)) d.markerPos = 'center';
     const v = typeof d.markerThick === 'number' ? d.markerThick : parseFloat(d.markerThick);
     d.markerThick = Number.isFinite(v) ? clampTo(v, TEXT_LIMIT.markerThick) : DEFAULTS.dialogue.markerThick;

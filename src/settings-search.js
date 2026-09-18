@@ -1,6 +1,7 @@
 // Local settings index. Hidden aliases include controls that are currently folded
 // or disabled. Searching never renders all sections or sends text to a server.
 const rows = [
+ ['theme','changes','변경한 설정·항목별 복원','변경 내역 기본값 다른 바꾼 설정 목록 초기화 원래대로 항목 하나만 되돌리기 복원 실수'],
  ['theme','palette','테마 색과 밝기','배경 진하기 테마색 농도 차콜 색감 퍼센트 0.5% 1% 20% 팔레트 화이트 나이트 밝은 어두운 다크모드 라이트모드 블루 레몬 피치 복숭아 자몽 라벤더 딸기 민트 오렌지 우드 갈색 수박 초록 빨강 커스텀 테마 선택'],
  ['theme','colors','테마 세부 색','바탕 배경 종이 카드 포인트 강조 형광펜 글자색 색깔 변경 색상 투명 색 고치기'],
  ['theme','custom','직접 테마 만들기','커스텀 테마 만들기 새 팔레트 내 색 이름 저장 자동 색 조합'],
@@ -8,7 +9,7 @@ const rows = [
  ['theme','backup','설정 백업·복원','백업 복원 파일 json 내보내기 가져오기 초기화 리셋 설정 전체 저장'],
  ['theme','palette','설정창 전체 화면·닫기·되돌리기','되돌리기 취소 앞으로가기 다시실행 실행취소 undo redo 전체화면 전체 화면 크게 넓게 설정창 팝업 작은창 작은 창 닫기 종료 나가기 엑스 x'],
  ['text','text','본문 글꼴과 크기','글자 글씨 폰트 글꼴 크기 굵기 자간 줄 높이 행간 언어 한글 영어 일본어 중국어 한자 구글 폰트 업로드 CSS 링크'],
- ['text','dialogue','대사·형광펜','대사 따옴표 형광펜 직사각형 네모 반듯 일자 펜 자국 모양 밑줄 기울기 대각선 위치 굵기 진하기 색 글자 폰트 자간 크기 전체 칠'],
+ ['text','dialogue','대사·형광펜','대사 따옴표 형광펜 직사각형 알약 둥근 끝 동그란 네모 반듯 일자 펜 자국 모양 밑줄 기울기 대각선 위치 굵기 진하기 색 글자 폰트 자간 크기 전체 칠'],
  ['text','ui','메뉴 글자','메뉴 설정창 버튼 글자 글씨 크기 굵기 자간 폰트 글꼴'],
  ['text','em','속마음 글자','속마음 기울임 이탤릭 별표 보라색 글자 색 크기 굵기 자간 폰트'],
  ['text','strong','강조 글자','강조 굵은 글씨 볼드 별표 두개 글자 색 크기 굵기 자간 폰트'],
@@ -47,7 +48,7 @@ for (const [sub, name, alias] of [['profile','캐릭터','캐릭터 봇 상대']
  ['chat',namesub,`${name} 시간·버튼 배치`,`${alias} 이름 시간 날짜 버튼 점세개 메뉴 편집 연필 모델 아이콘 통계 토큰 번호 한줄 두줄 옆 아래 간격 진하기 정렬`, '']);
 }
 const tabs={theme:'테마',text:'글자',chat:'채팅',image:'이미지',prompt:'프롬프트'};
-const subs={palette:'색',colors:'색 고치기',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
+const subs={changes:'변경한 설정',palette:'색',colors:'색 고치기',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
 const normalize = value => String(value).normalize('NFKC').toLowerCase().replace(/퀵\s*리플라이|quick\s*repl(?:y|ies)|큐알|\bqr\b/g,'퀵리플라이').replace(/프사|아바타/g,'프로필').replace(/글씨|글자\s*간격/g,m=>m==='글씨'?'글자':'자간').replace(/확대\s*축소/g,'확대 축소').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 export const SEARCH_ENTRIES = rows.map(([tab,sub,title,aliases,anchor='',path=''],id)=>{
  const words=[...new Set(normalize(title+' '+aliases).split(' '))];

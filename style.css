@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 49개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build ee0edc1839dd) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 49개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 2d975a05072c) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 10px;
@@ -17205,6 +17205,13 @@ html body .bl-editor .bl-editor-group-body > .salty-fontrows:not(.bl-decor-contr
 .bl-palette-tint .salty-slider { margin:0; }
 .bl-editor [data-act^="history-"]:disabled { opacity:.3; cursor:default; }
 .bl-history-notice { max-height:40vh; overflow:auto; line-height:1.6; overflow-wrap:anywhere; }
+.bl-editor input[type="range"][data-range] { touch-action:pan-y pinch-zoom; }
+html body .bl-editor .bl-setting-reset { display:inline-flex; align-items:center; justify-content:center; width:28px; min-width:28px; height:28px; min-height:28px; padding:0; margin:0 0 0 6px; border:1px solid var(--salty-line); border-radius:8px; background:transparent; color:var(--salty-accent); font:18px/1 sans-serif; vertical-align:middle; box-shadow:none; cursor:pointer; }
+html body .bl-editor .bl-setting-reset[hidden] { display:none !important; }
+.bl-setting-reset:focus-visible { outline:2px solid var(--salty-accent); outline-offset:2px; }
+.bl-setting-change { display:flex; flex-direction:column; gap:8px; padding:16px 0; border-bottom:1px solid var(--salty-line); overflow-wrap:anywhere; }
+.bl-setting-change > small { color:var(--salty-muted); line-height:1.6; }
+.bl-setting-change > div { display:flex; gap:8px; flex-wrap:wrap; }
 /* css/99-lazy-panel.css */
 #salty-lazy-panel-start {}
 body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > * {
