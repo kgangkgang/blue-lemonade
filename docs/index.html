@@ -7,10 +7,10 @@
   <meta name="description" content="읽기 편한 SillyTavern 테마, Blue Lemonade. 실제 화면과 움직이는 미리보기, 업데이트 내역, 모바일 설치 파일을 한곳에서 만나 보세요.">
   <meta property="og:title" content="🍋 Blue Lemonade"><meta property="og:description" content="상큼하게, 가볍게, 조금 더 편하게. 실리태번 테마의 화면과 새 소식을 만나 보세요.">
   <meta property="og:image" content="https://kgangkgang.github.io/blue-lemonade/media/pc-chat.png">
-  <link rel="stylesheet" href="site.css?v=20260918-phones"><link rel="stylesheet" href="palette-preview.css"><link rel="stylesheet" href="hero-phones.css"><script src="hero-phones.js" defer></script><script src="site.js" defer></script><script src="palette-preview.js" defer></script>
+  <link rel="stylesheet" href="site.css?v=20260918-phones"><link rel="stylesheet" href="palette-preview.css"><link rel="stylesheet" href="hero-phones.css"><link rel="stylesheet" href="features.css"><script src="features.js" defer></script><script src="hero-phones.js" defer></script><script src="site.js" defer></script><script src="palette-preview.js" defer></script>
 </head>
 <body>
-  <header class="top"><a class="brand" href="#"><span class="lemon" aria-hidden="true">◒</span> Blue Lemonade</a><nav><a href="#gallery">둘러보기</a><a href="#colors">테마 색상</a><a href="#updates">업데이트</a><a href="#install">설치</a></nav></header>
+  <header class="top"><a class="brand" href="#"><span class="lemon" aria-hidden="true">◒</span> Blue Lemonade</a><nav><a href="#gallery">둘러보기</a><a href="#colors">테마 색상</a><a href="#features">전체 기능</a><a href="#updates">업데이트</a><a href="#install">설치</a></nav></header>
   <main>
     <section class="hero">
       <div class="hero-copy"><span class="eyebrow">A LITTLE FRESHNESS FOR YOUR STORIES</span><h1>상큼하게,<br>가볍게.<span class="sparkle" aria-hidden="true">✳</span></h1><p>오래 머물고 싶은 이야기에는<br>눈이 편한 화면이 어울리니까.</p><p class="intro">파란 형광펜과 레몬빛 포인트.<br>글꼴부터 색, 작은 버튼 하나까지 취향대로 바꾸는<br>SillyTavern 테마, <strong>Blue Lemonade</strong>.</p><div class="actions"><a class="button primary" href="#install">내 실리태번에 담기 <span>↗</span></a><a class="text-link" href="#gallery">화면 먼저 보기 ↓</a></div><div class="version-line"><span class="pill">3.7.7</span><span>2026.09.18</span></div></div>
@@ -42,8 +42,99 @@
       <p id="palette-loading">테마 색상을 불러오는 중이에요.</p>
       <noscript><p>테마 색상 비교를 사용하려면 JavaScript를 켜 주세요.</p></noscript>
     </section>
+
+    <section id="reading" class="section reading-section" aria-labelledby="reading-heading">
+      <div class="section-head"><div><span class="eyebrow">FIND YOUR READING RHYTHM</span><h2 id="reading-heading">글자 사이에도, 내 취향.</h2></div><p>자간부터 첫 줄 들여쓰기까지.<br>직접 움직여 보며 읽기 편한 모습을 찾아보세요.</p></div>
+      <div class="reading-layout">
+        <form id="reading-controls" class="reading-controls">
+          <label for="read-size">글자 크기 <output for="read-size">16px</output></label><input id="read-size" type="range" min="12" max="22" value="16" step="1">
+          <label for="read-spacing">자간 <output for="read-spacing">−0.01em</output></label><input id="read-spacing" type="range" min="-5" max="8" value="-1" step="1">
+          <label for="read-line">줄간격 <output for="read-line">1.8</output></label><input id="read-line" type="range" min="1.4" max="2.2" value="1.8" step="0.01">
+          <label for="read-para">문단 간격 <output for="read-para">0.9em</output></label><input id="read-para" type="range" min="0" max="2" value="0.9" step="0.01">
+          <label for="read-gutter">좌우 여백 <output for="read-gutter">20px</output></label><input id="read-gutter" type="range" min="8" max="40" value="20" step="1">
+          <label for="read-align">문단 정렬</label><select id="read-align"><option value="left">왼쪽</option><option value="word">양쪽</option><option value="break">양쪽 (낱말 끊기)</option></select>
+          <label class="reading-check"><input id="read-indent" type="checkbox">첫 줄 들여쓰기</label>
+          <button type="reset" class="reading-reset">처음 값으로</button>
+          <p class="reading-note">소개용 가상 글이에요. 여기서 바꾼 값은 실리태번 설정에 저장되지 않아요.</p>
+        </form>
+        <div class="reading-paper"><span class="reading-kicker">등대 아래 찻집 · 읽기 예시</span><div id="reading-sample">
+          <p>창가에 놓인 유리잔 위로 오후의 햇살이 내려앉았다. 아린은 레몬 한 조각을 천천히 저으며, 바다 건너에서 도착한 편지를 펼쳤다.</p>
+          <p><q>오늘은 서두르지 말자. 다음 배가 올 때까지, 아직 시간이 있으니까.</q></p>
+          <p>멀리서 들려오는 파도 소리가 문장 사이를 채웠다. 종이 위의 글자를 한 줄씩 따라가다 보니, 어느새 식어 가던 차에서도 다시 향이 느껴지는 듯했다.</p>
+          <p>이야기는 같은 자리에서 이어졌다. 글자 사이에 조금 더 여유를 주고, 문단의 첫머리를 가지런히 맞춘 채로.</p>
+        </div><span class="reading-footnote">실리태번에서는 역할별 글꼴·굵기·색과 PC 본문 폭까지 조절할 수 있어요.</span></div>
+      </div>
+      <noscript><p>슬라이더 미리보기는 JavaScript를 켜면 사용할 수 있어요. 아래 기능 안내는 그대로 읽을 수 있어요.</p></noscript>
+    </section>
+    <section id="features" class="section features-section" aria-labelledby="features-heading">
+      <div class="section-head"><div><span class="eyebrow">EVERY LITTLE DETAIL</span><h2 id="features-heading">작은 설정까지, 빠짐없이.</h2></div><p>묶음을 펼치면 기능과 설정 위치를 볼 수 있어요.<br>Blue Lemonade 3.7.7 기준.</p></div>
+      <div class="feature-search" hidden><label for="feature-query">기능 찾기</label><input id="feature-query" type="search" placeholder="자간, 들여쓰기, 글꼴, 이미지…" autocomplete="off"><button id="feature-clear" type="button">전체 보기</button></div>
+      <p id="feature-result" class="feature-result" role="status">56가지 기능 안내</p>
+      <div id="feature-groups"><details class="feature-group" data-default-open="true" open><summary><span><b>글자 · 문단</b><small>글꼴부터 문장 사이의 여백까지, 오래 읽기 편한 화면.</small></span><span class="feature-group-count">12가지</span></summary><div class="feature-grid"><article class="feature-card"><h4>본문 크기·굵기·자간</h4><p>글자를 키우거나 두껍게 하고, 글자 사이를 조여 한눈에 들어오는 밀도를 맞춰요.</p><small>글자 › 본문</small></article>
+<article class="feature-card"><h4>줄간격</h4><p>줄과 줄 사이를 넓히거나 좁혀, 긴 답변을 읽는 호흡을 바꿔요.</p><small>글자 › 본문</small></article>
+<article class="feature-card"><h4>문단 간격·첫 줄 들여쓰기</h4><p>문단 사이 여백과 첫 줄 들여쓰기를 따로 골라 소설책처럼 정돈해요.</p><small>글자 › 문단</small></article>
+<article class="feature-card"><h4>왼쪽·양쪽 정렬</h4><p>왼쪽 정렬, 낱말을 유지하는 양쪽 정렬, 낱말도 끊어 채우는 양쪽 정렬을 골라요.</p><small>글자 › 문단</small></article>
+<article class="feature-card"><h4>좌우 여백·PC 본문 폭</h4><p>폰에서는 가장자리 여유를, PC에서는 한 줄이 너무 길어지지 않도록 최대 폭을 맞춰요.</p><small>글자 › 문단</small></article>
+<article class="feature-card"><h4>여섯 역할별 글자 설정</h4><p>본문·대사·메뉴·속마음·강조·코드의 글꼴, 크기, 굵기, 자간을 따로 바꿔요. 본문 설정을 따라가게 할 수도 있어요.</p><small>글자 › 각 역할</small></article>
+<article class="feature-card"><h4>언어별 글꼴·한자 선택</h4><p>한국어·영어·일본어·중국어 글꼴을 따로 지정해요. 한자를 어느 언어의 글꼴로 보여 줄지도 선택해요.</p><small>글자 › 각 역할 › 글꼴</small></article>
+<article class="feature-card"><h4>글꼴 찾기·내 글꼴 추가</h4><p>이름 검색과 분류로 글꼴을 찾고 미리 봐요. 구글 폰트, CSS 링크, WOFF·WOFF2·TTF·OTF 파일도 추가할 수 있어요.</p><small>글자 › 글꼴 목록</small></article>
+<article class="feature-card"><h4>다섯 가지 대사 표시</h4><p>형광펜·전체 칠·굵게·색·없음 중 선택해요. 대사 글자색과 형광펜 색도 따로 맞춰요.</p><small>글자 › 대사</small></article>
+<article class="feature-card"><h4>형광펜 기울기·위치·굵기</h4><p>반듯하게 또는 비스듬하게 칠하고, 가운데 강조와 아래쪽 밑줄 느낌을 골라요.</p><small>글자 › 대사</small></article>
+<article class="feature-card"><h4>속마음·강조·코드 구분</h4><p>속마음은 기울임을 끄고 색으로만 구분할 수 있어요. 강조는 별도 색으로, 코드는 원하는 글꼴로 읽어요.</p><small>글자 › 속마음·강조·코드</small></article>
+<article class="feature-card"><h4>글자 그림자·외곽선</h4><p>그림자를 넣을 역할을 고르고 색·투명도·각도·거리·퍼짐을 조절해요. 본문 전체 외곽선은 색·두께·진하기를 바꿔요.</p><small>글자 › 그림자 · 외곽선</small></article>
+</div></details>
+<details class="feature-group" data-default-open="false"><summary><span><b>색 · 스타일</b><small>낮과 밤의 색, 캐릭터마다 다른 분위기.</small></span><span class="feature-group-count">9가지</span></summary><div class="feature-grid"><article class="feature-card"><h4>6종 에이드·화이트·나이트</h4><p>블루·레몬·리얼 블랙·멜론·자몽·피치의 밝고 어두운 모드를 골라요. 위 색상 미리보기에서 바로 비교할 수 있어요.</p><small>테마 › 색</small></article>
+<article class="feature-card"><h4>기기·시간에 따른 자동 전환</h4><p>기기의 다크 모드를 따르거나, 화이트와 나이트로 바뀔 시간을 직접 정해요.</p><small>테마 › 색 › 자동</small></article>
+<article class="feature-card"><h4>나만의 커스텀 에이드</h4><p>바탕·패널·글자·포인트색을 섞어 이름을 붙여요. 화이트와 나이트를 각각 미리 보고 완성해요.</p><small>테마 › 색 › 커스텀 에이드 만들기</small></article>
+<article class="feature-card"><h4>부분별 색 고치기</h4><p>본문·대사·속마음·강조·보조 글자, 메뉴·입력칸·말풍선, 형광펜·그림자 색을 바꿔요. 색은 테마마다 따로 저장돼요.</p><small>테마 › 색 고치기</small></article>
+<article class="feature-card"><h4>사진에서 색 고르기</h4><p>이미지의 대표 색과 확대경으로 짚은 색을 골라요. 최근 사용한 색도 다시 쓸 수 있어요.</p><small>색 고르기 팝업</small></article>
+<article class="feature-card"><h4>완성된 읽기 스타일</h4><p>소설책·메신저·또렷하게·처음 모습으로 글자와 채팅 모양을 한 번에 바꿔요. 고른 테마 색은 유지돼요.</p><small>테마 › 스타일</small></article>
+<article class="feature-card"><h4>내 스타일 저장·관리</h4><p>현재 색·글꼴·글자·채팅·이미지 모습을 최대 20개까지 저장해요. 이름을 바꾸거나 지금 모습으로 갱신할 수 있어요.</p><small>테마 › 스타일</small></article>
+<article class="feature-card"><h4>캐릭터·그룹별 스타일</h4><p>저장한 스타일을 캐릭터나 그룹에 연결하면 그 채팅을 열 때 자동으로 입혀져요.</p><small>테마 › 스타일</small></article>
+<article class="feature-card"><h4>스타일 공유·되돌리기</h4><p>스타일을 코드나 파일로 주고받고, 방금 입힌 스타일은 되돌릴 수 있어요.</p><small>테마 › 스타일</small></article>
+</div></details>
+<details class="feature-group" data-default-open="false"><summary><span><b>채팅 · 퀵 리플라이</b><small>내 메시지와 조작 버튼도 읽는 방식에 맞게.</small></span><span class="feature-group-count">13가지</span></summary><div class="feature-grid"><article class="feature-card"><h4>네 가지 내 메시지 모양</h4><p>말풍선·카드·테이블·글자만 중 골라요. 내 메시지의 글자 크기와 진하기도 따로 조절해요.</p><small>채팅 › 메시지</small></article>
+<article class="feature-card"><h4>이름·시간·아바타 표시</h4><p>이름과 시간, 이름만, 모두 숨김을 선택해요. 아바타를 숨기면 채팅 이미지를 더 넓게 볼 수 있어요.</p><small>채팅 › 메시지</small></article>
+<article class="feature-card"><h4>아이콘·배경 이미지</h4><p>선 아이콘과 기본 아이콘을 고르고, 채팅 뒤 배경 그림을 비추거나 깨끗한 테마 바탕으로 읽어요.</p><small>채팅 › 화면</small></article>
+<article class="feature-card"><h4>테마에 맞는 선택 목록</h4><p>모델·프리셋 등의 긴 목록을 테마 팝업으로 보여 줘요. 끄면 기기의 기본 선택 목록을 사용해요.</p><small>채팅 › 화면</small></article>
+<article class="feature-card"><h4>실리태번 색 칸도 같은 팝업</h4><p>실리태번 설정의 색 칸에서도 테마의 색 고르기를 사용할 수 있어요.</p><small>채팅 › 화면</small></article>
+<article class="feature-card"><h4>새 글자 페이드 인</h4><p>스트리밍으로 들어오는 새 글자가 부드럽게 나타나요. 실리태번 기본 페이드 인이 켜져 있으면 이 효과는 쉬어요.</p><small>채팅 › 화면</small></article>
+<article class="feature-card"><h4>QR 위치·스크롤 방향</h4><p>퀵 리플라이를 입력창 위나 아래에 놓고, 가로 또는 세로로 넘겨요. 세로는 보이는 줄을 1~4줄로 정해요.</p><small>채팅 › 화면 › 퀵 리플라이</small></article>
+<article class="feature-card"><h4>PC 휠·드래그·버튼 정렬</h4><p>Shift 없이 휠로 QR을 옆으로 넘기거나 마우스로 끌어요. 멈출 때 버튼이 가지런히 맞춰져요.</p><small>퀵 리플라이 줄</small></article>
+<article class="feature-card"><h4>QR 이름·내용·하위 세트 찾기</h4><p>돋보기에서 이름과 내용을 검색하고 일치한 부분을 강조해요. 연결된 하위 세트도 함께 찾아요.</p><small>퀵 리플라이 › 돋보기</small></article>
+<article class="feature-card"><h4>누르기 편한 하위 QR 목록</h4><p>버튼 전체로 하위 목록을 열고 제목도 버튼 옆에서 확인해요. 긴 목록은 창 안에서 스크롤하며 스크롤바 색은 테마를 따라가요.</p><small>하위 세트가 연결된 퀵 리플라이</small></article>
+<article class="feature-card"><h4>몰입 읽기</h4><p>폰에서 아래로 읽으면 상단 바와 입력창이 숨고, 살짝 올리거나 누르면 다시 나타나요.</p><small>채팅 › 화면 › 폰</small></article>
+<article class="feature-card"><h4>한 손 버튼 줄</h4><p>입력창 가까이에 스와이프·사칭·이어 쓰기·다시 생성을 놓아요. 필요한 버튼만 켤 수 있어요.</p><small>채팅 › 화면 › 폰</small></article>
+<article class="feature-card"><h4>본문 색 통일·톤 맞추기</h4><p>메시지에 지정된 색을 테마색으로 통일하거나, 원래 색상을 살리고 채도·밝기만 맞춰요. 화이트·나이트 값을 따로 정해요.</p><small>채팅 › 기타</small></article>
+</div></details>
+<details class="feature-group" data-default-open="false"><summary><span><b>이미지 · 에셋</b><small>그림도 채팅 속에 자연스럽게 들어오도록.</small></span><span class="feature-group-count">8가지</span></summary><div class="feature-grid"><article class="feature-card"><h4>가로 꽉·본문 폭·작게</h4><p>채팅 이미지를 화면 끝까지 넓히거나 본문 폭에 맞추고, 작게 넣을 수도 있어요.</p><small>이미지 › 배치</small></article>
+<article class="feature-card"><h4>비율 유지·높이 맞춤</h4><p>원본 비율을 살리면서 최대 높이를 제한하거나, 그림마다 일정한 높이에 맞춰요.</p><small>이미지 › 크기</small></article>
+<article class="feature-card"><h4>모서리·커스텀 모양</h4><p>네모 이미지의 모서리를 둥글게 하고, 투명한 그림을 도형으로 불러와 원하는 실루엣으로 보여 줘요.</p><small>이미지 › 모양</small></article>
+<article class="feature-card"><h4>내 도형 저장·맞추기</h4><p>커스텀 도형을 목록에 저장해 다시 써요. 이미지 상자에 늘리거나 도형의 비율을 유지해 맞출 수 있어요.</p><small>이미지 › 모양 › 커스텀</small></article>
+<article class="feature-card"><h4>선·안쪽·빛·프리즘 테두리</h4><p>네모 이미지에 테두리 느낌을 고르고 위·아래·좌·우 면, 두께, 진하기와 번짐을 조절해요.</p><small>이미지 › 모양</small></article>
+<article class="feature-card"><h4>이미지에 어울리는 자동 테두리색</h4><p>그림 가장자리에서 색을 뽑아 테두리에 사용해요. 배치와 흐림에 따라 테두리가 가려질 때는 설정에서 안내해 줘요.</p><small>이미지 › 모양 › 자동 색</small></article>
+<article class="feature-card"><h4>가장자리 흐림</h4><p>약함·중간·강함을 고르고 위아래와 옆의 흐림 범위를 따로 맞춰 바탕에 자연스럽게 녹여요.</p><small>이미지 › 흐림</small></article>
+<article class="feature-card"><h4>흰 배경·투명 캐릭터 컷</h4><p>밝은 테마에서 이미지의 흰 배경을 바탕색에 섞어요. 투명 컷에도 같은 효과를 적용하거나, 자르지 않고 아래만 흐릴 수 있어요.</p><small>이미지 › 흐림·모양</small></article>
+</div></details>
+<details class="feature-group" data-default-open="false"><summary><span><b>날씨 · 프롬프트</b><small>장면의 분위기와 프롬프트의 개성을 함께.</small></span><span class="feature-group-count">7가지</span></summary><div class="feature-grid"><article class="feature-card"><h4>비·눈 효과</h4><p>채팅 뒤에 비나 눈을 내려요. 세기·투명도·크기·속도·각도를 바꾸면 미리보기도 함께 움직여요.</p><small>채팅 › 화면 › 날씨</small></article>
+<article class="feature-card"><h4>내 그림이 내리는 효과</h4><p>투명 배경의 그림을 넣어 꽃잎이나 별처럼 내리게 해요. 저장한 그림을 다시 골라 쓸 수 있어요.</p><small>채팅 › 화면 › 날씨 › 내 그림</small></article>
+<article class="feature-card"><h4>데우스 카드 스킨</h4><p>데우스 엑스 마키나 호환을 켜면 트래커·장면 계획·상태 카드가 테마와 어울리게 바뀌어요.</p><small>프롬프트 › 데우스 엑스 마키나</small></article>
+<article class="feature-card"><h4>폰에서 카드 접기</h4><p>트래커는 한 줄로, 펼쳐진 카드는 제목만 남겨요. 내용을 보고 싶을 때 눌러 펼쳐요.</p><small>프롬프트 › 카드 스킨</small></article>
+<article class="feature-card"><h4>카드 색·이모티콘 선택</h4><p>카드마다 원래 색을 살리거나 테마의 포인트색으로 통일해요. 제목 앞 이모티콘도 켜고 끌 수 있어요.</p><small>프롬프트 › 데우스 엑스 마키나</small></article>
+<article class="feature-card"><h4>프롬프트 대사색 살리기</h4><p>프롬프트가 지정한 대사색을 글자 또는 형광펜에 반영해요. 대사색용 외곽선과 그림자도 별도로 조절해요.</p><small>프롬프트 › 대사 색상 가독성 향상</small></article>
+<article class="feature-card"><h4>트래커 날씨 따라가기</h4><p>데우스 호환을 켜면 트래커가 비·눈을 알려 줄 때 채팅 뒤 날씨 효과도 따라가요.</p><small>프롬프트 › 트래커 날씨로 날씨 효과</small></article>
+</div></details>
+<details class="feature-group" data-default-open="false"><summary><span><b>설정 · 백업</b><small>손본 모습은 보관하고, 다음에도 편하게.</small></span><span class="feature-group-count">7가지</span></summary><div class="feature-grid"><article class="feature-card"><h4>설정 내보내기·가져오기</h4><p>테마 설정을 JSON 파일로 보관하고 다시 불러와요. 스타일 공유와 별도로 전체 설정을 옮길 때 사용해요.</p><small>테마 › 백업</small></article>
+<article class="feature-card"><h4>실리태번 설정 맞추기·초기화</h4><p>실리태번의 흐림·그림자·말풍선 모양을 테마에 맞춰요. 처음 설정으로 되돌릴 때도 내 글꼴 목록은 남아요.</p><small>테마 › 백업</small></article>
+<article class="feature-card"><h4>기존 커스텀 CSS 잠시 끄기</h4><p>실리태번 사용자 설정의 커스텀 CSS를 삭제하지 않고, 이 테마를 쓰는 동안 잠시 꺼 둘 수 있어요.</p><small>채팅 › 기타</small></article>
+<article class="feature-card"><h4>새로고침 화면 꾸미기</h4><p>페이지가 열리는 동안 보이는 화면도 테마 분위기로 맞춰요.</p><small>채팅 › 화면 › 새로고침 화면</small></article>
+<article class="feature-card"><h4>설정 중 바로 미리보기</h4><p>글자·채팅·이미지·색의 변화를 설정 화면에서 확인해요. 미리보기가 길면 접어서 공간을 확보할 수 있어요.</p><small>각 설정의 미리보기</small></article>
+<article class="feature-card"><h4>PC·모바일 설정 정리</h4><p>PC 설정은 두 열로, 폰 설정은 좁은 화면에 맞게 정리해요. 긴 선택 목록은 화면 안에서 스크롤해요.</p><small>테마 적용 시</small></article>
+<article class="feature-card"><h4>테마 내 공지사항·업데이트</h4><p>설정 창의 버전 표시를 누르면 테마 안에서 공지사항과 업데이트 내용을 볼 수 있어요. 새 공지가 있으면 버전 표시가 빛나요.</p><small>Blue Lemonade › 버전 표시</small></article>
+</div></details></div><p id="feature-empty" hidden>일치하는 기능이 없어요. 다른 단어로 찾아보세요.</p>
+    </section>
     <section id="gallery" class="section"><div class="section-head"><div><span class="eyebrow">TAKE A LOOK</span><h2>이야기를 담는, 작은 차이.</h2></div><p>옆으로 넘겨 보세요.<br>이미지는 눌러서 크게 볼 수 있어요.</p></div><div id="galleries"></div></section>
-    <section id="updates" class="section updates"><div class="section-head"><div><span class="eyebrow">FRESHLY SQUEEZED</span><h2>조금씩 더 편해지는 중.</h2></div><p>버전을 누르면<br>그날의 업데이트가 펼쳐져요.</p></div><div id="notes"><p>업데이트 내역을 불러오는 중이에요.</p></div></section>
+    <section id="updates" class="section updates"><div class="section-head"><div><span class="eyebrow">FRESHLY SQUEEZED</span><h2>조금씩 더 편해지는 중.</h2></div><p>버전을 누르면<br>그날의 업데이트가 펼쳐져요.</p></div><aside class="notice-guide"><span aria-hidden="true">✦</span><div><strong>테마 안에서도 공지사항을 볼 수 있어요.</strong><p>실리태번의 Blue Lemonade 설정 창에서 <b>버전 표시(v3.7.7)</b>를 누르면 공지사항이 열려요. 새 공지가 있으면 버전 표시가 빛나서 알려 줘요.</p></div></aside><div id="notes"><p>업데이트 내역을 불러오는 중이에요.</p></div></section>
     <section id="install" class="install section"><span class="eyebrow">MAKE YOURSELF AT HOME</span><h2>이제, 내 이야기 차례.</h2><p>폰에서는 ZIP으로, PC에서는 저장소 주소로 설치할 수 있어요.</p><div class="install-grid"><article><span class="step">01 / MOBILE</span><h3>모바일 설치</h3><p>ZIP을 풀어 <code>extensions/blue-lemonade</code>에 덮어쓴 뒤 실리태번을 새로고침하세요. 기존 테마 설정은 그대로 남아요.</p><a class="button primary" download href="downloads/blue-lemonade-3.7.7.zip">3.7.7 ZIP 받기 ↓</a></article><article><span class="step">02 / REPOSITORY</span><h3>저장소로 설치</h3><p>실리태번의 확장 설치에 아래 주소를 넣으세요. 이미 설치했다면 확장 관리에서 업데이트할 수 있어요.</p><div class="copy-row"><code id="repo-url">https://github.com/kgangkgang/blue-lemonade</code><button id="copy-repo" aria-label="설치 주소 복사">복사</button></div><a class="text-link" href="https://github.com/kgangkgang/blue-lemonade" target="_blank" rel="noopener">GitHub 저장소 ↗</a></article></div><p class="install-note">다른 테마 확장은 끄고 사용해 주세요. 모양이 섞이면 ‘채팅 › 기타 › 커스텀 CSS 끄기’를 확인해 보세요.</p></section>
   </main>
   <footer><a class="brand" href="#">🍋 Blue Lemonade</a><p>새 기능은 상큼하게, 화면은 가볍게.</p><span>스크린샷·영상은 소개용 가상 채팅에서 촬영했습니다.</span></footer>
