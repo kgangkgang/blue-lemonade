@@ -33,20 +33,23 @@
   }
   function renderMix() {
     const m = mixes[mode];
-    document.querySelector('#palette-mix-scope').textContent = `${mode === 'light' ? '라이트' : '나이트'} 전용 · 2~3가지 에이드를 섞어요`;
+    document.querySelector('#palette-mix-scope').textContent = `${mode === 'light' ? '라이트' : '나이트'} 전용 · 2~3가지 에이드를 섞어요. 글자는 따로 골라요.`;
     mixToggle.setAttribute('aria-pressed', String(m.on)); mixToggle.textContent = m.on ? '혼합 끄기' : '에이드 혼합하기';
     mixBody.hidden = !m.on;
     if (!m.on) return;
+    // same parts as the theme: dot (the ade's accent) · name · order number
     mixSwatches.replaceChildren(...families.map(f => {
-      const b = document.createElement('button'), dot = document.createElement('i'), i = m.families.indexOf(f.id);
-      b.type = 'button'; b.dataset.family = f.id; b.setAttribute('aria-label', f.label); b.setAttribute('aria-pressed', String(i >= 0));
-      b.disabled = i < 0 && m.families.length === 3; dot.style.background = f[mode].pop; b.append(dot);
+      const b = document.createElement('button'), dot = document.createElement('i'), name = document.createElement('span'), i = m.families.indexOf(f.id);
+      b.type = 'button'; b.dataset.family = f.id; b.setAttribute('aria-pressed', String(i >= 0));
+      b.disabled = i < 0 && m.families.length === 3; dot.style.background = f[mode].accent; name.textContent = f.label; b.append(dot, name);
       if (i >= 0) { const n = document.createElement('b'); n.textContent = i + 1; b.append(n); }
       return b;
     }));
-    const slider = (key, label, min, max, value, unit) => `<label>${label}<output>${value}${unit}</output></label><input type="range" data-mix="${key}" min="${min}" max="${max}" step="1" value="${value}" aria-label="${label}">`;
-    mixSliders.innerHTML = slider('angle', '혼합 방향', 0, 360, m.angle, '°') + m.families.map((f, i) => slider('w' + i, families.find(x => x.id === f).label + ' 비중', 1, 100, m.weights[i], '')).join('');
+    const slider = (key, label, min, max, value) => `<div class="st-slider"><div class="st-slider-head"><span>${label}</span><label class="st-num"><input type="number" data-mix="${key}" min="${min}" max="${max}" step="1" value="${value}"><i></i></label></div><input type="range" data-mix="${key}" min="${min}" max="${max}" step="1" value="${value}" aria-label="${label}"></div>`;
+    mixSliders.innerHTML = slider('angle', '혼합 방향 (°)', 0, 360, m.angle) + m.families.map((f, i) => slider('w' + i, families.find(x => x.id === f).label + ' 비중', 1, 100, m.weights[i])).join('');
+    mixSliders.querySelectorAll('input[type=range]').forEach(fillRange);
   }
+  const fillRange = input => input.style.setProperty('--fill', `${((+input.value - +input.min) / (+input.max - +input.min)) * 100}%`);
   mixToggle.addEventListener('click', () => { mixes[mode].on = !mixes[mode].on; renderMix(); render(); });
   mixSwatches.addEventListener('click', e => {
     const b = e.target.closest('button[data-family]'); if (!b || b.disabled) return;
@@ -57,9 +60,9 @@
   });
   mixSliders.addEventListener('input', e => {
     const input = e.target.closest('input[data-mix]'); if (!input) return;
-    const m = mixes[mode], v = Number(input.value);
+    const m = mixes[mode], v = Math.min(+input.max, Math.max(+input.min, Number(input.value) || +input.min));
     if (input.dataset.mix === 'angle') m.angle = v; else m.weights[Number(input.dataset.mix.slice(1))] = v;
-    input.previousElementSibling.querySelector('output').textContent = v + (input.dataset.mix === 'angle' ? '°' : '');
+    mixSliders.querySelectorAll(`input[data-mix="${input.dataset.mix}"]`).forEach(x => { if (x !== input) x.value = v; if (x.type === 'range') fillRange(x); });
     paintMix();
   });
   function render(announce = true) {

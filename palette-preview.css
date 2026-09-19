@@ -71,24 +71,16 @@
 
 @media (prefers-reduced-motion:reduce){.js .palette-layout .palette-families button{opacity:1;translate:none}.palette-chat.swap>*,.palette-swatches>div{animation:none}}
 
-/* ade mixing — the theme's 에이드 혼합하기 (gradients.js), per white / night */
-.palette-mix{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
-.palette-mix-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.palette-mix-head>span{font-size:14px;font-weight:650;color:var(--ink);line-height:1.4}
-.palette-mix-head small{display:block;margin-top:3px;font-size:12px;font-weight:500;color:var(--muted)}
-#palette-mix-toggle{flex:none;height:38px;padding:0 14px;border:0;border-radius:11px;background:var(--tint);color:var(--ink);font-size:13px;font-weight:650;transition:background-color .2s,color .2s,scale .15s ease}
-#palette-mix-toggle[aria-pressed=true]{background:var(--blue);color:var(--on-blue)}
-#palette-mix-toggle:active{scale:.95}
-.palette-mix-body{margin-top:14px;animation:card-in .4s var(--ease) both}
+/* ade mixing — the theme's 에이드 혼합하기 (css/50-gradients.css + panel parts) */
+.palette-mix{margin-top:22px}
+.palette-mix-body{padding-bottom:6px;animation:card-in .4s var(--ease) both}
 .palette-mix-body[hidden]{display:none}
-.palette-mix-swatches{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-bottom:14px}
-.palette-mix-swatches button{position:relative;display:grid;place-items:center;aspect-ratio:1;padding:0;border:0;border-radius:50%;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);transition:box-shadow .2s,opacity .2s,scale .15s ease}
-.palette-mix-swatches button i{width:62%;height:62%;border-radius:50%}
-.palette-mix-swatches button[aria-pressed=true]{box-shadow:inset 0 0 0 2px var(--blue),var(--shadow-sm)}
-.palette-mix-swatches button b{position:absolute;top:-4px;right:-4px;display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--blue);color:var(--on-blue);font-size:11px;font-weight:700}
-.palette-mix-swatches button:disabled{opacity:.35;cursor:default}
-.palette-mix-swatches button:not(:disabled):active{scale:.92}
-#palette-mix-sliders label{display:flex;justify-content:space-between;font-size:13px;font-weight:600;color:var(--ink);margin-top:4px}
-#palette-mix-sliders output{color:var(--blue);font-variant-numeric:tabular-nums}
-#palette-mix-sliders input{width:100%;margin:2px 0 8px;accent-color:var(--blue)}
-.palette-mix-note{margin:4px 0 0;font-size:12px;line-height:1.6;color:var(--muted)}
+.st-mix-swatches{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:6px 0 8px}
+.st-mix-swatches button{display:flex;align-items:center;gap:8px;min-width:0;padding:10px;border:1px solid transparent;border-radius:8px;background:var(--shade-2);color:var(--ink);font:inherit;font-size:13px;text-align:left;cursor:pointer;transition:border-color .15s ease,opacity .15s ease,scale .15s ease}
+.st-mix-swatches button i{flex:none;width:12px;height:12px;border-radius:50%}
+.st-mix-swatches button span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-mix-swatches button b{margin-left:auto}
+.st-mix-swatches button[aria-pressed=true]{border-color:var(--blue)}
+.st-mix-swatches button:disabled{opacity:.4;cursor:default}
+.st-mix-swatches button:not(:disabled):active{scale:.97}
+#palette-mix-toggle[aria-pressed=true]{background:var(--shade-2)}

@@ -11,7 +11,7 @@
   <meta property="og:title" content="🍋 Blue Lemonade"><meta property="og:description" content="상큼하게, 가볍게, 조금 더 편하게. 실리태번 테마의 화면과 새 소식을 만나 보세요.">
   <meta property="og:image" content="https://kgangkgang.github.io/blue-lemonade/media/pc-chat.png">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-  <link rel="stylesheet" href="site.css?v=20260919-mix"><link rel="stylesheet" href="palette-preview.css?v=20260919-mix"><link rel="stylesheet" href="hero-phones.css?v=20260919-mix"><link rel="stylesheet" href="features.css?v=20260919-mix"><script src="features.js?v=20260919-mix" defer></script><script src="hero-phones.js?v=20260919-mix" defer></script><script src="site.js?v=20260919-mix" defer></script><script src="palette-preview.js?v=20260919-mix" defer></script>
+  <link rel="stylesheet" href="site.css?v=20260919-lab2"><link rel="stylesheet" href="palette-preview.css?v=20260919-lab2"><link rel="stylesheet" href="hero-phones.css?v=20260919-lab2"><link rel="stylesheet" href="features.css?v=20260919-lab2"><script src="features.js?v=20260919-lab2" defer></script><script src="reading.js?v=20260919-lab2" defer></script><script src="hero-phones.js?v=20260919-lab2" defer></script><script src="site.js?v=20260919-lab2" defer></script><script src="palette-preview.js?v=20260919-lab2" defer></script>
 </head>
 <body>
   <header class="top"><div class="top-inner"><a class="brand" href="#"><span class="lemon" aria-hidden="true"></span>Blue Lemonade</a><nav aria-label="바로가기"><a href="#colors">테마 색상</a><a href="#gallery">둘러보기</a><a href="#features">전체 기능</a><a href="#updates">업데이트</a></nav><div class="top-actions"><button id="theme-toggle" class="icon-button" type="button" aria-label="화이트·나이트 전환"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.25" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 3.75a8.25 8.25 0 0 1 0 16.5z" fill="currentColor"/></svg></button><a class="button primary small" href="#install">설치</a></div></div><span class="progress" aria-hidden="true"></span></header>
@@ -35,7 +35,7 @@
           <div id="palette-families" class="palette-families" role="group" aria-label="테마 색상 선택"></div>
           <div class="palette-label">읽기 편한 밝기</div>
           <div class="palette-modes" role="group" aria-label="테마 밝기 선택"><button type="button" data-mode="light" aria-pressed="true">☀ 화이트</button><button type="button" data-mode="dark" aria-pressed="false">☾ 나이트</button></div>
-          <div class="palette-mix" id="palette-mix"><div class="palette-mix-head"><span>에이드 혼합하기<small id="palette-mix-scope">라이트 전용 · 2~3가지 에이드를 섞어요</small></span><button type="button" id="palette-mix-toggle" aria-pressed="false">에이드 혼합하기</button></div><div class="palette-mix-body" id="palette-mix-body" hidden><div class="palette-mix-swatches" id="palette-mix-swatches" role="group" aria-label="섞을 에이드"></div><div id="palette-mix-sliders"></div><p class="palette-mix-note">최대 3색 · 비중은 서로의 상대적인 넓이예요. 글자는 기본 단색 그대로예요.</p></div></div>
+          <div class="palette-mix st-group" id="palette-mix"><div class="st-row"><span>에이드 혼합하기<small id="palette-mix-scope">라이트 전용 · 2~3가지 에이드를 섞어요. 글자는 따로 골라요.</small></span><button type="button" class="st-btn" id="palette-mix-toggle" aria-pressed="false">에이드 혼합하기</button></div><div class="palette-mix-body" id="palette-mix-body" hidden><div class="st-mix-swatches" id="palette-mix-swatches" role="group" aria-label="섞을 에이드"></div><div id="palette-mix-sliders"></div><p class="st-note">최대 3색 · 색 비중은 서로의 상대적인 넓이예요.</p></div></div>
           <p class="palette-help">기본 색상으로 보여드려요.<br>나만의 색은 실리태번에서 직접 만들 수 있어요.</p>
         </div>
         <div class="palette-stage" id="palette-stage">
@@ -57,22 +57,13 @@
     <section id="reading" class="section reading-section" aria-labelledby="reading-heading">
       <div class="section-head"><span class="eyebrow">02 · Type</span><h2 id="reading-heading">글자 사이에도, 내 취향.</h2><p>자간부터 첫 줄 들여쓰기까지, 직접 움직여 보세요.</p></div>
       <div class="reading-layout">
-        <form id="reading-controls" class="reading-controls">
-          <label for="read-size">글자 크기 <output for="read-size">16px</output></label><input id="read-size" type="range" min="12" max="22" value="16" step="1">
-          <label for="read-spacing">자간 <output for="read-spacing">−0.01em</output></label><input id="read-spacing" type="range" min="-5" max="8" value="-1" step="1">
-          <label for="read-line">줄간격 <output for="read-line">1.8</output></label><input id="read-line" type="range" min="1.4" max="2.2" value="1.8" step="0.01">
-          <label for="read-para">문단 간격 <output for="read-para">0.9em</output></label><input id="read-para" type="range" min="0" max="2" value="0.9" step="0.01">
-          <label for="read-gutter">좌우 여백 <output for="read-gutter">20px</output></label><input id="read-gutter" type="range" min="8" max="40" value="20" step="1">
-          <label for="read-align">문단 정렬</label><select id="read-align"><option value="left">왼쪽</option><option value="word">양쪽</option><option value="break">양쪽 (낱말 끊기)</option></select>
-          <label class="reading-check"><input id="read-indent" type="checkbox">첫 줄 들여쓰기</label><div class="reading-marker" role="group" aria-labelledby="read-marker-title"><p id="read-marker-title" class="reading-marker-title">대사 형광펜</p><div class="reading-seg"><span>모양</span><div class="seg" role="group" aria-label="형광펜 모양" data-key="shape"><button type="button" data-value="stroke" aria-pressed="true">펜 자국</button><button type="button" data-value="rectangle" aria-pressed="false">직사각형</button><button type="button" data-value="pill" aria-pressed="false">알약</button></div></div><div class="reading-seg"><span>기울기</span><div class="seg" role="group" aria-label="형광펜 기울기" data-key="tilt"><button type="button" data-value="flat" aria-pressed="true">일직선</button><button type="button" data-value="slant" aria-pressed="false">대각선</button><button type="button" data-value="steep" aria-pressed="false">완전 대각선</button></div></div><div class="reading-seg"><span>위치</span><div class="seg" role="group" aria-label="형광펜 위치" data-key="pos"><button type="button" data-value="center" aria-pressed="true">가운데</button><button type="button" data-value="bottom" aria-pressed="false">아래</button></div></div><label for="read-thick">굵기 <output for="read-thick">54%</output></label><input id="read-thick" type="range" min="10" max="100" value="54" step="1"></div>
-          <button type="reset" class="reading-reset">처음 값으로</button>
-          <p class="reading-note">소개용 가상 글이에요. 여기서 바꾼 값은 실리태번 설정에 저장되지 않아요.</p>
-        </form>
+        <form id="reading-controls" class="reading-controls"><div id="reading-lab" class="st-panel"></div><button type="reset" class="reading-reset">처음 값으로</button><p class="reading-note">소개용 가상 글이에요. 여기서 바꾼 값은 실리태번 설정에 저장되지 않아요.</p></form>
         <div class="reading-paper"><span class="reading-kicker">등대 아래 찻집 · 읽기 예시</span><div id="reading-sample">
-          <p>창가에 놓인 유리잔 위로 오후의 햇살이 내려앉았다. 아린은 레몬 한 조각을 천천히 저으며, 바다 건너에서 도착한 편지를 펼쳤다.</p>
-          <p><q>오늘은 서두르지 말자. 다음 배가 올 때까지, 아직 시간이 있으니까.</q></p>
-          <p>멀리서 들려오는 파도 소리가 문장 사이를 채웠다. <q>이 편지, 누가 보낸 걸까? 글씨가 꼭 등대지기 할아버지 같은데.</q> 아린이 봉투를 뒤집어 보았다.</p>
-          <p>이야기는 같은 자리에서 이어졌다. 글자 사이에 조금 더 여유를 주고, 문단의 첫머리를 가지런히 맞춘 채로.</p>
+          <p>창가에 놓인 유리잔 위로 오후의 햇살이 내려앉았다. 아린은 <strong>레몬 한 조각</strong>을 천천히 저으며, 바다 건너에서 도착한 편지를 펼쳤다.</p>
+          <p><q>오늘은 서두르지 말자. 다음 배가 올 때까지, 아직 시간이 있으니까.</q> <em>조금 늦어도 괜찮을 텐데.</em></p>
+          <p>멀리서 들려오는 파도 소리가 문장 사이를 채웠다. <q>이 편지, 누가 보낸 걸까? 글씨가 꼭 등대지기 할아버지 같은데.</q> 봉투 끝에는 <code>오후 4시 · 맑음</code>이라고 적혀 있었다.</p>
+          <p>이야기는 같은 자리에서 이어졌다. <span class="hanja">燈臺</span> 아래 찻집, 글자 사이에 조금 더 여유를 두고 문단의 첫머리를 가지런히 맞춘 채로.</p>
+          <p class="sample-more"><span lang="en">Lemonade keeps the summer awake — 1234567890</span> · <span lang="ja">夏の海</span> · <span lang="zh">夏日海边</span></p>
         </div><span class="reading-footnote">실리태번에서는 역할별 글꼴·굵기·색과 PC 본문 폭까지 조절할 수 있어요.</span></div>
       </div>
       <noscript><p>슬라이더 미리보기는 JavaScript를 켜면 사용할 수 있어요. 아래 기능 안내는 그대로 읽을 수 있어요.</p></noscript>
