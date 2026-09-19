@@ -10,11 +10,15 @@
   const rgb = c => { const m = String(c).match(/rgba?\(([^)]+)\)/); if (m) return m[1].split(',').slice(0, 3).map(Number); const h = String(c).replace('#', ''); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); };
   const mixRgb = (a, b, t) => { const x = rgb(a), y = rgb(b); return `rgb(${x.map((v, i) => Math.round(v * t + y[i] * (1 - t))).join(', ')})`; };
   let selected = 'blue', mode = siteTheme(), families = [], pickedMode = false;
-  // 에이드 혼합하기 — same rules as the theme (gradients.js): 2~3 ades, angle 0~360, weights 1~100, white and night kept apart
-  const mixes = { light: { on: false, families: ['blue', 'strawberry'], angle: 90, weights: [50, 50, 50] }, dark: { on: false, families: ['blue', 'strawberry'], angle: 90, weights: [50, 50, 50] } };
+  // 에이드 혼합하기 — same rules as the theme (gradients.js): 2~3 ades, angle 0~360, blend 0~100, weights 1~100, white and night kept apart
+  const mixes = { light: { on: false, families: ['blue', 'strawberry'], angle: 90, weights: [50, 50, 50], blend: 50 }, dark: { on: false, families: ['blue', 'strawberry'], angle: 90, weights: [50, 50, 50], blend: 50 } };
   const clamp = (v, lo, hi, d) => Number.isFinite(Number(v)) ? Math.min(hi, Math.max(lo, Number(v))) : d;
-  const stops = (colors, weights) => { const w = colors.map((_, i) => clamp(weights?.[i], 1, 100, 50)), sum = w.reduce((a, b) => a + b, 0); let used = 0; return colors.map((color, i) => { const at = (used + w[i] / 2) / sum * 100; used += w[i]; return `${color} ${Number(at.toFixed(3))}%`; }); };
-  const gradientCss = (colors, m) => `linear-gradient(${m.angle}deg, ${stops(colors, m.weights).join(', ')})`;
+  // 번짐 (3.9.7): 50 = each color peaks mid-share; below 50 solid bands widen to hard edges at 0; above 50 the end colors slide to the edges
+  const stops = (colors, weights, blend = 50) => { const w = colors.map((_, i) => clamp(weights?.[i], 1, 100, 50)), sum = w.reduce((a, b) => a + b, 0), b = clamp(blend, 0, 100, 50), last = colors.length - 1, at = v => `${Number(v.toFixed(3))}%`; let used = 0;
+    return colors.flatMap((color, i) => { const mid = (used + w[i] / 2) / sum * 100, half = w[i] / 2 / sum * 100; used += w[i];
+      if (b >= 50) { const u = (b - 50) / 50; return [`${color} ${at(i === 0 ? mid * (1 - u) : i === last ? mid + (100 - mid) * u : mid)}`]; }
+      const band = half * (1 - b / 50); return [`${color} ${at(mid - band)}`, `${color} ${at(mid + band)}`]; }); };
+  const gradientCss = (colors, m) => `linear-gradient(${m.angle}deg, ${stops(colors, m.weights, m.blend).join(', ')})`;
   const variant = f => families.find(x => x.id === f)[mode];
   const transparent = c => /,\s*0(\.0+)?\s*\)$/.test(String(c));
   const mixSwatches = document.querySelector('#palette-mix-swatches'), mixSliders = document.querySelector('#palette-mix-sliders'), mixBody = document.querySelector('#palette-mix-body'), mixToggle = document.querySelector('#palette-mix-toggle');
@@ -46,7 +50,7 @@
       return b;
     }));
     const slider = (key, label, min, max, value) => `<div class="st-slider"><div class="st-slider-head"><span>${label}</span><label class="st-num"><input type="number" data-mix="${key}" min="${min}" max="${max}" step="1" value="${value}"><i></i></label></div><input type="range" data-mix="${key}" min="${min}" max="${max}" step="1" value="${value}" aria-label="${label}"></div>`;
-    mixSliders.innerHTML = slider('angle', '혼합 방향 (°)', 0, 360, m.angle) + m.families.map((f, i) => slider('w' + i, families.find(x => x.id === f).label + ' 비중', 1, 100, m.weights[i])).join('');
+    mixSliders.innerHTML = slider('angle', '혼합 방향 (°)', 0, 360, m.angle) + slider('blend', '번짐', 0, 100, m.blend) + m.families.map((f, i) => slider('w' + i, families.find(x => x.id === f).label + ' 비중', 1, 100, m.weights[i])).join('');
     mixSliders.querySelectorAll('input[type=range]').forEach(fillRange);
   }
   const fillRange = input => input.style.setProperty('--fill', `${((+input.value - +input.min) / (+input.max - +input.min)) * 100}%`);
@@ -61,7 +65,7 @@
   mixSliders.addEventListener('input', e => {
     const input = e.target.closest('input[data-mix]'); if (!input) return;
     const m = mixes[mode], v = Math.min(+input.max, Math.max(+input.min, Number(input.value) || +input.min));
-    if (input.dataset.mix === 'angle') m.angle = v; else m.weights[Number(input.dataset.mix.slice(1))] = v;
+    if (input.dataset.mix === 'angle') m.angle = v; else if (input.dataset.mix === 'blend') m.blend = v; else m.weights[Number(input.dataset.mix.slice(1))] = v;
     mixSliders.querySelectorAll(`input[data-mix="${input.dataset.mix}"]`).forEach(x => { if (x !== input) x.value = v; if (x.type === 'range') fillRange(x); });
     paintMix();
   });

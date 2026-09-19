@@ -21,8 +21,11 @@
   });
   let S = DEFAULTS(), role = 'text', fonts = null;
   const ROLES = [['text', '본문'], ['dialogue', '대사'], ['em', '속마음'], ['strong', '강조'], ['code', '코드'], ['para', '문단'], ['shadow', '그림자 · 외곽선']];
-  const LANGS = [['ko', '한국어'], ['en', 'English'], ['ja', '日本語'], ['zh', '中文']];
-  const GROUPS = { sans: '고딕', serif: '명조', display: '꾸밈 · 손글씨', mono: '고정폭 · 도트' };
+  const LANGS = [['ko', '한국어'], ['en', '영어'], ['ja', '일본어'], ['zh', '중국어']];
+  // the theme's sample lines (src/fonts.js SAMPLES) and check mark (panel.js CHECK)
+  const SAMPLES = { ko: '바닷바람이 창을 두드렸다. 소금 한 꼬집이면 충분해.', en: 'The quick brown fox jumps over the lazy dog. 1234567890', ja: '月夜に海の塩がきらめいた。あいうえお カキクケコ', zh: '月光下的海盐闪闪发光。你好，世界' };
+  const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
+  const GROUPS = { sans: '고딕', serif: '명조', display: '꾸밈 · 손글씨', mono: '고정폭' };
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const get = path => path.split('.').reduce((o, k) => o?.[k], S);
   const set = (path, v) => { const keys = path.split('.'), last = keys.pop(); keys.reduce((o, k) => o[k], S)[last] = v; };
@@ -41,6 +44,46 @@
     }
   }
   const family = id => { const f = byId(id); return f ? `${f.family}, 'Pretendard Variable', sans-serif` : null; };
+  const previewName = f => `BL Preview ${String(f.id).replace(/[^\w-]/g, '_')}`;
+  const previewed = new Map(); // id -> family name to paint with, once its letters have arrived
+  let previewQueue = [], previewTimer = 0;
+  const unique = t => [...new Set([...t])].join('');
+  // same weight rule as the theme (fonts.js previewFamily): ask for 400, or the nearest weight the family has
+  function previewFamily(google) {
+    const [name, axes = ''] = String(google).split(':'); const [tags = '', values = ''] = axes.split('@');
+    const keys = tags.split(','), wi = keys.indexOf('wght'), ii = keys.indexOf('ital');
+    if (wi < 0 || !values) return name;
+    const weights = values.split(';').map(t => t.split(',')).filter(t => ii < 0 || t[ii] === '0').map(t => t[wi].split('..').map(Number));
+    if (!weights.length || weights.some(([lo, hi = lo]) => lo <= 400 && 400 <= hi)) return name;
+    const rank = w => (w > 400 && w <= 500 ? w : w < 400 ? 1000 - w : 2000 + w);
+    return `${name}:wght@${weights.map(([lo, hi = lo]) => Math.min(hi, Math.max(lo, 400))).sort((a, b) => rank(a) - rank(b))[0]}`;
+  }
+  const paintPreview = id => { const fam = previewed.get(id); if (!fam) return; lab.querySelectorAll(`[data-preview="${CSS.escape(id)}"] .st-fontinfo small, .st-fontrow[data-id="${CSS.escape(id)}"] strong`).forEach(el => { el.style.fontFamily = `${fam}, 'Pretendard Variable', sans-serif`; }); };
+  function queuePreview(f) { if (!f || previewed.has(f.id) || previewQueue.includes(f)) return; previewQueue.push(f); clearTimeout(previewTimer); previewTimer = setTimeout(flushPreviews, 140); }
+  function flushPreviews() {
+    const batch = previewQueue.filter(f => !previewed.has(f.id)); previewQueue = [];
+    const google = batch.filter(f => f.google);
+    for (let i = 0; i < google.length; i += 24) {
+      const chunk = google.slice(i, i + 24);
+      const text = unique(chunk.map(f => f.label + (f.native || '') + SAMPLES[f.lang || 'ko']).join(''));
+      const byName = new Map(chunk.map(f => [f.family.replace(/['"]/g, '').split(',')[0].trim(), f]));
+      chunk.forEach(f => previewed.set(f.id, null));
+      fetch(`https://fonts.googleapis.com/css2?${chunk.map(f => 'family=' + previewFamily(f.google)).join('&')}&text=${encodeURIComponent(text)}&display=swap`).then(r => r.ok ? r.text() : Promise.reject())
+        .then(css => Promise.all([...css.matchAll(/@font-face\s*{([^}]*)}/g)].map(([, body]) => {
+          const prop = k => (body.match(new RegExp(`${k}\\s*:\\s*([^;]+);`)) || [])[1]?.trim();
+          const f = byName.get(String(prop('font-family') || '').replace(/['"]/g, '')); if (!f) return null;
+          const face = new FontFace(previewName(f), prop('src'), { weight: prop('font-weight') || '400', style: prop('font-style') || 'normal', ...(prop('unicode-range') ? { unicodeRange: prop('unicode-range') } : {}) });
+          return face.load().then(ff => { document.fonts.add(ff); return f; }, () => null);
+        })))
+        .then(done => { for (const f of chunk) { previewed.set(f.id, done.includes(f) ? `'${previewName(f)}'` : f.family); paintPreview(f.id); } })
+        .catch(() => chunk.forEach(f => previewed.delete(f.id))); // try again next time it shows
+    }
+    for (const f of batch.filter(f => !f.google)) {
+      previewed.set(f.id, null); ensureFont(f.id);
+      const name = f.family.replace(/['"]/g, '').split(',')[0].trim();
+      document.fonts.load(`16px "${name}"`, SAMPLES[f.lang || 'ko']).catch(() => {}).then(() => { previewed.set(f.id, f.family); paintPreview(f.id); });
+    }
+  }
   const roleFonts = r => { const v = S[r].font; return v === 'same' ? null : v; };
 
   // ---- theme marker geometry (apply.js)
@@ -117,15 +160,57 @@
     return `<div class="st-slider${same && v === null ? ' is-same' : ''}"><div class="st-slider-head"><span>${label}</span>${same ? seg(path + '#same', [['same', '본문과 같게'], ['own', '직접']], v === null ? 'same' : 'own') : ''}<label class="st-num"><input type="number" data-path="${path}" min="${min}" max="${max}" step="${step}" value="${value}" ${same && v === null ? 'disabled' : ''}><i>${unit}</i></label></div><input type="range" data-path="${path}" min="${min}" max="${max}" step="${step}" value="${value}" ${same && v === null ? 'disabled' : ''}></div>`;
   };
   const color = (path, label) => row(label, '', `<input type="color" class="st-color" data-path="${path}" value="${get(path)}">`);
-  function fontSelect(roleKey, lang) {
-    const set = S[roleKey].font, cur = set === 'same' ? 'same' : set[lang];
-    const list = fonts ? fonts.filter(f => f.lang === lang || (lang === 'en' && f.latin)) : [];
-    const first = lang === 'ko' ? (roleKey === 'text' ? '' : `<option value="same" ${cur === 'same' ? 'selected' : ''}>본문과 같게</option>`) : `<option value="auto" ${cur === 'auto' ? 'selected' : ''}>한국어 글꼴 따라가기</option>`;
-    const groups = Object.entries(GROUPS).map(([g, gl]) => { const items = list.filter(f => f.group === g); return items.length ? `<optgroup label="${gl}">${items.map(f => `<option value="${f.id}" ${f.id === cur ? 'selected' : ''}>${esc(f.label)}</option>`).join('')}</optgroup>` : ''; }).join('');
-    const disabled = lang !== 'ko' && set === 'same';
-    return row(LANGS.find(l => l[0] === lang)[1], '', `<select class="st-select" data-font="${roleKey}" data-lang="${lang}" ${disabled ? 'disabled' : ''}>${first}${groups}</select>`);
+  let picker = null, fontQuery = '', fontTag = 'sans';
+  const sizeBadge = f => (f.size >= 1000 ? `${(f.size / 1000).toFixed(1)}MB` : f.size ? `${f.size}KB` : '');
+  const fontsFor = lang => (fonts || []).filter(f => f.lang === lang || (lang === 'en' && f.latin));
+  const defaultTag = (lang, id) => { const g = (id && id !== 'auto' && byId(id)?.group) || 'sans'; return fontsFor(lang).some(f => f.group === g) ? g : 'all'; };
+  function fontItem(f, cur) {
+    const ready = previewed.get(f.id);
+    return `<button type="button" class="st-fontitem${cur === f.id ? ' on' : ''}" data-pick-font="${esc(f.id)}" data-preview="${esc(f.id)}">
+      <span class="st-fontinfo"><b>${esc(f.label)}${f.native ? ` <i>${esc(f.native)}</i>` : ''}${f.size ? `<em>${sizeBadge(f)}</em>` : ''}${f.single ? '<em>굵기 하나</em>' : ''}</b>
+      <small${ready ? ` style="font-family:${esc(ready)}, 'Pretendard Variable', sans-serif"` : ''}>${esc(SAMPLES[f.lang] || SAMPLES.ko)}</small></span>${cur === f.id ? `<span class="st-check">${CHECK}</span>` : ''}</button>`;
   }
-  const fontBlock = r => `<div class="st-group"><p class="st-title">글꼴</p>${fonts ? LANGS.map(([l]) => fontSelect(r, l)).join('') : '<p class="st-note">글꼴 목록을 불러오는 중이에요.</p>'}${r === 'text' ? row('한자', '한자를 어느 언어 글꼴로 보여 줄지', seg('hanja', [['auto', '자동'], ['ko', '한국어'], ['ja', '日本語'], ['zh', '中文']], S.hanja)) : ''}</div>`;
+  function fontList(roleKey, lang, cur) {
+    const list = fontsFor(lang);
+    const present = Object.entries(GROUPS).map(([g, label]) => [g, label, list.filter(f => f.group === g)]).filter(([, , l]) => l.length);
+    const tags = [['all', '전체', list.length], ...present.map(([g, label, l]) => [g, label, l.length])].map(([id, label, n]) => `<button type="button" data-font-tag="${id}" class="${fontTag === id ? 'on' : ''}">${label}<span>${n}</span></button>`).join('');
+    const auto = lang !== 'ko' ? `<button type="button" class="st-fontitem${!cur || cur === 'auto' ? ' on' : ''}" data-pick-font="auto"><span class="st-fontinfo"><b>한국어 글꼴 따라감</b><small>따로 고르지 않고 한국어 글꼴에 든 ${LANGS.find(([l]) => l === lang)[1]} 글자를 씀</small></span>${!cur || cur === 'auto' ? `<span class="st-check">${CHECK}</span>` : ''}</button>` : '';
+    return `<div class="st-fontlist" data-role="${roleKey}" data-lang="${lang}"><div class="st-fonthead"><div class="st-fontsearch"><input type="search" placeholder="글꼴 이름 찾기" data-font-search value="${esc(fontQuery)}" autocomplete="off" aria-label="글꼴 이름 찾기"></div><div class="st-fonttags">${tags}</div></div>
+      <div class="st-fontscroll">${auto}${present.map(([g, label, l]) => `<div class="st-fontgroup" data-group="${g}"><h5>${label} <span>${l.length}</span></h5>${l.map(f => fontItem(f, cur)).join('')}</div>`).join('')}
+      <p class="st-fontempty" hidden><span>그런 이름의 글꼴이 없어요</span><button type="button" data-font-tag="all" hidden>전체<span></span></button></p></div></div>`;
+  }
+  function fontRow(roleKey, lang) {
+    const set = S[roleKey].font, cur = set[lang], auto = lang !== 'ko' && (!cur || cur === 'auto'), f = auto ? null : byId(cur);
+    if (f) queuePreview(f);
+    const open = picker?.role === roleKey && picker?.lang === lang, ready = f && previewed.get(f.id);
+    const name = auto ? '<span class="auto">한국어 글꼴 따라감</span>' : f ? esc(f.label) : '<span class="auto">없음</span>';
+    return `<button type="button" class="st-fontrow${open ? ' open' : ''}" data-picker="${roleKey}" data-lang="${lang}"${f ? ` data-id="${esc(f.id)}"` : ''} aria-expanded="${open}"><small>${LANGS.find(([l]) => l === lang)[1]}</small><strong${ready ? ` style="font-family:${esc(ready)}, 'Pretendard Variable', sans-serif"` : ''}>${name}</strong></button>${open ? fontList(roleKey, lang, cur) : ''}`;
+  }
+  function filterFonts() {
+    const list = lab.querySelector('.st-fontlist'); if (!list) return;
+    const q = fontQuery.trim().toLowerCase(), one = fontTag !== 'all', counts = { all: 0 }; let shown = 0;
+    list.querySelectorAll('.st-fontgroup').forEach(group => {
+      let n = 0;
+      group.querySelectorAll('.st-fontitem').forEach(item => { const hit = !q || item.querySelector('b').textContent.toLowerCase().includes(q); item.hidden = !hit; if (hit) n++; });
+      group.querySelector('h5 span').textContent = n; counts[group.dataset.group] = n; counts.all += n;
+      group.hidden = !n || (one && group.dataset.group !== fontTag); if (!group.hidden) shown += n;
+    });
+    list.classList.toggle('one', one);
+    list.querySelectorAll('.st-fonttags [data-font-tag]').forEach(tag => { const n = counts[tag.dataset.fontTag] || 0; tag.classList.toggle('on', tag.dataset.fontTag === fontTag); tag.classList.toggle('none', !n); tag.lastElementChild.textContent = n; });
+    const empty = list.querySelector('.st-fontempty'), elsewhere = !shown && counts.all > 0;
+    empty.hidden = shown > 0; empty.firstElementChild.textContent = elsewhere ? '이 묶음엔 없어요' : '그런 이름의 글꼴이 없어요';
+    empty.lastElementChild.hidden = !elsewhere; empty.lastElementChild.lastElementChild.textContent = counts.all;
+  }
+  let fontIO = null;
+  function watchPreviews() {
+    fontIO?.disconnect(); fontIO = null;
+    const scroll = lab.querySelector('.st-fontscroll'); if (!scroll) return;
+    fontIO = new IntersectionObserver(entries => { for (const e of entries) if (e.isIntersecting) { queuePreview(byId(e.target.dataset.preview)); fontIO.unobserve(e.target); } }, { root: scroll, rootMargin: '120px 0px' });
+    scroll.querySelectorAll('[data-preview]').forEach(el => fontIO.observe(el));
+    filterFonts();
+    const on = scroll.querySelector('.st-fontitem.on:not([hidden])'); if (on) scroll.scrollTop = on.offsetTop - scroll.clientHeight / 3;
+  }
+  const fontBlock = r => `<div class="st-group"><p class="st-title">글꼴</p>${r !== 'text' ? row('본문 글꼴과 같게', '', `<label class="st-switch"><input type="checkbox" data-same-font="${r}" ${S[r].font === 'same' ? 'checked' : ''}><span></span></label>`) : ''}${!fonts ? '<p class="st-note">글꼴 목록을 불러오는 중이에요.</p>' : S[r].font === 'same' ? '' : `<div class="st-fontrows">${LANGS.map(([l]) => fontRow(r, l)).join('')}</div>`}${r === 'text' ? row('한자', '한자를 어느 언어 글꼴로 보여 줄지', seg('hanja', [['auto', '자동'], ['ko', '한국어'], ['ja', '日本語'], ['zh', '中文']], S.hanja)) : ''}</div>`;
   const PANES = {
     text: () => fontBlock('text') + `<div class="st-group">${slider('text.size', '크기', 12, 24, 1, 'px')}${slider('text.weight', '굵기', 100, 900, 50, '')}${slider('text.spacing', '자간', -10, 20, 1, '/100em')}</div>`,
     dialogue: () => `<div class="st-group">${row('표시', '', seg('dialogue.style', [['marker', '형광펜'], ['full', '전체 칠'], ['bold', '굵게'], ['tint', '색'], ['plain', '없음']], S.dialogue.style))}`
@@ -151,19 +236,38 @@
   function render() {
     lab.innerHTML = `<div class="st-tabs">${seg('#role', ROLES, role)}</div><div class="st-pane">${PANES[role]()}</div>`;
     lab.querySelectorAll('input[type=range]').forEach(fill);
+    watchPreviews();
   }
   const numberOf = el => { const v = Number(el.value); return Number.isFinite(v) ? Math.min(+el.max, Math.max(+el.min, v)) : +el.min; };
+  function pickFont(id) {
+    const { role: r, lang } = picker;
+    if (S[r].font === 'same') S[r].font = { ko: S.text.font.ko, en: 'auto', ja: 'auto', zh: 'auto' };
+    S[r].font[lang] = id; if (id !== 'auto') ensureFont(id);
+    const scroll = lab.querySelector('.st-fontscroll');
+    if (fontQuery.trim()) { fontQuery = ''; fontTag = defaultTag(lang, id); render(); }
+    else {
+      scroll.querySelectorAll('.st-fontitem').forEach(item => { const on = item.dataset.pickFont === id; item.classList.toggle('on', on); item.querySelector('.st-check')?.remove(); if (on) item.insertAdjacentHTML('beforeend', `<span class="st-check">${CHECK}</span>`); });
+      const rowEl = lab.querySelector(`.st-fontrow[data-picker="${r}"][data-lang="${lang}"]`);
+      rowEl.outerHTML = fontRow(r, lang).replace(/<div class="st-fontlist"[\s\S]*$/, '');
+    }
+    apply();
+  }
   lab.addEventListener('click', e => {
+    const opener = e.target.closest('[data-picker]');
+    if (opener) { const { picker: r, lang } = opener.dataset; picker = picker?.role === r && picker?.lang === lang ? null : { role: r, lang }; fontQuery = ''; if (picker) fontTag = defaultTag(lang, S[r].font[lang]); render(); return; }
+    const tag = e.target.closest('[data-font-tag]'); if (tag) { fontTag = tag.dataset.fontTag; filterFonts(); return; }
+    const item = e.target.closest('[data-pick-font]'); if (item && picker) { pickFont(item.dataset.pickFont); return; }
     const b = e.target.closest('.st-seg button, [data-target]'); if (!b) return;
     if (b.dataset.target) { S.shadow.targets[b.dataset.target] = !S.shadow.targets[b.dataset.target]; b.setAttribute('aria-pressed', String(S.shadow.targets[b.dataset.target])); apply(); return; }
     const path = b.parentElement.dataset.set, v = b.dataset.value;
-    if (path === '#role') role = v;
+    if (path === '#role') { role = v; picker = null; }
     else if (path.endsWith('#same')) { const p = path.slice(0, -5), key = p.split('.').pop(); set(p, v === 'same' ? null : (S.text[key === 'weight' ? 'weight' : key] ?? 0)); }
     else set(path, v);
     render(); apply();
   });
   lab.addEventListener('input', e => {
     const el = e.target;
+    if (el.matches('[data-font-search]')) { fontQuery = el.value; filterFonts(); return; }
     if (el.matches('input[type=range], input[type=number]')) {
       const v = numberOf(el); set(el.dataset.path, v);
       const twin = lab.querySelector(`input[data-path="${el.dataset.path}"]:not([type="${el.type}"])`); if (twin && el.type === 'range') twin.value = v; else if (twin) twin.value = v;
@@ -174,6 +278,7 @@
   lab.addEventListener('change', e => {
     const el = e.target;
     if (el.matches('input[type=checkbox][data-path]')) { set(el.dataset.path, el.checked); render(); apply(); }
+    else if (el.matches('input[data-same-font]')) { const r = el.dataset.sameFont; S[r].font = el.checked ? 'same' : { ko: S.text.font.ko, en: 'auto', ja: 'auto', zh: 'auto' }; picker = null; render(); apply(); }
     else if (el.matches('select[data-font]')) {
       const r = el.dataset.font, lang = el.dataset.lang, v = el.value;
       if (lang === 'ko' && v === 'same') S[r].font = 'same';
@@ -182,7 +287,7 @@
       render(); apply();
     }
   });
-  form.addEventListener('reset', e => { e.preventDefault(); S = DEFAULTS(); render(); apply(); });
+  form.addEventListener('reset', e => { e.preventDefault(); S = DEFAULTS(); picker = null; render(); apply(); });
   form.addEventListener('submit', e => e.preventDefault());
   // the highlighter color follows the site's white / night
   document.addEventListener('bl-theme', () => requestAnimationFrame(apply));
