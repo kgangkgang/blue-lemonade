@@ -15,11 +15,13 @@ const groups = [
     ['385-zoom.mp4','미리보기는 확대해서','최대 300%까지 키우고, 끌어서 구석까지 확인해요.','385-zoom.jpg','385-zoom.gif'],
     ['390-changes.png','바꾼 설정만 모아서','기본값과 다른 항목을 한눈에. 하나씩 기본값으로 돌려요.'],
   ]},
-  { title: '사진은 크게, 액자는 취향대로.', sub: '큰 프로필 · 장식 액자 · 액자 색 · 내 프로필', cards: [
+  { title: '사진은 크게, 액자는 취향대로.', sub: '큰 프로필 · 장식 액자 · 액자 색 · 내 PNG 액자 · 내 프로필', cards: [
     ['380-big-profile.png','사진을 이야기 첫머리에','캐릭터 사진을 본문 위에 크게. 크기와 자르기도 자유롭게.'],
     ['383-frames.mp4','여섯 가지 장식 액자','수채화부터 낙서 노트까지, 눌러서 바로 바꿔요.','383-frames.jpg','383-frames.gif'],
     ['399-frame-colors.mp4','액자 색도 내 마음대로','기본 액자는 바탕색과 포인트색을 따로 골라요.','399-frame-colors.jpg','399-frame-colors.gif'],
     ['399-frame-colors-set.png','바탕색 · 포인트색','캐릭터 프로필 › 장식 액자에서 두 칸만 바꾸면 돼요.'],
+    ['399-custom-frame.mp4','내 PNG로 만드는 액자','그림을 고르면 사진이 들어갈 안쪽을 찾아 주고, 한 번 누르면 끝이에요.','399-custom-frame.jpg','399-custom-frame.gif'],
+    ['399-custom-frame-chat.png','내 액자 그대로','직접 만든 폴라로이드도 기본 액자처럼 어울려요.'],
     ['384-my-profile.png','내 프로필도 따로','내 사진에는 다른 액자를. 캐릭터와 따로 꾸며요.'],
   ]},
   { title: '대사는 또렷하게, 분위기는 그대로.', sub: '프롬프트 색 · 형광펜 · 외곽선 · 나이트 모드', cards: [
@@ -53,7 +55,9 @@ const groups = [
     ['310-styles.png','한 번에 입히는 스타일','소설책, 메신저, 또렷하게. 완성 스타일로 시작하세요.'],
     ['320-auto.png','낮에는 밝게, 밤에는 편안하게','기기 다크 모드나 정해 둔 시간을 따라 전환해요.'],
   ]},
-  { title: '설정하는 시간도 편안하게.', sub: 'PC와 폰 설정 · 긴 목록 · 다른 CSS 끄기', cards: [
+  { title: '설정하는 시간도 편안하게.', sub: '숫자 쉼표 · 두 칸 설정 · 프롬프트 목록 · 긴 목록 · 다른 CSS 끄기', cards: [
+    ['399-context-commas.mp4','128,000처럼 쉼표로','폰에서도 설정은 두 칸으로. 큰 숫자는 끊어 보여서 컨텍스트를 헷갈리지 않아요.','399-context-commas.jpg','399-context-commas.gif'],
+    ['399-prompt-list.png','프롬프트 목록도 한눈에','위쪽은 두 줄로, 토큰 수는 오른쪽에 맞춰 정리했어요.'],
     ['301-pc-st-settings.png','PC 설정은 두 열로','스위치와 슬라이더를 나란히 정리했어요.'],
     ['351-pc-color-bars.jpg','길고 보기 편한 색 칸','이름 옆에서 지금 색을 바로 확인해요.'],
     ['364-ext-drawer.png','좁아도 가지런한 확장 서랍','아이콘은 밀리지 않고 글자는 줄 너비에 맞춰져요.'],
@@ -64,7 +68,7 @@ const groups = [
 ];
 // PC screens (1440×900) — shown instead of the phone groups when the visitor picks PC
 const pcGroups = [
-  { title: '넓은 화면에서, 더 시원하게.', sub: '배경 그림 · 에이드 혼합 · 번짐 · 액자 색 · 나란히 보는 설정 · 날씨', cards: [
+  { title: '넓은 화면에서, 더 시원하게.', sub: '배경 그림 · 에이드 혼합 · 번짐 · 액자 색 · 내 PNG 액자 · 나란히 보는 설정 · 날씨', cards: [
     ['pc-mix.mp4','에이드를 섞어서','두세 가지 에이드로 형광펜과 면을 함께 물들여요.','pc-mix.jpg','pc-mix.gif'],
     ['pc-blend.mp4','번짐은 내 마음대로','미리보기를 보면서 경계를 또렷하게, 또는 부드럽게.','pc-blend.jpg','pc-blend.gif'],
     ['pc-night.jpg','밤바다 위의 나이트','배경 그림이 은은하게 비치는 차콜 화면.'],
@@ -73,13 +77,14 @@ const pcGroups = [
     ['pc-ades.mp4','열두 가지 에이드','넓은 화면에서 한 번에 바꿔 보세요.','pc-ades.jpg','pc-ades.gif'],
     ['pc-frame-colors.mp4','액자 색도 내 마음대로','리본 액자의 바탕색과 포인트색을 바꿔 가며.','pc-frame-colors.jpg','pc-frame-colors.gif'],
     ['pc-frame-colors-set.jpg','바탕색 · 포인트색','미리보기를 보면서 두 칸만 바꾸면 돼요.'],
+    ['pc-custom-frame.mp4','내 PNG로 만드는 액자','파란 자리에 사진이 들어가요. 확인하고 한 번 누르면 적용돼요.','pc-custom-frame.jpg','pc-custom-frame.gif'],
     ['pc-weather.mp4','눈 내리는 밤','채팅 뒤로 조용히 눈이 내려요.','pc-weather.jpg','pc-weather.gif'],
   ]},
 ];
 const $ = s => document.querySelector(s);
 function element(tag, cls, text) { const e=document.createElement(tag); if(cls)e.className=cls; if(text)e.textContent=text; return e; }
 // media version: bump when shots are retaken under the same names, so cached copies don't linger
-const MV='?v=20260919b';
+const MV='?v=20260919c';
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
 document.documentElement.classList.add('js');
 const lightbox=$('#lightbox');
