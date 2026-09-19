@@ -92,7 +92,8 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]) #reading-sample{--read-em:#97afce;--read-strong:#ffe873;--read-gold:transparent}}
 
 /* ---- the theme's settings-panel parts (css/20-panel.css), reused on the site ---- */
-.st-panel{display:grid;gap:10px}
+.st-panel{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+.st-panel>*,.st-pane{min-width:0}
 .st-tabs .st-seg{display:flex;flex-wrap:wrap}
 .st-group{padding:4px 14px;border-radius:14px;background:var(--shade)}
 .st-title{margin:10px 0 2px;font-size:13px;font-weight:700;color:var(--ink)}
@@ -141,3 +142,47 @@
 .reading-controls{gap:10px;min-width:0}
 .st-panel,.st-group{min-width:0}
 
+
+/* font picker — the theme's (css/20-panel.css): four language rows in one card, the chosen row opens a list with search, group tags and live previews */
+.st-fontrows{margin:4px -8px 8px;padding:4px;border-radius:12px;background:var(--surface)}
+.st-fontrow{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:8px 10px;border:0;border-radius:9px;background:transparent;color:var(--ink);font:inherit;text-align:left;cursor:pointer;transition:background-color .15s ease}
+.st-fontrow small{flex:none;width:3.4em;font-size:12px;font-weight:600;color:var(--muted)}
+.st-fontrow strong{flex:1;min-width:0;overflow:hidden;font-size:15px;font-weight:500;white-space:nowrap;text-overflow:ellipsis}
+.st-fontrow strong .auto{font-family:inherit;font-size:13px;color:var(--muted)}
+.st-fontrow::after{content:"›";color:var(--faint);font-size:19px;line-height:1;transition:transform .2s ease}
+.st-fontrow:not(.open):active{background:var(--shade)}
+@media (hover:hover){.st-fontrow:not(.open):hover{background:var(--shade)}}
+.st-fontrow.open{background:var(--tint);border-radius:9px 9px 0 0}
+.st-fontrow.open::after{transform:rotate(90deg)}
+.st-fontlist{margin-bottom:2px;border-radius:0 0 9px 9px;overflow:hidden;animation:card-in .3s var(--ease) both}
+.st-fonthead{background:var(--surface)}
+.st-fontsearch{padding:8px 8px 6px}
+.st-fontsearch input{width:100%;margin:0;padding:8px 12px;border:0;border-radius:9px;background:var(--shade);color:var(--ink);font:inherit;font-size:14px;box-shadow:inset 0 1px 2px rgba(0,0,0,.1);outline:none;-webkit-appearance:none;appearance:none}
+.st-fontsearch input:focus{box-shadow:0 0 0 2px var(--blue),inset 0 1px 2px rgba(0,0,0,.1)}
+.st-fonttags{display:flex;gap:6px;padding:2px 8px 8px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none}
+.st-fonttags::-webkit-scrollbar{display:none}
+.st-fonttags button,.st-fontempty button{display:inline-flex;flex:none;align-items:center;gap:5px;height:32px;padding:0 12px;border:0;border-radius:99px;background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 1px var(--line);color:var(--muted);font:inherit;font-size:12.5px;font-weight:600;white-space:nowrap;cursor:pointer;transition:background-color .15s ease,color .15s ease}
+.st-fonttags button span,.st-fontempty button span{font-size:11.5px;font-weight:500;font-variant-numeric:tabular-nums;color:var(--faint)}
+@media (hover:hover){.st-fonttags button:not(.on):hover,.st-fontempty button:hover{color:var(--ink)}}
+.st-fonttags button.on{background:var(--blue);box-shadow:0 4px 10px -4px var(--blue);color:var(--on-blue)}
+.st-fonttags button.on span{color:inherit;opacity:.72}
+.st-fonttags button.none:not(.on){opacity:.5;box-shadow:none}
+.st-fontscroll{max-height:min(52svh,420px);overflow-y:auto;overscroll-behavior:auto;scrollbar-width:thin}
+.st-fontgroup h5{position:sticky;top:0;z-index:1;margin:0;padding:9px 12px 4px;background:var(--surface);color:var(--muted);font-size:12px;font-weight:700}
+.st-fontgroup h5 span{margin-left:4px;font-weight:500;color:var(--faint)}
+.st-fontlist.one .st-fontgroup h5{display:none}
+.st-fontitem{display:flex;align-items:center;gap:10px;width:100%;padding:8px 12px;border:0;border-radius:9px;background:none;color:var(--ink);font:inherit;text-align:left;cursor:pointer;transition:background-color .12s ease}
+.st-fontitem[hidden],.st-fontgroup[hidden],.st-fontempty[hidden],.st-fontempty button[hidden]{display:none}
+.st-fontitem:active{background:var(--shade)}
+@media (hover:hover){.st-fontitem:hover{background:var(--shade)}}
+.st-fontitem.on{background:var(--tint)}
+.st-fontinfo{flex:1;min-width:0}
+.st-fontinfo b{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:12.5px;font-weight:650;color:var(--muted)}
+.st-fontitem.on .st-fontinfo b{color:var(--blue)}
+.st-fontinfo b i{font-style:normal;font-weight:500;color:var(--faint)}
+.st-fontinfo b em{padding:1px 6px;border-radius:99px;background:var(--shade);font-size:10.5px;font-style:normal;font-weight:600;color:var(--muted)}
+.st-fontinfo small{display:block;margin-top:2px;overflow:hidden;font-size:15px;line-height:1.4;color:var(--ink);white-space:nowrap;text-overflow:ellipsis}
+.st-fontitem[data-pick-font=auto] .st-fontinfo small{font-size:12.5px;color:var(--muted);white-space:normal}
+.st-check{flex:none;width:20px;height:20px;color:var(--blue)}
+.st-check svg{width:20px;height:20px}
+.st-fontempty{display:flex;flex-direction:column;align-items:center;gap:10px;margin:0;padding:22px 12px;color:var(--muted);font-size:13px}
