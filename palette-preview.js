@@ -45,7 +45,7 @@
     mixSwatches.replaceChildren(...families.map(f => {
       const b = document.createElement('button'), dot = document.createElement('i'), name = document.createElement('span'), i = m.families.indexOf(f.id);
       b.type = 'button'; b.dataset.family = f.id; b.setAttribute('aria-pressed', String(i >= 0));
-      b.disabled = i < 0 && m.families.length === 3; dot.setAttribute('aria-hidden', 'true'); dot.style.background = `linear-gradient(135deg, ${f[mode].bg} 50%, ${f[mode].pop} 50%)`; name.textContent = f.label; b.append(dot, name);
+      b.disabled = i < 0 && m.families.length === 3; dot.setAttribute('aria-hidden', 'true'); dot.style.background = `linear-gradient(135deg, ${f.light.bg} 50%, ${f.light.pop} 50%)`; name.textContent = f.label; b.append(dot, name);
       if (i >= 0) { const n = document.createElement('b'); n.textContent = i + 1; b.append(n); }
       return b;
     }));
@@ -82,8 +82,8 @@
     document.querySelector('#palette-mode-label').textContent = mode === 'light' ? '화이트' : '나이트';
     for (const button of choices.children) {
       button.setAttribute('aria-pressed', String(button.dataset.family === selected));
-      const p = families.find(f => f.id === button.dataset.family)[mode];
-      button.querySelector('.palette-dot').style.background = `linear-gradient(135deg, ${p.bg} 50%, ${p.pop} 50%)`;
+      const f = families.find(f => f.id === button.dataset.family), p = f.light;
+      button.querySelector('.palette-dot').style.background = `linear-gradient(135deg, ${p.bg} 50%, ${f.light.pop} 50%)`;
     }
     modes.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
     swatches.replaceChildren();
