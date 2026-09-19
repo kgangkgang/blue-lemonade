@@ -1,12 +1,12 @@
 'use strict';
 const groups = [
   { title: '에이드를 섞어, 나만의 색으로.', sub: '에이드 혼합 · 글자 그라데이션', cards: [
-    ['396-mix.mp4','에이드를 섞어서','방향을 돌리고 두세 가지 에이드를 골라 섞어요.','396-mix.png','396-mix.gif'],
+    ['396-mix.mp4','에이드를 섞어서','방향을 돌리고 두세 가지 에이드를 골라 섞어요.','396-mix.jpg','396-mix.gif'],
     ['396-text-gradient.png','글자에도 그라데이션','이름·대사·속마음을 따로 물들일 수 있어요.'],
     ['396-mix-setting.png','섞는 건 간단하게','혼합을 켜고 에이드를 고르면 끝. 라이트·나이트 따로 저장돼요.'],
   ]},
   { title: '열두 가지 에이드, 가벼워진 설정.', sub: '새 에이드 6종 · 알약·직사각형 형광펜 · 설정 검색 · 되돌리기 · 변경한 설정', cards: [
-    ['388-ades.mp4','에이드가 열두 가지로','라벤더·딸기·민트·오렌지·우드·수박이 더해졌어요.','388-ades.png','388-ades.gif'],
+    ['388-ades.mp4','에이드가 열두 가지로','라벤더·딸기·민트·오렌지·우드·수박이 더해졌어요.','388-ades.jpg','388-ades.gif'],
     ['390-pill-marker.png','끝이 둥근 알약 형광펜','펜 자국·직사각형에 알약 모양까지 더해졌어요.'],
     ['388-rect-marker.png','끝이 반듯한 형광펜','펜 자국 대신 직사각형으로. 위치와 굵기도 맞춰요.'],
     ['385-search.mp4','말로 찾는 설정','"내 사진 오른쪽"처럼 입력하면 그 설정으로 바로 가요.','385-search.jpg','385-search.gif'],
@@ -16,7 +16,7 @@ const groups = [
   ]},
   { title: '사진은 크게, 액자는 취향대로.', sub: '큰 프로필 · 장식 액자 · 내 프로필', cards: [
     ['380-big-profile.png','사진을 이야기 첫머리에','캐릭터 사진을 본문 위에 크게. 크기와 자르기도 자유롭게.'],
-    ['383-frames.mp4','여섯 가지 장식 액자','수채화부터 낙서 노트까지, 눌러서 바로 바꿔요.','383-frames.png','383-frames.gif'],
+    ['383-frames.mp4','여섯 가지 장식 액자','수채화부터 낙서 노트까지, 눌러서 바로 바꿔요.','383-frames.jpg','383-frames.gif'],
     ['384-my-profile.png','내 프로필도 따로','내 사진에는 다른 액자를. 캐릭터와 따로 꾸며요.'],
   ]},
   { title: '대사는 또렷하게, 분위기는 그대로.', sub: '프롬프트 색 · 형광펜 · 외곽선 · 나이트 모드', cards: [
@@ -46,7 +46,7 @@ const groups = [
     ['330-rain.mp4','창밖에 비가 내리는 날','채팅 뒤에 은은하게 흐르는 비. 세기도 조절해요.','330-rain.png','330-rain.gif'],
     ['330-snow.mp4','조용히 내려오는 눈','트래커의 날씨를 따르게 할 수도 있어요.','330-snow.png','330-snow.gif'],
     ['331-lemon.mp4','레몬도 내려요','투명 PNG로 꽃잎, 별, 마음에 드는 그림을 더해요.','331-lemon.png','331-lemon.gif'],
-    ['362-weather-preview.mp4','움직이는 미리보기','크기, 투명도, 속도, 각도를 바꾸면 바로 따라와요.','362-weather-panel.png','362-weather-preview.gif'],
+    ['362-weather-preview.mp4','움직이는 미리보기','크기, 투명도, 속도, 각도를 바꾸면 바로 따라와요.','362-weather-preview.jpg','362-weather-preview.gif'],
     ['310-styles.png','한 번에 입히는 스타일','소설책, 메신저, 또렷하게. 완성 스타일로 시작하세요.'],
     ['320-auto.png','낮에는 밝게, 밤에는 편안하게','기기 다크 모드나 정해 둔 시간을 따라 전환해요.'],
   ]},
@@ -75,7 +75,7 @@ function element(tag, cls, text) { const e=document.createElement(tag); if(cls)e
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
 document.documentElement.classList.add('js');
 const lightbox=$('#lightbox');
-const inView=new IntersectionObserver(entries=>{for(const {target,isIntersecting} of entries){if(reduceMotion.matches||target.dataset.userPaused)continue;if(isIntersecting)target.play().catch(()=>{});else target.pause();}},{threshold:.5,rootMargin:'-15% 0px -15% 0px'});
+const inView=new IntersectionObserver(entries=>{for(const {target,isIntersecting} of entries){if(reduceMotion.matches||target.dataset.userPaused)continue;if(isIntersecting)target.play().catch(()=>{});else target.pause();}},{threshold:.35});
 for(const group of [...pcGroups.map(g=>({...g,device:'pc'})),...groups.map(g=>({...g,device:'mobile'}))]){
   const block=element('section','gallery-block'), heading=element('div','gallery-heading'), label=element('div'); block.dataset.device=group.device;
   label.append(element('h3','',group.title),element('p','',group.sub));heading.append(label);
@@ -87,7 +87,7 @@ for(const group of [...pcGroups.map(g=>({...g,device:'pc'})),...groups.map(g=>({
   for(const [file,title,description,poster,gif] of group.cards){
     const card=element('figure','card'), wrap=element('div','media-wrap'), caption=element('figcaption','',title); card.style.setProperty('--i',Math.min(track.children.length,6));
     if(file.endsWith('.mp4')){
-      const video=element('video');video.preload='none';video.playsInline=true;video.muted=true;video.loop=true;video.src='media/'+file;video.poster='media/'+poster;video.setAttribute('aria-label',title);
+      const video=element('video');video.preload='metadata';video.playsInline=true;video.muted=true;video.loop=true;video.setAttribute('muted','');video.setAttribute('playsinline','');video.src='media/'+file;video.poster='media/'+poster;video.setAttribute('aria-label',title);
       if(reduceMotion.matches)video.controls=true;
       else{const state=element('span','play-state','▶');state.setAttribute('aria-hidden','true');wrap.classList.add('paused');
         video.addEventListener('play',()=>wrap.classList.remove('paused'));video.addEventListener('pause',()=>wrap.classList.add('paused'));
@@ -139,4 +139,17 @@ document.querySelectorAll('.section-head,.palette-layout,.reading-layout,.galler
     document.querySelectorAll('.track').forEach(t => t.dispatchEvent(new Event('scroll'))); };
   set(html.classList.contains('device-pc') ? 'pc' : 'mobile');
   pick.addEventListener('click', e => { const b = e.target.closest('button[data-device]'); if (!b) return; set(b.dataset.device); try { localStorage.setItem('bl-site-device', b.dataset.device); } catch {} });
+})();
+
+// hero loops (phones for mobile, browser windows for PC): only the chosen device's pair is fetched
+(() => {
+  const art = document.querySelector('.hero-art'); if (!art) return;
+  const vids = [...art.querySelectorAll('video.hero-video')];
+  const shown = v => v.offsetParent !== null;
+  const start = v => { if (!v.src && v.dataset.src) { if (v.dataset.poster) v.poster = v.dataset.poster; v.src = v.dataset.src; } v.muted = true; const p = v.play(); if (p) p.catch(() => {}); };
+  const sync = () => { const on = !art.classList.contains('idle'); for (const v of vids) { if (shown(v) && on) start(v); else v.pause(); } };
+  new MutationObserver(sync).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+  new MutationObserver(sync).observe(art, { attributes: true, attributeFilter: ['class'] });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) sync(); });
+  if (!reduceMotion.matches) sync();
 })();
