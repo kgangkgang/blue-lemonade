@@ -33,6 +33,12 @@ document.querySelector('#run').onclick=async()=>{
   change('gradients.light.angle',275);await pause();check('angle applies',style('body').backgroundImage.includes('275deg'));
   const before=style('body').backgroundImage;change('gradients.light.weights.0',95);await pause();check('weight changes paint distribution',style('body').backgroundImage!==before);
   click('[data-act="history-undo"]');await pause();check('weight undo',s.gradients.light.weights[0]===50);click('[data-act="history-redo"]');await pause();check('weight redo',s.gradients.light.weights[0]===95);
+  const soft=style('body').backgroundImage;change('gradients.light.blend',0);await pause();const hard=style('body').backgroundImage;
+  check('blend 0 paints hard edges',s.gradients.light.blend===0&&hard!==soft&&/(\d+(?:\.\d+)?)%, rgba?\([^)]*\) \1%/.test(hard),hard);
+  change('gradients.light.blend',100);await pause();const wide=style('body').backgroundImage;
+  check('blend 100 runs edge to edge',/ 0%,/.test(wide)&&/ 100%\)$/.test(wide),wide);
+  click('[data-act="history-undo"]');await pause();check('blend undo',s.gradients.light.blend===0);click('[data-act="history-redo"]');await pause();check('blend redo',s.gradients.light.blend===100);
+  change('gradients.light.blend',50);await pause();check('blend 50 restores the original gradient',style('body').backgroundImage===soft);
   const lightSnapshot=JSON.stringify(s.gradients.light);
   s.palette=paletteVariant('blue','dark');applyAll();route('theme','palette');
   check('night starts solid independently',!s.gradients.dark.on&&!style('body').backgroundImage.includes('linear-gradient'));

@@ -2,14 +2,14 @@ import { PALETTES, PALETTE_FAMILIES, paletteColors, paletteVariant, safeColor, p
 
 export const GRADIENT_KEYS = ['bg','surface','raised','accent','marker','gold','text','dialogue','em','strong','muted','faint','name','userName','ui','code'];
 export const TEXT_GRADIENT_KEYS = ['text','dialogue','em','strong','muted','faint','name','userName','ui','code'];
-export const MIX_DEFAULT = {on:false,families:['blue','strawberry'],angle:90,weights:[50,50,50]};
+export const MIX_DEFAULT = {on:false,families:['blue','strawberry'],angle:90,weights:[50,50,50],blend:50};
 const number=(v,min,max,fallback)=>Number.isFinite(Number(v))?Math.min(max,Math.max(min,Number(v))):fallback;
 const weights=v=>[0,1,2].map(i=>number(v?.[i],1,100,50));
 const cleanColor=v=>{const c=parseColor(v);return `rgba(${c.slice(0,3).map(n=>number(n,0,255,128)).join(',')},${number(c[3],0,1,1)})`;};
 export function tidyGradients(raw) {
     const normalizeMix=m=>{
         const families=[...new Set(Array.isArray(m?.families)?m.families:[])].filter(k=>k!=='custom'&&Object.hasOwn(PALETTE_FAMILIES,k)).slice(0,3);
-        return {on:m?.on===true,families:families.length>=2?families:[...MIX_DEFAULT.families],angle:number(m?.angle,0,360,90),weights:weights(m?.weights)};
+        return {on:m?.on===true,families:families.length>=2?families:[...MIX_DEFAULT.families],angle:number(m?.angle,0,360,90),weights:weights(m?.weights),blend:number(m?.blend,0,100,50)};
     };
     const light=normalizeMix(raw?.light||raw?.mix),dark=normalizeMix(raw?.dark||raw?.mix);
     const overrides={};
@@ -27,11 +27,20 @@ export function tidyGradients(raw) {
 }
 export const mixPath=s=>'gradients.'+(PALETTES[s.palette]?.mode==='dark'?'dark':'light');
 export const mixFor=s=>s.gradients?.[PALETTES[s.palette]?.mode==='dark'?'dark':'light'];
-export function gradientStops(colors,values) {
-    const w=colors.map((_,i)=>number(values?.[i],1,100,50)),sum=w.reduce((a,b)=>a+b,0);let used=0;
-    return colors.map((color,i)=>{const at=(used+w[i]/2)/sum*100;used+=w[i];return {color:safeColor(color),at:Number(at.toFixed(3))};});
+// 번짐 (blend, 0~100). 50 = each color peaks at the middle of its share (the 3.9.6 gradient, unchanged).
+// Below 50 every color keeps a solid band that widens until 0 = hard edges at the share boundaries.
+// Above 50 the first and last colors slide out to the ends, so 100 blends from one edge to the other.
+export function gradientStops(colors,values,blend=50) {
+    const w=colors.map((_,i)=>number(values?.[i],1,100,50)),sum=w.reduce((a,b)=>a+b,0),b=number(blend,0,100,50),last=colors.length-1;let used=0;
+    const round=v=>Number(v.toFixed(3));
+    return colors.flatMap((color,i)=>{
+        const mid=(used+w[i]/2)/sum*100,half=w[i]/2/sum*100;used+=w[i];color=safeColor(color);
+        if(b>=50){const u=(b-50)/50;return [{color,at:round(i===0?mid*(1-u):i===last?mid+(100-mid)*u:mid)}];}
+        const band=half*(1-b/50);
+        return [{color,at:round(mid-band)},{color,at:round(mid+band)}];
+    });
 }
-export function gradientCss(g) {return `linear-gradient(${g.angle}deg, ${gradientStops(g.colors,g.weights).map(s=>`${s.color} ${s.at}%`).join(', ')})`;}
+export function gradientCss(g) {return `linear-gradient(${g.angle}deg, ${gradientStops(g.colors,g.weights,g.blend).map(s=>`${s.color} ${s.at}%`).join(', ')})`;}
 export function gradientFor(s,key) {
     const g=s.gradients?.overrides?.[s.palette]?.[key];
     if(g?.mode==='solid')return null;
@@ -43,16 +52,16 @@ export function gradientFor(s,key) {
 }
 export function gradientSvg(g,id='blend') {
     const r=g.angle*Math.PI/180,x=Math.sin(r)/2,y=-Math.cos(r)/2;
-    const stops=gradientStops(g.colors,g.weights).map(s=>{const [r,g,b,a]=parseColor(s.color);return `<stop offset='${s.at}%' stop-color='rgb(${r},${g},${b})' stop-opacity='${a}'/>`;}).join('');
+    const stops=gradientStops(g.colors,g.weights,g.blend).map(s=>{const [r,g,b,a]=parseColor(s.color);return `<stop offset='${s.at}%' stop-color='rgb(${r},${g},${b})' stop-opacity='${a}'/>`;}).join('');
     return `<linearGradient id='${id}' x1='${.5-x}' y1='${.5-y}' x2='${.5+x}' y2='${.5+y}'>${stops}</linearGradient>`;
 }
 
 export function gradientSample(g,position) {
-    const stops=gradientStops(g.colors,g.weights),at=Math.max(0,Math.min(100,position*100));
+    const stops=gradientStops(g.colors,g.weights,g.blend),at=Math.max(0,Math.min(100,position*100));
     let a=stops[0],b=stops.at(-1);
     if(at<=a.at)return a.color;if(at>=b.at)return b.color;
     for(let i=1;i<stops.length;i++)if(at<=stops[i].at){a=stops[i-1];b=stops[i];break;}
-    const left=parseColor(a.color),right=parseColor(b.color),t=(at-a.at)/(b.at-a.at);
+    const left=parseColor(a.color),right=parseColor(b.color),t=b.at>a.at?(at-a.at)/(b.at-a.at):1;
     return `rgba(${left.slice(0,3).map((v,i)=>Math.round(v+(right[i]-v)*t)).join(',')},${Number((left[3]+(right[3]-left[3])*t).toFixed(3))})`;
 }
 export function gradientCap(g,right) {

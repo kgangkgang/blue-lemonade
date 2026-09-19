@@ -103,7 +103,7 @@ function syncHistoryButtons() {
 function historyLabel(path) {
     if(path.startsWith('gradients.')) {
         if(historyLabels.has(path))return historyLabels.get(path);
-        if(/^gradients\.(light|dark)/.test(path))return (path.startsWith('gradients.dark')?'나이트':'라이트')+' 에이드 혼합 · '+(path.endsWith('families')?'색 조합':path.endsWith('angle')?'방향':path.endsWith('weights')?'색 비중':'켜기/끄기');
+        if(/^gradients\.(light|dark)/.test(path))return (path.startsWith('gradients.dark')?'나이트':'라이트')+' 에이드 혼합 · '+(path.endsWith('families')?'색 조합':path.endsWith('angle')?'방향':path.endsWith('blend')?'번짐':path.includes('weights')?'색 비중':'켜기/끄기');
         const key=path.split('.')[3],label=TOKEN_GROUPS.flatMap(([,list])=>list).find(([id])=>id===key)?.[1]||({name:'캐릭터 이름',userName:'내 이름',ui:'메뉴',code:'코드'})[key]||'색';
         return `그라데이션 · ${label}`;
     }
