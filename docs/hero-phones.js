@@ -3,7 +3,8 @@
   const still = matchMedia('(prefers-reduced-motion: reduce)');
   const art = document.querySelector('.hero-art');
   const phones = [...document.querySelectorAll('.hero-art .phone')];
-  const screens = [...phones, ...document.querySelectorAll('.hero-art .browser')];
+  const browsers = [...document.querySelectorAll('.hero-art .browser')];
+  const screens = [...phones, ...browsers];
   const reset = phone => {
     for (const key of ['--tilt-x', '--tilt-y', '--lift']) phone.style.removeProperty(key);
   };
@@ -29,6 +30,28 @@
       setTimeout(() => phone.style.removeProperty('scale'), 170);
     });
   }
+  for (const browser of browsers) {
+    let bounceTimer;
+    browser.addEventListener('click', () => {
+      browsers.forEach(p => {
+        p.classList.toggle('front', p === browser);
+        p.setAttribute('aria-pressed', String(p === browser));
+      });
+      clearTimeout(bounceTimer);
+      browser.style.removeProperty('scale');
+      if (still.matches) return;
+      browser.style.scale = '1.06';
+      bounceTimer = setTimeout(() => browser.style.removeProperty('scale'), 170);
+    });
+    browser.addEventListener('keydown', event => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      browser.click();
+    });
+  }
+  still.addEventListener('change', () => {
+    if (still.matches) screens.forEach(screen => screen.style.removeProperty('scale'));
+  });
   canTilt.addEventListener('change', () => screens.forEach(reset));
   window.addEventListener('blur', () => screens.forEach(reset));
 
