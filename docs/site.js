@@ -1,5 +1,10 @@
 'use strict';
 const groups = [
+  { title: '에이드를 섞어, 나만의 색으로.', sub: '에이드 혼합 · 글자 그라데이션', cards: [
+    ['396-mix.mp4','에이드를 섞어서','방향을 돌리고 두세 가지 에이드를 골라 섞어요.','396-mix.png','396-mix.gif'],
+    ['396-text-gradient.png','글자에도 그라데이션','이름·대사·속마음을 따로 물들일 수 있어요.'],
+    ['396-mix-setting.png','섞는 건 간단하게','혼합을 켜고 에이드를 고르면 끝. 라이트·나이트 따로 저장돼요.'],
+  ]},
   { title: '열두 가지 에이드, 가벼워진 설정.', sub: '새 에이드 6종 · 알약·직사각형 형광펜 · 설정 검색 · 되돌리기 · 변경한 설정', cards: [
     ['388-ades.mp4','에이드가 열두 가지로','라벤더·딸기·민트·오렌지·우드·수박이 더해졌어요.','388-ades.png','388-ades.gif'],
     ['390-pill-marker.png','끝이 둥근 알약 형광펜','펜 자국·직사각형에 알약 모양까지 더해졌어요.'],
@@ -56,6 +61,14 @@ const groups = [
 ];
 // PC screens (1440×900) — shown instead of the phone groups when the visitor picks PC
 const pcGroups = [
+  { title: '넓은 화면에서, 더 시원하게.', sub: '배경 그림 · 에이드 혼합 · 나란히 보는 설정 · 날씨', cards: [
+    ['pc-mix.mp4','에이드를 섞어서','두세 가지 에이드로 형광펜과 면을 함께 물들여요.','pc-mix.jpg','pc-mix.gif'],
+    ['pc-night.jpg','밤바다 위의 나이트','배경 그림이 은은하게 비치는 차콜 화면.'],
+    ['pc-settings.jpg','미리보기와 설정을 나란히','왼쪽에서 보고, 오른쪽에서 바로 바꿔요.'],
+    ['pc-search.mp4','찾으면 바로 그 설정','"형광펜 모양"처럼 입력하면 그 자리로 가요.','pc-search.jpg','pc-search.gif'],
+    ['pc-ades.mp4','열두 가지 에이드','넓은 화면에서 한 번에 바꿔 보세요.','pc-ades.jpg','pc-ades.gif'],
+    ['pc-weather.mp4','눈 내리는 밤','채팅 뒤로 조용히 눈이 내려요.','pc-weather.jpg','pc-weather.gif'],
+  ]},
 ];
 const $ = s => document.querySelector(s);
 function element(tag, cls, text) { const e=document.createElement(tag); if(cls)e.className=cls; if(text)e.textContent=text; return e; }
@@ -63,7 +76,7 @@ const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
 document.documentElement.classList.add('js');
 const lightbox=$('#lightbox');
 const inView=new IntersectionObserver(entries=>{for(const {target,isIntersecting} of entries){if(reduceMotion.matches||target.dataset.userPaused)continue;if(isIntersecting)target.play().catch(()=>{});else target.pause();}},{threshold:.5,rootMargin:'-15% 0px -15% 0px'});
-for(const group of [...groups.map(g=>({...g,device:'mobile'})),...pcGroups.map(g=>({...g,device:'pc'}))]){
+for(const group of [...pcGroups.map(g=>({...g,device:'pc'})),...groups.map(g=>({...g,device:'mobile'}))]){
   const block=element('section','gallery-block'), heading=element('div','gallery-heading'), label=element('div'); block.dataset.device=group.device;
   label.append(element('h3','',group.title),element('p','',group.sub));heading.append(label);
   const track=element('div','track'); track.tabIndex=0; track.setAttribute('aria-label',group.title+' 갤러리');

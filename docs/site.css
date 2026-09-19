@@ -289,7 +289,7 @@ dialog[open]::backdrop{animation:fade .3s ease}
 .device-mobile .device-pick [data-device=mobile],.device-pc .device-pick [data-device=pc]{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--blue),var(--shadow-sm)}
 .hero-copy>:nth-child(6){animation-delay:.46s}
 /* gallery: PC blocks show for PC visitors once PC media exist */
-.device-mobile .gallery-block[data-device=pc],.device-pc #galleries.has-pc .gallery-block[data-device=mobile]{display:none}
+.device-mobile .gallery-block[data-device=pc]{display:none}
 .gallery-block[data-device=pc] .card{flex-basis:540px}
 .gallery-block[data-device=pc] .media-wrap{height:auto;aspect-ratio:16/10}
 .gallery-block[data-device=pc] .media-wrap img,.gallery-block[data-device=pc] .media-wrap video{object-fit:cover}
