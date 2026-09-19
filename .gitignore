@@ -4,3 +4,6 @@ build-zip.ps1
 # Python QA cache
 __pycache__/
 *.pyc
+
+# Only Blue Lemonade is distributed from this repository.
+/docs/downloads/*.json
