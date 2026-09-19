@@ -75,5 +75,7 @@
 @media (hover:hover) and (pointer:fine){.hero-art .browser:hover{transition:transform .12s ease,scale .6s cubic-bezier(.34,1.56,.5,1)}}
 @keyframes pc-bob{to{translate:0 -10px}}
 .hero-art.idle .browser{animation-play-state:paused}
-@media (max-width:760px){.browser{width:96%}.browser.light{left:0;top:10px}.browser.night{right:-6%;top:150px}}
+/* Leave room for the rotated corners and the tap bounce inside the viewport. */
+@media (max-width:1400px){.browser{width:94%}.browser.light{left:0}.browser.night{right:0}}
+@media (max-width:760px){.browser{width:88%}.browser.light{left:2%;top:20px}.browser.night{right:2%;top:150px}}
 @media (prefers-reduced-motion:reduce){.hero-art .browser,.hero-art .browser:hover{animation:none;transform:none;transition:none}}
