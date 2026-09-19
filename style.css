@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 51개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 8ad99e201c2b) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 51개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 07f8ac0424a1) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -11972,7 +11972,7 @@ body.salty #send_form #qr--bar.bl-qr-more-right::after { opacity: 1; }
 body.salty #send_form #qr--bar { scroll-snap-type: x proximity; scroll-padding-left: var(--bl-qr-snap, 0px); }
 body.salty #send_form #qr--bar .qr--button { scroll-snap-align: start; }
 body.salty #send_form #qr--bar #bl-qr-find::before,
-body.salty #send_form #qr--bar #qr--popoutTrigger::before { content: ''; position: absolute; top: -4px; bottom: -4px; right: 100%; width: 8px; background: var(--salty-fill-surface, var(--salty-surface)); pointer-events: none; }
+body.salty #send_form #qr--bar #qr--popoutTrigger::after { content: ''; position: absolute; top: -4px; bottom: -4px; right: 100%; width: 8px; background: var(--salty-fill-surface, var(--salty-surface)); pointer-events: none; }
 body.salty #send_form #qr--bar #bl-qr-find::after { content: ''; position: absolute; top: -4px; bottom: -4px; left: 100%; width: 29px; background: linear-gradient(to right, var(--salty-surface) 5px, transparent); pointer-events: none; opacity: 0; transition: opacity 0.12s ease; }
 body.salty #send_form #qr--bar.bl-qr-cut-left #bl-qr-find::after { opacity: 1; }
 body.salty #send_form #qr--bar.bl-qr-dragging { scroll-snap-type: none; }
@@ -17233,7 +17233,7 @@ html body .bl-editor .bl-setting-reset[hidden] { display:none !important; }
 .bl-gradient-colors label { display:flex; align-items:center; gap:8px; }
 .bl-mix-swatches { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:8px; margin:12px 0; }
 .bl-mix-swatches button { display:flex; align-items:center; gap:8px; border:1px solid transparent; padding:10px; border-radius:8px; background:var(--bl-field,var(--salty-raised)); color:var(--salty-text); min-width:0; font:inherit; cursor:pointer; }
-.bl-mix-swatches button i { width:12px; height:12px; border-radius:50%; flex:none; }
+.bl-mix-swatches button i { width:22px; height:22px; border-radius:50%; flex:none; box-shadow:inset 0 0 0 1px var(--salty-line); }
 .bl-mix-swatches button[aria-pressed=true] { border-color:var(--salty-accent); }
 .bl-mix-swatches button:disabled { opacity:.4; cursor:default; }
 .bl-mix-swatches button b { margin-left:auto; }
