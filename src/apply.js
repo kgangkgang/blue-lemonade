@@ -1,3 +1,4 @@
+import { gradientFor, gradientCss, gradientSvg, gradientCap, gradientFills, gradientTextCss } from './gradients.js';
 import { syncFrameShadows } from './frame-shadow.js';
 import { syncMessageMenus } from './menu-position.js';
 import { syncProfileClip } from './profile-clip.js';
@@ -219,22 +220,30 @@ export function markerGeometry(d) {
 }
 
 export function markerBackground(s, color) {
+    const gradient=gradientFor(s,'marker');
     const { T, l, r } = markerGeometry(['rectangle','pill'].includes(s.dialogue.markerShape) ? {...s.dialogue, tilt:'flat'} : s.dialogue);
     const lb = l + T;
     const rb = r + T;
     const w = Math.min(1.8, T * 0.07); // 위아래 물결 — 얇은 획은 덜 출렁이게
     const [cr, cg, cb, ca] = parseColor(color);
-    const rgb = `rgb(${cr},${cg},${cb})`;
-    const op = Math.min(1, ca);
+    const rgb = gradient?'url(#blend)':`rgb(${cr},${cg},${cb})`;
+    const op = gradient?1:Math.min(1, ca);
     const n = v => Number(v.toFixed(2));
     if (s.dialogue.markerShape === 'pill') {
         // Separate half-caps keep their radius when a quote wraps or grows wider.
         // The three regions meet without overlapping translucent paint.
         const ink = `rgba(${cr},${cg},${cb},${n(op)})`, cap = n(T / 200), y = T === 100 ? 50 : n(l / (100 - T) * 100);
+        if(gradient) {
+            const capImage=(right)=>{
+                const svg=`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 100' preserveAspectRatio='none'><defs>${gradientCap(gradient,right)}</defs><ellipse cx='${right?0:50}' cy='50' rx='50' ry='50' fill='url(#blend)'/></svg>`;
+                return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+            };
+            return `${capImage(false)} left ${y}% / min(${cap}em, 50%) ${n(T)}% no-repeat, ${capImage(true)} right ${y}% / min(${cap}em, 50%) ${n(T)}% no-repeat, ${gradientCss(gradient)} center ${y}% / max(0px, calc(100% - ${n(cap * 2)}em)) ${n(T)}% no-repeat`;
+        }
         return `radial-gradient(ellipse 100% 50% at 100% 50%, ${ink} 99%, transparent 100%) left ${y}% / min(${cap}em, 50%) ${n(T)}% no-repeat, radial-gradient(ellipse 100% 50% at 0% 50%, ${ink} 99%, transparent 100%) right ${y}% / min(${cap}em, 50%) ${n(T)}% no-repeat, linear-gradient(${ink}, ${ink}) center ${y}% / max(0px, calc(100% - ${n(cap * 2)}em)) ${n(T)}% no-repeat`;
     }
     if (s.dialogue.markerShape === 'rectangle') {
-        const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><rect x='0' y='${n(l)}' width='100' height='${n(T)}' fill='${rgb}' fill-opacity='${n(op)}'/></svg>`;
+        const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><defs>${gradient?gradientSvg(gradient):''}</defs><rect x='0' y='${n(l)}' width='100' height='${n(T)}' fill='${rgb}' fill-opacity='${n(op)}'/></svg>`;
         return `url("data:image/svg+xml,${encodeURIComponent(svg)}") center / 100% 100% no-repeat`;
     }
     // 획 하나: 시작은 펜촉처럼 비스듬히(위가 조금 오른쪽), 끝도 비스듬히 잘림(아래가 조금 왼쪽)
@@ -245,7 +254,7 @@ export function markerBackground(s, color) {
         `Q75,${n(rb + w - (rb - lb) * 0.25)} 50,${n((lb + rb) / 2)}`, `T0.8,${n(lb)}`, 'Z',
     ].join(' ');
     const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'>`
-        + `<defs><linearGradient id='p' x1='0' x2='1' y1='0' y2='0'><stop offset='0' stop-color='${rgb}' stop-opacity='${n(op * 0.45)}'/><stop offset='0.14' stop-color='${rgb}' stop-opacity='0'/></linearGradient></defs>`
+        + `<defs>${gradient?gradientSvg(gradient):''}<linearGradient id='p' x1='0' x2='1' y1='0' y2='0'><stop offset='0' stop-color='rgb(${cr},${cg},${cb})' stop-opacity='${n(op * 0.45)}'/><stop offset='0.14' stop-color='rgb(${cr},${cg},${cb})' stop-opacity='0'/></linearGradient></defs>`
         + `<path d='${stroke}' fill='${rgb}' fill-opacity='${n(op)}'/>`
         // 시작 쪽에 잉크가 고인 느낌: 같은 획 안에서만 겹치므로 이음매 없음
         + `<path d='${stroke}' fill='url(#p)'/>`
@@ -522,6 +531,7 @@ export function applyAll() {
         '--salty-side-all': edgeSidesAll ? '1' : '0',
         '--salty-side-part': edgeSidesAll ? '0' : '1',
     }, imageHeight(s.image), imageShape(s.image), frameVars(s.image, 'img', pal.accent), decorVars(s.image.decor, 'image', s.image.radius), profileVars(s.profile, pal), profileVars(s.userProfile, pal, true));
+    Object.assign(vars,gradientFills(s,vars));
     // 테마를 끄면 토큰은 설정 창에만 — :root 에 두면 안 쓰는 변수가 문서 전체에 깔림 (설정 창은 꺼도 자기 색으로 보임)
     let css = `${s.enabled ? ':root' : '.salty-panel'} {\n${declarations(vars)}\n}`;
 
@@ -558,6 +568,10 @@ export function applyAll() {
     }
     const variables = styleTag('salty-vars');
     if (variables.textContent !== css) variables.textContent = css;
+    // Keep selector rules stable while sliders change only the variable sheet.
+    const gradients = styleTag('salty-gradients');
+    const gradientRules = gradientTextCss(s, vars['--salty-marker-bg']);
+    if (gradients.textContent !== gradientRules) gradients.textContent = gradientRules;
 
     // 아이콘 CSS(15KB)도 테마를 끄면 비움 — body.salty 밖에선 쓸 데가 없음
     const icons = s.enabled ? styleTag('salty-icons') : document.getElementById('salty-icons');

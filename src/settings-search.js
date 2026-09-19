@@ -2,6 +2,8 @@
 // or disabled. Searching never renders all sections or sends text to a server.
 import { favoriteButton } from './settings-favorites.js';
 const rows = [
+ ['theme','palette','에이드 혼합하기 · 그라데이션','그라데이션 그라디언트 혼합 섞기 2색 3색 두색 세색 방향 각도 360 반전 비중 비율 색상 조합'],
+ ['theme','colors','글자·형광펜 그라데이션','본문 대사 속마음 강조 글자 형광펜 그라데이션 단색 색 비중 방향 각도'],
  ['theme','changes','변경한 설정·항목별 복원','변경 내역 기본값 다른 바꾼 설정 목록 초기화 원래대로 항목 하나만 되돌리기 복원 실수'],
  ['theme','palette','테마 색과 밝기','배경 진하기 테마색 농도 차콜 색감 퍼센트 0.5% 1% 20% 팔레트 화이트 나이트 밝은 어두운 다크모드 라이트모드 블루 레몬 피치 복숭아 자몽 라벤더 딸기 민트 오렌지 우드 갈색 수박 초록 빨강 커스텀 테마 선택'],
  ['theme','colors','테마 세부 색','바탕 배경 종이 카드 포인트 강조 형광펜 글자색 색깔 변경 색상 투명 색 고치기'],

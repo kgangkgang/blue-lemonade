@@ -8,6 +8,7 @@ const omittedPaths = new Set(['image.masks','image.maskId','chat.weatherImageId'
 const safe = path => typeof path === 'string' && !path.split('.').some(k => ['__proto__','constructor','prototype'].includes(k));
 export function settingDefault(settings, path) {
     if (!safe(path) || omitted.has(path.split('.')[0]) || omittedPaths.has(path)) return { allowed: false };
+    if (path === 'gradients.overrides' || path.startsWith('gradients.overrides.')) return {allowed:true,value:path==='gradients.overrides'?{}:undefined};
     if (path.startsWith('colorOverrides.')) {
         const [, palette, token, extra] = path.split('.');
         return { allowed: !extra && !!PALETTES[palette] && Object.hasOwn(PALETTES[palette], token), value: undefined };
@@ -39,7 +40,7 @@ export function changedSettings(settings) {
     function visit(defaults, value, path) {
         if (omitted.has(path.split('.')[0]) || omittedPaths.has(path)) return;
         // Uploaded frame artwork and its mask are an atomic pair; saved copies remain untouched.
-        if (path.endsWith('.decor') || path === 'image.mask' || !defaults || typeof defaults !== 'object' || Array.isArray(defaults)) {
+        if (path === 'gradients.overrides' || path.endsWith('.decor') || path === 'image.mask' || !defaults || typeof defaults !== 'object' || Array.isArray(defaults)) {
             if (!equal(defaults, value)) result.push({ path, before: defaults, value });
             return;
         }
@@ -54,6 +55,7 @@ export function changedSettings(settings) {
 }
 export function settingRoute(path) {
     const [scope, key] = path.split('.');
+    if (scope === 'gradients') return {tab:'theme',sub:key!=='overrides'?'palette':'colors'};
     if (scope === 'colorOverrides') return { tab:'theme', sub:'colors' };
     if (['palette','lightTint','nightTint','auto','enabled','customName'].includes(scope)) return {tab:'theme',sub:'palette'};
     if (scope === 'fonts') return key === 'name' || key === 'userName' ? {tab:'chat',sub:key === 'name' ? 'name' : 'user-name'} : {tab:'text',sub:key === 'hanja' ? 'text' : key};

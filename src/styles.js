@@ -5,7 +5,7 @@
 // — 모양만 바꾸고 쓰는 방식은 그대로 두려고. 저장한 도형을 쓰는 스타일은 그림 대신 도형 id 만 담는다 (설정 파일이 무거워지지 않게).
 import { getSettings, DEFAULTS, FONT_SET } from './settings.js';
 
-export const STYLE_KEYS = ['palette', 'nightTint', 'lightTint', 'customName', 'colorOverrides', 'fonts', 'type', 'dialogue', 'ui', 'code', 'em', 'strong', 'shadow', 'chat', 'image', 'profile', 'userProfile'];
+export const STYLE_KEYS = ['gradients', 'palette', 'nightTint', 'lightTint', 'customName', 'colorOverrides', 'fonts', 'type', 'dialogue', 'ui', 'code', 'em', 'strong', 'shadow', 'chat', 'image', 'profile', 'userProfile'];
 const CHAT_BEHAVIOR = ['selectPop', 'colorPop', 'streamFade', 'demFold', 'qrFind'];
 export const MAX_STYLES = 20;
 const CODE_PREFIX = 'BLS1.';     // deflate-raw + base64url

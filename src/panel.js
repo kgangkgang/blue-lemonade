@@ -1,3 +1,4 @@
+import { gradientControls, mixControls, gradientAction, bindGradientColors } from './gradient-ui.js';
 import { bindEditor, openEditorCatalog, arrangeEditor, revealEditorTarget, selectEditorGroup } from './settings-editor.js';
 import { SettingsHistory } from './settings-history.js';
 import { bindTouchSliders } from './touch-sliders.js';
@@ -100,6 +101,12 @@ function syncHistoryButtons() {
     }
 }
 function historyLabel(path) {
+    if(path.startsWith('gradients.')) {
+        if(historyLabels.has(path))return historyLabels.get(path);
+        if(/^gradients\.(light|dark)/.test(path))return (path.startsWith('gradients.dark')?'나이트':'라이트')+' 에이드 혼합 · '+(path.endsWith('families')?'색 조합':path.endsWith('angle')?'방향':path.endsWith('weights')?'색 비중':'켜기/끄기');
+        const key=path.split('.')[3],label=TOKEN_GROUPS.flatMap(([,list])=>list).find(([id])=>id===key)?.[1]||({name:'캐릭터 이름',userName:'내 이름',ui:'메뉴',code:'코드'})[key]||'색';
+        return `그라데이션 · ${label}`;
+    }
     const scope = { profile: '캐릭터 프로필', userProfile: '내 프로필', image: '에셋 이미지', type: '본문', dialogue: '대사', em: '속마음', strong: '강조', chat: '채팅' }[path.split('.')[0]];
     if (path.startsWith('colorOverrides.')) {
         const [, palette, token] = path.split('.');
@@ -108,6 +115,8 @@ function historyLabel(path) {
     return [scope, historyLabels.get(path) || path].filter(Boolean).join(' · ');
 }
 function historyValue(value, path) {
+    if(/^gradients\.(light|dark)\.families$/.test(path)&&Array.isArray(value))return value.map(k=>PALETTE_FAMILIES[k]?.label||k).join(' + ');
+    if(path.startsWith('gradients.')&&Array.isArray(value))return value.join(' : ');
     if (value == null) return '기본값';
     if (typeof value === 'boolean') return value ? '켜짐' : '꺼짐';
     if (path === 'palette') return PALETTES[value]?.label || String(value);
@@ -391,7 +400,7 @@ function color(token, label, note = '') {
     // 투명한 색은 스와치가 빈 칸처럼 보여서 뒤에 투명 격자를 깔아 줌 (CSS .clear)
     // 견본 크기는 CSS 변수로 (3.5.1 — PC 팝업에서는 이름 옆을 다 채우는 긴 막대, 33-panel-columns)
     const clear = parseColor(pal[token])[3] < 0.1 ? ' clear' : '';
-    return `<div class="salty-row salty-color${clear}"><span>${mdLabel(label)}${note ? `<small>${note}</small>` : ''}</span><toolcool-color-picker data-token="${token}" color="${esc(pal[token])}" button-width="var(--bl-sw-w, 3rem)" button-height="var(--bl-sw-h, 1.5rem)" button-padding="var(--bl-sw-p, .25rem)"></toolcool-color-picker></div>`;
+    return `<div class="salty-row salty-color${clear}"><span>${mdLabel(label)}${note ? `<small>${note}</small>` : ''}</span><toolcool-color-picker data-token="${token}" color="${esc(pal[token])}" button-width="var(--bl-sw-w, 3rem)" button-height="var(--bl-sw-h, 1.5rem)" button-padding="var(--bl-sw-p, .25rem)"></toolcool-color-picker></div>${gradientControls(getSettings(),token,label,{slider,esc})}`;
 }
 
 const fill = (value, min, max) => `${((value - min) / (max - min)) * 100}%`;
@@ -932,7 +941,7 @@ function tabTheme(s, sub) {
             ${stack('자동 기준', seg('auto.by', [['system', '기기 다크 모드'], ['time', '시간']]))}
             ${s.auto.by === 'time' ? `<div class="salty-row"><span>나이트 시작</span><input type="time" class="salty-time" data-time-path="auto.night" value="${esc(s.auto.night)}" aria-label="나이트 시작"></div><div class="salty-row"><span>화이트 시작</span><input type="time" class="salty-time" data-time-path="auto.day" value="${esc(s.auto.day)}" aria-label="화이트 시작"></div>` : ''}
         </div>` : '';
-    return `${chatPreview()}${selected !== 'custom' ? `<div class="bl-palette-tint">${slider(mode === 'dark' ? 'nightTint' : 'lightTint', '배경 테마색 농도', mode === 'dark' ? 1 : .5, 20, .5)}<small>${mode === 'dark' ? '기본 1% · 차콜' : '기본 0.5% · 화이트'}부터 20%까지. 직접 고친 배경색은 유지해요.</small></div>` : ''}<div class="salty-palette-toolbar"><span>${auto ? '자동 · ' : ''}${mode === 'light' ? '화이트' : '나이트'}</span><div class="salty-mode-switch" role="group" aria-label="테마 밝기">${['light', 'dark'].map(kind => `<button type="button" data-act="palette-mode" data-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'} 모드" title="${kind === 'light' ? '화이트' : '나이트'}" aria-pressed="${!auto && mode === kind}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}<button type="button" data-act="palette-auto" aria-label="자동" title="자동" aria-pressed="${auto}"><i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i></button></div></div>${autoOptions}<div class="salty-palettes">${cards}${custom}</div>`;
+    return `${chatPreview()}${selected !== 'custom' ? `<div class="bl-palette-tint">${slider(mode === 'dark' ? 'nightTint' : 'lightTint', '배경 테마색 농도', mode === 'dark' ? 1 : .5, 20, .5)}<small>${mode === 'dark' ? '기본 1% · 차콜' : '기본 0.5% · 화이트'}부터 20%까지. 직접 고친 배경색은 유지해요.</small></div>` : ''}<div class="salty-palette-toolbar"><span>${auto ? '자동 · ' : ''}${mode === 'light' ? '화이트' : '나이트'}</span><div class="salty-mode-switch" role="group" aria-label="테마 밝기">${['light', 'dark'].map(kind => `<button type="button" data-act="palette-mode" data-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'} 모드" title="${kind === 'light' ? '화이트' : '나이트'}" aria-pressed="${!auto && mode === kind}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}<button type="button" data-act="palette-auto" aria-label="자동" title="자동" aria-pressed="${auto}"><i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i></button></div></div>${autoOptions}${mixControls(s,{slider,esc})}<div class="salty-palettes">${cards}${custom}</div>`;
 
 }
 
@@ -1116,7 +1125,7 @@ function tabText(s, sub) {
             ${roleType('대사', [sizeOpt('type.dialogueSize', '크기', '본문과 같게', ...TEXT_LIMIT.dialogueSize), slider('dialogue.weight', '굵기', 300, 800, 1), sizeOpt('dialogue.letterSpacing', '자간', '본문과 같게', ...TEXT_LIMIT.letterSpacing)])}
             ${cap('대사 글꼴')}${fontBlock(s, 'dialogue')}`;
     } else if (sub === 'ui') {
-        body = `${roleType('메뉴', [sizeOpt('type.uiSize', '크기', '기본', ...TEXT_LIMIT.uiSize), sizeOpt('ui.weight', '굵기', '기본', 300, 800), sizeOpt('ui.letterSpacing', '자간', '기본', ...TEXT_LIMIT.letterSpacing)], '메뉴 · 단추 · 설정창 글자')}
+        body = `${gradientControls(s,'ui','메뉴 글자',{slider,esc})}${roleType('메뉴', [sizeOpt('type.uiSize', '크기', '기본', ...TEXT_LIMIT.uiSize), sizeOpt('ui.weight', '굵기', '기본', 300, 800), sizeOpt('ui.letterSpacing', '자간', '기본', ...TEXT_LIMIT.letterSpacing)], '메뉴 · 단추 · 설정창 글자')}
             ${cap('메뉴 글꼴')}${fontBlock(s, 'ui')}`;
     } else if (sub === 'em') {
         body = `${cap('속마음', mdLabel('*기울임*'))}
@@ -1129,18 +1138,18 @@ function tabText(s, sub) {
     } else if (sub === 'strong') {
         body = `${cap('강조', mdLabel('**굵게**'))}
             <div class="salty-group">
-                ${color('strong', '글자 색')}
+                ${color('strong', '글자 색')}${color('gold','강조 형광펜 색')}
             </div>
             ${roleType('강조', [sizeOpt('strong.size', '크기', '본문과 같게', ...TEXT_LIMIT.roleSize), slider('strong.weight', '굵기', 400, 900, 1), sizeOpt('strong.letterSpacing', '자간', '본문과 같게', ...TEXT_LIMIT.letterSpacing)])}
             ${cap('강조 글꼴')}${fontBlock(s, 'strong')}`;
     } else if (sub === 'code') {
-        body = `${cap('코드', '\`코드\`')}
+        body = `${gradientControls(s,'code','코드 글자',{slider,esc})}${cap('코드', '\`코드\`')}
             ${roleType('코드', [sizeOpt('type.codeSize', '크기', '본문과 같게', ...TEXT_LIMIT.codeSize), sizeOpt('code.weight', '굵기', '본문과 같게', 300, 800), sizeOpt('code.letterSpacing', '자간', '본문과 같게', ...TEXT_LIMIT.letterSpacing)])}
             ${cap('코드 글꼴')}${fontBlock(s, 'code')}
             <p class="salty-note">기본은 도트 글꼴(Neo둥근모)이에요.</p>`;
     } else {
         // 본문: 크기 · 굵기 · 자간 · 줄 간격 → 글꼴 (예전 '크기' · '모양' 칸을 합침)
-        body = `${roleType('본문', [slider('type.size', '크기', 12, 22, 1), slider('type.weight', '굵기', 300, 600, 1), slider('type.letterSpacing', '자간', -5, 8, 1), slider('type.lineHeight', '줄 간격', 1.4, 2.2, 0.01)])}
+        body = `<div class="salty-group">${color('text','본문 글자 색')}</div>${roleType('본문', [slider('type.size', '크기', 12, 22, 1), slider('type.weight', '굵기', 300, 600, 1), slider('type.letterSpacing', '자간', -5, 8, 1), slider('type.lineHeight', '줄 간격', 1.4, 2.2, 0.01)])}
             ${cap('본문 글꼴')}${fontBlock(s, 'text')}`;
     }
     // 미리보기는 탭 맨 위에 붙어 있는 칸 안에 — 슬라이드바를 미는 동안 화면에 남게 (길면 꺾쇠로 접음). 메뉴 칸은 메뉴 글꼴 · 크기로 그린 미리보기
@@ -1188,7 +1197,7 @@ function nameControls(s, prefix = 'profile') {
         ${range('nameSize', '크기 (px)')}${range('nameWeight', '굵기', 50)}${range('nameSpacing', '자간 (1/100em)')}${range('nameHeight', '줄 높이', 0.1)}
         ${stack('정보 정렬', seg(`${prefix}.nameAlign`, [['left', '왼쪽'], ['center', '가운데'], ['right', '오른쪽']]), '이름·시간·버튼과 메시지 번호·생성 정보를 함께 맞춰요')}
         ${row('테마 글자색', toggle(`${prefix}.nameAuto`, p.nameAuto))}
-        ${!p.nameAuto ? frameColor(`${prefix}.nameColor`, '이름 색', p.nameColor) : ''}
+        ${!p.nameAuto ? frameColor(`${prefix}.nameColor`, '이름 색', p.nameColor) : ''}${gradientControls(s,prefix==='profile'?'name':'userName','이름 글자',{slider,esc})}
         ${row('기울임', toggle(`${prefix}.nameItalic`, p.nameItalic))}${row('밑줄', toggle(`${prefix}.nameUnderline`, p.nameUnderline))}
         ${range('nameOutline', '외곽선 두께 (px)', 0.1)}${frameColor(`${prefix}.nameOutlineColor`, '외곽선 색', p.nameOutlineColor)}
         ${row('이름 그림자', toggle(`${prefix}.nameShadow`, p.nameShadow))}
@@ -1569,6 +1578,7 @@ function render(root) {
     root.querySelector('.salty-sec').scrollTop = root._editorScroll.get(root._editorRoute) || 0;
 
     // 색 고르기: 처음 그릴 때 나는 change 는 무시하고, 사용자가 만진 뒤부터 저장
+    bindGradientColors(root,getSettings,update);
     root.querySelectorAll('toolcool-color-picker[data-token]').forEach((picker) => {
         const arm = () => { picker._armed = true; };
         picker.addEventListener('pointerdown', arm);
@@ -1869,8 +1879,11 @@ function bind(root) {
                     ui.subs.theme = 'palette';
                     refreshPanels();
                     break;
+                case 'mix-toggle': case 'mix-family': case 'gradient-mode': case 'gradient-count':
+                    update(st=>gradientAction(el.dataset.act,el,st));
+                    break;
                 case 'reset-colors':
-                    update((st) => { delete st.colorOverrides[st.palette]; });
+                    update((st) => { delete st.colorOverrides[st.palette]; delete st.gradients.overrides[st.palette]; });
                     break;
                 case 'seg': {
                     // 테두리와 흐림은 원리상 양립 불가: 흐림 마스크가 box-shadow(테두리)까지 지운다.

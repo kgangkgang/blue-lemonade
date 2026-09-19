@@ -1,3 +1,4 @@
+localStorage.setItem('salty_tab','text');localStorage.setItem('salty_subs',JSON.stringify({text:'em'}));
 // Synthetic benchmark: real runtime modules and host CSS, no user data or API calls.
 const output=document.querySelector('#results'),progress=document.querySelector('#progress'),button=document.querySelector('#run');
 const probes=[],errors=[];
@@ -12,6 +13,7 @@ const frame=()=>new Promise(r=>requestAnimationFrame(r));const settle=async()=>{
 const image='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="400" height="300" fill="#94b6ca"/><circle cx="200" cy="130" r="85" fill="#fae0b4"/></svg>');
 function message(i){return '<div class="mes" mesid="'+i+'" is_user="'+(i%4===1)+'" is_system="false"><div class="mesAvatarWrapper"><div class="avatar"><img src="'+image+'" alt="합성 프로필"></div><div class="mesIDDisplay">#'+i+'</div></div><div class="mes_block"><div class="ch_name"><span class="name_text">검사용 캐릭터</span><small class="timestamp">가상 시간</small><div class="mes_buttons"><span class="mes_button extraMesButtonsHint">⋯</span><span class="mes_button mes_edit">✎</span></div></div><div class="mes_text">'+Array.from({length:4},()=>'<p>성능 검사용 합성 문장입니다. <q>대사의 형광펜과 간격을 확인합니다.</q> '+('길어진 채팅에서도 원래 기능을 유지합니다. '.repeat(4))+'</p>').join('')+(i%4===0?'<img class="eh-img" src="'+image+'" alt="합성 에셋">':'')+'</div></div></div>'}
 const s=getSettings();s.profile.original=s.userProfile.original=false;s.image.fade='off';s.image.blendWhite=false;s.image.layout='column';s.profile.mode='small';s.chat.colorPop=s.chat.selectPop=false;
+if(new URLSearchParams(location.search).has('blend')&&s.gradients){s.gradients.light.on=true;s.gradients.light.families=['blue','strawberry','melon'];}
 applyAll();startAssetWatcher();progress.textContent='준비 완료';
 const stats=values=>{const a=[...values].sort((a,b)=>a-b);return {median:+a[Math.floor(a.length/2)].toFixed(2),p95:+a[Math.floor(a.length*.95)].toFixed(2),max:+a.at(-1).toFixed(2)}};
 button.onclick=async()=>{button.disabled=true;const checks=[],cases=[],check=(name,pass,detail)=>checks.push({name,pass:!!pass,detail});const chat=document.querySelector('#chat');

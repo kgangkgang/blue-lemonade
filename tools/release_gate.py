@@ -5,7 +5,7 @@ import json
 from pathlib import Path, PurePosixPath
 import re
 import subprocess
-import tempfile
+import uuid
 import zipfile
 
 
@@ -92,9 +92,12 @@ def build_zip(path, files, prefix):
     require(not path.exists(), f'Refusing to overwrite release: {path.name}')
     path.parent.mkdir(parents=True, exist_ok=True)
     # Write then validate before publishing the artifact at its final path.
-    with tempfile.TemporaryDirectory(dir=path.parent) as folder:
-        staged = Path(folder) / 'release.zip'
-        with zipfile.ZipFile(staged, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
+    # A private TemporaryDirectory on Windows gives the ZIP an owner-only ACL,
+    # which survives rename and prevents the desktop user from opening it.
+    # Create the staging file beside the output with normal directory inheritance.
+    staged = path.parent / ('.release-' + uuid.uuid4().hex + '.tmp')
+    try:
+        with staged.open('xb') as stream, zipfile.ZipFile(stream, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
             for name, content in sorted(files.items()):
                 info = zipfile.ZipInfo(prefix + '/' + name, (2020, 1, 1, 0, 0, 0))
                 info.compress_type = zipfile.ZIP_DEFLATED
@@ -102,6 +105,8 @@ def build_zip(path, files, prefix):
                 archive.writestr(info, content)
         compare(files, read_zip(staged, prefix), 'Built ZIP')
         staged.rename(path)
+    finally:
+        staged.unlink(missing_ok=True)
 
 
 def main():

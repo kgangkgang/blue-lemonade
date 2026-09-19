@@ -1,3 +1,4 @@
+import { MIX_DEFAULT, tidyGradients } from './gradients.js';
 import { tidyFrameLibrary } from './frame-library.js';
 import { DECOR_DEFAULTS, tidyDecor } from './decor.js';
 import { FRAME_DEFAULTS, FRAME_RANGE, tidyFrame } from './frames.js';
@@ -15,6 +16,7 @@ export const FONT_SLOTS = ['text', 'dialogue', 'ui', 'em', 'strong', 'code', 'na
 export const DEFAULTS = {
     version: VERSION,
     enabled: true,
+    gradients: { light: structuredClone(MIX_DEFAULT), dark: structuredClone(MIX_DEFAULT), overrides: {} },
     frameLibrary: [],
     noticeSeen: '', // 3.0.0: 공지사항을 열어 본 마지막 버전 — 지금 버전이 더 새것이면 버전 알약이 빛난다 (notice.js)
     palette: 'salt',
@@ -399,6 +401,7 @@ export function getSettings() {
     delete s.pastel; // 1.8.2~1.9.1 의 파스텔 스위치 — 파스텔로 정착하며 없앰 (id 는 PALETTE_ALIASES 가 원래 id 로)
     s.customName = typeof s.customName === 'string' ? s.customName.trim().slice(0, 24) : '';
     s.noticeSeen = typeof s.noticeSeen === 'string' ? s.noticeSeen.slice(0, 20) : '';
+    s.gradients = tidyGradients(s.gradients);
     tidyFlags(s);
     tidyStyles(s);
     if (firstDeus) s.deus.on = !!(s.chat?.demSkin || s.chat?.weather === 'tracker');
