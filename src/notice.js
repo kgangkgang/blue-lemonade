@@ -8,6 +8,13 @@ import { getSettings, saveSettings } from './settings.js';
 
 export const NOTICES = [
 {
+    "version": "3.9.9",
+    "date": "2026-09-19",
+    "items": [
+        "에이드 선택 원을 라이트 색으로 고정했어요. 나이트에서도 흰 바탕에 블루는 파랑, 레몬은 노랑으로 보여요."
+    ]
+},
+{
     "version": "3.9.8",
     "date": "2026-09-19",
     "items": [
