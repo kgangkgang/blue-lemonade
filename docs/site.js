@@ -54,14 +54,17 @@ const groups = [
     ['351-splash.mp4','처음부터 레몬 화면','새로고침하는 짧은 순간까지 같은 분위기로.','331-lemon.png','351-splash.gif'],
   ]},
 ];
+// PC screens (1440×900) — shown instead of the phone groups when the visitor picks PC
+const pcGroups = [
+];
 const $ = s => document.querySelector(s);
 function element(tag, cls, text) { const e=document.createElement(tag); if(cls)e.className=cls; if(text)e.textContent=text; return e; }
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
 document.documentElement.classList.add('js');
 const lightbox=$('#lightbox');
 const inView=new IntersectionObserver(entries=>{for(const {target,isIntersecting} of entries){if(reduceMotion.matches||target.dataset.userPaused)continue;if(isIntersecting)target.play().catch(()=>{});else target.pause();}},{threshold:.5,rootMargin:'-15% 0px -15% 0px'});
-for(const group of groups){
-  const block=element('section','gallery-block'), heading=element('div','gallery-heading'), label=element('div');
+for(const group of [...groups.map(g=>({...g,device:'mobile'})),...pcGroups.map(g=>({...g,device:'pc'}))]){
+  const block=element('section','gallery-block'), heading=element('div','gallery-heading'), label=element('div'); block.dataset.device=group.device;
   label.append(element('h3','',group.title),element('p','',group.sub));heading.append(label);
   const track=element('div','track'); track.tabIndex=0; track.setAttribute('aria-label',group.title+' 갤러리');
   const arrows=element('div','arrows'), buttons=[];
@@ -110,3 +113,17 @@ $('#theme-toggle').onclick=e=>{const next=(root.dataset.theme||(dark.matches?'da
 // quiet fade-up as blocks enter
 const reveal=new IntersectionObserver(entries=>{for(const e of entries)if(e.isIntersecting){e.target.classList.add('in');reveal.unobserve(e.target);}},{rootMargin:'0px 0px -8% 0px'});
 document.querySelectorAll('.section-head,.palette-layout,.reading-layout,.gallery-block,.feature-search,.notice-guide,#notes,.install-inner>*').forEach(el=>{el.classList.add('reveal');reveal.observe(el);});
+
+// which device the visitor mostly uses: picked in the hero, remembered, defaults to the screen they are on
+(() => {
+  const html = document.documentElement, pcReady = pcGroups.length > 0;
+  $('#galleries').classList.toggle('has-pc', pcReady);
+  document.querySelector('.hero-art')?.classList.toggle('has-pc', pcReady);
+  const pick = document.querySelector('.device-pick');
+  if (!pcReady) { pick?.remove(); return; }
+  const set = device => { html.classList.toggle('device-pc', device === 'pc'); html.classList.toggle('device-mobile', device !== 'pc');
+    pick.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.device === device)));
+    document.querySelectorAll('.track').forEach(t => t.dispatchEvent(new Event('scroll'))); };
+  set(html.classList.contains('device-pc') ? 'pc' : 'mobile');
+  pick.addEventListener('click', e => { const b = e.target.closest('button[data-device]'); if (!b) return; set(b.dataset.device); try { localStorage.setItem('bl-site-device', b.dataset.device); } catch {} });
+})();

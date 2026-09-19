@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#f7faff" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#141f2e" media="(prefers-color-scheme: dark)">
-  <script>try{const t=localStorage.getItem('bl-site-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
+  <script>try{const t=localStorage.getItem('bl-site-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}
+  (()=>{let d;try{d=localStorage.getItem('bl-site-device')}catch(e){}if(d!=='pc'&&d!=='mobile')d=matchMedia('(max-width: 760px), (pointer: coarse)').matches?'mobile':'pc';document.documentElement.classList.add('device-'+d)})();</script>
   <title>Blue Lemonade — 상큼하게, 가볍게.</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='88'%3E🍋%3C/text%3E%3C/svg%3E">
   <meta name="description" content="읽기 편한 SillyTavern 테마, Blue Lemonade. 실제 화면과 움직이는 미리보기, 업데이트 내역, 설치 ZIP 파일을 한곳에서 만나 보세요.">
@@ -22,8 +23,9 @@
         <p class="lead">오래 머물고 싶은 이야기에는<br>눈이 편한 화면이 어울리니까.</p>
         <p class="intro">파란 형광펜과 레몬빛 포인트. 글꼴부터 색, 작은 버튼 하나까지 취향대로 바꾸는 SillyTavern 테마.</p>
         <div class="actions"><a class="button primary" href="#install">내 실리태번에 담기</a><a class="button ghost" href="#colors">둘러보기 <span aria-hidden="true">↓</span></a></div>
+        <div class="device-pick" role="group" aria-label="주로 쓰는 기기"><span>주로 어디서 쓰세요?</span><button type="button" data-device="mobile" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10.5 18.5h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>모바일</button><button type="button" data-device="pc" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="12.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 20.5h6M12 16.5v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>PC</button></div>
       </div>
-      <div class="hero-art"><div class="glow" aria-hidden="true"></div><div class="fizz" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="phone-slot first"><div class="phone first"><img src="media/hero-phone-light.png" width="412" height="900" alt="화이트 테마 전체 모바일 화면: 상단 설정 바, 가상 대화, 퀵 리플라이와 입력창" fetchpriority="high"></div></div><div class="phone-slot second"><div class="phone second"><img src="media/hero-phone-night.png" width="412" height="900" alt="나이트 테마 전체 모바일 화면: 상단 설정 바, 가상 대화, 퀵 리플라이와 입력창" fetchpriority="high"></div></div></div>
+      <div class="hero-art"><div class="glow" aria-hidden="true"></div><div class="pc-stage" aria-hidden="true"><div class="browser night"><div class="bar"><i></i><i></i><i></i></div><img src="media/pc-hero-night.jpg" width="1440" height="900" alt="" loading="lazy" decoding="async"></div><div class="browser light"><div class="bar"><i></i><i></i><i></i></div><img src="media/pc-hero-light.jpg" width="1440" height="900" alt="" loading="lazy" decoding="async"></div></div><div class="fizz" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="phone-slot first"><div class="phone first"><img src="media/hero-phone-light.png" width="412" height="900" alt="화이트 테마 전체 모바일 화면: 상단 설정 바, 가상 대화, 퀵 리플라이와 입력창" fetchpriority="high"></div></div><div class="phone-slot second"><div class="phone second"><img src="media/hero-phone-night.png" width="412" height="900" alt="나이트 테마 전체 모바일 화면: 상단 설정 바, 가상 대화, 퀵 리플라이와 입력창" fetchpriority="high"></div></div></div>
     </section>
     <section id="colors" class="section colors-section" aria-labelledby="colors-heading">
       <div class="section-head"><span class="eyebrow">01 · Color</span><h2 id="colors-heading">오늘의 이야기는, 무슨 색?</h2><p>에이드와 밝기를 골라 보세요. 본문부터 형광펜까지 함께 바뀌어요.</p></div>

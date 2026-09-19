@@ -279,3 +279,18 @@ dialog[open]::backdrop{animation:fade .3s ease}
   .js .reveal{opacity:1;transform:none}
   .js .gallery-block .card,.js .palette-layout .palette-families button{opacity:1;translate:none}
 }
+
+/* which device the visitor mostly uses — switches the hero art and the gallery */
+.device-pick{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:22px}
+.device-pick>span{font-size:13px;color:var(--muted);margin-right:4px}
+.device-pick button{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 15px;border:0;border-radius:999px;background:var(--tint);color:var(--muted);font-size:13.5px;font-weight:650;transition:background-color .2s,color .2s,box-shadow .2s,scale .15s ease}
+.device-pick button svg{width:16px;height:16px}
+.device-pick button:active{scale:.95}
+.device-mobile .device-pick [data-device=mobile],.device-pc .device-pick [data-device=pc]{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--blue),var(--shadow-sm)}
+.hero-copy>:nth-child(6){animation-delay:.46s}
+/* gallery: PC blocks show for PC visitors once PC media exist */
+.device-mobile .gallery-block[data-device=pc],.device-pc #galleries.has-pc .gallery-block[data-device=mobile]{display:none}
+.gallery-block[data-device=pc] .card{flex-basis:540px}
+.gallery-block[data-device=pc] .media-wrap{height:auto;aspect-ratio:16/10}
+.gallery-block[data-device=pc] .media-wrap img,.gallery-block[data-device=pc] .media-wrap video{object-fit:cover}
+@media (max-width:760px){.gallery-block[data-device=pc] .card{flex-basis:min(88vw,540px)}}
