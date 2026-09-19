@@ -34,11 +34,11 @@ const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 // 2.7.0: 글꼴 탭을 글자 탭에 합침 — 역할(본문 · 대사 · 메뉴 · 속마음 · 강조 · 코드)마다 한 화면에서 글꼴 · 크기 · 굵기 · 자간을 다 만짐
 const TABS = [['theme', '테마'], ['text', '글자'], ['chat', '채팅'], ['image', '이미지'], ['prompt', '프롬프트']];
 const SUBS = {
-    theme: [['palette', '색'], ['colors', '색 고치기'], ['styles', '스타일'], ['changes', '변경한 설정'], ['backup', '백업'], ['problems', '문제 기록']],
+    theme: [['palette', '색'], ['colors', '색 고치기'], ['styles', '스타일'], ['changes', '변경한 설정'], ['backup', '백업']],
     text: [['text', '본문'], ['dialogue', '대사'], ['ui', '메뉴'], ['em', '속마음'], ['strong', '강조'], ['code', '코드'], ['para', '문단'], ['shadow', '그림자 · 외곽선']],
     chat: [['message', '메시지'], ['profile', '캐릭터 프로필'], ['user-profile', '내 프로필'], ['name', '캐릭터 이름·시간'], ['user-name', '내 이름·시간'], ['screen', '화면'], ['etc', '기타']],
     image: [['layout', '배치'], ['shape', '모양'], ['frame', '테두리'], ['size', '크기'], ['fade', '흐림']],
-    prompt: [['deus', '데우스 엑스 마키나'], ['regex', '정규식 비교']],
+    prompt: [['deus', '데우스 엑스 마키나']],
 };
 
 const panels = new Set();
@@ -234,8 +234,6 @@ export function setPanelFullscreen(root, enabled) {
 }
 
 export function unmountPanel(root) {
-    root._toolGeneration=(root._toolGeneration||0)+1;root._toolCleanup?.();root._toolCleanup=null;
-    root._toolIO?.disconnect();root._toolIO=null;
     root._previewCleanup?.();
     for (const key of ['_fontIO', '_rowsRO']) { root[key]?.disconnect(); root[key] = null; }
     root.remove(); panels.delete(root); root._pv = {}; root._previewViews?.clear();
@@ -902,7 +900,6 @@ function fontBlock(s, slot) {
 
 // ───────── 테마 ─────────
 function tabTheme(s, sub) {
-    if (sub === 'problems') return '<div class="bl-settings-tool" data-settings-tool="problems"><p class="salty-note">문제 기록을 여는 중…</p></div>';
     if (sub === 'changes') return settingsChanges(s);
     if (sub === 'custom') return customBuilder(s);
     if (sub === 'backup') return tabBackup();
@@ -1357,8 +1354,7 @@ function weatherSeg(s) {
 
 // ───────── 프롬프트 (3.4.0) ─────────
 // 프리셋마다 한 칸. 지금은 데우스 엑스 마키나 2.3 — 호환을 켜야 카드 표본 · 카드 설정 · 트래커 설정이 보이고 적용된다
-function tabPrompt(s, sub) {
-    if (sub === 'regex') return '<div class="bl-settings-tool" data-settings-tool="regex"><p class="salty-note">정규식 비교를 여는 중…</p></div>';
+function tabPrompt(s) {
     const on = !!s.deus?.on;
     const ink = s.deus?.ink || {};
     const dio = ink.outline || { on: false, color: '#000000', width: 0.6, alpha: 100 };  // 데우스 대사 가독성: 외곽선
@@ -1525,9 +1521,6 @@ function tabImage(s, sub) {
 
 // ───────── 그리기 ─────────
 function render(root) {
-    const toolGeneration=root._toolGeneration=(root._toolGeneration||0)+1;
-    root._toolCleanup?.();root._toolCleanup=null;
-    root._toolIO?.disconnect();root._toolIO=null;
     const oldSection = root.querySelector('.salty-sec');
     if (oldSection && root._editorRoute) root._editorScroll?.set(root._editorRoute, oldSection.scrollTop);
     root._fontIO?.disconnect(); root._fontIO = null;
@@ -1566,18 +1559,6 @@ function render(root) {
         </div>`;
     arrangeEditor(root, `${ui.tab}/${sub}`, subLabel);
     root.querySelector('.bl-editor-directory-list').insertAdjacentHTML('afterbegin',favoritesMarkup({tab:ui.tab,sub,title:subLabel}));
-    const toolHost=root.querySelector('[data-settings-tool]');
-    if(toolHost) {
-        // The extension drawer also mounts while closed. Read records only once visible.
-        root._toolIO=new IntersectionObserver(entries=>{
-            if(!entries.some(e=>e.isIntersecting))return;
-            root._toolIO?.disconnect();root._toolIO=null;
-            import('./settings-tools.js').then(({mountSettingsTool})=>{
-                if(root._toolGeneration===toolGeneration&&toolHost.isConnected)root._toolCleanup=mountSettingsTool(toolHost,toolHost.dataset.settingsTool);
-            }).catch(()=>{if(toolHost.isConnected)toolHost.textContent='도구를 불러오지 못했어요. 확장 업데이트 파일을 확인해 주세요.';});
-        });
-        root._toolIO.observe(toolHost);
-    }
     bindCustomBuilder(root);
     paintSettingsSearch(root);
     fillPreviews(root); // 미리보기 무대 다시 꽂기 (만들지 않고 옮겨 담기만)

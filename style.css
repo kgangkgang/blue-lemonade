@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 50개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build f1506953cc1a) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 50개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 7fee93e6f5b8) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -17212,36 +17212,19 @@ html body .bl-editor .bl-setting-reset[hidden] { display:none !important; }
 .bl-setting-change { display:flex; flex-direction:column; gap:8px; padding:16px 0; border-bottom:1px solid var(--salty-line); overflow-wrap:anywhere; }
 .bl-setting-change > small { color:var(--salty-muted); line-height:1.6; }
 .bl-setting-change > div { display:flex; gap:8px; flex-wrap:wrap; }
-/* css/48-settings-tools.css */
+/* css/48-settings-favorites.css */
 .bl-favorites { padding: 0 0 16px; margin-bottom: 12px; border-bottom: 1px solid var(--salty-border); }
 .bl-favorites header, .bl-favorites header > span, .bl-favorite-row, .bl-search-result-row { display: flex; align-items: center; gap: 8px; }
 .bl-favorites header { justify-content: space-between; }
 .bl-favorites header > span { font-size: 12px; color: var(--salty-muted); }
-.salty-panel .bl-favorite-toggle { flex: 0 0 40px; width: 40px; min-height: 40px; padding: 0; margin: 0; display: grid; place-items: center; color: var(--salty-muted); font: 24px/1 sans-serif; border: 0; border-radius: 8px; background: transparent; cursor: pointer; }
-.salty-panel .bl-favorite-toggle[aria-pressed="true"] { color: var(--salty-accent); background: var(--salty-accent-10); }
+.salty-panel .bl-favorite-toggle { flex: 0 0 40px; width: 40px; min-height: 40px; padding: 0; margin: 0; display: grid; place-items: center; color: var(--salty-muted); font: inherit; border: 0; border-radius: 8px; background: transparent; cursor: pointer; }
+.salty-panel .bl-favorite-toggle[aria-pressed="true"] { color: var(--salty-accent); }
 .salty-panel .bl-favorite-row > [data-favorite-jump] { flex: 1; min-width: 0; text-align: left; padding: 9px 6px; border: 0; background: transparent; color: var(--salty-text); font: inherit; cursor: pointer; overflow-wrap: anywhere; }
 .bl-search-result-row > [data-settings-result] { flex: 1; min-width: 0; }
 .salty-panel .bl-search-result-row .bl-favorite-toggle { align-items: center; }
-.bl-settings-tool { min-width: 0; color: var(--salty-text); }
-.bl-tool-options { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 16px; }
-.bl-tool-options label, .bl-tool-input { display: flex; flex-direction: column; gap: 7px; min-width: 0; font-size: 13px; }
-.bl-tool-options label { flex: 1 1 130px; }
-.salty-panel .bl-tool-options select, .salty-panel .bl-tool-options input[type="number"], .salty-panel .bl-tool-input textarea { width: 100%; margin: 0; padding: 10px; border-radius: 9px; border: 1px solid var(--salty-border); background: var(--bl-well); color: var(--salty-text); font: inherit; font-size: max(16px, var(--fs,14px)); box-sizing: border-box; }
-.bl-tool-options .bl-tool-check { flex-direction: row; align-items: center; min-height: 40px; }
-.salty-panel .bl-tool-input textarea { resize: vertical; min-height: 100px; max-height: 65svh; line-height: 1.55; }
-.bl-settings-tool [data-tool-status] { font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
-.bl-tool-columns { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
-.bl-tool-columns label { min-width: 0; font-size: 13px; }
-.bl-settings-tool pre { padding: 12px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 340px; overflow: auto; background: var(--bl-well); border: 1px solid var(--salty-border); border-radius: 9px; color: var(--salty-text); font: 13px/1.6 monospace; text-align: left; }
-.bl-tool-preview { display: block; width: 100%; height: 230px; resize: vertical; min-height: 100px; max-height: 70svh; border: 1px solid var(--salty-border); border-radius: 9px; background: var(--salty-surface); }
-.bl-tool-traces details { padding: 12px 0; border-bottom: 1px solid var(--salty-border); }
-.bl-tool-traces summary { cursor: pointer; overflow-wrap: anywhere; }
-.bl-tool-traces summary span { margin-inline-start: 10px; font-size: 12px; color: var(--salty-muted); }
-.bl-problem { border: 1px solid var(--salty-border); border-radius: 12px; padding: 16px; margin: 12px 0; overflow-wrap: anywhere; }
-.bl-problem header { display: flex; flex-direction: column; gap: 6px; }
-.bl-problem small { color: var(--salty-muted); font-size: 12px; }
-.bl-problem-cause { white-space: pre-wrap; line-height: 1.6; }
-@media (max-width: 600px) { .bl-tool-columns { grid-template-columns: minmax(0,1fr); } }
+ .salty-panel .bl-favorite-toggle > .fa-star { width: 18px; line-height: 1; font-size: 17px; pointer-events: none; }
+.salty-panel .bl-favorite-toggle:hover { background: var(--salty-accent-10); }
+.salty-panel .bl-favorite-toggle:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 1px; }
 /* css/99-lazy-panel.css */
 #salty-lazy-panel-start {}
 body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > * {

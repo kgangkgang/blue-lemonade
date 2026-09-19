@@ -2,8 +2,6 @@
 // or disabled. Searching never renders all sections or sends text to a server.
 import { favoriteButton } from './settings-favorites.js';
 const rows = [
- ['theme','problems','문제 기록 · 실패 원인','오류 에러 실패 원인 이유 버그 장기기억 번역 api 요청 로그 재시도 다시 기록 연결 인증 토큰 한도 진단'],
- ['prompt','regex','정규식 적용 전후 비교','정규식 regex 규칙 치환 전후 비교 원문 결과 색 보라색 속마음 적용 안됨 안먹음 디버그 대상 마크다운 프롬프트'],
  ['theme','changes','변경한 설정·항목별 복원','변경 내역 기본값 다른 바꾼 설정 목록 초기화 원래대로 항목 하나만 되돌리기 복원 실수'],
  ['theme','palette','테마 색과 밝기','배경 진하기 테마색 농도 차콜 색감 퍼센트 0.5% 1% 20% 팔레트 화이트 나이트 밝은 어두운 다크모드 라이트모드 블루 레몬 피치 복숭아 자몽 라벤더 딸기 민트 오렌지 우드 갈색 수박 초록 빨강 커스텀 테마 선택'],
  ['theme','colors','테마 세부 색','바탕 배경 종이 카드 포인트 강조 형광펜 글자색 색깔 변경 색상 투명 색 고치기'],
@@ -51,7 +49,7 @@ for (const [sub, name, alias] of [['profile','캐릭터','캐릭터 봇 상대']
  ['chat',namesub,`${name} 시간·버튼 배치`,`${alias} 이름 시간 날짜 버튼 점세개 메뉴 편집 연필 모델 아이콘 통계 토큰 번호 한줄 두줄 옆 아래 간격 진하기 정렬`, '']);
 }
 const tabs={theme:'테마',text:'글자',chat:'채팅',image:'이미지',prompt:'프롬프트'};
-const subs={problems:'문제 기록',regex:'정규식 비교',changes:'변경한 설정',palette:'색',colors:'색 고치기',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
+const subs={changes:'변경한 설정',palette:'색',colors:'색 고치기',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
 const normalize = value => String(value).normalize('NFKC').toLowerCase().replace(/퀵\s*리플라이|quick\s*repl(?:y|ies)|큐알|\bqr\b/g,'퀵리플라이').replace(/프사|아바타/g,'프로필').replace(/글씨|글자\s*간격/g,m=>m==='글씨'?'글자':'자간').replace(/확대\s*축소/g,'확대 축소').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 export const SEARCH_ENTRIES = rows.map(([tab,sub,title,aliases,anchor='',path=''],id)=>{
  const words=[...new Set(normalize(title+' '+aliases).split(' '))];

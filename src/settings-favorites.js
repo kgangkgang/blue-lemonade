@@ -1,9 +1,11 @@
 // Navigation preferences stay on this device; theme/style imports do not overwrite them.
 const KEY = 'salty_favorites', LIMIT = 16;
+const STAR = '<i class="fa-solid fa-star" aria-hidden="true"></i>';
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const favoriteKey = e => [e.tab, e.sub, e.anchor || '', e.path || ''].join('|');
 function tidy(e) {
     if (!e || !['theme','text','chat','image','prompt'].includes(e.tab) || !/^[a-z-]+$/.test(e.sub)) return null;
+    if ((e.tab==='theme'&&e.sub==='problems')||(e.tab==='prompt'&&e.sub==='regex')) return null;
     return {tab:e.tab,sub:e.sub,title:String(e.title || e.sub).slice(0,100),anchor:String(e.anchor || '').slice(0,100),path:/^[\w.]*$/.test(e.path || '')?String(e.path || '').slice(0,100):''};
 }
 export function readFavorites() {
@@ -18,11 +20,11 @@ export function toggleFavorite(entry) {
 }
 export function favoriteButton(entry) {
     const on=readFavorites().some(e=>favoriteKey(e)===favoriteKey(entry));
-    return `<button type="button" class="bl-favorite-toggle" data-favorite="${esc(JSON.stringify(tidy(entry)))}" aria-pressed="${on}" aria-label="${esc(entry.title)} 즐겨찾기 ${on?'해제':'고정'}" title="즐겨찾기 ${on?'해제':'고정'}">${on?'★':'☆'}</button>`;
+    return `<button type="button" class="bl-favorite-toggle" data-favorite="${esc(JSON.stringify(tidy(entry)))}" aria-pressed="${on}" aria-label="${esc(entry.title)} 즐겨찾기 ${on?'해제':'고정'}" title="즐겨찾기 ${on?'해제':'고정'}">${STAR}</button>`;
 }
 export function favoritesMarkup(current) {
     const items=readFavorites();
-    return `<section class="bl-favorites"><header><b>즐겨찾기</b><span>현재 항목 ${favoriteButton(current)}</span></header>${items.length?items.map(e=>`<div class="bl-favorite-row"><button type="button" data-favorite-jump="${esc(JSON.stringify(e))}">${esc(e.title)}</button>${favoriteButton(e)}</div>`).join(''):'<p class="salty-note">현재 항목이나 검색 결과의 ☆를 눌러 자주 쓰는 설정을 고정해요.</p>'}</section>`;
+    return `<section class="bl-favorites"><header><b>즐겨찾기</b><span>현재 항목 ${favoriteButton(current)}</span></header>${items.length?items.map(e=>`<div class="bl-favorite-row"><button type="button" data-favorite-jump="${esc(JSON.stringify(e))}">${esc(e.title)}</button>${favoriteButton(e)}</div>`).join(''):'<p class="salty-note">현재 항목이나 검색 결과의 별 아이콘으로 자주 쓰는 설정을 고정해요.</p>'}</section>`;
 }
 export function bindFavorites(root,navigate,refresh) {
     root.addEventListener('click',event=>{
