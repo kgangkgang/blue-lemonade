@@ -41,11 +41,11 @@
     mixToggle.setAttribute('aria-pressed', String(m.on)); mixToggle.textContent = m.on ? '혼합 끄기' : '에이드 혼합하기';
     mixBody.hidden = !m.on;
     if (!m.on) return;
-    // same parts as the theme: dot (the ade's accent) · name · order number
+    // Same split swatches as the family picker and the theme mix controls.
     mixSwatches.replaceChildren(...families.map(f => {
       const b = document.createElement('button'), dot = document.createElement('i'), name = document.createElement('span'), i = m.families.indexOf(f.id);
       b.type = 'button'; b.dataset.family = f.id; b.setAttribute('aria-pressed', String(i >= 0));
-      b.disabled = i < 0 && m.families.length === 3; dot.style.background = f[mode].accent; name.textContent = f.label; b.append(dot, name);
+      b.disabled = i < 0 && m.families.length === 3; dot.setAttribute('aria-hidden', 'true'); dot.style.background = `linear-gradient(135deg, ${f[mode].bg} 50%, ${f[mode].pop} 50%)`; name.textContent = f.label; b.append(dot, name);
       if (i >= 0) { const n = document.createElement('b'); n.textContent = i + 1; b.append(n); }
       return b;
     }));
