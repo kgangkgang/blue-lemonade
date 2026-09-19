@@ -10,6 +10,58 @@
   const rgb = c => { const m = String(c).match(/rgba?\(([^)]+)\)/); if (m) return m[1].split(',').slice(0, 3).map(Number); const h = String(c).replace('#', ''); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); };
   const mixRgb = (a, b, t) => { const x = rgb(a), y = rgb(b); return `rgb(${x.map((v, i) => Math.round(v * t + y[i] * (1 - t))).join(', ')})`; };
   let selected = 'blue', mode = siteTheme(), families = [], pickedMode = false;
+  // 에이드 혼합하기 — same rules as the theme (gradients.js): 2~3 ades, angle 0~360, weights 1~100, white and night kept apart
+  const mixes = { light: { on: false, families: ['blue', 'strawberry'], angle: 90, weights: [50, 50, 50] }, dark: { on: false, families: ['blue', 'strawberry'], angle: 90, weights: [50, 50, 50] } };
+  const clamp = (v, lo, hi, d) => Number.isFinite(Number(v)) ? Math.min(hi, Math.max(lo, Number(v))) : d;
+  const stops = (colors, weights) => { const w = colors.map((_, i) => clamp(weights?.[i], 1, 100, 50)), sum = w.reduce((a, b) => a + b, 0); let used = 0; return colors.map((color, i) => { const at = (used + w[i] / 2) / sum * 100; used += w[i]; return `${color} ${Number(at.toFixed(3))}%`; }); };
+  const gradientCss = (colors, m) => `linear-gradient(${m.angle}deg, ${stops(colors, m.weights).join(', ')})`;
+  const variant = f => families.find(x => x.id === f)[mode];
+  const transparent = c => /,\s*0(\.0+)?\s*\)$/.test(String(c));
+  const mixSwatches = document.querySelector('#palette-mix-swatches'), mixSliders = document.querySelector('#palette-mix-sliders'), mixBody = document.querySelector('#palette-mix-body'), mixToggle = document.querySelector('#palette-mix-toggle');
+  const FILL = ['bg', 'surface', 'raised'];
+  function paintMix() {
+    const m = mixes[mode];
+    for (const key of FILL) stage.style.removeProperty('--preview-fill-' + key);
+    for (const key of ['--preview-fill-user', '--preview-band-marker', '--preview-band-gold']) stage.style.removeProperty(key);
+    if (!m.on) return;
+    for (const key of FILL) stage.style.setProperty('--preview-fill-' + key, gradientCss(m.families.map(f => variant(f)[key]), m));
+    // light bubbles: each ade's marker at 16% over its surface (gradients.js user-bg rule); night follows raised
+    stage.style.setProperty('--preview-fill-user', mode === 'light' ? gradientCss(m.families.map(f => mixRgb(variant(f).marker, variant(f).surface, .16)), m) : gradientCss(m.families.map(f => variant(f).raised), m));
+    // dialogue band and strong underline take the mixed marker / gold, drawn as bands like the solid ones
+    stage.style.setProperty('--preview-band-marker', `${gradientCss(m.families.map(f => variant(f).marker), m)} 0 83.9% / 100% 44% no-repeat`);
+    if (m.families.some(f => !transparent(variant(f).gold))) stage.style.setProperty('--preview-band-gold', `${gradientCss(m.families.map(f => variant(f).gold), m)} 0 84.6% / 100% 35% no-repeat`);
+  }
+  function renderMix() {
+    const m = mixes[mode];
+    document.querySelector('#palette-mix-scope').textContent = `${mode === 'light' ? '라이트' : '나이트'} 전용 · 2~3가지 에이드를 섞어요`;
+    mixToggle.setAttribute('aria-pressed', String(m.on)); mixToggle.textContent = m.on ? '혼합 끄기' : '에이드 혼합하기';
+    mixBody.hidden = !m.on;
+    if (!m.on) return;
+    mixSwatches.replaceChildren(...families.map(f => {
+      const b = document.createElement('button'), dot = document.createElement('i'), i = m.families.indexOf(f.id);
+      b.type = 'button'; b.dataset.family = f.id; b.setAttribute('aria-label', f.label); b.setAttribute('aria-pressed', String(i >= 0));
+      b.disabled = i < 0 && m.families.length === 3; dot.style.background = f[mode].pop; b.append(dot);
+      if (i >= 0) { const n = document.createElement('b'); n.textContent = i + 1; b.append(n); }
+      return b;
+    }));
+    const slider = (key, label, min, max, value, unit) => `<label>${label}<output>${value}${unit}</output></label><input type="range" data-mix="${key}" min="${min}" max="${max}" step="1" value="${value}" aria-label="${label}">`;
+    mixSliders.innerHTML = slider('angle', '혼합 방향', 0, 360, m.angle, '°') + m.families.map((f, i) => slider('w' + i, families.find(x => x.id === f).label + ' 비중', 1, 100, m.weights[i], '')).join('');
+  }
+  mixToggle.addEventListener('click', () => { mixes[mode].on = !mixes[mode].on; renderMix(); render(); });
+  mixSwatches.addEventListener('click', e => {
+    const b = e.target.closest('button[data-family]'); if (!b || b.disabled) return;
+    const m = mixes[mode], key = b.dataset.family, i = m.families.indexOf(key);
+    if (i >= 0 && m.families.length > 2) { m.families.splice(i, 1); m.weights.splice(i, 1); m.weights.push(50); }
+    else if (i < 0 && m.families.length < 3) m.families.push(key);
+    renderMix(); render();
+  });
+  mixSliders.addEventListener('input', e => {
+    const input = e.target.closest('input[data-mix]'); if (!input) return;
+    const m = mixes[mode], v = Number(input.value);
+    if (input.dataset.mix === 'angle') m.angle = v; else m.weights[Number(input.dataset.mix.slice(1))] = v;
+    input.previousElementSibling.querySelector('output').textContent = v + (input.dataset.mix === 'angle' ? '°' : '');
+    paintMix();
+  });
   function render(announce = true) {
     const family = families.find(f => f.id === selected);
     const palette = family[mode];
@@ -17,6 +69,7 @@
     // like the theme (apply.js): light bubbles take 16% of the ade's marker hue over the surface; night keeps the raised color
     stage.style.setProperty('--preview-user', mode === 'light' ? mixRgb(palette.marker, palette.surface, .16) : palette.raised);
     stage.style.colorScheme = mode;
+    paintMix();
     document.querySelector('#palette-name').textContent = family.label;
     document.querySelector('#palette-description').textContent = palette.desc;
     document.querySelector('#palette-mode-label').textContent = mode === 'light' ? '화이트' : '나이트';
@@ -30,15 +83,16 @@
     for (const [key, label] of [['bg','바탕'],['text','본문'],['accent','포인트'],['marker','대사 형광펜']]) {
       const item = document.createElement('div'), chip = document.createElement('span'), name = document.createElement('span');
       chip.className = 'palette-chip'; chip.style.backgroundColor = palette[key]; chip.setAttribute('aria-hidden','true');
+      if (mixes[mode].on && ['bg', 'marker'].includes(key)) chip.style.backgroundImage = gradientCss(mixes[mode].families.map(f => variant(f)[key]), mixes[mode]);
       name.textContent = label; item.title = `${label}: ${palette[key]}`;
       item.style.setProperty('--i', swatches.children.length); item.append(chip, name); swatches.append(item);
     }
     if (announce) { const chat = stage.querySelector('.palette-chat'); chat.classList.remove('swap'); void chat.offsetWidth; chat.classList.add('swap'); }
     if (announce) document.querySelector('#palette-announcement').textContent = `${family.label} ${mode === 'light' ? '화이트' : '나이트'} 미리보기`;
   }
-  modes.forEach(button => button.addEventListener('click', () => { mode = button.dataset.mode; pickedMode = true; render(); }));
+  modes.forEach(button => button.addEventListener('click', () => { mode = button.dataset.mode; pickedMode = true; renderMix(); render(); }));
   // the demo follows the site's white / night switch until a brightness is picked here
-  document.addEventListener('bl-theme', event => { if (pickedMode) return; mode = event.detail; if (families.length) render(false); });
+  document.addEventListener('bl-theme', event => { if (pickedMode) return; mode = event.detail; if (families.length) { renderMix(); render(false); } });
   fetch('theme-palettes.json').then(r => { if (!r.ok) throw new Error('palettes'); return r.json(); }).then(data => {
     families = data;
     for (const family of families) {
@@ -47,6 +101,6 @@
       dot.className = 'palette-dot'; dot.setAttribute('aria-hidden','true'); label.textContent = family.label;
       button.append(dot, label); button.addEventListener('click', () => { selected = family.id; render(); }); choices.append(button);
     }
-    render(false); demo.hidden = false; document.querySelector('#palette-loading').hidden = true;
+    renderMix(); render(false); demo.hidden = false; document.querySelector('#palette-loading').hidden = true;
   }).catch(() => { document.querySelector('#palette-loading').textContent = '색상을 불러오지 못했어요. 잠시 후 새로고침해 주세요.'; });
 })();
