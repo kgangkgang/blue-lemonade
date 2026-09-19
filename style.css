@@ -1,9 +1,9 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 49개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 2d975a05072c) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 49개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build dcce83288720) */
 /* css/00-base.css */
 body.salty {
-  --r-sm: 10px;
-  --r-md: 14px;
-  --r-lg: 20px;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
   --shade: var(--salty-shade);
   --shade-2: var(--salty-shade-2);
   --field: var(--salty-field);
@@ -953,7 +953,7 @@ body.salty #form_sheld {
 body.salty #send_form {
   background: var(--salty-surface) !important;
   border: 0 !important;
-  border-radius: 22px !important;
+  border-radius: var(--bl-r-lg) !important;
   box-shadow: var(--bl-e3) !important;
   padding: 4px 6px 5px !important;
   opacity: 1 !important;
@@ -2992,10 +2992,10 @@ body.salty {
   --bl-gutter: 16px;
   --bl-inset: 14px;
   --bl-r-xs: 6px;
-  --bl-r-sm: 8px;
-  --bl-r-md: 12px;
-  --bl-r-menu: 14px;
-  --bl-r-lg: 18px;
+  --bl-r-sm: 6px;
+  --bl-r-md: 10px;
+  --bl-r-menu: 10px;
+  --bl-r-lg: 14px;
   --bl-r-pill: 999px;
   --bl-h-num: 32px;
   --bl-h-icon: 34px;

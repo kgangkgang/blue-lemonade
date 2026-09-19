@@ -335,10 +335,13 @@ const sized = typeof ResizeObserver === 'function' ? new ResizeObserver((entries
     }
 }) : null;
 
+// A shared callback is deduplicated by addEventListener while an image is loading.
+// Repeated scans or src changes must not queue a new closure for the same load.
+function onAssetLoad(event) { classify(event.currentTarget); }
 function classify(img) {
     const host = img.closest(HOST) || img;
     if (!img.complete || !img.naturalWidth) {
-        img.addEventListener('load', () => classify(img), { once: true });
+        img.addEventListener('load', onAssetLoad, { once: true });
         return;
     }
     const rec = probe(img);
@@ -382,7 +385,7 @@ export function startAssetWatcher() {
                     const img = m.target;
                     // 바뀐 src 가 아직 안 실렸으면 complete · naturalWidth 가 앞 그림을 가리켜
                     // 옛 픽셀이 새 URL 키에 박힌다 → 실린 뒤 한 번 더 (같은 URL 이면 load 가 안 와도 once 라 안 샌다)
-                    img.addEventListener("load", () => classify(img), { once: true });
+                    img.addEventListener('load', onAssetLoad, { once: true });
                     classify(img); // src 가 바뀌면 자동 색도 같이 갱신됨
                 }
                 continue;

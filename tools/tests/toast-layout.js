@@ -1,3 +1,4 @@
+localStorage.setItem("salty_tab","theme");localStorage.setItem("salty_subs",JSON.stringify({theme:"palette"}));
 const runtime=new URL(new URLSearchParams(location.search).has('dev')?'../../salty-ext/':'../../',import.meta.url);
 const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('style.css',runtime);document.head.append(css);await new Promise(r=>css.onload=r);
 const ctx={extensionSettings:{},powerUserSettings:{},saveSettingsDebounced(){},getRequestHeaders:()=>({})};window.SillyTavern={getContext:()=>ctx};
@@ -17,8 +18,11 @@ document.querySelector('#run').onclick=async()=>{
   const field=panel.querySelector('[data-num="'+tint+'"]');field.value=String(s[tint]+1);field.dispatchEvent(new Event('change',{bubbles:true}));
   panel.querySelector('[data-act="history-undo"]').click();await pause(60);
   const first=document.querySelector('#toast-container>.toast');
+  const unrelated=toastr.warning('다른 확장의 경고','별도 알림',{...options})[0];
   panel.querySelector('[data-act="history-redo"]').click();await pause(60);
-  check(palette+' real undo and redo notices',document.querySelectorAll('#toast-container>.toast').length===2&&first.querySelector('.toast-title').textContent==='되돌렸어요');
+  check(palette+' history replaces only its previous notice',!first.isConnected&&unrelated.isConnected&&document.querySelectorAll('.bl-history-notice').length===1);
+  const latest=document.querySelector('.bl-history-notice').closest('.toast');
+  check(palette+' newest notice is redo',latest.querySelector('.toast-title').textContent==='다시 실행했어요');
   for(const [i,toast]of [...document.querySelectorAll('#toast-container>.toast')].entries()){
    const box=toast.getBoundingClientRect(),title=toast.querySelector('.toast-title').getBoundingClientRect();
    check(palette+'/'+i+' no close icon',!toast.querySelector('.toast-close-button'));
@@ -26,7 +30,7 @@ document.querySelector('#run').onclick=async()=>{
    check(palette+'/'+i+' toast fits viewport',box.left>=0&&box.right<=innerWidth+1);
 
   }
-  first.querySelector('.toast-message').click();await pause(60);check(palette+' tapping text removes only its own toast',!first.isConnected&&document.querySelectorAll('#toast-container>.toast').length===1);
+  latest.querySelector('.toast-message').click();await pause(60);check(palette+' tapping text removes only history notice',!latest.isConnected&&unrelated.isConnected);
   toastr.remove();toastr.info('자동으로 닫는 알림','알림',{...options,timeOut:100});await pause(300);check(palette+' timed notification still closes',!document.querySelector('#toast-container>.toast'));
  }
  document.querySelector('#results').textContent=JSON.stringify({total:checks.length,passed:checks.filter(x=>x.pass).length,width:innerWidth,checks},null,2);

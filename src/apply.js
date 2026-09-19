@@ -329,13 +329,6 @@ function imageHeight(image) {
 
 // ───────── 에셋 이미지 모양 · 흐림 ─────────
 // 흐림 단계: y = 위아래(대각선은 자른 선, 아치는 둥근 윗면) · x = 옆 — 그림 짧은 변에 곱하는 비율. 강함은 네 가장자리가 바탕에 녹아듦
-// 예전 단계별 고정값 (지금은 settings.js 의 FADE_AMOUNT 가 슬라이더 기본값으로 씀 — 참고용으로 남김)
-const IMAGE_FADE = {
-    off: { y: 0, x: 0 },
-    soft: { y: 0.1, x: 0 },
-    medium: { y: 0.18, x: 0.06 },
-    strong: { y: 0.3, x: 0.22 },
-};
 function imageShape(image) {
     // 번짐 폭은 슬라이더 값(%) 이 정한다. 단계는 클래스 출처로만 남고, '끔' 이면 값과 무관하게 0
      // (끔 상태에서 옛 값이 남아 마스크가 살아 있으면 테두리가 지워진다)
@@ -440,9 +433,9 @@ export function applyAll() {
     Object.assign(vars, mode === 'dark' ? {
         '--salty-e1': `${hi(0.16)}, 0 1px 1px ${sh(0.31)}, 0 2px 6px -2px ${sh(0.39)}`,
         '--salty-e2': `${hi(0.2)}, 0 1px 2px ${sh(0.39)}, 0 3px 7px -3px ${sh(0.45)}`,
-        '--salty-e3': `${hi(0.16)}, 0 1px 3px ${sh(0.33)}, 0 8px 18px -8px ${sh(0.63)}`,
-        '--salty-e4': `${hi(0.2)}, 0 2px 6px ${sh(0.39)}, 0 14px 30px -12px ${sh(0.76)}`,
-        '--salty-e5': `${hi(0.18)}, 0 4px 12px ${sh(0.45)}, 0 22px 48px -18px ${sh(0.83)}`,
+        '--salty-e3': `${hi(0.055)}, 0 4px 12px -4px ${sh(0.5)}`,
+        '--salty-e4': `${hi(0.065)}, 0 8px 24px -8px ${sh(0.65)}`,
+        '--salty-e5': `${hi(0.06)}, 0 14px 36px -12px ${sh(0.75)}`,
         '--salty-sheet': `inset 0 10px 10px -10px ${sh(0.56)}, 0 16px 34px -14px ${sh(0.69)}`,
         '--salty-press': `inset 0 1px 3px ${sh(0.63)}`,
         '--salty-well-in': `inset 0 1px 1px ${sh(0.2)}`,
@@ -459,9 +452,9 @@ export function applyAll() {
     } : {
         '--salty-e1': `0 1px 3px ${sh(0.25)}`,
         '--salty-e2': `0 1px 4px ${sh(0.4)}`,
-        '--salty-e3': `0 1px 3px ${sh(0.43)}, 0 10px 28px -10px ${sh(1.43)}`,
-        '--salty-e4': `0 2px 6px ${sh(0.5)}, 0 18px 44px -12px ${sh(1.86)}`,
-        '--salty-e5': `0 4px 14px ${sh(0.57)}, 0 34px 80px -20px ${sh(2.43)}`,
+        '--salty-e3': `0 4px 16px -5px ${sh(0.8)}`,
+        '--salty-e4': `0 8px 28px -8px ${sh(1.2)}`,
+        '--salty-e5': `0 16px 40px -12px ${sh(1.6)}`,
         '--salty-sheet': `inset 0 12px 12px -12px ${sh(0.86)}, 0 24px 48px -16px ${sh(1.86)}`,
         '--salty-press': `inset 0 1px 3px ${sh(1)}`,
         '--salty-well-in': `inset 0 1px 2px ${sh(0.5)}`,

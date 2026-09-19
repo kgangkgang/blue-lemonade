@@ -84,6 +84,7 @@ function setPath(obj, path, value) {
 const isNum = v => typeof v === 'number' && Number.isFinite(v);
 const isSet = v => !!v && typeof v === 'object'; // 글꼴 칸이 언어별 묶음인지 ('same' 이 아닌지)
 const history = new SettingsHistory();
+let historyToast;
 const historyLabels = new Map(Object.entries(SETTING_LABELS));
 const historyOptions = new Map(Object.entries(SETTING_VALUES));
 function labelHistoryControl(label, control) {
@@ -123,9 +124,11 @@ function historyValue(value, path) {
 function stepHistory(redo) {
     const changes = history.step(getSettings(), redo);
     if (!changes.length) { syncHistoryButtons(); return; }
-    saveSoon(); applyAll(); refreshPanels();
+    saveSoon(); applyAll(); refreshPanels(changes);
     const rows = changes.slice(0, 8).map(c => `<div>${esc(historyLabel(c.path))}: <b>${esc(historyValue(c.from, c.path))}</b> → <b>${esc(historyValue(c.to, c.path))}</b></div>`).join('');
-    toastr.info(`<div class="bl-history-notice">${rows}${changes.length > 8 ? `<small>외 ${changes.length - 8}개 설정도 복원했어요.</small>` : ''}</div>`, redo ? '다시 실행했어요' : '되돌렸어요', { escapeHtml: false, closeButton: false, tapToDismiss: true, timeOut: 6500, extendedTimeOut: 10000 });
+    // Only replace this editor's history notice; errors and other extensions' notices stay.
+    if (historyToast?.[0]?.isConnected) historyToast.stop(true, true).trigger('click').stop(true, true);
+    historyToast = toastr.info(`<div class="bl-history-notice">${rows}${changes.length > 8 ? `<small>외 ${changes.length - 8}개 설정도 복원했어요.</small>` : ''}</div>`, redo ? '다시 실행했어요' : '되돌렸어요', { escapeHtml: false, closeButton: false, tapToDismiss: true, onclick: null, hideDuration: 0, timeOut: 6500, extendedTimeOut: 10000 });
 }
 
 function settingsChanges(s) {
@@ -234,7 +237,28 @@ export function noticeSeenChanged() {
     refreshPanels();
 }
 
-export function refreshPanels() {
+export function refreshPanels(changes) {
+    // Numeric-to-numeric edits do not add controls. Keep preview gestures, focus and scroll.
+    // Unknown paths, nullable controls and the differences page need the full renderer.
+    if (changes?.length && !(ui.tab === 'theme' && subOf(ui.tab) === 'changes') &&
+        changes.every(c => Object.hasOwn(NUM, c.path) && isNum(c.from) && isNum(c.to))) {
+        for (const root of panels) {
+            if (!root.isConnected) { unmountPanel(root); continue; }
+            for (const { path, to } of changes) {
+                for (const input of root.querySelectorAll(`input[data-num="${path}"]`)) {
+                    input.value = numText(path, to); input.dataset.def = to; fitNum(input);
+                }
+                for (const input of root.querySelectorAll(`input[data-range="${path}"]`)) {
+                    input.value = to;
+                    input.style.setProperty('--fill', fill(Number(input.value), Number(input.min), Number(input.max)));
+                }
+                syncWeatherPreview(root, path);
+            }
+        }
+        if (changes.some(c => c.path === 'nightTint' || c.path === 'lightTint')) syncPaletteTints();
+        syncHistoryButtons(); syncSettingResets();
+        return;
+    }
     for (const root of panels) {
         if (!root.isConnected) {
             unmountPanel(root);
@@ -261,14 +285,18 @@ function update(mutator, rerender = true, group = '') {
     applyAll();
     if (rerender) refreshPanels();
     else if (oldTint !== `${getSettings().nightTint}/${getSettings().lightTint}`) {
-        const s = getSettings(), mode = PALETTES[s.palette]?.mode;
-        for (const panel of panels) for (const card of panel.querySelectorAll('.salty-pal[data-family]')) {
-            const colors = paletteColors({ ...s, palette: paletteVariant(card.dataset.family, mode) });
-            for (const key of ['bg', 'surface', 'raised']) card.style.setProperty(`--pal-${key}`, safeColor(colors[key]));
-        }
+        syncPaletteTints();
     }
     syncHistoryButtons();
     syncSettingResets();
+}
+
+function syncPaletteTints() {
+    const s = getSettings(), mode = PALETTES[s.palette]?.mode;
+    for (const panel of panels) for (const card of panel.querySelectorAll('.salty-pal[data-family]')) {
+        const colors = paletteColors({ ...s, palette: paletteVariant(card.dataset.family, mode) });
+        for (const key of ['bg', 'surface', 'raised']) card.style.setProperty(`--pal-${key}`, safeColor(colors[key]));
+    }
 }
 
 // ───────── 조각들 ─────────
@@ -1848,6 +1876,7 @@ function bind(root) {
                     }
                     const { path, value } = el.dataset;
                     const current = getPath(getSettings(), path);
+                    if (String(current) === value) break;
                     update(st => setPath(st, path, typeof current === 'number' ? Number(value) : value));
                     break;
                 }
