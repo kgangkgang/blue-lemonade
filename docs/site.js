@@ -15,9 +15,11 @@ const groups = [
     ['385-zoom.mp4','미리보기는 확대해서','최대 300%까지 키우고, 끌어서 구석까지 확인해요.','385-zoom.jpg','385-zoom.gif'],
     ['390-changes.png','바꾼 설정만 모아서','기본값과 다른 항목을 한눈에. 하나씩 기본값으로 돌려요.'],
   ]},
-  { title: '사진은 크게, 액자는 취향대로.', sub: '큰 프로필 · 장식 액자 · 내 프로필', cards: [
+  { title: '사진은 크게, 액자는 취향대로.', sub: '큰 프로필 · 장식 액자 · 액자 색 · 내 프로필', cards: [
     ['380-big-profile.png','사진을 이야기 첫머리에','캐릭터 사진을 본문 위에 크게. 크기와 자르기도 자유롭게.'],
     ['383-frames.mp4','여섯 가지 장식 액자','수채화부터 낙서 노트까지, 눌러서 바로 바꿔요.','383-frames.jpg','383-frames.gif'],
+    ['399-frame-colors.mp4','액자 색도 내 마음대로','기본 액자는 바탕색과 포인트색을 따로 골라요.','399-frame-colors.jpg','399-frame-colors.gif'],
+    ['399-frame-colors-set.png','바탕색 · 포인트색','캐릭터 프로필 › 장식 액자에서 두 칸만 바꾸면 돼요.'],
     ['384-my-profile.png','내 프로필도 따로','내 사진에는 다른 액자를. 캐릭터와 따로 꾸며요.'],
   ]},
   { title: '대사는 또렷하게, 분위기는 그대로.', sub: '프롬프트 색 · 형광펜 · 외곽선 · 나이트 모드', cards: [
@@ -62,18 +64,22 @@ const groups = [
 ];
 // PC screens (1440×900) — shown instead of the phone groups when the visitor picks PC
 const pcGroups = [
-  { title: '넓은 화면에서, 더 시원하게.', sub: '배경 그림 · 에이드 혼합 · 번짐 · 나란히 보는 설정 · 날씨', cards: [
+  { title: '넓은 화면에서, 더 시원하게.', sub: '배경 그림 · 에이드 혼합 · 번짐 · 액자 색 · 나란히 보는 설정 · 날씨', cards: [
     ['pc-mix.mp4','에이드를 섞어서','두세 가지 에이드로 형광펜과 면을 함께 물들여요.','pc-mix.jpg','pc-mix.gif'],
     ['pc-blend.mp4','번짐은 내 마음대로','미리보기를 보면서 경계를 또렷하게, 또는 부드럽게.','pc-blend.jpg','pc-blend.gif'],
     ['pc-night.jpg','밤바다 위의 나이트','배경 그림이 은은하게 비치는 차콜 화면.'],
     ['pc-settings.jpg','미리보기와 설정을 나란히','왼쪽에서 보고, 오른쪽에서 바로 바꿔요.'],
     ['pc-search.mp4','찾으면 바로 그 설정','"형광펜 모양"처럼 입력하면 그 자리로 가요.','pc-search.jpg','pc-search.gif'],
     ['pc-ades.mp4','열두 가지 에이드','넓은 화면에서 한 번에 바꿔 보세요.','pc-ades.jpg','pc-ades.gif'],
+    ['pc-frame-colors.mp4','액자 색도 내 마음대로','리본 액자의 바탕색과 포인트색을 바꿔 가며.','pc-frame-colors.jpg','pc-frame-colors.gif'],
+    ['pc-frame-colors-set.jpg','바탕색 · 포인트색','미리보기를 보면서 두 칸만 바꾸면 돼요.'],
     ['pc-weather.mp4','눈 내리는 밤','채팅 뒤로 조용히 눈이 내려요.','pc-weather.jpg','pc-weather.gif'],
   ]},
 ];
 const $ = s => document.querySelector(s);
 function element(tag, cls, text) { const e=document.createElement(tag); if(cls)e.className=cls; if(text)e.textContent=text; return e; }
+// media version: bump when shots are retaken under the same names, so cached copies don't linger
+const MV='?v=20260919b';
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
 document.documentElement.classList.add('js');
 const lightbox=$('#lightbox');
@@ -89,15 +95,15 @@ for(const group of [...pcGroups.map(g=>({...g,device:'pc'})),...groups.map(g=>({
   for(const [file,title,description,poster,gif] of group.cards){
     const card=element('figure','card'), wrap=element('div','media-wrap'), caption=element('figcaption','',title); card.style.setProperty('--i',Math.min(track.children.length,6));
     if(file.endsWith('.mp4')){
-      const video=element('video');video.preload='metadata';video.playsInline=true;video.muted=true;video.loop=true;video.setAttribute('muted','');video.setAttribute('playsinline','');video.src='media/'+file;video.poster='media/'+poster;video.setAttribute('aria-label',title);
+      const video=element('video');video.preload='metadata';video.playsInline=true;video.muted=true;video.loop=true;video.setAttribute('muted','');video.setAttribute('playsinline','');video.src='media/'+file+MV;video.poster='media/'+poster+MV;video.setAttribute('aria-label',title);
       if(reduceMotion.matches)video.controls=true;
       else{const state=element('span','play-state','▶');state.setAttribute('aria-hidden','true');wrap.classList.add('paused');
         video.addEventListener('play',()=>wrap.classList.remove('paused'));video.addEventListener('pause',()=>wrap.classList.add('paused'));
         video.addEventListener('click',()=>{if(video.paused){delete video.dataset.userPaused;video.play().catch(()=>{});}else{video.dataset.userPaused='1';video.pause();}});
         wrap.append(state);inView.observe(video);}
       wrap.prepend(video);
-    }else{const img=element('img');img.src='media/'+file;img.alt=title;img.loading='lazy';img.decoding='async';img.tabIndex=0;const open=()=>{lightbox.querySelector('img').src=img.src;lightbox.querySelector('img').alt=title;lightbox.querySelector('p').textContent=title;lightbox.showModal();};img.onclick=open;img.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();open();}};wrap.append(img);}
-    caption.append(element('small','',description));if(gif){const a=element('a','gif-link','움짤로 보기 ↗');a.href='media/'+gif;a.target='_blank';a.rel='noopener';caption.append(a);}card.append(wrap,caption);track.append(card);
+    }else{const img=element('img');img.src='media/'+file+MV;img.alt=title;img.loading='lazy';img.decoding='async';img.tabIndex=0;const open=()=>{lightbox.querySelector('img').src=img.src;lightbox.querySelector('img').alt=title;lightbox.querySelector('p').textContent=title;lightbox.showModal();};img.onclick=open;img.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();open();}};wrap.append(img);}
+    caption.append(element('small','',description));if(gif){const a=element('a','gif-link','움짤로 보기 ↗');a.href='media/'+gif+MV;a.target='_blank';a.rel='noopener';caption.append(a);}card.append(wrap,caption);track.append(card);
   }block.append(heading,track);$('#galleries').append(block);syncArrows();
 }
 lightbox.querySelector('.close').onclick=()=>lightbox.close();lightbox.onclick=e=>{if(e.target===lightbox)lightbox.close();};lightbox.addEventListener('close',()=>{lightbox.querySelector('img').src='';});
