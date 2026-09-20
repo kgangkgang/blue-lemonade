@@ -1,3 +1,5 @@
+import {scriptsMarkup,bindScripts} from './scripts/ui.js';
+import {updateMarkup,bindThemeUpdate} from './theme-update.js';
 import { bindAddonLayout } from './addon-layout.js';
 import { typesetRoot } from './typography.js';
 import { addonMarkup, bindAddons } from './addons.js';
@@ -39,12 +41,12 @@ const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 // 2.7.0: 글꼴 탭을 글자 탭에 합침 — 역할(본문 · 대사 · 메뉴 · 속마음 · 강조 · 코드)마다 한 화면에서 글꼴 · 크기 · 굵기 · 자간을 다 만짐
 const TABS = [['theme', '테마'], ['text', '글자'], ['chat', '채팅'], ['image', '이미지'], ['prompt', '프롬프트'], ['extensions', '확장']];
 const SUBS = {
-    theme: [['palette', '색'], ['colors', '색 고치기'], ['styles', '스타일'], ['changes', '변경한 설정'], ['backup', '백업']],
+    theme: [['palette', '색'], ['colors', '색 고치기'], ['styles', '스타일'], ['changes', '변경한 설정'], ['backup', '백업'], ['update', '업데이트']],
     text: [['text', '본문'], ['dialogue', '대사'], ['ui', '메뉴'], ['em', '속마음'], ['strong', '강조'], ['code', '코드'], ['para', '문단'], ['shadow', '그림자 · 외곽선']],
     chat: [['message', '메시지'], ['profile', '캐릭터 프로필'], ['user-profile', '내 프로필'], ['name', '캐릭터 이름·시간'], ['user-name', '내 이름·시간'], ['screen', '화면'], ['etc', '기타']],
     image: [['layout', '배치'], ['shape', '모양'], ['frame', '테두리'], ['size', '크기'], ['fade', '흐림']],
     prompt: [['deus', '데우스 엑스 마키나']],
-    extensions: [['words', '단어 치환'], ['capture', '채팅 캡처'], ['order', '확장 순서'], ['perf', '성능 보조'], ['models', '모델 등록'], ['modelorder', '모델 순서']],
+    extensions: [['words', '단어 치환'], ['capture', '채팅 캡처'], ['order', '확장 순서'], ['perf', '성능 보조'], ['models', '모델 등록'], ['modelorder', '모델 순서'], ['scripts', '스크립트']],
 };
 
 const panels = new Set();
@@ -250,6 +252,8 @@ export function setPanelFullscreen(root, enabled) {
 export function unmountPanel(root) {
     root._captureCleanup?.(); root._captureCleanup=null;
     root._addonCleanup?.(); root._addonCleanup=null;
+    root._scriptsCleanup?.(); root._scriptsCleanup=null;
+    root._updateCleanup?.(); root._updateCleanup=null;
     root._previewCleanup?.();
     for (const key of ['_fontIO', '_rowsRO']) { root[key]?.disconnect(); root[key] = null; }
     root.remove(); panels.delete(root); root._pv = {}; root._previewViews?.clear();
@@ -916,6 +920,7 @@ function fontBlock(s, slot) {
 
 // ───────── 테마 ─────────
 function tabTheme(s, sub) {
+    if(sub==='update')return updateMarkup();
     if (sub === 'changes') return settingsChanges(s);
     if (sub === 'custom') return customBuilder(s);
     if (sub === 'backup') return tabBackup();
@@ -1375,7 +1380,7 @@ function weatherSeg(s) {
 
 // ───────── 프롬프트 (3.4.0) ─────────
 // 프리셋마다 한 칸. 지금은 데우스 엑스 마키나 — 호환을 켜야 카드 표본 · 카드 설정 · 트래커 설정이 보이고 적용된다
-function tabExtensions(s, sub) { return addonMarkup(s,sub) + (['words','capture'].includes(sub) && s.addons[sub] ? wordToolsMarkup(s,sub) : ''); }
+function tabExtensions(s, sub) { if(sub==='scripts')return scriptsMarkup(); return addonMarkup(s,sub) + (['words','capture'].includes(sub) && s.addons[sub] ? wordToolsMarkup(s,sub) : ''); }
 
 function tabPrompt(s) {
     const on = !!s.deus?.on;
@@ -1546,6 +1551,8 @@ function tabImage(s, sub) {
 function render(root) {
     root._captureCleanup?.(); root._captureCleanup=null;
     root._addonCleanup?.(); root._addonCleanup=null;
+    root._scriptsCleanup?.(); root._scriptsCleanup=null;
+    root._updateCleanup?.(); root._updateCleanup=null;
     const oldSection = root.querySelector('.salty-sec');
     if (oldSection && root._editorRoute) root._editorScroll?.set(root._editorRoute, oldSection.scrollTop);
     root._addonScroll ??= new Map();
@@ -1591,6 +1598,8 @@ function render(root) {
     fillPreviews(root); // 미리보기 무대 다시 꽂기 (만들지 않고 옮겨 담기만)
     typesetRoot(root);
     bindAddons(root, refreshPanels);
+    void bindScripts(root);
+    bindThemeUpdate(root);
     bindWordTools(root, refreshPanels);
     bindAddonLayout(root);
     bindPreviewViews(root, `${ui.tab}/${ui.subs[ui.tab]}`);

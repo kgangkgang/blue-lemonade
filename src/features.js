@@ -20,6 +20,8 @@ const load = (name, url) => (modules[name] ??= import(url).catch((error) => {
 export function syncFeatures(s) {
     const on = !!s.enabled;
     syncTypography(on);
+    const scripts=on&&Object.values(SillyTavern.getContext().extensionSettings?.blue_lemonade_scripts?.enabled||{}).some(v=>v===true);
+    if(scripts||modules.scripts)load('scripts','./scripts/runtime.js').then(m=>m?.syncScripts(scripts));
     const reader = on && !!s.reader?.autoHide;
     if (reader || modules.reader) load('reader', './reader.js').then(m => m?.syncReader(reader));
     const onehand = on && !!s.onehand?.on;

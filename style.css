@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 53개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 56fd8d285490) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 54개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build bcaac81a7eb4) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -17502,6 +17502,24 @@ html body .salty-panel .bl-tool-primary { color:var(--salty-text); border:1px so
 .bl-message-view .salty-btn[aria-pressed=true] { border:1px solid var(--salty-accent);background:color-mix(in srgb,var(--salty-accent) 14%,var(--salty-surface)); }
 .bl-message-language { display:block;color:var(--salty-muted);font-size:10px;font-style:normal;margin:3px 0; }
 .bl-message-choice [data-message-excerpt] { white-space:normal;overflow-wrap:anywhere; }
+/* css/53-script-tools.css */
+.salty-panel .bl-script-layout { display:grid;grid-template-columns:minmax(0,1fr);gap:16px; }
+.salty-panel .bl-script-list,.salty-panel .bl-script-editor,.salty-panel .bl-theme-update { min-width:0; }
+.salty-panel .bl-script-card { margin:0 0 10px;padding:12px;border:1px solid var(--salty-line);border-radius:12px; }
+.salty-panel .bl-script-heading { display:flex;align-items:center;gap:10px;flex-wrap:wrap; }
+.salty-panel .bl-script-heading>button { flex:1;min-width:140px;text-align:left;white-space:normal; }
+.salty-panel .bl-script-heading>button[aria-pressed="true"] { box-shadow:inset 0 0 0 2px var(--salty-accent,#91c9ef); }
+.salty-panel .bl-script-switch { display:flex;align-items:center;gap:8px;white-space:nowrap; }
+.salty-panel .bl-script-card p { font-size:.9em;line-height:1.6;margin:10px 0 6px; }
+.salty-panel .bl-script-card small { display:block;line-height:1.5;overflow-wrap:anywhere;opacity:.8; }
+.salty-panel .bl-script-editor label { display:block; }
+.salty-panel .bl-script-editor textarea { box-sizing:border-box;display:block;width:100%;min-width:0;height:55vh;min-height:240px;resize:vertical;padding:12px;margin:8px 0 12px;background:var(--bl-fill-field,var(--salty-field))!important;color:var(--salty-text,#dce3eb)!important;border:1px solid var(--salty-line)!important;border-radius:10px;font:13px/1.6 Consolas,monospace!important;white-space:pre;overflow:auto; }
+.salty-panel .bl-script-actions { display:flex;flex-wrap:wrap;gap:10px;margin:12px 0; }
+.salty-panel .bl-script-actions>.salty-btn { flex:1 1 140px;min-width:0;white-space:normal;margin:0;min-height:42px; }
+.salty-panel .bl-script-actions>[hidden] { display:none!important; }
+.salty-panel [data-script-feedback],.salty-panel [data-theme-update-status] { line-height:1.6;overflow-wrap:anywhere; }
+.bl-script-hint { display:block;white-space:pre-line;line-height:1.5;margin:5px 0;opacity:.8; }
+@container (min-width:800px) { .salty-panel .bl-script-layout {grid-template-columns:minmax(260px,.8fr) minmax(0,1.2fr);} }
 /* css/99-lazy-panel.css */
 #salty-lazy-panel-start {}
 body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > * {
