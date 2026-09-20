@@ -84,7 +84,7 @@ const pcGroups = [
 const $ = s => document.querySelector(s);
 function element(tag, cls, text) { const e=document.createElement(tag); if(cls)e.className=cls; if(text)e.textContent=text; return e; }
 // media version: bump when shots are retaken under the same names, so cached copies don't linger
-const MV='?v=20260920-409';
+const MV='?v=20260920-410';
 const additions = { title: '새로 더한, 나만의 작은 도구.', sub: '4.0.7 · 날씨 · 에이드 보관함 · 선택해서 켜는 확장', cards: [
  ['407-lorebook-night.png','연결된 책에 불이 들어와요','캐릭터·채팅 로어북이 연결되면 아이콘이 테마색으로 은은하게 빛나요.'],
  ['407-lorebook-light.png','밝은 화면에서도 한눈에','화이트·나이트와 그룹 채팅 모두 적용돼요. 연결 해제 시 기본 모습으로 돌아와요.'],
@@ -116,18 +116,17 @@ pcGroups.unshift({...scripts408,cards:[
  ['408-update-pc.jpg','업데이트도 테마 설정에서','Git 설치는 직접 업데이트, ZIP 설치는 다운로드를 안내해요. 버튼을 누르기 전에는 조회하지 않아요.']
 ]});
 
-const exports409={title:'남긴 문단만, 더 선명하게.',sub:'4.0.9 · 고화질 영상 · GIF 저장 · 날씨별 색 · 반복 작업 정리'};
-const exportExamples409=[
- ['409-export.mp4','글자가 선명한 영상','8개 문단만 남긴 가상 대화의 실제 저장 결과예요. 짧은 내용은 그 높이에 맞추고, 긴 내용은 위에서 아래로 스크롤해요.','409-export.png'],
- ['409-export.gif','짧은 로그는 움직이는 GIF로','두 문단과 분홍색 눈을 함께 저장했어요. GIF는 720px·10fps·256색, 더 선명한 영상은 MP4/WebM을 선택하세요.']
+const exports410={title:'글은 그대로, 날씨만 움직이게.',sub:'4.1.0 · 고정 화면 · 문단별 분할 · 정보 표시 · 모바일 날씨 버튼'};
+const exportExamples410=[
+ ['410-export.mp4','자동 스크롤 없는 선명한 영상','가상 예제의 실제 저장 결과예요. 긴 글은 파일당 최대 문단 수와 화면 높이에 맞춰 여러 파일로 나눠요.','410-export.png'],
+ ['410-export.gif','고정 화면 GIF','GIF도 화면을 내리지 않아요. 파일별 미리보기에서 선택하거나 전체 ZIP으로 저장해요. GIF는 720px·10fps·256색이에요.']
 ];
-groups.unshift({...exports409,cards:[
- ['409-capture-mobile.jpg','영상과 GIF를 골라 저장','편집한 문단으로 미리보기부터 확인해요. 삭제한 문단의 빈 공간은 남기지 않아요.'],
- ['409-weather-mobile.jpg','눈은 분홍, 비는 파랑','효과마다 색을 따로 기억해요. 커스텀 그림은 투명도를 유지하며 물들어요.'],...exportExamples409
+groups.unshift({...exports410,cards:[
+ ['410-capture-mobile.jpg','본문만 또는 원하는 정보만','이름·날짜·모델·번호·토큰·시간을 각각 선택해요. 원래 대화에는 영향을 주지 않아요.'],
+ ['410-weather-mobile.jpg','긴 이름도 한 줄로','내 그림·트래커 따라 버튼이 좁은 화면에서 글자 단위로 꺾이지 않아요.'],...exportExamples410
 ]});
-pcGroups.unshift({...exports409,cards:[
- ['409-capture-pc.jpg','왼쪽에서 고르고 오른쪽에서 조절','영상 해상도·재생 시간·배경·날씨를 한 화면에서 고르고 저장해요.'],
- ['409-weather-pc.jpg','미리 보며 고르는 날씨 색','기본 색으로 돌아가거나 직접 색을 골라요. 채팅과 저장 결과에도 같은 색이 적용돼요.'],...exportExamples409
+pcGroups.unshift({...exports410,cards:[
+ ['410-capture-pc.jpg','파일별 미리보기와 세부 설정','문단 수·영상 크기·표시 정보를 오른쪽에서 조절해요.'],...exportExamples410
 ]});
 
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
