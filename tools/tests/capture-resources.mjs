@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import { createCaptureResources } from '../../src/capture-resources.js';
+let calls=0, mode='ok', release;
+globalThis.fetch=async(_url,{signal}={})=>{calls++;signal?.throwIfAborted();if(mode==='wait')await new Promise(r=>release=r);signal?.throwIfAborted();return {ok:mode!=='fail',blob:async()=>new Blob(['example'])};};
+globalThis.FileReader=class {readAsDataURL(){queueMicrotask(()=>{this.result=mode==='large'?'data:image/png;base64,'+'A'.repeat(7*1024*1024):'data:image/png;base64,example';this.onload();});}};
+let styleReads=0;
+globalThis.getComputedStyle=()=>{styleReads++;return {backgroundImage:'none',getPropertyValue:()=> 'red',*[Symbol.iterator](){yield 'color';}};};
+let passed=0;const test=async(name,run)=>{await run();passed++;console.log('PASS '+name);};
+await test('parallel and sequential URLs share one fetch',async()=>{const r=createCaptureResources();calls=0;await Promise.all([r.embed('/a'),r.embed('/a')]);await r.embed('/a');assert.equal(calls,1);r.close();});
+await test('separate exports refetch content',async()=>{calls=0;for(let i=0;i<2;i++){const r=createCaptureResources();await r.embed('/a');r.close();}assert.equal(calls,2);});
+await test('failed fetch can be retried',async()=>{const r=createCaptureResources();calls=0;mode='fail';await assert.rejects(r.embed('/a'));mode='ok';await r.embed('/a');assert.equal(calls,2);r.close();});
+await test('aborted fetch is not cached',async()=>{const r=createCaptureResources(),c=new AbortController();mode='wait';const job=r.embed('/a',c.signal);c.abort();release();await assert.rejects(job,{name:'AbortError'});mode='ok';await r.embed('/a');r.close();});
+await test('pre-aborted calls do not fetch',async()=>{const r=createCaptureResources(),c=new AbortController();calls=0;c.abort();assert.throws(()=>r.embed('/a',c.signal),{name:'AbortError'});assert.equal(calls,0);r.close();});
+await test('closed batch refuses new work',async()=>{const r=createCaptureResources();r.close();await assert.rejects(r.embed('/a'),{name:'AbortError'});assert.throws(()=>r.paint({},{}),{name:'AbortError'});});
+await test('data URLs do not fetch',async()=>{const r=createCaptureResources();calls=0;assert.equal(await r.embed('data:image/png,x'),'data:image/png,x');assert.equal(calls,0);r.close();});
+await test('large images evict old cached payloads',async()=>{const r=createCaptureResources();mode='large';calls=0;await r.embed('/a');await r.embed('/b');await r.embed('/a');assert.equal(calls,3);mode='ok';r.close();});
+await test('paint snapshot is reused for same node only',async()=>{const r=createCaptureResources(),source={tagName:'P'},clone=()=>({style:{cssText:'',setProperty(k,v){this.cssText+=`${k}:${v};`;}}});styleReads=0;const a=clone(),b=clone();r.paint(source,a);r.paint(source,b);assert.equal(styleReads,1);assert.equal(a.style.cssText,b.style.cssText);r.paint({tagName:'P'},clone());assert.equal(styleReads,2);r.close();});
+console.log(`${passed} checks passed`);

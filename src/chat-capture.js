@@ -1,37 +1,30 @@
 import { applyCaptureDraft } from './capture-editor.js';
 import { preparePrivacy, attachMaskShapes } from './capture-privacy.js';
 import { applyCaptureDisplay, reflowCaptureText, capturePagePlan } from './capture-layout.js';
+import { createCaptureResources } from './capture-resources.js';
 const urls = text => [...text.matchAll(/url\((?:"([^"]*)"|'([^']*)'|([^)]*))\)/g)].map(m=>({raw:m[0],url:m[1]??m[2]??m[3]}));
 // Render only the selected, already loaded messages. Everything used by the SVG is embedded.
 const limited = (promise, ms, message) => new Promise((resolve,reject)=>{
     const timer=setTimeout(()=>reject(Error(message)),ms);
     Promise.resolve(promise).then(resolve,reject).finally(()=>clearTimeout(timer));
 });
-async function dataURL(url, signal) {
-    if(url.startsWith('data:'))return url;
-    const response=await fetch(url,{signal});if(!response.ok)throw Error('이미지를 읽지 못했어요. 불러온 이미지를 확인해 주세요.');
-    return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;response.blob().then(blob=>reader.readAsDataURL(blob),reject);});
-}
-async function copyPaint(source, clone, cache, signal, options={}) {
+async function copyPaint(source, clone, resources, signal, options={}) {
     signal.throwIfAborted();
     if(source.matches('script,iframe,video,audio,.mes_buttons,.mes_edit_buttons,.swipe_left,.swipe_right,.swipes-counter')||(options.showAssets===false&&source.closest('.mes_text')&&source.matches('img,picture,svg,canvas'))||(options.showAvatar===false&&source.matches('.avatar'))||(options.showName===false&&source.matches('.name_text,.mes_name')))return;
-    const style=getComputedStyle(source);
-    for(const property of style)clone.style.setProperty(property,style.getPropertyValue(property));
+    const bg=resources.paint(source,clone);
     clone.style.animation='none';clone.style.transition='none';clone.style.contentVisibility='visible';
-    if(source.tagName==='Q'&&['none','normal','""',"''"].includes(getComputedStyle(source,'::before').content))clone.style.quotes='none';
     clone.removeAttribute('id');clone.removeAttribute('onclick');
-    const embedded=url=>{if(!cache.has(url))cache.set(url,dataURL(url,signal));return cache.get(url);};
+    const embedded=url=>resources.embed(url,signal);
     if(source.tagName==='IMG') {
         clone.removeAttribute('srcset');clone.removeAttribute('loading');
         if(source.currentSrc||source.src)clone.src=await embedded(source.currentSrc||source.src);
     }
-    const bg=style.backgroundImage;
     if(bg.includes('url(')) {
         let output=bg;
         for(const match of urls(bg))output=output.replace(match.raw,`url("${await embedded(new URL(match.url,location.href).href)}")`);
         clone.style.backgroundImage=output;
     }
-    await Promise.all([...source.children].map((child,i)=>copyPaint(child,clone.children[i],cache,signal,options)));
+    await Promise.all([...source.children].map((child,i)=>copyPaint(child,clone.children[i],resources,signal,options)));
 }
 export async function captureMessages(ids, progress=()=>{}, options={}, signal=null) {
     signal?.throwIfAborted();
@@ -39,10 +32,11 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
     progress('글꼴 준비 중…');
     await limited(document.fonts.ready,3000,'글꼴 로딩 지연').catch(()=>{});
     signal?.throwIfAborted();
-    const cache=new Map(), nodes=ids.map(id=>document.querySelector(`#chat .mes[mesid="${id}"]`));
+    const nodes=ids.map(id=>document.querySelector(`#chat .mes[mesid="${id}"]`));
     if(nodes.some(node=>!node))throw Error('선택한 메시지가 화면에서 사라졌어요. 다시 불러와 주세요.');
     const width=Math.ceil(Math.max(...nodes.map(node=>node.getBoundingClientRect().width)));
     if(width<100)throw Error('채팅 화면을 연 뒤 다시 시도해 주세요.');
+    const resources=options.resources||createCaptureResources();
     const wrapper=document.createElement('div');wrapper.style.cssText=`width:${width}px;position:fixed;left:-20000px;top:0;overflow:hidden;`;
     const background=getComputedStyle(document.documentElement).getPropertyValue('--salty-bg').trim() || getComputedStyle(document.body).backgroundColor;
     wrapper.style.background=options.videoLayer?'transparent':background;
@@ -54,7 +48,7 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
     try {
         for(const [i,node] of nodes.entries()) {
             progress(`메시지 ${i+1}/${nodes.length} 만드는 중…`);
-            const clone=node.cloneNode(true);await copyPaint(node,clone,cache,controller.signal,options);
+            const clone=node.cloneNode(true);await copyPaint(node,clone,resources,controller.signal,options);
             const draft=options.edits?.find(draft=>draft.id===ids[i]);
             applyCaptureDraft(clone,draft,node);
             if(draft)for(const el of [clone,...clone.querySelectorAll('.mes_block,.mes_text,.mes_text *')])if(!el.matches('img,picture,svg,svg *,canvas,video')){
@@ -93,8 +87,7 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
                 // A font-face's URLs are alternative formats, not separate fonts.
                 for(const hit of urls(rule.style.src)) {
                     const url=new URL(hit.url,sheet.href||location.href).href;
-                    if(!cache.has(url))cache.set(url,dataURL(url,controller.signal));
-                    try { const embedded=await limited(cache.get(url),3000,'글꼴 로딩 지연');css=rule.cssText.replace(rule.style.src,`url("${embedded}")`);break; } catch { css=''; }
+                    try { const embedded=await limited(resources.embed(url,controller.signal),3000,'글꼴 로딩 지연');css=rule.cssText.replace(rule.style.src,`url("${embedded}")`);break; } catch { css=''; }
                 }
                 fonts+=css;
             }
@@ -126,5 +119,5 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
         if(signal?.aborted)throw new DOMException("캡처를 취소했어요.","AbortError");
         if(controller.signal.aborted)throw Error('이미지 또는 글꼴 응답이 늦어요. 메시지를 나누어 다시 시도해 주세요.');
         throw error;
-    } finally {clearTimeout(timer);signal?.removeEventListener("abort",abort);controller.abort();wrapper.remove();}
+    } finally {clearTimeout(timer);signal?.removeEventListener("abort",abort);controller.abort();wrapper.remove();if(!options.resources)resources.close();}
 }

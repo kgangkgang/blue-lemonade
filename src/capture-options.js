@@ -1,4 +1,5 @@
 import { CAPTURE_INFO_KEYS } from './capture-layout.js';
+import { createCaptureResources } from './capture-resources.js';
 import { toolSection, bindAddonLayout } from './addon-layout.js';
 import { MASK_DEFAULTS, MASK_RANGES, maskProfile } from './capture-style.js';
 import { paintMasks } from './capture-privacy.js';
@@ -52,9 +53,17 @@ export function bindCaptureOptions(root,changed=()=>{}) {
     });
     root.addEventListener('click',event=>{if(event.target.closest('[data-mask-reset]')){cfg.maskStyles[cfg.mask]={...MASK_DEFAULTS};rebuild();save();}});
     draw();
-    root.querySelectorAll('[data-capture-option]').forEach(input=>input.addEventListener('change',()=>{
-        if(input.type==='number'&&(!input.value||!input.validity.valid))return;cfg[input.dataset.captureOption]=input.type==='checkbox'?input.checked:input.value;if(input.dataset.captureOption==='mask')rebuild();save();
-    }));
+    root.querySelectorAll('[data-capture-option]').forEach(input=>{
+        const commit=()=>{
+            if(input.type==='number'&&(!input.value||!input.validity.valid))return;
+            const key=input.dataset.captureOption,value=input.type==='checkbox'?input.checked:input.value;
+            if(String(cfg[key])===String(value))return;
+            cfg[key]=value;if(key==='mask')rebuild();save();
+        };
+        input.addEventListener('change',commit);
+        // Invalidate generated files while typing too, before focus leaves the field.
+        if(input.type==='number')input.addEventListener('input',commit);
+    });
     names.addEventListener('input',event=>{const i=event.target.dataset.captureName;if(i!==undefined){cfg.names[Number(i)]=event.target.value;save();}});
     names.addEventListener('click',event=>{const i=event.target.closest('[data-capture-remove]')?.dataset.captureRemove;if(i!==undefined){cfg.names.splice(Number(i),1);names.innerHTML=cfg.names.map(nameRow).join('');save();}});
     root.querySelector('[data-capture-add]').addEventListener('click',()=>{
@@ -96,9 +105,10 @@ export async function openCapturePreview(ids, mount = null, selectedIds = () => 
     part.onchange=show;
     async function generate(){
         if(busy)return;busy=true;render.disabled=true;invalidate();const current=revision;controller=new AbortController();const signal=controller.signal;
+        const resources=createCaptureResources();
         try{
             const captureIds=selectedIds();if(!captureIds.length)throw Error('메시지를 먼저 선택해 주세요.');
-            const options={...captureOptionsSnapshot(),edits},motion=['video','gif'].includes(options.format);
+            const options={...captureOptionsSnapshot(),edits,resources},motion=['video','gif'].includes(options.format);
             const sources=captureIds.map(id=>document.querySelector(`#chat .mes[mesid="${Number(id)}"]`));
             const markup=sources.map(el=>el?.innerHTML);
             const stable=()=>{if(sources.some((el,i)=>!el?.isConnected||el.innerHTML!==markup[i]))throw Error('저장 중 메시지가 바뀌었어요. 답변·번역이 끝난 뒤 다시 만들어 주세요.');};
@@ -121,7 +131,7 @@ export async function openCapturePreview(ids, mount = null, selectedIds = () => 
             if(archive){zipURL=URL.createObjectURL(archive);zip.href=zipURL;zip.hidden=false;}
             show();render.textContent='미리보기 다시 만들기';
         }catch(error){if(alive()&&revision===current)status.textContent=error.message||'미리보기를 만들지 못했어요.';}
-        finally{busy=false;render.disabled=false;}
+        finally{resources.close();busy=false;render.disabled=false;}
     }
     dialog.querySelector('[data-capture-edit]').onclick=async()=>{try{const result=await(await import('./capture-editor.js')).editCaptureDraft(selectedIds(),edits);if(result){edits=result.draft;invalidate();}}catch(error){status.textContent=error.message;}};
     render.onclick=generate;await generate();
