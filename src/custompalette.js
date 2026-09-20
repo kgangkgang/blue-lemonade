@@ -31,7 +31,7 @@ function recipe(palette) {
 export function openCustomBuilder(settings, mode) {
     const source = paletteFamily(settings.palette);
     const saved = settings.customName || settings.colorOverrides?.['custom-light'] || settings.colorOverrides?.['custom-night'];
-    draft = { name: settings.customName || '나만의 에이드', mode: mode === 'dark' ? 'dark' : 'light' };
+    draft = { id: settings.activeCustomPalette || '', name: settings.customName || '나만의 에이드', mode: mode === 'dark' ? 'dark' : 'light' };
     for (const kind of ['light', 'dark']) {
         const id = paletteVariant(saved ? 'custom' : source, kind);
         draft[kind] = recipe({ ...PALETTES[id], ...(settings.colorOverrides?.[id] || {}) });
@@ -42,9 +42,27 @@ export function setCustomMode(mode) { if (draft) draft.mode = mode === 'dark' ? 
 export function seedCustom(family) { if (draft) draft[draft.mode] = recipe(PALETTES[paletteVariant(family, draft.mode)]); }
 export function saveCustomPalette(settings) {
     if (!draft) return;
+    const library=settings.customPalettes;
+    const index=library.findIndex(item=>item.id===draft.id);
+    if(index<0 && library.length>=24)throw Error('에이드는 24개까지 저장할 수 있어요.');
     settings.customName = draft.name.trim().slice(0, 24) || '나만의 에이드';
     for (const mode of ['light', 'dark']) settings.colorOverrides[paletteVariant('custom', mode)] = makeCustomPalette(draft[mode], mode);
     settings.palette = paletteVariant('custom', draft.mode);
+    const entry={id:draft.id||crypto.randomUUID(),name:settings.customName,light:structuredClone(settings.colorOverrides['custom-light']),dark:structuredClone(settings.colorOverrides['custom-night'])};
+    if(index<0)library.push(entry);else library[index]=entry;
+    draft.id=entry.id;settings.activeCustomPalette=entry.id;
+}
+
+export function newCustomPalette(settings, mode) { openCustomBuilder(settings,mode);draft.id='';draft.name='새 에이드';for(const kind of ['light','dark']) {const id=paletteVariant(paletteFamily(settings.palette),kind);draft[kind]=recipe({...PALETTES[id],...(settings.colorOverrides?.[id]||{})});} }
+export function useCustomPalette(settings,id) {
+    const entry=settings.customPalettes.find(item=>item.id===id);if(!entry)return;
+    settings.customName=entry.name;settings.activeCustomPalette=id;
+    settings.colorOverrides['custom-light']=structuredClone(entry.light);
+    settings.colorOverrides['custom-night']=structuredClone(entry.dark);
+    settings.palette=paletteVariant('custom',PALETTES[settings.palette]?.mode||'light');
+}
+export function customLibrary(settings) {
+    return `<div class="salty-group"><h4>내 에이드 보관함</h4><p class="salty-note">화이트·나이트 색을 한 쌍으로 24개까지 저장해요. 불러온 뒤 색 고치기에서 조금씩 바꿀 수 있어요.</p><div class="bl-palette-library">${settings.customPalettes.map(item=>`<article><b>${esc(item.name)}</b><button type="button" class="salty-btn" data-act="custom-use" data-id="${esc(item.id)}">불러오기</button><button type="button" class="salty-btn" data-act="custom-library-edit" data-id="${esc(item.id)}">편집</button><button type="button" class="salty-btn" data-act="custom-delete" data-id="${esc(item.id)}">삭제</button></article>`).join('')}</div><div class="salty-btns bl-palette-actions"><button type="button" class="salty-btn" data-act="custom-new">새 에이드 만들기</button><button type="button" class="salty-btn" data-act="custom-keep">현재 에이드 색 저장</button></div></div>`;
 }
 
 function previewStyle(palette) {

@@ -50,8 +50,9 @@ for (const [sub, name, alias] of [['profile','캐릭터','캐릭터 봇 상대']
  rows.push(['chat',namesub,`${name} 이름 글꼴·꾸미기`,`${alias} 이름 폰트 글꼴 언어 크기 굵기 자간 색 정렬 왼쪽 중앙 가운데 오른쪽 기울임 밑줄 외곽선 그림자`, '이름 글자'],
  ['chat',namesub,`${name} 시간·버튼 배치`,`${alias} 이름 시간 날짜 버튼 점세개 메뉴 편집 연필 모델 아이콘 통계 토큰 번호 한줄 두줄 옆 아래 간격 진하기 정렬`, '']);
 }
-const tabs={theme:'테마',text:'글자',chat:'채팅',image:'이미지',prompt:'프롬프트'};
-const subs={changes:'변경한 설정',palette:'색',colors:'색 고치기',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
+rows.push(['extensions','words','단어 치환','단어 바꾸기 조사 규칙 되돌리기'],['extensions','capture','채팅 캡처','이미지 사진 저장 메시지 다중 선택'],['extensions','order','확장 순서','패널 고정 순서 정렬'],['extensions','perf','성능 보조','끊김 감시 요청 로그 로딩 저장 정리'],['chat','screen','날씨 움직임','레몬 꽃잎 유성 낙하 회전 흔들림 커스텀'],['theme','palette','내 에이드 보관함','커스텀 여러개 저장 불러오기']);
+const tabs={extensions:'확장',theme:'테마',text:'글자',chat:'채팅',image:'이미지',prompt:'프롬프트'};
+const subs={words:'단어 치환',capture:'채팅 캡처',order:'확장 순서',perf:'성능 보조',changes:'변경한 설정',palette:'색',colors:'색 고치기',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
 const normalize = value => String(value).normalize('NFKC').toLowerCase().replace(/퀵\s*리플라이|quick\s*repl(?:y|ies)|큐알|\bqr\b/g,'퀵리플라이').replace(/프사|아바타/g,'프로필').replace(/글씨|글자\s*간격/g,m=>m==='글씨'?'글자':'자간').replace(/확대\s*축소/g,'확대 축소').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 export const SEARCH_ENTRIES = rows.map(([tab,sub,title,aliases,anchor='',path=''],id)=>{
  const words=[...new Set(normalize(title+' '+aliases).split(' '))];

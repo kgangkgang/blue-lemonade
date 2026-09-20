@@ -1,4 +1,6 @@
+import { MASK_STYLES, normalizeMaskStyle } from './capture-style.js';
 import { MIX_DEFAULT, tidyGradients } from './gradients.js';
+import { syncWeatherProfile } from './weather-profiles.js';
 import { tidyFrameLibrary } from './frame-library.js';
 import { DECOR_DEFAULTS, tidyDecor } from './decor.js';
 import { FRAME_DEFAULTS, FRAME_RANGE, tidyFrame } from './frames.js';
@@ -60,10 +62,10 @@ export const DEFAULTS = {
     outline: { on: false, color: '#000000', alpha: 100, width: 1 },   // 전체(메시지 본문) 외곽선 · width: px(0.2~3) · alpha: %
     em: { italic: false, weight: 400, size: null, letterSpacing: null },   // *속마음* — 기울일지, 굵기, 크기(px · null = 본문과 같게), 자간(1/100 em · null = 본문과 같게)
     strong: { weight: 650, size: null, letterSpacing: null },              // **강조**
-    chat: { user: 'bubble', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, colorPop: true, streamFade: false, demSkin: false, demFold: true, weather: 'off', weatherLevel: 2, weatherOpacity: 100, weatherSize: 100, weatherSpeed: 100, weatherAngle: -9, weatherImage: '', weatherImageId: '', qrScroll: 'x', qrFind: true, qrRows: 2, qrPlace: 'bottom', demInk: false, demInkMode: 'text', toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } } }, // streamFade: 스트리밍 중 새 글자만 가볍게 페이드 인 (2.9.5, streamfade.js — 실리태번 페이드 인이 켜져 있으면 쉼) · tone: 톤 맞추기의 채도 · 밝기(%) 화이트/나이트 따로 (2.6.1) · toneInline: 본문 글자색의 색상만 두고 채도 · 밝기를 테마에 맞춤 (2.6.0, unifyInline 이 꺼져 있을 때) · selectPop: 실리태번 select 를 테마가 그린 목록 팝업으로 (2.5.0) · colorPop: 설정 창 밖 색 칸도 테마 색 고르기로 (3.5.0, colorpop.js) · regexIcons: 정규식 카드 제목 앞 이모티콘 보이기 · unifyRegex: 프리셋 정규식 카드(DEM 등)의 모듈별 색 → 포인트색 하나 · unifyInline: 메시지에 적힌 글자색(<font color> · style) 무시
+    chat: { user: 'bubble', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, colorPop: true, streamFade: false, demSkin: false, demFold: true, weather: 'off', weatherLevel: 2, weatherOpacity: 100, weatherSize: 100, weatherSpeed: 100, weatherAngle: -9, weatherMotion: 'natural', weatherSway: 100, weatherSpin: 100, weatherCurvature:65, weatherOrbitSize:100, weatherOrbitDirection:'right', weatherImage: '', weatherImageId: '', qrScroll: 'x', qrFind: true, qrRows: 2, qrPlace: 'bottom', demInk: false, demInkMode: 'text', toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } } }, // streamFade: 스트리밍 중 새 글자만 가볍게 페이드 인 (2.9.5, streamfade.js — 실리태번 페이드 인이 켜져 있으면 쉼) · tone: 톤 맞추기의 채도 · 밝기(%) 화이트/나이트 따로 (2.6.1) · toneInline: 본문 글자색의 색상만 두고 채도 · 밝기를 테마에 맞춤 (2.6.0, unifyInline 이 꺼져 있을 때) · selectPop: 실리태번 select 를 테마가 그린 목록 팝업으로 (2.5.0) · colorPop: 설정 창 밖 색 칸도 테마 색 고르기로 (3.5.0, colorpop.js) · regexIcons: 정규식 카드 제목 앞 이모티콘 보이기 · unifyRegex: 프리셋 정규식 카드(DEM 등)의 모듈별 색 → 포인트색 하나 · unifyInline: 메시지에 적힌 글자색(<font color> · style) 무시
     // 3.1.0: 몰입 읽기(폰 — 아래로 밀면 위 바 · 입력창 숨김, reader.js) · 한 손 버튼 줄(입력판 위 ‹ › 사칭 · 이어 쓰기 · 다시 생성, onehand.js)
     reader: { autoHide: false },
-    // 3.4.0 프롬프트 호환: 데우스 엑스 마키나 2.3 — 끄면 카드 스킨 · 폰 접기 · 카드 색 통일 · 카드 이모티콘 · 트래커 날씨가 모두 쉰다 (값은 남음)
+    // 3.4.0 프롬프트 호환: 데우스 엑스 마키나 — 끄면 카드 스킨 · 폰 접기 · 카드 색 통일 · 카드 이모티콘 · 트래커 날씨가 모두 쉰다 (값은 남음)
     // 3.7.1 데우스 대사 색상 가독성 향상: 프롬프트가 칠한 글자(@Dialogue Color)에만 거는 외곽선 · 그림자.
     // 색에 따라 배경에 묻혀 안 읽히는 경우를 위해 — 둘 다 켜도 되고 하나만 켜도 된다. 파라미터는 전체 외곽선 · 글자 그림자와 같은 것들.
     // 3.7.2 다른 CSS: 사용자 설정 › 커스텀 CSS 를 테마가 켜진 동안 꺼 둘지 (내용은 그대로 — 끄면 바로 돌아온다)
@@ -79,6 +81,12 @@ export const DEFAULTS = {
     auto: { on: false, by: 'system', night: '20:00', day: '07:00' },
     // 3.3.1 날씨 효과의 내 그림 목록 [{ id, name, data }] — 스타일에는 안 담김 (고른 그림만 chat.weatherImage)
     weatherImages: [],
+    customPalettes: [],
+    activeCustomPalette: '',
+    addons: { order: false, perf: false, words: false, capture: false, models: false, modelorder: false },
+    addonUI: { orderIcon: false, perfIcon: false, wordsMenu: false, captureMenu: false, perfMenu: { watchdog:false, timer:true, perf:false, log:true, dedupe:false } },
+    wordTools: { messageView: 'translation', rules: [], presets: [], syntax: 'comma', caseSensitive: false, wholeWords: false, particles: true },
+    captureTools: { replace: false, preset: '', redact: false, names: [], mask: 'auto', maskStyles: {}, format:'image', duration:6, backgroundTint:60, includeWeather:true, includeBackground:true, showName:true, showAvatar:true, showAssets:true },
     onehand: { on: false, swipe: true, imp: true, cont: true, regen: true },
     // 3.1.0 스타일: 내 스타일 목록 [{ id, name, data }] · 캐릭터 연결 { 'c:아바타' | 'g:그룹': 스타일 id } · 지금 입힌 캐릭터 스타일 { id, key } · 그 전 원래 모습 (styles.js · charstyle.js)
     styles: [],
@@ -246,13 +254,18 @@ function tidyFlags(s) {
         s.chat.demSkin = flag(s.chat.demSkin, false);
         s.chat.demFold = flag(s.chat.demFold, true);
         // 3.3.0 날씨 효과: off | rain | snow | tracker(데우스 트래커 날씨 따라) · 세기 1~3
-        if (!['off', 'rain', 'snow', 'custom', 'tracker'].includes(s.chat.weather)) s.chat.weather = 'off';
+        if (!['off', 'rain', 'snow', 'lemon', 'petal', 'meteor', 'custom', 'tracker'].includes(s.chat.weather)) s.chat.weather = 'off';
+        syncWeatherProfile(s.chat);
         s.chat.weatherLevel = [1, 2, 3].includes(Number(s.chat.weatherLevel)) ? Number(s.chat.weatherLevel) : 2;
         const range = (key, min, max, def) => { const n = Number(s.chat[key]); s.chat[key] = Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : def; };
         range('weatherOpacity', 10, 100, 100);
         range('weatherSize', 40, 250, 100);
         range('weatherSpeed', 20, 250, 100);
         range('weatherAngle', -45, 45, -9);
+        range('weatherCurvature',0,100,65); range('weatherOrbitSize',40,240,100);
+        if(!['left','right'].includes(s.chat.weatherOrbitDirection))s.chat.weatherOrbitDirection='right';
+        range('weatherSway', 0, 300, 100); range('weatherSpin', 0, 300, 100);
+        if (!['natural', 'straight', 'flutter', 'streak'].includes(s.chat.weatherMotion)) s.chat.weatherMotion = 'natural';
         // 3.5.4 퀵 리플라이 줄: x 가로 스크롤 · y 세로 스크롤(보이는 줄 1~4)
         if (!['x', 'y'].includes(s.chat.qrScroll)) s.chat.qrScroll = 'x';
         s.chat.qrFind = flag(s.chat.qrFind, true);
@@ -355,6 +368,7 @@ export function getSettings() {
     // 3.4.0 전 설정: 데우스 카드 스킨이나 트래커 날씨를 쓰던 사람이면 호환을 켠 채로 시작 (한 번만)
     const firstDeus = ext[KEY].deus === undefined;
     const migrateUserMode = !ext[KEY].userProfile || ext[KEY].userProfile.mode === 'inherit';
+    const migrateWordSyntax = ext[KEY].wordTools && ext[KEY].wordTools.syntax !== 'comma';
     const s = fill(ext[KEY], DEFAULTS);
     if (migrateUserMode) s.userProfile.mode = SillyTavern.getContext().powerUserSettings?.hideChatAvatars_enabled || s.chat.user === 'bubble' ? 'none' : 'small';
     if (TILT_RENAME[s.dialogue?.tilt]) s.dialogue.tilt = TILT_RENAME[s.dialogue.tilt];
@@ -404,6 +418,36 @@ export function getSettings() {
     s.gradients = tidyGradients(s.gradients);
     tidyFlags(s);
     tidyStyles(s);
+    if (!Array.isArray(s.customPalettes)) s.customPalettes=[];
+    if (typeof s.activeCustomPalette !== 'string') s.activeCustomPalette='';
+    if (!isObj(s.addons)) s.addons=structuredClone(DEFAULTS.addons);
+    for (const key of Object.keys(DEFAULTS.addons)) s.addons[key]=s.addons[key]===true;
+    if (!isObj(s.addonUI)) s.addonUI=structuredClone(DEFAULTS.addonUI);
+    if (!isObj(s.addonUI.perfMenu)) s.addonUI.perfMenu=structuredClone(DEFAULTS.addonUI.perfMenu);
+    for (const key of ['orderIcon','perfIcon','wordsMenu','captureMenu']) s.addonUI[key]=flag(s.addonUI[key],false);
+    for (const key of Object.keys(DEFAULTS.addonUI.perfMenu)) s.addonUI.perfMenu[key]=flag(s.addonUI.perfMenu[key],DEFAULTS.addonUI.perfMenu[key]);
+    if (!isObj(s.wordTools)) s.wordTools=structuredClone(DEFAULTS.wordTools);
+    s.wordTools.messageView=s.wordTools.messageView==='original'?'original':'translation';
+    if (!Array.isArray(s.wordTools.rules)) s.wordTools.rules=[];
+    s.wordTools.rules=s.wordTools.rules.filter(rule=>rule&&typeof rule==='object').slice(0,500);
+    if(!Array.isArray(s.wordTools.presets))s.wordTools.presets=[];
+    s.wordTools.presets=s.wordTools.presets.filter(p=>p&&typeof p.id==='string'&&Array.isArray(p.rules)).slice(0,24);
+    if(migrateWordSyntax) {
+        for(const rules of [s.wordTools.rules,...s.wordTools.presets.map(p=>p.rules)])for(const rule of rules)if(rule&&typeof rule.from==='string')rule.from=rule.from.split('||').join(', ');
+        s.wordTools.syntax='comma';
+    }
+    if(!isObj(s.captureTools))s.captureTools=structuredClone(DEFAULTS.captureTools);
+    s.captureTools.format=s.captureTools.format==='video'?'video':'image';
+    s.captureTools.backgroundTint=Math.min(100,Math.max(0,Number(s.captureTools.backgroundTint??60)||0));
+    s.captureTools.duration=Math.min(30,Math.max(3,Number(s.captureTools.duration)||6));
+    for(const key of ['showName','showAvatar','showAssets','includeWeather','includeBackground'])s.captureTools[key]=s.captureTools[key]!==false;
+    s.captureTools.replace=s.captureTools.replace===true;s.captureTools.redact=s.captureTools.redact===true;
+    s.captureTools.names=Array.isArray(s.captureTools.names)?s.captureTools.names.filter(n=>typeof n==='string').slice(0,40):[];
+    if(!['auto','white','black','mosaic','tape'].includes(s.captureTools.mask))s.captureTools.mask='auto';
+    if(typeof s.captureTools.preset!=='string')s.captureTools.preset='';
+    if(!isObj(s.captureTools.maskStyles))s.captureTools.maskStyles={};
+    for(const style of MASK_STYLES)s.captureTools.maskStyles[style]=normalizeMaskStyle(s.captureTools.maskStyles[style]);
+    s.customPalettes=s.customPalettes.filter(item=>item&&typeof item.id==='string'&&typeof item.name==='string'&&isObj(item.light)&&isObj(item.dark)).slice(0,24);
     if (firstDeus) s.deus.on = !!(s.chat?.demSkin || s.chat?.weather === 'tracker');
     for (const id of Object.keys(s.colorOverrides || {})) if (!PALETTES[id]) delete s.colorOverrides[id];
     return s;

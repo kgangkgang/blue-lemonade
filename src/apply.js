@@ -594,7 +594,7 @@ export function applyAll() {
         if (s.chat.qrScroll === 'y') want.add('salty-qr-y'); // 3.5.4 퀵 리플라이 세로 스크롤 (css/35-qr-bar.css)
         if (s.chat.qrPlace === 'top') want.add('salty-qr-top'); // 3.7.0 퀵 리플라이 줄을 입력창 위로 (css/36-qr-place.css)
         if (s.outline?.on) want.add('salty-outline'); // 3.7.0 글자 외곽선 — 메시지 본문 전체 (css/38-outline.css)
-        const deus = !!s.deus?.on; // 3.4.0 프롬프트 › 데우스 엑스 마키나 2.3 호환 — 끄면 아래 데우스 카드 클래스가 모두 빠진다
+        const deus = !!s.deus?.on; // 3.4.0 프롬프트 › 데우스 엑스 마키나 호환 — 끄면 아래 데우스 카드 클래스가 모두 빠진다
         if (deus && s.chat.unifyRegex) want.add('salty-unify-regex');   // 정규식 카드 색 통일 (style.css '색 통일' 블록)
         if (s.chat.unifyInline) want.add('salty-unify-inline'); // 본문에 적힌 글자색 무시
         else if (s.chat.toneInline) want.add('salty-tone');     // 글자색의 색상만 두고 채도 · 밝기 맞춤 (tone.js + style.css 끝 규칙)

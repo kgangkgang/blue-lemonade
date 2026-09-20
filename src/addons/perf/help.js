@@ -1,0 +1,5 @@
+export function showPerfHelp(){
+    const dialog=document.createElement('dialog');dialog.className='bl-tool-dialog';
+    dialog.innerHTML=`<h3>성능 보조는 무슨 일을 하나요?</h3><p><b>스트리밍 중 바뀐 곳만 다시 그리기</b><br>답변이 한 글자씩 올 때 본문 전체를 매번 갈아 끼우지 않고 바뀐 부분을 갱신해요. 긴 답변의 깜빡임과 화면 그리기 부담을 줄여요. 호환되지 않는 HTML에서는 기존 방식으로 돌아가요.</p><p><b>큰 저장은 뒤에서 보내기</b><br>큰 채팅·설정 저장 요청의 전송 처리를 별도 워커로 옮겨 입력과 스크롤이 덜 멈추게 해요. 모델의 답변 생성 속도나 네트워크 속도를 높이는 기능은 아니에요. 저장 완료는 실제 응답을 기다려요.</p><p><b>프롬프트 목록은 열었을 때 그리기</b><br>닫혀 있는 프롬프트 목록의 불필요한 화면 갱신을 미루고, 열 때 최신 내용을 보여 줘요.</p><p><b>끊김 감시</b><br>스트리밍 응답에만 적용됩니다. 비스트리밍 응답의 대기 시간은 감시하지 않습니다. 스트리밍이 시작된 뒤 데이터가 오지 않는 시간을 감시해요. 첫 응답 대기 제한은 별도 옵션이고 기본은 꺼짐이에요.</p><p><b>로딩 시간 · 요청 로그 · 저장 정리</b><br>각각 앱 준비 시간 확인, 요청 내역 확인, 같은 저장 요청의 중복 전송 줄이기를 맡아요. 별 두 개 메뉴의 표시를 꺼도 도구는 계속 동작해요.</p><button type="button" class="salty-btn">닫기</button>`;
+    document.body.append(dialog);dialog.showModal();dialog.querySelector('button').onclick=()=>dialog.close();dialog.addEventListener('close',()=>dialog.remove(),{once:true});
+}

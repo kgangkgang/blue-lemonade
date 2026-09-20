@@ -22,7 +22,7 @@ def inventory(root, kind):
     root = Path(root).resolve()
     names = ['manifest.json', 'index.js', 'style.css', 'README.md']
     if kind == 'theme':
-        names += [p.relative_to(root).as_posix() for p in (root / 'src').rglob('*.js')]
+        names += [p.relative_to(root).as_posix() for p in (root / 'src').rglob('*') if p.is_file() and p.suffix in {'.js', '.css'}]
     else:
         names += [p.name for p in root.glob('*.js') if p.name != 'index.js']
     require(len(names) > 4, 'No runtime modules found')

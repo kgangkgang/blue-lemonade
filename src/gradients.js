@@ -79,7 +79,7 @@ export function gradientFills(s,vars) {
     const palette=paletteColors(s),mix=mixFor(s);
     const aliases={page:'bg',card:'card',control:'control','control-hover':'control-hover',well:'field',field:PALETTES[s.palette]?.mode==='dark'?'sunk':'control',overlay:'surface',hover:'shade','press-bg':'shade-2',selected:'tint-18','check-off':'shade-2',accent:'accent',pop:'pop'};
     const baseKeys=['bg','surface','raised','accent','marker','gold','pop','field','user-bg','card','control','control-hover','sunk','shade','shade-2','surface-shade','tint-12','tint-14','tint-18','tint-bg-12','accent-press','accent-dlg','accent-8','accent-10','accent-13','accent-22','accent-28','accent-40','accent-70','bg-82','toast-error','toast-warning','toast-success','overlay'];
-    const related=k=>['bg','surface','raised','accent','marker','gold'].includes(k)?k:k==='pop'||k.startsWith('accent')||k.startsWith('tint')||k==='toast-success'?'accent':k==='user-bg'?'raised':k==='bg-82'||k==='sunk'?'bg':'surface';
+    const related=k=>['bg','surface','raised','accent','marker','gold','pop'].includes(k)?k:k.startsWith('accent')||k.startsWith('tint')||k==='toast-success'?'accent':k==='user-bg'?'raised':k==='bg-82'||k==='sunk'?'bg':'surface';
     for(const key of baseKeys) {
         const gradient=gradientFor(s,related(key));
         if(!gradient)continue;
@@ -89,7 +89,7 @@ export function gradientFills(s,vars) {
             result['--salty-fill-user-bg']=gradientCss({...gradient,colors});continue;
         }
         // Derived surfaces preserve their current lightness and opacity.
-        if(!['bg','surface','raised','accent','marker','gold'].includes(key)) {
+        if(!['bg','surface','raised','accent','marker','gold','pop'].includes(key)) {
             const base=parseColor(vars[`--salty-${key}`]||vars['--salty-surface']);
             const source=parseColor(palette[related(key)]);
             colors=colors.map(c=>{const p=parseColor(c);return `rgba(${p.slice(0,3).map((v,i)=>Math.max(0,Math.min(255,Math.round(v+base[i]-source[i])))).join(',')},${base[3]})`;});

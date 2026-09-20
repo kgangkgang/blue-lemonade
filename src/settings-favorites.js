@@ -4,7 +4,7 @@ const STAR = '<i class="fa-solid fa-star" aria-hidden="true"></i>';
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const favoriteKey = e => [e.tab, e.sub, e.anchor || '', e.path || ''].join('|');
 function tidy(e) {
-    if (!e || !['theme','text','chat','image','prompt'].includes(e.tab) || !/^[a-z-]+$/.test(e.sub)) return null;
+    if (!e || !['theme','text','chat','image','prompt','extensions'].includes(e.tab) || !/^[a-z-]+$/.test(e.sub)) return null;
     if ((e.tab==='theme'&&e.sub==='problems')||(e.tab==='prompt'&&e.sub==='regex')) return null;
     return {tab:e.tab,sub:e.sub,title:String(e.title || e.sub).slice(0,100),anchor:String(e.anchor || '').slice(0,100),path:/^[\w.]*$/.test(e.path || '')?String(e.path || '').slice(0,100):''};
 }

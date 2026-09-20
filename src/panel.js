@@ -1,3 +1,7 @@
+import { bindAddonLayout } from './addon-layout.js';
+import { typesetRoot } from './typography.js';
+import { addonMarkup, bindAddons } from './addons.js';
+import { wordToolsMarkup, bindWordTools } from './word-tools.js';
 import { gradientControls, mixControls, gradientAction, bindGradientColors } from './gradient-ui.js';
 import { bindEditor, openEditorCatalog, arrangeEditor, revealEditorTarget, selectEditorGroup } from './settings-editor.js';
 import { SettingsHistory } from './settings-history.js';
@@ -8,7 +12,7 @@ import { syncProfileClip } from './profile-clip.js';
 import { refreshPreset, FRAME_PRESETS, FRAME_LIMIT, presetFrame, saveFrame, useFrame, deleteFrame } from './frame-library.js';
 import { syncDecor } from './decor.js';
 import { FRAME_RANGE } from './frames.js';
-import { openCustomBuilder, customBuilder, bindCustomBuilder, setCustomMode, seedCustom, saveCustomPalette } from './custompalette.js';
+import { customLibrary, newCustomPalette, useCustomPalette, openCustomBuilder, customBuilder, bindCustomBuilder, setCustomMode, seedCustom, saveCustomPalette } from './custompalette.js';
 // 설정 창. 확장 서랍과 ✦ 메뉴 팝업 두 곳에 같은 창을 띄울 수 있음.
 // 위에서 대분류(탭) → 아래에서 소분류(칩)를 골라 한 번에 한 묶음만 보여 줌 (폰에서 창이 아래로 길어지지 않게)
 import { getSettings, saveSettings, resetSettings, FONT_SET, FONT_SLOTS, IMAGE_RANGE, PROFILE_RANGE, TEXT_LIMIT, FADE_AMOUNT } from './settings.js';
@@ -33,13 +37,14 @@ const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 
 // 대분류 탭 · 소분류 칩 — id 는 저장돼 있으니(localStorage) 바꾸지 말 것
 // 2.7.0: 글꼴 탭을 글자 탭에 합침 — 역할(본문 · 대사 · 메뉴 · 속마음 · 강조 · 코드)마다 한 화면에서 글꼴 · 크기 · 굵기 · 자간을 다 만짐
-const TABS = [['theme', '테마'], ['text', '글자'], ['chat', '채팅'], ['image', '이미지'], ['prompt', '프롬프트']];
+const TABS = [['theme', '테마'], ['text', '글자'], ['chat', '채팅'], ['image', '이미지'], ['prompt', '프롬프트'], ['extensions', '확장']];
 const SUBS = {
     theme: [['palette', '색'], ['colors', '색 고치기'], ['styles', '스타일'], ['changes', '변경한 설정'], ['backup', '백업']],
     text: [['text', '본문'], ['dialogue', '대사'], ['ui', '메뉴'], ['em', '속마음'], ['strong', '강조'], ['code', '코드'], ['para', '문단'], ['shadow', '그림자 · 외곽선']],
     chat: [['message', '메시지'], ['profile', '캐릭터 프로필'], ['user-profile', '내 프로필'], ['name', '캐릭터 이름·시간'], ['user-name', '내 이름·시간'], ['screen', '화면'], ['etc', '기타']],
     image: [['layout', '배치'], ['shape', '모양'], ['frame', '테두리'], ['size', '크기'], ['fade', '흐림']],
     prompt: [['deus', '데우스 엑스 마키나']],
+    extensions: [['words', '단어 치환'], ['capture', '채팅 캡처'], ['order', '확장 순서'], ['perf', '성능 보조'], ['models', '모델 등록'], ['modelorder', '모델 순서']],
 };
 
 const panels = new Set();
@@ -243,6 +248,8 @@ export function setPanelFullscreen(root, enabled) {
 }
 
 export function unmountPanel(root) {
+    root._captureCleanup?.(); root._captureCleanup=null;
+    root._addonCleanup?.(); root._addonCleanup=null;
     root._previewCleanup?.();
     for (const key of ['_fontIO', '_rowsRO']) { root[key]?.disconnect(); root[key] = null; }
     root.remove(); panels.delete(root); root._pv = {}; root._previewViews?.clear();
@@ -941,7 +948,7 @@ function tabTheme(s, sub) {
             ${stack('자동 기준', seg('auto.by', [['system', '기기 다크 모드'], ['time', '시간']]))}
             ${s.auto.by === 'time' ? `<div class="salty-row"><span>나이트 시작</span><input type="time" class="salty-time" data-time-path="auto.night" value="${esc(s.auto.night)}" aria-label="나이트 시작"></div><div class="salty-row"><span>화이트 시작</span><input type="time" class="salty-time" data-time-path="auto.day" value="${esc(s.auto.day)}" aria-label="화이트 시작"></div>` : ''}
         </div>` : '';
-    return `${chatPreview()}${selected !== 'custom' ? `<div class="bl-palette-tint">${slider(mode === 'dark' ? 'nightTint' : 'lightTint', '배경 테마색 농도', mode === 'dark' ? 1 : .5, 20, .5)}<small>${mode === 'dark' ? '기본 1% · 차콜' : '기본 0.5% · 화이트'}부터 20%까지. 직접 고친 배경색은 유지해요.</small></div>` : ''}<div class="salty-palette-toolbar"><span>${auto ? '자동 · ' : ''}${mode === 'light' ? '화이트' : '나이트'}</span><div class="salty-mode-switch" role="group" aria-label="테마 밝기">${['light', 'dark'].map(kind => `<button type="button" data-act="palette-mode" data-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'} 모드" title="${kind === 'light' ? '화이트' : '나이트'}" aria-pressed="${!auto && mode === kind}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}<button type="button" data-act="palette-auto" aria-label="자동" title="자동" aria-pressed="${auto}"><i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i></button></div></div>${autoOptions}${mixControls(s,{slider,esc})}<div class="salty-palettes">${cards}${custom}</div>`;
+    return `${chatPreview()}${selected !== 'custom' ? `<div class="bl-palette-tint">${slider(mode === 'dark' ? 'nightTint' : 'lightTint', '배경 테마색 농도', mode === 'dark' ? 1 : .5, 20, .5)}<small>${mode === 'dark' ? '기본 1% · 차콜' : '기본 0.5% · 화이트'}부터 20%까지. 직접 고친 배경색은 유지해요.</small></div>` : ''}<div class="salty-palette-toolbar"><span>${auto ? '자동 · ' : ''}${mode === 'light' ? '화이트' : '나이트'}</span><div class="salty-mode-switch" role="group" aria-label="테마 밝기">${['light', 'dark'].map(kind => `<button type="button" data-act="palette-mode" data-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'} 모드" title="${kind === 'light' ? '화이트' : '나이트'}" aria-pressed="${!auto && mode === kind}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}<button type="button" data-act="palette-auto" aria-label="자동" title="자동" aria-pressed="${auto}"><i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i></button></div></div>${autoOptions}${mixControls(s,{slider,esc})}<div class="salty-palettes">${cards}${custom}</div>${customLibrary(s)}`;
 
 }
 
@@ -1300,10 +1307,15 @@ function tabChat(s, sub) {
             ${weatherMode(s) !== 'off' ? stack('세기', seg('chat.weatherLevel', [[1, '약하게'], [2, '보통'], [3, '강하게']])) : ''}
         </div>
         ${weatherMode(s) !== 'off' ? `<div class="salty-group">
+            <p class="salty-note">지금 선택한 날씨에만 적용돼요. 날씨마다 값을 따로 기억해요.</p>
             ${slider('chat.weatherOpacity', '투명도', 10, 100, 1, 100)}
             ${slider('chat.weatherSize', '크기', 40, 250, 1, 100)}
             ${slider('chat.weatherSpeed', '속도', 20, 250, 1, 100)}
             ${slider('chat.weatherAngle', '각도', -45, 45, 1, -9)}
+            ${stack('움직임', seg('chat.weatherMotion', [['natural', '자연스럽게'], ['straight', '곧게'], ['flutter', '살랑살랑'], ['streak', '빠르게 쏟아지기']]))}
+            ${slider('chat.weatherSway', '흔들림', 0, 300, 1, 100)}
+            ${slider('chat.weatherSpin', '회전', 0, 300, 1, 100)}
+            ${s.chat.weather==='meteor'?`${stack('유성우 도는 방향',seg('chat.weatherOrbitDirection',[['left','왼쪽으로 · 반시계'],['right','오른쪽으로 · 시계']]))}${slider('chat.weatherCurvature','유성우 곡률',0,100,1,65)}${slider('chat.weatherOrbitSize','유성우 원 크기',40,240,1,100)}<p class="salty-note">곡률 0은 직선, 100은 원형 궤도예요. 원이 작으면 유성이 많아지고, 크면 넓은 원을 따라 적게 보여요. 각도로 궤도의 방향을 기울여요. ‘곧게’ 움직임을 고르면 곡률보다 우선해 직선으로 내려요.</p>`:''}
         </div>` : ''}
         ${cap('폰')}<div class="salty-group">
             <div class="bl-inline-preview" data-pv="phone">${phoneMock(s)}</div>
@@ -1355,20 +1367,22 @@ function weatherMode(s) {
 
 /** 날씨 고르기 — 트래커 따라는 데우스 호환을 켰을 때만 */
 function weatherSeg(s) {
-    const options = [['off', '끔'], ['rain', '비'], ['snow', '눈'], ['custom', '내 그림'], ...(s.deus?.on ? [['tracker', '트래커 따라']] : [])];
+    const options = [['off', '끔'], ['rain', '비'], ['snow', '눈'], ['lemon', '레몬'], ['petal', '꽃잎'], ['meteor', '유성'], ['custom', '내 그림'], ...(s.deus?.on ? [['tracker', '트래커 따라']] : [])];
     const current = weatherMode(s);
     return `<div class="salty-seg">${options.map(([value, label]) =>
         `<button data-act="seg" data-path="chat.weather" data-value="${value}" class="${current === value ? 'on' : ''}">${label}</button>`).join('')}</div>`;
 }
 
 // ───────── 프롬프트 (3.4.0) ─────────
-// 프리셋마다 한 칸. 지금은 데우스 엑스 마키나 2.3 — 호환을 켜야 카드 표본 · 카드 설정 · 트래커 설정이 보이고 적용된다
+// 프리셋마다 한 칸. 지금은 데우스 엑스 마키나 — 호환을 켜야 카드 표본 · 카드 설정 · 트래커 설정이 보이고 적용된다
+function tabExtensions(s, sub) { return addonMarkup(s,sub) + (['words','capture'].includes(sub) && s.addons[sub] ? wordToolsMarkup(s,sub) : ''); }
+
 function tabPrompt(s) {
     const on = !!s.deus?.on;
     const ink = s.deus?.ink || {};
     const dio = ink.outline || { on: false, color: '#000000', width: 0.6, alpha: 100 };  // 데우스 대사 가독성: 외곽선
     const dis = ink.shadow || { on: false, color: '#000000', alpha: 60, angle: 135, distance: 1.5, blur: 2 }; // 그림자
-    const head = `${cap('데우스 엑스 마키나 2.3')}<div class="salty-group">
+    const head = `${cap('데우스 엑스 마키나')}<div class="salty-group">
             ${row('프롬프트 호환', toggle('deus.on', on), '이 프리셋의 트래커 · 장면 계획 · 상태 카드를 테마에 맞춰요')}
         </div>`;
     if (!on) return `${head}<p class="salty-note">데우스 엑스 마키나 프리셋을 쓸 때만 켜 주세요. 끄면 아래 설정이 모두 쉬어요 (고른 값은 남아요).</p>`;
@@ -1530,13 +1544,17 @@ function tabImage(s, sub) {
 
 // ───────── 그리기 ─────────
 function render(root) {
+    root._captureCleanup?.(); root._captureCleanup=null;
+    root._addonCleanup?.(); root._addonCleanup=null;
     const oldSection = root.querySelector('.salty-sec');
     if (oldSection && root._editorRoute) root._editorScroll?.set(root._editorRoute, oldSection.scrollTop);
+    root._addonScroll ??= new Map();
+    if (oldSection && root._editorRoute) root._addonScroll.set(root._editorRoute, [oldSection.querySelector(".bl-addon-main")?.scrollTop || 0, oldSection.querySelector(".bl-addon-config")?.scrollTop || 0]);
     root._fontIO?.disconnect(); root._fontIO = null;
     const s = getSettings();
     const issues = getIssues();
     root._issues = issues;
-    const body = { theme: tabTheme, text: tabText, chat: tabChat, image: tabImage, prompt: tabPrompt };
+    const body = { theme: tabTheme, text: tabText, chat: tabChat, image: tabImage, prompt: tabPrompt, extensions: tabExtensions };
     if (!body[ui.tab]) ui.tab = 'theme';
     const sub = subOf(ui.tab);
     let section;
@@ -1571,11 +1589,17 @@ function render(root) {
     bindCustomBuilder(root);
     paintSettingsSearch(root);
     fillPreviews(root); // 미리보기 무대 다시 꽂기 (만들지 않고 옮겨 담기만)
+    typesetRoot(root);
+    bindAddons(root, refreshPanels);
+    bindWordTools(root, refreshPanels);
+    bindAddonLayout(root);
     bindPreviewViews(root, `${ui.tab}/${ui.subs[ui.tab]}`);
     syncSamples(s); // 미리보기 문단 클래스 맞추기
     installSettingResets(root);
     // Preview sizing changes the available scroll height; restore after it is measured.
     root.querySelector('.salty-sec').scrollTop = root._editorScroll.get(root._editorRoute) || 0;
+    const paneScroll = root._addonScroll.get(root._editorRoute) || [0, 0];
+    [".bl-addon-main", ".bl-addon-config"].forEach((selector, i) => { const pane = root.querySelector(selector); if (pane) pane.scrollTop = paneScroll[i]; });
 
     // 색 고르기: 처음 그릴 때 나는 change 는 무시하고, 사용자가 만진 뒤부터 저장
     bindGradientColors(root,getSettings,update);
@@ -1855,6 +1879,22 @@ function bind(root) {
                 case 'palette-auto':
                     update(st => { st.auto.on = !st.auto.on; });
                     break;
+                case 'custom-keep':
+                    update(st => { newCustomPalette(st, PALETTES[st.palette]?.mode); saveCustomPalette(st); });
+                    break;
+                case 'custom-use':
+                    update(st => useCustomPalette(st,el.dataset.id));
+                    break;
+                case 'custom-delete':
+                    update(st => { st.customPalettes=st.customPalettes.filter(item=>item.id!==el.dataset.id); if(st.activeCustomPalette===el.dataset.id)st.activeCustomPalette=''; });
+                    break;
+                case 'custom-library-edit':
+                    update(st => useCustomPalette(st,el.dataset.id));
+                    openCustomBuilder(getSettings(),PALETTES[getSettings().palette]?.mode);
+                    ui.subs.theme='custom'; refreshPanels(); break;
+                case 'custom-new':
+                    newCustomPalette(getSettings(), PALETTES[getSettings().palette]?.mode);
+                    ui.subs.theme='custom'; refreshPanels(); break;
                 case 'custom-open':
                     openCustomBuilder(getSettings(), PALETTES[getSettings().palette]?.mode);
                     ui.subs.theme = 'custom';

@@ -56,6 +56,7 @@ export function arrangeEditor(root, route, title) {
     workspace.append(section);
     workspace.inert = !!root._catalogOpen;
     root.querySelector('.salty-nav').inert = !!root._catalogOpen;
+    if(route.startsWith('extensions/')) { section.classList.add('bl-extension-page'); workspace.classList.add('bl-extension-workspace'); return; }
     const elements = [...section.children], groups = []; let current;
     const makeGroup = (label, anchor) => {
         const group = document.createElement('div'); group.className = 'bl-editor-group'; group.dataset.group = label;

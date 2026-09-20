@@ -5,7 +5,7 @@
 //        내 그림(custom): 받은 ImageBitmap 을 입자마다 돌려 가며 그린다 (눈처럼 흔들리며 내림).
 
 const LEVEL = [0, 0.55, 1, 1.7];
-const DENSITY = { rain: 0.00022, snow: 0.00016, custom: 0.0001 };
+const DENSITY = { rain: 0.00022, snow: 0.00016, custom: 0.0001, lemon: 0.0001, petal: 0.00012, meteor: 0.00005 };
 const SPRITE_PX = 18; // 내 그림 기본 크기 (긴 변, 크기 100%)
 
 export function createEngine(ctx) {
@@ -20,12 +20,14 @@ export function createEngine(ctx) {
     let speedK = 1;
     let slant = Math.tan(-9 * Math.PI / 180); // 세로 1 에 대한 가로 (음수 = 왼쪽으로)
     let sprite = null;
+    let motion = 'natural', swayK = 1, spinK = 1;
+    let curvature=.65, orbitSize=1, orbitDirection=-1;
     let items = [];
     const rand = (a, b) => a + Math.random() * (b - a);
 
     function drop(anywhere) {
         const depth = Math.random();
-        return { x: rand(-60, W + 60), y: anywhere ? rand(-40, H) : rand(-80, -10), len: 9 + depth * 16, speed: 520 + depth * 620, depth };
+        return { x: rand(-60, W + 60), y: anywhere ? rand(-40, H) : rand(-80, -10), len: 9 + depth * 16, speed: 520 + depth * 620, sway: 16, freq: .7, phase: rand(0, Math.PI * 2), rot: 0, spin: .15, depth };
     }
     function flake(anywhere) {
         const depth = Math.random();
@@ -35,13 +37,38 @@ export function createEngine(ctx) {
         const depth = Math.random();
         return { x: rand(0, W), y: anywhere ? rand(0, H) : rand(-40, -10), s: 0.6 + depth * 0.6, speed: 28 + depth * 62, sway: 10 + depth * 22, phase: rand(0, Math.PI * 2), freq: rand(0.3, 0.9), rot: rand(0, Math.PI * 2), spin: rand(-1.4, 1.4), depth };
     }
-    const make = anywhere => (mode === 'rain' ? drop(anywhere) : mode === 'snow' ? flake(anywhere) : piece(anywhere));
+    function meteorPoint(p, y) {
+        const k=motion==='straight'?0:curvature, angle=Math.atan(slant);
+        const base=Math.max(120,Math.min(W,H)*.9)*orbitSize*p.orbit;
+        const distance=y-H*.5;
+        let x=p.anchor-W*.5,dy=distance;
+        if(k>0){
+            const radius=base/k, theta=distance/radius+p.phase*k;
+            // At full curvature every lane shares the same orbital centre.
+            // As curvature approaches zero, the arc opens into a straight fall.
+            x=(1-k)*(p.anchor-W*.5)+orbitDirection*radius*(1-k-Math.cos(theta));
+            dy=radius*Math.sin(theta);
+        }
+        const flutter=k&&motion==='flutter'?Math.sin(distance/120+p.phase)*5*swayK:0;
+        return {x:W*.5+x*Math.cos(angle)+dy*Math.sin(angle)+flutter,y:H*.5-x*Math.sin(angle)+dy*Math.cos(angle)};
+    }
+    function comet(anywhere) {
+        const depth = Math.random();
+        // Each streak follows one continuous arc. Its tail is sampled from
+        // that same curve, so a still capture and the first frame are curved too.
+        return { anchor: rand(-W * .12, W * 1.12), y: anywhere ? rand(0, H + 90) : rand(-90, -10),
+            depth, speed: 48 + depth * 65, phase: rand(0, Math.PI * 2), age: rand(0, 8),
+            orbit:rand(.35,1.15),
+            length: rand(100, 230) * (.75 + depth * .45), bright: Math.random() < .15,
+            tone: Math.random() };
+    }
+    const make = anywhere => (mode === 'rain' ? drop(anywhere) : mode === 'snow' ? flake(anywhere) : mode === 'meteor' ? comet(anywhere) : piece(anywhere));
 
     function seed() {
         const k = LEVEL[level] ?? 1;
         const area = Math.max(0, W * H);
-        const active = mode === 'rain' || mode === 'snow' || (mode === 'custom' && sprite);
-        items = active ? Array.from({ length: Math.round(area * DENSITY[mode] * k) }, () => make(true)) : [];
+        const active = DENSITY[mode] && (mode !== 'custom' || sprite);
+        items = active ? Array.from({ length: Math.min(mode === 'meteor' ? 160 : 500, Math.round(area * DENSITY[mode] * k * (mode==='meteor'?Math.pow(1/orbitSize,1.5):1))) }, () => make(true)) : [];
     }
 
     function step(dt, now) {
@@ -50,15 +77,22 @@ export function createEngine(ctx) {
         const margin = 40 * sizeK;
         for (let i = 0; i < items.length; i++) {
             const p = items[i];
-            const v = p.speed * speedK;
+            if (mode === 'meteor') {
+                p.age += dt;
+                p.y += p.speed * speedK * (motion === 'streak' ? 1.7 : 1) * dt;
+                if(motion==='straight'||curvature===0){if(p.y-p.length*Math.sqrt(sizeK)>H+Math.max(W,H))items[i]=comet(false);}else{const period=2*Math.PI*Math.max(120,Math.min(W,H)*.9)*orbitSize*p.orbit/curvature;if(p.y-H*.5>period)p.y-=period;}
+                continue;
+            }
+            const streak = motion === 'streak';
+            const v = p.speed * speedK * (streak ? 6 : 1);
             p.y += v * dt;
             p.x += v * slant * dt;
+            p.x += Math.sin(t * p.freq + p.phase) * p.sway * dt * swayK * (motion === 'straight' ? 0 : motion === 'flutter' ? 2 : 1);
+            if (mode !== 'snow') p.rot += p.spin * dt * Math.min(2, speedK) * spinK;
             if (mode === 'rain') {
                 if (p.y - p.len * sizeK > H || p.x < -margin - 60 || p.x > W + margin + 60) items[i] = drop(false);
                 continue;
             }
-            p.x += Math.sin(t * p.freq + p.phase) * p.sway * dt;
-            if (mode === 'custom') p.rot += p.spin * dt * Math.min(2, speedK);
             if (p.x < -margin) p.x += W + margin * 2;
             else if (p.x > W + margin) p.x -= W + margin * 2;
             if (p.y - margin > H) items[i] = make(false);
@@ -78,7 +112,8 @@ export function createEngine(ctx) {
                     if (p.depth < from || p.depth >= to) continue;
                     const len = p.len * sizeK;
                     ctx.moveTo(p.x, p.y);
-                    ctx.lineTo(p.x - len * slant, p.y - len);
+                    const angle = Math.atan(slant) + p.rot;
+                    ctx.lineTo(p.x - len * Math.sin(angle), p.y - len * Math.cos(angle));
                 }
                 ctx.lineWidth = (0.8 + b * 0.35) * Math.sqrt(sizeK);
                 ctx.strokeStyle = `rgba(${colors.rain}, ${Math.min(1, colors.rainAlpha * (0.45 + b * 0.28) * opacity).toFixed(3)})`;
@@ -96,10 +131,48 @@ export function createEngine(ctx) {
                 ctx.fillStyle = `rgba(${colors.snow}, ${Math.min(1, colors.snowAlpha * (0.45 + b * 0.27) * opacity).toFixed(3)})`;
                 ctx.fill();
             });
-        } else if (mode === 'custom' && sprite) {
-            const long = Math.max(sprite.width, sprite.height) || 1;
-            const bw = sprite.width / long;
-            const bh = sprite.height / long;
+        } else if (mode === 'meteor') {
+            ctx.lineCap = 'round';
+            for (const p of items) {
+                const length = p.length * Math.sqrt(sizeK), points = [];
+                for (let n = 0; n <= 24; n++) points.push(meteorPoint(p, p.y - length * n / 24));
+                const head = points[0], tail = points.at(-1);
+                const width = (.45 + p.depth * .55) * Math.sqrt(sizeK);
+                const ink = p.tone < .22 ? '244,229,184' : p.tone < .65 ? '205,237,255' : '173,216,245';
+                const light = colors.snowAlpha < .7;
+                // Quiet fine arcs stay readable over chat. A few brighter tips
+                // add depth without giving every streak a large circular head.
+                ctx.globalAlpha = opacity * (.36 + p.depth * .46);
+                for (const glow of [true, false]) {
+                    const gradient = ctx.createLinearGradient(head.x, head.y, tail.x, tail.y);
+                    const color = light ? '57,111,156' : ink;
+                    const alpha = glow ? .1 : .9;
+                    gradient.addColorStop(0, `rgba(${color},${alpha})`);
+                    gradient.addColorStop(.32, `rgba(${color},${alpha * .75})`);
+                    gradient.addColorStop(.8, `rgba(${color},${alpha * .25})`);
+                    gradient.addColorStop(1, `rgba(${color},0)`);
+                    ctx.strokeStyle = gradient;ctx.lineWidth = width * (glow ? 4 : 1);ctx.beginPath();
+                    for (const [n, point] of points.entries()) {
+                        // Rotation controls a subtle twist in the luminous thread.
+                        const twist = glow||curvature===0||motion==='straight' ? 0 : Math.sin(n * .2 - p.age * spinK + p.phase) * width * .25 * Math.min(1, spinK);
+                        if (!n) ctx.moveTo(point.x, point.y);else ctx.lineTo(point.x + twist, point.y);
+                    }
+                    ctx.stroke();
+                }
+                if (p.bright) {
+                    const radius = width * 4;
+                    const halo = ctx.createRadialGradient(head.x, head.y, 0, head.x, head.y, radius);
+                    halo.addColorStop(0, light ? 'rgba(60,137,171,.55)' : 'rgba(188,255,238,.75)');
+                    halo.addColorStop(1, 'rgba(135,234,243,0)');
+                    ctx.fillStyle=halo;ctx.beginPath();ctx.arc(head.x,head.y,radius,0,Math.PI*2);ctx.fill();
+                }
+                ctx.fillStyle = light ? '#527f9b' : '#eefbff';ctx.beginPath();ctx.arc(head.x,head.y,width * .65,0,Math.PI*2);ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+        } else if (['custom', 'lemon', 'petal'].includes(mode)) {
+            const long = Math.max(sprite?.width || 1, sprite?.height || 1);
+            const bw = (sprite?.width || 1) / long;
+            const bh = (sprite?.height || 1) / long;
             for (const p of items) {
                 const size = SPRITE_PX * sizeK * p.s;
                 const w = size * bw;
@@ -108,7 +181,22 @@ export function createEngine(ctx) {
                 const sin = Math.sin(p.rot) * dpr;
                 ctx.globalAlpha = Math.min(1, (0.55 + p.depth * 0.45) * opacity);
                 ctx.setTransform(cos, sin, -sin, cos, p.x * dpr, p.y * dpr);
-                ctx.drawImage(sprite, -w / 2, -h / 2, w, h);
+                if (mode === 'custom' && sprite) ctx.drawImage(sprite, -w / 2, -h / 2, w, h);
+                else if (mode === 'lemon') {
+                    ctx.beginPath(); ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
+                    ctx.fillStyle = '#ffe56a'; ctx.fill();
+                    ctx.strokeStyle = '#fff7bc'; ctx.lineWidth = Math.max(.7, size * .055); ctx.stroke();
+                    for (let n = 0; n < 8; n++) {
+                        const a = n * Math.PI / 4;
+                        ctx.beginPath(); ctx.moveTo(Math.cos(a) * size * .09, Math.sin(a) * size * .09);
+                        ctx.lineTo(Math.cos(a) * size * .4, Math.sin(a) * size * .4); ctx.stroke();
+                    }
+                } else if (mode === 'petal') {
+                    ctx.beginPath(); ctx.moveTo(0, -size * .5);
+                    ctx.bezierCurveTo(size * .65, -size * .25, size * .3, size * .55, 0, size * .45);
+                    ctx.bezierCurveTo(-size * .4, size * .2, -size * .5, -size * .2, 0, -size * .5);
+                    ctx.fillStyle = '#f3aec9'; ctx.fill();
+                }
             }
             ctx.globalAlpha = 1;
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -131,10 +219,16 @@ export function createEngine(ctx) {
                 sprite?.close?.();
                 sprite = next.sprite || null;
             }
-            const reseed = next.mode !== mode || next.level !== level || (spriteChanged && next.mode === 'custom');
+            const reseed = (Number.isFinite(next.orbitSize)&&next.orbitSize/100!==orbitSize) || next.mode !== mode || next.level !== level || (spriteChanged && next.mode === 'custom');
             mode = next.mode;
             level = next.level;
             if (next.colors) colors = next.colors;
+            if (next.motion) motion = next.motion;
+            if(Number.isFinite(next.curvature))curvature=Math.max(0,Math.min(1,next.curvature/100));
+            if(Number.isFinite(next.orbitSize))orbitSize=Math.max(.4,Math.min(2.4,next.orbitSize/100));
+            if(next.orbitDirection)orbitDirection=next.orbitDirection==='left'?1:-1;
+            if (Number.isFinite(next.sway)) swayK = Math.max(0, Math.min(3, next.sway / 100));
+            if (Number.isFinite(next.spin)) spinK = Math.max(0, Math.min(3, next.spin / 100));
             if (Number.isFinite(next.opacity)) opacity = Math.min(1, Math.max(0.05, next.opacity / 100));
             if (Number.isFinite(next.size)) sizeK = Math.min(3, Math.max(0.3, next.size / 100));
             if (Number.isFinite(next.speed)) speedK = Math.min(3, Math.max(0.2, next.speed / 100));

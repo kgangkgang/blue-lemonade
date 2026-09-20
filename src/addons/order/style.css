@@ -1,0 +1,162 @@
+/* 확장 순서 — 버튼 하나와 순서 창
+   index.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이다.
+   설정 서랍이 없어서 기댈 우리 요소가 화면에 없으므로 :root 에 둔다. */
+:root {
+    --po-css-version: "1.1.0";
+}
+
+/* 확장 서랍 맨 위 버튼 줄의 아이콘 버튼. 옆의 두 버튼과 높이를 맞추고 글자 없이 정사각형에 가깝게. */
+.po-open {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.po-open > i {
+    font-size: 1em;
+    line-height: 1;
+}
+
+/* ── 순서 창 ───────────────────────────────────────── */
+
+.po-dialog {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+}
+
+.po-title {
+    margin: 0 0 2px;
+}
+
+/* 창 제목의 버전 배지 — 다른 확장들과 같은 모양 */
+.po-version {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 1px 7px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--SmartThemeBodyColor, #888) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--SmartThemeBodyColor, #999) 28%, transparent);
+    font-size: 0.7em;
+    font-weight: 400;
+    color: color-mix(in srgb, var(--SmartThemeBodyColor, #999) 65%, transparent);
+    vertical-align: middle;
+}
+
+.po-hint {
+    margin: 0;
+    opacity: 0.7;
+    line-height: 1.45;
+}
+
+.po-opt {
+    margin: 0;
+}
+
+.po-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    max-height: 55vh;
+    overflow-y: auto;
+}
+
+.po-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 6px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--SmartThemeBodyColor, #888) 6%, transparent);
+}
+
+.po-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.po-item button {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2em;
+    height: 2em;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    opacity: 0.65;
+}
+
+.po-item button:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--SmartThemeBodyColor, #888) 14%, transparent);
+    opacity: 1;
+}
+
+.po-item button:disabled {
+    opacity: 0.2;
+    cursor: default;
+}
+
+.po-pin.is-on {
+    color: var(--SmartThemeQuoteColor, #6cf);
+    opacity: 1;
+}
+
+/* 순서 창 안에서 위·아래를 나누는 줄 */
+.po-line {
+    height: 1px;
+    margin: 4px 2px;
+    background: color-mix(in srgb, var(--SmartThemeBodyColor, #888) 30%, transparent);
+}
+
+.po-empty {
+    padding: 10px 6px;
+    text-align: center;
+    opacity: 0.7;
+}
+
+.po-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+/* 실리태번 기본값은 .menu_button { width: min-content } 인데, 한글은 글자마다 줄을 바꿀 수 있어서
+   최소 너비가 한 글자다. 그대로 두면 "처음으로"가 한 글자씩 세로로 접힌다.
+   줄바꿈을 막으면 최소 너비가 글자 전체 너비가 되므로, nowrap 하나로도 막힌다. */
+.po-foot .menu_button {
+    margin: 0;
+    flex: 0 0 auto;
+    width: auto;
+    min-width: max-content;
+    white-space: nowrap;
+}
+
+.po-count {
+    flex: 0 0 auto;
+    opacity: 0.7;
+    font-size: 0.85em;
+}
+
+/* 확장 서랍에 실제로 그어지는 구분선.
+   두 칸이 세로 flex라 이 칸도 flex 항목이 된다 — 가로로 꽉 차게 둔다. */
+#po-divider {
+    flex: 0 0 auto;
+    width: 100%;
+    height: 1px;
+    margin: 6px 0;
+    background: color-mix(in srgb, var(--SmartThemeBodyColor, #888) 35%, transparent);
+}

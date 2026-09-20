@@ -50,7 +50,7 @@ const groups = [
     ['351-color-swatches.png','이미지의 대표 색','색 조합을 한 줄에서 고르고 최근 색도 다시 써요.'],
     ['330-rain.mp4','창밖에 비가 내리는 날','채팅 뒤에 은은하게 흐르는 비. 세기도 조절해요.','330-rain.jpg','330-rain.gif'],
     ['330-snow.mp4','조용히 내려오는 눈','트래커의 날씨를 따르게 할 수도 있어요.','330-snow.jpg','330-snow.gif'],
-    ['331-lemon.mp4','레몬도 내려요','투명 PNG로 꽃잎, 별, 마음에 드는 그림을 더해요.','331-lemon.jpg','331-lemon.gif'],
+    ['331-lemon.mp4','내 그림도 내려요','투명 PNG로 꽃잎, 별, 마음에 드는 그림을 더해요.','331-lemon.jpg','331-lemon.gif'],
     ['362-weather-preview.mp4','움직이는 미리보기','크기, 투명도, 속도, 각도를 바꾸면 바로 따라와요.','362-weather-preview.jpg','362-weather-preview.gif'],
     ['310-styles.png','한 번에 입히는 스타일','소설책, 메신저, 또렷하게. 완성 스타일로 시작하세요.'],
     ['320-auto.png','낮에는 밝게, 밤에는 편안하게','기기 다크 모드나 정해 둔 시간을 따라 전환해요.'],
@@ -84,7 +84,26 @@ const pcGroups = [
 const $ = s => document.querySelector(s);
 function element(tag, cls, text) { const e=document.createElement(tag); if(cls)e.className=cls; if(text)e.textContent=text; return e; }
 // media version: bump when shots are retaken under the same names, so cached copies don't linger
-const MV='?v=20260919c';
+const MV='?v=20260920-405';
+const additions = { title: '새로 더한, 나만의 작은 도구.', sub: '4.0.5 · 날씨 · 에이드 보관함 · 선택해서 켜는 확장', cards: [
+ ['403-hero-phone-dark.mp4','유성우에서 비와 눈으로','실제 테마의 세 가지 날씨가 부드럽게 이어져요.','403-hero-phone-dark.jpg','403-hero-phone-dark.gif'],
+ ['403-capture-new-desktop.png','넓은 화면에서는 나란히','PC는 왼쪽에서 선택·미리보기, 오른쪽에서 두 열의 설정을 조절해요.'],
+ ['403-capture-parameters-mobile.jpg','가림 모양도 섬세하게','얇은 슬라이더와 테마색 손잡이로 여백·기울기·외곽선·그림자를 조절해요.'],
+ ['400-weather-lemon.mp4','레몬은 기본 날씨로','그림을 따로 준비하지 않아도, 레몬 조각이 내려요.','400-weather-lemon.jpg','400-weather-lemon.gif'],
+ ['400-weather-petal.mp4','흔들흔들 꽃잎','낙하 방식·흔들림·회전을 모든 날씨에 적용해요.','400-weather-petal.jpg','400-weather-petal.gif'],
+ ['402-weather-meteor.mp4','밤하늘을 둥글게 도는 유성우','방향·곡률·원 크기로 직선부터 원형까지.','402-weather-meteor.jpg','402-weather-meteor.gif'],
+ ['402-weather-settings.png','움직임까지 직접','유성우 방향·곡률·원 크기도 미리 보면서 맞춰요.'],
+ ['403-palette-library.jpg','마음에 든 색은 보관함에','화이트·나이트를 한 쌍으로, 24개까지 저장해요.'],
+ ['403-words-desktop.png','단어 치환도 한곳에서','번역본·원문 보기로 메시지를 고르고, 치환 전후를 확인해요.'],
+ ['403-capture-new-desktop.png','좋아하는 장면을 이미지·영상으로','캡처용 글 편집과 가림 꾸밈, 배경 영상까지 미리 봐요.'],
+ ['403-order-desktop.png','확장 순서 정리','필요할 때만 켜고, 기존 단독 확장과 중복 실행을 막아요.'],
+ ['402-capture-editor.png','공유할 문장만 다듬어서','문장을 고치고 문단을 옮겨도 원문과 번역문은 그대로예요.'],
+ ['402-capture-video.mp4','배경과 날씨도 함께','이름을 가린 캡처에도 움직이는 장면을 담아요.','402-capture-video.jpg','402-capture-video.gif'],
+ ['403-models-desktop.png','목록에 없는 모델도 직접','공급자를 고르고 모델 이름을 등록해요.'],
+ ['403-modelorder-desktop.png','모델 순서도 테마 안에서','직접 등록한 모델을 끌거나 화살표로 정렬해요.'],
+ ['403-perf-desktop.png','성능 보조도 선택해서','왼쪽에서 표시 위치를 고르고 오른쪽에서 다섯 도구를 바로 조절해요.'],
+]};
+groups.unshift({...additions,cards:additions.cards.map(card=>card[0]==='403-capture-new-desktop.png'?['403-capture-mobile.png','모바일에서도 미리 보고 저장','선택한 채팅과 이름 가림을 확인하고, 설정을 바꾼 뒤 다시 만들어요.']:card)});pcGroups.unshift(additions);
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
 document.documentElement.classList.add('js');
 const lightbox=$('#lightbox');
@@ -158,11 +177,12 @@ document.querySelectorAll('.section-head,.palette-layout,.reading-layout,.galler
 (() => {
   const art = document.querySelector('.hero-art'); if (!art) return;
   const vids = [...art.querySelectorAll('video.hero-video')];
-  const shown = v => v.offsetParent !== null;
+  const shown = v => document.documentElement.classList.contains('device-pc') ? !!v.closest('.pc-stage') : !!v.closest('.phone-slot');
   const start = v => { if (!v.src && v.dataset.src) { if (v.dataset.poster) v.poster = v.dataset.poster; v.src = v.dataset.src; } v.muted = true; const p = v.play(); if (p) p.catch(() => {}); };
-  const sync = () => { const on = !art.classList.contains('idle'); for (const v of vids) { if (shown(v) && on) start(v); else v.pause(); } };
+  const sync = () => { const on = !document.hidden && !reduceMotion.matches && !art.classList.contains('idle'); for (const v of vids) { if (shown(v) && on) start(v); else v.pause(); } };
   new MutationObserver(sync).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
   new MutationObserver(sync).observe(art, { attributes: true, attributeFilter: ['class'] });
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) sync(); });
-  if (!reduceMotion.matches) sync();
+  document.addEventListener('visibilitychange', sync);
+  reduceMotion.addEventListener('change', sync);
+  sync();
 })();

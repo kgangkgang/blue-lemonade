@@ -1,3 +1,4 @@
+import { startAddons, syncAddonIcons } from './src/addons.js';
 // Blue Lemonade · 블루 레몬에이드 — 실리태번 테마 확장 (폴더·설정 키는 예전 이름 salty 그대로)
 import { getSettings, saveSettings } from './src/settings.js';
 import { applyAll, dropStaleOverrides } from './src/apply.js';
@@ -61,15 +62,17 @@ async function showVersion(badge) {
     refreshPanels(); // 설정 창이 버전을 읽기 전에 그려졌으면 알약을 붙여 다시 그림
 }
 
-async function openPopup(fullscreen = false) {
+async function openPopup(fullscreen = false, extension = null) {
     restorePreviewRules();
     const ctx = SillyTavern.getContext();
     const wrap = document.createElement('div');
     wrap.style.textAlign = 'left';
     const panel = mountPanel(wrap, { popup: true });
+
     setTimeout(retoneAll, 400); // 정규식 카드 미리보기의 색 글자도 톤 맞춤 (tone.js)
     try {
         await ctx.callGenericPopup(wrap, ctx.POPUP_TYPE.TEXT, '', { wide: true, allowVerticalScrolling: true, okButton: false, onOpen: popup => {
+    if(['words','capture'].includes(extension))panel.querySelector(`[data-act="editor-route"][data-tab="extensions"][data-sub="${extension}"]`)?.click();
             panel._onClose = () => popup.completeAffirmative();
             setPanelFullscreen(panel, fullscreen);
         } });
@@ -98,6 +101,7 @@ loadVersion().then(() => refreshPanels()); // 설정 창 제목 옆 공지사항
 
 // 콘솔·테스트용
 window.Salty = { getSettings, applyAll, refreshPanels, openPopup, restorePreviewRules, deferredPreviewRuleCount, panelHasRuleCount, panelCssEnabled, streamFadeState };
+window.addEventListener('bl:addons-state',refreshPanels);
 
 jQuery(() => {
     widenSelectorCache(); // 실리태번의 위임 핸들러 선택자를 jQuery 가 매번 다시 컴파일하지 않게 (2.9.4, lite.js)
@@ -106,6 +110,7 @@ jQuery(() => {
     startMenuOpenMark(); // ··· 메뉴가 열린 메시지에 bl-menu-open (style.css 의 :has() 대신, lite.js)
     startAnchorGate();   // ≡ · ✦ 메뉴가 열려 있을 때만 입력판에 앵커 이름 (2.9.4, lite.js)
     mountDrawer();
+    syncAddonIcons();
     addMenuItem();
     startAssetWatcher();
     startPromptList(); // 검사 창 프롬프트 목록 줄을 세 조각으로 쪼갬 (CSS 로는 순서를 못 바꿈)
@@ -131,3 +136,6 @@ jQuery(() => {
         refreshTimer = setTimeout(refreshPanels, 400);
     });
 });
+
+// Host modules finish evaluating after extensions load; do not hold that cycle open.
+startAddons().catch(error => console.error('[Blue Lemonade] 확장 기능 시작', error));

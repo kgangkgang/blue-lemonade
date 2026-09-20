@@ -3,7 +3,7 @@ import { PALETTES, paletteColors } from './palettes.js';
 import { presetColors } from './frame-presets.js';
 const read = (obj, path) => path.split('.').reduce((v, k) => v != null && Object.hasOwn(v,k) ? v[k] : undefined, obj);
 const equal = (a, b) => a === b || (!!a && !!b && typeof a === 'object' && typeof b === 'object' && Object.keys(a).length === Object.keys(b).length && Object.keys(a).every(k => equal(a[k], b[k])));
-const omitted = new Set(['version','noticeSeen','frameLibrary','customFonts','styles','charStyles','activeStyle','baseStyle','weatherImages']);
+const omitted = new Set(['version','noticeSeen','frameLibrary','customFonts','styles','charStyles','activeStyle','baseStyle','weatherImages','customPalettes','activeCustomPalette','wordTools']);
 const omittedPaths = new Set(['image.masks','image.maskId','chat.weatherImageId']);
 const safe = path => typeof path === 'string' && !path.split('.').some(k => ['__proto__','constructor','prototype'].includes(k));
 export function settingDefault(settings, path) {
@@ -55,6 +55,7 @@ export function changedSettings(settings) {
 }
 export function settingRoute(path) {
     const [scope, key] = path.split('.');
+    if (scope === 'addons') return {tab:'extensions',sub:key};
     if (scope === 'gradients') return {tab:'theme',sub:key!=='overrides'?'palette':'colors'};
     if (scope === 'colorOverrides') return { tab:'theme', sub:'colors' };
     if (['palette','lightTint','nightTint','auto','enabled','customName'].includes(scope)) return {tab:'theme',sub:'palette'};

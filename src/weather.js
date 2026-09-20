@@ -76,7 +76,7 @@ const ratio = () => Math.min(1.5, window.devicePixelRatio || 1);
 
 /** 설정의 날씨 값 → 엔진 값 (범위는 settings.js 가 이미 잡음) */
 function paramsFrom(chat = {}) {
-    return { opacity: Number(chat.weatherOpacity) || 100, size: Number(chat.weatherSize) || 100, speed: Number(chat.weatherSpeed) || 100, angle: Number.isFinite(Number(chat.weatherAngle)) ? Number(chat.weatherAngle) : -9 };
+    return { curvature:Number(chat.weatherCurvature??65),orbitSize:Number(chat.weatherOrbitSize??100),orbitDirection:chat.weatherOrbitDirection||'right', opacity: Number(chat.weatherOpacity) || 100, size: Number(chat.weatherSize) || 100, speed: Number(chat.weatherSpeed) || 100, motion: chat.weatherMotion || 'natural', sway: Number(chat.weatherSway ?? 100), spin: Number(chat.weatherSpin ?? 100), angle: Number.isFinite(Number(chat.weatherAngle)) ? Number(chat.weatherAngle) : -9 };
 }
 
 // 내 그림: data URL → ImageBitmap. 워커로 넘기면 원본이 비워지므로 보낼 때마다 새로 만든다 (Blob 만 들고 있음)
@@ -190,7 +190,7 @@ function listen() {
 
 /** features.js 가 설정이 바뀔 때마다 부른다 */
 export function syncWeather(on, chat = {}) {
-    const mode = ['rain', 'snow', 'custom', 'tracker'].includes(chat.weather) ? chat.weather : 'off';
+    const mode = ['rain', 'snow', 'lemon', 'petal', 'meteor', 'custom', 'tracker'].includes(chat.weather) ? chat.weather : 'off';
     const level = [1, 2, 3].includes(Number(chat.weatherLevel)) ? Number(chat.weatherLevel) : 2;
     wanted = { on: !!on && mode !== 'off', mode, level, params: paramsFrom(chat), sprite: chat.weatherImage || '' };
     if (!wanted.on) {
@@ -213,7 +213,7 @@ export function syncWeather(on, chat = {}) {
 // ───────── 설정 창 채팅 표본 ─────────
 /** 채팅 표본(.salty-preview[data-prev="chat"])에 작은 효과. 트래커 따라면 지금 채팅의 날씨, 없으면 비를 보여 준다 */
 export function previewWeather(stage, chat = {}) {
-    const mode = ['rain', 'snow', 'custom', 'tracker'].includes(chat.weather) ? chat.weather : 'off';
+    const mode = ['rain', 'snow', 'lemon', 'petal', 'meteor', 'custom', 'tracker'].includes(chat.weather) ? chat.weather : 'off';
     const level = [1, 2, 3].includes(Number(chat.weatherLevel)) ? Number(chat.weatherLevel) : 2;
     let preview = stage._blWeather;
     if (mode === 'off') {
@@ -240,4 +240,31 @@ export function previewWeather(stage, chat = {}) {
 /** 시험용 */
 export function weatherState() {
     return { wanted, layer: !!layer, current: layer?.current() ?? null, tracker: trackerMode() };
+}
+
+/** A still of the current effect, rendered at export resolution for long captures. */
+export async function captureWeather(width, height, scale) {
+    if (!wanted.on || !layer) return '';
+    const current = { ...layer.current() }, spriteData = wanted.sprite;
+    if (current.mode === 'off') return '';
+    const { createEngine } = await import('./weather-engine.js');
+    const canvas = document.createElement('canvas');
+    const engine = createEngine(canvas.getContext('2d'));
+    const bitmap = current.mode === 'custom' ? await spriteBitmap(spriteData) : null;
+    try {
+        engine.resize(width, height, scale);
+        engine.config({ ...current, colors: colorsNow(), sprite: bitmap });
+        engine.draw();
+        return canvas.toDataURL('image/png');
+    } finally { bitmap?.close?.(); canvas.width = canvas.height = 1; }
+}
+/** Independent animation used only during capture; the live weather is untouched. */
+export async function captureWeatherAnimation(width,height,scale=1) {
+    if(!wanted.on||!layer)return null;
+    const current={...layer.current()};if(current.mode==='off')return null;
+    const {createEngine}=await import('./weather-engine.js');
+    const canvas=document.createElement('canvas'),engine=createEngine(canvas.getContext('2d'));
+    const bitmap=current.mode==='custom'?await spriteBitmap(wanted.sprite):null;
+    engine.resize(width,height,scale);engine.config({...current,colors:colorsNow(),sprite:bitmap});
+    return {canvas,draw(dt,now){engine.step(dt,now);engine.draw();},close(){bitmap?.close?.();canvas.width=canvas.height=1;}};
 }
