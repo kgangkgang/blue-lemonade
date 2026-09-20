@@ -1313,6 +1313,8 @@ function tabChat(s, sub) {
         </div>
         ${weatherMode(s) !== 'off' ? `<div class="salty-group">
             <p class="salty-note">지금 선택한 날씨에만 적용돼요. 날씨마다 값을 따로 기억해요.</p>
+            ${stack('날씨 색',seg('chat.weatherColorMode',[['auto','기본 색'],['custom','직접 고르기']],'auto'),'날씨마다 따로 저장해요. 기본 색으로 돌아가면 원래 색을 사용해요.')}
+            ${s.chat.weatherColorMode==='custom'?`<div class="salty-row"><span>입자 색</span><input type="color" data-color-path="chat.weatherColor" value="${esc(s.chat.weatherColor)}" aria-label="날씨 입자 색"></div><p class="salty-note">커스텀 그림은 투명한 부분을 유지하고 선택한 색으로 물들여요.</p>`:''}
             ${slider('chat.weatherOpacity', '투명도', 10, 100, 1, 100)}
             ${slider('chat.weatherSize', '크기', 40, 250, 1, 100)}
             ${slider('chat.weatherSpeed', '속도', 20, 250, 1, 100)}
@@ -2283,7 +2285,10 @@ function bind(root) {
         }
         const picker = event.target.closest('input[data-color-path]');
         if (picker) {
-            if (/^#[0-9a-f]{6}$/i.test(picker.value)) update(st => setPath(st, picker.dataset.colorPath, picker.value), false);
+            if (/^#[0-9a-f]{6}$/i.test(picker.value)) {
+                update(st => setPath(st, picker.dataset.colorPath, picker.value), false);
+                for(const panel of panels)syncWeatherPreview(panel,picker.dataset.colorPath);
+            }
             return;
         }
         const range = event.target.closest('input[data-range]');

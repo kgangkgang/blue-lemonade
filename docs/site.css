@@ -188,7 +188,7 @@ dialog{border:0;border-radius:22px;background:var(--surface);color:var(--text);m
 dialog[open]{animation:pop .3s var(--ease)}
 @keyframes pop{from{opacity:0;transform:scale(.96)}}
 dialog::backdrop{background:rgba(8,16,28,.78);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
-dialog img{display:block;max-height:79vh;max-width:85vw;object-fit:contain;margin:auto;border-radius:10px}
+dialog img{display:block;max-height:79vh;max-width:min(85vw,100%);object-fit:contain;margin:auto;border-radius:10px}
 dialog p{text-align:center;font-size:14px;margin:14px 0 0;color:var(--ink);font-weight:600}
 .close{position:absolute;top:10px;right:10px;display:grid;place-items:center;width:36px;height:36px;padding:0;border:0;border-radius:50%;background:var(--surface);color:var(--ink);font-size:24px;line-height:1;box-shadow:var(--shadow-sm)}
 #toast{position:fixed;z-index:60;bottom:28px;left:50%;transform:translate(-50%,8px);background:var(--ink);color:var(--bg);border-radius:999px;padding:12px 22px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s var(--ease)}
@@ -293,4 +293,5 @@ dialog[open]::backdrop{animation:fade .3s ease}
 .gallery-block[data-device=pc] .card{flex-basis:540px}
 .gallery-block[data-device=pc] .media-wrap{height:auto;aspect-ratio:16/10}
 .gallery-block[data-device=pc] .media-wrap img,.gallery-block[data-device=pc] .media-wrap video{object-fit:cover}
+.gallery-block[data-device=pc] .media-wrap.export-media img,.gallery-block[data-device=pc] .media-wrap.export-media video{object-fit:contain}
 @media (max-width:760px){.gallery-block[data-device=pc] .card{flex-basis:min(88vw,540px)}}

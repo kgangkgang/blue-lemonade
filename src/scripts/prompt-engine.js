@@ -2,16 +2,32 @@
 export function createPromptEngine(doc = document) {
     const sources = new Map(), changed = new Map(), hints = new Map();
     const normalize = value => String(value || '').normalize('NFKC').replace(/[\uFE0E\uFE0F\s]/g, '');
-    let observer, timer, lastId = null;
+    let observer, timer, lastId = null, ordered = [];
+    const watched='li[data-pm-identifier],#completion_prompt_manager_footer_append_prompt,.regex-script-label,div.regex_script_name,li.regex-debugger-rule,#completion_prompt_manager_popup_entry_form_name,input.regex_script_name';
+    function compile(data) {
+        const result={priority:Number(data.priority)||0,partial:!!data.partial};
+        for(const kind of ['prompts','regex']){
+            const names=new Map(),ids=new Map(),partial=[];
+            for(const entry of data[kind]||[]){
+                const key=normalize(entry.name);if(!key)continue;
+                if(!names.has(key))names.set(key,entry);
+                if(entry.id){if(!ids.has(entry.id))ids.set(entry.id,[]);ids.get(entry.id).push({key,entry});}
+                partial.push({key,entry});
+            }
+            partial.sort((a,b)=>b.entry.name.length-a.entry.name.length);
+            result[kind]={names,ids,partial};
+        }
+        return result;
+    }
+    const order=()=>{ordered=[...sources.values()].sort((a,b)=>b.priority-a.priority);};
     function lookup(kind, id, name) {
         const key = normalize(name);
-        for (const source of [...sources.values()].sort((a,b) => b.priority-a.priority)) {
-            const list = source[kind] || [];
-            const exact = list.find(e => id && e.id === id && (!key || normalize(e.name) === key))
-                || list.find(e => normalize(e.name) === key);
+        for (const source of ordered) {
+            const list = source[kind];
+            const exact = list.ids.get(id)?.find(e=>!key||e.key===key)?.entry || list.names.get(key);
             if (exact) return exact;
             if (kind === 'prompts' && source.partial && key) {
-                const partial = list.filter(e => key.includes(normalize(e.name))).sort((a,b) => b.name.length-a.name.length)[0];
+                const partial = list.partial.find(e=>key.includes(e.key))?.entry;
                 if (partial) return partial;
             }
         }
@@ -49,11 +65,17 @@ export function createPromptEngine(doc = document) {
         doc.querySelectorAll('input.regex_script_name').forEach(el=>hint(el,'regex',null));
     }
     function schedule() { if (!timer) timer=setTimeout(render,60); }
-    function click(event) { const row=event.target.closest?.('li[data-pm-identifier]'); if(row)lastId=row.dataset.pmIdentifier; schedule(); }
+    function click(event) { const row=event.target.closest?.('li[data-pm-identifier]'); if(row)lastId=row.dataset.pmIdentifier; if(event.target.closest?.(watched))schedule(); }
     function input(event) {if(event.target.matches?.('#completion_prompt_manager_popup_entry_form_name,input.regex_script_name'))schedule();}
     function start() {
         observer=new MutationObserver(records=>{
-            if (records.some(r=>{const el=r.target.nodeType===1?r.target:r.target.parentElement; return !el?.closest('#chat, .bl-scripts, .bl-script-hint');})) schedule();
+            const containsTarget=node=>node.nodeType===1&&(node.matches(watched)||!!node.querySelector(watched));
+            if(records.some(record=>{
+                const el=record.target.nodeType===1?record.target:record.target.parentElement;
+                if(!el||el.closest('#chat,.bl-scripts,.bl-script-hint'))return false;
+                if(changed.has(el)&&el.textContent===changed.get(el).after)return false;
+                return !!el.closest(watched)||[...record.addedNodes,...record.removedNodes].some(containsTarget);
+            }))schedule();
         });
         observer.observe(doc.body,{childList:true,subtree:true,characterData:true});
         doc.addEventListener('click',click); doc.addEventListener('input',input);
@@ -65,7 +87,7 @@ export function createPromptEngine(doc = document) {
         changed.clear(); for(const el of hints.values())el.remove();hints.clear();
     }
     return {register(id,data){
-        if(!sources.size)start(); sources.set(id,data);render();
-        return ()=>{sources.delete(id);if(sources.size)render();else stop();};
+        if(!sources.size)start(); sources.set(id,compile(data));order();render();
+        return ()=>{sources.delete(id);order();if(sources.size)render();else stop();};
     },stop};
 }

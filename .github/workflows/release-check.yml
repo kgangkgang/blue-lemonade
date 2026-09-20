@@ -22,6 +22,7 @@ jobs:
         run: |
           python -m unittest discover -s tools/tests -p 'test_release_gate.py'
           node tools/tests/settings-upgrade.mjs .
+          node tools/tests/capture-motion.mjs .
       - name: Verify the current downloadable ZIP byte for byte
         run: |
           python -c "import json,subprocess,sys; v=json.load(open('manifest.json'))['version']; subprocess.run([sys.executable,'tools/release_gate.py','--kind','theme','--source','.','--zip',f'docs/downloads/blue-lemonade-{v}.zip'],check=True)"

@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {pathToFileURL} from 'node:url';
+import path from 'node:path';
+const root=process.argv[2]?pathToFileURL(path.resolve(process.argv[2])+'/'):new URL('../../',import.meta.url);
+const {motionLayout}=await import(new URL('src/capture-motion-layout.js',root));
+const {syncWeatherProfile,WEATHER_MODES}=await import(new URL('src/weather-profiles.js',root));
+const short=motionLayout({width:1170,height:450,scale:3},{duration:8});
+assert.equal(short.width,1080);assert.ok(short.height<500);assert.equal(short.travel,0);assert.equal(short.duration,8);
+const long=motionLayout({width:1170,height:12000,scale:3},{duration:12});
+assert.equal(long.width,1080);assert.equal(long.height,1920);assert.equal(long.offsetAt(0),0);assert.equal(long.offsetAt(12),long.travel);
+const gif=motionLayout({width:1440,height:3000,scale:3},{format:'gif'});assert.equal(gif.width,720);assert.equal(gif.height,1280);
+const chat={weather:'rain',weatherColorMode:'custom',weatherColor:'#ff0000',weatherProfiles:{rain:{weatherLevel:1},snow:{weatherLevel:3}},weatherProfileMode:'rain'};
+syncWeatherProfile(chat);chat.weather='snow';syncWeatherProfile(chat);assert.equal(chat.weatherColorMode,'auto');assert.equal(chat.weatherLevel,3);
+chat.weatherColorMode='custom';chat.weatherColor='#00ff00';syncWeatherProfile(chat);chat.weather='rain';syncWeatherProfile(chat);assert.equal(chat.weatherColor,'#ff0000');
+const fresh={weather:'rain',weatherColorMode:'custom',weatherColor:'#ff0000'};syncWeatherProfile(fresh);
+for(const mode of WEATHER_MODES.filter(m=>m!=='rain'))assert.equal(fresh.weatherProfiles[mode].weatherColorMode,'auto');
+console.log('capture sizing, duration preservation, scroll boundaries, GIF sizing and per-weather colour migration: passed');

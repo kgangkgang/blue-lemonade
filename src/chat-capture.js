@@ -56,7 +56,13 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
             const clone=node.cloneNode(true);await copyPaint(node,clone,cache,controller.signal,options);
             const draft=options.edits?.find(draft=>draft.id===ids[i]);
             applyCaptureDraft(clone,draft,node);
-            if(draft)for(const el of clone.querySelectorAll('.mes_block,.mes_text,.mes_text *'))if(!el.matches('img,picture,svg,svg *,canvas,video')){el.style.height='auto';el.style.minHeight='0';el.style.maxHeight='none';}
+            if(draft)for(const el of [clone,...clone.querySelectorAll('.mes_block,.mes_text,.mes_text *')])if(!el.matches('img,picture,svg,svg *,canvas,video')){
+                // Computed logical dimensions are copied too, and override height:auto.
+                for(const key of ['height','block-size'])el.style.setProperty(key,'auto','important');
+                for(const key of ['min-height','min-block-size'])el.style.setProperty(key,'0','important');
+                for(const key of ['max-height','max-block-size'])el.style.setProperty(key,'none','important');
+                el.style.flexBasis='auto';
+            }
             if(options.showName===false)clone.querySelectorAll('.ch_name,.mes_header').forEach(el=>el.remove());
             if(options.showAvatar===false){clone.querySelectorAll('.mesAvatarWrapper,.avatar').forEach(el=>el.remove());clone.style.gap='0';const block=clone.querySelector('.mes_block');if(block){block.style.marginLeft='0';block.style.width='100%';block.style.maxWidth='100%';}}
             if(options.showAssets===false)clone.querySelectorAll('.mes_text img,.mes_text picture,.mes_text svg,.mes_text canvas').forEach(el=>el.remove());

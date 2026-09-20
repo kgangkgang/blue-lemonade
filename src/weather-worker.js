@@ -3,7 +3,7 @@ import { createEngine, createLoop } from './weather-engine.js';
 
 let engine = null;
 let loop = null;
-let reduce = false;
+let reduce = false, paused = false;
 
 self.onmessage = ({ data }) => {
     if (!data || typeof data !== 'object') return;
@@ -14,6 +14,7 @@ self.onmessage = ({ data }) => {
         engine.resize(data.w, data.h, data.dpr);
         engine.config(data);
         apply();
+        self.postMessage({type:'ready'});
         return;
     }
     if (!engine) return;
@@ -24,13 +25,14 @@ self.onmessage = ({ data }) => {
         engine.config(data);
         apply();
     } else if (data.type === 'pause') {
-        loop.stop();
+        paused=true;loop.stop();
     } else if (data.type === 'resume') {
-        apply();
+        paused=false;apply();
     }
 };
 
 function apply() {
+    if(paused){loop.stop();return;}
     if (engine.idle()) {
         loop.stop();
         engine.draw(); // 지움

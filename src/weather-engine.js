@@ -20,6 +20,19 @@ export function createEngine(ctx) {
     let speedK = 1;
     let slant = Math.tan(-9 * Math.PI / 180); // 세로 1 에 대한 가로 (음수 = 왼쪽으로)
     let sprite = null;
+    let tint = null, tintRGB = null, tintLight = null, tintedSprite = null;
+    function colorSprite() {
+        if(tintedSprite){tintedSprite.width=tintedSprite.height=1;tintedSprite=null;}
+        if(!sprite||!tint)return;
+        const scale=Math.min(1,256/Math.max(sprite.width,sprite.height));
+        const w=Math.max(1,Math.round(sprite.width*scale)),h=Math.max(1,Math.round(sprite.height*scale));
+        const canvas=typeof OffscreenCanvas==='function'?new OffscreenCanvas(w,h):ctx.canvas.ownerDocument?.createElement('canvas');
+        if(!canvas)return;
+        canvas.width=w;canvas.height=h;
+        const paint=canvas.getContext('2d');paint.drawImage(sprite,0,0,w,h);
+        paint.globalCompositeOperation='source-in';paint.fillStyle=tint;paint.fillRect(0,0,w,h);
+        tintedSprite=canvas;
+    }
     let motion = 'natural', swayK = 1, spinK = 1;
     let curvature=.65, orbitSize=1, orbitDirection=-1;
     let items = [];
@@ -116,7 +129,7 @@ export function createEngine(ctx) {
                     ctx.lineTo(p.x - len * Math.sin(angle), p.y - len * Math.cos(angle));
                 }
                 ctx.lineWidth = (0.8 + b * 0.35) * Math.sqrt(sizeK);
-                ctx.strokeStyle = `rgba(${colors.rain}, ${Math.min(1, colors.rainAlpha * (0.45 + b * 0.28) * opacity).toFixed(3)})`;
+                ctx.strokeStyle = `rgba(${tintRGB || colors.rain}, ${Math.min(1, colors.rainAlpha * (0.45 + b * 0.28) * opacity).toFixed(3)})`;
                 ctx.stroke();
             });
         } else if (mode === 'snow') {
@@ -128,7 +141,7 @@ export function createEngine(ctx) {
                     ctx.moveTo(p.x + r, p.y);
                     ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
                 }
-                ctx.fillStyle = `rgba(${colors.snow}, ${Math.min(1, colors.snowAlpha * (0.45 + b * 0.27) * opacity).toFixed(3)})`;
+                ctx.fillStyle = `rgba(${tintRGB || colors.snow}, ${Math.min(1, colors.snowAlpha * (0.45 + b * 0.27) * opacity).toFixed(3)})`;
                 ctx.fill();
             });
         } else if (mode === 'meteor') {
@@ -145,7 +158,7 @@ export function createEngine(ctx) {
                 ctx.globalAlpha = opacity * (.36 + p.depth * .46);
                 for (const glow of [true, false]) {
                     const gradient = ctx.createLinearGradient(head.x, head.y, tail.x, tail.y);
-                    const color = light ? '57,111,156' : ink;
+                    const color = tintRGB || (light ? '57,111,156' : ink);
                     const alpha = glow ? .1 : .9;
                     gradient.addColorStop(0, `rgba(${color},${alpha})`);
                     gradient.addColorStop(.32, `rgba(${color},${alpha * .75})`);
@@ -162,11 +175,11 @@ export function createEngine(ctx) {
                 if (p.bright) {
                     const radius = width * 4;
                     const halo = ctx.createRadialGradient(head.x, head.y, 0, head.x, head.y, radius);
-                    halo.addColorStop(0, light ? 'rgba(60,137,171,.55)' : 'rgba(188,255,238,.75)');
-                    halo.addColorStop(1, 'rgba(135,234,243,0)');
+                    halo.addColorStop(0, tintRGB ? `rgba(${tintRGB},.75)` : light ? 'rgba(60,137,171,.55)' : 'rgba(188,255,238,.75)');
+                    halo.addColorStop(1, `rgba(${tintRGB || '135,234,243'},0)`);
                     ctx.fillStyle=halo;ctx.beginPath();ctx.arc(head.x,head.y,radius,0,Math.PI*2);ctx.fill();
                 }
-                ctx.fillStyle = light ? '#527f9b' : '#eefbff';ctx.beginPath();ctx.arc(head.x,head.y,width * .65,0,Math.PI*2);ctx.fill();
+                ctx.fillStyle = tintLight || (light ? '#527f9b' : '#eefbff');ctx.beginPath();ctx.arc(head.x,head.y,width * .65,0,Math.PI*2);ctx.fill();
             }
             ctx.globalAlpha = 1;
         } else if (['custom', 'lemon', 'petal'].includes(mode)) {
@@ -181,11 +194,11 @@ export function createEngine(ctx) {
                 const sin = Math.sin(p.rot) * dpr;
                 ctx.globalAlpha = Math.min(1, (0.55 + p.depth * 0.45) * opacity);
                 ctx.setTransform(cos, sin, -sin, cos, p.x * dpr, p.y * dpr);
-                if (mode === 'custom' && sprite) ctx.drawImage(sprite, -w / 2, -h / 2, w, h);
+                if (mode === 'custom' && sprite) ctx.drawImage(tintedSprite || sprite, -w / 2, -h / 2, w, h);
                 else if (mode === 'lemon') {
                     ctx.beginPath(); ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
-                    ctx.fillStyle = '#ffe56a'; ctx.fill();
-                    ctx.strokeStyle = '#fff7bc'; ctx.lineWidth = Math.max(.7, size * .055); ctx.stroke();
+                    ctx.fillStyle = tint || '#ffe56a'; ctx.fill();
+                    ctx.strokeStyle = tintLight || '#fff7bc'; ctx.lineWidth = Math.max(.7, size * .055); ctx.stroke();
                     for (let n = 0; n < 8; n++) {
                         const a = n * Math.PI / 4;
                         ctx.beginPath(); ctx.moveTo(Math.cos(a) * size * .09, Math.sin(a) * size * .09);
@@ -195,7 +208,7 @@ export function createEngine(ctx) {
                     ctx.beginPath(); ctx.moveTo(0, -size * .5);
                     ctx.bezierCurveTo(size * .65, -size * .25, size * .3, size * .55, 0, size * .45);
                     ctx.bezierCurveTo(-size * .4, size * .2, -size * .5, -size * .2, 0, -size * .5);
-                    ctx.fillStyle = '#f3aec9'; ctx.fill();
+                    ctx.fillStyle = tint || '#f3aec9'; ctx.fill();
                 }
             }
             ctx.globalAlpha = 1;
@@ -215,10 +228,19 @@ export function createEngine(ctx) {
         },
         config(next) {
             const spriteChanged = next.sprite !== undefined;
+            const nextTint='tint' in next&&/^#[0-9a-f]{6}$/i.test(next.tint||'')?next.tint.toLowerCase():'tint' in next?null:tint;
+            const tintChanged=nextTint!==tint;
+            if(tintChanged){
+                tint=nextTint;
+                const rgb=tint?.slice(1).match(/../g).map(v=>parseInt(v,16));
+                tintRGB=rgb?.join(',')||null;
+                tintLight=rgb?`rgb(${rgb.map(v=>Math.round(v+(255-v)*.65)).join(',')})`:null;
+            }
             if (spriteChanged) {
                 sprite?.close?.();
                 sprite = next.sprite || null;
             }
+            if(spriteChanged||tintChanged)colorSprite();
             const reseed = (Number.isFinite(next.orbitSize)&&next.orbitSize/100!==orbitSize) || next.mode !== mode || next.level !== level || (spriteChanged && next.mode === 'custom');
             mode = next.mode;
             level = next.level;
@@ -237,6 +259,7 @@ export function createEngine(ctx) {
         },
         step,
         draw,
+        dispose() { items=[];sprite?.close?.();sprite=null;if(tintedSprite)tintedSprite.width=tintedSprite.height=1;tintedSprite=null; },
         idle: () => mode === 'off' || !items.length,
     };
 }

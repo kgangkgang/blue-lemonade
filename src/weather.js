@@ -39,23 +39,34 @@ function colorsNow() {
 }
 
 /** 캔버스 하나 + 그리는 쪽(워커 또는 메인) */
-async function createRenderer(canvas, init) {
+async function createRenderer(canvas, init, replaceCanvas) {
     if (typeof canvas.transferControlToOffscreen === 'function' && typeof Worker === 'function') {
+        let worker, transferred=false;
         try {
+            worker = new Worker(new URL('./weather-worker.js', import.meta.url), { type: 'module' });
             const offscreen = canvas.transferControlToOffscreen();
-            const worker = new Worker(new URL('./weather-worker.js', import.meta.url), { type: 'module' });
-            worker.postMessage({ type: 'init', canvas: offscreen, ...init }, [offscreen]);
+            transferred=true;
+            await new Promise((resolve,reject)=>{
+                const finish=error=>{clearTimeout(timeout);worker.onmessage=worker.onerror=null;error?reject(error):resolve();};
+                const timeout=setTimeout(()=>finish(Error('날씨 워커 준비 시간 초과')),3000);
+                worker.onmessage=event=>{if(event.data?.type==='ready')finish();};
+                worker.onerror=event=>{event.preventDefault();finish(Error('날씨 워커를 불러오지 못했어요.'));};
+                try{worker.postMessage({ type: 'init', canvas: offscreen, ...init }, [offscreen]);}catch(error){finish(error);}
+            });
             return { post: (message, transfer = []) => worker.postMessage(message, transfer), stop: () => worker.terminate(), kind: 'worker' };
         } catch (error) {
+            worker?.terminate();
+            // A transferred canvas cannot provide a main-thread 2D context again.
+            if(transferred){const replacement=canvas.cloneNode(false);canvas.replaceWith(replacement);canvas=replacement;replaceCanvas(replacement);}
             console.info('[Blue Lemonade] 날씨 효과를 워커로 못 돌려 메인에서 그려요', error);
         }
     }
     const { createEngine, createLoop } = await import('./weather-engine.js');
     const engine = createEngine(canvas.getContext('2d'));
     const loop = createLoop(engine, fn => requestAnimationFrame(fn), id => cancelAnimationFrame(id));
-    let reduce = !!init.reduce;
+    let reduce = !!init.reduce, paused = false;
     const apply = () => {
-        if (engine.idle() || reduce) { loop.stop(); engine.draw(); } else loop.start();
+        if (engine.idle() || reduce || paused) { loop.stop(); if(!paused)engine.draw(); } else loop.start();
     };
     engine.resize(init.w, init.h, init.dpr);
     engine.config(init);
@@ -64,10 +75,10 @@ async function createRenderer(canvas, init) {
         post(message) {
             if (message.type === 'resize') { engine.resize(message.w, message.h, message.dpr); if (!loop.running()) engine.draw(); }
             else if (message.type === 'config') { engine.config(message); apply(); }
-            else if (message.type === 'pause') loop.stop();
-            else if (message.type === 'resume') apply();
+            else if (message.type === 'pause') {paused=true;loop.stop();}
+            else if (message.type === 'resume') {paused=false;apply();}
         },
-        stop: () => loop.stop(),
+        stop: () => {loop.stop();engine.dispose();},
         kind: 'main',
     };
 }
@@ -76,7 +87,7 @@ const ratio = () => Math.min(1.5, window.devicePixelRatio || 1);
 
 /** 설정의 날씨 값 → 엔진 값 (범위는 settings.js 가 이미 잡음) */
 function paramsFrom(chat = {}) {
-    return { curvature:Number(chat.weatherCurvature??65),orbitSize:Number(chat.weatherOrbitSize??100),orbitDirection:chat.weatherOrbitDirection||'right', opacity: Number(chat.weatherOpacity) || 100, size: Number(chat.weatherSize) || 100, speed: Number(chat.weatherSpeed) || 100, motion: chat.weatherMotion || 'natural', sway: Number(chat.weatherSway ?? 100), spin: Number(chat.weatherSpin ?? 100), angle: Number.isFinite(Number(chat.weatherAngle)) ? Number(chat.weatherAngle) : -9 };
+    return { tint:chat.weatherColorMode==='custom'?chat.weatherColor:null, curvature:Number(chat.weatherCurvature??65),orbitSize:Number(chat.weatherOrbitSize??100),orbitDirection:chat.weatherOrbitDirection||'right', opacity: Number(chat.weatherOpacity) || 100, size: Number(chat.weatherSize) || 100, speed: Number(chat.weatherSpeed) || 100, motion: chat.weatherMotion || 'natural', sway: Number(chat.weatherSway ?? 100), spin: Number(chat.weatherSpin ?? 100), angle: Number.isFinite(Number(chat.weatherAngle)) ? Number(chat.weatherAngle) : -9 };
 }
 
 // 내 그림: data URL → ImageBitmap. 워커로 넘기면 원본이 비워지므로 보낼 때마다 새로 만든다 (Blob 만 들고 있음)
@@ -94,7 +105,7 @@ async function spriteBitmap(dataUrl) {
 
 /** 한 자리(#sheld 또는 설정 표본)에 붙는 효과 */
 function createLayer(host, className) {
-    const canvas = document.createElement('canvas');
+    let canvas = document.createElement('canvas');
     canvas.className = className;
     canvas.setAttribute('aria-hidden', 'true');
     host.prepend(canvas);
@@ -102,13 +113,16 @@ function createLayer(host, className) {
     let pending = null;
     let current = { mode: 'off', level: 2 };
     let spriteKey = '';
-    let spriteGen = 0;
+    let spriteGen = 0, destroyed = false, paused = document.hidden;
+    const cleanup = new Set();
     const size = () => {
         const rect = host.getBoundingClientRect();
         return { w: Math.round(rect.width), h: Math.round(rect.height) };
     };
-    const ready = createRenderer(canvas, { ...size(), dpr: ratio(), mode: 'off', level: 2, colors: colorsNow(), reduce: reduceMotion.matches }).then((r) => {
+    const ready = createRenderer(canvas, { ...size(), dpr: ratio(), mode: 'off', level: 2, colors: colorsNow(), reduce: reduceMotion.matches }, replacement=>{canvas=replacement;}).then((r) => {
         renderer = r;
+        if(destroyed){r.stop();return r;}
+        if(paused)r.post({type:'pause'});
         if (pending) r.post(pending);
         pending = null;
         return r;
@@ -116,9 +130,10 @@ function createLayer(host, className) {
     const observer = new ResizeObserver(() => renderer?.post({ type: 'resize', ...size(), dpr: ratio() }));
     observer.observe(host);
     return {
-        canvas,
+        get canvas(){return canvas;},
         ready,
         set(mode, level, params = {}, spriteData = '') {
+            if(destroyed)return;
             current = { mode, level, ...params };
             const message = { type: 'config', mode, level, colors: colorsNow(), ...params };
             const wantKey = mode === 'custom' ? spriteData : '';
@@ -127,9 +142,8 @@ function createLayer(host, className) {
                 spriteKey = wantKey;
                 const gen = ++spriteGen;
                 const send = (bitmap) => {
-                    if (gen !== spriteGen) { bitmap?.close?.(); return; }
-                    const withSprite = { ...message, sprite: bitmap };
-                    ready.then(r => r.post(withSprite, bitmap ? [bitmap] : []));
+                    if (destroyed || gen !== spriteGen) { bitmap?.close?.(); return; }
+                    ready.then(r => {if(destroyed||gen!==spriteGen){bitmap?.close?.();return;}r.post({...current,type:'config',colors:colorsNow(),sprite:bitmap},bitmap?[bitmap]:[]);});
                 };
                 if (wantKey) spriteBitmap(wantKey).then(send, () => send(null));
                 else send(null);
@@ -138,9 +152,12 @@ function createLayer(host, className) {
             else pending = message;
         },
         current: () => current,
-        pause: () => renderer?.post({ type: 'pause' }),
-        resume: () => renderer?.post({ type: 'resume' }),
+        pause: () => {paused=true;renderer?.post({ type: 'pause' });},
+        resume: () => {paused=false;renderer?.post({ type: 'resume' });},
+        onDestroy(fn) {cleanup.add(fn);},
         destroy() {
+            if(destroyed)return;destroyed=true;spriteGen++;pending=null;
+            for(const fn of cleanup)fn();cleanup.clear();
             observer.disconnect();
             ready.then(r => r.stop());
             canvas.remove();
@@ -231,6 +248,7 @@ export function previewWeather(stage, chat = {}) {
             preview.destroy();
             if (stage._blWeather === preview) stage._blWeather = null;
         }, 2000);
+        preview.onDestroy(()=>clearInterval(watch));
     }
     stage.classList.add('bl-weather-pv-on');
     const shown = mode === 'tracker' ? (trackerMode() === 'off' ? 'rain' : trackerMode()) : mode;
@@ -256,15 +274,15 @@ export async function captureWeather(width, height, scale) {
         engine.config({ ...current, colors: colorsNow(), sprite: bitmap });
         engine.draw();
         return canvas.toDataURL('image/png');
-    } finally { bitmap?.close?.(); canvas.width = canvas.height = 1; }
+    } finally { engine.dispose(); canvas.width = canvas.height = 1; }
 }
 /** Independent animation used only during capture; the live weather is untouched. */
 export async function captureWeatherAnimation(width,height,scale=1) {
     if(!wanted.on||!layer)return null;
-    const current={...layer.current()};if(current.mode==='off')return null;
+    const current={...layer.current()},spriteData=wanted.sprite;if(current.mode==='off')return null;
     const {createEngine}=await import('./weather-engine.js');
     const canvas=document.createElement('canvas'),engine=createEngine(canvas.getContext('2d'));
-    const bitmap=current.mode==='custom'?await spriteBitmap(wanted.sprite):null;
+    const bitmap=current.mode==='custom'?await spriteBitmap(spriteData):null;
     engine.resize(width,height,scale);engine.config({...current,colors:colorsNow(),sprite:bitmap});
-    return {canvas,draw(dt,now){engine.step(dt,now);engine.draw();},close(){bitmap?.close?.();canvas.width=canvas.height=1;}};
+    return {canvas,draw(dt,now){engine.step(dt,now);engine.draw();},close(){engine.dispose();canvas.width=canvas.height=1;}};
 }
