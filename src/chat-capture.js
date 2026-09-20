@@ -1,5 +1,6 @@
 import { applyCaptureDraft } from './capture-editor.js';
 import { preparePrivacy, attachMaskShapes } from './capture-privacy.js';
+import { applyCaptureDisplay, reflowCaptureText, capturePagePlan } from './capture-layout.js';
 const urls = text => [...text.matchAll(/url\((?:"([^"]*)"|'([^']*)'|([^)]*))\)/g)].map(m=>({raw:m[0],url:m[1]??m[2]??m[3]}));
 // Render only the selected, already loaded messages. Everything used by the SVG is embedded.
 const limited = (promise, ms, message) => new Promise((resolve,reject)=>{
@@ -13,7 +14,7 @@ async function dataURL(url, signal) {
 }
 async function copyPaint(source, clone, cache, signal, options={}) {
     signal.throwIfAborted();
-    if(source.matches('script,iframe,video,audio,.mes_buttons,.mes_edit_buttons,.swipe_left,.swipe_right,.swipes-counter,.mes_timer')||(options.showAssets===false&&source.closest('.mes_text')&&source.matches('img,picture,svg,canvas'))||(options.showAvatar===false&&source.matches('.mesAvatarWrapper,.avatar'))||(options.showName===false&&source.matches('.ch_name,.mes_header')))return;
+    if(source.matches('script,iframe,video,audio,.mes_buttons,.mes_edit_buttons,.swipe_left,.swipe_right,.swipes-counter')||(options.showAssets===false&&source.closest('.mes_text')&&source.matches('img,picture,svg,canvas'))||(options.showAvatar===false&&source.matches('.avatar'))||(options.showName===false&&source.matches('.name_text,.mes_name')))return;
     const style=getComputedStyle(source);
     for(const property of style)clone.style.setProperty(property,style.getPropertyValue(property));
     clone.style.animation='none';clone.style.transition='none';clone.style.contentVisibility='visible';
@@ -63,14 +64,21 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
                 for(const key of ['max-height','max-block-size'])el.style.setProperty(key,'none','important');
                 el.style.flexBasis='auto';
             }
-            if(options.showName===false)clone.querySelectorAll('.ch_name,.mes_header').forEach(el=>el.remove());
-            if(options.showAvatar===false){clone.querySelectorAll('.mesAvatarWrapper,.avatar').forEach(el=>el.remove());clone.style.gap='0';const block=clone.querySelector('.mes_block');if(block){block.style.marginLeft='0';block.style.width='100%';block.style.maxWidth='100%';}}
-            if(options.showAssets===false)clone.querySelectorAll('.mes_text img,.mes_text picture,.mes_text svg,.mes_text canvas').forEach(el=>el.remove());
-            clone.querySelectorAll('script,iframe,video,audio,.mes_buttons,.mes_edit_buttons,.swipe_left,.swipe_right,.swipes-counter,.mes_timer').forEach(el=>el.remove());
+            clone.querySelectorAll('script,iframe,video,audio,.mes_buttons,.mes_edit_buttons,.swipe_left,.swipe_right,.swipes-counter,.mes_ghost,.del_checkbox,.for_checkbox').forEach(el=>el.remove());
+            applyCaptureDisplay(clone,options,window.SillyTavern?.getContext?.().chat?.[ids[i]]?.extra?.model||'');
+            reflowCaptureText(clone);
+            if(options.videoLayer)for(const image of clone.querySelectorAll('.mes_text img')){
+                // An oversized illustration occupies its own page instead of forcing the text smaller.
+                image.style.setProperty('max-height',`${width*1.45}px`,'important');image.style.setProperty('max-block-size',`${width*1.45}px`,'important');image.style.objectFit='contain';
+            }
             clone.style.width=`${width}px`;clone.style.maxWidth='none';clone.style.height='auto';clone.style.contentVisibility='visible';clone.style.margin='0';
             wrapper.append(clone);
         }
         const privacy=preparePrivacy(wrapper,options);
+        const fullHeight=Math.ceil(wrapper.getBoundingClientRect().height);
+        const pages=options.videoLayer?capturePagePlan(wrapper,width,options.maxParagraphs):[{top:0,height:fullHeight}];
+        const pageIndex=Math.min(pages.length-1,Math.max(0,Math.floor(Number(options.pageIndex)||0))),page=pages[pageIndex];
+        if(options.planOnly)return {pages,width,height:fullHeight};
         // Embed used webfonts; inaccessible stylesheets are left to platform font fallbacks.
         progress('글꼴 담는 중…');
         let fonts='';
@@ -92,7 +100,7 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
             }
         }
         controller.signal.throwIfAborted();
-        const height=Math.ceil(wrapper.getBoundingClientRect().height);
+        const height=page.height;
         if(!height||height>16000||width*height>16000000)throw Error('선택한 내용이 너무 길거나 비어 있어요. 메시지를 나누어 저장해 주세요.');
         const scale=Math.min(3,Math.sqrt(16000000/(width*height)),16000/height,16000/width);
         const pixelWidth=Math.floor(width*scale),pixelHeight=Math.floor(height*scale);
@@ -103,16 +111,17 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
         controller.signal.throwIfAborted();
         const dark=document.body.classList.contains('salty-dark');
         attachMaskShapes(wrapper,options.mask||'auto',dark,options.maskStyles?.[options.mask||'auto'],scale);
-        wrapper.style.position='static';wrapper.style.removeProperty('left');wrapper.style.removeProperty('top');
-        const html=new XMLSerializer().serializeToString(wrapper);
-        const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${pixelWidth}" height="${pixelHeight}" viewBox="0 0 ${width} ${height}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml"><style>${fonts.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</style>${html}</div></foreignObject></svg>`;
+        // Serialize a detached copy: never move the off-screen export into the live page flow.
+        const exportRoot=wrapper.cloneNode(true);exportRoot.style.position='static';exportRoot.style.removeProperty('left');exportRoot.style.removeProperty('top');
+        const html=new XMLSerializer().serializeToString(exportRoot);
+        const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${pixelWidth}" height="${pixelHeight}" viewBox="0 ${page.top} ${width} ${height}"><foreignObject width="${width}" height="${fullHeight}"><div xmlns="http://www.w3.org/1999/xhtml"><style>${fonts.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</style>${html}</div></foreignObject></svg>`;
         const image=new Image();
         await limited(new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(Error('이 브라우저에서 캡처를 만들지 못했어요.'));image.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);}),10000,'이미지 변환 시간이 초과됐어요. 메시지를 나누어 다시 시도해 주세요.');
         controller.signal.throwIfAborted();
         const canvas=document.createElement('canvas');canvas.width=pixelWidth;canvas.height=pixelHeight;canvas.getContext('2d').drawImage(image,0,0);
         const blob=await limited(new Promise(resolve=>canvas.toBlob(resolve,'image/png')),8000,'PNG 저장 시간이 초과됐어요.');if(!blob)throw Error('이미지 저장에 실패했어요.');
         controller.signal.throwIfAborted();
-        return {blob,width:pixelWidth,height:pixelHeight,scale,weather:!!weather,...privacy};
+        return {blob,width:pixelWidth,height:pixelHeight,scale,weather:!!weather,pageIndex,pageCount:pages.length,...privacy};
     } catch(error) {
         if(signal?.aborted)throw new DOMException("캡처를 취소했어요.","AbortError");
         if(controller.signal.aborted)throw Error('이미지 또는 글꼴 응답이 늦어요. 메시지를 나누어 다시 시도해 주세요.');

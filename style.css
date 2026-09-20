@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 54개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build bcaac81a7eb4) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 54개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 764a9c1f2f5d) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -17502,6 +17502,8 @@ html body .salty-panel .bl-tool-primary { color:var(--salty-text); border:1px so
 .bl-message-view .salty-btn[aria-pressed=true] { border:1px solid var(--salty-accent);background:color-mix(in srgb,var(--salty-accent) 14%,var(--salty-surface)); }
 .bl-message-language { display:block;color:var(--salty-muted);font-size:10px;font-style:normal;margin:3px 0; }
 .bl-message-choice [data-message-excerpt] { white-space:normal;overflow-wrap:anywhere; }
+.salty-panel .bl-weather-choices{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,7.5em),1fr));gap:5px;padding:5px;}
+.salty-panel .bl-weather-choices>button{min-width:0;width:100%;white-space:nowrap!important;word-break:keep-all!important;overflow-wrap:normal!important;padding:9px 5px;line-height:1.4;}
 /* css/53-script-tools.css */
 .salty-panel .bl-script-layout { display:grid;grid-template-columns:minmax(0,1fr);gap:16px; }
 .salty-panel .bl-script-list,.salty-panel .bl-script-editor,.salty-panel .bl-theme-update { min-width:0; }

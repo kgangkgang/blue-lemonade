@@ -1376,7 +1376,7 @@ function weatherMode(s) {
 function weatherSeg(s) {
     const options = [['off', '끔'], ['rain', '비'], ['snow', '눈'], ['lemon', '레몬'], ['petal', '꽃잎'], ['meteor', '유성'], ['custom', '내 그림'], ...(s.deus?.on ? [['tracker', '트래커 따라']] : [])];
     const current = weatherMode(s);
-    return `<div class="salty-seg">${options.map(([value, label]) =>
+    return `<div class="salty-seg bl-weather-choices">${options.map(([value, label]) =>
         `<button data-act="seg" data-path="chat.weather" data-value="${value}" class="${current === value ? 'on' : ''}">${label}</button>`).join('')}</div>`;
 }
 

@@ -86,7 +86,7 @@ export const DEFAULTS = {
     addons: { order: false, perf: false, words: false, capture: false, models: false, modelorder: false },
     addonUI: { orderIcon: false, perfIcon: false, wordsMenu: false, captureMenu: false, perfMenu: { watchdog:false, timer:true, perf:false, log:true, dedupe:false } },
     wordTools: { messageView: 'translation', rules: [], presets: [], syntax: 'comma', caseSensitive: false, wholeWords: false, particles: true },
-    captureTools: { replace: false, preset: '', redact: false, names: [], mask: 'auto', maskStyles: {}, format:'image', duration:6, resolution:1080, backgroundTint:60, includeWeather:true, includeBackground:true, showName:true, showAvatar:true, showAssets:true },
+    captureTools: { replace: false, preset: '', redact: false, names: [], mask: 'auto', maskStyles: {}, format:'image', duration:6, maxParagraphs:4, resolution:1080, backgroundTint:60, includeWeather:true, includeBackground:true, showName:true, showAvatar:true, showAssets:true, showTimestamp:true, showModel:true, showMessageId:true, showTokens:true, showGenerationTime:true },
     onehand: { on: false, swipe: true, imp: true, cont: true, regen: true },
     // 3.1.0 스타일: 내 스타일 목록 [{ id, name, data }] · 캐릭터 연결 { 'c:아바타' | 'g:그룹': 스타일 id } · 지금 입힌 캐릭터 스타일 { id, key } · 그 전 원래 모습 (styles.js · charstyle.js)
     styles: [],
@@ -442,8 +442,9 @@ export function getSettings() {
     s.captureTools.format=['video','gif'].includes(s.captureTools.format)?s.captureTools.format:'image';
     s.captureTools.resolution=Number(s.captureTools.resolution)===1440?1440:1080;
     s.captureTools.backgroundTint=Math.min(100,Math.max(0,Number(s.captureTools.backgroundTint??60)||0));
+    s.captureTools.maxParagraphs=Math.min(20,Math.max(1,Math.floor(Number(s.captureTools.maxParagraphs)||4)));
     s.captureTools.duration=Math.min(30,Math.max(3,Number(s.captureTools.duration)||6));
-    for(const key of ['showName','showAvatar','showAssets','includeWeather','includeBackground'])s.captureTools[key]=s.captureTools[key]!==false;
+    for(const key of ['showName','showAvatar','showAssets','showTimestamp','showModel','showMessageId','showTokens','showGenerationTime','includeWeather','includeBackground'])s.captureTools[key]=s.captureTools[key]!==false;
     s.captureTools.replace=s.captureTools.replace===true;s.captureTools.redact=s.captureTools.redact===true;
     s.captureTools.names=Array.isArray(s.captureTools.names)?s.captureTools.names.filter(n=>typeof n==='string').slice(0,40):[];
     if(!['auto','white','black','mosaic','tape'].includes(s.captureTools.mask))s.captureTools.mask='auto';
