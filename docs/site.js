@@ -84,8 +84,10 @@ const pcGroups = [
 const $ = s => document.querySelector(s);
 function element(tag, cls, text) { const e=document.createElement(tag); if(cls)e.className=cls; if(text)e.textContent=text; return e; }
 // media version: bump when shots are retaken under the same names, so cached copies don't linger
-const MV='?v=20260920-405';
-const additions = { title: '새로 더한, 나만의 작은 도구.', sub: '4.0.5 · 날씨 · 에이드 보관함 · 선택해서 켜는 확장', cards: [
+const MV='?v=20260920-407';
+const additions = { title: '새로 더한, 나만의 작은 도구.', sub: '4.0.7 · 날씨 · 에이드 보관함 · 선택해서 켜는 확장', cards: [
+ ['407-lorebook-night.png','연결된 책에 불이 들어와요','캐릭터·채팅 로어북이 연결되면 아이콘이 테마색으로 은은하게 빛나요.'],
+ ['407-lorebook-light.png','밝은 화면에서도 한눈에','화이트·나이트와 그룹 채팅 모두 적용돼요. 연결 해제 시 기본 모습으로 돌아와요.'],
  ['403-hero-phone-dark.mp4','유성우에서 비와 눈으로','실제 테마의 세 가지 날씨가 부드럽게 이어져요.','403-hero-phone-dark.jpg','403-hero-phone-dark.gif'],
  ['403-capture-new-desktop.png','넓은 화면에서는 나란히','PC는 왼쪽에서 선택·미리보기, 오른쪽에서 두 열의 설정을 조절해요.'],
  ['403-capture-parameters-mobile.jpg','가림 모양도 섬세하게','얇은 슬라이더와 테마색 손잡이로 여백·기울기·외곽선·그림자를 조절해요.'],

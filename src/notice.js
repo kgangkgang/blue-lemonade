@@ -8,6 +8,14 @@ import { getSettings, saveSettings } from './settings.js';
 
 export const NOTICES = [
 {
+    "version": "4.0.7",
+    "date": "2026-09-20",
+    "items": [
+        "전개 지시와 로어북 버튼의 작은 동그라미를 빼고, 켜져 있을 때 빛으로만 표시해요.",
+        "봇 카드에 연결된 캐릭터·채팅 로어북이 있으면 아이콘이 테마색으로 은은하게 빛나요. 연결을 해제하면 원래 모습으로 돌아가요."
+    ]
+},
+{
     "version": "4.0.5",
     "date": "2026-09-20",
     "items": [

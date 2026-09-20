@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 53개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 37c482c0b5ff) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 53개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 56fd8d285490) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -1200,17 +1200,7 @@ body.salty #mes_stop i {
   display: flex;
 }
 body.salty #jj-button .jj-dot {
-  top: auto;
-  right: 4.5px;
-  bottom: 4.5px;
-  width: 6px;
-  height: 6px;
-  background: var(--bl-jj-dot);
-  box-shadow: 0 0 0 2px var(--bl-jj-btn-bg);
-}
-body.salty:not(.salty-icons-line) #jj-button .jj-dot {
-  right: 3.5px;
-  bottom: 3.5px;
+  display: none !important;
 }
 body.salty #jj-popup {
   left: -6px !important;
@@ -6694,6 +6684,13 @@ body.salty #right-nav-panel #avatar_controls .form_create_bottom_buttons_block >
 body.salty #right-nav-panel #avatar_controls > label {
   flex: none !important;
   height: auto !important;
+}
+body.salty #right-nav-panel :is(#avatar_controls, #group-metadata-controls) #world_button.world_set,
+body.salty #right-nav-panel :is(#avatar_controls, #group-metadata-controls) :where(.chat_lorebook_button):is(#bl-s, *).world_set {
+  position: relative;
+  color: var(--salty-accent) !important;
+  background: color-mix(in srgb, var(--salty-accent) 16%, var(--bl-control)) !important;
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--salty-accent) 70%, transparent), 0 0 10px color-mix(in srgb, var(--salty-accent) 20%, transparent) !important;
 }
 body.salty #right-nav-panel #avatar-and-name-block #character_name_pole,
 body.salty #right-nav-panel #avatar-and-name-block #char-management-dropdown,
