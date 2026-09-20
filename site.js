@@ -84,7 +84,7 @@ const pcGroups = [
 const $ = s => document.querySelector(s);
 function element(tag, cls, text) { const e=document.createElement(tag); if(cls)e.className=cls; if(text)e.textContent=text; return e; }
 // media version: bump when shots are retaken under the same names, so cached copies don't linger
-const MV='?v=20260920-407';
+const MV='?v=20260920-408';
 const additions = { title: '새로 더한, 나만의 작은 도구.', sub: '4.0.7 · 날씨 · 에이드 보관함 · 선택해서 켜는 확장', cards: [
  ['407-lorebook-night.png','연결된 책에 불이 들어와요','캐릭터·채팅 로어북이 연결되면 아이콘이 테마색으로 은은하게 빛나요.'],
  ['407-lorebook-light.png','밝은 화면에서도 한눈에','화이트·나이트와 그룹 채팅 모두 적용돼요. 연결 해제 시 기본 모습으로 돌아와요.'],
@@ -106,6 +106,16 @@ const additions = { title: '새로 더한, 나만의 작은 도구.', sub: '4.0.
  ['403-perf-desktop.png','성능 보조도 선택해서','왼쪽에서 표시 위치를 고르고 오른쪽에서 다섯 도구를 바로 조절해요.'],
 ]};
 groups.unshift({...additions,cards:additions.cards.map(card=>card[0]==='403-capture-new-desktop.png'?['403-capture-mobile.png','모바일에서도 미리 보고 저장','선택한 채팅과 이름 가림을 확인하고, 설정을 바꾼 뒤 다시 만들어요.']:card)});pcGroups.unshift(additions);
+const scripts408 = {title:'한글화와 업데이트도, 테마 안에서.',sub:'4.0.8 · 스크립트 5종 · 개별 켜기·끄기 · 코드 편집 · 단독 업데이트'};
+groups.unshift({...scripts408,cards:[
+ ['408-scripts-mobile.jpg','필요한 스크립트만 켜요','실리태번·헬퍼 한글화, 데우스·샤진 번역과 삼각형 접기를 각각 선택해요. 기존 헬퍼의 같은 스크립트는 먼저 꺼 주세요.'],
+ ['408-update-mobile.jpg','이 테마만 업데이트','전체 확장 목록을 기다리지 않고 확인해요. 업데이트 후 새로고침하면 적용돼요.']
+]});
+pcGroups.unshift({...scripts408,cards:[
+ ['408-scripts-pc.jpg','왼쪽에서 고르고, 오른쪽에서 편집','스크립트마다 코드를 수정·저장·복원할 수 있어요. 사용자 수정본은 테마 업데이트 뒤에도 남아요.'],
+ ['408-update-pc.jpg','업데이트도 테마 설정에서','Git 설치는 직접 업데이트, ZIP 설치는 다운로드를 안내해요. 버튼을 누르기 전에는 조회하지 않아요.']
+]});
+
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
 document.documentElement.classList.add('js');
 const lightbox=$('#lightbox');
