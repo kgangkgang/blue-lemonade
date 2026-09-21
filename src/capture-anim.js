@@ -6,7 +6,6 @@
 //   WebP : 캔버스가 한 장씩 WebP 로 구운 것을 풀어 VP8X · ANIM · ANMF 로 다시 묶는다 (인코더를 들고 오지 않는다).
 import { prepareMotion, abortError } from './capture-motion.js';
 
-const FPS = 10;
 
 // ───────── 공통 ─────────
 const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
@@ -126,25 +125,61 @@ function createWebp(width, height, quality) {
     };
 }
 
-/** capture-options.js 가 부른다. options.format = 'apng' | 'webp' */
+// ───────── 최대 용량 맞추기 ─────────
+// 화면 전체가 바뀌는 움짤(날씨 · 배경 영상)은 장마다 통째로 들어가 금방 수십 MB 가 된다. 올릴 곳의 한도(예: 8MB)에 맞추려면
+// 앞의 몇 장을 시험 삼아 구워 장당 크기를 재고, 한도에 들어오는 가장 좋은 단계(화질 → 크기 → 초당 장수)를 고른다.
+// 화질은 WebP 만 (APNG 는 무손실이라 크기 · 장수로만 줄인다). factor = 기준(1단계) 대비 예상 용량
+const LADDER = {
+    webp: [[1, .82, 10, 1], [1, .7, 10, .74], [1, .55, 10, .57], [.8, .55, 10, .4], [.8, .42, 10, .31], [.67, .42, 10, .23], [.67, .42, 7, .17], [.5, .38, 7, .1], [.5, .3, 5, .065], [.4, .25, 5, .042]],
+    apng: [[1, 1, 10, 1], [.8, 1, 10, .68], [.67, 1, 10, .5], [.67, 1, 7, .37], [.5, 1, 7, .23], [.5, 1, 5, .17], [.4, 1, 5, .12], [.33, 1, 4, .075]],
+};
+const even = n => Math.max(2, Math.floor(n / 2) * 2);
+
+/** capture-options.js 가 부른다. options.format = 'apng' | 'webp', options.maxMB = 최대 용량(0 = 제한 없음) */
 export async function captureAnimated(ids, progress = () => {}, options = {}, signal) {
-    const kind = options.format === 'webp' ? 'webp' : 'apng';
+    const kind = options.format === 'webp' ? 'webp' : 'apng', label = kind === 'webp' ? 'WebP' : 'APNG';
     const motion = await prepareMotion(ids, progress, { ...options, format: 'gif' }, signal); // 크기 · 길이는 움짤과 같은 규칙 (720px · 10fps)
-    const hidden = () => { if (document.hidden) failure = Error('저장 중에는 이 탭을 열어 두세요.'); };
     let failure = null;
+    const hidden = () => { if (document.hidden) failure = Error('저장 중에는 이 탭을 열어 두세요.'); };
     document.addEventListener('visibilitychange', hidden);
+    const small = document.createElement('canvas'), smallCtx = small.getContext('2d', { willReadFrequently: true });
     try {
-        const { width, height, duration } = motion.layout, frames = Math.ceil(duration * FPS);
-        const encoder = kind === 'webp' ? createWebp(width, height, 0.9) : createApng(width, height);
-        const start = performance.now();
-        for (let i = 0; i < frames; i++) {
-            if (signal?.aborted) throw abortError();
-            if (failure) throw failure;
-            const wait = start + i * 1000 / FPS - performance.now(); if (wait > 0) await new Promise(r => setTimeout(r, wait)); // 배경 영상은 실제 시간으로 흐른다
-            motion.draw(i ? 1 / FPS : 0, i * 1000 / FPS, i / FPS);
-            await encoder.add(new Uint8Array(motion.ctx.getImageData(0, 0, width, height).data.buffer), 1000 / FPS);
-            progress(`${kind === 'webp' ? 'WebP' : 'APNG'} 만드는 중… ${i + 1} / ${frames}장`);
+        const { width, height, duration } = motion.layout, limit = Math.max(0, Number(options.maxMB) || 0) * 1024 * 1024, ladder = LADDER[kind];
+        let clock = 0; // 그림 속 시간(초) — 시험 굽기와 다시 굽기에서도 날씨 · 글자가 이어서 흐른다
+        /** 한 번 굽기: frames 장을 [scale, quality, fps] 로. stopAt 장만 굽고 멈출 수도 있다(시험) */
+        const encode = async ([scale, quality, fps], seconds, note) => {
+            const w = even(width * scale), h = even(height * scale), frames = Math.max(2, Math.ceil(seconds * fps));
+            small.width = w; small.height = h;
+            const encoder = kind === 'webp' ? createWebp(w, h, quality) : createApng(w, h);
+            const start = performance.now();
+            for (let i = 0; i < frames; i++) {
+                if (signal?.aborted) throw abortError();
+                if (failure) throw failure;
+                const wait = start + i * 1000 / fps - performance.now(); if (wait > 0) await new Promise(r => setTimeout(r, wait)); // 배경 영상은 실제 시간으로 흐른다
+                motion.draw(i || clock ? 1 / fps : 0, clock * 1000, clock); clock += 1 / fps;
+                let data;
+                if (scale === 1) data = motion.ctx.getImageData(0, 0, width, height).data;
+                else { smallCtx.clearRect(0, 0, w, h); smallCtx.drawImage(motion.canvas, 0, 0, w, h); data = smallCtx.getImageData(0, 0, w, h).data; }
+                await encoder.add(new Uint8Array(data.buffer), 1000 / fps);
+                progress(`${label} ${note}… ${i + 1} / ${frames}장`);
+            }
+            return encoder.finish();
+        };
+        let step = 0;
+        if (limit) {
+            const probeSeconds = Math.min(duration, 1.2), probe = await encode(ladder[0], probeSeconds, '용량 재는 중');
+            const expected = probe.size / probeSeconds * duration * 1.08;
+            while (step < ladder.length - 1 && expected * ladder[step][3] > limit * .94) step++;
         }
-        return { ...motion.result, blob: encoder.finish(), format: kind, extension: kind === 'webp' ? 'webp' : 'png' };
-    } finally { document.removeEventListener('visibilitychange', hidden); motion.close(); }
+        let blob = await encode(ladder[step], duration, '만드는 중');
+        // 예상이 빗나갔으면 실제 크기로 다시 골라 한 번 더 (최대 두 번)
+        for (let retry = 0; limit && blob.size > limit && step < ladder.length - 1 && retry < 2; retry++) {
+            const need = limit * .94 / blob.size * ladder[step][3];
+            do step++; while (step < ladder.length - 1 && ladder[step][3] > need);
+            blob = await encode(ladder[step], duration, '용량에 맞춰 다시 만드는 중');
+        }
+        const [scale, quality, fps] = ladder[step];
+        return { ...motion.result, width: even(width * scale), height: even(height * scale), blob, format: kind, extension: kind === 'webp' ? 'webp' : 'png',
+            fitted: limit ? { step, scale, quality, fps, overLimit: blob.size > limit } : null };
+    } finally { document.removeEventListener('visibilitychange', hidden); small.width = small.height = 1; motion.close(); }
 }
