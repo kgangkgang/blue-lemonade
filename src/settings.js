@@ -91,6 +91,7 @@ export const DEFAULTS = {
     wordTools: { messageView: 'translation', rules: [], presets: [], syntax: 'comma', caseSensitive: false, wholeWords: false, particles: true },
     captureTools: { replace: false, preset: '', redact: false, names: [], mask: 'auto', maskStyles: {}, format:'image', duration:6, maxMB:8, maxParagraphs:4, resolution:1080, backgroundTint:60, includeWeather:true, includeBackground:true, showName:true, showAvatar:true, showAssets:true, showTimestamp:true, showModel:true, showMessageId:true, showTokens:true, showGenerationTime:true },
     onehand: { on: false, swipe: true, imp: true, cont: true, regen: true },
+    bgWindow: { on: false, mode: 'audio' }, // 4.3.2 백그라운드 창 (실험): 답을 기다리는 동안 PIP 작은 창을 띄워 다른 앱을 봐도 생성 · 번역이 이어지게
     // 3.1.0 스타일: 내 스타일 목록 [{ id, name, data }] · 캐릭터 연결 { 'c:아바타' | 'g:그룹': 스타일 id } · 지금 입힌 캐릭터 스타일 { id, key } · 그 전 원래 모습 (styles.js · charstyle.js)
     styles: [],
     charStyles: {},
@@ -254,6 +255,8 @@ function tidyFlags(s) {
     if (!['system', 'time'].includes(s.auto.by)) s.auto.by = 'system';
     for (const key of ['night', 'day']) if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(String(s.auto[key]))) s.auto[key] = DEFAULTS.auto[key];
     if (!isObj(s.onehand)) s.onehand = structuredClone(DEFAULTS.onehand);
+    if (!isObj(s.bgWindow)) s.bgWindow = structuredClone(DEFAULTS.bgWindow);
+    s.bgWindow = { on: s.bgWindow.on === true, mode: s.bgWindow.mode === 'pip' ? 'pip' : 'audio' };
     for (const key of Object.keys(DEFAULTS.onehand)) s.onehand[key] = flag(s.onehand[key], DEFAULTS.onehand[key]);
     if (isObj(s.chat)) {
         s.chat.demSkin = flag(s.chat.demSkin, false);

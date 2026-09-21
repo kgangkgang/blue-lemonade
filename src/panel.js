@@ -1354,6 +1354,8 @@ function tabChat(s, sub) {
         ${cap('폰')}<div class="salty-group">
             <div class="bl-inline-preview" data-pv="phone">${phoneMock(s)}</div>
             ${row('스크롤하면 바 숨기기', toggle('reader.autoHide', !!s.reader?.autoHide), '아래로 읽으면 숨고, 살짝 올리거나 누르면 나와요')}
+            ${row('백그라운드에서도 계속 (실험)', toggle('bgWindow.on', !!s.bgWindow?.on), '답을 기다리는 동안 다른 앱을 봐도 생성 · 번역이 멈추지 않게 해요. 보내기 · 스와이프를 누를 때 켜지고 끝나면 꺼져요')}
+            ${s.bgWindow?.on ? stack('버티는 방식', seg('bgWindow.mode', [['audio', '소리 없이 버티기'], ['pip', '작은 창 띄우기']], 'audio'), s.bgWindow?.mode === 'pip' ? '진행 상황이 보이는 작은 창(PIP)이 떠요. 가장 확실하지만 창이 화면에 남아요' : '창 없이 버텨요. 귀에 안 들리는 아주 작은 소리를 내서 브라우저가 탭을 재우지 못하게 해요. 폰에 따라 안 통할 수 있어요 — 그러면 작은 창 방식을 써 보세요') : ''}
             ${row('한 손 버튼 줄', toggle('onehand.on', !!s.onehand?.on), '입력창 위에 스와이프 · 사칭 · 이어 쓰기 · 다시 생성')}
             ${s.onehand?.on ? stack('버튼', chips([['onehand.swipe', '스와이프'], ['onehand.imp', '사칭'], ['onehand.cont', '이어 쓰기'], ['onehand.regen', '다시 생성']])) : ''}
         </div>`;
