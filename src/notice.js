@@ -8,6 +8,13 @@ import { getSettings, saveSettings } from './settings.js';
 
 export const NOTICES = [
 {
+    "version": "4.2.1",
+    "date": "2026-09-21",
+    "items": [
+        "데우스 감정 대사가 번역문으로 바뀐 뒤에도 바로 움직여요. 번역 확장이 본문을 갈아 끼우면 효과가 사라졌다가 새로고침해야 돌아오던 문제예요. 본문이 통째로 바뀐 메시지만 잠깐 뒤(0.4초)에 다시 살려요."
+    ]
+},
+{
     "version": "4.2.0",
     "date": "2026-09-21",
     "items": [

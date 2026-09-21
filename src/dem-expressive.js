@@ -4,7 +4,7 @@
 // 정규식에 안 걸린 채 남고, 실리태번 정화기가 모르는 태그라 조용히 버린다 — 화면에는 맨 대사만 남아 효과가 걸릴 칸이 없다.
 // 그래서 메시지 원문에서 '감정 태그 + 괄호 대사'를 찾아, 화면의 같은 대사를 프리셋이 만들었을 것과 같은
 // <span class="custom-dem-expressive custom-dem-expressive--excited"> 로 감싼다. 원문 · 저장되는 글은 건드리지 않는다.
-// 감시자는 없다: 메시지가 그려졌다는 실리태번 이벤트 뒤에만 훑는다 (mes-pins.js 와 같은 방식).
+// 메시지가 그려졌다는 실리태번 이벤트 뒤에 훑고, 번역처럼 이벤트 없이 본문이 바뀌는 경우만 가벼운 감시자로 잡는다 (아래 onMutations).
 
 const TAGS = 'shout|quiet|angry|excited|dizzy|crying|anxious|hurt|intoxicated|whispering|trembling|deadpan|allcaps|uppercase|nocaps|lowercase|titlecase|tiny|small|large|huge|spaced|wide|tight|bold|italic|mono|gradient|rainbow|red|orange|yellow|green|cyan|blue|purple|pink|white|gray|bright|dim|faded|glow|warm|cool';
 const FIND = new RegExp(`((?:<(?:${TAGS})\\b[^>\\r\\n]{0,240}>[ \\t]*){1,4})(?:<(?:span|font)\\b[^>\\r\\n]{0,240}>[ \\t]*)?([「『][^」』\\r\\n]{1,600}[」』])`, 'gi');
@@ -106,8 +106,30 @@ function schedule() {
     timers = [setTimeout(sweep, 80), setTimeout(sweep, 800), setTimeout(sweep, 3000)];
 }
 
+// 번역 확장은 본문을 번역문으로 갈아 끼울 때 실리태번 이벤트를 내지 않는다 — 그래서 번역이 늦게 오면 감싼 칸이 사라진 채로 남았다(새로고침해야 다시 움직임).
+// #chat 에서 '본문이 통째로 바뀐 메시지'만 적어 두었다가 조용해진 뒤(0.4초) 그 메시지만 다시 감싼다. 스트리밍 중에는 글자가 올 때마다 미뤄져 끝난 뒤 한 번만 돈다.
+let watcher = null, changed = new Set(), quiet = 0, dressing = false;
+function onMutations(records) {
+    if (dressing) return;
+    for (const record of records) {
+        const body = record.target.nodeType === 1 && record.target.classList.contains('mes_text') ? record.target : null;
+        if (body && ![...record.addedNodes].every(n => n.nodeType === 1 && n.classList.contains(MADE))) changed.add(body);
+    }
+    if (!changed.size) return;
+    clearTimeout(quiet);
+    quiet = setTimeout(() => {
+        const chat = SillyTavern.getContext().chat || [], bodies = [...changed]; changed = new Set();
+        dressing = true;
+        try {
+            for (const body of bodies) { const mes = body.closest('.mes[mesid]'); if (mes?.isConnected) { dress(mes, chat[Number(mes.getAttribute('mesid'))]); markLeads(body); } }
+        } finally { queueMicrotask(() => { watcher?.takeRecords(); dressing = false; }); }
+    }, 400);
+}
+
 function bind() {
     if (bound) return;
+    const chatBox = document.getElementById('chat');
+    if (chatBox && !watcher) { watcher = new MutationObserver(onMutations); watcher.observe(chatBox, { childList: true, subtree: true }); }
     const { eventSource, event_types: t } = SillyTavern.getContext();
     const names = [t.CHAT_CHANGED, t.CHARACTER_MESSAGE_RENDERED, t.USER_MESSAGE_RENDERED, t.MORE_MESSAGES_LOADED, t.MESSAGE_UPDATED, t.MESSAGE_SWIPED, t.MESSAGE_EDITED].filter(Boolean);
     names.forEach(name => eventSource.on(name, schedule));
@@ -116,6 +138,7 @@ function bind() {
 
 function unbind() {
     if (!bound) return;
+    watcher?.disconnect(); watcher = null; clearTimeout(quiet); changed = new Set();
     bound.names.forEach(name => bound.eventSource.removeListener(name, schedule));
     timers.forEach(clearTimeout);
     timers = [];
