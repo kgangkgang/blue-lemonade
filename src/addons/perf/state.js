@@ -21,7 +21,7 @@ const DEFAULTS = Object.freeze({
     unit: '$',
     /** 이 확장이 부르는 요청은 없지만, 확장별로 기록에서 뺄 수 있다 (폴더 이름 목록) */
     ignoreCallers: [],
-    /** 예산 — new-api 계열 중계 서버(yunzhuhub 등)의 사용량·잔액 연동 (1.2.0) */
+    /** 예산 — new-api 계열 중계 서버의 사용량·잔액 연동 (1.2.0) */
     budget: {
         enabled: false,
         /** 비우면 사용자 지정 API 주소(custom_url)의 서버를 쓴다 */

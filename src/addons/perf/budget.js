@@ -1,6 +1,6 @@
 // 요청 로그 — 예산 (중계 서버의 사용량·잔액 연동, 1.2.0)
 //
-// new-api 계열 중계 서버(yunzhuhub 등)는 API 키만으로 두 가지를 준다.
+// new-api 계열 중계 서버는 API 키만으로 두 가지를 준다.
 //   GET /api/usage/token/        그 키의 누적 사용량 (quota 단위, 500000 = 1달러)
 //   GET /api/log/token?key=…     그 키의 최근 요청 1,000건 — 모델·토큰·실제 과금(quota)
 // 콘솔에서 만든 시스템 액세스 토큰이 있으면 GET /api/user/self 로 계정의 실제 잔액도 가져온다.

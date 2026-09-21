@@ -510,7 +510,7 @@ function renderBudget(state) {
     if (!budget.isConfigured()) {
         holder.innerHTML = `
             <div class="rl-empty"><i class="fa-solid fa-wallet"></i><b>중계 서버 연동이 꺼져 있어요</b>
-            <p>확장 설정 → ${esc(TITLE)} → 예산에서 켜고 API 키를 넣어 주세요. new-api 계열 서버(yunzhuhub 등)에서 실제 과금과 잔액을 가져와요.</p></div>`;
+            <p>확장 설정 → ${esc(TITLE)} → 예산에서 켜고 API 키를 넣어 주세요. new-api 계열 서버에서 실제 과금과 잔액을 가져와요.</p></div>`;
         return;
     }
 
