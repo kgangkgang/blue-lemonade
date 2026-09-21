@@ -16,13 +16,24 @@ const load = (name, url) => (modules[name] ??= import(url).catch((error) => {
     return null;
 }));
 
+// 스크립트 런타임: 시작할 때 파일을 못 받으면(폰에서 가끔) 예전에는 다음 설정 변경 때까지 다섯 개가 전부 '꺼짐'으로 남았다 — 몇 번 다시 받는다
+let scriptsWanted=false,scriptRetry=0;
+function startScripts(tries=4){
+    clearTimeout(scriptRetry);
+    load('scripts','./scripts/runtime.js').then((m)=>{
+        if(m)return m.syncScripts(scriptsWanted);
+        if(tries>0)scriptRetry=setTimeout(()=>startScripts(tries-1),2500);
+    }).catch(error=>console.error('[Blue Lemonade] 스크립트를 시작하지 못했어요',error));
+}
+
 /** apply.js applyAll 끝에서 부른다 */
 export function syncFeatures(s) {
     const on = !!s.enabled;
     syncTypography(on);
     const scriptsRequested=Object.values(SillyTavern.getContext().extensionSettings?.blue_lemonade_scripts?.enabled||{}).some(v=>v===true);
     // The editor can start the runtime before this module has imported it.
-    if(scriptsRequested||modules.scripts)load('scripts','./scripts/runtime.js').then(m=>m?.syncScripts(on&&scriptsRequested)).catch(error=>console.error('[Blue Lemonade] 스크립트를 시작하지 못했어요',error));
+    scriptsWanted=on&&scriptsRequested;
+    if(scriptsRequested||modules.scripts)startScripts();
     const reader = on && !!s.reader?.autoHide;
     if (reader || modules.reader) load('reader', './reader.js').then(m => m?.syncReader(reader));
     const onehand = on && !!s.onehand?.on;
