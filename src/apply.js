@@ -615,7 +615,7 @@ export function applyAll() {
             if (fx.motion !== 'normal') want.add(`salty-demfx-${fx.motion}`);
             if (fx.glow) want.add('salty-demfx-glow');
         }
-        if (fx?.flow) want.add('salty-demfx-flow');
+        if (fx?.flow) want.add(fx.flowMode === 'marker' ? 'salty-demfx-mflow' : 'salty-demfx-flow'); // 색 흐름: 글자에 | 형광펜 띠에
         if (deus && s.chat.demSkin) want.add('salty-dem-skin');          // 3.1.0 데우스 카드 스킨 (css/30-dem-skin.css)
         if (deus && s.chat.demSkin && s.chat.demFold !== false) want.add('salty-dem-fold'); // 폰: 트래커 한 줄 · 펼쳐 오는 카드 접기 (demskin.js)
         if (s.type.indent) want.add('salty-indent');

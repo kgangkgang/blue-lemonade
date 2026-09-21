@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 015ff4460ef8) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 113925b82466) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -17708,9 +17708,19 @@ body.salty.salty-demfx-go :is(#chat, .cg-root, .salty-preview) .custom-dem-expre
 body.salty.salty-demfx-go :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive.custom-dem-expressive--intoxicated:not(#salty-none) {
   animation: bl-fx-gradient 2.75s linear infinite, bl-fx-intoxicated 1.1s ease-in-out infinite alternate !important;
 }
+body.salty :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive {
+  text-indent: 0;
+}
+body.salty.salty-indent :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive.bl-fx-lead {
+  margin-left: -1em;
+  text-indent: 1em;
+}
 body.salty.salty-demfx-go.salty-demfx-glow :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none),
 body.salty.salty-demfx-go.salty-demfx-glow :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) * {
   text-shadow: 0 0 calc(var(--bl-fx-glow, 0) * .55em) currentColor !important;
+}
+body.salty.salty-demfx-go:not(.salty-demfx-flow) :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) {
+  color: var(--salty-marker-ink, var(--salty-dialogue)) !important;
 }
 body.salty.salty-demfx-flow :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) q:is(.bl-s, *),
 body.salty.salty-demfx-flow :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) font:is(.bl-s, *),
@@ -17722,6 +17732,22 @@ body.salty.salty-demfx-flow :is(#chat, .cg-root, .salty-preview) .custom-dem-exp
   color: transparent !important;
   -webkit-text-fill-color: transparent !important;
   background: none !important;
+}
+body.salty.salty-demfx-mflow:is(.salty-dlg-marker, .salty-dlg-full) :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) q:not(q q) {
+  background: var(--dem-gradient, linear-gradient(90deg, #ff6b6b, #ffd166, #7ee787, #70d6ff, #c77dff, #ff8acb)) 0 50% / 240% 100% no-repeat !important;
+}
+body.salty.salty-demfx-go.salty-demfx-mflow:is(.salty-dlg-marker, .salty-dlg-full) :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) q:not(q q) {
+  animation: bl-fx-gradient 2.75s linear infinite alternate;
+}
+@supports (-webkit-mask-clip: text) {
+  body.salty.salty-demfx-mflow.salty-dlg-marker :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) q:not(q q) {
+    -webkit-mask: linear-gradient(#000 0 0), var(--salty-marker-bg);
+    -webkit-mask-clip: text, border-box;
+  }
+}
+body.salty.salty-demfx-mflow.salty-dlg-full :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) q:not(q q) {
+  opacity: 1;
+  border-radius: 5px;
 }
 @keyframes bl-fx-gradient {
   from { background-position: 0 50%; }
@@ -17766,12 +17792,13 @@ body.salty.salty-demfx-flow :is(#chat, .cg-root, .salty-preview) .custom-dem-exp
   from { rotate: calc(-.6deg * var(--bl-fx-k, 1)); filter: hue-rotate(-48deg) saturate(1.45) brightness(.88); }
   to { rotate: calc(.6deg * var(--bl-fx-k, 1)); filter: hue-rotate(58deg) saturate(1.9) brightness(1.16); }
 }
-.salty-preview[data-prev="regex"] .custom-dem-expressive {
+.salty-preview[data-prev="regex"] .custom-dem-expressive,
+body.salty :is(#chat, .cg-root) .custom-dem-expressive.bl-fx-made {
   display: inline-block;
   max-width: 100%;
   vertical-align: baseline;
   color: transparent;
-  background-image: linear-gradient(90deg, #ff6b6b, #ffd166, #7ee787, #70d6ff, #c77dff, #ff8acb);
+  background-image: var(--dem-gradient, linear-gradient(90deg, #ff6b6b, #ffd166, #7ee787, #70d6ff, #c77dff, #ff8acb));
   background-size: 240% 100%;
   background-position: 0 50%;
   background-repeat: no-repeat;

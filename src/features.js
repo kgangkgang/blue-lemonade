@@ -37,6 +37,9 @@ export function syncFeatures(s) {
     // 4.1.3 ··· 메뉴 버튼 고정 (mes-pins.js)
     const pins = on && (s.chat?.mesPins?.length || 0) > 0;
     if (pins || modules.mespins) load('mespins', './mes-pins.js').then(m => m?.syncMesPins(pins, s.chat.mesPins));
+    // 데우스 감정 대사: 프리셋 정규식이 못 받는 「…」 대사를 화면에서 감싼다 (dem-expressive.js)
+    const demfx = on && !!s.deus?.on && !!s.deus?.fx?.on;
+    if (demfx || modules.demfx) load('demfx', './dem-expressive.js').then(m => m?.syncDemExpressive(demfx));
     const dem = on && !!s.deus?.on && !!s.chat?.demSkin;
     if (dem || modules.dem) load('dem', './demskin.js').then(m => m?.syncDemSkin(dem, s.chat));
     // 3.5.1 새로고침 첫 화면 파일 (user.css 에 줄이 있을 때만 씀 — splash.js)

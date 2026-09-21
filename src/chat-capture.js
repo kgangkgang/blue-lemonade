@@ -10,6 +10,8 @@ const limited = (promise, ms, message) => new Promise((resolve,reject)=>{
 });
 async function copyPaint(source, clone, resources, signal, options={}) {
     signal.throwIfAborted();
+    // 모델 아이콘 SVG 안의 잉크스케이프 메타 요소(sodipodi:namedview 등)는 style 이 없는 맨 Element — 그릴 것도 없으니 건너뛴다
+    if(!clone?.style||!source.style)return;
     if(source.matches('script,iframe,video,audio,.mes_buttons,.mes_edit_buttons,.swipe_left,.swipe_right,.swipes-counter')||(options.showAssets===false&&source.closest('.mes_text')&&source.matches('img,picture,svg,canvas'))||(options.showAvatar===false&&source.matches('.avatar'))||(options.showName===false&&source.matches('.name_text,.mes_name')))return;
     const bg=resources.paint(source,clone);
     clone.style.animation='none';clone.style.transition='none';clone.style.contentVisibility='visible';

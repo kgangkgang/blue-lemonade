@@ -220,9 +220,11 @@ function buildDrawer() {
     refreshDrawer();
 }
 
-function checkFilesMatch() {
+function checkFilesMatch(tries = 5) {
     const cssVersion = getComputedStyle(document.documentElement).getPropertyValue('--pa-css-version').trim().replace(/["']/g, '');
     if (cssVersion === VERSION || typeof toastr === 'undefined') return;
+    // 스타일 파일이 아직 안 왔을 뿐일 수 있다 (새로 깐 직후 · 느린 폰) — 값이 빈 동안은 경고하지 않고 다시 본다
+    if (!cssVersion && tries > 0) { setTimeout(() => checkFilesMatch(tries - 1), 3000); return; }
     toastr.warning(`${TITLE} 파일이 섞였어요 (코드 ${VERSION}, 스타일 ${cssVersion || '예전 것'}). 블루 레몬에이드 업데이트 파일을 확인하고 새로고침해 주세요.`, TITLE, { timeOut: 15000 });
 }
 

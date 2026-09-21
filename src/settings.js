@@ -78,7 +78,7 @@ export const DEFAULTS = {
             shadow: { on: false, color: '#000000', alpha: 60, angle: 135, distance: 1.5, blur: 2 },
         },
         // 4.1.2 감정 대사 효과(Expressive Dialogue): 움직임 soft|normal|big · 빛 · 색 흐름 · 기기의 애니메이션 줄이기 무시 (css/55-dem-expressive.css)
-        fx: { on: true, motion: 'normal', glow: true, flow: false, force: false },
+        fx: { on: true, motion: 'normal', glow: true, flow: false, flowMode: 'text', force: false }, // flowMode: 색 흐름을 글자에(text) | 형광펜 띠에(marker)
     },
     // 3.2.0 화이트 · 나이트 자동: by = system(기기 다크 모드) | time(night 부터 day 까지 나이트) — automode.js
     auto: { on: false, by: 'system', night: '20:00', day: '07:00' },
@@ -341,6 +341,7 @@ function tidyOutline(s) {
     if (!isObj(s.deus.fx)) s.deus.fx = structuredClone(DEFAULTS.deus.fx);
     for (const key of ['on', 'glow', 'flow', 'force']) s.deus.fx[key] = flag(s.deus.fx[key], DEFAULTS.deus.fx[key]);
     if (!['soft', 'normal', 'big'].includes(s.deus.fx.motion)) s.deus.fx.motion = DEFAULTS.deus.fx.motion;
+    if (!['text', 'marker'].includes(s.deus.fx.flowMode)) s.deus.fx.flowMode = DEFAULTS.deus.fx.flowMode;
 }
 
 /** 글자 그림자: 켬/끔 · 대상은 불리언, 색은 #rrggbb, 숫자는 범위 안. 2.3.0 의 dialogue.shadow(대사만) 는 여기로 옮김 */

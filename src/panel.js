@@ -596,7 +596,7 @@ function regexStage() {
     const item = (kind, icon, value, extra = '') => `<div class="custom-dem-track__item custom-dem-track__item--${kind}"><span class="custom-dem-track__icon">${icon}</span><span class="custom-dem-track__value">${value}</span>${extra}</div>`;
     return `<div class="salty-preview" data-prev="regex" aria-hidden="true">
         ${prevMes('false', '아린', `<div class="custom-dem-track">${item('time', '🕐', '오후 4:12')}${item('date', '🗓️', '3일째 · 목요일')}${item('location', '📍', '항구 → 등대 아래 찻집')}${item('weather', '⛅', '맑음', '<span class="custom-dem-track__temp">18°C</span>')}</div>
-        <p class="bl-fx-line"><span class="custom-dem-expressive custom-dem-expressive--shout"><font color="#e64553" class="bl-ink-sample" style="--bl-ink:#e64553"><q>「거기 서!」</q></font></span> <span class="custom-dem-expressive custom-dem-expressive--trembling"><q>「…무, 무서워.」</q></span> <span class="custom-dem-expressive custom-dem-expressive--crying"><font color="#1e88c7" class="bl-ink-sample" style="--bl-ink:#1e88c7"><q>「가지 마…」</q></font></span> 감정 대사예요.</p>
+        <p class="bl-fx-line"><span class="custom-dem-expressive custom-dem-expressive--shout bl-fx-lead"><font color="#e64553" class="bl-ink-sample" style="--bl-ink:#e64553"><q>「거기 서!」</q></font></span> <span class="custom-dem-expressive custom-dem-expressive--trembling"><q>「…무, 무서워.」</q></span> <span class="custom-dem-expressive custom-dem-expressive--crying"><font color="#1e88c7" class="bl-ink-sample" style="--bl-ink:#1e88c7"><q>「가지 마…」</q></font></span> 감정 대사예요.</p>
         <details class="custom-dem-card custom-dem-scene-plan" open>${head('🗺️', '장면 계획', '흐름도')}<div class="custom-dem-scene-plan__body">${step('inputs', 'Inputs', '상황 맥락', '찻집 약속 직전, 아린은 편지를 숨긴다.')}${step('constraints', 'Constraints', 'Character Realism', '들뜬 마음을 쉽게 드러내지 않는다.')}${step('plan', 'Plan', 'Prose Plan', '편지 이야기는 마지막 문단까지 아껴 둔다.')}</div></details>
         <details class="custom-dem-card custom-dem-status" open>${head('📊', 'Status', 'Live')}<div class="custom-dem-status__body"><div class="custom-dem-status-row"><strong class="custom-dem-status-row__name">아린</strong><span class="custom-dem-status-row__field"><span class="custom-dem-status-row__label custom-dem-status-row__label--physical">몸</span><span>나른함</span></span><span class="custom-dem-status-row__field"><span class="custom-dem-status-row__label custom-dem-status-row__label--clothes">옷</span><span>하늘색 원피스</span></span><span class="custom-dem-status-row__field"><span class="custom-dem-status-row__label custom-dem-status-row__label--mental">마음</span><span>기대</span></span><span class="custom-dem-status-row__field"><span class="custom-dem-status-row__label custom-dem-status-row__label--relationship">관계</span><span class="custom-dem-status-row__score">72/100</span></span></div></div></details>
         <details class="custom-dem-card custom-dem-threads" open>${head('🧶', 'Story Threads', '')}<div class="custom-dem-threads__body"><div class="custom-dem-thread-row"><span class="custom-dem-thread-tag custom-dem-thread-tag--current">[Current]</span> 찻집의 약속</div><div class="custom-dem-thread-row"><span class="custom-dem-thread-tag custom-dem-thread-tag--unresolved">[Unresolved]</span> 사라진 등대지기</div><div class="custom-dem-thread-row"><span class="custom-dem-thread-tag custom-dem-thread-tag--seed">[Seed]</span> 바다 건너온 편지</div></div></details>
@@ -1400,7 +1400,7 @@ function tabPrompt(s) {
     const ink = s.deus?.ink || {};
     const dio = ink.outline || { on: false, color: '#000000', width: 0.6, alpha: 100 };  // 데우스 대사 가독성: 외곽선
     const dis = ink.shadow || { on: false, color: '#000000', alpha: 60, angle: 135, distance: 1.5, blur: 2 }; // 그림자
-    const fx = s.deus?.fx || { on: true, motion: 'normal', glow: true, flow: false, force: false }; // 4.1.2 감정 대사 효과
+    const fx = s.deus?.fx || { on: true, motion: 'normal', glow: true, flow: false, flowMode: 'text', force: false }; // 4.1.2 감정 대사 효과
     const head = `${cap('데우스 엑스 마키나')}<div class="salty-group">
             ${row('프롬프트 호환', toggle('deus.on', on), '이 프리셋의 트래커 · 장면 계획 · 상태 카드를 테마에 맞춰요')}
         </div>`;
@@ -1450,6 +1450,7 @@ function tabPrompt(s) {
             ${fx.on ? stack('움직임', seg('deus.fx.motion', [['soft', '약하게'], ['normal', '보통'], ['big', '크게']], 'normal'), '약하게 = 프리셋 원래 크기') : ''}
             ${fx.on ? row('빛', toggle('deus.fx.glow', fx.glow), '외침 · 화남 · 울음 대사가 제 색으로 은은하게 빛나요') : ''}
             ${fx.on ? row('색 흐름', toggle('deus.fx.flow', fx.flow), '그 대사만 대사색 · 형광펜 대신 흐르는 색 글자로') : ''}
+            ${fx.on && fx.flow ? stack('색 흐름을 어디에', seg('deus.fx.flowMode', [['text', '글자'], ['marker', '형광펜']], 'text'), '형광펜: 글자는 대사색 그대로 두고 띠에 색이 흘러요 (대사 표시가 형광펜 · 전체 칠일 때)') : ''}
             ${fx.on ? row('기기 설정 무시', toggle('deus.fx.force', fx.force), '기기가 애니메이션 줄이기 · 절전이어도 움직여요') : ''}
         </div>
         ${fx.on && !fx.force && globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? '<p class="salty-note">지금 이 기기는 애니메이션 줄이기 상태라 효과가 멈춰 있어요. 보려면 기기 설정 무시를 켜 주세요.</p>' : ''}
