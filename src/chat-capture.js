@@ -57,12 +57,15 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
             await copyPaint(node,clone,resources,controller.signal,options);
             const draft=options.edits?.find(draft=>draft.id===ids[i]);
             applyCaptureDraft(clone,draft,node);
-            if(draft)for(const el of [clone,...clone.querySelectorAll('.mes_block,.mes_text,.mes_text *')])if(!el.matches('img,picture,svg,svg *,canvas,video')){
+            // 문단을 지운 편집본: 본문 밖의 칸(아바타 기둥 등)에도 원래 메시지 높이가 적혀 있어 빈 화면이 길게 남았다 → 그림을 뺀 모든 칸의 높이를 푼다
+            if(draft)for(const el of [clone,...clone.querySelectorAll('*')])if(el.style&&!el.matches('img,picture,svg,svg *,canvas,video')){
                 // Computed logical dimensions are copied too, and override height:auto.
                 for(const key of ['height','block-size'])el.style.setProperty(key,'auto','important');
                 for(const key of ['min-height','min-block-size'])el.style.setProperty(key,'0','important');
                 for(const key of ['max-height','max-block-size'])el.style.setProperty(key,'none','important');
                 el.style.flexBasis='auto';
+                // 격자 칸(.mes)은 줄 높이가 px 로 적혀 있다 (예: 19px 1352px) — 풀지 않으면 문단을 지워도 원래 높이가 남는다
+                if(el.style.gridTemplateRows&&el.style.gridTemplateRows!=='none'){el.style.gridTemplateRows=el.style.gridTemplateRows.split(' ').map(()=>'auto').join(' ');}
             }
             clone.querySelectorAll('script,iframe,video,audio,.mes_buttons,.mes_edit_buttons,.swipe_left,.swipe_right,.swipes-counter,.mes_ghost,.del_checkbox,.for_checkbox').forEach(el=>el.remove());
             applyCaptureDisplay(clone,options,window.SillyTavern?.getContext?.().chat?.[ids[i]]?.extra?.model||'');

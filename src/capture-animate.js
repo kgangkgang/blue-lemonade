@@ -8,6 +8,8 @@
 //   3. 영상 · 움짤은 바탕 위에 조각을 제자리에 그린다. 애니메이션마다 주기가 달라도 한 바퀴(LOOP) 안에 정수 번 돌게 시간을 맞춰 이음매가 없다.
 // 원본 메시지는 시간만 잠깐 옮겼다가 돌려놓는다. 글 · 저장 데이터는 건드리지 않는다.
 
+import { bakeMarker } from './capture-resources.js';
+
 const PROPS = ['translate', 'rotate', 'scale', 'transform', 'filter', 'opacity', 'background-position', 'text-shadow', 'letter-spacing'];
 const LOOP = 3000;       // 한 바퀴(ms)
 const MARGIN = 28;       // 조각 위아래 여유(px) — 튀어 오름 · 기울기 · 빛이 잘리지 않게
@@ -78,6 +80,7 @@ export function prepareAnimated(pairs, wrapper, page, fonts) {
                         const live = getComputedStyle(el), to = unit.targetParts[n].style;
                         for (const prop of PROPS) to.setProperty(prop, live.getPropertyValue(prop));
                         to.setProperty('animation', 'none');
+                        bakeMarker(live, to); // 색이 흐르는 형광펜 띠는 프레임마다 그 순간의 위치로 다시 굽는다
                     });
                     const html = serializer.serializeToString(unit.piece);
                     const pw = Math.ceil(width * scale), ph = out[i].height;

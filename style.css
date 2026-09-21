@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 113925b82466) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build a86a20f5cd45) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -17758,17 +17758,17 @@ body.salty.salty-demfx-mflow.salty-dlg-full :is(#chat, .cg-root, .salty-preview)
   to { scale: calc(1 + .03 * var(--bl-fx-k, 1)); --bl-fx-glow: 1; filter: brightness(1.3) saturate(1.25); }
 }
 @keyframes bl-fx-angry {
-  from { scale: 1; rotate: calc(-.45deg * var(--bl-fx-k, 1)); --bl-fx-glow: 0; filter: brightness(1); }
-  to { scale: calc(1 + .025 * var(--bl-fx-k, 1)); rotate: calc(.45deg * var(--bl-fx-k, 1)); --bl-fx-glow: .7; filter: brightness(1.14) saturate(1.08); }
+  from { scale: 1; rotate: calc(-.25deg * var(--bl-fx-k, 1)); --bl-fx-glow: 0; filter: brightness(1); }
+  to { scale: calc(1 + .025 * var(--bl-fx-k, 1)); rotate: calc(.25deg * var(--bl-fx-k, 1)); --bl-fx-glow: .7; filter: brightness(1.14) saturate(1.08); }
 }
 @keyframes bl-fx-excited {
   0%, 100% { translate: 0 0; rotate: 0deg; --bl-fx-glow: 0; }
-  25% { translate: 0 calc(-.06em * var(--bl-fx-k, 1)); rotate: calc(-1deg * var(--bl-fx-k, 1)); }
-  75% { translate: 0 calc(.04em * var(--bl-fx-k, 1)); rotate: calc(1deg * var(--bl-fx-k, 1)); --bl-fx-glow: .85; }
+  25% { translate: 0 calc(-.06em * var(--bl-fx-k, 1)); rotate: calc(-.4deg * var(--bl-fx-k, 1)); }
+  75% { translate: 0 calc(.04em * var(--bl-fx-k, 1)); rotate: calc(.4deg * var(--bl-fx-k, 1)); --bl-fx-glow: .85; }
 }
 @keyframes bl-fx-dizzy {
-  0%, 100% { rotate: calc(-2deg * var(--bl-fx-k, 1)); filter: hue-rotate(0deg); }
-  50% { rotate: calc(2deg * var(--bl-fx-k, 1)); translate: 0 calc(-.05em * var(--bl-fx-k, 1)); filter: hue-rotate(18deg); }
+  0%, 100% { rotate: calc(-.6deg * var(--bl-fx-k, 1)); filter: hue-rotate(0deg); }
+  50% { rotate: calc(.6deg * var(--bl-fx-k, 1)); translate: 0 calc(-.05em * var(--bl-fx-k, 1)); filter: hue-rotate(18deg); }
 }
 @keyframes bl-fx-crying {
   from { opacity: .62; translate: 0 0; --bl-fx-glow: .2; }
@@ -17789,8 +17789,8 @@ body.salty.salty-demfx-mflow.salty-dlg-full :is(#chat, .cg-root, .salty-preview)
   to { filter: saturate(1.05) brightness(1.08); --bl-fx-glow: .6; }
 }
 @keyframes bl-fx-intoxicated {
-  from { rotate: calc(-.6deg * var(--bl-fx-k, 1)); filter: hue-rotate(-48deg) saturate(1.45) brightness(.88); }
-  to { rotate: calc(.6deg * var(--bl-fx-k, 1)); filter: hue-rotate(58deg) saturate(1.9) brightness(1.16); }
+  from { rotate: calc(-.35deg * var(--bl-fx-k, 1)); filter: hue-rotate(-48deg) saturate(1.45) brightness(.88); }
+  to { rotate: calc(.35deg * var(--bl-fx-k, 1)); filter: hue-rotate(58deg) saturate(1.9) brightness(1.16); }
 }
 .salty-preview[data-prev="regex"] .custom-dem-expressive,
 body.salty :is(#chat, .cg-root) .custom-dem-expressive.bl-fx-made {
