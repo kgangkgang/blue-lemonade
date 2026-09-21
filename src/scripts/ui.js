@@ -15,7 +15,7 @@ export async function bindScripts(root){
     const paint=()=>{if(!alive)return;for(const item of SCRIPT_CATALOG){box.querySelector(`[data-script-status="${item.id}"]`).textContent=runtime.scriptStatus(item.id);const toggle=box.querySelector(`[data-script-enable="${item.id}"]`);toggle.checked=scriptSettings().enabled[item.id];toggle.disabled=busy;}};
     const unsubscribe=runtime.subscribeScripts(paint);
     // 켜 두었는데 '꺼짐'으로 남은 스크립트가 있으면(시작 때 못 돌았음) 이 화면을 열 때 다시 시작한다
-    if(getSettings().enabled&&SCRIPT_CATALOG.some(item=>scriptSettings().enabled[item.id]&&runtime.scriptStatus(item.id)==='꺼짐'))runtime.syncScripts(true).catch(error=>console.error('[Blue Lemonade] 스크립트를 시작하지 못했어요',error)).finally(paint);
+    runtime.healScripts(!!getSettings().enabled);
     root._scriptsCleanup=()=>{alive=false;unsubscribe();};
     async function choose(id){
         selected=id;selection=id;const seq=++sequence,item=scriptDefinition(id);code.disabled=true;

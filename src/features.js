@@ -17,11 +17,16 @@ const load = (name, url) => (modules[name] ??= import(url).catch((error) => {
 }));
 
 // 스크립트 런타임: 시작할 때 파일을 못 받으면(폰에서 가끔) 예전에는 다음 설정 변경 때까지 다섯 개가 전부 '꺼짐'으로 남았다 — 몇 번 다시 받는다
-let scriptsWanted=false,scriptRetry=0;
+let scriptsWanted=false,scriptRetry=0,scriptHeal=[];
 function startScripts(tries=4){
     clearTimeout(scriptRetry);
     load('scripts','./scripts/runtime.js').then((m)=>{
-        if(m)return m.syncScripts(scriptsWanted);
+        if(m){
+            // 시작 직후에는 설정 적용이 여러 번 겹친다 — 끝난 뒤에도 켜 둔 스크립트가 멈춰 있으면 다시 시작한다 (5초 · 15초 · 40초 뒤 확인)
+            clearTimeout(scriptHeal[0]);clearTimeout(scriptHeal[1]);clearTimeout(scriptHeal[2]);
+            scriptHeal=[5000,15000,40000].map(ms=>setTimeout(()=>m.healScripts(scriptsWanted),ms));
+            return m.syncScripts(scriptsWanted);
+        }
         if(tries>0)scriptRetry=setTimeout(()=>startScripts(tries-1),2500);
     }).catch(error=>console.error('[Blue Lemonade] 스크립트를 시작하지 못했어요',error));
 }
