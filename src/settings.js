@@ -448,7 +448,7 @@ export function getSettings() {
         s.wordTools.syntax='comma';
     }
     if(!isObj(s.captureTools))s.captureTools=structuredClone(DEFAULTS.captureTools);
-    s.captureTools.format=['video','gif'].includes(s.captureTools.format)?s.captureTools.format:'image';
+    s.captureTools.format=['video','gif','apng','webp'].includes(s.captureTools.format)?s.captureTools.format:'image';
     s.captureTools.resolution=Number(s.captureTools.resolution)===1440?1440:1080;
     s.captureTools.backgroundTint=Math.min(100,Math.max(0,Number(s.captureTools.backgroundTint??60)||0));
     s.captureTools.maxParagraphs=Math.min(20,Math.max(1,Math.floor(Number(s.captureTools.maxParagraphs)||4)));
