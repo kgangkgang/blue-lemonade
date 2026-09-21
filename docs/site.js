@@ -138,15 +138,16 @@ const topics = [
 ];
 const $ = s => document.querySelector(s);
 function element(tag, cls, text) { const e=document.createElement(tag); if(cls)e.className=cls; if(text)e.textContent=text; return e; }
-// media version: bump when shots are retaken under the same names, so cached copies don't linger
-const MV='?v=20260921-425';
+// media cache keys: one stable key for everything; a file retaken under the same name gets its own entry here (never bump the stable key)
+const RETAKEN={'412-bg-alpha.mp4':'413','412-bg-alpha.jpg':'413','412-bg-alpha.gif':'413','412-dem-fx.mp4':'417','412-dem-fx.jpg':'417','412-dem-fx.gif':'417','415-fx-marker.mp4':'417','415-fx-marker.jpg':'417','415-fx-marker.gif':'417'};
+const mv=file=>'?v='+(RETAKEN[file]||'s1');
 
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
 let motionAllowed=false;try{motionAllowed=sessionStorage.getItem('bl-site-motion')==='1';}catch{}
 const calm=()=>reduceMotion.matches&&!motionAllowed;
 document.documentElement.classList.add('js');
 const lightbox=$('#lightbox');
-const inView=new IntersectionObserver(entries=>{for(const {target,isIntersecting} of entries){if(calm()||target.dataset.userPaused)continue;if(isIntersecting)target.play().catch(()=>{});else target.pause();}},{threshold:.35});
+const inView=new IntersectionObserver(entries=>{for(const {target,isIntersecting} of entries){if(calm()||target.dataset.userPaused)continue;if(isIntersecting){if(!target.src&&target.dataset.src)target.src=target.dataset.src;target.play().catch(()=>{});}else target.pause();}},{threshold:.35});
 function galleryBlock(topic, device, cards, withHeading){
   const block=element('section','gallery-block'), heading=element('div','gallery-heading'), label=element('div'); block.dataset.device=device;
   label.append(element('h3','',topic.title),element('p','',topic.sub));
@@ -160,15 +161,15 @@ function galleryBlock(topic, device, cards, withHeading){
     const card=element('figure','card'), wrap=element('div','media-wrap'), caption=element('figcaption','',title); card.style.setProperty('--i',Math.min(track.children.length,6));
     if(file.startsWith('410-export.')||file.startsWith('420-capture-moving.'))wrap.classList.add('export-media');
     if(file.endsWith('.mp4')){
-      const video=element('video');video.preload='metadata';video.playsInline=true;video.muted=true;video.loop=true;video.setAttribute('muted','');video.setAttribute('playsinline','');video.src='media/'+file+MV;video.poster='media/'+poster+MV;video.setAttribute('aria-label',title);
-      if(reduceMotion.matches)video.controls=true;
+      const video=element('video');video.preload='none';video.playsInline=true;video.muted=true;video.loop=true;video.setAttribute('muted','');video.setAttribute('playsinline','');video.dataset.src='media/'+file+mv(file);video.poster='media/'+poster+mv(poster);video.setAttribute('aria-label',title);
+      if(reduceMotion.matches){video.controls=true;video.src=video.dataset.src;}
       else{const state=element('span','play-state','▶');state.setAttribute('aria-hidden','true');wrap.classList.add('paused');
         video.addEventListener('play',()=>wrap.classList.remove('paused'));video.addEventListener('pause',()=>wrap.classList.add('paused'));
-        video.addEventListener('click',()=>{if(video.paused){delete video.dataset.userPaused;video.play().catch(()=>{});}else{video.dataset.userPaused='1';video.pause();}});
+        video.addEventListener('click',()=>{if(!video.src&&video.dataset.src)video.src=video.dataset.src;if(video.paused){delete video.dataset.userPaused;video.play().catch(()=>{});}else{video.dataset.userPaused='1';video.pause();}});
         wrap.append(state);inView.observe(video);}
       wrap.prepend(video);
-    }else{const img=element('img');img.src='media/'+file+MV;img.alt=title;img.loading='lazy';img.decoding='async';img.tabIndex=0;const open=()=>{lightbox.querySelector('img').src=img.src;lightbox.querySelector('img').alt=title;lightbox.querySelector('p').textContent=title;lightbox.showModal();};img.onclick=open;img.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();open();}};wrap.append(img);}
-    caption.append(element('small','',description));if(credit){const c=element('a','gif-link',credit[0]);c.href=credit[1];c.target='_blank';c.rel='noopener';caption.append(c);}if(gif){const a=element('a','gif-link','움짤로 보기 ↗');a.href='media/'+gif+MV;a.target='_blank';a.rel='noopener';caption.append(a);}card.append(wrap,caption);track.append(card);
+    }else{const img=element('img');img.src='media/'+file+mv(file);img.alt=title;img.loading='lazy';img.decoding='async';img.tabIndex=0;const open=()=>{lightbox.querySelector('img').src=img.src;lightbox.querySelector('img').alt=title;lightbox.querySelector('p').textContent=title;lightbox.showModal();};img.onclick=open;img.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();open();}};wrap.append(img);}
+    caption.append(element('small','',description));if(credit){const c=element('a','gif-link',credit[0]);c.href=credit[1];c.target='_blank';c.rel='noopener';caption.append(c);}if(gif){const a=element('a','gif-link','움짤로 보기 ↗');a.href='media/'+gif+mv(gif);a.target='_blank';a.rel='noopener';caption.append(a);}card.append(wrap,caption);track.append(card);
   }block.append(heading,track);return block;
 }
 // Topic tabs: a topic's cards are built the first time it is opened, so the page starts with one topic's media instead of all of them
@@ -252,7 +253,7 @@ document.querySelectorAll('.fresh,.section-head,.palette-layout,.reading-layout,
   const shown = v => document.documentElement.classList.contains('device-pc') ? !!v.closest('.pc-stage') : !!v.closest('.phone-slot');
   const start = v => { if (!v.src && v.dataset.src) { if (v.dataset.poster) v.poster = v.dataset.poster; v.src = v.dataset.src; } v.muted = true; const p = v.play(); if (p) p.catch(() => { if (!motionAllowed) motionNote('blocked'); }); };
   // a quiet line under the hero when videos are held back, with one button to play them anyway
-  function motionNote(why) { let n = document.querySelector('.motion-note'); if (!n) { n = document.createElement('p'); n.className = 'motion-note'; const t = document.createElement('span'), b = document.createElement('button'); b.type = 'button'; b.textContent = '영상 재생'; b.onclick = () => { motionAllowed = true; try { sessionStorage.setItem('bl-site-motion', '1'); } catch {} n.remove(); sync(); for (const v of document.querySelectorAll('.topic-panel:not([hidden]) video')) { const r = v.getBoundingClientRect(); if (r.top < innerHeight && r.bottom > 0) v.play().catch(() => {}); } }; n.append(t, b); (document.querySelector('.device-pick') || art).after(n); } n.firstChild.textContent = why === 'blocked' ? '절전 모드 등으로 자동 재생이 막혀 있어요.' : '기기의 ‘애니메이션 줄이기’가 켜져 있어 영상을 멈춰 뒀어요.'; }
+  function motionNote(why) { let n = document.querySelector('.motion-note'); if (!n) { n = document.createElement('p'); n.className = 'motion-note'; const t = document.createElement('span'), b = document.createElement('button'); b.type = 'button'; b.textContent = '영상 재생'; b.onclick = () => { motionAllowed = true; try { sessionStorage.setItem('bl-site-motion', '1'); } catch {} n.remove(); sync(); for (const v of document.querySelectorAll('.topic-panel:not([hidden]) video')) { const r = v.getBoundingClientRect(); if (r.top < innerHeight && r.bottom > 0) { if (!v.src && v.dataset.src) v.src = v.dataset.src; v.play().catch(() => {}); } } }; n.append(t, b); (document.querySelector('.device-pick') || art).after(n); } n.firstChild.textContent = why === 'blocked' ? '절전 모드 등으로 자동 재생이 막혀 있어요.' : '기기의 ‘애니메이션 줄이기’가 켜져 있어 영상을 멈춰 뒀어요.'; }
   const sync = () => { const on = !document.hidden && !calm() && !art.classList.contains('idle'); for (const v of vids) { if (shown(v) && on) start(v); else v.pause(); } };
   new MutationObserver(sync).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
   new MutationObserver(sync).observe(art, { attributes: true, attributeFilter: ['class'] });
