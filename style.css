@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 6c5eaf5aa438) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 4d360e9688eb) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -17412,6 +17412,19 @@ body.bl-hide-perf-timer #lt-wand-button, body.bl-hide-perf-log #rl-wand-button {
 .bl-capture-editor { width:760px; }
 .bl-capture-editor article { padding:12px; margin:12px 0; border:1px solid var(--salty-line); border-radius:10px; }
 .bl-capture-editor textarea { display:block; width:100%; box-sizing:border-box; resize:vertical; margin:8px 0; color:var(--salty-text); background:var(--salty-field); }
+.bl-capture-editor .bl-edit-bar { position:sticky; top:-20px; z-index:1; display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:10px 0; background:var(--salty-bg); }
+.bl-capture-editor .bl-edit-bar button { flex:1 1 130px; min-height:40px; }
+.bl-capture-editor .bl-edit-all { display:flex; align-items:center; gap:8px; padding:0 6px; }
+.bl-capture-editor article.bl-edit-row { padding:4px 10px; margin:6px 0; border:0; border-radius:12px; background:var(--salty-shade); }
+.bl-capture-editor article.bl-edit-row.open { padding-bottom:10px; }
+.bl-edit-line { display:flex; align-items:center; gap:10px; min-width:0; }
+.bl-edit-line > input { flex:0 0 auto; margin:0; }
+.bl-edit-peek { flex:1 1 auto; min-width:0; display:flex; align-items:center; gap:8px; min-height:40px; padding:0; border:0; background:transparent; color:inherit; font:inherit; text-align:left; cursor:pointer; }
+.bl-edit-peek > span { flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.bl-edit-peek > span em { color:var(--salty-faint); font-style:normal; }
+.bl-edit-peek > img { flex:0 0 auto; width:28px; height:28px; object-fit:cover; border-radius:6px; }
+.bl-edit-peek > i { flex:0 0 auto; color:var(--salty-faint); font-size:.8em; }
+.bl-capture-editor .bl-edit-row .bl-word-actions button { flex:0 0 48px; }
 .bl-capture-presets { display:grid; gap:8px; margin:0 0 12px; padding:0 0 12px; border-bottom:1px solid var(--salty-line); }
 .bl-capture-presets .bl-word-actions { display:flex; flex-wrap:wrap; gap:8px; }
 .bl-capture-presets .bl-word-actions button { flex:1 1 120px; min-height:38px; }

@@ -30,10 +30,21 @@ function wrap(node, tags) {
     span.appendChild(node);
 }
 
+/** 채팅 밖의 본문(북마크 카드 등)에도 같은 일을 한다 — 본문 요소를 직접 받는다. 효과를 꺼 두었으면 아무것도 안 한다 */
+export function dressBody(body, message) {
+    if (!active || !body || !message) return;
+    dressInto(body, message);
+    markLeads(body);
+}
+
 /** 한 메시지: 원문(번역본이 있으면 그것도)의 감정 대사를 화면에서 찾아 감싼다 */
 function dress(mes, message) {
     const body = mes.querySelector('.mes_text');
     if (!body || !message) return;
+    dressInto(body, message);
+}
+// 본문이 아직 문서에 붙기 전(북마크 카드를 글자로 만드는 중)에도 쓰이므로 isConnected 가 아니라 body 안인지로 본다
+function dressInto(body, message) {
     const hits = [...findExpressive(message.extra?.display_text), ...findExpressive(message.mes)];
     if (!hits.length) return;
     // 1) 칸 하나가 통째로 그 대사인 경우(테마의 대사 칸 q · 대사 색상의 span/font): 가장 바깥 칸을 감싼다 — 프리셋이 만드는 모양(감정 칸 > 색 칸 > q)과 같게.
@@ -41,7 +52,7 @@ function dress(mes, message) {
     const boxes = [...body.querySelectorAll('q, font, span[style]')];
     const rest = [];
     for (const hit of hits) {
-        let box = boxes.find(el => el.isConnected && el.textContent.trim() === hit.text && !el.closest('.custom-dem-expressive'));
+        let box = boxes.find(el => body.contains(el) && el.textContent.trim() === hit.text && !el.closest('.custom-dem-expressive'));
         if (!box) { rest.push(hit); continue; }
         while (box.parentElement !== body && box.parentElement.matches('q, font, span[style]') && box.parentElement.textContent.trim() === hit.text) box = box.parentElement;
         wrap(box, hit.tags);
@@ -52,7 +63,7 @@ function dress(mes, message) {
     const nodes = [];
     for (let n = walker.nextNode(); n; n = walker.nextNode()) if (n.data.includes('「') || n.data.includes('『')) nodes.push(n);
     for (const hit of rest) {
-        const node = nodes.find(n => n.isConnected && n.data.includes(hit.text) && !n.parentElement.closest('.custom-dem-expressive'));
+        const node = nodes.find(n => body.contains(n) && n.data.includes(hit.text) && !n.parentElement.closest('.custom-dem-expressive'));
         if (!node) continue;
         const start = node.data.indexOf(hit.text);
         const target = start > 0 ? node.splitText(start) : node;

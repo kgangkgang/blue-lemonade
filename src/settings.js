@@ -86,7 +86,7 @@ export const DEFAULTS = {
     weatherImages: [],
     customPalettes: [],
     activeCustomPalette: '',
-    addons: { order: false, perf: false, words: false, capture: false, models: false, modelorder: false, modelswitch: false, rewrite: false },
+    addons: { order: false, perf: false, words: false, capture: false, models: false, modelorder: false, modelswitch: false, rewrite: false, bookmarks: false },
     addonUI: { orderIcon: false, perfIcon: false, wordsMenu: false, captureMenu: false, perfMenu: { watchdog:false, timer:true, perf:false, log:true, dedupe:false } },
     wordTools: { messageView: 'translation', rules: [], presets: [], syntax: 'comma', caseSensitive: false, wholeWords: false, particles: true },
     captureTools: { replace: false, preset: '', redact: false, names: [], mask: 'auto', maskStyles: {}, format:'image', duration:6, maxMB:8, maxParagraphs:4, resolution:1080, backgroundTint:60, includeWeather:true, includeBackground:true, showName:true, showAvatar:true, showAssets:true, showTimestamp:true, showModel:true, showMessageId:true, showTokens:true, showGenerationTime:true },
