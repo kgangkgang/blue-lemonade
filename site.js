@@ -63,6 +63,7 @@ const topics = [
   ]},
   { id:'capture', label:'캡처', fresh:true, title:'글은 그대로, 날씨만 움직이게.', sub:'이미지 · 영상 · GIF · 이름 가리기 · 캡처용 글 편집 · 문단별 분할', cards: [
     ['420-capture-moving.webp','움짤 속 글자도 살아 있게','테마가 저장한 실제 WebP 움짤이에요. 같은 장면이 GIF 818KB · WebP 501KB, 색을 줄이지 않는 APNG 는 1.6MB 였어요.'],
+    ['424-capture-quick.png','몇 초 만에 빠른 미리보기','굽지 않고 첫 화면부터 확인해요. 파일은 ‘파일 만들기’를 눌렀을 때만 만들고, 창을 닫았다 와도 만든 파일과 글 편집이 남아요. 프리셋으로 설정도 한 번에.'],
     ['420-capture-format.png','올릴 곳 한도에 맞춰서','파일 종류에서 GIF · APNG · WebP 를 고르고 최대 용량을 정하면, 화질 → 크기 → 초당 장수 순으로 낮춰 맞춰요.'],
     ['410-capture-mobile.jpg','본문만 또는 원하는 정보만','이름·날짜·모델·번호·토큰·시간을 각각 선택해요. 원래 대화에는 영향을 주지 않아요.'],
     ...exportExamples410,
@@ -135,7 +136,7 @@ const topics = [
 const $ = s => document.querySelector(s);
 function element(tag, cls, text) { const e=document.createElement(tag); if(cls)e.className=cls; if(text)e.textContent=text; return e; }
 // media version: bump when shots are retaken under the same names, so cached copies don't linger
-const MV='?v=20260921-420';
+const MV='?v=20260921-424';
 
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
 document.documentElement.classList.add('js');
@@ -188,9 +189,17 @@ function galleryBlock(topic, device, cards, withHeading){
 }
 {const big=lightbox.querySelector('img');big.addEventListener('load',()=>{lightbox.classList.toggle('tall',big.naturalHeight>big.naturalWidth*1.9);lightbox.scrollTop=0;});}
 lightbox.querySelector('.close').onclick=()=>lightbox.close();lightbox.onclick=e=>{if(e.target===lightbox)lightbox.close();};lightbox.addEventListener('close',()=>{lightbox.querySelector('img').src='';});
-const SHOWN_NOTES=5;
-fetch('release-notes.json').then(r=>{if(!r.ok)throw new Error('notes');return r.json();}).then(notes=>{$('#notes').replaceChildren();notes.forEach((note,i)=>{const d=element('details','note');d.open=i===0;d.hidden=i>=SHOWN_NOTES;const s=element('summary');s.append(element('span','num',note.version));if(i===0)s.append(element('span','tag','NEW'));s.append(element('span','date',note.date.replaceAll('-','.')),element('span','plus','+'));const ul=element('ul');note.items.forEach((t,k)=>{const li=element('li','',t);li.style.setProperty('--i',Math.min(k,10));ul.append(li);});d.append(s,ul);$('#notes').append(d);});
-  if(notes.length>SHOWN_NOTES){const more=element('button','notes-more',`이전 버전 ${notes.length-SHOWN_NOTES}개 더 보기`);more.type='button';more.onclick=()=>{document.querySelectorAll('.note[hidden]').forEach((n,k)=>{n.hidden=false;n.classList.add('appear');n.style.setProperty('--i',Math.min(k,12));});more.remove();};$('#notes').after(more);}
+const SHOWN_NOTES=3;
+fetch('release-notes.json').then(r=>{if(!r.ok)throw new Error('notes');return r.json();}).then(notes=>{$('#notes').replaceChildren();
+  // one card per day, like the theme's own notice: a busy day reads as "v4.1.2 ~ v4.2.4 · 업데이트 13번"
+  const days=[];for(const note of notes){const last=days.at(-1);if(last&&last.date===note.date)last.notes.push(note);else days.push({date:note.date,notes:[note]});}
+  days.forEach((day,i)=>{const d=element('details','note');d.open=i===0;d.hidden=i>=SHOWN_NOTES;const s=element('summary'),first=day.notes.at(-1).version,latest=day.notes[0].version;
+    s.append(element('span','num',latest));if(i===0)s.append(element('span','tag','NEW'));
+    if(day.notes.length>1)s.append(element('span','span',`v${first} ~ v${latest} · 업데이트 ${day.notes.length}번`));
+    s.append(element('span','date',day.date.replaceAll('-','.')),element('span','plus','+'));d.append(s);
+    day.notes.forEach(note=>{if(day.notes.length>1)d.append(element('h4','ver','v'+note.version));const ul=element('ul');note.items.forEach((t,k)=>{const li=element('li','',t);li.style.setProperty('--i',Math.min(k,10));ul.append(li);});d.append(ul);});
+    $('#notes').append(d);});
+  if(days.length>SHOWN_NOTES){const more=element('button','notes-more',`이전 날짜 ${days.length-SHOWN_NOTES}일 더 보기`);more.type='button';more.onclick=()=>{document.querySelectorAll('.note[hidden]').forEach((n,k)=>{n.hidden=false;n.classList.add('appear');n.style.setProperty('--i',Math.min(k,12));});more.remove();};$('#notes').after(more);}
 }).catch(()=>{$('#notes').textContent='업데이트 내역을 불러오지 못했어요. 잠시 후 새로고침해 주세요.';});
 $('#copy-repo').onclick=async()=>{try{await navigator.clipboard.writeText($('#repo-url').textContent);const cb=$('#copy-repo');cb.textContent='복사됨 ✓';cb.classList.add('done');setTimeout(()=>{cb.textContent='복사';cb.classList.remove('done');},1800);$('#toast').textContent='설치 주소를 복사했어요.';$('#toast').classList.add('show');setTimeout(()=>$('#toast').classList.remove('show'),2200);}catch{$('#copy-repo').textContent='주소 선택';const r=document.createRange();r.selectNodeContents($('#repo-url'));const s=window.getSelection();s.removeAllRanges();s.addRange(r);}};
 document.addEventListener('play',e=>{if(e.target.tagName==='VIDEO'&&e.target.controls)document.querySelectorAll('video').forEach(v=>{if(v!==e.target)v.pause();});},true);
