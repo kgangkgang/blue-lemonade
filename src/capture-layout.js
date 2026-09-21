@@ -29,7 +29,8 @@ export function reflowCaptureText(clone){
         if(!['inline','inline-block'].includes(el.style.display)||el.querySelector('img,svg,canvas'))continue;
         for(const key of ['width','inline-size','height','block-size'])el.style.setProperty(key,'auto','important');
         for(const key of ['min-width','min-inline-size'])el.style.setProperty(key,'0','important');
-        for(const key of ['max-width','max-inline-size'])el.style.setProperty(key,'none','important');
+        // 100% 같은 비율 상한은 '만든 사람이 건 제약'이라 그대로 둔다: 풀면 왼쪽으로 당겨 둔 감정 대사 칸(margin-left:-1em)이 문단보다 1em 넓어져 줄이 화면과 다르게 꺾였다
+        for(const key of ['max-width','max-inline-size'])if(!el.style.getPropertyValue(key).endsWith('%'))el.style.setProperty(key,'none','important');
     }
     // Keep the opening quote attached to its first letter without a copied pixel width.
     for(const el of clone.querySelectorAll('.bl-quote-lead')){el.style.whiteSpace='nowrap';el.style.textIndent='0';}

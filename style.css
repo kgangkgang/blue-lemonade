@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build a86a20f5cd45) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 61edc95d351d) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -17412,6 +17412,10 @@ body.bl-hide-perf-timer #lt-wand-button, body.bl-hide-perf-log #rl-wand-button {
 .bl-capture-editor { width:760px; }
 .bl-capture-editor article { padding:12px; margin:12px 0; border:1px solid var(--salty-line); border-radius:10px; }
 .bl-capture-editor textarea { display:block; width:100%; box-sizing:border-box; resize:vertical; margin:8px 0; color:var(--salty-text); background:var(--salty-field); }
+.bl-capture-media { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 0; }
+.bl-capture-media > span { display:flex; align-items:center; gap:8px; min-width:0; max-width:100%; }
+.bl-capture-media img { width:56px; height:56px; object-fit:cover; border-radius:8px; flex:0 0 auto; }
+.bl-capture-media small { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--salty-muted); }
 .bl-capture-editor .bl-word-actions button { min-height:40px; flex:1 1 90px; }
 .bl-capture-editor footer { position:sticky; bottom:-20px; background:var(--salty-bg); padding:12px 0; }
 .bl-capture-editor .bl-word-actions {display:flex;flex-wrap:wrap;gap:8px;}
