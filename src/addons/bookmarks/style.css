@@ -1629,8 +1629,9 @@ body.cg-previewing #chat .mes .swipes-counter { display: none !important; }
 .cg-root .cg-card-who span { color: var(--salty-faint, inherit); font-variant-numeric: tabular-nums; }
 
 /* 메모: 레몬 포인트색을 옅게 깐 띠 (왼쪽 세로선 없음) */
-.cg-root .cg-note { border-left: 0; border-radius: 14px; padding: 10px 14px 10px 36px; background: color-mix(in srgb, var(--bl-pop, var(--salty-accent)) 14%, transparent); }
-.cg-root .cg-note > i { color: var(--bl-pop, var(--salty-accent)); }
+/* 메모 띠는 포인트색(파랑 계열) — 레몬색은 어두운 에이드에서 누렇게 탁해 보였다 */
+.cg-root .cg-note { border-left: 0; border-radius: 14px; padding: 10px 14px 10px 36px; background: var(--salty-accent-13, color-mix(in srgb, var(--salty-accent) 13%, transparent)); }
+.cg-root .cg-note > i { color: var(--salty-accent); }
 
 /* 본문: 채팅 서식 고리. 고리가 가져오는 말풍선 모양(여백 · 바탕 · 그림자)은 카드 안에서는 뺀다 */
 /* :not(#salty-none) = 테마의 미리보기 칸 규칙(높이 상한 등)보다 무겁게 */
@@ -1668,7 +1669,9 @@ body.cg-previewing #chat .mes .swipes-counter { display: none !important; }
 .cg-root .cg-chat-count { background: color-mix(in srgb, var(--salty-text) 8%, transparent); color: var(--salty-muted, inherit); }
 .cg-root .cg-chat-item.is-active .cg-chat-count { background: var(--salty-accent); color: var(--salty-on-accent, #fff); }
 @media (max-width: 760px) {
-    .cg-root .cg-sidebar { background: var(--bl-card, var(--salty-surface, var(--salty-bg, var(--cg-base)))); border-radius: 0 26px 26px 0; box-shadow: 18px 0 50px -20px rgba(0, 0, 0, .55); }
+    .cg-root .cg-sidebar { background: var(--bl-card, var(--salty-surface, var(--salty-bg, var(--cg-base)))); border-radius: 0 26px 26px 0; box-shadow: none; }
+    /* 그림자는 열렸을 때만 — 닫힌 서랍의 그림자가 창 왼쪽 가장자리로 새어 나왔다 */
+    .cg-root .is-drawer-open .cg-sidebar { box-shadow: 18px 0 50px -20px rgba(0, 0, 0, .55); }
     .cg-root .cg-scrim { background: rgba(8, 12, 20, .55); }
 }
 .cg-root .cg-sheet { border: 0; border-radius: 24px; background: var(--salty-bg, var(--cg-base)); box-shadow: var(--bl-e4, 0 18px 50px -18px rgba(10, 30, 60, .45)); }
@@ -1709,3 +1712,9 @@ body.cg-previewing #chat .mes .swipes-counter { display: none !important; }
 .cg-root .cg-chatlike:not(#salty-none) > .mes::before, .cg-root .cg-chatlike:not(#salty-none) > .mes::after,
 .cg-root .cg-chatlike:not(#salty-none) > .mes > .mes_block::before, .cg-root .cg-chatlike:not(#salty-none) > .mes > .mes_block::after,
 .cg-root .cg-chatlike:not(#salty-none) .mes_text::before, .cg-root .cg-chatlike:not(#salty-none) .mes_text::after { content: none !important; display: none !important; }
+
+/* 북마크 창만 밝게 / 어둡게 (alt-palette.js 가 같은 에이드의 반대쪽 팔레트 변수를 이 창에 넣는다).
+   body 의 salty-dark / salty-light 에 걸린 테마 토큰은 창 안에서 다시 잡아 준다 */
+.cg-root[data-bl-alt] { color: var(--salty-text); }
+.cg-root[data-bl-alt="light"] { --bl-card: var(--salty-card, var(--salty-surface)); --bl-well: var(--salty-field); --bl-pop: var(--salty-pop, var(--salty-accent)); --bl-e4: 0 18px 50px -18px rgba(10, 30, 60, .35); color-scheme: light; }
+.cg-root[data-bl-alt="dark"] { --bl-card: var(--salty-card, var(--salty-surface)); --bl-well: var(--salty-surface); --bl-pop: var(--salty-pop, #FFE973); --bl-e4: 0 18px 50px -18px rgba(0, 0, 0, .6); color-scheme: dark; }

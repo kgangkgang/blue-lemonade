@@ -1,4 +1,5 @@
 // 북마크 — 설정, 색, 테마, 모듈 사이 연결
+import { syncAltPalette } from './alt-palette.js';
 import { extension_settings, getContext } from '../../../../../../extensions.js';
 import { saveSettingsDebounced } from '../../../../../../../script.js';
 
@@ -215,6 +216,9 @@ function effectiveTheme() {
 export function applyTheme(element) {
     element.dataset.cgTheme = effectiveTheme();
     element.dataset.cgTone = resolvedTone();
+    // 블루 레몬에이드를 따라가는 중에도 밝게 / 어둡게를 직접 고르면 북마크 창만 같은 에이드의 반대쪽 팔레트로 보여 준다 (alt-palette.js)
+    const alt = isFollowingTheme() ? syncAltPalette(settings().theme) : '';
+    if (alt) { element.dataset.blAlt = alt; element.dataset.cgTone = alt; } else delete element.dataset.blAlt;
 }
 
 export function iconName() {
