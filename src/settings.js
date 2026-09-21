@@ -267,7 +267,6 @@ function tidyFlags(s) {
           for (const [mode, max] of [['shadow', 3], ['rainbow', 1], ['sun', 1]]) { const list = Array.isArray(spots[mode]) ? spots[mode].slice(0, max).map(p => (p && Number.isFinite(Number(p.x)) && Number.isFinite(Number(p.y)) ? { x: Math.max(0, Math.min(1, Number(p.x))), y: Math.max(0, Math.min(1, Number(p.y))) } : null)) : []; if (list.some(Boolean)) clean[mode] = list; }
           s.chat.weatherSpots = clean; }
         s.chat.weatherTrackerSkip = Array.isArray(s.chat.weatherTrackerSkip) ? [...new Set(s.chat.weatherTrackerSkip)].filter(mode => ['rain', 'snow', 'fog', 'sun', 'star', 'glass', 'rainbow', 'breeze'].includes(mode)) : []; // 트래커 따라에서 제외할 날씨
-        syncWeatherProfile(s.chat);
         if(!['auto','custom','gradient'].includes(s.chat.weatherColorMode))s.chat.weatherColorMode='auto';
         if(!/^#[0-9a-f]{6}$/i.test(s.chat.weatherColor2||''))s.chat.weatherColor2='#f5b8e4';
         if(!['soft','anime','wisp'].includes(s.chat.weatherFogStyle))s.chat.weatherFogStyle='soft';
@@ -290,6 +289,8 @@ function tidyFlags(s) {
         if(!['left','right'].includes(s.chat.weatherOrbitDirection))s.chat.weatherOrbitDirection='right';
         range('weatherSway', 0, 300, 100); range('weatherSpin', 0, 300, 100);
         if (!['natural', 'straight', 'flutter', 'streak'].includes(s.chat.weatherMotion)) s.chat.weatherMotion = 'natural';
+        // 날씨 값을 전부 다듬은 뒤에 프로필에 적는다 — 먼저 적으면 새 값이 빈 채로 저장됐다가 다음 불러오기에서 채워져, 저장 · 불러오기를 되풀이한 결과가 달라진다
+        syncWeatherProfile(s.chat);
         // 3.5.4 퀵 리플라이 줄: x 가로 스크롤 · y 세로 스크롤(보이는 줄 1~4)
         if (!['x', 'y'].includes(s.chat.qrScroll)) s.chat.qrScroll = 'x';
         s.chat.qrFind = flag(s.chat.qrFind, true);

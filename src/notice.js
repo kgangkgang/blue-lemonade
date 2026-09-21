@@ -8,6 +8,14 @@ import { getSettings, saveSettings } from './settings.js';
 
 export const NOTICES = [
 {
+    "version": "4.2.9",
+    "date": "2026-09-22",
+    "items": [
+        "물결이 흐르다 중간중간 툭 끊겼다 다시 시작하는 것처럼 보이던 것을 고쳤어요.",
+        "설정을 저장하고 다시 불러올 때 새 날씨 값(안개 · 햇살 · 별 · 나무 그림자 · 물결의 모양 값)이 날씨별 기억에 처음 한 번 빈 채로 적히던 것을 고쳤어요."
+    ]
+},
+{
     "version": "4.2.8",
     "date": "2026-09-22",
     "items": [

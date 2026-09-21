@@ -309,7 +309,7 @@ function water(env) {
             tiles.forEach((tile, n) => {
                 const dir = n ? -1 : 1, breathe = 1 + Math.sin(move * .5 + n * 2) * .05 * k;
                 const ox = (dir * move * (9 + n * 4) + Math.sin(move * .7 + n) * 10 * k) * env.dpr, oy = (move * (5 + n * 3) + Math.cos(move * .6 + n * 2) * 7 * k) * env.dpr;
-                p.setTransform(scale * breathe, 0, env.slant * .6 * scale, scale * squash * breathe, ox % (512 * scale), oy % (512 * scale * squash));
+                p.setTransform(scale * breathe, 0, env.slant * .6 * scale, scale * squash * breathe, ox % (512 * scale * breathe), oy % (512 * scale * squash * breathe)); // 무늬 한 장의 너비(숨쉬는 배율 포함)로 나눈 나머지 — 배율을 빼고 나누면 되감길 때마다 무늬가 툭 끊겨 보였다
                 p.globalCompositeOperation = n ? 'lighter' : 'source-over'; p.globalAlpha = n ? .45 : 1;
                 p.fillStyle = p.createPattern(tile, 'repeat');
                 const reach = 6000 / scale; p.fillRect(-reach, -reach, reach * 2, reach * 2);
