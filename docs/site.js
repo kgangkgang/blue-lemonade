@@ -62,7 +62,8 @@ const topics = [
     ['pc-weather.mp4','눈 내리는 밤','채팅 뒤로 조용히 눈이 내려요.','pc-weather.jpg','pc-weather.gif'],
   ]},
   { id:'capture', label:'캡처', fresh:true, title:'글은 그대로, 날씨만 움직이게.', sub:'이미지 · 영상 · GIF · 이름 가리기 · 캡처용 글 편집 · 문단별 분할', cards: [
-    ['416-capture-moving.gif','움짤 속 글자도 살아 있게','테마의 움짤 저장으로 만든 실제 결과예요. 채팅에서 돌던 감정 대사의 흔들림 · 빛 · 색 흐름이 영상과 움짤에도 그대로 담겨요.'],
+    ['420-capture-moving.webp','움짤 속 글자도 살아 있게','테마가 저장한 실제 WebP 움짤이에요. 같은 장면이 GIF 818KB · WebP 501KB, 색을 줄이지 않는 APNG 는 1.6MB 였어요.'],
+    ['420-capture-format.png','올릴 곳 한도에 맞춰서','파일 종류에서 GIF · APNG · WebP 를 고르고 최대 용량을 정하면, 화질 → 크기 → 초당 장수 순으로 낮춰 맞춰요.'],
     ['410-capture-mobile.jpg','본문만 또는 원하는 정보만','이름·날짜·모델·번호·토큰·시간을 각각 선택해요. 원래 대화에는 영향을 주지 않아요.'],
     ...exportExamples410,
     ['402-capture-video.mp4','배경과 날씨도 함께','이름을 가린 캡처에도 움직이는 장면을 담아요.','402-capture-video.jpg','402-capture-video.gif'],
@@ -70,7 +71,7 @@ const topics = [
     ['403-capture-parameters-mobile.jpg','가림 모양도 섬세하게','얇은 슬라이더와 테마색 손잡이로 여백·기울기·외곽선·그림자를 조절해요.'],
     ['402-capture-editor.png','공유할 문장만 다듬어서','문장을 고치고 문단을 옮겨도 원문과 번역문은 그대로예요.'],
   ], pc: [
-    ['416-capture-moving.gif','움짤 속 글자도 살아 있게','테마의 움짤 저장으로 만든 실제 결과예요. 감정 대사의 흔들림 · 빛 · 색 흐름이 영상과 움짤에도 담겨요.'],
+    ['420-capture-moving.webp','움짤 속 글자도 살아 있게','테마가 저장한 실제 WebP 움짤이에요. 같은 장면이 GIF 818KB · WebP 501KB, 색을 줄이지 않는 APNG 는 1.6MB 였어요.'],
     ['410-capture-pc.jpg','파일별 미리보기와 세부 설정','문단 수·영상 크기·표시 정보를 오른쪽에서 조절해요.'],
     ['403-capture-new-desktop.png','넓은 화면에서는 나란히','PC는 왼쪽에서 선택·미리보기, 오른쪽에서 두 열의 설정을 조절해요.'],
     ...exportExamples410,
@@ -134,7 +135,7 @@ const topics = [
 const $ = s => document.querySelector(s);
 function element(tag, cls, text) { const e=document.createElement(tag); if(cls)e.className=cls; if(text)e.textContent=text; return e; }
 // media version: bump when shots are retaken under the same names, so cached copies don't linger
-const MV='?v=20260921-417';
+const MV='?v=20260921-420';
 
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
 document.documentElement.classList.add('js');
@@ -151,7 +152,7 @@ function galleryBlock(topic, device, cards, withHeading){
   track.addEventListener('scroll',syncArrows,{passive:true});addEventListener('resize',syncArrows);block.syncArrows=syncArrows;
   for(const [file,title,description,poster,gif,credit] of cards){
     const card=element('figure','card'), wrap=element('div','media-wrap'), caption=element('figcaption','',title); card.style.setProperty('--i',Math.min(track.children.length,6));
-    if(file.startsWith('410-export.')||file.startsWith('416-capture-moving.'))wrap.classList.add('export-media');
+    if(file.startsWith('410-export.')||file.startsWith('420-capture-moving.'))wrap.classList.add('export-media');
     if(file.endsWith('.mp4')){
       const video=element('video');video.preload='metadata';video.playsInline=true;video.muted=true;video.loop=true;video.setAttribute('muted','');video.setAttribute('playsinline','');video.src='media/'+file+MV;video.poster='media/'+poster+MV;video.setAttribute('aria-label',title);
       if(reduceMotion.matches)video.controls=true;
