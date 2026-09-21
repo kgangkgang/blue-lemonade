@@ -392,7 +392,11 @@ export function applyAll() {
     vars['--salty-user-bg'] = mode === 'light' && !s.palette.startsWith('custom-') && !s.colorOverrides?.[s.palette]?.raised
         ? mix(pal.marker, pal.surface, 0.16) : pal.raised;
     // 4.1.3: 배경 이미지를 비칠 때는 내 메시지 면(말풍선 · 카드 · 테이블)도 채팅 바탕 농도를 따라간다 — 100 이면 지금처럼 불투명
-    if (s.chat.bgImage) vars['--salty-user-bg'] = scaleAlpha(vars['--salty-user-bg'], (s.chat.bgAlpha ?? 82) / 100);
+    // 4.3.0: 날씨를 켜 두면 내 메시지 면도 비친다 — 채팅 바탕은 날씨 때 투명해지는데 내 메시지 면만 단색으로 남아 날씨를 덮었다.
+    // 농도는 채팅 › 화면 › 날씨의 '내 메시지 농도'(기본 70, 100 = 불투명). 배경 이미지 비치기와 같이 켜져 있으면 더 옅은 쪽을 쓴다
+    const weatherOn = !!s.chat.weather && s.chat.weather !== 'off' && !(s.chat.weather === 'tracker' && !s.deus?.on);
+    const userAlpha = Math.min(s.chat.bgImage ? (s.chat.bgAlpha ?? 82) / 100 : 1, weatherOn ? (s.chat.weatherBubble ?? 70) / 100 : 1);
+    if (userAlpha < 1) vars['--salty-user-bg'] = scaleAlpha(vars['--salty-user-bg'], userAlpha);
     vars['--salty-on-accent'] = onColor(pal.accent); // 포인트색 위 글자색 (밝은 포인트면 어두운 글자)
     // 두 번째 포인트(지금 있는 곳 · 고른 것): 블루 아워는 레몬, 없으면 포인트색. 밝은 pop 위 글자는 어두운 테마면 바탕 남색
     const pop = pal.pop || pal.accent;

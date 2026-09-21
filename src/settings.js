@@ -283,6 +283,7 @@ function tidyFlags(s) {
         range('weatherSize', 40, 250, 100);
         range('weatherSpeed', 20, 250, 100);
         range('weatherAngle', -45, 45, -9);
+        range('weatherBubble',30,100,70); // 날씨를 켠 동안 내 메시지 면의 농도
         range('weatherShadowBlur',0,100,35);
         range('weatherFogStretch',50,300,100); range('weatherFogEdge',0,100,30); range('weatherFogSwell',0,300,100); range('weatherFogDepth',0,200,100);
         range('weatherCurvature',0,100,65); range('weatherOrbitSize',40,240,100);

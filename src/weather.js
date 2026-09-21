@@ -312,7 +312,8 @@ function seeThrough(stage, on) {
     const root = getComputedStyle(document.documentElement);
     for (const name of SEE_THROUGH) {
         const value = root.getPropertyValue(name).trim();
-        if (on && value) stage.style.setProperty(name, `color-mix(in srgb, ${value} 72%, transparent)`);
+        const faint = /rgba\([^)]*,\s*(0?\.\d+|0)\s*\)/.test(value); // 이미 비치는 색(날씨 중 내 메시지 농도)은 한 번 더 낮추지 않는다
+        if (on && value && !faint) stage.style.setProperty(name, `color-mix(in srgb, ${value} 72%, transparent)`);
         else stage.style.removeProperty(name);
     }
 }

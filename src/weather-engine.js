@@ -55,11 +55,12 @@ function createCore(ctx, first) {
         if (canvas) { canvas.width = w; canvas.height = h; }
         return canvas;
     }
+    const fogBake = canvas => canvas;
+    const fogDrop = () => { for (const image of fogSprites) { if (typeof image.close === 'function') image.close(); else image.width = image.height = 1; } fogSprites = []; };
     function fogPaint() {
         const key = [mix(0), mix(.5), mix(1), colors.snow, fog.style, Math.round(fog.edge * 20)].join('|');
         if (key === fogKey && fogSprites.length) return;
-        for (const canvas of fogSprites) canvas.width = canvas.height = 1;
-        fogSprites = []; fogKey = key;
+        fogDrop(); fogKey = key;
         const e = fog.edge;
         for (let n = 0; n < 3; n++) {
             const ink = mix(n / 2) || colors.snow; // 그라데이션이면 덩어리마다 두 색 사이의 다른 색
@@ -87,7 +88,7 @@ function createCore(ctx, first) {
                 let g = paint.createLinearGradient(0, 96, 0, h); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,1)');
                 paint.fillStyle = g; paint.fillRect(0, 96, w, h - 96);
                 for (const [from, to] of [[0, 70], [w, w - 70]]) { g = paint.createLinearGradient(from, 0, to, 0); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)'); paint.fillStyle = g; paint.fillRect(Math.min(from, to), 0, 70, h); }
-                fogSprites.push(canvas);
+                fogSprites.push(fogBake(canvas));
                 continue;
             }
             const size = 192, canvas = fogCanvas(size, size); if (!canvas) return;
@@ -99,7 +100,7 @@ function createCore(ctx, first) {
                 g.addColorStop(0, `rgba(${ink},${(.5 + e * .2).toFixed(2)})`); g.addColorStop(Math.min(.92, .45 + e * .45), `rgba(${ink},${(.22 + e * .3).toFixed(2)})`); g.addColorStop(1, `rgba(${ink},0)`);
                 paint.fillStyle = g; paint.beginPath(); paint.arc(x * size, y * size, r * size, 0, Math.PI * 2); paint.fill();
             }
-            fogSprites.push(canvas);
+            fogSprites.push(fogBake(canvas));
         }
     }
     function fogY() {
@@ -200,8 +201,9 @@ function createCore(ctx, first) {
         const active = DENSITY[mode] && (mode !== 'custom' || sprite);
         if (mode === 'fog') fogPaint();
         if (mode === 'sun') sunbeams();
+        const cap = mode === 'fog' ? 22 : mode === 'meteor' ? 160 : 500; // 안개: 큰 덩어리를 겹쳐 찍는 값이 커서 수를 묶는다 (예전 36)
         const sortFog = () => { if (mode === 'fog') items.sort((a, b) => a.depth - b.depth); }; // 먼 덩어리부터 그린다
-        items = active ? Array.from({ length: Math.min(mode === 'fog' ? 36 : mode === 'meteor' ? 160 : 500, Math.round(area * DENSITY[mode] * k * (mode==='meteor'?Math.pow(1/orbitSize,1.5):1))) }, () => make(true)) : [];
+        items = active ? Array.from({ length: Math.min(cap, Math.round(area * DENSITY[mode] * k * (mode==='meteor'?Math.pow(1/orbitSize,1.5):1))) }, () => make(true)) : [];
         sortFog();
     }
 
@@ -562,7 +564,10 @@ function createCore(ctx, first) {
             dpr = ratio;
             if(ctx.canvas.width!==width)ctx.canvas.width=width;
             if(ctx.canvas.height!==height)ctx.canvas.height=height;
-            if (changed || !items.length) seed();
+            // 장면(무지개 · 물결 · 그림자 …)은 크기가 바뀌어도 다시 만들지 않는다: 폰에서 주소창이 들락거릴 때마다 화면 높이가 바뀌는데,
+            // 그때마다 물결 무늬 · 물방울 그림을 새로 구워 효과가 멈칫했다가 처음부터 다시 도는 것처럼 보였다. 장면은 매 프레임 지금 크기를 읽는다
+            if (scene) { if (changed) scene.resize?.(); }
+            else if (changed || !items.length) seed();
         },
         config(next) {
             const spriteChanged = next.sprite !== undefined;
@@ -615,8 +620,9 @@ function createCore(ctx, first) {
         },
         step,
         draw,
-        dispose() { scene?.dispose?.();scene=null;items=[];for(const canvas of tintedSprites)canvas.width=canvas.height=1;tintedSprites=[];for(const canvas of fogSprites)canvas.width=canvas.height=1;fogSprites=[];fogKey='';sprite?.close?.();sprite=null;if(tintedSprite)tintedSprite.width=tintedSprite.height=1;tintedSprite=null; },
+        dispose() { scene?.dispose?.();scene=null;items=[];for(const canvas of tintedSprites)canvas.width=canvas.height=1;tintedSprites=[];fogDrop();fogKey='';sprite?.close?.();sprite=null;if(tintedSprite)tintedSprite.width=tintedSprite.height=1;tintedSprite=null; },
         idle: () => mode === 'off' || !items.length,
+        fps: () => (['fog', 'sun', 'star', 'rainbow', 'shadow', 'water'].includes(mode) ? 20 : 30),
     };
 }
 
@@ -637,6 +643,7 @@ export function createEngine(ctx) {
         draw() { main.draw(); extra.draw(); },
         dispose() { main.dispose(); extra.dispose(); },
         idle: () => main.idle() && extra.idle(),
+        fps: () => Math.max(main.idle() ? 0 : main.fps(), extra.idle() ? 0 : extra.fps()) || 30,
     };
 }
 
@@ -645,10 +652,10 @@ export function createLoop(engine, raf, caf) {
     let id = 0;
     let last = 0;
     let running = false;
-    const FRAME = 1000 / 30;
     function tick(now) {
         if (!running) return;
         id = raf(tick);
+        const FRAME = 1000 / (engine.fps?.() || 30); // 천천히 움직이는 효과는 20fps
         if (last && now - last < FRAME - 2) return;
         const dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
         last = now;

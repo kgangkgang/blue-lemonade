@@ -1324,6 +1324,7 @@ function tabChat(s, sub) {
             ${weatherMode(s) === 'tracker' ? `<p class="salty-note">세기 · 색 · 모양은 그 날씨를 직접 골랐을 때 맞춰 둔 값을 그대로 써요. 비는 비대로, 눈은 눈대로요.</p>
             <button type="button" class="salty-btn bl-weather-skip-fold" data-act="weather-skip-fold" aria-expanded="${!!ui.weatherSkipOpen}">제외할 날씨${(s.chat.weatherTrackerSkip || []).length ? ` · ${s.chat.weatherTrackerSkip.length}` : ''} <i class="fa-solid fa-chevron-${ui.weatherSkipOpen ? 'up' : 'down'}"></i></button>
             ${ui.weatherSkipOpen ? `<div class="salty-seg bl-weather-choices bl-weather-skip">${[['rain', '비'], ['snow', '눈'], ['fog', '안개'], ['sun', '햇살'], ['star', '별'], ['glass', '유리 빗방울'], ['rainbow', '무지개'], ['breeze', '흩날림']].map(([value, label]) => `<button data-act="weather-skip" data-value="${value}" class="${(s.chat.weatherTrackerSkip || []).includes(value) ? 'on' : ''}">${label}</button>`).join('')}</div><p class="salty-note">고른 날씨는 트래커에 나와도 화면에 그리지 않아요.</p>` : ''}` : ''}
+            ${weatherMode(s) !== 'off' ? `${slider('chat.weatherBubble', '내 메시지 농도', 30, 100, 1, 70)}<p class="salty-note">날씨를 켠 동안 내 메시지 면(말풍선 · 카드 · 테이블)이 이만큼만 칠해져 그 뒤의 날씨가 비쳐요. 100이면 불투명해요.</p>` : ''}
             ${weatherMixing(s) && s.chat.weather2 && s.chat.weather2 !== 'off' ? stack('둘째 날씨 세기', seg('chat.weather2Level', [[1, '약하게'], [2, '보통'], [3, '강하게']], 2), '둘째 날씨의 세부 값은 그 날씨를 첫째로 골랐을 때 맞춰 둔 값을 써요') : ''}
         </div>
         ${!['off', 'tracker'].includes(weatherMode(s)) ? `<div class="salty-group">

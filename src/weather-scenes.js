@@ -4,6 +4,9 @@
 const TAU = Math.PI * 2;
 export const SCENE_MODES = ['rainbow', 'shadow', 'breeze', 'glass', 'water'];
 
+// 구운 그림을 쥐는 자리 (ImageBitmap 으로 바꿔 보았으나 잰 값이 나아지지 않아 캔버스 그대로 둔다)
+const bake = canvas => canvas;
+const drop2 = image => { if (!image) return; if (typeof image.close === 'function') image.close(); else image.width = image.height = 1; };
 const lighten = (rgb, k) => rgb.split(',').map(v => Math.round(Number(v) + (255 - Number(v)) * k)).join(',');
 /** 색: 그라데이션이면 두 색 사이, 한 색이면 그 색(조금씩 밝게), 아니면 기본색 */
 const inkOf = (env, t, fallback) => (env.gradient ? env.mix(t) : env.tintRGB ? lighten(env.tintRGB, t * .5) : fallback);
@@ -14,10 +17,10 @@ const wobble = env => (env.motion === 'straight' ? 0 : env.sway * (env.motion ==
 function rainbow(env) {
     // 파스텔 일곱 빛. 띠를 작은 그림에 한 번만 그려 두고(번짐 · 양 끝이 하늘로 풀리는 가림막 포함) 프레임마다 그 그림만 얹는다 — 늘려 그리면서 한 번 더 부드러워진다
     const BOW = ['196,160,255', '150,178,255', '140,218,255', '168,240,196', '255,246,170', '255,210,150', '255,160,170'];
-    let sprite = null, key = '';
+    let sprite = null, key = '', used = 1; // used = 그림에서 띠가 차지하는 위쪽 비율
     const PAD = .12;
     function paint(w, h) {
-        if (sprite) sprite.width = sprite.height = 1;
+        drop2(sprite);
         sprite = env.canvas(w, h);
         if (!sprite) return;
         // 그림은 화면보다 사방 12% 넓다 — 좌우로 흔들릴 때 그림의 가장자리(잘린 선)가 화면 안으로 들어오지 않는다
@@ -46,6 +49,8 @@ function rainbow(env) {
         const mask = p.createLinearGradient(0, cy - R * 1.24, 0, cy - R * .12);
         mask.addColorStop(0, 'rgba(0,0,0,1)'); mask.addColorStop(.45, 'rgba(0,0,0,.85)'); mask.addColorStop(1, 'rgba(0,0,0,0)');
         p.fillStyle = mask; p.fillRect(0, 0, w, h);
+        used = Math.max(.05, Math.min(1, (cy - R * .12) / h));
+        sprite = bake(sprite);
     }
     return {
         step() {},
@@ -58,10 +63,12 @@ function rainbow(env) {
             const pulse = 1 - .22 * Math.min(2, k) * (.5 + .5 * Math.sin(t * .6 * pace(env)));
             const swing = env.motion === 'straight' ? 0 : t * .05 * env.spin; // 회전 = 좌우로 천천히 흔들린다
             ctx.globalAlpha = Math.min(1, pulse * env.opacity);
-            ctx.drawImage(sprite, -W * PAD + Math.sin(swing) * W * .06, -H * PAD + (1 - Math.cos(swing)) * H * .02, W * (1 + PAD * 2), H * (1 + PAD * 2));
+            // 띠가 있는 위쪽만 찍는다 (그림의 아래쪽은 가림막으로 비어 있다 — 화면 전체를 찍던 값을 줄인다)
+            const part = Math.min(1, used + .02), fullH = H * (1 + PAD * 2);
+            ctx.drawImage(sprite, 0, 0, sprite.width, Math.ceil(sprite.height * part), -W * PAD + Math.sin(swing) * W * .06, -H * PAD + (1 - Math.cos(swing)) * H * .02, W * (1 + PAD * 2), Math.ceil(sprite.height * part) / sprite.height * fullH);
             ctx.globalAlpha = 1;
         },
-        dispose() { if (sprite) sprite.width = sprite.height = 1; sprite = null; },
+        dispose() { drop2(sprite); sprite = null; },
     };
 }
 
@@ -70,7 +77,7 @@ function shadow(env) {
     const SIZE = 440;
     // 그림은 화면에 찍힐 크기 그대로(기기 픽셀) 그린다 — 예전에는 440px 그림을 늘려 찍어 잎이 뭉개져 보였다. 흐리기는 조절 값(0 = 또렷한 그림자)
     function paint(ink, pixels) {
-        if (sprite) sprite.width = sprite.height = 1;
+        drop2(sprite);
         f = pixels / SIZE;
         sprite = env.canvas(pixels, pixels);
         if (!sprite) return;
@@ -95,13 +102,14 @@ function shadow(env) {
                 p.fill(); p.restore();
             }
         }
+        sprite = bake(sprite);
     }
     return {
         step() {},
         draw(t) {
             const { ctx, W, H } = env;
             const ink = inkOf(env, 0, env.light ? env.colors.rain : '0,0,0');
-            const scale = Math.min(W, H) / SIZE * 1.2 * env.size, pixels = Math.max(64, Math.min(1500, Math.ceil(SIZE * scale * env.dpr / 32) * 32));
+            const scale = Math.min(W, H) / SIZE * 1.2 * env.size, pixels = Math.max(64, Math.min(1024, Math.ceil(SIZE * scale * env.dpr / 32) * 32));
             const want = `${ink}|${env.opts.shadowStyle}|${env.opts.shadowBlur}|${pixels}`;
             if (want !== key || !sprite) { key = want; paint(ink, pixels); }
             if (!sprite) return;
@@ -126,7 +134,7 @@ function shadow(env) {
             g.addColorStop(0, `rgba(${glow},${(.2 * env.opacity).toFixed(3)})`); g.addColorStop(1, `rgba(${glow},0)`);
             ctx.globalAlpha = 1; ctx.fillStyle = g; ctx.fillRect(bx - br, by - br, br * 2, br * 2);
         },
-        dispose() { if (sprite) sprite.width = sprite.height = 1; sprite = null; },
+        dispose() { drop2(sprite); sprite = null; },
     };
 }
 
@@ -167,19 +175,22 @@ function breeze(env) {
 
 // 유리 빗방울: 방울을 선으로 그리지 않고, 빛이 뒤집혀 맺히는 진짜 물방울처럼(위는 어둡고 아래가 밝다 · 가장자리 그늘 · 반짝이는 점 · 유리에 지는 그림자)
 // 모양이 조금씩 다른 그림 여섯 장을 한 번 구워 두고 크기만 바꿔 찍는다
+const DROP_SIZES = [10, 16, 24, 36, 56, 84]; // 기기 픽셀
 function dropSprites(env, ink, rim) {
-    const S = 96, list = [];
-    for (let n = 0; n < 6; n++) {
+    // 크기 묶음마다 여섯 모양씩 구워 둔다 — 찍을 때 늘리거나 줄이지 않고 기기 픽셀 1:1 로 찍으면 값이 크게 준다 (큰 그림을 줄여 찍는 것이 방울 수만큼 쌓여 느렸다)
+    const list = [];
+    for (let n = 0; n < DROP_SIZES.length * 6; n++) {
+        const S = DROP_SIZES[Math.floor(n / 6)], k = S / 96, shapeN = n % 6;
         const canvas = env.canvas(S, S); if (!canvas) break;
-        const p = canvas.getContext('2d'), cx = S / 2, cy = S * .52, rx = S * (.27 + hash(n, 1) * .05), ry = S * (.31 + hash(n, 2) * .07), lean = (hash(n, 3) - .5) * .5;
+        const p = canvas.getContext('2d'), cx = S / 2, cy = S * .52, rx = S * (.27 + hash(shapeN, 1) * .05), ry = S * (.31 + hash(shapeN, 2) * .07), lean = (hash(shapeN, 3) - .5) * .5 * k;
         const shape = () => { // 아래가 조금 무거운 물방울 꼴 (방울마다 살짝 찌그러진다)
             p.beginPath(); p.moveTo(cx + lean * 6, cy - ry);
             p.bezierCurveTo(cx + rx * 1.15, cy - ry * .85, cx + rx * 1.25, cy + ry * .55, cx, cy + ry);
             p.bezierCurveTo(cx - rx * 1.25, cy + ry * .55, cx - rx * 1.15, cy - ry * .85, cx + lean * 6, cy - ry); p.closePath();
         };
-        const soft = 'filter' in p;
-        if (soft) p.filter = 'blur(3px)';
-        p.save(); p.translate(2, 5); shape(); p.fillStyle = `rgba(${rim},.16)`; p.fill(); p.restore(); // 유리에 지는 옅은 그림자
+        const soft = 'filter' in p && S >= 24;
+        if (soft) p.filter = `blur(${(3 * k).toFixed(1)}px)`;
+        p.save(); p.translate(2 * k, 5 * k); shape(); p.fillStyle = `rgba(${rim},.16)`; p.fill(); p.restore(); // 유리에 지는 옅은 그림자
         p.filter = 'none';
         p.save(); shape(); p.clip();
         const body = p.createLinearGradient(0, cy - ry, 0, cy + ry); // 물방울은 렌즈라 위아래 빛이 뒤집힌다
@@ -189,14 +200,14 @@ function dropSprites(env, ink, rim) {
         const belly = p.createRadialGradient(cx, cy + ry * .8, 0, cx, cy + ry * .8, rx * 1.5);
         belly.addColorStop(0, `rgba(${ink},.34)`); belly.addColorStop(.6, `rgba(${ink},.1)`); belly.addColorStop(1, `rgba(${ink},0)`);
         p.fillStyle = belly; p.fillRect(0, 0, S, S);
-        if (soft) p.filter = 'blur(2px)';
-        shape(); p.strokeStyle = `rgba(${rim},.3)`; p.lineWidth = 3.5; p.stroke(); // 안쪽 가장자리 그늘 (옅게)
+        if (soft) p.filter = `blur(${(2 * k).toFixed(1)}px)`;
+        shape(); p.strokeStyle = `rgba(${rim},.3)`; p.lineWidth = 3.5 * k; p.stroke(); // 안쪽 가장자리 그늘 (옅게)
         p.filter = 'none'; p.restore();
         // 반짝임은 점이 아니라 위쪽 가장자리를 따라 도는 가는 빛 한 줄
         if (soft) p.filter = 'blur(.6px)';
-        p.strokeStyle = 'rgba(255,255,255,.85)'; p.lineWidth = 2.2; p.lineCap = 'round'; p.beginPath(); p.ellipse(cx + lean * 3, cy - ry * .08, rx * .74, ry * .72, 0, Math.PI * 1.12, Math.PI * 1.46); p.stroke();
+        p.strokeStyle = 'rgba(255,255,255,.85)'; p.lineWidth = Math.max(1, 2.2 * k); p.lineCap = 'round'; p.beginPath(); p.ellipse(cx + lean * 3, cy - ry * .08, rx * .74, ry * .72, 0, Math.PI * 1.12, Math.PI * 1.46); p.stroke();
         p.filter = 'none';
-        list.push(canvas);
+        list.push(bake(canvas));
     }
     return list;
 }
@@ -205,7 +216,7 @@ function glass(env) {
     const drop = () => ({ x: env.rand(0, env.W), y: env.rand(0, env.H), r: 2 + Math.pow(Math.random(), 2.4) * 11, kind: Math.floor(Math.random() * 6), born: -1, sliding: false, from: 0, vy: 0, phase: env.rand(0, TAU), beads: [] });
     let drops = [], streaks = [], sprites = [], key = '';
     const fill = () => {
-        drops = Array.from({ length: Math.min(200, Math.round(env.W * env.H * .00015 * env.k)) }, drop);
+        drops = Array.from({ length: Math.min(130, Math.round(env.W * env.H * .00011 * env.k)) }, drop);
         streaks = Array.from({ length: Math.round(4 * env.k) }, () => ({ x: env.rand(0, env.W), y: env.rand(-env.H, env.H), len: env.rand(70, 160), v: env.rand(500, 900) }));
     };
     fill();
@@ -234,13 +245,17 @@ function glass(env) {
         draw(t) {
             const { ctx } = env, ink = inkOf(env, 0, env.light ? '214,232,250' : '236,245,255'), rim = env.light ? '30,50,75' : '6,10,16';
             const want = `${ink}|${rim}`;
-            if (want !== key || !sprites.length) { for (const c of sprites) c.width = c.height = 1; key = want; sprites = dropSprites(env, ink, rim); }
+            if (want !== key || !sprites.length) { sprites.forEach(drop2); key = want; sprites = dropSprites(env, ink, rim); }
             if (!sprites.length) return;
             ctx.lineCap = 'round';
             ctx.strokeStyle = `rgba(${ink},${(.12 * env.opacity).toFixed(3)})`; ctx.lineWidth = 1; ctx.beginPath();
             for (const s of streaks) { ctx.moveTo(s.x, s.y); ctx.lineTo(s.x - s.len * env.slant, s.y - s.len); }
             ctx.stroke();
-            const stamp = (x, y, r, kind, alpha, stretch = 1) => { const w = r * 2 * 1.9 * env.size, h = w * stretch; ctx.globalAlpha = alpha; ctx.drawImage(sprites[kind % sprites.length], x - w / 2, y - h * .52, w, h); };
+            const stamp = (x, y, r, kind, alpha, stretch = 1) => {
+                const want = r * 2 * 1.9 * env.size * env.dpr; let b = 0; while (b < DROP_SIZES.length - 1 && DROP_SIZES[b] < want) b++;
+                const w = DROP_SIZES[b] / env.dpr, h = w * stretch; // 묶음 크기 그대로 (1:1)
+                ctx.globalAlpha = alpha; ctx.drawImage(sprites[b * 6 + (kind % 6)] || sprites[kind % 6], Math.round((x - w / 2) * env.dpr) / env.dpr, Math.round((y - h * .52) * env.dpr) / env.dpr, w, h);
+            };
             for (const d of drops) {
                 const a = Math.min(1, (t - d.born) / 1.2) * env.opacity;
                 if (d.sliding && d.y - d.from > 4) { // 젖은 자국: 옅은 물길 + 남은 작은 방울들
@@ -254,7 +269,7 @@ function glass(env) {
             ctx.globalAlpha = 1;
         },
         resize: fill,
-        dispose() { for (const c of sprites) c.width = c.height = 1; sprites = []; },
+        dispose() { sprites.forEach(drop2); sprites = []; },
     };
 }
 
@@ -266,26 +281,29 @@ function causticTile(env, seed, width, ink) {
     const p = canvas.getContext('2d'), image = p.createImageData(N, N), data = image.data, [r, g, b] = ink.split(',').map(Number);
     const smooth = (edge, x) => { const t = Math.max(0, Math.min(1, x / edge)); return t * t * (3 - 2 * t); };
     const wrap = n => ((n % cells) + cells) % cells;
+    // 점 자리는 칸마다 한 번만 구한다 (예전에는 픽셀 × 이웃 아홉 칸마다 삼각함수를 돌려 느린 폰에서 2초 넘게 걸렸다). 픽셀마다는 거리 제곱 비교만 하고 제곱근은 끝에 두 번
+    const jx = new Float32Array(cells * cells), jy = new Float32Array(cells * cells);
+    for (let wy = 0; wy < cells; wy++) for (let wx = 0; wx < cells; wx++) { jx[wy * cells + wx] = hash(wx + seed, wy * 7 + seed); jy[wy * cells + wx] = hash(wx * 3 + seed, wy + seed * 5); }
     for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
         const u = x / N * cells, v = y / N * cells, ci = Math.floor(u), cj = Math.floor(v);
-        let f1 = 9, f2 = 9;
+        let s1 = 81, s2 = 81;
         for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
-            const px = ci + di, py = cj + dj, wx = wrap(px), wy = wrap(py);
-            const d = Math.hypot(px + hash(wx + seed, wy * 7 + seed) - u, py + hash(wx * 3 + seed, wy + seed * 5) - v);
-            if (d < f1) { f2 = f1; f1 = d; } else if (d < f2) f2 = d;
+            const px = ci + di, py = cj + dj, at = wrap(py) * cells + wrap(px);
+            const dx = px + jx[at] - u, dy = py + jy[at] - v, d = dx * dx + dy * dy;
+            if (d < s1) { s2 = s1; s1 = d; } else if (d < s2) s2 = d;
         }
-        const edge = f2 - f1, line = 1 - smooth(width, edge), glow = 1 - smooth(width * 4, edge);
+        const edge = Math.sqrt(s2) - Math.sqrt(s1), line = 1 - smooth(width, edge), glow = 1 - smooth(width * 4, edge);
         const i = (y * N + x) * 4;
         data[i] = r; data[i + 1] = g; data[i + 2] = b; data[i + 3] = Math.round(Math.min(1, line * .9 + glow * .14) * 255);
     }
     p.putImageData(image, 0, 0);
-    return canvas;
+    return bake(canvas);
 }
 
 function water(env) {
     const sparks = Array.from({ length: 26 }, (_, i) => ({ u: hash(i, 3), v: hash(i, 7), phase: hash(i, 11) * TAU, freq: .6 + hash(i, 13) * 1.6 }));
     let tiles = [], key = '', band = null;
-    const drop = () => { for (const canvas of [...tiles, band]) if (canvas) canvas.width = canvas.height = 1; tiles = []; band = null; };
+    const drop = () => { tiles.forEach(drop2); if (band) band.width = band.height = 1; tiles = []; band = null; };
     return {
         step() {},
         draw(t) {
@@ -307,9 +325,14 @@ function water(env) {
             const scale = 520 * env.size * (sea ? .8 : 1) * env.dpr / 512, squash = area === 'all' ? 1 : .55; // 비스듬히 내려다본 수면처럼 세로로 눌린다
             p.setTransform(1, 0, 0, 1, 0, 0); p.globalCompositeOperation = 'source-over'; p.globalAlpha = 1; p.clearRect(0, 0, bw, bh);
             tiles.forEach((tile, n) => {
-                const dir = n ? -1 : 1, breathe = 1 + Math.sin(move * .5 + n * 2) * .05 * k;
+                // 흐름은 '무늬 한 장의 너비'로 나눈 나머지만큼만 민다. 배율을 시간에 따라 바꾸면(숨쉬기) 그 너비도 같이 변해서 나머지가 튀고,
+                // 오래 켜 둘수록 무늬가 툭툭 끊기며 미끄러졌다 → 배율은 고정하고 일렁임은 두 장의 엇갈린 흐름 + 좌우 흔들림으로만 낸다
+                const dir = n ? -1 : 1, period = 512 * scale;
                 const ox = (dir * move * (9 + n * 4) + Math.sin(move * .7 + n) * 10 * k) * env.dpr, oy = (move * (5 + n * 3) + Math.cos(move * .6 + n * 2) * 7 * k) * env.dpr;
-                p.setTransform(scale * breathe, 0, env.slant * .6 * scale, scale * squash * breathe, ox % (512 * scale * breathe), oy % (512 * scale * squash * breathe)); // 무늬 한 장의 너비(숨쉬는 배율 포함)로 나눈 나머지 — 배율을 빼고 나누면 되감길 때마다 무늬가 툭 끊겨 보였다
+// 기울임은 맨 바깥에서 건다: 안쪽에서 걸면 세로로 한 장 되감길 때 가로가 (기울기 × 한 장)만큼 어긋나 104초마다 무늬가 튀었다
+                p.setTransform(1, 0, env.slant * .6, 1, 0, 0);
+                p.translate(((ox % period) + period) % period - period, ((oy % (period * squash)) + period * squash) % (period * squash) - period * squash);
+                p.scale(scale, scale * squash);
                 p.globalCompositeOperation = n ? 'lighter' : 'source-over'; p.globalAlpha = n ? .45 : 1;
                 p.fillStyle = p.createPattern(tile, 'repeat');
                 const reach = 6000 / scale; p.fillRect(-reach, -reach, reach * 2, reach * 2);
