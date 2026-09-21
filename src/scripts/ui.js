@@ -1,4 +1,4 @@
-import {SCRIPT_CATALOG,loadBundledScript,scriptDefinition} from './catalog.js';
+import {SCRIPT_CATALOG,loadBundledScript,scriptDefinition,probeBundled,loadFailure} from './catalog.js';
 import {scriptSettings,replaceScriptSettings,persistScripts,legacyConflicts} from './store.js';
 import {getSettings} from '../settings.js';
 let selected='korean',busy=false;
@@ -23,7 +23,7 @@ export async function bindScripts(root){
         const lines=[
             `테마 ${document.querySelector('link[href*="blue-lemonade/style.css"]')?'css 있음':'css ?'} · 스크립트 틀 ${frames.join(',')||'없음'}`,
             `헬퍼 한글화 ${globalThis.__tavernHelperKoreanUI_v1?.version||'안 돎'} · 실리태번 한글화 ${globalThis.__sillyTavernKoreanUI_v1?.version||'안 돎'}`,
-            `상태 ${SCRIPT_CATALOG.map(item=>item.id+'='+runtime.scriptStatus(item.id)).join(' · ')}`,
+            `상태 ${SCRIPT_CATALOG.map(item=>item.id+'='+runtime.scriptStatus(item.id)+(loadFailure(item.id)?' ['+loadFailure(item.id)+']':'')).join(' · ')}`,
             `헬퍼 한글화 안쪽: ${(()=>{const k=globalThis.__tavernHelperKoreanUI_v1;if(!k?.stats)return '정보 없음';const t=k.stats();return `범위 ${t.scopes}(${t.watching}) · 바꾼 글 ${t.texts} · 멈춤 ${t.stopped} · 오류 ${k.errors}${k.lastError?' '+k.lastError:''}`;})()} · 헬퍼 창 한자 ${[...(document.querySelectorAll('#tavern_helper *')||[])].filter(e=>!e.childElementCount&&han.test(e.textContent)).length}`,
             `다시 시작: ${runtime.scriptDeaths().join(' | ')||'없음'}`,
             `✦ 메뉴 ${menu?'있음':'없음'} · 항목 ${items.length} · 한자 남은 항목: ${items.filter(t=>han.test(t)).join(' | ')||'없음'}`,
@@ -31,6 +31,8 @@ export async function bindScripts(root){
             `헬퍼 ${globalThis.TavernHelper?'있음':'없음'} · ${navigator.userAgent.replace(/^.*?(Chrome\/[\d.]+|Firefox\/[\d.]+|Version\/[\d.]+).*$/,'$1')} · ${new Date().toTimeString().slice(0,8)}`,
         ];
         out.textContent=lines.join('\n');out.hidden=false;
+        // 파일이 실제로 어떻게 읽히는지 (응답 · 길이 · 끝까지 있는지) — 받는 대로 아래에 붙인다
+        Promise.all(SCRIPT_CATALOG.map(item=>probeBundled(item.id))).then(rows=>{out.textContent+='\n파일: '+rows.join(' · ');});
     };
     // 켜 두었는데 '꺼짐'으로 남은 스크립트가 있으면(시작 때 못 돌았음) 이 화면을 열 때 다시 시작한다
     runtime.healScripts(!!getSettings().enabled);

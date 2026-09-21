@@ -1,4 +1,4 @@
-import {SCRIPT_CATALOG,loadBundledScript} from './catalog.js';
+import {SCRIPT_CATALOG,loadBundledScript,loadFailure} from './catalog.js';
 import {scriptSettings,legacyConflicts} from './store.js';
 import {createPromptEngine} from './prompt-engine.js';
 const running=new Map(), states=new Map(), listeners=new Set();
@@ -44,7 +44,7 @@ async function startOne(item,state,current){
         let code=state.overrides[id]?.code;
         for(let attempt=0;typeof code!=='string';attempt++){
             try{code=await timed(loadBundledScript(id,attempt>0),25000);}
-            catch(error){if(attempt>=3)throw error;status(id,'파일을 다시 받는 중…');await new Promise(resolve=>setTimeout(resolve,2000*(attempt+1)));}
+            catch(error){if(attempt>=3)throw error;status(id,`파일을 다시 받는 중… (${loadFailure(id)||error.message})`);await new Promise(resolve=>setTimeout(resolve,2000*(attempt+1)));}
             if(current!==revision)return;
         }
         if(current!==revision)return; // 더 새 요청이 이어서 처리한다
