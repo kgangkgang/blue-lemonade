@@ -453,6 +453,7 @@ export function getSettings() {
     s.captureTools.backgroundTint=Math.min(100,Math.max(0,Number(s.captureTools.backgroundTint??60)||0));
     s.captureTools.maxParagraphs=Math.min(20,Math.max(1,Math.floor(Number(s.captureTools.maxParagraphs)||4)));
     s.captureTools.duration=Math.min(30,Math.max(3,Number(s.captureTools.duration)||6));
+    s.captureTools.capturePresets=(Array.isArray(s.captureTools.capturePresets)?s.captureTools.capturePresets:[]).filter(p=>p&&typeof p.id==='string'&&typeof p.name==='string'&&isObj(p.values)).slice(0,12); // 채팅 캡처 › 내 프리셋
     s.captureTools.maxMB=Math.min(200,Math.max(0,Number(s.captureTools.maxMB??8)||0)); // APNG · WebP 움짤의 최대 용량 (0 = 제한 없음)
     for(const key of ['showName','showAvatar','showAssets','showTimestamp','showModel','showMessageId','showTokens','showGenerationTime','includeWeather','includeBackground'])s.captureTools[key]=s.captureTools[key]!==false;
     s.captureTools.replace=s.captureTools.replace===true;s.captureTools.redact=s.captureTools.redact===true;

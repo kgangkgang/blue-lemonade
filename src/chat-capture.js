@@ -106,7 +106,7 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
         const animator=moving.length?prepareAnimated(moving,wrapper,page,fonts):null;
         const height=page.height;
         if(!height||height>16000||width*height>16000000)throw Error('선택한 내용이 너무 길거나 비어 있어요. 메시지를 나누어 저장해 주세요.');
-        const scale=Math.min(3,Math.sqrt(16000000/(width*height)),16000/height,16000/width);
+        const scale=Math.min(Number(options.maxScale)||3,Math.sqrt(16000000/(width*height)),16000/height,16000/width); // maxScale: 빠른 미리보기는 낮은 배율로
         const pixelWidth=Math.floor(width*scale),pixelHeight=Math.floor(height*scale);
         progress('날씨와 고화질 이미지 만드는 중…');
         const {captureWeather}=await import('./weather.js');

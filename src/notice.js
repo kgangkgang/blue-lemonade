@@ -8,6 +8,17 @@ import { getSettings, saveSettings } from './settings.js';
 
 export const NOTICES = [
 {
+    "version": "4.2.4",
+    "date": "2026-09-21",
+    "items": [
+        "채팅 캡처에 빠른 미리보기가 생겼어요. 캡처 창을 열면 굽지 않고 첫 화면만 몇 초 만에 보여 주고, 저장할 파일은 '파일 만들기'를 눌렀을 때만 만들어요. 영상 · 움짤을 고를 때마다 다 구워질 때까지 기다리지 않아도 돼요.",
+        "만든 파일과 캡처용 글 편집이 사라지지 않아요. 캡처 창을 닫고 배경을 바꾸러 다녀와도 그대로 남고, 설정을 바꿔도 '바꾸기 전에 만든 파일'이라고만 알려요. 같은 채팅인 동안 '지우기'를 누르거나 다시 만들기 전까지 남아요.",
+        "캡처 프리셋이 생겼어요 (저장 방식 맨 위). 갤용 움짤 · 선명한 움짤 · 고화질 영상 · 이미지 네 가지가 기본으로 들어 있고, 지금 설정을 내 프리셋으로 12개까지 저장할 수 있어요. 고르면 바로 적용돼요.",
+        "캡처용 글 편집에 '이 문단만' 버튼이 생겼어요. 그 문단 하나만 남기고 나머지를 한 번에 지워요 — 대사 한 줄만 움짤로 만들 때 쓰세요.",
+        "공지사항이 날짜별로 묶여요. 같은 날 여러 번 올라간 업데이트를 'v4.1.2 ~ v4.2.4 · 업데이트 13번'처럼 한 장으로 읽을 수 있어요."
+    ]
+},
+{
     "version": "4.2.3",
     "date": "2026-09-21",
     "items": [
@@ -713,12 +724,23 @@ export function hasUnseenNotice() {
 
 const escapeHtml = text => String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+// 같은 날 나온 버전은 한 장으로 묶는다 (하루에 여러 번 올라간 날 — '오늘 바뀐 것'을 한 번에 읽게). 버전 표시는 'v4.1.5 ~ v4.2.3'
+function groupByDate(list) {
+    const groups = [];
+    for (const notice of list) {
+        const last = groups.at(-1);
+        if (last && last.date === notice.date) { last.first = notice.version; last.items.push(...notice.items); last.count++; }
+        else groups.push({ date: notice.date, version: notice.version, first: notice.version, items: [...notice.items], count: 1 });
+    }
+    return groups.map(g => ({ date: g.date, items: g.items, version: g.count > 1 ? `${g.first} ~ v${g.version}` : g.version, note: g.count > 1 ? ` · 업데이트 ${g.count}번` : '' }));
+}
+
 function noticeHtml() {
-    const rows = NOTICES.map((notice, i) => `
+    const rows = groupByDate(NOTICES).map((notice, i) => `
         <div class="salty-notice-item${i === 0 ? ' open' : ''}">
             <button type="button" class="salty-notice-toggle" aria-expanded="${i === 0}">
                 <span class="salty-notice-ver">v${escapeHtml(notice.version)}</span>
-                <span class="salty-notice-date">${escapeHtml(notice.date.replaceAll('-', '.'))}</span>
+                <span class="salty-notice-date">${escapeHtml(notice.date.replaceAll('-', '.'))}${escapeHtml(notice.note)}</span>
                 <i aria-hidden="true"></i>
             </button>
             <ul>${notice.items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
