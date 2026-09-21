@@ -365,3 +365,10 @@ dialog.tall img{max-height:none;width:min(85vw,460px);max-width:100%}
 /* six highlights: 3 × 2 on wide screens, 2 × 3 on a phone */
 .fresh-row{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media (max-width:760px){.fresh-row{grid-template-columns:repeat(2,minmax(0,1fr))}.fresh-item:last-child{grid-column:auto}}
+
+/* updates grouped by day: the range sits next to the newest version, each release is a small heading inside */
+.note summary .span{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.note .ver{margin:18px 0 0 80px;font-size:14px;font-weight:720;letter-spacing:-.01em;color:var(--blue);font-variant-numeric:tabular-nums}
+.note .ver:first-of-type{margin-top:2px}
+.note .ver+ul{margin-top:8px}
+@media (max-width:760px){.note .ver{margin-left:2px}.note summary{flex-wrap:wrap;row-gap:4px}.note summary .span{order:5;flex-basis:100%;white-space:normal}}
