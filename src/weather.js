@@ -91,6 +91,7 @@ async function createRenderer(canvas, init, replaceCanvas) {
     const apply = () => {
         if (engine.idle() || reduce || paused) { loop.stop(); if(!paused)engine.draw(); } else loop.start();
     };
+    engine.onWake = () => apply();
     engine.resize(init.w, init.h, init.dpr);
     engine.config(init);
     apply();
@@ -363,6 +364,7 @@ export async function captureWeather(width, height, scale) {
     try {
         engine.resize(width, height, scale);
         engine.config({ ...current, colors: colorsNow(), sprite: bitmap });
+        await engine.ready();
         engine.draw();
         return canvas.toDataURL('image/png');
     } finally { engine.dispose(); canvas.width = canvas.height = 1; }
@@ -374,7 +376,7 @@ export async function captureWeatherAnimation(width,height,scale=1) {
     const {createEngine}=await import('./weather-engine.js');
     const canvas=document.createElement('canvas'),engine=createEngine(canvas.getContext('2d'));
     const bitmap=current.mode==='custom'?await spriteBitmap(spriteData):null;
-    engine.resize(width,height,scale);engine.config({...current,colors:colorsNow(),sprite:bitmap});
+    engine.resize(width,height,scale);engine.config({...current,colors:colorsNow(),sprite:bitmap});await engine.ready();
     return {canvas,draw(dt,now){engine.step(dt,now);engine.draw();},close(){engine.dispose();canvas.width=canvas.height=1;}};
 }
 

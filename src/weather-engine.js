@@ -4,14 +4,17 @@
 // 3.3.1: 투명도 · 크기 · 속도 · 각도 조절 — 입자에는 기본값만 두고 그릴 때 곱하므로 슬라이더를 밀어도 다시 뿌리지 않는다.
 //        내 그림(custom): 받은 ImageBitmap 을 입자마다 돌려 가며 그린다 (눈처럼 흔들리며 내림).
 
-import { SCENE_MODES, createScene } from './weather-scenes.js';
+// 장면(무지개 · 물결 …) 코드는 그 날씨를 처음 고를 때만 받는다 — 비 · 눈만 쓰면 읽지 않는다
+const SCENE_MODES = ['rainbow', 'shadow', 'breeze', 'glass', 'water'];
+let scenesModule = null, scenesLoading = null;
+const loadScenes = () => (scenesLoading ??= import('./weather-scenes.js').then(m => { scenesModule = m; return m; }));
 
 const LEVEL = [0, 0.55, 1, 1.7];
 const DENSITY = { rain: 0.00022, snow: 0.00016, custom: 0.0001, lemon: 0.0001, petal: 0.00012, meteor: 0.00005, fog: 0.00003, sun: 0.00008, star: 0.00034, firefly: 0.00007 };
 const SPRITE_PX = 18; // 내 그림 기본 크기 (긴 변, 크기 100%)
 const BANDS = [[0, 0.34], [0.34, 0.67], [0.67, 1.01]];
 
-function createCore(ctx, first) {
+function createCore(ctx, first, shared = {}) {
     let W = 0;
     let H = 0;
     let dpr = 1;
@@ -195,7 +198,10 @@ function createCore(ctx, first) {
 
     function seed() {
         scene?.dispose?.(); scene = null;
-        if (SCENE_MODES.includes(mode)) { scene = W > 0 && H > 0 ? createScene(mode, env) : null; items = scene ? [scene] : []; return; }
+        if (SCENE_MODES.includes(mode)) {
+            if (!scenesModule) { items = []; const wantMode = mode; loadScenes().then(() => { if (mode === wantMode && !scene) { seed(); shared.wake?.(); } }, () => {}); return; } // 받는 동안은 비어 있다가, 받으면 다시 뿌린다
+            scene = W > 0 && H > 0 ? scenesModule.createScene(mode, env) : null; items = scene ? [scene] : []; return;
+        }
         const k = LEVEL[level] ?? 1;
         const area = Math.max(0, W * H);
         const active = DENSITY[mode] && (mode !== 'custom' || sprite);
@@ -631,8 +637,13 @@ function createCore(ctx, first) {
  * config 의 second = { mode, level, …그 날씨의 조절 값 }. 없거나 'off' 면 첫 효과만 돈다 (둘째 쪽은 입자가 없어 아무 일도 하지 않는다).
  */
 export function createEngine(ctx) {
-    const main = createCore(ctx, true), extra = createCore(ctx, false);
+    const shared = { wake: null };
+    const main = createCore(ctx, true, shared), extra = createCore(ctx, false, shared);
     return {
+        /** 장면 코드를 늦게 받아 효과가 뒤늦게 생겼을 때 부른다 — 멈춰 있던 그리기 루프를 다시 돌리게 (weather.js · weather-worker.js 가 건다) */
+        set onWake(fn) { shared.wake = typeof fn === 'function' ? fn : null; },
+        /** 지금 설정에 필요한 코드를 다 받았는지 (캡처처럼 바로 한 장을 그려야 하는 곳에서 기다린다) */
+        ready: () => (scenesLoading || Promise.resolve()).then(() => {}, () => {}),
         resize(w, h, ratio) { main.resize(w, h, ratio); extra.resize(w, h, ratio); },
         config(next) {
             main.config(next);

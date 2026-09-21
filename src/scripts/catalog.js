@@ -46,13 +46,16 @@ export function loadBundledScript(id,fresh=false){
   // 실행기는 그것을 '이미 돌고 있는 코드와 같다'로 잘못 읽어 아무것도 띄우지 않은 채 '사용 중'이라고 적었다 (메뉴가 중국어로 남던 원인).
   // 글이 아니면 실패로 치고, 모듈 읽기가 안 되면 파일을 글로 직접 받아 본다. 그래도 안 되면 이유를 남긴다(진단 · 상태 줄에 보임)
   if(fresh)cache.delete(id);
+  // 이 기기에서 원래 파일이 비어 온 적이 있으면(브라우저가 막음) 둘째 사본부터 받는다 — 스크립트마다 헛요청 두 번(모듈 · 직접 받기)을 건너뛴다. 둘째가 안 되면 원래 순서로
+  let plainFirst=false;try{plainFirst=localStorage.getItem('bl_scripts_plain')==='1';}catch{/* 저장소를 못 쓰면 늘 원래 순서 */}
+  if(plainFirst&&!cache.has(id)){cache.set(id,loadPlain(item).catch(()=>{try{localStorage.removeItem('bl_scripts_plain');}catch{/* 무시 */}cache.delete(id);return loadBundledScript(id,true);}));return cache.get(id);}
   if(!cache.has(id))cache.set(id,import(bundledUrl(item,fresh)).then(module=>{
     if(typeof module.default!=='string'||module.default.length<50)throw Error('모듈에 내용이 없어요');
     return module.default;
   }).catch(async importError=>{
     try{const code=await fetchBundled(item);failures.delete(id);return code;}
     catch(error){
-      try{const code=await loadPlain(item);failures.set(id,`둘째 사본으로 돌아요 (${String(error?.message||error).slice(0,50)})`);return code;}catch(plainError){error=Error(`${String(error?.message||error).slice(0,60)} → ${plainError.message}`);}
+      try{const code=await loadPlain(item);try{localStorage.setItem('bl_scripts_plain','1');}catch{/* 무시 */}failures.set(id,`둘째 사본으로 돌아요 (${String(error?.message||error).slice(0,50)})`);return code;}catch(plainError){error=Error(`${String(error?.message||error).slice(0,60)} → ${plainError.message}`);}
       failures.set(id,`${String(importError?.message||importError).slice(0,50)} → ${String(error?.message||error).slice(0,70)}`);throw error;}
   }).catch(error=>{cache.delete(id);throw error;}));
   return cache.get(id);

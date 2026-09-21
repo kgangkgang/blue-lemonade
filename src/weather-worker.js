@@ -11,6 +11,7 @@ self.onmessage = ({ data }) => {
         engine = createEngine(data.canvas.getContext('2d'));
         loop = createLoop(engine, fn => self.requestAnimationFrame(fn), id => self.cancelAnimationFrame(id));
         reduce = !!data.reduce;
+        engine.onWake = () => apply();
         engine.resize(data.w, data.h, data.dpr);
         engine.config(data);
         apply();
