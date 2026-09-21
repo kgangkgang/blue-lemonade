@@ -47,7 +47,18 @@ const topics = [
     ['pc-frame-colors-set.jpg','바탕색 · 포인트색','미리보기를 보면서 두 칸만 바꾸면 돼요.'],
     ['pc-custom-frame.mp4','내 PNG로 만드는 액자','파란 자리에 사진이 들어가요. 확인하고 한 번 누르면 적용돼요.','pc-custom-frame.jpg','pc-custom-frame.gif'],
   ]},
-  { id:'weather', label:'날씨', title:'오늘의 장면에, 오늘의 날씨.', sub:'비 · 눈 · 레몬 · 꽃잎 · 유성우 · 내 그림 · 움직임 조절', cards: [
+  { id:'weather', label:'날씨', fresh:true, title:'오늘의 장면에, 오늘의 날씨.', sub:'안개 · 햇살 · 별 · 반딧불이 · 무지개 · 나무 그림자 · 물결 · 유리 빗방울 · 두 날씨 혼합 · 비 · 눈 · 유성우 · 내 그림', cards: [
+    ['429-weather-star-meteor.mp4','은하수 위로 유성이','날씨 혼합하기로 두 날씨를 겹쳐요. 별 + 유성.','429-weather-star-meteor.jpg'],
+    ['429-weather-picker.png','하늘 · 자연 · 물·유리','종류별로 고르고, 1 · 2 칸에 하나씩 넣으면 혼합이에요. 날씨마다 세기와 색(기본 · 직접 · 그라데이션)을 따로 기억해요.'],
+    ['429-weather-rainbow.mp4','비 갠 뒤의 무지개','꼭대기를 끌어서 자리를 옮길 수 있어요.','429-weather-rainbow.jpg'],
+    ['429-weather-sun.mp4','창으로 드는 햇살','빛줄기 · 성스러운 빛 · 애니풍 · 렌즈 플레어. 빛의 자리도 끌어서 정해요.','429-weather-sun.jpg'],
+    ['429-weather-shadow.mp4','나뭇잎 그림자','야자 잎 · 나뭇잎 가지가 글 위로 어른거려요. 가지마다 자리를 옮기고 흐리기도 조절해요.','429-weather-shadow.jpg'],
+    ['429-weather-fog.mp4','뭉게뭉게 안개','뭉게뭉게 · 애니풍 구름 띠 · 실안개. 위치와 길이, 깊이감까지.','429-weather-fog.jpg'],
+    ['429-weather-fog-rain.mp4','안개 낀 비','안개 + 비. 트래커 따라를 켜면 장면의 날씨에 맞춰 알아서 겹쳐요.','429-weather-fog-rain.jpg'],
+    ['429-weather-water.mp4','수영장 물빛','수영장 · 바다 물결을 아래 · 위 · 전체에. 이음매 없이 일렁여요.','429-weather-water.jpg'],
+    ['429-weather-glass.mp4','유리창의 빗방울','실내 장면의 비는 유리에 맺혀 흘러요.','429-weather-glass.jpg'],
+    ['429-weather-firefly.mp4','반딧불이','밤 화면에 천천히 떠다니는 불빛.','429-weather-firefly.jpg'],
+    ['429-weather-breeze.mp4','바람에 흩날리는 잎','가볍게 날리는 잎. 다른 날씨와 섞기 좋아요.','429-weather-breeze.jpg'],
     ['403-hero-phone-dark.mp4','유성우에서 비와 눈으로','실제 테마의 세 가지 날씨가 부드럽게 이어져요.','403-hero-phone-dark.jpg','403-hero-phone-dark.gif'],
     ['402-weather-meteor.mp4','밤하늘을 둥글게 도는 유성우','방향·곡률·원 크기로 직선부터 원형까지.','402-weather-meteor.jpg','402-weather-meteor.gif'],
     ['400-weather-petal.mp4','흔들흔들 꽃잎','낙하 방식·흔들림·회전을 모든 날씨에 적용해요.','400-weather-petal.jpg','400-weather-petal.gif'],
@@ -102,6 +113,7 @@ const topics = [
   ]},
   { id:'read', label:'읽기', fresh:true, title:'읽는 동안에는, 이야기만.', sub:'몰입 읽기 · 한 손 버튼 · 카드 접기 · 퀵 리플라이 · 로어북 표시', cards: [
     ['425-bookmark-panel.png','남겨 둔 장면을 한곳에','북마크 창에서 모아 보고 · 찾고 · 그 자리로 돌아가요. 카드의 글은 채팅과 같은 서식이고, 메모도 달 수 있어요. 북마크 창만 밝게 · 어둡게 따로 볼 수도 있어요.'],
+    ['429-bookmark-panel-light.png','밝은 화면의 북마크','라이트에서도 카드가 한 면으로 깔끔해요. 북마크 창만 밝게 · 어둡게 따로 고를 수도 있어요.'],
     ['425-bookmark-chat.png','메시지마다 별 하나','메시지의 별을 누르면 북마크, 길게 누르면 메모. 앞뒤 문맥 보기와 같은 캐릭터의 다른 채팅, 채팅 전체 검색도 들어 있어요.'],
     ['412-bg-alpha.mp4','배경 그림 위에서도 또렷하게','채팅 바탕 농도를 0~100%로. 내 메시지도 같은 농도를 따라가고, 100이면 입력창 둘레까지 테마 바탕색으로 덮어요.','412-bg-alpha.jpg','412-bg-alpha.gif'],
     ['412-pins.jpg','자주 쓰는 버튼은 밖으로','··· 메뉴 속 번역·복사·숨기기 같은 버튼을 골라 늘 보이게 해요. 풀면 원래 자리로 돌아가요.'],
