@@ -372,3 +372,8 @@ dialog.tall img{max-height:none;width:min(85vw,460px);max-width:100%}
 .note .ver:first-of-type{margin-top:2px}
 .note .ver+ul{margin-top:8px}
 @media (max-width:760px){.note .ver{margin-left:2px}.note summary{flex-wrap:wrap;row-gap:4px}.note summary .span{order:5;flex-basis:100%;white-space:normal}}
+
+/* shown only when the device asks for less motion or blocks autoplay */
+.motion-note{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;margin:14px 0 0;font-size:13px;line-height:1.5;color:var(--muted)}
+.motion-note button{height:32px;padding:0 14px;border:0;border-radius:999px;background:var(--ink);color:var(--bg);font-size:13px;font-weight:650}
+.motion-note button:active{scale:.95}

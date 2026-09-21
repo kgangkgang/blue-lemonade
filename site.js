@@ -142,9 +142,11 @@ function element(tag, cls, text) { const e=document.createElement(tag); if(cls)e
 const MV='?v=20260921-425';
 
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
+let motionAllowed=false;try{motionAllowed=sessionStorage.getItem('bl-site-motion')==='1';}catch{}
+const calm=()=>reduceMotion.matches&&!motionAllowed;
 document.documentElement.classList.add('js');
 const lightbox=$('#lightbox');
-const inView=new IntersectionObserver(entries=>{for(const {target,isIntersecting} of entries){if(reduceMotion.matches||target.dataset.userPaused)continue;if(isIntersecting)target.play().catch(()=>{});else target.pause();}},{threshold:.35});
+const inView=new IntersectionObserver(entries=>{for(const {target,isIntersecting} of entries){if(calm()||target.dataset.userPaused)continue;if(isIntersecting)target.play().catch(()=>{});else target.pause();}},{threshold:.35});
 function galleryBlock(topic, device, cards, withHeading){
   const block=element('section','gallery-block'), heading=element('div','gallery-heading'), label=element('div'); block.dataset.device=device;
   label.append(element('h3','',topic.title),element('p','',topic.sub));
@@ -248,11 +250,14 @@ document.querySelectorAll('.fresh,.section-head,.palette-layout,.reading-layout,
   const art = document.querySelector('.hero-art'); if (!art) return;
   const vids = [...art.querySelectorAll('video.hero-video')];
   const shown = v => document.documentElement.classList.contains('device-pc') ? !!v.closest('.pc-stage') : !!v.closest('.phone-slot');
-  const start = v => { if (!v.src && v.dataset.src) { if (v.dataset.poster) v.poster = v.dataset.poster; v.src = v.dataset.src; } v.muted = true; const p = v.play(); if (p) p.catch(() => {}); };
-  const sync = () => { const on = !document.hidden && !reduceMotion.matches && !art.classList.contains('idle'); for (const v of vids) { if (shown(v) && on) start(v); else v.pause(); } };
+  const start = v => { if (!v.src && v.dataset.src) { if (v.dataset.poster) v.poster = v.dataset.poster; v.src = v.dataset.src; } v.muted = true; const p = v.play(); if (p) p.catch(() => { if (!motionAllowed) motionNote('blocked'); }); };
+  // a quiet line under the hero when videos are held back, with one button to play them anyway
+  function motionNote(why) { let n = document.querySelector('.motion-note'); if (!n) { n = document.createElement('p'); n.className = 'motion-note'; const t = document.createElement('span'), b = document.createElement('button'); b.type = 'button'; b.textContent = '영상 재생'; b.onclick = () => { motionAllowed = true; try { sessionStorage.setItem('bl-site-motion', '1'); } catch {} n.remove(); sync(); for (const v of document.querySelectorAll('.topic-panel:not([hidden]) video')) { const r = v.getBoundingClientRect(); if (r.top < innerHeight && r.bottom > 0) v.play().catch(() => {}); } }; n.append(t, b); (document.querySelector('.device-pick') || art).after(n); } n.firstChild.textContent = why === 'blocked' ? '절전 모드 등으로 자동 재생이 막혀 있어요.' : '기기의 ‘애니메이션 줄이기’가 켜져 있어 영상을 멈춰 뒀어요.'; }
+  const sync = () => { const on = !document.hidden && !calm() && !art.classList.contains('idle'); for (const v of vids) { if (shown(v) && on) start(v); else v.pause(); } };
   new MutationObserver(sync).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
   new MutationObserver(sync).observe(art, { attributes: true, attributeFilter: ['class'] });
   document.addEventListener('visibilitychange', sync);
-  reduceMotion.addEventListener('change', sync);
+  reduceMotion.addEventListener('change', () => { if (calm()) motionNote('reduce'); else document.querySelector('.motion-note')?.remove(); sync(); });
+  if (calm()) motionNote('reduce');
   sync();
 })();
