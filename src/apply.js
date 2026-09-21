@@ -598,7 +598,10 @@ export function applyAll() {
         want.add(`salty-profile-mode-${s.profile.mode}`);
         if (['small', 'banner'].includes(s.userProfile.mode)) want.add('salty-user-profile-custom');
         want.add(`salty-user-profile-mode-${s.userProfile.mode}`);
-        want.add(`salty-user-profile-side-${s.userProfile.side}`);
+        // 자동: 말풍선이면 오른쪽(메신저처럼 말풍선 옆에 붙는다), 나머지 모양은 왼쪽
+        const userSide = s.userProfile.side === 'auto' ? (s.chat.user === 'bubble' ? 'right' : 'left') : s.userProfile.side;
+        want.add(`salty-user-profile-side-${userSide}`);
+        if ((s.userProfile.metaSide === 'auto' ? userSide : s.userProfile.metaSide) === 'right') want.add('salty-user-meta-right'); // 번호 · 시간 · 토큰 줄도 오른쪽 끝에
         if (s.userProfile.mode === 'banner') { want.add('salty-user-profile-banner'); want.add(`salty-user-profile-layout-${s.userProfile.layout}`); want.add(`salty-user-profile-sizing-${s.userProfile.sizing}`); want.add(`salty-user-profile-${s.userProfile.headerLayout}`); }
         if (s.profile.mode === 'banner') { want.add('salty-profile-banner'); want.add(`salty-profile-layout-${s.profile.layout}`); want.add(`salty-profile-sizing-${s.profile.sizing}`); want.add(`salty-profile-${s.profile.headerLayout}`); }
         if (s.chat.qrScroll === 'y') want.add('salty-qr-y'); // 3.5.4 퀵 리플라이 세로 스크롤 (css/35-qr-bar.css)

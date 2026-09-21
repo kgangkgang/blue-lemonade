@@ -9,7 +9,7 @@ import { FRAME_DEFAULTS, FRAME_RANGE, tidyFrame } from './frames.js';
 import { PALETTES, PALETTE_ALIASES } from './palettes.js';
 
 export const KEY = 'salty';
-export const VERSION = 3; // 설정 구조 버전 (1.0.0 = 1 · 1.4 = 2)
+export const VERSION = 4; // 설정 구조 버전 (1.0.0 = 1 · 1.4 = 2 · 4.3.4 = 4)
 
 // 언어별 글꼴 묶음. en/ja/zh 가 'auto' 면 한국어 글꼴이 그 글자도 맡음.
 export const FONT_SET = { ko: 'pretendard', en: 'auto', ja: 'auto', zh: 'auto' };
@@ -101,7 +101,7 @@ export const DEFAULTS = {
     image: { decor: { ...DECOR_DEFAULTS }, ...FRAME_DEFAULTS, layout: 'bleed', shape: 'rect', fit: 'ratio', maxh: 78, height: 40, blendWhite: true, cutoutSame: true, fade: 'soft', fadeY: 10, fadeX: 0, angle: 3, radius: 14, cornerCut: 10, scratchAmount: 45, scratchDirection: 'straight', scratchTexture: 'sharp', edge: 'none', edgeAuto: true, edgeSideTop: true, edgeSideRight: true, edgeSideBottom: true, edgeSideLeft: true, edgeThick: 1, edgeAlpha: 30, edgeGlow: 0, mask: '', maskFit: 'stretch', masks: [], maskId: '' }, // shape: rect | custom(mask = 투명 PNG data URL, maskFit: stretch | contain) — angle · cornerCut · scratch* 는 뺀 모양의 옛 값(CSS 는 남아 있음) · fit(크기): ratio 비율 유지(maxh = 최대 높이) | fixed 높이 맞춤(height = 높이), 둘 다 화면 높이 % · fade(흐림): off | soft | medium | strong · angle: 대각선 기울기(도)
 };
 
-DEFAULTS.userProfile = { ...structuredClone(DEFAULTS.profile), mode: 'none', side: 'left' };
+DEFAULTS.userProfile = { ...structuredClone(DEFAULTS.profile), mode: 'none', side: 'auto', metaSide: 'auto' }; // auto = 말풍선이면 오른쪽(메신저처럼), 나머지 모양은 왼쪽
 
 export const PROFILE_RANGE = { screenHeight: [10, 100], maxHeight: [10, 100], visibleHeight: [10, 100], nameSize: [10, 60], nameWeight: [100, 900], nameSpacing: [-10, 30], nameHeight: [1, 2.5], headerGap: [0, 32], metaSize: [8, 24], metaOpacity: [20, 100], buttonGap: [0, 24], nameOutline: [0, 3], nameShadowBlur: [0, 20], nameShadowY: [-10, 10], nameShadowAlpha: [0, 100], width: [30, 100], height: [100, 720], positionX: [0, 100], positionY: [0, 100], radius: [0, 80], gap: [0, 64], blur: [0, 16], opacity: [20, 100], fadeY: [0, 45], fadeX: [0, 45] };
 
@@ -131,6 +131,8 @@ function migrate(s) {
         if (s.chat?.user === 'line') s.chat.user = 'plain';
     }
     // 2 → 3: 양쪽 정렬 켜기/끄기(type.justify) → 정렬 방식(type.align). 가져온 파일에도 남아 있을 수 있어 tidyType 이 매번 바꿈
+    // 3 → 4 (4.3.4): 내 작은 사진 위치의 예전 기본값 '왼쪽'을 '자동'으로 (말풍선이면 오른쪽 — 왼쪽 끝에 있으면 말풍선이 붕 떠 보였다). 그 뒤에 왼쪽을 다시 고르면 그대로 둔다
+    if (from < 4 && s.userProfile && typeof s.userProfile === 'object' && s.userProfile.side === 'left') s.userProfile.side = 'auto';
     s.version = VERSION;
     return s;
 }
@@ -430,7 +432,8 @@ export function getSettings() {
             s[owner].modeVersion = 1;
         }
         if (!['none', 'small', 'banner'].includes(s[owner].mode)) s[owner].mode = DEFAULTS[owner].mode;
-        if (owner === 'userProfile' && !['left', 'right'].includes(s[owner].side)) s[owner].side = 'left';
+        if (owner === 'userProfile' && !['auto', 'left', 'right'].includes(s[owner].side)) s[owner].side = 'auto';
+        if (owner === 'userProfile' && !['auto', 'left', 'right'].includes(s[owner].metaSide)) s[owner].metaSide = 'auto'; // 번호 · 시간 · 토큰 줄 (auto = 사진을 따라감)
         if (!['cover', 'contain'].includes(s[owner].fit)) s[owner].fit = 'cover';
         if (!['column', 'bleed', 'inset'].includes(s[owner].layout)) s[owner].layout = 'column';
         if (!['pixels', 'screen', 'ratio'].includes(s[owner].sizing)) s[owner].sizing = 'pixels';

@@ -32,14 +32,23 @@ async function loadPlain(item){
   if(code.length<50)throw Error('둘째 사본도 비었어요');
   return code;
 }
-/** 진단용: 파일이 실제로 어떻게 읽히는지 */
+/** 진단용: 파일이 실제로 어떻게 읽히는지 — 받은 글자 수와 함께 서버가 말한 길이(content-length) · 압축 · etag 를 적는다.
+ *  서버가 말한 길이부터 0 이면 서버(폰의 파일 읽기)가 빈 파일을 준 것이고, 길이는 멀쩡한데 받은 글이 0 이면 오는 길(브라우저)에서 비워진 것이다 */
+async function probeUrl(label,url){
+  try{
+    const response=await fetch(url+(url.includes('?')?'&':'?')+'r='+Date.now().toString(36),{cache:'no-store'});
+    const text=await response.text(),h=name=>response.headers.get(name)||'-';
+    return `${label}: ${response.status} 받음 ${text.length}자 · 서버 길이 ${h('content-length')} · 압축 ${h('content-encoding')} · etag ${h('etag')} · 고친 때 ${h('last-modified').slice(5,25)}`;
+  }catch(error){return `${label}: 못 받음 ${String(error?.message||error).slice(0,60)}`;}
+}
 export async function probeBundled(id){
   const item=scriptDefinition(id);if(!item)return `${id}: ?`;
-  try{const response=await fetch(bundledUrl(item,true),{cache:'no-store'});const text=await response.text();
-    let plain='?';try{const r2=await fetch(new URL(`./plain/${item.file}.js?r=${Date.now().toString(36)}`,import.meta.url).href,{cache:'no-store'});plain=`${r2.status} ${(await r2.text()).length}자`;}catch{plain='못 받음';}
-    return `${id}: ${response.status} ${text.length}자 ${/";?\s*$/.test(text)?'끝 있음':'끝 없음'} / 둘째 ${plain}`;}
-  catch(error){return `${id}: 못 받음 ${String(error?.message||error).slice(0,60)}`;}
+  const first=await probeUrl(id,new URL(`./bundled/${item.file}.js`,import.meta.url).href);
+  const second=await probeUrl('  둘째',new URL(`./plain/${item.file}.js`,import.meta.url).href);
+  return `${first}\n${second}`;
 }
+/** 진단용: 테마의 다른 파일 · 실리태번 자체 파일도 같은지 (테마 파일만 비는지 가린다) */
+export const probeOthers=()=>Promise.all([probeUrl('테마 panel.js',new URL('../panel.js',import.meta.url).href),probeUrl('테마 style.css',new URL('../../style.css',import.meta.url).href),probeUrl('실리태번 script.js',new URL('/script.js',location.href).href)]);
 export function loadBundledScript(id,fresh=false){
   const item=scriptDefinition(id);if(!item)return Promise.reject(Error('알 수 없는 스크립트예요.'));
   // 폰에서 테마를 다시 깐 직후에는 파일이 빈 채로(또는 쓰다 만 채로) 읽혀 default 가 없는 모듈이 올 때가 있다. 빈 모듈도 문법상 멀쩡해서 오류 없이 undefined 가 나왔고,

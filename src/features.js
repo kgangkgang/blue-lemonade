@@ -23,8 +23,9 @@ function startScripts(tries=4){
     load('scripts','./scripts/runtime.js').then((m)=>{
         if(m){
             // 시작 직후에는 설정 적용이 여러 번 겹친다 — 끝난 뒤에도 켜 둔 스크립트가 멈춰 있으면 다시 시작한다 (5초 · 15초 · 40초 뒤 확인)
-            clearTimeout(scriptHeal[0]);clearTimeout(scriptHeal[1]);clearTimeout(scriptHeal[2]);
-            scriptHeal=[5000,15000,40000].map(ms=>setTimeout(()=>m.healScripts(scriptsWanted),ms));
+            for(const timer of scriptHeal)clearTimeout(timer);
+            // 4.3.4: 폰에서 테마를 다시 깐 뒤 한동안 파일이 빈 채로 읽히는 일이 있다 — 5분까지 간격을 벌려 가며 다시 시도한다
+            scriptHeal=[5000,15000,40000,90000,150000,220000,300000].map(ms=>setTimeout(()=>m.healScripts(scriptsWanted),ms));
             // ✦ 메뉴를 열 때와 화면으로 돌아올 때도 본다 — 밖에서 닫힌 스크립트(상태는 '사용 중', 메뉴는 중국어)를 그 자리에서 되살린다
             if(!scriptWatch){scriptWatch=true;
                 document.addEventListener('click',(event)=>{

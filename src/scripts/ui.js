@@ -1,4 +1,4 @@
-import {SCRIPT_CATALOG,loadBundledScript,scriptDefinition,probeBundled,loadFailure} from './catalog.js';
+import {SCRIPT_CATALOG,loadBundledScript,scriptDefinition,probeBundled,probeOthers,loadFailure} from './catalog.js';
 import {scriptSettings,replaceScriptSettings,persistScripts,legacyConflicts} from './store.js';
 import {getSettings} from '../settings.js';
 let selected='korean',busy=false;
@@ -32,7 +32,8 @@ export async function bindScripts(root){
         ];
         out.textContent=lines.join('\n');out.hidden=false;
         // 파일이 실제로 어떻게 읽히는지 (응답 · 길이 · 끝까지 있는지) — 받는 대로 아래에 붙인다
-        Promise.all(SCRIPT_CATALOG.map(item=>probeBundled(item.id))).then(rows=>{out.textContent+='\n파일: '+rows.join(' · ');});
+        // 두 개만 자세히 (다섯 개 다 적으면 화면이 넘친다) + 테마의 다른 파일 · 실리태번 파일
+        Promise.all([probeBundled('helper'),probeBundled('fold'),probeOthers()]).then(([a,b,others])=>{out.textContent+='\n— 파일 —\n'+[a,b,...others].join('\n');});
     };
     // 켜 두었는데 '꺼짐'으로 남은 스크립트가 있으면(시작 때 못 돌았음) 이 화면을 열 때 다시 시작한다
     runtime.healScripts(!!getSettings().enabled);
