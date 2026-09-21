@@ -8,6 +8,13 @@ import { getSettings, saveSettings } from './settings.js';
 
 export const NOTICES = [
 {
+    "version": "4.1.3",
+    "date": "2026-09-21",
+    "items": [
+        "채팅 바탕 농도를 바꾸면 내 메시지(말풍선·카드·테이블)와 입력창 둘레도 같이 따라가요. 100이면 입력창 둘레로 배경 그림이 띠처럼 보이던 것까지 덮여요."
+    ]
+},
+{
     "version": "4.1.2",
     "date": "2026-09-21",
     "items": [

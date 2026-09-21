@@ -1310,7 +1310,7 @@ function tabChat(s, sub) {
             ${stack('아이콘', seg('chat.icons', [['line', '선 아이콘'], ['default', '기본']]))}
             ${row('배경 이미지 비치기', toggle('chat.bgImage', s.chat.bgImage), '끄면 깨끗한 종이색 바탕')}
             ${s.chat.bgImage ? slider('chat.bgAlpha', '채팅 바탕 농도', 0, 100, 1, 82) : ''}
-            ${s.chat.bgImage ? '<p class="salty-note">100이면 채팅 영역만 테마 바탕색으로 완전히 덮어요. 배경 그림 때문에 글자가 안 보일 때 올려 주세요.</p>' : ''}
+            ${s.chat.bgImage ? '<p class="salty-note">100이면 채팅 영역과 입력창 둘레를 테마 바탕색으로 완전히 덮어요. 내 메시지 면도 같은 농도를 따라가요.</p>' : ''}
             ${row('고르기 목록 팝업', toggle('chat.selectPop', s.chat.selectPop !== false), '모델 · 프리셋 같은 목록을 테마가 그린 팝업으로 (끄면 폰 기본 목록)')}
             ${row('색 고르기 팝업', toggle('chat.colorPop', s.chat.colorPop !== false), '실리태번 색 칸도 테마 색 고르기로')}
             ${splashRow()}

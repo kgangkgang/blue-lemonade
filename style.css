@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build bfc8dfbc3ca7) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 7f7de3b46bff) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -1435,6 +1435,12 @@ body.salty #chat {
 }
 body.salty.salty-bgimg #chat {
   background: var(--salty-fill-bg-82, var(--salty-bg-82)) !important;
+}
+body.salty.salty-bgimg #sheld {
+  background: var(--salty-fill-bg-82, var(--salty-bg-82)) !important;
+}
+body.salty.salty-bgimg #sheld > [id="chat"] {
+  background: transparent !important;
 }
 body.salty #chat .mes {
   max-width: calc(var(--salty-measure) + var(--salty-gutter) * 2);
