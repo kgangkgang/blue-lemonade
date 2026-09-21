@@ -73,7 +73,6 @@ const topics = [
   ]},
   { id:'tools', label:'도구', fresh:true, title:'필요한 것만 켜는, 작은 도구.', sub:'스크립트 · 단어 치환 · 확장 순서 · 모델 등록·순서 · 성능 보조 · 단독 업데이트', cards: [
     ['412-modelswitch.jpg','여러 확장의 모델을 한 번에','모델을 따로 고르는 확장들의 공급자와 모델을 함께 바꿔요. 자주 쓰는 조합은 저장해 두고, 잠금으로 실수도 막아요.'],
-    ['412-rewrite.jpg','마음에 안 드는 문장만 다시','보기 싫은 묘사가 나온 문장만 골라 다시 쓰게 해요. 규칙은 직접 적거나 AI에게 부탁해 만들어요. 기본 규칙의 이름 예시는 공유봇의 캐릭터예요.',,,['예시: 공유봇 천지합동청 ↗','https://kkangtong.xyz/posts/54677']],
     ['408-scripts-mobile.jpg','필요한 스크립트만 켜요','실리태번·헬퍼 한글화, 데우스·샤진 번역과 삼각형 접기를 각각 선택해요. 기존 헬퍼의 같은 스크립트는 먼저 꺼 주세요.'],
     ['408-update-mobile.jpg','이 테마만 업데이트','전체 확장 목록을 기다리지 않고 확인해요. 업데이트 후 새로고침하면 적용돼요.'],
     ['403-words-desktop.png','단어 치환도 한곳에서','번역본·원문 보기로 메시지를 고르고, 치환 전후를 확인해요.'],
@@ -85,8 +84,17 @@ const topics = [
     ['408-scripts-pc.jpg','왼쪽에서 고르고, 오른쪽에서 편집','스크립트마다 코드를 수정·저장·복원할 수 있어요. 사용자 수정본은 테마 업데이트 뒤에도 남아요.'],
     ['408-update-pc.jpg','업데이트도 테마 설정에서','Git 설치는 직접 업데이트, ZIP 설치는 다운로드를 안내해요. 버튼을 누르기 전에는 조회하지 않아요.'],
   ]},
+  { id:'rewrite', label:'다시 쓰기', fresh:true, tall:true, title:'마음에 안 드는 문장만, 다시.', sub:'금지 묘사 · 예외 · AI에게 부탁해서 만들기 · 테스트 · 사용법', guide:true, cards: [
+    ['412-rw-rules-glasses.png','금지 묘사 — 규칙 하나 열어 보기','규칙마다 잡을 단어(영·한·일·중), 고쳐 쓰는 AI에게 줄 설명을 적어요. 기본 규칙 열 개는 끄거나 지울 수 있어요.'],
+    ['412-rw-rules-horn.png','이 캐릭터에게만','사람 아이콘이 붙은 규칙은 적어 둔 이름이 최근 메시지에 나올 때만 켜져요. 기본 규칙 「뿔」의 사탄은 공유봇의 캐릭터예요.',,,['예시: 공유봇 천지합동청 ↗','https://kkangtong.xyz/posts/54677']],
+    ['412-rw-ai.png','AI에게 부탁해서 만들기','싫은 묘사를 평소 말투로 적고 → 프롬프트를 복사해 아무 AI에게 → 받은 답을 붙여넣으면 규칙이 돼요.'],
+    ['412-rw-exceptions.png','예외 — 원래 그 특징이 있는 캐릭터','이름과 허용할 묘사를 체크해요. 기본 예외 벨포드 · 아델스타인은 공유봇의 캐릭터라, 그 봇을 안 쓰면 지우면 돼요.',,,['예시: 공유봇 천지합동청 ↗','https://kkangtong.xyz/posts/54677']],
+    ['412-rw-test.png','테스트 — 걸리는 곳 보기','문장을 넣으면 어느 규칙에 걸리는지 바로 보여 줘요. 이 단계는 기기 안에서만 돌아서 비용이 없어요.'],
+    ['412-rw-guide.png','사용법은 버전 표시 속에','제목 옆 버전 표시를 누르면 열 단계 사용법이 열려요. 처음 켜기부터 단어 쓰는 법, 비용, 잘 안 될 때까지.'],
+    ['412-rewrite.jpg','연결은 지금 모델 그대로','고칠 때 쓸 모델은 현재 연결 · 직접 선택 · 연결 프로필 중에 골라요.'],
+  ]},
   { id:'read', label:'읽기', fresh:true, title:'읽는 동안에는, 이야기만.', sub:'몰입 읽기 · 한 손 버튼 · 카드 접기 · 퀵 리플라이 · 로어북 표시', cards: [
-    ['412-bg-alpha.mp4','배경 그림 위에서도 또렷하게','채팅 바탕 농도를 0~100%로. 100이면 채팅 영역만 테마 바탕색으로 완전히 덮어요.','412-bg-alpha.jpg','412-bg-alpha.gif'],
+    ['412-bg-alpha.mp4','배경 그림 위에서도 또렷하게','채팅 바탕 농도를 0~100%로. 내 메시지도 같은 농도를 따라가고, 100이면 입력창 둘레까지 테마 바탕색으로 덮어요.','412-bg-alpha.jpg','412-bg-alpha.gif'],
     ['412-pins.jpg','자주 쓰는 버튼은 밖으로','··· 메뉴 속 번역·복사·숨기기 같은 버튼을 골라 늘 보이게 해요. 풀면 원래 자리로 돌아가요.'],
     ['310-reader.mp4','밀어서 몰입하기','아래로 읽으면 메뉴와 입력창이 잠시 비켜나요.','310-reader.jpg','310-reader.gif'],
     ['310-onehand.png','한 손으로 닿는 버튼','스와이프, 사칭, 이어 쓰기, 다시 생성을 입력창 가까이에.'],
@@ -122,7 +130,7 @@ const topics = [
 const $ = s => document.querySelector(s);
 function element(tag, cls, text) { const e=document.createElement(tag); if(cls)e.className=cls; if(text)e.textContent=text; return e; }
 // media version: bump when shots are retaken under the same names, so cached copies don't linger
-const MV='?v=20260921-412';
+const MV='?v=20260921-413';
 
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
 document.documentElement.classList.add('js');
@@ -161,7 +169,7 @@ function galleryBlock(topic, device, cards, withHeading){
     let panel=panels.get(id);
     if(!panel){const topic=topics.find(t=>t.id===id);panel=element('div','topic-panel');panel.setAttribute('role','tabpanel');panel.setAttribute('aria-labelledby','topic-tab-'+id);
       if(topic.pc)panel.append(galleryBlock(topic,'pc',topic.pc,true));
-      const phone=galleryBlock(topic,'mobile',topic.cards,true);if(topic.pc){phone.classList.add('after-pc');phone.querySelector('.gallery-heading>div').append(element('p','gallery-device','모바일 화면'));}panel.append(phone);panels.set(id,panel);host.append(panel);}
+      const phone=galleryBlock(topic,'mobile',topic.cards,true);if(topic.tall)phone.classList.add('tall-media');if(topic.guide){const g=document.querySelector('#rewrite-guide');if(g){g.hidden=false;phone.querySelector('.gallery-heading').after(g);}}if(topic.pc){phone.classList.add('after-pc');phone.querySelector('.gallery-heading>div').append(element('p','gallery-device','모바일 화면'));}panel.append(phone);panels.set(id,panel);host.append(panel);}
     for(const [key,p] of panels){p.hidden=key!==id;if(key!==id)for(const b of p.children)b.classList.remove('in');}
     requestAnimationFrame(()=>requestAnimationFrame(()=>{for(const b of panel.children){b.classList.add('in');b.syncArrows();}}));
     try{sessionStorage.setItem('bl-site-topic',id);}catch{}
@@ -173,6 +181,7 @@ function galleryBlock(topic, device, cards, withHeading){
   let first=topics[0].id;try{const saved=sessionStorage.getItem('bl-site-topic');if(topics.some(t=>t.id===saved))first=saved;}catch{}
   show(first);
 }
+{const big=lightbox.querySelector('img');big.addEventListener('load',()=>{lightbox.classList.toggle('tall',big.naturalHeight>big.naturalWidth*1.9);lightbox.scrollTop=0;});}
 lightbox.querySelector('.close').onclick=()=>lightbox.close();lightbox.onclick=e=>{if(e.target===lightbox)lightbox.close();};lightbox.addEventListener('close',()=>{lightbox.querySelector('img').src='';});
 const SHOWN_NOTES=5;
 fetch('release-notes.json').then(r=>{if(!r.ok)throw new Error('notes');return r.json();}).then(notes=>{$('#notes').replaceChildren();notes.forEach((note,i)=>{const d=element('details','note');d.open=i===0;d.hidden=i>=SHOWN_NOTES;const s=element('summary');s.append(element('span','num',note.version));if(i===0)s.append(element('span','tag','NEW'));s.append(element('span','date',note.date.replaceAll('-','.')),element('span','plus','+'));const ul=element('ul');note.items.forEach((t,k)=>{const li=element('li','',t);li.style.setProperty('--i',Math.min(k,10));ul.append(li);});d.append(s,ul);$('#notes').append(d);});
