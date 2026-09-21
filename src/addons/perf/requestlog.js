@@ -61,7 +61,8 @@ jQuery(async () => {
     mountWandButton();
     registerSlashCommand();
     for (const delay of [800, 3000]) setTimeout(mountWandButton, delay);
-    setTimeout(checkFilesMatch, 3000);
+    // 4.2.2: 계산된 스타일은 화면이 한 번 그려진 직후에 읽는다 (그때는 이미 계산돼 있어 공짜) — 시작 도중에 읽으면 문서 전체를 그 자리에서 계산했다. 화면이 꺼져 있으면 5초 뒤 그냥 읽음
+    setTimeout(() => { let done = false; const go = () => { if (!done) { done = true; checkFilesMatch(); } }; requestAnimationFrame(() => setTimeout(go, 0)); setTimeout(go, 5000); }, 3000);
     trimEntries().catch(() => {});
     // 시작할 때 한 번 가져와서 예산 알림을 바로 낼 수 있게 한다
     setTimeout(() => refreshBudget().catch(() => {}), 6000);

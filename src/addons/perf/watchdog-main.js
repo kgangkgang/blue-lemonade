@@ -29,6 +29,7 @@ function initSettings() {
     all[MODULE] = s;
 }
 
+const CUT_KEY = Symbol.for('st.stream-watchdog.cut');
 const stats = { watched: 0, stalled: 0 };
 
 const env = {
@@ -37,6 +38,8 @@ const env = {
     clearInterval: id => clearInterval(id),
     isHidden: () => document.visibilityState === 'hidden',
     onStall: ({ idleMs, first }) => {
+        // 다른 확장에 알림: 방금 답을 끊었다 (번역 확장은 끊긴 반쪽짜리 글을 자동 번역하지 않는다). 다음 생성 요청이 시작되면 지운다
+        globalThis[CUT_KEY] = { at: Date.now(), first: !!first };
         stats.stalled++;
         refreshStats();
         const seconds = Math.round(idleMs / 1000);
@@ -51,6 +54,7 @@ function install() {
     window.fetch = function streamWatchdogFetch(input, init) {
         try {
             if (settings().enabled && isStreamRequest(input, init, location.origin)) {
+                delete globalThis[CUT_KEY]; // 새 답이 시작됨 — 지난번에 끊었다는 표시는 더는 이 답의 것이 아니다
                 const idleMs = clampIdle(settings().idleSeconds) * 1000;
                 const firstMs = clampFirst(settings().firstSeconds) * 1000;
                 // 끊을 때 원래 요청도 같이 끊는다 — 요청 로그처럼 응답을 복사해 읽는 쪽까지 함께 끝나게.
@@ -148,5 +152,6 @@ window.StreamWatchdog = { stats, settings, STALL_NAME };
 
 jQuery(() => {
     buildDrawer();
-    setTimeout(checkFilesMatch, 3000);
+    // 4.2.2: 계산된 스타일은 화면이 한 번 그려진 직후에 읽는다 (그때는 이미 계산돼 있어 공짜) — 시작 도중에 읽으면 문서 전체를 그 자리에서 계산했다. 화면이 꺼져 있으면 5초 뒤 그냥 읽음
+    setTimeout(() => { let done = false; const go = () => { if (!done) { done = true; checkFilesMatch(); } }; requestAnimationFrame(() => setTimeout(go, 0)); setTimeout(go, 5000); }, 3000);
 });

@@ -82,6 +82,10 @@ function installMorph() {
 
 function isShown(el) {
     if (!el?.isConnected) return false;
+    // 4.2.2: checkVisibility() 는 밀린 스타일 계산을 그 자리에서 돌린다 — 답이 오는 동안 프롬프트 관리자가 다시 그리려 할 때마다
+    // 문서 전체(1만 6천 요소)를 계산했다 (폰 리그 한 턴 0.36초). 서랍이 닫혀 있으면(실리태번이 .openDrawer 를 뗀다) 물어볼 것도 없다.
+    const drawer = el.closest('.drawer-content');
+    if (drawer && !drawer.classList.contains('openDrawer')) return false;
     if (typeof el.checkVisibility === 'function') return el.checkVisibility();
     return el.getClientRects().length > 0;
 }
@@ -241,5 +245,6 @@ window.PerfAssist = { settings, unavailable, morph, promptList, saver, version: 
 
 jQuery(() => {
     buildDrawer();
-    setTimeout(checkFilesMatch, 3000);
+    // 4.2.2: 계산된 스타일은 화면이 한 번 그려진 직후에 읽는다 (그때는 이미 계산돼 있어 공짜) — 시작 도중에 읽으면 문서 전체를 그 자리에서 계산했다. 화면이 꺼져 있으면 5초 뒤 그냥 읽음
+    setTimeout(() => { let done = false; const go = () => { if (!done) { done = true; checkFilesMatch(); } }; requestAnimationFrame(() => setTimeout(go, 0)); setTimeout(go, 5000); }, 3000);
 });
