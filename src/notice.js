@@ -8,6 +8,13 @@ import { getSettings, saveSettings } from './settings.js';
 
 export const NOTICES = [
 {
+    "version": "4.2.6",
+    "date": "2026-09-21",
+    "items": [
+        "확장 › 스크립트 화면에 '진단' 단추가 생겼어요. 누르면 스크립트가 도는지, 헬퍼 한글화 버전, ✦ 메뉴에 번역 안 된 항목이 남았는지가 몇 줄로 나와요. 테마를 새로 깐 직후 폰에서만 헬퍼 메뉴가 중국어로 보이는 문제를 찾기 위한 것이에요 — 그럴 때 이 화면을 캡처해 주세요."
+    ]
+},
+{
     "version": "4.2.5",
     "date": "2026-09-21",
     "items": [

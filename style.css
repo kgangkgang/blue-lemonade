@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 4d360e9688eb) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build a5f518eed7f5) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -17592,6 +17592,7 @@ dialog.popup.bl-roomy-dialog .popup-content { margin-left:0 !important; margin-r
 .salty-panel [data-script-feedback],.salty-panel [data-theme-update-status] { line-height:1.6;overflow-wrap:anywhere; }
 .bl-script-hint { display:block;white-space:pre-line;line-height:1.5;margin:5px 0;opacity:.8; }
 @container (min-width:800px) { .salty-panel .bl-script-layout {grid-template-columns:minmax(260px,.8fr) minmax(0,1.2fr);} }
+.bl-script-diagnosis { margin: 8px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--salty-shade); color: var(--salty-muted); font: 12px/1.6 ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; user-select: text; }
 /* css/54-mes-pins.css */
 body.salty #chat .mes .bl-pinned {
   flex: none;
