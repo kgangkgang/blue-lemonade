@@ -101,7 +101,7 @@ const topics = [
     ['412-rewrite.jpg','연결은 지금 모델 그대로','고칠 때 쓸 모델은 현재 연결 · 직접 선택 · 연결 프로필 중에 골라요.'],
   ]},
   { id:'read', label:'읽기', fresh:true, title:'읽는 동안에는, 이야기만.', sub:'몰입 읽기 · 한 손 버튼 · 카드 접기 · 퀵 리플라이 · 로어북 표시', cards: [
-    ['425-bookmark-panel.png','남겨 둔 장면을 한곳에','북마크 창에서 모아 보고 · 찾고 · 그 자리로 돌아가요. 카드의 글은 채팅과 같은 서식이고, 메모도 달 수 있어요.'],
+    ['425-bookmark-panel.png','남겨 둔 장면을 한곳에','북마크 창에서 모아 보고 · 찾고 · 그 자리로 돌아가요. 카드의 글은 채팅과 같은 서식이고, 메모도 달 수 있어요. 북마크 창만 밝게 · 어둡게 따로 볼 수도 있어요.'],
     ['425-bookmark-chat.png','메시지마다 별 하나','메시지의 별을 누르면 북마크, 길게 누르면 메모. 앞뒤 문맥 보기와 같은 캐릭터의 다른 채팅, 채팅 전체 검색도 들어 있어요.'],
     ['412-bg-alpha.mp4','배경 그림 위에서도 또렷하게','채팅 바탕 농도를 0~100%로. 내 메시지도 같은 농도를 따라가고, 100이면 입력창 둘레까지 테마 바탕색으로 덮어요.','412-bg-alpha.jpg','412-bg-alpha.gif'],
     ['412-pins.jpg','자주 쓰는 버튼은 밖으로','··· 메뉴 속 번역·복사·숨기기 같은 버튼을 골라 늘 보이게 해요. 풀면 원래 자리로 돌아가요.'],
@@ -139,7 +139,7 @@ const topics = [
 const $ = s => document.querySelector(s);
 function element(tag, cls, text) { const e=document.createElement(tag); if(cls)e.className=cls; if(text)e.textContent=text; return e; }
 // media cache keys: one stable key for everything; a file retaken under the same name gets its own entry here (never bump the stable key)
-const RETAKEN={'412-bg-alpha.mp4':'413','412-bg-alpha.jpg':'413','412-bg-alpha.gif':'413','412-dem-fx.mp4':'417','412-dem-fx.jpg':'417','412-dem-fx.gif':'417','415-fx-marker.mp4':'417','415-fx-marker.jpg':'417','415-fx-marker.gif':'417'};
+const RETAKEN={'425-bookmark-panel.png':'427','412-bg-alpha.mp4':'413','412-bg-alpha.jpg':'413','412-bg-alpha.gif':'413','412-dem-fx.mp4':'417','412-dem-fx.jpg':'417','412-dem-fx.gif':'417','415-fx-marker.mp4':'417','415-fx-marker.jpg':'417','415-fx-marker.gif':'417'};
 const mv=file=>'?v='+(RETAKEN[file]||'s1');
 
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
