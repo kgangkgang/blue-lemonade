@@ -101,6 +101,12 @@ export function arrangeEditor(root, route, title) {
             current.append(element);
         }
     }
+    // 안에 고칠 것이 하나도 없는 묶음(제목 + 짧은 예시 글뿐)은 자리만 차지한다 — 그리지 않는다
+    for (const group of [...groups]) {
+        const body = group.querySelector('.bl-editor-group-body');
+        if ([...body.children].some(el => !el.classList.contains('salty-note')) || body.textContent.trim().length > 24) continue;
+        group.remove(); groups.splice(groups.indexOf(group), 1);
+    }
     if (groups.length === 1) { groups[0].classList.add('bl-editor-single'); groups[0].querySelector('.bl-editor-group-toggle').hidden = true; }
     summarizeEditorGroups(root);
     const remembered = root._editorGroups.get(route);

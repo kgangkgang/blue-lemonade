@@ -503,6 +503,9 @@ export function applyAll() {
         // 글자색 톤 맞추기(tone.js)의 채도 · 밝기 — 지금 팔레트가 나이트면 dark 값 (2.6.1 슬라이더)
         '--bl-tone-s': `${(s.chat.tone?.[pal.mode === 'dark' ? 'dark' : 'light']?.s ?? (pal.mode === 'dark' ? 70 : 58))}%`,
         '--bl-tone-l': `${(s.chat.tone?.[pal.mode === 'dark' ? 'dark' : 'light']?.l ?? (pal.mode === 'dark' ? 74 : 38))}%`,
+        // 4.1.4 형광펜 색 모드의 띠는 글자보다 옅어야 해서 톤 값을 따로 둔다 (css/37-prompt-ink.css)
+        '--bl-mtone-s': `${(s.chat.markerTone?.[pal.mode === 'dark' ? 'dark' : 'light']?.s ?? (pal.mode === 'dark' ? 62 : 88))}%`,
+        '--bl-mtone-l': `${(s.chat.markerTone?.[pal.mode === 'dark' ? 'dark' : 'light']?.l ?? (pal.mode === 'dark' ? 46 : 72))}%`,
 
         '--salty-em-style': s.em.italic ? 'italic' : 'normal',
         '--salty-em-weight': String(s.em.weight),

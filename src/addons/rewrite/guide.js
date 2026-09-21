@@ -118,3 +118,42 @@ ${personal ? `<p><b>기본 규칙 "유저 외모 색깔"</b>은 만든 사람의
     </ul>
   </details>
 </div>`;
+
+// The "?" next to 씬 플랜 리롤. What a Scene Plan is comes from the Deus Ex Machina preset's "! Scene Plan !" prompt.
+export const SCENE_HELP_HTML = `
+<div class="bwr_guide">
+  <h3><i class="fa-solid fa-rotate"></i> 씬 플랜 리롤</h3>
+  <p class="bwr_guide_lead"><b>데우스 엑스 마키나</b> 프리셋을 쓸 때만 필요한 기능이에요. 다른 프리셋에서는 꺼 두세요.</p>
+  <details open>
+    <summary>씬 플랜(장면 계획)이 뭔가요</summary>
+    <p>데우스 엑스 마키나의 <b>! Scene Plan !</b> 프롬프트는 AI에게 <b>모든 답변을 <code>&lt;scene_plan&gt;</code> 칸으로 시작</b>하라고 시켜요. 본문을 쓰기 전에 아래 항목을 한 줄씩 먼저 정하는 칸이에요.</p>
+    <ul>
+      <li><b>Context</b> — 속뜻 · 앞 내용과의 연결 · 캐릭터 시트 · 세계관</li>
+      <li><b>OOC</b> — 내가 직접 내린 지시가 있으면 어떻게 따를지</li>
+      <li><b>Knowledge</b> — 이번 장면에 필요한 사실</li>
+      <li><b>Story progression</b> — 속도(Pacing)를 지키면서 장면을 어떻게 나아가게 할지</li>
+      <li><b>Prose Length · Language · Narrative Style</b> — 분량, 출력 언어, 문체</li>
+      <li>켜 둔 모듈마다 한 줄씩 — 선택지(CYOA) · 원작 고증(Fandom) · Momentum Engine · 긍정 편향 막기 · 캐릭터 전지 막기 · 캐릭터 현실성 등</li>
+    </ul>
+    <p>프리셋 설명 그대로 <b>일관성을 지키는 데 꼭 필요한 칸</b>이고, 채팅에서는 접힌 "Scene Plan" 카드로 보여요.</p>
+  </details>
+  <details open>
+    <summary>왜 다시 받나요</summary>
+    <p>모델이 가끔 이 칸을 <b>건너뛰고 바로 본문을 쓰거나</b>, 계획을 쓰다가 <b>중간에 끊겨요</b>. 그런 답변은 프리셋의 문체 · 분량 · 전개 규칙을 거치지 않은 답이라 품질이 흔들리고, 끊긴 칸은 카드가 깨져 보여요.</p>
+    <p>이 기능을 켜면 답변이 도착했을 때 확인해서, 씬 플랜이 <b>없거나 닫히지 않았으면 같은 요청을 조용히 다시 보내</b> 답변을 바꿔요. 번역 확장이 번역하기 전에 끝나서 번역을 두 번 하지 않아요.</p>
+  </details>
+  <details>
+    <summary>언제 움직이고 언제 안 움직이나요</summary>
+    <ul>
+      <li>보낸 프롬프트에 <b>표시 문구</b>(기본 <code>&lt;scene_plan_guide&gt;</code>)가 있을 때만 검사해요. 그래서 다른 프리셋의 답변은 절대 다시 받지 않아요.</li>
+      <li>답변이 <b>시작 문구</b>(기본 <code>&lt;scene_plan</code>, <code>&lt;scene_reasoning</code>) 중 하나로 시작하고, 열린 칸이 모두 닫혔고, 그 뒤에 본문이 있어야 통과예요.</li>
+      <li>이어 쓰기(Continue)와 <b>내가 직접 멈춘</b> 답변은 건드리지 않아요. 연결이 끊겨서 잘린 답변은 다시 받아요.</li>
+      <li>다시 받는 동안에는 보내기 · 스와이프가 잠기고, 멈춤 버튼을 누르면 그만두고 원래 답변을 남겨요.</li>
+      <li><b>리롤</b> 탭에서 문구 · 최대 시도 · 제한 시간을 바꿀 수 있어요. 끝까지 실패하면 원래 답변을 그대로 둬요.</li>
+    </ul>
+  </details>
+  <details>
+    <summary>비용</summary>
+    <p>다시 받기 한 번 = <b>답변 하나를 통째로 다시 생성</b>하는 비용이에요(채팅에 쓰는 연결 · 같은 프롬프트, 스트리밍 없이). 금지 묘사 고치기처럼 몇 문장만 보내는 게 아니에요. 자주 뜬다면 프리셋의 Scene Plan 프롬프트가 켜져 있는지, 모델의 추론(Reasoning) 설정이 너무 높지 않은지 먼저 확인해 보세요.</p>
+  </details>
+</div>`;

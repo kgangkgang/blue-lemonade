@@ -9,7 +9,7 @@
     --bwr-accent-soft: color-mix(in srgb, var(--bwr-accent) 18%, transparent);
     --bwr-danger: #e5484d;
     /* Compared with index.js after load: a mismatch may be a packaging, cache, or installation issue. */
-    --bwr-css-version: "1.8.4";
+    --bwr-css-version: "1.8.5";
 }
 
 /* 서랍 안쪽 — .inline-drawer-content 는 실리태번이 열고 닫으므로 display 를 주지 않고 안에 한 겹 더 둔다 */
@@ -175,13 +175,6 @@
 
 .bwr_settings .bwr_segment {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-/* 폰 폭: 탭 여섯 개를 3 + 3 같은 폭으로 (4 + 2 로 들쭉날쭉하지 않게) */
-@container (max-width: 560px) {
-    .bwr_settings .bwr_tabs {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
 }
 
 .bwr_settings .bwr_tab,
@@ -532,10 +525,6 @@
 }
 
 @container (max-width: 560px) {
-    .bwr_settings .bwr_tabs {
-        grid-template-columns: repeat(6, minmax(0, 1fr));
-    }
-
     .bwr_settings .bwr_tab {
         position: relative;
         flex-direction: column;

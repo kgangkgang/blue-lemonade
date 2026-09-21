@@ -471,7 +471,7 @@ const NUM = {
     'image.cornerCut': { unit: '%' },
     'image.scratchAmount': { unit: '%' },
     'shadow.alpha': { unit: '%' },
-    'chat.tone.light.s': { unit: '%' }, 'chat.tone.light.l': { unit: '%' }, 'chat.tone.dark.s': { unit: '%' }, 'chat.tone.dark.l': { unit: '%' },
+    'chat.tone.light.s': { unit: '%' }, 'chat.tone.light.l': { unit: '%' }, 'chat.tone.dark.s': { unit: '%' }, 'chat.tone.dark.l': { unit: '%' }, 'chat.markerTone.light.s': { unit: '%' }, 'chat.markerTone.light.l': { unit: '%' }, 'chat.markerTone.dark.s': { unit: '%' }, 'chat.markerTone.dark.l': { unit: '%' },
     'shadow.angle': { unit: '도' },
     'shadow.distance': { unit: 'px' },
     'shadow.blur': { unit: 'px' },
@@ -1171,7 +1171,7 @@ function tabText(s, sub) {
             ${roleType('강조', [sizeOpt('strong.size', '크기', '본문과 같게', ...TEXT_LIMIT.roleSize), slider('strong.weight', '굵기', 400, 900, 1), sizeOpt('strong.letterSpacing', '자간', '본문과 같게', ...TEXT_LIMIT.letterSpacing)])}
             ${cap('강조 글꼴')}${fontBlock(s, 'strong')}`;
     } else if (sub === 'code') {
-        body = `${gradientControls(s,'code','코드 글자',{slider,esc})}${cap('코드', '\`코드\`')}
+        body = `${gradientControls(s,'code','코드 글자',{slider,esc})}
             ${roleType('코드', [sizeOpt('type.codeSize', '크기', '본문과 같게', ...TEXT_LIMIT.codeSize), sizeOpt('code.weight', '굵기', '본문과 같게', 300, 800), sizeOpt('code.letterSpacing', '자간', '본문과 같게', ...TEXT_LIMIT.letterSpacing)])}
             ${cap('코드 글꼴')}${fontBlock(s, 'code')}
             <p class="salty-note">기본은 도트 글꼴(Neo둥근모)이에요.</p>`;
@@ -1292,17 +1292,7 @@ function tabChat(s, sub) {
         const customCss = `${cap('다른 CSS', customLines ? `커스텀 CSS ${customLines}줄` : '커스텀 CSS 없음')}<div class="salty-group">
             ${row('커스텀 CSS 끄기', toggle('compat.muteCustomCss', !!s.compat?.muteCustomCss), '사용자 설정의 커스텀 CSS 를 테마가 켜진 동안 꺼요 · 지우지는 않아요')}
         </div>`;
-        return `${colorPreview()}${cap('색 통일')}<div class="salty-group">
-            ${row('본문 색 지정', toggle('chat.unifyInline', s.chat.unifyInline), '메시지에 적힌 글자색을 무시하고 테마 글자색으로')}
-            ${s.chat.unifyInline ? '' : row('글자색 톤 맞추기', toggle('chat.toneInline', s.chat.toneInline), '색은 그대로 두고 채도 · 밝기만 테마에 맞춤 — 퍼스널 컬러가 들쭉날쭉할 때')}
-        </div>
-        ${!s.chat.unifyInline && s.chat.toneInline ? `${cap('톤 값', PALETTES[s.palette]?.mode === 'dark' ? '지금은 나이트 값이 보여요' : '지금은 화이트 값이 보여요')}<div class="salty-group">
-            ${slider('chat.tone.light.s', '화이트 채도', 0, 100, 1)}
-            ${slider('chat.tone.light.l', '화이트 밝기', 10, 90, 1)}
-            ${slider('chat.tone.dark.s', '나이트 채도', 0, 100, 1)}
-            ${slider('chat.tone.dark.l', '나이트 밝기', 10, 90, 1)}
-        </div>` : ''}
-        ${customCss}`;
+        return `${customCss}`;
     }
     if (sub === 'screen') {
         const stFade = !!SillyTavern.getContext().powerUserSettings?.stream_fade_in; // 실리태번 쪽 페이드 인 (무거움) — 켜져 있으면 끄는 줄을 같이 보여 줌
@@ -1427,6 +1417,21 @@ function tabPrompt(s) {
             ${s.chat.demInk ? stack('색을 어디에', seg('chat.demInkMode', [['text', '글자 색'], ['marker', '형광펜 색']], 'text'), '형광펜 색: 글자는 테마 색 그대로 두고 띠만 프롬프트 색으로') : ''}
         </div>
         ${s.chat.demInk && s.chat.demInkMode === 'marker' && !['marker', 'full'].includes(s.dialogue.style) ? '<p class="salty-note">지금 대사 표시가 “' + ({ bold: '굵게', tint: '색', plain: '없음' }[s.dialogue.style] || s.dialogue.style) + '” 라 칠할 띠가 없어요. 글자 › 대사 › 표시를 형광펜이나 전체 칠로 바꾸면 띠에 색이 들어가요.</p>' : ''}
+        ${cap('색 통일', '메시지에 적힌 글자색')}<div class="salty-group">
+            ${row('본문 색 지정', toggle('chat.unifyInline', s.chat.unifyInline), '메시지에 적힌 글자색을 무시하고 테마 글자색으로')}
+            ${s.chat.unifyInline ? '' : row('색 톤 맞추기', toggle('chat.toneInline', s.chat.toneInline), '색은 그대로 두고 채도 · 밝기만 테마에 맞춤 — 글자 색이든 형광펜 색이든')}
+        </div>
+        ${!s.chat.unifyInline && s.chat.toneInline ? `${cap('톤 값', PALETTES[s.palette]?.mode === 'dark' ? '지금은 나이트 값이 보여요' : '지금은 화이트 값이 보여요')}<div class="salty-group">
+            ${s.chat.demInk && s.chat.demInkMode === 'marker' ? `
+            ${slider('chat.markerTone.light.s', '화이트 형광펜 채도', 0, 100, 1)}
+            ${slider('chat.markerTone.light.l', '화이트 형광펜 밝기', 10, 95, 1)}
+            ${slider('chat.markerTone.dark.s', '나이트 형광펜 채도', 0, 100, 1)}
+            ${slider('chat.markerTone.dark.l', '나이트 형광펜 밝기', 10, 95, 1)}` : `
+            ${slider('chat.tone.light.s', '화이트 채도', 0, 100, 1)}
+            ${slider('chat.tone.light.l', '화이트 밝기', 10, 90, 1)}
+            ${slider('chat.tone.dark.s', '나이트 채도', 0, 100, 1)}
+            ${slider('chat.tone.dark.l', '나이트 밝기', 10, 90, 1)}`}
+        </div>` : ''}
         ${cap('대사 색상 가독성 향상', '프롬프트가 칠한 글자에만')}<div class="salty-group">
             ${row('외곽선', toggle('deus.ink.outline.on', dio.on), '글자 둘레에 테두리 — 밝은 색이 밝은 배경에 묻힐 때')}
             ${dio.on ? `<div class="salty-row"><span>외곽선 색</span><input type="color" data-color-path="deus.ink.outline.color" value="${esc(dio.color)}" aria-label="외곽선 색"></div>` : ''}

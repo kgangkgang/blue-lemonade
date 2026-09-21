@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 7f7de3b46bff) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 015ff4460ef8) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -16739,6 +16739,14 @@ body.salty.salty-dlg-full.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg
   -webkit-mask: none;
   mask: none;
   border-radius: 5px;
+}
+body.salty.salty-tone.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"])[style*="--bl-hue"] q:not(q q) {
+  background-color: hsl(var(--bl-hue) var(--bl-mtone-s) var(--bl-mtone-l)) !important;
+}
+body.salty.salty-tone.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]).bl-tone-grey q:not(q q) {
+  background: var(--salty-marker-bg) !important;
+  -webkit-mask: none;
+  mask: none;
 }
 body.salty.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q q {
   background-color: transparent !important;
