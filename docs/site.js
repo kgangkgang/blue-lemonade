@@ -64,6 +64,7 @@ const topics = [
   { id:'capture', label:'캡처', fresh:true, title:'글은 그대로, 날씨만 움직이게.', sub:'이미지 · 영상 · GIF · 이름 가리기 · 캡처용 글 편집 · 문단별 분할', cards: [
     ['420-capture-moving.webp','움짤 속 글자도 살아 있게','테마가 저장한 실제 WebP 움짤이에요. 같은 장면이 GIF 818KB · WebP 501KB, 색을 줄이지 않는 APNG 는 1.6MB 였어요.'],
     ['424-capture-quick.png','몇 초 만에 빠른 미리보기','굽지 않고 첫 화면부터 확인해요. 파일은 ‘파일 만들기’를 눌렀을 때만 만들고, 창을 닫았다 와도 만든 파일과 글 편집이 남아요. 프리셋으로 설정도 한 번에.'],
+    ['425-capture-editor.png','남길 문단만 골라서','캡처용 글 편집은 문단마다 한 줄. 체크해서 한 번에 지우거나 고른 것만 남기고, 한 줄을 누르면 펼쳐서 고쳐요.'],
     ['420-capture-format.png','올릴 곳 한도에 맞춰서','파일 종류에서 GIF · APNG · WebP 를 고르고 최대 용량을 정하면, 화질 → 크기 → 초당 장수 순으로 낮춰 맞춰요.'],
     ['410-capture-mobile.jpg','본문만 또는 원하는 정보만','이름·날짜·모델·번호·토큰·시간을 각각 선택해요. 원래 대화에는 영향을 주지 않아요.'],
     ...exportExamples410,
@@ -100,6 +101,8 @@ const topics = [
     ['412-rewrite.jpg','연결은 지금 모델 그대로','고칠 때 쓸 모델은 현재 연결 · 직접 선택 · 연결 프로필 중에 골라요.'],
   ]},
   { id:'read', label:'읽기', fresh:true, title:'읽는 동안에는, 이야기만.', sub:'몰입 읽기 · 한 손 버튼 · 카드 접기 · 퀵 리플라이 · 로어북 표시', cards: [
+    ['425-bookmark-panel.png','남겨 둔 장면을 한곳에','북마크 창에서 모아 보고 · 찾고 · 그 자리로 돌아가요. 카드의 글은 채팅과 같은 서식이고, 메모도 달 수 있어요.'],
+    ['425-bookmark-chat.png','메시지마다 별 하나','메시지의 별을 누르면 북마크, 길게 누르면 메모. 앞뒤 문맥 보기와 같은 캐릭터의 다른 채팅, 채팅 전체 검색도 들어 있어요.'],
     ['412-bg-alpha.mp4','배경 그림 위에서도 또렷하게','채팅 바탕 농도를 0~100%로. 내 메시지도 같은 농도를 따라가고, 100이면 입력창 둘레까지 테마 바탕색으로 덮어요.','412-bg-alpha.jpg','412-bg-alpha.gif'],
     ['412-pins.jpg','자주 쓰는 버튼은 밖으로','··· 메뉴 속 번역·복사·숨기기 같은 버튼을 골라 늘 보이게 해요. 풀면 원래 자리로 돌아가요.'],
     ['310-reader.mp4','밀어서 몰입하기','아래로 읽으면 메뉴와 입력창이 잠시 비켜나요.','310-reader.jpg','310-reader.gif'],
@@ -136,7 +139,7 @@ const topics = [
 const $ = s => document.querySelector(s);
 function element(tag, cls, text) { const e=document.createElement(tag); if(cls)e.className=cls; if(text)e.textContent=text; return e; }
 // media version: bump when shots are retaken under the same names, so cached copies don't linger
-const MV='?v=20260921-424';
+const MV='?v=20260921-425';
 
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
 document.documentElement.classList.add('js');
