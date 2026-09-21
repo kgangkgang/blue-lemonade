@@ -1,5 +1,6 @@
 import { MASK_STYLES, normalizeMaskStyle } from './capture-style.js';
 import { MIX_DEFAULT, tidyGradients } from './gradients.js';
+import { tidyPins } from './mes-pins.js';
 import { syncWeatherProfile } from './weather-profiles.js';
 import { tidyFrameLibrary } from './frame-library.js';
 import { DECOR_DEFAULTS, tidyDecor } from './decor.js';
@@ -62,7 +63,7 @@ export const DEFAULTS = {
     outline: { on: false, color: '#000000', alpha: 100, width: 1 },   // 전체(메시지 본문) 외곽선 · width: px(0.2~3) · alpha: %
     em: { italic: false, weight: 400, size: null, letterSpacing: null },   // *속마음* — 기울일지, 굵기, 크기(px · null = 본문과 같게), 자간(1/100 em · null = 본문과 같게)
     strong: { weight: 650, size: null, letterSpacing: null },              // **강조**
-    chat: { user: 'bubble', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, colorPop: true, streamFade: false, demSkin: false, demFold: true, weather: 'off', weatherLevel: 2, weatherOpacity: 100, weatherSize: 100, weatherSpeed: 100, weatherAngle: -9, weatherMotion: 'natural', weatherSway: 100, weatherSpin: 100, weatherCurvature:65, weatherOrbitSize:100, weatherOrbitDirection:'right', weatherColorMode:'auto', weatherColor:'#91cfff', weatherImage: '', weatherImageId: '', qrScroll: 'x', qrFind: true, qrRows: 2, qrPlace: 'bottom', demInk: false, demInkMode: 'text', toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } } }, // streamFade: 스트리밍 중 새 글자만 가볍게 페이드 인 (2.9.5, streamfade.js — 실리태번 페이드 인이 켜져 있으면 쉼) · tone: 톤 맞추기의 채도 · 밝기(%) 화이트/나이트 따로 (2.6.1) · toneInline: 본문 글자색의 색상만 두고 채도 · 밝기를 테마에 맞춤 (2.6.0, unifyInline 이 꺼져 있을 때) · selectPop: 실리태번 select 를 테마가 그린 목록 팝업으로 (2.5.0) · colorPop: 설정 창 밖 색 칸도 테마 색 고르기로 (3.5.0, colorpop.js) · regexIcons: 정규식 카드 제목 앞 이모티콘 보이기 · unifyRegex: 프리셋 정규식 카드(DEM 등)의 모듈별 색 → 포인트색 하나 · unifyInline: 메시지에 적힌 글자색(<font color> · style) 무시
+    chat: { user: 'bubble', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, bgAlpha: 82, mesPins: [], unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, colorPop: true, streamFade: false, demSkin: false, demFold: true, weather: 'off', weatherLevel: 2, weatherOpacity: 100, weatherSize: 100, weatherSpeed: 100, weatherAngle: -9, weatherMotion: 'natural', weatherSway: 100, weatherSpin: 100, weatherCurvature:65, weatherOrbitSize:100, weatherOrbitDirection:'right', weatherColorMode:'auto', weatherColor:'#91cfff', weatherImage: '', weatherImageId: '', qrScroll: 'x', qrFind: true, qrRows: 2, qrPlace: 'bottom', demInk: false, demInkMode: 'text', toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } } }, // streamFade: 스트리밍 중 새 글자만 가볍게 페이드 인 (2.9.5, streamfade.js — 실리태번 페이드 인이 켜져 있으면 쉼) · tone: 톤 맞추기의 채도 · 밝기(%) 화이트/나이트 따로 (2.6.1) · toneInline: 본문 글자색의 색상만 두고 채도 · 밝기를 테마에 맞춤 (2.6.0, unifyInline 이 꺼져 있을 때) · selectPop: 실리태번 select 를 테마가 그린 목록 팝업으로 (2.5.0) · colorPop: 설정 창 밖 색 칸도 테마 색 고르기로 (3.5.0, colorpop.js) · regexIcons: 정규식 카드 제목 앞 이모티콘 보이기 · unifyRegex: 프리셋 정규식 카드(DEM 등)의 모듈별 색 → 포인트색 하나 · unifyInline: 메시지에 적힌 글자색(<font color> · style) 무시
     // 3.1.0: 몰입 읽기(폰 — 아래로 밀면 위 바 · 입력창 숨김, reader.js) · 한 손 버튼 줄(입력판 위 ‹ › 사칭 · 이어 쓰기 · 다시 생성, onehand.js)
     reader: { autoHide: false },
     // 3.4.0 프롬프트 호환: 데우스 엑스 마키나 — 끄면 카드 스킨 · 폰 접기 · 카드 색 통일 · 카드 이모티콘 · 트래커 날씨가 모두 쉰다 (값은 남음)
@@ -76,6 +77,8 @@ export const DEFAULTS = {
             outline: { on: false, color: '#000000', alpha: 100, width: 0.6 },
             shadow: { on: false, color: '#000000', alpha: 60, angle: 135, distance: 1.5, blur: 2 },
         },
+        // 4.1.2 감정 대사 효과(Expressive Dialogue): 움직임 soft|normal|big · 빛 · 색 흐름 · 기기의 애니메이션 줄이기 무시 (css/55-dem-expressive.css)
+        fx: { on: true, motion: 'normal', glow: true, flow: false, force: false },
     },
     // 3.2.0 화이트 · 나이트 자동: by = system(기기 다크 모드) | time(night 부터 day 까지 나이트) — automode.js
     auto: { on: false, by: 'system', night: '20:00', day: '07:00' },
@@ -83,7 +86,7 @@ export const DEFAULTS = {
     weatherImages: [],
     customPalettes: [],
     activeCustomPalette: '',
-    addons: { order: false, perf: false, words: false, capture: false, models: false, modelorder: false },
+    addons: { order: false, perf: false, words: false, capture: false, models: false, modelorder: false, modelswitch: false, rewrite: false },
     addonUI: { orderIcon: false, perfIcon: false, wordsMenu: false, captureMenu: false, perfMenu: { watchdog:false, timer:true, perf:false, log:true, dedupe:false } },
     wordTools: { messageView: 'translation', rules: [], presets: [], syntax: 'comma', caseSensitive: false, wholeWords: false, particles: true },
     captureTools: { replace: false, preset: '', redact: false, names: [], mask: 'auto', maskStyles: {}, format:'image', duration:6, maxParagraphs:4, resolution:1080, backgroundTint:60, includeWeather:true, includeBackground:true, showName:true, showAvatar:true, showAssets:true, showTimestamp:true, showModel:true, showMessageId:true, showTokens:true, showGenerationTime:true },
@@ -213,6 +216,8 @@ function tidyRoles(s) {
     if (isObj(s.chat)) {
         s.chat.userSize = num(s.chat.userSize, [60, 140]) ?? 100;
         s.chat.userInk = num(s.chat.userInk, [30, 100]) ?? 100;
+        s.chat.bgAlpha = num(s.chat.bgAlpha, [0, 100]) ?? 82; // 배경 이미지 위 채팅 바탕 농도 (4.1.3) — 100 = 불투명
+        s.chat.mesPins = tidyPins(s.chat.mesPins); // ··· 메뉴에서 꺼내 늘 보이게 할 버튼 (4.1.3, mes-pins.js)
     }
 }
 const isObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -333,6 +338,9 @@ function tidyOutline(s) {
     if (!isObj(s.deus.ink.shadow)) s.deus.ink.shadow = structuredClone(DEFAULTS.deus.ink.shadow);
     tidyInkPart(s.deus.ink.outline, DEFAULTS.deus.ink.outline, OUTLINE_LIMIT);
     tidyInkPart(s.deus.ink.shadow, DEFAULTS.deus.ink.shadow, INK_SHADOW_LIMIT);
+    if (!isObj(s.deus.fx)) s.deus.fx = structuredClone(DEFAULTS.deus.fx);
+    for (const key of ['on', 'glow', 'flow', 'force']) s.deus.fx[key] = flag(s.deus.fx[key], DEFAULTS.deus.fx[key]);
+    if (!['soft', 'normal', 'big'].includes(s.deus.fx.motion)) s.deus.fx.motion = DEFAULTS.deus.fx.motion;
 }
 
 /** 글자 그림자: 켬/끔 · 대상은 불리언, 색은 #rrggbb, 숫자는 범위 안. 2.3.0 의 dialogue.shadow(대사만) 는 여기로 옮김 */

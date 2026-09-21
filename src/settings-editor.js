@@ -10,6 +10,12 @@ export function openEditorCatalog(root, open, search = false) {
 }
 
 export function bindEditor(root) {
+    root.addEventListener('change', () => setTimeout(() => summarizeEditorGroups(root), 0));
+    // 긴 안내 글은 두 줄까지만 보이고, 누르면 펴진다 (4.1.2)
+    root.addEventListener('click', (event) => {
+        const note = event.target.closest?.('.bl-editor-group-body .salty-note');
+        if (note && !event.target.closest('a,button,input,select,label')) note.classList.toggle('open');
+    });
     root.addEventListener('keydown', event => {
         const catalog = root.querySelector('.bl-editor-catalog');
         if (!catalog || catalog.hidden) return;
@@ -33,6 +39,24 @@ export function selectEditorGroup(root, group, toggle = false) {
         item.querySelector('.bl-editor-group-body').hidden = !expanded;
     }
     root.dispatchEvent(new Event('bl:preview-resize'));
+}
+
+// 접힌 묶음 제목 옆의 '지금 값' (4.1.2): 펼치지 않고도 훑어볼 수 있게. 고른 칩 · 켠 스위치만 읽는다 (설정 값은 건드리지 않음)
+function groupSummary(body) {
+    const pins = body.querySelector('.bl-mespins');
+    if (pins) { const n = pins.querySelectorAll('button.on').length; return n ? `${n}개` : '없음'; }
+    const parts = [];
+    const seg = body.querySelector('.salty-seg:not(.salty-mini) > button.on');
+    if (seg) parts.push(seg.textContent.trim());
+    const switches = [...body.querySelectorAll('.salty-switch input')];
+    if (switches.length) { const on = switches.filter(i => i.checked).length; parts.push(on ? (switches.length === 1 ? '켬' : `${on}개 켬`) : '끔'); }
+    return parts.join(' · ').slice(0, 24);
+}
+export function summarizeEditorGroups(root) {
+    for (const group of root.querySelectorAll('.bl-editor-group')) {
+        const out = group.querySelector('.bl-editor-group-summary');
+        if (out) out.textContent = groupSummary(group.querySelector('.bl-editor-group-body'));
+    }
 }
 
 export function revealEditorTarget(root, target) {
@@ -60,7 +84,8 @@ export function arrangeEditor(root, route, title) {
     const elements = [...section.children], groups = []; let current;
     const makeGroup = (label, anchor) => {
         const group = document.createElement('div'); group.className = 'bl-editor-group'; group.dataset.group = label;
-        const button = document.createElement('button'); button.type = 'button'; button.className = 'bl-editor-group-toggle'; button.dataset.act = 'editor-group'; button.textContent = label;
+        const button = document.createElement('button'); button.type = 'button'; button.className = 'bl-editor-group-toggle'; button.dataset.act = 'editor-group';
+        const name = document.createElement('span'); name.textContent = label; const summary = document.createElement('small'); summary.className = 'bl-editor-group-summary'; button.append(name, summary);
         if (anchor) button.dataset.searchAnchor = anchor;
         const body = document.createElement('div'); body.className = 'bl-editor-group-body';
         group.append(button, body); groups.push(group); section.append(group); current = body;
@@ -76,8 +101,8 @@ export function arrangeEditor(root, route, title) {
             current.append(element);
         }
     }
-    const heading = document.createElement('h3'); heading.className = 'bl-editor-heading'; heading.textContent = title; section.prepend(heading);
     if (groups.length === 1) { groups[0].classList.add('bl-editor-single'); groups[0].querySelector('.bl-editor-group-toggle').hidden = true; }
+    summarizeEditorGroups(root);
     const remembered = root._editorGroups.get(route);
     const selected = remembered === null ? null : groups.find(g => g.dataset.group === remembered) || groups[0];
     for (const group of groups) {

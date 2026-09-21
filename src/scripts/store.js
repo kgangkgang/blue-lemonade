@@ -35,6 +35,9 @@ export function legacyConflicts(id){
   const definition=SCRIPT_CATALOG.find(item=>item.id===id);if(!definition)return [];
   const settings=SillyTavern.getContext().extensionSettings?.tavern_helper;
   if(settings?.enabled===false||settings?.script?.enabled?.global===false)return [];
-  const trees=window.TavernHelper?.getScriptTrees?.({type:'global'})??settings?.script?.scripts;
+  // 헬퍼가 아직 준비되기 전에 물으면 던질 수 있다(느린 폰에서 테마가 먼저 뜰 때) — 그때는 저장된 설정으로 본다.
+  let trees;
+  try{trees=window.TavernHelper?.getScriptTrees?.({type:'global'});}catch(error){console.warn('[Blue Lemonade] 헬퍼 스크립트 목록을 아직 읽지 못했어요',error);}
+  trees??=settings?.script?.scripts;
   return flatten(trees).filter(script=>definition.match.every(token=>String(script.content||'').includes(token)));
 }

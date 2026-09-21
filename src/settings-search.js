@@ -21,7 +21,7 @@ const rows = [
  ['text','shadow','글자 그림자·외곽선','글자 글씨 본문 그림자 외곽선 테두리 가독성 색 진하기 투명도 각도 거리 번짐 퍼짐 두께 대상 대사 속마음 강조'],
  ['chat','message','내 메시지 모양','말풍선 카드 테이블 글자만 사용자 내 메시지 채팅 모양 이름 줄 시간 숨김 작은 아바타 숨기기 글자 크기 진하기'],
  ['chat','screen','퀵 리플라이 · QR','qr 큐알 퀵리플라이 퀵 리플라이 quick reply 빠른답장 빠른 답장 단축답장 편집 검색 돋보기 숨기기 끄기 켜기 토글 자리 위치 입력창 위 아래 가로 세로 스크롤 줄','퀵 리플라이'],
- ['chat','screen','채팅 화면·아이콘','아이콘 선 기본 배경 이미지 비치기 고르기 목록 팝업 색 고르기 팝업 모델 프리셋 선택창'],
+ ['chat','screen','채팅 화면·아이콘','아이콘 선 기본 배경 이미지 비치기 채팅 바탕 농도 불투명 투명 메시지 버튼 고정 꺼내기 번역 버튼 점 세 개 메뉴 고르기 목록 팝업 색 고르기 팝업 모델 프리셋 선택창'],
  ['chat','screen','새로고침 화면','새로고침 시작 로딩 레몬 로고 뇌 splash', '새로고침 화면'],
  ['image','layout','미리보기 확대·축소·이동','미리보기 예시 확대 축소 돋보기 배율 원래 크기 초기 크기 이동 드래그 핀치 손가락 줌 높이 가변 크기 손잡이 한줄 넓게 늘리기 줄이기 기본 높이'],
  ['chat','screen','가벼운 페이드 인','스트리밍 새 글자 페이드인 스며들기 빨라지기 속도 버벅임 애니메이션', '', 'chat.streamFade'],
@@ -37,6 +37,7 @@ const rows = [
  ['image','fade','에셋 가장자리 흐림','에셋 이미지 사진 흐림 번짐 가장자리 페이드 위아래 옆 투명 흰 배경 지우기'],
  ['prompt','deus','데우스 프롬프트 호환','데우스 dem deus 엑스 마키나 프롬프트 호환 켜기 끄기 트래커 장면 계획 상태 카드 접기 폰 색 통일 이모티콘'],
  ['prompt','deus','데우스 대사 색·가독성','데우스 프롬프트 대사 색 형광펜 가독성 향상 그림자 외곽선 글자 배경 묻힘 두께 진하기 거리 번짐','대사 색상 가독성 향상'],
+ ['prompt','deus','데우스 감정 대사 효과','데우스 expressive dialogue 감정 대사 효과 애니메이션 움직임 외침 떨림 빛 색 흐름 무지개 애니메이션 줄이기 절전','감정 대사 효과'],
  ['prompt','deus','트래커 날씨 연결','데우스 트래커 날씨 비 눈 채팅 뒤 효과 자동 연결','트래커'],
 ];
 for (const [sub, name, alias] of [['profile','캐릭터','캐릭터 봇 상대'],['user-profile','내','내 나 유저 사용자 페르소나 깡캐']]) {
@@ -50,19 +51,76 @@ for (const [sub, name, alias] of [['profile','캐릭터','캐릭터 봇 상대']
  rows.push(['chat',namesub,`${name} 이름 글꼴·꾸미기`,`${alias} 이름 폰트 글꼴 언어 크기 굵기 자간 색 정렬 왼쪽 중앙 가운데 오른쪽 기울임 밑줄 외곽선 그림자`, '이름 글자'],
  ['chat',namesub,`${name} 시간·버튼 배치`,`${alias} 이름 시간 날짜 버튼 점세개 메뉴 편집 연필 모델 아이콘 통계 토큰 번호 한줄 두줄 옆 아래 간격 진하기 정렬`, '']);
 }
-rows.push(['extensions','words','단어 치환','단어 바꾸기 조사 규칙 되돌리기'],['extensions','capture','채팅 캡처','이미지 사진 저장 메시지 다중 선택'],['extensions','order','확장 순서','패널 고정 순서 정렬'],['extensions','perf','성능 보조','끊김 감시 요청 로그 로딩 저장 정리'],['chat','screen','날씨 움직임','레몬 꽃잎 유성 낙하 회전 흔들림 커스텀'],['theme','palette','내 에이드 보관함','커스텀 여러개 저장 불러오기']);
+rows.push(['extensions','words','단어 치환','단어 바꾸기 조사 규칙 되돌리기'],['extensions','capture','채팅 캡처','이미지 사진 저장 메시지 다중 선택'],['extensions','order','확장 순서','패널 고정 순서 정렬'],['extensions','perf','성능 보조','끊김 감시 요청 로그 로딩 저장 정리'],['chat','screen','날씨 움직임','레몬 꽃잎 유성 낙하 회전 흔들림 커스텀'],['theme','palette','내 에이드 보관함','커스텀 여러개 저장 불러오기'],
+ ['extensions','models','모델 등록','모델 이름 직접 추가 등록 공급자 목록에 없는 새 모델 커스텀 모델'],
+ ['extensions','modelorder','모델 순서','등록한 모델 정렬 순서 드래그 위로 아래로'],
+ ['extensions','modelswitch','모델 전환','번역 장기 기억 다시 쓰기 모델 한번에 바꾸기 중계 공식 API 조합 저장 주소 잠금 공급자 전환'],
+ ['extensions','rewrite','다시 쓰기','금지 묘사 금지어 밴 단어 문장 고치기 다시 쓰기 안경 수염 외모 묘사 씬 플랜 리롤 장면 계획 예외 캐릭터 AI 프롬프트 규칙 사용법'],
+ ['extensions','scripts','스크립트','내장 스크립트 실리태번 한글화 헬퍼 한글화 데우스 샤진 번역 프롬프트 이름 정규식 이름 삼각형 접기 코드 편집'],
+ ['theme','update','테마 업데이트','업데이트 새 버전 확인 최신 버전 받기 공지사항 달라진 점']);
 const tabs={extensions:'확장',theme:'테마',text:'글자',chat:'채팅',image:'이미지',prompt:'프롬프트'};
-const subs={words:'단어 치환',capture:'채팅 캡처',order:'확장 순서',perf:'성능 보조',changes:'변경한 설정',palette:'색',colors:'색 고치기',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
+const subs={words:'단어 치환',capture:'채팅 캡처',order:'확장 순서',perf:'성능 보조',models:'모델 등록',modelorder:'모델 순서',modelswitch:'모델 전환',rewrite:'다시 쓰기',scripts:'스크립트',update:'업데이트',changes:'변경한 설정',palette:'색',colors:'색 고치기',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
 const normalize = value => String(value).normalize('NFKC').toLowerCase().replace(/퀵\s*리플라이|quick\s*repl(?:y|ies)|큐알|\bqr\b/g,'퀵리플라이').replace(/프사|아바타/g,'프로필').replace(/글씨|글자\s*간격/g,m=>m==='글씨'?'글자':'자간').replace(/확대\s*축소/g,'확대 축소').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+// 한글을 초성 · 자모로 풀어 둔다: 'ㅂㄱ' → 배경, '배겨'(치다 만 글자) → 배경, 한 글자 틀린 말도 찾는다.
+const CHO='ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ', JUNG='ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ', JONG=['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const syllable=c=>{const k=c.charCodeAt(0)-0xAC00;return k>=0&&k<11172?k:-1;};
+export const chosung=text=>[...String(text)].map(c=>{const k=syllable(c);return k<0?c:CHO[Math.floor(k/588)];}).join('');
+export const jamo=text=>[...String(text)].map(c=>{const k=syllable(c);return k<0?c:CHO[Math.floor(k/588)]+JUNG[Math.floor(k%588/28)]+JONG[k%28];}).join('');
+// 말하듯 쓴 문장 → 설정에서 쓰는 말. 왼쪽이 보이면 오른쪽 낱말을 검색어에 보탠다.
+const INTENTS=[
+ [/작아|작게|작은|크게|큰|키우|키워|줄이|줄여|커졌|작아졌/,'크기'],
+ [/안\s*보|잘\s*안|가독성|읽기\s*(?:힘|어려|불편)|눈\s*아프|흐릿|묻혀/,'외곽선 그림자 가독성 농도'],
+ [/어둡|어두운|밤|눈부|다크/,'나이트 다크모드 밝기'],
+ [/밝게|밝은|환하|라이트|하얗/,'화이트 라이트모드 밝기'],
+ [/느려|느림|렉|버벅|끊겨|끊김|무거|멈춰|멈춤/,'성능 보조 끊김 감시 로딩'],
+ [/비쳐|비치|비침|투명|불투명|뒤에\s*배경|배경\s*사진|배경\s*그림/,'배경 이미지 비치기 농도 투명'],
+ [/폰트|서체|글씨체|글자체/,'글꼴'],
+ [/줄\s*사이|행간|줄\s*간격|빽빽|답답/,'줄간격 문단 간격 여백'],
+ [/동그랗|동그란|둥글|네모|각지|모서리/,'모양 둥글기 모서리'],
+ [/저장해\s*두|저장해\s*놓|나중에\s*다시|옮기|다른\s*기기|폰으로|컴퓨터로/,'스타일 저장 백업 내보내기 가져오기'],
+ [/원래대로|처음으로|되돌|초기화|리셋|망했|잘못\s*바꿨|실수/,'초기화 되돌리기 복원 변경한 설정'],
+ [/눈이?\s*(?:내리|내려|와|오)|비가?\s*(?:내리|내려|와|오)|날씨|꽃잎|유성|별똥/,'날씨'],
+ [/캡처|캡쳐|스샷|스크린샷|사진으로|이미지로\s*저장|짤/,'채팅 캡처'],
+ [/금지|밴|보기\s*싫|나오지\s*않게|안\s*나오게|묘사/,'다시 쓰기 금지 묘사'],
+ [/번역\s*안|영어로\s*나와|영어가|중국어|한글로|한국어로/,'스크립트 한글화'],
+ [/모델\s*바꾸|모델\s*변경|중계|api\s*바꾸/,'모델 전환'],
+ [/말풍선|메신저|카톡|버블/,'메시지 말풍선 모양'],
+ [/색깔|색상|컬러|색\s*바꾸|무슨\s*색/,'색 테마'],
+ [/별표|즐겨\s*찾|자주\s*쓰는/,'즐겨찾기'],
+];
+const STOP=new Set(['설정','편집','변경','바꾸기','바꾸고','바꿀','싶어','싶어요','싶은데','싶다','어떻게','어디서','어디','해줘','해주세요','하는','하려면','하고','있어','있나','있나요','없어','없나','너무','좀','조금','약간','그냥','이거','저거','그거','뭐','왜','제발','하면','되나','되나요','돼','할','수','것','거','법','방법','알려줘','찾아줘','하게','해','줘']);
+const ENDING=/(?:으로|에서|에게|한테|이랑|하고|하게|해서|인데|은데|는데|이요|예요|에요|어요|아요|나요|가요|고요|이야|이에요|들|을|를|은|는|이|가|도|만|의|에|로|와|과|랑|요)$/u;
+const stem=word=>{let w=word;for(let i=0;i<2;i++){const next=w.replace(ENDING,'');if(next===w||next.length<1)break;w=next;}return w;};
+// 한 글자 틀림까지 (자모 기준, 앞에서부터 같은 길이만 본다)
+function near(a,b){
+ if(Math.abs(a.length-b.length)>1)return false;
+ let i=0,j=0,miss=0;
+ while(i<a.length&&j<b.length){
+  if(a[i]===b[j]){i++;j++;continue;}
+  if(++miss>1)return false;
+  if(a.length>b.length)i++;else if(a.length<b.length)j++;else{i++;j++;}
+ }
+ return miss+(a.length-i)+(b.length-j)<=1;
+}
 export const SEARCH_ENTRIES = rows.map(([tab,sub,title,aliases,anchor='',path=''],id)=>{
  const words=[...new Set(normalize(title+' '+aliases).split(' '))];
- return {id,tab,sub,title,anchor,path,breadcrumb:tabs[tab]+' › '+subs[sub],words,compact:words.join('')};
+ const titleWords=normalize(title).split(' ');
+ return {id,tab,sub,title,anchor,path,breadcrumb:tabs[tab]+' › '+subs[sub],words,compact:words.join(''),
+  titleCho:chosung(titleWords.join('')),cho:words.map(chosung),jamoWords:words.map(jamo),titleJamo:titleWords.map(jamo)};
 });
 export function searchSettings(query) {
- const q=normalize(String(query).slice(0,160)), compact=q.replaceAll(' ','');
- if(!compact)return [];
+ // NFKC 가 ㅂ(호환 자모)을 첫소리 자모(U+1100~)로 바꿔 놓으므로 되돌린다
+ const raw=normalize(String(query).slice(0,160)).replace(/[ᄀ-ᄒ]/g,c=>CHO[c.charCodeAt(0)-0x1100]);
+ if(!raw.replaceAll(' ',''))return [];
+ // 말하듯 쓴 문장이면 뜻에 맞는 낱말을 보탠다
+ const extra=INTENTS.filter(([re])=>re.test(raw)).map(([,add])=>add).join(' ');
+ const q=extra?normalize(raw+' '+extra):raw, compact=q.replaceAll(' ','');
  const tokens=q.split(' '), tokenSet=new Set(tokens);
- const words=tokens.map(w=>w.replace(/(?:으로|에서|하고|하게|좀|을|를|은|는)$/u,'' )).filter(w=>w.length>1&&!['설정','편집','변경','바꾸기','싶어','싶어요','어떻게','어디서','해줘'].includes(w));
+ const stems=[...new Set(tokens.map(stem))];
+ for(const w of stems)if(w.length===1)tokenSet.add(w);
+ const words=stems.filter(w=>w.length>1&&!STOP.has(w));
+ const initials=raw.split(' ').filter(w=>w.length>1&&/^[ㄱ-ㅎ]+$/.test(w));
+ const loose=raw.split(' ').map(stem).filter(w=>w.length>1&&!STOP.has(w)&&!/^[ㄱ-ㅎ]+$/.test(w)).map(w=>[w,jamo(w)]).filter(([,j])=>j.length>=3);
  const mine=/(?:^|\s)(?:내(?!보내)|나의|유저|사용자|페르소나|깡캐)/.test(q), bot=/(?:캐릭터|봇|상대)/.test(q);
  const frame=/액자/.test(q), transfer=/내보내|가져오|백업|복원|공유/.test(q);
  return SEARCH_ENTRIES.map(entry=>{
@@ -70,6 +128,19 @@ export function searchSettings(query) {
   for(const w of entry.words){if((w.length>1&&compact.includes(w))||(w.length===1&&tokenSet.has(w))){score+=Math.min(w.length,6);matches++;}}
   for(const w of words)if(entry.compact.includes(w)){score+=10;matches++;}
   if(entry.compact.includes(compact))score+=12;
+  // 초성: ㅂㄱ → 배경
+  for(const w of initials){
+   if(entry.titleCho.includes(w)){score+=entry.titleCho.startsWith(w)?34:26;matches++;}
+   else if(entry.cho.some(c=>c.startsWith(w))){score+=16;matches++;}
+   else if(w.length>2&&entry.cho.some(c=>c.includes(w))){score+=8;matches++;}
+  }
+  // 치다 만 글자 · 한 글자 틀린 말: 자모로 풀어 낱말 앞머리와 견준다
+  for(const [w,j] of loose){
+   if(entry.compact.includes(w))continue;
+   if(entry.titleJamo.some(t=>t.startsWith(j))){score+=14;matches++;}
+   else if(entry.jamoWords.some(t=>t.startsWith(j))){score+=9;matches++;}
+   else if(j.length>=5&&entry.jamoWords.some(t=>near(j,t.slice(0,j.length))||near(j,t))){score+=6;matches++;}
+  }
   if(!matches)return {entry,score:0};
   if(mine)score+=entry.sub.startsWith('user-')?30:entry.tab==='chat'&&['profile','name'].includes(entry.sub)?-25:0;
   if(bot&&!mine)score+=['profile','name'].includes(entry.sub)?20:entry.sub.startsWith('user-')?-20:0;
@@ -77,16 +148,16 @@ export function searchSettings(query) {
   if(frame)score+=entry.title.includes('액자')?30:-10;
   if(transfer&&!frame)score+=['styles','backup'].includes(entry.sub)?35:-10;
   return {entry,score};
- }).filter(r=>r.score>0).sort((a,b)=>b.score-a.score||a.entry.id-b.entry.id).slice(0,8).map(r=>r.entry);
+ }).filter(r=>r.score>0).sort((a,b)=>b.score-a.score||a.entry.id-b.entry.id).slice(0,10).map(r=>r.entry);
 }
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-export const searchMarkup = query => `<div class="bl-settings-search"><div class="bl-search-field"><input type="search" data-settings-search maxlength="160" aria-label="테마 설정 검색" autocomplete="off" placeholder="설정 찾기 · 예: QR 편집" value="${esc(query)}"><button type="button" data-settings-clear aria-label="설정 검색 지우기" ${query?'':'hidden'}>×</button></div><div class="bl-search-results" aria-label="설정 검색 결과" hidden></div></div>`;
+export const searchMarkup = query => `<div class="bl-settings-search"><div class="bl-search-field"><input type="search" data-settings-search maxlength="160" aria-label="테마 설정 검색" autocomplete="off" placeholder="설정 찾기 · 예: QR 편집 · ㅂㄱ · 글씨가 작아" value="${esc(query)}"><button type="button" data-settings-clear aria-label="설정 검색 지우기" ${query?'':'hidden'}>×</button></div><div class="bl-search-results" aria-label="설정 검색 결과" hidden></div></div>`;
 export function paintSettingsSearch(root) {
  const query=root._settingsQuery||'', list=root.querySelector('.bl-search-results');if(!list)return;
  root.querySelector('[data-settings-clear]').hidden=!query;
  list.hidden=!query.trim();if(list.hidden){list.replaceChildren();return;}
  const items=searchSettings(query);
- list.innerHTML=`<p role="status">${items.length?'관련 설정 '+items.length+'개':'찾는 설정이 없어요. 기능 이름이나 다른 표현으로 검색해 보세요.'}</p>`+items.map(e=>`<div class="bl-search-result-row"><button type="button" data-settings-result="${e.id}"><strong>${esc(e.title)}</strong><small>${esc(e.breadcrumb)}</small></button>${favoriteButton(e)}</div>`).join('');
+ list.innerHTML=`<p role="status">${items.length?'관련 설정 '+items.length+'개':'찾는 설정이 없어요. 다른 말이나 초성(ㅂㄱ)으로도 찾아보세요.'}</p>`+items.map(e=>`<div class="bl-search-result-row"><button type="button" data-settings-result="${e.id}"><strong>${esc(e.title)}</strong><small>${esc(e.breadcrumb)}</small></button>${favoriteButton(e)}</div>`).join('');
 }
 export function bindSettingsSearch(root,navigate) {
  const update=input=>{root._settingsQuery=input.value;paintSettingsSearch(root);};

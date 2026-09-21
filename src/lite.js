@@ -8,6 +8,7 @@ import { positionMessageMenu } from './menu-position.js';
 const PREVIEW = /#salty-nochat|\.salty-preview|\.salty-sample/;
 let deferred = [];     // 제자리에서 꺼 둔 CSSMediaRule 들 (parkRule)
 let restored = false;
+let deferredRules = 0;   // 꺼 둔 규칙 수 (덩어리 수가 아니라)
 
 function themeSheet() {
     for (const sheet of document.styleSheets) {
@@ -46,6 +47,7 @@ function expand(selector) {
     return args.flatMap(a => expand(head + a + tail));
 }
 function previewOnly(selectorText) {
+    if (!PREVIEW.test(selectorText)) return false; // 4.1.2: 규칙 대부분(3천여 개)은 미리보기 이름이 아예 없다 — 쪼개 보기 전에 넘긴다
     return splitTop(selectorText).flatMap(expand).every(p => PREVIEW.test(p));
 }
 
@@ -55,10 +57,12 @@ function previewOnly(selectorText) {
  * 나중이 되어 덮어쓰기가 뒤집혔다 (월드인포 줄마다 덮어쓰기 칸이 2열 · 세로 대신 옛 한 줄 규칙으로 깨짐).
  * 제자리에 두면 순서가 그대로다. 안 맞는 @media 안의 규칙은 브라우저가 규칙 목록에 넣지 않으니 :has() 비용도 똑같이 빠진다.
  */
-function parkRule(owner, index) {
-    const text = owner.cssRules[index].cssText;
-    owner.insertRule(`@media not all {\n${text}\n}`, index); // 먼저 넣고 원래 것을 지운다 — 넣기가 실패해도 규칙이 사라지지 않게
-    owner.deleteRule(index + 1);
+// 4.1.2: 나란히 붙은 규칙들은 한 덩어리로 (count 개) — 미리보기 사본은 수백 개가 줄지어 있어, 하나씩 넣고 지우면 그때마다 시트가 바뀐 것으로 쳐졌다
+function parkRule(owner, index, count = 1) {
+    let text = '';
+    for (let i = index; i < index + count; i++) text += `${owner.cssRules[i].cssText}\n`;
+    owner.insertRule(`@media not all {\n${text}}`, index); // 먼저 넣고 원래 것을 지운다 — 넣기가 실패해도 규칙이 사라지지 않게
+    for (let i = 0; i < count; i++) owner.deleteRule(index + 1);
     return owner.cssRules[index];
 }
 
@@ -72,7 +76,11 @@ function pull(list, owner, end = list.length) {
             continue;
         }
         if (rule.type !== CSSRule.STYLE_RULE || !previewOnly(rule.selectorText)) continue;
-        deferred.push(parkRule(owner, i));
+        let first = i;
+        while (first > 0 && list[first - 1].type === CSSRule.STYLE_RULE && previewOnly(list[first - 1].selectorText)) first--;
+        deferred.push(parkRule(owner, first, i - first + 1));
+        deferredRules += i - first + 1;
+        i = first;
     }
 }
 
@@ -102,7 +110,7 @@ export function restorePreviewRules() {
 }
 
 export function deferredPreviewRuleCount() {
-    return deferred.length;
+    return restored ? 0 : deferredRules;
 }
 
 // ── 서랍 · 팝업이 열렸을 때만 켜는 규칙: style.css 맨 끝의 게으른 칸 ──────────────────────────────
@@ -124,6 +132,7 @@ let panelStyle = null;  // 옮겨 둔 게으른 칸 규칙이 든 <style id="sal
 let panelOn = false;
 let panelCount = 0;
 let panelPending = false;
+let offTimer = 0;
 
 /** 시트 맨 위 목록에서 게으른 칸 시작 표시 규칙의 자리 (없으면 -1) */
 function lazyStart(sheet) {
@@ -133,7 +142,16 @@ function lazyStart(sheet) {
     }
     return -1;
 }
+// 4.1.2: 열려 있는 동안(시작할 때의 로딩 팝업 포함)에는 채팅 밖 변화마다 불린다 — 문서 전체(1만 6천 요소)를 선택자로 훑는 대신
+// 살아 있는 .openDrawer 목록과 body 바로 아래의 dialog(실리태번 팝업은 늘 여기 붙는다)부터 본다. 못 찾으면 예전처럼 전체를 본다.
+const openDrawers = document.getElementsByClassName('openDrawer');
+export function quickOpen(skipClass = '') {
+    if (openDrawers.length) return true;
+    for (const el of document.body.children) if (el.tagName === 'DIALOG' && el.open && !(skipClass && el.classList.contains(skipClass))) return true;
+    return false;
+}
 function uiOpen() {
+    if (quickOpen()) return true;
     if (document.querySelector('.openDrawer, dialog[open]')) return true;
     for (const el of document.querySelectorAll(LEGACY_POPUPS)) if (el.getClientRects().length) return true;
     return false;
@@ -200,6 +218,9 @@ function watchPanelOpen() {
             const t = m.target;
             if (t.nodeType !== 1 || t.closest?.('#chat, #form_sheld')) continue;
             if (!panelOn && !mayOpen(m)) continue;
+            // 4.1.2: 켜는 쪽은 그리기 전에(바로), 끄는 쪽은 0.1초에 한 번 — 열려 있는 동안(시작할 때의 로딩 팝업 포함)은 채팅 밖
+            // 변화마다 문서를 훑었다 (폰 리그 시작 한 번에 0.2초). 늦게 꺼져도 서랍이 닫힌 뒤라 보이는 것이 없다.
+            if (panelOn) { if (!offTimer) offTimer = setTimeout(() => { offTimer = 0; syncPanelCss(); }, 100); return; }
             syncPanelCss();
             return;
         }

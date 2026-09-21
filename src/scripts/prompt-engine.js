@@ -31,7 +31,18 @@ export function createPromptEngine(doc = document) {
                 if (partial) return partial;
             }
         }
-        return null;
+        return kind === 'prompts' ? variant(name) : null;
+    }
+    // A user's copy named "Original (memo)" shows the original's translation with the same memo.
+    function variant(name) {
+        const match = /^(.*\S)\s*\(([^()]+)\)\s*([^\s()]*)\s*$/.exec(String(name || ''));
+        if (!match) return null;
+        const base = lookup('prompts', null, `${match[1]} ${match[3]}`);
+        if (!base) return null;
+        const title = match[3] && base.title.endsWith(match[3])
+            ? `${base.title.slice(0, -match[3].length).trimEnd()} (${match[2]}) ${match[3]}`
+            : `${base.title} (${match[2]})`;
+        return {...base, title};
     }
     function paint(el, kind, id) {
         let state = changed.get(el);

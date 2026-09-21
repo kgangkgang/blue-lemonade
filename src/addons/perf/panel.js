@@ -149,6 +149,8 @@ export function buildDrawer() {
         saveSettings();
     });
     $('.rl-open').addEventListener('click', () => openDialog());
+    // 긴 안내 글은 두 줄까지만 — 누르면 펴진다 (테마 4.1.2)
+    drawer.addEventListener('click', (event) => { const hint = event.target.closest?.('.rl-hint'); if (hint && !event.target.closest('a,button,input')) hint.classList.toggle('is-open'); });
     $('.rl-price-save').addEventListener('click', onPriceAdd);
     for (const selector of ['.rl-price-model', '.rl-price-in', '.rl-price-out']) {
         $(selector).addEventListener('keydown', (event) => {
@@ -579,10 +581,10 @@ function renderBudget(state) {
                     <tbody>${sorted.map(group => `
                         <tr>
                             <td class="rl-td-label">${esc(sortBy === 'label' ? group.label.replace(/-/g, '.') : group.label)}</td>
-                            <td>${number(group.requests)}</td>
-                            <td>${number(group.promptTokens)}</td>
-                            <td>${number(group.completionTokens)}</td>
-                            <td>${money(budget.quotaToMoney(group.quota))}</td>
+                            <td data-label="요청">${number(group.requests)}</td>
+                            <td data-label="입력">${number(group.promptTokens)}</td>
+                            <td data-label="출력">${number(group.completionTokens)}</td>
+                            <td data-label="과금">${money(budget.quotaToMoney(group.quota))}</td>
                         </tr>`).join('')}
                     </tbody>
                 </table>
@@ -699,7 +701,7 @@ function renderList(state) {
             <button type="button" class="rl-item ${status.className}" data-id="${esc(entry.id)}">
                 <span class="rl-item-time">${timeOf(entry.at)}</span>
                 <span class="rl-item-main">
-                    <b>${esc(titleOf(entry))}<span class="rl-item-model">${esc(entry.model || '?')}</span></b>
+                    <b><span class="rl-item-title">${esc(titleOf(entry))}</span><span class="rl-item-model">${esc(entry.model || '?')}</span></b>
                     <small>${tokensLabel(entry)} · ${seconds(entry.durationMs)}${cost}</small>
                     ${error}
                 </span>
@@ -812,7 +814,7 @@ function renderDetail(entry) {
         <div class="rl-detail-head">
             <button type="button" class="rl-icon-btn rl-back" data-act="back" aria-label="목록으로"><i class="fa-solid fa-arrow-left"></i></button>
             <div class="rl-detail-title">
-                <b>${esc(titleOf(entry))}<span class="rl-item-model">${esc(entry.model || '?')}</span></b>
+                <b><span class="rl-item-title">${esc(titleOf(entry))}</span><span class="rl-item-model">${esc(entry.model || '?')}</span></b>
                 <small>${dateTimeOf(entry.at)}</small>
             </div>
             <div class="rl-detail-actions">
@@ -878,10 +880,10 @@ function renderTable(title, groups, { sortBy = 'promptTokens', desc = true } = {
                 <tbody>${sorted.map(group => `
                     <tr>
                         <td class="rl-td-label">${esc(group.label)}${group.errors ? `<small class="rl-td-err">오류 ${group.errors}</small>` : ''}</td>
-                        <td>${number(group.requests)}</td>
-                        <td>${approxMark(group)}${number(group.promptTokens)}</td>
-                        <td>${number(group.completionTokens)}${group.reasoningTokens ? `<small class="rl-dim">생각 ${number(group.reasoningTokens)} 포함</small>` : ''}</td>
-                        <td>${number(group.cachedTokens)}</td><td>${costCell(group)}${group.unknownUsage?`<small class="rl-dim">사용량 미확인 ${number(group.unknownUsage)}건</small>`:''}</td>
+                        <td data-label="요청">${number(group.requests)}</td>
+                        <td data-label="입력">${approxMark(group)}${number(group.promptTokens)}</td>
+                        <td data-label="출력">${number(group.completionTokens)}${group.reasoningTokens ? `<small class="rl-dim">생각 ${number(group.reasoningTokens)} 포함</small>` : ''}</td>
+                        <td data-label="캐시 입력">${number(group.cachedTokens)}</td><td data-label="예상 비용">${costCell(group)}${group.unknownUsage?`<small class="rl-dim">사용량 미확인 ${number(group.unknownUsage)}건</small>`:''}</td>
                     </tr>`).join('')}
                 </tbody>
             </table>

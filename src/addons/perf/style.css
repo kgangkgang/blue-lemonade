@@ -825,3 +825,48 @@
     margin-right: 4px;
     color: var(--pa-hub-accent);
 }
+
+/* ===== 요청 로그 가독성 (테마 4.1.2) ===== */
+/* 제목은 한 줄 — 모델 이름에 밀려 한 글자씩 꺾이지 않게 */
+.rl-item-title { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rl-item-main b .rl-item-model, .rl-detail-title b .rl-item-model { flex: 1 1 0; min-width: 0; }
+.rl-stats > p.rl-dim { margin: 0; font-size: .8em; line-height: 1.5; }
+/* 자세히 보기: 크기가 제각각인 칩 대신 두 칸 격자 (긴 값은 한 줄 전체) */
+.rl-meta { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); }
+.rl-meta-chip { min-width: 0; }
+.rl-meta-chip b { overflow-wrap: anywhere; }
+
+@media (max-width: 600px) {
+    /* 필터 세 개를 한 줄에 */
+    .rl-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+    .rl-filters select { width: 100%; min-width: 0; padding-left: 8px; font-size: .85em; text-overflow: ellipsis; }
+    .rl-filter-count { grid-column: 1 / -1; margin: -2px 2px 0 auto; font-size: .78em; }
+    /* 목록 줄: 용도 · 모델 · 수치를 한 줄씩 */
+    .rl-item-main b, .rl-detail-title b { flex-direction: column; align-items: stretch; gap: 1px; }
+    .rl-item-main b .rl-item-model, .rl-detail-title b .rl-item-model { flex: none; }
+    .rl-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    /* 집계 타일 2 x 2 */
+    .rl-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .rl-tile { padding: 8px 10px; }
+    .rl-tile b { font-size: 1.1em; overflow-wrap: anywhere; }
+    /* 표 → 줄마다 작은 카드: 이름 한 줄 + 이름표 붙은 수치 (가로 스크롤 없음) */
+    .rl-table-wrap { overflow-x: visible; }
+    .rl-table, .rl-table tbody { display: block; width: 100%; }
+    .rl-table thead { display: none; }
+    .rl-table tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px 8px; padding: 8px 2px; border-bottom: 1px solid var(--rl-line); }
+    .rl-table td { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; padding: 0; border: 0; text-align: left; white-space: normal; overflow-wrap: anywhere; font-size: .88em; }
+    .rl-table td[data-label]::before { content: attr(data-label); color: var(--rl-faint); font-size: .78em; font-weight: 600; }
+    .rl-table td.rl-td-label { grid-column: 1 / -1; max-width: none; flex-direction: row; align-items: baseline; flex-wrap: wrap; font-weight: 600; font-size: .92em; }
+    .rl-table td small { margin-left: 0; }
+}
+.rl-settings .rl-hint:not(.rl-b-warning) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; cursor: pointer; }
+.rl-settings .rl-hint.is-open { display: block; -webkit-line-clamp: none; line-clamp: none; overflow: visible; }
+.rl-settings .rl-hint[hidden] { display: none; }
+
+/* ===== 로딩 시간 가독성 (테마 4.1.2): 폰에서 시각 타일을 두 칸으로 ===== */
+@media (max-width: 600px) {
+    .lt-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .lt-sum { min-width: 0; padding: 8px 10px; }
+    .lt-sum b { font-size: 1.05em; }
+    .lt-note { font-size: .78em; }
+}

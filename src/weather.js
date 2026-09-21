@@ -114,7 +114,27 @@ function createLayer(host, className) {
     let current = { mode: 'off', level: 2 };
     let spriteKey = '';
     let spriteGen = 0, destroyed = false, paused = document.hidden;
+    let inView = true;
     const cleanup = new Set();
+    // Hidden/folded previews must not keep a second animation running.
+    // Observe the host, not the canvas that can be replaced during fallback.
+    const syncPaused = () => {
+        const next=document.hidden || !inView;
+        if(next===paused)return;
+        paused=next;
+        renderer?.post({type:paused?'pause':'resume'});
+    };
+    document.addEventListener('visibilitychange',syncPaused);
+    cleanup.add(()=>document.removeEventListener('visibilitychange',syncPaused));
+    if(typeof IntersectionObserver==='function') {
+        const visible=new IntersectionObserver(entries=>{
+            if(!host.isConnected){api.destroy();return;}
+            inView=entries[entries.length-1]?.isIntersecting??true;
+            syncPaused();
+        });
+        visible.observe(host);
+        cleanup.add(()=>visible.disconnect());
+    }
     const size = () => {
         const rect = host.getBoundingClientRect();
         return { w: Math.round(rect.width), h: Math.round(rect.height) };
@@ -129,7 +149,7 @@ function createLayer(host, className) {
     });
     const observer = new ResizeObserver(() => renderer?.post({ type: 'resize', ...size(), dpr: ratio() }));
     observer.observe(host);
-    return {
+    const api = {
         get canvas(){return canvas;},
         ready,
         set(mode, level, params = {}, spriteData = '') {
@@ -163,6 +183,7 @@ function createLayer(host, className) {
             canvas.remove();
         },
     };
+    return api;
 }
 
 // ───────── 채팅 뒤 ─────────
@@ -189,12 +210,6 @@ function scheduleTracker() {
     trackerTimer = setTimeout(refresh, 400);
 }
 
-function onVisibility() {
-    if (!layer) return;
-    if (document.visibilityState === 'hidden') layer.pause();
-    else layer.resume();
-}
-
 function listen() {
     if (listening) return;
     listening = true;
@@ -202,7 +217,6 @@ function listen() {
     for (const name of ['CHARACTER_MESSAGE_RENDERED', 'MESSAGE_UPDATED', 'MESSAGE_SWIPED', 'MESSAGE_DELETED', 'CHAT_CHANGED', 'MESSAGE_EDITED']) {
         if (event_types[name]) eventSource.on(event_types[name], scheduleTracker);
     }
-    document.addEventListener('visibilitychange', onVisibility);
 }
 
 /** features.js 가 설정이 바뀔 때마다 부른다 */
@@ -233,7 +247,7 @@ export function previewWeather(stage, chat = {}) {
     const mode = ['rain', 'snow', 'lemon', 'petal', 'meteor', 'custom', 'tracker'].includes(chat.weather) ? chat.weather : 'off';
     const level = [1, 2, 3].includes(Number(chat.weatherLevel)) ? Number(chat.weatherLevel) : 2;
     let preview = stage._blWeather;
-    if (mode === 'off') {
+    if (mode === 'off' || !stage.isConnected) {
         preview?.destroy();
         stage._blWeather = null;
         stage.classList.remove('bl-weather-pv-on');
@@ -242,13 +256,11 @@ export function previewWeather(stage, chat = {}) {
     if (!preview) {
         preview = stage._blWeather = createLayer(stage, 'bl-weather-pv');
         // 창을 닫아 표본이 문서에서 떨어지면 워커를 끝낸다
-        const watch = setInterval(() => {
-            if (stage.isConnected) return;
-            clearInterval(watch);
-            preview.destroy();
-            if (stage._blWeather === preview) stage._blWeather = null;
-        }, 2000);
+        // A host removed while already outside the viewport need not produce
+        // another intersection event. Retain the fallback for external removal.
+        const watch=setInterval(()=>{if(!stage.isConnected)preview.destroy();},2000);
         preview.onDestroy(()=>clearInterval(watch));
+        preview.onDestroy(()=>{if(stage._blWeather===preview)stage._blWeather=null;});
     }
     stage.classList.add('bl-weather-pv-on');
     const shown = mode === 'tracker' ? (trackerMode() === 'off' ? 'rain' : trackerMode()) : mode;

@@ -89,12 +89,12 @@ export function markBroken(id, error) {
 
 let open = false;
 async function openHub(tab) {
-    if(inlineHost?.isConnected){showTab(TABS.some(t=>t.id===tab)?tab:savedTab());root.scrollIntoView({block:'nearest'});return;}
+    if(inlineHost?.isConnected&&inlineHost.offsetParent){showTab(TABS.some(t=>t.id===tab)?tab:savedTab());root.scrollIntoView({block:'nearest'});return;}
     if (open) return;
     open = true;
     showTab(TABS.some(t=>t.id===tab)?tab:savedTab());
     try {
-        await callGenericPopup(root, POPUP_TYPE.TEXT, '', { okButton: '닫기', wide: true, allowVerticalScrolling: true });
+        await callGenericPopup(root, POPUP_TYPE.TEXT, '', { okButton: '닫기', wide: true, allowVerticalScrolling: true, onOpen: popup => popup?.dlg?.classList.add('bl-roomy-dialog') });
     } finally {
         (inlineHost?.isConnected?inlineHost:holder).replaceChildren(root); // 닫힌 창과 같이 사라지지 않게 숨은 자리로
         open = false;

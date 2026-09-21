@@ -230,17 +230,14 @@ export function markerBackground(s, color) {
     const op = gradient?1:Math.min(1, ca);
     const n = v => Number(v.toFixed(2));
     if (s.dialogue.markerShape === 'pill') {
-        // Separate half-caps keep their radius when a quote wraps or grows wider.
-        // The three regions meet without overlapping translucent paint.
-        const ink = `rgba(${cr},${cg},${cb},${n(op)})`, cap = n(T / 200), y = T === 100 ? 50 : n(l / (100 - T) * 100);
-        if(gradient) {
-            const capImage=(right)=>{
-                const svg=`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 100' preserveAspectRatio='none'><defs>${gradientCap(gradient,right)}</defs><ellipse cx='${right?0:50}' cy='50' rx='50' ry='50' fill='url(#blend)'/></svg>`;
-                return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
-            };
-            return `${capImage(false)} left ${y}% / min(${cap}em, 50%) ${n(T)}% no-repeat, ${capImage(true)} right ${y}% / min(${cap}em, 50%) ${n(T)}% no-repeat, ${gradientCss(gradient)} center ${y}% / max(0px, calc(100% - ${n(cap * 2)}em)) ${n(T)}% no-repeat`;
-        }
-        return `radial-gradient(ellipse 100% 50% at 100% 50%, ${ink} 99%, transparent 100%) left ${y}% / min(${cap}em, 50%) ${n(T)}% no-repeat, radial-gradient(ellipse 100% 50% at 0% 50%, ${ink} 99%, transparent 100%) right ${y}% / min(${cap}em, 50%) ${n(T)}% no-repeat, linear-gradient(${ink}, ${ink}) center ${y}% / max(0px, calc(100% - ${n(cap * 2)}em)) ${n(T)}% no-repeat`;
+        // 4.1.2: 도형 하나로 그린다 — 예전엔 반원 · 띠 · 반원 세 겹이라 이음매가 실금으로 보이고 오른쪽 반원이 빠져 끝이 잘려 보였다 (사용자 제보).
+        // 줄이 바뀌면 조각마다(box-decoration-break: clone) 온전한 알약 하나.
+        // 양 끝 반원은 높이에 맞춰 같은 비율로(meet) 그려 반지름이 늘 띠 높이의 절반, 가운데는 반원에 붙은 긴 네모를 반쪽 칸이 잘라 낸다.
+        // 셋을 마스크 하나로 합친 뒤 색은 한 번만 칠하므로 반투명 색이 겹쳐 진해지는 자리도 없다.
+        const half = (right) => `<svg x='${right?49:0}%' width='51%' height='100%'><svg width='100%' height='100%' viewBox='0 0 50 100' preserveAspectRatio='${right?'xMaxYMid':'xMinYMid'} meet' overflow='visible'><circle cx='${right?0:50}' cy='50' r='50' fill='#fff'/><rect x='${right?-100000:50}' y='0' width='100000' height='100' fill='#fff'/></svg></svg>`;
+        const y = T === 100 ? 50 : n(l / (100 - T) * 100);
+        const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'><defs>${gradient?gradientSvg(gradient):''}<mask id='m' maskUnits='userSpaceOnUse' x='0' y='0' width='100%' height='100%'>${half(false)}${half(true)}</mask></defs><rect width='100%' height='100%' fill='${rgb}' fill-opacity='${n(op)}' mask='url(#m)'/></svg>`;
+        return `url("data:image/svg+xml,${encodeURIComponent(svg)}") center ${y}% / 100% ${n(T)}% no-repeat`;
     }
     if (s.dialogue.markerShape === 'rectangle') {
         const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><defs>${gradient?gradientSvg(gradient):''}</defs><rect x='0' y='${n(l)}' width='100' height='${n(T)}' fill='${rgb}' fill-opacity='${n(op)}'/></svg>`;
@@ -403,6 +400,10 @@ export function applyAll() {
     vars['--salty-danger-ink'] = mode === 'dark' ? pal.bg : '#FFFFFF';
     vars['--salty-danger-soft'] = alpha(pal.danger, mode === 'dark' ? 0.16 : 0.12);
     vars['--salty-on-pop'] = mode === 'dark' && onPop !== '#FFFFFF' ? pal.bg : onPop;
+    // 4.1.2: 켜짐 빛(전개지시 깃털 등)도 팔레트의 포인트색으로 — 예전엔 CSS 에 레몬색 rgba 가 박혀 있어 다른 에이드에서도 노랗게 빛났다
+    vars['--salty-pop-glow'] = mode === 'dark'
+        ? `0 0 0 1.5px ${alpha(pop, 0.5)}, 0 0 16px -2px ${alpha(pop, 0.5)}`
+        : `0 0 0 3px ${alpha(pop, 0.22)}, 0 3px 12px -3px ${alpha(pop, 0.55)}`;
     // 파생 톤은 JS 로 계산 (color-mix 를 모르는 예전 브라우저에서도 면·입력칸·포커스 링이 나오게)
     Object.assign(vars, {
         '--salty-shade': alpha(pal.text, 0.06),
@@ -424,7 +425,7 @@ export function applyAll() {
         '--salty-tint-bg-12': mix(pal.accent, pal.bg, 0.12),
         '--salty-accent-press': mix(pal.accent, pal.text, 0.86),
         '--salty-accent-dlg': mix(pal.accent, pal.dialogue, 0.6),
-        '--salty-bg-82': scaleAlpha(pal.bg, 0.82),
+        '--salty-bg-82': scaleAlpha(pal.bg, (s.chat.bgAlpha ?? 82) / 100), // 이름은 예전 고정값(82%)에서 — 4.1.3 부터 채팅 › 화면의 '바탕 농도'
         '--salty-text-90': scaleAlpha(pal.text, 0.9),
         '--salty-shadow-50': scaleAlpha(pal.shadow, 0.5),
         '--salty-surface-shade': mix(pal.text, pal.surface, 0.06),
@@ -603,6 +604,13 @@ export function applyAll() {
         if (deus && s.chat.demInk && s.chat.demInkMode === 'marker') want.add('salty-dem-ink-marker'); // 3.7.1 그 색을 형광펜 띠에 (글자는 테마 색)
         if (deus && s.deus?.ink?.outline?.on) want.add('salty-demink-outline'); // 3.7.1 데우스 대사 색상 가독성 향상 — 외곽선
         if (deus && s.deus?.ink?.shadow?.on) want.add('salty-demink-shadow');   //                                  — 그림자
+        const fx = deus && s.deus?.fx?.on ? s.deus.fx : null; // 4.1.2 감정 대사 효과 (css/55-dem-expressive.css)
+        if (fx && (fx.force || !globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches)) {
+            want.add('salty-demfx-go');
+            if (fx.motion !== 'normal') want.add(`salty-demfx-${fx.motion}`);
+            if (fx.glow) want.add('salty-demfx-glow');
+        }
+        if (fx?.flow) want.add('salty-demfx-flow');
         if (deus && s.chat.demSkin) want.add('salty-dem-skin');          // 3.1.0 데우스 카드 스킨 (css/30-dem-skin.css)
         if (deus && s.chat.demSkin && s.chat.demFold !== false) want.add('salty-dem-fold'); // 폰: 트래커 한 줄 · 펼쳐 오는 카드 접기 (demskin.js)
         if (s.type.indent) want.add('salty-indent');

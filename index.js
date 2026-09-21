@@ -14,7 +14,15 @@ import { startSelectPop } from './src/selects.js';
 import { startColorPop } from './src/colorpop.js';
 import { startInlineTone, retoneAll } from './src/tone.js';
 import { startStreamFade, streamFadeState } from './src/streamfade.js';
-import { mountPanel, unmountPanel, setPanelFullscreen, refreshPanels, noticeSeenChanged } from './src/panel.js';
+// 4.1.2: 설정 창(panel.js 와 거기에만 딸린 모듈 24개 · 310KB)은 설정 창을 처음 열 때 불러온다 — 시작할 때 읽는 모듈 64 → 40개.
+let panelApi = null, panelLoading = null;
+const loadPanel = () => panelLoading ||= import('./src/panel.js').then(api => (panelApi = api));
+const refreshPanels = (changes) => panelApi?.refreshPanels(changes); // 아직 안 불러왔으면 그려진 창도 없다
+function noticeSeenChanged() {
+    if (panelApi) return panelApi.noticeSeenChanged();
+    const unseen = hasUnseenNotice();
+    document.querySelectorAll('#salty-drawer .bl-version').forEach(badge => badge.classList.toggle('is-new', unseen));
+}
 import { loadVersion, hasUnseenNotice, openNotice } from './src/notice.js';
 import { setFeatureHooks } from './src/features.js';
 import { deferPreviewRules, restorePreviewRules, deferredPreviewRuleCount, startMenuOpenMark, startAnchorGate, widenSelectorCache, deferPanelHasRules, panelHasRuleCount, panelCssEnabled } from './src/lite.js';
@@ -37,7 +45,20 @@ function mountDrawer() {
     // 미리보기 CSS 는 서랍을 펼 때 되돌린다 (lite.js) — 실리태번의 토글 핸들러보다 먼저 받게 capture 로
     drawer.querySelector('.inline-drawer-toggle').addEventListener('click', restorePreviewRules, { capture: true });
     drawer.querySelector('.inline-drawer-toggle').addEventListener('click', () => setTimeout(retoneAll, 400)); // 서랍 미리보기도 톤 맞춤
-    mountPanel(drawer.querySelector('.inline-drawer-content'), { onFullscreen: () => openPopup(true) });
+    // 4.1.2: 서랍 속 설정 창은 처음 펼칠 때 만든다 — 닫힌 서랍 안에 시작할 때마다 통째로 그리고(버전 · 확장 기능 상태가 올 때마다 다시)
+    // 미리보기 크기까지 재던 것 (폰 리그 시작 한 번에 0.45초). 실리태번의 토글 핸들러보다 먼저 받게 capture 로.
+    const ensurePanel = async () => {
+        const content = drawer.querySelector('.inline-drawer-content');
+        if (!content || content.querySelector('.salty-panel') || drawer._blMounting) return;
+        drawer._blMounting = true;
+        try {
+            const { mountPanel } = await loadPanel();
+            if (!content.querySelector('.salty-panel')) mountPanel(content, { onFullscreen: () => openPopup(true) });
+        } catch (error) { console.error('[Blue Lemonade] 설정 창을 불러오지 못했어요', error); }
+        finally { drawer._blMounting = false; }
+    };
+    drawer._blEnsurePanel = ensurePanel;
+    drawer.querySelector('.inline-drawer-toggle').addEventListener('click', ensurePanel, { capture: true });
 }
 
 // 버전 배지는 manifest.json 을 읽어서 적음 (버전을 코드에 두 번 적지 않게)
@@ -65,6 +86,7 @@ async function showVersion(badge) {
 async function openPopup(fullscreen = false, extension = null) {
     restorePreviewRules();
     const ctx = SillyTavern.getContext();
+    const { mountPanel, unmountPanel, setPanelFullscreen } = await loadPanel();
     const wrap = document.createElement('div');
     wrap.style.textAlign = 'left';
     const panel = mountPanel(wrap, { popup: true });
@@ -100,8 +122,8 @@ applyAll();
 loadVersion().then(() => refreshPanels()); // 설정 창 제목 옆 공지사항 알약에 쓸 버전 (3.0.0)
 
 // 콘솔·테스트용
-window.Salty = { getSettings, applyAll, refreshPanels, openPopup, restorePreviewRules, deferredPreviewRuleCount, panelHasRuleCount, panelCssEnabled, streamFadeState };
-window.addEventListener('bl:addons-state',refreshPanels);
+window.Salty = { ensureDrawerPanel: () => document.getElementById('salty-drawer')?._blEnsurePanel?.(), getSettings, applyAll, refreshPanels, openPopup, restorePreviewRules, deferredPreviewRuleCount, panelHasRuleCount, panelCssEnabled, streamFadeState };
+window.addEventListener('bl:addons-state', () => refreshPanels());
 
 jQuery(() => {
     widenSelectorCache(); // 실리태번의 위임 핸들러 선택자를 jQuery 가 매번 다시 컴파일하지 않게 (2.9.4, lite.js)
@@ -110,6 +132,8 @@ jQuery(() => {
     startMenuOpenMark(); // ··· 메뉴가 열린 메시지에 bl-menu-open (style.css 의 :has() 대신, lite.js)
     startAnchorGate();   // ≡ · ✦ 메뉴가 열려 있을 때만 입력판에 앵커 이름 (2.9.4, lite.js)
     mountDrawer();
+    // 확장 서랍 · ✦ 메뉴를 여는 순간 설정 창 코드를 미리 받아 둔다 (테마 줄을 누를 때 기다리지 않게)
+    for (const id of ['extensions-settings-button', 'extensionsMenuButton']) document.getElementById(id)?.addEventListener('pointerdown', () => { loadPanel().catch(() => {}); }, { capture: true, passive: true });
     syncAddonIcons();
     addMenuItem();
     startAssetWatcher();

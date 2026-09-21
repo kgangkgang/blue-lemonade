@@ -1,3 +1,4 @@
+import { listMenuButtons, PIN_LIMIT } from './mes-pins.js';
 import {scriptsMarkup,bindScripts} from './scripts/ui.js';
 import {updateMarkup,bindThemeUpdate} from './theme-update.js';
 import { bindAddonLayout } from './addon-layout.js';
@@ -46,7 +47,7 @@ const SUBS = {
     chat: [['message', '메시지'], ['profile', '캐릭터 프로필'], ['user-profile', '내 프로필'], ['name', '캐릭터 이름·시간'], ['user-name', '내 이름·시간'], ['screen', '화면'], ['etc', '기타']],
     image: [['layout', '배치'], ['shape', '모양'], ['frame', '테두리'], ['size', '크기'], ['fade', '흐림']],
     prompt: [['deus', '데우스 엑스 마키나']],
-    extensions: [['words', '단어 치환'], ['capture', '채팅 캡처'], ['order', '확장 순서'], ['perf', '성능 보조'], ['models', '모델 등록'], ['modelorder', '모델 순서'], ['scripts', '스크립트']],
+    extensions: [['words', '단어 치환'], ['capture', '채팅 캡처'], ['order', '확장 순서'], ['perf', '성능 보조'], ['models', '모델 등록'], ['modelorder', '모델 순서'], ['modelswitch', '모델 전환'], ['rewrite', '다시 쓰기'], ['scripts', '스크립트']],
 };
 
 const panels = new Set();
@@ -161,7 +162,9 @@ function installSettingResets(root) {
         const label = row?.querySelector(':scope > header > span,:scope > span,:scope > .salty-row > span');
         if (!label || [...label.querySelectorAll('[data-act="setting-reset"]')].some(b => b.dataset.setting === path)) continue;
         const button = document.createElement('button'); button.type = 'button'; button.className = 'bl-setting-reset'; button.dataset.act = 'setting-reset'; button.dataset.setting = path; button.textContent = '↺';
-        button.title = `${historyLabel(path)} · 기본값으로`; button.setAttribute('aria-label', button.title); label.append(button);
+        button.title = `${historyLabel(path)} · 기본값으로`; button.setAttribute('aria-label', button.title);
+        const note = label.querySelector(':scope > small');
+        if (note) note.before(button); else label.append(button); // 설명 글 아래로 떨어지지 않게 이름 바로 옆
     }
     syncSettingResets();
 }
@@ -250,6 +253,7 @@ export function setPanelFullscreen(root, enabled) {
 }
 
 export function unmountPanel(root) {
+    for(const stage of Object.values(root._pv || {}))stage._blWeather?.destroy();
     root._captureCleanup?.(); root._captureCleanup=null;
     root._addonCleanup?.(); root._addonCleanup=null;
     root._scriptsCleanup?.(); root._scriptsCleanup=null;
@@ -343,6 +347,17 @@ function chips(items) {
     const s = getSettings();
     return `<div class="salty-seg">${items.map(([path, label]) =>
         `<button data-act="chip" data-path="${path}" class="${getPath(s, path) ? 'on' : ''}">${label}</button>`).join('')}</div>`;
+}
+
+// ··· 메뉴 버튼 고르기 (4.1.3): 지금 실리태번 · 다른 확장이 메뉴에 넣어 둔 버튼을 그대로 보여 준다
+function mesPinPicker(s) {
+    const items = listMenuButtons();
+    const pins = s.chat.mesPins || [];
+    const gone = pins.filter(key => !items.some(item => item.key === key)).map(key => ({ key, icon: 'fa-solid fa-circle-question', title: key }));
+    if (!items.length && !gone.length) return '<p class="salty-note">채팅을 열면 고를 수 있는 버튼이 나와요.</p>';
+    return `<div class="salty-seg bl-mespins">${[...items, ...gone].map(item =>
+        `<button data-act="mes-pin" data-key="${esc(item.key)}" class="${pins.includes(item.key) ? 'on' : ''}" aria-pressed="${pins.includes(item.key)}"><i class="${esc(item.icon)}" aria-hidden="true"></i><span>${esc(item.title)}</span></button>`).join('')}</div>
+        <p class="salty-note">누른 버튼은 메뉴를 열지 않아도 이름 줄에 보여요. 최대 ${PIN_LIMIT}개.</p>`;
 }
 
 function toggle(path, checked) {
@@ -439,7 +454,7 @@ const NUM = {
     'strong.size': { unit: 'px' }, 'strong.weight': {}, 'strong.letterSpacing': { unit: 'em', scale: 100 },
     'code.weight': {}, 'code.letterSpacing': { unit: 'em', scale: 100 },
     'ui.weight': {}, 'ui.letterSpacing': { unit: 'em', scale: 100 },
-    'chat.userSize': { unit: '%' }, 'chat.userInk': { unit: '%' },
+    'chat.userSize': { unit: '%' }, 'chat.userInk': { unit: '%' }, 'chat.bgAlpha': { unit: '%' },
     'type.para': { unit: '줄' },
     'type.gutter': { unit: 'px' },
     'type.measure': { unit: 'px' },
@@ -581,6 +596,7 @@ function regexStage() {
     const item = (kind, icon, value, extra = '') => `<div class="custom-dem-track__item custom-dem-track__item--${kind}"><span class="custom-dem-track__icon">${icon}</span><span class="custom-dem-track__value">${value}</span>${extra}</div>`;
     return `<div class="salty-preview" data-prev="regex" aria-hidden="true">
         ${prevMes('false', '아린', `<div class="custom-dem-track">${item('time', '🕐', '오후 4:12')}${item('date', '🗓️', '3일째 · 목요일')}${item('location', '📍', '항구 → 등대 아래 찻집')}${item('weather', '⛅', '맑음', '<span class="custom-dem-track__temp">18°C</span>')}</div>
+        <p class="bl-fx-line"><span class="custom-dem-expressive custom-dem-expressive--shout"><font color="#e64553" class="bl-ink-sample" style="--bl-ink:#e64553"><q>「거기 서!」</q></font></span> <span class="custom-dem-expressive custom-dem-expressive--trembling"><q>「…무, 무서워.」</q></span> <span class="custom-dem-expressive custom-dem-expressive--crying"><font color="#1e88c7" class="bl-ink-sample" style="--bl-ink:#1e88c7"><q>「가지 마…」</q></font></span> 감정 대사예요.</p>
         <details class="custom-dem-card custom-dem-scene-plan" open>${head('🗺️', '장면 계획', '흐름도')}<div class="custom-dem-scene-plan__body">${step('inputs', 'Inputs', '상황 맥락', '찻집 약속 직전, 아린은 편지를 숨긴다.')}${step('constraints', 'Constraints', 'Character Realism', '들뜬 마음을 쉽게 드러내지 않는다.')}${step('plan', 'Plan', 'Prose Plan', '편지 이야기는 마지막 문단까지 아껴 둔다.')}</div></details>
         <details class="custom-dem-card custom-dem-status" open>${head('📊', 'Status', 'Live')}<div class="custom-dem-status__body"><div class="custom-dem-status-row"><strong class="custom-dem-status-row__name">아린</strong><span class="custom-dem-status-row__field"><span class="custom-dem-status-row__label custom-dem-status-row__label--physical">몸</span><span>나른함</span></span><span class="custom-dem-status-row__field"><span class="custom-dem-status-row__label custom-dem-status-row__label--clothes">옷</span><span>하늘색 원피스</span></span><span class="custom-dem-status-row__field"><span class="custom-dem-status-row__label custom-dem-status-row__label--mental">마음</span><span>기대</span></span><span class="custom-dem-status-row__field"><span class="custom-dem-status-row__label custom-dem-status-row__label--relationship">관계</span><span class="custom-dem-status-row__score">72/100</span></span></div></div></details>
         <details class="custom-dem-card custom-dem-threads" open>${head('🧶', 'Story Threads', '')}<div class="custom-dem-threads__body"><div class="custom-dem-thread-row"><span class="custom-dem-thread-tag custom-dem-thread-tag--current">[Current]</span> 찻집의 약속</div><div class="custom-dem-thread-row"><span class="custom-dem-thread-tag custom-dem-thread-tag--unresolved">[Unresolved]</span> 사라진 등대지기</div><div class="custom-dem-thread-row"><span class="custom-dem-thread-tag custom-dem-thread-tag--seed">[Seed]</span> 바다 건너온 편지</div></div></details>
@@ -1293,11 +1309,16 @@ function tabChat(s, sub) {
         return `${chatPreview()}<div class="salty-group">
             ${stack('아이콘', seg('chat.icons', [['line', '선 아이콘'], ['default', '기본']]))}
             ${row('배경 이미지 비치기', toggle('chat.bgImage', s.chat.bgImage), '끄면 깨끗한 종이색 바탕')}
+            ${s.chat.bgImage ? slider('chat.bgAlpha', '채팅 바탕 농도', 0, 100, 1, 82) : ''}
+            ${s.chat.bgImage ? '<p class="salty-note">100이면 채팅 영역만 테마 바탕색으로 완전히 덮어요. 배경 그림 때문에 글자가 안 보일 때 올려 주세요.</p>' : ''}
             ${row('고르기 목록 팝업', toggle('chat.selectPop', s.chat.selectPop !== false), '모델 · 프리셋 같은 목록을 테마가 그린 팝업으로 (끄면 폰 기본 목록)')}
             ${row('색 고르기 팝업', toggle('chat.colorPop', s.chat.colorPop !== false), '실리태번 색 칸도 테마 색 고르기로')}
             ${splashRow()}
             ${row('가벼운 페이드 인', toggle('chat.streamFade', !!s.chat.streamFade), '스트리밍 중 새 글자만 스며들게')}
             ${s.chat.streamFade && stFade ? row('실리태번 페이드 인', toggle('st.streamFadeIn', true), '끄면 빨라지고 위 옵션이 대신해요') : ''}
+        </div>
+        ${cap('메시지 버튼', '··· 메뉴 밖에 늘 보일 버튼')}<div class="salty-group">
+            ${mesPinPicker(s)}
         </div>
         ${cap('퀵 리플라이')}<div class="salty-group">
             <div class="bl-inline-preview" data-pv="qr">${qrSample(s.chat.qrFind !== false)}</div>
@@ -1389,6 +1410,7 @@ function tabPrompt(s) {
     const ink = s.deus?.ink || {};
     const dio = ink.outline || { on: false, color: '#000000', width: 0.6, alpha: 100 };  // 데우스 대사 가독성: 외곽선
     const dis = ink.shadow || { on: false, color: '#000000', alpha: 60, angle: 135, distance: 1.5, blur: 2 }; // 그림자
+    const fx = s.deus?.fx || { on: true, motion: 'normal', glow: true, flow: false, force: false }; // 4.1.2 감정 대사 효과
     const head = `${cap('데우스 엑스 마키나')}<div class="salty-group">
             ${row('프롬프트 호환', toggle('deus.on', on), '이 프리셋의 트래커 · 장면 계획 · 상태 카드를 테마에 맞춰요')}
         </div>`;
@@ -1418,6 +1440,14 @@ function tabPrompt(s) {
             ${dis.on ? slider('deus.ink.shadow.blur', '그림자 퍼짐', 0, 24, 0.5) : ''}
         </div>
         <p class="salty-note">둘 다 켜도 되고 하나만 켜도 돼요. 프롬프트가 색칠하지 않은 보통 글자는 그대로예요.</p>
+        ${cap('감정 대사 효과', 'Expressive Dialogue')}<div class="salty-group">
+            ${row('효과 살리기', toggle('deus.fx.on', fx.on), '외침 · 떨림 같은 감정 대사가 눈에 보이게 움직여요')}
+            ${fx.on ? stack('움직임', seg('deus.fx.motion', [['soft', '약하게'], ['normal', '보통'], ['big', '크게']], 'normal'), '약하게 = 프리셋 원래 크기') : ''}
+            ${fx.on ? row('빛', toggle('deus.fx.glow', fx.glow), '외침 · 화남 · 울음 대사가 제 색으로 은은하게 빛나요') : ''}
+            ${fx.on ? row('색 흐름', toggle('deus.fx.flow', fx.flow), '그 대사만 대사색 · 형광펜 대신 흐르는 색 글자로') : ''}
+            ${fx.on ? row('기기 설정 무시', toggle('deus.fx.force', fx.force), '기기가 애니메이션 줄이기 · 절전이어도 움직여요') : ''}
+        </div>
+        ${fx.on && !fx.force && globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? '<p class="salty-note">지금 이 기기는 애니메이션 줄이기 상태라 효과가 멈춰 있어요. 보려면 기기 설정 무시를 켜 주세요.</p>' : ''}
         ${cap('트래커')}<div class="salty-group">
             ${row('트래커 날씨로 날씨 효과', toggle('deus.weather', s.chat.weather === 'tracker'), '트래커 날씨가 비 · 눈이면 채팅 뒤에 내려요 · 세기 · 크기는 채팅 › 화면 › 날씨')}
         </div>`;
@@ -1598,6 +1628,7 @@ function render(root) {
     bindCustomBuilder(root);
     paintSettingsSearch(root);
     fillPreviews(root); // 미리보기 무대 다시 꽂기 (만들지 않고 옮겨 담기만)
+    for(const stage of Object.values(root._pv || {}))if(!stage.isConnected)stage._blWeather?.destroy();
     typesetRoot(root);
     bindAddons(root, refreshPanels);
     void bindScripts(root);
@@ -1964,6 +1995,16 @@ function bind(root) {
                     // 표본 넘기기 — 설정이 아니라 보기 상태라 저장하지 않는다 (창을 닫으면 첫 장으로)
                     ui.pic = (ui.pic + Number(el.dataset.step) + PHOTOS.length) % PHOTOS.length;
                     refreshPanels();
+                    break;
+                }
+                case 'mes-pin': {
+                    const { key } = el.dataset;
+                    update((st) => {
+                        const pins = st.chat.mesPins || [];
+                        if (pins.includes(key)) st.chat.mesPins = pins.filter(k => k !== key);
+                        else if (pins.length >= PIN_LIMIT) toastr.warning(`버튼은 ${PIN_LIMIT}개까지 꺼내 둘 수 있어요.`, 'Blue Lemonade');
+                        else st.chat.mesPins = [...pins, key];
+                    });
                     break;
                 }
                 case 'chip': {

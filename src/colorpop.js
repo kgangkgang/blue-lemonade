@@ -62,6 +62,10 @@ export function startColorPop() {
     }, true);
     // 키보드(Enter · Space)도 click 으로 들어온다. 뒤가 굴러가면 칸과 떨어지니 닫음 (연 직후는 봐줌 — 폰 주소창 · 부드러운 스크롤)
     document.addEventListener('scroll', (e) => {
-        if (picker?.isColorPickOpen() && !(e.target instanceof Element && e.target.closest('.bl-cp-layer')) && picker.colorPickAge() > 700) picker.closeColorPick();
+        if (!picker?.isColorPickOpen() || (e.target instanceof Element && e.target.closest('.bl-cp-layer')) || picker.colorPickAge() <= 700) return;
+        // 4.1.2: 색 코드 칸을 누르면 폰은 자판을 올리면서 그 칸이 보이게 뒤 화면을 굴린다 — 그 스크롤에 창이 꺼져 코드를 칠 수 없었다 (사용자 제보).
+        // 코드 칸에 글을 치는 중이면 닫지 않고 자리만 다시 잡는다.
+        if (document.activeElement instanceof Element && document.activeElement.closest('.bl-cp-layer input')) { picker.repositionColorPick(); return; }
+        picker.closeColorPick();
     }, true);
 }

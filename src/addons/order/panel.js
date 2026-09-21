@@ -121,7 +121,7 @@ export async function openDialog() {
     dialogRoot = content;
     renderList();
     try {
-        await callGenericPopup(content, POPUP_TYPE.TEXT, '', { okButton: '닫기', wide: true, allowVerticalScrolling: true });
+        await callGenericPopup(content, POPUP_TYPE.TEXT, '', { okButton: '닫기', wide: true, allowVerticalScrolling: true, onOpen: popup => popup?.dlg?.classList.add('bl-roomy-dialog') });
     } finally {
         dialogRoot = null;
         for(const mount of pendingInline)mount();pendingInline.clear();

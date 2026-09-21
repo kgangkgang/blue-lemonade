@@ -1,0 +1,617 @@
+/* 다시 쓰기 설정 화면 — 다른 확장(캐릭터 에셋·전개지시)과 같은 설정 앱 모양:
+   1px 테 대신 옅은 톤 칸, 이름 왼쪽 · 스위치 오른쪽 줄, 알약 모양 탭. 테마가 없어도 실리태번 색으로 보인다. */
+.bwr_settings {
+    --bwr-accent: var(--customThemeColor, var(--SmartThemeQuoteColor, #4a8fe7));
+    --bwr-text: var(--SmartThemeBodyColor, #d8d8d8);
+    --bwr-tint: color-mix(in srgb, var(--bwr-text) 7%, transparent);
+    --bwr-well: color-mix(in srgb, var(--bwr-text) 11%, transparent);
+    --bwr-track: color-mix(in srgb, var(--bwr-text) 28%, transparent);
+    --bwr-accent-soft: color-mix(in srgb, var(--bwr-accent) 18%, transparent);
+    --bwr-danger: #e5484d;
+    /* Compared with index.js after load: a mismatch may be a packaging, cache, or installation issue. */
+    --bwr-css-version: "1.8.4";
+}
+
+/* 서랍 안쪽 — .inline-drawer-content 는 실리태번이 열고 닫으므로 display 를 주지 않고 안에 한 겹 더 둔다 */
+.bwr_settings .bwr_body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 6px 0 8px;
+    container-type: inline-size;
+}
+
+.bwr_settings .text_pole,
+.bwr_settings .menu_button {
+    margin: 0;
+}
+
+.bwr_settings .bwr_hint {
+    display: block;
+    font-size: 0.82em;
+    line-height: 1.5;
+    opacity: 0.7;
+}
+
+/* ── 스위치 칸: 이름 왼쪽 · 스위치 오른쪽 ─────────────────── */
+.bwr_settings .bwr_card {
+    display: flex;
+    flex-direction: column;
+    padding: 2px 14px;
+    border-radius: 14px;
+    background: var(--bwr-tint);
+}
+
+.bwr_settings .bwr_switch_row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 46px;
+    margin: 0;
+    cursor: pointer;
+    user-select: none;
+}
+
+.bwr_settings .bwr_switch_row > span:first-child {
+    flex: 1;
+    min-width: 0;
+}
+
+/* 진짜 체크박스는 보이지 않게만 두고(값·이벤트는 index.js 가 그대로 씀) 옆 칸을 스위치로 그린다.
+   테마가 모든 체크박스 모양을 !important 로 바꾸므로 이쪽도 !important 로 숨긴다. */
+.bwr_settings .bwr_switch_row > input[type="checkbox"] {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    opacity: 0 !important;
+    clip-path: inset(50%) !important;
+    pointer-events: none !important;
+}
+
+.bwr_settings .bwr_switch {
+    position: relative;
+    flex: 0 0 auto;
+    width: 44px;
+    height: 26px;
+    border-radius: 999px;
+    background: var(--bwr-track);
+    transition: background 0.2s;
+}
+
+.bwr_settings .bwr_switch::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    transition: transform 0.2s;
+}
+
+.bwr_settings input:checked + .bwr_switch {
+    background: var(--bwr-accent);
+}
+
+.bwr_settings input:checked + .bwr_switch::after {
+    transform: translateX(18px);
+}
+
+.bwr_settings input:focus-visible + .bwr_switch {
+    outline: 2px solid var(--bwr-accent);
+    outline-offset: 2px;
+}
+
+/* 편집 칸 머리의 작은 '사용' 스위치 */
+.bwr_settings .bwr_switch_row.bwr_compact {
+    flex: 0 0 auto;
+    gap: 8px;
+    min-height: 36px;
+}
+
+.bwr_settings .bwr_compact > span:first-child {
+    flex: 0 0 auto;
+    font-size: 0.9em;
+}
+
+/* ── 버튼 ───────────────────────────────────────────── */
+.bwr_settings .bwr_wide {
+    width: 100%;
+    min-height: 40px;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 12px;
+}
+
+.bwr_settings .bwr_danger_btn,
+.bwr_settings .bwr_delete i {
+    color: var(--bwr-danger);
+}
+
+.bwr_settings .bwr_row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+}
+
+/* 버튼 두 개가 반씩 */
+.bwr_settings .bwr_row_split > .menu_button {
+    flex: 1 1 140px;
+    min-height: 38px;
+    justify-content: center;
+    border-radius: 12px;
+}
+
+.bwr_settings .menu_button.bwr_busy {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.bwr_settings .menu_button.bwr_busy i {
+    animation: bwr-spin 1s linear infinite;
+}
+
+@keyframes bwr-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── 탭 · 연결 고르기: 오목한 알약 줄 ─────────────────── */
+.bwr_settings .bwr_tabs,
+.bwr_settings .bwr_segment {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 3px;
+    padding: 4px;
+    border-radius: 12px;
+    background: var(--bwr-well);
+}
+
+.bwr_settings .bwr_segment {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* 폰 폭: 탭 여섯 개를 3 + 3 같은 폭으로 (4 + 2 로 들쭉날쭉하지 않게) */
+@container (max-width: 560px) {
+    .bwr_settings .bwr_tabs {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+.bwr_settings .bwr_tab,
+.bwr_settings .bwr_seg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 0;
+    min-height: 36px;
+    padding: 6px 4px;
+    border-radius: 9px;
+    font-size: 0.88em;
+    line-height: 1.2;
+    text-align: center;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    opacity: 0.72;
+    transition: background 0.15s, color 0.15s;
+}
+
+.bwr_settings .bwr_tab > span:not(.bwr_badge) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bwr_settings .bwr_tab i {
+    font-size: 0.9em;
+}
+
+.bwr_settings .bwr_tab:hover,
+.bwr_settings .bwr_seg:hover {
+    opacity: 1;
+}
+
+.bwr_settings .bwr_tab.active,
+.bwr_settings .bwr_seg.active {
+    opacity: 1;
+    font-weight: 600;
+    color: var(--bwr-accent);
+    background: var(--bwr-accent-soft);
+}
+
+.bwr_settings .bwr_badge {
+    flex: 0 0 auto;
+    min-width: 18px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-size: 0.75em;
+    font-weight: 600;
+    text-align: center;
+    background: var(--bwr-well);
+}
+
+.bwr_settings .bwr_badge:empty {
+    display: none;
+}
+
+/* ── 탭 내용: 고른 탭만 보임 ───────────────────────────── */
+.bwr_settings .bwr_panel,
+.bwr_settings .bwr_stack {
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.bwr_settings .bwr_panel.active,
+.bwr_settings .bwr_stack {
+    display: flex;
+}
+
+/* ── 입력 칸 ────────────────────────────────────────── */
+.bwr_settings .bwr_grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.bwr_settings .bwr_field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    margin: 0;
+}
+
+.bwr_settings .bwr_field > span {
+    font-size: 0.82em;
+    font-weight: 600;
+    opacity: 0.75;
+}
+
+.bwr_settings .bwr_field .text_pole {
+    width: 100%;
+}
+
+/* 커스텀 주소: '모델 목록 불러오기' 옆 상태 글 */
+.bwr_settings #bwr_models_status {
+    flex: 1 1 160px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+/* ── 칩(금지 묘사 · 예외 캐릭터 · 허용할 묘사) ──────────── */
+.bwr_settings .bwr_chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.bwr_settings .bwr_chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    min-height: 32px;
+    padding: 0 13px;
+    border-radius: 999px;
+    background: var(--bwr-tint);
+    font-size: 0.9em;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s, color 0.15s;
+}
+
+.bwr_settings .bwr_chip_label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bwr_settings .bwr_chip:hover {
+    background: var(--bwr-well);
+}
+
+.bwr_settings .bwr_chip.active {
+    font-weight: 600;
+    color: var(--bwr-accent);
+    background: var(--bwr-accent-soft);
+}
+
+.bwr_settings .bwr_chip.bwr_off {
+    opacity: 0.5;
+    text-decoration: line-through;
+}
+
+.bwr_settings .bwr_chip.bwr_add {
+    color: var(--bwr-accent);
+    background: transparent;
+    box-shadow: inset 0 0 0 1.5px var(--bwr-accent-soft);
+}
+
+.bwr_settings .bwr_chip .fa-xmark {
+    opacity: 0.5;
+}
+
+.bwr_settings .bwr_warn {
+    color: var(--warning, #e8a33d);
+}
+
+/* 특정 캐릭터에게만 적용되는 금지 묘사 칩의 표시 */
+.bwr_settings .bwr_chip .bwr_scope {
+    font-size: 0.8em;
+    opacity: 0.55;
+}
+
+/* 고른 칩의 편집 칸 */
+.bwr_settings .bwr_editor {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 14px;
+    background: var(--bwr-tint);
+}
+
+.bwr_settings .bwr_editor_head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.bwr_settings .bwr_editor_head > .text_pole,
+.bwr_settings .bwr_editor_head > .bwr_title {
+    flex: 1;
+    min-width: 0;
+}
+
+.bwr_settings .bwr_editor_head .bwr_delete {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    justify-content: center;
+    border-radius: 10px;
+}
+
+.bwr_settings .bwr_error {
+    color: var(--warning, #e8a33d);
+    white-space: pre-wrap;
+}
+
+.bwr_settings .bwr_error:empty {
+    display: none;
+}
+
+/* 리롤 상태 줄 */
+.bwr_settings .bwr_status {
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: var(--bwr-tint);
+    font-size: 0.85em;
+}
+
+.bwr_settings .bwr_status:empty {
+    display: none;
+}
+
+/* 판정 색 (리롤 상태 · 테스트) */
+.bwr_settings .bwr_ok {
+    color: var(--okay, #7ec699);
+}
+
+.bwr_settings .bwr_no {
+    color: var(--warning, #e8a33d);
+}
+
+/* 테스트 결과 */
+.bwr_settings .bwr_spans {
+    margin: 4px 0;
+    padding-left: 18px;
+}
+
+.bwr_settings .bwr_preview {
+    max-height: 260px;
+    margin: 0;
+    padding: 10px 12px;
+    overflow: auto;
+    border-radius: 10px;
+    background: var(--bwr-tint);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* 설정 제목의 버전 배지 — 다른 확장(전개지시·캐릭터 에셋·단어 치환·모델 등록)과 같은 모양 */
+.bwr-version {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 1px 7px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--SmartThemeBodyColor, #888) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--SmartThemeBodyColor, #999) 28%, transparent);
+    font-size: 0.7em;
+    font-weight: 400;
+    color: color-mix(in srgb, var(--SmartThemeBodyColor, #999) 65%, transparent);
+    vertical-align: middle;
+}
+
+/* ── 1.8.0: 버전 배지 = 사용법 열기 · AI에게 부탁하기 · 사용법 글 ───────── */
+.bwr_settings .bwr-version[role="button"] {
+    cursor: pointer;
+}
+
+.bwr_settings .bwr-version[role="button"]:hover,
+.bwr_settings .bwr-version[role="button"]:focus-visible {
+    border-color: var(--bwr-accent);
+    color: var(--bwr-accent);
+    outline: none;
+}
+
+.bwr_settings .bwr_guide_link {
+    color: var(--bwr-accent);
+}
+
+.bwr_settings.bwr_ai,
+.bwr_settings .bwr_guide {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: left;
+}
+
+.bwr_settings.bwr_ai h3,
+.bwr_settings .bwr_guide h3 {
+    margin: 0 0 2px;
+    font-size: 1.1em;
+}
+
+.bwr_settings .bwr_ai_result {
+    white-space: pre-wrap;
+    min-height: 1.5em;
+}
+
+.bwr_settings .bwr_ai_prompt[hidden] {
+    display: none;
+}
+
+.bwr_settings .bwr_guide_lead {
+    margin: 0;
+    line-height: 1.6;
+}
+
+.bwr_settings .bwr_guide details {
+    padding: 2px 14px;
+    border-radius: 14px;
+    background: var(--bwr-tint);
+}
+
+.bwr_settings .bwr_guide summary {
+    padding: 10px 0;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.bwr_settings .bwr_guide details > :not(summary) {
+    margin: 0 0 10px;
+    font-size: 0.92em;
+    line-height: 1.65;
+}
+
+.bwr_settings .bwr_guide ol,
+.bwr_settings .bwr_guide ul {
+    padding-left: 1.3em;
+}
+
+.bwr_settings .bwr_guide li + li {
+    margin-top: 4px;
+}
+
+.bwr_settings .bwr_guide code {
+    padding: 1px 5px;
+    border-radius: 6px;
+    background: var(--bwr-well);
+    font-size: 0.92em;
+    word-break: break-word;
+}
+
+.bwr_settings .bwr_guide a {
+    color: var(--bwr-accent);
+    text-decoration: underline;
+}
+
+/* ── 1.8.2: 시원한 화면 ─────────────────────────────────
+   팝업 안(테마 내장 · AI 도우미 · 사용법)은 가운데 정렬을 물려받아 이름이 칸 가운데에 떠 있었다 → 왼쪽 정렬.
+   폰 폭 탭은 3 + 3 두 줄 대신 아이콘 위 · 이름 아래로 한 줄 여섯 칸. */
+.bwr_settings {
+    text-align: left;
+}
+
+@container (max-width: 560px) {
+    .bwr_settings .bwr_tabs {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+
+    .bwr_settings .bwr_tab {
+        position: relative;
+        flex-direction: column;
+        gap: 3px;
+        min-height: 48px;
+        padding: 7px 2px 6px;
+        font-size: 0.74em;
+    }
+
+    .bwr_settings .bwr_tab i {
+        font-size: 1.25em;
+    }
+
+    .bwr_settings .bwr_tab .bwr_badge {
+        position: absolute;
+        top: 3px;
+        right: 3px;
+        min-width: 15px;
+        padding: 0 4px;
+        font-size: 0.85em;
+    }
+}
+
+/* 우리 팝업은 화면을 넓게: 실리태번 · 테마 기본값(폭 90% · 안쪽 12px · 양쪽 스크롤바 자리 두 겹)이면 412px 폰에서
+   설정이 315px 만 썼다. 남의 규칙이 !important 라 여기도 그렇게 건다 (우리 팝업에만 붙는 클래스). */
+dialog.popup.bwr_dialog {
+    width: min(760px, calc(100dvw - 12px)) !important;
+    max-width: calc(100dvw - 12px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding: 12px 8px 10px !important;
+}
+
+dialog.popup.bwr_dialog .popup-body,
+dialog.popup.bwr_dialog .popup-content {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    scrollbar-gutter: auto !important;
+}
+
+/* 1.8.3: 스크롤바 자리는 양쪽에 똑같이 — 한쪽만 잡히면 오른쪽 여백이 스크롤바 폭만큼 더 넓어 보인다 */
+dialog.popup.bwr_dialog .popup-content {
+    padding: 2px 0 4px !important;
+    scrollbar-gutter: stable both-edges !important;
+}
+
+/* 테마 설정 창 오른쪽에 들어갈 때: 제목 줄은 테마가 이미 보여 주므로 버전 표시만 남긴다 */
+.bwr_settings.bl-embedded-settings .inline-drawer-header {
+    padding: 0 2px 6px;
+    min-height: 0;
+}
+
+/* 1.8.3: 이름 옆 ? 동그라미 */
+.bwr_settings .bwr_help {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    margin-left: 6px;
+    border-radius: 50%;
+    background: var(--bwr-well);
+    font-size: 0.78em;
+    font-weight: 700;
+    line-height: 1;
+    vertical-align: middle;
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+.bwr_settings .bwr_help:hover,
+.bwr_settings .bwr_help:focus-visible {
+    background: var(--bwr-accent-soft);
+    color: var(--bwr-accent);
+    opacity: 1;
+    outline: none;
+}

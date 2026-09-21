@@ -199,10 +199,10 @@ async function onListClick(event) {
 
 let opening=false;
 export async function openPanel(){
- if(inlineHost?.isConnected){root.scrollIntoView({block:'nearest'});return;}
+ if(inlineHost?.isConnected&&inlineHost.offsetParent){root.scrollIntoView({block:'nearest'});return;}
  if(opening)return;opening=true;buildPanel();render();
  root.querySelector('.inline-drawer-content').style.display='block';
- try{await callGenericPopup(root,POPUP_TYPE.TEXT,'',{okButton:'닫기',wide:true,allowVerticalScrolling:true});}
+ try{await callGenericPopup(root,POPUP_TYPE.TEXT,'',{okButton:'닫기',wide:true,allowVerticalScrolling:true,onOpen: popup => popup?.dlg?.classList.add('bl-roomy-dialog')});}
  finally{(inlineHost?.isConnected?inlineHost:holder).replaceChildren(root);opening=false;}
 }
 

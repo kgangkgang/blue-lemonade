@@ -101,3 +101,7 @@
     opacity: 0.7;
     font-size: 0.85em;
 }
+
+/* 가독성 (테마 4.1.2): 팝업 안에서도 글은 왼쪽 정렬 */
+.mr-body { text-align: left; }
+.mr-name { text-align: left; }

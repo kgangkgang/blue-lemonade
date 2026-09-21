@@ -6,3 +6,5 @@
 .mo-row button{width:36px;min-height:38px;border:1px solid var(--SmartThemeBorderColor,#8884);border-radius:8px;background:var(--SmartThemeBlurTintColor,#333);color:var(--SmartThemeBodyColor,#eee);cursor:pointer}
 .mo-handle{touch-action:none;cursor:grab!important;font-size:24px}
 .mo-dragging{background:var(--SmartThemeQuoteColor,#7a97aa);outline:1px solid currentColor}
+#model-order-settings{text-align:left}
+#model-order-settings p,#model-order-settings small{font-size:.85em;line-height:1.5;opacity:.8}

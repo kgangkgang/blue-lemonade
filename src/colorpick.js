@@ -348,10 +348,28 @@ export function closeColorPick() {
     s.onClose?.(s.dirty && value !== s.original);
 }
 
+// 4.1.2: 색을 한 번 움직이면 설정 창이 다시 그려져 색 칸(anchor)이 새 요소로 바뀐다. 예전엔 그 뒤의 첫 resize 에서 '색 칸이 사라짐'으로 보고
+// 닫았는데, 폰에서는 색 코드 칸을 누르면 키보드가 올라오며 resize 가 온다 — 코드를 치려는 순간 창이 꺼졌다 (사용자 제보).
+// 같은 data-* 를 가진 새 색 칸을 다시 찾아 붙고, 못 찾으면 닫지 않고 그 자리에 둔다 (닫기는 바깥 누름 · Esc · Enter).
+function sameAnchor(old) {
+    const entries = Object.entries(old.dataset || {});
+    if (!entries.length) return null;
+    const selector = old.tagName.toLowerCase() + entries.map(([key, value]) => `[data-${key.replace(/[A-Z]/g, c => '-' + c.toLowerCase())}="${CSS.escape(value)}"]`).join('');
+    try { return (layer?.parentElement || document).querySelector(selector); } catch { return null; }
+}
+export function repositionColorPick() { onResize(); }
 function onResize() {
     if (!layer || !session) return;
-    if (!session.anchor.isConnected) { closeColorPick(); return; }
-    place(layer.firstElementChild, session.anchor);
+    replace(layer.firstElementChild);
+}
+/** 다시 그려진 색 칸을 찾아 그 옆에 다시 놓는다. 못 찾으면 지금 자리에 둔다 */
+function replace(box) {
+    if (!session.anchor.isConnected) {
+        const again = sameAnchor(session.anchor);
+        if (!again) return;
+        session.anchor = again;
+    }
+    place(box, session.anchor);
 }
 
 /**
@@ -469,7 +487,7 @@ export function openColorPick({ anchor, value, alpha = false, onInput, onClose }
         }
         if (!session || !box.isConnected) return;
         showPicture(box);
-        place(box, session.anchor);
+        replace(box);
     });
 
     // 바깥을 누르면 닫힘. 층 안의 누름은 문서로 올려 보내지 않음 — 실리태번이 html touchstart · mousedown 에서 서랍을 닫는다
@@ -495,11 +513,11 @@ export function openColorPick({ anchor, value, alpha = false, onInput, onClose }
             if (!picture) fileInput.click();
             else if (box.classList.contains('pic-on')) hidePicture(box);
             else showPicture(box);
-            if (picture) place(box, session.anchor);
+            if (picture) replace(box);
             return;
         }
         if (act === 'pic-change') { fileInput.click(); return; }
-        if (act === 'pic-close') { hidePicture(box); place(box, session.anchor); return; }
+        if (act === 'pic-close') { hidePicture(box); replace(box); return; }
         if (act === 'revert') {
             setFrom(parseColor(original));
             render(session.state);

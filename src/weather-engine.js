@@ -7,6 +7,7 @@
 const LEVEL = [0, 0.55, 1, 1.7];
 const DENSITY = { rain: 0.00022, snow: 0.00016, custom: 0.0001, lemon: 0.0001, petal: 0.00012, meteor: 0.00005 };
 const SPRITE_PX = 18; // 내 그림 기본 크기 (긴 변, 크기 100%)
+const BANDS = [[0, 0.34], [0.34, 0.67], [0.67, 1.01]];
 
 export function createEngine(ctx) {
     let W = 0;
@@ -50,20 +51,22 @@ export function createEngine(ctx) {
         const depth = Math.random();
         return { x: rand(0, W), y: anywhere ? rand(0, H) : rand(-40, -10), s: 0.6 + depth * 0.6, speed: 28 + depth * 62, sway: 10 + depth * 22, phase: rand(0, Math.PI * 2), freq: rand(0.3, 0.9), rot: rand(0, Math.PI * 2), spin: rand(-1.4, 1.4), depth };
     }
-    function meteorPoint(p, y) {
-        const k=motion==='straight'?0:curvature, angle=Math.atan(slant);
-        const base=Math.max(120,Math.min(W,H)*.9)*orbitSize*p.orbit;
+    // One scratch buffer per engine; drawing a tail must not allocate 25 objects
+    // (and two sets of iterator pairs) per particle on every frame.
+    const points = new Float64Array(50);
+    function meteorPoint(p, y, k, radius, cos, sin, index) {
         const distance=y-H*.5;
         let x=p.anchor-W*.5,dy=distance;
         if(k>0){
-            const radius=base/k, theta=distance/radius+p.phase*k;
+            const theta=distance/radius+p.phase*k;
             // At full curvature every lane shares the same orbital centre.
             // As curvature approaches zero, the arc opens into a straight fall.
             x=(1-k)*(p.anchor-W*.5)+orbitDirection*radius*(1-k-Math.cos(theta));
             dy=radius*Math.sin(theta);
         }
         const flutter=k&&motion==='flutter'?Math.sin(distance/120+p.phase)*5*swayK:0;
-        return {x:W*.5+x*Math.cos(angle)+dy*Math.sin(angle)+flutter,y:H*.5-x*Math.sin(angle)+dy*Math.cos(angle)};
+        points[index]=W*.5+x*cos+dy*sin+flutter;
+        points[index+1]=H*.5-x*sin+dy*cos;
     }
     function comet(anywhere) {
         const depth = Math.random();
@@ -116,10 +119,9 @@ export function createEngine(ctx) {
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.clearRect(0, 0, W, H);
         if (!items.length) return;
-        const bands = [[0, 0.34], [0.34, 0.67], [0.67, 1.01]];
         if (mode === 'rain') {
             ctx.lineCap = 'round';
-            bands.forEach(([from, to], b) => {
+            BANDS.forEach(([from, to], b) => {
                 ctx.beginPath();
                 for (const p of items) {
                     if (p.depth < from || p.depth >= to) continue;
@@ -133,7 +135,7 @@ export function createEngine(ctx) {
                 ctx.stroke();
             });
         } else if (mode === 'snow') {
-            bands.forEach(([from, to], b) => {
+            BANDS.forEach(([from, to], b) => {
                 ctx.beginPath();
                 for (const p of items) {
                     if (p.depth < from || p.depth >= to) continue;
@@ -146,18 +148,31 @@ export function createEngine(ctx) {
             });
         } else if (mode === 'meteor') {
             ctx.lineCap = 'round';
+            const scale=Math.sqrt(sizeK), k=motion==='straight'?0:curvature;
+            const angle=Math.atan(slant), cos=Math.cos(angle), sin=Math.sin(angle);
             for (const p of items) {
-                const length = p.length * Math.sqrt(sizeK), points = [];
-                for (let n = 0; n <= 24; n++) points.push(meteorPoint(p, p.y - length * n / 24));
-                const head = points[0], tail = points.at(-1);
-                const width = (.45 + p.depth * .55) * Math.sqrt(sizeK);
+                const length = p.length * scale;
+                const radius=Math.max(120,Math.min(W,H)*.9)*orbitSize*p.orbit/k;
+                let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+                for (let n = 0; n <= 24; n++) {
+                    const i=n*2;
+                    meteorPoint(p, p.y - length * n / 24, k, radius, cos, sin, i);
+                    minX=Math.min(minX,points[i]);maxX=Math.max(maxX,points[i]);
+                    minY=Math.min(minY,points[i+1]);maxY=Math.max(maxY,points[i+1]);
+                }
+                const width = (.45 + p.depth * .55) * scale;
+                // Include the tip halo, thick glow, twist and antialiasing fringe.
+                // All visible particles retain exactly the same path and paint.
+                const margin=width*5+2;
+                if(maxX < -margin || minX > W+margin || maxY < -margin || minY > H+margin)continue;
                 const ink = p.tone < .22 ? '244,229,184' : p.tone < .65 ? '205,237,255' : '173,216,245';
                 const light = colors.snowAlpha < .7;
                 // Quiet fine arcs stay readable over chat. A few brighter tips
                 // add depth without giving every streak a large circular head.
                 ctx.globalAlpha = opacity * (.36 + p.depth * .46);
-                for (const glow of [true, false]) {
-                    const gradient = ctx.createLinearGradient(head.x, head.y, tail.x, tail.y);
+                for (let pass=0;pass<2;pass++) {
+                    const glow=pass===0;
+                    const gradient = ctx.createLinearGradient(points[0], points[1], points[48], points[49]);
                     const color = tintRGB || (light ? '57,111,156' : ink);
                     const alpha = glow ? .1 : .9;
                     gradient.addColorStop(0, `rgba(${color},${alpha})`);
@@ -165,21 +180,21 @@ export function createEngine(ctx) {
                     gradient.addColorStop(.8, `rgba(${color},${alpha * .25})`);
                     gradient.addColorStop(1, `rgba(${color},0)`);
                     ctx.strokeStyle = gradient;ctx.lineWidth = width * (glow ? 4 : 1);ctx.beginPath();
-                    for (const [n, point] of points.entries()) {
+                    for (let n=0;n<=24;n++) {
                         // Rotation controls a subtle twist in the luminous thread.
                         const twist = glow||curvature===0||motion==='straight' ? 0 : Math.sin(n * .2 - p.age * spinK + p.phase) * width * .25 * Math.min(1, spinK);
-                        if (!n) ctx.moveTo(point.x, point.y);else ctx.lineTo(point.x + twist, point.y);
+                        if (!n) ctx.moveTo(points[0], points[1]);else ctx.lineTo(points[n*2] + twist, points[n*2+1]);
                     }
                     ctx.stroke();
                 }
                 if (p.bright) {
                     const radius = width * 4;
-                    const halo = ctx.createRadialGradient(head.x, head.y, 0, head.x, head.y, radius);
+                    const halo = ctx.createRadialGradient(points[0], points[1], 0, points[0], points[1], radius);
                     halo.addColorStop(0, tintRGB ? `rgba(${tintRGB},.75)` : light ? 'rgba(60,137,171,.55)' : 'rgba(188,255,238,.75)');
                     halo.addColorStop(1, `rgba(${tintRGB || '135,234,243'},0)`);
-                    ctx.fillStyle=halo;ctx.beginPath();ctx.arc(head.x,head.y,radius,0,Math.PI*2);ctx.fill();
+                    ctx.fillStyle=halo;ctx.beginPath();ctx.arc(points[0],points[1],radius,0,Math.PI*2);ctx.fill();
                 }
-                ctx.fillStyle = tintLight || (light ? '#527f9b' : '#eefbff');ctx.beginPath();ctx.arc(head.x,head.y,width * .65,0,Math.PI*2);ctx.fill();
+                ctx.fillStyle = tintLight || (light ? '#527f9b' : '#eefbff');ctx.beginPath();ctx.arc(points[0],points[1],width * .65,0,Math.PI*2);ctx.fill();
             }
             ctx.globalAlpha = 1;
         } else if (['custom', 'lemon', 'petal'].includes(mode)) {
@@ -218,12 +233,14 @@ export function createEngine(ctx) {
 
     return {
         resize(w, h, ratio) {
+            const width=Math.max(1,Math.round(w*ratio)),height=Math.max(1,Math.round(h*ratio));
+            if(w===W && h===H && ratio===dpr && ctx.canvas.width===width && ctx.canvas.height===height)return;
             const changed = Math.abs(w - W) > 40 || Math.abs(h - H) > 80;
             W = w;
             H = h;
             dpr = ratio;
-            ctx.canvas.width = Math.max(1, Math.round(w * ratio));
-            ctx.canvas.height = Math.max(1, Math.round(h * ratio));
+            if(ctx.canvas.width!==width)ctx.canvas.width=width;
+            if(ctx.canvas.height!==height)ctx.canvas.height=height;
             if (changed || !items.length) seed();
         },
         config(next) {

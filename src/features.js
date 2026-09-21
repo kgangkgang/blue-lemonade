@@ -22,7 +22,7 @@ export function syncFeatures(s) {
     syncTypography(on);
     const scriptsRequested=Object.values(SillyTavern.getContext().extensionSettings?.blue_lemonade_scripts?.enabled||{}).some(v=>v===true);
     // The editor can start the runtime before this module has imported it.
-    if(scriptsRequested||modules.scripts)load('scripts','./scripts/runtime.js').then(m=>m?.syncScripts(on&&scriptsRequested));
+    if(scriptsRequested||modules.scripts)load('scripts','./scripts/runtime.js').then(m=>m?.syncScripts(on&&scriptsRequested)).catch(error=>console.error('[Blue Lemonade] 스크립트를 시작하지 못했어요',error));
     const reader = on && !!s.reader?.autoHide;
     if (reader || modules.reader) load('reader', './reader.js').then(m => m?.syncReader(reader));
     const onehand = on && !!s.onehand?.on;
@@ -34,6 +34,9 @@ export function syncFeatures(s) {
     const weatherChat = s.chat?.weather === 'tracker' && !s.deus?.on ? { ...s.chat, weather: 'off' } : s.chat;
     const weather = on && !!weatherChat?.weather && weatherChat.weather !== 'off';
     if (weather || modules.weather) load('weather', './weather.js').then(m => m?.syncWeather(weather, weatherChat));
+    // 4.1.3 ··· 메뉴 버튼 고정 (mes-pins.js)
+    const pins = on && (s.chat?.mesPins?.length || 0) > 0;
+    if (pins || modules.mespins) load('mespins', './mes-pins.js').then(m => m?.syncMesPins(pins, s.chat.mesPins));
     const dem = on && !!s.deus?.on && !!s.chat?.demSkin;
     if (dem || modules.dem) load('dem', './demskin.js').then(m => m?.syncDemSkin(dem, s.chat));
     // 3.5.1 새로고침 첫 화면 파일 (user.css 에 줄이 있을 때만 씀 — splash.js)

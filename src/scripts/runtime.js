@@ -16,8 +16,9 @@ export async function syncScripts(on){
     for(const item of SCRIPT_CATALOG){
         if(current!==revision)return;
         const id=item.id;if(!state.enabled[id])continue;
-        if(legacyConflicts(id).length){stop(id);status(id,'기존 헬퍼 스크립트가 켜져 있어요');continue;}
         try{
+            // 충돌 검사도 이 안에서: 여기서 던지면 예전에는 다섯 개가 전부 '꺼짐'인 채 아무것도 안 돌았다.
+            if(legacyConflicts(id).length){stop(id);status(id,'기존 헬퍼 스크립트가 켜져 있어요');continue;}
             const code=state.overrides[id]?.code??await loadBundledScript(id);
             if(current!==revision)return;
             if(running.get(id)?.code===code)continue;

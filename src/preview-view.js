@@ -16,6 +16,12 @@ export function bindPreviewViews(root, section) {
         viewport.setAttribute('aria-label', '미리보기 · 방향키 또는 드래그로 이동');
         const scene = document.createElement('div'); scene.className = 'bl-view-scene';
         targets.forEach(e => scene.append(e)); viewport.append(scene); box.append(bar, viewport);
+        // 확대 · 축소 줄은 평소엔 접어 둔다 (4.1.2) — 폰에서 설정 줄이 더 보이게. 돋보기로 펴고, 두 손가락 · 휠 · 키보드 확대는 그대로
+        const toolsToggle = document.createElement('button'); toolsToggle.type = 'button'; toolsToggle.className = 'bl-view-toggle';
+        toolsToggle.innerHTML = '<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>'; toolsToggle.setAttribute('aria-label', '미리보기 확대 · 축소 도구');
+        const syncTools = () => { bar.hidden = !state.tools; toolsToggle.setAttribute('aria-expanded', String(!!state.tools)); };
+        toolsToggle.onclick = () => { state.tools = !state.tools; syncTools(); measure(); };
+        syncTools();
         const [minus, plus, reset] = bar.querySelectorAll('button'), output = bar.querySelector('output');
         let width = 0, height = 0, viewHeight = 0, raf = 0;
         const pointers = new Map();
@@ -29,7 +35,7 @@ export function bindPreviewViews(root, section) {
         if (box.classList.contains('salty-prevbox')) {
             const row = document.createElement('div'); row.className = 'bl-view-resize';
             row.innerHTML = '<div class="bl-view-grip" role="separator" tabindex="0" aria-label="미리보기 높이 조절" aria-orientation="horizontal" title="위아래로 끌어서 높이 조절"><i></i></div><button type="button" aria-label="미리보기 기본 높이" title="기본 높이로">↺</button>';
-            box.append(row); grip = row.firstElementChild;
+            box.append(row); grip = row.firstElementChild; row.prepend(toolsToggle);
             grip.onpointerdown = e => { if (e.button !== 0) return; resizeStart = { id: e.pointerId, y: e.clientY, height: viewHeight }; grip.setPointerCapture(e.pointerId); e.preventDefault(); };
             grip.onpointermove = e => { if (resizeStart?.id !== e.pointerId) return; state.height = Math.max(48, Math.min(heightLimit(), resizeStart.height + e.clientY - resizeStart.y)); measure(); e.preventDefault(); };
             grip.onpointerup = grip.onpointercancel = grip.onlostpointercapture = () => { resizeStart = null; };
@@ -41,6 +47,7 @@ export function bindPreviewViews(root, section) {
             };
             row.lastElementChild.onclick = () => { state.height = null; measure(); };
         }
+        if (!toolsToggle.isConnected) { box.classList.add('bl-view-float'); box.append(toolsToggle); }
         function paint() {
             raf = 0;
             const extraX = Math.max(0, width * (state.scale - 1));

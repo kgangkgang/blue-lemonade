@@ -1,5 +1,5 @@
 // 표시만 쉼표로 묶는다. input의 type/value, min/max/step, 저장 이벤트는 바꾸지 않는다.
-import { uiOpenKnown } from './lite.js';
+import { uiOpenKnown, quickOpen } from './lite.js';
 export function groupedNumber(value) {
     const raw = String(value).trim();
     if (!/^[+-]?\d+(?:\.\d+)?$/.test(raw)) return raw;
@@ -97,7 +97,18 @@ export function startNumberDisplay() {
     const onMutations = (list) => { if (!list.every(m => inChat(m.target))) schedule(); };
     // 3.6.1: 서랍 · 팝업이 열려 있나 — lite.js 가 게으른 칸을 켜고 끄려고 이미 지켜보는 값을 쓴다 (못 쓰면 예전처럼 문서에서 찾기).
     // 예전엔 1.5초마다 문서 전체를 querySelector 로 훑었는데, 아무것도 안 열려 있으면 끝까지 훑어 폰 리그 답변 한 번에 0.1초였다
-    const anyOpen = () => uiOpenKnown() ?? !!document.querySelector('.openDrawer, dialog.popup[open]');
+    // 4.1.2: 실리태번의 로딩 화면은 투명한 팝업(dialog.transparent_dialogue_popup)이라 '열린 팝업'으로 쳐졌다 — 시작하는 동안 프레임마다
+    // 숨은 숫자 칸 168개를 전부 다시 쟀다 (폰 리그 시작 한 번에 0.78초, 강제 레이아웃 포함). 그림 크게 보기도 같은 투명 팝업이고 숫자 칸이 없다.
+    const LOADER = 'transparent_dialogue_popup';
+    const anyOpen = () => {
+        const known = uiOpenKnown();
+        if (known === false) return false;
+        // 로딩 화면이 덮고 있는 동안은 보이는 숫자 칸이 없다 — 걷히면 그 변화로 다시 불린다
+        for (const el of document.body.children) if (el.tagName === 'DIALOG' && el.open && el.classList.contains(LOADER)) return false;
+        if (quickOpen(LOADER)) return true;
+        // 옛 팝업(dialog 가 아닌 것)은 lite.js 만 안다
+        return known === true || !!document.querySelector(`.openDrawer, dialog.popup[open]:not(.${LOADER})`);
+    };
     // 굴리는 동안 프레임마다 다시 잴 필요는 없다 (이제 화면 밖 칸도 같이 재 둔다) — 멈춘 뒤 한 번 (2.9.2)
     let scrollTimer = 0;
     const onScroll = (e) => { if (!inChat(e.target)) { clearTimeout(scrollTimer); scrollTimer = setTimeout(schedule, 150); } };
