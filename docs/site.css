@@ -336,3 +336,29 @@ dialog[open]::backdrop{animation:fade .3s ease}
 .topic-tabs .fresh-topic{position:relative}
 .topic-tabs .fresh-topic::after{content:"";position:absolute;top:7px;right:9px;width:7px;height:7px;border-radius:50%;background:var(--lemon);box-shadow:0 0 0 2px var(--tint)}
 .topic-tabs .fresh-topic[aria-selected=true]::after{box-shadow:0 0 0 2px var(--ink)}
+
+/* 다시 쓰기 topic: explainer + tall panel screenshots */
+.rw-guide{margin:0 0 26px;padding:22px 24px;border-radius:22px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line),var(--shadow-sm)}
+.rw-steps{list-style:none;counter-reset:rw;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0;padding:0}
+.rw-steps li{counter-increment:rw;display:grid;gap:5px;align-content:start;padding:14px 16px;border-radius:16px;background:var(--tint)}
+.rw-steps b{font-size:15px;font-weight:700;letter-spacing:-.025em;color:var(--ink)}
+.rw-steps b::before{content:counter(rw);display:inline-grid;place-items:center;width:20px;height:20px;margin-right:8px;border-radius:50%;background:var(--blue);color:#fff;font-size:11.5px;font-weight:700;vertical-align:1px}
+.rw-steps span{font-size:13.5px;line-height:1.6;color:var(--muted)}
+.rw-credit{margin:16px 0 0;padding:12px 16px;border-radius:14px;background:color-mix(in srgb,var(--lemon) 26%,var(--surface));font-size:14px;line-height:1.65;color:var(--ink)}
+.rw-credit a{color:var(--blue);font-weight:700;text-underline-offset:3px;white-space:nowrap}
+.rw-where{margin:10px 2px 0;font-size:13px;color:var(--muted);line-height:1.6}
+.tall-media .media-wrap{align-items:flex-start}
+.tall-media .media-wrap img{height:auto;object-fit:cover;object-position:top}
+.tall-media .media-wrap::after{content:"눌러서 전체 보기";position:absolute;left:50%;bottom:12px;translate:-50% 0;padding:6px 12px;border-radius:999px;background:rgba(17,38,60,.78);color:#fff;font-size:12px;font-weight:650;letter-spacing:-.01em;pointer-events:none}
+.tall-media .media-wrap:has(img[src*="412-rewrite.jpg"])::after{display:none}
+dialog.tall{overflow-y:auto;overscroll-behavior:contain}
+dialog.tall img{max-height:none;width:min(85vw,460px);max-width:100%}
+@media (max-width:760px){.rw-guide{padding:16px}.rw-steps{grid-template-columns:minmax(0,1fr);gap:8px}.rw-credit{font-size:13.5px}.rw-credit a{white-space:normal}}
+
+/* updates on a wide screen: heading + tip on the left, the list fills the right (the 860px list alone looked pushed to the left) */
+@media (min-width:1100px){
+  .updates{display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);grid-template-rows:auto 1fr;column-gap:64px}
+  .updates .section-head{grid-column:1;grid-row:1;margin-bottom:28px}
+  .updates .notice-guide{grid-column:1;grid-row:2;align-self:start;max-width:none;margin:0;position:sticky;top:96px}
+  .updates #notes{grid-column:2;grid-row:1/3;max-width:none}
+}
