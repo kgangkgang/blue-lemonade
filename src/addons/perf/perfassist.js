@@ -4,6 +4,7 @@
 //  2. 닫힌 프롬프트 목록은 열 때 그리기 (promptlist.js)
 //  3. 큰 저장은 뒤에서 보내기 (savesend.js + save-worker.js)
 // 각 기능은 실리태번 쪽 모양(내보내기 · 이벤트 · 메서드)이 없으면 켜지지 않고 원래대로 둔다.
+import { verifyAddonCss } from '../../addon-files-check.js';
 import { pane } from './hub.js';
 import * as extensions from '../../../../../../extensions.js';
 import * as script from '../../../../../../../script.js';
@@ -224,12 +225,9 @@ function buildDrawer() {
     refreshDrawer();
 }
 
-function checkFilesMatch(tries = 5) {
-    const cssVersion = getComputedStyle(document.documentElement).getPropertyValue('--pa-css-version').trim().replace(/["']/g, '');
-    if (cssVersion === VERSION || typeof toastr === 'undefined') return;
-    // 스타일 파일이 아직 안 왔을 뿐일 수 있다 (새로 깐 직후 · 느린 폰) — 값이 빈 동안은 경고하지 않고 다시 본다
-    if (!cssVersion && tries > 0) { setTimeout(() => checkFilesMatch(tries - 1), 3000); return; }
-    toastr.warning(`${TITLE} 파일이 섞였어요 (코드 ${VERSION}, 스타일 ${cssVersion || '예전 것'}). 블루 레몬에이드 업데이트 파일을 확인하고 새로고침해 주세요.`, TITLE, { timeOut: 15000 });
+function checkFilesMatch() {
+    // 기다려 보고 · 스타일을 한 번 다시 받아 보고 · 그래도 다를 때만 한 번 알린다 (src/addon-files-check.js)
+    verifyAddonCss({ folder: 'perf', name: '--pa-css-version', version: VERSION, title: TITLE });
 }
 
 initSettings();

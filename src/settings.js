@@ -259,9 +259,24 @@ function tidyFlags(s) {
         s.chat.demSkin = flag(s.chat.demSkin, false);
         s.chat.demFold = flag(s.chat.demFold, true);
         // 3.3.0 날씨 효과: off | rain | snow | tracker(데우스 트래커 날씨 따라) · 세기 1~3
-        if (!['off', 'rain', 'snow', 'lemon', 'petal', 'meteor', 'custom', 'tracker'].includes(s.chat.weather)) s.chat.weather = 'off';
+        if (!['off', 'rain', 'snow', 'fog', 'sun', 'star', 'firefly', 'rainbow', 'shadow', 'breeze', 'glass', 'water', 'lemon', 'petal', 'meteor', 'custom', 'tracker'].includes(s.chat.weather)) s.chat.weather = 'off';
+        if (!['off', 'rain', 'snow', 'fog', 'sun', 'star', 'firefly', 'rainbow', 'shadow', 'breeze', 'glass', 'water', 'lemon', 'petal', 'meteor'].includes(s.chat.weather2)) s.chat.weather2 = 'off';
+        s.chat.weather2Level = [1, 2, 3].includes(Number(s.chat.weather2Level)) ? Number(s.chat.weather2Level) : 2;
+        // 끌어서 정한 자리 (화면 비율 0~1). 없으면 자동 배치
+        { const spots = s.chat.weatherSpots && typeof s.chat.weatherSpots === 'object' && !Array.isArray(s.chat.weatherSpots) ? s.chat.weatherSpots : {}; const clean = {};
+          for (const [mode, max] of [['shadow', 3], ['rainbow', 1], ['sun', 1]]) { const list = Array.isArray(spots[mode]) ? spots[mode].slice(0, max).map(p => (p && Number.isFinite(Number(p.x)) && Number.isFinite(Number(p.y)) ? { x: Math.max(0, Math.min(1, Number(p.x))), y: Math.max(0, Math.min(1, Number(p.y))) } : null)) : []; if (list.some(Boolean)) clean[mode] = list; }
+          s.chat.weatherSpots = clean; }
+        s.chat.weatherTrackerSkip = Array.isArray(s.chat.weatherTrackerSkip) ? [...new Set(s.chat.weatherTrackerSkip)].filter(mode => ['rain', 'snow', 'fog', 'sun', 'star', 'glass', 'rainbow', 'breeze'].includes(mode)) : []; // 트래커 따라에서 제외할 날씨
         syncWeatherProfile(s.chat);
-        if(!['auto','custom'].includes(s.chat.weatherColorMode))s.chat.weatherColorMode='auto';
+        if(!['auto','custom','gradient'].includes(s.chat.weatherColorMode))s.chat.weatherColorMode='auto';
+        if(!/^#[0-9a-f]{6}$/i.test(s.chat.weatherColor2||''))s.chat.weatherColor2='#f5b8e4';
+        if(!['soft','anime','wisp'].includes(s.chat.weatherFogStyle))s.chat.weatherFogStyle='soft';
+        if(!['shaft','holy','anime','flare'].includes(s.chat.weatherSunStyle))s.chat.weatherSunStyle='shaft';
+        if(!['sky','milky'].includes(s.chat.weatherStarStyle))s.chat.weatherStarStyle='sky';
+        if(!['palm','leaf'].includes(s.chat.weatherShadowStyle))s.chat.weatherShadowStyle='palm';
+        if(!['pool','sea'].includes(s.chat.weatherWaterStyle))s.chat.weatherWaterStyle='pool';
+        if(!['bottom','top','all'].includes(s.chat.weatherWaterArea))s.chat.weatherWaterArea='bottom';
+        if(!['all','bottom','top','both'].includes(s.chat.weatherFogArea))s.chat.weatherFogArea='all';
         if(!/^#[0-9a-f]{6}$/i.test(s.chat.weatherColor||''))s.chat.weatherColor='#91cfff';
         s.chat.weatherLevel = [1, 2, 3].includes(Number(s.chat.weatherLevel)) ? Number(s.chat.weatherLevel) : 2;
         const range = (key, min, max, def) => { const n = Number(s.chat[key]); s.chat[key] = Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : def; };
@@ -269,6 +284,8 @@ function tidyFlags(s) {
         range('weatherSize', 40, 250, 100);
         range('weatherSpeed', 20, 250, 100);
         range('weatherAngle', -45, 45, -9);
+        range('weatherShadowBlur',0,100,35);
+        range('weatherFogStretch',50,300,100); range('weatherFogEdge',0,100,30); range('weatherFogSwell',0,300,100); range('weatherFogDepth',0,200,100);
         range('weatherCurvature',0,100,65); range('weatherOrbitSize',40,240,100);
         if(!['left','right'].includes(s.chat.weatherOrbitDirection))s.chat.weatherOrbitDirection='right';
         range('weatherSway', 0, 300, 100); range('weatherSpin', 0, 300, 100);

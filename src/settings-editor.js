@@ -29,10 +29,19 @@ export function bindEditor(root) {
     });
 }
 
+// 펼쳐 둔 묶음은 창마다가 아니라 통틀어 기억한다 (4.2.8): 설정 창을 닫고 채팅을 잠깐 본 뒤 다시 열면 편집하던 묶음(예: 날씨)이 그대로 펼쳐져 있다. 새로고침 뒤에도 이어진다
+const GROUPS_KEY = 'salty_editor_groups';
+const sharedGroups = new Map(), sharedScroll = new Map();
+try { for (const [route, label] of Object.entries(JSON.parse(localStorage.getItem(GROUPS_KEY) || '{}'))) if (typeof label === 'string') sharedGroups.set(route, label); } catch { /* 저장소를 못 쓰면 이번 화면 동안만 기억한다 */ }
+function rememberGroups() {
+    try { localStorage.setItem(GROUPS_KEY, JSON.stringify(Object.fromEntries([...sharedGroups].filter(([, label]) => typeof label === 'string').slice(-40)))); } catch { /* 위와 같음 */ }
+}
+
 export function selectEditorGroup(root, group, toggle = false) {
     const route = root._editorRoute;
     const open = !(toggle && group.querySelector('.bl-editor-group-toggle').getAttribute('aria-expanded') === 'true');
     root._editorGroups.set(route, open ? group.dataset.group : null);
+    rememberGroups();
     for (const item of root.querySelectorAll('.bl-editor-group')) {
         const expanded = open && item === group;
         item.querySelector('.bl-editor-group-toggle').setAttribute('aria-expanded', String(expanded));
@@ -65,7 +74,7 @@ export function revealEditorTarget(root, target) {
 }
 
 export function arrangeEditor(root, route, title) {
-    root._editorGroups ??= new Map(); root._editorScroll ??= new Map(); root._editorRoute = route;
+    root._editorGroups ??= sharedGroups; root._editorScroll ??= sharedScroll; root._editorRoute = route;
     const section = root.querySelector('.salty-sec'), preview = section.querySelector(':scope > .salty-prevbox');
     const workspace = document.createElement('div'); workspace.className = 'bl-editor-workspace';
     section.before(workspace);

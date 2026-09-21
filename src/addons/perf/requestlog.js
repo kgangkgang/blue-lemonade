@@ -1,6 +1,7 @@
 // 요청 로그 (Request Log)
 // 실리태번과 확장이 보내는 API 요청을 모두 기록한다. 프롬프트·응답·오류를 다시 보고, 토큰과 비용을 날짜·모델별로 모아 본다.
 // 기록은 이 기기의 브라우저(IndexedDB)에만 남는다.
+import { verifyAddonCss } from '../../addon-files-check.js';
 import { eventSource, event_types } from '../../../../../../../script.js';
 import { TITLE, VERSION, FOLDER, initSettings } from './state.js';
 import { installCapture, setGenerationType, clearGenerationType, beginSendTrace, markSend } from './capture.js';
@@ -35,9 +36,8 @@ eventSource.on(event_types.GENERATION_STOPPED, () => clearGenerationType());
 
 // 폰에서 zip을 덧씌우면 예전 파일이 그대로 남는 일이 있다. 코드와 스타일의 판이 다르면 알려 준다.
 function checkFilesMatch() {
-    const cssVersion = getComputedStyle(document.documentElement).getPropertyValue('--rl-css-version').trim().replace(/["']/g, '');
-    if (cssVersion === VERSION) return;
-    toast('warning', `${TITLE} 파일이 섞였어요 (코드 ${VERSION}, 스타일 ${cssVersion || '예전 것'}). 블루 레몬에이드 업데이트 파일을 확인하고 새로고침해 주세요.`, { timeOut: 15000 });
+    // 기다려 보고 · 스타일을 한 번 다시 받아 보고 · 그래도 다를 때만 한 번 알린다 (src/addon-files-check.js)
+    verifyAddonCss({ folder: 'perf', name: '--rl-css-version', version: VERSION, title: TITLE });
 }
 
 // 슬래시 명령: /request-log 로도 연다

@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build a5f518eed7f5) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build d8fa800f1914) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -15988,6 +15988,9 @@ body.salty .salty-preview > canvas.bl-weather-pv {
   height: 100%;
   pointer-events: none;
 }
+body.salty .salty-preview.bl-weather-pv-on {
+  overflow: hidden;
+}
 body.salty .salty-preview.bl-weather-pv-on > .mes {
   position: relative;
   z-index: 1;
@@ -16004,6 +16007,58 @@ body.salty .salty-preview.bl-weather-pv-on > .mes {
 .salty-mask-item .salty-weather-thumb {
   width: 36px;
   height: 36px;
+}
+#bl-weather-place {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  touch-action: none;
+  background: rgba(0, 0, 0, .12);
+}
+#bl-weather-place .bl-weather-place-bar {
+  position: absolute;
+  left: 50%;
+  bottom: 96px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 24px);
+  padding: 8px 10px 8px 14px;
+  border-radius: 999px;
+  background: var(--salty-raised, #2c2e32);
+  color: var(--salty-text, #fff);
+  font-size: 13px;
+  white-space: nowrap;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .35);
+}
+#bl-weather-place .bl-weather-place-bar button {
+  border: 0;
+  border-radius: 999px;
+  padding: 7px 12px;
+  background: var(--salty-shade, rgba(255, 255, 255, .08));
+  color: inherit;
+  font: inherit;
+}
+#bl-weather-place .bl-weather-place-bar button[data-place="done"] {
+  background: var(--salty-accent, #6ab3ff);
+  color: var(--salty-on-accent, #fff);
+  font-weight: 700;
+}
+#bl-weather-place .bl-weather-place-dot {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--salty-accent, #6ab3ff);
+  color: var(--salty-on-accent, #fff);
+  font-weight: 700;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, .85), 0 4px 14px rgba(0, 0, 0, .4);
+  touch-action: none;
+  cursor: grab;
 }
 /* css/33-panel-columns.css */
 @media (max-width: 1000px) {
@@ -17574,6 +17629,17 @@ dialog.popup.bl-roomy-dialog { width:calc(100dvw - 12px) !important; max-width:c
 dialog.popup.bl-roomy-dialog .popup-body { margin-left:0 !important; margin-right:0 !important; padding-left:0 !important; padding-right:0 !important; scrollbar-gutter:auto !important; }
 dialog.popup.bl-roomy-dialog .popup-content { margin-left:0 !important; margin-right:0 !important; padding:2px 0 4px !important; scrollbar-gutter:stable both-edges !important; }
 }
+.salty-panel .bl-weather-cats,.salty-panel .bl-weather-slots{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,5.2em),1fr));gap:5px;padding:5px;margin-bottom:6px;}
+.salty-panel .bl-weather-cats>button,.salty-panel .bl-weather-slots>button{min-width:0;width:100%;white-space:nowrap!important;padding:9px 5px;}
+.salty-panel .bl-weather-cats>button.open{box-shadow:inset 0 0 0 1.5px var(--salty-accent);}
+.salty-panel .bl-weather-mix{margin-top:8px;}
+.salty-panel .bl-weather-skip-fold{margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;}
+.salty-panel .bl-weather-skip{margin-top:6px;}
+.salty-panel .bl-spot-row{display:flex;gap:14px;align-items:flex-start;}
+.salty-panel .bl-spot-pad{position:relative;flex:none;width:min(42%,150px);border-radius:14px;background:var(--salty-shade);box-shadow:inset 0 0 0 1px var(--salty-line);touch-action:none;overflow:visible;}
+.salty-panel .bl-spot{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;padding:0;border:0;border-radius:50%;background:var(--salty-raised);color:var(--salty-text);font-size:12px;font-weight:700;box-shadow:0 0 0 2px var(--salty-muted),0 2px 8px rgba(0,0,0,.3);touch-action:none;cursor:grab;}
+.salty-panel .bl-spot.on{background:var(--salty-accent);color:var(--salty-on-accent,#fff);box-shadow:0 0 0 2px var(--salty-accent),0 2px 8px rgba(0,0,0,.3);}
+.salty-panel .bl-spot-side{min-width:0;flex:1;display:grid;gap:8px;}
 /* css/53-script-tools.css */
 .salty-panel .bl-script-layout { display:grid;grid-template-columns:minmax(0,1fr);gap:16px; }
 .salty-panel .bl-script-list,.salty-panel .bl-script-editor,.salty-panel .bl-theme-update { min-width:0; }

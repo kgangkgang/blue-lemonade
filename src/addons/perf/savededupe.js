@@ -9,6 +9,7 @@
 // [1.1.1] 답을 받는 동안 채팅 바꾸기를 막고, 스트리밍 답의 끝 저장 · 끊긴 스트림의 답을 저장한 뒤 넘긴다 (switchguard.js).
 // [1.1.2] 누름이 아닌 길도 막는다 (switchcode.js): 확장 · 스크립트의 getContext().openCharacterChat · openGroupChat,
 //         jQuery .trigger('click'), 그리고 reloadCurrentChat (정규식 편집기 · 페르소나 · 사용자 설정 · /chat-reload …).
+import { verifyAddonCss } from '../../addon-files-check.js';
 import { pane } from './hub.js';
 import * as extensions from '../../../../../../extensions.js';
 import * as script from '../../../../../../../script.js';
@@ -668,9 +669,8 @@ function buildDrawer() {
 }
 
 function checkFilesMatch() {
-    const cssVersion = getComputedStyle(document.documentElement).getPropertyValue('--sv-css-version').trim().replace(/["']/g, '');
-    if (cssVersion === VERSION || typeof toastr === 'undefined') return;
-    toastr.warning(`${TITLE} 파일이 섞였어요 (코드 ${VERSION}, 스타일 ${cssVersion || '예전 것'}). 블루 레몬에이드 업데이트 파일을 확인하고 새로고침해 주세요.`, TITLE, { timeOut: 15000 });
+    // 기다려 보고 · 스타일을 한 번 다시 받아 보고 · 그래도 다를 때만 한 번 알린다 (src/addon-files-check.js)
+    verifyAddonCss({ folder: 'perf', name: '--sv-css-version', version: VERSION, title: TITLE });
 }
 
 initSettings();

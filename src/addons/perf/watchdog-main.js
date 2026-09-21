@@ -3,6 +3,7 @@
 // (멈춤을 눌러야 풀림). 답이 시작된 뒤 정한 시간 동안 조각이 하나도 안 오면 연결이 끊긴 것으로 보고 스트림을 끝낸다.
 // [1.1.1] 받은 글이 있으면 스트림을 끝으로 닫아 멈춤 단추와 같은 끝 처리를 탄다 — 받은 글이 다 남고, 스와이프 · 이어쓰기도
 // 다시 쓰기 · 번역 · 장기 기억 · 저장을 거치고, 다시 쓰기는 사용자 멈춤이 아니니 끊긴 씬 플랜을 리롤한다.
+import { verifyAddonCss } from '../../addon-files-check.js';
 import { pane } from './hub.js';
 import * as extensions from '../../../../../../extensions.js';
 import * as script from '../../../../../../../script.js';
@@ -141,9 +142,8 @@ function buildDrawer() {
 }
 
 function checkFilesMatch() {
-    const cssVersion = getComputedStyle(document.documentElement).getPropertyValue('--sw-css-version').trim().replace(/["']/g, '');
-    if (cssVersion === VERSION || typeof toastr === 'undefined') return;
-    toastr.warning(`${TITLE} 파일이 섞였어요 (코드 ${VERSION}, 스타일 ${cssVersion || '예전 것'}). 블루 레몬에이드 업데이트 파일을 확인하고 새로고침해 주세요.`, TITLE, { timeOut: 15000 });
+    // 기다려 보고 · 스타일을 한 번 다시 받아 보고 · 그래도 다를 때만 한 번 알린다 (src/addon-files-check.js)
+    verifyAddonCss({ folder: 'perf', name: '--sw-css-version', version: VERSION, title: TITLE });
 }
 
 initSettings();

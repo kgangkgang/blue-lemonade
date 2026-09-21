@@ -1318,14 +1318,29 @@ function tabChat(s, sub) {
             ${s.chat.qrScroll === 'y' ? slider('chat.qrRows', '보이는 줄', 1, 4, 1, 2) : ''}
         </div>
         ${cap('날씨')}<div class="salty-group">
-            ${stack('채팅 뒤 효과', weatherSeg(s), weatherMode(s) === 'tracker' ? '데우스 트래커 날씨가 비 · 눈이면 내려요' : '')}
+            ${stack('채팅 뒤 효과', weatherSeg(s), weatherMode(s) === 'tracker' ? '트래커 날씨를 읽어 비 · 눈 · 안개 · 햇살 · 밤의 별을 보여요. 안개비 · 여우비처럼 둘이면 겹쳐요' : '')}
             ${weatherMode(s) === 'custom' ? weatherImageControls(s) : ''}
-            ${weatherMode(s) !== 'off' ? stack('세기', seg('chat.weatherLevel', [[1, '약하게'], [2, '보통'], [3, '강하게']])) : ''}
+            ${!['off', 'tracker'].includes(weatherMode(s)) ? stack('세기', seg('chat.weatherLevel', [[1, '약하게'], [2, '보통'], [3, '강하게']])) : ''}
+            ${weatherMode(s) === 'tracker' ? `<p class="salty-note">세기 · 색 · 모양은 그 날씨를 직접 골랐을 때 맞춰 둔 값을 그대로 써요. 비는 비대로, 눈은 눈대로요.</p>
+            <button type="button" class="salty-btn bl-weather-skip-fold" data-act="weather-skip-fold" aria-expanded="${!!ui.weatherSkipOpen}">제외할 날씨${(s.chat.weatherTrackerSkip || []).length ? ` · ${s.chat.weatherTrackerSkip.length}` : ''} <i class="fa-solid fa-chevron-${ui.weatherSkipOpen ? 'up' : 'down'}"></i></button>
+            ${ui.weatherSkipOpen ? `<div class="salty-seg bl-weather-choices bl-weather-skip">${[['rain', '비'], ['snow', '눈'], ['fog', '안개'], ['sun', '햇살'], ['star', '별'], ['glass', '유리 빗방울'], ['rainbow', '무지개'], ['breeze', '흩날림']].map(([value, label]) => `<button data-act="weather-skip" data-value="${value}" class="${(s.chat.weatherTrackerSkip || []).includes(value) ? 'on' : ''}">${label}</button>`).join('')}</div><p class="salty-note">고른 날씨는 트래커에 나와도 화면에 그리지 않아요.</p>` : ''}` : ''}
+            ${weatherMixing(s) && s.chat.weather2 && s.chat.weather2 !== 'off' ? stack('둘째 날씨 세기', seg('chat.weather2Level', [[1, '약하게'], [2, '보통'], [3, '강하게']], 2), '둘째 날씨의 세부 값은 그 날씨를 첫째로 골랐을 때 맞춰 둔 값을 써요') : ''}
         </div>
-        ${weatherMode(s) !== 'off' ? `<div class="salty-group">
+        ${!['off', 'tracker'].includes(weatherMode(s)) ? `<div class="salty-group">
             <p class="salty-note">지금 선택한 날씨에만 적용돼요. 날씨마다 값을 따로 기억해요.</p>
-            ${stack('날씨 색',seg('chat.weatherColorMode',[['auto','기본 색'],['custom','직접 고르기']],'auto'),'날씨마다 따로 저장해요. 기본 색으로 돌아가면 원래 색을 사용해요.')}
+            ${stack('날씨 색',seg('chat.weatherColorMode',[['auto','기본 색'],['custom','직접 고르기'],['gradient','그라데이션']],'auto'),'날씨마다 따로 저장해요. 기본 색으로 돌아가면 원래 색을 사용해요.')}
             ${s.chat.weatherColorMode==='custom'?`<div class="salty-row"><span>입자 색</span><input type="color" data-color-path="chat.weatherColor" value="${esc(s.chat.weatherColor)}" aria-label="날씨 입자 색"></div><p class="salty-note">커스텀 그림은 투명한 부분을 유지하고 선택한 색으로 물들여요.</p>`:''}
+            ${s.chat.weatherColorMode==='gradient'?`<div class="salty-row"><span>첫 색</span><input type="color" data-color-path="chat.weatherColor" value="${esc(s.chat.weatherColor)}" aria-label="날씨 첫 색"></div><div class="salty-row"><span>둘째 색</span><input type="color" data-color-path="chat.weatherColor2" value="${esc(s.chat.weatherColor2)}" aria-label="날씨 둘째 색"></div><p class="salty-note">비 · 눈은 위에서 아래로 물들고, 나머지는 입자마다 두 색 사이의 색을 띠어요.</p>`:''}
+            ${weatherSpotPad(s)}
+            ${s.chat.weather==='shadow'?`${stack('그림자 모양',seg('chat.weatherShadowStyle',[['palm','야자 잎'],['leaf','나뭇잎 가지']],'palm'))}${slider('chat.weatherShadowBlur','흐리기',0,100,1,35)}<p class="salty-note">세기는 가지 수, 속도 · 흔들림은 살랑임, 각도는 가지가 기운 정도, 회전은 느린 출렁임이에요.</p>`:''}
+            ${s.chat.weather==='water'?`${stack('물결 모양',seg('chat.weatherWaterStyle',[['pool','수영장 물그물'],['sea','바다 물빛']],'pool'))}${stack('물결 위치',seg('chat.weatherWaterArea',[['bottom','아래쪽'],['top','위쪽'],['all','전체']],'bottom'))}<p class="salty-note">크기는 물그물 칸, 속도 · 흔들림은 일렁임, 각도는 기울기, 회전은 반짝임이에요. 움직임을 '빠르게 쏟아지기'로 두면 옆으로 흘러요.</p>`:''}
+            ${s.chat.weather==='rainbow'?`<p class="salty-note">각도는 무지개의 자리, 크기는 띠의 굵기, 회전은 좌우로 흔들리는 빠르기예요. 세기를 강하게 하면 쌍무지개가 돼요.</p>`:''}
+            ${s.chat.weather==='glass'?`<p class="salty-note">회전은 물방울이 흘러내리기 시작하는 빈도, 속도는 흘러내리는 빠르기, 각도는 흐르는 방향이에요. 움직임을 '곧게'로 두면 맺힌 채 멈춰 있어요.</p>`:''}
+            ${s.chat.weather==='breeze'?`<p class="salty-note">각도는 바람 방향, 회전은 잎이 도는 빠르기예요.</p>`:''}
+            ${s.chat.weather==='star'?`${stack('별 모양',seg('chat.weatherStarStyle',[['sky','반짝이는 별'],['milky','은하수']],'sky'))}<p class="salty-note">속도는 반짝이는 빠르기, 흔들림은 반짝임의 깊이, 각도는 하늘이 흐르는 방향(은하수는 띠가 누운 방향), 회전은 십자 빛이 도는 빠르기예요. 가끔 별똥별이 지나가요. 유성과 겹치면 잘 어울려요.</p>`:''}
+            ${s.chat.weather==='firefly'?`<p class="salty-note">속도는 나는 빠르기, 흔들림은 헤매는 정도, 각도는 쏠리는 방향, 회전은 깜빡이는 빠르기예요.</p>`:''}
+            ${s.chat.weather==='sun'?`${stack('햇살 모양',seg('chat.weatherSunStyle',[['shaft','빛줄기'],['holy','성스러운 빛'],['anime','애니풍'],['flare','렌즈 플레어']],'shaft'))}<p class="salty-note">각도는 빛이 드는 쪽, 크기는 빛의 굵기, 속도 · 흔들림은 일렁임이에요. 렌즈 플레어는 육각 빛번짐이 줄지어 놓여요.</p>`:''}
+            ${s.chat.weather==='fog'?`${stack('안개 모양',seg('chat.weatherFogStyle',[['soft','뭉게뭉게'],['anime','애니풍 구름 띠'],['wisp','실안개']],'soft'))}${stack('안개 위치',seg('chat.weatherFogArea',[['all','전체'],['bottom','아래쪽'],['top','위쪽'],['both','위아래']],'all'))}${slider('chat.weatherFogStretch','길이',50,300,1,100)}${slider('chat.weatherFogEdge','가장자리 선명하게',0,100,1,30)}${slider('chat.weatherFogSwell','부풀기',0,300,1,100)}${slider('chat.weatherFogDepth','깊이감',0,200,1,100)}<p class="salty-note">각도는 흐르는 방향(왼쪽 · 오른쪽)만 정해요.</p>`:''}
             ${slider('chat.weatherOpacity', '투명도', 10, 100, 1, 100)}
             ${slider('chat.weatherSize', '크기', 40, 250, 1, 100)}
             ${slider('chat.weatherSpeed', '속도', 20, 250, 1, 100)}
@@ -1383,12 +1398,38 @@ function weatherMode(s) {
     return mode === 'tracker' && !s.deus?.on ? 'off' : mode;
 }
 
-/** 날씨 고르기 — 트래커 따라는 데우스 호환을 켰을 때만 */
+/** 날씨 자리 (4.2.8): 화면을 줄인 네모 안에서 점을 끌어 옮긴다 — 나무 그림자는 가지마다, 무지개는 꼭대기, 햇살은 빛의 자리. 놓을 때 저장한다 */
+const SPOT_DEFAULTS = { shadow: [[0, 0], [1, .02], [0, .86]], rainbow: [[.55, .1]], sun: [[.5, 0]] };
+function weatherSpotPad(s) {
+    const mode = weatherMode(s);
+    if (!SPOT_DEFAULTS[mode] || (mode === 'sun' && !['holy', 'flare', 'shaft', 'anime'].includes(s.chat.weatherSunStyle))) return '';
+    const count = mode === 'shadow' ? Math.max(1, Number(s.chat.weatherLevel) || 2) : 1, saved = s.chat.weatherSpots?.[mode] || [];
+    const sheld = document.getElementById('sheld'), ratio = sheld?.clientWidth > 0 ? Math.max(1, Math.min(2.3, sheld.clientHeight / sheld.clientWidth)) : 1.9;
+    const dots = SPOT_DEFAULTS[mode].slice(0, count).map(([dx, dy], i) => { const at = saved[i] || { x: dx, y: dy }; return `<button type="button" class="bl-spot${saved[i] ? ' on' : ''}" data-spot="${i}" style="left:${(at.x * 100).toFixed(1)}%;top:${(at.y * 100).toFixed(1)}%" aria-label="자리 ${i + 1}">${count > 1 ? i + 1 : ''}</button>`; }).join('');
+    return stack('자리', `<div class="bl-spot-row"><div class="bl-spot-pad" data-spot-mode="${mode}" style="aspect-ratio:1/${ratio.toFixed(2)}">${dots}</div>
+        <div class="bl-spot-side"><p class="salty-note">네모가 채팅 화면이에요. 점을 끌어 ${mode === 'shadow' ? '가지가 뻗어 나오는 자리' : mode === 'rainbow' ? '무지개 꼭대기' : '빛이 드는 자리'}를 옮겨요.</p>${saved.length ? '<button type="button" class="salty-btn" data-act="weather-spot-reset">자동 배치로</button>' : ''}<button type="button" class="salty-btn" data-act="weather-spot-place">채팅 화면에서 정하기</button></div></div>`);
+}
+
+/** 날씨 고르기 (4.2.8): 종류가 많아져 카테고리로 나눴다. '날씨 혼합하기'를 켜면 첫째 · 둘째 칸을 골라 가며 두 날씨를 겹친다 (에이드 혼합하기와 같은 식) */
+const WEATHER_CATS = [
+    ['sky', '하늘', [['rain', '비'], ['snow', '눈'], ['fog', '안개'], ['sun', '햇살'], ['rainbow', '무지개'], ['star', '별'], ['meteor', '유성']]],
+    ['nature', '자연', [['petal', '꽃잎'], ['lemon', '레몬'], ['firefly', '반딧불이'], ['breeze', '흩날림'], ['shadow', '나무 그림자']]],
+    ['water', '물 · 유리', [['glass', '유리 빗방울'], ['water', '물결']]],
+    ['etc', '그 밖', [['custom', '내 그림'], ['tracker', '트래커 따라']]],
+];
+const weatherLabel = value => WEATHER_CATS.flatMap(cat => cat[2]).find(item => item[0] === value)?.[1] || '없음';
+const weatherMixing = s => !['off', 'tracker'].includes(weatherMode(s)) && (ui.weatherMix || (s.chat.weather2 && s.chat.weather2 !== 'off'));
 function weatherSeg(s) {
-    const options = [['off', '끔'], ['rain', '비'], ['snow', '눈'], ['lemon', '레몬'], ['petal', '꽃잎'], ['meteor', '유성'], ['custom', '내 그림'], ...(s.deus?.on ? [['tracker', '트래커 따라']] : [])];
-    const current = weatherMode(s);
-    return `<div class="salty-seg bl-weather-choices">${options.map(([value, label]) =>
-        `<button data-act="seg" data-path="chat.weather" data-value="${value}" class="${current === value ? 'on' : ''}">${label}</button>`).join('')}</div>`;
+    const first = weatherMode(s), mixing = weatherMixing(s), slot = mixing && ui.weatherSlot === 2 ? 2 : 1;
+    const path = slot === 2 ? 'chat.weather2' : 'chat.weather', current = slot === 2 ? (s.chat.weather2 || 'off') : first;
+    const allowed = ([value]) => (value !== 'tracker' || s.deus?.on) && (slot === 1 || (!['custom', 'tracker'].includes(value) && value !== first));
+    const cats = WEATHER_CATS.map(([id, label, items]) => [id, label, items.filter(allowed)]).filter(cat => cat[2].length);
+    const cat = cats.find(c => c[0] === ui.weatherCat) || cats.find(c => c[2].some(item => item[0] === current)) || cats[0];
+    const button = (value, label) => `<button data-act="seg" data-path="${path}" data-value="${value}" class="${current === value ? 'on' : ''}">${label}</button>`;
+    return `${mixing ? `<div class="salty-seg bl-weather-slots"><button data-act="weather-slot" data-slot="1" class="${slot === 1 ? 'on' : ''}">1 · ${weatherLabel(first)}</button><button data-act="weather-slot" data-slot="2" class="${slot === 2 ? 'on' : ''}">2 · ${weatherLabel(s.chat.weather2)}</button></div>` : ''}
+        <div class="salty-seg bl-weather-cats">${button('off', slot === 2 ? '없음' : '끔')}${cats.map(([id, label]) => `<button data-act="weather-cat" data-cat="${id}" class="${cat[0] === id && current !== 'off' ? 'on' : cat[0] === id ? 'open' : ''}">${label}</button>`).join('')}</div>
+        <div class="salty-seg bl-weather-choices">${cat[2].map(([value, label]) => button(value, label)).join('')}</div>
+        ${!['off', 'tracker'].includes(first) ? `<button type="button" class="salty-btn bl-weather-mix" data-act="weather-mix">${mixing ? '혼합 끄기' : '날씨 혼합하기'}</button>` : ''}`;
 }
 
 // ───────── 프롬프트 (3.4.0) ─────────
@@ -1992,6 +2033,29 @@ function bind(root) {
                     update(st => setPath(st, path, typeof current === 'number' ? Number(value) : value));
                     break;
                 }
+                case 'weather-spot-place': {
+                    // 설정 창을 닫고 실제 채팅 화면 위에서 점을 끌게 한다. '완료'를 누르면 설정 창이 다시 열린다
+                    const mode = weatherMode(getSettings()), count = mode === 'shadow' ? Math.max(1, Number(getSettings().chat.weatherLevel) || 2) : 1;
+                    const weather = await import('./weather.js');
+                    root.querySelector('[data-act="panel-close"]')?.click();
+                    weather.placeWeatherSpots(mode, SPOT_DEFAULTS[mode].slice(0, count), () => window.Salty?.openPopup?.());
+                    break;
+                }
+                case 'weather-spot-reset': { const mode = weatherMode(getSettings()); update((st) => { const spots = { ...(st.chat.weatherSpots || {}) }; delete spots[mode]; st.chat.weatherSpots = spots; }); break; }
+                case 'weather-skip-fold': ui.weatherSkipOpen = !ui.weatherSkipOpen; refreshPanels(); break;
+                case 'weather-skip': {
+                    const mode = el.dataset.value;
+                    update((st) => { const list = st.chat.weatherTrackerSkip || []; st.chat.weatherTrackerSkip = list.includes(mode) ? list.filter(item => item !== mode) : [...list, mode]; });
+                    break;
+                }
+                case 'weather-cat': ui.weatherCat = el.dataset.cat; refreshPanels(); break;
+                case 'weather-slot': ui.weatherSlot = el.dataset.slot === '2' ? 2 : 1; ui.weatherCat = ''; refreshPanels(); break;
+                case 'weather-mix': {
+                    // 켜면 둘째 칸으로 가서 바로 고르게 하고, 끄면 둘째 날씨를 없앤다
+                    if (weatherMixing(getSettings())) { ui.weatherMix = false; ui.weatherSlot = 1; ui.weatherCat = ''; if (getSettings().chat.weather2 !== 'off') update(st => setPath(st, 'chat.weather2', 'off')); else refreshPanels(); }
+                    else { ui.weatherMix = true; ui.weatherSlot = 2; ui.weatherCat = ''; refreshPanels(); }
+                    break;
+                }
                 case 'pvkind': {
                     ui.previewKind = el.dataset.kind === 'cut' ? 'cut' : 'photo';
                     refreshPanels();
@@ -2309,6 +2373,22 @@ function bind(root) {
     });
 
     // 숫자 칸에서 Enter = 입력 확정 (팝업의 Enter 닫기로 넘어가지 않게)
+    // 날씨 자리 점 끌기: 끄는 동안은 점만 움직이고, 놓을 때 저장한다 (저장하면 화면이 다시 그려져 끌던 점이 바뀌므로)
+    root.addEventListener('pointerdown', (event) => {
+        const dot = event.target.closest?.('.bl-spot'), pad = dot?.parentElement;
+        if (!dot || !pad) return;
+        event.preventDefault(); event.stopPropagation();
+        try { dot.setPointerCapture(event.pointerId); } catch { /* 없어도 끌린다 */ }
+        let at = null;
+        const move = (e) => { const rect = pad.getBoundingClientRect(); at = { x: Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)), y: Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height)) }; dot.style.left = `${at.x * 100}%`; dot.style.top = `${at.y * 100}%`; };
+        const end = () => {
+            dot.removeEventListener('pointermove', move); dot.removeEventListener('pointerup', end); dot.removeEventListener('pointercancel', end);
+            if (!at) return;
+            const mode = pad.dataset.spotMode, index = Number(dot.dataset.spot), spot = { x: Math.round(at.x * 1000) / 1000, y: Math.round(at.y * 1000) / 1000 };
+            update((st) => { const spots = { ...(st.chat.weatherSpots || {}) }, list = [...(spots[mode] || [])]; const base = SPOT_DEFAULTS[mode]; for (let i = 0; i < index; i++) list[i] ??= { x: base[i][0], y: base[i][1] }; list[index] = spot; spots[mode] = list; st.chat.weatherSpots = spots; });
+        };
+        dot.addEventListener('pointermove', move); dot.addEventListener('pointerup', end); dot.addEventListener('pointercancel', end);
+    });
     root.addEventListener('keydown', (event) => {
         if (event.key !== 'Enter' || !event.target.matches('input[data-num]')) return;
         event.preventDefault();

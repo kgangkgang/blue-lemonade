@@ -1,4 +1,5 @@
 // 북마크 — 채팅 메시지 북마크. 단독 확장(chat-bookmarks)의 코드를 블루 레몬에이드 애드온으로 옮긴 것 (설정 칸 chaekgalpi · 자료 chat_metadata.favorites 는 그대로라 서로 이어진다)
+import { verifyAddonCss } from '../../addon-files-check.js';
 import { eventSource, event_types } from '../../../../../../../script.js';
 import { VERSION, initSettings, hooks, applyColors, colorsFor, currentChatKey, iconName, settings, themeColors } from './state.js';
 import { currentRecord, bookmarkAt, addBookmark, removeBookmark, syncAnchors } from './data.js';
@@ -275,12 +276,7 @@ jQuery(() => {
 
     // 폰 파일 앱은 압축을 풀 때 덮어쓰지 않고 'style (1).css'처럼 따로 저장해서 예전 파일이 남곤 한다.
     // style.css의 버전 표시가 코드와 다르면 알려 준다.
-    setTimeout(() => {
-        const cssVersion = getComputedStyle(document.documentElement).getPropertyValue('--cg-css-version').trim().replace(/["']/g, '');
-        if (cssVersion !== VERSION) {
-            toastr.warning(`북마크 파일이 섞였어요 (코드 ${VERSION}, 스타일 ${cssVersion || '예전 것'}). extensions/blue-lemonade 폴더를 지우고 새 zip을 다시 풀어 주세요.`, '북마크', { timeOut: 15000 });
-        }
-    }, 2000);
+    verifyAddonCss({ folder: 'bookmarks', name: '--cg-css-version', version: VERSION, title: '북마크' });
 
     // 이전 확장이 같이 켜져 있으면 아이콘이 두 개가 되니 알려 준다 (데이터는 같아서 그대로 이어진다).
     setTimeout(() => {

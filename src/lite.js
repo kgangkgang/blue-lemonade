@@ -255,6 +255,37 @@ export function startMenuOpenMark() {
     const syncChat = () => chat.classList.toggle('bl-mes-menu-open', !!chat.querySelector(':scope > .mes.bl-menu-open'));
     chat.querySelectorAll('.extraMesButtons').forEach(sync);
     syncChat();
+    // 4.2.8 '··· 버튼이 아예 없고 버튼들이 늘 펼쳐져 있는' 환경: 다른 CSS(확장 · 커스텀 CSS · 옛 테마 조각)가 버튼 칸을 늘 보이게 하고 ··· 를 숨긴 경우다.
+    // 실리태번의 '메시지 작업 확장'과 같은 모습인데 body 에 그 표시(expandMessageActions)가 없어서, 테마는 그 칸을 '떠 있는 메뉴'로 그렸고 닫을 방법도 없이 채팅을 가렸다.
+    // 눌러서 연 흔적(.visible · 인라인 display)이 없는데도 보이고 있으면 늘 펼침으로 보고, 실리태번과 같은 표시를 달아 이름 줄 아래 한 줄로 그린다.
+    const detectForced = () => {
+        const body = document.body, menu = chat.querySelector(':scope > .mes:last-of-type .mes_buttons > .extraMesButtons');
+        if (!menu || document.getElementById('expandMessageActions')?.checked) { body.classList.remove('bl-forced-expand'); return; }
+        const mine = body.classList.contains('bl-forced-expand');
+        if (mine) body.classList.remove('expandMessageActions'); // 내가 단 표시를 잠깐 떼고 잰다 (같은 태스크 안이라 화면에는 안 보인다)
+        const forced = !menu.classList.contains('visible') && !/display/.test(menu.getAttribute('style') || '') && getComputedStyle(menu).display !== 'none';
+        body.classList.toggle('bl-forced-expand', forced);
+        if (forced) body.classList.add('expandMessageActions');
+    };
+    for (const ms of [1500, 5000]) setTimeout(detectForced, ms);
+    try { const { eventSource, event_types } = SillyTavern.getContext(); eventSource.on(event_types.CHAT_CHANGED, () => setTimeout(detectForced, 1200)); } catch { /* 이벤트를 못 걸면 시작할 때 잰 값만 쓴다 */ }
+    // 4.2.8 바깥을 눌러도 메뉴가 안 닫히는 환경(예전 실리태번은 ··· 를 누르면 버튼 칸을 열어 두기만 하고 닫지 않는다 · 닫는 애니메이션이 끝나지 않는 폰)에서는
+    // 테마가 이 칸을 떠 있는 메뉴로 그리기 때문에 메뉴가 채팅을 가린 채 남았다. 실리태번에게 먼저 맡기고, 0.45초 뒤에도 열려 있으면 테마가 닫는다.
+    document.addEventListener('click', (event) => {
+        if (document.body.classList.contains('expandMessageActions') || event.target?.closest?.('.extraMesButtons, .extraMesButtonsHint')) return;
+        const open = chat.querySelectorAll('.extraMesButtons.visible, .extraMesButtons[style*="display: flex"], .extraMesButtons[style*="display:flex"]');
+        if (!open.length) return;
+        setTimeout(() => {
+            for (const menu of open) {
+                if (!menu.isConnected || (!menu.classList.contains('visible') && getComputedStyle(menu).display === 'none')) continue;
+                menu.classList.remove('visible'); menu.style.display = 'none'; menu.style.opacity = '';
+                const hint = menu.parentElement?.querySelector(':scope > .extraMesButtonsHint');
+                if (hint) { hint.style.display = ''; hint.style.opacity = ''; }
+                sync(menu);
+            }
+            syncChat();
+        }, 450);
+    }, true);
     new MutationObserver((list) => {
         let menu = false;
         for (const m of list) if (m.target.classList?.contains('extraMesButtons')) { sync(m.target); menu = true; }

@@ -1,5 +1,5 @@
-export const WEATHER_MODES=['rain','snow','lemon','petal','meteor','custom','tracker'];
-export const WEATHER_FIELDS=['weatherLevel','weatherOpacity','weatherSize','weatherSpeed','weatherAngle','weatherMotion','weatherSway','weatherSpin','weatherCurvature','weatherOrbitSize','weatherOrbitDirection','weatherColorMode','weatherColor'];
+export const WEATHER_MODES=['rain','snow','fog','sun','star','firefly','rainbow','shadow','breeze','glass','water','lemon','petal','meteor','custom','tracker'];
+export const WEATHER_FIELDS=['weatherLevel','weatherOpacity','weatherSize','weatherSpeed','weatherAngle','weatherMotion','weatherSway','weatherSpin','weatherCurvature','weatherOrbitSize','weatherOrbitDirection','weatherColorMode','weatherColor','weatherColor2','weatherShadowStyle','weatherShadowBlur','weatherWaterStyle','weatherWaterArea','weatherSunStyle','weatherStarStyle','weatherFogStyle','weatherFogArea','weatherFogStretch','weatherFogEdge','weatherFogSwell','weatherFogDepth'];
 const take=chat=>Object.fromEntries(WEATHER_FIELDS.map(key=>[key,chat[key]]));
 export function syncWeatherProfile(chat){
     if(!chat.weatherProfiles||typeof chat.weatherProfiles!=='object'||Array.isArray(chat.weatherProfiles))chat.weatherProfiles={};

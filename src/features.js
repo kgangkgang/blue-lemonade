@@ -17,7 +17,7 @@ const load = (name, url) => (modules[name] ??= import(url).catch((error) => {
 }));
 
 // 스크립트 런타임: 시작할 때 파일을 못 받으면(폰에서 가끔) 예전에는 다음 설정 변경 때까지 다섯 개가 전부 '꺼짐'으로 남았다 — 몇 번 다시 받는다
-let scriptsWanted=false,scriptRetry=0,scriptHeal=[];
+let scriptsWanted=false,scriptRetry=0,scriptHeal=[],scriptWatch=false;
 function startScripts(tries=4){
     clearTimeout(scriptRetry);
     load('scripts','./scripts/runtime.js').then((m)=>{
@@ -25,6 +25,19 @@ function startScripts(tries=4){
             // 시작 직후에는 설정 적용이 여러 번 겹친다 — 끝난 뒤에도 켜 둔 스크립트가 멈춰 있으면 다시 시작한다 (5초 · 15초 · 40초 뒤 확인)
             clearTimeout(scriptHeal[0]);clearTimeout(scriptHeal[1]);clearTimeout(scriptHeal[2]);
             scriptHeal=[5000,15000,40000].map(ms=>setTimeout(()=>m.healScripts(scriptsWanted),ms));
+            // ✦ 메뉴를 열 때와 화면으로 돌아올 때도 본다 — 밖에서 닫힌 스크립트(상태는 '사용 중', 메뉴는 중국어)를 그 자리에서 되살린다
+            if(!scriptWatch){scriptWatch=true;
+                document.addEventListener('click',(event)=>{
+                    if(!event.target?.closest?.('#extensionsMenuButton'))return;
+                    m.healScripts(scriptsWanted);
+                    // 그래도 헬퍼 항목이 중국어로 남아 있으면(스크립트는 '사용 중') 헬퍼 한글화를 새로 시작한다 — 새로 시작하면 메뉴 전체를 처음부터 다시 훑는다
+                    for(const ms of [700,2500])setTimeout(()=>{
+                        if(!scriptsWanted||m.scriptStatus('helper')!=='사용 중')return;
+                        const left=[...document.querySelectorAll('#extensionsMenu .list-group-item, #extensionsMenu .extension_container span')].some(node=>/[一-鿿]/.test(node.textContent));
+                        if(left)m.reviveScript('helper','메뉴에 한자가 남음');
+                    },ms);
+                },true);
+                document.addEventListener('visibilitychange',()=>{if(!document.hidden)m.healScripts(scriptsWanted);});}
             return m.syncScripts(scriptsWanted);
         }
         if(tries>0)scriptRetry=setTimeout(()=>startScripts(tries-1),2500);

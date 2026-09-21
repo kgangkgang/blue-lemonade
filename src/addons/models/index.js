@@ -1,5 +1,6 @@
 // 모델 등록 — 공급자마다 원하는 모델 이름을 직접 넣어 두고 고르는 확장
 // 이전 확장 Custom-Vertex-Model(버텍스 전용)을 대신한다. 설정은 처음 켤 때 한 번 옮겨 온다.
+import { verifyAddonCss } from '../../addon-files-check.js';
 import { eventSource, event_types } from '../../../../../../../script.js';
 import { extension_settings } from '../../../../../../extensions.js';
 import { OLD_MODULE, TITLE, VERSION, initSettings, saveSettings, settings } from './state.js';
@@ -36,11 +37,8 @@ function checkOldExtension() {
 }
 
 function checkFilesMatch() {
-    const panel = document.querySelector('.mr-settings');
-    if (!panel) return;
-    const cssVersion = getComputedStyle(panel).getPropertyValue('--mr-css-version').trim().replace(/["']/g, '');
-    if (cssVersion === VERSION) return;
-    toast('warning', `${TITLE} 파일이 섞였어요 (코드 ${VERSION}, 스타일 ${cssVersion || '예전 것'}). 블루 레몬에이드 파일을 확인하고 다시 새로고침해 주세요.`, { timeOut: 15000 });
+    // 기다려 보고 · 스타일을 한 번 다시 받아 보고 · 그래도 다를 때만 한 번 알린다 (src/addon-files-check.js)
+    verifyAddonCss({ folder: 'models', name: '--mr-css-version', version: VERSION, title: TITLE, selector: '.mr-settings' });
 }
 
 jQuery(async () => {

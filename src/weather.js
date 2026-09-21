@@ -7,19 +7,42 @@
 // 트래커 따라: 마지막 AI 답의 데우스 트래커 날씨 칸 글자를 보고 비 · 눈 · 없음을 고른다 (번역된 한국어 · 영어 둘 다).
 // 켜 두었을 때만 불러온다 (features.js). 설정 창 채팅 표본에도 같은 효과를 작게 (previewWeather).
 import { parseColor } from './palettes.js';
+import { getSettings, saveSettings } from './settings.js';
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const WEATHER_VALUE = '.custom-dem-track__item--weather .custom-dem-track__value, .custom-dem-track-recovery__item--context .custom-dem-track-recovery__value';
 
 // 날씨 글자 → 비 · 눈. 한국어는 낱말 앞(띄어쓰기 · 쉼표 뒤)에서만 — "준비", "비밀", "눈부신" 같은 말에 걸리지 않게
 const SNOW = /(?:^|[\s,·/(~→-])(?:눈(?!부)|함박눈|진눈깨비|싸락눈|눈보라|폭설|첫눈|눈발)|snow|sleet|blizzard|flurr/i;
-const RAIN = /(?:^|[\s,·/(~→-])(?:비(?![밀행슷교록용])|이슬비|가랑비|보슬비|안개비|장대비|소나기|폭우|호우|장마|빗|폭풍우|뇌우)|rain|drizzl|shower|storm|thunder|downpour|monsoon/i;
+const RAIN = /(?:^|[\s,·/(~→-])(?:비(?![밀행슷교록용])|이슬비|가랑비|보슬비|안개비|장대비|여우비|소나기|폭우|호우|장마|빗|폭풍우|뇌우)|rain|drizzl|shower|storm|thunder|downpour|monsoon|sun\s*shower/i;
 
-export function detectWeather(text) {
+const FOG = /안개|연무|박무|물안개|fog|mist|haze/i; // '안개비'는 위의 비에서 먼저 걸린다
+
+// 햇살: 맑음 · 햇빛 · 노을. 실내 · 밤이면 끈다 ("warm interior", "clear night"). 해 질 녘은 따뜻한 색으로
+const SUN = /맑[음은고]|쾌청|화창|햇[살빛볕]|볕|양지|clear|sunn?y|sunlight|sunshine|sunlit|bright|fair/i;
+const DUSK = /노을|석양|일몰|황혼|해\s*질|땅거미|일출|새벽|여명|sunset|sunrise|dusk|dawn|twilight|golden/i;
+const NIGHT = /(?:^|[\s,·/(~→-])밤|야간|한밤|자정|심야|night|midnight|moon|starry/i;
+const INDOOR = /실내|내부|지하|indoor|interior|inside|underground/i;
+const HAZE = /스모그|황사|미세\s*먼지|smog|dust/i;
+const GLOOM = /흐[림린]|구름\s*많|overcast|gloomy/i;
+
+/** 트래커 날씨 글 → 겹칠 효과들 (앞이 주 효과). 예: "안개비" → 비 + 안개, "여우비" → 비 + 햇살, "눈안개" → 눈 + 안개 */
+export function detectWeatherAll(text) {
     const value = String(text || '');
-    if (SNOW.test(value)) return 'snow';
-    if (RAIN.test(value)) return 'rain';
-    return 'off';
+    const found = [];
+    if (SNOW.test(value)) found.push('snow');
+    if (RAIN.test(value)) found.push(INDOOR.test(value) ? 'glass' : 'rain'); // 실내에서 보는 비 → 유리의 빗방울
+    if (/무지개|rainbow/i.test(value)) found.push('rainbow');
+    if (FOG.test(value) || HAZE.test(value)) found.push('fog');
+    const outdoors = !INDOOR.test(value) || /햇[살빛볕]|sunlight|sunshine|sunlit/i.test(value); // "창으로 드는 햇살"은 실내라도 켠다
+    const dusk = DUSK.test(value);
+    if (outdoors && !NIGHT.test(value) && !GLOOM.test(value) && (dusk || SUN.test(value) || /여우비|sun\s*shower/i.test(value))) found.push('sun');
+    if (outdoors && NIGHT.test(value) && !GLOOM.test(value)) found.push('star'); // 맑은 밤 · 밤 → 별
+    if (/바람|산들|breez|wind|gust/i.test(value)) found.push('breeze');
+    return { modes: found.slice(0, 2), warm: dusk };
+}
+export function detectWeather(text) {
+    return detectWeatherAll(text).modes[0] || 'off';
 }
 
 function rgbText(value, fallback) {
@@ -87,7 +110,11 @@ const ratio = () => Math.min(1.5, window.devicePixelRatio || 1);
 
 /** 설정의 날씨 값 → 엔진 값 (범위는 settings.js 가 이미 잡음) */
 function paramsFrom(chat = {}) {
-    return { tint:chat.weatherColorMode==='custom'?chat.weatherColor:null, curvature:Number(chat.weatherCurvature??65),orbitSize:Number(chat.weatherOrbitSize??100),orbitDirection:chat.weatherOrbitDirection||'right', opacity: Number(chat.weatherOpacity) || 100, size: Number(chat.weatherSize) || 100, speed: Number(chat.weatherSpeed) || 100, motion: chat.weatherMotion || 'natural', sway: Number(chat.weatherSway ?? 100), spin: Number(chat.weatherSpin ?? 100), angle: Number.isFinite(Number(chat.weatherAngle)) ? Number(chat.weatherAngle) : -9 };
+    return { tint:['custom','gradient'].includes(chat.weatherColorMode)?chat.weatherColor:null, tint2:chat.weatherColorMode==='gradient'?chat.weatherColor2:null,
+        scene:{shadowStyle:chat.weatherShadowStyle,shadowBlur:chat.weatherShadowBlur??35,waterStyle:chat.weatherWaterStyle,waterArea:chat.weatherWaterArea},
+        spots:chat.weatherSpots||null,
+        sun:{style:chat.weatherSunStyle}, star:{style:chat.weatherStarStyle},
+        fog:{style:chat.weatherFogStyle,area:chat.weatherFogArea,stretch:chat.weatherFogStretch,edge:chat.weatherFogEdge,swell:chat.weatherFogSwell,depth:chat.weatherFogDepth}, curvature:Number(chat.weatherCurvature??65),orbitSize:Number(chat.weatherOrbitSize??100),orbitDirection:chat.weatherOrbitDirection||'right', opacity: Number(chat.weatherOpacity) || 100, size: Number(chat.weatherSize) || 100, speed: Number(chat.weatherSpeed) || 100, motion: chat.weatherMotion || 'natural', sway: Number(chat.weatherSway ?? 100), spin: Number(chat.weatherSpin ?? 100), angle: Number.isFinite(Number(chat.weatherAngle)) ? Number(chat.weatherAngle) : -9 };
 }
 
 // 내 그림: data URL → ImageBitmap. 워커로 넘기면 원본이 비워지므로 보낼 때마다 새로 만든다 (Blob 만 들고 있음)
@@ -104,7 +131,7 @@ async function spriteBitmap(dataUrl) {
 }
 
 /** 한 자리(#sheld 또는 설정 표본)에 붙는 효과 */
-function createLayer(host, className) {
+function createLayer(host, className, virtual = false) {
     let canvas = document.createElement('canvas');
     canvas.className = className;
     canvas.setAttribute('aria-hidden', 'true');
@@ -135,9 +162,19 @@ function createLayer(host, className) {
         visible.observe(host);
         cleanup.add(()=>visible.disconnect());
     }
+    // 설정 창 표본(virtual): 표본 칸은 낮아서 그 크기로 그리면 무지개 · 햇살 · 그림자가 실제 채팅보다 훨씬 작게 나왔다.
+    // 캔버스를 '표본 너비 × 실제 채팅 화면 비율'의 키로 잡고 표본 칸에는 그 위쪽(아래에 깔리는 효과는 아래쪽)만 보이게 한다 — 크기가 실제와 같다
+    let anchorBottom = false;
     const size = () => {
-        const rect = host.getBoundingClientRect();
-        return { w: Math.round(rect.width), h: Math.round(rect.height) };
+        // 표본은 돋보기 배율(transform: scale)이 걸려 있을 수 있다. getBoundingClientRect 는 배율이 곱해진 값이라 그것으로 캔버스 키를 잡으면
+        // 배율만큼 세로로 눌려 보였다(레몬이 납작해짐) → 배율과 무관한 배치 크기(clientWidth/Height)로 잰다
+        const rect = virtual ? { width: host.clientWidth, height: host.clientHeight } : host.getBoundingClientRect();
+        if (!virtual) return { w: Math.round(rect.width), h: Math.round(rect.height) };
+        const sheld = document.getElementById('sheld');
+        const ratio = sheld?.clientWidth > 0 && sheld.clientHeight > 0 ? sheld.clientHeight / sheld.clientWidth : 1.9;
+        const h = Math.max(Math.round(rect.height), Math.round(rect.width * Math.min(2.4, Math.max(.5, ratio))));
+        canvas.style.height = `${h}px`; canvas.style.top = anchorBottom ? 'auto' : '0'; canvas.style.bottom = anchorBottom ? '0' : 'auto';
+        return { w: Math.round(rect.width), h };
     };
     const ready = createRenderer(canvas, { ...size(), dpr: ratio(), mode: 'off', level: 2, colors: colorsNow(), reduce: reduceMotion.matches }, replacement=>{canvas=replacement;}).then((r) => {
         renderer = r;
@@ -154,6 +191,8 @@ function createLayer(host, className) {
         ready,
         set(mode, level, params = {}, spriteData = '') {
             if(destroyed)return;
+            const low = (mode === 'water' && (params.scene?.waterArea ?? 'bottom') === 'bottom') || (mode === 'fog' && params.fog?.area === 'bottom');
+            if (virtual && low !== anchorBottom) { anchorBottom = low; renderer?.post({ type: 'resize', ...size(), dpr: ratio() }); }
             current = { mode, level, ...params };
             const message = { type: 'config', mode, level, colors: colorsNow(), ...params };
             const wantKey = mode === 'custom' ? spriteData : '';
@@ -192,16 +231,32 @@ let wanted = { on: false, mode: 'off', level: 2 };
 let listening = false;
 let trackerTimer = 0;
 
-function trackerMode() {
+function trackerWeather() {
     const values = document.querySelectorAll(`#chat .mes:not([is_user="true"]) :is(${WEATHER_VALUE})`);
     const last = values[values.length - 1];
-    return last ? detectWeather(last.textContent) : 'off';
+    return last ? detectWeatherAll(last.textContent) : { modes: [], warm: false };
+}
+const trackerMode = () => trackerWeather().modes[0] || 'off';
+// 그 날씨를 골랐을 때 맞춰 둔 값(날씨마다 따로 기억)을 쓴다 — 트래커 · 둘째 효과가 안개를 부르면 안개 탭에서 다듬은 모양 그대로 나온다
+// 한 번도 고른 적 없는 날씨는 기본값으로 (지금 칸의 값을 물려받지 않는다)
+const profileOf = (chat, mode) => (mode === chat.weather ? chat : chat.weatherProfiles?.[mode] ? { ...chat, weatherColorMode: 'auto', ...chat.weatherProfiles[mode] } : { weatherSpots: chat.weatherSpots });
+function plan(chat, level) {
+    if (chat.weather === 'tracker') {
+        const found = trackerWeather(), warm = found.warm, skip = Array.isArray(chat.weatherTrackerSkip) ? chat.weatherTrackerSkip : [];
+        const modes = found.modes.filter(mode => !skip.includes(mode)); // 제외해 둔 날씨는 트래커에 나와도 그리지 않는다
+        if (!modes.length) return { mode: 'off', level, params: {} };
+        // 트래커 따라에는 제 조절 값이 없다: 세기까지 그 날씨를 골랐을 때 맞춰 둔 값을 쓴다 (예전에는 비 · 눈을 다르게 맞춰 놔도 트래커 쪽 값 하나로 똑같이 나왔다)
+        const levelOf = mode => { const n = Number(profileOf(chat, mode).weatherLevel); return [1, 2, 3].includes(n) && chat.weatherProfiles?.[mode] ? n : 2; };
+        return { mode: modes[0], level: levelOf(modes[0]), params: { ...paramsFrom(profileOf(chat, modes[0])), warm, second: modes[1] ? { mode: modes[1], level: levelOf(modes[1]), warm, ...paramsFrom(profileOf(chat, modes[1])) } : null } };
+    }
+    const second = chat.weather2 && chat.weather2 !== 'off' && chat.weather2 !== chat.weather ? { mode: chat.weather2, level: [1, 2, 3].includes(Number(chat.weather2Level)) ? Number(chat.weather2Level) : 2, warm: false, ...paramsFrom(profileOf(chat, chat.weather2)) } : null;
+    return { mode: chat.weather, level, params: { ...paramsFrom(chat), warm: false, second } };
 }
 
 function refresh() {
     if (!layer) return;
-    const mode = wanted.mode === 'tracker' ? trackerMode() : wanted.mode;
-    layer.set(mode, wanted.level, wanted.params, wanted.sprite);
+    const next = plan(wanted.chat, wanted.level);
+    layer.set(next.mode, next.level, next.params, wanted.sprite);
 }
 
 function scheduleTracker() {
@@ -221,9 +276,9 @@ function listen() {
 
 /** features.js 가 설정이 바뀔 때마다 부른다 */
 export function syncWeather(on, chat = {}) {
-    const mode = ['rain', 'snow', 'lemon', 'petal', 'meteor', 'custom', 'tracker'].includes(chat.weather) ? chat.weather : 'off';
+    const mode = ['rain', 'snow', 'fog', 'sun', 'star', 'firefly', 'rainbow', 'shadow', 'breeze', 'glass', 'water', 'lemon', 'petal', 'meteor', 'custom', 'tracker'].includes(chat.weather) ? chat.weather : 'off';
     const level = [1, 2, 3].includes(Number(chat.weatherLevel)) ? Number(chat.weatherLevel) : 2;
-    wanted = { on: !!on && mode !== 'off', mode, level, params: paramsFrom(chat), sprite: chat.weatherImage || '' };
+    wanted = { on: !!on && mode !== 'off', mode, level, chat: { ...chat, weather: mode }, params: paramsFrom(chat), sprite: chat.weatherImage || '' };
     if (!wanted.on) {
         layer?.destroy();
         layer = null;
@@ -242,19 +297,40 @@ export function syncWeather(on, chat = {}) {
 }
 
 // ───────── 설정 창 채팅 표본 ─────────
+// 표본의 내 메시지(말풍선 · 카드 · 테이블 띠)와 카드 바탕은 불투명이라 그 뒤의 날씨를 가린다. 바탕 변수를 표본 칸에서만 72% 로 낮춰 덮어쓴다.
+// (변수가 제 값을 가리키면 순환이라, 뿌리의 계산값을 읽어 적는다. 팔레트가 바뀌면 설정 창이 다시 불러 주니 그때 새 값으로 바뀐다)
+// 날씨를 켜 두면 표본의 첫 메시지를 두 문단 더 길게 — 효과가 위쪽에만 걸려 감이 안 잡혔다
+function moreLines(stage, on) {
+    const have = stage.querySelectorAll('.bl-weather-more');
+    if (!on) { for (const p of have) p.remove(); return; }
+    const text = stage.querySelector('.mes:not([is_user="true"]) .mes_text');
+    if (have.length || !text) return;
+    text.insertAdjacentHTML('beforeend', '<p class="bl-weather-more">창밖으로 오후의 빛이 길게 기울었다. 그는 말없이 잔을 한 번 돌리고, 식어 버린 차 위로 떠오른 레몬 조각을 가만히 바라보았다.</p><p class="bl-weather-more"><q>「오늘은 하늘이 좋네.」</q> 낮은 목소리가 조용한 방 안에 천천히 번졌다.</p>');
+}
+const SEE_THROUGH = ['--salty-user-bg', '--salty-raised', '--salty-card', '--salty-shade'];
+function seeThrough(stage, on) {
+    const root = getComputedStyle(document.documentElement);
+    for (const name of SEE_THROUGH) {
+        const value = root.getPropertyValue(name).trim();
+        if (on && value) stage.style.setProperty(name, `color-mix(in srgb, ${value} 72%, transparent)`);
+        else stage.style.removeProperty(name);
+    }
+}
 /** 채팅 표본(.salty-preview[data-prev="chat"])에 작은 효과. 트래커 따라면 지금 채팅의 날씨, 없으면 비를 보여 준다 */
 export function previewWeather(stage, chat = {}) {
-    const mode = ['rain', 'snow', 'lemon', 'petal', 'meteor', 'custom', 'tracker'].includes(chat.weather) ? chat.weather : 'off';
+    const mode = ['rain', 'snow', 'fog', 'sun', 'star', 'firefly', 'rainbow', 'shadow', 'breeze', 'glass', 'water', 'lemon', 'petal', 'meteor', 'custom', 'tracker'].includes(chat.weather) ? chat.weather : 'off';
     const level = [1, 2, 3].includes(Number(chat.weatherLevel)) ? Number(chat.weatherLevel) : 2;
     let preview = stage._blWeather;
     if (mode === 'off' || !stage.isConnected) {
         preview?.destroy();
         stage._blWeather = null;
         stage.classList.remove('bl-weather-pv-on');
+        seeThrough(stage, false);
+        moreLines(stage, false);
         return;
     }
     if (!preview) {
-        preview = stage._blWeather = createLayer(stage, 'bl-weather-pv');
+        preview = stage._blWeather = createLayer(stage, 'bl-weather-pv', true);
         // 창을 닫아 표본이 문서에서 떨어지면 워커를 끝낸다
         // A host removed while already outside the viewport need not produce
         // another intersection event. Retain the fallback for external removal.
@@ -263,8 +339,10 @@ export function previewWeather(stage, chat = {}) {
         preview.onDestroy(()=>{if(stage._blWeather===preview)stage._blWeather=null;});
     }
     stage.classList.add('bl-weather-pv-on');
-    const shown = mode === 'tracker' ? (trackerMode() === 'off' ? 'rain' : trackerMode()) : mode;
-    preview.set(shown, level, paramsFrom(chat), chat.weatherImage || '');
+    seeThrough(stage, true);
+    moreLines(stage, true);
+    const next = plan({ ...chat, weather: mode }, level);
+    preview.set(next.mode === 'off' ? 'rain' : next.mode, next.mode === 'off' ? level : next.level, next.mode === 'off' ? paramsFrom(chat) : next.params, chat.weatherImage || '');
 }
 
 /** 시험용 */
@@ -297,4 +375,47 @@ export async function captureWeatherAnimation(width,height,scale=1) {
     const bitmap=current.mode==='custom'?await spriteBitmap(spriteData):null;
     engine.resize(width,height,scale);engine.config({...current,colors:colorsNow(),sprite:bitmap});
     return {canvas,draw(dt,now){engine.step(dt,now);engine.draw();},close(){engine.dispose();canvas.width=canvas.height=1;}};
+}
+
+// ───────── 채팅 화면에서 자리 정하기 ─────────
+/**
+ * 실제 채팅 화면(#sheld) 위에 점을 띄워 끌어 옮기게 한다. 끄는 동안 바로 그 자리에 그려지고, '완료'를 누르면 저장한다.
+ * 자리는 화면 비율(0~1)이라 스크롤해도 · 화면 크기가 달라져도 같은 자리에 있다 (날씨 캔버스가 채팅 칸이 아니라 #sheld 에 붙어 있다).
+ */
+export function placeWeatherSpots(mode, defaults, onDone) {
+    const host = document.getElementById('sheld');
+    if (!host || document.getElementById('bl-weather-place')) return;
+    const s = getSettings(), before = JSON.stringify(s.chat.weatherSpots || {});
+    const list = defaults.map(([x, y], i) => ({ ...(s.chat.weatherSpots?.[mode]?.[i] || { x, y }) }));
+    const box = document.createElement('div');
+    box.id = 'bl-weather-place';
+    box.innerHTML = `<div class="bl-weather-place-bar"><span>점을 끌어 자리를 정해요</span><button type="button" data-place="auto">자동 배치</button><button type="button" data-place="cancel">취소</button><button type="button" data-place="done">완료</button></div>${list.map((_, i) => `<button type="button" class="bl-weather-place-dot" data-index="${i}">${list.length > 1 ? i + 1 : ''}</button>`).join('')}`;
+    host.append(box);
+    const dots = [...box.querySelectorAll('.bl-weather-place-dot')];
+    const paint = () => dots.forEach((dot, i) => { dot.style.left = `${list[i].x * 100}%`; dot.style.top = `${list[i].y * 100}%`; });
+    let queued = 0;
+    const apply = (spots) => { // 설정 · 지금 도는 효과에 바로 반영
+        s.chat.weatherSpots = spots;
+        if (wanted.chat) wanted.chat.weatherSpots = spots;
+        cancelAnimationFrame(queued); queued = requestAnimationFrame(refresh);
+    };
+    const live = () => apply({ ...(s.chat.weatherSpots || {}), [mode]: list.map(p => ({ x: Math.round(p.x * 1000) / 1000, y: Math.round(p.y * 1000) / 1000 })) });
+    const close = (reopen) => { box.remove(); if (reopen) onDone?.(); };
+    paint();
+    box.addEventListener('pointerdown', (event) => {
+        const dot = event.target.closest('.bl-weather-place-dot');
+        if (!dot) return;
+        event.preventDefault();
+        try { dot.setPointerCapture(event.pointerId); } catch { /* 없어도 끌린다 */ }
+        const index = Number(dot.dataset.index);
+        const move = (e) => { const rect = box.getBoundingClientRect(); list[index] = { x: Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)), y: Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height)) }; paint(); live(); };
+        const end = () => { dot.removeEventListener('pointermove', move); dot.removeEventListener('pointerup', end); dot.removeEventListener('pointercancel', end); };
+        dot.addEventListener('pointermove', move); dot.addEventListener('pointerup', end); dot.addEventListener('pointercancel', end);
+    });
+    box.addEventListener('click', (event) => {
+        const act = event.target.closest('[data-place]')?.dataset.place;
+        if (act === 'done') { live(); saveSettings(); close(true); }
+        else if (act === 'cancel') { apply(JSON.parse(before)); close(true); }
+        else if (act === 'auto') { const spots = { ...(s.chat.weatherSpots || {}) }; delete spots[mode]; apply(spots); saveSettings(); close(true); }
+    });
 }
