@@ -23,7 +23,7 @@ const topics = [
     ['pc-night.jpg','밤바다 위의 나이트','배경 그림이 은은하게 비치는 차콜 화면.'],
   ]},
   { id:'text', label:'대사', fresh:true, title:'대사는 또렷하게, 분위기는 그대로.', sub:'형광펜 모양 · 글자 그라데이션 · 프롬프트 색 · 외곽선', cards: [
-    ['412-dem-fx.mp4','감정이 실린 대사는 움직여요','데우스 엑스 마키나의 Expressive Dialogue(외침 · 떨림 · 울음 · 들뜸 …)를 테마 위에서도 또렷하게. 움직임 크기 · 빛 · 색 흐름을 골라요.','412-dem-fx.jpg','412-dem-fx.gif'],
+    ['412-dem-fx.mp4','감정이 실린 대사는 움직여요','데우스 엑스 마키나의 Expressive Dialogue(외침 · 떨림 · 울음 · 어지러움 · 들뜸 …)를 테마 위에서도 또렷하게. 영상은 움직임 ‘크게’ — 은은하게 · 보통도 고를 수 있어요.','412-dem-fx.jpg','412-dem-fx.gif'],
     ['390-pill-marker.png','끝이 둥근 알약 형광펜','펜 자국·직사각형에 알약 모양까지 더해졌어요.'],
     ['388-rect-marker.png','끝이 반듯한 형광펜','펜 자국 대신 직사각형으로. 위치와 굵기도 맞춰요.'],
     ['396-text-gradient.png','글자에도 그라데이션','이름·대사·속마음을 따로 물들일 수 있어요.'],
@@ -131,7 +131,7 @@ const topics = [
 const $ = s => document.querySelector(s);
 function element(tag, cls, text) { const e=document.createElement(tag); if(cls)e.className=cls; if(text)e.textContent=text; return e; }
 // media version: bump when shots are retaken under the same names, so cached copies don't linger
-const MV='?v=20260921-413';
+const MV='?v=20260921-413b';
 
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
 document.documentElement.classList.add('js');
