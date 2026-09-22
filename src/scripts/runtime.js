@@ -30,7 +30,10 @@ export const scriptStatus=id=>states.get(id)||'꺼짐';
 export function subscribeScripts(fn){listeners.add(fn);return()=>listeners.delete(fn);}
 function status(id,text){states.set(id,text);for(const fn of listeners)fn();}
 function stop(id){const item=running.get(id);if(!item)return;running.delete(id);try{item.frame.contentWindow.dispatchEvent(new Event('pagehide'));}catch{/* detached */}for(const fn of item.cleanups)try{fn();}catch(error){console.warn('[Blue Lemonade] Script cleanup',error);}item.frame.remove();}
-export function validateScript(code){if(typeof code!=='string'||code.length>1000000)throw Error('코드는 1MB 이내로 입력해 주세요.');new Function('BlueLemonade',code);}
+// compile=false 면 크기만 본다. 내장 코드는 빌드(tools/build-plain-scripts.mjs:15)가 이미 new Function 으로
+// 문법을 확인하므로, 시작할 때 부모 창에서 같은 610KB 를 한 번 더 컴파일할 이유가 없다 —
+// 아래에서 iframe 의 Function 이 어차피 다시 컴파일하고, 문법 오류는 같은 try/catch 가 '실행 오류' 로 보여 준다.
+export function validateScript(code,compile=true){if(typeof code!=='string'||code.length>1000000)throw Error('코드는 1MB 이내로 입력해 주세요.');if(compile)new Function('BlueLemonade',code);}
 // 스크립트마다 따로 시작한다. 예전에는 목록 순서대로 하나씩 기다렸는데, 앞의 것(한글화 사전 440KB)을 폰이 늦게 받거나 못 받으면
 // 뒤의 스크립트가 전부 '꺼짐'으로 남았다. 어디서 멈췄는지 보이게 단계도 상태에 적는다.
 const timed=(promise,ms)=>new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('파일을 받지 못했어요 (시간 초과)')),ms);promise.then(resolve,reject).finally(()=>clearTimeout(timer));});
@@ -50,7 +53,7 @@ async function startOne(item,state,current){
         if(current!==revision)return; // 더 새 요청이 이어서 처리한다
         if(typeof code!=='string'||!code)throw Error('스크립트 코드를 받지 못했어요');
         if(running.has(id)&&running.get(id).code===code){status(id,'사용 중');return;}
-        validateScript(code);stop(id);
+        validateScript(code,!!state.overrides[id]?.code);stop(id);
         const frame=document.createElement('iframe');frame.hidden=true;frame.tabIndex=-1;frame.setAttribute('aria-hidden','true');frame.dataset.blScript=id;document.body.append(frame);
         const cleanups=[],win=frame.contentWindow;running.set(id,{frame,code,cleanups,win,custom:!!state.overrides[id]?.code});
         win.addEventListener('pagehide',()=>setTimeout(()=>died(id,frame,'틀이 닫힘'),0));

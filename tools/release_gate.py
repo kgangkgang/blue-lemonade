@@ -40,7 +40,8 @@ def validate(files, kind):
     require(bool(re.fullmatch(r'\d+\.[0-9]\.[0-9]', version)), 'Version must carry at 10, e.g. 3.9.9 -> 4.0.0')
     require(manifest.get('js') == 'index.js' and manifest.get('css') == 'style.css', 'Unexpected manifest entry points')
     if kind == 'theme':
-        notice = files.get('src/notice.js', b'').decode('utf-8')
+        # 4.5.0: 공지 본문이 src/notice-data.js 로 갈라졌다 (팝업 열 때만 읽는다). 옛 판도 받아 준다.
+        notice = files.get('src/notice-data.js', files.get('src/notice.js', b'')).decode('utf-8')
         found = re.search(r'\bNOTICES\s*=\s*\[\s*\{\s*[\'"]?version[\'"]?\s*:\s*[\'"]([^\'"]+)', notice)
         require(found is not None and found[1] == version, 'Manifest and newest notice versions differ')
     else:

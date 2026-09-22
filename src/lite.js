@@ -174,11 +174,21 @@ export function deferPanelHasRules(tries = 25) {
     }
     if (lazyStart(sheet) < 0) return;
     panelPending = true;
-    fetch(sheet.href).then(res => (res.ok ? res.text() : Promise.reject(new Error(`HTTP ${res.status}`)))).then((text) => {
-        const mark = `${LAZY_SENTINEL} {}`;
-        const at = text.lastIndexOf(mark);
-        if (at < 0) throw new Error('받아 온 style.css 에 게으른 칸 표시가 없음');
-        const tail = text.slice(at + mark.length);
+    // 꼬리만 받는다 — 빌드가 src/lazy-panel.gen.css 로 따로 써 둔다(1.8KB).
+    // 예전에는 style.css(842KB) 를 통째로 받아 문자열로 풀고 뒤만 잘라 썼다. 옛 배포본에는 그 파일이
+    // 없을 수 있어 404 면 예전처럼 style.css 에서 잘라 쓴다.
+    const tailUrl = new URL('./lazy-panel.gen.css', import.meta.url);
+    const grab = fetch(tailUrl)
+        .then(res => (res.ok ? res.text() : Promise.reject(new Error(`HTTP ${res.status}`))))
+        .catch(() => fetch(sheet.href)
+            .then(res => (res.ok ? res.text() : Promise.reject(new Error(`HTTP ${res.status}`))))
+            .then((text) => {
+                const mark = `${LAZY_SENTINEL} {}`;
+                const at = text.lastIndexOf(mark);
+                if (at < 0) throw new Error('받아 온 style.css 에 게으른 칸 표시가 없음');
+                return text.slice(at + mark.length);
+            }));
+    grab.then((tail) => {
         const probe = new CSSStyleSheet();
         probe.replaceSync(tail);
         const from = lazyStart(sheet);

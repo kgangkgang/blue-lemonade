@@ -10,7 +10,7 @@ class GateTests(unittest.TestCase):
     def fixture(self,kind='memory'):
         files={'manifest.json':json.dumps({'version':'1.3.1','js':'index.js','css':'style.css'}).encode(),'index.js':b"import { VERSION } from './defs.js';",'defs.js':b"export const VERSION = '1.3.1';",'style.css':b':root {--lm-css-version: "1.3.1";}', 'README.md':b'Synthetic fixture'}
         if kind=='theme':
-            del files['defs.js'];files['index.js']=b"import './src/notice.js';";files['src/notice.js']=b'export const NOTICES = [{"version":"1.3.1"}];'
+            del files['defs.js'];files['index.js']=b"import './src/notice.js';";files['src/notice.js']=b"import './notice-data.js';";files['src/notice-data.js']=b'export const NOTICES = [{"version":"1.3.1"}];'
         return files
     def test_valid_memory(self):self.assertEqual(gate.validate(self.fixture(),'memory'),'1.3.1')
     def test_stale_css_blocks(self):
@@ -20,7 +20,7 @@ class GateTests(unittest.TestCase):
         f=self.fixture();f['defs.js']=b"export const VERSION='1.3.0';"
         with self.assertRaisesRegex(gate.GateError,'code'):gate.validate(f,'memory')
     def test_stale_notice_blocks(self):
-        f=self.fixture('theme');f['src/notice.js']=b'export const NOTICES=[{version:"1.2.9"}];'
+        f=self.fixture('theme');f['src/notice-data.js']=b'export const NOTICES=[{version:"1.2.9"}];'
         with self.assertRaisesRegex(gate.GateError,'notice'):gate.validate(f,'theme')
     def test_missing_dependency_blocks(self):
         f=self.fixture();f['index.js']=b"import('./missing.js')"

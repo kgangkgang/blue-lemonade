@@ -1,0 +1,32 @@
+
+body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > * {
+  grid-column: 1 / -1;
+}
+body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > * {
+  grid-column: 1 / -1;
+}
+body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting :is(#InstructSettingsColumn, #SystemPromptColumn > h4, #SystemPromptBlock, [name="tokenizerSettingsBlock"])[data-cc-null] > * {
+  opacity: 0.5;
+}
+body.salty #AdvancedFormatting .flex-container:has(> label[for^="reasoning_"]) > * {
+  flex: 1 1 100% !important;
+}
+body.salty #rm_api_block #openai_api > *,
+body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > * {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin: 0 !important;
+}
+@media (max-width: 1000px) {
+  .salty-panel .salty-group:has(> .salty-slider + .salty-slider) > :not(.salty-slider),
+  .salty-panel .salty-group:has(> .salty-slider + .salty-slider) > .salty-slider:not(.salty-slider + *):not(:has(+ .salty-slider)) {
+    grid-column: 1 / -1;
+  }
+}
+@media (min-width: 1001px) {
+  .salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > :not(.salty-row, .salty-slider),
+.salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > .salty-row:not(:is(.salty-row, .salty-slider) + *):not(:has(+ :is(.salty-row, .salty-slider))),
+.salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > .salty-slider:not(:is(.salty-row, .salty-slider) + *):not(:has(+ :is(.salty-row, .salty-slider))) {
+    grid-column: 1 / -1;
+  }
+}
