@@ -5,7 +5,6 @@ import { syncProfileClip } from './profile-clip.js';
 import { decorVars, syncDecor, prepareDecor } from './decor.js';
 import { frameVars } from './frames.js';
 import { syncProfile } from './profile.js';
-import { scratchMask, slantGeometry } from './image-shapes.js';
 // 설정 → :root CSS 변수(--salty-*) + 실리태번 색 변수 덮기 + body 클래스 + 글꼴 합치기
 import { getSettings, fontSet, FONT_SLOTS, DEFAULTS } from './settings.js';
 import { PALETTES, LEGACY, TOKEN_KEYS, paletteColors, parseColor, sameColor, onColor } from './palettes.js';
@@ -340,19 +339,16 @@ function imageShape(image) {
      // (끔 상태에서 옛 값이 남아 마스크가 살아 있으면 테두리가 지워진다)
     const off = image.fade === 'off';
     const f = { y: off ? 0 : (image.fadeY ?? 10) / 100, x: off ? 0 : (image.fadeX ?? 0) / 100 };
-    const slant = slantGeometry(image.angle);
+    // 4.5.1: 2.2.1 에서 뺀 모양(유리 조각 · 대각선)의 변수 --salty-scratch-mask · --salty-corner-cut ·
+    // --salty-slant-* 를 더 만들지 않는다. style.css 에서 그것을 읽는 규칙이 0 건인데도 applyAll 마다
+    // 2,220 자짜리 SVG 마스크를 만들어 변수 시트에 적고 있었다. 설정 키(angle · cornerCut · scratch*)는
+    // 그대로 둔다 — 값이 남아 있어도 해가 없고, 키를 지우면 사용자의 저장값이 날아간다.
     return {
         '--salty-feather-y': String(f.y),
         '--salty-feather-x': String(f.x),
-        '--salty-scratch-mask': scratchMask(image.scratchAmount, image.scratchDirection, image.scratchTexture),
         // 커스텀 도형: 설정에 든 투명 PNG(data URL)의 알파로 오림. 늘리기 = 그림 상자 가득, 맞추기 = 비율 유지 가운데
         '--salty-img-mask': image.mask ? `url("${image.mask}")` : 'none',
         '--salty-img-mask-size': image.maskFit === 'contain' ? 'contain' : '100% 100%',
-        '--salty-corner-cut': String(image.cornerCut / 100),
-        '--salty-slant-deg': `${slant.degrees}deg`,
-        '--salty-slant-sin': slant.sin.toFixed(4),
-        '--salty-slant-cos': slant.cos.toFixed(4), // 흐림 폭 상한: 자르고 남은 띠 두께 = 높이 × cos - 자른 거리
-        '--salty-slant-tan': slant.tan.toFixed(4),
     };
 }
 
