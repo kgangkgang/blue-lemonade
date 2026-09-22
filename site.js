@@ -106,6 +106,7 @@ const topics = [
     S('capture-info', '본문만 또는 원하는 정보만', ''),
   ]},
   { id:'tools', label:'도구', title:'필요한 것만 켜는, 작은 도구.', sub:'스크립트 · 단어 치환 · 확장 순서 · 모델 등록·순서·전환 · 성능 보조 · 단독 업데이트', cards: [
+    P('regexlink', '끈 모듈의 정규식도 같이 꺼지게', "프롬프트 관리자에서 끈 모듈(모멘텀 엔진 · 상태창 · 선택지 …)의 정규식을 자동으로 끄고, 다시 켜면 돌려놓아요. 모듈마다 프롬프트 따라 · 늘 켜기 · 늘 끄기를 고를 수 있어요."),
     P('scripts', '필요한 스크립트만 켜요', '실리태번 · 헬퍼 한글화, 데우스 · 샤진 번역과 삼각형 접기를 각각 선택해요. 기존 헬퍼의 같은 스크립트는 먼저 꺼 주세요.'),
     P('update-tool', '이 테마만 업데이트', '전체 확장 목록을 기다리지 않고 확인해요. 업데이트 후 새로고침하면 적용돼요.'),
     P('modelswitch', '여러 확장의 모델을 한 번에', '모델을 따로 고르는 확장들의 공급자와 모델을 함께 바꿔요. 자주 쓰는 조합은 저장해 두고, 잠금으로 실수도 막아요.'),
@@ -115,6 +116,7 @@ const topics = [
     P('modelorder', '모델 순서도 테마 안에서', '직접 등록한 모델을 끌거나 화살표로 정렬해요.'),
     P('perf', '성능 보조도 선택해서', '끊김 감시 · 로딩 시간 · 요청 로그 · 저장 정리, 다섯 도구를 바로 조절해요.'),
   ], pc: [
+    S('regexlink', '끈 모듈의 정규식도 같이 꺼지게', '모듈 카드가 두 열로. 짝 프롬프트가 켜져 있으면 칩이 강조돼요.'),
     S('scripts', '왼쪽에서 고르고, 오른쪽에서 편집', '스크립트마다 코드를 수정 · 저장 · 복원할 수 있어요.'),
     S('update-tool', '업데이트도 테마 설정에서', ''),
     S('modelswitch', '여러 확장의 모델을 한 번에', ''),
@@ -185,7 +187,7 @@ const topics = [
 const $ = s => document.querySelector(s);
 function element(tag, cls, text) { const e=document.createElement(tag); if(cls)e.className=cls; if(text)e.textContent=text; return e; }
 // media cache keys: one stable key for everything; a file retaken under the same name gets its own entry here (never bump the stable key)
-const RETAKEN={'434-hero-pc-light.mp4':'b','434-hero-pc-light.jpg':'b','434-hero-pc-dark.mp4':'b','434-hero-pc-dark.jpg':'b'};
+const RETAKEN={'434-hero-pc-light.mp4':'b','434-hero-pc-light.jpg':'b','434-hero-pc-dark.mp4':'b','434-hero-pc-dark.jpg':'b','434-scripts.png':'436','434-pc-scripts.png':'436','434-update-tool.png':'436','434-pc-update-tool.png':'436','434-words.png':'436','434-pc-words.png':'436','434-order.png':'436','434-pc-order.png':'436','434-models.png':'436','434-pc-models.png':'436','434-modelorder.png':'436','434-pc-modelorder.png':'436','434-perf.png':'436','434-pc-perf.png':'436','434-modelswitch.png':'436','434-pc-modelswitch.png':'436'};
 const mv=file=>'?v='+(RETAKEN[file]||'s1');
 
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
