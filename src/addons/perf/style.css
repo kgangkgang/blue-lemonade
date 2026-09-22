@@ -870,3 +870,15 @@
     .lt-sum b { font-size: 1.05em; }
     .lt-note { font-size: .78em; }
 }
+
+/* 4.5.5: 도구마다 '불러오기' 스위치 — 탭 맨 위, 설정 칸과 살짝 떼어 둔다 */
+.pa-hub-load {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--SmartThemeBorderColor, #8884);
+    font-size: 0.9em;
+    opacity: 0.85;
+}

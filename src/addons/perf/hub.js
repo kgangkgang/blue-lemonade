@@ -5,9 +5,10 @@
 // 각 기능은 자기 설정 칸을 예전처럼 만들되 pane(탭)에 넣는다. 창을 닫아도 칸은 문서 안 숨은 자리에 남겨 둬서
 // 기능 쪽 코드가 자기 칸을 찾거나 고쳐 그리는 방식은 그대로다.
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
+import { getSettings, saveSettings } from '../../settings.js';
 
 export const SUITE_TITLE = '설정';
-export const SUITE_VERSION = '2.0.2';
+export const SUITE_VERSION = '2.1.0';
 const BUTTON_ID = 'pa-hub-open';
 const TAB_KEY = 'pa_hub_tab';
 
@@ -36,7 +37,7 @@ root.innerHTML = `
         ${TABS.map(tab => `<button type="button" class="pa-hub-tab" role="tab" data-tab="${tab.id}" aria-selected="false"><i class="fa-solid ${tab.icon}"></i><span>${esc(tab.title)}</span></button>`).join('')}
     </div>
     <div class="pa-hub-panes">
-        ${TABS.map(tab => `<div class="pa-hub-pane" role="tabpanel" data-tab="${tab.id}" hidden><div class="pa-hub-note" hidden></div></div>`).join('')}
+        ${TABS.map(tab => `<div class="pa-hub-pane" role="tabpanel" data-tab="${tab.id}" hidden><label class="checkbox_label pa-hub-load"><input type="checkbox" data-load="${tab.id}"><span>이 도구 불러오기</span></label><div class="pa-hub-note" hidden></div></div>`).join('')}
     </div>`;
 holder.append(root);
 
@@ -82,6 +83,28 @@ export function markLegacy(id, folder) {
     note(id, `<i class="fa-solid fa-circle-info"></i> 예전 <b>${esc(title)}</b> 확장(<code>${esc(folder)}</code>)이 아직 켜져 있어서 여기서는 쉬어요. 확장 관리에서 지우고 새로고침하면 이 탭으로 합쳐져요.`);
 }
 
+/** 사용자가 이 도구를 꺼 두어 아예 안 읽었을 때 */
+export function markOff(id) {
+    const title = TABS.find(tab => tab.id === id)?.title ?? id;
+    note(id, `<i class="fa-solid fa-circle-info"></i> <b>${esc(title)}</b>을(를) 꺼 두어서 불러오지 않았어요. 위 '이 도구 불러오기'를 켜고 새로고침하면 다시 써요.`);
+}
+
+// 4.5.5: 도구마다 '불러오기' 스위치. 끄면 다음 새로고침부터 그 파일을 아예 안 읽는다
+// (perfMenu 는 마법봉 메뉴에 보일지, 이것은 파일을 읽을지 — 다른 설정이다).
+function syncLoadSwitches() {
+    const on = getSettings().addonUI?.perfLoad ?? {};
+    for (const box of root.querySelectorAll('[data-load]')) box.checked = on[box.dataset.load] !== false;
+}
+root.addEventListener('change', (event) => {
+    const box = event.target.closest('[data-load]');
+    if (!box) return;
+    const s = getSettings();
+    s.addonUI.perfLoad[box.dataset.load] = box.checked;
+    saveSettings();
+    const title = TABS.find(tab => tab.id === box.dataset.load)?.title ?? box.dataset.load;
+    globalThis.toastr?.info(`${title}: 새로고침하면 적용돼요.`, 'Blue Lemonade');
+});
+
 /** 기능을 불러오다 실패했을 때 */
 export function markBroken(id, error) {
     note(id, `<i class="fa-solid fa-triangle-exclamation"></i> 이 기능을 켜지 못했어요: ${esc(error?.message ?? error)}`);
@@ -106,6 +129,7 @@ function runBuilders() {
 let open = false;
 async function openHub(tab) {
     runBuilders();
+    syncLoadSwitches();
     if(inlineHost?.isConnected&&inlineHost.offsetParent){showTab(TABS.some(t=>t.id===tab)?tab:savedTab());root.scrollIntoView({block:'nearest'});return;}
     if (open) return;
     open = true;
@@ -145,6 +169,7 @@ export { openHub };
 let inlineHost=null;
 export function mountInline(host) {
     runBuilders();
+    syncLoadSwitches();
     showTab(savedTab());
     inlineHost=host;if(open)host.textContent='열린 설정창을 닫으면 여기에 표시돼요.';else host.replaceChildren(root);root.classList.add('bl-embedded-settings');
     const content=root.querySelector('.inline-drawer-content');if(content)content.style.display='block';
