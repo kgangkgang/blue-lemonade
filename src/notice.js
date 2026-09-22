@@ -8,6 +8,13 @@ import { getSettings, saveSettings } from './settings.js';
 
 export const NOTICES = [
 {
+    "version": "4.3.9",
+    "date": "2026-09-22",
+    "items": [
+        "확장 순서를 바꾸면 일부 확장의 설정 창 색이 깨지던 것을 고쳤어요. 오토픽처럼 설정 칸 안에 스타일을 같이 넣는 확장이 칸 밖으로 끌려 나오면서, 그 확장이 쓰는 색이 통째로 사라져 밝은 팔레트에서 글자가 안 보였어요."
+    ]
+},
+{
     "version": "4.3.8",
     "date": "2026-09-22",
     "items": [

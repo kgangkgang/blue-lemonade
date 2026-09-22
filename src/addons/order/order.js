@@ -76,7 +76,10 @@ export function scan() {
         // 칸(.extension_container)에 이 창 하나뿐이면 창이 아니라 칸째로 옮긴다.
         // 정규식은 '#regex_container 안의 …' 로 자기 목록을 찾기 때문에, 칸에서 꺼내면
         // 일괄 편집(전체 선택·켜고 끄기·삭제·내보내기)이 아무 말 없이 죽는다.
-        const node = box && box.children.length === 1 ? box : el;
+        // 셀 때는 children 이 아니라 '창' 만 센다 — 오토픽처럼 칸 안에 설정 HTML 과 <style> 을
+        // 같이 넣는 확장이 있어서, 그냥 세면 둘로 보여 창을 칸 밖으로 꺼내 버린다. 꺼내지면
+        // 그 확장의 '#칸id 안의 …' 규칙이 통째로 안 걸려 제 색 변수가 사라진다(오토픽이 흰 글자로 남았음).
+        const node = box && [...box.children].filter(isPanel).length === 1 ? box : el;
         panels.push({ el, key, label: labelOf(el), node });
     };
 
