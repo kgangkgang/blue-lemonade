@@ -8,6 +8,13 @@ import { getSettings, saveSettings } from './settings.js';
 
 export const NOTICES = [
 {
+    "version": "4.4.2",
+    "date": "2026-09-22",
+    "items": [
+        "프리셋이 만든 HTML 카드 글자가 안 보이던 것을 고쳤어요. 데우스의 '시각적 연출'처럼 AI 가 카드 배경만 칠하고 글자색을 안 정하면, 밝은 팔레트에서 어두운 카드 위에 어두운 글자가 얹혔어요. 이제 읽히지 않는 칸만 골라 글자색을 맞춰요 — 색이 제대로 된 카드는 그대로 둡니다."
+    ]
+},
+{
     "version": "4.4.1",
     "date": "2026-09-22",
     "items": [
