@@ -7,7 +7,7 @@ export const MODULE = 'model_register';
 export const FOLDER = 'model-register';
 /** 이전 확장(Custom-Vertex-Model)이 쓰던 설정 키. 처음 켤 때 한 번만 가져온다. */
 export const OLD_MODULE = 'vertexCustomModels';
-export const VERSION = '1.0.4';
+export const VERSION = '1.1.0';
 export const TITLE = '모델 등록';
 
 const DEFAULTS = Object.freeze({

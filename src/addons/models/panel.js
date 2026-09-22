@@ -66,6 +66,7 @@ export function buildPanel() {
         if (event.key === 'Enter') { event.preventDefault(); onAdd(); }
     });
     $('.mr-list').addEventListener('click', onListClick);
+    startDrag($('.mr-list'));
 
     render();
 }
@@ -107,6 +108,7 @@ export function render() {
             row.dataset.index = String(index);
             row.dataset.name = model;
             row.innerHTML = `
+                <button type="button" class="mr-handle" title="끌어서 이동" tabindex="-1" aria-hidden="true">⠿</button>
                 <span class="mr-name"></span>
                 <span class="mr-item-buttons">
                     <div class="menu_button fa-solid fa-arrow-up" data-act="up" title="위로"></div>
@@ -121,6 +123,47 @@ export function render() {
 
     const total = Object.values(settings().sources).reduce((sum, entries) => sum + entries.length, 0);
     $('.mr-count').textContent = `이 공급자 ${models.length}개 · 전체 ${total}개`;
+}
+
+// 4.5.2: '모델 순서' 애드온을 여기로 합쳤다. 그 애드온에만 있던 것이 ⠿ 끌기뿐이라(나머지는 sources.js 가
+// 바이트까지 같고 ↑↓ 정렬은 이미 여기 있었다) 끌기만 옮겨 왔다. 휴대폰에서는 ↑↓ 버튼을 쓰면 된다.
+let drag = null;
+function startDrag(list) {
+    list.addEventListener('pointerdown', (event) => {
+        const handle = event.target.closest('.mr-handle');
+        if (!handle || event.button !== 0) return;
+        event.preventDefault();
+        const row = handle.closest('.mr-item');
+        drag = { id: currentId, before: [...modelsOf(currentId)], name: row.dataset.name, pointer: event.pointerId, handle };
+        try { handle.setPointerCapture(event.pointerId); } catch { /* 캡처를 못 잡아도 끌기는 된다 */ }
+        row.classList.add('mr-dragging');
+    });
+    list.addEventListener('pointermove', (event) => {
+        if (!drag || event.pointerId !== drag.pointer) return;
+        const target = document.elementFromPoint(event.clientX, event.clientY)?.closest('.mr-item');
+        const moving = [...list.children].find(r => r.dataset.name === drag.name);
+        if (target && moving && target !== moving && list.contains(target)) {
+            const rect = target.getBoundingClientRect();
+            list.insertBefore(moving, event.clientY > rect.top + rect.height / 2 ? target.nextSibling : target);
+        }
+        const rect = list.getBoundingClientRect();
+        if (event.clientY < rect.top + 28) list.scrollTop -= 14;
+        else if (event.clientY > rect.bottom - 28) list.scrollTop += 14;
+    });
+    const end = (event, cancel) => {
+        if (!drag || event.pointerId !== drag.pointer) return;
+        const held = drag;
+        const next = [...list.querySelectorAll('.mr-item')].map(r => r.dataset.name);
+        drag = null;
+        try { held.handle.releasePointerCapture(event.pointerId); } catch { /* 이미 놓았을 수 있다 */ }
+        // 끄는 사이에 목록이 바뀌었으면 손대지 않고 그대로 다시 그린다
+        if (cancel || JSON.stringify(modelsOf(held.id)) !== JSON.stringify(held.before)) { render(); return; }
+        if (JSON.stringify(next) === JSON.stringify(held.before)) { render(); return; }
+        save(held.id, next);
+    };
+    list.addEventListener('pointerup', event => end(event, false));
+    list.addEventListener('pointercancel', event => end(event, true));
+    list.addEventListener('keydown', (event) => { if (event.key === 'Escape' && drag) { drag = null; render(); } });
 }
 
 function save(sourceId, models) {

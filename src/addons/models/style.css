@@ -1,7 +1,7 @@
 /* 모델 등록 — 설정 화면
    state.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
 .mr-settings {
-    --mr-css-version: "1.0.4";
+    --mr-css-version: "1.1.0";
 }
 
 /* .inline-drawer-content 자체에는 display를 주지 않는다 (실리태번이 접고 펼 때 display를 바꾼다). */
@@ -105,3 +105,20 @@
 /* 가독성 (테마 4.1.2): 팝업 안에서도 글은 왼쪽 정렬 */
 .mr-body { text-align: left; }
 .mr-name { text-align: left; }
+
+/* 4.5.2: '모델 순서' 애드온에서 옮겨 온 ⠿ 끌기 (그 애드온에만 있던 유일한 기능) */
+.mr-handle {
+    touch-action: none;
+    cursor: grab;
+    font-size: 20px;
+    line-height: 1;
+    width: 28px;
+    flex: 0 0 auto;
+    border: 0;
+    background: none;
+    color: inherit;
+    opacity: 0.55;
+    padding: 0;
+}
+.mr-handle:active { cursor: grabbing; }
+.mr-item.mr-dragging { outline: 1px solid currentColor; opacity: 0.85; }
