@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 6f47d8c3d177) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 0d5768fa12cc) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -2955,7 +2955,7 @@ body.salty #loader.splash-screen .splash-message::before {
   content: "SillyTavern";
   display: block;
   color: var(--salty-text);
-  font-family: var(--salty-font-ui, inherit);
+  font-family: system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
   font-size: var(--bl-fs-title, 22px);
   font-weight: 700;
   font-synthesis-weight: none;
@@ -2967,7 +2967,7 @@ body.salty #loader.splash-screen .splash-message::after {
   display: block;
   margin-top: var(--bl-s1);
   color: var(--salty-muted);
-  font-family: var(--salty-font-ui, inherit);
+  font-family: system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
   font-size: var(--bl-fs-sub, 13px);
   font-weight: 500;
   font-synthesis-weight: none;
