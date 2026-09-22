@@ -8,6 +8,13 @@ import { getSettings, saveSettings } from './settings.js';
 
 export const NOTICES = [
 {
+    "version": "4.4.3",
+    "date": "2026-09-22",
+    "items": [
+        "불러오는 첫 화면의 글자가 번져 보이던 것을 고쳤어요. 실리태번이 모든 글자에 넣는 그림자가 첫 화면에도 걸려, 굵은 글자 획마다 검은 안개가 깔렸어요. 테마가 그림자를 끄는 규칙은 그때 아직 걸리기 전이라 못 막았어요."
+    ]
+},
+{
     "version": "4.4.2",
     "date": "2026-09-22",
     "items": [

@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 6b0a70ee3ad2) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build dd393237efab) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -2924,6 +2924,12 @@ body.salty.salty-dark .popup:has(#loader.splash-screen)::backdrop {
   background: var(--salty-bg, #071C2E) !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
+}
+body.salty #loader.splash-screen,
+body.salty :is(#loader.splash-screen *),
+body.salty #loader.splash-screen *::before,
+body.salty #loader.splash-screen *::after {
+  text-shadow: none !important;
 }
 body.salty #loader.splash-screen {
   gap: var(--bl-sp-gap, var(--bl-s5)) !important;

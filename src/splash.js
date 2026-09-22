@@ -107,6 +107,12 @@ function buildCss(s) {
     const logo = `data:image/svg+xml,${svg.replace(/</g, '%3C').replace(/>/g, '%3E').replace(/#/g, '%23')}`;
     return ascii(`/* blue-lemonade-splash: Blue Lemonade rewrites this file when the palette changes - do not edit */
 ${faces}
+/* 실리태번 코어 style.css:140 의 전체 선택자가 text-shadow: 0 0 calc(var(--shadowWidth)*1px) var(--SmartThemeShadowColor) 를
+   :root 기본값(2px · rgba(0,0,0,0.5))으로 첫 프레임부터 .splash-message 에 걸리고, text-shadow 는 상속이라
+   ::before · ::after 글자에도 검은 안개가 얹힌다 (실측: 0~1517ms 동안 rgba(0,0,0,0.5) 0 0 2px, 그 뒤 none).
+   테마의 body.salty 쪽 끄기 규칙은 그때 body 에 salty 가 아직 없어서 못 막는다 — 여기서 꺼야 한다.
+   #loader.splash-screen 은 부팅 스플래시에만 붙는 클래스라 일반 팝업 · 액션 로더에는 닿지 않는다. */
+#loader.splash-screen, #loader.splash-screen *, #loader.splash-screen *::before, #loader.splash-screen *::after { text-shadow: none !important; }
 #preloader { background-color: ${bg} !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 .popup:has(#loader.splash-screen) { padding: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; }
 .popup:has(#loader.splash-screen)::backdrop { background: ${bg} !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
