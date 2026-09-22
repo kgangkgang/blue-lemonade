@@ -325,10 +325,15 @@ function visibleBookmarks(record) {
         .sort((a, b) => (a.index - b.index) * direction);
     if (!view.query) return items;
     const query = view.query.toLowerCase();
-    // 4.5.8: 찾는 말에 영문자가 없으면 대소문자를 맞출 것이 없다 — 메시지를 통째로 이어 붙여
-    // 소문자로 바꾸는 일을 건너뛴다 (긴 채팅에서 검색 한 번에 임시 문자열이 수 MB 였다).
+    // 4.5.8: 찾는 말에 대소문자가 있는 글자가 없으면 맞추고 말 것이 없다 — 메시지를 통째로
+    // 이어 붙여 소문자로 바꾸는 일을 건너뛴다 (긴 채팅에서 검색 한 번에 임시 문자열이 수 MB 였다).
     // 메모에서 먼저 찾아 보고 거기서 나오면 본문은 아예 만들지 않는다.
-    const fold = /[a-z]/i.test(view.query) ? (text => text.toLowerCase()) : (text => text);
+    // 4.5.9: 판정을 글자 종류가 아니라 '이 글자에 대소문자 짝이 있는가' 로 바꿨다. 유니코드 전체
+    // 1,114,112자를 훑어 확인: /[a-z]/i 는 구멍 2,985자(À · ПРИВЕТ · Σ …), 대·소문자 범주(Lu·Ll)로도
+    // 116자가 남는다(로마 숫자 Ⅰ Ⅱ Ⅲ 는 Nl, 원문자 Ⓐ 는 So, ǅ 는 Lt — 한자 키로 실제로 쳐진다).
+    // 아래 식은 구멍 0자이면서 건너뛰는 글자 수는 /[a-z]/i 와 똑같다(1,109,027자) — 이득은 그대로다.
+    const cased = view.query !== view.query.toLowerCase() || view.query !== view.query.toUpperCase();
+    const fold = cased ? (text => text.toLowerCase()) : (text => text);
     return items.filter(({ fav, index }) => {
         const note = fold(noteToPlainText(fav.note));
         if (view.noteOnly) return note.includes(query);

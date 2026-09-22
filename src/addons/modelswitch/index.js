@@ -8,7 +8,7 @@ import { SOURCES } from '../models/sources.js';
 import { listTargets, supports, registry } from './targets.js';
 import { setLocks, withoutLock } from './lock.js';
 
-const VERSION = '1.0.1';
+const VERSION = '1.0.2';
 const MAX_LISTS = 3;
 const MAX_PRESETS = 8;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

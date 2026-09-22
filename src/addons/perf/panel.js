@@ -629,6 +629,12 @@ async function loadFirstPage(state) {
         state.loading = false;
     }
     if (dialog !== state) return;
+    // 4.5.9: 저장소 안내를 여기서 다시 쓴다. 창을 그릴 때 읽은 isMemoryOnly() 는 아직 openDb() 가
+    // 한 번도 안 불렸으면 초기값 false 라 '이 기기에만 남아요' 로 나온다 — 실제로는 저장이 안 되는
+    // 창인데 남는다고 적힌다. 4.5.8 까지는 시작할 때 부르던 trimEntries() 가 우연히 openDb() 를
+    // 먼저 불러 줘서 가려져 있었다(그것도 비동기라 확실하진 않았다). 첫 쪽을 읽고 나면 확실해진다.
+    const note = state.root?.querySelector('.rl-top-note');
+    if (note) note.textContent = isMemoryOnly() ? '이 창을 닫으면 사라져요 (저장소 없음)' : '이 기기에만 남아요';
     renderCallerFilter(state);
     renderList(state);
 }

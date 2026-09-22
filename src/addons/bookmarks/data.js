@@ -456,7 +456,10 @@ export function syncAnchors() {
     // 4.5.8: 메시지가 하나 늘었다고 전부 다시 해시하지 않는다 — 북마크가 저마다 제 자리에
     // 그대로 있으면(stillVerified) 다시 맞출 것이 없다. 자리가 밀렸거나 지워졌으면 이 검사가
     // 걸러내 아래 resolveAnchors 로 간다. 전에는 길이가 바뀌면 조건이 먼저 막아 늘 다시 해시했다.
-    if (favorites.every(fav => stillVerified(fav, messages))) return none;
+    // 4.5.9: fav && — 손으로 고친 jsonl 등으로 favorites 에 빈 칸이 섞이면 every() 가 여기서
+    // 던져 resolveAnchors 가 아예 안 돈다. 빈 칸이 있으면 false 로 떨어뜨려 옛 길로 보낸다
+    // (anchors.js 는 빈 칸을 건너뛰도록 돼 있다).
+    if (favorites.every(fav => fav && stillVerified(fav, messages))) return none;
 
     const result = resolveAnchors(messages, favorites, { hash: textHash, removeMissing: shrunk, preferBackward: shrunk });
     for (const fav of result.removed) verified.delete(fav.id);

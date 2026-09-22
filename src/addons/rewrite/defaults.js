@@ -1,5 +1,5 @@
 import { COLORS, COLOR_MODS } from './colors.js';
-import { USER_COLORS_RULE, USER_HAIR_RULE } from './defaults-personal.js';
+import { USER_COLORS_RULE, USER_HAIR_RULE, USER_NAILS_RULE } from './defaults-personal.js';
 import { MULTILINGUAL_WORDS, NOSTRIL_RULE } from './multilingual.js';
 
 export { USER_COLORS_EXTRA } from './defaults-personal.js';
@@ -120,6 +120,7 @@ export const DEFAULT_SETTINGS = {
         },
         ...(USER_COLORS_RULE ? [USER_COLORS_RULE] : []),
         ...(USER_HAIR_RULE ? [USER_HAIR_RULE] : []),
+        ...(USER_NAILS_RULE ? [USER_NAILS_RULE] : []),
         {
             // The "fufu" laugh; a single ふ / 후 (a breath, "ふっ") is fine.
             // Regex lines because kana and hangul have no word boundaries: ふふ, ふふふ, ふふっ, うふふ, フフ, 후후, fufu.
@@ -170,9 +171,10 @@ export const DEFAULT_SETTINGS = {
 
 for (const rule of DEFAULT_SETTINGS.rules) {
     // The persona rule arrives complete from defaults-personal.js.
-    if (rule !== USER_COLORS_RULE && rule !== USER_HAIR_RULE && MULTILINGUAL_WORDS[rule.id]) rule.words += '\n' + MULTILINGUAL_WORDS[rule.id];
+    if (rule !== USER_COLORS_RULE && rule !== USER_HAIR_RULE && rule !== USER_NAILS_RULE && MULTILINGUAL_WORDS[rule.id]) rule.words += '\n' + MULTILINGUAL_WORDS[rule.id];
 }
 DEFAULT_SETTINGS.rules.push(structuredClone(NOSTRIL_RULE));
 DEFAULT_SETTINGS.offeredRules.push(NOSTRIL_RULE.id);
 if (!USER_COLORS_RULE) DEFAULT_SETTINGS.offeredRules = DEFAULT_SETTINGS.offeredRules.filter(id => id !== 'user_colors');
 if (USER_HAIR_RULE) DEFAULT_SETTINGS.offeredRules.splice(DEFAULT_SETTINGS.offeredRules.indexOf('user_colors') + 1, 0, USER_HAIR_RULE.id);
+if (USER_NAILS_RULE) DEFAULT_SETTINGS.offeredRules.splice(DEFAULT_SETTINGS.offeredRules.indexOf(USER_HAIR_RULE ? USER_HAIR_RULE.id : 'user_colors') + 1, 0, USER_NAILS_RULE.id);

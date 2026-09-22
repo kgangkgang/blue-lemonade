@@ -27,6 +27,9 @@ async function fetchBundled(item){
 // retry=true 일 때만 주소를 흔든다. 4.5.8 전에는 늘 흔들어서, 둘째 사본으로 도는 기기
 // (bl_scripts_plain='1')는 새로고침마다 609KB 를 통째로 다시 받았다 — 캐시가 절대 안 맞았다.
 // 첫 번째 시도는 주소를 고정해 조건부 GET(304)이 먹게 하고, 실패해서 다시 받을 때만 흔든다.
+// 4.5.9: 둘째 사본 우선 분기에 retry 를 false 로 박아 두면 안 된다 — runtime.js 는 재시도를
+// loadBundledScript(id, attempt>0) 로 알리는데, 주소가 같으면 모듈 맵이 멈춰 있는 레코드를
+// 그대로 돌려줘 재시도가 요청을 한 번도 안 낸다. fresh 를 그대로 넘긴다.
 async function loadPlain(item,retry){
   const bust=retry?`?r=${Date.now().toString(36)}`:'';
   const module=await import(new URL(`./plain/${item.file}.js${bust}`,import.meta.url).href);
@@ -61,7 +64,7 @@ export function loadBundledScript(id,fresh=false){
   if(fresh)cache.delete(id);
   // 이 기기에서 원래 파일이 비어 온 적이 있으면(브라우저가 막음) 둘째 사본부터 받는다 — 스크립트마다 헛요청 두 번(모듈 · 직접 받기)을 건너뛴다. 둘째가 안 되면 원래 순서로
   let plainFirst=false;try{plainFirst=localStorage.getItem('bl_scripts_plain')==='1';}catch{/* 저장소를 못 쓰면 늘 원래 순서 */}
-  if(plainFirst&&!cache.has(id)){cache.set(id,loadPlain(item,false).catch(()=>{try{localStorage.removeItem('bl_scripts_plain');}catch{/* 무시 */}cache.delete(id);return loadBundledScript(id,true);}));return cache.get(id);}
+  if(plainFirst&&!cache.has(id)){cache.set(id,loadPlain(item,fresh).catch(()=>{try{localStorage.removeItem('bl_scripts_plain');}catch{/* 무시 */}cache.delete(id);return loadBundledScript(id,true);}));return cache.get(id);}
   if(!cache.has(id))cache.set(id,import(bundledUrl(item,fresh)).then(module=>{
     if(typeof module.default!=='string'||module.default.length<50)throw Error('모듈에 내용이 없어요');
     return module.default;

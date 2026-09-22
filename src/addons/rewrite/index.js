@@ -37,7 +37,7 @@ import { PROVIDERS, applyModelRequestRules, isHttpUrl, modelIdsFrom, normalizeUr
 import { capturedMessages, capturedRequest, holdGeneration, regenerateReply, replaceReply, visibleText, watchRequests, withTimeout } from './reroll.js';
 import { applyUpgrades } from './upgrades.js';
 
-const VERSION = '1.8.5';
+const VERSION = '1.8.6';
 const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];
