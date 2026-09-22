@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build d4cd97afa0ed) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build b217bbb3598d) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -17875,15 +17875,12 @@ body.salty.salty-demfx-go.salty-demfx-glow :is(#chat, .cg-root, .salty-preview) 
 body.salty.salty-demfx-go.salty-demfx-glow :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) * {
   text-shadow: 0 0 calc(var(--bl-fx-glow, 0) * .55em) currentColor !important;
 }
-body.salty:not(.salty-demfx-flow) :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) {
-  color: var(--salty-marker-ink, var(--salty-dialogue)) !important;
-  -webkit-text-fill-color: var(--salty-marker-ink, var(--salty-dialogue)) !important;
-  background-image: none !important;
-}
 body.salty:is(.salty-dem-ink-marker, .salty-dlg-marker, .salty-dlg-full) :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) {
   translate: none !important;
   rotate: none !important;
   scale: none !important;
+  opacity: 1 !important;
+  filter: none !important;
 }
 body.salty.salty-demfx-flow :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) q:is(.bl-s, *),
 body.salty.salty-demfx-flow :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) font:is(.bl-s, *),
@@ -17956,7 +17953,7 @@ body.salty.salty-demfx-mflow.salty-dlg-full :is(#chat, .cg-root, .salty-preview)
   to { rotate: calc(.35deg * var(--bl-fx-k, 1)); filter: hue-rotate(58deg) saturate(1.9) brightness(1.16); }
 }
 .salty-preview[data-prev="regex"] .custom-dem-expressive,
-body.salty :is(#chat, .cg-root) .custom-dem-expressive.bl-fx-made {
+body.salty:is(.salty-demfx-flow, .salty-demfx-mflow) :is(#chat, .cg-root) .custom-dem-expressive.bl-fx-made {
   display: inline-block;
   max-width: 100%;
   vertical-align: baseline;

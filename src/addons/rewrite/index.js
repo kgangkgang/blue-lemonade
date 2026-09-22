@@ -37,7 +37,7 @@ import { PROVIDERS, applyModelRequestRules, isHttpUrl, modelIdsFrom, normalizeUr
 import { capturedMessages, capturedRequest, holdGeneration, regenerateReply, replaceReply, visibleText, watchRequests, withTimeout } from './reroll.js';
 import { applyUpgrades } from './upgrades.js';
 
-const VERSION = '1.8.6';
+const VERSION = '1.8.7';
 const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];
@@ -260,7 +260,8 @@ async function fetchCustomModels({ silent = false } = {}) {
     // The address changed while waiting: the screen now belongs to the new address.
     if (!isCurrent()) return;
     if (settings.provider === 'custom') renderModels();
-    const reason = result.ok ? '' : String(result.error?.message || result.error || '알 수 없는 오류');
+    if (!result.ok) console.warn(`[${TITLE}] 모델 목록 실패:`, result.error);
+    const reason = result.ok ? '' : friendlyError(result.error?.message || result.error) || '알 수 없는 오류';
     if (!result.ok) renderModelsStatus(`불러오기 실패: ${reason}`);
     if (silent) return;
     if (!result.ok) {
@@ -478,6 +479,37 @@ function laterToast(show) {
     };
 }
 
+// 1.8.7 — provider errors used to reach the toasts in English ("Resource has been exhausted (e.g. check quota).").
+// Known wordings become Korean; anything else is shown exactly as it came, and every caller logs the raw error.
+// Words are read before numbers: "429 Too Many Requests" and "503 Service Unavailable" carry their own words, so a
+// bare number in a sentence ("500 tokens left") is never taken for a status code — only a labelled or bracketed one.
+// Chinese lines are the new-api relay's own wording.
+function friendlyError(error) {
+    const text = String(error?.message ?? error ?? '').trim();
+    if (!text) return '';
+    const lower = text.toLowerCase();
+    const has = (...words) => words.some(word => lower.includes(word));
+    const status = (...codes) => new RegExp(
+        String.raw`(?:\[\s*(?:${codes.join('|')})\s*\]|(?:status|code|http|error)\D{0,10}(?:${codes.join('|')}))(?!\d)`, 'i').test(text);
+    if (has('rate limit', 'rate_limit', 'too many requests')) return '요청이 너무 잦아요. 잠깐 쉬었다 다시 해 주세요.';
+    if (has('resource has been exhausted', 'resource_exhausted', 'quota', '额度', '余额不足') || status('429'))
+        return '쓸 수 있는 양(할당량)을 다 썼어요. 잠시 뒤에 다시 하거나 다른 모델·키를 써 주세요.';
+    if (has('prohibited_content', 'safety', 'blocked', 'recitation', 'content filter', 'content_filter'))
+        return '모델이 이 내용을 거절했어요 (안전 필터). 같은 내용은 다시 해도 막혀요.';
+    if (has('api key', 'api_key', 'unauthenticated', 'invalid authentication', 'permission_denied', 'permission denied', '无可用渠道') || status('401', '403'))
+        return 'API 키가 없거나 권한이 없어요. 키와 주소를 확인해 주세요.';
+    if (has('overloaded', 'unavailable', 'service_unavailable', 'capacity', '饱和') || status('502', '503'))
+        return '모델 쪽 서버가 붐벼요. 잠시 뒤에 다시 해 주세요.';
+    if (has('deadline', 'timed out', 'timeout', 'etimedout')) return '시간 안에 답이 오지 않았어요.';
+    if (has('failed to fetch', 'network error', 'networkerror', 'err_network', 'econnrefused', 'enotfound'))
+        return '연결이 끊겼어요. 인터넷과 주소를 확인해 주세요.';
+    if (has('internal error', 'internal server error', 'internal_server_error') || status('500'))
+        return '모델 쪽에서 오류가 났어요. 다시 해 주세요.';
+    if (has('not found', 'does not exist', 'no such model') || status('404')) return '그 모델이나 주소를 찾을 수 없어요.';
+    if (has('context length', 'maximum context', 'token limit', 'too long')) return '보낸 글이 모델이 받을 수 있는 길이를 넘었어요.';
+    return text;
+}
+
 function report(result, total, manual) {
     afterPaint().then(() => showReport(result, total, manual));
 }
@@ -486,7 +518,9 @@ function showReport({ fixed, failed, error }, total, manual) {
     const kept = total - fixed - failed;
     if (failed > 0) {
         const done = fixed > 0 ? ` (${fixed}곳은 고침)` : '';
-        const reason = error ? ` ${error.message}` : '';
+        if (error) console.warn(`[${TITLE}] 고쳐 쓰기 실패:`, error);
+        const friendly = friendlyError(error);
+        const reason = friendly ? ` ${friendly}` : '';
         toastr.warning(`${failed}곳은 못 고쳐서 원문 그대로 뒀어요${done}.${reason}`, TITLE);
         return;
     }
@@ -604,7 +638,7 @@ async function cleanMessage(messageId, manual, signal) {
         report(result, spans.length, manual);
     } catch (error) {
         console.error(`[${TITLE}]`, error);
-        toastr.error(`고쳐 쓰는 중 오류: ${error.message}`, TITLE);
+        toastr.error(`고쳐 쓰는 중 오류: ${friendlyError(error)}`, TITLE);
     } finally {
         busy.delete(key);
         clearProgress?.();
@@ -718,7 +752,7 @@ async function ensureScenePlan(messageId, end, stopSignal) {
         } else if (stopSignal.aborted) {
             toastr.info('다시 생성을 멈췄어요. 처음 답변을 그대로 뒀어요.', TITLE);
         } else if (outcome.error) {
-            const reason = outcome.error?.name === 'AbortError' ? `${scene.timeoutSec}초 안에 응답이 없어요` : outcome.error.message;
+            const reason = outcome.error?.name === 'AbortError' ? `${scene.timeoutSec}초 안에 응답이 없어요` : friendlyError(outcome.error);
             console.warn(`[${TITLE}] 씬 플랜 리롤 실패:`, outcome.error);
             toastr.warning(`${outcome.attempts}번 다시 생성해 봤지만 처음 답변을 그대로 뒀어요. 마지막 오류: ${reason}`, TITLE);
         } else {
@@ -726,7 +760,7 @@ async function ensureScenePlan(messageId, end, stopSignal) {
         }
     } catch (error) {
         console.error(`[${TITLE}]`, error);
-        toastr.error(`다시 생성 중 오류: ${error.message}`, TITLE);
+        toastr.error(`다시 생성 중 오류: ${friendlyError(error)}`, TITLE);
     } finally {
         busy.delete(key);
         if (progress) toastr.clear(progress);
@@ -1413,12 +1447,14 @@ async function previewRewrite() {
     try {
         const output = await rewriteText({ text, spans, exceptions, compiled: active, generate, maxAttempts: settings.maxAttempts, log });
         const kept = spans.length - output.fixed - output.failed;
-        const error = output.error ? ` (${output.error.message})` : '';
+        if (output.error) console.warn(`[${TITLE}] 테스트 고쳐 쓰기 실패:`, output.error);
+        const error = output.error ? ` (${friendlyError(output.error)})` : '';
         result.empty()
             .append($('<div>').text(`고침 ${output.fixed} · 그대로 ${kept} · 실패 ${output.failed}${error}`))
             .append($('<pre class="bwr_preview">').text(output.text));
     } catch (error) {
-        result.empty().append($('<div>').text(`오류: ${error.message}`));
+        console.warn(`[${TITLE}] 테스트 오류:`, error);
+        result.empty().append($('<div>').text(`오류: ${friendlyError(error)}`));
     } finally {
         previewing = false;
     }
