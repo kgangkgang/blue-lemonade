@@ -4,7 +4,14 @@ import { eventSource, event_types } from '../../../../../../../script.js';
 import { VERSION, initSettings, hooks, applyColors, colorsFor, currentChatKey, iconName, settings, themeColors } from './state.js';
 import { currentRecord, bookmarkAt, addBookmark, removeBookmark, syncAnchors } from './data.js';
 import { openNoteEditor, previewRecord, isPreviewing, exitPreview, abandonPreviewForGeneration } from './viewers.js';
-import { openPanel, onChatChanged } from './panel.js';
+
+// 4.5.4: 모아 보기 창(panel.js 47KB + 그것만 쓰는 settings-view.js 17.7KB)은 창을 열 때 읽는다.
+// 북마크 표시 · 메모 · 미리보기는 창 없이도 돌아가야 해서 index.js 는 그대로 시작할 때 읽힌다.
+let panelPromise = null;
+const panelModule = () => (panelPromise ??= import('./panel.js'));
+export async function openPanel(...args) { return (await panelModule()).openPanel(...args); }
+// 창을 아직 안 열었으면 알릴 곳이 없다 — 읽은 뒤에만 넘긴다
+function notifyChatChanged() { if (panelPromise) panelPromise.then(m => m.onChatChanged()).catch(() => {}); }
 
 initSettings();
 
@@ -214,7 +221,7 @@ eventSource.on(event_types.CHAT_CHANGED, async () => {
     if (isPreviewing()) await exitPreview({ reload: false });
     applyColors(colorsFor(currentChatKey()));
     syncBookmarks();
-    onChatChanged();
+    notifyChatChanged();
     scheduleIconRefresh(120);
 });
 
@@ -287,7 +294,6 @@ jQuery(() => {
 });
 
 // ── 블루 레몬에이드 애드온 연결 (addons.js) ──────────────────
-export { openPanel };
 /** 테마 설정 창 안 칸: 북마크 창은 제 화면이 따로 있어 여는 단추만 둔다 */
 export function mountInline(host) {
     host.innerHTML = '<p class="salty-note">메시지의 북마크 단추를 누르면 표시가 남고, 길게 누르면 메모를 적어요. 모아 보기는 ✦ 메뉴의 북마크로도 열려요.</p><button type="button" class="salty-btn bl-tool-primary">북마크 모아 보기</button>';
