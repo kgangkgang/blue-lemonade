@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 3753db2bc4e8) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build d4e2186bb25c) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -17875,7 +17875,7 @@ body.salty.salty-demfx-go.salty-demfx-glow :is(#chat, .cg-root, .salty-preview) 
 body.salty.salty-demfx-go.salty-demfx-glow :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) * {
   text-shadow: 0 0 calc(var(--bl-fx-glow, 0) * .55em) currentColor !important;
 }
-body.salty.salty-demfx-go:not(.salty-demfx-flow) :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) {
+body.salty:not(.salty-demfx-flow) :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) {
   color: var(--salty-marker-ink, var(--salty-dialogue)) !important;
   -webkit-text-fill-color: var(--salty-marker-ink, var(--salty-dialogue)) !important;
   background-image: none !important;
