@@ -10,6 +10,7 @@ import { startCompactLayout } from './src/layout.js';
 import { startNumberDisplay } from './src/numbers.js';
 import { startNameMarquee } from './src/marquee.js';
 import { startGutterWatch } from './src/gutter.js';
+import { startDraftKeep } from './src/draft.js';
 import { startSelectPop } from './src/selects.js';
 import { startColorPop } from './src/colorpop.js';
 import { startInlineTone, retoneAll } from './src/tone.js';
@@ -144,6 +145,7 @@ jQuery(() => {
     startNumberDisplay();
     startNameMarquee(); // 헬퍼 스크립트 이름: 눌러서 긴 이름 끝까지 보기
     startGutterWatch(); // 스크롤하는 칸에만 양쪽 스크롤바 홈 (PC)
+    startDraftKeep(); // 입력칸에 쓰다 만 글은 새로고침해도 남는다 (채팅마다 따로)
     startSelectPop();   // select 를 테마가 그린 목록 팝업으로 (2.5.0)
     startColorPop();    // 색 칸을 테마 색 고르기로 (3.5.0)
     startInlineTone();  // 본문 글자색의 채도 · 밝기 맞춤 (2.6.0)
