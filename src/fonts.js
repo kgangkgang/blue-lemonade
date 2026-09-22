@@ -160,7 +160,11 @@ export function parseFaces(cssText, baseUrl) {
 
 const unquote = s => String(s || '').trim().replace(/^['"]|['"]$/g, '').toLowerCase();
 
+// 4.5.7: fa 는 fonts-archive 한 줄 CSS 의 이름만 적은 것 — 469개가 전부 같은 꼴이라 주소를 반복하지 않는다
+const FONTS_ARCHIVE = name => `https://cdn.jsdelivr.net/gh/fonts-archive/${name}/${name}.css`;
+
 function sourceUrls(font) {
+    if (font.fa) return [FONTS_ARCHIVE(font.fa)];
     if (font.css) return [].concat(font.css);
     if (font.google) return [`${GOOGLE}family=${font.google}&display=swap`];
     return [];
