@@ -56,11 +56,12 @@ rows.push(['extensions','words','단어 치환','단어 바꾸기 조사 규칙 
  ['extensions','modelorder','모델 순서','등록한 모델 정렬 순서 드래그 위로 아래로'],
  ['extensions','bookmarks','북마크','북마크 책갈피 즐겨찾기 메시지 표시 메모 모아 보기 찾기 이동 앞뒤 문맥 다른 채팅'],
  ['extensions','modelswitch','모델 전환','번역 장기 기억 다시 쓰기 모델 한번에 바꾸기 중계 공식 API 조합 저장 주소 잠금 공급자 전환'],
+ ['extensions','regexlink','프롬프트 연동 정규식','정규식 프롬프트 연동 모듈 모멘텀 엔진 상태창 선택지 끄기 켜기 자동 스트리밍 가볍게 데우스 regex'],
  ['extensions','rewrite','다시 쓰기','금지 묘사 금지어 밴 단어 문장 고치기 다시 쓰기 안경 수염 외모 묘사 씬 플랜 리롤 장면 계획 예외 캐릭터 AI 프롬프트 규칙 사용법'],
  ['extensions','scripts','스크립트','내장 스크립트 실리태번 한글화 헬퍼 한글화 데우스 샤진 번역 프롬프트 이름 정규식 이름 삼각형 접기 코드 편집'],
  ['theme','update','테마 업데이트','업데이트 새 버전 확인 최신 버전 받기 공지사항 달라진 점']);
 const tabs={extensions:'확장',theme:'테마',text:'글자',chat:'채팅',image:'이미지',prompt:'프롬프트'};
-const subs={words:'단어 치환',capture:'채팅 캡처',order:'확장 순서',perf:'성능 보조',models:'모델 등록',modelorder:'모델 순서',modelswitch:'모델 전환',rewrite:'다시 쓰기',bookmarks:'북마크',scripts:'스크립트',update:'업데이트',changes:'변경한 설정',palette:'색',colors:'색 고치기',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
+const subs={words:'단어 치환',capture:'채팅 캡처',order:'확장 순서',perf:'성능 보조',models:'모델 등록',modelorder:'모델 순서',modelswitch:'모델 전환',regexlink:'프롬프트 연동 정규식',rewrite:'다시 쓰기',bookmarks:'북마크',scripts:'스크립트',update:'업데이트',changes:'변경한 설정',palette:'색',colors:'색 고치기',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
 const normalize = value => String(value).normalize('NFKC').toLowerCase().replace(/퀵\s*리플라이|quick\s*repl(?:y|ies)|큐알|\bqr\b/g,'퀵리플라이').replace(/프사|아바타/g,'프로필').replace(/글씨|글자\s*간격/g,m=>m==='글씨'?'글자':'자간').replace(/확대\s*축소/g,'확대 축소').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 // 한글을 초성 · 자모로 풀어 둔다: 'ㅂㄱ' → 배경, '배겨'(치다 만 글자) → 배경, 한 글자 틀린 말도 찾는다.
 const CHO='ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ', JUNG='ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ', JONG=['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
