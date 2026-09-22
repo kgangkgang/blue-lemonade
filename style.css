@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build d4e2186bb25c) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build d4cd97afa0ed) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -17879,6 +17879,11 @@ body.salty:not(.salty-demfx-flow) :is(#chat, .cg-root, .salty-preview) .custom-d
   color: var(--salty-marker-ink, var(--salty-dialogue)) !important;
   -webkit-text-fill-color: var(--salty-marker-ink, var(--salty-dialogue)) !important;
   background-image: none !important;
+}
+body.salty:is(.salty-dem-ink-marker, .salty-dlg-marker, .salty-dlg-full) :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) {
+  translate: none !important;
+  rotate: none !important;
+  scale: none !important;
 }
 body.salty.salty-demfx-flow :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) q:is(.bl-s, *),
 body.salty.salty-demfx-flow :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) font:is(.bl-s, *),
