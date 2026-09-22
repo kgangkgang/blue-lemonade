@@ -278,7 +278,8 @@ export function startMenuOpenMark() {
         if (forced) body.classList.add('expandMessageActions');
     };
     for (const ms of [1500, 5000]) setTimeout(detectForced, ms);
-    try { const { eventSource, event_types } = SillyTavern.getContext(); eventSource.on(event_types.CHAT_CHANGED, () => setTimeout(detectForced, 1200)); } catch { /* 이벤트를 못 걸면 시작할 때 잰 값만 쓴다 */ }
+    // 메뉴 안 '가지 만들기'처럼 메뉴가 열린 채 채팅이 바뀌면 떨어져 나간 메뉴의 클래스 변화는 안 잡혀 #chat 앵커가 남았다 — 채팅이 바뀔 때 다시 잰다
+    try { const { eventSource, event_types } = SillyTavern.getContext(); eventSource.on(event_types.CHAT_CHANGED, () => { syncChat(); setTimeout(detectForced, 1200); }); } catch { /* 이벤트를 못 걸면 시작할 때 잰 값만 쓴다 */ }
     // 4.2.8 바깥을 눌러도 메뉴가 안 닫히는 환경(예전 실리태번은 ··· 를 누르면 버튼 칸을 열어 두기만 하고 닫지 않는다 · 닫는 애니메이션이 끝나지 않는 폰)에서는
     // 테마가 이 칸을 떠 있는 메뉴로 그리기 때문에 메뉴가 채팅을 가린 채 남았다. 실리태번에게 먼저 맡기고, 0.45초 뒤에도 열려 있으면 테마가 닫는다.
     document.addEventListener('click', (event) => {
@@ -301,6 +302,8 @@ export function startMenuOpenMark() {
         for (const m of list) if (m.target.classList?.contains('extraMesButtons')) { sync(m.target); menu = true; }
         if (menu) syncChat();
     }).observe(chat, { attributes: true, attributeFilter: ['class'], subtree: true });
+    // 열린 메뉴째로 메시지가 지워진 경우도 (메시지를 넣고 뺄 때만 불림 — 스트리밍 글자는 .mes 안쪽이라 안 불림)
+    new MutationObserver(() => { if (chat.classList.contains('bl-mes-menu-open')) syncChat(); }).observe(chat, { childList: true });
 }
 
 // ── 앵커 이름은 쓸 때만 (2.9.4) ─────────────────────────────────────────────

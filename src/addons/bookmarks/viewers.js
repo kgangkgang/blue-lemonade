@@ -320,9 +320,15 @@ export async function enterPreview(record, index) {
     const last = Math.min(record.messages.length - 1, index + 2);
     for (let i = first; i <= last; i++) {
         // 실리태번이 메시지 객체를 손볼 수 있으니 복사본을 넘긴다.
-        const element = addOneMessage(structuredClone(record.messages[i]), { forceId: i, scroll: false, showSwipes: false });
+        const message = record.messages[i];
+        const element = addOneMessage(structuredClone(message), { forceId: i, scroll: false, showSwipes: false });
         const node = element?.[0] ?? element;
-        if (node instanceof HTMLElement) hydrateHtmlBlocks(node);
+        if (node instanceof HTMLElement) {
+            // 캐릭터 에셋(1.4.2~)이 무작위 그림을 이 값으로 고른다 — 없으면 지금 채팅의 같은 번호 메시지로 골라 실제 채팅과 그림이 달랐다.
+            // 식은 캐릭터 에셋 render.js messageSeed 와 같아야 한다 (이어 쓴 메시지는 extra.eh_seed)
+            node.dataset.ehSeed = `${message?.extra?.eh_seed ?? message?.send_date ?? i}|${message?.swipe_id ?? 0}`;
+            hydrateHtmlBlocks(node);
+        }
     }
     hooks.refreshMessageIcons();
     setTimeout(() => flashMessage(index), 60);

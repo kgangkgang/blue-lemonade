@@ -2,7 +2,7 @@
 
 /* ===== 끊김 감시 (parts/stream-watchdog.css) ===== */
 /* 끊김 감시 (Stream Watchdog) — 설정 서랍 */
-:root { --sw-css-version: "1.1.1"; }
+:root { --sw-css-version: "1.1.2"; }
 
 .sw-settings .sw-body {
     display: flex;
@@ -135,7 +135,7 @@
 
 /* ===== 요청 로그 (parts/request-log.css) ===== */
 /* 요청 로그 (Request Log) — 설정 서랍 · 로그·집계 창 */
-:root { --rl-css-version: "1.2.4"; }
+:root { --rl-css-version: "1.2.5"; }
 
 .rl-settings, .rl-root {
     --rl-text: var(--SmartThemeBodyColor, #e8e8ec);

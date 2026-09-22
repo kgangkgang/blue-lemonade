@@ -181,6 +181,7 @@ function createLayer(host, className, virtual = false) {
         renderer = r;
         if(destroyed){r.stop();return r;}
         if(paused)r.post({type:'pause'});
+        r.post({ type: 'resize', ...size(), dpr: ratio() }); // 워커가 준비되는 동안 바뀐 크기는 버려졌다 — 지금 크기로 한 번 맞춤
         if (pending) r.post(pending);
         pending = null;
         return r;

@@ -14,7 +14,7 @@ const LEMON_PATH = 'M448 352Q447 379 429 397Q411 415 384 416Q374 416 365 413Q348
 let state = null;   // null 모름 · 'on' 줄 있음 · 'late' 줄은 있는데 다른 규칙 뒤라 무시됨 · 'off' 없음
 let checking = null;
 let served = null;  // 서버에 있는 스플래시 파일 내용 (한 번 읽음)
-let timer = 0;
+let timer = 0, lateTimer = 0;
 
 export function splashState() {
     return state;
@@ -126,8 +126,16 @@ ${faces}
 `);
 }
 
-async function write(s) {
+async function write(s, late = false) {
     if ((await checkSplash()) === 'off') return;
+    // 시작 직후 글꼴 CSS(#salty-fontfaces)가 아직 없으면 기다린다 — 글꼴 없이 한 번, 글꼴 붙여 또 한 번 올리던 것 (applyFonts 가 끝나면 syncSplash 로 다시 부름).
+    // 그 부름이 없는 경우(꺼 둔 채 시작했다가 켰는데 글꼴 CSS 가 비어 있음)에도 안 빠지게 15초 뒤 한 번은 쓴다
+    if (s.enabled && !late && !document.getElementById('salty-fontfaces')) {
+        clearTimeout(lateTimer);
+        lateTimer = setTimeout(() => write(s, true).catch(error => console.warn('[Blue Lemonade] 새로고침 화면', error)), 15000);
+        return;
+    }
+    clearTimeout(lateTimer);
     const css = buildCss(s);
     if (served === null) {
         const res = await fetch(`/user/files/${SPLASH_FILE}`, { cache: 'no-store' }).catch(() => null);

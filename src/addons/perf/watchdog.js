@@ -7,6 +7,8 @@
 // 1.1.0: 첫 글자까지 기다릴 최대 시간(기본 끔) — 요청을 보낸 뒤 그 시간 안에 첫 조각이 안 오면 끊는다.
 //        응답 머리도 안 왔으면 요청 자체를 끊고(실리태번은 오류로 보고 잠금을 푼다), 머리만 왔으면 스트림을 오류로 끝낸다.
 // 1.1.1: 받은 글이 있을 때는 오류가 아니라 끝으로 닫는다 (아래 [1.1.1] 설명 — 멈춤 단추와 같은 끝 처리).
+// 1.1.2: 화면이 가려졌는지가 아니라 검사가 제때 돌았는지로 센다 — 배경 창(소리)으로 살아 있는 가려진 탭도 멈춘 답을 끊고,
+//        얼었다 깬 탭의 밀린 틈은 세지 않는다 (아래 [1.1.2] 설명).
 
 export const GENERATE_PATHS = [
     '/api/backends/chat-completions/generate',
@@ -69,8 +71,12 @@ function stallError(message) {
 
 const tickFor = (...limits) => Math.max(100, Math.min(1000, ...limits.filter(ms => ms > 0).map(ms => Math.floor(ms / 4))));
 
+// [1.1.2] 틱 사이가 이보다 길면 그동안 페이지가 돌지 않은 것(탭이 얼었다 깸 · 긴 작업 · 1분 간격으로 조인 가려진 탭)이라 그 틈은 안 센다.
+// 깨어난 뒤에는 쌓인 조각보다 타이머가 먼저 돌 수 있다. 제때 돈 틱은 가려져 있어도 센다 (가려진 탭도 1초 간격으로 돈다).
+const maxGapFor = tickMs => Math.max(3000, tickMs * 3);
+
 /**
- * 요청 전체를 감싼다: 첫 글자 최대 대기(firstMs > 0)면 응답 머리가 오기 전부터 시간을 센다 (화면이 꺼진 동안은 빼고).
+ * 요청 전체를 감싼다: 첫 글자 최대 대기(firstMs > 0)면 응답 머리가 오기 전부터 시간을 센다 (페이지가 멈춰 있던 틈은 빼고).
  * 머리가 오면 watchResponse 가 이어서 센다.
  * @param {Promise<Response>} request 원래 fetch
  * @returns {Promise<Response>}
@@ -81,9 +87,11 @@ export function watchRequest(request, { idleMs, firstMs = 0, abort, env }) {
         let waited = 0;
         let last = env.now();
         let settled = false;
+        const tickMs = tickFor(firstMs);
+        const maxGap = maxGapFor(tickMs);
         const tick = () => {
             const now = env.now();
-            if (!env.isHidden()) waited += now - last;
+            if (now - last <= maxGap) waited += now - last;
             last = now;
         };
         const timer = env.setInterval(() => {
@@ -96,7 +104,7 @@ export function watchRequest(request, { idleMs, firstMs = 0, abort, env }) {
             try { abort(error); } catch { /* 무시 */ }
             try { env.onStall({ idleMs: waited, first: true }); } catch { /* 무시 */ }
             reject(error);
-        }, tickFor(firstMs));
+        }, tickMs);
         request.then((response) => {
             if (settled) return;
             settled = true;
@@ -114,8 +122,8 @@ export function watchRequest(request, { idleMs, firstMs = 0, abort, env }) {
 
 /**
  * 응답 본문을 감싼다. 첫 조각이 온 뒤, 조각을 기다리는 동안(읽기가 걸려 있는 동안)만 시간을 센다 —
- * 실리태번이 그리느라 바빠 읽기를 쉬는 동안(역압)은 세지 않고, 화면이 꺼져 있던 동안도 세지 않는다
- * (폰이 탭을 얼렸다 깨우면 쌓인 조각보다 타이머가 먼저 돌 수 있다).
+ * 실리태번이 그리느라 바빠 읽기를 쉬는 동안(역압)은 세지 않고, 페이지가 멈춰 있던 틈(틱 사이가 maxGapFor 보다 김)이
+ * 보이면 거기서 다시 센다 (폰이 탭을 얼렸다 깨우면 쌓인 조각보다 타이머가 먼저 돌 수 있다).
  * 첫 조각 전은 firstMs(> 0 일 때만)로 따로 센다 — firstWaited 는 응답 머리가 오기 전까지 이미 기다린 시간.
  *
  * @param {Response} response 원래 응답
@@ -124,7 +132,7 @@ export function watchRequest(request, { idleMs, firstMs = 0, abort, env }) {
  * @param {number} [options.firstMs] 첫 조각까지 최대 대기 (0 = 끔)
  * @param {number} [options.firstWaited] 머리가 오기 전까지 기다린 시간
  * @param {(error: Error) => void} options.abort 원래 요청 끊기 (fetch 신호)
- * @param {object} options.env { now, setInterval, clearInterval, isHidden, onStall(info) }
+ * @param {object} options.env { now, setInterval, clearInterval, onStall(info) }
  * @returns {Response} 감싼 응답. [1.1.1] 끊었으면 response.streamWatchdog = { stalled: true, error, first }
  */
 export function watchResponse(response, { idleMs, firstMs = 0, firstWaited = 0, abort, env }) {
@@ -158,7 +166,9 @@ export function watchResponse(response, { idleMs, firstMs = 0, firstWaited = 0, 
     let finished = false;
     let last = env.now();
     let waitedFirst = firstWaited;
-    let lastFirstTick = env.now();
+    const tickMs = tickFor(idleMs, firstMs);
+    const maxGap = maxGapFor(tickMs);
+    let lastTick = env.now();
     let timer = null;
 
     const stop = () => {
@@ -190,19 +200,22 @@ export function watchResponse(response, { idleMs, firstMs = 0, firstWaited = 0, 
 
     const check = () => {
         if (finished) return;
+        const now = env.now();
+        // [1.1.2] 제때 돈 틱 = 페이지가 살아 있었다 (가려져 있어도). 틈이 길면 얼었다 깬 것 — 그 틈은 안 세고 여기서 다시 센다
+        const gap = now - lastTick;
+        const live = gap <= maxGap;
+        lastTick = now;
         if (!started) {
-            const now = env.now();
-            if (firstMs > 0 && !env.isHidden()) waitedFirst += now - lastFirstTick;
-            lastFirstTick = now;
+            if (firstMs > 0 && live) waitedFirst += gap;
             last = now;
             if (firstMs > 0 && waitedFirst >= firstMs) cut(stallError(`Stream stalled: no first chunk for ${Math.round(waitedFirst / 1000)}s`), { idleMs: waitedFirst, first: true });
             return;
         }
-        if (!reading || env.isHidden()) {
-            last = env.now();
+        if (!reading || !live) {
+            last = now;
             return;
         }
-        const idle = env.now() - last;
+        const idle = now - last;
         if (idle < idleMs) return;
         cut(stallError(`Stream stalled: no data for ${Math.round(idle / 1000)}s`), { idleMs: idle });
     };
@@ -210,7 +223,7 @@ export function watchResponse(response, { idleMs, firstMs = 0, firstWaited = 0, 
     const stream = new ReadableStream({
         start(c) {
             controller = c;
-            timer = env.setInterval(check, tickFor(idleMs, firstMs));
+            timer = env.setInterval(check, tickMs);
         },
         async pull(c) {
             if (finished) return; // [1.1.1] 끊은 뒤 — 끊긴 원래 본문은 더 읽지 않는다

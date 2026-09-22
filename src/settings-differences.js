@@ -55,18 +55,22 @@ export function changedSettings(settings) {
 }
 export function settingRoute(path) {
     const [scope, key] = path.split('.');
-    if (scope === 'addons') return {tab:'extensions',sub:key};
+    if (scope === 'addons') return {tab:'extensions',sub:key === 'modelorder' ? 'models' : key}; // 모델 순서는 모델 등록으로 합쳐짐
+    if (scope === 'captureTools') return {tab:'extensions',sub:'capture'};
+    if (scope === 'addonUI') return {tab:'extensions',sub:/^perf/.test(key) ? 'perf' : /^words/.test(key) ? 'words' : /^capture/.test(key) ? 'capture' : 'order'};
     if (scope === 'gradients') return {tab:'theme',sub:key!=='overrides'?'palette':'colors'};
     if (scope === 'colorOverrides') return { tab:'theme', sub:'colors' };
     if (['palette','lightTint','nightTint','auto','enabled','customName'].includes(scope)) return {tab:'theme',sub:'palette'};
     if (scope === 'fonts') return key === 'name' || key === 'userName' ? {tab:'chat',sub:key === 'name' ? 'name' : 'user-name'} : {tab:'text',sub:key === 'hanja' ? 'text' : key};
+    if (path === 'userProfile.metaSide') return {tab:'chat',sub:'user-profile'}; // 번호 · 시간 줄 위치는 작은 사진 옆이라 내 프로필에
     if (scope === 'profile' || scope === 'userProfile') return {tab:'chat',sub:/^(name|header|meta|button)/.test(key) ? scope === 'profile' ? 'name' : 'user-name' : scope === 'profile' ? 'profile' : 'user-profile'};
     if (scope === 'type') return {tab:'text',sub:({dialogueSize:'dialogue',uiSize:'ui',codeSize:'code',para:'para',gutter:'para',measure:'para',indent:'para',align:'para'})[key] || 'text'};
     if (['dialogue','em','strong','ui','code'].includes(scope)) return {tab:'text',sub:scope};
     if (['shadow','outline'].includes(scope)) return {tab:'text',sub:'shadow'};
     if (scope === 'image') return {tab:'image',sub:key.startsWith('edge') || key === 'decor' ? 'frame' : /^(fit|maxh|height)$/.test(key) ? 'size' : /^(fade|blendWhite)/.test(key) ? 'fade' : key === 'layout' ? 'layout' : 'shape'};
-    if (scope === 'deus' || scope === 'chat' && /^dem/.test(key)) return {tab:'prompt',sub:'deus'};
-    if (scope === 'compat' || scope === 'chat' && /^(unify|tone|regexIcons)/.test(key)) return {tab:'chat',sub:'etc'};
+    // 카드 · 색 통일 · 톤 값은 데우스 화면에 있다 (채팅 › 기타에는 커스텀 CSS 끄기만)
+    if (scope === 'deus' || scope === 'chat' && /^(dem|unify|tone|markerTone|regexIcons)/.test(key)) return {tab:'prompt',sub:'deus'};
+    if (scope === 'compat') return {tab:'chat',sub:'etc'};
     if (scope === 'chat' && /^(user|header)/.test(key)) return {tab:'chat',sub:'message'};
     return {tab:'chat',sub:'screen'};
 }

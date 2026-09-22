@@ -27,7 +27,10 @@ function hideNames(root,names) {
         // Original glyphs never reach the exported bitmap, including antialiasing.
         mask.style.cssText='display:inline-block;position:relative;max-width:100%;vertical-align:baseline;text-indent:0;isolation:isolate;';
         const hidden=document.createElement('span');hidden.dataset.blHiddenName='';hidden.style.setProperty('opacity','0','important');
-        hidden.append(range.extractContents());mask.append(hidden);range.insertNode(mask);
+        hidden.append(range.extractContents());
+        // 투명도만으로는 조상의 글자 모양 배경(background-clip:text · 감정 대사 색 흐름)에 글자가 그대로 찍힌다 → 안쪽까지 visibility 로 뺀다
+        for(const el of [hidden,...hidden.querySelectorAll('*')])el.style?.setProperty('visibility','hidden','important');
+        mask.append(hidden);range.insertNode(mask);
     }
     return matches.length;
 }

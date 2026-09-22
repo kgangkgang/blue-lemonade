@@ -60,16 +60,22 @@ export function wordToolsMarkup(s, mode) {
     return `<div class="bl-addon-layout"><div class="bl-addon-main">${main}<p class="bl-tool-status" data-word-status role="status"></p></div><div class="bl-addon-config">${options}${menu}</div></div>`;
 }
 
-function snapshot(m) { return {mes:m.mes, display:m.extra?.display_text, swipe:m.swipe_id, swipeText:m.swipes?.[m.swipe_id]}; }
+function snapshot(m) { return {mes:m.mes, display:m.extra?.display_text, hash:m.extra?.original_text_hash, swipe:m.swipe_id, swipeText:m.swipes?.[m.swipe_id]}; }
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+// 번역기의 원문 표식 (llm-translator originalHashOf 와 같은 식) — 원문과 번역문을 함께 바꿀 때 새 원문으로 옮겨야 번역문을 지우고 다시 번역하지 않는다
+// 실리태번 utils.js 는 전후 보기를 누를 때 불러온다 — 정적 import 로 두면 설정 창 모듈 묶음이 실리태번 경로에 묶인다. 못 불러오면 표식을 안 옮긴다(예전처럼 다시 번역)
+let hashFn=null;
+const loadHash=async()=>{try{hashFn??=(await import('../../../../utils.js')).getStringHash;}catch(error){console.warn('[Blue Lemonade]',error);}};
+const sourceHash=(m,mes)=>{if(!hashFn)return null;const ctx=context();return String(hashFn(String(ctx.substituteParams(mes??'',ctx.name1,m.name)??'')));};
 function write(m,data) {
     m.mes=data.mes;
     if(data.display!==undefined){m.extra??={};m.extra.display_text=data.display;}
+    if(data.hash!==undefined){m.extra??={};m.extra.original_text_hash=data.hash;}
     if(m.swipes && data.swipe!==undefined)m.swipes[data.swipe]=data.swipeText;
 }
 async function applyTransaction(transaction, reverse=false) {
     const ctx=context();
-    if(ctx.chatId!==transaction.key || document.querySelector('#send_but')?.classList.contains('displayNone'))throw Error('채팅이 바뀌었거나 응답 생성 중이에요. 다시 확인해 주세요.');
+    if(ctx.chatId!==transaction.key || document.body.dataset.generating==='true')throw Error('채팅이 바뀌었거나 응답 생성 중이에요. 다시 확인해 주세요.');
     for(const row of transaction.rows)if(ctx.chat[row.id]!==row.message || !same(snapshot(row.message),reverse?row.after:row.before))throw Error('미리보기 이후 메시지가 바뀌었어요. 다시 전후 보기를 눌러 주세요.');
     for(const row of transaction.rows)write(row.message,reverse?row.before:row.after);
     try { await ctx.saveChat(); }
@@ -144,10 +150,13 @@ export function bindWordTools(root, refresh) {
             if(action==='copy'){await navigator.clipboard.writeText(draft);globalThis.toastr?.success('복사했어요.','Blue Lemonade');}
             if(action==='preview') {
                 if(!ids.length)throw Error('메시지를 먼저 선택해 주세요.');
+                await loadHash();
                 proposal={key:ctx.chatId,rows:ids.map(id=>{
                     const message=ctx.chat[id],before=snapshot(message),after={...before};
                     const result=replaceText(before.mes,cfg.rules,cfg);after.mes=result.text;
                     if(before.display!==undefined)after.display=replaceText(before.display,cfg.rules,cfg).text;
+                    // 번역이 지금 원문 것이었을 때만 표식을 새 원문으로 (오래된 번역은 그대로 → 번역기가 다시 번역)
+                    if(after.mes!==before.mes&&before.display!==undefined&&before.hash!==undefined&&before.hash===sourceHash(message,before.mes))after.hash=sourceHash(message,after.mes);
                     if(before.swipeText!==undefined)after.swipeText=after.mes;
                     return {id,message,before,after,count:result.count};
                 }).filter(row=>!same(row.before,row.after))};

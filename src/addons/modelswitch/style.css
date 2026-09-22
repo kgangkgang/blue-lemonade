@@ -1,4 +1,4 @@
-#model-switch-settings{--ms-version:"1.0.2"}
+#model-switch-settings{--ms-version:"1.0.3"}
 #model-switch-settings .inline-drawer-content{display:flex;flex-direction:column;gap:12px;text-align:left}
 .ms-presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
 .ms-presets:empty{display:none}
@@ -53,4 +53,4 @@
 .ms-lock small{opacity:.7}
 body.bl-ms-lock-translator :is(#llm_connection_mode,#llm_provider,#llm_model,#llm_custom_model,#llm_custom_url,#llm_custom_fetch_models),
 body.bl-ms-lock-rewrite :is(#bwr_connection .bwr_seg,#bwr_provider,#bwr_model,#bwr_custom_model,#bwr_custom_url,#bwr_fetch_models,#bwr_import_translator),
-body.bl-ms-lock-memory .lm-root :is([data-set-radio="apiMode"],[data-set^="direct."]){opacity:.42;cursor:not-allowed;caret-color:transparent}
+body.bl-ms-lock-memory .lm-root :is([data-set-radio="apiMode"],[data-set="direct.source"],[data-set^="direct.models."],[data-set^="direct.customModels."],[data-set="direct.customUrl"]){opacity:.42;cursor:not-allowed;caret-color:transparent}

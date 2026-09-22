@@ -203,8 +203,10 @@ function addWandButton(attempt = 0) {
  */
 function syncBookmarks() {
     if (isPreviewing()) return;
-    const { removed } = syncAnchors();
+    const { removed, orphaned } = syncAnchors();
     if (removed) toastr.info(`지운 메시지에 달린 북마크 ${removed}개도 지웠어요.`, '북마크', { timeOut: 2500 });
+    // 가지 · 체크포인트 파일은 원래 채팅의 북마크를 통째로 물려받는다 — 잘려 나간 메시지의 것
+    if (orphaned) toastr.info(`이 채팅에 없는 메시지의 북마크 ${orphaned}개를 지웠어요.`, '북마크', { timeOut: 2500 });
 }
 hooks.syncBookmarks = syncBookmarks;
 

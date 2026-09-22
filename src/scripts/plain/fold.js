@@ -13,7 +13,7 @@ export default function blueLemonadeScript(BlueLemonade) {
 (() => {
   'use strict';
 
-  const VERSION = '1.0.0';
+  const VERSION = '1.0.1';
   const LOG = '[▲ 접기]';
   const ST = window.parent ?? window;
   const stDoc = ST.document;
@@ -98,6 +98,7 @@ ${B}:focus-visible::before {
   let sweepTimer = 0;
   const docs = new Map(); // 연결한 문서 → 정리 함수
   const frames = new Set(); // load 리스너를 단 iframe
+  const offs = []; // 실리태번 이벤트 해제 함수
 
   // ── 대상 판별 ─────────────────────────────────────────────
 
@@ -329,6 +330,7 @@ ${B}:focus-visible::before {
     alive = false;
     clearTimeout(sweepTimer);
     stDoc.removeEventListener('visibilitychange', scheduleSweep);
+    offs.splice(0).forEach(off => { try { off(); } catch { /* 이미 사라진 창 */ } });
     for (const frame of frames) frame.removeEventListener('load', onFrameLoad);
     frames.clear();
     for (const off of docs.values()) {
@@ -346,6 +348,19 @@ ${B}:focus-visible::before {
   if (typeof eventOn === 'function' && typeof tavern_events === 'object') {
     for (const name of SWEEP_EVENTS) {
       if (tavern_events[name]) eventOn(tavern_events[name], scheduleSweep);
+    }
+  } else {
+    // 테마 실행기 틀에는 헬퍼 전역(eventOn)이 없다 — 실리태번 이벤트에 직접 달고 destroy 에서 뗀다.
+    let ctx = null;
+    try { ctx = ST.SillyTavern?.getContext?.(); } catch { /* 없으면 visibilitychange 만 */ }
+    const bus = ctx?.eventSource, types = ctx?.event_types;
+    if (bus && types) {
+      for (const name of SWEEP_EVENTS) {
+        const type = types[name];
+        if (!type) continue;
+        bus.on(type, scheduleSweep);
+        offs.push(() => bus.removeListener(type, scheduleSweep));
+      }
     }
   }
   hookDoc(stDoc);

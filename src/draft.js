@@ -81,8 +81,11 @@ function restore(swap) {
 }
 
 function onChatChanged() {
+    const prev = currentId;
     flush();                    // 떠나는 채팅의 초안을 먼저 적고
     currentId = chatKey();      // 새 채팅으로 갈아탄 뒤
+    // 같은 채팅을 다시 불러온 것(정규식 · 북마크 등)이면 칸에 있는 글이 최신이다 — 저장본으로 덮지 않는다
+    if (currentId === prev) { const el = box(); if (el) write(currentId, el.value); return; }
     restore(true);              // 그 채팅의 초안으로 갈아끼운다 (없으면 빈칸)
 }
 
@@ -99,10 +102,11 @@ export function startDraftKeep() {
 
     eventSource.on(event_types.CHAT_CHANGED, onChatChanged);
     // 보내고 나면 그 채팅 초안은 버린다 (실리태번이 칸을 비울 때 input 이 안 올 수 있음)
+    // 칸에 남은 글은 지킨다 — /sys · /send 같은 명령이나 스크립트가 보낸 것이면 쓰던 글이 그대로 있다
     if (event_types.MESSAGE_SENT) {
         eventSource.on(event_types.MESSAGE_SENT, () => {
             if (timer) { clearTimeout(timer); timer = null; }
-            write(currentId, '');
+            write(currentId, box()?.value || '');
         });
     }
 

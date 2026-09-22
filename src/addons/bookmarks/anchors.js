@@ -74,14 +74,16 @@ function nearestHead(messages, head, from, claimed, preferBackward) {
  * 1) 그 번호의 메시지가 지문과 같으면 그대로 둔다.
  * 2) 다르면 가까운 번호부터 지문이 같은 메시지를 찾아 옮긴다. 없으면 보낸 시각 · 이름이 같은 메시지(원문만 바뀜)를 찾는다.
  * 3) 어디에도 없으면: removeMissing이면(같은 채팅에서 메시지가 줄었을 때) 지운 메시지의 북마크로 보고 지우고,
+ *    번호가 채팅 끝보다 뒤면(가지 · 체크포인트 파일, 비웠다가 다시 연 채팅) 이 채팅에 없는 메시지의 북마크라 지운다 (orphaned).
+ *    — 두면 나중에 그 번호에 새 메시지가 생길 때 엉뚱한 메시지에 붙었다.
  *    아니면 그 자리 메시지가 스와이프 · 수정으로 바뀐 것이니 지금 메시지를 새 지문으로 삼는다.
  * @param {object[]} messages 채팅 메시지 (번호 = 배열 위치)
  * @param {object[]} favorites chat_metadata.favorites
  * @param {{ hash: (text: string) => string|number, removeMissing?: boolean, preferBackward?: boolean }} options
- * @returns {{ moved: number, removed: object[], adopted: number }}
+ * @returns {{ moved: number, removed: object[], adopted: number, orphaned: number }} orphaned = removed 중 채팅 끝보다 뒤라서 지운 수
  */
 export function resolveAnchors(messages, favorites, { hash, removeMissing = false, preferBackward = false }) {
-    const result = { moved: 0, removed: [], adopted: 0 };
+    const result = { moved: 0, removed: [], adopted: 0, orphaned: 0 };
     const claimed = new Map(); // 번호 → 그 자리를 차지한 지문
     const pending = [];
 
@@ -139,8 +141,9 @@ export function resolveAnchors(messages, favorites, { hash, removeMissing = fals
     }
 
     for (const { fav, index } of stillMissing) {
-        if (removeMissing) {
+        if (removeMissing || index >= messages.length) {
             result.removed.push(fav);
+            if (!removeMissing) result.orphaned++;
         } else if (messages[index]) {
             fav.anchor = messageAnchor(messages[index], hash);
             result.adopted++;

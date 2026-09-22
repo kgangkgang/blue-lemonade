@@ -74,6 +74,21 @@ export function addonMarkup(s,id){
     return `<div class="bl-addon-layout bl-addon-embedded-layout"><div class="bl-addon-main">${header}${toolSection('activation','실행·설정',actions,true)}${toolSection('position','미리보기',where+wand,true)}${position||perf?toolSection('menus','표시할 위치',position+perf,true):''}</div><div class="bl-addon-config bl-addon-inline" data-addon-inline="${id}"><h3 class="bl-inline-title">세부 설정</h3><div class="bl-addon-inline-content" role="region" aria-label="${names[id]} 세부 설정"><p class="salty-note">${running.has(id)?'설정을 불러오는 중…':'기능을 켜고 새로고침하면 여기에서 설정할 수 있어요.'}</p></div></div></div>`;
 }
 
+// 정규식 연동은 끄는 순간 원래 켜짐 상태로 되돌린다 (새로고침 뒤에 안 실려도 꺼 둔 정규식이 남지 않게)
+// 멈춘 뒤엔 돌지 않는 것으로 친다: 세부 설정 · 옆 칸이 다시 붙어 정규식을 또 끄지 않게 (다시 켜면 새로고침)
+async function stopRegexlink(){
+    try{await (await import('./addons/regexlink/index.js')).stop();}catch(error){console.warn('[Blue Lemonade]',error);}
+    running.delete('regexlink');
+}
+// 설정 초기화 · 가져오기 뒤: 돌고 있는 정규식 연동을 새 켜짐 값에 맞춘다 (안 돌던 것은 불러오지 않는다)
+export async function syncRegexlinkFlag(){
+    if(!running.has('regexlink'))return;
+    try{
+        if(getSettings().addons?.regexlink)(await import('./addons/regexlink/index.js')).sync();
+        else{await stopRegexlink();changed();}
+    }catch(error){console.warn('[Blue Lemonade]',error);}
+}
+
 export function bindAddons(root,refresh){
     bindInlineAddon(root);
 
@@ -81,8 +96,7 @@ export function bindAddons(root,refresh){
         const id=input.dataset.addonToggle,on=input.checked;
         if(on&&folders[id]&&await conflict(id)){input.checked=false;globalThis.toastr?.warning(`${names[id]} 단독 확장이 켜져 있어요. 확장 관리에서 둘 중 하나를 꺼 주세요.`,'Blue Lemonade');return;}
         getSettings().addons[id]=on;
-        // 정규식 연동은 끄는 순간 원래 켜짐 상태로 되돌린다 (새로고침 뒤에 안 실려도 꺼 둔 정규식이 남지 않게)
-        if(id==='regexlink'&&!on&&running.has(id)){try{(await import('./addons/regexlink/index.js')).stop();}catch(error){console.warn('[Blue Lemonade]',error);}}
+        if(id==='regexlink'&&!on&&running.has(id))await stopRegexlink();
         try{await persist();}catch(error){globalThis.toastr?.warning(error.message,'Blue Lemonade');}await syncAddonIcons();refresh();
     }));
     root.querySelectorAll('[data-addon-open]').forEach(button=>button.addEventListener('click',async()=>{

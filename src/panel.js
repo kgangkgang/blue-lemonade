@@ -3,7 +3,7 @@ import {scriptsMarkup,bindScripts} from './scripts/ui.js';
 import {updateMarkup,bindThemeUpdate} from './theme-update.js';
 import { bindAddonLayout } from './addon-layout.js';
 import { typesetRoot } from './typography.js';
-import { addonMarkup, bindAddons } from './addons.js';
+import { addonMarkup, bindAddons, syncRegexlinkFlag } from './addons.js';
 import { wordToolsMarkup, bindWordTools } from './word-tools.js';
 import { gradientControls, mixControls, gradientAction, bindGradientColors } from './gradient-ui.js';
 import { bindEditor, openEditorCatalog, arrangeEditor, revealEditorTarget, selectEditorGroup } from './settings-editor.js';
@@ -1373,7 +1373,10 @@ function tabChat(s, sub) {
     </div>`;
 }
 
-
+/** 저장된 도형 목록 최대 (도형 하나가 설정에 수십 KB 로 들어가므로) */
+const MASK_SLOTS = 12;
+/** '바꾸기'를 누른 뒤 파일을 고르면 이 칸의 그림을 갈아 끼운다 */
+let maskReplaceId = '';
 function maskControls(s) {
     const { mask, maskId, masks } = s.image;
     const has = !!mask;
@@ -1696,8 +1699,9 @@ function render(root) {
 
     // 색 고르기: 처음 그릴 때 나는 change 는 무시하고, 사용자가 만진 뒤부터 저장
     bindGradientColors(root,getSettings,update);
+    // 끌 때마다 나는 change 는 색 하나당 한 단계로 묶고, 칸을 새로 누르면 앞 단계를 닫는다 (되돌리기 기록이 안 넘치게)
     root.querySelectorAll('toolcool-color-picker[data-token]').forEach((picker) => {
-        const arm = () => { picker._armed = true; };
+        const arm = () => { picker._armed = true; history.flush(getSettings()); syncHistoryButtons(); };
         picker.addEventListener('pointerdown', arm);
         picker.addEventListener('keydown', arm);
         picker.addEventListener('change', (event) => {
@@ -1709,7 +1713,7 @@ function render(root) {
                 const token = picker.dataset.token;
                 if (sameColor(value, paletteColors(st)[token])) return;
                 st.colorOverrides[st.palette] = { ...(st.colorOverrides[st.palette] || {}), [token]: value };
-            }, false);
+            }, false, `color:${picker.dataset.token}`);
         });
     });
 
@@ -2102,7 +2106,8 @@ function bind(root) {
                     const start = path.endsWith('letterSpacing') ? getSettings().type.letterSpacing
                         : path.endsWith('weight') ? 400
                             : path === 'type.uiSize' ? stUiSize() : getSettings().type.size;
-                    update(st => setPath(st, path, Math.min(max, Math.max(min, Number(start) || min))));
+                    const n = Number(start); // 본문 자간 0 도 그대로 출발값 (|| 로 쓰면 0 이 최소값이 됨)
+                    update(st => setPath(st, path, Math.min(max, Math.max(min, Number.isFinite(n) ? n : min))));
                     break;
                 }
                 case 'picker': {
@@ -2369,6 +2374,8 @@ function bind(root) {
                         for (const key of Object.keys(st)) delete st[key];
                         Object.assign(st, fresh); SillyTavern.getContext().extensionSettings.salty = st;
                     });
+                    // 정규식 연동이 꺼졌으면 끄는 스위치처럼 원래 켜짐 상태로 되돌림
+                    try { await syncRegexlinkFlag(); } catch (error) { console.warn('[Blue Lemonade] 정규식 연동 맞추기 실패', error); }
                     break;
             }
         } catch (error) {
@@ -2417,7 +2424,7 @@ function bind(root) {
         const picker = event.target.closest('input[data-color-path]');
         if (picker) {
             if (/^#[0-9a-f]{6}$/i.test(picker.value)) {
-                update(st => setPath(st, picker.dataset.colorPath, picker.value), false);
+                update(st => setPath(st, picker.dataset.colorPath, picker.value), false, `color:${picker.dataset.colorPath}`); // 닫을 때 change 로 한 단계
                 for(const panel of panels)syncWeatherPreview(panel,picker.dataset.colorPath);
             }
             return;
@@ -2504,7 +2511,8 @@ function bind(root) {
             // 자동 색은 켜고 끌 때 테두리 설명(edgeHint) 문구가 바뀌니 창을 다시 그린다
             // 2.9.2: 본문 색 지정 → '글자색 톤 맞추기' 줄, 톤 맞추기 → 톤 값 슬라이더 넷, 투명 그림도 똑같이 → 설명 문구가 스위치에 따라
             // 보였다 안 보였다 하는데 다시 그리지 않아, 끈 뒤에도 슬라이더가 남아 있었다
-            update(st => setPath(st, path, target.checked), ['enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on'].includes(path));
+            // 감정 대사 효과(움직임 · 빛 · 색 흐름) · 백그라운드 버티는 방식 줄도 스위치를 따라 보였다 안 보였다 한다
+            update(st => setPath(st, path, target.checked), ['enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on', 'deus.fx.on', 'deus.fx.flow', 'deus.fx.force', 'bgWindow.on'].includes(path));
             return;
         }
         if (target.matches('input[data-file="font"]') && target.files?.[0]) {
@@ -2582,6 +2590,7 @@ function bind(root) {
                 history.run(backup, st => { for (const key of Object.keys(st)) delete st[key]; Object.assign(st, ext.salty); ext.salty = st; });
                 saveSettings();
                 refreshPanels();
+                try { await syncRegexlinkFlag(); } catch (error) { console.warn('[Blue Lemonade] 정규식 연동 맞추기 실패', error); }
                 toastr.success('설정을 가져왔어요', 'Blue Lemonade');
             } catch (error) {
                 toastr.error(error.message, 'Blue Lemonade');

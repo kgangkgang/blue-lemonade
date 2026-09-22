@@ -19,7 +19,8 @@ const BUDGET = 96 * 1024 * 1024; // 조각 그림 메모리 상한
 const endless = a => a.playState === 'running' && a.effect?.getComputedTiming?.().iterations === Infinity;
 const pathTo = (root, el) => { const path = []; for (let n = el; n && n !== root; n = n.parentElement) path.unshift([...n.parentElement.children].indexOf(n)); return path; };
 const follow = (root, path) => path.reduce((n, i) => n?.children[i], root);
-function setVisibility(root, value) { for (const el of [root, ...root.querySelectorAll('*')]) el.style?.setProperty('visibility', value, 'important'); }
+// 가린 이름(capture-privacy.js) 안쪽은 늘 숨긴 채로 둔다 — 조각에서 칸을 보이게 할 때 같이 드러나면 이름이 새어 나간다
+function setVisibility(root, value) { for (const el of [root, ...root.querySelectorAll('*')]) if (!el.closest?.('[data-bl-hidden-name]')) el.style?.setProperty('visibility', value, 'important'); }
 
 /** 방금 만든 사본에서: 원본의 움직이는 칸(가장 바깥 것)과 짝이 되는 사본 칸을 찾아 둔다. 사본을 고치기 전에 불러야 자리가 맞는다 */
 export function collectAnimated(source, clone) {
@@ -77,6 +78,7 @@ export function prepareAnimated(pairs, wrapper, page, fonts) {
                 for (const a of animations) { a.pause(); a.currentTime = (k / count) * cycles.get(a); }
                 for (const [i, unit] of units.entries()) {
                     unit.sourceParts.forEach((el, n) => {
+                        if (unit.targetParts[n].closest('[data-bl-mask]')) return; // 이름 가림 그림 · 가린 글자에는 움직임을 적지 않는다
                         const live = getComputedStyle(el), to = unit.targetParts[n].style;
                         for (const prop of PROPS) to.setProperty(prop, live.getPropertyValue(prop));
                         to.setProperty('animation', 'none');
@@ -89,12 +91,16 @@ export function prepareAnimated(pairs, wrapper, page, fonts) {
                     await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = () => reject(Error('움직이는 글자를 그리지 못했어요.')); image.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
                     // SVG 그림에서 바로 만든 ImageBitmap 은 크롬이 '외부 그림'으로 쳐서 캔버스를 읽을 수 없게 만든다 → 바탕 그림과 같은 길(캔버스에 그린 뒤)로
                     const sheet = document.createElement('canvas'); sheet.width = pw; sheet.height = ph;
-                    sheet.getContext('2d').drawImage(image, 0, 0, pw, ph);
-                    out[i].images.push(await createImageBitmap(sheet));
-                    sheet.width = sheet.height = 1;
+                    try {
+                        sheet.getContext('2d').drawImage(image, 0, 0, pw, ph);
+                        out[i].images.push(await createImageBitmap(sheet));
+                    } finally { sheet.width = sheet.height = 1; }
                 }
                 progress(`움직이는 글자 준비 중… ${k + 1} / ${count}장`);
             }
+        } catch (error) {
+            closeAnimated({ pieces: out }); // 굽다 멈추면(취소 · 설정 바뀜) 모은 조각 그림을 GC 를 기다리지 않고 바로 놓는다
+            throw error;
         } finally {
             for (const { a, time } of saved) { try { a.currentTime = time; a.play(); } catch { /* 메시지가 사라짐 */ } }
         }

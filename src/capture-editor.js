@@ -21,7 +21,8 @@ export function applyCaptureDraft(clone,draft,source){
 }
 export function editCaptureDraft(ids,current){
  return new Promise((resolve,reject)=>{
-  let draft;try{draft=structuredClone(current||captureDraft(ids));}catch(error){reject(error);return;}
+  // 지금 고른 메시지로 연다 — 전에 편집한 메시지는 그 편집을, 새로 고른 메시지는 원래 표시를 (고르지 않은 메시지의 편집은 부르는 쪽이 남긴다)
+  let draft;try{const byId=new Map((current||[]).map(m=>[m.id,m]));draft=structuredClone(ids.map(id=>byId.get(id)||captureDraft([id])[0]));}catch(error){reject(error);return;}
   const dialog=document.createElement('dialog');dialog.className='bl-tool-dialog bl-capture-editor';
   dialog.innerHTML='<h3>캡처용 글 편집</h3><p>이 캡처의 사본만 바꿔요. 원문과 번역문은 저장하거나 수정하지 않아요. 수정한 문단은 일반 글자로 표시돼요.</p><div data-capture-edit-list></div><footer class="bl-word-actions"><button type="button" class="salty-btn" data-edit-apply>캡처에 반영</button><button type="button" class="salty-btn" data-edit-reset>원래 표시로 초기화</button><button type="button" class="salty-btn" data-edit-cancel>취소</button></footer>';
   const list=dialog.querySelector('[data-capture-edit-list]');

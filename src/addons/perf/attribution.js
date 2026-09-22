@@ -26,11 +26,15 @@ export function createAttribution() {
  }
  function resolve({explicit,caller,type,kind,body}) {
   if(explicit?.purpose&&PURPOSES[explicit.purpose])return {caller:safe(explicit.caller)||caller,purpose:explicit.purpose,attribution:'explicit'};
-  const content=[...(Array.isArray(body.messages)?body.messages:[]).map(m=>typeof m.content==='string'?m.content:JSON.stringify(m.content)),body.prompt,...(body.contents||[]).flatMap(c=>(c.parts||[]).map(p=>p.text)),...(body.systemInstruction?.parts||[]).map(p=>p.text)].filter(Boolean).map(clean).join(' ');
-  const matches=[...active].filter(r=>r.user&&content.includes(r.user)&&(!r.system||content.includes(r.system)));
-  const keys=new Set(matches.map(r=>r.caller+'|'+r.purpose));
-  if(keys.size===1)return {caller:matches[0].caller,purpose:matches[0].purpose,attribution:'matched'};
-  if(keys.size>1)return {caller,purpose:'unknown',attribution:'ambiguous'};
+  // 맞춰 볼 줄이 없으면 프롬프트 전체 정리(수백 KB)를 건너뛴다
+  const rows=[...active].filter(r=>r.user);
+  if(rows.length){
+   const content=[...(Array.isArray(body.messages)?body.messages:[]).map(m=>typeof m.content==='string'?m.content:JSON.stringify(m.content)),body.prompt,...(body.contents||[]).flatMap(c=>(c.parts||[]).map(p=>p.text)),...(body.systemInstruction?.parts||[]).map(p=>p.text)].filter(Boolean).map(clean).join(' ');
+   const matches=rows.filter(r=>content.includes(r.user)&&(!r.system||content.includes(r.system)));
+   const keys=new Set(matches.map(r=>r.caller+'|'+r.purpose));
+   if(keys.size===1)return {caller:matches[0].caller,purpose:matches[0].purpose,attribution:'matched'};
+   if(keys.size>1)return {caller,purpose:'unknown',attribution:'ambiguous'};
+  }
   if(kind!=='text')return {caller,purpose:kind||'other',attribution:'endpoint'};
   const byCaller={'llm-translator-custom':'translation.chat','llm-translator':'translation.chat','chat-bookmarks':'translation.bookmark','ban-word-rewrite':'rewrite','story-direction':'direction',memory:'summary',caption:'image.caption'};
   const purpose=caller==='chat'?({'swipe':'chat.swipe','regenerate':'chat.regenerate','continue':'chat.continue','impersonate':'chat.impersonate','quiet':'chat.quiet'}[type]||'chat.generate'):byCaller[caller]||'unknown';

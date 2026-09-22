@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 231c443c31ff) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 9ede10ee336a) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -1550,10 +1550,10 @@ body.salty:not(.salty-dark) #chat .mes .mesIDDisplay,
 body.salty:not(.salty-dark) #chat .mes .mes_timer,
 body.salty:not(.salty-dark) #chat .mes .tokenCounterDisplay,
 body.salty:not(.salty-dark) #chat .mes .timestamp,
-body.salty:is(.salty-user-card, .salty-user-bubble) #chat .mes[is_user="true"] .mesIDDisplay,
-body.salty:is(.salty-user-card, .salty-user-bubble) #chat .mes[is_user="true"] .mes_timer,
-body.salty:is(.salty-user-card, .salty-user-bubble) #chat .mes[is_user="true"] .tokenCounterDisplay,
-body.salty:is(.salty-user-card, .salty-user-bubble) #chat .mes[is_user="true"] .timestamp {
+body.salty:is(.salty-user-card, .salty-user-bubble, .salty-user-table) #chat .mes[is_user="true"] .mesIDDisplay,
+body.salty:is(.salty-user-card, .salty-user-bubble, .salty-user-table) #chat .mes[is_user="true"] .mes_timer,
+body.salty:is(.salty-user-card, .salty-user-bubble, .salty-user-table) #chat .mes[is_user="true"] .tokenCounterDisplay,
+body.salty:is(.salty-user-card, .salty-user-bubble, .salty-user-table) #chat .mes[is_user="true"] .timestamp {
   color: var(--salty-muted) !important;
 }
 body.salty #chat .mes .ch_name {
@@ -1898,12 +1898,12 @@ body.salty #chat .mes .mes_bias {
   font-family: var(--salty-font-ui);
   font-size: var(--bl-fs-micro);
 }
-body.salty #chat .mes_block:has(.edit_textarea) > .ch_name {
+body.salty #chat .mes_block > .ch_name:has(~ .edit_textarea, ~ * .edit_textarea) {
   flex-wrap: wrap;
   row-gap: 8px;
   margin-bottom: 10px !important;
 }
-body.salty #chat .mes_block:has(.edit_textarea) > .ch_name > .flex1 {
+body.salty #chat .mes_block > .ch_name:has(~ .edit_textarea, ~ * .edit_textarea) > .flex1 {
   flex: 1 0 100%;
 }
 body.salty #chat .mes .mes_edit_buttons {
@@ -2322,7 +2322,7 @@ body.salty.salty-user-bubble #chat .mes[is_user="true"] .mes_block:has(.edit_tex
 body.salty.salty-user-bubble #chat .mes[is_user="true"] .ch_name {
   margin-bottom: 3px !important;
 }
-body.salty.salty-user-bubble #chat .mes[is_user="true"] .mes_block:has(.edit_textarea) > .ch_name {
+body.salty.salty-user-bubble #chat .mes[is_user="true"] .mes_block > .ch_name:has(~ .edit_textarea, ~ * .edit_textarea) {
   margin-bottom: 10px !important;
 }
 body.salty.salty-user-bubble #chat .mes[is_user="true"] .name_text,
@@ -12361,10 +12361,10 @@ body.salty:not(.salty-dark) :is(#salty-nochat, .salty-preview) .mes .mesIDDispla
 body.salty:not(.salty-dark) :is(#salty-nochat, .salty-preview) .mes .mes_timer,
 body.salty:not(.salty-dark) :is(#salty-nochat, .salty-preview) .mes .tokenCounterDisplay,
 body.salty:not(.salty-dark) :is(#salty-nochat, .salty-preview) .mes .timestamp,
-body.salty:is(.salty-user-card, .salty-user-bubble) :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .mesIDDisplay,
-body.salty:is(.salty-user-card, .salty-user-bubble) :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .mes_timer,
-body.salty:is(.salty-user-card, .salty-user-bubble) :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .tokenCounterDisplay,
-body.salty:is(.salty-user-card, .salty-user-bubble) :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .timestamp {
+body.salty:is(.salty-user-card, .salty-user-bubble, .salty-user-table) :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .mesIDDisplay,
+body.salty:is(.salty-user-card, .salty-user-bubble, .salty-user-table) :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .mes_timer,
+body.salty:is(.salty-user-card, .salty-user-bubble, .salty-user-table) :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .tokenCounterDisplay,
+body.salty:is(.salty-user-card, .salty-user-bubble, .salty-user-table) :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .timestamp {
   color: var(--salty-muted) !important;
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes .ch_name {
@@ -12567,12 +12567,12 @@ body.salty.expandMessageActions :is(#salty-nochat, .salty-preview) .mes .mes_but
 body.salty :is(#salty-nochat, .salty-preview) .mes[is_system="true"] .mes_text {
   color: var(--salty-muted);
 }
-body.salty :is(#salty-nochat, .salty-preview) .mes_block:has(.edit_textarea) > .ch_name {
+body.salty :is(#salty-nochat, .salty-preview) .mes_block > .ch_name:has(~ .edit_textarea, ~ * .edit_textarea) {
   flex-wrap: wrap;
   row-gap: 8px;
   margin-bottom: 10px !important;
 }
-body.salty :is(#salty-nochat, .salty-preview) .mes_block:has(.edit_textarea) > .ch_name > .flex1 {
+body.salty :is(#salty-nochat, .salty-preview) .mes_block > .ch_name:has(~ .edit_textarea, ~ * .edit_textarea) > .flex1 {
   flex: 1 0 100%;
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes_text details[class*="custom-dem-card"] {
@@ -12807,7 +12807,7 @@ body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="tr
 body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .ch_name {
   margin-bottom: 3px !important;
 }
-body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .mes_block:has(.edit_textarea) > .ch_name {
+body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .mes_block > .ch_name:has(~ .edit_textarea, ~ * .edit_textarea) {
   margin-bottom: 10px !important;
 }
 body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .name_text,
@@ -13706,10 +13706,7 @@ body.salty.salty-profile-banner.salty-profile-below-two :is(#salty-nochat, .salt
 body.salty.salty-profile-banner.salty-profile-below-two :is(#salty-nochat, .salty-preview) .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) .ch_name > .mes_edit_buttons {
   grid-area: 3 / 1 / 4 / -1;
 }
-body.salty.salty-profile-banner :is(#salty-nochat, .salty-preview) .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) .ch_name .mes_ghost {
-  grid-area: 4 / 1 / 5 / -1; justify-self: var(--bl-name-justify);
-}
-body.salty.salty-profile-banner.salty-header-none :is(#salty-nochat, .salty-preview) .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) .ch_name {
+body.salty.salty-profile-banner.salty-header-none :is(#salty-nochat, .salty-preview) .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) .ch_name > .flex1 {
   display: none !important;
 }
 body.salty.salty-user-profile-banner :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) {
@@ -13869,10 +13866,7 @@ body.salty.salty-user-profile-banner.salty-user-profile-below-two :is(#salty-noc
 body.salty.salty-user-profile-banner.salty-user-profile-below-two :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) .ch_name > .mes_edit_buttons {
   grid-area: 3 / 1 / 4 / -1;
 }
-body.salty.salty-user-profile-banner :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) .ch_name .mes_ghost {
-  grid-area: 4 / 1 / 5 / -1; justify-self: var(--bl-user-name-justify);
-}
-body.salty.salty-user-profile-banner.salty-header-none :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) .ch_name {
+body.salty.salty-user-profile-banner.salty-header-none :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) .ch_name > .flex1 {
   display: none !important;
 }
 body.salty.salty-user-profile-banner :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar.bl-art-frame {
@@ -17114,8 +17108,7 @@ body.salty.salty-profile-banner.salty-profile-below-one #chat .mes:not([is_user=
 body.salty.salty-profile-banner.salty-profile-below-one #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) .ch_name > .mes_edit_buttons { margin-inline-start: 12px !important; }
 body.salty.salty-profile-banner.salty-profile-below-two #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) .ch_name > .mes_buttons,
 body.salty.salty-profile-banner.salty-profile-below-two #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) .ch_name > .mes_edit_buttons { grid-area: 3 / 1 / 4 / -1; }
-body.salty.salty-profile-banner #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) .ch_name .mes_ghost { grid-area: 4 / 1 / 5 / -1; justify-self: var(--bl-name-justify); }
-body.salty.salty-profile-banner.salty-header-none #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) .ch_name { display: none !important; }
+body.salty.salty-profile-banner.salty-header-none #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) .ch_name > .flex1 { display: none !important; }
 /* css/43-user-profile.gen.css */
 body.salty.salty-user-profile-banner #chat .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) {
   display: grid !important;
@@ -17234,8 +17227,7 @@ body.salty.salty-user-profile-banner.salty-user-profile-below-one #chat .mes[is_
 body.salty.salty-user-profile-banner.salty-user-profile-below-one #chat .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) .ch_name > .mes_edit_buttons { margin-inline-start: 12px !important; }
 body.salty.salty-user-profile-banner.salty-user-profile-below-two #chat .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) .ch_name > .mes_buttons,
 body.salty.salty-user-profile-banner.salty-user-profile-below-two #chat .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) .ch_name > .mes_edit_buttons { grid-area: 3 / 1 / 4 / -1; }
-body.salty.salty-user-profile-banner #chat .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) .ch_name .mes_ghost { grid-area: 4 / 1 / 5 / -1; justify-self: var(--bl-user-name-justify); }
-body.salty.salty-user-profile-banner.salty-header-none #chat .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) .ch_name { display: none !important; }
+body.salty.salty-user-profile-banner.salty-header-none #chat .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) .ch_name > .flex1 { display: none !important; }
 .bl-art-frame[data-bl-frame="userProfile"] {
   --bl-art-shadow: var(--bl-art-shadow-userProfile, none);
   --bl-decor-art: var(--bl-user-profile-decor-art); --bl-decor-mask: var(--bl-user-profile-decor-mask);
@@ -17673,6 +17665,7 @@ html body .salty-panel .bl-tool-primary { color:var(--salty-text); border:1px so
 .bl-addon-inline-content .pa-hub-title,
 .bl-addon-inline-content .inline-drawer-header { display:none!important; }
 .bl-addon-inline-content .inline-drawer-content { display:block!important; }
+.bl-addon-inline-content :is(#regex-link-settings,#model-switch-settings) > .inline-drawer-content { display:flex!important; }
 .bl-addon-inline-content .po-dialog,
 .bl-addon-inline-content .pa-hub,
 .bl-addon-inline-content .mr-settings { width:100%; padding:0; }

@@ -4,6 +4,8 @@ export function createPromptEngine(doc = document) {
     const normalize = value => String(value || '').normalize('NFKC').replace(/[\uFE0E\uFE0F\s]/g, '');
     let observer, timer, lastId = null, ordered = [];
     const watched='li[data-pm-identifier],#completion_prompt_manager_footer_append_prompt,.regex-script-label,div.regex_script_name,li.regex-debugger-rule,#completion_prompt_manager_popup_entry_form_name,input.regex_script_name';
+    // These open or clear the edit form without a mutation we watch, so re-render after them too.
+    const formButtons=',.completion_prompt_manager_footer .menu_button,#completion_prompt_manager_popup_entry_form_close,#completion_prompt_manager_popup_close_button';
     function compile(data) {
         const result={priority:Number(data.priority)||0,partial:!!data.partial};
         for(const kind of ['prompts','regex']){
@@ -27,11 +29,23 @@ export function createPromptEngine(doc = document) {
             const exact = list.ids.get(id)?.find(e=>!key||e.key===key)?.entry || list.names.get(key);
             if (exact) return exact;
             if (kind === 'prompts' && source.partial && key) {
-                const partial = list.partial.find(e=>key.includes(e.key))?.entry;
-                if (partial) return partial;
+                const hit = list.partial.find(e=>key.includes(e.key));
+                if (hit) return partialEntry(hit, key, name);
             }
         }
         return kind === 'prompts' ? variant(name) : null;
+    }
+    // A partial hit keeps the preset's own markers around it (×, └) as written; a remainder with letters or digits is still dropped.
+    function partialEntry(hit, key, name) {
+        const at = key.indexOf(hit.key), marker = s => !/[\p{L}\p{N}]/u.test(s) && /[\p{S}\p{P}]/u.test(s);
+        const pre = key.slice(0, at), post = key.slice(at + hit.key.length);
+        const keepPre = marker(pre), keepPost = marker(post);
+        if (!keepPre && !keepPost) return hit.entry;
+        // Cut the same text out of the original name, spacing included; fall back to the normalized text.
+        const chars = [...String(name || '')], part = (a, b) => chars.slice(a, b).join('');
+        const head = () => { for (let i = chars.length; i > 0; i--) if (normalize(part(0, i)) === pre) return part(0, i).trimStart(); return pre + ' '; };
+        const tail = () => { for (let i = 0; i < chars.length; i++) if (normalize(part(i)) === post) return part(i).trimEnd(); return ' ' + post; };
+        return {...hit.entry, title: (keepPre ? head() : '') + hit.entry.title + (keepPost ? tail() : '')};
     }
     // A user's copy named "Original (memo)" shows the original's translation with the same memo.
     function variant(name) {
@@ -58,7 +72,8 @@ export function createPromptEngine(doc = document) {
         else changed.delete(el);
     }
     function hint(input, kind, id) {
-        const entry = lookup(kind,id,input.value);
+        // An empty name gets no hint; otherwise the last clicked row's id would label a new prompt.
+        const entry = normalize(input.value) ? lookup(kind,id,input.value) : null;
         let el = hints.get(input);
         if (!entry) { el?.remove(); hints.delete(input); return; }
         if (!el) { el=doc.createElement('small'); el.className='bl-script-hint'; input.insertAdjacentElement('afterend',el); hints.set(input,el); }
@@ -76,7 +91,7 @@ export function createPromptEngine(doc = document) {
         doc.querySelectorAll('input.regex_script_name').forEach(el=>hint(el,'regex',null));
     }
     function schedule() { if (!timer) timer=setTimeout(render,60); }
-    function click(event) { const row=event.target.closest?.('li[data-pm-identifier]'); if(row)lastId=row.dataset.pmIdentifier; if(event.target.closest?.(watched))schedule(); }
+    function click(event) { const row=event.target.closest?.('li[data-pm-identifier]'); if(row)lastId=row.dataset.pmIdentifier; if(event.target.closest?.(watched+formButtons))schedule(); }
     function input(event) {if(event.target.matches?.('#completion_prompt_manager_popup_entry_form_name,input.regex_script_name'))schedule();}
     function start() {
         observer=new MutationObserver(records=>{

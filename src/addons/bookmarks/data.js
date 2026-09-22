@@ -11,8 +11,23 @@ import { chatKey, currentChatKey } from './state.js';
 import { chatLabel } from './render.js';
 import { anchorHead, messageAnchor, resolveAnchors } from './anchors.js';
 
+/**
+ * favorites 의 빈 칸(null 등 객체가 아닌 것 — 손으로 고친 jsonl 등)을 그 자리에서 빼고 뺀 수를 돌려준다.
+ * 빈 칸이 있으면 아이콘 · 찾기 · 맞추기가 fav.messageId 에서 던졌다. 새 배열로 바꾸지 않는다 (syncAnchors 가 같은 배열로 같은 채팅을 알아본다).
+ */
+function cleanFavorites(favorites) {
+    let removed = 0;
+    for (let i = favorites.length - 1; i >= 0; i--) {
+        if (favorites[i] && typeof favorites[i] === 'object') continue;
+        favorites.splice(i, 1);
+        removed++;
+    }
+    return removed;
+}
+
 function ensureFavorites(metadata) {
     if (!Array.isArray(metadata.favorites)) metadata.favorites = [];
+    cleanFavorites(metadata.favorites);
     return metadata.favorites;
 }
 
@@ -436,10 +451,10 @@ function stillVerified(fav, messages) {
 /**
  * 현재 채팅의 북마크 번호를 메시지에 맞춘다. 대부분은 확인만 하고 끝난다.
  * 옮기거나 지웠으면 저장을 맡긴다. 새 지문만 적었으면(예전 북마크 · 스와이프 · 수정) 따로 저장하지 않고 다음 채팅 저장에 실려 간다.
- * @returns {{ moved: number, removed: number }}
+ * @returns {{ moved: number, removed: number, orphaned: number }} removed = 지운 메시지의 북마크, orphaned = 이 채팅에 없는 메시지의 북마크
  */
 export function syncAnchors() {
-    const none = { moved: 0, removed: 0 };
+    const none = { moved: 0, removed: 0, orphaned: 0 };
     const context = getContext();
     const messages = context.chat ?? [];
     const key = currentChatKey();
@@ -452,6 +467,8 @@ export function syncAnchors() {
     const shrunk = sameChat && messages.length < tracked.length;
     if (tracked.key !== key) verified.clear();
     Object.assign(tracked, { key, metadata, favorites, length: messages.length });
+    // 빈 칸은 그 자리에서 빼고 파일에서도 지워지게 저장을 맡긴다.
+    if (favorites && cleanFavorites(favorites)) saveCurrentMetadataSoon();
     if (!favorites?.length) return none;
     // 4.5.8: 메시지가 하나 늘었다고 전부 다시 해시하지 않는다 — 북마크가 저마다 제 자리에
     // 그대로 있으면(stillVerified) 다시 맞출 것이 없다. 자리가 밀렸거나 지워졌으면 이 검사가
@@ -465,5 +482,5 @@ export function syncAnchors() {
     for (const fav of result.removed) verified.delete(fav.id);
     for (const fav of favorites) rememberVerified(fav, messages[Number(fav.messageId)]);
     if (result.moved || result.removed.length) saveCurrentMetadataSoon();
-    return { moved: result.moved, removed: result.removed.length };
+    return { moved: result.moved, removed: result.removed.length - result.orphaned, orphaned: result.orphaned };
 }

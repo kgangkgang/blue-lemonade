@@ -9,7 +9,8 @@ const limited = (promise, ms, message) => new Promise((resolve,reject)=>{
     const timer=setTimeout(()=>reject(Error(message)),ms);
     Promise.resolve(promise).then(resolve,reject).finally(()=>clearTimeout(timer));
 });
-async function copyPaint(source, clone, resources, signal, options={}) {
+const BLANK='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; // 1×1 투명
+async function copyPaint(source, clone, resources, signal, options={}, skip=()=>{}) {
     signal.throwIfAborted();
     // 모델 아이콘 SVG 안의 잉크스케이프 메타 요소(sodipodi:namedview 등)는 style 이 없는 맨 Element — 그릴 것도 없으니 건너뛴다
     if(!clone?.style||!source.style)return;
@@ -17,7 +18,8 @@ async function copyPaint(source, clone, resources, signal, options={}) {
     const bg=resources.paint(source,clone);
     clone.style.animation='none';clone.style.transition='none';clone.style.contentVisibility='visible';
     clone.removeAttribute('id');clone.removeAttribute('onclick');
-    const embedded=url=>resources.embed(url,signal);
+    // 못 읽는 그림 하나 때문에 캡처 전체가 멈추지 않게: 그 그림만 투명한 빈칸으로 두고 센다 (취소 · 시간 초과는 그대로 멈춘다)
+    const embedded=url=>resources.embed(url,signal).catch(error=>{if(signal.aborted||error?.name==='AbortError')throw error;skip();return BLANK;});
     if(source.tagName==='IMG') {
         clone.removeAttribute('srcset');clone.removeAttribute('loading');
         if(source.currentSrc||source.src)clone.src=await embedded(source.currentSrc||source.src);
@@ -27,7 +29,7 @@ async function copyPaint(source, clone, resources, signal, options={}) {
         for(const match of urls(bg))output=output.replace(match.raw,`url("${await embedded(new URL(match.url,location.href).href)}")`);
         clone.style.backgroundImage=output;
     }
-    await Promise.all([...source.children].map((child,i)=>copyPaint(child,clone.children[i],resources,signal,options)));
+    await Promise.all([...source.children].map((child,i)=>copyPaint(child,clone.children[i],resources,signal,options,skip)));
 }
 export async function captureMessages(ids, progress=()=>{}, options={}, signal=null) {
     signal?.throwIfAborted();
@@ -49,12 +51,13 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
     signal?.addEventListener("abort",abort,{once:true});
     const timer=setTimeout(abort,25000);
     const moving=[];
+    let skippedImages=0;
     try {
         for(const [i,node] of nodes.entries()) {
             progress(`메시지 ${i+1}/${nodes.length} 만드는 중…`);
             const clone=node.cloneNode(true);
             if(options.animateText)moving.push(...collectAnimated(node,clone)); // 움직이는 칸 (capture-animate.js) — 사본을 고치기 전에 짝을 지어 둔다
-            await copyPaint(node,clone,resources,controller.signal,options);
+            await copyPaint(node,clone,resources,controller.signal,options,()=>skippedImages++);
             const draft=options.edits?.find(draft=>draft.id===ids[i]);
             applyCaptureDraft(clone,draft,node);
             // 문단을 지운 편집본: 본문 밖의 칸(아바타 기둥 등)에도 원래 메시지 높이가 적혀 있어 빈 화면이 길게 남았다 → 그림을 뺀 모든 칸의 높이를 푼다
@@ -102,8 +105,6 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
             }
         }
         controller.signal.throwIfAborted();
-        // 영상 · 움짤: 움직이는 칸은 바탕에서 숨기고 조각으로 따로 굽는다
-        const animator=moving.length?prepareAnimated(moving,wrapper,page,fonts):null;
         const height=page.height;
         if(!height||height>16000||width*height>16000000)throw Error('선택한 내용이 너무 길거나 비어 있어요. 메시지를 나누어 저장해 주세요.');
         const scale=Math.min(Number(options.maxScale)||3,Math.sqrt(16000000/(width*height)),16000/height,16000/width); // maxScale: 빠른 미리보기는 낮은 배율로
@@ -115,6 +116,8 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
         controller.signal.throwIfAborted();
         const dark=document.body.classList.contains('salty-dark');
         attachMaskShapes(wrapper,options.mask||'auto',dark,options.maskStyles?.[options.mask||'auto'],scale);
+        // 영상 · 움짤: 움직이는 칸은 바탕에서 숨기고 조각으로 따로 굽는다 — 가림 그림을 붙인 뒤에 떼야 조각에도 가림이 들어간다
+        const animator=moving.length?prepareAnimated(moving,wrapper,page,fonts):null;
         // Serialize a detached copy: never move the off-screen export into the live page flow.
         const exportRoot=wrapper.cloneNode(true);exportRoot.style.position='static';exportRoot.style.removeProperty('left');exportRoot.style.removeProperty('top');
         const html=new XMLSerializer().serializeToString(exportRoot);
@@ -123,9 +126,11 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
         await limited(new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(Error('이 브라우저에서 캡처를 만들지 못했어요.'));image.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);}),10000,'이미지 변환 시간이 초과됐어요. 메시지를 나누어 다시 시도해 주세요.');
         controller.signal.throwIfAborted();
         const canvas=document.createElement('canvas');canvas.width=pixelWidth;canvas.height=pixelHeight;canvas.getContext('2d').drawImage(image,0,0);
-        const blob=await limited(new Promise(resolve=>canvas.toBlob(resolve,'image/png')),8000,'PNG 저장 시간이 초과됐어요.');if(!blob)throw Error('이미지 저장에 실패했어요.');
+        // toBlob 은 부를 때 그림을 떠 두므로 바로 큰 캔버스를 놓아도 된다 (최대 64MB — GC 를 기다리지 않는다)
+        let blob;try{blob=await limited(new Promise(resolve=>canvas.toBlob(resolve,'image/png')),8000,'PNG 저장 시간이 초과됐어요.');}finally{canvas.width=canvas.height=0;image.removeAttribute('src');}
+        if(!blob)throw Error('이미지 저장에 실패했어요.');
         controller.signal.throwIfAborted();
-        return {blob,width:pixelWidth,height:pixelHeight,scale,weather:!!weather,pageIndex,pageCount:pages.length,animator,...privacy};
+        return {blob,width:pixelWidth,height:pixelHeight,scale,weather:!!weather,pageIndex,pageCount:pages.length,animator,skippedImages,...privacy};
     } catch(error) {
         if(signal?.aborted)throw new DOMException("캡처를 취소했어요.","AbortError");
         if(controller.signal.aborted)throw Error('이미지 또는 글꼴 응답이 늦어요. 메시지를 나누어 다시 시도해 주세요.');

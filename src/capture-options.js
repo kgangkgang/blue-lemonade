@@ -43,7 +43,7 @@ export function bindCaptureOptions(root,changed=()=>{}) {
         root.querySelectorAll('[data-redact-options]').forEach(el=>el.hidden=!cfg.redact);
         root.querySelectorAll('[data-replace-options]').forEach(el=>el.hidden=!cfg.replace);
     };
-    const save=()=>{syncInfo();visibility();saveSettings();changed();};
+    const save=()=>{syncInfo();visibility();saveSettings();if(kept.files)kept.stale=true;changed();}; // 캡처 창이 닫혀 있어도 만든 파일은 '바꾸기 전' 으로
     bindCapturePresets(root,cfg,values=>{
         for(const [key,value] of Object.entries(values)){if(!PRESET_KEYS.includes(key))continue;cfg[key]=value;const input=root.querySelector(`[data-capture-option="${key}"]`);if(input){if(input.type==='checkbox')input.checked=value!==false;else input.value=String(value);}}
         save();
@@ -106,8 +106,9 @@ export function captureOptionsSnapshot() {
     return structuredClone({...cfg,words:preset||s.wordTools});
 }
 // 캡처 창을 닫았다 다시 열어도(배경을 바꾸러 다녀와도) 만든 파일과 캡처용 글 편집이 남는다 — 같은 채팅인 동안, '지우기'를 누르기 전까지.
-const kept={chat:null,edits:null,files:null,archive:null};
-const keptFor=()=>{const chat=SillyTavern.getContext().chatId;if(kept.chat!==chat){kept.chat=chat;kept.edits=null;kept.files=null;kept.archive=null;}return kept;};
+// ids · stale: 만든 파일이 어느 선택으로 만들어졌고, 그 뒤 설정 · 편집이 바뀌었는지 (창을 다시 열어도 '바꾸기 전 파일' 표시가 남게)
+const kept={chat:null,edits:null,files:null,archive:null,ids:'',stale:false};
+const keptFor=()=>{const chat=SillyTavern.getContext().chatId;if(kept.chat!==chat){kept.chat=chat;kept.edits=null;kept.files=null;kept.archive=null;kept.ids='';kept.stale=false;}return kept;};
 export async function openCapturePreview(ids, mount = null, selectedIds = () => ids) {
     const {captureMessages}=await import('./chat-capture.js');
     const panel=mount?.closest('.salty-panel');panel?._captureCleanup?.();
@@ -126,7 +127,7 @@ export async function openCapturePreview(ids, mount = null, selectedIds = () => 
     const clearButton=dialog.querySelector('[data-capture-clear]'),quick=dialog.querySelector('[data-capture-quick]');
     const wipe=()=>{release();video.hidden=img.hidden=save.hidden=zip.hidden=true;save.removeAttribute('href');zip.removeAttribute('href');dialog.querySelector('[data-capture-parts]').hidden=true;};
     // 설정 · 선택이 바뀌어도 만들어 둔 파일은 지우지 않는다 — '바꾸기 전 파일'이라고만 알리고, 다시 만들면 그때 바뀐다
-    const invalidate=()=>{revision++;controller?.abort();if(outputs.length&&outputs[0].kept){stale=true;show();}else{wipe();status.textContent='설정이 바뀌었어요. 빠른 미리보기나 파일 만들기를 눌러 주세요.';}};
+    const invalidate=()=>{revision++;controller?.abort();if(memory.files?.length)memory.stale=true;if(outputs.length&&outputs[0].kept){stale=true;show();}else{wipe();status.textContent='설정이 바뀌었어요. 빠른 미리보기나 파일 만들기를 눌러 주세요.';}};
     const settingsRoot=mount?.closest('.salty-sec');
     const cleanup=()=>{revision++;controller?.abort();release();/* kept 는 남긴다 */settingsRoot?.removeEventListener('bl:capture-options-changed',invalidate);settingsRoot?.removeEventListener('change',selectionChanged);};
     const selectionChanged=event=>{if(event.target.matches('[data-word-message]'))invalidate();};
@@ -138,7 +139,7 @@ export async function openCapturePreview(ids, mount = null, selectedIds = () => 
         clearButton.hidden=!(memory.files?.length||memory.edits);
         const r=item.result,mb=n=>n>=1048576?`${(n/1048576).toFixed(n>=10485760?1:2)}MB`:`${Math.max(1,Math.round(n/1024))}KB`,total=outputs.reduce((sum,o)=>sum+o.blob.size,0),limit=['apng','webp'].includes(r.format)?(Number(getSettings().captureTools.maxMB)||0)*1048576:0;
         const fit=r.fitted?(r.fitted.overLimit?' · 한도를 못 맞췄어요 — 재생 시간이나 문단 수를 줄여 주세요':r.fitted.step?` · 용량에 맞춰 ${r.fitted.scale<1?'크기 '+Math.round(r.fitted.scale*100)+'% · ':''}${r.fitted.quality<1?'화질 '+Math.round(r.fitted.quality*100)+' · ':''}초당 ${r.fitted.fps}장`:''):'';
-        status.textContent=`${item.quick?'빠른 미리보기(저장용 아님) · ':stale?'설정을 바꾸기 전에 만든 파일 · ':''}${outputs.length>1?`${Number(part.value)+1} / ${outputs.length} 파일 · `:''}${mb(item.blob.size)}${outputs.length>1?` (전체 ${mb(total)})`:''}${limit&&item.blob.size>limit?' ⚠ 한도 초과':''}${fit} · ${r.width} × ${r.height} · 치환 ${r.replaced}곳 · 이름 ${r.hidden}곳 가림${r.weather?' · 날씨 포함':''}${r.duration?' · '+r.duration+'초 · 고정 화면':''}`;
+        status.textContent=`${item.quick?'빠른 미리보기(저장용 아님) · ':stale?'설정을 바꾸기 전에 만든 파일 · ':''}${outputs.length>1?`${Number(part.value)+1} / ${outputs.length} 파일 · `:''}${mb(item.blob.size)}${outputs.length>1?` (전체 ${mb(total)})`:''}${limit&&item.blob.size>limit?' ⚠ 한도 초과':''}${fit} · ${r.width} × ${r.height} · 치환 ${r.replaced}곳 · 이름 ${r.hidden}곳 가림${r.weather?' · 날씨 포함':''}${r.duration?' · '+r.duration+'초 · 고정 화면':''}${r.skippedImages?` · 그림 ${r.skippedImages}개 못 읽음`:''}`;
     };
     part.onchange=show;
     async function generate(){
@@ -165,7 +166,7 @@ export async function openCapturePreview(ids, mount = null, selectedIds = () => 
             let archive=null;if(pending.length>1){progress('전체 파일 ZIP 묶는 중…');archive=await(await import('./capture-archive.js')).captureArchive(pending,signal);}
             signal.throwIfAborted();if(!alive()||revision!==current)return;
             outputs=pending.map(item=>({...item,kept:true,url:URL.createObjectURL(item.blob)}));
-            memory.files=pending.map(item=>({...item,kept:true}));memory.archive=archive;
+            memory.files=pending.map(item=>({...item,kept:true}));memory.archive=archive;memory.ids=captureIds.join(',');memory.stale=false;
             part.innerHTML=outputs.map((item,i)=>`<option value="${i}">${i+1} / ${outputs.length} · ${item.result.width} × ${item.result.height}</option>`).join('');part.value='0';dialog.querySelector('[data-capture-parts]').hidden=outputs.length<2;
             if(archive){zipURL=URL.createObjectURL(archive);zip.href=zipURL;zip.hidden=false;}
             show();render.textContent='파일 다시 만들기';
@@ -190,14 +191,15 @@ export async function openCapturePreview(ids, mount = null, selectedIds = () => 
         finally{resources.close();busy=false;render.disabled=quick.disabled=false;}
     }
     quick.onclick=quickLook;
-    clearButton.onclick=()=>{revision++;controller?.abort();memory.files=null;memory.archive=null;memory.edits=null;edits=null;stale=false;wipe();clearButton.hidden=true;status.textContent='만든 파일과 캡처용 글 편집을 지웠어요.';};
-    dialog.querySelector('[data-capture-edit]').onclick=async()=>{try{const result=await(await import('./capture-editor.js')).editCaptureDraft(selectedIds(),edits);if(result){edits=result.draft;memory.edits=edits;clearButton.hidden=!(memory.files?.length||memory.edits);invalidate();}}catch(error){status.textContent=error.message;}};
+    clearButton.onclick=()=>{revision++;controller?.abort();memory.files=null;memory.archive=null;memory.edits=null;memory.ids='';memory.stale=false;edits=null;stale=false;wipe();clearButton.hidden=true;status.textContent='만든 파일과 캡처용 글 편집을 지웠어요.';};
+    dialog.querySelector('[data-capture-edit]').onclick=async()=>{try{const ids=selectedIds(),result=await(await import('./capture-editor.js')).editCaptureDraft(ids,edits);if(result){edits=result.draft?[...(edits||[]).filter(m=>!ids.includes(m.id)),...result.draft]:null;memory.edits=edits;clearButton.hidden=!(memory.files?.length||memory.edits);invalidate();}}catch(error){status.textContent=error.message;}};
     render.onclick=generate;
     // 열 때: 만들어 둔 파일이 있으면 그대로 보여 주고, 없으면 굽지 않고 빠른 미리보기만
     if(memory.files?.length){
         outputs=memory.files.map(item=>({...item,url:URL.createObjectURL(item.blob)}));
         part.innerHTML=outputs.map((item,i)=>`<option value="${i}">${i+1} / ${outputs.length} · ${item.result.width} × ${item.result.height}</option>`).join('');part.value='0';dialog.querySelector('[data-capture-parts]').hidden=outputs.length<2;
         if(memory.archive){zipURL=URL.createObjectURL(memory.archive);zip.href=zipURL;zip.hidden=false;}
+        stale=memory.stale||memory.ids!==selectedIds().join(',');
         show();render.textContent='파일 다시 만들기';
     }else{clearButton.hidden=!memory.edits;await quickLook();}
 }

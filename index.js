@@ -17,7 +17,9 @@ import { startInlineTone, retoneAll } from './src/tone.js';
 import { startStreamFade, streamFadeState } from './src/streamfade.js';
 // 4.1.2: 설정 창(panel.js 와 거기에만 딸린 모듈 24개 · 310KB)은 설정 창을 처음 열 때 불러온다 — 시작할 때 읽는 모듈 64 → 40개.
 let panelApi = null, panelLoading = null;
-const loadPanel = () => panelLoading ||= import('./src/panel.js').then(api => (panelApi = api));
+// 못 불러오면 기억을 지워 다음에 누를 때 다시 부른다 (실패한 약속을 붙들고 있으면 새로고침 전까지 서랍이 빈 채였다)
+const loadPanel = () => panelLoading ||= import('./src/panel.js').then(api => (panelApi = api), (error) => { panelLoading = null; throw error; });
+const panelFailed = () => toastr.warning('설정 창을 못 불러왔어요. 다시 누르거나 새로고침해 주세요.', 'Blue Lemonade');
 const refreshPanels = (changes) => panelApi?.refreshPanels(changes); // 아직 안 불러왔으면 그려진 창도 없다
 function noticeSeenChanged() {
     if (panelApi) return panelApi.noticeSeenChanged();
@@ -55,7 +57,7 @@ function mountDrawer() {
         try {
             const { mountPanel } = await loadPanel();
             if (!content.querySelector('.salty-panel')) mountPanel(content, { onFullscreen: () => openPopup(true) });
-        } catch (error) { console.error('[Blue Lemonade] 설정 창을 불러오지 못했어요', error); }
+        } catch (error) { console.error('[Blue Lemonade] 설정 창을 불러오지 못했어요', error); panelFailed(); }
         finally { drawer._blMounting = false; }
     };
     drawer._blEnsurePanel = ensurePanel;
@@ -87,7 +89,9 @@ async function showVersion(badge) {
 async function openPopup(fullscreen = false, extension = null) {
     restorePreviewRules();
     const ctx = SillyTavern.getContext();
-    const { mountPanel, unmountPanel, setPanelFullscreen } = await loadPanel();
+    let api;
+    try { api = await loadPanel(); } catch (error) { console.error('[Blue Lemonade] 설정 창을 불러오지 못했어요', error); panelFailed(); return; }
+    const { mountPanel, unmountPanel, setPanelFullscreen } = api;
     const wrap = document.createElement('div');
     wrap.style.textAlign = 'left';
     const panel = mountPanel(wrap, { popup: true });

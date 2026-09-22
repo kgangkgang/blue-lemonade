@@ -90,19 +90,30 @@ function notify(entry) {
 
 // ── 누가 보냈나 ─────────────────────────────────────────────
 
+/** 테마 폴더 이름 — 이 파일은 <폴더>/src/addons/perf/ 에 있다 (설치 이름이 달라도 맞게) */
+const OWN_FOLDER = new URL('../../../', import.meta.url).pathname.split('/').filter(Boolean).pop();
+/** 테마 안 애드온 폴더 → 요청 로그의 호출자 키 (CALLER_LABELS · 용도 표에 이미 있는 이름) */
+const OWN_ADDONS = new Map([['rewrite', 'ban-word-rewrite'], ['bookmarks', 'chat-bookmarks']]);
+
 /**
  * 호출 스택에서 요청을 시작한 확장 폴더를 찾는다 (1.1.0).
  * 스택은 안쪽→바깥쪽 순서다. 실리태번 헬퍼처럼 fetch 나 생성 함수를 감싸는 확장은 실제 호출자보다 안쪽에 나타나므로,
  * 실리태번 본체 프레임(openai.js · script.js)보다 바깥쪽에 있는 확장 중 가장 바깥 것을 호출자로 본다.
  * 본체 프레임이 없으면 가장 바깥 확장, 그것도 없으면 본체가 보낸 채팅 요청이다.
+ * 테마 안의 성능 보조(이 감싸기) 프레임은 빼고, 내장 다시 쓰기 · 북마크는 위 표의 호출자 키로 적는다.
  */
 function callerFromStack() {
     const stack = new Error().stack ?? '';
     const frames = [];
     for (const line of stack.split('\n')) {
-        const third = line.match(/\/scripts\/extensions\/third-party\/([^/]+)\//);
+        const third = line.match(/\/scripts\/extensions\/third-party\/([^/]+)\/(?:src\/addons\/([^/]+)\/)?/);
         if (third) {
-            if (third[1] !== 'perf-assist' && third[1] !== 'request-log') frames.push({ kind: 'ext', name: third[1] });
+            let name = third[1];
+            if (name === OWN_FOLDER) {
+                if (third[2] === 'perf') continue;
+                name = OWN_ADDONS.get(third[2]) ?? name;
+            }
+            if (name !== 'perf-assist' && name !== 'request-log') frames.push({ kind: 'ext', name });
             continue;
         }
         const builtin = line.match(/\/scripts\/extensions\/([^/]+)\//);

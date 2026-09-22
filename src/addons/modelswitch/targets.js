@@ -88,7 +88,10 @@ const memory = {
         ownObject(d, 'models', {})[source] = model;
         if (source === 'custom' && url) d.customUrl = url;
         // 장기 기억의 설정 창은 열려 있을 때만 그려진다. 같은 모듈을 불러 다시 그리게 하고, 안 되면 다음에 열 때 반영된다.
-        try { (await import(new URL('../../../../long-memory/panel.js', import.meta.url).href)).refreshPanel?.(); } catch { /* 다음에 열 때 반영 */ }
+        // 1.5.1+ 는 창을 panel-loader 로 늦게 받는다 — 그쪽 refreshPanel 은 창이 없으면 아무것도 안 한다.
+        // panel.js 를 바로 부르면 안 쓸 화면 코드(~230KB)를 받으니, panel-loader 가 없는 1.5.0 이하만 panel.js 로.
+        const lm = file => new URL(`../../../../long-memory/${file}`, import.meta.url).href;
+        try { (await import(lm('panel-loader.js')).catch(() => import(lm('panel.js')))).refreshPanel?.(); } catch { /* 다음에 열 때 반영 */ }
     },
 };
 

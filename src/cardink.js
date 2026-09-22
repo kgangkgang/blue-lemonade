@@ -13,11 +13,30 @@ const MARK = 'blInk';            // 손 댄 요소 표시 (data-bl-ink)
 // 실리태번은 메시지 안 <style> 의 클래스를 custom-* 로 바꿔 단다 → 그것과 인라인 배경만 후보로 본다
 const CANDIDATES = '[class*="custom-"], [style*="background"]';
 
+// rgb() · rgba() 는 숫자만 뽑는다. color-mix · oklch · lab · color(srgb …) 는 계산값이 그대로 남아
+// 숫자 뜻이 달라서(0~1 · L/C/H) 1×1 캔버스에 칠해 sRGB 로 읽는다 — 같은 색 글자는 한 번만
+let ink2d = null;
+const seen = new Map();
 const parse = (value) => {
-    const n = String(value).match(/[\d.]+/g);
-    if (!n) return null;
-    const [r, g, b, a] = n.map(Number);
-    return { r, g, b, a: a === undefined ? 1 : a };
+    const s = String(value);
+    if (/^rgba?\(/i.test(s)) {
+        const n = s.match(/[\d.]+/g);
+        if (!n) return null;
+        const [r, g, b, a] = n.map(Number);
+        return { r, g, b, a: a === undefined ? 1 : a };
+    }
+    if (seen.has(s)) return seen.get(s);
+    ink2d ||= Object.assign(document.createElement('canvas'), { width: 1, height: 1 }).getContext('2d', { willReadFrequently: true });
+    if (!ink2d) return null;
+    ink2d.clearRect(0, 0, 1, 1);
+    ink2d.fillStyle = 'transparent';   // 못 읽는 색이면 앞 색이 남으므로 먼저 투명으로 (→ 투명이라 건너뜀)
+    ink2d.fillStyle = s;
+    ink2d.fillRect(0, 0, 1, 1);
+    const d = ink2d.getImageData(0, 0, 1, 1).data;
+    const c = { r: d[0], g: d[1], b: d[2], a: d[3] / 255 };
+    if (seen.size >= 200) seen.clear();
+    seen.set(s, c);
+    return c;
 };
 const over = (top, under) => ({
     r: top.r * top.a + under.r * (1 - top.a),

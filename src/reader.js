@@ -70,7 +70,8 @@ function onScroll() {
     const top = chat.scrollTop;
     const delta = top - lastTop;
     lastTop = top;
-    lastScrollAt = performance.now();
+    // 맨 아래에 붙어 끝난 스크롤은 적지 않는다 — 스트리밍 자동 스크롤이고, 멈출 관성도 없다 (안 그러면 톡이 자주 무시됨)
+    if (chat.scrollHeight - top - chat.clientHeight >= 2) lastScrollAt = performance.now(); // 폰은 scrollTop 에 소수점이 붙는다
     if (performance.now() > userUntil) {
         travel = 0;
         return;

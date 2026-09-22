@@ -37,7 +37,7 @@ import { PROVIDERS, applyModelRequestRules, isHttpUrl, modelIdsFrom, normalizeUr
 import { capturedMessages, capturedRequest, holdGeneration, regenerateReply, replaceReply, visibleText, watchRequests, withTimeout } from './reroll.js';
 import { applyUpgrades } from './upgrades.js';
 
-const VERSION = '1.8.7';
+const VERSION = '1.8.8';
 const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];
@@ -597,6 +597,11 @@ async function cleanMessage(messageId, manual, signal) {
     const clearProgress = settings.notify || manual
         ? laterToast(() => toastr.info(`${spans.length}곳 확인하는 중…`, TITLE, { timeOut: 0, extendedTimeOut: 0 }))
         : null;
+    // 1.8.8 자동 검사는 실리태번이 이 답을 저장하기 전에 돈다. 고쳐 쓰는 동안 탭이 죽거나 새로 고치면 답이 통째로 사라지니
+    // 요청과 함께 먼저 저장해 둔다. 스와이프 사본이 아직 안 맞으면(스트리밍 끔 · 끊긴 스트림) 덜 만든 답이라 저장하지 않는다.
+    const preSave = !manual && (!Array.isArray(message.swipes) || message.swipes[message.swipe_id ?? 0] === message.mes)
+        ? saveChatConditional().catch(error => console.warn(`[${TITLE}] 미리 저장 실패:`, error))
+        : null;
     try {
         const result = await rewriteText({
             text: original,
@@ -607,6 +612,8 @@ async function cleanMessage(messageId, manual, signal) {
             maxAttempts: settings.maxAttempts,
             log,
         });
+        // 미리 저장이 원문을 다 담은 뒤에 글을 바꾼다
+        await preSave;
         // 멈춤 = 이 답변은 그대로 둔다 (리롤을 멈출 때와 같다). 앞선 시도에서 고친 곳도 넣지 않는다.
         if (signal?.aborted) {
             toastr.info('고쳐 쓰기를 멈췄어요. 답변을 그대로 뒀어요.', TITLE);
@@ -640,12 +647,19 @@ async function cleanMessage(messageId, manual, signal) {
         console.error(`[${TITLE}]`, error);
         toastr.error(`고쳐 쓰는 중 오류: ${friendlyError(error)}`, TITLE);
     } finally {
+        // 실리태번의 저장(이 리스너가 끝난 뒤)이 겹쳐 버려지지 않게 끝까지 기다린다
+        await preSave;
         busy.delete(key);
         clearProgress?.();
     }
 }
 
 async function checkLastMessage() {
+    // 1.8.8 답이 오는 중에 누르면 반쯤 온 글을 붙잡아, 끝난 답의 자동 검사가 말없이 건너뛰어진다
+    if (document.body.dataset.generating === 'true') {
+        toastr.info('답이 끝난 뒤에 눌러 주세요.', TITLE);
+        return;
+    }
     const { chat } = getContext();
     for (let id = chat.length - 1; id >= Math.max(0, chat.length - 6); id--) {
         if (!chat[id].is_user && !chat[id].is_system) {
@@ -742,6 +756,8 @@ async function ensureScenePlan(messageId, end, stopSignal) {
                 return;
             }
             await replaceReply(messageId, message, outcome.result);
+            // 1.8.8: 끊김 감시가 끊은 답을 새로 받아 바꿨으니 '끊긴 답' 표시를 지운다 — 남아 있으면 번역기가 온전한 새 답을 건너뛴다
+            delete globalThis[Symbol.for('st.stream-watchdog.cut')];
             if ($(`#chat .mes[mesid="${messageId}"]`).length > 0 && !isEditingMessage(document, messageId)) { // 1.7.5: 편집 중이면 다시 그리지 않는다
                 updateMessageBlock(messageId, message);
             }

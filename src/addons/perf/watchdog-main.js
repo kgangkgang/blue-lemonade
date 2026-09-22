@@ -11,7 +11,7 @@ import { isStreamRequest, watchRequest, clampIdle, clampFirst, STALL_NAME } from
 
 const MODULE = 'stream_watchdog';
 const FOLDER = 'blue-lemonade'; // 2.0.0 성능 보조로 합침
-const VERSION = '1.1.1';
+const VERSION = '1.1.2';
 const TITLE = '끊김 감시';
 
 const DEFAULTS = Object.freeze({ enabled: true, idleSeconds: 20, firstSeconds: 0 }); // firstSeconds: 첫 글자까지 최대 대기 (1.1.0, 0 = 끔)
@@ -37,7 +37,6 @@ const env = {
     now: () => performance.now(),
     setInterval: (fn, ms) => setInterval(fn, ms),
     clearInterval: id => clearInterval(id),
-    isHidden: () => document.visibilityState === 'hidden',
     onStall: ({ idleMs, first }) => {
         // 다른 확장에 알림: 방금 답을 끊었다 (번역 확장은 끊긴 반쪽짜리 글을 자동 번역하지 않는다). 다음 생성 요청이 시작되면 지운다
         globalThis[CUT_KEY] = { at: Date.now(), first: !!first };
