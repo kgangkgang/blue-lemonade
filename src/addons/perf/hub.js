@@ -87,8 +87,25 @@ export function markBroken(id, error) {
     note(id, `<i class="fa-solid fa-triangle-exclamation"></i> 이 기능을 켜지 못했어요: ${esc(error?.message ?? error)}`);
 }
 
+// 4.5.3: 탭 내용은 허브가 처음 보일 때 만든다. 요청 로그의 설정 칸(panel.js 52KB)이
+// 시작할 때 조건 없이 읽히고 있었는데, 허브를 안 열면 한 번도 보이지 않는 화면이다.
+// 도구는 여기에 만드는 함수를 맡겨 두고, 허브가 열릴 때(팝업 · 설정 창 안 둘 다) 한 번만 불린다.
+const builders = new Map();
+const built = new Set();
+export function onFirstShow(id, build) {
+    if (built.has(id)) { build(); return; }   // 이미 한 번 보였으면 그 자리에서
+    builders.set(id, build);
+}
+function runBuilders() {
+    for (const [id, build] of builders) {
+        builders.delete(id); built.add(id);
+        try { build(); } catch (error) { console.error('[Blue Lemonade]', error); }
+    }
+}
+
 let open = false;
 async function openHub(tab) {
+    runBuilders();
     if(inlineHost?.isConnected&&inlineHost.offsetParent){showTab(TABS.some(t=>t.id===tab)?tab:savedTab());root.scrollIntoView({block:'nearest'});return;}
     if (open) return;
     open = true;
@@ -127,6 +144,7 @@ export { openHub };
 
 let inlineHost=null;
 export function mountInline(host) {
+    runBuilders();
     showTab(savedTab());
     inlineHost=host;if(open)host.textContent='열린 설정창을 닫으면 여기에 표시돼요.';else host.replaceChildren(root);root.classList.add('bl-embedded-settings');
     const content=root.querySelector('.inline-drawer-content');if(content)content.style.display='block';

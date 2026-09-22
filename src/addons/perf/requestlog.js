@@ -2,10 +2,10 @@
 // 실리태번과 확장이 보내는 API 요청을 모두 기록한다. 프롬프트·응답·오류를 다시 보고, 토큰과 비용을 날짜·모델별로 모아 본다.
 // 기록은 이 기기의 브라우저(IndexedDB)에만 남는다.
 import { verifyAddonCss } from '../../addon-files-check.js';
+import { onFirstShow } from './hub.js';
 import { eventSource, event_types } from '../../../../../../../script.js';
 import { TITLE, VERSION, FOLDER, initSettings } from './state.js';
 import { installCapture, setGenerationType, clearGenerationType, beginSendTrace, markSend } from './capture.js';
-import { buildDrawer, mountWandButton, openDialog } from './panel.js';
 import { trimEntries } from './store.js';
 import { refresh as refreshBudget, refreshSoon as refreshBudgetSoon } from './budget.js';
 
@@ -40,6 +40,26 @@ function checkFilesMatch() {
     verifyAddonCss({ folder: 'perf', name: '--rl-css-version', version: VERSION, title: TITLE });
 }
 
+
+// 4.5.3: 설정 칸과 기록 창(panel.js 52KB)은 실제로 열 때 읽는다.
+// 마법봉 단추는 12줄짜리라 여기서 직접 만들고, 누를 때 비로소 panel.js 를 받는다.
+let panelPromise = null;
+const panel = () => (panelPromise ??= import('./panel.js'));
+async function openDialog() { (await panel()).openDialog(); }
+function mountWandButton() {
+    if (document.getElementById('rl-wand-button')) return;
+    const container = document.getElementById('data_bank_wand_container') ?? document.getElementById('extensionsMenu');
+    if (!container) return;
+    const item = document.createElement('div');
+    item.id = 'rl-wand-button';
+    item.className = 'list-group-item flex-container flexGap5 interactable';
+    item.tabIndex = 0;
+    item.setAttribute('role', 'button');
+    item.innerHTML = `<div class="fa-solid fa-receipt extensionsMenuExtensionButton"></div><span>${TITLE}</span>`;
+    item.addEventListener('click', () => { openDialog(); });
+    container.append(item);
+}
+
 // 슬래시 명령: /request-log 로도 연다
 function registerSlashCommand() {
     try {
@@ -57,7 +77,7 @@ function registerSlashCommand() {
 }
 
 jQuery(async () => {
-    buildDrawer();
+    onFirstShow('log', async () => (await panel()).buildDrawer());
     mountWandButton();
     registerSlashCommand();
     for (const delay of [800, 3000]) setTimeout(mountWandButton, delay);
