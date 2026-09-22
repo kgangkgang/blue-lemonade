@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 9ede10ee336a) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 1d6279ef42a1) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -1643,6 +1643,21 @@ body.salty #chat .mes .mes_buttons {
   min-width: 0;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+html body.salty #chat .mes {
+  box-sizing: border-box !important;
+}
+html body.salty #chat .mes > .mes_block {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+html body.salty #chat .mes > .mes_block > .ch_name {
+  max-width: 100% !important;
+}
+html body.salty #chat .mes .ch_name > .mes_buttons {
+  flex-wrap: wrap !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
 }
 body.salty #chat .mes :is(.mes_buttons, .mes_reasoning_actions) .mes_button {
   box-sizing: border-box;
@@ -12449,6 +12464,21 @@ body.salty :is(#salty-nochat, .salty-preview) .mes .mes_buttons {
   min-width: 0;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+html body.salty :is(#salty-nochat, .salty-preview) .mes {
+  box-sizing: border-box !important;
+}
+html body.salty :is(#salty-nochat, .salty-preview) .mes > .mes_block {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+html body.salty :is(#salty-nochat, .salty-preview) .mes > .mes_block > .ch_name {
+  max-width: 100% !important;
+}
+html body.salty :is(#salty-nochat, .salty-preview) .mes .ch_name > .mes_buttons {
+  flex-wrap: wrap !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes :is(.mes_buttons, .mes_reasoning_actions) .mes_button {
   box-sizing: border-box;

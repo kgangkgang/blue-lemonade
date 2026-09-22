@@ -1,4 +1,4 @@
-import { COLORS, COLOR_MODS } from './colors.js';
+import { COLORS, COLOR_MODS, MORE_COLORS } from './colors.js';
 import { USER_COLORS_RULE, USER_HAIR_RULE, USER_NAILS_RULE } from './defaults-personal.js';
 import { MULTILINGUAL_WORDS, NOSTRIL_RULE } from './multilingual.js';
 
@@ -8,6 +8,16 @@ const NAILS = String.raw`(?:finger|toe)?(?:nails?|manicure)`;
 const NAIL_ADJ = String.raw`long|short|sharp|pointed|curved|hooked|blunt|thick|thin|neat|neatly trimmed|trimmed|filed|manicured|chipped|polished|buffed|glossy|matte|lacquered|painted|jagged|wicked|cruel|slender|elegant|tapered|perfect|clean|little|tiny|bitten|broken|immaculate|pristine`;
 // Grey-ish colours also cover claws and talons (the way Gemini phrased it); other colours only cover nails.
 const GRAYS = String.raw`(?:(?:dark|deep|charcoal|slate|ash|smoky|smoke|steel|iron|storm|stormy|pewter|matte)[- ]?)?(?:gr[ae]y(?:ish)?|charcoal|gunmetal|graphite|pewter)`;
+
+// 1.8.9 — eyewear colours. Black and its names are the only allowed frame colour, so the colour list is every
+// other colour the hair/nail rules know plus finishes that are never black (wire, tortoiseshell, clear).
+// "wine glasses" and "two glasses of red wine" are drinkware, so those colours are left out and "of" never links.
+const FRAME_BLACKS = new Set(['black', 'jet', 'ebony', 'obsidian', 'onyx', 'inky', 'raven', 'charcoal']);
+const FRAME_DRINKS = new Set(['wine', 'champagne', 'crystal', 'milky', 'honey', 'coffee', 'mocha', 'caramel', 'chocolate', 'cherry', 'strawberry', 'peach', 'lemon', 'mint', 'aqua', 'cream', 'espresso', 'cocoa', 'apricot', 'tangerine', 'orange', 'salmon', 'cinnamon', 'walnut', 'hazelnut']);
+const FRAME_COLORS = [...COLORS.split('|'), ...MORE_COLORS.split('|')].filter(c => !FRAME_BLACKS.has(c) && !FRAME_DRINKS.has(c)).join('|');
+const FRAME_FINISH = String.raw`tortoise(?:-?shell)?|wire|wiry|clear|transparent|translucent|see-through`;
+const EYEWEAR = String.raw`glasses|eyeglasses|spectacles|specs|monocles?|pince-nez|bifocals|eyewear`;
+const NOT_A_FRAME = String.raw`(?![- ](?:haired|eyed|skinned|hair|eyes?|skin|light|glow|wine|liquid|dawn|dusk|sun|sky|leaf|leaves))`;
 
 export const DEFAULT_SETTINGS = {
     enabled: true,
@@ -61,6 +71,37 @@ export const DEFAULT_SETTINGS = {
             enabled: true,
             description: 'eyewear such as glasses, spectacles, or monocles',
             words: 'glasses, eyeglasses, spectacles, monocle, monocles, pince-nez, bifocals, wire-rimmed, horn-rimmed, gold-rimmed, silver-rimmed, metal-rimmed, thin-rimmed, thick-rimmed, black-rimmed',
+        },
+        {
+            id: 'glasses_color',
+            name: '안경 색',
+            enabled: true,
+            description: 'eyewear in any colour or finish other than plain black: gold-, silver-, wire- or tortoiseshell-rimmed frames, coloured or clear frames, tinted lenses, a colour on the rims or temples (금테 안경, 은테, 金縁の眼鏡, 金边眼镜). The glasses themselves are fine and must stay; make the frames black or drop the colour word.',
+            words: [
+                // colour or finish (+ rimmed/framed/tinted) before the eyewear: "gold-rimmed glasses", "thin silver frames", "wire spectacles"
+                String.raw`/\b(?:${FRAME_COLORS}|${FRAME_FINISH})(?:[- ]?(?:rimmed|framed|tinted|edged|toned|colou?red|plated))?(?:,?\s+(?!(?:and|or|with|hair|eyes?|skin|of)\b)[\p{L}-]+){0,2},?\s+(?:${EYEWEAR}|frames|rims|lenses)\b/`,
+                // eyewear was/with a colour: "his glasses were gold-rimmed", "spectacles with silver frames", "lenses tinted amber"
+                String.raw`/\b(?:${EYEWEAR}|lenses)\b(?:\s+(?!(?:of|and)\b)[\p{L}-]+){0,2}\s+(?:were|was|are|is|had|with|in|glinted|gleamed|flashed|shone|tinted|framed|rimmed)\s+(?:(?:a|an|the|their|its)\s+)?(?:(?!(?:hair|eyes?|skin)\b)[\p{L}-]+\s+){0,2}(?:${FRAME_COLORS})(?:[- ](?:rimmed|framed|tinted|frames?|rims?|wire|metal|tint|finish))?\b${NOT_A_FRAME}/`,
+                // "his glasses, gold-rimmed and thin"
+                String.raw`/\b(?:${EYEWEAR}),\s+(?:(?:a|an|the|their|its|all)\s+)?(?:[\p{L}-]+\s+){0,2}(?:${FRAME_COLORS})(?:[- ](?:rimmed|framed|tinted|frames?|rims?))?\b${NOT_A_FRAME}/`,
+                // "the gold rims of his glasses", "the silver wire of her spectacles"
+                String.raw`/\b(?:${FRAME_COLORS})(?:[- ]?(?:plated|toned|colou?red))?\s+(?:rims?|frames?|temples?|arms?|wire)\s+of\s+(?:his|her|their|the|those|[\p{L}]+['’]s)\s+(?:${EYEWEAR})\b/`,
+                // "glasses whose frames were gold", "spectacles, the rims a dull silver"
+                String.raw`/\b(?:${EYEWEAR})\b[^.!?\n]{0,20}?\b(?:rims?|frames?|temples?|lenses|tint)\s+(?:were|was|are|is|a|an|in|of)\s+(?:[\p{L}-]+\s+){0,2}(?:${FRAME_COLORS})\b${NOT_A_FRAME}/`,
+                // 금테 안경 · 은테 · 갈색 안경테 · 붉은 렌즈 (금 · 은 · 갈 · 회 need 색/빛/테 behind them — 은 is also a particle)
+                String.raw`/(?:(?:금|은|백금|황금|갈|밤|녹|회|백|호박|호피|구리|청동)(?:색|빛|테)|(?:붉은|빨간|빨강|파란|파랑|푸른|초록|보라|분홍|핑크|하얀|흰|노란|노랑|투명|무지개|알록달록|금빛|은빛|금색|은색|갈색|회색|백색|녹색)(?:색|빛|테)?)\s*(?:의\s*)?(?:안경(?:테|알)?|테|프레임|렌즈)/`,
+                String.raw`/(?:금|은|백금|황금|갈|호피)테(?=[\s의를가이은는로에,.!?]|$)/`,
+                // 안경은 금테였다 · 안경테는 은색 · 렌즈가 붉은
+                String.raw`/(?:안경(?:테|알)?|렌즈|프레임)(?:은|는|이|가)\s*(?:짙은\s*|옅은\s*|밝은\s*|어두운\s*|연한\s*|진한\s*)?(?:(?:금|은|백금|황금|갈|밤|녹|회|백|호박|호피)(?:색|빛|테)|(?:붉은|빨간|빨강|파란|파랑|푸른|초록|보라|분홍|핑크|하얀|흰|노란|노랑|투명|무지개))/`,
+                // 金縁の眼鏡 · 銀ぶちメガネ · メガネは金色
+                String.raw`/(?:金|銀|茶|赤|青|緑|紫|桃|白|黄|灰|透明|べっ甲|鼈甲|銅)(?:色|縁|ぶち|フレーム)?(?:の)?\s*(?:眼鏡|メガネ|めがね|フレーム|レンズ|片眼鏡|モノクル)/`,
+                String.raw`/(?:眼鏡|メガネ|めがね|フレーム|レンズ)(?:の縁|の枠|のフレーム)?(?:は|が)\s*(?:金|銀|茶|赤|青|緑|紫|桃|白|黄|灰|透明|べっ甲|鼈甲|銅)(?:色|縁)?/`,
+                // 金边眼镜 · 银框眼镜 · 镜框是金色的
+                String.raw`/(?:金|银|銀|铜|銅|棕|褐|红|紅|蓝|藍|绿|綠|紫|粉|黄|黃|灰|透明|玳瑁)(?:色|边|邊|丝|絲|框)?(?:的)?\s*(?:眼镜|眼鏡|镜框|鏡框|镜片|鏡片|镜架|鏡架)/`,
+                String.raw`/(?:眼镜|眼鏡|镜框|鏡框|镜架|鏡架|镜片|鏡片)(?:是|为|為|呈)\s*(?:金|银|銀|铜|銅|棕|褐|红|紅|蓝|藍|绿|綠|紫|粉|白|黄|黃|灰|透明|玳瑁)(?:色)?/`,
+            ].join('\n'),
+            // Only Belford wears glasses at all (the 안경 rule bans them on everyone else), so the colour check is his.
+            onlyFor: 'Belford Beelzebub, Belford, Beelzebub, Bel, 벨포드, 벨, 벨제부브, 베엘제붑, ベルフォード・ベルゼブブ, ベルフォード, ベルゼブブ',
         },
         {
             id: 'beard',
@@ -148,7 +189,7 @@ export const DEFAULT_SETTINGS = {
         },
     ],
     // Default rule ids already offered to this install; newer ones get added once on load (see loadSettings).
-    offeredRules: ['glasses', 'beard', 'tan', 'cane', 'ears', 'gray_nails', 'horns', 'user_colors', 'fufu', 'chest_hair'],
+    offeredRules: ['glasses', 'glasses_color', 'beard', 'tan', 'cane', 'ears', 'gray_nails', 'horns', 'user_colors', 'fufu', 'chest_hair'],
     exceptions: [
         {
             id: 'belford',

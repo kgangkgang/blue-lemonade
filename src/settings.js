@@ -195,7 +195,7 @@ const ALIGNS = ['left', 'justify-word', 'justify-break'];
 const MARKER_POSITIONS = ['center', 'bottom'];
 // 가져온 파일 · 손으로 고친 값 거르기용 한계: 크기 px, 형광펜 두께 %
 // 두께 아래 10 은 눈금이 아니라 '보이는 획'의 한계 — 5~9 는 화면에서 획이 사라짐 (apply.js MIN_THICK 과 같은 값)
-export const TEXT_LIMIT = { dialogueSize: [8, 40], uiSize: [8, 32], codeSize: [8, 32], markerThick: [10, 100], roleSize: [8, 40], letterSpacing: [-10, 20], weight: [100, 900] };
+export const TEXT_LIMIT = { dialogueSize: [8, 40], uiSize: [8, 32], codeSize: [8, 32], markerThick: [10, 100], roleSize: [8, 40], letterSpacing: [-10, 20], weight: [100, 900], gutter: [8, 40] };
 
 /** 역할별 글자 값(2.7.0): 크기 px · 자간 1/100 em · 굵기 — 없음(null) 은 그대로, 숫자는 범위 안으로 */
 function tidyRoles(s) {
@@ -327,6 +327,9 @@ function tidyType(type) {
         const v = type[key] === null ? NaN : (typeof type[key] === 'number' ? type[key] : parseFloat(type[key]));
         type[key] = Number.isFinite(v) && v > 0 ? clampTo(v, TEXT_LIMIT[key]) : null; // null = 따로 안 정함
     }
+    // 좌우 여백은 슬라이더(8~40) 밖 값이 가져오기 · 스타일 파일로 들어올 수 있다 — 8 아래면 버튼 줄의 -8px 여백이 화면 밖으로 나간다 (4.6.9)
+    const gutter = typeof type.gutter === 'number' ? type.gutter : parseFloat(type.gutter);
+    type.gutter = Number.isFinite(gutter) ? clampTo(gutter, TEXT_LIMIT.gutter) : DEFAULTS.type.gutter;
 }
 
 /** 형광펜 두께 · 위치 정리 */
