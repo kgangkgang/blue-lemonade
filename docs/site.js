@@ -85,8 +85,8 @@ const topics = [
     P('weather-bubble', '내 메시지 농도', '날씨를 켠 동안 내 메시지 면이 이만큼만 칠해져요.'),
     P('weather-custom', '내 그림도 내려요', '투명 PNG로 꽃잎, 별, 마음에 드는 그림을 더해요.'),
   ], pc: [
-    ['434-hero-pc-light.mp4','바닷가의 빛줄기','넓은 화면에서 물결 + 햇살.','434-hero-pc-light.jpg'],
-    ['434-hero-pc-dark.mp4','밤바다와 은하수','넓은 화면에서 물결 + 별.','434-hero-pc-dark.jpg'],
+    ['434-hero-pc-light.mp4','꽃잎과 봄볕','넓은 화면에서 꽃잎 + 햇살(애니풍).','434-hero-pc-light.jpg'],
+    ['434-hero-pc-dark.mp4','안개 낀 숲의 반딧불이','넓은 화면에서 반딧불이 + 실안개.','434-hero-pc-dark.jpg'],
     S('picker', '하늘 · 자연 · 물·유리', '두 날씨를 1 · 2 칸에.'),
     S('weather-tracker', '트래커 날씨 따라가기', ''),
     S('weather-bubble', '내 메시지 농도', ''),
@@ -185,7 +185,7 @@ const topics = [
 const $ = s => document.querySelector(s);
 function element(tag, cls, text) { const e=document.createElement(tag); if(cls)e.className=cls; if(text)e.textContent=text; return e; }
 // media cache keys: one stable key for everything; a file retaken under the same name gets its own entry here (never bump the stable key)
-const RETAKEN={};
+const RETAKEN={'434-hero-pc-light.mp4':'b','434-hero-pc-light.jpg':'b','434-hero-pc-dark.mp4':'b','434-hero-pc-dark.jpg':'b'};
 const mv=file=>'?v='+(RETAKEN[file]||'s1');
 
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
