@@ -450,11 +450,13 @@ export function syncAnchors() {
 
     const sameChat = tracked.key === key && ((!!favorites && tracked.favorites === favorites) || tracked.metadata === metadata);
     const shrunk = sameChat && messages.length < tracked.length;
-    const lengthChanged = !sameChat || messages.length !== tracked.length;
     if (tracked.key !== key) verified.clear();
     Object.assign(tracked, { key, metadata, favorites, length: messages.length });
     if (!favorites?.length) return none;
-    if (!lengthChanged && favorites.every(fav => stillVerified(fav, messages))) return none;
+    // 4.5.8: 메시지가 하나 늘었다고 전부 다시 해시하지 않는다 — 북마크가 저마다 제 자리에
+    // 그대로 있으면(stillVerified) 다시 맞출 것이 없다. 자리가 밀렸거나 지워졌으면 이 검사가
+    // 걸러내 아래 resolveAnchors 로 간다. 전에는 길이가 바뀌면 조건이 먼저 막아 늘 다시 해시했다.
+    if (favorites.every(fav => stillVerified(fav, messages))) return none;
 
     const result = resolveAnchors(messages, favorites, { hash: textHash, removeMissing: shrunk, preferBackward: shrunk });
     for (const fav of result.removed) verified.delete(fav.id);

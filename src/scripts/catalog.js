@@ -24,8 +24,12 @@ async function fetchBundled(item){
   return code;
 }
 /** 셋째 길: 모양이 전혀 다른 둘째 사본(src/scripts/plain/<id>.js — 여러 줄짜리 보통 함수)에서 함수 몸통을 글로 꺼낸다 (tools/build-plain-scripts.mjs 가 만든다) */
-async function loadPlain(item){
-  const module=await import(new URL(`./plain/${item.file}.js?r=${Date.now().toString(36)}`,import.meta.url).href);
+// retry=true 일 때만 주소를 흔든다. 4.5.8 전에는 늘 흔들어서, 둘째 사본으로 도는 기기
+// (bl_scripts_plain='1')는 새로고침마다 609KB 를 통째로 다시 받았다 — 캐시가 절대 안 맞았다.
+// 첫 번째 시도는 주소를 고정해 조건부 GET(304)이 먹게 하고, 실패해서 다시 받을 때만 흔든다.
+async function loadPlain(item,retry){
+  const bust=retry?`?r=${Date.now().toString(36)}`:'';
+  const module=await import(new URL(`./plain/${item.file}.js${bust}`,import.meta.url).href);
   const text=String(module.default||''),from=text.indexOf('/*BL-SCRIPT-START*/'),to=text.lastIndexOf('/*BL-SCRIPT-END*/');
   if(from<0||to<0)throw Error('둘째 사본도 비었어요');
   const code=text.slice(from+19,to).trim();
@@ -57,14 +61,14 @@ export function loadBundledScript(id,fresh=false){
   if(fresh)cache.delete(id);
   // 이 기기에서 원래 파일이 비어 온 적이 있으면(브라우저가 막음) 둘째 사본부터 받는다 — 스크립트마다 헛요청 두 번(모듈 · 직접 받기)을 건너뛴다. 둘째가 안 되면 원래 순서로
   let plainFirst=false;try{plainFirst=localStorage.getItem('bl_scripts_plain')==='1';}catch{/* 저장소를 못 쓰면 늘 원래 순서 */}
-  if(plainFirst&&!cache.has(id)){cache.set(id,loadPlain(item).catch(()=>{try{localStorage.removeItem('bl_scripts_plain');}catch{/* 무시 */}cache.delete(id);return loadBundledScript(id,true);}));return cache.get(id);}
+  if(plainFirst&&!cache.has(id)){cache.set(id,loadPlain(item,false).catch(()=>{try{localStorage.removeItem('bl_scripts_plain');}catch{/* 무시 */}cache.delete(id);return loadBundledScript(id,true);}));return cache.get(id);}
   if(!cache.has(id))cache.set(id,import(bundledUrl(item,fresh)).then(module=>{
     if(typeof module.default!=='string'||module.default.length<50)throw Error('모듈에 내용이 없어요');
     return module.default;
   }).catch(async importError=>{
     try{const code=await fetchBundled(item);failures.delete(id);return code;}
     catch(error){
-      try{const code=await loadPlain(item);try{localStorage.setItem('bl_scripts_plain','1');}catch{/* 무시 */}failures.set(id,`둘째 사본으로 돌아요 (${String(error?.message||error).slice(0,50)})`);return code;}catch(plainError){error=Error(`${String(error?.message||error).slice(0,60)} → ${plainError.message}`);}
+      try{const code=await loadPlain(item,true);try{localStorage.setItem('bl_scripts_plain','1');}catch{/* 무시 */}failures.set(id,`둘째 사본으로 돌아요 (${String(error?.message||error).slice(0,50)})`);return code;}catch(plainError){error=Error(`${String(error?.message||error).slice(0,60)} → ${plainError.message}`);}
       failures.set(id,`${String(importError?.message||importError).slice(0,50)} → ${String(error?.message||error).slice(0,70)}`);throw error;}
   }).catch(error=>{cache.delete(id);throw error;}));
   return cache.get(id);

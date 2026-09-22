@@ -325,12 +325,17 @@ function visibleBookmarks(record) {
         .sort((a, b) => (a.index - b.index) * direction);
     if (!view.query) return items;
     const query = view.query.toLowerCase();
+    // 4.5.8: 찾는 말에 영문자가 없으면 대소문자를 맞출 것이 없다 — 메시지를 통째로 이어 붙여
+    // 소문자로 바꾸는 일을 건너뛴다 (긴 채팅에서 검색 한 번에 임시 문자열이 수 MB 였다).
+    // 메모에서 먼저 찾아 보고 거기서 나오면 본문은 아예 만들지 않는다.
+    const fold = /[a-z]/i.test(view.query) ? (text => text.toLowerCase()) : (text => text);
     return items.filter(({ fav, index }) => {
-        const note = noteToPlainText(fav.note).toLowerCase();
+        const note = fold(noteToPlainText(fav.note));
         if (view.noteOnly) return note.includes(query);
+        if (note.includes(query)) return true;
         const message = record.messages?.[index];
-        const haystack = `${note}\n${messageText(message)}\n${message?.mes ?? ''}\n${message?.name ?? fav.sender ?? ''}`.toLowerCase();
-        return haystack.includes(query);
+        const rest = `${messageText(message)}\n${message?.mes ?? ''}\n${message?.name ?? fav.sender ?? ''}`;
+        return fold(rest).includes(query);
     });
 }
 

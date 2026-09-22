@@ -1,9 +1,12 @@
 // 모델 전환 — 잠금: 여기서 관리하는 확장의 공급자 · 모델 칸을 그 확장 화면에서는 못 바꾸게 한다.
 // 칸을 없애거나 disabled 로 만들지 않는다 (확장이 다시 그리면 풀리고, 테마를 끄면 되돌릴 길이 없어진다).
 // body 클래스 + CSS 로 흐리게 하고, 누르는 순간을 문서 맨 앞에서 가로채 모델 전환 창을 연다. 감시자 없음.
+// 4.5.8: 프리셋 고르기(#llm_preset_select)와 번역기 설정 가져오기(#bwr_import_translator)도 잠근다 —
+// 둘 다 공급자 · 모델을 통째로 덮어써서 잠금을 우회하는 길이었다. #bwr_reset 은 일부러 두지 않는다
+// (확인창까지 눌러 되돌리는 길까지 막으면 빠져나올 방법이 없어진다).
 const CONTROLS = {
-    translator: '#llm_connection_mode, #llm_provider, #llm_model, #llm_custom_model, #llm_custom_url, #llm_custom_fetch_models',
-    rewrite: '#bwr_connection .bwr_seg, #bwr_provider, #bwr_model, #bwr_custom_model, #bwr_custom_url, #bwr_fetch_models',
+    translator: '#llm_connection_mode, #llm_provider, #llm_model, #llm_custom_model, #llm_custom_url, #llm_custom_fetch_models, #llm_preset_select',
+    rewrite: '#bwr_connection .bwr_seg, #bwr_provider, #bwr_model, #bwr_custom_model, #bwr_custom_url, #bwr_fetch_models, #bwr_import_translator',
     memory: '.lm-root [data-set-radio="apiMode"], .lm-root [data-set^="direct."]',
 };
 let locked = new Set(), bypass = 0, open = null, bound = false;
