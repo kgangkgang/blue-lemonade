@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build c857f0362c81) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 6f47d8c3d177) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -2958,6 +2958,7 @@ body.salty #loader.splash-screen .splash-message::before {
   font-family: var(--salty-font-ui, inherit);
   font-size: var(--bl-fs-title, 22px);
   font-weight: 700;
+  font-synthesis-weight: none;
   line-height: 1.25;
   letter-spacing: 0.01em;
 }
@@ -2969,6 +2970,7 @@ body.salty #loader.splash-screen .splash-message::after {
   font-family: var(--salty-font-ui, inherit);
   font-size: var(--bl-fs-sub, 13px);
   font-weight: 500;
+  font-synthesis-weight: none;
   line-height: 1.4;
 }
 body.salty #loader.splash-screen #load-spinner {
@@ -10597,6 +10599,33 @@ body.salty .rl-root .rl-tile,
 body.salty .rl-root .rl-balance {
   background: var(--salty-fill-surface-shade, var(--salty-surface-shade));
 }
+html body.salty #autopic_settings_container {
+  --ap-accent: var(--salty-accent);
+  --ap-bg-main: transparent;
+  --ap-bg-card: var(--salty-surface);
+  --ap-bg-input: var(--salty-field);
+  --ap-bg-item: var(--salty-shade);
+  --ap-text: var(--salty-text);
+  --ap-text-vague: var(--salty-muted);
+  --ap-border: var(--salty-shade-2);
+  --ap-input-border: var(--salty-shade-2);
+}
+html body.salty #autopic_settings_container .inline-drawer-content {
+  background-color: transparent !important;
+  color: var(--salty-text) !important;
+}
+html body.salty #autopic_settings_container .image-gen-nav-item.active,
+html body.salty #autopic_settings_container .nai-param-nav-item.active,
+html body.salty #autopic_settings_container .gen-btn-blue,
+html body.salty #autopic_settings_container [style*="background: var(--ap-accent)"] {
+  color: var(--salty-on-accent) !important;
+}
+html body.salty #autopic_settings_container .gen-checkbox-label input[type="checkbox"]:checked::after {
+  color: var(--salty-on-accent);
+}
+html body.salty #autopic_settings_container [style*="#cccccc"] { color: var(--salty-muted) !important; }
+html body.salty #autopic_settings_container [style*="#e07b7b"] { color: var(--bl-danger) !important; }
+html body.salty #autopic_settings_container [style*="#ff9f43"] { color: var(--bl-warning, var(--salty-em)) !important; }
 /* css/20-panel.css */
 .salty-panel {
   --r-sm: 8px;
