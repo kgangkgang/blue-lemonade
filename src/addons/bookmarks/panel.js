@@ -167,7 +167,12 @@ export function closePanel({ keepColors = false } = {}) {
     closeSettings({ immediate: true });
     view.root.classList.remove('is-open');
     setTimeout(() => {
-        if (!view.open) view.root.hidden = true;
+        if (view.open) return;
+        view.root.hidden = true;
+        // 4.5.6: 닫힌 창의 목록은 문서에 남을 이유가 없다 — 카드 수십 장과 그에 걸린 관찰자가 그대로 살아 있었다.
+        // 숨긴 뒤에 비운다(바로 비우면 닫히는 0.2초 동안 빈칸이 번쩍인다). 다시 열면 renderAll 이 그린다.
+        const list = view.root.querySelector('.cg-list');
+        if (list) list.replaceChildren();
     }, 200);
     if (!keepColors) applyColors(colorsFor(currentChatKey()));
 }
