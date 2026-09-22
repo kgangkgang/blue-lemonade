@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 1d6279ef42a1) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 0d0b8406ed59) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -11095,6 +11095,9 @@ body.salty-dark .salty-subs button.on {
     transform: skewX(-12deg);
   }
 }
+.salty-reset-pick { display: grid; gap: 10px; text-align: left; }
+.salty-reset-pick label { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.salty-reset-pick input { width: 18px; height: 18px; margin: 0; }
 .salty-note {
   margin: 8px 4px 0;
   font-size: var(--fs-cap);
@@ -17950,7 +17953,7 @@ body.salty.salty-demfx-mflow.salty-dlg-full :is(#chat, .cg-root, .salty-preview)
   50% { rotate: calc(.6deg * var(--bl-fx-k, 1)); translate: 0 calc(-.05em * var(--bl-fx-k, 1)); filter: hue-rotate(18deg); }
 }
 @keyframes bl-fx-crying {
-  from { opacity: .62; translate: 0 0; --bl-fx-glow: .2; }
+  from { opacity: .72; translate: 0 0; --bl-fx-glow: .2; }
   to { opacity: 1; translate: 0 calc(.03em * var(--bl-fx-k, 1)); --bl-fx-glow: .65; }
 }
 @keyframes bl-fx-shake {
@@ -17960,7 +17963,7 @@ body.salty.salty-demfx-mflow.salty-dlg-full :is(#chat, .cg-root, .salty-preview)
   75% { translate: calc(-.04em * var(--bl-fx-k, 1)) calc(.025em * var(--bl-fx-k, 1)); }
 }
 @keyframes bl-fx-whisper {
-  from { opacity: .5; filter: brightness(.9); }
+  from { opacity: .7; filter: brightness(.9); }
   to { opacity: .92; filter: brightness(1.05); }
 }
 @keyframes bl-fx-hurt {
@@ -17983,6 +17986,9 @@ body.salty :is(#chat, .cg-root) .custom-dem-expressive.bl-fx-made {
   background-repeat: no-repeat;
   -webkit-background-clip: text;
   background-clip: text;
+}
+body.salty :is(#chat, .cg-root) q .custom-dem-expressive.bl-fx-made {
+  display: inline;
 }
 .salty-preview[data-prev="regex"] .custom-dem-expressive--shout { font-weight: 700; }
 @media (prefers-reduced-motion: no-preference) {

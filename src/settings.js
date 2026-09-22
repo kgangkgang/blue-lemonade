@@ -505,19 +505,22 @@ export function saveSettings() {
     SillyTavern.getContext().saveSettingsDebounced();
 }
 
-export function resetSettings() {
+// 4.7.0: 무엇을 되돌릴지 고른다 — look(테마 모습) · addons(애드온 켬 · 설정) · tools(단어 치환 · 캡처) · library(프레임 · 팔레트 · 날씨 그림 · 모양)
+// 내 글꼴 · 본 공지 · 내 스타일 · 캐릭터 연결은 늘 남긴다 (입혀 둔 캐릭터 스타일 상태는 비움)
+const RESET_GROUPS = { addons: ['addons', 'addonUI'], tools: ['wordTools', 'captureTools'], library: ['frameLibrary', 'customPalettes', 'weatherImages'] };
+export function resetSettings(groups = { look: true }) {
     const ext = SillyTavern.getContext().extensionSettings;
-    const keepFonts = ext[KEY]?.customFonts || [];
-    const keepSeen = ext[KEY]?.noticeSeen || ''; // 초기화해도 이미 본 공지가 다시 빛나지 않게
-    const keepStyles = ext[KEY]?.styles || []; // 내 스타일 · 캐릭터 연결도 남김 (입혀 둔 캐릭터 스타일 상태는 비움)
-    const keepLinks = ext[KEY]?.charStyles || {};
-    ext[KEY] = structuredClone(DEFAULTS);
-    ext[KEY].customFonts = keepFonts;
-    ext[KEY].noticeSeen = keepSeen;
-    ext[KEY].styles = keepStyles;
-    ext[KEY].charStyles = keepLinks;
+    const old = ext[KEY] || {};
+    const fresh = structuredClone(DEFAULTS);
+    const next = groups.look ? fresh : structuredClone(old);
+    if (groups.look) for (const key of ['customFonts', 'noticeSeen', 'styles', 'charStyles']) next[key] = structuredClone(old[key] ?? fresh[key]);
+    for (const [group, keys] of Object.entries(RESET_GROUPS)) for (const key of keys) next[key] = structuredClone(groups[group] ? DEFAULTS[key] : (old[key] ?? DEFAULTS[key]));
+    if (!next.image || typeof next.image !== 'object') next.image = structuredClone(DEFAULTS.image);
+    if (groups.library) { next.image.masks = []; next.image.maskId = ''; if (next.image.shape === 'custom') next.image.shape = 'rect'; }
+    else if (groups.look) next.image.masks = structuredClone(old.image?.masks || []);
+    ext[KEY] = next;
     saveSettings();
-    return ext[KEY];
+    return next;
 }
 
 /** 글꼴 묶음 꺼내기 (slot: text | dialogue | ui | em | strong). 'same' 이면 본문 묶음. */

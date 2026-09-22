@@ -198,6 +198,21 @@ function saveSoon() {
     saveTimer = setTimeout(saveSettings, 300);
 }
 
+/** '처음 설정으로' — 되돌릴 묶음을 고르는 창. 취소하면 null, 아니면 { look, addons, tools, library } */
+async function askResetGroups() {
+    const ctx = SillyTavern.getContext();
+    const rows = [['look', '테마 모습', true], ['addons', '애드온 켬 · 설정', false], ['tools', '단어 치환 · 캡처', false], ['library', '프레임 · 팔레트 · 날씨 그림 · 모양', false]];
+    const box = document.createElement('div');
+    box.className = 'salty-reset-pick';
+    box.innerHTML = `<p><b>처음 설정으로</b></p>${rows.map(([id, label, on]) => `<label><input type="checkbox" data-reset="${id}" ${on ? 'checked' : ''}><span>${label}</span></label>`).join('')}<p class="salty-note">내 글꼴 · 내 스타일은 남아요.</p>`;
+    let ok;
+    if (ctx.callGenericPopup && ctx.POPUP_TYPE) ok = await ctx.callGenericPopup(box, ctx.POPUP_TYPE.CONFIRM, '', { okButton: '되돌리기', cancelButton: '취소' }) === ctx.POPUP_RESULT?.AFFIRMATIVE;
+    else ok = confirm('테마 설정을 처음 상태로 돌릴까요? (내 글꼴 목록은 남아요)');
+    if (!ok) return null;
+    const groups = Object.fromEntries(rows.map(([id]) => [id, !!box.querySelector(`[data-reset="${id}"]`)?.checked]));
+    return Object.values(groups).some(Boolean) ? groups : null;
+}
+
 export function mountPanel(container, { popup = false, onFullscreen = null } = {}) {
     const root = document.createElement('div');
     root.className = popup ? 'salty-panel in-popup bl-editor' : 'salty-panel bl-editor';
@@ -1095,7 +1110,7 @@ function tabBackup() {
             ${row('실리태번 설정', `<button class="salty-btn" data-act="st-theme">${matched ? '다시 맞추기' : '맞추기'}</button>`,
         matched ? '지금 이 테마에 맞게 돼 있어요' : '흐림 · 그림자 · 말풍선 모양을 이 테마에 맞춰요')}
             ${row('설정 파일', '<span class="salty-btns"><button class="salty-btn" data-act="export">내보내기</button><button class="salty-btn" data-act="import">가져오기</button></span>')}
-            ${row('처음 설정으로', '<button class="salty-btn salty-btn-danger" data-act="reset">되돌리기</button>', '내 글꼴 목록은 남아요')}
+            ${row('처음 설정으로', '<button class="salty-btn salty-btn-danger" data-act="reset">되돌리기</button>', '무엇을 되돌릴지 골라요')}
         </div>
         <input type="file" accept=".json" hidden data-file="settings">`;
 }
@@ -2367,16 +2382,19 @@ function bind(root) {
                     refreshPanels();
                     break;
                 }
-                case 'reset':
-                    if (!confirm('테마 설정을 처음 상태로 돌릴까요? (내 글꼴 목록은 남아요)')) return;
+                case 'reset': {
+                    // 4.7.0: 무엇을 되돌릴지 고른다 (전에는 애드온 · 단어 규칙 · 라이브러리까지 말없이 지웠다)
+                    const groups = await askResetGroups();
+                    if (!groups) return;
                     update(st => {
-                        const fresh = resetSettings();
+                        const fresh = resetSettings(groups);
                         for (const key of Object.keys(st)) delete st[key];
                         Object.assign(st, fresh); SillyTavern.getContext().extensionSettings.salty = st;
                     });
                     // 정규식 연동이 꺼졌으면 끄는 스위치처럼 원래 켜짐 상태로 되돌림
                     try { await syncRegexlinkFlag(); } catch (error) { console.warn('[Blue Lemonade] 정규식 연동 맞추기 실패', error); }
                     break;
+                }
             }
         } catch (error) {
             toastr.error(error.message || String(error), 'Blue Lemonade');

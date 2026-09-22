@@ -7,7 +7,9 @@
 // 메시지가 그려졌다는 실리태번 이벤트 뒤에 훑고, 번역처럼 이벤트 없이 본문이 바뀌는 경우만 가벼운 감시자로 잡는다 (아래 onMutations).
 
 const TAGS = 'shout|quiet|angry|excited|dizzy|crying|anxious|hurt|intoxicated|whispering|trembling|deadpan|allcaps|uppercase|nocaps|lowercase|titlecase|tiny|small|large|huge|spaced|wide|tight|bold|italic|mono|gradient|rainbow|red|orange|yellow|green|cyan|blue|purple|pink|white|gray|bright|dim|faded|glow|warm|cool';
-const FIND = new RegExp(`((?:<(?:${TAGS})\\b[^>\\r\\n]{0,240}>[ \\t]*){1,4})(?:<(?:span|font)\\b[^>\\r\\n]{0,240}>[ \\t]*)?([「『][^」』\\r\\n]{1,600}[」』])`, 'gi');
+// 4.7.0: 괄호 짝을 맞춘다 — 「『…』, …」 처럼 안에 『』가 든 대사를 첫 』에서 끊으면 대사 일부만 q 안쪽에 감싸게 되고,
+// 형광펜 색 모드의 q 글자 마스크가 안쪽 inline-block 글자를 띠 투명도로 흐리고, 움직이면 q 상자 밖을 잘랐다 (2026-09-23 실측)
+const FIND = new RegExp(`((?:<(?:${TAGS})\\b[^>\\r\\n]{0,240}>[ \\t]*){1,4})(?:<(?:span|font)\\b[^>\\r\\n]{0,240}>[ \\t]*)?(「[^」\\r\\n]{1,600}」|『[^』\\r\\n]{1,600}』)`, 'gi');
 const TAG_NAME = new RegExp(`<(${TAGS})\\b`, 'gi');
 const MADE = 'bl-fx-made';
 
