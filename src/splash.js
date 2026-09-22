@@ -110,7 +110,7 @@ ${faces}
 #preloader { background-color: ${bg} !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 .popup:has(#loader.splash-screen) { padding: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; }
 .popup:has(#loader.splash-screen)::backdrop { background: ${bg} !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
-#loader.splash-screen { --bl-sp-title: ${px(1.467)}; --bl-sp-sub: ${px(0.867)}; font-size: ${px(1)}; line-height: 1.55; gap: 20px !important; filter: none !important; }
+#loader.splash-screen { --bl-sp-title: ${px(1.467)}; --bl-sp-sub: ${px(0.867)}; --bl-sp-font: ${font}; --bl-sp-gap: 20px; --bl-sp-gap2: 4px; font-size: ${px(1)}; line-height: 1.55; gap: var(--bl-sp-gap) !important; filter: none !important; }
 @media screen and (max-width: 1000px) { #loader.splash-screen { --bl-sp-title: ${px(1.333)}; --bl-sp-sub: ${px(0.833)}; font-size: ${px(0.933)}; } }
 #loader.splash-screen .splash-logo { order: 1; width: min(150px, 50%) !important; height: auto !important; filter: none !important; content: url("${logo}"); }
 #loader.splash-screen .splash-message { order: 2; display: block !important; margin: 0 !important; font-size: 0 !important; line-height: 0 !important; letter-spacing: 0 !important; opacity: 1 !important; text-align: center; }

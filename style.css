@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 0d5768fa12cc) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 6b0a70ee3ad2) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -2926,7 +2926,7 @@ body.salty.salty-dark .popup:has(#loader.splash-screen)::backdrop {
   backdrop-filter: none !important;
 }
 body.salty #loader.splash-screen {
-  gap: var(--bl-s5) !important;
+  gap: var(--bl-sp-gap, var(--bl-s5)) !important;
   filter: none !important;
 }
 body.salty #loader.splash-screen .splash-logo {
@@ -2955,8 +2955,8 @@ body.salty #loader.splash-screen .splash-message::before {
   content: "SillyTavern";
   display: block;
   color: var(--salty-text);
-  font-family: system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
-  font-size: var(--bl-fs-title, 22px);
+  font-family: var(--bl-sp-font, var(--salty-font-ui, inherit));
+  font-size: var(--bl-sp-title, var(--bl-fs-title, 22px));
   font-weight: 700;
   font-synthesis-weight: none;
   line-height: 1.25;
@@ -2965,10 +2965,10 @@ body.salty #loader.splash-screen .splash-message::before {
 body.salty #loader.splash-screen .splash-message::after {
   content: "불러오는 중";
   display: block;
-  margin-top: var(--bl-s1);
+  margin-top: var(--bl-sp-gap2, var(--bl-s1));
   color: var(--salty-muted);
-  font-family: system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
-  font-size: var(--bl-fs-sub, 13px);
+  font-family: var(--bl-sp-font, var(--salty-font-ui, inherit));
+  font-size: var(--bl-sp-sub, var(--bl-fs-sub, 13px));
   font-weight: 500;
   font-synthesis-weight: none;
   line-height: 1.4;

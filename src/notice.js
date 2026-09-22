@@ -8,6 +8,13 @@ import { getSettings, saveSettings } from './settings.js';
 
 export const NOTICES = [
 {
+    "version": "4.4.1",
+    "date": "2026-09-22",
+    "items": [
+        "불러오는 첫 화면의 글자가 한 번 바뀌던 것을 고쳤어요. 첫 그림을 그리는 파일과 테마 본체가 서로 다른 글자 크기를 써서, 테마가 붙는 순간 글자가 13% 작아지며 다시 그려졌어요. 이제 첫 그림이 그대로 끝까지 갑니다."
+    ]
+},
+{
     "version": "4.4.0",
     "date": "2026-09-22",
     "items": [
