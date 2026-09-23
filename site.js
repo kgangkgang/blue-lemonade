@@ -1,5 +1,5 @@
 'use strict';
-// Synthetic demonstration chat; revised settings and weather filmed with the 4.7.2 runtime.
+// Synthetic demonstration chats; calm scenes and palette controls use the current runtime.
 const topics = [
   {
     "id": "color",
@@ -8,10 +8,10 @@ const topics = [
     "sub": "에이드를 섞고, 번짐을 조절하고, 마음에 든 색을 저장해요.",
     "cards": [
       [
-        "471-mix-setting.mp4",
+        "calm-mix-setting.mp4",
         "에이드 섞기",
         "두세 가지 색을 원하는 비율로.",
-        "471-mix-setting.jpg"
+        "calm-mix-setting.jpg"
       ],
       [
         "472-colors.mp4",
@@ -40,10 +40,10 @@ const topics = [
     ],
     "pc": [
       [
-        "471-pc-mix-setting.mp4",
+        "calm-pc-mix-setting.mp4",
         "섞고, 바로 보고",
         "미리보기와 설정을 나란히.",
-        "471-pc-mix-setting.jpg"
+        "calm-pc-mix-setting.jpg"
       ],
       [
         "472-pc-colors.mp4",
@@ -184,106 +184,70 @@ const topics = [
   {
     "id": "weather",
     "label": "날씨",
-    "title": "이야기 뒤에 흐르는 풍경.",
-    "sub": "실사 · 일러스트 · 셀 애니. 같은 날씨도 다른 분위기로.",
+    "title": "대화 뒤에, 가볍게.",
+    "sub": "비와 눈은 단순하게. 빛과 색은 은은하게. 원하는 효과만 골라요.",
     "cards": [
       [
-        "471-look-feather.mp4",
-        "빛 사이로 내려오는 깃털",
-        "천천히 흔들리고, 가볍게 회전해요.",
-        "471-look-feather.jpg"
+        "calm-look-rain.mp4",
+        "가는 비",
+        "글 뒤로 조용히 지나가요.",
+        "calm-look-rain.jpg"
       ],
       [
-        "471-look-butterfly.mp4",
-        "문장 곁의 나비",
-        "날갯짓하며 떠오르는 작은 색.",
-        "471-look-butterfly.jpg"
+        "calm-look-snow.mp4",
+        "작은 눈",
+        "동그란 눈송이가 천천히.",
+        "calm-look-snow.jpg"
       ],
       [
-        "472-lemon-cel.mp4",
-        "가벼운 셀 애니풍",
-        "단순한 색면, 부드러운 명암.",
-        "472-lemon-cel.jpg"
-      ],
-      [
-        "471-look-lemon-anime.mp4",
-        "일러스트풍 레몬",
-        "기존 애니풍도 그대로 남겨 뒀어요.",
-        "471-look-lemon-anime.jpg"
-      ],
-      [
-        "471-look-sun.mp4",
-        "햇살 머무는 오후",
-        "구름과 따뜻한 빛을 겹쳐요.",
-        "471-look-sun.jpg"
-      ],
-      [
-        "472-look-rain.mp4",
-        "비 오는 창가",
-        "",
-        "472-look-rain.jpg"
+        "calm-look-mist.mp4",
+        "옅은 안개",
+        "덩어리 없이 부드럽게.",
+        "calm-look-mist.jpg"
       ],
       [
         "471-look-stars.mp4",
         "은하수와 유성",
-        "",
+        "빛으로 채우는 밤.",
         "471-look-stars.jpg"
       ],
       [
-        "472-weather-style.mp4",
-        "실사 · 일러스트 · 셀 애니",
-        "같은 날씨, 세 가지 그림체.",
-        "472-weather-style.jpg"
+        "calm-look-petals.mp4",
+        "작은 색 조각",
+        "꽃잎도 가볍고 단순하게.",
+        "calm-look-petals.jpg"
       ],
       [
-        "471-weather-color.mp4",
-        "색도 내 마음대로",
-        "기본 · 직접 고르기 · 두 색 그라데이션.",
-        "471-weather-color.jpg"
+        "calm-look-butterfly.mp4",
+        "가벼운 나비",
+        "무늬를 덜어낸 작은 실루엣.",
+        "calm-look-butterfly.jpg"
       ],
       [
-        "471-weather-bubble.mp4",
-        "내 메시지 너머로도",
-        "",
-        "471-weather-bubble.jpg"
-      ],
-      [
-        "471-weather-custom.mp4",
-        "내 그림도 내려요",
-        "",
-        "471-weather-custom.jpg"
-      ],
-      [
-        "472-weather-outline.mp4",
-        "외곽선은 취향대로",
-        "그림 외곽선을 켜고 끌 수 있어요.",
-        "472-weather-outline.jpg"
+        "calm-weather-setting.mp4",
+        "원하는 만큼만",
+        "크기와 속도를 직접 조절해요.",
+        "calm-weather-setting.jpg"
       ]
     ],
     "pc": [
       [
-        "471-pc-sun.mp4",
-        "햇살 머무는 오후",
+        "calm-pc-rain.mp4",
+        "가는 비",
         "",
-        "471-pc-sun.jpg"
+        "calm-pc-rain.jpg"
+      ],
+      [
+        "calm-pc-snow.mp4",
+        "작은 눈",
+        "",
+        "calm-pc-snow.jpg"
       ],
       [
         "471-pc-stars.mp4",
-        "밤의 은하수",
+        "은하수와 유성",
         "",
         "471-pc-stars.jpg"
-      ],
-      [
-        "471-pc-picker.mp4",
-        "두 날씨를 함께",
-        "",
-        "471-pc-picker.jpg"
-      ],
-      [
-        "471-pc-weather-color.mp4",
-        "색과 움직임",
-        "",
-        "471-pc-weather-color.jpg"
       ]
     ]
   },
@@ -666,21 +630,4 @@ document.querySelectorAll('.fresh,.section-head,.palette-layout,.reading-layout,
     document.querySelectorAll('.track').forEach(t => t.dispatchEvent(new Event('scroll'))); };
   set(html.classList.contains('device-pc') ? 'pc' : 'mobile');
   pick.addEventListener('click', e => { const b = e.target.closest('button[data-device]'); if (!b) return; set(b.dataset.device); try { localStorage.setItem('bl-site-device', b.dataset.device); } catch {} });
-})();
-
-// hero loops (phones for mobile, browser windows for PC): only the chosen device's pair is fetched
-(() => {
-  const art = document.querySelector('.hero-art'); if (!art) return;
-  const vids = [...art.querySelectorAll('video.hero-video')];
-  const shown = v => document.documentElement.classList.contains('device-pc') ? !!v.closest('.pc-stage') : !!v.closest('.phone-slot');
-  const start = v => { if (!v.src && v.dataset.src) { if (v.dataset.poster) v.poster = v.dataset.poster; v.src = v.dataset.src; } v.muted = true; const p = v.play(); if (p) p.catch(() => { if (!motionAllowed) motionNote('blocked'); }); };
-  // a quiet line under the hero when videos are held back, with one button to play them anyway
-  function motionNote(why) { let n = document.querySelector('.motion-note'); if (!n) { n = document.createElement('p'); n.className = 'motion-note'; const t = document.createElement('span'), b = document.createElement('button'); b.type = 'button'; b.textContent = '영상 재생'; b.onclick = () => { motionAllowed = true; try { sessionStorage.setItem('bl-site-motion', '1'); } catch {} n.remove(); sync(); for (const v of document.querySelectorAll('.topic-panel:not([hidden]) video')) { const r = v.getBoundingClientRect(); if (r.top < innerHeight && r.bottom > 0) { if (!v.src && v.dataset.src) v.src = v.dataset.src; v.play().catch(() => {}); } } }; n.append(t, b); (document.querySelector('.device-pick') || art).after(n); } n.firstChild.textContent = why === 'blocked' ? '절전 모드 등으로 자동 재생이 막혀 있어요.' : '기기의 ‘애니메이션 줄이기’가 켜져 있어 영상을 멈춰 뒀어요.'; }
-  const sync = () => { const on = !document.hidden && !calm() && !art.classList.contains('idle'); for (const v of vids) { if (shown(v) && on) start(v); else v.pause(); } };
-  new MutationObserver(sync).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-  new MutationObserver(sync).observe(art, { attributes: true, attributeFilter: ['class'] });
-  document.addEventListener('visibilitychange', sync);
-  reduceMotion.addEventListener('change', () => { if (calm()) motionNote('reduce'); else document.querySelector('.motion-note')?.remove(); sync(); });
-  if (calm()) motionNote('reduce');
-  sync();
 })();
