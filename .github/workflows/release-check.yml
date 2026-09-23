@@ -35,6 +35,7 @@ jobs:
           node tools/tests/appearance-workflow.mjs .
           node tools/tests/optimization-cache.mjs
           node tools/tests/preferences-safety.mjs .
+          node tools/tests/appearance-comfort.mjs .
           node tools/build-integrity.mjs . --check
       - name: Verify the current downloadable ZIP byte for byte
         run: |

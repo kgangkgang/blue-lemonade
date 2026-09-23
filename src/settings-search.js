@@ -2,6 +2,9 @@
 // or disabled. Searching never renders all sections or sends text to a server.
 import { favoriteButton } from './settings-favorites.js';
 const rows = [
+ ['theme','backup','최근 꾸미기 복구함','이전 모습 기록 복구 새로고침 스타일 프리셋 보관'],
+ ['theme','colors','가독성 확인 · 색 보정','글자 배경 형광펜 대비 안보임 흐림 보정'],
+ ['chat','screen','생성·편집 중 날씨 쉬기','자동 일시정지 재개 답변 타이핑 편집 날씨 성능'],
  ['theme','backup','설정 일부 잠그기','잠금 유지 스타일 프리셋 글꼴 크기 문단 여백 색 프로필'],
  ['theme','update','설치 · 충돌 점검','파일 버전 섞임 설치 오류 충돌 커스텀 CSS 진단 재설치'],
  ['text','para','폰 · PC 배치 따로 기억','모바일 기기별 분리 저장 글자 크기 여백 프로필'],

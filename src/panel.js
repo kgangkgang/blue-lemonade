@@ -1,3 +1,5 @@
+import { readabilityReport, fixReadability } from './readability.js';
+import { appearanceArchive, rememberAppearance, restoreAppearance } from './appearance-archive.js';
 import { healthMarkup, bindHealth } from './install-health.js';
 import { LOCK_GROUPS } from './setting-locks.js';
 import { deviceKind } from './device-layouts.js';
@@ -967,9 +969,11 @@ function tabTheme(s, sub) {
     if (sub === 'backup') return tabBackup();
     if (sub === 'styles') return tabStyles(s);
     if (sub === 'colors') {
+        const report=readabilityReport(s);
+        const readability=`<div class="salty-group">${cap('가독성 확인')}${report.map(x=>row(x.label,`<span>${x.ratio.toFixed(1)} : 1 · ${x.ratio>=4.5?'양호':'대비 낮음'}</span>${x.fix?`<button class="salty-btn" data-act="readability-fix" data-key="${x.key}">색 보정</button>`:''}`,x.ratio<4.5&&!x.fix?'밝고 어두운 배경이 섞여 있어요. 배경색 차이를 먼저 줄여 주세요.':'')).join('')}<p class="salty-note">테마 배경·형광펜 색 기준이에요. 그라데이션은 여러 지점을 비교하며 사진·날씨·개별 메시지 색은 포함하지 않아요.</p></div>`;
         const colors = TOKEN_GROUPS.map(([label, list]) =>
             `${cap(label)}<div class="salty-group">${list.map(([key, name]) => color(key, name)).join('')}</div>`).join('');
-        return `${chatPreview()}${colors}
+        return `${chatPreview()}${readability}${colors}
             <div class="salty-btns"><button class="salty-btn" data-act="reset-colors">${esc(PALETTES[s.palette]?.label || '이 테마')} 색 처음으로</button></div>
             <p class="salty-note">색은 테마마다 따로 저장돼요.</p>`;
     }
@@ -1072,7 +1076,7 @@ function styleSwatch(data) {
 /** 스타일을 입히기 전 모습을 되돌리기용으로 남기고 입힌다 */
 function wearStyle(data, label) {
     const before = captureStyle(getSettings());
-    update(st => applyStyleData(st, data));
+    update(st => { if(!rememberAppearance(st,label+' 적용 전'))toastr.info('그림 데이터가 커서 복구함에 담지 못했어요. 전체 설정 파일로 보관해 주세요.'); applyStyleData(st, data); });
     if (sameStyle(before, captureStyle(getSettings()))) {
         toastr.info('이미 그 모습이에요', 'Blue Lemonade');
         return;
@@ -1117,7 +1121,9 @@ async function copyText(text) {
 function tabBackup() {
     const matched = alreadyMatches();
     const locks=getSettings().settingLocks;
-    return `<div class="salty-group">${cap('스타일을 바꿔도 유지할 설정')}${LOCK_GROUPS.map(([id,label])=>row(label,toggle('settingLocks.'+id,locks[id]))).join('')}<p class="salty-note">스타일·공유 프리셋·캐릭터 연결에 적용돼요. 직접 조절과 전체 설정 파일 복원·초기화에는 적용하지 않아요.</p></div><div class="salty-group">
+    const archive=appearanceArchive(getSettings());
+    const archiveMarkup=`<div class="salty-group">${cap('최근 꾸미기 복구함')}<p class="salty-note">스타일·프리셋 적용 전 모습을 최대 8개 기억해요. 복구는 잠금과 관계없이 그때 모습으로 돌아가요.</p>${archive.length?archive.map(x=>row(esc(x.label),`<button class="salty-btn" data-act="appearance-restore" data-id="${esc(x.id)}">복구</button>`,new Date(x.at).toLocaleString())).join(''):'<p class="salty-note">아직 보관한 모습이 없어요.</p>'}</div>`;
+    return `${archiveMarkup}<div class="salty-group">${cap('스타일을 바꿔도 유지할 설정')}${LOCK_GROUPS.map(([id,label])=>row(label,toggle('settingLocks.'+id,locks[id]))).join('')}<p class="salty-note">스타일·공유 프리셋·캐릭터 연결에 적용돼요. 직접 조절과 전체 설정 파일 복원·초기화에는 적용하지 않아요.</p></div><div class="salty-group">
             ${row('실리태번 설정', `<button class="salty-btn" data-act="st-theme">${matched ? '다시 맞추기' : '맞추기'}</button>`,
         matched ? '지금 이 테마에 맞게 돼 있어요' : '흐림 · 그림자 · 말풍선 모양을 이 테마에 맞춰요')}
             ${row('프리셋 공유', '<span class="salty-btns"><button class="salty-btn" data-act="preset-export">공유하기</button><button class="salty-btn" data-act="preset-import">불러오기</button></span>', '형광펜 · 날씨처럼 묶음만 골라요')}
@@ -1363,6 +1369,7 @@ function tabChat(s, sub) {
             ${s.chat.qrScroll === 'y' ? slider('chat.qrRows', '보이는 줄', 1, 4, 1, 2) : ''}
         </div>
         ${cap('날씨')}<div class="salty-group">
+            ${row('생성·편집 중 날씨 쉬기', toggle('chat.weatherAutoRest', s.chat.weatherAutoRest), '답을 받거나 글을 쓰는 동안 멈추고, 끝나면 이어져요.')}
             ${row('글 읽기 우선', toggle('chat.weatherReadability', s.chat.weatherReadability), '날씨를 조금 옅게 하고, 그림자를 따로 쓰지 않을 때 글자 그림자를 자동으로 보완해요.')}
 
             ${stack('채팅 뒤 효과', weatherSeg(s), weatherMode(s) === 'tracker' ? '트래커 날씨를 읽어 비 · 눈 · 안개 · 햇살 · 밤의 별을 보여요. 안개비 · 여우비처럼 둘이면 겹쳐요' : '')}
@@ -1949,6 +1956,13 @@ function bind(root) {
         const { act } = el.dataset;
         try {
             switch (act) {
+                case 'readability-fix':
+                    update(st=>{rememberAppearance(st,'가독성 보정 전');fixReadability(st,el.dataset.key);});
+                    break;
+                case 'appearance-restore':
+                    update(st=>restoreAppearance(st,el.dataset.id));
+                    toastr.success('보관한 모습으로 복구했어요.', 'Blue Lemonade');
+                    break;
                 case 'setting-jump': jumpToSetting(root, el.dataset.setting); break;
                 case 'setting-reset': {
                     const path = el.dataset.setting, settings = getSettings();
@@ -2643,7 +2657,7 @@ function bind(root) {
                 if (target.files[0].size > 1024 * 1024) throw new Error('프리셋 파일이 너무 커요');
                 const incoming = readPreset(JSON.parse(await target.files[0].text()));
                 const selected = await askPresetGroups(incoming);
-                if (selected) {update(st=>applyPreset(st,incoming,selected));toastr.success('선택한 프리셋을 불러왔어요','Blue Lemonade');}
+                if (selected) {update(st=>{if(!rememberAppearance(st,'프리셋 불러오기 전'))toastr.info('그림 데이터가 커서 복구함에 담지 못했어요.');applyPreset(st,incoming,selected);});toastr.success('선택한 프리셋을 불러왔어요','Blue Lemonade');}
             } catch (error) {toastr.error(error.message || String(error),'Blue Lemonade');}
             target.value='';return;
         }

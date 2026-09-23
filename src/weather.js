@@ -1,3 +1,4 @@
+import { bindWeatherRest } from './weather-rest.js';
 // 날씨 효과 (3.3.0) — 채팅 글 뒤에 비 · 눈이 내린다. 채팅 › 화면 › 날씨 (chat.weather: off | rain | snow | custom | tracker, chat.weatherLevel 1~3).
 // 3.3.1: 투명도 · 크기 · 속도 · 각도 (chat.weatherOpacity · Size · Speed · Angle) · 내 그림(chat.weatherImage — 투명 PNG data URL, 목록은 weatherImages).
 //
@@ -143,12 +144,12 @@ function createLayer(host, className, virtual = false) {
     let current = { mode: 'off', level: 2 };
     let spriteKey = '';
     let spriteGen = 0, destroyed = false, paused = document.hidden;
-    let inView = true;
+    let inView = true, resting = false;
     const cleanup = new Set();
     // Hidden/folded previews must not keep a second animation running.
     // Observe the host, not the canvas that can be replaced during fallback.
     const syncPaused = () => {
-        const next=document.hidden || !inView;
+        const next=document.hidden || !inView || resting;
         if(next===paused)return;
         paused=next;
         renderer?.post({type:paused?'pause':'resume'});
@@ -192,13 +193,14 @@ function createLayer(host, className, virtual = false) {
     observer.observe(host);
     const api = {
         get canvas(){return canvas;},
+        rest(value){resting=!!value;canvas.style.opacity=resting?'0.15':current.readability?'0.55':'1';syncPaused();},
         ready,
         set(mode, level, params = {}, spriteData = '') {
             if(destroyed)return;
             const low = (mode === 'water' && (params.scene?.waterArea ?? 'bottom') === 'bottom') || (mode === 'fog' && params.fog?.area === 'bottom');
             if (virtual && low !== anchorBottom) { anchorBottom = low; renderer?.post({ type: 'resize', ...dimensions() }); }
             current = { mode, level, ...params };
-            canvas.style.opacity = params.readability ? "0.55" : "1";
+            canvas.style.opacity = resting ? "0.15" : params.readability ? "0.55" : "1";
             const message = { type: 'config', mode, level, colors: colorsNow(), ...params };
             const wantKey = mode === 'custom' ? spriteData : '';
             if (wantKey !== spriteKey) {
@@ -231,7 +233,7 @@ function createLayer(host, className, virtual = false) {
 }
 
 // ───────── 채팅 뒤 ─────────
-let layer = null;
+let layer = null, restBinding = null;
 let wanted = { on: false, mode: 'off', level: 2 };
 let listening = false;
 let trackerTimer = 0;
@@ -285,6 +287,7 @@ export function syncWeather(on, chat = {}) {
     const level = [1, 2, 3].includes(Number(chat.weatherLevel)) ? Number(chat.weatherLevel) : 2;
     wanted = { on: !!on && mode !== 'off', mode, level, chat: { ...chat, weather: mode }, params: paramsFrom(chat), sprite: chat.weatherImage || '' };
     if (!wanted.on) {
+        restBinding?.dispose();restBinding=null;
         layer?.destroy();
         layer = null;
         document.body.classList.remove('bl-weather-on');
@@ -294,8 +297,12 @@ export function syncWeather(on, chat = {}) {
     if (!host) return;
     if (!layer || !layer.canvas.isConnected) {
         layer?.destroy();
+        restBinding?.dispose();
         layer = createLayer(host, 'bl-weather');
+        restBinding=bindWeatherRest(layer,()=>wanted.chat.weatherAutoRest!==false);
+        layer.onDestroy(()=>{restBinding?.dispose();restBinding=null;});
     }
+    restBinding?.sync();
     document.body.classList.add('bl-weather-on');
     listen();
     refresh();

@@ -1,0 +1,47 @@
+import assert from 'node:assert/strict';
+import {pathToFileURL} from 'node:url';
+import path from 'node:path';
+const root=pathToFileURL(path.resolve(process.argv[2]||'.')+'/');
+const {DEFAULTS,getSettings,saveSettings}=await import(new URL('src/settings.js',root));
+const {rememberAppearance,restoreAppearance,appearanceArchive}=await import(new URL('src/appearance-archive.js',root));
+const {applyStyleData,PRESETS}=await import(new URL('src/styles.js',root));
+const {SettingsHistory}=await import(new URL('src/settings-history.js',root));
+const s=structuredClone(DEFAULTS);s.type.size=23;s.settingLocks.size=true;
+assert(rememberAppearance(s,'test'));const first=appearanceArchive(s)[0].id;
+applyStyleData(s,PRESETS[1].data());s.type.size=14;
+const ext={salty:JSON.parse(JSON.stringify(s))};let saved=0;
+globalThis.SillyTavern={getContext:()=>({extensionSettings:ext,saveSettingsDebounced(){saved++;}})};
+const loaded=getSettings();assert(restoreAppearance(loaded,first));saveSettings();assert.equal(loaded.type.size,23);assert.equal(loaded.settingLocks.size,true);assert.equal(saved,1);
+assert(appearanceArchive(loaded).some(x=>x.label==='복구하기 전'));assert.equal(restoreAppearance(loaded,'missing'),false);
+for(let i=0;i<15;i++){loaded.type.size=12+i;rememberAppearance(loaded,'step');}assert.equal(appearanceArchive(loaded).length,8);
+const count=loaded.appearanceHistory.length;rememberAppearance(loaded);assert.equal(loaded.appearanceHistory.length,count);
+const h=new SettingsHistory();h.run(loaded,st=>{rememberAppearance(st,'undo');st.type.size=30;});h.step(loaded);assert(loaded.appearanceHistory.length>0);
+assert.equal(appearanceArchive({...s,appearanceHistory:[null,{},...loaded.appearanceHistory]}).length,8);
+const {contrast,composite,readabilityReport,fixReadability,improveInk}=await import(new URL('src/readability.js',root));
+const {parseColor,PALETTES}=await import(new URL('src/palettes.js',root));
+assert.equal(contrast([0,0,0,1],[255,255,255,1]),21);assert.equal(contrast([30,30,30,1],[30,30,30,1]),1);
+assert.deepEqual(composite([255,0,0,.5],[255,255,255,1]),[255,127.5,127.5,1]);
+assert.equal(improveInk([128,128,128,1],[[0,0,0,1],[255,255,255,1]],7),null);
+for(const palette of Object.keys(PALETTES)){
+ const x=structuredClone(DEFAULTS);x.palette=palette;x.colorOverrides[palette]={text:'#888888',em:'#888888',dialogue:'#888888'};
+ for(const row of readabilityReport(x)){assert(Number.isFinite(row.ratio));if(row.fix){assert(fixReadability(x,row.key));assert(readabilityReport(x).find(z=>z.key===row.key).ratio>=4.5);}}
+}
+const mixed=structuredClone(DEFAULTS);mixed.gradients.light.on=true;mixed.colorOverrides.salt={text:'#eeeeee'};assert(fixReadability(mixed,'text'));assert(readabilityReport(mixed)[0].ratio>=4.5);
+const events=new Map(),listeners=new Map();let observerCallback,disconnected=false;
+globalThis.MutationObserver=class{constructor(fn){observerCallback=fn;}observe(){}disconnect(){disconnected=true;}};
+const doc={body:{dataset:{}},activeElement:{matches:()=>false},addEventListener:(k,f)=>listeners.set(k,f),removeEventListener:k=>listeners.delete(k)};
+const source={on:(k,f)=>events.set(k,f),removeListener:k=>events.delete(k)};
+const ctx={eventSource:source,event_types:Object.fromEntries(['GENERATION_STARTED','GENERATION_ENDED','GENERATION_STOPPED','CHAT_CHANGED'].map(k=>[k,k]))};
+const {bindWeatherRest}=await import(new URL('src/weather-rest.js',root));let rest=false,enabled=true;
+const binding=bindWeatherRest({rest:v=>rest=v},()=>enabled,doc,ctx);
+events.get('GENERATION_STARTED')('normal',{},true);assert.equal(rest,false);
+events.get('GENERATION_STARTED')();assert.equal(rest,true);
+events.get('GENERATION_STOPPED')();assert.equal(rest,false);
+doc.body.dataset.generating='false';observerCallback();assert.equal(rest,false);
+doc.body.dataset.generating='true';observerCallback();assert.equal(rest,true);
+delete doc.body.dataset.generating;observerCallback();assert.equal(rest,false);
+doc.activeElement.matches=()=>true;binding.sync();assert.equal(rest,true);enabled=false;binding.sync();assert.equal(rest,false);enabled=true;doc.activeElement.matches=()=>false;
+listeners.get('input')({target:{matches:()=>true}});assert.equal(rest,true);
+await new Promise(r=>setTimeout(r,1250));assert.equal(rest,false);
+binding.dispose();assert(disconnected);assert.equal(events.size,0);assert.equal(listeners.size,0);
+console.log('PASS persistent appearance recovery, lock override, bounded archive, contrast/alpha/mixed palettes, generation and typing rest lifecycle');

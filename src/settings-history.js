@@ -9,7 +9,7 @@ function diff(before, after, path = [], patches = []) {
     if (before && after && typeof before === 'object' && typeof after === 'object' && !Array.isArray(before) && !Array.isArray(after)) {
         for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) {
             if (['__proto__', 'constructor', 'prototype'].includes(key)) continue;
-            if (!path.length && ['version', 'noticeSeen'].includes(key)) continue;
+            if (!path.length && ['version', 'noticeSeen', 'appearanceHistory'].includes(key)) continue;
             diff(before[key], after[key], [...path, key], patches);
         }
     } else patches.push({ path, before: clone(before), after: clone(after) });
