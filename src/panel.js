@@ -1,3 +1,5 @@
+import { healthMarkup, bindHealth } from './install-health.js';
+import { LOCK_GROUPS } from './setting-locks.js';
 import { deviceKind } from './device-layouts.js';
 import { bindComparison, comparisonView } from './appearance-compare.js';
 import { listMenuButtons, PIN_LIMIT } from './mes-pins.js';
@@ -279,6 +281,7 @@ export function unmountPanel(root) {
     root._captureCleanup?.(); root._captureCleanup=null;
     root._addonCleanup?.(); root._addonCleanup=null;
     root._scriptsCleanup?.(); root._scriptsCleanup=null;
+    root._healthCleanup?.();
     root._updateCleanup?.(); root._updateCleanup=null;
     root._previewCleanup?.();
     for (const key of ['_fontIO', '_rowsRO']) { root[key]?.disconnect(); root[key] = null; }
@@ -958,7 +961,7 @@ function fontBlock(s, slot) {
 
 // ───────── 테마 ─────────
 function tabTheme(s, sub) {
-    if(sub==='update')return updateMarkup();
+    if(sub==='update')return updateMarkup()+healthMarkup();
     if (sub === 'changes') return settingsChanges(s);
     if (sub === 'custom') return customBuilder(s);
     if (sub === 'backup') return tabBackup();
@@ -1113,7 +1116,8 @@ async function copyText(text) {
 
 function tabBackup() {
     const matched = alreadyMatches();
-    return `<div class="salty-group">
+    const locks=getSettings().settingLocks;
+    return `<div class="salty-group">${cap('스타일을 바꿔도 유지할 설정')}${LOCK_GROUPS.map(([id,label])=>row(label,toggle('settingLocks.'+id,locks[id]))).join('')}<p class="salty-note">스타일·공유 프리셋·캐릭터 연결에 적용돼요. 직접 조절과 전체 설정 파일 복원·초기화에는 적용하지 않아요.</p></div><div class="salty-group">
             ${row('실리태번 설정', `<button class="salty-btn" data-act="st-theme">${matched ? '다시 맞추기' : '맞추기'}</button>`,
         matched ? '지금 이 테마에 맞게 돼 있어요' : '흐림 · 그림자 · 말풍선 모양을 이 테마에 맞춰요')}
             ${row('프리셋 공유', '<span class="salty-btns"><button class="salty-btn" data-act="preset-export">공유하기</button><button class="salty-btn" data-act="preset-import">불러오기</button></span>', '형광펜 · 날씨처럼 묶음만 골라요')}
@@ -1682,6 +1686,7 @@ function render(root) {
     root._captureCleanup?.(); root._captureCleanup=null;
     root._addonCleanup?.(); root._addonCleanup=null;
     root._scriptsCleanup?.(); root._scriptsCleanup=null;
+    root._healthCleanup?.();
     root._updateCleanup?.(); root._updateCleanup=null;
     const oldSection = root.querySelector('.salty-sec');
     if (oldSection && root._editorRoute) root._editorScroll?.set(root._editorRoute, oldSection.scrollTop);
@@ -1731,6 +1736,7 @@ function render(root) {
     bindAddons(root, refreshPanels);
     void bindScripts(root);
     bindThemeUpdate(root);
+    bindHealth(root,applyAll);
     bindWordTools(root, refreshPanels);
     bindAddonLayout(root);
     bindPreviewViews(root, `${ui.tab}/${ui.subs[ui.tab]}`);

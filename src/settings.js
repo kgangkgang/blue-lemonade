@@ -20,6 +20,7 @@ export const FONT_SLOTS = ['text', 'dialogue', 'ui', 'em', 'strong', 'code', 'na
 export const DEFAULTS = {
     version: VERSION,
     enabled: true,
+    settingLocks: {fonts:false,size:false,spacing:false,colors:false,profile:false},
     deviceLayouts: { on: false, pc: {}, mobile: {} },
     gradients: { light: structuredClone(MIX_DEFAULT), dark: structuredClone(MIX_DEFAULT), overrides: {} },
     frameLibrary: [],

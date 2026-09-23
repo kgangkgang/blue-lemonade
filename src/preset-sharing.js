@@ -1,3 +1,4 @@
+import { preserveLocks } from './setting-locks.js';
 // Portable, opt-in appearance presets. Never include chats, addon credentials or libraries.
 import { WEATHER_FIELDS, WEATHER_MODES } from './weather-profiles.js';
 import { DEFAULTS } from './settings.js';
@@ -88,6 +89,8 @@ export function readPreset(data) {
 }
 export function applyPreset(settings, raw, selected) {
     const data=readPreset(raw), pick=new Set(selected);
+    const restoreLocked=preserveLocks(settings);
+    try {
     for (const [id,values] of Object.entries(data.groups)) {
         if (!pick.has(id)) continue;
         for (const [path,value] of Object.entries(values)) {
@@ -102,4 +105,5 @@ export function applyPreset(settings, raw, selected) {
         }
     }
     if (pick.has('weather')&&data.groups.weather) settings.chat.weatherProfileMode=settings.chat.weather;
+    } finally { restoreLocked(); }
 }

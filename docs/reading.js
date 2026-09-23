@@ -19,7 +19,7 @@
     shadow: { on: false, targets: { text: false, dialogue: true, em: false, strong: false, code: false }, color: '#000000', alpha: 45, angle: 135, distance: 2, blur: 3 },
     outline: { on: false, color: '#000000', alpha: 100, width: 1 },
   });
-  let S = DEFAULTS(), role = 'text', fonts = null, paletteMix = null;
+  let S = window.BLPlayground?.read('reading', DEFAULTS()) || DEFAULTS(), role = 'text', fonts = null, paletteMix = null;
   const ROLES = [['text', '본문'], ['dialogue', '대사'], ['em', '속마음'], ['strong', '강조'], ['code', '코드'], ['para', '문단'], ['shadow', '그림자 · 외곽선']];
   const LANGS = [['ko', '한국어'], ['en', '영어'], ['ja', '일본어'], ['zh', '중국어']];
   // the theme's sample lines (src/fonts.js SAMPLES) and check mark (panel.js CHECK)
@@ -126,6 +126,7 @@
 
   // ---- paint the sample
   function apply() {
+    window.BLPlayground?.write('reading', S);
     const st = sample.style, css = (k, v) => v === null || v === undefined ? st.removeProperty(k) : st.setProperty(k, v);
     const tf = S.text.font;
     for (const id of Object.values(tf)) ensureFont(id);
@@ -293,6 +294,7 @@
     }
   });
   form.addEventListener('reset', e => { e.preventDefault(); S = DEFAULTS(); picker = null; render(); apply(); });
+  document.addEventListener('bl-playground-reset', () => {S=DEFAULTS();picker=null;render();apply();});
   form.addEventListener('submit', e => e.preventDefault());
   // the highlighter color follows the site's white / night
   document.addEventListener('bl-theme', () => requestAnimationFrame(apply));

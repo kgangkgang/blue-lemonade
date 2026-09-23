@@ -1,3 +1,4 @@
+import { preserveLocks } from './setting-locks.js';
 // 스타일 (3.1.0) — 지금 모습(팔레트 · 색 · 글꼴 · 글자 · 채팅 모양 · 이미지 모양)을 이름 붙여 저장하고, 코드 · 파일로 나누고,
 // 완성된 스타일(소설책 · 메신저 …)을 입힌다. 캐릭터별 연결은 charstyle.js.
 //
@@ -27,6 +28,8 @@ export function captureStyle(s = getSettings()) {
 /** 스타일 데이터를 설정에 입히기 (일부만 든 스타일은 든 칸만). chat · image 는 칸 안의 값만 덮어 동작 설정 · 도형 목록은 남는다 */
 export function applyStyleData(s, data) {
     if (!isObj(data)) return;
+    const restoreLocked=preserveLocks(s);
+    try {
     for (const key of STYLE_KEYS) {
         const value = data[key];
         if (value === undefined || value === null) continue;
@@ -48,6 +51,7 @@ export function applyStyleData(s, data) {
         const mask = s.image.masks?.find(m => m.id === s.image.maskId);
         if (mask) s.image.mask = mask.data;
     }
+    } finally { restoreLocked(); }
 }
 
 /** 두 스타일이 같은 모습인가 (저장 · 되돌리기 판단) */

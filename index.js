@@ -129,7 +129,8 @@ setFeatureHooks({ applyAll, refreshPanels }); // 켤 때만 불러오는 기능�
 const settings = getSettings();
 if (dropStaleOverrides(settings)) saveSettings();
 applyAll();
-loadVersion().then(() => refreshPanels()); // 설정 창 제목 옆 공지사항 알약에 쓸 버전 (3.0.0)
+loadVersion().then(() => refreshPanels()); // 공지사항 버전 표시
+setTimeout(() => import('./src/install-health.js').then(m=>m.checkInstallation()).catch(()=>{}),6000); // 시작 후 가벼운 로컬 버전 점검
 
 // 콘솔·테스트용
 window.Salty = { ensureDrawerPanel: () => document.getElementById('salty-drawer')?._blEnsurePanel?.(), getSettings, applyAll, refreshPanels, openPopup, restorePreviewRules, deferredPreviewRuleCount, panelHasRuleCount, panelCssEnabled, streamFadeState };

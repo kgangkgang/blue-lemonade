@@ -1,3 +1,4 @@
+import { preserveLocks } from './setting-locks.js';
 // 캐릭터별 스타일 (3.1.0) — 캐릭터(또는 그룹)에 내 스타일 하나를 이어 두면, 그 채팅을 열 때 그 스타일로 바뀌고
 // 이어 두지 않은 채팅으로 가면 원래 모습으로 돌아온다.
 //
@@ -27,6 +28,7 @@ function commit() {
     const style = s.styles.find(x => x.id === active.id);
     if (!style) return false;
     const now = captureStyle(s);
+    preserveLocks(now,style.data,s.settingLocks)();
     if (sameStyle(now, style.data)) return false;
     style.data = now;
     saveSettings();

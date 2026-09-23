@@ -71,6 +71,7 @@ export function settingRoute(path) {
     // 카드 · 색 통일 · 톤 값은 데우스 화면에 있다 (채팅 › 기타에는 커스텀 CSS 끄기만)
     if (scope === 'deus' || scope === 'chat' && /^(dem|unify|tone|markerTone|regexIcons)/.test(key)) return {tab:'prompt',sub:'deus'};
     if (scope === 'deviceLayouts') return {tab:'text',sub:'para'};
+    if (scope === 'settingLocks') return {tab:'theme',sub:'backup'};
     if (scope === 'compat') return {tab:'chat',sub:'etc'};
     if (scope === 'chat' && /^(user|header)/.test(key)) return {tab:'chat',sub:'message'};
     return {tab:'chat',sub:'screen'};

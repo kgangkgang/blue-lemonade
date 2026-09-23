@@ -2,6 +2,8 @@
 // or disabled. Searching never renders all sections or sends text to a server.
 import { favoriteButton } from './settings-favorites.js';
 const rows = [
+ ['theme','backup','설정 일부 잠그기','잠금 유지 스타일 프리셋 글꼴 크기 문단 여백 색 프로필'],
+ ['theme','update','설치 · 충돌 점검','파일 버전 섞임 설치 오류 충돌 커스텀 CSS 진단 재설치'],
  ['text','para','폰 · PC 배치 따로 기억','모바일 기기별 분리 저장 글자 크기 여백 프로필'],
  ['chat','screen','날씨 글 읽기 우선','가독성 보호 자동 그림자 날씨 농도'],
  ['theme','palette','에이드 혼합하기 · 그라데이션','그라데이션 그라디언트 혼합 섞기 2색 3색 두색 세색 방향 각도 360 반전 비중 비율 색상 조합 번짐 경계 블러 흐리기 부드럽게 선명 섞임'],

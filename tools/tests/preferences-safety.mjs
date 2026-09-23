@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import crypto from 'node:crypto';
+import {pathToFileURL} from 'node:url';
+import path from 'node:path';
+const root=pathToFileURL(path.resolve(process.argv[2]||'.')+'/');
+const {DEFAULTS}=await import(new URL('src/settings.js',root));
+const {applyStyleData}=await import(new URL('src/styles.js',root));
+const {capturePreset,applyPreset}=await import(new URL('src/preset-sharing.js',root));
+const {preserveLocks}=await import(new URL('src/setting-locks.js',root));
+const s=structuredClone(DEFAULTS);s.settingLocks.fonts=true;s.settingLocks.size=true;s.type.size=23;
+const incoming=structuredClone(DEFAULTS);incoming.palette='night';incoming.type.size=14;incoming.fonts.text.ko='ridibatang';incoming.type.gutter=36;
+applyStyleData(s,incoming);assert.equal(s.type.size,23);assert.equal(s.fonts.text.ko,'pretendard');assert.equal(s.palette,'night');assert.equal(s.type.gutter,36);
+s.palette='salt';applyPreset(s,capturePreset(incoming,['text','colors']),['text','colors']);assert.equal(s.type.size,23);assert.equal(s.fonts.text.ko,'pretendard');assert.equal(s.palette,'night');
+s.settingLocks.colors=true;s.palette='salt';applyStyleData(s,incoming);assert.equal(s.palette,'salt');
+s.settingLocks.fonts=false;s.settingLocks.size=false;applyStyleData(s,incoming);assert.equal(s.type.size,14);assert.equal(s.fonts.text.ko,'ridibatang');
+const original=structuredClone(DEFAULTS),edited=structuredClone(incoming);preserveLocks(edited,original,{fonts:true,size:true})();assert.equal(edited.type.size,16);assert.equal(edited.fonts.text.ko,'pretendard');assert.equal(edited.palette,'night');
+const {verifyFiles}=await import(new URL('src/install-health.js',root));
+const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
+let active=0,peak=0;
+const verification=await verifyFiles({ok:digest('good'),changed:digest('old'),missing:digest('no')},async p=>{active++;peak=Math.max(peak,active);await Promise.resolve();active--;if(p==='missing')throw Error();return p==='ok'?'good':'new';},digest);
+assert.equal(verification.checked,3);assert.deepEqual(verification.failures.sort((a,b)=>a.path.localeCompare(b.path)),[{path:'changed',kind:'mismatch'},{path:'missing',kind:'unavailable'}]);assert(peak<=4);
+const {fileFingerprint}=await import(new URL('src/file-fingerprint.js',root));
+const {FILE_HASHES}=await import(new URL('src/build-info.js',root));
+const installed=await verifyFiles(FILE_HASHES,p=>fs.readFileSync(new URL(p,root)),fileFingerprint);assert.equal(installed.failures.length,0);
+assert.notEqual(fileFingerprint(new TextEncoder().encode('blue')),fileFingerprint(new TextEncoder().encode('bluf')));
+const stateSource=fs.readFileSync('docs/playground-state.js','utf8');
+let saved=JSON.stringify({version:1,reading:{dialogue:{font:{ko:'ridibatang',en:'auto',ja:'auto',zh:'auto'}},size:21},palette:{selected:'peach'}});
+function context(){const events={};const ctx=vm.createContext({structuredClone,setTimeout:()=>1,clearTimeout(){},localStorage:{getItem:()=>saved,setItem:(k,v)=>{saved=v;}},document:{addEventListener(){},querySelector:()=>null},window:{addEventListener:(k,f)=>events[k]=f}});vm.runInContext(stateSource,ctx);return {api:ctx.window.BLPlayground,events};}
+let {api,events}=context();assert.equal(api.read('reading',{dialogue:{font:'same'}}).dialogue.font.ko,'ridibatang');
+api.write('reading',{size:24});api.write('privateText',{text:'PRIVATE CHAT'});events.pagehide();assert(!saved.includes('PRIVATE'));assert.equal(context().api.read('reading',{size:16}).size,24);
+saved='{broken';assert.equal(context().api.read('reading',{size:16}).size,16);
+saved=JSON.stringify({version:1,reading:{font:'"><img src=x onerror=alert(1)>'}});assert.equal(context().api.read('reading',{font:'pretendard'}).font,'pretendard');
+// Plain DOM renderer must treat HTML as text, while recognizing the supported roles.
+class Node {constructor(tag='text'){this.tag=tag;this.children=[];this.style={};this.value='';this.handlers={};}append(...nodes){this.children.push(...nodes);}replaceChildren(...nodes){this.children=nodes;}get childNodes(){return this.children;}cloneNode(){return new Node(this.tag);}addEventListener(k,f){this.handlers[k]=f;}set textContent(v){this.text=v;}}
+const sample=new Node('sample'),input=new Node('textarea'),reset=new Node('button');
+const ctx=vm.createContext({document:{querySelector:q=>q==='#reading-sample'?sample:q==='#personal-preview-text'?input:reset,createDocumentFragment:()=>new Node('fragment'),createElement:tag=>new Node(tag),createTextNode:text=>{const n=new Node();n.text=text;return n;}}});
+vm.runInContext(fs.readFileSync('docs/personal-preview.js','utf8'),ctx);input.value='<img src=x> **굵게** *속마음* "대사" `코드`';input.handlers.input();
+const nodes=sample.children[0].children[0].children;assert(!nodes.some(n=>n.tag==='img'));for(const tag of ['strong','em','q','code'])assert(nodes.some(n=>n.tag===tag));assert(nodes.some(n=>n.text?.includes('<img src=x>')));
+reset.handlers.click();assert.equal(input.value,'');
+console.log('PASS style/preset locks, file mismatch detection, persistence, malformed storage and safe personal preview');
