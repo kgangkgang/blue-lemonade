@@ -149,6 +149,9 @@ export const DEFAULT_SETTINGS = {
                 // grey-ish claws and talons, in either order
                 String.raw`/\b${GRAYS}(?:[- ](?:black|painted|lacquered|polished|varnished|tipped|colou?red|tinted))?(?:,?\s+(?:${NAIL_ADJ}))?,?\s+(?:claws?|talons?)\b/`,
                 String.raw`/\b(?:claws?|talons?)\s+(?:(?:were|was|are|is|gleamed|glinted|shone|looked)\s+)?(?:an?\s+)?${GRAYS}\b/`,
+                // 1.9.1 any colour + up to two words + claws/talons: "neatly trimmed black demon claws", "red-tipped talons" — not "the black cat claws at"
+                String.raw`/\b(?:(?:${COLOR_MODS})[- ]?)?(?:${COLORS})\b(?:[- ][\p{L}-]+){0,2}?[- ](?:claws?|talons?)\b(?!\s+(?:at|into|through|his way|her way|its way)\b)/`,
+                String.raw`/\b(?:claws?|talons?)\b[^.!?\n]{0,25}?\b(?:were|was|are|is|painted|lacquered|gleamed|glinted|shone)\b[^.!?\n]{0,12}?\b(?:${COLORS})\b/`,
             ].join('\n'),
         },
         {

@@ -7,6 +7,14 @@
 
 [화면 둘러보기 · 업데이트 · 모바일 ZIP](https://kgangkgang.github.io/blue-lemonade/)
 
+## 4.7.7
+
+- 다시 쓰기 **1.9.1** (`audit/ban-word-rewrite-1.9.1`, 패치 `rewrite191-claws.py`): `gray_nails`(색깔 손톱)가 놓치던 두 모양 — 색과 손톱 사이에 낱말이 끼는 한국어("검은 악마의 손톱", `colored()` 는 바로 붙어야 잡았다)와 회색 계열이 아닌 색의 claws/talons("neatly trimmed black demon claws", claws 패턴은 `GRAYS` 만). 영어 2줄(색 + 최대 2낱말 + claws, `claws at` 제외 · claws … were 색) + 한 · 일 · 중 3줄. 벨포드 · 아델스타인은 예외 allow 그대로. 검사 `tests191-claws.mjs` 금지 12 · 허용 7; 옛 회귀의 "his black claws … = 허용" 기대는 이번 요청과 어긋나 금지로 옮김(49/49).
+
+## 4.7.5
+
+- 백업 → 프리셋 공유 줄(`panel.js`): '선택해서 공유하기 · 선택해서 불러오기' 두 긴 버튼이 412px 에서 라벨 옆에 두 줄로 쌓였다(사용자 스크린샷). 이름을 '공유하기 · 불러오기'로 줄이고 `.salty-row > .salty-btns { flex: none; max-width: 68% }`(css/20-panel.css) — 버튼은 줄어들지 않고 라벨 · 설명이 접힌다. `rig/ui-audit.mjs` 로 설정 창 37개 소분류의 모든 줄을 412px 에서 재서(버튼 여러 줄 · 라벨 짓눌림 · 가로 넘침) 이것 말고는 없었다 — 남은 표시는 미리보기 헤더의 의도된 -8px 여백과 스타일 카드의 말줄임뿐.
+
 ## 4.7.3
 
 2026-09-23 사용자 요청 "기능에서 더 추가할 만한 것" — 제보 처리 시간을 줄이는 다섯 가지 + 미리보기 정리. 격리 서버 412px 실측 8/8 (`scratchpad/rig/feat-test.mjs`).

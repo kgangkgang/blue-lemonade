@@ -7,6 +7,13 @@
 // tools/release_gate.py 가 맨 앞 version 을 manifest 와 맞춰 본다 — 파일 이름을 바꾸면 거기도 고칠 것.
 
 export const NOTICES = [
+{
+    "version": "4.7.7",
+    "date": "2026-09-23",
+    "items": [
+        "다시 쓰기 1.9.1: '색깔 손톱' 규칙이 놓치던 두 모양을 잡아요 — 색과 손톱 사이에 낱말이 낀 한국어(검은 악마의 손톱)와 회색이 아닌 색의 claws(black demon claws)."
+    ]
+},
     {
     "version": "4.7.6",
     "date": "2026-09-23",
