@@ -19,7 +19,7 @@
     shadow: { on: false, targets: { text: false, dialogue: true, em: false, strong: false, code: false }, color: '#000000', alpha: 45, angle: 135, distance: 2, blur: 3 },
     outline: { on: false, color: '#000000', alpha: 100, width: 1 },
   });
-  let S = DEFAULTS(), role = 'text', fonts = null;
+  let S = DEFAULTS(), role = 'text', fonts = null, paletteMix = null;
   const ROLES = [['text', '본문'], ['dialogue', '대사'], ['em', '속마음'], ['strong', '강조'], ['code', '코드'], ['para', '문단'], ['shadow', '그림자 · 외곽선']];
   const LANGS = [['ko', '한국어'], ['en', '영어'], ['ja', '일본어'], ['zh', '중국어']];
   // the theme's sample lines (src/fonts.js SAMPLES) and check mark (panel.js CHECK)
@@ -104,16 +104,21 @@
     const { T, l, r } = geometry(d.thick, d.shape === 'stroke' ? d.tilt : 'flat', d.pos);
     const lb = l + T, rb = r + T, w = Math.min(1.8, T * 0.07);
     const [cr, cg, cb, ca] = parseColor(color), rgb = `rgb(${cr},${cg},${cb})`, op = Math.min(1, ca);
+    const mix = paletteMix;
+    const angle = ((mix?.angle ?? 90) - 90) * Math.PI / 180;
+    const gradient = mix ? `<linearGradient id='mix' x1='${50 - Math.cos(angle) * 50}%' y1='${50 - Math.sin(angle) * 50}%' x2='${50 + Math.cos(angle) * 50}%' y2='${50 + Math.sin(angle) * 50}%'>${mix.stops.map(stop => { const at = stop.lastIndexOf(' '); return `<stop offset='${stop.slice(at + 1)}' stop-color='${stop.slice(0, at)}'/>`; }).join('')}</linearGradient>` : '';
+    const paint = mix ? "url(#mix)" : rgb, opacity = mix ? 1 : n2(op);
     if (d.shape === 'pill') {
       const ink = `rgba(${cr},${cg},${cb},${n2(op)})`, cap = n2(T / 200), y = T === 100 ? 50 : n2(l / (100 - T) * 100);
-      return `radial-gradient(ellipse 100% 50% at 100% 50%, ${ink} 99%, transparent 100%) left ${y}% / min(${cap}em, 50%) ${n2(T)}% no-repeat, radial-gradient(ellipse 100% 50% at 0% 50%, ${ink} 99%, transparent 100%) right ${y}% / min(${cap}em, 50%) ${n2(T)}% no-repeat, linear-gradient(${ink}, ${ink}) center ${y}% / max(0px, calc(100% - ${n2(cap * 2)}em)) ${n2(T)}% no-repeat`;
+      const band = mix ? `linear-gradient(${mix.angle}deg, ${mix.stops.join(', ')})` : `linear-gradient(${ink}, ${ink})`;
+      return `radial-gradient(ellipse 100% 50% at 100% 50%, ${mix?.colors[0] || ink} 99%, transparent 100%) left ${y}% / min(${cap}em, 50%) ${n2(T)}% no-repeat, radial-gradient(ellipse 100% 50% at 0% 50%, ${mix?.colors.at(-1) || ink} 99%, transparent 100%) right ${y}% / min(${cap}em, 50%) ${n2(T)}% no-repeat, ${band} center ${y}% / max(0px, calc(100% - ${n2(cap * 2)}em)) ${n2(T)}% no-repeat`;
     }
     const svg = d.shape === 'rectangle'
-      ? `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><rect x='0' y='${n2(l)}' width='100' height='${n2(T)}' fill='${rgb}' fill-opacity='${n2(op)}'/></svg>`
+      ? `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><defs>${gradient}</defs><rect x='0' y='${n2(l)}' width='100' height='${n2(T)}' fill='${paint}' fill-opacity='${opacity}'/></svg>`
       : (() => {
         const stroke = [`M0,${n2(l + T * 0.22)}`, `L2.2,${n2(l)}`, `Q25,${n2(l - w + (r - l) * 0.25)} 50,${n2((l + r) / 2)}`, `T98.6,${n2(r)}`,
           `L100,${n2(r + T * 0.5)}`, `L97.2,${n2(rb)}`, `Q75,${n2(rb + w - (rb - lb) * 0.25)} 50,${n2((lb + rb) / 2)}`, `T0.8,${n2(lb)}`, 'Z'].join(' ');
-        return `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><defs><linearGradient id='p' x1='0' x2='1' y1='0' y2='0'><stop offset='0' stop-color='${rgb}' stop-opacity='${n2(op * 0.45)}'/><stop offset='0.14' stop-color='${rgb}' stop-opacity='0'/></linearGradient></defs><path d='${stroke}' fill='${rgb}' fill-opacity='${n2(op)}'/><path d='${stroke}' fill='url(#p)'/></svg>`;
+        return `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><defs>${gradient}<linearGradient id='p' x1='0' x2='1' y1='0' y2='0'><stop offset='0' stop-color='${rgb}' stop-opacity='${n2(op * 0.45)}'/><stop offset='0.14' stop-color='${rgb}' stop-opacity='0'/></linearGradient></defs><path d='${stroke}' fill='${paint}' fill-opacity='${opacity}'/><path d='${stroke}' fill='url(#p)'/></svg>`;
       })();
     return `url("data:image/svg+xml,${encodeURIComponent(svg)}") center / 100% 100% no-repeat`;
   }
@@ -142,7 +147,7 @@
     st.wordBreak = S.para.align === 'justify-break' ? 'break-all' : 'keep-all';
     css('--em-style', S.em.italic ? 'italic' : 'normal');
     sample.dataset.dlg = S.dialogue.style;
-    const marker = getComputedStyle(document.documentElement).getPropertyValue('--marker') || 'rgba(20,165,255,.24)';
+    const marker = getComputedStyle(sample).getPropertyValue('--preview-marker').trim() || 'rgba(20,165,255,.24)';
     css('--read-marker', markerBackground(marker));
     // shadow: angle 0 = right, clockwise; distance / blur in px
     const sh = S.shadow, a = sh.angle * Math.PI / 180;
@@ -291,10 +296,21 @@
   form.addEventListener('submit', e => e.preventDefault());
   // the highlighter color follows the site's white / night
   document.addEventListener('bl-theme', () => requestAnimationFrame(apply));
+  document.addEventListener('bl-palette', event => { paletteMix = event.detail; apply(); });
+  const controls = document.querySelector('.playground-tabs');
+  function showControls(tab) {
+    controls.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.playground === tab)));
+    document.querySelector('#color-controls').hidden = tab !== 'color';
+    form.hidden = tab === 'color';
+    if (tab !== 'color') { role = tab === 'marker' ? 'dialogue' : 'text'; picker = null; render(); }
+  }
+  controls.addEventListener('click', e => { const b = e.target.closest('[data-playground]'); if (b) showControls(b.dataset.playground); });
+  document.querySelectorAll('a[href="#reading"]').forEach(a => a.addEventListener('click', () => showControls('type')));
+  if (location.hash === '#reading') showControls('type');
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', apply);
 
   render(); apply();
   // font list: fetched when the section comes near, so the page itself stays light
   const load = () => fetch('fonts.json').then(r => r.json()).then(list => { fonts = list; render(); apply(); }).catch(() => {});
-  new IntersectionObserver((entries, io) => { if (entries.some(x => x.isIntersecting)) { io.disconnect(); load(); } }, { rootMargin: '400px' }).observe(form);
+  new IntersectionObserver((entries, io) => { if (entries.some(x => x.isIntersecting)) { io.disconnect(); load(); } }, { rootMargin: '400px' }).observe(document.querySelector('#colors'));
 })();
