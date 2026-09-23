@@ -196,3 +196,7 @@
 /* Fit the frame to the recorded viewport; never crop the settings header. */
 .gallery-block .media-wrap,.gallery-block[data-device=pc] .media-wrap{height:auto;aspect-ratio:auto;display:block}
 .gallery-block .media-wrap video,.gallery-block .media-wrap img,.gallery-block[data-device=pc] .media-wrap video,.gallery-block[data-device=pc] .media-wrap img{width:100%;height:auto;aspect-ratio:auto;object-fit:contain;object-position:center top;border-radius:8px}
+
+/* Mixed portrait and landscape recordings keep independent card heights. */
+.gallery-block .track{align-items:flex-start}
+
