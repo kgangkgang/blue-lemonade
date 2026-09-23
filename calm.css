@@ -142,14 +142,14 @@
 .device-pc .showcase-phone video{aspect-ratio:1280/800;border-radius:0 0 12px 12px}
 .device-pc .showcase-phone>span{text-align:left;padding:10px;font-size:12px}
 .device-pc .showcase[data-front=weather] .showcase-phone{transform:translate(0,0) rotate(1deg)}
-.device-mobile .showcase-stage{max-width:400px;margin-inline:auto;height:auto;aspect-ratio:400/550}
+.device-mobile .showcase-stage{max-width:360px;margin-inline:auto;height:auto;aspect-ratio:360/630}
 .device-mobile .showcase-pc{width:66%;max-width:none;border:5px solid var(--surface);border-radius:23px;left:3%;top:12%;transform:rotate(-3deg)}
 .device-mobile .showcase-phone{width:66%;max-width:none;left:31%;right:auto;top:3%;transform:rotate(4deg) scale(.94)}
 .device-mobile .showcase[data-front=weather] .showcase-phone{left:3%;top:12%;transform:rotate(-3deg)}
 .device-mobile .showcase[data-front=weather] .showcase-pc{left:31%;top:3%;transform:rotate(4deg) scale(.94)}
 .device-mobile .showcase-screen{transition:transform .5s cubic-bezier(.22,.8,.25,1),left .5s,top .5s,box-shadow .5s}
 @media(prefers-reduced-motion:reduce){.device-mobile .showcase-screen{transition:none}}
-.device-mobile .showcase-screen video{aspect-ratio:720/1170;border-radius:0 0 16px 16px}
+.device-mobile .showcase-screen video{aspect-ratio:9/19.5;border-radius:0 0 16px 16px}
 .device-mobile .showcase-screen>span{text-align:center;font-size:11px;padding:9px 2px}
 #view-dock{display:none}
 #site-guide{width:min(360px,calc(100vw - 40px));padding:26px;border:1px solid var(--line);border-radius:18px;background:var(--surface);color:var(--ink);box-shadow:0 20px 80px #10203030}
