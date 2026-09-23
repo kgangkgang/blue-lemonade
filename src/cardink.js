@@ -128,9 +128,10 @@ export function startCardInk() {
     for (const name of ['CHARACTER_MESSAGE_RENDERED', 'USER_MESSAGE_RENDERED', 'MESSAGE_UPDATED', 'MESSAGE_EDITED', 'MESSAGE_SWIPED']) {
         on(name, id => schedule(mesOf(id) || document.getElementById('chat')));
     }
-    // 채팅을 열거나 답이 끝나면 통째로 (스트리밍 도중에는 카드가 아직 덜 그려져 있다)
+    // 채팅을 열면 통째로. 답이 끝나면 방금 끝난 답(마지막 메시지)만 — 4.7.8: 채팅 전체를 다시 재면 답마다 카드 수백 개의
+    // 계산 스타일을 강제로 읽어 답 끝의 긴 작업에 얹혔다(폰 리그 답 끝 forced style·layout 41ms@4x). 스트리밍 도중에는 카드가 아직 덜 그려져 있다.
     on('CHAT_CHANGED', () => schedule(null));
-    on('GENERATION_ENDED', () => schedule(null));
+    on('GENERATION_ENDED', () => schedule(document.querySelector('#chat > .mes:last-of-type') || document.getElementById('chat')));
     // 북마크 창이 메시지를 다시 그릴 때도 (테마의 다른 모듈과 같은 신호)
     document.addEventListener('chat-bookmarks:render', (event) => {
         const root = event.detail?.root;

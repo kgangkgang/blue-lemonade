@@ -1,7 +1,7 @@
 // 자동 생성 (tools/build-plain-scripts.mjs) — 고치려면 bundled/korean.js 을 고치고 다시 만든다
 export default function blueLemonadeScript(BlueLemonade) {
 /*BL-SCRIPT-START*/
-// SillyTavern Korean UI (leftover English), v1.4.1
+// SillyTavern Korean UI (leftover English), v1.4.2
 // Replaces exact English UI strings SillyTavern leaves untranslated. Chat messages, names, presets and other
 // user content are never rewritten. Only built-in welcome labels/greetings are handled inside chat.
 // Nothing is saved, and turning the script off restores the original text.
@@ -43,6 +43,9 @@ export default function blueLemonadeScript(BlueLemonade) {
   function normalize(text) {
     return String(text ?? '').normalize('NFKC').replace(/\s+/g, ' ').trim();
   }
+  // v1.4.2: 사전 열쇠(4,270) · 패턴(297)은 모두 라틴 글자나 한자 · 가나를 품는다 → 그 글자가 없는 글(한글 · 숫자 · 기호뿐)은 찾아볼 필요가 없다.
+  // 첫 훑기에서 글자 노드 수천 개의 대부분이 이미 한글이라, NFKC · 공백 정리 · Map 조회를 통째로 건너뛴다.
+  const MAYBE_FOREIGN = /[A-Za-z\u3040-\u30ff\u3400-\u9fff\uf900-\ufaff]/;
   TRANSLATIONS['Requests ending with a model turn are not supported.'] = '마지막 메시지가 AI 답변인 요청은 지원하지 않아요.';
   TRANSLATIONS['read ECONNABORTED'] = '서버 응답을 읽는 중 연결이 중단됐어요. (ECONNABORTED)';
   PATTERNS.unshift(...[{"re": "^(메시지 #\\d+ 번역 실패: )request to (https?://\\S+) failed, reason: (?:read )?ECONNABORTED$", "ko": "$1서버 응답을 읽는 중 연결이 중단됐어요. (ECONNABORTED) 요청 주소: $2", "head": "메시지"}, {"re": "^request to (https?://\\S+) failed, reason: (?:read )?ECONNABORTED$", "ko": "서버 응답을 읽는 중 연결이 중단됐어요. (ECONNABORTED) 요청 주소: $1", "head": "request"}]);
@@ -194,7 +197,7 @@ export default function blueLemonadeScript(BlueLemonade) {
     if (!element) return;
     if (trusted ? element.tagName === 'TEXTAREA' : (element.closest(SKIP) || element.closest('input, textarea'))) return;
     const value = node.nodeValue;
-    if (!value || !/\S/.test(value)) return; // 빈 칸 · 줄바꿈뿐인 노드 (번역할 것 없음)
+    if (!value || !MAYBE_FOREIGN.test(value)) return; // 빈 칸 · 한글뿐인 노드 (번역할 것 없음)
     // SillyTavern reads some <option> texts back (preset names), so only its own i18n-tagged options are touched.
     if (element.tagName === 'OPTION' && !element.hasAttribute('data-i18n')) return;
     swapText(node, translate);
@@ -218,6 +221,7 @@ export default function blueLemonadeScript(BlueLemonade) {
     for (const attribute of ATTRIBUTE_NAMES) {
       if (!element.hasAttribute(attribute)) continue;
       const before = element.getAttribute(attribute);
+      if (!before || !MAYBE_FOREIGN.test(before)) continue;
       const translated = translate(before);
       if (translated === null || translated === before) continue;
       let changes = attributeChanges.get(element);
@@ -440,7 +444,7 @@ export default function blueLemonadeScript(BlueLemonade) {
     for(const pop of doc.querySelectorAll('.TH-popup'))watchHelper(pop);
   }
 
-  host[INSTANCE_KEY] = { version: '1.4.1', cleanup };
+  host[INSTANCE_KEY] = { version: '1.4.2', cleanup };
   window.addEventListener('pagehide', cleanup, { once: true });
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', init, { once: true });
   else init();

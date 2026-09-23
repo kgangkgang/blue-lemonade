@@ -254,12 +254,20 @@ async function probeSource(font) {
 }
 
 /** 이 글꼴이 빈 글리프로 그리는 문자 종류: ['han', 'kana', 'latin'] 가운데 해당하는 것 */
+// 4.7.8: 결과는 기기에 남긴다 — 같은 파일(src)이면 시작할 때마다 캔버스에 그려 보지 않는다 (부팅 0.1~0.15s@4x)
+const BLANK_STORE = 'bl-blank-glyphs';
+function storedBlank() { try { return JSON.parse(localStorage.getItem(BLANK_STORE) || '{}'); } catch { return {}; } }
+function rememberBlank(id, src, out) {
+    try { const all = storedBlank(); all[id] = { src, out }; const keys = Object.keys(all); if (keys.length > 60) delete all[keys[0]]; localStorage.setItem(BLANK_STORE, JSON.stringify(all)); } catch { /* 저장 공간이 없으면 다음에 다시 잰다 */ }
+}
 export async function blankScripts(font) {
     if (!font || typeof document === 'undefined' || typeof FontFace === 'undefined') return [];
     if (blankCache.has(font.id)) return blankCache.get(font.id);
     const p = (async () => {
         const src = await probeSource(font);
         if (!src) return [];
+        const known = storedBlank()[font.id];
+        if (known && known.src === src && Array.isArray(known.out)) return known.out;
         const family = `salty-probe-${font.id}`;
         const face = new FontFace(family, src);
         document.fonts.add(face);
@@ -271,6 +279,7 @@ export async function blankScripts(font) {
                 if ([...sample].some(ch => inkOf('serif', ch) > 0 && inkOf(`'${family}', serif`, ch) === 0)) out.push(script);
             }
             if (out.length) console.warn(`[Salty] ${font.label || font.id}: 빈 글리프 (${out.join(', ')}) — 그 글자는 기기 글꼴로 그림`);
+            rememberBlank(font.id, src, out);
             return out;
         } catch {
             return [];

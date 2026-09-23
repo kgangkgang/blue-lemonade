@@ -120,16 +120,24 @@ export function baseColors() {
  * 그 테마는 팔레트 색을 :root 변수(--salty-accent, --salty-pop)로 써 두고, 켜져 있을 때만 body에 salty 클래스를 붙인다.
  * 포인트 · 유저 = 포인트색, 아이콘 = 두 번째 포인트(블루 아워는 레몬, 나머지는 포인트색).
  */
+// 4.7.8: getComputedStyle(:root) 은 밀린 스타일 계산을 그 자리에서 돌린다 — 시작할 때 메시지마다 · head 가 바뀔 때마다 불려
+// 부팅의 0.3~0.4s@4x 였다. 테마 색은 <style id="salty-vars"> 글자와 body 의 salty-dark 로 정해지니 그것이 같으면 지난 값을 준다.
+let themeMemo = null;
 export function themeColors() {
     if (!document.body?.classList.contains('salty')) return null;
+    const vars = document.getElementById('salty-vars')?.textContent || '';
+    const sig = `${vars.length}|${vars.slice(0, 160)}|${document.body.classList.contains('salty-dark')}`;
+    if (themeMemo && themeMemo.sig === sig) return themeMemo.value ? { ...themeMemo.value } : null;
     const style = getComputedStyle(document.documentElement);
     const hexOf = (name) => {
         const rgb = parseCssColor(style.getPropertyValue(name));
         return rgb ? `#${rgb.map(channel => Math.round(channel).toString(16).padStart(2, '0')).join('')}` : null;
     };
     const accent = hexOf('--salty-accent');
-    if (!accent) return null;
-    return { accent, user: accent, icon: hexOf('--salty-pop') ?? accent };
+    const value = accent ? { accent, user: accent, icon: hexOf('--salty-pop') ?? accent } : null;
+    // 변수가 아직 안 쓰였을 때(시작 직후)의 null 은 기억하지 않는다 — 다음 호출이 다시 읽는다
+    if (vars) themeMemo = { sig, value };
+    return value ? { ...value } : null;
 }
 
 /** 테마를 따라가는 중인가 (설정이 켜져 있고 블루 레몬에이드도 켜져 있을 때) */

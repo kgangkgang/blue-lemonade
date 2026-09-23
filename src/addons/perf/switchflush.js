@@ -73,13 +73,19 @@ export function createSaveTimers(env) {
     let running = 0;
     const stats = { tagged: 0, fired: 0, cleared: 0, flushed: 0 };
 
+    // 4.7.8: 같은 handler(lodash debounce 의 timerExpired 등)는 스트리밍 중 걸음마다 다시 걸린다 — 종류(어디서 건 저장 타이머인지)는
+    // 처음 한 번만 스택으로 가리고 기억한다. new Error().stack 이 답 하나에 수백 번 떠서 31ms@4x 였다.
+    const kinds = new WeakMap();
     function saveDedupeSetTimeout(handler, ms, ...rest) {
         if (typeof handler !== 'function' || ms !== env.delay() || !env.enabled()) return env.nativeSet(handler, ms, ...rest);
-        let kind = null;
-        try {
-            kind = timerKind(env.stack());
-        } catch {
-            kind = null;
+        let kind = kinds.get(handler);
+        if (kind === undefined) {
+            try {
+                kind = timerKind(env.stack()) || null;
+            } catch {
+                kind = null;
+            }
+            kinds.set(handler, kind);
         }
         if (!kind) return env.nativeSet(handler, ms, ...rest);
         let live = null;

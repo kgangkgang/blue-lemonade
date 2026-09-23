@@ -373,6 +373,14 @@ export function classifyAll(root = document.getElementById('chat')) {
 }
 
 let observer = null;
+const tidyLater = new Set();
+let tidyTimer = 0;
+function tidyFlush() {
+    tidyTimer = 0;
+    if (document.body.dataset.generating === 'true') { tidyTimer = setTimeout(tidyFlush, 500); return; }
+    for (const mes of tidyLater) if (mes.isConnected) tidyLeadingBreaks(mes);
+    tidyLater.clear();
+}
 export function startAssetWatcher() {
     const chat = document.getElementById('chat');
     if (!chat || observer) return;
@@ -397,7 +405,9 @@ export function startAssetWatcher() {
                 if (node.matches('.mes, .mes_text, .mes_text *')) tidy.add(node.closest('.mes') || node);
             });
         }
-        for (const mes of tidy) tidyLeadingBreaks(mes);
+        // 4.7.8: 답이 오는 동안 걸음마다 그 메시지의 <p> 를 전부 훑지 않는다 — 답이 끝난 뒤(생성 표시가 사라진 뒤) 한 번
+        for (const mes of tidy) { if (document.body.dataset.generating === 'true' && mes.matches?.('.mes:last-of-type, .mes:last-of-type *')) tidyLater.add(mes); else tidyLeadingBreaks(mes); }
+        if (tidyLater.size && !tidyTimer) tidyTimer = setTimeout(tidyFlush, 500);
     });
     observer.observe(chat, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] });
     classifyAll();
