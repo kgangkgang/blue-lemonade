@@ -3,6 +3,8 @@
 // 옮긴 자리에는 주석 노드를 남겨 두었다가, 고정을 풀거나 테마를 끄면 원래 순서 그대로 메뉴에 돌려놓는다.
 // 감시자는 두지 않는다: 메시지가 그려지는 이벤트와 ··· 를 누르는 순간에만 훑는다 (대기 중 콜백 0).
 
+import { getSettings, saveSettings } from './settings.js';
+
 const GENERIC = /^(mes_button|interactable|menu_button|fa|fa-.+|bl-.+|salty-.+)$/;
 // 실리태번이 상태에 따라 둘 중 하나만 보여 주는 짝 — 앞의 것을 고르면 뒤의 것도 같이 옮긴다
 const PAIRS = { mes_hide: ['mes_unhide'], mes_media_gallery: ['mes_media_list'] };
@@ -121,10 +123,59 @@ function unbind() {
 }
 
 /** apply.js(features.js) 가 설정이 바뀔 때마다 부른다 */
-export function syncMesPins(on, list) {
+export function syncMesPins(on, list, themeOn = on) {
     pins = tidyPins(list);
     order = pins.flatMap(k => [k, ...(PAIRS[k] || [])]);
     active = !!on && order.length > 0;
     if (active) bind(); else unbind();
     sweep();
+    startPinGesture(!!themeOn);
+}
+
+// 4.7.1 길게 누르기: ··· 메뉴 안 버튼을 길게 누르면 이름 줄로 꺼내고, 꺼낸 버튼을 길게 누르면 메뉴로 돌려놓는다 (설정 창 없이)
+const HOLD_MS = 550, MOVE_PX = 8;
+let gesture = null, hold = 0, held = null, gestureOn = false, gestureBound = false;
+function startPinGesture(on) {
+    gestureOn = on;
+    if (!on || gestureBound) { if (!on) clearTimeout(hold); return; }
+    gestureBound = true;
+    document.addEventListener('pointerdown', (event) => {
+        if (!gestureOn || (event.pointerType === 'mouse' && event.button !== 0)) return;
+        const el = event.target?.closest?.('.mes_buttons > .extraMesButtons > *, .mes_buttons > .bl-pinned');
+        if (!el || el.matches('.extraMesButtonsHint')) return;
+        clearTimeout(hold);
+        gesture = { el, x: event.clientX, y: event.clientY };
+        hold = setTimeout(() => { if (gesture?.el === el) { gesture = null; togglePin(el); } }, HOLD_MS);
+    }, true);
+    const cancel = () => { clearTimeout(hold); gesture = null; };
+    document.addEventListener('pointermove', (event) => { if (gesture && Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) > MOVE_PX) cancel(); }, true);
+    for (const type of ['pointerup', 'pointercancel', 'scroll']) document.addEventListener(type, cancel, true);
+    // 길게 누른 뒤 손을 떼면 click 이 따라온다 — 그 버튼의 원래 동작(번역 · 숨김 …)이 돌지 않게 한 번 막는다
+    document.addEventListener('click', (event) => {
+        if (!held) return;
+        const fresh = Date.now() - held.at < 800;
+        held = null;
+        if (fresh) { event.stopPropagation(); event.preventDefault(); }
+    }, true);
+    document.addEventListener('contextmenu', (event) => { if (held && Date.now() - held.at < 800) event.preventDefault(); }, true);
+}
+function togglePin(el) {
+    const key = pinKey(el);
+    if (!key) return;
+    const s = getSettings();
+    const current = tidyPins(s.chat.mesPins || []);
+    // 짝(mes_unhide 는 mes_hide 의 짝)은 앞 이름으로 고른다
+    const own = Object.entries(PAIRS).find(([, pair]) => pair.includes(key))?.[0] || key;
+    const pinned = el.classList.contains('bl-pinned') || current.includes(own);
+    let next;
+    if (pinned) next = current.filter(k => k !== own);
+    else if (current.length >= PIN_LIMIT) { globalThis.toastr?.warning(`버튼은 ${PIN_LIMIT}개까지 꺼내 둘 수 있어요.`, 'Blue Lemonade'); return; }
+    else next = [...current, own];
+    held = { el, at: Date.now() };
+    try { navigator.vibrate?.(15); } catch { /* 진동이 없는 기기 */ }
+    s.chat.mesPins = next;
+    saveSettings();
+    syncMesPins(next.length > 0, next, true);
+    globalThis.Salty?.refreshPanels?.();
+    globalThis.toastr?.info(pinned ? '메뉴로 돌려놓았어요' : '이름 줄에 꺼냈어요 · 길게 누르면 되돌려요', 'Blue Lemonade', { timeOut: 2500 });
 }

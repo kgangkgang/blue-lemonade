@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 0d0b8406ed59) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 05f1b84aa1c2) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -11103,6 +11103,15 @@ body.salty-dark .salty-subs button.on {
   font-size: var(--fs-cap);
   line-height: 1.5;
   color: var(--salty-muted);
+}
+.salty-note.bl-css-touch {
+  color: var(--salty-danger);
+}
+.salty-note.bl-css-touch small {
+  display: block;
+  margin-top: 2px;
+  color: var(--salty-muted);
+  overflow-wrap: anywhere;
 }
 .salty-group {
   padding: 2px var(--pad);

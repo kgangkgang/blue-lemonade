@@ -9,7 +9,7 @@
     --bwr-accent-soft: color-mix(in srgb, var(--bwr-accent) 18%, transparent);
     --bwr-danger: #e5484d;
     /* Compared with index.js after load: a mismatch may be a packaging, cache, or installation issue. */
-    --bwr-css-version: "1.8.9";
+    --bwr-css-version: "1.9.0";
 }
 
 /* 서랍 안쪽 — .inline-drawer-content 는 실리태번이 열고 닫으므로 display 를 주지 않고 안에 한 겹 더 둔다 */
@@ -604,3 +604,27 @@ dialog.popup.bwr_dialog .popup-content {
     opacity: 1;
     outline: none;
 }
+
+/* ── 1.9.0: 채팅에서 고른 낱말 옆 금지 칩 (quick-ban.js) ── */
+.bwr_quickban {
+    position: fixed;
+    z-index: 4100;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: min(70vw, 260px);
+    margin: 0;
+    padding: 6px 12px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--bwr-accent, var(--SmartThemeQuoteColor));
+    color: var(--bwr-on-accent, #fff);
+    font: inherit;
+    font-size: 13px;
+    line-height: 1.2;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+.bwr_quickban[hidden] { display: none; }
+.bwr_quickban > span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }

@@ -5,7 +5,7 @@ let selected='korean',busy=false;
 const drafts=new Map();
 export function scriptsMarkup(){
     const s=scriptSettings();
-    return `<div class="bl-scripts"><div class="bl-script-layout"><div class="bl-script-list"><h3>스크립트</h3><p class="salty-note">필요한 것만 켜세요. 켜고 끄면 바로 적용돼요.</p>${SCRIPT_CATALOG.map(item=>`<article class="bl-script-card"><div class="bl-script-heading"><button type="button" class="salty-btn" data-script-select="${item.id}" aria-pressed="${selected===item.id}"><i class="fa-solid ${item.icon}" aria-hidden="true"></i> ${item.name}</button><label class="bl-script-switch"><input type="checkbox" data-script-enable="${item.id}" ${s.enabled[item.id]?'checked':''}> 켜기</label></div><p>${item.description}</p><small data-script-status="${item.id}"></small></article>`).join('')}<p class="salty-note">기존 헬퍼에서 같은 스크립트를 켜 둔 경우 먼저 그 항목을 꺼 주세요. 데이터는 그대로 두고 중복 실행만 막아요.</p><button type="button" class="salty-btn" data-script-diagnose>진단</button><pre class="bl-script-diagnosis" data-script-diagnosis hidden></pre></div><div class="bl-script-editor"><h3 data-script-title></h3><p class="salty-note">코드를 수정해 저장할 수 있어요. 수정본은 테마 업데이트와 색 프리셋 가져오기로 덮어쓰지 않아요.</p><label>스크립트 코드<textarea data-script-code spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="스크립트 코드"></textarea></label><div class="bl-script-actions"><button type="button" class="salty-btn" data-script-save>수정 저장·적용</button><button type="button" class="salty-btn" data-script-reset>기본 코드로 복원</button><button type="button" class="salty-btn" data-script-export>코드 파일 저장</button></div><details><summary>편집 도움말</summary><p>자바스크립트 코드예요. 문법 오류는 저장 전에 알려드려요. 추가한 이벤트·타이머는 <code>BlueLemonade.onCleanup(() =&gt; { ... })</code>에서 해제해 주세요. 번역 사전은 이름·번역·설명 값을 편집할 수 있어요.</p></details><p data-script-feedback role="status" aria-live="polite"></p></div></div></div>`;
+    return `<div class="bl-scripts"><div class="bl-script-layout"><div class="bl-script-list"><h3>스크립트</h3><p class="salty-note">필요한 것만 켜세요. 켜고 끄면 바로 적용돼요.</p>${SCRIPT_CATALOG.map(item=>`<article class="bl-script-card"><div class="bl-script-heading"><button type="button" class="salty-btn" data-script-select="${item.id}" aria-pressed="${selected===item.id}"><i class="fa-solid ${item.icon}" aria-hidden="true"></i> ${item.name}</button><label class="bl-script-switch"><input type="checkbox" data-script-enable="${item.id}" ${s.enabled[item.id]?'checked':''}> 켜기</label></div><p>${item.description}</p><small data-script-status="${item.id}"></small></article>`).join('')}<p class="salty-note">기존 헬퍼에서 같은 스크립트를 켜 둔 경우 먼저 그 항목을 꺼 주세요. 데이터는 그대로 두고 중복 실행만 막아요.</p><button type="button" class="salty-btn" data-script-diagnose>진단</button> <button type="button" class="salty-btn" data-script-scan>남은 영어 찾기</button><pre class="bl-script-diagnosis" data-script-diagnosis hidden></pre></div><div class="bl-script-editor"><h3 data-script-title></h3><p class="salty-note">코드를 수정해 저장할 수 있어요. 수정본은 테마 업데이트와 색 프리셋 가져오기로 덮어쓰지 않아요.</p><label>스크립트 코드<textarea data-script-code spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="스크립트 코드"></textarea></label><div class="bl-script-actions"><button type="button" class="salty-btn" data-script-save>수정 저장·적용</button><button type="button" class="salty-btn" data-script-reset>기본 코드로 복원</button><button type="button" class="salty-btn" data-script-export>코드 파일 저장</button></div><details><summary>편집 도움말</summary><p>자바스크립트 코드예요. 문법 오류는 저장 전에 알려드려요. 추가한 이벤트·타이머는 <code>BlueLemonade.onCleanup(() =&gt; { ... })</code>에서 해제해 주세요. 번역 사전은 이름·번역·설명 값을 편집할 수 있어요.</p></details><p data-script-feedback role="status" aria-live="polite"></p></div></div></div>`;
 }
 export async function bindScripts(root){
     const box=root.querySelector('.bl-scripts');if(!box)return;
@@ -34,6 +34,16 @@ export async function bindScripts(root){
         // 파일이 실제로 어떻게 읽히는지 (응답 · 길이 · 끝까지 있는지) — 받는 대로 아래에 붙인다
         // 두 개만 자세히 (다섯 개 다 적으면 화면이 넘친다) + 테마의 다른 파일 · 실리태번 파일
         Promise.all([probeBundled('helper'),probeBundled('fold'),probeOthers()]).then(([a,b,others])=>{out.textContent+='\n— 파일 —\n'+[a,b,...others].join('\n');});
+    };
+    // 4.7.1 남은 영어 찾기: 서랍을 잠깐 열어 보이는 영어를 모아 붙여 넣기 좋게 (scan.js)
+    box.querySelector('[data-script-scan]').onclick=async()=>{
+        const out=box.querySelector('[data-script-diagnosis]'),button=box.querySelector('[data-script-scan]');
+        if(button.disabled)return;button.disabled=true;out.hidden=false;out.textContent='서랍을 열어 보는 중… (몇 초 걸려요)';
+        try{const m=await import('./scan.js');const r=await m.scanEnglish(id=>{out.textContent=`보는 중… ${id}`;});out.textContent=r.text;
+            let copied=false;try{await navigator.clipboard.writeText(r.text);copied=true;}catch{}
+            globalThis.toastr?.[r.count?'info':'success'](copied?`남은 영어 ${r.count}개를 복사했어요. 붙여 넣어 보내 주세요`:`남은 영어 ${r.count}개예요. 아래 글을 복사해 주세요`,'Blue Lemonade');}
+        catch(error){out.textContent=`찾지 못했어요: ${error?.message||error}`;}
+        finally{button.disabled=false;}
     };
     // 켜 두었는데 '꺼짐'으로 남은 스크립트가 있으면(시작 때 못 돌았음) 이 화면을 열 때 다시 시작한다
     runtime.healScripts(!!getSettings().enabled);

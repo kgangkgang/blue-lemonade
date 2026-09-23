@@ -68,7 +68,8 @@ export function syncFeatures(s) {
     if (weather || modules.weather) load('weather', './weather.js').then(m => m?.syncWeather(weather, weatherChat));
     // 4.1.3 ··· 메뉴 버튼 고정 (mes-pins.js)
     const pins = on && (s.chat?.mesPins?.length || 0) > 0;
-    if (pins || modules.mespins) load('mespins', './mes-pins.js').then(m => m?.syncMesPins(pins, s.chat.mesPins));
+    // 4.7.1: 고정한 버튼이 없어도 길게 눌러 꺼내는 손짓은 있어야 하므로 테마가 켜져 있으면 늘 부른다
+    if (on || modules.mespins) load('mespins', './mes-pins.js').then(m => m?.syncMesPins(pins, s.chat.mesPins, on));
     // 데우스 감정 대사: 프리셋 정규식이 못 받는 「…」 대사를 화면에서 감싼다 (dem-expressive.js)
     const demfx = on && !!s.deus?.on && !!s.deus?.fx?.on;
     if (demfx || modules.demfx) load('demfx', './dem-expressive.js').then(m => m?.syncDemExpressive(demfx));

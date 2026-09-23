@@ -26,6 +26,7 @@ import { getIssues } from './checks.js';
 import { applySillyTavernTheme, saveAsSillyTavernTheme, alreadyMatches } from './sttheme.js';
 import { classifyAll } from './assets.js';
 import { openNotice, currentVersion, hasUnseenNotice } from './notice.js';
+import { customCssReport, buildDiagnosis } from './diagnose.js';
 import { PRESETS, MAX_STYLES, captureStyle, applyStyleData, sameStyle, sharePayload, encodeStyle, decodeStyle, newStyleId, uniqueName, mergeFonts, currentKey, keyLabel } from './styles.js';
 import { charStyleModule } from './features.js';
 import { splashState, checkSplash, SPLASH_COMMAND, SPLASH_IMPORT } from './splash.js';
@@ -1318,9 +1319,14 @@ function tabChat(s, sub) {
     if (sub === 'user-name') return nameControls(s, 'userProfile');
     if (sub === 'name') return nameControls(s);
     if (sub === 'etc') {
-        const customLines = (SillyTavern.getContext().powerUserSettings?.custom_css || '').split('\n').filter(line => line.trim()).length;
-        const customCss = `${cap('다른 CSS', customLines ? `커스텀 CSS ${customLines}줄` : '커스텀 CSS 없음')}<div class="salty-group">
+        // 4.7.1: 커스텀 CSS 가 메시지 칸(.mes · #chat …)을 건드리면 여기서 바로 보인다 — 제보의 첫 의심 대상
+        const css = customCssReport();
+        const touch = css.chat.length ? `<p class="salty-note bl-css-touch"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> 커스텀 CSS ${css.chat.length}개 규칙이 메시지 칸을 건드려요 — 버튼 · 이름 줄이 이상하면 먼저 꺼 보세요<br><small>${css.chat.slice(0, 5).map(esc).join(' · ')}${css.chat.length > 5 ? ' …' : ''}</small></p>` : '';
+        const customCss = `${cap('다른 CSS', css.lines ? `커스텀 CSS ${css.lines}줄 · ${css.rules}규칙` : '커스텀 CSS 없음')}<div class="salty-group">${touch}
             ${row('커스텀 CSS 끄기', toggle('compat.muteCustomCss', !!s.compat?.muteCustomCss), '사용자 설정의 커스텀 CSS 를 테마가 켜진 동안 꺼요 · 지우지는 않아요')}
+        </div>
+        ${cap('진단', '제보할 때 붙여 넣는 한 덩어리')}<div class="salty-group">
+            ${row('진단 복사', '<button class="salty-btn" data-act="diag-copy" aria-label="진단 복사"><i class="fa-solid fa-copy" aria-hidden="true"></i></button>', '테마 · 실리태번 버전, 화면 폭, 표시 옵션, 커스텀 CSS, 켜진 확장')}
         </div>`;
         return `${customCss}`;
     }
@@ -2350,6 +2356,12 @@ function bind(root) {
                     const name = await ask('새 이름', style.name);
                     if (name === null || !String(name).trim()) break;
                     update((st) => { const target = st.styles.find(x => x.id === style.id); if (target) target.name = uniqueName(name, st.styles, style.id); });
+                    break;
+                }
+                case 'diag-copy': {
+                    const text = await buildDiagnosis();
+                    if (await copyText(text)) toastr.success('진단을 복사했어요. 제보 글에 붙여 넣으면 돼요', 'Blue Lemonade');
+                    else toastr.info(esc(text).replace(/\n/g, '<br>'), '진단 (직접 복사)', { escapeHtml: false, timeOut: 20000, extendedTimeOut: 20000 });
                     break;
                 }
                 case 'splash-copy': {

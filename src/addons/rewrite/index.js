@@ -36,8 +36,9 @@ import { createSpanFinder } from './spans.js';
 import { PROVIDERS, applyModelRequestRules, isHttpUrl, modelIdsFrom, normalizeUrl, pruneModelLists, resolveModel } from './providers.js';
 import { capturedMessages, capturedRequest, holdGeneration, regenerateReply, replaceReply, visibleText, watchRequests, withTimeout } from './reroll.js';
 import { applyUpgrades } from './upgrades.js';
+import { startQuickBan } from './quick-ban.js';
 
-const VERSION = '1.8.9';
+const VERSION = '1.9.0';
 const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];
@@ -1628,8 +1629,30 @@ function start() {
             if ($('.bwr_settings .bwr_panel[data-panel="reroll"]').hasClass('active')) renderSceneStatus();
         }),
         '답변 검사': () => eventSource.makeFirst(event_types.MESSAGE_RECEIVED, onMessageReceived),
+        // 1.9.0 채팅에서 고른 낱말 옆의 금지 칩 (quick-ban.js)
+        '빠른 금지': () => startQuickBan(addQuickRule),
     });
     if (!EMBEDDED) ensureUi();
+}
+
+/** 1.9.0 — 고른 글 그대로를 낱말로 하는 규칙 하나. 같은 낱말의 규칙이 있으면 만들지 않는다. */
+export function addQuickRule(text) {
+    const word = String(text || '').replace(/\s+/g, ' ').trim();
+    if (!word) return false;
+    const same = settings.rules.find(rule => String(rule.words || '').split('\n').map(w => w.trim().toLowerCase()).includes(word.toLowerCase()));
+    if (same) {
+        toastr.info(`"${same.name || word}" 규칙에 이미 있어요`, TITLE);
+        return false;
+    }
+    const rule = { id: newId('rule'), name: word, enabled: true, words: word, description: `the exact wording "${word}"`, onlyFor: '', near: '' };
+    settings.rules.push(rule);
+    selectedRuleId = rule.id;
+    recompile();
+    // 설정 화면이 떠 있을 때만 다시 그린다 (없으면 그릴 자리가 없다)
+    if (document.getElementById('bwr_rule_chips')) { renderRules(); renderExceptionEditor(); }
+    saveSettingsDebounced();
+    toastr.success(`"${word}" 금지 규칙을 넣었어요`, TITLE);
+    return true;
 }
 
 const ready = new Promise(resolve => jQuery(() => {
