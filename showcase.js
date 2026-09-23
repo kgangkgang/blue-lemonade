@@ -3,8 +3,20 @@
  const root=document.querySelector('#showcase'), reading=root.querySelector('#reading-film'), weather=root.querySelector('#weather-film');
  const videos=[reading,weather], play=root.querySelector('#showcase-play'), caption=root.querySelector('#showcase-caption');
  const reduced=matchMedia('(prefers-reduced-motion: reduce)');
- const files={mobile:{rain:'rain-phone-v2',snow:'snow-phone-v2',stars:'stars-phone-v2',meteor:'meteor-phone-v2',clear:'clear-phone-long'},pc:{rain:'rain-pc-v2',snow:'snow-pc-v2',stars:'stars-pc-v2',meteor:'meteor-pc-v2',clear:'daynight-pc-clear'}};
- let visible=false,paused=false,consent=false,look='rain';
+  let visible=false,paused=false,consent=false;
+ const readingSteps=[
+  '기본 간격 · 얇은 글씨와 형광펜',
+  '글씨를 조금 굵게 · 줄·문단 간격을 좁게',
+  '굵은 글씨 · 넓은 줄 간격과 기울어진 형광펜',
+  '얇은 글씨 · 자간·줄·문단 간격을 넓게'
+ ];
+ function describe(){
+  const night=root.dataset.front==='weather',video=night?weather:reading;
+  const step=Math.min(3,Math.floor((video.currentTime||0)/4.2));
+  const text=`${night?'나이트':'라이트'} · ${readingSteps[step]}`;
+  if(caption.textContent!==text)caption.textContent=text;
+ }
+ for(const video of videos){video.addEventListener('timeupdate',describe);video.addEventListener('loadeddata',describe);video.addEventListener('emptied',describe);}
  function sync(){
   const run=visible&&!document.hidden&&!document.querySelector('#site-guide[open]')&&!paused&&(!reduced.matches||consent);
   for(const v of videos){if(run){if(!v.getAttribute('src'))v.src=v.dataset.src;v.play().catch(()=>{});}else v.pause();}
@@ -12,9 +24,9 @@
  }
  function sources(){
   const device=document.documentElement.classList.contains('device-mobile')?'mobile':'pc';
-  const mode=document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
-  const read=device==='mobile'?`reading-phone-long-${mode}`:mode==='dark'?'reading-night-pc':'reading-white-pc';
-  for(const [v,file] of [[reading,read],[weather,`${files[device][look]}-${mode}`]]){
+    const light=device==='mobile'?'ade-reading-phone-light':'ade-reading-pc-light';
+    const night=device==='mobile'?'ade-reading-phone-dark':'ade-reading-pc-dark';
+    for(const [v,file] of [[reading,light],[weather,night]]){
    const src=`media/${file}.mp4`;if(v.dataset.src===src)continue;
    v.pause();v.removeAttribute('src');v.dataset.src=src;v.poster=`media/${file}.jpg`;v.load();
   }
@@ -23,16 +35,11 @@
  function front(screen){
   root.dataset.front=screen;
   root.querySelectorAll('[data-screen]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.screen===screen)));
-  caption.textContent=screen==='reading'?'글꼴·색·여백을 내 취향대로.':'날씨 효과는 원하는 만큼만.';
+  describe();
  }
  root.querySelectorAll('[data-screen]').forEach(b=>b.addEventListener('click',()=>front(b.dataset.screen)));
- root.querySelectorAll('[data-look]').forEach(b=>b.addEventListener('click',()=>{
-  front('weather');if(look===b.dataset.look)return;look=b.dataset.look;
-  root.querySelectorAll('[data-look]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
-  sources();
- }));
  play.addEventListener('click',()=>{if(reduced.matches&&!consent){consent=true;paused=false;}else paused=!paused;sync();});
  new IntersectionObserver(([e])=>{visible=e.isIntersecting;sync();},{threshold:.08}).observe(root);
  document.addEventListener('visibilitychange',sync);reduced.addEventListener('change',sync);
- document.addEventListener('bl-theme',sources);document.addEventListener('bl-device',sources);document.addEventListener('bl-guideclose',sync);sources();
+ document.addEventListener('bl-theme',sources);document.addEventListener('bl-device',sources);document.addEventListener('bl-guideclose',sync);sources();describe();
 })();

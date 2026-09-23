@@ -4,13 +4,13 @@ const topics = [
   {
     "id": "color",
     "label": "색",
-    "title": "한 방울씩, 나만의 색.",
-    "sub": "에이드를 섞고, 번짐을 조절하고, 마음에 든 색을 저장해요.",
+    "title": "색상과 그라데이션",
+    "sub": "최대 3색 혼합 · 색 비중 · 번짐 조절 · 팔레트 저장",
     "cards": [
       [
         "calm-mix-setting.mp4",
         "에이드 섞기",
-        "두세 가지 색을 원하는 비율로.",
+        "1~3색을 선택한 순서대로 혼합해요.",
         "calm-mix-setting.jpg"
       ],
       [
@@ -21,13 +21,13 @@ const topics = [
       ],
       [
         "472-styles.mp4",
-        "한 번에 입히는 스타일",
+        "스타일 일괄 적용",
         "소설책 · 메신저 · 또렷하게.",
         "472-styles.jpg"
       ],
       [
         "471-palette-library.mp4",
-        "마음에 든 색 보관하기",
+        "팔레트 저장",
         "라이트와 나이트를 한 쌍으로.",
         "471-palette-library.jpg"
       ],
@@ -62,7 +62,7 @@ const topics = [
   {
     "id": "text",
     "label": "대사",
-    "title": "읽는 리듬까지 내 취향으로.",
+    "title": "글꼴과 대사 표시",
     "sub": "형광펜 · 글꼴 · 여백 · 움직이는 대사.",
     "cards": [
       [
@@ -73,7 +73,7 @@ const topics = [
       ],
       [
         "472-fx-setting.mp4",
-        "감정이 실린 대사",
+        "대사 애니메이션",
         "움직임 · 빛 · 색 흐름을 골라요.",
         "472-fx-setting.jpg"
       ],
@@ -117,7 +117,7 @@ const topics = [
       ],
       [
         "471-pc-fonts.mp4",
-        "글꼴과 읽는 리듬",
+        "글꼴과 줄 간격",
         "",
         "471-pc-fonts.jpg"
       ]
@@ -126,12 +126,12 @@ const topics = [
   {
     "id": "profile",
     "label": "사진",
-    "title": "사진을 크게, 이야기는 편안하게.",
+    "title": "프로필 크기와 이미지 배치",
     "sub": "큰 프로필 · 작은 프로필 · 대화만. 액자와 배치도 따로.",
     "cards": [
       [
         "472-profile-setting.mp4",
-        "사진은 원하는 만큼",
+        "프로필 표시 방식",
         "없음 · 작게 · 상단 크게.",
         "472-profile-setting.jpg"
       ],
@@ -143,7 +143,7 @@ const topics = [
       ],
       [
         "472-name-time.mp4",
-        "이름에도 나만의 색",
+        "이름 색상과 글꼴",
         "단색부터 그라데이션, 글꼴까지.",
         "472-name-time.jpg"
       ],
@@ -162,7 +162,7 @@ const topics = [
     ],
     "pc": [
       ["calm-profile-large.mp4", "큰 프로필", "PC에서 상단 사진을 크게.", "calm-profile-large.jpg"],
-      ["calm-profile-small.mp4", "작은 프로필", "익숙한 얼굴과 가벼운 대화.", "calm-profile-small.jpg"],
+      ["calm-profile-small.mp4", "작은 프로필", "메시지 옆에 작은 프로필을 표시해요.", "calm-profile-small.jpg"],
       ["calm-profile-none.mp4", "대화만", "사진 없이 문장에 집중해요.", "calm-profile-none.jpg"],
       [
         "472-pc-profile-setting.mp4",
@@ -178,13 +178,13 @@ const topics = [
       ],
       [
         "472-pc-image-frame.mp4",
-        "사진의 마무리",
+        "이미지 테두리와 모서리",
         "",
         "472-pc-image-frame.jpg"
       ],
       [
         "476-frame-presets.mp4",
-        "사진을 살리는 액자 6종",
+        "액자 프리셋 6종",
         "수채화 · 가는 리본 · 겹친 종이.",
         "476-frame-presets.jpg"
       ]
@@ -193,19 +193,19 @@ const topics = [
   {
     "id": "weather",
     "label": "날씨",
-    "title": "대화 뒤에, 가볍게.",
-    "sub": "비와 눈은 단순하게. 빛과 색은 은은하게. 원하는 효과만 골라요.",
+    "title": "날씨 효과",
+    "sub": "비 · 눈 · 안개 · 은하수 · 유성 · 꽃잎의 속도와 양을 조절해요.",
     "cards": [
       [
         "rain-phone-v2.mp4",
         "가는 비",
-        "선택한 밝기로 보여요.",
+        "라이트 테마의 날씨 효과 예시예요.",
         "rain-phone-v2.jpg"
       ],
       [
         "snow-phone-v2.mp4",
         "작은 눈",
-        "동그란 눈송이가 천천히.",
+        "눈송이의 크기와 속도를 조절해요.",
         "snow-phone-v2.jpg"
       ],
       [
@@ -214,12 +214,12 @@ const topics = [
         "옅게 흐르는 안개.",
         "mist-phone-long.jpg"
       ],
-      ["stars-phone-v2.mp4", "은하수", "부드럽게 흐르는 별빛.", "stars-phone-v2.jpg"],
-      ["meteor-phone-v2.mp4", "유성", "빛의 궤적만 가볍게.", "meteor-phone-v2.jpg"],
+      ["stars-phone-v2.mp4", "은하수", "별 입자가 움직이는 배경 효과.", "stars-phone-v2.jpg"],
+      ["meteor-phone-v2.mp4", "유성", "유성이 화면을 가로지르는 효과.", "meteor-phone-v2.jpg"],
       [
         "petals-phone-long.mp4",
         "작은 색 조각",
-        "꽃잎도 가볍고 단순하게.",
+        "꽃잎 입자의 양과 속도를 조절해요.",
         "petals-phone-long.jpg"
       ],
       [
@@ -242,14 +242,14 @@ const topics = [
         "",
         "snow-pc-v2.jpg"
       ],
-      ["stars-pc-v2.mp4", "은하수", "부드럽게 흐르는 별빛.", "stars-pc-v2.jpg"],
-      ["meteor-pc-v2.mp4", "유성", "빛의 궤적만 가볍게.", "meteor-pc-v2.jpg"]
+      ["stars-pc-v2.mp4", "은하수", "별 입자가 움직이는 배경 효과.", "stars-pc-v2.jpg"],
+      ["meteor-pc-v2.mp4", "유성", "유성이 화면을 가로지르는 효과.", "meteor-pc-v2.jpg"]
     ]
   },
   {
     "id": "capture",
     "label": "캡처",
-    "title": "좋아하는 장면을 간직하는 법.",
+    "title": "채팅 이미지·영상 저장",
     "sub": "미리 보고, 문단을 고르고, 이미지나 영상으로.",
     "cards": [
       [
@@ -313,7 +313,7 @@ const topics = [
   {
     "id": "tools",
     "label": "도구",
-    "title": "필요한 것만, 가까운 곳에.",
+    "title": "내장 확장 도구",
     "sub": "스크립트부터 모델 전환까지 테마 안에서.",
     "cards": [
       [
@@ -377,7 +377,7 @@ const topics = [
   {
     "id": "rewrite",
     "label": "다시 쓰기",
-    "title": "마음에 안 드는 문장만, 다시.",
+    "title": "금지 표현 감지와 다시 쓰기",
     "sub": "금지 묘사 · 규칙 만들기 · 예외 · 테스트.",
     "cards": [
       [
@@ -396,12 +396,7 @@ const topics = [
         "471-rw-exceptions.mp4",
         "캐릭터별 예외",
         "",
-        "471-rw-exceptions.jpg",
-        null,
-        [
-          "예시: 공유봇 천지합동청 ↗",
-          "https://kkangtong.xyz/posts/54677"
-        ]
+        "471-rw-exceptions.jpg"
       ],
       [
         "471-rw-test.mp4",
@@ -435,12 +430,12 @@ const topics = [
   {
     "id": "read",
     "label": "읽기",
-    "title": "읽는 동안에는, 이야기만.",
+    "title": "북마크와 빠른 조작",
     "sub": "북마크 · 빠른 버튼 · 프롬프트 카드 · 한 손 조작.",
     "cards": [
       [
         "472-bookmark-setting.mp4",
-        "좋아하는 장면에 북마크",
+        "메시지 북마크",
         "",
         "472-bookmark-setting.jpg"
       ],
@@ -452,7 +447,7 @@ const topics = [
       ],
       [
         "472-prompt-tab.mp4",
-        "프롬프트 카드도 같은 분위기로",
+        "프롬프트 카드 테마 적용",
         "",
         "472-prompt-tab.jpg"
       ],
@@ -475,7 +470,7 @@ const topics = [
   {
     "id": "settings",
     "label": "설정",
-    "title": "꾸미는 시간도 가볍게.",
+    "title": "설정 검색과 백업",
     "sub": "검색하고, 되돌리고, 내 설정을 보관해요.",
     "cards": [
       [
@@ -486,7 +481,7 @@ const topics = [
       ],
       [
         "471-favorites.mp4",
-        "자주 쓰는 설정은 가까이",
+        "설정 즐겨찾기",
         "",
         "471-favorites.jpg"
       ],
@@ -519,7 +514,7 @@ function element(tag, cls, text) { const e=document.createElement(tag); if(cls)e
 const modeMedia=new Set(["rain-phone-v2", "snow-phone-v2", "mist-phone-long", "stars-phone-v2", "meteor-phone-v2", "petals-phone-long", "rain-pc-v2", "snow-pc-v2", "stars-pc-v2", "meteor-pc-v2", "clear-phone-long", "daynight-pc-clear"]);
 function setMediaMode(video){
  const mode=document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
- const file=video.dataset.modeBase+'-'+mode;video.dataset.src='media/'+file+'.mp4';video.poster='media/'+file+'.jpg';
+ const file=video.dataset.modeBase+'-'+mode;video.dataset.src='media/'+file+'.mp4'+mv(file+'.mp4');video.poster='media/'+file+'.jpg'+mv(file+'.jpg');
 }
 document.addEventListener('bl-theme',()=>{for(const video of document.querySelectorAll('video[data-mode-base]')){
  const playing=!video.paused;video.pause();video.removeAttribute('src');setMediaMode(video);video.load();
@@ -527,7 +522,7 @@ document.addEventListener('bl-theme',()=>{for(const video of document.querySelec
  if(playing&&!document.hidden){video.src=video.dataset.src;video.play().catch(()=>{});}
 }});
 const RETAKEN={};
-const mv=file=>'?v='+(RETAKEN[file]||'s1');
+const mv=file=>'?v='+(RETAKEN[file]||'s1')+'-ade-488';
 
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
 let motionAllowed=false;try{motionAllowed=sessionStorage.getItem('bl-site-motion')==='1';}catch{}
@@ -618,12 +613,7 @@ let current=null;const setCurrent=id=>{current=id;for(const [a,s] of navLinks){c
 const spy=new IntersectionObserver(entries=>{for(const e of entries){if(e.isIntersecting)setCurrent(e.target.id);else if(current===e.target.id)setCurrent(null);}},{rootMargin:'-45% 0px -54% 0px'});
 navLinks.forEach(([,s])=>spy.observe(s));
 
-// white / night toggle — follows the device until the visitor picks one
-const root=document.documentElement, dark=matchMedia('(prefers-color-scheme: dark)');
-$('#theme-toggle').onclick=e=>{const next=(root.dataset.theme||(dark.matches?'dark':'light'))==='dark'?'light':'dark';const swap=()=>{root.dataset.theme=next;try{localStorage.setItem('bl-site-theme',next);}catch{}document.dispatchEvent(new CustomEvent('bl-theme',{detail:next}));};
-  if(!document.startViewTransition||reduceMotion.matches){swap();return;}
-  const b=e.currentTarget.getBoundingClientRect(),x=b.left+b.width/2,y=b.top+b.height/2,r=Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y));
-  root.classList.add('theme-swap');const vt=document.startViewTransition(swap);vt.finished.finally(()=>root.classList.remove('theme-swap'));vt.ready.then(()=>root.animate({clipPath:[`circle(0px at ${x}px ${y}px)`,`circle(${r}px at ${x}px ${y}px)`]},{duration:850,easing:'cubic-bezier(.45,0,.2,1)',pseudoElement:'::view-transition-new(root)'})).catch(()=>{});};
+// Homepage stays light; palette preview brightness is independent.
 
 // quiet fade-up as blocks enter
 const reveal=new IntersectionObserver(entries=>{for(const e of entries)if(e.isIntersecting){e.target.classList.add('in');reveal.unobserve(e.target);}},{rootMargin:'0px 0px -8% 0px'});
