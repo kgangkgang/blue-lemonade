@@ -13,4 +13,7 @@ chat.weather='petal';syncWeatherProfile(chat);assert.equal(chat.weatherColor,'#f
 chat.weather2='lemon';assert.equal(chat.weatherProfiles.lemon.weatherArtStyle,'anime');
 delete chat.weatherProfiles.feather;chat.weather='feather';syncWeatherProfile(chat);assert.equal(chat.weatherArtStyle,'real');
 const roundTrip=JSON.parse(JSON.stringify(chat));syncWeatherProfile(roundTrip);assert.equal(JSON.stringify(roundTrip),JSON.stringify(chat));
+chat.weatherArtStyle='cel';chat.weatherArtOutline=true;syncWeatherProfile(chat);
+chat.weather='lemon';syncWeatherProfile(chat);assert.equal(chat.weatherArtStyle,'anime');assert.equal(chat.weatherArtOutline,false);
+chat.weather='feather';syncWeatherProfile(chat);assert.equal(chat.weatherArtStyle,'cel');assert.equal(chat.weatherArtOutline,true);
 console.log('PASS independent art style, tint, new-mode defaults, mixed layers and save round trip');

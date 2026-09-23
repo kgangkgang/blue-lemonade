@@ -12,7 +12,7 @@ import zipfile
 class GateError(ValueError):
     pass
 
-WEATHER_ARTWORK = tuple(f'{pack}{style}.webp' for pack in ('nature', 'light', 'wings') for style in ('', '-anime'))
+WEATHER_ARTWORK = tuple(f'{pack}{style}.webp' for pack in ('nature', 'light', 'wings') for style in ('', '-anime', '-cel'))
 
 
 def require(condition, message):

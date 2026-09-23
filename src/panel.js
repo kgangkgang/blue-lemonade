@@ -33,6 +33,7 @@ import { decodeAnyImage, imageWidth, imageHeight, IMAGE_ACCEPT } from './imagede
 import { bindSettingsSearch, searchMarkup, paintSettingsSearch } from './settings-search.js';
 import { favoritesMarkup, bindFavorites } from './settings-favorites.js';
 import { bindPreviewViews } from './preview-view.js';
+import { PRESET_GROUPS, capturePreset, readPreset, applyPreset } from './preset-sharing.js';
 
 // 브랜드 레몬 — ✦ 메뉴 · 확장 서랍 · 스플래시와 같은 속찬 레몬(폰트어썸 fa-lemon U+F094) 윤곽 그대로
 export const MARK = '<svg viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path transform="translate(0 448) scale(1 -1)" d="M448 352Q447 379 429 397Q411 415 384 416Q374 416 365 413Q348 407 330 404Q311 400 294 404Q237 418 180 399Q124 379 80 336Q37 292 17 236Q-2 179 12 122Q16 105 12 86Q9 68 3 51Q0 42 0 32Q1 5 19 -13Q37 -31 64 -32Q74 -32 83 -29Q100 -23 118 -20Q137 -16 154 -20Q211 -34 268 -15Q324 5 368 48Q411 92 431 148Q450 205 436 262Q432 279 436 298Q439 316 445 333Q448 342 448 352ZM213 321Q171 308 139 277Q108 245 95 203Q90 190 76 193Q62 198 65 212Q80 262 117 299Q154 336 204 351Q218 354 223 340Q226 326 213 321Z"/></svg>';
@@ -1109,10 +1110,23 @@ function tabBackup() {
     return `<div class="salty-group">
             ${row('실리태번 설정', `<button class="salty-btn" data-act="st-theme">${matched ? '다시 맞추기' : '맞추기'}</button>`,
         matched ? '지금 이 테마에 맞게 돼 있어요' : '흐림 · 그림자 · 말풍선 모양을 이 테마에 맞춰요')}
-            ${row('설정 파일', '<span class="salty-btns"><button class="salty-btn" data-act="export">내보내기</button><button class="salty-btn" data-act="import">가져오기</button></span>')}
+            ${row('프리셋 공유', '<span class="salty-btns"><button class="salty-btn" data-act="preset-export">선택해서 공유하기</button><button class="salty-btn" data-act="preset-import">선택해서 불러오기</button></span>', '형광펜 · 날씨처럼 원하는 묶음만 골라요')}
+            ${row('전체 설정 파일', '<span class="salty-btns"><button class="salty-btn" data-act="export">내보내기</button><button class="salty-btn" data-act="import">가져오기</button></span>')}
             ${row('처음 설정으로', '<button class="salty-btn salty-btn-danger" data-act="reset">되돌리기</button>', '무엇을 되돌릴지 골라요')}
         </div>
-        <input type="file" accept=".json" hidden data-file="settings">`;
+        <input type="file" accept=".json" hidden data-file="settings"><input type="file" accept=".json" hidden data-file="preset">`;
+}
+
+async function askPresetGroups(incoming = null) {
+    const ctx = SillyTavern.getContext(), box = document.createElement('div');
+    const available = PRESET_GROUPS.filter(([id]) => !incoming || incoming.groups[id]);
+    box.className = 'salty-reset-pick';
+    box.innerHTML = `<p><b>${incoming ? '어떤 프리셋을 불러올까요?' : '어떤 프리셋을 공유할까요?'}</b></p>${available.map(([id,label])=>`<label><input type="checkbox" data-preset-group="${id}" ${incoming ? 'checked' : ''}><span>${label}</span></label>`).join('')}<p class="salty-note">${incoming ? '선택한 묶음만 바뀌어요.' : '개인 이미지와 저장한 라이브러리는 담지 않아요.'}</p>`;
+    const ok = await ctx.callGenericPopup(box, ctx.POPUP_TYPE.CONFIRM, '', {okButton: incoming ? '불러오기' : '파일로 공유', cancelButton:'취소'});
+    if (ok !== ctx.POPUP_RESULT?.AFFIRMATIVE) return null;
+    const selected = [...box.querySelectorAll('input:checked')].map(input=>input.dataset.presetGroup);
+    if (!selected.length) {toastr.info('묶음을 하나 이상 골라 주세요.', 'Blue Lemonade'); return null;}
+    return selected;
 }
 
 // ───────── 글자 ─────────
@@ -1336,7 +1350,7 @@ function tabChat(s, sub) {
         ${cap('날씨')}<div class="salty-group">
             ${stack('채팅 뒤 효과', weatherSeg(s), weatherMode(s) === 'tracker' ? '트래커 날씨를 읽어 비 · 눈 · 안개 · 햇살 · 밤의 별을 보여요. 안개비 · 여우비처럼 둘이면 겹쳐요' : '')}
             ${weatherMode(s) === 'custom' ? weatherImageControls(s) : ''}
-            ${['snow','fog','sun','star','firefly','shadow','breeze','glass','water','lemon','petal','feather','butterfly'].includes(weatherMode(s)) ? stack('그림 스타일',seg('chat.weatherArtStyle',[['real','실사풍'],['anime','애니풍']],'real'),'색과 움직임은 그대로, 그림의 느낌만 바꿔요. 날씨마다 기억해요.') : ''}
+            ${['snow','fog','sun','star','firefly','shadow','breeze','glass','water','lemon','petal','feather','butterfly'].includes(weatherMode(s)) ? stack('그림 스타일',seg('chat.weatherArtStyle',[['real','실사풍'],['anime','일러스트풍'],['cel','셀 애니풍']],'real'),'색과 움직임은 그대로, 그림의 느낌만 바꿔요. 날씨마다 기억해요.') : ''}
             ${!['off', 'tracker'].includes(weatherMode(s)) ? stack('세기', seg('chat.weatherLevel', [[1, '약하게'], [2, '보통'], [3, '강하게']])) : ''}
             ${weatherMode(s) === 'tracker' ? `<p class="salty-note">세기 · 색 · 모양은 그 날씨를 직접 골랐을 때 맞춰 둔 값을 그대로 써요. 비는 비대로, 눈은 눈대로요.</p>
             <button type="button" class="salty-btn bl-weather-skip-fold" data-act="weather-skip-fold" aria-expanded="${!!ui.weatherSkipOpen}">제외할 날씨${(s.chat.weatherTrackerSkip || []).length ? ` · ${s.chat.weatherTrackerSkip.length}` : ''} <i class="fa-solid fa-chevron-${ui.weatherSkipOpen ? 'up' : 'down'}"></i></button>
@@ -1357,6 +1371,7 @@ function tabChat(s, sub) {
             ${s.chat.weather==='breeze'?`<p class="salty-note">각도는 바람 방향, 회전은 잎이 도는 빠르기예요.</p>`:''}
             ${s.chat.weather==='star'?`${stack('별 모양',seg('chat.weatherStarStyle',[['sky','반짝이는 별'],['milky','은하수']],'sky'))}<p class="salty-note">속도는 반짝이는 빠르기, 흔들림은 반짝임의 깊이, 각도는 하늘이 흐르는 방향(은하수는 띠가 누운 방향), 회전은 십자 빛이 도는 빠르기예요. 가끔 별똥별이 지나가요. 유성과 겹치면 잘 어울려요.</p>`:''}
             ${s.chat.weather==='firefly'?`<p class="salty-note">속도는 나는 빠르기, 흔들림은 헤매는 정도, 각도는 쏠리는 방향, 회전은 깜빡이는 빠르기예요.</p>`:''}
+            ${['snow','fog','sun','star','firefly','shadow','breeze','glass','water','lemon','petal','feather','butterfly'].includes(weatherMode(s)) ? row('그림 외곽선',toggle('chat.weatherArtOutline',s.chat.weatherArtOutline)) : ''}
             ${s.chat.weather==='sun'?`${stack('햇살 모양',seg('chat.weatherSunStyle',[['shaft','빛줄기'],['holy','성스러운 빛'],['anime','애니풍'],['flare','렌즈 플레어']],'shaft'))}<p class="salty-note">각도는 빛이 드는 쪽, 크기는 빛의 굵기, 속도 · 흔들림은 일렁임이에요. 렌즈 플레어는 육각 빛번짐이 줄지어 놓여요.</p>`:''}
             ${s.chat.weather==='fog'?`${stack('안개 모양',seg('chat.weatherFogStyle',[['soft','뭉게뭉게'],['anime','애니풍 구름 띠'],['wisp','실안개']],'soft'))}${stack('안개 위치',seg('chat.weatherFogArea',[['all','전체'],['bottom','아래쪽'],['top','위쪽'],['both','위아래']],'all'))}${slider('chat.weatherFogStretch','길이',50,300,1,100)}${slider('chat.weatherFogEdge','가장자리 선명하게',0,100,1,30)}${slider('chat.weatherFogSwell','부풀기',0,300,1,100)}${slider('chat.weatherFogDepth','깊이감',0,200,1,100)}<p class="salty-note">각도는 흐르는 방향(왼쪽 · 오른쪽)만 정해요.</p>`:''}
             ${slider('chat.weatherOpacity', '투명도', 10, 100, 1, 100)}
@@ -2223,6 +2238,16 @@ function bind(root) {
                     await root._issues?.[Number(el.dataset.i)]?.run();
                     setTimeout(refreshPanels, 400);
                     break;
+                case 'preset-export': {
+                    const selected = await askPresetGroups(); if (!selected) break;
+                    const payload = capturePreset(getSettings(), selected);
+                    const a = document.createElement('a');a.href = URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));
+                    a.download = `blue-lemonade-preset-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+                    break;
+                }
+                case 'preset-import':
+                    root.querySelector('input[data-file="preset"]')?.click();
+                    break;
                 case 'export': {
                     const blob = new Blob([JSON.stringify({ saltySettings: true, version: 2, settings: getSettings() }, null, 2)], { type: 'application/json' });
                     const a = document.createElement('a');
@@ -2587,6 +2612,15 @@ function bind(root) {
             }
             target.value = '';
             return;
+        }
+        if (target.matches('input[data-file="preset"]') && target.files?.[0]) {
+            try {
+                if (target.files[0].size > 1024 * 1024) throw new Error('프리셋 파일이 너무 커요');
+                const incoming = readPreset(JSON.parse(await target.files[0].text()));
+                const selected = await askPresetGroups(incoming);
+                if (selected) {update(st=>applyPreset(st,incoming,selected));toastr.success('선택한 프리셋을 불러왔어요','Blue Lemonade');}
+            } catch (error) {toastr.error(error.message || String(error),'Blue Lemonade');}
+            target.value='';return;
         }
         if (target.matches('input[data-file="settings"]') && target.files?.[0]) {
             try {

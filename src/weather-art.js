@@ -25,7 +25,7 @@ async function decodePack(name, canvas) {
         const paint = scratch.getContext('2d', { willReadFrequently: true });
         const textures = new Map();
         try {
-            for (const [index, kind] of PACKS[name.replace('-anime', '')].entries()) {
+            for (const [index, kind] of PACKS[name.replace(/-(anime|cel)$/, '')].entries()) {
                 paint.clearRect(0, 0, cw, ch);
                 paint.drawImage(atlas, index % 3 * cw, Math.floor(index / 3) * ch, cw, ch, 0, 0, cw, ch);
                 const pixels = paint.getImageData(0, 0, cw, ch).data;
@@ -62,7 +62,7 @@ export function createWeatherArt(canvas, wake) {
         request(mode, style = 'real') {
             if (disposed || (typeof createImageBitmap !== 'function' && typeof Image !== 'function')) return;
             for (const base of MODES[mode] || []) {
-                const name = style === 'anime' ? `${base}-anime` : base;
+                const name = ['anime', 'cel'].includes(style) ? `${base}-${style}` : base;
                 if (pending.has(name) || owned.has(name)) continue;
                 let pack = packs.get(name);
                 if (!pack) {
@@ -80,20 +80,33 @@ export function createWeatherArt(canvas, wake) {
             }
         },
         ready: () => Promise.all([...pending.values()]),
-        get(kind, color = null, style = 'real') {
+        get(kind, color = null, style = 'real', outline = false) {
             if (disposed) return null;
             let source;
-            for (const [name, pack] of owned) {if (name.endsWith('-anime') !== (style === 'anime')) continue; source = pack.textures?.get(kind); if (source) break; }
-            if (!source || !color) return source || null;
-            const key = `${style}|${kind}|${color}`;
+            for (const [name, pack] of owned) {if ((name.match(/-(anime|cel)$/)?.[1] || 'real') !== style) continue; source = pack.textures?.get(kind); if (source) break; }
+            if (!source || (!color && !outline)) return source || null;
+            const key = `${style}|${kind}|${color}|${outline}`;
             if (tinted.has(key)) return tinted.get(key);
             const result = canvas(source.width, source.height); if (!result) return source;
             const paint = result.getContext('2d');
             // A luminance layer preserves the painted veins, folds and cloud relief.
-            paint.filter = 'grayscale(1) brightness(1.25)';
-            paint.drawImage(source, 0, 0); paint.filter = 'none';
-            paint.globalCompositeOperation = 'multiply'; paint.fillStyle = `rgb(${color})`; paint.fillRect(0, 0, result.width, result.height);
-            paint.globalCompositeOperation = 'destination-in'; paint.drawImage(source, 0, 0);
+            if (color) {
+                paint.filter = 'grayscale(1) brightness(1.25)';
+                paint.drawImage(source, 0, 0); paint.filter = 'none';
+                paint.globalCompositeOperation = 'multiply'; paint.fillStyle = `rgb(${color})`; paint.fillRect(0, 0, result.width, result.height);
+                paint.globalCompositeOperation = 'destination-in'; paint.drawImage(source, 0, 0);
+                paint.globalCompositeOperation = 'source-over';
+            } else paint.drawImage(source, 0, 0);
+            if (outline) {
+                const edge = canvas(source.width, source.height), brush = edge?.getContext('2d');
+                if (brush) {
+                    const r = Math.max(1, Math.min(source.width, source.height) * .018);
+                    for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6; brush.drawImage(source, Math.cos(a) * r, Math.sin(a) * r); }
+                    brush.globalCompositeOperation = 'source-in'; brush.fillStyle = 'rgba(49,68,98,.65)'; brush.fillRect(0, 0, edge.width, edge.height);
+                    paint.globalCompositeOperation = 'destination-over'; paint.drawImage(edge, 0, 0); paint.globalCompositeOperation = 'source-over';
+                    edge.width = edge.height = 1;
+                }
+            }
             tinted.set(key, result); return result;
         },
         clearTint,

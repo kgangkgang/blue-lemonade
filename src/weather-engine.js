@@ -20,8 +20,8 @@ function createCore(ctx, first, shared = {}) {
     let H = 0;
     let dpr = 1;
     let mode = 'off';
-    let artStyle = 'real';
-    const materials = { get: (kind, color) => shared.art?.get(kind, color, artStyle) };
+    let artStyle = 'real', artOutline = false;
+    const materials = { get: (kind, color) => shared.art?.get(kind, color, artStyle, artOutline) };
     let level = 2;
     let colors = { rain: '200,215,240', rainAlpha: 0.3, snow: '255,255,255', snowAlpha: 0.8 };
     let opacity = 1;
@@ -64,7 +64,7 @@ function createCore(ctx, first, shared = {}) {
     const fogBake = canvas => canvas;
     const fogDrop = () => { for (const image of fogSprites) { if (typeof image.close === 'function') image.close(); else image.width = image.height = 1; } fogSprites = []; };
     function fogPaint() {
-        const key = [artStyle, mix(0), mix(.5), mix(1), colors.snow, fog.style, Math.round(fog.edge * 20), !!materials.get('cloud')].join('|');
+        const key = [artStyle, artOutline, mix(0), mix(.5), mix(1), colors.snow, fog.style, Math.round(fog.edge * 20), !!materials.get('cloud')].join('|');
         if (key === fogKey && fogSprites.length) return;
         fogDrop(); fogKey = key;
         const e = fog.edge;
@@ -672,8 +672,8 @@ function createCore(ctx, first, shared = {}) {
             else if (changed || !items.length) seed();
         },
         config(next) {
-            const wantedArt = next.artStyle === 'anime' ? 'anime' : 'real';
-            const artChanged = wantedArt !== artStyle; artStyle = wantedArt;
+            const wantedArt = ['anime', 'cel'].includes(next.artStyle) ? next.artStyle : 'real';
+            const artChanged = wantedArt !== artStyle || !!next.artOutline !== artOutline; artStyle = wantedArt; artOutline = !!next.artOutline;
             const spriteChanged = next.sprite !== undefined;
             const nextTint='tint' in next&&/^#[0-9a-f]{6}$/i.test(next.tint||'')?next.tint.toLowerCase():'tint' in next?null:tint;
             const nextTint2=nextTint&&/^#[0-9a-f]{6}$/i.test(next.tint2||'')?next.tint2.toLowerCase():'tint2' in next||!nextTint?null:tint2;

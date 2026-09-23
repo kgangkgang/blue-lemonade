@@ -235,7 +235,7 @@ function dropSprites(env, ink, rim) {
 }
 
 function glass(env) {
-    const drop = () => ({ x: env.rand(0, env.W), y: env.rand(0, env.H), r: 2 + Math.pow(Math.random(), 2.4) * 11, kind: Math.floor(Math.random() * 6), born: -1, sliding: false, from: 0, vy: 0, phase: env.rand(0, TAU), beads: [] });
+    const drop = () => ({ x: env.rand(0, env.W), y: env.rand(0, env.H), r: 2 + Math.pow(Math.random(), 2.4) * 11, kind: Math.floor(Math.random() * 6), born: -1, sliding: false, vy: 0, tilt: 0, phase: env.rand(0, TAU), beads: [], trail: [] });
     let drops = [], streaks = [], sprites = [], key = '';
     const fill = () => {
         drops = Array.from({ length: Math.min(130, Math.round(env.W * env.H * .00011 * env.k)) }, drop);
@@ -252,17 +252,31 @@ function glass(env) {
                     if (still) continue;
                     const creep = (1.2 + d.r * .8) * (.25 + .75 * Math.max(0, Math.sin(t * .6 + d.phase))) * pace(env) * dt; // 붙은 채 천천히 기어 내린다
                     d.y += creep; d.x += creep * env.slant * .6;
+                    d.tilt = -Math.atan(env.slant * .6);
                     if (d.y - d.r > env.H + 12) { drops[i] = drop(); drops[i].y = env.rand(-10, env.H * .25); drops[i].born = t; continue; }
-                    if (d.r > 5 && Math.random() < rate * dt) { d.sliding = true; d.from = d.y; d.vy = 24 + d.r * 14; }
+                    if (d.r > 5 && Math.random() < rate * dt) { d.sliding = true; d.trail = [[d.x, d.y]]; d.vy = 24 + d.r * 14; }
                     continue;
                 }
-                const before = d.y;
                 d.vy += 20 * dt; // 흘러내리며 조금씩 빨라진다
-                d.y += d.vy * pace(env) * dt; d.x += (d.vy * env.slant * .6 + Math.sin(t * 2.4 + d.phase) * 7 * wobble(env)) * dt;
-                if (Math.floor(before / 22) !== Math.floor(d.y / 22) && d.beads.length < 14) d.beads.push([d.x + env.rand(-1.5, 1.5), before, env.rand(1, 2.2)]); // 지나간 자리에 남는 작은 방울
+                const vx = d.vy * env.slant * .6 + Math.sin(t * 2.4 + d.phase) * 7 * wobble(env);
+                const distance = pace(env) * dt;
+                d.x += vx * distance; d.y += d.vy * distance;
+                d.tilt = -Math.atan2(vx, d.vy); // 방울의 긴 축을 실제 흐르는 방향에 맞춘다
+                const last = d.trail[d.trail.length - 1];
+                if (Math.hypot(d.x - last[0], d.y - last[1]) >= 3) {
+                    d.trail.push([d.x, d.y]);
+                    if (d.trail.length > 64) d.trail.shift();
+                }
+                const bead = d.beads[d.beads.length - 1] || d.trail[0];
+                if (Math.hypot(d.x - bead[0], d.y - bead[1]) >= 22) {
+                    d.beads.push([d.x, d.y, env.rand(1, 2.2)]);
+                    if (d.beads.length > 14) d.beads.shift();
+                }
+                while (d.trail.length > 1 && d.y - d.trail[0][1] > 180) d.trail.shift();
+                while (d.beads.length && d.y - d.beads[0][1] > 180) d.beads.shift();
                 if (d.y - d.r > env.H + 12) { drops[i] = drop(); drops[i].born = t; }
             }
-            if (!still) for (const s of streaks) { s.y += s.v * pace(env) * dt; s.x += s.v * env.slant * dt; if (s.y - s.len > env.H) { s.y = -env.rand(10, env.H * .6); s.x = env.rand(0, env.W); } }
+            if (!still) for (const s of streaks) { const travel = s.v * pace(env) * dt; s.y += travel; s.x += travel * env.slant; if (s.y - s.len > env.H) { s.y = -env.rand(10, env.H * .6); s.x = env.rand(0, env.W); } }
         },
         draw(t) {
             const { ctx } = env, ink = inkOf(env, 0, env.light ? '214,232,250' : '236,245,255'), rim = env.light ? '30,50,75' : '6,10,16';
@@ -273,20 +287,27 @@ function glass(env) {
             ctx.strokeStyle = `rgba(${ink},${(.12 * env.opacity).toFixed(3)})`; ctx.lineWidth = 1; ctx.beginPath();
             for (const s of streaks) { ctx.moveTo(s.x, s.y); ctx.lineTo(s.x - s.len * env.slant, s.y - s.len); }
             ctx.stroke();
-            const stamp = (x, y, r, kind, alpha, stretch = 1) => {
+            const stamp = (x, y, r, kind, alpha, stretch = 1, tilt = 0) => {
                 const want = r * 2 * 1.9 * env.size * env.dpr; let b = 0; while (b < DROP_SIZES.length - 1 && DROP_SIZES[b] < want) b++;
                 const w = DROP_SIZES[b] / env.dpr, h = w * stretch; // 묶음 크기 그대로 (1:1)
-                ctx.globalAlpha = alpha; ctx.drawImage(sprites[b * 6 + (kind % 6)] || sprites[kind % 6], Math.round((x - w / 2) * env.dpr) / env.dpr, Math.round((y - h * .52) * env.dpr) / env.dpr, w, h);
+                ctx.globalAlpha = alpha;
+                const cos = Math.cos(tilt) * env.dpr, sin = Math.sin(tilt) * env.dpr;
+                ctx.setTransform(cos, sin, -sin, cos, Math.round(x * env.dpr), Math.round(y * env.dpr));
+                ctx.drawImage(sprites[b * 6 + (kind % 6)] || sprites[kind % 6], -w / 2, -h * .52, w, h);
+                ctx.setTransform(env.dpr, 0, 0, env.dpr, 0, 0);
             };
             for (const d of drops) {
                 const a = Math.min(1, (t - d.born) / 1.2) * env.opacity;
-                if (d.sliding && d.y - d.from > 4) { // 젖은 자국: 옅은 물길 + 남은 작은 방울들
-                    const g = ctx.createLinearGradient(0, d.from, 0, d.y);
+                if (d.sliding && d.trail.length > 1) { // 지나온 좌표를 잇는다 — 움직이는 방울에 수직 꼬리를 붙이지 않는다
+                    const [startX, startY] = d.trail[0];
+                    const g = ctx.createLinearGradient(startX, startY, d.x, d.y);
                     g.addColorStop(0, `rgba(${ink},0)`); g.addColorStop(1, `rgba(${ink},${(.2 * a).toFixed(3)})`);
-                    ctx.globalAlpha = 1; ctx.strokeStyle = g; ctx.lineWidth = Math.max(1, d.r * .5 * env.size); ctx.beginPath(); ctx.moveTo(d.x, d.from); ctx.lineTo(d.x, d.y); ctx.stroke();
+                    ctx.globalAlpha = 1; ctx.strokeStyle = g; ctx.lineWidth = Math.max(1, d.r * .5 * env.size); ctx.beginPath(); ctx.moveTo(startX, startY);
+                    for (let j = 1; j < d.trail.length; j++) ctx.lineTo(d.trail[j][0], d.trail[j][1]);
+                    ctx.lineTo(d.x, d.y); ctx.stroke();
                     for (const [bx, by, br] of d.beads) stamp(bx, by, br, d.kind + 1, a * .9);
                 }
-                stamp(d.x, d.y, d.r, d.kind, a, d.sliding ? 1.3 : 1);
+                stamp(d.x, d.y, d.r, d.kind, a, d.sliding ? 1.3 : 1, d.tilt);
             }
             ctx.globalAlpha = 1;
         },
