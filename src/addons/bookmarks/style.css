@@ -1649,6 +1649,8 @@ body.cg-previewing #chat .mes .swipes-counter { display: none !important; }
 .cg-root .cg-card-head { min-height: 30px; padding: 0; gap: 8px; margin-bottom: 9px; }
 .cg-root .cg-card-who { flex: 1; flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 3px 10px; }
 .cg-root .cg-card-who span { margin-left: auto; color: var(--cg-muted); font-size: .72rem; }
+.cg-root .cg-card-head--metadata { min-height: 0; margin-bottom: 8px; }
+.cg-root .cg-card-head--metadata .cg-card-who span { margin-left: 0; }
 .cg-root .cg-message-surface { padding: 14px 17px; border-radius: 3px 18px 18px 18px; background: var(--salty-shade, var(--cg-card)); min-width: 0; }
 .cg-root .cg-card-body { margin-top: 0; }
 .cg-root .cg-card.is-user .cg-message-surface { background: color-mix(in srgb, var(--cg-user, var(--cg-text)) 8%, var(--salty-bg, var(--cg-base))); }

@@ -4,7 +4,7 @@ import { extension_settings, getContext } from '../../../../../../extensions.js'
 import { saveSettingsDebounced } from '../../../../../../../script.js';
 
 export const MODULE = 'chaekgalpi';
-export const VERSION = '1.3.4';
+export const VERSION = '1.3.5';
 
 export const DEFAULT_COLORS = Object.freeze({ accent: '#a98bd9', user: '#5aa9e6', icon: '#f2c14e' });
 const COLOR_KEYS = Object.keys(DEFAULT_COLORS);
@@ -14,6 +14,7 @@ const DEFAULTS = Object.freeze({
     theme: 'auto',          // auto: 실리태번 테마를 따른다 / light / dark
     iconStyle: 'star',      // 메시지에 붙는 아이콘: star / bookmark
     showIdentity: true,     // 북마크마다 프로필 사진과 이름 표시
+    showTimestamp: true,    // 프로필 표시와 별개로 날짜·시간 표시
     collapseLong: true,     // 긴 메시지를 접어서 보여 준다
     itemsPerPage: 10,
     contextRange: 1,        // 앞뒤 문맥 창에서 앞뒤로 보여 줄 메시지 수

@@ -86,8 +86,12 @@ export function renderSettingsPage(page, viewingChat, onBack) {
 
             <section class="cg-section">
                 <div class="cg-setting">
-                    <div class="cg-setting-text"><b>프로필 사진·이름 표시</b><small>끄면 북마크의 머리줄을 숨겨요.</small></div>
+                    <div class="cg-setting-text"><b>프로필 사진·이름 표시</b><small>북마크에 작성자의 사진과 이름을 보여요.</small></div>
                     <button type="button" class="cg-switch" role="switch" aria-label="프로필 사진·이름 표시" data-setting="showIdentity" aria-checked="${store.showIdentity !== false}"><span></span></button>
+                </div>
+                <div class="cg-setting">
+                    <div class="cg-setting-text"><b>날짜·시간 표시</b><small>메시지 번호와 작성 날짜·시간을 보여요.</small></div>
+                    <button type="button" class="cg-switch" role="switch" aria-label="날짜·시간 표시" data-setting="showTimestamp" aria-checked="${store.showTimestamp !== false}"><span></span></button>
                 </div>
             </section>
 

@@ -638,6 +638,8 @@ function renderCard(record, fav, index) {
     const formatIndex = record.isCurrent ? index : null;
     const name = message?.name ?? fav.sender ?? '알 수 없음';
     const date = message ? formatDate(message.send_date) : '';
+    const showIdentity = settings().showIdentity !== false;
+    const showTimestamp = settings().showTimestamp !== false;
     const note = renderNoteHtml(fav.note);
     const reasoning = message ? renderReasoningHtml(message, formatIndex) : '';
     const body = message
@@ -659,11 +661,11 @@ function renderCard(record, fav, index) {
     return `
         <article class="cg-card ${isUser ? 'is-user' : 'is-ai'}${missing ? ' is-missing' : ''}${fav.virtual ? ' is-virtual' : ''}" data-fav-id="${escapeHtml(fav.id)}" data-index="${index}"${fav.virtual ? ' data-virtual="1"' : ''}>
             <span class="cg-ribbon" aria-hidden="true"></span>
-            ${settings().showIdentity !== false ? `<header class="cg-card-head">
-                <img class="cg-card-avatar" src="${escapeHtml(avatarForMessage(message ?? { is_user: isUser }, record.owner))}" alt="" loading="lazy" onerror="this.src='img/ai4.png'">
+            ${showIdentity || showTimestamp ? `<header class="cg-card-head${showIdentity ? '' : ' cg-card-head--metadata'}">
+                ${showIdentity ? `<img class="cg-card-avatar" src="${escapeHtml(avatarForMessage(message ?? { is_user: isUser }, record.owner))}" alt="" loading="lazy" onerror="this.src='img/ai4.png'">` : ''}
                 <div class="cg-card-who">
-                    <b>${escapeHtml(name)}</b>
-                    <span>${indexLabel}${date ? ` · ${escapeHtml(date)}` : ''}</span>
+                    ${showIdentity ? `<b>${escapeHtml(name)}</b>` : ''}
+                    ${showTimestamp ? `<span>${indexLabel}${date ? ` · ${escapeHtml(date)}` : ''}</span>` : ''}
                 </div>
             </header>` : ''}
             ${reasoning ? `<details class="cg-reasoning"><summary><i class="fa-solid fa-brain"></i> 생각 과정</summary><div class="mes_text">${reasoning}</div></details>` : ''}
