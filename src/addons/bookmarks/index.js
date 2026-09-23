@@ -256,7 +256,7 @@ function syncThemeColors() {
     // 4.7.8: head 는 시작할 때 수십 번 바뀐다(다른 확장의 <style> · 글꼴). 그때마다 getComputedStyle(:root) 를 읽으면 문서 전체 스타일을
     // 다시 계산한다(부팅 0.3~0.4s@4x). 테마가 실제로 쓰는 것 — 변수 <style> 글자 · body 의 salty 클래스 — 이 같으면 계산 없이 끝낸다.
     const vars = document.getElementById('salty-vars')?.textContent || '';
-    const cheap = `${vars.length}|${vars.slice(0, 80)}|${document.body.classList.contains('salty')}|${document.body.classList.contains('salty-dark')}|${!!settings().followTheme}`;
+    const cheap = `${vars}|${document.body.classList.contains('salty')}|${document.body.classList.contains('salty-dark')}|${!!settings().followTheme}`;
     if (cheap === cheapSignature) return;
     cheapSignature = cheap;
     const signature = JSON.stringify([!!settings().followTheme, themeColors(), document.body.classList.contains('salty-dark')]);

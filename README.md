@@ -7,18 +7,6 @@
 
 [화면 둘러보기 · 업데이트 · 모바일 ZIP](https://kgangkgang.github.io/blue-lemonade/)
 
-## 4.8.1
-
-- 최적화 2차 (폰 리그 412px · CPU 4배 느리게 · 7 MB 채팅, `audit/opt412/perf`). 시작: 한글화 1.4.2 가 라틴·가나·한자가 없는 글(대부분의 한국어 노드)을 `MAYBE_FOREIGN` 한 번으로 건너뜀, 북마크 `themeColors()` 를 `salty-vars` 글자로 메모(부팅마다 메시지 수만큼 `getComputedStyle(:root)`), `fonts.js` 빈 글리프 검사를 localStorage(`bl-blank-glyphs`)에 기억. 답 받기: `typography` 조판과 `assets` 앞줄 정리를 `body[data-generating]` 동안 미루고 답이 끝나면 한 번, `cardink` 는 답이 끝날 때 채팅 전체 대신 마지막 메시지만, `switchflush` 는 handler 별 timerKind 를 WeakMap 에 기억(`new Error().stack` 을 걸음마다 뜨던 것). 측정(3회 중앙값, 4배속): 테마 시작 JS 4.6 s → 3.6 s, 마지막 토큰 → 입력 해제 2.8 s → 2.1 s, → 번역 완료 7.1 s → 5.4 s(편차 큼), 스트리밍 중 테마 몫 ≈ 7 %. 남은 것: 성능 보조 `morph.js` 답마다 0.6 s, `lite.js` 미리보기 규칙 주차 0.45 s, 저장 정리 getContext 감싸기, 프롬프트 목록 관찰자.
-
-## 4.8.0
-
-- 비의 측면 이탈을 반대쪽 같은 높이로 이어 각도에 따른 빈 구역을 수정. 이동 입자 경계 처리 보강 및 PC/폰 ±60도 장시간 모서리 회귀 검사.
-
-## 4.7.8
-
-- 에이드 혼합 1색 선택 보존, 누른 순서대로 추가, 단색 렌더링 지원.
-
 ## 4.7.7
 
 - 다시 쓰기 **1.9.1** (`audit/ban-word-rewrite-1.9.1`, 패치 `rewrite191-claws.py`): `gray_nails`(색깔 손톱)가 놓치던 두 모양 — 색과 손톱 사이에 낱말이 끼는 한국어("검은 악마의 손톱", `colored()` 는 바로 붙어야 잡았다)와 회색 계열이 아닌 색의 claws/talons("neatly trimmed black demon claws", claws 패턴은 `GRAYS` 만). 영어 2줄(색 + 최대 2낱말 + claws, `claws at` 제외 · claws … were 색) + 한 · 일 · 중 3줄. 벨포드 · 아델스타인은 예외 allow 그대로. 검사 `tests191-claws.mjs` 금지 12 · 허용 7; 옛 회귀의 "his black claws … = 허용" 기대는 이번 요청과 어긋나 금지로 옮김(49/49).
@@ -581,5 +569,3 @@ GIF 인코더는 GIF 저장을 선택할 때에만 별도 워커에서 불러옵
 액자 자동 인식은 닫힌 테두리에 적합합니다. 선이 열려 있으면 틈 연결 또는 직접 영역 지정으로 보완하세요. 이름 꾸미기는 큰 프로필 모드에서 적용됩니다.
 
 세로 자르기는 CSS object-view-box를 지원하는 최신 브라우저에서 동작합니다. 장식 액자는 원래 비율과 최대 높이를 유지하므로 세로로 긴 액자를 가로 꽉 배치하면 좌우 여백이 남을 수 있습니다.
-
-4.8.0: 날씨 글 읽기 우선, 폰·PC 배치 분리, 누르는 동안 원래 모습 비교, 홈페이지 설정 내보내기.

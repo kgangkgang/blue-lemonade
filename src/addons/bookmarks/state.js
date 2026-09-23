@@ -126,7 +126,7 @@ let themeMemo = null;
 export function themeColors() {
     if (!document.body?.classList.contains('salty')) return null;
     const vars = document.getElementById('salty-vars')?.textContent || '';
-    const sig = `${vars.length}|${vars.slice(0, 160)}|${document.body.classList.contains('salty-dark')}`;
+    const sig = `${vars}|${document.body.classList.contains('salty-dark')}`;
     if (themeMemo && themeMemo.sig === sig) return themeMemo.value ? { ...themeMemo.value } : null;
     const style = getComputedStyle(document.documentElement);
     const hexOf = (name) => {
@@ -136,7 +136,7 @@ export function themeColors() {
     const accent = hexOf('--salty-accent');
     const value = accent ? { accent, user: accent, icon: hexOf('--salty-pop') ?? accent } : null;
     // 변수가 아직 안 쓰였을 때(시작 직후)의 null 은 기억하지 않는다 — 다음 호출이 다시 읽는다
-    if (vars) themeMemo = { sig, value };
+    if (vars && value) themeMemo = { sig, value };
     return value ? { ...value } : null;
 }
 

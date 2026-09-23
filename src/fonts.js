@@ -256,7 +256,7 @@ async function probeSource(font) {
 /** 이 글꼴이 빈 글리프로 그리는 문자 종류: ['han', 'kana', 'latin'] 가운데 해당하는 것 */
 // 4.7.8: 결과는 기기에 남긴다 — 같은 파일(src)이면 시작할 때마다 캔버스에 그려 보지 않는다 (부팅 0.1~0.15s@4x)
 const BLANK_STORE = 'bl-blank-glyphs';
-function storedBlank() { try { return JSON.parse(localStorage.getItem(BLANK_STORE) || '{}'); } catch { return {}; } }
+function storedBlank() { try { const value = JSON.parse(localStorage.getItem(BLANK_STORE) || '{}'); return value && typeof value === 'object' && !Array.isArray(value) ? value : {}; } catch { return {}; } }
 function rememberBlank(id, src, out) {
     try { const all = storedBlank(); all[id] = { src, out }; const keys = Object.keys(all); if (keys.length > 60) delete all[keys[0]]; localStorage.setItem(BLANK_STORE, JSON.stringify(all)); } catch { /* 저장 공간이 없으면 다음에 다시 잰다 */ }
 }
