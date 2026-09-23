@@ -315,14 +315,14 @@ function createCore(ctx, first, shared = {}) {
                 if (nebula) {
                     const c = Math.cos(th) * dpr, s = Math.sin(th) * dpr;
                     ctx.setTransform(c, s, -s, c, cx * dpr, cy * dpr);
-                    ctx.globalAlpha = (light ? .2 : .38) * opacity * (1 + Math.sin(t * .12 * speedK) * .08 * depthK);
+                    ctx.globalAlpha = .38 * opacity * (1 + Math.sin(t * .12 * speedK) * .08 * depthK);
                     ctx.drawImage(nebula, -reach, -girth * 1.4, reach * 2, girth * 2.8);
                     ctx.globalAlpha = 1; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
                 } else {
                 const hues = ['150,130,255', '110,170,255', '255,150,220'];
                 for (let n = 0; n < 7; n++) {
                     const u = (n / 6 - .5) * 2, x = cx + Math.cos(th) * u * reach, y = cy + Math.sin(th) * u * reach, r = girth * (1.7 - Math.abs(u) * .6);
-                    const a = (light ? .16 : .13) * (1 - Math.abs(u) * .45) * opacity * (1 + Math.sin(t * .2 * speedK + n) * .15 * depthK);
+                    const a = (light ? .25 : .13) * (1 - Math.abs(u) * .45) * opacity * (1 + Math.sin(t * .2 * speedK + n) * .15 * depthK);
                     const ink = rgbB ? mix(n / 6) : tintRGB || hues[n % 3];
                     const g = ctx.createRadialGradient(x, y, 0, x, y, r);
                     g.addColorStop(0, `rgba(${ink},${a.toFixed(3)})`); g.addColorStop(.6, `rgba(${ink},${(a * .4).toFixed(3)})`); g.addColorStop(1, `rgba(${ink},0)`);
@@ -333,7 +333,7 @@ function createCore(ctx, first, shared = {}) {
             for (const p of items) {
                 if (p.band) { p.x = cx + Math.cos(th) * p.u * reach - Math.sin(th) * p.off * girth * 1.25; p.y = cy + Math.sin(th) * p.u * reach + Math.cos(th) * p.off * girth * 1.25; }
                 const twinkle = 1 - depthK * (.5 + .5 * Math.sin(t * p.freq * speedK + p.phase));
-                const a = Math.min(1, (.35 + p.depth * .65) * twinkle * opacity * (light ? .85 : 1));
+                const a = Math.min(1, (.35 + p.depth * .65) * twinkle * opacity);
                 if (a < .02) continue;
                 const ink = rgbB ? mix(p.tone) : tintRGB || (light ? colors.snow : p.tone < .2 ? '255,236,200' : p.tone < .45 ? '200,222,255' : '255,255,255');
                 const r = p.r * scale;
@@ -534,7 +534,7 @@ function createCore(ctx, first, shared = {}) {
                 const light = colors.snowAlpha < .7;
                 // Quiet fine arcs stay readable over chat. A few brighter tips
                 // add depth without giving every streak a large circular head.
-                ctx.globalAlpha = opacity * (.36 + p.depth * .46);
+                ctx.globalAlpha = opacity * (light ? .62 + p.depth * .35 : .36 + p.depth * .46);
                 for (let pass=0;pass<2;pass++) {
                     const glow=pass===0;
                     const gradient = ctx.createLinearGradient(points[0], points[1], points[48], points[49]);

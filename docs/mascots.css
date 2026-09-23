@@ -1,0 +1,19 @@
+.site-pets{position:fixed;inset:0;z-index:115;pointer-events:none;overflow:hidden;contain:layout style}
+.site-pets[hidden]{display:none}
+.site-pet{position:absolute;left:0;top:0;width:var(--pet-size);height:var(--pet-size);padding:0;border:0;background:none;pointer-events:auto;touch-action:none;user-select:none;cursor:grab;will-change:transform;-webkit-user-select:none}
+.site-pet:focus-visible{outline:2px dashed var(--blue);outline-offset:-7px;border-radius:50%}
+.site-pet[data-state=held]{cursor:grabbing;z-index:2}
+.site-pet[data-state=stone]{cursor:default}
+.pet-pose{position:absolute;overflow:hidden;pointer-events:none;background-repeat:no-repeat;transform-origin:50% 30%;image-rendering:auto}
+.pet-sleep{position:absolute;right:5%;top:5%;font:700 13px var(--font);color:var(--blue-strong);opacity:0;pointer-events:none}
+.site-pet[data-state=sleep] .pet-sleep{opacity:1;animation:pet-dream 2.4s ease-in-out infinite}
+@keyframes pet-dream{50%{transform:translate(4px,-7px);opacity:.4}}
+.pet-controls{position:fixed;z-index:116;left:16px;bottom:calc(16px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:4px;padding:5px;background:var(--surface);border:1px solid var(--line-strong);border-radius:999px;box-shadow:var(--shadow-sm);font-size:12px}
+.pet-controls button{border:0;border-radius:999px;background:none;color:var(--muted);padding:8px 10px;min-height:36px;white-space:nowrap}
+.pet-controls button:hover,.pet-controls button[aria-pressed=true]{background:var(--tint);color:var(--blue-strong)}
+.pet-controls button:disabled{opacity:.5;cursor:default}
+.pet-controls .pet-label{padding-left:9px;color:var(--blue-strong);font-weight:650}
+.pet-help{position:fixed;z-index:116;bottom:70px;left:20px;margin:0;padding:7px 11px;border-radius:9px;background:var(--surface);border:1px solid var(--line);font-size:12px;color:var(--muted);pointer-events:none;transition:opacity .3s}
+.pet-help[hidden]{display:none}
+@media(max-width:760px){.pet-controls{left:10px;bottom:calc(14px + env(safe-area-inset-bottom))}.pet-controls .pet-label{display:none}.pet-controls button{font-size:11px;padding-inline:9px}.pet-help{left:12px;font-size:11px;max-width:230px}.site-pet{--pet-size:88px}}
+@media(prefers-reduced-motion:reduce){.pet-sleep,.pet-help{animation:none!important;transition:none!important}}

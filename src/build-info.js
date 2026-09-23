@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "4.8.7";
+export const BUILD_VERSION = "4.8.8";
 export const FILE_HASHES = {
   "index.js": "11525:c350c9ec:3374aa11",
-  "manifest.json": "385:fc5e4d9e:f16ea628",
+  "manifest.json": "385:80ef6c53:c2961823",
   "src/addon-files-check.js": "3740:f346932a:6cf8d08d",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "1868:6b7abfa6:795dfbc9",
@@ -142,13 +142,13 @@ export const FILE_HASHES = {
   "src/marquee.js": "4394:b21eba98:bf26831b",
   "src/menu-position.js": "3312:4d17612e:af7476d7",
   "src/mes-pins.js": "9110:58a88535:74b20064",
-  "src/notice-data.js": "92620:99647075:95c56a48",
+  "src/notice-data.js": "93163:0cbc504b:9177f177",
   "src/notice.js": "4506:dbb8f2a7:75e005f7",
   "src/notify-sw.js": "985:5f0777db:749f45cf",
   "src/numbers.js": "930:4be2a1fd:48f02c7b",
   "src/onehand.js": "3722:2a2a8493:2de8c2c7",
   "src/palettes.js": "30391:f4b5ffc5:a6260329",
-  "src/panel.js": "200628:a30292b5:ce47d73c",
+  "src/panel.js": "200800:229ec2e4:6cd8fc59",
   "src/preset-sharing.js": "7007:d767df1d:3d2b0680",
   "src/preview-view.js": "10670:ed5af254:efdee3b2",
   "src/profile-clip.js": "4246:15605763:56d4e872",
@@ -182,7 +182,7 @@ export const FILE_HASHES = {
   "src/settings-history.js": "3491:c0f06c71:b7a64e71",
   "src/settings-labels.js": "30363:9d65224c:da88c721",
   "src/settings-search.js": "23370:ec7ca470:0b43738f",
-  "src/settings.js": "46191:1c9fd908:239314fa",
+  "src/settings.js": "46190:8ecaaecf:bd069dc4",
   "src/splash.js": "11845:c3880f7f:053159a2",
   "src/streamfade.js": "14136:0e2127b6:06593cf1",
   "src/sttheme.js": "7403:8c6d1799:5e2a866d",
@@ -194,15 +194,15 @@ export const FILE_HASHES = {
   "src/vendor/gif-writer.js": "15523:55aa4c9a:308694e8",
   "src/vendor/image-q.js": "105671:f2e1c3b1:86833578",
   "src/weather-art.js": "7610:a755d4ad:93d0665d",
-  "src/weather-engine.js": "58272:3d59d2e6:d4c4cba0",
+  "src/weather-engine.js": "58267:f82273c1:cb91db5d",
   "src/weather-options.js": "1139:8eb7a09a:ec1ea719",
   "src/weather-profiles.js": "3177:7c2d50f7:5305217e",
   "src/weather-readability.js": "365:b2ecfbab:b3ad7a03",
   "src/weather-rest.js": "1618:89a16430:722c5d5e",
   "src/weather-scenes.js": "32135:4b0be002:91b8c348",
   "src/weather-worker.js": "1504:8d909ab4:0555d7c0",
-  "src/weather.js": "28982:04e5134f:087edc63",
+  "src/weather.js": "29151:893fa4f6:d26e0a3b",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "22770:07c345df:f825c7fc",
-  "style.css": "844636:d41045cd:35880750"
+  "style.css": "844636:4df35a68:f27ecb4a"
 };

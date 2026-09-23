@@ -13,6 +13,7 @@ class GateError(ValueError):
     pass
 
 WEATHER_ARTWORK = tuple(f'{pack}{style}.webp' for pack in ('nature', 'light', 'wings') for style in ('', '-anime', '-cel'))
+PREVIEW_ARTWORK = ('ade-game.webp', 'ade-lemon.webp', 'ade-cat.webp', 'ade-nap.webp', 'ade-rain.webp', 'character.webp')
 
 
 def require(condition, message):
@@ -29,6 +30,10 @@ def inventory(root, kind):
         # arbitrary local images into the public package.
         for name in WEATHER_ARTWORK:
             asset = root / 'src' / 'weather-art' / name
+            if asset.is_file():
+                names.append(asset.relative_to(root).as_posix())
+        for name in PREVIEW_ARTWORK:
+            asset = root / 'src' / 'preview-art' / name
             if asset.is_file():
                 names.append(asset.relative_to(root).as_posix())
     else:
@@ -48,6 +53,10 @@ def validate(files, kind):
     require(bool(re.fullmatch(r'\d+\.[0-9]\.[0-9]', version)), 'Version must carry at 10, e.g. 3.9.9 -> 4.0.0')
     require(manifest.get('js') == 'index.js' and manifest.get('css') == 'style.css', 'Unexpected manifest entry points')
     if kind == 'theme':
+        if b'./preview-art/' in files.get('src/panel.js', b''):
+            for name in PREVIEW_ARTWORK:
+                data = files.get('src/preview-art/' + name, b'')
+                require(data.startswith(b'RIFF') and data[8:12] == b'WEBP', f'Missing preview artwork: {name}')
         if 'src/weather-art.js' in files:
             for name in WEATHER_ARTWORK:
                 data = files.get('src/weather-art/' + name, b'')

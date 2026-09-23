@@ -11,7 +11,7 @@
   const DEFAULTS = () => ({
     text: { font: { ko: 'pretendard', en: 'auto', ja: 'auto', zh: 'auto' }, size: 16, weight: 400, spacing: -1 },
     dialogue: { font: 'same', size: null, weight: 400, spacing: null, style: 'marker', shape: 'stroke', tilt: 'flat', pos: 'center', thick: 54 },
-    em: { font: 'same', size: null, weight: 400, spacing: null, italic: false },
+    em: { font: 'same', size: null, weight: 400, spacing: null, italic: true },
     strong: { font: 'same', size: null, weight: 650, spacing: null },
     code: { font: { ko: 'neodgm', en: 'auto', ja: 'auto', zh: 'auto' }, size: null, weight: null, spacing: null },
     para: { line: 1.8, gap: 0.9, gutter: 20, align: 'left', indent: false },

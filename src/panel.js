@@ -596,8 +596,8 @@ function prevMes(user, name, text) {
 // 본문에 「대사」 · 굵게 · 기울임 · 코드를 섞어 글꼴 · 형광펜 · 강조 · 코드 글꼴이 한눈에 보이게 함
 function chatStage() {
     return `<div class="salty-preview" data-prev="chat" aria-hidden="true">
-        ${prevMes('false', '아린', '<p><q>「레몬 한 조각이면 충분해.」</q> 그는 <strong>식은 찻잔</strong>을 내려놓고 <em>천천히</em> 고개를 들었다.</p>')}
-        ${prevMes('true', '나', '<p><q>「그럼 <code>4시</code>에.」</q> 나는 고개를 끄덕였다.</p>')}
+        ${prevMes('false', '에이드', '<p>에이드의 배 위에서 <strong>나이트</strong>가 눈을 가늘게 떴다. <q>「아, 알았어. 안 움직일게.」</q> <em>이 인간 또 움직이네... 눌러버려야겠다...</em></p>')}
+        ${prevMes('true', '나', '<p><q>「벌써 <code>4시</code>야.」</q> 나는 웃으며 게임기를 내려놓았다.</p>')}
     </div>`;
 }
 
@@ -622,12 +622,12 @@ function regexStage() {
     const step = (phase, phaseName, label, value) => `<div class="custom-dem-scene-plan__phase custom-dem-scene-plan__phase--${phase}"><span>${phaseName}</span></div><div class="custom-dem-scene-plan__step custom-dem-scene-plan__step--${phase}"><span class="custom-dem-scene-plan__label">${label}</span><span class="custom-dem-scene-plan__value">${value}</span></div>`;
     const item = (kind, icon, value, extra = '') => `<div class="custom-dem-track__item custom-dem-track__item--${kind}"><span class="custom-dem-track__icon">${icon}</span><span class="custom-dem-track__value">${value}</span>${extra}</div>`;
     return `<div class="salty-preview" data-prev="regex" aria-hidden="true">
-        ${prevMes('false', '아린', `<div class="custom-dem-track">${item('time', '🕐', '오후 4:12')}${item('date', '🗓️', '3일째 · 목요일')}${item('location', '📍', '항구 → 등대 아래 찻집')}${item('weather', '⛅', '맑음', '<span class="custom-dem-track__temp">18°C</span>')}</div>
+        ${prevMes('false', '에이드', `<div class="custom-dem-track">${item('time', '🕐', '오후 4:12')}${item('date', '🗓️', '3일째 · 목요일')}${item('location', '📍', '항구 → 등대 아래 찻집')}${item('weather', '⛅', '맑음', '<span class="custom-dem-track__temp">18°C</span>')}</div>
         <p class="bl-fx-line"><span class="custom-dem-expressive custom-dem-expressive--shout bl-fx-lead"><font color="#e64553" class="bl-ink-sample" style="--bl-ink:#e64553"><q>「거기 서!」</q></font></span> <span class="custom-dem-expressive custom-dem-expressive--trembling"><q>「…무, 무서워.」</q></span> <span class="custom-dem-expressive custom-dem-expressive--crying"><font color="#1e88c7" class="bl-ink-sample" style="--bl-ink:#1e88c7"><q>「가지 마…」</q></font></span> 감정 대사예요.</p>
-        <details class="custom-dem-card custom-dem-scene-plan" open>${head('🗺️', '장면 계획', '흐름도')}<div class="custom-dem-scene-plan__body">${step('inputs', 'Inputs', '상황 맥락', '찻집 약속 직전, 아린은 편지를 숨긴다.')}${step('constraints', 'Constraints', 'Character Realism', '들뜬 마음을 쉽게 드러내지 않는다.')}${step('plan', 'Plan', 'Prose Plan', '편지 이야기는 마지막 문단까지 아껴 둔다.')}</div></details>
-        <details class="custom-dem-card custom-dem-status" open>${head('📊', 'Status', 'Live')}<div class="custom-dem-status__body"><div class="custom-dem-status-row"><strong class="custom-dem-status-row__name">아린</strong><span class="custom-dem-status-row__field"><span class="custom-dem-status-row__label custom-dem-status-row__label--physical">몸</span><span>나른함</span></span><span class="custom-dem-status-row__field"><span class="custom-dem-status-row__label custom-dem-status-row__label--clothes">옷</span><span>하늘색 원피스</span></span><span class="custom-dem-status-row__field"><span class="custom-dem-status-row__label custom-dem-status-row__label--mental">마음</span><span>기대</span></span><span class="custom-dem-status-row__field"><span class="custom-dem-status-row__label custom-dem-status-row__label--relationship">관계</span><span class="custom-dem-status-row__score">72/100</span></span></div></div></details>
+        <details class="custom-dem-card custom-dem-scene-plan" open>${head('🗺️', '장면 계획', '흐름도')}<div class="custom-dem-scene-plan__body">${step('inputs', 'Inputs', '상황 맥락', '찻집 약속 직전, 에이드는 편지를 숨긴다.')}${step('constraints', 'Constraints', 'Character Realism', '들뜬 마음을 쉽게 드러내지 않는다.')}${step('plan', 'Plan', 'Prose Plan', '편지 이야기는 마지막 문단까지 아껴 둔다.')}</div></details>
+        <details class="custom-dem-card custom-dem-status" open>${head('📊', 'Status', 'Live')}<div class="custom-dem-status__body"><div class="custom-dem-status-row"><strong class="custom-dem-status-row__name">에이드</strong><span class="custom-dem-status-row__field"><span class="custom-dem-status-row__label custom-dem-status-row__label--physical">몸</span><span>나른함</span></span><span class="custom-dem-status-row__field"><span class="custom-dem-status-row__label custom-dem-status-row__label--clothes">옷</span><span>하늘색 원피스</span></span><span class="custom-dem-status-row__field"><span class="custom-dem-status-row__label custom-dem-status-row__label--mental">마음</span><span>기대</span></span><span class="custom-dem-status-row__field"><span class="custom-dem-status-row__label custom-dem-status-row__label--relationship">관계</span><span class="custom-dem-status-row__score">72/100</span></span></div></div></details>
         <details class="custom-dem-card custom-dem-threads" open>${head('🧶', 'Story Threads', '')}<div class="custom-dem-threads__body"><div class="custom-dem-thread-row"><span class="custom-dem-thread-tag custom-dem-thread-tag--current">[Current]</span> 찻집의 약속</div><div class="custom-dem-thread-row"><span class="custom-dem-thread-tag custom-dem-thread-tag--unresolved">[Unresolved]</span> 사라진 등대지기</div><div class="custom-dem-thread-row"><span class="custom-dem-thread-tag custom-dem-thread-tag--seed">[Seed]</span> 바다 건너온 편지</div></div></details>
-        <p><q>「오늘은 등대 아래 찻집에서.」</q> 아린은 편지를 가방 깊숙이 밀어 넣었다.</p>
+        <p><q>「오늘은 등대 아래 찻집에서.」</q> 에이드는 편지를 가방 깊숙이 밀어 넣었다.</p>
         <p class="bl-ink-line"><font color="#e64553" class="bl-ink-sample" style="--bl-ink:#e64553"><q>「편지는 내가 가져갈게.」</q></font> <font color="#1e88c7" class="bl-ink-sample" style="--bl-ink:#1e88c7"><q>「…괜찮겠어?」</q></font> 프롬프트가 칠한 대사예요.</p>`)}
     </div>`;
 }
@@ -669,7 +669,7 @@ function colorPreview() {
 
 function colorStage() {
     return `<div class="salty-preview" data-prev="color" aria-hidden="true">
-        ${prevMes('false', '아린', '<p><font color="#e64553">붉게 칠한 글자</font>와 <span style="color:#40a02b">초록으로 칠한 글자</span>, <q>「그리고 대사.」</q></p><p><span style="color:#7c6cf0">보라색 혼잣말</span>이 <font color="#df8e1d">노랗게</font> 끝났다.</p>')}
+        ${prevMes('false', '에이드', '<p><font color="#e64553">붉게 칠한 글자</font>와 <span style="color:#40a02b">초록으로 칠한 글자</span>, <q>「그리고 대사.」</q></p><p><span style="color:#7c6cf0">보라색 혼잣말</span>이 <font color="#df8e1d">노랗게</font> 끝났다.</p>')}
     </div>`;
 }
 
@@ -689,8 +689,8 @@ function imagePreview(s, sub) {
 }
 
 // Packaged illustrations preserve dark/light/color and transparent-cutout test cases.
-const PHOTOS = ['노을', '밤', '흰 바탕', '숲'];
-const previewPhotos = ['sunset', 'night', 'paper', 'forest'].map(name => new URL(`./preview-art/${name}.webp`, import.meta.url).href);
+const PHOTOS = ['게임', '레몬 먹으며 쉬기', '나이트 쓰다듬기', '나이트와 낮잠', '빗길 산책'];
+const previewPhotos = ['ade-game', 'ade-lemon', 'ade-cat', 'ade-nap', 'ade-rain'].map(name => new URL(`./preview-art/${name}.webp`, import.meta.url).href);
 function samplePhoto(index = ui.pic) {
     return previewPhotos[((index % PHOTOS.length) + PHOTOS.length) % PHOTOS.length];
 }

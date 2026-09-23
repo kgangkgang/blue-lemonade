@@ -5,3 +5,5 @@
 /src/** text eol=lf
 /src/weather-art/*.webp binary
 /docs/downloads/*.zip binary
+
+/src/preview-art/*.webp binary

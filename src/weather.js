@@ -60,7 +60,7 @@ function colorsNow() {
     const dark = document.body.classList.contains('salty-dark');
     const root = getComputedStyle(document.documentElement);
     if (dark) return { rain: '200,215,240', rainAlpha: 0.34, snow: '255,255,255', snowAlpha: 0.82 };
-    return { rain: rgbText(root.getPropertyValue('--salty-text'), '40,50,60'), rainAlpha: 0.22, snow: rgbText(root.getPropertyValue('--salty-accent'), '90,130,170'), snowAlpha: 0.5 };
+    return { rain: rgbText(root.getPropertyValue('--salty-text'), '40,50,60'), rainAlpha: 0.42, snow: rgbText(root.getPropertyValue('--salty-accent'), '90,130,170'), snowAlpha: 0.68 };
 }
 
 /** 캔버스 하나 + 그리는 쪽(워커 또는 메인) */
@@ -173,7 +173,7 @@ function createLayer(host, className, virtual = false) {
         // 배율만큼 세로로 눌려 보였다(레몬이 납작해짐) → 배율과 무관한 배치 크기(clientWidth/Height)로 잰다
         const rect = virtual ? { width: host.clientWidth, height: host.clientHeight } : host.getBoundingClientRect();
         if (!virtual) return { w: Math.round(rect.width), h: Math.round(rect.height) };
-        const sheld = document.getElementById('sheld');
+        const sheld = document.querySelector('body > #sheld') || document.getElementById('sheld');
         const ratio = sheld?.clientWidth > 0 && sheld.clientHeight > 0 ? sheld.clientHeight / sheld.clientWidth : 1.9;
         const h = Math.max(Math.round(rect.height), Math.round(rect.width * Math.min(2.4, Math.max(.5, ratio))));
         canvas.style.height = `${h}px`; canvas.style.top = anchorBottom ? 'auto' : '0'; canvas.style.bottom = anchorBottom ? '0' : 'auto';
@@ -293,9 +293,9 @@ export function syncWeather(on, chat = {}) {
         document.body.classList.remove('bl-weather-on');
         return;
     }
-    const host = document.getElementById('sheld');
+    const host = document.querySelector('body > #sheld') || document.getElementById('sheld');
     if (!host) return;
-    if (!layer || !layer.canvas.isConnected) {
+    if (!layer || !layer.canvas.isConnected || layer.canvas.parentElement !== host) {
         layer?.destroy();
         restBinding?.dispose();
         layer = createLayer(host, 'bl-weather');
@@ -397,7 +397,7 @@ export async function captureWeatherAnimation(width,height,scale=1) {
  * 자리는 화면 비율(0~1)이라 스크롤해도 · 화면 크기가 달라져도 같은 자리에 있다 (날씨 캔버스가 채팅 칸이 아니라 #sheld 에 붙어 있다).
  */
 export function placeWeatherSpots(mode, defaults, onDone) {
-    const host = document.getElementById('sheld');
+    const host = document.querySelector('body > #sheld') || document.getElementById('sheld');
     if (!host || document.getElementById('bl-weather-place')) return;
     const s = getSettings(), before = JSON.stringify(s.chat.weatherSpots || {});
     const list = defaults.map(([x, y], i) => ({ ...(s.chat.weatherSpots?.[mode]?.[i] || { x, y }) }));
