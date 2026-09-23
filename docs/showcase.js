@@ -3,7 +3,7 @@
  const root=document.querySelector('#showcase'), reading=root.querySelector('#reading-film'), weather=root.querySelector('#weather-film');
  const videos=[reading,weather], play=root.querySelector('#showcase-play'), caption=root.querySelector('#showcase-caption');
  const reduced=matchMedia('(prefers-reduced-motion: reduce)');
- const files={mobile:{rain:'476-rain-mobile-hd',snow:'476-snow-mobile-hd',stars:'478-stars-mobile-tall',meteor:'478-meteor-mobile-tall',clear:'476-clear-mobile-hd'},pc:{rain:'478-rain-pc',snow:'daynight-pc-snow',stars:'478-stars-pc',meteor:'478-meteor-pc',clear:'daynight-pc-clear'}};
+ const files={mobile:{rain:'rain-phone-long',snow:'snow-phone-long',stars:'stars-phone-long',meteor:'meteor-phone-long',clear:'clear-phone-long'},pc:{rain:'478-rain-pc',snow:'daynight-pc-snow',stars:'478-stars-pc',meteor:'478-meteor-pc',clear:'daynight-pc-clear'}};
  let visible=false,paused=false,consent=false,look='rain';
  function sync(){
   const run=visible&&!document.hidden&&!document.querySelector('#site-guide[open]')&&!paused&&(!reduced.matches||consent);
@@ -13,7 +13,7 @@
  function sources(){
   const device=document.documentElement.classList.contains('device-mobile')?'mobile':'pc';
   const mode=document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
-  const read=mode==='dark'?`reading-night-${device}`:device==='mobile'?'476-reading-mobile-hd':'reading-white-pc';
+  const read=device==='mobile'?`reading-phone-long-${mode}`:mode==='dark'?'reading-night-pc':'reading-white-pc';
   for(const [v,file] of [[reading,read],[weather,`${files[device][look]}-${mode}`]]){
    const src=`media/${file}.mp4`;if(v.dataset.src===src)continue;
    v.pause();v.removeAttribute('src');v.dataset.src=src;v.poster=`media/${file}.jpg`;v.load();
