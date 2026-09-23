@@ -161,6 +161,9 @@ const topics = [
       ]
     ],
     "pc": [
+      ["calm-profile-large.mp4", "큰 프로필", "PC에서 상단 사진을 크게.", "calm-profile-large.jpg"],
+      ["calm-profile-small.mp4", "작은 프로필", "익숙한 얼굴과 가벼운 대화.", "calm-profile-small.jpg"],
+      ["calm-profile-none.mp4", "대화만", "사진 없이 문장에 집중해요.", "calm-profile-none.jpg"],
       [
         "472-pc-profile-setting.mp4",
         "프로필의 크기와 배치",
@@ -211,12 +214,8 @@ const topics = [
         "낮과 밤, 옅게 흐르는 안개.",
         "476-mist-mobile-hd.jpg"
       ],
-      [
-        "476-stars-mobile-hd.mp4",
-        "은하수와 유성",
-        "화이트와 나이트의 은은한 빛.",
-        "476-stars-mobile-hd.jpg"
-      ],
+      ["478-stars-mobile.mp4", "은하수", "부드럽게 흐르는 별빛.", "478-stars-mobile.jpg"],
+      ["478-meteor-mobile.mp4", "유성", "빛의 궤적만 가볍게.", "478-meteor-mobile.jpg"],
       [
         "476-petals-mobile-hd.mp4",
         "작은 색 조각",
@@ -232,10 +231,10 @@ const topics = [
     ],
     "pc": [
       [
-        "daynight-pc-rain.mp4",
+        "478-rain-pc.mp4",
         "가는 비",
         "",
-        "daynight-pc-rain.jpg"
+        "478-rain-pc.jpg"
       ],
       [
         "daynight-pc-snow.mp4",
@@ -243,12 +242,8 @@ const topics = [
         "",
         "daynight-pc-snow.jpg"
       ],
-      [
-        "daynight-pc-stars.mp4",
-        "은하수와 유성",
-        "",
-        "daynight-pc-stars.jpg"
-      ]
+      ["478-stars-pc.mp4", "은하수", "부드럽게 흐르는 별빛.", "478-stars-pc.jpg"],
+      ["478-meteor-pc.mp4", "유성", "빛의 궤적만 가볍게.", "478-meteor-pc.jpg"]
     ]
   },
   {
@@ -577,7 +572,9 @@ function galleryBlock(topic, device, cards, withHeading){
   host.before(tabs);
   for(const link of document.querySelectorAll('a[data-topic]'))link.addEventListener('click',()=>show(link.dataset.topic));
   let first=topics[0].id;try{const saved=sessionStorage.getItem('bl-site-topic');if(topics.some(t=>t.id===saved))first=saved;}catch{}
+  if(location.hash==='#portraits')first='profile';
   show(first);
+  if(location.hash==='#portraits')document.querySelector('#gallery').scrollIntoView();
 }
 {const big=lightbox.querySelector('img');big.addEventListener('load',()=>{lightbox.classList.toggle('tall',big.naturalHeight>big.naturalWidth*1.9);lightbox.scrollTop=0;});}
 lightbox.querySelector('.close').onclick=()=>lightbox.close();lightbox.onclick=e=>{if(e.target===lightbox)lightbox.close();};lightbox.addEventListener('close',()=>{lightbox.querySelector('img').src='';});
@@ -586,7 +583,7 @@ fetch('release-notes.json').then(r=>{if(!r.ok)throw new Error('notes');return r.
   // one card per day, like the theme's own notice: a busy day reads as "v4.1.2 ~ v4.2.4 · 업데이트 13번"
   const days=[];for(const note of notes){const last=days.at(-1);if(last&&last.date===note.date)last.notes.push(note);else days.push({date:note.date,notes:[note]});}
   days.forEach((day,i)=>{const d=element('details','note');d.open=i===0;d.hidden=i>=SHOWN_NOTES;const s=element('summary'),first=day.notes.at(-1).version,latest=day.notes[0].version;
-    s.append(element('span','num',latest));if(i===0)s.append(element('span','tag','NEW'));
+    s.append(element('span','num',latest));if(i===0)s.append(element('span','tag','새 소식'));
     if(day.notes.length>1)s.append(element('span','span',`v${first} ~ v${latest} · 업데이트 ${day.notes.length}번`));
     s.append(element('span','date',day.date.replaceAll('-','.')),element('span','plus','+'));d.append(s);
     day.notes.forEach(note=>{if(day.notes.length>1)d.append(element('h4','ver','v'+note.version));const ul=element('ul');note.items.forEach((t,k)=>{const li=element('li','',t);li.style.setProperty('--i',Math.min(k,10));ul.append(li);});d.append(ul);});

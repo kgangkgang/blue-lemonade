@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict';
+import {pathToFileURL} from 'node:url';
+import path from 'node:path';
+const root=path.resolve(process.argv[2]||'.');
+const {tidyGradients,gradientFor,gradientCss,gradientStops,gradientSample}=await import(pathToFileURL(path.join(root,'src/gradients.js')));
+const {gradientAction}=await import(pathToFileURL(path.join(root,'src/gradient-ui.js')));
+const {DEFAULTS,getSettings}=await import(pathToFileURL(path.join(root,'src/settings.js')));
+const s=structuredClone(DEFAULTS);
+const ctx={extensionSettings:{salty:s},powerUserSettings:{},saveSettingsDebounced(){}};
+globalThis.SillyTavern={getContext:()=>ctx};
+s.gradients.light={on:true,families:['blue','strawberry'],angle:90,blend:50,weights:[24,76,50]};
+const pick=family=>gradientAction('mix-family',{dataset:{family}},s);
+const dark=structuredClone(s.gradients.dark);
+pick('blue');
+assert.deepEqual(s.gradients.light.families,['strawberry']);
+assert.equal(s.gradients.light.weights[0],76);
+assert.deepEqual(getSettings().gradients.light.families,['strawberry']);
+pick('strawberry');
+assert.deepEqual(s.gradients.light.families,['strawberry']);
+for(const blend of [0,50,100]){
+ s.gradients.light.blend=blend;
+ const g=gradientFor(s,'bg');
+ assert.equal(gradientStops(g.colors,g.weights,blend).length,2);
+ assert.equal(gradientSample(g,0),gradientSample(g,1));
+ assert.match(gradientCss(g),/0%.*,.*100%/);
+}
+pick('mint');pick('blue');pick('lemon');
+assert.deepEqual(s.gradients.light.families,['strawberry','mint','blue']);
+pick('mint');pick('mint');
+assert.deepEqual(s.gradients.light.families,['strawberry','blue','mint']);
+assert.deepEqual(s.gradients.dark,dark);
+assert.deepEqual(tidyGradients(s.gradients).light.families,s.gradients.light.families);
+assert.equal(tidyGradients({light:{families:[]}}).light.families.length,2);
+console.log('PASS: single-color reload/render, ordered additions, three-color limit, weights, mode isolation');

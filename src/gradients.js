@@ -9,7 +9,7 @@ const cleanColor=v=>{const c=parseColor(v);return `rgba(${c.slice(0,3).map(n=>nu
 export function tidyGradients(raw) {
     const normalizeMix=m=>{
         const families=[...new Set(Array.isArray(m?.families)?m.families:[])].filter(k=>k!=='custom'&&Object.hasOwn(PALETTE_FAMILIES,k)).slice(0,3);
-        return {on:m?.on===true,families:families.length>=2?families:[...MIX_DEFAULT.families],angle:number(m?.angle,0,360,90),weights:weights(m?.weights),blend:number(m?.blend,0,100,50)};
+        return {on:m?.on===true,families:families.length>=1?families:[...MIX_DEFAULT.families],angle:number(m?.angle,0,360,90),weights:weights(m?.weights),blend:number(m?.blend,0,100,50)};
     };
     const light=normalizeMix(raw?.light||raw?.mix),dark=normalizeMix(raw?.dark||raw?.mix);
     const overrides={};
@@ -31,6 +31,7 @@ export const mixFor=s=>s.gradients?.[PALETTES[s.palette]?.mode==='dark'?'dark':'
 // Below 50 every color keeps a solid band that widens until 0 = hard edges at the share boundaries.
 // Above 50 the first and last colors slide out to the ends, so 100 blends from one edge to the other.
 export function gradientStops(colors,values,blend=50) {
+    if(colors.length===1)return [{color:safeColor(colors[0]),at:0},{color:safeColor(colors[0]),at:100}];
     const w=colors.map((_,i)=>number(values?.[i],1,100,50)),sum=w.reduce((a,b)=>a+b,0),b=number(blend,0,100,50),last=colors.length-1;let used=0;
     const round=v=>Number(v.toFixed(3));
     return colors.flatMap((color,i)=>{
