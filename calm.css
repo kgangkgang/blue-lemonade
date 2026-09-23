@@ -62,7 +62,8 @@
 #palette-stage #reading-sample strong{background:none}
 #colors .palette-message-head b{color:var(--preview-accent)}
 #colors .palette-user,#colors .palette-compose{display:none}
-#colors .st-tabs .st-seg{gap:4px}
+#colors .st-tabs .st-seg{flex-wrap:nowrap;gap:2px;max-width:100%;overflow-x:auto;scrollbar-width:thin}
+#colors .st-tabs .st-seg button{flex:0 0 auto;padding-inline:5px;font-size:12px}
 /* Do not squeeze a settings panel and a long reading sample into a tablet row. */
 @media(max-width:1000px){
  #colors .palette-layout{grid-template-columns:1fr;gap:20px}
