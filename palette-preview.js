@@ -15,6 +15,7 @@
   const clamp = (v, lo, hi, d) => Number.isFinite(Number(v)) ? Math.min(hi, Math.max(lo, Number(v))) : d;
   // 번짐 (3.9.7): 50 = each color peaks mid-share; below 50 solid bands widen to hard edges at 0; above 50 the end colors slide to the edges
   const stops = (colors, weights, blend = 50) => { const w = colors.map((_, i) => clamp(weights?.[i], 1, 100, 50)), sum = w.reduce((a, b) => a + b, 0), b = clamp(blend, 0, 100, 50), last = colors.length - 1, at = v => `${Number(v.toFixed(3))}%`; let used = 0;
+    if (colors.length === 1) return [`${colors[0]} 0%`, `${colors[0]} 100%`];
     return colors.flatMap((color, i) => { const mid = (used + w[i] / 2) / sum * 100, half = w[i] / 2 / sum * 100; used += w[i];
       if (b >= 50) { const u = (b - 50) / 50; return [`${color} ${at(i === 0 ? mid * (1 - u) : i === last ? mid + (100 - mid) * u : mid)}`]; }
       const band = half * (1 - b / 50); return [`${color} ${at(mid - band)}`, `${color} ${at(mid + band)}`]; }); };
@@ -38,7 +39,7 @@
   }
   function renderMix() {
     const m = mixes[mode];
-    document.querySelector('#palette-mix-scope').textContent = `${mode === 'light' ? '라이트' : '나이트'} 전용 · 2~3가지 에이드를 섞어요. 글자는 따로 골라요.`;
+    document.querySelector('#palette-mix-scope').textContent = `${mode === 'light' ? '라이트' : '나이트'} 전용 · 누른 순서대로 최대 3색. 1색만 남겨도 돼요.`;
     mixToggle.setAttribute('aria-pressed', String(m.on)); mixToggle.textContent = m.on ? '혼합 끄기' : '에이드 혼합하기';
     mixBody.hidden = !m.on;
     if (!m.on) return;
@@ -59,7 +60,7 @@
   mixSwatches.addEventListener('click', e => {
     const b = e.target.closest('button[data-family]'); if (!b || b.disabled) return;
     const m = mixes[mode], key = b.dataset.family, i = m.families.indexOf(key);
-    if (i >= 0 && m.families.length > 2) { m.families.splice(i, 1); m.weights.splice(i, 1); m.weights.push(50); }
+    if (i >= 0 && m.families.length > 1) { m.families.splice(i, 1); m.weights.splice(i, 1); m.weights.push(50); }
     else if (i < 0 && m.families.length < 3) m.families.push(key);
     renderMix(); render();
   });
@@ -84,6 +85,7 @@
     for (const button of choices.children) {
       button.setAttribute('aria-pressed', String(button.dataset.family === selected));
       const f = families.find(f => f.id === button.dataset.family), p = f.light;
+      button.style.setProperty('--ade-color', f[siteTheme()].accent);
       button.querySelector('.palette-dot').style.background = `linear-gradient(135deg, ${p.bg} 50%, ${f.light.pop} 50%)`;
     }
     modes.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
@@ -105,7 +107,7 @@
     families = data;
     for (const family of families) {
       const button = document.createElement('button'), dot = document.createElement('span'), label = document.createElement('span');
-      button.type = 'button'; button.dataset.family = family.id; button.title = family.label; button.setAttribute('aria-label', family.label); button.style.setProperty('--i', choices.children.length);
+      button.type = 'button'; button.dataset.family = family.id; button.style.setProperty('--ade-color', family.light.accent); button.setAttribute('aria-label', family.label); button.style.setProperty('--i', choices.children.length);
       dot.className = 'palette-dot'; dot.setAttribute('aria-hidden','true'); label.textContent = family.label;
       button.append(dot, label); button.addEventListener('click', () => { selected = family.id; render(); }); choices.append(button);
     }
