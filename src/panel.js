@@ -1336,6 +1336,7 @@ function tabChat(s, sub) {
         ${cap('날씨')}<div class="salty-group">
             ${stack('채팅 뒤 효과', weatherSeg(s), weatherMode(s) === 'tracker' ? '트래커 날씨를 읽어 비 · 눈 · 안개 · 햇살 · 밤의 별을 보여요. 안개비 · 여우비처럼 둘이면 겹쳐요' : '')}
             ${weatherMode(s) === 'custom' ? weatherImageControls(s) : ''}
+            ${['snow','fog','sun','star','firefly','shadow','breeze','glass','water','lemon','petal','feather','butterfly'].includes(weatherMode(s)) ? stack('그림 스타일',seg('chat.weatherArtStyle',[['real','실사풍'],['anime','애니풍']],'real'),'색과 움직임은 그대로, 그림의 느낌만 바꿔요. 날씨마다 기억해요.') : ''}
             ${!['off', 'tracker'].includes(weatherMode(s)) ? stack('세기', seg('chat.weatherLevel', [[1, '약하게'], [2, '보통'], [3, '강하게']])) : ''}
             ${weatherMode(s) === 'tracker' ? `<p class="salty-note">세기 · 색 · 모양은 그 날씨를 직접 골랐을 때 맞춰 둔 값을 그대로 써요. 비는 비대로, 눈은 눈대로요.</p>
             <button type="button" class="salty-btn bl-weather-skip-fold" data-act="weather-skip-fold" aria-expanded="${!!ui.weatherSkipOpen}">제외할 날씨${(s.chat.weatherTrackerSkip || []).length ? ` · ${s.chat.weatherTrackerSkip.length}` : ''} <i class="fa-solid fa-chevron-${ui.weatherSkipOpen ? 'up' : 'down'}"></i></button>
@@ -1435,7 +1436,7 @@ function weatherSpotPad(s) {
 /** 날씨 고르기 (4.2.8): 종류가 많아져 카테고리로 나눴다. '날씨 혼합하기'를 켜면 첫째 · 둘째 칸을 골라 가며 두 날씨를 겹친다 (에이드 혼합하기와 같은 식) */
 const WEATHER_CATS = [
     ['sky', '하늘', [['rain', '비'], ['snow', '눈'], ['fog', '안개'], ['sun', '햇살'], ['rainbow', '무지개'], ['star', '별'], ['meteor', '유성']]],
-    ['nature', '자연', [['petal', '꽃잎'], ['lemon', '레몬'], ['firefly', '반딧불이'], ['breeze', '흩날림'], ['shadow', '나무 그림자']]],
+    ['nature', '자연', [['petal', '꽃잎'], ['lemon', '레몬'], ['feather', '깃털'], ['butterfly', '나비'], ['firefly', '반딧불이'], ['breeze', '흩날림'], ['shadow', '나무 그림자']]],
     ['water', '물 · 유리', [['glass', '유리 빗방울'], ['water', '물결']]],
     ['etc', '그 밖', [['custom', '내 그림'], ['tracker', '트래커 따라']]],
 ];

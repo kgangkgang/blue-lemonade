@@ -111,7 +111,7 @@ const ratio = () => Math.min(1.5, window.devicePixelRatio || 1);
 
 /** 설정의 날씨 값 → 엔진 값 (범위는 settings.js 가 이미 잡음) */
 function paramsFrom(chat = {}) {
-    return { tint:['custom','gradient'].includes(chat.weatherColorMode)?chat.weatherColor:null, tint2:chat.weatherColorMode==='gradient'?chat.weatherColor2:null,
+    return { artStyle:chat.weatherArtStyle==='anime'?'anime':'real', tint:['custom','gradient'].includes(chat.weatherColorMode)?chat.weatherColor:null, tint2:chat.weatherColorMode==='gradient'?chat.weatherColor2:null,
         scene:{shadowStyle:chat.weatherShadowStyle,shadowBlur:chat.weatherShadowBlur??35,waterStyle:chat.weatherWaterStyle,waterArea:chat.weatherWaterArea},
         spots:chat.weatherSpots||null,
         sun:{style:chat.weatherSunStyle}, star:{style:chat.weatherStarStyle},
@@ -278,7 +278,7 @@ function listen() {
 
 /** features.js 가 설정이 바뀔 때마다 부른다 */
 export function syncWeather(on, chat = {}) {
-    const mode = ['rain', 'snow', 'fog', 'sun', 'star', 'firefly', 'rainbow', 'shadow', 'breeze', 'glass', 'water', 'lemon', 'petal', 'meteor', 'custom', 'tracker'].includes(chat.weather) ? chat.weather : 'off';
+    const mode = ['rain', 'snow', 'fog', 'sun', 'star', 'firefly', 'rainbow', 'shadow', 'breeze', 'glass', 'water', 'lemon', 'petal', 'feather', 'butterfly', 'meteor', 'custom', 'tracker'].includes(chat.weather) ? chat.weather : 'off';
     const level = [1, 2, 3].includes(Number(chat.weatherLevel)) ? Number(chat.weatherLevel) : 2;
     wanted = { on: !!on && mode !== 'off', mode, level, chat: { ...chat, weather: mode }, params: paramsFrom(chat), sprite: chat.weatherImage || '' };
     if (!wanted.on) {
@@ -321,7 +321,7 @@ function seeThrough(stage, on) {
 }
 /** 채팅 표본(.salty-preview[data-prev="chat"])에 작은 효과. 트래커 따라면 지금 채팅의 날씨, 없으면 비를 보여 준다 */
 export function previewWeather(stage, chat = {}) {
-    const mode = ['rain', 'snow', 'fog', 'sun', 'star', 'firefly', 'rainbow', 'shadow', 'breeze', 'glass', 'water', 'lemon', 'petal', 'meteor', 'custom', 'tracker'].includes(chat.weather) ? chat.weather : 'off';
+    const mode = ['rain', 'snow', 'fog', 'sun', 'star', 'firefly', 'rainbow', 'shadow', 'breeze', 'glass', 'water', 'lemon', 'petal', 'feather', 'butterfly', 'meteor', 'custom', 'tracker'].includes(chat.weather) ? chat.weather : 'off';
     const level = [1, 2, 3].includes(Number(chat.weatherLevel)) ? Number(chat.weatherLevel) : 2;
     let preview = stage._blWeather;
     if (mode === 'off' || !stage.isConnected) {

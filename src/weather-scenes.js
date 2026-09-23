@@ -84,6 +84,16 @@ function shadow(env) {
         const p = sprite.getContext('2d');
         const blur = env.opts.shadowBlur / 100 * 16 * f;
         if (blur > .3 && 'filter' in p) p.filter = `blur(${blur.toFixed(1)}px)`;
+        const palmArt = env.art?.get(env.opts.shadowStyle === 'leaf' ? 'leaf' : 'palm', ink);
+        if (palmArt) {
+            if (env.opts.shadowStyle === 'leaf') {
+                for (let i = 0; i < 5; i++) {
+                    p.save();p.translate(pixels * (.13 + i * .16), pixels * (.1 + i * .14));p.rotate(i % 2 ? -.45 : .8);
+                    p.drawImage(palmArt, -pixels * .12, -pixels * .04, pixels * .28, pixels * .4);p.restore();
+                }
+            } else p.drawImage(palmArt, 0, 0, pixels, pixels);
+            p.filter = 'none'; sprite = bake(sprite); return;
+        }
         p.scale(f, f);
         p.fillStyle = p.strokeStyle = `rgb(${ink})`;
         const at = u => { const a = 1 - u; return [a * a * 0 + 2 * a * u * 190 + u * u * 400, a * a * 10 + 2 * a * u * 60 + u * u * 330]; }; // 줄기: 구석에서 비스듬히 아래로 휜다
@@ -110,7 +120,7 @@ function shadow(env) {
             const { ctx, W, H } = env;
             const ink = inkOf(env, 0, env.light ? env.colors.rain : '0,0,0');
             const scale = Math.min(W, H) / SIZE * 1.2 * env.size, pixels = Math.max(64, Math.min(1024, Math.ceil(SIZE * scale * env.dpr / 32) * 32));
-            const want = `${ink}|${env.opts.shadowStyle}|${env.opts.shadowBlur}|${pixels}`;
+            const want = `${env.artStyle}|${ink}|${env.opts.shadowStyle}|${env.opts.shadowBlur}|${pixels}|${!!env.art?.get(env.opts.shadowStyle === 'leaf' ? 'leaf' : 'palm')}`;
             if (want !== key || !sprite) { key = want; paint(ink, pixels); }
             if (!sprite) return;
             const k = wobble(env), tilt = Math.atan(env.slant) * .8;
@@ -164,6 +174,11 @@ function breeze(env) {
                 if (!p.leaf) { ctx.fillStyle = `rgba(${inkOf(env, p.tone, '252,246,214')},${a.toFixed(3)})`; ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(.8, size * .16), 0, TAU); ctx.fill(); continue; }
                 const cos = Math.cos(p.rot) * env.dpr, sin = Math.sin(p.rot) * env.dpr;
                 ctx.setTransform(cos, sin, -sin, cos, p.x * env.dpr, p.y * env.dpr);
+                const material = env.art?.get('leaf', env.tintRGB ? inkOf(env, Math.round(p.tone * 4) / 4, '') : null);
+                if (material) {
+                    const h = size * 2, w = h * material.width / material.height;
+                    ctx.globalAlpha = a;ctx.drawImage(material, -w / 2, -h / 2, w, h);ctx.globalAlpha = 1;continue;
+                }
                 ctx.fillStyle = `rgba(${inkOf(env, p.tone, p.tone < .55 ? '126,176,84' : '250,240,200')},${a.toFixed(3)})`;
                 ctx.beginPath(); ctx.moveTo(-size, 0); ctx.quadraticCurveTo(0, -size * .55, size, 0); ctx.quadraticCurveTo(0, size * .55, -size, 0); ctx.fill();
             }
@@ -182,6 +197,13 @@ function dropSprites(env, ink, rim) {
     for (let n = 0; n < DROP_SIZES.length * 6; n++) {
         const S = DROP_SIZES[Math.floor(n / 6)], k = S / 96, shapeN = n % 6;
         const canvas = env.canvas(S, S); if (!canvas) break;
+        const droplet = env.art?.get('droplet', env.tintRGB ? ink : null);
+        if (droplet) {
+            const paint = canvas.getContext('2d');
+            paint.translate(S / 2, S / 2); paint.rotate((shapeN - 2.5) * .09);
+            paint.drawImage(droplet, -S * .32, -S * .38, S * .64, S * .76);
+            list.push(bake(canvas)); continue;
+        }
         const p = canvas.getContext('2d'), cx = S / 2, cy = S * .52, rx = S * (.27 + hash(shapeN, 1) * .05), ry = S * (.31 + hash(shapeN, 2) * .07), lean = (hash(shapeN, 3) - .5) * .5 * k;
         const shape = () => { // 아래가 조금 무거운 물방울 꼴 (방울마다 살짝 찌그러진다)
             p.beginPath(); p.moveTo(cx + lean * 6, cy - ry);
@@ -244,7 +266,7 @@ function glass(env) {
         },
         draw(t) {
             const { ctx } = env, ink = inkOf(env, 0, env.light ? '214,232,250' : '236,245,255'), rim = env.light ? '30,50,75' : '6,10,16';
-            const want = `${ink}|${rim}`;
+            const want = `${env.artStyle}|${ink}|${rim}|${!!env.art?.get('droplet')}`;
             if (want !== key || !sprites.length) { sprites.forEach(drop2); key = want; sprites = dropSprites(env, ink, rim); }
             if (!sprites.length) return;
             ctx.lineCap = 'round';
@@ -278,6 +300,18 @@ function glass(env) {
 function causticTile(env, seed, width, ink) {
     const N = 512, cells = 4, canvas = env.canvas(N, N); // 크게 구워야 늘려 찍어도 선이 뭉개지지 않는다
     if (!canvas) return null;
+    const material = env.art?.get('caustic', ink);
+    if (material) {
+        const paint = canvas.getContext('2d');
+        // Overlapping, wrapped stamps form a continuous tile without rectangular seams.
+        for (const [cx, cy, angle] of [[128, 128, seed * .13], [384, 384, seed * -.19]]) {
+            for (const dx of [-N, 0, N]) for (const dy of [-N, 0, N]) {
+                paint.save();paint.translate(cx + dx, cy + dy);paint.rotate(angle);
+                paint.globalAlpha = .75;paint.drawImage(material, -240, -200, 480, 400);paint.restore();
+            }
+        }
+        return bake(canvas);
+    }
     const p = canvas.getContext('2d'), image = p.createImageData(N, N), data = image.data, [r, g, b] = ink.split(',').map(Number);
     const smooth = (edge, x) => { const t = Math.max(0, Math.min(1, x / edge)); return t * t * (3 - 2 * t); };
     const wrap = n => ((n % cells) + cells) % cells;
@@ -310,7 +344,7 @@ function water(env) {
             const { ctx, W, H } = env, sea = env.opts.waterStyle === 'sea', area = env.opts.waterArea;
             const [top, bottom] = area === 'top' ? [0, H * .42] : area === 'all' ? [0, H] : [H * .52, H];
             const fillInk = inkOf(env, 1, sea ? '60,170,205' : '84,170,186'), lineInk = inkOf(env, 0, env.light ? '30,140,165' : '238,251,255');
-            const want = [lineInk, sea].join('|');
+            const want = [env.artStyle, lineInk, sea, !!env.art?.get('caustic')].join('|');
             if (want !== key || !tiles.length) { drop(); key = want; tiles = [causticTile(env, 3, sea ? .1 : .05, lineInk), causticTile(env, 11, sea ? .12 : .06, lineInk)].filter(Boolean); }
             // 물빛: 띠의 안쪽 끝은 투명하게 풀린다
             const wash = ctx.createLinearGradient(0, top, 0, bottom), depthA = (.2 + env.level * .07) * env.opacity;

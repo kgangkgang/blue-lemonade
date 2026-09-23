@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {pathToFileURL} from 'node:url';
+import path from 'node:path';
+const root=pathToFileURL(path.resolve(process.argv[2]||'.')+'/');
+const {syncWeatherProfile,WEATHER_MODES}=await import(new URL('src/weather-profiles.js',root));
+assert(WEATHER_MODES.includes('feather')&&WEATHER_MODES.includes('butterfly'));
+const chat={weather:'lemon',weatherArtStyle:'anime',weatherColorMode:'gradient',weatherColor:'#ffc433',weatherColor2:'#ffa6be'};
+syncWeatherProfile(chat);
+chat.weather='petal';syncWeatherProfile(chat);assert.equal(chat.weatherArtStyle,'real');assert.equal(chat.weatherColorMode,'auto');
+chat.weatherArtStyle='anime';chat.weatherColorMode='custom';chat.weatherColor='#f0a4cb';syncWeatherProfile(chat);
+chat.weather='lemon';syncWeatherProfile(chat);assert.equal(chat.weatherArtStyle,'anime');assert.equal(chat.weatherColorMode,'gradient');assert.equal(chat.weatherColor,'#ffc433');
+chat.weather='petal';syncWeatherProfile(chat);assert.equal(chat.weatherColor,'#f0a4cb');
+chat.weather2='lemon';assert.equal(chat.weatherProfiles.lemon.weatherArtStyle,'anime');
+delete chat.weatherProfiles.feather;chat.weather='feather';syncWeatherProfile(chat);assert.equal(chat.weatherArtStyle,'real');
+const roundTrip=JSON.parse(JSON.stringify(chat));syncWeatherProfile(roundTrip);assert.equal(JSON.stringify(roundTrip),JSON.stringify(chat));
+console.log('PASS independent art style, tint, new-mode defaults, mixed layers and save round trip');

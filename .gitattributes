@@ -3,4 +3,5 @@
 /manifest.json text eol=lf
 /README.md text eol=lf
 /src/** text eol=lf
+/src/weather-art/*.webp binary
 /docs/downloads/*.zip binary

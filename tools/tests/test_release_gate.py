@@ -22,6 +22,21 @@ class GateTests(unittest.TestCase):
     def test_stale_notice_blocks(self):
         f=self.fixture('theme');f['src/notice-data.js']=b'export const NOTICES=[{version:"1.2.9"}];'
         with self.assertRaisesRegex(gate.GateError,'notice'):gate.validate(f,'theme')
+    def test_weather_artwork_must_be_packaged(self):
+        f=self.fixture('theme');f['src/weather-art.js']=b'export const artwork = true;'
+        with self.assertRaisesRegex(gate.GateError,'weather artwork'):gate.validate(f,'theme')
+        for name in gate.WEATHER_ARTWORK:f['src/weather-art/'+name]=b'RIFF0000WEBPfixture'
+        self.assertEqual(gate.validate(f,'theme'),'1.3.1')
+    def test_inventory_only_adds_named_weather_images(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);f=self.fixture('theme')
+            for name,data in f.items():
+                p=root/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(data)
+            art=root/'src/weather-art';art.mkdir()
+            for name in ('nature.webp','light.webp','private.webp'):(art/name).write_bytes(b'RIFF0000WEBPfixture')
+            files=gate.inventory(root,'theme')
+            self.assertIn('src/weather-art/nature.webp',files);self.assertIn('src/weather-art/light.webp',files)
+            self.assertNotIn('src/weather-art/private.webp',files)
     def test_missing_dependency_blocks(self):
         f=self.fixture();f['index.js']=b"import('./missing.js')"
         with self.assertRaisesRegex(gate.GateError,'missing'):gate.validate(f,'memory')

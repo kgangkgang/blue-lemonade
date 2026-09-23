@@ -5,12 +5,13 @@
 //        내 그림(custom): 받은 ImageBitmap 을 입자마다 돌려 가며 그린다 (눈처럼 흔들리며 내림).
 
 // 장면(무지개 · 물결 …) 코드는 그 날씨를 처음 고를 때만 받는다 — 비 · 눈만 쓰면 읽지 않는다
+import { createWeatherArt } from './weather-art.js';
 const SCENE_MODES = ['rainbow', 'shadow', 'breeze', 'glass', 'water'];
 let scenesModule = null, scenesLoading = null;
 const loadScenes = () => (scenesLoading ??= import('./weather-scenes.js').then(m => { scenesModule = m; return m; }));
 
 const LEVEL = [0, 0.55, 1, 1.7];
-const DENSITY = { rain: 0.00022, snow: 0.00016, custom: 0.0001, lemon: 0.0001, petal: 0.00012, meteor: 0.00005, fog: 0.00003, sun: 0.00008, star: 0.00034, firefly: 0.00007 };
+const DENSITY = { rain: 0.00022, snow: 0.00016, custom: 0.0001, lemon: 0.0001, petal: 0.00012, feather: 0.000045, butterfly: 0.000025, meteor: 0.00005, fog: 0.00003, sun: 0.00008, star: 0.00034, firefly: 0.00007 };
 const SPRITE_PX = 18; // 내 그림 기본 크기 (긴 변, 크기 100%)
 const BANDS = [[0, 0.34], [0.34, 0.67], [0.67, 1.01]];
 
@@ -19,6 +20,8 @@ function createCore(ctx, first, shared = {}) {
     let H = 0;
     let dpr = 1;
     let mode = 'off';
+    let artStyle = 'real';
+    const materials = { get: (kind, color) => shared.art?.get(kind, color, artStyle) };
     let level = 2;
     let colors = { rain: '200,215,240', rainAlpha: 0.3, snow: '255,255,255', snowAlpha: 0.8 };
     let opacity = 1;
@@ -61,12 +64,22 @@ function createCore(ctx, first, shared = {}) {
     const fogBake = canvas => canvas;
     const fogDrop = () => { for (const image of fogSprites) { if (typeof image.close === 'function') image.close(); else image.width = image.height = 1; } fogSprites = []; };
     function fogPaint() {
-        const key = [mix(0), mix(.5), mix(1), colors.snow, fog.style, Math.round(fog.edge * 20)].join('|');
+        const key = [artStyle, mix(0), mix(.5), mix(1), colors.snow, fog.style, Math.round(fog.edge * 20), !!materials.get('cloud')].join('|');
         if (key === fogKey && fogSprites.length) return;
         fogDrop(); fogKey = key;
         const e = fog.edge;
         for (let n = 0; n < 3; n++) {
             const ink = mix(n / 2) || colors.snow; // 그라데이션이면 덩어리마다 두 색 사이의 다른 색
+            const material = materials.get(fog.style === 'wisp' ? 'mist' : 'cloud', mix(n / 2));
+            if (material) {
+                const canvas = fogCanvas(384, 240); if (!canvas) return;
+                const paint = canvas.getContext('2d');
+                paint.filter = `blur(${((1 - e) * (fog.style === 'soft' ? 4 : 2)).toFixed(1)}px)`;
+                // Mirror the painted relief, rather than repeating an identical cloud silhouette.
+                if (n === 1) {paint.translate(384, 0); paint.scale(-1, 1);}
+                paint.drawImage(material, 8, 8, 368, 224);
+                fogSprites.push(canvas); continue;
+            }
             if (fog.style === 'anime') {
                 // 애니풍: 윗선이 몽글몽글한 구름 띠. 아래는 평평하게 풀리고, 안쪽에 한 톤 밝은 결을 한 겹 더 얹는다 (셀 채색 느낌)
                 const w = 384, h = 176, canvas = fogCanvas(w, h); if (!canvas) return;
@@ -159,6 +172,8 @@ function createCore(ctx, first, shared = {}) {
     }
     function piece(anywhere) {
         const depth = Math.random();
+        if (mode === 'butterfly') return { x: rand(0, W), y: anywhere ? rand(0, H) : H + 36, s: .65 + depth * .65, speed: 12 + depth * 20, sway: 15 + depth * 22, phase: rand(0, Math.PI * 2), freq: rand(.45, .85), rot: rand(-.2, .2), spin: rand(-.2, .2), depth };
+        if (mode === 'feather') {const rot=rand(-.6,.6);return {x:rand(0,W),y:anywhere?rand(0,H):-40,s:.65+depth*.65,speed:10+depth*22,sway:14+depth*24,phase:rand(0,Math.PI*2),freq:rand(.35,.6),rot,rot0:rot,spin:rand(-.4,.4),depth};}
         return { x: rand(0, W), y: anywhere ? rand(0, H) : rand(-40, -10), s: 0.6 + depth * 0.6, speed: 28 + depth * 62, sway: 10 + depth * 22, phase: rand(0, Math.PI * 2), freq: rand(0.3, 0.9), rot: rand(0, Math.PI * 2), spin: rand(-1.4, 1.4), depth };
     }
     // One scratch buffer per engine; drawing a tail must not allocate 25 objects
@@ -193,7 +208,7 @@ function createCore(ctx, first, shared = {}) {
     let scene = null, sceneOpts = { shadowStyle: 'palm', shadowBlur: 35, waterStyle: 'pool', waterArea: 'bottom' };
     const env = { ctx, rand, mix, canvas: (w, h) => fogCanvas(w, h), get W() { return W; }, get H() { return H; }, get dpr() { return dpr; }, get level() { return level; }, get k() { return LEVEL[level] ?? 1; },
         get opacity() { return opacity; }, get size() { return sizeK; }, get speed() { return speedK; }, get slant() { return slant; }, get sway() { return swayK; }, get spin() { return spinK; }, get motion() { return motion; },
-        get colors() { return colors; }, get light() { return colors.snowAlpha < .7; }, get tintRGB() { return tintRGB; }, get gradient() { return !!rgbB; }, get opts() { return sceneOpts; }, get spots() { return spots?.[mode] || null; } };
+        get art() { return materials; }, get artStyle() { return artStyle; }, get colors() { return colors; }, get light() { return colors.snowAlpha < .7; }, get tintRGB() { return tintRGB; }, get gradient() { return !!rgbB; }, get opts() { return sceneOpts; }, get spots() { return spots?.[mode] || null; } };
     const make = anywhere => (mode === 'star' ? star() : mode === 'firefly' ? firefly() : mode === 'sun' ? mote(anywhere) : mode === 'fog' ? puff(anywhere) : mode === 'rain' ? drop(anywhere) : mode === 'snow' ? flake(anywhere) : mode === 'meteor' ? comet(anywhere) : piece(anywhere));
 
     function seed() {
@@ -258,9 +273,19 @@ function createCore(ctx, first, shared = {}) {
                 p.x += dir * flow;
                 p.y -= flow * Math.abs(slant) * .8; // 각도가 클수록 비스듬히 피어오른다
                 p.y += Math.sin(t * p.freq + p.phase) * p.sway * dt * swayK * (motion === 'straight' ? 0 : motion === 'flutter' ? 2 : 1) * .35;
-                p.rot += p.spin * dt * spinK;
+                // Clouds rock gently; accumulated rotation eventually turns a cloud bank upright.
+                p.rot = p.rot0 + Math.sin(t * .08 + p.phase) * p.spin * 8 * spinK;
                 if (p.y < -reach) p.y = H + reach * .6;
                 if (dir > 0 ? p.x - reach > W : p.x + reach < 0) items[i] = puff(false);
+                continue;
+            }
+            if (mode === 'butterfly') {
+                const flutter = motion === 'straight' ? 0 : motion === 'flutter' ? 1.7 : 1;
+                p.y -= p.speed * speedK * (motion === 'streak' ? 2.5 : 1) * dt;
+                p.x += (Math.sin(t * p.freq + p.phase) * p.sway * swayK * flutter + slant * 14) * speedK * dt;
+                p.rot = Math.sin(t * p.freq + p.phase) * .32 * spinK * flutter;
+                if (p.x < -margin) p.x = W + margin; else if (p.x > W + margin) p.x = -margin;
+                if (p.y < -margin) items[i] = piece(false);
                 continue;
             }
             const streak = motion === 'streak';
@@ -268,7 +293,8 @@ function createCore(ctx, first, shared = {}) {
             p.y += v * dt;
             p.x += v * slant * dt;
             p.x += Math.sin(t * p.freq + p.phase) * p.sway * dt * swayK * (motion === 'straight' ? 0 : motion === 'flutter' ? 2 : 1);
-            if (mode !== 'snow') p.rot += p.spin * dt * Math.min(2, speedK) * spinK;
+            if (mode === 'feather') p.rot = p.rot0 + Math.sin(t * .65 * speedK + p.phase) * .7 * spinK;
+            else if (mode !== 'snow') p.rot += p.spin * dt * Math.min(2, speedK) * spinK;
             if (mode === 'rain') {
                 if (p.y - p.len * sizeK > H || p.x < -margin - 60 || p.x > W + margin + 60) items[i] = drop(false);
                 continue;
@@ -301,10 +327,12 @@ function createCore(ctx, first, shared = {}) {
                 ctx.stroke();
             });
         } else if (mode === 'snow') {
+            const crystal = materials.get('snow');
             BANDS.forEach(([from, to], b) => {
                 ctx.beginPath();
                 for (const p of items) {
                     if (p.depth < from || p.depth >= to) continue;
+                    if (crystal && p.depth > .68) continue;
                     const r = p.r * sizeK;
                     ctx.moveTo(p.x + r, p.y);
                     ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
@@ -313,11 +341,29 @@ function createCore(ctx, first, shared = {}) {
                 ctx.fillStyle = rgbB ? wash(snowAlpha) : `rgba(${tintRGB || colors.snow}, ${snowAlpha})`;
                 ctx.fill();
             });
+            if (crystal) for (const p of items) {
+                if (p.depth <= .68) continue;
+                const art = materials.get('snow', tintRGB ? mix(Math.round(p.depth * 4) / 4) : colors.snowAlpha < .7 ? '128,161,187' : null);
+                const side = (7 + p.depth * 7) * sizeK, angle = p.phase + clock * .16 * spinK;
+                const c = Math.cos(angle) * dpr, s = Math.sin(angle) * dpr;
+                ctx.setTransform(c, s, -s, c, p.x * dpr, p.y * dpr);
+                ctx.globalAlpha = (.38 + p.depth * .4) * opacity;
+                ctx.drawImage(art, -side / 2, -side / 2, side, side);
+            }
+            ctx.globalAlpha = 1; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         } else if (mode === 'star') {
             const t = clock, light = colors.snowAlpha < .7, scale = Math.sqrt(sizeK);
             const depthK = motion === 'straight' ? 0 : Math.min(1, .55 * swayK * (motion === 'flutter' ? 1.6 : 1)); // 흔들림 = 반짝임의 깊이
             const th = -.62 + Math.atan(slant) * 1.5, cx = W / 2, cy = H / 2, reach = Math.hypot(W, H) * .62, girth = Math.min(W, H) * .2 * sizeK; // 각도 = 은하수가 누운 방향
             if (starStyle === 'milky') {
+                const nebula = materials.get('nebula', tintRGB ? mix(.5) : null);
+                if (nebula) {
+                    const c = Math.cos(th) * dpr, s = Math.sin(th) * dpr;
+                    ctx.setTransform(c, s, -s, c, cx * dpr, cy * dpr);
+                    ctx.globalAlpha = (light ? .2 : .38) * opacity * (1 + Math.sin(t * .12 * speedK) * .08 * depthK);
+                    ctx.drawImage(nebula, -reach, -girth * 1.4, reach * 2, girth * 2.8);
+                    ctx.globalAlpha = 1; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                } else {
                 const hues = ['150,130,255', '110,170,255', '255,150,220'];
                 for (let n = 0; n < 7; n++) {
                     const u = (n / 6 - .5) * 2, x = cx + Math.cos(th) * u * reach, y = cy + Math.sin(th) * u * reach, r = girth * (1.7 - Math.abs(u) * .6);
@@ -326,6 +372,7 @@ function createCore(ctx, first, shared = {}) {
                     const g = ctx.createRadialGradient(x, y, 0, x, y, r);
                     g.addColorStop(0, `rgba(${ink},${a.toFixed(3)})`); g.addColorStop(.6, `rgba(${ink},${(a * .4).toFixed(3)})`); g.addColorStop(1, `rgba(${ink},0)`);
                     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+                }
                 }
             }
             for (const p of items) {
@@ -367,6 +414,10 @@ function createCore(ctx, first, shared = {}) {
                 const a = Math.min(1, (.25 + glow * .75) * (.5 + p.depth * .5) * opacity);
                 const ink = rgbB ? mix(p.tone) : tintRGB || (light ? '116,150,20' : p.tone < .5 ? '214,255,120' : '255,240,140');
                 const r = p.r * scale, halo = r * (4 + glow * 3);
+                const material = materials.get('glow', rgbB ? mix(Math.round(p.tone * 4) / 4) : ink);
+                if (material) {
+                    ctx.globalAlpha = a;ctx.drawImage(material, p.x - halo, p.y - halo, halo * 2, halo * 2);ctx.globalAlpha = 1;continue;
+                }
                 const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, halo);
                 g.addColorStop(0, `rgba(${ink},${(a * .55).toFixed(3)})`); g.addColorStop(1, `rgba(${ink},0)`);
                 ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, halo, 0, Math.PI * 2); ctx.fill();
@@ -384,7 +435,35 @@ function createCore(ctx, first, shared = {}) {
             // 색을 직접 고르면 그 색 그대로 칠한다 — '더하기' 합성에서는 어두운 색(검은 햇빛)이 보이지 않는다
             const core = (rgbB ? mix(.5) : tintRGB) || base;
             ctx.globalCompositeOperation = light || tintRGB ? 'source-over' : 'lighter';
-            if (sunStyle === 'holy') {
+            const paintedBeam = materials.get('sunbeam');
+            if (paintedBeam) {
+                const spot = spots?.sun?.[0];
+                if (sunStyle === 'holy') {
+                    const x = spot ? spot.x * W : W * (.5 - Math.max(-.35, Math.min(.35, slant * .9))), y = spot ? spot.y * H : -H * .08;
+                    const angle = lean * .3 + Math.sin(turn + t * .03 * speedK) * .09 * swayK;
+                    const c = Math.cos(angle) * dpr, s = Math.sin(angle) * dpr, width = W * 1.65 * sizeK;
+                    ctx.setTransform(c, s, -s, c, x * dpr, y * dpr);
+                    ctx.globalAlpha = (light ? .4 : .32) * opacity * (.86 + .14 * Math.sin(turn));
+                    ctx.drawImage(materials.get('sunbeam', core), -width / 2, 0, width, Math.max(H * 1.1, width));
+                } else if (sunStyle === 'flare') {
+                    const x = spot ? spot.x * W : W * (.5 - Math.max(-1, Math.min(1, Math.atan(slant) / .35)) * .44), y = spot ? spot.y * H : H * .04;
+                    for (const [i, beam] of beams.entries()) {
+                        const at = i ? beam.at : 0, r = (i ? 14 + beam.width * 140 : Math.min(W, H) * .4) * sizeK;
+                        const gx = x + (W - 2 * x) * at + Math.sin(turn + beam.phase) * 8 * swayK, gy = y + (H - y) * at;
+                        ctx.globalAlpha = Math.max(0, (i ? .24 : .5) * shimmer(beam) * opacity);
+                        ctx.drawImage(materials.get('glow', inkOf(beam)), gx - r, gy - r, r * 2, r * 2);
+                    }
+                } else for (const beam of beams) {
+                    const anime = sunStyle === 'anime', x = W * beam.at + (spot ? (spot.x - .5) * W : 0) + Math.sin(turn + beam.phase) * 14 * swayK;
+                    const y = spot ? spot.y * H : -H * .12;
+                    const width = W * (anime ? .58 : .3) * sizeK, angle = -lean * .5;
+                    const c = Math.cos(angle) * dpr, s = Math.sin(angle) * dpr;
+                    ctx.setTransform(c, s, -s, c, x * dpr, y * dpr);
+                    ctx.globalAlpha = Math.max(0, (anime ? .2 : .15) * shimmer(beam) * opacity);
+                    ctx.drawImage(materials.get('sunbeam', inkOf(beam)), -width / 2, 0, width, H * 1.3);
+                }
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.globalAlpha = 1;
+            } else if (sunStyle === 'holy') {
                 // 성스러운 빛: 화면 위 한 점에서 부채꼴로 퍼지는 빛살 + 그 자리의 은은한 후광
                 const spot = spots?.sun?.[0];
                 const cx = spot ? spot.x * W : W * (.5 - Math.max(-.35, Math.min(.35, slant * .9))), cy = spot ? spot.y * H : -H * .1, reach = Math.hypot(W, H) * 1.05;
@@ -451,6 +530,8 @@ function createCore(ctx, first, shared = {}) {
                 const a = Math.max(0, (.35 + p.depth * .5) * (.55 + Math.sin(t * p.twinkle + p.phase) * .45) * opacity * (light ? .9 : .8));
                 ctx.fillStyle = `rgba(${rgbB ? mix(p.depth) : tintRGB || base},${a.toFixed(3)})`;
                 const r = p.r * Math.sqrt(sizeK);
+                const glow = materials.get('glow', rgbB ? mix(Math.round(p.depth * 4) / 4) : tintRGB || base);
+                if (glow) {ctx.globalAlpha = a;ctx.drawImage(glow, p.x - r * 2, p.y - r * 2, r * 4, r * 4);ctx.globalAlpha = 1;continue;}
                 ctx.beginPath();
                 if (sunStyle === 'anime' || sunStyle === 'holy') { const k = r * 2.6, n = r * .55; ctx.moveTo(p.x, p.y - k); ctx.quadraticCurveTo(p.x + n * .3, p.y - n * .3, p.x + k, p.y); ctx.quadraticCurveTo(p.x + n * .3, p.y + n * .3, p.x, p.y + k); ctx.quadraticCurveTo(p.x - n * .3, p.y + n * .3, p.x - k, p.y); ctx.quadraticCurveTo(p.x - n * .3, p.y - n * .3, p.x, p.y - k); }
                 else ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
@@ -526,12 +607,13 @@ function createCore(ctx, first, shared = {}) {
                 ctx.fillStyle = (own && rgbB ? `rgb(${own})` : tintLight) || (light ? '#527f9b' : '#eefbff');ctx.beginPath();ctx.arc(points[0],points[1],width * .65,0,Math.PI*2);ctx.fill();
             }
             ctx.globalAlpha = 1;
-        } else if (['custom', 'lemon', 'petal'].includes(mode)) {
-            const long = Math.max(sprite?.width || 1, sprite?.height || 1);
-            const bw = (sprite?.width || 1) / long;
-            const bh = (sprite?.height || 1) / long;
+        } else if (['custom', 'lemon', 'petal', 'feather', 'butterfly'].includes(mode)) {
+            const baseArt = mode === 'custom' ? sprite : materials.get(mode);
+            const long = Math.max(baseArt?.width || 1, baseArt?.height || 1);
+            const bw = (baseArt?.width || 1) / long;
+            const bh = (baseArt?.height || 1) / long;
             for (const p of items) {
-                const size = SPRITE_PX * sizeK * p.s;
+                const size = (mode === 'custom' ? SPRITE_PX : mode === 'butterfly' ? 36 : mode === 'feather' ? 37 : mode === 'lemon' ? 26 : 23) * sizeK * p.s;
                 const w = size * bw;
                 const h = size * bh;
                 const cos = Math.cos(p.rot) * dpr;
@@ -539,6 +621,20 @@ function createCore(ctx, first, shared = {}) {
                 ctx.globalAlpha = Math.min(1, (0.55 + p.depth * 0.45) * opacity);
                 ctx.setTransform(cos, sin, -sin, cos, p.x * dpr, p.y * dpr);
                 if (mode === 'custom' && sprite) ctx.drawImage(tintedSprites[Math.min(4, Math.floor(p.depth * 5))] || tintedSprite || sprite, -w / 2, -h / 2, w, h);
+                else if (baseArt) {
+                    const material = materials.get(mode, tintRGB ? mix(Math.round(p.depth * 4) / 4) : null);
+                    const fold = mode === 'butterfly' ? .2 + .8 * Math.abs(Math.sin(clock * (4 + p.depth * 2) * speedK + p.phase)) : mode === 'petal' && motion !== 'straight' ? .58 + .42 * Math.abs(Math.cos(clock * .65 * spinK + p.phase)) : 1;
+                    ctx.drawImage(material, -w * fold / 2, -h / 2, w * fold, h);
+                }
+                else if (mode === 'feather') {
+                    ctx.strokeStyle = tint || (colors.snowAlpha < .7 ? '#91a7bf' : '#edf3ff');ctx.lineWidth=Math.max(.7,size*.035);
+                    ctx.beginPath();ctx.moveTo(0,-size*.4);ctx.quadraticCurveTo(size*.12,0,0,size*.4);ctx.stroke();
+                    for(let n=0;n<7;n++){const y=-size*.28+n*size*.08,span=Math.sin((n+1)/8*Math.PI)*size*.2;ctx.beginPath();ctx.moveTo(0,y+size*.09);ctx.lineTo(span,y);ctx.moveTo(0,y+size*.09);ctx.lineTo(-span,y);ctx.stroke();}
+                }
+                else if (mode === 'butterfly') {
+                    const flap=.2+.8*Math.abs(Math.sin(clock*5*speedK+p.phase));ctx.scale(flap,1);ctx.fillStyle=tint||'#afc9ef';
+                    for(const sign of [-1,1]){ctx.beginPath();ctx.moveTo(0,0);ctx.bezierCurveTo(sign*size*.6,-size*.5,sign*size*.55,size*.28,0,size*.14);ctx.fill();}
+                }
                 else if (mode === 'lemon') {
                     ctx.beginPath(); ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
                     ctx.fillStyle = rgbB ? `rgb(${mix(p.depth)})` : tint || '#ffe56a'; ctx.fill();
@@ -576,6 +672,8 @@ function createCore(ctx, first, shared = {}) {
             else if (changed || !items.length) seed();
         },
         config(next) {
+            const wantedArt = next.artStyle === 'anime' ? 'anime' : 'real';
+            const artChanged = wantedArt !== artStyle; artStyle = wantedArt;
             const spriteChanged = next.sprite !== undefined;
             const nextTint='tint' in next&&/^#[0-9a-f]{6}$/i.test(next.tint||'')?next.tint.toLowerCase():'tint' in next?null:tint;
             const nextTint2=nextTint&&/^#[0-9a-f]{6}$/i.test(next.tint2||'')?next.tint2.toLowerCase():'tint2' in next||!nextTint?null:tint2;
@@ -622,8 +720,10 @@ function createCore(ctx, first, shared = {}) {
             if (Number.isFinite(next.speed)) speedK = Math.min(3, Math.max(0.2, next.speed / 100));
             if (Number.isFinite(next.angle)) slant = Math.tan(Math.min(60, Math.max(-60, next.angle)) * Math.PI / 180);
             if (mode === 'fog') fogPaint(); // 색(테마 · 직접 고른 색)이 바뀌었으면 덩어리 그림을 다시 만든다
-            if (reseed || fogFlip || starChanged) seed();
+            shared.art?.request(mode, artStyle);
+            if (reseed || fogFlip || starChanged || artChanged) seed();
         },
+        artReady() { if (mode === 'fog') {fogKey = ''; fogPaint();} },
         step,
         draw,
         dispose() { scene?.dispose?.();scene=null;items=[];for(const canvas of tintedSprites)canvas.width=canvas.height=1;tintedSprites=[];fogDrop();fogKey='';sprite?.close?.();sprite=null;if(tintedSprite)tintedSprite.width=tintedSprite.height=1;tintedSprite=null; },
@@ -639,20 +739,27 @@ function createCore(ctx, first, shared = {}) {
 export function createEngine(ctx) {
     const shared = { wake: null };
     const main = createCore(ctx, true, shared), extra = createCore(ctx, false, shared);
+    shared.art = createWeatherArt((w, h) => {
+        const canvas = typeof OffscreenCanvas === 'function' ? new OffscreenCanvas(w, h) : ctx.canvas.ownerDocument?.createElement('canvas');
+        if (canvas) {canvas.width = w; canvas.height = h;} return canvas;
+    }, () => {main.artReady(); extra.artReady(); shared.wake?.();});
+    let artColorKey = '';
     return {
         /** 장면 코드를 늦게 받아 효과가 뒤늦게 생겼을 때 부른다 — 멈춰 있던 그리기 루프를 다시 돌리게 (weather.js · weather-worker.js 가 건다) */
         set onWake(fn) { shared.wake = typeof fn === 'function' ? fn : null; },
         /** 지금 설정에 필요한 코드를 다 받았는지 (캡처처럼 바로 한 장을 그려야 하는 곳에서 기다린다) */
-        ready: () => (scenesLoading || Promise.resolve()).then(() => {}, () => {}),
+        ready: () => Promise.all([scenesLoading, shared.art.ready()]).then(() => {}, () => {}),
         resize(w, h, ratio) { main.resize(w, h, ratio); extra.resize(w, h, ratio); },
         config(next) {
+            const key = [next.tint, next.tint2, next.colors?.snow, next.second?.tint, next.second?.tint2].join('|');
+            if (key !== artColorKey) {artColorKey = key; shared.art.clearTint();}
             main.config(next);
             const second = next.second && typeof next.second === 'object' && next.second.mode && next.second.mode !== 'off' && next.second.mode !== next.mode && next.second.mode !== 'custom' ? next.second : null;
             extra.config(second ? { colors: next.colors, tint: null, tint2: null, ...second } : { mode: 'off', level: next.level });
         },
         step(dt, now) { main.step(dt, now); extra.step(dt, now); },
         draw() { main.draw(); extra.draw(); },
-        dispose() { main.dispose(); extra.dispose(); },
+        dispose() { main.dispose(); extra.dispose(); shared.art.dispose(); },
         idle: () => main.idle() && extra.idle(),
         fps: () => Math.max(main.idle() ? 0 : main.fps(), extra.idle() ? 0 : extra.fps()) || 30,
     };

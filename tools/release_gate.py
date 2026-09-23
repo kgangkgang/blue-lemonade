@@ -12,6 +12,8 @@ import zipfile
 class GateError(ValueError):
     pass
 
+WEATHER_ARTWORK = tuple(f'{pack}{style}.webp' for pack in ('nature', 'light', 'wings') for style in ('', '-anime'))
+
 
 def require(condition, message):
     if not condition:
@@ -23,6 +25,12 @@ def inventory(root, kind):
     names = ['manifest.json', 'index.js', 'style.css', 'README.md']
     if kind == 'theme':
         names += [p.relative_to(root).as_posix() for p in (root / 'src').rglob('*') if p.is_file() and p.suffix in {'.js', '.css'}]
+        # Only these curated weather atlases are runtime images. Do not sweep
+        # arbitrary local images into the public package.
+        for name in WEATHER_ARTWORK:
+            asset = root / 'src' / 'weather-art' / name
+            if asset.is_file():
+                names.append(asset.relative_to(root).as_posix())
     else:
         names += [p.name for p in root.glob('*.js') if p.name != 'index.js']
     require(len(names) > 4, 'No runtime modules found')
@@ -40,6 +48,10 @@ def validate(files, kind):
     require(bool(re.fullmatch(r'\d+\.[0-9]\.[0-9]', version)), 'Version must carry at 10, e.g. 3.9.9 -> 4.0.0')
     require(manifest.get('js') == 'index.js' and manifest.get('css') == 'style.css', 'Unexpected manifest entry points')
     if kind == 'theme':
+        if 'src/weather-art.js' in files:
+            for name in WEATHER_ARTWORK:
+                data = files.get('src/weather-art/' + name, b'')
+                require(data.startswith(b'RIFF') and data[8:12] == b'WEBP', f'Missing weather artwork: {name}')
         # 4.5.0: 공지 본문이 src/notice-data.js 로 갈라졌다 (팝업 열 때만 읽는다). 옛 판도 받아 준다.
         notice = files.get('src/notice-data.js', files.get('src/notice.js', b'')).decode('utf-8')
         found = re.search(r'\bNOTICES\s*=\s*\[\s*\{\s*[\'"]?version[\'"]?\s*:\s*[\'"]([^\'"]+)', notice)
