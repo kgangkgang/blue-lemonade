@@ -5,6 +5,7 @@
 //        내 그림(custom): 받은 ImageBitmap 을 입자마다 돌려 가며 그린다 (눈처럼 흔들리며 내림).
 
 // 장면(무지개 · 물결 …) 코드는 그 날씨를 처음 고를 때만 받는다 — 비 · 눈만 쓰면 읽지 않는다
+import { weatherAmount } from './weather-options.js';
 import { createWeatherArt } from './weather-art.js';
 const SCENE_MODES = ['rainbow', 'shadow', 'breeze', 'glass', 'water'];
 let scenesModule = null, scenesLoading = null;
@@ -22,7 +23,7 @@ function createCore(ctx, first, shared = {}) {
     let mode = 'off';
     let artStyle = 'real', artOutline = false;
     const materials = { get: (kind, color) => artStyle === 'simple' ? (kind === 'nebula' ? shared.art?.get(kind, color, 'real', false) : null) : shared.art?.get(kind, color, artStyle, artOutline) };
-    let level = 2;
+    let level = 2, amount = 100;
     let colors = { rain: '200,215,240', rainAlpha: 0.3, snow: '255,255,255', snowAlpha: 0.8 };
     let opacity = 1;
     let sizeK = 1;
@@ -181,7 +182,7 @@ function createCore(ctx, first, shared = {}) {
             if (!scenesModule) { items = []; const wantMode = mode; loadScenes().then(() => { if (mode === wantMode && !scene) { seed(); shared.wake?.(); } }, () => {}); return; } // 받는 동안은 비어 있다가, 받으면 다시 뿌린다
             scene = W > 0 && H > 0 ? scenesModule.createScene(mode, env) : null; items = scene ? [scene] : []; return;
         }
-        const k = (LEVEL[level] ?? 1) * (artStyle === 'simple' && ['lemon','petal','feather','butterfly','sun','firefly'].includes(mode) ? .55 : 1);
+        const k = (['rain','snow'].includes(mode) ? amount / 100 : (LEVEL[level] ?? 1)) * (artStyle === 'simple' && ['lemon','petal','feather','butterfly','sun','firefly'].includes(mode) ? .55 : 1);
         const area = Math.max(0, W * H);
         const active = DENSITY[mode] && (mode !== 'custom' || sprite);
         if (mode === 'fog') fogPaint();
@@ -658,8 +659,10 @@ function createCore(ctx, first, shared = {}) {
             }
             const fogFlip=fogChanged||next.mode==='fog'&&Number.isFinite(next.angle)&&(next.angle<0)!==(slant<0); // 흐르는 방향이 바뀌면 다시 뿌린다
             const reseed = (Number.isFinite(next.orbitSize)&&next.orbitSize/100!==orbitSize) || next.mode !== mode || next.level !== level || (spriteChanged && next.mode === 'custom');
+            const nextAmount=weatherAmount(next.amount,next.level), amountChanged=nextAmount!==amount;
             mode = next.mode;
             level = next.level;
+            amount = nextAmount;
             if (next.colors) colors = next.colors;
             if (next.motion) motion = next.motion;
             if(Number.isFinite(next.curvature))curvature=Math.max(0,Math.min(1,next.curvature/100));
@@ -674,6 +677,12 @@ function createCore(ctx, first, shared = {}) {
             if (mode === 'fog') fogPaint(); // 색(테마 · 직접 고른 색)이 바뀌었으면 덩어리 그림을 다시 만든다
             shared.art?.request(mode, artStyle);
             if (reseed || fogFlip || starChanged || artChanged) seed();
+            else if(amountChanged && ['rain','snow'].includes(mode)){
+                // A slider changes population without teleporting existing drops.
+                const count=Math.min(500,Math.round(Math.max(0,W*H)*DENSITY[mode]*amount/100));
+                if(items.length>count)items.length=count;
+                while(items.length<count)items.push(make(true));
+            }
         },
         artReady() { if (mode === 'fog') {fogKey = ''; fogPaint();} },
         step,

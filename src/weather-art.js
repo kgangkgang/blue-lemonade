@@ -8,7 +8,7 @@ const PACKS = {
 const MODES = { petal: ['nature'], lemon: ['nature'], breeze: ['nature'],
     star: ['light'], sun: ['light'], firefly: ['light'], shadow: ['light', 'nature'], water: ['light'], glass: ['light'], feather: ['wings'], butterfly: ['wings'] };
 const packs = new Map();
-const limits = { cloud: 384, mist: 384, nebula: 384, sunbeam: 384, caustic: 384, palm: 384, droplet: 96, glow: 64 };
+const limits = { cloud: 384, mist: 384, nebula: 512, sunbeam: 384, caustic: 384, palm: 384, droplet: 96, glow: 64 };
 
 async function decodePack(name, canvas) {
     const response = await fetch(new URL(`./weather-art/${name}.webp`, import.meta.url));

@@ -1,13 +1,21 @@
+import { weatherAmount, activeWeather } from './weather-options.js';
 export const WEATHER_MODES=['rain','snow','fog','sun','star','firefly','rainbow','shadow','breeze','glass','water','lemon','petal', 'feather', 'butterfly','meteor','custom','tracker'];
-export const WEATHER_FIELDS=['weatherIllustrated','weatherArtStyle','weatherArtOutline','weatherLevel','weatherOpacity','weatherSize','weatherSpeed','weatherAngle','weatherMotion','weatherSway','weatherSpin','weatherCurvature','weatherOrbitSize','weatherOrbitDirection','weatherColorMode','weatherColor','weatherColor2','weatherShadowStyle','weatherShadowBlur','weatherWaterStyle','weatherWaterArea','weatherSunStyle','weatherStarStyle','weatherFogStyle','weatherFogArea','weatherFogStretch','weatherFogEdge','weatherFogSwell','weatherFogDepth'];
+export const WEATHER_FIELDS=['weatherIllustrated','weatherArtStyle','weatherArtOutline','weatherLevel','weatherAmount','weatherOpacity','weatherSize','weatherSpeed','weatherAngle','weatherMotion','weatherSway','weatherSpin','weatherCurvature','weatherOrbitSize','weatherOrbitDirection','weatherColorMode','weatherColor','weatherColor2','weatherShadowStyle','weatherShadowBlur','weatherWaterStyle','weatherWaterArea','weatherSunStyle','weatherStarStyle','weatherFogStyle','weatherFogArea','weatherFogStretch','weatherFogEdge','weatherFogSwell','weatherFogDepth'];
 const take=chat=>Object.fromEntries(WEATHER_FIELDS.map(key=>[key,chat[key]]));
 export function syncWeatherProfile(chat){
+    if(!activeWeather(chat.weather))chat.weather='off';
+    if(!activeWeather(chat.weather2))chat.weather2='off';
+    chat.weatherSunStyle='flare';
+    chat.weatherAmount=weatherAmount(chat.weatherAmount,chat.weatherLevel);
+    chat.weather2Amount=weatherAmount(chat.weather2Amount,chat.weather2Level);
     chat.weatherArtStyle=['anime','cel'].includes(chat.weatherArtStyle)?chat.weatherArtStyle:'real';
     chat.weatherIllustrated=chat.weatherIllustrated===true;
     chat.weatherArtOutline=!!chat.weatherArtOutline;
     if(!chat.weatherProfiles||typeof chat.weatherProfiles!=='object'||Array.isArray(chat.weatherProfiles))chat.weatherProfiles={};
     // Older per-effect profiles have no color fields. Never inherit another effect's tint.
     for(const profile of Object.values(chat.weatherProfiles))if(profile&&typeof profile==='object'){
+        profile.weatherSunStyle='flare';
+        profile.weatherAmount=weatherAmount(profile.weatherAmount,profile.weatherLevel);
         profile.weatherIllustrated??=false;profile.weatherArtStyle??='real';profile.weatherArtOutline??=false;profile.weatherColorMode??='auto';profile.weatherColor??='#91cfff';
     }
     if(!WEATHER_MODES.includes(chat.weatherProfileMode)){

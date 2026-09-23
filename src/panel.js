@@ -492,7 +492,7 @@ const NUM = {
     'shadow.angle': { unit: '도' },
     'shadow.distance': { unit: 'px' },
     'shadow.blur': { unit: 'px' },
-    'chat.weatherOpacity': { unit: '%' }, 'chat.weatherSize': { unit: '%' }, 'chat.weatherSpeed': { unit: '%' }, 'chat.weatherAngle': { unit: '도' },
+    'chat.weatherAmount': { unit: '%' }, 'chat.weather2Amount': { unit: '%' }, 'chat.weatherOpacity': { unit: '%' }, 'chat.weatherSize': { unit: '%' }, 'chat.weatherSpeed': { unit: '%' }, 'chat.weatherAngle': { unit: '도' },
 };
 const numText = (path, v) => String(Number((Number(v) / (NUM[path]?.scale || 1)).toFixed(4)));
 // 숫자칸 폭 = 값 글자 수 (3.3.0 — 자간 -0.0075 같은 긴 값이 잘리지 않게). CSS 가 1ch 단위로 폭을 잡는다
@@ -1111,7 +1111,7 @@ function tabBackup() {
     return `<div class="salty-group">
             ${row('실리태번 설정', `<button class="salty-btn" data-act="st-theme">${matched ? '다시 맞추기' : '맞추기'}</button>`,
         matched ? '지금 이 테마에 맞게 돼 있어요' : '흐림 · 그림자 · 말풍선 모양을 이 테마에 맞춰요')}
-            ${row('프리셋 공유', '<span class="salty-btns"><button class="salty-btn" data-act="preset-export">선택해서 공유하기</button><button class="salty-btn" data-act="preset-import">선택해서 불러오기</button></span>', '형광펜 · 날씨처럼 원하는 묶음만 골라요')}
+            ${row('프리셋 공유', '<span class="salty-btns"><button class="salty-btn" data-act="preset-export">공유하기</button><button class="salty-btn" data-act="preset-import">불러오기</button></span>', '형광펜 · 날씨처럼 묶음만 골라요')}
             ${row('전체 설정 파일', '<span class="salty-btns"><button class="salty-btn" data-act="export">내보내기</button><button class="salty-btn" data-act="import">가져오기</button></span>')}
             ${row('처음 설정으로', '<button class="salty-btn salty-btn-danger" data-act="reset">되돌리기</button>', '무엇을 되돌릴지 골라요')}
         </div>
@@ -1356,14 +1356,14 @@ function tabChat(s, sub) {
         ${cap('날씨')}<div class="salty-group">
             ${stack('채팅 뒤 효과', weatherSeg(s), weatherMode(s) === 'tracker' ? '트래커 날씨를 읽어 비 · 눈 · 안개 · 햇살 · 밤의 별을 보여요. 안개비 · 여우비처럼 둘이면 겹쳐요' : '')}
             ${weatherMode(s) === 'custom' ? weatherImageControls(s) : ''}
-            ${['sun','star','firefly','shadow','breeze','glass','water','lemon','petal','feather','butterfly'].includes(weatherMode(s)) ? row('그림 효과 사용',toggle('chat.weatherIllustrated',s.chat.weatherIllustrated).replace('<input','<input aria-label="그림 효과 사용"'),'기본은 작고 단순하게. 켜면 이전 그림체를 골라 쓸 수 있어요.') : ''}
-            ${s.chat.weatherIllustrated && ['sun','star','firefly','shadow','breeze','glass','water','lemon','petal','feather','butterfly'].includes(weatherMode(s)) ? stack('그림 스타일',seg('chat.weatherArtStyle',[['real','실사풍'],['anime','일러스트풍'],['cel','셀 애니풍']],'real'),'색과 움직임은 그대로, 그림의 느낌만 바꿔요. 날씨마다 기억해요.') : ''}
-            ${!['off', 'tracker'].includes(weatherMode(s)) ? stack('세기', seg('chat.weatherLevel', [[1, '약하게'], [2, '보통'], [3, '강하게']])) : ''}
+            ${['sun','star','firefly','shadow','breeze','lemon','petal'].includes(weatherMode(s)) ? row('그림 효과 사용',toggle('chat.weatherIllustrated',s.chat.weatherIllustrated).replace('<input','<input aria-label="그림 효과 사용"'),'기본은 작고 단순하게. 켜면 이전 그림체를 골라 쓸 수 있어요.') : ''}
+            ${s.chat.weatherIllustrated && ['sun','star','firefly','shadow','breeze','lemon','petal'].includes(weatherMode(s)) ? stack('그림 스타일',seg('chat.weatherArtStyle',[['real','실사풍'],['anime','일러스트풍'],['cel','셀 애니풍']],'real'),'색과 움직임은 그대로, 그림의 느낌만 바꿔요. 날씨마다 기억해요.') : ''}
+            ${['rain','snow'].includes(weatherMode(s)) ? slider('chat.weatherAmount', weatherMode(s)==='rain'?'비의 양':'눈의 양', 0, 200, 1, 100)+'<p class="salty-note">100%가 기본 양이에요. 숫자를 직접 입력해도 돼요.</p>' : !['off', 'tracker'].includes(weatherMode(s)) ? stack('세기', seg('chat.weatherLevel', [[1, '약하게'], [2, '보통'], [3, '강하게']])) : ''}
             ${weatherMode(s) === 'tracker' ? `<p class="salty-note">세기 · 색 · 모양은 그 날씨를 직접 골랐을 때 맞춰 둔 값을 그대로 써요. 비는 비대로, 눈은 눈대로요.</p>
             <button type="button" class="salty-btn bl-weather-skip-fold" data-act="weather-skip-fold" aria-expanded="${!!ui.weatherSkipOpen}">제외할 날씨${(s.chat.weatherTrackerSkip || []).length ? ` · ${s.chat.weatherTrackerSkip.length}` : ''} <i class="fa-solid fa-chevron-${ui.weatherSkipOpen ? 'up' : 'down'}"></i></button>
-            ${ui.weatherSkipOpen ? `<div class="salty-seg bl-weather-choices bl-weather-skip">${[['rain', '비'], ['snow', '눈'], ['fog', '안개'], ['sun', '햇살'], ['star', '별'], ['glass', '유리 빗방울'], ['rainbow', '무지개'], ['breeze', '흩날림']].map(([value, label]) => `<button data-act="weather-skip" data-value="${value}" class="${(s.chat.weatherTrackerSkip || []).includes(value) ? 'on' : ''}">${label}</button>`).join('')}</div><p class="salty-note">고른 날씨는 트래커에 나와도 화면에 그리지 않아요.</p>` : ''}` : ''}
+            ${ui.weatherSkipOpen ? `<div class="salty-seg bl-weather-choices bl-weather-skip">${[['rain', '비'], ['snow', '눈'], ['fog', '안개'], ['sun', '햇살'], ['star', '별'], ['rainbow', '무지개'], ['breeze', '흩날림']].map(([value, label]) => `<button data-act="weather-skip" data-value="${value}" class="${(s.chat.weatherTrackerSkip || []).includes(value) ? 'on' : ''}">${label}</button>`).join('')}</div><p class="salty-note">고른 날씨는 트래커에 나와도 화면에 그리지 않아요.</p>` : ''}` : ''}
             ${weatherMode(s) !== 'off' ? `${slider('chat.weatherBubble', '내 메시지 농도', 30, 100, 1, 70)}<p class="salty-note">날씨를 켠 동안 내 메시지 면(말풍선 · 카드 · 테이블)이 이만큼만 칠해져 그 뒤의 날씨가 비쳐요. 100이면 불투명해요.</p>` : ''}
-            ${weatherMixing(s) && s.chat.weather2 && s.chat.weather2 !== 'off' ? stack('둘째 날씨 세기', seg('chat.weather2Level', [[1, '약하게'], [2, '보통'], [3, '강하게']], 2), '둘째 날씨의 세부 값은 그 날씨를 첫째로 골랐을 때 맞춰 둔 값을 써요') : ''}
+            ${weatherMixing(s) && s.chat.weather2 && s.chat.weather2 !== 'off' ? ['rain','snow'].includes(s.chat.weather2) ? slider('chat.weather2Amount', s.chat.weather2==='rain'?'함께 내리는 비의 양':'함께 내리는 눈의 양',0,200,1,100) : stack('둘째 날씨 세기', seg('chat.weather2Level', [[1, '약하게'], [2, '보통'], [3, '강하게']], 2), '둘째 날씨의 세부 값은 그 날씨를 첫째로 골랐을 때 맞춰 둔 값을 써요') : ''}
         </div>
         ${!['off', 'tracker'].includes(weatherMode(s)) ? `<div class="salty-group">
             <p class="salty-note">지금 선택한 날씨에만 적용돼요. 날씨마다 값을 따로 기억해요.</p>
@@ -1372,14 +1372,12 @@ function tabChat(s, sub) {
             ${s.chat.weatherColorMode==='gradient'?`<div class="salty-row"><span>첫 색</span><input type="color" data-color-path="chat.weatherColor" value="${esc(s.chat.weatherColor)}" aria-label="날씨 첫 색"></div><div class="salty-row"><span>둘째 색</span><input type="color" data-color-path="chat.weatherColor2" value="${esc(s.chat.weatherColor2)}" aria-label="날씨 둘째 색"></div><p class="salty-note">비 · 눈은 위에서 아래로 물들고, 나머지는 입자마다 두 색 사이의 색을 띠어요.</p>`:''}
             ${weatherSpotPad(s)}
             ${s.chat.weather==='shadow'?`${stack('그림자 모양',seg('chat.weatherShadowStyle',[['palm','야자 잎'],['leaf','나뭇잎 가지']],'palm'))}${slider('chat.weatherShadowBlur','흐리기',0,100,1,35)}<p class="salty-note">세기는 가지 수, 속도 · 흔들림은 살랑임, 각도는 가지가 기운 정도, 회전은 느린 출렁임이에요.</p>`:''}
-            ${s.chat.weather==='water'?`${stack('물결 모양',seg('chat.weatherWaterStyle',[['pool','수영장 물그물'],['sea','바다 물빛']],'pool'))}${stack('물결 위치',seg('chat.weatherWaterArea',[['bottom','아래쪽'],['top','위쪽'],['all','전체']],'bottom'))}<p class="salty-note">크기는 물그물 칸, 속도 · 흔들림은 일렁임, 각도는 기울기, 회전은 반짝임이에요. 움직임을 '빠르게 쏟아지기'로 두면 옆으로 흘러요.</p>`:''}
             ${s.chat.weather==='rainbow'?`<p class="salty-note">각도는 무지개의 자리, 크기는 띠의 굵기, 회전은 좌우로 흔들리는 빠르기예요. 세기를 강하게 하면 쌍무지개가 돼요.</p>`:''}
-            ${s.chat.weather==='glass'?`<p class="salty-note">회전은 물방울이 흘러내리기 시작하는 빈도, 속도는 흘러내리는 빠르기, 각도는 흐르는 방향이에요. 움직임을 '곧게'로 두면 맺힌 채 멈춰 있어요.</p>`:''}
             ${s.chat.weather==='breeze'?`<p class="salty-note">각도는 바람 방향, 회전은 잎이 도는 빠르기예요.</p>`:''}
             ${s.chat.weather==='star'?`${stack('별 모양',seg('chat.weatherStarStyle',[['sky','반짝이는 별'],['milky','은하수']],'sky'))}<p class="salty-note">속도는 반짝이는 빠르기, 흔들림은 반짝임의 깊이, 각도는 하늘이 흐르는 방향(은하수는 띠가 누운 방향), 회전은 십자 빛이 도는 빠르기예요. 가끔 별똥별이 지나가요. 유성과 겹치면 잘 어울려요.</p>`:''}
             ${s.chat.weather==='firefly'?`<p class="salty-note">속도는 나는 빠르기, 흔들림은 헤매는 정도, 각도는 쏠리는 방향, 회전은 깜빡이는 빠르기예요.</p>`:''}
-            ${(s.chat.weatherIllustrated || weatherMode(s)==='butterfly') && ['sun','star','firefly','shadow','breeze','glass','water','lemon','petal','feather','butterfly'].includes(weatherMode(s)) ? row('그림 외곽선',toggle('chat.weatherArtOutline',s.chat.weatherArtOutline)) : ''}
-            ${s.chat.weather==='sun'?`${stack('햇살 모양',seg('chat.weatherSunStyle',[['shaft','빛줄기'],['holy','성스러운 빛'],['anime','애니풍'],['flare','렌즈 플레어']],'shaft'))}<p class="salty-note">각도는 빛이 드는 쪽, 크기는 빛의 굵기, 속도 · 흔들림은 일렁임이에요. 렌즈 플레어는 육각 빛번짐이 줄지어 놓여요.</p>`:''}
+            ${s.chat.weatherIllustrated && ['sun','star','firefly','shadow','breeze','lemon','petal'].includes(weatherMode(s)) ? row('그림 외곽선',toggle('chat.weatherArtOutline',s.chat.weatherArtOutline)) : ''}
+            ${s.chat.weather==='sun'?'<p class="salty-note">렌즈 플레어의 크기·속도·자리를 조절해요. 색도 직접 고를 수 있어요.</p>':''}
             ${s.chat.weather==='fog'?`${stack('안개 모양',seg('chat.weatherFogStyle',[['soft','부드러운 안개'],['anime','안개 띠'],['wisp','실안개']],'soft'))}${stack('안개 위치',seg('chat.weatherFogArea',[['all','전체'],['bottom','아래쪽'],['top','위쪽'],['both','위아래']],'all'))}${slider('chat.weatherFogStretch','길이',50,300,1,100)}${slider('chat.weatherFogEdge','가장자리 선명하게',0,100,1,30)}${slider('chat.weatherFogSwell','부풀기',0,300,1,100)}${slider('chat.weatherFogDepth','깊이감',0,200,1,100)}<p class="salty-note">각도는 흐르는 방향(왼쪽 · 오른쪽)만 정해요.</p>`:''}
             ${slider('chat.weatherOpacity', '투명도', 10, 100, 1, 100)}
             ${slider('chat.weatherSize', '크기', 40, 250, 1, 100)}
@@ -1459,8 +1457,7 @@ function weatherSpotPad(s) {
 const WEATHER_CATS = [
     ['sky', '기본', [['rain', '비'], ['snow', '눈'], ['fog', '안개']]],
     ['light', '빛', [['sun', '햇살'], ['rainbow', '무지개'], ['star', '별'], ['meteor', '유성']]],
-    ['nature', '자연', [['petal', '꽃잎'], ['lemon', '레몬'], ['feather', '깃털'], ['butterfly', '나비'], ['firefly', '반딧불이'], ['breeze', '흩날림'], ['shadow', '나무 그림자']]],
-    ['water', '물 · 유리', [['glass', '유리 빗방울'], ['water', '물결']]],
+    ['nature', '자연', [['petal', '꽃잎'], ['lemon', '레몬'], ['firefly', '반딧불이'], ['breeze', '흩날림'], ['shadow', '나무 그림자']]],
     ['etc', '그 밖', [['custom', '내 그림'], ['tracker', '트래커 따라']]],
 ];
 const weatherLabel = value => WEATHER_CATS.flatMap(cat => cat[2]).find(item => item[0] === value)?.[1] || '없음';

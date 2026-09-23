@@ -27,10 +27,11 @@
     const m = mixes[mode];
     for (const key of FILL) stage.style.removeProperty('--preview-fill-' + key);
     for (const key of ['--preview-fill-user', '--preview-band-marker', '--preview-band-gold']) stage.style.removeProperty(key);
-    if (!m.on) return;
+    if (!m.on) { document.dispatchEvent(new CustomEvent('bl-palette', { detail: null })); return; }
     for (const key of FILL) stage.style.setProperty('--preview-fill-' + key, gradientCss(m.families.map(f => variant(f)[key]), m));
     // light bubbles: each ade's marker at 16% over its surface (gradients.js user-bg rule); night follows raised
     stage.style.setProperty('--preview-fill-user', mode === 'light' ? gradientCss(m.families.map(f => mixRgb(variant(f).marker, variant(f).surface, .16)), m) : gradientCss(m.families.map(f => variant(f).raised), m));
+    document.dispatchEvent(new CustomEvent('bl-palette', { detail: { colors: m.families.map(f => variant(f).marker), angle: m.angle, stops: stops(m.families.map(f => variant(f).marker), m.weights, m.blend) } }));
     // dialogue band and strong underline take the mixed marker / gold, drawn as bands like the solid ones
     stage.style.setProperty('--preview-band-marker', `${gradientCss(m.families.map(f => variant(f).marker), m)} 0 83.9% / 100% 44% no-repeat`);
     if (m.families.some(f => !transparent(variant(f).gold))) stage.style.setProperty('--preview-band-gold', `${gradientCss(m.families.map(f => variant(f).gold), m)} 0 84.6% / 100% 35% no-repeat`);

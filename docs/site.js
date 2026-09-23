@@ -143,8 +143,8 @@ const topics = [
       ],
       [
         "472-name-time.mp4",
-        "이름과 시간 줄",
-        "",
+        "이름에도 나만의 색",
+        "단색부터 그라데이션, 글꼴까지.",
         "472-name-time.jpg"
       ],
       [
@@ -178,6 +178,12 @@ const topics = [
         "사진의 마무리",
         "",
         "472-pc-image-frame.jpg"
+      ],
+      [
+        "475-frame-presets.mp4",
+        "사진을 살리는 액자 6종",
+        "수채화 · 가는 리본 · 겹친 종이.",
+        "475-frame-presets.jpg"
       ]
     ]
   },
@@ -188,66 +194,60 @@ const topics = [
     "sub": "비와 눈은 단순하게. 빛과 색은 은은하게. 원하는 효과만 골라요.",
     "cards": [
       [
-        "calm-look-rain.mp4",
+        "daynight-look-rain.mp4",
         "가는 비",
-        "글 뒤로 조용히 지나가요.",
-        "calm-look-rain.jpg"
+        "화이트에서 나이트까지.",
+        "daynight-look-rain.jpg"
       ],
       [
-        "calm-look-snow.mp4",
+        "daynight-look-snow.mp4",
         "작은 눈",
-        "동그란 눈송이가 천천히.",
-        "calm-look-snow.jpg"
+        "낮과 밤에 동그란 눈송이.",
+        "daynight-look-snow.jpg"
       ],
       [
-        "calm-look-mist.mp4",
+        "daynight-look-mist.mp4",
         "옅은 안개",
-        "덩어리 없이 부드럽게.",
-        "calm-look-mist.jpg"
+        "낮과 밤, 옅게 흐르는 안개.",
+        "daynight-look-mist.jpg"
       ],
       [
-        "471-look-stars.mp4",
+        "daynight-look-stars.mp4",
         "은하수와 유성",
-        "빛으로 채우는 밤.",
-        "471-look-stars.jpg"
+        "화이트와 나이트의 은은한 빛.",
+        "daynight-look-stars.jpg"
       ],
       [
-        "calm-look-petals.mp4",
+        "daynight-look-petals.mp4",
         "작은 색 조각",
         "꽃잎도 가볍고 단순하게.",
-        "calm-look-petals.jpg"
+        "daynight-look-petals.jpg"
       ],
       [
-        "calm-look-butterfly.mp4",
-        "가벼운 나비",
-        "무늬를 덜어낸 작은 실루엣.",
-        "calm-look-butterfly.jpg"
-      ],
-      [
-        "calm-weather-setting.mp4",
+        "475-weather-amount.mp4",
         "원하는 만큼만",
-        "크기와 속도를 직접 조절해요.",
-        "calm-weather-setting.jpg"
+        "비·눈의 양을 숫자로, 원하는 만큼.",
+        "475-weather-amount.jpg"
       ]
     ],
     "pc": [
       [
-        "calm-pc-rain.mp4",
+        "daynight-pc-rain.mp4",
         "가는 비",
         "",
-        "calm-pc-rain.jpg"
+        "daynight-pc-rain.jpg"
       ],
       [
-        "calm-pc-snow.mp4",
+        "daynight-pc-snow.mp4",
         "작은 눈",
         "",
-        "calm-pc-snow.jpg"
+        "daynight-pc-snow.jpg"
       ],
       [
-        "471-pc-stars.mp4",
+        "daynight-pc-stars.mp4",
         "은하수와 유성",
         "",
-        "471-pc-stars.jpg"
+        "daynight-pc-stars.jpg"
       ]
     ]
   },

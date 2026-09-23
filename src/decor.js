@@ -1,4 +1,4 @@
-import { drawPreset, FRAME_PRESETS } from './frame-presets.js';
+import { drawPreset, FRAME_PRESETS, FRAME_PRESET_VERSION } from './frame-presets.js';
 export const DECOR_DEFAULTS = { on: false, art: '', mask: '', ratio: 1, opacity: 100, zoom: 100, x: 50, y: 50, fit: 'cover', radius: null, frameWidth: 100, frameHeight: 100 };
 const validated = new WeakMap();
 export function tidyDecor(owner) {
@@ -24,9 +24,9 @@ export function prepareDecor(settings) {
     const owners = ['image', 'profile', 'userProfile'];
     if (settings.enabled) for (const owner of owners) {
         const d = settings[owner]?.decor;
-        if (d?.presetId && !d.libraryId && d.presetVersion !== 3 && FRAME_PRESETS.some(([id]) => id === d.presetId)) {
+        if (d?.presetId && !d.libraryId && d.presetVersion !== FRAME_PRESET_VERSION && FRAME_PRESETS.some(([id]) => id === d.presetId)) {
             const next = drawPreset(d.presetId, d);
-            d.art = next.art; d.mask = next.mask; d.ratio = next.ratio; d.presetVersion = 3;
+            d.art = next.art; d.mask = next.mask; d.ratio = next.ratio; d.presetVersion = FRAME_PRESET_VERSION;
         }
     }
 }

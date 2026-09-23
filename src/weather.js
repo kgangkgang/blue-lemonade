@@ -6,6 +6,7 @@
 // (css/32-weather.css). 화면이 꺼지면 멈추고, 동작 줄이기면 멈춘 한 장만.
 // 트래커 따라: 마지막 AI 답의 데우스 트래커 날씨 칸 글자를 보고 비 · 눈 · 없음을 고른다 (번역된 한국어 · 영어 둘 다).
 // 켜 두었을 때만 불러온다 (features.js). 설정 창 채팅 표본에도 같은 효과를 작게 (previewWeather).
+import { weatherAmount, weatherPixelRatio, activeWeather } from './weather-options.js';
 import { parseColor } from './palettes.js';
 import { getSettings, saveSettings } from './settings.js';
 
@@ -31,7 +32,7 @@ export function detectWeatherAll(text) {
     const value = String(text || '');
     const found = [];
     if (SNOW.test(value)) found.push('snow');
-    if (RAIN.test(value)) found.push(INDOOR.test(value) ? 'glass' : 'rain'); // 실내에서 보는 비 → 유리의 빗방울
+    if (RAIN.test(value) && !INDOOR.test(value)) found.push('rain'); // Retired glass effect: indoor rain stays clear.
     if (/무지개|rainbow/i.test(value)) found.push('rainbow');
     if (FOG.test(value) || HAZE.test(value)) found.push('fog');
     const outdoors = !INDOOR.test(value) || /햇[살빛볕]|sunlight|sunshine|sunlit/i.test(value); // "창으로 드는 햇살"은 실내라도 켠다
@@ -107,14 +108,14 @@ async function createRenderer(canvas, init, replaceCanvas) {
     };
 }
 
-const ratio = () => Math.min(1.5, window.devicePixelRatio || 1);
+// Backing resolution follows device density, with a 4 MP pixel budget.
 
 /** 설정의 날씨 값 → 엔진 값 (범위는 settings.js 가 이미 잡음) */
 function paramsFrom(chat = {}) {
-    return { artStyle:chat.weatherIllustrated===true?(['anime','cel'].includes(chat.weatherArtStyle)?chat.weatherArtStyle:'real'):'simple', artOutline:!!chat.weatherArtOutline, tint:['custom','gradient'].includes(chat.weatherColorMode)?chat.weatherColor:null, tint2:chat.weatherColorMode==='gradient'?chat.weatherColor2:null,
+    return { amount:weatherAmount(chat.weatherAmount,chat.weatherLevel), artStyle:chat.weatherIllustrated===true?(['anime','cel'].includes(chat.weatherArtStyle)?chat.weatherArtStyle:'real'):'simple', artOutline:!!chat.weatherArtOutline, tint:['custom','gradient'].includes(chat.weatherColorMode)?chat.weatherColor:null, tint2:chat.weatherColorMode==='gradient'?chat.weatherColor2:null,
         scene:{shadowStyle:chat.weatherShadowStyle,shadowBlur:chat.weatherShadowBlur??35,waterStyle:chat.weatherWaterStyle,waterArea:chat.weatherWaterArea},
         spots:chat.weatherSpots||null,
-        sun:{style:chat.weatherSunStyle}, star:{style:chat.weatherStarStyle},
+        sun:{style:'flare'}, star:{style:chat.weatherStarStyle},
         fog:{style:chat.weatherFogStyle,area:chat.weatherFogArea,stretch:chat.weatherFogStretch,edge:chat.weatherFogEdge,swell:chat.weatherFogSwell,depth:chat.weatherFogDepth}, curvature:Number(chat.weatherCurvature??65),orbitSize:Number(chat.weatherOrbitSize??100),orbitDirection:chat.weatherOrbitDirection||'right', opacity: Number(chat.weatherOpacity) || 100, size: Number(chat.weatherSize) || 100, speed: Number(chat.weatherSpeed) || 100, motion: chat.weatherMotion || 'natural', sway: Number(chat.weatherSway ?? 100), spin: Number(chat.weatherSpin ?? 100), angle: Number.isFinite(Number(chat.weatherAngle)) ? Number(chat.weatherAngle) : -9 };
 }
 
@@ -177,16 +178,17 @@ function createLayer(host, className, virtual = false) {
         canvas.style.height = `${h}px`; canvas.style.top = anchorBottom ? 'auto' : '0'; canvas.style.bottom = anchorBottom ? '0' : 'auto';
         return { w: Math.round(rect.width), h };
     };
-    const ready = createRenderer(canvas, { ...size(), dpr: ratio(), mode: 'off', level: 2, colors: colorsNow(), reduce: reduceMotion.matches }, replacement=>{canvas=replacement;}).then((r) => {
+    const dimensions = () => { const value=size(); return {...value,dpr:weatherPixelRatio(window.devicePixelRatio,value.w,value.h)}; };
+    const ready = createRenderer(canvas, { ...dimensions(), mode: 'off', level: 2, colors: colorsNow(), reduce: reduceMotion.matches }, replacement=>{canvas=replacement;}).then((r) => {
         renderer = r;
         if(destroyed){r.stop();return r;}
         if(paused)r.post({type:'pause'});
-        r.post({ type: 'resize', ...size(), dpr: ratio() }); // 워커가 준비되는 동안 바뀐 크기는 버려졌다 — 지금 크기로 한 번 맞춤
+        r.post({ type: 'resize', ...dimensions() }); // 워커가 준비되는 동안 바뀐 크기는 버려졌다 — 지금 크기로 한 번 맞춤
         if (pending) r.post(pending);
         pending = null;
         return r;
     });
-    const observer = new ResizeObserver(() => renderer?.post({ type: 'resize', ...size(), dpr: ratio() }));
+    const observer = new ResizeObserver(() => renderer?.post({ type: 'resize', ...dimensions() }));
     observer.observe(host);
     const api = {
         get canvas(){return canvas;},
@@ -194,7 +196,7 @@ function createLayer(host, className, virtual = false) {
         set(mode, level, params = {}, spriteData = '') {
             if(destroyed)return;
             const low = (mode === 'water' && (params.scene?.waterArea ?? 'bottom') === 'bottom') || (mode === 'fog' && params.fog?.area === 'bottom');
-            if (virtual && low !== anchorBottom) { anchorBottom = low; renderer?.post({ type: 'resize', ...size(), dpr: ratio() }); }
+            if (virtual && low !== anchorBottom) { anchorBottom = low; renderer?.post({ type: 'resize', ...dimensions() }); }
             current = { mode, level, ...params };
             const message = { type: 'config', mode, level, colors: colorsNow(), ...params };
             const wantKey = mode === 'custom' ? spriteData : '';
@@ -251,7 +253,7 @@ function plan(chat, level) {
         const levelOf = mode => { const n = Number(profileOf(chat, mode).weatherLevel); return [1, 2, 3].includes(n) && chat.weatherProfiles?.[mode] ? n : 2; };
         return { mode: modes[0], level: levelOf(modes[0]), params: { ...paramsFrom(profileOf(chat, modes[0])), warm, second: modes[1] ? { mode: modes[1], level: levelOf(modes[1]), warm, ...paramsFrom(profileOf(chat, modes[1])) } : null } };
     }
-    const second = chat.weather2 && chat.weather2 !== 'off' && chat.weather2 !== chat.weather ? { mode: chat.weather2, level: [1, 2, 3].includes(Number(chat.weather2Level)) ? Number(chat.weather2Level) : 2, warm: false, ...paramsFrom(profileOf(chat, chat.weather2)) } : null;
+    const second = chat.weather2 && activeWeather(chat.weather2) && chat.weather2 !== 'off' && chat.weather2 !== chat.weather ? { mode: chat.weather2, level: [1, 2, 3].includes(Number(chat.weather2Level)) ? Number(chat.weather2Level) : 2, warm: false, ...paramsFrom(profileOf(chat, chat.weather2)), amount:weatherAmount(chat.weather2Amount,chat.weather2Level) } : null;
     return { mode: chat.weather, level, params: { ...paramsFrom(chat), warm: false, second } };
 }
 
@@ -278,7 +280,7 @@ function listen() {
 
 /** features.js 가 설정이 바뀔 때마다 부른다 */
 export function syncWeather(on, chat = {}) {
-    const mode = ['rain', 'snow', 'fog', 'sun', 'star', 'firefly', 'rainbow', 'shadow', 'breeze', 'glass', 'water', 'lemon', 'petal', 'feather', 'butterfly', 'meteor', 'custom', 'tracker'].includes(chat.weather) ? chat.weather : 'off';
+    const mode = activeWeather(chat.weather) && ['rain', 'snow', 'fog', 'sun', 'star', 'firefly', 'rainbow', 'shadow', 'breeze', 'glass', 'water', 'lemon', 'petal', 'feather', 'butterfly', 'meteor', 'custom', 'tracker'].includes(chat.weather) ? chat.weather : 'off';
     const level = [1, 2, 3].includes(Number(chat.weatherLevel)) ? Number(chat.weatherLevel) : 2;
     wanted = { on: !!on && mode !== 'off', mode, level, chat: { ...chat, weather: mode }, params: paramsFrom(chat), sprite: chat.weatherImage || '' };
     if (!wanted.on) {
@@ -321,7 +323,7 @@ function seeThrough(stage, on) {
 }
 /** 채팅 표본(.salty-preview[data-prev="chat"])에 작은 효과. 트래커 따라면 지금 채팅의 날씨, 없으면 비를 보여 준다 */
 export function previewWeather(stage, chat = {}) {
-    const mode = ['rain', 'snow', 'fog', 'sun', 'star', 'firefly', 'rainbow', 'shadow', 'breeze', 'glass', 'water', 'lemon', 'petal', 'feather', 'butterfly', 'meteor', 'custom', 'tracker'].includes(chat.weather) ? chat.weather : 'off';
+    const mode = activeWeather(chat.weather) && ['rain', 'snow', 'fog', 'sun', 'star', 'firefly', 'rainbow', 'shadow', 'breeze', 'glass', 'water', 'lemon', 'petal', 'feather', 'butterfly', 'meteor', 'custom', 'tracker'].includes(chat.weather) ? chat.weather : 'off';
     const level = [1, 2, 3].includes(Number(chat.weatherLevel)) ? Number(chat.weatherLevel) : 2;
     let preview = stage._blWeather;
     if (mode === 'off' || !stage.isConnected) {

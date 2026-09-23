@@ -6,10 +6,11 @@ export const FRAME_PRESETS = [
     ['scrapbook', '스크랩 다이어리'], ['ribbon', '리본 포스트'],
     ['pop', '겹친 메모지'], ['notebook', '낙서 노트'],
 ];
+export const FRAME_PRESET_VERSION = 4;
 const palettes = {
-    watercolor: ['#8cadd0', '#e7a4b6'], browser: ['#dce3ed', '#65788e'],
-    scrapbook: ['#eadfcf', '#899f83'], ribbon: ['#f4dce4', '#b86684'],
-    pop: ['#faf4e7', '#a9c4c3'], notebook: ['#f4eedc', '#527bba'],
+    watercolor: ['#abc5db', '#dfbecb'], browser: ['#f2f5f8', '#8295ab'],
+    scrapbook: ['#f5f0e7', '#a5b6a0'], ribbon: ['#fcf4f6', '#b8879b'],
+    pop: ['#fffaf0', '#bbced0'], notebook: ['#faf8ee', '#849eb8'],
 };
 export const presetColors = id => palettes[id] || palettes.watercolor;
 const cache = new Map();
@@ -29,9 +30,11 @@ export function drawPreset(id, options = {}) {
     const baseWidth = id === 'watercolor' ? 420 : 360, baseHeight = id === 'watercolor' ? 420 : 480;
     const w = Math.round(baseWidth * frameWidth / 100), h = Math.round(baseHeight * frameHeight / 100);
     const art = document.createElement('canvas'), mask = document.createElement('canvas');
-    art.width = mask.width = w; art.height = mask.height = h;
+    // Crisp fine lines on dense phone screens; dimensions below stay logical.
+    art.width = mask.width = w * 2; art.height = mask.height = h * 2;
     const c = art.getContext('2d'), m = mask.getContext('2d');
     if (!c || !m) throw new Error('액자 그림을 만들 수 없어요.');
+    c.scale(2, 2); m.scale(2, 2);
     let seed = 15439;
     const random = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
     const round = (ctx, x, y, width, height, radius, fill) => {
@@ -49,83 +52,83 @@ export function drawPreset(id, options = {}) {
         customMask = true;
         const points = Array.from({ length: 160 }, (_, i) => {
             const angle = i * Math.PI * 2 / 160;
-            const r = .84 + .065 * Math.sin(angle * 3 + .9) + .05 * Math.cos(angle * 7) + .025 * Math.sin(angle * 17) + (random() - .5) * .04;
-            return [Math.cos(angle) * (w / 2 - 9) * r, Math.sin(angle) * (h / 2 - 9) * r];
+            const r = .9 + .022 * Math.sin(angle * 3 + .9) + .018 * Math.cos(angle * 7) + .007 * Math.sin(angle * 17) + (random() - .5) * .01;
+            const x = Math.cos(angle), y = Math.sin(angle);
+            return [Math.sign(x) * Math.pow(Math.abs(x), .56) * (w / 2 - 16) * r, Math.sign(y) * Math.pow(Math.abs(y), .56) * (h / 2 - 16) * r];
         });
         const blot = (ctx, scale) => { ctx.beginPath(); for (const [x, y] of points) ctx.lineTo(w / 2 + x * scale, h / 2 + y * scale); ctx.closePath(); ctx.fill(); };
         // Broad, translucent washes instead of a hard cut-out with a thin rim.
-        m.fillStyle = '#fff'; blot(m, .62);
-        for (let i = 0; i < 48; i++) { m.globalAlpha = .065; blot(m, .62 + i * .009); }
+        m.fillStyle = '#fff'; blot(m, .8);
+        for (let i = 0; i < 40; i++) { m.globalAlpha = .09; blot(m, .8 + i * .0055); }
         m.globalAlpha = 1;
         // Dry-brush scratches follow the edge, keeping faces in the center clear.
         m.globalCompositeOperation = 'destination-out'; m.strokeStyle = '#000';
-        for (let i = 0; i < 100; i++) {
-            const [x, y] = points[Math.floor(random() * points.length)], reach = .73 + random() * .22;
-            m.globalAlpha = .08 + random() * .28; m.lineWidth = .3 + random() * 1.8;
+        for (let i = 0; i < 65; i++) {
+            const [x, y] = points[Math.floor(random() * points.length)], reach = .94 + random() * .07;
+            m.globalAlpha = .03 + random() * .1; m.lineWidth = .25 + random() * .55;
             m.beginPath(); m.moveTo(w / 2 + x * reach, h / 2 + y * reach); m.lineTo(w / 2 + x * 1.035 + (random() - .5) * 9, h / 2 + y * 1.035); m.stroke();
         }
         m.globalCompositeOperation = 'source-over'; m.globalAlpha = 1;
         const wash = c.createLinearGradient(0, 0, w, h); wash.addColorStop(0, color); wash.addColorStop(1, accent);
         c.fillStyle = wash;
-        for (let i = 0; i < 30; i++) { c.globalAlpha = .018; blot(c, .68 + i * .014); }
+        for (let i = 0; i < 24; i++) { c.globalAlpha = .016; blot(c, .9 + i * .006); }
         // Pigment diffuses into the translucent perimeter without a solid outline.
-        c.globalAlpha = 1; c.globalCompositeOperation = 'destination-out'; c.drawImage(mask, 0, 0); c.globalCompositeOperation = 'source-over';
+        c.globalAlpha = 1; c.globalCompositeOperation = 'destination-out'; c.drawImage(mask, 0, 0, w, h); c.globalCompositeOperation = 'source-over';
     } else if (id === 'browser') {
-        window = [12, 48, w - 24, h - 60, 9];
-        c.fillStyle = color; round(c, 7, 7, w - 14, h - 14, 15, true);
+        window = [12, 44, w - 24, h - 56, 7];
+        c.fillStyle = color; round(c, 7, 7, w - 14, h - 14, 13, true);
         const shine = c.createLinearGradient(0, 7, 0, h); shine.addColorStop(0, '#ffffff70'); shine.addColorStop(1, '#ffffff00');
         c.fillStyle = shine; round(c, 7, 7, w - 14, h - 14, 15, true);
         c.strokeStyle = accent + '60'; c.lineWidth = .8; round(c, 7.5, 7.5, w - 15, h - 15, 15, false);
-        for (const [i, tint] of ['#e99a96', '#e4c281', '#9abfa0'].entries()) { c.fillStyle = tint; c.beginPath(); c.arc(22 + i * 13, 27, 3.5, 0, Math.PI * 2); c.fill(); }
-        c.fillStyle = '#ffffff70'; round(c, 74, 18, w - 95, 19, 5, true);
-        c.strokeStyle = accent + '25'; c.lineWidth = .6; round(c, 74, 18, w - 95, 19, 5, false);
+        for (const [i, tint] of ['#d9aaa7', '#ddd0a4', '#b4c7b6'].entries()) { c.fillStyle = tint; c.beginPath(); c.arc(22 + i * 11, 25, 2.6, 0, Math.PI * 2); c.fill(); }
+        c.fillStyle = '#ffffff90'; round(c, 66, 16, w - 86, 18, 6, true);
+        c.strokeStyle = accent + '20'; c.lineWidth = .6; round(c, 66, 16, w - 86, 18, 6, false);
         c.strokeStyle = accent + '80'; c.lineWidth = 1;
         const x = (w + 53) / 2; round(c, x - 2.5, 26, 5, 4, 1, false); c.beginPath(); c.arc(x, 26, 1.8, Math.PI, 0); c.stroke();
-        c.strokeStyle = accent + '20'; line(8, 42, w - 8, 42);
+        c.strokeStyle = accent + '18'; line(8, 39, w - 8, 39);
     } else if (id === 'scrapbook') {
-        window = [30, 38, w - 60, h - 95, 2];
+        window = [25, 31, w - 50, h - 77, 1];
         c.fillStyle = color; c.beginPath();
-        for (let x = 8; x <= w - 8; x += 5) c.lineTo(x, 14 + random() * 4);
-        for (let y = 15; y <= h - 12; y += 5) c.lineTo(w - 10 + random() * 4, y);
-        for (let x = w - 9; x >= 8; x -= 5) c.lineTo(x, h - 13 + random() * 5);
+        for (let x = 10; x <= w - 10; x += 4) c.lineTo(x, 16 + random() * 1.6);
+        for (let y = 16; y <= h - 14; y += 4) c.lineTo(w - 11 + random() * 1.5, y);
+        for (let x = w - 11; x >= 10; x -= 4) c.lineTo(x, h - 15 + random() * 1.7);
         c.closePath(); c.fill();
-        for (const [x, y, a] of [[50, 25, -.21], [w - 49, h - 29, -.17]]) {
-            c.save(); c.translate(x, y); c.rotate(a); c.fillStyle = accent + 'b0'; c.fillRect(-37, -9, 74, 18);
-            c.strokeStyle = '#ffffff55'; c.lineWidth = 2; for (let j = -30; j < 40; j += 10) line(j, -9, j - 10, 9); c.restore();
-        }
+        overlays.push(() => { c.save(); c.translate(w * .28, 24); c.rotate(-.11); c.fillStyle = accent + '70'; c.fillRect(-29, -7, 58, 14); c.strokeStyle = '#ffffff50'; c.lineWidth = .7; line(-26, -4, 26, -4); c.restore(); });
+        c.strokeStyle = accent + '70'; c.lineWidth = .8; line(26, h - 29, Math.min(w - 26, 82), h - 29);
 
     } else if (id === 'ribbon') {
-        window = [30, 43, w - 60, h - 77, 12];
-        c.fillStyle = color; round(c, 15, 22, w - 30, h - 37, 20, true);
-        c.strokeStyle = accent; c.lineWidth = 1; c.setLineDash([2, 5]); round(c, 22, 29, w - 44, h - 51, 16, false); c.setLineDash([]);
+        window = [26, 36, w - 52, h - 66, 5];
+        c.fillStyle = color; round(c, 15, 20, w - 30, h - 36, 8, true);
+        c.strokeStyle = accent + '65'; c.lineWidth = .65; round(c, 20, 25, w - 40, h - 46, 6, false);
         overlays.push(() => {
-        const x = w / 2; c.fillStyle = accent;
-        for (const s of [-1, 1]) { c.beginPath(); c.moveTo(x, 25); c.bezierCurveTo(x + s * 64, -6, x + s * 55, 48, x, 25); c.fill(); c.beginPath(); c.moveTo(x + s * 4, 28); c.lineTo(x + s * 26, 62); c.lineTo(x + s * 9, 53); c.lineTo(x, 32); c.fill(); }
-        c.fillStyle = color; c.beginPath(); c.arc(x, 25, 4, 0, Math.PI * 2); c.fill();
+        const x = w * .72; c.strokeStyle = accent; c.lineWidth = 1.6;
+        for (const s of [-1, 1]) { c.beginPath(); c.moveTo(x, 25); c.bezierCurveTo(x + s * 35, 1, x + s * 37, 33, x, 25); c.stroke(); c.beginPath(); c.moveTo(x, 26); c.bezierCurveTo(x + s * 6, 33, x + s * 9, 39, x + s * 17, 44); c.stroke(); }
+        c.fillStyle = accent; c.beginPath(); c.ellipse(x, 25, 2.4, 1.8, -.15, 0, Math.PI * 2); c.fill();
         });
     } else if (id === 'pop') {
         customMask = true;
         const tilt = (ctx, angle, draw) => { ctx.save(); ctx.translate(w / 2, h / 2); ctx.rotate(angle); ctx.translate(-w / 2, -h / 2); draw(); ctx.restore(); };
-        tilt(c, .045, () => { c.fillStyle = accent; round(c, 21, 23, w - 40, h - 44, 3, true); });
-        tilt(c, -.032, () => {
+        tilt(c, .023, () => { c.fillStyle = accent; round(c, 23, 25, w - 44, h - 46, 2, true); });
+        tilt(c, -.017, () => {
             c.fillStyle = '#313a4015'; round(c, 20, 23, w - 47, h - 49, 3, true);
             c.fillStyle = color; round(c, 16, 18, w - 47, h - 49, 3, true);
             c.strokeStyle = '#75695930'; c.lineWidth = .7; round(c, 16, 18, w - 47, h - 49, 3, false);
         });
-        m.fillStyle = '#fff'; tilt(m, -.032, () => round(m, 29, 31, w - 73, h - 83, 1, true));
+        m.fillStyle = '#fff'; tilt(m, -.017, () => round(m, 28, 30, w - 71, h - 78, 1, true));
         overlays.push(() => {
-            star(w - 47, 39, 19, '#fffdf6'); star(w - 47, 39, 14, accent);
-            star(28, h - 45, 12, '#fffdf6'); star(28, h - 45, 8, accent);
+            c.save(); c.translate(47, 25); c.rotate(-.08); c.strokeStyle = '#7e919e'; c.lineWidth = 1.2;
+            c.beginPath(); c.moveTo(-4, 18); c.lineTo(-4, -9); c.bezierCurveTo(-4,-18,7,-18,7,-9); c.lineTo(7,18); c.bezierCurveTo(7,24,0,24,0,18); c.lineTo(0,-8); c.stroke(); c.restore();
         });
     } else {
-        window = [41, 34, w - 66, h - 72, 2];
+        window = [39, 29, w - 62, h - 65, 1];
         c.fillStyle = color; round(c, 16, 10, w - 27, h - 20, 6, true);
-        c.strokeStyle = accent + '38'; c.lineWidth = 1;
-        for (let y = 25; y < h - 10; y += 18) line(18, y, w - 13, y);
-        c.strokeStyle = accent + '70'; line(36, 11, 36, h - 11);
-        for (let y = 34; y < h - 16; y += 30) { c.strokeStyle = accent; c.lineWidth = 2; c.beginPath(); c.ellipse(18, y, 9, 4, -.2, .2, Math.PI * 1.8); c.stroke(); }
+        c.strokeStyle = accent + '22'; c.lineWidth = .65;
+        for (let y = 29; y < h - 10; y += 22) line(18, y, w - 13, y);
+        c.strokeStyle = accent + '45'; line(33, 11, 33, h - 11);
+        const rings = Math.max(4, Math.round((h - 60) / 48));
+        for (let i = 0; i < rings; i++) { const y = 34 + i * (h - 68) / (rings - 1); c.fillStyle = accent + '30'; c.beginPath(); c.arc(24, y, 2.4, 0, Math.PI * 2); c.fill(); c.strokeStyle = accent + 'c0'; c.lineWidth = 1; c.beginPath(); c.ellipse(18, y, 7, 3.3, -.16, .2, Math.PI * 1.8); c.stroke(); }
         overlays.push(() => {
-            c.save(); c.translate(w - 27, h - 23); c.rotate(-.38);
+            c.save(); c.translate(w - 29, h - 25); c.rotate(-.38); c.scale(.62, .62);
             c.fillStyle = '#fffdf5'; c.beginPath(); c.ellipse(0, 0, 24, 17, 0, 0, Math.PI * 2); c.fill();
             c.fillStyle = '#eac747'; c.beginPath(); c.moveTo(-20, 0); c.bezierCurveTo(-15, -21, 15, -21, 20, 0); c.bezierCurveTo(15, 20, -15, 20, -20, 0); c.fill();
             c.strokeStyle = '#fff6b4'; c.lineWidth = 2; c.beginPath(); c.arc(-1, 0, 10, Math.PI, Math.PI * 1.6); c.stroke();
@@ -134,10 +137,10 @@ export function drawPreset(id, options = {}) {
     }
     if (!customMask) { m.fillStyle = '#fff'; round(m, ...window.slice(0, 4), window[4], true); }
     // The interior stays transparent: never paint over the user's photograph.
-    if (id !== 'watercolor') { c.globalCompositeOperation = 'destination-out'; c.drawImage(mask, 0, 0); c.globalCompositeOperation = 'source-over'; }
+    if (id !== 'watercolor') { c.globalCompositeOperation = 'destination-out'; c.drawImage(mask, 0, 0, w, h); c.globalCompositeOperation = 'source-over'; }
     for (const draw of overlays) draw();
     const result = { on: true, art: art.toDataURL('image/png'), mask: mask.toDataURL('image/png'), ratio: baseWidth / baseHeight,
-        presetVersion: 3, presetId: id, presetColor: color, presetAccent: accent, frameWidth, frameHeight,
+        presetVersion: FRAME_PRESET_VERSION, presetId: id, presetColor: color, presetAccent: accent, frameWidth, frameHeight,
         radius: 0, opacity: 100, zoom: 100, x: 50, y: 50, fit: 'cover' };
     // Bounded cache: slider/color edits cannot retain an unlimited set of PNGs.
     if (!standard && cache.size >= 8) cache.delete(cache.keys().next().value);

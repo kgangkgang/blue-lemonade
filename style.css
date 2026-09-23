@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 05f1b84aa1c2) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 3163d90acaaf) */
 /* css/00-base.css */
 body.salty {
   --r-sm: 6px;
@@ -1660,6 +1660,8 @@ html body.salty #chat .mes .ch_name > .mes_buttons {
   max-width: 100% !important;
 }
 body.salty #chat .mes :is(.mes_buttons, .mes_reasoning_actions) .mes_button {
+  align-items: center;
+  justify-content: center;
   box-sizing: border-box;
   width: 32px;
   height: 32px;
@@ -11814,12 +11816,17 @@ body.salty-dark .salty-shapes button.on {
 .salty-btns {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 8px;
   min-width: 0;
 }
 .salty-btns > .salty-btn {
   flex: 0 1 auto;
   margin: 0;
+}
+.salty-row > .salty-btns {
+  flex: none;
+  max-width: 68%;
 }
 .bl-palette-actions { margin-top: 12px; }
 .bl-palette-actions > .salty-btn { flex: 1 1 180px; }
@@ -12493,6 +12500,8 @@ html body.salty :is(#salty-nochat, .salty-preview) .mes .ch_name > .mes_buttons 
   max-width: 100% !important;
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes :is(.mes_buttons, .mes_reasoning_actions) .mes_button {
+  align-items: center;
+  justify-content: center;
   box-sizing: border-box;
   width: 32px;
   height: 32px;
@@ -17765,6 +17774,8 @@ dialog.popup.bl-roomy-dialog .popup-content { margin-left:0 !important; margin-r
 .bl-script-diagnosis { margin: 8px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--salty-shade); color: var(--salty-muted); font: 12px/1.6 ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; user-select: text; }
 /* css/54-mes-pins.css */
 body.salty #chat .mes .bl-pinned {
+  align-items: center;
+  justify-content: center;
   flex: none;
   box-sizing: border-box;
   width: 32px;
