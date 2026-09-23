@@ -3,12 +3,22 @@
  const root=document.querySelector('#showcase'), reading=root.querySelector('#reading-film'), weather=root.querySelector('#weather-film');
  const videos=[reading,weather], play=root.querySelector('#showcase-play'), caption=root.querySelector('#showcase-caption');
  const reduced=matchMedia('(prefers-reduced-motion: reduce)');
- const files={rain:'476-rain-mobile-hd',snow:'476-snow-mobile-hd',stars:'478-stars-mobile',meteor:'478-meteor-mobile',clear:'476-clear-mobile-hd'};
+ const files={mobile:{rain:'476-rain-mobile-hd',snow:'476-snow-mobile-hd',stars:'478-stars-mobile-tall',meteor:'478-meteor-mobile-tall',clear:'476-clear-mobile-hd'},pc:{rain:'478-rain-pc',snow:'daynight-pc-snow',stars:'478-stars-pc',meteor:'478-meteor-pc',clear:'daynight-pc-clear'}};
  let visible=false,paused=false,consent=false,look='rain';
  function sync(){
-  const run=visible&&!document.hidden&&!paused&&(!reduced.matches||consent);
+  const run=visible&&!document.hidden&&!document.querySelector('#site-guide[open]')&&!paused&&(!reduced.matches||consent);
   for(const v of videos){if(run){if(!v.getAttribute('src'))v.src=v.dataset.src;v.play().catch(()=>{});}else v.pause();}
   play.textContent=run?'일시정지':'영상 재생';play.setAttribute('aria-label',run?'시연 일시정지':'시연 재생');
+ }
+ function sources(){
+  const device=document.documentElement.classList.contains('device-mobile')?'mobile':'pc';
+  const mode=document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  const read=mode==='dark'?`reading-night-${device}`:device==='mobile'?'476-reading-mobile-hd':'reading-white-pc';
+  for(const [v,file] of [[reading,read],[weather,`${files[device][look]}-${mode}`]]){
+   const src=`media/${file}.mp4`;if(v.dataset.src===src)continue;
+   v.pause();v.removeAttribute('src');v.dataset.src=src;v.poster=`media/${file}.jpg`;v.load();
+  }
+  sync();
  }
  function front(screen){
   root.dataset.front=screen;
@@ -19,9 +29,10 @@
  root.querySelectorAll('[data-look]').forEach(b=>b.addEventListener('click',()=>{
   front('weather');if(look===b.dataset.look)return;look=b.dataset.look;
   root.querySelectorAll('[data-look]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
-  weather.pause();weather.removeAttribute('src');weather.style.setProperty('--film-ratio',['stars','meteor'].includes(look)?'720/900':'720/1170');weather.poster=`media/${files[look]}.jpg`;weather.dataset.src=`media/${files[look]}.mp4`;weather.load();sync();
+  sources();
  }));
  play.addEventListener('click',()=>{if(reduced.matches&&!consent){consent=true;paused=false;}else paused=!paused;sync();});
  new IntersectionObserver(([e])=>{visible=e.isIntersecting;sync();},{threshold:.08}).observe(root);
  document.addEventListener('visibilitychange',sync);reduced.addEventListener('change',sync);
+ document.addEventListener('bl-theme',sources);document.addEventListener('bl-device',sources);document.addEventListener('bl-guideclose',sync);sources();
 })();

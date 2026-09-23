@@ -199,23 +199,23 @@ const topics = [
       [
         "476-rain-mobile-hd.mp4",
         "가는 비",
-        "화이트에서 나이트까지.",
+        "선택한 밝기로 보여요.",
         "476-rain-mobile-hd.jpg"
       ],
       [
         "476-snow-mobile-hd.mp4",
         "작은 눈",
-        "낮과 밤에 동그란 눈송이.",
+        "동그란 눈송이가 천천히.",
         "476-snow-mobile-hd.jpg"
       ],
       [
         "476-mist-mobile-hd.mp4",
         "옅은 안개",
-        "낮과 밤, 옅게 흐르는 안개.",
+        "옅게 흐르는 안개.",
         "476-mist-mobile-hd.jpg"
       ],
-      ["478-stars-mobile.mp4", "은하수", "부드럽게 흐르는 별빛.", "478-stars-mobile.jpg"],
-      ["478-meteor-mobile.mp4", "유성", "빛의 궤적만 가볍게.", "478-meteor-mobile.jpg"],
+      ["478-stars-mobile-tall.mp4", "은하수", "부드럽게 흐르는 별빛.", "478-stars-mobile-tall.jpg"],
+      ["478-meteor-mobile-tall.mp4", "유성", "빛의 궤적만 가볍게.", "478-meteor-mobile-tall.jpg"],
       [
         "476-petals-mobile-hd.mp4",
         "작은 색 조각",
@@ -516,6 +516,16 @@ const topics = [
 const $ = s => document.querySelector(s);
 function element(tag, cls, text) { const e=document.createElement(tag); if(cls)e.className=cls; if(text)e.textContent=text; return e; }
 // media cache keys: one stable key for everything; a file retaken under the same name gets its own entry here (never bump the stable key)
+const modeMedia=new Set(["476-rain-mobile-hd", "476-snow-mobile-hd", "476-mist-mobile-hd", "478-stars-mobile-tall", "478-meteor-mobile-tall", "476-petals-mobile-hd", "478-rain-pc", "daynight-pc-snow", "478-stars-pc", "478-meteor-pc", "476-clear-mobile-hd", "daynight-pc-clear"]);
+function setMediaMode(video){
+ const mode=document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+ const file=video.dataset.modeBase+'-'+mode;video.dataset.src='media/'+file+'.mp4';video.poster='media/'+file+'.jpg';
+}
+document.addEventListener('bl-theme',()=>{for(const video of document.querySelectorAll('video[data-mode-base]')){
+ const playing=!video.paused;video.pause();video.removeAttribute('src');setMediaMode(video);video.load();
+ if(video.controls)video.src=video.dataset.src;
+ if(playing&&!document.hidden){video.src=video.dataset.src;video.play().catch(()=>{});}
+}});
 const RETAKEN={};
 const mv=file=>'?v='+(RETAKEN[file]||'s1');
 
@@ -539,6 +549,7 @@ function galleryBlock(topic, device, cards, withHeading){
     if(file.startsWith('410-export.')||file.startsWith('420-capture-moving.'))wrap.classList.add('export-media');
     if(file.endsWith('.mp4')){
       const video=element('video');video.preload='none';video.playsInline=true;video.muted=true;video.loop=true;video.setAttribute('muted','');video.setAttribute('playsinline','');video.dataset.src='media/'+file+mv(file);video.poster='media/'+poster+mv(poster);video.setAttribute('aria-label',title);
+      if(modeMedia.has(file.replace('.mp4',''))){video.dataset.modeBase=file.replace('.mp4','');setMediaMode(video);}
       if(reduceMotion.matches){video.controls=true;video.src=video.dataset.src;}
       else{const state=element('span','play-state','▶');state.setAttribute('aria-hidden','true');wrap.classList.add('paused');
         video.addEventListener('play',()=>wrap.classList.remove('paused'));video.addEventListener('pause',()=>wrap.classList.add('paused'));
@@ -548,7 +559,7 @@ function galleryBlock(topic, device, cards, withHeading){
         wrap.append(state);inView.observe(video);}
       wrap.prepend(video);
       const enlarge=element('button','gallery-expand','크게 보기 ↗');enlarge.type='button';enlarge.setAttribute('aria-label',title+' 크게 보기');
-      enlarge.onclick=()=>{const dialog=$('#atmosphere-lightbox'), player=dialog.querySelector('video');player.poster=video.poster;player.src=video.getAttribute('src')||video.dataset.src;player.setAttribute('aria-label',title);dialog.showModal();player.play().catch(()=>{});};wrap.append(enlarge);
+      enlarge.onclick=()=>{const dialog=$('#atmosphere-lightbox'), player=dialog.querySelector('video');if(video.dataset.modeBase)player.dataset.modeBase=video.dataset.modeBase;else delete player.dataset.modeBase;player.poster=video.poster;player.src=video.getAttribute('src')||video.dataset.src;player.setAttribute('aria-label',title);dialog.showModal();player.play().catch(()=>{});};wrap.append(enlarge);
     }else{const img=element('img');img.src='media/'+file+mv(file);img.alt=title;img.loading='lazy';img.decoding='async';img.tabIndex=0;const open=()=>{lightbox.querySelector('img').src=img.src;lightbox.querySelector('img').alt=title;lightbox.querySelector('p').textContent=title;lightbox.showModal();};img.onclick=open;img.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();open();}};wrap.append(img);}
     caption.append(element('small','',description));if(credit){const c=element('a','gif-link',credit[0]);c.href=credit[1];c.target='_blank';c.rel='noopener';caption.append(c);}if(gif){const a=element('a','gif-link','움짤로 보기 ↗');a.href='media/'+gif+mv(gif);a.target='_blank';a.rel='noopener';caption.append(a);}card.append(wrap,caption);track.append(card);
   }block.append(heading,track);return block;
@@ -578,6 +589,10 @@ function galleryBlock(topic, device, cards, withHeading){
 }
 {const big=lightbox.querySelector('img');big.addEventListener('load',()=>{lightbox.classList.toggle('tall',big.naturalHeight>big.naturalWidth*1.9);lightbox.scrollTop=0;});}
 lightbox.querySelector('.close').onclick=()=>lightbox.close();lightbox.onclick=e=>{if(e.target===lightbox)lightbox.close();};lightbox.addEventListener('close',()=>{lightbox.querySelector('img').src='';});
+{const dialog=$('#atmosphere-lightbox'), video=dialog.querySelector('video');
+ dialog.querySelector('button').addEventListener('click',()=>dialog.close());
+ dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});
+ dialog.addEventListener('close',()=>{video.pause();video.removeAttribute('src');delete video.dataset.modeBase;video.load();});}
 const SHOWN_NOTES=3;
 fetch('release-notes.json').then(r=>{if(!r.ok)throw new Error('notes');return r.json();}).then(notes=>{$('#notes').replaceChildren();
   // one card per day, like the theme's own notice: a busy day reads as "v4.1.2 ~ v4.2.4 · 업데이트 13번"
@@ -624,7 +639,7 @@ document.querySelectorAll('.fresh,.section-head,.palette-layout,.reading-layout,
   if (!pcReady) { pick?.remove(); return; }
   const set = device => { html.classList.toggle('device-pc', device === 'pc'); html.classList.toggle('device-mobile', device !== 'pc');
     pick.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.device === device)));
-    document.querySelectorAll('.track').forEach(t => t.dispatchEvent(new Event('scroll'))); };
+    document.querySelectorAll('.track').forEach(t => t.dispatchEvent(new Event('scroll'))); document.dispatchEvent(new CustomEvent('bl-device',{detail:device})); };
   set(html.classList.contains('device-pc') ? 'pc' : 'mobile');
   pick.addEventListener('click', e => { const b = e.target.closest('button[data-device]'); if (!b) return; set(b.dataset.device); try { localStorage.setItem('bl-site-device', b.dataset.device); } catch {} });
 })();

@@ -102,7 +102,7 @@
   }
   modes.forEach(button => button.addEventListener('click', () => { mode = button.dataset.mode; pickedMode = true; renderMix(); render(); }));
   // the demo follows the site's white / night switch until a brightness is picked here
-  document.addEventListener('bl-theme', event => { if (pickedMode) return; mode = event.detail; if (families.length) { renderMix(); render(false); } });
+  document.addEventListener('bl-theme', event => { mode = event.detail; pickedMode = false; if (families.length) { renderMix(); render(false); } });
   fetch('theme-palettes.json').then(r => { if (!r.ok) throw new Error('palettes'); return r.json(); }).then(data => {
     families = data;
     for (const family of families) {

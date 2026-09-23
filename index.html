@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#f7faff" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#141f2e" media="(prefers-color-scheme: dark)">
-  <script>try{const t=localStorage.getItem('bl-site-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}
+  <script>document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';try{const t=localStorage.getItem('bl-site-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}
   (()=>{let d;try{d=localStorage.getItem('bl-site-device')}catch(e){}if(d!=='pc'&&d!=='mobile')d=matchMedia('(max-width: 760px), (pointer: coarse)').matches?'mobile':'pc';document.documentElement.classList.add('device-'+d)})();</script>
   <title>Blue Lemonade — 상큼하게, 가볍게.</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='88'%3E🍋%3C/text%3E%3C/svg%3E">
@@ -11,9 +11,9 @@
   <meta property="og:title" content="🍋 Blue Lemonade"><meta property="og:description" content="상큼하게, 가볍게, 조금 더 편하게. 실리태번 테마의 화면과 새 소식을 만나 보세요.">
   <meta property="og:image" content="https://kgangkgang.github.io/blue-lemonade/media/pc-chat.png">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-  <link rel="stylesheet" href="site.css?v=426"><link rel="stylesheet" href="palette-preview.css?v=476-final2"><link rel="stylesheet" href="features.css?v=20260919-custom"><script src="features.js?v=20260919-custom" defer></script><script src="reading.js?v=476-final2" defer></script><script src="site.js?v=478" defer></script><script src="palette-preview.js?v=478" defer></script>
-<link rel="stylesheet" href="atmosphere.css?v=calm-1"><script src="showcase.js?v=478" defer></script>
-<link rel="stylesheet" href="calm.css?v=478-final">
+  <link rel="stylesheet" href="site.css?v=426"><link rel="stylesheet" href="palette-preview.css?v=476-final2"><link rel="stylesheet" href="features.css?v=20260919-custom"><script src="features.js?v=20260919-custom" defer></script><script src="reading.js?v=476-final2" defer></script><script src="site.js?v=478-modes" defer></script><script src="palette-preview.js?v=478-modes" defer></script>
+<link rel="stylesheet" href="atmosphere.css?v=calm-1"><script src="showcase.js?v=478-modes" defer></script>
+<link rel="stylesheet" href="calm.css?v=478-modes">
 </head>
 <body>
   <header class="top"><div class="top-inner"><a class="brand" href="#"><span class="lemon" aria-hidden="true"></span>Blue Lemonade</a><nav aria-label="바로가기"><a href="#colors">색 · 글자</a><a href="#gallery" data-topic="profile">프로필</a><a href="#gallery">둘러보기</a><a href="#features">전체 기능</a><a href="#updates">업데이트</a></nav><div class="top-actions"><button id="theme-toggle" class="icon-button" type="button" aria-label="화이트·나이트 전환"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.25" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 3.75a8.25 8.25 0 0 1 0 16.5z" fill="currentColor"/></svg></button><a class="button primary small" href="#install">설치</a></div></div><span class="progress" aria-hidden="true"></span></header>
@@ -164,4 +164,6 @@
   </main>
   <footer><a class="brand" href="#"><span class="lemon" aria-hidden="true"></span>Blue Lemonade</a><p>새 기능은 상큼하게, 화면은 가볍게.</p><span>스크린샷·영상은 소개용 가상 채팅에서 촬영했습니다.</span></footer>
   <dialog id="lightbox"><button class="close" aria-label="이미지 닫기">×</button><img alt=""><p></p></dialog><div id="toast" role="status" aria-live="polite"></div>
-<dialog id="atmosphere-lightbox" aria-label="움직이는 테마 화면"><button type="button" aria-label="시연 닫기">닫기 ×</button><video muted loop playsinline controls></video></dialog></body></html>
+<dialog id="atmosphere-lightbox" aria-label="움직이는 테마 화면"><button type="button" aria-label="시연 닫기">닫기 ×</button><video muted loop playsinline controls></video></dialog><div id="view-dock" aria-label="화면 보기"><button type="button" data-view-device></button><button type="button" data-view-theme></button></div>
+<dialog id="site-guide" aria-labelledby="site-guide-title"><h2 id="site-guide-title">내 화면에 맞춰 보기</h2><p>접속한 기기와 시스템 밝기에 맞춰 보여드려요.</p><p>달·해 버튼을 누르면 나이트·화이트로 볼 수 있어요.</p><p>PC·모바일 버튼을 누르면 해당 기기의 시연으로 바뀌어요.</p><button type="button">확인</button></dialog>
+<script src="view-controls.js?v=478-modes" defer></script></body></html>
