@@ -7,6 +7,9 @@
 const reloads = new Map();
 let warned = false;
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+// 4.8.3: 시작 직후의 getComputedStyle 은 밀린 스타일 계산을 그 자리에서 돌린다 — 도구 여섯이 저마다 하면 부팅 0.3s@4x.
+// 브라우저가 한가할 때(그 프레임의 계산이 끝난 뒤) 읽으면 공짜에 가깝고, 여섯이 같은 한가한 틈에 몰려 한 번만 계산된다.
+const idle = () => new Promise(resolve => (typeof requestIdleCallback === 'function' ? requestIdleCallback(() => resolve(), { timeout: 4000 }) : setTimeout(resolve, 1000)));
 
 function read(name, selector) {
     const element = selector ? document.querySelector(selector) : document.documentElement;
@@ -41,9 +44,9 @@ function reloadStyle(folder) {
  */
 export async function verifyAddonCss({ folder, name, version, title, selector }) {
     const ok = () => { const value = read(name, selector); return value === null || value === version; };
-    for (let i = 0; i < 4; i++) { if (ok()) return true; await wait(3000); }
+    for (let i = 0; i < 4; i++) { await idle(); if (ok()) return true; await wait(3000); }
     const reloaded = await reloadStyle(folder);
-    for (let i = 0; i < 3; i++) { await wait(i ? 3000 : 300); if (ok()) return true; }
+    for (let i = 0; i < 3; i++) { await wait(i ? 3000 : 300); await idle(); if (ok()) return true; }
     console.warn(`[Blue Lemonade] ${title}: 코드 ${version}, 스타일 ${read(name, selector) || '없음'} (다시 받기 ${reloaded ? '함' : '실패'})`);
     if (!warned && typeof toastr !== 'undefined') {
         warned = true;

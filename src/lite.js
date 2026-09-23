@@ -71,7 +71,15 @@ function pull(list, owner, end = list.length) {
     for (let i = end - 1; i >= 0; i--) {
         const rule = list[i];
         if (rule.cssRules && rule.type !== CSSRule.STYLE_RULE) {
-            if (rule.type === CSSRule.MEDIA_RULE && rule.media.mediaText === 'not all') continue; // 이미 꺼 둔 것
+            if (rule.type === CSSRule.MEDIA_RULE && rule.media.mediaText === 'not all') {
+                // 4.8.3: 빌드(gen-preview-css.js)가 미리 꺼 둔 미리보기 덩어리 — 뽑아 넣을 것 없이 목록에만 넣고, 켤 때 함께 켠다
+                const first = rule.cssRules[0];
+                if (first && first.type === CSSRule.STYLE_RULE && PREVIEW.test(first.selectorText) && !deferred.includes(rule)) {
+                    deferred.push(rule);
+                    deferredRules += rule.cssRules.length;
+                }
+                continue;
+            }
             pull(rule.cssRules, rule);
             continue;
         }
@@ -84,6 +92,21 @@ function pull(list, owner, end = list.length) {
     }
 }
 
+// 4.8.4: 빌드(tools/css-park.cjs)가 미리보기 전용 규칙을 `@media not all` 로 미리 꺼 둔다 — 여기서는 그 덩어리만 모은다
+// (규칙 하나하나의 selectorText 를 읽지 않는다: 3,500개를 읽는 것만으로 폰 리그 부팅 0.15s@4x 였다).
+// 덩어리를 하나도 못 찾으면(옛 빌드 · 손으로 고친 style.css) 예전처럼 훑어서 뽑는다.
+function collectParked(list) {
+    for (const rule of list) {
+        if (rule.type === CSSRule.STYLE_RULE || !rule.cssRules) continue;
+        if (rule.type === CSSRule.MEDIA_RULE && rule.media.mediaText === 'not all') {
+            const first = rule.cssRules[0];
+            if (first && first.type === CSSRule.STYLE_RULE && PREVIEW.test(first.selectorText)) { deferred.push(rule); deferredRules += rule.cssRules.length; }
+            continue;
+        }
+        collectParked(rule.cssRules);
+    }
+}
+
 /** 시트가 읽히면 미리보기 규칙을 떼어 둔다. 시트가 아직 안 왔으면 잠시 뒤 다시. */
 export function deferPreviewRules(tries = 25) {
     if (restored || deferred.length) return;
@@ -93,6 +116,8 @@ export function deferPreviewRules(tries = 25) {
         return;
     }
     try {
+        collectParked(sheet.cssRules);
+        if (deferred.length) return;
         const lazy = lazyStart(sheet);
         pull(sheet.cssRules, sheet, lazy < 0 ? sheet.cssRules.length : lazy);
     } catch (err) {
@@ -323,10 +348,14 @@ export function startAnchorGate(tries = 25) {
         else if (form) form.classList.add('bl-send-menu-open'); // 메뉴를 못 찾으면 예전처럼 늘 앵커를 둔다
         return;
     }
-    // 열고 닫을 때만 불린다 (display 가 바뀌는 순간) — getComputedStyle 은 그때 한 번
-    const sync = () => form.classList.toggle('bl-send-menu-open', menus.some(el => el.isConnected && getComputedStyle(el).display !== 'none'));
+    // 열고 닫을 때만 불린다 (display 가 바뀌는 순간) — getComputedStyle 은 그때 한 번.
+    // 4.8.3: 여닫는 애니메이션 · 시작 때의 style/class 변화가 한 프레임에 여러 번 오면 그때마다 문서 스타일을 강제로 계산했다
+    // (폰 리그 부팅 0.2s@4x) → 프레임 직전에 한 번만 (rAF 는 스타일 계산 전이라 앵커는 여전히 같은 프레임에 생긴다)
+    const sync = () => { frame = 0; form.classList.toggle('bl-send-menu-open', menus.some(el => el.isConnected && getComputedStyle(el).display !== 'none')); };
+    let frame = 0;
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(sync); };
     sync();
-    const observer = new MutationObserver(sync);
+    const observer = new MutationObserver(schedule);
     for (const el of menus) observer.observe(el, { attributes: true, attributeFilter: ['style', 'class'] });
 }
 

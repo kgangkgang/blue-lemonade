@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build aead034bd31a) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 56개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 0f603574c5b7) */
 /* css/00-base.css */
 :root{--bl-release:"4.8.4";}
 body.salty {
@@ -2113,9 +2113,11 @@ body.salty #chat .mes .mes_text p:empty {
 body.salty #chat .mes .mes_text pre {
   overflow-x: auto;
 }
+@media not all {
 .salty-sample q::before,
 .salty-sample q::after {
   content: none;
+}
 }
 body.salty .mes_text .bl-quote-lead,
 .salty-sample .bl-quote-lead {
@@ -2646,6 +2648,7 @@ body.salty.salty-unify-inline.salty-dem-ink :is(#chat .mes, .cg-root) .mes_text 
 body.salty.salty-regex-noicons :is(#chat, .cg-root) .mes_text [class*="custom-"][class*="__icon"] {
   display: none !important;
 }
+@media not all {
 .salty-preview[data-prev="regex"] .mes_text details.custom-dem-card {
   display: block;
   margin: 0 0 8px;
@@ -2816,6 +2819,7 @@ body.salty :is(#salty-nochat, .salty-preview)[data-prev="regex"] .mes_text > p:l
 }
 .salty-preview[data-prev="regex"] .mes_text .custom-dem-track__icon { display: inline-flex; width: 22px; justify-content: center; }
 .salty-preview[data-prev="regex"] .mes_text .custom-dem-track__value { color: color-mix(in srgb, var(--dem-accent) var(--bl-dem-ink, 74%), var(--salty-text)); font-weight: 700; }
+}
 body.salty .select2-search--inline .select2-search__field {
   padding: 0 !important;
   line-height: normal !important;
@@ -11363,6 +11367,7 @@ body.salty-dark .salty-shapes button.on {
   background: #fff;
   box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
 }
+@media not all {
 .salty-sample {
   padding: 14px 16px !important;
   background: var(--salty-fill-bg, var(--salty-bg));
@@ -11372,6 +11377,7 @@ body.salty-dark .salty-shapes button.on {
   margin-top: 0.6em !important;
   font-size: 0.9em !important;
   color: var(--salty-muted);
+}
 }
 .salty-uisample {
   padding: 12px 14px;
@@ -11913,9 +11919,11 @@ body.salty-dark .salty-shapes button.on {
   .salty-tabs button {
     padding: 6px 5px;
   }
-  .salty-sample {
+  @media not all {
+.salty-sample {
     padding: 12px 14px !important;
   }
+}
   .salty-num input[type="number"] {
     width: 4.8em !important;
   }
@@ -12290,6 +12298,7 @@ body.salty #right-nav-panel:is(bl-s, *) {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
+@media not all {
 body.salty #salty-nochat,
 body.salty :where(.salty-preview):is(#bl-s, *) {
   background: var(--salty-fill-bg, var(--salty-bg)) !important;
@@ -12526,8 +12535,10 @@ body.salty:not(.salty-icons-line) :is(#salty-nochat, .salty-preview) .mes .mes_b
   -webkit-text-fill-color: transparent;
   -webkit-text-stroke: 1.4px currentColor;
 }
+}
 @media (hover: hover) {
-  body.salty :is(#salty-nochat, .salty-preview) .mes:hover > .mes_block > .ch_name .mes_buttons {
+  @media not all {
+body.salty :is(#salty-nochat, .salty-preview) .mes:hover > .mes_block > .ch_name .mes_buttons {
     color: var(--salty-muted) !important;
   }
   body.salty :is(#salty-nochat, .salty-preview) .mes :is(.mes_buttons, .mes_reasoning_actions) .mes_button:hover {
@@ -12535,6 +12546,8 @@ body.salty:not(.salty-icons-line) :is(#salty-nochat, .salty-preview) .mes .mes_b
     color: var(--salty-text);
   }
 }
+}
+@media not all {
 body.salty :is(#salty-nochat, .salty-preview) .mes :is(.mes_buttons, .mes_reasoning_actions) .mes_button:active {
   background: var(--bl-fill-press-bg, var(--bl-press-bg));
   color: var(--salty-text);
@@ -12549,8 +12562,10 @@ body.salty:not(.expandMessageActions) :is(#salty-nochat, .salty-preview) .mes.bl
   contain: none !important;
   content-visibility: visible !important;
 }
+}
 @supports (position-try-fallbacks: flip-block) and (position-anchor: --a) {
-  body.salty:not(.expandMessageActions) #salty-nochat.bl-mes-menu-open,
+  @media not all {
+body.salty:not(.expandMessageActions) #salty-nochat.bl-mes-menu-open,
 body.salty:not(.expandMessageActions) :where(.salty-preview):is(#bl-s, *).bl-mes-menu-open {
     anchor-name: --salty-chat;
   }
@@ -12569,6 +12584,8 @@ body.salty:not(.expandMessageActions) :where(.salty-preview):is(#bl-s, *).bl-mes
     position-visibility: anchors-visible;
   }
 }
+}
+@media not all {
 body.salty:not(.expandMessageActions) :is(#salty-nochat, .salty-preview) .mes .mes_buttons:has(> .extraMesButtons.visible)::before {
   content: "";
   flex: none;
@@ -12980,8 +12997,10 @@ body.salty.salty-img-bleed :is(#salty-nochat, .salty-preview) .mes_text img.eh-i
   width: calc(100% + var(--salty-gutter) * 2) !important;
   margin-inline: calc(var(--salty-gutter) * -1) !important;
 }
+}
 @media (max-width: 1000px) {
-  body.salty #salty-nochat,
+  @media not all {
+body.salty #salty-nochat,
 body.salty :where(.salty-preview):is(#bl-s, *) {
     scrollbar-width: none;
   }
@@ -12991,6 +13010,8 @@ body.salty :where(.salty-preview):is(#bl-s, *)::-webkit-scrollbar {
     height: 0;
   }
 }
+}
+@media not all {
 body.salty.salty-img-bleed :is(#salty-nochat, .salty-preview) .mes_text .custom-cac-img:is(bl-s, *),
 body.salty.salty-img-bleed :is(#salty-nochat, .salty-preview) .mes_text img.character-asset-rendered,
 body.salty.salty-img-bleed :is(#salty-nochat, .salty-preview) .mes_text img.eh-img,
@@ -13110,6 +13131,7 @@ body.salty:not(.salty-unify-inline) :is(#salty-nochat, .salty-preview) .mes .mes
 body.salty:not(.salty-unify-inline) :is(#salty-nochat, .salty-preview) .mes .mes_text font[color] strong {
   color: inherit;
 }
+}
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview), .cg-root) .mes_text [class*="custom-dem-"] {
   --dem-accent: var(--salty-accent) !important;
   --dem-phase-accent: var(--salty-accent) !important;
@@ -13141,6 +13163,7 @@ body.salty.salty-unify-inline.salty-dem-ink :is(:is(#salty-nochat, .salty-previe
 body.salty.salty-regex-noicons :is(:is(#salty-nochat, .salty-preview), .cg-root) .mes_text [class*="custom-"][class*="__icon"] {
   display: none !important;
 }
+@media not all {
 body.salty.salty-icons-line :is(#salty-nochat, .salty-preview) .mes .mes_buttons > .mes_bookmark::before,
 body.salty.salty-icons-line :is(#salty-nochat, .salty-preview) .mes .mes_buttons > .cg-mes-btn.fa-star::before,
 body.salty.salty-icons-line :is(#salty-nochat, .salty-preview) .mes .mes_buttons > .cg-mes-btn.fa-star.is-marked::before,
@@ -13170,6 +13193,7 @@ body.salty.salty-icons-line :is(#salty-nochat, .salty-preview) .mes .mes_buttons
 body.salty.salty-icons-line :is(#salty-nochat, .salty-preview) .mes .mes_buttons > .cg-mes-btn.fa-bookmark.is-marked {
   --salty-mi: var(--salty-mi-bookmarkfill);
 }
+}
 body.salty .cg-textarea:is(#bl-s, *),
 body.salty :is(#jj-popup .jj-textarea),
 body.salty .eh-textarea:is(#bl-s, *),
@@ -13184,10 +13208,13 @@ body.salty :is(:is(#salty-nochat, .salty-preview) .translation_edit_textarea) {
   overflow-wrap: anywhere !important;
 }
 @media screen and (max-width: 1000px) {
-  body.salty :is(#salty-nochat, .salty-preview) .mes {
+  @media not all {
+body.salty :is(#salty-nochat, .salty-preview) .mes {
     padding-top: 12px !important;
   }
 }
+}
+@media not all {
 :is(body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-sample) details[class*="custom-dem-card"],
 :is(body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-sample) .custom-dem-track:is(bl-s, *),
 :is(body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-sample) .custom-dem-track-recovery:is(bl-s, *) {
@@ -13197,22 +13224,27 @@ body.salty :is(:is(#salty-nochat, .salty-preview) .translation_edit_textarea) {
 :is(body.salty.salty-indent :is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-sample.salty-indent) :is(details[class*="custom-dem-card"], .custom-dem-track, .custom-dem-track-recovery) p {
   text-indent: 0;
 }
+}
 @media (prefers-reduced-motion: no-preference) {
-  :is(#salty-nochat, .salty-preview) .mes_text bl-fade {
+  @media not all {
+:is(#salty-nochat, .salty-preview) .mes_text bl-fade {
     animation-name: bl-fade-in;
     animation-timing-function: ease-out;
     animation-fill-mode: backwards;
     will-change: opacity;
   }
 }
+}
 @media (max-width: 1000px) {
-  body.salty.bl-reader #salty-nochat,
+  @media not all {
+body.salty.bl-reader #salty-nochat,
 body.salty.bl-reader :where(.salty-preview):is(#bl-s, *) {
     max-height: none !important;
     padding-top: calc(var(--topBarBlockSize) + 8px) !important;
     padding-bottom: calc(var(--bl-form-h, 96px) + 8px) !important;
     scroll-padding-top: var(--topBarBlockSize);
   }
+}
 }
 body.salty.salty-light.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--physical {
   color: color-mix(in srgb, #f38ba8 var(--bl-dem-ink), var(--salty-text));
@@ -13555,6 +13587,7 @@ body.salty.salty-dem-skin.salty-dem-fold :is(:is(#salty-nochat, .salty-preview),
     transform: none !important;
   }
 }
+@media not all {
 body.salty.bl-weather-on #salty-nochat,
 body.salty.bl-weather-on :where(.salty-preview):is(#bl-s, *) {
   background: transparent !important;
@@ -14010,6 +14043,7 @@ body.salty.salty-user-card.salty-user-profile-mode-none :is(#salty-nochat, .salt
 body.salty.salty-user-card.salty-user-profile-mode-none :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mes_block {
   margin-left: 0 !important;
 }
+}
 /* css/24-previewbox.css */
 .salty-prevbox {
   position: sticky;
@@ -14033,6 +14067,7 @@ body.salty.salty-user-card.salty-user-profile-mode-none :is(#salty-nochat, .salt
 .salty-prevbox + .salty-label {
   margin-top: 10px;
 }
+@media not all {
 body.salty #salty-nochat,
 body.salty :where(.salty-preview):is(#bl-s, *) {
   position: relative;
@@ -14091,16 +14126,20 @@ body.salty :where(.salty-preview):is(#bl-s, *)[data-prev="img"][data-sub="size"]
   --salty-img-height: min(var(--bl-prev-ih), calc(var(--bl-cap) * var(--bl-prev-ky)));
   --salty-img-maxh: none;
 }
+}
 @media screen and (max-width: 1000px) {
-  body.salty #salty-nochat,
+  @media not all {
+body.salty #salty-nochat,
 body.salty :where(.salty-preview):is(#bl-s, *) {
     max-height: min(44svh, 288px);
   }
+}
 }
 .salty-prevbox[data-two] {
   display: flex;
   gap: 6px;
 }
+@media not all {
 .salty-prevbox[data-two] > .salty-preview {
   flex: 1 1 0;
   min-width: 0;
@@ -14121,6 +14160,7 @@ body.salty :where(.salty-preview):is(#bl-s, *):not([data-prev="img"]) {
 body.salty :is(#salty-nochat, .salty-preview):not([data-prev="img"]) > * {
   pointer-events: none;
 }
+}
 .salty-prevbox > .salty-sample,
 .salty-prevbox > .salty-uisample {
   max-height: min(28svh, 230px);
@@ -14128,11 +14168,13 @@ body.salty :is(#salty-nochat, .salty-preview):not([data-prev="img"]) > * {
   overscroll-behavior: contain;
   scrollbar-width: thin;
 }
+@media not all {
 body.salty :is(#salty-nochat, .salty-preview)[data-prev="color"] .mes {
   padding-block: 10px 6px !important;
 }
 body.salty :is(#salty-nochat, .salty-preview)[data-prev="color"] .mes_text > p:last-child {
   margin-bottom: 0 !important;
+}
 }
 /* css/25-palette-maker.css */
 .salty-panel .salty-palette-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 5px 1px 12px; min-height: 38px; }
@@ -16062,8 +16104,10 @@ body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root, .salty-preview) .m
   40%, 70% { transform: translateY(-46px); }
   82%, 100% { transform: translateY(-34px); }
 }
+@media not all {
 body.salty .salty-preview .thk-fold {
   display: none !important;
+}
 }
 /* css/32-weather.css */
 body.salty.bl-weather-on #chat {
@@ -16086,6 +16130,7 @@ body.salty #sheld > canvas.bl-weather {
   height: 100%;
   pointer-events: none;
 }
+@media not all {
 body.salty .salty-preview > canvas.bl-weather-pv {
   position: absolute;
   inset: 0;
@@ -16100,6 +16145,7 @@ body.salty .salty-preview.bl-weather-pv-on {
 body.salty .salty-preview.bl-weather-pv-on > .mes {
   position: relative;
   z-index: 1;
+}
 }
 .salty-weather-thumb {
   display: inline-block;
@@ -16924,8 +16970,10 @@ body.salty.salty-demink-shadow :is(#chat, .cg-root, #salty-nochat, .salty-previe
 body.salty.salty-demink-shadow :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text :is(font[color], [style*="color"]) :not(#salty-none) {
   text-shadow: var(--salty-demink-shadow, none) !important;
 }
+@media not all {
 body.salty.salty-dem-ink :is(#salty-nochat, .salty-preview) .mes .mes_text font.bl-ink-sample[color] {
   color: var(--bl-ink) !important;
+}
 }
 .salty-panel .bl-ink-line {
   margin-top: 6px;
@@ -17348,8 +17396,10 @@ body.salty.salty-user-card.salty-user-profile-mode-none #chat .mes[is_user="true
 .bl-view-port:active { cursor:grabbing; }
 .bl-view-port:focus-visible { outline:2px solid var(--salty-accent); outline-offset:-2px; }
 .bl-view-scene { transform-origin:0 0; width:100%; display:flow-root; pointer-events:none; }
+@media not all {
 body.salty #salty-nochat:not([data-prev="img"]):where(.bl-view-scene > *),
 body.salty :where(.salty-preview):is(#bl-s, *):not([data-prev="img"]):where(.bl-view-scene > *) { max-height:none !important; overflow:visible; }
+}
 .bl-view-scene > .salty-sample,
 .bl-view-scene > .salty-uisample { max-height:none; overflow:visible; margin-block:0; }
 .bl-inline-preview { min-width:0; width:100%; }
@@ -18011,11 +18061,15 @@ body.salty :is(#chat, .cg-root) .custom-dem-expressive.bl-fx-made {
 body.salty :is(#chat, .cg-root) q .custom-dem-expressive.bl-fx-made {
   display: inline;
 }
+@media not all {
 .salty-preview[data-prev="regex"] .custom-dem-expressive--shout { font-weight: 700; }
+}
 @media (prefers-reduced-motion: no-preference) {
-  .salty-preview[data-prev="regex"] .custom-dem-expressive--shout { animation: bl-fx-gradient 2.75s linear infinite, bl-fx-impact .9s ease-in-out infinite alternate; }
+  @media not all {
+.salty-preview[data-prev="regex"] .custom-dem-expressive--shout { animation: bl-fx-gradient 2.75s linear infinite, bl-fx-impact .9s ease-in-out infinite alternate; }
   .salty-preview[data-prev="regex"] .custom-dem-expressive--trembling { animation: bl-fx-gradient 2.75s linear infinite, bl-fx-shake .8s steps(2, end) infinite; }
   .salty-preview[data-prev="regex"] .custom-dem-expressive--crying { animation: bl-fx-gradient 2.75s linear infinite, bl-fx-crying 1.55s ease-in-out infinite alternate; }
+}
 }
 /* css/99-lazy-panel.css */
 #salty-lazy-panel-start {}

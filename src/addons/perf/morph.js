@@ -20,16 +20,30 @@
  * 기본값(id 짝짓기)은 같은 id 가 두 번 나오는 HTML 뒤에 옛 요소 하나를 남겨 innerHTML 결과와 달라졌다 (자체 시험에서 잡힘).
  * 우리가 그리지 않은 요소(drawn 에 없음)에는 저마다 다른 열쇠를 줘서, 열쇠 없는 새 요소와 짝지어지지 않고 끝에 지워지게 한다.
  * 예전에는 열린 <details> 끝의 ▲ 버튼(div)이 다음 걸음에 새로 생긴 본문 div 로 고쳐 쓰여, 그 줄을 누르면 카드가 접혔다.
+ * 4.8.3: 걸음마다 답 전체(수백 요소)를 훑어 지도를 만들지 않는다 — 첫 걸음(붙이기 전부터 있던 것 전부가 남의 것)만 통째로 보고,
+ * 그 뒤로는 관찰자가 본 것(남이 새로 넣은 요소와 그 아래 · 남이 속성을 바꾼 요소)만 열쇠를 준다. 남의 요소는 걸음마다 지워지므로
+ * (열쇠 없는 새 요소와 짝지어지지 않아 끝에 버려진다) 지난 걸음의 남의 요소가 남아 있을 일은 없다. 폰 리그 답 하나 0.76s@4x 의 큰 몫.
  * @param {Element} el 스트리밍 중인 .mes_text
  * @param {WeakSet<Element>} drawn 지난 걸음들에서 morphdom 이 넣거나 맞춘 요소
+ * @param {{ added: Element[], touched: Element[] } | null} [seen] 관찰자가 본 것 (null 이면 첫 걸음: 전부 훑는다)
  */
-export function morphOptions(el, drawn) {
+export function morphOptions(el, drawn, seen = null) {
     const foreign = new Map();
-    if (typeof el?.getElementsByTagName === 'function') {
-        const all = el.getElementsByTagName('*');
-        for (let i = 0; i < all.length; i++) {
-            if (!drawn.has(all[i])) foreign.set(all[i], `pa-foreign-${i}`);
+    let n = 0;
+    const mark = (node) => { if (!drawn.has(node) && !foreign.has(node)) foreign.set(node, `pa-foreign-${n++}`); };
+    if (seen === null) {
+        if (typeof el?.getElementsByTagName === 'function') {
+            const all = el.getElementsByTagName('*');
+            for (let i = 0; i < all.length; i++) mark(all[i]);
         }
+    } else {
+        for (const root of seen.added) {
+            if (root === el || !el.contains(root)) continue;
+            mark(root);
+            const all = root.getElementsByTagName('*');
+            for (let i = 0; i < all.length; i++) mark(all[i]);
+        }
+        for (const node of seen.touched) if (node !== el && el.contains(node)) mark(node);
     }
     return {
         childrenOnly: true,
@@ -50,20 +64,26 @@ export function morphOptions(el, drawn) {
  */
 function watchAttributes(MO, el) {
     const touched = new Set();
-    const observer = new MO((records) => {
-        for (const record of records) touched.add(record.target);
-    });
-    observer.observe(el, { attributes: true, subtree: true });
+    const added = new Set();   // 4.8.3: 남이 걸음 사이에 넣은 요소 (morphdom 이 넣은 것은 skip() 으로 버린다)
+    const note = (record) => {
+        if (record.type === 'childList') { for (const node of record.addedNodes) if (node.nodeType === 1) added.add(node); }
+        else touched.add(record.target);
+    };
+    const observer = new MO((records) => { for (const record of records) note(record); });
+    observer.observe(el, { attributes: true, childList: true, subtree: true });
     return {
+        /** @returns {{ added: Element[], touched: Element[] }} */
         take() {
-            for (const record of observer.takeRecords()) touched.add(record.target);
-            const out = [...touched];
+            for (const record of observer.takeRecords()) note(record);
+            const out = { added: [...added], touched: [...touched] };
+            added.clear();
             touched.clear();
             return out;
         },
         skip() { observer.takeRecords(); },
         stop() {
             observer.disconnect();
+            added.clear();
             touched.clear();
         },
     };
@@ -80,7 +100,7 @@ function watchAttributes(MO, el) {
 export function createStreamMorph(env) {
     const desc = env.descriptor;
     const stats = { streams: 0, ticks: 0, native: 0, fallbacks: 0, foreign: 0, touched: 0 };
-    /** @type {{ el: Element, processor: any, drawn: WeakSet<Element>, attrs: ReturnType<typeof watchAttributes> } | null} */
+    /** @type {{ el: Element, processor: any, drawn: WeakSet<Element>, attrs: ReturnType<typeof watchAttributes>, fresh: boolean } | null} */
     let current = null;
 
     function usable() {
@@ -125,13 +145,15 @@ export function createStreamMorph(env) {
         desc.set.call(target, html);
         try {
             // 지난 걸음 뒤 남이 속성을 바꾼 요소는 '우리가 그린 것'에서 빼서 새로 갈아 끼우게 한다
-            for (const node of state.attrs.take()) {
+            const seen = state.attrs.take();
+            for (const node of seen.touched) {
                 if (node !== this && state.drawn.delete(node)) stats.touched++;
             }
-            const options = morphOptions(this, state.drawn);
+            const options = morphOptions(this, state.drawn, state.fresh ? null : seen);
             stats.foreign += options.foreign;
             env.morphdom(this, target, options);
             state.attrs.skip();
+            state.fresh = false;
             stats.ticks++;
         } catch (error) {
             stats.fallbacks++;
@@ -164,7 +186,7 @@ export function createStreamMorph(env) {
             set: morphSetter,
         });
         // 붙이기 전부터 있던 요소는 모두 '남이 넣은 것'으로 본다 → 첫 걸음은 통째로 갈아 끼우는 것과 같다
-        current = { el, processor, drawn: new WeakSet(), attrs: watchAttributes(env.MutationObserver, el) };
+        current = { el, processor, drawn: new WeakSet(), attrs: watchAttributes(env.MutationObserver, el), fresh: true };
         stats.streams++;
         return true;
     }
@@ -184,12 +206,15 @@ export function createStreamMorph(env) {
             const attrs = watchAttributes(env.MutationObserver, el);
             let planted = null;
             let marked = null;
+            let fresh = true;
             try {
                 for (const html of steps) {
-                    for (const node of attrs.take()) drawn.delete(node);
+                    const seen = attrs.take();
+                    for (const node of seen.touched) drawn.delete(node);
                     const target = el.cloneNode(false);
                     desc.set.call(target, html);
-                    env.morphdom(el, target, morphOptions(el, drawn));
+                    env.morphdom(el, target, morphOptions(el, drawn, fresh ? null : seen));
+                    fresh = false;
                     attrs.skip();
                     desc.set.call(ref, html);
                     if (desc.get.call(el) !== desc.get.call(ref)) return false;
