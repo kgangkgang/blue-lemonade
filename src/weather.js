@@ -116,7 +116,7 @@ function paramsFrom(chat = {}) {
         scene:{shadowStyle:chat.weatherShadowStyle,shadowBlur:chat.weatherShadowBlur??35,waterStyle:chat.weatherWaterStyle,waterArea:chat.weatherWaterArea},
         spots:chat.weatherSpots||null,
         sun:{style:'flare'}, star:{style:chat.weatherStarStyle},
-        fog:{style:chat.weatherFogStyle,area:chat.weatherFogArea,stretch:chat.weatherFogStretch,edge:chat.weatherFogEdge,swell:chat.weatherFogSwell,depth:chat.weatherFogDepth}, curvature:Number(chat.weatherCurvature??65),orbitSize:Number(chat.weatherOrbitSize??100),orbitDirection:chat.weatherOrbitDirection||'right', opacity: Number(chat.weatherOpacity) || 100, size: Number(chat.weatherSize) || 100, speed: Number(chat.weatherSpeed) || 100, motion: chat.weatherMotion || 'natural', sway: Number(chat.weatherSway ?? 100), spin: Number(chat.weatherSpin ?? 100), angle: Number.isFinite(Number(chat.weatherAngle)) ? Number(chat.weatherAngle) : -9 };
+        fog:{style:chat.weatherFogStyle,area:chat.weatherFogArea,stretch:chat.weatherFogStretch,edge:chat.weatherFogEdge,swell:chat.weatherFogSwell,depth:chat.weatherFogDepth}, curvature:Number(chat.weatherCurvature??65),orbitSize:Number(chat.weatherOrbitSize??100),orbitDirection:chat.weatherOrbitDirection||'right', readability: chat.weatherReadability === true, opacity: Number(chat.weatherOpacity) || 100, size: Number(chat.weatherSize) || 100, speed: Number(chat.weatherSpeed) || 100, motion: chat.weatherMotion || 'natural', sway: Number(chat.weatherSway ?? 100), spin: Number(chat.weatherSpin ?? 100), angle: Number.isFinite(Number(chat.weatherAngle)) ? Number(chat.weatherAngle) : -9 };
 }
 
 // 내 그림: data URL → ImageBitmap. 워커로 넘기면 원본이 비워지므로 보낼 때마다 새로 만든다 (Blob 만 들고 있음)
@@ -198,6 +198,7 @@ function createLayer(host, className, virtual = false) {
             const low = (mode === 'water' && (params.scene?.waterArea ?? 'bottom') === 'bottom') || (mode === 'fog' && params.fog?.area === 'bottom');
             if (virtual && low !== anchorBottom) { anchorBottom = low; renderer?.post({ type: 'resize', ...dimensions() }); }
             current = { mode, level, ...params };
+            canvas.style.opacity = params.readability ? "0.55" : "1";
             const message = { type: 'config', mode, level, colors: colorsNow(), ...params };
             const wantKey = mode === 'custom' ? spriteData : '';
             if (wantKey !== spriteKey) {

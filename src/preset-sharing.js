@@ -42,7 +42,7 @@ function groupFor(path) {
     if (a==='chat') {
         if (b==='markerTone') return 'marker';
         if (chatKeys.has(b)) return 'chat';
-        if (['weather','weather2','weather2Level','weather2Amount','weatherBubble'].includes(b)||WEATHER_FIELDS.includes(b)) return 'weather';
+        if (['weather','weather2','weather2Level','weather2Amount','weatherBubble','weatherReadability'].includes(b)||WEATHER_FIELDS.includes(b)) return 'weather';
         if (b==='weatherProfiles'&&WEATHER_MODES.includes(c)&&WEATHER_FIELDS.includes(d)) return 'weather';
     }
     return '';
@@ -96,7 +96,9 @@ export function applyPreset(settings, raw, selected) {
                 if (!parent[key]||typeof parent[key]!=='object'||Array.isArray(parent[key])) parent[key]={};
                 parent=parent[key];
             }
-            parent[parts.at(-1)]=structuredClone(value);
+            if (parts[0] === 'gradients' && parts[1] === 'overrides' && parts.at(-1) === 'mode' && value === 'inherit') {
+                delete settings.gradients.overrides[parts[2]][parts[3]];
+            } else parent[parts.at(-1)]=structuredClone(value);
         }
     }
     if (pick.has('weather')&&data.groups.weather) settings.chat.weatherProfileMode=settings.chat.weather;

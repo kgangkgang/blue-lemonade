@@ -1,0 +1,50 @@
+import assert from 'node:assert/strict';
+import {pathToFileURL} from 'node:url';
+import path from 'node:path';
+import fs from 'node:fs';
+const base=pathToFileURL(path.resolve(process.argv[2]||'.')+'/');
+const {DEFAULTS,getSettings,saveSettings}=await import(new URL('src/settings.js',base));
+const {syncDeviceLayout,saveDeviceLayout}=await import(new URL('src/device-layouts.js',base));
+const {appearanceSnapshot,beginComparison,endComparison,comparisonView,bindComparison}=await import(new URL('src/appearance-compare.js',base));
+const {weatherReadability}=await import(new URL('src/weather-readability.js',base));
+const {readPreset,applyPreset,capturePreset}=await import(new URL('src/preset-sharing.js',base));
+const {tidyGradients,gradientFor}=await import(new URL('src/gradients.js',base));
+const {PALETTE_FAMILIES}=await import(new URL('src/palettes.js',base));
+const {websitePreset}=await import('../../docs/preset-export.mjs');
+const s=structuredClone(DEFAULTS);syncDeviceLayout(s,'pc');s.deviceLayouts.on=true;syncDeviceLayout(s,'pc');
+s.type.size=22;s.type.gutter=32;s.profile.mode='banner';s.palette='night';saveDeviceLayout(s);
+syncDeviceLayout(s,'mobile');assert.equal(s.type.size,16);assert.equal(s.profile.mode,'small');assert.equal(s.palette,'night');
+s.type.size=18;s.profile.mode='none';syncDeviceLayout(s,'pc');assert.equal(s.type.size,22);assert.equal(s.type.gutter,32);assert.equal(s.profile.mode,'banner');
+saveDeviceLayout(s);const reloaded=JSON.parse(JSON.stringify(s));syncDeviceLayout(reloaded,'mobile');assert.equal(reloaded.type.size,18);assert.equal(reloaded.profile.mode,'none');
+reloaded.deviceLayouts.on=false;syncDeviceLayout(reloaded,'mobile');reloaded.type.size=19;syncDeviceLayout(reloaded,'pc');assert.equal(reloaded.type.size,19);
+const ext={salty:structuredClone(s)};globalThis.SillyTavern={getContext:()=>({extensionSettings:ext,powerUserSettings:{},saveSettingsDebounced(){}})};
+getSettings().type.size=23;saveSettings();assert.equal(ext.salty.deviceLayouts.pc.type.size,23);
+const baseline=appearanceSnapshot(s);s.type.size=25;const before=structuredClone(s);beginComparison('owner',baseline);
+assert.equal(comparisonView(s).type.size,22);comparisonView(s).type.size=99;assert.deepEqual(s,before);
+assert.equal(endComparison('other'),false);assert.equal(endComparison('owner'),true);assert.equal(comparisonView(s).type.size,25);
+// Keyboard, cancellation, visibility and disposal all restore the live settings.
+globalThis.window=new EventTarget();globalThis.document=new EventTarget();document.hidden=false;
+const button={setAttribute(k,v){this[k]=v;},closest:()=>button};const root=new EventTarget();root.querySelector=()=>button;
+let view;const cleanup=bindComparison(root,s,()=>{view=comparisonView(s).type.size;});s.type.size=29;
+const key=()=>{const e=new Event('keydown',{cancelable:true});Object.defineProperties(e,{key:{value:' '},target:{value:button}});root.dispatchEvent(e);assert.equal(view,25);};
+for(const kind of ['pointercancel','blur','pointerup']){key();window.dispatchEvent(new Event(kind));assert.equal(view,29);}
+key();document.hidden=true;document.dispatchEvent(new Event('visibilitychange'));assert.equal(view,29);
+key();cleanup();assert.equal(view,29);
+delete globalThis.document;
+assert.equal(weatherReadability(s,'dark').active,false);s.chat.weather='rain';s.chat.weatherReadability=true;assert.equal(weatherReadability(s,'dark').active,true);
+s.chat.weather='off';assert.equal(weatherReadability(s,'light').active,false);
+s.chat.weather='tracker';assert.equal(weatherReadability(s,'light').active,false);s.deus.on=true;assert.equal(weatherReadability(s,'light').active,true);
+assert.equal(capturePreset(s,['weather']).groups.weather['chat.weatherReadability'],true);
+const reading={text:{font:DEFAULTS.fonts.text,size:19,weight:500,spacing:2},dialogue:{font:'same',size:21,weight:600,spacing:1,style:'marker',shape:'round',tilt:'slant',pos:'bottom',thick:35},em:{font:'same',size:null,weight:400,spacing:null,italic:true},strong:{font:'same',size:22,weight:700,spacing:null},code:{font:DEFAULTS.fonts.code,size:null,weight:null,spacing:null},para:{line:2,gap:1.2,gutter:30,align:'justify-word',indent:true},hanja:'ja',shadow:DEFAULTS.shadow,outline:DEFAULTS.outline};
+const families=JSON.parse(fs.readFileSync(new URL('../../docs/theme-palettes.json',import.meta.url)));
+for(const selected of families.map(f=>f.id)) for(const mode of ['light','dark']) for(const picks of [['melon'],['peach','blue','strawberry']]) {
+ const mixes={light:{on:true,families:picks,weights:[20,70,40],angle:135,blend:83},dark:{on:false,families:['blue'],weights:[50,50,50],angle:90,blend:20}};
+ const packet=readPreset(websitePreset(reading,{selected,mode,mixes,families}));
+ const dst=structuredClone(DEFAULTS);dst.gradients.overrides[packet.groups.colors.palette]={bg:{mode:'solid'},text:{mode:'gradient',colors:['#000','#fff']}};
+ applyPreset(dst,packet,['colors','text','marker']);dst.gradients=tidyGradients(dst.gradients);
+ assert.equal(dst.palette,PALETTE_FAMILIES[selected][mode]);assert.equal(dst.type.size,19);assert.equal(dst.type.dialogueSize,21);assert.equal(dst.dialogue.markerShape,'round');assert.equal(dst.fonts.hanja,'ja');assert.equal(dst.em.italic,true);
+ assert.deepEqual(dst.gradients.light,mixes.light);assert.equal(gradientFor(dst,'text'),null);
+ if(mode==='light')assert.equal(gradientFor(dst,'bg').blend,83);
+ assert.deepEqual(dst.addons,DEFAULTS.addons);assert.deepEqual(dst.profile,DEFAULTS.profile);
+}
+console.log('PASS device persistence, comparison cancellation, weather protection, 48 website imports');

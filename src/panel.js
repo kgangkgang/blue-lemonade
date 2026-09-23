@@ -1,3 +1,5 @@
+import { deviceKind } from './device-layouts.js';
+import { bindComparison, comparisonView } from './appearance-compare.js';
 import { listMenuButtons, PIN_LIMIT } from './mes-pins.js';
 import {scriptsMarkup,bindScripts} from './scripts/ui.js';
 import {updateMarkup,bindThemeUpdate} from './theme-update.js';
@@ -96,6 +98,7 @@ function setPath(obj, path, value) {
 const isNum = v => typeof v === 'number' && Number.isFinite(v);
 const isSet = v => !!v && typeof v === 'object'; // 글꼴 칸이 언어별 묶음인지 ('same' 이 아닌지)
 const history = new SettingsHistory();
+window.addEventListener("bl:device-layout", () => history.clear());
 let historyToast;
 const historyLabels = new Map(Object.entries(SETTING_LABELS));
 const historyOptions = new Map(Object.entries(SETTING_VALUES));
@@ -221,6 +224,7 @@ export function mountPanel(container, { popup = false, onFullscreen = null } = {
     root._onFullscreen = onFullscreen;
     container.appendChild(root);
     panels.add(root);
+    root._compareCleanup = bindComparison(root, getSettings(), () => { applyAll(); for (const panel of panels) syncWeatherPreview(panel, "chat.weather"); });
     bindTouchSliders(root);
     bind(root);
     bindEditor(root);
@@ -270,6 +274,7 @@ export function setPanelFullscreen(root, enabled) {
 }
 
 export function unmountPanel(root) {
+    root._compareCleanup?.();
     for(const stage of Object.values(root._pv || {}))stage._blWeather?.destroy();
     root._captureCleanup?.(); root._captureCleanup=null;
     root._addonCleanup?.(); root._addonCleanup=null;
@@ -325,7 +330,7 @@ function syncWeatherPreview(root, path) {
     if (!String(path).startsWith('chat.weather')) return;
     const stage = root?._pv?.chat;
     if (!stage?.isConnected) return;
-    const s = getSettings();
+    const s = comparisonView(getSettings());
     import('./weather.js').then(m => m.previewWeather(stage, s.enabled ? s.chat : { weather: 'off' })).catch(() => {});
 }
 
@@ -1134,7 +1139,7 @@ async function askPresetGroups(incoming = null) {
 function tabText(s, sub) {
     let body = '';
     if (sub === 'para') {
-        body = `<div class="salty-group">
+        body = `<div class="salty-group">${row('폰 · PC 배치 따로 기억', toggle('deviceLayouts.on', s.deviceLayouts.on), '글자 크기·간격·여백·프로필 배치를 기기별로 기억해요. 색과 글꼴은 함께 써요.')}<p class="salty-note">지금은 ${deviceKind() === 'mobile' ? '모바일' : 'PC'} 배치를 편집하고 있어요.</p></div><div class="salty-group">
                 ${stack('정렬', seg('type.align', [['left', '왼쪽'], ['justify-word', '양쪽'], ['justify-break', '양쪽(끊어서)']], s.type.justify ? 'justify-word' : 'left'), '양쪽(끊어서): 낱말이 잘려도 빈틈 없이')}
                 ${row('첫 줄 들여쓰기', toggle('type.indent', s.type.indent))}
             </div>
@@ -1354,6 +1359,8 @@ function tabChat(s, sub) {
             ${s.chat.qrScroll === 'y' ? slider('chat.qrRows', '보이는 줄', 1, 4, 1, 2) : ''}
         </div>
         ${cap('날씨')}<div class="salty-group">
+            ${row('글 읽기 우선', toggle('chat.weatherReadability', s.chat.weatherReadability), '날씨를 조금 옅게 하고, 그림자를 따로 쓰지 않을 때 글자 그림자를 자동으로 보완해요.')}
+
             ${stack('채팅 뒤 효과', weatherSeg(s), weatherMode(s) === 'tracker' ? '트래커 날씨를 읽어 비 · 눈 · 안개 · 햇살 · 밤의 별을 보여요. 안개비 · 여우비처럼 둘이면 겹쳐요' : '')}
             ${weatherMode(s) === 'custom' ? weatherImageControls(s) : ''}
             ${['sun','star','firefly','shadow','breeze','lemon','petal'].includes(weatherMode(s)) ? row('그림 효과 사용',toggle('chat.weatherIllustrated',s.chat.weatherIllustrated).replace('<input','<input aria-label="그림 효과 사용"'),'기본은 작고 단순하게. 켜면 이전 그림체를 골라 쓸 수 있어요.') : ''}
@@ -1671,6 +1678,7 @@ function tabImage(s, sub) {
 
 // ───────── 그리기 ─────────
 function render(root) {
+    root._stopComparison?.();
     root._captureCleanup?.(); root._captureCleanup=null;
     root._addonCleanup?.(); root._addonCleanup=null;
     root._scriptsCleanup?.(); root._scriptsCleanup=null;
@@ -1706,7 +1714,7 @@ function render(root) {
     root.innerHTML = `
         <div class="salty-nav"><div class="bl-settings-toprow">
             <button type="button" class="bl-editor-choose" data-act="editor-catalog" aria-label="설정 선택" aria-haspopup="dialog" aria-expanded="${!!root._catalogOpen}"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/></svg><span>${subLabel}</span></button>
-            <div class="bl-editor-actions"><button type="button" data-act="history-undo" aria-label="되돌리기" title="되돌리기" ${!history.pending && !history.undoStack.length ? 'disabled' : ''}><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4 3 8l4 4M3 8h8a5 5 0 0 1 0 10"/></svg></button><button type="button" data-act="history-redo" aria-label="다시 실행" title="앞으로 가기 · 다시 실행" ${history.pending || !history.redoStack.length ? 'disabled' : ''}><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m13 4 4 4-4 4m4-4H9a5 5 0 0 0 0 10"/></svg></button><button type="button" class="bl-editor-search-button" data-act="editor-search" aria-label="설정 검색"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="m13 13 4 4"/></svg></button><button type="button" class="bl-settings-expand" data-act="panel-fullscreen" aria-pressed="${!!root._fullscreen}">${root._fullscreen ? '작은 창' : '전체 화면'}</button>${root.classList.contains('in-popup') ? '<button type="button" class="bl-settings-close" data-act="panel-close" aria-label="테마 설정 닫기" title="닫기">×</button>' : ''}</div>
+            <div class="bl-editor-actions"><button type="button" data-compare aria-label="누르는 동안 설정 열기 전 모습 보기" title="누르는 동안 설정 열기 전 모습" aria-pressed="false">비교</button><button type="button" data-act="history-undo" aria-label="되돌리기" title="되돌리기" ${!history.pending && !history.undoStack.length ? 'disabled' : ''}><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4 3 8l4 4M3 8h8a5 5 0 0 1 0 10"/></svg></button><button type="button" data-act="history-redo" aria-label="다시 실행" title="앞으로 가기 · 다시 실행" ${history.pending || !history.redoStack.length ? 'disabled' : ''}><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m13 4 4 4-4 4m4-4H9a5 5 0 0 0 0 10"/></svg></button><button type="button" class="bl-editor-search-button" data-act="editor-search" aria-label="설정 검색"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="m13 13 4 4"/></svg></button><button type="button" class="bl-settings-expand" data-act="panel-fullscreen" aria-pressed="${!!root._fullscreen}">${root._fullscreen ? '작은 창' : '전체 화면'}</button>${root.classList.contains('in-popup') ? '<button type="button" class="bl-settings-close" data-act="panel-close" aria-label="테마 설정 닫기" title="닫기">×</button>' : ''}</div>
         </div></div>
         <section class="salty-sec" data-tab="${ui.tab}" data-sub="${sub}">${section}</section>
         <div class="bl-editor-catalog" role="dialog" aria-modal="true" aria-label="설정 선택 목록" ${root._catalogOpen ? '' : 'hidden'}>
@@ -2567,7 +2575,7 @@ function bind(root) {
             // 2.9.2: 본문 색 지정 → '글자색 톤 맞추기' 줄, 톤 맞추기 → 톤 값 슬라이더 넷, 투명 그림도 똑같이 → 설명 문구가 스위치에 따라
             // 보였다 안 보였다 하는데 다시 그리지 않아, 끈 뒤에도 슬라이더가 남아 있었다
             // 감정 대사 효과(움직임 · 빛 · 색 흐름) · 백그라운드 버티는 방식 줄도 스위치를 따라 보였다 안 보였다 한다
-            update(st => setPath(st, path, target.checked), ['chat.weatherIllustrated', 'enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on', 'deus.fx.on', 'deus.fx.flow', 'deus.fx.force', 'bgWindow.on'].includes(path));
+            update(st => setPath(st, path, target.checked), ['deviceLayouts.on', 'chat.weatherReadability', 'chat.weatherIllustrated', 'enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on', 'deus.fx.on', 'deus.fx.flow', 'deus.fx.force', 'bgWindow.on'].includes(path));
             return;
         }
         if (target.matches('input[data-file="font"]') && target.files?.[0]) {

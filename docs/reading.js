@@ -313,4 +313,5 @@
   // font list: fetched when the section comes near, so the page itself stays light
   const load = () => fetch('fonts.json').then(r => r.json()).then(list => { fonts = list; render(); apply(); }).catch(() => {});
   new IntersectionObserver((entries, io) => { if (entries.some(x => x.isIntersecting)) { io.disconnect(); load(); } }, { rootMargin: '400px' }).observe(document.querySelector('#colors'));
+  document.addEventListener('bl-export-state', e => { e.detail.reading = structuredClone(S); });
 })();

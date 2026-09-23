@@ -30,3 +30,5 @@ body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-containe
     grid-column: 1 / -1;
   }
 }
+.bl-editor-actions [data-compare]{touch-action:none;user-select:none;white-space:nowrap;}
+.bl-editor-actions [data-compare][aria-pressed="true"]{background:var(--salty-accent);color:var(--salty-on-accent);}

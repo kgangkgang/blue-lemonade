@@ -2,6 +2,8 @@
 // or disabled. Searching never renders all sections or sends text to a server.
 import { favoriteButton } from './settings-favorites.js';
 const rows = [
+ ['text','para','폰 · PC 배치 따로 기억','모바일 기기별 분리 저장 글자 크기 여백 프로필'],
+ ['chat','screen','날씨 글 읽기 우선','가독성 보호 자동 그림자 날씨 농도'],
  ['theme','palette','에이드 혼합하기 · 그라데이션','그라데이션 그라디언트 혼합 섞기 2색 3색 두색 세색 방향 각도 360 반전 비중 비율 색상 조합 번짐 경계 블러 흐리기 부드럽게 선명 섞임'],
  ['theme','colors','글자·형광펜 그라데이션','본문 대사 속마음 강조 글자 형광펜 그라데이션 단색 색 비중 방향 각도'],
  ['theme','changes','변경한 설정·항목별 복원','변경 내역 기본값 다른 바꾼 설정 목록 초기화 원래대로 항목 하나만 되돌리기 복원 실수'],

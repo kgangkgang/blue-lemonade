@@ -52,7 +52,9 @@ function mountDrawer() {
     // 미리보기 크기까지 재던 것 (폰 리그 시작 한 번에 0.45초). 실리태번의 토글 핸들러보다 먼저 받게 capture 로.
     const ensurePanel = async () => {
         const content = drawer.querySelector('.inline-drawer-content');
-        if (!content || content.querySelector('.salty-panel') || drawer._blMounting) return;
+        if (!content || drawer._blMounting) return;
+        const existing = content.querySelector('.salty-panel');
+        if (existing) { existing._resetComparison?.(getSettings()); return; }
         drawer._blMounting = true;
         try {
             const { mountPanel } = await loadPanel();
@@ -118,6 +120,9 @@ function addMenuItem() {
     item.addEventListener('click', () => openPopup());
     menu.appendChild(item);
 }
+
+import { DEVICE_QUERY } from './src/device-layouts.js';
+matchMedia(DEVICE_QUERY).addEventListener('change', () => { window.dispatchEvent(new Event('bl:device-layout')); applyAll(); refreshPanels(); saveSettings(); });
 
 // 테마는 가능한 한 빨리 (깜빡임 줄이기)
 setFeatureHooks({ applyAll, refreshPanels }); // 켤 때만 불러오는 기능이 설정 적용 · 창 다시 그리기를 부를 수 있게 (3.1.0)

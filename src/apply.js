@@ -11,6 +11,8 @@ import { PALETTES, LEGACY, TOKEN_KEYS, paletteColors, parseColor, sameColor, onC
 import { buildComposite, slotStack, findFont } from './fonts.js';
 import { iconsCss } from './icons.js';
 import { classifyAll } from './assets.js';
+import { comparisonView } from './appearance-compare.js';
+import { weatherReadability } from './weather-readability.js';
 import { syncFeatures } from './features.js';
 import { syncSplash } from './splash.js';
 
@@ -314,6 +316,7 @@ function shadowClasses(s) {
 
 /** 설정 창 미리보기 문단의 클래스를 설정에 맞춤 */
 export function syncSamples(s = getSettings()) {
+    s = appearanceForRender(s);
     const name = `salty-sample salty-dlg-${s.dialogue.style} salty-align-${s.type.align}${s.type.indent ? ' salty-indent' : ''}${shadowClasses(s).map(c => ` ${c}`).join('')}${s.outline?.on ? ' salty-outline' : ''}`; // 3.7.0 외곽선(전체)은 표본에도 — 데우스 가독성 향상은 표본에 색칠한 글자가 없어 안 보인다
     document.querySelectorAll('.salty-sample').forEach((el) => { if (el.className !== name) el.className = name; });
 }
@@ -375,9 +378,16 @@ function autocompleteVars(pal, mode) {
     return Object.fromEntries(Object.entries(vars).map(([k, v]) => [`--ac-style-color-${k}`, v]));
 }
 
+function appearanceForRender(s) {
+    s = comparisonView(s);
+    const protection = weatherReadability(s, (PALETTES[s.palette] || PALETTES.salt).mode);
+    if (protection.active && !s.shadow.on) s = {...s, shadow: {...s.shadow, on:true, targets:{text:true,dialogue:true,em:true,strong:true,code:true}, color: PALETTES[s.palette]?.mode === "dark" ? "#000000" : "#ffffff", alpha:85, angle:90, distance:1, blur:2}};
+    return s;
+}
+
 // ───────── 전체 적용 ─────────
 export function applyAll() {
-    const s = getSettings();
+    const s = appearanceForRender(getSettings());
     prepareDecor(s);
     const pal = paletteColors(s);
     const mode = (PALETTES[s.palette] || PALETTES.salt).mode;

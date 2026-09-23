@@ -32,6 +32,7 @@ jobs:
           node tools/tests/weather-coverage.mjs .
           node tools/tests/glass-motion.mjs .
           node tools/tests/preset-sharing.mjs .
+          node tools/tests/appearance-workflow.mjs .
       - name: Verify the current downloadable ZIP byte for byte
         run: |
           python -c "import json,subprocess,sys; v=json.load(open('manifest.json'))['version']; subprocess.run([sys.executable,'tools/release_gate.py','--kind','theme','--source','.','--zip',f'docs/downloads/blue-lemonade-{v}.zip'],check=True)"

@@ -4,7 +4,7 @@ import { presetColors } from './frame-presets.js';
 const read = (obj, path) => path.split('.').reduce((v, k) => v != null && Object.hasOwn(v,k) ? v[k] : undefined, obj);
 const equal = (a, b) => a === b || (!!a && !!b && typeof a === 'object' && typeof b === 'object' && Object.keys(a).length === Object.keys(b).length && Object.keys(a).every(k => equal(a[k], b[k])));
 const omitted = new Set(['version','noticeSeen','frameLibrary','customFonts','styles','charStyles','activeStyle','baseStyle','weatherImages','customPalettes','activeCustomPalette','wordTools']);
-const omittedPaths = new Set(['image.masks','image.maskId','chat.weatherImageId']);
+const omittedPaths = new Set(['deviceLayouts.pc','deviceLayouts.mobile','image.masks','image.maskId','chat.weatherImageId']);
 const safe = path => typeof path === 'string' && !path.split('.').some(k => ['__proto__','constructor','prototype'].includes(k));
 export function settingDefault(settings, path) {
     if (!safe(path) || omitted.has(path.split('.')[0]) || omittedPaths.has(path)) return { allowed: false };
@@ -70,6 +70,7 @@ export function settingRoute(path) {
     if (scope === 'image') return {tab:'image',sub:key.startsWith('edge') || key === 'decor' ? 'frame' : /^(fit|maxh|height)$/.test(key) ? 'size' : /^(fade|blendWhite)/.test(key) ? 'fade' : key === 'layout' ? 'layout' : 'shape'};
     // 카드 · 색 통일 · 톤 값은 데우스 화면에 있다 (채팅 › 기타에는 커스텀 CSS 끄기만)
     if (scope === 'deus' || scope === 'chat' && /^(dem|unify|tone|markerTone|regexIcons)/.test(key)) return {tab:'prompt',sub:'deus'};
+    if (scope === 'deviceLayouts') return {tab:'text',sub:'para'};
     if (scope === 'compat') return {tab:'chat',sub:'etc'};
     if (scope === 'chat' && /^(user|header)/.test(key)) return {tab:'chat',sub:'message'};
     return {tab:'chat',sub:'screen'};

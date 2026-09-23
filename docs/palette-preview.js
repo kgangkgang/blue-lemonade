@@ -113,4 +113,5 @@
     }
     renderMix(); render(false); demo.hidden = false; document.querySelector('#palette-loading').hidden = true;
   }).catch(() => { document.querySelector('#palette-loading').textContent = '색상을 불러오지 못했어요. 잠시 후 새로고침해 주세요.'; });
+  document.addEventListener('bl-export-state', e => { e.detail.palette = structuredClone({selected,mode,mixes,families}); });
 })();
