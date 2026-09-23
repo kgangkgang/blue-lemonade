@@ -84,3 +84,5 @@
 .st-mix-swatches button:disabled{opacity:.4;cursor:default}
 .st-mix-swatches button:not(:disabled):active{scale:.97}
 #palette-mix-toggle[aria-pressed=true]{background:var(--shade-2)}
+
+.personal-preview{padding:16px;border-bottom:1px solid var(--preview-line);}.personal-preview summary{cursor:pointer;font-weight:600;}.personal-preview label{display:block;margin:12px 0 6px;}.personal-preview textarea{box-sizing:border-box;width:100%;resize:vertical;min-height:120px;background:var(--preview-surface);color:var(--preview-text);border:1px solid var(--preview-line);border-radius:10px;padding:12px;font:inherit;}.personal-preview p{font-size:13px;color:var(--preview-muted);}

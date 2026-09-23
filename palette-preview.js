@@ -25,6 +25,7 @@
   const mixSwatches = document.querySelector('#palette-mix-swatches'), mixSliders = document.querySelector('#palette-mix-sliders'), mixBody = document.querySelector('#palette-mix-body'), mixToggle = document.querySelector('#palette-mix-toggle');
   const FILL = ['bg', 'surface', 'raised'];
   function paintMix() {
+    window.BLPlayground?.write('palette', {selected,mixes});
     const m = mixes[mode];
     for (const key of FILL) stage.style.removeProperty('--preview-fill-' + key);
     for (const key of ['--preview-fill-user', '--preview-band-marker', '--preview-band-gold']) stage.style.removeProperty(key);
@@ -105,6 +106,11 @@
   document.addEventListener('bl-theme', event => { mode = event.detail; pickedMode = false; if (families.length) { renderMix(); render(false); } });
   fetch('theme-palettes.json').then(r => { if (!r.ok) throw new Error('palettes'); return r.json(); }).then(data => {
     families = data;
+    const saved=window.BLPlayground?.read('palette',{selected:'blue',mixes});
+    if(saved){
+      if(families.some(f=>f.id===saved.selected))selected=saved.selected;
+      for(const kind of ['light','dark']){const m=saved.mixes[kind];const picks=[...new Set(m.families)].filter(id=>families.some(f=>f.id===id)).slice(0,3);mixes[kind]={on:m.on,families:picks.length?picks:['blue'],angle:clamp(m.angle,0,360,90),blend:clamp(m.blend,0,100,50),weights:[0,1,2].map(i=>clamp(m.weights[i],1,100,50))};}
+    }
     for (const family of families) {
       const button = document.createElement('button'), dot = document.createElement('span'), label = document.createElement('span');
       button.type = 'button'; button.dataset.family = family.id; button.style.setProperty('--ade-color', family.light.accent); button.setAttribute('aria-label', family.label); button.style.setProperty('--i', choices.children.length);
@@ -113,5 +119,6 @@
     }
     renderMix(); render(false); demo.hidden = false; document.querySelector('#palette-loading').hidden = true;
   }).catch(() => { document.querySelector('#palette-loading').textContent = '색상을 불러오지 못했어요. 잠시 후 새로고침해 주세요.'; });
+  document.addEventListener('bl-playground-reset', () => {selected='blue';for(const kind of ['light','dark'])mixes[kind]={on:false,families:['blue','strawberry'],angle:90,weights:[50,50,50],blend:50};if(families.length){renderMix();render();}});
   document.addEventListener('bl-export-state', e => { e.detail.palette = structuredClone({selected,mode,mixes,families}); });
 })();
