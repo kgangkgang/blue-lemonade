@@ -2,6 +2,7 @@ import { toolSection } from './addon-layout.js';
 // Optional integrations share standalone settings, but only one owner runs per page.
 import { getSettings, saveSettings } from './settings.js';
 import { restorePendingAddons, saveAddonsNow } from './addon-save.js';
+import { IDS as ASSIST_IDS, LABELS as ASSIST_LABELS } from './assist/core.js';
 const running=new Set(),failed=new Map(),loading=new Set();
 let started=false,saving=0,saveError='';
 const folders={order:'panel-order',perf:'perf-assist',words:'word-replace',models:'model-register',rewrite:'ban-word-rewrite',bookmarks:'chat-bookmarks'};
@@ -61,6 +62,10 @@ export async function startAddons(){
     }
 }
 export function addonMarkup(s,id){
+    if(ASSIST_IDS.includes(id)) {
+        const notes={conflicts:'중복 실행·설치 버전·화면 간섭과 관측된 오류를 확인해요.',requestview:'실제 전송 직전 요청과 로어북·확장 주입 내용을 확인해요. 기록은 이 탭에만 남아요.',retranslate:'한글 번역문을 선택하면 대응 원문을 찾아 현재 번역 모델로 다시 번역해요. LLM 번역 확장이 필요해요.',taste:'좋은 글·싫은 글·고친 글을 분석하고, 채택한 취향만 답변에 적용해요.'};
+        return `<div class="bl-addon-header"><h3>${ASSIST_LABELS[id]}</h3><label class="bl-addon-power"><span>기능 켜기</span><input type="checkbox" data-assist-toggle="${id}" ${s.addons[id]?'checked':''}></label></div><p class="salty-note">${notes[id]}</p><button type="button" class="salty-btn" data-assist-open="${id}" ${s.addons[id]?'':'disabled'}>열기</button>`;
+    }
     const on=!!s.addons[id],needsReload=['order','perf','models','modelswitch','regexlink','rewrite','bookmarks'].includes(id)&&on!==running.has(id);
     const status=saving?'설정 저장 확인 중…':saveError||(loading.has(id)?'기능을 불러오는 중…':failed.get(id))||(needsReload?'새로고침 대기':on?'사용 중':'꺼짐');
     const header=`<header class="bl-addon-header"><div><h3><i class="fa-solid ${icons[id]}" aria-hidden="true"></i> ${names[id]}</h3><p role="status" class="bl-addon-status ${on?'is-on':''}">${status}</p></div><label class="bl-addon-power"><span>기능 켜기</span><input type="checkbox" data-addon-toggle="${id}" ${on?'checked':''} ${saving?'disabled':''}></label></header>`;
@@ -90,6 +95,11 @@ export async function syncRegexlinkFlag(){
 }
 
 export function bindAddons(root,refresh){
+    root.querySelectorAll('[data-assist-toggle]').forEach(input=>input.onchange=async()=>{
+        getSettings().addons[input.dataset.assistToggle]=input.checked;
+        try{await persist();(await import('./assist/index.js')).syncAssist();refresh();}catch(error){globalThis.toastr?.warning(error.message);}
+    });
+    root.querySelectorAll('[data-assist-open]').forEach(button=>button.onclick=async()=>{const m=await import('./assist/index.js');m.syncAssist();m.openTool(button.dataset.assistOpen);});
     bindInlineAddon(root);
 
     root.querySelectorAll('[data-addon-toggle]').forEach(input=>input.addEventListener('change',async()=>{
