@@ -33,7 +33,7 @@
     document.querySelector('.scene-number').textContent = look.number;
     document.querySelector('.scene-detail').textContent = look.detail;
     video.pause(); video.removeAttribute('src');
-    const file = narrow.matches ? look.file : look.file.replace('-look-', '-pc-');
+    const file = narrow.matches ? `476-${key}-mobile-hd` : look.file.replace('-look-', '-pc-');
     video.poster = `media/${file}.jpg`;
     video.dataset.src = `media/${file}.mp4`;
     video.setAttribute('aria-label', `${look.detail} 실제 테마 시연`);
@@ -86,7 +86,7 @@
   heroVideo.addEventListener('timeupdate',syncHeroCaption);
   let heroVisible=false,heroPaused=false,heroConsent=false;
   function syncHero(){if(heroVisible&&!document.hidden&&!heroPaused&&(!reduced.matches||heroConsent)){if(!heroVideo.getAttribute('src'))heroVideo.src=heroVideo.dataset.src;heroVideo.play().catch(()=>{});}else heroVideo.pause();}
-  function heroSource(){const file=narrow.matches?'reading-white-mobile':'reading-white-pc';heroVideo.pause();heroVideo.removeAttribute('src');heroVideo.poster=`media/${file}.jpg`;heroVideo.dataset.src=`media/${file}.mp4`;heroVideo.load();heroCaption.textContent=heroLooks[0];syncHero();}
+  function heroSource(){const file=narrow.matches?'476-reading-mobile-hd':'reading-white-pc';heroVideo.pause();heroVideo.removeAttribute('src');heroVideo.poster=`media/${file}.jpg`;heroVideo.dataset.src=`media/${file}.mp4`;heroVideo.load();heroCaption.textContent=heroLooks[0];syncHero();}
   heroPlay.addEventListener('click',()=>{heroPaused=!heroVideo.paused;heroConsent=true;syncHero();});
   heroVideo.addEventListener('play',()=>{heroPlay.textContent='일시정지';heroPlay.setAttribute('aria-label','색·글자·여백 시연 일시정지');});
   heroVideo.addEventListener('pause',()=>{heroPlay.textContent='영상 재생';heroPlay.setAttribute('aria-label','색·글자·여백 시연 재생');});

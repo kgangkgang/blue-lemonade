@@ -180,10 +180,10 @@ const topics = [
         "472-pc-image-frame.jpg"
       ],
       [
-        "475-frame-presets.mp4",
+        "476-frame-presets.mp4",
         "사진을 살리는 액자 6종",
         "수채화 · 가는 리본 · 겹친 종이.",
-        "475-frame-presets.jpg"
+        "476-frame-presets.jpg"
       ]
     ]
   },
@@ -194,34 +194,34 @@ const topics = [
     "sub": "비와 눈은 단순하게. 빛과 색은 은은하게. 원하는 효과만 골라요.",
     "cards": [
       [
-        "daynight-look-rain.mp4",
+        "476-rain-mobile-hd.mp4",
         "가는 비",
         "화이트에서 나이트까지.",
-        "daynight-look-rain.jpg"
+        "476-rain-mobile-hd.jpg"
       ],
       [
-        "daynight-look-snow.mp4",
+        "476-snow-mobile-hd.mp4",
         "작은 눈",
         "낮과 밤에 동그란 눈송이.",
-        "daynight-look-snow.jpg"
+        "476-snow-mobile-hd.jpg"
       ],
       [
-        "daynight-look-mist.mp4",
+        "476-mist-mobile-hd.mp4",
         "옅은 안개",
         "낮과 밤, 옅게 흐르는 안개.",
-        "daynight-look-mist.jpg"
+        "476-mist-mobile-hd.jpg"
       ],
       [
-        "daynight-look-stars.mp4",
+        "476-stars-mobile-hd.mp4",
         "은하수와 유성",
         "화이트와 나이트의 은은한 빛.",
-        "daynight-look-stars.jpg"
+        "476-stars-mobile-hd.jpg"
       ],
       [
-        "daynight-look-petals.mp4",
+        "476-petals-mobile-hd.mp4",
         "작은 색 조각",
         "꽃잎도 가볍고 단순하게.",
-        "daynight-look-petals.jpg"
+        "476-petals-mobile-hd.jpg"
       ],
       [
         "475-weather-amount.mp4",

@@ -31,7 +31,7 @@
 @media(max-width:1000px){.hero{gap:28px;padding-inline:24px}.essentials{margin-inline:24px}.hero h1{font-size:44px}}
 @media(max-width:760px){
  .hero{display:flex;flex-direction:column;align-items:stretch;padding:38px 24px 34px;gap:30px}.hero h1{font-size:clamp(46px,12.5vw,56px);line-height:1.23;margin:18px 0}.hero .lead{font-size:14px}.hero .actions{margin-top:22px}.hero .device-pick{margin-top:18px}.hero-kicker{font-size:9px;margin-top:18px}
- .hero-art{max-width:360px;margin:auto;width:100%}.mix-film video{aspect-ratio:412/620;object-fit:cover;object-position:top}.film-label{padding:10px 13px}.mix-film figcaption{padding:10px}
+ .hero-art{max-width:360px;margin:auto;width:100%}.mix-film video{aspect-ratio:720/1170;object-fit:contain;object-position:top}.film-label{padding:10px 13px}.mix-film figcaption{padding:10px}
  .essentials{grid-template-columns:1fr;padding-block:22px;gap:21px}.essentials a{padding:0;gap:5px}.essentials b{font-size:14px}.essentials span{font-size:12px}
  .section{padding:60px 22px}.section-head h2{font-size:29px}.section-head p{font-size:14px}.weather-scene{grid-template-columns:1fr;padding:22px 12px 12px;gap:22px}.scene-title{font-size:26px;margin:12px 0}.scene-screen{max-width:360px}.weather-pick{margin-top:16px}.scene-detail{margin-top:12px}.portrait-display{padding:10px}.portrait-choice small{display:none}.portrait-choice b{font-size:13px}
 }
@@ -46,20 +46,61 @@
 #colors .reading-controls{padding:0;background:none;box-shadow:none;border-radius:0}
 #colors [hidden]{display:none!important}
 #colors .palette-controls{position:static;min-width:0;scroll-margin-top:90px}
-#colors .palette-stage{position:sticky;top:90px;padding:26px 24px;border-radius:16px}
-#colors .palette-families{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
-#colors .palette-families button{min-height:52px;padding:9px 5px;gap:6px;font-size:13px}
+#colors .palette-stage{position:sticky;top:90px;max-height:calc(100svh - 114px);overflow:auto;padding:26px 24px;border-radius:16px;scrollbar-width:thin}
+#colors .palette-families{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#colors .palette-families button{min-height:52px;padding:10px;gap:8px;font-size:13px;word-break:keep-all;overflow-wrap:anywhere}
+#colors .palette-families button span:last-child{min-width:0}
+@media(min-width:1001px) and (hover:hover){
+ #colors .palette-families{grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+ #colors .palette-families button{justify-content:center;min-height:48px;aspect-ratio:1;padding:8px;border-radius:50%;background:none;box-shadow:none}
+ #colors .palette-families button[aria-pressed=true]{box-shadow:inset 0 0 0 2px var(--blue)}
+ #colors .palette-families button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+ #colors .palette-families button span:last-child{display:none}
+ #colors .palette-dot{width:30px;height:30px}
+}
 #palette-stage #reading-sample{color:var(--preview-text);--ink:var(--preview-dialogue);--marker:var(--preview-marker);--blue:var(--preview-accent);--muted:var(--preview-muted);--read-em:var(--preview-em);--read-strong:var(--preview-strong);--read-gold:var(--preview-gold);--shade-2:var(--preview-raised);padding-block:16px}
 #palette-stage #reading-sample strong{background:none}
 #colors .palette-message-head b{color:var(--preview-accent)}
 #colors .palette-user,#colors .palette-compose{display:none}
 #colors .st-tabs .st-seg{gap:4px}
-@media(max-width:760px){
+/* Do not squeeze a settings panel and a long reading sample into a tablet row. */
+@media(max-width:1000px){
  #colors .palette-layout{grid-template-columns:1fr;gap:20px}
- #colors .palette-stage{position:relative;top:auto;order:-1;max-height:32svh;overflow:auto;z-index:0;padding:16px 12px;scrollbar-width:thin}
+ #colors .palette-stage{position:relative;top:auto;order:-1;max-height:420px;max-height:min(48svh,420px);overflow:auto;z-index:0;padding:20px 16px;scrollbar-width:thin}
  #colors .palette-stage-head{padding-bottom:12px;margin-bottom:12px}
  #colors .palette-stage-head p,#colors .palette-swatches{display:none}
- #colors .palette-controls{max-height:48svh;overflow:auto;scrollbar-width:thin;padding:0 2px 8px}
- #colors .playground-tabs{position:sticky;top:0;background:var(--surface);z-index:2}
- #colors .palette-families button{min-height:46px}
+ #colors .palette-controls{max-height:none;overflow:visible;padding:0}
+ #colors .playground-tabs{position:static;background:none}
+ #colors .palette-families{grid-template-columns:repeat(3,minmax(0,1fr))}
+ #colors .palette-families button{flex-direction:column;justify-content:center;text-align:center;min-height:76px;padding:10px 6px}
 }
+
+/* Keep Korean phrases intact, but allow long addresses and user text to fit. */
+.hero-copy,.section-head,.essentials,.card figcaption,.feature-group summary,.feature-card,.install-grid,.scene-footnote,.portrait-display figcaption{word-break:keep-all;overflow-wrap:anywhere}
+.hero h1 .mark{white-space:nowrap}
+.hero-copy,.hero-art,.section-head,.weather-scene>*,.portrait-layout>*,.install-grid>*{min-width:0}
+.hero .actions .button{white-space:nowrap}
+.film-label{gap:12px}.film-label button{flex:none;white-space:nowrap}
+.scene-footnote{flex-wrap:wrap;align-items:baseline}.scene-footnote a{flex:none}
+#colors .playground-tabs button{min-width:0;word-break:keep-all;line-height:1.4}
+#colors .st-row.stack .st-seg{flex-wrap:wrap;gap:4px}
+#colors .st-row.stack .st-seg button{flex:1 0 auto}
+#colors .st-row>span{word-break:keep-all;overflow-wrap:anywhere}
+.note summary{flex-wrap:wrap;row-gap:8px}
+.note summary .span{min-width:0;white-space:normal;word-break:keep-all;overflow-wrap:anywhere}
+.note summary .num,.note summary .tag,.note summary time{flex-shrink:0}
+.note summary .plus{flex:none;margin-inline:6px}
+@media(max-width:380px){
+ .hero .actions{display:grid;grid-template-columns:1fr;width:100%}
+ .hero .actions .button{width:100%;justify-content:center}
+ .section{padding-inline:18px}
+ .section-head h2{font-size:27px;line-height:1.35}
+ #colors .palette-stage{padding-inline:10px}
+ #colors .palette-stage-head h3{font-size:16px;word-break:keep-all}
+ #colors .playground-tabs button{font-size:12px}
+ #colors .palette-families button{font-size:12px}
+ .feature-group-count{padding-inline:6px}
+}
+
+.scene-screen video{aspect-ratio:1280/800}
+@media(max-width:760px){.scene-screen video{aspect-ratio:720/1170}}

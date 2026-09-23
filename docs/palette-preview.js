@@ -105,7 +105,7 @@
     families = data;
     for (const family of families) {
       const button = document.createElement('button'), dot = document.createElement('span'), label = document.createElement('span');
-      button.type = 'button'; button.dataset.family = family.id; button.style.setProperty('--i', choices.children.length);
+      button.type = 'button'; button.dataset.family = family.id; button.title = family.label; button.setAttribute('aria-label', family.label); button.style.setProperty('--i', choices.children.length);
       dot.className = 'palette-dot'; dot.setAttribute('aria-hidden','true'); label.textContent = family.label;
       button.append(dot, label); button.addEventListener('click', () => { selected = family.id; render(); }); choices.append(button);
     }
