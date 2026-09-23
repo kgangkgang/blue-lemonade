@@ -80,12 +80,16 @@
     if (event.key === 'Enter' || event.key === ' ') {event.preventDefault(); enlargeProfile();}
   });
   const heroVideo = document.querySelector('#mix-hero'), heroPlay = document.querySelector('#hero-play');
+  const heroCaption = document.querySelector('#hero-caption');
+  const heroLooks = ['블루 × 민트 · 가볍게 읽기', '피치 × 딸기 · 단정하게 모으기', '라벤더 × 블루 · 굵고 또렷하게', '민트 × 멜론 · 여백을 넉넉하게'];
+  function syncHeroCaption(){heroCaption.textContent=heroLooks[Math.floor((heroVideo.currentTime+.08)/4.2)%4];}
+  heroVideo.addEventListener('timeupdate',syncHeroCaption);
   let heroVisible=false,heroPaused=false,heroConsent=false;
   function syncHero(){if(heroVisible&&!document.hidden&&!heroPaused&&(!reduced.matches||heroConsent)){if(!heroVideo.getAttribute('src'))heroVideo.src=heroVideo.dataset.src;heroVideo.play().catch(()=>{});}else heroVideo.pause();}
-  function heroSource(){const file=narrow.matches?'calm-mix':'calm-pc-mix';heroVideo.pause();heroVideo.removeAttribute('src');heroVideo.poster=`media/${file}.jpg`;heroVideo.dataset.src=`media/${file}.mp4`;heroVideo.load();syncHero();}
+  function heroSource(){const file=narrow.matches?'hybrid-mobile':'hybrid-pc';heroVideo.pause();heroVideo.removeAttribute('src');heroVideo.poster=`media/${file}.jpg`;heroVideo.dataset.src=`media/${file}.mp4`;heroVideo.load();heroCaption.textContent=heroLooks[0];syncHero();}
   heroPlay.addEventListener('click',()=>{heroPaused=!heroVideo.paused;heroConsent=true;syncHero();});
-  heroVideo.addEventListener('play',()=>{heroPlay.textContent='일시정지';heroPlay.setAttribute('aria-label','에이드 혼합 영상 일시정지');});
-  heroVideo.addEventListener('pause',()=>{heroPlay.textContent='영상 재생';heroPlay.setAttribute('aria-label','에이드 혼합 영상 재생');});
+  heroVideo.addEventListener('play',()=>{heroPlay.textContent='일시정지';heroPlay.setAttribute('aria-label','색·글자·여백 시연 일시정지');});
+  heroVideo.addEventListener('pause',()=>{heroPlay.textContent='영상 재생';heroPlay.setAttribute('aria-label','색·글자·여백 시연 재생');});
   new IntersectionObserver(([entry])=>{heroVisible=entry.isIntersecting;syncHero();}).observe(heroVideo);
   document.addEventListener('visibilitychange',syncHero);reduced.addEventListener('change',syncHero);narrow.addEventListener('change',heroSource);heroSource();
   const profiles = {
