@@ -26,7 +26,7 @@ export function readabilityReport(s){
         const splitInk=marked&&p.markerInk;
         const backgrounds=splitInk?bands:band?[...backs,...bands]:backs;
         const token=key==='dialogue'&&s.dialogue.style==='tint'?'accent':marked&&p.markerInk?'markerInk':key;
-        const g=gradientFor(s,token),inks=g?Array.from({length:21},(_,i)=>parseColor(gradientSample(g,i/20))):[parseColor(p[token])];
+        const g=token==='markerInk'?null:gradientFor(s,token),inks=g?Array.from({length:21},(_,i)=>parseColor(gradientSample(g,i/20))):[parseColor(p[token])];
         const inkRatio=Math.min(...inks.flatMap(c=>backgrounds.map(bg=>contrast(c,bg))));
         const outsideRatio=splitInk?Math.min(...backs.map(bg=>contrast(parseColor(p.dialogue),bg))):21;
         const ratio=Math.min(inkRatio,outsideRatio);

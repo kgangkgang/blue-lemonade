@@ -154,7 +154,7 @@ export const FILE_HASHES = {
   "src/profile.js": "4295:67252e8a:607e88c7",
   "src/promptlist.js": "4085:588ced61:9949ed25",
   "src/qrfind.js": "13337:8d51f63f:96281d77",
-  "src/readability.js": "3213:b3cbce86:ee4e1661",
+  "src/readability.js": "3238:b819b718:f0f129ce",
   "src/reader.js": "7849:f9a0e373:c7b772d9",
   "src/scripts/bundled/deus.js": "71720:ddbe5bc4:16add9c2",
   "src/scripts/bundled/fold.js": "14773:cf844e0a:169fb52a",

@@ -26,6 +26,7 @@ for(const palette of Object.keys(PALETTES)){
  const x=structuredClone(DEFAULTS);x.palette=palette;x.colorOverrides[palette]={text:'#888888',em:'#888888',dialogue:'#888888'};
  for(const row of readabilityReport(x)){assert(Number.isFinite(row.ratio));if(row.fix){assert(fixReadability(x,row.key));assert(readabilityReport(x).find(z=>z.key===row.key).ratio>=4.5);}}
 }
+const lemon=structuredClone(DEFAULTS);lemon.palette='lemon-night';lemon.gradients.dark.on=true;assert(readabilityReport(lemon).every(row=>Number.isFinite(row.ratio)));
 const mixed=structuredClone(DEFAULTS);mixed.gradients.light.on=true;mixed.colorOverrides.salt={text:'#eeeeee'};assert(fixReadability(mixed,'text'));assert(readabilityReport(mixed)[0].ratio>=4.5);
 const events=new Map(),listeners=new Map();let observerCallback,disconnected=false;
 globalThis.MutationObserver=class{constructor(fn){observerCallback=fn;}observe(){}disconnect(){disconnected=true;}};
