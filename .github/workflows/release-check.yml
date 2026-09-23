@@ -29,6 +29,7 @@ jobs:
           node tools/tests/weather-styles.mjs .
           node tools/tests/weather-simple.mjs .
           node tools/tests/weather-amount.mjs .
+          node tools/tests/weather-coverage.mjs .
           node tools/tests/glass-motion.mjs .
           node tools/tests/preset-sharing.mjs .
       - name: Verify the current downloadable ZIP byte for byte

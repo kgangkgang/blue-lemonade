@@ -197,16 +197,16 @@ const topics = [
     "sub": "비와 눈은 단순하게. 빛과 색은 은은하게. 원하는 효과만 골라요.",
     "cards": [
       [
-        "rain-phone-long.mp4",
+        "rain-phone-v2.mp4",
         "가는 비",
         "선택한 밝기로 보여요.",
-        "rain-phone-long.jpg"
+        "rain-phone-v2.jpg"
       ],
       [
-        "snow-phone-long.mp4",
+        "snow-phone-v2.mp4",
         "작은 눈",
         "동그란 눈송이가 천천히.",
-        "snow-phone-long.jpg"
+        "snow-phone-v2.jpg"
       ],
       [
         "mist-phone-long.mp4",
@@ -214,8 +214,8 @@ const topics = [
         "옅게 흐르는 안개.",
         "mist-phone-long.jpg"
       ],
-      ["stars-phone-long.mp4", "은하수", "부드럽게 흐르는 별빛.", "stars-phone-long.jpg"],
-      ["meteor-phone-long.mp4", "유성", "빛의 궤적만 가볍게.", "meteor-phone-long.jpg"],
+      ["stars-phone-v2.mp4", "은하수", "부드럽게 흐르는 별빛.", "stars-phone-v2.jpg"],
+      ["meteor-phone-v2.mp4", "유성", "빛의 궤적만 가볍게.", "meteor-phone-v2.jpg"],
       [
         "petals-phone-long.mp4",
         "작은 색 조각",
@@ -231,19 +231,19 @@ const topics = [
     ],
     "pc": [
       [
-        "478-rain-pc.mp4",
+        "rain-pc-v2.mp4",
         "가는 비",
         "",
-        "478-rain-pc.jpg"
+        "rain-pc-v2.jpg"
       ],
       [
-        "daynight-pc-snow.mp4",
+        "snow-pc-v2.mp4",
         "작은 눈",
         "",
-        "daynight-pc-snow.jpg"
+        "snow-pc-v2.jpg"
       ],
-      ["478-stars-pc.mp4", "은하수", "부드럽게 흐르는 별빛.", "478-stars-pc.jpg"],
-      ["478-meteor-pc.mp4", "유성", "빛의 궤적만 가볍게.", "478-meteor-pc.jpg"]
+      ["stars-pc-v2.mp4", "은하수", "부드럽게 흐르는 별빛.", "stars-pc-v2.jpg"],
+      ["meteor-pc-v2.mp4", "유성", "빛의 궤적만 가볍게.", "meteor-pc-v2.jpg"]
     ]
   },
   {
@@ -516,7 +516,7 @@ const topics = [
 const $ = s => document.querySelector(s);
 function element(tag, cls, text) { const e=document.createElement(tag); if(cls)e.className=cls; if(text)e.textContent=text; return e; }
 // media cache keys: one stable key for everything; a file retaken under the same name gets its own entry here (never bump the stable key)
-const modeMedia=new Set(["rain-phone-long", "snow-phone-long", "mist-phone-long", "stars-phone-long", "meteor-phone-long", "petals-phone-long", "478-rain-pc", "daynight-pc-snow", "478-stars-pc", "478-meteor-pc", "clear-phone-long", "daynight-pc-clear"]);
+const modeMedia=new Set(["rain-phone-v2", "snow-phone-v2", "mist-phone-long", "stars-phone-v2", "meteor-phone-v2", "petals-phone-long", "rain-pc-v2", "snow-pc-v2", "stars-pc-v2", "meteor-pc-v2", "clear-phone-long", "daynight-pc-clear"]);
 function setMediaMode(video){
  const mode=document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
  const file=video.dataset.modeBase+'-'+mode;video.dataset.src='media/'+file+'.mp4';video.poster='media/'+file+'.jpg';

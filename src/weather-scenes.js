@@ -1,6 +1,7 @@
 // 날씨 장면 (4.2.8) — 입자가 아니라 화면 전체로 그리는 효과들: 무지개 · 나무 그림자 · 흩날림 · 유리 빗방울 · 물결.
 // weather-engine.js 의 createCore 가 이 모드일 때 그리기를 통째로 맡긴다 (워커에서도 같이 돈다 — DOM 을 쓰지 않는다).
 // env: 엔진의 지금 값(크기 · 조절 값 · 색)을 읽는 창. 조절 값은 전부 어떤 식으로든 먹게 한다 (각도 · 속도 · 흔들림 · 회전 · 움직임 · 크기 · 투명도 · 세기 · 색).
+import { wrapWeatherCoordinate as wrap } from './weather-options.js';
 const TAU = Math.PI * 2;
 export const SCENE_MODES = ['rainbow', 'shadow', 'breeze', 'glass', 'water'];
 
@@ -163,7 +164,7 @@ function breeze(env) {
                 const p = items[i], v = p.speed * pace(env) * dt;
                 p.x += dir * v; p.y += v * Math.abs(env.slant) * 1.2 + Math.sin(t * p.freq + p.phase) * 16 * dt * k;
                 p.rot += p.spin * dt * env.spin;
-                if (p.y > env.H + 20) p.y -= env.H + 40;
+                p.y = wrap(p.y, env.H, 20);
                 if (dir > 0 ? p.x > env.W + 24 : p.x < -24) items[i] = make(false);
             }
         },
@@ -283,7 +284,7 @@ function glass(env) {
                 while (d.beads.length && d.y - d.beads[0][1] > 180) d.beads.shift();
                 if (d.y - d.r > env.H + 12) { drops[i] = drop(); drops[i].born = t; }
             }
-            if (!still) for (const s of streaks) { const travel = s.v * pace(env) * dt; s.y += travel; s.x += travel * env.slant; if (s.y - s.len > env.H) { s.y = -env.rand(10, env.H * .6); s.x = env.rand(0, env.W); } }
+            if (!still) for (const s of streaks) { const travel = s.v * pace(env) * dt; s.y += travel; s.x = wrap(s.x + travel * env.slant, env.W, s.len); if (s.y - s.len > env.H) { s.y = -env.rand(10, env.H * .6); s.x = env.rand(0, env.W); } }
         },
         draw(t) {
             const { ctx } = env, ink = inkOf(env, 0, env.light ? '214,232,250' : '236,245,255'), rim = env.light ? '30,50,75' : '6,10,16';

@@ -5,7 +5,7 @@
 //        내 그림(custom): 받은 ImageBitmap 을 입자마다 돌려 가며 그린다 (눈처럼 흔들리며 내림).
 
 // 장면(무지개 · 물결 …) 코드는 그 날씨를 처음 고를 때만 받는다 — 비 · 눈만 쓰면 읽지 않는다
-import { weatherAmount } from './weather-options.js';
+import { weatherAmount, wrapWeatherCoordinate as wrap } from './weather-options.js';
 import { createWeatherArt } from './weather-art.js';
 const SCENE_MODES = ['rainbow', 'shadow', 'breeze', 'glass', 'water'];
 let scenesModule = null, scenesLoading = null;
@@ -211,8 +211,8 @@ function createCore(ctx, first, shared = {}) {
                 // 각도 · 속도: 밤하늘 전체가 아주 천천히 흐른다 (곧게 = 멈춤)
                 if (p.band) continue; // 은하수 띠의 별은 띠를 따라 놓인다 (자리는 그릴 때 각도에서 계산)
                 if (motion !== 'straight') { const drift = 1.6 * speedK * (.4 + p.depth) * dt; p.x += drift * (slant < 0 ? -1 : 1); p.y += drift * Math.abs(slant); }
-                if (p.x < -4) p.x += W + 8; else if (p.x > W + 4) p.x -= W + 8;
-                if (p.y > H + 4) p.y -= H + 8;
+                p.x = wrap(p.x, W, 4);
+                p.y = wrap(p.y, H, 4);
                 continue;
             }
             if (mode === 'firefly') {
@@ -221,15 +221,15 @@ function createCore(ctx, first, shared = {}) {
                 const v = p.speed * speedK * (motion === 'streak' ? 3 : 1) * dt;
                 p.x += Math.cos(p.heading) * v + v * slant * .8; // 각도: 한쪽으로 쏠려 난다
                 p.y += Math.sin(p.heading) * v * .7;
-                if (p.x < -12) p.x += W + 24; else if (p.x > W + 12) p.x -= W + 24;
-                if (p.y < -12) p.y += H + 24; else if (p.y > H + 12) p.y -= H + 24;
+                p.x = wrap(p.x, W, 12);
+                p.y = wrap(p.y, H, 12);
                 continue;
             }
             if (mode === 'sun') {
                 p.y -= p.speed * speedK * dt;
                 p.x += Math.sin(t * p.freq + p.phase) * p.sway * dt * swayK * (motion === 'straight' ? 0 : motion === 'flutter' ? 2 : 1);
                 if (p.y < -10) items[i] = mote(false);
-                if (p.x < -10) p.x += W + 20; else if (p.x > W + 10) p.x -= W + 20;
+                p.x = wrap(p.x, W, 10);
                 continue;
             }
             if (mode === 'fog') {
@@ -240,7 +240,7 @@ function createCore(ctx, first, shared = {}) {
                 p.y += Math.sin(t * p.freq + p.phase) * p.sway * dt * swayK * (motion === 'straight' ? 0 : motion === 'flutter' ? 2 : 1) * .35;
                 // Clouds rock gently; accumulated rotation eventually turns a cloud bank upright.
                 p.rot = p.rot0 + Math.sin(t * .08 + p.phase) * p.spin * 8 * spinK;
-                if (p.y < -reach) p.y = H + reach * .6;
+                p.y = wrap(p.y, H, reach);
                 if (dir > 0 ? p.x - reach > W : p.x + reach < 0) items[i] = puff(false);
                 continue;
             }
@@ -249,7 +249,7 @@ function createCore(ctx, first, shared = {}) {
                 p.y -= p.speed * speedK * (motion === 'streak' ? 2.5 : 1) * dt;
                 p.x += (Math.sin(t * p.freq + p.phase) * p.sway * swayK * flutter + slant * 14) * speedK * dt;
                 p.rot = Math.sin(t * p.freq + p.phase) * .32 * spinK * flutter;
-                if (p.x < -margin) p.x = W + margin; else if (p.x > W + margin) p.x = -margin;
+                p.x = wrap(p.x, W, margin);
                 if (p.y < -margin) items[i] = piece(false);
                 continue;
             }
@@ -261,11 +261,13 @@ function createCore(ctx, first, shared = {}) {
             if (mode === 'feather') p.rot = p.rot0 + Math.sin(t * .65 * speedK + p.phase) * .7 * spinK;
             else if (mode !== 'snow') p.rot += p.spin * dt * Math.min(2, speedK) * spinK;
             if (mode === 'rain') {
-                if (p.y - p.len * sizeK > H || p.x < -margin - 60 || p.x > W + margin + 60) items[i] = drop(false);
+                // Side exits must enter the opposite side at the same height.
+                // Sending them back to the top leaves a dry triangle downwind.
+                p.x = wrap(p.x, W, margin + 60);
+                if (p.y - p.len * sizeK > H) items[i] = drop(false);
                 continue;
             }
-            if (p.x < -margin) p.x += W + margin * 2;
-            else if (p.x > W + margin) p.x -= W + margin * 2;
+            p.x = wrap(p.x, W, margin);
             if (p.y - margin > H) items[i] = make(false);
         }
     }
