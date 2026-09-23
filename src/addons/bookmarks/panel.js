@@ -149,8 +149,10 @@ export async function openPanel({ keepState = false } = {}) {
 
     applyTheme(view.root);
     view.root.hidden = false;
+    if (!reuse) view.root.classList.remove('cg-chat-intro');
     void view.root.offsetWidth;
     view.root.classList.add('is-open');
+    if (!reuse) view.root.classList.add('cg-chat-intro');
     view.open = true;
     applyColors(colorsFor(view.selectedKey ?? currentChatKey()));
     renderAll();
@@ -657,19 +659,19 @@ function renderCard(record, fav, index) {
     return `
         <article class="cg-card ${isUser ? 'is-user' : 'is-ai'}${missing ? ' is-missing' : ''}${fav.virtual ? ' is-virtual' : ''}" data-fav-id="${escapeHtml(fav.id)}" data-index="${index}"${fav.virtual ? ' data-virtual="1"' : ''}>
             <span class="cg-ribbon" aria-hidden="true"></span>
-            <header class="cg-card-head">
+            ${settings().showIdentity !== false ? `<header class="cg-card-head">
                 <img class="cg-card-avatar" src="${escapeHtml(avatarForMessage(message ?? { is_user: isUser }, record.owner))}" alt="" loading="lazy" onerror="this.src='img/ai4.png'">
                 <div class="cg-card-who">
                     <b>${escapeHtml(name)}</b>
                     <span>${indexLabel}${date ? ` · ${escapeHtml(date)}` : ''}</span>
                 </div>
-            </header>
+            </header>` : ''}
             ${reasoning ? `<details class="cg-reasoning"><summary><i class="fa-solid fa-brain"></i> 생각 과정</summary><div class="mes_text">${reasoning}</div></details>` : ''}
             <div class="cg-message-surface">
             <div class="cg-card-body${collapsed ? ' is-collapsed' : ''}"><div class="salty-preview cg-chatlike" data-prev="bookmark"><div class="mes" is_user="${isUser}"><div class="mes_block"><div class="cg-mes mes_text">${body}</div></div></div></div></div>
             <button type="button" class="cg-expand" hidden><span>전체 보기</span><i class="fa-solid fa-chevron-down"></i></button>
             </div>
-            ${note ? `<div class="cg-note" role="note" aria-label="메모"><i class="fa-solid fa-feather-pointed" aria-hidden="true"></i><div class="salty-preview cg-chatlike" data-prev="bookmark"><div class="mes" is_user="${isUser}"><div class="mes_block"><div class="cg-note-text mes_text">${note}</div></div></div></div></div>` : ''}
+            ${note ? `<div class="cg-note" role="note" aria-label="메모"><div class="salty-preview cg-chatlike" data-prev="bookmark"><div class="mes" is_user="${isUser}"><div class="mes_block"><div class="cg-note-text mes_text">${note}</div></div></div></div></div>` : ''}
             <footer class="cg-card-actions">
                 ${footer}
             </footer>

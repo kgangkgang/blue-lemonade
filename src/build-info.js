@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "4.8.8";
+export const BUILD_VERSION = "4.8.9";
 export const FILE_HASHES = {
   "index.js": "11525:c350c9ec:3374aa11",
-  "manifest.json": "385:80ef6c53:c2961823",
+  "manifest.json": "385:90819dbc:c8f9f2f7",
   "src/addon-files-check.js": "3740:f346932a:6cf8d08d",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "1868:6b7abfa6:795dfbc9",
@@ -13,12 +13,12 @@ export const FILE_HASHES = {
   "src/addons/bookmarks/edit-guard.js": "905:5a27ecea:5aa23416",
   "src/addons/bookmarks/frame-fit.js": "1005:b6748dd1:e0b3858c",
   "src/addons/bookmarks/index.js": "15004:e0393fe9:2ee672f2",
-  "src/addons/bookmarks/panel.js": "48786:a10ed36e:b023e237",
+  "src/addons/bookmarks/panel.js": "48889:e8d478a2:ead7bb97",
   "src/addons/bookmarks/preview-guard.js": "2019:a2379d1e:e5daa71e",
   "src/addons/bookmarks/render.js": "13327:03915c6b:da600134",
-  "src/addons/bookmarks/settings-view.js": "17770:70980c4f:9a6140a6",
-  "src/addons/bookmarks/state.js": "11040:12c58111:01e073b0",
-  "src/addons/bookmarks/style.css": "62019:87ac5d13:fd910c2c",
+  "src/addons/bookmarks/settings-view.js": "18268:44bb58f3:071df9b7",
+  "src/addons/bookmarks/state.js": "11121:5f62ba71:6c3def26",
+  "src/addons/bookmarks/style.css": "63070:6a6ee866:7d938674",
   "src/addons/bookmarks/text-match.js": "1928:91c477ac:e2d8e11d",
   "src/addons/bookmarks/tracker-spacing.js": "1235:d0ab4b4f:2bc6a099",
   "src/addons/bookmarks/translate.js": "18686:c640214f:f07a9ce9",
@@ -142,7 +142,7 @@ export const FILE_HASHES = {
   "src/marquee.js": "4394:b21eba98:bf26831b",
   "src/menu-position.js": "3312:4d17612e:af7476d7",
   "src/mes-pins.js": "9110:58a88535:74b20064",
-  "src/notice-data.js": "93163:0cbc504b:9177f177",
+  "src/notice-data.js": "93840:5c7074c9:bfe9f13f",
   "src/notice.js": "4506:dbb8f2a7:75e005f7",
   "src/notify-sw.js": "985:5f0777db:749f45cf",
   "src/numbers.js": "930:4be2a1fd:48f02c7b",
@@ -204,5 +204,5 @@ export const FILE_HASHES = {
   "src/weather.js": "29151:893fa4f6:d26e0a3b",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "22770:07c345df:f825c7fc",
-  "style.css": "844636:4df35a68:f27ecb4a"
+  "style.css": "847594:6fb5fadd:aa3efea3"
 };

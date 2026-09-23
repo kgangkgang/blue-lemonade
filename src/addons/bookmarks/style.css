@@ -472,6 +472,25 @@
 
 .cg-toolbar-meta { margin-top: 1px; font-size: .78rem; color: var(--cg-faint); }
 
+/* 채팅 이름은 패널 진입 때만 안내하고, 이후에는 채팅 목록에서 확인한다. */
+.cg-root .cg-toolbar-chat { max-height: 0; opacity: 0; visibility: hidden; }
+.cg-root.cg-chat-intro .cg-toolbar-chat {
+    animation: cg-chat-intro 3.2s ease both;
+}
+@keyframes cg-chat-intro {
+    0% { max-height: 2.5em; opacity: 0; visibility: visible; transform: translateY(-5px); }
+    10%, 75% { max-height: 2.5em; opacity: 1; visibility: visible; transform: translateY(0); }
+    90% { max-height: 2.5em; opacity: 0; visibility: hidden; transform: translateY(-5px); }
+    100% { max-height: 0; opacity: 0; visibility: hidden; transform: translateY(-5px); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .cg-root.cg-chat-intro .cg-toolbar-chat { animation-name: cg-chat-intro-still; }
+}
+@keyframes cg-chat-intro-still {
+    0%, 99% { max-height: 2.5em; opacity: 1; visibility: visible; }
+    100% { max-height: 0; opacity: 0; visibility: hidden; }
+}
+
 .cg-list {
     flex: 1;
     display: flex;
@@ -1643,7 +1662,7 @@ body.cg-previewing #chat .mes .swipes-counter { display: none !important; }
 
 /* 메모: 본문 아래, 포인트색 세로선에 붙인 짧은 주석 */
 /* 실제 채팅 서식과 사용자 메모 내용은 유지한다. */
-.cg-root .cg-note { border-left: 2px solid var(--cg-role); border-radius: 0; margin: 12px 0 4px 5px; padding: 4px 8px 4px 28px; background: transparent; color: var(--cg-muted); }
+.cg-root .cg-note { border-left: 2px solid var(--cg-role); border-radius: 0; margin: 12px 0 4px 5px; padding: 4px 8px 4px 12px; background: transparent; color: var(--cg-muted); }
 .cg-root .cg-note > i { top: 8px; left: 9px; color: var(--cg-role); }
 
 /* 본문: 채팅 서식 고리. 고리가 가져오는 말풍선 모양(여백 · 바탕 · 그림자)은 카드 안에서는 뺀다 */
@@ -1743,13 +1762,13 @@ body.cg-previewing #chat .mes .swipes-counter { display: none !important; }
     .cg-root .cg-hero-avatar { width: 28px; height: 28px; border-radius: 9px; }
     .cg-root .cg-toolbar { padding: 10px 16px; }
     .cg-root .cg-list { padding: 8px calc(16px - var(--cg-sbw)) 24px; }
-    .cg-root .cg-card { padding-left: 18px; padding-bottom: 18px; }
-    .cg-root .cg-card::before { left: 3px; }
-    .cg-root .cg-card::after { left: 0; }
+    .cg-root .cg-card { padding-left: 0; padding-bottom: 24px; }
+    .cg-root .cg-card::before, .cg-root .cg-card::after { content: none; display: none; }
     .cg-root .cg-message-surface { padding: 12px 13px; border-radius: 3px 15px 15px 15px; }
     .cg-root .cg-card-who { gap: 2px 8px; }
     .cg-root .cg-card-who span { font-size: .68rem; }
-    .cg-root .cg-card-actions { gap: 0; }
+    .cg-root .cg-note { margin: 12px 0 4px; padding: 4px 8px 4px 12px; }
+    .cg-root .cg-card-actions { gap: 0; margin-top: 8px; }
     .cg-root .cg-action { flex: 1 1 44px; min-width: 44px; max-width: 48px; }
     .cg-root .cg-action.is-danger { margin-left: auto; }
 }

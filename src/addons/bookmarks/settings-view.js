@@ -85,6 +85,13 @@ export function renderSettingsPage(page, viewingChat, onBack) {
             </section>
 
             <section class="cg-section">
+                <div class="cg-setting">
+                    <div class="cg-setting-text"><b>프로필 사진·이름 표시</b><small>끄면 북마크의 머리줄을 숨겨요.</small></div>
+                    <button type="button" class="cg-switch" role="switch" aria-label="프로필 사진·이름 표시" data-setting="showIdentity" aria-checked="${store.showIdentity !== false}"><span></span></button>
+                </div>
+            </section>
+
+            <section class="cg-section">
                 <h3 class="cg-section-title"><i class="fa-solid fa-masks-theater"></i>데우스 엑스 마키나</h3>
                 <div class="cg-setting">
                     <div class="cg-setting-text"><b>본문만 보기</b><small>카드에 본문만 보여요. 끄면 장면 계획 · 트래커 같은 정규식 카드도 같이 보여요.</small></div>
