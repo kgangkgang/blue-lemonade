@@ -57,6 +57,8 @@ export function syncFeatures(s) {
     if (reader || modules.reader) load('reader', './reader.js').then(m => m?.syncReader(reader));
     const bgWindow = on && !!s.bgWindow?.on;
     if (bgWindow || modules.bgwindow) load('bgwindow', './background-window.js').then(m => m?.syncBackgroundWindow(bgWindow, s.bgWindow?.mode));
+    const replyNotify = on && !!s.replyNotify?.on;
+    if (replyNotify || modules.replynotify) load('replynotify', './reply-notify.js').then(m => m?.syncReplyNotify(replyNotify));
     const onehand = on && !!s.onehand?.on;
     if (onehand || modules.onehand) load('onehand', './onehand.js').then(m => m?.syncOneHand(onehand, s.onehand));
     const auto = on && !!s.auto?.on;

@@ -194,6 +194,108 @@ export function findSpans(text, compiled) {
     return spans.map(span => ({ ...span, text: text.slice(span.start, span.end) }));
 }
 
+// ── 1.9.2 반복 감지 ─────────────────────────────────────────
+// 최근 답들과 거의 같은 문장이 또 나오면 그 문장만 '반복 표현' 규칙으로 잡아 다시 쓰게 한다.
+// 비교는 문자 3-gram 자카드 유사도(한국어·영어 공통, 어순이 조금 바뀌어도 잡힘). 짧은 문장은 우연히 같기 쉬워 minLength 아래는 안 본다.
+export const REPEAT_RULE = Object.freeze({ id: 'repeat', name: '반복 표현', repeat: true, description: 'wording repeated almost verbatim from an earlier reply' });
+
+// \ub9c8\uce68\ud45c \ub4a4\uc758 \ub2eb\ub294 \ub530\uc634\ud45c \u00b7 \uad04\ud638 \u00b7 \uae30\uc6b8\uc784 \ud45c\uc2dc(* _)\uae4c\uc9c0 \ud55c \ubb38\uc7a5\uc73c\ub85c (SENTENCE_END \uc640 \uac19\uc740 \uae00\uc790\ub4e4)
+const SENTENCE = /[^\n]+?(?:[.!?\u2026\u3002\uff01\uff1f]+["'\u201d\u2019\u300d\u300f)\]*_~]*(?=\s|$)|(?=\n|$))/g;
+/** 문장 조각 [{start, end, text}] — findSpans 처럼 앞뒤 공백 · * _ 는 뺀다 (기울임 짝이 안 깨지게) */
+export function splitSentences(text) {
+    const source = String(text ?? '');
+    const out = [];
+    for (const match of source.matchAll(SENTENCE)) {
+        let start = match.index;
+        let end = start + match[0].length;
+        while (start < end && /[\s*_]/.test(source[start])) start++;
+        while (end > start && /[\s*_]/.test(source[end - 1])) end--;
+        if (end > start) out.push({ start, end, text: source.slice(start, end) });
+    }
+    return out;
+}
+
+export function normalizeSentence(text) {
+    return String(text ?? '').toLowerCase().normalize('NFKC')
+        .replace(/[*_"\u201c\u201d'\u2018\u2019\u00ab\u00bb\u300c\u300d\u300e\u300f()\[\]{}<>.,!?\u2026;:~\-\u2014\u2013\u3001\u3002\uff01\uff1f]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function shingles(normalized, size = 3) {
+    const set = new Set();
+    for (let i = 0; i + size <= normalized.length; i++) set.add(normalized.slice(i, i + size));
+    return set;
+}
+
+/** 두 (정규화한) 문장의 3-gram 자카드 유사도 0~1. 한쪽이 다른 쪽을 통째로 품으면 1. */
+export function similarity(a, b) {
+    const x = normalizeSentence(a), y = normalizeSentence(b);
+    if (!x || !y) return 0;
+    if (x === y || x.includes(y) || y.includes(x)) return 1;
+    const sa = shingles(x), sb = shingles(y);
+    if (sa.size === 0 || sb.size === 0) return 0;
+    let both = 0;
+    for (const s of sa) if (sb.has(s)) both++;
+    return both / (sa.size + sb.size - both);
+}
+
+/**
+ * @param {string} text 이번 답
+ * @param {string[]} previous 최근 답들의 글
+ * @param {{threshold?: number, minLength?: number}} [options] threshold 0~1, minLength 정규화한 글자 수
+ * @returns {{start:number,end:number,text:string,rules:object[],repeatOf:string,score:number}[]}
+ */
+export function findRepeats(text, previous, { threshold = 0.6, minLength = 14 } = {}) {
+    const earlier = [];
+    for (const reply of previous) {
+        for (const sentence of splitSentences(reply)) {
+            const norm = normalizeSentence(sentence.text);
+            if (norm.length >= minLength) earlier.push({ text: sentence.text, norm, sh: shingles(norm) });
+        }
+    }
+    if (earlier.length === 0) return [];
+    const spans = [];
+    for (const sentence of splitSentences(text)) {
+        const norm = normalizeSentence(sentence.text);
+        if (norm.length < minLength) continue;
+        const sh = shingles(norm);
+        let best = null;
+        let bestScore = 0;
+        for (const prev of earlier) {
+            let score;
+            if (norm === prev.norm || norm.includes(prev.norm) || prev.norm.includes(norm)) score = 1;
+            else {
+                let both = 0;
+                for (const s of sh) if (prev.sh.has(s)) both++;
+                score = both / (sh.size + prev.sh.size - both);
+            }
+            if (score > bestScore) { bestScore = score; best = prev; }
+        }
+        if (best && bestScore >= threshold) {
+            spans.push({ start: sentence.start, end: sentence.end, text: sentence.text, rules: [REPEAT_RULE], repeatOf: best.text, score: bestScore, repeatThreshold: threshold });
+        }
+    }
+    return spans;
+}
+
+/** 금지 묘사 조각과 반복 조각을 자리 순으로 합친다 (겹치면 하나로, 규칙은 모두) */
+export function mergeSpans(text, ...lists) {
+    const all = lists.flat().slice().sort((a, b) => a.start - b.start);
+    const merged = [];
+    for (const span of all) {
+        const last = merged[merged.length - 1];
+        if (last && span.start < last.end) {
+            last.end = Math.max(last.end, span.end);
+            for (const rule of span.rules) if (!last.rules.includes(rule)) last.rules.push(rule);
+            if (span.repeatOf && !last.repeatOf) { last.repeatOf = span.repeatOf; last.repeatThreshold = span.repeatThreshold; }
+        } else {
+            merged.push({ ...span, rules: [...span.rules] });
+        }
+    }
+    return merged.map(span => ({ ...span, text: text.slice(span.start, span.end) }));
+}
+
 export function splitNames(text) {
     return String(text ?? '').split(/[,\n]/).map(name => name.trim()).filter(Boolean);
 }
@@ -245,6 +347,7 @@ export function prepareSpans(spans, exceptions) {
 }
 
 function ruleLine(rule) {
+    if (rule.repeat) return '- repeated wording: the sentence repeats an earlier reply almost word for word. Keep its meaning, tone and length, but say it with fresh wording, imagery and sentence structure.';
     const names = rule.scopeNames ?? [];
     if (names.length === 0) return `- ${ruleLabel(rule)}`;
     return `- ${ruleLabel(rule)} (only for ${names.join(' / ')}: other characters may really have this, so remove it only where it is given to ${names[0]})`;
@@ -281,7 +384,8 @@ export function buildPrompt(text, spans, retry, exceptions) {
         '3. Keep everything else the same: meaning, tense, point of view, names, dialogue, and every formatting mark (asterisks, quotation marks, brackets, HTML tags).',
         '4. Never leave a sentence empty.',
         '5. Return a tagged sentence unchanged if it matched only by coincidence (drinking glasses, candy canes, tan-colored clothing), if the detail belongs to an exception character, or if a detail marked "only for" belongs to a different character.',
-        '6. Reply with only the tags, in order, one per line, and nothing else, like: <s1>rewritten sentence</s1>',
+        ...(spans.some(span => span.repeatOf) ? ['6. For a sentence tagged as repeated wording, remove nothing: rephrase it so it no longer echoes the earlier sentence given for it (different verbs, images and rhythm), keeping meaning, speaker and length.'] : []),
+        `${spans.some(span => span.repeatOf) ? 7 : 6}. Reply with only the tags, in order, one per line, and nothing else, like: <s1>rewritten sentence</s1>`,
     );
     if (retry) {
         system.push(
@@ -299,6 +403,10 @@ export function buildPrompt(text, spans, retry, exceptions) {
         'Tagged sentences to rewrite:',
         ...spans.map((span, i) => `<s${i + 1}>${span.text}</s${i + 1}>`),
     ];
+    if (spans.some(span => span.repeatOf)) {
+        user.push('', 'Earlier sentences the tagged ones repeat (do not reuse their wording):');
+        spans.forEach((span, i) => { if (span.repeatOf) user.push(`<r${i + 1}>${span.repeatOf}</r${i + 1}>`); });
+    }
     return [
         { role: 'system', content: system.join('\n') },
         { role: 'user', content: user.join('\n') },
@@ -342,10 +450,12 @@ export function checkRewrite(span, rewrite, compiled) {
     // An exception character (or, under a limited rule, another character) may legitimately keep the detail.
     // 그 예외는 규칙 단위다: 예외 규칙은 세지 않고, 문장에 예외 아닌 규칙이 하나라도 있으면 나머지 금지 묘사가 줄어야 한다.
     const exempt = span.exemptRules ?? [];
-    if (span.rules.some(rule => !exempt.includes(rule))) {
+    if (span.rules.some(rule => !rule.repeat && !exempt.includes(rule))) {
         const counted = compiled.filter(entry => !exempt.includes(entry.rule));
         if (countMatches(text, counted) >= countMatches(span.text, counted)) return 'banned';
     }
+    // 1.9.2 반복 표현: 고친 글이 여전히 이전 문장(또는 원문)과 거의 같으면 안 고친 것
+    if (span.repeatOf && (similarity(text, span.repeatOf) >= (span.repeatThreshold ?? 0.6) || similarity(text, span.text) >= 0.85)) return 'banned';
     return 'ok';
 }
 

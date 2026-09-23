@@ -51,6 +51,8 @@ export const DEFAULT_SETTINGS = {
     maxAttempts: 5,
     lookback: 5,
     skipExemptOnly: false,
+    // 1.9.2 반복 감지: 최근 lookback 개의 답과 거의 같은 문장(3-gram 자카드 ≥ threshold %)은 다시 쓰게 한다. minLength 는 비교할 최소 글자 수.
+    repeat: { on: false, lookback: 6, threshold: 60, minLength: 14 },
     // Reply-start check: when the prompt asks for a Scene Plan and the reply doesn't start with one,
     // the same request is sent again (chat connection, no streaming) before the translator runs.
     scenePlan: {

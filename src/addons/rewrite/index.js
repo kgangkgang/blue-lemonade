@@ -22,7 +22,9 @@ import {
     compilePattern,
     compileRule,
     findActiveExceptions,
+    findRepeats,
     findSpans,
+    mergeSpans,
     prepareSpans,
     promptHasMarker,
     rerollUntil,
@@ -38,7 +40,7 @@ import { capturedMessages, capturedRequest, holdGeneration, regenerateReply, rep
 import { applyUpgrades } from './upgrades.js';
 import { startQuickBan } from './quick-ban.js';
 
-const VERSION = '1.9.1';
+const VERSION = '1.9.2';
 const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];
@@ -108,6 +110,7 @@ function loadSettings() {
         stored.customModelLists = {};
     }
     stored.scenePlan = { ...DEFAULT_SETTINGS.scenePlan, ...stored.scenePlan };
+    stored.repeat = { ...DEFAULT_SETTINGS.repeat, ...(stored.repeat && typeof stored.repeat === 'object' ? stored.repeat : {}) };
     return stored;
 }
 
@@ -542,6 +545,20 @@ function recentText(chat, messageId) {
         .join('\n');
 }
 
+// 1.9.2 반복 감지에 견줄 최근 AI 답들 (messageId 앞의 것만, 사용자 · 시스템 메시지는 제외)
+function previousReplies(chat, messageId) {
+    const out = [];
+    for (let i = messageId - 1; i >= 0 && out.length < settings.repeat.lookback; i--) {
+        const message = chat[i];
+        if (!message || message.is_user || message.is_system || typeof message.mes !== 'string') continue;
+        out.push(message.mes);
+    }
+    return out;
+}
+function repeatOptions() {
+    return { threshold: Math.min(0.95, Math.max(0.3, settings.repeat.threshold / 100)), minLength: settings.repeat.minLength };
+}
+
 const busy = new Set();
 
 // 채팅마다 따로 센다: 번호만 쓰면 다른 채팅의 같은 번호 메시지가 말없이 건너뛰어진다.
@@ -580,6 +597,11 @@ async function cleanMessage(messageId, manual, signal) {
     if (getContext().chat[messageId] !== message || message.mes !== original) {
         busy.delete(key);
         return;
+    }
+    // 1.9.2 최근 답과 거의 같은 문장도 같은 길로 고친다
+    if (settings.repeat.on) {
+        const repeats = findRepeats(original, previousReplies(chat, messageId), repeatOptions());
+        if (repeats.length > 0) spans = mergeSpans(original, spans, repeats);
     }
     if (spans.length === 0) {
         busy.delete(key);
@@ -1410,7 +1432,14 @@ function detectTestText() {
     const active = rulesFor(text);
     // activateRules hands back copies of the limited rules, so compare by id.
     const skipped = compiled.filter(entry => !active.some(item => item.rule.id === entry.rule.id)).map(entry => entry.rule.name || '이름 없음');
-    const spans = findSpans(text, active);
+    let spans = findSpans(text, active);
+    if (settings.repeat.on) {
+        // 시험 글은 채팅에 없으니 지금 채팅의 마지막 답들 전부와 견준다
+        let previous = [];
+        try { const { chat } = getContext(); previous = previousReplies(chat, chat.length); } catch { previous = []; }
+        const repeats = findRepeats(text, previous, repeatOptions());
+        if (repeats.length > 0) spans = mergeSpans(text, spans, repeats);
+    }
     const exceptions = findActiveExceptions(text, settings.exceptions);
     prepareSpans(spans, exceptions);
     return { text, spans, exceptions, active, skipped };
@@ -1440,9 +1469,11 @@ function showDetection() {
     const list = $('<ul class="bwr_spans">');
     for (const span of spans) {
         const names = span.rules.map(rule => rule.name || '이름 없음').join(', ');
-        list.append($('<li>')
+        const item = $('<li>')
             .append($('<b>').text(`[${names}]${span.exempt ? ' (예외 확인)' : ''} `))
-            .append(document.createTextNode(span.text)));
+            .append(document.createTextNode(span.text));
+        if (span.repeatOf) item.append($('<small class="bwr_repeat_of">').text(`↳ 이전 답: ${span.repeatOf} (${Math.round(span.score * 100)}%)`));
+        list.append(item);
     }
     result.append(list);
     if (exceptions.length > 0) {
@@ -1486,6 +1517,10 @@ function syncInputs() {
     $('#bwr_timeout').val(settings.timeoutSec);
     $('#bwr_attempts').val(settings.maxAttempts);
     $('#bwr_lookback').val(settings.lookback);
+    $('#bwr_repeat_on').prop('checked', settings.repeat.on);
+    $('#bwr_repeat_lookback').val(settings.repeat.lookback);
+    $('#bwr_repeat_threshold').val(settings.repeat.threshold);
+    $('#bwr_repeat_min').val(settings.repeat.minLength);
     syncConnection();
     syncScene();
     renderRules();
@@ -1511,6 +1546,20 @@ function bindSettings() {
     bindNumber('#bwr_attempts', 'maxAttempts', 1, 5);
     bindNumber('#bwr_lookback', 'lookback', 0, 50);
     bindNumber('#bwr_max_tokens', 'maxTokens', 256, 65536);
+    // 1.9.2 반복 감지
+    $('#bwr_repeat_on').on('change', function () {
+        settings.repeat.on = this.checked;
+        saveSettingsDebounced();
+    });
+    const bindRepeatNumber = (selector, key, min, max) => $(selector).on('change', function () {
+        const value = Math.min(max, Math.max(min, Math.round(Number(this.value)) || DEFAULT_SETTINGS.repeat[key]));
+        settings.repeat[key] = value;
+        this.value = value;
+        saveSettingsDebounced();
+    });
+    bindRepeatNumber('#bwr_repeat_lookback', 'lookback', 1, 30);
+    bindRepeatNumber('#bwr_repeat_threshold', 'threshold', 30, 95);
+    bindRepeatNumber('#bwr_repeat_min', 'minLength', 6, 60);
     bindConnection();
     bindScene();
 

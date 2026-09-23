@@ -688,115 +688,13 @@ function imagePreview(s, sub) {
         </div>`);
 }
 
-// 표본 그림은 캔버스로 그린다 — 파일을 늘리지 않고, SVG data URI 는 naturalWidth 가 0 이라
-// assets.js 의 투명 가장자리 판독(캔버스 읽기)이 실패한다. 한 번 그린 것은 문자열로 들고 있음.
-// 네 장을 화살표로 넘긴다: 한 장만 두면 "이게 뭐야?" 싶고, 테두리가 어떤 그림에서 잘 보이는지도 견줄 수 없다.
-// 고른 순서대로 노을(위 찬색 · 아래 더운색) · 밤(어두운 그림) · 흰 바탕(밝은 그림) · 숲(초록 계열) —
-// 자동 색이 그림마다 다른 색을 뽑는 것과, 밝은 테두리가 흰 바탕에서 약해지는 것을 눈으로 확인할 수 있다
+// Packaged illustrations preserve dark/light/color and transparent-cutout test cases.
 const PHOTOS = ['노을', '밤', '흰 바탕', '숲'];
-const photoCache = [];
-
+const previewPhotos = ['sunset', 'night', 'paper', 'forest'].map(name => new URL(`./preview-art/${name}.webp`, import.meta.url).href);
 function samplePhoto(index = ui.pic) {
-    const i = ((index % PHOTOS.length) + PHOTOS.length) % PHOTOS.length;
-    if (photoCache[i]) return photoCache[i];
-    const w = 480, h = 260;
-    const cv = document.createElement('canvas');
-    cv.width = w; cv.height = h;
-    const g = cv.getContext('2d');
-    if (i === 1) return (photoCache[i] = photoNight(cv, g, w, h));
-    if (i === 2) return (photoCache[i] = photoPaper(cv, g, w, h));
-    if (i === 3) return (photoCache[i] = photoForest(cv, g, w, h));
-    const sky = g.createLinearGradient(0, 0, 0, h);
-    [[0, '#2E5E96'], [0.42, '#7FAFD4'], [0.62, '#E9D79A'], [0.78, '#E7B44E'], [1, '#A85E22']].forEach(([o, c]) => sky.addColorStop(o, c));
-    g.fillStyle = sky; g.fillRect(0, 0, w, h);
-    const sun = g.createRadialGradient(w * 0.72, h * 0.46, 0, w * 0.72, h * 0.46, h * 0.32);
-    sun.addColorStop(0, 'rgba(255,252,235,0.95)'); sun.addColorStop(1, 'rgba(255,240,190,0)');
-    g.fillStyle = sun; g.fillRect(0, 0, w, h);
-    g.fillStyle = 'rgba(30,52,86,0.55)';           // 물결 한 줄: 흐림 · 찢긴 결을 견줄 또렷한 선
-    g.beginPath(); g.moveTo(0, h * 0.66);
-    g.bezierCurveTo(w * 0.22, h * 0.58, w * 0.38, h * 0.70, w * 0.62, h * 0.63);
-    g.bezierCurveTo(w * 0.8, h * 0.58, w * 0.9, h * 0.66, w, h * 0.62);
-    g.lineTo(w, h); g.lineTo(0, h); g.closePath(); g.fill();
-    g.fillStyle = 'rgba(74,36,14,0.42)'; g.fillRect(0, h * 0.87, w, 3);
-    return (photoCache[0] = cv.toDataURL('image/png'));
+    return previewPhotos[((index % PHOTOS.length) + PHOTOS.length) % PHOTOS.length];
 }
-
-// 밤: 거의 검은 그림. 어두운 그림에서는 밝은 띠 · 바깥 블룸만 읽히고 잉크 층은 묻힌다
-function photoNight(cv, g, w, h) {
-    const sky = g.createLinearGradient(0, 0, 0, h);
-    [[0, '#070C16'], [0.55, '#101B2E'], [1, '#1B2A3F']].forEach(([o, c]) => sky.addColorStop(o, c));
-    g.fillStyle = sky; g.fillRect(0, 0, w, h);
-    g.fillStyle = 'rgba(255,244,214,0.9)';          // 창 두 칸 — 따뜻한 빛
-    g.fillRect(w * 0.62, h * 0.34, w * 0.09, h * 0.13);
-    g.fillRect(w * 0.76, h * 0.42, w * 0.06, h * 0.09);
-    g.fillStyle = 'rgba(140,200,255,0.5)';
-    for (const [x, y] of [[0.12, 0.16], [0.3, 0.1], [0.46, 0.22], [0.84, 0.14], [0.2, 0.3]]) {
-        g.beginPath(); g.arc(w * x, h * y, 1.6, 0, Math.PI * 2); g.fill();
-    }
-    g.fillStyle = 'rgba(0,0,0,0.55)';               // 아래 지붕 실루엣
-    g.beginPath(); g.moveTo(0, h); g.lineTo(0, h * 0.72); g.lineTo(w * 0.34, h * 0.62);
-    g.lineTo(w * 0.58, h * 0.74); g.lineTo(w, h * 0.66); g.lineTo(w, h); g.closePath(); g.fill();
-    return cv.toDataURL('image/png');
-}
-
-// 흰 바탕: 일러스트처럼 거의 흰 그림. '흰 배경 지우기' 와 밝은 테두리가 여기서 어떻게 되는지 보인다
-function photoPaper(cv, g, w, h) {
-    g.fillStyle = '#F6F8FB'; g.fillRect(0, 0, w, h);
-    const soft = g.createLinearGradient(0, h * 0.5, 0, h);
-    soft.addColorStop(0, 'rgba(206,222,238,0)'); soft.addColorStop(1, 'rgba(186,206,226,0.75)');
-    g.fillStyle = soft; g.fillRect(0, 0, w, h);
-    g.strokeStyle = 'rgba(52,74,102,0.8)'; g.lineWidth = 3;  // 선화 한 덩이
-    g.beginPath(); g.arc(w * 0.42, h * 0.44, h * 0.19, 0, Math.PI * 2); g.stroke();
-    g.beginPath(); g.moveTo(w * 0.42, h * 0.63); g.lineTo(w * 0.42, h * 0.9); g.stroke();
-    g.beginPath(); g.moveTo(w * 0.26, h * 0.74); g.lineTo(w * 0.58, h * 0.74); g.stroke();
-    g.fillStyle = 'rgba(233,190,0,0.85)';
-    g.beginPath(); g.ellipse(w * 0.7, h * 0.58, w * 0.06, h * 0.08, 0.3, 0, Math.PI * 2); g.fill();
-    return cv.toDataURL('image/png');
-}
-
-// 숲: 초록~청록. 자동 색이 노을과 전혀 다른 색을 뽑는 걸 견줄 장면
-function photoForest(cv, g, w, h) {
-    const air = g.createLinearGradient(0, 0, 0, h);
-    [[0, '#9FD6C2'], [0.45, '#3E8E77'], [1, '#14382F']].forEach(([o, c]) => air.addColorStop(o, c));
-    g.fillStyle = air; g.fillRect(0, 0, w, h);
-    g.fillStyle = 'rgba(255,252,225,0.28)';         // 빗살 빛
-    for (let k = 0; k < 5; k++) {
-        g.beginPath(); g.moveTo(w * (0.1 + k * 0.18), 0); g.lineTo(w * (0.2 + k * 0.18), 0);
-        g.lineTo(w * (0.02 + k * 0.18), h); g.lineTo(w * (-0.06 + k * 0.18), h); g.closePath(); g.fill();
-    }
-    g.fillStyle = 'rgba(10,32,26,0.72)';            // 나무 줄기 셋
-    for (const x of [0.18, 0.52, 0.83]) g.fillRect(w * x, h * 0.1, w * 0.045, h);
-    g.fillStyle = 'rgba(8,26,22,0.85)';
-    g.beginPath(); g.moveTo(0, h); g.lineTo(0, h * 0.84); g.lineTo(w * 0.5, h * 0.78);
-    g.lineTo(w, h * 0.86); g.lineTo(w, h); g.closePath(); g.fill();
-    return cv.toDataURL('image/png');
-}
-
-let cutSrc = '';
-// 투명 PNG 컷 표본: 가장자리를 비워 두면 assets.js 가 테두리 알파를 세어 .salty-cutout 을 붙인다
-// (배치 칸에서 지운 안내문 자리 — 자르지 않고 아래만 녹는 그 처리를 글 대신 그림이 보여 준다).
-// 48칸 격자의 가장자리 192칸 중 156칸이 비어 판정 기준(25%)을 한참 넘는다
-function sampleCut() {
-    if (cutSrc) return cutSrc;
-    const w = 240, h = 260;
-    const cv = document.createElement('canvas');
-    cv.width = w; cv.height = h;
-    const g = cv.getContext('2d');
-    const body = g.createLinearGradient(0, 0, 0, h);
-    [[0, '#3C6C93'], [0.55, '#8E7AA8'], [1, '#D9863F']].forEach(([o, c]) => body.addColorStop(o, c));
-    g.fillStyle = body;
-    g.beginPath();                                  // 어깨에서 아래로 퍼지는 실루엣 — 위 · 좌우는 투명하게 남는다
-    g.moveTo(w * 0.5, h * 0.34);
-    g.bezierCurveTo(w * 0.86, h * 0.46, w * 0.92, h * 0.8, w * 0.88, h);
-    g.lineTo(w * 0.12, h);
-    g.bezierCurveTo(w * 0.08, h * 0.8, w * 0.14, h * 0.46, w * 0.5, h * 0.34);
-    g.closePath(); g.fill();
-    g.beginPath(); g.ellipse(w * 0.5, h * 0.23, w * 0.18, h * 0.145, 0, 0, Math.PI * 2); g.fill();
-    g.fillStyle = 'rgba(255,238,214,0.92)';         // 얼굴 — 사람 모양으로 읽히게
-    g.beginPath(); g.ellipse(w * 0.5, h * 0.25, w * 0.125, h * 0.1, 0, 0, Math.PI * 2); g.fill();
-    cutSrc = cv.toDataURL('image/png');
-    return cutSrc;
-}
+function sampleCut() { return new URL('./preview-art/character.webp', import.meta.url).href; }
 
 // 지금 채팅에 있는 아바타를 빌려 온다 (미리보기에 내 캐릭터가 나온다).
 // 없으면 빈 div 그대로 두고 보정 CSS 가 팔레트색 동그라미로 칠한다 (모서리는 실리태번 설정이 정함)
@@ -840,7 +738,10 @@ function fillPreviews(root) {
             const img = stage.querySelector('img.custom-cac-img');
             if (img) {
                 const want = kind === 'cut' ? sampleCut() : samplePhoto();
-                if (img.getAttribute('src') !== want) img.src = want;
+                if (img.getAttribute('src') !== want) {
+                    img.onload = () => { classifyAll(stage); syncDecor(getSettings()); syncProfileClip(getSettings()); };
+                    img.src = want;
+                }
             }
             if (box.dataset.sub) stage.dataset.sub = box.dataset.sub;
             if (box.dataset.fit) stage.dataset.fit = box.dataset.fit;
@@ -1411,6 +1312,7 @@ function tabChat(s, sub) {
             ${row('스크롤하면 바 숨기기', toggle('reader.autoHide', !!s.reader?.autoHide), '아래로 읽으면 숨고, 살짝 올리거나 누르면 나와요')}
             ${row('백그라운드에서도 계속 (실험)', toggle('bgWindow.on', !!s.bgWindow?.on), '답을 기다리는 동안 다른 앱을 봐도 생성 · 번역이 멈추지 않게 해요. 보내기 · 스와이프를 누를 때 켜지고 끝나면 꺼져요')}
             ${s.bgWindow?.on ? stack('버티는 방식', seg('bgWindow.mode', [['audio', '소리 없이 버티기'], ['pip', '작은 창 띄우기']], 'audio'), s.bgWindow?.mode === 'pip' ? '진행 상황이 보이는 작은 창(PIP)이 떠요. 가장 확실하지만 창이 화면에 남아요' : '창 없이 버텨요. 귀에 안 들리는 아주 작은 소리를 내서 브라우저가 탭을 재우지 못하게 해요. 폰에 따라 안 통할 수 있어요 — 그러면 작은 창 방식을 써 보세요') : ''}
+            ${row('답이 오면 알려 주기', toggle('replyNotify.on', !!s.replyNotify?.on), '다른 앱을 보고 있을 때 답이 끝나면 알림 · 진동으로 알려요. 처음 켤 때 브라우저가 알림 허용을 물어요. 화면을 보고 있을 땐 알리지 않아요')}
             ${row('한 손 버튼 줄', toggle('onehand.on', !!s.onehand?.on), '입력창 위에 스와이프 · 사칭 · 이어 쓰기 · 다시 생성')}
             ${s.onehand?.on ? stack('버튼', chips([['onehand.swipe', '스와이프'], ['onehand.imp', '사칭'], ['onehand.cont', '이어 쓰기'], ['onehand.regen', '다시 생성']])) : ''}
         </div>`;
@@ -2572,6 +2474,17 @@ function bind(root) {
         }
         if (target.matches('input[data-toggle]')) {
             const path = target.dataset.toggle;
+            if (path === 'replyNotify.on' && target.checked) {
+                // 4.8.7 알림 허용은 누르는 순간(사용자 동작 안)에 물어야 폰 크롬이 제대로 띄운다 — 모듈은 그 뒤에 불러온다
+                const ask = !('Notification' in window) ? Promise.resolve('unsupported')
+                    : Notification.permission === 'default' ? Notification.requestPermission().catch(() => Notification.permission)
+                        : Promise.resolve(Notification.permission);
+                ask.then(state => import('./reply-notify.js').then(m => m.afterPermission(state))).then((ok) => {
+                    if (ok) return;
+                    update(st => { st.replyNotify.on = false; });
+                    refreshPanels();
+                }).catch(() => {});
+            }
             if (path === 'st.streamFadeIn') {
                 $('#stream_fade_in').prop('checked', target.checked).trigger('input');
                 refreshPanels();
