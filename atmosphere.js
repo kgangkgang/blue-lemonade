@@ -10,7 +10,7 @@
   const narrow = matchMedia('(max-width: 760px)');
   const looks = {
     sun: {title: '햇살이 머무는\n문장 사이.', description: '부드러운 구름과 따뜻한 볕.\n평범한 대화도 느긋한 오후처럼.', file: '471-look-sun', detail: '안개 · 구름 띠  +  햇살 · 따뜻한 빛', number: '01 / SUNLIT AFTERNOON'},
-    rain: {title: '빗소리가 들릴 듯,\n조용한 이야기.', description: '창에 맺힌 작은 빗방울.\n흐린 날에는 조금 더 가까이.', file: '471-look-rain', detail: '유리 빗방울  +  옅은 안개', number: '02 / RAIN ON THE WINDOW'},
+    rain: {title: '빗소리가 들릴 듯,\n조용한 이야기.', description: '창에 맺힌 작은 빗방울.\n흐린 날에는 조금 더 가까이.', file: '472-look-rain', detail: '유리 빗방울  +  옅은 안개', number: '02 / RAIN ON THE WINDOW'},
     stars: {title: '잠들기 아까운\n푸른 밤.', description: '은하수 위로 천천히 흐르는 유성.\n끝내고 싶지 않은 대화의 배경.', file: '471-look-stars', detail: '별 · 은하수  +  둥글게 도는 유성', number: '03 / UNDER THE STARS'}
   };
   let visible = false, manuallyPaused = false, manualWeather = false;

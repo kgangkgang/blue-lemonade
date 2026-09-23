@@ -1,5 +1,5 @@
 'use strict';
-// All gallery footage uses the 4.7.1 runtime with a synthetic demonstration chat.
+// Synthetic demonstration chat; revised settings and weather filmed with the 4.7.2 runtime.
 const topics = [
   {
     "id": "color",
@@ -14,16 +14,16 @@ const topics = [
         "471-mix-setting.jpg"
       ],
       [
-        "471-colors.mp4",
+        "472-colors.mp4",
         "색 하나하나",
         "바탕부터 글자까지 따로 고쳐요.",
-        "471-colors.jpg"
+        "472-colors.jpg"
       ],
       [
-        "471-styles.mp4",
+        "472-styles.mp4",
         "한 번에 입히는 스타일",
         "소설책 · 메신저 · 또렷하게.",
-        "471-styles.jpg"
+        "472-styles.jpg"
       ],
       [
         "471-palette-library.mp4",
@@ -46,16 +46,16 @@ const topics = [
         "471-pc-mix-setting.jpg"
       ],
       [
-        "471-pc-colors.mp4",
+        "472-pc-colors.mp4",
         "색 하나하나",
         "",
-        "471-pc-colors.jpg"
+        "472-pc-colors.jpg"
       ],
       [
-        "471-pc-styles.mp4",
+        "472-pc-styles.mp4",
         "완성된 스타일",
         "",
-        "471-pc-styles.jpg"
+        "472-pc-styles.jpg"
       ]
     ]
   },
@@ -72,10 +72,10 @@ const topics = [
         "471-marker-setting.jpg"
       ],
       [
-        "471-fx-setting.mp4",
+        "472-fx-setting.mp4",
         "감정이 실린 대사",
         "움직임 · 빛 · 색 흐름을 골라요.",
-        "471-fx-setting.jpg"
+        "472-fx-setting.jpg"
       ],
       [
         "471-text-gradient-setting.mp4",
@@ -96,10 +96,10 @@ const topics = [
         "471-para.jpg"
       ],
       [
-        "471-outline-setting.mp4",
-        "또렷한 글자 외곽선",
+        "472-outline-setting.mp4",
+        "글자 그림자 · 외곽선",
         "",
-        "471-outline-setting.jpg"
+        "472-outline-setting.jpg"
       ]
     ],
     "pc": [
@@ -110,10 +110,10 @@ const topics = [
         "471-pc-marker-setting.jpg"
       ],
       [
-        "471-pc-fx-setting.mp4",
+        "472-pc-fx-setting.mp4",
         "움직임의 크기까지",
         "",
-        "471-pc-fx-setting.jpg"
+        "472-pc-fx-setting.jpg"
       ],
       [
         "471-pc-fonts.mp4",
@@ -130,54 +130,54 @@ const topics = [
     "sub": "큰 프로필 · 작은 프로필 · 대화만. 액자와 배치도 따로.",
     "cards": [
       [
-        "471-profile-setting.mp4",
+        "472-profile-setting.mp4",
         "사진은 원하는 만큼",
         "없음 · 작게 · 상단 크게.",
-        "471-profile-setting.jpg"
+        "472-profile-setting.jpg"
       ],
       [
-        "471-my-profile.mp4",
+        "472-my-profile.mp4",
         "내 프로필은 따로",
         "",
-        "471-my-profile.jpg"
+        "472-my-profile.jpg"
       ],
       [
-        "471-name-time.mp4",
+        "472-name-time.mp4",
         "이름과 시간 줄",
         "",
-        "471-name-time.jpg"
+        "472-name-time.jpg"
       ],
       [
-        "471-image-layout.mp4",
+        "472-image-layout.mp4",
         "채팅 속 그림 배치",
         "",
-        "471-image-layout.jpg"
+        "472-image-layout.jpg"
       ],
       [
-        "471-image-frame.mp4",
+        "472-image-frame.mp4",
         "둥글기와 테두리",
         "",
-        "471-image-frame.jpg"
+        "472-image-frame.jpg"
       ]
     ],
     "pc": [
       [
-        "471-pc-profile-setting.mp4",
+        "472-pc-profile-setting.mp4",
         "프로필의 크기와 배치",
         "",
-        "471-pc-profile-setting.jpg"
+        "472-pc-profile-setting.jpg"
       ],
       [
-        "471-pc-my-profile.mp4",
+        "472-pc-my-profile.mp4",
         "내 사진도 따로",
         "",
-        "471-pc-my-profile.jpg"
+        "472-pc-my-profile.jpg"
       ],
       [
-        "471-pc-image-frame.mp4",
+        "472-pc-image-frame.mp4",
         "사진의 마무리",
         "",
-        "471-pc-image-frame.jpg"
+        "472-pc-image-frame.jpg"
       ]
     ]
   },
@@ -185,7 +185,7 @@ const topics = [
     "id": "weather",
     "label": "날씨",
     "title": "이야기 뒤에 흐르는 풍경.",
-    "sub": "실사풍과 애니풍. 같은 날씨도 다른 분위기로.",
+    "sub": "실사 · 일러스트 · 셀 애니. 같은 날씨도 다른 분위기로.",
     "cards": [
       [
         "471-look-feather.mp4",
@@ -200,9 +200,15 @@ const topics = [
         "471-look-butterfly.jpg"
       ],
       [
+        "472-lemon-cel.mp4",
+        "가벼운 셀 애니풍",
+        "단순한 색면, 부드러운 명암.",
+        "472-lemon-cel.jpg"
+      ],
+      [
         "471-look-lemon-anime.mp4",
-        "애니풍 레몬",
-        "또렷한 선과 부드러운 색.",
+        "일러스트풍 레몬",
+        "기존 애니풍도 그대로 남겨 뒀어요.",
         "471-look-lemon-anime.jpg"
       ],
       [
@@ -212,10 +218,10 @@ const topics = [
         "471-look-sun.jpg"
       ],
       [
-        "471-look-rain.mp4",
+        "472-look-rain.mp4",
         "비 오는 창가",
         "",
-        "471-look-rain.jpg"
+        "472-look-rain.jpg"
       ],
       [
         "471-look-stars.mp4",
@@ -224,10 +230,10 @@ const topics = [
         "471-look-stars.jpg"
       ],
       [
-        "471-weather-style.mp4",
-        "실사풍 · 애니풍",
-        "날씨마다 그림체를 따로 기억해요.",
-        "471-weather-style.jpg"
+        "472-weather-style.mp4",
+        "실사 · 일러스트 · 셀 애니",
+        "같은 날씨, 세 가지 그림체.",
+        "472-weather-style.jpg"
       ],
       [
         "471-weather-color.mp4",
@@ -246,6 +252,12 @@ const topics = [
         "내 그림도 내려요",
         "",
         "471-weather-custom.jpg"
+      ],
+      [
+        "472-weather-outline.mp4",
+        "외곽선은 취향대로",
+        "그림 외곽선을 켜고 끌 수 있어요.",
+        "472-weather-outline.jpg"
       ]
     ],
     "pc": [
@@ -272,12 +284,6 @@ const topics = [
         "색과 움직임",
         "",
         "471-pc-weather-color.jpg"
-      ],
-      [
-        "471-pc-weather-style.mp4",
-        "그림체도 취향대로",
-        "",
-        "471-pc-weather-style.jpg"
       ]
     ]
   },
@@ -352,90 +358,60 @@ const topics = [
     "sub": "스크립트부터 모델 전환까지 테마 안에서.",
     "cards": [
       [
-        "471-scripts.mp4",
-        "필요한 스크립트만",
-        "",
-        "471-scripts.jpg"
-      ],
-      [
-        "471-words.mp4",
+        "472-words.mp4",
         "단어 치환",
         "",
-        "471-words.jpg"
+        "472-words.jpg"
       ],
       [
-        "471-modelswitch.mp4",
+        "472-modelswitch.mp4",
         "모델을 한 번에 바꾸기",
         "",
-        "471-modelswitch.jpg"
+        "472-modelswitch.jpg"
       ],
       [
-        "471-models.mp4",
+        "472-models.mp4",
         "목록에 없는 모델 등록",
         "",
-        "471-models.jpg"
+        "472-models.jpg"
       ],
       [
-        "471-perf.mp4",
+        "472-perf.mp4",
         "성능 보조",
         "",
-        "471-perf.jpg"
+        "472-perf.jpg"
       ],
       [
-        "471-regexlink.mp4",
+        "472-regexlink.mp4",
         "프롬프트와 정규식을 함께",
         "",
-        "471-regexlink.jpg"
+        "472-regexlink.jpg"
       ],
       [
-        "471-order.mp4",
+        "472-order.mp4",
         "확장 순서 정리",
         "",
-        "471-order.jpg"
-      ],
-      [
-        "471-update-tool.mp4",
-        "테마 업데이트",
-        "",
-        "471-update-tool.jpg"
+        "472-order.jpg"
       ]
     ],
     "pc": [
       [
-        "471-pc-scripts.mp4",
-        "스크립트 고르고 편집하기",
-        "",
-        "471-pc-scripts.jpg"
-      ],
-      [
-        "471-pc-modelswitch.mp4",
+        "472-pc-modelswitch.mp4",
         "여러 확장의 모델을 한 번에",
         "",
-        "471-pc-modelswitch.jpg"
+        "472-pc-modelswitch.jpg"
       ],
       [
-        "471-pc-words.mp4",
-        "단어 치환",
-        "",
-        "471-pc-words.jpg"
-      ],
-      [
-        "471-pc-perf.mp4",
-        "성능 보조",
-        "",
-        "471-pc-perf.jpg"
-      ],
-      [
-        "471-pc-models.mp4",
+        "472-pc-models.mp4",
         "모델 등록",
         "",
-        "471-pc-models.jpg"
+        "472-pc-models.jpg"
       ],
       [
-        "471-pc-regexlink.mp4",
+        "472-pc-regexlink.mp4",
         "프롬프트 연동 정규식",
         "",
-        "471-pc-regexlink.jpg"
+        "472-pc-regexlink.jpg"
       ]
     ]
   },
@@ -449,23 +425,13 @@ const topics = [
         "471-rw-rules.mp4",
         "금지 묘사 규칙",
         "",
-        "471-rw-rules.jpg",
-        null,
-        [
-          "예시: 공유봇 천지합동청 ↗",
-          "https://kkangtong.xyz/posts/54677"
-        ]
+        "471-rw-rules.jpg"
       ],
       [
         "471-rw-ai.mp4",
         "AI에게 부탁해서 규칙 만들기",
         "",
-        "471-rw-ai.jpg",
-        null,
-        [
-          "예시: 공유봇 천지합동청 ↗",
-          "https://kkangtong.xyz/posts/54677"
-        ]
+        "471-rw-ai.jpg"
       ],
       [
         "471-rw-exceptions.mp4",
@@ -482,23 +448,13 @@ const topics = [
         "471-rw-test.mp4",
         "걸리는 표현 미리 확인하기",
         "",
-        "471-rw-test.jpg",
-        null,
-        [
-          "예시: 공유봇 천지합동청 ↗",
-          "https://kkangtong.xyz/posts/54677"
-        ]
+        "471-rw-test.jpg"
       ],
       [
         "471-rw-connect.mp4",
         "사용할 모델 고르기",
         "",
-        "471-rw-connect.jpg",
-        null,
-        [
-          "예시: 공유봇 천지합동청 ↗",
-          "https://kkangtong.xyz/posts/54677"
-        ]
+        "471-rw-connect.jpg"
       ]
     ],
     "pc": [
@@ -506,23 +462,13 @@ const topics = [
         "471-pc-rw-rules.mp4",
         "규칙 하나씩 살펴보기",
         "",
-        "471-pc-rw-rules.jpg",
-        null,
-        [
-          "예시: 공유봇 천지합동청 ↗",
-          "https://kkangtong.xyz/posts/54677"
-        ]
+        "471-pc-rw-rules.jpg"
       ],
       [
         "471-pc-rw-ai.mp4",
         "규칙 만들기도 편하게",
         "",
-        "471-pc-rw-ai.jpg",
-        null,
-        [
-          "예시: 공유봇 천지합동청 ↗",
-          "https://kkangtong.xyz/posts/54677"
-        ]
+        "471-pc-rw-ai.jpg"
       ]
     ],
     "guide": true
@@ -534,54 +480,36 @@ const topics = [
     "sub": "북마크 · 빠른 버튼 · 프롬프트 카드 · 한 손 조작.",
     "cards": [
       [
-        "471-bookmark-setting.mp4",
+        "472-bookmark-setting.mp4",
         "좋아하는 장면에 북마크",
         "",
-        "471-bookmark-setting.jpg"
+        "472-bookmark-setting.jpg"
       ],
       [
-        "471-pins-setting.mp4",
+        "472-pins-setting.mp4",
         "자주 쓰는 버튼은 가까이",
         "",
-        "471-pins-setting.jpg"
+        "472-pins-setting.jpg"
       ],
       [
-        "471-prompt-tab.mp4",
+        "472-prompt-tab.mp4",
         "프롬프트 카드도 같은 분위기로",
         "",
-        "471-prompt-tab.jpg"
+        "472-prompt-tab.jpg"
       ],
       [
-        "471-qr-setting.mp4",
+        "472-qr-setting.mp4",
         "퀵 리플라이 자리와 모양",
         "",
-        "471-qr-setting.jpg"
-      ],
-      [
-        "471-background-keep.mp4",
-        "모바일에서도 편안하게",
-        "",
-        "471-background-keep.jpg"
+        "472-qr-setting.jpg"
       ]
     ],
     "pc": [
       [
-        "471-pc-bookmark-setting.mp4",
-        "북마크도 테마에 맞춰",
-        "",
-        "471-pc-bookmark-setting.jpg"
-      ],
-      [
-        "471-pc-pins-setting.mp4",
-        "버튼을 원하는 곳에",
-        "",
-        "471-pc-pins-setting.jpg"
-      ],
-      [
-        "471-pc-qr-setting.mp4",
+        "472-pc-qr-setting.mp4",
         "빠른 답장 설정",
         "",
-        "471-pc-qr-setting.jpg"
+        "472-pc-qr-setting.jpg"
       ]
     ]
   },
@@ -592,16 +520,10 @@ const topics = [
     "sub": "검색하고, 되돌리고, 내 설정을 보관해요.",
     "cards": [
       [
-        "471-search.mp4",
-        "말하듯 찾는 설정",
-        "초성으로도 찾아요.",
-        "471-search.jpg"
-      ],
-      [
-        "471-changes.mp4",
+        "472-changes.mp4",
         "바꾼 것만 모아서",
         "",
-        "471-changes.jpg"
+        "472-changes.jpg"
       ],
       [
         "471-favorites.mp4",
@@ -610,36 +532,24 @@ const topics = [
         "471-favorites.jpg"
       ],
       [
-        "471-backup.mp4",
-        "설정 백업과 복원",
-        "",
-        "471-backup.jpg"
+        "472-backup.mp4",
+        "필요한 프리셋만 공유",
+        "형광펜 · 날씨 · 글꼴을 골라 담고, 필요한 것만 불러와요.",
+        "472-backup.jpg"
       ],
       [
-        "471-css-setting.mp4",
+        "472-css-setting.mp4",
         "다른 CSS와 함께 쓸 때",
         "",
-        "471-css-setting.jpg"
+        "472-css-setting.jpg"
       ]
     ],
     "pc": [
       [
-        "471-pc-search.mp4",
-        "찾으면 바로 그 설정",
-        "",
-        "471-pc-search.jpg"
-      ],
-      [
-        "471-pc-changes.mp4",
-        "바꾼 것만 한눈에",
-        "",
-        "471-pc-changes.jpg"
-      ],
-      [
-        "471-pc-backup.mp4",
-        "설정 보관하기",
-        "",
-        "471-pc-backup.jpg"
+        "472-pc-backup.mp4",
+        "필요한 프리셋만 공유",
+        "형광펜 · 날씨 · 글꼴을 골라 담고, 필요한 것만 불러와요.",
+        "472-pc-backup.jpg"
       ]
     ]
   }
