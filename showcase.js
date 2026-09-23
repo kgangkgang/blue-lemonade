@@ -3,7 +3,7 @@
  const root=document.querySelector('#showcase'), reading=root.querySelector('#reading-film'), weather=root.querySelector('#weather-film');
  const videos=[reading,weather], play=root.querySelector('#showcase-play'), caption=root.querySelector('#showcase-caption');
  const reduced=matchMedia('(prefers-reduced-motion: reduce)');
- const files={mobile:{rain:'rain-phone-long',snow:'snow-phone-long',stars:'stars-phone-long',meteor:'meteor-phone-long',clear:'clear-phone-long'},pc:{rain:'478-rain-pc',snow:'daynight-pc-snow',stars:'478-stars-pc',meteor:'478-meteor-pc',clear:'daynight-pc-clear'}};
+ const files={mobile:{rain:'rain-phone-v2',snow:'snow-phone-v2',stars:'stars-phone-v2',meteor:'meteor-phone-v2',clear:'clear-phone-long'},pc:{rain:'rain-pc-v2',snow:'snow-pc-v2',stars:'stars-pc-v2',meteor:'meteor-pc-v2',clear:'daynight-pc-clear'}};
  let visible=false,paused=false,consent=false,look='rain';
  function sync(){
   const run=visible&&!document.hidden&&!document.querySelector('#site-guide[open]')&&!paused&&(!reduced.matches||consent);
