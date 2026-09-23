@@ -664,10 +664,12 @@ function renderCard(record, fav, index) {
                     <span>${indexLabel}${date ? ` · ${escapeHtml(date)}` : ''}</span>
                 </div>
             </header>
-            ${note ? `<div class="cg-note"><i class="fa-solid fa-quote-left" aria-hidden="true"></i><div class="salty-preview cg-chatlike" data-prev="bookmark"><div class="mes" is_user="${isUser}"><div class="mes_block"><div class="cg-note-text mes_text">${note}</div></div></div></div></div>` : ''}
             ${reasoning ? `<details class="cg-reasoning"><summary><i class="fa-solid fa-brain"></i> 생각 과정</summary><div class="mes_text">${reasoning}</div></details>` : ''}
+            <div class="cg-message-surface">
             <div class="cg-card-body${collapsed ? ' is-collapsed' : ''}"><div class="salty-preview cg-chatlike" data-prev="bookmark"><div class="mes" is_user="${isUser}"><div class="mes_block"><div class="cg-mes mes_text">${body}</div></div></div></div></div>
             <button type="button" class="cg-expand" hidden><span>전체 보기</span><i class="fa-solid fa-chevron-down"></i></button>
+            </div>
+            ${note ? `<div class="cg-note" role="note" aria-label="메모"><i class="fa-solid fa-feather-pointed" aria-hidden="true"></i><div class="salty-preview cg-chatlike" data-prev="bookmark"><div class="mes" is_user="${isUser}"><div class="mes_block"><div class="cg-note-text mes_text">${note}</div></div></div></div></div>` : ''}
             <footer class="cg-card-actions">
                 ${footer}
             </footer>
@@ -704,6 +706,8 @@ function updateExpandButton(card) {
     body.classList.toggle('is-overflowing', overflows);
     button.hidden = !expanded && !overflows;
     button.classList.toggle('is-expanded', expanded);
+    button.setAttribute('aria-expanded', String(expanded));
+    button.setAttribute('aria-label', expanded ? '본문 접기' : '본문 전체 보기');
     button.querySelector('span').textContent = expanded ? '접기' : '전체 보기';
 }
 
