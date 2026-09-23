@@ -197,6 +197,13 @@ function dropSprites(env, ink, rim) {
     for (let n = 0; n < DROP_SIZES.length * 6; n++) {
         const S = DROP_SIZES[Math.floor(n / 6)], k = S / 96, shapeN = n % 6;
         const canvas = env.canvas(S, S); if (!canvas) break;
+        if (env.artStyle === 'simple') {
+            const p = canvas.getContext('2d');
+            p.beginPath(); p.ellipse(S*.5,S*.52,S*.22,S*.3,0,0,TAU);
+            p.fillStyle=`rgba(${ink},.08)`; p.fill();
+            p.strokeStyle=`rgba(${ink},.38)`; p.lineWidth=Math.max(.6,S*.025);p.stroke();
+            list.push(bake(canvas)); continue;
+        }
         const droplet = env.art?.get('droplet', env.tintRGB ? ink : null);
         if (droplet) {
             const paint = canvas.getContext('2d');

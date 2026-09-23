@@ -111,7 +111,7 @@ const ratio = () => Math.min(1.5, window.devicePixelRatio || 1);
 
 /** 설정의 날씨 값 → 엔진 값 (범위는 settings.js 가 이미 잡음) */
 function paramsFrom(chat = {}) {
-    return { artStyle:['anime','cel'].includes(chat.weatherArtStyle)?chat.weatherArtStyle:'real', artOutline:!!chat.weatherArtOutline, tint:['custom','gradient'].includes(chat.weatherColorMode)?chat.weatherColor:null, tint2:chat.weatherColorMode==='gradient'?chat.weatherColor2:null,
+    return { artStyle:chat.weatherIllustrated===true?(['anime','cel'].includes(chat.weatherArtStyle)?chat.weatherArtStyle:'real'):'simple', artOutline:!!chat.weatherArtOutline, tint:['custom','gradient'].includes(chat.weatherColorMode)?chat.weatherColor:null, tint2:chat.weatherColorMode==='gradient'?chat.weatherColor2:null,
         scene:{shadowStyle:chat.weatherShadowStyle,shadowBlur:chat.weatherShadowBlur??35,waterStyle:chat.weatherWaterStyle,waterArea:chat.weatherWaterArea},
         spots:chat.weatherSpots||null,
         sun:{style:chat.weatherSunStyle}, star:{style:chat.weatherStarStyle},

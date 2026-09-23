@@ -5,7 +5,7 @@ const PACKS = {
     light: ['nebula', 'sunbeam', 'caustic', 'palm', 'droplet', 'glow'],
     wings: ['feather', 'butterfly', 'featherGold', 'butterflyPink', 'down', 'moth'],
 };
-const MODES = { fog: ['nature'], snow: ['nature'], petal: ['nature'], lemon: ['nature'], breeze: ['nature'],
+const MODES = { petal: ['nature'], lemon: ['nature'], breeze: ['nature'],
     star: ['light'], sun: ['light'], firefly: ['light'], shadow: ['light', 'nature'], water: ['light'], glass: ['light'], feather: ['wings'], butterfly: ['wings'] };
 const packs = new Map();
 const limits = { cloud: 384, mist: 384, nebula: 384, sunbeam: 384, caustic: 384, palm: 384, droplet: 96, glow: 64 };
@@ -60,7 +60,8 @@ export function createWeatherArt(canvas, wake) {
     const clearTint = () => { for (const texture of tinted.values()) texture.width = texture.height = 1; tinted.clear(); };
     return {
         request(mode, style = 'real') {
-            if (disposed || (typeof createImageBitmap !== 'function' && typeof Image !== 'function')) return;
+            if (style === 'simple' && mode === 'star') style = 'real'; // Keep the diffuse Milky Way backdrop.
+            if (style === 'simple' || disposed || (typeof createImageBitmap !== 'function' && typeof Image !== 'function')) return;
             for (const base of MODES[mode] || []) {
                 const name = ['anime', 'cel'].includes(style) ? `${base}-${style}` : base;
                 if (pending.has(name) || owned.has(name)) continue;

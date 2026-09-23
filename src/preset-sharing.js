@@ -21,7 +21,7 @@ function template(path) {
     if (parts[0]==='fonts'&&parts.length===3&&Object.hasOwn(DEFAULTS.fonts,parts[1])&&['ko','en','ja','zh'].includes(parts[2])) return '';
     if (parts[0]==='chat') {
         const key=parts[1]==='weatherProfiles'&&parts.length===4&&WEATHER_MODES.includes(parts[2])?parts[3]:parts.length===2?parts[1]:'';
-        if (WEATHER_FIELDS.includes(key)||['weather','weather2','weather2Level','weatherBubble'].includes(key)) return weatherStrings.has(key)?'':['weatherArtOutline','weatherBubble'].includes(key)?false:0;
+        if (WEATHER_FIELDS.includes(key)||['weather','weather2','weather2Level','weatherBubble'].includes(key)) return weatherStrings.has(key)?'':['weatherIllustrated','weatherArtOutline','weatherBubble'].includes(key)?false:0;
     }
     let v=DEFAULTS;for(const key of parts){if(!v||typeof v!=='object'||!Object.hasOwn(v,key))return undefined;v=v[key];}
     return v;

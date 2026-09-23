@@ -21,7 +21,7 @@ function createCore(ctx, first, shared = {}) {
     let dpr = 1;
     let mode = 'off';
     let artStyle = 'real', artOutline = false;
-    const materials = { get: (kind, color) => shared.art?.get(kind, color, artStyle, artOutline) };
+    const materials = { get: (kind, color) => artStyle === 'simple' ? (kind === 'nebula' ? shared.art?.get(kind, color, 'real', false) : null) : shared.art?.get(kind, color, artStyle, artOutline) };
     let level = 2;
     let colors = { rain: '200,215,240', rainAlpha: 0.3, snow: '255,255,255', snowAlpha: 0.8 };
     let opacity = 1;
@@ -64,53 +64,17 @@ function createCore(ctx, first, shared = {}) {
     const fogBake = canvas => canvas;
     const fogDrop = () => { for (const image of fogSprites) { if (typeof image.close === 'function') image.close(); else image.width = image.height = 1; } fogSprites = []; };
     function fogPaint() {
-        const key = [artStyle, artOutline, mix(0), mix(.5), mix(1), colors.snow, fog.style, Math.round(fog.edge * 20), !!materials.get('cloud')].join('|');
+        const key = [mix(0), mix(.5), mix(1), colors.snow, fog.style, Math.round(fog.edge * 20)].join('|');
         if (key === fogKey && fogSprites.length) return;
         fogDrop(); fogKey = key;
         const e = fog.edge;
         for (let n = 0; n < 3; n++) {
             const ink = mix(n / 2) || colors.snow; // 그라데이션이면 덩어리마다 두 색 사이의 다른 색
-            const material = materials.get(fog.style === 'wisp' ? 'mist' : 'cloud', mix(n / 2));
-            if (material) {
-                const canvas = fogCanvas(384, 240); if (!canvas) return;
-                const paint = canvas.getContext('2d');
-                paint.filter = `blur(${((1 - e) * (fog.style === 'soft' ? 4 : 2)).toFixed(1)}px)`;
-                // Mirror the painted relief, rather than repeating an identical cloud silhouette.
-                if (n === 1) {paint.translate(384, 0); paint.scale(-1, 1);}
-                paint.drawImage(material, 8, 8, 368, 224);
-                fogSprites.push(canvas); continue;
-            }
-            if (fog.style === 'anime') {
-                // 애니풍: 윗선이 몽글몽글한 구름 띠. 아래는 평평하게 풀리고, 안쪽에 한 톤 밝은 결을 한 겹 더 얹는다 (셀 채색 느낌)
-                const w = 384, h = 176, canvas = fogCanvas(w, h); if (!canvas) return;
-                const paint = canvas.getContext('2d');
-                const blur = (1 - e) * 7;
-                if (blur > .4 && 'filter' in paint) paint.filter = `blur(${blur.toFixed(1)}px)`;
-                const bumps = (seedN, base, scale, alpha) => {
-                    paint.fillStyle = `rgba(${ink},${alpha})`; paint.beginPath();
-                    let x = 34;
-                    for (let i = 0; x < w - 34; i++) {
-                        const r = (22 + ((i * 5 + seedN * 3) % 4) * 7) * scale * (x < 90 || x > w - 90 ? .7 : 1);
-                        paint.moveTo(x + r, base); paint.arc(x, base, r, 0, Math.PI * 2);
-                        x += r * 1.15;
-                    }
-                    paint.rect(34, base, w - 68, h - base); paint.fill();
-                };
-                bumps(n, 84, 1, .62);
-                bumps(n + 2, 104, .7, .3);
-                paint.filter = 'none';
-                // 양 끝과 아래쪽은 투명하게 풀어 띠끼리 자연스럽게 겹친다
-                paint.globalCompositeOperation = 'destination-out';
-                let g = paint.createLinearGradient(0, 96, 0, h); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,1)');
-                paint.fillStyle = g; paint.fillRect(0, 96, w, h - 96);
-                for (const [from, to] of [[0, 70], [w, w - 70]]) { g = paint.createLinearGradient(from, 0, to, 0); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)'); paint.fillStyle = g; paint.fillRect(Math.min(from, to), 0, 70, h); }
-                fogSprites.push(fogBake(canvas));
-                continue;
-            }
+            // Mist has no painted relief or outline: cached translucent gradients only.
             const size = 192, canvas = fogCanvas(size, size); if (!canvas) return;
             const paint = canvas.getContext('2d');
-            const lobes = fog.style === 'wisp' ? [[.5, .5, .48]] : [[.5, .54, .34]];
-            if (fog.style !== 'wisp') for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + n * 1.3, d = .17 + ((i * 7 + n * 3) % 5) * .012; lobes.push([.5 + Math.cos(a) * d * 1.25, .54 + Math.sin(a) * d * .7, .2 + ((i + n) % 3) * .035]); }
+            const lobes = fog.style !== 'soft' ? [[.5, .5, .48]] : [[.5, .54, .34]];
+            if (fog.style === 'soft') for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + n * 1.3, d = .17 + ((i * 7 + n * 3) % 5) * .012; lobes.push([.5 + Math.cos(a) * d * 1.25, .54 + Math.sin(a) * d * .7, .2 + ((i + n) % 3) * .035]); }
             for (const [x, y, r] of lobes) {
                 const g = paint.createRadialGradient(x * size, y * size, 0, x * size, y * size, r * size);
                 g.addColorStop(0, `rgba(${ink},${(.5 + e * .2).toFixed(2)})`); g.addColorStop(Math.min(.92, .45 + e * .45), `rgba(${ink},${(.22 + e * .3).toFixed(2)})`); g.addColorStop(1, `rgba(${ink},0)`);
@@ -207,7 +171,7 @@ function createCore(ctx, first, shared = {}) {
     let spots = null; // 끌어서 정한 자리 (모드별 [{x,y}])
     let scene = null, sceneOpts = { shadowStyle: 'palm', shadowBlur: 35, waterStyle: 'pool', waterArea: 'bottom' };
     const env = { ctx, rand, mix, canvas: (w, h) => fogCanvas(w, h), get W() { return W; }, get H() { return H; }, get dpr() { return dpr; }, get level() { return level; }, get k() { return LEVEL[level] ?? 1; },
-        get opacity() { return opacity; }, get size() { return sizeK; }, get speed() { return speedK; }, get slant() { return slant; }, get sway() { return swayK; }, get spin() { return spinK; }, get motion() { return motion; },
+        get opacity() { return opacity * (artStyle === 'simple' ? .65 : 1); }, get size() { return sizeK; }, get speed() { return speedK; }, get slant() { return slant; }, get sway() { return swayK; }, get spin() { return spinK; }, get motion() { return motion; },
         get art() { return materials; }, get artStyle() { return artStyle; }, get colors() { return colors; }, get light() { return colors.snowAlpha < .7; }, get tintRGB() { return tintRGB; }, get gradient() { return !!rgbB; }, get opts() { return sceneOpts; }, get spots() { return spots?.[mode] || null; } };
     const make = anywhere => (mode === 'star' ? star() : mode === 'firefly' ? firefly() : mode === 'sun' ? mote(anywhere) : mode === 'fog' ? puff(anywhere) : mode === 'rain' ? drop(anywhere) : mode === 'snow' ? flake(anywhere) : mode === 'meteor' ? comet(anywhere) : piece(anywhere));
 
@@ -217,7 +181,7 @@ function createCore(ctx, first, shared = {}) {
             if (!scenesModule) { items = []; const wantMode = mode; loadScenes().then(() => { if (mode === wantMode && !scene) { seed(); shared.wake?.(); } }, () => {}); return; } // 받는 동안은 비어 있다가, 받으면 다시 뿌린다
             scene = W > 0 && H > 0 ? scenesModule.createScene(mode, env) : null; items = scene ? [scene] : []; return;
         }
-        const k = LEVEL[level] ?? 1;
+        const k = (LEVEL[level] ?? 1) * (artStyle === 'simple' && ['lemon','petal','feather','butterfly','sun','firefly'].includes(mode) ? .55 : 1);
         const area = Math.max(0, W * H);
         const active = DENSITY[mode] && (mode !== 'custom' || sprite);
         if (mode === 'fog') fogPaint();
@@ -327,12 +291,10 @@ function createCore(ctx, first, shared = {}) {
                 ctx.stroke();
             });
         } else if (mode === 'snow') {
-            const crystal = materials.get('snow');
             BANDS.forEach(([from, to], b) => {
                 ctx.beginPath();
                 for (const p of items) {
                     if (p.depth < from || p.depth >= to) continue;
-                    if (crystal && p.depth > .68) continue;
                     const r = p.r * sizeK;
                     ctx.moveTo(p.x + r, p.y);
                     ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
@@ -341,16 +303,6 @@ function createCore(ctx, first, shared = {}) {
                 ctx.fillStyle = rgbB ? wash(snowAlpha) : `rgba(${tintRGB || colors.snow}, ${snowAlpha})`;
                 ctx.fill();
             });
-            if (crystal) for (const p of items) {
-                if (p.depth <= .68) continue;
-                const art = materials.get('snow', tintRGB ? mix(Math.round(p.depth * 4) / 4) : colors.snowAlpha < .7 ? '128,161,187' : null);
-                const side = (7 + p.depth * 7) * sizeK, angle = p.phase + clock * .16 * spinK;
-                const c = Math.cos(angle) * dpr, s = Math.sin(angle) * dpr;
-                ctx.setTransform(c, s, -s, c, p.x * dpr, p.y * dpr);
-                ctx.globalAlpha = (.38 + p.depth * .4) * opacity;
-                ctx.drawImage(art, -side / 2, -side / 2, side, side);
-            }
-            ctx.globalAlpha = 1; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         } else if (mode === 'star') {
             const t = clock, light = colors.snowAlpha < .7, scale = Math.sqrt(sizeK);
             const depthK = motion === 'straight' ? 0 : Math.min(1, .55 * swayK * (motion === 'flutter' ? 1.6 : 1)); // 흔들림 = 반짝임의 깊이
@@ -613,7 +565,7 @@ function createCore(ctx, first, shared = {}) {
             const bw = (baseArt?.width || 1) / long;
             const bh = (baseArt?.height || 1) / long;
             for (const p of items) {
-                const size = (mode === 'custom' ? SPRITE_PX : mode === 'butterfly' ? 36 : mode === 'feather' ? 37 : mode === 'lemon' ? 26 : 23) * sizeK * p.s;
+                const size = (mode === 'custom' ? SPRITE_PX : mode === 'butterfly' ? 23 : mode === 'feather' ? 24 : mode === 'lemon' ? 17 : 12) * sizeK * p.s;
                 const w = size * bw;
                 const h = size * bh;
                 const cos = Math.cos(p.rot) * dpr;
@@ -632,8 +584,8 @@ function createCore(ctx, first, shared = {}) {
                     for(let n=0;n<7;n++){const y=-size*.28+n*size*.08,span=Math.sin((n+1)/8*Math.PI)*size*.2;ctx.beginPath();ctx.moveTo(0,y+size*.09);ctx.lineTo(span,y);ctx.moveTo(0,y+size*.09);ctx.lineTo(-span,y);ctx.stroke();}
                 }
                 else if (mode === 'butterfly') {
-                    const flap=.2+.8*Math.abs(Math.sin(clock*5*speedK+p.phase));ctx.scale(flap,1);ctx.fillStyle=tint||'#afc9ef';
-                    for(const sign of [-1,1]){ctx.beginPath();ctx.moveTo(0,0);ctx.bezierCurveTo(sign*size*.6,-size*.5,sign*size*.55,size*.28,0,size*.14);ctx.fill();}
+                    const flap=.2+.8*Math.abs(Math.sin(clock*5*speedK+p.phase));ctx.scale(flap,1);ctx.fillStyle=rgbB ? `rgb(${mix(p.depth)})` : tint||'#afc9ef';
+                    for(const sign of [-1,1]){ctx.beginPath();ctx.moveTo(0,0);ctx.bezierCurveTo(sign*size*.6,-size*.5,sign*size*.55,size*.28,0,size*.14);ctx.fill();if(artOutline){ctx.strokeStyle=colors.snowAlpha<.7?'#6c819e':'#dce9ff';ctx.lineWidth=Math.max(.65,size*.03);ctx.stroke();}}
                 }
                 else if (mode === 'lemon') {
                     ctx.beginPath(); ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
@@ -672,7 +624,7 @@ function createCore(ctx, first, shared = {}) {
             else if (changed || !items.length) seed();
         },
         config(next) {
-            const wantedArt = ['anime', 'cel'].includes(next.artStyle) ? next.artStyle : 'real';
+            const wantedArt = ['simple', 'anime', 'cel'].includes(next.artStyle) ? next.artStyle : 'real';
             const artChanged = wantedArt !== artStyle || !!next.artOutline !== artOutline; artStyle = wantedArt; artOutline = !!next.artOutline;
             const spriteChanged = next.sprite !== undefined;
             const nextTint='tint' in next&&/^#[0-9a-f]{6}$/i.test(next.tint||'')?next.tint.toLowerCase():'tint' in next?null:tint;

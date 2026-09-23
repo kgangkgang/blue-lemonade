@@ -1356,7 +1356,8 @@ function tabChat(s, sub) {
         ${cap('날씨')}<div class="salty-group">
             ${stack('채팅 뒤 효과', weatherSeg(s), weatherMode(s) === 'tracker' ? '트래커 날씨를 읽어 비 · 눈 · 안개 · 햇살 · 밤의 별을 보여요. 안개비 · 여우비처럼 둘이면 겹쳐요' : '')}
             ${weatherMode(s) === 'custom' ? weatherImageControls(s) : ''}
-            ${['snow','fog','sun','star','firefly','shadow','breeze','glass','water','lemon','petal','feather','butterfly'].includes(weatherMode(s)) ? stack('그림 스타일',seg('chat.weatherArtStyle',[['real','실사풍'],['anime','일러스트풍'],['cel','셀 애니풍']],'real'),'색과 움직임은 그대로, 그림의 느낌만 바꿔요. 날씨마다 기억해요.') : ''}
+            ${['sun','star','firefly','shadow','breeze','glass','water','lemon','petal','feather','butterfly'].includes(weatherMode(s)) ? row('그림 효과 사용',toggle('chat.weatherIllustrated',s.chat.weatherIllustrated).replace('<input','<input aria-label="그림 효과 사용"'),'기본은 작고 단순하게. 켜면 이전 그림체를 골라 쓸 수 있어요.') : ''}
+            ${s.chat.weatherIllustrated && ['sun','star','firefly','shadow','breeze','glass','water','lemon','petal','feather','butterfly'].includes(weatherMode(s)) ? stack('그림 스타일',seg('chat.weatherArtStyle',[['real','실사풍'],['anime','일러스트풍'],['cel','셀 애니풍']],'real'),'색과 움직임은 그대로, 그림의 느낌만 바꿔요. 날씨마다 기억해요.') : ''}
             ${!['off', 'tracker'].includes(weatherMode(s)) ? stack('세기', seg('chat.weatherLevel', [[1, '약하게'], [2, '보통'], [3, '강하게']])) : ''}
             ${weatherMode(s) === 'tracker' ? `<p class="salty-note">세기 · 색 · 모양은 그 날씨를 직접 골랐을 때 맞춰 둔 값을 그대로 써요. 비는 비대로, 눈은 눈대로요.</p>
             <button type="button" class="salty-btn bl-weather-skip-fold" data-act="weather-skip-fold" aria-expanded="${!!ui.weatherSkipOpen}">제외할 날씨${(s.chat.weatherTrackerSkip || []).length ? ` · ${s.chat.weatherTrackerSkip.length}` : ''} <i class="fa-solid fa-chevron-${ui.weatherSkipOpen ? 'up' : 'down'}"></i></button>
@@ -1377,9 +1378,9 @@ function tabChat(s, sub) {
             ${s.chat.weather==='breeze'?`<p class="salty-note">각도는 바람 방향, 회전은 잎이 도는 빠르기예요.</p>`:''}
             ${s.chat.weather==='star'?`${stack('별 모양',seg('chat.weatherStarStyle',[['sky','반짝이는 별'],['milky','은하수']],'sky'))}<p class="salty-note">속도는 반짝이는 빠르기, 흔들림은 반짝임의 깊이, 각도는 하늘이 흐르는 방향(은하수는 띠가 누운 방향), 회전은 십자 빛이 도는 빠르기예요. 가끔 별똥별이 지나가요. 유성과 겹치면 잘 어울려요.</p>`:''}
             ${s.chat.weather==='firefly'?`<p class="salty-note">속도는 나는 빠르기, 흔들림은 헤매는 정도, 각도는 쏠리는 방향, 회전은 깜빡이는 빠르기예요.</p>`:''}
-            ${['snow','fog','sun','star','firefly','shadow','breeze','glass','water','lemon','petal','feather','butterfly'].includes(weatherMode(s)) ? row('그림 외곽선',toggle('chat.weatherArtOutline',s.chat.weatherArtOutline)) : ''}
+            ${(s.chat.weatherIllustrated || weatherMode(s)==='butterfly') && ['sun','star','firefly','shadow','breeze','glass','water','lemon','petal','feather','butterfly'].includes(weatherMode(s)) ? row('그림 외곽선',toggle('chat.weatherArtOutline',s.chat.weatherArtOutline)) : ''}
             ${s.chat.weather==='sun'?`${stack('햇살 모양',seg('chat.weatherSunStyle',[['shaft','빛줄기'],['holy','성스러운 빛'],['anime','애니풍'],['flare','렌즈 플레어']],'shaft'))}<p class="salty-note">각도는 빛이 드는 쪽, 크기는 빛의 굵기, 속도 · 흔들림은 일렁임이에요. 렌즈 플레어는 육각 빛번짐이 줄지어 놓여요.</p>`:''}
-            ${s.chat.weather==='fog'?`${stack('안개 모양',seg('chat.weatherFogStyle',[['soft','뭉게뭉게'],['anime','애니풍 구름 띠'],['wisp','실안개']],'soft'))}${stack('안개 위치',seg('chat.weatherFogArea',[['all','전체'],['bottom','아래쪽'],['top','위쪽'],['both','위아래']],'all'))}${slider('chat.weatherFogStretch','길이',50,300,1,100)}${slider('chat.weatherFogEdge','가장자리 선명하게',0,100,1,30)}${slider('chat.weatherFogSwell','부풀기',0,300,1,100)}${slider('chat.weatherFogDepth','깊이감',0,200,1,100)}<p class="salty-note">각도는 흐르는 방향(왼쪽 · 오른쪽)만 정해요.</p>`:''}
+            ${s.chat.weather==='fog'?`${stack('안개 모양',seg('chat.weatherFogStyle',[['soft','부드러운 안개'],['anime','안개 띠'],['wisp','실안개']],'soft'))}${stack('안개 위치',seg('chat.weatherFogArea',[['all','전체'],['bottom','아래쪽'],['top','위쪽'],['both','위아래']],'all'))}${slider('chat.weatherFogStretch','길이',50,300,1,100)}${slider('chat.weatherFogEdge','가장자리 선명하게',0,100,1,30)}${slider('chat.weatherFogSwell','부풀기',0,300,1,100)}${slider('chat.weatherFogDepth','깊이감',0,200,1,100)}<p class="salty-note">각도는 흐르는 방향(왼쪽 · 오른쪽)만 정해요.</p>`:''}
             ${slider('chat.weatherOpacity', '투명도', 10, 100, 1, 100)}
             ${slider('chat.weatherSize', '크기', 40, 250, 1, 100)}
             ${slider('chat.weatherSpeed', '속도', 20, 250, 1, 100)}
@@ -1456,7 +1457,8 @@ function weatherSpotPad(s) {
 
 /** 날씨 고르기 (4.2.8): 종류가 많아져 카테고리로 나눴다. '날씨 혼합하기'를 켜면 첫째 · 둘째 칸을 골라 가며 두 날씨를 겹친다 (에이드 혼합하기와 같은 식) */
 const WEATHER_CATS = [
-    ['sky', '하늘', [['rain', '비'], ['snow', '눈'], ['fog', '안개'], ['sun', '햇살'], ['rainbow', '무지개'], ['star', '별'], ['meteor', '유성']]],
+    ['sky', '기본', [['rain', '비'], ['snow', '눈'], ['fog', '안개']]],
+    ['light', '빛', [['sun', '햇살'], ['rainbow', '무지개'], ['star', '별'], ['meteor', '유성']]],
     ['nature', '자연', [['petal', '꽃잎'], ['lemon', '레몬'], ['feather', '깃털'], ['butterfly', '나비'], ['firefly', '반딧불이'], ['breeze', '흩날림'], ['shadow', '나무 그림자']]],
     ['water', '물 · 유리', [['glass', '유리 빗방울'], ['water', '물결']]],
     ['etc', '그 밖', [['custom', '내 그림'], ['tracker', '트래커 따라']]],
@@ -2568,7 +2570,7 @@ function bind(root) {
             // 2.9.2: 본문 색 지정 → '글자색 톤 맞추기' 줄, 톤 맞추기 → 톤 값 슬라이더 넷, 투명 그림도 똑같이 → 설명 문구가 스위치에 따라
             // 보였다 안 보였다 하는데 다시 그리지 않아, 끈 뒤에도 슬라이더가 남아 있었다
             // 감정 대사 효과(움직임 · 빛 · 색 흐름) · 백그라운드 버티는 방식 줄도 스위치를 따라 보였다 안 보였다 한다
-            update(st => setPath(st, path, target.checked), ['enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on', 'deus.fx.on', 'deus.fx.flow', 'deus.fx.force', 'bgWindow.on'].includes(path));
+            update(st => setPath(st, path, target.checked), ['chat.weatherIllustrated', 'enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on', 'deus.fx.on', 'deus.fx.flow', 'deus.fx.force', 'bgWindow.on'].includes(path));
             return;
         }
         if (target.matches('input[data-file="font"]') && target.files?.[0]) {
