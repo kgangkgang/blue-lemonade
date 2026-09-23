@@ -60,10 +60,10 @@
  #colors .palette-families button span:last-child{display:none}
  #colors .palette-dot{width:30px;height:30px}
 }
-#palette-stage #reading-sample{color:var(--preview-text);--ink:var(--preview-dialogue);--marker:var(--preview-marker);--blue:var(--preview-accent);--muted:var(--preview-muted);--read-em:var(--preview-em);--read-strong:var(--preview-strong);--read-gold:var(--preview-gold);--shade-2:var(--preview-raised);padding-block:16px}
-#palette-stage #reading-sample strong{background:none}
+:is(#palette-stage,.comparison-stage) :is(#reading-sample,.comparison-sample){color:var(--preview-text);--ink:var(--preview-dialogue);--marker:var(--preview-marker);--blue:var(--preview-accent);--muted:var(--preview-muted);--read-em:var(--preview-em);--read-strong:var(--preview-strong);--read-gold:var(--preview-gold);--shade-2:var(--preview-raised);padding-block:16px}
+:is(#palette-stage,.comparison-stage) :is(#reading-sample,.comparison-sample) strong{background:none}
 #colors .palette-message-head b{color:var(--preview-accent)}
-#colors #palette-name{color:var(--preview-accent)}
+#colors :is(#palette-name,.comparison-name){color:var(--preview-accent)}
 @media(min-width:1001px) and (hover:hover){
  #colors .palette-families button{position:relative;overflow:visible}
  #colors .palette-families button:is(:hover,:focus-visible){z-index:3}
