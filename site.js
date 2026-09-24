@@ -5,9 +5,10 @@ const topics = [
   "id": "new498",
   "label": "새 기능",
   "title": "그림도 번역도, 내 방식으로",
-  "sub": "캐릭터 에셋의 그림 관리와 LLM 번역의 실제 사용 흐름을 살펴보세요. 에셋은 5.1.0, 번역·한글화 새 기능은 5.0.0, 기존 LLM 위치·탭과 메뉴 순서는 4.9.8 촬영본이에요.",
+  "sub": "전개 지시부터 그림 관리와 번역까지 실제 사용 흐름을 살펴보세요. 전개 지시는 5.1.1, 에셋은 5.1.0, 번역·한글화 새 기능은 5.0.0, 기존 LLM 위치·탭과 메뉴 순서는 4.9.8 촬영본이에요.",
   "tall": true,
   "cards": [
+    ["511-direction.mp4", "전개 지시 · 다음 장면을 깃펜에", "원하는 전개를 적고 켜면 대화 요청마다 지시가 들어가요. 끄면 내용은 남고 삽입만 멈춰요. 켜짐은 깃펜의 빛으로 표시합니다. 5.1.1 설정 시연입니다.", "511-direction.jpg"],
     ["510-assets-presets.mp4", "캐릭터 에셋 · 그림 프리셋을 따로", "그림을 폴더별로 나누고 프리셋 전체를 켜거나 꺼요. 같은 파일 이름은 켜진 폴더 중 위쪽 것이 우선해요. 가상 캐릭터와 직접 만든 시연용 그림으로 촬영했습니다.", "510-assets-presets.jpg"],
     ["510-assets-toggle.mp4", "캐릭터 에셋 · 쓸 그림만 골라요", "그림을 크게 보고 하나씩 껐다 켜요. 끈 그림은 파일을 지우지 않고 AI에게 알려 주는 목록에서 제외해요. 가상 캐릭터와 시연용 그림을 사용했습니다.", "510-assets-toggle.jpg"],
 
@@ -654,7 +655,7 @@ lightbox.querySelector('.close').onclick=()=>lightbox.close();lightbox.onclick=e
  dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});
  dialog.addEventListener('close',()=>{video.pause();video.removeAttribute('src');delete video.dataset.modeBase;video.load();});}
 const SHOWN_NOTES=3;
-fetch('release-notes.json?v=510', {cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error('notes');return r.json();}).then(notes=>{$('#notes').replaceChildren();
+fetch('release-notes.json?v=511', {cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error('notes');return r.json();}).then(notes=>{$('#notes').replaceChildren();
   // one card per day, like the theme's own notice: a busy day reads as "v4.1.2 ~ v4.2.4 · 업데이트 13번"
   const days=[];for(const note of notes){const last=days.at(-1);if(last&&last.date===note.date)last.notes.push(note);else days.push({date:note.date,notes:[note]});}
   days.forEach((day,i)=>{const d=element('details','note');d.open=i===0;d.hidden=i>=SHOWN_NOTES;const s=element('summary'),first=day.notes.at(-1).version,latest=day.notes[0].version;
