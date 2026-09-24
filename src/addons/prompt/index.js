@@ -1,4 +1,5 @@
 import { installLocalizationPage } from './localization-ui.js';
+import { forEachLimited } from './cache-loading.js';
 // Modified 2026-09-24: Blue Lemonade personal preview 1.1.0; based on supplied 개인개조+++ ZIP.
 import { installRegexPage } from './regex-ui.js';
 import { installGuide } from './guide.js';
@@ -418,7 +419,7 @@ async function initTranslationCache() {
     }
 
     indexShards = new Set(Array.isArray(index.shards) ? index.shards : []);
-    await Promise.all([...indexShards].map(async file => {
+    await forEachLimited(indexShards,4,async file => {
         try {
             const data = await fileGetJSON(file);
             const entries = data?.entries || {};
@@ -429,7 +430,7 @@ async function initTranslationCache() {
             brokenShards.add(file);
             console.warn(`[${EXT}] cache shard load failed: ${file}`, e);
         }
-    }));
+    });
     if (brokenShards.size && typeof toastr !== 'undefined') {
         toastr.warning(`번역 캐시 파일 ${brokenShards.size}개를 읽지 못했습니다. 해당 항목의 번역은 이번 세션에 저장되지 않습니다.`);
     }
@@ -4096,16 +4097,36 @@ function getSourceName(kind, page, idPfx) {
 }
 
 // ── Panel ──────────────────────────────────────────────────────────────
+function dockPanel() {
+    const panel = PDOC.getElementById('pt-panel');
+    const host = PDOC.getElementById('pt-drawer-host');
+    if (!panel || !host) return;
+    host.append(panel);
+    panel.classList.remove('pt-hidden');
+    panel.classList.add('pt-in-drawer');
+    syncDrawerPages();
+}
+let drawerPagesVisible = null;
+function syncDrawerPages() {
+    const panel = PDOC.getElementById('pt-panel');
+    if (!panel?.classList.contains('pt-in-drawer')) return;
+    const visible = !!panel.getClientRects().length;
+    if (visible === drawerPagesVisible) return;
+    drawerPagesVisible = visible;
+    if (visible) wakePages();
+    else sleepPages();
+}
 export function openPanel() {
-    PDOC.getElementById('pt-panel')?.classList.remove('pt-hidden');
+    const panel = PDOC.getElementById('pt-panel');
+    if (!panel) return;
+    PDOC.body.append(panel);
+    panel.classList.remove('pt-hidden', 'pt-in-drawer');
+    drawerPagesVisible = null;
     wakePages();
-    PDOC.getElementById('pt-panel')?.dispatchEvent(new Event('pt:opened'));
+    panel.dispatchEvent(new Event('pt:opened'));
 }
 function closePanel() {
-    PDOC.getElementById('pt-panel')?.classList.add('pt-hidden');
-    // Give ST back a small document — see PAGE_HOOKS.
-    sleepPages();
-    // A modal left open would otherwise sit there holding its own listeners.
+    dockPanel();
     PDOC.getElementById('pt-choice-modal')?.remove();
 }
 
@@ -4218,7 +4239,7 @@ function buildPanel() {
     } catch(e){}
 
     // 패널 내 CSS 로드
-    if (CSS_URL && !PDOC.getElementById('pt-panel-css')) {
+    if (CSS_URL && !Array.from(PDOC.querySelectorAll('link[rel="stylesheet"]')).some(link=>link.href===CSS_URL)) {
         const link=PDOC.createElement('link');
         link.id='pt-panel-css'; link.rel='stylesheet'; link.href=CSS_URL;
         PDOC.head.appendChild(link);
@@ -4314,7 +4335,7 @@ export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
         console.error(`[${EXT}] buildSettingsHTML failed`, e);
         return;
     }
-    if (CSS_URL) {
+    if (CSS_URL && !Array.from(PDOC.querySelectorAll('link[rel="stylesheet"]')).some(link=>link.href===CSS_URL)) {
         $('<link>',{id:'pt-main-css',rel:'stylesheet',href:CSS_URL}).appendTo('head');
     }
 
@@ -4416,7 +4437,6 @@ export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
     $(document).on('input','#pt-proxy-pw',function(){cfg().reverseProxyPassword=this.value;saveSettingsDebounced();});
     $('#pt-prefill-toggle').on('change',function(){cfg().prefillEnabled=this.checked;saveSettingsDebounced();});
     $('#pt-prefill-text').on('input',function(){cfg().prefillText=this.value;saveSettingsDebounced();});
-    $('#pt-open-panel-btn').on('click', () => openPanel());
     $('#pt-clear-cache-btn').on('click', async () => {
         const { count, sizeStr } = getCacheStats();
         if (count === 0) {
@@ -4442,6 +4462,19 @@ export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
     bindConnection({doc:PDOC,cfg,save:saveSettingsDebounced,host:oai_settings,extensions:extension_settings,headers:getRequestHeaders,models:PROVIDER_MODELS,escape:esc,refresh:()=>{updateModelDropdown();buildParamsUI();applyProviderModeUI();updateStatusModel();}});
     updateModelDropdown();buildParamsUI();applyProviderModeUI();
 
+    dockPanel();
+    const drawerContent = PDOC.getElementById('pt-drawer-host').parentElement;
+    const drawerObserver = new MutationObserver(syncDrawerPages);
+    for (let ancestor = drawerContent; ancestor; ancestor = ancestor.parentElement) {
+        drawerObserver.observe(ancestor, {attributes:true, attributeFilter:['style','class']});
+    }
+    PDOC.querySelector('.pt-extension-settings .inline-drawer-toggle').addEventListener('click', () => {
+        setTimeout(() => {
+            dockPanel();
+            const panel = PDOC.getElementById('pt-panel');
+            if (panel.getClientRects().length) panel.dispatchEvent(new Event('pt:opened'));
+        }, 0);
+    });
     cfg().fabVisible=false; PDOC.getElementById('pt-fab')?.remove();
     console.log(`[${EXT}] loaded`);
     resolve();

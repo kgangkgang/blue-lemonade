@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "4.9.7";
+export const BUILD_VERSION = "4.9.8";
 export const FILE_HASHES = {
   "index.js": "11830:f722c908:4f65cd8d",
-  "manifest.json": "364:daee78c1:1ad236fa",
+  "manifest.json": "365:27beb8d8:450dcbf0",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "1966:af208084:30e4b912",
@@ -68,14 +68,15 @@ export const FILE_HASHES = {
   "src/addons/perf/switchguard.js": "5854:37f30f10:be046448",
   "src/addons/perf/watchdog-main.js": "8818:c159b5b9:3d62b82f",
   "src/addons/perf/watchdog.js": "13416:708a363a:f3a0887e",
+  "src/addons/prompt/cache-loading.js": "384:766f047d:4f5c117c",
   "src/addons/prompt/connection.js": "5387:1beaf574:f176abcd",
   "src/addons/prompt/current-connection.js": "2878:89e80a9b:052deb3c",
-  "src/addons/prompt/guide.js": "22330:89312a41:e0da8cfb",
-  "src/addons/prompt/index.js": "228747:9ea6ad48:e9e0eda5",
+  "src/addons/prompt/guide.js": "22785:670a36e0:038fdd16",
+  "src/addons/prompt/index.js": "230119:d38fc60e:9641d112",
   "src/addons/prompt/localization-ui.js": "3163:32c7baca:20f45fc6",
   "src/addons/prompt/regex-ui.js": "6773:8e66c330:0233b208",
-  "src/addons/prompt/settings-ui.js": "7752:d2ff0f48:fd8c48a0",
-  "src/addons/prompt/style.css": "40446:f70752fe:4351cd9c",
+  "src/addons/prompt/settings-ui.js": "7671:5fe44134:03cd53ed",
+  "src/addons/prompt/style.css": "41671:5e5c8c5c:8eecd79f",
   "src/addons/regexlink/engine.js": "6142:9c1c6944:113b5e9f",
   "src/addons/regexlink/index.js": "14829:c1f45022:3a7ce65e",
   "src/addons/regexlink/style.css": "1247:62915416:4c995bef",
@@ -180,7 +181,7 @@ export const FILE_HASHES = {
   "src/marquee.js": "4394:b21eba98:bf26831b",
   "src/menu-position.js": "3312:4d17612e:af7476d7",
   "src/mes-pins.js": "9110:58a88535:74b20064",
-  "src/notice-data.js": "98650:1c51148b:39ecb0c8",
+  "src/notice-data.js": "99143:13cce967:f6017ef9",
   "src/notice.js": "4506:dbb8f2a7:75e005f7",
   "src/notify-sw.js": "985:5f0777db:749f45cf",
   "src/numbers.js": "930:4be2a1fd:48f02c7b",
@@ -243,5 +244,5 @@ export const FILE_HASHES = {
   "src/weather.js": "29151:893fa4f6:d26e0a3b",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "22770:07c345df:f825c7fc",
-  "style.css": "854366:3e085e2d:a7b3c087"
+  "style.css": "854366:4b79b883:18c4c7fb"
 };

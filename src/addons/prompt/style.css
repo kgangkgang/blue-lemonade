@@ -260,7 +260,7 @@
 }
 #pt-panel{box-shadow:0 16px 70px #081a3a35;border:1px solid var(--pt-border)}
 #pt-panel-header h3{display:flex;align-items:center;gap:8px;flex-wrap:wrap;text-align:left}
-#pt-panel .pt-version,.pt-extension-settings .pt-version {
+#pt-panel .pt-version {
  display:inline-flex!important;align-items:center;justify-content:center;flex:0 0 auto!important;
  font:600 12px/1.4 var(--mainFontFamily,system-ui,sans-serif)!important;
  width:auto!important;min-width:54px;max-width:none!important;height:auto!important;min-height:32px;
@@ -339,3 +339,14 @@
 #pt-page-localization textarea{min-height:220px;width:100%;font-size:12px}
 #pt-tabs{overflow-x:auto}#pt-tabs .pt-tab{min-width:48px}
 @media(max-width:350px){#pt-tabs{grid-template-columns:repeat(3,minmax(0,1fr));}#pt-tabs .pt-tab{min-height:38px}}
+
+.pt-extension-settings .pt-drawer-version{display:inline-block;vertical-align:middle;margin-left:6px;padding:1px 8px;border:1px solid color-mix(in srgb,currentColor 16%,transparent);border-radius:99px;font-size:11px;font-weight:400;line-height:1.5;background:color-mix(in srgb,currentColor 5%,transparent);color:var(--salty-muted,var(--SmartThemeBodyColor));cursor:pointer}.pt-extension-settings .pt-drawer-version:focus-visible{outline:2px solid var(--salty-accent,#70a6df);outline-offset:2px}
+
+/* The extension drawer owns the same controls used by detailed settings. */
+#pt-panel.pt-in-drawer{position:relative;inset:auto;transform:none;width:100%;max-width:none;height:auto;max-height:none;min-width:0;z-index:auto;margin:8px 0;box-shadow:none;border-radius:12px}
+#pt-panel.pt-in-drawer #pt-panel-header h3,#pt-panel.pt-in-drawer #pt-panel-close{display:none}
+#pt-panel.pt-in-drawer #pt-panel-header{justify-content:flex-end;padding:5px 10px}
+#pt-panel.pt-in-drawer #pt-panel-content,#pt-panel.pt-in-drawer .pt-page{height:auto;overflow:visible;flex:none}
+#pt-panel.pt-in-drawer .pt-page-scroll{flex:none;max-height:65vh;overflow-y:auto}
+#pt-panel.pt-in-drawer .pt-settings-scroll{overflow:visible;max-height:none}
+#pt-drawer-host{min-width:0;width:100%}

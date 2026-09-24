@@ -60,15 +60,16 @@ export function installGuide({doc,cfg,save,openPanel,closePanel}) {
   if(dialog?.open)return;returnFocus=doc.activeElement;
   dialog=doc.createElement('dialog');dialog.className='pt-help-dialog';dialog.setAttribute('aria-label','한글화 패널 사용방법');
   dialog.innerHTML=`<header><div><small>BLUE LEMONADE</small><h2>한글화 패널 사용방법</h2></div><button type="button" aria-label="사용방법 닫기">×</button></header><nav role="tablist" aria-label="사용방법 주제">${groups.map(([name],i)=>`<button type="button" role="tab" id="pt-help-tab-${i}" aria-controls="pt-help-topic-${i}" aria-selected="${!i}" tabindex="${i?-1:0}" data-help-group="${i}">${name}</button>`).join('')}</nav><div class="pt-help-body">${groups.map(([,indices],i)=>`<section role="tabpanel" id="pt-help-topic-${i}" aria-labelledby="pt-help-tab-${i}" data-help-page="${i}" ${i?'hidden':''}>${i===0?'<p class="pt-help-lead">메뉴를 한글로 보고, 외국어 프롬프트와 정규식 이름을 번역하는 도구예요.</p>':''}${indices.map((n,j)=>`<details class="pt-help-chapter" ${j===0?'open':''}><summary>${chapters[n][0]}</summary><div>${chapters[n][1]}</div></details>`).join('')}</section>`).join('')}</div><footer><label class="pt-check"><input type="checkbox" data-help-inline ${cfg().blShowHelp!==false?'checked':''}><span>작업 화면에 보조 설명 표시</span></label><button type="button" class="pt-ui-button" data-help-start>패널 사용하기</button></footer>`;
+  dialog.addEventListener('click',event=>event.stopPropagation());
   doc.body.append(dialog);dialog.querySelector('header button').onclick=()=>dialog.close();
-  dialog.querySelector('[data-help-start]').onclick=()=>{dialog.close();openPanel();};
+  dialog.querySelector('[data-help-start]').onclick=()=>{dialog.close();if(panel.classList.contains('pt-in-drawer')){const content=panel.closest('.inline-drawer-content');if(!content.getClientRects().length)content.parentElement.querySelector('.inline-drawer-toggle').click();}else openPanel();};
   dialog.querySelector('[data-help-inline]').onchange=event=>{cfg().blShowHelp=event.target.checked;save();syncHelp();};
   const nav=dialog.querySelector('nav');keyboardTabs(nav);
   nav.querySelectorAll('button').forEach(button=>button.onclick=()=>{for(const tab of nav.children){const on=tab===button;tab.setAttribute('aria-selected',String(on));tab.tabIndex=on?0:-1;}for(const page of dialog.querySelectorAll('[data-help-page]'))page.hidden=page.dataset.helpPage!==button.dataset.helpGroup;dialog.querySelector('.pt-help-body').scrollTop=0;});
   dialog.addEventListener('close',()=>{dialog.remove();dialog=null;if(returnFocus?.isConnected)returnFocus.focus();},{once:true});
   dialog.showModal();cfg().blIntroSeen110=true;save();
  }
- doc.querySelectorAll('[data-pt-guide]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();showGuide();}));
+ doc.querySelectorAll('[data-pt-guide]').forEach(button=>{button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();showGuide();});if(button.tagName!=='BUTTON')button.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();showGuide();}});});
  panel.addEventListener('pt:opened',()=>{if(!cfg().blIntroSeen110)showGuide();});
  panel.addEventListener('keydown',event=>{if(event.key==='Escape'&&!dialog?.open){event.stopPropagation();closePanel();}});
  activate('localization');
