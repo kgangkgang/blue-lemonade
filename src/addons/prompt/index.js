@@ -3309,11 +3309,13 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
                 <button class="pt-btn pt-btn-secondary" id="${idPfx}-load"> 로드</button>
                 <div class="pt-export-group">
                     <button class="pt-btn-icon" id="${idPfx}-apply" title="${kind === 'wi' ? '월드인포에 즉시 적용' : kind === 'char' ? '봇카드에 즉시 적용' : '프리셋에 즉시 적용'}"><i class="fa-solid fa-bolt"></i></button>
+                    <details class="pt-more-actions"><summary><i class="fa-solid fa-ellipsis" aria-hidden="true"></i> 더보기</summary><div class="pt-more-actions-body">
                     <button class="pt-btn-icon" id="${idPfx}-copy" title="복사"><i class="fa-solid fa-copy" aria-hidden="true"></i><span>복사</span></button>
                     <button class="pt-btn-icon" id="${idPfx}-txt" title="TXT 내보내기"><i class="fa-solid fa-file-lines" aria-hidden="true"></i><span>TXT</span></button>
                     <button class="pt-btn-icon" id="${idPfx}-json" title="JSON 내보내기"><i class="fa-solid fa-file-code" aria-hidden="true"></i><span>JSON</span></button>
                     ${kind === 'char' ? '' : `<button class="pt-btn-icon" id="${idPfx}-tm" title="번역 메모리"><i class="fa-solid fa-box-archive" aria-hidden="true"></i><span>번역 기록</span></button>
                     <input type="file" id="${idPfx}-tmfile" accept="application/json,.json" style="display:none;">`}
+                    </div></details>
                 </div>
             </div>
             <div class="pt-progress-wrap" id="${idPfx}-prog">

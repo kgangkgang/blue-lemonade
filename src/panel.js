@@ -51,7 +51,7 @@ const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 // 2.7.0: 글꼴 탭을 글자 탭에 합침 — 역할(본문 · 대사 · 메뉴 · 속마음 · 강조 · 코드)마다 한 화면에서 글꼴 · 크기 · 굵기 · 자간을 다 만짐
 const TABS = [['theme', '테마'], ['text', '글자'], ['chat', '채팅'], ['image', '이미지'], ['prompt', '프롬프트'], ['extensions', '확장']];
 const SUBS = {
-    theme: [['palette', '색'], ['colors', '색 고치기'], ['styles', '스타일'], ['changes', '변경한 설정'], ['backup', '백업'], ['update', '업데이트']],
+    theme: [['palette', '색'], ['colors', '색 고치기'], ['styles', '스타일'], ['changes', '변경한 설정'], ['backup', '백업'], ['update', '업데이트'], ['etc', '기타 설정']],
     text: [['text', '본문'], ['dialogue', '대사'], ['ui', '메뉴'], ['em', '속마음'], ['strong', '강조'], ['code', '코드'], ['para', '문단'], ['shadow', '그림자 · 외곽선']],
     chat: [['message', '메시지'], ['profile', '캐릭터 프로필'], ['user-profile', '내 프로필'], ['name', '캐릭터 이름·시간'], ['user-name', '내 이름·시간'], ['screen', '화면'], ['etc', '기타']],
     image: [['layout', '배치'], ['shape', '모양'], ['frame', '테두리'], ['size', '크기'], ['fade', '흐림']],
@@ -866,6 +866,7 @@ function fontBlock(s, slot) {
 
 // ───────── 테마 ─────────
 function tabTheme(s, sub) {
+    if(sub==='etc')return `<details class="bl-usage-mode"><summary>사용 모드: <strong>${({both:'테마 + 확장',theme:'테마만',extensions:'확장만'})[usageMode(s)]}</strong></summary><div class="bl-usage-mode-body"><label>사용 모드<select data-usage-mode aria-label="사용 모드">${[['both','테마 + 확장'],['theme','테마만'],['extensions','확장만']].map(([v,label])=>`<option value="${v}" ${usageMode(s)===v?'selected':''}>${label}</option>`).join('')}</select></label><p>선택한 모드만 실행해요. 기존 설정은 보관해요.</p><button type="button" class="salty-btn" data-usage-apply>저장하고 새로고침</button><span role="status" data-usage-status></span></div></details>`;
     if(sub==='update')return updateMarkup()+healthMarkup();
     if (sub === 'changes') return settingsChanges(s);
     if (sub === 'custom') return customBuilder(s);
@@ -1400,7 +1401,7 @@ function weatherSeg(s) {
 
 // ───────── 프롬프트 (3.4.0) ─────────
 // 프리셋마다 한 칸. 지금은 데우스 엑스 마키나 — 호환을 켜야 카드 표본 · 카드 설정 · 트래커 설정이 보이고 적용된다
-function tabExtensions(s, sub) { if(!addonsEnabled(s))return '<p class="salty-note">현재 사용 모드에서는 내장 확장을 실행하지 않아요. 설정 선택 메뉴의 사용 모드에서 테마 + 확장 또는 확장만을 고르면 저장한 설정으로 다시 사용할 수 있어요.</p>';  if(sub==='scripts')sub='prompt'; return addonMarkup(s,sub) + (['words','capture'].includes(sub) && s.addons[sub] ? wordToolsMarkup(s,sub) : ''); }
+function tabExtensions(s, sub) { if(!addonsEnabled(s))return '<p class="salty-note">현재 사용 모드에서는 내장 확장을 실행하지 않아요. 테마 → 기타 설정 → 사용 모드에서 테마 + 확장 또는 확장만을 고르면 저장한 설정으로 다시 사용할 수 있어요.</p>';  if(sub==='scripts')sub='prompt'; return addonMarkup(s,sub) + (['words','capture'].includes(sub) && s.addons[sub] ? wordToolsMarkup(s,sub) : ''); }
 
 function tabPrompt(s) {
     const on = !!s.deus?.on;
@@ -1636,16 +1637,16 @@ function render(root) {
         <section class="salty-sec" data-tab="${ui.tab}" data-sub="${sub}">${section}</section>
         <div class="bl-editor-catalog" role="dialog" aria-modal="true" aria-label="설정 선택 목록" ${root._catalogOpen ? '' : 'hidden'}>
             <button type="button" class="bl-editor-scrim" data-act="editor-catalog-close" aria-label="설정 선택 닫기"></button>
-            <div class="bl-editor-directory"><div class="bl-editor-directory-head"><b>설정 선택</b><button type="button" data-act="editor-catalog-close" aria-label="설정 선택 닫기">×</button></div>${searchMarkup(root._settingsQuery || '')}<div class="bl-editor-directory-list"><div class="bl-usage-mode"><label>사용 모드<select data-usage-mode aria-label="사용 모드">${[['both','테마 + 확장'],['theme','테마만'],['extensions','확장만']].map(([v,label])=>`<option value="${v}" ${usageMode(s)===v?'selected':''}>${label}</option>`).join('')}</select></label><p>선택한 모드만 실행해요. 기존 설정은 보관해요.</p><button type="button" class="salty-btn" data-usage-apply>저장하고 새로고침</button><span role="status" data-usage-status></span></div>${catalog}${head}${s.activeStyle ? '<p class="salty-note">캐릭터 스타일 적용 중</p>' : ''}<div class="salty-checks">${issues.map((issue, i) => `<div class="salty-check"><span>${issue.text}</span>${issue.fix ? `<button class="salty-btn" data-act="fix" data-i="${i}">${issue.fix}</button>` : ''}</div>`).join('')}</div></div></div>
+            <div class="bl-editor-directory"><div class="bl-editor-directory-head"><b>설정 선택</b><button type="button" data-act="editor-catalog-close" aria-label="설정 선택 닫기">×</button></div>${searchMarkup(root._settingsQuery || '')}<div class="bl-editor-directory-list">${catalog}${head}${s.activeStyle ? '<p class="salty-note">캐릭터 스타일 적용 중</p>' : ''}<div class="salty-checks">${issues.map((issue, i) => `<div class="salty-check"><span>${issue.text}</span>${issue.fix ? `<button class="salty-btn" data-act="fix" data-i="${i}">${issue.fix}</button>` : ''}</div>`).join('')}</div></div></div>
         </div>`;
     arrangeEditor(root, `${ui.tab}/${sub}`, subLabel);
     root.querySelector('.bl-editor-directory-list').insertAdjacentHTML('afterbegin',favoritesMarkup({tab:ui.tab,sub,title:subLabel}));
-    root.querySelector('[data-usage-apply]').onclick=async(event)=>{
+    root.querySelector('[data-usage-apply]')?.addEventListener('click',async(event)=>{
         const button=event.currentTarget, status=root.querySelector('[data-usage-status]');
         button.disabled=true;status.textContent='설정을 저장하고 있어요…';
         const previous=s.usageMode;s.usageMode=root.querySelector('[data-usage-mode]').value;
         try{await saveAddonsNow();location.reload();}catch(error){s.usageMode=previous;status.textContent=error.message;button.disabled=false;}
-    };
+    });
     bindCustomBuilder(root);
     paintSettingsSearch(root);
     fillPreviews(root); // 미리보기 무대 다시 꽂기 (만들지 않고 옮겨 담기만)

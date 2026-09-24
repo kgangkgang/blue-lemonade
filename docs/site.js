@@ -5,7 +5,7 @@ const topics = [
   "id": "new498",
   "label": "새 기능",
   "title": "내장하면서 달라진 부분",
-  "sub": "한글화 패널 4.9.9 · LLM·메뉴·사용 모드 4.9.8 실제 조작 화면 · 기본 기능은 원본 안내도 함께 참고하세요.",
+  "sub": "한글화 패널 4.9.9 · LLM·메뉴·사용 모드 4.9.8 실제 조작 화면 · 5.0.0에서는 목록·작업 버튼을 더 간결하게 정리하고 사용 모드를 테마 → 기타 설정으로 옮겼어요.",
   "tall": true,
   "cards": [
     [
@@ -647,7 +647,7 @@ lightbox.querySelector('.close').onclick=()=>lightbox.close();lightbox.onclick=e
  dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});
  dialog.addEventListener('close',()=>{video.pause();video.removeAttribute('src');delete video.dataset.modeBase;video.load();});}
 const SHOWN_NOTES=3;
-fetch('release-notes.json?v=499', {cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error('notes');return r.json();}).then(notes=>{$('#notes').replaceChildren();
+fetch('release-notes.json?v=4910', {cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error('notes');return r.json();}).then(notes=>{$('#notes').replaceChildren();
   // one card per day, like the theme's own notice: a busy day reads as "v4.1.2 ~ v4.2.4 · 업데이트 13번"
   const days=[];for(const note of notes){const last=days.at(-1);if(last&&last.date===note.date)last.notes.push(note);else days.push({date:note.date,notes:[note]});}
   days.forEach((day,i)=>{const d=element('details','note');d.open=i===0;d.hidden=i>=SHOWN_NOTES;const s=element('summary'),first=day.notes.at(-1).version,latest=day.notes[0].version;

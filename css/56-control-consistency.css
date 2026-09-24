@@ -94,7 +94,7 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
 .salty-panel .bl-health-versions dt { font-size:12px; color:var(--salty-muted); }
 .salty-panel .bl-health-versions dd { margin:0; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
 
-.salty-panel .bl-usage-mode { display:grid; gap:10px; padding:12px; margin:0 0 14px; border:1px solid var(--salty-line); border-radius:10px; }
+.salty-panel .bl-usage-mode { display:block; padding:12px; margin:0 0 14px; border:1px solid var(--salty-line); border-radius:10px; }
 .salty-panel .bl-usage-mode label { display:grid; gap:8px; font-weight:600; }
 .salty-panel .bl-usage-mode select { width:100%; min-width:0; min-height:44px; font:inherit; }
 .salty-panel .bl-usage-mode p { margin:0; color:var(--salty-muted); font-size:12px; line-height:1.6; }
@@ -103,3 +103,7 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
 
 .salty-panel .bl-prompt-source { margin:4px 0 14px; color:var(--salty-muted); font-size:12px; line-height:1.7; }
 .salty-panel .bl-prompt-source a { color:var(--salty-accent); text-underline-offset:3px; }
+
+.salty-panel .bl-usage-mode summary { cursor:pointer; min-height:32px; line-height:1.7; font-size:14px; }
+.salty-panel .bl-usage-mode summary strong { font-weight:600; }
+.salty-panel .bl-usage-mode-body { display:grid; gap:12px; padding-top:16px; }
