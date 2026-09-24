@@ -74,7 +74,8 @@ function modelOptions(source) {
     if (selector) document.querySelectorAll(`${selector} option`).forEach(o => { if (o.value) names.add(o.value); });
     if (source === 'custom') {
         const lists = [extension_settings['llm-translator-custom']?.custom_model_lists, extension_settings.memoria?.direct?.customModelLists, extension_settings.ban_word_rewrite?.customModelLists];
-        for (const byUrl of lists) for (const entry of Object.values(byUrl || {})) for (const name of entry?.models || []) names.add(String(name));
+        lists.push(extension_settings['prompt-panel']?.customModelLists);
+        for (const byUrl of lists) for (const entry of Object.values(byUrl || {})) for (const name of (Array.isArray(entry) ? entry : entry?.models) || []) names.add(String(name));
     }
     for (const target of listTargets()) { try { const now = target.read(); if (now?.source === source && now.model) names.add(now.model); } catch { /* 읽지 못한 대상 */ } }
     return [...names].slice(0, 400);

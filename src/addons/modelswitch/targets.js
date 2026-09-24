@@ -19,6 +19,7 @@ function ownObject(parent, key, fallback) {
 
 const translator = {
     id: 'translator', name: '번역', folder: 'llm-translator-custom', sources: NARROW,
+    builtin: () => !!extension_settings.salty?.addons?.translator,
     settings: () => extension_settings['llm-translator-custom'],
     read() {
         const s = this.settings();
@@ -95,8 +96,25 @@ const memory = {
     },
 };
 
-const KNOWN = [translator, memory, rewrite];
-const KNOWN_KEYS = new Set(['llm-translator-custom', 'memoria', 'ban_word_rewrite', 'model_switch', 'model_register', 'salty']);
+const prompt = {
+    id: 'prompt', name: '한글화 패널', folder: 'prompt-panel',
+    sources: [...NARROW, 'mistralai', 'groq', 'xai', 'zai'],
+    builtin: () => !!extension_settings.salty?.addons?.prompt,
+    settings: () => extension_settings['prompt-panel'],
+    read() {
+        const s = this.settings();
+        if (s.connectionMode !== 'direct') return { follow: s.connectionMode === 'profile' ? '연결 프로필' : '지금 연결' };
+        return { source: fromGoogle(s.provider), model: s.model === '__custom__' ? s.customModelName || '' : s.model || '', url: s.provider === 'custom' ? s.customUrl || '' : '' };
+    },
+    apply({ source, model, url }) {
+        const s = this.settings();
+        s.connectionMode = 'direct'; s.provider = toGoogle(source); s.model = model;
+        if (source === 'custom' && url) s.customUrl = url;
+        window.dispatchEvent(new Event('bl:prompt-connection-changed'));
+    },
+};
+const KNOWN = [translator, prompt, memory, rewrite];
+const KNOWN_KEYS = new Set(['llm-translator-custom', 'prompt-panel', 'memoria', 'ban_word_rewrite', 'model_switch', 'model_register', 'salty']);
 const registered = new Map();
 
 /** 다른 확장이 스스로 등록하는 길: globalThis[Symbol.for('st.model-switch.v1')].register({ id, name, read, apply, sources? }) */
@@ -151,7 +169,7 @@ function detected() {
                     if (provider === 'custom' && url && urlKey) node[urlKey] = url;
                 },
             });
-            break; // 확장 하나에 한 군데만
+            // An extension may have several independent model connections.
         }
     }
     return out;

@@ -12,6 +12,7 @@
 // 1.0.3: 장기 기억은 모델 전환이 쓰는 칸(연결 방식 · 공급자 · 모델 · 주소)만 — 'direct.' 전체를 잡아
 // 온도 · 리버스 프록시까지 막혔는데, 모델 전환 창엔 그 칸이 없어 고칠 길이 없었다. style.css 와 같은 목록.
 const CONTROLS = {
+    prompt: '#pt-connection-mode, #pt-provider, #pt-model-select, #pt-model-custom, #pt-custom-url, #pt-fetch-models, #pt-import-llm',
     translator: '#llm_connection_mode, #llm_provider, #llm_model, #llm_custom_model, #llm_custom_url, #llm_custom_fetch_models',
     rewrite: '#bwr_connection .bwr_seg, #bwr_provider, #bwr_model, #bwr_custom_model, #bwr_custom_url, #bwr_fetch_models, #bwr_import_translator',
     memory: '.lm-root [data-set-radio="apiMode"], .lm-root [data-set="direct.source"], .lm-root [data-set^="direct.models."], .lm-root [data-set^="direct.customModels."], .lm-root [data-set="direct.customUrl"]',

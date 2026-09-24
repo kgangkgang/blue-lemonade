@@ -4487,3 +4487,13 @@ export function mountInline(host){
  const text=document.createElement('p');text.className='salty-note';text.textContent='프리셋·월드인포·봇카드를 한 화면에서 읽고 번역해요. 버전 버튼에서 사용방법을 볼 수 있어요.';
  const button=document.createElement('button');button.type='button';button.className='salty-btn';button.textContent='한글화 패널 열기';button.onclick=openPanel;host.replaceChildren(text,button);return()=>host.replaceChildren();
 }
+
+// Model switch changes the shared config without triggering provider defaults.
+window.addEventListener('bl:prompt-connection-changed', () => {
+    if (!extension_settings || !document.getElementById('pt-provider')) return;
+    const c = cfg();
+    document.getElementById('pt-provider').value = c.provider;
+    document.getElementById('pt-connection-mode').value = c.connectionMode;
+    document.getElementById('pt-custom-url').value = c.customUrl || '';
+    updateModelDropdown(); buildParamsUI(); applyProviderModeUI(); updateStatusModel();
+});

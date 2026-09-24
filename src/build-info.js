@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.0.2";
+export const BUILD_VERSION = "5.0.3";
 export const FILE_HASHES = {
   "index.js": "11830:f722c908:4f65cd8d",
-  "manifest.json": "365:f1d14812:c8ac1955",
+  "manifest.json": "365:f4867c01:606ff989",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "1966:af208084:30e4b912",
@@ -32,11 +32,11 @@ export const FILE_HASHES = {
   "src/addons/models/sources.js": "5251:0e71e325:8b5932b3",
   "src/addons/models/state.js": "4785:384b9a3f:46b7bb10",
   "src/addons/models/style.css": "2819:b0104d1d:d2a8f98d",
-  "src/addons/modelswitch/index.js": "17700:155169f6:c43a667b",
-  "src/addons/modelswitch/lock.js": "4429:e65fcff0:48efe3a1",
+  "src/addons/modelswitch/index.js": "17807:f9d51c84:6c0e753d",
+  "src/addons/modelswitch/lock.js": "4564:5b4b3227:e596adc5",
   "src/addons/modelswitch/menu.js": "819:eb7385ea:1e0e2e70",
-  "src/addons/modelswitch/style.css": "4768:1a184f12:c230f0d3",
-  "src/addons/modelswitch/targets.js": "9775:5e261550:88854c0c",
+  "src/addons/modelswitch/style.css": "4973:7297deae:645e714f",
+  "src/addons/modelswitch/targets.js": "10821:cd0bd390:76f322dc",
   "src/addons/order/menus.js": "5942:355c720a:2aac3af1",
   "src/addons/order/order.js": "13046:ee20ae3e:5e2ed079",
   "src/addons/order/panel.js": "10064:19d7d118:1246a46b",
@@ -72,7 +72,7 @@ export const FILE_HASHES = {
   "src/addons/prompt/connection.js": "5387:1beaf574:f176abcd",
   "src/addons/prompt/current-connection.js": "2878:89e80a9b:052deb3c",
   "src/addons/prompt/guide.js": "23246:61d0571c:fe2a5b49",
-  "src/addons/prompt/index.js": "230465:9f0c1399:acd86bf3",
+  "src/addons/prompt/index.js": "231014:582e0f8a:af04efa2",
   "src/addons/prompt/localization-ui.js": "3163:32c7baca:20f45fc6",
   "src/addons/prompt/regex-ui.js": "6773:8e66c330:0233b208",
   "src/addons/prompt/settings-ui.js": "7671:5fe44134:03cd53ed",
@@ -182,7 +182,7 @@ export const FILE_HASHES = {
   "src/marquee.js": "4394:b21eba98:bf26831b",
   "src/menu-position.js": "3312:4d17612e:af7476d7",
   "src/mes-pins.js": "9110:58a88535:74b20064",
-  "src/notice-data.js": "100747:9fbbe3c7:ed96abb2",
+  "src/notice-data.js": "100961:7bc1e70f:fddfec67",
   "src/notice.js": "4506:dbb8f2a7:75e005f7",
   "src/notify-sw.js": "985:5f0777db:749f45cf",
   "src/numbers.js": "930:4be2a1fd:48f02c7b",
@@ -245,5 +245,5 @@ export const FILE_HASHES = {
   "src/weather.js": "29151:893fa4f6:d26e0a3b",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "22770:07c345df:f825c7fc",
-  "style.css": "854606:aaf1525d:c8f10f46"
+  "style.css": "854606:33895a89:c5cfb5fd"
 };
