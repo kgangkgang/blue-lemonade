@@ -45,8 +45,8 @@ export function syncTypography(on) {
     typesetRoot(document);
     const chat=document.getElementById('chat');if(!chat)return;
     // 4.7.8: 답이 오는 동안(body[data-generating]) 그 메시지는 걸음마다 다시 그려지므로 조판해 봐야 다음 걸음에 사라진다 —
-    // 더러워진 것으로만 적어 두고 답이 끝나면(생성 표시가 사라지면) 한 번에 조판한다. 폰 리그 답 하나에 96ms@4x 였다.
-    const flush=()=>{timer=0;if(document.body.dataset.generating==='true'){timer=setTimeout(flush,400);return;}for(const root of dirty)if(root?.isConnected)typesetRoot(root);dirty.clear();};
+    // 생성 중에는 표시줄 뒤 빈 줄만 정리하고, 나머지 조판은 답이 끝나면 한 번에 처리한다.
+    const flush=()=>{timer=0;if(document.body.dataset.generating==='true'){for(const root of dirty)if(root?.isConnected)normalizeTrackerSpacing(root);timer=setTimeout(flush,400);return;}for(const root of dirty)if(root?.isConnected)typesetRoot(root);dirty.clear();};
     observer=new MutationObserver(records=>{
         for(const record of records){
             const element=record.target.nodeType===1?record.target:record.target.parentElement;
