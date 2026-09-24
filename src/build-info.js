@@ -1,12 +1,12 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.1.1";
+export const BUILD_VERSION = "5.1.2";
 export const FILE_HASHES = {
   "index.js": "11830:f722c908:4f65cd8d",
-  "manifest.json": "365:e1662cd0:81c80bb8",
+  "manifest.json": "365:3ef0d105:fa2e0f10",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "1966:af208084:30e4b912",
-  "src/addons.js": "22683:3fddd79b:538689de",
+  "src/addons.js": "24104:c5a56155:d9e53ada",
   "src/addons/assets/assets.js": "11448:ad987b0f:3126a78c",
   "src/addons/assets/image-format.js": "2669:0698443f:584b41bf",
   "src/addons/assets/index.js": "10358:78856b68:7eea5035",
@@ -200,7 +200,7 @@ export const FILE_HASHES = {
   "src/marquee.js": "4394:b21eba98:bf26831b",
   "src/menu-position.js": "3312:4d17612e:af7476d7",
   "src/mes-pins.js": "9110:58a88535:74b20064",
-  "src/notice-data.js": "103465:8635a67b:f245cf7d",
+  "src/notice-data.js": "103800:92f47a21:cf63097c",
   "src/notice.js": "4623:c387a90d:e051d1f2",
   "src/notify-sw.js": "985:5f0777db:749f45cf",
   "src/numbers.js": "930:4be2a1fd:48f02c7b",
@@ -263,5 +263,5 @@ export const FILE_HASHES = {
   "src/weather.js": "29151:893fa4f6:d26e0a3b",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "22770:07c345df:f825c7fc",
-  "style.css": "854979:1a228901:60294bf7"
+  "style.css": "856161:9615032b:eeb0c86b"
 };

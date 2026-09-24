@@ -1,13 +1,20 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.1.1.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.1.2.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.1.1 · 최신 업데이트</summary>
+<summary>5.1.2 · 최신 업데이트</summary>
+
+- 원작자가 있는 내장 확장(전개 지시·캐릭터 에셋·LLM 번역·한글화 패널·커스텀 CSS 조절)의 세부 설정 화면 맨 아래에 원작자와 출처 링크를 엔딩 크레딧처럼 작게 적었어요. 전체 출처는 버전 옆 ⓒ와 같아요.
+
+</details>
+
+<details>
+<summary>5.1.1 · 전개 지시 내장</summary>
 
 - 전개 지시를 내장했어요. 확장 → 전개 지시에서 켜고 새로고침한 뒤 입력창 깃털 버튼에 다음 이야기의 방향을 적어요.
 - 기존 개조본의 내용·프롬프트·깊이·색 설정을 이어 써요. 원본 저장소와 수정본 업로드 허락 게시글을 출처 안내에 추가했어요.
