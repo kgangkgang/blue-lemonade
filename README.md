@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.0.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.0.9.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.0.8 · 최신 업데이트</summary>
+<summary>5.0.9 · 최신 업데이트</summary>
+
+- LLM 번역이 문단마다 요청하던 방식을 고쳤어요. 첫 번역과 수정한 문단들을 묶어서 보내고, 번역 프롬프트도 묶음당 한 번만 보내요.
+- 문단 캐시는 유지해요. 긴 글만 응답 길이에 맞춰 나누고, 응답의 문단 번호가 맞지 않으면 잘못 적용하지 않아요.
+
+</details>
+
+<details>
+<summary>5.0.8 · 버전 표시</summary>
 
 - 확장 제목 옆 버전이 브라우저 캐시 때문에 예전 값으로 남을 수 있던 문제를 고쳤어요. 업데이트 후 새로고침하면 최신 설치 버전을 확인해요.
 

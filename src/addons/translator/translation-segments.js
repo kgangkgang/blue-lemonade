@@ -74,30 +74,70 @@ export function segmentParagraphs(text) {
     return parts.length <= 161 ? parts : null;
 }
 
+export function batchGroups(bodies, limit = 3600) {
+    const groups = []; let group = [], size = 0;
+    for (const body of bodies) {
+        if (group.length && size + body.length > limit) { groups.push(group); group = []; size = 0; }
+        group.push(body); size += body.length;
+    }
+    if (group.length) groups.push(group);
+    return groups;
+}
+
+// Exact IDs keep model output from being attached to the wrong paragraph.
+export function batchPayload(bodies) {
+    return '[Translate each text below using the translation instructions above. Return ONLY a JSON array of objects with exactly id and text. Keep every numeric id unchanged, translate its text completely, preserve markup/placeholders, and do not merge or split entries.]\n' +
+        JSON.stringify(bodies.map((text, id) => ({ id, text })));
+}
+export function parseBatchResult(raw, count) {
+    let value;
+    try { value = JSON.parse(String(raw).trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')); } catch { /* validated below */ }
+    const fail = () => { throw Error('문단 번호나 응답 형식이 맞지 않아 번역을 적용하지 않았어요. 다시 시도해 주세요.'); };
+    if (!Array.isArray(value) || value.length !== count) return fail();
+    const found = new Map();
+    for (const row of value) {
+        if (!row || !Number.isInteger(row.id) || row.id < 0 || row.id >= count || found.has(row.id) || typeof row.text !== 'string' || !row.text.trim()) return fail();
+        found.set(row.id, row.text);
+    }
+    return Array.from({length: count}, (_, id) => found.get(id));
+}
 export async function translateSegments({ parts, signature, request, check = () => {}, progress = () => {}, cacheable = () => true, blockedMarker }) {
-    const stamp = epoch, output = [], total = Math.ceil(parts.length / 2);
+    const stamp = epoch, output = [...parts], total = Math.ceil(parts.length / 2), missing = new Map();
     let reused = 0, translated = 0, blocked = 0;
-    for (let i = 0; i < parts.length; i++) {
+    for (let i = 0; i < parts.length; i += 2) {
         check();
         const body = parts[i];
-        if (i % 2 || !body.trim() || /^(\s*\[\[__VAR_\d+__\]\]\s*)+$/.test(body)) { output.push(body); continue; }
+        if (!body.trim() || /^(\s*\[\[__VAR_\d+__\]\]\s*)+$/.test(body)) continue;
         const key = await checkpointKey(JSON.stringify(['paragraph-v1', signature(body), body]));
         const saved = await read(key);
         check();
-        progress({ stage: 'segments', done: Math.floor(i / 2), total, reused, translated });
-        if (typeof saved === 'string') { output.push(saved); reused++; continue; }
-        let result;
-        try { result = await request(body); }
+        if (typeof saved === 'string') { output[i] = saved; reused++; continue; }
+        if (!missing.has(key)) missing.set(key, { key, body, indices: [] });
+        missing.get(key).indices.push(i);
+    }
+    const pending = [...missing.values()];
+    progress({ stage: 'segments', done: reused, total, reused, translated, pending: pending.length });
+    if (pending.length) {
+        let results;
+        try { results = await request(pending.map(row => row.body)); }
         catch (error) {
             if (!error?.refused || !blockedMarker) throw error;
-            check(); blocked++; output.push(`${blockedMarker}\n${body}`); continue;
+            check();
+            for (const row of pending) for (const i of row.indices) { output[i] = `${blockedMarker}\n${row.body}`; blocked++; }
         }
         check();
-        if (typeof result !== 'string' || !result.trim()) throw Error('빈 문단 번역은 저장하지 않았어요.');
-        if (epoch === stamp && cacheable(body, result)) await write(key, result, stamp);
-        output.push(result); translated++;
+        if (results) {
+            // Validate the entire batch before persisting any part.
+            if (!Array.isArray(results) || results.length !== pending.length || results.some(text => typeof text !== 'string' || !text.trim())) throw Error('문단 번역 응답이 맞지 않아 저장하지 않았어요.');
+            for (let n = 0; n < pending.length; n++) {
+                check();
+                const row = pending[n], result = results[n];
+                if (epoch === stamp && cacheable(row.body, result)) await write(row.key, result, stamp);
+                for (const i of row.indices) { output[i] = result; translated++; }
+            }
+        } else if (!blocked) throw Error('빈 번역 응답은 저장하지 않았어요.');
     }
     check();
-    progress({ stage: 'segments', done: total, total, reused, translated });
+    progress({ stage: 'segments', done: total, total, reused, translated, pending: 0 });
     return { text: output.join(''), reused, translated, blocked, total };
 }

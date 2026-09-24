@@ -1,7 +1,7 @@
 // Modified 2026-09-24: Blue Lemonade bundled adapter; original settings and translation DB retained.
 import { createGuards, watchGuard } from './translation-guard.js';
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
-import { segmentParagraphs, translateSegments, clearSegmentCache } from './translation-segments.js';
+import { segmentParagraphs, translateSegments, clearSegmentCache, batchPayload, parseBatchResult, batchGroups } from './translation-segments.js';
 import { syncSelectionRetranslate } from './selection/index.js';
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
@@ -1760,16 +1760,28 @@ async function translate(text, options = {}) {
                     const marks = value => JSON.stringify(value.match(/\[\[__VAR_\d+__\]\]/g) || []);
                     return marks(body) === marks(out) && !linesWithKana(out).length;
                 },
-                request: async body => {
-                    let out = tidyKana(await callWithLayouts(body, PROMPT_LAYOUTS));
-                    const lines = linesWithKana(out);
+                request: async bodies => {
+                    const translated = [];
+                    for (const group of batchGroups(bodies, CHUNK_TARGET * 2)) {
+                        watcher.check();
+                        const payload = batchPayload(group);
+                        translated.push(...parseBatchResult(await callWithLayouts(payload, PROMPT_LAYOUTS), group.length).map(tidyKana));
+                    }
+                    // Any remaining Japanese is repaired in one additional request for the whole batch.
+                    const joined = translated.join('\n\n'), lines = linesWithKana(joined);
                     if (lines.length) {
                         try {
                             const fixed = await request(buildFullPrompt(0, KANA_FIX_NOTE + lines.map(([, line], i) => `${i + 1}. ${line}`).join('\n')));
-                            out = applyKanaFix(out, lines, fixed);
+                            const corrected = applyKanaFix(joined, lines, fixed).split('\n');
+                            let offset = 0;
+                            for (let i = 0; i < translated.length; i++) {
+                                const length = translated[i].split('\n').length;
+                                translated[i] = corrected.slice(offset, offset + length).join('\n');
+                                offset += length + 1;
+                            }
                         } catch (error) { if (error?.cancelled) throw error; }
                     }
-                    return out;
+                    return translated;
                 },
             });
             translatedText = result.text;
@@ -1883,7 +1895,7 @@ function progressBadge(messageId, message = null, sourceMes = message?.mes, chat
     const text = () => {
         const sec = Math.round((Date.now() - started) / 1000);
         if (stage.stage === 'chunks') return `${stage.resumed ? '이어 번역' : '번역 중'} · 문단 ${stage.done + 1}/${stage.total} · ${sec}초`;
-        if (stage.stage === 'segments') return `문단 ${Math.min(stage.done + 1, stage.total)}/${stage.total} · 캐시 ${stage.reused}개 · 새 번역 ${stage.translated}개 · ${sec}초`;
+        if (stage.stage === 'segments') return `캐시 ${stage.reused}개 · ${stage.pending ? `수정 문단 ${stage.pending}개 묶음 번역 중` : `새 번역 ${stage.translated}개`} · ${sec}초`;
         if (stage.stage === 'kana') return `번역 중 · 마무리 · ${sec}초`;
         return `번역 중 · ${sec}초`;
     };
