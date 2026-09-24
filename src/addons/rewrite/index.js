@@ -38,7 +38,7 @@ import { createSpanFinder } from './spans.js';
 import { PROVIDERS, applyModelRequestRules, isHttpUrl, modelIdsFrom, normalizeUrl, pruneModelLists, resolveModel } from './providers.js';
 import { capturedMessages, capturedRequest, holdGeneration, regenerateReply, replaceReply, visibleText, watchRequests, withTimeout } from './reroll.js';
 import { applyUpgrades } from './upgrades.js';
-import { startQuickBan } from './quick-ban.js';
+import { startQuickBan, setQuickBanEnabled } from './quick-ban.js';
 
 const VERSION = '1.9.2';
 const MODULE = 'ban_word_rewrite';
@@ -1511,6 +1511,8 @@ async function previewRewrite() {
 // ── Setup ─────────────────────────────────────────────
 
 function syncInputs() {
+    setQuickBanEnabled(settings.quickBan);
+    $('#bwr_quick_ban').prop('checked', settings.quickBan !== false);
     $('#bwr_enabled').prop('checked', settings.enabled);
     $('#bwr_notify').prop('checked', settings.notify);
     $('#bwr_skip_exempt').prop('checked', settings.skipExemptOnly);
@@ -1541,6 +1543,11 @@ function bindSettings() {
 
     bindCheckbox('#bwr_enabled', 'enabled');
     bindCheckbox('#bwr_notify', 'notify');
+    $('#bwr_quick_ban').on('change', function () {
+        settings.quickBan = this.checked;
+        setQuickBanEnabled(settings.quickBan);
+        saveSettingsDebounced();
+    });
     bindCheckbox('#bwr_skip_exempt', 'skipExemptOnly');
     bindNumber('#bwr_timeout', 'timeoutSec', 10, 600);
     bindNumber('#bwr_attempts', 'maxAttempts', 1, 5);
@@ -1679,7 +1686,7 @@ function start() {
         }),
         '답변 검사': () => eventSource.makeFirst(event_types.MESSAGE_RECEIVED, onMessageReceived),
         // 1.9.0 채팅에서 고른 낱말 옆의 금지 칩 (quick-ban.js)
-        '빠른 금지': () => startQuickBan(addQuickRule),
+        '빠른 금지': () => { setQuickBanEnabled(settings.quickBan); startQuickBan(addQuickRule); },
     });
     if (!EMBEDDED) ensureUi();
 }

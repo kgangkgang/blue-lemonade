@@ -22,6 +22,7 @@ const NOT_A_FRAME = String.raw`(?![- ](?:haired|eyed|skinned|hair|eyes?|skin|lig
 export const DEFAULT_SETTINGS = {
     enabled: true,
     notify: true,
+    quickBan: true,
     // 'current' = the model you chat with, 'direct' = provider/model picked here, 'profile' = a Connection Manager profile
     connection: 'current',
     profileId: '',

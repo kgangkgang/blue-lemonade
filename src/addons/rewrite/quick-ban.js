@@ -2,7 +2,7 @@
 // 설정 창을 열지 않고도 "이 말 그만"을 그 자리에서 — 규칙 이름 · 낱말은 고른 글 그대로, 설명은 core 가 프롬프트에 쓸 한 줄.
 // 선택은 브라우저에 맡긴다(폰은 길게 누르면 낱말이 골라진다): 우리는 selectionchange 만 듣고, 칩은 선택 아래에 둔다(안드로이드 선택 메뉴는 위에 뜬다).
 const MAX = 40;
-let chip = null, timer = 0, current = '', onAdd = null;
+let chip = null, timer = 0, current = '', onAdd = null, enabled = true, bound = false;
 
 function selectedText() {
     const selection = document.getSelection();
@@ -32,6 +32,7 @@ function show({ text, rect }) {
         chip.addEventListener('pointerdown', event => { event.preventDefault(); event.stopPropagation(); });
         chip.addEventListener('click', event => {
             event.preventDefault(); event.stopPropagation();
+            if (!enabled || !current) return;
             const word = current;
             hide();
             document.getSelection()?.removeAllRanges();
@@ -51,6 +52,7 @@ function show({ text, rect }) {
 }
 
 function check() {
+    if (!enabled) { hide(); return; }
     const found = selectedText();
     if (!found) { hide(); return; }
     // 편집 중인 글이나 입력칸 안의 선택은 아니다 (편집 칸은 .mes_text 가 아니라 textarea 라 위 검사에서 이미 빠진다)
@@ -60,8 +62,16 @@ function check() {
 /** 켠다. add(text) 는 규칙을 만들고 참/거짓(이미 있음)을 돌려준다. */
 export function startQuickBan(add) {
     onAdd = add;
-    document.addEventListener('selectionchange', () => { clearTimeout(timer); timer = setTimeout(check, 250); });
+    if (bound) return;
+    bound = true;
+    document.addEventListener('selectionchange', () => { clearTimeout(timer); if (enabled) timer = setTimeout(check, 250); });
     // 스크롤하면 위치가 어긋나므로 숨긴다 (다시 고르면 다시 뜬다)
     document.getElementById('chat')?.addEventListener('scroll', hide, { passive: true });
     window.addEventListener('resize', hide);
+}
+
+export function setQuickBanEnabled(value) {
+    enabled = value !== false;
+    clearTimeout(timer);
+    if (!enabled) hide();
 }
