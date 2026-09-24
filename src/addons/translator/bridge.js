@@ -1,19 +1,25 @@
 import { getSettings } from '../../settings.js';
-import { ready } from './index.js';
-export { ready };
+import { ready, duplicate } from './index.js';
+export { ready, duplicate };
 let root, anchor, dialog, owner = null;
-function settingsRoot() {
+function findRoot() {
     if (!root) {
         // The extension-order tool may lift this drawer out of its original holder.
-        root = document.querySelector('.translation_settings.llmt-settings');
-        if (!root) throw Error('번역 설정을 찾지 못했어요. 새로고침해 주세요.');
-        anchor = document.createComment('Blue Lemonade translator home');
+        const node = document.querySelector('.translation_settings.llmt-settings');
+        if (!node) return null; // index.html 을 못 받았을 때 (2.1.3 부터 치명적이지 않다)
+        root = node; anchor = document.createComment('Blue Lemonade translator home');
         root.before(anchor); root.dataset.blTranslator = 'true';
     }
     return root;
 }
+function settingsRoot() {
+    const node = findRoot();
+    if (!node) throw Error('번역 설정을 찾지 못했어요. 새로고침해 주세요.');
+    return node;
+}
 export function syncVisibility() {
-    const node = settingsRoot();
+    const node = findRoot();
+    if (!node) return;
     node.hidden = !owner && getSettings().addonUI.translatorDrawer === false;
 }
 function take(host) {

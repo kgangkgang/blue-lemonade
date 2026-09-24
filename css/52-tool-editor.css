@@ -105,9 +105,10 @@ html body .salty-panel .bl-tool-primary { color:var(--salty-text); border:1px so
 .bl-extension-page .bl-addon-embedded-layout { min-height:100%; box-sizing:border-box; }
 .bl-addon-credit { display:flex; flex-direction:column; align-items:center; gap:1px; margin:24px 0 0; padding:12px 8px 2px; border-top:1px dashed var(--salty-line); text-align:center; color:var(--salty-muted); font-size:10.5px; line-height:1.7; letter-spacing:.02em; overflow-wrap:anywhere; }
 .bl-addon-layout > .bl-addon-credit { margin-top:auto; }
-.bl-addon-credit a { color:inherit; text-decoration:underline dotted; text-underline-offset:3px; }
+/* 글자는 작게 두고 누르는 영역만 넓힌다 (폰 오탭 방지) — 5.1.3 */
+.bl-addon-credit a { display:inline-block; padding:7px 6px; margin:-5px 0; color:inherit; text-decoration:underline dotted; text-underline-offset:3px; }
 .bl-addon-credit a:hover,.bl-addon-credit a:focus-visible { color:var(--salty-text); }
-html body .bl-addon-credit-all { display:inline; min-height:0; margin:2px 0 0; padding:0; border:0; border-radius:0; box-shadow:none; background:transparent; color:inherit; font:inherit; letter-spacing:inherit; cursor:pointer; }
+html body .bl-addon-credit-all { display:inline-block; min-height:0; margin:-5px 0; padding:7px 6px; border:0; border-radius:0; box-shadow:none; background:transparent; color:inherit; font:inherit; letter-spacing:inherit; cursor:pointer; }
 html body .bl-addon-credit-all:hover,html body .bl-addon-credit-all:focus-visible { color:var(--salty-text); outline:none; }
 /* Desktop embeds the actual controls; mobile keeps the existing focused dialog. */
 .bl-addon-inline { display:none; }
@@ -123,6 +124,8 @@ html body .bl-addon-credit-all:hover,html body .bl-addon-credit-all:focus-visibl
 .bl-addon-inline-content .pa-hub-tab { flex:1 1 100px; min-width:0; white-space:normal; }
 @container bl-editor (min-width:720px) {
   .bl-extension-page .bl-addon-embedded-layout { grid-template-columns:minmax(240px,.75fr) minmax(0,1.25fr); }
+  /* 5.1.3 묶음 페이지(성능 보조·모델 관리)는 페이지가 overflow:hidden 이라 묶음 자체가 스크롤해야 한다 */
+  .bl-extension-page > .bl-addon-group { flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; padding-right:4px; }
   .bl-extension-page .bl-addon-embedded-layout { grid-template-rows:minmax(0,1fr) auto; min-height:0; }
   .bl-addon-embedded-layout > .bl-addon-credit { grid-column:1/-1; align-self:end; margin-top:0; }
   .bl-addon-inline { display:flex; }

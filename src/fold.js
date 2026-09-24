@@ -263,9 +263,26 @@ ${B}:focus-visible::before {
     if (target?.localName === 'details') sync(target);
   }
 
+  // 실리태번 문서의 변화는 채팅(#chat · .mes_text) 안의 것만 본다 (isTarget 과 같은 기준). iframe 문서는 채팅 속 것만 연결하므로 전부.
+  // 그 밖(설정 서랍 · 팝업)에서 온 변화는 새로 붙은 것이 메시지 본문을 품을 때(북마크 패널 · 앞뒤 문맥 창)만 본다.
+  function inChat(node) {
+    if (node.ownerDocument !== stDoc) return true;
+    const el = node.nodeType === 1 ? node : node.parentElement;
+    return !!el?.closest('#chat, .mes_text');
+  }
+
+  function bringsChat(record) {
+    if (record.type !== 'childList') return false;
+    for (const node of record.addedNodes) {
+      if (node.nodeType === 1 && (node.matches('#chat, .mes_text') || node.querySelector('#chat, .mes_text'))) return true;
+    }
+    return false;
+  }
+
   function onMutations(records) {
     if (!alive) return;
     for (const record of records) {
+      if (!inChat(record.target) && !bringsChat(record)) continue;
       // 열림/닫힘이 바뀌었거나, 칸 안에 새 내용이 붙어 버튼이 맨 아래가 아니게 된 경우
       if (record.target.localName === 'details') sync(record.target);
       if (record.type !== 'childList') continue;

@@ -4,10 +4,12 @@ self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
-    const url = event.notification.data?.url || self.location.origin + '/';
+    // 알림에 담긴 주소(실리태번 페이지)를 연다. 없으면 범위(…/blue-lemonade/src/)에서 다섯 단계 위인 실리태번 루트 — 하위 경로로 서비스해도 맞다
+    const root = new URL('../../../../../', self.registration.scope).href;
+    const url = event.notification.data?.url || root;
     event.waitUntil((async () => {
         const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-        const mine = all.find(client => client.url.startsWith(self.location.origin)) || all[0];
+        const mine = all.find(client => client.url === url) || all.find(client => client.url.startsWith(root)) || all[0];
         if (mine) { try { await mine.focus(); return; } catch { /* 초점을 못 주면 새로 연다 */ } }
         await self.clients.openWindow(url);
     })());

@@ -25,6 +25,7 @@ import {
     findRepeats,
     findSpans,
     mergeSpans,
+    parseEntries,
     prepareSpans,
     promptHasMarker,
     rerollUntil,
@@ -1695,7 +1696,9 @@ function start() {
 export function addQuickRule(text) {
     const word = String(text || '').replace(/\s+/g, ' ').trim();
     if (!word) return false;
-    const same = settings.rules.find(rule => String(rule.words || '').split('\n').map(w => w.trim().toLowerCase()).includes(word.toLowerCase()));
+    // 쉼표로 이어 쓴 줄도 낱말 단위로 견준다 (기본 규칙의 목록은 한 줄에 여러 낱말)
+    const wanted = word.toLowerCase();
+    const same = settings.rules.find(rule => parseEntries(rule.words).some(entry => 'word' in entry && entry.word.toLowerCase() === wanted));
     if (same) {
         toastr.info(`"${same.name || word}" 규칙에 이미 있어요`, TITLE);
         return false;

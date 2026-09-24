@@ -12,9 +12,10 @@ export async function restorePendingAddons() {
     } catch{return false;}
 }
 export function saveAddonsNow() {
-    const flags={...getSettings().addons},mode=getSettings().usageMode||'both',pending=JSON.stringify({flags,at:Date.now()});
-    try{if(key)sessionStorage.setItem(key,pending);}catch{/* Server persistence still works. */}
     queue=queue.catch(()=>{}).then(async()=>{
+        // Snapshot inside the queued task: a fast on→off toggle must compare the latest flags, not a stale copy.
+        const flags={...getSettings().addons},mode=getSettings().usageMode||'both',pending=JSON.stringify({flags,at:Date.now()});
+        try{if(key)sessionStorage.setItem(key,pending);}catch{/* Server persistence still works. */}
         const host=await import('../../../../../script.js');
         await host.saveSettings();
         // The host catches save errors itself. Verify its persisted copy before reload.

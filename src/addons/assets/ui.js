@@ -112,15 +112,24 @@ export function applyThemeVars(root) {
 }
 
 let themeTimer = 0;
+let themeSource = '';
 
 /**
  * 떠 있는 모든 확장 화면(패널, 크게 보기)의 테마 색을 다시 계산한다.
  * requestAnimationFrame 대신 타이머를 쓴다: 화면에 안 보이는 탭에서는 프레임이 돌지 않아 계산이 영영 밀린다.
+ * getComputedStyle 은 문서 전체 스타일 계산을 강제하므로, 색이 바뀔 수 있는 곳(<html style> · 블루 레몬에이드 색 변수 칸 ·
+ * 밝음/어두움 클래스 · 시트 수)이 지난번과 같으면 읽지 않는다. 머리줄만 있는 설정 자리(data-eh-stub)는 이 색을 쓰지 않으니 건너뛴다.
  */
 export function refreshThemeVars() {
     clearTimeout(themeTimer);
     themeTimer = setTimeout(() => {
-        document.querySelectorAll('.eh-root').forEach(applyThemeVars);
+        const roots = [...document.querySelectorAll('.eh-root')].filter(root => !root.hasAttribute('data-eh-stub'));
+        if (!roots.length) return;
+        const vars = document.getElementById('salty-vars')?.textContent ?? '';
+        const source = [document.documentElement.getAttribute('style'), vars.length, vars.slice(0, 160), document.body.classList.contains('salty'), document.body.classList.contains('salty-dark'), document.styleSheets.length].join('|');
+        if (source === themeSource) return;
+        themeSource = source;
+        roots.forEach(applyThemeVars);
     }, 60);
 }
 

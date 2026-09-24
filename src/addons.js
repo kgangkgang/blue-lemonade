@@ -3,17 +3,18 @@ import { toolSection } from './addon-layout.js';
 // Optional integrations share standalone settings, but only one owner runs per page.
 import { getSettings, saveSettings } from './settings.js';
 import { restorePendingAddons, saveAddonsNow } from './addon-save.js';
-import { IDS as ASSIST_IDS, LABELS as ASSIST_LABELS } from './assist/core.js';
+import { IDS as ASSIST_IDS, LABELS as ASSIST_LABELS, DUPLICATES } from './assist/core.js';
 const running=new Set(),failed=new Map(),loading=new Set();
 let started=false,saving=0,saveError='';
-const folders={direction:'story-direction',assets:'char-assets',prompt:'prompt-panel',customstyle:'SillyTavern-CustomThemeStyleInputs',translator:'llm-translator-custom',order:'panel-order',perf:'perf-assist',words:'word-replace',models:'model-register',rewrite:'ban-word-rewrite',bookmarks:'chat-bookmarks'};
+// 단독 확장 폴더 후보는 assist/core.js 의 DUPLICATES 한 표만 쓴다 (첫 이름은 안내 문구용)
+const folders=Object.fromEntries(Object.entries(DUPLICATES).map(([id,list])=>[id,list[0]]));
 const names={direction:'전개 지시',assets:'캐릭터 에셋',prompt:'한글화 패널',customstyle:'커스텀 CSS 조절',translator:'LLM 번역',order:'확장 순서',perf:'성능 보조',words:'단어 치환',capture:'채팅 캡처',models:'모델 등록',modelswitch:'모델 전환',regexlink:'프롬프트 연동 정규식',rewrite:'다시 쓰기',bookmarks:'북마크'};
 const icons={direction:'fa-feather-pointed',assets:'fa-images',prompt:'fa-table-list',customstyle:'fa-sliders',translator:'fa-language',words:'fa-arrow-right-arrow-left',capture:'fa-camera',order:'fa-arrow-down-short-wide',perf:'fa-gauge-high',models:'fa-circle-plus',modelswitch:'fa-shuffle',regexlink:'fa-link',bookmarks:'fa-bookmark',rewrite:'fa-glasses'};
 const tabs=[['watchdog','끊김 감시','heart-pulse'],['timer','로딩 시간','stopwatch'],['perf','성능 보조','gauge-high'],['log','요청 로그','receipt'],['dedupe','저장 정리','floppy-disk']];
 const changed=()=>window.dispatchEvent(new Event('bl:addons-state'));
 export async function conflict(id){
     const {extensionNames,extension_settings}=await import('../../../../extensions.js');
-    const candidates=id==='direction'?['story-direction','Direction-Manager','Direction-Manager-Lite','jeongaejisi']:id==='assets'?['char-assets','character-assets','esetham']:[folders[id]];
+    const candidates=DUPLICATES[id]??[];
     return candidates.some(folder=>{const key=`third-party/${folder}`;return extensionNames.includes(key)&&!extension_settings.disabledExtensions?.includes(key);});
 }
 async function stylesheet(id){
@@ -23,12 +24,60 @@ async function stylesheet(id){
         link.onload=()=>{clearTimeout(timer);resolve();};link.onerror=()=>{clearTimeout(timer);link.remove();reject(Error('스타일을 읽지 못했어요.'));};document.head.append(link);
     });
 }
-async function persist(){saving++;saveError='';changed();try{await saveAddonsNow();}catch(error){saveError=error.message;throw error;}finally{saving--;changed();}}
+async function persist(){saving++;saveError='';changed();try{await saveAddonsNow();saveError='';}catch(error){saveError=error.message;throw error;}finally{saving--;changed();}}
+// 확장은 실리태번이 설정을 다 읽기 전에 시작한다 (settingsReady 전엔 saveSettings 가 미루기만 해서 저장 확인이 실패로 남았다) — 저장은 APP_READY 뒤에
+async function whenAppReady(task){
+    try{
+        const host=await import('../../../../../script.js');
+        if(!host.settingsReady&&document.getElementById('loader')){host.eventSource.once(host.event_types.APP_READY,task);return;}
+    }catch(error){console.warn('[Blue Lemonade]',error);}
+    setTimeout(task,0);
+}
+const DUPLICATE_RUNNING='같은 확장이 이미 켜져 있어요. 단독 확장을 끄고 새로고침해 주세요.';
+async function startOne(id){
+    try{
+        let module=null;
+        if(id==='direction'){
+            module=await import('./addons/direction/index.js');await module.ready;
+        }else if(id==='assets'){
+            module=await import('./addons/assets/index.js');await module.ready;
+        }else if(id==='prompt'){
+            module=await import('./addons/prompt/index.js');await module.ready;
+        }else if(id==='customstyle'){
+            module=await import('./addons/customstyle/index.js');
+        }else if(id==='translator'){
+            module=await import('./addons/translator/bridge.js');await module.ready;
+        }else if(id==='perf'){
+            module=await import('./addons/perf/start.js');
+            if(module.failures.length)failed.set(id,'일부 도구를 시작하지 못했어요. 세부 설정에서 확인해 주세요.');
+        }else if(id==='modelswitch'){
+            module=await import('./addons/modelswitch/index.js');
+        }else if(id==='regexlink'){
+            module=await import('./addons/regexlink/index.js');
+        }else if(id==='rewrite'){
+            module=await import('./addons/rewrite/index.js');
+        }else if(id==='bookmarks'){
+            module=await import('./addons/bookmarks/index.js');
+        }else if(id==='models'){
+            module=await import('./addons/models/index.js');
+        }else{
+            (await import('./addons/order/state.js')).initSettings();
+            (await import('./addons/order/order.js')).startEngine();
+        }
+        // 같은 확장이 화면에 이미 있으면(단독 확장이 먼저 올라옴) 모듈이 duplicate 를 알린다 — 돌리지 않고 대기
+        if(module?.duplicate===true){failed.set(id,DUPLICATE_RUNNING);return;}
+        // 번역 설정 HTML 이 안 왔어도 번역 자체는 돈다 — 표시 맞추기 실패로 실패 처리하지 않는다
+        if(id==='translator')try{module.syncVisibility();}catch(error){console.warn('[Blue Lemonade]',error);}
+        running.add(id);
+    }catch(error){failed.set(id,'시작하지 못했어요. 새로고침 후 다시 확인해 주세요.');console.error('[Blue Lemonade]',error);}
+    finally{loading.delete(id);changed();}
+}
 export async function startAddons(){
     if(started)return;started=true;
     const restored=await restorePendingAddons();
-    if(restored)persist().catch(()=>{});
+    if(restored)whenAppReady(()=>persist().catch(()=>{}));
     const s=getSettings();if(!addonsEnabled(s))return;
+    const ids=[];
     for(const id of ['perf','order','models','modelswitch','regexlink','rewrite','direction','bookmarks','assets','translator','prompt','customstyle','words']){
         if(!s.addons[id])continue;
         if(await conflict(id)){
@@ -37,40 +86,16 @@ export async function startAddons(){
             globalThis.toastr?.warning(`${names[id]}: ${failed.get(id)}`,'Blue Lemonade');continue;
         }
         if(id==='words')continue;
-        loading.add(id);changed();
-        try{
-            if(id!=='translator')await stylesheet(id);
-            if(id==='direction'){
-                await (await import('./addons/direction/index.js')).ready;
-            }else if(id==='assets'){
-                await (await import('./addons/assets/index.js')).ready;
-            }else if(id==='prompt'){
-                await (await import('./addons/prompt/index.js')).ready;
-            }else if(id==='customstyle'){
-                await import('./addons/customstyle/index.js');
-            }else if(id==='translator'){
-                const translator=await import('./addons/translator/bridge.js');await translator.ready;translator.syncVisibility();
-            }else if(id==='perf'){
-                const suite=await import('./addons/perf/start.js');
-                if(suite.failures.length)failed.set(id,'일부 도구를 시작하지 못했어요. 세부 설정에서 확인해 주세요.');
-            }else if(id==='modelswitch'){
-                await import('./addons/modelswitch/index.js');
-            }else if(id==='regexlink'){
-                await import('./addons/regexlink/index.js');
-            }else if(id==='rewrite'){
-                await import('./addons/rewrite/index.js');
-            }else if(id==='bookmarks'){
-                await import('./addons/bookmarks/index.js');
-            }else if(id==='models'){
-                await import('./addons/models/index.js');
-            }else{
-                (await import('./addons/order/state.js')).initSettings();
-                (await import('./addons/order/order.js')).startEngine();
-            }
-            running.add(id);await syncAddonIcons();
-        }catch(error){failed.set(id,'시작하지 못했어요. 새로고침 후 다시 확인해 주세요.');console.error('[Blue Lemonade]',error);}
-        finally{loading.delete(id);changed();}
+        loading.add(id);ids.push(id);
     }
+    changed();
+    // 스타일은 한꺼번에 먼저 (느린 하나가 나머지를 줄 세우지 않게). 못 읽어도 JS 는 올린다 — 파일 어긋남은 verifyAddonCss 가 따로 알린다
+    const styled=ids.filter(id=>id!=='translator');
+    (await Promise.allSettled(styled.map(stylesheet))).forEach((outcome,i)=>{if(outcome.status==='rejected')console.warn('[Blue Lemonade]',names[styled[i]],'스타일:',outcome.reason?.message||outcome.reason);});
+    // 성능 보조는 fetch 를 감싸므로 다른 확장보다 먼저 끝나 있어야 한다
+    if(ids.includes('perf')){await startOne('perf');try{await syncAddonIcons();}catch(error){console.warn('[Blue Lemonade]',error);}}
+    await Promise.allSettled(ids.filter(id=>id!=='perf').map(startOne));
+    try{await syncAddonIcons();}catch(error){console.warn('[Blue Lemonade]',error);}
 }
 export function addonMarkup(s,id,nested=false){
     if(!nested && id==='models') return `<div class="bl-addon-group"><h3>모델 관리</h3>${addonMarkup(s,'models',true)}${addonMarkup(s,'modelswitch',true)}</div>`;
@@ -126,6 +151,7 @@ export function bindAddons(root,refresh){
         const id=input.dataset.addonToggle,on=input.checked;
         if(on&&folders[id]&&await conflict(id)){input.checked=false;globalThis.toastr?.warning(`${names[id]} 단독 확장이 켜져 있어요. 확장 관리에서 둘 중 하나를 꺼 주세요.`,'Blue Lemonade');return;}
         getSettings().addons[id]=on;
+        if(!on)failed.delete(id);
         if(id==='regexlink'&&!on&&running.has(id))await stopRegexlink();
         try{await persist();}catch(error){globalThis.toastr?.warning(error.message,'Blue Lemonade');}await syncAddonIcons();refresh();
     }));

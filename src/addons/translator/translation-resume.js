@@ -42,8 +42,18 @@ async function write(value) {
         });
     } catch { /* memory fallback; never prevent a completed translation */ } finally { db?.close(); }
 }
+// http 로 연 폰(비보안 컨텍스트)에는 crypto.subtle 이 없다 — 같은 입력이면 같은 값이 나오는 순수 JS 해시(FNV-1a 두 벌)로 대신한다.
+// 키는 같은지만 견주므로 형식이 달라도 된다. subtle 이 있으면 예전 그대로 SHA-256 (저장된 키 유지).
+function fallbackHash(bytes) {
+    let a = 0x811c9dc5, b = 0x050c5d1f;
+    for (const byte of bytes) { a = Math.imul(a ^ byte, 0x01000193) >>> 0; b = Math.imul(b ^ byte, 0x5bd1e995) >>> 0; }
+    return `fnv-${a.toString(16).padStart(8, '0')}${b.toString(16).padStart(8, '0')}`;
+}
 export async function checkpointKey(value) {
-    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+    const bytes = new TextEncoder().encode(value);
+    const subtle = globalThis.crypto?.subtle;
+    if (!subtle) return fallbackHash(bytes);
+    const digest = await subtle.digest('SHA-256', bytes);
     return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
 }
 export async function clearCheckpoints(key) {

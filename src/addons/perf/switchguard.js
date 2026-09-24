@@ -7,7 +7,8 @@
 // (MESSAGE_RECEIVED · CHARACTER_MESSAGE_RENDERED 를 기다린 뒤) 저장한다. 그 사이에 바꾸면 끝난 답이 저장되지 않았다 (재현).
 //
 // 상태
-// - generating: 실리태번이 잠가 둔 동안 (스트리밍 · 스트리밍 아닌 기다림 · 그룹 생성 · 다시 쓰기의 잠금) → 막는다
+// - generating: 실리태번이 잠가 둔 동안 (스트리밍 · 스트리밍 아닌 기다림 · 그룹 생성) → 막는다.
+//   다시 쓰기 · 장면 다시 굴리기의 잠금(body[data-generating] 만 켠다)도 같다 — 20초 상한 없이, 잠금이 풀릴 때까지 (답이 아직 저장 전이다)
 // - finishing: 잠금은 풀렸지만 streamingProcessor 가 아직 이 채팅의 답을 마무리 중(저장 전) → 저장 마치기(switchflush)가 기다렸다가 넘긴다
 // - 끊긴 스트림(onErrorStreaming)은 실리태번이 저장하지 않는다 → erroredUnsaved 면 바꾸기 전에 한 번 저장한다
 // 번역 · 장기 기억처럼 답 뒤에 도는 일은 막지 않는다 (번역은 캐시에 남고 번역기가 다른 채팅에 붙이지 않는다, 장기 기억은 다음 전송 때 기록한다).
@@ -38,6 +39,7 @@ function toMs(value) {
  * @param {(id: number) => any} env.messageAt 지금 chat[id]
  * @param {() => number} env.now
  * @param {(key: string, wallMs: number) => boolean} env.savedSinceWall 그 채팅의 저장이 wallMs(Date.now 기준) 뒤에 시작해 성공했는지
+ * @param {() => boolean} [env.pageLocked] body[data-generating] 이 켜져 있는지 (다시 쓰기의 잠금은 is_send_press 없이 이것만 켠다)
  */
 export function createSwitchGuard(env, options = {}) {
     const o = { ...DEFAULTS, ...options };
@@ -63,6 +65,8 @@ export function createSwitchGuard(env, options = {}) {
             seen = p ? { processor: p, since: env.now() } : null;
             return 'generating';
         }
+        // 다시 쓰기의 잠금: 실리태번 잠금이 풀린 뒤 20초를 넘겨도 답은 아직 저장 전이다 — 시간 상한 없이 막는다 (상한은 finishing 에만)
+        if (safe(env.pageLocked, false) === true) return 'generating';
         if (!p || p.isStopped || !inThisChat(p)) return null;
         if (seen?.processor !== p) seen = { processor: p, since: env.now() };
         if (env.now() - seen.since > o.finishMaxMs) return null;

@@ -10,11 +10,15 @@ let deferred = [];     // 제자리에서 꺼 둔 CSSMediaRule 들 (parkRule)
 let restored = false;
 let deferredRules = 0;   // 꺼 둔 규칙 수 (덩어리 수가 아니라)
 
+// 폴더 이름이 blue-lemonade 가 아니어도(blue-lemonade-main …) 제 style.css 를 찾는다 — 이 파일 기준 상대 주소가 먼저, 옛 이름 규칙은 예비
+const OWN_SHEET = new URL('../style.css', import.meta.url).href;
 function themeSheet() {
-    for (const sheet of document.styleSheets) {
-        if (!sheet.href || !/\/blue-lemonade\/style\.css/.test(sheet.href)) continue;
-        try { void sheet.cssRules; } catch { return null; }   // 다른 출처면 못 읽음
-        return sheet;
+    for (const test of [href => href === OWN_SHEET, href => /\/blue-lemonade\/style\.css/.test(href)]) {
+        for (const sheet of document.styleSheets) {
+            if (!sheet.href || !test(sheet.href)) continue;
+            try { void sheet.cssRules; } catch { return null; }   // 다른 출처면 못 읽음
+            return sheet;
+        }
     }
     return null;
 }

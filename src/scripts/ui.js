@@ -21,7 +21,7 @@ export async function bindScripts(root){
         const items=menu?[...menu.querySelectorAll('span')].map(e=>e.textContent.trim()).filter(Boolean):[];
         const icon=menu?.querySelector('.fa-square-root-variable'),chain=[];for(let n=icon;n&&n!==document.body&&chain.length<6;n=n.parentElement)chain.push((n.id?'#'+n.id:n.tagName.toLowerCase())+(n.className&&typeof n.className==='string'?'.'+n.className.split(/\s+/).slice(0,2).join('.'):''));
         const lines=[
-            `테마 ${document.querySelector('link[href*="blue-lemonade/style.css"]')?'css 있음':'css ?'} · 스크립트 틀 ${frames.join(',')||'없음'}`,
+            `테마 ${[...document.querySelectorAll('link[rel="stylesheet"]')].some(link=>link.href===new URL('../../style.css',import.meta.url).href)||document.querySelector('link[href*="blue-lemonade/style.css"]')?'css 있음':'css ?'} · 스크립트 틀 ${frames.join(',')||'없음'}`,
             `헬퍼 한글화 ${globalThis.__tavernHelperKoreanUI_v1?.version||'안 돎'} · 실리태번 한글화 ${globalThis.__sillyTavernKoreanUI_v1?.version||'안 돎'}`,
             `상태 ${SCRIPT_CATALOG.map(item=>item.id+'='+runtime.scriptStatus(item.id)+(loadFailure(item.id)?' ['+loadFailure(item.id)+']':'')).join(' · ')}`,
             `헬퍼 한글화 안쪽: ${(()=>{const k=globalThis.__tavernHelperKoreanUI_v1;if(!k?.stats)return '정보 없음';const t=k.stats();return `범위 ${t.scopes}(${t.watching}) · 바꾼 글 ${t.texts} · 멈춤 ${t.stopped} · 오류 ${k.errors}${k.lastError?' '+k.lastError:''}`;})()} · 헬퍼 창 한자 ${[...(document.querySelectorAll('#tavern_helper *')||[])].filter(e=>!e.childElementCount&&han.test(e.textContent)).length}`,

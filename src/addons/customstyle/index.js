@@ -430,24 +430,17 @@ class CustomThemeSettingsManager {
 
         if (keyMatch) {
             const tempStart = keyMatch.index + keyMatch[0].length - 1; // Index of the opening '['
-            let openBrackets = 0;
-            let closeBrackets = 0;
             let endIndex = -1;
 
-            // Simple state machine to count matching brackets
-            // We start from the opening bracket we found
-            for (let i = tempStart; i < currentContent.length; i++) {
-                const char = currentContent[i];
-                if (char === '[') {
-                    openBrackets++;
-                } else if (char === ']') {
-                    closeBrackets++;
-                }
-
-                if (openBrackets > 0 && openBrackets === closeBrackets) {
+            // The array is JSON, and a ']' may sit inside a string value, so a
+            // bare bracket count can stop early and corrupt the CSS on the next
+            // save. Take the first ']' at which the slice parses as JSON.
+            for (let i = currentContent.indexOf(']', tempStart); i !== -1; i = currentContent.indexOf(']', i + 1)) {
+                try {
+                    JSON.parse(currentContent.substring(tempStart, i + 1));
                     endIndex = i + 1; // Include the closing ']'
                     break;
-                }
+                } catch { /* not the end yet */ }
             }
 
             if (endIndex !== -1) {
@@ -611,18 +604,30 @@ class CustomThemeSettingsManager {
 
     initialize() {
         const boot = () => {
+            if (this.isAppReady) return;
             this.isAppReady = true;
             this.injectDrawer();
+            // Remember the config we built from, so the first SETTINGS_UPDATED
+            // of the session does not rebuild the UI (and drop focus) for nothing.
+            this.previousStyleValue = this._parseCSSConfig(CSS_THEME_STYLE_VAR);
             this.buildUI();
             this.setupDelegation();
 
             // Apply initial settings
             this.updateCSSVariables(this.settings.entries || {});
         };
-        boot();
+        this.boot = boot;
+        // getComputedStyle at import time forces a style flush in the middle of
+        // startup; wait for the first frame (hidden tabs get no frames — fall
+        // back to a timer).
+        requestAnimationFrame(() => setTimeout(boot, 0));
+        setTimeout(boot, 1000);
 
+        let settingsTimer = null;
         eventSource.on(event_types.SETTINGS_UPDATED, () => {
-            if (this.isAppReady) {
+            if (!this.isAppReady) return;
+            clearTimeout(settingsTimer);
+            settingsTimer = setTimeout(() => {
                 const currentConfig = this._parseCSSConfig(CSS_THEME_STYLE_VAR);
                 // Simple deep compare to see if we need to rebuild inputs
                 if (JSON.stringify(currentConfig) !== JSON.stringify(this.previousStyleValue)) {
@@ -630,7 +635,7 @@ class CustomThemeSettingsManager {
                     this.buildUI();
                     this.updateCSSVariables(this.settings.entries || {});
                 }
-            }
+            }, 300);
         });
     }
 }
@@ -644,6 +649,7 @@ export default customThemeManager;
 let currentDialog=null;
 export function openPanel(){
  if(currentDialog?.open)return;
+ customThemeManager.boot?.();
  const drawer=document.getElementById('ctsi-drawer');customThemeManager.buildUI();customThemeManager.updateCSSVariables(customThemeManager.settings.entries||{});
  const dialog=document.createElement('dialog');currentDialog=dialog;dialog.className='bl-ctsi-dialog';dialog.setAttribute('aria-label','커스텀 CSS 조절');
  dialog.innerHTML='<header><b>커스텀 CSS 조절</b><button type="button" aria-label="커스텀 CSS 조절 닫기">×</button></header><p>CSS에 정의된 색·크기·텍스트 값을 입력칸으로 조절해요.</p><div class="bl-ctsi-body"></div><small>Copyright © 2025 <a href="https://github.com/IceFog72/SillyTavern-CustomThemeStyleInputs" target="_blank" rel="noopener noreferrer">IceFog72</a> · <a href="https://github.com/IceFog72/SillyTavern-CustomThemeStyleInputs/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT</a></small>';

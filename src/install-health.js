@@ -22,7 +22,7 @@ export async function checkInstallation(full=false){
             const response=await fetch(new URL('manifest.json',base),{cache:'no-store',signal:AbortSignal.timeout(10000)});
             if(!response.ok)throw Error();report.disk=(await response.json()).version;
             if(full)report.files=await verifyFiles(FILE_HASHES,async path=>{const r=await fetch(new URL(path,base),{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error();return r.arrayBuffer();},digest);
-        }catch{report.error='설치 파일을 읽지 못했어요. 서버 연결을 확인하고 다시 검사해 주세요.';}
+        }catch{report.error='설치 파일을 읽지 못했어요. 서버 연결을 확인하고 다시 검사해 주세요.';if(full&&!report.files)report.files={checked:0,failures:[],error:true};}  // 실패도 검사한 것으로 남긴다 — 다시 그릴 때마다 전체 검사가 되풀이되지 않게
         result=report;return report;
     })();
     paint();
@@ -43,9 +43,9 @@ function paint(){
         const failures=result?.files?.failures||[];
         const count=issues.filter(issue=>issue.fix!=='비우기').length+Number(!!cssRisk)+Number(!!mismatch)+Number(failures.length>0)+Number(!!result?.error);
         const summary=document.createElement('div');summary.className='bl-health-summary';
-        summary.dataset.state=pending?'pending':count?'attention':result?.files?'ok':'pending';
-        const title=document.createElement('strong');title.textContent=pending?'설치 상태를 확인하고 있어요':count?`확인이 필요한 항목 ${count}개`:result?.files?'설치 상태가 정상이에요':'검사 결과를 기다리고 있어요';
-        const note=document.createElement('span');note.textContent=pending?'잠시만 기다려 주세요.':count?'아래 안내에서 필요한 조치를 선택해 주세요.':'알려진 충돌과 파일 상태를 기준으로 확인해요.';
+        summary.dataset.state=pending?'pending':count?'attention':result?'ok':'pending';
+        const title=document.createElement('strong');title.textContent=pending?'설치 상태를 확인하고 있어요':count?`확인이 필요한 항목 ${count}개`:result?.files?'설치 상태가 정상이에요':result?'버전이 일치해요':'검사 결과를 기다리고 있어요';
+        const note=document.createElement('span');note.textContent=pending?'잠시만 기다려 주세요.':count?'아래 안내에서 필요한 조치를 선택해 주세요.':result&&!result.files?'파일 내용까지 보려면 다시 검사를 눌러 주세요. 설치 파일 전체를 내려받아 확인해요.':'알려진 충돌과 파일 상태를 기준으로 확인해요.';
         summary.append(title,note);out.append(summary);
         const line=(text,action,label)=>{
             const row=document.createElement('div');row.className='bl-health-item';
@@ -64,7 +64,7 @@ function paint(){
             const label=document.createElement('summary');label.textContent='버전 · 파일 상세 정보';details.append(label);
             const versions=document.createElement('dl');versions.className='bl-health-versions';
             for(const [name,value] of [['실행',result.version],['스타일',result.css],['설치',result.disk]]){const cell=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=name;dd.textContent=value||'확인 못 함';cell.append(dt,dd);versions.append(cell);}details.append(versions);
-            if(result.files){const p=document.createElement('p');p.textContent=failures.length?`${result.files.checked}개 중 ${failures.length}개 확인 필요`:`설치 파일 ${result.files.checked}개가 모두 이 버전과 일치해요.`;details.append(p);}
+            if(result.files&&!result.files.error){const p=document.createElement('p');p.textContent=failures.length?`${result.files.checked}개 중 ${failures.length}개 확인 필요`:`설치 파일 ${result.files.checked}개가 모두 이 버전과 일치해요.`;details.append(p);}
             if(failures.length){const list=document.createElement('ul');for(const f of failures){const item=document.createElement('li');item.textContent=`${f.path} · ${f.kind==='mismatch'?'내용 다름':'읽지 못함'}`;list.append(item);}details.append(list);}
             out.append(details);
         }
@@ -74,5 +74,6 @@ export function bindHealth(root,apply){
     const box=root.querySelector('.bl-install-health');if(!box)return;
     views.add(box);box.addEventListener('bl:health-fix',apply);root._healthCleanup=()=>views.delete(box);
     box.querySelector('[data-health-check]').onclick=()=>checkInstallation(true);
-    if(!result?.files&&!pending)checkInstallation(true);else paint();
+    // 전체 검사(파일 263개 내려받아 해시)는 '다시 검사' 단추로만. 화면을 열 때는 있는 결과만 그린다
+    paint();
 }

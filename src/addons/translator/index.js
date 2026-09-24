@@ -51,6 +51,13 @@ if (!extensionSettings) {
     extension_settings[extensionName] = extensionSettings;
 }
 
+// 단독 LLM 번역 확장(또는 이름을 바꾼 사본)이 먼저 올라와 있으면 이 내장판은 이벤트 · 단추 · 슬래시 명령을 달지 않는다 (두 벌이 겹쳐 돌았다).
+// 로더(src/addons.js)는 duplicate 를 보고 "대기 중" 으로 표시한다.
+export const duplicate = Boolean(globalThis[Symbol.for('st.llm-translator.archive.v1')] || globalThis.__blLlmTranslatorLoaded);
+if (duplicate) console.warn('[LLM Translator] 단독 LLM 번역 확장이 이미 실행 중이라 테마 내장판은 대기해요.');
+else globalThis.__blLlmTranslatorLoaded = true;
+const registerCommand = command => { if (!duplicate) SlashCommandParser.addCommandObject(command); };
+
 // 번역 진행 상태 추적 (단순화)
 const translationInProgress = {};
 const guards = createGuards(getContext);
@@ -1577,7 +1584,26 @@ function connectionSignature() {
             vertex: s.llm_provider === 'vertexai' ? [oai_settings.vertexai_auth_mode, oai_settings.vertexai_region, oai_settings.vertexai_express_project_id] : null,
         } : null,
         limit: s.profile_max_tokens, api: c.mainApi,
-        connection: s.connection_mode === 'direct' ? null : c.mainApi === 'openai' ? c.chatCompletionSettings : c.textCompletionSettings });
+        connection: s.connection_mode === 'direct' ? null : activeConnectionFields(c) });
+}
+
+// 현재 연결 모드에서 번역 결과에 닿는 값만 (예전엔 oai_settings 전체 — 프롬프트 본문까지 — 가 들어가 프롬프트 하나만 껐다 켜도
+// 문단 캐시가 전부 무효였고, 100ms 감시가 프리셋 전체를 문자열화했고, 응답 설정 창만 건드려도 번역이 멈췄다). 비밀번호는 값이 아니라 유무만.
+function activeConnectionFields(c) {
+    try {
+        if (c.mainApi === 'openai') {
+            const o = c.chatCompletionSettings || {};
+            let model = ''; try { model = getChatCompletionModel(o); } catch { model = o[`${o.chat_completion_source}_model`] ?? ''; }
+            return [o.chat_completion_source, model, o.custom_url, o.reverse_proxy, Boolean(o.proxy_password), o.temperature, o.top_p, o.top_k,
+                o.frequency_penalty, o.presence_penalty, o.openai_max_tokens, o.openai_max_context];
+        }
+        if (c.mainApi === 'textgenerationwebui') {
+            const t = c.textCompletionSettings || {};
+            let model = ''; try { model = getTextGenModel(t); } catch { model = t.model ?? ''; }
+            return [t.type, model, t.server_urls?.[t.type] ?? t.api_server ?? null, t.max_length];
+        }
+    } catch { /* 아래 */ }
+    return [c.mainApi];
 }
 
 // 통합된 번역 함수 (고정 패턴 + 스마트 보정 적용 + 프롬프트/매크로 로직 복구)
@@ -1708,10 +1734,16 @@ async function translate(text, options = {}) {
             return substituteParams(built);
         };
         const PROMPT_LAYOUTS = (paragraphParts || glossaryBlock) ? [0, 1, 2] : [0, 2];
-        // Resolve chat macros before the first await; no later chunk reads another chat.
         const chunks = !isInputTranslation && !isRetranslation && !options.noChunks ? splitForChunks(maskedText) : [];
-        const prepared = new Map([maskedText, ...chunks, ...(paragraphParts?.filter((_, i) => i % 2 === 0) || [])].map(body => [body, PROMPT_LAYOUTS.map(layout => buildFullPrompt(layout, body))]));
-        const key = chunks.length > 1 ? await checkpointKey(JSON.stringify([connection, text, [...prepared]])) : '';
+        // 프롬프트는 처음 쓸 때 한 번만 만든다 (예전엔 모든 문단 × 3 배치를 캐시 조회 전에 미리 만들어 용어집 검색 · 매크로 치환이 수백 번 돌았다).
+        // 채팅이 바뀐 뒤에는 만들지 않는다 (다른 채팅의 매크로가 들어가지 않게 watcher 가 먼저 멈춘다).
+        const built = new Map();
+        const prepared = { get(body) { if (!built.has(body)) { watcher.check(); built.set(body, PROMPT_LAYOUTS.map(layout => buildFullPrompt(layout, body))); } return built.get(body); } };
+        // 문단 캐시 · 이어하기 키의 서명: 준비된 프롬프트 전체 대신 연결 · 프롬프트 · 지침 · 용어집(범위 + 항목) 요약 하나 (paragraph-v2)
+        const chatCtx = getContext();
+        const setupDigest = await checkpointKey(JSON.stringify([connection, finalPrompt, rulePrompt, additionalGuidance, extensionSettings.glossary_enabled === false ? null
+            : [chatCtx?.groupId ?? null, chatCtx?.characters?.[chatCtx?.characterId]?.avatar ?? null, extensionSettings.glossary_entries ?? null]]));
+        const key = chunks.length > 1 ? await checkpointKey(JSON.stringify([setupDigest, text])) : '';
         watcher.check();
 
         // ==================================================================================
@@ -1754,29 +1786,46 @@ async function translate(text, options = {}) {
         };
         let translatedText = '';
         if (paragraphParts) {
+            // 묶음의 원문 글자 수는 출력 한도도 따른다 — 직접 연결 기본 max_length 1000 토큰에 3600자를 보내면 JSON 답이 잘렸다.
+            // 답 글자 수 ≈ 원문 글자 수, 토큰당 ≈1.2자로 잡아 한도의 1.2배까지만 묶는다 (max_tokens 를 키우면 모델 한도 400 이 날 수 있어 묶음을 줄이는 쪽).
+            const s = extensionSettings, live = getContext();
+            const outputTokens = s.connection_mode === 'direct' ? Number(s.parameters?.[s.llm_provider]?.max_length) || 0
+                : Number(s.profile_max_tokens) || (live?.mainApi === 'openai' ? Number(live.chatCompletionSettings?.openai_max_tokens) : Number(live?.textCompletionSettings?.max_length)) || 0;
+            const groupLimit = outputTokens > 0 ? Math.min(CHUNK_TARGET * 2, Math.max(400, Math.round(outputTokens * 1.2))) : CHUNK_TARGET * 2;
             const result = await translateSegments({ parts: paragraphParts,
-                signature: body => [connection, prepared.get(body)], check: watcher.check, progress, blockedMarker: BLOCKED_CHUNK_MARK,
+                signature: () => setupDigest, check: watcher.check, progress, blockedMarker: BLOCKED_CHUNK_MARK,
                 cacheable: (body, out) => {
                     const marks = value => JSON.stringify(value.match(/\[\[__VAR_\d+__\]\]/g) || []);
                     return marks(body) === marks(out) && !linesWithKana(out).length;
                 },
                 request: async bodies => {
                     const translated = [];
-                    for (const group of batchGroups(bodies, CHUNK_TARGET * 2)) {
+                    let failed = null, succeeded = 0;
+                    for (const group of batchGroups(bodies, groupLimit)) {
                         watcher.check();
                         const payload = batchPayload(group);
-                        translated.push(...parseBatchResult(await callWithLayouts(payload, PROMPT_LAYOUTS), group.length).map(tidyKana));
+                        try {
+                            translated.push(...parseBatchResult(await callWithLayouts(payload, PROMPT_LAYOUTS), group.length).map(tidyKana));
+                            succeeded++;
+                        } catch (error) {
+                            // 한 묶음만 거절 · 실패해도 성공한 묶음은 붙이고 캐시에 넣는다 — 그 묶음 자리만 null(차단 표시). 전부 실패하면 예전처럼 오류
+                            if (error?.cancelled) throw error;
+                            failed ??= error;
+                            translated.push(...group.map(() => null));
+                        }
                     }
+                    if (failed && !succeeded) throw failed;
+                    if (failed) console.warn('[LLM Translator] 일부 묶음 실패 — 그 문단만 원문으로 남겨요:', failed.message);
                     // Any remaining Japanese is repaired in one additional request for the whole batch.
-                    const joined = translated.join('\n\n'), lines = linesWithKana(joined);
+                    const joined = translated.map(text => text ?? '').join('\n\n'), lines = linesWithKana(joined);
                     if (lines.length) {
                         try {
                             const fixed = await request(buildFullPrompt(0, KANA_FIX_NOTE + lines.map(([, line], i) => `${i + 1}. ${line}`).join('\n')));
                             const corrected = applyKanaFix(joined, lines, fixed).split('\n');
                             let offset = 0;
                             for (let i = 0; i < translated.length; i++) {
-                                const length = translated[i].split('\n').length;
-                                translated[i] = corrected.slice(offset, offset + length).join('\n');
+                                const length = (translated[i] ?? '').split('\n').length;
+                                if (translated[i] !== null) translated[i] = corrected.slice(offset, offset + length).join('\n');
                                 offset += length + 1;
                             }
                         } catch (error) { if (error?.cancelled) throw error; }
@@ -2043,7 +2092,7 @@ async function retranslateMessage(messageId, promptType, forceRetranslate = fals
         const sourceMes = message.mes;          // [1.9.2] 끝났을 때 같은 글인지 보려고
         const chatId = context.chatId;
         const originalText = substituteParams(message.mes, context.name1, message.name);
-        const existingTranslation = await getTranslationFromDB(originalText);
+        const existingTranslation = await readCachedTranslation(originalText);
 
         let textToRetranslate, prompt;
 
@@ -2109,7 +2158,7 @@ async function retranslateMessage(messageId, promptType, forceRetranslate = fals
         //         addTranslationToDB 가 이제 같은 원문의 줄을 고쳐 쓴다.
         // [2.1.3] 일부 문단이 차단돼 원문으로 남았으면 캐시에 넣지 않는다 (translateMessage 와 같게)
         if (report.partial) toastr.warning(`문단 ${report.blockedChunks}/${report.chunks}덩이는 차단돼 원문으로 남겼어요. 다시 번역하면 다시 시도해요.`, '번역', { timeOut: 8000 });
-        else await addTranslationToDB(originalText, retranslation);
+        else await storeTranslationQuietly(originalText, retranslation);
 
         // [1.9.2] 재번역하는 동안 채팅 · 스와이프 · 글이 바뀌었으면 붙이지 않는다 (캐시에는 남음)
         const targetIndex = runToken.guard.index();
@@ -2231,7 +2280,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
             showStartToast = true;
         } else if (source === 'auto' && !message.extra.display_text) {
             // 자동 번역시: DB에서 번역문을 가져올 수 있는지 먼저 확인
-            const existingTranslation = await getTranslationFromDB(originalText);
+            const existingTranslation = await readCachedTranslation(originalText);
 
             // DB에 번역문이 없는 경우만 토스트 표시 (새로운 메시지)
             if (!existingTranslation) {
@@ -2256,7 +2305,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                 shouldTranslate = hash !== originalHashOf(originalText) || looksLikeRefusal(originalText, message.extra.display_text);
             } else {
                 // DB에서 현재 원문에 대한 번역이 있는지 확인
-                const cachedForCurrentText = await getTranslationFromDB(originalText);
+                const cachedForCurrentText = await readCachedTranslation(originalText);
                 if (!cachedForCurrentText) {
                     shouldTranslate = true;
                 }
@@ -2265,7 +2314,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
 
         if (shouldTranslate) {
             // 캐시된 번역 확인
-            const cachedTranslation = await getTranslationFromDB(originalText);
+            const cachedTranslation = await readCachedTranslation(originalText);
             let translation = cachedTranslation;
 
             runToken.guard.assert();
@@ -2274,13 +2323,15 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                 // [2.1.0] 메시지 위에 진행 표시 · 문단을 나눠 일부가 차단되면 캐시에 넣지 않는다 (다시 번역하면 다시 시도)
                 const report = {};
                 const badge = progressBadge(messageId, message, sourceMes, chatId);
+                // 화살표 다시 번역이라도 차단 표시가 남은 글이면 문단 캐시를 쓴다 — 이미 된 문단은 다시 보내지 않고 차단된 문단만 다시 시도
+                const segmentCache = source !== 'handleTranslateButtonClick_retranslate' || String(message.extra.display_text || '').includes(BLOCKED_CHUNK_MARK);
                 try {
-                    translation = await translate(originalText, { segmentCache: source !== 'handleTranslateButtonClick_retranslate', assertValid: () => runToken.guard.assert(), onProgress: badge.update, report });
+                    translation = await translate(originalText, { segmentCache, assertValid: () => runToken.guard.assert(), onProgress: badge.update, report });
                 } finally {
                     badge.remove();
                 }
                 if (report.partial) toastr.warning(`문단 ${report.blockedChunks}/${report.chunks}덩이는 차단돼 원문으로 남겼어요. 다시 번역하면 다시 시도해요.`, '번역', { timeOut: 8000 });
-                else await addTranslationToDB(originalText, translation);
+                else await storeTranslationQuietly(originalText, translation);
             }
 
             // [1.9.2] 번역하는 동안 채팅을 바꾸거나 · 스와이프 · 수정 · 앞 메시지 삭제로 그 자리 글이 바뀌었으면 붙이지 않는다 (캐시에는 남음)
@@ -3171,6 +3222,7 @@ function initSettingsTabs() {
 // jQuery 초기화 블록
 export const ready = new Promise((resolve, reject) => {
 jQuery(async () => {
+    if (duplicate) { resolve(); return; } // 단독 확장이 이미 돌고 있다 — UI · 이벤트를 달지 않는다
     try {
         // 필요한 HTML과 CSS 로드
         // [2.1.2] ?v=Date.now() 를 뺐다 — 실리태번은 확장 파일을 max-age 0 + ETag 로 주므로
@@ -3973,6 +4025,7 @@ async function extractGlossaryFromWorldInfo() {
     const existing = glossaryExistingForms(key);
     const items = [];
     const failures = [];
+    let streak = 0; // 연달아 실패한 항목 수 — 3개면 (키 · 모델 · 중계가 죽은 것) 남은 항목을 보내지 않고 멈춘다
     const progress = startGlossaryProgress('월드인포에서 용어를 뽑는 중…', jobs.length);
     try {
         for (const job of jobs) {
@@ -3981,9 +4034,11 @@ async function extractGlossaryFromWorldInfo() {
                 : [...KEY_INSTRUCTIONS, `Entry: ${job.title}`, `Korean: ${job.korean.join(', ')}`, `Other: ${job.other.join(', ')}`].join('\n');
             try {
                 items.push(...await askGlossaryItems(prompt));
+                streak = 0;
             } catch (error) {
                 console.warn(`[LLM Translator] 월드인포 용어집 "${job.title}" 실패`, error);
                 failures.push(`${job.title}: ${error?.message || String(error)}`);
+                if (++streak >= 3) { toastr.error(`항목 3개가 연달아 실패해 멈췄어요: ${error?.message || String(error)}`, '용어집', { timeOut: 8000 }); break; }
             }
             progress.done();
         }
@@ -4022,7 +4077,9 @@ async function askGlossaryItems(prompt) {
     try {
         return parseGlossaryItems(await callLLMAPI(prompt, {...GLOSSARY_CALL_OPTIONS,requestPurpose:'translation.glossary'}));
     } catch (error) {
-        console.warn('[LLM Translator] 용어집 뽑기 재시도', error);
+        // 답이 잘린(JSON 깨짐) 경우에만 한도를 키워 다시 묻는다 — 거절 · 429 · 시간 초과는 다시 보내도 같아서 그대로 올린다
+        if (!error?.truncated) throw error;
+        console.warn('[LLM Translator] 용어집 뽑기 재시도 (답이 잘림)', error);
         return parseGlossaryItems(await callLLMAPI(prompt, {...GLOSSARY_CALL_RETRY,requestPurpose:'translation.glossary'}));
     }
 }
@@ -4047,7 +4104,7 @@ function parseGlossaryItems(raw) {
         const items = JSON.parse(text.slice(start, end + 1));
         return Array.isArray(items) ? items : [];
     } catch {
-        throw new Error('모델의 목록을 읽을 수 없어요 (JSON이 잘렸거나 형식이 달라요).');
+        throw Object.assign(new Error('모델의 목록을 읽을 수 없어요 (JSON이 잘렸거나 형식이 달라요).'), { truncated: true });
     }
 }
 
@@ -5048,6 +5105,16 @@ async function updateTranslationByOriginalText(originalText, newTranslation) {
 }
 
 // IndexedDB에서 번역 데이터 가져오는 함수
+// 메시지 번역 경로용: 사생활 모드 · 용량 초과 · 깨진 DB 로 IndexedDB 가 실패해도 번역은 새로 하고, 받은 번역문은 붙인다 (예전엔 저장 실패가 유료 번역을 버렸다)
+async function readCachedTranslation(originalText) {
+    try { return await getTranslationFromDB(originalText); }
+    catch (error) { console.warn('[LLM Translator] 번역 캐시 읽기 실패 — 새로 번역해요:', error?.message || error); return null; }
+}
+async function storeTranslationQuietly(originalText, translation) {
+    try { await addTranslationToDB(originalText, translation); }
+    catch (error) { console.warn('[LLM Translator] 번역 캐시 저장 실패 — 번역문은 붙였어요:', error?.message || error); }
+}
+
 async function getTranslationFromDB(originalText) {
     const db = await openDB();
     return new Promise((resolve, reject) => {
@@ -6554,7 +6621,7 @@ function restoreContent(html, transMap, origMap) {
 
 
 
-SlashCommandParser.addCommandObject(SlashCommand.fromProps({
+registerCommand(SlashCommand.fromProps({
     name: 'LlmTranslateLast',
     callback: async () => {
         const lastMessage = document.querySelector('#chat .mes:last-child');
@@ -6574,7 +6641,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({
     helpString: '마지막 메시지를 LLM 번역기로 번역합니다.',
 }));
 
-SlashCommandParser.addCommandObject(SlashCommand.fromProps({
+registerCommand(SlashCommand.fromProps({
     name: 'LlmRetranslateCorrection',
     callback: async (parsedArgs) => {
         const messageIdStr = validateAndNormalizeMessageId(parsedArgs.messageId);
@@ -6608,7 +6675,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({
     ],
 }));
 
-SlashCommandParser.addCommandObject(SlashCommand.fromProps({
+registerCommand(SlashCommand.fromProps({
     name: 'LlmRetranslateGuidance',
     callback: async (parsedArgs) => {
         const messageIdStr = validateAndNormalizeMessageId(parsedArgs.messageId);
@@ -6642,7 +6709,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({
     ],
 }));
 
-SlashCommandParser.addCommandObject(SlashCommand.fromProps({
+registerCommand(SlashCommand.fromProps({
     name: 'LlmRetranslateParagraph',
     callback: async (parsedArgs) => {
         const messageIdStr = validateAndNormalizeMessageId(parsedArgs.messageId);
@@ -6676,7 +6743,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({
     ],
 }));
 
-SlashCommandParser.addCommandObject(SlashCommand.fromProps({
+registerCommand(SlashCommand.fromProps({
     name: 'LlmTranslateID',
     callback: async (parsedArgs) => {
         const messageIdStr = validateAndNormalizeMessageId(parsedArgs.messageId);
@@ -6727,21 +6794,21 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({
 
 
 
-SlashCommandParser.addCommandObject(SlashCommand.fromProps({
+registerCommand(SlashCommand.fromProps({
     name: 'llmDBUploadBackup',
     callback: backupTranslationsToMetadata,
     helpString: 'LLM 번역 캐시를 현재 채팅 메타데이터에 백업합니다. (백업용 채팅에서 실행 권장)',
     returns: '백업 진행 및 결과 알림 (toastr)',
 }));
 
-SlashCommandParser.addCommandObject(SlashCommand.fromProps({
+registerCommand(SlashCommand.fromProps({
     name: 'llmDBDownloadRestore',
     callback: restoreTranslationsFromMetadata, // Add-Only + Progress Bar 버전
     helpString: '현재 채팅 메타데이터의 백업에서 번역 캐시를 복원/병합합니다 (없는 데이터만 추가).',
     returns: '복원 진행(프로그레스 바) 및 결과 알림 (toastr)',
 }));
 
-SlashCommandParser.addCommandObject(SlashCommand.fromProps({
+registerCommand(SlashCommand.fromProps({
     name: 'llmDBmetaClearBackup',
     callback: clearBackupFromMetadata,
     helpString: '현재 채팅 메타데이터에서 LLM 번역 캐시 백업을 삭제합니다 (영구 삭제).',
@@ -6749,7 +6816,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({
 }));
 
 //	/llmGetTranslation messageId={{lastMessageId}}
-SlashCommandParser.addCommandObject(SlashCommand.fromProps({
+registerCommand(SlashCommand.fromProps({
     /**
      * 슬래시 커맨드 이름: /llmGetTranslation
      * 기능: 지정된 메시지 ID에 해당하는 번역문을 DB에서 가져옵니다.
@@ -6801,7 +6868,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({
 }));
 
 //	/llmDBDeleteTranslation messageId={{lastMessageId}}
-SlashCommandParser.addCommandObject(SlashCommand.fromProps({
+registerCommand(SlashCommand.fromProps({
     /**
      * 슬래시 커맨드 이름: /llmDBDeleteTranslation
      * 기능: 지정된 메시지 ID (및 선택적 스와이프 번호)에 해당하는 번역 데이터를 DB에서 삭제합니다.
@@ -6853,7 +6920,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({
     returns: '삭제 작업 성공/실패/정보 메시지',
 }));
 // 기존 llmTranslate 수정: prompt 인수 추가
-SlashCommandParser.addCommandObject(SlashCommand.fromProps({
+registerCommand(SlashCommand.fromProps({
     name: 'llmTranslate',
     helpString: 'LLM을 사용하여 텍스트를 번역합니다. 기본적으로 채팅 번역 설정을 따르며, prompt 인수로 프롬프트를 직접 지정할 수 있습니다.\n사용법: /llmTranslate "텍스트" [prompt="프롬프트 내용"]',
     unnamedArgumentList: [
@@ -6889,7 +6956,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({
 }));
 
 // 신규 llmTranslateInput 추가: 입력 번역용
-SlashCommandParser.addCommandObject(SlashCommand.fromProps({
+registerCommand(SlashCommand.fromProps({
     name: 'llmTranslateInput',
     helpString: 'LLM을 사용하여 텍스트를 입력용(주로 영어)으로 번역합니다. 기본적으로 입력 번역 설정을 따르며, prompt 인수로 프롬프트를 직접 지정할 수 있습니다.\n사용법: /llmTranslateInput "텍스트" [prompt="프롬프트 내용"]',
     unnamedArgumentList: [
@@ -6928,7 +6995,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({
 }));
 
 // 범위 지정 번역문 가져오기 커맨드
-SlashCommandParser.addCommandObject(SlashCommand.fromProps({
+registerCommand(SlashCommand.fromProps({
     name: 'llmGetTranslations',
     callback: async (parsedArgs) => {
         const DEBUG_PREFIX_CMD = `[${extensionName} - Cmd /llmGetTranslations]`;
@@ -7279,7 +7346,7 @@ class PromptManager {
 }
 
 // 번역문/원문 토글 슬래시 커맨드
-SlashCommandParser.addCommandObject(SlashCommand.fromProps({
+registerCommand(SlashCommand.fromProps({
     name: 'LlmToggleTranslation',
     callback: async (parsedArgs) => {
         const messageIdStr = validateAndNormalizeMessageId(parsedArgs.messageId);
@@ -7792,7 +7859,7 @@ class PresetManager {
 
 
 // Archive integration is local and optional. Concurrent callers share the existing job.
-globalThis[Symbol.for('st.llm-translator.archive.v1')] = {
+if (!duplicate) globalThis[Symbol.for('st.llm-translator.archive.v1')] = {
     automatic:()=>shouldTranslate(incomingTypes),
     async wait(message,isAlive) {
         if(!shouldTranslate(incomingTypes)||!isAlive())return;
@@ -7834,7 +7901,7 @@ globalThis[Symbol.for('st.llm-translator.archive.v1')] = {
 };
 
 // Optional persona editor bridge; reuses direct/profile credentials without changing them.
-globalThis[Symbol.for('st.llm-translator.persona.v1')] = makePersonaBridge(callLLMAPI, text => buildGlossaryBlock(text, { reverse: true }));
+if (!duplicate) globalThis[Symbol.for('st.llm-translator.persona.v1')] = makePersonaBridge(callLLMAPI, text => buildGlossaryBlock(text, { reverse: true }));
 
 // Module API: callers receive the same guarded jobs as the UI.
 export { translate, translateMessage, retranslateMessage, onTranslateInputMessageClick, onTranslateChatClick, onMessageSentTranslate };

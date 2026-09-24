@@ -282,6 +282,7 @@ body.salty #nonQRFormItems #jj-button:not(.is-on) {
   }
 }
 body.salty #jj-button.is-on i {
+  filter: drop-shadow(0 0 4px currentColor); /* color-mix 없는 구형 WebView 폴백 */
   filter: drop-shadow(0 0 4px color-mix(in srgb, currentColor 65%, transparent));
 }
 body.salty #nonQRFormItems #jj-button.is-on {

@@ -17,7 +17,7 @@ import * as openai from '../../../../../../openai.js';
 import * as groupChats from '../../../../../../group-chats.js';
 import { createRecovery, asyncStacksWork, stackHas, bodyKey, liveChatFrom, MARKER, DROP_MESSAGE } from './recovery.js';
 import { createPromptDefer } from './promptdefer.js';
-import { createSaveTimers, createSwitchFlush, matchSwitchEntry, FLUSH_MARKER, SWITCH_ENTRIES } from './switchflush.js';
+import { createSaveTimers, createSwitchFlush, matchSwitchEntry, SWITCH_ENTRIES } from './switchflush.js';
 import { createSwitchGuard, wrapCommands, DELETE_ENTRY, GUARD_COMMANDS } from './switchguard.js';
 import { createCodeGuard, isClickTrigger, CODE_SWITCH_KEYS } from './switchcode.js';
 
@@ -45,6 +45,8 @@ const last = new Map();
 const stats = { skipped: 0, sent: 0, skippedBytes: 0 };
 /** 채팅 키 → 성공했거나(같은 본문이라 건너뛴 것 포함) 저장 가운데 가장 늦게 시작한 시각 */
 const lastOk = new Map();
+/** 마지막으로 서버에 보내 성공한 저장에 걸린 시간 (ms) — 바꾸기 전 저장 기다림을 그 2배까지 늘린다 (switchflush) */
+let lastSaveMs = 0;
 /** 밀린 저장 되살리기. 이 실리태번에서 쓸 수 없으면 null (저장 건너뛰기만 동작) */
 let recovery = null;
 let recoveryUnsupported = false;
@@ -74,15 +76,6 @@ function noteOk(key, start) {
     if (key !== null && start > (lastOk.get(key) ?? -Infinity)) lastOk.set(key, start);
 }
 
-/** 채팅을 바꾸기 전 저장이 멈추면 끊을 수 있게 신호를 단다 */
-function withSignal(init, signal) {
-    if (!signal) return init;
-    let merged = signal;
-    if (init?.signal && typeof AbortSignal !== 'undefined' && typeof AbortSignal.any === 'function') merged = AbortSignal.any([init.signal, signal]);
-    else if (init?.signal) return init;
-    return { ...init, signal: merged };
-}
-
 function installDedupe() {
     const nativeFetch = window.fetch;
 
@@ -91,6 +84,7 @@ function installDedupe() {
         request.then((response) => {
             if (response.ok) {
                 noteOk(key, start);
+                lastSaveMs = performance.now() - start;
                 if (remember) { last.set(path, init.body); stats.sent++; refreshStats(); }
             } else {
                 last.delete(path);
@@ -119,8 +113,6 @@ function installDedupe() {
                     if (check.block) return Promise.resolve(fakeOk());
                     token = check.token;
                 }
-                // [1.1.0] 채팅을 바꾸기 전에 부른 저장은 5초를 넘기면 끊는다 (바꾸기가 멈춘 저장을 기다리다 실패하지 않게)
-                if (switchFlush?.active() && stackHas(FLUSH_MARKER)) init = withSignal(init, switchFlush.signal());
                 // [1.0.1] 비교하지 않고 그냥 내보내는 저장도 서버 파일을 바꾼다: 확장을 꺼 둔 동안의 저장, 그리고 실리태번 요청 압축
                 // (config.yaml performance.requestCompression)이 켜져 본문이 gzip 바이트로 나가는 저장. 그때 기억해 둔 본문을 버리지 않으면
                 // 나중에 그 전 내용으로 되돌린 저장(메시지 지우기 등)을 "지난번과 같다"며 건너뛰어, 지운 메시지가 서버 파일에 남았다.
@@ -304,6 +296,8 @@ function installSwitchGuard() {
         messageAt: id => (Array.isArray(script.chat) ? script.chat[id] : null),
         now: () => performance.now(),
         savedSinceWall,
+        // 다시 쓰기 · 장면 다시 굴리기는 is_send_press 없이 body[data-generating] 만 켠 채 20초 넘게 돌 수 있다
+        pageLocked: () => document.body?.dataset?.generating === 'true',
     });
 }
 
@@ -336,6 +330,7 @@ function installSwitchFlush() {
         recoveryBusy: () => !!recovery?.inCall(),
         save: () => script.saveChatConditional(),
         savedSince: (key, since) => (lastOk.get(key) ?? -Infinity) >= since,
+        lastSaveMs: () => lastSaveMs,
         onChange: refreshStats,
         // [1.1.1] 스트리밍 답 마무리 · 끊긴 스트림의 답 (막기를 꺼도 저장 마치기는 기다린다)
         finishing: () => switchGuard?.state() === 'finishing',
@@ -431,9 +426,16 @@ function queueSwitch(entry) {
     const toastTimer = setTimeout(() => {
         if (typeof toastr !== 'undefined') toast = toastr.info('저장을 마치고 넘어가요', TITLE, { timeOut: 0, extendedTimeOut: 0, tapToDismiss: false });
     }, 700);
-    switchFlush.run().finally(() => {
+    switchFlush.run().then((result) => {
         clearTimeout(toastTimer);
         if (toast && typeof toastr !== 'undefined') toastr.clear(toast);
+        // 저장을 못 마쳤으면(시간 초과 · 실패) 도는 저장은 끊지 않고 그대로 끝나게 두며, 붙잡은 누름은 버린다 — 넘어가면 그 저장이 사라진다
+        if (result === 'timeout' || result === 'failed') {
+            queued = null;
+            switchFlush.note('dropped', { result });
+            if (typeof toastr !== 'undefined') toastr.warning('저장을 아직 못 마쳤어요. 잠시 후 다시 눌러 주세요.', TITLE, { preventDuplicates: true, timeOut: 5000 });
+            return;
+        }
         replaySwitchClick();
     });
 }

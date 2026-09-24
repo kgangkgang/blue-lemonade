@@ -519,9 +519,11 @@ function getCacheStats() {
     return { count: translationMap.size, sizeStr };
 }
 
+// Local heuristic only. ctx.getTokenCount() is a synchronous XHR per uncached
+// string on chat-completion APIs (ST 1.19), so a few hundred blocks would block
+// the UI a few hundred times while rendering; this is an estimate for display.
 function estimateTokens(text) {
     if (!text) return 0;
-    try { const ctx=SillyTavern?.getContext?.(); if(ctx&&typeof ctx.getTokenCount==='function') return ctx.getTokenCount(text); } catch(e) {}
     const cjk=(text.match(/[\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af]/g)||[]).length;
     return Math.ceil(cjk/1.5+(text.length-cjk)/4);
 }
@@ -957,6 +959,12 @@ function getCurrentPresetName() {
         const txt=el.options[el.selectedIndex]?.text?.trim(); if(txt&&txt!=='—') return txt;
     }
     return '';
+}
+// Cache namespace for a preset. An empty / '__cur__' selection resolves to the
+// loaded preset's real name so the entries never share one '__cur__' bucket.
+function presetNs(presetName) {
+    const name = (!presetName || presetName === '__cur__') ? (getCurrentPresetName() || '__cur__') : presetName;
+    return `pt-preset::${name}`;
 }
 function readPresetBlocks(presetName) {
     const blocks=[];
@@ -2538,7 +2546,7 @@ function exportPresetJSON(presetName) {
     if (!presetObj) throw new Error('프리셋 객체를 찾을 수 없습니다');
 
     const cloned = deepClone(presetObj);
-    const ns = `pt-preset::${presetName || '__cur__'}`;
+    const ns = presetNs(presetName);
 
     // Strip API connection / endpoint / credential fields.
     // These are machine-specific and may include secrets; they should never be
@@ -2613,17 +2621,19 @@ async function applyPresetLive(presetName, titlesOnly) {
     const cur = getCurrentPresetName();
     const isCurrent = targetName === cur;
     let presetObj;
+    const presetIndex = isCurrent ? undefined : openai_setting_names?.[targetName];
     if (isCurrent) {
         presetObj = oai_settings;
     } else {
-        const presetIndex = openai_setting_names?.[targetName];
-        presetObj = presetIndex !== undefined ? openai_settings[presetIndex] : null;
+        // Work on a copy: ST's stored entry is only replaced once the save
+        // succeeded, so a failed save leaves its in-memory list untouched.
+        presetObj = presetIndex !== undefined && openai_settings[presetIndex] ? deepClone(openai_settings[presetIndex]) : null;
     }
     if (!presetObj) throw new Error('프리셋 객체를 찾을 수 없습니다');
 
     // Same ns readPresetBlocks()/exportPresetJSON() use, so this picks up
     // whatever was already translated in the panel for this preset.
-    const ns = `pt-preset::${presetName || '__cur__'}`;
+    const ns = presetNs(presetName);
     let applied = 0;
     if (Array.isArray(presetObj.prompts)) {
         for (const p of presetObj.prompts) {
@@ -2672,9 +2682,21 @@ async function applyPresetLive(presetName, titlesOnly) {
     // extensions read that array: 酒馆助手(JS-Slash-Runner) rebuilds the whole
     // preset from `preset_list.presets[idx]` on its own debounced save, so a
     // stale entry there would silently write our applied names back out.
+    //
+    // For a preset that is NOT the loaded one, updateList() would also select
+    // it (val().trigger('change')), switching the user over and discarding
+    // unsaved edits of the loaded preset — so skip the update there and sync
+    // the in-memory entry ourselves.
     const presetManager = SillyTavern?.getContext?.()?.getPresetManager?.('openai');
+    const syncStoredCopy = () => {
+        try {
+            const idx = openai_setting_names?.[targetName];
+            if (idx !== undefined && Array.isArray(openai_settings)) openai_settings[idx] = presetBody;
+        } catch (e) { console.warn(`[${EXT}] preset list sync failed`, e); }
+    };
     if (presetManager?.savePreset) {
-        await presetManager.savePreset(targetName, presetBody);
+        await presetManager.savePreset(targetName, presetBody, { skipUpdate: !isCurrent });
+        if (!isCurrent) syncStoredCopy();
     } else {
         // Older ST without an exposed PresetManager — fall back to the raw call.
         const res = await fetch('/api/presets/save', {
@@ -2684,10 +2706,7 @@ async function applyPresetLive(presetName, titlesOnly) {
         });
         if (!res.ok) throw new Error(`저장 실패 (HTTP ${res.status})`);
         // Keep ST's in-memory copy in step with what we just wrote.
-        try {
-            const idx = openai_setting_names?.[targetName];
-            if (idx !== undefined && Array.isArray(openai_settings)) openai_settings[idx] = presetBody;
-        } catch (e) { console.warn(`[${EXT}] preset list sync failed`, e); }
+        syncStoredCopy();
     }
 
     // Make ST-BaiBai-Tools drop its cached group state so it re-reads the names
@@ -3180,6 +3199,10 @@ ${numbered}
 Now output the ${names.length} numbered lines, translated into ${lang}.`;
 
     const result = await runCompletion(buildMessages(prompt));
+    if (typeof result !== 'string' || !result.trim()) {
+        // Nothing came back — halving the batch will not make the model answer.
+        const err = new Error('empty reply'); err.__empty = true; throw err;
+    }
     return parseNumberedTitles(result, names.length);
 }
 
@@ -3230,10 +3253,14 @@ async function runTitleTranslation({ items, list, ns, pBar, pLabel, pWrap, btnSt
     // 응답 줄 수가 배치와 어긋나면 예전에는 그 배치 전체(기본 15개)를 버렸다.
     // 이제는 반씩 쪼개 다시 물어보고, 한 개까지 내려가면 한 번 더 시도한다.
     // 개수가 맞는 응답만 채택하는 판정 자체는 그대로다 — 추측해서 넣지 않는다.
-    const translateNames = async (batch) => {
+    // 쪼개기까지 합쳐 한 배치당 요청은 최대 BATCH_ATTEMPTS번 — 빈 응답은 쪼개
+    // 봐야 똑같으니 바로 실패로 친다.
+    const BATCH_ATTEMPTS = 4;
+    const translateNames = async (batch, budget) => {
         const tries = batch.length === 1 ? 2 : 1;
         for (let attempt = 0; attempt < tries; attempt++) {
-            if (stopReq) return null;
+            if (stopReq || budget.left <= 0) return null;
+            budget.left--;
             try {
                 const t = await translateTitleBatch(batch.map(b => b.name));
                 if (t) return t;
@@ -3241,15 +3268,16 @@ async function runTitleTranslation({ items, list, ns, pBar, pLabel, pWrap, btnSt
             } catch (err) {
                 if (stopReq || err?.__stopped) return null;
                 console.warn(`[${EXT}] title batch failed`, err);
+                if (err?.__empty) return null;
                 // 키 오류 같은 확정적 실패는 쪼개 봐야 똑같이 실패한다.
                 if (!isRetryableError(err)) return null;
             }
         }
-        if (stopReq || batch.length === 1) return null;
+        if (stopReq || batch.length === 1 || budget.left <= 0) return null;
         const mid = Math.ceil(batch.length / 2);
-        const left = await translateNames(batch.slice(0, mid));
+        const left = await translateNames(batch.slice(0, mid), budget);
         if (!stopReq) await sleepCancellable(requestDelayMs());
-        const right = stopReq ? null : await translateNames(batch.slice(mid));
+        const right = stopReq || budget.left <= 0 ? null : await translateNames(batch.slice(mid), budget);
         if (!left && !right) return null;
         return [
             ...(left  || new Array(mid).fill(null)),
@@ -3257,10 +3285,11 @@ async function runTitleTranslation({ items, list, ns, pBar, pLabel, pWrap, btnSt
         ];
     };
 
-    let done = 0, okCount = 0, failCount = 0;
+    let done = 0, okCount = 0, failCount = 0, deadBatches = 0;
     for (const batch of batches) {
         if (stopReq) break;
-        const translated = await translateNames(batch);
+        const translated = await translateNames(batch, { left: BATCH_ATTEMPTS });
+        let batchOk = 0;
         batch.forEach((b, i) => {
             const v = translated?.[i];
             if (!v) { failCount++; return; }
@@ -3268,9 +3297,16 @@ async function runTitleTranslation({ items, list, ns, pBar, pLabel, pWrap, btnSt
             // Title-only blocks show the translated name in their
             // 번역 box (they have no body), so refresh it in place.
             if (b.titleOnly) setBlockHTML(list, b.id, esc(v));
-            okCount++;
+            okCount++; batchOk++;
         });
         done += batch.length;
+        // 세 배치 연속으로 하나도 못 받으면 연결·모델 문제다 — 나머지를 돌려 봐야 요청만 쌓인다.
+        deadBatches = batchOk ? 0 : deadBatches + 1;
+        if (!stopReq && deadBatches >= 3 && done < targets.length) {
+            if (typeof toastr !== 'undefined') toastr.error('제목 번역이 3배치 연속 실패해 중단했습니다. 연결·모델 설정을 확인해 주세요.');
+            stopReq = true;
+            break;
+        }
         const pct = Math.round(done / targets.length * 100);
         pBar.style.width = pct + '%';
         pLabel.textContent = `${done} / ${targets.length}  (${pct}%)`;
@@ -3577,7 +3613,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
             showEmpty('불러올 데이터가 없습니다.');
             return;
         }
-        ns=`${idPfx}::${val||'__cur__'}`;
+        ns=kind==='preset' ? presetNs(val) : `${idPfx}::${val||'__cur__'}`;
         showEmpty('로딩 중...');
         try {
             items=await loadFn(val);
@@ -4326,7 +4362,17 @@ function buildParamsUI() {
 }
 
 // ── Init ───────────────────────────────────────────────────────────────
+// true when another Prompt Panel (standalone install under any folder name)
+// already built its UI — we then stay dormant so the two never fight over
+// the same cache files.
+export let duplicate = false;
 export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
+    if (PDOC.getElementById('pt-panel') || PDOC.getElementById('pt-provider')) {
+        duplicate = true;
+        console.warn(`[${EXT}] another Prompt Panel is already running — built-in copy stays dormant`);
+        resolve();
+        return;
+    }
     console.log(`[${EXT}] init start`);
     try { await initImports(); } catch(e) { console.error(`[${EXT}] initImports failed`, e); throw e; }
     console.log(`[${EXT}] imports OK`);
@@ -4466,9 +4512,13 @@ export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
 
     dockPanel();
     const drawerContent = PDOC.getElementById('pt-drawer-host').parentElement;
+    // Only the drawer content, its own .inline-drawer and #extensions_settings
+    // change when the drawer opens/closes; watching every ancestor up to <html>
+    // made each body class toggle (streaming etc.) flush layout via getClientRects.
     const drawerObserver = new MutationObserver(syncDrawerPages);
-    for (let ancestor = drawerContent; ancestor; ancestor = ancestor.parentElement) {
-        drawerObserver.observe(ancestor, {attributes:true, attributeFilter:['style','class']});
+    const drawerWatch = new Set([drawerContent, drawerContent.closest('.inline-drawer'), PDOC.getElementById('extensions_settings')]);
+    for (const el of drawerWatch) {
+        if (el) drawerObserver.observe(el, {attributes:true, attributeFilter:['style','class']});
     }
     PDOC.querySelector('.pt-extension-settings .inline-drawer-toggle').addEventListener('click', () => {
         setTimeout(() => {

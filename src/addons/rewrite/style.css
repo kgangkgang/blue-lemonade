@@ -617,8 +617,8 @@ dialog.popup.bwr_dialog .popup-content {
     padding: 6px 12px;
     border: 0;
     border-radius: 999px;
-    background: var(--bwr-accent, var(--SmartThemeQuoteColor));
-    color: var(--bwr-on-accent, #fff);
+    background: var(--salty-accent, var(--bwr-accent, var(--SmartThemeQuoteColor)));
+    color: var(--salty-on-accent, #fff); /* 5.1.3 body 에 붙는 칩이라 .bwr_settings 변수는 상속 안 됨 */
     font: inherit;
     font-size: 13px;
     line-height: 1.2;

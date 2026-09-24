@@ -1,7 +1,7 @@
 import { preserveLocks } from './setting-locks.js';
 // Portable, opt-in appearance presets. Never include chats, addon credentials or libraries.
 import { WEATHER_FIELDS, WEATHER_MODES } from './weather-profiles.js';
-import { DEFAULTS } from './settings.js';
+import { DEFAULTS, isCssColor } from './settings.js';
 import { PALETTES } from './palettes.js';
 import { GRADIENT_KEYS } from './gradients.js';
 
@@ -61,6 +61,7 @@ function validValue(v) {return v===null||typeof v==='boolean'||(typeof v==='numb
 function validField(path,value) {
     const shape=template(path);
     if(!validValue(value))return false;
+    if(path.startsWith('colorOverrides.')&&path.split('.').length===3)return value===''||isCssColor(value); // 색만 — 값이 <style> 에 그대로 들어간다 (5.1.2)
     if(shape===null)return value===null||typeof value==='number';
     if(Array.isArray(shape))return Array.isArray(value)&&value.every(v=>typeof v===typeof shape[0]);
     return typeof value===typeof shape;

@@ -457,7 +457,7 @@ body.expandMessageActions .mes .mes_buttons .extraMesButtons {
     font-weight: 600;
     cursor: pointer;
 }
-.llmt-gl-scope.active { background: var(--llmt-accent); border-color: transparent; color: #10131a; }
+.llmt-gl-scope.active { background: var(--llmt-accent); border-color: transparent; color: var(--salty-on-accent, #10131a); }
 .llmt-gl-count { margin-left: auto; color: var(--llmt-dim); font-size: .8em; font-variant-numeric: tabular-nums; }
 .llmt-gl-sort { border-color: var(--llmt-border); font-size: .8em; font-weight: 700; }
 .llmt-gl-list { display: flex; flex-direction: column; gap: 2px; max-height: 260px; overflow-y: auto; }

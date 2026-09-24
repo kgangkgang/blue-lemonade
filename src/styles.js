@@ -4,7 +4,7 @@ import { preserveLocks } from './setting-locks.js';
 //
 // 스타일에 담지 않는 것: 테마 켬/끔 · 공지 · 내 글꼴 목록 · 도형 목록 · 동작 설정(고르기 팝업 · 페이드 인 · 폰 접기 · 몰입 읽기 · 한 손 버튼)
 // — 모양만 바꾸고 쓰는 방식은 그대로 두려고. 저장한 도형을 쓰는 스타일은 그림 대신 도형 id 만 담는다 (설정 파일이 무거워지지 않게).
-import { getSettings, DEFAULTS, FONT_SET } from './settings.js';
+import { getSettings, DEFAULTS, FONT_SET, isCssColor } from './settings.js';
 
 export const STYLE_KEYS = ['gradients', 'palette', 'nightTint', 'lightTint', 'customName', 'colorOverrides', 'fonts', 'type', 'dialogue', 'ui', 'code', 'em', 'strong', 'shadow', 'chat', 'image', 'profile', 'userProfile'];
 const CHAT_BEHAVIOR = ['triangleFold', 'weatherAutoRest', 'selectPop', 'colorPop', 'streamFade', 'demFold', 'qrFind'];
@@ -13,6 +13,16 @@ const CODE_PREFIX = 'BLS1.';     // deflate-raw + base64url
 const PLAIN_PREFIX = 'BLS0.';    // 압축 못 하는 브라우저: base64url 만
 
 const isObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
+const UNSAFE = new Set(['__proto__', 'constructor', 'prototype']);
+/** 스타일 칸의 값이 기본값과 같은 생김새인가 (객체 칸은 객체, 나머지는 같은 typeof) — fonts: "pretendard" 같은 것이 apply 를 죽였다 (5.1.2) */
+const sameShape = (key, value) => isObj(DEFAULTS[key]) ? isObj(value) : typeof value === typeof DEFAULTS[key];
+/** 직접 고친 색: 팔레트별 { token: 색 } 만 남긴다 — 색이 아닌 문자열은 <style> 에 규칙을 끼워 넣을 수 있다 (5.1.2) */
+function cleanOverrides(overrides) {
+    for (const [id, colors] of Object.entries(overrides)) {
+        if (UNSAFE.has(id) || !isObj(colors)) { delete overrides[id]; continue; }
+        for (const [token, value] of Object.entries(colors)) if (UNSAFE.has(token) || !(value === '' || isCssColor(value))) delete colors[token];
+    }
+}
 
 /** 지금 설정에서 스타일 데이터 떼어 내기 */
 export function captureStyle(s = getSettings()) {
@@ -32,15 +42,20 @@ export function applyStyleData(s, data) {
     try {
     for (const key of STYLE_KEYS) {
         const value = data[key];
-        if (value === undefined || value === null) continue;
-        if ((key === 'chat' || key === 'image' || key === 'profile' || key === 'userProfile') && isObj(value)) {
-            const clean = structuredClone(value);
-            if (key === 'chat') for (const k of CHAT_BEHAVIOR) delete clean[k];
-            if (key === 'image') delete clean.masks;
-            Object.assign(s[key], clean);
+        if (value === undefined || value === null || !sameShape(key, value)) continue;
+        if (key === 'chat' || key === 'image' || key === 'profile' || key === 'userProfile') {
+            // 아는 칸만 (기본값에 있거나 정리된 설정에 이미 있는 이름) — Object.assign 은 own __proto__ 까지 옮겨 붙였다 (5.1.2)
+            if (!isObj(s[key])) s[key] = structuredClone(DEFAULTS[key]);
+            const target = s[key];
+            for (const [k, v] of Object.entries(value)) {
+                if (UNSAFE.has(k) || !(Object.hasOwn(DEFAULTS[key], k) || Object.hasOwn(target, k))) continue;
+                if ((key === 'chat' && CHAT_BEHAVIOR.includes(k)) || (key === 'image' && k === 'masks')) continue;
+                target[k] = structuredClone(v);
+            }
             continue;
         }
         s[key] = structuredClone(value);
+        if (key === 'colorOverrides') cleanOverrides(s[key]);
     }
     if (s.chat?.weatherImageId && !s.chat.weatherImage) {
         const pic = s.weatherImages?.find(w => w.id === s.chat.weatherImageId);
@@ -176,7 +191,8 @@ export async function decodeStyle(input) {
     }
     if (!isObj(payload) || !payload.saltyStyle || !isObj(payload.style)) throw new Error('블루 레몬에이드 스타일이 아니에요');
     const style = {};
-    for (const key of STYLE_KEYS) if (payload.style[key] !== undefined) style[key] = payload.style[key];
+    for (const key of STYLE_KEYS) if (payload.style[key] !== undefined && sameShape(key, payload.style[key])) style[key] = payload.style[key]; // 생김새가 다른 칸은 버림 (5.1.2)
+    if (style.colorOverrides) cleanOverrides(style.colorOverrides);
     if (!Object.keys(style).length) throw new Error('스타일 안에 든 값이 없어요');
     const fonts = Array.isArray(payload.fonts) ? payload.fonts.filter(f => isObj(f) && typeof f.id === 'string' && typeof f.family === 'string') : [];
     return { name: typeof payload.name === 'string' && payload.name.trim() ? payload.name.trim().slice(0, 24) : '받은 스타일', style, fonts };

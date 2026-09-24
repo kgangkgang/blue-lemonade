@@ -1,6 +1,7 @@
 // 프롬프트 연동 정규식 — 켜 둔 프롬프트에 딸린 정규식만 켜고, 꺼 둔 모듈(모멘텀 엔진 · 상태창 …)의 정규식은 끈다.
 // 꺼진 정규식은 실리태번이 스트리밍 · 프롬프트 만들기에서 아예 건너뛰므로 답이 오는 동안 정규식 비용이 그만큼 준다.
-// 켜고 끄는 것은 메모리의 정규식 목록(프리셋 · 전역 · 캐릭터)에 disabled 를 쓰는 것뿐 — 프리셋 파일은 사용자가 저장할 때와 기능을 끌 때(되돌린 값)만 바뀐다.
+// 켜고 끄는 것은 메모리의 정규식 목록(프리셋 · 전역)에 disabled 를 쓰는 것뿐 — 프리셋 파일은 사용자가 저장할 때와 기능을 끌 때(되돌린 값)만 바뀐다.
+// 캐릭터 카드의 정규식은 손대지 않는다: 실리태번 정규식 편집기가 메모리의 disabled 를 카드에 그대로 써 넣는데 stop() 은 프리셋 파일만 되돌릴 수 있다.
 // 원래 상태는 origin 에 적어 두고, 기능을 끄면 되돌린다 (그새 저장돼 파일에 들어간 우리 값도). 계산은 engine.js (테스트 가능).
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
 import { extension_settings } from '../../../../../../extensions.js';
@@ -24,7 +25,7 @@ function store() {
     return s;
 }
 
-/** 지금 실제로 쓰이는 정규식 목록들 (실리태번과 같은 기준: 허용된 프리셋 · 허용된 캐릭터) */
+/** 지금 실제로 쓰이는 정규식 목록들 (전역 · 허용된 프리셋). 캐릭터 카드 목록은 되돌릴 길이 없어 넣지 않는다 (origin 에도 적지 않는다) */
 function scriptLists() {
     const ctx = SillyTavern.getContext();
     const lists = [];
@@ -32,9 +33,6 @@ function scriptLists() {
     const api = ctx.mainApi;
     const presetName = oai_settings?.preset_settings_openai;
     if (api === 'openai' && extension_settings.preset_allowed_regex?.openai?.includes(presetName) && Array.isArray(oai_settings.extensions?.regex_scripts)) lists.push(oai_settings.extensions.regex_scripts);
-    const avatar = ctx.characters?.[ctx.characterId]?.avatar;
-    const scoped = ctx.characters?.[ctx.characterId]?.data?.extensions?.regex_scripts;
-    if (avatar && extension_settings.character_allowed_regex?.includes(avatar) && Array.isArray(scoped)) lists.push(scoped);
     return lists;
 }
 

@@ -8,7 +8,8 @@
 // 한 번 저장한 뒤 그 클릭을 다시 보낸다.
 // - 남은 것이 없으면(저장 대기 · 저장 중 · 복구 대기가 모두 없으면) 클릭을 건드리지 않는다. 저장도 더하지 않는다.
 // - 채팅 파일을 직접 쓰지 않는다. 실리태번의 바꾸기 코드가 돌기 전, 아직 그대로인 지금 채팅만 저장한다.
-// - 앞 저장을 5초까지 기다리고, 우리 저장이 5초(합쳐 8초)를 넘거나 실패하면 요청을 끊고 그냥 넘어간다.
+// - 앞 저장을 5초까지 기다린다. 우리 저장은 5초(마지막 저장이 오래 걸렸으면 그 2배까지)를 기다리고, 넘기거나 실패하면
+//   저장은 끊지 않고 그대로 끝나게 두며 클릭도 다시 보내지 않는다 (끊으면 7MB 채팅의 마지막 수정이 사라졌다). 사용자에게 다시 누르라고 알린다.
 // [1.1.1] 스트리밍 답을 마무리하는 중(잠금은 풀렸지만 실리태번의 끝 저장 전)이면 그 저장이 끝날 때까지 기다린다.
 //         끊긴 스트림의 답(실리태번이 저장하지 않는다)도 바꾸기 전에 저장한다. 기다리는 사이 답 받기가 다시 시작되면 멈춘다 (blocked).
 
@@ -146,12 +147,11 @@ export function createSaveTimers(env) {
 
 const DEFAULTS = Object.freeze({
     limitMs: 5000, // 앞선 저장을 기다리고 우리 저장을 시작하기까지 붙잡는 최대 시간
-    saveLimitMs: 5000, // 시작한 우리 저장을 기다리는 최대 시간 (폰에서 큰 채팅 저장은 수 초)
-    maxTotalMs: 8000, // 전부 합쳐 이보다 오래 붙잡지 않는다
+    saveLimitMs: 5000, // 시작한 우리 저장을 기다리는 최소 시간 (폰에서 큰 채팅 저장은 수 초 — 마지막 성공한 저장의 2배까지 늘린다)
+    maxTotalMs: 8000, // 전부 합쳐 이보다 오래 붙잡지 않는다 (저장 기다림이 늘면 그만큼 같이 는다)
     idleMs: 150, // 저장이 이만큼 조용해야 "끝났다"고 본다 (실리태번 저장 대기는 0.1초마다 잠금을 본다)
     tickMs: 20,
     maxSaves: 2, // 한 번 붙잡는 동안 부르는 저장 수
-    abortGraceMs: 1500, // 멈춘 저장을 끊은 뒤 잠금이 풀리기를 기다리는 시간
 });
 
 /**
@@ -169,6 +169,7 @@ const DEFAULTS = Object.freeze({
  * @param {() => boolean} [env.finishing] [1.1.1] 스트리밍 답의 마무리(끝 저장까지)가 도는 중
  * @param {() => boolean} [env.generating] [1.1.1] 답을 받는 중 (기다림을 멈춘다)
  * @param {(live: object) => boolean} [env.erroredUnsaved] [1.1.1] 끊긴 스트림의 답이 저장되지 않음
+ * @param {() => number} [env.lastSaveMs] 마지막으로 성공한 저장에 걸린 시간 (없으면 0) — 저장 기다림을 그 2배까지 늘린다
  */
 export function createSwitchFlush(env, options = {}) {
     const o = { ...DEFAULTS, ...options };
@@ -260,14 +261,16 @@ export function createSwitchFlush(env, options = {}) {
             const started = env.now();
             note('save', { attempt: state.saves, key: live.key });
             const saving = saveDedupeSwitchFlush();
-            const saveDeadline = Math.min(started + o.saveLimitMs, state.t0 + o.maxTotalMs);
+            // 큰 채팅은 저장 한 번이 5초를 넘기도 한다 — 마지막 성공한 저장의 2배까지 기다린다 (합계 상한도 그만큼 늘린다)
+            const saveLimit = Math.max(o.saveLimitMs, 2 * (Number(env.lastSaveMs?.()) || 0));
+            const totalLimit = Math.max(o.maxTotalMs, saveLimit + (o.maxTotalMs - o.saveLimitMs));
+            const saveDeadline = Math.min(started + saveLimit, state.t0 + totalLimit);
             const outcome = await Promise.race([
                 saving.then(() => 'done', () => 'done'),
                 env.sleep(Math.max(0, saveDeadline - env.now())).then(() => 'timeout'),
             ]);
             if (outcome === 'timeout') {
-                state.controller?.abort();
-                await Promise.race([saving.catch(() => {}), env.sleep(o.abortGraceMs)]);
+                // 저장은 끊지 않는다 — 끊으면 그 저장(마지막 수정)이 사라진다. 그대로 끝나게 두고, 바꾸기만 넘기지 않는다 (savededupe 가 알린다).
                 result = 'timeout';
                 break;
             }
@@ -287,7 +290,6 @@ export function createSwitchFlush(env, options = {}) {
             t0: env.now(),
             saves: 0,
             busy: { saving: 0, timer: 0, recovery: 0, finishing: 0 },
-            controller: typeof AbortController === 'function' ? new AbortController() : null,
             promise: null,
         };
         note('start');
@@ -313,8 +315,6 @@ export function createSwitchFlush(env, options = {}) {
         run,
         active: () => active !== null,
         note,
-        /** 붙잡은 동안의 저장 요청에 달 AbortSignal (없으면 null) */
-        signal: () => active?.controller?.signal ?? null,
         stats,
         log,
     };

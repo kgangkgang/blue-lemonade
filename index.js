@@ -172,7 +172,9 @@ jQuery(() => {
     }
     // 실리태번 쪽 설정이 바뀌면 설정 점검을 다시
     let refreshTimer = null;
-    $(document).on('change input', '#chat_display, #hideChatAvatarsEnabled, #customCSS, #stream_fade_in', () => {
+    $(document).on('change input', '#chat_display, #hideChatAvatarsEnabled, #customCSS, #stream_fade_in', (event) => {
+        // 5.1.2: 커스텀 CSS 를 치는 동안(input)은 그 보고서가 보이는 화면(채팅 › 기타)일 때만 — 400ms 마다 설정 창 전체를 다시 그렸다. 다 치고 나면(change) 그대로
+        if (event.type === 'input' && event.target.id === 'customCSS' && !panelApi?.panelShows('chat', 'etc')) return;
         clearTimeout(refreshTimer);
         refreshTimer = setTimeout(refreshPanels, 400);
     });

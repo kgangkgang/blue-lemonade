@@ -112,6 +112,12 @@ export const DEFAULTS = {
 
 DEFAULTS.userProfile = { ...structuredClone(DEFAULTS.profile), mode: 'none', side: 'auto', metaSide: 'auto' }; // auto = 말풍선이면 오른쪽(메신저처럼), 나머지 모양은 왼쪽
 
+// 5.1.2: 스타일 시트에 그대로 들어가는 색 문자열 — #hex · rgb(a) · hsl(a) 만. 괄호 안에 { } ; 가 못 들어오니 규칙을 끼워 넣을 수 없다
+// (직접 고친 색 · 나눈 스타일 · 선택 공유 프리셋이 같이 씀)
+export const CSS_COLOR = /^(#[0-9a-f]{3,8}|rgba?\([^(){};]*\)|hsla?\([^(){};]*\))$/i;
+export const isCssColor = value => typeof value === 'string' && CSS_COLOR.test(value.trim());
+const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
 export const PROFILE_RANGE = { screenHeight: [10, 100], maxHeight: [10, 100], visibleHeight: [10, 100], nameSize: [10, 60], nameWeight: [100, 900], nameSpacing: [-10, 30], nameHeight: [1, 2.5], headerGap: [0, 32], metaSize: [8, 24], metaOpacity: [20, 100], buttonGap: [0, 24], nameOutline: [0, 3], nameShadowBlur: [0, 20], nameShadowY: [-10, 10], nameShadowAlpha: [0, 100], width: [30, 100], height: [100, 720], positionX: [0, 100], positionY: [0, 100], radius: [0, 80], gap: [0, 64], blur: [0, 16], opacity: [20, 100], fadeY: [0, 45], fadeX: [0, 45] };
 
 function fill(target, defaults) {
@@ -410,10 +416,21 @@ function tidyFontSlot(fonts, slot) {
     else fonts[slot] = 'same';
 }
 
+// 5.1.2: 한 마이크로태스크 안에서는 정리를 한 번만 — 설정 창이 한 번 그려질 때 getSettings 를 40~60번 부른다.
+// 저장 칸의 객체가 통째로 바뀌면(초기화 · 가져오기) 같은 객체가 아니라 그냥 지나가고, 제자리에서 고친 값은 같은 객체라 그대로 보인다.
+// 값을 고친 뒤 같은 마이크로태스크 안에서 정리(범위 · 형식)를 다시 받고 싶으면 invalidateSettings()
+let memo = null;
+export function invalidateSettings() { memo = null; }
+
 export function getSettings() {
     const ext = SillyTavern.getContext().extensionSettings;
+    if (memo && ext[KEY] === memo) return memo;
     if (!ext[KEY]) ext[KEY] = structuredClone(DEFAULTS);
     migrate(ext[KEY]);
+    // 5.1.2: 칸 자체가 깨진 값(fonts: "pretendard" · colorOverrides: "salt" …)이면 그 칸을 기본값으로 — fill() 은 있는 값을 안 건드려 아래 정리 · apply 가 죽었다 (매 시작마다)
+    for (const [key, value] of Object.entries(DEFAULTS)) {
+        if (isObj(value) ? !isObj(ext[KEY][key]) : Array.isArray(value) ? !Array.isArray(ext[KEY][key]) : false) ext[KEY][key] = structuredClone(value);
+    }
     // 3.4.0 전 설정: 데우스 카드 스킨이나 트래커 날씨를 쓰던 사람이면 호환을 켠 채로 시작 (한 번만)
     const firstDeus = ext[KEY].deus === undefined;
     const migrateUserMode = !ext[KEY].userProfile || ext[KEY].userProfile.mode === 'inherit';
@@ -429,7 +446,11 @@ export function getSettings() {
     s.compat.muteCustomCss = flag(s.compat.muteCustomCss, false);
     if (isObj(s.type)) tidyType(s.type);
     tidyRoles(s);
-    if (isObj(s.fonts)) ['em', 'strong', 'code', 'name', 'userName'].forEach(slot => tidyFontSlot(s.fonts, slot));
+    if (isObj(s.fonts)) {
+        FONT_SLOTS.forEach(slot => tidyFontSlot(s.fonts, slot));
+        if (!isObj(s.fonts.text)) s.fonts.text = { ...FONT_SET }; // 본문은 'same' 이 없다 (fonts.js slotStack 이 묶음을 기대)
+        if (!['auto', 'ko', 'ja', 'zh'].includes(s.fonts.hanja)) s.fonts.hanja = 'auto';
+    }
     if (s.image && !IMAGE_SHAPES.includes(s.image.shape)) s.image.shape = 'rect'; // 모르는 모양(가져온 파일 · 뺀 유리 조각 · 물방울) → 네모
     if (s.image) { tidyImage(s.image); tidyFrame(s.image); }
     tidyDecor(s.image);
@@ -466,7 +487,7 @@ export function getSettings() {
     delete s.pastel; // 1.8.2~1.9.1 의 파스텔 스위치 — 파스텔로 정착하며 없앰 (id 는 PALETTE_ALIASES 가 원래 id 로)
     s.customName = typeof s.customName === 'string' ? s.customName.trim().slice(0, 24) : '';
     s.noticeSeen = typeof s.noticeSeen === 'string' ? s.noticeSeen.slice(0, 20) : '';
-    s.gradients = tidyGradients(s.gradients);
+    { const tidy = tidyGradients(s.gradients); if (JSON.stringify(tidy) !== JSON.stringify(s.gradients)) s.gradients = tidy; } // 이미 정돈돼 있으면 같은 객체 그대로
     tidyFlags(s);
     tidyStyles(s);
     if (!Array.isArray(s.customPalettes)) s.customPalettes=[];
@@ -507,7 +528,16 @@ export function getSettings() {
     for(const style of MASK_STYLES)s.captureTools.maskStyles[style]=normalizeMaskStyle(s.captureTools.maskStyles[style]);
     s.customPalettes=s.customPalettes.filter(item=>item&&typeof item.id==='string'&&typeof item.name==='string'&&isObj(item.light)&&isObj(item.dark)).slice(0,24);
     if (firstDeus) s.deus.on = !!(s.chat?.demSkin || s.chat?.weather === 'tracker');
-    for (const id of Object.keys(s.colorOverrides || {})) if (!PALETTES[id]) delete s.colorOverrides[id];
+    // 직접 고친 색: 팔레트 id 는 아는 것만, 값은 색 문자열만 — 값이 <style> 에 그대로 들어가니 "red} body{display:none}" 같은 것이 화면을 지웠다 (5.1.2)
+    for (const [id, colors] of Object.entries(s.colorOverrides)) {
+        if (!Object.hasOwn(PALETTES, id) || !isObj(colors)) { delete s.colorOverrides[id]; continue; }
+        for (const [token, value] of Object.entries(colors)) {
+            if (UNSAFE_KEYS.has(token) || !isCssColor(value)) delete colors[token];
+            else if (value !== value.trim()) colors[token] = value.trim();
+        }
+    }
+    memo = s;
+    queueMicrotask(() => { memo = null; });
     return s;
 }
 
@@ -520,17 +550,24 @@ export function saveSettings() {
 // 4.7.0: 무엇을 되돌릴지 고른다 — look(테마 모습) · addons(애드온 켬 · 설정) · tools(단어 치환 · 캡처) · library(프레임 · 팔레트 · 날씨 그림 · 모양)
 // 내 글꼴 · 본 공지 · 내 스타일 · 캐릭터 연결은 늘 남긴다 (입혀 둔 캐릭터 스타일 상태는 비움)
 const RESET_GROUPS = { addons: ['addons', 'addonUI'], tools: ['wordTools', 'captureTools'], library: ['frameLibrary', 'customPalettes', 'weatherImages'] };
+// 5.1.2: 테마 모습이 아닌 쓰는 방식(켬 · 사용 모드 · 잠금 · 자동 화이트/나이트 · 한 손 · 몰입 읽기 · 백그라운드 창 · 알림 · 다른 CSS · 고른 커스텀 에이드)은 '테마 모습' 초기화에 남긴다
+const RESET_KEEP = ['appearanceHistory', 'customFonts', 'noticeSeen', 'styles', 'charStyles', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify', 'activeCustomPalette'];
 export function resetSettings(groups = { look: true }) {
     const ext = SillyTavern.getContext().extensionSettings;
     const old = ext[KEY] || {};
     const fresh = structuredClone(DEFAULTS);
     const next = groups.look ? fresh : structuredClone(old);
-    if (groups.look) for (const key of ['appearanceHistory', 'customFonts', 'noticeSeen', 'styles', 'charStyles']) next[key] = structuredClone(old[key] ?? fresh[key]);
+    if (groups.look) {
+        for (const key of RESET_KEEP) next[key] = structuredClone(old[key] ?? fresh[key]);
+        // 기기별 배치는 켬/끔만 남긴다 — 담긴 pc · mobile 값은 모습이라, 남기면 syncDeviceLayout 이 초기화한 모습 위에 옛 배치를 도로 입힌다
+        next.deviceLayouts = { on: old.deviceLayouts?.on === true, pc: {}, mobile: {} };
+    }
     for (const [group, keys] of Object.entries(RESET_GROUPS)) for (const key of keys) next[key] = structuredClone(groups[group] ? DEFAULTS[key] : (old[key] ?? DEFAULTS[key]));
     if (!next.image || typeof next.image !== 'object') next.image = structuredClone(DEFAULTS.image);
     if (groups.library) { next.image.masks = []; next.image.maskId = ''; if (next.image.shape === 'custom') next.image.shape = 'rect'; }
     else if (groups.look) next.image.masks = structuredClone(old.image?.masks || []);
     ext[KEY] = next;
+    memo = null;
     saveSettings();
     return next;
 }

@@ -34,7 +34,7 @@ export function getIssues() {
     }
 
     const css = ctx.powerUserSettings?.custom_css || '';
-    if (/Moonlit|Slate|--custom-theme-style-inputs/.test(css)) {
+    if (/Moonlit|Slate/.test(css)) {
         issues.push({
             text: '사용자 설정의 커스텀 CSS에 예전 테마가 남아 있어요.',
             fix: '비우기',

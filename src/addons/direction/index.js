@@ -155,14 +155,24 @@ function isRawGeneration() {
     return /\bgenerateRaw(?:Data)?\b/.test(new Error().stack ?? '');
 }
 
+// 생성 종류는 GENERATION_STARTED(prepareOpenAIMessages 보다 먼저)에서 받아 둔다. 조용한 생성(/gen · 요약 · 그림 프롬프트 · 표정)과
+// 대신 쓰기(impersonate)에는 넣지 않는다. 한 번 쓰면 비워서 지난 값이 다음 요청에 새지 않게 한다.
+let generationType = null;
+function trackGeneration(type) {
+    generationType = typeof type === 'string' ? type : null;
+}
+
 function injectDirection(eventData) {
-    if (!isActive() || isRawGeneration()) return;
+    const type = generationType;
+    generationType = null;
+    if (!isActive() || isRawGeneration() || type === 'quiet' || type === 'impersonate') return;
     const store = settings();
     const template = store.directionPrompt;
     const messages = eventData?.chat;
     if (!template?.trim() || !Array.isArray(messages)) return;
 
-    insertDirection(messages, template, store.direction.content, store.promptDepth, getChatCompletionModel(oai_settings));
+    const prefill = type === 'impersonate' ? oai_settings.assistant_impersonation : oai_settings.assistant_prefill;
+    insertDirection(messages, template, store.direction.content, store.promptDepth, getChatCompletionModel(oai_settings), { type, prefill });
 }
 
 // 프리셋 안에서 {{direction}}을 직접 쓸 수도 있게 매크로로도 둔다. 꺼져 있으면 빈칸이 된다.
@@ -567,9 +577,10 @@ export const ready = new Promise((resolve, reject) => jQuery(() => {
     registerDirectionMacro();
     buildSettings();
     ensureButton();
+    eventSource.on(event_types.GENERATION_STARTED, trackGeneration);
     eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, injectDirection);
     // 테마를 바꾸면 테마 색을 쓰는 경우의 글자색(켜짐 배지)도 다시 계산한다.
-    eventSource.on(event_types.SETTINGS_UPDATED, applyOnColor);
+    eventSource.on(event_types.SETTINGS_UPDATED, syncOnColor); // 5.1.3: 저장마다 계산 스타일을 읽지 않고 값싼 서명이 바뀔 때만
     // 설정 저장을 기다리지 않고 테마 색이 바뀌는 그 자리에서 따라간다.
     // 실리태번 테마는 <html style>, 블루 레몬에이드는 <head>의 <style id="salty-vars"> · body 클래스를 바꾼다.
     // 1.1.0: 60ms 뒤에 바로 계산 스타일을 읽으면, 답이 스트리밍되는 도중(실리태번이 body 클래스를 붙였다 뗌)에는 채팅이 막 바뀐
@@ -581,8 +592,12 @@ export const ready = new Promise((resolve, reject) => jQuery(() => {
         clearTimeout(themeTimer);
         themeTimer = setTimeout(syncOnColor, 0);
     };
+    // 5.1.3: 부팅 중엔 확장 CSS·색 변수·body 클래스가 수십 번 바뀌어 그때마다 문서 전체 스타일을 강제로 계산했다
+    // (폰 흉내 부팅 0.4~0.9초). 앱이 준비될 때까지는 조용히 있다가 한 번만 맞춘다.
+    let bootQuiet = !!document.getElementById('loader');
+    if (bootQuiet) eventSource.once(event_types.APP_READY, () => setTimeout(() => { bootQuiet = false; syncOnColor(); }, 1500));
     const watchTheme = new MutationObserver(() => {
-        if (themeFrame) return;
+        if (bootQuiet || themeFrame) return;
         clearTimeout(themeTimer);
         themeTimer = setTimeout(() => { cancelAnimationFrame(themeFrame); themeFrame = 0; syncOnColor(); }, 1000);
         themeFrame = requestAnimationFrame(() => { themeFrame = 0; afterPaint(); });

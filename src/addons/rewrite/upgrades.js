@@ -32,15 +32,21 @@ function renderEntry(entry) {
 
 /**
  * Replaces a rule's word list with the new default, keeping the user's own additions: entries that were neither
- * in the old default nor already covered by the new one. Name and description move along only if untouched.
+ * in the old default nor already covered by the new one. Default entries the user had removed from the old list
+ * stay removed. Name and description move along only if untouched.
  */
 export function upgradeRuleWords(rule, fresh, previous) {
-    const known = new Set([...parseEntries(previous.words), ...parseEntries(fresh.words)].map(entryKey));
-    const compiled = [compileRule(fresh)];
+    const previousEntries = parseEntries(previous.words);
+    const current = new Set(parseEntries(rule.words).map(entryKey));
+    const removed = new Set(previousEntries.map(entryKey).filter(key => !current.has(key)));
+    const freshEntries = parseEntries(fresh.words).filter(entry => !removed.has(entryKey(entry)));
+    const freshWords = removed.size ? freshEntries.map(renderEntry).join('\n') : fresh.words;
+    const known = new Set([...previousEntries, ...freshEntries].map(entryKey));
+    const compiled = [compileRule({ ...fresh, words: freshWords })];
     const extra = parseEntries(rule.words)
         .filter(entry => !known.has(entryKey(entry)))
         .filter(entry => !('word' in entry) || findSpans(entry.word, compiled).length === 0);
-    rule.words = [fresh.words, ...extra.map(renderEntry)].join('\n');
+    rule.words = [freshWords, ...extra.map(renderEntry)].join('\n');
     if (rule.name === previous.name) rule.name = fresh.name;
     if ((rule.description ?? '') === (previous.description ?? '')) rule.description = fresh.description;
 }

@@ -159,22 +159,41 @@ function ownedByNear(sentence, index, length, nearNames) {
     return !around.some(part => OTHER_OWNER.test(part));
 }
 
+// 찾기에서 빼는 부분: 코드(```…``` · `…`) · 태그와 그 속성(<span class="gold">) · 주소(…/gold-rimmed.png). 원문 마크업 위에서 찾다 보니
+// 이런 곳의 낱말까지 문장으로 잡혀 AI 가 고친 글이 마크업 안에 끼워졌다. 같은 길이의 공백으로 바꿔(줄바꿈은 남긴다) 위치는 그대로 두므로
+// 결과 span 은 원문을 그대로 가리키고, message.mes 는 받아들인 span 밖에서는 손대지 않는다.
+const PROTECTED = [
+    /```[\s\S]*?```/g,
+    /`[^`\n]*`/g,
+    /<\/?[A-Za-z][^<>]*>/g,
+    /\b[a-z][a-z0-9+.-]*:\/\/[^\s<>"'`)]+/gi,
+];
+
+/** Blanks code, tags and URLs with same-length spaces (newlines kept) so match indices still point into the original text. */
+export function maskProtected(text) {
+    let masked = text;
+    for (const regex of PROTECTED) masked = masked.replace(regex, part => part.replace(/[^\n]/g, ' '));
+    return masked;
+}
+
 /**
  * Returns the sentences containing banned words, without surrounding whitespace or * / _ marks
  * so a rewrite can never unbalance italics. A rule with `nearNames` only counts matches that are theirs (ownedByNear).
+ * Matching runs on the masked text (maskProtected); the returned spans slice the original.
  */
 export function findSpans(text, compiled) {
     const hits = [];
+    const masked = maskProtected(text);
     for (const { rule, regexes } of compiled) {
         for (const regex of regexes) {
-            for (const match of text.matchAll(regex)) {
+            for (const match of masked.matchAll(regex)) {
                 if (!countable(match[0])) continue;
                 const matchEnd = match.index + match[0].length;
-                let start = sentenceStart(text, match.index);
-                let end = sentenceEnd(text, matchEnd);
-                if (!ownedByNear(text.slice(start, end), match.index - start, match[0].length, rule.nearNames)) continue;
-                while (start < match.index && /[\s*_]/.test(text[start])) start++;
-                while (end > matchEnd && /[\s*_]/.test(text[end - 1])) end--;
+                let start = sentenceStart(masked, match.index);
+                let end = sentenceEnd(masked, matchEnd);
+                if (!ownedByNear(masked.slice(start, end), match.index - start, match[0].length, rule.nearNames)) continue;
+                while (start < match.index && /[\s*_]/.test(masked[start])) start++;
+                while (end > matchEnd && /[\s*_]/.test(masked[end - 1])) end--;
                 hits.push({ start, end, rule });
             }
         }
@@ -424,9 +443,10 @@ export function parseRewrites(raw, count) {
 
 function countMatches(text, compiled) {
     let count = 0;
+    const masked = maskProtected(text);
     for (const { regexes } of compiled) {
         for (const regex of regexes) {
-            for (const match of text.matchAll(regex)) {
+            for (const match of masked.matchAll(regex)) {
                 if (countable(match[0])) count++;
             }
         }

@@ -44,6 +44,7 @@ eventSource.on(event_types.CHAT_CHANGED, () => reload());
 // 이미 보이던 그림이 바뀌었다. 첫 시각을 extra.eh_seed 에 한 번만 남기고 render.js messageSeed 가 먼저 쓴다.
 if (event_types.GENERATION_STARTED) eventSource.on(event_types.GENERATION_STARTED, (type, _options, dryRun) => {
     if (dryRun || !['continue', 'append', 'appendFinal'].includes(type)) return;
+    if (!runtime.folder || !runtime.assets.length) return; // 그림이 없는 캐릭터의 채팅에는 씨앗을 남기지 않는다
     const chat = getContext().chat;
     const last = chat?.[chat.length - 1];
     if (!last?.extra || typeof last.extra !== 'object' || last.extra.eh_seed !== undefined) return;
@@ -78,6 +79,7 @@ function lazyPanel() {
     if (!container) return;
     const stub = document.createElement('div');
     stub.className = 'eh-root';
+    stub.dataset.ehStub = ''; // 머리줄만 있는 동안은 테마 색 계산(ui.js refreshThemeVars)에서 건너뛴다
     drawer = stub;
     stub.innerHTML = `<div class="inline-drawer"><div class="inline-drawer-toggle inline-drawer-header">`
         + `<b><i class="fa-solid fa-images"></i> ${TITLE} <button type="button" class="eh-version ext-version" aria-label="캐릭터 에셋 사용방법">v${VERSION}</button></b>`
@@ -95,7 +97,7 @@ function lazyPanel() {
         observer.disconnect();
         document.removeEventListener('click', onClick, true);
         // 1.4.2: 폰에서 panel.js 가 비거나 잘려 오면 서랍이 빈 채로 말이 없었다. 같은 주소는 다시 읽어도 같은 결과라 알리기만 한다.
-        panelPromise = import('./panel.js').then(mod => mod.buildPanel(stub)).catch(error => {
+        panelPromise = import('./panel.js').then(mod => { delete stub.dataset.ehStub; return mod.buildPanel(stub); }).catch(error => {
             console.error(`[${TITLE}] 설정 화면 불러오기 실패`, error);
             const box = stub.querySelector('.inline-drawer-content');
             if (box) {
@@ -123,7 +125,8 @@ async function boot() {
     lazyPanel();
     watchThemeVars();
     setupRenderer();
-    await reload();
+    // 그림 목록 읽기(/api/sprites/get 여러 번)는 기다리지 않는다 — ready 를 붙잡으면 뒤 확장들이 다 늦어진다
+    void reload().catch(error => console.error(`[${TITLE}] 그림 목록 읽기 실패`, error));
 
     // 처음 켤 때 이전 확장 설정을 가져왔으면 한 번 알려 준다.
     const store = settings();

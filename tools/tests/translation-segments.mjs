@@ -28,3 +28,12 @@ console.log('PASS first batch 1 request, multiple edits 1 request, reuse 0 reque
 
 assert.deepEqual(batchGroups(['aa','bb','cc'],4),[['aa','bb'],['cc']]);
 assert.deepEqual(batchGroups(['longer-than-limit','a'],2),[['longer-than-limit'],['a']]);
+
+// 묶음 하나만 실패(null)하면 성공한 문단은 붙이고 캐시에 넣는다; null 자리만 차단 표시. 다시 번역하면 그 문단만 보낸다
+await clearSegmentCache();calls=[];const mixed=await go('P\n\nQ',{request:async bodies=>['번역('+bodies[0]+')',null],blockedMarker:'BLOCKED'});
+assert.equal(mixed.translated,1);assert.equal(mixed.blocked,1);assert.equal(mixed.text,'번역(P)\n\nBLOCKED\nQ');calls=[];await go('P\n\nQ');assert.deepEqual(calls,[['Q']]);
+await assert.rejects(go('R\n\nS',{request:async()=>['ok',null]}));
+// <think> 블록 · 앞뒤 설명문 · 숫자 문자열 id 도 읽는다 (개수 · 번호 검사는 그대로)
+assert.deepEqual(parseBatchResult('<think>plan [1]</think>Sure, here [it] is:\n[{"id":"1","text":"b"},{"id":"0","text":"a"}]\nDone.',2),['a','b']);
+assert.throws(()=>parseBatchResult('<think>x</think>[{"id":"0","text":"a"}]',2));
+console.log('PASS partial batch failure keeps successful paragraphs; tolerant batch parsing');

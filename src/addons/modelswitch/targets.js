@@ -138,10 +138,10 @@ function shapeOf(node) {
     return key;
 }
 
-function prettyName(key, folderNames) {
-    const flat = text => String(text).toLowerCase().replace(/[^a-z0-9가-힣]/g, '');
-    const folder = folderNames.find(name => flat(name) === flat(key));
-    return folder || key;
+const flat = text => String(text).toLowerCase().replace(/[^a-z0-9가-힣]/g, '');
+// 설정 키와 같은 이름의 확장 폴더 — 지워진 확장이 남긴 설정에는 손대지 않는다
+function folderOf(key, folderNames) {
+    return folderNames.find(name => flat(name) === flat(key)) || '';
 }
 
 function detected() {
@@ -149,6 +149,8 @@ function detected() {
     const out = [];
     for (const [key, value] of Object.entries(extension_settings)) {
         if (KNOWN_KEYS.has(key) || !isObj(value)) continue;
+        const folder = folderOf(key, folders);
+        if (!folder || !installed(folder)) continue;
         const spots = [[value, '']];
         for (const [inner, node] of Object.entries(value)) if (isObj(node)) spots.push([node, inner]);
         for (const [node, inner] of spots) {
@@ -158,13 +160,15 @@ function detected() {
             const to = source => google ? toGoogle(source) : source, from = provider => google ? fromGoogle(provider) : provider;
             const urlKey = ['customUrl', 'custom_url'].find(name => typeof node[name] === 'string');
             out.push({
-                id: `auto:${key}${inner ? '.' + inner : ''}`, name: prettyName(key, folders), auto: true, sources: null,
+                // 그 확장이 이미 아는 공급자(models 의 키)만 — 없던 공급자 키를 만들어 넣지 않는다
+                id: `auto:${key}${inner ? '.' + inner : ''}`, name: folder, auto: true, sources: Object.keys(node.models).map(from),
                 read() {
                     const provider = String(node[providerKey] || ''), picked = String(node.models?.[provider] || '');
                     return { source: from(provider), model: picked === 'custom' ? String(node.customModels?.[provider] || '') : picked, url: provider === 'custom' && urlKey ? node[urlKey] : '' };
                 },
                 apply({ source, model, url }) {
                     const provider = to(source);
+                    if (!(provider in node.models)) throw new Error(`${folder}: ${provider} 공급자 칸이 없어요`);
                     node[providerKey] = provider; node.models[provider] = model;
                     if (provider === 'custom' && url && urlKey) node[urlKey] = url;
                 },

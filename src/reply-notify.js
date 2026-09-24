@@ -10,6 +10,8 @@ let lastShown = 0;
 // 워커는 src/ 에 둔다 — 패키저가 테마 루트의 추가 js 는 싣지 않는다 (index.js 만). 범위도 src/ 라 실리태번 페이지는 제어하지 않는다.
 function swUrl() { return new URL('./notify-sw.js', import.meta.url); }
 function scope() { return new URL('./', import.meta.url).pathname; }
+// 이 파일은 <실리태번>/scripts/extensions/third-party/blue-lemonade/src/ 에서 온다 — 다섯 단계 위가 실리태번 루트 (하위 경로로 서비스해도 맞다)
+const ICON = new URL('../../../../../img/apple-icon-114x114.png', import.meta.url).href;
 
 async function ensureWorker() {
     if (registration) return registration;
@@ -53,12 +55,17 @@ async function notify() {
     if (Date.now() - lastShown < 3000) return; // 끝 이벤트가 겹쳐 두 번 오는 것
     lastShown = Date.now();
     const { title, body } = replyPreview();
-    const options = { body, tag: 'bl-reply', renotify: true, silent: false, vibrate: [90, 50, 90], icon: '/img/apple-icon-114x114.png', data: { url: location.href } };
+    const options = { body, tag: 'bl-reply', renotify: true, silent: false, vibrate: [90, 50, 90], icon: ICON, data: { url: location.href } };
+    let shown = false;
     try {
         const reg = await ensureWorker();
-        if (reg?.showNotification) { await reg.showNotification(title, options); return; }
-        if ('Notification' in window && Notification.permission === 'granted') new Notification(title, options);
-    } catch (error) { console.info('[Blue Lemonade] 알림을 띄우지 못했어요', error?.message || error); }
+        // 워커가 아직 활성이 아니면 showNotification 이 TypeError 로 거부된다 — 그때도 아래 페이지 알림으로 넘어간다
+        if (reg?.active && typeof reg.showNotification === 'function') { await reg.showNotification(title, options); shown = true; }
+    } catch (error) { console.info('[Blue Lemonade] 워커 알림을 띄우지 못했어요', error?.message || error); }
+    if (!shown) {
+        try { if ('Notification' in window && Notification.permission === 'granted') new Notification(title, options); }
+        catch (error) { console.info('[Blue Lemonade] 알림을 띄우지 못했어요', error?.message || error); }
+    }
     try { navigator.vibrate?.([90, 50, 90]); } catch { /* 진동이 없는 기기 */ }
 }
 

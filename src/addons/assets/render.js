@@ -629,7 +629,8 @@ function replaceTags(text, seen, whole) {
 // 칸 4개나 탭으로 들여쓴 줄은 마크다운이 코드 블록으로 만든다(AI가 문단을 들여쓰면 태그 줄도 그렇게 된다).
 // 태그만 들어 있는 코드 블록은 코드가 아니라 그림 자리이므로 바꿔 준다. 코드 색칠이 태그를 여러 조각으로 쪼개
 // 놓기 때문에 글자 마디가 아니라 블록을 통째로 바꾼다. 다른 글과 섞인 코드 블록은 건드리지 않는다.
-const TAG_ONLY_PATTERN = /^(?:\s*\{\{img::\s*[^{}]+?\s*\}\}\s*)+$/i;
+// '태그만' 인지는 태그를 모두 지운 뒤 남는 글이 없는지로 본다 — 앞뒤로 되짚는 정규식은 스트리밍 중 덜 끝난 `{{img::이름` 이
+// 태그 여럿과 함께 오면 시간이 지수로 늘었다 (태그 18개 = 32초).
 
 /** @param {Element[]} blocks 지금 DOM 의 text.querySelectorAll('code, pre') 와 같은 목록 (문서 순서) */
 function replaceTagOnlyCode(text, seen, blocks) {
@@ -637,9 +638,10 @@ function replaceTagOnlyCode(text, seen, blocks) {
         if (!block.isConnected) continue;
         if (block.tagName === 'PRE' && block.querySelector('code')) continue; // 안쪽 code에서 처리한다
         const content = block.textContent ?? '';
-        if (!content.includes('{{img::') || !TAG_ONLY_PATTERN.test(content)) continue;
+        if (!content.includes('{{img::')) continue;
         const names = [...content.matchAll(TAG_PATTERN)].map(match => match[1]);
-        if (!names.length || names.some(name => !findAsset(name))) continue;
+        if (!names.length || content.replace(TAG_PATTERN, '').trim() !== '') continue;
+        if (names.some(name => !findAsset(name))) continue;
         const fragment = document.createDocumentFragment();
         for (const name of names) {
             const found = resolveTag(name, text, seen);

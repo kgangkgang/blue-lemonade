@@ -25,7 +25,7 @@ import { FRAME_RANGE } from './frames.js';
 import { customLibrary, newCustomPalette, useCustomPalette, openCustomBuilder, customBuilder, bindCustomBuilder, setCustomMode, seedCustom, saveCustomPalette } from './custompalette.js';
 // 설정 창. 확장 서랍과 ✦ 메뉴 팝업 두 곳에 같은 창을 띄울 수 있음.
 // 위에서 대분류(탭) → 아래에서 소분류(칩)를 골라 한 번에 한 묶음만 보여 줌 (폰에서 창이 아래로 길어지지 않게)
-import { getSettings, saveSettings, resetSettings, FONT_SET, FONT_SLOTS, IMAGE_RANGE, PROFILE_RANGE, TEXT_LIMIT, FADE_AMOUNT } from './settings.js';
+import { getSettings, invalidateSettings, saveSettings, resetSettings, FONT_SET, FONT_SLOTS, IMAGE_RANGE, PROFILE_RANGE, TEXT_LIMIT, FADE_AMOUNT } from './settings.js';
 import { PALETTES, PALETTE_FAMILIES, paletteFamily, paletteVariant, TOKEN_GROUPS, paletteColors, parseColor, sameColor, safeColor } from './palettes.js';
 import { GROUPS, LANGS, SAMPLES, fontsFor, findFont, previewStack, queuePreview, isPreviewReady, isPreviewBlank, addGoogleFont, addCssFont, uploadFont, removeCustomFont } from './fonts.js';
 import { applyAll, syncSamples } from './apply.js';
@@ -293,6 +293,11 @@ export function unmountPanel(root) {
     const settings = getSettings(); syncDecor(settings); syncProfileClip(settings);
 }
 
+/** 5.1.2: 보이는 설정 창이 그 탭 · 소분류를 열어 두었는가 (index.js — 커스텀 CSS 를 치는 동안은 그 보고서가 보이는 화면에서만 다시 그린다) */
+export function panelShows(tab, sub) {
+    return ui.tab === tab && subOf(tab) === sub && [...panels].some(root => root.isConnected && (root.checkVisibility?.() ?? true));
+}
+
 /** 공지를 본 뒤: 설정 창 알약은 다시 그리고, 확장 서랍 머리의 버전 알약도 보통 모양으로 (3.0.0) */
 export function noticeSeenChanged() {
     const unseen = hasUnseenNotice();
@@ -333,19 +338,49 @@ export function refreshPanels(changes) {
 
 // 3.6.2: 날씨 값(투명도 · 크기 · 속도 · 각도)은 판을 다시 그리지 않고 바꾸니(슬라이드바 · 숫자 칸) 미리보기에 따로 알린다.
 // 예전에는 다른 칸을 눌러 판이 다시 그려질 때까지 미리보기가 옛 값으로 내렸다 (사용자: "비 눈 트래커 미리보기에 파라미터 바로 반영 안 된다")
+// 5.1.2: 슬라이더 틱마다가 아니라 프레임마다 한 번 (창마다) — 마지막 틱이 잡아 둔 프레임이 마지막 값으로 그린다
+const weatherFrames = new WeakMap();
 function syncWeatherPreview(root, path) {
     if (!String(path).startsWith('chat.weather')) return;
     const stage = root?._pv?.chat;
-    if (!stage?.isConnected) return;
-    const s = comparisonView(getSettings());
-    import('./weather.js').then(m => m.previewWeather(stage, s.enabled ? s.chat : { weather: 'off' })).catch(() => {});
+    if (!stage?.isConnected || weatherFrames.has(root)) return;
+    weatherFrames.set(root, requestAnimationFrame(() => {
+        weatherFrames.delete(root);
+        if (!stage.isConnected) return;
+        const s = comparisonView(getSettings());
+        import('./weather.js').then(m => m.previewWeather(stage, s.enabled ? s.chat : { weather: 'off' })).catch(() => {});
+    }));
+}
+
+// 5.1.2: 적용이 죽으면 저장하지 않고 방금 고친 것을 되돌린다 — 전에는 saveSoon 이 먼저라 망가진 설정이 저장돼 다음 시작부터 창이 안 열렸다
+function safeApply() {
+    try { applyAll(); return true; }
+    catch (error) {
+        console.error('[Blue Lemonade] 설정 적용', error);
+        if (history.step(getSettings()).length) { history.redoStack.pop(); invalidateSettings(); try { applyAll(); } catch { /* 되돌려도 안 되면 그대로 — 저장은 안 한다 */ } }
+        toastr.error(`적용하지 못해 되돌렸어요: ${error.message || error}`, 'Blue Lemonade');
+        refreshPanels();
+        return false;
+    }
+}
+// 슬라이더 · 색 고르기 틱: applyAll(변수 계산 · SVG · 기능 12개)은 프레임마다 한 번 — 설정 값은 틱마다 바로 고쳐 두고 그리기만 모은다.
+// 끌기가 끝나도 마지막 틱이 잡아 둔 프레임이 마지막 값으로 그린다 (놓치는 틱 없음). 보통 update 가 끼어들면 그 자리에서 바로 그린다
+let applyFrame = 0;
+function applySoon() {
+    if (applyFrame) return;
+    applyFrame = requestAnimationFrame(() => { applyFrame = 0; if (safeApply()) saveSoon(); });
 }
 
 function update(mutator, rerender = true, group = '') {
     const oldTint = `${getSettings().nightTint}/${getSettings().lightTint}`;
     history.run(getSettings(), mutator, group);
-    saveSoon();
-    applyAll();
+    invalidateSettings(); // 고친 값을 정리(범위 · 형식)한 채로 그린다
+    if (group && !rerender) applySoon();
+    else {
+        if (applyFrame) { cancelAnimationFrame(applyFrame); applyFrame = 0; }
+        if (!safeApply()) return;
+        saveSoon();
+    }
     if (rerender) refreshPanels();
     else if (oldTint !== `${getSettings().nightTint}/${getSettings().lightTint}`) {
         syncPaletteTints();
