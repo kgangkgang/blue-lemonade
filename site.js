@@ -1,6 +1,57 @@
 'use strict';
 // Synthetic demonstration chats; calm scenes and palette controls use the current runtime.
 const topics = [
+{
+  "id": "new498",
+  "label": "새 기능",
+  "title": "내장하면서 달라진 부분",
+  "sub": "4.9.8 실제 조작 화면 · LLM과 한글화 패널 중심 · 기본 기능은 원본 안내도 함께 참고하세요.",
+  "tall": true,
+  "cards": [
+    [
+      "498-llm-location.mp4",
+      "LLM 번역 · 표시 위치 선택",
+      "추가된 내장 설정에서 확장 탭 표시를 켜고 꺼요. 숨긴 상태에서도 세부 설정을 열 수 있어요.",
+      "498-llm-location.jpg"
+    ],
+    [
+      "498-llm-settings.mp4",
+      "LLM 번역 · 쓰던 설정을 한곳에서",
+      "블루레몬에이드 스타일의 번역·모델·프롬프트·데이터 탭. 기존 연결·용어집·기록을 이어 쓰는 구성이에요.",
+      "498-llm-settings.jpg"
+    ],
+    [
+      "498-panel-mobile.mp4",
+      "한글화 패널 · 바로 펼쳐 쓰기",
+      "별도 창을 거치지 않고 확장 탭에서 바로 사용해요. 준비된 한글화 사전과 자료 번역을 상단 탭으로 모았어요.",
+      "498-panel-mobile.jpg"
+    ],
+    [
+      "498-panel-guide.mp4",
+      "한글화 패널 · 설명은 필요할 만큼",
+      "버전 버튼에 자세한 사용방법을 모았어요. 익숙해지면 작업 화면의 보조 설명을 숨길 수 있어요.",
+      "498-panel-guide.jpg"
+    ],
+    [
+      "498-regex-phone.mp4",
+      "정규식 · 이름만 한글로",
+      "추가된 정규식 탭에서 번역 이름을 표시하거나 원문으로 되돌려요. 검색식·치환식·저장된 원본 이름은 그대로예요. 시연용 응답으로 준비한 번역 예제입니다.",
+      "498-regex-phone.jpg"
+    ],
+    [
+      "498-menu-order.mp4",
+      "요술봉과 채팅 메뉴도 순서 변경",
+      "확장 설정뿐 아니라 요술봉·가로줄 세 개 메뉴의 항목도 위아래로 옮겨요.",
+      "498-menu-order.jpg"
+    ],
+    [
+      "498-modes.mp4",
+      "테마만 · 확장만 · 함께",
+      "원하는 사용 모드를 고르는 화면이에요. 실제 적용은 「저장하고 새로고침」을 누르며 기존 설정은 보관돼요.",
+      "498-modes.jpg"
+    ]
+  ]
+},
   {
     "id": "color",
     "label": "색",
@@ -552,9 +603,10 @@ function galleryBlock(topic, device, cards, withHeading){
         video.tabIndex=0;video.setAttribute('role','button');video.setAttribute('aria-label',title+' 재생 또는 일시정지');
         video.addEventListener('click',toggle);video.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle();}});
         wrap.append(state);inView.observe(video);}
+      if(file.startsWith('498-')){const subtitles=element('track');subtitles.kind='captions';subtitles.label='한국어 안내';subtitles.srclang='ko';subtitles.src='media/'+file.replace('.mp4','.vtt');subtitles.default=true;video.append(subtitles);}
       wrap.prepend(video);
       const enlarge=element('button','gallery-expand','크게 보기 ↗');enlarge.type='button';enlarge.setAttribute('aria-label',title+' 크게 보기');
-      enlarge.onclick=()=>{const dialog=$('#atmosphere-lightbox'), player=dialog.querySelector('video');if(video.dataset.modeBase)player.dataset.modeBase=video.dataset.modeBase;else delete player.dataset.modeBase;player.poster=video.poster;player.src=video.getAttribute('src')||video.dataset.src;player.setAttribute('aria-label',title);dialog.showModal();player.play().catch(()=>{});};wrap.append(enlarge);
+      enlarge.onclick=()=>{const dialog=$('#atmosphere-lightbox'), player=dialog.querySelector('video');if(video.dataset.modeBase)player.dataset.modeBase=video.dataset.modeBase;else delete player.dataset.modeBase;player.querySelectorAll('track').forEach(t=>t.remove());video.querySelectorAll('track').forEach(t=>player.append(t.cloneNode(true)));player.poster=video.poster;player.src=video.getAttribute('src')||video.dataset.src;player.setAttribute('aria-label',title);dialog.showModal();player.play().catch(()=>{});};wrap.append(enlarge);
     }else{const img=element('img');img.src='media/'+file+mv(file);img.alt=title;img.loading='lazy';img.decoding='async';img.tabIndex=0;const open=()=>{lightbox.querySelector('img').src=img.src;lightbox.querySelector('img').alt=title;lightbox.querySelector('p').textContent=title;lightbox.showModal();};img.onclick=open;img.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();open();}};wrap.append(img);}
     caption.append(element('small','',description));if(credit){const c=element('a','gif-link',credit[0]);c.href=credit[1];c.target='_blank';c.rel='noopener';caption.append(c);}if(gif){const a=element('a','gif-link','움짤로 보기 ↗');a.href='media/'+gif+mv(gif);a.target='_blank';a.rel='noopener';caption.append(a);}card.append(wrap,caption);track.append(card);
   }block.append(heading,track);return block;
