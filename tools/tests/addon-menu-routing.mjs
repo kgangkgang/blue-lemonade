@@ -9,7 +9,7 @@ const {IDS}=await import(new URL('src/assist/core.js',root));
 const saved={enabled:true,addons:{models:true,modelswitch:true,regexlink:true,conflicts:true},addonUI:{modelswitchMenu:false}};
 globalThis.SillyTavern={getContext:()=>({extensionSettings:{salty:saved}})};
 const s=getSettings();
-assert.deepEqual(IDS,['conflicts','retranslate']);
+assert.deepEqual(IDS,['conflicts']);
 assert.equal(s.addonUI.modelswitchMenu,false);
 for(const id of ['models','modelswitch','regexlink','conflicts'])assert.equal(s.addons[id],true);
 assert.equal(DEFAULTS.addonUI.modelswitchMenu,true);

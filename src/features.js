@@ -48,7 +48,7 @@ function startScripts(tries=4){
 /** apply.js applyAll 끝에서 부른다 */
 export function syncFeatures(s) {
     const on = !!s.enabled;
-    if (['conflicts','retranslate'].some(id=>s.addons?.[id]) || modules.assist) load('assist','./assist/index.js').then(m=>m?.syncAssist());
+    if (['conflicts'].some(id=>s.addons?.[id]) || modules.assist) load('assist','./assist/index.js').then(m=>m?.syncAssist());
     syncTypography(on);
     const scriptsRequested=Object.values(SillyTavern.getContext().extensionSettings?.blue_lemonade_scripts?.enabled||{}).some(v=>v===true);
     // The editor can start the runtime before this module has imported it.

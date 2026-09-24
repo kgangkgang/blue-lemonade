@@ -90,7 +90,7 @@ export const DEFAULTS = {
     weatherImages: [],
     customPalettes: [],
     activeCustomPalette: '',
-    addons: { order: false, perf: false, words: false, capture: false, models: false, modelorder: false, modelswitch: false, regexlink: false, rewrite: false, bookmarks: false, conflicts: false, retranslate: false },
+    addons: { order: false, perf: false, words: false, capture: false, models: false, modelorder: false, modelswitch: false, regexlink: false, rewrite: false, bookmarks: false, conflicts: false },
     addonUI: { orderIcon: false, perfIcon: false, wordsMenu: false, captureMenu: false, modelswitchMenu: true, perfMenu: { watchdog:false, timer:true, perf:false, log:true, dedupe:false },
         // 4.5.5: 성능 보조의 도구를 아예 안 불러오게 (perfMenu 는 '메뉴에 보이기', 이것은 '불러오기').
         // 기본은 전부 켬 — 지금 쓰던 대로 돌아가고, 안 쓰는 도구를 끄면 그만큼 시작이 가벼워진다.

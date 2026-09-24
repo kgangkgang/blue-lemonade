@@ -65,7 +65,7 @@ export function addonMarkup(s,id,nested=false){
     if(!nested && id==='models') return `<div class="bl-addon-group"><h3>모델 관리</h3>${addonMarkup(s,'models',true)}${addonMarkup(s,'modelswitch',true)}</div>`;
     if(!nested && id==='perf') return `<div class="bl-addon-group">${addonMarkup(s,'perf',true)}${addonMarkup(s,'regexlink',true)}<section class="bl-addon-group-tool">${addonMarkup(s,'conflicts',true)}</section></div>`;
     if(ASSIST_IDS.includes(id)) {
-        const notes={conflicts:'중복 실행·설치 버전·화면 간섭과 관측된 오류를 확인해요.',retranslate:'한글 번역문을 선택하면 대응 원문을 찾아 현재 번역 모델로 다시 번역해요. LLM 번역 확장이 필요해요.'};
+        const notes={conflicts:'중복 실행·설치 버전·화면 간섭과 관측된 오류를 확인해요.'};
         return `<div class="bl-addon-header"><h3>${ASSIST_LABELS[id]}</h3><label class="bl-addon-power"><span>기능 켜기</span><input type="checkbox" data-assist-toggle="${id}" ${s.addons[id]?'checked':''}></label></div><p class="salty-note">${notes[id]}</p><button type="button" class="salty-btn" data-assist-open="${id}" ${s.addons[id]?'':'disabled'}>열기</button>`;
     }
     const on=!!s.addons[id],needsReload=['order','perf','models','modelswitch','regexlink','rewrite','bookmarks'].includes(id)&&on!==running.has(id);
