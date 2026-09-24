@@ -179,3 +179,9 @@ body.salty :is(#chat, .cg-root) q .custom-dem-expressive.bl-fx-made {
   .salty-preview[data-prev="regex"] .custom-dem-expressive--trembling { animation: bl-fx-gradient 2.75s linear infinite, bl-fx-shake .8s steps(2, end) infinite; }
   .salty-preview[data-prev="regex"] .custom-dem-expressive--crying { animation: bl-fx-gradient 2.75s linear infinite, bl-fx-crying 1.55s ease-in-out infinite alternate; }
 }
+
+/* Native selection menus must not chase moving text. Freeze at the current frame. */
+body.salty.bl-dem-selecting :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(#salty-none):not(#salty-none),
+body.salty.bl-dem-selecting :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(#salty-none):not(#salty-none) * {
+  animation-play-state: paused !important;
+}

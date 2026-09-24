@@ -1,3 +1,4 @@
+import { syncDemSelection } from './dem-selection.js';
 // 데우스 감정 대사: 「…」『…』 대사 살리기 (프롬프트 › 데우스 엑스 마키나 › 감정 대사 효과).
 //
 // 프리셋의 'DEM - Render Expressive Dialogue' 정규식은 "…" · “…” 대사만 알아본다. 「…」 대사에 붙은 <excited> 같은 태그는
@@ -161,5 +162,6 @@ function unbind() {
 /** features.js 가 설정이 바뀔 때마다 부른다 */
 export function syncDemExpressive(on) {
     active = !!on;
+    syncDemSelection(active);
     if (active) { bind(); schedule(); } else { unbind(); undress(); }
 }
