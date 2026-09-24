@@ -47,6 +47,20 @@ export function upgradeRuleWords(rule, fresh, previous) {
 
 export const UPGRADES = [
     {
+        id: 'fufu-ehehe-5.0.7',
+        apply(stored) {
+            const rule = stored.rules.find(item => item.id === 'fufu');
+            if (!rule) return;
+            const fresh = defaultRule('fufu');
+            const addition = parseEntries(fresh.words)[0];
+            const known = new Set(parseEntries(rule.words).map(entryKey));
+            if (!known.has(entryKey(addition))) rule.words = [rule.words || '', renderEntry(addition)].join('\n');
+            if (rule.name === '후후 웃음') rule.name = fresh.name;
+            if (rule.description === "the laugh \"ふふ\" in any form (ふふ, ふふっ, ふふふ, うふふ, フフ, 후후, fufu) — replace it with a different laugh or reaction that fits the speaker (ふっ, くすっ, ははっ, へへ, a smile, a snort) or drop it; a single ふ or 후 is fine") rule.description = fresh.description;
+        },
+    },
+
+    {
         // v1.7.0: 뾰족귀 gained the `…` gap entries; 회색 손톱 became 색깔 손톱 (any colour on nails).
         id: 'words-1.7',
         apply(stored) {

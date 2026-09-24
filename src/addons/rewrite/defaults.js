@@ -172,10 +172,11 @@ export const DEFAULT_SETTINGS = {
             // The "fufu" laugh; a single ふ / 후 (a breath, "ふっ") is fine.
             // Regex lines because kana and hangul have no word boundaries: ふふ, ふふふ, ふふっ, うふふ, フフ, 후후, fufu.
             id: 'fufu',
-            name: '후후 웃음',
+            name: '후후 · えへへ 웃음',
             enabled: true,
-            description: 'the laugh "ふふ" in any form (ふふ, ふふっ, ふふふ, うふふ, フフ, 후후, fufu) — replace it with a different laugh or reaction that fits the speaker (ふっ, くすっ, ははっ, へへ, a smile, a snort) or drop it; a single ふ or 후 is fine',
+            description: 'the laughs "ふふ" and "えへへ" in any form (えへへ, えへへっ, エヘヘ, ふふ, ふふっ, ふふふ, うふふ, フフ, 후후, fufu) — replace it with a different laugh or reaction that fits the speaker (ふっ, くすっ, ははっ, へへ, a smile, a snort) or drop it; a single ふ or 후 is fine',
             words: [
+                String.raw`/(?:えへへ+|エヘヘ+)(?:っ|ッ)?/`,
                 String.raw`/(?:う|ウ)?(?:ふふ|フフ)+(?:っ|ッ)?/`,
                 String.raw`/후후+/`,
                 String.raw`/\bfufu+\b/`,
