@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import {pathToFileURL} from 'node:url';
+const root=pathToFileURL(path.resolve(process.argv[2]||'.')+'/');
+const {segmentParagraphs,translateSegments,clearSegmentCache}=await import(new URL('src/addons/translator/translation-segments.js',root));
+let calls=[];let config='model-A';
+const go=(text,extra={})=>translateSegments({parts:segmentParagraphs(text),signature:()=>config,request:async body=>{calls.push(body);return '번역('+body+')';},...extra});
+await clearSegmentCache();
+assert.equal((await go('A\n\nB\n\nC')).translated,3);
+calls=[];let edited=await go('A\n\nB edited\n\nC');assert.deepEqual(calls,['B edited']);assert.equal(edited.reused,2);assert.equal(edited.text,'번역(A)\n\n번역(B edited)\n\n번역(C)');
+calls=[];await go('C\n\nA\n\nC');assert.equal(calls.length,0);
+calls=[];await go('C\n\nNew\n\nA');assert.deepEqual(calls,['New']);
+config='model-B';calls=[];await go('A\n\nC');assert.equal(calls.length,2);
+assert.equal(segmentParagraphs('<div>one\n\ntwo</div>'),null);assert.equal(segmentParagraphs('```a\n\nb```'),null);
+assert.deepEqual(segmentParagraphs('a\r\n \r\nb'),['a','\r\n \r\n','b']);
+calls=[];await go('[[__VAR_0__]]\n\nA');assert.deepEqual(calls,[]);
+let blocked=await go('blocked',{request:async()=>{throw Object.assign(Error('blocked'),{refused:true});},blockedMarker:'BLOCKED'});assert.equal(blocked.blocked,1);calls=[];await go('blocked');assert.equal(calls.length,1);
+await assert.rejects(go('failed',{request:async()=>{throw Error('network');}}));calls=[];await go('failed');assert.equal(calls.length,1);
+await assert.rejects(go('cancelled',{check:()=>{throw Object.assign(Error('cancelled'),{cancelled:true});}}));
+await clearSegmentCache();calls=[];await go('A');assert.equal(calls.length,1);
+console.log('PASS edit/insert/delete/reorder/duplicates/config invalidation/HTML and code fallback/whitespace/masks/refusal/retry/cancel/clear');
+
+assert.equal(segmentParagraphs('<span>one\n\ntwo</span>'),null);
+assert(segmentParagraphs('<span>one</span>\n\n<span>two</span>'));

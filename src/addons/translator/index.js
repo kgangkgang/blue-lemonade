@@ -1,6 +1,7 @@
 // Modified 2026-09-24: Blue Lemonade bundled adapter; original settings and translation DB retained.
 import { createGuards, watchGuard } from './translation-guard.js';
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
+import { segmentParagraphs, translateSegments, clearSegmentCache } from './translation-segments.js';
 import { syncSelectionRetranslate } from './selection/index.js';
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
@@ -1677,6 +1678,7 @@ async function translate(text, options = {}) {
 
         // [1.8.0] 용어집: 원문에 실제로 나오는 항목만 골라 프롬프트 앞에 붙인다 (보내기·입력 번역은 방향을 뒤집어서)
         const glossaryBlock = buildGlossaryBlock(text, { reverse: isInputTranslation });
+        const paragraphParts = options.segmentCache && !isInputTranslation && !isRetranslation && !options.noChunks ? segmentParagraphs(maskedText) : null;
 
         // [2.0.4] 배치 0 = 예전 그대로. 1 · 2 는 입력 필터에 막혔을 때만 쓰는 다시 보내기용 (내용은 같고 순서 · 머리말만 다르다)
         const buildFullPrompt = (layout, body = maskedText) => {
@@ -1687,8 +1689,9 @@ async function translate(text, options = {}) {
                 built = `[Additional Rules]:\n${rulePrompt}\n\n${finalPrompt}`;
             }
 
-            if (glossaryBlock) {
-                built = layout === 1 ? `${built}\n\n${glossaryBlock}` : `${glossaryBlock}\n\n${built}`;
+            const terms = paragraphParts ? buildGlossaryBlock(body, { reverse: false }) : glossaryBlock;
+            if (terms) {
+                built = layout === 1 ? `${built}\n\n${terms}` : `${terms}\n\n${built}`;
             }
             if (layout === 2) built = `[Fiction translation request]\n\n${built}`;
 
@@ -1704,10 +1707,10 @@ async function translate(text, options = {}) {
             built = substituteCustomPlaceholders(built, isInputTranslation);
             return substituteParams(built);
         };
-        const PROMPT_LAYOUTS = glossaryBlock ? [0, 1, 2] : [0, 2];
+        const PROMPT_LAYOUTS = (paragraphParts || glossaryBlock) ? [0, 1, 2] : [0, 2];
         // Resolve chat macros before the first await; no later chunk reads another chat.
         const chunks = !isInputTranslation && !isRetranslation && !options.noChunks ? splitForChunks(maskedText) : [];
-        const prepared = new Map([maskedText, ...chunks].map(body => [body, PROMPT_LAYOUTS.map(layout => buildFullPrompt(layout, body))]));
+        const prepared = new Map([maskedText, ...chunks, ...(paragraphParts?.filter((_, i) => i % 2 === 0) || [])].map(body => [body, PROMPT_LAYOUTS.map(layout => buildFullPrompt(layout, body))]));
         const key = chunks.length > 1 ? await checkpointKey(JSON.stringify([connection, text, [...prepared]])) : '';
         watcher.check();
 
@@ -1750,7 +1753,28 @@ async function translate(text, options = {}) {
             return result.text;
         };
         let translatedText = '';
-        if (maskedText.length > CHUNK_TARGET * 2 && chunks.length > 1) {
+        if (paragraphParts) {
+            const result = await translateSegments({ parts: paragraphParts,
+                signature: body => [connection, prepared.get(body)], check: watcher.check, progress, blockedMarker: BLOCKED_CHUNK_MARK,
+                cacheable: (body, out) => {
+                    const marks = value => JSON.stringify(value.match(/\[\[__VAR_\d+__\]\]/g) || []);
+                    return marks(body) === marks(out) && !linesWithKana(out).length;
+                },
+                request: async body => {
+                    let out = tidyKana(await callWithLayouts(body, PROMPT_LAYOUTS));
+                    const lines = linesWithKana(out);
+                    if (lines.length) {
+                        try {
+                            const fixed = await request(buildFullPrompt(0, KANA_FIX_NOTE + lines.map(([, line], i) => `${i + 1}. ${line}`).join('\n')));
+                            out = applyKanaFix(out, lines, fixed);
+                        } catch (error) { if (error?.cancelled) throw error; }
+                    }
+                    return out;
+                },
+            });
+            translatedText = result.text;
+            if (report) { report.reusedParagraphs = result.reused; report.translatedParagraphs = result.translated; report.partial = result.blocked > 0; report.blockedChunks = result.blocked; report.chunks = result.total; }
+        } else if (maskedText.length > CHUNK_TARGET * 2 && chunks.length > 1) {
             translatedText = await runChunks();
         } else {
             progress({ stage: 'whole' });
@@ -1763,7 +1787,7 @@ async function translate(text, options = {}) {
 
         // [2.1.0] 한국어 번역문에 남은 가나 정리: っ · ー 는 지우고, 일본어가 통째로 남은 줄만 한 번 더 보낸다 (프롬프트로는 100% 안 막힌다)
         translatedText = tidyKana(translatedText);
-        const kanaLines = linesWithKana(translatedText);
+        const kanaLines = paragraphParts ? [] : linesWithKana(translatedText);
         if (kanaLines.length) {
             progress({ stage: 'kana' });
             try {
@@ -1859,6 +1883,7 @@ function progressBadge(messageId, message = null, sourceMes = message?.mes, chat
     const text = () => {
         const sec = Math.round((Date.now() - started) / 1000);
         if (stage.stage === 'chunks') return `${stage.resumed ? '이어 번역' : '번역 중'} · 문단 ${stage.done + 1}/${stage.total} · ${sec}초`;
+        if (stage.stage === 'segments') return `문단 ${Math.min(stage.done + 1, stage.total)}/${stage.total} · 캐시 ${stage.reused}개 · 새 번역 ${stage.translated}개 · ${sec}초`;
         if (stage.stage === 'kana') return `번역 중 · 마무리 · ${sec}초`;
         return `번역 중 · ${sec}초`;
     };
@@ -2238,7 +2263,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                 const report = {};
                 const badge = progressBadge(messageId, message, sourceMes, chatId);
                 try {
-                    translation = await translate(originalText, { assertValid: () => runToken.guard.assert(), onProgress: badge.update, report });
+                    translation = await translate(originalText, { segmentCache: source !== 'handleTranslateButtonClick_retranslate', assertValid: () => runToken.guard.assert(), onProgress: badge.update, report });
                 } finally {
                     badge.remove();
                 }
@@ -5050,6 +5075,7 @@ async function deleteDB() {
 
     guards.chatChanged();
     await clearCheckpoints();
+    await clearSegmentCache();
     return new Promise((resolve, reject) => {
         const request = indexedDB.deleteDatabase(DB_NAME);
         request.onsuccess = () => {

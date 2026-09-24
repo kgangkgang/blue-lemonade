@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.0.5.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.0.6.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.0.5 · 최신 업데이트</summary>
+<summary>5.0.6 · 최신 업데이트</summary>
+
+- LLM 번역이 문단별 결과를 저장해 원문 수정 시 바뀐 문단만 번역해요. 그대로인 문단은 기존 번역을 재사용해요.
+- 새 방식으로 번역한 글부터 적용돼요. 첫 번역의 요청 횟수는 늘 수 있으며, 설정 변경이나 나누기 어려운 HTML·코드는 다시 번역해요.
+- 문단 캐시는 브라우저에 최대 30일 보관하며 번역 DB 전체 삭제로 함께 지워요.
+
+</details>
+
+<details>
+<summary>5.0.5 · 대사 선택</summary>
 
 - 데우스 감정 대사를 선택하거나 길게 누르는 동안 움직임을 잠시 멈춰요. 선택을 해제하면 다시 움직여요.
 
