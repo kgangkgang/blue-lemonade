@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "4.9.8";
+export const BUILD_VERSION = "4.9.9";
 export const FILE_HASHES = {
   "index.js": "11830:f722c908:4f65cd8d",
-  "manifest.json": "365:27beb8d8:450dcbf0",
+  "manifest.json": "365:ffa8aee7:003e28c9",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "1966:af208084:30e4b912",
@@ -71,12 +71,12 @@ export const FILE_HASHES = {
   "src/addons/prompt/cache-loading.js": "384:766f047d:4f5c117c",
   "src/addons/prompt/connection.js": "5387:1beaf574:f176abcd",
   "src/addons/prompt/current-connection.js": "2878:89e80a9b:052deb3c",
-  "src/addons/prompt/guide.js": "22785:670a36e0:038fdd16",
-  "src/addons/prompt/index.js": "230119:d38fc60e:9641d112",
+  "src/addons/prompt/guide.js": "23246:61d0571c:fe2a5b49",
+  "src/addons/prompt/index.js": "230256:3d6a5370:9abae24a",
   "src/addons/prompt/localization-ui.js": "3163:32c7baca:20f45fc6",
   "src/addons/prompt/regex-ui.js": "6773:8e66c330:0233b208",
   "src/addons/prompt/settings-ui.js": "7671:5fe44134:03cd53ed",
-  "src/addons/prompt/style.css": "41671:5e5c8c5c:8eecd79f",
+  "src/addons/prompt/style.css": "48248:24beca4b:5c5caa94",
   "src/addons/regexlink/engine.js": "6142:9c1c6944:113b5e9f",
   "src/addons/regexlink/index.js": "14829:c1f45022:3a7ce65e",
   "src/addons/regexlink/style.css": "1247:62915416:4c995bef",
@@ -148,7 +148,7 @@ export const FILE_HASHES = {
   "src/checks.js": "2546:93e7bb66:b9d814c9",
   "src/colorpick.js": "26942:4e6e56c9:d69071a9",
   "src/colorpop.js": "3803:4c14cd36:cdfae47c",
-  "src/credits.js": "3204:5eb41260:13049d1f",
+  "src/credits.js": "3347:2d6e9d3e:5ecbb640",
   "src/current.js": "1590:9701d538:8863d506",
   "src/custompalette.js": "10681:65f8dac4:943aee43",
   "src/danger.js": "2587:1af54289:192195f8",
@@ -181,7 +181,7 @@ export const FILE_HASHES = {
   "src/marquee.js": "4394:b21eba98:bf26831b",
   "src/menu-position.js": "3312:4d17612e:af7476d7",
   "src/mes-pins.js": "9110:58a88535:74b20064",
-  "src/notice-data.js": "99143:13cce967:f6017ef9",
+  "src/notice-data.js": "99770:0eb7e12e:6df443c5",
   "src/notice.js": "4506:dbb8f2a7:75e005f7",
   "src/notify-sw.js": "985:5f0777db:749f45cf",
   "src/numbers.js": "930:4be2a1fd:48f02c7b",
@@ -244,5 +244,5 @@ export const FILE_HASHES = {
   "src/weather.js": "29151:893fa4f6:d26e0a3b",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "22770:07c345df:f825c7fc",
-  "style.css": "854366:4b79b883:18c4c7fb"
+  "style.css": "854366:cd8f2897:c5777a36"
 };

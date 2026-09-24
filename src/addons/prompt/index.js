@@ -3309,10 +3309,10 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
                 <button class="pt-btn pt-btn-secondary" id="${idPfx}-load"> 로드</button>
                 <div class="pt-export-group">
                     <button class="pt-btn-icon" id="${idPfx}-apply" title="${kind === 'wi' ? '월드인포에 즉시 적용' : kind === 'char' ? '봇카드에 즉시 적용' : '프리셋에 즉시 적용'}"><i class="fa-solid fa-bolt"></i></button>
-                    <button class="pt-btn-icon" id="${idPfx}-copy" title="복사"><i class="fa-solid fa-copy"></i></button>
-                    <button class="pt-btn-icon" id="${idPfx}-txt" title="TXT 내보내기"><i class="fa-solid fa-file-lines"></i></button>
-                    <button class="pt-btn-icon" id="${idPfx}-json" title="JSON 내보내기"><i class="fa-solid fa-file-code"></i></button>
-                    ${kind === 'char' ? '' : `<button class="pt-btn-icon" id="${idPfx}-tm" title="번역 메모리"><i class="fa-solid fa-box-archive"></i></button>
+                    <button class="pt-btn-icon" id="${idPfx}-copy" title="복사"><i class="fa-solid fa-copy" aria-hidden="true"></i><span>복사</span></button>
+                    <button class="pt-btn-icon" id="${idPfx}-txt" title="TXT 내보내기"><i class="fa-solid fa-file-lines" aria-hidden="true"></i><span>TXT</span></button>
+                    <button class="pt-btn-icon" id="${idPfx}-json" title="JSON 내보내기"><i class="fa-solid fa-file-code" aria-hidden="true"></i><span>JSON</span></button>
+                    ${kind === 'char' ? '' : `<button class="pt-btn-icon" id="${idPfx}-tm" title="번역 메모리"><i class="fa-solid fa-box-archive" aria-hidden="true"></i><span>번역 기록</span></button>
                     <input type="file" id="${idPfx}-tmfile" accept="application/json,.json" style="display:none;">`}
                 </div>
             </div>
@@ -4169,7 +4169,7 @@ function buildPanel() {
         <div id="pt-panel-header">
             <h3>한글화 패널</h3>
             <div style="display:flex;align-items:center;gap:4px;">
-                <button id="pt-panel-refresh" aria-label="목록 새로고침"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i></button>
+                <button id="pt-panel-refresh" aria-label="목록 새로고침"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i><span>목록 새로고침</span></button>
                 <button id="pt-panel-close" aria-label="닫기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
             </div>
         </div>
@@ -4308,7 +4308,7 @@ function buildParamsUI() {
         const range=PARAM_RANGES[k]||{min:0,max:1,step:0.01}, val=params[k]??defaults[k];
         html+=`<div class="pt-param-row"><label class="pt-param-label">${PARAM_LABELS[k]||k}</label><input aria-label="${PARAM_LABELS[k]||k} 조절" type="range" class="pt-param-slider" data-pkey="${k}" min="${range.min}" max="${range.max}" step="${range.step}" value="${val}"><input aria-label="${PARAM_LABELS[k]||k}" type="number" class="pt-param-num" data-pkey="${k}" min="${range.min}" max="${range.max}" step="${range.step}" value="${val}"></div>`;
     });
-    html+=`<button class="pt-ui-button" id="pt-params-reset" style="font-size:11px;margin-top:4px;width:100%;">기본값으로 재설정</button>`;
+    html+=`<button class="pt-ui-button" id="pt-params-reset" >기본값으로 재설정</button>`;
     wrap.innerHTML=html;
     wrap.querySelectorAll('.pt-param-slider,.pt-param-num').forEach(el=>{
         el.addEventListener('input',()=>{

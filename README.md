@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-4.9.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-4.9.9.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>4.9.8 · 최신 업데이트</summary>
+<summary>4.9.9 · 최신 업데이트</summary>
+
+- 한글화 패널의 탭·설정 카드·작업 버튼·설명 간격을 다시 정리했어요. 좁은 화면에서는 상단 메뉴가 두 줄로 배치돼요.
+- 생성 파라미터 4개를 2열 × 2줄로 배치하고 입력칸과 슬라이더를 읽기 편하게 키웠어요.
+- 복사·내보내기에 글자 표시를 추가하고 원문·번역 결과의 제목과 본문 간격을 넓혔어요. 설명 숨기기와 기존 설정은 그대로 사용할 수 있어요.
+- Prompt Panel 개인개조+++ 공유 게시글 링크를 출처 안내에 추가했어요.
+
+</details>
+
+<details>
+<summary>4.9.8 · 인라인 한글화</summary>
 
 - 한글화 패널 앞에 아이콘을 붙이고 제목 옆 버전 표시를 다른 확장과 맞췄어요.
 - 확장 탭에서 한글화 도구가 바로 펼쳐져요. 블루레몬에이드 상세설정에서는 별도 패널로 열려요. 중복 스타일 로딩도 없앴어요.

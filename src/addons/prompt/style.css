@@ -1,5 +1,4 @@
-/* Prompt Panel — MISTY GLASS COMPACT
-   Six themes · original layout preserved · no patch/override tail */
+/* Prompt Panel — Blue Lemonade integrated localization UI. */
 
 /* Settings drawer */
 .pt-extension-settings .inline-drawer-content{padding:10px 0 6px}
@@ -350,3 +349,76 @@
 #pt-panel.pt-in-drawer .pt-page-scroll{flex:none;max-height:65vh;overflow-y:auto}
 #pt-panel.pt-in-drawer .pt-settings-scroll{overflow:visible;max-height:none}
 #pt-drawer-host{min-width:0;width:100%}
+
+/* 2026-09-24: readable settings layout, shared by drawer and floating view. */
+#pt-panel{container-type:inline-size;font-size:14px;line-height:1.65;border-radius:16px;--pt-border:color-mix(in srgb,var(--pt-text) 13%,transparent)}
+#pt-panel.pt-in-drawer{border:0;border-radius:0;background:transparent;margin:8px 0 0}
+#pt-panel #pt-panel-header{padding:12px 16px;gap:12px}
+#pt-panel.pt-in-drawer #pt-panel-header{padding:0 4px 8px}
+#pt-panel #pt-panel-refresh{width:auto;height:36px;padding:6px 10px;display:flex;align-items:center;gap:7px;font-family:inherit;font-size:12px;font-weight:500;line-height:1.5;border:1px solid var(--pt-border);border-radius:8px;background:transparent}
+#pt-panel #pt-panel-refresh i{font-size:14px}
+#pt-panel #pt-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:0 12px 12px;padding:5px;border:0;border-radius:12px;background:color-mix(in srgb,var(--pt-text) 5%,transparent);overflow:visible}
+#pt-panel #pt-tabs .pt-tab{display:flex;align-items:center;justify-content:center;gap:7px;min-height:42px;min-width:0;padding:8px 6px;font-size:14px;font-weight:500;white-space:normal;line-height:1.4;border-radius:8px;color:var(--pt-text-dim)}
+#pt-panel #pt-tabs .pt-tab.active{background:var(--pt-accent-soft);color:var(--pt-text);font-weight:700;box-shadow:none}
+#pt-panel #pt-tabs .pt-tab i{color:var(--pt-accent);font-size:13px}
+#pt-panel .pt-settings-nav{margin:0 12px;padding:0 0 8px;gap:4px;border-bottom:1px solid var(--pt-border)}
+#pt-panel .pt-settings-nav button{font-size:13px;min-height:40px}
+#pt-panel .pt-settings-scroll{padding:16px 12px}
+#pt-panel .pt-card{padding:16px;margin:0 0 16px;border:0;border-radius:12px;background:color-mix(in srgb,var(--pt-text) 4%,var(--pt-bg));box-shadow:none}
+#pt-panel .pt-card h4{display:flex;align-items:center;gap:8px;margin:0 0 16px;font-size:15px;line-height:1.5;font-weight:700}
+#pt-panel .pt-card h4::before{content:'';width:3px;height:16px;border-radius:3px;background:var(--pt-accent);flex:none}
+#pt-panel .pt-field{gap:6px;margin-bottom:18px}
+#pt-panel .pt-field:last-child{margin-bottom:0}
+#pt-panel .pt-bl-help{font-size:13px;line-height:1.8;color:color-mix(in srgb,var(--pt-text) 78%,var(--pt-bg));margin:6px 0 12px}
+#pt-panel .pt-check{gap:10px;min-height:40px;margin:4px 0;font-size:14px;line-height:1.6}
+#pt-panel .pt-check input[type=checkbox],#pt-panel .pt-checkbox{width:18px;height:18px;flex:0 0 18px}
+#pt-panel .pt-localization-list{display:grid;gap:12px}
+#pt-panel .pt-localization-list .pt-card{margin:0}
+#pt-panel .pt-localization-list .pt-check{font-weight:650}
+#pt-panel .pt-localization-list small{display:inline-block;font-size:12px;color:var(--pt-accent);padding:2px 8px;background:var(--pt-accent-soft);border-radius:6px}
+#pt-panel #pt-params-wrap{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#pt-panel #pt-params-wrap .pt-param-row{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;margin:0;min-width:0;padding:12px 10px;background:var(--pt-bg);border-radius:10px;border:1px solid var(--pt-border)}
+#pt-panel #pt-params-wrap .pt-param-label{grid-column:auto;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+#pt-panel #pt-params-wrap .pt-param-num{grid-row:2;width:100%;min-width:0;min-height:38px;padding:7px 9px;font-size:14px;font-variant-numeric:tabular-nums}
+#pt-panel #pt-params-wrap .pt-param-slider{grid-row:3;margin:0;min-height:28px;width:100%;min-width:0}
+#pt-panel #pt-params-reset{grid-column:1/-1;min-height:38px;margin:0;font-size:13px!important;background:transparent}
+#pt-panel .pt-page-fixed{padding:4px 12px 0}
+#pt-panel .pt-page-scroll{padding:12px}
+#pt-panel .pt-toolbar{gap:8px;margin-bottom:12px}
+#pt-panel .pt-select,#pt-panel .pt-combo-input{min-height:42px;font-size:14px}
+#pt-panel .pt-combo{flex:1 1 100%;min-width:0}
+#pt-panel .pt-combo-item{font-size:14px;padding:10px;white-space:normal}
+#pt-panel .pt-controls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+#pt-panel .pt-controls-scroll{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px;overflow:visible}
+#pt-panel .pt-btn{min-height:40px;height:auto;padding:9px 12px;font-size:13px;font-weight:600;border-radius:9px;box-shadow:none;white-space:normal}
+#pt-panel .pt-btn-danger{min-width:40px;width:auto}
+#pt-panel .pt-search{flex:1 1 100%;width:100%;height:42px;font-size:14px;padding:10px 12px}
+#pt-panel .pt-select-row{flex-wrap:wrap;gap:8px;font-size:13px;padding:10px 0}
+#pt-panel .pt-info-chip,#pt-panel .pt-selected-chip{font-size:12px;font-weight:500}
+#pt-panel .pt-block-list{gap:12px}
+#pt-panel .pt-block-item{box-shadow:none;border-radius:12px}
+#pt-panel .pt-block-item:hover{transform:none}
+#pt-panel .pt-block-header{gap:10px;padding:13px 12px;flex-wrap:wrap}
+#pt-panel .pt-block-name{font-size:14px;white-space:normal;overflow-wrap:anywhere;line-height:1.6;min-width:100px}
+#pt-panel .pt-block-body{padding:14px}
+#pt-panel .pt-block-meta,#pt-panel .pt-token-count,#pt-panel .pt-status-badge{font-size:12px;opacity:1}
+#pt-panel .pt-original-label,#pt-panel .pt-translated-label{font-size:13px;margin-bottom:8px}
+#pt-panel .pt-original-text,#pt-panel .pt-translated-text{line-height:1.85;padding:12px;max-height:320px}
+#pt-panel .pt-edit-btn{width:32px;height:32px;font-size:12px}
+#pt-panel #pt-page-regex{gap:16px;padding:12px}
+#pt-panel .pt-regex-toolbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#pt-panel .pt-regex-toolbar .pt-check{grid-column:1/-1}
+#pt-panel .pt-regex-toolbar button{font-size:13px;min-height:44px;line-height:1.5}
+#pt-panel .pt-regex-row{padding:14px;border-radius:12px;background:color-mix(in srgb,var(--pt-text) 4%,var(--pt-bg));border:0}
+#pt-panel .pt-regex-row span,#pt-panel .pt-regex-row input[type=text]{font-size:14px}
+#pt-panel #pt-statusbar{padding:10px 14px;font-size:12px;border-top:1px solid var(--pt-border)}
+@container (min-width:560px){#pt-panel #pt-tabs{grid-template-columns:repeat(6,minmax(0,1fr))}#pt-panel .pt-localization-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Drawer-wide caption rules must not shrink panel section headings. */
+body.salty #pt-panel .pt-card h4{font-size:15px!important;color:var(--pt-text)!important}
+#pt-panel .pt-field>label{font-size:14px}
+#pt-panel .pt-ui-button{font-size:13px;line-height:1.5;min-height:42px;border-radius:9px}
+#pt-panel p:empty{display:none}
+
+#pt-panel .pt-export-group{display:flex;flex-wrap:wrap;gap:8px;flex:1 1 100%}
+#pt-panel .pt-export-group .pt-btn-icon{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:auto;min-height:40px;height:auto;padding:8px 10px;font-size:12px;line-height:1.5}
