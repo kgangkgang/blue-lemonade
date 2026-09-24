@@ -1,0 +1,324 @@
+/* ===== css/06-chat-text.css =====
+   메시지 본문 조판(글꼴 · 크기 · 대사 형광펜 · 기울임 · 굵게 · 코드) · 내 메시지 모양.
+   설정 창 표본(.salty-sample)도 여기 규칙을 같이 쓴다.
+   ===== */
+/* ---------- 본문 (설정 창 미리보기 .salty-sample 도 같은 규칙) ---------- */
+body.salty #chat .mes .mes_text {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+body.salty #chat .mes .mes_text p:empty {
+  display: none;
+}
+body.salty #chat .mes .mes_text pre {
+  overflow-x: auto;
+}
+.salty-sample q::before,
+.salty-sample q::after {
+  content: none;
+}
+/* A long unspaced quotation must not put all justification space after 「. */
+body.salty .mes_text .bl-quote-lead,
+.salty-sample .bl-quote-lead {
+  display: inline-block;
+  white-space: nowrap;
+  text-align: start;
+  text-indent: 0;
+  margin: 0;
+  padding: 0;
+}
+:is(body.salty #chat .mes .mes_text, .salty-sample) {
+  font-family: var(--salty-font-text) !important;
+  font-size: var(--salty-size) !important;
+  line-height: var(--salty-lh) !important;
+  letter-spacing: var(--salty-ls) !important;
+  font-weight: var(--salty-weight) !important;
+  color: var(--salty-text);
+  text-align: var(--salty-align);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+/* 양쪽 정렬 두 가지 (--salty-align 은 예전 이름 그대로 씀)
+   · justify-word: 낱말을 안 끊음 — 긴 낱말이 다음 줄로 내려가 사이 공백이 벌어질 수 있음
+   · justify-break: 한글을 글자 사이에서 끊어 줄이 꽉 참 → 공백이 거의 안 벌어짐
+     (영어 낱말은 통째로 남김 — 하이픈 없이 자르면 'Lemon/ade' 처럼 읽다가 걸림) */
+:is(body.salty.salty-align-justify-word #chat .mes .mes_text, .salty-sample.salty-align-justify-word),
+:is(body.salty.salty-align-justify-break #chat .mes .mes_text, .salty-sample.salty-align-justify-break) {
+  text-align: justify;
+}
+:is(body.salty.salty-align-justify-break #chat .mes .mes_text, .salty-sample.salty-align-justify-break) {
+  word-break: normal; /* 한글은 글자 사이에서 끊김 — 영어 낱말은 안 쪼갬 */
+  hyphens: auto; /* 하이픈 사전이 있는 낱말만 하이픈과 함께 끊음 */
+  text-wrap: wrap; /* 마지막 줄 다듬기(pretty)는 끄기 — 줄을 꽉 채우는 게 먼저 */
+}
+:is(body.salty #chat .mes .mes_text, .salty-sample) :is(p, li) {
+  font: inherit !important;
+  letter-spacing: inherit !important;
+  line-height: inherit !important;
+}
+:is(body.salty #chat .mes .mes_text, .salty-sample) p {
+  margin: 0 0 var(--salty-para) !important;
+}
+:is(body.salty #chat .mes .mes_text, .salty-sample) p:last-child {
+  margin-bottom: 0 !important;
+}
+:is(body.salty.salty-indent #chat .mes .mes_text, .salty-sample.salty-indent) p {
+  text-indent: 1em;
+}
+
+/* 대사 */
+:is(body.salty #chat .mes .mes_text, .salty-sample) q {
+  color: var(--salty-dialogue);
+  font-family: var(--salty-font-dialogue, inherit); /* 대사 칸이 '본문과 같게'면 변수가 비어(inherit) 둘레 글꼴 그대로 */
+  /* 대사 크기: 둘레 글자 × 본문 대비 배율 (내 메시지처럼 작아진 글 안에서도 같은 비율).
+     줄 높이는 둘레 줄과 같게 (1em / 배율 = 둘레 글자 크기) — 큰 대사가 든 줄만 벌어지지 않게.
+     단 대사 글자 상자(1em 안팎)보다 낮아지면 형광펜 띠가 윗줄 띠와 붙으므로 1.28em 아래로는 안 내려감
+     — 본문과 같거나 작은 대사, 본문 16 · 대사 18 까지는 그대로 둘레 줄에 맞춰짐 */
+  font-size: calc(1em * var(--salty-dialogue-scale, 1));
+  line-height: max(1.28em, calc(var(--salty-lh) * 1em / var(--salty-dialogue-scale, 1)));
+  font-weight: var(--salty-dialogue-weight);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+/* --salty-marker-bg: 한 장의 SVG 획 — apply.js markerBackground.
+   좌우 padding 은 주지 않음: 대사가 줄 끝에서 시작해 통째로 아랫줄로 넘어가면, 폰 브라우저는 대사의 시작 모서리만
+   윗줄 끝에 남기는데 padding 이 있으면 그 빈 조각에도 형광펜이 칠해져 윗줄 끝에 조각이 보였음. 따옴표가 양 끝 여백 역할을 함 */
+:is(body.salty.salty-dlg-marker #chat .mes .mes_text, .salty-sample.salty-dlg-marker) q {
+  background: var(--salty-marker-bg);
+  color: var(--salty-marker-ink, var(--salty-dialogue)); /* 밝은 띠 위 어두운 글자 (레몬 블루 나이트) — 다른 팔레트는 대사 색 그대로 */
+}
+/* 대사 안의 대사: 같은 자리에 또 칠하면 그 부분만 잉크가 두 배로 진해짐 → 안쪽은 칠하지 않음 */
+:is(body.salty.salty-dlg-marker #chat .mes .mes_text, .salty-sample.salty-dlg-marker,
+  body.salty.salty-dlg-full #chat .mes .mes_text, .salty-sample.salty-dlg-full) q q {
+  background: none;
+  padding: 0;
+  margin: 0;
+}
+/* 대사 안의 대사: 크기를 또 곱하지 않게 */
+:is(body.salty #chat .mes .mes_text, .salty-sample) q q {
+  font-size: inherit;
+  line-height: inherit;
+}
+:is(body.salty.salty-dlg-full #chat .mes .mes_text, .salty-sample.salty-dlg-full) q {
+  background: var(--salty-fill-marker, var(--salty-marker));
+  border-radius: 5px;
+  padding: 0.04em 0; /* 좌우 padding 없음 — 형광펜과 같은 이유 (줄 끝 빈 조각) */
+}
+:is(body.salty.salty-dlg-bold #chat .mes .mes_text, .salty-sample.salty-dlg-bold) q {
+  font-weight: 650;
+}
+:is(body.salty.salty-dlg-tint #chat .mes .mes_text, .salty-sample.salty-dlg-tint) q {
+  color: var(--salty-accent-dlg);
+}
+
+/* 속마음 · 강조 · 기타 */
+:is(body.salty #chat .mes .mes_text, .salty-sample) em {
+  font-family: var(--salty-font-em, inherit); /* 속마음 칸이 '본문과 같게'면 둘레 글꼴 그대로 (대사 안이면 대사 글꼴) */
+  font-style: var(--salty-em-style);
+  font-weight: var(--salty-em-weight);
+  color: var(--salty-em);
+}
+/* 강조: 굵게 + 노란 형광펜 띠를 아래쪽에 (중요한 부분만 노랑) */
+:is(body.salty #chat .mes .mes_text, .salty-sample) strong {
+  font-family: var(--salty-font-strong, inherit); /* 강조 칸이 '본문과 같게'면 둘레 글꼴 그대로 */
+  font-weight: var(--salty-strong-weight);
+  color: var(--salty-strong);
+  box-shadow: inset 0 -0.36em var(--salty-gold);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+:is(body.salty #chat .mes .mes_text, .salty-sample) u {
+  text-decoration-color: var(--salty-accent-70);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.22em;
+}
+/* 인용: 선 대신 옅은 면 */
+body.salty #chat .mes .mes_text blockquote {
+  margin: 1em 0 !important;
+  padding: 0.8em 1em !important;
+  border: 0 !important;
+  border-radius: var(--r-md);
+  background: var(--salty-fill-shade, var(--shade)) !important;
+  color: var(--salty-muted);
+}
+/* 장면 전환: 선 대신 · · · */
+body.salty #chat .mes .mes_text hr {
+  opacity: 1 !important;
+  height: auto;
+  margin: 1.8em 0 !important;
+  border: 0 !important;
+  background: none !important;
+  overflow: visible;
+  text-align: center;
+}
+body.salty #chat .mes .mes_text hr::before {
+  content: "·  ·  ·";
+  color: var(--salty-faint);
+  font-size: 15px;
+  letter-spacing: 0.3em;
+}
+body.salty #chat .mes .mes_text a {
+  color: var(--salty-accent);
+  text-decoration: underline;
+  text-decoration-color: var(--salty-accent-40);
+  text-underline-offset: 0.2em;
+}
+body.salty #chat .mes .mes_text :is(code, pre) {
+  background: var(--salty-fill-shade, var(--shade)) !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  color: var(--salty-text) !important;
+}
+/* 코드 글자(`코드`): 글꼴 칸 '코드' · 크기 칸 '코드' 를 따름 (안 정하면 둘레 글꼴 · 같은 크기).
+   기본은 도트 글꼴(Neo둥근모) — 도트는 이음자(ligature)가 없어야 획이 또렷 */
+:is(body.salty #chat .mes .mes_text, .salty-sample) :is(code, kbd, samp) {
+  padding: 0 0.28em !important;
+  font-family: var(--salty-font-code, ui-monospace, monospace) !important;
+  font-size: var(--salty-code-size, 1em) !important;
+  font-variant-ligatures: none;
+  letter-spacing: 0 !important;
+}
+:is(body.salty #chat .mes .mes_text, .salty-sample) pre :is(code, kbd, samp) {
+  padding: 0 !important;
+}
+body.salty #chat .mes .mes_text table {
+  border-collapse: collapse;
+}
+body.salty #chat .mes .mes_text :is(th, td) {
+  border: 0 !important;
+  padding: 6px 10px;
+}
+body.salty #chat .mes .mes_text tr:nth-child(even) td {
+  background: var(--salty-fill-shade, var(--shade));
+}
+
+/* ---------- 내 메시지 ---------- */
+body.salty #chat .mes[is_user="true"] .mes_text {
+  color: color-mix(in srgb, var(--salty-text) var(--salty-user-ink, 100%), transparent); /* 2.7.3: 진하기 슬라이더 (100 = 캐릭터 글과 같게, 전엔 90 고정) */
+}
+body.salty #chat .mes[is_user="true"] .mes_text p {
+  font-size: calc(var(--salty-size) * var(--salty-user-scale, 1)) !important; /* 2.7.3: 크기 슬라이더 (100% = 캐릭터 글과 같게, 전엔 0.94 고정) */
+}
+
+/* 말풍선: 오른쪽, 옅은 면 + 쉬는 카드 그림자(e1) — 아바타는 숨김 */
+body.salty.salty-user-bubble #chat .mes[is_user="true"] .mesAvatarWrapper > .avatar {
+  display: none !important;
+}
+/* 메타가 켜져 있으면: 메타는 말풍선 안 첫 줄(이름 위) — 메타 칸을 한 줄 묶음으로, 말풍선 폭은 격자 열(최대 86%)이 정함 */
+body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-timer.no-tokenCount.no-mesIDDisplay) #chat .mes[is_user="true"]:not(.smallSysMes) {
+  grid-template-columns: auto minmax(0, 1fr) fit-content(86%);
+}
+body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-timer.no-tokenCount.no-mesIDDisplay) #chat .mes[is_user="true"]:not(.smallSysMes):has(.edit_textarea) {
+  grid-template-columns: auto 0px minmax(0, 1fr); /* 편집할 때는 가로 꽉 */
+}
+body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-timer.no-tokenCount.no-mesIDDisplay) #chat .mes[is_user="true"]:not(.smallSysMes) > .mesAvatarWrapper {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: baseline;
+  grid-area: 1 / 3;
+  z-index: 1; /* 말풍선 면 위에 */
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  margin: 0 16px;
+  padding: 0;
+}
+body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-timer.no-tokenCount.no-mesIDDisplay) #chat .mes[is_user="true"]:not(.smallSysMes) > .mesAvatarWrapper > :is(.mesIDDisplay, .mes_timer, .tokenCounterDisplay) {
+  margin: 10px 0 2px;
+}
+body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-timer.no-tokenCount.no-mesIDDisplay) #chat .mes[is_user="true"]:not(.smallSysMes) > .mes_block {
+  grid-area: 2 / 3;
+  width: auto !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+}
+/* 보이는 메타가 있는 말풍선은 메타 줄부터 (윗 여백 10 + 메타 줄 16 + 2) */
+body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-mesIDDisplay) #chat .mes[is_user="true"]:not(.smallSysMes):has(> .mesAvatarWrapper > .mesIDDisplay:not(:empty)) > .mes_block,
+body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-timer) #chat .mes[is_user="true"]:not(.smallSysMes):has(> .mesAvatarWrapper > .mes_timer:not(:empty)) > .mes_block,
+body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-tokenCount) #chat .mes[is_user="true"]:not(.smallSysMes):has(> .mesAvatarWrapper > .tokenCounterDisplay:not(:empty)) > .mes_block {
+  grid-row: 1 / 3;
+  padding-top: 28px !important;
+}
+
+body.salty.salty-user-bubble #chat .mes[is_user="true"] .mes_block {
+  width: fit-content !important;
+  max-width: 86% !important;
+  margin-left: auto !important;
+  padding: 10px 16px 13px !important;
+  background: var(--salty-user-bg, var(--salty-raised)) !important;
+  border-radius: var(--r-lg) var(--r-lg) 6px var(--r-lg) !important;
+  box-shadow: var(--bl-e1) !important;
+}
+/* 편집할 때는 가로 꽉 (글 칸이 좁아지지 않게) */
+body.salty.salty-user-bubble #chat .mes[is_user="true"] .mes_block:has(.edit_textarea) {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+body.salty.salty-user-bubble #chat .mes[is_user="true"] .ch_name {
+  margin-bottom: 3px !important;
+}
+body.salty.salty-user-bubble #chat .mes[is_user="true"] .mes_block > .ch_name:has(~ .edit_textarea, ~ * .edit_textarea) {
+  margin-bottom: 10px !important; /* 편집 버튼 줄과 글 칸 사이 */
+}
+body.salty.salty-user-bubble #chat .mes[is_user="true"] :is(.name_text, .timestamp) {
+  font-size: var(--bl-ts-micro) !important; /* 11.5 — 메뉴 글자 크기를 따라감 */
+  color: var(--salty-muted) !important;
+}
+
+/* 카드: 가로 전체 옅은 면 + e1 */
+body.salty.salty-user-card #chat .mes[is_user="true"] .mes_block {
+  padding: 12px 16px 14px !important;
+  background: var(--salty-user-bg, var(--salty-raised)) !important;
+  border-radius: var(--r-md) !important;
+  box-shadow: var(--bl-e1) !important;
+}
+/* 메타 들여쓰기 = 카드 안쪽 여백, 아바타를 보이면 카드는 아바타에서 10px 띄움 */
+body.salty.salty-user-card #chat .mes[is_user="true"] {
+  --salty-meta-inset: 16px;
+}
+body.salty.salty-user-card:not(.salty-user-profile-custom):not(.hideChatAvatars) #chat .mes[is_user="true"] {
+  --salty-meta-inset: 26px;
+}
+body.salty.salty-user-card:not(.salty-user-profile-custom):not(.hideChatAvatars) #chat .mes[is_user="true"] .mes_block {
+  margin-left: 10px !important;
+}
+/* 메타가 켜져 있으면: 메타는 카드 안 첫 줄(이름 위) — 카드가 메타 줄까지 덮음 (윗 여백 12 + 메타 줄 16 + 2) */
+body.salty.salty-user-card:not(.salty-user-profile-custom):not(.no-timer.no-tokenCount.no-mesIDDisplay) #chat .mes[is_user="true"]:not(.smallSysMes) > .mesAvatarWrapper > :is(.mesIDDisplay, .mes_timer, .tokenCounterDisplay) {
+  z-index: 1; /* 카드 면 위에 */
+  margin: 12px 0 2px;
+}
+body.salty.salty-user-card:not(.salty-user-profile-custom):not(.no-timer.no-tokenCount.no-mesIDDisplay) #chat .mes[is_user="true"]:not(.smallSysMes) > .mesAvatarWrapper > .avatar {
+  grid-row: 1 / 3;
+}
+body.salty.salty-user-card:not(.salty-user-profile-custom):not(.no-mesIDDisplay) #chat .mes[is_user="true"]:not(.smallSysMes):has(> .mesAvatarWrapper > .mesIDDisplay:not(:empty)) > .mes_block,
+body.salty.salty-user-card:not(.salty-user-profile-custom):not(.no-timer) #chat .mes[is_user="true"]:not(.smallSysMes):has(> .mesAvatarWrapper > .mes_timer:not(:empty)) > .mes_block,
+body.salty.salty-user-card:not(.salty-user-profile-custom):not(.no-tokenCount) #chat .mes[is_user="true"]:not(.smallSysMes):has(> .mesAvatarWrapper > .tokenCounterDisplay:not(:empty)) > .mes_block {
+  grid-row: 1 / 3;
+  padding-top: 30px !important;
+}
+
+/* 글자만: 캐릭터와 같은 본문/메타 여백을 그대로 쓴다. */
+body.salty.salty-user-plain #chat .mes[is_user="true"] .mes_text {
+  color: var(--salty-muted);
+}
+
+/* 테이블: 글과 도구는 캐릭터와 같은 폭, 면만 채팅창 좌우 끝까지 펼친다. */
+body.salty.salty-user-table #chat .mes[is_user="true"] {
+  position: relative;
+  isolation: isolate;
+}
+body.salty.salty-user-table #chat .mes[is_user="true"]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--salty-user-bg, var(--salty-raised));
+  box-shadow: 0 0 0 100vmax var(--salty-user-bg, var(--salty-raised));
+  clip-path: inset(0 -100vmax);
+  pointer-events: none;
+}
+body.salty.salty-user-table #chat .mes[is_user="true"].selected::before { background: var(--bl-fill-selected, var(--bl-selected)); box-shadow: 0 0 0 100vmax var(--bl-selected); }
+
+/* A speaker label and the following dialogue may share a Markdown paragraph. */
+:is(body.salty.salty-indent #chat .mes .mes_text, .salty-sample.salty-indent) q.bl-line-dialogue { margin-inline-start: 1em; }

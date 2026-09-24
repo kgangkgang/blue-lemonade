@@ -1,0 +1,107 @@
+/* ===== css/54-mes-pins.css =====
+   메시지 버튼 고정 (4.1.3, src/mes-pins.js): ··· 메뉴에서 꺼낸 버튼(.bl-pinned)을 이름 줄 버튼과 같은 32px 칸으로.
+   mes_button 클래스가 없는 다른 확장 버튼도 같은 모양이 되도록 칸 크기를 다시 적는다.
+   ===== */
+body.salty #chat .mes .bl-pinned {
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  box-sizing: border-box;
+  width: 32px;
+  height: 32px;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: var(--bl-r-sm);
+  color: inherit;
+  opacity: 1 !important;
+  filter: none !important;
+  font-size: 16px !important;
+  line-height: 32px !important;
+  text-align: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (hover: hover) {
+  body.salty #chat .mes .bl-pinned:hover {
+    background: var(--bl-fill-hover, var(--bl-hover));
+    color: var(--salty-text);
+  }
+}
+body.salty #chat .mes .bl-pinned:active {
+  background: var(--bl-fill-press-bg, var(--bl-press-bg));
+  color: var(--salty-text);
+}
+/* 메뉴 안 버튼을 전부 꺼냈으면 빈 메뉴를 여는 ··· 는 숨긴다 */
+body.salty:not(.expandMessageActions) #chat .mes .bl-menu-empty > .extraMesButtonsHint {
+  display: none !important;
+}
+
+/* 선 아이콘: 메뉴 안에서 쓰던 그림(css/11-chrome.css 의 --salty-mi-*)을 꺼낸 버튼에도 */
+body.salty.salty-icons-line #chat .mes .bl-pinned:is(.mes_legacy_translate, .mes_llm_translate, .mes_toggle_original, .mes_edit_translation, .mes_paragraph_correction, .mes_delete_translation, .mes_translate, .sd_message_gen, .mes_narrate, .mes_prompt, .mes_hide, .mes_unhide, .mes_media_gallery, .mes_media_list, .mes_embed, .mes_swipe_picker, .mes_create_bookmark, .mes_create_branch, .mes_copy, .mes_to_image)::before {
+  content: "" !important;
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+  background-color: currentColor;
+  -webkit-mask: var(--salty-mi) center / contain no-repeat;
+  mask: var(--salty-mi) center / contain no-repeat;
+}
+body.salty.salty-icons-line #chat .mes .bl-pinned {
+  font-size: 18px !important;
+}
+body.salty.salty-icons-line #chat .mes .bl-pinned.mes_legacy_translate { --salty-mi: var(--salty-mi-brain); }
+body.salty.salty-icons-line #chat .mes .bl-pinned.mes_llm_translate { --salty-mi: var(--salty-mi-swap); }
+body.salty.salty-icons-line #chat .mes .bl-pinned.mes_toggle_original { --salty-mi: var(--salty-mi-search); }
+body.salty.salty-icons-line #chat .mes .bl-pinned.mes_edit_translation { --salty-mi: var(--salty-mi-squarepen); }
+body.salty.salty-icons-line #chat .mes .bl-pinned.mes_paragraph_correction { --salty-mi: var(--salty-mi-wrench); }
+body.salty.salty-icons-line #chat .mes .bl-pinned.mes_delete_translation { --salty-mi: var(--salty-mi-trash); }
+body.salty.salty-icons-line #chat .mes .bl-pinned.mes_translate { --salty-mi: var(--salty-mi-languages); }
+body.salty.salty-icons-line #chat .mes .bl-pinned.sd_message_gen { --salty-mi: var(--salty-mi-brush); }
+body.salty.salty-icons-line #chat .mes .bl-pinned.mes_narrate { --salty-mi: var(--salty-mi-volume); }
+body.salty.salty-icons-line #chat .mes .bl-pinned.mes_prompt { --salty-mi: var(--salty-mi-prompt); }
+body.salty.salty-icons-line #chat .mes .bl-pinned.mes_hide { --salty-mi: var(--salty-mi-eye); }
+body.salty.salty-icons-line #chat .mes .bl-pinned.mes_unhide { --salty-mi: var(--salty-mi-eyeoff); }
+body.salty.salty-icons-line #chat .mes .bl-pinned.mes_media_gallery { --salty-mi: var(--salty-mi-gallery); }
+body.salty.salty-icons-line #chat .mes .bl-pinned.mes_media_list { --salty-mi: var(--salty-mi-cells); }
+body.salty.salty-icons-line #chat .mes .bl-pinned.mes_embed { --salty-mi: var(--salty-mi-clip); }
+body.salty.salty-icons-line #chat .mes .bl-pinned.mes_swipe_picker { --salty-mi: var(--salty-mi-history); }
+body.salty.salty-icons-line #chat .mes .bl-pinned.mes_create_bookmark { --salty-mi: var(--salty-mi-flag); }
+body.salty.salty-icons-line #chat .mes .bl-pinned.mes_create_branch { --salty-mi: var(--salty-mi-branch); }
+body.salty.salty-icons-line #chat .mes .bl-pinned.mes_copy { --salty-mi: var(--salty-mi-copy); }
+body.salty.salty-icons-line #chat .mes .bl-pinned.mes_to_image { --salty-mi: var(--salty-mi-camera); }
+
+/* 설정 창의 고르기: 두 칸 목록 — 아이콘 · 이름 · 고른 표시(체크) */
+.salty-panel .bl-mespins {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px;
+}
+.salty-panel .bl-mespins button {
+  display: grid;
+  grid-template-columns: 1.3em minmax(0, 1fr) 14px;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  text-align: left;
+}
+.salty-panel .bl-mespins button > i {
+  text-align: center;
+}
+.salty-panel .bl-mespins button > span {
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.35;
+}
+.salty-panel .bl-mespins button::after {
+  content: "";
+  width: 5px;
+  height: 9px;
+  margin: 0 4px 3px;
+  border: solid transparent;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.salty-panel .bl-mespins button.on::after {
+  border-color: var(--salty-accent);
+}

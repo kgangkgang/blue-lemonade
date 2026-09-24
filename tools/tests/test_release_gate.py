@@ -53,6 +53,18 @@ class GateTests(unittest.TestCase):
             files=gate.inventory(root,'theme')
             self.assertIn('src/weather-art/nature.webp',files);self.assertIn('src/weather-art/light.webp',files)
             self.assertNotIn('src/weather-art/private.webp',files)
+    def test_bundled_templates_and_licenses_are_required_and_packaged(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            for name,data in self.fixture('theme').items():
+                p=root/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(data)
+            bundle=root/'src/addons/translator';bundle.mkdir(parents=True)
+            (bundle/'settings.html').write_text('<label>API</label>')
+            with self.assertRaisesRegex(gate.GateError,'Missing bundled license'):gate.inventory(root,'theme')
+            (bundle/'LICENSE').write_text('license fixture')
+            files=gate.inventory(root,'theme')
+            self.assertIn('src/addons/translator/settings.html',files)
+            self.assertIn('src/addons/translator/LICENSE',files)
     def test_missing_dependency_blocks(self):
         f=self.fixture();f['index.js']=b"import('./missing.js')"
         with self.assertRaisesRegex(gate.GateError,'missing'):gate.validate(f,'memory')

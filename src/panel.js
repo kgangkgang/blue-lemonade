@@ -1,3 +1,5 @@
+import { addonsEnabled, usageMode } from './usage-mode.js';
+import { saveAddonsNow } from './addon-save.js';
 import { readabilityReport, fixReadability } from './readability.js';
 import { appearanceArchive, rememberAppearance, restoreAppearance } from './appearance-archive.js';
 import { healthMarkup, bindHealth } from './install-health.js';
@@ -5,7 +7,6 @@ import { LOCK_GROUPS } from './setting-locks.js';
 import { deviceKind } from './device-layouts.js';
 import { bindComparison, comparisonView } from './appearance-compare.js';
 import { listMenuButtons, PIN_LIMIT } from './mes-pins.js';
-import {scriptsMarkup,bindScripts} from './scripts/ui.js';
 import {updateMarkup,bindThemeUpdate} from './theme-update.js';
 import { bindAddonLayout } from './addon-layout.js';
 import { typesetRoot } from './typography.js';
@@ -55,7 +56,7 @@ const SUBS = {
     chat: [['message', '메시지'], ['profile', '캐릭터 프로필'], ['user-profile', '내 프로필'], ['name', '캐릭터 이름·시간'], ['user-name', '내 이름·시간'], ['screen', '화면'], ['etc', '기타']],
     image: [['layout', '배치'], ['shape', '모양'], ['frame', '테두리'], ['size', '크기'], ['fade', '흐림']],
     prompt: [['deus', '데우스 엑스 마키나']],
-    extensions: [['words', '단어 치환'], ['capture', '채팅 캡처'], ['order', '확장 순서'], ['perf', '성능 보조'], ['models', '모델 관리'], ['bookmarks', '북마크'], ['rewrite', '다시 쓰기'], ['scripts', '스크립트']],
+    extensions: [['words', '단어 치환'], ['capture', '채팅 캡처'], ['order', '확장 순서'], ['perf', '성능 보조'], ['models', '모델 관리'], ['bookmarks', '북마크'], ['translator', 'LLM 번역'], ['prompt','한글화 패널'], ['customstyle','커스텀 CSS 조절'], ['rewrite', '다시 쓰기'], ],
 };
 
 const panels = new Set();
@@ -820,11 +821,11 @@ function defaultTag(lang, id) {
 function fontList(slot, lang, set) {
     const current = set[lang];
     const fonts = fontsFor(lang);
-    const present = GROUPS.map(([group, label]) => [group, label, fonts.filter(f => f.group === group)]).filter(([, , list]) => list.length);
+    const present = GROUPS.map(([group, label]) => [group, label, fonts.filter(f => f.group === group)]).filter(([, list]) => list.length);
     if (ui.fontTag !== 'all' && !present.some(([group]) => group === ui.fontTag)) ui.fontTag = 'all'; // 내 글꼴을 다 지운 경우 등
     const groups = present.map(([group, label, list]) =>
         `<div class="salty-fontgroup" data-group="${group}"><h5>${label} <span>${list.length}</span></h5>${list.map(f => fontItem(f, lang, current)).join('')}</div>`).join('');
-    const tags = [['all', '전체', present.reduce((n, [, , list]) => n + list.length, 0)], ...present.map(([group, label, list]) => [group, label, list.length])]
+    const tags = [['all', '전체', present.reduce((n, [, list]) => n + list.length, 0)], ...present.map(([group, label, list]) => [group, label, list.length])]
         .map(([id, label, n]) => `<button data-act="fonttag" data-tag="${id}" class="${ui.fontTag === id ? 'on' : ''}">${label}<span>${n}</span></button>`).join('');
     const auto = lang !== 'ko'
         ? `<button class="salty-fontitem ${!current || current === 'auto' ? 'on' : ''}" data-act="font" data-id="auto">
@@ -1240,6 +1241,7 @@ function tabChat(s, sub) {
         const css = customCssReport();
         const touch = css.chat.length ? `<p class="salty-note bl-css-touch"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> 커스텀 CSS ${css.chat.length}개 규칙이 메시지 칸을 건드려요 — 버튼 · 이름 줄이 이상하면 먼저 꺼 보세요<br><small>${css.chat.slice(0, 5).map(esc).join(' · ')}${css.chat.length > 5 ? ' …' : ''}</small></p>` : '';
         const customCss = `${cap('다른 CSS', css.lines ? `커스텀 CSS ${css.lines}줄 · ${css.rules}규칙` : '커스텀 CSS 없음')}<div class="salty-group">${touch}
+            ${row('펼친 카드 아래에 접기 버튼',toggle('chat.triangleFold',s.chat.triangleFold??SillyTavern.getContext().extensionSettings?.blue_lemonade_scripts?.enabled?.fold??false),'채팅 카드 맨 아래에서 바로 접어요.')}
             ${row('커스텀 CSS 끄기', toggle('compat.muteCustomCss', !!s.compat?.muteCustomCss), '사용자 설정의 커스텀 CSS 를 테마가 켜진 동안 꺼요 · 지우지는 않아요')}
         </div>
         ${cap('진단', '제보할 때 붙여 넣는 한 덩어리')}<div class="salty-group">
@@ -1398,7 +1400,7 @@ function weatherSeg(s) {
 
 // ───────── 프롬프트 (3.4.0) ─────────
 // 프리셋마다 한 칸. 지금은 데우스 엑스 마키나 — 호환을 켜야 카드 표본 · 카드 설정 · 트래커 설정이 보이고 적용된다
-function tabExtensions(s, sub) { if(sub==='scripts')return scriptsMarkup(); return addonMarkup(s,sub) + (['words','capture'].includes(sub) && s.addons[sub] ? wordToolsMarkup(s,sub) : ''); }
+function tabExtensions(s, sub) { if(!addonsEnabled(s))return '<p class="salty-note">현재 사용 모드에서는 내장 확장을 실행하지 않아요. 설정 선택 메뉴의 사용 모드에서 테마 + 확장 또는 확장만을 고르면 저장한 설정으로 다시 사용할 수 있어요.</p>';  if(sub==='scripts')sub='prompt'; return addonMarkup(s,sub) + (['words','capture'].includes(sub) && s.addons[sub] ? wordToolsMarkup(s,sub) : ''); }
 
 function tabPrompt(s) {
     const on = !!s.deus?.on;
@@ -1406,7 +1408,7 @@ function tabPrompt(s) {
     const dio = ink.outline || { on: false, color: '#000000', width: 0.6, alpha: 100 };  // 데우스 대사 가독성: 외곽선
     const dis = ink.shadow || { on: false, color: '#000000', alpha: 60, angle: 135, distance: 1.5, blur: 2 }; // 그림자
     const fx = s.deus?.fx || { on: true, motion: 'normal', glow: true, flow: false, flowMode: 'text', force: false }; // 4.1.2 감정 대사 효과
-    const head = `${cap('데우스 엑스 마키나')}<div class="salty-group">
+    const head = `${cap('데우스 엑스 마키나')}<p class="bl-prompt-source">호환 대상 프롬프트 · <a href="https://www.reddit.com/r/SillyTavernAI/s/ldSEyIl3Gx" target="_blank" rel="noopener noreferrer">데우스 원문 보기 ↗</a></p><div class="salty-group">
             ${row('프롬프트 호환', toggle('deus.on', on), '이 프리셋의 트래커 · 장면 계획 · 상태 카드를 테마에 맞춰요')}
         </div>`;
     if (!on) return `${head}<p class="salty-note">데우스 엑스 마키나 프리셋을 쓸 때만 켜 주세요. 끄면 아래 설정이 모두 쉬어요 (고른 값은 남아요).</p>`;
@@ -1622,10 +1624,10 @@ function render(root) {
     const head = root.classList.contains('in-popup')
         ? `<div class="salty-head">
             <div class="salty-mark">${MARK}</div>
-            <div><div class="salty-title">Blue Lemonade${currentVersion() ? ` <button type="button" class="salty-ver${hasUnseenNotice() ? ' is-new' : ''}" data-act="notice" aria-label="공지사항">v${currentVersion()}</button>` : ''}</div><div class="salty-sub">읽기 편한 테마</div></div>
-            <label class="salty-switch" title="테마 켜기"><input type="checkbox" data-toggle="enabled" ${s.enabled ? 'checked' : ''}><span></span></label>
+            <div><div class="salty-title">Blue Lemonade${currentVersion() ? ` <button type="button" class="salty-ver${hasUnseenNotice() ? ' is-new' : ''}" data-act="notice" aria-label="공지사항">v${currentVersion()}</button>` : ''} <button type="button" class="bl-copyright" data-bl-credits aria-label="출처·라이선스" title="출처·라이선스">ⓒ</button></div><div class="salty-sub">읽기 편한 테마</div></div>
+            <label class="salty-switch" title="블루레몬에이드 사용"><input type="checkbox" data-toggle="enabled" ${s.enabled ? 'checked' : ''}><span></span></label>
         </div>`
-        : `<div class="salty-head salty-head-slim"><span>테마 켜기</span>${toggle('enabled', s.enabled)}</div>`;
+        : `<div class="salty-head salty-head-slim"><span>블루레몬에이드 사용</span>${toggle('enabled', s.enabled)}</div>`;
     root.innerHTML = `
         <div class="salty-nav"><div class="bl-settings-toprow">
             <button type="button" class="bl-editor-choose" data-act="editor-catalog" aria-label="설정 선택" aria-haspopup="dialog" aria-expanded="${!!root._catalogOpen}"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/></svg><span>${subLabel}</span></button>
@@ -1634,17 +1636,22 @@ function render(root) {
         <section class="salty-sec" data-tab="${ui.tab}" data-sub="${sub}">${section}</section>
         <div class="bl-editor-catalog" role="dialog" aria-modal="true" aria-label="설정 선택 목록" ${root._catalogOpen ? '' : 'hidden'}>
             <button type="button" class="bl-editor-scrim" data-act="editor-catalog-close" aria-label="설정 선택 닫기"></button>
-            <div class="bl-editor-directory"><div class="bl-editor-directory-head"><b>설정 선택</b><button type="button" data-act="editor-catalog-close" aria-label="설정 선택 닫기">×</button></div>${searchMarkup(root._settingsQuery || '')}<div class="bl-editor-directory-list">${catalog}${head}${s.activeStyle ? '<p class="salty-note">캐릭터 스타일 적용 중</p>' : ''}<div class="salty-checks">${issues.map((issue, i) => `<div class="salty-check"><span>${issue.text}</span>${issue.fix ? `<button class="salty-btn" data-act="fix" data-i="${i}">${issue.fix}</button>` : ''}</div>`).join('')}</div></div></div>
+            <div class="bl-editor-directory"><div class="bl-editor-directory-head"><b>설정 선택</b><button type="button" data-act="editor-catalog-close" aria-label="설정 선택 닫기">×</button></div>${searchMarkup(root._settingsQuery || '')}<div class="bl-editor-directory-list"><div class="bl-usage-mode"><label>사용 모드<select data-usage-mode aria-label="사용 모드">${[['both','테마 + 확장'],['theme','테마만'],['extensions','확장만']].map(([v,label])=>`<option value="${v}" ${usageMode(s)===v?'selected':''}>${label}</option>`).join('')}</select></label><p>선택한 모드만 실행해요. 기존 설정은 보관해요.</p><button type="button" class="salty-btn" data-usage-apply>저장하고 새로고침</button><span role="status" data-usage-status></span></div>${catalog}${head}${s.activeStyle ? '<p class="salty-note">캐릭터 스타일 적용 중</p>' : ''}<div class="salty-checks">${issues.map((issue, i) => `<div class="salty-check"><span>${issue.text}</span>${issue.fix ? `<button class="salty-btn" data-act="fix" data-i="${i}">${issue.fix}</button>` : ''}</div>`).join('')}</div></div></div>
         </div>`;
     arrangeEditor(root, `${ui.tab}/${sub}`, subLabel);
     root.querySelector('.bl-editor-directory-list').insertAdjacentHTML('afterbegin',favoritesMarkup({tab:ui.tab,sub,title:subLabel}));
+    root.querySelector('[data-usage-apply]').onclick=async(event)=>{
+        const button=event.currentTarget, status=root.querySelector('[data-usage-status]');
+        button.disabled=true;status.textContent='설정을 저장하고 있어요…';
+        const previous=s.usageMode;s.usageMode=root.querySelector('[data-usage-mode]').value;
+        try{await saveAddonsNow();location.reload();}catch(error){s.usageMode=previous;status.textContent=error.message;button.disabled=false;}
+    };
     bindCustomBuilder(root);
     paintSettingsSearch(root);
     fillPreviews(root); // 미리보기 무대 다시 꽂기 (만들지 않고 옮겨 담기만)
     for(const stage of Object.values(root._pv || {}))if(!stage.isConnected)stage._blWeather?.destroy();
     typesetRoot(root);
     bindAddons(root, refreshPanels);
-    void bindScripts(root);
     bindThemeUpdate(root);
     bindHealth(root,applyAll);
     bindWordTools(root, refreshPanels);

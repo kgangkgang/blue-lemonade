@@ -1,0 +1,20 @@
+/* ===== css/38-outline.css =====
+   3.7.0 글자 외곽선 (글자 › 그림자 › 글자 외곽선, apply.js body.salty-outline).
+
+   그림자(text-shadow)와 달리 -webkit-text-stroke 를 쓴다. paint-order: stroke fill 이 없으면 획이 글자 안쪽을
+   절반 파먹어 얇은 글꼴이 가늘어 보이므로 반드시 같이 준다 (크로미움 · 사파리 · 파이어폭스 모두 받는다).
+   두께 · 색은 apply.js 가 --salty-outline-w · --salty-outline-c 로 준다.
+
+   메시지 본문 전체에 두른다. stroke 는 상속되므로 .mes_text 하나에만 주면 안쪽 글자까지 따라온다.
+   데우스 대사 색상에만 두르는 것은 제 칸으로 옮겼다 (3.7.1, css/37-prompt-ink.css '가독성 향상').
+   ===== */
+body.salty.salty-outline :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text,
+body.salty .salty-sample.salty-outline {
+  -webkit-text-stroke: var(--salty-outline-w, 0) var(--salty-outline-c, transparent);
+  paint-order: stroke fill;
+}
+/* 카드 · 코드 · 아이콘 글꼴에는 두르지 않는다 — 데우스 카드의 작은 숫자 · 라벨은 획이 겹쳐 뭉개지고,
+   Font Awesome 글리프는 외곽선이 그림을 두껍게 만든다 */
+body.salty:is(.salty-outline, .salty-demink-outline) :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text :is(code, pre, .fa-solid, .fa-regular, .fa-brands, [class*="custom-dem-"]) {
+  -webkit-text-stroke: 0;
+}

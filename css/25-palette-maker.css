@@ -1,0 +1,68 @@
+/* ===== css/25-palette-maker.css =====
+   색상과 밝기 · 나만의 에이드 작업대 · 시작 화면 버전 표시.
+   ===== */
+/* ===== 색상과 밝기 · 나만의 에이드 작업대 (surfaces:palette-maker) ===== */
+.salty-panel .salty-palette-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 5px 1px 12px; min-height: 38px; }
+.salty-panel .salty-palette-toolbar > span { font-size: 12px; color: var(--salty-muted); }
+.salty-panel .salty-mode-switch { display: flex; flex: none; gap: 3px; padding: 3px; border-radius: 12px; background: var(--salty-fill-shade, var(--salty-shade)); }
+.salty-panel .salty-mode-switch button { display: grid; place-items: center; width: 38px; height: 32px; border: 0; border-radius: 9px; background: transparent; color: var(--salty-muted); font-size: 17px; cursor: pointer; }
+.salty-panel .salty-mode-switch button[aria-pressed="true"] { background: var(--salty-fill-surface, var(--salty-surface)); color: var(--salty-accent); box-shadow: 0 0 0 1px var(--salty-shade); }
+.salty-panel .salty-mode-switch button:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 2px; }
+.salty-panel .salty-pal { min-width: 0; gap: 7px; padding: 8px; transition: box-shadow .15s ease; }
+.salty-panel .salty-pal.on { box-shadow: 0 0 0 2px var(--salty-accent); }
+.salty-panel .salty-pal small { font-size: 10px; line-height: 1.5; margin-top: -3px; }
+.salty-panel .salty-pal b:not(.salty-pal-page b) { font-size: 12px; line-height: 1.5; font-weight: 600; }
+.salty-panel .salty-pal-page { padding: 8px; min-height: 69px; }
+.salty-panel .salty-pal-create { align-content: center; justify-items: center; min-height: 136px; text-align: center; background: var(--salty-fill-accent-8, var(--salty-accent-8)); color: var(--salty-text); box-shadow: inset 0 0 0 1px var(--salty-accent-22); }
+.salty-panel .salty-pal-create small { color: var(--salty-muted) !important; }
+.salty-panel .salty-create-icon { display: grid; place-items: center; width: 38px; height: 38px; margin-bottom: 3px; border-radius: 12px; background: var(--salty-fill-accent-13, var(--salty-accent-13)); color: var(--salty-accent); font-size: 26px; font-weight: 400; }
+.salty-panel .salty-custom-card { position: relative; display: grid; min-width: 0; }
+.salty-panel .salty-custom-card .salty-pal { width: 100%; }
+.salty-panel .salty-custom-edit { position: absolute; right: 8px; top: 8px; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; border: 0; background: var(--salty-fill-surface, var(--salty-surface)); color: var(--salty-accent); cursor: pointer; font-size: 12px; }
+.salty-panel .salty-custom-back { padding: 6px 0; background: none; border: 0; color: var(--salty-muted); font: inherit; font-size: 12px; cursor: pointer; }
+.salty-panel .salty-custom-back i { margin-right: 5px; }
+.salty-panel .salty-custom-preview { position: sticky; top: var(--salty-navh, 0px); z-index: 2; padding: 12px; border-radius: 13px; background: var(--draft-bg); color: var(--draft-text); box-shadow: inset 0 0 0 1px var(--draft-line); font-size: 12px; line-height: 1.6; }
+.salty-panel .salty-draft-top { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+.salty-panel .salty-draft-top > i { color: var(--draft-accent); }
+.salty-panel .salty-draft-top b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--draft-text); }
+.salty-panel .salty-draft-top > span { margin-left: auto; color: var(--draft-muted); font-size: 9px; letter-spacing: .1em; }
+.salty-panel .salty-draft-chat { padding: 11px; border-radius: 9px; background: var(--draft-surface); }
+.salty-panel .salty-draft-chat small { color: var(--draft-muted); font-size: 10px; }
+.salty-panel .salty-draft-chat p { margin: 5px 0; color: var(--draft-text); font-size: 12px; }
+.salty-panel .salty-draft-chat mark { color: var(--draft-dialogue); background: var(--draft-marker); border-radius: 3px; padding: 1px 2px; }
+.salty-panel .salty-draft-reply { width: fit-content; margin: 8px 0 0 auto; padding: 6px 9px; border-radius: 9px 9px 3px 9px; background: var(--draft-raised); }
+.salty-panel .salty-draft-reply b { color: var(--draft-strong); }
+.salty-panel .salty-draft-menu, .salty-panel .salty-draft-input { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 2px; font-size: 10px; color: var(--draft-muted); }
+.salty-panel .salty-draft-toggle { display: block; position: relative; width: 28px; height: 16px; border-radius: 20px; background: var(--draft-accent); }
+.salty-panel .salty-draft-toggle::before { content: ''; position: absolute; right: 2px; top: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--draft-on); }
+.salty-panel .salty-draft-input { padding: 5px 7px; border-radius: 9px; background: var(--draft-surface); }
+.salty-panel .salty-draft-input i { display: grid; place-items: center; width: 23px; height: 23px; border-radius: 50%; background: var(--draft-accent); color: var(--draft-on); }
+.salty-panel .salty-custom-recipe { margin-top: 12px; }
+.salty-panel .salty-custom-name { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px; color: var(--salty-muted); font-size: 11px; }
+.salty-panel .salty-custom-name input { min-width: 0; width: 100%; height: 36px; border: 0; border-radius: 8px; padding: 5px 9px; background: var(--salty-fill-shade, var(--salty-shade)); color: var(--salty-text); font: inherit; font-size: 12px; }
+.salty-panel .salty-custom-seeds { display: flex; gap: 5px; margin: 10px 0; }
+.salty-panel .salty-custom-seeds button { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 4px; border: 0; border-radius: 7px; padding: 7px 2px; background: var(--salty-fill-shade, var(--salty-shade)); color: var(--salty-muted); font: inherit; font-size: 10px; cursor: pointer; }
+.salty-panel .salty-custom-seeds i { display: block; width: 9px; height: 9px; border-radius: 50%; background: var(--seed); }
+.salty-panel .salty-custom-colors { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
+.salty-panel .salty-custom-color { min-width: 0; padding: 7px 4px; border-radius: 9px; background: var(--salty-fill-shade, var(--salty-shade)); }
+.salty-panel .salty-custom-color label { display: grid; justify-items: center; gap: 5px; color: var(--salty-muted); font-size: 11px; }
+.salty-panel .salty-custom-color input[type="color"] { display: block; appearance: none; width: 100%; height: 30px; min-height: 0; padding: 0; border: 0; border-radius: 6px; background: transparent; cursor: pointer; }
+.salty-panel .salty-custom-color input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.salty-panel .salty-custom-color input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 6px; }
+.salty-panel .salty-custom-color input[type="color"]::-moz-color-swatch { border: 0; border-radius: 6px; }
+.salty-panel .salty-custom-color input[type="text"] { width: 100%; min-width: 0; height: 27px; padding: 4px 0 0; border: 0; background: transparent; color: var(--salty-text); text-align: center; font: 10px/1.4 monospace; }
+.salty-panel .salty-custom-color input[aria-invalid="true"] { color: var(--salty-danger); outline: 1px solid var(--salty-danger); border-radius: 4px; }
+.salty-panel .salty-custom-foot { display: flex; justify-content: space-between; gap: 5px; margin: 8px 1px; color: var(--salty-muted); font-size: 10px; }
+.salty-panel .salty-custom-save { width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; height: 38px; background: var(--salty-fill-accent, var(--salty-accent)); color: var(--salty-on-accent); border: 0; border-radius: 9px; cursor: pointer; }
+.salty-panel .salty-custom-save:disabled { opacity: .45; cursor: default; }
+body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header:not(:has(> .drag-handle)) { grid-template-columns: 0 28px minmax(0, 1fr) 36px 30px; }
+body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header > .world_entry_thin_controls > .flex-container > .WIEnteryHeaderControls { grid-template-columns: minmax(0, 1.5fr) minmax(0, .8fr) minmax(0, 1.1fr); }
+body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header > .world_entry_thin_controls > .flex-container > .WIEnteryHeaderControls:has(input[name="depth"]:not(:disabled)) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* ===== /surfaces:palette-maker ===== */
+
+/* 메인 버전 표시는 번호와 빌드 정보를 두 줄로. 숨기거나 말줄임하지 않는다. */
+body.salty .welcomePanel .welcomeHeaderTitle { align-items: center; gap: 6px; }
+body.salty .welcomePanel .welcomeHeaderVersionDisplay { overflow: visible; white-space: normal; text-overflow: clip; line-height: 1.5; font-size: 11px; }
+body.salty .welcomePanel .welcomeHeaderVersionDisplay > span { display: block; overflow-wrap: anywhere; }
+body.salty .welcomePanel .welcomeHeaderVersionDisplay .bl-version-build { color: var(--salty-muted); font-size: 10px; font-weight: 400; }
+body.salty .welcomePanel .welcomeHeaderLogo { flex-shrink: 0; }

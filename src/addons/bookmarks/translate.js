@@ -87,6 +87,8 @@ let displayProcessor = null; // Promise<함수|null>, 처음 쓸 때 한 번만 
  * 예전 번역기라 내보내지 않으면 번역문을 가공하지 않고 쓴다 (번역기의 '원문 병기 안 함'과 같은 결과).
  */
 function loadDisplayProcessor() {
+    const bundled=globalThis[Symbol.for('blue-lemonade.translator')];
+    if(typeof bundled?.processTranslationText==='function')return Promise.resolve(bundled.processTranslationText);
     displayProcessor ??= (async () => {
         const url = new URL(`../../../../${TRANSLATOR_MODULE}/index.js`, import.meta.url).href;
         const loaded = [...document.querySelectorAll('script[type="module"][src]')].some(script => script.src === url);

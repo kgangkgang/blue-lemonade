@@ -1,0 +1,206 @@
+/* ===== css/07-images.css =====
+   에셋 이미지: 배치 · 크기 · 테두리(surfaces:imgedge) · 모양 · 흐림 · 투명 컷.
+   ===== */
+/* ---------- 에셋 이미지 ---------- */
+body.salty #chat .mes_text :is(.custom-cac-wrap, [class*="custom-imageWrapper"]) {
+  display: block; /* !important 금지: 에셋 확장이 못 불러온 그림을 onerror 로 숨김(인라인 display:none) — 덮으면 깨진 아이콘이 남음 */
+  width: auto !important;
+  padding: 0 !important;
+  margin: 1.4em 0 !important;
+  background: none !important;
+  border-radius: 0 !important;
+}
+body.salty #chat .mes_text :is(.custom-cac-frame, .custom-cac-frame:hover, .custom-cac-inner, .custom-cac-img) {
+  display: block; /* 위와 같은 이유 — 인라인 숨김이 이겨야 함 */
+  position: static !important;
+  z-index: auto !important;
+  max-width: none !important;
+  padding: 0 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+body.salty #chat .mes_text :is(.custom-cac-frame, .custom-cac-frame:hover, .custom-cac-inner) {
+  overflow: visible !important;
+}
+body.salty #chat .mes_text :is(.custom-cac-halo-img, .custom-cac-glow) {
+  display: none !important;
+}
+/* 크기(apply.js 가 svh 로 넣음 → 폰 주소창이 접혀도 안 흔들림): 비율 유지 = 높이 auto + 최대 높이 · 높이 맞춤 = 높이 고정.
+   틀을 넘치는 쪽은 잘라 채움 — 얼굴이 남게 가로 가운데, 세로는 그림 비율(--salty-ar)을 따라 세로 그림 위쪽 25% ~ 가로 그림 40%.
+   overflow: hidden 필수 — 크롬은 그림에 overflow: visible 이면 잘린 나머지까지 틀 밖(옆 여백 · 위아래 글 위)에 그리고 모서리도 안 둥글림 */
+body.salty #chat .mes_text :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img) {
+  display: block; /* 위와 같은 이유 — 못 불러온 그림은 숨은 채로 있어야 함 */
+  width: 100% !important;
+  max-width: none !important;
+  height: var(--salty-img-height, auto) !important;
+  max-height: var(--salty-img-maxh, none) !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  object-fit: cover !important;
+  object-position: center clamp(25%, calc(25% + (var(--salty-ar, 0.75) - 0.75) * 25%), 40%) !important;
+  border: 0 !important;
+  border-radius: var(--salty-img-radius) !important;
+  box-shadow: none !important;
+}
+body.salty #chat .mes_text :is(img.character-asset-rendered, img.eh-img) {
+  margin: 1.4em 0 !important;
+}
+
+/* 가로 꽉 */
+body.salty.salty-img-bleed #chat .mes_text :is(.custom-cac-wrap, [class*="custom-imageWrapper"]) {
+  margin-inline: calc(var(--salty-gutter) * -1) !important;
+}
+body.salty.salty-img-bleed #chat .mes_text :is(img.character-asset-rendered, img.eh-img) {
+  width: calc(100% + var(--salty-gutter) * 2) !important;
+  margin-inline: calc(var(--salty-gutter) * -1) !important;
+}
+/* 전체폭 에셋이 오른쪽에서 6px 모자라 보였음: #chat 이 스크롤바 자리를 잡아 보이는 폭이 390 → 384 였음
+   (측정: 그림은 -20~404 까지 뻗지만 스크롤 칸이 384 에서 잘라 384~390 이 바탕으로 남음).
+   폰에서는 채팅 스크롤바를 없애 화면 끝까지 쓰고, 그림 위에서 밀어도 그대로 스크롤됨 (스크롤 칸은 #chat 그대로).
+   PC 는 스크롤바를 그대로 둠 — 마우스로 끌 자리가 필요함 */
+@media (max-width: 1000px) {
+  body.salty #chat {
+    scrollbar-width: none;
+  }
+  body.salty #chat::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+}
+body.salty.salty-img-bleed #chat .mes_text :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img) {
+  border-radius: 0 !important;
+}
+/* 작게 가운데 */
+body.salty.salty-img-inset #chat .mes_text :is(.custom-cac-wrap, [class*="custom-imageWrapper"], img.character-asset-rendered, img.eh-img) {
+  width: min(72%, 420px) !important;
+  margin-inline: auto !important;
+}
+/* 본문 폭 · 작게의 네모: 종이 위에 놓인 사진처럼 옅은 그림자(e2). 흰 배경 지우기 중엔 틀이 드러나서, 흐림을 켜면 가장자리가 녹아야 해서 뺌 */
+body.salty.salty-shape-rect.salty-fade-off.salty-edge-none:not(.salty-img-bleed):not(.salty-blend) #chat .mes_text :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img) {
+  box-shadow: var(--bl-e2) !important;
+}
+
+/* 밝은 테마: 흰 배경을 종이색에 녹임.
+   섞일 바탕이 메시지 안에 있어야 됨 — 다른 확장이 .mes 에 contain(격리)을 걸면 투명한 판과 섞여 효과가 사라지므로 메시지에 종이색을 깔아 둠 */
+body.salty.salty-blend #chat .mes_text :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img) {
+  mix-blend-mode: multiply;
+}
+body.salty.salty-blend #chat .mes {
+  background: var(--salty-fill-bg, var(--salty-bg)) !important;
+}
+body.salty.salty-blend #chat .mes.selected {
+  background: linear-gradient(var(--salty-accent-10), var(--salty-accent-10)) var(--salty-bg) !important;
+}
+/* ===== 에셋 이미지 테두리 (surfaces:imgedge) ===== */
+body.salty.salty-shape-rect:is(.salty-edge-none, .salty-edge-line, .salty-edge-inset, .salty-edge-glow, .salty-edge-prism) #chat .mes_text :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img) {
+  border-style: var(--bl-img-frame-style) !important;
+  border-color: var(--bl-img-frame-color) !important;
+  border-width: var(--bl-img-frame-top) var(--bl-img-frame-right) var(--bl-img-frame-bottom) var(--bl-img-frame-left) !important;
+  padding: var(--bl-img-frame-gap) !important;
+  box-sizing: border-box;
+  outline: var(--bl-img-frame-outline) !important;
+  outline-offset: var(--bl-img-frame-offset) !important;
+  box-shadow: var(--bl-img-frame-shadow) !important;
+}
+body.salty.salty-edge-auto.salty-shape-rect #chat .mes_text :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img) {
+  border-color: rgb(var(--salty-pick-key, 145 165 186) / var(--salty-edge-alpha)) !important;
+}
+/* ===== /surfaces:imgedge ===== */
+
+/* ---------- 에셋 이미지 모양 (salty-shape-*) · 흐림 (salty-fade-*) ---------- */
+/* 흐림 단계(apply.js): --salty-feather-y 위아래 · --salty-feather-x 옆 = 그림 짧은 변에 곱하는 비율.
+   끔 · 약함(위아래) · 중간(옆도 조금) · 강함(네 가장자리가 바탕에 녹아듦) — 모든 모양에 먹음.
+   흐림 띠 알파 5단(0 · a1 · a2 · a3 · 1): 밝은 테마는 사인 곡선이라 시작 · 끝에 띠 자국이 안 남음.
+   어두운 테마는 바깥쪽이 더 빨리 투명해지는 곡선 → 밝은 그림 바탕이 남색 위에서 뿌연 회색 띠로 길게 남지 않음.
+   --salty-iw · --salty-ih · --salty-imin(짧은 변) px 과 --salty-rar(가로/세로)는 assets.js 가 그림마다 넣는 실제 그려진 크기 → 배치 · 아바타 · PC 폭과 상관없이 맞음.
+   전부 그라데이션 마스크(스크래치만 작은 정적 타일)이고 SVG 필터가 없어 폰에서도 가벼움. 투명 캐릭터 컷(.salty-cutout)은 빼고 아래 규칙대로 */
+body.salty {
+  --salty-fade-a1: .15;
+  --salty-fade-a2: .5;
+  --salty-fade-a3: .85;
+}
+body.salty.salty-dark {
+  --salty-fade-a1: .05;
+  --salty-fade-a2: .26;
+  --salty-fade-a3: .66;
+}
+body.salty #chat .mes_text :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img) {
+  --salty-cut: 0px; /* 대각선: 자른 선까지 거리 */
+  --salty-mask-angle: 180deg;
+  --salty-fy: max(1px, calc(var(--salty-imin, 240px) * var(--salty-feather-y, 0)));
+  --salty-fx: max(1px, calc(var(--salty-imin, 240px) * var(--salty-feather-x, 0)));
+  --salty-mask-y: linear-gradient(var(--salty-mask-angle), rgb(0 0 0 / 0) var(--salty-cut), rgb(0 0 0 / var(--salty-fade-a1)) calc(var(--salty-cut) + var(--salty-fy) * .25), rgb(0 0 0 / var(--salty-fade-a2)) calc(var(--salty-cut) + var(--salty-fy) * .5), rgb(0 0 0 / var(--salty-fade-a3)) calc(var(--salty-cut) + var(--salty-fy) * .75), #000 calc(var(--salty-cut) + var(--salty-fy)), #000 calc(calc(100% - var(--salty-cut)) - var(--salty-fy)), rgb(0 0 0 / var(--salty-fade-a3)) calc(calc(100% - var(--salty-cut)) - var(--salty-fy) * .75), rgb(0 0 0 / var(--salty-fade-a2)) calc(calc(100% - var(--salty-cut)) - var(--salty-fy) * .5), rgb(0 0 0 / var(--salty-fade-a1)) calc(calc(100% - var(--salty-cut)) - var(--salty-fy) * .25), rgb(0 0 0 / 0) calc(100% - var(--salty-cut)));
+  --salty-mask-x: linear-gradient(to right, rgb(0 0 0 / 0) 0px, rgb(0 0 0 / var(--salty-fade-a1)) calc(0px + var(--salty-fx) * .25), rgb(0 0 0 / var(--salty-fade-a2)) calc(0px + var(--salty-fx) * .5), rgb(0 0 0 / var(--salty-fade-a3)) calc(0px + var(--salty-fx) * .75), #000 calc(0px + var(--salty-fx)), #000 calc(100% - var(--salty-fx)), rgb(0 0 0 / var(--salty-fade-a3)) calc(100% - var(--salty-fx) * .75), rgb(0 0 0 / var(--salty-fade-a2)) calc(100% - var(--salty-fx) * .5), rgb(0 0 0 / var(--salty-fade-a1)) calc(100% - var(--salty-fx) * .25), rgb(0 0 0 / 0) 100%);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+/* 흐림이 켜지면 1px 안쪽으로 자름: 폰의 소수 배율(2.625 · 2.75 · PC 1.5)에서 마스크를 여러 장 겹치면 그림 맨 끝 한 줄이 새어
+   빈 바탕에 가는 선이 생김. 흐림 끝은 어차피 투명이라 잘린 게 안 보임 (약함은 옆이 안 흐려서 위아래만) */
+body.salty.salty-fade-soft #chat .mes_text :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img) {
+  clip-path: inset(1px 0);
+}
+body.salty:is(.salty-fade-medium, .salty-fade-strong) #chat .mes_text :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img) {
+  clip-path: inset(1px);
+}
+/* 중간 · 강함: 흐림 띠 바깥쪽은 거의 투명해서 그림이 글에서 떠 보임 → 위아래 간격을 흐림 폭의 1/3 만큼 당김 (0.6em 은 남김) */
+body.salty:is(.salty-fade-medium, .salty-fade-strong) {
+  --salty-fade-pull: 0.34;
+}
+body.salty:is(.salty-fade-medium, .salty-fade-strong):not(.salty-shape-slant) #chat .mes_text :is(img.character-asset-rendered.salty-asset, img.eh-img.salty-asset, .custom-cac-wrap.salty-asset, [class*="custom-imageWrapper"].salty-asset):not(.salty-cutout) {
+  margin-block: max(0.6em, calc(1.4em - var(--salty-imin, 240px) * var(--salty-feather-y, 0) * var(--salty-fade-pull))) !important;
+}
+
+/* 네모: 끔 = 마스크 없음 · 약함 = 위아래 · 중간 · 강함 = 옆까지 (아래 규칙) */
+body.salty.salty-shape-rect:not(.salty-fade-off) #chat .mes_text :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img) {
+  -webkit-mask-image: var(--salty-mask-y);
+  mask-image: var(--salty-mask-y);
+}
+
+/* 네모의 중간 · 강함: 옆도 흐림 */
+body.salty.salty-shape-rect:is(.salty-fade-medium, .salty-fade-strong) #chat .mes_text :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img) {
+  -webkit-mask-image: var(--salty-mask-y), var(--salty-mask-x);
+  mask-image: var(--salty-mask-y), var(--salty-mask-x);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+
+/* 2.2.1 에 고르기에서 뺀 모양(대각선 · 코너 컷 · 스크래치)의 규칙은 3.0.0 에서 지움 — 설정 정리(settings.js)가 옛 값을 네모로 바꿔 그 body 클래스가 붙을 일이 없다 */
+
+/* 투명 캐릭터 컷: 자르지 않고, 아래만 살짝 흐리게 (drop-shadow 필터는 폰에서 번져 보여서 안 씀).
+   높이 맞춤이어도 틀을 키우지 않음 (키우면 투명한 빈 칸이 그림 위에 생김) → 고른 높이를 최대 높이로만 씀 */
+body.salty #chat .mes_text :is(.salty-cutout .custom-cac-img, .salty-cutout img, img.salty-cutout) {
+  height: auto !important;
+  max-height: var(--salty-img-cap, none) !important;
+  object-fit: contain !important;
+  object-position: center bottom !important;
+  border-radius: 0 !important;
+  mix-blend-mode: normal !important;
+  -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent);
+  mask-image: linear-gradient(to bottom, #000 82%, transparent);
+}
+
+/* ---------- 리뷰 반영: 상태 표시가 지워지지 않게 ---------- */
+/* 태그 거르기 상태(안 고름 · 고름 · 뺌)는 surfaces:foundation 태그 규칙 + surfaces:characters 에 */
+/* 오른쪽 서랍 탭 버튼의 켜짐 표시 */
+body.salty .right_menu_button.active,
+body.salty .selected-right-tab {
+  color: var(--salty-accent) !important;
+}
+@media (hover: hover) {
+  body.salty .right_menu_button:hover {
+    color: var(--salty-text) !important;
+  }
+}
+/* 생각 칸 요약줄이 카드 밖으로 삐져나오지 않게 (실리태번의 -30px 보정 되돌림) */
+body.salty #chat .mes_reasoning_details .mes_reasoning_summary {
+  margin-right: 0 !important;
+}
+/* 대사 안의 기울임·<font color> 안의 글자는 바깥 색을 따름 (실리태번 기본 동작 유지) */
+:is(body.salty #chat .mes .mes_text, .salty-sample) q :is(em, i) {
+  color: inherit;
+}
+body.salty:not(.salty-unify-inline) #chat .mes .mes_text font[color] :is(em, i, u, q, strong) {
+  color: inherit;
+}

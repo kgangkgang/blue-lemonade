@@ -1,0 +1,226 @@
+/* ===== css/08-regex-unify.css =====
+   색 통일(정규식 카드 · 본문 글자색) · 설정 창 정규식 카드 표본.
+   ===== */
+/* ---------- 색 통일 (설정 창 채팅 탭 · apply.js body 클래스) ----------
+   북마크 확장 창(.cg-root)도 messageFormatting 으로 같은 카드를 그리므로 #chat 과 함께 잡는다.
+   정규식 카드: 데우스(DEM) 카드는 모듈마다 다른 색(복숭아 · 파랑 · 보라 · 빨강 · 노랑 · 하늘 · 초록)을 --dem-* 변수와
+   색 코드로 박아 둠 → 변수는 포인트색으로 덮고, 색 코드로 직접 칠한 이름 · 항목 라벨 · 점수 칩은 규칙으로 덮는다.
+   실리태번은 메시지 안 클래스 앞에 custom- 을 붙이므로 선택자도 custom-dem-… 이다. 카드 안의 color-mix(var(--dem-accent) …)
+   는 변수만 바꾸면 저절로 포인트색 톤이 된다 */
+body.salty.salty-unify-regex :is(#chat, .cg-root) .mes_text [class*="custom-dem-"] {
+  --dem-accent: var(--salty-accent) !important;
+  --dem-phase-accent: var(--salty-accent) !important;
+  --dem-thread-color: var(--salty-accent) !important;
+  --dem-item-accent: var(--salty-accent) !important;
+}
+body.salty.salty-unify-regex :is(#chat, .cg-root) .mes_text :is(.custom-dem-status-row__name, [class*="custom-dem-status-row__label--"], .custom-dem-psychological-state-row__name, [class*="custom-dem-psychological-state-row__label--"], .custom-dem-track__temp, .custom-dem-track-recovery__temp) {
+  color: var(--salty-accent) !important;
+}
+body.salty.salty-unify-regex :is(#chat, .cg-root) .mes_text :is(.custom-dem-status-row__score, .custom-dem-track__temp, .custom-dem-track-recovery__temp) {
+  background: var(--salty-fill-accent-13, var(--salty-accent-13)) !important;
+  border-color: var(--salty-accent-28) !important;
+}
+/* 본문 색 지정: 모델이 <font color> · style="color:…" 로 칠한 글자색은 둘레 색을 따름 (대사 · 속마음 · 강조는 제 규칙대로).
+   font[color] 는 표현 힌트라 아무 규칙에나 지지만 style 은 인라인이라 !important 가 필요 */
+body.salty.salty-unify-inline:not(.salty-dem-ink) :is(#chat .mes, .cg-root) .mes_text :is(font[color], [style*="color"]) {
+  color: inherit !important;
+}
+/* 3.7.0 '프롬프트 색 그대로'(salty-dem-ink)가 켜져 있으면, 대사(q)를 품은 칠은 색 통일에서 뺀다 —
+   색 통일의 color: inherit !important 가 먼저 색을 지워 버리면 대사에 물려줄 색 자체가 없다 (css/37-prompt-ink.css).
+   대사가 없는 칠(설명 문장을 통째로 칠한 것 등)은 그대로 테마 색을 따른다. */
+body.salty.salty-unify-inline.salty-dem-ink :is(#chat .mes, .cg-root) .mes_text :is(font[color], [style*="color"]):not(:has(q)) {
+  color: inherit !important;
+}
+/* 정규식 카드 이모티콘: 데우스 카드는 제목 · 항목 앞 그림을 …__icon 스팬에 넣음 (모델 본문에는 거의 없음) → 스팬째 숨김.
+   [class*="__icon"] 은 다른 프리셋 카드의 BEM 아이콘 칸도 같이 잡는다 */
+body.salty.salty-regex-noicons :is(#chat, .cg-root) .mes_text [class*="custom-"][class*="__icon"] {
+  display: none !important;
+}
+
+/* ---------- 정규식 카드 표본 (설정 창 채팅 › 기타 미리보기, panel.js regexStage) ----------
+   데우스 카드의 원래 모양 · 색(카트푸치나)을 줄여 옮긴 것. 카드 틀은 위 프리셋 카드 규칙의 미리보기 사본이 대고,
+   색 통일 · 이모티콘 규칙(사본)이 아이디 특이도로 이 규칙들을 이긴다 — 스위치를 켜고 끄면 그 자리에서 바뀜 */
+.salty-preview[data-prev="regex"] .mes_text details.custom-dem-card {
+  display: block;
+  margin: 0 0 8px;
+  border-left: 3px solid var(--dem-accent) !important;
+  border-radius: var(--bl-r-md);
+  background: var(--bl-fill-card, var(--bl-card));
+  box-shadow: var(--bl-e1);
+  font-size: .92em;
+  overflow: hidden;
+}
+/* 표본 무대는 320px 마개를 풀어 둔다 (내용이 ~300px 이라 넘치지 않고, 잘리면 '본문 색 지정' 표본이 안 보인다) */
+body.salty :is(#salty-nochat, .salty-preview)[data-prev="regex"] {
+  max-height: none;
+}
+.salty-preview[data-prev="regex"] .mes_text details.custom-dem-card > summary::-webkit-details-marker {
+  display: none;
+}
+.salty-preview[data-prev="regex"] .mes_text details.custom-dem-card > summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  cursor: default;
+}
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  flex: 0 0 26px;
+  background: color-mix(in srgb, var(--dem-accent) 14%, transparent);
+}
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-card__title { font-weight: 700; }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-card__tag {
+  margin-left: auto;
+  font-size: .68em;
+  font-weight: 700;
+  text-transform: uppercase;
+  opacity: .62;
+}
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-status { --dem-accent: #89b4fa; }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-threads { --dem-accent: #cba6f7; }
+.salty-preview[data-prev="regex"] .mes_text :is(.custom-dem-status__body, .custom-dem-threads__body) {
+  padding: 2px 10px 8px;
+}
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__field {
+  display: inline-flex;
+  gap: 4px;
+}
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label--relationship { color: color-mix(in srgb, #fab387 var(--bl-dem-ink, 74%), var(--salty-text)); }
+/* 3.4.1 표본 장면 계획: 단계 이름 · 칸 이름이 단계 색 (입력 초록 · 제약 파랑 · 계획 노랑) — 카드 색 통일을 켜고 끄면 바로 달라진다 */
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-scene-plan__body {
+  counter-reset: bl-pv-step;
+  padding: 2px 10px 8px;
+}
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-scene-plan__phase {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 2px;
+  color: color-mix(in srgb, var(--dem-phase-accent) var(--bl-dem-ink, 74%), var(--salty-text));
+  font-size: .72em;
+  font-weight: 750;
+}
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-scene-plan__phase::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: color-mix(in srgb, var(--dem-phase-accent) 30%, transparent);
+}
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-scene-plan__step {
+  display: grid;
+  grid-template-columns: 1.8rem minmax(0, 1fr);
+  column-gap: 8px;
+  padding: 4px 0;
+  counter-increment: bl-pv-step;
+}
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-scene-plan__step::before {
+  content: counter(bl-pv-step, decimal-leading-zero);
+  grid-row: 1 / span 2;
+  display: grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--dem-accent) 14%, transparent);
+  color: color-mix(in srgb, var(--dem-accent) var(--bl-dem-ink, 74%), var(--salty-text));
+  font-size: .72em;
+  font-weight: 800;
+}
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-scene-plan__label {
+  color: color-mix(in srgb, var(--dem-accent) var(--bl-dem-ink, 74%), var(--salty-text));
+  font-size: .86em;
+  font-weight: 650;
+}
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-scene-plan__value {
+  font-size: .92em;
+}
+.salty-preview[data-prev="regex"] .mes_text :is(.custom-dem-scene-plan__phase--inputs, .custom-dem-scene-plan__step--inputs) { --dem-accent: #a6e3a1; --dem-phase-accent: #a6e3a1; }
+.salty-preview[data-prev="regex"] .mes_text :is(.custom-dem-scene-plan__phase--constraints, .custom-dem-scene-plan__step--constraints) { --dem-accent: #89b4fa; --dem-phase-accent: #89b4fa; }
+.salty-preview[data-prev="regex"] .mes_text :is(.custom-dem-scene-plan__phase--plan, .custom-dem-scene-plan__step--plan) { --dem-accent: #f9e2af; --dem-phase-accent: #f9e2af; }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-thread-row {
+  padding: 2px 0;
+}
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-scene-plan { --dem-accent: #a6e3a1; }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-track__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__name { color: color-mix(in srgb, #cba6f7 var(--bl-dem-ink, 74%), var(--salty-text)); font-weight: 700; }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label { font-size: .86em; font-weight: 700; }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label--physical { color: color-mix(in srgb, #f38ba8 var(--bl-dem-ink, 74%), var(--salty-text)); }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label--clothes { color: color-mix(in srgb, #f9e2af var(--bl-dem-ink, 74%), var(--salty-text)); }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label--mental { color: color-mix(in srgb, #a6e3a1 var(--bl-dem-ink, 74%), var(--salty-text)); }
+.salty-preview[data-prev="regex"] .mes_text :is(.custom-dem-status-row__score, .custom-dem-track__temp) {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: .8em;
+  font-weight: 700;
+  background: color-mix(in srgb, #fab387 14%, transparent);
+  border: 1px solid color-mix(in srgb, #fab387 28%, transparent);
+}
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-track__temp {
+  color: color-mix(in srgb, #f9e2af var(--bl-dem-ink, 74%), var(--salty-text));
+  background: color-mix(in srgb, #f9e2af 12%, transparent);
+  border-color: color-mix(in srgb, #f9e2af 28%, transparent);
+}
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-thread-tag {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: .82em;
+  border: 1px solid var(--dem-thread-color);
+  background: color-mix(in srgb, var(--dem-thread-color) 16%, transparent);
+  color: color-mix(in srgb, var(--dem-thread-color) var(--bl-dem-ink, 74%), var(--salty-text));
+}
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-thread-tag--current { --dem-thread-color: #a6e3a1; }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-thread-tag--unresolved { --dem-thread-color: #f9e2af; }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-thread-tag--seed { --dem-thread-color: #cba6f7; }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-track {
+  --dem-accent: #94e2d5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 0 0 8px;
+  padding: 4px 10px;
+  border-left: 3px solid var(--dem-accent);
+}
+/* 무대 위아래 여백은 채팅 무대와 같게, 마지막 문단은 붙여서 320px 마개 안에 들어가게 */
+body.salty :is(#salty-nochat, .salty-preview)[data-prev="regex"] .mes {
+  padding-block: 10px 6px !important;
+}
+body.salty :is(#salty-nochat, .salty-preview)[data-prev="regex"] .mes_text > p:last-child {
+  margin-bottom: 0 !important;
+}
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-track__icon { display: inline-flex; width: 22px; justify-content: center; }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-track__value { color: color-mix(in srgb, var(--dem-accent) var(--bl-dem-ink, 74%), var(--salty-text)); font-weight: 700; }
+/* select2 안의 검색 입력칸은 그대로 */
+body.salty .select2-search--inline .select2-search__field {
+  padding: 0 !important;
+  line-height: normal !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+}
+
+/* 시작 화면: 실리태번 로고(투명한 빨간 선) 대신 테마 아이콘 */
+body.salty .welcomePanel .welcomeHeaderLogo {
+  content: var(--salty-logo);
+  box-sizing: border-box;
+  /* 3.0.0: width · height · padding → css/11-chrome.css (같은 선택자 규칙이 덮음) */
+  /* 뒤에 깔린 판 없이 레몬만 (판이 사라진 만큼 레몬을 크게) */
+  background: transparent;
+  object-fit: contain;
+}

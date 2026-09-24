@@ -1,0 +1,507 @@
+/* ===== css/02-controls.css =====
+   버튼 · 입력칸 · 체크박스 · 슬라이더 같은 공용 조작 부품.
+   ===== */
+/* ---------- 버튼 · 입력칸 ---------- */
+/* 보조 버튼(기본): 떠 있는 칩(e2) — 누르면 가라앉음 */
+body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)) {
+  min-height: var(--bl-h-ctl);
+  gap: var(--bl-s2);
+  padding: 0 var(--bl-inset) !important;
+  border: 0 !important;
+  border-radius: var(--bl-r-sm) !important;
+  background: var(--bl-fill-control, var(--bl-control)) !important;
+  box-shadow: var(--bl-e2) !important;
+  color: var(--salty-text) !important;
+  opacity: 1 !important;
+  font-size: var(--bl-fs-ctl);
+  font-weight: 500;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)) > :is(i, .fa-solid, .fa-regular) {
+  font-size: 15px;
+  color: var(--salty-muted);
+}
+@media (hover: hover) {
+  body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)):hover {
+    background: var(--bl-fill-control-hover, var(--bl-control-hover)) !important;
+  }
+}
+body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)):active {
+  background: var(--bl-fill-press-bg, var(--bl-press-bg)) !important;
+  box-shadow: var(--bl-press) !important;
+  transform: translateY(1px);
+}
+/* 켜진 버튼: 옅은 포인트 면으로 눌려 들어간 상태 */
+body.salty .menu_button:is(.toggleEnabled, .active, .toggled):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)) {
+  background: var(--bl-fill-selected, var(--bl-selected)) !important;
+  box-shadow: var(--bl-well-in) !important;
+  color: var(--salty-accent) !important;
+}
+body.salty .menu_button:is(.toggleEnabled, .active, .toggled):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)) > :is(i, .fa-solid, .fa-regular) {
+  color: var(--salty-accent);
+}
+/* 아이콘만 있는 버튼: 면 없이 흐린 아이콘(34px), 누르면 옅은 면
+   (i 하나 + 맨 글자는 CSS 로 못 가려서 아이콘 버튼처럼 보임 → 화면별로 예외 추가) */
+body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled)) {
+  min-width: var(--bl-h-icon);
+  min-height: var(--bl-h-icon);
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--salty-muted) !important;
+  font-size: var(--bl-ic) !important;
+}
+body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *)) > i {
+  font-size: var(--bl-ic);
+  color: inherit;
+}
+@media (hover: hover) {
+  body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled)):hover {
+    background: var(--bl-fill-hover, var(--bl-hover)) !important;
+    color: var(--salty-text) !important;
+  }
+}
+body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled)):active {
+  background: var(--bl-fill-press-bg, var(--bl-press-bg)) !important;
+  color: var(--salty-text) !important;
+  transform: none;
+}
+body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):is(.toggleEnabled, .active, .toggled):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *)) {
+  min-width: var(--bl-h-icon);
+  min-height: var(--bl-h-icon);
+  padding: 0 !important;
+  background: var(--salty-fill-accent-10, var(--salty-accent-10)) !important;
+  box-shadow: none !important;
+  color: var(--salty-accent) !important;
+}
+/* 위험 버튼(지우기 등): 붉은 면 대신 흐린 호박색 */
+body.salty .menu_button:is(.redWarningBG, .red_button):where(:not(#nonQRFormItems *, .salty-panel *)) {
+  min-width: var(--bl-h-icon);
+  min-height: var(--bl-h-icon);
+  border: 0 !important;
+  border-radius: var(--bl-r-sm) !important;
+  background: var(--bl-warn-bg) !important;
+  box-shadow: none !important;
+  color: var(--bl-warn) !important;
+  opacity: 1 !important;
+}
+/* 머리줄 바로가기(시작 화면 ? · 깃허브 · 디스코드 · 임시 채팅): 떠 있는 칩이면 줄이 넘쳐서 조용한 버튼으로 */
+body.salty .welcomePanel .welcomeShortcuts .menu_button {
+  min-width: 32px;
+  min-height: 32px;
+  margin: 0 !important;
+  padding: 0 8px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--salty-muted) !important;
+  white-space: nowrap;
+}
+@media (hover: hover) {
+  body.salty .welcomePanel .welcomeShortcuts .menu_button:hover {
+    background: var(--bl-fill-hover, var(--bl-hover)) !important;
+  }
+}
+/* 포커스는 가는 테두리 대신 부드러운 링 + 제 그림자 */
+body.salty :is(.menu_button, .list-group-item, .interactable):focus-visible {
+  outline: none !important;
+  box-shadow: var(--bl-ring), var(--bl-e2) !important;
+}
+
+/* 입력칸 — 시트 위: 흰 면이 살짝 떠 있음(e1) */
+body.salty :is(.text_pole, select, textarea, input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"]), .neo-range-input):where(:not(#send_textarea, .select2-search__field, .salty-panel *, #nonQRFormItems *, ul, ol)) {
+  min-height: var(--bl-h-ctl);
+  border: 0 !important;
+  border-radius: var(--bl-r-sm) !important;
+  outline: none !important;
+  background-color: var(--bl-field) !important;
+  box-shadow: var(--bl-field-sh) !important;
+  color: var(--salty-text) !important;
+  font-size: var(--bl-fs-body);
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+/* 카드 · 팝업 · 확장 설정 · 월드 인포 항목 안: 오목한 칸 (화면별 카드는 이 목록에 붙이거나 서랍 id 로 따로) */
+body.salty :where(.popup, .world_entry, #extensions_settings, #extensions_settings2) :is(.text_pole, select, textarea, input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"]), .neo-range-input):where(:not(#send_textarea, .select2-search__field, .salty-panel *, #nonQRFormItems *, ul, ol)) {
+  background-color: var(--bl-well) !important;
+  box-shadow: var(--bl-well-in) !important;
+}
+body.salty :is(.text_pole, select, textarea, input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"]), .neo-range-input):where(:not(#send_textarea, .select2-search__field, .salty-panel *, #nonQRFormItems *, ul, ol)):focus {
+  background-color: var(--salty-surface) !important;
+  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+}
+body.salty :is(.text_pole, input:is([type="text"], [type="search"], [type="password"], [type="url"], [type="email"])):where(:not(textarea, select, #send_textarea, .select2-search__field, .salty-panel *, #nonQRFormItems *, ul, ol)) {
+  padding-inline: var(--bl-s3) !important;
+}
+body.salty textarea:where(:not(#send_textarea, .select2-search__field, .salty-panel *, #nonQRFormItems *)) {
+  padding: 10px var(--bl-s3) !important;
+  line-height: 1.55 !important;
+}
+body.salty ::placeholder {
+  color: var(--salty-faint) !important;
+  opacity: 1 !important;
+}
+body.salty select:not([multiple]) {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  padding-left: var(--bl-s3) !important;
+  padding-right: 30px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23808080' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6.5 9.5 5.5 5.5 5.5-5.5'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 10px center !important;
+  background-size: 15px 15px !important;
+}
+body.salty select option {
+  background: var(--salty-fill-surface, var(--salty-surface));
+  color: var(--salty-text);
+}
+/* 여러 개 고르는 목록: 고른 줄은 옅은 포인트 면 (크롬은 배경색을 무시해서 한 색 그라데이션) */
+body.salty select[multiple]:where(:not(.salty-panel *)) {
+  padding: var(--bl-s1) !important;
+}
+body.salty select[multiple]:where(:not(.salty-panel *)) option {
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+body.salty select[multiple]:where(:not(.salty-panel *)) option:checked {
+  background: linear-gradient(var(--salty-tint-18), var(--salty-tint-18)) !important;
+  color: var(--salty-accent) !important;
+  -webkit-text-fill-color: var(--salty-accent);
+  font-weight: 600;
+}
+/* 숫자칸(슬라이더 옆): 작고 가운데, 자리 맞춘 숫자 */
+body.salty :is(.range-block-counter input, input.neo-range-input) {
+  height: var(--bl-h-num) !important;
+  min-height: 0 !important;
+  padding: 0 6px !important;
+  border-radius: 8px !important;
+  font-size: var(--bl-fs-ctl) !important;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* 체크박스: 꺼짐 = 오목한 칸, 켜짐 = 포인트색이 떠오름 */
+body.salty input:is([type="checkbox"], [type="radio"], [type="range"]) {
+  accent-color: var(--salty-accent);
+}
+body.salty input[type="checkbox"]:where(:not(.salty-switch > input, .salty-panel *)) {
+  width: 18px !important;
+  height: 18px !important;
+  border: 0 !important;
+  border-radius: var(--bl-r-xs) !important;
+  outline: none !important;
+  background-color: var(--bl-check-off) !important;
+  box-shadow: var(--bl-track) !important;
+  transform: none !important;
+  transition: background-color 0.15s ease;
+}
+body.salty input[type="checkbox"]:where(:not(.salty-switch > input, .salty-panel *)):checked {
+  background-color: var(--salty-accent) !important;
+  box-shadow: var(--bl-accent-lift) !important;
+}
+body.salty input[type="checkbox"]:where(:not(.salty-switch > input, .salty-panel *))::before {
+  box-shadow: inset 1em 1em var(--salty-on-accent, #fff) !important;
+}
+body.salty input[type="checkbox"]:where(:not(.salty-switch > input, .salty-panel *)):disabled {
+  opacity: 0.45;
+}
+body.salty label.checkbox_label:where(:not(#nonQRFormItems *)) {
+  align-items: center !important;
+}
+/* 설정 서랍 · 팝업의 체크 줄 → 이름 왼쪽 · 스위치 오른쪽 (설정 창 스위치와 같은 44×26)
+   확장 설정 · 월드 인포 · 캐릭터 편집의 체크박스는 그대로. display 는 안 건드림 */
+body.salty :where(#user-settings-block, #left-nav-panel, #rm_api_block, #AdvancedFormatting, #PersonaManagement, #Backgrounds, #rm_extensions_block .extensions_block > .flex-container, .popup .popup-inputs) label.checkbox_label:where(:not(.salty-panel *, .world_entry *, #extensions_settings *, #extensions_settings2 *)) {
+  min-height: var(--bl-h-row);
+  gap: var(--bl-s2) var(--bl-s3) !important;
+  font-size: var(--bl-fs-body);
+  color: var(--salty-text);
+  cursor: pointer;
+  /* 줄 폭을 채워야 스위치가 오른쪽 끝에 붙음 (두 줄이 나란하면 반씩) */
+  flex: 1 1 auto;
+  align-self: stretch;
+}
+body.salty :where(#user-settings-block, #left-nav-panel, #rm_api_block, #AdvancedFormatting, #PersonaManagement, #Backgrounds, #rm_extensions_block .extensions_block > .flex-container, .popup .popup-inputs) label.checkbox_label:where(:not(.salty-panel *, .world_entry *, #extensions_settings *, #extensions_settings2 *)) > :is(span, small) {
+  font-size: var(--bl-fs-body) !important;
+  line-height: 1.35;
+  color: var(--salty-text) !important;
+  opacity: 1 !important;
+}
+body.salty :where(#user-settings-block, #left-nav-panel, #rm_api_block, #AdvancedFormatting, #PersonaManagement, #Backgrounds, #rm_extensions_block .extensions_block > .flex-container, .popup .popup-inputs) label.checkbox_label > input[type="checkbox"]:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)) {
+  position: relative !important;
+  flex: 0 0 auto !important;
+  order: 99;
+  width: 36px !important;
+  height: 20px !important;
+  margin: 0 0 0 auto !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: var(--bl-r-pill) !important;
+  outline: none !important;
+  background-color: var(--bl-check-off) !important;
+  box-shadow: var(--bl-track) !important;
+  transform: none !important;
+  filter: none !important;
+  transition: background-color 0.18s ease !important;
+}
+body.salty :where(#user-settings-block, #left-nav-panel, #rm_api_block, #AdvancedFormatting, #PersonaManagement, #Backgrounds, #rm_extensions_block .extensions_block > .flex-container, .popup .popup-inputs) label.checkbox_label > input[type="checkbox"]:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *))::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 3px !important;
+  left: 3px !important;
+  width: 14px !important;
+  height: 14px !important;
+  border-radius: 50% !important;
+  clip-path: none !important;
+  background: #fff !important;
+  box-shadow: var(--bl-knob) !important;
+  transform: none !important;
+  transition: transform 0.18s ease !important;
+}
+body.salty :where(#user-settings-block, #left-nav-panel, #rm_api_block, #AdvancedFormatting, #PersonaManagement, #Backgrounds, #rm_extensions_block .extensions_block > .flex-container, .popup .popup-inputs) label.checkbox_label > input[type="checkbox"]:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)):checked {
+  background-color: var(--salty-accent) !important;
+  box-shadow: none !important;
+}
+body.salty :where(#user-settings-block, #left-nav-panel, #rm_api_block, #AdvancedFormatting, #PersonaManagement, #Backgrounds, #rm_extensions_block .extensions_block > .flex-container, .popup .popup-inputs) label.checkbox_label > input[type="checkbox"]:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)):checked::before {
+  transform: translateX(16px) !important;
+}
+body.salty :where(#user-settings-block, #left-nav-panel, #rm_api_block, #AdvancedFormatting, #PersonaManagement, #Backgrounds, #rm_extensions_block .extensions_block > .flex-container, .popup .popup-inputs) label.checkbox_label > input[type="checkbox"]:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)):disabled {
+  opacity: 0.4 !important;
+}
+body.salty :where(#user-settings-block, #left-nav-panel, #rm_api_block, #AdvancedFormatting, #PersonaManagement, #Backgrounds, #rm_extensions_block .extensions_block > .flex-container, .popup .popup-inputs) label.checkbox_label > input[type="checkbox"]:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)):focus-visible {
+  box-shadow: var(--bl-ring) !important;
+}
+/* 설정 창 스위치는 칸 전체를 눌러도 되게 */
+.salty-switch > input {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* 슬라이더: 오목한 가는 막대 + 떠 있는 흰 손잡이 */
+body.salty input[type="range"]:where(:not(.salty-panel *)) {
+  height: 5px !important;
+  margin: 10px 0 !important;
+  border: 0 !important;
+  border-radius: var(--bl-r-pill) !important;
+  outline: none !important;
+  background: var(--salty-fill-shade-2, var(--salty-shade-2)) !important;
+  box-shadow: var(--bl-track) !important;
+  opacity: 1 !important;
+}
+body.salty input[type="range"]:where(:not(.salty-panel *))::-webkit-slider-thumb {
+  width: 22px !important;
+  height: 22px !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: #fff !important;
+  box-shadow: var(--bl-knob) !important;
+}
+body.salty input[type="range"]:where(:not(.salty-panel *))::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--bl-knob);
+}
+body.salty .ui-slider {
+  outline: none !important;
+  border: 0 !important;
+  background: var(--salty-fill-shade-2, var(--salty-shade-2)) !important;
+}
+body.salty .ui-slider-handle {
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: #fff !important;
+  box-shadow: var(--bl-knob) !important;
+}
+body.salty .range-block-title {
+  color: var(--salty-text) !important;
+}
+/* 이름 왼쪽 · 숫자 오른쪽 한 줄, 막대는 아래 (구조가 맞을 때만 — display 는 !important 없이: 실리태번이 숨긴 칸은 그대로 숨김) */
+body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--bl-s3);
+  row-gap: 0;
+  padding: var(--bl-s2) 0 !important;
+}
+/* 3.0.0: 여기 있던 규칙 'body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > *' 은 css/99-lazy-panel.css 로 옮김 (서랍 · 팝업이 열렸을 때만 켜짐) */
+body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-title {
+  grid-column: 1;
+  grid-row: 1;
+  width: auto !important;
+  min-height: var(--bl-h-num);
+  justify-content: flex-start !important;
+  text-align: left !important;
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 500;
+}
+body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-range-and-counter {
+  display: contents;
+}
+body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter {
+  grid-column: 2;
+  grid-row: 1;
+  flex: none !important;
+  margin: 0 !important;
+}
+body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter input {
+  width: 84px !important;
+  margin: 0 !important;
+}
+body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-range {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  width: 100% !important;
+  margin: 0 !important;
+}
+/* 사용자 설정의 작은 슬라이더(작은 이름 + 막대 + 숫자)도 같은 배치 */
+body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-content: start;
+  align-items: center;
+  column-gap: var(--bl-s2);
+  row-gap: 0;
+  padding: 6px 0 2px;
+}
+body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+  text-align: left;
+  font-size: var(--bl-fs-sub) !important;
+  font-weight: 600;
+  color: var(--salty-text) !important;
+}
+body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
+  grid-column: 2;
+  grid-row: 1;
+  width: 60px !important;
+  margin: 0 !important;
+}
+body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-slider {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  width: 100% !important;
+}
+body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:not(:first-child) {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  color: var(--salty-faint);
+}
+
+/* select2 (태그 입력 등): 입력칸과 같은 규칙, 목록은 메뉴 층(e4) */
+body.salty .select2-container--default :is(.select2-selection--multiple, .select2-selection--single) {
+  min-height: var(--bl-h-ctl);
+  border: 0 !important;
+  border-radius: var(--bl-r-sm) !important;
+  background: var(--bl-fill-field, var(--bl-field)) !important;
+  box-shadow: var(--bl-field-sh) !important;
+}
+body.salty :where(.popup, .world_entry, #extensions_settings, #extensions_settings2) .select2-container--default :is(.select2-selection--multiple, .select2-selection--single) {
+  background: var(--bl-fill-well, var(--bl-well)) !important;
+  box-shadow: var(--bl-well-in) !important;
+}
+body.salty .select2-container--default:is(.select2-container--focus, .select2-container--open) :is(.select2-selection--multiple, .select2-selection--single) {
+  background: var(--salty-fill-surface, var(--salty-surface)) !important;
+  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+}
+/* 한 개 고르기: select 와 같은 높이 · 같은 꺾쇠 (삼각형은 테두리로 그린 것이라 테두리만 지움) */
+body.salty .select2-container--default .select2-selection--single {
+  height: var(--bl-h-ctl) !important;
+}
+body.salty .select2-container--default .select2-selection--single .select2-selection__rendered {
+  padding: 0 30px 0 var(--bl-s3) !important;
+  color: var(--salty-text) !important;
+  font-size: var(--bl-fs-body);
+  line-height: var(--bl-h-ctl) !important;
+}
+body.salty .select2-container--default .select2-selection--single .select2-selection__placeholder {
+  color: var(--salty-faint) !important;
+}
+body.salty .select2-container--default .select2-selection--single .select2-selection__arrow {
+  top: 50% !important;
+  right: 10px !important;
+  width: 15px !important;
+  height: 15px !important;
+  margin-top: -7.5px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23808080' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6.5 9.5 5.5 5.5 5.5-5.5'/%3E%3C/svg%3E") no-repeat center / 15px 15px;
+}
+body.salty .select2-container--default .select2-selection--single .select2-selection__arrow b {
+  border: 0 !important;
+}
+body.salty .select2-container--default .select2-selection__choice {
+  padding: 2px 10px !important;
+  border: 0 !important;
+  border-radius: var(--bl-r-pill) !important;
+  background: var(--bl-fill-hover, var(--bl-hover)) !important;
+  color: var(--salty-text) !important;
+  font-size: var(--bl-fs-cap);
+  font-weight: 600;
+}
+body.salty .select2-dropdown {
+  padding: 6px;
+  overflow: hidden;
+  border: 0 !important;
+  border-radius: var(--bl-r-md) !important;
+  background: var(--bl-fill-overlay, var(--bl-overlay)) !important;
+  box-shadow: var(--bl-e4) !important;
+  color: var(--salty-text) !important;
+}
+/* 3.6.3: 목록 높이를 화면에 맞춘다. 실리태번은 300px 로 박아 두어 화면이 낮으면(가로로 눕힘 · 자판이 올라옴)
+   목록이 화면 밖으로 흘러 몇 줄만 보였다 — 412×900 은 16줄, 900×412 은 4줄. 이제 화면 높이의 절반쯤까지만. */
+body.salty .select2-results__options {
+  max-height: min(300px, max(132px, 52svh)) !important;
+}
+/* 화면이 낮으면(가로로 눕힘 · 자판) 더 낮게 — select2 는 고른 칸 바로 아래에 목록을 놓으므로, 남는 높이 안에 들어와야 다 보인다.
+   (자리를 position: fixed 로 옮겨 화면 아래에 붙이는 방법은 서랍이 만든 기준 상자 때문에 화면 밖으로 나가 쓰지 않는다) */
+@media (max-height: 620px) {
+  body.salty .select2-results__options {
+    max-height: max(96px, 34svh) !important;
+  }
+}
+body.salty .select2-results__option {
+  padding: 10px var(--bl-s3) !important;
+  border-radius: var(--bl-r-sm);
+  font-size: var(--bl-fs-body);
+}
+body.salty .select2-container--default .select2-results__option--highlighted[aria-selected],
+body.salty .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+  background: var(--bl-fill-hover, var(--bl-hover)) !important;
+  color: var(--salty-text) !important;
+}
+body.salty .select2-container--default .select2-results__option[aria-selected="true"],
+body.salty .select2-container--default .select2-results__option--selected {
+  background: var(--salty-fill-accent-10, var(--salty-accent-10)) !important;
+  color: var(--salty-accent) !important;
+}
+body.salty .select2-container--default .select2-search--dropdown .select2-search__field {
+  border: 0 !important;
+  border-radius: var(--bl-r-sm) !important;
+  background: var(--bl-fill-well, var(--bl-well)) !important;
+  box-shadow: var(--bl-well-in) !important;
+  color: var(--salty-text) !important;
+}
+
+/* 아바타 · 목록 설명 · 월드인포 항목 — 화면별 담당(surfaces:characters · worldinfo)이 옮겨 갈 규칙 (캐릭터 목록 줄은 surfaces:characters 로 옮김) */
+body.salty :is(.avatar, .avatar img, .avatar_div img, #avatar_div_div img) {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+body.salty .avatar:not(#chat .avatar) img {
+  border-radius: var(--r-sm) !important;
+}
+body.salty .character_name_block .ch_description,
+body.salty .character_name_block .ch_add_placeholder {
+  color: var(--salty-muted) !important;
+  opacity: 1 !important;
+}
+body.salty .world_entry {
+  background: var(--salty-fill-shade, var(--shade)) !important;
+  border: 0 !important;
+  border-radius: var(--r-md) !important;
+  box-shadow: none !important;
+}
+body.salty .world_entry .inline-drawer-content {
+  background: transparent !important;
+}

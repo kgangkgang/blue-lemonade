@@ -1,0 +1,173 @@
+/* ===== css/19-extwindows.css =====
+   확장이 들고 온 창 색 맞추기 (로그 발췌 · 북마크 · 타번 헬퍼).
+   ===== */
+/* ===== 실리태번 화면: 확장이 들고 온 창 색 맞추기 (surfaces:extwindows) ===== */
+/* 확장이 자기 색을 들고 오는 화면 셋 — 로그 발췌(--ui-*) · 북마크(--cg-*) · 타번 헬퍼 고르기 칸.
+   · 부품 규칙을 하나씩 덮지 않고 그 확장이 쓰는 '색 변수' 만 테마 색으로 바꿈 (모양 · 짜임새는 그대로)
+   · 확장의 밝게 · 어둡게 설정보다 테마를 앞세움: 남색 앱 안에 흰 창 하나가 뜨는 게 제일 어색했음
+   · html body.salty 로 확장의 html[data-tti-theme] · .cg-root[data-cg-theme] 보다 한 점 무겁게 */
+
+/* ---------- 로그 발췌: 제 설정이 '밝게' 라서 두 팔레트 모두 흰 창이었음 ---------- */
+html body.salty :is(.text-to-image-converter-settings, .tti-select-menu, .tti-modal-backdrop,
+  .tti-selection-float, .tti-highlight-float) {
+  --ui-canvas: var(--bl-page);
+  --ui-panel: var(--salty-surface);
+  --ui-surface: var(--salty-field);     /* 입력칸 · 작은 버튼 — 두 팔레트 다 창 면과 한 톤 다름 */
+  --ui-surface-raised: var(--bl-card);
+  --ui-hover: var(--bl-hover);
+  --ui-border: transparent;             /* 가는 선 없음 — 톤 · 그림자로 나눔 */
+  --ui-border-strong: var(--salty-shade-2);
+  --ui-text: var(--salty-text);
+  --ui-text-soft: var(--salty-muted);
+  --ui-text-muted: var(--salty-faint);
+  --ui-accent: var(--salty-accent);     /* 저장 = 꽉 찬 포인트 버튼 (예전엔 세이지 초록) */
+  --ui-accent-hover: var(--salty-accent-press);
+  --ui-on-accent: var(--salty-on-accent);
+  --ui-danger: var(--bl-danger);
+  --ui-shadow: var(--bl-e4);
+  --ui-shadow-soft: var(--bl-e2);
+}
+/* 제목 줄은 떠 있는 바처럼 — 아래 가는 선 대신 그림자 */
+html body.salty .tti-editor-header {
+  box-shadow: var(--bl-e3);
+}
+/* 팝업 뒤 어둠 — 확장은 #08080a 64% 로 고정돼 있음 */
+html body.salty .tti-modal-backdrop {
+  background: var(--bl-scrim);
+}
+/* 확장 설정 줄의 켜짐 알약: 팔레트에 없는 보라(#a29bfe) 였음 */
+html body.salty :is(#tti_ext_float_toggle, #tti_ext_mes_toggle) .tti-ext-toggle-state.on {
+  background: var(--bl-fill-pop, var(--bl-pop));
+  color: var(--bl-on-pop);
+}
+html body.salty :is(#tti_ext_float_toggle, #tti_ext_mes_toggle) .tti-ext-toggle-state.off {
+  background: var(--bl-fill-check-off, var(--bl-check-off));
+  color: var(--salty-faint);
+}
+
+/* ---------- 북마크: 창 · 시트 면이 제 검정(#141318) 이라 다른 앱 창처럼 보였음 ---------- */
+html body.salty .cg-root {
+  --cg-base: var(--bl-page);                 /* 창 = 페이지 톤 */
+  --cg-card: var(--salty-surface);           /* 그 위 카드 */
+  --cg-card-shadow: var(--bl-e1);
+  --cg-scrim: var(--bl-scrim);
+  --cg-window-shadow: var(--bl-e5);
+  --cg-tint: transparent;
+  --cg-line: transparent;                    /* 가는 선 없음 */
+  --cg-line-strong: var(--salty-shade-2);    /* 스크롤바 · 포커스 테 */
+  --cg-text: var(--salty-text);
+  --cg-danger: var(--bl-danger);             /* 확장 기본값은 분홍기 도는 빨강 */
+  --cg-accent-fallback: var(--salty-accent); /* 색을 안 고른 채팅 — 확장 기본값은 보라 */
+  --SmartThemeBodyColor: var(--salty-text);
+  --SmartThemeEmColor: var(--salty-em);
+}
+/* 시트는 떠 있는 창 → 카드 톤, 그 안의 칸은 오목하게 */
+html body.salty .cg-sheet {
+  --cg-base: var(--salty-surface);
+  --cg-card: var(--bl-page);
+  --cg-card-shadow: var(--bl-well-in);
+}
+/* 뒤 비침 흐림 없음 — 맨 위 목록엔 실리태번 것만 적혀 있어서 시트 오버레이 · 미리보기 바가 빠져 있었음 */
+html body.salty :is(.cg-overlay, .cg-sheet-overlay, .cg-window, .cg-sheet, .cg-settings-page, #cg-preview-bar) {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* ---------- 타번 헬퍼 고르기 칸: 고른 칸을 다른 세그먼트와 같은 '떠 있는 칩' 으로 ---------- */
+/* 설정 창 탭(.salty-tabs .on) · 실리태번 탭(.ui-tabs-active) 은 떠 있는 칩인데 여기만 꽉 찬 알약이라
+   나란히 놓으면 서로 다른 디자인처럼 보였음 (surfaces:sweep 의 앞 규칙을 한 점 무겁게 덮음) */
+html body.salty .TH-custom-tailwind .TH-radio-button--selected {
+  background: var(--salty-fill-surface, var(--salty-surface));
+  box-shadow: var(--bl-e2);
+  color: var(--salty-text) !important;
+}
+html body.salty.salty-dark .TH-custom-tailwind .TH-radio-button--selected {
+  background: color-mix(in srgb, var(--salty-text) 18%, var(--salty-surface));
+}
+/* ===== /surfaces:extwindows ===== */
+
+/* Request Log: muted cards and legible selected controls in both theme modes. */
+body.salty :is(.rl-root, .rl-settings) {
+  --rl-text: var(--salty-text);
+  --rl-muted: var(--salty-muted);
+  --rl-faint: var(--salty-muted);
+  --rl-line: var(--salty-line);
+  --rl-hover: var(--salty-shade);
+  --rl-accent: var(--salty-accent);
+  --rl-accent-soft: var(--salty-surface-shade);
+}
+body.salty :is(.rl-root, .rl-settings) :is(.rl-tab, .rl-chip)[aria-pressed="true"] {
+  background: var(--salty-fill-tint-14, var(--salty-tint-14));
+  color: var(--salty-text) !important;
+  border-color: var(--salty-accent-28);
+}
+body.salty .rl-root :is(.rl-tile, .rl-balance) {
+  background: var(--salty-fill-surface-shade, var(--salty-surface-shade));
+}
+
+/* Model management and prompt-linked regex share the theme's quiet card surfaces. */
+html body.salty :is(#model-switch-settings,#regex-link-settings,.mr-settings) {
+  color:var(--salty-text);
+}
+html body.salty :is(.ms-target,.ms-lock,.rlk-keep,.rl-module,.mr-item) {
+  border:0; border-radius:14px; padding:12px 14px;
+  background:var(--salty-fill-surface,var(--salty-surface)); box-shadow:var(--bl-e1);
+}
+html body.salty :is(.ms-targets,.rl-modules,.mr-list) { gap:8px; }
+html body.salty :is(.ms-chip,.ms-options) {
+  border:0; border-radius:14px; background:var(--salty-fill-surface,var(--salty-surface)); color:var(--salty-text);
+}
+html body.salty .ms-chip.on { background:var(--salty-accent); color:var(--salty-on-accent); }
+html body.salty :is(.ms-icon,.ms-pull,.ms-option,.mr-item-buttons .menu_button) { min-width:44px; min-height:44px; border:0; border-radius:10px; }
+html body.salty :is(.ms-target,.ms-lock,.rlk-keep) small { color:var(--salty-muted); opacity:1; line-height:1.5; }
+html body.salty .rl-module-head small { color:var(--salty-muted); opacity:1; }
+html body.salty .rl-owner { padding:3px 9px; color:var(--salty-muted); background:var(--salty-shade); opacity:1; }
+html body.salty .rl-owner.on { color:var(--salty-text); background:var(--salty-tint-14); }
+html body.salty .mr-item.is-picked { box-shadow:inset 0 0 0 2px var(--salty-accent); }
+html body.salty .mr-empty { padding:18px 14px; border-radius:14px; color:var(--salty-muted); background:var(--salty-surface); opacity:1; }
+
+/* ---------- 오토픽(AutoPic): 제 팔레트(--ap-*)가 테마와 따로 놀아 라이트에서 글자가 안 보였음 ---------- */
+/* 확장 안의 '테마 설정'(다크 · 라이트 · 벚꽃) 이 무엇이든, 또 아직 아무 것도 안 골랐을 때도 테마 색을 앞세운다
+   — 로그 발췌(--ui-*) · 북마크(--cg-*) 와 같은 방식.
+   확장의 #autopic_settings_container.theme-dark 보다 한 점 무겁게 잡아야 덮인다 (html body.salty …).
+   클래스가 안 붙은 순간엔 --ap-* 가 통째로 빈 값이라 흰 글자가 흰 바탕에 얹혔다. */
+html body.salty #autopic_settings_container {
+  --ap-accent: var(--salty-accent);
+  --ap-bg-main: transparent;                /* 창 자체는 다른 확장 창처럼 비침 */
+  --ap-bg-card: var(--salty-surface);       /* 그 위 카드 */
+  --ap-bg-input: var(--salty-field);        /* 입력칸 · 작은 버튼 */
+  --ap-bg-item: var(--salty-shade);
+  --ap-text: var(--salty-text);
+  --ap-text-vague: var(--salty-muted);
+  --ap-border: var(--salty-shade-2);        /* 칸 나눔선 겸 hover 바탕으로 같이 쓰임 */
+  --ap-input-border: var(--salty-shade-2);
+}
+/* 창 머리에 인라인으로 박힌 배경 #1a1a1c · 글자 #ffffff — 확장이 제 규칙으로 덮지 못하는 판(옛 버전)도 있다 */
+html body.salty #autopic_settings_container .inline-drawer-content {
+  background-color: transparent !important;
+  color: var(--salty-text) !important;
+}
+/* 꽉 찬 포인트 바탕 위 글자 — 확장은 흰색으로 박아 뒀는데 나이트 팔레트의 포인트색은 밝다.
+   포인트색을 '바탕' 으로 쓴 것만 고른다 — 같은 변수를 글자색 · accent-color 로 쓰는 곳도 있어서. */
+html body.salty #autopic_settings_container :is(.image-gen-nav-item, .nai-param-nav-item).active,
+html body.salty #autopic_settings_container .gen-btn-blue,
+html body.salty #autopic_settings_container [style*="background: var(--ap-accent)"] {
+  color: var(--salty-on-accent) !important;
+}
+html body.salty #autopic_settings_container .gen-checkbox-label input[type="checkbox"]:checked::after {
+  color: var(--salty-on-accent);
+}
+/* 인라인으로 박힌 고정 색 셋 — 밝은 팔레트에서 흰 종이에 묻힌다 (각각 파일에 한 번씩만 쓰임) */
+html body.salty #autopic_settings_container [style*="#cccccc"] { color: var(--salty-muted) !important; }
+html body.salty #autopic_settings_container [style*="#e07b7b"] { color: var(--bl-danger) !important; }
+html body.salty #autopic_settings_container [style*="#ff9f43"] { color: var(--bl-warning, var(--salty-em)) !important; }
+
+html body.salty #model-switch-settings .ms-actions .ms-apply { border-radius:10px!important; }
+/* Source and license notices: one click from the theme version. */
+.bl-copyright{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;width:30px;min-height:30px;padding:2px;border:0;border-radius:50%;font:500 20px/1 system-ui;background:transparent;color:var(--salty-muted,#64748b);cursor:pointer}
+.bl-copyright:focus-visible{outline:2px solid var(--salty-accent,#3975b8)}
+.bl-credits-dialog{margin:auto;width:min(620px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:0;border:1px solid var(--salty-line,#cdd9e8);border-radius:18px;background:var(--salty-surface,#fff);color:var(--salty-text,#24354c);overflow:hidden}
+.bl-credits-dialog[open]{display:flex;flex-direction:column}.bl-credits-dialog::backdrop{background:#07152999}
+.bl-credits-dialog>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;flex:none;border-bottom:1px solid var(--salty-line,#cdd9e8)}
+.bl-credits-dialog h2{font-size:18px;margin:0}.bl-credits-dialog header button{width:40px;height:40px;border:0;background:transparent;color:inherit;font:400 26px/1 system-ui;cursor:pointer}
+.bl-credits-body{overflow:auto;min-height:0;padding:4px 18px 18px;font-size:13px;line-height:1.8;word-break:keep-all;overflow-wrap:anywhere}.bl-credits-body section{padding:10px 0;border-bottom:1px solid var(--salty-line,#cdd9e8)}.bl-credits-body h3{font-size:15px;margin:8px 0}.bl-credits-body a{color:var(--salty-accent,#3975b8);text-decoration:underline}

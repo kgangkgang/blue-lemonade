@@ -1,0 +1,14 @@
+/* ===== css/50-gradients.css ===== */
+/* Gradient controls stay inside the active settings section. No animation. */
+.bl-gradient-control { padding: 0 0 14px; margin: 0 0 12px; border-bottom: 1px solid var(--salty-line); }
+.bl-gradient-control .salty-seg { margin: 8px 0 12px; }
+.bl-gradient-control .salty-slider { margin-top: 12px; }
+.bl-gradient-colors { display:flex; align-items:center; flex-wrap:wrap; gap:12px; padding:8px 0; }
+.bl-gradient-colors label { display:flex; align-items:center; gap:8px; }
+.bl-mix-swatches { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:8px; margin:12px 0; }
+.bl-mix-swatches button { display:flex; align-items:center; gap:8px; border:1px solid transparent; padding:10px; border-radius:8px; background:var(--bl-field,var(--salty-raised)); color:var(--salty-text); min-width:0; font:inherit; cursor:pointer; }
+.bl-mix-swatches button i { width:22px; height:22px; border-radius:50%; flex:none; box-shadow:inset 0 0 0 1px var(--salty-line); }
+.bl-mix-swatches button[aria-pressed=true] { border-color:var(--salty-accent); }
+.bl-mix-swatches button:disabled { opacity:.4; cursor:default; }
+.bl-mix-swatches button b { margin-left:auto; }
+.bl-mix > .salty-row { flex-wrap:wrap; gap:12px; }

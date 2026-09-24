@@ -1,6 +1,6 @@
 // One reversible renderer for both dictionaries. No prompt values or chat text are written.
 export function createPromptEngine(doc = document) {
-    const sources = new Map(), changed = new Map(), hints = new Map();
+    const sources = new Map(), changed = new Map(), hints = new Map(), titles = new Map();
     const normalize = value => String(value || '').normalize('NFKC').replace(/[\uFE0E\uFE0F\s]/g, '');
     let observer, timer, lastId = null, ordered = [];
     const watched='li[data-pm-identifier],#completion_prompt_manager_footer_append_prompt,.regex-script-label,div.regex_script_name,li.regex-debugger-rule,#completion_prompt_manager_popup_entry_form_name,input.regex_script_name';
@@ -62,7 +62,7 @@ export function createPromptEngine(doc = document) {
         let state = changed.get(el);
         if (state && el.textContent !== state.after) { changed.delete(el); state = null; }
         const original = state?.before ?? el.textContent;
-        const name = el.getAttribute('title') || original;
+        const name = titles.get(el)?.before || el.getAttribute('title') || original;
         const entry = lookup(kind, id, name);
         // Leave another extension's translations alone.
         if (!state && el.getAttribute('title') && normalize(original) !== normalize(name)) return;
@@ -80,6 +80,15 @@ export function createPromptEngine(doc = document) {
         const text = `→ ${entry.title}${entry.desc ? '\n'+entry.desc : ''}`;
         if (el.textContent !== text) el.textContent=text;
     }
+    function translateTitle(el) {
+        let state=titles.get(el);
+        if(state&&el.getAttribute('title')!==state.after){titles.delete(el);state=null;}
+        const original=state?.before??el.getAttribute('title');
+        const entry=lookup('regex',el.parentElement?.id,original);
+        const next=entry?.title??original;
+        if(next!==el.getAttribute('title'))el.setAttribute('title',next);
+        if(entry)titles.set(el,{before:original,after:next});else titles.delete(el);
+    }
     function render() {
         timer=null;
         for (const [el] of changed) if (!el.isConnected) changed.delete(el);
@@ -89,6 +98,8 @@ export function createPromptEngine(doc = document) {
         doc.querySelectorAll('.regex-script-label[id] > .regex_script_name, div.regex_script_name[title], li.regex-debugger-rule[data-id] .rule-name').forEach(el=>paint(el,'regex',el.closest('li.regex-debugger-rule')?.dataset.id || el.parentElement.id));
         doc.querySelectorAll('#completion_prompt_manager_popup_entry_form_name').forEach(el=>hint(el,'prompts',lastId));
         doc.querySelectorAll('input.regex_script_name').forEach(el=>hint(el,'regex',null));
+        for(const [el] of titles)if(!el.isConnected)titles.delete(el);
+        doc.querySelectorAll('#saved_preset_scripts [title],#saved_regex_scripts [title],#saved_scoped_scripts [title]').forEach(translateTitle);
     }
     function schedule() { if (!timer) timer=setTimeout(render,60); }
     function click(event) { const row=event.target.closest?.('li[data-pm-identifier]'); if(row)lastId=row.dataset.pmIdentifier; if(event.target.closest?.(watched+formButtons))schedule(); }
@@ -99,17 +110,19 @@ export function createPromptEngine(doc = document) {
             if(records.some(record=>{
                 const el=record.target.nodeType===1?record.target:record.target.parentElement;
                 if(!el||el.closest('#chat,.bl-scripts,.bl-script-hint'))return false;
-                if(changed.has(el)&&el.textContent===changed.get(el).after)return false;
-                return !!el.closest(watched)||[...record.addedNodes,...record.removedNodes].some(containsTarget);
+                if(record.type==='attributes'&&titles.get(el)?.after===el.getAttribute('title'))return false;
+                if(record.type!=='attributes'&&changed.has(el)&&el.textContent===changed.get(el).after)return false;
+                return !!el.closest(watched+',#saved_preset_scripts,#saved_regex_scripts,#saved_scoped_scripts')||[...record.addedNodes,...record.removedNodes].some(containsTarget);
             }))schedule();
         });
-        observer.observe(doc.body,{childList:true,subtree:true,characterData:true});
+        observer.observe(doc.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['title']});
         doc.addEventListener('click',click); doc.addEventListener('input',input);
     }
     function stop() {
         observer?.disconnect(); observer=null; clearTimeout(timer);timer=null;
         doc.removeEventListener('click',click); doc.removeEventListener('input',input);
         for(const [el,state] of changed) if(el.textContent===state.after)el.textContent=state.before;
+        for(const [el,state] of titles)if(el.getAttribute('title')===state.after)el.setAttribute('title',state.before);titles.clear();
         changed.clear(); for(const el of hints.values())el.remove();hints.clear();
     }
     return {register(id,data){

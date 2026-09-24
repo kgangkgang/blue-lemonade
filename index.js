@@ -1,4 +1,6 @@
+import { themeEnabled } from './src/usage-mode.js';
 import { startAddons, syncAddonIcons } from './src/addons.js';
+import { installCredits } from './src/credits.js';
 // Blue Lemonade · 블루 레몬에이드 — 실리태번 테마 확장 (폴더·설정 키는 예전 이름 salty 그대로)
 import { getSettings, saveSettings } from './src/settings.js';
 import { applyAll, dropStaleOverrides } from './src/apply.js';
@@ -39,7 +41,7 @@ function mountDrawer() {
     // 다른 확장들과 같은 머리 모양: 속찬 레몬 + 이름 + 버전 배지
     drawer.innerHTML = `
         <div class="inline-drawer-toggle inline-drawer-header">
-            <b><i class="fa-solid fa-lemon"></i> Blue Lemonade <span class="bl-version ext-version" hidden></span></b>
+            <b><i class="fa-solid fa-lemon"></i> Blue Lemonade <span class="bl-version ext-version" hidden></span> <button type="button" class="bl-copyright" data-bl-credits aria-label="출처·라이선스" title="출처·라이선스">ⓒ</button></b>
             <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
         </div>
         <div class="inline-drawer-content"></div>`;
@@ -137,6 +139,7 @@ window.Salty = { ensureDrawerPanel: () => document.getElementById('salty-drawer'
 window.addEventListener('bl:addons-state', () => refreshPanels());
 
 jQuery(() => {
+    installCredits();
     widenSelectorCache(); // 실리태번의 위임 핸들러 선택자를 jQuery 가 매번 다시 컴파일하지 않게 (2.9.4, lite.js)
     deferPreviewRules(); // 설정창 미리보기 전용 규칙은 설정창을 열 때까지 시트에서 빼 둠 (lite.js)
     deferPanelHasRules(); // 서랍 · 팝업 전용 :has() 규칙은 서랍 · 팝업이 열려 있을 때만 (lite.js, 2.8.4)
@@ -147,6 +150,7 @@ jQuery(() => {
     for (const id of ['extensions-settings-button', 'extensionsMenuButton']) document.getElementById(id)?.addEventListener('pointerdown', () => { loadPanel().catch(() => {}); }, { capture: true, passive: true });
     syncAddonIcons();
     addMenuItem();
+    if (themeEnabled(getSettings())) {
     startAssetWatcher();
     startPromptList(); // 검사 창 프롬프트 목록 줄을 세 조각으로 쪼갬 (CSS 로는 순서를 못 바꿈)
     startCurrentMark();
@@ -165,6 +169,7 @@ jQuery(() => {
     const { eventSource, event_types } = SillyTavern.getContext();
     eventSource.on(event_types.CHAT_CHANGED, () => setTimeout(classifyAll, 300));
 
+    }
     // 실리태번 쪽 설정이 바뀌면 설정 점검을 다시
     let refreshTimer = null;
     $(document).on('change input', '#chat_display, #hideChatAvatarsEnabled, #customCSS, #stream_fade_in', () => {

@@ -1,0 +1,237 @@
+/* ===== css/21-witidy.css =====
+   좁은 화면 정리: 제목/작업 한 줄 + 값 한 줄.
+   ===== */
+/* ===== 좁은 화면 정리 (surfaces:witidy) ===== */
+/* 제목/작업 한 줄 + 값 한 줄. 실제 입력과 클릭 대상은 그대로 둔다. */
+body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header {
+  display: grid !important;
+  /* 3.0.0: grid-template-columns → 이 파일 아래 (같은 선택자 규칙이 덮음) */
+  align-items: center !important;
+  gap: 6px 3px !important;
+  padding: 8px !important;
+}
+body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header::before,
+body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header::after { content: none; }
+body.salty #WorldInfo .world_entry .inline-drawer-header > .drag-handle { grid-area: 1 / 1; width: 14px; margin: 0; }
+/* 3.0.0: 여기 있던 규칙 'body.salty #WorldInfo .world_entry .WIEntryTitleAndStatus' 은 지움 — grid-area · gap → 이 파일 아래 (같은 선택자 규칙이 덮음) */
+body.salty #WorldInfo .world_entry textarea[name="comment"] {
+  min-height: 34px !important; height: 34px !important; max-height: 68px;
+  padding: 6px 4px !important; font-size: 13px !important;
+}
+body.salty #WorldInfo .world_entry select[name="entryStateSelector"] {
+  width: 36px !important; height: 34px !important; padding: 0 12px 0 2px !important;
+  background-position: right 1px center !important;
+}
+body.salty #WorldInfo .world_entry .inline-drawer-header .killSwitch { margin: 0 !important; /* 3.0.0: grid-area → 이 파일 아래 (같은 선택자 규칙이 덮음) */ }
+body.salty #WorldInfo .world_entry .inline-drawer-header .inline-drawer-toggle { height: 34px; /* 3.0.0: grid-area · width → 이 파일 아래 (같은 선택자 규칙이 덮음) */ }
+body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header > .world_entry_thin_controls > .flex-container > .WIEnteryHeaderControls {
+  display: grid; grid-area: 2 / 1 / 3 / -1;
+  grid-auto-flow: row; gap: 4px 8px;
+  width: 100%; min-width: 0;
+  /* 3.0.0: grid-template-columns → css/25-palette-maker.css (같은 선택자 규칙이 덮음) */
+}
+body.salty #WorldInfo .world_entry .WIEnteryHeaderControls > .world_entry_form_control {
+  flex-direction: row; align-items: center; gap: 4px !important; min-width: 0;
+}
+body.salty #WorldInfo .world_entry .WIEnteryHeaderControls .WIEntryHeaderTitleMobile {
+  font-size: 10px !important; line-height: 1.2; white-space: nowrap; text-align: left;
+  margin: 0 !important; padding: 0 !important;
+}
+body.salty #WorldInfo .world_entry .WIEnteryHeaderControls .world_entry_form_control > :is(input, select) {
+  flex: 1 1 0; width: 0 !important; max-width: none !important; min-width: 0 !important;
+  height: 28px !important; min-height: 30px !important; margin: 0 !important;
+  padding-block: 3px !important; padding-left: 7px !important; font-size: 12px !important;
+}
+.bl-wi-actions { display: contents; }
+.bl-wi-actions > summary, .bl-wi-actions .bl-wi-action-list span { display: none; }
+.bl-favorites-heading, .bl-fav-name { display: none; }
+body.salty #WorldInfo .bl-wi-actions { display: block; position: relative; margin: 0; /* 3.0.0: grid-area → 이 파일 아래 (같은 선택자 규칙이 덮음) */ }
+/* 항목 머리줄 숨통: 비어 있던 끌기 칸(14px)을 빼 꺾쇠를 왼쪽 끝으로, 이름 칸을 줄이고 동그라미 · 스위치 · ⋯ 사이 3px → 10px */
+body.salty:not(#salty-none) #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header {
+  grid-template-columns: 22px minmax(0, 1fr) 36px 28px;
+  column-gap: 10px !important;
+}
+body.salty:not(#salty-none) #WorldInfo .world_entry .inline-drawer-header .inline-drawer-toggle { grid-area: 1 / 1; width: 22px; justify-content: flex-start; }
+/* 이름 칸의 시작선 = 아래 줄 위치 드롭다운의 시작선 (둘 다 여백 8 + 4 뒤 44px).
+   "위치:" 글자 폭이 글꼴마다 달라 드롭다운 시작이 흔들려서, 글자 칸을 28px 로 고정 (꺾쇠 22 + 간격 10 = 28 + 간격 4) */
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls > [name="PositionBlock"] > .WIEntryHeaderTitleMobile {
+  flex: 0 0 28px;
+  width: 28px;
+  min-width: 28px;
+  overflow: hidden;
+}
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEntryTitleAndStatus { grid-area: 1 / 2; gap: 10px !important; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .inline-drawer-header .killSwitch { grid-area: 1 / 3; }
+body.salty:not(#salty-none) #WorldInfo .bl-wi-actions { grid-area: 1 / 4; }
+body.salty #WorldInfo .bl-wi-actions > summary {
+  display: grid; place-items: center; list-style: none; width: 30px; height: 34px;
+  border-radius: 8px; color: var(--salty-muted); cursor: pointer; font-size: 21px;
+}
+body.salty #WorldInfo .bl-wi-actions > summary::-webkit-details-marker { display: none; }
+body.salty #WorldInfo .bl-wi-actions[open] > summary { background: var(--salty-fill-accent-13, var(--salty-accent-13)); color: var(--salty-accent); }
+body.salty #WorldInfo .bl-wi-action-list {
+  position: absolute; right: 0; top: 36px; z-index: 15; width: 136px;
+  padding: 4px; border-radius: 10px; background: var(--bl-fill-overlay, var(--bl-overlay)); box-shadow: var(--bl-e2);
+  border: 1px solid var(--salty-shade-2);
+}
+body.salty #WorldInfo .world_entry .inline-drawer-header .bl-wi-action-list .menu_button {
+  display: flex; align-items: center; justify-content: flex-start; gap: 10px;
+  width: 100% !important; height: 38px !important; margin: 0 !important; padding: 0 10px !important;
+  background: transparent !important; box-shadow: none !important; border-radius: 6px;
+}
+body.salty #WorldInfo .bl-wi-action-list span { display: inline; font: 500 13px/1.4 var(--mainFontFamily); }
+body.salty #WorldInfo .world_entry:has(.bl-wi-actions[open]) { position: relative; z-index: 5; }
+body.salty #WorldInfo .world_entry:has(> form > .inline-drawer > .inline-drawer-header .inline-drawer-toggle.up) { box-shadow: var(--bl-e1) !important; }
+/* 중첩 스크롤의 빈 자리는 없애고 실제 목록 양옆에만 같은 폭을 둔다. */
+body.salty #WorldInfo:not(#salty-none) { scrollbar-gutter: stable both-edges; padding-inline: 4px !important; }
+body.salty #WorldInfo #world_popup_entries_list { overflow: visible; max-height: none; scrollbar-gutter: auto; padding-inline: 0 !important; }
+
+body.salty #WorldInfo .world_entry .inline-drawer-content { padding-inline: 8px !important; }
+/* 가로 이동은 유지하면서 가로 막대만 감춘다. 세로 막대는 남긴다. */
+body.salty :is(.drawer-content, .popup, #floatingPrompt, #character_popup)::-webkit-scrollbar:horizontal,
+body.salty :is(.drawer-content, .popup, #floatingPrompt, #character_popup) *::-webkit-scrollbar:horizontal { height: 0; }
+body.salty #floatingPrompt .panelControlBar { min-width: 0; max-width: 100%; }
+body.salty #floatingPrompt .panelControlBar .dragClose { flex-shrink: 0; }
+/* 작가 노트: 실리태번이 overflow-y: scroll 로 늘 스크롤바를 그려 X 버튼과 겹치고 오른쪽 폭만 먹어서 숨김(내용이 짧음).
+   제목 · 설명 · 입력칸이 같은 좌우 선(14px)에서 시작하고 끝나게, 접기 화살표는 X 버튼 왼쪽에 */
+body.salty #floatingPrompt,
+body.salty #floatingPrompt [name="floatingPromptHolder"] { scrollbar-width: none !important; }
+body.salty #floatingPrompt::-webkit-scrollbar,
+body.salty #floatingPrompt [name="floatingPromptHolder"]::-webkit-scrollbar { display: none; width: 0 !important; height: 0 !important; }
+body.salty #floatingPrompt:not(#salty-none) { padding-left: 14px !important; padding-right: 14px !important; }
+body.salty #floatingPrompt [name="floatingPromptHolder"] { margin-inline: 0 !important; padding-inline: 0 !important; }
+body.salty #floatingPrompt .inline-drawer-header { padding-left: 0 !important; padding-right: 30px !important; }
+body.salty #floatingPrompt .inline-drawer-content { padding-left: 0 !important; padding-right: 0 !important; }
+/* 별 + 이름이 있는 즐겨찾기 띠 */
+body.salty #right-nav-panel #CharListButtonAndHotSwaps { align-items: flex-start; padding: 6px 8px !important; gap: 8px !important; }
+body.salty #right-nav-panel #CharListButtonAndHotSwaps > .flex-container { flex-flow: column !important; padding-top: 20px; }
+body.salty #right-nav-panel #HotSwapWrapper { display: flex; flex-direction: column !important; align-items: stretch !important; min-width: 0; gap: 5px; }
+body.salty #right-nav-panel #HotSwapWrapper .bl-favorites-heading { width: 100%; flex: none; display: flex; align-items: center; gap: 6px; color: var(--salty-muted); font-size: 11px; font-weight: 600; }
+body.salty #right-nav-panel #HotSwapWrapper .bl-favorites-heading i { color: var(--salty-pop); font-size: 10px; }
+body.salty #right-nav-panel #HotSwapWrapper .bl-favorites-heading small { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--salty-faint); }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap { display: flex; align-items: flex-start; gap: 6px; width: 100%; height: auto !important; max-height: none !important; flex-wrap: nowrap !important; padding: 3px 0; overflow-x: auto; scrollbar-width: none; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar {
+  display: flex; flex-direction: column; justify-content: flex-start; flex: 0 0 64px;
+  width: 64px !important; height: auto !important; max-height: none; gap: 5px;
+  padding: 5px 4px; border-radius: 10px; 
+  /* 3.0.0: background · box-shadow → css/27-compact.css (같은 선택자 규칙이 덮음) */
+}
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar img { width: 48px !important; height: 52px !important; border-radius: 8px !important; object-fit: cover; box-shadow: none !important; }
+body.salty #right-nav-panel #HotSwapWrapper .bl-fav-name { display: block; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--salty-text); font-size: 10px; line-height: 1.4; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > small { min-height: 32px; text-align: left; font-size: 11px; }
+body.salty #right-nav-panel #charListFixedTop { background: transparent; box-shadow: none; padding-inline: 0 !important; }
+body.salty #right-nav-panel #rm_print_characters_block .character_select {
+  padding: 9px !important; gap: 10px !important; border-radius: 12px;
+  background: linear-gradient(110deg, var(--salty-accent-13), transparent 65%), var(--bl-card) !important;
+}
+body.salty #right-nav-panel #rm_print_characters_block .character_select > .avatar { flex: 0 0 54px; width: 54px; height: 64px; }
+body.salty #right-nav-panel #rm_print_characters_block .character_select > .avatar img { width: 54px !important; height: 64px !important; object-fit: cover; border-radius: 9px !important; box-shadow: none !important; }
+/* 그림과 분리한 표본 선택 도구 */
+body.salty .salty-panel .bl-preview-tools { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 6px 0; }
+body.salty .salty-panel .bl-preview-kinds, body.salty .salty-panel .bl-preview-samples:not([hidden]) { display: flex; align-items: center; gap: 2px; }
+body.salty .salty-panel .bl-preview-tools button { min-height: 30px; padding: 4px 7px; border: 0; border-radius: 7px; background: transparent; color: var(--salty-muted); font: inherit; font-size: 11px; cursor: pointer; }
+body.salty .salty-panel .bl-preview-tools button[aria-pressed="true"] { background: var(--salty-fill-accent-13, var(--salty-accent-13)); color: var(--salty-accent); }
+body.salty .salty-panel .bl-preview-samples button { min-width: 28px; font-size: 21px; }
+body.salty .salty-panel .bl-preview-samples span { min-width: 30px; color: var(--salty-muted); text-align: center; font-size: 11px; }
+body.salty .salty-panel .salty-sec[data-tab="image"] .salty-group { padding-inline: 10px; }
+body.salty .salty-panel .salty-sec[data-tab="image"] .salty-shapes { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; padding: 0; background: transparent; }
+body.salty .salty-panel .salty-sec[data-tab="image"] .salty-shapes button { border-radius: 9px; padding: 9px 3px; box-shadow: none; flex-direction: column; justify-content: center; gap: 5px; font-size: 11px; min-height: 62px; }
+/* 작은 트랙, 넉넉한 누름 영역 */
+body.salty .salty-panel .salty-switch { width: 36px; height: 36px; }
+body.salty .salty-panel .salty-switch span { inset: 8px 0; }
+body.salty .salty-panel .salty-switch span::after { width: 14px; height: 14px; box-shadow: none; }
+body.salty .salty-panel .salty-switch input:checked + span::after { transform: translateX(16px); }
+body.salty label.checkbox_label:has(> input[type="checkbox"]) { min-height: 36px; }
+/* 메시지 삭제도 같은 빨강과 절제된 면을 쓴다. */
+body.salty :is(.mes_edit_delete, .mes_reasoning_delete, .mes_media_delete, .mes_file_delete, .PastChat_cross) {
+  color: var(--bl-danger) !important; background: var(--salty-danger-soft) !important;
+  box-shadow: none !important; border: 0 !important; border-radius: 7px !important;
+}
+@media (max-width: 1000px) {
+  body.salty { --bl-gutter: 10px; --bl-inset: 10px; }
+  body.salty .popup:has(.salty-panel.in-popup) { padding-inline: 6px !important; width: calc(100vw - 12px) !important; max-width: calc(100vw - 12px) !important; }
+  body.salty .popup:has(.salty-panel.in-popup) :is(.popup-body, .popup-content) { padding-inline: 0 !important; scrollbar-gutter: auto !important; }
+  body.salty .popup:has(.salty-panel.in-popup) .popup-content { scrollbar-gutter: stable both-edges !important; }
+  body.salty .popup .salty-panel.in-popup { --pp: 2px; --pad: 10px; padding: 2px 2px 6px !important; }
+  body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
+    display: grid !important; grid-template-columns: minmax(0, 1fr) auto; width: 100%; gap: 5px 10px;
+  }
+  body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .flex-container:has(> .neo-range-slider) > small { grid-column: 1 / -1; width: 100%; text-align: left; }
+  body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .neo-range-slider { width: 100%; min-width: 0; grid-area: 2 / 1 !important; }
+  body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .neo-range-input { grid-area: 2 / 2 !important; }
+  body.salty #user-settings-block :is(#UI-Customization, #power-user-option-checkboxes) > div[name] { padding-inline: 9px !important; }
+}
+
+body.salty #WorldInfo .world_entry .killSwitch { width: 36px; height: 20px; }
+body.salty #WorldInfo .world_entry .killSwitch::before { width: 14px; height: 14px; box-shadow: none; }
+body.salty #WorldInfo .world_entry .killSwitch.fa-toggle-on::before { transform: translateX(16px); }
+body.salty #WorldInfo .world_entry .killSwitch::after { inset: -7px 0; }
+/* 가로 퀵 리플라이: 폰은 입력판 아래 도구 줄의 남는 폭을 쓴다. */
+body.salty #send_form #qr--bar {
+  order: 30; flex-wrap: nowrap; justify-content: flex-start; gap: 5px;
+  min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
+  overscroll-behavior-x: contain; padding: 2px 0; opacity: 1;
+}
+body.salty #send_form #qr--bar > .qr--buttons { flex: 0 0 auto; width: max-content; flex-wrap: nowrap; justify-content: flex-start; }
+body.salty #send_form #qr--bar .qr--button { flex-shrink: 0; min-height: 30px; padding: 4px 9px; margin: 0; border: 0; border-radius: 7px; background: var(--bl-fill-hover, var(--bl-hover)); color: var(--salty-text); box-shadow: none; font-size: 11px; white-space: nowrap; }
+body.salty #send_form #qr--bar #qr--popoutTrigger { position: sticky; left: 0; flex-shrink: 0; order: -1; background: var(--bl-fill-card, var(--bl-card)); }
+body.salty #send_form #qr--bar:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: -2px; }
+/* 버튼이 하나도 없는 빈 바는 자리를 차지하지 않음 (2.7.9 — 위아래 여백 2px 씩이 입력판 아래에 빈 줄을 만들어 버튼 줄 전체가 2px 위로 밀려 있었음) */
+body.salty #send_form #qr--bar:not(:has(.qr--button, #qr--popoutTrigger)) { display: none; }
+/* 3.5.3 QR 줄: 앞 돋보기(찾기 팝업, layout.js · qrfind.js)는 창 띄우기 버튼 옆에 붙어 있고, 넘치는 끝은 흐리게 · PC 는 잡아 끌기 */
+body.salty #send_form #qr--bar #bl-qr-find { position: sticky; left: 0; z-index: 1; flex-shrink: 0; order: -1; display: grid; place-items: center; min-width: 30px; min-height: 30px; margin: 0; padding: 0 8px; border: 0; border-radius: 7px;  color: var(--salty-muted); box-shadow: none; font-size: 12px; cursor: pointer; }
+body.salty #send_form #qr--bar #bl-qr-find:hover { color: var(--salty-text); }
+/* 앞에 붙은 두 단추는 불투명 바탕 — .menu_button 의 반투명 면(!important)이면 넘긴 버튼 글자가 비쳐 겹쳐 보임 */
+body.salty #send_form #qr--bar :is(#bl-qr-find, #qr--popoutTrigger) { z-index: 2; background: linear-gradient(var(--bl-hover), var(--bl-hover)), var(--salty-surface) !important; box-shadow: 0 0 0 4px var(--salty-surface) !important; /* 둥근 모서리 틈으로 밑에 숨은 버튼 색이 비쳐 단추가 각진 밝은 네모로 보였음 → 바탕색 테두리로 틈을 가림 */ }
+/* 넘치는 끝 흐림: mask 는 폰(스크롤 칸을 따로 그리는 모바일 합성)에서 줄 뒤가 까만 네모로 칠해져 못 씀 → 줄 안 양끝에 붙는(sticky) 입력판 바탕색 그라데이션.
+   간격(gap 5px)까지 음수 여백으로 지워 버튼 자리는 그대로. 왼쪽은 앞 단추(창 띄우기 · 돋보기) 바로 오른쪽에 */
+body.salty #send_form #qr--bar::after { content: ''; position: sticky; right: 0; z-index: 1; flex: 0 0 28px; align-self: stretch; margin-left: -33px; background: linear-gradient(to left, var(--salty-surface), transparent); pointer-events: none; opacity: 0; transition: opacity 0.15s ease; }
+body.salty #send_form #qr--bar.bl-qr-more-right::after { opacity: 1; }
+/* 3.5.4 왼쪽은 흐림 대신 스냅: 넘기다 멈추면 버튼 시작이 앞 단추(돋보기) 오른쪽 + 간격에 붙음 — 흐림을 깔면 반쯤 걸린 버튼이
+   밝은 네모 조각으로 돋보기에 붙어 보였다 (사용자: "검색창 옆에 흰색 네모"). --bl-qr-snap 은 layout.js 가 잼. 끄는 동안은 스냅 끔 */
+body.salty #send_form #qr--bar { scroll-snap-type: x proximity; scroll-padding-left: var(--bl-qr-snap, 0px); }
+body.salty #send_form #qr--bar .qr--button { scroll-snap-align: start; }
+/* 앞 단추 왼쪽 틈(폰 줄 안쪽 여백 4px · 창 띄우기와 돋보기 사이 5px)으로 지나가는 버튼 조각이 보이지 않게 바탕색 가림막 */
+body.salty #send_form #qr--bar #bl-qr-find::before,
+body.salty #send_form #qr--bar #qr--popoutTrigger::after { content: ''; position: absolute; top: -4px; bottom: -4px; right: 100%; width: 8px; background: var(--salty-fill-surface, var(--salty-surface)); pointer-events: none; }
+/* 왼쪽 흐림: 돋보기에 붙은 조각(절대 위치라 버튼 배치에 영향 없음). 간격 5px 은 바탕색으로 채우고 이어서 24px 흐림 — 반쯤 걸린 버튼이 있을 때만 */
+body.salty #send_form #qr--bar #bl-qr-find::after { content: ''; position: absolute; top: -4px; bottom: -4px; left: 100%; width: 29px; background: linear-gradient(to right, var(--salty-surface) 5px, transparent); pointer-events: none; opacity: 0; transition: opacity 0.12s ease; }
+body.salty #send_form #qr--bar.bl-qr-cut-left #bl-qr-find::after { opacity: 1; }
+body.salty #send_form #qr--bar.bl-qr-dragging { scroll-snap-type: none; }
+/* 끄는 동안 잡은 버튼의 누름 효과(1px 내려가기 · 누름 면)는 끔 — 끌기인데 눌린 것처럼 보이고, 스크롤 중 따로 그려지며 까만 네모로 칠해졌음 */
+body.salty #send_form #qr--bar.bl-qr-dragging .qr--button { transform: none !important; background: var(--bl-fill-hover, var(--bl-hover)) !important; box-shadow: none !important; transition: none !important; }
+@media (hover: hover) and (pointer: fine) {
+  body.salty #send_form #qr--bar:is(.bl-qr-more-left, .bl-qr-more-right) { cursor: grab; }
+  body.salty #send_form #qr--bar.bl-qr-dragging, body.salty #send_form #qr--bar.bl-qr-dragging * { cursor: grabbing !important; user-select: none; }
+}
+/* 찾기 팝업: 이름 한 줄 + 내용 미리보기 한 줄 */
+body.salty .bl-qrf .salty-pick-rows > button { flex-direction: column; align-items: stretch; justify-content: center; gap: 1px; padding: 6px 12px 6px 14px; }
+body.salty .bl-qrf .bl-qrf-name { display: flex; align-items: center; gap: 7px; min-width: 0; }
+body.salty .bl-qrf .bl-qrf-name b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.salty .bl-qrf .bl-qrf-name i { flex: none; width: 14px; color: var(--salty-muted); font-size: 12px; text-align: center; }
+body.salty .bl-qrf .salty-pick-rows > button small { overflow: hidden; color: var(--salty-muted); font-size: 11.5px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+/* 3.5.5 찾은 글자: 대사 형광펜과 같은 획(--salty-marker-bg) · 글자색 */
+body.salty .bl-qrf mark { padding: 0; border-radius: 0; background: var(--salty-marker-bg); color: var(--salty-marker-ink, var(--salty-text)); -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+@media (max-width: 1000px) {
+  body.salty #nonQRFormItems > #qr--bar { order: 7; flex: 1 1 0 !important; width: 0; max-width: 100%; padding: 2px 4px; align-self: center; }
+}
+
+
+body.salty #WorldInfo .select2-hidden-accessible { position: absolute !important; width: 1px !important; min-width: 0 !important; max-width: 1px !important; height: 1px !important; padding: 0 !important; }
+body.salty #WorldInfo .world_entry .inline-drawer-outlet::before { flex-basis: calc(100% + 16px); margin-inline: -8px; }
+body.salty #right-nav-panel #right-nav-panel-tabs:has(#rm_button_selected_ch h2:empty):has(#result_info[style*="display: none"]) { display: none !important; }
+body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"] { width: 36px !important; height: 20px !important; }
+body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"]::before { width: 14px !important; height: 14px !important; box-shadow: none !important; }
+body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"]:checked::before { transform: translateX(16px) !important; }
+body.salty #dialogue_del_mes { gap: 8px; padding: 7px 10px !important; }
+body.salty #dialogue_del_mes .menu_button { min-height: 36px !important; height: 36px !important; border-radius: 8px !important; box-shadow: none !important; font-size: 13px !important; font-weight: 500 !important; }
+body.salty #dialogue_del_mes #dialogue_del_mes_ok { background: var(--salty-danger-soft) !important; color: var(--bl-danger) !important; }
+@media (max-width: 1000px) {
+  body.salty #user-settings-block:not(#salty-none) { scrollbar-gutter: stable both-edges; padding-inline: 4px !important; }
+  body.salty #user-settings-block #user-settings-block-content .flex-container:has(> :is(span, label) + select):not(#UI-language-block) {
+    display: grid !important; grid-template-columns: minmax(0, 1fr); gap: 5px !important; padding-block: 9px !important; align-items: start !important;
+  }
+  body.salty #user-settings-block #user-settings-block-content .flex-container:has(> :is(span, label) + select):not(#UI-language-block) > :is(span, label) { width: 100%; min-width: 0; text-align: left; line-height: 1.4; }
+  body.salty #user-settings-block #user-settings-block-content .flex-container:has(> :is(span, label) + select):not(#UI-language-block) > select { width: 100% !important; max-width: none !important; min-width: 0 !important; text-align: left !important; text-align-last: left !important; background-color: var(--bl-control) !important; border-radius: 8px !important; }
+}
+/* ===== /surfaces:witidy ===== */

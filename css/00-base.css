@@ -1,0 +1,37 @@
+/* ===== css/00-base.css =====
+   맨 앞 — 설계 원칙 주석 · body.salty 기본 변수(둥글기 --r-*) · 배경 그림 가리기.
+   ===== */
+:root{--bl-release:"4.9.7";}
+
+/* =========================================================
+   Blue Lemonade · 블루 레몬에이드  (1.5.3, 예전 이름 Salty · 소금 — 클래스·변수 이름은 salty 그대로)
+   테마 규칙은 모두 body.salty 아래 — 확장 설정에서 끄면 바로 원래대로.
+   색·글꼴·크기 값은 src/apply.js 가 :root 의 --salty-* 로 넣음.
+
+   원칙
+   · 면 세 단계: page(bg · 서랍 · 채팅) < card(surface) < overlay(메뉴 · 알림 — 어두운 테마는 한 톤 밝게)
+   · 가는 선 없음. 칸은 톤 · 여백 · 묶음 · 그림자로만 나눔 (어두운 테마의 윗면 옅은 빛만 예외)
+   · 그림자 5단 --bl-e1~e5: 쉬는 카드 < 버튼 · 칩 < 떠 있는 바 < 메뉴 · 알림 < 팝업 · 서랍,
+     눌림 · 오목한 칸은 안쪽 그림자 — 토큰은 surfaces:foundation 블록
+   · 뒤 비침 흐림(backdrop-filter) · 글자 그림자 · 흐림 필터 없음 (box-shadow 는 괜찮음)
+     (폰 GPU 에서 색이 번지거나 찌그러져 보이는 원인)
+   · 둥글기: 10(버튼 · 입력칸) 14(카드 · 알림) 16(메뉴) 20(팝업 · 서랍 · 말풍선)
+   · 상태색은 흐린 호박 하나 (분홍 · 빨강 · 초록 없음), 마우스 올림 효과는 (hover: hover) 안에서만
+   ========================================================= */
+
+body.salty {
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --shade: var(--salty-shade);
+  --shade-2: var(--salty-shade-2);
+  --field: var(--salty-field);
+  --ring: var(--salty-ring);
+  --lift: var(--salty-lift);
+  --lift-lg: var(--salty-lift-lg);
+  background: var(--salty-fill-bg, var(--salty-bg)) !important;
+  color: var(--salty-text);
+}
+body.salty:not(.salty-bgimg) #bg1 {
+  opacity: 0 !important;
+}

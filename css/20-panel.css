@@ -1,0 +1,1373 @@
+/* ===== css/20-panel.css =====
+   테마 설정 창(.salty-panel) — 테마를 꺼도 이 창은 자기 색으로 보인다.
+   ===== */
+/* =========================================================
+   설정 창 (.salty-panel) — 테마를 꺼도 이 창은 자기 색으로 보임
+   위 대분류 탭(.salty-tabs) → 아래 소분류 칩(.salty-subs) → 한 번에 한 묶음만
+   글자 크기는 '메뉴' 크기를 따라감: calc(N * var(--sp)) = 메뉴 15px 기준 N px
+   ========================================================= */
+.salty-panel {
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --shade: var(--salty-shade);
+  --shade-2: var(--salty-shade-2);
+  --ring: var(--salty-ring);
+  /* 메뉴 글자 크기 1px 어치 (테마의 메뉴 크기 → 없으면 실리태번 글자 크기).
+     메뉴 크기를 따라가되 절반만, 그리고 0.86 아래로는 안 내려감 → 메뉴를 아주 작게 해도 이 창은 읽을 수 있음 */
+  --sp: max(0.86px, calc(0.5px + var(--salty-ui-size, var(--mainFontSize, 15px)) / 30));
+  --fs: calc(13.5 * var(--sp));
+  --fs-tab: calc(13 * var(--sp));
+  --fs-chip: calc(12.5 * var(--sp));
+  --fs-cap: calc(12 * var(--sp));
+  --fs-small: calc(11.5 * var(--sp));
+  --fs-num: calc(14 * var(--sp));
+  --fs-name: calc(15.5 * var(--sp));
+  --gap: 10px;   /* 묶음 사이 */
+  --pad: 14px;   /* 묶음 안쪽 좌우 */
+  --row-h: 46px; /* 줄 높이 */
+  --num-h: 34px; /* 숫자 입력칸 */
+  --danger: var(--salty-danger); /* 되돌릴 수 없는 단추 (진짜 빨강) */
+  --pp: 14px; /* 판 안쪽 여백 — 위에 붙는 탭 줄도 이만큼 넓힘 */
+  margin: 6px 0 10px;
+  padding: var(--pp);
+  background: var(--salty-fill-surface, var(--salty-surface));
+  color: var(--salty-text);
+  border: 0;
+  border-radius: var(--r-lg);
+  font-family: var(--salty-font-ui);
+  font-size: var(--fs);
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+  text-align: left;
+  word-break: keep-all; /* 한글은 낱말 가운데서 안 끊기게 */
+  overflow-wrap: break-word; /* 칸보다 긴 낱말만 끊음 (anywhere 는 한글 낱말도 끊음) */
+}
+body.salty-dark .salty-panel {
+  --danger: var(--salty-danger);
+}
+.salty-panel.in-popup {
+  --pp: 2px;
+  margin: 0;
+  padding: 2px 2px 6px;
+  background: transparent;
+  border-radius: 0;
+}
+.salty-panel,
+.salty-panel * {
+  text-shadow: none !important;
+  box-sizing: border-box;
+}
+.salty-panel button {
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.salty-panel button:focus-visible,
+.salty-panel input:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+/* 머리 */
+.salty-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.salty-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  /* 시작 화면 로고와 같게: 뒤에 판 없이 레몬만 */
+  background: transparent;
+  color: var(--salty-lemon, var(--salty-accent));
+}
+.salty-mark svg {
+  width: 30px;
+  height: 30px;
+}
+.salty-title {
+  font-size: calc(16 * var(--sp));
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+/* 3.0.0 공지사항 알약: 제목 옆 버전 — 누르면 공지사항(notice.js).
+   보통은 다른 확장의 버전 알약과 같은 모양, 안 본 업데이트가 있으면(is-new) 포인트색으로 은은히 빛남.
+   빛은 ::after 의 투명도만 움직여서 그리기 비용이 거의 없음 (box-shadow 를 직접 움직이면 매 프레임 다시 칠함) */
+.salty-ver {
+  position: relative;
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border: 1px solid color-mix(in srgb, var(--salty-text) 16%, transparent);
+  border-radius: 999px;
+  background: var(--salty-fill-shade, var(--shade));
+  color: var(--salty-muted);
+  font: inherit;
+  font-size: var(--fs-small);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.5;
+  vertical-align: middle;
+  cursor: pointer;
+}
+/* 3.0.2: 설정 창 제목 옆 알약이 제목 글자 크기(16.8px · 굵기 800)로 커졌다 (사용자: "알약 너무 큼").
+   .salty-panel button { font: inherit } 가 .salty-ver 의 글자 크기 · 굵기를 이겼음 → 한 단계 무겁게 다시 */
+.salty-panel .salty-ver {
+  top: -1px;
+  padding: 0 7px;
+  font-size: calc(10.5 * var(--sp));
+  font-weight: 400;
+  line-height: 1.6;
+}
+/* 3.3.1 공지 알약이 빛날 때 위쪽이 잘렸다 (사용자 제보) — 팝업의 스크롤 칸(.popup-content) 윗변이 알약 위 5px 에 있어
+   위로 약 11px 퍼지는 빛(::after box-shadow)이 잘림. 팝업 머리 위에 여유를 둔다 (서랍 속 알약은 잘리지 않음) */
+.salty-panel.in-popup > .salty-head {
+  padding-top: 8px;
+}
+.salty-ver:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+:is(.salty-ver, body.salty #rm_extensions_block #salty-drawer .bl-version).is-new {
+  position: relative; /* 빛(::after)이 알약 크기로 — 없으면 서랍 전체 크기의 둥근 빛이 됨 */
+  border-color: color-mix(in srgb, var(--salty-accent) 70%, transparent);
+  background: color-mix(in srgb, var(--salty-accent) 16%, transparent);
+  color: var(--salty-accent);
+  font-weight: 600;
+}
+:is(.salty-ver, body.salty #rm_extensions_block #salty-drawer .bl-version).is-new::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  box-shadow: 0 0 10px 1px color-mix(in srgb, var(--salty-accent) 60%, transparent);
+  pointer-events: none;
+  will-change: opacity;
+  animation: salty-ver-glow 2.4s ease-in-out infinite;
+}
+@keyframes salty-ver-glow {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.salty-ver, body.salty #rm_extensions_block #salty-drawer .bl-version).is-new::after {
+    animation: none;
+    opacity: 0.7;
+  }
+}
+/* 공지사항 팝업 (실리태번 팝업 안): 버전마다 한 칸, 맨 위만 펼침. <details> 대신 단추 — ▲ 접기 스크립트가 details 에 단추를 붙임 */
+.salty-notice {
+  text-align: left;
+  color: var(--salty-text);
+}
+.salty-notice-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 2px 2px 12px;
+}
+.salty-notice-head b {
+  font-size: 1.15em;
+  font-weight: 800;
+}
+.salty-notice-head span {
+  color: var(--salty-muted);
+  font-size: 0.85em;
+}
+.salty-notice-item {
+  margin-bottom: 8px;
+  border-radius: 12px;
+  background: var(--salty-fill-shade, var(--salty-shade));
+}
+.salty-notice-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.salty-notice-ver {
+  font-weight: 700;
+}
+.salty-notice-item.open .salty-notice-ver {
+  color: var(--salty-accent);
+}
+.salty-notice-date {
+  color: var(--salty-muted);
+  font-size: 0.85em;
+}
+.salty-notice-toggle i {
+  margin-left: auto;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--salty-muted);
+  border-bottom: 2px solid var(--salty-muted);
+  transform: rotate(45deg) translateY(-2px);
+}
+.salty-notice-item.open .salty-notice-toggle i {
+  transform: rotate(-135deg) translateY(-2px);
+}
+.salty-notice-item ul {
+  display: none;
+  margin: 0;
+  padding: 0 14px 12px 30px;
+}
+.salty-notice-item.open ul {
+  display: block;
+}
+.salty-notice-item li {
+  margin: 4px 0;
+  line-height: 1.55;
+}
+/* 공지사항 팝업 크기 (3.5.0): PC 는 정사각형 창, 폰은 설정 창 팝업처럼 화면 폭을 거의 다 쓴다
+   (사용자: "공지사항 모바일 좌우 여백 너무 넓음" · "PC는 공지사항 정사각형 모양으로") — 전에는 둘레 여백 50px */
+body.salty .popup:has(.salty-notice) {
+  width: min(640px, calc(100vw - 32px)) !important;
+  max-width: min(640px, calc(100vw - 32px)) !important;
+  height: min(640px, calc(100dvh - 32px)) !important;
+  padding-inline: 12px !important;
+}
+body.salty .popup:has(.salty-notice) .popup-body {
+  padding-inline: 0 !important;
+  scrollbar-gutter: auto !important; /* 스크롤은 안쪽 칸만 — 바깥 칸의 빈 홈까지 여백이 두 번 */
+}
+body.salty .popup:has(.salty-notice) .popup-content {
+  padding-inline: 4px !important;
+}
+@media (max-width: 1000px) {
+  html body.salty .popup:has(.salty-notice) {
+    width: calc(100vw - 12px) !important;
+    max-width: calc(100vw - 12px) !important;
+    height: auto !important;
+    padding-inline: 6px !important;
+  }
+  html body.salty .popup:has(.salty-notice) .popup-content {
+    padding-inline: 0 !important;
+  }
+}
+.salty-sub {
+  font-size: var(--fs-small);
+  color: var(--salty-muted);
+}
+.salty-head .salty-switch {
+  margin-left: auto;
+}
+/* 서랍: 실리태번 서랍 머리에 이미 제목이 있어서 켜기 한 줄만 */
+.salty-head-slim {
+  justify-content: space-between;
+  min-height: 38px;
+  margin-bottom: 8px;
+  padding: 0 2px;
+  font-weight: 650;
+}
+
+/* 스위치 */
+.salty-switch {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 44px;
+  height: 26px;
+}
+/* 스위치를 덮는 투명 체크박스: 실리태번 전역 체크박스의 윤곽선 · 고정 크기 · 밀림을 지움 (서랍에서 유령 폭이 생김) */
+.salty-switch input {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  filter: none !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  opacity: 0;
+  cursor: pointer;
+}
+.salty-switch span {
+  position: absolute;
+  inset: 0;
+  border-radius: 99px;
+  background: var(--shade-2);
+  transition: background-color 0.2s ease;
+  pointer-events: none;
+}
+.salty-switch span::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
+  transition: transform 0.2s ease;
+}
+.salty-switch input:checked + span {
+  background: var(--salty-fill-accent, var(--salty-accent));
+}
+.salty-switch input:checked + span::after {
+  transform: translateX(18px);
+}
+
+/* 대분류 탭 */
+.salty-tabs::-webkit-scrollbar {
+  display: none;
+}
+.salty-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  overflow-x: auto;
+  background: var(--salty-fill-shade, var(--shade));
+  border-radius: 10px;
+  scrollbar-width: none;
+}
+.salty-tabs button {
+  flex: 1 0 auto;
+  padding: 7px 6px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--salty-muted);
+  font-size: var(--fs-tab);
+  font-weight: 550;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.salty-tabs button.on {
+  background: var(--salty-fill-surface, var(--salty-surface));
+  color: var(--salty-text);
+  box-shadow: var(--salty-e2, 0 1px 3px var(--salty-shadow-50));
+}
+
+/* 소분류 칩: 탭 아래 한 줄. 좁으면 다음 줄로 넘김 — 옆으로 밀면 끝 칩이 잘려 안 보임 */
+.salty-subs {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 4px;
+  row-gap: 3px;
+  margin-top: 6px;
+  padding: 0 1px;
+}
+.salty-subs button {
+  flex: none;
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 99px;
+  background: none;
+  color: var(--salty-muted);
+  font-size: var(--fs-chip);
+  font-weight: 550;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.salty-subs button.on {
+  background: var(--salty-fill-accent-13, var(--salty-accent-13));
+  color: var(--salty-accent);
+}
+/* 어두운 테마: 고른 칩 글자는 레몬 (탭 · 고르기 칸과 같게) */
+body.salty-dark .salty-subs button.on {
+  color: var(--bl-pop, var(--salty-accent));
+}
+.salty-subs button:not(.on):active {
+  background: var(--salty-fill-shade, var(--shade));
+}
+@media (hover: hover) {
+  .salty-tabs button:not(.on):hover,
+  .salty-subs button:not(.on):hover {
+    color: var(--salty-text);
+  }
+}
+
+/* 묶음 사이 간격: 제목이 있으면 제목이 맡음 */
+:where(.salty-sec > * + *) {
+  margin-top: var(--gap);
+}
+/* 탭 + 칩 묶음: 창 안에서 위에 붙어 있어 긴 묶음을 내려봐도 소분류를 바로 바꿀 수 있음 */
+.salty-nav {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  margin: 0 calc(var(--pp) * -1) 4px;
+  padding: 4px var(--pp);
+  background: var(--salty-fill-surface, var(--salty-surface));
+}
+.salty-panel.in-popup .salty-nav {
+  background: var(--bl-card, var(--salty-surface));
+}
+.salty-sec {
+  padding-top: 2px;
+}
+.salty-sec > .salty-label + * {
+  margin-top: 0;
+}
+.salty-label {
+  margin: 16px 4px 6px;
+  font-size: var(--fs-cap);
+  font-weight: 600;
+  color: var(--salty-muted);
+}
+.salty-sec > .salty-label:first-child {
+  margin-top: 10px;
+}
+.salty-hint {
+  margin-left: 4px;
+  font-weight: 500;
+  color: var(--salty-faint);
+}
+/* 라벨 속 *기울임* · **굵게** 예시: 별표는 옅게, 글자는 진짜로 기울이고 굵게 (한글 글꼴도 기울어지게 합성 허용) */
+.salty-md {
+  color: var(--salty-faint);
+  font-synthesis: weight style;
+}
+.salty-md-i {
+  font-style: italic;
+  font-weight: 500;
+}
+.salty-md-b {
+  font-weight: 650;
+}
+.salty-md-mark {
+  font-weight: 500;
+  opacity: 0.75;
+}
+/* 색 고치기 줄 안: 줄 이름(본문색)보다 한 단계 옅게, 별표는 더 옅게 */
+.salty-row .salty-md {
+  color: var(--salty-muted);
+}
+.salty-row .salty-md-mark {
+  color: var(--salty-faint);
+  opacity: 1;
+}
+.salty-md-i .salty-md-mark:last-child {
+  margin-left: 0.08em;
+}
+@supports not (font-synthesis: style) {
+  .salty-md-i {
+    display: inline-block;
+    font-style: normal;
+    transform: skewX(-12deg);
+  }
+}
+/* 4.7.0 '처음 설정으로' 묶음 고르기 (실리태번 팝업 안) */
+.salty-reset-pick { display: grid; gap: 10px; text-align: left; }
+.salty-reset-pick label { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.salty-reset-pick input { width: 18px; height: 18px; margin: 0; }
+.salty-note {
+  margin: 8px 4px 0;
+  font-size: var(--fs-cap);
+  line-height: 1.5;
+  color: var(--salty-muted);
+}
+/* 4.7.3 커스텀 CSS 가 메시지 칸을 건드릴 때 (채팅 → 기타, panel.js customCssReport) */
+.salty-note.bl-css-touch {
+  color: var(--salty-danger);
+}
+.salty-note.bl-css-touch small {
+  display: block;
+  margin-top: 2px;
+  color: var(--salty-muted);
+  overflow-wrap: anywhere;
+}
+
+/* 묶음: 옅은 면 한 장 안에 여러 줄 */
+.salty-group {
+  padding: 2px var(--pad);
+  background: var(--salty-fill-bg, var(--salty-bg));
+  border-radius: var(--r-md);
+}
+.salty-panel.in-popup :is(.salty-group, .salty-sample, .salty-uisample, .salty-fontrows) {
+  background: var(--salty-fill-shade, var(--shade));
+}
+
+/* 줄 (묶음 안) */
+.salty-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: var(--row-h);
+  padding: 7px 0;
+}
+.salty-row > span {
+  min-width: 0;
+}
+.salty-row > span small,
+.salty-stack > span small {
+  display: block;
+  margin-top: 1px;
+  font-size: var(--fs-small);
+  line-height: 1.4;
+  color: var(--salty-muted);
+}
+.salty-stack {
+  display: grid;
+  gap: 7px;
+  padding: 9px 0;
+}
+.salty-stack .salty-seg {
+  display: flex;
+}
+.salty-stack .salty-seg button {
+  flex: 1;
+}
+
+/* 고르기 버튼 묶음 */
+.salty-seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 3px;
+  background: var(--salty-fill-shade, var(--shade));
+  border-radius: 11px;
+}
+.salty-seg button {
+  padding: 6px 9px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  color: var(--salty-muted);
+  font-weight: 600;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.salty-seg button.on {
+  background: var(--salty-fill-surface, var(--salty-surface));
+  color: var(--salty-text);
+  box-shadow: var(--salty-e2, 0 1px 3px var(--salty-shadow-50));
+}
+/* 줄 오른쪽에 붙는 작은 고르기 (대사 · 메뉴 크기의 '본문과 같게 | 직접') */
+.salty-seg.salty-mini {
+  flex: none;
+  flex-wrap: nowrap;
+}
+.salty-seg.salty-mini button {
+  min-height: 32px;
+  padding: 6px 11px;
+  font-size: var(--fs-chip);
+}
+/* 어두운 테마: 면색 칩은 판보다 어두워 구멍처럼 보여서, 고른 칸(탭 포함)은 판보다 한 톤 밝게 */
+body.salty-dark .salty-seg button.on,
+body.salty-dark .salty-tabs button.on {
+  background: var(--salty-fill-control, var(--salty-control));
+  box-shadow: var(--bl-e2, inset 0 1px 0 rgba(255, 255, 255, 0.04));
+}
+
+/* 이미지 모양 고르기: 고르기 버튼 묶음과 같은 판 · 같은 글자 크기. 2칸씩 작은 그림 + 이름 (360px 폰에서도 이름에 자리가 넉넉함) */
+.salty-shapes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px;
+  padding: 3px;
+  background: var(--salty-fill-shade, var(--shade));
+  border-radius: 11px;
+}
+.salty-shapes button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  min-height: 42px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  color: var(--salty-muted);
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: left;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.salty-shapes svg {
+  display: block;
+  flex: none;
+  width: 34px;
+  height: 24px;
+  color: var(--salty-faint);
+  transition: color 0.15s ease;
+}
+.salty-shapes button.on {
+  background: var(--salty-fill-surface, var(--salty-surface));
+  color: var(--salty-text);
+  box-shadow: var(--salty-e2, 0 1px 3px var(--salty-shadow-50));
+}
+/* 어두운 테마: 고른 칸이 판보다 어두우면 구멍처럼 보여서, 고르기 버튼과 같은 한 톤 밝은 면 */
+body.salty-dark .salty-shapes button.on {
+  background: color-mix(in srgb, var(--salty-text) 18%, var(--salty-surface));
+}
+.salty-shapes button.on svg {
+  color: var(--bl-pop, var(--salty-accent));
+}
+
+/* 슬라이더 */
+.salty-slider {
+  padding: 8px 0 3px;
+}
+.salty-slider header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 2px;
+}
+.salty-slider header > span {
+  min-width: 0;
+}
+/* 대사 · 메뉴 크기: 이름 · 고르기 · 숫자칸이 윗줄, 슬라이드바는 아랫줄 전체 폭 (본문 크기와 같은 배치) */
+.salty-slider.salty-slider-wide {
+  padding: 0 0 10px;
+}
+.salty-sizeopt .salty-row {
+  flex-wrap: wrap;
+  min-height: calc(var(--row-h) - 4px);
+}
+.salty-sizeopt .salty-row > span:first-child { flex: 1 0 70px; }
+.salty-sizeopt-ctl {
+  display: inline-flex;
+  flex-wrap: wrap;
+  max-width: 100%;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+/* 글자 크기 묶음은 값이 두 자리뿐 → 숫자칸을 좁혀 세 줄의 오른쪽 끝을 맞춤 */
+.salty-sizes .salty-num input[type="number"] {
+  width: 3.8em !important;
+}
+/* 숫자 입력칸 (소수점까지) */
+.salty-num {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  color: var(--salty-muted);
+  font-size: var(--fs-cap);
+  font-variant-numeric: tabular-nums;
+}
+.salty-num i {
+  font-style: normal;
+}
+/* 단위 칸은 단위가 없어도 같은 폭 → 입력칸 오른쪽 끝이 다 맞음 */
+.salty-num i.salty-unit {
+  width: 1.5em;
+}
+.salty-num input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+  width: 5.2em !important;
+  height: var(--num-h) !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 9px !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  outline: none !important;
+  background: var(--salty-fill-surface, var(--salty-surface)) !important;
+  box-shadow: var(--salty-well-in) !important; /* 오목한 칸 */
+  color: var(--salty-text) !important;
+  font: inherit !important;
+  font-size: var(--fs-num) !important;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.salty-num input[type="number"]::-webkit-inner-spin-button,
+.salty-num input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.salty-num input[type="number"]:focus {
+  box-shadow: var(--salty-ring), var(--salty-well-in) !important;
+}
+.salty-slider input[type="range"] {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  display: block;
+  width: 100% !important;
+  height: 24px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  cursor: pointer;
+}
+.salty-slider input[type="range"]::-webkit-slider-runnable-track {
+  height: 5px !important;
+  border: 0 !important;
+  border-radius: 99px !important;
+  background: linear-gradient(to right, var(--salty-accent) var(--fill, 50%), var(--shade-2) var(--fill, 50%)) !important;
+  box-shadow: none !important;
+}
+.salty-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  width: 22px !important;
+  height: 22px !important;
+  margin-top: -8.5px !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: #fff !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14), 0 3px 10px rgba(0, 0, 0, 0.18) !important;
+}
+.salty-slider input[type="range"]::-moz-range-track {
+  height: 5px;
+  border-radius: 99px;
+  background: var(--shade-2);
+}
+.salty-slider input[type="range"]::-moz-range-progress {
+  height: 5px;
+  border-radius: 99px;
+  background: var(--salty-fill-accent, var(--salty-accent));
+}
+.salty-slider input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
+}
+
+/* 미리보기 */
+.salty-sample {
+  padding: 14px 16px !important;
+  background: var(--salty-fill-bg, var(--salty-bg));
+  border-radius: var(--r-md);
+}
+.salty-sample p.salty-sample-more {
+  margin-top: 0.6em !important;
+  font-size: 0.9em !important;
+  color: var(--salty-muted);
+}
+/* 메뉴 글꼴 미리보기: 실제 메뉴 글꼴 · 메뉴 크기 (본문 미리보기와 달리 이 창·실리태번 화면 글자를 보여 줌) */
+.salty-uisample {
+  padding: 12px 14px;
+  background: var(--salty-fill-bg, var(--salty-bg));
+  border-radius: var(--r-md);
+  font-family: var(--salty-font-ui);
+  font-size: var(--salty-ui-size, var(--mainFontSize, 15px));
+  line-height: 1.5;
+}
+.salty-uisample p {
+  margin: 0 !important;
+}
+.salty-uisample p + p {
+  margin-top: 0.45em !important;
+}
+.salty-uisample b {
+  font-weight: 700;
+}
+.salty-uisample p:last-child {
+  font-size: 0.88em;
+  color: var(--salty-muted);
+}
+
+/* 글꼴 고르기: 언어 네 줄이 한 장 안에, 고른 줄 아래로 목록이 펼쳐짐 */
+.salty-fontrows {
+  padding: 4px;
+  background: var(--salty-fill-bg, var(--salty-bg));
+  border-radius: var(--r-md);
+}
+.salty-fontrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--salty-text);
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+.salty-fontrow small {
+  flex: none;
+  width: 3.4em;
+  font-size: var(--fs-cap);
+  font-weight: 600;
+  color: var(--salty-muted);
+}
+.salty-fontrow strong {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--fs-name);
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.salty-fontrow strong .auto {
+  font-family: var(--salty-font-ui);
+  font-size: var(--fs);
+  color: var(--salty-muted);
+}
+.salty-fontrow::after {
+  content: "›";
+  color: var(--salty-faint);
+  font-size: calc(19 * var(--sp));
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+.salty-fontrow:not(.open):active {
+  background: var(--salty-fill-shade, var(--shade));
+}
+@media (hover: hover) {
+  .salty-fontrow:not(.open):hover {
+    background: var(--salty-fill-shade, var(--shade));
+  }
+}
+.salty-fontrow.open {
+  background: var(--salty-fill-tint-bg-12, var(--salty-tint-bg-12));
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+}
+.salty-panel.in-popup .salty-fontrow.open {
+  background: var(--salty-fill-tint-12, var(--salty-tint-12));
+}
+.salty-fontrow.open::after {
+  transform: rotate(90deg);
+}
+.salty-fontlist {
+  margin-bottom: 2px;
+  border-radius: 0 0 var(--r-sm) var(--r-sm);
+  background: transparent;
+  overflow: hidden; /* 안쪽 스크롤을 다시 쓰므로 넘치는 것은 잘라냄 */
+}
+/* 찾기 + 묶음 태그: 목록을 밀어도 탭 줄 바로 아래에 붙어 있음.
+   목록 자체는 창과 같이 흐름 → 스크롤바가 하나 (예전에는 목록 안에 또 스크롤이 생겨 폰에서 두 개로 보였음) */
+.salty-fonthead {
+  /* 안쪽 스크롤 상자 바로 위에 있어서 sticky 없이도 늘 보임 (sticky 를 걸면 팝업 스크롤과 엉킴) */
+  background: var(--salty-fill-bg, var(--salty-bg));
+}
+.salty-panel.in-popup .salty-fonthead {
+  background: var(--salty-fill-surface-shade, var(--salty-surface-shade));
+}
+.salty-fontsearch {
+  padding: 8px 8px 6px;
+}
+.salty-fontsearch input {
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 8px 12px !important;
+  border: 0 !important;
+  border-radius: var(--r-sm) !important;
+  background: var(--salty-fill-surface, var(--salty-surface)) !important;
+  color: var(--salty-text) !important;
+  font: inherit !important;
+  box-shadow: var(--salty-well-in) !important; /* 오목한 칸 */
+  outline: none !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.salty-fontsearch input:focus {
+  box-shadow: var(--ring), var(--salty-well-in) !important;
+}
+/* 묶음 태그: 검색칸 바로 아래 한 줄, 옆으로 밀기 (스크롤바 없음) */
+.salty-fonttags {
+  position: relative;
+  display: flex;
+  gap: 6px;
+  padding: 2px 8px 8px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  /* 더 밀 수 있는 쪽 끝만 흐리게 (폭은 panel.js 가 남은 거리만큼, 최대 28px) */
+  --salty-fade-l: 0px;
+  --salty-fade-r: 0px;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--salty-fade-l), #000 calc(100% - var(--salty-fade-r)), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 var(--salty-fade-l), #000 calc(100% - var(--salty-fade-r)), transparent);
+}
+.salty-fonttags::-webkit-scrollbar {
+  display: none;
+}
+.salty-fonttags button,
+.salty-fontempty button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 99px;
+  background: var(--salty-fill-surface, var(--salty-surface));
+  box-shadow: var(--salty-e2);
+  color: var(--salty-muted);
+  font-size: var(--fs-chip);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+.salty-fonttags button span,
+.salty-fontempty button span {
+  font-size: var(--fs-small);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--salty-faint);
+}
+@media (hover: hover) {
+  .salty-fonttags button:not(.on):hover,
+  .salty-fontempty button:hover {
+    color: var(--salty-text);
+  }
+}
+.salty-fonttags button.on {
+  background: var(--salty-fill-accent, var(--salty-accent));
+  box-shadow: 0 1px 2px var(--salty-accent-28), 0 4px 10px -4px var(--salty-accent-70);
+  color: var(--salty-on-accent);
+}
+.salty-fonttags button.on span {
+  color: inherit;
+  opacity: 0.72;
+}
+.salty-fonttags button.none:not(.on) {
+  opacity: 0.5;
+  box-shadow: none;
+}
+.salty-fontscroll {
+  /* 목록이 1000개라 흐르게 두면 한 칸이 수만 픽셀이 되어 아래 설정에 닿을 수 없음 → 안쪽 스크롤 유지.
+     "스크롤바가 두 개로 보인다" 는 문제는 안쪽 바를 눈에서만 없애 해결 (손가락 · 마우스 휠은 그대로 됨).
+     max-height 를 없애면 폰 블록의 60dvh 가 남아 스크롤 없이 넘쳐 뒤 요소와 겹쳤음 — 그 사고를 되돌림 */
+  max-height: min(52svh, 520px);
+  overflow-y: auto;
+  /* contain 을 걸지 않음: 목록 끝에 닿으면 다음 손가락은 창 전체를 밀어 아래 언어(한자 …) 칸까지 감 (2.4.2, 사용자 요청) */
+  overscroll-behavior: auto;
+  scrollbar-width: none;
+}
+.salty-fontscroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.salty-fontgroup h5 {
+  /* 안쪽 스크롤 안에서 묶음 이름이 위에 붙어 따라옴 */
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 9px 12px 4px;
+  background: var(--salty-fill-bg, var(--salty-bg));
+  color: var(--salty-muted);
+  font-size: var(--fs-small);
+  font-weight: 700;
+}
+.salty-panel.in-popup .salty-fontgroup h5 {
+  background: var(--salty-fill-surface-shade, var(--salty-surface-shade));
+}
+.salty-fontgroup h5 span {
+  margin-left: 4px;
+  font-weight: 500;
+  color: var(--salty-faint);
+}
+.salty-fontlist.one .salty-fontgroup h5 {
+  display: none;
+}
+.salty-fontitem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--salty-text);
+  text-align: left;
+  transition: background-color 0.12s ease;
+}
+.salty-fontitem[hidden],
+.salty-fontgroup[hidden],
+.salty-fontempty button[hidden] {
+  display: none !important;
+}
+.salty-fontitem:active {
+  background: var(--salty-fill-shade, var(--shade));
+}
+@media (hover: hover) {
+  .salty-fontitem:hover {
+    background: var(--salty-fill-shade, var(--shade));
+  }
+}
+.salty-fontitem.on {
+  background: var(--salty-fill-accent-13, var(--salty-accent-13));
+}
+.salty-fontinfo {
+  flex: 1;
+  min-width: 0;
+}
+.salty-fontinfo b {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: var(--fs-chip);
+  font-weight: 650;
+  color: var(--salty-muted);
+}
+.salty-fontitem.on .salty-fontinfo b {
+  color: var(--salty-accent);
+}
+.salty-fontinfo b i {
+  font-style: normal;
+  font-weight: 500;
+  color: var(--salty-faint);
+}
+.salty-fontinfo b em {
+  padding: 1px 6px;
+  border-radius: 99px;
+  background: var(--salty-fill-shade, var(--shade));
+  font-size: calc(10.5 * var(--sp));
+  font-style: normal;
+  font-weight: 600;
+  color: var(--salty-muted);
+}
+.salty-fontinfo small {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  font-size: var(--fs-name);
+  line-height: 1.4;
+  color: var(--salty-text);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.salty-fontitem[data-id="auto"] .salty-fontinfo small {
+  font-size: var(--fs-chip);
+  line-height: 1.4;
+  color: var(--salty-muted);
+  white-space: normal;
+}
+.salty-check-ic {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--salty-accent);
+}
+.salty-check-ic svg {
+  width: 20px;
+  height: 20px;
+}
+.salty-fontitem .salty-x {
+  flex: none;
+  padding: 4px 8px;
+  border-radius: 8px;
+  color: var(--salty-faint);
+}
+@media (hover: hover) {
+  .salty-fontitem .salty-x:hover {
+    background: var(--shade-2);
+    color: var(--salty-text);
+  }
+}
+.salty-fontempty {
+  margin: 0;
+  padding: 16px 12px;
+  color: var(--salty-muted);
+  text-align: center;
+}
+.salty-fontempty > span {
+  display: block;
+}
+.salty-fontempty button {
+  margin-top: 10px;
+}
+.salty-fontadd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 8px 10px;
+}
+
+/* 테마 카드 */
+.salty-palettes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.salty-pal {
+  display: grid;
+  gap: 8px;
+  padding: 8px 8px 10px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: var(--pal-bg);
+  color: var(--pal-text);
+  text-align: left;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pal-text) 12%, transparent);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+@media (hover: hover) {
+  .salty-pal:hover {
+    transform: translateY(-1px);
+  }
+}
+.salty-pal.on {
+  box-shadow: 0 0 0 2px var(--salty-accent), 0 0 0 5px var(--salty-accent-22);
+}
+.salty-pal-page {
+  display: block;
+  padding: 9px 9px 8px;
+  border-radius: 9px;
+  background: var(--pal-surface);
+  font-size: var(--fs-chip);
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  color: var(--pal-text);
+}
+.salty-pal-page b {
+  font-weight: 700;
+  color: var(--pal-strong, inherit); /* 실제 강조 글씨 색: 블루 아워는 레몬 */
+  box-shadow: inset 0 -0.34em var(--pal-gold);
+}
+.salty-pal-page mark {
+  /* 띠는 보통 글자 아래 절반만 — 형광펜 안 글자가 어두운 팔레트(레몬 블루 나이트)는 글자 전체를 덮어야 읽힘 (panel.js --pal-mark-top) */
+  background: linear-gradient(to bottom, transparent var(--pal-mark-top, 55%), var(--pal-marker) var(--pal-mark-top, 55%), var(--pal-marker) 94%, transparent 94%);
+  color: var(--pal-marker-ink, inherit);
+  padding: 0 0.1em;
+}
+.salty-pal-page i {
+  display: block;
+  width: 46%;
+  height: 4px;
+  margin-top: 7px;
+  border-radius: 2px;
+  background: var(--pal-pop, var(--pal-accent)); /* 두 번째 포인트(보내기 버튼 색) — 레몬 블루 · 블루 아워는 노랑 */
+}
+.salty-pal b:not(.salty-pal-page b) {
+  display: block;
+  padding: 0 2px;
+  font-size: var(--fs-chip);
+  font-weight: 700;
+}
+.salty-pal small {
+  display: block;
+  margin-top: -6px;
+  padding: 0 2px;
+  font-size: var(--fs-small);
+  color: var(--pal-muted) !important;
+}
+
+/* 색 고치기 */
+.salty-color {
+  min-height: 40px;
+  padding: 4px 0;
+}
+.salty-panel toolcool-color-picker {
+  --tool-cool-color-picker-btn-bg: transparent;
+  --tool-cool-color-picker-btn-border-color: transparent;
+  --tool-cool-color-picker-btn-border-radius: 9px;
+  --tool-cool-color-picker-btn-inner-border-radius: 7px;
+  flex: none;
+  border-radius: 9px;
+  box-shadow: inset 0 0 0 1px var(--shade-2);
+}
+/* 투명한 색(블루 아워의 강조 형광펜 = 안 씀)은 빈 윤곽으로만 보여서, 뒤에 투명 격자를 깔아 '투명'이 보이게 */
+.salty-color.clear toolcool-color-picker {
+  --chk: color-mix(in srgb, var(--salty-text) 10%, transparent);
+  background-image: conic-gradient(var(--chk) 0 25%, transparent 0 50%, var(--chk) 0 75%, transparent 0);
+  background-size: 12px 12px;
+}
+
+/* 버튼 */
+.salty-btn {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 40px;
+  height: auto;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: var(--salty-fill-shade, var(--shade));
+  color: var(--salty-text);
+  font-weight: 550;
+  transition: background-color 0.15s ease;
+}
+.salty-btn:active {
+  background: var(--shade-2);
+}
+@media (hover: hover) {
+  .salty-btn:hover {
+    background: var(--shade-2);
+  }
+}
+.salty-btn.primary {
+  background: var(--salty-fill-accent, var(--salty-accent));
+  color: var(--salty-on-accent, #fff);
+}
+/* 되돌릴 수 없는 것 (처음 설정으로) */
+.salty-btn.salty-btn-danger {
+  color: var(--danger);
+}
+.salty-btns {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end; /* 4.7.4 줄 안에서 접히면 오른쪽 끝에 붙는다 (라벨 옆에 어정쩡하게 뜨지 않게) */
+  gap: 8px;
+  min-width: 0;
+}
+.salty-btns > .salty-btn {
+  flex: 0 1 auto;
+  margin: 0;
+}
+/* 4.7.4 줄 안의 버튼 묶음은 줄어들지 않는다 — 라벨 · 설명 쪽이 접히지, 버튼이 두 줄로 쌓이지 않게 (백업 → 프리셋 공유) */
+.salty-row > .salty-btns {
+  flex: none;
+  max-width: 68%;
+}
+.bl-palette-actions { margin-top: 12px; }
+.bl-palette-actions > .salty-btn { flex: 1 1 180px; }
+
+/* 설정 점검 */
+.salty-checks:empty {
+  display: none;
+}
+.salty-checks {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.salty-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: var(--salty-fill-tint-12, var(--salty-tint-12));
+  font-size: var(--fs-chip);
+  line-height: 1.4;
+}
+.salty-check span {
+  flex: 1;
+}
+.salty-check .salty-btn {
+  flex: none;
+  padding: 6px 10px;
+  background: var(--salty-fill-surface, var(--salty-surface));
+}
+
+/* 이 창을 띄운 팝업의 '닫기': 포인트색을 채우면 어느 설정보다 닫기가 커 보여서,
+   팝업 보조 단추(취소)와 같은 조용한 면으로. 다른 팝업의 확인 단추는 그대로 포인트색 */
+.popup:has(.salty-panel.in-popup) .popup-controls .menu_button.popup-button-ok:not(.redWarningBG) {
+  background: var(--bl-fill-well, var(--bl-well)) !important;
+  box-shadow: none !important;
+  color: var(--salty-text) !important;
+}
+@media (hover: hover) {
+  .popup:has(.salty-panel.in-popup) .popup-controls .menu_button.popup-button-ok:not(.redWarningBG):hover {
+    background: var(--bl-fill-hover, var(--bl-hover)) !important;
+  }
+}
+.popup:has(.salty-panel.in-popup) .popup-controls .menu_button.popup-button-ok:not(.redWarningBG):active {
+  background: var(--bl-press-bg, var(--bl-hover)) !important;
+  box-shadow: var(--bl-press) !important;
+}
+.popup:has(.salty-panel.in-popup) .popup-controls .menu_button.popup-button-ok:not(.redWarningBG):focus-visible {
+  box-shadow: var(--bl-ring) !important;
+}
+
+/* ---------- 폰: 한 단계 촘촘하게 (손가락 닿는 칸은 36px 이상 유지) ---------- */
+@media screen and (max-width: 1000px) {
+  .salty-panel {
+    --fs: calc(13 * var(--sp));
+    --fs-tab: calc(12.5 * var(--sp));
+    --fs-chip: calc(12 * var(--sp));
+    --fs-cap: calc(11.5 * var(--sp));
+    --fs-small: calc(11 * var(--sp));
+    --fs-num: calc(13.5 * var(--sp));
+    --fs-name: calc(15 * var(--sp));
+    --gap: 8px;
+    --pad: 12px;
+    --row-h: 42px;
+    --num-h: 32px;
+    --pp: 12px;
+    padding: var(--pp);
+  }
+  .salty-head {
+    gap: 9px;
+    margin-bottom: 10px;
+  }
+  .salty-mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+  }
+  .salty-mark svg {
+    /* 판을 없앤 뒤로는 칸(34px) 안에서 레몬이 너무 작아 보여서 키움 */
+    width: 26px;
+    height: 26px;
+  }
+  .salty-label {
+    margin: 14px 4px 5px;
+  }
+  .salty-subs button {
+    height: 30px;
+    padding: 0 9px; /* 글자 탭 소분류 여섯 칸이 390px 한 줄에 들어가게 */
+  }
+  .salty-tabs button {
+    padding: 6px 5px;
+  }
+  .salty-sample {
+    padding: 12px 14px !important;
+  }
+  .salty-num input[type="number"] {
+    width: 4.8em !important;
+  }
+  .salty-palettes {
+    gap: 8px;
+  }
+  /* 팝업으로 띄운 설정 창: 좁은 폰에서 둘레 여백을 줄여 본문 폭을 넓게 */
+  .popup:has(.salty-panel.in-popup) {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+}
+
+/* ---------- 폰 ---------- */
+@media screen and (max-width: 1000px) {
+  body.salty #chat .mes {
+    padding-top: 12px !important;
+  }
+  .salty-palettes {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .salty-fontscroll {
+    max-height: 60dvh;
+  }
+}

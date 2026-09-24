@@ -1,0 +1,978 @@
+/* ===== css/14-prompt.css =====
+   AI 응답 설정 서랍 · 프롬프트 관리자 · 프롬프트 편집 시트 · API 서랍.
+   ===== */
+/* ===== 실리태번 화면: AI 응답 설정 · 프롬프트 관리자 (surfaces:prompt) ===== */
+/* AI 응답 설정 서랍 · 프롬프트 관리자 · 프롬프트 편집 시트 · API 서랍
+   · 묶음은 카드(e1): 프리셋 / 샘플러 / 고급 설정 / 로짓 바이어스 — 카드 안 입력칸은 오목한 칸
+   · 숫자는 오른쪽 84px 칸(슬라이더 숫자칸과 같음), 한 줄 고르기는 값만 흐린 글자 + 꺾쇠
+   · 프롬프트 목록은 카드 없이 판판하게: 서랍 양끝까지 닿는 줄, 한 줄 걸러 옅은 톤, 켜기 없는 표시줄은 오목한 띠
+     칸 = ☰ · 이름(본문 크기) · 토큰 · 빼기 · 고치기 · 켜기 스위치(오른쪽 끝) — 좌우 여백은 양쪽 16 으로 같게
+     표시줄은 이름이 조작 칸까지 차지, 셈 없는 토큰(-)은 비움, 두 줄 이름은 줄 길이를 고르게 */
+
+/* ---------- 서랍 틀 ---------- */
+body.salty #left-nav-panel {
+  padding: 0 !important;
+}
+body.salty #left-nav-panel > .scrollableInner {
+  padding: var(--bl-s2) var(--bl-gutter) var(--bl-s8) !important;
+}
+/* 스크롤 위에 떠서 내용을 가리던 안내 한 줄 · 도움말 ? (실리태번이 켜고 끄지 않는 고정 요소) */
+body.salty #left-nav-panel > :is(#clickSlidersTips, .topRightInset) {
+  display: none;
+}
+/* 잠금(데스크톱만 — 폰은 실리태번이 숨김): 반투명 24px 자물쇠 대신 조용한 34px 아이콘, 잠김은 포인트색 */
+body.salty #left-nav-panel > #lm_button_panel_pin_div {
+  padding: var(--bl-s1) 0 0 calc(var(--bl-gutter) - 9px) !important;
+  opacity: 1 !important;
+  line-height: 0;
+}
+body.salty #left-nav-panel #lm_button_panel_pin_div > label {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: var(--bl-h-icon);
+  height: var(--bl-h-icon);
+  border-radius: var(--bl-r-sm);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+body.salty #left-nav-panel #lm_button_panel_pin_div .right_menu_button {
+  padding: 0 !important;
+  font-size: 16px !important;
+  line-height: 1;
+  color: var(--salty-muted) !important;
+}
+@media (hover: hover) {
+  body.salty #left-nav-panel #lm_button_panel_pin_div > label:hover {
+    background: var(--bl-fill-hover, var(--bl-hover));
+  }
+  body.salty #left-nav-panel #lm_button_panel_pin_div > label:hover .right_menu_button {
+    color: var(--salty-text) !important;
+  }
+}
+body.salty #left-nav-panel #lm_button_panel_pin:checked + label {
+  background: var(--salty-fill-accent-10, var(--salty-accent-10));
+}
+body.salty #left-nav-panel #lm_button_panel_pin:checked + label .right_menu_button {
+  color: var(--salty-accent) !important;
+}
+
+/* ---------- 묶음 카드 ---------- */
+body.salty #left-nav-panel :is(#respective-presets-block > div > div:has(> .standoutHeader), #range_block_openai, #openai_settings > div:not(.range-block), #openai_settings > .range-block.m-t-1) {
+  margin: 0 0 var(--bl-s3) !important;
+  padding: var(--bl-s1) var(--bl-inset) !important;
+  border: 0 !important;
+  border-radius: var(--bl-r-md) !important;
+  background: var(--bl-fill-card, var(--bl-card)) !important;
+  box-shadow: var(--bl-e1) !important;
+}
+/* 카드 안 입력칸: 오목한 칸 (한 줄 고르기 · 프롬프트 목록은 따로) */
+body.salty #left-nav-panel :is(#respective-presets-block, #range_block_openai, #openai_settings) :is(.text_pole, select, textarea, input:is([type="text"], [type="number"], [type="search"])):where(:not(ul, ol, .oneline-dropdown > select)) {
+  background-color: var(--bl-well) !important;
+  box-shadow: var(--bl-well-in) !important;
+}
+body.salty #left-nav-panel :is(#respective-presets-block, #range_block_openai, #openai_settings) :is(.text_pole, select, textarea, input:is([type="text"], [type="number"], [type="search"])):where(:not(ul, ol, .oneline-dropdown > select)):focus {
+  background-color: var(--salty-surface) !important;
+  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+}
+
+/* ---------- 카드 속 줄 리듬 ---------- */
+body.salty #left-nav-panel :is(#range_block_openai, #openai_settings) .range-block {
+  margin: 0 !important;
+}
+/* 스위치 줄 설명: 이름에 붙이고 다음 줄과는 띄움 */
+body.salty #left-nav-panel :is(#range_block_openai, #openai_settings) .range-block > .toggle-description {
+  margin: -6px 0 var(--bl-s3) !important;
+  padding: 0 2px;
+}
+body.salty #left-nav-panel .toggle-description :is(strong, b) {
+  font-weight: 600;
+  color: var(--salty-text);
+}
+body.salty #left-nav-panel .toggle-description a {
+  color: var(--salty-accent) !important;
+  text-decoration: none;
+}
+/* 카드 속 hr: 선 대신 카드 끝까지 닿는 옅은 띠 (≡ 메뉴 칸 나눔과 같은 모양) */
+body.salty #left-nav-panel #range_block_openai > hr {
+  height: 5px !important;
+  margin: 8px 0 !important;
+  background: transparent !important;
+  opacity: 1 !important;
+}
+body.salty #left-nav-panel #range_block_openai > .inline-drawer {
+  margin-top: 0 !important;
+}
+/* 오픈라우터 최대 비용 같은 한 줄 정보 */
+body.salty #left-nav-panel #range_block_openai > div[data-source]:not(.range-block) {
+  padding: var(--bl-s1) 2px;
+  font-size: var(--bl-fs-sub);
+  color: var(--salty-muted);
+}
+/* 제목 속 작은 글자(도구 호출 반복 한도) · 옆 i 아이콘 */
+body.salty #left-nav-panel .range-block-title > small {
+  font-size: inherit !important;
+  color: inherit !important;
+}
+body.salty #left-nav-panel .range-block-title > .fa-circle-info {
+  margin: 0 0 0 6px !important;
+  font-size: 14px;
+}
+
+/* ---------- 프리셋 카드: 이름줄(흐린 이름 + 조용한 아이콘) · 고르기 줄 ---------- */
+body.salty #left-nav-panel #respective-presets-block .standoutHeader {
+  align-items: center;
+  min-height: var(--bl-h-icon);
+  margin: 2px 0 0 !important;
+  padding: 0 0 0 2px !important;
+}
+body.salty #left-nav-panel #respective-presets-block .standoutHeader > .flex-container {
+  gap: 0 !important;
+  margin-right: -8px;
+}
+body.salty #left-nav-panel #respective-presets-block .standoutHeader + .flex-container {
+  align-items: center;
+  padding: 2px 0 10px;
+}
+body.salty #left-nav-panel #respective-presets-block .standoutHeader + .flex-container > .flex-container {
+  gap: 0 !important;
+  margin: 0 -8px 0 var(--bl-s1) !important;
+}
+/* 프리셋-연결 묶기 켜짐: 옅은 포인트 면 (실리태번의 --active 색 대신) */
+body.salty #left-nav-panel label[for="bind_preset_to_connection"]:has(input:checked) {
+  background: var(--salty-fill-accent-10, var(--salty-accent-10)) !important;
+  color: var(--salty-accent) !important;
+}
+
+/* 슬라이더 이름: 숫자칸과 세로 가운데 맞춤 */
+body.salty #left-nav-panel .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-title {
+  display: flex;
+  align-items: center;
+}
+
+/* ---------- 숫자 하나 줄(최대 응답 길이 · 스와이프 수 · 시드): 이름 왼쪽 · 숫자칸 오른쪽 — 구조가 맞을 때만 ---------- */
+body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--bl-s3);
+  row-gap: 0;
+  padding: 7px 0 !important;
+}
+/* 3.0.0: 여기 있던 규칙 'body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type=…' 은 css/99-lazy-panel.css 로 옮김 (서랍 · 팝업이 열렸을 때만 켜짐) */
+body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .range-block-title {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  width: auto !important;
+  min-height: var(--bl-h-num);
+  justify-content: flex-start !important;
+  text-align: left !important;
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 500;
+}
+body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p {
+  grid-column: 2;
+  grid-row: 1;
+  width: 84px !important;
+}
+body.salty #left-nav-panel :is(#range_block_openai, #openai_settings) .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .toggle-description {
+  grid-row: 2;
+  margin: 2px 0 0 !important;
+}
+body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p > input {
+  width: 100% !important;
+  height: var(--bl-h-num) !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 6px !important;
+  border-radius: 8px !important;
+  font-size: var(--bl-fs-ctl) !important;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* ---------- 한 줄 고르기(추론 강도 · 상세도 · 이미지 품질 등): 이름 왼쪽 · 값은 흐린 글자 + 꺾쇠 ---------- */
+body.salty #left-nav-panel #openai_settings .flex-container.flexFlowColumn:has(> .oneline-dropdown) {
+  margin: 0 !important;
+  text-align: left;
+}
+body.salty #left-nav-panel #openai_settings .oneline-dropdown {
+  align-items: center;
+  column-gap: var(--bl-s3) !important;
+  row-gap: 0 !important;
+}
+body.salty #left-nav-panel #openai_settings .oneline-dropdown > label {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--bl-h-row);
+  margin: 0 !important;
+  font-size: var(--bl-fs-body);
+  color: var(--salty-text);
+}
+body.salty #left-nav-panel #openai_settings .oneline-dropdown > label .fa-circle-question {
+  font-size: 14px;
+  color: var(--salty-faint) !important;
+  opacity: 1 !important;
+}
+body.salty #left-nav-panel #openai_settings .oneline-dropdown > select {
+  flex: 0 1 auto;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 45%;
+  height: var(--bl-h-icon);
+  min-height: var(--bl-h-icon);
+  margin: 0 !important;
+  padding: 0 26px 0 10px !important;
+  background-color: transparent !important;
+  background-position: right 6px center !important;
+  box-shadow: none !important;
+  color: var(--salty-muted) !important;
+  font-weight: 500;
+  text-align: right;
+  text-align-last: right;
+}
+@media (hover: hover) {
+  body.salty #left-nav-panel #openai_settings .oneline-dropdown > select:hover {
+    background-color: var(--bl-hover) !important;
+    color: var(--salty-text) !important;
+  }
+}
+body.salty #left-nav-panel #openai_settings .oneline-dropdown > select:focus-visible {
+  box-shadow: var(--bl-ring) !important;
+}
+body.salty #left-nav-panel #openai_settings .oneline-dropdown > :is(.toggle-description, strong) {
+  flex: 1 1 100%;
+  margin: -6px 0 var(--bl-s3) !important;
+  padding: 0 2px;
+}
+
+/* ---------- 여닫는 줄 + 현재 값(캐릭터 이름 방식 · 이어쓰기 구분자): 값은 오른쪽에 흐리게 ---------- */
+body.salty #left-nav-panel #openai_settings .inline-drawer-header > .flex-container {
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  gap: 6px;
+  min-width: 0;
+}
+body.salty #left-nav-panel #openai_settings .inline-drawer-header > .flex-container > small {
+  flex: 0 1 auto !important;
+  margin-left: auto;
+  font-size: var(--bl-fs-ctl) !important;
+  font-weight: 500;
+  color: var(--salty-muted) !important;
+  white-space: nowrap;
+}
+/* 라디오 선택지: 이름 + 아래 설명 (설명은 이름 줄에 맞춤) */
+body.salty #left-nav-panel #openai_settings .inline-drawer-content > label.checkbox_label:has(> input[type="radio"]) {
+  min-height: 0;
+  padding: var(--bl-s2) 2px;
+  gap: 2px 10px !important;
+}
+body.salty #left-nav-panel #openai_settings .inline-drawer-content > label.checkbox_label > input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+body.salty #left-nav-panel #openai_settings .inline-drawer-content > label.checkbox_label > small {
+  padding-left: 28px;
+  font-size: var(--bl-fs-sub) !important;
+  line-height: 1.45;
+  color: var(--salty-muted) !important;
+}
+/* 모델 지원 표시: 초록 · 금색 대신 포인트색 · 흐린 호박 */
+body.salty #left-nav-panel [data-cc-toggle] > i {
+  font-size: 14px;
+}
+body.salty #left-nav-panel [data-cc-toggle] > .icon-supported {
+  color: var(--salty-accent) !important;
+}
+body.salty #left-nav-panel [data-cc-toggle] > .icon-unsupported {
+  color: var(--bl-warn) !important;
+}
+
+/* ---------- 로짓 바이어스 카드: 제목 · 설명 · 프리셋 줄 ---------- */
+body.salty #left-nav-panel #logit_bias_openai {
+  align-items: center;
+  min-height: var(--bl-h-ctl);
+  padding-top: 2px;
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 600;
+}
+body.salty #left-nav-panel #logit_bias_openai + .toggle-description {
+  margin-top: -4px !important;
+}
+body.salty #left-nav-panel .openai_logit_bias_preset_form {
+  align-items: center;
+  gap: 0 !important;
+  width: 100%;
+  padding: var(--bl-s2) 0 2px;
+}
+body.salty #left-nav-panel .openai_logit_bias_preset_form > select {
+  flex: 1 1 auto;
+  margin: 0 var(--bl-s1) 0 0 !important;
+}
+body.salty #left-nav-panel .openai_logit_bias_preset_form > i.menu_button {
+  margin: 0 !important;
+}
+body.salty #left-nav-panel .openai_logit_bias_preset_form > i.menu_button:last-of-type {
+  margin-right: -8px !important;
+}
+
+/* ---------- 프롬프트 관리자: 카드 없이 판판한 목록 ---------- */
+/* 좌우 기준선: 제목 · 알약 · 고르기 · 아이콘의 바깥 끝은 양쪽 모두 서랍 여백(16),
+   목록 줄만 서랍 양끝까지 닿고 줄 안 여백이 같은 16 — ☰ 와 켜기 스위치가 양쪽 같은 거리 */
+body.salty #left-nav-panel #openai_settings #completion_prompt_manager > .range-block {
+  --pm-x: var(--bl-gutter);        /* 줄 안 좌우 여백 */
+  --pm-handle: 20px;               /* ☰ 칸 (폰) — 글자가 15px 이라 20 으로 줄이고 4 는 이름 칸에 보탬 */
+  --pm-icon: 18px;                 /* 이름 앞 종류 아이콘 칸 (내어쓰기) */
+  /* 3.0.0: --pm-ctl → css/27-compact.css (같은 선택자 규칙이 덮음) */
+  /* --pm-ctl: 실측: 빼기 34 + 틈 6 + 고치기 34 + 켜기 스위치 38 */
+  --pm-tok: 46px;                  /* 실측: '12,345' 글자 37.5 + 좌우 여백 8 (44 는 다섯 자리에서 넘쳤음) */
+  --pm-gap: 4px;                   /* 칸 사이 틈 — 토큰 왼쪽 여백 6 이 더 벌려 줌 */
+  --pm-alt: var(--salty-field);    /* 한 줄 걸러 톤 */
+  --pm-group: var(--salty-raised); /* 묶음 머리줄 띠 (밝은 테마: 한 톤 깊은 파랑) */
+  margin: var(--bl-s1) 0 0 !important; /* 위 카드 아래 여백 12 + 4 = 이름표 위 16 */
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+body.salty.salty-dark #left-nav-panel #openai_settings #completion_prompt_manager > .range-block {
+  --pm-group: var(--bl-page); /* 어두운 테마: 시트 톤(더 깊은 남색) */
+}
+body.salty #completion_prompt_manager .completion_prompt_manager_error {
+  margin: 0 0 var(--bl-s2) !important;
+  padding: var(--bl-s3) var(--bl-inset) !important;
+  border: 0 !important;
+  border-radius: 12px;
+  background: var(--bl-warn-bg);
+  color: var(--salty-text);
+  font-size: var(--bl-fs-sub);
+}
+body.salty #completion_prompt_manager .completion_prompt_manager_error .fa-solid {
+  color: var(--bl-warn) !important;
+}
+/* 제목줄: 서랍의 다른 묶음 이름(OpenAI 사전 설정)과 같은 12.5 흐린 이름표 + 토큰 합계 알약 */
+body.salty #completion_prompt_manager .completion_prompt_manager_header {
+  align-items: center;
+  gap: var(--bl-s2);
+  min-height: var(--bl-h-icon);
+  margin: 0 !important;
+  padding: 0 0 0 2px !important;
+  color: var(--salty-muted) !important;
+}
+body.salty #completion_prompt_manager .completion_prompt_manager_header > div {
+  margin: 0 !important;
+}
+body.salty #completion_prompt_manager .completion_prompt_manager_header > .completion_prompt_manager_header_advanced {
+  margin: 0 !important;
+  font-size: var(--bl-fs-cap);
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  color: var(--salty-muted);
+}
+body.salty #completion_prompt_manager .completion_prompt_manager_header_advanced span {
+  margin: 0 !important;
+  filter: none !important;
+}
+body.salty #completion_prompt_manager .completion_prompt_manager_header > div:last-child {
+  padding: 4px 12px;
+  border-radius: var(--bl-r-pill);
+  background: var(--bl-fill-hover, var(--bl-hover));
+  font-size: var(--bl-fs-cap);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--salty-muted);
+}
+/* 도구줄: 넣을 프롬프트 고르기 + 조용한 아이콘 (좁으면 아이콘은 아랫줄 오른쪽) */
+body.salty #completion_prompt_manager .completion_prompt_manager_footer {
+  /* 3.0.0: flex-wrap · gap · padding → css/27-compact.css (같은 선택자 규칙이 덮음) */
+  align-items: center;
+  justify-content: flex-end;
+  margin: 0 !important;
+}
+/* 3.0.0: 여기 있던 규칙 'body.salty #completion_prompt_manager .completion_prompt_manager_footer > select' 은 지움 — flex · min-width · margin → css/27-compact.css (같은 선택자 규칙이 덮음) */
+/* 시트 위 칸이라 떠 있는 입력칸 (카드 속 오목한 칸 규칙을 되돌림) */
+body.salty #left-nav-panel #openai_settings #completion_prompt_manager .completion_prompt_manager_footer > select {
+  background-color: var(--bl-control) !important;
+  box-shadow: var(--bl-e1) !important;
+}
+body.salty #left-nav-panel #openai_settings #completion_prompt_manager .completion_prompt_manager_footer > select:focus {
+  background-color: var(--salty-surface) !important;
+  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+}
+body.salty #completion_prompt_manager .completion_prompt_manager_footer > .menu_button {
+  margin: 0 !important;
+}
+body.salty #completion_prompt_manager .completion_prompt_manager_footer > select + .menu_button {
+  margin-left: 6px !important;
+}
+/* 마지막 아이콘의 글자 끝을 기준선에 */
+/* 3.0.0: 여기 있던 규칙 'body.salty #completion_prompt_manager .completion_prompt_manager_footer > .menu_…' 은 지움 — margin-right → css/27-compact.css (같은 선택자 규칙이 덮음) */
+/* 지우기 · 되돌리기: 평소엔 흐리게, 누를 때만 흐린 호박 (실리태번의 빨강 · 노랑 대신) */
+body.salty #completion_prompt_manager .completion_prompt_manager_footer > :is(.caution, #prompt-manager-reset-character) {
+  color: var(--salty-muted) !important;
+}
+@media (hover: hover) {
+  body.salty #completion_prompt_manager .completion_prompt_manager_footer > :is(.caution, #prompt-manager-reset-character):hover {
+    color: var(--bl-warn) !important;
+  }
+}
+body.salty #completion_prompt_manager .completion_prompt_manager_footer > :is(.caution, #prompt-manager-reset-character):active {
+  color: var(--bl-warn) !important;
+}
+
+/* 목록 띠: 서랍 양끝까지 닿는 카드 면, 톤으로만 나눔 — 카드 그림자(e1)의 윗면 빛 · 1px 그림자는 끝까지 닿으면 선으로 보여 뺌 */
+body.salty #completion_prompt_manager #completion_prompt_manager_list {
+  /* 3.0.0: width · margin → css/27-compact.css (같은 선택자 규칙이 덮음) */
+  /* width: 실리태번 .text_pole 의 100% 를 넘어 서랍 양끝까지 */
+  max-width: none !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: var(--bl-fill-card, var(--bl-card)) !important;
+  box-shadow: none !important;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li {
+  margin: 0 !important;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_list_separator {
+  display: none;
+}
+/* 칸: 이름 · 토큰 · 조작 — 실리태번 순서(조작 · 토큰)를 바꿔 켜기 스위치를 오른쪽 끝에 (설정 스위치와 같은 자리)
+   머리줄과 모든 줄이 같은 칸 폭이라 빼기 · 고치기 · 켜기가 줄마다 세로로 맞음.
+   토큰 셈이 없는 줄 · 조작이 없는 줄도 칸은 그대로 자리를 지킴 (이름 칸 = 남는 폭 전부: 360 에서 134, 390 에서 164) */
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li:is(.completion_prompt_manager_list_head, .completion_prompt_manager_prompt) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) var(--pm-tok) var(--pm-ctl) !important;
+  column-gap: var(--pm-gap) !important;
+  align-items: center !important;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li > :is(.completion_prompt_manager_prompt_name, span:first-child:not(.drag-handle)) {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li > .prompt_manager_prompt_tokens {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  text-align: right;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li > :is(span:has(> .prompt_manager_prompt_controls), span:nth-child(2):empty) {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+  width: var(--pm-ctl);
+}
+/* 이름 · 토큰 머리: 띠 맨 위의 작은 이름표 (이름 글자 · 토큰 숫자와 같은 칸) */
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_list_head {
+  min-height: 34px;
+  padding: 5px var(--pm-x) 5px calc(var(--pm-x) + var(--pm-icon)) !important;
+  font-size: var(--bl-fs-cap);
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  color: var(--salty-muted);
+}
+/* 머리 글자가 아래로 처져 보이던 것 → 줄 높이 맞춰 가운데 (align 에서 옮겨 옴) */
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_list_head > span {
+  line-height: 1;
+  align-self: center;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_list_head .prompt_manager_prompt_tokens {
+  padding: 0 2px 0 6px;
+  font-size: inherit !important;
+}
+/* 프롬프트 줄: 선 · 테두리 없이 한 줄 걸러 옅은 톤 */
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt {
+  position: relative;
+  min-height: var(--bl-h-row);
+  padding: 6px var(--pm-x) !important;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent;
+  transition: box-shadow 0.15s ease;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:nth-child(even) {
+  background: var(--pm-alt);
+}
+/* 폰(☰ 있음): 이름을 ☰ 칸만큼 밀어냄 */
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(> .drag-handle.ui-sortable-handle) {
+  padding-left: calc(var(--pm-x) + var(--pm-handle)) !important;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list:has(.drag-handle.ui-sortable-handle) > li.completion_prompt_manager_list_head {
+  padding-left: calc(var(--pm-x) + var(--pm-handle) + var(--pm-icon)) !important;
+}
+/* 묶음 머리줄(켜기가 없는 표시용 줄 — 프리셋의 🔹제목🔹 같은 줄): 시트 톤의 오목한 띠, 이름은 굵게
+   · 조작이 없으니 이름이 토큰 · 조작 칸까지 차지 (빈 아이콘 자리는 접고, 빼기만 있으면 오른쪽 끝에)
+   · 머리줄끼리 붙으면 한 띠로: 맞닿는 위 · 아래 안쪽 그림자를 빼서 사이에 선이 생기지 않게 */
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) {
+  --pm-top: inset 0 7px 8px -8px var(--salty-shadow);
+  --pm-bot: inset 0 -7px 8px -8px var(--salty-shadow);
+  grid-template-columns: minmax(0, 1fr) auto var(--pm-ctl) !important;
+  background: var(--pm-group);
+  box-shadow: var(--pm-top), var(--pm-bot);
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) + li:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) {
+  --pm-top: inset 0 0 transparent;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)):has(+ li .prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) {
+  --pm-bot: inset 0 0 transparent;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) .completion_prompt_manager_prompt_name :is(.prompt-manager-inspect-action, span:not(.fa-solid)) {
+  font-weight: 650;
+}
+@media (hover: hover) {
+  body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:hover {
+    box-shadow: inset 0 0 0 100vmax var(--bl-hover);
+  }
+  body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)):hover {
+    box-shadow: var(--pm-top), var(--pm-bot), inset 0 0 0 100vmax var(--bl-hover);
+  }
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list .drag-handle {
+  left: 0;
+  width: calc(var(--pm-x) + var(--pm-handle));
+  justify-content: flex-start;
+  padding: 0 0 0 var(--pm-x) !important;
+  color: var(--salty-faint);
+  font-size: 15px;
+}
+/* 끌어 옮기는 줄은 떠오르고(e4), 놓일 자리는 옅은 포인트 면 */
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.ui-sortable-helper {
+  background: var(--bl-fill-overlay, var(--bl-overlay)) !important;
+  box-shadow: var(--bl-e4) !important;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.ui-sortable-placeholder {
+  visibility: visible !important;
+  background: var(--bl-fill-selected, var(--bl-selected)) !important;
+  box-shadow: none !important;
+}
+/* 이름: 딱 한 줄 — 칸을 넘치는 긴 이름만 끝을 … 로 줄임 (한글 낱말이 반으로 갈리지 않음)
+   종류 아이콘은 왼쪽 18 칸에 따로 떠 있어 머리 '이름' 글자와 시작이 같음. 위아래 5 = 한 줄 46 높이 그대로 */
+body.salty #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt_name {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 5px 0 5px var(--pm-icon);
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  font-size: var(--bl-fs-body);
+  line-height: 1.4;
+  color: var(--salty-text);
+}
+/* … 는 이름 글자에만 — 뒤에 붙는 작은 표시(역할 · 깊이 · 카드에서 가져옴)는 줄어들지 않고 그대로 보이게 */
+body.salty #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt_name > :is(a.prompt-manager-inspect-action, span:not([class])) {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt_name > :is(.fa-solid[data-role], .prompt-manager-injection-depth, .prompt-manager-overridden) {
+  flex: none;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt_name .prompt-manager-inspect-action {
+  color: var(--salty-text) !important;
+  font-weight: 500;
+  text-decoration: none !important;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_important .completion_prompt_manager_prompt_name .prompt-manager-inspect-action {
+  font-weight: 650;
+}
+@media (hover: hover) {
+  body.salty #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt_name .prompt-manager-inspect-action:hover {
+    color: var(--salty-accent) !important;
+  }
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt_name .fa-solid {
+  filter: none !important;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt_name > .fa-solid:first-child {
+  position: absolute;
+  top: 5px;
+  left: 0;
+  width: 14px;
+  height: calc(var(--bl-fs-body) * 1.4);
+  margin: 0 !important;
+  font-size: 12px;
+  line-height: calc(var(--bl-fs-body) * 1.4);
+  text-align: center;
+  color: var(--salty-faint) !important;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt_name .fa-solid[data-role] {
+  margin: 0 0 0 5px !important;
+  font-size: 10px;
+  vertical-align: 2px;
+  color: var(--salty-faint) !important;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt_name > .fa-solid.fa-star {
+  color: var(--bl-lemon) !important;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt_name .prompt-manager-overridden {
+  margin: 0 0 0 5px !important;
+  color: var(--salty-accent) !important;
+  opacity: 1 !important;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt_name .prompt-manager-injection-depth {
+  margin-left: 5px;
+  font-size: var(--bl-fs-micro);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--salty-faint);
+}
+/* 꺼진 줄: 이름 · 숫자 흐리게 (꺼진 스위치와 함께 구분) */
+body.salty #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt_disabled :is(.completion_prompt_manager_prompt_name, .completion_prompt_manager_prompt_name .prompt-manager-inspect-action, .completion_prompt_manager_prompt_name > span:not(.fa-solid), .prompt_manager_prompt_tokens) {
+  color: var(--salty-faint) !important;
+}
+/* 오른쪽 조작(빼기 · 고치기 · 켜기): 실측 폭의 고정 칸(빼기 40 = 34 + 틈 6 · 고치기 34 · 켜기 38)에
+   버튼을 번호로 못 박아 둠 — 못 쓰는 버튼 자리(실리태번이 넣는 빈 span)가 있어도 칸이 밀리지 않음 */
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt_manager_prompt_controls {
+  display: grid !important;
+  /* 3.0.0: grid-template-columns → css/27-compact.css (같은 선택자 규칙이 덮음) */
+  column-gap: 0 !important;
+  align-items: center !important;
+  justify-items: start !important;
+  width: var(--pm-ctl) !important;
+  margin: 0 0 0 auto !important;
+  font-size: 14px;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt_manager_prompt_controls > span {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px !important;
+  height: 34px !important;
+  margin: 0 !important;
+  border-radius: 8px;
+  opacity: 1 !important;
+  filter: none !important;
+  color: var(--salty-faint);
+  font-size: 13px !important;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+/* 못 쓰는 버튼 대신 들어오는 빈 span 은 숨김 (칸은 아래 번호로 지켜짐) */
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt_manager_prompt_controls > span:not([class*="-action"]) {
+  display: none !important;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt_manager_prompt_controls > .prompt-manager-edit-action {
+  grid-column: 2;
+  color: var(--salty-muted);
+}
+/* 연결 끊기: 지우는 짓이라 쉴 때도 빨강(--bl-danger) — 핀 · 별표 · 고치기는 그대로 조용한 색 */
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt_manager_prompt_controls > .prompt-manager-detach-action {
+  grid-column: 1;
+  color: var(--bl-danger) !important;
+}
+@media (hover: hover) {
+  body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt_manager_prompt_controls > :is(.prompt-manager-detach-action, .prompt-manager-edit-action):hover {
+    background: var(--bl-fill-hover, var(--bl-hover));
+    color: var(--salty-text);
+  }
+  /* #left-nav-panel 을 더해 뒤쪽 surfaces:semantic 의 같은 규칙(쉴 때 조용한 빨강)을 이김 */
+  body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt_manager_prompt_controls > .prompt-manager-detach-action:hover {
+    background: var(--bl-danger-soft) !important;
+    color: var(--bl-danger) !important;
+  }
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt_manager_prompt_controls > :is(.prompt-manager-detach-action, .prompt-manager-edit-action):active {
+  background: var(--bl-fill-press-bg, var(--bl-press-bg));
+}
+/* 누르면 꽉 찬 빨강 + 밝은 글자 — 두 팔레트 모두 또렷 (레몬에이드 #D0231A/흰 · 블루 아워 #FF5247/남색) */
+body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt_manager_prompt_controls > .prompt-manager-detach-action:active {
+  background: var(--bl-danger) !important;
+  color: var(--bl-danger-ink) !important;
+}
+/* 켜기: 글꼴 아이콘 대신 설정 스위치와 같은 색 · 그림자의 38×22 스위치 (줄이 많아 한 단 작게), 오른쪽 끝을 기준선에 */
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt_manager_prompt_controls > .prompt-manager-toggle-action {
+  grid-column: 3;
+  /* 3.0.0: width → css/27-compact.css (같은 선택자 규칙이 덮음) */
+  color: transparent !important;
+  font-size: 0 !important;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action::before {
+  content: '' !important;
+  position: absolute;
+  top: 50%;
+  /* 3.0.0: left · width · height · margin-top · border-radius · background · box-shadow · transition → css/27-compact.css (같은 선택자 규칙이 덮음) */
+}
+/* 레몬에이드: 흰 줄 · 옅은 파랑 줄 어느 쪽에서도 꺼진 칸이 보이게 한 단 진하게 (켜짐 규칙이 뒤에 있어 켜진 색은 그대로) */
+/* 3.0.0: 여기 있던 규칙 'body.salty:not(.salty-dark) #completion_prompt_manager #completion_prompt_manage…' 은 지움 — background → css/27-compact.css (같은 선택자 규칙이 덮음) */
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  /* 3.0.0: left · width · height · margin-top · border-radius · background · box-shadow · transition → css/27-compact.css (같은 선택자 규칙이 덮음) */
+}
+/* 3.0.0: 여기 있던 규칙 'body.salty #completion_prompt_manager #completion_prompt_manager_list li.complet…' 은 지움 — background · box-shadow → css/27-compact.css (같은 선택자 규칙이 덮음) */
+/* 3.0.0: 여기 있던 규칙 'body.salty #completion_prompt_manager #completion_prompt_manager_list li.complet…' 은 지움 — transform → css/27-compact.css (같은 선택자 규칙이 덮음) */
+/* 토큰 수: 이름과 조작 사이, 자리 맞춘 숫자 — 부족 경고는 흐린 호박 */
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt_manager_prompt_tokens {
+  padding: 0 2px 0 6px;
+  font-size: var(--bl-fs-sub) !important;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--salty-muted);
+}
+/* 셈이 없는 줄(-)은 칸을 비움: 줄표가 목록 가운데 세로줄로 늘어서지 않고 이름이 그만큼 넓어짐 (부족 경고가 붙은 줄은 둠) */
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt_manager_prompt_tokens[data-pm-tokens="-"]:not(:has(.text_danger, .text_warning)) {
+  display: none;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list .prompt_manager_prompt_tokens :is(.text_danger, .text_warning) {
+  margin-right: 4px;
+  font-size: 12px;
+  color: var(--bl-warn) !important;
+}
+
+/* ---------- 프롬프트 편집 · 살펴보기 시트 ---------- */
+body.salty #completion_prompt_manager_popup {
+  padding: var(--bl-s2) var(--bl-gutter) var(--bl-s6) !important;
+  word-break: keep-all; /* 설명 줄 · 칸 이름 · 살펴보기 카드에서 한글 낱말이 반으로 갈리지 않게 */
+  overflow-wrap: break-word;
+}
+body.salty #completion_prompt_manager_popup :is(#completion_prompt_manager_popup_edit, #completion_prompt_manager_popup_inspect) {
+  padding: 0 !important;
+}
+body.salty #completion_prompt_manager_popup :is(#completion_prompt_manager_popup_edit, #completion_prompt_manager_popup_inspect) > h3 {
+  margin: 6px 2px var(--bl-s3) !important;
+}
+body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry {
+  padding: 0 !important;
+}
+/* 칸 배치: 좁으면 두 칸씩, 이름은 한 줄 전체 */
+body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form > .flex-container {
+  gap: 0 var(--bl-s3) !important;
+}
+body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_control {
+  flex: 1 1 140px;
+  min-width: 0;
+  margin: 0 !important;
+  padding-bottom: var(--bl-s4);
+}
+body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_control:has(> #completion_prompt_manager_popup_entry_form_name) {
+  flex-basis: 100%;
+}
+/* 칸 이름 · 설명 */
+body.salty #completion_prompt_manager_popup :is(.completion_prompt_manager_popup_entry_form_control > label, label[for="completion_prompt_manager_popup_entry_form_prompt"], .completion_prompt_manager_popup_header > label) {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 2px 6px;
+  font-size: var(--bl-fs-ctl);
+  font-weight: 650;
+  color: var(--salty-text);
+}
+body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_control > label > i {
+  font-size: 13px;
+  color: var(--salty-faint);
+}
+body.salty #completion_prompt_manager_popup .text_muted {
+  margin-top: 6px;
+  padding: 0 2px;
+  font-size: var(--bl-fs-sub);
+  line-height: 1.45;
+  color: var(--salty-muted) !important;
+}
+/* 트리거(여러 개 고르기): 폰 실리태번의 50px 상한을 풀어 여섯 개가 다 보이게 — 칸은 한 줄 전체 (역할 옆에 긴 상자가 서지 않게) */
+body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_control:has(> #completion_prompt_manager_popup_entry_form_injection_trigger) {
+  flex-basis: 100%;
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_injection_trigger {
+  width: 100% !important;
+  height: auto !important;
+  background-image: none !important; /* 실리태번 꺾쇠 그림이 목록 오른쪽 가운데에 남지 않게 */
+  min-height: 0 !important;
+  max-height: none !important;
+  field-sizing: content;
+}
+/* 고르지 않은 선택지는 칸 면 그대로 — 둥근 선택지 상자가 겹쳐 사이가 줄처럼 보이지 않게 (고른 줄의 옅은 포인트 면은 그대로) */
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_injection_trigger option:not(:checked) {
+  background: transparent;
+}
+/* 깊이 · 순서: 실리태번이 visibility 로만 숨겨 빈자리가 남음 → 숨겨졌을 때만 자리도 접음 */
+body.salty #completion_prompt_manager_popup :is(#completion_prompt_manager_depth_block, #completion_prompt_manager_order_block)[style*="visibility: hidden"] {
+  display: none;
+}
+/* 프롬프트 칸 머리: 이름 + 덮어쓰기 금지 체크 */
+body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_control > .flex-container.alignItemsCenter {
+  gap: 0 var(--bl-s3);
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_forbid_overrides_block label.checkbox_label {
+  gap: var(--bl-s2);
+  padding: 0 2px 6px;
+  font-size: var(--bl-fs-sub);
+  color: var(--salty-muted);
+}
+body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_control:has(#completion_prompt_manager_popup_entry_form_prompt:disabled) > div:first-child::after {
+  flex-basis: 100%;
+  margin: var(--bl-s1) 0 var(--bl-s2);
+  padding: var(--bl-s3) var(--bl-inset);
+  border-radius: 12px;
+  background: var(--bl-fill-hover, var(--bl-hover));
+  font-size: var(--bl-fs-sub);
+  font-weight: 500;
+  text-align: left;
+  color: var(--salty-muted);
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_source_block {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  margin: 0 0 var(--bl-s2);
+  padding: var(--bl-s2) var(--bl-s3);
+  border-radius: var(--bl-r-sm);
+  background: var(--bl-fill-hover, var(--bl-hover));
+  font-size: var(--bl-fs-sub);
+  color: var(--salty-muted);
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_source_block > b {
+  font-weight: 600;
+  color: var(--salty-text);
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_prompt {
+  min-height: max(240px, 42dvh) !important;
+}
+/* 아래 버튼: 닫기(왼쪽, 조용히) · 되돌리기(흐린 호박) · 저장(이 시트의 확인 = 포인트색 채움) */
+body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_footer {
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--bl-s2);
+  margin-top: var(--bl-s2) !important;
+  padding-bottom: var(--bl-s4); /* 시트 아래 둥근 끝에 닿지 않게 (내용이 넘치는 칸이라 바깥 여백이 안 먹음) */
+}
+body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_footer > .menu_button {
+  min-width: var(--bl-h-lg) !important;
+  min-height: var(--bl-h-lg) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 12px !important;
+  font-size: 17px !important;
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_close {
+  margin-right: auto !important;
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_reset {
+  color: var(--bl-warn) !important;
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_save {
+  min-width: 88px !important;
+  background: var(--salty-fill-accent, var(--salty-accent)) !important;
+  box-shadow: var(--bl-accent-lift) !important;
+  color: var(--salty-on-accent, #fff) !important;
+}
+@media (hover: hover) {
+  body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_save:hover {
+    background: var(--salty-fill-accent-press, var(--salty-accent-press)) !important;
+  }
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_save:active {
+  background: var(--salty-fill-accent-press, var(--salty-accent-press)) !important;
+  box-shadow: var(--bl-press) !important;
+}
+/* 살펴보기: 머리줄(이름 + 닫기) · 메시지마다 여닫는 카드 */
+body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_header {
+  gap: var(--bl-s2);
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_close_button {
+  flex: none;
+  padding: 0 !important;
+  font-size: var(--bl-ic) !important;
+}
+/* 검사 목록 스타일은 surfaces:promptlist 에서 함께 관리한다. */
+
+/* ---------- API 서랍 ---------- */
+/* API 제목: 연결 프로필 아래 칸 제목 — 위를 띄워 묶음을 나눔 */
+body.salty #rm_api_block > #title_api {
+  /* 3.0.0: margin → css/27-compact.css (같은 선택자 규칙이 덮음) */
+  font-size: var(--bl-fs-head) !important;
+}
+body.salty #rm_api_block .notes-link .note-link-span {
+  font-size: 15px;
+  vertical-align: 2px;
+}
+/* 프로필 줄: 고르기 + 조용한 아이콘, 오른쪽 끝 맞춤 */
+body.salty #rm_api_block .flex-container:has(> #connection_profiles) {
+  align-items: center;
+  gap: 0 !important;
+  margin-top: var(--bl-s2);
+}
+body.salty #rm_api_block #connection_profiles {
+  margin: 0 var(--bl-s1) 0 0 !important;
+}
+body.salty #rm_api_block .flex-container:has(> #connection_profiles) > .menu_button {
+  margin: 0 !important;
+}
+body.salty #rm_api_block .flex-container:has(> #connection_profiles) > .menu_button:last-child {
+  margin-right: -8px !important;
+}
+/* API 키 줄(입력칸 + 열쇠): 열쇠 글자 끝을 입력칸 끝과 같은 기준선에 */
+body.salty #rm_api_block .flex-container:has(> .text_pole + .manage-api-keys:last-child) {
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: var(--bl-s1) !important;
+}
+body.salty #rm_api_block .flex-container > .text_pole + .manage-api-keys:last-child {
+  margin: 0 -8px 0 0 !important;
+}
+/* 도움말 속 코드: 옅은 알약 */
+body.salty #rm_api_block small code {
+  padding: 1px 6px;
+  border: 0 !important;
+  border-radius: 6px;
+  background: var(--bl-fill-hover, var(--bl-hover)) !important;
+  color: var(--salty-muted) !important;
+  font-size: 0.92em;
+}
+body.salty #rm_api_block small :is(b, strong) {
+  font-weight: 600;
+  color: var(--salty-muted);
+}
+/* 연결 · 추가 설정 · 테스트: 줄을 채우는 같은 높이 칩 */
+body.salty #rm_api_block .flex-container:has(> .api_button) {
+  gap: var(--bl-s2) !important;
+  margin: var(--bl-s4) 0 var(--bl-s1);
+}
+body.salty #rm_api_block .flex-container:has(> .api_button) > .menu_button {
+  flex: 1 1 auto;
+  justify-content: center;
+  margin: 0 !important;
+}
+/* 연결 상태: 빨강 · 초록 점 대신 호박(끊김) · 포인트색(연결) 점 + 둘레 빛 */
+body.salty #rm_api_block .online_status {
+  gap: var(--bl-s2);
+  margin: var(--bl-s3) 0 var(--bl-s2) !important;
+  opacity: 1 !important;
+  font-size: var(--bl-fs-ctl);
+  color: var(--salty-muted);
+}
+body.salty #rm_api_block .online_status_indicator {
+  flex: none;
+  width: 8px !important;
+  height: 8px !important;
+  margin: 0 4px;
+  background-color: var(--bl-warn) !important;
+  box-shadow: 0 0 0 4px var(--bl-warn-halo);
+}
+body.salty #rm_api_block .online_status_indicator.success {
+  background-color: var(--salty-accent) !important;
+  box-shadow: none;
+}
+body.salty #rm_api_block .online_status_text {
+  margin-left: 2px !important;
+}
+body.salty #rm_api_block #viewSecrets {
+  padding: 6px 2px;
+  font-size: var(--bl-fs-ctl);
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--salty-accent) !important;
+}
+/* ===== /surfaces:prompt ===== */

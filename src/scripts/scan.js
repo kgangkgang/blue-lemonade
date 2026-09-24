@@ -1,7 +1,7 @@
 // 4.7.1 남은 영어 찾기: 실리태번 서랍 · 안쪽 접이식 패널을 잠깐 열어 화면에 남은 라틴 글자 UI 를 모은다.
 // 결과를 붙여 보내면 한글화 사전에 넣을 수 있다 — 사용자가 어디서 영어를 봤는지 일일이 알려 주지 않아도 되게.
 // 채팅 본문 · 캐릭터 · 페르소나 · 배경 목록 · 프롬프트 목록 · 태그 · 입력칸(사용자 글)은 보지 않는다.
-const SKIP = '#chat, .cg-root, #rm_print_characters_block, #user_avatar_block, #bg_menu_content, #completion_prompt_manager, .tag, #qr--bar, .llmt-gl-list, script, style, noscript, textarea, input, code, pre, #character_popup_text, .mes_text, #salty-drawer, .salty-panel, .bl-scripts, #version_display';
+const SKIP = '#pt-panel, .pt-help-dialog, #chat, .cg-root, #rm_print_characters_block, #user_avatar_block, #bg_menu_content, #completion_prompt_manager, .tag, #qr--bar, .llmt-gl-list, script, style, noscript, textarea, input, code, pre, #character_popup_text, .mes_text, #salty-drawer, .salty-panel, .bl-scripts, #version_display';
 const TOP = ['#leftNavDrawerIcon', '#ai-config-button', '#advanced-formatting-button', '#WI-SP-button', '#user-settings-button', '#backgrounds-button', '#extensions-settings-button', '#persona-management-button', '#rightNavDrawerIcon'];
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const vis = el => { if (!el || !el.getClientRects().length) return false; const cs = getComputedStyle(el); return cs.visibility !== 'hidden' && cs.opacity !== '0'; };

@@ -1,0 +1,78 @@
+/* ===== css/33-panel-columns.css =====
+   3.3.0 설정 창 두 열 (사용자: "PC는 짧은 것들 세로 2줄로, 채도 · 밝기 같은 파라미터는 모바일도 2줄로").
+   - 폰 · 좁은 화면: 묶음 안의 슬라이더(이름 · 숫자칸 · 막대)끼리 두 열. 스위치 줄 · 고르기 · 설명은 전체 폭 그대로
+   - PC 팝업(화면 1001px 이상의 테마 설정 팝업): 스위치 · 버튼 줄(.salty-row)과 슬라이더를 두 열. 확장 서랍 속 설정 창은 폭이 좁아 그대로
+   - 혼자 떨어진 짧은 칸(앞뒤에 짝이 없는 것)은 전체 폭 — 오른쪽 반이 비지 않게
+   숫자칸은 값 글자 수만큼 (아래 규칙) — 두 열에서도 짧은 값은 좁게
+   ===== */
+@media (max-width: 1000px) {
+  .salty-panel .salty-group:has(> .salty-slider + .salty-slider) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 14px;
+  }
+  /* 4.1.2: '혼자 떨어진 칸은 전체 폭' 규칙은 css/99-lazy-panel.css 로 (오른쪽 끝 :not() + 왼쪽 :has()) */
+  .salty-panel .salty-group:has(> .salty-slider + .salty-slider) > .salty-slider header {
+    gap: 6px;
+  }
+}
+@media (min-width: 1001px) {
+  .salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+  }
+  /* 4.1.2: 전체 폭 규칙은 css/99-lazy-panel.css 로 */
+  /* 3.5.0 슬라이더와 한 줄에 선 짧은 줄(색 칸 · 스위치)은 칸 가운데가 아니라 위 — 옆 슬라이더의 이름 줄과 나란히
+     (사용자: "PC 색깔 팔레트 위치가 애매" — 그림자 색 칸이 투명도 슬라이더 옆에서 이름 · 막대 사이에 떠 있었다) */
+  .salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > .salty-row {
+    align-self: start;
+  }
+}
+
+/* 3.5.1 PC 팝업의 색 칸: 이름 옆 남은 폭을 다 채운 긴 막대 (사용자: "PC 색깔을 색 옆에 쭉 길게 직사각형으로").
+   toolcool 견본 크기는 panel.js 가 button-width/height 에 var(--bl-sw-w/h) 를 넣어 두어 여기서 정한다 (그림자 안까지 변수가 내려감) */
+@media (min-width: 1001px) {
+  .salty-panel.in-popup .salty-row:is(.salty-color, :has(> input[type="color"])) {
+    gap: 16px;
+  }
+  /* 막대는 칸 폭의 절반으로 오른쪽에 — 이름 길이가 달라도 줄마다 막대 시작이 나란함 */
+  .salty-panel.in-popup .salty-row:is(.salty-color, :has(> input[type="color"])) > span {
+    flex: 1 1 0;
+  }
+  .salty-panel.in-popup .salty-row.salty-color > toolcool-color-picker {
+    --bl-sw-w: 100%;
+    --bl-sw-h: 34px;
+    --bl-sw-p: 0;
+    --tool-cool-color-picker-btn-border-radius-inner: 8px;
+    --tool-cool-color-picker-btn-border-color-inner: color-mix(in srgb, var(--salty-text) 14%, transparent);
+    display: block;
+    flex: 0 0 50%;
+    min-width: 0;
+    height: 34px;
+    line-height: 0;
+    border-radius: 8px;
+    box-shadow: none;
+  }
+  .salty-panel.in-popup .salty-row > input[type="color"][data-color-path] {
+    flex: 0 0 50%;
+    width: auto;
+    min-width: 0;
+    height: 34px;
+  }
+}
+
+/* 3.3.0 예시 칸 스크롤바: PC 에서 흰 막대로 튀던 것 → 옅은 글자색 */
+body.salty :is(#salty-nochat, .salty-preview):not([data-prev="img"]),
+.salty-prevbox > :is(.salty-sample, .salty-uisample) {
+  scrollbar-color: color-mix(in srgb, var(--salty-text) 26%, transparent) transparent;
+}
+
+/* 3.3.0 숫자칸이 값 길이에 맞게 (사용자: "자간 -0.0075 로 했는데 숫자가 잘려 보인다") — 고정 폭(5.2 · 3.8em)이
+   소수 넷째 자리 음수를 못 담았다. panel.js 가 값 글자 수를 --num-ch 로 적고 폭은 그만큼 (1ch = 숫자 한 칸, 양옆 여백 9px 씩).
+   field-sizing: content 는 숫자칸에서 값이 바뀐 폭을 따라가지 않아 쓰지 않는다 */
+.salty-panel .salty-num input[type="number"][data-num] {
+  width: calc(var(--num-ch, 4) * 1ch + 20px) !important;
+  min-width: 3.4em;
+  max-width: 8em;
+}

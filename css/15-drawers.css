@@ -1,0 +1,1727 @@
+/* ===== css/15-drawers.css =====
+   그 밖의 서랍: 사용자 설정 · 확장 · 고급 서식 · 배경 · 확장들의 설정 칸 (surfaces:sweep).
+   ===== */
+/* ===== 실리태번 화면: 그 밖의 서랍 (월드 인포 · 페르소나 · 확장 · 사용자 설정 · API) (surfaces:sweep) ===== */
+/* 사용자 설정 · 확장 · 고급 서식 · 배경 — 묶음은 카드(e1), 카드 안 입력칸은 오목한 칸, 줄은 46px
+   · 묶음 이름(h4)이 묶음 안에 있으면 카드 첫 줄, 드롭다운 줄은 이름 왼쪽 · 값 오른쪽
+   · 실리태번이 숨기는 칸에는 display !important 없음 */
+
+/* ---------- 공용: 카드 ---------- */
+/* 목록은 :where(0점) — 아래 화면별 규칙이 여백을 바꿀 수 있게 */
+body.salty :where(
+  #user-settings-block #UI-presets-block,
+  #user-settings-block [name="AvatarAndChatDisplay"],
+  #user-settings-block [name="themeElements"] > .inline-drawer,
+  #user-settings-block [name="FontBlurChatWidthBlock"],
+  #user-settings-block [name="themeToggles"],
+  #user-settings-block #UI-Customization > div[name],
+  #user-settings-block #power-user-option-checkboxes > div[name],
+  #AdvancedFormatting #ContextSettings > div,
+  #AdvancedFormatting #InstructSettingsColumn,
+  #AdvancedFormatting #SystemPromptColumn > div:not([id]),
+  #rm_extensions_block #extensions_settings:has(.inline-drawer),
+  #rm_extensions_block #extensions_settings2:has(.inline-drawer),
+  #rm_extensions_block .extensions_block > .flex-container:first-child > label.checkbox_label
+) {
+  margin: 0 0 var(--bl-s3) !important;
+  padding: var(--bl-s1) var(--bl-inset) !important;
+  border: 0 !important;
+  border-radius: var(--bl-r-md) !important;
+  background: var(--bl-fill-card, var(--bl-card)) !important;
+  background-image: none !important;
+  box-shadow: var(--bl-e1) !important;
+}
+/* 카드 안 입력칸: 오목한 칸 */
+body.salty :is(#user-settings-block-content, #AdvancedFormatting) :is(.text_pole, select, textarea, input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"]), .neo-range-input):where(:not(#send_textarea, .select2-search__field, .salty-panel *, ul, ol)) {
+  background-color: var(--bl-well) !important;
+  box-shadow: var(--bl-well-in) !important;
+}
+body.salty :is(#user-settings-block-content, #AdvancedFormatting) :is(.text_pole, select, textarea, input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"]), .neo-range-input):where(:not(#send_textarea, .select2-search__field, .salty-panel *, ul, ol)):focus {
+  background-color: var(--salty-surface) !important;
+  box-shadow: var(--bl-ring) !important;
+}
+/* 카드 첫 줄 묶음 이름: 위 여백은 카드 안쪽으로 */
+body.salty :is(#user-settings-block #UI-presets-block, #user-settings-block #UI-Customization > div[name], #user-settings-block #power-user-option-checkboxes > div[name], #AdvancedFormatting #ContextSettings > div, #AdvancedFormatting #InstructSettingsColumn, #AdvancedFormatting #SystemPromptColumn > div:not([id]), #AdvancedFormatting [name="tokenizerSelectorBlock"]) > h4:first-child {
+  min-height: var(--bl-h-icon);
+  margin: 0 !important;
+  padding: 10px 2px 2px !important;
+}
+body.salty :is(#user-settings-block, #AdvancedFormatting) h4 :is(.title_restorable, .flex-container) {
+  gap: 0;
+}
+/* 제목 · 묶음 이름 옆 ? 아이콘은 작고 흐리게 */
+body.salty :is(#user-settings-block, #AdvancedFormatting, #rm_extensions_block, #Backgrounds) :is(h3, h4, label, small) .note-link-span {
+  font-size: 13px !important;
+  color: var(--salty-faint) !important;
+}
+body.salty :is(#user-settings-block, #AdvancedFormatting) h3 .note-link-span {
+  font-size: 16px !important;
+}
+body.salty :is(#user-settings-block, #AdvancedFormatting) :is(h3, h4) .notes-link {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+}
+/* 스위치 줄 이름: 속에 한 겹 더 싸인 글자(span · div 속 small)도 줄 이름 크기 */
+body.salty :is(#user-settings-block, #AdvancedFormatting) label.checkbox_label:where(:not(.salty-panel *)) :is(small, span):where(:not(.fa-solid, .fa-regular, .fa-brands, .menu_button, .menu_button *, .note-link-span)) {
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 500;
+  color: var(--salty-text) !important;
+  opacity: 1 !important;
+}
+body.salty :is(#user-settings-block, #AdvancedFormatting) label.checkbox_label:where(:not(.salty-panel *)) :is(i, .fa-solid, .fa-brands):where(:not(.menu_button, .note-link-span)) {
+  margin: 0 !important;
+  font-size: 13px !important;
+  color: var(--salty-faint) !important;
+  opacity: 1 !important;
+}
+
+/* ---------- 드롭다운 줄: 이름 왼쪽 · 값 오른쪽(흐린 글자 + 꺾쇠) ---------- */
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)),
+body.salty #user-settings-block-content #MovingUI-presets-block label[for="movingUIPresets"],
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) {
+  display: flex;
+  flex-flow: row nowrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: var(--bl-s3) !important;
+  min-height: var(--bl-h-row);
+  margin: 0 !important;
+  padding: 0 !important;
+}
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > :is(span, small, label),
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > label small,
+body.salty #user-settings-block-content #MovingUI-presets-block label[for="movingUIPresets"] > small,
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) :is(small, label) {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 500 !important;
+  line-height: 1.35;
+  color: var(--salty-text) !important;
+  opacity: 1 !important;
+}
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) select,
+body.salty #user-settings-block-content #MovingUI-presets-block label[for="movingUIPresets"] select,
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) select {
+  flex: 1 1 0% !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: var(--bl-h-icon) !important;
+  min-height: var(--bl-h-icon) !important;
+  margin: 0 !important;
+  padding: 0 26px 0 8px !important;
+  background-color: transparent !important;
+  background-position: right 6px center !important;
+  box-shadow: none !important;
+  color: var(--salty-muted) !important;
+  font-size: var(--bl-fs-body);
+  text-align: right;
+  text-align-last: right;
+  text-overflow: ellipsis;
+  field-sizing: content;
+}
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) select:focus-visible,
+body.salty #user-settings-block-content #MovingUI-presets-block label[for="movingUIPresets"] select:focus-visible,
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) select:focus-visible {
+  box-shadow: var(--bl-ring) !important;
+}
+body.salty #user-settings-block-content [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container:has(> .flex1 select) {
+  flex-direction: column;
+  gap: 0 !important;
+}
+body.salty #user-settings-block-content [name="AutoCompleteToggle"] .inline-drawer-content .flex1 > .flex-container:has(> select),
+body.salty #user-settings-block #MovingUI-presets-block label[for="movingUIPresets"] > .flex-container {
+  flex: 1 1 0% !important;
+  min-width: 0;
+  max-width: none;
+  justify-content: flex-end;
+}
+body.salty #user-settings-block-content :is([name="AutoCompleteToggle"] .inline-drawer-content .flex1 > .flex-container, #MovingUI-presets-block label[for="movingUIPresets"] > .flex-container) > select {
+  max-width: 100% !important;
+}
+/* 자동완성 글자 크기: 이름 왼쪽 · 숫자 오른쪽 · 막대 아래 */
+body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--bl-s2);
+  padding: 6px 0 4px;
+}
+body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > label {
+  grid-column: 1;
+  grid-row: 1;
+}
+body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > label small {
+  padding: 0 !important;
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 500 !important;
+  color: var(--salty-text) !important;
+}
+body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > .neo-range-input {
+  grid-column: 2;
+  grid-row: 1;
+  width: 72px !important;
+  margin: 0 !important;
+}
+body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > .neo-range-slider {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  width: 100% !important;
+}
+
+/* ---------- 사용자 설정: 머리 ---------- */
+/* 제목 + 언어(오른쪽 값) / 버전 한 줄 / 계정 + 찾기 */
+body.salty #user-settings-block [name="userSettingsRowOne"] {
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 0 var(--bl-s3) !important;
+  padding-top: var(--bl-s1);
+}
+body.salty #user-settings-block [name="userSettingsRowOne"] > .flex-container:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+body.salty #user-settings-block [name="userSettingsRowOne"] h3 {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+body.salty #user-settings-block #UI-language-block {
+  flex: 0 0 auto;
+  margin-left: auto;
+  align-items: center !important;
+  gap: 2px !important;
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-sub);
+}
+body.salty #user-settings-block #ui_language_select {
+  flex: 0 1 auto !important;
+  width: auto !important;
+  height: var(--bl-h-icon) !important;
+  min-height: var(--bl-h-icon) !important;
+  padding: 0 26px 0 6px !important;
+  background-color: transparent !important;
+  background-position: right 6px center !important;
+  box-shadow: none !important;
+  color: var(--salty-muted) !important;
+  font-size: var(--bl-fs-ctl);
+  field-sizing: content;
+  max-width: 210px;
+}
+body.salty #user-settings-block #ui_language_select:focus-visible {
+  box-shadow: var(--bl-ring) !important;
+}
+body.salty #user-settings-block #version_display {
+  flex: 1 1 100%;
+  margin: -2px 0 0;
+  text-align: left;
+  color: var(--salty-faint) !important;
+  font-size: var(--bl-fs-micro);
+  line-height: 1.35;
+}
+body.salty #user-settings-block [name="UserSettingsRowTwo"] {
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: var(--bl-s2) !important;
+  margin: var(--bl-s3) 0 var(--bl-s4);
+}
+body.salty #user-settings-block #account_controls {
+  flex: 0 0 auto;
+  gap: var(--bl-s2);
+}
+/* 찾기 칸: 돋보기 + 한 줄 */
+body.salty #user-settings-block #settingsSearch {
+  height: var(--bl-h-ctl) !important;
+  min-height: var(--bl-h-ctl) !important;
+  margin: 0 !important;
+  padding: 8px var(--bl-s3) 0 36px !important;
+  overflow: hidden;
+  resize: none !important;
+  line-height: 22px !important;
+  white-space: nowrap;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23808A96' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='6.5'/%3E%3Cpath d='m20 20-4.2-4.2'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: 12px center !important;
+  background-size: 16px 16px !important;
+}
+
+/* ---------- 사용자 설정: 본문 ---------- */
+body.salty #user-settings-block #user-settings-block-content {
+  align-items: flex-start;
+  column-gap: var(--bl-s4) !important;
+  row-gap: 0 !important;
+}
+body.salty #user-settings-block :is(#UI-Theme-Block, #UI-Customization, #power-user-options-block, #power-user-option-checkboxes, [name="themeElements"]) {
+  gap: 0 !important;
+}
+body.salty #user-settings-block [name="themeElements"] > hr {
+  margin: 0 !important;
+}
+/* 테마 고르기: 이름 줄 + 드롭다운 · 저장 아이콘 */
+/* 3.0.0: 여기 있던 규칙 'body.salty #user-settings-block #UI-presets-block' 은 지움 — gap · padding-bottom → 이 파일 아래 (같은 선택자 규칙이 덮음) */
+body.salty #user-settings-block #UI-presets-block > .flex-container {
+  gap: 2px !important;
+}
+body.salty #user-settings-block #UI-presets-block #themes {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-right: var(--bl-s1) !important;
+}
+/* 이름 줄 · 아이콘이 칸 위쪽 공간의 가운데에 오게(카드 위 여백 + h4 위 여백이 겹쳐 아래로 처져 보였음), 블록도 작게 (92px → 약 78px) */
+body.salty:not(#salty-none) #user-settings-block #UI-presets-block:not(#salty-none) {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+  gap: 4px !important;
+}
+body.salty:not(#salty-none) #user-settings-block #UI-presets-block:not(#salty-none) > h4:first-child {
+  min-height: 30px !important;
+  margin: 0 !important;
+  padding: 0 2px !important;
+  align-items: center !important;
+}
+body.salty:not(#salty-none) #user-settings-block #UI-presets-block:not(#salty-none) > h4:first-child .menu_button {
+  height: 30px !important;
+  min-height: 30px !important;
+}
+body.salty:not(#salty-none) #user-settings-block #UI-presets-block:not(#salty-none) > .flex-container > :is(#themes, .menu_button) {
+  height: 32px !important;
+  min-height: 32px !important;
+}
+/* 카드 속 여닫는 줄 (테마 색 · 사용자 테마 입력 · 자동 스와이프 등) */
+body.salty #user-settings-block-content .inline-drawer > .inline-drawer-header {
+  margin: 0 !important;
+}
+body.salty #user-settings-block-content .inline-drawer > .inline-drawer-content {
+  padding: 0 0 var(--bl-s3) !important;
+}
+body.salty #user-settings-block [name="themeElements"] > .inline-drawer {
+  padding-block: 0 !important;
+}
+body.salty #user-settings-block #color-picker-block > .flex-container {
+  min-height: 40px;
+  align-items: center;
+  gap: var(--bl-s3);
+  font-size: var(--bl-fs-body);
+}
+/* 색 견본: 둥근 모서리 + 옅은 톤 테두리(흰 견본이 카드에 묻히지 않게) */
+body.salty #user-settings-block #color-picker-block toolcool-color-picker {
+  --tool-cool-color-picker-btn-border-radius: 8px;
+  --tool-cool-color-picker-btn-border-radius-inner: 6px;
+  --tool-cool-color-picker-btn-border-color-inner: var(--salty-shade-2);
+}
+/* 슬라이더 넷: 폰에서 반쪽씩이면 좁아서 한 줄에 하나 */
+body.salty #user-settings-block [name="FontBlurChatWidthBlock"] {
+  gap: 0 !important;
+  padding-block: var(--bl-s2) !important;
+}
+body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
+  flex: 1 1 100% !important;
+  padding: 6px 0 4px !important;
+}
+body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 500 !important;
+}
+body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child :is(span, i, div) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child :is(i, .fa-solid) {
+  font-size: 12px !important;
+  color: var(--salty-faint) !important;
+  opacity: 1 !important;
+}
+body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
+  width: 72px !important;
+}
+body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:not(:first-child) {
+  font-size: var(--bl-fs-micro) !important;
+}
+/* 사용자 테마 입력(다른 확장이 슬라이더 칸에 끼워 넣음): 한 줄 차지 */
+body.salty #user-settings-block [name="FontBlurChatWidthBlock"] > .inline-drawer {
+  flex: 1 1 100%;
+}
+/* 스위치 두 개가 한 줄이면 폰에서 좁아서 한 줄에 하나씩 */
+body.salty #user-settings-block-content :is(.checkbox-container, .inline-drawer-content > .flex-container):has(> label.checkbox_label + label.checkbox_label) {
+  flex-wrap: wrap !important;
+  gap: 0 !important;
+}
+body.salty #user-settings-block-content :is(.checkbox-container, .inline-drawer-content > .flex-container):has(> label.checkbox_label + label.checkbox_label) > label.checkbox_label {
+  flex: 1 1 100% !important;
+}
+/* 그 밖의 설정: 실리태번은 display: contents 라 카드가 안 생김 */
+body.salty #user-settings-block [name="MiscellaneousToggles"] {
+  display: block;
+}
+body.salty #user-settings-block [name="MiscellaneousToggles"] > .flex-container.flexGap2 {
+  flex-wrap: nowrap;
+  gap: var(--bl-s2) !important;
+  padding: 2px 0 var(--bl-s2);
+}
+body.salty #user-settings-block [name="MiscellaneousToggles"] > .flex-container.flexGap2 > .menu_button {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0 !important;
+  padding: 0 var(--bl-s2) !important;
+}
+body.salty #user-settings-block [name="MiscellaneousToggles"] .menu_button small {
+  font-size: inherit !important;
+  font-weight: inherit;
+  color: inherit !important;
+}
+body.salty #user-settings-block [name="MiscellaneousToggles"] > .flex-container:has(> #movingUIModeCheckBlock) {
+  flex-wrap: nowrap;
+  gap: var(--bl-s3) !important;
+}
+body.salty #user-settings-block #movingUIreset {
+  flex: 0 0 auto;
+}
+body.salty #user-settings-block #movingUIreset > i {
+  margin: 0 !important;
+}
+body.salty #user-settings-block #MovingUI-presets-block,
+body.salty #user-settings-block #MovingUI-presets-block > .flex-container {
+  flex-wrap: nowrap;
+  align-items: center !important;
+  gap: var(--bl-s1) !important;
+  width: 100%;
+}
+body.salty #user-settings-block #MovingUI-presets-block label[for="movingUIPresets"] {
+  flex: 1 1 auto;
+}
+/* 사용자 CSS: 묶음 안 작은 이름 + 오목한 편집 칸 */
+body.salty #user-settings-block #CustomCSS-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-bottom: var(--bl-s3);
+}
+body.salty #user-settings-block #CustomCSS-block > h4 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--bl-h-icon);
+  margin: var(--bl-s2) 0 var(--bl-s1) !important;
+}
+body.salty #user-settings-block #customCSS {
+  margin: 0 !important;
+  font-size: 13px;
+}
+/* 카드 속 입력 이름(자동 스와이프 · 자동 계속 · 파서 플래그) */
+body.salty #user-settings-block-content :is(.inline-drawer-content > small, .auto_swipe > small, [name="STscriptToggles"] > div > label:not(.checkbox_label) > small) {
+  display: block;
+  padding: 10px 2px 6px;
+  font-size: var(--bl-fs-sub) !important;
+  font-weight: 600;
+  color: var(--salty-muted) !important;
+}
+body.salty #user-settings-block-content .auto_continue_settings_block > label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bl-s3);
+  min-height: var(--bl-h-row);
+}
+body.salty #user-settings-block-content .auto_continue_settings_block > label > small {
+  font-size: var(--bl-fs-body) !important;
+  color: var(--salty-text) !important;
+}
+body.salty #user-settings-block-content .auto_continue_settings_block > label > input {
+  flex: 0 0 auto;
+  width: 84px !important;
+  text-align: center;
+}
+body.salty #user-settings-block-content #smooth_streaming_speed_control .slider_hint {
+  color: var(--salty-faint);
+  font-size: var(--bl-fs-micro);
+}
+
+/* ---------- 확장 ---------- */
+body.salty #rm_extensions_block .extensions_block {
+  align-items: flex-start;
+  gap: 0 var(--bl-s4) !important;
+}
+/* 머리: 제목 → 버튼 둘 → 알림 스위치 카드 */
+body.salty #rm_extensions_block .extensions_block > .flex-container:first-child {
+  flex-wrap: wrap !important;
+  gap: var(--bl-s2) !important;
+  margin-bottom: var(--bl-s3);
+  padding-top: var(--bl-s1);
+}
+body.salty #rm_extensions_block .extensions_block > .flex-container:first-child > h3 {
+  flex: 1 1 100% !important;
+}
+body.salty #rm_extensions_block .extensions_block > .flex-container:first-child > .menu_button {
+  order: 1;
+  margin: 0 !important;
+}
+body.salty #rm_extensions_block .extensions_block > .flex-container:first-child > label.checkbox_label {
+  order: 2;
+  flex: 1 1 100% !important;
+  margin: var(--bl-s1) 0 0 !important;
+}
+/* 확장 목록: 기존 묶음은 유지하고 펼친 줄도 카드 한 단계(e1)로만 구분 */
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2):has(.inline-drawer) {
+  padding: var(--bl-s1) !important;
+}
+/* 넓은 화면에서는 확장 목록을 두 열로 흘린다 (좁으면 저절로 한 열).
+   "확장 순서" 확장이 창을 전부 첫째 칸으로 모으므로, 두 칸을 나란히 놓는 게 아니라
+   칸 하나 안을 여러 열로 흘려야 한다. columns 에 열 수와 최소 폭을 함께 주면
+   칸이 좁을 때 열 수가 저절로 1로 줄어서 질의문(미디어·컨테이너)이 필요 없다.
+   여러 열 배치는 flex 컨테이너에서 무시되므로 display 를 block 으로 바꾼다
+   (칸에 gap 이 없고 창마다 margin: 0 이라 세로 간격은 그대로다) */
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2):has(.inline-drawer) {
+  display: block;
+  columns: 2 var(--bl-ext-colw, 430px);
+  column-gap: var(--bl-s4);
+}
+/* 창 하나가 두 열에 걸쳐 반 토막 나지 않게 */
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) > :is(.inline-drawer, hr),
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .extension_container > * {
+  break-inside: avoid;
+}
+/* "확장 순서"의 고정 경계선은 두 열을 가로질러서, 위아래 묶음이 섞이지 않게 한다 */
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) > #po-divider {
+  column-span: all;
+}
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer) {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: var(--bl-r-sm) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transition: margin 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer) > .inline-drawer-header {
+  margin: 0 !important;
+  padding: 0 10px !important;
+  border-radius: var(--bl-r-sm) !important;
+  font-weight: 500;
+}
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer) > .inline-drawer-header :is(b, strong) {
+  font-weight: 500;
+}
+@media (hover: hover) {
+  body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer) > .inline-drawer-header:hover {
+    background: var(--bl-fill-hover, var(--bl-hover)) !important;
+  }
+}
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer):has(> .inline-drawer-header .inline-drawer-icon.up) {
+  margin: 6px 0 !important;
+  border-radius: var(--bl-r-md) !important;
+  background: var(--bl-fill-card, var(--bl-card)) !important;
+  box-shadow: var(--bl-e1) !important;
+}
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer):has(> .inline-drawer-header .inline-drawer-icon.up) > .inline-drawer-header {
+  border-radius: var(--bl-r-md) var(--bl-r-md) 0 0 !important;
+  font-weight: 600;
+}
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer):has(> .inline-drawer-header .inline-drawer-icon.up) > .inline-drawer-header :is(b, strong) {
+  font-weight: 600;
+}
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer) > .inline-drawer-content {
+  padding: 0 10px var(--bl-s3) !important;
+}
+/* 옛 Extras API: 조용한 묶음 */
+body.salty #rm_extensions_block .extensions_block > hr {
+  margin: 0 !important;
+}
+body.salty #rm_extensions_block .extensions_block > .flex-container.justifyCenter {
+  flex-wrap: wrap !important;
+  gap: 0 !important;
+}
+body.salty #rm_extensions_block .extensions_block > .flex-container.justifyCenter > h4 {
+  flex: 1 1 100%;
+}
+body.salty #rm_extensions_block .extensions_block > .flex-container.justifyCenter > .flex-container {
+  flex: 1 1 100%;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: space-between;
+  gap: var(--bl-s3) !important;
+}
+body.salty #rm_extensions_block #extensions_status {
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-sub);
+}
+body.salty #rm_extensions_block label[for="extensions_autoconnect"] {
+  flex: 0 1 auto !important;
+}
+body.salty #rm_extensions_block .extensions_block > .flex-container.alignitemsflexstart {
+  align-items: center !important;
+  gap: var(--bl-s2) !important;
+  margin-top: var(--bl-s1);
+}
+body.salty #rm_extensions_block #extensions_url {
+  flex: 1 1 100% !important;
+}
+body.salty #rm_extensions_block .extensions_url_block #extensions_connect {
+  margin: 0 !important;
+}
+
+/* ---------- 고급 서식 ---------- */
+body.salty #AdvancedFormatting > .flex-container:first-child {
+  flex-wrap: wrap;
+  gap: var(--bl-s2) !important;
+  padding-top: var(--bl-s1);
+}
+body.salty #AdvancedFormatting > .flex-container:first-child > h3 {
+  flex: 1 1 100% !important;
+}
+body.salty #AdvancedFormatting > .flex-container:first-child > .flex-container {
+  gap: var(--bl-s2) !important;
+}
+body.salty #AdvancedFormatting #advanced-formatting-cc-notice {
+  margin: var(--bl-s3) 0 !important;
+}
+body.salty #AdvancedFormatting > .flex-container.spaceEvenly {
+  align-items: flex-start;
+  column-gap: var(--bl-s4) !important;
+  row-gap: 0 !important;
+}
+/* 회색 처리(채팅 완성 API 에선 효과 없음): 어둡게 누르는 필터 대신 흐리게 */
+body.salty #AdvancedFormatting :is(.disabled, [data-cc-null], input:disabled, textarea:disabled, select:disabled) {
+  filter: none !important;
+}
+body.salty #AdvancedFormatting .disabled {
+  opacity: 0.5;
+}
+body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting :is(#InstructSettingsColumn, #SystemPromptColumn > h4, #SystemPromptBlock, [name="tokenizerSettingsBlock"])[data-cc-null] {
+  opacity: 1;
+}
+/* 3.0.0: 여기 있던 규칙 'body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFor…' 은 css/99-lazy-panel.css 로 옮김 (서랍 · 팝업이 열렸을 때만 켜짐) */
+/* 시스템 프롬프트: 이름(h4)과 본문이 형제라 두 조각을 이어 한 카드로 */
+body.salty #AdvancedFormatting #SystemPromptColumn > h4:first-child {
+  min-height: var(--bl-h-icon);
+  margin: 0 0 -1px !important; /* 본문 칸과 1px 겹쳐 이음새 선을 가림 */
+  padding: 10px var(--bl-inset) 2px !important;
+  border-radius: var(--bl-r-md) var(--bl-r-md) 0 0 !important;
+  background: var(--bl-fill-card, var(--bl-card)) !important;
+  box-shadow: var(--bl-e1) !important;
+  clip-path: inset(-40px -40px 0 -40px);
+}
+body.salty #AdvancedFormatting #SystemPromptColumn > #SystemPromptBlock {
+  margin: 0 0 var(--bl-s3) !important;
+  padding: var(--bl-s1) var(--bl-inset) var(--bl-s3) !important;
+  border-radius: 0 0 var(--bl-r-md) var(--bl-r-md) !important;
+  background: var(--bl-fill-card, var(--bl-card)) !important;
+  box-shadow: inset 0 1px 0 var(--bl-card), var(--bl-e1) !important;
+  clip-path: inset(0 -40px -80px -40px);
+}
+/* 묶음 이름 줄의 켜기 아이콘(⚡ · 🔗 · ⏻): 스위치 줄 높이 대신 아이콘 크기 */
+body.salty #AdvancedFormatting h4 label.checkbox_label {
+  flex: 0 0 auto !important;
+  align-self: center !important;
+  min-height: 0 !important;
+  gap: 0 !important;
+}
+body.salty #AdvancedFormatting h4 label.checkbox_label small {
+  font-size: inherit !important;
+}
+/* 템플릿 고르기: 드롭다운 + 아이콘 (좁으면 아이콘이 아래 줄 오른쪽) */
+body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) {
+  flex-wrap: wrap !important;
+  align-items: center;
+  gap: 2px var(--bl-s1) !important;
+  padding: 2px 0 var(--bl-s1);
+}
+body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) > select {
+  flex: 1 1 180px !important; /* 폰에선 아이콘이 다음 줄로 — 이름이 'Neutral - Cł' 로 잘리지 않게 */
+  min-width: 0;
+  margin: 0 !important;
+  text-overflow: ellipsis;
+}
+body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) > .flex-container {
+  flex-wrap: nowrap;
+  gap: 0 !important;
+  margin: 0 0 0 auto !important;
+}
+/* 입력 이름: 작은 흐린 이름 → 칸 */
+body.salty #AdvancedFormatting > .spaceEvenly small:where(:not(label.checkbox_label *, summary *, h4 *, .fa-solid, #context_story_string_position_block *, [name="tokenPaddingBlock"] *)) {
+  display: block;
+  padding: 10px 2px 6px;
+  font-size: var(--bl-fs-sub) !important;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--salty-muted) !important;
+  opacity: 1 !important;
+}
+body.salty #AdvancedFormatting > .spaceEvenly label.flex-container:has(> small + .editor_maximize) {
+  align-items: center;
+  justify-content: space-between;
+}
+body.salty #AdvancedFormatting > .spaceEvenly :is(small, label) :is(.fa-circle-question, .fa-question-circle) {
+  font-size: 12px !important;
+  color: var(--salty-faint) !important;
+  opacity: 1 !important;
+}
+/* 예시 구분자 · 채팅 시작, 접두 · 접미 짝: 사이 8px */
+body.salty #AdvancedFormatting > .spaceEvenly :is(.flex-container:has(> .flex1 > label), details > .flex-container, #context_story_string_inject_settings) {
+  gap: var(--bl-s2) !important;
+}
+/* 접두 · 접미 짝: 칸이 좁으면(폰) 한 줄에 하나씩 — 이름이 '접두/사' 로 꺾이지 않게 */
+body.salty #AdvancedFormatting details .flexAuto {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+/* 순서 묶음(details): 여닫는 줄 + 오른쪽 꺾쇠 */
+body.salty #AdvancedFormatting details {
+  margin: 0 !important;
+}
+body.salty #AdvancedFormatting details > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--bl-s2);
+  min-height: 42px;
+  padding: 0 26px 0 2px;
+  list-style: none;
+  cursor: pointer;
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 600;
+  color: var(--salty-text);
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23808080' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6.5 9.5 5.5 5.5 5.5-5.5'/%3E%3C/svg%3E") no-repeat right 4px center / 15px 15px;
+}
+body.salty #AdvancedFormatting details[open] > summary {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23808080' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6.5 14.5 5.5-5.5 5.5 5.5'/%3E%3C/svg%3E");
+}
+body.salty #AdvancedFormatting details > summary::-webkit-details-marker {
+  display: none;
+}
+body.salty #AdvancedFormatting details[open] {
+  padding-bottom: var(--bl-s2);
+}
+/* 토큰 여백 · 최대 추가 수: 이름 왼쪽 · 숫자칸 오른쪽 */
+body.salty #AdvancedFormatting [name="tokenPaddingBlock"] {
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between;
+  gap: var(--bl-s3) !important;
+  min-height: var(--bl-h-row);
+  margin: 0 !important;
+  padding: 0 !important;
+}
+body.salty #AdvancedFormatting [name="tokenPaddingBlock"] > .range-block-title {
+  flex: 1 1 auto;
+  width: auto !important;
+  margin: 0 !important;
+}
+body.salty #AdvancedFormatting [name="tokenPaddingBlock"] small {
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 500;
+  color: var(--salty-text) !important;
+}
+body.salty #AdvancedFormatting :is([name="tokenPaddingBlock"] > input, #reasoning_max_additions) {
+  flex: 0 0 auto !important;
+  width: 84px !important;
+  height: var(--bl-h-num) !important;
+  min-height: var(--bl-h-num) !important;
+  margin: 0 !important;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+body.salty #AdvancedFormatting .flex-container:has(> label[for^="reasoning_"]) {
+  flex-wrap: wrap !important;
+  gap: 0 !important;
+}
+/* 3.0.0: 여기 있던 규칙 'body.salty #AdvancedFormatting .flex-container:has(> label[for^="reasoning_"]) > *' 은 css/99-lazy-panel.css 로 옮김 (서랍 · 팝업이 열렸을 때만 켜짐) */
+body.salty #AdvancedFormatting .flex-container:has(> label[for^="reasoning_"]) > div:has(> #reasoning_max_additions) {
+  flex-direction: row-reverse;
+  align-items: center !important;
+  justify-content: space-between;
+  min-height: var(--bl-h-row);
+}
+body.salty #AdvancedFormatting .flex-container:has(> label[for^="reasoning_"]) > div:has(> #reasoning_max_additions) > small {
+  padding: 0 !important;
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 500;
+  color: var(--salty-text) !important;
+}
+body.salty #AdvancedFormatting [name="tokenizerSelectorBlock"] > select {
+  width: 100%;
+  margin-bottom: var(--bl-s1) !important;
+}
+
+/* ---------- 배경 ---------- */
+/* 머리: 제목 + 아이콘 / 찾기 + 맞춤 + 정렬 */
+body.salty #Backgrounds #bg-header-fixed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--bl-s1);
+  padding: var(--bl-s1) 0 var(--bl-s3) !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+body.salty #Backgrounds #bg-header-fixed :is(.bg-header-row-1, .bg-header-row-2) {
+  display: contents;
+}
+body.salty #Backgrounds #bg-header-fixed::before {
+  content: '';
+  order: 1;
+  flex-basis: 100%;
+  height: var(--bl-s2);
+}
+body.salty #Backgrounds #bg-header-fixed h3 {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+body.salty #Backgrounds #bg-header-fixed .expander {
+  flex: 0 0 0;
+}
+body.salty #Backgrounds #bg-header-fixed :is(#auto_background, #bg_add_folder_button, #add_background_button_top) {
+  margin: 0 !important;
+}
+body.salty #Backgrounds #bg-filter {
+  order: 2;
+  flex: 1 1 140px;
+  min-width: 0;
+  margin: 0 !important;
+  padding-left: 36px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23808A96' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='6.5'/%3E%3Cpath d='m20 20-4.2-4.2'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: 12px center !important;
+  background-size: 16px 16px !important;
+}
+body.salty #Backgrounds :is(#background_fitting, #bg-sort) {
+  order: 3;
+  flex: 0 0 auto;
+  width: auto !important;
+  max-width: none !important;
+  margin: 0 0 0 var(--bl-s1) !important;
+}
+body.salty #Backgrounds #bg-sort {
+  order: 4;
+}
+/* 탭: 두 칸 세그먼트 + 오른쪽 조용한 아이콘 */
+body.salty #Backgrounds :is(#bg_tabs, .bg_tab_panel) {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+body.salty #Backgrounds #bg_tabs {
+  gap: var(--bl-s2) !important;
+}
+body.salty #Backgrounds #bg_tabs .bg_tabs_list {
+  align-items: center;
+  gap: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+body.salty #Backgrounds #bg_tabs .bg_tabs_list .bg_tab_button {
+  flex: 0 0 auto;
+  min-width: 0 !important;
+  padding: 3px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: var(--bl-fill-hover, var(--bl-hover)) !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+body.salty #Backgrounds #bg_tabs .bg_tabs_list .bg_tab_button:first-of-type {
+  padding-right: 1px !important;
+  border-radius: 12px 0 0 12px !important;
+}
+body.salty #Backgrounds #bg_tabs .bg_tabs_list .bg_tab_button:nth-of-type(2) {
+  padding-left: 1px !important;
+  border-radius: 0 12px 12px 0 !important;
+}
+body.salty #Backgrounds #bg_tabs .bg_tabs_list .bg_tab_button a {
+  display: block;
+  min-width: 64px;
+  padding: 7px 16px !important;
+  border-radius: var(--bl-r-sm);
+  color: var(--salty-muted) !important;
+  font-size: var(--bl-fs-sub);
+  font-weight: 650;
+  text-align: center;
+}
+body.salty #Backgrounds #bg_tabs .bg_tabs_list .bg_tab_button.ui-tabs-active a {
+  background: var(--salty-fill-surface, var(--salty-surface));
+  box-shadow: var(--bl-e2);
+  color: var(--salty-text) !important;
+}
+body.salty.salty-dark #Backgrounds #bg_tabs .bg_tabs_list .bg_tab_button.ui-tabs-active a {
+  background: color-mix(in srgb, var(--salty-text) 18%, var(--salty-surface));
+}
+body.salty #Backgrounds #bg_tabs .heading-controls {
+  position: static !important;
+  transform: none !important;
+  align-items: center;
+  gap: 2px !important;
+  margin-left: auto;
+}
+body.salty #Backgrounds .bg_tab_panel {
+  padding: 6px 6px 72px !important;
+  background: transparent !important;
+}
+/* 썸네일: 둥근 사진 + e2, 고른 것은 틈을 둔 포인트 링 + 체크 */
+body.salty #Backgrounds :is(#bg_menu_content, #bg_custom_content, .bg_folder_grid) {
+  gap: 10px !important;
+}
+body.salty #Backgrounds :is(.bg_example, .bg_folder_tile) {
+  border: 0 !important;
+  outline: 0 !important;
+  border-radius: var(--bl-r-sm) !important;
+  background-color: var(--bl-hover) !important;
+  box-shadow: var(--bl-e2) !important;
+  filter: none !important;
+}
+body.salty #Backgrounds .bg_example .thumbnail-clipper {
+  inset: 0;
+}
+body.salty #Backgrounds .bg_example.locked-background {
+  box-shadow: 0 0 0 2px var(--bl-page), 0 0 0 4px var(--bl-lemon), var(--bl-e2) !important;
+}
+body.salty #Backgrounds .bg_example:is(.selected-background, .folder-group-selected) {
+  box-shadow: 0 0 0 2px var(--bl-page), 0 0 0 4px var(--salty-accent), var(--bl-e2) !important;
+}
+body.salty #Backgrounds .bg_example:is(.selected-background, .folder-group-selected)::before,
+body.salty #Backgrounds .bg_example.locked-background::after {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  filter: none !important;
+  font-size: 10px !important;
+  line-height: 20px;
+  text-align: center;
+}
+body.salty #Backgrounds .bg_example:is(.selected-background, .folder-group-selected)::before {
+  top: 6px !important;
+  background: var(--salty-fill-accent, var(--salty-accent));
+  color: var(--salty-on-accent, #fff) !important;
+}
+body.salty #Backgrounds .bg_example:is(.selected-background, .folder-group-selected)::before {
+  right: auto !important;
+  left: 6px !important;
+}
+body.salty #Backgrounds .bg_example.locked-background::after {
+  right: 6px !important;
+  bottom: 26px !important;
+  background: rgba(4, 14, 26, 0.55);
+  color: var(--bl-lemon) !important;
+}
+/* 사진 위 글자 · 버튼: 흐림 없이 옅은 어두운 면 */
+body.salty #Backgrounds .bg_example .BGSampleTitle {
+  padding: 3px 8px !important;
+  border-radius: 0 !important;
+  background: rgba(4, 14, 26, 0.5) !important;
+  color: #fff !important;
+  font-size: var(--bl-fs-micro) !important;
+  font-weight: 600;
+}
+body.salty #Backgrounds :is(.bg_example, .bg_folder_tile) :is(.mobile-only-menu-toggle, .jg-menu) {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  border: 0 !important;
+}
+body.salty #Backgrounds :is(.bg_example, .bg_folder_tile) .mobile-only-menu-toggle {
+  top: 6px !important;
+  right: 6px !important;
+  width: 26px !important;
+  height: 26px !important;
+  border-radius: 8px !important;
+  background-color: rgba(4, 14, 26, 0.45) !important;
+  font-size: 13px;
+}
+body.salty #Backgrounds :is(.bg_example, .bg_folder_tile) .jg-menu {
+  top: 6px !important;
+  right: 6px !important;
+  padding: 2px !important;
+  border-radius: var(--bl-r-sm) !important;
+  background-color: rgba(4, 14, 26, 0.72) !important;
+}
+body.salty #Backgrounds :is(.bg_example, .bg_folder_tile) .jg-button {
+  border-radius: 8px !important;
+  color: #fff !important;
+}
+body.salty #Backgrounds #bg-scroll-top {
+  width: 40px !important;
+  height: 40px !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: var(--bl-fill-overlay, var(--bl-overlay)) !important;
+  box-shadow: var(--bl-e4) !important;
+  color: var(--salty-muted) !important;
+  outline: none !important;
+  filter: none !important;
+}
+body.salty #Backgrounds .bg_folder_breadcrumb {
+  gap: var(--bl-s2);
+  margin-bottom: var(--bl-s2);
+}
+body.salty #Backgrounds #bg_chat_hint {
+  padding: var(--bl-s6) var(--bl-s4);
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-sub);
+}
+body.salty #Backgrounds #bg_chat_hint code {
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--bl-fill-hover, var(--bl-hover));
+  color: var(--salty-text);
+}
+@media (hover: hover) {
+  body.salty #Backgrounds .bg_folder_tile:hover {
+    filter: none !important;
+    box-shadow: var(--bl-e3) !important;
+  }
+}
+
+/* 배경 머리 버튼: 폰처럼 아이콘만 (글자 칩이면 좁은 서랍에서 두 줄로 꺾임) */
+body.salty #Backgrounds #bg-header-fixed :is(#auto_background, #bg_add_folder_button, #add_background_button_top) > span {
+  display: none;
+}
+body.salty #Backgrounds :is(#auto_background, #bg_add_folder_button, #add_background_button_top, #bg_selection_mode_button):not(.active, .toggleEnabled) {
+  min-width: var(--bl-h-icon);
+  min-height: var(--bl-h-icon);
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--salty-muted) !important;
+}
+body.salty #Backgrounds :is(#auto_background, #bg_add_folder_button, #add_background_button_top, #bg_selection_mode_button) > i {
+  font-size: var(--bl-ic) !important;
+  color: inherit !important;
+}
+
+/* ---------- 넓이: 서랍이 좁으면(PC 채팅 폭 40% 등) 여러 칸을 한 칸으로 ---------- */
+body.salty #user-settings-block :is(#UI-Theme-Block, #UI-Customization, #power-user-options-block),
+body.salty #AdvancedFormatting :is(#ContextSettings, #InstructSettingsColumn, #SystemPromptColumn),
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) {
+  flex: 1 1 300px !important;
+  min-width: 0 !important;
+}
+
+/* ---------- 폰: 버튼 줄은 반씩 ---------- */
+@media screen and (max-width: 1000px) {
+  body.salty #AdvancedFormatting > .flex-container:first-child > .flex-container,
+  body.salty #AdvancedFormatting > .flex-container:first-child > .flex-container > .menu_button {
+    flex: 1 1 0;
+  }
+}
+
+/* ---------- 줄바꿈: 한국어는 단어째로 (음절 가운데서 안 꺾임), 넘치는 긴 주소 · 영어 낱말만 꺾음 ---------- */
+body.salty :is(#rm_extensions_block, #user-settings-block, #AdvancedFormatting, #Backgrounds, .TH-custom-tailwind) {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+/* 드롭다운 줄: 이름이 먼저 자리를 잡고(최대 60%, 넘치면 단어째 줄바꿈) 값은 남은 자리에서 말줄임 */
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > :is(span, small, label),
+body.salty #user-settings-block-content #MovingUI-presets-block label[for="movingUIPresets"] > small,
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) > :is(small, label) {
+  flex: 0 1 auto !important;
+  max-width: 60%;
+}
+body.salty #user-settings-block-content [name="AutoCompleteToggle"] .inline-drawer-content .flex1 > .flex-container:has(> select) {
+  flex: 1 1 0% !important;
+  max-width: none;
+}
+/* 확장 서랍 머리 줄: 이름이 길어도 꺾쇠는 제자리 */
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer-header > .inline-drawer-icon {
+  flex: 0 0 auto;
+}
+
+@media screen and (max-width: 1000px) {
+  /* 확장 머리 버튼 둘: 글자는 한 줄로, 둘이 한 줄에 안 들어가면 한 줄에 하나씩 꽉 차게 ('관/리' 로 꺾이지 않게) */
+  body.salty #rm_extensions_block .extensions_block > .flex-container:first-child > .menu_button {
+    flex: 1 1 auto;
+    white-space: nowrap;
+  }
+  /* 3.6.4: 그 줄에 아이콘만 있는 단추(확장 순서 · 성능 보조 설정처럼 확장이 붙이는 것)가 있으면, 글자 단추가 먼저 줄어들어
+     아이콘 단추가 같은 줄에 남는다 (예전엔 아이콘 단추가 둘째 줄로 밀려 혼자 가운데 섰다). 자리가 넉넉하면 그대로 꽉 채운다 —
+     확장 구성은 사람마다 다르니 개수를 세지 않고 남는 자리에 맡긴다 */
+  body.salty #rm_extensions_block .extensions_block > .flex-container:first-child > .menu_button:has(> span) {
+    flex: 1 1 0; /* 기준 너비 0 — 글자 길이가 줄을 넘기지 않고, 남는 자리를 글자 단추끼리 나눠 갖는다 */
+    min-width: 0;
+  }
+  /* 3.6.5: 자리가 모자라면 글자를 자르지 말고 줄에 맞춰 작게 (사용자: "… 으로 짤리는 거 아쉬운데 글자 크기 작게").
+     줄 너비를 기준(cqi)으로 재니 단추가 늘어날수록 글씨만 조금씩 작아진다 — 폭 412 13.4px · 360 11.5px · 320 10.1px 로 안 잘림.
+     말줄임은 그래도 모자랄 때를 위한 마지막 수단으로 남겨 둔다 */
+  body.salty #rm_extensions_block .extensions_block > .flex-container:first-child {
+    container-type: inline-size;
+  }
+  body.salty #rm_extensions_block .extensions_block > .flex-container:first-child > .menu_button {
+    padding-inline: 6px !important; /* 다른 칸의 단추 여백 규칙(10px)을 이 줄에서만 덮는다 */
+    gap: 5px;
+  }
+  body.salty #rm_extensions_block .extensions_block > .flex-container:first-child > .menu_button > span {
+    overflow: hidden;
+    font-size: clamp(9px, 3.6cqi, var(--bl-fs-body));
+    text-overflow: ellipsis;
+  }
+  body.salty #rm_extensions_block .extensions_block > .flex-container:first-child > .menu_button:not(:has(> span)) {
+    flex: 0 0 auto;
+  }
+  /* 움직이는 UI 초기화: 폰에선 아이콘만 — 이름 옆 모니터 아이콘이 둘째 줄로 밀리지 않게 */
+  body.salty #user-settings-block #movingUIreset > span {
+    display: none;
+  }
+  body.salty #user-settings-block #movingUIreset {
+    width: var(--bl-h-icon);
+    /* 3.0.0: min-width → 이 파일 아래 (같은 선택자 규칙이 덮음) */
+    padding: 0 !important;
+    justify-content: center;
+  }
+  /* 배경 머리: 찾기 칸은 한 줄 전체, 맞춤 · 정렬은 그 밑에 반씩 (정렬만 홀로 떨어져 있지 않게) */
+  body.salty #Backgrounds #bg-filter {
+    flex: 1 1 100%;
+  }
+  body.salty #Backgrounds :is(#background_fitting, #bg-sort) {
+    flex: 1 1 0%;
+    min-width: 0;
+    margin: var(--bl-s2) 0 0 !important;
+  }
+  body.salty #Backgrounds #bg-sort {
+    margin-left: var(--bl-s1) !important;
+  }
+}
+
+/* 옛 Extras API 키 칸 + 연결 버튼: 입력칸이 줄어들고 버튼은 글자 폭만큼 ('연/결' 로 꺾이지 않게) */
+body.salty #rm_extensions_block .extensions_block > .flex-container.alignitemsflexstart > #extensions_api_key {
+  flex: 1 1 0% !important;
+  min-width: 0;
+}
+body.salty #rm_extensions_block .extensions_url_block {
+  flex: 0 0 auto;
+}
+body.salty #rm_extensions_block .extensions_url_block #extensions_connect {
+  white-space: nowrap;
+}
+/* 확장 설정 속 체크 줄 여럿이 한 줄(SMEA · DYN · 더 명확하게 …): 똑같이 나누면 긴 이름이 세로로 섬 → 이름 폭만큼, 넘치면 다음 줄 */
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .flex-container > label.checkbox_label.flex1 {
+  flex: 1 1 auto;
+}
+/* 빠른 답장 편집 머리: 이름 한 줄 + 세트 고르기 · 아이콘은 넘치면 다음 줄 (이름이 한 글자씩 세로로 서지 않게) */
+body.salty #rm_extensions_block #qr--editor > .qr--head {
+  flex-wrap: wrap;
+  /* 3.0.0: row-gap → css/26-rounds-1.7.css (같은 선택자 규칙이 덮음) */
+}
+body.salty #rm_extensions_block #qr--editor > .qr--head > .qr--title {
+  flex: 1 1 auto;
+  white-space: nowrap;
+}
+body.salty #rm_extensions_block #qr--editor > .qr--head > .qr--actions {
+  /* 3.0.0: flex · flex-wrap · align-items → css/27-compact.css (같은 선택자 규칙이 덮음) */
+  justify-content: flex-end;
+  min-width: 0;
+}
+/* 3.0.0: 여기 있던 규칙 'body.salty #rm_extensions_block #qr--editor > .qr--head #qr--set' 은 지움 — flex → css/26-rounds-1.7.css (같은 선택자 규칙이 덮음), min-width → css/27-compact.css (같은 선택자 규칙이 덮음) */
+@media screen and (max-width: 1000px) {
+  /* 폰: 세트 고르기는 한 줄 전체, 아이콘 여섯은 그 밑 오른쪽 한 줄 (고급 서식 템플릿 고르기와 같은 모양) */
+  /* 3.0.0: 여기 있던 규칙 'body.salty #rm_extensions_block #qr--editor > .qr--head #qr--set' 은 지움 — flex-basis → css/26-rounds-1.7.css (같은 선택자 규칙이 덮음) */
+}
+/* 펼친 확장 칸(한 톤 밝은 면) 속 꺼진 체크박스: 남색 페이지 톤으로 오목하게 — 밝아진 면에 묻히지 않게 (헬퍼 묶음 칸은 이미 남색이라 제외) */
+body.salty.salty-dark #rm_extensions_block :is(#extensions_settings, #extensions_settings2) input[type="checkbox"]:where(:not(:checked, .sr-only, .salty-switch > input, .salty-panel *, .TH-custom-tailwind *)) {
+  background-color: var(--bl-page) !important;
+}
+
+/* ---------- 확장: 실리태번 헬퍼(JS-Slash-Runner) ---------- */
+/* 확장의 테일윈드 유틸리티는 @layer 안이라 !important 없이 이김 — 확장이 인라인으로 박은 글자색 · 간격만 !important
+   고른 탭 · 고르기 칸은 --bl-pop (블루 아워 레몬 · 레몬에이드 파랑) + 그 위 글자 --bl-on-pop, 스위치 켜짐은 다른 스위치와 같은 포인트 파랑 */
+
+/* 탭 줄(렌더링 · 스크립트 · 도구 · 최적화 · 개발): 테마 세그먼트 탭 — 테두리 없음, 고른 탭은 떠 있는 칸 */
+body.salty #tavern_helper .inline-drawer-content > .flex-col > .border-x-2 {
+  gap: 2px;
+  padding: 3px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--bl-fill-hover, var(--bl-hover));
+}
+body.salty #tavern_helper .inline-drawer-content > .flex-col > .border-x-2 > div {
+  min-height: var(--bl-h-icon);
+  border-radius: var(--bl-r-sm);
+  background: transparent;
+  color: var(--salty-muted);
+  font-weight: 600;
+  transition: background-color 0.18s ease, box-shadow 0.18s ease;
+}
+body.salty #tavern_helper .inline-drawer-content > .flex-col > .border-x-2 > div > div {
+  white-space: nowrap;
+}
+/* 고른 탭: 확장이 붙이는 color-mix 바탕 클래스로 알아봄 */
+body.salty #tavern_helper .inline-drawer-content > .flex-col > .border-x-2 > div[class*="bg-[color-mix"] {
+  background: var(--salty-fill-surface, var(--salty-surface));
+  box-shadow: var(--bl-e2);
+  color: var(--salty-text);
+}
+body.salty.salty-dark #tavern_helper .inline-drawer-content > .flex-col > .border-x-2 > div[class*="bg-[color-mix"] {
+  background: color-mix(in srgb, var(--salty-text) 18%, var(--salty-surface));
+  color: var(--bl-pop);
+}
+/* 확장이 고른 탭 글자에 흰색 · 검정을 인라인으로 박음 → 탭 색을 따르게 (안 고른 개발 탭의 연결 상태 색은 그대로) */
+body.salty #tavern_helper .inline-drawer-content > .flex-col > .border-x-2 > div[class*="bg-[color-mix"] > div {
+  color: inherit !important;
+}
+
+/* 묶음 상자: 1px 테 대신 오목한 페이지 톤 칸 (팝업 체크 묶음과 같은 모양) */
+body.salty .TH-custom-tailwind div.rounded-md.p-1[class~="border-(--grey5050a)"],
+body.salty .TH-custom-tailwind fieldset.TH-fieldset > :not(legend) {
+  padding: var(--bl-s3);
+  border: 0;
+  border-radius: var(--bl-r-md);
+  background: var(--bl-fill-page, var(--bl-page));
+  box-shadow: var(--bl-well-in);
+}
+/* 이름 붙은 묶음(fieldset): 테 위에 걸친 이름은 칸 위 캡션으로 */
+body.salty .TH-custom-tailwind fieldset.TH-fieldset {
+  gap: var(--bl-s1) !important;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+body.salty .TH-custom-tailwind fieldset.TH-fieldset > legend {
+  float: left;
+  width: 100%;
+  margin: 0;
+  padding: var(--bl-s2) 2px 0;
+  color: var(--salty-muted);
+  font-weight: 650;
+  line-height: 1.3;
+}
+/* 줄 사이 1px 선: 선은 지우고 여백만 */
+body.salty .TH-custom-tailwind .grow[class~="bg-(--grey5050a)"] {
+  background: transparent;
+}
+body.salty .TH-custom-tailwind [class~="border-t"][class~="border-(--grey5050a)"] {
+  border-top-color: transparent;
+}
+
+/* 스위치(Toggle): 테마 스위치와 같은 44×26 — 꺼짐은 오목한 칸 + 흰 손잡이, 켜짐은 포인트 칸 */
+body.salty .TH-custom-tailwind .relative.inline-block:has(> input.peer.sr-only[type="checkbox"] + label) {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 26px;
+}
+body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type="checkbox"] + label {
+  overflow: visible;
+  background-color: var(--bl-check-off);
+  box-shadow: var(--bl-track);
+  transition: background-color 0.18s ease;
+}
+body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type="checkbox"] + label::after {
+  top: 3px;
+  right: auto;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  box-shadow: var(--bl-knob);
+  translate: none;
+  transform: none;
+  transition: transform 0.18s ease, background-color 0.18s ease;
+}
+body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type="checkbox"]:checked + label {
+  background-color: var(--salty-accent);
+  box-shadow: none;
+}
+body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type="checkbox"]:checked + label::after {
+  transform: translateX(18px);
+}
+body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type="checkbox"]:focus-visible + label {
+  box-shadow: var(--bl-ring);
+}
+body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type="checkbox"]:disabled + label {
+  opacity: 0.4;
+}
+
+/* 고르기 칸(전체 · 프런트엔드만 · 사용 안 함): 테마 세그먼트 — 고른 칸은 포인트 면 + 맞는 글자색, 안 고른 칸은 조용히 */
+body.salty .TH-custom-tailwind .inline-flex:has(> .TH-radio-button) {
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--bl-fill-hover, var(--bl-hover));
+}
+body.salty .TH-custom-tailwind .TH-radio-button {
+  flex: 1 1 auto;
+  min-height: 32px;
+  margin: 0 !important;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: var(--bl-r-sm) !important;
+  background: transparent;
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-sub);
+  font-weight: 650;
+  line-height: 1.5;
+  text-align: center;
+}
+body.salty .TH-custom-tailwind .TH-radio-button--selected {
+  background: var(--bl-fill-pop, var(--bl-pop));
+  box-shadow: var(--bl-e2);
+  color: var(--bl-on-pop) !important;
+}
+/* 고르기 칸이 있는 줄: 이름 · 설명은 한 줄 전체, 고르기 칸은 그 밑에 꽉 차게 (설명이 좁은 칸에서 세로로 길어지지 않게) */
+body.salty .TH-custom-tailwind .flex.items-center.justify-between:has(> .flex-none > .inline-flex > .TH-radio-button) {
+  flex-wrap: wrap;
+  row-gap: var(--bl-s2) !important;
+}
+body.salty .TH-custom-tailwind .flex.items-center.justify-between:has(> .flex-none > .inline-flex > .TH-radio-button) > :is(.flex-1, .flex-none) {
+  flex: 1 1 100%;
+}
+body.salty .TH-custom-tailwind .flex.items-center.justify-between:has(> .flex-none > .inline-flex > .TH-radio-button) > .flex-none > .inline-flex {
+  display: flex;
+  width: 100%;
+}
+
+/* 확장 버튼(열기 등): 테두리 대신 떠 있는 칩 */
+body.salty .TH-custom-tailwind .TH-Button--container {
+  width: auto;
+  min-width: 56px;
+  min-height: var(--bl-h-icon);
+  padding: 0 var(--bl-s4);
+  border: 0;
+  border-radius: var(--bl-r-sm);
+  background: var(--bl-fill-control, var(--bl-control));
+  box-shadow: var(--bl-e2);
+  color: var(--salty-text);
+  font-size: var(--bl-fs-ctl);
+  font-weight: 600;
+  white-space: nowrap;
+}
+body.salty .TH-custom-tailwind .TH-Button--container:active {
+  background: var(--bl-fill-press-bg, var(--bl-press-bg));
+  box-shadow: var(--bl-press);
+}
+/* 스크립트 · 폴더 줄: 테 · 흐린 바탕 대신 옅은 톤 줄, 아이콘 버튼은 촘촘히 — 이름 자리를 넓힘 */
+body.salty .TH-custom-tailwind :is([data-type="script"], [data-type="folder"]) {
+  border: 0;
+  border-radius: var(--bl-r-sm);
+  background: var(--bl-fill-hover, var(--bl-hover));
+}
+body.salty .TH-custom-tailwind :is([data-type="script"], [data-type="folder"]) .menu_button.interactable {
+  min-width: 30px;
+  min-height: 30px;
+  margin-right: 0;
+}
+/* 오디오 재생 줄 · 음량 막대: 테 없이 톤만 */
+body.salty .TH-custom-tailwind .rounded-sm.border[class~="bg-neutral-900/15"] {
+  border: 0;
+  background: var(--bl-fill-hover, var(--bl-hover));
+}
+body.salty .TH-custom-tailwind .rounded-full.border[class~="bg-(--black30a)"] {
+  width: 84px; /* 누르기 쉽게 조금 넓게 */
+  border: 0;
+  background: var(--bl-fill-check-off, var(--bl-check-off));
+  box-shadow: var(--bl-track);
+}
+/* 이름 끝 ? 아이콘: 이름 마지막 글자 바로 뒤 — 아이콘 칸 폭은 0(글리프는 오른쪽 여백으로 넘쳐 그려짐)이라 홀로 다음 줄로 떨어지지 않음 */
+body.salty .TH-custom-tailwind .TH-Item--title:has(> .note-link-span) {
+  display: block;
+  padding-right: 22px;
+}
+body.salty .TH-custom-tailwind .TH-Item--title > .note-link-span {
+  display: inline-block;
+  width: 0;
+  overflow: visible;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+body.salty .TH-custom-tailwind .TH-Item--title > .note-link-span::before {
+  margin-left: 2px;
+}
+/* 페이지 톤 칸 속 입력칸 색: 밝은 테마는 한 톤 어둡게(원래 입력칸 색이 페이지 톤과 같아 안 보임), 어두운 테마는 원래 입력칸 */
+body.salty :is(.TH-custom-tailwind, #rm_extensions_block .jj-settings-body) {
+  --sw-field: color-mix(in srgb, var(--salty-text) 7%, var(--bl-page));
+}
+body.salty.salty-dark :is(.TH-custom-tailwind, #rm_extensions_block .jj-settings-body) {
+  --sw-field: var(--bl-well);
+}
+body.salty:not(.salty-dark) #tavern_helper :is(div.rounded-md.p-1[class~="border-(--grey5050a)"], fieldset.TH-fieldset) :is(input.text_pole, select, textarea):where(:not(:focus)),
+body.salty:not(.salty-dark) #rm_extensions_block .jj-settings-body :is(input.text_pole, textarea.text_pole):where(:not(:focus)) {
+  background-color: var(--sw-field) !important;
+}
+/* 밝은 테마: 헬퍼 속 꺼진 체크박스(변경 감지 허용 · 일치하는 항목만 표시)가 옅은 칸에 묻힘 → 한 톤 진하게 */
+body.salty:not(.salty-dark) .TH-custom-tailwind input[type="checkbox"]:not(:checked, .sr-only) {
+  background-color: color-mix(in srgb, var(--salty-text) 18%, transparent) !important;
+}
+
+/* 음량 막대: 확장이 막대 위에 투명한 range 를 겹쳐 둠 → 전역 슬라이더 모양(보이는 막대 · 흰 손잡이 · 위아래 여백)을 지우고
+   투명한 채 막대 자리에 (누르는 칸만 위아래로 넓게) */
+body.salty .TH-custom-tailwind .relative.rounded-full > input[type="range"].opacity-0 {
+  top: -10px;
+  height: calc(100% + 20px) !important;
+  margin: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  opacity: 0 !important;
+}
+
+/* 헬퍼 팝업(프롬프트 뷰어 · 변수 관리자 · 로그 뷰어): 포인트색 머리띠(글자가 안 보임) 대신 팝업과 같은 카드 면 + 큰 제목 + 둥근 아이콘
+   폰(확장이 rounded-sm 을 안 붙임)은 바 밑에 붙은 시트라 아래 모서리만, PC 는 네 모서리 (폰은 확장이 5px 를 인라인으로 박아서 !important) */
+body.salty .dialog-teleported:has(> .TH-custom-tailwind[role="dialog"]) {
+  border-radius: 0 0 var(--bl-r-lg) var(--bl-r-lg) !important;
+  box-shadow: var(--bl-e5);
+}
+body.salty .dialog-teleported:has(> .TH-custom-tailwind.rounded-sm[role="dialog"]) {
+  border-radius: var(--bl-r-lg) !important;
+}
+body.salty .dialog-teleported > .TH-custom-tailwind[role="dialog"] {
+  border-radius: inherit;
+  background: var(--bl-fill-card, var(--bl-card));
+  box-shadow: none;
+  color: var(--salty-text);
+}
+body.salty .dialog-teleported [role="dialog"] > [class~="bg-(--SmartThemeQuoteColor)"]:first-child {
+  min-height: var(--bl-h-lg);
+  gap: var(--bl-s2);
+  padding: var(--bl-s1) var(--bl-s2) var(--bl-s1) var(--bl-s4);
+  background: var(--bl-fill-card, var(--bl-card));
+}
+/* 제목 · 아이콘: 확장이 포인트색에 맞춘 글자색을 인라인으로 박음 → 테마 글자색 */
+body.salty .dialog-teleported [role="dialog"] > [class~="bg-(--SmartThemeQuoteColor)"] > .cursor-move {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--salty-text) !important;
+  font-size: var(--bl-fs-head);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body.salty .dialog-teleported [role="dialog"] > [class~="bg-(--SmartThemeQuoteColor)"] > .shrink-0 {
+  align-items: center;
+  gap: 2px;
+  color: var(--salty-muted) !important;
+}
+body.salty .dialog-teleported [role="dialog"] > [class~="bg-(--SmartThemeQuoteColor)"] > .shrink-0 > div {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  transition: background-color 0.12s ease;
+}
+/* 닫기만 옅은 면 (설정 팝업 X 와 같게) */
+body.salty .dialog-teleported [role="dialog"] > [class~="bg-(--SmartThemeQuoteColor)"] > .shrink-0 > div:last-child {
+  background: var(--bl-fill-hover, var(--bl-hover));
+}
+@media (hover: hover) {
+  body.salty .dialog-teleported [role="dialog"] > [class~="bg-(--SmartThemeQuoteColor)"] > .shrink-0 > div:hover {
+    background: var(--bl-fill-hover, var(--bl-hover));
+    color: var(--salty-text);
+  }
+}
+body.salty .dialog-teleported [role="dialog"] > [class~="bg-(--SmartThemeQuoteColor)"] > .shrink-0 > div:active {
+  background: var(--bl-fill-press-bg, var(--bl-press-bg));
+}
+/* 처음 여는 사람용 ? 깜빡임: 진한 파랑 대신 포인트색 */
+@keyframes salty-th-blink {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; color: var(--salty-accent); }
+}
+body.salty .dialog-teleported .th-question-blink {
+  animation-name: salty-th-blink;
+}
+/* 변수 관리자 JSON 편집기: 도구 줄 칸막이 선 · text/tree 테 · 경로 칸 1px 파란 테 대신 톤 */
+body.salty .TH-custom-tailwind .jse-menu {
+  border-radius: var(--bl-r-sm);
+  background: var(--bl-fill-hover, var(--bl-hover)) !important;
+}
+body.salty .TH-custom-tailwind .jse-menu .jse-separator {
+  background: transparent !important;
+}
+body.salty .TH-custom-tailwind .jse-menu .jse-group-button {
+  border: 0 !important;
+  border-radius: var(--bl-r-xs) !important;
+  background: transparent !important;
+  color: var(--salty-muted) !important;
+}
+body.salty .TH-custom-tailwind .jse-menu .jse-group-button.jse-selected {
+  background: var(--bl-fill-pop, var(--bl-pop)) !important;
+  color: var(--bl-on-pop) !important;
+}
+/* JSON 편집기 키보드용 숨은 입력칸: 전역 입력칸 모양(흰 칸 · 높이)이 붙어 팝업 왼쪽 위에 조각으로 보임 → 1px 투명 */
+body.salty .jse-hidden-input {
+  width: 1px !important;
+  min-width: 0 !important;
+  height: 1px !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  opacity: 0 !important;
+}
+body.salty .TH-custom-tailwind .jse-navigation-bar {
+  border: 0 !important;
+  border-radius: var(--bl-r-sm);
+  background: var(--sw-field) !important;
+  box-shadow: var(--bl-well-in);
+}
+
+/* 탭 줄: 탭마다 좌우 여백 + 남는 폭은 똑같이 나눔(이름 사이가 고르게), 좁으면(폰) 아이콘을 숨겨 앞 탭 이름에 붙어 보이지 않게 */
+body.salty #tavern_helper .inline-drawer-content > .flex-col > .border-x-2 {
+  container-type: inline-size;
+}
+body.salty #tavern_helper .inline-drawer-content > .flex-col > .border-x-2 > div {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0 6px;
+}
+@container (max-width: 440px) {
+  body.salty #tavern_helper .inline-drawer-content > .flex-col > .border-x-2 > div i {
+    display: none;
+  }
+}
+/* 개발 탭 실시간 연결 표시: 확장이 초록 · 빨강을 인라인으로 박음 → 연결됨은 포인트, 끊김은 호박색 */
+body.salty .TH-custom-tailwind i.fa-wifi[style*="green"],
+body.salty #tavern_helper .border-x-2 > div > div[style*="green"] {
+  color: var(--salty-accent) !important;
+}
+body.salty .TH-custom-tailwind i.fa-wifi[style*="170, 0, 0"],
+body.salty #tavern_helper .border-x-2 > div > div[style*="170, 0, 0"] {
+  color: var(--bl-warn) !important;
+}
+
+/* 스크립트 탭 머리 버튼 넷: 2×2 같은 폭 (2+2 · 3+1 로 들쭉날쭉하지 않게) */
+body.salty #tavern_helper .flex.flex-wrap:has(> .menu_button_icon > .fa-folder-plus) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--bl-s2);
+}
+body.salty #tavern_helper .flex.flex-wrap:has(> .menu_button_icon > .fa-folder-plus) > .menu_button_icon {
+  width: auto;
+  min-width: 0;
+  margin-inline: 0;
+  flex-wrap: nowrap;
+  justify-content: center;
+  white-space: nowrap;
+}
+/* 찾기 칸 안내 글자: 넘치면 말줄임 (글자 가운데서 잘리지 않게) */
+body.salty #tavern_helper input.text_pole:is([type="text"], [type="search"]) {
+  text-overflow: ellipsis;
+}
+/* 스크립트 줄: 늘 한 줄 — 이름이 넘치면 말줄임, 이름을 누르면 옆으로 흘러서 끝까지 보여 줌 (src/marquee.js) */
+body.salty .TH-custom-tailwind [data-type="script"] {
+  flex-wrap: nowrap;
+  column-gap: 6px;
+  padding: 6px 6px 6px 10px;
+}
+body.salty .TH-custom-tailwind [data-type="script"] > .grow {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  scroll-behavior: auto; /* marquee.js 가 매 프레임 scrollLeft 를 옮김 — 부드럽게 스크롤이 끼면 떨림 */
+  cursor: pointer;
+}
+/* 흐르는 동안: 말줄임 끄기 */
+body.salty .TH-custom-tailwind [data-type="script"] > .grow.salty-marquee {
+  text-overflow: clip;
+}
+/* 기기의 움직임 줄이기 설정이면 흘리지 않고, 누를 때마다 이름 전체를 줄 바꿈해서 펼침 · 접음 */
+@media (prefers-reduced-motion: reduce) {
+  body.salty .TH-custom-tailwind [data-type="script"] > .grow.salty-marquee {
+    white-space: normal;
+  }
+}
+/* 고르기 칸 셋(코드 접기): 한 줄에 다 들어가면 한 줄, 글자가 커져서 안 들어가면 2+1 로 꺾이지 않고 세로로 하나씩 */
+body.salty .TH-custom-tailwind .inline-flex:has(> .TH-radio-button:nth-child(3)) > .TH-radio-button {
+  flex: 1 1 calc((12em + 84px - 100%) * 999);
+  white-space: nowrap;
+}
+
+/* ---------- 확장: 전개지시 · 캐릭터 에셋 확장 — 1px 테 대신 톤 (헬퍼 묶음 칸과 같은 오목한 페이지 톤 칸) ---------- */
+body.salty #rm_extensions_block .jj-settings-body :is(.jj-status, .jj-card) {
+  border: 0;
+  border-radius: var(--bl-r-md);
+  background: var(--bl-fill-page, var(--bl-page));
+  box-shadow: var(--bl-well-in);
+}
+body.salty #rm_extensions_block .jj-settings-body .jj-status {
+  padding: 10px 12px;
+}
+/* 켜짐: 테 대신 켜짐 색을 옅게 섞은 칸 (점 · 제목 글자도 켜짐을 알림) */
+body.salty #rm_extensions_block .jj-settings-body .jj-status.is-on {
+  background: color-mix(in srgb, var(--jj-on) 12%, var(--bl-page));
+}
+body.salty #rm_extensions_block .jj-settings-body .jj-row {
+  padding: 6px 12px;
+}
+body.salty #rm_extensions_block .jj-settings-body :is(.jj-row + .jj-row, .jj-prompt-body) {
+  border-top: 0;
+}
+/* 깊이 − 숫자 + : 테 없는 파인 칸 하나, 숫자칸은 칸에 녹임 */
+body.salty #rm_extensions_block .jj-settings-body .jj-stepper {
+  border: 0;
+  border-radius: var(--bl-r-sm);
+  background: var(--sw-field);
+  box-shadow: var(--bl-well-in);
+}
+body.salty #rm_extensions_block .jj-settings-body .jj-stepper input {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+body.salty #rm_extensions_block .jj-settings-body .jj-swatch {
+  box-shadow: var(--bl-e2);
+}
+/* 캐릭터 에셋 확장: 상태 · 묶음은 파인 칸, 탭 패널 테는 지움 */
+body.salty #rm_extensions_block #character_assets_settings :is(.character-assets__status, .character-assets__section, .character-assets__toolbar, .character-assets__upload-options) {
+  border: 0;
+  border-radius: var(--bl-r-md);
+  background: var(--bl-fill-page, var(--bl-page));
+  box-shadow: var(--bl-well-in);
+}
+body.salty #rm_extensions_block #character_assets_settings :is(.keyword-group, .style-option) {
+  border: 0;
+  background: var(--bl-fill-hover, var(--bl-hover));
+}
+body.salty #rm_extensions_block #character_assets_settings .character-assets__panel.is-active {
+  padding: var(--bl-s2) 0 0;
+  border: 0;
+  background: transparent;
+}
+body.salty #rm_extensions_block #character_assets_settings code {
+  border: 0;
+  border-radius: 6px;
+  background: var(--bl-fill-hover, var(--bl-hover));
+}
+body.salty #rm_extensions_block #character_assets_settings .asset-preview-thumb {
+  border-bottom: 0;
+}
+/* 탭 넷: 테마 세그먼트 — 폰에서도 넷이 한 줄에 들어가게 폭을 나눔, 고른 탭은 떠 있는 칸 */
+body.salty #rm_extensions_block #character_assets_settings .character-assets__tabs {
+  gap: 2px;
+  padding: 3px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--bl-fill-hover, var(--bl-hover));
+}
+body.salty #rm_extensions_block #character_assets_settings .character-assets__tab {
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 5px;
+  padding: 7px 6px;
+  border: 0;
+  border-radius: var(--bl-r-sm);
+  background: transparent;
+  color: var(--salty-muted);
+  font-weight: 600;
+}
+body.salty #rm_extensions_block #character_assets_settings .character-assets__tab.is-active {
+  border: 0;
+  background: var(--salty-fill-surface, var(--salty-surface));
+  box-shadow: var(--bl-e2);
+  color: var(--salty-text);
+}
+body.salty.salty-dark #rm_extensions_block #character_assets_settings .character-assets__tab.is-active {
+  background: color-mix(in srgb, var(--salty-text) 18%, var(--salty-surface));
+  color: var(--bl-pop);
+}
+
+/* ---------- 확장: 그 밖의 서랍 자잘한 것 ---------- */
+/* 체크 줄 이름 뒤 작은 설명(무료 모드 프롬프트 확장 (interactive/commands)): 설명은 이름 밑 줄로 — 이름이 두 줄로 꺾여 두 항목처럼 보이지 않게 */
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) label.checkbox_label:has(> input[type="checkbox"] + span + small:last-child) {
+  flex-wrap: wrap;
+  row-gap: 0;
+}
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) label.checkbox_label:has(> input[type="checkbox"] + span + small:last-child) > span {
+  flex: 1 1 0%;
+  min-width: 0;
+}
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) label.checkbox_label:has(> input[type="checkbox"] + span + small:last-child) > small {
+  flex: 1 1 100%;
+  padding-left: 43px; /* 체크박스 앞 10 + 체크박스 18 + 사이 15 — 이름 첫 글자에 맞춤 */
+}
+/* 이미지 생성: 체크 줄 바로 밑 '근원' 이름이 붙어 있어서 한 칸 띄움 */
+body.salty #rm_extensions_block label[for="sd_source"] {
+  display: block;
+  margin-top: var(--bl-s3);
+}
+/* 너비 · 높이 바꾸기 ⇄: 두 이름 위 가운데 제자리 줄 (높이 이름에 붙지 않게) */
+body.salty #rm_extensions_block #sd_dimensions_block {
+  padding-top: 18px;
+}
+body.salty #rm_extensions_block #sd_swap_dimensions {
+  top: -4px;
+}
+/* 빠른 답장 색 견본: 색이 비면 1px 테만 보임 → 테 없는 파인 칸 */
+body.salty #rm_extensions_block #qr--color {
+  --tool-cool-color-picker-btn-border-color: transparent;
+  --tool-cool-color-picker-btn-border-color-inner: transparent;
+  --tool-cool-color-picker-btn-border-radius: 8px;
+  --tool-cool-color-picker-btn-border-radius-inner: 6px;
+  border-radius: 8px;
+  background: var(--bl-fill-well, var(--bl-well));
+  box-shadow: var(--bl-well-in);
+}
+/* 정규식 프리셋: 드롭다운은 넘치면 말줄임, 좁으면 아이콘 넷이 다음 줄 오른쪽 (고급 서식 템플릿 고르기와 같게) */
+body.salty #rm_extensions_block #regex_presets_block .flex-container:has(> #regex_presets) {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px !important;
+}
+body.salty #rm_extensions_block #regex_presets {
+  flex: 1 1 100% !important;
+  min-width: 0;
+  text-overflow: ellipsis;
+}
+body.salty #rm_extensions_block #regex_presets + .menu_button {
+  margin-left: auto !important;
+}
+@media screen and (max-width: 1000px) {
+  /* 폰: 드롭다운은 한 줄 전체, 아이콘 넷은 그 밑 오른쪽 한 줄 (휴지통만 홀로 떨어지지 않게) */
+  /* 3.0.0: 여기 있던 규칙 'body.salty #rm_extensions_block #regex_presets' 은 지움 — flex-basis → css/26-rounds-1.7.css (같은 선택자 규칙이 덮음) */
+}
+/* 정규식 스크립트 줄 … (더 보기): 옆 연필 · 휴지통처럼 면 없는 흐린 아이콘 (label 이라 아이콘 버튼 규칙에 안 걸림) */
+body.salty #rm_extensions_block .regex-script-label label.menu_button.regex_script_expand {
+  min-width: var(--bl-h-icon);
+  min-height: var(--bl-h-icon);
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--salty-muted) !important;
+  font-size: var(--bl-ic) !important;
+}
+@media (hover: hover) {
+  body.salty #rm_extensions_block .regex-script-label label.menu_button.regex_script_expand:hover {
+    background: var(--bl-fill-hover, var(--bl-hover)) !important;
+    color: var(--salty-text) !important;
+  }
+}
+body.salty #rm_extensions_block .regex-script-label label.menu_button.regex_script_expand:active {
+  background: var(--bl-fill-press-bg, var(--bl-press-bg)) !important;
+}
+
+@media screen and (max-width: 1000px) {
+  /* 움직이는 UI: 스위치는 다른 줄처럼 오른쪽 끝 세로줄, 초기화 아이콘은 스위치 바로 앞 (면 없는 흐린 아이콘) */
+  body.salty #user-settings-block [name="MiscellaneousToggles"] > .flex-container:has(> #movingUIModeCheckBlock) {
+    position: relative;
+  }
+  body.salty #user-settings-block #movingUIModeCheckBlock {
+    flex: 1 1 100% !important;
+  }
+  body.salty #user-settings-block #movingUIreset {
+    position: absolute;
+    top: calc(50% - var(--bl-h-icon) / 2);
+    right: calc(44px + var(--bl-s2));
+    /* 3.0.0: width → 이 파일 아래 (원래 규칙으로 합침) */
+    min-width: var(--bl-h-icon);
+    height: var(--bl-h-icon);
+    min-height: var(--bl-h-icon);
+    margin: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: var(--salty-muted) !important;
+  }
+  body.salty #user-settings-block #movingUIreset:active {
+    background: var(--bl-fill-press-bg, var(--bl-press-bg)) !important;
+  }
+}
+/* ===== /surfaces:sweep ===== */

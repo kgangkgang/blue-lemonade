@@ -1,0 +1,981 @@
+/* ===== css/11-chrome.css =====
+   채팅 겉모습 · 시작 화면 · 선 아이콘.
+   ===== */
+/* ===== 실리태번 화면: 채팅 겉모습 · 시작 화면 (surfaces:chrome) ===== */
+/* ---------- 메시지 · 시작 화면 선 아이콘: 상단 바와 같은 얇은 선 (선 아이콘 설정일 때만 · 모르는 확장 버튼은 원래 글리프) ---------- */
+body.salty.salty-icons-line {
+  --salty-mi-brain: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%205.6a2.9%202.9%200%200%200-5.6-.9A2.9%202.9%200%200%200%204.2%209a3.2%203.2%200%200%200%20.2%205.6%203.1%203.1%200%200%200%203.4%204.3A2.9%202.9%200%200%200%2012%2019.4M12%205.6a2.9%202.9%200%200%201%205.6-.9A2.9%202.9%200%200%201%2019.8%209a3.2%203.2%200%200%201-.2%205.6%203.1%203.1%200%200%201-3.4%204.3%202.9%202.9%200%200%201-4.2.5M12%205.6v13.8M8.6%209.6c1.1.2%202%20.9%202.4%201.9M15.4%209.6c-1.1.2-2%20.9-2.4%201.9%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-swap: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M8%204%204.5%207.5%208%2011M4.5%207.5h14M16%2013l3.5%203.5L16%2020M19.5%2016.5h-14%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-search: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2210.8%22%20cy%3D%2210.8%22%20r%3D%226.3%22%2F%3E%3Cpath%20d%3D%22m15.5%2015.5%204.5%204.5%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-squarepen: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M11.5%204.5H6.5a2%202%200%200%200-2%202v11a2%202%200%200%200%202%202h11a2%202%200%200%200%202-2v-5%22%2F%3E%3Cpath%20d%3D%22M17.9%203.9a2%202%200%200%201%202.9%202.9l-8%208-3.6.8.8-3.6z%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-wrench: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M14.6%206.4a4.3%204.3%200%200%200-5.7%205.2l-5%205a1.9%201.9%200%200%200%202.7%202.7l5-5a4.3%204.3%200%200%200%205.2-5.7l-2.6%202.6-2.3-.3-.3-2.3z%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-trash: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4.5%207h15M10%2011v5.5M14%2011v5.5M6.5%207l.8%2011.2a2%202%200%200%200%202%201.8h5.4a2%202%200%200%200%202-1.8L17.5%207M9.5%207V5a1.5%201.5%200%200%201%201.5-1.5h2A1.5%201.5%200%200%201%2014.5%205v2%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-languages: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%205.5h9M8.5%203.5v2M11.2%205.5c-.9%203.8-3.3%206.5-6.7%208M6.6%209.2c1%201.8%202.6%203.2%204.6%204.2%22%2F%3E%3Cpath%20d%3D%22m12.5%2020.5%204-9%204%209M13.9%2017.3h5.2%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-brush: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M19.8%204.2c-3.4%201.2-7.3%204.7-9.5%207.8l1.7%201.7c3.1-2.2%206.6-6.1%207.8-9.5z%22%2F%3E%3Cpath%20d%3D%22M9.2%2013.4c-2-.2-3.7%201.3-3.7%203.4%200%201.1-.6%202-1.8%202.5%201%20.6%202.1.9%203.3.9%202.6%200%204.4-1.8%204.1-4.2%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-volume: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M11%205.2%206.6%208.8H4.3a.8.8%200%200%200-.8.8v4.8c0%20.4.4.8.8.8h2.3l4.4%203.6z%22%2F%3E%3Cpath%20d%3D%22M15.3%209.2a4%204%200%200%201%200%205.6M18.1%206.4a8%208%200%200%201%200%2011.2%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-prompt: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M13.5%203.5h-6a2%202%200%200%200-2%202v13a2%202%200%200%200%202%202h9a2%202%200%200%200%202-2v-10z%22%2F%3E%3Cpath%20d%3D%22M13.5%203.5v5h5M9%2013h6M9%2016.5h4%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-eye: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M2.9%2012.3a.8.8%200%200%201%200-.6C4.5%208%208%205.5%2012%205.5s7.5%202.5%209.1%206.2a.8.8%200%200%201%200%20.6C19.5%2016%2016%2018.5%2012%2018.5S4.5%2016%202.9%2012.3z%22%2F%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%222.8%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-eyeoff: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M10.4%205.6a9.8%209.8%200%200%201%201.6-.1c4%200%207.5%202.5%209.1%206.2a.8.8%200%200%201%200%20.6%2010.4%2010.4%200%200%201-1.9%202.9M14%2014.1A2.8%202.8%200%200%201%209.9%2010M17.3%2017.3a9.6%209.6%200%200%201-5.3%201.2c-4%200-7.5-2.5-9.1-6.2a.8.8%200%200%201%200-.6%2010.5%2010.5%200%200%201%203.8-4.9M3.5%203.5l17%2017%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-gallery: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%227.5%22%20y%3D%223.5%22%20width%3D%2213%22%20height%3D%2213%22%20rx%3D%222%22%2F%3E%3Cpath%20d%3D%22M16.5%2020.5H6a2.5%202.5%200%200%201-2.5-2.5V7.5M7.8%2013.8l3.2-2.9%202.6%202.2%201.9-1.4%204.7%203.6%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-cells: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.6%22%2F%3E%3Crect%20x%3D%2213%22%20y%3D%224%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.6%22%2F%3E%3Crect%20x%3D%224%22%20y%3D%2213%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.6%22%2F%3E%3Crect%20x%3D%2213%22%20y%3D%2213%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.6%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-clip: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m19.6%2011.4-7.8%207.8a4.9%204.9%200%200%201-6.9-6.9l8.2-8.2a3.2%203.2%200%200%201%204.6%204.6l-8.2%208.2a1.6%201.6%200%200%201-2.3-2.3l7.5-7.5%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-history: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%2012a8%208%200%201%200%202.3-5.7L4%208.6%22%2F%3E%3Cpath%20d%3D%22M4%204.3v4.3h4.3M12%208v4.2l2.9%201.8%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-flag: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5.5%2020.5v-16M5.5%204.5c4.2-2.2%206.6%201.9%2012.5.2v8.6c-5.9%201.7-8.3-2.4-12.5-.2%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-branch: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%226.5%22%20cy%3D%225.5%22%20r%3D%222.2%22%2F%3E%3Ccircle%20cx%3D%226.5%22%20cy%3D%2218.5%22%20r%3D%222.2%22%2F%3E%3Ccircle%20cx%3D%2217.5%22%20cy%3D%226.5%22%20r%3D%222.2%22%2F%3E%3Cpath%20d%3D%22M6.5%207.7v8.6M17.5%208.7c0%204.6-4.4%205.4-9.2%208%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-copy: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%228.5%22%20y%3D%228.5%22%20width%3D%2212%22%20height%3D%2212%22%20rx%3D%222.2%22%2F%3E%3Cpath%20d%3D%22M15.5%208.5V6a2.5%202.5%200%200%200-2.5-2.5H6A2.5%202.5%200%200%200%203.5%206v7A2.5%202.5%200%200%200%206%2015.5h2.5%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-camera: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m8.8%205.5%201.1-1.6c.2-.3.5-.4.8-.4h2.6c.3%200%20.6.1.8.4l1.1%201.6H19a2%202%200%200%201%202%202v10a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-10a2%202%200%200%201%202-2z%22%2F%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212.5%22%20r%3D%223.5%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-flagfill: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5.5%2020.5v-16%22%2F%3E%3Cpath%20d%3D%22M5.5%204.5c4.2-2.2%206.6%201.9%2012.5.2v8.6c-5.9%201.7-8.3-2.4-12.5-.2z%22%20fill%3D%22%23000%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-star: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m12%203.8%202.5%205.1%205.6.8-4.1%204%201%205.6-5-2.6-5%202.6%201-5.6-4.1-4%205.6-.8z%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-starfill: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m12%203.8%202.5%205.1%205.6.8-4.1%204%201%205.6-5-2.6-5%202.6%201-5.6-4.1-4%205.6-.8z%22%20fill%3D%22%23000%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-bookmark: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M7.5%203.5h9a1%201%200%200%201%201%201v16l-5.5-3.7-5.5%203.7v-16a1%201%200%200%201%201-1z%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-bookmarkfill: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M7.5%203.5h9a1%201%200%200%201%201%201v16l-5.5-3.7-5.5%203.7v-16a1%201%200%200%201%201-1z%22%20fill%3D%22%23000%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-chevup: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6.5%2014.5%205.5-5.5%205.5%205.5%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-chevdown: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6.5%209.5%205.5%205.5%205.5-5.5%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-bulb: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M9.3%2017.5h5.4M10.2%2020.5h3.6M12%203.5a5.8%205.8%200%200%200-3.5%2010.4c.6.5%201%201.2%201%202V16h5v-.1c0-.8.4-1.5%201-2A5.8%205.8%200%200%200%2012%203.5z%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-x: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6.5%206.5%2011%2011M17.5%206.5l-11%2011%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-check: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m5%2012.5%204.5%204.5L19%207.5%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-shrink: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4.5%2014h5.5v5.5M19.5%2010H14V4.5M14%2010l6-6M4%2020l6-6%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-pencil: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4.5%2019.5h4l10-10a2.1%202.1%200%200%200-4-4l-10%2010v4zM13.5%207.5l3%203%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-chevleft: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m14.5%206.5-5.5%205.5%205.5%205.5%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-chevright: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m9.5%206.5%205.5%205.5-5.5%205.5%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-chevcircle: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%228.5%22%2F%3E%3Cpath%20d%3D%22m8.6%2010.6%203.4%203.4%203.4-3.4%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-gear: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%223.2%22%2F%3E%3Cpath%20d%3D%22M12%203.5v2.3M12%2018.2v2.3M3.5%2012h2.3M18.2%2012h2.3M6%206l1.6%201.6M16.4%2016.4%2018%2018M6%2018l1.6-1.6M16.4%207.6%2018%206%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-xcircle: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%228.5%22%2F%3E%3Cpath%20d%3D%22m9.3%209.3%205.4%205.4M14.7%209.3l-5.4%205.4%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-help: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%228.5%22%2F%3E%3Cpath%20d%3D%22M9.6%209.4a2.5%202.5%200%200%201%204.9.8c0%201.7-2.5%202.3-2.5%202.3%22%2F%3E%3Cpath%20d%3D%22M12%2016.3h.01%22%20stroke-width%3D%222.6%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-chatdots: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M20.5%2011.6a8.4%208.4%200%200%201-12.4%207.4L3.5%2020.5%205%2016a8.5%208.5%200%201%201%2015.5-4.4z%22%2F%3E%3Cpath%20d%3D%22M8.4%2011.8h.01M12%2011.8h.01M15.6%2011.8h.01%22%20stroke-width%3D%222.6%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-pin: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%2016v4.5M8.5%203.5h7M9.8%203.5v5.3l-2.9%203.5a.9.9%200%200%200%20.7%201.5h8.8a.9.9%200%200%200%20.7-1.5l-2.9-3.5V3.5%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-chat: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M20.5%2011.6a8.4%208.4%200%200%201-12.4%207.4L3.5%2020.5%205%2016a8.5%208.5%200%201%201%2015.5-4.4z%22%2F%3E%3C%2Fsvg%3E");
+}
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_legacy_translate::before,
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_llm_translate::before,
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_toggle_original::before,
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_edit_translation::before,
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_paragraph_correction::before,
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_delete_translation::before,
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_translate::before,
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .sd_message_gen::before,
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_narrate::before,
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_prompt::before,
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_hide::before,
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_unhide::before,
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_media_gallery::before,
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_media_list::before,
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_embed::before,
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_swipe_picker::before,
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_create_bookmark::before,
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_create_branch::before,
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_copy::before,
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_to_image::before,
+body.salty.salty-icons-line #chat .mes .mes_buttons > .mes_bookmark::before,
+body.salty.salty-icons-line #chat .mes .mes_buttons > .cg-mes-btn.fa-star::before,
+body.salty.salty-icons-line #chat .mes .mes_buttons > .cg-mes-btn.fa-star.is-marked::before,
+body.salty.salty-icons-line #chat .mes .mes_buttons > .cg-mes-btn.fa-bookmark::before,
+body.salty.salty-icons-line #chat .mes .mes_buttons > .cg-mes-btn.fa-bookmark.is-marked::before,
+body.salty.salty-icons-line #chat .mes .mes_edit_buttons > .mes_edit_up::before,
+body.salty.salty-icons-line #chat .mes .mes_edit_buttons > .mes_edit_down::before,
+body.salty.salty-icons-line #chat .mes .mes_edit_buttons > .mes_edit_copy::before,
+body.salty.salty-icons-line #chat .mes .mes_edit_buttons > .mes_edit_add_reasoning::before,
+body.salty.salty-icons-line #chat .mes .mes_edit_buttons > .mes_edit_delete::before,
+body.salty.salty-icons-line #chat .mes .mes_edit_buttons > .mes_edit_cancel::before,
+body.salty.salty-icons-line #chat .mes .mes_edit_buttons > .mes_edit_done::before,
+body.salty.salty-icons-line #chat .mes .mes_reasoning_actions > .mes_reasoning_close_all::before,
+body.salty.salty-icons-line #chat .mes .mes_reasoning_actions > .mes_reasoning_copy::before,
+body.salty.salty-icons-line #chat .mes .mes_reasoning_actions > .mes_reasoning_edit::before,
+body.salty.salty-icons-line #chat .mes .mes_reasoning_actions > .mes_reasoning_edit_done::before,
+body.salty.salty-icons-line #chat .mes .mes_reasoning_actions > .mes_reasoning_delete::before,
+body.salty.salty-icons-line #chat .mes .mes_reasoning_actions > .mes_reasoning_edit_cancel::before,
+body.salty.salty-icons-line #chat .mes .mes_reasoning_arrow::before,
+body.salty.salty-icons-line #chat .mes .swipe_left::before,
+body.salty.salty-icons-line #chat .mes .swipe_right::before,
+body.salty.salty-icons-line .welcomePanel .showRecentChats > i::before,
+body.salty.salty-icons-line .welcomePanel .recentChatsSettings > i::before,
+body.salty.salty-icons-line .welcomePanel .hideRecentChats > i::before,
+body.salty.salty-icons-line .welcomePanel .welcomeShortcuts i.fa-question-circle::before,
+body.salty.salty-icons-line .welcomePanel .openTemporaryChat > i::before,
+body.salty.salty-icons-line .welcomePanel .recentChat .pinChat > i::before,
+body.salty.salty-icons-line .welcomePanel .recentChat .renameChat > i::before,
+body.salty.salty-icons-line .welcomePanel .recentChat .deleteChat > i::before,
+body.salty.salty-icons-line .welcomePanel .recentChat .counterBlock > i::before,
+body.salty.salty-icons-line .welcomePanel .showMoreChats > small::before,
+body.salty.salty-icons-line .welcomePanel .noRecentChat > i::before {
+  content: "" !important;
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+  background-color: currentColor;
+  -webkit-mask: var(--salty-mi) center / contain no-repeat;
+  mask: var(--salty-mi) center / contain no-repeat;
+}
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_legacy_translate { --salty-mi: var(--salty-mi-brain); }
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_llm_translate { --salty-mi: var(--salty-mi-swap); }
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_toggle_original { --salty-mi: var(--salty-mi-search); }
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_edit_translation { --salty-mi: var(--salty-mi-squarepen); }
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_paragraph_correction { --salty-mi: var(--salty-mi-wrench); }
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_delete_translation { --salty-mi: var(--salty-mi-trash); }
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_translate { --salty-mi: var(--salty-mi-languages); }
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .sd_message_gen { --salty-mi: var(--salty-mi-brush); }
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_narrate { --salty-mi: var(--salty-mi-volume); }
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_prompt { --salty-mi: var(--salty-mi-prompt); }
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_hide { --salty-mi: var(--salty-mi-eye); }
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_unhide { --salty-mi: var(--salty-mi-eyeoff); }
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_media_gallery { --salty-mi: var(--salty-mi-gallery); }
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_media_list { --salty-mi: var(--salty-mi-cells); }
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_embed { --salty-mi: var(--salty-mi-clip); }
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_swipe_picker { --salty-mi: var(--salty-mi-history); }
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_create_bookmark { --salty-mi: var(--salty-mi-flag); }
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_create_branch { --salty-mi: var(--salty-mi-branch); }
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_copy { --salty-mi: var(--salty-mi-copy); }
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_to_image { --salty-mi: var(--salty-mi-camera); }
+body.salty.salty-icons-line #chat .mes .mes_buttons > .mes_bookmark { --salty-mi: var(--salty-mi-flagfill); }
+body.salty.salty-icons-line #chat .mes .mes_buttons > .cg-mes-btn.fa-star { --salty-mi: var(--salty-mi-star); }
+body.salty.salty-icons-line #chat .mes .mes_buttons > .cg-mes-btn.fa-star.is-marked { --salty-mi: var(--salty-mi-starfill); }
+body.salty.salty-icons-line #chat .mes .mes_buttons > .cg-mes-btn.fa-bookmark { --salty-mi: var(--salty-mi-bookmark); }
+body.salty.salty-icons-line #chat .mes .mes_buttons > .cg-mes-btn.fa-bookmark.is-marked { --salty-mi: var(--salty-mi-bookmarkfill); }
+body.salty.salty-icons-line #chat .mes .mes_edit_buttons > .mes_edit_up { --salty-mi: var(--salty-mi-chevup); }
+body.salty.salty-icons-line #chat .mes .mes_edit_buttons > .mes_edit_down { --salty-mi: var(--salty-mi-chevdown); }
+body.salty.salty-icons-line #chat .mes .mes_edit_buttons > .mes_edit_copy { --salty-mi: var(--salty-mi-copy); }
+body.salty.salty-icons-line #chat .mes .mes_edit_buttons > .mes_edit_add_reasoning { --salty-mi: var(--salty-mi-bulb); }
+body.salty.salty-icons-line #chat .mes .mes_edit_buttons > .mes_edit_delete { --salty-mi: var(--salty-mi-trash); }
+body.salty.salty-icons-line #chat .mes .mes_edit_buttons > .mes_edit_cancel { --salty-mi: var(--salty-mi-x); }
+body.salty.salty-icons-line #chat .mes .mes_edit_buttons > .mes_edit_done { --salty-mi: var(--salty-mi-check); }
+body.salty.salty-icons-line #chat .mes .mes_reasoning_actions > .mes_reasoning_close_all { --salty-mi: var(--salty-mi-shrink); }
+body.salty.salty-icons-line #chat .mes .mes_reasoning_actions > .mes_reasoning_copy { --salty-mi: var(--salty-mi-copy); }
+body.salty.salty-icons-line #chat .mes .mes_reasoning_actions > .mes_reasoning_edit { --salty-mi: var(--salty-mi-pencil); }
+body.salty.salty-icons-line #chat .mes .mes_reasoning_actions > .mes_reasoning_edit_done { --salty-mi: var(--salty-mi-check); }
+body.salty.salty-icons-line #chat .mes .mes_reasoning_actions > .mes_reasoning_delete { --salty-mi: var(--salty-mi-trash); }
+body.salty.salty-icons-line #chat .mes .mes_reasoning_actions > .mes_reasoning_edit_cancel { --salty-mi: var(--salty-mi-x); }
+body.salty.salty-icons-line #chat .mes .mes_reasoning_arrow { --salty-mi: var(--salty-mi-chevup); }
+body.salty.salty-icons-line #chat .mes .swipe_left { --salty-mi: var(--salty-mi-chevleft); }
+body.salty.salty-icons-line #chat .mes .swipe_right { --salty-mi: var(--salty-mi-chevright); }
+body.salty.salty-icons-line .welcomePanel .showRecentChats > i { --salty-mi: var(--salty-mi-chevcircle); }
+body.salty.salty-icons-line .welcomePanel .recentChatsSettings > i { --salty-mi: var(--salty-mi-gear); }
+body.salty.salty-icons-line .welcomePanel .hideRecentChats > i { --salty-mi: var(--salty-mi-xcircle); }
+body.salty.salty-icons-line .welcomePanel .welcomeShortcuts i.fa-question-circle { --salty-mi: var(--salty-mi-help); }
+body.salty.salty-icons-line .welcomePanel .openTemporaryChat > i { --salty-mi: var(--salty-mi-chatdots); }
+body.salty.salty-icons-line .welcomePanel .recentChat .pinChat > i { --salty-mi: var(--salty-mi-pin); }
+body.salty.salty-icons-line .welcomePanel .recentChat .renameChat > i { --salty-mi: var(--salty-mi-squarepen); }
+body.salty.salty-icons-line .welcomePanel .recentChat .deleteChat > i { --salty-mi: var(--salty-mi-trash); }
+body.salty.salty-icons-line .welcomePanel .recentChat .counterBlock > i { --salty-mi: var(--salty-mi-chat); }
+body.salty.salty-icons-line .welcomePanel .showMoreChats > small { --salty-mi: var(--salty-mi-chevdown); }
+body.salty.salty-icons-line .welcomePanel .noRecentChat > i { --salty-mi: var(--salty-mi-chatdots); }
+
+/* 시작 화면: 채팅 폭에 맞춘 카드 한 장(e1) — 머리줄(로고 · 버전 · 아이콘) / 제목줄(최근 채팅 · 바로가기) / 최근 채팅 줄 */
+body.salty #chat .welcomePanel {
+  box-sizing: border-box;
+  gap: 2px;
+  width: calc(100% - 24px);
+  max-width: calc(var(--salty-measure) + var(--salty-gutter) * 2 - 24px);
+  margin: 8px auto 12px !important;
+  padding: 10px 8px 8px;
+  border: 0 !important;
+  border-radius: var(--bl-r-lg) !important;
+  background: var(--bl-fill-card, var(--bl-card)) !important;
+  box-shadow: var(--bl-e1);
+  font-family: var(--salty-font-ui);
+}
+body.salty .welcomePanel .welcomeHeaderTitle {
+  /* 3.0.0: gap → css/25-palette-maker.css (같은 선택자 규칙이 덮음) */
+  min-height: 36px;
+  padding: 0 0 0 6px;
+}
+body.salty .welcomePanel .welcomeHeaderLogo {
+  width: 30px;
+  height: 30px;
+  /* 뒤에 판이 없으니 안쪽 여백 · 모서리도 필요 없음 — 레몬이 칸을 꽉 채움 */
+  padding: 0;
+  border-radius: 0;
+}
+body.salty .welcomePanel .welcomeHeaderVersionDisplay {
+  flex: 1 1 auto;
+  min-width: 0;
+  /* 3.0.0: overflow · font-size · white-space → css/25-palette-maker.css (같은 선택자 규칙이 덮음) */
+  color: var(--salty-muted);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  text-overflow: ellipsis;
+}
+/* 머리줄 아이콘(펼치기 · 설정 · 접기): 32px 투명 버튼, 흐린 아이콘 (display 는 실리태번이 켜고 끔) */
+body.salty .welcomePanel .welcomeHeaderTitle .mes_button {
+  box-sizing: border-box;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  padding: 0 !important;
+  border-radius: var(--bl-r-sm);
+  color: var(--salty-faint) !important;
+  opacity: 1 !important;
+  filter: none !important;
+  line-height: 32px;
+  text-align: center;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+body.salty .welcomePanel .welcomeHeaderTitle .mes_button i {
+  font-size: 15px;
+  line-height: inherit;
+  vertical-align: top;
+}
+
+/* 제목줄: "최근 채팅" 제목 + 오른쪽 바로가기 (한 줄) */
+body.salty .welcomePanel .welcomeHeader {
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 0 0 8px;
+}
+body.salty .welcomePanel .recentChatsTitle {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--salty-text);
+  font-size: calc(var(--mainFontSize, 15px) * 1.067);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+body.salty .welcomePanel .welcomeShortcuts {
+  flex: none;
+  flex-wrap: nowrap;
+  gap: 2px;
+}
+/* 문서 · 깃허브 · 디스코드: 글자 없이 흐린 아이콘만 (자주 안 쓰는 링크 — PC 에서도 제목줄이 한 줄에 들어가게) */
+body.salty .welcomePanel .welcomeShortcuts a.menu_button {
+  width: 32px;
+  padding: 0 !important;
+  justify-content: center;
+  color: var(--salty-faint) !important;
+}
+body.salty .welcomePanel .welcomeShortcuts a.menu_button > span {
+  display: none;
+}
+body.salty .welcomePanel .welcomeShortcuts a.menu_button > i {
+  color: inherit;
+}
+body.salty .welcomePanel .welcomeShortcuts .welcomeShortcutsSeparator {
+  width: 6px;
+  overflow: hidden;
+  color: transparent;
+  font-size: 0;
+}
+/* 임시 채팅: 바로가기 중 유일한 떠 있는 칩(e2) */
+body.salty .welcomePanel .welcomeShortcuts .menu_button.openTemporaryChat {
+  height: 32px;
+  min-height: 32px;
+  padding: 0 12px !important;
+  border-radius: var(--bl-r-sm) !important;
+  background: var(--bl-fill-control, var(--bl-control)) !important;
+  box-shadow: var(--bl-e2) !important;
+  color: var(--salty-text) !important;
+  font-size: var(--bl-fs-ctl);
+  font-weight: 600;
+}
+body.salty .welcomePanel .welcomeShortcuts .openTemporaryChat i {
+  color: var(--salty-muted);
+}
+@media (hover: hover) {
+  body.salty .welcomePanel .welcomeHeaderTitle .mes_button:hover,
+  body.salty .welcomePanel .welcomeShortcuts a.menu_button:hover {
+    background: var(--bl-fill-hover, var(--bl-hover)) !important;
+    color: var(--salty-text) !important;
+  }
+  body.salty .welcomePanel .welcomeShortcuts .menu_button.openTemporaryChat:hover {
+    background: var(--bl-fill-control-hover, var(--bl-control-hover)) !important;
+  }
+}
+body.salty .welcomePanel .welcomeHeaderTitle .mes_button:active {
+  background: var(--bl-fill-press-bg, var(--bl-press-bg));
+}
+body.salty .welcomePanel .welcomeShortcuts .menu_button.openTemporaryChat:active {
+  background: var(--bl-fill-press-bg, var(--bl-press-bg)) !important;
+  box-shadow: var(--bl-press) !important;
+}
+
+/* 최근 채팅 줄: 선 없이 톤으로만 — 이름 · 날짜 · 줄 버튼 / 미리보기 두 줄 / 개수 · 크기 */
+body.salty .welcomeRecent .recentChatList {
+  gap: 2px;
+}
+body.salty .welcomeRecent .recentChatList .recentChat {
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 6px 10px 12px;
+  border: 0 !important;
+  border-radius: var(--bl-r-md);
+  background-color: transparent;
+  transition: background-color 0.15s ease;
+}
+body.salty .welcomeRecent .recentChatList .recentChat:hover {
+  background-color: transparent;
+}
+@media (hover: hover) {
+  body.salty .welcomeRecent .recentChatList .recentChat:hover {
+    background-color: var(--bl-hover);
+  }
+}
+body.salty .welcomeRecent .recentChatList .recentChat:active {
+  background-color: var(--bl-press-bg);
+}
+/* 고정한 채팅: 옅은 포인트 면 + 줄 버튼의 핀이 포인트색 (모서리의 작은 핀은 떠 보여서 숨김) */
+body.salty .welcomeRecent .recentChatList .recentChat:has(> .recentChatPinned) {
+  background-color: var(--salty-accent-8);
+}
+body.salty .welcomeRecent .recentChatList .recentChat .recentChatPinned {
+  display: none;
+}
+body.salty .welcomeRecent .recentChatList .recentChat .avatar {
+  margin-top: 4px;
+  border-radius: var(--bl-r-sm);
+  box-shadow: var(--bl-e2);
+}
+body.salty .welcomeRecent .recentChatList .recentChat .avatar img {
+  border-radius: var(--bl-r-sm);
+}
+body.salty .welcomeRecent .recentChatList .recentChat .recentChatInfo {
+  gap: 2px;
+  min-width: 0;
+  align-self: stretch;
+}
+body.salty .welcomeRecent .recentChatList .recentChat .chatNameContainer {
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+}
+body.salty .welcomeRecent .recentChatList .recentChat .chatNameContainer .chatName {
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-sub);
+  font-weight: 500;
+}
+body.salty .welcomeRecent .recentChatList .recentChat .chatName .characterName {
+  color: var(--salty-text);
+  font-size: var(--bl-fs-body);
+  font-weight: 650;
+}
+body.salty .welcomeRecent .recentChatList .recentChat .chatDate {
+  flex: none;
+  color: var(--salty-faint);
+  opacity: 1;
+  font-size: var(--bl-fs-micro);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+/* 줄 버튼(고정 · 이름 바꾸기 · 지우기): 30px 투명, 흐린 아이콘 — 고정은 켜지면 포인트색 */
+body.salty .welcomeRecent .recentChatList .recentChat .chatActions {
+  flex: none;
+  gap: 0;
+}
+body.salty .welcomeRecent .recentChatList .recentChat .chatActions .menu_button {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  min-height: 30px;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--salty-faint) !important;
+  font-size: 13px !important;
+}
+body.salty .welcomeRecent .recentChatList .recentChat .chatActions .menu_button.pinChat.active {
+  background: var(--salty-fill-accent-10, var(--salty-accent-10)) !important;
+  color: var(--salty-accent) !important;
+}
+@media (hover: hover) {
+  body.salty .welcomeRecent .recentChatList .recentChat .chatActions .menu_button:hover {
+    background: var(--bl-fill-hover, var(--bl-hover)) !important;
+    color: var(--salty-text) !important;
+  }
+  /* 3.0.0: 여기 있던 규칙 'body.salty .welcomeRecent .recentChatList .recentChat .chatActions .menu_button.…' 은 지움 — background · color → css/17-semantic.css (같은 선택자 규칙이 덮음) */
+}
+body.salty .welcomeRecent .recentChatList .recentChat .chatActions .menu_button:active {
+  background: var(--bl-fill-press-bg, var(--bl-press-bg)) !important;
+  box-shadow: var(--bl-press) !important;
+}
+/* 미리보기는 가로 꽉, 개수 · 크기는 그 아래 한 줄 */
+body.salty .welcomeRecent .recentChatList .recentChat .chatMessageContainer {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+}
+body.salty .welcomeRecent .recentChatList .recentChat .chatMessageContainer .chatMessage {
+  padding-right: 8px;
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-sub);
+  line-height: 1.45;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+body.salty.big-avatars:not(.hideChatAvatars) .welcomeRecent .recentChatList .recentChat .chatMessageContainer .chatMessage {
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+body.salty.big-avatars.hideChatAvatars .welcomeRecent .recentChatList .recentChat .chatMessageContainer .chatMessage {
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+body.salty .welcomeRecent .recentChatList .recentChat .chatStats {
+  align-items: center;
+  align-self: flex-start;
+  justify-content: flex-start;
+  gap: 10px;
+  color: var(--salty-faint);
+  font-size: var(--bl-fs-micro);
+  font-variant-numeric: tabular-nums;
+}
+body.salty .welcomeRecent .recentChatList .recentChat .chatStats :is(small, i) {
+  color: inherit;
+  opacity: 1;
+  font-size: inherit;
+}
+body.salty .welcomeRecent .recentChatList .recentChat .chatStats .counterBlock {
+  align-items: center;
+  gap: 5px;
+}
+body.salty .welcomeRecent .recentChatList .recentChat .chatStats .counterBlock i {
+  font-size: 10px;
+}
+body.salty .welcomeRecent .recentChatList .recentChat .chatStats .counterBlock::after {
+  content: none;
+}
+/* 더 보기: 카드 맨 아래 가로 꽉 투명 줄 */
+body.salty .welcomeRecent .recentChatList .showMoreChats {
+  align-self: stretch;
+  width: auto;
+  height: 34px;
+  min-height: 34px;
+  margin: 2px 0 0 !important;
+  padding: 0 !important;
+  border-radius: var(--bl-r-sm) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--salty-faint) !important;
+}
+@media (hover: hover) {
+  body.salty .welcomeRecent .recentChatList .showMoreChats:hover {
+    background: var(--bl-fill-hover, var(--bl-hover)) !important;
+    color: var(--salty-text) !important;
+  }
+}
+body.salty .welcomePanel .recentChatList .noRecentChat {
+  align-items: center;
+  gap: 8px;
+  padding: 20px 16px;
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-sub);
+}
+body.salty .welcomePanel .recentChatList .noRecentChat i {
+  color: var(--salty-faint);
+}
+/* 폰: 바로가기는 아이콘만 — 임시 채팅도 옆 아이콘들과 같은 32px 투명 버튼 (카드 모서리에 뜬 칩으로 안 보이게, 아이콘만 한 단계 진하게) */
+@media screen and (max-width: 1000px) {
+  body.salty .welcomePanel .welcomeShortcuts .menu_button.openTemporaryChat {
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
+    min-height: 32px;
+    padding: 0 !important;
+    justify-content: center;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: var(--salty-muted) !important;
+  }
+  body.salty .welcomePanel .welcomeShortcuts .openTemporaryChat i {
+    color: inherit;
+  }
+  body.salty .welcomePanel .welcomeShortcuts .openTemporaryChat span {
+    display: none;
+  }
+  body.salty .welcomePanel .welcomeShortcuts .menu_button.openTemporaryChat:active {
+    background: var(--bl-fill-press-bg, var(--bl-press-bg)) !important;
+    box-shadow: none !important;
+  }
+}
+@media screen and (max-width: 1000px) and (hover: hover) {
+  body.salty .welcomePanel .welcomeShortcuts .menu_button.openTemporaryChat:hover {
+    background: var(--bl-fill-hover, var(--bl-hover)) !important;
+    color: var(--salty-text) !important;
+  }
+}
+/* ---------- 채팅 파일 관리 창(≡ → 채팅 파일 관리) · 스와이프 고르기 ---------- */
+/* 창 = 카드 시트(e5) · 머리(제목 · 닫기 / 버튼 셋 / 검색) · 줄(이름 · 연필 / 날짜 · 크기 · 개수 · 줄 버튼 / 미리보기)
+   지금 보는 채팅과 고른 스와이프는 옅은 포인트 면 + 포인트 테 (실리태번의 보라 --cobalt30a 는 surfaces:greys 에서 이미 바꿈) */
+body.salty #shadow_select_chat_popup {
+  background-color: var(--bl-scrim) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+body.salty #select_chat_popup {
+  gap: var(--bl-s2);
+  padding: var(--bl-s4) var(--bl-s3) var(--bl-s3) !important;
+  border: 0 !important;
+  border-radius: var(--bl-r-lg) !important;
+  background: var(--bl-fill-card, var(--bl-card)) !important;
+  box-shadow: var(--bl-e5) !important;
+  color: var(--salty-text);
+  font-family: var(--salty-font-ui);
+  font-size: var(--bl-fs-body);
+}
+/* 머리: 제목 + 닫기 한 줄, 버튼 셋 한 줄, 검색은 제 줄 가로 꽉 (폰 자판이 올라와도 칸이 안 좁아짐) */
+body.salty #select_chat_popup > [name="selectChatPopupHeader"] {
+  flex: none;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: var(--bl-s2) !important;
+}
+/* 가져오기용 숨은 파일 칸 — 줄 간격만 잡아먹음 */
+body.salty #select_chat_import {
+  display: none;
+}
+body.salty #selectChatPopupHeaderText {
+  order: 0;
+  flex: 1 1 calc(100% - 46px);
+  min-width: 0;
+  padding-left: 2px;
+  color: var(--salty-text);
+  font-size: var(--bl-fs-head);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+  text-align: left;
+  word-break: keep-all;
+}
+body.salty #selectChatPopupHeaderText .note-link-span {
+  margin-left: 2px;
+  color: var(--salty-faint);
+  font-size: 14px;
+}
+body.salty #selectChatPopupHeaderText > a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: -8px -7px;
+  border-radius: var(--bl-r-xs);
+  vertical-align: middle;
+}
+body.salty #select_chat_cross {
+  order: 1;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--bl-h-icon);
+  height: var(--bl-h-icon);
+  border-radius: 50%;
+  background: var(--bl-fill-hover, var(--bl-hover));
+  color: var(--salty-muted) !important;
+  opacity: 1 !important;
+  font-size: 15px !important;
+}
+body.salty #select_chat_cross::before {
+  content: "\f00d"; /* 동그라미 안 × → 맨 × (카드 위 겹동그라미로 안 보이게) */
+}
+/* 새 채팅 · 채팅 가져오기 · Backups: 같은 높이 떠 있는 칩, 한 줄에 나눠 채움 */
+body.salty #select_chat_popup :is(#newChatFromManageScreenButton, #chat_import_button, button.menu_button) {
+  order: 2;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--bl-h-ctl) !important;
+  gap: 6px !important;
+  margin: 0 !important;
+  padding: 0 10px !important;
+  justify-content: center;
+  border: 0 !important;
+  border-radius: var(--bl-r-sm) !important;
+  background: var(--bl-fill-control, var(--bl-control)) !important;
+  box-shadow: var(--bl-e2) !important;
+  color: var(--salty-text) !important;
+  font-family: inherit;
+  font-size: var(--bl-fs-ctl) !important;
+  font-weight: 600;
+  white-space: nowrap;
+}
+body.salty #select_chat_popup :is(#newChatFromManageScreenButton, #chat_import_button, button.menu_button) > i {
+  flex: none;
+  color: var(--salty-muted) !important;
+  font-size: 15px !important;
+}
+body.salty #select_chat_popup :is(#newChatFromManageScreenButton, #chat_import_button, button.menu_button) > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (hover: hover) {
+  body.salty #select_chat_popup :is(#newChatFromManageScreenButton, #chat_import_button, button.menu_button):hover {
+    background: var(--bl-fill-control-hover, var(--bl-control-hover)) !important;
+  }
+}
+body.salty #select_chat_popup :is(#newChatFromManageScreenButton, #chat_import_button, button.menu_button):active {
+  background: var(--bl-fill-press-bg, var(--bl-press-bg)) !important;
+  box-shadow: var(--bl-press) !important;
+}
+body.salty #select_chat_search {
+  order: 3;
+  flex: 1 1 100% !important;
+  width: auto !important;
+  min-width: 0;
+  height: var(--bl-h-ctl);
+  margin: 0 !important;
+  border-radius: var(--bl-r-sm) !important;
+  background-color: var(--bl-well) !important;
+  box-shadow: var(--bl-well-in) !important;
+  font-size: var(--bl-fs-body);
+}
+body.salty #select_chat_search:focus {
+  background-color: var(--salty-surface) !important;
+  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+}
+/* 백업 목록: 종이색 오목한 칸 안의 줄 (테두리 없음) */
+body.salty #select_chat_popup .chatBackupsList {
+  flex: none;
+  gap: 0;
+  max-height: min(30dvh, 260px);
+  padding: var(--bl-s1);
+  border: 0 !important;
+  border-radius: var(--bl-r-md);
+  background: var(--bl-fill-page, var(--bl-page));
+  box-shadow: var(--bl-well-in);
+}
+body.salty #select_chat_popup .chatBackupsListItem {
+  gap: 2px var(--bl-s2);
+  padding: var(--bl-s2) 10px;
+  border: 0 !important;
+  border-radius: var(--bl-r-sm);
+  background: transparent !important;
+  font-size: var(--bl-fs-sub);
+}
+body.salty #select_chat_popup .chatBackupsListItemName {
+  color: var(--salty-text);
+  opacity: 1;
+  font-size: var(--bl-fs-sub);
+  font-weight: 600;
+}
+body.salty #select_chat_popup .chatBackupsListItemInfo {
+  color: var(--salty-faint);
+  filter: grayscale(1); /* 개수 뒤 💬 이모지가 연보라로 보임 */
+  opacity: 1;
+  font-size: var(--bl-fs-micro);
+  font-variant-numeric: tabular-nums;
+}
+body.salty #select_chat_popup .chatBackupsListItemActions {
+  gap: 2px;
+  color: var(--salty-faint);
+}
+body.salty #select_chat_popup .chatBackupsListItemActions .right_menu_button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: var(--bl-r-xs);
+  color: inherit;
+  opacity: 1;
+  filter: none !important;
+  font-size: 14px !important;
+}
+@media (hover: hover) {
+  body.salty #select_chat_popup .chatBackupsListItem:hover {
+    background: var(--bl-fill-hover, var(--bl-hover)) !important;
+  }
+  body.salty #select_chat_popup .chatBackupsListItemActions .right_menu_button:hover {
+    background: var(--bl-fill-hover, var(--bl-hover));
+    color: var(--salty-text);
+  }
+}
+/* 목록: 남은 높이 전부 (자판이 올라와 창이 낮아져도 줄이 보이게) */
+body.salty :is(#select_chat_div, .swipe_picker_div) {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+  padding: 0 !important;
+  overscroll-behavior: contain;
+}
+body.salty :is(#select_chat_div, .swipe_picker_div) .select_chat_block_wrapper {
+  margin: 0;
+}
+/* 줄: 선 없이 톤으로만 — 이름 / 날짜 · 크기 · 개수 · 줄 버튼 / 미리보기 두 줄 */
+body.salty :is(.select_chat_block, .swipe_picker_block) {
+  position: relative;
+  flex-direction: column;
+  align-items: stretch !important;
+  text-align: left; /* 팝업은 가운데 정렬이 기본 — 스와이프 줄 이름이 가운데로 감 */
+  gap: 4px;
+  margin: 2px 0 !important;
+  padding: 10px var(--bl-s3) 12px !important;
+  border: 0 !important;
+  border-radius: var(--bl-r-md) !important;
+  background-color: transparent !important;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+@media (hover: hover) {
+  body.salty :is(.select_chat_block, .swipe_picker_block):not([highlight]):hover {
+    background-color: var(--bl-hover) !important;
+  }
+}
+body.salty :is(.select_chat_block, .swipe_picker_block):not([highlight]):active {
+  background-color: var(--bl-press-bg) !important;
+}
+/* 지금 보고 있는 채팅 · 고른 스와이프 */
+body.salty :is(.select_chat_block, .swipe_picker_block)[highlight] {
+  background-color: var(--bl-selected) !important;
+  box-shadow: inset 0 0 0 2px var(--salty-accent), var(--bl-e1) !important;
+}
+body.salty :is(.select_chat_block, .swipe_picker_block) #select_chat_name_wrapper {
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 2px var(--bl-s2) !important;
+}
+/* 첫 줄: 이름 + 이름 바꾸기 연필 (이름이 두 줄로 꺾여도 연필은 마지막 줄 뒤) */
+body.salty :is(.select_chat_block, .swipe_picker_block) #select_chat_name_wrapper > .flex-container:first-of-type {
+  display: block;
+  flex: 1 1 100%;
+  min-width: 0;
+  padding-right: 36px; /* 오른쪽 위 연필 자리 */
+}
+body.salty :is(.select_chat_block, .swipe_picker_block) .select_chat_block_filename {
+  display: inline;
+  flex: 0 1 auto !important;
+  min-width: 0;
+  color: var(--salty-text) !important;
+  opacity: 1 !important;
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 650;
+  line-height: 1.35;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+body.salty :is(.select_chat_block, .swipe_picker_block) .renameChatButton {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--bl-r-xs);
+  color: var(--salty-faint) !important;
+  opacity: 1 !important;
+  font-size: 12px !important;
+}
+/* 둘째 줄: 날짜 · 크기 · 개수는 왼쪽, 줄 버튼은 오른쪽 */
+body.salty :is(.select_chat_block, .swipe_picker_block) #select_chat_name_wrapper > .flex-container:last-of-type {
+  flex: 1 1 100%;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: var(--bl-s2) !important;
+  min-width: 0;
+}
+body.salty :is(.select_chat_block, .swipe_picker_block) .select_chat_info {
+  flex: 1 1 auto;
+  flex-wrap: nowrap !important; /* 괄호 안에서 꺾이면 줄 높이가 들쭉날쭉해짐 */
+  align-items: baseline;
+  gap: 0 5px !important;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--salty-faint);
+  font-size: var(--bl-fs-micro);
+  font-variant-numeric: tabular-nums;
+}
+body.salty :is(.select_chat_block, .swipe_picker_block) .select_chat_info > small {
+  flex: none;
+  width: auto;
+  color: inherit;
+  opacity: 1 !important;
+  font-size: inherit !important;
+  white-space: nowrap;
+}
+/* 자리가 모자라면 제일 덜 중요한 파일 크기만 줄어듦 (날짜 · 개수는 그대로) */
+body.salty :is(.select_chat_block, .swipe_picker_block) .select_chat_info .chat_file_size {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+body.salty :is(.select_chat_block, .swipe_picker_block) .select_chat_info .chat_messages_date {
+  color: var(--salty-muted);
+  font-weight: 500;
+}
+/* 실리태번이 개수 뒤에 붙이는 💬 이모지가 연보라로 보임 → 회색으로 */
+body.salty :is(.select_chat_block, .swipe_picker_block) .select_chat_info .chat_messages_num {
+  filter: grayscale(1);
+}
+/* 줄 버튼(내보내기 · 문서로 · 지우기 / 스와이프는 펼치기 · 복사 · 분기 · 지우기): 32px 투명 버튼
+   지우기 색은 빨강 담당이 따로 칠함 — 여기선 모양 · 돌아가는 효과만 (폰에서 번짐) */
+body.salty :is(.select_chat_block, .swipe_picker_block) .select_chat_actions {
+  flex: none;
+  align-items: center !important;
+  gap: 2px !important;
+  color: var(--salty-faint);
+}
+body.salty :is(.select_chat_block, .swipe_picker_block) .select_chat_actions > * {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border-radius: var(--bl-r-xs);
+  color: inherit;
+  opacity: 1 !important;
+  font-size: 15px !important;
+  line-height: 1;
+  transform: none;
+}
+body.salty :is(.select_chat_block, .swipe_picker_block) .select_chat_actions > :is(.PastChat_cross, .swipe_picker_delete) {
+  width: 32px !important;
+  height: 32px !important;
+  animation: none !important;
+  filter: none !important;
+}
+body.salty :is(.select_chat_block, .swipe_picker_block) .select_chat_actions > .swipe_picker_delete.disabled {
+  opacity: 0.4 !important;
+}
+@media (hover: hover) {
+  body.salty :is(.select_chat_block, .swipe_picker_block) .select_chat_actions > *:hover {
+    background: var(--bl-fill-hover, var(--bl-hover));
+  }
+  body.salty :is(.select_chat_block, .swipe_picker_block) .select_chat_actions > :not(.PastChat_cross, .swipe_picker_delete):hover {
+    color: var(--salty-text);
+  }
+}
+body.salty :is(.select_chat_block, .swipe_picker_block) .select_chat_actions > *:active {
+  background: var(--bl-fill-press-bg, var(--bl-press-bg));
+}
+/* 미리보기: 두 줄까지 (한글은 낱말 안에서 안 끊김) */
+body.salty :is(.select_chat_block, .swipe_picker_block) .select_chat_block_mes {
+  margin: 0;
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-sub) !important;
+  line-height: 1.5;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+/* 스와이프 펼치기(실리태번 기본 동작)는 그대로 — 줄 수 제한을 다시 풀어 줌 */
+body.salty .swipe_picker_block:has(.swipe_picker_expand_toggle:checked) .select_chat_block_mes {
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+  white-space: pre-wrap;
+}
+/* 스와이프 고르기 창: 내용만큼만 높게 (스와이프 두 개인데 화면을 다 쓰면 빈 칸이 큼)
+   dialog 는 위·아래가 0 으로 잡혀 있어 height:auto 면 화면 높이만큼 늘어남 → fit-content */
+body.salty dialog.popup.swipe_picker_popup {
+  height: fit-content !important;
+  min-height: 0 !important; /* 실리태번의 min-height:fit-content 가 아래 최대 높이를 이겨서, 펼치면 창이 화면을 넘어감 */
+  max-height: min(88dvh, 900px) !important;
+}
+body.salty dialog.popup.swipe_picker_popup .popup-body {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+}
+body.salty dialog.popup.swipe_picker_popup .popup-content {
+  flex: 0 1 auto;
+  min-height: 0;
+}
+body.salty dialog.popup.swipe_picker_popup .popup-content > .flex-container {
+  min-height: 0;
+}
+/* 펼친 글이 길면 창 높이는 그대로 두고 목록만 굴림 (머리 · 번호 칸은 제자리) */
+body.salty .popup.swipe_picker_popup .swipe_picker_div {
+  flex: 1 1 0% !important;
+  min-height: 0;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+}
+body.salty .popup.swipe_picker_popup .swipe_picker_header {
+  gap: var(--bl-s2);
+  padding-bottom: var(--bl-s2);
+  background: var(--bl-fill-card, var(--bl-card));
+}
+body.salty .popup.swipe_picker_popup .swipe_picker_header h3 {
+  font-size: var(--bl-fs-head);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+body.salty .popup.swipe_picker_popup .swipe_picker_header .popup-button-close {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--bl-h-icon) !important;
+  height: var(--bl-h-icon) !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  background: var(--bl-fill-hover, var(--bl-hover)) !important;
+  color: var(--salty-muted) !important;
+  opacity: 1 !important;
+  font-size: 15px !important;
+}
+body.salty .popup.swipe_picker_popup .swipe_picker_header .popup-button-close::before {
+  content: "\f00d";
+}
+body.salty .popup.swipe_picker_popup .swipe_picker_div {
+  margin-top: 0 !important;
+}
+/* 아래 줄: 스와이프 번호 칸 */
+body.salty .popup.swipe_picker_popup .popup-controls > label {
+  flex: 1 1 auto;
+  gap: var(--bl-s2) !important;
+  min-height: var(--bl-h-lg);
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-ctl);
+  font-weight: 600;
+}
+body.salty .popup.swipe_picker_popup .popup-controls input {
+  flex: none;
+  width: 88px;
+  height: var(--bl-h-lg);
+  margin: 0;
+  border-radius: 12px !important;
+  font-size: var(--bl-fs-ctl);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+/* PC 에서도 이 창은 500px 남짓 — 제목 · 버튼 셋 · 검색 · 닫기를 한 줄에 넣으면 닫기가 제목과 버튼
+   사이로 밀려 들어감. 그래서 폰과 같은 세 줄 머리(제목 · 닫기 / 버튼 셋 / 검색)를 그대로 씀 */
+/* 폰: 창을 상단 바 밑에 띄우고 좌우 여백 (바가 창에 가리지 않게) */
+@media screen and (max-width: 1000px) {
+  body.salty #select_chat_popup {
+    left: var(--bl-s2);
+    right: var(--bl-s2);
+    top: calc(var(--topBarBlockSize, 40px) + 6px);
+    bottom: var(--bl-s2);
+    max-height: calc(100dvh - var(--topBarBlockSize, 40px) - 14px);
+    padding: var(--bl-s3) 10px 10px !important;
+  }
+  body.salty :is(.select_chat_block, .swipe_picker_block) {
+    padding: 10px 10px 12px !important;
+  }
+}
+/* 좁은 폰(360 등): 버튼 셋이 한 줄에 들어가게 조금 좁게 */
+@media screen and (max-width: 380px) {
+  body.salty #select_chat_popup > [name="selectChatPopupHeader"] {
+    gap: 6px !important;
+  }
+  body.salty #select_chat_popup :is(#newChatFromManageScreenButton, #chat_import_button, button.menu_button) {
+    gap: 4px !important;
+    padding: 0 8px !important;
+    font-size: var(--bl-fs-sub) !important;
+  }
+  body.salty #select_chat_popup :is(#newChatFromManageScreenButton, #chat_import_button, button.menu_button) > i {
+    font-size: 13px !important;
+  }
+  body.salty #select_chat_popup :is(#newChatFromManageScreenButton, #chat_import_button, button.menu_button) > span {
+    min-width: 0;
+  }
+  /* 날짜가 길어 한 줄에 다 안 들어감 → 파일 크기는 접고 날짜 · 개수만 (여는 괄호는 개수 앞에 다시 붙임) */
+  body.salty :is(.select_chat_block, .swipe_picker_block) .select_chat_info .chat_file_size {
+    display: none;
+  }
+  body.salty :is(.select_chat_block, .swipe_picker_block) .select_chat_info .chat_messages_num::before {
+    content: "(";
+  }
+}
+/* ===== /surfaces:chrome ===== */

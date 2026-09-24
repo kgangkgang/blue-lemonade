@@ -1,0 +1,261 @@
+/* ===== css/09-st-align-brand-loader-greys.css =====
+   실리태번 화면 공통: 줄 맞춤 · 스크롤바 홈(PC) · 브랜드 · 로딩 화면 · 회색 변수.
+   ===== */
+/* ===== 실리태번 화면: 줄 맞춤 (surfaces:align) ===== */
+/* 1) 프롬프트 목록 칸 맞춤(이름 · 토큰 · 조작)은 surfaces:prompt 로 옮김 —
+      두 곳에서 !important 로 다투다 이름 칸이 116px 조작 칸에 밀려 좁아져(390 에서 154) 한 줄 이름이 두 줄로 꺾였음 */
+
+/* 2) 설정 라벨 옆 파란 동그라미 체크(.icon-supported)가 글자에 붙어 있고 두꺼웠음
+      → 간격을 주고, 꽉 찬 원 대신 얇은 체크만 */
+body.salty :is(#left-nav-panel, .drawer-content, .popup) .icon-supported {
+  margin-inline-start: 8px !important;
+  font-size: 12px !important;
+  opacity: 0.8;
+}
+body.salty :is(#left-nav-panel, .drawer-content, .popup) .icon-supported::before {
+  content: "\f00c" !important;  /* fa-check — 원 없는 얇은 체크 */
+}
+
+/* 3) 상단 알림(토스트): 아이콘 기준으로 글자가 살짝 위/아래로 어긋나 보였음 → 세로 가운데 */
+body.salty #toast-container > div {
+  display: flex; /* !important 금지: toastr 는 숨긴 뒤 :visible 이면 지우지 않음 → 인라인 display:none 이 이겨야 사라진다 */
+  flex-direction: column !important; /* 제목은 본문 위 — 가로로 나란히 두면 "생성 오류" 가 좁은 칸에서 세로로 쪼개짐 */
+  justify-content: center !important; /* 알림이 최소 높이보다 짧을 때 글자 뭉치를 세로 가운데로 */
+  align-items: stretch !important;
+  gap: 3px !important;
+}
+body.salty #toast-container > div > :is(.toast-message, .toast-title) {
+  margin: 0 !important;
+  line-height: 1.35 !important;
+}
+/* ===== /surfaces:align ===== */
+
+/* ===== 실리태번 화면: 스크롤바 좌우 균형 (surfaces:gutter) ===== */
+/* 서랍 안쪽 스크롤 영역은 좌우 여백을 같게 주는데 오른쪽 6px 스크롤바가 그 안을 먹어서
+   내용이 왼쪽으로 치우쳐 보임 (프롬프트 관리자: 왼쪽 14 / 오른쪽 20 으로 측정됨).
+   스크롤바 자리를 양쪽에 같이 잡아 두어 눈으로 봤을 때 가운데로. */
+body.salty {
+  --bl-sbw: 6px; /* ::-webkit-scrollbar 폭과 같게 */
+}
+body.salty {
+  --bl-inset-base: 14px; /* 서랍 안쪽 좌우 여백 (기반 규칙과 같은 값 — 기반이 바뀌면 여기도 같이) */
+}
+body.salty :is(.scrollableInner, .drawer-content, .popup-content, .popup-body, #left-nav-panel, #right-nav-panel) {
+  scrollbar-gutter: stable both-edges;
+}
+/* 위 규칙은 스크롤하는 칸의 좌우 균형을 맞추려는 것인데, 실리태번 서랍은 정작 자기가 스크롤하지 않는다
+   (실측: #left-nav-panel · #right-nav-panel · #WorldInfo · #user-settings-block · #AdvancedFormatting ·
+   #Backgrounds · #PersonaManagement · #floatingPrompt · #cfgConfig · #logprobsViewer 모두 overflow-y: hidden,
+   스크롤은 그 안의 .scrollableInner 가 한다). 스크롤바가 없는데 자리를 양쪽에 6px 씩 잡아 두니
+   293px 폰에서 12px 이 그냥 버려졌다 — 캐릭터 카드가 화면에서 18px 안쪽에서 시작한 이유의 절반.
+   스크롤바가 없는 칸은 자리를 잡지 않는다 (보이는 여백은 padding 이 정하므로 균형은 그대로) */
+body.salty :is(#left-nav-panel, #right-nav-panel, #AdvancedFormatting, #WorldInfo, #user-settings-block, #Backgrounds, #PersonaManagement, #floatingPrompt, #cfgConfig, #logprobsViewer):not(#salty-none) {
+  scrollbar-gutter: auto;
+}
+/* 예외: 고급 서식은 안쪽 칸이 아니라 서랍 자신이 스크롤한다(1.18 실측 overflow-y: scroll).
+   폰에서는 오른쪽에만 스크롤바(6px)가 자리를 먹어 좌 10px · 우 16px 로 어긋났음 → 양쪽에 같은 자리를 잡고 그만큼 여백을 줄임 */
+body.salty:not(#salty-none) #AdvancedFormatting:not(#salty-none) {
+  scrollbar-gutter: stable both-edges;
+  padding-left: max(0px, calc(var(--bl-gutter, 10px) - var(--bl-sbw))) !important;
+  padding-right: max(0px, calc(var(--bl-gutter, 10px) - var(--bl-sbw))) !important;
+}
+/* 양쪽에 잡아 둔 스크롤바 자리만큼 안쪽 여백을 줄여, 보이는 여백은 그대로 두고 폭은 안 잃게 */
+/* 기반 규칙이 #left-nav-panel > .scrollableInner 에 --bl-gutter 로 여백을 주므로(id 우선순위),
+   같은 우선순위로 좌우만 스크롤바 폭만큼 줄임 — 보이는 여백은 --bl-gutter 그대로, 폭은 안 잃음 */
+body.salty :is(#left-nav-panel, #right-nav-panel, #user-settings-block, #WorldInfo, #rm_api_block, #AdvancedFormatting, #Backgrounds, #PersonaManagement, #rm_extensions_block):not(#salty-none) > .scrollableInner,
+body.salty .drawer-content:not(#salty-none) > .scrollableInner {
+  padding-left: max(0px, calc(var(--bl-gutter, 14px) - var(--bl-sbw))) !important;
+  padding-right: max(0px, calc(var(--bl-gutter, 14px) - var(--bl-sbw))) !important;
+}
+/* scrollbar-gutter 를 모르는 예전 브라우저: 오른쪽 여백에서 스크롤바 폭만큼 빼서 맞춤 */
+@supports not (scrollbar-gutter: stable) {
+  body.salty .scrollableInner {
+    padding-right: max(0px, calc(14px - var(--bl-sbw)));
+  }
+}
+/* ===== /surfaces:gutter ===== */
+
+/* ===== 실리태번 화면: 브랜드 (surfaces:brand) ===== */
+/* 레몬 하나 · 버전 배지 하나
+   · 레몬은 네 곳(✦ 메뉴 · 확장 서랍 · 설정 창 머리 · 시작 화면 타일)에서 같은 윤곽 —
+     폰트어썸 fa-lemon(U+F094) 속찬 글리프. 메뉴 · 서랍은 FA 글꼴 글자 그대로,
+     설정 창(panel.js MARK)과 시작 화면(apply.js logoUrl)은 같은 글리프에서 뽑은 SVG
+     (아래 스플래시 surfaces:loader 와 path 가 똑같음)
+   · 서랍 머리 레몬만 레몬색(--bl-lemon: 밝은 테마 진한 레몬 · 어두운 테마 밝은 레몬),
+     ✦ 메뉴 · 설정 창 · 시작 화면은 그 자리 색(메뉴 보조색 · 포인트색)을 그대로 따름
+   · 버전 배지: 확장마다 테가 있다 없다 달랐던 것을 테 있는 알약 하나로 —
+     모든 확장이 공통으로 .ext-version 을 달고 있어서 그걸 기준으로 잡음.
+     접두사별 클래스(.jj- 전개지시 · .eh- 캐릭터 에셋 · .wr- 단어 치환 · .mr- 모델 등록 ·
+     .bwr- 다시쓰기 · .llmt- 번역 · .bl- 블루 레몬에이드)는
+     공통 클래스가 빠진 판을 위한 방어용
+     (북마크 .cg-version 과 .eh-version-foot 은 알약이 아니라 창 아래 한 줄 글이라 그대로) */
+body.salty #rm_extensions_block #salty-drawer > .inline-drawer-header > b > .fa-lemon {
+  color: var(--salty-lemon, #E9BE00); /* 상표 레몬은 팔레트의 brand (없으면 레몬색) — 상태색 --bl-lemon 과 따로 (4.1.2) */
+}
+/* 확장 제목 옆 아이콘: 확장마다 크기가 제각각이라 줄이 들쭉날쭉했음 → 글자 크기에 맞춤.
+   색은 각 확장이 정한 것을 그대로 둠 (레몬만 위에서 레몬색) */
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer-header > b > :is(i, svg) {
+  width: auto;
+  margin-right: 6px;
+  font-size: 1em;
+  line-height: 1;
+  vertical-align: -1px;
+}
+body.salty #rm_extensions_block :is(.ext-version, .jj-version, .eh-version, .wr-version, .mr-version, .bwr-version, .llmt-version, .bl-version) {
+  display: inline-block;
+  margin-left: var(--bl-s1);
+  padding: 1px 8px;
+  border: 1px solid color-mix(in srgb, var(--salty-text) 16%, transparent);
+  border-radius: var(--bl-r-pill);
+  background: var(--bl-fill-hover, var(--bl-hover));
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-micro) !important;
+  font-weight: 400;
+  line-height: 1.5;
+  vertical-align: middle;
+}
+/* ===== /surfaces:brand ===== */
+
+/* ===== 실리태번 화면: 로딩(스플래시) (surfaces:loader) ===== */
+/* 새로고침 로딩 화면: 까만 바탕 · 빨간 뇌 로고 · "초기화 중…" 대신 팔레트 바탕 · 속찬 레몬 · SillyTavern.
+   · 스플래시는 팝업(dialog.popup.transparent_dialogue_popup) 안에 들어 있어서 위 팝업 규칙의 카드 면 · 그림자 · 여백을
+     여기서 되돌림 (:has 로 스플래시가 든 팝업만 — 다른 팝업은 그대로)
+   · 바탕은 세 겹: 뒤에 깔린 #preloader · 팝업 뒤 막(::backdrop) · 그 위 내용 — 세 겹을 같은 바탕색으로 칠해야 한 색으로 보임
+     (::backdrop 에는 팔레트 변수가 안 닿는 브라우저가 있어 팔레트별 되돌림값을 적어 둠)
+   · 흐림(backdrop-filter)과 사라질 때 blur 는 끔 — 폰에서 색이 번져 보임
+   · 레몬은 브랜드와 같은 속찬 모양을 SVG 로 그려 넣음 (밝은 테마는 진한 레몬, 어두운 테마는 밝은 레몬)
+   · 지역화된 "초기화 중…"은 글자 크기 0 으로 감추고 브랜드 이름을 ::before 로 직접 씀 (실리태번 쪽 번역·JS 는 그대로)
+   · 다 불러오면 실리태번이 #preloader 와 스플래시 팝업을 지움 → 평소 화면에는 이 칸의 규칙이 하나도 안 남음 */
+body.salty #preloader {
+  background-color: var(--salty-bg) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  color: var(--salty-text) !important;
+}
+/* 스플래시가 든 팝업은 카드가 아니라 바탕 — 면 · 그림자 · 둥글기 · 여백 되돌림 */
+body.salty .popup:has(#loader.splash-screen) {
+  padding: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+/* 팝업 뒤 막도 같은 바탕색 (어두운 막이 겹치면 두 겹으로 보임) */
+body.salty.salty-light .popup:has(#loader.splash-screen)::backdrop {
+  background: var(--salty-bg, #F1F8FD) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+body.salty.salty-dark .popup:has(#loader.splash-screen)::backdrop {
+  background: var(--salty-bg, #071C2E) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+/* 레몬 · 이름 · 돌아가는 톱니를 한 줄로 세움 (실리태번 기본 간격 4rem 은 너무 벌어짐) */
+/* 위와 같은 이유 — 초기 파일이 없는 사람(새 설치 · css/user.css 에 @import 안 넣음)을 위해 여기도 한 번 더.
+   여기 것은 확장이 붙은 뒤에야 오므로 번짐 구간을 못 막는다: 진짜 방패는 src/splash.js 가 만드는 초기 파일이다. */
+body.salty :is(#loader.splash-screen, #loader.splash-screen *),
+body.salty #loader.splash-screen *::before,
+body.salty #loader.splash-screen *::after {
+  text-shadow: none !important;
+}
+body.salty #loader.splash-screen {
+  gap: var(--bl-sp-gap, var(--bl-s5)) !important;
+  filter: none !important; /* 사라질 때 실리태번이 주는 blur(15px) 끔 — 폰에서 색 번짐 */
+}
+/* 로고: 빨간 뇌 대신 속찬 레몬 — 크기는 예전 로고와 같게, 그림자 없음 */
+body.salty #loader.splash-screen .splash-logo {
+  order: 1;
+  width: min(150px, 50%) !important;
+  height: auto !important;
+  filter: none !important;
+}
+body.salty.salty-light #loader.splash-screen .splash-logo {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 448 512'%3E%3Cpath fill='%23E9BE00' transform='translate(0 448) scale(1 -1)' d='M448 352Q447 379 429 397Q411 415 384 416Q374 416 365 413Q348 407 330 404Q311 400 294 404Q237 418 180 399Q124 379 80 336Q37 292 17 236Q-2 179 12 122Q16 105 12 86Q9 68 3 51Q0 42 0 32Q1 5 19 -13Q37 -31 64 -32Q74 -32 83 -29Q100 -23 118 -20Q137 -16 154 -20Q211 -34 268 -15Q324 5 368 48Q411 92 431 148Q450 205 436 262Q432 279 436 298Q439 316 445 333Q448 342 448 352ZM213 321Q171 308 139 277Q108 245 95 203Q90 190 76 193Q62 198 65 212Q80 262 117 299Q154 336 204 351Q218 354 223 340Q226 326 213 321Z'/%3E%3C/svg%3E");
+}
+body.salty.salty-dark #loader.splash-screen .splash-logo {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 448 512'%3E%3Cpath fill='%23FFE973' transform='translate(0 448) scale(1 -1)' d='M448 352Q447 379 429 397Q411 415 384 416Q374 416 365 413Q348 407 330 404Q311 400 294 404Q237 418 180 399Q124 379 80 336Q37 292 17 236Q-2 179 12 122Q16 105 12 86Q9 68 3 51Q0 42 0 32Q1 5 19 -13Q37 -31 64 -32Q74 -32 83 -29Q100 -23 118 -20Q137 -16 154 -20Q211 -34 268 -15Q324 5 368 48Q411 92 431 148Q450 205 436 262Q432 279 436 298Q439 316 445 333Q448 342 448 352ZM213 321Q171 308 139 277Q108 245 95 203Q90 190 76 193Q62 198 65 212Q80 262 117 299Q154 336 204 351Q218 354 223 340Q226 326 213 321Z'/%3E%3C/svg%3E");
+}
+/* 글: 지역화된 한 줄은 감추고 브랜드 이름을 영어로 (제목 눈금) + 아래 보조 한 줄 */
+body.salty #loader.splash-screen .splash-message {
+  order: 2;
+  display: block !important;
+  margin: 0 !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  letter-spacing: 0 !important;
+  opacity: 1 !important;
+  text-align: center;
+}
+/* 이 칸의 값은 src/splash.js 가 만드는 초기 파일(css/user.css 의 @import 로 첫 그림부터 걸림)을 그대로 따른다.
+   style.css 는 확장이 붙은 뒤에야 오므로, 두 벌이 다르면 그 순간 글자가 한 번 바뀐다.
+   실측: 초기 파일 22.74px(--mainFontSize 기준) vs 여기 --bl-fs-title 19.995px(테마 눈금) — 13.7% 튐.
+   그래서 --bl-sp-* 를 먼저 보고, 초기 파일이 없을 때만(처음 설치 · @import 안 넣은 사람) 예전 값으로 내려간다. */
+body.salty #loader.splash-screen .splash-message::before {
+  content: "SillyTavern";
+  display: block;
+  color: var(--salty-text);
+  font-family: var(--bl-sp-font, var(--salty-font-ui, inherit));
+  font-size: var(--bl-sp-title, var(--bl-fs-title, 22px));
+  font-weight: 700;
+  /* 이 줄이 뜰 때 테마 글꼴은 아직 받는 중(font-display: swap)이라 대체 글꼴로 먼저 그려진다.
+     대체 글꼴에 700 이 없으면 크롬이 글자를 번지게 굵혀 흉내 내고, 진짜 글꼴이 오면 또렷해진다.
+     가짜 굵게를 끄면 잠깐 보통 굵기로 있다가 굵어진다 — 번지는 것보다 덜 거슬림. */
+  font-synthesis-weight: none;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+}
+body.salty #loader.splash-screen .splash-message::after {
+  content: "불러오는 중";
+  display: block;
+  margin-top: var(--bl-sp-gap2, var(--bl-s1));
+  color: var(--salty-muted);
+  font-family: var(--bl-sp-font, var(--salty-font-ui, inherit));
+  font-size: var(--bl-sp-sub, var(--bl-fs-sub, 13px));
+  font-weight: 500;
+  font-synthesis-weight: none;
+  line-height: 1.4;
+}
+/* 돌아가는 톱니는 포인트색 — 블루 아워는 레몬(--bl-pop), 레몬에이드는 포인트 파랑 */
+body.salty #loader.splash-screen #load-spinner {
+  order: 3;
+  margin-top: var(--bl-s2);
+  color: var(--bl-pop) !important;
+  font-size: 1.7em !important; /* fa-3x(3em)는 이 화면에서 너무 큼 */
+  opacity: 1 !important;
+}
+/* ===== /surfaces:loader ===== */
+
+/* ===== 실리태번 회색 변수 (surfaces:greys) ===== */
+/* 실리태번과 확장(실리태번 헬퍼 버전 글씨 등)이 쓰는 중성 회색 --grey50 … 은 남색·하늘빛 바탕 위에서
+   분홍도 갈색도 아닌 잿빛으로 보임 → 같은 밝기의 푸른 회색으로 바꿈 (밝기 순서는 그대로) */
+body.salty.salty-dark {
+  --grey10: #0F1E2C;
+  --grey30: #3E4D5C;
+  --grey50: #7B8FA3;
+  --grey70: #A9B7C4;
+  --grey75: #BAC6D1;
+  --grey30a: rgba(40, 62, 84, 0.3);
+  --grey5020a: rgba(123, 143, 163, 0.2);
+  --grey5050a: rgba(123, 143, 163, 0.5);
+  --grey7070a: rgba(169, 183, 196, 0.7);
+}
+/* 밝은 테마의 반투명 회색은 apply.js 가 글자색 기준으로 이미 바꿈 → 단색 회색만 */
+body.salty.salty-light {
+  --grey10: #162230;
+  --grey30: #3F4E5D;
+  --grey50: #627487;
+  --grey70: #A7B4C1;
+  --grey75: #B9C4CF;
+}
+/* 실리태번 색 변수: 채팅 기록 · 스와이프 목록 · 비밀키 목록의 선택 줄(--cobalt30a)은 보라빛 → 포인트색 틴트.
+   삭제 강조(--crimson70a, --crimson-hover)는 공통 삭제 빨강을 그대로 가리킨다.
+   따뜻한 회백색(--ivory)·중성 회색 바탕(--greyCAIbg)도 테마 색으로 */
+body.salty {
+  --cobalt30a: var(--salty-accent-22);
+  --crimson70a: var(--bl-danger);
+  --crimson-hover: var(--bl-danger);
+  --fullred: var(--bl-danger);
+  --ivory: var(--salty-text);
+  --greyCAIbg: var(--salty-raised);
+}
+/* ===== /surfaces:greys ===== */

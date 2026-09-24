@@ -1,0 +1,214 @@
+/* ===== css/26-rounds-1.7.css =====
+   1.7 무렵 손본 곳: 제목 간격 · 두 줄 페르소나 · 빠른 답장 설정 · 정규식 도구 줄.
+   ===== */
+/* ---------- 1.7: 제목 간격 · 두 줄 페르소나 · 빠른 답장 설정 ---------- */
+body.salty #right-nav-panel #CharListButtonAndHotSwaps:has(.hotswap .avatar) {
+  margin-bottom: 20px !important;
+}
+body.salty #WorldInfo .world_entry .WIEnteryHeaderControls input[type="number"] { appearance: textfield; padding-right: 5px !important; }
+body.salty #WorldInfo .world_entry .WIEnteryHeaderControls input[type="number"]::-webkit-inner-spin-button,
+body.salty #WorldInfo .world_entry .WIEnteryHeaderControls input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+/* 제목과 이름을 첫 줄, 도구와 추가 설정을 둘째 줄로. 긴 이름은 높이를 늘려 표시한다. */
+body.salty #PersonaManagement .persona_management_current_persona > h4.standoutHeader:first-child {
+  width: 116px; padding: 12px 12px 0 !important; font-size: 10px !important;
+  /* 3.0.0: height → css/12-worldinfo.css (원래 규칙으로 합침) */
+}
+body.salty #PersonaManagement #persona_controls {
+  display: grid; gap: 4px !important;
+  margin-top: -32px !important; padding: 8px !important;
+  /* 3.0.0: grid-template-columns → css/27-compact.css (같은 선택자 규칙이 덮음) */
+}
+/* 3.0.0: 여기 있던 규칙 'body.salty #PersonaManagement #persona_controls::after' 은 지움 — content → css/12-worldinfo.css (원래 규칙으로 합침) */
+body.salty #PersonaManagement #persona_controls .persona_name {
+  grid-area: 1 / 1 / 2 / -1; min-height: 24px; padding: 2px 4px 2px 108px;
+  text-align: left !important;
+  font-size: 15px !important; overflow-wrap: anywhere;
+}
+body.salty #PersonaManagement #persona_controls .persona_controls_buttons_block {
+  grid-area: 2 / 1; margin: 0;
+  /* 3.0.0: width · gap → css/27-compact.css (같은 선택자 규칙이 덮음), justify-content → css/12-worldinfo.css (원래 규칙으로 합침) */
+}
+/* 3.0.0: 여기 있던 규칙 'body.salty #PersonaManagement #persona_controls .persona_controls_buttons_block …' 은 지움 — width · min-width · height · min-height → css/27-compact.css (같은 선택자 규칙이 덮음) */
+body.salty #PersonaManagement #persona_controls .persona_controls_buttons_block #persona_delete_button { margin-left: 0 !important; }
+body.salty #PersonaManagement #persona_controls > label { grid-area: 2 / 2; /* 3.0.0: width · max-width → css/27-compact.css (같은 선택자 규칙이 덮음) */ }
+body.salty #PersonaManagement #persona-management-dropdown { width: 100%; padding-left: 4px !important; font-size: 11px !important; }
+/* 빠른 답장: 구역마다 가벼운 바탕과 한쪽으로 모은 도구. 색은 테마 팔레트만 사용한다. */
+body.salty #qr--settings > .inline-drawer > .inline-drawer-content { padding: 8px !important; }
+body.salty #qr--settings > .inline-drawer > .inline-drawer-content > hr { display: none; }
+body.salty #qr--settings :is(#qr--global, #qr--chat, #qr--character, #qr--editor) {
+  margin: 12px 0 0; padding: 10px; border-radius: 10px;
+  background: var(--salty-fill-surface, var(--salty-surface)); border: 1px solid var(--salty-line); box-shadow: none;
+}
+body.salty #qr--settings .qr--head { align-items: center; gap: 6px; margin-bottom: 6px; }
+body.salty #qr--settings .qr--title { flex: 1; min-width: 0; color: var(--salty-text); font-size: 12px; font-weight: 600; }
+body.salty #qr--settings .qr--head > small { color: var(--salty-muted); font-size: 10px; }
+body.salty #qr--settings .qr--head > .qr--actions { margin-left: auto; gap: 3px; }
+body.salty #qr--settings .qr--setList { display: flex; flex-direction: column; gap: 6px; }
+body.salty #qr--settings .qr--setList .qr--item {
+  display: grid; grid-template-columns: 12px minmax(0, 1fr) auto 26px 26px; gap: 4px;
+  align-items: center; padding: 6px; border-radius: 7px; background: var(--salty-fill-raised, var(--salty-raised));
+}
+body.salty #qr--settings .qr--setList .qr--item > select { width: 100%; min-width: 0; margin: 0; height: 30px; padding: 3px 18px 3px 6px; font-size: 12px; }
+body.salty #qr--settings .drag-handle { color: var(--salty-faint); font-size: 12px; }
+body.salty #qr--settings .qr--visible { display: flex; align-items: center; gap: 3px; font-size: 10px; color: var(--salty-muted); white-space: nowrap; }
+body.salty #qr--settings .menu_button_icon,
+body.salty #qr--settings .qr--action { min-width: 26px !important; width: 26px !important; height: 30px !important; min-height: 30px !important; padding: 0 !important; margin: 0 !important; font-size: 12px !important; }
+body.salty #qr--settings :is(.qr--del, .redWarningBG) { color: var(--salty-danger) !important; background: transparent !important; box-shadow: none !important; }
+body.salty #qr--settings :is(.inline-drawer-content, #qr--set-settings) > label.flex-container {
+  display: flex; align-items: center; gap: 8px !important; min-height: 34px; margin: 0; padding: 5px 4px;
+  font-size: 12px; line-height: 1.5;
+}
+body.salty #qr--settings label > input[type="checkbox"] { width: 16px; height: 16px; flex: none; margin: 0; }
+body.salty #qr--settings label > span { min-width: 0; }
+body.salty #qr--settings label small { display: block; font-size: 10px; color: var(--salty-muted); }
+body.salty #qr--settings #qr--set-settings { margin: 8px 0; padding: 6px; border-radius: 8px; background: var(--salty-fill-raised, var(--salty-raised)); }
+body.salty #rm_extensions_block #qr--editor > .qr--head { gap: 5px !important; }
+body.salty #rm_extensions_block #qr--editor > .qr--head > .qr--actions { justify-content: flex-end; /* 3.0.0: gap → css/27-compact.css (같은 선택자 규칙이 덮음) */ }
+body.salty #rm_extensions_block #qr--editor > .qr--head #qr--set { max-width: none; /* 3.0.0: flex · width · margin → css/27-compact.css (같은 선택자 규칙이 덮음) */ }
+body.salty #qr--settings .qr--set-item { margin-bottom: 8px; }
+body.salty #qr--settings .qr--set-item > .qr--content {
+  padding: 8px; border: 1px solid var(--salty-line); border-radius: 8px; background: var(--salty-fill-raised, var(--salty-raised));
+}
+body.salty #qr--settings .qr--set-itemMessage { width: 100%; min-height: 54px; padding: 8px; border-radius: 6px; background: var(--salty-fill-surface, var(--salty-surface)); color: var(--salty-text); border: 0; font-size: 12px; line-height: 1.5; /* 3.0.0: margin → css/28-late-fixes.css (같은 선택자 규칙이 덮음) */ }
+body.salty #qr--settings .qr--set-itemLabel { height: 30px; font-size: 12px; /* 3.0.0: min-width → css/28-late-fixes.css (같은 선택자 규칙이 덮음) */ }
+body.salty #qr--settings .qr--content > .qr--actions { gap: 4px; justify-content: flex-end; }
+
+/* ---------- 정규식: 균등한 상단 도구와 공통 오른쪽 끝선 ---------- */
+body.salty #rm_extensions_block #regex_container .inline-drawer-content { padding: 8px !important; }
+body.salty #regex_container .inline-drawer-content > .flex-container:first-child {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px !important;
+}
+body.salty #regex_container .inline-drawer-content > .flex-container:first-child > .menu_button {
+  width: 100%; min-width: 0; margin: 0 !important; padding: 6px 3px !important;
+  justify-content: center; gap: 5px !important; font-size: 12px !important;
+}
+body.salty #regex_container .inline-drawer-content > .flex-container:first-child > .menu_button > small { font-size: 11px !important; white-space: normal; text-align: center; }
+body.salty #regex_container :is(#regex_presets_block, #global_scripts_block, #preset_scripts_block, #scoped_scripts_block) { width: 100%; min-width: 0; margin-inline: 0; }
+body.salty #regex_container .regex-script-container { width: 100%; padding: 0; gap: 5px !important; }
+body.salty #regex_container .regex-script-label { width: 100%; box-sizing: border-box; margin: 0; padding: 5px 0 5px 5px; align-items: center; gap: 5px !important; }
+body.salty #regex_container .regex-script-label > .flex-container { flex-shrink: 0; align-items: center; gap: 3px !important; }
+body.salty #regex_container .regex-script-label > .flex-container > label.checkbox { margin: 0 !important; }
+body.salty #regex_container .regex-script-label .menu_button,
+body.salty #regex_container #regex_presets_block .menu_button { width: 28px !important; min-width: 28px !important; height: 32px !important; min-height: 32px !important; padding: 0 !important; margin: 0 !important; display: inline-flex; align-items: center; justify-content: center; }
+body.salty #rm_extensions_block #regex_presets_block .flex-container:has(> #regex_presets) { justify-content: flex-end; /* 3.0.0: gap → css/15-drawers.css (원래 규칙으로 합침) */ }
+body.salty #rm_extensions_block #regex_presets { width: 100%; margin: 0 0 4px !important; /* 3.0.0: flex → css/15-drawers.css (원래 규칙으로 합침) */ }
+body.salty #regex_container :is(.delete_regex, #regex_preset_delete) { color: var(--bl-danger) !important; }
+/* 모바일 설정: 짧은 조절 항목 두 개를 나란히, 긴 설명과 펼침 영역은 전체 폭. */
+@media (max-width: 1000px) {
+  body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="FontBlurChatWidthBlock"], [name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px !important;
+  }
+  body.salty #user-settings-block :is([name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > :is(h4, .inline-drawer, div:not(:has(> select))) { grid-column: 1 / -1; }
+  body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) {
+    flex-direction: column; align-items: stretch !important; gap: 4px !important; min-width: 0; padding-block: 3px !important;
+  }
+  body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) > :is(small,span,label) {
+    width: 100%; flex: none !important; min-width: 0; max-width: none; text-align: left; font-size: 11px !important;
+  }
+  body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) > select { width: 100%; min-width: 0; max-width: none !important; flex: none !important; margin: 0; font-size: 12px; }
+  /* 프로필 · 채팅 · 미디어 스타일 · 알림 네 칸: 자주 안 바꾸는 값이라 작게 (195px → 약 120px). 이름은 한 줄 */
+  body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) { padding-block: 6px !important; row-gap: 4px !important; }
+  body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) { min-height: 0 !important; padding-block: 2px !important; gap: 3px !important; }
+  body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) > :is(small, span, label) { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 12px !important; line-height: 1.3 !important; }
+  body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) > select { height: 30px !important; min-height: 30px !important; }
+  body.salty #user-settings-block :is([name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > label.checkbox_label {
+    width: 100%; min-width: 0; min-height: 38px; margin: 0 !important; padding: 3px 0 !important; gap: 7px !important;
+  }
+  body.salty #user-settings-block :is([name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > label.checkbox_label > :is(span,small) { font-size: 11px !important; line-height: 1.45; overflow-wrap: anywhere; }
+  body.salty #user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container { padding-inline: 0 !important; gap: 4px !important; }
+  body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .neo-range-input { width: 46px !important; min-width: 46px !important; font-size: 11px; }
+}
+
+/* 3.0.1~3.0.2 채팅/메시지 처리 두 열 (사용자: "여유 많이 남아서 그냥 세로 2줄로", "폰도 2줄 해도 될거같던데")
+   - 슬라이더 둘(메시지 수 · 스트리밍 FPS)과 스와이프 · 제스처 스위치 둘은 각자 한 겹에 싸여 있어 두 열 칸을 통째로 차지했다
+     → 감싼 칸을 풀어(display: contents) 하나씩 한 칸. 폰에서는 스와이프 · 제스처만 글자가 커서(다른 스위치 11px) 크기도 맞춘다
+   - PC · 태블릿(1001px 이상): 셋째 칸이 앞 두 칸 아래로 내려와 서랍 폭 전체(700px 안팎)를 쓰는데 한 줄에 하나씩이라 휑했다 → 두 열.
+     열 폭은 칸의 45% 이상이라 세 열이 되지 않고, 칸이 600px 보다 좁으면(아주 넓은 서랍에서 셋이 나란히) 한 열 그대로
+   - 폰: 고르기 줄(예시 메시지 처리 · 이미지 스와이프 동작 · Enter로 보내기)이 한 칸 181px 에 이름과 값을 나란히 두어 값이 "토…" 로 잘렸다
+     → 이름 위 · 값 아래 (15-drawers 의 줄 규칙이 !important 라 아이디를 하나 더 붙여 이긴다) */
+body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > :is(.checkbox-container, h4 + div.flex-container) { display: contents; }
+@media (min-width: 1001px) {
+  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(max(260px, 45%), 1fr)); column-gap: 28px;
+  }
+  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > :is(h4, .inline-drawer, div:not(:has(> select))) { grid-column: 1 / -1; }
+  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > div:has(> select) { min-width: 0; gap: 8px; }
+  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > div:has(> select) > select { min-width: 0; max-width: 60%; }
+  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] :is(> label.checkbox_label, > .checkbox-container > label.checkbox_label) { min-width: 0; }
+}
+@media (max-width: 1000px) {
+  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-container > label.checkbox_label {
+    width: 100%; min-width: 0; min-height: 38px; margin: 0 !important; padding: 3px 0 !important; gap: 7px !important;
+  }
+  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-container > label.checkbox_label > :is(span, small) { font-size: 11px !important; line-height: 1.45; overflow-wrap: anywhere; }
+  body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) {
+    flex-flow: column nowrap !important; align-items: stretch !important; justify-content: center !important; gap: 1px !important; min-height: 38px; padding-block: 2px !important;
+  }
+  body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) > :is(span, small, label),
+  body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) > label small {
+    max-width: none; font-size: 11px !important; font-weight: 400 !important; line-height: 1.35;
+  }
+  /* 슬라이더 이름도 스위치 이름과 같은 크기 (15px 굵게 → 11px) */
+  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > h4 + div.flex-container > div > small:first-child > span { font-size: 11px !important; font-weight: 400 !important; }
+  body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) select {
+    flex: none !important; width: 100% !important; height: 26px !important; min-height: 26px !important; padding: 0 22px 0 0 !important;
+    background-position: right 2px center !important; font-size: 13px !important; text-align: left; text-align-last: left;
+  }
+}
+
+/* 모바일 월드 인포 활성화 설정: 사용자 설정처럼 두 열 — 이름 위, 막대 · 숫자 아래. 삽입 전략은 전체 폭, 스위치도 두 열. */
+/* (2.0.11) 폰 전용이던 것을 PC 에도 — 사용자: "모바일이랑 PC 랑 따로 가지 말고 같이" */
+body.salty #WorldInfo #wiSliders { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px !important; }
+body.salty #WorldInfo #wiSliders > .flex-container { flex: none !important; width: auto; min-width: 0; }
+body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) { grid-template-columns: minmax(0, 1fr) auto; /* 3.0.0: gap · padding → css/12-worldinfo.css (원래 규칙으로 합침) */ }
+body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child { grid-column: 1 / -1; grid-row: 1; /* 3.0.0: min-height → css/12-worldinfo.css (원래 규칙으로 합침) */ }
+body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-slider { grid-area: 2 / 1 !important; width: 100%; min-width: 0; }
+body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input { grid-area: 2 / 2 !important; min-width: 46px !important; font-size: 11px; /* 3.0.0: width → css/12-worldinfo.css (원래 규칙으로 합침) */ }
+body.salty #WorldInfo #wiSliders > .flex-container:has(> #world_info_character_strategy) { grid-column: 1 / -1; }
+body.salty #WorldInfo #wiCheckboxes { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px !important; }
+body.salty #WorldInfo #wiCheckboxes label.checkbox_label { min-width: 0; }
+
+
+/* 모바일 AI 응답 설정 위쪽(#range_block_openai): 두 열로 압축 (사용자: "너무 공백 많고 세로로 긴데 … 세로 2줄로").
+   슬라이더 · 숫자 칸 · 스위치는 한 칸씩(이름 위, 막대+숫자 아래 · 스위치는 이름 옆), 설명 글과 가로줄은 숨김,
+   빠른 프롬프트 · 유틸리티 프롬프트 · 그 밖의 것은 전체 폭. 실리태번이 display:none 으로 숨긴 칸(소스에 없는 항목)은
+   그리드 칸을 차지하지 않으므로 빈자리가 생기지 않는다 */
+/* (2.0.11) 폰 전용이던 것을 PC 에도 — 사용자: "모바일이랑 PC 랑 따로 가지 말고 같이" */
+/* 실리태번이 jQuery show() 로 인라인 display:block 을 박아 두므로 !important 가 필요하고,
+   hide() 의 인라인 display:none 은 살려야 하니(API 를 바꾸면 이 묶음이 숨겨짐) 그 경우만 뺀다 */
+body.salty #left-nav-panel #range_block_openai:not([style*="display: none"]):not([style*="display:none"]) { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; align-items: start; }
+body.salty #left-nav-panel #range_block_openai > * { grid-column: 1 / -1; min-width: 0; }
+body.salty #left-nav-panel #range_block_openai > hr { display: none; }
+/* 슬라이더 칸: 이름 위(작은 글씨), 막대 + 60px 숫자 아래 */
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) { grid-column: auto; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 8px; padding: 6px 0 4px !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-title { grid-column: 1 / -1 !important; grid-row: 1; min-height: 0; font-size: var(--bl-fs-sub) !important; line-height: 1.3; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-range { grid-column: 1 !important; grid-row: 2 !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter { grid-column: 2 !important; grid-row: 2 !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter input { width: 60px !important; font-size: 11px !important; }
+/* 숫자 하나 칸(최대 응답 길이 · 스와이프 수 · 시드): 이름 위, 숫자 아래 — 응답 길이는 테마 슬라이더가 붙으니 막대 + 숫자 */
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) { grid-column: auto; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 8px; padding: 6px 0 4px !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .range-block-title { grid-column: 1 / -1 !important; grid-row: 1; min-height: 0; font-size: var(--bl-fs-sub) !important; line-height: 1.3; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .toggle-description { display: none; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p { grid-column: 1 / -1 !important; grid-row: 2; width: 100% !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p > input { font-size: 11px !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> #bl-response-range) > .wide100p { grid-column: 2 !important; width: 60px !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> #bl-response-range) > #bl-response-range { grid-column: 1 !important; grid-row: 2; align-self: center; }
+/* 스위치 칸(제한 해제 · 스트리밍): 이름 + 스위치, 설명 숨김 */
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) { grid-column: auto; display: flex; flex-direction: column; justify-content: center; min-height: 100%; padding: 6px 0 4px !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > .toggle-description { display: none; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label { width: 100%; min-width: 0; min-height: 0; margin: 0 !important; padding: 0 !important; gap: 6px !important; justify-content: space-between; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label > span { font-size: var(--bl-fs-sub) !important; line-height: 1.3; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label > input[type="checkbox"] { flex: none; width: 36px !important; height: 20px !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label > input[type="checkbox"]::before { width: 14px !important; height: 14px !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label > input[type="checkbox"]:checked::before { transform: translateX(16px) !important; }
+/* 자리 정렬(사용자: "컨텍스트 크기랑 최대 응답 길이는 커플"): 1줄 스위치 둘(제한 해제 · 스트리밍) · 2줄 토큰 둘(컨텍스트 크기 · 최대 응답 길이)
+   · 그다음 슬라이더들(문서 순서) · 스와이프 수 + 시드 한 줄 · 나머지(빠른 프롬프트 · 유틸리티 프롬프트 · 소스별 잡동사니)는 맨 아래.
+   grid-column 으로 왼쪽 · 오른쪽을 못 박아 슬라이더가 홀수여도 짝이 갈라지지 않는다 (시드는 스와이프 수가 숨는 소스도 있어 자동) */
+body.salty #left-nav-panel #range_block_openai > * { order: 50; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) { order: 10; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(#oai_max_context_unlocked) { order: 1; grid-column: 1; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(#stream_toggle) { order: 2; grid-column: 2; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(#openai_max_context) { order: 3; grid-column: 1; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(#openai_max_tokens) { order: 4; grid-column: 2; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(#n_openai) { order: 20; grid-column: 1; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(#seed_openai) { order: 21; }

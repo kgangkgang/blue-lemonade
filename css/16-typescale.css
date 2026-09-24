@@ -1,0 +1,302 @@
+/* ===== css/16-typescale.css =====
+   글자 크기 눈금 통일 (확장마다 다르던 rem · px · em 을 테마 눈금으로).
+   ===== */
+/* ===== 실리태번 화면: 글자 크기 통일 (surfaces:typescale) ===== */
+/* 확장마다 제 눈금(rem · px · em)을 써서 글자 크기가 뒤죽박죽이던 것을 테마 눈금 하나로 맞춤.
+   · 눈금을 새로 만들지 않고 기반 토큰(--bl-fs-*)에 쓸 자리 이름만 붙여 씀 — 폰에서 한 단 좁아지는 것도 같이 따라감.
+     그래서 카드 제목 · 줄 이름이 확장 서랍 제목(--bl-fs-body)보다 커지지 않음
+   · 긴 글(북마크 본문 · 앞뒤 문맥 · 메모 · 번역문 · 지시문 · 프롬프트 칸): 채팅 본문과 똑같이 —
+     크기 · 굵기 · 줄 높이 · 자간 · 글꼴 · 낱말 안 꺾기 · 정렬 · 첫 줄 들여쓰기 · 단락 간격
+   · 창 · 시트 제목은 한 단 크게, 설명 · 메타는 한 단 작게, 배지 · 날짜 · 개수는 두 단 작게
+   · 짜임새는 그대로 — 글자 크기만 바꿈. 아이콘 글리프와 공용 규칙이 이미 한 크기로 맞춘 것(입력칸 · h4 묶음 이름 ·
+     아이콘만 든 버튼)은 건드리지 않음
+   · 확장 CSS 가 !important 로 박은 값이 많아 여기도 !important 를 씀 */
+body.salty {
+  --bl-ts-read: var(--salty-size, var(--mainFontSize, 15px));                   /* 긴 글 = 채팅 본문 */
+  --bl-ts-ui: var(--bl-fs-body, var(--mainFontSize, 15px));                     /* 카드 제목 · 줄 이름 (폰 14 · PC 15) */
+  --bl-ts-ctl: var(--bl-fs-ctl, calc(var(--mainFontSize, 15px) * 0.933));       /* 버튼 · 숫자칸 */
+  --bl-ts-meta: var(--bl-fs-sub, calc(var(--mainFontSize, 15px) * 0.867));      /* 설명 · 메타 · 탭 */
+  --bl-ts-cap: var(--bl-fs-cap, calc(var(--mainFontSize, 15px) * 0.833));       /* 묶음 이름 · 칩 */
+  --bl-ts-micro: var(--bl-fs-micro, calc(var(--mainFontSize, 15px) * 0.767));   /* 배지 · 날짜 · 개수 · 버전 */
+  --bl-ts-head: var(--bl-fs-head, calc(var(--mainFontSize, 15px) * 1.2));       /* 창 · 시트 제목 */
+}
+
+/* ---------- 긴 글: 채팅 본문과 같은 읽기 글자 ---------- */
+/* 보여 주는 글 — 정렬 · 낱말 꺾기까지 채팅과 같게 (한글은 낱말 안에서 안 꺾음) */
+body.salty :is(.cg-mes.mes_text, .cg-bubble-text.mes_text, .cg-note-text) {
+  font-family: var(--salty-font-text) !important;
+  font-size: var(--bl-ts-read) !important;
+  font-weight: var(--salty-weight) !important;
+  line-height: var(--salty-lh) !important;
+  letter-spacing: var(--salty-ls) !important;
+  text-align: var(--salty-align) !important;
+  word-break: keep-all !important;
+  overflow-wrap: anywhere !important; /* 칸보다 긴 낱말(주소 등)만 꺾음 */
+  text-wrap: pretty;
+}
+/* 사용자가 글을 쓰는 칸도 같은 읽기 글자 — 정렬은 왼쪽 그대로 (쓰는 중에 줄이 벌어지면 눈이 아픔) */
+body.salty :is(.cg-textarea, #jj-popup .jj-textarea, .eh-textarea, .jj-prompt textarea.text_pole,
+  #chat .translation_edit_textarea) {
+  font-family: var(--salty-font-text) !important;
+  font-size: var(--bl-ts-read) !important;
+  font-weight: var(--salty-weight) !important;
+  line-height: var(--salty-lh) !important;
+  letter-spacing: var(--salty-ls) !important;
+  word-break: keep-all !important;
+  overflow-wrap: anywhere !important;
+}
+/* 낱말 안에서도 꺾는 정렬을 골랐을 때 — 채팅과 같은 값 */
+body.salty.salty-align-justify-break :is(.cg-mes.mes_text, .cg-bubble-text.mes_text, .cg-note-text) {
+  word-break: normal !important;
+  hyphens: auto !important;
+  text-wrap: wrap;
+}
+/* 단락 간격 · 첫 줄 들여쓰기도 채팅과 같게 (같은 글을 채팅과 북마크에서 나란히 봐도 같은 모양) */
+body.salty :is(.cg-mes.mes_text, .cg-bubble-text.mes_text) :is(p, li) {
+  font: inherit !important;
+  letter-spacing: inherit !important;
+  line-height: inherit !important;
+}
+body.salty :is(.cg-mes.mes_text, .cg-bubble-text.mes_text) p {
+  margin: 0 0 var(--salty-para) !important;
+}
+/* Match the chat's empty-paragraph cleanup after HTML tracker blocks. */
+body.salty :is(.cg-mes.mes_text, .cg-bubble-text.mes_text) p:empty {
+  display: none;
+}
+body.salty :is(.cg-mes.mes_text, .cg-bubble-text.mes_text) p:last-child {
+  margin-bottom: 0 !important;
+}
+body.salty.salty-indent :is(.cg-mes.mes_text, .cg-bubble-text.mes_text) p {
+  text-indent: 1em;
+}
+/* 대사 · 속마음 · 강조: 굵기 · 기울기 · 글꼴을 채팅과 같게.
+   색과 형광펜 띠는 넘기지 않음 — 이 카드는 팔레트와 따로 어두운 색이라 채팅 글자색을 주면 안 보이게 됨 */
+body.salty :is(.cg-mes, .cg-bubble-text) q {
+  font-family: var(--salty-font-dialogue, inherit) !important;
+  /* 채팅과 같이 둘레 글자 대비 배율 — 작아진 칸(생각 과정 0.92em) 안에서도 대사가 둘레보다 커지지 않음 */
+  font-size: calc(1em * var(--salty-dialogue-scale, 1)) !important;
+  /* 줄 높이는 둘레 줄에 맞춤 — 대사를 키워도 그 줄만 벌어지지 않음 (채팅과 같은 식) */
+  line-height: max(1.28em, calc(var(--salty-lh) * 1em / var(--salty-dialogue-scale, 1))) !important;
+  font-weight: var(--salty-dialogue-weight) !important;
+}
+/* 칸이 '본문과 같게'면 변수가 비어 둘레 글꼴 그대로 (대사 안의 속마음이면 대사 글꼴) — 채팅과 같은 되돌림값 */
+body.salty :is(.cg-mes, .cg-bubble-text) :is(em, i):not(.fa-solid, .fa-regular, .fa-brands) {
+  font-family: var(--salty-font-em, inherit) !important;
+  font-style: var(--salty-em-style) !important;
+  font-weight: var(--salty-em-weight) !important;
+}
+body.salty :is(.cg-mes, .cg-bubble-text) :is(strong, b) {
+  font-family: var(--salty-font-strong, inherit) !important;
+  font-weight: var(--salty-strong-weight) !important;
+}
+/* 생각 과정은 본문보다 한 뼘 작게 — 채팅과 같은 비율 */
+body.salty .cg-reasoning > .mes_text {
+  font-size: 0.92em !important;
+}
+
+/* ---------- 북마크 (chat-bookmarks · 옛 chaekgalpi) ---------- */
+body.salty :is(.cg-title, .cg-sheet-title, .cg-page-title) {
+  font-size: var(--bl-ts-head) !important;
+}
+body.salty :is(.cg-toolbar-chat, .cg-chat-name, .cg-card-who b, .cg-bubble-name b,
+  .cg-confirm-text, .cg-section-title, .cg-setting-text b, .cg-color-text b, .cg-guide b, .cg-empty b,
+  .cg-page-label b, .cg-preview-label) {
+  font-size: var(--bl-ts-ui) !important;
+}
+body.salty :is(.cg-btn, .cg-expand, .cg-sub-btn) {
+  font-size: var(--bl-ts-ctl) !important;
+}
+body.salty :is(.cg-toolbar-meta, .cg-chat-loading, .cg-sheet-subtitle, .cg-hint,
+  .cg-section-desc, .cg-scope-note, .cg-setting-text small, .cg-color-text small, .cg-guide p,
+  .cg-empty p, .cg-page-label span, .cg-page-now > span, .cg-stepper-label, .cg-segmented button,
+  .cg-sub-note, .cg-sub-status, .cg-reasoning > summary, .cg-preview-btn) {
+  font-size: var(--bl-ts-meta) !important;
+}
+body.salty :is(.cg-eyebrow, .cg-side-head, .cg-chip, .cg-preview-chip, .cg-action) {
+  font-size: var(--bl-ts-cap) !important;
+}
+body.salty :is(.cg-badge, .cg-card-who span, .cg-bubble-name, .cg-chat-meta, .cg-chat-count, .cg-version) {
+  font-size: var(--bl-ts-micro) !important;
+}
+
+/* ---------- 캐릭터 에셋 (esetham) ---------- */
+body.salty :is(.eh-hero-name, .eh-card-title, .eh-guide > summary > span, .eh-setting-text b,
+  .eh-steps li > b, .eh-viewer-name) {
+  font-size: var(--bl-ts-ui) !important;
+}
+body.salty :is(.eh-btn, .eh-vbtn) {
+  font-size: var(--bl-ts-ctl) !important;
+}
+body.salty :is(.eh-hero-meta, .eh-setting-text small, .eh-guide > summary small, .eh-steps li p,
+  .eh-macros, .eh-guide-note, .eh-empty, .eh-select-count, .eh-viewer-meta) {
+  font-size: var(--bl-ts-meta) !important;
+}
+body.salty :is(.eh-segmented button, .eh-chip, .eh-btn--small) {
+  font-size: var(--bl-ts-cap) !important;
+}
+/* 도구 줄: 이미지 · ZIP · 선택 · S/M/L 을 한 줄에 (390px 폰에서 10px 모자라 S/M/L 이 다음 줄로 떨어졌음) */
+body.salty .eh-toolbar {
+  flex-wrap: nowrap;
+  gap: 5px;
+}
+body.salty .eh-toolbar > .eh-btn {
+  flex: 0 1 auto;
+  min-width: 0;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+/* 찾기 칸: 테두리 상자 안에 또 오목한 입력칸이 들어간 두 겹(PPT 같음) → 오목한 칸 하나에 돋보기와 글자 */
+body.salty:not(#salty-none) .eh-search:not(#salty-none) {
+  gap: 8px;
+  padding: 0 6px 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--bl-fill-well, var(--bl-well));
+  box-shadow: var(--bl-well-in);
+}
+body.salty:not(#salty-none) .eh-search:not(#salty-none):focus-within {
+  box-shadow: var(--bl-well-in), var(--bl-ring);
+}
+body.salty:not(#salty-none) .eh-search:not(#salty-none) input:not(#salty-none) {
+  height: 100% !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+body.salty .eh-steps li::before {
+  font-size: var(--bl-ts-cap) !important;
+}
+body.salty :is(.eh-tile-name, .eh-tile-badge, .eh-tile-off, .eh-tile-check, .eh-version-foot) {
+  font-size: var(--bl-ts-micro) !important;
+}
+body.salty .eh-grid[data-size="l"] .eh-tile-name {
+  font-size: var(--bl-ts-cap) !important;
+}
+/* 그림 이름은 산문이 아니라 파일 이름 — 한 줄이면 뒤가 잘려 옆 타일과 구별이 안 됨. 두 줄까지 보여 주고
+   타일 높이는 이름이 짧아도 같게 (격자가 들쭉날쭉해지지 않게) */
+body.salty .eh-tile-name {
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.3 !important;
+  min-height: 2.6em;
+}
+
+/* ---------- LLM 번역기 (llm-translator-custom) ---------- */
+/* 묶음 이름(h4)과 아이콘만 든 버튼은 공용 규칙이 이미 눈금대로 맞춤 — 여기서 또 정하지 않음 */
+body.salty :is(.llmt-label, .llmt-card-head span) {
+  font-size: var(--bl-ts-ui) !important;
+}
+body.salty :is(.llmt-tagline, .llmt-desc, .llmt-tab) {
+  font-size: var(--bl-ts-meta) !important;
+}
+
+/* ---------- 다시 쓰기 (ban-word-rewrite) ---------- */
+body.salty :is(.bwr_settings .bwr_tab, .bwr_settings .bwr_seg, .bwr_settings .bwr_hint,
+  .bwr_settings .bwr_field > span, .bwr_settings .bwr_status) {
+  font-size: var(--bl-ts-meta) !important;
+}
+body.salty .bwr_settings .bwr_badge {
+  font-size: var(--bl-ts-micro) !important;
+}
+
+/* ---------- 전개지시 (story-direction · 옛 jeongaejisi) ---------- */
+body.salty :is(.jj-row-label b, .jj-prompt > summary > span, .jj-status-title, .jj-popup-title > span) {
+  font-size: var(--bl-ts-ui) !important;
+}
+body.salty .jj-small-btn {
+  font-size: var(--bl-ts-ctl) !important;
+}
+body.salty :is(.jj-row-label small, .jj-hint, .jj-status-text, .jj-meaning > summary, .jj-meaning ul,
+  .jj-prompt-state, .jj-depth-meaning, .jj-popup-foot) {
+  font-size: var(--bl-ts-meta) !important;
+}
+body.salty .jj-state {
+  font-size: var(--bl-ts-micro) !important;
+}
+/* 색 고르는 줄도 글자는 다른 줄과 같은 단 — 색 코드 칸만 살짝 좁혀 이름이 한 줄에 남게 (#fac679 는 그대로 들어감) */
+body.salty .jj-settings .jj-color-row .text_pole {
+  width: 5.8em !important;
+  font-size: var(--bl-ts-ctl) !important;
+}
+
+/* ---------- 타번 헬퍼 (JS-Slash-Runner) — 제 눈금 5단을 테마 눈금에 맞춤 ---------- */
+body.salty .th-text-lg {
+  font-size: var(--bl-fs-title, calc(var(--mainFontSize, 15px) * 1.467)) !important;
+}
+body.salty .th-text-md {
+  font-size: var(--bl-ts-head) !important;
+}
+body.salty .th-text-base {
+  font-size: var(--bl-ts-ui) !important;
+}
+body.salty .th-text-sm {
+  font-size: var(--bl-ts-meta) !important;
+}
+body.salty .th-text-xs:not(.TH-radio-button) {
+  font-size: var(--bl-ts-cap) !important;
+}
+/* '렌더링 최적화' 같은 묶음 이름은 Tailwind 유틸리티가 @layer utilities 안에서 !important 로 박아
+   보통 규칙으로는 못 이김. important 는 앞선 층이 이기므로 우리 층을 앞에 세워 맞춤
+   (테마 style.css 가 타번 헬퍼 CSS 보다 먼저 실려 이 층이 첫 층이 됨. 순서가 바뀌면 이 규칙만 조용히 무시됨) */
+@layer bl-typescale {
+  body.salty .TH-custom-tailwind fieldset.TH-fieldset > legend {
+    font-size: var(--bl-ts-cap) !important;
+  }
+}
+
+/* ---------- 로그 발췌 (text-to-image-converter) — 10 ~ 18px 이 섞여 있던 것을 눈금 5단으로 ---------- */
+/* 미리보기 · 본문 편집칸은 만들 그림을 그대로 보여 주는 곳이라 건드리지 않음 */
+body.salty :is(.tti-editor-title, .tti-modal > header h3) {
+  font-size: var(--bl-ts-head) !important;
+}
+body.salty :is(.tti-preset-current b, .tti-mobile-sheet-heading) {
+  font-size: var(--bl-ts-ui) !important;
+}
+body.salty :is(.tti-primary-btn, .tti-secondary-btn, .tti-wide-btn, .tti-modal > footer button.primary,
+  .tti-modal > footer button.text-field-copy, .tti-highlight-action, .tti-select-trigger,
+  .option-stepper .stepper-display, .tti-web-font-name) {
+  font-size: var(--bl-ts-ctl) !important;
+}
+body.salty :is(.text-to-image-converter-settings, .tti-modal-backdrop) :is(input[type="text"], input[type="number"], select, option, optgroup),
+body.salty .tti-replace-modal .replacement-rule input[type="text"] {
+  font-size: var(--bl-ts-ctl) !important;
+}
+body.salty :is(.tti-section-desc, .tti-option-label, .tti-field > span:first-child, .tti-color-row > label,
+  .tti-meta-label, .tti-replace-option-row, .replacement-empty,
+  .tti-mode-switches label, .how_to_use_box, .tti-segment button, .tti-help-link, .tti-pen, .tti-pen-empty,
+  .html-switcher-inputs-empty, .tti-selection-toggle, .tti-selection-append, .tti-selection-bookmark,
+  .tti-selection-clipboard, .tti-selection-empty, .add-tag-btn, .add-rule-button, .tag-swatch,
+  .option-stepper > div:first-of-type > span, .option-stepper .stepper-btn, .tti-ratio-btn,
+  .bg-image-item .delete-bg-btn, .tti-mobile-sheet-heading button) {
+  font-size: var(--bl-ts-meta) !important;
+}
+body.salty :is(.text-to-image-converter-settings, .tti-modal) .buttons,
+body.salty .tti-selection-menu * {
+  font-size: var(--bl-ts-meta) !important;
+}
+body.salty :is(.tab-btn, .tti-control-section > h3, .tti-preview-pane h4, .tti-mobile-bar button,
+  .replace-control label, .tti-modal-subhead, .tti-pen-bar-label, .html-switcher-inputs-header,
+  .tti-web-font-type, .tti-selection-submenu-header, .tti-ratio-btn > span) {
+  font-size: var(--bl-ts-cap) !important;
+}
+body.salty .tti-web-font-list .tti-field .buttons {
+  font-size: var(--bl-ts-cap) !important;
+}
+body.salty :is(.replacement-rule label small, .tti-replace-modal .replacement-rule > .rule-toggle,
+  .tti-modal > header small, .tti-preset-current small, .tti-preview-count, .download-btn, .dl_all,
+  .range-value-tooltip, .tag-color-chip, .tti-replace-modal .rule-index, .tti-primary-btn em,
+  #tti_ext_float_toggle .tti-ext-toggle-state, #tti_ext_mes_toggle .tti-ext-toggle-state) {
+  font-size: var(--bl-ts-micro) !important;
+}
+/* ===== /surfaces:typescale ===== */
+
+body.salty.salty-indent :is(.cg-mes,.cg-bubble-text,.cg-note-text) q.bl-line-dialogue { margin-inline-start: 1em; }
+body.salty .cg-note-text p { text-indent: 0; }

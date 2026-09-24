@@ -1,0 +1,356 @@
+/* ===== css/31-styles-panel.css =====
+   3.1.0 설정 창 › 테마 › 스타일: 완성된 스타일 카드 · 내 스타일 목록 · 캐릭터 연결 · 창 머리의 캐릭터 스타일 알림.
+   ===== */
+/* 완성된 스타일: 두 칸씩 작은 카드 (이름 + 한 줄 설명) */
+.salty-presets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.salty-preset {
+  display: grid;
+  gap: 2px;
+  min-height: 58px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: var(--salty-fill-bg, var(--salty-bg));
+  color: var(--salty-text);
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+.salty-panel.in-popup .salty-preset {
+  background: var(--salty-fill-shade, var(--shade));
+}
+.salty-preset b {
+  font-size: var(--fs);
+  font-weight: 700;
+}
+.salty-preset small {
+  color: var(--salty-muted);
+  font-size: var(--fs-small);
+  line-height: 1.35;
+}
+.salty-preset:active {
+  background: var(--salty-fill-accent-13, var(--salty-accent-13));
+}
+@media (hover: hover) {
+  .salty-preset:hover {
+    background: var(--shade-2);
+  }
+}
+.salty-undo {
+  margin-top: 8px;
+}
+
+/* 내 스타일 목록: 줄 하나 = 이름 단추(누르면 입힘) + ⋯ (도구 펼침) */
+.salty-styles {
+  display: grid;
+  gap: 6px;
+}
+.salty-style {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  border-radius: var(--r-md);
+  background: var(--salty-fill-bg, var(--salty-bg));
+  overflow: hidden;
+}
+.salty-panel.in-popup .salty-style {
+  background: var(--salty-fill-shade, var(--shade));
+}
+.salty-style.on {
+  box-shadow: inset 0 0 0 2px var(--salty-accent);
+}
+.salty-style-main {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 0;
+  background: none;
+  color: var(--salty-text);
+  text-align: left;
+}
+.salty-style-main b {
+  overflow: hidden;
+  font-weight: 650;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.salty-style-main small {
+  flex: none;
+  color: var(--salty-accent);
+  font-size: var(--fs-small);
+  font-weight: 600;
+}
+.salty-style-more {
+  width: 44px;
+  border: 0;
+  background: none;
+  color: var(--salty-muted);
+}
+.salty-style.open .salty-style-more {
+  color: var(--salty-accent);
+}
+.salty-style-tools {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 10px 10px;
+}
+.salty-style-tools .salty-btn {
+  padding: 6px 10px;
+  font-size: var(--fs-small);
+}
+.salty-style-add {
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+/* 캐릭터 스타일 고르기: 이름이 많으면 여러 줄로 */
+.salty-seg.salty-wrap {
+  display: flex;
+  flex-wrap: wrap;
+}
+.salty-seg.salty-wrap button {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 창 머리: 지금 캐릭터 스타일이 입혀져 있음 */
+.salty-style-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 7px 12px;
+  border-radius: var(--r-md);
+  background: var(--salty-fill-accent-10, var(--salty-accent-10));
+  color: var(--salty-accent);
+  font-size: var(--fs-small);
+  font-weight: 600;
+}
+.salty-style-note span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 클립보드를 못 쓸 때 코드를 골라 복사하는 칸 */
+.salty-code-box {
+  width: 100%;
+  min-height: 120px;
+  font-family: monospace;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+/* ---------- 3.2.0 완성된 스타일 글자 표본 · 내 스타일 색 점 ---------- */
+.salty-preset-sample {
+  display: block;
+  overflow: hidden;
+  margin: 2px 0 1px;
+  color: var(--salty-text);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.salty-preset-sample.is-indent {
+  text-indent: 1em;
+}
+.salty-preset-sample q {
+  quotes: none;
+}
+.salty-preset-sample q.m-marker {
+  background: linear-gradient(transparent 45%, var(--salty-marker) 45%, var(--salty-marker) 90%, transparent 90%);
+}
+.salty-preset-sample q.m-full {
+  background: var(--salty-fill-marker, var(--salty-marker));
+}
+.salty-preset-sample q.m-bold {
+  color: var(--salty-dialogue);
+  font-weight: 700;
+}
+.salty-preset-sample q.m-tint {
+  color: var(--salty-accent);
+}
+.salty-style-swatch {
+  position: relative;
+  flex: none;
+  align-self: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--sw-bg);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sw-text) 22%, transparent);
+}
+.salty-style-swatch i {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.salty-style-swatch i:first-child {
+  left: 4px;
+  top: 7px;
+  background: var(--sw-accent);
+}
+.salty-style-swatch i:last-child {
+  right: 4px;
+  top: 7px;
+  background: var(--sw-marker);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sw-text) 18%, transparent);
+}
+.salty-style-main {
+  align-items: center;
+}
+
+/* ---------- 3.2.0 화이트 · 나이트 자동 옵션 ---------- */
+.salty-auto {
+  margin: -4px 0 12px;
+}
+.salty-time {
+  min-height: 34px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: var(--salty-fill-shade, var(--shade));
+  color: var(--salty-text);
+  font: inherit;
+  color-scheme: light dark;
+}
+
+/* ---------- 3.2.0 폰 화면 표본 (채팅 › 화면 › 폰) ----------
+   작은 폰 그림. 몰입 읽기 켬(.is-reader)이면 위 바 · 입력창이 비켜났다가 돌아오는 것을 5.5초마다 되풀이 (transform 만 — 창이 열려 있을 때만 돔).
+   한 손 버튼 줄 켬(.is-onehand)이면 입력창 위에 알약 줄. 동작 줄이기면 멈춘 그림 */
+.salty-phonemock {
+  position: relative;
+  width: 118px;
+  height: 204px;
+  margin: 12px auto 8px;
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--salty-fill-bg, var(--salty-bg));
+  box-shadow: 0 0 0 3px var(--shade-2), var(--bl-e2, 0 2px 8px var(--salty-shadow-50));
+  isolation: isolate;
+}
+.salty-phonemock .pm-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 20px;
+  padding: 0 8px;
+  background: var(--salty-fill-surface, var(--salty-surface));
+  box-shadow: var(--bl-e1, 0 1px 3px var(--salty-shadow-50));
+}
+.salty-phonemock .pm-top i {
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--salty-muted);
+  opacity: 0.55;
+}
+.salty-phonemock .pm-body {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.salty-phonemock .pm-scroll {
+  padding: 28px 10px 70px;
+}
+.salty-phonemock .pm-scroll p {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 9px;
+}
+.salty-phonemock .pm-scroll i {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--salty-text) 38%, transparent);
+}
+.salty-phonemock .pm-scroll i.q {
+  height: 5px;
+  background: var(--salty-fill-marker, var(--salty-marker));
+}
+.salty-phonemock .pm-form {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: 8px 7px 8px;
+  background: linear-gradient(to top, var(--salty-bg) calc(100% - 6px), transparent);
+}
+.salty-phonemock .pm-onehand {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 5px;
+}
+.salty-phonemock .pm-onehand b {
+  width: 14px;
+  height: 11px;
+  border-radius: 6px;
+  background: var(--salty-fill-surface, var(--salty-surface));
+  box-shadow: var(--bl-e1, 0 1px 2px var(--salty-shadow-50));
+}
+.salty-phonemock .pm-onehand span {
+  flex: 1;
+}
+.salty-phonemock .pm-input {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 24px;
+  padding: 0 5px 0 7px;
+  border-radius: 10px;
+  background: var(--salty-fill-surface, var(--salty-surface));
+  box-shadow: var(--bl-e2, 0 1px 3px var(--salty-shadow-50));
+}
+.salty-phonemock .pm-input i {
+  width: 34px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--salty-faint);
+}
+.salty-phonemock .pm-input u {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--salty-lemon);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .salty-phonemock.is-reader .pm-top { animation: salty-pm-top 5.5s ease-in-out infinite; }
+  .salty-phonemock.is-reader .pm-form { animation: salty-pm-form 5.5s ease-in-out infinite; }
+  .salty-phonemock.is-reader .pm-scroll { animation: salty-pm-scroll 5.5s ease-in-out infinite; }
+}
+@keyframes salty-pm-top {
+  0%, 22% { transform: none; }
+  34%, 70% { transform: translateY(-130%); }
+  82%, 100% { transform: none; }
+}
+@keyframes salty-pm-form {
+  0%, 22% { transform: none; }
+  34%, 70% { transform: translateY(115%); }
+  82%, 100% { transform: none; }
+}
+@keyframes salty-pm-scroll {
+  0%, 18% { transform: none; }
+  40%, 70% { transform: translateY(-46px); }
+  82%, 100% { transform: translateY(-34px); }
+}
+
+/* 3.2.0 표본 안에는 ▲ 접기 스크립트 단추를 숨긴다 — 그 스크립트가 문서의 열린 details 마다 붙이는데, 누를 수도 없는 표본에서 칸만 늘렸다 */
+body.salty .salty-preview .thk-fold {
+  display: none !important;
+}

@@ -1,0 +1,14 @@
+/* ===== css/44-settings-search.css ===== */
+.bl-settings-search { position: relative; margin: 2px 0 10px; }
+.bl-search-field { display: flex; align-items: center; gap: 6px; border: 1px solid var(--salty-border); background: var(--bl-fill-well, var(--bl-well)); border-radius: 12px; padding: 0 8px; }
+.salty-panel .bl-search-field input { min-width: 0; width: 100%; height: 40px; padding: 8px 4px; border: 0; box-shadow: none; outline: none; background: transparent; color: var(--salty-text); font: inherit; font-size: max(16px, var(--fs, 14px)); }
+.bl-search-field:focus-within { border-color: var(--salty-accent); }
+.bl-search-field input::-webkit-search-cancel-button { display: none; }
+.salty-panel .bl-search-field button { flex: none; width: 34px; height: 34px; padding: 0; margin: 0; background: transparent; border: 0; color: var(--salty-muted); font: 22px/1 sans-serif; cursor: pointer; }
+.bl-search-results { position: absolute; inset: calc(100% + 5px) 0 auto; z-index: 6; max-height: min(380px, 55svh); overflow: auto; overscroll-behavior: contain; padding: 8px; border: 1px solid var(--salty-border); border-radius: 14px; background: var(--bl-overlay, var(--salty-surface)); box-shadow: var(--bl-e4); }
+.bl-search-results p { margin: 4px 8px 8px; font-size: 12px; color: var(--salty-muted); }
+.salty-panel .bl-search-results button { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; width: 100%; min-height: 48px; margin: 0; padding: 10px; border: 0; border-radius: 8px; background: transparent; color: var(--salty-text); text-align: left; white-space: normal; font: inherit; cursor: pointer; }
+.bl-search-results button small { color: var(--salty-muted); font-size: 12px; }
+.bl-search-results button:hover, .bl-search-results button:focus-visible { background: var(--salty-fill-accent-10, var(--salty-accent-10)); outline: 1px solid var(--salty-accent); }
+.bl-settings-search [hidden] { display: none !important; }
+.bl-search-target { outline: 2px solid var(--salty-accent); outline-offset: 5px; border-radius: 8px; scroll-margin-top: calc(var(--salty-navh, 160px) + 12px); }

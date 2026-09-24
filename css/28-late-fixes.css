@@ -1,0 +1,495 @@
+/* ===== css/28-late-fixes.css =====
+   2.x 에서 버전마다 덧붙인 손질 (숫자 칸 · 빠른 답장 · 페르소나 제목 · 즐겨찾기 별 · 카드 삼각형 · 커스텀 도형 ·
+   글자 그림자 · 설정 창 드롭다운 · 고르기 목록 · 월드인포 2열 · 톤 맞추기 · 역할별 글자 값 · 트래커 · 페이드 인).
+   같은 무게의 앞 규칙을 순서로 이기는 것이 많다 — 앞 모듈로 옮기면 빌드 뒤 node tools/check-order.cjs --against <옮기기 전 style.css> 와 node tools/equiv.cjs 로 확인할 것.
+   ===== */
+#bl-response-range { display: none; }
+body.salty #left-nav-panel #bl-response-range { display: block; grid-column: 1 / -1; grid-row: 2; width: 100% !important; min-width: 0; -webkit-appearance: none; appearance: none; }
+body.salty #bl-response-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; }
+body.salty #left-nav-panel #range_block_openai > hr { box-shadow: none !important; height: 0; /* 3.0.0: background · margin → css/14-prompt.css (원래 규칙으로 합침) */ }
+
+body.salty #qr--settings .qr--set-item > .qr--content { display: grid !important; grid-template-columns: 14px minmax(0, 1fr) 26px; gap: 4px; }
+body.salty #qr--settings .qr--content > .drag-handle { grid-area: 1 / 1; align-self: center; }
+body.salty #qr--settings .qr--set-itemLabelContainer { grid-area: 1 / 2; display: flex; min-width: 0; align-items: center; }
+body.salty #qr--settings .qr--set-itemLabel { flex: 1; width: 0; min-width: 0; }
+body.salty #qr--settings .qr--set-optionsContainer { grid-area: 1 / 3; }
+body.salty #qr--settings .qr--set-itemMessage { grid-area: 2 / 1 / 3 / -1; height: 54px; margin: 2px 0; /* 3.0.0: min-height → css/26-rounds-1.7.css (원래 규칙으로 합침) */ }
+body.salty #qr--settings .qr--content > .qr--actions { grid-area: 3 / 1 / 4 / -1; display: flex; flex-flow: row nowrap; width: 100%; }
+
+body.salty #regex_container .regex-script-label { border: 0; }
+@media (max-width: 1000px) {
+  body.salty #user-settings-block [name="AvatarAndChatDisplay"] { align-items: stretch !important; }
+  body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) { justify-content: space-between !important; }
+}
+
+/* 현재 페르소나: 제목 뒤 실제 글자 폭 + 10px에서 이름 시작. */
+body.salty #PersonaManagement #persona_controls:has(> .bl-persona-title-row) { margin-top: 4px !important; }
+body.salty #PersonaManagement #persona_controls > .bl-persona-title-row {
+  grid-area: 1 / 1 / 2 / -1; display: flex; align-items: baseline; justify-content: flex-start;
+  gap: 10px; min-width: 0; min-height: 24px; padding: 2px 4px;
+}
+body.salty #PersonaManagement #persona_controls > .bl-persona-title-row > h4 {
+  flex: 0 0 auto; width: auto; height: auto; margin: 0 !important; padding: 0 !important;
+  font-size: 10px !important; line-height: 1.4; color: var(--salty-muted); text-align: left;
+}
+body.salty #PersonaManagement #persona_controls > .bl-persona-title-row > .persona_name {
+  flex: 0 1 auto; width: auto; min-width: 0; min-height: 0; padding: 0 !important;
+  margin: 0 !important; text-align: left !important;
+}
+
+/* ---------- 즐겨찾기 별 (2.1.1, 사용자: "즐겨찾기 별 표시 너무 밤티남") ----------
+   사진 모서리에 얹힌 동그라미 배지(면 색 · 테 · 그림자)를 없애고 작은 별만 남김. 사진 위에서 읽히도록 옅은 그림자 한 겹.
+   아래 선택자들은 위의 목록 · 레몬에이드 · 격자 · 폰 규칙과 같은 무게라 뒤에 있는 이 규칙이 이김 */
+body.salty #right-nav-panel :is(.character_select, .group_select, .group_member).is_fav > .avatar::after,
+body.salty:not(.salty-dark) #right-nav-panel :is(.character_select, .group_select, .group_member).is_fav > .avatar::after,
+body.salty.charListGrid #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select).is_fav > .avatar::after {
+  top: 4px;
+  right: 4px;
+  width: auto;
+  height: auto;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--bl-lemon);
+  font-size: 11px;
+  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.45));
+}
+body.salty #right-nav-panel #avatar_div:has(#favorite_button.fav_on) #avatar_div_div::after,
+body.salty:not(.salty-dark) #right-nav-panel #avatar_div:has(#favorite_button.fav_on) #avatar_div_div::after {
+  top: 6px;
+  right: 6px;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--bl-lemon);
+  font-size: 13px;
+  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.45));
+}
+
+/* ---------- 프리셋 카드 펼침 삼각형 (2.1.2, 사용자: "삼각형은 왜 이리 작냐 점 같아") ----------
+   데우스 카드는 .dem-card__caret 을 .78em 으로 두어 폰에서 점처럼 보임 → 글자 크기만큼 키우고 세로 가운데 */
+body.salty :is(#chat, .cg-root) .mes_text [class*="custom-dem-card__caret"]:not(#salty-none),
+body.salty :is(#salty-nochat, .salty-preview) .mes_text [class*="custom-dem-card__caret"]:not(#salty-none) {
+  /* 글자(▸)는 글꼴마다 점만 하게 나와서 글자 대신 테두리로 삼각형을 그린다 (2.2.2) — 카드가 열리면 프리셋이 span 을 90° 돌리므로 그대로 돈다.
+     :not(#salty-none) 은 '카드 안 테두리 전부 투명' 규칙(details[class*=custom-dem-card] *)보다 무겁게 하려는 것 */
+  display: inline-block !important;
+  width: 0 !important;
+  height: 0 !important;
+  padding: 0 !important;
+  margin-left: 4px;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  border-top: 7px solid transparent !important;
+  border-bottom: 7px solid transparent !important;
+  border-left: 11px solid currentColor !important;
+  border-left-color: currentColor !important;
+  border-right: 0 !important;
+  align-self: center;
+  vertical-align: middle;
+}
+
+/* ---------- 커스텀 도형 (2.2.0, 사용자: "내가 이미지 주워올 테니까 그 도형으로") ----------
+   설정에서 고른 투명 PNG 의 알파가 마스크. 스크래치와 같은 방식이고 흐림은 별도 층으로 합친다 (apply.js --salty-img-mask · -size) */
+body.salty.salty-shape-custom #chat .mes_text :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img),
+body.salty.salty-shape-custom :is(#salty-nochat, .salty-preview) .mes_text :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img) {
+  border-radius: 0 !important;
+  -webkit-mask-image: var(--salty-img-mask);
+  mask-image: var(--salty-img-mask);
+  -webkit-mask-size: var(--salty-img-mask-size, 100% 100%); mask-size: var(--salty-img-mask-size, 100% 100%);
+  -webkit-mask-position: center; mask-position: center;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+}
+body.salty.salty-shape-custom:not(.salty-fade-off) #chat .mes_text :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img),
+body.salty.salty-shape-custom:not(.salty-fade-off) :is(#salty-nochat, .salty-preview) .mes_text :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img) {
+  -webkit-mask-image: var(--salty-img-mask), var(--salty-mask-y), var(--salty-mask-x);
+  mask-image: var(--salty-img-mask), var(--salty-mask-y), var(--salty-mask-x);
+  -webkit-mask-size: var(--salty-img-mask-size, 100% 100%), 100% 100%, 100% 100%; mask-size: var(--salty-img-mask-size, 100% 100%), 100% 100%, 100% 100%;
+  -webkit-mask-composite: source-in, source-in;
+  mask-composite: intersect, intersect;
+}
+/* 설정 창의 도형 미리보기 칸: 포인트색 면을 마스크로 오려 도형만 보여 줌 */
+.salty-panel .salty-mask-thumb {
+  width: 96px;
+  height: 64px;
+  flex: none;
+  border-radius: 8px;
+  background: var(--salty-fill-shade, var(--salty-shade));
+}
+.salty-panel .salty-mask-thumb > i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--salty-fill-accent, var(--salty-accent));
+  -webkit-mask-image: var(--salty-img-mask); mask-image: var(--salty-img-mask);
+  -webkit-mask-size: var(--salty-img-mask-size, 100% 100%); mask-size: var(--salty-img-mask-size, 100% 100%);
+  -webkit-mask-position: center; mask-position: center;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+}
+.salty-panel .salty-mask-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.salty-panel .salty-mask-row .salty-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* 저장한 커스텀 도형 목록 (2.2.2): 도형 미리보기 칸을 눌러 고름 · 고른 칸은 포인트색 고리 */
+.salty-panel .salty-mask-lib {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.salty-panel .salty-mask-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--salty-muted);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.salty-panel .salty-mask-item .salty-mask-thumb {
+  width: 72px;
+  height: 48px;
+}
+.salty-panel .salty-mask-item.on {
+  color: var(--salty-text);
+}
+.salty-panel .salty-mask-item.on .salty-mask-thumb {
+  box-shadow: 0 0 0 2px var(--salty-accent);
+}
+.salty-panel .salty-mask-item:focus-visible {
+  outline: 2px solid var(--salty-accent);
+  outline-offset: 2px;
+}
+
+/* ---------- 글자 그림자 (2.3.0 대사만 → 2.4.0 대상 고르기: 본문 · 대사 · 속마음 · 강조 · 코드) ----------
+   body.salty * { text-shadow: none !important } (폰 번짐 막기)가 모든 요소에 none 을 직접 박아 두므로 상속으로는 못 내려간다 →
+   대상마다 그 요소와 그 안 모든 요소를 :not(#salty-none) 무게로 잡는다. 본문(text)이 켜져 있어도 꺼 둔 대상(대사 등)은 다시 none. 값은 apply.js textShadow */
+body.salty.salty-shadow-text :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text:not(#salty-none),
+body.salty.salty-shadow-text :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text :not(#salty-none),
+body.salty .salty-sample.salty-shadow-text:not(#salty-none),
+body.salty .salty-sample.salty-shadow-text :not(#salty-none),
+body.salty.salty-shadow-dialogue :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text :is(q, q *):not(#salty-none),
+body.salty .salty-sample.salty-shadow-dialogue :is(q, q *):not(#salty-none),
+body.salty.salty-shadow-em :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text :is(em, i, em *, i *):not(.fa-solid, .fa-regular, .fa-brands):not(#salty-none),
+body.salty .salty-sample.salty-shadow-em :is(em, i, em *, i *):not(#salty-none),
+body.salty.salty-shadow-strong :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text :is(strong, b, strong *, b *):not(#salty-none),
+body.salty .salty-sample.salty-shadow-strong :is(strong, b, strong *, b *):not(#salty-none),
+body.salty.salty-shadow-code :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text :is(code, pre, code *, pre *):not(#salty-none),
+body.salty .salty-sample.salty-shadow-code :is(code, pre, code *, pre *):not(#salty-none) {
+  text-shadow: var(--salty-shadow, none) !important;
+}
+/* 본문이 켜져 있을 때 꺼 둔 대상은 다시 없앰 (앞 규칙과 같은 무게 · 뒤에 있어 이김) */
+body.salty.salty-shadow-text:not(.salty-shadow-dialogue) :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text :is(q, q *):not(#salty-none),
+body.salty .salty-sample.salty-shadow-text:not(.salty-shadow-dialogue) :is(q, q *):not(#salty-none),
+body.salty.salty-shadow-text:not(.salty-shadow-em) :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text :is(em, i, em *, i *):not(#salty-none),
+body.salty .salty-sample.salty-shadow-text:not(.salty-shadow-em) :is(em, i, em *, i *):not(#salty-none),
+body.salty.salty-shadow-text:not(.salty-shadow-strong) :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text :is(strong, b, strong *, b *):not(#salty-none),
+body.salty .salty-sample.salty-shadow-text:not(.salty-shadow-strong) :is(strong, b, strong *, b *):not(#salty-none),
+body.salty.salty-shadow-text:not(.salty-shadow-code) :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text :is(code, pre, code *, pre *):not(#salty-none),
+body.salty .salty-sample.salty-shadow-text:not(.salty-shadow-code) :is(code, pre, code *, pre *):not(#salty-none) {
+  text-shadow: none !important;
+}
+/* 설정 창의 그림자 색 칸: 네이티브 color 입력을 스와치처럼 */
+.salty-panel input[type="color"][data-color-path] {
+  width: 46px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+}
+.salty-panel input[type="color"][data-color-path]::-webkit-color-swatch-wrapper { padding: 0; }
+.salty-panel input[type="color"][data-color-path]::-webkit-color-swatch { border: 0; border-radius: 8px; box-shadow: 0 0 0 1px var(--salty-shade-2); }
+
+/* ---------- 설정 창 소분류 드롭다운 (2.4.1 select → 2.4.2 직접 그린 목록, 사용자: "OS 팝업은 투박함") ----------
+   단추(지금 항목 + 꺾쇠) 밑에 카드로 펼쳐지는 라디오 목록. 탭 줄이 sticky 라 목록도 그 위에 뜬다 */
+.salty-panel .salty-subsel { position: relative; margin-top: 6px; }
+.salty-panel .salty-subsel > button {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  width: 100%; height: 38px; padding: 0 14px 0 14px; border: 0; border-radius: 11px;
+  background: var(--salty-fill-shade, var(--salty-shade)); color: var(--salty-text);
+  font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; text-align: left;
+}
+.salty-panel .salty-subsel.open > button { background: var(--salty-fill-accent-13, var(--salty-accent-13)); color: var(--salty-accent); }
+body.salty-dark .salty-panel .salty-subsel.open > button { color: var(--bl-pop, var(--salty-accent)); }
+.salty-panel .salty-subsel > button:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 2px; }
+.salty-panel .salty-subsel > button > i { flex: none; width: 8px; height: 8px; margin: -4px 3px 0 0; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); opacity: 0.7; transition: transform 0.18s ease; }
+.salty-panel .salty-subsel.open > button > i { transform: translateY(4px) rotate(225deg); }
+.salty-panel .salty-pick {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 5;
+  display: flex; flex-direction: column; padding: 6px; border-radius: 14px;
+  background: var(--bl-card, var(--salty-surface)); box-shadow: var(--bl-e4, var(--salty-lift-lg));
+  max-height: min(60vh, 420px); overflow-y: auto;
+  animation: salty-pick-in 0.16s ease-out;
+}
+@keyframes salty-pick-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .salty-panel .salty-pick { animation: none; } }
+.salty-panel .salty-pick > button {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  min-height: 42px; padding: 0 12px 0 14px; border: 0; border-radius: 10px;
+  background: transparent; color: var(--salty-text); font: inherit; font-size: 13.5px; font-weight: 550; text-align: left; cursor: pointer;
+}
+.salty-panel .salty-pick > button.on { color: var(--salty-accent); font-weight: 650; }
+body.salty-dark .salty-panel .salty-pick > button.on { color: var(--bl-pop, var(--salty-accent)); }
+/* 라디오 동그라미: 고른 것은 포인트색 고리 + 가운데 점 */
+.salty-panel .salty-pick > button > i { flex: none; width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--salty-faint); }
+.salty-panel .salty-pick > button.on > i { box-shadow: inset 0 0 0 2px currentColor; background: radial-gradient(circle, currentColor 0 4px, transparent 4.5px); }
+@media (hover: hover) { .salty-panel .salty-pick > button:not(.on):hover { background: var(--salty-fill-shade, var(--salty-shade)); } }
+.salty-panel .salty-pick > button:active { background: var(--salty-fill-shade-2, var(--salty-shade-2)); }
+
+/* ---------- 붙어 있는 미리보기(예시) 접기 · 펴기 (2.4.4, 사용자: "예시는 꺾쇠로 접었다 폈다") ----------
+   2.4.3 의 두 줄 잘라 굴리기는 뺌 ("그렇게 만들라는 게 아니었다"). 칸 아래 가운데 꺾쇠 하나 — 접으면 꺾쇠만 남고
+   무대 · 표본 · 도구 줄은 숨는다 (무대는 남아 있어 펼치면 깜빡임 없이 그대로). 상태는 localStorage salty_pvfold */
+.salty-prevbox:has(.salty-pvfold) { padding-bottom: 20px; }
+.salty-prevbox .salty-pvfold {
+  position: absolute; left: var(--pp); right: var(--pp); bottom: 0; height: 20px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0; padding: 0; border: 0; border-radius: 8px; background: transparent; cursor: pointer;
+}
+.salty-prevbox .salty-pvfold:active { background: var(--salty-fill-shade, var(--salty-shade)); }
+.salty-prevbox .salty-pvfold:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: -2px; }
+.salty-prevbox .salty-pvfold > i {
+  width: 8px; height: 8px; border-right: 2px solid var(--salty-muted); border-bottom: 2px solid var(--salty-muted);
+  transform: translateY(2px) rotate(225deg); /* 펼침: 위 꺾쇠 (누르면 접힘) */
+  transition: transform 0.18s ease;
+}
+.salty-prevbox.folded .salty-pvfold > i { transform: translateY(-2px) rotate(45deg); } /* 접힘: 아래 꺾쇠 */
+.salty-prevbox.folded { min-height: 20px; }
+.salty-prevbox.folded > :not(.salty-pvfold) { display: none !important; }
+.salty-prevbox.folded + * { margin-top: 8px; }
+
+/* ---------- 고르기 목록 팝업 (2.5.0, src/selects.js — 실리태번 select 를 테마가 그린 목록으로) ----------
+   설정창 소분류 팝업(.salty-panel .salty-pick)과 같은 모양을 설정창 밖에서도 쓰려고 .salty-pick-float 로 한 벌 더.
+   .salty-pick-layer 는 화면 전체를 덮는 투명 층 — 바깥을 누르면 닫히고, 뒤 화면은 그동안 안 눌림 (OS 목록과 같음) */
+body.salty .salty-pick-layer { position: fixed; inset: 0; z-index: 100000; background: transparent; }
+body.salty .salty-pick-float {
+  position: fixed; display: flex; flex-direction: column; box-sizing: border-box;
+  padding: 6px; border-radius: 14px;
+  background: var(--bl-card, var(--salty-surface)); color: var(--salty-text);
+  box-shadow: var(--bl-e4, var(--salty-lift-lg));
+  font-family: var(--salty-font-ui, inherit); font-size: 13.5px;
+  animation: salty-pick-in 0.16s ease-out;
+}
+body.salty .salty-pick-float.up { animation-name: salty-pick-in-up; }
+@keyframes salty-pick-in-up { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { body.salty .salty-pick-float { animation: none; } }
+body.salty .salty-pick-search { flex: none; padding: 2px 2px 6px; }
+body.salty .salty-pick-search input {
+  width: 100% !important; height: 36px; margin: 0 !important; padding: 0 12px !important; box-sizing: border-box;
+  border: 0 !important; border-radius: 10px !important; background: var(--salty-fill-shade, var(--salty-shade)) !important; color: var(--salty-text) !important;
+  font: inherit !important; outline: none !important; box-shadow: none !important; -webkit-appearance: none; appearance: none;
+}
+body.salty .salty-pick-search input:focus { box-shadow: 0 0 0 2px var(--salty-accent-28) !important; }
+body.salty .salty-pick-rows { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; display: flex; flex-direction: column; }
+body.salty .salty-pick-rows::-webkit-scrollbar { width: 0; height: 0; }
+body.salty .salty-pick-rows > button {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex: none;
+  min-height: 42px; padding: 0 12px 0 14px; border: 0; border-radius: 10px;
+  background: transparent; color: var(--salty-text); font: inherit; font-weight: 550; text-align: left; cursor: pointer;
+}
+body.salty .salty-pick-rows > button > span { min-width: 0; overflow-wrap: anywhere; }
+body.salty .salty-pick-rows > button[disabled] { opacity: 0.45; cursor: default; }
+body.salty .salty-pick-rows > button.on { color: var(--salty-accent); font-weight: 650; }
+body.salty-dark .salty-pick-rows > button.on { color: var(--bl-pop, var(--salty-accent)); }
+body.salty .salty-pick-rows > button > i { flex: none; width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--salty-faint); }
+body.salty .salty-pick-rows > button.on > i { box-shadow: inset 0 0 0 2px currentColor; background: radial-gradient(circle, currentColor 0 4px, transparent 4.5px); }
+@media (hover: hover) { body.salty .salty-pick-rows > button:not(.on):not([disabled]):hover { background: var(--salty-fill-shade, var(--salty-shade)); } }
+body.salty .salty-pick-rows > button:active { background: var(--salty-fill-shade-2, var(--salty-shade-2)); }
+body.salty .salty-pick-rows > button:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: -2px; }
+/* optgroup 제목: 작은 흐린 글씨, 첫 것만 위 여백 없음 */
+body.salty .salty-pick-group { padding: 10px 14px 4px; font-size: 11.5px; font-weight: 700; color: var(--salty-muted); }
+body.salty .salty-pick-group:first-child { padding-top: 4px; }
+body.salty .salty-pick-empty { padding: 12px 14px; color: var(--salty-muted); }
+
+/* ---------- 월드인포 줄마다 덮어쓰기 칸을 두 줄(2열)로 (2.5.1, 사용자: "월드인포도 세로 2줄로") ----------
+   스캔 깊이 · 대소문자 · Whole Words · Group Scoring · 자동화 ID 다섯 칸이 한 줄씩 다섯 줄이라 폰에서 길었다.
+   → 2열 격자, 칸마다 이름 위 · 값 아래. 홀수로 남는 마지막(자동화 ID)은 두 열을 다 씀. 위(5431~)의 한 줄 규칙을 덮는다 */
+body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 10px !important;
+  margin-top: 4px;
+}
+body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] > .world_entry_form_control {
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start;
+  gap: 4px;
+  min-height: 0;
+  padding: 6px 8px;
+  border-radius: var(--r-sm, 10px);
+  background: var(--salty-fill-shade, var(--salty-shade));
+}
+body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] > .world_entry_form_control:has(> input[name="automationId"]) {
+  grid-column: 1 / -1; /* 다섯째 칸(자동화 ID)이 혼자 남으니 두 열을 다 씀 (:last-child 는 뒤에 숨은 칸이 있어 안 맞았음) */
+}
+body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] > .world_entry_form_control > small {
+  flex: none;
+  padding: 0;
+  font-size: var(--bl-fs-sub) !important;
+  font-weight: 600;
+  color: var(--salty-muted) !important;
+}
+body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] > .world_entry_form_control > input {
+  flex: none;
+  width: 100% !important;
+  text-align: left;
+  background: var(--salty-fill-surface, var(--salty-surface)) !important;
+}
+body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] > .world_entry_form_control > select {
+  width: 100% !important;
+  max-width: none !important;
+  padding-left: 0 !important;
+  text-align: left;
+  text-align-last: left;
+  color: var(--salty-text) !important;
+}
+
+/* ---------- 글자색 톤 맞추기 (2.6.0, src/tone.js · body.salty-tone) ----------
+   tone.js 가 색 글자마다 --bl-hue(0~360)만 심는다. 채도 · 밝기는 여기 값 하나 — 라이트는 흰 종이 위에서 읽히게 진하고,
+   나이트는 남색 위에서 떠 보이게 밝게. 회색끼 색(bl-tone-grey)은 색상이 없으니 테마 글자색.
+   본문 색 지정(salty-unify-inline)이 켜지면 apply.js 가 salty-tone 을 안 붙이므로 겹치지 않는다 */
+/* --bl-tone-s · --bl-tone-l 는 apply.js 가 설정(채팅 › 기타 슬라이더)에서 뿌리에 내보냄 — 여기서 body 에 다시 적으면 그걸 덮어 버리니 적지 않는다 */
+body.salty.salty-tone :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"])[style*="--bl-hue"] {
+  color: hsl(var(--bl-hue) var(--bl-tone-s) var(--bl-tone-l)) !important;
+  -webkit-text-fill-color: hsl(var(--bl-hue) var(--bl-tone-s) var(--bl-tone-l));
+}
+body.salty.salty-tone :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]).bl-tone-grey {
+  color: inherit !important;
+  -webkit-text-fill-color: inherit;
+}
+
+/* ---------- 역할별 글자 값: 크기 · 자간 · 굵기 (2.7.0, 글자 탭 정리 — 본문 · 대사 · 메뉴 · 속마음 · 강조 · 코드 전부 같은 파라미터) ----------
+   변수는 apply.js 가 뿌리에 내보냄. 없음(null) 이면 inherit 이라 둘레 글자 값 그대로.
+   크기는 둘레 글자 대비 배율(--salty-*-scale) — 대사 안의 속마음처럼 겹쳐도 상대적으로 맞고, 줄 높이는 대사와 같은 식으로 둘레 줄에 맞춤.
+   채팅 · 설정창 미리보기 · 북마크 창을 한 번에 */
+:is(body.salty #chat .mes .mes_text, body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-sample, body.salty :is(.cg-mes, .cg-bubble-text)) q {
+  letter-spacing: var(--salty-dialogue-ls, inherit);
+}
+:is(body.salty #chat .mes .mes_text, body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-sample, body.salty :is(.cg-mes, .cg-bubble-text)) em {
+  font-size: calc(1em * var(--salty-em-scale, 1));
+  line-height: max(1.28em, calc(var(--salty-lh) * 1em / var(--salty-em-scale, 1)));
+  letter-spacing: var(--salty-em-ls, inherit);
+}
+:is(body.salty #chat .mes .mes_text, body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-sample, body.salty :is(.cg-mes, .cg-bubble-text)) strong {
+  font-size: calc(1em * var(--salty-strong-scale, 1));
+  line-height: max(1.28em, calc(var(--salty-lh) * 1em / var(--salty-strong-scale, 1)));
+  letter-spacing: var(--salty-strong-ls, inherit);
+}
+:is(body.salty #chat .mes .mes_text, body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-sample, body.salty :is(.cg-mes, .cg-bubble-text)) code {
+  font-weight: var(--salty-code-weight, inherit);
+  letter-spacing: var(--salty-code-ls, inherit);
+}
+/* 메뉴 글자: 몸통에 걸어 물려받게 — 채팅 본문은 제 규칙(!important)이 있어 안 바뀜 */
+body.salty, body.salty .salty-uisample {
+  font-weight: var(--salty-ui-weight, normal);
+  letter-spacing: var(--salty-ui-ls, normal);
+}
+
+/* ---------- 데우스 트래커 칸 순서 (2.7.4, 사용자: "균형 잡힌 중립 기압을 날짜 오른쪽으로 — 위치가 자꾸 두 줄") ----------
+   시간 · 날짜 · 날씨(+온도) 를 첫 줄에, 장소는 폰에서 한 줄을 통째로. DEM 의 <style> 은 .mes_text .custom-dem-track__item--… (0,2,0) 라
+   여기(아이디 갈고리)가 이긴다. 복구용 트래커(custom-dem-track-recovery)도 같이 */
+body.salty :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery) > [class*="__item--time"] { order: 1; }
+body.salty :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery) > [class*="__item--date"] { order: 2; }
+body.salty :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery) > [class*="__item--weather"] { order: 3; }
+body.salty :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery) > [class*="__item--location"] { order: 4; }
+@media (max-width: 1000px) {
+  body.salty :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery) > [class*="__item--location"] { flex: 1 1 100% !important; }
+  /* 2.7.5: 날씨는 늘 첫 줄 오른쪽 — 날짜가 길면 날씨가 둘째 줄로 밀리던 것(같은 정규식, 글자 수 차이). 날짜 칸이 남는 폭을 먹고 안에서 줄바꿈 */
+  body.salty :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery) > [class*="__item--time"] { flex: 0 0 auto !important; }
+  /* 2.9.2: 영어 원문에서 날짜가 글자 단위로 쪼개졌다 (사용자: "영문일때 정규식 이렇게 보이는거") — 날씨 "Controlled Atmospheric Pressure" 가
+     줄어들지 않는 칸이라 날짜 칸이 한 줌만 남았고, DEM 값의 overflow-wrap:anywhere 가 단어 한가운데서 끊었다.
+     이제 두 칸 모두 가장 긴 낱말보다는 안 좁아지고(min-content), 낱말 사이에서만 줄을 바꾼다. 한국어처럼 짧으면 예전처럼 한 줄,
+     다 안 들어가면 날씨가 둘째 줄로 내려간다. */
+  body.salty :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery) > [class*="__item--date"] { flex: 1 1 0 !important; min-width: min-content !important; }
+  body.salty :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery) > [class*="__item--weather"] { flex: 0 1 auto !important; min-width: min-content !important; }
+  body.salty :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery) > :is([class*="__item--date"], [class*="__item--weather"]) [class*="__value"] { overflow-wrap: break-word !important; word-break: keep-all !important; }
+}
+
+/* ---------- 데우스 카드 안은 본문 조판을 따르지 않음 (2.9.3, 폰 점검에서 찾음) ----------
+   양쪽 정렬 · 한글 글자 사이 끊기(justify-break) · 첫 줄 들여쓰기는 긴 본문 문단을 위한 설정인데, 카드 안의 짧은 칸까지 물려받았다.
+   그래서 트래커 장소가 "H.A.L.O.   Headquarters   →   7F" 처럼 낱말 사이가 벌어지고, 씬 플랜 · 심리 상태 줄에서
+   "드/림주" · "저/녁" 처럼 낱말이 갈리고, 갈등 카드 문단이 한 칸 들여 써졌다 (테마를 끄면 없음).
+   카드 · 트래커 안은 왼쪽 정렬 + 낱말 단위 줄바꿈 + 들여쓰기 없음. 본문 문단은 그대로 */
+:is(body.salty #chat .mes .mes_text, .salty-sample) :is(details[class*="custom-dem-card"], .custom-dem-track, .custom-dem-track-recovery) {
+  text-align: start;
+  word-break: keep-all;
+}
+:is(body.salty.salty-indent #chat .mes .mes_text, .salty-sample.salty-indent) :is(details[class*="custom-dem-card"], .custom-dem-track, .custom-dem-track-recovery) p {
+  text-indent: 0;
+}
+
+/* ---------- 프롬프트 목록 ☰ 손잡이 (2.7.6, 제보: 좁은 폰에서 📌 과 ☰ 이 겹침) ----------
+   1) 자리 비우기 규칙이 `li:has(> .drag-handle.ui-sortable-handle)` 로 '바로 아래 자식' 만 봤다 — 실리태번 판에 따라 손잡이가 한 겹 안에
+      들어가면 손잡이는 보이는데 이름이 안 밀려 겹쳤다. 실리태번 자체 규칙처럼 자손이면 다 잡는다.
+   2) ☰ 글자는 메뉴 글꼴에 없으면 세로줄 · 네모로 나온다 → 글자 대신 선 세 개를 그린다 */
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.drag-handle.ui-sortable-handle) {
+  padding-left: calc(var(--pm-x) + var(--pm-handle)) !important;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list .drag-handle.ui-sortable-handle {
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  height: 100% !important;
+  width: calc(var(--pm-x) + var(--pm-handle)) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  padding: 0 0 0 var(--pm-x) !important;
+  font-size: 0 !important;      /* ☰ 글자 숨김 — 아래 선 세 개가 대신 */
+  color: var(--salty-faint);
+  z-index: 1;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list .drag-handle.ui-sortable-handle::before {
+  content: '';
+  width: 12px;
+  height: 10px;
+  background: repeating-linear-gradient(to bottom, currentColor 0 2px, transparent 2px 4px);
+  border-radius: 1px;
+}
+
+/* ---------- 글꼴 목록: 이 기기에서 안 그려지는 글꼴 표시 (2.7.7, fonts.js checkPreviewInk) ---------- */
+.salty-fontinfo b em.salty-blank {
+  background: color-mix(in srgb, var(--salty-danger) 14%, transparent);
+  color: var(--salty-danger);
+}
+.salty-fontitem.blank .salty-fontinfo small { opacity: 0.55; } /* 표본은 기기 글꼴로 — 이 글꼴 모양이 아니라는 뜻으로 옅게 */
+
+/* ---------- 투명 캐릭터 컷: 흐림 끔이면 아래도 녹이지 않음 (2.7.8) ----------
+   위 .salty-cutout 규칙은 흐림 설정과 상관없이 아래 18% 를 항상 마스크로 녹였다 → 흐림을 껐는데도 새 누끼 그림의 몸통이 점점 사라져 보였음.
+   흐림 끔 = 컷도 끝까지 또렷, 약함 이상 = 예전처럼 아래만 살짝. 채팅과 설정 미리보기 둘 다 */
+body.salty.salty-fade-off :is(#chat, #salty-nochat, .salty-preview) .mes_text :is(.salty-cutout .custom-cac-img, .salty-cutout img, img.salty-cutout) {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+/* ---------- 가벼운 페이드 인 (2.9.5, src/streamfade.js) ----------
+   스트리밍 중인 답변에서 방금 붙은 글자 조각만 <bl-fade> 로 감싸 투명도만 0 → 1 (레이아웃 · 글자 모양은 그대로).
+   길이와 음수 지연(도착한 뒤 지난 시간)은 JS 가 요소마다 적는다 — 실리태번이 걸음마다 innerHTML 을 새로 써도 페이드가 이어짐.
+   backwards: 끝난 뒤에는 아무 효과도 남기지 않음 (감싼 요소는 스트림이 끝나고 JS 가 풀어 줌). 기기 '동작 줄이기'면 JS 도 안 붙고 CSS 도 한 번 더 막음 */
+@media (prefers-reduced-motion: no-preference) {
+  #chat .mes_text bl-fade {
+    animation-name: bl-fade-in;
+    animation-timing-function: ease-out;
+    animation-fill-mode: backwards;
+    will-change: opacity; /* 조각을 따로 합성해 프레임마다 레이아웃 · 페인트를 다시 안 함 (4배 느린 CPU 에서 3회 모두 메인 스레드 약 1%p ↓) */
+  }
+}
+@keyframes bl-fade-in {
+  from { opacity: 0; }
+}

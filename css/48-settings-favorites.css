@@ -1,0 +1,14 @@
+/* ===== css/48-settings-favorites.css ===== */
+.bl-favorites { padding: 0 0 16px; margin-bottom: 12px; border-bottom: 1px solid var(--salty-border); }
+.bl-favorites header, .bl-favorites header > span, .bl-favorite-row, .bl-search-result-row { display: flex; align-items: center; gap: 8px; }
+.bl-favorites header { justify-content: space-between; }
+.bl-favorites header > span { font-size: 12px; color: var(--salty-muted); }
+.salty-panel .bl-favorite-toggle { flex: 0 0 40px; width: 40px; min-height: 40px; padding: 0; margin: 0; display: grid; place-items: center; color: var(--salty-muted); font: inherit; border: 0; border-radius: 8px; background: transparent; cursor: pointer; }
+.salty-panel .bl-favorite-toggle[aria-pressed="true"] { color: var(--salty-accent); }
+.salty-panel .bl-favorite-row > [data-favorite-jump] { flex: 1; min-width: 0; text-align: left; padding: 9px 6px; border: 0; background: transparent; color: var(--salty-text); font: inherit; cursor: pointer; overflow-wrap: anywhere; }
+.bl-search-result-row > [data-settings-result] { flex: 1; min-width: 0; }
+.salty-panel .bl-search-result-row .bl-favorite-toggle { align-items: center; }
+
+ .salty-panel .bl-favorite-toggle > .fa-star { width: 18px; line-height: 1; font-size: 17px; pointer-events: none; }
+.salty-panel .bl-favorite-toggle:hover { background: var(--salty-fill-accent-10, var(--salty-accent-10)); }
+.salty-panel .bl-favorite-toggle:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 1px; }

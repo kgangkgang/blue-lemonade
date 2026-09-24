@@ -1,0 +1,188 @@
+/* ===== css/03-menus.css =====
+   ≡ · ✦ 메뉴 · 팝업 · 알림(토스트).
+   ===== */
+/* ---------- 메뉴 · 팝업 · 알림 ---------- */
+/* ≡ · ✦ 메뉴: 떠 있는 층(e4), 어두운 테마는 한 톤 밝게 */
+body.salty :is(#options, #extensionsMenu, .list-group) {
+  padding: 6px !important;
+  border: 0 !important;
+  border-radius: var(--bl-r-menu) !important;
+  background: var(--bl-fill-overlay, var(--bl-overlay)) !important;
+  box-shadow: var(--bl-e4) !important;
+}
+/* ≡ 메뉴는 여백을 스크롤 칸 안쪽으로 — 칸 나눔 띠가 메뉴 끝까지 닿게 (스크롤 칸이 바깥을 자름) */
+body.salty #options {
+  padding: 0 !important;
+}
+body.salty #options .options-content {
+  padding: 6px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+/* display 는 건드리지 않음 — 실리태번이 displayNone 으로 숨기는 항목(채팅 닫기 등)이 있음 */
+body.salty :is(#options .options-content a, #extensionsMenu .list-group-item, #extensionsMenu > .extension_container > div, #extensionsMenu > div:not(.extension_container), .list-group > .list-group-item) {
+  min-height: var(--bl-h-menu);
+  align-items: center !important;
+  gap: var(--bl-s3) !important;
+  padding: 0 var(--bl-s3) !important;
+  border: 0 !important;
+  border-radius: var(--bl-r-sm) !important;
+  color: var(--salty-text) !important;
+  opacity: 1 !important;
+  font-size: var(--bl-fs-body);
+  font-weight: 500;
+  transition: background-color 0.12s ease;
+}
+@media (hover: hover) {
+  body.salty :is(#options .options-content a, #extensionsMenu .list-group-item, #extensionsMenu > .extension_container > div, #extensionsMenu > div:not(.extension_container), .list-group > .list-group-item):hover {
+    background: var(--bl-fill-hover, var(--bl-hover)) !important;
+  }
+}
+body.salty :is(#options .options-content a, #extensionsMenu .list-group-item, #extensionsMenu > .extension_container > div, #extensionsMenu > div:not(.extension_container), .list-group > .list-group-item):active {
+  background: var(--bl-fill-press-bg, var(--bl-press-bg)) !important;
+}
+body.salty :is(#options .options-content a, #extensionsMenu .list-group-item, #extensionsMenu > .extension_container > div, #extensionsMenu > div:not(.extension_container)) :is(i, .fa-solid, .extensionsMenuExtensionButton) {
+  width: var(--bl-ic-box) !important;
+  min-width: var(--bl-ic-box);
+  color: var(--salty-muted) !important;
+  opacity: 1 !important;
+  font-size: var(--bl-ic) !important;
+  text-align: center;
+}
+/* 메뉴 칸 나눔: 선 대신 옅은 띠 */
+body.salty #options .options-content hr {
+  height: 5px !important;
+  margin: 5px -6px !important;
+  border: 0 !important;
+  background: var(--bl-fill-hover, var(--bl-hover)) !important;
+  opacity: 1 !important;
+}
+
+/* 팝업: 카드 면 + 가장 높은 층(e5), 뒤는 흐림 없는 옅은 막 */
+body.salty .popup {
+  border: 0 !important;
+  border-radius: var(--bl-r-lg) !important;
+  background: var(--bl-fill-card, var(--bl-card)) !important;
+  box-shadow: var(--bl-e5) !important;
+  color: var(--salty-text) !important;
+}
+body.salty .popup:not(:has(.salty-panel)) {
+  padding: var(--bl-s5) var(--bl-s4) var(--bl-s4) !important;
+}
+body.salty .popup::backdrop {
+  background: var(--bl-scrim) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+body.salty .popup .popup-content:not(:has(.salty-panel)) {
+  font-size: var(--bl-fs-body);
+  line-height: 1.55;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+body.salty .popup .popup-content > h3 {
+  margin: 2px 0 var(--bl-s2) !important;
+  font-size: var(--bl-fs-head) !important;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+}
+body.salty .popup .popup-content > p {
+  margin: 0 0 var(--bl-s1);
+  color: var(--salty-muted);
+}
+/* 팝업 속 체크 묶음: 종이색 오목한 칸 안에 스위치 줄 */
+body.salty .popup .popup-inputs {
+  margin-top: var(--bl-s4) !important;
+  padding: 2px var(--bl-inset) !important;
+  border-radius: var(--bl-r-md);
+  background: var(--bl-fill-page, var(--bl-page));
+  box-shadow: var(--bl-well-in);
+  text-align: left;
+}
+body.salty .popup .popup-input {
+  min-height: var(--bl-h-lg) !important;
+  margin-top: var(--bl-s3) !important;
+  border-radius: 12px !important;
+}
+/* 아래 버튼: 같은 폭으로 나눠 채움, 확인만 포인트색 */
+body.salty .popup .popup-controls {
+  align-self: stretch !important;
+  flex-wrap: wrap;
+  gap: var(--bl-s2) !important;
+  margin-top: var(--bl-s5) !important;
+}
+body.salty .popup .popup-controls .menu_button {
+  flex: 1 1 0;
+  min-width: 30%;
+  min-height: var(--bl-h-lg) !important;
+  margin: 0 !important;
+  padding: 0 var(--bl-s4) !important;
+  border-radius: 12px !important;
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 650 !important;
+}
+body.salty .popup .popup-controls .menu_button.popup-button-ok:not(.redWarningBG) {
+  background: var(--salty-fill-accent, var(--salty-accent)) !important;
+  box-shadow: var(--bl-accent-lift) !important;
+  color: var(--salty-on-accent, #fff) !important;
+}
+@media (hover: hover) {
+  body.salty .popup .popup-controls .menu_button.popup-button-ok:not(.redWarningBG):hover {
+    background: var(--salty-fill-accent-press, var(--salty-accent-press)) !important;
+  }
+}
+body.salty .popup .popup-controls .menu_button.popup-button-ok:not(.redWarningBG):active {
+  background: var(--salty-fill-accent-press, var(--salty-accent-press)) !important;
+  box-shadow: var(--bl-press) !important;
+}
+body.salty .popup .popup-controls .menu_button.popup-button-ok:not(.redWarningBG):focus-visible {
+  box-shadow: var(--bl-ring), var(--bl-accent-lift) !important;
+}
+body.salty .popup .popup-controls .menu_button.popup-button-cancel {
+  background: var(--bl-fill-well, var(--bl-well)) !important;
+  box-shadow: none !important;
+  color: var(--salty-text) !important;
+}
+body.salty .popup .popup-controls .menu_button:is(:hover, :focus, :focus-visible) {
+  filter: none !important;
+}
+body.salty .popup .popup-button-close {
+  top: 12px !important;
+  right: 12px !important;
+  width: 30px !important;
+  height: 30px !important;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  background: var(--bl-fill-hover, var(--bl-hover)) !important;
+  color: var(--salty-muted) !important;
+  font-size: 15px !important;
+  filter: none !important;
+}
+body.salty .popup :focus:not(:focus-visible) {
+  outline: none !important;
+}
+
+/* 알림: 한 가지 면(e4) + 상태 점 (색 면 없음 · 빨강 · 초록 없음) */
+/* 3.0.0: 여기 있던 규칙 'body.salty #toast-container > div, body.salty #toast-container > :is(.toast-erro…' 은 지움 — position · margin-top · margin-bottom · padding · border · border-radius · background-color · background-image · box-shadow · color · opacity · font-size · line-height → css/17-semantic.css (같은 선택자 규칙이 덮음)
+   margin-bottom: 좌우 margin 은 그대로 — toastr 가운데 정렬(auto)
+   opacity: !important 금지: 페이드 인라인 opacity 를 막지 않게 (toastr 의 .8 은 특이도로 이미 이김) */
+/* 상태 동그라미 · 띠 · 굵은 제목은 아래 surfaces:semantic 칸에서 그림 (예전 8px 호박 점은 지움) */
+/* 3.0.0: 여기 있던 규칙 'body.salty #toast-container .toast-title' 은 지움 — margin-bottom · font-weight → css/17-semantic.css (같은 선택자 규칙이 덮음) */
+/* 3.0.0: 여기 있던 규칙 'body.salty #toast-container > .toast-error .toast-title' 은 지움 — font-weight → css/17-semantic.css (같은 선택자 규칙이 덮음) */
+
+/* 풍선 도움말(jQuery UI): 뒤집힌 작은 칩 — 새로 만들지는 않음 */
+body.salty .ui-tooltip {
+  padding: 6px 10px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: var(--salty-text) !important;
+  box-shadow: var(--bl-e4) !important;
+  color: var(--salty-bg) !important;
+  font-size: var(--bl-fs-sub);
+  font-weight: 500;
+}

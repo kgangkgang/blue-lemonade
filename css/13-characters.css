@@ -1,0 +1,1336 @@
+/* ===== css/13-characters.css =====
+   캐릭터 목록 · 편집 · 태그 거르기 · 고급 정의.
+   ===== */
+/* ===== 실리태번 화면: 캐릭터 목록 · 태그 거르기 (surfaces:characters) ===== */
+/* 오른쪽 서랍(#right-nav-panel): 캐릭터 목록 · 편집 · 그룹 편집 + 고급 정의(#character_popup)
+   · 보이는 면(카드 · 입력칸)은 좌우 16 선에 맞추고, 아이콘 버튼은 글자가 16 선에 오게 상자를 바깥으로 뺌
+   · 목록 줄은 한 장씩 카드(e1) — 즐겨찾기는 아바타 모서리 레몬 별, 지금 채팅 중인 줄은 포인트 테두리(src/current.js), 일괄 편집 고름은 두 번째 포인트 테두리 + 체크
+   · 한국어는 낱말 중간에서 줄을 바꾸지 않음(keep-all) — 서랍 · 고급 정의 전체와 글 칸
+   · 스크롤 칸 안쪽에 여백을 둬서 줄 · 카드 그림자가 잘리지 않게
+   · display 는 실리태번이 켜고 끄는 것(검색칸 · 토큰 정보 · 잠금 아이콘 · 버튼)에 쓰지 않음 */
+
+/* ---------- 서랍 틀 · 맨 윗줄 ---------- */
+body.salty #right-nav-panel {
+  padding: var(--bl-s1) 0 0 !important;
+}
+/* 한국어는 낱말 중간에서 줄을 바꾸지 않음 (서랍 · 고급 정의 전체, 글 칸 포함) */
+body.salty :is(#right-nav-panel, #character_popup) {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+body.salty :is(#right-nav-panel, #character_popup) textarea {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+/* 글 칸 크기 손잡이: 둥근 모서리 밖에 점으로 찍혀서 투명하게 (끌어서 늘리기는 그대로) */
+body.salty :is(#right-nav-panel, #character_popup) textarea::-webkit-resizer {
+  background: transparent;
+}
+/* 목록 버튼 + 즐겨찾기 바로가기 */
+body.salty #right-nav-panel #CharListButtonAndHotSwaps {
+  align-items: center !important;
+  /* 3.0.0: gap · padding → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+  min-height: 42px;
+}
+body.salty #right-nav-panel #CharListButtonAndHotSwaps > .flex-container {
+  /* 3.0.0: flex-flow → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+  align-items: center;
+  gap: 0;
+}
+/* 서랍 속 아이콘 버튼: 34px 상자, 흐린 아이콘 (잠금 아이콘은 실리태번이 display 로 바꾸므로 크기 · 색만) */
+body.salty #right-nav-panel :is(#rm_button_characters, #rm_button_search, #result_info .right_menu_button) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--bl-h-icon);
+  height: var(--bl-h-icon);
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: var(--bl-r-sm);
+  font-size: 17px !important;
+}
+body.salty #right-nav-panel :is(#rm_button_characters, #rm_button_search, #result_info .right_menu_button, #rm_button_panel_pin_div .right_menu_button) {
+  color: var(--salty-muted) !important;
+  opacity: 1 !important;
+  filter: none !important;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+body.salty #right-nav-panel #rm_button_panel_pin_div .right_menu_button {
+  padding: 8px !important;
+  font-size: 16px !important;
+}
+body.salty #right-nav-panel #rm_button_panel_pin:checked + label .right_menu_button {
+  color: var(--salty-accent) !important;
+}
+@media (hover: hover) {
+  body.salty #right-nav-panel :is(#rm_button_characters, #rm_button_search, #result_info .right_menu_button):hover {
+    background: var(--bl-fill-hover, var(--bl-hover));
+    color: var(--salty-text) !important;
+  }
+}
+body.salty #right-nav-panel :is(#rm_button_characters, #rm_button_search, #result_info .right_menu_button):active {
+  background: var(--bl-fill-press-bg, var(--bl-press-bg));
+}
+/* 즐겨찾기 바로가기: 빈 안내는 작고 흐리게, 아바타는 떠 있는 작은 사진 */
+body.salty #right-nav-panel #HotSwapWrapper {
+  justify-content: flex-start !important;
+  /* 3.0.0: min-width → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+}
+body.salty #right-nav-panel .hotswap {
+  justify-content: flex-start !important;
+  align-items: center;
+  gap: var(--bl-s2);
+  margin: 0 !important;
+  min-width: 0;
+}
+body.salty #right-nav-panel .hotswap > small {
+  overflow: hidden;
+  color: var(--salty-muted) !important;
+  font-size: var(--bl-fs-sub) !important;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+body.salty #right-nav-panel .hotswap .avatar {
+  opacity: 1 !important;
+  outline: 0 !important;
+}
+body.salty #right-nav-panel .hotswap > small * {
+  font-size: inherit !important;
+}
+/* 바로가기 아바타: 큰 아바타 설정이어도 40px 정사각 (얼굴이 보이게 위쪽 기준) */
+body.salty #right-nav-panel .hotswap {
+  padding: 0 4px;
+}
+body.salty #right-nav-panel .hotswap .avatar {
+  width: 40px !important;
+  height: 40px !important;
+  margin: 0 !important;
+}
+body.salty #right-nav-panel .hotswap .avatar img {
+  width: 40px !important;
+  height: 40px !important;
+  border: 0 !important;
+  border-radius: var(--bl-r-sm) !important;
+  box-shadow: var(--bl-e2) !important;
+  object-position: center 30%;
+}
+/* 바로가기 아바타가 있으면 큰 제목과 한 칸 더 띄움 (7 → 15) */
+/* 3.0.0: 여기 있던 규칙 'body.salty #right-nav-panel #CharListButtonAndHotSwaps:has(.hotswap .avatar)' 은 지움 — margin-bottom → css/26-rounds-1.7.css (같은 선택자 규칙이 덮음) */
+
+/* ---------- 제목 줄: 캐릭터 이름(편집 화면으로 가는 탭) + 토큰 수 ---------- */
+body.salty #right-nav-panel #rm_PinAndTabs {
+  gap: var(--bl-s2);
+  padding: 0 7px 0 var(--bl-gutter) !important;
+}
+body.salty #right-nav-panel #right-nav-panel-tabs {
+  gap: var(--bl-s1);
+  min-height: 40px;
+}
+body.salty #right-nav-panel #rm_button_selected_ch {
+  padding: 0 !important;
+  opacity: 1 !important;
+}
+body.salty #right-nav-panel #rm_button_selected_ch h2 {
+  color: var(--salty-text) !important;
+  font-size: var(--bl-fs-title) !important;
+  font-weight: 650 !important;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  transition: color 0.15s ease;
+}
+/* 긴 이름은 두 줄까지 낱말 단위로 (빈 제목은 실리태번이 숨기므로 :not(:empty)) */
+body.salty #right-nav-panel #rm_button_selected_ch h2:not(:empty) {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  text-wrap: wrap;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+/* 목록 · 그룹 화면(토큰 정보가 숨은 때)에서는 안 켜진 탭이라 흐리게 */
+body.salty #right-nav-panel #right-nav-panel-tabs:has(> #result_info[style*="none"]) #rm_button_selected_ch h2 {
+  color: var(--salty-muted) !important;
+}
+@media (hover: hover) {
+  body.salty #right-nav-panel #right-nav-panel-tabs #rm_button_selected_ch:hover h2 {
+    color: var(--salty-text) !important;
+  }
+}
+body.salty #right-nav-panel #result_info {
+  gap: 0 !important;
+  padding: 0 !important;
+  font-size: var(--bl-fs-sub) !important;
+}
+/* 편집 중(토큰 정보가 보일 때): 이름이 한 줄을 다 쓰고, 토큰 수 · 아이콘은 그 아래 한 줄 — 긴 이름이 잘리지 않게 */
+body.salty #right-nav-panel #right-nav-panel-tabs:has(> #result_info:not([style*="none"])) {
+  flex-wrap: wrap;
+  row-gap: 0;
+}
+body.salty #right-nav-panel #right-nav-panel-tabs:has(> #result_info:not([style*="none"])) > #rm_button_selected_ch {
+  flex: 1 1 100%;
+}
+body.salty #right-nav-panel #right-nav-panel-tabs > #result_info:not([style*="none"]) {
+  flex: 1 1 100%;
+  margin-top: -2px;
+}
+/* 토큰 수: "81 토큰 (81 영구)" 한 줄, 왼쪽 */
+body.salty #right-nav-panel #result_info_text {
+  flex-direction: row !important;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 5px;
+  margin-right: auto;
+  color: var(--salty-muted);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25 !important;
+  text-align: left !important;
+}
+body.salty #right-nav-panel #result_info_text strong {
+  color: var(--salty-text);
+  font-weight: 650;
+}
+body.salty #right-nav-panel #result_info_text small {
+  color: var(--salty-muted) !important;
+  font-size: var(--bl-fs-micro) !important;
+}
+body.salty #right-nav-panel #result_info #chartokenwarning {
+  color: var(--bl-warn) !important;
+}
+/* 새 캐릭터(제목이 빈 때): 토큰 수가 큰 제목 자리에 떠 있지 않게 오른쪽 아이콘 옆으로 */
+body.salty #right-nav-panel #right-nav-panel-tabs:has(> #rm_button_selected_ch h2:empty) #result_info_text {
+  margin: 0 var(--bl-s1) 0 auto;
+}
+
+/* ---------- 목록 머리: 도구 막대 · 검색칸 · 거르기 칩을 카드 한 장(e1)에 ---------- */
+body.salty #right-nav-panel #charListFixedTop {
+  margin: var(--bl-s1) var(--bl-gutter) var(--bl-s1);
+  /* 아래 여백 2px 은 30px 짜리 거르기 동그라미와 14px 둥근 모서리가 부딪혀 단추가 바닥에 붙어 보였다.
+     위아래를 같게 주고 좌우도 한 단 넓혀 숨통을 준다 */
+  padding: var(--bl-s2) var(--bl-s2) var(--bl-s2) !important;
+  border-radius: var(--bl-r-md);
+  /* 3.0.0: background · box-shadow → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+}
+/* 폰에서 캐릭터 서랍은 좌우 여백을 줄여 폭을 더 쓴다 —
+   서랍 padding 8 + 카드 margin 14 = 22px 씩 먹어서 360~390px 화면에서 답답했다 (사용자 지적) */
+@media (max-width: 1000px) {
+  /* 기반 규칙(2918줄)이 :not(#salty-none) 으로 아이디 둘을 쓰므로 같은 방법으로 이겨야 한다 */
+  body.salty #right-nav-panel:not(#salty-none) > .scrollableInner {
+    /* 스크롤바 자리는 오른쪽 한 쪽만 (양쪽이면 왼쪽 6px 이 그냥 버려진다).
+       그만큼 왼쪽에 여백을 주어 눈으로 보이는 좌우를 맞춘다 — 실측 카드 x=12 / 오른쪽 12 */
+    scrollbar-gutter: stable;
+    /* 3.0.0: padding-left · padding-right → css/27-compact.css (같은 선택자 규칙이 덮음) */
+    /* 기반 폭이 96% 라 12px 을 잃고 있었다 (실측: 293px 화면에서 281px) */
+    width: 100% !important;
+    max-width: none !important;
+  }
+  body.salty #right-nav-panel:not(#salty-none) #rm_characters_block {
+    width: 100% !important;
+  }
+  /* 캐릭터 상세: #form_create 의 좌우 14px + 카드 자체 12px 이 겹쳐 글자가 40px 안쪽에서 시작했다
+     (293px 화면의 13.7%). 둘 다 줄여 카드가 화면을 더 쓰게 한다 */
+  body.salty #right-nav-panel:not(#salty-none) #form_create {
+    /* 상세 화면도 자기가 스크롤한다 → 목록과 같은 방법으로 좌우를 맞춘다 (실측 12 / 12) */
+    scrollbar-gutter: stable;
+    /* 3.0.0: padding-left · padding-right → css/27-compact.css (같은 선택자 규칙이 덮음) */
+  }
+  body.salty #right-nav-panel:not(#salty-none) :is(#avatar-and-name-block, #description_textarea, #firstmessage_textarea, #character_json_data) {
+    padding-inline: var(--bl-s2) !important;
+  }
+  /* 폭을 가장 많이 먹던 곳: 목록 블록의 좌우 padding 14px (+ margin) = 한쪽 22px.
+     4px 으로 줄이고 margin 은 없애 카드가 화면을 더 쓰게 한다 */
+  /* 6679줄의 같은 특이도 규칙이 뒤에 있어 순서로 졌다 → 아이디를 하나 더 얹는다 */
+  body.salty #right-nav-panel:not(#salty-none) #rm_print_characters_block {
+    /* 목록 자체도 스크롤한다 → 오른쪽 자리를 늘 잡아 두고(내용이 적을 때 카드가 튀지 않게)
+       왼쪽에 같은 만큼 여백을 준다. 카드 좌우가 화면에서 12px 씩으로 같아진다 */
+    scrollbar-gutter: stable;
+    /* 3.0.0: padding-left · padding-right → css/27-compact.css (같은 선택자 규칙이 덮음) */
+    margin-inline: 0 !important;
+  }
+  /* 목록 위 거르기 · 정렬 머리띠는 카드와 왼쪽 끝을 맞춘다 (실측 둘 다 x=12) */
+  /* 3.0.0: 여기 있던 규칙 'body.salty #right-nav-panel #charListFixedTop' 은 지움 — margin-inline → css/27-compact.css (같은 선택자 규칙이 덮음) */
+}
+body.salty #right-nav-panel #rm_button_bar {
+  gap: 0 !important;
+  align-items: center;
+}
+body.salty #right-nav-panel #rm_button_bar .menu_button {
+  width: var(--bl-h-icon) !important;
+  height: var(--bl-h-icon);
+  margin: 0 !important;
+  aspect-ratio: auto !important;
+}
+/* 정렬 · 쪽 크기 select: 칸 없이 오른쪽 정렬 값 + 꺾쇠 (누르면 옅은 면) */
+body.salty #right-nav-panel :is(#character_sort_order, .paginationjs-size-changer select) {
+  height: var(--bl-h-icon) !important;
+  min-height: var(--bl-h-icon) !important;
+  margin: 0 !important;
+  padding: 0 28px 0 var(--bl-s2) !important;
+  border-radius: var(--bl-r-sm) !important;
+  background-color: transparent !important;
+  background-position: right 8px center !important;
+  box-shadow: none !important;
+  color: var(--salty-muted) !important;
+  font-size: var(--bl-fs-ctl) !important;
+  font-weight: 600;
+  text-align: right;
+  text-align-last: right;
+  cursor: pointer;
+}
+body.salty #right-nav-panel #character_sort_order {
+  flex: 1 1 0 !important;
+  min-width: 72px !important;
+}
+@media (hover: hover) {
+  body.salty #right-nav-panel :is(#character_sort_order, .paginationjs-size-changer select):hover {
+    background-color: var(--bl-hover) !important;
+    color: var(--salty-text) !important;
+  }
+}
+body.salty #right-nav-panel :is(#character_sort_order, .paginationjs-size-changer select):focus-visible {
+  box-shadow: var(--bl-ring) !important;
+}
+/* 검색칸(돋보기로 켬): 카드 안이라 오목한 칸 */
+body.salty #right-nav-panel #form_character_search_form {
+  padding: 2px 0 var(--bl-s1);
+}
+body.salty #right-nav-panel #charListFixedTop #rm_button_search.active {
+  background: var(--salty-fill-accent-10, var(--salty-accent-10));
+  color: var(--salty-accent) !important;
+}
+body.salty #right-nav-panel #character_search_bar {
+  background-color: var(--bl-well) !important;
+  box-shadow: var(--bl-well-in) !important;
+}
+body.salty #right-nav-panel #character_search_bar:focus {
+  background-color: var(--salty-surface) !important;
+  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+}
+/* 거르기 칩: 카드 위에 떠 있는 칩(e2), 누르면 오목 — 고름 · 뺌은 foundation 규칙 그대로 */
+body.salty #right-nav-panel .rm_tag_controls {
+  column-gap: 5px !important;
+  row-gap: 5px !important;
+  /* 가로 스크롤 상자(overflow auto)라 안쪽 여백이 0 이면 동그라미의 고리 · 그림자가 잘림 → 3px 여백을 주고 그만큼 바깥으로 되돌려 자리는 그대로 */
+  /* 3.0.0: margin · padding → css/27-compact.css (같은 선택자 규칙이 덮음) */
+}
+/* 거르기 동그라미는 도구 막대 버튼(34)보다 한 단 작은 30 — 칩 줄이 한 줄을 통째로 먹지 않게
+   (고름 · 뺌 상태의 면 · 테 · × 배지는 기반 규칙 그대로) */
+body.salty #right-nav-panel #rm_characters_block .rm_tag_filter .tag.actionable {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  min-height: 30px;
+  font-size: 13px !important;
+}
+body.salty #right-nav-panel #rm_characters_block .rm_tag_filter {
+  gap: 5px !important;
+}
+body.salty #right-nav-panel .rm_tag_filter {
+  align-items: center;
+  gap: 6px !important;
+}
+body.salty #right-nav-panel .rm_tag_filter .tag.actionable:where(:not(.selected, .excluded, .clearAllFilters)) {
+  background-color: var(--bl-control) !important;
+  box-shadow: var(--bl-e2) !important;
+  color: var(--salty-muted) !important;
+}
+@media (hover: hover) {
+  body.salty #right-nav-panel .rm_tag_filter .tag.actionable:where(:not(.selected, .excluded)):hover {
+    color: var(--salty-text) !important;
+  }
+}
+/* 글자 태그 칩: 안 고른 것도 떠 있는 칩 (흐리게 하지 않음 — 고름은 포인트 테두리, 뺌은 호박 테두리) */
+body.salty #right-nav-panel .rm_tag_filter .tag:not(.actionable) {
+  min-height: 28px;
+  gap: var(--bl-s1) !important;
+  padding: 0 11px !important;
+}
+body.salty #right-nav-panel #rm_characters_block .rm_tag_filter .tag:not(.actionable):where(:not(.selected, .excluded)) {
+  box-shadow: var(--bl-e2) !important;
+  opacity: 1 !important;
+}
+body.salty #right-nav-panel #rm_characters_block .rm_tag_filter .tag:not(.actionable):not([style*="background"]):where(:not(.selected, .excluded)) {
+  background-color: var(--bl-control) !important;
+  color: var(--salty-muted) !important;
+}
+body.salty #right-nav-panel .rm_tag_filter .tag:where(:not(.selected, .excluded, .clearAllFilters)):active {
+  background-color: var(--bl-press-bg) !important;
+  box-shadow: var(--bl-press) !important;
+}
+/* 레몬에이드: 뺀 칩 글자는 한 단 진한 호박 (흰 바탕에서 4.5:1 넘게, 테두리는 그대로) */
+body.salty:not(.salty-dark) #right-nav-panel .rm_tag_filter .tag.excluded {
+  color: var(--salty-muted) !important; /* 4.1.2: 박힌 호박색 대신 팔레트 글자색 (테는 포인트색 그대로) */
+}
+/* 뺀 글자 태그: 글자 위를 덮는 큰 × 대신 앞에 작은 × */
+body.salty #right-nav-panel .rm_tag_filter .tag:not(.actionable).excluded::after {
+  position: static !important;
+  order: -1;
+  height: auto !important;
+  font-size: 15px !important;
+  font-weight: 600;
+  line-height: 1 !important;
+}
+/* 뺀 아이콘 칩: 같은 호박색 아이콘에 겹쳐 안 보이던 × 를 오른쪽 위 작은 배지로 */
+body.salty #right-nav-panel .rm_tag_filter .tag.actionable.excluded::after {
+  top: -3px !important;
+  right: -3px !important;
+  left: auto !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px !important;
+  border-radius: 50%;
+  background: var(--bl-warn);
+  box-shadow: var(--bl-e2);
+  color: var(--salty-bg) !important;
+  font-size: 13px !important;
+  font-weight: 700;
+  line-height: 1 !important;
+}
+/* 폴더 안으로 들어갔을 때의 경로 태그 */
+body.salty #right-nav-panel .rm_tag_bogus_drilldown .tag:not(:first-child)::before {
+  color: var(--salty-faint) !important;
+}
+
+/* ---------- 쪽 넘김 줄: 조용한 글자 · 아이콘 ---------- */
+body.salty #right-nav-panel :is(#rm_print_characters_pagination, .group_pagination) {
+  align-items: center;
+  justify-content: flex-start !important;
+  gap: 0 !important;
+  min-height: 40px;
+  /* 칸이 좁아도 줄 높이가 내용보다 작아지지 않게 — 줄이 줄면서 두 번째 줄(연필 아이콘)이
+     줄 밖으로 넘쳐 첫 카드 왼쪽 위를 덮었음 (측정: 줄 57.2 < 내용 72 → 연필이 카드 위 6.8) */
+  flex: none;
+}
+body.salty #right-nav-panel #rm_print_characters_pagination {
+  flex-wrap: nowrap !important;
+  /* 오른쪽 18 = 카드 여백(14) + 카드 안 여백(4) — 격자 · 연필 아이콘 가운데가 위 돋보기와 같은 선 */
+  padding: 2px 18px 2px var(--bl-gutter) !important;
+}
+/* 쪽 번호 묶음만 줄어들고 꺾임 — 아이콘은 항상 첫 줄 오른쪽 끝 */
+body.salty #right-nav-panel .paginationjs {
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 2px;
+  min-width: 0;
+}
+body.salty #right-nav-panel .paginationjs-nav {
+  padding: 0 6px 0 0 !important;
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-sub) !important;
+  font-weight: 600 !important;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+body.salty #right-nav-panel .paginationjs-pages ul {
+  gap: 0 !important;
+  margin: 0 !important;
+}
+body.salty #right-nav-panel .paginationjs-pages ul li a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 32px;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 8px;
+  color: var(--salty-muted) !important;
+  opacity: 1 !important;
+  font-size: 15px;
+}
+body.salty #right-nav-panel .paginationjs-pages ul li.disabled a {
+  color: var(--salty-faint) !important;
+  opacity: 0.55 !important;
+}
+body.salty #right-nav-panel .paginationjs-pages ul li.active a {
+  background: var(--salty-fill-accent-10, var(--salty-accent-10));
+  color: var(--salty-accent) !important;
+}
+@media (hover: hover) {
+  body.salty #right-nav-panel .paginationjs-pages ul li:not(.disabled, .active) a:hover {
+    background: var(--bl-fill-hover, var(--bl-hover));
+    color: var(--salty-text) !important;
+  }
+}
+body.salty #right-nav-panel .paginationjs-size-changer {
+  margin-left: auto;
+}
+/* 쪽 번호 칸 · 셈 글자 · 쪽 크기를 좁혀 폰(360 · 390)에서 아이콘까지 한 줄에 —
+   더 좁거나 글자를 키우면 쪽 번호 묶음만 두 줄이 되고 아이콘은 제자리(겹치지 않음) */
+body.salty #right-nav-panel #rm_print_characters_pagination .paginationjs-pages ul li a {
+  width: 26px;
+}
+body.salty #right-nav-panel #rm_print_characters_pagination .paginationjs-nav {
+  padding-right: 2px !important;
+  font-size: var(--bl-fs-micro) !important;
+}
+/* 쪽 크기는 쪽 번호 바로 뒤에 붙임 — 줄이 꺾여도 둘째 줄이 셈 글자 · 카드와 같은 왼쪽 선(34)에 */
+body.salty #right-nav-panel #rm_print_characters_pagination .paginationjs-size-changer {
+  margin-left: 0 !important;
+}
+/* 일괄 편집 셈("2 고름")이 비었을 때는 자리를 먹지 않게 — 연필 아이콘이 위 돋보기와 같은 오른쪽 선에
+   (실리태번이 글자를 넣고 빼는 칸이라 display 는 건드리지 않음: 측정 350 → 352) */
+body.salty #right-nav-panel #rm_print_characters_pagination > #bulkSelectedCount:empty {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+body.salty #right-nav-panel #rm_print_characters_pagination .paginationjs-size-changer select {
+  padding: 0 17px 0 0 !important;
+  background-position: right 3px center !important;
+  font-size: var(--bl-fs-micro) !important;
+}
+@media screen and (max-width: 380px) {
+  body.salty #right-nav-panel #rm_print_characters_pagination .paginationjs-pages ul li a {
+    width: 23px;
+  }
+}
+/* 격자 · 일괄 편집(연필) 아이콘: 위 도구 막대와 같은 34 상자로 줄 오른쪽 끝에 붙임 —
+   누를 자리와 켠 표시(옅은 포인트 면)를 갖고, 쪽 번호가 길어져도 카드 위로 내려오지 않음 */
+body.salty #right-nav-panel #rm_print_characters_pagination > :is(.menu_button, .bulkEditOptionElement) {
+  flex: none;
+  margin: 0 !important;
+}
+body.salty #right-nav-panel #rm_print_characters_pagination > #charListGridToggle {
+  margin-left: auto !important;
+}
+body.salty #right-nav-panel #rm_print_characters_pagination > .menu_button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--bl-h-icon);
+  height: var(--bl-h-icon);
+  padding: 0 !important;
+  border-radius: var(--bl-r-sm);
+  color: var(--salty-muted) !important;
+  font-size: 16px !important;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+@media (hover: hover) {
+  body.salty #right-nav-panel #rm_print_characters_pagination > .menu_button:hover {
+    background: var(--bl-fill-hover, var(--bl-hover));
+    color: var(--salty-text) !important;
+  }
+}
+body.salty #right-nav-panel #rm_print_characters_pagination > .menu_button:active {
+  background: var(--bl-fill-press-bg, var(--bl-press-bg));
+}
+/* 켠 표시: 격자 보기일 때 격자 아이콘 · 일괄 편집 중일 때 연필 */
+body.salty.charListGrid #right-nav-panel #rm_print_characters_pagination > #charListGridToggle,
+body.salty #right-nav-panel #rm_print_characters_pagination:has(~ #rm_print_characters_block.group_overlay_mode_select) > #bulkEditButton {
+  background: var(--salty-fill-accent-10, var(--salty-accent-10));
+  color: var(--salty-accent) !important;
+}
+body.salty #right-nav-panel #rm_print_characters_pagination > #bulkDeleteButton {
+  color: var(--bl-warn) !important;
+}
+
+/* ---------- 목록 줄: 한 장씩 떠 있는 카드 ---------- */
+/* 줄마다 카드(e1) — 마우스 올리면 한 단 위(e3), 누르면 오목 · 즐겨찾기는 아바타 모서리 레몬 별 · 지금 채팅 중은 포인트 테두리
+   카드 면 색은 --salty-row-bg 로 두어 별 · 체크 배지 테두리가 눌림 · 현재 상태 색을 따라감 */
+body.salty #right-nav-panel #rm_print_characters_block {
+  gap: 10px;
+  padding: 6px var(--bl-gutter) var(--bl-s8) !important;
+}
+body.salty #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select, .bogus_folder_select) {
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 14px !important;
+  margin: 0 !important;
+  padding: 10px 12px 10px 10px !important;
+  border: 0 !important;
+  border-radius: var(--bl-r-md) !important;
+  outline: none !important;
+  --salty-row-bg: var(--bl-card);
+  background: var(--salty-row-bg) !important;
+  box-shadow: var(--bl-e1) !important;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+/* 지금 채팅 중인 캐릭터 · 그룹 (src/current.js 가 붙이는 .salty-current): 페르소나 고른 카드처럼 옅은 포인트 면 + 포인트 테두리 */
+body.salty #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select).salty-current {
+  --salty-row-bg: var(--salty-tint-12, var(--bl-selected));
+  box-shadow: inset 0 0 0 2px var(--salty-accent), var(--bl-e1) !important;
+}
+@media (hover: hover) {
+  body.salty #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select, .bogus_folder_select):hover {
+    box-shadow: var(--bl-e3) !important;
+    transform: translateY(-1px);
+  }
+  body.salty #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select).salty-current:hover {
+    box-shadow: inset 0 0 0 2px var(--salty-accent), var(--bl-e3) !important;
+  }
+}
+body.salty #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select, .bogus_folder_select):active {
+  --salty-row-bg: var(--bl-control-hover);
+  box-shadow: var(--bl-press) !important;
+  transform: translateY(1px);
+}
+body.salty #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select).salty-current:active {
+  box-shadow: inset 0 0 0 2px var(--salty-accent), var(--bl-press) !important;
+}
+body.salty #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select, .bogus_folder_select):focus-visible {
+  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+}
+/* 일괄 편집 중: 파란 테는 고른 카드만 — 지금 채팅 중 표시(옅은 면 + 테)는 잠시 끔 (고른 것 · 지울 것으로 헷갈리지 않게) */
+body.salty #right-nav-panel #rm_print_characters_block.group_overlay_mode_select :is(.character_select, .group_select).salty-current:not(.character_selected) {
+  --salty-row-bg: var(--bl-card);
+  box-shadow: var(--bl-e1) !important;
+}
+/* 일괄 편집에서 고른 캐릭터: 포인트 테두리 + 아바타 왼쪽 아래 체크 배지 */
+body.salty #right-nav-panel #rm_print_characters_block .character_select.character_selected {
+  --salty-row-bg: var(--bl-card);
+  box-shadow: inset 0 0 0 2px var(--salty-accent), var(--bl-e2) !important;
+}
+body.salty #right-nav-panel #rm_print_characters_block .character_select.character_selected > .avatar::before {
+  content: "\f00c";
+  position: absolute;
+  bottom: -6px;
+  left: -6px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--salty-fill-accent, var(--salty-accent));
+  box-shadow: 0 0 0 2px var(--salty-row-bg, var(--bl-card)), var(--bl-e2);
+  color: var(--salty-bg);
+  font: 900 11px/1 "Font Awesome 6 Free";
+}
+/* 아바타: 떠 있는 사진(e2) — 목록에서는 한 단 크고 깊게 (큰 아바타 설정이면 64×96, e3) */
+body.salty #right-nav-panel :is(.character_select, .group_select, .bogus_folder_select, .group_member) > .avatar {
+  position: relative;
+  flex: none;
+  margin: 0 !important;
+  outline: 0 !important;
+}
+body.salty #right-nav-panel :is(.character_select, .group_select, .group_member) > .avatar:not(.avatar_collage) img {
+  border: 0 !important;
+  border-radius: var(--bl-r-sm) !important;
+  box-shadow: var(--bl-e2) !important;
+}
+body.salty #right-nav-panel :is(.character_select, .group_select, .group_member) > .avatar.avatar_collage {
+  overflow: hidden;
+  border-radius: var(--bl-r-sm) !important;
+  box-shadow: var(--bl-e2) !important;
+}
+body.salty #right-nav-panel .avatar.avatar_collage img {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+body.salty.big-avatars #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select, .bogus_folder_select) > .avatar,
+body.salty.big-avatars #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select) > .avatar:not(.avatar_collage) img {
+  width: 64px !important;
+  min-width: 64px !important;
+  max-width: 64px !important;
+  height: 96px !important;
+}
+body.salty #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select) > .avatar:not(.avatar_collage) img,
+body.salty #right-nav-panel #rm_print_characters_block .group_select > .avatar.avatar_collage {
+  border-radius: var(--bl-r-sm) !important;
+  box-shadow: var(--bl-e1) !important;
+}
+/* 즐겨찾기 별: 아바타 오른쪽 위 작은 동그라미 (카드 면 색 테두리로 사진과 떼어 둠 — 눌린 · 현재 줄에서도 같은 색) */
+body.salty #right-nav-panel :is(.character_select, .group_select, .group_member).is_fav > .avatar::after {
+  content: "\f005";
+  position: absolute;
+  /* 3.0.0: top · right · width · height → css/27-compact.css (같은 선택자 규칙이 덮음), border-radius · background · box-shadow · color → css/28-late-fixes.css (같은 선택자 규칙이 덮음) */
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 900 11px/1 "Font Awesome 6 Free";
+}
+/* 레몬에이드: 흰 카드 위 흰 동그라미 속 레몬 별은 잘 안 보여서 레몬으로 채우고 별은 흰색 */
+/* 3.0.0: 여기 있던 규칙 'body.salty:not(.salty-dark) #right-nav-panel :is(.character_select, .group_selec…' 은 지움 — background · color → css/28-late-fixes.css (같은 선택자 규칙이 덮음) */
+/* 이름 · 설명 · 태그 */
+body.salty #right-nav-panel :is(.character_select_container, .group_select_container) {
+  row-gap: 3px !important;
+  min-width: 0;
+}
+/* 목록 보기: 아바타 옆 남은 폭 전부 (실리태번의 100% - 70px 는 간격 12 와 합치면 넘쳐서 줄이 꺾임) */
+body.salty:not(.charListGrid) #right-nav-panel #rm_print_characters_block :is(.character_select_container, .group_select_container) {
+  flex: 1 1 auto;
+  width: auto !important;
+}
+body.salty #right-nav-panel :is(#rm_print_characters_block, #rm_group_chats_block) .character_name_block {
+  align-items: baseline;
+  gap: var(--bl-s2) !important;
+  margin: 0 !important;
+}
+body.salty #right-nav-panel :is(#rm_print_characters_block, #rm_group_chats_block) .ch_name {
+  color: var(--salty-text) !important;
+  font-size: var(--bl-fs-body);
+  font-weight: 650 !important;
+  letter-spacing: -0.005em;
+  line-height: 1.35;
+}
+/* 목록 이름은 크기로 구분하고 굵기는 한 단계만 (16/600) */
+body.salty #right-nav-panel #rm_print_characters_block .ch_name {
+  font-size: calc(var(--mainFontSize, 15px) * 1.067) !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+body.salty #right-nav-panel :is(#rm_print_characters_block, #rm_group_chats_block) .ch_additional_info,
+body.salty #right-nav-panel #rm_print_characters_block .character_name_block_sub_line {
+  color: var(--salty-muted) !important;
+  font-size: var(--bl-fs-micro) !important;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  opacity: 1 !important;
+}
+/* 그룹 줄 'in this group': 실리태번이 절대 위치로 이름 · 멤버 줄 위에 겹쳐 그려서 숨김 (인원 수만 남김)
+   폴더의 '숨긴 수'는 제자리 한 줄로 (비면 숨김) */
+body.salty #right-nav-panel #rm_print_characters_block .group_select .character_name_block_sub_line {
+  display: none;
+}
+body.salty #right-nav-panel #rm_print_characters_block .bogus_folder_select .character_name_block_sub_line {
+  position: static;
+  flex: 1 1 100%;
+}
+body.salty #right-nav-panel #rm_print_characters_block .bogus_folder_select .character_name_block_sub_line:empty {
+  display: none;
+}
+/* 목록 보기: 버전 · 인원 수는 줄지 않게 (실리태번은 마지막 칸을 먼저 줄여 '1…'), 이름은 두 줄까지 낱말 단위로 */
+body.salty:not(.charListGrid) #right-nav-panel #rm_print_characters_block .character_name_block > .ch_additional_info {
+  flex: 0 0 auto !important;
+  max-width: 40%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+body.salty:not(.charListGrid) #right-nav-panel #rm_print_characters_block .character_name_block > .ch_name {
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: normal !important;
+  text-wrap: wrap !important;
+  overflow-wrap: anywhere;
+}
+body.salty #right-nav-panel #rm_print_characters_block .ch_assistant {
+  color: var(--salty-accent);
+}
+body.salty #right-nav-panel #rm_print_characters_block .ch_description {
+  margin: 0 !important;
+  color: var(--salty-muted) !important;
+  font-size: var(--bl-fs-sub) !important;
+  font-weight: 500;
+  line-height: 1.45;
+  opacity: 1 !important;
+}
+/* 설명은 두 줄까지 (긴 제작자 메모가 줄을 늘이지 않게), 한국어는 낱말 중간에서 안 끊음 — 격자 보기는 실리태번이 숨김 */
+body.salty:not(.charListGrid) #right-nav-panel #rm_print_characters_block .ch_description {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  margin-top: 1px !important;
+  white-space: normal !important;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+body.salty #right-nav-panel :is(#rm_print_characters_block, #rm_group_chats_block) .tags_inline {
+  gap: var(--bl-s1) !important;
+  margin-top: 3px;
+  opacity: 1 !important;
+}
+body.salty #right-nav-panel :is(#rm_print_characters_block, #rm_group_chats_block) .tags_inline .tag {
+  min-height: 20px !important;
+  padding: 0 8px !important;
+  font-size: var(--bl-fs-micro) !important;
+  font-weight: 600;
+  line-height: 20px;
+}
+body.salty #right-nav-panel :is(#rm_print_characters_block, #rm_group_chats_block) .tags_inline .tag:not([style*="background"]) {
+  color: var(--salty-muted) !important;
+}
+/* 목록 줄 태그: 카드에 눌러 찍은 이름표 (오목, 누르는 칩과 구분) */
+body.salty #right-nav-panel #rm_print_characters_block .tags_inline {
+  gap: 5px !important;
+  margin-top: 5px;
+}
+body.salty #right-nav-panel #rm_print_characters_block .tags_inline .tag {
+  min-height: 22px !important;
+  padding: 0 9px !important;
+  line-height: 22px;
+  box-shadow: var(--bl-well-in) !important;
+}
+body.salty #right-nav-panel #rm_print_characters_block .tags_inline .tag:not([style*="background"]) {
+  background: var(--bl-fill-page, var(--bl-page)) !important;
+}
+/* 폴더 줄: 폴더 아이콘은 오목한 타일, 안의 작은 아바타는 e1 */
+body.salty #right-nav-panel #rm_print_characters_block .bogus_folder_select > .avatar {
+  outline: 0 !important;
+  border-radius: 12px !important;
+  background: var(--bl-fill-page, var(--bl-page)) !important;
+  box-shadow: var(--bl-well-in) !important;
+  color: var(--salty-accent) !important;
+}
+body.salty #right-nav-panel #rm_print_characters_block .bogus_folder_avatars_block {
+  opacity: 1 !important;
+}
+body.salty #right-nav-panel #rm_print_characters_block .bogus_folder_avatars_block .avatar img {
+  border: 0 !important;
+  border-radius: 6px !important;
+  box-shadow: var(--bl-e1) !important;
+}
+/* 아바타 없는 캐릭터 · 새 그룹의 기본 그림: 보라 바탕을 무채색으로 */
+body.salty #right-nav-panel img[src$="img/ai4.png"] {
+  filter: grayscale(1) !important;
+}
+/* 빈 목록 · 숨긴 캐릭터 안내 */
+body.salty #right-nav-panel #rm_print_characters_block :is(.text_block, .empty_block) {
+  padding: var(--bl-s6) var(--bl-s4) !important;
+  background: transparent !important;
+  color: var(--salty-muted) !important;
+  font-size: var(--bl-fs-sub);
+  font-weight: 500;
+  text-align: center;
+  opacity: 1 !important;
+}
+/* 격자 보기: 사진이 꽉 찬 작은 카드 (폭에 맞춰 3칸 이상) */
+body.salty.charListGrid #right-nav-panel #rm_print_characters_block {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  align-content: start;
+  gap: 12px 10px !important;
+}
+body.salty.charListGrid #right-nav-panel #rm_print_characters_block > :not(.character_select, .group_select, .bogus_folder_select) {
+  grid-column: 1 / -1;
+}
+body.salty.charListGrid #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select, .bogus_folder_select) {
+  flex-direction: column !important;
+  align-items: stretch !important;
+  width: auto !important;
+  min-width: 0;
+  max-width: none !important;
+  gap: var(--bl-s2) !important;
+  padding: 6px 6px 9px !important;
+  border-radius: var(--bl-r-md) !important;
+}
+body.salty.charListGrid #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select, .bogus_folder_select) > .avatar,
+body.salty.charListGrid #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select) > .avatar:not(.avatar_collage) img {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: auto !important;
+  aspect-ratio: 1;
+}
+body.salty.charListGrid.big-avatars #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select, .bogus_folder_select) > .avatar,
+body.salty.charListGrid.big-avatars #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select) > .avatar:not(.avatar_collage) img {
+  aspect-ratio: 2 / 3;
+}
+body.salty.charListGrid #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select) > .avatar:not(.avatar_collage) img,
+body.salty.charListGrid #right-nav-panel #rm_print_characters_block .group_select > .avatar.avatar_collage {
+  border-radius: var(--bl-r-sm) !important;
+  box-shadow: var(--bl-e2) !important;
+}
+body.salty.charListGrid #right-nav-panel #rm_print_characters_block :is(.character_select_container, .group_select_container, .ch_name) {
+  max-width: none !important;
+}
+body.salty.charListGrid #right-nav-panel #rm_print_characters_block .ch_name {
+  padding: 0 2px;
+  font-size: var(--bl-fs-cap) !important;
+  font-weight: 650 !important;
+}
+/* 격자 보기 배지: 사진이 카드 폭을 다 쓰기 때문에 모서리 밖(-6)에 두면 카드 밖으로 나가 잘림
+   (측정: 별이 카드 오른쪽 위 꼭짓점에 0px — 반이 잘림) → 사진 안쪽 5px 로 */
+/* 3.0.0: 여기 있던 규칙 'body.salty.charListGrid #right-nav-panel #rm_print_characters_block :is(.charact…' 은 지움 — top · right → css/28-late-fixes.css (같은 선택자 규칙이 덮음) */
+body.salty.charListGrid #right-nav-panel #rm_print_characters_block .character_select.character_selected > .avatar::before {
+  bottom: 5px;
+  left: 5px;
+}
+
+/* ---------- 캐릭터 편집 ---------- */
+body.salty #right-nav-panel #form_create {
+  padding: 0 var(--bl-gutter) var(--bl-s8) !important;
+}
+/* 머리 카드(e2): 큰 아바타 + 편집 아이콘 + 더 보기 + 태그를 한 장에 — 이름 · 토큰 수는 바로 위 제목 줄 */
+body.salty #right-nav-panel #avatar-and-name-block {
+  margin: var(--bl-s2) 0 0;
+  padding: var(--bl-s4) var(--bl-inset) var(--bl-s3);
+  border-radius: var(--bl-r-lg);
+  background: var(--bl-fill-card, var(--bl-card));
+  box-shadow: var(--bl-e2);
+}
+body.salty #right-nav-panel #avatar-and-name-block #name_div {
+  margin-bottom: var(--bl-s3);
+}
+body.salty #right-nav-panel #avatar_div {
+  align-items: stretch !important;
+  gap: 14px;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+/* 아바타 96px (큰 아바타 설정이면 96×144), 깊은 그림자(e3) — 눌러서 사진 바꿀 때 살짝 작아짐 */
+body.salty #right-nav-panel #avatar_div_div {
+  flex: none;
+  width: 96px !important;
+  height: 96px !important;
+  margin: 0 !important;
+}
+body.salty.big-avatars #right-nav-panel #avatar_div_div {
+  height: 144px !important;
+}
+body.salty #right-nav-panel #avatar_div_div img {
+  width: 100% !important;
+  height: 100% !important;
+  border: 0 !important;
+  border-radius: var(--bl-r-md) !important;
+  box-shadow: var(--bl-e3) !important;
+  object-fit: cover;
+  transition: transform 0.15s ease;
+}
+body.salty #right-nav-panel #avatar_div_div:active img {
+  transform: scale(0.98);
+}
+/* 즐겨찾기면 편집 아바타에도 목록과 같은 레몬 별 */
+body.salty #right-nav-panel #avatar_div:has(#favorite_button.fav_on) #avatar_div_div {
+  position: relative;
+  overflow: visible !important;
+}
+body.salty #right-nav-panel #avatar_div:has(#favorite_button.fav_on) #avatar_div_div::after {
+  content: "\f005";
+  position: absolute;
+  /* 3.0.0: top · right · width · height · border-radius · background · box-shadow · color → css/28-late-fixes.css (같은 선택자 규칙이 덮음) */
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 900 13px/1 "Font Awesome 6 Free";
+  pointer-events: none;
+}
+/* 3.0.0: 여기 있던 규칙 'body.salty:not(.salty-dark) #right-nav-panel #avatar_div:has(#favorite_button.fa…' 은 지움 — background · color → css/28-late-fixes.css (같은 선택자 규칙이 덮음) */
+body.salty #right-nav-panel #avatar_controls {
+  flex: 1 1 0;
+  justify-content: space-between !important;
+  gap: var(--bl-s2);
+  min-width: 0;
+  height: auto !important;
+  padding: 0 !important;
+}
+/* 편집 아이콘: 떠 있는 작은 타일(e2) 4칸씩 — 누르면 오목 (새 캐릭터는 5개라 한 줄에) */
+body.salty #right-nav-panel #avatar_controls .form_create_bottom_buttons_block {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  flex: none;
+  gap: 6px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent;
+  box-shadow: none;
+}
+body.salty #right-nav-panel #form_create[actiontype="createcharacter"] #avatar_controls .form_create_bottom_buttons_block {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px !important;
+}
+body.salty #right-nav-panel #avatar_controls .form_create_bottom_buttons_block > .menu_button {
+  width: auto !important;
+  min-width: 0 !important;
+  height: 40px !important;
+  margin: 0 !important;
+  border-radius: var(--bl-r-sm) !important;
+  background-color: var(--bl-control) !important;
+  box-shadow: var(--bl-e2) !important;
+}
+@media (hover: hover) {
+  body.salty #right-nav-panel #avatar_controls .form_create_bottom_buttons_block > .menu_button:hover {
+    background-color: var(--bl-control-hover) !important;
+  }
+}
+body.salty #right-nav-panel #avatar_controls .form_create_bottom_buttons_block > .menu_button:active {
+  background-color: var(--bl-press-bg) !important;
+  box-shadow: var(--bl-press) !important;
+}
+body.salty #right-nav-panel #avatar_controls > label {
+  flex: none !important;
+  height: auto !important;
+}
+/* 카드 안 입력칸(이름 · 더 보기 · 태그 찾기)은 오목하게 */
+/* 호스트가 연결된 책에 붙이는 world_set을 그대로 따른다. 발동/스캔 여부 표시가 아니다.
+   공통 아이콘 색/타일 규칙보다 구체적으로 지정하며 크기와 클릭 영역을 바꾸지 않는다. */
+body.salty #right-nav-panel :is(#avatar_controls, #group-metadata-controls) :is(#world_button, .chat_lorebook_button).world_set {
+  position: relative;
+  color: var(--salty-accent) !important;
+  background: color-mix(in srgb, var(--salty-accent) 16%, var(--bl-control)) !important;
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--salty-accent) 70%, transparent), 0 0 10px color-mix(in srgb, var(--salty-accent) 20%, transparent) !important;
+}
+
+body.salty #right-nav-panel #avatar-and-name-block :is(#character_name_pole, #char-management-dropdown, #tagInput) {
+  background-color: var(--bl-well) !important;
+  box-shadow: var(--bl-well-in) !important;
+}
+body.salty #right-nav-panel #avatar-and-name-block :is(#character_name_pole, #char-management-dropdown, #tagInput):focus {
+  background-color: var(--salty-surface) !important;
+  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+}
+/* 즐겨찾기 켜짐은 레몬 별 (아이콘 버튼 공용 규칙이 흐린 색으로 덮지 않게) */
+body.salty #right-nav-panel :is(#favorite_button, #group_favorite_button).fav_on {
+  color: var(--bl-lemon) !important;
+}
+/* 태그 */
+body.salty #right-nav-panel .tag_controls {
+  gap: var(--bl-s1) !important;
+}
+body.salty #right-nav-panel #avatar-and-name-block #tags_div {
+  margin-top: var(--bl-s3);
+}
+body.salty #right-nav-panel :is(#tagList, #groupTagList) {
+  gap: 6px !important;
+  margin: var(--bl-s2) 0 0 !important;
+}
+/* 붙은 태그: 지울 수 있는 칩이라 떠 있게(e2) */
+body.salty #right-nav-panel :is(#tagList, #groupTagList) .tag {
+  min-height: 28px;
+  gap: 6px !important;
+  padding: 0 7px 0 11px !important;
+  box-shadow: var(--bl-e2) !important;
+  opacity: 1 !important;
+}
+body.salty #right-nav-panel :is(#tagList, #groupTagList) .tag:not([style*="background"]) {
+  background: var(--bl-fill-control, var(--bl-control)) !important;
+}
+/* 지우기 ×: 보이는 크기는 13 그대로, 누르는 칸은 27px (칩 오른쪽 여백까지) */
+body.salty #right-nav-panel :is(#tagList, #groupTagList) .tag_remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: content-box;
+  width: 13px;
+  height: 13px;
+  margin: 0 -7px 0 -6px;
+  padding: 7px;
+  /* 3.0.0: color → css/17-semantic.css (같은 선택자 규칙이 덮음) */
+  font-size: 13px;
+  line-height: 1;
+  opacity: 1 !important;
+}
+/* 제작자 메모: 여닫는 카드 */
+body.salty #right-nav-panel #spoiler_free_desc {
+  margin: var(--bl-s4) 0 var(--bl-s1);
+  padding: 0 var(--bl-s1) 0 var(--bl-inset);
+  border-radius: var(--bl-r-md);
+  background: var(--bl-fill-card, var(--bl-card));
+  box-shadow: var(--bl-e1);
+}
+body.salty #right-nav-panel #spoiler_free_desc > .inline-drawer-header {
+  min-height: var(--bl-h-row);
+  gap: var(--bl-s1) !important;
+}
+body.salty #right-nav-panel #creators_notes_div {
+  align-items: center !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 600 !important;
+}
+body.salty #right-nav-panel #spoiler_free_desc > .inline-drawer-content {
+  padding: 0 var(--bl-s3) var(--bl-s3) 0;
+  color: var(--salty-text);
+  font-size: var(--bl-fs-sub);
+  line-height: 1.55;
+}
+body.salty #right-nav-panel #creator_notes_empty,
+body.salty #right-nav-panel #creators_note_desc_hidden {
+  color: var(--salty-muted) !important;
+  font-size: var(--bl-fs-sub) !important;
+  font-weight: 500;
+}
+/* 설명 · 첫 메시지 이름 줄: 이름 + 작은 아이콘, 오른쪽에 작은 칩 */
+body.salty #right-nav-panel :is(#description_div, #first_message_div) {
+  gap: var(--bl-s2);
+  padding: var(--bl-s5) 2px var(--bl-s2) !important;
+}
+body.salty #right-nav-panel :is(#description_div, #first_message_div) > .flex-container {
+  gap: 2px;
+}
+/* 크게 보기 · 도움말: 아이콘은 13, 누르는 칸은 32px (줄 높이는 음수 여백으로 그대로) */
+body.salty :is(#right-nav-panel, #character_popup) :is(.editor_maximize, .note-link-span) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: -4px 0 !important;
+  padding: 0 !important;
+  border-radius: 8px;
+  font-size: 13px !important;
+}
+body.salty #right-nav-panel :is(.open_media_overrides, .open_alternate_greetings) {
+  min-height: 32px !important;
+  gap: 6px !important;
+  margin: 0 !important;
+  padding: 0 var(--bl-s3) !important;
+  font-size: var(--bl-fs-sub) !important;
+}
+body.salty #right-nav-panel .open_media_overrides > i {
+  font-size: 13px !important;
+}
+/* 토큰 수: 작고 흐린 숫자 */
+body.salty :is(#right-nav-panel, #character_popup) .extension_token_counter {
+  margin: 6px 2px 0 !important;
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-micro) !important;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+body.salty :is(#right-nav-panel, #character_popup) .extension_token_counter [data-token-counter] {
+  color: var(--salty-muted);
+  font-weight: 600;
+}
+
+/* ---------- 그룹 편집 ---------- */
+/* 그룹 설정 · 현재 멤버 · 멤버 추가 = 여닫는 카드 */
+body.salty #right-nav-panel #rm_group_chats_block {
+  gap: var(--bl-s3) !important;
+  padding: var(--bl-s2) var(--bl-gutter) var(--bl-s8) !important;
+}
+body.salty #right-nav-panel #rm_group_chats_block > .inline-drawer {
+  padding: 0 var(--bl-inset) var(--bl-s1);
+  border-radius: var(--bl-r-md);
+  background: var(--bl-fill-card, var(--bl-card));
+  box-shadow: var(--bl-e1);
+}
+body.salty #right-nav-panel #rm_group_chats_block :is(.text_pole, select, textarea, input[type="search"], input[type="text"], input[type="number"]):not(.select2-search__field, .J-paginationjs-size-select) {
+  background-color: var(--bl-well) !important;
+  box-shadow: var(--bl-well-in) !important;
+}
+body.salty #right-nav-panel #rm_group_chats_block :is(.text_pole, select, textarea, input[type="search"], input[type="text"], input[type="number"]):not(.select2-search__field, .J-paginationjs-size-select):focus {
+  background-color: var(--salty-surface) !important;
+  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+}
+body.salty #right-nav-panel #rm_group_chats_block #group-metadata-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bl-s2);
+  margin: 0 0 var(--bl-s2) !important;
+}
+body.salty #right-nav-panel #rm_group_top_bar {
+  align-items: flex-start !important;
+  gap: var(--bl-s3) !important;
+  font-size: var(--bl-fs-sub);
+}
+body.salty #right-nav-panel #rm_group_top_bar .add_avatar {
+  margin: 0 !important;
+}
+body.salty #right-nav-panel #rm_group_buttons {
+  flex: 1 1 0 !important;
+  gap: var(--bl-s2) !important;
+  padding: 0 !important;
+  min-width: 0;
+}
+/* 답변 방식 · 처리 방식: 좁은 서랍에서 잘리지 않게 한 줄씩 */
+body.salty #right-nav-panel #rm_group_buttons > div {
+  flex: 1 1 100% !important;
+  min-width: 0;
+}
+body.salty #right-nav-panel #rm_group_buttons label {
+  margin: 0 0 var(--bl-s1) !important;
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-cap);
+  font-weight: 650;
+  white-space: normal !important;
+}
+/* 버튼 줄 + 체크 칸: 아바타 · 선택칸 아래 한 줄 전체 */
+body.salty #right-nav-panel #GroupFavDelOkBack {
+  flex: 1 1 100% !important;
+  align-items: center;
+  justify-content: flex-start !important;
+  gap: var(--bl-s1) !important;
+}
+body.salty #right-nav-panel #GroupFavDelOkBack > .flex1 {
+  flex: 1 1 100%;
+}
+body.salty #right-nav-panel #group_avatar_preview img {
+  border: 0 !important;
+  border-radius: var(--bl-r-sm) !important;
+  box-shadow: var(--bl-e2) !important;
+}
+body.salty #right-nav-panel #GroupFavDelOkBack .checkbox_label {
+  gap: var(--bl-s2);
+  min-height: 32px;
+  color: var(--salty-text);
+  font-size: var(--bl-fs-sub);
+}
+body.salty #right-nav-panel #rm_group_delete {
+  color: var(--bl-warn) !important;
+}
+/* 멤버 목록: 회색 판 · 테두리 없이 카드 위에 바로 (그림자 자리만 남김) */
+body.salty #right-nav-panel :is(#rm_group_members, #rm_group_add_members) {
+  gap: 2px;
+  margin: var(--bl-s1) calc(var(--bl-s2) * -1) var(--bl-s2) !important;
+  padding: var(--bl-s1) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+/* 멤버 줄 */
+body.salty #right-nav-panel .group_member {
+  gap: var(--bl-s3);
+  padding: var(--bl-s2) !important;
+  border-radius: var(--bl-r-md) !important;
+}
+body.salty #right-nav-panel .group_member .group_member_name {
+  gap: var(--bl-s1) !important;
+  height: auto !important;
+  margin-left: 0 !important;
+}
+body.salty #right-nav-panel .group_member_icon {
+  column-gap: 2px !important;
+}
+body.salty #right-nav-panel .group_member .right_menu_button {
+  justify-content: center;
+  min-width: 30px;
+  height: 30px !important;
+  border-radius: 8px;
+  color: var(--salty-muted) !important;
+  filter: none !important;
+  font-size: 16px !important;
+  opacity: 1 !important;
+}
+@media (hover: hover) {
+  body.salty #right-nav-panel .group_member .right_menu_button:hover {
+    background: var(--bl-fill-hover, var(--bl-hover));
+    color: var(--salty-text) !important;
+  }
+}
+@media (hover: hover) {
+  body.salty #right-nav-panel .group_member:hover {
+    background: var(--bl-fill-hover, var(--bl-hover));
+  }
+}
+body.salty #right-nav-panel .group_member.disabled :is(.ch_name, .avatar) {
+  opacity: 0.45;
+}
+body.salty #right-nav-panel .group_member.is_active {
+  outline: 0 !important;
+  box-shadow: inset 0 0 0 2px var(--salty-accent);
+}
+body.salty #right-nav-panel .group_member.is_queued {
+  outline: 0 !important;
+  box-shadow: inset 0 0 0 2px var(--bl-lemon);
+}
+body.salty #right-nav-panel .group_member.is_fav .ch_name {
+  color: var(--salty-text) !important;
+}
+body.salty #right-nav-panel :is(#rm_group_members, #rm_group_add_members):empty {
+  background: transparent !important;
+}
+body.salty #right-nav-panel :is(#rm_group_members, #rm_group_add_members):empty::before {
+  padding: var(--bl-s4) 0;
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-sub);
+  font-weight: 500;
+  opacity: 1;
+}
+
+/* ---------- 고급 정의 (#character_popup): 서랍과 같은 시트 ---------- */
+body.salty #character_popup {
+  padding: var(--bl-s3) var(--bl-gutter) var(--bl-s8) !important;
+  border: 0 !important;
+  border-radius: 0 0 var(--bl-r-lg) var(--bl-r-lg) !important;
+  background: var(--bl-fill-page, var(--bl-page)) !important;
+  box-shadow: var(--bl-e5) !important;
+  color: var(--salty-text);
+}
+body.salty #character_popup #character_popup_text {
+  padding: var(--bl-s1) 44px var(--bl-s1) 2px;
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-body);
+  font-weight: 500;
+}
+body.salty #character_popup #character_popup-button-h3 {
+  color: var(--salty-text);
+  font-size: var(--bl-fs-title) !important;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+body.salty #character_popup #character_cross {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: var(--bl-s2) !important;
+  right: var(--bl-s2) !important;
+  width: var(--bl-h-icon);
+  height: var(--bl-h-icon);
+  border-radius: 50%;
+  color: var(--salty-faint) !important;
+  font-size: 22px !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+/* 여닫는 두 묶음(프롬프트 덮어쓰기 · 제작자 정보) = 카드, 안의 입력칸은 오목하게 */
+body.salty #character_popup > .inline-drawer {
+  padding: 0 var(--bl-inset);
+  border-radius: var(--bl-r-md);
+  background: var(--bl-fill-card, var(--bl-card));
+  box-shadow: var(--bl-e1);
+}
+body.salty #character_popup > .inline-drawer > .inline-drawer-header {
+  padding: var(--bl-s2) 2px !important;
+}
+body.salty #character_popup > .inline-drawer > .inline-drawer-header h4 {
+  margin: 0 !important;
+  color: var(--salty-text) !important;
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0;
+}
+body.salty #character_popup > .inline-drawer > .inline-drawer-header h4 small {
+  margin-left: 4px;
+  color: var(--salty-muted) !important;
+  font-size: var(--bl-fs-sub);
+  font-weight: 500;
+}
+body.salty #character_popup > .inline-drawer > .inline-drawer-content {
+  padding-bottom: var(--bl-s3);
+}
+body.salty #character_popup > .inline-drawer :is(.text_pole, select, textarea, input[type="number"]) {
+  background-color: var(--bl-well) !important;
+  box-shadow: var(--bl-well-in) !important;
+}
+body.salty #character_popup > .inline-drawer :is(.text_pole, select, textarea, input[type="number"]):focus {
+  background-color: var(--salty-surface) !important;
+  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+}
+body.salty #character_popup hr {
+  margin: var(--bl-s2) 0 !important;
+}
+/* 칸 이름(성격 요약 · 시나리오 …): 편집 화면의 '설명'과 같은 14/650, 아이콘은 옆에 한 줄로 */
+body.salty #character_popup h4:not(.inline-drawer-header h4) {
+  align-items: center;
+  flex-direction: row !important;
+  gap: 2px;
+  margin: var(--bl-s4) 0 var(--bl-s2) !important;
+  padding: 0 2px !important;
+  color: var(--salty-text) !important;
+  font-size: var(--bl-fs-ctl) !important;
+  font-weight: 650 !important;
+  letter-spacing: 0;
+}
+body.salty #character_popup h5 {
+  margin: 0 0 var(--bl-s2) !important;
+  padding: 0 2px;
+  font-weight: 500;
+}
+body.salty #character_popup .warning {
+  color: var(--bl-warn) !important;
+}
+
+/* 폰: 고급 정의 시트 높이를 서랍과 같게 (밑에 서랍 끝이 비쳐 보이지 않게), 바 밑 시트 그림자 */
+@media screen and (max-width: 1000px) {
+  html body.salty #character_popup {
+    height: calc(100dvh - 45px) !important;
+    min-height: calc(100dvh - 45px) !important;
+    max-height: calc(100dvh - 45px) !important;
+    box-shadow: var(--bl-sheet) !important;
+  }
+}
+/* ===== /surfaces:characters ===== */

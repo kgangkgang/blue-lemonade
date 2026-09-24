@@ -22,6 +22,7 @@ jobs:
         run: |
           python -m unittest discover -s tools/tests -p 'test_release_gate.py'
           node tools/tests/settings-upgrade.mjs .
+          node tools/tests/usage-mode.mjs .
           node tools/tests/conversation-assist.mjs .
           node tools/tests/addon-menu-routing.mjs .
           node tools/tests/mix-selection.mjs .

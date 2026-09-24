@@ -1,0 +1,1648 @@
+/* ===== css/12-worldinfo.css =====
+   월드 인포 서랍 · 페르소나 관리 서랍.
+   ===== */
+/* ===== 실리태번 화면: 월드 인포 · 페르소나 (surfaces:worldinfo) ===== */
+/* 월드 인포 서랍(#WorldInfo) · 페르소나 관리 서랍(#PersonaManagement)
+   · 묶음은 카드(e1), 카드 안 입력칸은 오목한 칸, 줄은 46px — 사용자 설정 · 캐릭터 목록과 같은 리듬
+   · 폰: 도구 줄은 "고르기 줄 / 아이콘 줄"로 나눠 아이콘이 하나씩 밀려 꺾이지 않게 (빈 가상 요소로 줄바꿈)
+   · 월드 인포 항목: 제목 줄 / 위치 · 순서 / 발동 확률 · 도구(옮기기 · 복제 · 지우기 · 켜기) — 빈 반쪽을 서로 채움
+   · 한글은 낱말 중간에서 안 꺾음(keep-all), 제목은 줄바꿈 없이
+   · display 는 실리태번이 켜고 끄는 칸(깊이 · 확률 · 출구 이름 · 잠금 표시)에 !important 없이만 */
+
+/* ---------- 공용: 서랍 글자 · 제목 옆 ? ---------- */
+body.salty :is(#WorldInfo, #PersonaManagement) {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+body.salty :is(#WorldInfo, #PersonaManagement) h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+body.salty :is(#WorldInfo, #PersonaManagement) h3 a {
+  display: inline-flex;
+  align-items: center;
+}
+body.salty :is(#WorldInfo, #PersonaManagement) h3 .note-link-span {
+  font-size: 16px !important;
+  color: var(--salty-faint) !important;
+}
+/* 도움말 링크(물음표)가 26×17 밖에 안 됨 → 누를 칸만 32px (음수 여백으로 제목 줄 높이는 그대로) */
+body.salty #PersonaManagement h3 > a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: -8px -7px !important;
+  border-radius: var(--bl-r-xs);
+}
+
+/* ---------- 공용: 쪽 넘김 줄 (캐릭터 목록과 같은 조용한 글자 · 아이콘) ---------- */
+body.salty :is(#WorldInfo, #PersonaManagement) .paginationjs {
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+body.salty :is(#WorldInfo, #PersonaManagement) .paginationjs-nav {
+  width: auto !important;
+  padding: 0 6px 0 2px !important;
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-sub) !important;
+  font-weight: 600 !important;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+body.salty :is(#WorldInfo, #PersonaManagement) .paginationjs-pages ul {
+  gap: 0 !important;
+  margin: 0 !important;
+}
+body.salty :is(#WorldInfo, #PersonaManagement) .paginationjs-pages ul li a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 8px;
+  color: var(--salty-muted) !important;
+  opacity: 1 !important;
+  font-size: 15px;
+}
+body.salty :is(#WorldInfo, #PersonaManagement) .paginationjs-pages ul li.disabled a {
+  color: var(--salty-faint) !important;
+  opacity: 0.55 !important;
+}
+body.salty :is(#WorldInfo, #PersonaManagement) .paginationjs-pages ul li.active a {
+  background: var(--salty-fill-accent-10, var(--salty-accent-10));
+  color: var(--salty-accent) !important;
+}
+@media (hover: hover) {
+  body.salty :is(#WorldInfo, #PersonaManagement) .paginationjs-pages ul li:not(.disabled, .active) a:hover {
+    background: var(--bl-fill-hover, var(--bl-hover));
+    color: var(--salty-text) !important;
+  }
+}
+body.salty :is(#WorldInfo, #PersonaManagement) .paginationjs-size-changer {
+  margin-left: auto;
+}
+/* 값만 보이는 고르기(정렬 · 쪽 크기 · 더 보기): 칸 없이 흐린 글자 + 꺾쇠, 누르면 옅은 면 */
+body.salty :is(#WorldInfo, #PersonaManagement) :is(.paginationjs-size-changer select, #world_info_sort_order, #persona_sort_order, #persona-management-dropdown) {
+  flex: 0 1 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: var(--bl-h-icon) !important;
+  min-height: var(--bl-h-icon) !important;
+  margin: 0 !important;
+  padding: 0 28px 0 var(--bl-s2) !important;
+  border-radius: var(--bl-r-sm) !important;
+  background-color: transparent !important;
+  background-position: right 8px center !important;
+  box-shadow: none !important;
+  color: var(--salty-muted) !important;
+  font-size: var(--bl-fs-ctl) !important;
+  font-weight: 600;
+  text-align: right;
+  text-align-last: right;
+  text-overflow: ellipsis;
+  field-sizing: content;
+  cursor: pointer;
+}
+@media (hover: hover) {
+  body.salty :is(#WorldInfo, #PersonaManagement) :is(.paginationjs-size-changer select, #world_info_sort_order, #persona_sort_order, #persona-management-dropdown):hover {
+    background-color: var(--bl-hover) !important;
+    color: var(--salty-text) !important;
+  }
+}
+body.salty :is(#WorldInfo, #PersonaManagement) :is(.paginationjs-size-changer select, #world_info_sort_order, #persona_sort_order, #persona-management-dropdown):focus-visible {
+  box-shadow: var(--bl-ring) !important;
+}
+
+/* ---------- 월드 인포: 제목 줄 (잠금 · 제목) ---------- */
+body.salty #WorldInfo > .flex-container:has(> #WI_panel_pin_div) {
+  gap: 2px !important;
+  min-height: 44px;
+  padding-top: 2px;
+}
+body.salty #WorldInfo #WI_panel_pin_div {
+  flex: none;
+  margin-left: -9px;
+}
+body.salty #WorldInfo #WI_panel_pin_div label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--bl-h-icon);
+  height: var(--bl-h-icon);
+  border-radius: var(--bl-r-sm);
+  color: var(--salty-muted);
+  font-size: 16px;
+  cursor: pointer;
+}
+body.salty #WorldInfo #WI_panel_pin:checked + label {
+  background: var(--salty-fill-accent-10, var(--salty-accent-10));
+  color: var(--salty-accent);
+}
+body.salty #WorldInfo #wi-holder {
+  margin: 0 !important;
+}
+
+/* ---------- 월드 인포: 전역 칸 — 활성 월드 · 활성화 설정을 카드로 (이름은 카드 첫 줄) ---------- */
+body.salty #WorldInfo #wiTopBlock {
+  flex-direction: row;
+  flex-wrap: wrap !important;
+  align-items: flex-start;
+  gap: var(--bl-s3) !important;
+  margin: var(--bl-s1) 0 0;
+}
+body.salty #WorldInfo #wiTopBlock > .range-block {
+  flex: 1 1 280px !important;
+  flex-direction: column;
+  align-items: stretch !important;
+  min-width: 0;
+  margin: 0 !important;
+  padding: 0 var(--bl-inset) var(--bl-s1) !important;
+  border: 0 !important;
+  border-radius: var(--bl-r-md) !important;
+  background: var(--bl-fill-card, var(--bl-card)) !important;
+  box-shadow: var(--bl-e1) !important;
+}
+body.salty #WorldInfo #wiTopBlock > .range-block > .range-block-title {
+  justify-content: flex-start !important;
+  margin: 0 !important;
+  padding: 10px 2px 6px !important;
+  color: var(--salty-muted) !important;
+  font-size: var(--bl-fs-cap) !important;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+  text-align: left !important;
+}
+body.salty #WorldInfo #wiTopBlock > .range-block > .range-block-title :is(small, span) {
+  font-size: inherit !important;
+  color: inherit !important;
+}
+body.salty #WorldInfo #wiTopBlock .range-block-range {
+  width: 100%;
+  margin: 0 0 10px;
+}
+/* 폰의 여러 개 고르기: 네 줄쯤 보이게 (원래 50px 라 둘째 줄이 잘림) */
+body.salty #WorldInfo #world_info {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: calc((1.4em + 12px) * 4 + 8px) !important;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+  margin: 0 !important;
+  field-sizing: content;
+  background-color: var(--bl-well) !important;
+  box-shadow: var(--bl-well-in) !important;
+}
+/* 안 고른 줄은 면 없이 (흰 칸이 고른 것처럼 보이지 않게) */
+body.salty #WorldInfo select[multiple] option:not(:checked) {
+  background: transparent;
+}
+/* 목록 줄 높이 고정 → 칸 높이를 네 줄에 딱 맞춤 (마지막 줄이 반쯤 잘려 깨진 것처럼 보이지 않게) */
+body.salty #WorldInfo select[multiple] option {
+  box-sizing: border-box !important;
+  height: calc(1.4em + 12px) !important;
+  min-height: 0 !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+  line-height: 1.4 !important;
+}
+body.salty #WorldInfo #wiTopBlock .select2-container--default .select2-selection--multiple {
+  background: var(--bl-fill-well, var(--bl-well)) !important;
+  box-shadow: var(--bl-well-in) !important;
+}
+/* 활성화 설정 카드: 카드 이름이 곧 여닫는 줄 ("펼치려면 클릭하세요." 대신)
+   · 여닫는 칸을 풀어(contents) 이름과 같은 격자 칸에 투명한 여닫기 줄을 겹침 — 줄 어디를 눌러도 열림 */
+body.salty #WorldInfo #wiTopBlock > .range-block:has(> .inline-drawer > .inline-drawer-header) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+body.salty #WorldInfo #wiTopBlock > .range-block > .inline-drawer {
+  display: contents;
+}
+body.salty #WorldInfo #wiTopBlock > .range-block:has(> .inline-drawer) > .range-block-title {
+  grid-area: 1 / 1;
+  align-self: stretch;
+  align-items: center;
+  min-height: var(--bl-h-row);
+  padding: 10px 34px 10px 2px !important;
+  color: var(--salty-text) !important;
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.35;
+  pointer-events: none;
+}
+body.salty #WorldInfo #wiTopBlock .inline-drawer-header {
+  grid-area: 1 / 1;
+  position: relative;
+  z-index: 1;
+  justify-content: flex-end !important;
+  min-height: var(--bl-h-row);
+  margin: 0;
+  padding: 0 2px !important;
+  background: transparent !important;
+}
+body.salty #WorldInfo #wiTopBlock .inline-drawer-header > b {
+  display: none;
+}
+body.salty #WorldInfo #wiTopBlock > .range-block:has(> .inline-drawer) {
+  padding-bottom: 0 !important;
+}
+body.salty #WorldInfo #wiTopBlock > .range-block > .inline-drawer > .inline-drawer-content {
+  grid-column: 1;
+  padding-bottom: var(--bl-s2);
+}
+/* 활성화 설정: 슬라이더는 한 칸씩(넓으면 두 칸), 이름 왼쪽 · 숫자 오른쪽 · 막대 아래 */
+body.salty #WorldInfo #wiActivationSettings {
+  flex-direction: column;
+  gap: 0 !important;
+}
+body.salty #WorldInfo #wiSliders {
+  flex-wrap: wrap !important;
+  /* 3.0.0: gap → css/26-rounds-1.7.css (같은 선택자 규칙이 덮음) */
+}
+/* 3.0.0: 여기 있던 규칙 'body.salty #WorldInfo #wiSliders > .flex-container' 은 지움 — flex · min-width → css/26-rounds-1.7.css (같은 선택자 규칙이 덮음) */
+body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
+  gap: 5px 8px;
+  padding: 6px 0 2px;
+}
+body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 0;
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 500;
+  line-height: 1.35;
+}
+body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child .fa-solid {
+  margin: 0 !important;
+  font-size: 13px;
+  color: var(--salty-faint) !important;
+  opacity: 1 !important;
+}
+body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
+  width: 46px !important;
+}
+body.salty #WorldInfo #wiSliders .neo-range-input {
+  background-color: var(--bl-well) !important;
+  box-shadow: var(--bl-well-in) !important;
+}
+/* 삽입 전략: 이름 왼쪽 · 값 오른쪽 */
+body.salty #WorldInfo #wiSliders > .flex-container:has(> #world_info_character_strategy) {
+  flex: 1 1 100% !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: space-between;
+  gap: var(--bl-s3) !important;
+  min-height: var(--bl-h-row);
+  margin-top: var(--bl-s1);
+}
+body.salty #WorldInfo #wiSliders > .flex-container:has(> #world_info_character_strategy) > small {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--salty-text) !important;
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 500;
+}
+body.salty #WorldInfo #world_info_character_strategy {
+  flex: 0 1 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 62% !important;
+  height: var(--bl-h-icon) !important;
+  min-height: var(--bl-h-icon) !important;
+  margin: 0 !important;
+  padding: 0 26px 0 8px !important;
+  background-color: transparent !important;
+  background-position: right 6px center !important;
+  box-shadow: none !important;
+  color: var(--salty-muted) !important;
+  text-align: right;
+  text-align-last: right;
+  text-overflow: ellipsis;
+  field-sizing: content;
+}
+/* 검사 옵션: 설정 서랍과 같은 이름 왼쪽 · 스위치 오른쪽 줄 */
+body.salty #WorldInfo #wiCheckboxes {
+  /* 3.0.0: gap → css/26-rounds-1.7.css (같은 선택자 규칙이 덮음) */
+  padding-bottom: var(--bl-s1);
+}
+body.salty #WorldInfo #wiCheckboxes label.checkbox_label {
+  min-height: var(--bl-h-row);
+  gap: var(--bl-s3) !important;
+  margin: 0 !important;
+  cursor: pointer;
+}
+body.salty #WorldInfo #wiCheckboxes label.checkbox_label > small {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: normal !important;
+  color: var(--salty-text) !important;
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 500;
+  line-height: 1.35;
+}
+body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"] {
+  position: relative !important;
+  flex: 0 0 auto !important;
+  order: 99;
+  /* 3.0.0: width · height → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+  margin: 0 0 0 auto !important;
+  overflow: visible !important;
+  border-radius: var(--bl-r-pill) !important;
+  background-color: var(--bl-check-off) !important;
+  box-shadow: var(--bl-track) !important;
+  transition: background-color 0.18s ease !important;
+}
+body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"]::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 3px !important;
+  left: 3px !important;
+  /* 3.0.0: width · height · box-shadow → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+  border-radius: 50% !important;
+  clip-path: none !important;
+  background: #fff !important;
+  transform: none !important;
+  transition: transform 0.18s ease !important;
+}
+body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"]:checked {
+  background-color: var(--salty-accent) !important;
+  box-shadow: none !important;
+}
+/* 3.0.0: 여기 있던 규칙 'body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"…' 은 지움 — transform → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"]:focus-visible {
+  box-shadow: var(--bl-ring) !important;
+}
+
+/* ---------- 월드 인포: 편집 도구 — 로어북 카드 / 항목 카드 ---------- */
+/* 카드 그림자가 잘리지 않게 칸을 좌우로 조금 넓힘 (실리태번이 이 칸을 overflow 로 자름) */
+body.salty #WorldInfo #world_popup {
+  margin: 0 -10px !important;
+  padding: 2px 10px 12px !important;
+}
+body.salty #WorldInfo #world_popup > hr {
+  margin: 6px 0 !important;
+}
+body.salty #WorldInfo #world_popup > .flex-container {
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 6px 10px !important;
+  margin: 0 0 var(--bl-s3) !important;
+  padding: 8px !important;
+  border-radius: var(--bl-r-md);
+  background: var(--bl-fill-card, var(--bl-card));
+  box-shadow: var(--bl-e1);
+}
+/* 줄바꿈용 빈 가상 요소: 앞 = 고르기 · 찾기, 뒤 = 아이콘 한 줄 */
+body.salty #WorldInfo #world_popup > .flex-container::after {
+  content: '';
+  order: 1;
+  flex: 0 0 100%;
+  height: 0;
+}
+body.salty #WorldInfo #world_popup > .flex-container > :is(.menu_button:not(#world_create_button), #world_info_pagination) {
+  order: 2;
+  margin: 0 !important;
+}
+body.salty #WorldInfo #world_popup > .flex-container > small {
+  display: none;
+}
+/* 로어북 카드: 만들기 + 고르기 / 가져오기 · 내보내기 · 이름 · 복제 ··· 지우기 */
+body.salty #WorldInfo #world_create_button {
+  order: 0;
+  flex: none;
+  margin: 0 !important;
+}
+body.salty #WorldInfo #world_editor_select,
+body.salty #WorldInfo #world_editor_select ~ .select2-container {
+  order: 0;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+body.salty #WorldInfo #world_popup :is(#world_editor_select, #world_info_search) {
+  background-color: var(--bl-well) !important;
+  box-shadow: var(--bl-well-in) !important;
+}
+body.salty #WorldInfo #world_popup :is(#world_editor_select, #world_info_search):focus {
+  background-color: var(--salty-surface) !important;
+  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+}
+body.salty #WorldInfo #world_popup .select2-container--default .select2-selection--single {
+  background: var(--bl-fill-well, var(--bl-well)) !important;
+  box-shadow: var(--bl-well-in) !important;
+}
+body.salty #WorldInfo #world_popup .select2-container--default .select2-selection__clear {
+  right: 32px !important;
+  margin: 0 !important;
+  color: var(--salty-faint);
+}
+body.salty #WorldInfo #world_popup > .flex-container > .menu_button#world_popup_delete {
+  margin-left: auto !important;
+}
+/* 항목 카드: 찾기 + 정렬 / 새 항목 · 모두 펼침 · 모두 접음 · 메모 채우기 · 순서 적용 ··· 새로고침 / 쪽 넘김 */
+body.salty #WorldInfo #world_info_search {
+  order: 0;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  height: var(--bl-h-ctl);
+  margin: 0 !important;
+}
+body.salty #WorldInfo #world_info_sort_order {
+  order: 0;
+  max-width: 48% !important;
+}
+body.salty #WorldInfo #world_popup > .flex-container > .menu_button#world_refresh {
+  margin-left: auto !important;
+}
+body.salty #WorldInfo #world_info_pagination {
+  order: 3 !important;
+  flex: 1 1 100%;
+  min-width: 0;
+}
+body.salty #WorldInfo #world_info_pagination:empty {
+  display: none;
+}
+
+/* ---------- 월드 인포: 항목 목록 ---------- */
+body.salty #WorldInfo #world_popup_entries_list {
+  padding: 0 0 var(--bl-s2);
+}
+body.salty #WorldInfo #WIEntryHeaderTitlesPC {
+  display: none;
+}
+/* 항목 없는 로어북: 머리 제목 줄이 늘 들어 있어 실리태번의 :empty 가 안 먹음 → 항목이 없으면 아이콘 + 한 줄 */
+body.salty #WorldInfo #world_popup_entries_list:not(:has(.world_entry))::before {
+  content: "\f518";
+  display: block;
+  width: auto;
+  height: auto;
+  padding: 28px 16px 10px;
+  color: var(--salty-faint);
+  opacity: 1;
+  font: 900 28px/1 "Font Awesome 6 Free";
+  text-align: center;
+}
+body.salty #WorldInfo #world_popup_entries_list:not(:has(.world_entry))::after {
+  content: "No entries found.";
+  display: block;
+  padding: 0 16px 24px;
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-sub);
+  font-weight: 500;
+  text-align: center;
+}
+html:lang(ko) body.salty #WorldInfo #world_popup_entries_list:not(:has(.world_entry))::after {
+  content: "항목을 찾을 수 없음";
+}
+/* 항목 = 카드(e1), 펼치면 떠오름(e3) */
+body.salty #WorldInfo .world_entry {
+  margin: 0 0 10px !important;
+  border: 0 !important;
+  border-radius: var(--bl-r-md) !important;
+  background: var(--bl-fill-card, var(--bl-card)) !important;
+  box-shadow: var(--bl-e1) !important;
+  transition: box-shadow 0.18s ease, background-color 0.18s ease;
+}
+/* 3.0.0: 여기 있던 규칙 'body.salty #WorldInfo .world_entry:has(> form > .inline-drawer > .inline-drawer-…' 은 지움 — box-shadow → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+body.salty #WorldInfo .world_entry .world_entry_form {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: inherit;
+}
+/* 꺼진 항목: 흐린 회색 필터 대신 납작한 옅은 면 + 흐린 글자 (도구 아이콘 · 스위치는 또렷하게) */
+body.salty #WorldInfo .world_entry.disabledWIEntry {
+  opacity: 1;
+  filter: none;
+  background: var(--bl-fill-hover, var(--bl-hover)) !important;
+  box-shadow: none !important;
+}
+body.salty #WorldInfo .world_entry.disabledWIEntry > form > .inline-drawer > .inline-drawer-header :is(.WIEntryTitleAndStatus, .WIEnteryHeaderControls) {
+  opacity: 0.5;
+}
+
+/* 머리: 감싼 칸을 풀어 한 흐름으로 — 제목 줄 / 위치 · 순서 · 확률 / 아래 도구 줄 */
+body.salty #WorldInfo .world_entry .inline-drawer-header {
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 4px 6px !important;
+  min-height: 0;
+  padding: 6px 8px 6px 2px !important;
+  cursor: default;
+}
+body.salty #WorldInfo .world_entry .inline-drawer-header > .world_entry_thin_controls,
+body.salty #WorldInfo .world_entry .inline-drawer-header > .world_entry_thin_controls > .flex-container {
+  display: contents;
+}
+body.salty #WorldInfo .world_entry .inline-drawer-header .inline-drawer-toggle {
+  order: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  /* 3.0.0: width · height → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: var(--bl-r-sm);
+  cursor: pointer;
+}
+body.salty #WorldInfo .world_entry .WIEntryTitleAndStatus {
+  order: 0;
+  flex: 1 1 0 !important;
+  flex-wrap: nowrap !important;
+  align-items: flex-start !important;
+  /* 3.0.0: gap → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+  width: auto !important;
+  min-width: 0;
+}
+body.salty #WorldInfo .world_entry .WIEntryTitleAndStatus > .flex-container {
+  min-width: 0;
+}
+body.salty #WorldInfo .world_entry textarea[name="comment"] {
+  width: 100%;
+  /* 3.0.0: min-height · max-height · padding · font-size → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+  margin: 0 !important;
+  resize: none !important;
+  font-weight: 600;
+  line-height: 1.45 !important;
+  field-sizing: content;
+}
+body.salty #WorldInfo .world_entry.disabledWIEntry textarea[name="comment"] {
+  color: var(--salty-muted) !important;
+}
+/* 상태(🔵 상수 · 🟢 보통 · 🔗 벡터): 작은 오목한 칸 */
+body.salty #WorldInfo .world_entry select[name="entryStateSelector"] {
+  flex: none;
+  /* 3.0.0: width · height · padding · background-position → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+  font-size: 14px;
+}
+/* 위치 · 깊이 · 순서 · 확률: 칸 묶음을 다 풀어 머리의 두 줄로 흘림 (격자 대신)
+   2줄 = 위치 (+ @D 이면 깊이) | 순서, 3줄 = 발동 확률 ··· 도구(옮기기 · 복제 · 지우기 · 켜기)
+   전에는 네 칸 격자 두 줄이라 위치 줄 오른쪽 145px · 도구 줄 왼쪽 190px 이 늘 비어 있었음
+   display 에 !important 금지 — 실리태번이 확률 칸을 jQuery show/hide (inline display) 로 켜고 끔 */
+/* 3.0.0: 여기 있던 규칙 'body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-head…' 은 지움 — display → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+/* 줄바꿈용 빈 가상 요소: ::before = 제목 줄 뒤, ::after = 위치 · 순서 줄 뒤 */
+body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header::before,
+body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header::after {
+  /* 3.0.0: content → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+  flex: 0 0 100%;
+  height: 0;
+}
+body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header::before {
+  order: 1;
+}
+body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header::after {
+  order: 3;
+}
+/* 칸 묶음(이름표 + 입력) = 글자 폭만 차지하는 한 줄 */
+body.salty #WorldInfo .world_entry .WIEnteryHeaderControls > .world_entry_form_control {
+  display: flex;
+  flex: 0 1 auto;
+  /* 3.0.0: flex-direction · align-items · gap · min-width → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+  /* flex-direction: 실리태번은 이 칸을 세로로 쌓음 — 이름표가 입력 위로 올라가 줄이 52~58px 됨 */
+  flex-wrap: nowrap;
+  /* gap: 실리태번의 flexNoGap 이 gap: 0 !important */
+  margin: 0 !important;
+  padding: 0 !important;
+}
+body.salty #WorldInfo .world_entry .WIEnteryHeaderControls > :is([name="PositionBlock"], .world_entry_form_control:has(> input[name="depth"]), .world_entry_form_control:has(> input[name="order"])) {
+  order: 2;
+}
+/* 발동 확률은 도구 줄 왼쪽 (도구 아이콘은 옮기기의 auto 여백으로 오른쪽 끝) */
+body.salty #WorldInfo .world_entry .WIEnteryHeaderControls > .probabilityContainer {
+  order: 4;
+}
+body.salty #WorldInfo .world_entry .WIEnteryHeaderControls .WIEntryHeaderTitleMobile {
+  display: block;
+  flex: none;
+  /* 3.0.0: margin · font-size · white-space → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+  color: var(--salty-muted);
+  font-weight: 500;
+}
+/* 깊이는 "@D" 위치일 때만 쓰임 — 꺼져 있으면 빈 이름표 대신 칸째 숨김 */
+body.salty #WorldInfo .world_entry .WIEnteryHeaderControls > .world_entry_form_control:has(> input[name="depth"]:disabled) {
+  display: none;
+}
+body.salty #WorldInfo .world_entry .WIEnteryHeaderControls select[name="position"] {
+  flex: 0 1 auto;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: var(--bl-h-ctl) !important;
+  margin: 0 !important;
+  padding: 0 24px 0 10px !important;
+  background-position: right 7px center !important;
+  font-size: var(--bl-fs-body);
+  text-overflow: ellipsis;
+  field-sizing: content;
+}
+/* 숫자칸: 네 자리 들어가는 고정 폭 (실리태번이 inline width 를 넣어 !important) */
+body.salty #WorldInfo .world_entry .WIEnteryHeaderControls input[type="number"] {
+  flex: none;
+  width: 54px !important;
+  min-width: 0 !important;
+  max-width: 54px !important;
+  height: var(--bl-h-ctl) !important;
+  margin: 0 !important;
+  padding: 0 4px !important;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+/* 도구: 끌기(사용자 정렬일 때)는 제목 줄 맨 앞, 옮기기 · 복제 · 지우기 · 켜기는 확률 줄 오른쪽 끝 */
+body.salty #WorldInfo .world_entry .inline-drawer-header > .drag-handle {
+  order: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 3.0.0: width → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+  height: var(--bl-h-icon);
+  color: var(--salty-faint);
+  font-size: 16px;
+  cursor: grab;
+}
+body.salty #WorldInfo .world_entry .inline-drawer-header > .menu_button {
+  order: 5;
+  width: var(--bl-h-icon);
+  height: var(--bl-h-icon);
+  margin: 0 !important;
+}
+body.salty #WorldInfo .world_entry .inline-drawer-header > .move_entry_button {
+  margin-left: auto !important;
+}
+@media (hover: hover) {
+  /* 3.0.0: 여기 있던 규칙 'body.salty #WorldInfo .world_entry .inline-drawer-header > .delete_entry_button:…' 은 지움 — background · color → css/17-semantic.css (같은 선택자 규칙이 덮음) */
+}
+/* 켜기: 글꼴 아이콘 대신 설정과 같은 44×26 스위치 */
+body.salty #WorldInfo .world_entry .killSwitch {
+  order: 6;
+  /* 3.7.2 !important: 스위치의 손잡이(::before)와 누르는 자리(::after)는 이 상자를 기준으로 선다. 다른 테마의 잔여 CSS 가
+     position 을 static 으로 바꾸면 손잡이가 카드 구석으로 떨어져 나가고, 누르는 자리가 머리줄 전체를 덮어
+     제목 · 꺾쇠를 눌러도 켜기만 토글됐다 (제보 2026-09-18). 테마가 그리는 스위치라 여기서는 테마가 이겨야 한다 */
+  position: relative !important;
+  /* 3.7.3 contain: layout — position 을 누가 더 센 !important 로 덮어써도 손잡이 · 누르는 자리의 기준 상자는 이 스위치다
+     (layout 격리는 절대 위치 자손의 기준 상자를 만든다. paint 와 달리 잘라 내지 않아 넉넉한 누르는 자리가 그대로 남는다).
+     없으면 덮어쓰였을 때 ::after 가 화면 전체(412×869)를 덮어 어디를 눌러도 켜기만 토글됐다 */
+  contain: layout !important;
+  flex: none;
+  /* 3.0.0: width · height → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+  margin: 0 2px 0 4px;
+  border-radius: var(--bl-r-pill);
+  background: var(--bl-fill-check-off, var(--bl-check-off));
+  box-shadow: var(--bl-track);
+  color: transparent !important;
+  font-size: 0 !important;
+  cursor: pointer;
+  transition: background-color 0.18s ease;
+}
+body.salty #WorldInfo .world_entry .killSwitch::before {
+  content: '' !important;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  /* 3.0.0: width · height · box-shadow → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.18s ease;
+}
+/* 누르는 자리: 보이지 않는 가상 요소로 스위치보다 넉넉하게 */
+body.salty #WorldInfo .world_entry .killSwitch::after {
+  content: '';
+  position: absolute;
+  /* 3.0.0: inset → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+}
+body.salty #WorldInfo .world_entry .killSwitch.fa-toggle-on {
+  background: var(--salty-fill-accent, var(--salty-accent));
+  box-shadow: none;
+}
+/* 3.0.0: 여기 있던 규칙 'body.salty #WorldInfo .world_entry .killSwitch.fa-toggle-on::before' 은 지움 — transform → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+
+/* ---------- 월드 인포: 펼친 항목 편집 ---------- */
+body.salty #WorldInfo .world_entry .inline-drawer-outlet {
+  row-gap: 0 !important;
+  padding: 0 var(--bl-inset) var(--bl-s3) !important;
+}
+/* 머리와 편집 사이: 선 대신 카드 끝까지 닿는 옅은 띠 */
+body.salty #WorldInfo .world_entry .inline-drawer-outlet::before {
+  content: '';
+  flex: 0 0 calc(100% + var(--bl-inset) * 2);
+  height: 5px;
+  margin: 4px calc(var(--bl-inset) * -1) 2px;
+  background: var(--bl-fill-hover, var(--bl-hover));
+}
+body.salty #WorldInfo .world_entry_edit > .flex-container {
+  gap: 0 var(--bl-s3) !important;
+}
+/* 칸 이름(기본 키워드 · 콘텐츠 · 포함 그룹 등): 작고 흐린 묶음 이름, 왼쪽 정렬 */
+body.salty #WorldInfo .world_entry_edit small.textAlignCenter,
+body.salty #WorldInfo .world_entry_edit .flex-container.justifySpaceBetween > small {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 !important;
+  padding: 12px 2px 6px;
+  color: var(--salty-muted) !important;
+  font-size: var(--bl-fs-cap) !important;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+  text-align: left !important;
+  white-space: nowrap;
+}
+body.salty #WorldInfo .world_entry_edit :is(small, label) :is(.fa-circle-info, .fa-comments, .note-link-span) {
+  margin: 0 !important;
+  font-size: 11px !important;
+  color: var(--salty-faint) !important;
+  opacity: 1 !important;
+}
+/* 키워드 · 논리 · 선택적 필터: 한 칸씩 */
+body.salty #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] {
+  gap: 0 !important;
+}
+body.salty #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control {
+  flex: 1 1 100% !important;
+  min-width: 0;
+}
+body.salty #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] textarea {
+  min-height: var(--bl-h-ctl);
+  padding-right: 36px !important;
+  resize: none !important;
+  field-sizing: content;
+}
+body.salty #WorldInfo .world_entry_edit .switch_input_type_icon {
+  top: 38px;
+  right: 6px;
+  margin: 0 !important;
+  opacity: 0.65;
+}
+/* 논리 · 줄마다 덮어쓰기(스캔 깊이 · 대소문자 · 자동화 ID 등): 이름 왼쪽 · 값 오른쪽 46px 줄 */
+body.salty #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control:has(> select[name="entryLogicType"]),
+body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] > .world_entry_form_control {
+  flex: 1 1 100% !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between;
+  gap: var(--bl-s3);
+  min-height: var(--bl-h-row);
+  min-width: 0;
+}
+body.salty #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control:has(> select[name="entryLogicType"]) {
+  margin-top: 4px;
+}
+body.salty #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control:has(> select[name="entryLogicType"]) > small,
+body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] > .world_entry_form_control > small {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0 2px;
+  color: var(--salty-text) !important;
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 500;
+  letter-spacing: 0;
+  white-space: normal;
+}
+/* 3.0.0: 여기 있던 규칙 'body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"]' 은 지움 — gap → css/28-late-fixes.css (같은 선택자 규칙이 덮음) */
+body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] > .world_entry_form_control > input {
+  /* 3.0.0: flex · width · text-align → css/28-late-fixes.css (같은 선택자 규칙이 덮음) */
+  height: var(--bl-h-ctl);
+  margin: 0 !important;
+}
+body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] ::placeholder {
+  font-size: var(--bl-fs-sub);
+}
+body.salty #WorldInfo .world_entry_edit :is([name="perEntryOverridesBlock"] > .world_entry_form_control > select, select[name="entryLogicType"]) {
+  flex: 0 1 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 62% !important;
+  height: var(--bl-h-icon) !important;
+  min-height: var(--bl-h-icon) !important;
+  margin: 0 !important;
+  padding: 0 26px 0 8px !important;
+  background-color: transparent !important;
+  background-position: right 6px center !important;
+  box-shadow: none !important;
+  color: var(--salty-muted) !important;
+  text-align: right;
+  text-align-last: right;
+  field-sizing: content;
+}
+body.salty #WorldInfo .world_entry_edit :is([name="perEntryOverridesBlock"] > .world_entry_form_control > select, select[name="entryLogicType"]):focus-visible {
+  box-shadow: var(--bl-ring) !important;
+}
+/* 콘텐츠: 이름 · 토큰 수 / 체크 네 개(두 칸) / 글 칸 */
+body.salty #WorldInfo .world_entry_edit [name="contentAndCharFilterBlock"] {
+  flex: 1 1 100% !important;
+  min-width: 0;
+}
+body.salty #WorldInfo .world_entry_edit [name="contentAndCharFilterBlock"] > .world_entry_form_control {
+  min-width: 0;
+}
+body.salty #WorldInfo .world_entry_edit [name="contentAndCharFilterBlock"] label > small {
+  display: block;
+  font-size: inherit;
+}
+body.salty #WorldInfo .world_entry_edit [name="contentAndCharFilterBlock"] label > small > .flex-container {
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 0 var(--bl-s2) !important;
+}
+body.salty #WorldInfo .world_entry_edit [name="contentAndCharFilterBlock"] label > small > .flex-container > span:first-child {
+  flex: 1 1 auto;
+  gap: 6px;
+  padding: 12px 2px 6px;
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-cap);
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+body.salty #WorldInfo .world_entry_edit [name="contentAndCharFilterBlock"] label > small > .flex-container > span:first-child .editor_maximize {
+  margin: 0 !important;
+  font-size: 13px;
+}
+body.salty #WorldInfo .world_entry_edit [name="contentAndCharFilterBlock"] label > small > .flex-container > span:nth-child(2) {
+  flex: none;
+  padding: 12px 2px 6px;
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-micro);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+body.salty #WorldInfo .world_entry_edit [name="contentAndCharFilterBlock"] label > small > .flex-container > .flex-container {
+  flex: 1 1 100%;
+  flex-wrap: nowrap !important;
+  gap: 0 var(--bl-s3) !important;
+  padding: 0 0 6px;
+}
+body.salty #WorldInfo .world_entry_edit [name="contentAndCharFilterBlock"] label > small > .flex-container > .flex-container > .flexFlowColumn {
+  flex: 1 1 0;
+  gap: 0 !important;
+  min-width: 0;
+}
+/* 항목 편집 속 체크박스 줄: 체크박스는 그대로, 줄 높이 · 글자만 */
+body.salty #WorldInfo .world_entry_edit label.checkbox {
+  align-items: center !important;
+  gap: var(--bl-s2) !important;
+  min-height: 36px;
+  margin: 0 !important;
+  color: var(--salty-text);
+  font-size: var(--bl-fs-ctl);
+  font-weight: 500;
+  line-height: 1.35;
+  cursor: pointer;
+}
+body.salty #WorldInfo .world_entry_edit label.checkbox > input[type="checkbox"] {
+  flex: none;
+  margin: 0 !important;
+}
+body.salty #WorldInfo .world_entry_edit textarea[name="content"] {
+  min-height: 180px;
+}
+/* 포함 그룹: 이름 줄(오른쪽 우선 체크) + 입력 / 가중치 · 유지 · 대기 · 지연은 두 칸 격자 */
+body.salty #WorldInfo .world_entry_edit > .flex-container.flexGap10 {
+  flex-wrap: wrap !important;
+  gap: 0 var(--bl-s3) !important;
+}
+body.salty #WorldInfo .world_entry_edit > .flex-container.flexGap10 > div {
+  flex: 1 1 calc(50% - 6px) !important;
+  min-width: 0;
+}
+body.salty #WorldInfo .world_entry_edit > .flex-container.flexGap10 > .flex4 {
+  flex: 1 1 100% !important;
+}
+body.salty #WorldInfo .world_entry_edit > .flex-container.flexGap10 .justifySpaceBetween {
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: var(--bl-s2);
+  margin: 0 !important;
+}
+body.salty #WorldInfo .world_entry_edit > .flex-container.flexGap10 .justifySpaceBetween > small {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+body.salty #WorldInfo .world_entry_edit > .flex-container.flexGap10 label.checkbox_label {
+  flex: none;
+  gap: 6px !important;
+  margin: 0 !important;
+  padding-top: 6px;
+  color: var(--salty-text);
+  font-size: var(--bl-fs-ctl);
+  cursor: pointer;
+}
+body.salty #WorldInfo .world_entry_edit > .flex-container.flexGap10 label.checkbox_label :is(span, small) {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: inherit !important;
+  font-size: inherit !important;
+  opacity: 1 !important;
+}
+body.salty #WorldInfo .world_entry_edit > .flex-container.flexGap10 .range-block-range {
+  width: 100%;
+  margin: 0;
+}
+body.salty #WorldInfo .world_entry_edit > .flex-container.flexGap10 input[type="number"] {
+  width: 100% !important;
+  height: var(--bl-h-ctl);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+body.salty #WorldInfo .world_entry_edit > .flex-container.flexGap10 input[type="text"] {
+  width: 100% !important;
+  height: var(--bl-h-ctl);
+}
+body.salty #WorldInfo .world_entry_edit > .flex-container.flexGap10 select[multiple] {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: calc((1.4em + 12px) * 4 + 8px) !important;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+  field-sizing: content;
+}
+body.salty #WorldInfo .world_entry_edit [name="WIEntryBottomControls"] {
+  min-height: 0;
+  margin: 0 !important;
+}
+/* 추가 대조 대상: 46px 여닫는 줄 + 체크 줄 (넓으면 두 칸) */
+body.salty #WorldInfo .world_entry_edit > .inline-drawer {
+  margin-top: var(--bl-s2);
+}
+body.salty #WorldInfo .world_entry_edit > .inline-drawer > .inline-drawer-header {
+  min-height: var(--bl-h-row);
+  gap: var(--bl-s3);
+  padding: 0 2px !important;
+  border: 0 !important;
+  background: transparent !important;
+  font-size: var(--bl-fs-body);
+  color: var(--salty-text);
+  cursor: pointer;
+}
+body.salty #WorldInfo .world_entry_edit > .inline-drawer > .inline-drawer-header strong {
+  font-weight: 600;
+}
+body.salty #WorldInfo .world_entry_edit > .inline-drawer > .inline-drawer-content {
+  flex-wrap: wrap !important;
+  gap: 0 var(--bl-s3) !important;
+  padding: 0 0 var(--bl-s1) !important;
+}
+body.salty #WorldInfo .world_entry_edit > .inline-drawer > .inline-drawer-content > small {
+  flex: 1 1 220px !important;
+  min-width: 0;
+  font-size: inherit;
+}
+
+/* ---------- 페르소나: 제목 줄 — 제목은 한 줄, 버튼은 자리가 없으면 다음 줄에 같은 폭으로 ---------- */
+body.salty #PersonaManagement > .flex-container > .flex-container:first-child {
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: var(--bl-s2) var(--bl-s3) !important;
+  padding-top: 2px;
+}
+body.salty #PersonaManagement > .flex-container > .flex-container:first-child > .flex1 {
+  flex: 1 0 auto !important;
+  align-items: center !important;
+  min-height: 44px;
+}
+body.salty #PersonaManagement > .flex-container > .flex-container:first-child > .flex-container:last-child {
+  flex: 0 1 auto;
+  flex-wrap: nowrap !important;
+  gap: var(--bl-s2) !important;
+  min-width: 0;
+}
+body.salty #PersonaManagement > .flex-container > .flex-container:first-child > .flex-container:last-child > .menu_button {
+  justify-content: center;
+  margin: 0 !important;
+  white-space: nowrap;
+}
+body.salty #PersonaManagement #persona-management-block {
+  flex-direction: row;
+  flex-wrap: wrap !important;
+  gap: var(--bl-s4) var(--bl-s6) !important;
+  margin-top: var(--bl-s3);
+}
+body.salty #PersonaManagement #persona-management-block > div {
+  flex: 1 1 320px !important;
+  min-width: 0;
+}
+
+/* ---------- 페르소나: 목록 머리 카드 (만들기 · 찾기 · 정렬 / 쪽 넘김 · 격자) ---------- */
+/* 왼쪽 칸이 overflow 로 잘라서 카드 그림자 자리만큼 넓힘 */
+body.salty #PersonaManagement .persona_management_left_column {
+  align-self: stretch;
+  width: auto !important;
+  margin: 0 -10px !important;
+  padding: 2px 10px 4px !important;
+}
+body.salty #PersonaManagement .persona_management_left_column > .flex-container:first-child {
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin: 0 0 var(--bl-s1) !important;
+  padding: 7px !important;
+  border-radius: var(--bl-r-md);
+  background: var(--bl-fill-card, var(--bl-card));
+  box-shadow: var(--bl-e1);
+}
+body.salty #PersonaManagement .persona_management_left_column > .flex-container:first-child::after {
+  content: '';
+  order: 1;
+  flex: 0 0 100%;
+  height: 0;
+}
+body.salty #PersonaManagement #persona_pagination_container {
+  order: 2;
+  flex: 1 1 0 !important;
+  min-width: 0;
+}
+body.salty #PersonaManagement #persona_grid_toggle {
+  order: 2;
+  margin: 0 !important;
+}
+body.salty #PersonaManagement #persona_search_bar {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  height: var(--bl-h-ctl);
+  background-color: var(--bl-well) !important;
+  box-shadow: var(--bl-well-in) !important;
+}
+body.salty #PersonaManagement #persona_search_bar:focus {
+  background-color: var(--salty-surface) !important;
+  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+}
+body.salty #PersonaManagement #persona_sort_order {
+  max-width: 30% !important;
+}
+/* 글자 + 아이콘 버튼(i + div 글자): 아이콘 버튼으로 잘못 보이지 않게 떠 있는 칩으로 */
+body.salty #PersonaManagement :is(#create_dummy_persona, #lock_persona_default, #lock_persona_to_char, #lock_user_name) {
+  flex: none;
+  min-width: 0;
+  min-height: var(--bl-h-ctl) !important;
+  gap: 6px !important;
+  margin: 0 !important;
+  padding: 0 12px !important;
+  background: var(--bl-fill-control, var(--bl-control)) !important;
+  box-shadow: var(--bl-e2) !important;
+  color: var(--salty-text) !important;
+  font-size: var(--bl-fs-ctl) !important;
+  font-weight: 600;
+  white-space: nowrap;
+}
+body.salty #PersonaManagement :is(#create_dummy_persona, #lock_persona_default, #lock_persona_to_char, #lock_user_name) > i {
+  width: auto;
+  font-size: 15px !important;
+  color: var(--salty-muted) !important;
+}
+@media (hover: hover) {
+  body.salty #PersonaManagement :is(#create_dummy_persona, #lock_persona_default, #lock_persona_to_char, #lock_user_name):hover {
+    background: var(--bl-fill-control-hover, var(--bl-control-hover)) !important;
+  }
+}
+body.salty #PersonaManagement :is(#create_dummy_persona, #lock_persona_default, #lock_persona_to_char, #lock_user_name):active {
+  background: var(--bl-fill-press-bg, var(--bl-press-bg)) !important;
+  box-shadow: var(--bl-press) !important;
+}
+
+/* ---------- 페르소나: 목록 줄 = 캐릭터 목록과 같은 카드(e1) ---------- */
+/* 그림은 한 단 크게(72×108, e3) · 그림과 글자 사이 18px · 이름 16/700 · 설명 두 줄 · 잠금 표시는 글자 아래 알약
+   쓰는 페르소나 = 옅은 포인트 면 + 포인트 테 + 카드 오른쪽 끝 체크 하나, 기본 페르소나 = 글자 아래 레몬 알약 */
+body.salty #PersonaManagement #user_avatar_block {
+  gap: var(--bl-s3) !important;
+  margin: 0;
+  padding: 6px 0 var(--bl-s2);
+}
+body.salty #PersonaManagement #user_avatar_block .avatar-container {
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 18px !important;
+  margin: 0 !important;
+  padding: 12px 14px 12px 12px !important;
+  border: 0 !important;
+  border-radius: 16px !important;
+  outline: 0 !important;
+  --salty-row-bg: var(--bl-card);
+  background: var(--salty-row-bg) !important;
+  box-shadow: var(--bl-e1) !important;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+body.salty #PersonaManagement #user_avatar_block .avatar-container:hover {
+  background-color: var(--salty-row-bg) !important;
+}
+@media (hover: hover) {
+  body.salty #PersonaManagement #user_avatar_block .avatar-container:not(.selected):hover {
+    box-shadow: var(--bl-e3) !important;
+    transform: translateY(-1px);
+  }
+}
+body.salty #PersonaManagement #user_avatar_block .avatar-container:active {
+  --salty-row-bg: var(--bl-control-hover);
+  box-shadow: var(--bl-press) !important;
+  transform: translateY(1px);
+}
+body.salty #PersonaManagement #user_avatar_block .avatar-container.selected {
+  --salty-row-bg: var(--salty-tint-12, var(--bl-selected));
+  box-shadow: inset 0 0 0 2px var(--salty-accent), var(--bl-e1) !important;
+}
+body.salty #PersonaManagement #user_avatar_block .avatar-container.selected:active {
+  box-shadow: inset 0 0 0 2px var(--salty-accent), var(--bl-press) !important;
+}
+body.salty #PersonaManagement #user_avatar_block .avatar-container:focus-visible {
+  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+}
+body.salty #PersonaManagement #user_avatar_block .avatar-container > .avatar {
+  position: relative;
+  flex: none;
+  margin: 0 !important;
+  border-radius: 12px !important;
+  outline: 0 !important;
+}
+body.salty #PersonaManagement #user_avatar_block .avatar-container > .avatar img {
+  border: 0 !important;
+  border-radius: 12px !important;
+  box-shadow: var(--bl-e3) !important;
+  object-fit: cover;
+  object-position: center;
+}
+/* 큰 아바타 설정: 목록에서 한 단 크게 (캐릭터 목록 64×96 보다 조금 더) */
+body.salty.big-avatars #PersonaManagement #user_avatar_block .avatar-container > .avatar,
+body.salty.big-avatars #PersonaManagement #user_avatar_block .avatar-container > .avatar img {
+  width: 72px !important;
+  min-width: 72px !important;
+  max-width: 72px !important;
+  height: 108px !important;
+}
+body.salty:not(.big-avatars) #PersonaManagement #user_avatar_block .avatar-container > .avatar,
+body.salty:not(.big-avatars) #PersonaManagement #user_avatar_block .avatar-container > .avatar img {
+  width: 64px !important;
+  min-width: 64px !important;
+  height: 64px !important;
+}
+/* 지금 쓰는 페르소나 · 기본 페르소나: 동그란 배지(파란 체크 · 금 왕관) 대신 카드가 상태를 말함
+   · 쓰는 중 = 포인트 테 + 옅은 포인트 면(위 .selected) + 카드 오른쪽 끝 포인트 체크 하나 — 동그라미 · 흰 테 · 그림자 없이
+   · 기본 = 잠금 알약과 같은 줄에 조용한 레몬 알약 (모양은 잠금 알약과 같고 색만 레몬)
+   · 한 페르소나가 둘 다면 알약과 체크가 같이 보여 구분이 남음 */
+body.salty #PersonaManagement #user_avatar_block .avatar-container {
+  position: relative;
+}
+body.salty #PersonaManagement #user_avatar_block:not(.gridView) .avatar-container.selected {
+  padding-right: 32px !important;
+}
+body.salty #PersonaManagement #user_avatar_block:not(.gridView) .avatar-container.selected::after {
+  content: "\f00c";
+  position: absolute;
+  top: 50%;
+  right: 11px;
+  color: var(--salty-accent);
+  font: 900 15px/1 "Font Awesome 6 Free";
+  transform: translateY(-50%);
+}
+/* 기본 페르소나 알약: 레몬에이드는 레몬을 글자색으로 쓰면 흰 면에서 안 보여서 글자만 짙은 호박 쪽으로 섞음 */
+body.salty #PersonaManagement #user_avatar_block .avatar-container.default_persona .avatar_container_states::before {
+  content: "Default";
+  order: -1;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 9px;
+  border-radius: var(--bl-r-pill);
+  background: color-mix(in srgb, var(--bl-lemon) 24%, var(--bl-card));
+  color: color-mix(in srgb, var(--bl-warn) 70%, var(--salty-text));
+  font-size: var(--bl-fs-micro);
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+body.salty.salty-dark #PersonaManagement #user_avatar_block .avatar-container.default_persona .avatar_container_states::before {
+  background: color-mix(in srgb, var(--bl-lemon) 16%, transparent);
+  color: var(--bl-lemon);
+}
+html:lang(ko) body.salty #PersonaManagement #user_avatar_block .avatar-container.default_persona .avatar_container_states::before {
+  content: "기본";
+}
+body.salty #PersonaManagement #user_avatar_block .character_select_container {
+  flex: 1 1 auto;
+  width: auto !important;
+  row-gap: var(--bl-s1) !important;
+  min-width: 0;
+}
+/* 이름과 직함을 한 줄에 나눠 담으면 둘 다 말줄임이 됨 → 이름은 두 줄까지 꺾이고 직함은 그 아래 제 줄 */
+body.salty #PersonaManagement #user_avatar_block .character_name_block {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0 !important;
+  margin: 0 !important;
+}
+body.salty #PersonaManagement #user_avatar_block .ch_name {
+  display: -webkit-box;
+  flex: none !important; /* 실리태번의 flex1 은 세로 칸에서 높이를 늘림 */
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--salty-text) !important;
+  font-size: calc(var(--mainFontSize, 15px) * 1.067);
+  font-weight: 700 !important;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+  white-space: normal !important;
+  text-overflow: clip;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+body.salty #PersonaManagement #user_avatar_block .ch_additional_info {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--salty-faint) !important;
+  font-size: var(--bl-fs-micro) !important;
+  font-weight: 500;
+  line-height: 1.45;
+  opacity: 1 !important;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+/* 설명: 원문의 줄바꿈과 빈 줄을 보존하며 두 줄까지 미리보기. */
+body.salty #PersonaManagement #user_avatar_block .ch_description {
+  display: -webkit-box;
+  margin: 0 !important;
+  color: var(--salty-muted) !important;
+  font-size: var(--bl-fs-sub) !important;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  opacity: 1 !important;
+}
+/* 잠금 표시(이 채팅 · 이 캐릭터에 묶임): 흐린 비활성 버튼 대신 글자 아래 옅은 포인트 알약 */
+body.salty #PersonaManagement #user_avatar_block .avatar_container_states {
+  flex: none;
+  justify-content: flex-start;
+  gap: var(--bl-s1) !important;
+  margin-top: 2px;
+}
+body.salty #PersonaManagement #user_avatar_block .avatar_container_states .menu_button {
+  min-width: 0 !important;
+  min-height: 24px !important;
+  gap: 4px !important;
+  padding: 0 9px !important;
+  border-radius: var(--bl-r-pill) !important;
+  background: var(--salty-fill-accent-10, var(--salty-accent-10)) !important;
+  box-shadow: none !important;
+  color: var(--salty-accent) !important;
+  opacity: 1 !important;
+  filter: none !important;
+  font-size: var(--bl-fs-micro) !important;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+body.salty #PersonaManagement #user_avatar_block .avatar_container_states .menu_button i {
+  font-size: 11px !important;
+  color: inherit !important;
+}
+/* 실리태번은 알약 글자를 hover 때만 보여 줌 → 폰에서는 영원히 아이콘만 남음. 글자를 늘 펴고 겹치는 아이콘은 접음 */
+body.salty #PersonaManagement #user_avatar_block .avatar_container_states .menu_button .label {
+  max-width: none !important;
+  margin: 0 !important;
+  overflow: visible;
+  opacity: 1 !important;
+  font-size: inherit;
+  line-height: 1.2;
+}
+body.salty #PersonaManagement #user_avatar_block .avatar_container_states .menu_button .label_icon {
+  display: none !important;
+}
+/* 새 페르소나 그림 올리기 칸(+): 줄과 같은 높이의 조용한 칸 */
+body.salty #PersonaManagement #user_avatar_block .avatar_upload {
+  width: 72px !important;
+  height: 108px !important;
+  border-radius: 12px !important;
+  background: var(--bl-fill-hover, var(--bl-hover)) !important;
+  color: var(--salty-faint) !important;
+  font-size: 28px !important;
+}
+/* 격자 보기: 한 줄 안 카드 높이 같게 · 카드 안은 가운데 정렬 하나로 · 설명은 접음
+   (칸이 100px 밖에 안 되어 설명이 여섯 글자씩 잘려 글이 아니라 얼룩으로 보임) */
+body.salty #PersonaManagement #user_avatar_block.gridView {
+  align-items: stretch !important;
+  gap: 10px !important;
+  margin: 0;
+}
+body.salty #PersonaManagement #user_avatar_block.gridView .avatar-container {
+  flex-direction: column;
+  align-items: center !important;
+  height: auto !important;
+  gap: var(--bl-s2) !important;
+  padding: 10px 6px 12px !important;
+  border-radius: var(--bl-r-md) !important;
+  text-align: center;
+}
+body.salty #PersonaManagement #user_avatar_block.gridView .character_select_container {
+  flex: 1 1 auto;
+  align-items: center;
+  width: 100% !important;
+}
+body.salty #PersonaManagement #user_avatar_block.gridView .character_name_block {
+  align-items: center;
+  width: 100%;
+}
+body.salty #PersonaManagement #user_avatar_block.gridView .ch_name {
+  font-size: var(--bl-fs-sub);
+  text-align: center;
+}
+body.salty #PersonaManagement #user_avatar_block.gridView .ch_additional_info {
+  max-width: 100%;
+  text-align: center;
+}
+body.salty #PersonaManagement #user_avatar_block.gridView .ch_description {
+  display: none;
+}
+/* 격자에서는 카드가 100px — 글자 알약이 카드를 넘침 → 자물쇠 + 대상 아이콘만 (목록에서는 글자 그대로) */
+body.salty #PersonaManagement #user_avatar_block.gridView .avatar_container_states {
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 100%;
+  margin-top: auto;
+}
+body.salty #PersonaManagement #user_avatar_block.gridView .avatar_container_states .menu_button .label {
+  display: none !important;
+}
+body.salty #PersonaManagement #user_avatar_block.gridView .avatar_container_states .menu_button .label_icon {
+  display: inline-block !important;
+}
+
+/* ---------- 페르소나: 현재 페르소나 — 묶음 이름 / 이름 · 더 보기 / 아이콘 한 줄 카드 ---------- */
+/* 묶음 이름은 카드 첫 줄 (월드 인포 · 전역 설정 카드와 같게): 이름 줄 높이만큼 카드를 끌어올려 겹침 */
+body.salty #PersonaManagement .persona_management_current_persona > h4.standoutHeader:first-child {
+  position: relative;
+  z-index: 1;
+  height: 32px;
+  margin: var(--bl-s1) 0 0 !important;
+  /* 3.0.0: padding → css/26-rounds-1.7.css (같은 선택자 규칙이 덮음) */
+  overflow: hidden;
+  line-height: 18px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+body.salty #PersonaManagement #persona_controls {
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  /* 3.0.0: gap · padding → css/26-rounds-1.7.css (같은 선택자 규칙이 덮음) */
+  margin: -30px 0 0 !important;
+  border-radius: var(--bl-r-md);
+  background: var(--bl-fill-card, var(--bl-card));
+  box-shadow: var(--bl-e1);
+}
+body.salty #PersonaManagement #persona_controls::after {
+  content: none;
+  order: 2;
+  flex: 0 0 100%;
+  height: 0;
+}
+body.salty #PersonaManagement #persona_controls .persona_name {
+  order: 0;
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0 !important;
+  /* 3.0.0: padding · font-size → css/26-rounds-1.7.css (같은 선택자 규칙이 덮음) */
+  color: var(--salty-text) !important;
+  opacity: 1 !important;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+}
+body.salty #PersonaManagement #persona_controls > label {
+  order: 1;
+  flex: 0 1 auto !important;
+  /* 3.0.0: height → css/27-compact.css (같은 선택자 규칙이 덮음), max-width → css/26-rounds-1.7.css (같은 선택자 규칙이 덮음) */
+  min-width: 0;
+  margin: 0 !important;
+}
+/* 더 보기 고르기 칸: 값 고르기 모양 (투명 · 흐린 글자 · 오른쪽 화살) */
+body.salty #PersonaManagement #persona-management-dropdown {
+  height: var(--bl-h-icon) !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  color: var(--salty-muted) !important;
+  /* 3.0.0: font-size → css/26-rounds-1.7.css (같은 선택자 규칙이 덮음) */
+  text-align: right;
+}
+/* 아이콘 사이 10px, 지우기는 오른쪽 끝 (월드 인포 도구 줄과 같은 리듬) */
+body.salty #PersonaManagement #persona_controls .persona_controls_buttons_block {
+  order: 3;
+  flex: 1 1 100% !important;
+  flex-wrap: nowrap !important;
+  justify-content: space-between !important;
+  /* 3.0.0: gap · margin-top → css/26-rounds-1.7.css (같은 선택자 규칙이 덮음) */
+}
+body.salty #PersonaManagement #persona_controls .persona_controls_buttons_block .menu_button {
+  flex: none;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+/* 3.0.0: 여기 있던 규칙 'body.salty #PersonaManagement #persona_controls .persona_controls_buttons_block …' 은 지움 — margin-left → css/26-rounds-1.7.css (같은 선택자 규칙이 덮음) */
+/* 설명 · 위치 · 연결: 카드 없이 시트 위 칸 (캐릭터 편집과 같은 모양) */
+body.salty #PersonaManagement .persona_management_current_persona > h4 {
+  gap: 6px !important;
+}
+/* 아이콘 그림은 13px 그대로, 누를 칸만 32px (음수 여백으로 제목 줄 높이는 안 건드림) */
+body.salty #PersonaManagement .persona_management_current_persona > h4 .editor_maximize {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  width: 32px;
+  height: 32px;
+  margin: -8px -8px -8px -6px !important;
+  border-radius: var(--bl-r-xs);
+  font-size: 13px;
+}
+body.salty #PersonaManagement #persona_description {
+  min-height: 168px;
+  padding: 12px 14px !important;
+  border-radius: var(--bl-r-md) !important;
+  line-height: 1.55;
+}
+body.salty #PersonaManagement .persona_management_current_persona > .flex-container.justifySpaceBetween {
+  flex-wrap: nowrap !important;
+  align-items: baseline !important;
+  gap: var(--bl-s3);
+  margin: var(--bl-s4) 0 var(--bl-s2);
+}
+body.salty #PersonaManagement .persona_management_current_persona > .flex-container.justifySpaceBetween > h4 {
+  margin: 0 !important;
+}
+body.salty #PersonaManagement .persona_management_current_persona .extension_token_counter {
+  width: auto !important;
+  margin: 0 !important;
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-micro) !important;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+body.salty #PersonaManagement #persona_description_position {
+  width: 100%;
+  margin: 0 !important;
+}
+body.salty #PersonaManagement #persona_depth_position_settings {
+  gap: var(--bl-s3) !important;
+  margin-top: var(--bl-s3);
+}
+body.salty #PersonaManagement #persona_depth_position_settings > .flex1 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bl-s1);
+  min-width: 0;
+}
+body.salty #PersonaManagement #persona_depth_position_settings label {
+  padding: 0 2px;
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-sub);
+  font-weight: 600;
+}
+body.salty #PersonaManagement #persona_depth_position_settings :is(input, select) {
+  width: 100%;
+  margin: 0 !important;
+}
+/* 연결: 버튼 셋 같은 폭, 켜진 연결 = 눌려 들어간 포인트 칩 (기본 왕관은 레몬) */
+body.salty #PersonaManagement #persona_connections_buttons {
+  flex-wrap: nowrap !important;
+  gap: var(--bl-s2) !important;
+  margin: 0 0 var(--bl-s3) !important;
+}
+body.salty #PersonaManagement #persona_connections_buttons > .menu_button {
+  flex: 1 1 0;
+  justify-content: center;
+  padding: 0 8px !important;
+}
+body.salty #PersonaManagement #persona_connections_buttons > .menu_button > div {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 옅은 포인트 면 위 글자는 한 단 짙은 포인트 (대비) */
+body.salty #PersonaManagement #persona_connections_buttons > .menu_button.locked {
+  background: var(--bl-fill-selected, var(--bl-selected)) !important;
+  box-shadow: var(--bl-well-in) !important;
+  color: var(--salty-accent-press, var(--salty-accent)) !important;
+}
+body.salty #PersonaManagement #persona_connections_buttons > .menu_button.locked > i {
+  color: var(--salty-accent-press, var(--salty-accent)) !important;
+}
+body.salty #PersonaManagement #persona_connections_buttons > #lock_persona_default.locked > i {
+  color: var(--bl-lemon) !important;
+}
+body.salty #PersonaManagement #persona_connections_list {
+  padding: 2px 2px var(--bl-s1);
+  color: var(--salty-muted) !important;
+  font-size: var(--bl-fs-sub);
+  line-height: 1.45;
+  opacity: 1 !important;
+}
+body.salty #PersonaManagement #persona_connections_list .avatar img {
+  border-radius: var(--bl-r-sm) !important;
+  box-shadow: var(--bl-e2) !important;
+}
+/* 전역 설정: 카드(이름은 첫 줄) + 스위치 줄 */
+body.salty #PersonaManagement .persona_management_global_settings {
+  margin: var(--bl-s5) 0 var(--bl-s3) !important;
+  padding: 0 var(--bl-inset) var(--bl-s2) !important;
+  border-radius: var(--bl-r-md);
+  background: var(--bl-fill-card, var(--bl-card));
+  box-shadow: var(--bl-e1);
+}
+body.salty #PersonaManagement .persona_management_global_settings > h4:first-child {
+  min-height: 0;
+  margin: 0 !important;
+  padding: 12px 2px 0 !important;
+}
+body.salty #PersonaManagement .persona_management_global_settings > .range-block {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+/* 두 줄로 꺾이는 이름: 위아래 여백으로 줄끼리 붙지 않게 (한 줄이면 46px 그대로) */
+body.salty #PersonaManagement .persona_management_global_settings label.checkbox_label {
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+/* 폰: 목록 아래 · 두 칸 사이 · 오른쪽 칸 위 여백이 겹쳐 32px 이 비어 보였음 (사용자: "중앙 공백 너무 길어") → 합 10px 로 */
+@media screen and (max-width: 1000px) {
+  body.salty #PersonaManagement #persona-management-block {
+    row-gap: 4px !important;
+  }
+  body.salty #PersonaManagement .persona_management_right_column {
+    margin-top: 0;
+  }
+  body.salty #PersonaManagement #user_avatar_block {
+    padding-bottom: 2px !important;
+  }
+  body.salty #PersonaManagement #user_avatar_block .avatar-container {
+    padding: 12px 12px 12px 10px !important;
+    gap: 16px !important;
+  }
+}
+
+/* ---------- 폰 ---------- */
+@media screen and (max-width: 1000px) {
+  /* 월드 인포 시트: 항목이 적거나 없어도 캐릭터 목록처럼 화면 끝까지 (밑에 채팅이 비치지 않게) */
+  body.salty #WorldInfo {
+    min-height: calc(100dvh - 45px) !important;
+  }
+  /* 빈자리만 한 단 좁게 — 누를 자리(36+) · 글자 크기는 그대로 */
+  body.salty #WorldInfo #world_popup > hr {
+    margin: 0 0 4px !important;
+  }
+  body.salty #WorldInfo #world_popup > .flex-container {
+    gap: 4px 6px !important;
+    margin: 0 0 var(--bl-s2) !important;
+    padding: 6px !important;
+  }
+  body.salty #WorldInfo .world_entry {
+    margin-bottom: var(--bl-s2) !important;
+  }
+  /* 3.0.0: 여기 있던 규칙 'body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-head…' 은 지움 — padding → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+  body.salty #WorldInfo #world_popup_entries_list {
+    padding-bottom: var(--bl-s1);
+  }
+  /* 활성 월드 목록: 폰은 세 줄 (네 줄은 항목 목록을 그만큼 아래로 밀어냄 — 목록은 그대로 스크롤됨) */
+  body.salty #WorldInfo #world_info {
+    max-height: calc((1.4em + 12px) * 3 + 8px) !important;
+  }
+  body.salty #WorldInfo #wiTopBlock {
+    gap: var(--bl-s2) !important;
+  }
+  body.salty #WorldInfo #wiTopBlock > .range-block > .range-block-title {
+    padding: 8px 2px 4px !important;
+  }
+  body.salty #WorldInfo #wiTopBlock .range-block-range {
+    margin-bottom: 6px;
+  }
+  /* 페르소나 제목 줄: 버튼 셋은 제목 아래 같은 폭 */
+  body.salty #PersonaManagement > .flex-container > .flex-container:first-child > .flex-container:last-child {
+    flex: 1 1 100%;
+  }
+  body.salty #PersonaManagement > .flex-container > .flex-container:first-child > .flex-container:last-child > .menu_button {
+    flex: 1 1 0;
+    min-width: 0;
+    gap: 6px;
+    padding: 0 8px !important;
+  }
+}
+/* ===== /surfaces:worldinfo ===== */

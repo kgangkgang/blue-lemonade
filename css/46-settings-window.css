@@ -1,0 +1,26 @@
+/* ===== css/46-settings-window.css ===== */
+.salty-panel { --bl-settings-cover: var(--salty-panel-surface, var(--salty-surface)); }
+.salty-panel.in-popup { --bl-settings-cover: var(--salty-panel-card, var(--bl-card, var(--salty-surface))); }
+.salty-panel .salty-nav { margin-bottom:0; padding-bottom:6px; }
+.salty-panel .salty-sec { padding-top:0; }
+.salty-panel :is(.salty-nav,.salty-prevbox) {
+  background:var(--bl-settings-cover) !important;
+  /* Cover subpixel seams between the two independently sticky surfaces. */
+  box-shadow:0 2px 0 var(--bl-settings-cover);
+}
+.bl-settings-toprow { display:flex; gap:6px; align-items:flex-start; margin:2px 0 8px; }
+.bl-settings-toprow .bl-settings-search { flex:1; min-width:0; margin:0; }
+.salty-panel :is(.bl-settings-expand,.bl-settings-close) { flex:none; min-height:42px; margin:0; padding:0 9px; border:0; border-radius:10px; background:var(--salty-fill-shade, var(--salty-shade)); color:var(--salty-text); font:inherit; font-size:12px; white-space:nowrap; }
+.salty-panel .bl-settings-close { width:38px; padding:0; font:24px/1 sans-serif; }
+html body dialog.popup.bl-settings-dialog > .popup-button-close,
+html body dialog.popup.bl-settings-dialog .popup-controls { display:none !important; }
+html body dialog.popup.bl-settings-fullscreen:has(.salty-panel.in-popup) {
+  position:fixed !important; inset:0 !important; margin:0 !important;
+  width:100vw !important; width:100dvw !important; max-width:none !important;
+  height:100vh !important; height:100dvh !important; max-height:none !important; min-height:0 !important;
+  border:0 !important; border-radius:0 !important; transform:none !important;
+  padding:env(safe-area-inset-top, 0px) max(8px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(8px, env(safe-area-inset-left, 0px)) !important;
+}
+html body dialog.popup.bl-settings-fullscreen .popup-body { height:100%; min-height:0; max-height:100%; padding:0 !important; overflow:hidden; }
+html body dialog.popup.bl-settings-fullscreen .popup-content { flex:1; min-height:0; margin:0; padding:0 !important; overflow-y:auto; overscroll-behavior:contain; scrollbar-gutter:stable !important; }
+html body dialog.popup.bl-settings-fullscreen .salty-panel.in-popup { --pp:8px; padding:8px 8px 24px !important; }

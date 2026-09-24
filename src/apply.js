@@ -13,6 +13,7 @@ import { iconsCss } from './icons.js';
 import { classifyAll } from './assets.js';
 import { comparisonView } from './appearance-compare.js';
 import { weatherReadability } from './weather-readability.js';
+import { themeEnabled, addonsEnabled } from './usage-mode.js';
 import { syncFeatures } from './features.js';
 import { syncSplash } from './splash.js';
 
@@ -387,7 +388,8 @@ function appearanceForRender(s) {
 
 // ───────── 전체 적용 ─────────
 export function applyAll() {
-    const s = appearanceForRender(getSettings());
+    const rendered = appearanceForRender(getSettings());
+    const s = themeEnabled(rendered) ? rendered : {...rendered, enabled:false};
     prepareDecor(s);
     const pal = paletteColors(s);
     const mode = (PALETTES[s.palette] || PALETTES.salt).mode;
@@ -657,5 +659,5 @@ export function applyAll() {
     syncCustomCss(!!(s.enabled && s.compat?.muteCustomCss));
 
     applyFonts(s);
-    syncFeatures(s); // 3.1.0 켤 때만 불러오는 기능 (features.js)
+    syncFeatures(s, addonsEnabled(getSettings())); // 3.1.0 켤 때만 불러오는 기능 (features.js)
 }

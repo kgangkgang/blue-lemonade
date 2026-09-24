@@ -1,0 +1,26 @@
+/* ===== css/39-baibai.css =====
+   柏宝箱이 폰 월드북 머리를 자체 격자로 옮기면 기본 머리 격자를 중첩하지 않는다.
+   확장 설정을 바꾸지 않고, 해당 레이아웃 표지가 붙은 항목에만 적용한다.
+   ===== */
+body.salty:not(#salty-none) #WorldInfo .world_entry[data-bai-bai-world-info-mobile-header-layout="true"] > form > .inline-drawer > .inline-drawer-header {
+  display: block !important;
+  padding: 8px !important;
+}
+body.salty:not(#salty-none) #WorldInfo .bai-bai-wi-mobile-title-cell .WIEntryTitleAndStatus,
+body.salty:not(#salty-none) #WorldInfo .bai-bai-wi-mobile-title-cell .WIEntryTitleAndStatus > .flex-container {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  grid-area: auto;
+  width: 100% !important;
+  min-width: 0;
+}
+body.salty:not(#salty-none) #WorldInfo .bai-bai-wi-mobile-title-cell textarea[name="comment"] {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100%;
+}
+body.salty:not(#salty-none) #WorldInfo .bai-bai-wi-mobile-header .inline-drawer-toggle,
+body.salty:not(#salty-none) #WorldInfo .bai-bai-wi-mobile-header .killSwitch {
+  grid-area: auto;
+}

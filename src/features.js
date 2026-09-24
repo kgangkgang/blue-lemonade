@@ -46,13 +46,15 @@ function startScripts(tries=4){
 }
 
 /** apply.js applyAll 끝에서 부른다 */
-export function syncFeatures(s) {
+export function syncFeatures(s, addonsOn = !!s.enabled) {
     const on = !!s.enabled;
     if (['conflicts'].some(id=>s.addons?.[id]) || modules.assist) load('assist','./assist/index.js').then(m=>m?.syncAssist());
     syncTypography(on);
+    const fold=on&&!!(s.chat?.triangleFold??SillyTavern.getContext().extensionSettings?.blue_lemonade_scripts?.enabled?.fold);
+    if(fold||modules.fold)load('fold','./fold.js').then(m=>m?.syncFold(fold));
     const scriptsRequested=Object.values(SillyTavern.getContext().extensionSettings?.blue_lemonade_scripts?.enabled||{}).some(v=>v===true);
     // The editor can start the runtime before this module has imported it.
-    scriptsWanted=on&&scriptsRequested;
+    scriptsWanted=addonsOn&&scriptsRequested;
     if(scriptsRequested||modules.scripts)startScripts();
     const reader = on && !!s.reader?.autoHide;
     if (reader || modules.reader) load('reader', './reader.js').then(m => m?.syncReader(reader));
@@ -82,7 +84,7 @@ export function syncFeatures(s) {
     syncSplash(s, () => hooks.refreshPanels?.());
     // 캐릭터별 스타일: 이어 둔 캐릭터가 있을 때만. 입혀 둔 동안 바꾼 모습은 그 스타일에 적음
     const chars = Object.keys(s.charStyles || {}).length > 0 || !!s.activeStyle;
-    if (chars || modules.charstyle) {
+    if (on && (chars || modules.charstyle)) {
         load('charstyle', './charstyle.js').then((m) => {
             if (!m) return;
             m.startCharStyles(hooks.applyAll, hooks.refreshPanels);

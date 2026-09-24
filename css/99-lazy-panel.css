@@ -1,0 +1,48 @@
+/* ===== css/99-lazy-panel.css =====
+   서랍 · 팝업이 열려 있을 때만 켜는 규칙 — 반드시 맨 뒤 모듈.
+   src/lite.js 가 시작 표시 규칙 뒤의 규칙을 통째로 <style id="salty-panel-css"> 로 떼어 테마 <link> 바로 뒤에 두고,
+   서랍(.openDrawer) · 팝업(dialog[open] · 옛 팝업)이 없으면 끈다. 맨 뒤라서 떼어 내도 폭포 순서가 그대로다.
+   여기 넣을 것: 서랍 · 팝업 안에서만 맞고, 채팅이 바뀔 때마다 비싼 규칙 (오른쪽 끝이 `> *` 같은 아무 요소이고 왼쪽에 :has() — 2.9.4 측정).
+   넣으면 안 되는 것: 채팅 · 입력줄 · 시작 화면 · 알림 · 메뉴에 닿는 규칙 (닫혀 있는 동안 꺼진다).
+   옮겨 올 때는 원래 자리와 여기 사이에 같은 무게로 같은 속성을 다투는 규칙이 없어야 한다 → node tools/check-order.cjs --against <옮기기 전 style.css>
+   ===== */
+#salty-lazy-panel-start {}
+/* 원래 css/02-controls.css */
+body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > * {
+  grid-column: 1 / -1;
+}
+/* 원래 css/14-prompt.css */
+body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > * {
+  grid-column: 1 / -1;
+}
+/* 원래 css/15-drawers.css */
+body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting :is(#InstructSettingsColumn, #SystemPromptColumn > h4, #SystemPromptBlock, [name="tokenizerSettingsBlock"])[data-cc-null] > * {
+  opacity: 0.5;
+}
+/* 원래 css/15-drawers.css */
+body.salty #AdvancedFormatting .flex-container:has(> label[for^="reasoning_"]) > * {
+  flex: 1 1 100% !important;
+}
+/* 원래 css/27-compact.css */
+body.salty #rm_api_block #openai_api > *,
+body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > * {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin: 0 !important;
+}
+/* 원래 css/33-panel-columns.css (4.1.2) */
+@media (max-width: 1000px) {
+  .salty-panel .salty-group:has(> .salty-slider + .salty-slider) > :not(.salty-slider),
+  .salty-panel .salty-group:has(> .salty-slider + .salty-slider) > .salty-slider:not(.salty-slider + *):not(:has(+ .salty-slider)) {
+    grid-column: 1 / -1;
+  }
+}
+@media (min-width: 1001px) {
+  .salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > :not(.salty-row, .salty-slider),
+  .salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > :is(.salty-row, .salty-slider):not(:is(.salty-row, .salty-slider) + *):not(:has(+ :is(.salty-row, .salty-slider))) {
+    grid-column: 1 / -1;
+  }
+}
+
+.bl-editor-actions [data-compare]{touch-action:none;user-select:none;white-space:nowrap;}
+.bl-editor-actions [data-compare][aria-pressed="true"]{background:var(--salty-accent);color:var(--salty-on-accent);}

@@ -1,0 +1,120 @@
+/* ===== css/22-promptlist.css =====
+   프롬프트 목록(검사 창) 줄.
+   ===== */
+/* ===== 프롬프트 목록 (검사 창) 줄 (surfaces:promptlist) =====
+   실제 팝업의 두 id 를 포함한다. 옛 카드 규칙이 더 무거워 여백 수정이 가려지던 문제를 막는다.
+   제목과 역할은 왼쪽, 토큰은 오른쪽. 원문은 담백한 면 안에서 왼쪽 정렬로 읽는다. */
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list {
+  margin: var(--bl-s3) calc(var(--pp, 12px) * -1) 0 !important;
+  padding: 0 !important;
+  width: auto !important;
+  text-align: left;
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list > .completion_prompt_manager_prompt {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list > .completion_prompt_manager_prompt + .completion_prompt_manager_prompt {
+  border-top: 1px solid var(--salty-shade) !important;
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .completion_prompt_manager_prompt > .inline-drawer-header {
+  min-height: 44px;
+  padding: 8px 14px !important;
+  gap: 12px !important;
+  align-items: center;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .inline-drawer-header > span {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  font-size: var(--bl-fs-sub);
+  font-weight: 400;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+/* 테마 자체에서 구조를 나눈 줄만 한 줄로. 알아보지 못한 원문은 줄바꿈해 숫자를 보존한다. */
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .inline-drawer-header > .bl-prow {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .bl-prow-role {
+  flex: 0 0 3em;
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-micro);
+  font-weight: 500;
+  white-space: nowrap;
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .bl-prow-role[data-role="assistant"] {
+  color: var(--salty-accent);
+}
+/* 시스템은 경고색 대신 팔레트의 청회색. 밝은 테마에서도 읽히는 보조 글자색을 쓴다. */
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .bl-prow-role[data-role="system"] {
+  color: var(--salty-muted);
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .bl-prow-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--salty-text);
+  font-weight: 500;
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .bl-prow-tok {
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: var(--bl-pop);
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .bl-prow-t {
+  margin-left: 2px;
+  color: var(--bl-pop) !important;
+  font-size: 0.75em;
+  font-weight: 500;
+}
+/* 원 안의 화살표 대신 가는 꺾쇠만 남긴다. 펼침 상태는 실리태번의 up/down 클래스를 따른다. */
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .inline-drawer-icon {
+  flex: 0 0 12px;
+  width: 12px;
+  height: auto;
+  padding: 0 !important;
+  color: var(--salty-muted) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 10px !important;
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .inline-drawer-icon::before { content: '\f078'; }
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .inline-drawer-icon.up::before { content: '\f077'; }
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .completion_prompt_manager_prompt > .inline-drawer-content {
+  margin: 0 12px 12px !important;
+  padding: 14px 16px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: var(--salty-fill-surface, var(--salty-surface)) !important;
+  box-shadow: none !important;
+  font-size: var(--bl-fs-sub);
+  font-weight: 400;
+  line-height: 1.8;
+  text-align: left !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere;
+  color: var(--salty-text);
+}
+@media (hover: hover) {
+  body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .completion_prompt_manager_prompt > .inline-drawer-header:hover {
+    background: var(--salty-fill-shade, var(--salty-shade)) !important;
+  }
+}
+/* ===== /surfaces:promptlist ===== */

@@ -20,6 +20,7 @@ export const FONT_SLOTS = ['text', 'dialogue', 'ui', 'em', 'strong', 'code', 'na
 export const DEFAULTS = {
     version: VERSION,
     enabled: true,
+    usageMode: 'both',
     appearanceHistory: [],
     settingLocks: {fonts:false,size:false,spacing:false,colors:false,profile:false},
     deviceLayouts: { on: false, pc: {}, mobile: {} },
@@ -90,8 +91,8 @@ export const DEFAULTS = {
     weatherImages: [],
     customPalettes: [],
     activeCustomPalette: '',
-    addons: { order: false, perf: false, words: false, capture: false, models: false, modelorder: false, modelswitch: false, regexlink: false, rewrite: false, bookmarks: false, conflicts: false },
-    addonUI: { orderIcon: false, perfIcon: false, wordsMenu: false, captureMenu: false, modelswitchMenu: true, perfMenu: { watchdog:false, timer:true, perf:false, log:true, dedupe:false },
+    addons: { order: false, perf: false, words: false, capture: false, models: false, modelorder: false, modelswitch: false, regexlink: false, rewrite: false, bookmarks: false, translator: false, prompt: false, customstyle: false, conflicts: false },
+    addonUI: { translatorDrawer: true, orderIcon: false, perfIcon: false, wordsMenu: false, captureMenu: false, modelswitchMenu: true, perfMenu: { watchdog:false, timer:true, perf:false, log:true, dedupe:false },
         // 4.5.5: 성능 보조의 도구를 아예 안 불러오게 (perfMenu 는 '메뉴에 보이기', 이것은 '불러오기').
         // 기본은 전부 켬 — 지금 쓰던 대로 돌아가고, 안 쓰는 도구를 끄면 그만큼 시작이 가벼워진다.
         perfLoad: { watchdog:true, timer:true, perf:true, log:true, dedupe:true } },
@@ -476,6 +477,7 @@ export function getSettings() {
     if (!isObj(s.addonUI.perfMenu)) s.addonUI.perfMenu=structuredClone(DEFAULTS.addonUI.perfMenu);
     if (!isObj(s.addonUI.perfLoad)) s.addonUI.perfLoad=structuredClone(DEFAULTS.addonUI.perfLoad);
     for (const k of Object.keys(DEFAULTS.addonUI.perfLoad)) if (typeof s.addonUI.perfLoad[k] !== 'boolean') s.addonUI.perfLoad[k]=true;
+    s.addonUI.translatorDrawer=flag(s.addonUI.translatorDrawer,true);
     for (const key of ['orderIcon','perfIcon','wordsMenu','captureMenu']) s.addonUI[key]=flag(s.addonUI[key],false);
     for (const key of Object.keys(DEFAULTS.addonUI.perfMenu)) s.addonUI.perfMenu[key]=flag(s.addonUI.perfMenu[key],DEFAULTS.addonUI.perfMenu[key]);
     if (!isObj(s.wordTools)) s.wordTools=structuredClone(DEFAULTS.wordTools);

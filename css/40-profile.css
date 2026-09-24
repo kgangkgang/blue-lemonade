@@ -1,0 +1,77 @@
+/* ===== css/40-profile.css =====
+   캐릭터 사진을 메시지 위에 배치. 실제 아바타를 재사용해 클릭·확대 동작을 보존한다.
+   ===== */
+body.salty.salty-profile-banner #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) {
+  display: grid !important;
+  grid-template-columns: var(--bl-meta-leading) auto auto auto var(--bl-meta-trailing) !important;
+  grid-template-rows: auto auto auto !important;
+  gap: var(--bl-header-gap) 0 !important;
+  --salty-meta-inset: 0px;
+}
+body.salty.salty-profile-banner #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper {
+  display: contents !important;
+}
+body.salty.salty-profile-banner #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar {
+  display: block !important;
+  grid-area: 1 / 1 / 2 / -1 !important;
+  justify-self: center;
+  position: relative !important;
+  width: var(--bl-profile-width) !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: min(var(--bl-profile-height), var(--bl-profile-max-height)) !important;
+  max-height: none !important;
+  margin: 0 0 var(--bl-profile-gap) !important;
+  padding: var(--bl-profile-frame-gap) !important;
+  box-sizing: border-box;
+  border-style: var(--bl-profile-frame-style) !important;
+  border-color: var(--bl-profile-frame-color) !important;
+  border-width: var(--bl-profile-frame-top) var(--bl-profile-frame-right) var(--bl-profile-frame-bottom) var(--bl-profile-frame-left) !important;
+  border-radius: var(--bl-profile-radius) !important;
+  box-shadow: var(--bl-profile-frame-shadow) !important;
+  outline: var(--bl-profile-frame-outline) !important;
+  outline-offset: var(--bl-profile-frame-offset) !important;
+  overflow: visible !important;
+  background: transparent !important;
+}
+body.salty.salty-profile-banner #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  border-radius: max(0px, calc(var(--bl-profile-radius) - var(--bl-profile-frame-gap))) !important;
+  object-fit: var(--bl-profile-fit) !important;
+  object-position: var(--bl-profile-position) !important;
+  filter: blur(var(--bl-profile-blur)) !important;
+  opacity: var(--bl-profile-opacity);
+  mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-profile-fade-y), #000 calc(100% - var(--bl-profile-fade-y)), transparent), linear-gradient(to right, transparent, #000 var(--bl-profile-fade-x), #000 calc(100% - var(--bl-profile-fade-x)), transparent);
+  mask-composite: intersect;
+  -webkit-mask-composite: source-in;
+}
+body.salty.salty-profile-banner #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .mesIDDisplay { grid-area: 2 / 2 !important; }
+body.salty.salty-profile-banner #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .mes_timer { grid-area: 2 / 3 !important; }
+body.salty.salty-profile-banner #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .tokenCounterDisplay { grid-area: 2 / 4 !important; }
+body.salty.salty-profile-banner #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > :is(.mesIDDisplay, .mes_timer, .tokenCounterDisplay) { font-size: var(--bl-meta-size) !important; text-align: var(--bl-name-align); }
+body.salty.salty-profile-banner #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mes_block { grid-area: 3 / 1 / 4 / -1 !important; width: 100% !important; padding-inline: 0 !important; }
+body.salty.salty-profile-banner #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > :is(.for_checkbox, .del_checkbox) { grid-area: 2 / 1 !important; }
+
+body.salty.salty-profile-banner #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar img { object-view-box: var(--bl-profile-crop); }
+body.salty.salty-profile-banner.salty-profile-layout-bleed #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar {
+  width: calc(100% + var(--salty-gutter) * 2) !important;
+  max-width: none !important;
+  margin-inline: calc(var(--salty-gutter) * -1) !important;
+}
+body.salty.salty-profile-banner.salty-profile-layout-inset #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar { width: min(var(--bl-profile-width), 72%, 420px) !important; }
+body.salty.salty-profile-banner.salty-profile-sizing-ratio #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar:not(.bl-art-frame) { height: auto !important; }
+body.salty.salty-profile-banner.salty-profile-sizing-ratio #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar:not(.bl-art-frame) > img { height: auto !important; max-height: var(--bl-profile-max-height) !important; }
+
+body.salty.salty-profile-banner #chat .mes:not([is_user="true"]):not([is_system="true"]) > .mesAvatarWrapper > .avatar:not(.bl-art-frame) img[style*="--bl-photo-clip"] {
+  border-radius: 0 !important;
+  clip-path: var(--bl-photo-clip) !important;
+}
+body.salty.salty-profile-mode-none #chat .mes:not([is_user="true"]):not([is_system="true"]) > .mesAvatarWrapper > .avatar { display: none !important; }
+body.salty.salty-profile-mode-none #chat .mes:not([is_user="true"]):not([is_system="true"]) > .mes_block { padding-left: 0 !important; }
+body.salty.salty-profile-mode-small #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar { display: block !important; }
+body.salty.salty-profile-mode-small #chat .mes:not([is_user="true"]):not([is_system="true"]) > .mes_block { padding-left: 12px !important; }

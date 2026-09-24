@@ -1,0 +1,86 @@
+/* ===== css/18-density.css =====
+   폰에서 묶음 덜어내기 · 테마가 잠근 실리태번 설정 줄 표시.
+   ===== */
+/* ===== 실리태번 화면: 폰 묶음 덜어내기 (surfaces:density) ===== */
+/* 폰에서 카드는 진짜 묶음에만 — 단순한 목록(확장 목록 · 알림 한 줄)은 카드 없이 시트 위에.
+   칸이 겹겹이 쌓이면 답답해 보임 · 펼친 줄만 한 단 떠오름 */
+@media screen and (max-width: 1000px) {
+  html body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2):has(.inline-drawer) {
+    margin: 0 0 var(--bl-s2) !important;
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  /* 줄 글자는 서랍 여백에 맞춰 — 제목 · 버튼과 같은 왼쪽 끝(카드 안 10px → 시트 0) */
+  html body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer) > .inline-drawer-header {
+    padding: 0 !important;
+  }
+  /* 펼친 줄은 카드로 떠오름 — 여백은 카드 안쪽으로 되돌림 */
+  html body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer):has(> .inline-drawer-header .inline-drawer-icon.up) {
+    margin: var(--bl-s2) 0 !important;
+  }
+  html body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer):has(> .inline-drawer-header .inline-drawer-icon.up) > .inline-drawer-header {
+    padding: 0 10px !important;
+  }
+  /* 알림 한 줄: 카드 없이 시트 위 설정 줄 */
+  html body.salty #rm_extensions_block .extensions_block > .flex-container:first-child > label.checkbox_label {
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  /* 5) 두 목록(기본 확장 · 외부 확장) 사이: ≡ 메뉴와 같은 얇은 띠 — 묶음이 바뀌는 것이 보이게 */
+  html body.salty #rm_extensions_block #extensions_settings2:has(.inline-drawer)::before {
+    content: '';
+    flex: none;
+    height: 3px;
+    margin: 2px 0 var(--bl-s3);
+    border-radius: var(--bl-r-pill);
+    background: var(--bl-fill-hover, var(--bl-hover));
+  }
+  /* 6) 카드 안 위아래 여백을 고르게 (위 4 · 아래 10 → 8) — 첫 줄이 카드 윗선에 붙어 보이지 않게.
+     한 줄 여닫는 카드(테마 색상 등)는 줄 높이 그대로 두려고 목록에서 뺌 */
+  html body.salty :is(
+    #user-settings-block #UI-presets-block,
+    #user-settings-block [name="AvatarAndChatDisplay"],
+    #user-settings-block [name="FontBlurChatWidthBlock"],
+    #user-settings-block [name="themeToggles"],
+    #user-settings-block #UI-Customization > div[name],
+    #user-settings-block #power-user-option-checkboxes > div[name],
+    #AdvancedFormatting #ContextSettings > div,
+    #AdvancedFormatting #InstructSettingsColumn,
+    #AdvancedFormatting #SystemPromptColumn > div:not([id])
+  ) {
+    padding-top: var(--bl-s2) !important;
+    padding-bottom: var(--bl-s2) !important;
+  }
+  html body.salty :is(
+    #user-settings-block #UI-presets-block,
+    #user-settings-block [name="AvatarAndChatDisplay"],
+    #user-settings-block [name="FontBlurChatWidthBlock"],
+    #user-settings-block [name="themeToggles"],
+    #user-settings-block #UI-Customization > div[name],
+    #user-settings-block #power-user-option-checkboxes > div[name],
+    #AdvancedFormatting #ContextSettings > div,
+    #AdvancedFormatting #InstructSettingsColumn,
+    #AdvancedFormatting #SystemPromptColumn > div:not([id])
+  ) > h4:first-child {
+    padding-top: var(--bl-s1) !important;
+  }
+}
+/* ===== /surfaces:density ===== */
+
+/* ---------- 테마가 잠근 실리태번 설정 줄 ---------- */
+/* 흐림 강도 · 텍스트 그림자 너비는 테마가 0 으로 고정함 (폰에서 색이 번져서) →
+   숫자만 그대로 있으면 거짓말이라 흐리게 · 못 만지게 하고 까닭을 옆에 적음 (테마를 끄면 원래대로) */
+body.salty #user-settings-block-content .flex-container:has(> #blur_strength) > small:first-child::after,
+body.salty #user-settings-block-content .flex-container:has(> #shadow_width) > small:first-child::after {
+  content: "테마가 끔";
+  font-size: var(--bl-fs-micro);
+  font-weight: 400;
+  color: var(--salty-faint);
+}
+body.salty #user-settings-block-content .flex-container:has(> #blur_strength) > :is(.neo-range-slider, .neo-range-input),
+body.salty #user-settings-block-content .flex-container:has(> #shadow_width) > :is(.neo-range-slider, .neo-range-input) {
+  opacity: 0.4 !important; /* 실리태번 · 테마가 슬라이더 흐림을 !important 로 잡고 있어서 */
+  pointer-events: none !important;
+}

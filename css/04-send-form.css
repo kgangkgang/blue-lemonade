@@ -1,0 +1,541 @@
+/* ===== css/04-send-form.css =====
+   입력창(ㄴ자 두 줄) · 보내기 · 메시지 삭제 모드 바.
+   ===== */
+/* ---------- 입력창: 선 없이 떠 있는 판 (폰은 ㄴ자 두 줄) ---------- */
+body.salty #form_sheld {
+  padding: 0 10px 10px !important;
+  background: transparent !important;
+}
+/* Paint the exposed corners explicitly: the host's zero-height root can leave
+   the propagated body gradient unpainted around a transparent input wrapper. */
+body.salty:not(.salty-bgimg) #sheld {
+  background: var(--salty-fill-bg, var(--salty-bg)) !important;
+}
+html:has(> body.salty:not(.salty-bgimg)) { background-color: var(--salty-bg); }
+body.salty #send_form {
+  background: var(--salty-fill-surface, var(--salty-surface)) !important;
+  border: 0 !important;
+  border-radius: var(--bl-r-lg) !important;
+  box-shadow: var(--bl-e3) !important; /* 떠 있는 바 */
+  padding: 4px 6px 5px !important;
+  opacity: 1 !important;
+  transition: box-shadow 0.2s ease;
+}
+/* 쓰는 중(입력칸에 초점일 때만 — 깃털 창 입력칸 · 버튼을 눌러 생긴 초점은 아님): 넓은 화면은 링 + 같은 그림자, 폰은 링 없이 한 단 더 떠오름(e4) */
+body.salty #send_form:focus-within {
+  outline: none !important;
+}
+body.salty #send_form:has(#send_textarea:focus) {
+  box-shadow: var(--bl-ring), var(--bl-e3) !important;
+}
+@media (max-width: 1000px) {
+  body.salty #send_form:has(#send_textarea:focus) {
+    box-shadow: var(--bl-e4) !important;
+  }
+}
+@supports not selector(:has(a)) {
+  body.salty #send_form:focus-within {
+    box-shadow: var(--bl-ring), var(--bl-e3) !important;
+  }
+  @media (max-width: 1000px) {
+    body.salty #send_form:focus-within {
+      box-shadow: var(--bl-e4) !important;
+    }
+  }
+}
+body.salty #send_textarea {
+  color: var(--salty-text) !important;
+  background: transparent !important;
+  font-family: var(--salty-font-text) !important;
+  font-size: var(--salty-size, var(--bl-ts-ui)) !important; /* 2.7.1: 채팅 본문 크기를 따라감 (전엔 메뉴 크기라 본문보다 커 보였음 — 사용자 지적) */
+  letter-spacing: var(--salty-ls, normal) !important;         /* 자간도 본문과 같이 */
+  line-height: 1.55 !important;
+  min-height: var(--bottomFormBlockSize) !important;
+  padding: 4px 6px 5px !important; /* 위 3px은 실리태번 진행 줄(가려짐) */
+  resize: none !important; /* 높이는 글 양에 맞춰 저절로 늘어남 → 모서리 손잡이 뺌 */
+}
+@supports (field-sizing: content) {
+  body.salty #send_textarea {
+    height: auto; /* 처음부터 글 양 높이 → 첫 글자에 판이 1px 줄지 않음 */
+  }
+}
+body.salty #send_textarea::placeholder {
+  color: var(--salty-faint) !important;
+  text-align: left !important;
+  opacity: 1 !important;
+}
+
+/* 배치: 왼쪽 묶음은 풀어서(contents) 순서로 놓고, 오른쪽 묶음(보내기 · 이어쓰기 · 멈춤)은 한 덩어리로 끝에 */
+body.salty #nonQRFormItems {
+  border: 0 !important;
+  flex-wrap: wrap !important;
+  align-items: flex-end !important; /* 입력칸이 늘어나도 버튼은 아래에 그대로 */
+  column-gap: 2px !important;
+  row-gap: 0 !important;
+}
+body.salty #leftSendForm {
+  display: contents !important;
+}
+body.salty #nonQRFormItems > *,
+body.salty #leftSendForm > * {
+  order: 5; /* 다른 확장이 넣은 버튼: 왼쪽 버튼들 뒤 */
+}
+body.salty #options_button {
+  order: 1 !important;
+  margin: 0 !important;
+}
+body.salty #extensionsMenuButton {
+  order: 3 !important;
+  padding: 0 !important;
+}
+body.salty #nonQRFormItems #jj-button {
+  order: 4 !important;
+}
+body.salty #send_textarea {
+  order: 6 !important;
+  flex: 1 1 0 !important;
+  min-width: min(16em, 100%) !important; /* 다른 확장 버튼이 많으면 16em 밑으로 눌리는 대신 보내기와 함께 다음 줄로 */
+}
+body.salty #nonQRFormItems > #rightSendForm {
+  order: 9 !important;
+  display: flex;
+  flex-wrap: nowrap !important;
+  align-items: center;
+  gap: 4px;
+  width: auto !important;
+  height: var(--bottomFormBlockSize) !important;
+  margin-left: auto;
+  padding: 0 !important;
+}
+
+/* 폰: 윗줄 ≡ + 입력칸(남은 폭 전부), 아랫줄 ✦ · 깃털 … 보내기 */
+@media (max-width: 1000px) {
+  body.salty #send_textarea {
+    order: 2 !important;
+    flex: 1 1 calc(100% - var(--bottomFormBlockSize) - 4px) !important;
+    resize: none !important;
+  }
+}
+
+body.salty :is(#options, #extensionsMenu) {
+  max-height: calc(100dvh - var(--topBarBlockSize, 40px) - 12px);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+
+/* 3.7.8: PC는 실리태번 Popper의 버튼 기준 위치를 그대로 사용한다.
+   CSS 앵커가 잠시 해제된 프레임에도 Popper transform을 지우지 않아 메뉴가 왼쪽 끝으로 튀지 않는다.
+   폰에서만 기존 입력판 위 앵커 배치를 유지한다. */
+@media (max-width: 1000px) {
+@supports (anchor-name: --a) {
+  /* 2.9.4: 앵커 이름은 ≡ · ✦ 메뉴가 열려 있는 동안만 (lite.js startAnchorGate 가 bl-send-menu-open 을 붙임).
+     늘 붙어 있으면 입력칸에 글자 하나 칠 때마다 문서 전체 레이아웃이 다시 돌았다 — 4배 느린 CPU 에서 글자당 8ms → 0.4ms */
+  body.salty #send_form.bl-send-menu-open {
+    anchor-name: --salty-send-form;
+  }
+  body.salty :is(#options, #extensionsMenu) {
+    position-anchor: --salty-send-form;
+    inset: calc(var(--topBarBlockSize) + 6px) auto calc(anchor(top) + 6px) anchor(left) !important;
+    transform: none !important;
+    align-self: end; /* 내용 높이만큼, 판 바로 위에 */
+    max-height: -webkit-fill-available;
+    max-height: stretch; /* 위 막대와 판 사이를 넘으면 스크롤 */
+  }
+}
+}
+
+@media (min-width: 1001px) {
+  body.salty :is(#options, #extensionsMenu) {
+    max-height: calc(100dvh - var(--topBarBlockSize) - 12px);
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
+}
+
+/* 아이콘 버튼 */
+body.salty :is(#leftSendForm, #rightSendForm) > div:not(#send_but, #mes_stop) {
+  opacity: 1 !important;
+}
+body.salty :is(#leftSendForm, #rightSendForm) > div:not(#send_but, #mes_stop, .active, .toggleEnabled, .toggled, .is-on, [aria-pressed="true"]) {
+  color: var(--salty-muted) !important; /* 켜진 버튼은 빼고 — 켜짐 색은 아래 켜짐 규칙 · 확장 규칙이 정함 */
+}
+@media (hover: hover) {
+  /* 폰은 탭한 뒤에도 :hover 가 남아서 마우스 기기에서만. 깃털 · 켜진 버튼은 켜짐 색 그대로 */
+  body.salty :is(#leftSendForm, #rightSendForm) > div:not(#send_but, #mes_stop, #jj-button, .active, .toggleEnabled, .toggled, .is-on, [aria-pressed="true"]):hover {
+    color: var(--salty-text) !important;
+  }
+}
+/* 선 아이콘이 없는 다른 확장 버튼(글꼴 아이콘)은 선 아이콘과 같은 눈 크기로 */
+body.salty.salty-icons-line :is(#leftSendForm, #rightSendForm) > :not(#options_button, #extensionsMenuButton, #jj-button, #send_but, #mes_stop, #mes_continue, #mes_impersonate, .stscript_btn) {
+  font-size: 20px;
+}
+/* 다른 확장이 #nonQRFormItems 에 바로 넣은 버튼(아랫줄 깃털 옆): ≡ · ✦ 와 같은 칸 · 눈 크기
+   display 는 안 건드림 — 확장이 숨겨 둔 버튼이 되살아나지 않게
+   ⚠ 아이콘 하나짜리(또는 빈) 것에만 — 확장이 같은 자리에 넣은 '창'(입력칸이 든 패널)까지 34.5px 칸으로 눌러
+   버리면 안 된다. 진짜 전개지시(Direction-Manager)의 .dm-compact--popup 이 바로 그런 창이라, 이 규칙에 걸려
+   높이 34.5px + overflow:hidden 으로 글상자가 잘려 나가 '눌리긴 하는데 입력하려 하면 닫힘'이 됐다 (2026-09-12). */
+body.salty #nonQRFormItems > :where(:not(#leftSendForm, #rightSendForm, #send_textarea, #jj-button, #jj-popup, textarea, input, select, .autoComplete-wrap, [role="dialog"], [role="menu"], [popover])):where(.fa-solid, .fa-regular, .fa-brands, :empty, :has(> :is(i, svg, img):only-child)) {
+  /* 3.0.0: flex · width · min-width → 이 파일 아래 (같은 선택자 규칙이 덮음) */
+  align-items: center;
+  justify-content: center;
+  height: var(--bottomFormBlockSize);
+  margin: 0;
+  padding: 0;
+  border-radius: 12px;
+  font-size: min(var(--bottomFormIconSize), 24px); /* 넓은 글꼴 아이콘(1.25em)도 34.5px 칸 안에 */
+  line-height: var(--bottomFormBlockSize);
+  text-align: center;
+  cursor: pointer;
+}
+body.salty.salty-icons-line #nonQRFormItems > :where(:not(#leftSendForm, #rightSendForm, #send_textarea, #jj-button, #jj-popup, textarea, input, select, .autoComplete-wrap, [role="dialog"], [role="menu"], [popover])):where(.fa-solid, .fa-regular, .fa-brands, :empty, :has(> :is(i, svg, img):only-child)) {
+  font-size: 20px;
+}
+body.salty #nonQRFormItems > :where(:not(#leftSendForm, #rightSendForm, #send_textarea, #jj-button, #jj-popup)):where(.fa-solid, .fa-regular, .fa-brands, :empty, :has(> :is(i, svg, img):only-child)) > :where(svg, img) {
+  max-width: 1em;
+  max-height: 1em;
+}
+/* 아이콘만 있는 버튼은 줄이 넘칠 때 28px까지 좁아짐(평소엔 34.5px) → 버튼이 많아도 보내기가 혼자 다음 줄로 밀리지 않게
+   (왼쪽 묶음에 들어온 확장 버튼도 — 실리태번 34.5px 고정 폭 대신. ≡ · ✦ · 깃털은 그대로) */
+body.salty #nonQRFormItems > :where(:not(#leftSendForm, #rightSendForm, #send_textarea, #jj-button, #jj-popup, textarea, input, select, .autoComplete-wrap, [role="dialog"], [role="menu"], [popover])):where(.fa-solid, .fa-regular, .fa-brands, :empty, :has(> :is(i, svg, img):only-child)),
+body.salty #leftSendForm > :where(div:not(#options_button, #extensionsMenuButton, #jj-button)):where(.fa-solid, .fa-regular, .fa-brands, :empty, :has(> :is(i, svg, img):only-child)) {
+  flex: 1 0 28px;
+  width: auto;
+  min-width: 28px;
+  max-width: var(--bottomFormBlockSize);
+}
+/* 색 · 바탕은 약하게(0,1,1): 확장이 id 나 클래스 둘로 정한 켜짐 색 · 바탕은 그대로 이김
+   (위와 같은 이유로 아이콘 버튼에만 — 확장 '창'의 바탕 · 테두리까지 지우면 글자가 채팅 위에 떠 버린다) */
+body.salty :where(#nonQRFormItems > :not(#leftSendForm, #rightSendForm, #send_textarea, #jj-button, #jj-popup, textarea, input, select, .autoComplete-wrap, [role="dialog"], [role="menu"], [popover]):is(.fa-solid, .fa-regular, .fa-brands, :empty, :has(> :is(i, svg, img):only-child))) {
+  color: var(--salty-muted);
+  background-color: transparent;
+  border: 0;
+  box-shadow: none;
+  filter: none;
+}
+body.salty :where(#nonQRFormItems, #leftSendForm) > .menu_button.togglable:not(.toggleEnabled) {
+  color: var(--salty-muted); /* 실리태번의 빨간 꺼짐 색(0,3,0) 대신. id 없이 → 확장이 id 로 정한 색은 이김 */
+}
+/* 실리태번 hover — .menu_button 바탕(0,4,0) · 묶음 버튼 밝기 필터(1,1,1) — 는 폰에서 탭한 뒤에도 남아 켜짐처럼 보임 → 지움 (바탕은 id 없이: 확장 id 규칙은 이김) */
+body.salty :where(#nonQRFormItems, #leftSendForm) > .menu_button:not(.disabled):not([disabled]):where(:not(.active, .toggleEnabled, .toggled, .is-on, [aria-pressed="true"])):hover {
+  background-color: transparent;
+}
+body.salty :is(#leftSendForm, #rightSendForm) > div:hover {
+  filter: none;
+}
+@media (hover: hover) {
+  body.salty #nonQRFormItems > :where(:not(#leftSendForm, #rightSendForm, #send_textarea, #jj-button, #jj-popup, textarea, input, select, .autoComplete-wrap, [role="dialog"], [role="menu"], [popover], .active, .toggleEnabled, .toggled, .is-on, [aria-pressed="true"])):where(.fa-solid, .fa-regular, .fa-brands, :empty, :has(> :is(i, svg, img):only-child)):hover {
+    color: var(--salty-text);
+    background-color: var(--bl-hover);
+  }
+}
+/* 흔한 켜짐 표시(.active 등)는 깃털 켜짐과 같게: 포인트색 + 같은 색 옅은 바탕 — 확장이 켜짐 색을 안 정했을 때만
+   전부 :where 라 (0,1,1) → 확장이 클래스 둘이나 id 로 정한 켜짐 색 · 바탕이 이김.
+   실리태번 .menu_button.active 회색 바탕(0,4,0)은 이 무게로 못 이겨서, 그 규칙이 쓰는 --white30a 를 글자색 14% 로 바꿔 둠 */
+body.salty :where(#nonQRFormItems > :not(#leftSendForm, #rightSendForm, #send_textarea, #jj-button, #jj-popup), #leftSendForm > :not(#options_button, #extensionsMenuButton, #jj-button)):where(.active, .toggleEnabled, .toggled, .is-on, [aria-pressed="true"]):where(:not(.disabled, [disabled])) {
+  --white30a: color-mix(in srgb, currentColor 14%, transparent);
+  color: var(--salty-accent);
+  background-color: var(--white30a);
+}
+body.salty :where(#nonQRFormItems > :not(#leftSendForm, #rightSendForm, #send_textarea, #jj-button, #jj-popup), #leftSendForm > :not(#options_button, #extensionsMenuButton, #jj-button)).toggleEnabled {
+  color: var(--salty-accent) !important; /* 실리태번 .toggleEnabled 초록은 !important 라서 */
+}
+
+/* 전개지시 깃털: ≡ · ✦ 와 같은 칸, 같은 크기. 켜짐은 포인트색(확장에서 고른 색이 있으면 그 색) + 옅은 바탕 */
+body.salty {
+  /* 켜짐은 팔레트의 포인트색(--salty-pop: 보내기 버튼과 같은 색) — 버튼 · 깃털 창 배지 · 스위치가 같은 색 (확장 설정에서 색을 고르면 그 색이 이김)
+     밝은 테마는 불투명 포인트 알약 + 그 위 글자색, 어두운 테마는 칸 위에 포인트색 아이콘 (비치는 노랑은 올리브색이 됨)
+     4.1.2: 레몬색이 박혀 있어 에이드를 바꿔도 노랗게 빛나던 것을 팔레트를 따라가게 (사용자 요청) */
+  --bl-jj: var(--salty-pop, #FFDE3D);
+  --bl-jj-ink: var(--salty-on-pop, var(--salty-text)); /* 포인트색 위 글자 · 손잡이 */
+  --bl-jj-fg: var(--salty-accent);       /* 흰 면 위 글자 · 아이콘 (읽히는 포인트색) */
+  --bl-jj-btn-bg: var(--bl-jj);
+  --bl-jj-btn-fg: var(--bl-jj-ink);
+  --bl-jj-dot: var(--bl-jj-ink);
+  --bl-jj-glow: var(--salty-pop-glow, 0 0 0 3px rgba(255, 205, 0, 0.22), 0 3px 12px -3px rgba(214, 160, 0, 0.55));
+  --jj-on: var(--jj-on-color, var(--bl-jj)); /* 확장이 쓰는 변수 (설정 카드) */
+}
+body.salty.salty-dark {
+  --bl-jj: var(--salty-pop, #FFE973);
+  --bl-jj-ink: var(--salty-on-pop, #071C2E);
+  --bl-jj-fg: var(--bl-jj);
+  --bl-jj-btn-bg: var(--bl-control);     /* 남색 칸 위 레몬 깃털 */
+  --bl-jj-btn-fg: var(--bl-jj);
+  --bl-jj-dot: var(--bl-jj);
+  --bl-jj-glow: var(--salty-pop-glow, 0 0 0 1.5px rgba(255, 233, 115, 0.5), 0 0 16px -2px rgba(255, 233, 115, 0.5));
+}
+body.salty #nonQRFormItems #jj-button {
+  width: var(--bottomFormBlockSize) !important;
+  height: var(--bottomFormBlockSize) !important;
+  margin: 0 !important;
+  font-size: var(--bottomFormIconSize) !important;
+  border-radius: 12px;
+  box-shadow: none !important;
+  opacity: 1 !important;
+}
+body.salty #nonQRFormItems #jj-button:not(.is-on) {
+  color: var(--salty-muted) !important;
+  background: transparent !important;
+}
+@media (hover: hover) {
+  body.salty #nonQRFormItems #jj-button:not(.is-on):hover {
+    color: var(--salty-text) !important;
+  }
+}
+body.salty #jj-button.is-on i {
+  filter: none; /* 확장의 빛(drop-shadow)은 폰에서 번짐 */
+}
+body.salty #nonQRFormItems #jj-button.is-on {
+  background-color: var(--bl-jj-btn-bg) !important;
+  box-shadow: var(--bl-jj-glow) !important;
+  color: var(--bl-jj-btn-fg) !important;
+}
+body.salty #jj-button i,
+body.salty #mes_stop i {
+  display: flex;
+}
+/* 켜짐은 기존 빛으로만 표시. 확장의 내용 유무/상태 안내와 클릭 동작은 그대로 둔다. */
+body.salty #jj-button .jj-dot {
+  display: none !important;
+}
+/* 깃털 창: 입력판 폭에 맞추고 살짝 띄움. 글자는 아이콘 크기(28.5px)를 물려받지 않게 */
+body.salty #jj-popup {
+  left: -6px !important;
+  right: -6px !important;
+  width: auto !important;
+  max-width: none !important;
+  margin-bottom: 14px !important; /* 판 윗면과 10px 틈 */
+  font-size: 15px;
+  white-space: normal;
+  /* 뜬 층: 확장의 검은 그림자 · 흐림 · 테두리 대신. 그림자는 위 · 옆으로만 — 아래 끝(y + 퍼짐 + 흐림)이 창 밑 6px 을 안 넘게 해서 입력판 윗면이 얼룩지지 않게 */
+  border: 0 !important;
+  border-radius: var(--bl-r-lg) !important;
+  background: var(--bl-fill-overlay, var(--bl-overlay)) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: 0 -1px 5px -2px color-mix(in srgb, var(--salty-shadow, rgba(15, 34, 56, 0.14)) 60%, transparent), 0 -8px 24px -12px var(--salty-shadow, rgba(15, 34, 56, 0.14)), 0 -18px 48px -24px var(--salty-shadow, rgba(15, 34, 56, 0.14)) !important;
+  color: var(--salty-text) !important;
+}
+body.salty.salty-dark #jj-popup {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 -1px 6px -2px color-mix(in srgb, var(--salty-shadow, rgba(1, 8, 16, 0.72)) 55%, transparent), 0 -10px 30px -14px var(--salty-shadow, rgba(1, 8, 16, 0.72)), 0 -22px 56px -28px var(--salty-shadow, rgba(1, 8, 16, 0.72)) !important;
+}
+body.salty #jj-popup .jj-popup-head {
+  border: 0 !important;
+}
+body.salty #jj-popup .jj-popup-foot {
+  color: var(--salty-muted);
+}
+/* 지우기 · 닫기: 조용한 34px 아이콘 */
+body.salty #jj-popup .jj-icon-btn {
+  width: var(--bl-h-icon);
+  height: var(--bl-h-icon);
+  border: 0;
+  border-radius: 50%;
+  color: var(--salty-muted);
+  opacity: 1;
+}
+@media (hover: hover) {
+  body.salty #jj-popup .jj-icon-btn:hover {
+    background: var(--bl-fill-hover, var(--bl-hover));
+    color: var(--salty-text);
+  }
+}
+body.salty #jj-popup .jj-icon-btn:active {
+  background: var(--bl-fill-press-bg, var(--bl-press-bg));
+}
+/* 4.1.2 깃털 창 다듬기 (사용자: "촌티 남 · 버튼이 너무 크고 켜짐 글자도 구림") — 스위치는 작고 얇게, 상태는 알약 대신 조용한 글자,
+   제목은 한 단 가볍게, 입력칸의 두꺼운 3px 고리는 얇은 포인트색 선으로 */
+body.salty #jj-popup .jj-popup-head {
+  gap: 10px;
+  padding: 10px 8px 8px 14px;
+  align-items: center;
+}
+body.salty #jj-popup .jj-popup-title {
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+/* 켜기 스위치: 36×20 — 손잡이는 밝은 면(꺼짐) · 포인트색 위 글자색(켜짐) */
+body.salty #jj-popup .jj-switch {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--bl-fill-check-off, var(--bl-check-off));
+  box-shadow: var(--bl-track);
+}
+body.salty #jj-popup .jj-switch span {
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  box-shadow: var(--bl-knob);
+}
+body.salty #jj-popup .jj-switch[aria-checked="true"] {
+  background: var(--jj-on);
+  box-shadow: none;
+}
+body.salty #jj-popup .jj-switch[aria-checked="true"] span {
+  transform: translateX(16px);
+  background: var(--bl-jj-ink);
+  box-shadow: none;
+}
+/* 지시 입력칸: 회색 반투명 대신 오목한 칸 (꺼지면 확장이 흐리게 — 그대로) */
+body.salty #jj-popup .jj-textarea {
+  resize: none; /* 글 양에 맞춰 늘어남 */
+  border: 0 !important;
+  border-radius: 12px;
+  background-color: var(--bl-well) !important;
+  box-shadow: var(--bl-well-in) !important;
+  color: var(--salty-text) !important;
+}
+body.salty #jj-popup .jj-textarea:focus {
+  box-shadow: var(--bl-well-in), 0 0 0 1.5px var(--salty-accent-40) !important;
+}
+/* 창 제목 깃털: 제목 글자보다 튀지 않게 같은 크기 */
+body.salty.salty-icons-line #jj-popup .jj-popup-title i {
+  display: flex;
+  font-size: 1.05em;
+}
+body.salty #jj-popup .jj-popup-title i {
+  color: var(--bl-jj-fg);
+}
+/* 상태: 색 알약 대신 작은 글자 — 켜짐은 포인트색, 꺼짐은 흐린 글자 (스위치가 이미 상태를 보여 준다) */
+body.salty #jj-popup .jj-state {
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--salty-faint);
+  font-size: var(--bl-fs-micro); /* 확장의 .74em 은 폰에서 10.5px */
+  font-weight: 500;
+  letter-spacing: 0;
+}
+body.salty #jj-popup.is-on .jj-state {
+  background: none;
+  color: var(--bl-jj-fg);
+}
+/* 지우기 · 닫기는 한 단 작게 */
+body.salty #jj-popup .jj-icon-btn {
+  width: 30px;
+  height: 30px;
+  font-size: 14px;
+}
+
+/* 보내기 · 생성 멈춤: 같은 자리 같은 포인트색 동그라미 (밝은 테마는 포인트색 그림자, 어두운 테마는 빛 대신 중립 그림자) */
+body.salty #send_but,
+body.salty #rightSendForm > #mes_stop {
+  width: 34px !important;
+  height: 34px !important;
+  padding: 0 !important;
+  border-radius: 50%;
+  background: var(--salty-fill-accent, var(--salty-accent)) !important;
+  color: var(--salty-on-accent, #fff) !important;
+  box-shadow: var(--bl-accent-lift);
+  align-items: center;
+  justify-content: center;
+  font-size: 19px !important;
+  opacity: 1 !important;
+}
+body.salty.salty-dark #send_but,
+body.salty.salty-dark #rightSendForm > #mes_stop {
+  box-shadow: var(--bl-e2);
+}
+body.salty #rightSendForm > :is(.stscript_btn, #mes_stop, #mes_continue, #mes_impersonate) {
+  filter: none !important; /* 실리태번 hover 밝기 필터: 폰에선 누른 뒤에도 남음 */
+}
+body.salty #send_but {
+  display: flex;
+}
+/* 보내기 쪽 버튼 묶음: 다른 버튼과 같은 세로 중심 (2.7.9 — 전엔 2px 위로 옮겨 놓아 💬 · 보내기가 ≡ · ✦ 보다 떠 보였음, 사용자 지적) */
+body.salty #nonQRFormItems > #rightSendForm {
+  transform: none;
+}
+body.salty #send_but.displayNone,
+body.salty #form_sheld.isExecutingCommandsFromChatInput :is(#send_but, #mes_continue) {
+  display: none !important; /* 명령 실행 중엔 실리태번이 폭을 0으로 숨기는데, 위 크기 고정 때문에 자리가 남음 */
+}
+/* 명령 실행 중 버튼(일시정지 · 계속 · 중단): 조용한 떠 있는 동그라미 + 선 아이콘
+   → 생성 멈춤(포인트색 · 꽉 찬 네모)과 나란히 서도 구별됨 */
+body.salty #rightSendForm > .stscript_btn {
+  width: 34px !important;
+  height: 34px !important;
+  padding: 0 !important;
+}
+body.salty #rightSendForm > .stscript_btn > .fa-solid {
+  width: 34px;
+  height: 34px !important;
+  border-radius: 50% !important;
+  background-color: var(--bl-control) !important;
+  box-shadow: var(--bl-e2) !important;
+  color: var(--salty-muted) !important;
+  font-size: 13px !important;
+}
+body.salty.salty-icons-line #rightSendForm > .stscript_btn > .fa-solid {
+  font-size: 20px !important; /* 선 아이콘은 24칸 안에 작게 그려져서 */
+}
+@media (hover: hover) {
+  body.salty #rightSendForm > .stscript_btn:hover > .fa-solid {
+    color: var(--salty-text) !important;
+  }
+}
+body.salty #rightSendForm > .stscript_btn:active > .fa-solid {
+  background-color: var(--bl-press-bg) !important;
+  box-shadow: var(--bl-press) !important;
+}
+body.salty:not(.salty-icons-line) #mes_stop i {
+  font-size: 13px;
+}
+body.salty:not(.salty-icons-line) #rightSendForm > .stscript_stop > .fa-solid::before {
+  content: "";
+  width: 0.8em;
+  height: 0.8em;
+  box-sizing: border-box;
+  border: 2px solid currentColor;
+  border-radius: 3px; /* 글꼴 아이콘일 때도 명령 중단은 테두리 네모 → 생성 멈춤(꽉 찬 네모)과 모양으로 구별 */
+}
+body.salty:not(.salty-icons-line) #mes_stop i::before {
+  content: "\f04d"; /* 동그라미 안 동그라미 대신 네모 */
+}
+
+/* ---------- 메시지 삭제 모드: 입력 바가 있던 자리를 그대로 쓴다 ----------
+   실리태번 기본은 얇은 줄(46px)이라 두 줄 입력 바(78px) 자리에 들어가면 위가 텅 비어 버튼이 붕 떠 보였다.
+   → 입력 바와 같은 떠 있는 판 + 알약 버튼. 폰은 두 알약이 판을 꽉 채운다.
+   display 는 건드리지 않는다 — 실리태번이 inline style 로 block · none 을 번갈아 넣는다 */
+body.salty #dialogue_del_mes {
+  margin: 0 !important;
+  /* 3.0.0: padding → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+  background: var(--salty-fill-surface, var(--salty-surface)) !important;
+  border: 0 !important;
+  border-radius: 22px !important;
+  box-shadow: var(--bl-e3) !important;
+  text-align: center;
+  font-size: 0; /* 알약 사이 공백 글자 제거 → 간격은 margin 으로만 */
+}
+body.salty #dialogue_del_mes .menu_button {
+  display: inline-flex;
+  /* 3.0.0: height · border-radius · box-shadow · font-size · font-weight → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+  min-width: 108px;
+  margin: 0 3px !important;
+  padding: 0 18px !important;
+  border: 0 !important;
+  background: var(--bl-fill-control, var(--bl-control)) !important;
+  color: var(--salty-text) !important;
+  filter: none !important;
+  font-family: var(--salty-font-ui) !important;
+  letter-spacing: 0;
+  transition: background-color 0.15s ease;
+}
+body.salty #dialogue_del_mes .menu_button:hover {
+  background: var(--bl-fill-control-hover, var(--bl-control-hover)) !important;
+}
+/* 삭제는 팔레트의 빨강 하나. 캐릭터·프롬프트 삭제와 동일하다. */
+/* 3.0.0: 여기 있던 규칙 'body.salty #dialogue_del_mes #dialogue_del_mes_ok' 은 지움 — background · color → css/21-witidy.css (같은 선택자 규칙이 덮음) */
+body.salty #dialogue_del_mes #dialogue_del_mes_ok:hover {
+  background: var(--bl-danger) !important;
+}
+@media (max-width: 1000px) {
+  body.salty #dialogue_del_mes .menu_button {
+    width: calc(50% - 6px);
+    min-width: 0;
+  }
+}

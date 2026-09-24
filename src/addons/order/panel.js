@@ -1,3 +1,4 @@
+import {mountMenuOrdering} from './menus.js';
 // 확장 순서 — 위쪽 버튼 줄의 아이콘과, 눌렀을 때 뜨는 순서 창
 //
 // 설정 서랍을 따로 두지 않는다. 서랍을 두면 이 확장도 목록에 한 줄을 차지해서,
@@ -110,6 +111,7 @@ function buildContent() {
         act(item.dataset.key, item.dataset.group, button.dataset.act);
     });
 
+    mountMenuOrdering(root);
     return root;
 }
 

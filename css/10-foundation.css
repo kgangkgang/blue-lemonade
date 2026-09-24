@@ -1,0 +1,414 @@
+/* ===== css/10-foundation.css =====
+   디자인 기반 토큰(--bl-*) · 공용 부품. 새 화면 규칙은 이 토큰으로 짓는다.
+   ===== */
+/* ===== 실리태번 화면: 디자인 기반 토큰 (surfaces:foundation) ===== */
+/* 블루 레몬에이드 디자인 기반 — 토큰(--bl-*) + 공용 부품 몇 가지. 부품 대부분은 위 상단 바 · 서랍 · 버튼 · 메뉴 칸에 있음
+   · 면 3단: page(bg) < card(surface) < overlay(메뉴 · 알림, 어두운 테마는 tint-12)
+   · 그림자 5단: e1 쉬는 카드 · 시트 위 입력칸 / e2 버튼 · 칩 / e3 떠 있는 바 · 펼친 줄 / e4 메뉴 · 드롭다운 · 알림 / e5 팝업 · 서랍
+     눌림 · 오목함은 안쪽 그림자(--bl-press · --bl-well-in · --bl-track), 포커스는 --bl-ring + 제 그림자
+   · 특이도: 공용 규칙은 body.salty + 클래스(제외 조건은 :where 로 0점), 화면별 규칙(surfaces:*)은 서랍 id 를 붙여 항상 이김
+   · 실리태번이 숨기는 것(메뉴 항목 · 체크박스 · 팝업 닫기 · 슬라이더 칸)에는 display !important 금지
+   · 마우스 올림 효과는 (hover: hover) 안에서만 — 폰에서 눌린 색이 남지 않게 */
+
+/* ---------- 토큰 ---------- */
+body.salty {
+  /* 글자: 실리태번 글자 배율을 따라감 (--mainFontSize = 배율 × 15px) */
+  --bl-fs-micro: calc(var(--mainFontSize, 15px) * 0.767); /* 11.5 배지 · 날짜 · 버전 */
+  --bl-fs-cap: calc(var(--mainFontSize, 15px) * 0.833);   /* 12.5 묶음 이름 · 태그 */
+  --bl-fs-sub: calc(var(--mainFontSize, 15px) * 0.867);   /* 13 설명 · 안내 */
+  --bl-fs-ctl: calc(var(--mainFontSize, 15px) * 0.933);   /* 14 버튼 · 숫자칸 · 알림 */
+  --bl-fs-body: var(--mainFontSize, 15px);                /* 15 줄 이름 · 입력 · 메뉴 */
+  --bl-fs-head: calc(var(--mainFontSize, 15px) * 1.2);    /* 18 팝업 제목 */
+  --bl-fs-title: calc(var(--mainFontSize, 15px) * 1.467); /* 22 서랍 제목 */
+  /* 여백 (4 단위) */
+  --bl-s1: 4px;
+  --bl-s2: 8px;
+  --bl-s3: 12px;
+  --bl-s4: 16px;
+  --bl-s5: 20px;
+  --bl-s6: 24px;
+  --bl-s8: 32px;
+  --bl-gutter: 16px;  /* 서랍 좌우 */
+  --bl-inset: 14px;   /* 카드 안 좌우 */
+  /* 둥글기: 안쪽 = 바깥 - 여백 */
+  /* 1.6.13: 기존 카드 구성을 유지하고 둥글기·하이라이트만 한 단계 덜어낸다. */
+
+  --bl-r-xs: 6px;     /* 체크박스 */
+  --bl-r-sm: 6px;    /* 버튼 · 입력칸 · 줄 · 메뉴 항목 */
+  --bl-r-md: 10px;    /* 카드 · 알림 · 드롭다운 */
+  --bl-r-menu: 10px;  /* 메뉴 (항목 10 + 여백 6) */
+  --bl-r-lg: 14px;    /* 팝업 · 시트 아래 모서리 · 시작 화면 */
+  --bl-r-pill: 999px;
+  /* 높이 */
+  --bl-h-num: 32px;   /* 숫자칸 */
+  --bl-h-icon: 34px;  /* 아이콘 버튼 · 거르기 칩 */
+  --bl-h-ctl: 38px;   /* 입력칸 · 글자 버튼 (같은 줄에서 높이가 맞게 하나로) */
+  --bl-h-lg: 44px;    /* 팝업 버튼 · 팝업 입력칸 */
+  --bl-h-menu: 44px;  /* 메뉴 항목 (폰은 한 단 낮게) */
+  --bl-h-row: 46px;   /* 설정 줄 · 여닫는 줄 (설정 창 .salty-row 와 같음) */
+  /* 아이콘 */
+  --bl-ic: 16px;
+  --bl-ic-box: 20px;
+  /* 면 */
+  --bl-page: var(--salty-bg);
+  --bl-card: var(--salty-card, var(--salty-surface)); /* 어두운 테마는 apply.js 가 바탕보다 한 톤 밝게 */
+  --bl-control: var(--salty-control, var(--salty-surface));
+  --bl-control-hover: var(--salty-control-hover, var(--salty-surface-shade));
+  --bl-well: var(--salty-field);
+  --bl-field: var(--bl-control);    /* 시트 위 입력칸 면 — 밝은 테마는 떠 있는 흰 칸 */
+  --bl-field-sh: var(--bl-e1);      /* 시트 위 입력칸 그림자 */
+  --bl-overlay: var(--salty-surface);
+  --bl-hover: var(--salty-shade);
+  --bl-press-bg: var(--salty-shade-2);
+  --bl-selected: var(--salty-tint-18);
+  --bl-check-off: var(--salty-shade-2); /* 꺼진 체크박스 · 스위치 칸 */
+  /* 상태색 — 팔레트 밖이라 여기서만: 파랑 · 무채색 · 레몬 · 흐린 호박 (분홍 · 빨강 · 초록 없음) */
+  --bl-warn: var(--bl-pop); /* 주의는 팔레트의 기존 포인트 */
+  --bl-warn-bg: var(--salty-toast-warning);
+  --bl-warn-halo: var(--salty-shade-2);
+  --bl-lemon: var(--bl-pop); /* 4.1.2: 즐겨찾기 별 · 고정 표시도 팔레트의 포인트색 (예전엔 밝은 테마에서 늘 레몬색) */
+  /* 두 번째 포인트: 블루 아워는 레몬, 레몬에이드는 포인트 파랑 (apply.js --salty-pop)
+     쓰는 곳은 보내기 버튼 · 지금 있는 곳(열린 서랍 · 고른 탭 · 고르기 칸) · 즐겨찾기만 — 켜짐(스위치)과 고른 항목(카드 · 줄)엔 안 씀 (아래 "두 번째 포인트" 규칙) */
+  --bl-pop: var(--salty-pop, var(--salty-accent));
+  --bl-on-pop: var(--salty-on-pop, var(--salty-on-accent));
+  /* 그림자 — apply.js 가 --salty-e* 를 팔레트 그림자색으로 계산, 없으면 아래 값 (기본 팔레트 계산값과 같음) */
+  --bl-e1: var(--salty-e1, 0 1px 2px rgba(15, 34, 56, 0.05), 0 2px 10px -2px rgba(15, 34, 56, 0.07));
+  --bl-e2: var(--salty-e2, 0 1px 2px rgba(15, 34, 56, 0.09), 0 3px 8px -2px rgba(15, 34, 56, 0.1));
+  --bl-e3: var(--salty-e3, 0 1px 3px rgba(15, 34, 56, 0.06), 0 10px 28px -10px rgba(15, 34, 56, 0.2));
+  --bl-e4: var(--salty-e4, 0 2px 6px rgba(15, 34, 56, 0.07), 0 18px 44px -12px rgba(15, 34, 56, 0.26));
+  --bl-e5: var(--salty-e5, 0 4px 14px rgba(15, 34, 56, 0.08), 0 34px 80px -20px rgba(15, 34, 56, 0.34));
+  --bl-sheet: var(--salty-sheet, inset 0 12px 12px -12px rgba(15, 34, 56, 0.12), 0 24px 48px -16px rgba(15, 34, 56, 0.26)); /* 폰 시트: 바 그림자 + 아래로 뜸 */
+  --bl-press: var(--salty-press, inset 0 1px 3px rgba(15, 34, 56, 0.14));      /* 눌림 */
+  --bl-well-in: var(--salty-well-in, inset 0 1px 2px rgba(15, 34, 56, 0.07));  /* 오목한 칸 · 켜진 버튼 */
+  --bl-knob: var(--salty-knob, 0 1px 2px rgba(15, 34, 56, 0.2), 0 3px 8px -1px rgba(15, 34, 56, 0.2));
+  --bl-track: var(--salty-track, inset 0 1px 2px rgba(15, 34, 56, 0.1));
+  --bl-accent-lift: 0 1px 2px var(--salty-accent-28), 0 6px 14px -6px var(--salty-accent-70);
+  --bl-ring: var(--salty-ring);
+  --bl-scrim: var(--salty-scrim, rgba(7, 20, 34, 0.34));
+}
+/* 어두운 테마: 층은 밝기로 나누고(카드 · 메뉴가 한 톤 밝게) 그림자는 짧고 부드럽게 + 윗면 옅은 빛 */
+body.salty.salty-dark {
+  --bl-control: var(--salty-control, var(--salty-raised));
+  --bl-control-hover: var(--salty-control-hover, var(--salty-tint-14));
+  --bl-well: var(--salty-surface); /* 카드가 한 톤 밝아서 오목한 칸은 바탕 쪽으로 */
+  /* 시트 위 입력칸은 시트보다 한 톤 아래 — 층을 밝기로 나누니 오목한 칸은 늘 제 바탕보다 어두워야 함
+     (버튼은 반대로 한 톤 위 --bl-control, 그래서 칸과 버튼이 같은 톤으로 겹치지 않음) */
+  --bl-field: var(--salty-sunk, #051420);
+  --bl-field-sh: var(--bl-well-in);
+  --bl-overlay: var(--salty-overlay, var(--salty-tint-12)); /* 메뉴 · 알림은 카드보다 한 톤 더 밝게 */
+  --bl-warn: var(--bl-pop); /* 주의는 팔레트의 기존 포인트 */
+  --bl-warn-halo: var(--salty-shade-2);
+  --bl-pop: var(--salty-pop, #FFE973);
+  --bl-on-pop: var(--salty-on-pop, #071C2E);
+  --bl-lemon: var(--bl-pop); /* 즐겨찾기 별도 같은 레몬 */
+  --bl-check-off: var(--bl-control-hover); /* 남색 위에서도 꺼진 칸이 보이게 */
+  /* 다크에서는 단추 · 칩의 드롭 그림자가 촌스럽다 (사용자: "구시대 ppt 같음").
+     어두운 화면에서 물체가 떠 보이게 하는 건 그림자가 아니라 위쪽 1px 하이라이트와 면 색 차이다.
+     그래서 여기서는 --salty-e1/e2 (apply.js 가 만드는 드롭 그림자) 를 일부러 쓰지 않는다.
+     밝은 테마(위 3168~3169)는 종이 위 물체라 그림자가 맞으므로 그대로 둔다.
+     떠 있는 판(입력 바 · 팝업)이 쓰는 e3~e5 는 그림자가 제 몫을 하므로 건드리지 않는다 */
+  --bl-e1: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  --bl-e2: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --bl-e3: var(--salty-e3, inset 0 2px 3px -2px rgba(255, 255, 255, 0.16), 0 1px 3px rgba(0, 6, 16, 0.24), 0 8px 18px -8px rgba(0, 6, 16, 0.45));
+  --bl-e4: var(--salty-e4, inset 0 2px 3px -2px rgba(255, 255, 255, 0.2), 0 2px 6px rgba(0, 6, 16, 0.28), 0 14px 30px -12px rgba(0, 6, 16, 0.55));
+  --bl-e5: var(--salty-e5, inset 0 2px 3px -2px rgba(255, 255, 255, 0.18), 0 4px 12px rgba(0, 6, 16, 0.32), 0 22px 48px -18px rgba(0, 6, 16, 0.6));
+  --bl-sheet: var(--salty-sheet, inset 0 10px 10px -10px rgba(0, 6, 16, 0.4), 0 16px 34px -14px rgba(0, 6, 16, 0.5));
+  --bl-press: var(--salty-press, inset 0 1px 3px rgba(0, 6, 16, 0.45));
+  --bl-well-in: var(--salty-well-in, inset 0 1px 2px rgba(0, 6, 16, 0.3));
+  --bl-knob: var(--salty-knob, 0 1px 2px rgba(0, 6, 16, 0.4), 0 2px 6px -1px rgba(0, 6, 16, 0.35));
+  --bl-track: var(--salty-track, inset 0 1px 2px rgba(0, 6, 16, 0.3));
+  --bl-scrim: var(--salty-scrim, rgba(0, 6, 14, 0.6));
+}
+
+/* ---------- 세그먼트 탭 (jQuery UI 탭) — 설정 창 .salty-tabs 와 같은 모양 ---------- */
+body.salty .ui-tabs .ui-tabs-nav {
+  display: flex;
+  gap: 2px;
+  padding: 3px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: var(--bl-fill-hover, var(--bl-hover)) !important;
+}
+body.salty .ui-tabs .ui-tabs-nav li {
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: var(--bl-r-sm) !important;
+  background: transparent !important;
+}
+body.salty .ui-tabs .ui-tabs-nav .ui-tabs-anchor {
+  padding: 7px 12px !important;
+  color: var(--salty-muted) !important;
+  font-size: var(--bl-fs-sub);
+  font-weight: 650;
+}
+body.salty .ui-tabs .ui-tabs-nav li.ui-tabs-active {
+  background: var(--salty-fill-surface, var(--salty-surface)) !important;
+  box-shadow: var(--bl-e2) !important;
+}
+body.salty.salty-dark .ui-tabs .ui-tabs-nav li.ui-tabs-active {
+  background: color-mix(in srgb, var(--salty-text) 18%, var(--salty-surface)) !important;
+}
+body.salty .ui-tabs .ui-tabs-nav li.ui-tabs-active .ui-tabs-anchor {
+  color: var(--salty-text) !important;
+}
+
+/* ---------- 태그 · 거르기 칩 (리뷰 반영의 예전 태그 규칙보다 뒤라서 이김) ---------- */
+body.salty .tag {
+  min-height: 24px;
+  padding: 1px 9px !important;
+  border: 0 !important;
+  border-radius: var(--bl-r-pill) !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  font-size: var(--bl-fs-cap) !important;
+  font-weight: 600;
+}
+body.salty .tag:not([style*="background"]) {
+  background: var(--bl-fill-hover, var(--bl-hover)) !important;
+  color: var(--salty-text) !important;
+}
+/* 캐릭터 목록 거르기 동그라미(★ · 묶음 · 폴더 · ⚙ · 태그): 분홍 · 노랑 칠 대신 떠 있는 칩 */
+body.salty .rm_tag_filter .tag.actionable {
+  justify-content: center;
+  width: var(--bl-h-icon);
+  min-width: var(--bl-h-icon);
+  height: var(--bl-h-icon);
+  min-height: var(--bl-h-icon);
+  padding: 0 !important;
+  background-color: var(--bl-control) !important;
+  box-shadow: var(--bl-e2) !important;
+  color: var(--salty-muted) !important;
+  filter: none !important;
+  font-size: 14px !important;
+}
+body.salty .rm_tag_filter .tag.actionable:not(.selected):not(.excluded) {
+  opacity: 1 !important;
+}
+body.salty .rm_tag_filter .tag.actionable .tag_name {
+  color: inherit !important;
+}
+body.salty .rm_tag_filter .tag.actionable.clearAllFilters {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  color: var(--salty-faint) !important;
+}
+/* 글자 태그: 안 고른 것은 흐리게 (고름 · 뺌과 구분) */
+body.salty .rm_tag_filter .tag:not(.actionable):not(.selected):not(.excluded) {
+  opacity: 0.55 !important;
+}
+/* 고른 것: 옅은 포인트 면 + 포인트 테두리 */
+body.salty .rm_tag_filter .tag.selected {
+  background-color: var(--bl-selected) !important;
+  box-shadow: inset 0 0 0 2px var(--salty-accent), var(--bl-e1) !important;
+  color: var(--salty-accent) !important;
+  opacity: 1 !important;
+}
+body.salty .rm_tag_filter .tag.filterByFavorites.selected {
+  color: var(--bl-lemon) !important;
+}
+/* 뺀 것: 흐린 호박 면 + 호박 테두리 + × */
+body.salty .tag.excluded,
+body.salty .rm_tag_filter .tag.excluded {
+  background-color: var(--bl-warn-bg) !important;
+  box-shadow: inset 0 0 0 2px var(--bl-warn) !important;
+  color: var(--bl-warn) !important;
+  opacity: 1 !important;
+}
+body.salty .tag.excluded::after {
+  color: var(--bl-warn) !important;
+  text-shadow: none !important;
+}
+body.salty .rm_tag_filter .tag.actionable.excluded::after {
+  top: 0 !important;
+  height: 100% !important;
+  font-size: 22px !important;
+  line-height: var(--bl-h-icon) !important;
+}
+
+/* ---------- 폰: 서랍은 바 밑에 붙은 시트 (바 그림자는 시트 안쪽 윗면에) ---------- */
+@media screen and (max-width: 1000px) {
+  html body.salty #top-bar {
+    box-shadow: var(--bl-e3) !important;
+  }
+  html body.salty .drawer-content {
+    border-radius: 0 0 var(--bl-r-lg) var(--bl-r-lg) !important;
+    box-shadow: var(--bl-sheet) !important;
+  }
+}
+/* ---------- 폰: 한 단 좁은 밀도 (토큰 한 곳에서 — 모든 화면이 따라감) ---------- */
+/* 줄 · 버튼은 36~40 (누를 자리는 36 이상), 글자 · 카드 안 여백은 한 단 작게.
+   묶음 사이(카드 12px · 묶음 이름 16/8)는 그대로 — 묶음 안보다 묶음 사이가 넓어야 안 답답함 */
+@media screen and (max-width: 1000px) {
+  body.salty {
+    --bl-fs-micro: calc(var(--mainFontSize, 15px) * 0.733); /* 11 */
+    --bl-fs-cap: calc(var(--mainFontSize, 15px) * 0.8);     /* 12 */
+    --bl-fs-sub: calc(var(--mainFontSize, 15px) * 0.833);   /* 12.5 */
+    --bl-fs-ctl: calc(var(--mainFontSize, 15px) * 0.9);     /* 13.5 */
+    --bl-fs-body: calc(var(--mainFontSize, 15px) * 0.933);  /* 14 */
+    --bl-fs-head: calc(var(--mainFontSize, 15px) * 1.133);  /* 17 */
+    --bl-fs-title: calc(var(--mainFontSize, 15px) * 1.333); /* 20 */
+    --bl-gutter: 14px;
+    --bl-inset: 12px;
+    --bl-h-num: 30px;
+    --bl-h-ctl: 36px;
+    --bl-h-lg: 40px;
+    --bl-h-row: 40px;
+    --bl-h-menu: 36px;
+    --bl-ic: 15px;
+  }
+  /* 시트 위아래 여백 */
+  html body.salty .drawer-content:not(.fillLeft):not(.fillRight) {
+    padding: 6px var(--bl-gutter) 28px !important;
+  }
+  /* ≡ · ✦ 메뉴: 낮은 줄 · 좁은 여백 · 얇은 칸 나눔 띠 */
+  html body.salty :is(#options, #extensionsMenu, .list-group) {
+    padding: 4px !important;
+    border-radius: var(--bl-r-md) !important;
+  }
+  html body.salty #options {
+    padding: 0 !important;
+  }
+  html body.salty #options .options-content {
+    padding: 4px !important;
+  }
+  html body.salty :is(#options .options-content a, #extensionsMenu .list-group-item, #extensionsMenu > .extension_container > div, #extensionsMenu > div:not(.extension_container), .list-group > .list-group-item) {
+    gap: 10px !important;
+    padding: 0 10px !important;
+  }
+  html body.salty #options .options-content hr {
+    height: 3px !important;
+    margin: 4px -4px !important;
+  }
+  /* 팝업: 여백 한 단 좁게 */
+  html body.salty .popup:not(:has(.salty-panel)) {
+    padding: var(--bl-s4) var(--bl-s3) var(--bl-s3) !important;
+  }
+  html body.salty .popup .popup-controls {
+    margin-top: var(--bl-s4) !important;
+  }
+  /* 확장 프로그램 관리 팝업: 다른 폰 목록과 같은 40px 줄 · 본문 글자 (카드 속 카드 없이 판판한 목록) */
+  html body.salty .extensions_info .extension_block {
+    align-items: center !important;
+    min-height: var(--bl-h-row);
+    gap: var(--bl-s2) !important;
+    margin: 0 !important;
+    padding: var(--bl-s1) 0 !important;
+    border: 0 !important;
+    border-radius: var(--bl-r-sm) !important;
+    background: transparent !important;
+    font-size: var(--bl-fs-body);
+  }
+  /* 모듈 줄(선택 모듈: silero-tts …)은 팝업 끝에서 잘리지 말고 다음 줄로 — 실리태번은 한 줄로 자름 */
+  html body.salty .extensions_info .extension_text_block {
+    min-width: 0;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+  html body.salty .extensions_info .extension_name {
+    font-size: var(--bl-fs-body) !important;
+  }
+  html body.salty .extensions_info :is(.extension_version, .extension_author) {
+    font-size: var(--bl-fs-micro) !important;
+  }
+  html body.salty .extensions_info .extension_modules {
+    display: block;
+    color: var(--salty-muted);
+    font-size: var(--bl-fs-sub) !important;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+  /* 선택 모듈 이름: 실리태번이 lightgray 로 박아 흰 카드에서 안 읽힘 (없는 모듈 .failure 빨강은 그대로) */
+  html body.salty .extensions_info .extension_modules .optional {
+    color: var(--salty-faint) !important;
+  }
+  /* 상단 바: 아이콘 한 칸도 다른 줄과 같은 손가락 자리 — 바를 40px 로 (설정 줄 · 팝업 버튼과 같은 눈금).
+     실리태번은 :root 에서 --topBarBlockSize 를 계산해 두므로, 계산에 쓰는 여백 변수가 아니라 결과 변수를 덮어야 함.
+     서랍 시트 위치 · 높이도 이 변수를 쓰니 같이 따라감 */
+  html body.salty {
+    --topBarBlockSize: 40px;
+  }
+  /* 바 면(그림자 있는 띠)은 실리태번이 입력창 높이 변수로 재서 따로 맞춤 */
+  html body.salty #top-bar {
+    height: var(--topBarBlockSize) !important;
+  }
+  html body.salty #top-settings-holder .drawer-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    min-height: 36px;
+  }
+}
+/* ---------- 두 번째 포인트 --bl-pop (블루 아워 레몬) — 모든 화면이 이 규칙대로만 ----------
+   · 레몬 = 채팅 보내기 · 멈춤 버튼(채팅 화면의 단 하나 주 동작) · 지금 있는 곳(열린 서랍 아이콘 · 고른 탭 · 고르기 칸)
+           · 즐겨찾기 · 고정 표시(--bl-lemon: 별 · 잠근 배경)
+   · 파랑 = 그 밖 전부: 버튼 · 링크 · 포커스 · 형광펜 · 켜짐(스위치 · 체크박스)
+           · 고른 항목(카드 · 줄 · 배경 · 태그 · 메시지 · 일괄 선택 — 옅은 포인트 면 + 포인트 테)
+   · 레몬은 불투명 면 + 남색 글자(--bl-on-pop), 또는 남색 위 레몬 글자로만 (비치는 노랑은 올리브색)
+   레몬에이드는 --bl-pop 이 포인트 파랑이라 아래 규칙은 어두운 테마만 */
+/* 열린 서랍 아이콘: 파란 알약 위 레몬 */
+body.salty.salty-dark #top-settings-holder .drawer-icon.openIcon:not(.redOverlayGlow) {
+  color: var(--bl-pop) !important;
+}
+/* 고른 탭 · 고르기 칸: 한 톤 밝은 칸 위 레몬 글자 */
+body.salty.salty-dark .ui-tabs .ui-tabs-nav li.ui-tabs-active .ui-tabs-anchor,
+body.salty.salty-dark #Backgrounds #bg_tabs .bg_tabs_list .bg_tab_button.ui-tabs-active a {
+  color: var(--bl-pop) !important;
+}
+body.salty.salty-dark :is(.salty-tabs, .salty-seg, .salty-shapes) button.on {
+  color: var(--bl-pop); /* 모양 고르기는 이름 · 그림 둘 다 */
+}
+/* 채팅 보내기 · 생성 멈춤: 레몬 동그라미 + 남색 아이콘 (그림자는 입력창 칸의 중립 e2 그대로) */
+body.salty.salty-dark #send_but,
+body.salty.salty-dark #rightSendForm > #mes_stop {
+  background: var(--bl-fill-pop, var(--bl-pop)) !important;
+  color: var(--bl-on-pop) !important;
+}
+
+/* ---------- --SmartThemeQuoteColor = 포인트색 (apply.js) ----------
+   실리태번 · 확장은 이 변수를 포인트로 씀 (링크 · 자동완성 · 잠금 표시 · 타번 헬퍼 스위치 · 전개지시 등).
+   채팅 대사는 q 에 대사 색을 따로 칠하고, 실리태번이 이 변수로 칠하는 생각 칸 속 대사만 대사 색으로 되돌림 */
+body.salty #chat .mes_reasoning q,
+body.salty #chat .mes_reasoning q :is(i, em) {
+  color: var(--salty-dialogue);
+}
+/* 문맥 끝(이 위 메시지는 AI 에게 안 보냄): 실리태번 점선이 채팅 .mes 의 테두리 0 에 가려져서 되살림 */
+body.salty #chat .mes.lastInContext {
+  border-top: 3px dotted var(--salty-accent-70) !important;
+}
+/* 매크로 도움말(/? macros): 고른 줄을 포인트색으로 꽉 칠해 글자가 안 보임 → 다른 고른 줄처럼 옅은 포인트 면 + 포인트 테 */
+body.salty .macroBrowser .macro-item {
+  border-radius: var(--bl-r-sm);
+}
+body.salty .macroBrowser .macro-item.selected {
+  background: var(--bl-fill-selected, var(--bl-selected));
+  box-shadow: inset 0 0 0 2px var(--salty-accent);
+}
+body.salty .macroBrowser .macro-item.selected .macro-desc-preview {
+  opacity: 1; /* 옅은 포인트 면 위에서 0.7 투명도면 설명이 흐려짐 */
+}
+/* 출처 별표: 초록 대신 파랑 · 무채색 · 호박 */
+body.salty .macroBrowser .macro-source.isCore:not(.isExtension) {
+  color: var(--salty-muted);
+}
+body.salty .macroBrowser .macro-source.isExtension.isCore {
+  color: var(--salty-accent);
+}
+body.salty .macroBrowser .macro-source.isExtension.isThirdParty {
+  color: var(--bl-warn);
+}
+/* 자동완성 창: 테두리 대신 떠 있는 메뉴 그림자 (글자색은 apply.js 가 --ac-style-color-* 로) */
+body.salty :is(.autoComplete, .autoComplete-details) {
+  border-radius: var(--bl-r-md);
+  box-shadow: var(--bl-e4);
+}
+/* 자동완성 출처 표시: 초록(확장 기본) · 주황(외부 확장) 대신 파랑 · 호박 */
+body.salty .autoComplete-details > .specs > .head > .source.isCore.isExtension {
+  color: var(--salty-accent);
+}
+body.salty .autoComplete-details > .specs > .head > .source.isThirdParty.isExtension,
+body.salty .autoComplete > .item.macro-ac-item > .macro-source.isThirdParty {
+  color: var(--bl-warn);
+}
+/* ===== /surfaces:foundation ===== */

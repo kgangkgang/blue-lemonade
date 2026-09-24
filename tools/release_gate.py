@@ -52,6 +52,18 @@ def inventory(root, kind):
     names = ['manifest.json', 'index.js', 'style.css', 'README.md']
     if kind == 'theme':
         names += [p.relative_to(root).as_posix() for p in (root / 'src').rglob('*') if p.is_file() and p.suffix in {'.js', '.css'}]
+        # Corresponding editable source, build tools and bundled license/template files.
+        for name in ['LICENSE', 'THIRD-PARTY-NOTICES.md']:
+            if (root / name).is_file(): names.append(name)
+        names += [p.relative_to(root).as_posix() for p in (root / 'css').glob('*.css')]
+        for name in ['build-css.cjs','build-plain-scripts.mjs','gen-preview-css.js','gen-user-profile.cjs','css-lib.cjs','css-bucket.cjs','css-park.cjs']:
+            if (root / 'tools' / name).is_file(): names.append('tools/' + name)
+        for folder in ['translator','prompt','customstyle']:
+            bundle = root / 'src' / 'addons' / folder
+            if bundle.is_dir():
+                require((bundle / 'LICENSE').is_file(), f'Missing bundled license: {folder}')
+                names += [p.relative_to(root).as_posix() for p in bundle.rglob('*') if p.is_file() and (p.suffix in {'.html','.json','.md'} or p.name == 'LICENSE')]
+        if (root / 'src/vendor/README.md').is_file(): names.append('src/vendor/README.md')
         # Only these curated weather atlases are runtime images. Do not sweep
         # arbitrary local images into the public package.
         for name in WEATHER_ARTWORK:

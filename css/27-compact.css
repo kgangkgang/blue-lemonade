@@ -1,0 +1,474 @@
+/* ===== css/27-compact.css =====
+   압축 · 스크롤바 대칭 (surfaces:compact).
+   ===== */
+/* ===== 압축 · 스크롤바 대칭 (surfaces:compact, 2026-09-14) =====
+   사용자: "스크롤바 때문에 오른쪽만 뜨는 곳 대대적으로 확인" · "토글 너무 뚱뚱" · "이름/토큰 줄 빼" · "프롬프트 위쪽 2줄" · "API 화면 공백" */
+
+/* ── 스크롤바: 폰은 숨김 — 폰 스크롤바(6~8px)는 잡을 수도 없고 오른쪽 여백만 먹는다. 홈 0 이라 좌우가 저절로 대칭이고 폭도 안 잃는다.
+   --bl-sbw 를 0 으로 두면 위 surfaces:gutter 의 '홈만큼 여백 줄이기' 식이 전부 원래 여백으로 돌아온다. #chat 은 건드리지 않음 (제 규칙이 있음) */
+@media (max-width: 1000px) {
+  body.salty { --bl-sbw: 0px; }
+  body.salty :is(#left-nav-panel, #right-nav-panel, .scrollableInner, #user-settings-block, #PersonaManagement, #rm_print_characters_block, #WorldInfo, #AdvancedFormatting, #Backgrounds, #floatingPrompt, #rm_extensions_block, #rm_api_block, .rm_tag_controls, #world_popup_entries_list):not(#salty-none) {
+    scrollbar-width: none !important;
+    scrollbar-gutter: auto !important;
+  }
+  body.salty :is(#left-nav-panel, #right-nav-panel, .scrollableInner, #user-settings-block, #PersonaManagement, #rm_print_characters_block, #WorldInfo, #AdvancedFormatting, #Backgrounds, #floatingPrompt, #rm_extensions_block, #rm_api_block, .rm_tag_controls, #world_popup_entries_list)::-webkit-scrollbar {
+    display: none !important;
+  }
+  /* 캐릭터 서랍(폰): 위 규칙들이 왼쪽 여백을 --bl-sbw 로 주고 오른쪽은 스크롤바 홈으로 맞추던 구조라, 홈이 0 이 되자 여백이 통째로 사라졌다
+     (사용자: "좌우 여백이 아예 사라져서") → 양쪽 6px 로 못 박음. 서랍 6 + 목록 6 = 카드 좌우 12px, 전과 같은 값 */
+  body.salty #right-nav-panel:not(#salty-none) > .scrollableInner,
+  body.salty #right-nav-panel:not(#salty-none) #form_create,
+  body.salty #right-nav-panel:not(#salty-none) #rm_print_characters_block {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+  body.salty #right-nav-panel:not(#salty-none) #charListFixedTop {
+    margin-inline: 6px;
+  }
+}
+/* ── 스크롤바: PC 는 실제로 스크롤하는 칸(gutter.js 가 .bl-scrolls)에만 양쪽 홈 → 실측(2026-09-14, 1.18 staging):
+   #left-nav-panel · #right-nav-panel 은 서랍 자신이 스크롤하고(안쪽 .scrollableInner 가 아님), #user-settings-block · #PersonaManagement ·
+   #rm_print_characters_block 도 자기가 스크롤해 오른쪽만 6px 넓었다. 자기 padding 이 있는 칸은 홈만큼 덜어 보이는 여백은 그대로 */
+@media (min-width: 1000.1px) {
+  body.salty :is(#left-nav-panel, #right-nav-panel, #user-settings-block, #PersonaManagement, #rm_print_characters_block, #WorldInfo, #AdvancedFormatting, #Backgrounds, #floatingPrompt, #rm_extensions_block, #rm_api_block, .rm_tag_controls).bl-scrolls:not(#salty-none) {
+    scrollbar-gutter: stable both-edges !important;
+  }
+  body.salty :is(#user-settings-block, #PersonaManagement, #rm_print_characters_block).bl-scrolls:not(#salty-none) {
+    padding-left: max(0px, calc(var(--bl-gutter, 16px) - var(--bl-sbw))) !important;
+    padding-right: max(0px, calc(var(--bl-gutter, 16px) - var(--bl-sbw))) !important;
+  }
+}
+/* 프롬프트 목록의 양끝 닿기: .scrollableInner 여백이 (여백 − 홈) 이므로 그만큼만 내어 씀 — 전에는 여백 전부를 내어 써서 6px 이 칸 밖으로 나갔다 */
+body.salty #completion_prompt_manager #completion_prompt_manager_list {
+  width: calc(100% + (var(--bl-gutter) - var(--bl-sbw)) * 2) !important;
+  margin: 0 calc((var(--bl-gutter) - var(--bl-sbw)) * -1) !important;
+}
+
+/* ── 프롬프트 관리자: '이름 · 토큰' 머리줄 없앰 (사용자: "이름이랑 토큰인 거 모르는 사람이 어디 있어") */
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_list_head {
+  display: none !important;
+}
+/* 위쪽을 두 줄로: 1줄 '프롬프트 · 총 토큰', 2줄 '고르기 + 아이콘 여섯' (아이콘은 30px 로 줄여 390px 에서도 한 줄) */
+body.salty #completion_prompt_manager .completion_prompt_manager_footer {
+  flex-wrap: nowrap !important;
+  gap: 0 2px !important;
+  padding: var(--bl-s1) 0 var(--bl-s2) !important;
+}
+body.salty #completion_prompt_manager .completion_prompt_manager_footer > select {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  margin: 0 4px 0 0 !important;
+}
+body.salty #completion_prompt_manager .completion_prompt_manager_footer > .menu_button {
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  font-size: 13px !important;
+}
+body.salty #completion_prompt_manager .completion_prompt_manager_footer > .menu_button:last-child {
+  margin-right: -4px !important;
+}
+/* 켜기: 뚱뚱한 스위치 대신 22px 동그라미 — 꺼짐은 옅은 고리, 켜짐은 포인트색 꽉 찬 원 + 체크. 조작 칸 112 → 104 (켜기 38 → 30) */
+body.salty #left-nav-panel #openai_settings #completion_prompt_manager > .range-block {
+  --pm-ctl: 104px;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt_manager_prompt_controls {
+  grid-template-columns: 40px 34px 30px !important;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt_manager_prompt_controls > .prompt-manager-toggle-action {
+  width: 30px !important;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action::before {
+  left: 4px;
+  width: 22px;
+  height: 22px;
+  margin-top: -11px;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--salty-faint);
+  transition: background-color 0.18s ease, box-shadow 0.18s ease;
+}
+body.salty:not(.salty-dark) #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action::before {
+  background: transparent;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action::after {
+  left: 11px;
+  width: 5px;
+  height: 9px;
+  margin-top: -7px;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  border: solid var(--salty-on-accent, #fff);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action.fa-toggle-on::before {
+  background: var(--salty-fill-accent, var(--salty-accent));
+  box-shadow: none;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action.fa-toggle-on::after {
+  transform: rotate(45deg);
+  opacity: 1;
+}
+
+/* ── API 화면(폰): 이름 왼쪽 · 칸 오른쪽 한 줄씩 — 마크업이 h4 + 칸 나열이라 각 묶음을 두 열 표로.
+   URL · 키 · 모델 이름은 반으로 나누면 못 읽으니 두 칸씩 나란히가 아니라 이름을 옆으로 붙여 높이를 반으로. 안내 글(/v1 · 키 숨김)은 숨김 */
+/* (2.0.11) 폰 전용이던 것을 PC 에도 — 사용자: "모바일이랑 PC 랑 따로 가지 말고 같이" */
+/* 실리태번이 jQuery show() 로 인라인 display:block 을 박으므로 !important, 숨김(display:none)은 살림 — #range_block_openai 와 같은 함정 */
+body.salty #rm_api_block #openai_api:not([style*="display: none"]):not([style*="display:none"]),
+body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container):not([style*="display: none"]):not([style*="display:none"]) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 40%) minmax(0, 1fr);
+  gap: 10px 12px; /* 2.0.15: 줄 사이 10 (6 은 숨 막힘 — 사용자) */
+  align-items: center;
+}
+/* 3.0.0: 여기 있던 규칙 'body.salty #rm_api_block #openai_api > *, body.salty #rm_api_block #openai_api :is(form, d…' 은 css/99-lazy-panel.css 로 옮김 (서랍 · 팝업이 열렸을 때만 켜짐) */
+body.salty #rm_api_block #openai_api > h4,
+body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > h4 {
+  grid-column: 1;
+  padding: 0 !important;
+  font-size: var(--bl-fs-sub) !important;
+  line-height: 1.3;
+}
+body.salty #rm_api_block #openai_api > :is(select, input.text_pole, .flex-container:has(> .text_pole), .flex-container:has(> select)),
+body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > :is(select, input.text_pole, .flex-container:has(> .text_pole), .flex-container:has(> select)) {
+  grid-column: 2;
+}
+body.salty #rm_api_block #openai_api :is(form, div):has(> h4) > :is(div:has(> small:only-child), .neutral_warning) {
+  display: none !important;
+}
+body.salty #rm_api_block #openai_api > :is(.flex-container:has(> .api_button), .online_status) {
+  grid-column: 1 / -1;
+}
+/* 3.0.0: 여기 있던 규칙 'body.salty #rm_api_block > #title_api' 은 지움 — margin-bottom → 이 파일 아래 (같은 선택자 규칙이 덮음) */
+
+
+/* ── 빠른 답변 편집(사용자: "완전 ppt같아 — 칸 정렬 맞추고 여백은 남기고 가독성"): 상자 속 상자를 걷어 내고 판판한 줄로.
+   구역 카드 · 옵션 카드는 없애고(제목 글자만), 항목은 옅은 톤 한 장 위에 이름 · 본문 · 도구가 같은 왼쪽 끝(☰ 칸 다음)에서 시작.
+   기존 규칙(13922~ · 14230~)보다 아이디 하나 더 얹어 이긴다 */
+body.salty #rm_extensions_block #qr--settings :is(#qr--global, #qr--chat, #qr--character, #qr--editor) {
+  margin: 12px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+body.salty #rm_extensions_block #qr--settings .qr--head { margin-bottom: 4px; }
+body.salty #rm_extensions_block #qr--settings .qr--title {
+  font-size: var(--bl-fs-cap);
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  color: var(--salty-muted);
+}
+/* 세트 줄: 고르기 + 아이콘 여섯을 한 줄에 */
+body.salty #rm_extensions_block #qr--editor > .qr--head > .qr--actions {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 2px !important;
+}
+body.salty #rm_extensions_block #qr--editor > .qr--head #qr--set {
+  flex: 1 1 0 !important;
+  width: auto;
+  min-width: 0;
+  height: 32px;
+  margin: 0 4px 0 0 !important;
+}
+/* 옵션: 상자 없이 스위치 줄처럼 — 이름 · 설명, 색은 '색상 [견본] [지우기]' 한 줄 */
+body.salty #rm_extensions_block #qr--settings #qr--set-settings {
+  margin: 4px 0 10px;
+  padding: 0 2px;
+  border-radius: 0;
+  background: transparent;
+}
+body.salty #rm_extensions_block #qr--settings #qr--set-settings > label.flex-container {
+  min-height: 36px;
+  padding: 4px 0;
+  gap: 10px !important;
+  font-size: var(--bl-fs-body);
+  line-height: 1.4;
+}
+body.salty #rm_extensions_block #qr--settings #qr--set-settings > label.flex-container small { font-size: var(--bl-fs-micro); }
+body.salty #rm_extensions_block #qr--settings #qr--set-settings > .flex-container.alignItemsCenter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding: 4px 0;
+}
+body.salty #rm_extensions_block #qr--settings #qr--set-settings > .flex-container.alignItemsCenter > span {
+  order: -1;
+  flex: 1;
+  font-size: var(--bl-fs-body);
+}
+body.salty #rm_extensions_block #qr--settings #qr--set-settings > .flex-container.alignItemsCenter > #qr--colorClear {
+  height: 30px;
+  min-height: 30px;
+  margin: 0;
+  padding: 0 12px;
+  font-size: var(--bl-fs-sub);
+}
+/* 항목: 톤 한 장 · 이름은 오목한 칸 · 본문은 그 아래 같은 왼쪽 끝 · 도구는 오른쪽 아래 */
+body.salty #rm_extensions_block #qr--settings .qr--set-item { margin: 0 0 6px; }
+body.salty #rm_extensions_block #qr--settings .qr--set-item > .qr--content {
+  grid-template-columns: 18px minmax(0, 1fr) 28px;
+  gap: 4px 6px;
+  padding: 6px 8px 4px;
+  border: 0;
+  border-radius: var(--bl-r-md);
+  background: var(--salty-fill-field, var(--salty-field));
+  box-shadow: none;
+}
+body.salty #rm_extensions_block #qr--settings .qr--content > .drag-handle { justify-self: start; font-size: 13px; }
+body.salty #rm_extensions_block #qr--settings .qr--set-itemLabel {
+  height: 32px;
+  padding: 0 8px !important;
+  border-radius: 8px !important;
+  background: var(--bl-fill-well, var(--bl-well)) !important;
+  box-shadow: var(--bl-well-in) !important;
+  font-size: var(--bl-fs-body);
+  font-weight: 600;
+}
+body.salty #rm_extensions_block #qr--settings .qr--set-itemMessage {
+  grid-area: 2 / 2 / 3 / -1;
+  height: auto;
+  min-height: 56px;
+  margin: 0;
+  padding: 6px 8px !important;
+  border-radius: 8px !important;
+  background: var(--bl-fill-well, var(--bl-well)) !important;
+  box-shadow: var(--bl-well-in) !important;
+  font-size: var(--bl-fs-sub);
+  line-height: 1.45;
+}
+body.salty #rm_extensions_block #qr--settings .qr--content > .qr--actions {
+  grid-area: 3 / 2 / 4 / -1;
+  gap: 2px;
+  padding: 2px 0 0;
+}
+body.salty #rm_extensions_block #qr--settings .qr--set-qrListActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px;
+  padding: 2px 0 0;
+}
+body.salty #rm_extensions_block #qr--settings :is(.menu_button_icon, .qr--action) {
+  width: 28px !important;
+  min-width: 28px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  border-radius: 7px;
+}
+
+/* ── 밝은 모드 면 구분 (사용자: "화이트 테마에선 뭐가 뭔지 전혀 구분이 안 돼 … 뭐 클릭하다가 다른 거 클릭하겠어")
+   파스텔 흰 바탕(명도 98~99)에서 바탕 · 카드 · 버튼 · 떠 있는 입력칸이 전부 흰색이라 경계가 사라졌다.
+   팔레트(palettes.js · apply.js)는 다른 세션이 손보는 중이라 건드리지 않고 토큰만 덮는다:
+   버튼 · 떠 있는 입력칸 면 = 먹 6%(--salty-shade, 반투명이라 흰 카드 위에선 옅은 회색, 크림 바탕 위에선 크림 회색),
+   누름 = 먹 11%, 카드 그림자엔 먹 6% 고리 한 겹 — 색상 혼합(color-mix) 없이 기존 토큰만 씀 */
+body.salty.salty-light {
+  --bl-control: var(--salty-shade);
+  --bl-control-hover: var(--salty-shade-2);
+  --bl-e1: 0 0 0 1px var(--salty-shade), 0 2px 8px -2px var(--salty-shade-2);
+  --bl-e2: 0 0 0 1px var(--salty-shade-2), 0 3px 10px -2px var(--salty-shade-2); /* 떠 있는 버튼(e2)은 고리 11% — 카드(e1)보다 한 단 또렷하게 */
+}
+
+/* ── select2 목록(월드인포 활성 월드 고르기 등): 실리태번은 왼쪽 6px 에 체크 상자(::before)를 두고 padding-left 30 을 잡는데
+   테마가 padding 을 --bl-s3 로 덮어 체크가 첫 글자를 덮었다 (사용자: "PC 월드인포 선택에 글자 충돌"). 다중 선택 목록만 자리를 되돌리고
+   상자를 테마 모양(고리 · 켜짐은 포인트색 + 체크)으로, 단일 선택 목록은 상자를 뺀다 */
+body.salty .select2-results__options[aria-multiselectable="true"] .select2-results__option {
+  position: relative;
+  padding-left: 34px !important;
+}
+body.salty .select2-results__options[aria-multiselectable="true"] .select2-results__option::before {
+  left: 10px;
+  width: 16px;
+  height: 16px;
+  margin-top: -8px;
+  border: 0;
+  border-radius: 4px;
+  background-color: transparent;
+  box-shadow: inset 0 0 0 2px var(--salty-shade-2);
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+}
+body.salty .select2-results__options[aria-multiselectable="true"] .select2-results__option--selected::before {
+  content: '¹3';
+  color: var(--salty-on-accent, #fff);
+  background-color: var(--salty-accent);
+  box-shadow: none;
+}
+body.salty .select2-results__options:not([aria-multiselectable="true"]) .select2-results__option::before {
+  display: none;
+}
+
+/* ── 확장 서랍 두 칸(PC): 확장 순서(panel-order 1.1.0)가 넓은 화면에서 고정한 확장을 왼쪽 칸, 나머지를 오른쪽 칸에 두는데
+   테마가 두 칸에 flex-basis 300px 을 주어 서랍이 620px 보다 좁으면 위아래로 쌓였다 → 둘 다 보일 때는 반씩 나란히.
+   둘째 칸이 숨겨지면(인라인 display:none) 첫째 칸이 혼자 늘어나 전체 폭 */
+@media (min-width: 1001px) {
+  body.salty #rm_extensions_block .extensions_block > :is(#extensions_settings, #extensions_settings2):not([style*="display: none"]):not(#salty-none) {
+    flex: 1 1 calc(50% - var(--bl-s4)) !important;
+    min-width: 0 !important;
+  }
+}
+
+/* ── 캐릭터 서랍 · 밝은 모드 (사용자: "즐겨찾기 카드 흰색이면 안 보이고 · 아이콘 그림자가 하단에 잘려 · 카드 왼쪽은 잘 안 보여") */
+/* 즐겨찾기 타일: 흰 카드가 흰 바탕에 묻힘 → 떠 있는 버튼과 같은 고리(11%) + 그림자 */
+/* 3.0.0: 여기 있던 규칙 'body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar' 은 지움 — box-shadow → 이 파일 아래 (같은 선택자 규칙이 덮음) */
+/* 거르기 동그라미 줄: 가로 스크롤 상자라 2.0.2 에서 커진 그림자(아래 3px + 번짐 10)가 잘림 → 아래 여백을 10 으로, 그만큼 바깥으로 되돌려 자리는 그대로 */
+body.salty #right-nav-panel .rm_tag_controls:not(#salty-none) {
+  margin: 0 -3px -7px !important;
+  padding: 3px 3px 10px !important;
+}
+/* 캐릭터 카드: 왼쪽이 투명해지는 그라데이션이 흰 바탕과 붙어 왼쪽 가장자리가 사라짐 → 밝은 모드는 판판한 카드 면 + 11% 고리 (지금 채팅 중 카드의 포인트 테두리는 그대로) */
+body.salty #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select, .bogus_folder_select):not(.salty-current):not(#salty-none) { /* 2.0.11: 나이트에도 */
+  background: var(--bl-fill-card, var(--bl-card)) !important;
+  box-shadow: var(--bl-e2) !important;
+}
+
+/* ── 현재 페르소나 카드 둘째 줄 (사용자: "아이콘 중앙정렬 안 맞음 · 추가 설정들을 더 키우던지"): 아이콘 여섯은 왼쪽에 모아 34px 칸 · 4px 틈,
+   '추가 설정들' 고르기는 남는 폭 전부(전에는 104px 고정에 아이콘은 열 폭에 흩어짐), 높이는 둘 다 34 로 가운데 맞춤 */
+body.salty #PersonaManagement #persona_controls:not(#salty-none) {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 8px !important;
+}
+body.salty #PersonaManagement #persona_controls:not(#salty-none) .persona_controls_buttons_block {
+  width: auto;
+  gap: 4px !important;
+  justify-content: flex-start !important;
+  align-items: center;
+}
+body.salty #PersonaManagement #persona_controls:not(#salty-none) .persona_controls_buttons_block .menu_button {
+  width: 34px !important;
+  min-width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+}
+body.salty #PersonaManagement #persona_controls:not(#salty-none) > label {
+  display: flex;
+  align-items: center;
+  justify-self: stretch;
+  width: 100% !important;
+  max-width: none !important;
+  height: 34px !important;
+}
+body.salty #PersonaManagement #persona_controls:not(#salty-none) #persona-management-dropdown {
+  flex: 1 1 auto;
+  width: 100% !important;
+  min-width: 0;
+  height: 34px !important;
+  min-height: 34px !important;
+  font-size: var(--bl-fs-sub) !important;
+}
+/* 사용자 설정 서랍(폰): 좌우 4px 은 너무 붙음 (사용자) → 10px */
+@media (max-width: 1000px) {
+  body.salty #user-settings-block:not(#salty-none) {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+}
+
+/* ── API 서랍(폰) 제목 줄 (사용자: "API 글자랑 챗 컴플리션 1줄로"): 제목 h3 와 API 종류 고르기는 형제가 아니라(고르기는 세로 flex 칸 안)
+   그 칸을 display:contents 로 풀어 서랍 그리드의 항목으로 올린다 → 1줄 = 'API' + 고르기, 아래 묶음들은 전체 폭 */
+/* (2.0.11) 폰 전용이던 것을 PC 에도 — 사용자: "모바일이랑 PC 랑 따로 가지 말고 같이" */
+/* 서랍이 열려 있을 때만 (닫힘은 .closedDrawer 의 display:none — !important 그리드가 그것까지 이겨 제목 줄이 채팅 위에 떠다녔다, 2.0.12) */
+body.salty #rm_api_block.openDrawer:not(.closedDrawer):not([style*="display: none"]):not(#salty-none) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 40%) minmax(0, 1fr);
+  gap: 10px 12px;
+  padding: 14px var(--bl-gutter, 14px) 18px !important; /* 2.0.15: 그리드로 바꾸며 사라졌던 서랍 안쪽 여백 */
+  align-content: start;
+  align-items: center;
+}
+body.salty #rm_api_block:not(#salty-none) > * { grid-column: 1 / -1; min-width: 0; }
+body.salty #rm_api_block:not(#salty-none) > .flex-container.flexFlowColumn { display: contents; }
+body.salty #rm_api_block:not(#salty-none) > .flex-container.flexFlowColumn > * { grid-column: 1 / -1; min-width: 0; }
+body.salty #rm_api_block:not(#salty-none) > #title_api { grid-column: 1; grid-row: 1; margin: 0 !important; }
+body.salty #rm_api_block:not(#salty-none) > .flex-container.flexFlowColumn > #main-API-selector-block { grid-column: 2; grid-row: 1; margin: 0 !important; }
+body.salty #rm_api_block:not(#salty-none) > .flex-container.flexFlowColumn > #main-API-selector-block > select { width: 100%; margin: 0 !important; }
+body.salty #rm_api_block:not(#salty-none) > .flex-container.flexFlowColumn > #openai_api { margin-top: 8px; }
+body.salty #rm_api_block #openai_api > .flex-container:has(> .api_button) { margin-top: 6px !important; }
+body.salty #rm_api_block #openai_api > .online_status { margin-top: 2px !important; }
+
+
+/* ── 확장 서랍 맨 아래 '(지원 중단) 외부 API' 묶음 숨김 (사용자: "지원 안 함인데 왜 있는겨") — 제목 줄 · 주소/키 입력 줄 · 그 위 가로줄 */
+/* 3.6.0: 가로줄 갈래가 :has( … :has( … )) 로 겹쳐 있어 브라우저가 그 갈래만 버리고 있었다(겹친 :has 는 무효) → 줄이 남아 있었음 */
+body.salty #rm_extensions_block .extensions_block > :is(
+  hr.wide100p:has(+ .flex-container #extensions_status),
+  .flex-container:has(> h4 > [data-i18n="(DEPRECATED)"]),
+  .flex-container:has(#extensions_status),
+  .flex-container:has(> #extensions_url)
+) {
+  display: none !important;
+}
+
+/* ── 캐릭터 서랍 (사용자 2차 지적): 즐겨찾기 타일은 고리만으로는 약함 → 옅은 포인트색 면(--salty-tint-12) + 고리 (밝음 · 나이트 공통).
+   카드의 별 배지는 아바타 밖(-6px)으로 나가 카드 테두리를 뚫었음 → 아바타 안쪽 모서리로 */
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar {
+  background: var(--salty-tint-12, var(--bl-card));
+  box-shadow: var(--bl-e2);
+}
+/* 3.0.0: 여기 있던 규칙 'body.salty #right-nav-panel :is(.character_select, .group_select, .group_member)…' 은 지움 — top · right · width · height · font-size → css/28-late-fixes.css (같은 선택자 규칙이 덮음) */
+
+/* ── 챗 컴플리션 프리셋 카드 (사용자: "연결 표시랑 이름 블록 끝나는 부분 안 맞아서 불편"): 제목 줄 아이콘 넷과 고르기 줄 아이콘 셋의 열을 맞춤.
+   3.5.3: 전에는 카드를 5열 표로 풀고(display:contents) 고르기는 "select 가 바로 그 자리"일 때만 1~2열에 놓았다. 다른 확장이 고르기를
+   감싸거나(div) select2 처럼 옆에 다른 칸을 붙이면 그 칸은 자리가 없어, 단추 셋이 앞 칸부터 차고 고르기가 맨 끝 34px 칸에 끼어 밖으로
+   튀어나갔다 (제보: "(저장)(이름 수정)(프리셋으로 저장)(프리셋 목록 튀어나감)"). → 두 줄을 각각 flex 줄로: 아이콘은 34px · 간격 2px 로
+   오른쪽에 붙고, 나머지(제목 · 고르기 · 무엇이 끼든)는 남은 폭. 두 줄 모두 오른쪽 끝이 같아 아이콘 열이 저절로 맞는다 */
+body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > :is(.standoutHeader, .standoutHeader + .flex-container) {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center;
+  gap: 2px !important;
+  min-width: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+/* 4.1.2: 오른쪽 끝이 :not() (아무 요소)인데 왼쪽에 :has() 가 있으면 채팅 글자 한 조각마다 메시지 전체를 다시 계산한다 (lite.js 설명).
+   바로 다음 칸이 이미 .standoutHeader 를 요구하므로 :has() 는 뜻이 같은 :is(.bl-s, *) (무게 같음)로 바꾼다 */
+body.salty #left-nav-panel #openai_api-presets > div:is(.bl-s, *) > :is(.standoutHeader, .standoutHeader + .flex-container) > :not(.flex-container) {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader > strong {
+  padding-left: 2px;
+}
+body.salty #left-nav-panel #openai_api-presets > div:is(.bl-s, *) > .standoutHeader + .flex-container > :not(.flex-container) {
+  width: auto !important;
+  margin: 0 !important;
+}
+/* 확장이 감싼 고르기 · select2 칸도 칸 폭을 넘지 않게 */
+body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader + .flex-container > :not(.flex-container) :is(select, .select2-container) {
+  width: 100% !important;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0 !important;
+}
+body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > :is(.standoutHeader, .standoutHeader + .flex-container) > .flex-container {
+  display: flex !important;
+  flex: none;
+  flex-wrap: nowrap !important;
+  gap: 2px !important;
+  margin: 0 !important;
+}
+body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > :is(.standoutHeader, .standoutHeader + .flex-container) > .flex-container > :is(.menu_button, label.menu_button) {
+  flex: none;
+  justify-content: center;
+  width: 34px;
+  min-width: 34px;
+  margin: 0 !important;
+}
+/* ===== /surfaces:compact ===== */

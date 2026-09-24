@@ -1,0 +1,451 @@
+/* ===== css/17-semantic.css =====
+   상태 색: 알림 · 지우기 · 경고 · 성공.
+   ===== */
+/* ===== 실리태번 화면: 상태 색 (surfaces:semantic) ===== */
+/* 알림 · 지우기 · 전개지시의 상태 색. 남색 하나로 다 보이던 것을 네 가지로 나눔
+   · 빨강(--bl-danger)은 지우기 · 실패 전용 — 아이콘 · 꽉 찬 버튼 · 알림 띠로만 쓰고 넓은 면엔 절대 안 씀
+     (흰 종이에 옅은 빨강은 분홍, 남색에 옅은 빨강은 보라가 돼서 팔레트가 깨짐)
+   · 주의는 기존 포인트(--bl-pop), 완료·안내는 파랑. 의미는 아이콘과 문구로도 구분한다
+   · 알림은 한 가지 면(e4) + 왼쪽 색 띠 + 색 동그라미 아이콘 (글자는 늘 본문색이라 읽기 쉬움)
+   · 특이도: 이 칸은 surfaces:* 뒤라서 같은 무게면 이김. 서랍 id 가 붙은 예전 규칙은 아래에 따로 덮어씀
+   · 확인 창은 실리태번이 표시를 안 붙여서 src/danger.js 가 .salty-danger-confirm 을 붙여 줌 */
+
+body.salty {
+  /* 빨강: 색상각 3° (분홍 · 연어색 아님) */
+  --bl-danger: var(--salty-danger); /* 팔레트의 삭제색 하나만 사용 */
+  --bl-danger-ink: var(--salty-danger-ink);         /* 빨간 동그라미 · 눌린 버튼 위 글자 */
+  --bl-danger-btn: var(--bl-danger);
+  --bl-danger-btn-hover: var(--bl-danger);
+  --bl-danger-btn-press: var(--bl-danger);
+  --bl-danger-soft: var(--salty-danger-soft);
+  /* 반복되는 삭제도 같은 빨강. 별도의 짙은 빨강은 만들지 않는다. */
+  --bl-danger-quiet: var(--bl-danger);
+  /* 포커스 테: 비치는 빨강은 흰 종이에서 분홍이 돼서, 바탕색 틈 + 꽉 찬 빨강 두 겹으로 */
+  --bl-danger-ring: 0 0 0 2px var(--salty-surface), 0 0 0 4px var(--bl-danger);
+  /* 호박 · 초록 · 파랑 — 알림 동그라미 · 띠처럼 색 자체로 쓰는 자리용
+     (글자로 쓰는 호박은 예전대로 --bl-warn: 흰 면에서 4.5 : 1 넘음) */
+  --bl-warning: var(--bl-pop);
+  --bl-warning-ink: var(--bl-on-pop);
+  --bl-warning-soft: var(--bl-warn-bg);
+  --bl-success: var(--salty-accent);
+  --bl-success-ink: var(--salty-on-accent);
+  --bl-success-soft: var(--salty-toast-success);
+  --bl-info: var(--salty-accent);
+  --bl-info-ink: var(--salty-on-accent, #FFFFFF);
+  --bl-info-soft: var(--salty-accent-10);
+  /* 알림 동그라미 속 그림 (선 아이콘과 같은 1.8~2.6 굵기) */
+  --bl-ic-x: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%3E%3Cpath%20d%3D%22M8%208l8%208M16%208l-8%208%22%2F%3E%3C%2Fsvg%3E");
+  --bl-ic-bang: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%3E%3Cpath%20d%3D%22M12%206.6v6.6%22%2F%3E%3Cpath%20d%3D%22M12%2017.3h.01%22%2F%3E%3C%2Fsvg%3E");
+  --bl-ic-check: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6.6%2012.6l3.8%203.8L17.6%208.4%22%2F%3E%3C%2Fsvg%3E");
+  --bl-ic-i: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%3E%3Cpath%20d%3D%22M12%2011.2v5.9%22%2F%3E%3Cpath%20d%3D%22M12%207.3h.01%22%2F%3E%3C%2Fsvg%3E");
+}
+/* 어두운 테마: 남색 위에서 보이게 한 단 밝은 색 + 글자는 바탕 남색 */
+body.salty.salty-dark {
+  --bl-danger: var(--salty-danger); /* 팔레트의 삭제색 하나만 사용 */
+  --bl-danger-ink: var(--salty-danger-ink);
+  --bl-danger-btn: var(--bl-danger);
+  --bl-danger-btn-hover: var(--bl-danger);
+  --bl-danger-btn-press: var(--bl-danger);
+  --bl-danger-soft: var(--salty-danger-soft);
+  --bl-danger-quiet: var(--bl-danger);
+  --bl-warning: var(--bl-pop);
+  --bl-warning-ink: var(--bl-on-pop);
+  --bl-success: var(--salty-accent);
+  --bl-success-ink: var(--salty-on-accent);
+  --bl-info-ink: var(--salty-bg, #071C2E);
+}
+
+/* ---------- 알림(토스트): 왼쪽 색 띠 + 색 동그라미, 글자는 본문색 ---------- */
+body.salty #toast-container > div,
+body.salty #toast-container > :is(.toast-error, .toast-warning, .toast-success, .toast-info) {
+  --bl-tone: var(--salty-faint);
+  --bl-tone-ink: var(--bl-info-ink);
+  --bl-tone-glyph: var(--bl-ic-i);
+  position: relative;
+  width: min(340px, calc(100vw - 24px)) !important;
+  min-height: 56px;
+  margin: 0 auto var(--bl-s2) !important;
+  padding: 13px var(--bl-s4) 13px 48px !important;
+  overflow: hidden; /* 진행 띠가 둥근 모서리 밖으로 안 나가게 */
+  border: 0 !important;
+  border-radius: var(--bl-r-md) !important;
+  background-color: var(--bl-overlay) !important;
+  background-image: none !important;
+  box-shadow: var(--bl-e4), inset 4px 0 0 var(--bl-tone) !important;
+  color: var(--salty-text) !important;
+  opacity: 1; /* !important 금지: 위와 같은 이유 */
+  font-size: var(--bl-fs-ctl);
+  line-height: 1.45;
+  word-break: keep-all; /* 한글은 낱말 가운데서 안 끊기게 */
+  overflow-wrap: break-word; /* 긴 주소 · 영어 낱말만 꺾음 */
+  cursor: pointer; /* 눌러서 닫을 수 있음 — toastr 는 :hover 에만 줘서 폰에서는 안 보였음 */
+}
+body.salty #toast-container > .toast-error {
+  --bl-tone: var(--bl-danger);
+  --bl-tone-ink: var(--bl-danger-ink);
+  --bl-tone-glyph: var(--bl-ic-x);
+}
+body.salty #toast-container > .toast-warning {
+  --bl-tone: var(--bl-warning);
+  --bl-tone-ink: var(--bl-warning-ink);
+  --bl-tone-glyph: var(--bl-ic-bang);
+}
+body.salty #toast-container > .toast-success {
+  --bl-tone: var(--bl-success);
+  --bl-tone-ink: var(--bl-success-ink);
+  --bl-tone-glyph: var(--bl-ic-check);
+}
+body.salty #toast-container > .toast-info {
+  --bl-tone: var(--bl-info);
+  --bl-tone-ink: var(--bl-info-ink);
+  --bl-tone-glyph: var(--bl-ic-i);
+}
+/* 동그라미(::before) 와 그 속 그림(::after) — 예전 8px 점 규칙을 덮어씀 */
+body.salty #toast-container > div::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: 50%; /* 고정 14px 이면 한 줄 알림에서 3px 위로 떠 보였음 (실측 65 vs 68) */
+  width: 22px;
+  height: 22px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: var(--bl-tone);
+  box-shadow: none;
+}
+body.salty #toast-container > div::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  transform: translateY(-50%);
+  background-color: var(--bl-tone-ink);
+  -webkit-mask: var(--bl-tone-glyph) center / 20px 20px no-repeat;
+  mask: var(--bl-tone-glyph) center / 20px 20px no-repeat;
+}
+/* 실패: 어두운 테마만 동그라미에 옅은 빨간 둘레 빛
+   (흰 종이에서는 비치는 빛이 분홍으로 보여서 뺌 — 예전 호박색 둘레 빛도 여기서 지움) */
+body.salty #toast-container > .toast-error::before {
+  box-shadow: none;
+}
+body.salty.salty-dark #toast-container > .toast-error::before {
+  box-shadow: 0 0 0 4px var(--bl-danger-soft);
+}
+body.salty #toast-container .toast-title {
+  margin-bottom: 2px;
+  color: var(--salty-text);
+  font-size: var(--bl-fs-ctl);
+  font-weight: 700;
+  word-break: keep-all;
+}
+body.salty #toast-container > .toast-error .toast-title {
+  font-weight: 750;
+}
+/* 실리태번의 toastr 가 .toast-message 에 word-wrap: break-word 를 걸어 놔서 한글이 반으로 갈림 */
+body.salty #toast-container .toast-message {
+  color: var(--salty-text);
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+/* 닫기 ×: 조용한 동그라미 (실리태번의 흰 글자 + 그림자 대신) */
+body.salty #toast-container .toast-close-button {
+  position: relative;
+  top: -2px;
+  right: -4px;
+  width: 26px;
+  height: 26px;
+  margin-left: var(--bl-s2);
+  padding: 0 !important;
+  border-radius: 50%;
+  opacity: 1;
+  color: var(--salty-faint);
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 24px;
+  text-shadow: none;
+  filter: none;
+}
+@media (hover: hover) {
+  body.salty #toast-container .toast-close-button:hover {
+    background: var(--bl-fill-hover, var(--bl-hover));
+    opacity: 1;
+    color: var(--salty-text);
+  }
+}
+body.salty #toast-container .toast-close-button:active {
+  background: var(--bl-fill-press-bg, var(--bl-press-bg));
+  color: var(--salty-text);
+}
+/* 남은 시간 띠: 상태 색 얇은 선 */
+body.salty #toast-container .toast-progress {
+  height: 3px;
+  background-color: var(--bl-tone);
+  opacity: 0.4;
+}
+
+/* ---------- 지우기는 빨강: 휴지통 · 해골 아이콘은 쉴 때도 빨강 ----------
+   누르면 빨간 면 + 바탕색 아이콘으로 뒤집힘 (폰에서 눌린 색이 남지 않게 :hover 는 (hover: hover) 안에서만) */
+body.salty :is(.fa-trash, .fa-trash-can, .fa-trash-alt, .fa-skull, :has(> :is(i, span):only-child:is(.fa-trash, .fa-trash-can, .fa-trash-alt, .fa-skull))):where(:not(.salty-panel, .salty-panel *, #nonQRFormItems *, #toast-container *, .popup-controls *, #chat .mes_text *)) {
+  color: var(--bl-danger) !important;
+}
+/* 실리태번 빨강 버튼 클래스: 글자가 있으면 떠 있는 칩에 빨간 글자 */
+body.salty .menu_button:is(.redWarningBG, .red_button, .danger):where(:not(#nonQRFormItems *, .salty-panel *)) {
+  background: var(--bl-fill-control, var(--bl-control)) !important;
+  box-shadow: var(--bl-e2) !important;
+  color: var(--bl-danger) !important;
+}
+/* 아이콘만이면 면 없이 빨간 아이콘 (다른 아이콘 버튼과 같은 자리 · 같은 크기) */
+body.salty .menu_button:is(.redWarningBG, .red_button, .danger):is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):where(:not(#nonQRFormItems *, .salty-panel *)) {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+@media (hover: hover) {
+  body.salty .menu_button:is(.redWarningBG, .red_button, .danger):where(:not(#nonQRFormItems *, .salty-panel *)):hover {
+    background: var(--bl-fill-hover, var(--bl-hover)) !important;
+    color: var(--bl-danger) !important;
+  }
+}
+body.salty .menu_button:is(.redWarningBG, .red_button, .danger):where(:not(#nonQRFormItems *, .salty-panel *)):active {
+  background: var(--bl-danger) !important;
+  box-shadow: var(--bl-press) !important;
+  color: var(--bl-danger-ink) !important;
+}
+body.salty .menu_button:is(.redWarningBG, .red_button, .danger):where(:not(#nonQRFormItems *, .salty-panel *)):focus-visible {
+  box-shadow: var(--bl-danger-ring) !important;
+}
+
+/* ---------- 화면별로 예전 규칙(서랍 id) 덮어쓰기 ---------- */
+/* 캐릭터 지우기(해골): 타일은 그대로, 아이콘만 빨강 */
+body.salty #right-nav-panel #avatar_controls #delete_button {
+  background: var(--bl-fill-control, var(--bl-control)) !important;
+  color: var(--bl-danger) !important;
+}
+@media (hover: hover) {
+  body.salty #right-nav-panel #avatar_controls #delete_button:hover {
+    background: var(--bl-fill-control-hover, var(--bl-control-hover)) !important;
+    color: var(--bl-danger) !important;
+  }
+}
+body.salty #right-nav-panel #avatar_controls #delete_button:active {
+  background: var(--bl-danger) !important;
+  box-shadow: var(--bl-press) !important;
+  color: var(--bl-danger-ink) !important;
+}
+body.salty #right-nav-panel :is(#rm_group_delete, #bulkDeleteButton) {
+  color: var(--bl-danger) !important;
+}
+body.salty #right-nav-panel :is(#tagList, #groupTagList) .tag_remove {
+  color: var(--bl-danger) !important;
+}
+body.salty #character_context_menu_delete {
+  color: var(--bl-danger) !important;
+}
+/* 페르소나 지우기 */
+body.salty #PersonaManagement #persona_controls .persona_controls_buttons_block #persona_delete_button {
+  color: var(--bl-danger) !important;
+}
+/* 월드 인포: 로어북 지우기 · 항목 지우기 */
+body.salty #WorldInfo #world_popup > .flex-container > .menu_button#world_popup_delete {
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--bl-danger) !important;
+}
+body.salty #WorldInfo .world_entry .inline-drawer-header > .delete_entry_button {
+  color: var(--bl-danger) !important;
+}
+@media (hover: hover) {
+  body.salty #WorldInfo .world_entry .inline-drawer-header > .delete_entry_button:hover {
+    background: var(--bl-fill-hover, var(--bl-hover)) !important;
+    color: var(--bl-danger) !important;
+  }
+}
+body.salty #WorldInfo .world_entry .inline-drawer-header > .delete_entry_button:active {
+  background: var(--bl-danger) !important;
+  color: var(--bl-danger-ink) !important;
+}
+/* 로짓 바이어스 · 프록시 프리셋 줄의 휴지통 — 같은 휴지통이 옆 버튼과 색이 달라 보였음 */
+body.salty #left-nav-panel .openai_logit_bias_preset_form > i.menu_button:is(.fa-trash, .fa-trash-can, .fa-trash-alt) {
+  color: var(--bl-danger) !important;
+}
+@media (hover: hover) {
+  body.salty #left-nav-panel .openai_logit_bias_preset_form > i.menu_button:is(.fa-trash, .fa-trash-can, .fa-trash-alt):hover {
+    background: var(--bl-fill-hover, var(--bl-hover)) !important;
+    color: var(--bl-danger) !important;
+  }
+}
+body.salty #left-nav-panel .openai_logit_bias_preset_form > i.menu_button:is(.fa-trash, .fa-trash-can, .fa-trash-alt):active {
+  background: var(--bl-danger) !important;
+  color: var(--bl-danger-ink) !important;
+}
+/* 프롬프트 관리자: 아래 지우기 · 줄마다 빼기 · 넘친 토큰 수 */
+body.salty #left-nav-panel #completion_prompt_manager .completion_prompt_manager_footer > .caution {
+  color: var(--bl-danger) !important;
+}
+@media (hover: hover) {
+  body.salty #left-nav-panel #completion_prompt_manager .completion_prompt_manager_footer > .caution:hover {
+    color: var(--bl-danger) !important;
+  }
+}
+body.salty #left-nav-panel #completion_prompt_manager .completion_prompt_manager_footer > .caution:active {
+  color: var(--bl-danger) !important;
+}
+/* 줄마다 있는 '빼기'는 다시 넣을 수 있고 줄이 85개나 돼서 쉴 때는 조용히 — 손이 닿을 때만 빨강
+   (빨강은 지우기 · 실패 자리로 아낌. 아래 '프롬프트 삭제' 는 그대로 빨강) */
+@media (hover: hover) {
+  body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt_manager_prompt_controls > .prompt-manager-detach-action:hover {
+    background: var(--bl-fill-hover, var(--bl-hover)) !important;
+    color: var(--bl-danger) !important;
+  }
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt_manager_prompt_controls > .prompt-manager-detach-action:active {
+  background: var(--bl-fill-press-bg, var(--bl-press-bg)) !important;
+  color: var(--bl-danger) !important;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list .prompt_manager_prompt_tokens .text_danger {
+  color: var(--bl-danger) !important;
+}
+/* 메시지: ⋯ 메뉴 지우기 · 고치기 줄 지우기 · 생각 지우기 · 그림 · 파일 지우기 */
+body.salty:not(.expandMessageActions) #chat .mes .extraMesButtons > .mes_delete_translation {
+  color: var(--bl-danger);
+}
+@media (hover: hover) {
+  body.salty:not(.expandMessageActions) #chat .mes .extraMesButtons > .mes_delete_translation:hover {
+    background: var(--bl-fill-hover, var(--bl-hover));
+    color: var(--bl-danger);
+  }
+}
+body.salty:not(.expandMessageActions) #chat .mes .extraMesButtons > .mes_delete_translation:active {
+  background: var(--bl-danger);
+  color: var(--bl-danger-ink);
+}
+body.salty.expandMessageActions #chat .mes .extraMesButtons > .mes_delete_translation {
+  color: var(--bl-danger);
+}
+body.salty #chat .mes .mes_edit_buttons .mes_edit_delete {
+  color: var(--bl-danger) !important;
+}
+@media (hover: hover) {
+  body.salty #chat .mes .mes_edit_buttons .mes_edit_delete:hover {
+    background: var(--bl-fill-hover, var(--bl-hover)) !important;
+    color: var(--bl-danger) !important;
+  }
+}
+body.salty #chat .mes .mes_edit_buttons .mes_edit_delete:active {
+  background: var(--bl-danger) !important;
+  color: var(--bl-danger-ink) !important;
+}
+body.salty #chat .mes_reasoning_actions .mes_reasoning_delete,
+body.salty #chat .mes :is(.mes_media_delete, .mes_file_delete) {
+  color: var(--bl-danger) !important;
+}
+/* 줄마다 되풀이되는 지우기(채팅 기록 해골 · 시작 화면 최근 채팅 · 북마크 카드)
+   한 줄에 하나씩 있어도 같은 삭제색을 쓴다. hover 에서도 다른 빨강을 만들지 않는다.
+   카드에 하나뿐인 지우기(로어북 · 페르소나 · 캐릭터 · 고치기 줄)는 그대로 센 빨강 */
+body.salty :is(#select_chat_popup, .select_chat_block_wrapper) .PastChat_cross,
+body.salty :is(#select_chat_popup, .select_chat_block_wrapper) .PastChat_cross > i {
+  opacity: 1 !important;
+  color: var(--bl-danger-quiet) !important;
+}
+@media (hover: hover) {
+  body.salty :is(#select_chat_popup, .select_chat_block_wrapper) .PastChat_cross:hover,
+  body.salty :is(#select_chat_popup, .select_chat_block_wrapper) .PastChat_cross:hover > i {
+    color: var(--bl-danger) !important;
+  }
+}
+body.salty :is(#select_chat_popup, .select_chat_block_wrapper) .PastChat_cross:active,
+body.salty :is(#select_chat_popup, .select_chat_block_wrapper) .PastChat_cross:active > i {
+  color: var(--bl-danger) !important;
+}
+body.salty .welcomeRecent .recentChatList .recentChat .chatActions .menu_button.deleteChat,
+body.salty .welcomeRecent .recentChatList .recentChat .chatActions .menu_button.deleteChat > i {
+  color: var(--bl-danger-quiet) !important;
+}
+@media (hover: hover) {
+  body.salty .welcomeRecent .recentChatList .recentChat .chatActions .menu_button.deleteChat:hover {
+    background: var(--bl-fill-hover, var(--bl-hover)) !important;
+  }
+  body.salty .welcomeRecent .recentChatList .recentChat .chatActions .menu_button.deleteChat:hover,
+  body.salty .welcomeRecent .recentChatList .recentChat .chatActions .menu_button.deleteChat:hover > i {
+    color: var(--bl-danger) !important;
+  }
+}
+body.salty .welcomeRecent .recentChatList .recentChat .chatActions .menu_button.deleteChat:active,
+body.salty .welcomeRecent .recentChatList .recentChat .chatActions .menu_button.deleteChat:active > i {
+  color: var(--bl-danger) !important;
+}
+/* 북마크(책갈피) 카드의 삭제 — 확장이 칠하는 글자색은 그대로 두고 아이콘만 */
+body.salty .cg-card-actions .cg-action.is-danger > i {
+  color: var(--bl-danger-quiet) !important;
+}
+@media (hover: hover) {
+  body.salty .cg-card-actions .cg-action.is-danger:hover > i {
+    color: var(--bl-danger) !important;
+  }
+}
+body.salty .cg-card-actions .cg-action.is-danger:active > i {
+  color: var(--bl-danger) !important;
+}
+/* 확장 · 스크립트 · 에셋의 지우기 (제목이 '… 삭제' 인 버튼까지) */
+body.salty #rm_extensions_block :is(.btn_delete, .delete_regex, #regex_preset_delete, #bulk_delete_regex, .delete-asset-button, .eh-btn--danger),
+body.salty #rm_extensions_block .menu_button:where([title^="Delete"], [title^="삭제"], [title$="삭제"]) {
+  color: var(--bl-danger) !important;
+}
+/* 안내 칸 · 실험 모드 띠: 실패는 빨강, 주의는 호박 그대로 */
+body.salty .info-block.error :is(i, .fa-solid) {
+  color: var(--bl-danger) !important;
+}
+body.salty #labModeWarning {
+  border-radius: var(--bl-r-sm);
+  background: var(--bl-danger-btn) !important;
+  color: var(--bl-danger-ink) !important;
+}
+
+/* ---------- 확인 창의 지우기 버튼: 꽉 찬 빨강 ----------
+   실리태번은 지우기 확인 창에 따로 클래스를 안 붙임 (어느 확인 창이든 data-i18n 이 'OK', 글자는 '네')
+   → 빨강 클래스 · 버튼 글자(data-i18n) · 캐릭터 지우기 체크박스, 그리고 src/danger.js 가 붙이는 .salty-danger-confirm 으로 찾음 */
+body.salty .popup .popup-controls .menu_button:is(.redWarningBG, .red_button, .danger),
+body.salty .popup .popup-controls .menu_button.popup-button-ok:is([data-i18n*="Delete"], [data-i18n*="삭제"], [data-i18n*="지우"]),
+body.salty .popup:has(#del_char_checkbox) .popup-controls .menu_button.popup-button-ok,
+body.salty .popup.salty-danger-confirm .popup-controls .menu_button.popup-button-ok {
+  background: var(--bl-danger-btn) !important;
+  box-shadow: var(--bl-e2) !important;
+  color: var(--bl-danger-ink) !important;
+}
+@media (hover: hover) {
+  body.salty .popup .popup-controls .menu_button:is(.redWarningBG, .red_button, .danger):hover,
+  body.salty .popup .popup-controls .menu_button.popup-button-ok:is([data-i18n*="Delete"], [data-i18n*="삭제"], [data-i18n*="지우"]):hover,
+  body.salty .popup:has(#del_char_checkbox) .popup-controls .menu_button.popup-button-ok:hover,
+  body.salty .popup.salty-danger-confirm .popup-controls .menu_button.popup-button-ok:hover {
+    background: var(--bl-danger-btn-hover) !important;
+    color: var(--bl-danger-ink) !important;
+  }
+}
+body.salty .popup .popup-controls .menu_button:is(.redWarningBG, .red_button, .danger):active,
+body.salty .popup .popup-controls .menu_button.popup-button-ok:is([data-i18n*="Delete"], [data-i18n*="삭제"], [data-i18n*="지우"]):active,
+body.salty .popup:has(#del_char_checkbox) .popup-controls .menu_button.popup-button-ok:active,
+body.salty .popup.salty-danger-confirm .popup-controls .menu_button.popup-button-ok:active {
+  background: var(--bl-danger-btn-press) !important;
+  box-shadow: var(--bl-press) !important;
+  color: var(--bl-danger-ink) !important;
+}
+body.salty .popup .popup-controls .menu_button.popup-button-ok:is([data-i18n*="Delete"], [data-i18n*="삭제"], [data-i18n*="지우"]):focus-visible,
+body.salty .popup:has(#del_char_checkbox) .popup-controls .menu_button.popup-button-ok:focus-visible,
+body.salty .popup.salty-danger-confirm .popup-controls .menu_button.popup-button-ok:focus-visible {
+  /* 빨간 버튼에 포인트색(청록) 테가 붙으면 신호가 어긋남 → 위험 색 테로.
+     틈은 창 바탕색(--bl-card): --bl-danger-ring 의 틈(--salty-surface)은 창 바탕과 달라서 선이 하나 더 보임 */
+  box-shadow: 0 0 0 2px var(--bl-card), 0 0 0 4px var(--bl-danger), var(--bl-e2) !important;
+}
+/* 곁 버튼(스와이프만 지우기 등)은 조용한 빨강 — 꽉 찬 빨강은 한 창에 하나만 */
+body.salty .popup .popup-controls .menu_button.popup-button-custom:is([data-i18n*="Delete"], [data-i18n*="삭제"], [data-i18n*="지우"]) {
+  background: var(--bl-fill-well, var(--bl-well)) !important;
+  box-shadow: none !important;
+  color: var(--bl-danger) !important;
+}
+body.salty .popup .popup-controls .menu_button.popup-button-custom:is([data-i18n*="Delete"], [data-i18n*="삭제"], [data-i18n*="지우"]):active {
+  background: var(--bl-danger) !important;
+  box-shadow: var(--bl-press) !important;
+  color: var(--bl-danger-ink) !important;
+}
+/* ===== /surfaces:semantic ===== */

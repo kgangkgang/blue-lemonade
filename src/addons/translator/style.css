@@ -1,0 +1,712 @@
+/* 번역 수정창 */
+.translation_edit_buttons {
+    display: flex;
+    justify-content: center;
+    gap: 7px;
+    margin-bottom: 5px;
+}
+
+.translation_edit_buttons .translation_edit_done,
+.translation_edit_buttons .translation_edit_cancel {
+    opacity: 0.7;
+    cursor: pointer;
+    font-size: 1.5em;
+    color: var(--SmartThemeBodyColor);
+}
+
+.translation_edit_buttons .translation_edit_done:hover,
+.translation_edit_buttons .translation_edit_cancel:hover {
+    opacity: 1;
+}
+
+.mes.translation-editing .mes_buttons *,
+.mes.translation-editing .swipeRightBlock,
+.mes.translation-editing .swipe_left {
+    display: none  !important;
+}
+
+/* 메세지 액션 아이콘 줄바꿈 */
+.extraMesButtons.visible,
+body.expandMessageActions .mes .mes_buttons .extraMesButtons {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+/* 파라미터 설정 섹션 */
+.parameter-settings {
+    margin-top: 10px;
+}
+
+.parameter-group {
+    display: none;
+    margin-top: 10px;
+}
+
+.parameter-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    gap: 10px;
+}
+
+.parameter-item {
+    flex: 1;
+    max-width: 48%;
+}
+
+.parameter-item small {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.parameter-row {
+    display: flex;
+    gap: 5px;
+    width: 100%;
+}
+
+.parameter-row .parameterbox {
+    flex: 1;
+    width: 50%;
+}
+
+.parameter-row .neo-range-slider,
+.parameter-row .neo-range-input {
+    width: 100%;
+}
+
+.parameterbox small {
+    text-align: center;
+    display: block;
+    width: 100%;
+}
+
+.parameterbox {
+    align-items: center;
+}
+
+.flexFlowColumn {
+    flex-flow: column;
+}
+.gap0 {
+    gap: 0 !important;
+}
+
+/* 리버스 프록시 */
+.password-container {
+    display: flex;
+    width: 100%;
+}
+
+.password-container .text_pole {
+    flex: 1;
+    margin-right: 5px;
+}
+
+/* 번역 삭제 */
+.translation_settings .menu_button {
+    width: fit-content;
+    display: flex;
+    gap: 10px;
+    flex-direction: row;
+}
+
+
+
+/* LLM 번역기 확장 기능: details 기본 화살표 숨기기 (SillyTavern 적용 후) */
+.custom-llm-translator-details > summary.custom-llm-translator-summary {
+  list-style: none; /* 대부분의 브라우저용 */
+  -webkit-appearance: none; /* Safari 등 Webkit 추가 처리 */
+  appearance: none; /* 표준 */
+}
+
+/* Webkit 기반 브라우저 (Chrome, Safari, Edge)용 가상 선택자 */
+.custom-llm-translator-details > summary.custom-llm-translator-summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Firefox 및 표준 가상 선택자 */
+.custom-llm-translator-details > summary.custom-llm-translator-summary::marker {
+  display: none;
+}
+
+/* 클릭 가능한 커서 추가 */
+.custom-llm-translator-summary {
+  cursor: pointer;
+  /* 기본 display 속성 유지 또는 필요시 block/inline-block 설정 */
+  display: block; /* summary 기본 동작 유지 */
+}
+
+
+
+/* llm-translator/style.css */
+/* 명시성으로 유저커스텀css 제어 ex: 	#chat .mes .custom-mode-folded .custom-original_text  로 덮어쓰기 가능*/
+.custom-mode-folded .custom-original_text {
+  display: inline-block;
+  vertical-align: top; /* inline-block 요소 정렬 */
+  margin-bottom: 10px; /* 예시: 블록 간 최소 간격 */
+  /* 여기에 다른 '최소한의 조정' 스타일 추가 */
+}
+
+/*	덮어쓰기용: #chat .mes .custom-original_text.custom-mode-unfolded {	*/
+.custom-mode-unfolded.custom-original_text {
+  display: inline-block;
+  vertical-align: top; /* inline-block 요소 정렬 */
+  margin-bottom: 1px; /* 예시: 블록 간 최소 간격 */
+  /* 여기에 다른 '최소한의 조정' 스타일 추가 */
+}
+
+
+.prompt-editor-button {
+    cursor: pointer;
+    padding: 5px;
+    color: var(--text-color);
+    transition: color 0.3s ease;
+}
+
+.prompt-editor-button:hover {
+    color: var(--accent-color);
+}
+
+.gap5 {
+    gap: 5px;
+}
+
+/* 아이콘 수직 정렬 */
+.prompt-editor-button,
+.rule-prompt-editor-button,
+.fa-info-circle {
+    display: inline-flex;
+    align-items: center;
+    height: 20px;
+}
+
+.flex-container.align-items-center {
+    align-items: center;
+    min-height: 20px;
+}
+
+.prompt-select-container {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.prompt-select-container select {
+    flex: 1;
+}
+
+.small-button {
+    padding: 2px 8px;
+    font-size: 14px;
+    min-width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--background-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-color);
+    cursor: pointer;
+}
+
+.small-button:hover {
+    background: var(--background-tertiary);
+}
+
+/* 프롬프트 추가 폼 스타일 */
+.prompt-add-dialog {
+    padding: 15px;
+}
+
+.prompt-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+}
+
+.prompt-title {
+    font-size: 1.1em;
+    color: var(--text-color);
+    margin-bottom: 5px;
+}
+
+.prompt-form-group {
+    width: 100%;
+    margin: 0;
+}
+
+.prompt-form-group input.wide {
+    width: 100%;
+    background: var(--background-primary, #1a1a1a);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 8px 12px;
+    border-radius: 4px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+    text-align: center;
+    min-height: 36px;
+}
+
+/* SillyTavern 팝업 버튼 스타일 재정의 */
+.prompt-add-dialog ~ .popup_footer .menu_button {
+    min-width: 60px;
+    white-space: nowrap;
+    padding: 5px 15px;
+    margin: 0;
+}
+
+.prompt-form-group input::placeholder {
+    color: var(--text-color-secondary, #888888);
+    opacity: 0.7;
+}
+
+/* 프리셋 관리 */
+.preset-manager-container {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.preset-controls {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.preset-controls select {
+    flex: 1;
+}
+
+/* ───────── 설정 화면: 카드 · 탭 레이아웃 (Moonlit Echoes 테마 톤) ───────── */
+/* Moonlit 테마를 쓰면 테마 주 색상(--customThemeColor)을, 아니면 본체 강조색을 따라간다. */
+/* [1.8.6] 용어집 크게 보기·뽑기 팝업은 서랍 바깥에 뜨니 색 변수를 같이 준다 (없으면 범위 알약이 배경 없이 어두운 글자만 남는다) */
+.llmt-settings, .llmt-gl-expanded, .llmt-gl-pick {
+    --llmt-accent: var(--customThemeColor, var(--SmartThemeQuoteColor, #51a0de));
+    --llmt-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.15));
+    --llmt-text: var(--SmartThemeBodyColor, #dcdcd2);
+    --llmt-dim: color-mix(in srgb, var(--llmt-text) 62%, transparent);
+    --llmt-card-bg: color-mix(in srgb, var(--SmartThemeBlurTintColor, #171717) 55%, transparent);
+    --llmt-head-bg: color-mix(in srgb, var(--llmt-text) 5%, transparent);
+    --llmt-radius: 10px;
+}
+
+.llmt-tagline {
+    margin: 6px 0 12px;
+    text-align: center;
+    font-size: 0.9em;
+    color: var(--llmt-dim);
+}
+
+.llmt-card {
+    margin: 0 0 12px;
+    border: 1px solid var(--llmt-border);
+    border-radius: var(--llmt-radius);
+    background: var(--llmt-card-bg);
+    overflow: hidden;
+}
+
+.llmt-card--accent {
+    padding: 14px 14px 12px;
+    border-color: color-mix(in srgb, var(--llmt-accent) 70%, transparent);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--llmt-accent) 18%, transparent);
+}
+
+.llmt-section-title {
+    margin: 0 0 10px;
+    padding-left: 10px;
+    border-left: 4px solid var(--llmt-accent);
+    font-size: 1.05em;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--llmt-text);
+}
+
+.llmt-card-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--llmt-head-bg);
+    border-bottom: 1px solid var(--llmt-border);
+    font-weight: 600;
+}
+
+.llmt-card-head > i:first-child {
+    width: 1.2em;
+    text-align: center;
+    color: var(--llmt-accent);
+}
+
+.llmt-card-head .llmt-head-action {
+    margin-left: auto;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s, color 0.2s;
+}
+
+.llmt-card-head .llmt-head-action:hover {
+    opacity: 1;
+    color: var(--llmt-accent);
+}
+
+.llmt-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 14px;
+}
+
+.llmt-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.llmt-label {
+    font-weight: 600;
+}
+
+.llmt-desc {
+    display: block;
+    font-size: 0.85em;
+    line-height: 1.45;
+    color: var(--llmt-dim);
+}
+
+.llmt-card .text_pole,
+.llmt-card textarea {
+    width: 100%;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+.llmt-checks {
+    gap: 6px;
+}
+
+.llmt-checks--grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 6px 12px;
+    margin-top: 6px;
+}
+
+.llmt-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    cursor: pointer;
+}
+
+.llmt-divider {
+    height: 1px;
+    margin: 4px 0;
+    background: var(--llmt-border);
+}
+
+/* [1.8.0] 용어집 */
+.llmt-gl-enable { margin-left: 10px; font-weight: 500; font-size: .9em; }
+.llmt-card-head .llmt-gl-expand { margin-left: auto; font-size: .9em; }
+
+/* [1.8.5] 크게 보기 팝업 · 긴 이름 전광판 */
+.llmt-gl-expanded { display: flex; flex-direction: column; gap: 10px; text-align: left; }
+.llmt-gl-expanded-head { display: flex; align-items: center; gap: 8px; font-size: 1.05em; }
+.llmt-gl-expanded-head i { color: var(--llmt-accent); }
+.llmt-gl-expanded .llmt-card-body { padding: 0; }
+.llmt-gl-expanded .llmt-gl-list { max-height: none; }
+.llmt-gl-expanded .llmt-gl-row { padding: 7px 8px; font-size: 1.02em; }
+.llmt-gl-src, .llmt-gl-dst { cursor: pointer; }
+/* [1.8.12] 전광판용 inline-block 이라 부모의 말줄임표가 안 먹는다 — 자기 글자를 스스로 줄인다 */
+.llmt-gl-text {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+}
+.is-marquee .llmt-gl-text {
+    max-width: none;
+    overflow: visible;
+    text-overflow: clip;
+    animation: llmt-marquee var(--llmt-marquee-time, 4s) ease-in-out 1;
+}
+@keyframes llmt-marquee {
+    0%   { transform: translateX(0); }
+    15%  { transform: translateX(0); }
+    70%  { transform: translateX(var(--llmt-marquee, -100px)); }
+    85%  { transform: translateX(var(--llmt-marquee, -100px)); }
+    100% { transform: translateX(0); }
+}
+.llmt-gl-scopes { display: flex; align-items: center; gap: 4px; }
+.llmt-gl-scope {
+    padding: 4px 12px;
+    border: 1px solid var(--llmt-border);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--llmt-dim);
+    font: inherit;
+    font-size: .85em;
+    font-weight: 600;
+    cursor: pointer;
+}
+.llmt-gl-scope.active { background: var(--llmt-accent); border-color: transparent; color: #10131a; }
+.llmt-gl-count { margin-left: auto; color: var(--llmt-dim); font-size: .8em; font-variant-numeric: tabular-nums; }
+.llmt-gl-sort { border-color: var(--llmt-border); font-size: .8em; font-weight: 700; }
+.llmt-gl-list { display: flex; flex-direction: column; gap: 2px; max-height: 260px; overflow-y: auto; }
+.llmt-gl-row, .llmt-gl-add, .llmt-gl-pick-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto auto;
+    align-items: center;
+    gap: 6px;
+}
+.llmt-gl-row { padding: 4px 6px; border-radius: 8px; }
+.llmt-gl-row:hover { background: color-mix(in srgb, var(--llmt-text) 6%, transparent); }
+.llmt-gl-src, .llmt-gl-dst { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.llmt-gl-dst { color: var(--llmt-accent); }
+.llmt-gl-arrow { color: var(--llmt-dim); font-size: .8em; }
+.llmt-gl-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--llmt-dim);
+    font: inherit;
+    cursor: pointer;
+}
+.llmt-gl-icon:hover:not(:disabled) { background: color-mix(in srgb, var(--llmt-text) 8%, transparent); color: var(--llmt-text); }
+.llmt-gl-icon:disabled { opacity: .4; cursor: default; }
+.llmt-gl-add { grid-template-columns: 1fr auto 1fr auto; }
+.llmt-card .llmt-gl-add .text_pole { width: auto; min-width: 0; }
+.llmt-gl-addbtn { border-color: var(--llmt-border); }
+.llmt-gl-addbtn .fa-check { display: none; }
+.llmt-gl-addbtn.is-editing .fa-plus { display: none; }
+.llmt-gl-addbtn.is-editing .fa-check { display: inline; color: var(--llmt-accent); }
+.llmt-gl-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.llmt-gl-actions .menu_button { width: auto; white-space: nowrap; flex: none; }
+.llmt-gl-actions .menu_button:disabled, .llmt-gl-actions .menu_button.disabled { opacity: .5; pointer-events: none; }
+.llmt-gl-pick { display: flex; flex-direction: column; gap: 4px; text-align: left; }
+.llmt-gl-pick-head {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 8px;
+    margin: 0 0 6px;
+    padding: 6px 2px;
+    background: var(--SmartThemeBlurTintColor, #171717);
+}
+.llmt-gl-pick-head small { color: var(--llmt-dim); }
+.llmt-gl-pick-tools { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+.llmt-gl-pick-count { color: var(--llmt-dim); font-size: .85em; font-variant-numeric: tabular-nums; }
+.llmt-gl-pick-row { grid-template-columns: auto 1fr auto 1fr auto; padding: 3px 6px; border-radius: 8px; cursor: pointer; }
+.llmt-gl-pick-row:hover { background: color-mix(in srgb, var(--llmt-text) 6%, transparent); }
+.llmt-gl-pick-row small { color: var(--llmt-dim); white-space: nowrap; }
+.llmt-gl-pick-row input[type="text"] {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 4px 8px;
+    height: auto;
+    font-size: .92em;
+}
+.llmt-gl-pick-row.is-common input[type="text"] { opacity: .6; }
+.llmt-gl-pick-row .llmt-gl-pick-dst { color: var(--llmt-accent); }
+
+@media (max-width: 600px) {
+    /* [1.9.3] 화살표 칸이 1fr(넓은 칸)이라 번역 칸이 오른쪽으로 밀리고 화살표가 원문 칸 아래 테두리에 걸쳐 보였다 (폰 점검 412px).
+       화살표는 제 크기 칸, 번역 칸이 남는 폭을 가져서 원문 칸 바로 아래에 붙는다 */
+    .llmt-gl-pick-row { grid-template-columns: auto auto 1fr; grid-template-areas: "check src src" "check arrow dst"; gap: 2px 6px; }
+    .llmt-gl-pick-row input[type="checkbox"] { grid-area: check; }
+    .llmt-gl-pick-row .llmt-gl-pick-src { grid-area: src; }
+    .llmt-gl-pick-row .llmt-gl-arrow { grid-area: arrow; transform: rotate(90deg); align-self: center; justify-self: center; line-height: 1; }
+    .llmt-gl-pick-row .llmt-gl-pick-dst { grid-area: dst; }
+    .llmt-gl-pick-row small { display: none; }
+}
+.llmt-gl-pick-row.is-common .llmt-gl-src, .llmt-gl-pick-row.is-common .llmt-gl-dst { opacity: .55; }
+
+/* 탭 */
+.llmt-tabs {
+    display: flex;
+    gap: 2px;
+    margin: 4px 0 12px;
+    border-bottom: 1px solid var(--llmt-border);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.llmt-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.llmt-tab {
+    flex: 1 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin: 0 0 -1px;
+    padding: 10px 12px;
+    background: none;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    color: var(--llmt-dim);
+    font: inherit;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.llmt-tab:hover {
+    color: var(--llmt-text);
+}
+
+.llmt-tab i {
+    font-size: 0.9em;
+}
+
+.llmt-tab.active {
+    color: var(--llmt-text);
+    font-weight: 600;
+    border-bottom-color: var(--llmt-accent);
+}
+
+.llmt-tab.active i {
+    color: var(--llmt-accent);
+}
+
+.llmt-panel {
+    display: none;
+}
+
+.llmt-panel.active {
+    display: block;
+}
+
+/* 카드 안에 들어간 기존 요소 여백 정리 */
+.llmt-card .preset-manager-container,
+.llmt-card .prompt-select-container {
+    margin-bottom: 0;
+}
+
+.llmt-card .parameter-settings,
+.llmt-card .parameter-group {
+    margin-top: 0;
+}
+
+.llmt-card .range-block {
+    margin: 0;
+}
+
+.llmt-card .menu_button {
+    margin: 0;
+}
+
+.llmt-card .translation-backup-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+#custom_model_container {
+    margin-top: 6px;
+}
+
+/* 커스텀 엔드포인트: 모델 목록 불러오기 버튼 + 상태 문구 */
+.llmt-inline-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.llmt-inline-row .llmt-desc {
+    flex: 1 1 160px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+#llm_custom_fetch_models.llmt-loading i {
+    animation: llmt-spin 1s linear infinite;
+}
+
+@keyframes llmt-spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 480px) {
+    .llmt-tab {
+        padding: 9px 8px;
+    }
+
+    .llmt-card-head,
+    .llmt-card-body {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+}
+
+/* 설정 제목의 버전 배지 — 다른 확장(전개지시·캐릭터 에셋·단어 치환·모델 등록)과 같은 모양 */
+.llmt-version {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 1px 7px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--SmartThemeBodyColor, #888) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--SmartThemeBodyColor, #999) 28%, transparent);
+    font-size: 0.7em;
+    font-weight: 400;
+    color: color-mix(in srgb, var(--SmartThemeBodyColor, #999) 65%, transparent);
+    vertical-align: middle;
+}
+
+/* ── [1.6.0] 보내기 번역 버튼 (입력창 옆 💬): 켜지면 테마 색, 번역 중엔 깜빡임 ── */
+#llm_translate_input_button {
+    position: relative;
+    border-radius: 10px;
+    transition: color .15s, background-color .15s, box-shadow .15s;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none; /* 길게 누를 때 폰 메뉴 안 뜨게 */
+}
+#llm_translate_input_button.is-on {
+    color: var(--SmartThemeQuoteColor) !important;
+    background-color: color-mix(in srgb, var(--SmartThemeQuoteColor) 16%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--SmartThemeQuoteColor) 45%, transparent);
+    opacity: 1;
+}
+#llm_translate_input_button.is-on i { filter: drop-shadow(0 0 5px color-mix(in srgb, var(--SmartThemeQuoteColor) 65%, transparent)); }
+#llm_translate_input_button.is-busy i { animation: llmt-send-pulse 1s ease-in-out infinite; }
+@keyframes llmt-send-pulse { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { #llm_translate_input_button, #llm_translate_input_button.is-busy i { transition: none; animation: none; } }
+
+/* 2.1.0 번역 진행 표시 */
+.llmt-progress { font-size: 0.8em; opacity: 0.55; margin-bottom: 4px; user-select: none; }
+
+/* Blue Lemonade integration, modified 2026-09-24. */
+[data-bl-translator][hidden]{display:none!important}
+.bl-translator-mounted > .inline-drawer > .inline-drawer-header{display:none!important}
+.bl-translator-mounted > .inline-drawer > .inline-drawer-content{display:block!important;max-height:none!important;overflow:visible!important}
+.bl-translator-dialog{color:var(--salty-text,var(--SmartThemeBodyColor,#e1eaff));background:var(--salty-surface,#192534);border:1px solid var(--salty-line,#426180);border-radius:20px;width:min(760px,calc(100vw - 24px));max-width:calc(100vw - 24px);height:min(850px,calc(100dvh - 24px));max-height:calc(100dvh - 24px);padding:0;box-sizing:border-box;overflow:hidden}
+.bl-translator-dialog[open]{display:flex;flex-direction:column}
+.bl-translator-dialog::backdrop{background:#07101db3}
+.bl-translator-dialog > header{display:flex;align-items:center;justify-content:space-between;flex:none;padding:8px 16px;border-bottom:1px solid var(--salty-line,#426180)}
+.bl-translator-dialog > header button{width:44px;height:44px;color:inherit;background:transparent;border:0;font-size:24px;cursor:pointer}
+.bl-translator-dialog-body{overflow:auto;min-height:0;padding:12px;overscroll-behavior:contain}
+.bl-translator-dialog-body .llmt-settings{min-width:0;max-width:100%}

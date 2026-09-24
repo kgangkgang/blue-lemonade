@@ -160,3 +160,6 @@
     margin: 6px 0;
     background: color-mix(in srgb, var(--SmartThemeBodyColor, #888) 35%, transparent);
 }
+
+.po-menu-tabs{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap}.po-menu-tabs button[aria-pressed="true"]{color:var(--salty-accent);box-shadow:inset 0 0 0 1px currentColor}.po-dialog [data-order-page][hidden]{display:none!important}.po-menu-list{display:grid;gap:8px;margin-top:14px}.po-menu-list .po-item{grid-template-columns:minmax(0,1fr) 44px 44px}.po-menu-list .po-move{min-height:44px;min-width:44px}
+.po-dialog [data-order-page]>button+button{margin-inline-start:8px}.po-menu-list{max-height:55vh;overflow:auto}.po-menu-list .po-label{white-space:normal;overflow-wrap:anywhere}

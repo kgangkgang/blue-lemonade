@@ -1,0 +1,323 @@
+/* ===== css/34-color-pick.css =====
+   3.5.0 색 고르기 팝업 (src/colorpick.js · colorpop.js) — 실리태번 toolcool 색 칸 · input[type=color] 대신 뜨는 판.
+   판(채도 · 밝기) → 비교 동그라미 + 색상 · 투명도 막대 → 코드 칸 → 테마 색 · 최근 색. 글자 없이 모양으로만.
+   층(.bl-cp-layer)은 화면 전체 투명 막 — 바깥을 누르면 닫힘. 판은 층 안에 absolute (JS 가 화면 좌표로 놓음)
+   ===== */
+body.salty .bl-cp-layer {
+  position: fixed;
+  z-index: 100001;
+  background: transparent;
+}
+body.salty .bl-cp {
+  --chk: color-mix(in srgb, var(--salty-text) 14%, transparent);
+  --checker: repeating-conic-gradient(var(--chk) 0 25%, transparent 0 50%) 0 0 / 10px 10px;
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+  padding: 10px;
+  border-radius: 16px;
+  background: var(--bl-card, var(--salty-surface));
+  color: var(--salty-text);
+  box-shadow: var(--bl-e4, 0 12px 32px rgb(0 0 0 / 0.28)), 0 0 0 1px color-mix(in srgb, var(--salty-text) 8%, transparent);
+  font-family: var(--salty-font-ui, inherit);
+  font-size: 13px;
+  animation: bl-cp-in 0.14s ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+body.salty .bl-cp.up {
+  animation-name: bl-cp-in-up;
+}
+@keyframes bl-cp-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@keyframes bl-cp-in-up { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  body.salty .bl-cp { animation: none; }
+}
+body.salty .bl-cp *,
+body.salty .bl-cp *::before,
+body.salty .bl-cp *::after {
+  box-sizing: border-box;
+}
+body.salty .bl-cp :focus-visible {
+  outline: 2px solid var(--salty-accent);
+  outline-offset: 2px;
+}
+
+/* 판: 가로 = 채도, 세로 = 밝기 */
+body.salty .bl-cp-board {
+  position: relative;
+  height: 148px;
+  border-radius: 10px;
+  background:
+    linear-gradient(to top, #000, transparent),
+    linear-gradient(to right, #fff, var(--hue));
+  cursor: crosshair;
+  touch-action: none;
+  outline-offset: 2px;
+}
+@media (max-width: 599px) {
+  body.salty .bl-cp-board { height: 168px; }
+}
+body.salty .bl-cp :is(.bl-cp-board, .bl-cp-hue, .bl-cp-alpha) > i {
+  position: absolute;
+  left: var(--x);
+  top: var(--y, 50%);
+  width: 18px;
+  height: 18px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: rgb(var(--rgb));
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.35), 0 1px 4px rgb(0 0 0 / 0.35);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* 비교 동그라미(왼쪽 반 = 처음 색, 누르면 되돌림 · 오른쪽 반 = 지금 색) + 막대 */
+body.salty .bl-cp-mid {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+body.salty .bl-cp-cmp {
+  position: relative;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 50%;
+  background: var(--checker);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--salty-text) 18%, transparent);
+  cursor: pointer;
+}
+body.salty .bl-cp-cmp i,
+body.salty .bl-cp-cmp b {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+}
+body.salty .bl-cp-cmp i { left: 0; background: var(--was); }
+body.salty .bl-cp-cmp b { right: 0; background: var(--now); }
+body.salty .bl-cp-bars {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 0 9px;
+}
+body.salty .bl-cp :is(.bl-cp-hue, .bl-cp-alpha) {
+  position: relative;
+  height: 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: none;
+}
+/* 손가락 닿는 곳은 막대보다 넓게 */
+body.salty .bl-cp :is(.bl-cp-hue, .bl-cp-alpha)::before {
+  content: '';
+  position: absolute;
+  inset: -8px -9px;
+}
+body.salty .bl-cp-hue {
+  background: linear-gradient(to right, #f00 0%, #ff0 16.66%, #0f0 33.33%, #0ff 50%, #00f 66.66%, #f0f 83.33%, #f00 100%);
+}
+body.salty .bl-cp-alpha {
+  background: linear-gradient(to right, transparent, rgb(var(--rgb))), var(--checker);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--salty-text) 12%, transparent);
+}
+body.salty .bl-cp :is(.bl-cp-hue, .bl-cp-alpha) > i {
+  top: 50%;
+}
+body.salty .bl-cp-hue > i {
+  background: var(--hue);
+}
+body.salty .bl-cp-alpha > i {
+  background: linear-gradient(var(--now), var(--now)), #fff;
+}
+
+/* 코드 칸 + 스포이트 */
+body.salty .bl-cp-code {
+  display: flex;
+  gap: 6px;
+}
+body.salty .bl-cp .bl-cp-hex {
+  flex: 1;
+  min-width: 0;
+  height: 34px !important;
+  margin: 0 !important;
+  padding: 0 10px !important;
+  border: 0 !important;
+  border-radius: 9px !important;
+  background: var(--salty-fill-shade, var(--salty-shade)) !important;
+  color: var(--salty-text) !important;
+  font: 500 13px/34px ui-monospace, 'SFMono-Regular', Consolas, monospace !important;
+  letter-spacing: 0.04em;
+  text-align: center;
+  box-shadow: none !important;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+body.salty .bl-cp .bl-cp-hex:focus {
+  box-shadow: inset 0 0 0 1.5px var(--salty-accent) !important;
+}
+body.salty .bl-cp .bl-cp-hex[aria-invalid="true"] {
+  box-shadow: inset 0 0 0 1.5px var(--salty-danger, #e5484d) !important;
+}
+body.salty .bl-cp-drop {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: var(--salty-fill-shade, var(--salty-shade));
+  color: var(--salty-muted);
+  cursor: pointer;
+}
+body.salty .bl-cp-drop:hover {
+  color: var(--salty-text);
+}
+
+/* 테마 색 · 최근 색 */
+body.salty .bl-cp-sws {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(22px, 1fr));
+  gap: 6px;
+}
+body.salty .bl-cp-recent {
+  padding-top: 8px;
+  border-top: 1px solid color-mix(in srgb, var(--salty-text) 9%, transparent);
+}
+body.salty .bl-cp-sw {
+  aspect-ratio: 1;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: linear-gradient(var(--c), var(--c)), var(--checker);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--salty-text) 16%, transparent);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+body.salty .bl-cp-sw:hover {
+  transform: scale(1.08);
+}
+@media (max-width: 599px) {
+  body.salty .bl-cp-sws { grid-template-columns: repeat(auto-fill, minmax(28px, 1fr)); gap: 8px; }
+}
+
+/* ---------- 3.5.1 이미지에서 색 따기 ----------
+   코드 칸 옆 그림 단추 → 갤러리에서 이미지 → 판 자리에 이미지 (다시 누르면 판). 누르고 끄는 동안 손가락 위에 확대경.
+   이미지 대표 색은 테마 색 줄 위에 한 줄 (이미지를 고른 적 있을 때만) */
+body.salty .bl-cp-file {
+  display: none;
+}
+body.salty .bl-cp-pic {
+  position: relative;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  min-height: 96px;
+  border-radius: 10px;
+  background: var(--checker), var(--salty-shade);
+}
+body.salty .bl-cp.pic-on .bl-cp-pic {
+  display: flex;
+}
+body.salty .bl-cp.pic-on .bl-cp-board {
+  display: none;
+}
+body.salty .bl-cp-pic-canvas {
+  display: block;
+  max-width: 100%;
+  border-radius: 8px;
+  cursor: crosshair;
+  touch-action: none;
+}
+body.salty .bl-cp-pic-ring {
+  position: absolute;
+  left: var(--px);
+  top: var(--py);
+  display: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: rgb(var(--rgb));
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.4), 0 1px 4px rgb(0 0 0 / 0.35);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+body.salty .bl-cp-pic.has-point .bl-cp-pic-ring {
+  display: block;
+}
+body.salty .bl-cp-loupe {
+  position: absolute;
+  z-index: 1;
+  left: var(--px);
+  top: var(--py);
+  display: none;
+  width: 72px;
+  height: 72px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--salty-fill-shade, var(--salty-shade));
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.35), 0 6px 16px rgb(0 0 0 / 0.35);
+  transform: translate(-50%, calc(-100% - 20px));
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+body.salty .bl-cp-pic.loupe-down .bl-cp-loupe {
+  transform: translate(-50%, 20px);
+}
+body.salty .bl-cp-pic.picking .bl-cp-loupe {
+  display: block;
+}
+body.salty .bl-cp-pic-tools {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 4px;
+}
+body.salty .bl-cp-pic-tools button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.5);
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+body.salty .bl-cp.pic-on .bl-cp-drop[data-act="pic"] {
+  background: color-mix(in srgb, var(--salty-accent) 22%, transparent);
+  color: var(--salty-accent);
+}
+body.salty .bl-cp.pic-loading .bl-cp-drop[data-act="pic"] {
+  opacity: 0.5;
+  pointer-events: none;
+}
+body.salty .bl-cp-imgsws:empty {
+  display: none;
+}
+/* 3.5.2 HEIC 처럼 푸는 데 몇 초 걸릴 때 그림 단추가 숨 쉬듯 깜빡임 */
+body.salty .bl-cp.pic-loading .bl-cp-drop[data-act="pic"] i {
+  animation: bl-cp-pulse 0.9s ease-in-out infinite;
+}
+@keyframes bl-cp-pulse {
+  50% { opacity: 0.3; }
+}

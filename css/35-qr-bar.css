@@ -1,0 +1,306 @@
+/* ===== css/35-qr-bar.css =====
+   3.5.4 퀵 리플라이: 설정 창 미리보기 줄(.bl-qr-sample, 채팅 › 화면 › 퀵 리플라이) + 세로 스크롤 모드(body.salty-qr-y).
+   미리보기는 입력판 #qr--bar 규칙(21-witidy)과 같은 모양 · 같은 휠/끌기/스냅 (layout.js bindQrScroller).
+   세로 스크롤: 버튼이 줄바꿈되어 --bl-qr-rows 줄만큼 보이고 위아래로 넘긴다. 세트 묶음(.qr--buttons)은 풀어 한 흐름으로 —
+   묶음마다 줄이 새로 시작하면 짧은 세트가 줄을 낭비함 (사용자: "세로가 편할 때도 가로가 편할 때도")
+   ===== */
+.salty-panel .bl-qr-sample-wrap {
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--salty-fill-surface, var(--salty-surface));
+  box-shadow: inset 0 0 0 1px var(--salty-shade-2, rgba(0, 0, 0, 0.08));
+}
+.salty-panel .bl-qr-sample {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 2px 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+  scroll-padding-left: var(--bl-qr-snap, 0px);
+  outline: none;
+}
+.salty-panel .bl-qr-sample::-webkit-scrollbar {
+  display: none;
+}
+.salty-panel .bl-qr-sample > .qr--buttons {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  gap: 5px;
+  width: max-content;
+}
+.salty-panel .bl-qr-sample .qr--button {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  min-height: 30px;
+  padding: 4px 9px;
+  border-radius: 7px;
+  background: var(--bl-hover, rgba(127, 127, 127, 0.1));
+  color: var(--salty-text);
+  font-size: 11px;
+  white-space: nowrap;
+  scroll-snap-align: start;
+  user-select: none;
+}
+.salty-panel .bl-qr-sample .bl-qr-find-sample {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  display: grid;
+  flex-shrink: 0;
+  order: -1;
+  place-items: center;
+  min-width: 30px;
+  min-height: 30px;
+  padding: 0 8px;
+  border-radius: 7px;
+  background: linear-gradient(var(--bl-hover, rgba(127, 127, 127, 0.1)), var(--bl-hover, rgba(127, 127, 127, 0.1))), var(--salty-surface);
+  box-shadow: 0 0 0 4px var(--salty-surface);
+  color: var(--salty-muted);
+  font-size: 12px;
+}
+.salty-panel .bl-qr-sample .bl-qr-find-sample::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  right: 100%;
+  width: 8px;
+  background: var(--salty-fill-surface, var(--salty-surface));
+  pointer-events: none;
+}
+.salty-panel .bl-qr-sample .bl-qr-find-sample::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  left: 100%;
+  width: 29px;
+  background: linear-gradient(to right, var(--salty-surface) 5px, transparent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.salty-panel .bl-qr-sample.bl-qr-cut-left .bl-qr-find-sample::after {
+  opacity: 1;
+}
+.salty-panel .bl-qr-sample::after {
+  content: '';
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  flex: 0 0 28px;
+  align-self: stretch;
+  margin-left: -33px;
+  background: linear-gradient(to left, var(--salty-surface), transparent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.salty-panel .bl-qr-sample.bl-qr-more-right::after {
+  opacity: 1;
+}
+.salty-panel .bl-qr-sample.bl-qr-dragging {
+  scroll-snap-type: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .salty-panel .bl-qr-sample:is(.bl-qr-more-left, .bl-qr-more-right) { cursor: grab; }
+  .salty-panel .bl-qr-sample.bl-qr-dragging { cursor: grabbing; }
+}
+
+/* ---------- 세로 스크롤 ---------- */
+body.salty.salty-qr-y :is(#send_form #qr--bar, .salty-panel .bl-qr-sample) {
+  flex-wrap: wrap;
+  align-content: flex-start;
+  max-height: calc(var(--bl-qr-rows, 2) * 35px - 1px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-snap-type: y proximity;
+  scroll-padding-top: 2px;
+}
+body.salty.salty-qr-y :is(#send_form #qr--bar, .salty-panel .bl-qr-sample) > .qr--buttons {
+  display: contents;
+}
+body.salty.salty-qr-y :is(#send_form #qr--bar, .salty-panel .bl-qr-sample)::after,
+body.salty.salty-qr-y :is(#send_form #qr--bar, .salty-panel .bl-qr-sample) :is(#bl-qr-find, .bl-qr-find-sample)::after {
+  display: none;
+}
+/* 가로 넘김용으로 붙여 둔 앞 단추는 제자리 (세로로 넘기면 같이 올라감) */
+body.salty.salty-qr-y :is(#send_form #qr--bar, .salty-panel .bl-qr-sample) > :is(#bl-qr-find, #qr--popoutTrigger, .bl-qr-find-sample) {
+  position: relative;
+  left: auto !important;
+}
+
+/* ---------- 3.7.4 QR ⋮ 버튼 · 하위 목록 (사용자 제보: QR 세트 안에 QR 이 아주 많으면 ⋮ 목록이 화면 위로 솟구쳐 잘린 건 못 고름) ----------
+   ⋮ (.qr--button-expander): 실리태번 기본은 margin-left 1em + 폭 2em 이라 글자 한두 개짜리 버튼이 쓸데없이 넓었다 → 좁은 칸 · 옅은 구분선.
+   하위 목록 (.ctx-blocker > ul.ctx-menu, quick-reply/src/ui/ctx/ContextMenu.js): 누른 자리를 바닥으로 위로 자라고(bottom = 화면 높이 − 누른 y)
+   높이 제한이 없었다. 폰(1000px 이하)은 항목마다 padding 1em 이라 한 칸이 글자보다 훨씬 컸다.
+   → 칸을 줄이고 글자는 가운데, 높이는 layout.js 가 누른 자리 위 남는 높이(--bl-ctx-max)로 잡고 넘치면 안에서 스크롤.
+   3.7.5: 중첩 메뉴도 예외 없이 스크롤한다. 하위 단계는 같은 목록 안에서 펼쳐 옆으로 잘리지 않게 한다. */
+body.salty #send_form #qr--bar .qr--button.qr--hasCtx,
+body.salty #qr--popout .qr--button.qr--hasCtx {
+  width: max-content !important;
+  min-width: 0;
+  flex: 0 0 auto;
+  gap: 0;
+  padding: 0 0 0 9px !important;
+}
+body.salty #send_form #qr--bar .qr--button.qr--hasCtx > .qr--button-expander,
+body.salty #qr--popout .qr--button.qr--hasCtx > .qr--button-expander {
+  display: grid !important;
+  place-items: center;
+  align-self: stretch;
+  flex: none;
+  box-sizing: border-box;
+  width: auto;
+  max-width: 14ch;
+  min-width: 0;
+  min-height: 30px;
+  margin: 0 0 0 8px;
+  padding: 0 9px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: 0 7px 7px 0;
+  border-left: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  font-size: 12px;
+  line-height: 1;
+}
+body.salty .ctx-blocker .ctx-menu {
+  box-sizing: border-box;
+  min-width: 88px;
+  max-width: min(280px, calc(100vw - 16px));
+  margin: 0 !important;
+  padding: 4px !important;
+  border: 0 !important;
+  border-radius: 12px;
+  background: var(--bl-overlay, var(--salty-surface)) !important;
+  box-shadow: var(--bl-e4, 0 8px 28px rgba(0, 0, 0, 0.28));
+}
+body.salty:not(#salty-none) .ctx-blocker > .ctx-menu {
+  max-height: min(var(--bl-ctx-max, 50svh), 50svh, 360px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--salty-accent) 55%, transparent) transparent;
+  touch-action: pan-y;
+  clip-path: inset(0 round 12px);
+}
+/* Chromium's scrollbar-color/width replace the ::-webkit-scrollbar rules with
+   native controls (including arrow buttons). Use the custom track on Chromium. */
+@supports selector(::-webkit-scrollbar) {
+  body.salty:not(#salty-none) .ctx-blocker > .ctx-menu {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+}
+body.salty:not(#salty-none) .ctx-blocker > .ctx-menu::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+  background: transparent;
+}
+body.salty:not(#salty-none) .ctx-blocker > .ctx-menu::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: 9px;
+}
+body.salty:not(#salty-none) .ctx-blocker > .ctx-menu::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--salty-accent) 55%, transparent);
+  border: 0;
+  border-radius: 999px;
+  min-height: 24px;
+}
+body.salty:not(#salty-none) .ctx-blocker > .ctx-menu::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+body.salty .ctx-blocker > .ctx-menu.bl-ctx-single > .ctx-header {
+  display: none;
+}
+body.salty .ctx-blocker .ctx-has-children {
+  flex-wrap: wrap;
+}
+body.salty .ctx-blocker .ctx-sub-menu {
+  position: static !important;
+  flex: 0 0 100%;
+  order: 1;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  max-height: none;
+  overflow: visible;
+  margin-top: 4px !important;
+  box-shadow: inset 2px 0 0 var(--bl-line, rgba(127, 127, 127, 0.2));
+}
+/* :not(#salty-none) — 일반 메뉴 규칙(css/03-menus.css '.list-group > .list-group-item', :is(#options …) 때문에 아이디 무게)이
+   min-height · padding 을 이겨 칸이 PC 44px · 폰 36px 로 남았다 */
+body.salty:not(#salty-none) .ctx-blocker .ctx-menu > .list-group-item.ctx-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+  min-height: 30px;
+  margin: 0 !important;
+  padding: 4px 10px !important;
+  border: 0 !important;
+  border-radius: 8px;
+  background: transparent !important;
+  color: var(--salty-text);
+  font-size: 13px;
+  line-height: 1.2;
+  text-align: center;
+}
+body.salty .ctx-blocker .ctx-menu > .ctx-item + .ctx-item {
+  margin-top: 1px !important;
+}
+@media (hover: hover) {
+  body.salty .ctx-blocker .ctx-menu > .list-group-item.ctx-item:hover {
+    background: var(--bl-fill-hover, var(--bl-hover)) !important;
+  }
+}
+body.salty .ctx-blocker .ctx-menu > .list-group-item.ctx-item:active {
+  background: var(--bl-fill-hover, var(--bl-hover)) !important;
+}
+body.salty .ctx-blocker .ctx-menu .ctx-item > .qr--button-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body.salty .ctx-blocker .ctx-menu .ctx-item > .qr--button-icon:not(.qr--hidden) {
+  flex: none;
+  margin: 0;
+}
+body.salty .ctx-blocker .ctx-menu .ctx-expander {
+  flex: none;
+  width: 14px;
+  margin-left: 4px;
+  padding-left: 5px;
+  border-left: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+}
+body.salty:not(#salty-none) .ctx-blocker .ctx-menu > .list-group-item.ctx-header {
+  justify-content: center;
+  text-align: center;
+  min-height: 0;
+  padding: 6px 10px 3px !important;
+  color: var(--salty-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+body.salty .ctx-blocker .ctx-menu > .ctx-item + .ctx-header {
+  margin-top: 4px !important;
+  border-top: 1px solid var(--bl-line, rgba(127, 127, 127, 0.2)) !important;
+}

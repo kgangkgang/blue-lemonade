@@ -1,0 +1,102 @@
+/* ===== css/37-prompt-ink.css =====
+   3.7.0 프롬프트가 칠한 대사 색 그대로 (프롬프트 › 데우스 엑스 마키나 2.3 › 글씨, apply.js body.salty-dem-ink).
+
+   데우스의 @Dialogue Color 는 대사를 <span style="color:…"> 로 칠하고, 프리셋 정규식
+   'DEM - Render inline CSS @Dialogue Color as legacy font' 가 그것을 <font color="…"> 로 바꾼다.
+   그 안의 따옴표는 실리태번이 <q> 로 만들므로 화면에는 font[color] > q 가 남는데,
+   테마의 대사 규칙(css/06-chat-text.css)이 q 에 제 색과 형광펜을 칠해 프롬프트 색이 묻혔다.
+
+   켜면 대사만 프리셋 색을 따르고 형광펜 · 전체 칠은 그 글자에 안 칠한다 (색 통일이 켜져 있어도).
+   - color: inherit → font[color] · style="color" 에서 내려오는 색
+   - background: none → 형광펜(--salty-marker-bg) · 전체 칠(--salty-marker) 을 그 대사에만 끔
+   색 통일(salty-unify-inline)의 !important 를 이겨야 해서 여기도 !important 를 쓴다.
+   ===== */
+body.salty.salty-dem-ink :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) :is(q, q em, q i, q strong, q b) {
+  color: inherit !important;
+}
+/* 글자 색 (기본): 대사 글자에 프롬프트 색, 형광펜 · 전체 칠은 그 대사에만 끔 */
+body.salty.salty-dem-ink:not(.salty-dem-ink-marker) :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q {
+  background: none !important;
+  padding: 0;
+}
+
+/* 형광펜 색 (3.7.1, 사용자: "형광펜 좋아하는 사람도 있을 것 같아서"):
+   띠에 프롬프트 색을 넣고 글자는 테마 색 그대로 둔다.
+   - color 는 프롬프트 색을 그대로 받아 두고(위 규칙), 띠는 background-color: currentColor 로 그 색을 쓴다.
+   - 글자만 따로 테마 색으로: -webkit-text-fill-color (color 보다 글자 칠에서 우선한다).
+   - 띠 모양은 테마의 형광펜 그림(--salty-marker-bg)을 마스크로 써서 그대로 유지한다 — 그림 안 색은 버리고
+     알파(획 모양 · 잉크 고임 그라데이션)만 쓰므로 어떤 색이든 같은 붓자국이 된다.
+   3.7.4: 마스크는 q 가 그리는 글자까지 잘라서 글자가 띠 투명도(0.3~0.5)로 흐려졌다 → 마스크 층을 둘로:
+     1층 = 꽉 찬 층을 글자 모양으로만(-webkit-mask-clip: text, 안쪽 em · strong 글자 포함) → 글자는 그대로 선명,
+     2층 = 붓자국 그림 → 띠만 그 모양 · 투명도. 두 층은 합쳐진다(add).
+   q::before 로 띠를 따로 그리는 길은 안 됨: 여러 줄 대사의 absolute 기준 상자가 첫 줄 시작 ~ 끝 줄 끝을 잇는 한 사각형이라
+   줄마다 따로 칠해지지 않는다 (clone 은 배경 · 마스크에만 먹는다).
+   -webkit-mask-clip: text 는 크롬 · 삼성 인터넷 · 사파리만 안다 → 모르는 브라우저(파이어폭스)는 아래 @supports not 에서 글자 색 모드처럼. */
+body.salty.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q {
+  -webkit-text-fill-color: var(--salty-marker-ink, var(--salty-dialogue));
+  background-color: currentColor !important;
+  background-image: none !important;
+}
+@supports (-webkit-mask-clip: text) {
+  body.salty.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q {
+    -webkit-mask: linear-gradient(#000 0 0), var(--salty-marker-bg);
+    -webkit-mask-clip: text, border-box; /* 줄임말(-webkit-mask)은 text 를 못 받는다 → 반드시 그 뒤에 따로 */
+  }
+}
+@supports not (-webkit-mask-clip: text) {
+  body.salty.salty-dem-ink.salty-dem-ink-marker:not(.salty-dlg-full) :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q {
+    -webkit-text-fill-color: currentColor;
+    background: none !important;
+    padding: 0;
+  }
+}
+/* 전체 칠 대사는 붓자국이 아니라 통째 띠 — 마스크를 빼고 모서리만 둥글게 (기본 규칙과 같은 모양)
+   -webkit-mask: none 이 두 층 · mask-clip 까지 한꺼번에 되돌린다 */
+body.salty.salty-dlg-full.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q {
+  -webkit-mask: none;
+  mask: none;
+  border-radius: 5px;
+}
+/* 4.1.4 형광펜 색 + 색 톤 맞추기: 띠도 색상(--bl-hue, tone.js)만 두고 채도 · 밝기를 맞춘다. 글자용 값(--bl-tone-*)은 띠로는
+   너무 짙어서 띠 전용 값(--bl-mtone-*, apply.js ← chat.markerTone). 회색끼 색(bl-tone-grey)은 --bl-hue 가 없어 그대로. */
+body.salty.salty-tone.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"])[style*="--bl-hue"] q:not(q q) {
+  background-color: hsl(var(--bl-hue) var(--bl-mtone-s) var(--bl-mtone-l)) !important;
+}
+/* 회색끼 색은 톤을 맞추면 글자가 테마 글자색이 되는데, 띠까지 그 색(currentColor)이면 짙은 띠 위 짙은 글자가 된다 → 테마 형광펜 그대로 (마스크 없이 원래 띠 그림) */
+body.salty.salty-tone.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]).bl-tone-grey q:not(q q) {
+  background: var(--salty-marker-bg) !important; /* 줄임 값(그림 · 위치 · 크기)이라 background 로 받는다 */
+  -webkit-mask: none;
+  mask: none;
+}
+/* 대사 안의 대사는 겹쳐 칠하지 않는다 (테마의 기본 규칙과 같은 이유) */
+body.salty.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q q {
+  background-color: transparent !important;
+  -webkit-mask: none;
+  mask: none;
+}
+
+/* ---------- 3.7.1 대사 색상 가독성 향상 (프롬프트 › 데우스 › 대사 색상 가독성 향상) ----------
+   프롬프트가 칠한 글자(@Dialogue Color → font[color] · style="color")에만 외곽선 · 그림자를 건다.
+   둘은 서로 독립이라 하나만 켜도 되고 둘 다 켜도 된다. 값은 apply.js --salty-demink-* .
+
+   그림자는 테마의 폰 번짐 방지 규칙(body.salty * { text-shadow: none !important })을 이겨야 하므로
+   글자 그림자(css/28-late-fixes.css)와 같은 방법 — 그 요소와 그 안 모든 요소를 :not(#salty-none) 무게로 잡고 !important. */
+body.salty.salty-demink-outline :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text :is(font[color], [style*="color"]) {
+  -webkit-text-stroke: var(--salty-demink-outline-w, 0) var(--salty-demink-outline-c, transparent);
+  paint-order: stroke fill;
+}
+body.salty.salty-demink-shadow :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text :is(font[color], [style*="color"]):not(#salty-none),
+body.salty.salty-demink-shadow :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes .mes_text :is(font[color], [style*="color"]) :not(#salty-none) {
+  text-shadow: var(--salty-demink-shadow, none) !important;
+}
+
+/* ---------- 설정 창 미리보기 (3.7.1) ----------
+   프롬프트 탭 표본의 '프롬프트가 칠한 대사' 줄. 미리보기 사본(css/23-preview.gen.css)은 2.9.5 에서 얼려 둔 파일이라
+   색 통일의 새 갈래(:not(.salty-dem-ink))를 모른다 → 표본 글자는 제 색을 style="--bl-ink" 로 들고 있고 여기서 되살린다.
+   (진짜 채팅에서는 css/08-regex-unify.css 의 갈래가 처리하므로 이 규칙이 필요 없다) */
+body.salty.salty-dem-ink :is(#salty-nochat, .salty-preview) .mes .mes_text font.bl-ink-sample[color] {
+  color: var(--bl-ink) !important;
+}
+.salty-panel .bl-ink-line {
+  margin-top: 6px;
+}

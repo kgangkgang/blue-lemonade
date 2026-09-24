@@ -1,0 +1,88 @@
+/* ===== css/47-settings-editor.css ===== */
+html body .salty-panel.bl-editor { position:relative; display:flex; flex-direction:column; container:bl-editor / inline-size; height:min(780px,82dvh); min-height:320px; min-width:0; padding:0 !important; overflow:hidden; --pp:0px; --salty-navh:0px; --bl-editor-line:var(--salty-line); background:var(--bl-settings-cover); }
+html body dialog.popup.bl-settings-dialog:not(.bl-settings-fullscreen):has(.salty-panel.in-popup) { width:min(1120px,96vw) !important; max-width:96vw !important; height:min(880px,92dvh) !important; max-height:92dvh !important; padding:0 !important; }
+html body dialog.bl-settings-dialog .popup-body { height:100%; min-height:0; padding:0 !important; overflow:hidden; }
+html body dialog.bl-settings-dialog .popup-content { flex:1; height:100%; min-height:0; overflow:hidden !important; padding:0 !important; margin:0; scrollbar-gutter:auto !important; }
+html body dialog.bl-settings-dialog .popup-content > div { height:100%; min-height:0; }
+html body dialog.bl-settings-dialog .salty-panel.bl-editor.in-popup { height:100%; min-height:0; padding:0 !important; }
+html body .salty-panel.bl-editor .salty-nav { position:relative; top:auto; flex:none; z-index:4; margin:0; padding:4px 8px; border-bottom:1px solid var(--bl-editor-line); box-shadow:none; }
+.bl-editor .bl-settings-toprow { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:0; }
+.bl-editor .bl-editor-actions { display:flex; align-items:center; gap:4px; flex:none; }
+html body .bl-editor .bl-settings-toprow button { min-height:36px; margin:0; border:0; border-radius:8px; padding:6px 8px; color:var(--salty-text); background:transparent; font:inherit; font-size:12px; line-height:1.3; box-shadow:none; }
+html body .bl-editor .bl-settings-toprow button:hover { background:var(--salty-fill-shade, var(--salty-shade)); }
+html body .bl-editor .bl-settings-toprow .bl-settings-close { font:24px/1 sans-serif; width:34px; padding:0; }
+.bl-editor-choose { display:flex; align-items:center; gap:10px; min-width:0; text-align:left; }
+.bl-editor-choose span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:650; font-size:14px; }
+.bl-editor .bl-settings-toprow svg { width:16px; height:16px; flex:none; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+.bl-editor .bl-editor-workspace { flex:1; display:flex; flex-direction:column; min-height:0; overflow:hidden; }
+.bl-editor-stage { flex:none; min-width:0; padding:8px 10px 0; background:var(--salty-panel-surface,var(--salty-surface)); border-bottom:1px solid var(--bl-editor-line); overflow:hidden; }
+.bl-editor-caption { color:var(--salty-muted); font-size:11px; margin:0 0 6px; }
+.bl-editor .bl-editor-workspace:has(.salty-prevbox.folded) { display:flex !important; flex-direction:column; }
+.bl-editor .bl-editor-stage:has(.salty-prevbox.folded) { flex:none; padding:0 10px; border:0; border-bottom:1px solid var(--bl-editor-line); }
+.bl-editor-stage:has(.salty-prevbox.folded) .bl-editor-caption { display:none; }
+html body .bl-editor .bl-editor-stage .salty-prevbox { position:relative; inset:auto; width:100%; margin:0; padding:0 0 12px; box-shadow:none; background:transparent !important; }
+html body .bl-editor .salty-sec { flex:1; min-width:0; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; margin:0; padding:10px 10px 16px; text-align:left; }
+.bl-editor-heading { margin:0 0 8px; font-size:17px; font-weight:650; color:var(--salty-text); }
+.bl-editor-group { border-top:1px solid var(--bl-editor-line); }
+html body .bl-editor-group-toggle { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; margin:0; padding:8px 0; min-height:42px; border:0; border-radius:0; background:transparent; color:var(--salty-text); font:inherit; font-size:14px; font-weight:600; text-align:left; box-shadow:none; }
+.bl-editor-group-toggle::after { content:'+'; color:var(--salty-muted); font-size:18px; font-weight:400; }
+.bl-editor-group-toggle[aria-expanded="true"]::after { content:'−'; }
+.bl-editor-group-body { padding:0 0 8px; }
+.bl-editor-group-body[hidden],.bl-editor-group-toggle[hidden],.bl-editor-catalog[hidden] { display:none !important; }
+.bl-editor-single { border:0; }
+html body .bl-editor .bl-editor-group-body > :is(.salty-group,.salty-fontrows):not(.bl-decor-controls) { margin:0 0 6px; padding:4px 0; border-radius:0; background:transparent; box-shadow:none; }
+.bl-editor .salty-fonthead { position:static; }
+.bl-editor .bl-view-tools { justify-content:center; padding:6px 0; gap:8px; }
+.bl-editor .bl-view-tools small { display:none; }
+.bl-editor .bl-view-tools button { min-height:30px; }
+.bl-editor .salty-pvfold { left:0; right:0; }
+.bl-editor-catalog { position:absolute; inset:0; z-index:20; min-width:0; }
+.bl-editor-scrim { position:absolute; inset:0; width:100%; height:100%; margin:0; padding:0; border:0; background:rgb(0 0 0 / .28); }
+.bl-editor-directory { position:absolute; inset:0 auto 0 0; display:flex; flex-direction:column; width:min(340px,100%); padding:10px; background:var(--salty-panel-card,var(--salty-surface)); border-right:1px solid var(--bl-editor-line); box-shadow:12px 0 32px #0002; }
+.bl-editor-directory-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.bl-editor-directory-head button { border:0; background:transparent; color:var(--salty-text); width:36px; height:36px; font:24px/1 sans-serif; }
+.bl-editor-directory .bl-settings-search { flex:none; margin:0 0 12px; }
+.bl-editor-directory .bl-search-results { position:static; max-height:55dvh; margin-top:8px; box-shadow:none; }
+.bl-editor-directory-list { min-height:0; overflow:auto; overscroll-behavior:contain; }
+.bl-editor-directory:has(.bl-search-results:not([hidden])) .bl-editor-directory-list { display:none; }
+.bl-editor-category h4 { margin:14px 0 6px; padding:7px 8px; border-left:3px solid var(--salty-accent); border-bottom:1px solid var(--bl-editor-line); border-radius:4px; background:var(--salty-fill-shade, var(--salty-shade)); color:var(--salty-text); font-size:15px; font-weight:750; line-height:1.4; }
+.bl-editor-category button { display:block; width:100%; margin:2px 0; padding:10px 12px; border:0; border-radius:8px; text-align:left; background:transparent; color:var(--salty-text); font:inherit; font-size:14px; }
+.bl-editor-category button:is(:hover,[aria-current="page"]) { background:var(--salty-fill-shade, var(--salty-shade)); color:var(--salty-accent); }
+.bl-editor-directory .salty-head { margin-top:20px; border-top:1px solid var(--bl-editor-line); padding-top:18px; }
+.bl-editor-directory .salty-mark { width:24px; height:28px; }
+.bl-editor-directory .salty-title { font-size:15px; }
+.bl-editor-directory .salty-sub { display:none; }
+@container bl-editor (min-width:800px) {
+  .bl-editor .bl-editor-workspace:not(.bl-editor-no-preview) { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); }
+  .bl-editor .bl-editor-stage { display:flex; flex-direction:column; min-height:0; padding:12px 14px; border:0; border-right:1px solid var(--bl-editor-line); }
+  html body .bl-editor .salty-sec { padding:12px 14px 18px; }
+  .bl-editor .bl-editor-caption { margin-bottom:8px; }
+  .bl-editor .bl-editor-stage .salty-prevbox { margin-block:auto; }
+}
+
+.bl-editor-stage .bl-palette-tint { flex:none; width:100%; padding:10px 0 14px; }
+.bl-palette-tint small { display:block; color:var(--salty-muted); font-size:11px; line-height:1.5; margin-top:7px; }
+.bl-palette-tint .salty-slider { margin:0; }
+
+.bl-editor [data-act^="history-"]:disabled { opacity:.3; cursor:default; }
+.bl-history-notice { max-height:40vh; overflow:auto; line-height:1.6; overflow-wrap:anywhere; }
+
+.bl-editor input[type="range"][data-range] { touch-action:pan-y pinch-zoom; }
+html body .bl-editor .bl-setting-reset { display:inline-flex; align-items:center; justify-content:center; width:28px; min-width:28px; height:28px; min-height:28px; padding:0; margin:0 0 0 6px; border:1px solid var(--salty-line); border-radius:8px; background:transparent; color:var(--salty-accent); font:18px/1 sans-serif; vertical-align:middle; box-shadow:none; cursor:pointer; }
+html body .bl-editor .bl-setting-reset[hidden] { display:none !important; }
+.bl-setting-reset:focus-visible { outline:2px solid var(--salty-accent); outline-offset:2px; }
+.bl-setting-change { display:flex; flex-direction:column; gap:8px; padding:16px 0; border-bottom:1px solid var(--salty-line); overflow-wrap:anywhere; }
+.bl-setting-change > small { color:var(--salty-muted); line-height:1.6; }
+.bl-setting-change > div { display:flex; gap:8px; flex-wrap:wrap; }
+/* 4.1.2 가독성: 묶음 제목 옆 지금 값 · 안내 글 한 모양 · 이름 옆 초기화 */
+.bl-editor-group-toggle > span { flex:0 1 auto; min-width:0; }
+.bl-editor-group-summary { flex:1 1 0; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:right; font-size:12px; font-weight:500; color:var(--salty-faint); }
+.bl-editor-group-toggle[aria-expanded="true"] > .bl-editor-group-summary { visibility:hidden; }
+.bl-editor .bl-editor-group-body .salty-note { margin:4px 0 6px; font-size:12px; line-height:1.5; color:var(--salty-muted); display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; overflow:hidden; cursor:pointer; }
+.bl-editor .bl-editor-group-body .salty-note.open { display:block; -webkit-line-clamp:none; line-clamp:none; overflow:visible; }
+.bl-editor :is(.salty-row,.salty-stack) > span > small { font-size:12px; line-height:1.5; color:var(--salty-muted); }
+.bl-editor :is(.salty-row,.salty-stack) > span > .bl-setting-reset { vertical-align:middle; }
+/* 4.1.2: 설정 선택 목록을 두 줄(2열)로 — 이름이 다 짧아서 한 줄에 하나씩이면 길게 내려야 했다 */
+.bl-editor-category { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:2px 6px; }
+.bl-editor-category h4 { grid-column:1 / -1; }
+.bl-editor-category button { min-width:0; margin:0; overflow-wrap:anywhere; }

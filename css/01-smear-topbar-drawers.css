@@ -1,0 +1,215 @@
+/* ===== css/01-smear-topbar-drawers.css =====
+   폰 번짐 원인 제거(흐림 · 글자 그림자 · 필터 끄기) · 상단 바 · 서랍 · 패널 겉모습.
+   ===== */
+/* ---------- 번짐 원인 제거: 흐림 · 글자 그림자 · 필터 ---------- */
+body.salty,
+body.salty * {
+  text-shadow: none !important;
+}
+body.salty :is(#top-bar, #sheld, #chat, #form_sheld, #send_form, .drawer-content, .popup,
+  #options, #extensionsMenu, .list-group, .select2-dropdown, #toast-container > div, .ui-widget-content,
+  .mes, .mes_block, .mes_text, .inline-drawer-content, .avatar, #character_popup, .world_entry, .range-block,
+  #rm_print_characters_block, .character_select, #left-nav-panel, #right-nav-panel) {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+body.salty :is(.drawer-icon, .menu_button, .mes_button, .mes_buttons, .inline-drawer-icon, .right_menu_button,
+  .editor_maximize, .inline-drawer-maximize, .avatar, .avatar img, .tag:not(.excluded), #send_but, #mes_continue,
+  #options_button, #extensionsMenuButton, input[type="checkbox"], input[type="range"], .neo-range-input, .swipe_left, .swipe_right) {
+  filter: none !important;
+}
+body.salty .menu_button:is(.disabled, [disabled]):not(#salty-none) {
+  opacity: 0.45 !important;
+  filter: grayscale(1) !important;
+}
+/* 2.9.4: 선택 색은 body 한 곳에만 — 자식 요소들은 브라우저가 ::selection 을 부모에게서 물려받는다(highlight inheritance).
+   예전의 `body.salty ::selection` 은 모든 요소마다 body 까지 조상을 거슬러 올라가 맞춰 봐서, 스트리밍으로 글자가 들어올 때
+   (페이드 인이면 단어마다 span — 데우스 답장 하나에 1만 개) 한 단계의 스타일 계산이 4배 느린 CPU 에서 240 → 208ms 였다.
+   코드 블록은 실리태번의 `.hljs ::selection`(회색)이 직접 맞아 물려받기보다 앞서므로, 전처럼 테마 색이 이기게 따로 적는다.
+   문단 · 입력칸 · 코드 · 대사를 선택한 스크린샷이 픽셀까지 같음을 확인했다 */
+body.salty::selection,
+body.salty .hljs::selection,
+body.salty .hljs ::selection {
+  background: var(--salty-fill-accent-28, var(--salty-accent-28));
+}
+body.salty ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+body.salty ::-webkit-scrollbar-track {
+  background: transparent;
+}
+body.salty ::-webkit-scrollbar-thumb {
+  background: var(--shade-2);
+  border: 0;
+  border-radius: 99px;
+}
+
+/* ---------- 상단 바 ---------- */
+/* 떠 있는 바(e3) · 아이콘은 흐리게 · 열린 서랍은 포인트색 알약 */
+body.salty #top-bar {
+  background: var(--salty-fill-surface, var(--salty-surface)) !important;
+  border: 0 !important;
+  box-shadow: var(--bl-e3) !important;
+}
+body.salty #top-settings-holder {
+  border: 0 !important;
+}
+body.salty #top-settings-holder .drawer-icon:not(.redOverlayGlow) {
+  color: var(--salty-muted) !important;
+  opacity: 1 !important;
+  border-radius: var(--bl-r-sm);
+  transition: color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+@media (hover: hover) {
+  body.salty #top-settings-holder .drawer-icon:not(.redOverlayGlow):hover {
+    color: var(--salty-text) !important;
+  }
+}
+/* 열린 서랍: 자리 크기는 그대로, 그림자 퍼짐으로 옅은 알약 */
+body.salty #top-settings-holder .drawer-icon.openIcon:not(.redOverlayGlow) {
+  color: var(--salty-accent) !important;
+  background-color: var(--salty-accent-10);
+  box-shadow: 0 0 0 5px var(--salty-accent-10);
+}
+body.salty.salty-icons-line #top-settings-holder .drawer-icon {
+  font-size: 21px !important;
+}
+
+/* ---------- 서랍 · 패널 ---------- */
+/* 서랍 = 종이 시트(e5), 폰은 바 밑에 붙은 시트 (surfaces:foundation 끝 폰 규칙) */
+body.salty .drawer-content {
+  background: var(--bl-fill-page, var(--bl-page)) !important;
+  color: var(--salty-text);
+  border: 0 !important;
+  box-shadow: var(--bl-e5) !important;
+  font-size: var(--bl-fs-body);
+}
+body.salty .drawer-content:not(.fillLeft):not(.fillRight) {
+  padding: var(--bl-s2) var(--bl-gutter) var(--bl-s8) !important;
+  border-radius: 0 0 var(--bl-r-lg) var(--bl-r-lg) !important;
+}
+/* 제목 */
+body.salty :is(.drawer-content, .popup, :where(#character_popup)) :is(h3, h4, h5):not(.salty-panel *) {
+  color: var(--salty-text);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+/* 서랍 제목은 크게 — 확장 설정 · 여닫는 칸 속 h3 은 그대로 */
+body.salty .drawer-content h3:where(:not(.salty-panel *, .inline-drawer-content *, .extension_container *, #extensions_settings *, #extensions_settings2 *)) {
+  font-size: var(--bl-fs-title) !important;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+/* 묶음 이름(h4 · 강조 머리줄): 띠 없이 작고 흐린 이름, 오른쪽 버튼은 조용한 아이콘 */
+body.salty :is(.drawer-content, :where(#character_popup)) :is(h4, .standoutHeader:not(.inline-drawer-header)):not(.salty-panel *) {
+  margin: var(--bl-s4) 0 var(--bl-s2) !important;
+  padding: 0 2px !important;
+  background: none !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  filter: none !important;
+  font-size: var(--bl-fs-cap) !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.01em;
+  color: var(--salty-muted) !important;
+}
+body.salty :is(.drawer-content, :where(#character_popup)) :is(h4, .standoutHeader:not(.inline-drawer-header)):not(.salty-panel *) :is(b, strong) {
+  font-weight: inherit;
+}
+/* 캐릭터 칸 이름(설명 · 첫 메시지 등): 입력칸 위 글자만 */
+body.salty .title_restorable {
+  margin: 0 !important;
+  padding: var(--bl-s3) 2px var(--bl-s1) !important;
+  background: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  font-size: var(--bl-fs-ctl) !important;
+  font-weight: 650 !important;
+  color: var(--salty-text) !important;
+}
+body.salty :is(.drawer-content, .popup, :where(#character_popup)) h5:not(.salty-panel *) {
+  font-size: var(--bl-fs-cap);
+  color: var(--salty-muted);
+}
+/* 칸 나누는 hr 은 선 대신 여백 */
+body.salty :is(.drawer-content, .popup, :where(#character_popup)) hr {
+  height: 0;
+  margin: var(--bl-s3) 0 !important;
+  border: 0 !important;
+  background: none !important;
+  opacity: 0;
+}
+body.salty :is(.drawer-content, .popup, :where(#character_popup)) small:not(.salty-panel *) {
+  color: var(--salty-muted);
+  opacity: 1 !important;
+}
+body.salty .drawer-content .toggle-description:not(.salty-panel *) {
+  width: auto !important;
+  margin: 2px 0 var(--bl-s1) !important;
+  text-align: left !important;
+  font-size: var(--bl-fs-sub) !important;
+  line-height: 1.45;
+  color: var(--salty-muted) !important;
+}
+/* 서랍 속 까만 보조 아이콘은 흐리게 (:where — 탭 켜짐 · 화면별 색이 이기게) */
+body.salty :where(.editor_maximize, .right_menu_button, #rm_button_characters, .inline-drawer-maximize, .note-link-span, .fa-solid.fa-circle-info, .fa-solid.fa-circle-question, .ui-icon) {
+  color: var(--salty-faint) !important;
+  opacity: 1 !important;
+}
+/* 안내 상자: 왼쪽 색 띠 대신 옅은 면, 상태색은 아이콘에만 */
+body.salty .info-block {
+  padding: var(--bl-s3) var(--bl-inset) !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: var(--bl-fill-hover, var(--bl-hover)) !important;
+  box-shadow: none !important;
+  color: var(--salty-text) !important;
+  font-size: var(--bl-fs-sub);
+  line-height: 1.5;
+}
+body.salty .info-block :is(i, .fa-solid) {
+  color: var(--salty-accent) !important;
+}
+body.salty .info-block:is(.warning, .error) :is(i, .fa-solid) {
+  color: var(--bl-warn) !important;
+}
+/* 여닫는 줄: 46px 설정 줄, 흐린 꺾쇠 */
+body.salty .inline-drawer-header:where(:not(.salty-panel *, .world_entry *)) {
+  min-height: var(--bl-h-row);
+  gap: var(--bl-s3);
+  padding: 0 2px !important;
+  border: 0 !important;
+  background: transparent !important;
+  background-image: none !important;
+  filter: none !important;
+  font-size: var(--bl-fs-body);
+  font-weight: 600;
+  color: var(--salty-text);
+}
+body.salty .inline-drawer-header:where(:not(.salty-panel *, .world_entry *)) :is(b, strong) {
+  font-weight: 600;
+}
+body.salty .inline-drawer-icon {
+  color: var(--salty-faint) !important;
+  font-size: var(--bl-ic) !important;
+  opacity: 1 !important;
+}
+body.salty.salty-icons-line .inline-drawer-icon::before {
+  transition: transform 0.2s ease;
+}
+body.salty.salty-icons-line .inline-drawer-icon.up::before {
+  transform: rotate(180deg);
+}
+body.salty :is(.userSettingsInnerExpandable, .inline-drawer-content, .extension_container, .extensions_block) {
+  border: 0 !important;
+  border-radius: var(--bl-r-md) !important;
+  background: transparent !important;
+}
+body.salty .standoutHeader ~ .inline-drawer-content {
+  background: transparent !important;
+  border: 0 !important;
+}

@@ -1,3 +1,4 @@
+import {startMenuOrdering} from './menus.js';
 // 확장 순서 — 설정 창들을 찾아서 원하는 차례로 옮기는 부분
 //
 // 실리태번은 확장 설정을 두 칸(#extensions_settings, #extensions_settings2)에 나눠 붙인다.
@@ -273,6 +274,7 @@ function refreshWatch() {
  * 그래서 처음에 몇 번 더 줄을 세우고, 확장 서랍을 열 때마다 다시 세운다.
  */
 export function startEngine() {
+    startMenuOrdering();
     apply();
     startWatching();
     for (const delay of [400, 1500, 4000]) setTimeout(apply, delay);
