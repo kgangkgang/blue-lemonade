@@ -5,7 +5,7 @@ const topics = [
   "id": "new498",
   "label": "새 기능",
   "title": "내장하면서 달라진 부분",
-  "sub": "4.9.8 실제 조작 화면 · LLM과 한글화 패널 중심 · 기본 기능은 원본 안내도 함께 참고하세요.",
+  "sub": "한글화 패널 4.9.9 · LLM·메뉴·사용 모드 4.9.8 실제 조작 화면 · 기본 기능은 원본 안내도 함께 참고하세요.",
   "tall": true,
   "cards": [
     [
@@ -21,22 +21,28 @@ const topics = [
       "498-llm-settings.jpg"
     ],
     [
-      "498-panel-mobile.mp4",
+      "499-panel-mobile.mp4",
       "한글화 패널 · 바로 펼쳐 쓰기",
-      "별도 창을 거치지 않고 확장 탭에서 바로 사용해요. 준비된 한글화 사전과 자료 번역을 상단 탭으로 모았어요.",
-      "498-panel-mobile.jpg"
+      "별도 창을 거치지 않고 확장 탭에서 바로 사용해요. 준비된 한글화 사전과 자료 번역을 상단 아이콘 탭으로 모았어요. 좁은 화면에서는 메뉴가 두 줄로 배치돼요.",
+      "499-panel-mobile.jpg"
     ],
     [
-      "498-panel-guide.mp4",
+      "499-panel-guide.mp4",
       "한글화 패널 · 설명은 필요할 만큼",
       "버전 버튼에 자세한 사용방법을 모았어요. 익숙해지면 작업 화면의 보조 설명을 숨길 수 있어요.",
-      "498-panel-guide.jpg"
+      "499-panel-guide.jpg"
     ],
     [
-      "498-regex-phone.mp4",
+      "499-panel-parameters.mp4",
+      "한글화 패널 · 파라미터를 두 줄로",
+      "4개 설정을 2열 × 2줄로 배치했어요. 숫자를 입력하면 슬라이더도 함께 바뀌고, 기본값으로 돌릴 수 있어요.",
+      "499-panel-parameters.jpg"
+    ],
+    [
+      "499-regex-phone.mp4",
       "정규식 · 이름만 한글로",
       "추가된 정규식 탭에서 번역 이름을 표시하거나 원문으로 되돌려요. 검색식·치환식·저장된 원본 이름은 그대로예요. 시연용 응답으로 준비한 번역 예제입니다.",
-      "498-regex-phone.jpg"
+      "499-regex-phone.jpg"
     ],
     [
       "498-menu-order.mp4",
@@ -603,7 +609,7 @@ function galleryBlock(topic, device, cards, withHeading){
         video.tabIndex=0;video.setAttribute('role','button');video.setAttribute('aria-label',title+' 재생 또는 일시정지');
         video.addEventListener('click',toggle);video.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle();}});
         wrap.append(state);inView.observe(video);}
-      if(file.startsWith('498-')){const subtitles=element('track');subtitles.kind='captions';subtitles.label='한국어 안내';subtitles.srclang='ko';subtitles.src='media/'+file.replace('.mp4','.vtt');subtitles.default=true;video.append(subtitles);}
+      if(/^49[89]-/.test(file)){const subtitles=element('track');subtitles.kind='captions';subtitles.label='한국어 안내';subtitles.srclang='ko';subtitles.src='media/'+file.replace('.mp4','.vtt');subtitles.default=true;video.append(subtitles);}
       wrap.prepend(video);
       const enlarge=element('button','gallery-expand','크게 보기 ↗');enlarge.type='button';enlarge.setAttribute('aria-label',title+' 크게 보기');
       enlarge.onclick=()=>{const dialog=$('#atmosphere-lightbox'), player=dialog.querySelector('video');if(video.dataset.modeBase)player.dataset.modeBase=video.dataset.modeBase;else delete player.dataset.modeBase;player.querySelectorAll('track').forEach(t=>t.remove());video.querySelectorAll('track').forEach(t=>player.append(t.cloneNode(true)));player.poster=video.poster;player.src=video.getAttribute('src')||video.dataset.src;player.setAttribute('aria-label',title);dialog.showModal();player.play().catch(()=>{});};wrap.append(enlarge);
