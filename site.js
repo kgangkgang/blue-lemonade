@@ -4,10 +4,13 @@ const topics = [
 {
   "id": "new498",
   "label": "새 기능",
-  "title": "번역을 내 방식으로, 설정은 한곳에서",
-  "sub": "LLM 용어집·보내기 번역의 실제 사용 흐름부터 살펴보세요. 새 기능 영상은 5.0.0, 기존 LLM 위치·탭과 메뉴 순서는 4.9.8 촬영본이에요.",
+  "title": "그림도 번역도, 내 방식으로",
+  "sub": "캐릭터 에셋의 그림 관리와 LLM 번역의 실제 사용 흐름을 살펴보세요. 에셋은 5.1.0, 번역·한글화 새 기능은 5.0.0, 기존 LLM 위치·탭과 메뉴 순서는 4.9.8 촬영본이에요.",
   "tall": true,
   "cards": [
+    ["510-assets-presets.mp4", "캐릭터 에셋 · 그림 프리셋을 따로", "그림을 폴더별로 나누고 프리셋 전체를 켜거나 꺼요. 같은 파일 이름은 켜진 폴더 중 위쪽 것이 우선해요. 가상 캐릭터와 직접 만든 시연용 그림으로 촬영했습니다.", "510-assets-presets.jpg"],
+    ["510-assets-toggle.mp4", "캐릭터 에셋 · 쓸 그림만 골라요", "그림을 크게 보고 하나씩 껐다 켜요. 끈 그림은 파일을 지우지 않고 AI에게 알려 주는 목록에서 제외해요. 가상 캐릭터와 시연용 그림을 사용했습니다.", "510-assets-toggle.jpg"],
+
     ["500-llm-glossary-world.mp4", "LLM 용어집 · 월드인포에서 뽑기", "세계관의 이름·지명·단체를 후보로 뽑고 표기를 고친 뒤 필요한 것만 넣어요. 일상 단어는 기본 선택에서 빠져요. 가상 자료와 시연용 모델 응답을 사용했습니다.", "500-llm-glossary-world.jpg"],
     ["500-llm-glossary-chat.mp4", "LLM 용어집 · 번역문에서 뽑기", "캐릭터 카드와 최근 원문·번역문에서 쓰인 표기를 모아요. 후보를 수정하고 골라 이 캐릭터 용어집에 저장해요. 가상 자료와 시연용 모델 응답을 사용했습니다.", "500-llm-glossary-chat.jpg"],
     ["500-llm-send-context.mp4", "보내기 번역 · 참고정보도 함께", "캐릭터 설정·페르소나·월드인포·작가 노트·최근 대화를 골라 번역 요청에 참고로 넣어요. 이름과 말투를 맞추는 데 쓰며, 추가한 만큼 입력 토큰이 늘어요.", "500-llm-send-context.jpg"],
@@ -614,7 +617,7 @@ function galleryBlock(topic, device, cards, withHeading){
         video.tabIndex=0;video.setAttribute('role','button');video.setAttribute('aria-label',title+' 재생 또는 일시정지');
         video.addEventListener('click',toggle);video.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle();}});
         wrap.append(state);inView.observe(video);}
-      if(/^(?:49[89]|500)-/.test(file)){const subtitles=element('track');subtitles.kind='captions';subtitles.label='한국어 안내';subtitles.srclang='ko';subtitles.src='media/'+file.replace('.mp4','.vtt');subtitles.default=true;video.append(subtitles);}
+      if(/^(?:49[89]|500|510)-/.test(file)){const subtitles=element('track');subtitles.kind='captions';subtitles.label='한국어 안내';subtitles.srclang='ko';subtitles.src='media/'+file.replace('.mp4','.vtt');subtitles.default=true;video.append(subtitles);}
       wrap.prepend(video);
       const enlarge=element('button','gallery-expand','크게 보기 ↗');enlarge.type='button';enlarge.setAttribute('aria-label',title+' 크게 보기');
       enlarge.onclick=()=>{const dialog=$('#atmosphere-lightbox'), player=dialog.querySelector('video');if(video.dataset.modeBase)player.dataset.modeBase=video.dataset.modeBase;else delete player.dataset.modeBase;player.querySelectorAll('track').forEach(t=>t.remove());video.querySelectorAll('track').forEach(t=>player.append(t.cloneNode(true)));player.poster=video.poster;player.src=video.getAttribute('src')||video.dataset.src;player.setAttribute('aria-label',title);dialog.showModal();player.play().catch(()=>{});};wrap.append(enlarge);
