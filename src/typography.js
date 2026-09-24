@@ -1,5 +1,6 @@
 // Presentation-only fixes. Saved message text and translator source hashes are untouched.
 import { normalizeTrackerSpacing } from './addons/bookmarks/tracker-spacing.js';
+import { restoreDialogueTildes, resetDialogueTildes } from './dialogue-tildes.js';
 let active=false, observer=null, timer=0;
 const originals=new Map(), dirty=new Set();
 export function typesetRoot(root) {
@@ -7,6 +8,7 @@ export function typesetRoot(root) {
     // The same Markdown separators appear in chat and bookmark renderings.
     // Reuse the targeted cleanup; preserve line breaks inside actual prose.
     normalizeTrackerSpacing(root);
+    restoreDialogueTildes(root);
     for(const q of root.querySelectorAll('.mes_text q, .salty-sample q')) {
         if(q.closest('pre,code,details[class*="custom-dem-card"],.custom-dem-track'))continue;
         let previous=q.previousSibling;
@@ -40,13 +42,14 @@ export function syncTypography(on) {
                 value.lead?.remove();node.textContent=value.before;
             }else if(value.lead?.isConnected)value.lead.replaceWith(...value.lead.childNodes);
         }
+        resetDialogueTildes();
         originals.clear();document.querySelectorAll('.bl-line-dialogue').forEach(node=>node.classList.remove('bl-line-dialogue'));return;
     }
     typesetRoot(document);
     const chat=document.getElementById('chat');if(!chat)return;
     // 4.7.8: 답이 오는 동안(body[data-generating]) 그 메시지는 걸음마다 다시 그려지므로 조판해 봐야 다음 걸음에 사라진다 —
     // 생성 중에는 표시줄 뒤 빈 줄만 정리하고, 나머지 조판은 답이 끝나면 한 번에 처리한다.
-    const flush=()=>{timer=0;if(document.body.dataset.generating==='true'){for(const root of dirty)if(root?.isConnected)normalizeTrackerSpacing(root);timer=setTimeout(flush,400);return;}for(const root of dirty)if(root?.isConnected)typesetRoot(root);dirty.clear();};
+    const flush=()=>{timer=0;if(document.body.dataset.generating==='true'){for(const root of dirty)if(root?.isConnected){normalizeTrackerSpacing(root);restoreDialogueTildes(root);}timer=setTimeout(flush,400);return;}for(const root of dirty)if(root?.isConnected)typesetRoot(root);dirty.clear();};
     observer=new MutationObserver(records=>{
         for(const record of records){
             const element=record.target.nodeType===1?record.target:record.target.parentElement;

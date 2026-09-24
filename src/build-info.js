@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.0.1";
+export const BUILD_VERSION = "5.0.2";
 export const FILE_HASHES = {
   "index.js": "11830:f722c908:4f65cd8d",
-  "manifest.json": "365:9505801b:eabebfaf",
+  "manifest.json": "365:f1d14812:c8ac1955",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "1966:af208084:30e4b912",
@@ -158,6 +158,7 @@ export const FILE_HASHES = {
   "src/demskin.js": "2167:c0308caa:b58b2d08",
   "src/device-layouts.js": "2454:23885a09:84be226a",
   "src/diagnose.js": "4513:a62e174b:ce6de801",
+  "src/dialogue-tildes.js": "1375:4ae6b6f4:c812d7de",
   "src/draft.js": "4876:96701944:1ebeb7be",
   "src/features.js": "7255:d6e4fe00:8554d053",
   "src/file-fingerprint.js": "524:98923ac4:298a0ced",
@@ -181,7 +182,7 @@ export const FILE_HASHES = {
   "src/marquee.js": "4394:b21eba98:bf26831b",
   "src/menu-position.js": "3312:4d17612e:af7476d7",
   "src/mes-pins.js": "9110:58a88535:74b20064",
-  "src/notice-data.js": "100508:56559a7e:7b224f74",
+  "src/notice-data.js": "100747:9fbbe3c7:ed96abb2",
   "src/notice.js": "4506:dbb8f2a7:75e005f7",
   "src/notify-sw.js": "985:5f0777db:749f45cf",
   "src/numbers.js": "930:4be2a1fd:48f02c7b",
@@ -229,7 +230,7 @@ export const FILE_HASHES = {
   "src/theme-update.js": "4737:41f75f4f:a8cb353c",
   "src/tone.js": "6264:fdd77fd3:430a20c6",
   "src/touch-sliders.js": "1802:90ccf7ef:7832805d",
-  "src/typography.js": "3984:c9b9d7a3:b65347f7",
+  "src/typography.js": "4161:c9ab3f40:85f75044",
   "src/usage-mode.js": "274:97f75b3d:dfa5bb08",
   "src/vendor/gif-writer.js": "15523:55aa4c9a:308694e8",
   "src/vendor/image-q.js": "105671:f2e1c3b1:86833578",
@@ -244,5 +245,5 @@ export const FILE_HASHES = {
   "src/weather.js": "29151:893fa4f6:d26e0a3b",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "22770:07c345df:f825c7fc",
-  "style.css": "854606:3f5e7bce:7a63b449"
+  "style.css": "854606:aaf1525d:c8f10f46"
 };

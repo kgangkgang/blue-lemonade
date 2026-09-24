@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.0.1.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.0.2.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.0.1 · 최신 업데이트</summary>
+<summary>5.0.2 · 최신 업데이트</summary>
+
+- 대사에서 말끝을 늘이는 물결표(~~!·~~?)가 취소선으로 표시되던 경우를 고쳤어요. 기존 번역도 다시 번역할 필요 없이 화면에 적용돼요.
+- 일반적인 취소선과 코드 표시는 유지하며 저장된 대화는 바꾸지 않아요.
+
+</details>
+
+<details>
+<summary>5.0.1 · 날짜 표시줄 여백</summary>
 
 - 날짜·장소 표시줄 아래에 남던 빈 줄을 답변 생성 중에도 정리해요. 표시줄이 다른 HTML 요소 안에 있어도 적용해요.
 - 본문 안의 줄바꿈과 저장된 대화 내용은 유지해요.
