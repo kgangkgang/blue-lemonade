@@ -11,10 +11,10 @@ let loading = null;
 
 /** manifest.json 의 버전 (한 번만 읽는다) */
 export function loadVersion() {
-    loading ??= fetch(new URL('../manifest.json', import.meta.url))
-        .then(res => res.json())
+    loading ??= fetch(new URL('../manifest.json', import.meta.url), { cache: 'no-store' })
+        .then(res => { if (!res.ok) throw new Error('manifest unavailable'); return res.json(); })
         .then((manifest) => { version = String(manifest?.version || ''); return version; })
-        .catch(() => '');
+        .catch(() => { loading = null; return ''; });
     return loading;
 }
 
