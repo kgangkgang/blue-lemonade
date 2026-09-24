@@ -1,6 +1,6 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 57개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build d82cd3b5dbb4) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 57개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build f2820e4a4512) */
 /* css/00-base.css */
-:root{--bl-release:"4.9.4";}
+:root{--bl-release:"4.9.5";}
 body.salty {
   --r-sm: 6px;
   --r-md: 10px;
@@ -10633,6 +10633,37 @@ body.salty .rl-root .rl-tile,
 body.salty .rl-root .rl-balance {
   background: var(--salty-fill-surface-shade, var(--salty-surface-shade));
 }
+html body.salty #model-switch-settings,
+html body.salty #regex-link-settings,
+html body.salty :where(.mr-settings):is(#bl-s, *) {
+  color:var(--salty-text);
+}
+html body.salty .ms-target,
+html body.salty .ms-lock,
+html body.salty .rlk-keep,
+html body.salty .rl-module,
+html body.salty .mr-item {
+  border:0; border-radius:14px; padding:12px 14px;
+  background:var(--salty-fill-surface,var(--salty-surface)); box-shadow:var(--bl-e1);
+}
+html body.salty .ms-targets,
+html body.salty .rl-modules,
+html body.salty .mr-list { gap:8px; }
+html body.salty .ms-chip,
+html body.salty .ms-options {
+  border:0; border-radius:14px; background:var(--salty-fill-surface,var(--salty-surface)); color:var(--salty-text);
+}
+html body.salty .ms-chip.on { background:var(--salty-accent); color:var(--salty-on-accent); }
+html body.salty .ms-icon:is(.bl-s, *),
+html body.salty .ms-pull:is(.bl-s, *),
+html body.salty .ms-option:is(.bl-s, *),
+html body.salty :is(.mr-item-buttons .menu_button) { min-width:44px; min-height:44px; border:0; border-radius:10px; }
+html body.salty :is(.ms-target,.ms-lock,.rlk-keep) small { color:var(--salty-muted); opacity:1; line-height:1.5; }
+html body.salty .rl-module-head small { color:var(--salty-muted); opacity:1; }
+html body.salty .rl-owner { padding:3px 9px; color:var(--salty-muted); background:var(--salty-shade); opacity:1; }
+html body.salty .rl-owner.on { color:var(--salty-text); background:var(--salty-tint-14); }
+html body.salty .mr-item.is-picked { box-shadow:inset 0 0 0 2px var(--salty-accent); }
+html body.salty .mr-empty { padding:18px 14px; border-radius:14px; color:var(--salty-muted); background:var(--salty-surface); opacity:1; }
 html body.salty #autopic_settings_container {
   --ap-accent: var(--salty-accent);
   --ap-bg-main: transparent;
@@ -10660,6 +10691,7 @@ html body.salty #autopic_settings_container .gen-checkbox-label input[type="chec
 html body.salty #autopic_settings_container [style*="#cccccc"] { color: var(--salty-muted) !important; }
 html body.salty #autopic_settings_container [style*="#e07b7b"] { color: var(--bl-danger) !important; }
 html body.salty #autopic_settings_container [style*="#ff9f43"] { color: var(--bl-warning, var(--salty-em)) !important; }
+html body.salty #model-switch-settings .ms-actions .ms-apply { border-radius:10px!important; }
 /* css/20-panel.css */
 .salty-panel {
   --r-sm: 8px;
@@ -17811,7 +17843,9 @@ dialog.popup.bl-roomy-dialog .popup-content { margin-left:0 !important; margin-r
 .salty-panel .bl-spot.on{background:var(--salty-accent);color:var(--salty-on-accent,#fff);box-shadow:0 0 0 2px var(--salty-accent),0 2px 8px rgba(0,0,0,.3);}
 .salty-panel .bl-spot-side{min-width:0;flex:1;display:grid;gap:8px;}
 .bl-addon-group { display:flex; flex-direction:column; gap:20px; min-width:0; }
-.bl-addon-group-tool { padding:16px; border-top:1px solid var(--salty-border); }
+.bl-addon-group-tool { padding:18px; border:0; border-radius:20px; background:var(--salty-fill-surface,var(--salty-surface)); box-shadow:var(--bl-e1); }
+.bl-addon-group-tool .bl-addon-header { border:0; margin-bottom:10px; }
+.bl-addon-group-tool .salty-note { margin:6px 0 14px; }
 /* css/53-script-tools.css */
 .salty-panel .bl-script-layout { display:grid;grid-template-columns:minmax(0,1fr);gap:16px; }
 .salty-panel .bl-script-list,.salty-panel .bl-script-editor,.salty-panel .bl-theme-update { min-width:0; }

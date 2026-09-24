@@ -1,12 +1,12 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "4.9.4";
+export const BUILD_VERSION = "4.9.5";
 export const FILE_HASHES = {
   "index.js": "11525:c350c9ec:3374aa11",
-  "manifest.json": "385:9bfde09c:b84ee8d7",
+  "manifest.json": "385:2d001733:4c1135c6",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "1868:6b7abfa6:795dfbc9",
-  "src/addons.js": "18632:709bf560:24e71d58",
+  "src/addons.js": "18707:0b08acd1:a52bd5c0",
   "src/addons/bookmarks/alt-palette.js": "2585:e7f5e4b8:5cbbc6a9",
   "src/addons/bookmarks/anchors.js": "8401:93e937db:1480eeb9",
   "src/addons/bookmarks/data.js": "25221:6573cc2b:9cb60364",
@@ -66,7 +66,7 @@ export const FILE_HASHES = {
   "src/addons/perf/watchdog-main.js": "8818:c159b5b9:3d62b82f",
   "src/addons/perf/watchdog.js": "13416:708a363a:f3a0887e",
   "src/addons/regexlink/engine.js": "6142:9c1c6944:113b5e9f",
-  "src/addons/regexlink/index.js": "15004:db536b84:a7c02b36",
+  "src/addons/regexlink/index.js": "14829:c1f45022:3a7ce65e",
   "src/addons/regexlink/style.css": "1247:62915416:4c995bef",
   "src/addons/rewrite/ai-rules.js": "9929:11baae44:e5912a46",
   "src/addons/rewrite/colors.js": "3490:64c1dcb0:bcddf096",
@@ -90,11 +90,11 @@ export const FILE_HASHES = {
   "src/apply.js": "46965:c5132863:13a8ae11",
   "src/assets.js": "21834:e50c9dff:52dba6e4",
   "src/assist/core.js": "872:ebf432fc:ddbc73ac",
-  "src/assist/diagnostics.js": "3132:f45f08b9:5e17fb95",
+  "src/assist/diagnostics.js": "3068:cebfba58:9787c905",
   "src/assist/index.js": "748:27321c67:a09b941d",
   "src/assist/state.js": "187:2a203cfa:a7d65c54",
-  "src/assist/style.css": "2483:8299e1a8:60b48537",
-  "src/assist/ui.js": "2514:009b1181:5e38d874",
+  "src/assist/style.css": "4995:998c53b8:9ca6ec83",
+  "src/assist/ui.js": "3062:94cc98b5:474859d6",
   "src/automode.js": "2807:97512594:e26ac1ea",
   "src/background-window.js": "9589:5030b6f9:b78b864e",
   "src/capture-anim.js": "13511:670c2ffe:33e9cebc",
@@ -149,7 +149,7 @@ export const FILE_HASHES = {
   "src/marquee.js": "4394:b21eba98:bf26831b",
   "src/menu-position.js": "3312:4d17612e:af7476d7",
   "src/mes-pins.js": "9110:58a88535:74b20064",
-  "src/notice-data.js": "97027:aad39e6a:aa0464ae",
+  "src/notice-data.js": "97463:f10872ef:0b890529",
   "src/notice.js": "4506:dbb8f2a7:75e005f7",
   "src/notify-sw.js": "985:5f0777db:749f45cf",
   "src/numbers.js": "930:4be2a1fd:48f02c7b",
@@ -211,5 +211,5 @@ export const FILE_HASHES = {
   "src/weather.js": "29151:893fa4f6:d26e0a3b",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "22770:07c345df:f825c7fc",
-  "style.css": "847927:d35b8d49:4210ee29"
+  "style.css": "849883:f3c514e0:705f8869"
 };

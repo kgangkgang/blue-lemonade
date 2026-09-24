@@ -140,7 +140,7 @@ function render() {
     const s = store(), { on, off, skip, total } = summary();
     root.querySelector('.rl-summary').innerHTML = total
         ? `정규식 ${total}개 중 <b>${on}개 켜짐</b> · <b>${off}개 꺼짐</b>${skip ? ` · ${skip}개는 태그가 없어 그대로` : ''}`
-        : esc(lastNote || '정규식을 아직 못 읽었어요.');
+        : '연동 중인 정규식 없음';
     root.querySelector('[data-keep]').checked = s.keepRecent;
     root.querySelector('[data-recent]').value = s.recent;
     root.querySelector('.rl-modules').innerHTML = moduleTable();
@@ -152,7 +152,7 @@ function mount() {
     root.innerHTML = `<div class="inline-drawer-toggle inline-drawer-header"><b><i class="fa-solid fa-link" aria-hidden="true"></i> 프롬프트 연동 정규식 <span class="ext-version">v${VERSION}</span></b><div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div></div>
 <div class="inline-drawer-content">
   <p class="rl-summary" role="status"></p>
-  <p class="salty-note">프롬프트 관리자에서 끈 모듈(예: 모멘텀 엔진)의 정규식은 자동으로 꺼지고, 다시 켜면 돌아와요. 이미 그려진 메시지는 그대로이고 다음 답부터 적용돼요. 정규식 화면에서 직접 바꾼 것은 그 값을 기준으로 삼아요.</p>
+  <p class="salty-note">프롬프트 모듈을 끄면 연결된 정규식도 쉬어요. 다음 답변부터 반영되며, 직접 바꾼 설정은 유지해요.</p>
   <label class="rlk-keep"><input type="checkbox" data-keep><span><b>최근 메시지에 그 모듈이 있으면 켜 둠</b><small>이전 답에 남은 상태창 · 선택지가 날것으로 보이지 않게</small></span><input type="number" class="text_pole" data-recent min="1" max="200" aria-label="최근 메시지 수"></label>
   <div class="rl-modules"></div>
 </div>`;

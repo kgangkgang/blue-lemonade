@@ -66,7 +66,7 @@ export function addonMarkup(s,id,nested=false){
     if(!nested && id==='perf') return `<div class="bl-addon-group">${addonMarkup(s,'perf',true)}${addonMarkup(s,'regexlink',true)}<section class="bl-addon-group-tool">${addonMarkup(s,'conflicts',true)}</section></div>`;
     if(ASSIST_IDS.includes(id)) {
         const notes={conflicts:'중복 실행·설치 버전·화면 간섭과 관측된 오류를 확인해요.'};
-        return `<div class="bl-addon-header"><h3>${ASSIST_LABELS[id]}</h3><label class="bl-addon-power"><span>기능 켜기</span><input type="checkbox" data-assist-toggle="${id}" ${s.addons[id]?'checked':''}></label></div><p class="salty-note">${notes[id]}</p><button type="button" class="salty-btn" data-assist-open="${id}" ${s.addons[id]?'':'disabled'}>열기</button>`;
+        return `<div class="bl-addon-header"><h3><i class="fa-solid fa-stethoscope" aria-hidden="true"></i> ${ASSIST_LABELS[id]}</h3><label class="bl-addon-power"><span>기능 켜기</span><input type="checkbox" data-assist-toggle="${id}" ${s.addons[id]?'checked':''}></label></div><p class="salty-note">${notes[id]}</p><button type="button" class="salty-btn bl-tool-primary" data-assist-open="${id}" ${s.addons[id]?'':'disabled'}>열기</button>`;
     }
     const on=!!s.addons[id],needsReload=['order','perf','models','modelswitch','regexlink','rewrite','bookmarks'].includes(id)&&on!==running.has(id);
     const status=saving?'설정 저장 확인 중…':saveError||(loading.has(id)?'기능을 불러오는 중…':failed.get(id))||(needsReload?'새로고침 대기':on?'사용 중':'꺼짐');

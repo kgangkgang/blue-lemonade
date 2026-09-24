@@ -29,7 +29,7 @@ export async function diagnose() {
     if (health.disk && (health.disk !== health.version || health.css !== health.version)) rows.push({ code: 'version-mismatch', level: '확인됨', text: `설치 버전이 달라요. JS ${health.version} / CSS ${health.css || '?'} / manifest ${health.disk}` });
     if (health.error) rows.push({ code: 'unreadable', level: '확인 불가', text: health.error });
     for (const e of errors) rows.push({ code: 'runtime', level: '오류 관측', text: `${e.folder}: ${e.kind} 발생. 충돌 원인인지는 미확정이에요.` });
-    if (!rows.length) rows.push({ code: 'none', level: '점검 완료', text: '알려진 중복 실행과 관측된 오류가 없어요. 모든 확장의 호환성을 보장하는 검사는 아니에요.' });
+    if (!rows.length) rows.push({ code: 'none', level: '점검 완료', text: '알려진 중복 실행이나 관측된 오류가 없어요.' });
     // Copy-safe by construction: no arbitrary settings, URLs, chat, selectors, or error messages.
     const report = ['블루 레몬에이드 확장 진단', `테마 ${health.version} · 화면 ${innerWidth}×${innerHeight}`, `활성 확장 ${extensionNames.filter(n => !disabled.includes(n)).length}개`, ...rows.map(r => `[${r.level}] ${r.text}`)].join('\n');
     return { rows, report };
