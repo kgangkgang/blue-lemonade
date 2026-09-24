@@ -1,12 +1,10 @@
 import { IDS, LABELS } from './core.js';
 import { context, enabled } from './state.js';
-import { syncRequests } from './requests.js';
 import { syncDiagnostics } from './diagnostics.js';
-import { syncTaste } from './taste.js';
 import { selectionSnapshot } from './translation.js';
 import { openTool, setSelection, clearSelection, closeTools } from './ui.js';
 let listening = false, style = null, selectionTimer = 0;
-const ICONS = { conflicts: 'stethoscope', requestview: 'list-check', retranslate: 'language', taste: 'pen-nib' };
+const ICONS = { conflicts: 'stethoscope', retranslate: 'language' };
 function selectionChanged() {
     clearTimeout(selectionTimer);
     selectionTimer = setTimeout(() => {
@@ -15,7 +13,7 @@ function selectionChanged() {
         setSelection(snap);
         if (toolbar) return;
         const bar = document.createElement('div'); bar.id = 'bl-assist-selection'; bar.setAttribute('role', 'toolbar'); bar.setAttribute('aria-label', '선택한 글 도구');
-        for (const id of ['retranslate', 'taste'].filter(enabled)) {
+        for (const id of ['retranslate'].filter(enabled)) {
             const button = document.createElement('button'); button.type = 'button'; button.setAttribute('aria-label', LABELS[id]); button.innerHTML = `<i class="fa-solid fa-${ICONS[id]}"></i>`;
             button.addEventListener('pointerdown', e => e.preventDefault());
             button.onclick = () => { bar.remove(); openTool(id); }; bar.append(button);
@@ -23,15 +21,17 @@ function selectionChanged() {
         if (bar.children.length) document.body.append(bar);
     }, 180);
 }
-function chatChanged() { clearSelection(); document.getElementById('bl-assist-selection')?.remove(); closeTools(); syncTaste(); }
+function chatChanged() { clearSelection(); document.getElementById('bl-assist-selection')?.remove(); closeTools(); }
 export function syncAssist() {
     const any = IDS.some(enabled);
     if (any && !style) { style = document.createElement('link'); style.rel = 'stylesheet'; style.href = new URL('./style.css', import.meta.url).href; document.head.append(style); }
-    syncRequests(enabled('requestview')); syncDiagnostics(enabled('conflicts')); syncTaste();
+    syncDiagnostics(enabled('conflicts'));
+    context().setExtensionPrompt?.('blue_lemonade_writing_taste', '', 1, 1, false, 0);
+    for (const id of ['taste','requestview','conflicts']) document.getElementById('bl-assist-menu-' + id)?.remove();
     const menu = document.getElementById('extensionsMenu');
     for (const id of IDS) {
         let item = document.getElementById('bl-assist-menu-' + id);
-        if (!enabled(id)) { item?.remove(); continue; }
+        if (id === 'conflicts' || !enabled(id)) { item?.remove(); continue; }
         if (!item && menu) {
             item = document.createElement('div'); item.id = 'bl-assist-menu-' + id; item.className = 'list-group-item flex-container flexGap5 interactable'; item.tabIndex = 0; item.setAttribute('role','button');
             item.innerHTML = `<div class="fa-fw fa-solid fa-${ICONS[id]} extensionsMenuExtensionButton"></div><span>${LABELS[id]}</span>`;

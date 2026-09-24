@@ -1,3 +1,5 @@
+import { syncModelSwitchMenu } from './menu.js';
+import { getSettings } from '../../settings.js';
 // 모델 전환 — 번역 · 장기 기억 · 다시 쓰기처럼 제 모델을 따로 고르는 확장들의 공급자 · 모델을 한 번에 바꾼다.
 // 중계 서버가 안 될 때 공식 API 로, 되면 다시 중계로: 조합을 저장해 두고 눌러서 바꾼다.
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
@@ -218,18 +220,12 @@ function mount() {
     if (css !== VERSION) globalThis.toastr?.warning(`모델 전환 파일 버전이 달라요 (코드 ${VERSION}, 스타일 ${css || '없음'}).`);
 }
 
-function mountMenu() {
-    const menu = document.getElementById('extensionsMenu');
-    if (!menu || document.getElementById('bl-tool-menu-modelswitch')) return;
-    const button = document.createElement('div');
-    button.id = 'bl-tool-menu-modelswitch'; button.className = 'list-group-item flex-container flexGap5 interactable'; button.tabIndex = 0; button.setAttribute('role', 'button');
-    button.innerHTML = '<div class="fa-fw fa-solid fa-shuffle extensionsMenuExtensionButton"></div><span>모델 전환</span>';
-    button.onclick = () => openPanel();
-    button.onkeydown = event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openPanel(); } };
-    menu.append(button);
+export function syncMenu() {
+    const s=getSettings();
+    syncModelSwitchMenu(s.enabled && s.addons.modelswitch && s.addonUI.modelswitchMenu!==false, openPanel);
 }
 
-jQuery(() => { mount(); mountMenu(); syncLocks(); });
+jQuery(() => { mount(); syncMenu(); syncLocks(); });
 eventSource.on(event_types.SETTINGS_UPDATED, () => { if (root?.isConnected && !root.closest('[hidden]')) render(); });
 window.addEventListener('bl:model-switch-targets', render);
 

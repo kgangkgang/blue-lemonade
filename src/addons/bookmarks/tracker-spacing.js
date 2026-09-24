@@ -1,5 +1,5 @@
 // Markdown can leave separator newlines as <br> at the beginning of the
-// paragraph following a DEM tracker. They add empty lines only in this view.
+// paragraph following a DEM tracker. Shared by chat typography and bookmarks.
 // Touch the displayed separators, never the saved message or prose line breaks.
 export function normalizeTrackerSpacing(root) {
     for (const tracker of root.querySelectorAll('.custom-dem-track, .custom-dem-track-recovery')) {

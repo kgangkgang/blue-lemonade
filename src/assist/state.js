@@ -2,14 +2,6 @@ import { getSettings } from '../settings.js';
 export const context = () => SillyTavern.getContext();
 export const enabled = id => !!getSettings().enabled && !!getSettings().addons?.[id];
 export const chatKey = () => String(context().groupId ?? context().characterId ?? '') + ':' + String(context().getCurrentChatId?.() ?? context().chatId ?? '');
-export function state() {
-    const settings = context().extensionSettings;
-    const s = settings.blue_lemonade_assist ??= { samples: [], rules: [], applyTaste: false };
-    if (!Array.isArray(s.samples)) s.samples = [];
-    if (!Array.isArray(s.rules)) s.rules = [];
-    return s;
-}
-export function save() { context().saveSettingsDebounced(); }
 let busy = false;
 export function isBusy() { return busy; }
 export async function exclusive(task) {

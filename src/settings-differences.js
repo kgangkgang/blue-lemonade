@@ -55,9 +55,9 @@ export function changedSettings(settings) {
 }
 export function settingRoute(path) {
     const [scope, key] = path.split('.');
-    if (scope === 'addons') return {tab:'extensions',sub:key === 'modelorder' ? 'models' : key}; // 모델 순서는 모델 등록으로 합쳐짐
+    if (scope === 'addons') return {tab:'extensions',sub:['modelorder','modelswitch'].includes(key) ? 'models' : ['regexlink','conflicts'].includes(key) ? 'perf' : key}; // 모델 순서는 모델 등록으로 합쳐짐
     if (scope === 'captureTools') return {tab:'extensions',sub:'capture'};
-    if (scope === 'addonUI') return {tab:'extensions',sub:/^perf/.test(key) ? 'perf' : /^words/.test(key) ? 'words' : /^capture/.test(key) ? 'capture' : 'order'};
+    if (scope === 'addonUI') return {tab:'extensions',sub:/^modelswitch/.test(key) ? 'models' : /^perf/.test(key) ? 'perf' : /^words/.test(key) ? 'words' : /^capture/.test(key) ? 'capture' : 'order'};
     if (scope === 'gradients') return {tab:'theme',sub:key!=='overrides'?'palette':'colors'};
     if (scope === 'colorOverrides') return { tab:'theme', sub:'colors' };
     if (['palette','lightTint','nightTint','auto','enabled','customName'].includes(scope)) return {tab:'theme',sub:'palette'};

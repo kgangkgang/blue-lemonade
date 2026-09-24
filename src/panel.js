@@ -55,7 +55,7 @@ const SUBS = {
     chat: [['message', '메시지'], ['profile', '캐릭터 프로필'], ['user-profile', '내 프로필'], ['name', '캐릭터 이름·시간'], ['user-name', '내 이름·시간'], ['screen', '화면'], ['etc', '기타']],
     image: [['layout', '배치'], ['shape', '모양'], ['frame', '테두리'], ['size', '크기'], ['fade', '흐림']],
     prompt: [['deus', '데우스 엑스 마키나']],
-    extensions: [['words', '단어 치환'], ['capture', '채팅 캡처'], ['order', '확장 순서'], ['perf', '성능 보조'], ['models', '모델 등록'], ['bookmarks', '북마크'], ['modelswitch', '모델 전환'], ['regexlink', '프롬프트 연동 정규식'], ['rewrite', '다시 쓰기'], ['conflicts', '확장 충돌 진단'], ['requestview', '이번 답에 들어간 내용'], ['retranslate', '선택 부분 재번역'], ['taste', '문체 취향'], ['scripts', '스크립트']],
+    extensions: [['words', '단어 치환'], ['capture', '채팅 캡처'], ['order', '확장 순서'], ['perf', '성능 보조'], ['models', '모델 관리'], ['bookmarks', '북마크'], ['rewrite', '다시 쓰기'], ['retranslate', '선택 부분 재번역'], ['scripts', '스크립트']],
 };
 
 const panels = new Set();
@@ -86,6 +86,7 @@ const ui = {
 const OLD_SUBS = { size: 'text', shape: 'text', marker: 'dialogue' };
 if (ui.tab === 'font') { ui.tab = 'text'; if (ui.subs.font && !ui.subs.text) ui.subs.text = ui.subs.font; }
 function subOf(tab) {
+    if(tab==='extensions') ui.subs.extensions=({modelswitch:'models',regexlink:'perf',conflicts:'perf',taste:'retranslate',requestview:'retranslate'})[ui.subs.extensions]||ui.subs.extensions;
     if (tab === 'theme' && ui.subs.theme === 'custom') return 'custom';
     const list = SUBS[tab] || [];
     if (tab === 'text' && OLD_SUBS[ui.subs.text]) ui.subs.text = OLD_SUBS[ui.subs.text];

@@ -1,8 +1,12 @@
 // Presentation-only fixes. Saved message text and translator source hashes are untouched.
+import { normalizeTrackerSpacing } from './addons/bookmarks/tracker-spacing.js';
 let active=false, observer=null, timer=0;
 const originals=new Map(), dirty=new Set();
 export function typesetRoot(root) {
     if(!active||!root?.querySelectorAll)return;
+    // The same Markdown separators appear in chat and bookmark renderings.
+    // Reuse the targeted cleanup; preserve line breaks inside actual prose.
+    normalizeTrackerSpacing(root);
     for(const q of root.querySelectorAll('.mes_text q, .salty-sample q')) {
         if(q.closest('pre,code,details[class*="custom-dem-card"],.custom-dem-track'))continue;
         let previous=q.previousSibling;
