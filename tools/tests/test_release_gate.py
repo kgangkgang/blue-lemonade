@@ -13,6 +13,22 @@ class GateTests(unittest.TestCase):
             del files['defs.js'];files['index.js']=b"import './src/notice.js';";files['src/notice.js']=b"import './notice-data.js';";files['src/notice-data.js']=b'export const NOTICES = [{"version":"1.3.1"}];'
         return files
     def test_valid_memory(self):self.assertEqual(gate.validate(self.fixture(),'memory'),'1.3.1')
+    def test_embedded_addon_css_versions(self):
+        for source, folder, variable in gate.ADDON_CSS_VERSIONS:
+            with self.subTest(addon=source):
+                f=self.fixture('theme')
+                # Include all sources sharing the same stylesheet.
+                for other, group, prop in gate.ADDON_CSS_VERSIONS:
+                    if group==folder:
+                        f['src/addons/'+other]=b"export const VERSION = '1.3.5';"
+                        key=f'src/addons/{folder}/style.css'
+                        f[key]=f.get(key,b'')+(prop+': "1.3.5";\n').encode()
+                self.assertEqual(gate.validate(f,'theme'),'1.3.1')
+                key=f'src/addons/{folder}/style.css'
+                f[key]=f[key].replace((variable+': "1.3.5"').encode(),(variable+': "1.3.3"').encode())
+                with self.assertRaisesRegex(gate.GateError,'Addon CSS'):gate.validate(f,'theme')
+                del f[key]
+                with self.assertRaisesRegex(gate.GateError,'Addon CSS'):gate.validate(f,'theme')
     def test_stale_css_blocks(self):
         f=self.fixture();f['style.css']=b'--lm-css-version: "1.2.9";'
         with self.assertRaisesRegex(gate.GateError,'CSS'):gate.validate(f,'memory')

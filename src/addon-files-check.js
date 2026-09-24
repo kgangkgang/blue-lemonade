@@ -50,7 +50,7 @@ export async function verifyAddonCss({ folder, name, version, title, selector })
     console.warn(`[Blue Lemonade] ${title}: 코드 ${version}, 스타일 ${read(name, selector) || '없음'} (다시 받기 ${reloaded ? '함' : '실패'})`);
     if (!warned && typeof toastr !== 'undefined') {
         warned = true;
-        toastr.warning(`${title} 스타일 파일이 코드와 달라요 (코드 ${version}, 스타일 ${read(name, selector) || '없음'}). 새로고침해도 계속 뜨면 blue-lemonade 폴더를 지우고 새 zip을 다시 풀어 주세요.`, 'Blue Lemonade', { timeOut: 15000 });
+        toastr.warning(`${title} 스타일 파일이 코드와 달라요 (코드 ${version}, 스타일 ${read(name, selector) || '없음'}). 최신 버전으로 업데이트한 뒤 새로고침해 주세요. 계속 뜨면 이 경고의 코드·스타일 버전을 알려 주세요.`, 'Blue Lemonade', { timeOut: 15000 });
     }
     return false;
 }

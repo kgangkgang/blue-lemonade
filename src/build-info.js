@@ -1,9 +1,9 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "4.9.1";
+export const BUILD_VERSION = "4.9.2";
 export const FILE_HASHES = {
   "index.js": "11525:c350c9ec:3374aa11",
-  "manifest.json": "385:a7845937:d963e3fd",
-  "src/addon-files-check.js": "3740:f346932a:6cf8d08d",
+  "manifest.json": "385:af32e216:429b55d1",
+  "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "1868:6b7abfa6:795dfbc9",
   "src/addons.js": "17835:06ad2535:ca90ee79",
@@ -18,7 +18,7 @@ export const FILE_HASHES = {
   "src/addons/bookmarks/render.js": "13327:03915c6b:da600134",
   "src/addons/bookmarks/settings-view.js": "18708:15f0265e:fbc74a26",
   "src/addons/bookmarks/state.js": "11204:908adf65:c6d7e03e",
-  "src/addons/bookmarks/style.css": "63213:bf3c64ed:f41daa79",
+  "src/addons/bookmarks/style.css": "63213:c1f7ebe7:013119bb",
   "src/addons/bookmarks/text-match.js": "1928:91c477ac:e2d8e11d",
   "src/addons/bookmarks/tracker-spacing.js": "1235:d0ab4b4f:2bc6a099",
   "src/addons/bookmarks/translate.js": "18686:c640214f:f07a9ce9",
@@ -151,7 +151,7 @@ export const FILE_HASHES = {
   "src/marquee.js": "4394:b21eba98:bf26831b",
   "src/menu-position.js": "3312:4d17612e:af7476d7",
   "src/mes-pins.js": "9110:58a88535:74b20064",
-  "src/notice-data.js": "95437:0a9e9510:0952fc8c",
+  "src/notice-data.js": "95879:a297b5e5:2656895b",
   "src/notice.js": "4506:dbb8f2a7:75e005f7",
   "src/notify-sw.js": "985:5f0777db:749f45cf",
   "src/numbers.js": "930:4be2a1fd:48f02c7b",
@@ -213,5 +213,5 @@ export const FILE_HASHES = {
   "src/weather.js": "29151:893fa4f6:d26e0a3b",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "22770:07c345df:f825c7fc",
-  "style.css": "847594:860d127b:b54a76bc"
+  "style.css": "847594:1ba0a845:6f98edcf"
 };

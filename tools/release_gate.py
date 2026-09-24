@@ -15,6 +15,32 @@ class GateError(ValueError):
 WEATHER_ARTWORK = tuple(f'{pack}{style}.webp' for pack in ('nature', 'light', 'wings') for style in ('', '-anime', '-cel'))
 PREVIEW_ARTWORK = ('ade-game.webp', 'ade-lemon.webp', 'ade-cat.webp', 'ade-nap.webp', 'ade-rain.webp', 'character.webp')
 
+# Embedded tools have their own versions, independent of the theme release.
+ADDON_CSS_VERSIONS = (
+    ('bookmarks/state.js', 'bookmarks', '--cg-css-version'),
+    ('models/state.js', 'models', '--mr-css-version'),
+    ('order/state.js', 'order', '--po-css-version'),
+    ('rewrite/index.js', 'rewrite', '--bwr-css-version'),
+    ('perf/watchdog-main.js', 'perf', '--sw-css-version'),
+    ('perf/perfassist.js', 'perf', '--pa-css-version'),
+    ('perf/state.js', 'perf', '--rl-css-version'),
+    ('perf/savededupe.js', 'perf', '--sv-css-version'),
+)
+
+
+def validate_addon_css(files):
+    for source, folder, variable in ADDON_CSS_VERSIONS:
+        source = 'src/addons/' + source
+        css_path = f'src/addons/{folder}/style.css'
+        if source not in files and css_path not in files:
+            continue
+        code = files.get(source, b'').decode('utf-8')
+        css = files.get(css_path, b'').decode('utf-8')
+        code_version = re.search(r'\bconst\s+VERSION\s*=\s*[\'\"]([^\'\"]+)', code)
+        css_versions = re.findall(re.escape(variable) + r'\s*:\s*[\'\"]([^\'\"]+)', css)
+        require(code_version is not None and css_versions == [code_version[1]],
+                f'Addon CSS version mismatch: {source} / {variable}')
+
 
 def require(condition, message):
     if not condition:
@@ -53,6 +79,7 @@ def validate(files, kind):
     require(bool(re.fullmatch(r'\d+\.[0-9]\.[0-9]', version)), 'Version must carry at 10, e.g. 3.9.9 -> 4.0.0')
     require(manifest.get('js') == 'index.js' and manifest.get('css') == 'style.css', 'Unexpected manifest entry points')
     if kind == 'theme':
+        validate_addon_css(files)
         if b'./preview-art/' in files.get('src/panel.js', b''):
             for name in PREVIEW_ARTWORK:
                 data = files.get('src/preview-art/' + name, b'')
