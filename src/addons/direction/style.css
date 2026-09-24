@@ -1,0 +1,471 @@
+/* ============================================================
+   전개 지시 — 입력창 버튼, 빠른 편집 창, 설정
+   켜짐 색은 --jj-on-color (설정에서 색 코드를 비우면 테마의 대사 색)
+   ============================================================ */
+
+:root {
+    --jj-on: var(--jj-on-color, var(--SmartThemeQuoteColor, #e18a24));
+    /* index.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
+    --jj-css-version: "1.1.2";
+}
+
+/* ── 입력창 버튼 ─────────────────────────────────────────── */
+
+#jj-button {
+    order: 3;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    margin: 0 2px 0 -4px;
+    border-radius: 10px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--SmartThemeBodyColor);
+    font-size: 1.05em;
+    opacity: .45;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity .2s, color .2s, background-color .2s, box-shadow .2s;
+}
+
+#jj-button[hidden] { display: none; }
+
+/* 휴대폰: 요술봉 옆 (index.js placeButton). 옆 아이콘들과 같은 크기로 맞춘다. */
+/* 요술봉 오른쪽 = 그 줄의 맨 끝. 요술봉의 order를 읽어 따라가면 테마 CSS가 늦게 적용될 때 0으로 읽혀
+   버튼이 ≡ 앞으로 가 버려서, 불러오는 순서와 상관없는 큰 값으로 고정한다. */
+#leftSendForm > #jj-button.is-in-left { order: 999; }
+
+#jj-button.is-in-left {
+    width: 1.9em;
+    height: 1.9em;
+    margin: 0;
+    font-size: 1em;
+}
+#jj-button:hover { opacity: .85; }
+
+/* 켜짐: 테마 색(또는 설정한 색)으로 칠하고 은은하게 빛나게 한다. 눌러 보지 않아도 켜진 걸 알 수 있다. */
+#jj-button.is-on {
+    opacity: 1;
+    color: var(--jj-on);
+    background: transparent;
+    box-shadow: none;
+}
+
+#jj-button.is-on i { filter: drop-shadow(0 0 5px color-mix(in srgb, var(--jj-on) 65%, transparent)); }
+
+/* 켜져 있고 지시 내용도 있으면 오른쪽 위 점 */
+#jj-button .jj-dot {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--jj-on);
+    box-shadow: 0 0 0 2px var(--SmartThemeBlurTintColor, #171717);
+    opacity: 0;
+    transform: scale(.4);
+    transition: opacity .2s, transform .2s;
+}
+
+#jj-button .jj-dot { display: none; }
+#jj-button.has-popup { opacity: 1; }
+
+/* ── 빠른 편집 창 ────────────────────────────────────────── */
+
+#jj-popup {
+    position: absolute;
+    right: 0;
+    bottom: 100%;
+    z-index: 30000;
+    width: 460px;
+    max-width: calc(100vw - 16px);
+    margin-bottom: 6px;
+    overflow: hidden;
+    border-radius: 16px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    /* 테마 틴트는 반투명이라 흐림이 약하면 뒤 채팅 글자가 비친다. 테마 밝기에 맞춘 불투명 바탕을 깐다 (--jj-base는 index.js). */
+    background:
+        linear-gradient(var(--SmartThemeBlurTintColor), var(--SmartThemeBlurTintColor)),
+        var(--jj-base, #141318);
+    backdrop-filter: blur(var(--SmartThemeBlurStrength, 10px));
+    -webkit-backdrop-filter: blur(var(--SmartThemeBlurStrength, 10px));
+    box-shadow: 0 16px 40px -18px rgba(0, 0, 0, .7);
+    color: var(--SmartThemeBodyColor);
+    transform-origin: calc(100% - 20px) 100%;
+    transform: translateY(6px) scale(.97);
+    opacity: 0;
+    transition: opacity .18s ease, transform .18s ease;
+}
+
+#jj-popup.is-open { opacity: 1; transform: none; }
+
+.jj-popup-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 10px 10px 14px;
+    border-bottom: 1px solid var(--SmartThemeBorderColor);
+}
+
+.jj-popup-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    font-weight: 700;
+}
+
+.jj-popup-title i { color: var(--jj-on); }
+
+.jj-state {
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: .74em;
+    font-weight: 700;
+    background: color-mix(in srgb, var(--SmartThemeBodyColor) 10%, transparent);
+    color: color-mix(in srgb, var(--SmartThemeBodyColor) 65%, transparent);
+}
+
+#jj-popup.is-on .jj-state { background: var(--jj-on); color: var(--jj-on-ink, #fff); }
+
+.jj-switch {
+    position: relative;
+    flex-shrink: 0;
+    width: 46px;
+    height: 26px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--SmartThemeBodyColor) 22%, transparent);
+    cursor: pointer;
+    transition: background-color .2s;
+}
+
+.jj-switch span {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .35);
+    transition: transform .2s ease;
+}
+
+.jj-switch[aria-checked="true"] { background: var(--jj-on); }
+.jj-switch[aria-checked="true"] span { transform: translateX(20px); }
+
+.jj-icon-btn {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 9px;
+    background: transparent;
+    color: var(--SmartThemeBodyColor);
+    opacity: .75;
+    cursor: pointer;
+}
+
+.jj-icon-btn:hover { opacity: 1; background: color-mix(in srgb, var(--SmartThemeBodyColor) 8%, transparent); }
+
+.jj-popup-body { padding: 10px; }
+
+#jj-popup .jj-textarea {
+    display: block;
+    width: 100%;
+    min-height: 120px;
+    max-height: 40vh;
+    margin: 0;
+    padding: 10px 12px;
+    resize: vertical;
+    box-sizing: border-box;
+    border-radius: 11px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    background-color: rgba(0, 0, 0, .18);
+    color: var(--SmartThemeBodyColor);
+    font: inherit;
+    font-size: max(16px, var(--mainFontSize, 1rem));
+    line-height: 1.55;
+    outline: none;
+    transition: border-color .2s, opacity .2s;
+}
+
+#jj-popup .jj-textarea:focus { border-color: color-mix(in srgb, var(--jj-on) 60%, transparent); }
+#jj-popup:not(.is-on) .jj-textarea { opacity: .7; }
+
+.jj-popup-foot {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    padding: 0 12px 11px;
+    font-size: .78em;
+    line-height: 1.5;
+    color: color-mix(in srgb, var(--SmartThemeBodyColor) 60%, transparent);
+}
+
+.jj-popup-foot i { margin-top: 3px; }
+
+/* ── 설정 (확장 관리 화면) ───────────────────────────────── */
+
+/* 캐릭터 에셋 확장과 같은 카드 모양 (테마 글자색을 옅게 섞어 밝은/어두운 테마 모두 대비가 보이게) */
+.jj-settings {
+    --jj-card: color-mix(in srgb, var(--SmartThemeBodyColor, #888) 8%, transparent);
+    --jj-border: color-mix(in srgb, var(--SmartThemeBodyColor, #999) 28%, transparent);
+    --jj-line: color-mix(in srgb, var(--SmartThemeBodyColor, #999) 14%, transparent);
+    --jj-muted: color-mix(in srgb, var(--SmartThemeBodyColor, #999) 65%, transparent);
+}
+
+/* Layout lives on an inner wrapper: putting display:flex on .inline-drawer-content itself beat SillyTavern's
+   `.inline-drawer-content { display: none }`, so the drawer started expanded after every reload (1.0.5). */
+.jj-settings .jj-settings-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* 상태 카드 */
+.jj-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border: 1px solid var(--jj-border);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #1a1a1a) 90%, transparent);
+    transition: border-color .2s, background-color .2s;
+}
+
+.jj-status.is-on {
+    border-color: color-mix(in srgb, var(--jj-on) 55%, transparent);
+    background: color-mix(in srgb, var(--jj-on) 10%, var(--SmartThemeBlurTintColor, #1a1a1a));
+}
+
+.jj-status-dot {
+    width: 9px;
+    height: 9px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--jj-muted);
+}
+
+.jj-status.is-on .jj-status-dot {
+    background: var(--jj-on);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--jj-on) 25%, transparent);
+}
+
+.jj-status-main { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.35; }
+.jj-status-title { font-size: .95em; }
+.jj-status-text { font-size: .8em; color: var(--jj-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* 설정 줄: 이름 왼쪽, 조작 오른쪽 */
+.jj-card {
+    border: 1px solid var(--jj-border);
+    border-radius: 8px;
+    background: var(--jj-card);
+}
+
+.jj-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 46px;
+    padding: 6px 10px;
+}
+
+.jj-row + .jj-row { border-top: 1px solid var(--jj-line); }
+
+.jj-row-label { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+.jj-row-label b { font-size: .92em; font-weight: 600; }
+.jj-row-label small { font-size: .76em; color: var(--jj-muted); }
+
+.jj-switch:disabled { opacity: .4; cursor: default; }
+
+.jj-settings .jj-color-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.jj-settings .jj-swatch {
+    position: relative;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    margin: 0;
+    border-radius: 50%;
+    background: var(--jj-on);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2), 0 0 0 2px var(--jj-border);
+    cursor: pointer;
+}
+
+.jj-settings .jj-swatch input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.jj-settings .jj-color-row .text_pole {
+    width: 6.6em;
+    height: 30px;
+    margin: 0;
+    padding: 0 8px;
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: .85em;
+}
+
+.jj-settings .jj-color-row .text_pole.is-invalid { border-color: #e5484d; }
+
+.jj-small-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 30px;
+    margin: 0 !important;
+    padding: 3px 10px !important;
+    font-size: .82em;
+    white-space: nowrap;
+}
+
+/* 깊이: − 숫자 + */
+.jj-stepper {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 1px solid var(--jj-border);
+    border-radius: 8px;
+}
+
+.jj-stepper button {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: .72em;
+    opacity: .8;
+    cursor: pointer;
+}
+
+.jj-stepper button:hover { opacity: 1; background: var(--jj-card); }
+
+.jj-stepper input {
+    width: 2.6em;
+    height: 30px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-left: 1px solid var(--jj-line);
+    border-right: 1px solid var(--jj-line);
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: .9em;
+    text-align: center;
+    -moz-appearance: textfield;
+}
+
+.jj-stepper input::-webkit-inner-spin-button,
+.jj-stepper input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* 평소엔 접어 두는 프롬프트 (가장 긴 부분) */
+.jj-prompt > summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    list-style: none;
+    cursor: pointer;
+}
+
+.jj-prompt > summary::-webkit-details-marker { display: none; }
+.jj-prompt > summary > i:first-child { opacity: .75; }
+.jj-prompt > summary > span { font-size: .92em; font-weight: 600; }
+.jj-prompt-state { font-size: .76em; color: var(--jj-muted); }
+.jj-caret { margin-left: auto; font-size: .72em; opacity: .6; transition: transform .2s; }
+.jj-prompt[open] .jj-caret { transform: rotate(180deg); }
+
+.jj-prompt-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 10px 10px;
+    border-top: 1px solid var(--jj-line);
+}
+
+.jj-hint { margin: 0; font-size: .8em; line-height: 1.45; color: var(--jj-muted); }
+.jj-meaning > summary { font-size: .8em; color: var(--jj-muted); cursor: pointer; }
+.jj-meaning ul { margin: 4px 0 2px; padding-left: 1.2em; font-size: .8em; line-height: 1.5; color: var(--jj-muted); }
+.jj-prompt textarea.text_pole { width: 100%; margin: 0; box-sizing: border-box; font-size: .85em; }
+.jj-prompt-actions { display: flex; justify-content: flex-end; }
+
+/* 입력칸은 적은 만큼만 늘어난다 (지원하는 브라우저). 안 되면 min-height/세로 조절로 쓴다. */
+#jj-popup .jj-textarea { field-sizing: content; }
+
+/* 설정 제목의 버전 배지 — 캐릭터 에셋 확장과 같은 모양 */
+.jj-version {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 1px 7px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--SmartThemeBodyColor, #888) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--SmartThemeBodyColor, #999) 28%, transparent);
+    font-size: 0.7em;
+    font-weight: 400;
+    color: color-mix(in srgb, var(--SmartThemeBodyColor, #999) 65%, transparent);
+    vertical-align: middle;
+}
+
+/* 휴대폰: 세로로 길지 않게. 제목 줄을 얇게, 입력칸은 3줄에서 시작, 안내 줄은 뺀다. */
+@media (max-width: 1000px) {
+    #jj-popup { border-radius: 14px; margin-bottom: 4px; }
+    .jj-popup-head { gap: 8px; padding: 6px 6px 6px 10px; }
+    .jj-popup-title { gap: 6px; font-size: .95em; }
+    .jj-switch { width: 38px; height: 22px; }
+    .jj-switch span { top: 3px; left: 3px; width: 16px; height: 16px; }
+    .jj-switch[aria-checked="true"] span { transform: translateX(16px); }
+    .jj-icon-btn { width: 28px; height: 28px; border-radius: 8px; }
+    .jj-popup-body { padding: 0 8px 8px; }
+    #jj-popup .jj-textarea { min-height: calc(3lh + 16px); max-height: 30vh; padding: 7px 10px; line-height: 1.45; }
+    .jj-popup-foot { display: none; }
+}
+
+@media (max-width: 480px) {
+    #jj-button { width: 32px; height: 32px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #jj-button, #jj-button .jj-dot, #jj-popup, .jj-switch, .jj-switch span { transition: none; }
+}
+
+.bl-direction-dialog {width:min(620px,94vw);max-height:90dvh;padding:16px;border:1px solid var(--SmartThemeBorderColor,#555);border-radius:16px;background:var(--SmartThemeBlurTintColor,#25262a);color:var(--SmartThemeBodyColor,#eee);}
+.bl-direction-dialog::backdrop {background:#0008;}
+.bl-direction-dialog > header {display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
+.bl-direction-dialog > header button {background:transparent;border:0;color:inherit;font-size:24px;cursor:pointer;min-width:40px;min-height:40px;}
+.bl-direction-dialog #jj-settings > .inline-drawer > .inline-drawer-header {display:none;}

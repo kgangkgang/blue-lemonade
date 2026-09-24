@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {pathToFileURL} from 'node:url';
+const root=path.resolve(process.argv[2]||'.'), url=pathToFileURL(root+'/');
+const {insertDirection}=await import(new URL('src/addons/direction/prompt.js',url));
+const ext={};globalThis.__directionTest={ext,insertDirection};globalThis.window={matchMedia:()=>({matches:false})};
+const source=(await fs.readFile(path.join(root,'src/addons/direction/index.js'),'utf8')).split('// ── 시작')[0].replace(/^import .*;$/gm,'');
+const prelude='const {ext:extension_settings,insertDirection}=globalThis.__directionTest;const saveSettingsDebounced=()=>{};const getChatCompletionModel=()=>"example-model";const oai_settings={};';
+const m=await import('data:text/javascript;base64,'+Buffer.from(prelude+source+'\nexport {initSettings,settings,injectDirection};').toString('base64'));
+ext['Direction-Manager-Lite']={extensionEnabled:false,direction:{enabled:true,content:'literal $& direction'},directionPrompt:'Custom {{direction}}',promptDepth:3};
+m.initSettings();assert.equal(m.settings().extensionEnabled,false);assert.equal(m.settings().direction.content,'literal $& direction');assert.equal(m.settings().promptDepth,3);
+m.settings().onColor='#123456';m.initSettings();assert.equal(m.settings().onColor,'#123456');
+let chat=[{role:'user',content:'hello'}];m.injectDirection({chat});assert.equal(chat.length,1);
+m.settings().extensionEnabled=true;m.injectDirection({chat});assert.equal(chat[0].content,'Custom literal $& direction');
+chat=[{role:'user',content:'hello'}];function generateRaw(){m.injectDirection({chat});}generateRaw();assert.equal(chat.length,1);
+m.settings().direction.enabled=false;m.injectDirection({chat});assert.equal(chat.length,1);
+const answer={role:'assistant',content:'original answer'};chat=[answer];insertDirection(chat,'{{direction}}','next',0,'gemini-2.5-pro');assert.equal(chat[0],answer);assert.equal(chat.at(-1).role,'user');assert.equal(chat[1].role,'system');
+chat=[{...answer,tool_calls:[{id:'tool'}]}];insertDirection(chat,'{{direction}}','next',1,'gemini-2.5-pro');assert.equal(chat.length,2);assert.equal(chat.at(-1).role,'assistant');
+const {knownConflicts}=await import(new URL('src/assist/core.js',url));
+for(const folder of ['story-direction','Direction-Manager','Direction-Manager-Lite','jeongaejisi']){const key='third-party/'+folder;assert.equal(knownConflicts([key],[],{direction:true}).length,1);assert.equal(knownConflicts([key],[key],{direction:true}).length,0);assert.equal(knownConflicts([key],[],{direction:false}).length,0);}
+const {DEFAULTS}=await import(new URL('src/settings.js',url));assert.equal(DEFAULTS.addons.direction,false);
+delete globalThis.__directionTest;delete globalThis.window;
+console.log('PASS direction migration, preserved settings, off/raw isolation, insertion and Gemini continuation, duplicate ownership and opt-in');

@@ -17,6 +17,7 @@ PREVIEW_ARTWORK = ('ade-game.webp', 'ade-lemon.webp', 'ade-cat.webp', 'ade-nap.w
 
 # Embedded tools have their own versions, independent of the theme release.
 ADDON_CSS_VERSIONS = (
+    ('direction/index.js', 'direction', '--jj-css-version'),
     ('assets/state.js', 'assets', '--eh-css-version'),
     ('bookmarks/state.js', 'bookmarks', '--cg-css-version'),
     ('models/state.js', 'models', '--mr-css-version'),
@@ -64,6 +65,9 @@ def inventory(root, kind):
             if bundle.is_dir():
                 require((bundle / 'LICENSE').is_file(), f'Missing bundled license: {folder}')
                 names += [p.relative_to(root).as_posix() for p in bundle.rglob('*') if p.is_file() and (p.suffix in {'.html','.json','.md'} or p.name == 'LICENSE')]
+        if (root / 'src/addons/direction').is_dir():
+            require((root / 'src/addons/direction/NOTICE.md').is_file(), 'Missing Direction Manager permission notice')
+            names.append('src/addons/direction/NOTICE.md')
         if (root / 'src/addons/assets').is_dir():
             require((root / 'src/addons/assets/NOTICE.md').is_file(), 'Missing Character Assets permission notice')
             names.append('src/addons/assets/NOTICE.md')

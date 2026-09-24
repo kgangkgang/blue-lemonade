@@ -28,6 +28,7 @@ jobs:
           node tools/tests/conversation-assist.mjs .
           node tools/tests/addon-menu-routing.mjs .
           node tools/tests/character-assets.mjs .
+          node tools/tests/story-direction.mjs .
           node tools/tests/mix-selection.mjs .
           node tools/tests/capture-motion.mjs .
           node tools/tests/capture-resources.mjs

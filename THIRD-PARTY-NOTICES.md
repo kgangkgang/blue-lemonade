@@ -7,6 +7,7 @@ Blue Lemonade는 GNU Affero General Public License v3.0 조건으로 배포합�
 
 | 구성요소 | 원작자·출처 | 라이선스 |
 |---|---|---|
+| Direction Manager · 전개 지시 | [temporary0723](https://github.com/temporary0723/Direction-Manager) | [수정·업로드 허락 게시글](https://kkangtong.xyz/posts/104303) · [별도 고지](src/addons/direction/NOTICE.md) |
 | Character Assets | [tincansimagine](https://github.com/tincansimagine/character-assets) / 공유 게시글 작성자 「깡」 | [공유 허락 댓글](https://kkangtong.xyz/posts/122931#comment-7bd0d60e-f2f9-4c2c-9f42-4f395873fa17) · [별도 고지](src/addons/assets/NOTICE.md) |
 | 기반 테마 Moonlit Echoes Theme | [RivelleDays](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme) | [AGPL-3.0](LICENSE) |
 | LLM Translator | [1234anon](https://github.com/1234anon/llm-translator) / 수정판 [NamelessKkang](https://github.com/NamelessKkang/llm-translator-custom) | [AGPL-3.0](src/addons/translator/LICENSE) |

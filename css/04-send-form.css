@@ -282,12 +282,13 @@ body.salty #nonQRFormItems #jj-button:not(.is-on) {
   }
 }
 body.salty #jj-button.is-on i {
-  filter: none; /* 확장의 빛(drop-shadow)은 폰에서 번짐 */
+  filter: drop-shadow(0 0 4px color-mix(in srgb, currentColor 65%, transparent));
 }
 body.salty #nonQRFormItems #jj-button.is-on {
-  background-color: var(--bl-jj-btn-bg) !important;
-  box-shadow: var(--bl-jj-glow) !important;
-  color: var(--bl-jj-btn-fg) !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: var(--jj-on-color, var(--bl-jj-fg)) !important;
 }
 body.salty #jj-button i,
 body.salty #mes_stop i {
