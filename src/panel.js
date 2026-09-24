@@ -56,7 +56,7 @@ const SUBS = {
     chat: [['message', '메시지'], ['profile', '캐릭터 프로필'], ['user-profile', '내 프로필'], ['name', '캐릭터 이름·시간'], ['user-name', '내 이름·시간'], ['screen', '화면'], ['etc', '기타']],
     image: [['layout', '배치'], ['shape', '모양'], ['frame', '테두리'], ['size', '크기'], ['fade', '흐림']],
     prompt: [['deus', '데우스 엑스 마키나']],
-    extensions: [['words', '단어 치환'], ['capture', '채팅 캡처'], ['order', '확장 순서'], ['perf', '성능 보조'], ['models', '모델 관리'], ['bookmarks', '북마크'], ['translator', 'LLM 번역'], ['prompt','한글화 패널'], ['customstyle','커스텀 CSS 조절'], ['rewrite', '다시 쓰기'], ],
+    extensions: [['assets', '캐릭터 에셋'], ['words', '단어 치환'], ['capture', '채팅 캡처'], ['order', '확장 순서'], ['perf', '성능 보조'], ['models', '모델 관리'], ['bookmarks', '북마크'], ['translator', 'LLM 번역'], ['prompt','한글화 패널'], ['customstyle','커스텀 CSS 조절'], ['rewrite', '다시 쓰기'], ],
 };
 
 const panels = new Set();

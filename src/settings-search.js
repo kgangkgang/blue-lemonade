@@ -64,6 +64,7 @@ for (const [sub, name, alias] of [['profile','캐릭터','캐릭터 봇 상대']
 }
 rows.push(['extensions','words','단어 치환','단어 바꾸기 조사 규칙 되돌리기'],['extensions','capture','채팅 캡처','이미지 사진 저장 메시지 다중 선택'],['extensions','order','확장 순서','패널 고정 순서 정렬'],['extensions','perf','성능 보조','끊김 감시 요청 로그 로딩 저장 정리'],['chat','screen','날씨 움직임','레몬 꽃잎 유성 낙하 회전 흔들림 커스텀'],['theme','palette','내 에이드 보관함','커스텀 여러개 저장 불러오기'],
  ['extensions','models','모델 등록','모델 이름 직접 추가 등록 공급자 목록에 없는 새 모델 커스텀 모델'],
+ ['extensions','assets','캐릭터 에셋','이미지 그림 사진 에셋 프리셋 업로드 묶음 캐릭터'],
  ['extensions','translator','LLM 번역','번역 LLM 단독 확장 탭 표시 숨기기 용어집 선택 번역'],
  ['extensions','bookmarks','북마크','북마크 책갈피 즐겨찾기 메시지 표시 메모 모아 보기 찾기 이동 앞뒤 문맥 다른 채팅'],
  ['extensions','models','모델 전환','번역 장기 기억 다시 쓰기 모델 한번에 바꾸기 중계 공식 API 조합 저장 주소 잠금 공급자 전환'],
@@ -75,7 +76,7 @@ rows.push(['extensions','words','단어 치환','단어 바꾸기 조사 규칙 
  ['chat','screen','백그라운드에서도 계속','백그라운드 다른 앱 앱 전환 탭 잠 멈춤 소리 없이 무음 작은 창 pip 버티기 번역 계속','', 'bgWindow.on'],
  ['chat','screen','답이 오면 알려 주기','알림 진동 푸시 답 도착 완료 알려 주기 다른 앱 폰 백그라운드','', 'replyNotify.on']);
 const tabs={extensions:'확장',theme:'테마',text:'글자',chat:'채팅',image:'이미지',prompt:'프롬프트'};
-const subs={prompt:'한글화 패널',customstyle:'커스텀 CSS 조절',translator:'LLM 번역',conflicts:'확장 충돌 진단',words:'단어 치환',capture:'채팅 캡처',order:'확장 순서',perf:'성능 보조',models:'모델 관리',modelswitch:'모델 전환',regexlink:'프롬프트 연동 정규식',rewrite:'다시 쓰기',bookmarks:'북마크',scripts:'스크립트',update:'업데이트',changes:'변경한 설정',palette:'색',colors:'색 고치기',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
+const subs={assets:'캐릭터 에셋',prompt:'한글화 패널',customstyle:'커스텀 CSS 조절',translator:'LLM 번역',conflicts:'확장 충돌 진단',words:'단어 치환',capture:'채팅 캡처',order:'확장 순서',perf:'성능 보조',models:'모델 관리',modelswitch:'모델 전환',regexlink:'프롬프트 연동 정규식',rewrite:'다시 쓰기',bookmarks:'북마크',scripts:'스크립트',update:'업데이트',changes:'변경한 설정',palette:'색',colors:'색 고치기',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
 const normalize = value => String(value).normalize('NFKC').toLowerCase().replace(/퀵\s*리플라이|quick\s*repl(?:y|ies)|큐알|\bqr\b/g,'퀵리플라이').replace(/프사|아바타/g,'프로필').replace(/글씨|글자\s*간격/g,m=>m==='글씨'?'글자':'자간').replace(/확대\s*축소/g,'확대 축소').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 // 한글을 초성 · 자모로 풀어 둔다: 'ㅂㄱ' → 배경, '배겨'(치다 만 글자) → 배경, 한 글자 틀린 말도 찾는다.
 const CHO='ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ', JUNG='ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ', JONG=['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];

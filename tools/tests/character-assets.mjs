@@ -1,0 +1,35 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {pathToFileURL} from 'node:url';
+const root=path.resolve(process.argv[2]||'.');
+const src=await fs.readFile(path.join(root,'src/addons/assets/state.js'),'utf8');
+const ext={};let saves=0;
+globalThis.__assetTest={ext,save:()=>saves++,context:{characters:[{avatar:'Example.png'}],characterId:0}};
+const module=await import('data:text/javascript;base64,'+Buffer.from(src.replace(/^import .*;$/gm,'')+'\nconst extension_settings=globalThis.__assetTest.ext;const saveSettingsDebounced=globalThis.__assetTest.save;const getContext=()=>globalThis.__assetTest.context;').toString('base64'));
+ext['character-assets']={imagePrompt:'My custom prompt',renderer:{enabled:false,randomAsset:false},gallerySettings:{gridSize:'large'},characterAssets:{Example:{disabledAssets:['hidden.png']}}};
+module.initSettings();
+assert.equal(module.settings().prompt,'My custom prompt');
+assert.equal(module.settings().renderEnabled,false);assert.equal(module.settings().randomGroups,false);
+assert.deepEqual([...module.disabledSet('Example')],['hidden.png']);assert.equal(module.settings().thumbSize,'l');
+const existing=module.settings();existing.links={Example:[{owner:'Other',presetId:'one',enabled:false}]};
+module.initSettings();assert.equal(module.settings(),existing);assert.equal(existing.links.Example[0].enabled,false);
+module.pruneDisabled('Example',[]);assert.deepEqual(existing.disabled.Example,['hidden.png']);
+assert.equal(module.currentFolder(),'Example');globalThis.__assetTest.context.groupId='group';assert.equal(module.currentFolder(),'');
+const url=pathToFileURL(root+'/');
+const {knownConflicts}=await import(new URL('src/assist/core.js',url));
+for(const folder of ['char-assets','character-assets','esetham']){
+ const key='third-party/'+folder;
+ assert.equal(knownConflicts([key],[],{assets:true}).length,1);
+ assert.equal(knownConflicts([key],[key],{assets:true}).length,0);
+ assert.equal(knownConflicts([key],[],{assets:false}).length,0);
+}
+const {DEFAULTS,getSettings}=await import(new URL('src/settings.js',url));
+globalThis.SillyTavern={getContext:()=>({extensionSettings:{salty:{addons:{assets:true},usageMode:'extensions'}}})};
+assert.equal(DEFAULTS.addons.assets,false);assert.equal(getSettings().addons.assets,true);
+const {addonMarkup}=await import(new URL('src/addons.js',url));
+assert.match(addonMarkup(getSettings(),'assets'),/data-addon-toggle="assets"/);
+const notice=await fs.readFile(path.join(root,'src/addons/assets/NOTICE.md'),'utf8');
+assert.match(notice,/github.com\/tincansimagine\/character-assets/);assert.match(notice,/comment-7bd0d60e-f2f9-4c2c-9f42-4f395873fa17/);
+delete globalThis.__assetTest;
+console.log('PASS Character Assets legacy migration, existing settings, empty-folder preservation, duplicate ownership and opt-in');
