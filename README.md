@@ -1,13 +1,20 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.1.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.1.5.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.1.4 · 최신 업데이트</summary>
+<summary>5.1.5 · 최신 업데이트</summary>
+
+- LLM 번역에서 문단 묶음이 거절되면 그 자리에서 반으로 나눠 다시 보내요. 화살표로 다시 번역할 때 통과하던 작은 요청을 첫 번역에서 바로 해서, 문단 하나까지 막힐 때만 차단 표시가 남아요. 나누기는 메시지당 6번까지예요.
+
+</details>
+
+<details>
+<summary>5.1.4 · 번역 묶음 요청 형식</summary>
 
 - LLM 번역의 문단 묶음 요청을 JSON 포장 대신 번호 표시를 붙인 보통 글로 보내요. JSON으로 감싸면 첫 자동 번역이 거절되는 일이 잦았고(화살표 재번역은 통짜 경로라 됐어요), 프리필 문구와도 어긋났어요. 요청 횟수와 문단 캐시는 그대로예요.
 
