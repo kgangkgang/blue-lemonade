@@ -20,10 +20,10 @@ await assert.rejects(go('cancelled',{check:()=>{throw Object.assign(Error('cance
 await assert.rejects(go('bad1\n\nbad2',{request:async()=>['only one']}));calls=[];await go('bad1\n\nbad2');assert.deepEqual(calls,[['bad1','bad2']]);
 await clearSegmentCache();calls=[];await go('A\n\nA');assert.deepEqual(calls,[['A']]);
 assert.equal(segmentParagraphs('<span>one\n\ntwo</span>'),null);assert(segmentParagraphs('<span>one</span>\n\n<span>two</span>'));
-assert.deepEqual(parseBatchResult('[{"id":1,"text":"second"},{"id":0,"text":"first"}]',2),['first','second']);
-for(const raw of ['not json','[]','[{"id":0,"text":"a"},{"id":0,"text":"b"}]','[{"id":0,"text":"a"},{"id":3,"text":"b"}]','[{"id":0,"text":"a"},{"id":1,"text":""}]'])assert.throws(()=>parseBatchResult(raw,2));
-assert.deepEqual(parseBatchResult('```json\n[{"id":0,"text":"ok"}]\n```',1),['ok']);
-assert.deepEqual(JSON.parse(batchPayload(['a\n"b"']).split('\n').at(-1)),[{id:0,text:'a\n"b"'}]);
+assert.deepEqual(parseBatchResult('⟦1⟧ second\n\n⟦0⟧ first',2),['first','second']);
+for(const raw of ['no markers','','⟦0⟧ a\n⟦0⟧ b','⟦0⟧ a\n⟦3⟧ b','⟦0⟧ a\n⟦1⟧ ','⟦0⟧ a'])assert.throws(()=>parseBatchResult(raw,2));
+assert.deepEqual(parseBatchResult('```\n⟦0⟧ ok\n```',1),['ok']);assert.deepEqual(parseBatchResult('Here it is:\n⟦0⟧: first line\nsecond line\n\n【1】 two',2),['first line\nsecond line','two']);
+assert.ok(batchPayload(['a\n"b"','c']).endsWith('⟦0⟧ a\n"b"\n\n⟦1⟧ c'));assert.ok(!batchPayload(['x']).includes('JSON'));
 console.log('PASS first batch 1 request, multiple edits 1 request, reuse 0 requests; reorder/insert/delete/dedup; strict IDs and atomic validation; failures/cancel/clear');
 
 assert.deepEqual(batchGroups(['aa','bb','cc'],4),[['aa','bb'],['cc']]);
@@ -34,6 +34,6 @@ await clearSegmentCache();calls=[];const mixed=await go('P\n\nQ',{request:async 
 assert.equal(mixed.translated,1);assert.equal(mixed.blocked,1);assert.equal(mixed.text,'번역(P)\n\nBLOCKED\nQ');calls=[];await go('P\n\nQ');assert.deepEqual(calls,[['Q']]);
 await assert.rejects(go('R\n\nS',{request:async()=>['ok',null]}));
 // <think> 블록 · 앞뒤 설명문 · 숫자 문자열 id 도 읽는다 (개수 · 번호 검사는 그대로)
-assert.deepEqual(parseBatchResult('<think>plan [1]</think>Sure, here [it] is:\n[{"id":"1","text":"b"},{"id":"0","text":"a"}]\nDone.',2),['a','b']);
-assert.throws(()=>parseBatchResult('<think>x</think>[{"id":"0","text":"a"}]',2));
+assert.deepEqual(parseBatchResult('<think>plan ⟦9⟧</think>Sure, here it is:\n⟦1⟧ b\n⟦0⟧ a',2),['a','b']);
+assert.throws(()=>parseBatchResult('<think>x</think>⟦0⟧ a',2));
 console.log('PASS partial batch failure keeps successful paragraphs; tolerant batch parsing');

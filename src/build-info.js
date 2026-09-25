@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.1.3";
+export const BUILD_VERSION = "5.1.4";
 export const FILE_HASHES = {
   "index.js": "12169:6abf0b36:2502931a",
-  "manifest.json": "365:93bddf46:8b8d294b",
+  "manifest.json": "365:78bff03b:bd077824",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -131,7 +131,7 @@ export const FILE_HASHES = {
   "src/addons/translator/style.css": "20135:7fc98a5a:a6560c4f",
   "src/addons/translator/translation-guard.js": "2112:f04d3b75:2ed753ad",
   "src/addons/translator/translation-resume.js": "5228:aa325f12:5e031f03",
-  "src/addons/translator/translation-segments.js": "9064:d22e13b3:d57f9f51",
+  "src/addons/translator/translation-segments.js": "9591:21b7af44:85411e76",
   "src/appearance-archive.js": "1243:d0ee7b92:356c4593",
   "src/appearance-compare.js": "2964:a9ab0f50:369beedc",
   "src/apply.js": "47145:5abb73aa:d3d25dd3",
@@ -200,7 +200,7 @@ export const FILE_HASHES = {
   "src/marquee.js": "4394:b21eba98:bf26831b",
   "src/menu-position.js": "3312:4d17612e:af7476d7",
   "src/mes-pins.js": "9110:58a88535:74b20064",
-  "src/notice-data.js": "104800:d753a21e:8c75808c",
+  "src/notice-data.js": "105179:5603be1a:9bbd9f9b",
   "src/notice.js": "4623:c387a90d:e051d1f2",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "930:4be2a1fd:48f02c7b",
@@ -263,5 +263,5 @@ export const FILE_HASHES = {
   "src/weather.js": "29151:893fa4f6:d26e0a3b",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "22770:07c345df:f825c7fc",
-  "style.css": "856424:28657b16:f2bcba13"
+  "style.css": "856424:783e84d4:87487b0f"
 };

@@ -1,13 +1,20 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.1.3.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.1.4.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.1.3 · 최신 업데이트</summary>
+<summary>5.1.4 · 최신 업데이트</summary>
+
+- LLM 번역의 문단 묶음 요청을 JSON 포장 대신 번호 표시를 붙인 보통 글로 보내요. JSON으로 감싸면 첫 자동 번역이 거절되는 일이 잦았고(화살표 재번역은 통짜 경로라 됐어요), 프리필 문구와도 어긋났어요. 요청 횟수와 문단 캐시는 그대로예요.
+
+</details>
+
+<details>
+<summary>5.1.3 · 전체 점검</summary>
 
 - 업데이트가 많았던 만큼 전체 점검을 했어요. 번역 캐시가 프리셋을 조금만 만져도 지워지던 문제, 폰에서 http 주소로 접속하면 문단 번역이 실패하던 문제, 큰 채팅을 저장하는 중에 다른 채팅으로 넘어가면 마지막 수정이 사라지던 문제, 코드 블록 안 에셋 태그로 화면이 멈추던 문제를 고쳤어요.
 - 시작이 가벼워졌어요. 내장 확장 스타일을 한꺼번에 읽고, 전개 지시·캐릭터 에셋의 색 맞추기는 시작 중에 쉬어요. 스타일·프리셋 가져오기 값을 검사하고, '처음 설정으로 › 테마 모습'이 사용 모드·잠금을 지우지 않아요.

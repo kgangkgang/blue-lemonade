@@ -92,28 +92,35 @@ export function batchGroups(bodies, limit = 3600) {
 }
 
 // Exact IDs keep model output from being attached to the wrong paragraph.
+// 5.1.4: 묶음 요청은 JSON 이 아니라 번호 표시를 붙인 자연문으로 보낸다. JSON 으로 감싸면(이스케이프된 날 문장 + "JSON 만 돌려줘")
+// 모델·중계 필터가 '이야기 번역' 이 아니라 '자료 처리' 로 보고 첫 번역을 더 자주 거절했고, 프리필("Here is the translation:") 과도 어긋났다.
+// 화살표 재번역(통짜 경로)은 되는데 자동 번역만 막히던 이유. 표시는 본문에 나올 일 없는 ⟦n⟧ 을 쓴다.
+const MARK = /^[ \t]*[⟦【]\s*(\d+)\s*[⟧】][ \t]*[:：]?[ \t]*/;
 export function batchPayload(bodies) {
-    return '[Translate each text below using the translation instructions above. Return ONLY a JSON array of objects with exactly id and text. Keep every numeric id unchanged, translate its text completely, preserve markup/placeholders, and do not merge or split entries.]\n' +
-        JSON.stringify(bodies.map((text, id) => ({ id, text })));
+    return '[Translate every numbered passage below using the translation instructions above. Each passage starts with a marker like ⟦3⟧. Keep every marker exactly as it is at the start of its translated passage, translate the passage after it completely, keep markup and placeholders, and do not merge, split, reorder, add or drop passages.]\n\n' +
+        bodies.map((text, id) => `⟦${id}⟧ ${text}`).join('\n\n');
 }
 export function parseBatchResult(raw, count) {
-    // 앞의 <think>…</think> · 코드 펜스 · 앞뒤 설명문은 걷어 내고 가장 바깥 [ … ] 만 읽는다. 개수 · 번호 · 중복 · 빈 글 검사는 그대로 엄격하다.
-    const text = String(raw).replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
-    const end = text.lastIndexOf(']');
-    let value;
-    for (const start of new Set([text.indexOf('['), text.search(/\[\s*\{/)])) {
-        if (start < 0 || end <= start) continue;
-        try { value = JSON.parse(text.slice(start, end + 1)); break; } catch { /* validated below */ }
-    }
+    // 앞의 <think>…</think> · 코드 펜스 · 표시 앞의 설명문은 걷어 낸다. 개수 · 번호 · 중복 · 빈 글 검사는 엄격하다.
+    const text = String(raw).replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/^\s*```[a-z]*[ \t]*\n|\n[ \t]*```\s*$/g, '').trim();
     const fail = () => { throw Error('문단 번호나 응답 형식이 맞지 않아 번역을 적용하지 않았어요. 다시 시도해 주세요.'); };
-    if (!Array.isArray(value) || value.length !== count) return fail();
     const found = new Map();
-    for (const row of value) {
-        const id = typeof row?.id === 'string' && /^\s*\d+\s*$/.test(row.id) ? Number(row.id) : row?.id; // "0" 같은 숫자 문자열도 받는다
-        if (!row || !Number.isInteger(id) || id < 0 || id >= count || found.has(id) || typeof row.text !== 'string' || !row.text.trim()) return fail();
-        found.set(id, row.text);
+    let id = null, buffer = [];
+    const flush = () => {
+        if (id === null) return;
+        const body = buffer.join('\n').trim();
+        if (!body || found.has(id)) fail();
+        found.set(id, body);
+    };
+    for (const line of text.split('\n')) {
+        const mark = MARK.exec(line);
+        if (mark) { flush(); id = Number(mark[1]); buffer = [line.slice(mark[0].length)]; }
+        else if (id !== null) buffer.push(line);
     }
-    return Array.from({length: count}, (_, id) => found.get(id));
+    flush();
+    if (found.size !== count) fail();
+    for (const key of found.keys()) if (!Number.isInteger(key) || key < 0 || key >= count) fail();
+    return Array.from({length: count}, (_, i) => found.get(i));
 }
 export async function translateSegments({ parts, signature, request, check = () => {}, progress = () => {}, cacheable = () => true, blockedMarker }) {
     const stamp = epoch, output = [...parts], total = Math.ceil(parts.length / 2), missing = new Map();
