@@ -25,80 +25,78 @@
     display: none  !important;
 }
 
-/* 메세지 액션 아이콘 줄바꿈 */
-.extraMesButtons.visible,
-body.expandMessageActions .mes .mes_buttons .extraMesButtons {
+/* 메세지 액션 아이콘 줄바꿈 — 5.3.4: 번역 버튼이 붙은 줄만 (전엔 모든 확장 · ST 메시지 버튼 줄에 걸렸다) */
+.extraMesButtons.visible:has(> .mes_llm_translate),
+body.expandMessageActions .mes .mes_buttons .extraMesButtons:has(> .mes_llm_translate) {
     display: flex;
     flex-wrap: wrap;
 }
 
-/* 파라미터 설정 섹션 */
-.parameter-settings {
+/* 파라미터 설정 섹션 — 5.3.4: 아래 일반 이름 클래스는 번역 설정(.llmt-settings) 안으로만 */
+.llmt-settings .parameter-settings {
     margin-top: 10px;
 }
 
-.parameter-group {
+.llmt-settings .parameter-group {
     display: none;
     margin-top: 10px;
 }
 
-.parameter-row {
+.llmt-settings .parameter-row {
     display: flex;
     justify-content: space-between;
     margin-bottom: 10px;
     gap: 10px;
 }
 
-.parameter-item {
+.llmt-settings .parameter-item {
     flex: 1;
     max-width: 48%;
 }
 
-.parameter-item small {
+.llmt-settings .parameter-item small {
     display: block;
     margin-bottom: 5px;
 }
 
-.parameter-row {
+.llmt-settings .parameter-row {
     display: flex;
     gap: 5px;
     width: 100%;
 }
 
-.parameter-row .parameterbox {
+.llmt-settings .parameter-row .parameterbox {
     flex: 1;
     width: 50%;
 }
 
-.parameter-row .neo-range-slider,
-.parameter-row .neo-range-input {
+.llmt-settings .parameter-row .neo-range-slider,
+.llmt-settings .parameter-row .neo-range-input {
     width: 100%;
 }
 
-.parameterbox small {
+.llmt-settings .parameterbox small {
     text-align: center;
     display: block;
     width: 100%;
 }
 
-.parameterbox {
+.llmt-settings .parameterbox {
     align-items: center;
 }
 
-.flexFlowColumn {
-    flex-flow: column;
-}
-.gap0 {
+/* .flexFlowColumn 은 ST 본체(st-tailwind.css)에 같은 규칙이 있다 */
+.llmt-settings .gap0 {
     gap: 0 !important;
 }
 
 /* 리버스 프록시 */
-.password-container {
+.llmt-settings .password-container {
     display: flex;
     width: 100%;
 }
 
-.password-container .text_pole {
+.llmt-settings .password-container .text_pole {
     flex: 1;
     margin-right: 5px;
 }
@@ -160,47 +158,46 @@ body.expandMessageActions .mes .mes_buttons .extraMesButtons {
 }
 
 
-.prompt-editor-button {
+/* 5.3.4: 없는 변수(--text-color 등) 대신 ST 변수 */
+.llmt-settings .prompt-editor-button {
     cursor: pointer;
     padding: 5px;
-    color: var(--text-color);
+    color: var(--SmartThemeBodyColor);
     transition: color 0.3s ease;
 }
 
-.prompt-editor-button:hover {
-    color: var(--accent-color);
+.llmt-settings .prompt-editor-button:hover {
+    color: var(--SmartThemeQuoteColor);
 }
 
-.gap5 {
+.llmt-settings .gap5 {
     gap: 5px;
 }
 
 /* 아이콘 수직 정렬 */
-.prompt-editor-button,
-.rule-prompt-editor-button,
-.fa-info-circle {
+.llmt-settings :is(.prompt-editor-button, .rule-prompt-editor-button, .fa-info-circle) {
     display: inline-flex;
     align-items: center;
     height: 20px;
 }
 
-.flex-container.align-items-center {
+.llmt-settings .flex-container.align-items-center {
     align-items: center;
     min-height: 20px;
 }
 
-.prompt-select-container {
+.llmt-settings .prompt-select-container {
     display: flex;
     gap: 5px;
     align-items: center;
     margin-bottom: 10px;
 }
 
-.prompt-select-container select {
+.llmt-settings .prompt-select-container select {
     flex: 1;
 }
 
-.small-button {
+.llmt-settings .small-button {
     padding: 2px 8px;
     font-size: 14px;
     min-width: 30px;
@@ -208,15 +205,15 @@ body.expandMessageActions .mes .mes_buttons .extraMesButtons {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--background-secondary);
-    border: 1px solid var(--border-color);
+    background: var(--black30a);
+    border: 1px solid var(--SmartThemeBorderColor);
     border-radius: 4px;
-    color: var(--text-color);
+    color: var(--SmartThemeBodyColor);
     cursor: pointer;
 }
 
-.small-button:hover {
-    background: var(--background-tertiary);
+.llmt-settings .small-button:hover {
+    background: var(--white20a);
 }
 
 /* 프롬프트 추가 폼 스타일 */
@@ -224,7 +221,7 @@ body.expandMessageActions .mes .mes_buttons .extraMesButtons {
     padding: 15px;
 }
 
-.prompt-form {
+.prompt-add-dialog .prompt-form {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -232,22 +229,22 @@ body.expandMessageActions .mes .mes_buttons .extraMesButtons {
     gap: 10px;
 }
 
-.prompt-title {
+.prompt-add-dialog .prompt-title {
     font-size: 1.1em;
-    color: var(--text-color);
+    color: var(--SmartThemeBodyColor);
     margin-bottom: 5px;
 }
 
-.prompt-form-group {
+.prompt-add-dialog .prompt-form-group {
     width: 100%;
     margin: 0;
 }
 
-.prompt-form-group input.wide {
+.prompt-add-dialog .prompt-form-group input.wide {
     width: 100%;
-    background: var(--background-primary, #1a1a1a);
-    border: 1px solid var(--border-color);
-    color: var(--text-color);
+    background: var(--black30a, #1a1a1a);
+    border: 1px solid var(--SmartThemeBorderColor);
+    color: var(--SmartThemeBodyColor);
     padding: 8px 12px;
     border-radius: 4px;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
@@ -263,26 +260,26 @@ body.expandMessageActions .mes .mes_buttons .extraMesButtons {
     margin: 0;
 }
 
-.prompt-form-group input::placeholder {
-    color: var(--text-color-secondary, #888888);
+.prompt-add-dialog .prompt-form-group input::placeholder {
+    color: var(--SmartThemeEmColor, #888888);
     opacity: 0.7;
 }
 
 /* 프리셋 관리 */
-.preset-manager-container {
+.llmt-settings .preset-manager-container {
     display: flex;
     flex-direction: column;
     gap: 5px;
     margin-bottom: 10px;
 }
 
-.preset-controls {
+.llmt-settings .preset-controls {
     display: flex;
     gap: 5px;
     align-items: center;
 }
 
-.preset-controls select {
+.llmt-settings .preset-controls select {
     flex: 1;
 }
 

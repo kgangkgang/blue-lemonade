@@ -356,7 +356,7 @@ body.salty.salty-dark .ui-tabs .ui-tabs-nav li.ui-tabs-active .ui-tabs-anchor,
 body.salty.salty-dark #Backgrounds #bg_tabs .bg_tabs_list .bg_tab_button.ui-tabs-active a {
   color: var(--bl-pop) !important;
 }
-body.salty.salty-dark :is(.salty-tabs, .salty-seg, .salty-shapes) button.on {
+body.salty.salty-dark :is(.salty-seg, .salty-shapes) button.on {
   color: var(--bl-pop); /* 모양 고르기는 이름 · 그림 둘 다 */
 }
 /* 채팅 보내기 · 생성 멈춤: 레몬 동그라미 + 남색 아이콘 (그림자는 입력창 칸의 중립 e2 그대로) */

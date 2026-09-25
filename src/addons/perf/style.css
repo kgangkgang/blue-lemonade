@@ -135,7 +135,7 @@
 
 /* ===== 요청 로그 (parts/request-log.css) ===== */
 /* 요청 로그 (Request Log) — 설정 서랍 · 로그·집계 창 */
-:root { --rl-css-version: "1.2.5"; }
+:root { --rl-css-version: "1.2.6"; }
 
 .rl-settings, .rl-root {
     --rl-text: var(--SmartThemeBodyColor, #e8e8ec);
@@ -704,7 +704,7 @@
 
 /* ===== 저장 정리 (parts/save-dedupe.css) ===== */
 /* 저장 정리 (Save Dedupe) — 설정 서랍 */
-:root { --sv-css-version: "1.1.2"; }
+:root { --sv-css-version: "1.1.3"; }
 
 .sv-settings .sv-body {
     display: flex;

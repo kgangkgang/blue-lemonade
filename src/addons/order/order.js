@@ -14,7 +14,7 @@ import { settings } from './state.js';
 const COLUMNS = ['extensions_settings', 'extensions_settings2'];
 const HOME = 'extensions_settings';
 export const DIVIDER_ID = 'po-divider';
-const WIDE = '(min-width: 1001px)'; // 실리태번 mobile-styles 가 1000px 이하에서 두 칸을 위아래로 쌓는다
+const WIDE = 'not all and (max-width: 1000px)'; // 실리태번 mobile-styles 가 1000px 이하에서 두 칸을 위아래로 쌓는다
 
 /** 설정 창일 리 없는 것들 — 칸에 끼어 있어도 줄 세우기에서 뺀다 */
 const NOT_PANEL = new Set(['STYLE', 'SCRIPT', 'TEMPLATE', 'LINK', 'META', 'NOSCRIPT']);

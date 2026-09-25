@@ -319,11 +319,24 @@ export function splitNames(text) {
     return String(text ?? '').split(/[,\n]/).map(name => name.trim()).filter(Boolean);
 }
 
+// 한글 이름 뒤에 붙어도 이름으로 보는 글자 (조사 · 호칭 · 서술격 끝): 자드가 · 자드에게서 · 자드였다 · 자드님 · 자드야.
+// 이 글자들만 이어지다 한글이 아닌 글자(공백 · 문장부호 · 끝)에서 끝나야 한다 — 아델라이드 · 벨트 · 자드락은 이름이 아니다.
+const KO_TAIL = '[이가은는을를의에게서한테와과랑도만께야아여로으처럼보다까지부터님씨쨩짱양나요라고든조차마저뿐밖였인잖네군죠니냐며면란래데예구거쪽더러]';
+const HANGUL = '[가-힣]';
+const KANA = '[\\p{Script=Katakana}ー]';
+
 export function mentions(text, name) {
     if (/^[\x20-\x7E]+$/.test(name)) {
         return new RegExp(`(?<![A-Za-z0-9_])${escapeRegex(name)}(?![A-Za-z0-9_])`, 'i').test(text);
     }
-    return text.includes(name);
+    // 짧은 이름이 다른 낱말 속에서 걸리지 않게: 한글로 시작하면 앞이 한글이 아니고(위자드 · 블리자드 · 레벨),
+    // 한글로 끝나면 뒤에 조사 같은 글자만 온다. 가타카나 이름은 앞뒤가 가타카나가 아니어야 한다 (ウィザード).
+    const first = name[0];
+    const last = name[name.length - 1];
+    const before = new RegExp(HANGUL, 'u').test(first) ? `(?<!${HANGUL})` : new RegExp(KANA, 'u').test(first) ? `(?<!${KANA})` : '';
+    const after = new RegExp(HANGUL, 'u').test(last) ? `(?=${KO_TAIL}{0,5}(?!${HANGUL}))` : new RegExp(KANA, 'u').test(last) ? `(?!${KANA})` : '';
+    if (!before && !after) return text.includes(name);
+    return new RegExp(`${before}${escapeRegex(name)}${after}`, 'u').test(text);
 }
 
 export function findActiveExceptions(recentText, exceptions) {

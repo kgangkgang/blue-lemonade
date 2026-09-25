@@ -26,6 +26,12 @@ export function modulesOf(script) {
     return pick(`${script.findRegex || ''} ${script.replaceString || ''}`);
 }
 
+/** 키(낱말을 공백 하나로 이은 것) 안에 needle 이 낱말째로 들었나 — "roadmap" 에는 "map" 이 없다 */
+const hasWords = (hay, needle) => ` ${hay} `.includes(` ${needle} `);
+const escapeRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/** 소문자 글에 @키 태그가 있나 (뒤에 글자가 이어지면 다른 낱말: @map ≠ @mapping) */
+const tagIn = (low, key) => new RegExp(`@${escapeRe(key).replace(/ /g, '\\s+')}(?![a-z0-9])`).test(low);
+
 /** 프롬프트 이름을 견줄 수 있게: 「 」 | ! ⚠️ ❗ 와 괄호 안을 뗀다 */
 export const promptKey = name => keyOf(String(name || '').replace(/\([^)]*\)/g, ' ').replace(/[「」|!⚠️❗{}]/g, ' '));
 
@@ -36,15 +42,15 @@ export const promptKey = name => keyOf(String(name || '').replace(/\([^)]*\)/g, 
  */
 export function ownersFor(keys, prompts, aliases = ALIASES) {
     const list = prompts.filter(p => p && !p.marker && p.identifier);
-    const byName = (needle) => list.filter(p => promptKey(p.name).includes(needle)).map(p => p.identifier);
+    // 낱말 단위로 견준다: @Map 이 "Roadmap" 에 걸리면 안 된다
+    const byName = (needle) => list.filter(p => hasWords(promptKey(p.name), needle)).map(p => p.identifier);
     const out = new Map();
     for (const key of keys) {
         let owners = byName(key);
         if (!owners.length) for (const alias of aliases[key] || []) owners.push(...byName(alias));
         owners = [...new Set(owners)];
         if (!owners.length) {
-            const needle = `@${key}`;
-            const byContent = list.filter(p => keyOf(String(p.content || '').replace(/@/g, ' @')).includes(key) && String(p.content || '').toLowerCase().includes(needle.replace(/ /g, ' '))).map(p => p.identifier);
+            const byContent = list.filter(p => hasWords(keyOf(String(p.content || '').replace(/@/g, ' @')), key) && tagIn(String(p.content || '').toLowerCase(), key)).map(p => p.identifier);
             if (byContent.length && byContent.length <= 6) owners = byContent;
         }
         out.set(key, owners);
@@ -89,5 +95,5 @@ export function plan({ scripts, prompts, enabled, origin = {}, overrides = {}, r
 /** 메시지 글에 모듈 태그가 있나 (대소문자 무시, @ 있든 없든) */
 export function textHasModule(text, keys) {
     const low = String(text || '').toLowerCase();
-    return keys.some(k => low.includes(`@${k}`) || low.includes(`! ${k} !`) || (k === 'thinking' && low.includes('<thinking')));
+    return keys.some(k => tagIn(low, k) || low.includes(`! ${k} !`) || (k === 'thinking' && low.includes('<thinking')));
 }

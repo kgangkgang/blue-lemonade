@@ -64,8 +64,8 @@ export function syncChat() {
         s.activeStyle = null;
     }
     invalidateSettings(); // 5.2.3: 스타일을 제자리에 입힌 뒤 정리(범위 · 형식)를 다시 거치게
+    paint(); // 5.3.4: 입혀 본 뒤에 저장 — 적용이 죽는 스타일을 먼저 저장하면 새로고침할 때마다 다시 죽었다
     saveSettings();
-    paint();
     return true;
 }
 
@@ -78,8 +78,8 @@ export function styleRemoved(id) {
         s.baseStyle = null;
         s.activeStyle = null;
         invalidateSettings();
-        saveSettings();
         paint();
+        saveSettings();
     }
 }
 

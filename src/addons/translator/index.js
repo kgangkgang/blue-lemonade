@@ -1,7 +1,7 @@
 // Modified 2026-09-24: Blue Lemonade bundled adapter; original settings and translation DB retained.
 import { createGuards, watchGuard } from './translation-guard.js';
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
-import { segmentParagraphs, translateSegments, clearSegmentCache, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, BATCH_HEADER } from './translation-segments.js';
+import { segmentParagraphs, translateSegments, clearSegmentCache, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER } from './translation-segments.js';
 import { syncSelectionRetranslate } from './selection/index.js';
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
@@ -1192,7 +1192,9 @@ function failMarkOf(error) {
     const why = String(error.message ?? error).replace(/\s+/g, ' ').trim().slice(0, 50);
     return `[번역 실패${why ? ': ' + why : ''}${MARK_TAIL}`;
 }
-const isTransientError = error => !error?.refused && !error?.format && !error?.cancelled && !error?.timeout;
+// 5.3.4: 429 · 5xx · 네트워크 오류만 (요청 쪽에서 transient 를 단다). 시간 초과 · 401/403 · 잘못된 키는 다시 보내지 않는다 —
+//        시간 초과는 서버가 이미 처리 중이라 두 번 청구될 수 있고, 키 오류는 다시 보내도 같다.
+const isTransientError = error => Boolean(error?.transient) && !error?.refused && !error?.format && !error?.cancelled && !error?.timeout;
 const CHUNK_TARGET = 1800; // 한 덩이 글자 수 목표. 너무 작으면 문맥 · 말투가 흔들리고 요청이 많아진다.
 const KANA_RE = /[ぁ-ゖァ-ヺ]/;
 const KANA_FIX_NOTE = '[The numbered lines below are from a Korean translation but still contain Japanese. Translate each fully into Korean, keep the numbering and everything else unchanged, one line per number.]\n';
@@ -1204,7 +1206,9 @@ function splitForChunks(text) {
     let current = '';
     for (const paragraph of paragraphs) {
         const onlyMask = /^(\[\[__VAR_\d+__\]\]\s*)+$/.test(paragraph);
-        if (current && !onlyMask && current.length + paragraph.length > CHUNK_TARGET) { chunks.push(current); current = ''; }
+        // 5.3.4: 열린 <p> 가 닫히기 전에는 자르지 않는다 (여는 태그와 닫는 태그가 다른 요청으로 가지 않게 · 안 닫힌 <p> 는 목표의 2배까지만)
+        const openP = current.length < CHUNK_TARGET * 2 && (current.match(/<p\b[^>]*>/gi) || []).length > (current.match(/<\/p\s*>/gi) || []).length;
+        if (current && !onlyMask && !openP && current.length + paragraph.length > CHUNK_TARGET) { chunks.push(current); current = ''; }
         current = current ? `${current}\n\n${paragraph}` : paragraph;
     }
     if (current) chunks.push(current);
@@ -1245,6 +1249,8 @@ function applyKanaFix(text, kanaLines, fixed) {
         const m = raw.match(/^\s*(\d+)[.)]\s?(.*)$/);
         if (m) map.set(Number(m[1]), m[2]);
     }
+    // 5.3.4: 번호가 1..N 으로 딱 맞을 때만 — 두 줄을 합치고 번호를 다시 매긴 답은 한 칸씩 엉뚱한 줄에 들어갔다
+    if (map.size !== kanaLines.length || kanaLines.some((_, i) => !map.has(i + 1))) return String(text ?? '');
     kanaLines.forEach(([index, line], i) => {
         const candidate = map.get(i + 1);
         if (candidate === undefined || !candidate.trim() || KANA_RE.test(candidate)) return;
@@ -1430,14 +1436,14 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
         responseBody = await response.text();
     } catch (fetchError) {
         if (overrides.signal?.aborted) throw overrides.signal.reason;
-        if (fetchError?.name === 'AbortError') {
-            throw new Error(`${Math.round(timeoutMs / 1000)}초 안에 답이 없어 끊었어요. 요청을 더 작게 나누거나 잠시 뒤 다시 해 주세요.`);
+        if (fetchError?.name === 'AbortError') { // 5.3.4: 시간 초과는 다시 보내지 않는다 (timeout — isTransientError)
+            throw Object.assign(new Error(`${Math.round(timeoutMs / 1000)}초 안에 답이 없어 끊었어요. 요청을 더 작게 나누거나 잠시 뒤 다시 해 주세요.`), { timeout: true });
         }
         // 네트워크 에러 처리
         if (fetchError.name === 'TypeError' && fetchError.message.includes('Failed to fetch')) {
-            throw new Error('네트워크 연결에 실패했습니다. 인터넷 연결을 확인해주세요.');
+            throw Object.assign(new Error('네트워크 연결에 실패했습니다. 인터넷 연결을 확인해주세요.'), { transient: true });
         }
-        throw new Error(`요청 실패: ${fetchError.message}`);
+        throw Object.assign(new Error(`요청 실패: ${fetchError.message}`), { transient: fetchError?.name === 'TypeError' });
     } finally {
         clearTimeout(timeoutHandle);
         overrides.signal?.removeEventListener('abort', abort);
@@ -1459,20 +1465,21 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
             errorMessage = response.statusText || errorMessage;
         }
 
-        // 상태 코드별 구체적인 메시지
+        // 상태 코드별 구체적인 메시지 — 5.3.4: 429 · 5xx 만 transient (한 번 더 보냄). 524 는 서버가 아직 처리 중일 수 있어 시간 초과로 본다
+        const flags = response.status === 524 ? { timeout: true } : { transient: response.status === 429 || response.status >= 500 };
         switch (response.status) {
             case 401:
                 throw new Error('API 키가 잘못되었거나 권한이 없습니다.');
             case 403:
                 throw new Error('API 접근이 거부되었습니다. API 키 권한을 확인해주세요.');
             case 429:
-                throw new Error('API 호출 한도를 초과했습니다. 잠시 후 다시 시도해주세요.');
+                throw Object.assign(new Error('API 호출 한도를 초과했습니다. 잠시 후 다시 시도해주세요.'), flags);
             case 500:
-                throw new Error('서버 내부 오류가 발생했습니다.');
+                throw Object.assign(new Error('서버 내부 오류가 발생했습니다.'), flags);
             case 503:
-                throw new Error('서비스를 사용할 수 없습니다. 잠시 후 다시 시도해주세요.');
+                throw Object.assign(new Error('서비스를 사용할 수 없습니다. 잠시 후 다시 시도해주세요.'), flags);
             default:
-                throw new Error(errorMessage);
+                throw Object.assign(new Error(errorMessage), flags);
         }
     }
 
@@ -1484,7 +1491,8 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
     } catch {
         if (/cloudflare|<!doctype html|<html/i.test(rawText)) {
             const code = /error code:?\s*(\d{3})|errorcode_(\d{3})/i.exec(rawText);
-            throw new Error(`중계 서버가 제때 답하지 않아 Cloudflare 가 끊었어요${code ? ` (${code[1] || code[2]})` : ''}. 잠시 뒤 다시 하거나 요청을 줄여 주세요.`);
+            const status = code ? (code[1] || code[2]) : '';
+            throw Object.assign(new Error(`중계 서버가 제때 답하지 않아 Cloudflare 가 끊었어요${status ? ` (${status})` : ''}. 잠시 뒤 다시 하거나 요청을 줄여 주세요.`), status === '524' ? { timeout: true } : { transient: true });
         }
         throw new Error(`서버 응답을 읽을 수 없어요: ${rawText.slice(0, 80)}`);
     }
@@ -1623,7 +1631,7 @@ async function translate(text, options = {}) {
     const watcher = watchGuard(() => {
         chatGuard.assert(); options.assertValid?.();
         if (connectionSignature() !== connection) throw Object.assign(new Error('번역 연결이나 모델 설정이 바뀌어 멈췄어요. 같은 설정으로 다시 번역하면 저장한 문단부터 이어가요.'), { cancelled: true });
-    });
+    }, 500); // 5.3.4: 100ms → 500ms (매번 연결 설정을 문자열화한다. 단계마다 check() 도 따로 부른다)
     const request = async prompt => {
         watcher.check();
         const result = await callLLMAPI(prompt, { signal: watcher.signal });
@@ -1804,23 +1812,27 @@ async function translate(text, options = {}) {
                 : Number(s.profile_max_tokens) || (live?.mainApi === 'openai' ? Number(live.chatCompletionSettings?.openai_max_tokens) : Number(live?.textCompletionSettings?.max_length)) || 0;
             const groupLimit = outputTokens > 0 ? Math.min(CHUNK_TARGET * 2, Math.max(400, Math.round(outputTokens * 1.2))) : CHUNK_TARGET * 2;
             const failReasons = new Map(); // 5.2.9: 문단 본문 → 실패 원인
+            const noCache = new Set(); // 5.3.4: 붙이긴 하되 캐시에 넣지 않을 문단 (1부터 다시 매긴 답 — 한 칸 밀린 답과 구별이 안 된다)
             const result = await translateSegments({ parts: paragraphParts,
                 signature: () => setupDigest, check: watcher.check, progress, blockedMarker: body => failMarkOf(failReasons.get(body)),
                 cacheable: (body, out) => {
                     const marks = value => JSON.stringify(value.match(/\[\[__VAR_\d+__\]\]/g) || []);
-                    return marks(body) === marks(out) && !linesWithKana(out).length;
+                    // 5.3.4: 묶음 중 한 문단만 거절문으로 온 경우도 30일 캐시에 넣지 않는다
+                    return marks(body) === marks(out) && !linesWithKana(out).length && !looksLikeRefusal(body, out) && !noCache.has(body);
                 },
                 request: async bodies => {
                     const translated = [];
                     let failed = null, succeeded = 0, splits = 0;
-                    failReasons.clear();
+                    failReasons.clear(); noCache.clear();
                     // 5.1.5: 묶음이 거절되면 그 자리에서 반으로 나눠 다시 보낸다 — 사용자가 화살표로 다시 번역하면
                     // 통과하던 것과 같은 작은 요청이다. 문단 하나까지 막히면 그 문단만 null(차단 표시). 나누기는 메시지당 SPLIT_CAP 번까지.
                     const SPLIT_CAP = 6;
                     const translateGroup = async (group, layouts = PROMPT_LAYOUTS, retried = false) => {
                         watcher.check();
                         try {
-                            const out = parseBatchResult(await callWithLayouts(batchPayload(group), layouts), group.length).map(tidyKana);
+                            const meta = {};
+                            const out = parseBatchResult(await callWithLayouts(batchPayload(group), layouts), group.length, meta).map(tidyKana);
+                            if (meta.renumbered) for (const body of group) noCache.add(body);
                             succeeded++;
                             return out;
                         } catch (caught) {
@@ -1839,7 +1851,9 @@ async function translate(text, options = {}) {
                             if (error?.format || (error?.refused && group.length > 0)) {
                                 console.warn(`[LLM Translator] 묶음이 ${error.format ? '형식 오류' : '거절'}라 번호 없이 통짜로 다시 보내요:`, error.message);
                                 try {
-                                    const plain = String(await callWithLayouts(group.join('\n\n'), error.format ? PROMPT_LAYOUTS.slice(0, 1) : layouts));
+                                    // 5.3.4: 머리말 · 꼬리 메모를 걷고, 줄 단위로 온 답은 빈 줄을 되살린 뒤 문단을 센다 (전엔 한 문단으로 보고 괜히 반으로 나눴다)
+                                    const joinedGroup = group.join('\n\n');
+                                    const plain = restoreParagraphBreaks(joinedGroup, stripReplyWrapping(await callWithLayouts(joinedGroup, error.format ? PROMPT_LAYOUTS.slice(0, 1) : layouts)));
                                     const paras = plain.split(/\n[\t ]*\n(?:[\t ]*\n)*/).map(p => p.trim()).filter(Boolean);
                                     if (paras.length === group.length) { succeeded++; return paras.map(tidyKana); }
                                     if (group.length === 1 && plain.trim()) { succeeded++; return [tidyKana(plain.trim())]; }
@@ -2346,7 +2360,8 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
         }
 
         // 강제 번역이거나 번역문이 없는 경우, 또는 자동 번역시 원문이 바뀐 경우
-        let shouldTranslate = forceTranslate || !message.extra.display_text;
+        // 5.3.4: 전체 번역은 실패 표시가 남은 메시지도 다시 보낸다 (된 문단은 문단 캐시에서, 실패한 문단만 요청)
+        let shouldTranslate = forceTranslate || !message.extra.display_text || (source === 'batch' && String(message.extra.display_text).includes(MARK_TAIL));
 
         // 자동 번역시 원문이 바뀌었는지 확인
         if (!shouldTranslate && source === 'auto' && message.extra.display_text) {
@@ -3413,28 +3428,31 @@ function createEventHandler(translateFunction, shouldTranslateFunction) {
         }
 
         // 4. 새 타이머 설정
-        SHARED_SAFETY.timer = setTimeout(async () => {
+        const fire = async () => {
             // 실행 시점에 큐 복사 및 초기화 — [1.9.6] 그 사이 채팅을 바꿨거나 지워진 메시지는 빼고, 번호는 지금 채팅 기준으로
             const currentBatch = SHARED_SAFETY.queue.filter(task => resolveQueuedTarget(task.args, task.ref) !== null);
             SHARED_SAFETY.queue = [];
             SHARED_SAFETY.timer = null;
             // 한 번 부를 때마다 다시 확인한다 (앞 번역 · 확인 창을 기다리는 사이에도 채팅이 바뀔 수 있다)
+            // 5.3.4: 번역 함수가 promise 를 돌려주므로 한 건씩 끝난 뒤 다음을 보낸다 (전엔 N건이 한꺼번에 나갔다). 사이에 전체 번역 딜레이 · 일괄은 최소 0.5초
+            let started = 0;
+            const gap = Math.max(currentBatch.length >= SHARED_SAFETY.THRESHOLD ? 500 : 0, Number(extensionSettings.throttle_delay) || 0);
             const runTask = async (task) => {
                 const id = resolveQueuedTarget(task.args, task.ref);
                 if (id === null) {
                     console.debug('[LLM Translator] 대기 중에 채팅이 바뀌어 번역을 건너뜀', task.args);
                     return;
                 }
+                if (started++ && gap) await new Promise(resolve => setTimeout(resolve, gap));
                 await task.func(id);
             };
 
             if (currentBatch.length === 0) return;
 
-            // 5. 팝업이 이미 열려있다면? (극단적 상황 방지)
-            // -> 그냥 뒤따라온 배치들은 자동 취소하거나, 혹은 팝업 없이 큐에 쌓을 수도 있음.
-            // 여기서는 안전하게 '이전 팝업 처리 중이면 이번 배치는 자동 스킵' 처리 (또는 조용히 로그만)
+            // 5. 팝업이 이미 열려있다면? — 5.3.4: 버리지 않고 대기열에 되돌려 팝업이 닫힌 뒤 다시 본다
             if (SHARED_SAFETY.isPopupOpen) {
-                console.warn('[LLM Translator] Popup already open. Skipping batch.');
+                SHARED_SAFETY.queue.unshift(...currentBatch);
+                if (!SHARED_SAFETY.timer) SHARED_SAFETY.timer = setTimeout(fire, 1000);
                 return;
             }
 
@@ -3472,7 +3490,8 @@ function createEventHandler(translateFunction, shouldTranslateFunction) {
                     await runTask(task);
                 }
             }
-        }, SHARED_SAFETY.DELAY);
+        };
+        SHARED_SAFETY.timer = setTimeout(fire, SHARED_SAFETY.DELAY);
     };
 }
 
@@ -3522,7 +3541,7 @@ function translateIncomingMessage(messageId) {
     }
 
     // 백그라운드에서 번역 실행
-    translateMessage(messageId, false, 'auto').catch(error => {
+    return translateMessage(messageId, false, 'auto').catch(error => {
         console.warn('Auto translation failed:', error);
     });
 }
@@ -3540,7 +3559,7 @@ function translateOutgoingMessage(messageId) {
     }
 
     // 백그라운드에서 번역 실행
-    translateMessage(messageId, false, 'auto').catch(error => {
+    return translateMessage(messageId, false, 'auto').catch(error => {
         console.warn('Auto translation failed:', error);
     });
 }

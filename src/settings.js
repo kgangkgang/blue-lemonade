@@ -118,6 +118,26 @@ DEFAULTS.userProfile = { ...structuredClone(DEFAULTS.profile), mode: 'none', sid
 export const CSS_COLOR = /^(#[0-9a-f]{3,8}|rgba?\([^(){};]*\)|hsla?\([^(){};]*\))$/i;
 export const isCssColor = value => typeof value === 'string' && CSS_COLOR.test(value.trim());
 const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+// 5.3.4: 그림 data URL 은 base64 글자만 — 'data:image/' 로 시작하는지만 보면 따옴표 · 괄호가 섞여 style 속성 · CSS url() 을 빠져나갔다 (공유 코드로 스크립트 실행)
+// 지금 설정 창이 만드는 것은 PNG 뿐이지만 예전에 저장한 다른 형식도 그대로 읽히게
+export const DATA_IMAGE = /^data:image\/(png|jpeg|webp|gif|avif);base64,[a-z\d+/=]+$/i;
+export const isDataImage = value => typeof value === 'string' && value.length <= 8000000 && DATA_IMAGE.test(value);
+// 5.3.4: body 클래스로 들어가는 값은 아는 것만 — 공백이 든 값 하나로 classList.add 가 던져 시작할 때마다 테마가 죽었다
+const CLASS_VALUES = { user: ['bubble', 'card', 'table', 'plain'], header: ['full', 'name', 'none'], icons: ['line', 'default'], layout: ['bleed', 'column', 'inset'], style: ['marker', 'full', 'bold', 'tint', 'plain'], tilt: ['flat', 'slant', 'steep'] };
+// 5.3.4: 내 글꼴 항목 거르기 — family · 주소가 <style> 과 @font-face 에 그대로 들어간다. 공유 코드로 받은 항목도 이 검사를 지난다
+const FONT_FAMILY = /^(?:'[^'"\\;{}<>\r\n]{1,100}'|[^'"\\;{}<>\r\n,()]{1,100})$/;
+const FONT_URL = /^(?:https:\/\/[^\s"'()<>\\]{1,2000}|\/(?!\/)[^\s"'()<>\\]{1,500}|data:(?:font|application)\/[\w.+-]{1,40};base64,[a-z\d+/=]+)$/i;
+export function safeFont(f) {
+    if (!isObj(f) || typeof f.id !== 'string' || !/^[\w.-]{1,80}$/.test(f.id) || typeof f.family !== 'string' || !FONT_FAMILY.test(f.family.trim())) return false;
+    if (f.label !== undefined && typeof f.label !== 'string') return false;
+    if (f.google !== undefined && (typeof f.google !== 'string' || !/^[\w+-]{1,100}(:[\w@.;,]{1,100})?$/.test(f.google))) return false;
+    if (f.fa !== undefined && (typeof f.fa !== 'string' || !/^[\w-]{1,100}$/.test(f.fa))) return false;
+    if (f.css !== undefined && ![].concat(f.css).every(u => typeof u === 'string' && /^https:\/\/[^\s"'()<>\\]{1,2000}$/i.test(u))) return false;
+    if (f.file !== undefined && (typeof f.file !== 'string' || !FONT_URL.test(f.file))) return false;
+    if (f.files !== undefined && !(Array.isArray(f.files) && f.files.every(x => isObj(x) && typeof x.url === 'string' && FONT_URL.test(x.url)
+        && (x.weight == null || /^\d{1,3}( \d{1,3})?$/.test(String(x.weight))) && (x.style == null || ['normal', 'italic', 'oblique'].includes(x.style))))) return false;
+    return true;
+}
 
 export const PROFILE_RANGE = { screenHeight: [10, 100], maxHeight: [10, 100], visibleHeight: [10, 100], nameSize: [10, 60], nameWeight: [100, 900], nameSpacing: [-10, 30], nameHeight: [1, 2.5], headerGap: [0, 32], metaSize: [8, 24], metaOpacity: [20, 100], buttonGap: [0, 24], nameOutline: [0, 3], nameShadowBlur: [0, 20], nameShadowY: [-10, 10], nameShadowAlpha: [0, 100], width: [30, 100], height: [100, 720], positionX: [0, 100], positionY: [0, 100], radius: [0, 80], gap: [0, 64], blur: [0, 16], opacity: [20, 100], fadeY: [0, 45], fadeX: [0, 45] };
 
@@ -181,11 +201,11 @@ function tidyImage(image) {
     if (!IMAGE_FADES.includes(image.fade)) image.fade = fadeLevel(image.fade);
     if (!IMAGE_EDGES.includes(image.edge)) image.edge = 'none';
     // 커스텀 도형의 마스크는 data URL 만 (아직 안 골랐으면 빈 값 — 모양은 custom 인 채로 두어 고르기 칸이 보이게, CSS 는 mask none 이라 그대로 보임)
-    if (typeof image.mask !== 'string' || !image.mask.startsWith('data:image/')) image.mask = '';
+    if (!isDataImage(image.mask)) image.mask = ''; // 5.3.4: base64 글자만 (url("…") 에 그대로 들어간다)
     if (!MASK_FITS.includes(image.maskFit)) image.maskFit = 'stretch';
     // 저장한 도형 목록 [{ id, name, data }] — 깨진 항목은 버리고, 가리키는 칸이 없으면 '저장 안 된 그림' 상태로
     if (!Array.isArray(image.masks)) image.masks = [];
-    image.masks = image.masks.filter(item => item && typeof item === 'object' && typeof item.id === 'string' && item.id && typeof item.data === 'string' && item.data.startsWith('data:image/'))
+    image.masks = image.masks.filter(item => item && typeof item === 'object' && typeof item.id === 'string' && /^[\w-]{1,40}$/.test(item.id) && isDataImage(item.data))
         .map(item => ({ id: item.id, name: typeof item.name === 'string' && item.name.trim() ? item.name.trim().slice(0, 24) : '커스텀', data: item.data }));
     if (typeof image.maskId !== 'string' || !image.masks.some(item => item.id === image.maskId)) image.maskId = '';
     // 자동 색은 불리언 — 가져온 파일의 "false" 는 문자열이라 그냥 두면 참으로 읽힌다 (tidyType 의 justify 와 같은 방식).
@@ -245,6 +265,25 @@ function tidyRoles(s) {
         s.chat.mesPins = tidyPins(s.chat.mesPins); // ··· 메뉴에서 꺼내 늘 보이게 할 버튼 (4.1.3, mes-pins.js)
     }
 }
+/** 5.3.4: body 클래스 · 변수 시트로 가는 모양 값 — 모르는 값은 기본값, 톤(채도 · 밝기 %)은 0~100 숫자 */
+function tidyClassValues(s) {
+    const pick = (owner, key, list) => { if (isObj(owner) && !list.includes(owner[key])) owner[key] = list[0]; }; // 목록 첫 값 = 기본값
+    for (const key of ['user', 'header', 'icons']) pick(s.chat, key, CLASS_VALUES[key]);
+    pick(s.image, 'layout', CLASS_VALUES.layout);
+    pick(s.dialogue, 'style', CLASS_VALUES.style);
+    pick(s.dialogue, 'tilt', CLASS_VALUES.tilt);
+    if (!isObj(s.chat)) return;
+    for (const tone of ['tone', 'markerTone']) {
+        if (!isObj(s.chat[tone])) s.chat[tone] = structuredClone(DEFAULTS.chat[tone]);
+        for (const mode of ['light', 'dark']) {
+            if (!isObj(s.chat[tone][mode])) s.chat[tone][mode] = structuredClone(DEFAULTS.chat[tone][mode]);
+            for (const key of ['s', 'l']) {
+                const n = Number(s.chat[tone][mode][key]);
+                s.chat[tone][mode][key] = Number.isFinite(n) ? clampTo(n, [0, 100]) : DEFAULTS.chat[tone][mode][key];
+            }
+        }
+    }
+}
 const isObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
 const flag = (v, def) => (v === true || v === 'true' ? true : v === false || v === 'false' ? false : def);
 
@@ -263,7 +302,7 @@ function tidyStyles(s) {
     if (s.activeStyle !== null && !(isObj(s.activeStyle) && typeof s.activeStyle.id === 'string' && typeof s.activeStyle.key === 'string')) s.activeStyle = null;
     if (s.baseStyle !== null && !isObj(s.baseStyle)) s.baseStyle = null;
     // 3.3.1 날씨 그림 목록
-    const okImage = x => isObj(x) && typeof x.id === 'string' && x.id && typeof x.data === 'string' && x.data.startsWith('data:image/');
+    const okImage = x => isObj(x) && typeof x.id === 'string' && /^[\w-]{1,40}$/.test(x.id) && isDataImage(x.data); // 5.3.4: id 는 data-id 속성에, 그림은 style 속성에 들어간다
     if (!Array.isArray(s.weatherImages)) s.weatherImages = [];
     else if (s.weatherImages.length > 12 || !s.weatherImages.every(okImage)) s.weatherImages = s.weatherImages.filter(okImage).slice(0, 12);
 }
@@ -331,7 +370,7 @@ function tidyFlags(s) {
         s.chat.demInk = flag(s.chat.demInk, false);
         // 3.7.1 그 색을 어디에: text 글자 색 | marker 형광펜 띠 색 (글자는 테마 색 그대로)
         if (!['text', 'marker'].includes(s.chat.demInkMode)) s.chat.demInkMode = 'text';
-        if (typeof s.chat.weatherImage !== 'string' || (s.chat.weatherImage && !s.chat.weatherImage.startsWith('data:image/'))) s.chat.weatherImage = '';
+        if (s.chat.weatherImage !== '' && !isDataImage(s.chat.weatherImage)) s.chat.weatherImage = ''; // 5.3.4: base64 글자만 — 설정 창 style 속성에 그대로 들어가 스크립트가 돌았다
         if (typeof s.chat.weatherImageId !== 'string') s.chat.weatherImageId = '';
     }
 }
@@ -351,7 +390,15 @@ function tidyType(type) {
     // 좌우 여백은 슬라이더(8~40) 밖 값이 가져오기 · 스타일 파일로 들어올 수 있다 — 8 아래면 버튼 줄의 -8px 여백이 화면 밖으로 나간다 (4.6.9)
     const gutter = typeof type.gutter === 'number' ? type.gutter : parseFloat(type.gutter);
     type.gutter = Number.isFinite(gutter) ? clampTo(gutter, TEXT_LIMIT.gutter) : DEFAULTS.type.gutter;
+    // 5.3.4: 나머지 글자 값도 숫자 · 범위 안으로 — 문자열이 그대로 변수 시트에 들어가 "16px;} body{display:none" 같은 규칙을 끼워 넣을 수 있었다.
+    // 범위는 슬라이더보다 넓게 (가져온 파일 · 완성된 스타일의 값이 바뀌지 않게)
+    for (const [key, range] of Object.entries(TYPE_RANGE)) {
+        const n = typeof type[key] === 'number' ? type[key] : parseFloat(type[key]);
+        type[key] = Number.isFinite(n) ? clampTo(n, range) : DEFAULTS.type[key];
+    }
+    type.indent = flag(type.indent, false);
 }
+const TYPE_RANGE = { size: [8, 40], lineHeight: [1, 3], letterSpacing: [-20, 40], weight: [100, 900], para: [0, 4], measure: [320, 2400] };
 
 /** 형광펜 두께 · 위치 정리 */
 export const SHADOW_LIMIT = { alpha: [0, 100], angle: [0, 360], distance: [0, 12], blur: [0, 24] };
@@ -434,13 +481,15 @@ export function getSettings() {
     if (memo && ext[KEY] === memo) return memo;
     if (!ext[KEY]) ext[KEY] = structuredClone(DEFAULTS);
     migrate(ext[KEY]);
+    // 3.4.0 전 설정: 데우스 카드 스킨이나 트래커 날씨를 쓰던 사람이면 호환을 켠 채로 시작 (한 번만)
+    // 5.3.4: 아래 5.1.2 칸 채우기보다 먼저 본다 — 채운 뒤에 보면 deus · userProfile 이 늘 있어 두 옮기기가 5.1.3 부터 한 번도 안 돌았다.
+    // 한 번 돈 뒤에는 칸이 생기고(deus) 모드가 정해져(userProfile) 다시 돌지 않는다
+    const firstDeus = ext[KEY].deus === undefined;
+    const migrateUserMode = !ext[KEY].userProfile || ext[KEY].userProfile.mode === 'inherit';
     // 5.1.2: 칸 자체가 깨진 값(fonts: "pretendard" · colorOverrides: "salt" …)이면 그 칸을 기본값으로 — fill() 은 있는 값을 안 건드려 아래 정리 · apply 가 죽었다 (매 시작마다)
     for (const [key, value] of Object.entries(DEFAULTS)) {
         if (isObj(value) ? !isObj(ext[KEY][key]) : Array.isArray(value) ? !Array.isArray(ext[KEY][key]) : false) ext[KEY][key] = structuredClone(value);
     }
-    // 3.4.0 전 설정: 데우스 카드 스킨이나 트래커 날씨를 쓰던 사람이면 호환을 켠 채로 시작 (한 번만)
-    const firstDeus = ext[KEY].deus === undefined;
-    const migrateUserMode = !ext[KEY].userProfile || ext[KEY].userProfile.mode === 'inherit';
     const migrateWordSyntax = ext[KEY].wordTools && ext[KEY].wordTools.syntax !== 'comma';
     const s = fill(ext[KEY], DEFAULTS);
     if (migrateUserMode) s.userProfile.mode = SillyTavern.getContext().powerUserSettings?.hideChatAvatars_enabled || s.chat.user === 'bubble' ? 'none' : 'small';
@@ -453,6 +502,7 @@ export function getSettings() {
     s.compat.muteCustomCss = flag(s.compat.muteCustomCss, false);
     if (isObj(s.type)) tidyType(s.type);
     tidyRoles(s);
+    tidyClassValues(s);
     if (isObj(s.fonts)) {
         FONT_SLOTS.forEach(slot => tidyFontSlot(s.fonts, slot));
         if (!isObj(s.fonts.text)) s.fonts.text = { ...FONT_SET }; // 본문은 'same' 이 없다 (fonts.js slotStack 이 묶음을 기대)
@@ -497,6 +547,8 @@ export function getSettings() {
     { const tidy = tidyGradients(s.gradients); if (JSON.stringify(tidy) !== JSON.stringify(s.gradients)) s.gradients = tidy; } // 이미 정돈돼 있으면 같은 객체 그대로
     tidyFlags(s);
     tidyStyles(s);
+    // 5.3.4: 내 글꼴 — 이름 · 주소가 CSS 에 그대로 들어가니 모양이 맞는 항목만 (멀쩡하면 배열을 새로 만들지 않음)
+    if (!s.customFonts.every(safeFont)) s.customFonts = s.customFonts.filter(safeFont);
     if (!Array.isArray(s.customPalettes)) s.customPalettes=[];
     if (typeof s.activeCustomPalette !== 'string') s.activeCustomPalette='';
     if (!isObj(s.addons)) s.addons=structuredClone(DEFAULTS.addons);

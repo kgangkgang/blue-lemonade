@@ -1,6 +1,6 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 57개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 962fb6532365) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 57개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 94e027954338) */
 /* css/00-base.css */
-:root{--bl-release:"5.3.3";}
+:root{--bl-release:"5.3.4";}
 body.salty {
   --r-sm: 6px;
   --r-md: 10px;
@@ -1076,7 +1076,7 @@ body.salty #extensionsMenu {
   }
 }
 }
-@media (min-width: 1001px) {
+@media not all and (max-width: 1000px) {
   body.salty #options,
 body.salty #extensionsMenu {
     max-height: calc(100dvh - var(--topBarBlockSize) - 12px);
@@ -2488,13 +2488,11 @@ body.salty #chat .mes_text p > img.character-asset-rendered:only-child,
 body.salty #chat .mes_text p > img.eh-img:only-child {
   margin-block: 0 .35em !important;
 }
-body.salty #chat .mes_text :is(img.character-asset-rendered, img.eh-img) + br,
-body.salty #chat .mes_text :is(img.character-asset-rendered, img.eh-img) + br + br,
-body.salty #chat .mes_text :is(img.character-asset-rendered, img.eh-img) + br + br + br,
-body.salty #chat .mes_text br:has(+ :is(img.character-asset-rendered, img.eh-img)),
-body.salty #chat .mes_text br:has(+ br + :is(img.character-asset-rendered, img.eh-img)) {
+body.salty #chat .mes_text br.bl-img-br {
   display: none !important;
 }
+body.salty #chat .mes_text .bl-img-indent { display: none; }
+body.salty.salty-indent #chat .mes_text p > .bl-img-indent { display: inline-block; width: 1em; height: 0; }
 body.salty.salty-img-bleed #chat .mes_text .custom-cac-wrap,
 body.salty.salty-img-bleed #chat .mes_text [class*="custom-imageWrapper"] {
   margin-inline: calc(var(--salty-gutter) * -1) !important;
@@ -3379,7 +3377,7 @@ body.salty.salty-dark .ui-tabs .ui-tabs-nav li.ui-tabs-active .ui-tabs-anchor,
 body.salty.salty-dark #Backgrounds #bg_tabs .bg_tabs_list .bg_tab_button.ui-tabs-active a {
   color: var(--bl-pop) !important;
 }
-body.salty.salty-dark :is(.salty-tabs, .salty-seg, .salty-shapes) button.on {
+body.salty.salty-dark :is(.salty-seg, .salty-shapes) button.on {
   color: var(--bl-pop);
 }
 body.salty.salty-dark #send_but,
@@ -11044,81 +11042,6 @@ body.salty .popup:has(.salty-notice) .popup-content {
 .salty-switch input:checked + span::after {
   transform: translateX(18px);
 }
-.salty-tabs::-webkit-scrollbar {
-  display: none;
-}
-.salty-tabs {
-  display: flex;
-  gap: 2px;
-  padding: 3px;
-  overflow-x: auto;
-  background: var(--salty-fill-shade, var(--shade));
-  border-radius: 10px;
-  scrollbar-width: none;
-}
-.salty-tabs button {
-  flex: 1 0 auto;
-  padding: 7px 6px;
-  border: 0;
-  border-radius: 8px;
-  background: none;
-  color: var(--salty-muted);
-  font-size: var(--fs-tab);
-  font-weight: 550;
-  min-width: 0;
-  max-width: 100%;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  line-height: 1.45;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-.salty-tabs button.on {
-  background: var(--salty-fill-surface, var(--salty-surface));
-  color: var(--salty-text);
-  box-shadow: var(--salty-e2, 0 1px 3px var(--salty-shadow-50));
-}
-.salty-subs {
-  position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  column-gap: 4px;
-  row-gap: 3px;
-  margin-top: 6px;
-  padding: 0 1px;
-}
-.salty-subs button {
-  flex: none;
-  height: 32px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 99px;
-  background: none;
-  color: var(--salty-muted);
-  font-size: var(--fs-chip);
-  font-weight: 550;
-  min-width: 0;
-  max-width: 100%;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  line-height: 1.45;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-.salty-subs button.on {
-  background: var(--salty-fill-accent-13, var(--salty-accent-13));
-  color: var(--salty-accent);
-}
-body.salty-dark .salty-subs button.on {
-  color: var(--bl-pop, var(--salty-accent));
-}
-.salty-subs button:not(.on):active {
-  background: var(--salty-fill-shade, var(--shade));
-}
-@media (hover: hover) {
-  .salty-tabs button:not(.on):hover,
-  .salty-subs button:not(.on):hover {
-    color: var(--salty-text);
-  }
-}
 :where(.salty-sec > * + *) {
   margin-top: var(--gap);
 }
@@ -11280,8 +11203,7 @@ body.salty-dark .salty-subs button.on {
   padding: 6px 11px;
   font-size: var(--fs-chip);
 }
-body.salty-dark .salty-seg button.on,
-body.salty-dark .salty-tabs button.on {
+body.salty-dark .salty-seg button.on {
   background: var(--salty-fill-control, var(--salty-control));
   box-shadow: var(--bl-e2, inset 0 1px 0 rgba(255, 255, 255, 0.04));
 }
@@ -11994,13 +11916,6 @@ body.salty-dark .salty-shapes button.on {
   }
   .salty-label {
     margin: 14px 4px 5px;
-  }
-  .salty-subs button {
-    height: 30px;
-    padding: 0 9px;
-  }
-  .salty-tabs button {
-    padding: 6px 5px;
   }
   @media not all {
 .salty-sample {
@@ -13094,12 +13009,14 @@ body.salty :is(#salty-nochat, .salty-preview) .mes_text p > img.character-asset-
 body.salty :is(#salty-nochat, .salty-preview) .mes_text p > img.eh-img:only-child {
   margin-block: 0 .35em !important;
 }
-body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(img.character-asset-rendered, img.eh-img) + br,
-body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(img.character-asset-rendered, img.eh-img) + br + br,
-body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(img.character-asset-rendered, img.eh-img) + br + br + br,
-body.salty :is(#salty-nochat, .salty-preview) .mes_text br:has(+ :is(img.character-asset-rendered, img.eh-img)),
-body.salty :is(#salty-nochat, .salty-preview) .mes_text br:has(+ br + :is(img.character-asset-rendered, img.eh-img)) {
+body.salty :is(#salty-nochat, .salty-preview) .mes_text br.bl-img-br {
   display: none !important;
+}
+body.salty :is(#salty-nochat, .salty-preview) .mes_text .bl-img-indent {
+  display: none;
+}
+body.salty.salty-indent :is(#salty-nochat, .salty-preview) .mes_text p > .bl-img-indent {
+  display: inline-block; width: 1em; height: 0;
 }
 body.salty.salty-img-bleed :is(#salty-nochat, .salty-preview) .mes_text .custom-cac-wrap,
 body.salty.salty-img-bleed :is(#salty-nochat, .salty-preview) .mes_text [class*="custom-imageWrapper"] {
@@ -13345,17 +13262,6 @@ body.salty :is(#salty-nochat, .salty-preview) .mes {
     animation-timing-function: ease-out;
     animation-fill-mode: backwards;
     will-change: opacity;
-  }
-}
-}
-@media (max-width: 1000px) {
-  @media not all {
-body.salty.bl-reader #salty-nochat,
-body.salty.bl-reader :where(.salty-preview):is(#bl-s, *) {
-    max-height: none !important;
-    padding-top: calc(var(--topBarBlockSize) + 8px) !important;
-    padding-bottom: calc(var(--bl-form-h, 96px) + 8px) !important;
-    scroll-padding-top: var(--topBarBlockSize);
   }
 }
 }
@@ -14479,7 +14385,7 @@ body.salty #user-settings-block :is([name="themeToggles"], [name="CharacterHandl
 }
 body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-container:is(bl-s, *):is(bl-s, *),
 body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > :is(h4 + div.flex-container) { display: contents; }
-@media (min-width: 1001px) {
+@media not all and (max-width: 1000px) {
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(max(260px, 45%), 1fr)); column-gap: 28px;
   }
@@ -14488,8 +14394,8 @@ body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .inline-dr
 body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > :where(div:not(:has(> select))):is(.bl-s, *) { grid-column: 1 / -1; }
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > div:has(> select) { min-width: 0; gap: 8px; }
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > div:has(> select) > select { min-width: 0; max-width: 60%; }
-  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] :is(> label.checkbox_label):is(.bl-s, *),
-body.salty #user-settings-block [name="ChatMessageHandlingToggles"] :is(> .checkbox-container > label.checkbox_label) { min-width: 0; }
+  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > label.checkbox_label,
+  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-container > label.checkbox_label { min-width: 0; }
 }
 @media (max-width: 1000px) {
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-container > label.checkbox_label {
@@ -14597,7 +14503,7 @@ body.salty #world_popup_entries_list::-webkit-scrollbar {
     margin-inline: 6px;
   }
 }
-@media (min-width: 1000.1px) {
+@media not all and (max-width: 1000px) {
   body.salty #left-nav-panel.bl-scrolls:not(#salty-none),
 body.salty #right-nav-panel.bl-scrolls:not(#salty-none),
 body.salty #user-settings-block.bl-scrolls:not(#salty-none),
@@ -14871,7 +14777,7 @@ body.salty .select2-results__options[aria-multiselectable="true"] .select2-resul
 body.salty .select2-results__options:not([aria-multiselectable="true"]) .select2-results__option::before {
   display: none;
 }
-@media (min-width: 1001px) {
+@media not all and (max-width: 1000px) {
   body.salty #rm_extensions_block .extensions_block > #extensions_settings:not([style*="display: none"]):not(#salty-none),
 body.salty #rm_extensions_block .extensions_block > #extensions_settings2:not([style*="display: none"]):not(#salty-none) {
     flex: 1 1 calc(50% - var(--bl-s4)) !important;
@@ -15242,18 +15148,6 @@ body.salty .salty-sample.salty-shadow-text:not(.salty-shadow-code) :is(pre *):no
 }
 .salty-panel input[type="color"][data-color-path]::-webkit-color-swatch-wrapper { padding: 0; }
 .salty-panel input[type="color"][data-color-path]::-webkit-color-swatch { border: 0; border-radius: 8px; box-shadow: 0 0 0 1px var(--salty-shade-2); }
-.salty-panel .salty-subsel { position: relative; margin-top: 6px; }
-.salty-panel .salty-subsel > button {
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  width: 100%; height: 38px; padding: 0 14px 0 14px; border: 0; border-radius: 11px;
-  background: var(--salty-fill-shade, var(--salty-shade)); color: var(--salty-text);
-  font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; text-align: left;
-}
-.salty-panel .salty-subsel.open > button { background: var(--salty-fill-accent-13, var(--salty-accent-13)); color: var(--salty-accent); }
-body.salty-dark .salty-panel .salty-subsel.open > button { color: var(--bl-pop, var(--salty-accent)); }
-.salty-panel .salty-subsel > button:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 2px; }
-.salty-panel .salty-subsel > button > i { flex: none; width: 8px; height: 8px; margin: -4px 3px 0 0; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); opacity: 0.7; transition: transform 0.18s ease; }
-.salty-panel .salty-subsel.open > button > i { transform: translateY(4px) rotate(225deg); }
 .salty-panel .salty-pick {
   position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 5;
   display: flex; flex-direction: column; padding: 6px; border-radius: 14px;
@@ -16338,7 +16232,7 @@ body.salty .salty-preview.bl-weather-pv-on > .mes {
     gap: 6px;
   }
 }
-@media (min-width: 1001px) {
+@media not all and (max-width: 1000px) {
   .salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -16348,7 +16242,7 @@ body.salty .salty-preview.bl-weather-pv-on > .mes {
     align-self: start;
   }
 }
-@media (min-width: 1001px) {
+@media not all and (max-width: 1000px) {
   .salty-panel.in-popup .salty-row:is(.salty-color, :has(> input[type="color"])) {
     gap: 16px;
   }
@@ -17592,7 +17486,6 @@ html body .bl-editor .bl-settings-toprow .bl-settings-close { font:24px/1 sans-s
 .bl-editor-stage:has(.salty-prevbox.folded) .bl-editor-caption { display:none; }
 html body .bl-editor .bl-editor-stage .salty-prevbox { position:relative; inset:auto; width:100%; margin:0; padding:0 0 12px; box-shadow:none; background:transparent !important; }
 html body .bl-editor .salty-sec { flex:1; min-width:0; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; margin:0; padding:10px 10px 16px; text-align:left; }
-.bl-editor-heading { margin:0 0 8px; font-size:17px; font-weight:650; color:var(--salty-text); }
 .bl-editor-group { border-top:1px solid var(--bl-editor-line); }
 html body .bl-editor-group-toggle { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; margin:0; padding:8px 0; min-height:42px; border:0; border-radius:0; background:transparent; color:var(--salty-text); font:inherit; font-size:14px; font-weight:600; text-align:left; box-shadow:none; }
 .bl-editor-group-toggle::after { content:'+'; color:var(--salty-muted); font-size:18px; font-weight:400; }
@@ -17882,7 +17775,7 @@ html body .salty-panel .bl-tool-primary { color:var(--salty-text); border:1px so
   .bl-extension-page .bl-message-choices { max-height:290px; }
   .bl-extension-page .bl-capture-preview { max-height:none; overflow:visible; }
 }
-@media(min-width:641px) {
+@media not all and (max-width:640px) {
   .bl-capture-layout { grid-template-columns:minmax(0,1.35fr) minmax(260px,1fr); }
   .bl-capture-layout > section:first-child { grid-column:2; grid-row:1; }
   .bl-capture-layout > .bl-capture-preview { grid-column:1; grid-row:1; }
@@ -18391,7 +18284,7 @@ body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-containe
     grid-column: 1 / -1;
   }
 }
-@media (min-width: 1001px) {
+@media not all and (max-width: 1000px) {
   .salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > :not(.salty-row, .salty-slider),
 .salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > .salty-row:not(:is(.salty-row, .salty-slider) + *):not(:has(+ :is(.salty-row, .salty-slider))),
 .salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > .salty-slider:not(:is(.salty-row, .salty-slider) + *):not(:has(+ :is(.salty-row, .salty-slider))) {

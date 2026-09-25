@@ -144,7 +144,7 @@ body.salty :is(#options, #extensionsMenu) {
 }
 }
 
-@media (min-width: 1001px) {
+@media not all and (max-width: 1000px) { /* 5.3.4: 1001px 이면 1000~1001px(배율 · 소수 폭)에서 폰 · PC 규칙 둘 다 빠졌다 — max-width: 1000px 의 정확한 반대 */
   body.salty :is(#options, #extensionsMenu) {
     max-height: calc(100dvh - var(--topBarBlockSize) - 12px);
     overflow-y: auto;

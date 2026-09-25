@@ -127,14 +127,16 @@ body.salty #regex_container :is(.delete_regex, #regex_preset_delete) { color: va
    - 폰: 고르기 줄(예시 메시지 처리 · 이미지 스와이프 동작 · Enter로 보내기)이 한 칸 181px 에 이름과 값을 나란히 두어 값이 "토…" 로 잘렸다
      → 이름 위 · 값 아래 (15-drawers 의 줄 규칙이 !important 라 아이디를 하나 더 붙여 이긴다) */
 body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > :is(.checkbox-container, h4 + div.flex-container) { display: contents; }
-@media (min-width: 1001px) {
+@media not all and (max-width: 1000px) { /* 5.3.4: 1001px 이면 1000~1001px(배율 · 소수 폭)에서 폰 · PC 규칙 둘 다 빠졌다 — max-width: 1000px 의 정확한 반대 */
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(max(260px, 45%), 1fr)); column-gap: 28px;
   }
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > :is(h4, .inline-drawer, div:not(:has(> select))) { grid-column: 1 / -1; }
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > div:has(> select) { min-width: 0; gap: 8px; }
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > div:has(> select) > select { min-width: 0; max-width: 60%; }
-  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] :is(> label.checkbox_label, > .checkbox-container > label.checkbox_label) { min-width: 0; }
+  /* 5.3.4: 예전 :is(> …) 는 잘못된 선택자라 규칙 전체가 버려졌다 — 두 갈래로 풀어 씀 */
+  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > label.checkbox_label,
+  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-container > label.checkbox_label { min-width: 0; }
 }
 @media (max-width: 1000px) {
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-container > label.checkbox_label {

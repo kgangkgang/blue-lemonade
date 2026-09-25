@@ -54,16 +54,18 @@ body.salty #chat .mes_text p > :is(img.character-asset-rendered, img.eh-img):onl
 /* 5.2.6: 그림 태그 바로 다음 줄에 글이 이어지면(태그
 글) 마크다운이 <img><br>글 로 만든다 — 그림은 블록이라 <br> 이 빈 줄 하나를 더 만들어
    그림 아래만 위보다 줄 높이만큼 더 벌어졌다 (사용자 제보: 위아래 여백이 다름). 블록 그림 뒤의 <br> 은 필요 없으니 숨긴다 */
-body.salty #chat .mes_text :is(img.character-asset-rendered, img.eh-img) + br,
-body.salty #chat .mes_text :is(img.character-asset-rendered, img.eh-img) + br + br,
-body.salty #chat .mes_text :is(img.character-asset-rendered, img.eh-img) + br + br + br,
-body.salty #chat .mes_text br:has(+ :is(img.character-asset-rendered, img.eh-img)),
-body.salty #chat .mes_text br:has(+ br + :is(img.character-asset-rendered, img.eh-img)) {
+body.salty #chat .mes_text br.bl-img-br {
   /* 5.2.8: <prose>
 {{img}}
-글 처럼 태그 앞뒤에 줄바꿈이 둘 오면 <br><br> 가 되어 빈 줄이 남았다(사용자 스크린샷: 아래만 넓음) — 그림 앞뒤 줄바꿈은 셋까지 숨긴다 */
+글 처럼 태그 앞뒤에 줄바꿈이 둘 오면 <br><br> 가 되어 빈 줄이 남았다(사용자 스크린샷: 아래만 넓음) — 그림 앞뒤 줄바꿈은 셋까지 숨긴다.
+     5.3.4: 예전엔 img + br + br 선택자로 숨겼는데, 형제 선택자는 사이의 글자를 건너뛰어 그림 뒤 "줄A<br>줄B" 의 <br> 까지 숨겨
+     "줄A줄B" 로 붙었다 → typography.js 가 그림에 곧장 붙은(사이에 빈칸만 있는) <br> 에만 .bl-img-br 을 단다 (뒤 셋 · 앞 둘) */
   display: none !important;
 }
+/* 5.3.4: 첫 줄 들여쓰기는 문단 첫 줄에만 걸려 <p><img><br>글</p> 의 '글'(그림 뒤 새 줄)이 들여 써지지 않았다 (사용자 제보).
+   typography.js 가 그림 뒤 글 앞에 빈 칸 .bl-img-indent 를 끼운다 — 들여쓰기(p 의 text-indent: 1em)와 같은 폭, 켰을 때만 */
+body.salty #chat .mes_text .bl-img-indent { display: none; }
+body.salty.salty-indent #chat .mes_text p > .bl-img-indent { display: inline-block; width: 1em; height: 0; }
 
 /* 가로 꽉 */
 body.salty.salty-img-bleed #chat .mes_text :is(.custom-cac-wrap, [class*="custom-imageWrapper"]) {

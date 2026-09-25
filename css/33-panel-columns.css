@@ -16,7 +16,7 @@
     gap: 6px;
   }
 }
-@media (min-width: 1001px) {
+@media not all and (max-width: 1000px) { /* 5.3.4: 1001px 이면 1000~1001px(배율 · 소수 폭)에서 폰 · PC 규칙 둘 다 빠졌다 — max-width: 1000px 의 정확한 반대 */
   .salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -32,7 +32,7 @@
 
 /* 3.5.1 PC 팝업의 색 칸: 이름 옆 남은 폭을 다 채운 긴 막대 (사용자: "PC 색깔을 색 옆에 쭉 길게 직사각형으로").
    toolcool 견본 크기는 panel.js 가 button-width/height 에 var(--bl-sw-w/h) 를 넣어 두어 여기서 정한다 (그림자 안까지 변수가 내려감) */
-@media (min-width: 1001px) {
+@media not all and (max-width: 1000px) { /* 5.3.4: 1001px 이면 1000~1001px(배율 · 소수 폭)에서 폰 · PC 규칙 둘 다 빠졌다 — max-width: 1000px 의 정확한 반대 */
   .salty-panel.in-popup .salty-row:is(.salty-color, :has(> input[type="color"])) {
     gap: 16px;
   }

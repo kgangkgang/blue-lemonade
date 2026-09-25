@@ -41,7 +41,7 @@ import { capturedMessages, capturedRequest, holdGeneration, regenerateReply, rep
 import { applyUpgrades } from './upgrades.js';
 import { startQuickBan, setQuickBanEnabled } from './quick-ban.js';
 
-const VERSION = '1.9.3';
+const VERSION = '1.9.4';
 const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];
@@ -452,7 +452,7 @@ function log(verdict, original, rewrite) {
 const spanFinder = createSpanFinder({
     createWorker: () => new Worker(new URL(`./spans-worker.js?v=${VERSION}`, import.meta.url), { type: 'module' }),
     fallback: findSpans,
-    warn: reason => console.warn(`[${TITLE}] 금지 묘사 찾기 워커를 못 써서 화면에서 찾아요:`, reason),
+    warn: reason => console.warn(`[${TITLE}] 금지 묘사 찾기 워커:`, reason),
 });
 
 // 1.7.6 알림은 화면이 한 번 그려진 뒤에 띄운다. 답을 다시 그린 바로 뒤에 toastr 가 나타나는 애니메이션을 시작하면

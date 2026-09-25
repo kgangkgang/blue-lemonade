@@ -104,9 +104,28 @@ export function createPromptEngine(doc = document) {
     function schedule() { if (!timer) timer=setTimeout(render,60); }
     function click(event) { const row=event.target.closest?.('li[data-pm-identifier]'); if(row)lastId=row.dataset.pmIdentifier; if(event.target.closest?.(watched+formButtons))schedule(); }
     function input(event) {if(event.target.matches?.('#completion_prompt_manager_popup_entry_form_name,input.regex_script_name'))schedule();}
+    // #chat 은 보지 않는다: 스트리밍 답은 토큰마다 채팅을 바꿔 body 전체를 보면 그때마다 콜백이 돌았다.
+    // body 에서 #chat 까지의 조상은 자식 목록만, 그 밖의 가지(설정 서랍 · 팝업 · 템플릿)는 통째로 본다.
+    const FULL={childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['title']};
+    let chain=new Set();
+    function watch(node){
+        if(node.nodeType!==1||node.id==='chat')return;
+        if(chain.has(node)){observer.observe(node,{childList:true});for(const child of node.children)watch(child);}
+        else observer.observe(node,FULL);
+    }
+    function watchAll(){
+        const chat=doc.getElementById('chat');
+        chain=new Set();
+        if(!chat||!doc.body.contains(chat)){observer.observe(doc.body,FULL);return;}
+        for(let n=chat.parentElement;n&&n!==doc.body;n=n.parentElement)chain.add(n);
+        observer.observe(doc.body,{childList:true});
+        for(const child of doc.body.children)watch(child);
+    }
     function start() {
         observer=new MutationObserver(records=>{
             const containsTarget=node=>node.nodeType===1&&(node.matches(watched)||!!node.querySelector(watched));
+            // body · #chat 조상에 새로 붙은 가지(팝업 등)도 보기 시작한다
+            for(const record of records)if(record.type==='childList'&&(record.target===doc.body||chain.has(record.target)))record.addedNodes.forEach(watch);
             if(records.some(record=>{
                 const el=record.target.nodeType===1?record.target:record.target.parentElement;
                 if(!el||el.closest('#chat,.bl-scripts,.bl-script-hint'))return false;
@@ -115,7 +134,7 @@ export function createPromptEngine(doc = document) {
                 return !!el.closest(watched+',#saved_preset_scripts,#saved_regex_scripts,#saved_scoped_scripts')||[...record.addedNodes,...record.removedNodes].some(containsTarget);
             }))schedule();
         });
-        observer.observe(doc.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['title']});
+        watchAll();
         doc.addEventListener('click',click); doc.addEventListener('input',input);
     }
     function stop() {

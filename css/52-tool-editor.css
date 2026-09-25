@@ -96,7 +96,7 @@ html body .salty-panel .bl-tool-primary { color:var(--salty-text); border:1px so
   .bl-extension-page .bl-message-choices { max-height:290px; }
   .bl-extension-page .bl-capture-preview { max-height:none; overflow:visible; }
 }
-@media(min-width:641px) {
+@media not all and (max-width:640px) { /* 5.3.4: 641px 이면 640~641px 틈 */
   .bl-capture-layout { grid-template-columns:minmax(0,1.35fr) minmax(260px,1fr); }
   .bl-capture-layout > section:first-child { grid-column:2; grid-row:1; }
   .bl-capture-layout > .bl-capture-preview { grid-column:1; grid-row:1; }

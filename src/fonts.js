@@ -364,7 +364,8 @@ export function loadFont(font) {
         return;
     }
     sourceUrls(font).forEach((url, i) => {
-        const link = () => addLink(`salty-font-${font.id}-${i}`, url);
+        // 5.3.4: 스타일 코드로 받은 글꼴(shared)은 <link> 로 붙이지 않는다 — 그 CSS 안의 글꼴 말고 다른 규칙까지 화면에 들어온다
+        const link = () => { if (!font.shared) addLink(`salty-font-${font.id}-${i}`, url); };
         if (font.cors === false) return link(); // CSS 를 직접 못 읽는 주소: 링크로만
         fetchCss(url).then((css) => {
             const faces = parseFaces(css, url);
@@ -507,6 +508,7 @@ function upsert(font) {
 export async function addGoogleFont(name) {
     const family = String(name || '').trim().replace(/\s+/g, ' ').replace(/['"]/g, '');
     if (!family) throw new Error('글꼴 이름을 적어 주세요');
+    if (!/^[\w -]{1,100}$/.test(family)) throw new Error('구글 폰트 이름은 영문 · 숫자 · 띄어쓰기만 적어 주세요'); // 5.3.4: 이름이 CSS 에 그대로 들어간다
     const param = family.replace(/ /g, '+');
     const res = await fetch(`${GOOGLE}family=${param}&text=${encodeURIComponent('가A')}`);
     if (!res.ok) throw new Error(`구글 폰트에서 "${family}"를 못 찾았어요. 이름을 fonts.google.com 에 적힌 그대로 적어 주세요.`);
@@ -524,8 +526,9 @@ export async function addGoogleFont(name) {
 export async function addCssFont(url, name) {
     const href = String(url || '').trim();
     const family = String(name || '').trim().replace(/['"]/g, '');
-    if (!/^https:\/\//i.test(href)) throw new Error('https:// 로 시작하는 CSS 주소를 적어 주세요');
+    if (!/^https:\/\/[^\s"'()<>\\]+$/i.test(href)) throw new Error('https:// 로 시작하는 CSS 주소를 적어 주세요');
     if (!family) throw new Error('CSS 안의 font-family 이름을 적어 주세요');
+    if (/[\\;{}<>\r\n]/.test(family)) throw new Error('글꼴 이름에 쓸 수 없는 글자가 있어요'); // 5.3.4: 이름이 CSS 에 그대로 들어간다
     const font = { id: `c-${slug(family)}`, label: family, family: `'${family}'`, group: 'custom', css: href };
     let res;
     try {

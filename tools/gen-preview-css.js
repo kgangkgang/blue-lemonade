@@ -55,6 +55,8 @@ const DENY = [
     '#curEditTextarea', '.swipe_left', '.swipe_right', '.swipes-counter', '.swipeRightBlock', '.last_swipe',
     '.welcomePanel', '.mes_file', '.mes_media', '.mes_bias', '.mes_ghost', '.for_checkbox', '.del_checkbox',
     'custom-dem-card', 'custom-dem-expressive', '.lastInContext', '.last_mes', '.mes.selected', '.smallSysMes', '.bl-pinned', '.bl-menu-empty',
+    // 5.3.4: 몰입 읽기(폰)의 채팅 칸 배치 — 위 바 · 입력판 높이만큼 위아래 여백을 준다. 미리보기 상자로 옮기면 그 여백이 표본을 거의 덮었다
+    '.bl-reader',
 ];
 
 // ───────── 닻 (이 이름이 사본에 하나도 없으면 미리보기가 조용히 빈다) ─────────
@@ -765,6 +767,11 @@ function mainModules(argv) {
         for (const b of bad) console.error(`  · ${b}`);
         return 1;
     }
+    // 5.3.4: 뿌리에 새 선언 이름은 경고만 찍고 0 으로 끝나 그냥 지나갔다 (몰입 읽기 여백이 미리보기를 덮은 채 나감) → 실패로
+    if (rep.newRootProps.length) {
+        console.error(`\n[실패] 미리보기 뿌리에 새 선언 이름: ${rep.newRootProps.join(' · ')} — 보정 블록(css/24-previewbox)에 넣거나 DENY 로 뺄 것. 파일을 쓰지 않았다.`);
+        return 1;
+    }
     const genPath = path.join(CSS_DIR, GEN_MODULE);
     const gen = fs.readFileSync(genPath, 'utf8');
     const h = gen.indexOf(HEAD_MARK), t = gen.indexOf(TAIL_MARK);
@@ -810,6 +817,10 @@ function main(argv) {
     if (bad.length) {
         console.error('\n[실패] 파일을 쓰지 않았다:');
         for (const b of bad) console.error(`  · ${b}`);
+        process.exit(1);
+    }
+    if (rep.newRootProps.length) {
+        console.error(`\n[실패] 미리보기 뿌리에 새 선언 이름: ${rep.newRootProps.join(' · ')} — 파일을 쓰지 않았다.`);
         process.exit(1);
     }
     if (check) {

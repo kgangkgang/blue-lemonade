@@ -71,7 +71,8 @@ function dressInto(body, message) {
         if (!node) continue;
         const start = node.data.indexOf(hit.text);
         const target = start > 0 ? node.splitText(start) : node;
-        if (target.data.length > hit.text.length) target.splitText(hit.text.length);
+        // 5.3.4: 잘라 낸 뒤쪽 조각도 목록에 — 한 글자 노드에 「」 대사가 둘이면 둘째가 이 조각에 남는데 목록에 없어 놓쳤다
+        if (target.data.length > hit.text.length) nodes.push(target.splitText(hit.text.length));
         wrap(target, hit.tags);
     }
 }
@@ -163,6 +164,9 @@ function unbind() {
 
 /** features.js 가 설정이 바뀔 때마다 부른다 */
 export function syncDemExpressive(on) {
+    // 5.3.4: 설정 창 슬라이더를 끌면 applyAll 이 프레임마다 여기를 부른다 — 켜짐/꺼짐이 그대로면 할 일이 없다.
+    // 예전엔 켜져 있으면 훑기 타이머 셋을, 꺼져 있으면 채팅 전체 undress 를 매 프레임 다시 걸었다 (메시지 변화는 이벤트 · 감시자가 맡는다)
+    if (!!on === active && !!on === !!bound) return;
     active = !!on;
     syncDemSelection(active);
     if (active) { bind(); schedule(); } else { unbind(); undress(); }

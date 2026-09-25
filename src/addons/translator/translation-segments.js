@@ -28,10 +28,11 @@ async function readMany(keys) {
     for (const [key, value] of found) if (value?.time > Date.now() - TTL) fresh.set(key, value.text);
     return fresh;
 }
-async function write(key, text, stamp) {
-    if (text.length > 12000) return;
-    const value = { key, text, time: Date.now() };
-    memory.delete(key); memory.set(key, value);
+// 5.3.4: 한 번역에서 새로 받은 문단을 한 연결 · 한 쓰기 트랜잭션으로 저장한다 (예전엔 문단마다 DB 를 열고 트랜잭션을 따로 만들었다). rows: [key, text]
+async function writeMany(rows, stamp) {
+    const values = rows.filter(([, text]) => text.length <= 12000).map(([key, text]) => ({ key, text, time: Date.now() }));
+    if (!values.length) return;
+    for (const value of values) { memory.delete(value.key); memory.set(value.key, value); }
     while (memory.size > LIMIT) memory.delete(memory.keys().next().value);
     let handle;
     try {
@@ -39,8 +40,9 @@ async function write(key, text, stamp) {
         if (epoch !== stamp) return;
         await new Promise((resolve, reject) => {
             const tx = handle.transaction('parts', 'readwrite'), store = tx.objectStore('parts');
-            store.put(value);
-            if (++writes % 16 === 1) {
+            for (const value of values) store.put(value);
+            const before = writes; writes += values.length; // 예전처럼 문단 16개마다 한 번 정리
+            if (Math.floor((before + 15) / 16) !== Math.floor((writes + 15) / 16)) {
                 const request = store.getAll();
                 request.onsuccess = () => request.result.sort((a, b) => b.time - a.time).forEach((row, i) => {
                     if (i >= LIMIT || row.time < Date.now() - TTL) store.delete(row.key);
@@ -67,7 +69,8 @@ export function segmentParagraphs(text) {
     // Never split structured HTML or code across separate model requests.
     if (/```|~~~|<\/?(?:div|details|table|pre|script|style|ul|ol|blockquote)\b/i.test(text)) return null;
     const parts = text.split(/(\r?\n[\t ]*\r?\n(?:[\t ]*\r?\n)*)/);
-    const inline = new Set(['span', 'font', 'q', 'b', 'i', 'strong', 'em', 'u', 's', 'del', 'small', 'mark', 'code', 'a']);
+    // 5.3.4: <p> 도 짝을 본다 — 빈 줄을 품은 <p>…</p> 가 요청 사이에서 쪼개져 여는 태그와 닫는 태그가 따로 번역됐다
+    const inline = new Set(['span', 'font', 'q', 'b', 'i', 'strong', 'em', 'u', 's', 'del', 'small', 'mark', 'code', 'a', 'p']);
     for (let i = 0; i < parts.length; i += 2) {
         const stack = [];
         for (const match of parts[i].matchAll(/<(\/?)([a-z][\w-]*)\b[^>]*>/gi)) {
@@ -117,7 +120,30 @@ export function batchPayloadLegacy(bodies) {
     return '[Translate every numbered passage below using the translation instructions above. Each passage starts with a marker like ⟦3⟧. Keep every marker exactly as it is at the start of its translated passage, translate the passage after it completely, keep markup and placeholders, and do not merge, split, reorder, add or drop passages.]\n\n' +
         bodies.map((text, id) => `⟦${id}⟧ ${text}`).join('\n\n');
 }
-export function parseBatchResult(raw, count) {
+// 5.3.4: 답에 덧붙은 머리말 · 꼬리 메모. 원문 문단에는 빈 줄이 없으니(segmentParagraphs) 빈 줄 뒤에 따로 붙은 "Note: …" 는 번역이 아니다.
+const NOTE_BLOCK = /^[\s>*_(\[（【]*(?:(?:translator'?s?|translation|tl)\s*notes?|notes?|n\.b\.|번역\s*(?:메모|노트|참고|주석)|역주|참고|주석)\s*[)\]】）*_]*\s*[:：]|^[\s>*_(\[（【]*※/i;
+const RULE_BLOCK = /^[\t ]*(?:-{3,}|\*{3,}|_{3,})[\t ]*$/;
+const PREAMBLE_BLOCK = /^(?:(?:here(?:'s| is| are)|sure|certainly|okay|ok|below is|the following)(?![a-z])[^\n]{0,100}|(?:translation|번역)[^\n]{0,60}|(?:다음은|아래는)[^\n]{0,60}번역[^\n]{0,40})[:：]\s*$/i;
+/** 빈 줄로 떨어진 꼬리 메모(와 그 앞 구분선)를 걷는다. 첫 덩이는 건드리지 않는다. */
+export function stripTrailingNote(text) {
+    const blocks = String(text ?? '').split(/(\n[\t ]*\n(?:[\t ]*\n)*)/);
+    for (let k = 2; k < blocks.length; k += 2) {
+        if (!NOTE_BLOCK.test(blocks[k])) continue;
+        let cut = k - 1;
+        if (cut >= 2 && RULE_BLOCK.test(blocks[cut - 1])) cut -= 2;
+        return blocks.slice(0, cut).join('').replace(/\s+$/, '');
+    }
+    return blocks.join('');
+}
+/** 평문 답: 앞의 "Here is the translation:" 같은 한 줄 머리말과 꼬리 메모를 걷는다 (머리말이 문단 하나로 세어져 자리가 밀리지 않게) */
+export function stripReplyWrapping(text) {
+    let out = String(text ?? '').replace(/\r\n?/g, '\n').replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+    const first = /^([^\n]*)\n[\t ]*\n/.exec(out);
+    if (first && PREAMBLE_BLOCK.test(first[1].trim())) out = out.slice(first[0].length).replace(/^\s*\n/, '');
+    return stripTrailingNote(out).trim();
+}
+/** meta.renumbered: 1부터 다시 매긴 답을 한 칸 내려 받았다 (문단 하나를 빼먹고 끝에 지어낸 답과 구별이 안 돼 캐시에 넣지 않는다) */
+export function parseBatchResult(raw, count, meta = {}) {
     // 앞의 <think>…</think> · 코드 펜스 · 표시 앞의 설명문은 걷어 낸다. 개수 · 번호 · 중복 · 빈 글 검사는 엄격하다.
     const text = String(raw).replace(/\r\n?/g, '\n').replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/^\s*```[a-z]*[ \t]*\n|\n[ \t]*```\s*$/g, '').trim();
     const mark = text.includes('⟦') ? MARK : MARK_ALT;
@@ -126,7 +152,7 @@ export function parseBatchResult(raw, count) {
     let id = null, buffer = [];
     const flush = () => {
         if (id === null) return;
-        const body = buffer.join('\n').replace(/^\n+|\s+$/g, ''); // 빈 줄만 걷고 첫 줄 들여쓰기(코드 · 목록)는 둔다
+        const body = stripTrailingNote(buffer.join('\n')).replace(/^\n+|\s+$/g, ''); // 빈 줄만 걷고 첫 줄 들여쓰기(코드 · 목록)는 둔다 · 꼬리 메모는 뺀다
         if (!body || found.has(id)) fail();
         found.set(id, body);
     };
@@ -140,6 +166,7 @@ export function parseBatchResult(raw, count) {
     // 모델이 1부터 다시 매긴 답(1..N, 0 없음)은 한 칸 내려 받는다 — 개수 · 중복 검사는 그대로
     if (!found.has(0) && found.has(count) && [...found.keys()].every(k => k >= 1 && k <= count)) {
         for (let k = 1; k <= count; k++) { found.set(k - 1, found.get(k)); found.delete(k); }
+        meta.renumbered = true;
     }
     for (const key of found.keys()) if (!Number.isInteger(key) || key < 0 || key >= count) fail();
     return Array.from({length: count}, (_, i) => found.get(i));
@@ -178,17 +205,20 @@ export async function translateSegments({ parts, signature, request, check = () 
         if (results) {
             // Validate the entire batch before persisting any part. null = 그 묶음만 거절·실패 (차단 표시로 남기고 캐시에 넣지 않는다)
             if (!Array.isArray(results) || results.length !== pending.length || results.some(text => text !== null && (typeof text !== 'string' || !text.trim()))) throw Error('문단 번역 응답이 맞지 않아 저장하지 않았어요.');
-            for (let n = 0; n < pending.length; n++) {
-                check();
-                const row = pending[n], result = results[n];
-                if (result === null) {
-                    if (!blockedMarker) throw Error('일부 문단의 번역을 받지 못했어요.');
-                    for (const i of row.indices) { output[i] = `${markOf(row.body)}\n${row.body}`; blocked++; }
-                    continue;
+            const rows = []; // 5.3.4: 저장은 끝에 한 트랜잭션으로 (중간에 멈춰도 그때까지 확인한 문단은 저장)
+            try {
+                for (let n = 0; n < pending.length; n++) {
+                    check();
+                    const row = pending[n], result = results[n];
+                    if (result === null) {
+                        if (!blockedMarker) throw Error('일부 문단의 번역을 받지 못했어요.');
+                        for (const i of row.indices) { output[i] = `${markOf(row.body)}\n${row.body}`; blocked++; }
+                        continue;
+                    }
+                    if (epoch === stamp && cacheable(row.body, result)) rows.push([row.key, result]);
+                    for (const i of row.indices) { output[i] = result; translated++; }
                 }
-                if (epoch === stamp && cacheable(row.body, result)) await write(row.key, result, stamp);
-                for (const i of row.indices) { output[i] = result; translated++; }
-            }
+            } finally { if (rows.length) await writeMany(rows, stamp); }
         } else if (!blocked) throw Error('빈 번역 응답은 저장하지 않았어요.');
     }
     check();

@@ -30,7 +30,7 @@
 /* ── 스크롤바: PC 는 실제로 스크롤하는 칸(gutter.js 가 .bl-scrolls)에만 양쪽 홈 → 실측(2026-09-14, 1.18 staging):
    #left-nav-panel · #right-nav-panel 은 서랍 자신이 스크롤하고(안쪽 .scrollableInner 가 아님), #user-settings-block · #PersonaManagement ·
    #rm_print_characters_block 도 자기가 스크롤해 오른쪽만 6px 넓었다. 자기 padding 이 있는 칸은 홈만큼 덜어 보이는 여백은 그대로 */
-@media (min-width: 1000.1px) {
+@media not all and (max-width: 1000px) { /* 5.3.4: 1000.1px 도 0.1px 틈 — max-width: 1000px 의 정확한 반대 */
   body.salty :is(#left-nav-panel, #right-nav-panel, #user-settings-block, #PersonaManagement, #rm_print_characters_block, #WorldInfo, #AdvancedFormatting, #Backgrounds, #floatingPrompt, #rm_extensions_block, #rm_api_block, .rm_tag_controls).bl-scrolls:not(#salty-none) {
     scrollbar-gutter: stable both-edges !important;
   }
@@ -312,7 +312,7 @@ body.salty .select2-results__options:not([aria-multiselectable="true"]) .select2
 /* ── 확장 서랍 두 칸(PC): 확장 순서(panel-order 1.1.0)가 넓은 화면에서 고정한 확장을 왼쪽 칸, 나머지를 오른쪽 칸에 두는데
    테마가 두 칸에 flex-basis 300px 을 주어 서랍이 620px 보다 좁으면 위아래로 쌓였다 → 둘 다 보일 때는 반씩 나란히.
    둘째 칸이 숨겨지면(인라인 display:none) 첫째 칸이 혼자 늘어나 전체 폭 */
-@media (min-width: 1001px) {
+@media not all and (max-width: 1000px) { /* 5.3.4: 1001px 이면 1000~1001px(배율 · 소수 폭)에서 폰 · PC 규칙 둘 다 빠졌다 — max-width: 1000px 의 정확한 반대 */
   body.salty #rm_extensions_block .extensions_block > :is(#extensions_settings, #extensions_settings2):not([style*="display: none"]):not(#salty-none) {
     flex: 1 1 calc(50% - var(--bl-s4)) !important;
     min-width: 0 !important;

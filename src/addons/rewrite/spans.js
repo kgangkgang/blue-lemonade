@@ -33,7 +33,8 @@ export function createSpanHandler({ compileRule, findSpans }, limit = 64) {
 
 /**
  * 화면 쪽: find(text, active) → findSpans 와 같은 모양의 결과를 약속으로.
- * 워커가 안 만들어지거나 · 오류 · timeoutMs 안에 답이 없으면 그 뒤로는 fallback(= findSpans)만 쓴다.
+ * 워커가 안 만들어지거나 · 오류면 그 뒤로는 fallback(= findSpans)만 쓴다.
+ * timeoutMs 안에 답이 없으면 화면에서 다시 돌리지 않고 [] (워커는 새로 만든다).
  * @param {object} options
  * @param {() => Worker} options.createWorker
  * @param {(text: string, active: object[]) => object[]} options.fallback
@@ -42,12 +43,28 @@ export function createSpanFinder({ createWorker, fallback, timeoutMs = 5000, set
     let worker = null;
     let broken = false;
     let seq = 0;
+    let timeouts = 0;
     const waits = new Map();
+
+    // 시간 초과는 대개 사용자 정규식이 끝없이 도는 것 — 화면 스레드에서 다시 돌리면 화면이 멈춘다.
+    // 워커만 버리고(다음에 새로 만든다) 기다리던 찾기는 '찾은 것 없음'으로 끝낸다.
+    const timedOut = () => {
+        timeouts++;
+        warn(`no reply in ${timeoutMs} ms — 이번 답은 찾지 않고 넘어가요`);
+        try { worker?.terminate(); } catch { /* 이미 끝남 */ }
+        worker = null;
+        const pending = [...waits.values()];
+        waits.clear();
+        for (const wait of pending) {
+            clearTimer(wait.timer);
+            wait.skip();
+        }
+    };
 
     const fail = (reason) => {
         if (broken) return;
         broken = true;
-        warn(reason);
+        warn(`${reason} (화면에서 찾아요)`);
         try { worker?.terminate(); } catch { /* 이미 끝남 */ }
         worker = null;
         const pending = [...waits.values()];
@@ -81,7 +98,7 @@ export function createSpanFinder({ createWorker, fallback, timeoutMs = 5000, set
         } catch (error) {
             worker = null;
             broken = true;
-            warn(error?.message || String(error));
+            warn(`${error?.message || String(error)} (화면에서 찾아요)`);
         }
         return worker;
     };
@@ -106,10 +123,11 @@ export function createSpanFinder({ createWorker, fallback, timeoutMs = 5000, set
                         text: text.slice(span.start, span.end),
                     }))),
                     fallback: () => finish(fallback(text, active)),
+                    skip: () => finish([]),
                 };
                 wait.timer = setTimer(() => {
                     if (!waits.has(id)) return;
-                    fail(`no reply in ${timeoutMs} ms`); // fail 이 이 기다림까지 fallback 으로 끝낸다
+                    timedOut(); // 이 기다림까지 '찾은 것 없음'으로 끝낸다
                 }, timeoutMs);
                 waits.set(id, wait);
                 try {
@@ -121,6 +139,10 @@ export function createSpanFinder({ createWorker, fallback, timeoutMs = 5000, set
         },
         get broken() {
             return broken;
+        },
+        /** 시간 초과로 건너뛴 찾기 수 */
+        get timeouts() {
+            return timeouts;
         },
     };
 }

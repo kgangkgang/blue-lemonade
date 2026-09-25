@@ -218,18 +218,6 @@ body.salty .salty-sample.salty-shadow-text:not(.salty-shadow-code) :is(code, pre
 
 /* ---------- 설정 창 소분류 드롭다운 (2.4.1 select → 2.4.2 직접 그린 목록, 사용자: "OS 팝업은 투박함") ----------
    단추(지금 항목 + 꺾쇠) 밑에 카드로 펼쳐지는 라디오 목록. 탭 줄이 sticky 라 목록도 그 위에 뜬다 */
-.salty-panel .salty-subsel { position: relative; margin-top: 6px; }
-.salty-panel .salty-subsel > button {
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  width: 100%; height: 38px; padding: 0 14px 0 14px; border: 0; border-radius: 11px;
-  background: var(--salty-fill-shade, var(--salty-shade)); color: var(--salty-text);
-  font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; text-align: left;
-}
-.salty-panel .salty-subsel.open > button { background: var(--salty-fill-accent-13, var(--salty-accent-13)); color: var(--salty-accent); }
-body.salty-dark .salty-panel .salty-subsel.open > button { color: var(--bl-pop, var(--salty-accent)); }
-.salty-panel .salty-subsel > button:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 2px; }
-.salty-panel .salty-subsel > button > i { flex: none; width: 8px; height: 8px; margin: -4px 3px 0 0; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); opacity: 0.7; transition: transform 0.18s ease; }
-.salty-panel .salty-subsel.open > button > i { transform: translateY(4px) rotate(225deg); }
 .salty-panel .salty-pick {
   position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 5;
   display: flex; flex-direction: column; padding: 6px; border-radius: 14px;

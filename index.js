@@ -136,7 +136,8 @@ matchMedia(DEVICE_QUERY).addEventListener('change', () => { window.dispatchEvent
 setFeatureHooks({ applyAll, refreshPanels }); // 켤 때만 불러오는 기능이 설정 적용 · 창 다시 그리기를 부를 수 있게 (3.1.0)
 const settings = getSettings();
 if (dropStaleOverrides(settings)) saveSettings();
-applyAll();
+// 5.3.4: 적용이 죽어도 아래 서랍 · 메뉴는 붙게 — 예전에는 값 하나가 깨지면 설정 창까지 안 떠 고칠 길이 없었다
+try { applyAll(); } catch (error) { console.error('[Blue Lemonade] 시작할 때 설정 적용', error); }
 loadVersion().then(() => refreshPanels()); // 공지사항 버전 표시
 setTimeout(() => import('./src/install-health.js').then(m=>m.checkInstallation()).catch(()=>{}),6000); // 시작 후 가벼운 로컬 버전 점검
 

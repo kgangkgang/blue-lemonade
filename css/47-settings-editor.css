@@ -22,7 +22,6 @@ html body .bl-editor .bl-settings-toprow .bl-settings-close { font:24px/1 sans-s
 .bl-editor-stage:has(.salty-prevbox.folded) .bl-editor-caption { display:none; }
 html body .bl-editor .bl-editor-stage .salty-prevbox { position:relative; inset:auto; width:100%; margin:0; padding:0 0 12px; box-shadow:none; background:transparent !important; }
 html body .bl-editor .salty-sec { flex:1; min-width:0; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; margin:0; padding:10px 10px 16px; text-align:left; }
-.bl-editor-heading { margin:0 0 8px; font-size:17px; font-weight:650; color:var(--salty-text); }
 .bl-editor-group { border-top:1px solid var(--bl-editor-line); }
 html body .bl-editor-group-toggle { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; margin:0; padding:8px 0; min-height:42px; border:0; border-radius:0; background:transparent; color:var(--salty-text); font:inherit; font-size:14px; font-weight:600; text-align:left; box-shadow:none; }
 .bl-editor-group-toggle::after { content:'+'; color:var(--salty-muted); font-size:18px; font-weight:400; }

@@ -195,7 +195,8 @@ export function absorbChunk(json, acc) {
     if(Array.isArray(json.output))for(const item of json.output)for(const part of item.content||[])if(part.type==='output_text')acc.text+=part.text||'';
     if(json.type==='response.output_text.delta')acc.text+=json.delta||'';
     if(json.type==='response.completed'&&json.response?.usage)json={usage:json.response.usage};
-    if(typeof json.text==='string'&&!json.choices)acc.text+=json.text;
+    // Responses 스트림의 response.output_text.done 도 text(전체 답)를 실어 온다 — delta 로 이미 더했으니 response.* 는 빼고
+    if(typeof json.text==='string'&&!json.choices&&!String(json.type??'').startsWith('response.'))acc.text+=json.text;
     // 오류
     if (json.error) {
         const error = json.error;

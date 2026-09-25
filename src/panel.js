@@ -25,7 +25,7 @@ import { FRAME_RANGE } from './frames.js';
 import { customLibrary, newCustomPalette, useCustomPalette, openCustomBuilder, customBuilder, bindCustomBuilder, setCustomMode, seedCustom, saveCustomPalette } from './custompalette.js';
 // 설정 창. 확장 서랍과 ✦ 메뉴 팝업 두 곳에 같은 창을 띄울 수 있음.
 // 위에서 대분류(탭) → 아래에서 소분류(칩)를 골라 한 번에 한 묶음만 보여 줌 (폰에서 창이 아래로 길어지지 않게)
-import { getSettings, invalidateSettings, saveSettings, resetSettings, FONT_SET, FONT_SLOTS, IMAGE_RANGE, PROFILE_RANGE, TEXT_LIMIT, FADE_AMOUNT } from './settings.js';
+import { getSettings, invalidateSettings, saveSettings, resetSettings, FONT_SET, FONT_SLOTS, IMAGE_RANGE, PROFILE_RANGE, TEXT_LIMIT, FADE_AMOUNT, isDataImage } from './settings.js';
 import { PALETTES, PALETTE_FAMILIES, paletteFamily, paletteVariant, TOKEN_GROUPS, paletteColors, parseColor, sameColor, safeColor } from './palettes.js';
 import { GROUPS, LANGS, SAMPLES, fontsFor, findFont, previewStack, queuePreview, isPreviewReady, isPreviewBlank, addGoogleFont, addCssFont, uploadFont, removeCustomFont } from './fonts.js';
 import { applyAll, syncSamples } from './apply.js';
@@ -951,14 +951,14 @@ function tabStyles(s) {
         const open = ui.styleMenu === st.id;
         const meta = [on ? '지금 입힘' : '', used(st.id) ? `캐릭터 ${used(st.id)}` : ''].filter(Boolean).join(' · ');
         return `<div class="salty-style${on ? ' on' : ''}${open ? ' open' : ''}">
-            <button type="button" class="salty-style-main" data-act="style-apply" data-id="${st.id}">${styleSwatch(st.data)}<b>${esc(st.name)}</b>${meta ? `<small>${meta}</small>` : ''}</button>
-            <button type="button" class="salty-style-more" data-act="style-menu" data-id="${st.id}" aria-label="${esc(st.name)} 도구" aria-expanded="${open}"><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></button>
+            <button type="button" class="salty-style-main" data-act="style-apply" data-id="${esc(st.id)}">${styleSwatch(st.data)}<b>${esc(st.name)}</b>${meta ? `<small>${meta}</small>` : ''}</button>
+            <button type="button" class="salty-style-more" data-act="style-menu" data-id="${esc(st.id)}" aria-label="${esc(st.name)} 도구" aria-expanded="${open}"><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></button>
             ${open ? `<div class="salty-style-tools">
-                <button class="salty-btn" data-act="style-overwrite" data-id="${st.id}">지금 모습으로</button>
-                <button class="salty-btn" data-act="style-rename" data-id="${st.id}">이름</button>
-                <button class="salty-btn" data-act="style-copy" data-id="${st.id}">코드 복사</button>
-                <button class="salty-btn" data-act="style-file" data-id="${st.id}">파일</button>
-                <button class="salty-btn salty-btn-danger" data-act="style-delete" data-id="${st.id}">지우기</button>
+                <button class="salty-btn" data-act="style-overwrite" data-id="${esc(st.id)}">지금 모습으로</button>
+                <button class="salty-btn" data-act="style-rename" data-id="${esc(st.id)}">이름</button>
+                <button class="salty-btn" data-act="style-copy" data-id="${esc(st.id)}">코드 복사</button>
+                <button class="salty-btn" data-act="style-file" data-id="${esc(st.id)}">파일</button>
+                <button class="salty-btn salty-btn-danger" data-act="style-delete" data-id="${esc(st.id)}">지우기</button>
             </div>` : ''}
         </div>`;
     }).join('');
@@ -1210,8 +1210,8 @@ function decorControls(prefix, o) {
         ${d.art ? `<div class="bl-frame-save-row"><input type="text" data-frame-name="${prefix}" aria-label="액자 이름" maxlength="40" placeholder="액자 이름" value="${esc(selected?.name || '')}"><button type="button" class="salty-btn" data-act="frame-save" data-owner="${prefix}">새 액자로 저장</button></div>` : ''}
         <span class="bl-frame-label">내 액자 ${settings.frameLibrary.length} / ${FRAME_LIMIT}</span>
         <p class="salty-note">불러온 액자는 보관함에 저장돼요. 프로필과 에셋에서 함께 골라 쓸 수 있어요.</p>
-        ${settings.frameLibrary.length ? `<div class="bl-frame-library" role="group" aria-label="저장한 액자">${settings.frameLibrary.map(item => `<button type="button" data-act="frame-use" data-owner="${prefix}" data-id="${item.id}" aria-pressed="${d.libraryId === item.id}">${thumb(item.decor.art, item.name)}</button>`).join('')}</div>` : ''}
-        ${selected ? `<div class="bl-frame-actions"><button type="button" class="salty-btn" data-act="frame-rename" data-owner="${prefix}" data-id="${selected.id}">이름 바꾸기</button><button type="button" class="salty-btn" data-act="frame-delete" data-id="${selected.id}">보관함에서 삭제</button></div>` : ''}
+        ${settings.frameLibrary.length ? `<div class="bl-frame-library" role="group" aria-label="저장한 액자">${settings.frameLibrary.map(item => `<button type="button" data-act="frame-use" data-owner="${prefix}" data-id="${esc(item.id)}" aria-pressed="${d.libraryId === item.id}">${thumb(item.decor.art, item.name)}</button>`).join('')}</div>` : ''}
+        ${selected ? `<div class="bl-frame-actions"><button type="button" class="salty-btn" data-act="frame-rename" data-owner="${prefix}" data-id="${esc(selected.id)}">이름 바꾸기</button><button type="button" class="salty-btn" data-act="frame-delete" data-id="${esc(selected.id)}">보관함에서 삭제</button></div>` : ''}
     </div>`;
 }
 function nameControls(s, prefix = 'profile') {
@@ -1389,16 +1389,17 @@ function maskControls(s) {
     const { mask, maskId, masks } = s.image;
     const has = !!mask;
     const current = masks.find(item => item.id === maskId) || null;
-    const thumb = (data, extra = '') => `<span class="salty-mask-thumb${extra}" style="--salty-img-mask:url(&quot;${data}&quot;)" aria-hidden="true"><i></i></span>`;
+    // 5.3.4: 그림은 base64 data URL 만, 그래도 escape — 가져온 값이 style 속성을 빠져나가 스크립트가 돌 수 있었다
+    const thumb = (data, extra = '') => `<span class="salty-mask-thumb${extra}" style="--salty-img-mask:${isDataImage(data) ? `url(&quot;${esc(data)}&quot;)` : 'none'}" aria-hidden="true"><i></i></span>`;
     const library = masks.length ? `<div class="salty-mask-lib" role="listbox" aria-label="저장한 도형">${masks.map(item =>
-        `<button type="button" class="salty-mask-item${item.id === maskId ? ' on' : ''}" data-act="mask-use" data-id="${item.id}" aria-pressed="${item.id === maskId}">${thumb(item.data)}<small>${esc(item.name)}</small></button>`).join('')}</div>` : '';
+        `<button type="button" class="salty-mask-item${item.id === maskId ? ' on' : ''}" data-act="mask-use" data-id="${esc(item.id)}" aria-pressed="${item.id === maskId}">${thumb(item.data)}<small>${esc(item.name)}</small></button>`).join('')}</div>` : '';
     return `${library}
         <div class="salty-mask-row">
             <div class="salty-mask-thumb" aria-hidden="true">${has ? '<i></i>' : ''}</div>
             <div class="salty-btns">
                 <button class="salty-btn" data-act="mask-pick">${has ? '다른 이미지 고르기' : '이미지 고르기'}</button>
                 ${has && !current ? `<button class="salty-btn" data-act="mask-save">저장</button>` : ''}
-                ${current ? `<button class="salty-btn" data-act="mask-replace" data-id="${current.id}">바꾸기</button><button class="salty-btn salty-btn-danger" data-act="mask-delete" data-id="${current.id}">삭제</button>` : ''}
+                ${current ? `<button class="salty-btn" data-act="mask-replace" data-id="${esc(current.id)}">바꾸기</button><button class="salty-btn salty-btn-danger" data-act="mask-delete" data-id="${esc(current.id)}">삭제</button>` : ''}
                 ${has && !current ? '<button class="salty-btn" data-act="mask-clear">지우기</button>' : ''}
             </div>
         </div>
@@ -1521,16 +1522,16 @@ let weatherReplaceId = '';
 function weatherImageControls(s) {
     const current = s.chat.weatherImage;
     const saved = s.weatherImages.find(item => item.id === s.chat.weatherImageId) || null;
-    const thumb = data => `<span class="salty-weather-thumb" style="background-image:url(&quot;${data}&quot;)" aria-hidden="true"></span>`;
+    const thumb = data => isDataImage(data) ? `<span class="salty-weather-thumb" style="background-image:url(&quot;${esc(data)}&quot;)" aria-hidden="true"></span>` : '<span class="salty-weather-thumb" aria-hidden="true"></span>'; // 5.3.4: 도형 thumb 와 같은 검사
     const library = s.weatherImages.length ? `<div class="salty-mask-lib" role="listbox" aria-label="저장한 그림">${s.weatherImages.map(item =>
-        `<button type="button" class="salty-mask-item${item.id === s.chat.weatherImageId ? ' on' : ''}" data-act="wimg-use" data-id="${item.id}" aria-pressed="${item.id === s.chat.weatherImageId}">${thumb(item.data)}<small>${esc(item.name)}</small></button>`).join('')}</div>` : '';
+        `<button type="button" class="salty-mask-item${item.id === s.chat.weatherImageId ? ' on' : ''}" data-act="wimg-use" data-id="${esc(item.id)}" aria-pressed="${item.id === s.chat.weatherImageId}">${thumb(item.data)}<small>${esc(item.name)}</small></button>`).join('')}</div>` : '';
     return `${library}
         <div class="salty-mask-row">
             ${current ? thumb(current) : '<span class="salty-weather-thumb" aria-hidden="true"></span>'}
             <div class="salty-btns">
                 <button class="salty-btn" data-act="wimg-pick">${current ? '다른 그림 고르기' : '그림 고르기'}</button>
                 ${current && !saved ? '<button class="salty-btn" data-act="wimg-save">저장</button>' : ''}
-                ${saved ? `<button class="salty-btn" data-act="wimg-replace" data-id="${saved.id}">바꾸기</button><button class="salty-btn salty-btn-danger" data-act="wimg-delete" data-id="${saved.id}">삭제</button>` : ''}
+                ${saved ? `<button class="salty-btn" data-act="wimg-replace" data-id="${esc(saved.id)}">바꾸기</button><button class="salty-btn salty-btn-danger" data-act="wimg-delete" data-id="${esc(saved.id)}">삭제</button>` : ''}
             </div>
         </div>
         <input type="file" accept="${IMAGE_ACCEPT}" hidden data-file="weather">

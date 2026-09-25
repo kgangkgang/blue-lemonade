@@ -16,7 +16,8 @@ function died(id,frame,why){
     const item=running.get(id);if(!item||item.frame!==frame)return; // stop() 이 닫은 것이거나 이미 새 틀로 바뀜
     deaths.push(`${id} ${why} ${new Date().toTimeString().slice(0,8)}`);if(deaths.length>20)deaths.shift();
     stop(id);
-    const count=(restarts.get(id)||0)+1;restarts.set(id,count);
+    // 5.3.4: 한도는 최근 10분 안에 죽은 횟수로 — 예전에는 세션 내내 쌓여, 오래 켜 둔 창에서 가끔 닫히던 것도 일곱 번째부터는 영영 안 살아났다
+    const now=Date.now(),recent=(restarts.get(id)||[]).filter(at=>now-at<600000);recent.push(now);restarts.set(id,recent);const count=recent.length;
     if(!wanted||count>6){status(id,'멈췄어요. 새로고침해 주세요');return;}
     status(id,'다시 시작하는 중…');setTimeout(()=>{if(wanted&&!running.has(id))syncScripts(true).catch(()=>{});},400*count);
 }
@@ -67,10 +68,19 @@ async function startOne(item,state,current){
         if(running.has(id))status(id,'사용 중');
     }catch(error){stop(id);status(id,`실행 오류: ${error.message}`);}
 }
+// 5.3.4: 켤 것 · 끌 것이 이미 그대로면 아무것도 안 한다 — applyAll 마다(슬라이더를 끄는 프레임마다) 불려 매번 순번을 올리고 다섯 개를 다시 훑었다.
+// 죽었거나 · 코드가 바뀌었거나 · 아직 시작 중인 것이 하나라도 있으면 예전처럼 끝까지 간다
+const settled=(state,on)=>SCRIPT_CATALOG.every(item=>{
+    const now=running.get(item.id);
+    if(!(on&&state.enabled[item.id]))return !now&&states.get(item.id)==='꺼짐';
+    const code=state.overrides[item.id]?.code;
+    return !!now&&!dead(item.id)&&(code?now.code===code:!now.custom)&&states.get(item.id)==='사용 중';
+});
 export async function syncScripts(on){
     on=on && addonsEnabled(getSettings());
+    if(!!on===wanted&&settled(scriptSettings(),!!on))return;
     const current=++revision,state=scriptSettings();wanted=!!on;
-    for(const item of SCRIPT_CATALOG) if(!on||!state.enabled[item.id]){stop(item.id);status(item.id,'꺼짐');}
+    for(const item of SCRIPT_CATALOG) if(!on||!state.enabled[item.id]){stop(item.id);restarts.delete(item.id);status(item.id,'꺼짐');} // 끄면 다시 시작 한도도 처음부터
     if(!on)return;
     await Promise.all(SCRIPT_CATALOG.filter(item=>state.enabled[item.id]).map(item=>startOne(item,state,current)));
 }

@@ -17,7 +17,7 @@ const load = (name, url) => (modules[name] ??= import(url).catch((error) => {
 }));
 
 // 스크립트 런타임: 시작할 때 파일을 못 받으면(폰에서 가끔) 예전에는 다음 설정 변경 때까지 다섯 개가 전부 '꺼짐'으로 남았다 — 몇 번 다시 받는다
-let scriptsWanted=false,scriptRetry=0,scriptHeal=[],scriptWatch=false;
+let scriptsWanted=false,scriptRetry=0,scriptHeal=[],scriptWatch=false,scriptsKey='';
 function startScripts(tries=4){
     clearTimeout(scriptRetry);
     load('scripts','./scripts/runtime.js').then((m)=>{
@@ -42,6 +42,7 @@ function startScripts(tries=4){
             return m.syncScripts(scriptsWanted);
         }
         if(tries>0)scriptRetry=setTimeout(()=>startScripts(tries-1),2500);
+        else scriptsKey=''; // 끝내 못 받았으면 다음 설정 적용 때 다시 시도
     }).catch(error=>console.error('[Blue Lemonade] 스크립트를 시작하지 못했어요',error));
 }
 
@@ -52,10 +53,13 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     syncTypography(on);
     const fold=on&&!!(s.chat?.triangleFold??SillyTavern.getContext().extensionSettings?.blue_lemonade_scripts?.enabled?.fold);
     if(fold||modules.fold)load('fold','./fold.js').then(m=>m?.syncFold(fold));
-    const scriptsRequested=Object.values(SillyTavern.getContext().extensionSettings?.blue_lemonade_scripts?.enabled||{}).some(v=>v===true);
+    const scriptsEnabled=SillyTavern.getContext().extensionSettings?.blue_lemonade_scripts?.enabled||{};
+    const scriptsRequested=Object.values(scriptsEnabled).some(v=>v===true);
     // The editor can start the runtime before this module has imported it.
     scriptsWanted=addonsOn&&scriptsRequested;
-    if(scriptsRequested||modules.scripts)startScripts();
+    // 5.3.4: applyAll 마다(슬라이더를 끌면 프레임마다) 되살림 타이머 일곱 개를 지우고 다시 걸었다 — 처음 · 스크립트 켜고 끔이 바뀔 때만
+    const key=`${scriptsWanted}|${JSON.stringify(scriptsEnabled)}`;
+    if((scriptsRequested||modules.scripts)&&key!==scriptsKey){scriptsKey=key;startScripts();}
     const reader = on && !!s.reader?.autoHide;
     if (reader || modules.reader) load('reader', './reader.js').then(m => m?.syncReader(reader));
     const bgWindow = on && !!s.bgWindow?.on;

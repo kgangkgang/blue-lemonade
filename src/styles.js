@@ -4,7 +4,7 @@ import { preserveLocks } from './setting-locks.js';
 //
 // 스타일에 담지 않는 것: 테마 켬/끔 · 공지 · 내 글꼴 목록 · 도형 목록 · 동작 설정(고르기 팝업 · 페이드 인 · 폰 접기 · 몰입 읽기 · 한 손 버튼)
 // — 모양만 바꾸고 쓰는 방식은 그대로 두려고. 저장한 도형을 쓰는 스타일은 그림 대신 도형 id 만 담는다 (설정 파일이 무거워지지 않게).
-import { getSettings, DEFAULTS, FONT_SET, isCssColor } from './settings.js';
+import { getSettings, DEFAULTS, FONT_SET, isCssColor, safeFont } from './settings.js';
 
 export const STYLE_KEYS = ['gradients', 'palette', 'nightTint', 'lightTint', 'customName', 'colorOverrides', 'fonts', 'type', 'dialogue', 'ui', 'code', 'em', 'strong', 'shadow', 'chat', 'image', 'profile', 'userProfile'];
 const CHAT_BEHAVIOR = ['triangleFold', 'weatherAutoRest', 'selectPop', 'colorPop', 'streamFade', 'demFold', 'qrFind'];
@@ -193,7 +193,8 @@ export async function decodeStyle(input) {
     for (const key of STYLE_KEYS) if (payload.style[key] !== undefined && sameShape(key, payload.style[key])) style[key] = payload.style[key]; // 생김새가 다른 칸은 버림 (5.1.2)
     if (style.colorOverrides) cleanOverrides(style.colorOverrides);
     if (!Object.keys(style).length) throw new Error('스타일 안에 든 값이 없어요');
-    const fonts = Array.isArray(payload.fonts) ? payload.fonts.filter(f => isObj(f) && typeof f.id === 'string' && typeof f.family === 'string') : [];
+    // 5.3.4: 글꼴 이름 · 주소도 거른다 — family 가 <style> 에, css 주소가 <link> 로 들어가 받은 코드가 임의의 CSS 를 넣을 수 있었다
+    const fonts = Array.isArray(payload.fonts) ? payload.fonts.filter(f => safeFont(f) && f.cors !== false) : [];
     return { name: typeof payload.name === 'string' && payload.name.trim() ? payload.name.trim().slice(0, 24) : '받은 스타일', style, fonts };
 }
 
@@ -231,8 +232,9 @@ export function uniqueName(name, styles, exceptId = '') {
 export function mergeFonts(s, fonts) {
     let added = 0;
     for (const font of fonts || []) {
-        if (s.customFonts.some(f => f.id === font.id)) continue;
-        s.customFonts.push(structuredClone(font));
+        if (s.customFonts.some(f => f.id === font.id) || !safeFont(font) || font.cors === false) continue;
+        // 5.3.4: 받은 글꼴은 @font-face 만 옮겨 쓴다 (shared) — CSS 를 못 읽을 때 <link> 로 통째로 붙이지 않게 (fonts.js loadFont)
+        s.customFonts.push({ ...structuredClone(font), shared: true });
         added++;
     }
     return added;

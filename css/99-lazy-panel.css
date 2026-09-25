@@ -37,7 +37,7 @@ body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-containe
     grid-column: 1 / -1;
   }
 }
-@media (min-width: 1001px) {
+@media not all and (max-width: 1000px) { /* 5.3.4: 1001px 이면 1000~1001px(배율 · 소수 폭)에서 폰 · PC 규칙 둘 다 빠졌다 — max-width: 1000px 의 정확한 반대 */
   .salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > :not(.salty-row, .salty-slider),
   .salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > :is(.salty-row, .salty-slider):not(:is(.salty-row, .salty-slider) + *):not(:has(+ :is(.salty-row, .salty-slider))) {
     grid-column: 1 / -1;

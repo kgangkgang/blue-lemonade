@@ -5,7 +5,7 @@
    ===== */
 /* ===== 미리보기 자동 생성 (surfaces:preview) =====
    tools/gen-preview-css.js 가 #chat 규칙을 여기 복사한다 — 손으로 고치지 말 것.
-   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 332개 (89.1KB).
+   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 333개 (88.5KB).
    style.css 의 채팅 · 에셋 규칙을 고치면 `node tools/gen-preview-css.js` 를 다시 돌린다.
    이 칸을 다른 자리로 옮기지 말 것: 사본이 손으로 쓴 채팅 규칙보다 뒤에 있어야 같은 무게에서 이기고,
    바로 뒤의 보정 칸이 사본을 눌러 줄 수 있다. 앞으로 옮기면 아바타 모서리처럼 순서로만 갈리는 것이 뒤집힌다 */
@@ -666,12 +666,14 @@ body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(img.character-asset-
 body.salty :is(#salty-nochat, .salty-preview) .mes_text p > :is(img.character-asset-rendered, img.eh-img):only-child {
   margin-block: 0 .35em !important;
 }
-body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(img.character-asset-rendered, img.eh-img) + br,
-body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(img.character-asset-rendered, img.eh-img) + br + br,
-body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(img.character-asset-rendered, img.eh-img) + br + br + br,
-body.salty :is(#salty-nochat, .salty-preview) .mes_text br:has(+ :is(img.character-asset-rendered, img.eh-img)),
-body.salty :is(#salty-nochat, .salty-preview) .mes_text br:has(+ br + :is(img.character-asset-rendered, img.eh-img)) {
+body.salty :is(#salty-nochat, .salty-preview) .mes_text br.bl-img-br {
   display: none !important;
+}
+body.salty :is(#salty-nochat, .salty-preview) .mes_text .bl-img-indent {
+  display: none;
+}
+body.salty.salty-indent :is(#salty-nochat, .salty-preview) .mes_text p > .bl-img-indent {
+  display: inline-block; width: 1em; height: 0;
 }
 body.salty.salty-img-bleed :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-wrap, [class*="custom-imageWrapper"]) {
   margin-inline: calc(var(--salty-gutter) * -1) !important;
@@ -843,14 +845,6 @@ body.salty :is(.cg-textarea, #jj-popup .jj-textarea, .eh-textarea, .jj-prompt te
     animation-timing-function: ease-out;
     animation-fill-mode: backwards;
     will-change: opacity;
-  }
-}
-@media (max-width: 1000px) {
-  body.salty.bl-reader :is(#salty-nochat, .salty-preview) {
-    max-height: none !important;
-    padding-top: calc(var(--topBarBlockSize) + 8px) !important;
-    padding-bottom: calc(var(--bl-form-h, 96px) + 8px) !important;
-    scroll-padding-top: var(--topBarBlockSize);
   }
 }
 body.salty.salty-light.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--physical {

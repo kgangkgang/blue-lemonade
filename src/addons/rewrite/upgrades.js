@@ -1,4 +1,4 @@
-import { MULTILINGUAL_WORDS, multilingualNear } from './multilingual.js';
+import { MULTILINGUAL_WORDS, multilingualNear, GLOVES_KO_1_9_3 } from './multilingual.js';
 // One-off changes to saved settings when a default rule or exception changes shape after it was first shipped.
 // Saved settings only ever get missing keys filled in (see loadSettings), so an edited default needs a step here.
 // Each step runs once per install (ids kept in settings.appliedUpgrades); a fresh install lists them all as done.
@@ -16,6 +16,13 @@ const OLD_GRAY_NAILS = {
         String.raw`/\b(?:finger|toe)?(?:nails?|claws?|talons?)\s+(?:(?:were|was|are|is|gleamed|glinted|shone|looked)\s+)?(?:an?\s+)?(?:(?:dark|deep|charcoal|slate|ash|smoky|steel|iron)[- ]?)?(?:gr[ae]y(?:ish)?|charcoal|gunmetal|graphite|pewter)\b/`,
         String.raw`/\b(?:gr[ae]y|charcoal|gunmetal|graphite|pewter)\s+(?:nail\s+(?:polish|lacquer|varnish|paint)|(?:polish|lacquer|varnish)\b[^.!?\n]{0,25}?\b(?:finger|toe)?(?:nails?|claws?))/`,
     ].join('\n'),
+};
+
+// 1.9.3 에 처음 나간 장갑 규칙 (gauntlet 포함 · 중장갑 · 장갑 차량도 걸리던 줄)
+const OLD_GLOVES = {
+    name: '장갑',
+    description: 'gloves worn by a character (gloves, gloved hands, fingerless or leather gloves, gauntlets) — drop the gloves and keep the bare hand and the action; gloves that are only objects in the scene (rubber gloves on a shelf, oven mitts) are fine',
+    words: ['glove, gloves, gloved, gauntlet, gauntlets', 'fingerless glove*, leather-gloved, white-gloved, black-gloved, 手袋, てぶくろ, テブクロ, グローブ, 手套, 白手套, 黑手套, 皮手套', GLOVES_KO_1_9_3].join('\n'),
 };
 
 function defaultRule(id) {
@@ -107,6 +114,14 @@ export const UPGRADES = [
             const extra = parseEntries(USER_COLORS_EXTRA).filter(entry => !known.has(entryKey(entry)));
             if (extra.length) rule.words = [rule.words || '', ...extra.map(renderEntry)].join('\n');
             if ((rule.description ?? '') === OLD_USER_COLORS_DESCRIPTION) rule.description = defaultRule('user_colors').description;
+        },
+    },
+    {
+        // 1.9.3 장갑 규칙이 갑옷 낱말(gauntlet · 중장갑 · 경장갑 · 장갑 차량)에도 걸렸다. 사용자가 더한 낱말은 남긴다.
+        id: 'gloves-armor',
+        apply(stored) {
+            const rule = stored.rules.find(item => item.id === 'gloves');
+            if (rule) upgradeRuleWords(rule, defaultRule('gloves'), OLD_GLOVES);
         },
     },
 ];

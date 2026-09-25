@@ -23,7 +23,7 @@ import { createCodeGuard, isClickTrigger, CODE_SWITCH_KEYS } from './switchcode.
 
 const MODULE = 'save_dedupe';
 const FOLDER = 'blue-lemonade'; // 2.0.0 성능 보조로 합침
-const VERSION = '1.1.2';
+const VERSION = '1.1.3';
 const TITLE = '저장 정리';
 const SAVE_PATHS = ['/api/chats/save', '/api/chats/group/save'];
 
@@ -42,6 +42,9 @@ function initSettings() {
 
 /** 마지막으로 서버에 성공적으로 보낸 저장 본문 (경로별) */
 const last = new Map();
+/** 경로별 저장 요청 순번 · 아직 끝나지 않은 요청 수 — 겹친 저장은 서버에 어느 쪽이 남았는지 모르므로 기억하지 않는다 */
+const issued = new Map();
+const inflight = new Map();
 const stats = { skipped: 0, sent: 0, skippedBytes: 0 };
 /** 채팅 키 → 성공했거나(같은 본문이라 건너뛴 것 포함) 저장 가운데 가장 늦게 시작한 시각 */
 const lastOk = new Map();
@@ -80,17 +83,32 @@ function installDedupe() {
     const nativeFetch = window.fetch;
 
     function send(self, input, init, path, token, remember, key, start) {
+        // 같은 경로 저장이 겹치면(앞 요청이 아직 도는 중 · 응답 순서가 뒤바뀜) 서버 파일이 어느 본문인지 모른다 →
+        // 가장 늦게 보낸 요청이 끝나고 도는 요청이 없을 때만 본문을 기억하고, 그 밖에는 잊어서 다음 저장을 건너뛰지 않는다
+        const seq = (issued.get(path) ?? 0) + 1;
+        issued.set(path, seq);
+        inflight.set(path, (inflight.get(path) ?? 0) + 1);
+        const settle = () => {
+            const left = (inflight.get(path) ?? 1) - 1;
+            if (left > 0) inflight.set(path, left);
+            else inflight.delete(path);
+            return seq === issued.get(path) && left === 0;
+        };
         const request = nativeFetch.call(self, input, init);
         request.then((response) => {
+            const alone = settle();
             if (response.ok) {
                 noteOk(key, start);
                 lastSaveMs = performance.now() - start;
-                if (remember) { last.set(path, init.body); stats.sent++; refreshStats(); }
+                if (remember && alone) last.set(path, init.body);
+                else last.delete(path);
+                if (remember) { stats.sent++; refreshStats(); }
             } else {
                 last.delete(path);
             }
             recovery?.onSaveResult(token, response.ok);
         }, () => {
+            settle();
             last.delete(path);
             recovery?.onSaveResult(token, false);
         });
@@ -120,7 +138,7 @@ function installDedupe() {
                     last.delete(path);
                     return send(this, input, init, path, token, false, key, start);
                 }
-                if (last.get(path) === body) {
+                if (!inflight.get(path) && last.get(path) === body) {
                     stats.skipped++;
                     stats.skippedBytes += body.length;
                     refreshStats();
@@ -261,8 +279,8 @@ function shortStack() {
     }
 }
 
-// setTimeout 마다 불리므로 가볍게 (실리태번 상수 그대로)
-const saveDelay = () => script.DEFAULT_SAVE_EDIT_TIMEOUT;
+// setTimeout 마다 불리므로 가볍게 (실리태번 상수 그대로, 없는 버전이면 1초)
+const saveDelay = () => (Number(script.DEFAULT_SAVE_EDIT_TIMEOUT) > 0 ? script.DEFAULT_SAVE_EDIT_TIMEOUT : 1000);
 
 /**
  * 지금 채팅 키 · integrity 를 가볍게. 데우스 프리셋은 프롬프트 한 번에 saveMetadataDebounced 를 수백 번 부르고 그때마다

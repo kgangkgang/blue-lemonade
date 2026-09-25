@@ -4,6 +4,44 @@ import { restoreDialogueTildes, resetDialogueTildes } from './dialogue-tildes.js
 import { wrapSpanningQuotes, resetSpanningQuotes } from './dialogue-span.js';
 let active=false, observer=null, timer=0;
 const originals=new Map(), dirty=new Set();
+// 5.3.4: 에셋 그림에 곧장 붙은 <br> (사이에 빈칸 · 주석만) — 뒤로 셋, 앞으로 둘까지 .bl-img-br (css/07-images 가 숨김).
+// 예전 CSS 형제 선택자(img + br + br)는 사이의 글자를 건너뛰어 "줄A<br>줄B" 의 줄바꿈까지 숨겼다
+// 5.3.4: 첫 줄 들여쓰기(salty-indent)는 문단의 첫 줄에만 걸려서, <p><img><br>글</p> 의 '글' 은 그림 뒤 새 줄인데도 들여쓰지 않았다
+// (사용자 제보). 그림 뒤 글 앞에 빈 칸(.bl-img-indent, 들여쓰기가 켜졌을 때만 1em — css/07-images)을 하나 끼운다
+const ASSET_IMG='img.character-asset-rendered, img.eh-img', IMG_BR='bl-img-br', IMG_INDENT='bl-img-indent';
+const blank=node=>node.nodeType===8||(node.nodeType===3&&!node.data.trim())||node.classList?.contains(IMG_INDENT);
+// 들여 쓸 글 줄의 첫 조각인가: 글자 또는 글 속 요소(q · span · em …). 줄바꿈 · 그림 · 블록은 아님
+const NOT_INLINE=/^(BR|IMG|P|DIV|DETAILS|SUMMARY|UL|OL|LI|DL|BLOCKQUOTE|TABLE|PRE|H[1-6]|HR|FIGURE|SECTION|ARTICLE|ASIDE|HEADER|FOOTER|NAV|VIDEO|AUDIO|IFRAME|CANVAS|SVG|STYLE|SCRIPT|TEMPLATE)$/;
+// 그림 옆 줄바꿈을 모으고, 그 뒤(dir=next)에 처음 나오는 것을 돌려준다
+function nearBreaks(img,dir,limit,out){
+    let node=img[dir],count=0;
+    for(;node;node=node[dir]){
+        if(blank(node))continue;
+        if(node.nodeName!=='BR'||count>=limit)break;
+        out.add(node);count++;
+    }
+    return node;
+}
+export function markAssetBreaks(root){
+    if(!root?.querySelectorAll)return false;
+    const want=new Set(),spots=new Set();
+    for(const img of root.querySelectorAll(`.mes_text :is(${ASSET_IMG})`)){
+        const next=nearBreaks(img,'nextSibling',3,want);nearBreaks(img,'previousSibling',2,want);
+        // 문단 안(들여쓰기가 걸리는 곳)에서 그림 뒤에 글이 이어질 때만. 카드 · 트래커 안은 들여쓰기가 없다
+        if(next&&img.parentElement?.nodeName==='P'&&(next.nodeType===3||(next.nodeType===1&&!NOT_INLINE.test(next.nodeName)&&!next.matches(ASSET_IMG)))
+            &&!img.closest('details[class*="custom-dem-card"],.custom-dem-track,.custom-dem-track-recovery'))spots.add(next);
+    }
+    let changed=false;
+    for(const br of root.querySelectorAll(`br.${IMG_BR}`))if(!want.has(br))br.classList.remove(IMG_BR);
+    for(const br of want)if(!br.classList.contains(IMG_BR))br.classList.add(IMG_BR);
+    for(const pad of root.querySelectorAll(`.${IMG_INDENT}`))if(!spots.has(pad.nextSibling)){pad.remove();changed=true;}
+    for(const spot of spots)if(!spot.previousSibling?.classList?.contains(IMG_INDENT)){
+        const pad=document.createElement('span');pad.className=IMG_INDENT;pad.setAttribute('aria-hidden','true');
+        spot.before(pad);changed=true;
+        if(spot.nodeName==='Q')spot.classList.remove('bl-line-dialogue'); // 앞이 <br> 이던 대사 줄 들여쓰기와 겹치지 않게 (다음 조판이 다시 정한다)
+    }
+    return changed;
+}
 export function typesetRoot(root) {
     if(!active||!root?.querySelectorAll)return;
     // The same Markdown separators appear in chat and bookmark renderings.
@@ -45,24 +83,33 @@ export function syncTypography(on) {
             }else if(value.lead?.isConnected)value.lead.replaceWith(...value.lead.childNodes);
         }
         resetDialogueTildes();resetSpanningQuotes();
-        originals.clear();document.querySelectorAll('.bl-line-dialogue').forEach(node=>node.classList.remove('bl-line-dialogue'));return;
+        originals.clear();document.querySelectorAll('.bl-line-dialogue').forEach(node=>node.classList.remove('bl-line-dialogue'));
+        document.querySelectorAll(`br.${IMG_BR}`).forEach(node=>node.classList.remove(IMG_BR));
+        document.querySelectorAll(`.${IMG_INDENT}`).forEach(node=>node.remove());return;
     }
+    // 그림 뒤 들여쓰기 칸을 먼저 — 대사 줄 표시(bl-line-dialogue: 앞이 <br> 인 q)가 그 칸을 보고 정해져야 두 번 들이지 않는다
+    markAssetBreaks(document.getElementById('chat'));
     typesetRoot(document);
     const chat=document.getElementById('chat');if(!chat)return;
     // 4.7.8: 답이 오는 동안(body[data-generating]) 그 메시지는 걸음마다 다시 그려지므로 조판해 봐야 다음 걸음에 사라진다 —
     // 생성 중에는 표시줄 뒤 빈 줄만 정리하고, 나머지 조판은 답이 끝나면 한 번에 처리한다.
     const flush=()=>{timer=0;if(document.body.dataset.generating==='true'){for(const root of dirty)if(root?.isConnected){normalizeTrackerSpacing(root);restoreDialogueTildes(root);}timer=setTimeout(flush,400);return;}for(const root of dirty)if(root?.isConnected)typesetRoot(root);dirty.clear();};
     observer=new MutationObserver(records=>{
-        const generating=document.body.dataset.generating==='true',now=new Set();
+        const generating=document.body.dataset.generating==='true',now=new Set(),touched=new Set();
         for(const record of records){
             const element=record.target.nodeType===1?record.target:record.target.parentElement;
-            const mes=element?.closest('.mes');if(mes){dirty.add(mes);if(generating)now.add(mes);}
-            for(const node of record.addedNodes)if(node.nodeType===1)dirty.add(node.parentElement||node);
+            const mes=element?.closest('.mes');if(mes){dirty.add(mes);touched.add(mes);if(generating)now.add(mes);continue;}
+            // 5.3.4: #chat 에 새 메시지가 붙은 기록 — 예전엔 부모(#chat)를 넣어 새 메시지 하나에 채팅 전체를 다시 조판했다. 붙은 메시지만
+            for(const node of record.addedNodes)if(node.nodeType===1&&(node.matches('.mes')||node.querySelector('.mes'))){dirty.add(node);touched.add(node);}
         }
         // 5.3.2: 생성 중 표시줄 뒤 빈 줄은 그리기 전에(이 콜백은 화면을 그리기 전 마이크로태스크) 바로 지운다.
         // 예전엔 120ms 뒤에 지워서, 글자 조각이 올 때마다 빈 줄이 생겼다 사라져 답이 위아래로 흔들렸다 (사용자 제보: 떡방아).
         // 지우면서 생긴 기록은 버린다 (다시 이 콜백을 부르지 않게).
         if(now.size){for(const mes of now)if(mes.isConnected)normalizeTrackerSpacing(mes);observer.takeRecords();}
+        // 5.3.4: 그림 옆 <br> 표시도 그리기 전에 — 늦게 달면 빈 줄이 한 번 보였다 사라진다 (클래스만 바꾸므로 감시 기록이 생기지 않는다)
+        // 들여쓰기 칸을 넣고 뺀 기록도 버린다 (우리가 만든 것뿐 — 이 메시지는 이미 dirty 에 있다)
+        let padded=false;for(const root of touched)if(root.isConnected&&markAssetBreaks(root))padded=true;
+        if(padded)observer.takeRecords();
         clearTimeout(timer);timer=setTimeout(flush,120);
     });
     observer.observe(chat,{childList:true,subtree:true,characterData:true});

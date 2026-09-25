@@ -329,86 +329,6 @@ body.salty .popup:has(.salty-notice) .popup-content {
   transform: translateX(18px);
 }
 
-/* 대분류 탭 */
-.salty-tabs::-webkit-scrollbar {
-  display: none;
-}
-.salty-tabs {
-  display: flex;
-  gap: 2px;
-  padding: 3px;
-  overflow-x: auto;
-  background: var(--salty-fill-shade, var(--shade));
-  border-radius: 10px;
-  scrollbar-width: none;
-}
-.salty-tabs button {
-  flex: 1 0 auto;
-  padding: 7px 6px;
-  border: 0;
-  border-radius: 8px;
-  background: none;
-  color: var(--salty-muted);
-  font-size: var(--fs-tab);
-  font-weight: 550;
-  min-width: 0;
-  max-width: 100%;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  line-height: 1.45;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-.salty-tabs button.on {
-  background: var(--salty-fill-surface, var(--salty-surface));
-  color: var(--salty-text);
-  box-shadow: var(--salty-e2, 0 1px 3px var(--salty-shadow-50));
-}
-
-/* 소분류 칩: 탭 아래 한 줄. 좁으면 다음 줄로 넘김 — 옆으로 밀면 끝 칩이 잘려 안 보임 */
-.salty-subs {
-  position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  column-gap: 4px;
-  row-gap: 3px;
-  margin-top: 6px;
-  padding: 0 1px;
-}
-.salty-subs button {
-  flex: none;
-  height: 32px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 99px;
-  background: none;
-  color: var(--salty-muted);
-  font-size: var(--fs-chip);
-  font-weight: 550;
-  min-width: 0;
-  max-width: 100%;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  line-height: 1.45;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-.salty-subs button.on {
-  background: var(--salty-fill-accent-13, var(--salty-accent-13));
-  color: var(--salty-accent);
-}
-/* 어두운 테마: 고른 칩 글자는 레몬 (탭 · 고르기 칸과 같게) */
-body.salty-dark .salty-subs button.on {
-  color: var(--bl-pop, var(--salty-accent));
-}
-.salty-subs button:not(.on):active {
-  background: var(--salty-fill-shade, var(--shade));
-}
-@media (hover: hover) {
-  .salty-tabs button:not(.on):hover,
-  .salty-subs button:not(.on):hover {
-    color: var(--salty-text);
-  }
-}
-
 /* 묶음 사이 간격: 제목이 있으면 제목이 맡음 */
 :where(.salty-sec > * + *) {
   margin-top: var(--gap);
@@ -580,9 +500,8 @@ body.salty-dark .salty-subs button.on {
   padding: 6px 11px;
   font-size: var(--fs-chip);
 }
-/* 어두운 테마: 면색 칩은 판보다 어두워 구멍처럼 보여서, 고른 칸(탭 포함)은 판보다 한 톤 밝게 */
-body.salty-dark .salty-seg button.on,
-body.salty-dark .salty-tabs button.on {
+/* 어두운 테마: 면색 칩은 판보다 어두워 구멍처럼 보여서, 고른 칸은 판보다 한 톤 밝게 */
+body.salty-dark .salty-seg button.on {
   background: var(--salty-fill-control, var(--salty-control));
   box-shadow: var(--bl-e2, inset 0 1px 0 rgba(255, 255, 255, 0.04));
 }
@@ -1335,13 +1254,6 @@ body.salty-dark .salty-shapes button.on {
   }
   .salty-label {
     margin: 14px 4px 5px;
-  }
-  .salty-subs button {
-    height: 30px;
-    padding: 0 9px; /* 글자 탭 소분류 여섯 칸이 390px 한 줄에 들어가게 */
-  }
-  .salty-tabs button {
-    padding: 6px 5px;
   }
   .salty-sample {
     padding: 12px 14px !important;

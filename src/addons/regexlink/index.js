@@ -10,7 +10,7 @@ import { saveSettingsDebounced, eventSource, event_types } from '../../../../../
 import { oai_settings, promptManager } from '../../../../../../openai.js';
 import { plan, textHasModule } from './engine.js';
 
-const VERSION = '1.0.1';
+const VERSION = '1.0.2';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const holder = document.createElement('div'); holder.hidden = true; document.body.append(holder);
 let root, inlineHost = null, opening = false, timer = 0, lastRows = [], lastNote = '', applied = new Map(), stopped = false;

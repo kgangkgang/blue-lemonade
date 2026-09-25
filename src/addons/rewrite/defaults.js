@@ -170,8 +170,9 @@ export const DEFAULT_SETTINGS = {
             id: 'gloves',
             name: '장갑',
             enabled: true,
-            description: 'gloves worn by a character (gloves, gloved hands, fingerless or leather gloves, gauntlets) — drop the gloves and keep the bare hand and the action; gloves that are only objects in the scene (rubber gloves on a shelf, oven mitts) are fine',
-            words: 'glove, gloves, gloved, gauntlet, gauntlets',
+            // 건틀릿(갑옷 · "throw down the gauntlet")은 장갑이 아니다 — 1.9.3 에 있던 gauntlet 은 뺐다 (upgrades.js gloves-armor)
+            description: 'gloves worn by a character (gloves, gloved hands, fingerless or leather gloves) — drop the gloves and keep the bare hand and the action; gloves that are only objects in the scene (rubber gloves on a shelf, oven mitts) or armour (gauntlets, armoured vehicles) are fine',
+            words: 'glove, gloves, gloved',
         },
         ...(USER_COLORS_RULE ? [USER_COLORS_RULE] : []),
         ...(USER_HAIR_RULE ? [USER_HAIR_RULE] : []),
@@ -247,7 +248,7 @@ export const DEFAULT_SETTINGS = {
     // Default exception ids already offered; newer ones get added once on load, a deleted one stays deleted.
     offeredExceptions: ['belford', 'adelstein', 'michael', 'lucifer', 'uriel', 'zadkiel'],
     // One-off setting upgrades already applied (see upgrades.js); a fresh install needs none of them.
-    appliedUpgrades: ['words-1.7', 'belford-nails-1.7', 'multilingual-1.7.7', 'two-colors-1.7.9'],
+    appliedUpgrades: ['words-1.7', 'belford-nails-1.7', 'multilingual-1.7.7', 'two-colors-1.7.9', 'gloves-armor'],
 };
 
 for (const rule of DEFAULT_SETTINGS.rules) {

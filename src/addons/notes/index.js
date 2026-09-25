@@ -56,7 +56,7 @@ export function currentOwner() {
     return { key: `${ch.avatar}/${c.chatId}`, chat: String(c.chatId), avatar: ch.avatar, name: ch.name };
 }
 /** 지금 보이는 메모: 전체 메모 + 지금 채팅에 귀속된 메모 */
-export function visibleNotes() { const key = currentOwner()?.key; return notes().filter(n => !n.owner || n.owner.key === key); }
+export function visibleNotes() { const key = currentOwner()?.key; return notes().filter(n => !n.owner || n.owner.key === key || strayOwner(n.owner)); }
 const SORTS = [['manual', '직접 정한 순', 'fa-grip-lines'], ['name', '가나다순', 'fa-arrow-down-a-z'], ['time', '최근 고친 순', 'fa-clock-rotate-left']];
 const sortName = note => (note.title || note.body || '').trim();
 /** 보이는 순서: 직접 정한 순(저장 순서) · 가나다순(제목, 없으면 내용) · 최근 고친 순 */
@@ -72,8 +72,16 @@ export function orderedNotes() {
 const TAG_RE = /(^|\s)#([\p{L}\p{N}_\-\/]*[\p{L}_\-][\p{L}\p{N}_\-\/]*)/gu;
 // [[제목]] 연결 · ![[제목]] 끌어오기 · [[제목|보일 이름]]
 const LINK_RE = /(!?)\[\[([^\[\]\n|]+?)(?:\|([^\[\]\n]+?))?\]\]/g;
-const stripCode = text => String(text || '').replace(/```[\s\S]*?```/g, ' ').replace(/`[^`\n]*`/g, ' ');
-export function tagsOf(text) { const out = new Set(); for (const m of stripCode(text).matchAll(TAG_RE)) out.add(m[2].replace(/\/+$/, '')); out.delete(''); return [...out]; }
+const CODE_RE = /```[\s\S]*?```|`[^`\n]*`/g;
+const stripCode = text => String(text || '').replace(CODE_RE, ' ');
+/** 코드 칸 밖의 글에만 fn 을 적용 (코드 칸은 그대로) */
+const outsideCode = (text, fn) => { const s = String(text || ''); let out = '', last = 0; for (const m of s.matchAll(CODE_RE)) { out += fn(s.slice(last, m.index)) + m[0]; last = m.index + m[0].length; } return out + fn(s.slice(last)); };
+// #fff · #1a2b3c 같은 색 값은 태그가 아니다 — 세기(tagsOf)와 그리기(decorate)가 같은 규칙
+const HEX_TAG = /^(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
+const tagName = raw => { const t = raw.replace(/\/+$/, ''); return t && !HEX_TAG.test(t) ? t : ''; };
+// 그린 보기는 HTML 태그 속성 · 링크(a) 안 글을 태그로 안 그린다 — 셀 때도 뺀다
+const stripForTags = text => stripCode(text).replace(/<[^>]*>/g, ' ').replace(/!?\[[^\]\n]*\]\([^)\n]*\)/g, ' ');
+export function tagsOf(text) { const out = new Set(); for (const m of stripForTags(text).matchAll(TAG_RE)) out.add(tagName(m[2])); out.delete(''); return [...out]; }
 export function linksOf(text) { return [...stripCode(text).matchAll(LINK_RE)].map(m => ({ title: m[2].trim(), embed: !!m[1] })).filter(l => l.title); }
 const tagHit = (tags, q) => { const want = q.toLowerCase(); return tags.some(t => { const v = t.toLowerCase(); return v === want || v.startsWith(want + '/'); }); };
 /** 보이는 메모에 쓰인 태그 [[태그, 개수]] — 많은 순 */
@@ -148,7 +156,7 @@ function renameLinks(from, to, selfId) {
     const re = new RegExp('(!?\\[\\[)\\s*' + pattern + '\\s*((?:\\|[^\\]\\n]*)?\\]\\])', 'gi');
     let changed = 0;
     for (const n of [...notes()]) {
-        const next = n.body.replace(re, (all, open, close) => { changed++; return open + b + close; });
+        const next = outsideCode(n.body, part => part.replace(re, (all, open, close) => { changed++; return open + b + close; })); // 코드 칸 안의 [[ ]] 는 글자 그대로
         if (next !== n.body) updateNote(n.id, { body: next });
     }
     if (changed) globalThis.toastr?.info(`다른 메모의 연결 ${changed}곳도 새 제목으로 바꿨어요.`, TITLE, { timeOut: 2500 });
@@ -161,27 +169,49 @@ export function addNote(title = '', body = '', at = 0) {
     const owner = currentOwner();
     const note = { id: uid(), title, body, updated: Date.now(), ...(owner ? { owner } : {}) };
     list.splice(Math.max(0, Math.min(at, list.length)), 0, note);
-    save(); return note;
+    save(); if (String(title).trim()) syncLinkViews(); return note;
 }
-export function removeNote(id) { const list = notes(), i = list.findIndex(n => n.id === id); if (i < 0) return false; list.splice(i, 1); save(); return true; }
-export function duplicateNote(id) { const list = notes(), i = list.findIndex(n => n.id === id); if (i < 0) return null; const made = addNote(list[i].title, list[i].body, i + 1); if (made) { made.color = list[i].color || ''; made.ink = list[i].ink || ''; if (list[i].owner) made.owner = { ...list[i].owner }; if (list[i].folder) made.folder = list[i].folder; save(); } return made; }
+export function removeNote(id) { const list = notes(), i = list.findIndex(n => n.id === id); if (i < 0) return false; list.splice(i, 1); save(); syncLinkViews(); return true; }
+// 전체 메모를 복제하면 복사본도 전체 메모 (addNote 가 지금 채팅을 붙이므로 뗀다)
+export function duplicateNote(id) { const list = notes(), i = list.findIndex(n => n.id === id); if (i < 0) return null; const made = addNote(list[i].title, list[i].body, i + 1); if (made) { made.color = list[i].color || ''; made.ink = list[i].ink || ''; if (list[i].owner) made.owner = { ...list[i].owner }; else delete made.owner; if (list[i].folder) made.folder = list[i].folder; save(); } return made; }
 export function moveNote(id, delta) {
-    // 보이는 메모끼리 자리 바꿈 (다른 채팅 메모는 건너뜀)
-    const list = notes(), vis = orderedNotes().map(n => n.id), vi = vis.indexOf(id), vj = vi + delta;
-    if (vi < 0 || vj < 0 || vj >= vis.length) return false;
-    const i = list.findIndex(n => n.id === id), j = list.findIndex(n => n.id === vis[vj]);
-    [list[i], list[j]] = [list[j], list[i]]; save(); return true;
+    // 보이는 칸끼리 자리 바꿈 — 폴더는 한 칸(폴더 메모 전부가 같이 움직인다), 다른 채팅 메모는 건너뜀
+    const units = displayItems('').map(x => (x.folder ? orderedNotes().filter(n => n.folder === x.folder).map(n => n.id) : [x.note.id]));
+    const vi = units.findIndex(u => u.includes(id)), vj = vi + delta;
+    if (vi < 0 || vj < 0 || vj >= units.length) return false;
+    [units[vi], units[vj]] = [units[vj], units[vi]];
+    placeVisible(units.flat()); save(); return true;
 }
-export function updateNote(id, patch) { const note = notes().find(n => n.id === id); if (!note) return false; Object.assign(note, patch, { updated: Date.now() }); save(); syncViews(id); return true; }
+export function updateNote(id, patch) {
+    const note = notes().find(n => n.id === id); if (!note) return false;
+    const retitled = 'title' in patch && String(patch.title ?? '').trim().toLowerCase() !== note.title.trim().toLowerCase();
+    Object.assign(note, patch, { updated: Date.now() }); save(); syncViews(id);
+    if (retitled) syncLinkViews(); // [[제목]] · ![[제목]] 이 가리키는 메모가 바뀌었을 수 있다
+    return true;
+}
 
 // ── 내용 그리기 (채팅 본문과 같은 길) ──────────────────────
 /** host(.bl-notes-view) 안에 채팅처럼 그린다: 표시 정규식 · 마크다운 · 대사 q · 감정 대사 */
 let previewRulesOn = false;
-const TASK_RE = /^(\s*(?:[-*+]|\d+\.)\s+)\[([ xX])\](?=\s|$)/gm;
+// 인용(>) 안 목록도 체크 줄 · 코드 칸(``` · ~~~) 안은 글자 그대로 — 그린 보기(drawTasks)와 같은 규칙으로 센다
+const TASK_RE = /^(\s*(?:>\s*)*(?:[-*+]|\d+\.)\s+)\[([ xX])\](?=\s|$)/;
+const FENCE_RE = /^\s*(?:>\s*)*(`{3,}|~{3,})/;
 /** k 번째 체크 목록 줄의 [ ] ↔ [x] */
 function toggleTask(text, k) {
-    let n = -1;
-    return String(text).replace(TASK_RE, (all, lead, mark) => (++n === k ? `${lead}[${mark.trim() ? ' ' : 'x'}]` : all));
+    let n = -1, fence = '';
+    return String(text).split('\n').map(line => {
+        const f = FENCE_RE.exec(line);
+        if (f) { if (!fence) fence = f[1][0]; else if (f[1][0] === fence) fence = ''; return line; }
+        if (fence) return line;
+        return line.replace(TASK_RE, (all, lead, mark) => (++n === k ? `${lead}[${mark.trim() ? ' ' : 'x'}]` : all));
+    }).join('\n');
+}
+/** 글자 조각 바로 뒤가 띄어쓰기 · 줄 끝인가 (원문의 '[x] ' 규칙과 맞춘다 — '[x]글자' 는 상자가 아니다) */
+function endsWord(node) {
+    let s = node.nextSibling; while (s && s.nodeType === 3 && !s.data) s = s.nextSibling;
+    if (!s) return true;
+    if (s.nodeType === 3) return /^\s/.test(s.data);
+    return /^(UL|OL|BR|P|DIV)$/.test(s.nodeName);
 }
 /** 그린 목록에서 '[ ] ' · '[x] ' 로 시작하는 항목을 상자로 — 순서대로 번호를 붙여 원문의 k 번째와 짝짓는다 */
 function drawTasks(body, onToggle) {
@@ -189,8 +219,8 @@ function drawTasks(body, onToggle) {
     for (const li of body.querySelectorAll('li')) {
         const walker = document.createTreeWalker(li, NodeFilter.SHOW_TEXT);
         let node = walker.nextNode(); while (node && !node.data.trim()) node = walker.nextNode();
-        if (!node || node.parentElement.closest('li') !== li) continue;
-        const m = /^\s*\[([ xX])\]\s?/.exec(node.data); if (!m) continue;
+        if (!node || node.parentElement.closest('li') !== li || node.parentElement.closest('code, pre')) continue;
+        const m = /^\s*\[([ xX])\](?:\s|$)/.exec(node.data); if (!m || (m[0].endsWith(']') && !endsWord(node))) continue;
         node.data = node.data.slice(m[0].length);
         const done = !!m[1].trim(), index = k++;
         const box = document.createElement('span');
@@ -233,7 +263,7 @@ function decorate(body, selfId = '', depth = 0) {
         const text = node.data; if (!text.includes('[[') && !text.includes('#')) continue;
         const parts = []; let last = 0;
         for (const m of text.matchAll(DECOR_RE)) {
-            if (m[5] !== undefined) { const at = m.index + m[4].length; parts.push(text.slice(last, at), tagEl(m[5].replace(/\/+$/, ''))); last = m.index + m[0].length; continue; }
+            if (m[5] !== undefined) { const t = tagName(m[5]); if (!t) continue; const at = m.index + m[4].length; parts.push(text.slice(last, at), tagEl(t)); last = m.index + m[0].length; continue; }
             const title = m[2].trim(), target = findByTitle(title);
             parts.push(text.slice(last, m.index), m[1] && depth < 1 && target && target.id !== selfId ? embedEl(target, depth) : linkEl(title, m[3], target));
             last = m.index + m[0].length;
@@ -305,7 +335,7 @@ function surround(area, before, after, lineMode = false) {
     const start = area.selectionStart ?? area.value.length, end = area.selectionEnd ?? start, value = area.value;
     let s = start, e = end;
     if (lineMode) {
-        s = value.lastIndexOf('\n', start - 1) + 1;
+        s = start > 0 ? value.lastIndexOf('\n', start - 1) + 1 : 0; // lastIndexOf(-1) 은 0 번째 줄바꿈을 찾아 s > e (IndexSizeError)
         const lines = value.slice(s, e).split('\n');
         const strip = l => l.replace(/^(#{1,6} |- \[[ xX]\] |- |\d+\. )/, '');
         const numbered = before === '1. ';
@@ -336,9 +366,13 @@ function placePop(pop, anchor = null) {
 }
 // 스크롤 · 창 크기가 바뀌면 열린 팝업을 닫는다 (버튼에서 떨어져 떠 있지 않게)
 // (주소 · 찾기 칸에 글을 쓰는 중인 팝업은 닫지 않고 자리만 — 폰 자판이 올라오면 화면 크기가 바뀐다)
-const closeLoosePops = () => document.querySelectorAll('.bl-note-fmt-hs:not([hidden])').forEach(p => { if (p.contains(document.activeElement)) { if (!p.classList.contains('bl-note-ac')) placePop(p); return; } p.hidden = true; p.style.position = ''; });
-addEventListener('resize', closeLoosePops);
-document.addEventListener('scroll', e => { if (e.target?.closest?.('.bl-notes-dialog, .bl-notes-mini, #chat')) closeLoosePops(); }, true);
+// 스크롤마다 문서 전체를 선택자로 훑지 않게: 팝업 칸만 담긴 살아 있는 목록 + 한 화면(프레임)에 한 번
+const popEls = document.getElementsByClassName('bl-note-fmt-hs');
+const closeLoosePops = () => { for (const p of [...popEls]) { if (p.hidden) continue; if (p.contains(document.activeElement)) { if (!p.classList.contains('bl-note-ac')) placePop(p); continue; } p.hidden = true; p.style.position = ''; } };
+let looseFrame = 0;
+const closeLooseSoon = () => { if (!looseFrame) looseFrame = requestAnimationFrame(() => { looseFrame = 0; closeLoosePops(); }); };
+addEventListener('resize', closeLooseSoon);
+document.addEventListener('scroll', e => { if (!looseFrame && popEls.length && e.target?.closest?.('.bl-notes-dialog, .bl-notes-mini, #chat')) closeLooseSoon(); }, true);
 /** 편집 칸 안 글자 커서의 화면 위치 (거울 칸으로 잰다) — [[ 고르기 목록을 커서 밑에 */
 function caretRect(area) {
     const cs = getComputedStyle(area), m = document.createElement('div');
@@ -497,6 +531,11 @@ function syncViews(id) {
     const hosts = new Set([...document.querySelectorAll(`.bl-note-embed[data-embed="${id}"]`)].map(e => e.closest('.bl-note, .bl-sticky, .bl-notes-peek')).filter(Boolean));
     hosts.forEach(el => el._sync?.());
 }
+/** 제목이 바뀌거나 메모가 생기고 없어지면 [[연결]] · ![[끌어오기]] 가 든 보기를 다시 그린다 (없는 제목 ↔ 있는 제목) */
+function syncLinkViews() {
+    const hosts = new Set([...document.querySelectorAll('.bl-notes-view .bl-note-link, .bl-notes-view .bl-note-embed')].map(e => e.closest('.bl-note, .bl-sticky, .bl-notes-peek')).filter(Boolean));
+    hosts.forEach(el => el._sync?.());
+}
 
 // ── 메모지 색: 테마 팔레트(에이드마다 한 색 — 나이트 쪽 파스텔이라 밝은 · 어두운 테마 모두 어울림) + 내 색 ──
 const NOTE_COLORS = () => Object.entries(PALETTE_FAMILIES).filter(([key]) => key !== 'custom').map(([key, fam]) => {
@@ -621,6 +660,7 @@ ${x.img ? `<img src="${escA(x.img)}" alt="" loading="lazy">` : `<i class="fa-sol
 }
 // 채팅을 바꾸면 보이는 메모가 달라진다 · 채팅 이름을 바꾸면 귀속도 따라간다 · 캐릭터 이름이 바뀌면 표시 이름도
 function onChatChanged() {
+    measureOwners();
     const cur = currentOwner();
     if (cur) { let changed = false; for (const n of notes()) if (n.owner?.key === cur.key && (n.owner.name !== cur.name || n.owner.avatar !== cur.avatar)) { n.owner = { ...n.owner, name: cur.name, avatar: cur.avatar }; changed = true; } if (changed) save(); }
     peekId = null; rerenderAll();
@@ -636,6 +676,37 @@ function onChatRenamed(data) {
     }
     if (changed) { save(); rerenderAll(); }
 }
+// 캐릭터 이름을 바꾸면 카드 파일(avatar)이 바뀐다 → 귀속 key 도 새 파일로 (채팅 파일 이름은 그대로)
+function onCharacterRenamed(oldAvatar, newAvatar) {
+    if (!oldAvatar || !newAvatar || oldAvatar === newAvatar) return;
+    let changed = false;
+    for (const n of notes()) { const o = n.owner; if (!o || o.group || o.avatar !== oldAvatar) continue; n.owner = { ...o, avatar: newAvatar, key: `${newAvatar}/${o.chat}` }; changed = true; }
+    if (changed) { save(); rerenderAll(); }
+}
+/** 지운 채팅의 메모는 전체 메모로 — 안 보이는 채 남지 않게 */
+function releaseNotes(match) {
+    let count = 0;
+    for (const n of notes()) if (n.owner && match(n.owner)) { delete n.owner; count++; }
+    if (!count) return;
+    save(); rerenderAll();
+    globalThis.toastr?.info(`지운 채팅의 메모 ${count}개를 전체 메모로 옮겼어요.`, TITLE, { timeOut: 3500 });
+}
+// CHAT_DELETED 는 채팅 이름만 준다 — 지금 캐릭터의 그 채팅을 먼저, 없으면 같은 이름의 채팅 (이름에 캐릭터 이름 · 시각이 들어 있어 겹칠 일이 드물다)
+function onChatDeleted(name) {
+    const chat = String(name || '').replace(/\.jsonl$/i, ''); if (!chat) return;
+    const c = getContext(), avatar = c.groupId ? '' : c.characters?.[c.characterId]?.avatar;
+    const hit = o => !o.group && o.chat === chat;
+    releaseNotes(avatar && notes().some(n => n.owner && hit(n.owner) && n.owner.avatar === avatar) ? o => hit(o) && o.avatar === avatar : hit);
+}
+function onGroupChatDeleted(chatId) { const chat = String(chatId || ''); if (chat) releaseNotes(o => !!o.group && o.chat === chat); }
+// 캐릭터 · 그룹 자체가 없어진 메모(지운 캐릭터 · 이 수정 전에 이름을 바꾼 캐릭터)는 고치지 않고 어느 채팅에서나 보인다
+// — 귀속 표시를 꾹 눌러 다시 귀속. 목록은 채팅을 열 때(캐릭터 목록이 다 불린 뒤) 다시 잰다
+let liveOwners = null;
+function measureOwners() {
+    const c = getContext(), chars = c.characters || [];
+    liveOwners = c.chatId && chars.length ? { avatars: new Set(chars.map(ch => ch.avatar)), groups: new Set((c.groups || []).map(g => g.id)) } : null;
+}
+const strayOwner = o => !!liveOwners && (o.group ? !liveOwners.groups.has(o.group) : !!o.avatar && !liveOwners.avatars.has(o.avatar));
 
 // ── 창 ─────────────────────────────────────────────────────
 let dialog = null;
@@ -645,8 +716,10 @@ const whenFull = ts => { if (!ts) return ''; const d = new Date(ts); return `${d
 const when = ts => { if (!ts) return ''; const d = new Date(ts), now = new Date(); if (d.toDateString() === now.toDateString()) return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; return d.getFullYear() === now.getFullYear() ? `${pad2(d.getMonth() + 1)}.${pad2(d.getDate())}` : `${d.getFullYear()}.${pad2(d.getMonth() + 1)}.${pad2(d.getDate())}`; };
 const grow = area => { if (area.hidden) return; area.style.height = 'auto'; area.style.height = Math.min(area.scrollHeight + 2, 480) + 'px'; };
 
+/** 카드를 다시 써도 되는지 — 카드 틀에 박힌 것(폴더 안 · 귀속 표시 · 색)이 같을 때만 */
+const cardSig = (note, inFolder) => [inFolder ? 1 : 0, note.owner?.key || '', note.owner?.name || '', note.color || '', note.ink || ''].join('|');
 function card(note, index, total, inFolder = false) {
-    const el = document.createElement('article');
+    const el = document.createElement('article'); el._sig = cardSig(note, inFolder); el._upd = note.updated;
     el.className = 'bl-note'; el.dataset.id = note.id; paintNote(el, note.color, note.ink);
     el.innerHTML = `<div class="bl-note-head"><input class="bl-note-title" type="text" maxlength="120" placeholder="제목" spellcheck="false"></div>
 <div class="bl-note-view bl-notes-view salty-preview" hidden></div>
@@ -669,7 +742,7 @@ function card(note, index, total, inFolder = false) {
     title.addEventListener('blur', () => { commit(null, true); if (titleBefore !== null && titleBefore !== title.value) renameLinks(titleBefore, title.value, note.id); titleBefore = null; });
     title.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); field.show(true); body.focus(); } });
     const field = bodyField(view, body, () => body.value, commit, fmt => title.after(fmt));
-    el._sync = () => { const n = current(); if (document.activeElement !== title) title.value = n.title; if (document.activeElement !== body) body.value = n.body; field.refresh(); time.textContent = when(n.updated); };
+    el._sync = () => { const n = current(); el._upd = n.updated; if (document.activeElement !== title) title.value = n.title; if (document.activeElement !== body) body.value = n.body; field.refresh(); time.textContent = when(n.updated); time.title = whenFull(n.updated); };
     return el;
 }
 
@@ -707,7 +780,22 @@ function renderList(root) {
     if (root.dataset.folder && !folderById(root.dataset.folder)) delete root.dataset.folder;
     const fid = root.dataset.folder || '';
     const items = displayItems(fid), host = root.querySelector('.bl-notes-list');
-    host.replaceChildren(...items.map((x, i) => (x.folder ? folderCard(x.folder) : card(x.note, i, items.length, !!fid))));
+    // 1.2.x: 목록이 바뀔 때마다 카드 300장을 새로 만들던 것 → 이미 있는 카드는 다시 쓰고(모양이 같을 때), 바뀐 자리만 옮긴다
+    const old = new Map(); for (const el of host.children) old.set(el.dataset.id ? 'n:' + el.dataset.id : 'f:' + el.dataset.folder, el);
+    const els = items.map((x, i) => {
+        if (x.folder) { const el = old.get('f:' + x.folder); if (el) { old.delete('f:' + x.folder); el._sync?.(); return el; } return folderCard(x.folder); }
+        const n = x.note, sig = cardSig(n, !!fid), el = old.get('n:' + n.id);
+        if (el && el._sig === sig) {
+            old.delete('n:' + n.id);
+            if (el._upd !== n.updated) el._sync?.();
+            const up = el.querySelector('[data-act="up"]'), down = el.querySelector('[data-act="down"]');
+            if (up) up.disabled = i === 0; if (down) down.disabled = i === items.length - 1;
+            return el;
+        }
+        return card(n, i, items.length, !!fid);
+    });
+    old.forEach(el => el.remove());
+    els.forEach((el, i) => { if (host.children[i] !== el) host.insertBefore(el, host.children[i] || null); });
     host.classList.toggle('is-sorted', (look().sort || 'manual') !== 'manual');
     host.classList.toggle('is-folder', !!fid);
     syncFolderBar(root, fid);
@@ -1022,7 +1110,7 @@ export function openLook() {
         const act = event.target.closest('[data-look]')?.dataset.look; if (!act) return;
         if (act === 'fonts') { panel.hidden = !panel.hidden; if (!panel.hidden) { renderFonts(find.value); find.focus({ preventScroll: true }); } }
         if (act === 'close') lookDialog.close();
-        if (act === 'reset') { store().look = { ...LOOK_DEFAULT, fmtOpen: look().fmtOpen, sort: look().sort }; apply(); rebuildFmtBars(); lookDialog.close(); openLook(); }
+        if (act === 'reset') { store().look = { ...LOOK_DEFAULT, fmtOpen: look().fmtOpen, sort: look().sort, ...(look().customColors ? { customColors: look().customColors } : {}) }; apply(); rebuildFmtBars(); lookDialog.close(); openLook(); } // 내 색(메모지 색 고르기)은 모양이 아니라 남긴다
     });
     // 슬라이더 ↔ 숫자 ↔ 같게
     const readParam = key => {
@@ -1053,9 +1141,10 @@ function placeSticky(el, pos) {
 }
 function rememberSticky(id, el) {
     if (!el.isConnected || stickies.get(id) !== el) return; // 닫힌 쪽지(목록에 다시 넣음)는 자리를 다시 적지 않는다
-    const r = el.getBoundingClientRect();
-    stickyStore()[id] = { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) };
-    save();
+    const r = el.getBoundingClientRect(), next = { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) }, old = stickyStore()[id];
+    if (old && old.x === next.x && old.y === next.y && old.w === next.w && old.h === next.h) return; // 쪽지 안을 누르기만 했으면(자리 · 크기 그대로) 저장하지 않는다
+    stickyStore()[id] = next;
+    saveSettingsDebounced(); // 자리 · 크기는 메모 줄과 무관 — save() 의 메모 줄 다시 그리기는 건너뜀
 }
 function raiseSticky(el) { stickies.forEach(other => other.classList.toggle('is-top', other === el)); }
 
@@ -1080,7 +1169,8 @@ function enableDrag(root, host) {
     host.addEventListener('touchmove', e => { if (dragging) e.preventDefault(); }, { passive: false });
     host.addEventListener('contextmenu', e => { if (dragging || e.target.closest('.bl-note-view, .bl-note-folder')) e.preventDefault(); });
     // 놓은 직후의 click(보기 → 편집 전환 · 폴더 열기)은 먹는다
-    root.addEventListener('click', e => { if (Date.now() - dragEndedAt < 350) { e.preventDefault(); e.stopPropagation(); } }, true);
+    // (작은 목록은 열 때마다 목록 칸을 새로 만든다 — 그대로 남는 root 에는 한 번만)
+    if (!root._dragClick) { root._dragClick = true; root.addEventListener('click', e => { if (Date.now() - dragEndedAt < 350) { e.preventDefault(); e.stopPropagation(); } }, true); }
 }
 const cardIds = el => (el.dataset.id ? [el.dataset.id] : (el.dataset.ids || '').split('|').filter(Boolean));
 function startDrag(root, host, cardEl, sx, sy) {
@@ -1092,6 +1182,7 @@ function startDrag(root, host, cardEl, sx, sy) {
     (root.closest('dialog') || document.body).append(ghost); // 모달 창 안이면 창 안에 (맨 위 층)
     cardEl.classList.add('is-dragging'); document.documentElement.classList.add('bl-notes-dragging');
     dragging = { id };
+    const orderBefore = [...host.children].flatMap(cardIds).join('|'); // 놓았을 때 칸 순서가 그대로면(꾹 누르기만) 저장 · 정렬 방식을 건드리지 않는다
     let lx = sx, ly = sy, outside = false, merge = null, mergeCand = null, mergeTimer = 0;
     const canMerge = !isFolder && !root.dataset.folder; // 폴더 밖 목록에서 메모를 끌 때만
     const clearMerge = () => { clearTimeout(mergeTimer); mergeTimer = 0; mergeCand = null; merge?.classList.remove('is-merge'); merge = null; ghost.classList.remove('is-merge'); };
@@ -1134,19 +1225,23 @@ function startDrag(root, host, cardEl, sx, sy) {
             openSticky(id);
             return;
         }
-        applyOrder([...host.children].flatMap(cardIds));
+        const ids = [...host.children].flatMap(cardIds);
+        if (ids.join('|') === orderBefore) return;
+        applyOrder(ids);
         rerenderAll();
     };
     document.addEventListener('pointermove', move, true); document.addEventListener('pointerup', end, true); document.addEventListener('pointercancel', end, true);
     navigator.vibrate?.(12);
 }
 /** 보이는 순서를 저장 순서로 (정렬 방식은 '직접 정한 순'으로) — 안 보이는 메모(다른 채팅)는 제자리, 보이는 메모는 첫 자리부터 새 순서로 */
-function applyOrder(ids) {
-    const s = store(), set = new Set(ids), byId = new Map(s.notes.map(n => [n.id, n]));
-    const first = s.notes.findIndex(n => set.has(n.id));
-    const rest = s.notes.filter(n => !set.has(n.id));
+function applyOrder(ids) { placeVisible(ids); store().look.sort = 'manual'; save(); }
+/** ids 순서대로 저장 순서를 고친다 (안 보이는 메모는 제자리) — 배열은 제자리에서 (store() 의 한 배열 규칙) */
+function placeVisible(ids) {
+    const list = notes(), set = new Set(ids), byId = new Map(list.map(n => [n.id, n]));
+    const first = list.findIndex(n => set.has(n.id));
+    const rest = list.filter(n => !set.has(n.id));
     rest.splice(Math.max(0, first), 0, ...ids.map(id => byId.get(id)).filter(Boolean));
-    s.notes = rest; s.look.sort = 'manual'; save();
+    list.splice(0, list.length, ...rest);
 }
 
 // ── 쪽지 머리띠 끌기: 옮기기 · 다른 쪽지에 놓으면 폴더 · 메모 줄(작은 목록)에 놓으면 다시 목록으로 ──
@@ -1337,7 +1432,7 @@ function renderPeek() {
     if (host.dataset.id !== note.id) {
         host.dataset.id = note.id;
         host.innerHTML = `<div class="bl-notes-peek-head"><b></b><button type="button" class="bl-note-btn" data-bar="pop" title="화면에 꺼내 두기 (PC)" aria-label="화면에 꺼내 두기"><i class="fa-solid fa-arrow-up-right-from-square"></i></button><button type="button" class="bl-note-btn" data-bar="close" title="접기" aria-label="접기"><i class="fa-solid fa-xmark"></i></button></div><div class="bl-notes-peek-view bl-notes-view salty-preview" hidden></div><textarea class="bl-notes-peek-body" placeholder="내용" spellcheck="false"></textarea>`;
-        const area = host.querySelector('textarea'), view = host.querySelector('.bl-notes-peek-view'); area.value = note.body;
+        const area = host.querySelector('textarea'), view = host.querySelector('.bl-notes-peek-view'); area.value = note.body; area.dataset.noteId = note.id; // 자기 자신 ![[ ]] 끌어오기 막기 · 고르기 목록에서 빼기
         let timer = 0;
         const commit = (value, now) => { clearTimeout(timer); const run = () => { const n = notes().find(x => x.id === note.id); if (n && n.body !== area.value) updateNote(note.id, { body: area.value }); }; now ? run() : (timer = setTimeout(run, 350)); };
         const field = bodyField(view, area, () => area.value, commit, fmt => host.querySelector('.bl-notes-peek-head b').after(fmt)); // 서식 줄은 제목 줄 안에
@@ -1404,7 +1499,11 @@ export function syncMenu() {
 
 store();
 applyLook();
-try { eventSource.on(event_types.CHAT_CHANGED, onChatChanged); eventSource.on(event_types.CHAT_RENAMED, onChatRenamed); } catch (error) { console.warn('[메모] 채팅 이벤트:', error); }
+try {
+    eventSource.on(event_types.CHAT_CHANGED, onChatChanged); eventSource.on(event_types.CHAT_RENAMED, onChatRenamed);
+    eventSource.on(event_types.CHARACTER_RENAMED, onCharacterRenamed); eventSource.on(event_types.CHAT_DELETED, onChatDeleted); eventSource.on(event_types.GROUP_CHAT_DELETED, onGroupChatDeleted);
+    eventSource.on(event_types.CHARACTER_DELETED, () => { measureOwners(); rerenderAll(); });
+} catch (error) { console.warn('[메모] 채팅 이벤트:', error); }
 let tries = 0;
 const mount = () => { syncMenu(); if ((!document.getElementById(MENU_ID) || !document.getElementById(BAR_ID)) && tries++ < 20) setTimeout(mount, 500); };
 mount();

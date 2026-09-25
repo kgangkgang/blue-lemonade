@@ -797,8 +797,9 @@ const NOTE_CLOSE_RE = /(?:\r?\n)?[ \t]*={3,}[ \t]*$/;
 
 // Global twin of NOTE_RE, for scanning every comment in a piece of source text.
 const NOTE_RE_G = /\{\{\s*\/\/([\s\S]*?)\}\}/g;
-// Presence of the  label is what makes a comment *ours*.
-const NOTE_MARK_RE = /\[[^\]]*\]/;
+// The fence line + the exact [내용 번역] label at the start is what makes a comment *ours*.
+// Any other [...] (e.g. an author's {{// [OOC] …}}) is someone else's comment and stays in source.
+const NOTE_MARK_RE = /^\s*={3,}[ \t]*\r?\n[ \t]*\[내용 번역\][ \t]*(?:\r?\n|$)/;
 
 // Once a 주석 번역 has been applied to a preset/WI/card, the annotation lives in
 // the file itself. Re-loading that file later, the extension has to tell its own
@@ -813,7 +814,7 @@ const NOTE_MARK_RE = /\[[^\]]*\]/;
 // Comments that are NOT ours are left in source untouched.
 function extractOwnNote(text) {
     const t = typeof text === 'string' ? text : '';
-    if (!t || !NOTE_MARK_RE.test(t)) return { source: t, note: '' };
+    if (!t || !t.includes(NOTE_LABEL)) return { source: t, note: '' };
     NOTE_RE_G.lastIndex = 0;
     for (const m of t.matchAll(NOTE_RE_G)) {
         if (!NOTE_MARK_RE.test(m[1] || '')) continue;   // someone else's comment
@@ -1324,10 +1325,32 @@ const esc = s => (s||'')
     .replace(/'/g,'&#39;');
 
 // Search keyword highlight
+// 글자 노드에만 <mark> 를 넣는다 — HTML 문자열에 바로 바꾸면 태그 · 속성 · &amp; 같은 엔티티 안까지 들어가 화면이 깨졌다.
 function highlightText(html, keyword) {
     if (!keyword) return html;
     const safeK = keyword.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-    return html.replace(new RegExp(`(${safeK})`, 'gi'), '<mark class="pt-highlight">$1</mark>');
+    const re = new RegExp(safeK, 'gi'), has = new RegExp(safeK, 'i');
+    const tpl = PDOC.createElement('template');
+    tpl.innerHTML = html;
+    const walker = PDOC.createTreeWalker(tpl.content, 4 /* NodeFilter.SHOW_TEXT */);
+    const nodes = [];
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) if (n.nodeValue && has.test(n.nodeValue)) nodes.push(n);
+    for (const node of nodes) {
+        const text = node.nodeValue, frag = PDOC.createDocumentFragment();
+        let at = 0;
+        for (const m of text.matchAll(re)) {
+            if (!m[0]) break;
+            if (m.index > at) frag.appendChild(PDOC.createTextNode(text.slice(at, m.index)));
+            const mark = PDOC.createElement('mark');
+            mark.className = 'pt-highlight';
+            mark.textContent = m[0];
+            frag.appendChild(mark);
+            at = m.index + m[0].length;
+        }
+        if (at < text.length) frag.appendChild(PDOC.createTextNode(text.slice(at)));
+        node.replaceWith(frag);
+    }
+    return tpl.innerHTML;
 }
 
 function makeBlockItem(block, ns, selectable, onEdited) {
@@ -3436,10 +3459,14 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
     // Shared by the initial load and by TM import (which updates the cache
     // for already-loaded items and needs the previews refreshed without a
     // full reload).
+    // 새로 그리기가 시작되면 앞의 조각 그리기는 멈춘다 (겹치면 행이 두 번 붙었다)
+    let renderSeq = 0;
     const renderList = (snap) => {
+        const token = ++renderSeq;
         list.innerHTML = '';
         let i = 0;
         const renderChunk = () => {
+            if (token !== renderSeq) return;
             const end = Math.min(i + 50, items.length), frag = PDOC.createDocumentFragment();
             for (; i < end; i++) frag.appendChild(makeBlockItem(items[i], ns, selectable, applyEyeMode));
             list.appendChild(frag);
@@ -3484,6 +3511,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
                 scrollTop: scrollEl?.scrollTop || 0,
             };
             clearTimeout(searchTimeout);
+            renderSeq++;
             list.innerHTML = '';
         },
         wake() {
@@ -3606,25 +3634,37 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
         setTimeout(refillSelect,1500); setTimeout(refillSelect,4000);
     }
 
+    // 이 탭의 번역이 도는 동안은 다른 소스를 불러오지 않는다 — 도는 번역이 같은 id 의 새 행에 결과를 써서 화면이 섞였다
+    let pageRunning = false;
+    const runHere = async (job) => { pageRunning = true; try { return await job(); } finally { pageRunning = false; } };
+    let loadSeq = 0;
     page.querySelector(`#${idPfx}-load`).addEventListener('click', async () => {
+        if (pageRunning) { if (typeof toastr !== 'undefined') toastr.info('번역이 끝나면 불러올 수 있어요', '', { preventDuplicates: true }); return; }
         const val=sel.value;
         // Character tab: require explicit selection (no implicit "current character" fallback)
         if (kind === 'char' && !val) {
             showEmpty('불러올 데이터가 없습니다.');
             return;
         }
-        ns=kind==='preset' ? presetNs(val) : `${idPfx}::${val||'__cur__'}`;
+        const mine=++loadSeq;
+        const nextNs=kind==='preset' ? presetNs(val) : `${idPfx}::${val||'__cur__'}`;
         showEmpty('로딩 중...');
+        let loaded;
         try {
-            items=await loadFn(val);
+            loaded=await loadFn(val);
         } catch (e) {
+            if (mine!==loadSeq) return;   // 더 늦게 누른 불러오기가 이긴다
             console.error(`[${EXT}] load failed`, e);
+            ns=nextNs;
             items=[];
             list.innerHTML='';
             showEmpty('불러오기 실패');
             if (typeof toastr !== 'undefined') toastr.error('불러오기 실패');
             return;
         }
+        if (mine!==loadSeq) return;
+        ns=nextNs;
+        items=loaded;
         // 이 확장이 예전에 적용해 둔 주석 블록은 "원문"이 아니다. 원문에서 떼어
         // 내어, ① 모델에 우리 주석을 원문인 양 다시 보내지 않고 ② 로컬 캐시가
         // 없어도 주석이 이미 존재한다는 것을 파일만 보고 알 수 있게 한다.
@@ -3698,22 +3738,22 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
     ]);
     page.querySelector(`#${idPfx}-trans`).addEventListener('click',async()=>{
         const mode=await askTransMode(); if(!mode) return;
-        await runTranslation(mkArgs(false,mode));
+        await runHere(()=>runTranslation(mkArgs(false,mode)));
     });
     page.querySelector(`#${idPfx}-retr`).addEventListener('click',async()=>{
         const mode=await askTransMode(); if(!mode) return;
         if(!confirm(mode==='note'?'주석을 다시 번역할까요? (본문 번역은 유지됩니다)':'본문을 재번역할까요? (주석은 유지됩니다)')) return;
-        await runTranslation(mkArgs(true,mode));
+        await runHere(()=>runTranslation(mkArgs(true,mode)));
     });
     page.querySelector(`#${idPfx}-titles`)?.addEventListener('click',async()=>{
-        await runTitleTranslation({
+        await runHere(()=>runTitleTranslation({
             items, list, ns, pBar, pLabel, pWrap, btnStop,
             onDone: () => {
                 // Show the freshly translated titles right away
                 if (!_eyeOn && eyeBtn) eyeBtn.click();
                 else applyEyeMode();
             },
-        });
+        }));
     });
     btnStop?.addEventListener('click',()=>{requestStop();});
     page.querySelector(`#${idPfx}-clr`).addEventListener('click',()=>{

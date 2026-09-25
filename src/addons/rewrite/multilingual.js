@@ -19,6 +19,10 @@ function colored(featureKo, featureJa, featureZh) {
     ].join('\n');
 }
 
+// 장갑 줄 (upgrades.js 가 1.9.3 에 저장된 줄을 이것으로 바꾼다)
+export const GLOVES_KO_1_9_3 = String.raw`/장갑(?!차|판|병|부대|을\s*두른)/`;
+const GLOVES_KO = String.raw`/(?<![중경])장갑(?!차|판|병|부대|사단|열차|을\s*두른|\s+(?:차량|부대|사단|열차))/`;
+
 export const MULTILINGUAL_WORDS = {
     glasses: ['eyeglass*, spectacle*, monocle*, rimless glasses, 안경, 외알안경, 뿔테, 금테안경, 은테안경, 테 없는 안경, 眼鏡, 眼镜, メガネ, めがね, モノクル, 片眼鏡, 单片眼镜, 單片眼鏡, ', String.raw`/(?:금|은|검은|검정|얇은|두꺼운)\s*테\s*안경/`].join('\n'),
     beard: ['whisker*, mutton-chops, soul patch*, chin beard*, chin stubble, unshaved', '수염, 턱수염, 콧수염, 구레나룻, 髭, 鬚, ひげ, ヒゲ, 無精髭, 顎髭, あごひげ, 口ひげ, もみあげ, 胡须, 鬍鬚, 胡子, 鬍子, 胡茬, 鬍茬, 络腮胡, 絡腮鬍, 山羊胡, 山羊鬍, 八字胡, 八字鬍, 鬓须, 鬢鬚', String.raw`/(?:턱|콧|입가|입술\s*위|얼굴|거뭇한|까슬한|덥수룩한)\s*(?:수염|털)/`, String.raw`/면도(?:를)?\s*(?:안\s*한|하지\s*않은)\s*(?:턱|얼굴)/`].join('\n'),
@@ -30,8 +34,8 @@ export const MULTILINGUAL_WORDS = {
         String.raw`/(?:검은|검정|까만|새까만|흑색|검붉은|붉은|빨간|빨강|핏빛|푸른|파란|보라|자주|금색|은색|금빛|은빛|회색|잿빛|하얀|흰|백색|녹색|초록|분홍|핑크|노란|노랑)(?:색|빛)?\s*(?:[가-힣]{1,4}의\s*){1,2}(?:손톱|발톱)/`,
         String.raw`/(?:黒い|黒|赤い|赤|白い|白|青い|青|紫|金|銀|灰色|灰)(?:色)?(?:の)?(?:[^。！？\n]{1,6}の)(?:爪)/`,
         String.raw`/(?:黑|红|紅|白|紫|金|银|銀|灰|蓝|藍|绿|綠)(?:色)?(?:的)?(?:[^。！？\n]{1,6}的)(?:指甲|趾甲|爪)/`].join('\n'),
-    // 1.9.3 — 장갑차 · 장갑판 (armour) are not gloves.
-    gloves: ['fingerless glove*, leather-gloved, white-gloved, black-gloved, 手袋, てぶくろ, テブクロ, グローブ, 手套, 白手套, 黑手套, 皮手套', String.raw`/장갑(?!차|판|병|부대|을\s*두른)/`].join('\n'),
+    // 1.9.3 — 장갑차 · 장갑판 (armour) are not gloves. 중장갑 · 경장갑 · 장갑 차량 (띄어 써도) 도 갑옷이다.
+    gloves: ['fingerless glove*, leather-gloved, white-gloved, black-gloved, 手袋, てぶくろ, テブクロ, グローブ, 手套, 白手套, 黑手套, 皮手套', GLOVES_KO].join('\n'),
     horns: ['horn nub*,horn bud*, hornlet*, 뿔, 角が生え, 角の生え, 角を生や, 角を持, 角付き, つの, ツノ, 悪魔の角, 鬼の角, 鹿の角, 犄角, 鹿角, 牛角, 羊角, 魔角, 恶魔角, 惡魔角', String.raw`/(?:头上|頭上|额头|額頭|头顶|頭頂)[^。！？\n]{0,12}角/`, String.raw`/(?:二本|一本|2本|1本|一対|鋭い|尖った|曲がった|ねじれた)(?:の)?角/`].join('\n'),
     user_colors: [colored(koFeature,jaFeature,zhFeature), '금발, 은발, 흑발, 백발, 적발, 청안, 벽안, 녹안, 적안, 자안, 金髪, 銀髪, 黒髪, 白髪, 赤髪, 茶髪, 碧眼, 青眼, 紅眼, 金发, 金髮, 银发, 銀髮, 黑发, 黑髮, 白发, 白髮, 红发, 紅髮, 碧眼, 蓝眸, 藍眸'].join('\n'),
     fufu: [String.raw`/(?:う|ウ)?(?:ふ[ー〜～\s・]?ふ|フ[ー〜～\s・]?フ)+(?:っ|ッ)?/`, String.raw`/후[우\s~～-]*후(?:후|훗)?/`, String.raw`/\b(?:u?fu[ -]?fu(?:fu)*|hoo[ -]?hoo|hu[ -]?hu)\b/`, '呼呼, 呼呼呼, 呋呋, 呵呵, 呵呵呵'].join('\n'),
