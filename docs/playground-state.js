@@ -1,6 +1,6 @@
 // Only appearance preferences belong in storage. Pasted sample text never does.
 (() => {
-  const key='bl-playground-v1';
+  const key='bl-playground-v2'; // 5.2.1: 예전 저장분에 속마음 기울임 꺼짐이 남아 있어 한 번 비운다 (기본값은 켜짐)
   let state={version:1}, timer;
   try { const raw=JSON.parse(localStorage.getItem(key)); if(raw?.version===1&&typeof raw==='object')state={version:1,reading:raw.reading,palette:raw.palette}; } catch {}
   const clean=(value,base)=>{

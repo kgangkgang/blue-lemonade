@@ -1,6 +1,6 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 57개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 2120b78a13a7) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 57개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 2d8c31623072) */
 /* css/00-base.css */
-:root{--bl-release:"5.2.0";}
+:root{--bl-release:"5.2.1";}
 body.salty {
   --r-sm: 6px;
   --r-md: 10px;
@@ -10615,29 +10615,6 @@ html body.salty :where(.cg-settings-page):is(#bl-s, *),
 html body.salty #cg-preview-bar {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
-}
-html body.salty .eh-root {
-  --eh-text: var(--salty-text);
-  --eh-accent: var(--salty-accent);
-  --eh-accent-ink: var(--salty-on-accent);
-  --eh-muted: var(--salty-muted);
-  --eh-faint: var(--salty-faint);
-  --eh-line: var(--salty-line);
-  --eh-line-strong: var(--salty-shade-2);
-  --eh-hover: var(--salty-shade);
-  --eh-card: var(--salty-fill-surface, var(--salty-surface));
-  --eh-well: var(--salty-fill-surface-shade, var(--salty-surface-shade));
-  --eh-tile-bg: var(--salty-fill-surface-shade, var(--salty-surface-shade));
-  --eh-accent-soft: var(--salty-fill-tint-14, var(--salty-tint-14));
-  --eh-accent-line: var(--salty-accent-28);
-  --eh-accent-text: var(--salty-accent);
-  --eh-danger: var(--bl-danger);
-}
-html body.salty .bl-assets-dialog {
-  background: var(--bl-page);
-  color: var(--salty-text);
-  border-color: var(--salty-line);
-  box-shadow: var(--bl-e5);
 }
 html body.salty .TH-custom-tailwind .TH-radio-button--selected {
   background: var(--salty-fill-surface, var(--salty-surface));

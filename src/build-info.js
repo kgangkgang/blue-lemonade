@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.2.0";
+export const BUILD_VERSION = "5.2.1";
 export const FILE_HASHES = {
   "index.js": "12169:6abf0b36:2502931a",
-  "manifest.json": "365:26070da2:834377b3",
+  "manifest.json": "365:e423db51:414ef557",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -200,7 +200,7 @@ export const FILE_HASHES = {
   "src/marquee.js": "4394:b21eba98:bf26831b",
   "src/menu-position.js": "3312:4d17612e:af7476d7",
   "src/mes-pins.js": "9110:58a88535:74b20064",
-  "src/notice-data.js": "106750:9771ede7:d0461820",
+  "src/notice-data.js": "107071:9a5a2cf4:ce1809f7",
   "src/notice.js": "4623:c387a90d:e051d1f2",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "930:4be2a1fd:48f02c7b",
@@ -244,7 +244,7 @@ export const FILE_HASHES = {
   "src/splash.js": "11845:c3880f7f:053159a2",
   "src/streamfade.js": "14136:0e2127b6:06593cf1",
   "src/sttheme.js": "7403:8c6d1799:5e2a866d",
-  "src/styles.js": "13327:c41d4075:597cf469",
+  "src/styles.js": "13259:01fe73db:f4c88348",
   "src/theme-update.js": "4737:41f75f4f:a8cb353c",
   "src/tone.js": "6264:fdd77fd3:430a20c6",
   "src/touch-sliders.js": "1802:90ccf7ef:7832805d",
@@ -263,5 +263,5 @@ export const FILE_HASHES = {
   "src/weather.js": "29151:893fa4f6:d26e0a3b",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "22770:07c345df:f825c7fc",
-  "style.css": "857731:86c67372:7f500cdb"
+  "style.css": "856856:ab699cb8:68a97693"
 };

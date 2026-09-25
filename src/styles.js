@@ -92,7 +92,6 @@ export const PRESETS = [
             fonts: { ...structuredClone(DEFAULTS.fonts), text: set('ridibatang') },
             type: { ...structuredClone(DEFAULTS.type), size: 17, lineHeight: 1.9, letterSpacing: -2, para: 0.35, indent: true, align: 'justify-word', measure: 680 },
             dialogue: { ...structuredClone(DEFAULTS.dialogue), style: 'plain' },
-            em: { ...structuredClone(DEFAULTS.em), italic: false },
             chat: { user: 'plain', header: 'name', userSize: 100, userInk: 85 },
         }),
     },
