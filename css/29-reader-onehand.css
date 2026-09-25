@@ -10,6 +10,10 @@
     top: 0 !important;
     height: 100dvh !important;
     max-height: 100dvh !important;
+    /* 5.1.8: 바를 숨기면 입력판이 화면 아래로 밀려 #sheld(overflow-x hidden → y auto)가 스크롤 가능해지고 6px 스크롤바가
+       생겨 채팅 폭이 390→384 로 줄며 글이 다시 배치됐다(사용자 제보). 스크롤은 #chat 이 하므로 #sheld 는 넘침을 숨긴다 */
+    overflow: hidden !important;
+    scrollbar-width: none;
   }
   body.salty.bl-reader #chat {
     max-height: none !important;
