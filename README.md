@@ -1,13 +1,20 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.1.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.1.9.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.1.8 · 최신 업데이트</summary>
+<summary>5.1.9 · 최신 업데이트</summary>
+
+- 한글화 패널 봇카드 탭의 빈 화면에 있던 카드 이모티콘을 없앴어요. 다른 탭과 같은 모양이에요.
+
+</details>
+
+<details>
+<summary>5.1.8 · 몰입 읽기 스크롤바</summary>
 
 - 폰에서 '스크롤하면 바 숨기기'를 켜고 바가 숨겨질 때 오른쪽에 스크롤바가 생겨 본문이 좁아졌다 넓어졌다 하던 문제를 고쳤어요. 이제 바가 숨어도 채팅 폭이 그대로예요.
 

@@ -4263,7 +4263,7 @@ function buildPanel() {
 
     buildPage({page:panel.querySelector('#pt-page-preset'),idPfx:'pt-preset',listFn:listAllPresets,loadFn:readPresetBlocks,selectable:true,icon:'',hint:'프리셋을 선택하고 로드하세요.',isAsync:false,kind:'preset'});
     buildPage({page:panel.querySelector('#pt-page-wi'),idPfx:'pt-wi',listFn:listAllWorldInfos,loadFn:readWorldInfo,selectable:true,icon:'',hint:'월드인포를 선택하고 로드하세요.',isAsync:true,kind:'wi'});
-    buildPage({page:panel.querySelector('#pt-page-char'),idPfx:'pt-char',listFn:listAllCharacters,loadFn:readCharCard,selectable:true,icon:'🃏',hint:'캐릭터를 선택하고 로드하세요.',isAsync:true,kind:'char'});
+    buildPage({page:panel.querySelector('#pt-page-char'),idPfx:'pt-char',listFn:listAllCharacters,loadFn:readCharCard,selectable:true,icon:'',hint:'캐릭터를 선택하고 로드하세요.',isAsync:true,kind:'char'});
 
     try { const cur=getCurrentPresetName(); if(cur)panel.querySelector('#pt-preset-sel').value=cur; } catch(e){}
     try {

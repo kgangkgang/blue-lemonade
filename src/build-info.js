@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.1.8";
+export const BUILD_VERSION = "5.1.9";
 export const FILE_HASHES = {
   "index.js": "12169:6abf0b36:2502931a",
-  "manifest.json": "365:26775ab7:6e2e0282",
+  "manifest.json": "365:056f44e8:d8d5a9b4",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -88,7 +88,7 @@ export const FILE_HASHES = {
   "src/addons/prompt/connection.js": "5387:1beaf574:f176abcd",
   "src/addons/prompt/current-connection.js": "2878:89e80a9b:052deb3c",
   "src/addons/prompt/guide.js": "23246:61d0571c:fe2a5b49",
-  "src/addons/prompt/index.js": "234007:5925edd5:1a0b6fa1",
+  "src/addons/prompt/index.js": "234003:2d5bdd74:d99e53d9",
   "src/addons/prompt/localization-ui.js": "3163:32c7baca:20f45fc6",
   "src/addons/prompt/regex-ui.js": "6773:8e66c330:0233b208",
   "src/addons/prompt/settings-ui.js": "7671:5fe44134:03cd53ed",
@@ -200,7 +200,7 @@ export const FILE_HASHES = {
   "src/marquee.js": "4394:b21eba98:bf26831b",
   "src/menu-position.js": "3312:4d17612e:af7476d7",
   "src/mes-pins.js": "9110:58a88535:74b20064",
-  "src/notice-data.js": "106273:a708c704:10cbbd5a",
+  "src/notice-data.js": "106461:fa9c7122:38cdb606",
   "src/notice.js": "4623:c387a90d:e051d1f2",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "930:4be2a1fd:48f02c7b",
@@ -263,5 +263,5 @@ export const FILE_HASHES = {
   "src/weather.js": "29151:893fa4f6:d26e0a3b",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "22770:07c345df:f825c7fc",
-  "style.css": "856856:e071ce1f:aa04ac40"
+  "style.css": "856856:a76a43f9:818a1819"
 };
