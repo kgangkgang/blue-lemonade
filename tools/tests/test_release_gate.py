@@ -14,13 +14,13 @@ class GateTests(unittest.TestCase):
         return files
     def test_valid_memory(self):self.assertEqual(gate.validate(self.fixture(),'memory'),'1.3.1')
     def test_embedded_addon_css_versions(self):
-        for source, folder, variable in gate.ADDON_CSS_VERSIONS:
+        for source, folder, variable, constant in gate.addon_css_versions():
             with self.subTest(addon=source):
                 f=self.fixture('theme')
                 # Include all sources sharing the same stylesheet.
-                for other, group, prop in gate.ADDON_CSS_VERSIONS:
+                for other, group, prop, name in gate.addon_css_versions():
                     if group==folder:
-                        f['src/addons/'+other]=b"export const VERSION = '1.3.5';"
+                        f['src/addons/'+other]=f"export const {name} = '1.3.5';".encode()
                         key=f'src/addons/{folder}/style.css'
                         f[key]=f.get(key,b'')+(prop+': "1.3.5";\n').encode()
                 self.assertEqual(gate.validate(f,'theme'),'1.3.1')
