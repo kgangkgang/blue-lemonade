@@ -612,8 +612,9 @@ function galleryBlock(topic, device, cards, withHeading){
     const card=element('figure','card'), wrap=element('div','media-wrap'), caption=element('figcaption','',title); card.style.setProperty('--i',Math.min(track.children.length,6));
     if(file.startsWith('410-export.')||file.startsWith('420-capture-moving.'))wrap.classList.add('export-media');
     if(file.endsWith('.mp4')){
-      const video=element('video');video.preload='none';video.playsInline=true;video.muted=true;video.loop=true;video.setAttribute('muted','');video.setAttribute('playsinline','');video.dataset.src='media/'+file+mv(file);video.poster='media/'+poster+mv(poster);video.setAttribute('aria-label',title);
-      if(modeMedia.has(file.replace('.mp4',''))){video.dataset.modeBase=file.replace('.mp4','');setMediaMode(video);}
+      const video=element('video');video.preload='none';video.playsInline=true;video.muted=true;video.loop=true;video.setAttribute('muted','');video.setAttribute('playsinline','');video.setAttribute('aria-label',title);
+      // 라이트/다크 파일은 모드 이름을 먼저 정해서 한 번만 지정 — 기본 파일 이름(없음)을 먼저 요청하지 않도록
+      const base=file.replace('.mp4','');if(modeMedia.has(base)){video.dataset.modeBase=base;setMediaMode(video);}else{video.dataset.src='media/'+file+mv(file);video.poster='media/'+poster+mv(poster);}
       if(reduceMotion.matches){video.controls=true;video.src=video.dataset.src;}
       else{const state=element('span','play-state','▶');state.setAttribute('aria-hidden','true');wrap.classList.add('paused');
         video.addEventListener('play',()=>wrap.classList.remove('paused'));video.addEventListener('pause',()=>wrap.classList.add('paused'));
