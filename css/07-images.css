@@ -43,11 +43,13 @@ body.salty #chat .mes_text :is(.custom-cac-img, img.character-asset-rendered, im
   box-shadow: none !important;
 }
 body.salty #chat .mes_text :is(img.character-asset-rendered, img.eh-img) {
-  margin: 1.4em 0 !important;
+  /* 5.2.7: 아래를 .35em 더 — 글줄은 글자 아래(디센더)가 위보다 비어 있어서 상자 간격이 같아도 눈에는 그림 위가 더 넓어 보인다
+     (격리 서버 잉크 측정: 위 33 / 아래 27px @16px → 같게). 사용자 제보 "아래가 짧아 보임" */
+  margin: 1.4em 0 1.75em !important;
 }
 /* 5.2.5: 문단으로 감싸인 그림(<p><img></p>)은 문단 간격(--salty-para)만 — 1.4em 에 문단 여백까지 더해져 그림 아래가 두 배로 벌어졌다 (사용자 제보) */
 body.salty #chat .mes_text p > :is(img.character-asset-rendered, img.eh-img):only-child {
-  margin-block: 0 !important;
+  margin-block: 0 .35em !important;
 }
 /* 5.2.6: 그림 태그 바로 다음 줄에 글이 이어지면(태그
 글) 마크다운이 <img><br>글 로 만든다 — 그림은 블록이라 <br> 이 빈 줄 하나를 더 만들어

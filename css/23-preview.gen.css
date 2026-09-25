@@ -649,10 +649,10 @@ body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-img, img
   box-shadow: none !important;
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(img.character-asset-rendered, img.eh-img) {
-  margin: 1.4em 0 !important;
+  margin: 1.4em 0 1.75em !important;
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes_text p > :is(img.character-asset-rendered, img.eh-img):only-child {
-  margin-block: 0 !important;
+  margin-block: 0 .35em !important;
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(img.character-asset-rendered, img.eh-img) + br {
   display: none !important;
