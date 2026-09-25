@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.1.5";
+export const BUILD_VERSION = "5.1.6";
 export const FILE_HASHES = {
   "index.js": "12169:6abf0b36:2502931a",
-  "manifest.json": "365:319f985c:3fa05ecb",
+  "manifest.json": "365:37cd9221:6c212ea6",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -128,7 +128,7 @@ export const FILE_HASHES = {
   "src/addons/translator/selection/translation.js": "8072:adb6eb6c:c65ee21e",
   "src/addons/translator/selection/ui.js": "5027:f6aa9b19:ccf02549",
   "src/addons/translator/sendform.html": "145:1e8a2159:510ea96d",
-  "src/addons/translator/style.css": "20135:7fc98a5a:a6560c4f",
+  "src/addons/translator/style.css": "20158:e2f647b6:d4c3f390",
   "src/addons/translator/translation-guard.js": "2112:f04d3b75:2ed753ad",
   "src/addons/translator/translation-resume.js": "5228:aa325f12:5e031f03",
   "src/addons/translator/translation-segments.js": "9624:90d4bb1c:7b07b6cb",
@@ -200,7 +200,7 @@ export const FILE_HASHES = {
   "src/marquee.js": "4394:b21eba98:bf26831b",
   "src/menu-position.js": "3312:4d17612e:af7476d7",
   "src/mes-pins.js": "9110:58a88535:74b20064",
-  "src/notice-data.js": "105538:a4a58637:7ca3d711",
+  "src/notice-data.js": "105732:e1beda8a:73c29fcb",
   "src/notice.js": "4623:c387a90d:e051d1f2",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "930:4be2a1fd:48f02c7b",
@@ -263,5 +263,5 @@ export const FILE_HASHES = {
   "src/weather.js": "29151:893fa4f6:d26e0a3b",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "22770:07c345df:f825c7fc",
-  "style.css": "856424:f7c973ed:971bd8eb"
+  "style.css": "856796:a52ed7c9:d6f1d690"
 };

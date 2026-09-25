@@ -1,13 +1,20 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.1.5.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.1.6.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.1.5 · 최신 업데이트</summary>
+<summary>5.1.6 · 최신 업데이트</summary>
+
+- 입력창의 보내기 번역 버튼(💬)도 전개 지시 깃펜처럼 켜졌을 때 테두리·바탕 없이 아이콘만 빛나요.
+
+</details>
+
+<details>
+<summary>5.1.5 · 거절 묶음 자동 재시도</summary>
 
 - LLM 번역에서 문단 묶음이 거절되면 그 자리에서 반으로 나눠 다시 보내요. 화살표로 다시 번역할 때 통과하던 작은 요청을 첫 번역에서 바로 해서, 문단 하나까지 막힐 때만 차단 표시가 남아요. 나누기는 메시지당 6번까지예요.
 

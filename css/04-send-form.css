@@ -291,6 +291,16 @@ body.salty #nonQRFormItems #jj-button.is-on {
   box-shadow: none !important;
   color: var(--jj-on-color, var(--bl-jj-fg)) !important;
 }
+/* 5.1.6 보내기 번역(💬)도 같은 규칙 — 켜짐은 아이콘 빛만 (단독 번역기가 켜져 있어도 테마가 맞춘다) */
+body.salty :is(#leftSendForm, #rightSendForm, #nonQRFormItems) #llm_translate_input_button.is-on {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+body.salty #llm_translate_input_button.is-on i {
+  filter: drop-shadow(0 0 4px currentColor);
+  filter: drop-shadow(0 0 4px color-mix(in srgb, currentColor 65%, transparent));
+}
 body.salty #jj-button i,
 body.salty #mes_stop i {
   display: flex;
