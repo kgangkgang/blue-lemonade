@@ -81,6 +81,18 @@ export function segmentParagraphs(text) {
     return parts.length <= 161 ? parts : null;
 }
 
+/** 5.2.4: 통짜/덩이 번역에서 모델이 문단 사이 빈 줄을 빠뜨리면(한 문단 = 한 줄로 돌려줌) 원문 문단 수와 줄 수가 같을 때만 빈 줄을 되살린다.
+ *  문단 묶음 경로는 구분자를 원문에서 가져오므로 해당 없음. 줄 수가 다르면(문단 안 줄바꿈 · 합쳐진 문단) 손대지 않는다. */
+export function restoreParagraphBreaks(source, output) {
+    const src = String(source ?? ''), out = String(output ?? '');
+    const blank = /\n[\t ]*\n/;
+    if (!blank.test(src) || blank.test(out)) return out;
+    const paragraphs = src.split(/\n[\t ]*\n(?:[\t ]*\n)*/).filter(p => p.trim()).length;
+    const lines = out.split('\n');
+    if (paragraphs < 2 || lines.length !== paragraphs || lines.some(l => !l.trim())) return out;
+    return lines.join('\n\n');
+}
+
 export function batchGroups(bodies, limit = 3600) {
     const groups = []; let group = [], size = 0;
     for (const body of bodies) {

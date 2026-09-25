@@ -1,7 +1,7 @@
 // Modified 2026-09-24: Blue Lemonade bundled adapter; original settings and translation DB retained.
 import { createGuards, watchGuard } from './translation-guard.js';
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
-import { segmentParagraphs, translateSegments, clearSegmentCache, batchPayload, parseBatchResult, batchGroups } from './translation-segments.js';
+import { segmentParagraphs, translateSegments, clearSegmentCache, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks } from './translation-segments.js';
 import { syncSelectionRetranslate } from './selection/index.js';
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
@@ -1779,7 +1779,7 @@ async function translate(text, options = {}) {
         let checkpointComplete = false;
         const runChunks = async () => {
             const result = await translateChunks({ key, chunks, check: watcher.check, progress,
-                request: body => callWithLayouts(body, PROMPT_LAYOUTS.slice(0, 2)), blockedMarker: BLOCKED_CHUNK_MARK });
+                request: async body => restoreParagraphBreaks(body, await callWithLayouts(body, PROMPT_LAYOUTS.slice(0, 2))), blockedMarker: BLOCKED_CHUNK_MARK });
             if (report) { report.partial = result.blocked > 0; report.blockedChunks = result.blocked; report.chunks = result.total; }
             checkpointComplete = result.blocked === 0;
             return result.text;
@@ -1851,7 +1851,7 @@ async function translate(text, options = {}) {
             translatedText = await runChunks();
         } else {
             progress({ stage: 'whole' });
-            try { translatedText = await callWithLayouts(maskedText, PROMPT_LAYOUTS); }
+            try { translatedText = restoreParagraphBreaks(maskedText, await callWithLayouts(maskedText, PROMPT_LAYOUTS)); } // 5.2.4 빠진 문단 빈 줄 되살리기
             catch (error) {
                 if (!error?.refused || chunks.length < 2) throw error;
                 translatedText = await runChunks();

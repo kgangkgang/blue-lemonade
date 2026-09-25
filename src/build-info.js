@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.2.3";
+export const BUILD_VERSION = "5.2.4";
 export const FILE_HASHES = {
   "index.js": "12169:6abf0b36:2502931a",
-  "manifest.json": "365:7924a62b:f5067cdf",
+  "manifest.json": "365:0d505376:db876099",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -118,7 +118,7 @@ export const FILE_HASHES = {
   "src/addons/translator/buttons.html": "417:3bc7c8b0:1b53077b",
   "src/addons/translator/current-connection.js": "2878:89e80a9b:052deb3c",
   "src/addons/translator/index.html": "51930:5637e0c7:83f8ce0a",
-  "src/addons/translator/index.js": "376596:43d59541:c7bc2efa",
+  "src/addons/translator/index.js": "376742:b65f48b6:693254fc",
   "src/addons/translator/menu-visibility.js": "1137:ae729d76:8ea71da6",
   "src/addons/translator/persona-bridge.js": "3140:1b658491:2dbebd54",
   "src/addons/translator/selection/core.js": "2945:4ba9f6e4:cab2a284",
@@ -131,7 +131,7 @@ export const FILE_HASHES = {
   "src/addons/translator/style.css": "20158:e2f647b6:d4c3f390",
   "src/addons/translator/translation-guard.js": "2112:f04d3b75:2ed753ad",
   "src/addons/translator/translation-resume.js": "5228:aa325f12:5e031f03",
-  "src/addons/translator/translation-segments.js": "10305:186213f0:bb44dbb9",
+  "src/addons/translator/translation-segments.js": "11137:ab9b1d80:1b1cc3f7",
   "src/appearance-archive.js": "1243:d0ee7b92:356c4593",
   "src/appearance-compare.js": "2964:a9ab0f50:369beedc",
   "src/apply.js": "47145:5abb73aa:d3d25dd3",
@@ -201,7 +201,7 @@ export const FILE_HASHES = {
   "src/marquee.js": "4394:b21eba98:bf26831b",
   "src/menu-position.js": "3312:4d17612e:af7476d7",
   "src/mes-pins.js": "9110:58a88535:74b20064",
-  "src/notice-data.js": "108243:2e677dad:4f8a09ed",
+  "src/notice-data.js": "108606:1f6a6355:2c748b2c",
   "src/notice.js": "4623:c387a90d:e051d1f2",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "930:4be2a1fd:48f02c7b",
@@ -264,5 +264,5 @@ export const FILE_HASHES = {
   "src/weather.js": "29151:893fa4f6:d26e0a3b",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "22770:07c345df:f825c7fc",
-  "style.css": "856893:58ece977:17e52158"
+  "style.css": "856893:f5e19f72:e6716996"
 };
