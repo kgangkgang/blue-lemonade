@@ -1,13 +1,20 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.2.9.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.3.0.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.2.9 · 최신 업데이트</summary>
+<summary>5.3.0 · 최신 업데이트</summary>
+
+- 번역 묶음 요청이 거절되면 문단을 반으로 나누기 전에, 번호 표시 없이 통째로 한 번 더 보내요. 화살표로 다시 번역할 때와 같은 요청이라, '첫 번역만 차단되고 다시 번역하면 되는' 경우가 자동으로 해결돼요. 통째로도 막히면 그때 나눠서 보내요.
+
+</details>
+
+<details>
+<summary>5.2.9 · 번역 실패 표시 원인별 · 일시 오류 재시도</summary>
 
 - 번역에서 원문으로 남은 문단의 표시를 원인별로 나눴어요. 모델이 거절한 것만 '차단된 문단'이고, 답 형식이 맞지 않으면 '번역 답 형식 오류', 중계 오류·빈 답이면 '번역 실패: 이유'로 보여요. 예전엔 전부 '차단'으로 보여서 평범한 문단이 검열된 것처럼 보였어요.
 - 묶음 요청이 429·5xx·네트워크 오류로 끊기면 1.5초 뒤 한 번 더 보내요. 그래도 안 되면 문단 수와 이유를 알림으로 알려요.

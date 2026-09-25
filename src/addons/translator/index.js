@@ -1266,7 +1266,7 @@ function refusalError(output) {
 /** 안전 필터에 막힌 응답이면 그 사유, 아니면 '' */
 function blockedReasonOf(data) {
     const finish = String(data?.choices?.[0]?.finish_reason ?? data?.candidates?.[0]?.finishReason ?? '');
-    if (/content_filter|safety|prohibited|blocklist|spii/i.test(finish)) return finish;
+    if (/content_filter|safety|prohibited|blocklist|spii|recitation/i.test(finish)) return finish; // 5.3.0: RECITATION(원문 재현 차단)도 거절로 — 통짜 · 나누기 재시도 대상
     if (data?.promptFeedback?.blockReason) return String(data.promptFeedback.blockReason);
     const message = String(data?.error?.message ?? '');
     const blocked = /blocked due to\s*:?\s*([A-Z_]+)/i.exec(message);
@@ -1834,14 +1834,17 @@ async function translate(text, options = {}) {
                             }
                             // 5.2.6: 답 형식이 안 맞으면(번호 표시를 빼먹음 · 문단을 합침) 거절이 아니다 — 번호 없이 통짜로 한 번 더 보낸다 (화살표 재번역과 같은 요청).
                             //        문단 수가 같으면 자리별로 붙이고 캐시에 넣는다. 전엔 '차단된 문단' 으로 남아 SFW 글이 검열된 것처럼 보였다.
-                            if (error?.format) {
-                                console.warn('[LLM Translator] 묶음 답 형식이 맞지 않아 통짜로 다시 보내요:', error.message);
+                            // 5.3.0: 거절도 마찬가지로 통짜를 먼저 — 사용자가 화살표로 다시 번역하면 통과하던 것은 번호 표시 · 머리말이 없는 이 요청이다.
+                            //        (Gemini 입력 필터는 글 내용보다 요청 모양에 반응한다 — looksLikeInputBlock 주석) 통짜도 막히면 그때 반으로 나눈다.
+                            if (error?.format || (error?.refused && group.length > 0)) {
+                                console.warn(`[LLM Translator] 묶음이 ${error.format ? '형식 오류' : '거절'}라 번호 없이 통짜로 다시 보내요:`, error.message);
                                 try {
-                                    const plain = String(await callWithLayouts(group.join('\n\n'), PROMPT_LAYOUTS.slice(0, 1)));
+                                    const plain = String(await callWithLayouts(group.join('\n\n'), error.format ? PROMPT_LAYOUTS.slice(0, 1) : layouts));
                                     const paras = plain.split(/\n[\t ]*\n(?:[\t ]*\n)*/).map(p => p.trim()).filter(Boolean);
                                     if (paras.length === group.length) { succeeded++; return paras.map(tidyKana); }
                                     if (group.length === 1 && plain.trim()) { succeeded++; return [tidyKana(plain.trim())]; }
-                                    console.warn(`[LLM Translator] 통짜 답의 문단 수(${paras.length})가 원문(${group.length})과 달라 원문으로 남겨요`);
+                                    console.warn(`[LLM Translator] 통짜 답의 문단 수(${paras.length})가 원문(${group.length})과 달라 ${group.length > 1 ? '나눠서 보내요' : '원문으로 남겨요'}`);
+                                    if (error.format) error = Object.assign(Error(`통짜 답의 문단 수(${paras.length})가 원문(${group.length})과 달라요`), { format: true });
                                 } catch (again) { if (again?.cancelled) throw again; error = again; }
                             }
                             if (group.length > 1 && error?.refused && splits < SPLIT_CAP) { // 형식 오류는 나눠도 안 낫고 요청만 는다 — 거절만
