@@ -9,6 +9,10 @@ body.salty #chat .mes .mes_text {
 }
 /* 5.2.5 번역 접기 보기의 문단 간격 = 테마 문단 간격 */
 body.salty #chat .mes .mes_text :is(.llmt-para-gap, .custom-llmt-para-gap) { height: var(--salty-para); }
+/* 5.2.8: 외부 LLM 번역기(llm-translator · llm-translator-custom)의 접기 · 원문 먼저 보기 — 문단마다 <details> 를 빈 줄로 이어 붙이지만
+   details 는 블록이라 문단 간격이 안 생긴다 (내장 번역기는 5.2.5 부터 간격 요소를 넣음). 붙어 있는 details 사이에만 테마 문단 간격 (커뮤니티 제보) */
+/* 마크다운이 details 사이에 빈 <p></p> 를 끼우므로(테마가 숨김) 인접(+)이 아니라 앞선 형제(~)로 본다. 내장 번역기(간격 요소가 앞에 있음)는 제외 — 간격 요소 뒤에도 빈 <p> 가 끼므로 ~ 로 */
+body.salty #chat .mes .mes_text :is(details.custom-llm-translator-details, details.llm-translator-details) ~ :is(details.custom-llm-translator-details, details.llm-translator-details):not(:is(.llmt-para-gap, .custom-llmt-para-gap) ~ details) { margin-top: var(--salty-para) !important; }
 body.salty #chat .mes .mes_text p:empty {
   display: none;
 }

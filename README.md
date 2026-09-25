@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.2.7.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.2.8.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.2.7 · 최신 업데이트</summary>
+<summary>5.2.8 · 최신 업데이트</summary>
+
+- 캐릭터 에셋 그림 앞뒤에 줄바꿈이 둘 이상 오는 글(예: 태그 위아래로 빈 줄)에서 그림 아래에 빈 줄 하나가 남아 위보다 넓어 보이던 것을 고쳤어요. 그림 앞뒤의 줄바꿈은 셋까지 숨겨요.
+- 외부 LLM 번역기 확장(llm-translator · llm-translator-custom)을 그대로 쓸 때도 접기·원문 먼저 보기의 문단 사이에 테마 문단 간격이 생겨요. 내장 번역기로 옮기지 않아도 돼요.
+
+</details>
+
+<details>
+<summary>5.2.7 · 에셋 그림 위아래 여백(눈높이)</summary>
 
 - 캐릭터 에셋 그림의 아래 여백을 위와 눈으로 같아 보이게 맞췄어요. 글줄은 글자 아래쪽이 위보다 비어 있어서 간격이 같아도 그림 위가 더 넓어 보였던 것이라, 아래를 조금 더 띄워요.
 

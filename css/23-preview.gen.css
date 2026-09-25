@@ -5,7 +5,7 @@
    ===== */
 /* ===== 미리보기 자동 생성 (surfaces:preview) =====
    tools/gen-preview-css.js 가 #chat 규칙을 여기 복사한다 — 손으로 고치지 말 것.
-   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 330개 (87.8KB).
+   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 331개 (88.5KB).
    style.css 의 채팅 · 에셋 규칙을 고치면 `node tools/gen-preview-css.js` 를 다시 돌린다.
    이 칸을 다른 자리로 옮기지 말 것: 사본이 손으로 쓴 채팅 규칙보다 뒤에 있어야 같은 무게에서 이기고,
    바로 뒤의 보정 칸이 사본을 눌러 줄 수 있다. 앞으로 옮기면 아바타 모서리처럼 순서로만 갈리는 것이 뒤집힌다 */
@@ -350,6 +350,9 @@ body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text {
 body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text :is(.llmt-para-gap, .custom-llmt-para-gap) {
   height: var(--salty-para);
 }
+body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text :is(details.custom-llm-translator-details, details.llm-translator-details) ~ :is(details.custom-llm-translator-details, details.llm-translator-details):not(:is(.llmt-para-gap, .custom-llmt-para-gap) ~ details) {
+  margin-top: var(--salty-para) !important;
+}
 body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text p:empty {
   display: none;
 }
@@ -654,7 +657,11 @@ body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(img.character-asset-
 body.salty :is(#salty-nochat, .salty-preview) .mes_text p > :is(img.character-asset-rendered, img.eh-img):only-child {
   margin-block: 0 .35em !important;
 }
-body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(img.character-asset-rendered, img.eh-img) + br {
+body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(img.character-asset-rendered, img.eh-img) + br,
+body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(img.character-asset-rendered, img.eh-img) + br + br,
+body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(img.character-asset-rendered, img.eh-img) + br + br + br,
+body.salty :is(#salty-nochat, .salty-preview) .mes_text br:has(+ :is(img.character-asset-rendered, img.eh-img)),
+body.salty :is(#salty-nochat, .salty-preview) .mes_text br:has(+ br + :is(img.character-asset-rendered, img.eh-img)) {
   display: none !important;
 }
 body.salty.salty-img-bleed :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-wrap, [class*="custom-imageWrapper"]) {
