@@ -252,23 +252,40 @@ function watchPanelOpen() {
         if (m.attributeName === 'open' || t.classList.contains('openDrawer')) return true;
         return t !== document.body && (t.matches(LEGACY_POPUPS) || !!t.querySelector(LEGACY_POPUPS));
     };
+    panelObserving = true;
     new MutationObserver((list) => {
+        let hit = false;
         for (const m of list) {
             const t = m.target;
             if (t.nodeType !== 1 || t.closest?.('#chat, #form_sheld')) continue;
-            if (!panelOn && !mayOpen(m)) continue;
-            // 4.1.2: 켜는 쪽은 그리기 전에(바로), 끄는 쪽은 0.1초에 한 번 — 열려 있는 동안(시작할 때의 로딩 팝업 포함)은 채팅 밖
-            // 변화마다 문서를 훑었다 (폰 리그 시작 한 번에 0.2초). 늦게 꺼져도 서랍이 닫힌 뒤라 보이는 것이 없다.
-            if (panelOn) { if (!offTimer) offTimer = setTimeout(() => { offTimer = 0; syncPanelCss(); }, 100); return; }
-            syncPanelCss();
-            return;
+            if (panelTap) panelTap(m); // 5.3.7: 숫자 쉼표(numcomma.js)도 채팅 밖 변화만 받는다
+            if (hit || (!panelOn && !mayOpen(m))) continue;
+            hit = true;
+            if (!panelTap) break;
         }
+        if (!hit) return;
+        // 4.1.2: 켜는 쪽은 그리기 전에(바로), 끄는 쪽은 0.1초에 한 번 — 열려 있는 동안(시작할 때의 로딩 팝업 포함)은 채팅 밖
+        // 변화마다 문서를 훑었다 (폰 리그 시작 한 번에 0.2초). 늦게 꺼져도 서랍이 닫힌 뒤라 보이는 것이 없다.
+        if (panelOn) { if (!offTimer) offTimer = setTimeout(() => { offTimer = 0; syncPanelCss(); }, 100); return; }
+        syncPanelCss();
     }).observe(document.body, { attributes: true, attributeFilter: ['class', 'open', 'style'], subtree: true, childList: true });
     // 서랍 아이콘 · 팝업 여는 순간에도 한 번 (관찰자보다 먼저 그려지는 일이 없게)
     // 2.9.4: 채팅 · 입력판 안의 클릭(보내기 · 메시지 단추)은 건너뛴다. 거기서 여는 팝업 · 서랍은 위 관찰자가 dialog · open · 옛 팝업의
     // style 변화로 같은 마이크로태스크 안에 잡는다. 이 훅이 부르는 uiOpen() 은 옛 팝업 6개에 getClientRects() 를 해서, 보내기를 누른
     // 순간 스타일 · 레이아웃을 강제로 한 번 더 돌렸다 (4배 느린 CPU 에서 보내기마다 약 130ms).
     document.addEventListener('click', (e) => { if (!e.target?.closest?.('#chat, #form_sheld')) queueMicrotask(syncPanelCss); }, true);
+}
+
+// 5.3.7: 숫자 쉼표(numcomma.js)가 새로 붙거나 보이게 된 숫자 칸을 찾는 길 — 문서를 따로 지켜보지 않고 위 관찰자가 받은 변화를 나눠 받는다.
+// 받는 쪽은 요소만 모아 두고 다음 프레임에 한 번 훑는다 (여기서는 부르기만). null 이면 뗀다.
+let panelTap = null;
+let panelObserving = false;
+export function tapPanelChanges(fn) {
+    panelTap = typeof fn === 'function' ? fn : null;
+}
+/** 서랍 · 팝업 관찰자가 돌고 있나 (게으른 칸 분리에 실패하면 없다) */
+export function panelWatching() {
+    return panelObserving;
 }
 
 export function panelHasRuleCount() {

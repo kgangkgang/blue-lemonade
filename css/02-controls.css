@@ -177,6 +177,23 @@ body.salty :is(.range-block-counter input, input.neo-range-input) {
   font-variant-numeric: tabular-nums;
   text-align: center;
 }
+/* 5.3.7 큰 숫자는 쉼표로 (src/numcomma.js): 포커스 밖일 때만 칸의 글꼴로 그린 '30,000' 그림을 배경 맨 위 겹으로 깔고 진짜 글자는 투명.
+   값 · DOM 은 그대로다. 원래 배경 그림 겹(있으면 --bl-num-under*)은 우리 겹 아래에 그대로 두고, 배경색은 건드리지 않는다.
+   :not(#bl-num-x):not(#bl-num-y) 는 id 두 개 세기 — 서랍마다 id 로 칸을 칠하는 규칙(월드인포 덮어쓰기 칸의 background 줄임 속성 등)보다
+   앞서게. 그래도 밀리면 numcomma.js 가 알아채고 그 칸은 원래대로 둔다 */
+body.salty input.bl-num-ghost:not(:focus):not(#bl-num-x):not(#bl-num-y) {
+  -webkit-text-fill-color: transparent !important;
+  background-image: var(--bl-num-ghost), var(--bl-num-under, none) !important;
+  background-size: var(--bl-num-size), var(--bl-num-under-size, auto) !important;
+  background-position: 0 0, var(--bl-num-under-pos, 0 0) !important;
+  background-repeat: no-repeat, var(--bl-num-under-repeat, no-repeat) !important;
+  background-origin: padding-box, var(--bl-num-under-origin, padding-box) !important;
+}
+/* 좁은 칸은 스핀 단추 자리까지 써서 그렸다 — 누르기 전에는 단추를 숨긴다(자리는 그대로라 레이아웃 변화 없음). 누르면 원래대로 보이고 눌린다 */
+body.salty input.bl-num-ghost.bl-num-wide:not(:focus):not(#bl-num-x):not(#bl-num-y)::-webkit-inner-spin-button {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
 
 /* 체크박스: 꺼짐 = 오목한 칸, 켜짐 = 포인트색이 떠오름 */
 body.salty input:is([type="checkbox"], [type="radio"], [type="range"]) {

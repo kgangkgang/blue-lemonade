@@ -75,6 +75,9 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     const weatherChat = s.chat?.weather === 'tracker' && !s.deus?.on ? { ...s.chat, weather: 'off' } : s.chat;
     const weather = on && !!weatherChat?.weather && weatherChat.weather !== 'off';
     if (weather || modules.weather) load('weather', './weather.js').then(m => m?.syncWeather(weather, weatherChat));
+    // 5.3.7 큰 숫자는 쉼표로: 숫자 칸의 30000 을 포커스 밖에서만 30,000 으로 (numcomma.js — 끄면 듣기 · 덧씌운 값까지 전부 뗀다)
+    const numComma = on && s.chat?.numComma !== false;
+    if (numComma || modules.numcomma) load('numcomma', './numcomma.js').then(m => m?.syncNumComma(numComma));
     // 4.1.3 ··· 메뉴 버튼 고정 (mes-pins.js)
     const pins = on && (s.chat?.mesPins?.length || 0) > 0;
     // 4.7.1: 고정한 버튼이 없어도 길게 눌러 꺼내는 손짓은 있어야 하므로 테마가 켜져 있으면 늘 부른다

@@ -1,13 +1,20 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.3.7.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.3.8.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.3.7 · 최신 업데이트</summary>
+<summary>5.3.8 · 최신 업데이트</summary>
+
+- 설정 창 등의 숫자칸에서 1,000 이상인 숫자를 30,000 처럼 쉼표로 보여 줘요. 칸을 누르면 원래 숫자가 보이고, 저장되는 값은 그대로 숫자예요. 채팅 › 화면 › '큰 숫자는 쉼표로' 에서 끌 수 있어요.
+
+</details>
+
+<details>
+<summary>5.3.7 · 메모 에셋 · 큰 프로필 · 선택 색</summary>
 
 - 메모에도 캐릭터 에셋 그림이 보여요. 큰 창 · 입력창 위 목록 · 펼친 보기 · 스티커 · 끌어온 메모 모두요. 같은 메모는 다시 그려도 같은 그림이에요.
 - 큰 프로필에 프로필 프레임을 켠 채 캐릭터 메시지를 숨기면 프로필 사진이 메시지 높이만큼 세로로 길게 늘어나던 것을 고쳤어요. 숨긴 메시지를 다시 보이게 하면 프레임도 바로 돌아와요.
