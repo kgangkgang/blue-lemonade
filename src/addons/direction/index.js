@@ -225,7 +225,10 @@ function ensureButton(attempt = 0) {
     // 5.1.7: 보내기 번역 💬 와 같은 조작 — 길게 누르면 켜기/끄기, 짧게 누르면 입력창. 길게 누른 뒤 따라오는 click 은 삼킨다
     let pressTimer = null, longPressed = false;
     const cancelPress = () => { clearTimeout(pressTimer); pressTimer = null; };
-    button.addEventListener('pointerdown', () => {
+    let touchPress = false;
+    button.addEventListener('pointerdown', (event) => {
+        if (event.button !== 0) return; // 오른쪽 · 가운데 버튼은 길게 누르기가 아니다
+        touchPress = event.pointerType !== 'mouse';
         longPressed = false;
         cancelPress();
         pressTimer = setTimeout(() => {
@@ -238,7 +241,7 @@ function ensureButton(attempt = 0) {
         }, 550);
     });
     ['pointerup', 'pointerleave', 'pointercancel'].forEach(type => button.addEventListener(type, cancelPress));
-    button.addEventListener('contextmenu', (event) => event.preventDefault()); // 길게 누를 때 폰 메뉴가 뜨지 않게
+    button.addEventListener('contextmenu', (event) => { if (touchPress) event.preventDefault(); }); // 길게 누를 때 폰 메뉴가 뜨지 않게 (마우스 우클릭 메뉴는 둔다)
     button.addEventListener('click', () => {
         if (longPressed) { longPressed = false; return; }
         togglePopup();

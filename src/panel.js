@@ -354,10 +354,11 @@ function syncWeatherPreview(root, path) {
 
 // 5.1.2: 적용이 죽으면 저장하지 않고 방금 고친 것을 되돌린다 — 전에는 saveSoon 이 먼저라 망가진 설정이 저장돼 다음 시작부터 창이 안 열렸다
 function safeApply() {
+    const hadPending = !!history.pending; // 이번 틱의 변경이 있을 때만 되돌린다 — 없으면 앞서 확정한 항목을 뽑아 버리게 된다
     try { applyAll(); return true; }
     catch (error) {
         console.error('[Blue Lemonade] 설정 적용', error);
-        if (history.step(getSettings()).length) { history.redoStack.pop(); invalidateSettings(); try { applyAll(); } catch { /* 되돌려도 안 되면 그대로 — 저장은 안 한다 */ } }
+        if (hadPending && history.step(getSettings()).length) { history.redoStack.pop(); invalidateSettings(); try { applyAll(); } catch { /* 되돌려도 안 되면 그대로 — 저장은 안 한다 */ } }
         toastr.error(`적용하지 못해 되돌렸어요: ${error.message || error}`, 'Blue Lemonade');
         refreshPanels();
         return false;

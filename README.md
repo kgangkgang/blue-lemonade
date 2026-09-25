@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.2.2.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.2.3.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.2.2 · 최신 업데이트</summary>
+<summary>5.2.3 · 최신 업데이트</summary>
+
+- 회귀 검사(기본·스트리밍·폰)와 5.1.4~5.2.2 변경분 점검을 돌려 고쳤어요. 번역 묶음 답에서 번호를 1부터 매기거나 괄호를 바꿔 쓴 경우를 받아들이고, 거절로 나눈 조각은 요청을 한 번씩만 보내요. 줄을 넘는 대사 색칠이 문단 사이 빈 줄을 만들지 않아요.
+- 성능 보조가 확장 스타일을 기다리지 않고 먼저 시작해 로딩 시간을 놓치지 않아요. '처음 설정으로 › 테마 모습'이 고정 메시지와 채팅 동작 설정을 남겨요. 캐릭터 스타일 전환·적용 실패 되돌리기의 사소한 오류, 깃펜 우클릭, 나이트에서 보내기 번역 버튼 켜짐 색을 깃펜과 같게 맞췄어요.
+
+</details>
+
+<details>
+<summary>5.2.2 · 줄 넘는 대사 색칠</summary>
 
 - 두 줄 넘게 이어지는 따옴표 대사에 색이 안 들어가던 문제를 고쳤어요. 실리태번이 한 줄 안의 따옴표만 대사로 잡아서 생기던 것이라, 줄을 넘어 닫히는 “ ” · " " · 「 」 대사를 테마가 찾아 색과 형광펜을 입혀요. 저장된 글은 그대로예요.
 

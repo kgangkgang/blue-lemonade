@@ -561,6 +561,13 @@ export function resetSettings(groups = { look: true }) {
         for (const key of RESET_KEEP) next[key] = structuredClone(old[key] ?? fresh[key]);
         // 기기별 배치는 켬/끔만 남긴다 — 담긴 pc · mobile 값은 모습이라, 남기면 syncDeviceLayout 이 초기화한 모습 위에 옛 배치를 도로 입힌다
         next.deviceLayouts = { on: old.deviceLayouts?.on === true, pc: {}, mobile: {} };
+        // 5.2.3: chat 안의 동작 값과 고정 메시지(데이터)도 모습이 아니다 — 남긴다 (styles.js CHAT_BEHAVIOR 와 같은 목록 + QR 배치 · 고정)
+        if (old.chat && typeof old.chat === 'object') {
+            for (const key of ['triangleFold', 'weatherAutoRest', 'selectPop', 'colorPop', 'streamFade', 'demFold', 'qrFind', 'qrScroll', 'qrRows', 'qrPlace', 'mesPins']) {
+                if (key in old.chat) next.chat[key] = structuredClone(old.chat[key]);
+            }
+        }
+        if (old.deus && typeof old.deus === 'object' && next.deus && typeof next.deus === 'object' && 'on' in old.deus) next.deus.on = old.deus.on;
     }
     for (const [group, keys] of Object.entries(RESET_GROUPS)) for (const key of keys) next[key] = structuredClone(groups[group] ? DEFAULTS[key] : (old[key] ?? DEFAULTS[key]));
     if (!next.image || typeof next.image !== 'object') next.image = structuredClone(DEFAULTS.image);

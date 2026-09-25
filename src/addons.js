@@ -91,9 +91,10 @@ export async function startAddons(){
     changed();
     // 스타일은 한꺼번에 먼저 (느린 하나가 나머지를 줄 세우지 않게). 못 읽어도 JS 는 올린다 — 파일 어긋남은 verifyAddonCss 가 따로 알린다
     const styled=ids.filter(id=>id!=='translator');
-    (await Promise.allSettled(styled.map(stylesheet))).forEach((outcome,i)=>{if(outcome.status==='rejected')console.warn('[Blue Lemonade]',names[styled[i]],'스타일:',outcome.reason?.message||outcome.reason);});
-    // 성능 보조는 fetch 를 감싸므로 다른 확장보다 먼저 끝나 있어야 한다
+    const styling=Promise.allSettled(styled.map(stylesheet)).then(results=>results.forEach((outcome,i)=>{if(outcome.status==='rejected')console.warn('[Blue Lemonade]',names[styled[i]],'스타일:',outcome.reason?.message||outcome.reason);}));
+    // 성능 보조는 fetch 를 감싸고 로딩 시간을 재므로 스타일을 기다리지 않고 맨 먼저 시작한다 (5.2.3: 기다리면 그 사이 실린 확장을 못 잰다)
     if(ids.includes('perf')){await startOne('perf');try{await syncAddonIcons();}catch(error){console.warn('[Blue Lemonade]',error);}}
+    await styling;
     await Promise.allSettled(ids.filter(id=>id!=='perf').map(startOne));
     try{await syncAddonIcons();}catch(error){console.warn('[Blue Lemonade]',error);}
 }

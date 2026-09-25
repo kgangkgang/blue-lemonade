@@ -95,30 +95,36 @@ export function batchGroups(bodies, limit = 3600) {
 // 5.1.4: 묶음 요청은 JSON 이 아니라 번호 표시를 붙인 자연문으로 보낸다. JSON 으로 감싸면(이스케이프된 날 문장 + "JSON 만 돌려줘")
 // 모델·중계 필터가 '이야기 번역' 이 아니라 '자료 처리' 로 보고 첫 번역을 더 자주 거절했고, 프리필("Here is the translation:") 과도 어긋났다.
 // 화살표 재번역(통짜 경로)은 되는데 자동 번역만 막히던 이유. 표시는 본문에 나올 일 없는 ⟦n⟧ 을 쓴다.
-const MARK = /^[ \t]*[⟦【]\s*(\d+)\s*[⟧】][ \t]*[:：]?[ \t]*/;
+const MARK = /^[ \t]*⟦\s*(\d+)\s*⟧[ \t]*[:：]?[ \t]*/;
+const MARK_ALT = /^[ \t]*【\s*(\d+)\s*】[ \t]*[:：]?[ \t]*/; // 모델이 괄호를 바꿔 쓴 답 — 원래 표시가 하나도 없을 때만 (본문의 각주 【1】 과 헷갈리지 않게)
 export function batchPayload(bodies) {
     return '[Translate every numbered passage below using the translation instructions above. Each passage starts with a marker like ⟦3⟧. Keep every marker exactly as it is at the start of its translated passage, translate the passage after it completely, keep markup and placeholders, and do not merge, split, reorder, add or drop passages.]\n\n' +
         bodies.map((text, id) => `⟦${id}⟧ ${text}`).join('\n\n');
 }
 export function parseBatchResult(raw, count) {
     // 앞의 <think>…</think> · 코드 펜스 · 표시 앞의 설명문은 걷어 낸다. 개수 · 번호 · 중복 · 빈 글 검사는 엄격하다.
-    const text = String(raw).replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/^\s*```[a-z]*[ \t]*\n|\n[ \t]*```\s*$/g, '').trim();
+    const text = String(raw).replace(/\r\n?/g, '\n').replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/^\s*```[a-z]*[ \t]*\n|\n[ \t]*```\s*$/g, '').trim();
+    const mark = text.includes('⟦') ? MARK : MARK_ALT;
     const fail = () => { throw Object.assign(Error('문단 번호나 응답 형식이 맞지 않아 번역을 적용하지 않았어요. 다시 시도해 주세요.'), { format: true }); };
     const found = new Map();
     let id = null, buffer = [];
     const flush = () => {
         if (id === null) return;
-        const body = buffer.join('\n').trim();
+        const body = buffer.join('\n').replace(/^\n+|\s+$/g, ''); // 빈 줄만 걷고 첫 줄 들여쓰기(코드 · 목록)는 둔다
         if (!body || found.has(id)) fail();
         found.set(id, body);
     };
     for (const line of text.split('\n')) {
-        const mark = MARK.exec(line);
-        if (mark) { flush(); id = Number(mark[1]); buffer = [line.slice(mark[0].length)]; }
+        const hit = mark.exec(line);
+        if (hit) { flush(); id = Number(hit[1]); buffer = [line.slice(hit[0].length)]; }
         else if (id !== null) buffer.push(line);
     }
     flush();
     if (found.size !== count) fail();
+    // 모델이 1부터 다시 매긴 답(1..N, 0 없음)은 한 칸 내려 받는다 — 개수 · 중복 검사는 그대로
+    if (!found.has(0) && found.has(count) && [...found.keys()].every(k => k >= 1 && k <= count)) {
+        for (let k = 1; k <= count; k++) { found.set(k - 1, found.get(k)); found.delete(k); }
+    }
     for (const key of found.keys()) if (!Number.isInteger(key) || key < 0 || key >= count) fail();
     return Array.from({length: count}, (_, i) => found.get(i));
 }

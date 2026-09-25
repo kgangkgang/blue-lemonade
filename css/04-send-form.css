@@ -296,6 +296,7 @@ body.salty :is(#leftSendForm, #rightSendForm, #nonQRFormItems) #llm_translate_in
   background: transparent !important;
   border: 0 !important;
   box-shadow: none !important;
+  color: var(--bl-jj-fg) !important; /* 5.2.3 깃펜과 같은 켜짐 색 (나이트 = 레몬) */
 }
 body.salty #llm_translate_input_button.is-on i {
   filter: drop-shadow(0 0 4px currentColor);

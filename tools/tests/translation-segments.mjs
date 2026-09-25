@@ -22,7 +22,7 @@ await clearSegmentCache();calls=[];await go('A\n\nA');assert.deepEqual(calls,[['
 assert.equal(segmentParagraphs('<span>one\n\ntwo</span>'),null);assert(segmentParagraphs('<span>one</span>\n\n<span>two</span>'));
 assert.deepEqual(parseBatchResult('⟦1⟧ second\n\n⟦0⟧ first',2),['first','second']);
 for(const raw of ['no markers','','⟦0⟧ a\n⟦0⟧ b','⟦0⟧ a\n⟦3⟧ b','⟦0⟧ a\n⟦1⟧ ','⟦0⟧ a'])assert.throws(()=>parseBatchResult(raw,2));
-assert.deepEqual(parseBatchResult('```\n⟦0⟧ ok\n```',1),['ok']);assert.deepEqual(parseBatchResult('Here it is:\n⟦0⟧: first line\nsecond line\n\n【1】 two',2),['first line\nsecond line','two']);
+assert.deepEqual(parseBatchResult('```\n⟦0⟧ ok\n```',1),['ok']);assert.deepEqual(parseBatchResult('Here it is:\n⟦0⟧: first line\nsecond line\n\n⟦1⟧ two',2),['first line\nsecond line','two']);assert.deepEqual(parseBatchResult('【0】 a\n【1】 b',2),['a','b']);assert.throws(()=>parseBatchResult('⟦0⟧ a\n【1】 b',2));assert.deepEqual(parseBatchResult('⟦1⟧ a\r\n⟦2⟧ b',2),['a','b']);assert.deepEqual(parseBatchResult('⟦0⟧\n    indented\n⟦1⟧ x',2),['    indented','x']);
 assert.ok(batchPayload(['a\n"b"','c']).endsWith('⟦0⟧ a\n"b"\n\n⟦1⟧ c'));assert.ok(!batchPayload(['x']).includes('JSON'));
 console.log('PASS first batch 1 request, multiple edits 1 request, reuse 0 requests; reorder/insert/delete/dedup; strict IDs and atomic validation; failures/cancel/clear');
 

@@ -6,7 +6,7 @@ import { preserveLocks } from './setting-locks.js';
 //       baseStyle (캐릭터 스타일로 바꾸기 직전의 원래 모습 — 이어 두지 않은 채팅으로 갈 때 되돌림)
 // 캐릭터 스타일이 입혀진 채팅에서 설정을 바꾸면 그 스타일에 저장된다 (commit). 원래 모습은 건드리지 않는다.
 // 이어 둔 캐릭터가 없으면 이 파일은 불러오지도 않는다 (features.js).
-import { getSettings, saveSettings } from './settings.js';
+import { getSettings, saveSettings, invalidateSettings } from './settings.js';
 import { captureStyle, applyStyleData, sameStyle, currentKey } from './styles.js';
 
 let listening = false;
@@ -63,6 +63,7 @@ export function syncChat() {
         s.baseStyle = null;
         s.activeStyle = null;
     }
+    invalidateSettings(); // 5.2.3: 스타일을 제자리에 입힌 뒤 정리(범위 · 형식)를 다시 거치게
     saveSettings();
     paint();
     return true;
@@ -76,6 +77,7 @@ export function styleRemoved(id) {
         if (s.baseStyle) applyStyleData(s, s.baseStyle);
         s.baseStyle = null;
         s.activeStyle = null;
+        invalidateSettings();
         saveSettings();
         paint();
     }

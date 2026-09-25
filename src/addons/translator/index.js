@@ -1804,10 +1804,10 @@ async function translate(text, options = {}) {
                     // 5.1.5: 묶음이 거절되면 그 자리에서 반으로 나눠 다시 보낸다 — 사용자가 화살표로 다시 번역하면
                     // 통과하던 것과 같은 작은 요청이다. 문단 하나까지 막히면 그 문단만 null(차단 표시). 나누기는 메시지당 SPLIT_CAP 번까지.
                     const SPLIT_CAP = 6;
-                    const translateGroup = async group => {
+                    const translateGroup = async (group, layouts = PROMPT_LAYOUTS) => {
                         watcher.check();
                         try {
-                            const out = parseBatchResult(await callWithLayouts(batchPayload(group), PROMPT_LAYOUTS), group.length).map(tidyKana);
+                            const out = parseBatchResult(await callWithLayouts(batchPayload(group), layouts), group.length).map(tidyKana);
                             succeeded++;
                             return out;
                         } catch (error) {
@@ -1816,7 +1816,9 @@ async function translate(text, options = {}) {
                                 splits++;
                                 console.warn(`[LLM Translator] 묶음(${group.length}문단)이 막혀 반으로 나눠 다시 보내요:`, error.message);
                                 const mid = Math.ceil(group.length / 2);
-                                return [...await translateGroup(group.slice(0, mid)), ...await translateGroup(group.slice(mid))];
+                                // 나눈 조각은 배치 하나로만 — 조각마다 배치 3개를 돌리면 요청이 최대 39회까지 불어난다 (배치 1개면 15회)
+                                const half = PROMPT_LAYOUTS.slice(0, 1);
+                                return [...await translateGroup(group.slice(0, mid), half), ...await translateGroup(group.slice(mid), half)];
                             }
                             // 문단 하나까지 막힘 · 나누기 상한 · 그 밖의 오류: 그 문단들 자리만 null. 전부 실패하면 예전처럼 오류
                             failed ??= error;

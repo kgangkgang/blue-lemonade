@@ -93,7 +93,8 @@ function notify(entry) {
 /** 테마 폴더 이름 — 이 파일은 <폴더>/src/addons/perf/ 에 있다 (설치 이름이 달라도 맞게) */
 const OWN_FOLDER = new URL('../../../', import.meta.url).pathname.split('/').filter(Boolean).pop();
 /** 테마 안 애드온 폴더 → 요청 로그의 호출자 키 (CALLER_LABELS · 용도 표에 이미 있는 이름) */
-const OWN_ADDONS = new Map([['rewrite', 'ban-word-rewrite'], ['bookmarks', 'chat-bookmarks']]);
+// 5.2.3: 내장 번역 · 한글화 패널도 단독판 이름으로 적는다 — 요청 로그의 '보낸 곳' 이 blue-lemonade 로 뭉뚱그려지지 않게
+const OWN_ADDONS = new Map([['rewrite', 'ban-word-rewrite'], ['bookmarks', 'chat-bookmarks'], ['translator', 'llm-translator-custom'], ['prompt', 'prompt-panel'], ['assets', 'char-assets'], ['direction', 'story-direction']]);
 
 /**
  * 호출 스택에서 요청을 시작한 확장 폴더를 찾는다 (1.1.0).

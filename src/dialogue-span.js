@@ -7,10 +7,11 @@ const OPENERS = Object.keys(PAIRS);
 const SKIP = 'q, pre, code, script, style, textarea, .bl-quote-lead, details[class*="custom-dem-card"], .custom-dem-track';
 const created = new Set();
 const MAX_SPAN_NODES = 40; // 이만큼 뒤까지만 닫는 따옴표를 찾는다 (메시지 전체를 대사로 잘못 칠하지 않게)
+const MAX_STRAIGHT_NODES = 6; // 곧은따옴표는 여닫음이 같은 글자라 짝 잃은 것 하나가 멀리까지 칠할 수 있어 짧게만
 
 function textNodes(root) {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-        acceptNode: node => node.parentElement?.closest(SKIP) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT,
+        acceptNode: node => (!node.data.trim() || node.parentElement?.closest(SKIP)) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT, // 공백만 있는 노드(문단 사이 \n)는 감싸면 '채우기' 스타일에서 빈 줄이 생긴다
     });
     const out = [];
     for (let node = walker.nextNode(); node; node = walker.nextNode()) out.push(node);
@@ -52,14 +53,15 @@ export function wrapSpanningQuotes(root) {
                 const found = unclosedOpener(nodes[i].data);
                 if (!found) continue;
                 const closer = PAIRS[found.open];
-                for (let j = i + 1; j < nodes.length && j <= i + MAX_SPAN_NODES; j++) {
+                const reach = closer === '"' ? MAX_STRAIGHT_NODES : MAX_SPAN_NODES;
+                for (let j = i + 1; j < nodes.length && j <= i + reach; j++) {
                     // 같은 메시지 안에서만 (북마크 미리보기 등 다른 상자로 넘어가지 않게)
                     const text = nodes[j].data;
                     let end = -1;
                     for (let k = 0; k < text.length; k++) {
                         const c = text[k];
                         if (c === closer && (closer !== '"' || closesStraight(text, k))) { end = k; break; }
-                        if (c === found.open && closer !== '"') { end = -2; break; } // 닫기 전에 같은 따옴표가 또 열림 — 짝이 안 맞는 글, 건너뜀
+                        if (c === found.open && (closer !== '"' || opensStraight(text, k))) { end = -2; break; } // 닫기 전에 같은 따옴표가 또 열림 — 짝이 안 맞는 글, 건너뜀
                     }
                     if (end === -2) break;
                     if (end < 0) continue;
