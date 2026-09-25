@@ -1,7 +1,7 @@
 // Modified 2026-09-24: Blue Lemonade bundled adapter; original settings and translation DB retained.
 import { createGuards, watchGuard } from './translation-guard.js';
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
-import { segmentParagraphs, translateSegments, clearSegmentCache, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks } from './translation-segments.js';
+import { segmentParagraphs, translateSegments, clearSegmentCache, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, BATCH_HEADER } from './translation-segments.js';
 import { syncSelectionRetranslate } from './selection/index.js';
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
@@ -1183,6 +1183,16 @@ function inputBlockError() {
 
 // [2.1.0] 문단 나눠 보내기 · 남은 가나 정리 (순수 함수 — 테스트: backups/… /tests/chunks.test.mjs)
 const BLOCKED_CHUNK_MARK = '[차단된 문단 — 원문 그대로]';
+const MARK_TAIL = ' — 원문 그대로]'; // 5.2.9: 모든 실패 표시의 공통 꼬리 (재번역 판단은 이걸로)
+/** 5.2.9: 실패 원인별 표시 — 예전엔 중계 오류 · 빈 답 · 형식 오류도 전부 '차단된 문단' 이라 검열로 오해했다 */
+function failMarkOf(error) {
+    if (!error) return BLOCKED_CHUNK_MARK;
+    if (error.refused) return BLOCKED_CHUNK_MARK;
+    if (error.format) return '[번역 답 형식 오류' + MARK_TAIL;
+    const why = String(error.message ?? error).replace(/\s+/g, ' ').trim().slice(0, 50);
+    return `[번역 실패${why ? ': ' + why : ''}${MARK_TAIL}`;
+}
+const isTransientError = error => !error?.refused && !error?.format && !error?.cancelled && !error?.timeout;
 const CHUNK_TARGET = 1800; // 한 덩이 글자 수 목표. 너무 작으면 문맥 · 말투가 흔들리고 요청이 많아진다.
 const KANA_RE = /[ぁ-ゖァ-ヺ]/;
 const KANA_FIX_NOTE = '[The numbered lines below are from a Korean translation but still contain Japanese. Translate each fully into Korean, keep the numbering and everything else unchanged, one line per number.]\n';
@@ -1772,7 +1782,8 @@ async function translate(text, options = {}) {
             }
             if (looksLikeInputBlock(out)) throw inputBlockError();
             // [1.9.0] 거절문은 번역문이 아니다 — 여기서 던지면 붙이지도 캐시에 넣지도 않는다 (마스킹된 원문끼리 길이를 견준다)
-            if (looksLikeRefusal(body, out)) throw refusalError(out);
+            // 5.2.9: 묶음 머리말은 원문이 아니다 — 머리말을 뺀 길이로 견준다 (머리말 탓에 짧은 묶음의 정상 번역이 거절로 오인됐다)
+            if (looksLikeRefusal(body.startsWith(BATCH_HEADER) ? body.slice(BATCH_HEADER.length) : body, out)) throw refusalError(out);
             return out;
         };
 
@@ -1792,8 +1803,9 @@ async function translate(text, options = {}) {
             const outputTokens = s.connection_mode === 'direct' ? Number(s.parameters?.[s.llm_provider]?.max_length) || 0
                 : Number(s.profile_max_tokens) || (live?.mainApi === 'openai' ? Number(live.chatCompletionSettings?.openai_max_tokens) : Number(live?.textCompletionSettings?.max_length)) || 0;
             const groupLimit = outputTokens > 0 ? Math.min(CHUNK_TARGET * 2, Math.max(400, Math.round(outputTokens * 1.2))) : CHUNK_TARGET * 2;
+            const failReasons = new Map(); // 5.2.9: 문단 본문 → 실패 원인
             const result = await translateSegments({ parts: paragraphParts,
-                signature: () => setupDigest, check: watcher.check, progress, blockedMarker: BLOCKED_CHUNK_MARK,
+                signature: () => setupDigest, check: watcher.check, progress, blockedMarker: body => failMarkOf(failReasons.get(body)),
                 cacheable: (body, out) => {
                     const marks = value => JSON.stringify(value.match(/\[\[__VAR_\d+__\]\]/g) || []);
                     return marks(body) === marks(out) && !linesWithKana(out).length;
@@ -1801,10 +1813,11 @@ async function translate(text, options = {}) {
                 request: async bodies => {
                     const translated = [];
                     let failed = null, succeeded = 0, splits = 0;
+                    failReasons.clear();
                     // 5.1.5: 묶음이 거절되면 그 자리에서 반으로 나눠 다시 보낸다 — 사용자가 화살표로 다시 번역하면
                     // 통과하던 것과 같은 작은 요청이다. 문단 하나까지 막히면 그 문단만 null(차단 표시). 나누기는 메시지당 SPLIT_CAP 번까지.
                     const SPLIT_CAP = 6;
-                    const translateGroup = async (group, layouts = PROMPT_LAYOUTS) => {
+                    const translateGroup = async (group, layouts = PROMPT_LAYOUTS, retried = false) => {
                         watcher.check();
                         try {
                             const out = parseBatchResult(await callWithLayouts(batchPayload(group), layouts), group.length).map(tidyKana);
@@ -1813,6 +1826,12 @@ async function translate(text, options = {}) {
                         } catch (caught) {
                             let error = caught;
                             if (error?.cancelled) throw error;
+                            // 5.2.9: 중계 429 · 5xx · 네트워크 같은 일시 오류는 1.5초 뒤 한 번 더 — 예전엔 곧장 '차단된 문단' 으로 남았다
+                            if (!retried && isTransientError(error)) {
+                                console.warn('[LLM Translator] 묶음 요청 오류 — 잠시 뒤 한 번 더 보내요:', error.message);
+                                await new Promise(resolve => setTimeout(resolve, 1500)); watcher.check();
+                                return translateGroup(group, layouts, true);
+                            }
                             // 5.2.6: 답 형식이 안 맞으면(번호 표시를 빼먹음 · 문단을 합침) 거절이 아니다 — 번호 없이 통짜로 한 번 더 보낸다 (화살표 재번역과 같은 요청).
                             //        문단 수가 같으면 자리별로 붙이고 캐시에 넣는다. 전엔 '차단된 문단' 으로 남아 SFW 글이 검열된 것처럼 보였다.
                             if (error?.format) {
@@ -1835,12 +1854,18 @@ async function translate(text, options = {}) {
                             }
                             // 문단 하나까지 막힘 · 나누기 상한 · 그 밖의 오류: 그 문단들 자리만 null. 전부 실패하면 예전처럼 오류
                             failed ??= error;
+                            for (const body of group) failReasons.set(body, error); // 5.2.9: 자리마다 원인 (표시 문구용)
                             return group.map(() => null);
                         }
                     };
                     for (const group of batchGroups(bodies, groupLimit)) translated.push(...await translateGroup(group));
                     if (failed && !succeeded) throw failed;
-                    if (failed) console.warn('[LLM Translator] 일부 묶음 실패 — 그 문단만 원문으로 남겨요:', failed.message);
+                    if (failed) {
+                        const count = translated.filter(text => text === null).length;
+                        console.warn('[LLM Translator] 일부 묶음 실패 — 그 문단만 원문으로 남겨요:', failed.message);
+                        // 5.2.9: 폰에서는 콘솔을 못 보니 원인을 알림으로 (거절 · 형식 · 오류 구분)
+                        if (globalThis.toastr) toastr.warning(`${failed.refused ? '모델이 거절해서' : failed.format ? '답 형식이 맞지 않아' : '요청 오류로'} 문단 ${count}개를 원문으로 남겼어요 — ${String(failed.message).slice(0, 120)}`, 'LLM 번역', { timeOut: 9000 });
+                    }
                     // Any remaining Japanese is repaired in one additional request for the whole batch.
                     const joined = translated.map(text => text ?? '').join('\n\n'), lines = linesWithKana(joined);
                     if (lines.length) {
@@ -2349,7 +2374,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                 const report = {};
                 const badge = progressBadge(messageId, message, sourceMes, chatId);
                 // 화살표 다시 번역이라도 차단 표시가 남은 글이면 문단 캐시를 쓴다 — 이미 된 문단은 다시 보내지 않고 차단된 문단만 다시 시도
-                const segmentCache = source !== 'handleTranslateButtonClick_retranslate' || String(message.extra.display_text || '').includes(BLOCKED_CHUNK_MARK);
+                const segmentCache = source !== 'handleTranslateButtonClick_retranslate' || String(message.extra.display_text || '').includes(MARK_TAIL);
                 try {
                     translation = await translate(originalText, { segmentCache, assertValid: () => runToken.guard.assert(), onProgress: badge.update, report });
                 } finally {

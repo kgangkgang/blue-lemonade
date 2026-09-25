@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.2.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.2.9.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.2.8 · 최신 업데이트</summary>
+<summary>5.2.9 · 최신 업데이트</summary>
+
+- 번역에서 원문으로 남은 문단의 표시를 원인별로 나눴어요. 모델이 거절한 것만 '차단된 문단'이고, 답 형식이 맞지 않으면 '번역 답 형식 오류', 중계 오류·빈 답이면 '번역 실패: 이유'로 보여요. 예전엔 전부 '차단'으로 보여서 평범한 문단이 검열된 것처럼 보였어요.
+- 묶음 요청이 429·5xx·네트워크 오류로 끊기면 1.5초 뒤 한 번 더 보내요. 그래도 안 되면 문단 수와 이유를 알림으로 알려요.
+- 거절 판정을 할 때 묶음 머리말을 원문 길이에 넣지 않아요. 머리말 때문에 짧은 묶음의 정상 번역이 '짧은 거절문'으로 오인되던 경우를 막아요.
+
+</details>
+
+<details>
+<summary>5.2.8 · 에셋 그림 앞뒤 줄바꿈 · 외부 번역기 문단 간격</summary>
 
 - 캐릭터 에셋 그림 앞뒤에 줄바꿈이 둘 이상 오는 글(예: 태그 위아래로 빈 줄)에서 그림 아래에 빈 줄 하나가 남아 위보다 넓어 보이던 것을 고쳤어요. 그림 앞뒤의 줄바꿈은 셋까지 숨겨요.
 - 외부 LLM 번역기 확장(llm-translator · llm-translator-custom)을 그대로 쓸 때도 접기·원문 먼저 보기의 문단 사이에 테마 문단 간격이 생겨요. 내장 번역기로 옮기지 않아도 돼요.

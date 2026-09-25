@@ -109,7 +109,11 @@ export function batchGroups(bodies, limit = 3600) {
 // 화살표 재번역(통짜 경로)은 되는데 자동 번역만 막히던 이유. 표시는 본문에 나올 일 없는 ⟦n⟧ 을 쓴다.
 const MARK = /^[ \t]*⟦\s*(\d+)\s*⟧[ \t]*[:：]?[ \t]*/;
 const MARK_ALT = /^[ \t]*【\s*(\d+)\s*】[ \t]*[:：]?[ \t]*/; // 모델이 괄호를 바꿔 쓴 답 — 원래 표시가 하나도 없을 때만 (본문의 각주 【1】 과 헷갈리지 않게)
+export const BATCH_HEADER = '[Translate every numbered passage below using the translation instructions above. Each passage starts with a marker like ⟦3⟧. Keep every marker exactly as it is at the start of its translated passage, translate the passage after it completely, keep markup and placeholders, and do not merge, split, reorder, add or drop passages.]\n\n';
 export function batchPayload(bodies) {
+    return BATCH_HEADER + bodies.map((text, id) => `⟦${id}⟧ ${text}`).join('\n\n');
+}
+export function batchPayloadLegacy(bodies) {
     return '[Translate every numbered passage below using the translation instructions above. Each passage starts with a marker like ⟦3⟧. Keep every marker exactly as it is at the start of its translated passage, translate the passage after it completely, keep markup and placeholders, and do not merge, split, reorder, add or drop passages.]\n\n' +
         bodies.map((text, id) => `⟦${id}⟧ ${text}`).join('\n\n');
 }
@@ -160,13 +164,15 @@ export async function translateSegments({ parts, signature, request, check = () 
     }
     const pending = [...missing.values()];
     progress({ stage: 'segments', done: reused, total, reused, translated, pending: pending.length });
+    // 5.2.9: blockedMarker 는 문구 또는 (body, error?) => 문구
+    const markOf = (body, error) => typeof blockedMarker === 'function' ? blockedMarker(body, error) : blockedMarker;
     if (pending.length) {
         let results;
         try { results = await request(pending.map(row => row.body)); }
         catch (error) {
             if (!error?.refused || !blockedMarker) throw error;
             check();
-            for (const row of pending) for (const i of row.indices) { output[i] = `${blockedMarker}\n${row.body}`; blocked++; }
+            for (const row of pending) for (const i of row.indices) { output[i] = `${markOf(row.body, error)}\n${row.body}`; blocked++; }
         }
         check();
         if (results) {
@@ -177,7 +183,7 @@ export async function translateSegments({ parts, signature, request, check = () 
                 const row = pending[n], result = results[n];
                 if (result === null) {
                     if (!blockedMarker) throw Error('일부 문단의 번역을 받지 못했어요.');
-                    for (const i of row.indices) { output[i] = `${blockedMarker}\n${row.body}`; blocked++; }
+                    for (const i of row.indices) { output[i] = `${markOf(row.body)}\n${row.body}`; blocked++; }
                     continue;
                 }
                 if (epoch === stamp && cacheable(row.body, result)) await write(row.key, result, stamp);
