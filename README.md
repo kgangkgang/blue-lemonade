@@ -1,13 +1,20 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.3.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.3.5.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.3.4 · 최신 업데이트</summary>
+<summary>5.3.5 · 최신 업데이트</summary>
+
+- 5.3.4 에서 프롬프트 연동 정규식을 켜 두면 '파일 버전이 달라요 (코드 1.0.2, 스타일 1.0.1)' 경고가 뜨던 것을 고쳤어요. 스타일 파일의 버전 표시만 빠진 것이라 기능은 그대로였어요.
+
+</details>
+
+<details>
+<summary>5.3.4 · 리뷰 수정 묶음</summary>
 
 - 공유 스타일 코드를 더 엄격하게 검사해요. 날씨 그림 · 도형 · 글꼴 · 글자 값에 코드나 CSS 를 몰래 끼워 넣은 스타일은 그 값만 버리고 적용해요. 설정 값 하나가 깨져 테마 설정 창이 아예 안 뜨던 경우도 이제 기본값으로 돌리고 떠요.
 - 캐릭터 에셋 그림 근처에서 두 줄이 한 줄로 붙어 보이던 것을 고쳤어요. 그림에 바로 붙은 줄바꿈만 숨겨요. 첫 줄 들여쓰기를 켰을 때 그림 바로 아래 글만 들여쓰기가 빠지던 것도 고쳤어요.
