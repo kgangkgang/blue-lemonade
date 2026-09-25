@@ -351,6 +351,7 @@ dialog[open]::backdrop{animation:fade .3s ease}
 .tall-media .media-wrap img{height:auto;object-fit:cover;object-position:top}
 .tall-media .media-wrap::after{content:"눌러서 전체 보기";position:absolute;left:50%;bottom:12px;translate:-50% 0;padding:6px 12px;border-radius:999px;background:rgba(17,38,60,.78);color:#FDFEFF;font-size:12px;font-weight:650;letter-spacing:-.01em;pointer-events:none}
 .tall-media .media-wrap:has(img[src*="412-rewrite.jpg"])::after{display:none}
+.tall-media .media-wrap:has(video)::after{display:none}
 dialog.tall{overflow-y:auto;overscroll-behavior:contain}
 dialog.tall img{max-height:none;width:min(85vw,460px);max-width:100%}
 @media (max-width:760px){.rw-guide{padding:16px}.rw-steps{grid-template-columns:minmax(0,1fr);gap:8px}.rw-credit{font-size:13.5px}.rw-credit a{white-space:normal}}
