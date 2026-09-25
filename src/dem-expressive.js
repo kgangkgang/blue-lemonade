@@ -13,6 +13,7 @@ const TAGS = 'shout|quiet|angry|excited|dizzy|crying|anxious|hurt|intoxicated|wh
 const FIND = new RegExp(`((?:<(?:${TAGS})\\b[^>\\r\\n]{0,240}>[ \\t]*){1,4})(?:<(?:span|font)\\b[^>\\r\\n]{0,240}>[ \\t]*)?(「[^」\\r\\n]{1,600}」|『[^』\\r\\n]{1,600}』)`, 'gi');
 const TAG_NAME = new RegExp(`<(${TAGS})\\b`, 'gi');
 const MADE = 'bl-fx-made';
+const LONG_CHARS = 14; // 5.3.1: 이보다 긴 감정 대사는 inline-block 이 아니라 inline 으로 (폰 한 줄 ≈ 22자)
 
 let bound = null, timers = [], active = false;
 
@@ -91,11 +92,12 @@ function markLeads(body) {
     body.querySelectorAll('.custom-dem-expressive:not(.custom-dem-expressive--)').forEach((span) => {
         if (span.parentElement.closest('.custom-dem-expressive')) return;
         span.classList.toggle('bl-fx-lead', leads(span));
+        span.classList.toggle('bl-fx-long', span.textContent.trim().length >= LONG_CHARS); // 5.3.1: 긴 대사는 inline (CSS) — 줄을 통째로 넘어가 양끝 맞춤 틈이 벌어지지 않게
     });
 }
 
 function undress(root = document) {
-    root.querySelectorAll('.bl-fx-lead').forEach(span => span.classList.remove('bl-fx-lead'));
+    root.querySelectorAll('.bl-fx-lead, .bl-fx-long').forEach(span => span.classList.remove('bl-fx-lead', 'bl-fx-long'));
     root.querySelectorAll(`.${MADE}`).forEach((span) => {
         const parent = span.parentNode;
         while (span.firstChild) parent.insertBefore(span.firstChild, span);

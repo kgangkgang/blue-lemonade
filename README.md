@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.3.0.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.3.1.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.3.0 · 최신 업데이트</summary>
+<summary>5.3.1 · 최신 업데이트</summary>
+
+- 데우스 감정 대사 태그가 겹쳐 있을 때(예: 속삭임 + 불안) 같은 대사가 옆에 한 번 더 비쳐 보이던 유령 글자를 없앴어요. 바깥 칸의 글자 모양 배경이 안쪽 칸의 들여쓰기를 못 따라가던 것이라, 바깥 칸의 배경을 빼요.
+- 긴 감정 대사가 줄 중간에 못 들어가면 통째로 아랫줄로 넘어가면서 양끝 맞춤 문단의 윗줄 낱말 사이가 크게 벌어지던 것을 고쳤어요. 14자 이상인 감정 대사는 보통 글처럼 줄을 이어 가요(흔들림 같은 움직임만 빠지고 색·빛은 그대로).
+
+</details>
+
+<details>
+<summary>5.3.0 · 거절된 번역 묶음은 통짜로 먼저</summary>
 
 - 번역 묶음 요청이 거절되면 문단을 반으로 나누기 전에, 번호 표시 없이 통째로 한 번 더 보내요. 화살표로 다시 번역할 때와 같은 요청이라, '첫 번역만 차단되고 다시 번역하면 되는' 경우가 자동으로 해결돼요. 통째로도 막히면 그때 나눠서 보내요.
 

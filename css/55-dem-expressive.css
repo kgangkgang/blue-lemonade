@@ -66,6 +66,22 @@ body.salty.salty-indent :is(#chat, .cg-root, .salty-preview) .custom-dem-express
   margin-left: -1em;
   text-indent: 1em;
 }
+/* 5.3.1 유령 글자: <whispering><anxious>"…"</anxious></whispering> 처럼 감정 칸이 겹치면 바깥 칸의 글자 모양 배경(background-clip: text)이
+   안쪽 inline-block 칸의 들여쓰기(.bl-fx-lead 의 text-indent) · 움직임을 못 따라가 같은 대사가 1em 옆에 한 번 더 그려졌다 (2026-09-25 격리 서버 재현).
+   글자는 맨 안쪽 칸 · q 가 그리니 바깥 칸의 배경은 없어도 된다 */
+body.salty :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:has(> .custom-dem-expressive) {
+  background-image: none !important;
+}
+/* 5.3.1 긴 감정 대사: 프리셋 칸은 inline-block 이라 줄 중간에 못 들어가면 통째로 아랫줄로 넘어가고, 양끝 맞춤이면 윗줄 낱말 사이가 크게 벌어졌다.
+   14자 이상(.bl-fx-long, dem-expressive.js)은 inline 으로 — 움직임(translate · rotate)만 못 받고 색 흐름 · 빛 · 흐림은 그대로. 문단 앞 칸은 문단 들여쓰기 그대로 */
+body.salty :is(#chat, .cg-root) .custom-dem-expressive.bl-fx-long,
+body.salty :is(#chat, .cg-root) .bl-fx-long .custom-dem-expressive {
+  display: inline !important;
+}
+body.salty.salty-indent :is(#chat, .cg-root) .custom-dem-expressive.bl-fx-lead.bl-fx-long {
+  margin-left: 0;
+  text-indent: inherit;
+}
 
 /* 빛: 글자를 그리는 안쪽 요소의 제 색으로 (span 자신은 transparent 라 빛이 안 보인다) */
 body.salty.salty-demfx-go.salty-demfx-glow :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none),

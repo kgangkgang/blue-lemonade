@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.3.0";
+export const BUILD_VERSION = "5.3.1";
 export const FILE_HASHES = {
   "index.js": "12169:6abf0b36:2502931a",
-  "manifest.json": "365:728d8a15:a99a1b38",
+  "manifest.json": "365:b6333816:c374679c",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -171,7 +171,7 @@ export const FILE_HASHES = {
   "src/danger.js": "2587:1af54289:192195f8",
   "src/decor-view.js": "6545:ffaf4732:6d4fbc29",
   "src/decor.js": "4048:6dcbd9ab:44ab6a44",
-  "src/dem-expressive.js": "9586:acb6b0f8:fd66427e",
+  "src/dem-expressive.js": "9942:8b12678b:702f2684",
   "src/dem-selection.js": "1486:542d911d:07a42ad8",
   "src/demskin.js": "2167:c0308caa:b58b2d08",
   "src/device-layouts.js": "2454:23885a09:84be226a",
@@ -201,7 +201,7 @@ export const FILE_HASHES = {
   "src/marquee.js": "4394:b21eba98:bf26831b",
   "src/menu-position.js": "3312:4d17612e:af7476d7",
   "src/mes-pins.js": "9110:58a88535:74b20064",
-  "src/notice-data.js": "111847:a8c49aaa:bc4e4951",
+  "src/notice-data.js": "112512:733b13ee:83b88732",
   "src/notice.js": "4623:c387a90d:e051d1f2",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "930:4be2a1fd:48f02c7b",
@@ -264,5 +264,5 @@ export const FILE_HASHES = {
   "src/weather.js": "29151:893fa4f6:d26e0a3b",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "22770:07c345df:f825c7fc",
-  "style.css": "859638:a14aede4:23dfcaed"
+  "style.css": "860084:9be8d565:32046d2c"
 };
