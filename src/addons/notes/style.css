@@ -5,7 +5,7 @@
    ============================================================ */
 :root {
     /* index.js 의 VERSION 과 같아야 한다 */
-    --bl-notes-css-version: "1.1.0";
+    --bl-notes-css-version: "1.2.0";
     --bl-notes-surface: var(--salty-surface, var(--SmartThemeBlurTintColor, #25262a));
     --bl-notes-card: var(--bl-card, var(--salty-card, rgba(255, 255, 255, .04)));
     --bl-notes-text: var(--salty-text, var(--SmartThemeBodyColor, #eee));
@@ -510,3 +510,190 @@ body.salty :is(#salty-nochat, .bl-look-sample.salty-preview) { margin: 0 0 8px !
 /* 체크 상자 안 표시: 테마가 메시지 안 아이콘(i)을 속마음처럼 칠하는 규칙보다 우선 — 안 체크면 안 보이게 */
 .bl-notes-view .bl-note-check i, .bl-notes-view .mes_text .bl-note-check i { color: inherit !important; font-style: normal !important; -webkit-text-fill-color: currentColor !important; text-shadow: none !important; }
 .bl-notes-view .bl-note-check:not(.is-on), .bl-notes-view .mes_text .bl-note-check:not(.is-on) { color: transparent !important; }
+
+/* ══════════ 1.2.0 ══════════ */
+/* ── 태그 · 연결 · 끌어오기 (그린 본문 안) ── */
+.bl-notes-view .bl-note-tag { display: inline; margin: 0 .05em; padding: 0 .4em; border: 0; border-radius: 999px; background: color-mix(in srgb, var(--bl-notes-accent) 16%, transparent); color: var(--bl-notes-accent); font: inherit; font-size: .88em; line-height: inherit; vertical-align: baseline; cursor: pointer; }
+.bl-notes-view .bl-note-tag:hover { background: color-mix(in srgb, var(--bl-notes-accent) 28%, transparent); }
+.bl-notes-view .bl-note-link { display: inline; margin: 0; padding: 0; border: 0; background: none; color: var(--bl-notes-accent); font: inherit; line-height: inherit; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--bl-notes-accent) 45%, transparent); text-underline-offset: .2em; cursor: pointer; }
+.bl-notes-view .bl-note-link.is-missing { color: var(--bl-notes-muted); text-decoration-style: dashed; }
+.bl-notes-view .bl-note-embed { margin: .5em 0; padding: .45em .8em .55em; border-radius: var(--bl-r-sm, 8px); background: color-mix(in srgb, var(--bl-notes-text) 5%, transparent); box-shadow: inset 2px 0 0 color-mix(in srgb, var(--bl-notes-accent) 60%, transparent); }
+.bl-notes-view .bl-note-embed.has-color { background: color-mix(in srgb, var(--bl-note-c) 12%, transparent); box-shadow: inset 2px 0 0 var(--bl-note-c); }
+.bl-notes-view .bl-note-embed-title { display: flex; align-items: center; gap: .4em; margin: 0 0 .2em; font-size: .85em; font-weight: 700; text-decoration: none; }
+.bl-notes-view .bl-note-embed-title i, .bl-notes-view .mes_text .bl-note-embed-title i { color: inherit !important; font-style: normal !important; -webkit-text-fill-color: currentColor !important; text-shadow: none !important; }
+.bl-note-embed-body > :first-child { margin-top: 0 !important; }
+.bl-note-embed-body > :last-child { margin-bottom: 0 !important; }
+.bl-note-embed-empty { margin: 0; color: var(--bl-notes-muted); font-size: .9em; }
+
+/* ── 머리: 태그 모아보기 · 버전(사용방법) · 첫 안내의 '쓰는 법 보기' ── */
+.bl-notes-tagpop { max-height: 50vh; overflow: auto; overscroll-behavior: contain; }
+.bl-notes-sortpop .bl-notes-sortbtn small { margin-left: auto; padding-left: 12px; color: var(--bl-notes-muted); font-size: 11px; font-weight: 400; font-variant-numeric: tabular-nums; }
+.bl-notes-tagnone { margin: 6px 10px; color: var(--bl-notes-muted); font-size: 12px; white-space: nowrap; }
+[data-act="tags"].is-on { color: var(--bl-notes-accent) !important; }
+.bl-notes-ver { margin-left: 2px; padding: 1px 8px; border: 0; border-radius: 999px; background: color-mix(in srgb, var(--bl-notes-accent) 14%, transparent); color: var(--bl-notes-accent); font: inherit; font-size: 11px; font-weight: 600; line-height: 1.6; cursor: pointer; }
+.bl-notes-ver:hover { background: color-mix(in srgb, var(--bl-notes-accent) 24%, transparent); }
+.bl-notes-guidelink { padding: 0; border: 0; background: none; color: var(--bl-notes-accent); font: inherit; text-decoration: underline; text-underline-offset: .2em; cursor: pointer; }
+
+/* ── 서식 줄 링크 팝업 · [[ 자동 목록 ── */
+.bl-note-fmt-hs[data-pop="link"] { flex-direction: column; align-items: stretch; gap: 2px; padding: 6px; min-width: 170px; }
+.bl-note-fmt-hs .bl-note-linkopt { display: flex !important; justify-content: flex-start; gap: 10px; width: 100%; height: 34px; padding: 0 10px !important; font-size: 12px !important; font-weight: 500 !important; }
+.bl-note-fmt-hs.is-url { flex-direction: row; width: 270px; max-width: calc(100vw - 16px); }
+.bl-note-urlrow { display: flex; align-items: center; gap: 8px; width: 100%; padding-left: 6px; }
+.bl-note-urlrow > i { color: var(--bl-notes-muted); font-size: 12px; }
+.bl-note-fmt-hs input[type="url"], .bl-note-fmt-hs input[type="search"] { flex: 1 1 auto; min-width: 0; width: 100%; height: 30px !important; min-height: 0 !important; margin: 0 !important; padding: 0 10px !important; border: 0 !important; border-radius: var(--bl-r-sm, 6px) !important; background: var(--bl-notes-card) !important; color: var(--bl-notes-text) !important; font: inherit !important; font-size: 13px !important; box-shadow: none !important; outline: none !important; }
+.bl-note-fmt-hs.is-pick { width: 270px; max-width: calc(100vw - 16px); gap: 6px; }
+.bl-note-pickhead { display: flex; flex-direction: column; gap: 6px; }
+.bl-note-pickseg { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding: 2px; border-radius: var(--bl-r-sm, 6px); background: var(--bl-notes-card); }
+.bl-note-pickseg button { height: 28px; border: 0; border-radius: 4px; background: transparent; color: var(--bl-notes-muted); font: inherit; font-size: 12px; cursor: pointer; }
+.bl-note-pickseg button.on { background: var(--bl-notes-surface); color: var(--bl-notes-text); font-weight: 700; box-shadow: var(--bl-e1, none); }
+.bl-note-picklist { display: flex; flex-direction: column; gap: 1px; max-height: 40vh; overflow: auto; overscroll-behavior: contain; }
+.bl-note-pickrow { display: flex; align-items: baseline; gap: 8px; width: 100%; min-height: 32px; padding: 5px 8px; border: 0; border-radius: var(--bl-r-sm, 6px); background: transparent; color: var(--bl-notes-text); font: inherit; font-size: 12px; text-align: left; cursor: pointer; }
+.bl-note-pickrow b { flex: 0 1 auto; min-width: 2em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+.bl-note-pickrow small { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--bl-notes-muted); font-size: 11px; }
+.bl-note-pickrow:hover, .bl-note-pickrow.on { background: var(--bl-notes-hover); }
+.bl-note-picknone { margin: 6px 8px; color: var(--bl-notes-muted); font-size: 12px; }
+.bl-note-fmt-hs.bl-note-ac { flex-direction: column; align-items: stretch; width: 250px; max-width: calc(100vw - 16px); padding: 4px; gap: 1px; }
+
+/* ── 폴더 칸: 작게 — 메모마다 제목 + 내용 첫 줄 (좁으면 제목만) ── */
+.bl-notes-list > .bl-note.bl-note-folder { gap: 4px !important; padding: 8px 8px 6px !important; }
+.bl-folder-head { display: flex; align-items: center; gap: 8px; min-height: 26px; padding: 0 4px; border-radius: var(--bl-r-sm, 6px); color: var(--bl-notes-text); font-size: 13px; cursor: pointer; }
+.bl-folder-head:hover { background: var(--bl-notes-hover); }
+.bl-folder-head > .fa-folder { color: var(--bl-notes-accent); }
+.bl-folder-head b { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bl-folder-head small { color: var(--bl-notes-muted); font-size: 11px; }
+.bl-folder-go { margin-left: auto; color: var(--bl-notes-muted); font-size: 10px; }
+.bl-folder-rows { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.bl-folder-row { display: flex; align-items: baseline; gap: 8px; min-width: 0; padding: 3px 6px; border-radius: var(--bl-r-sm, 6px); color: var(--bl-notes-text); font-size: 12px; line-height: 1.5; cursor: pointer; }
+.bl-folder-row:hover { background: var(--bl-notes-hover); }
+.bl-folder-row b { flex: 0 1 auto; min-width: 2.5em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.bl-folder-row span { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--bl-notes-muted); }
+.bl-folder-row span:empty { display: none; }
+.bl-folder-row.has-color b::before { content: ''; display: inline-block; width: 6px; height: 6px; margin: 0 6px 0 0; border-radius: 50%; background: var(--bl-note-c); vertical-align: .15em; }
+.bl-folder-row[hidden] { display: none !important; }
+.bl-folder-bar { display: flex; align-items: center; gap: 6px; margin: 0 0 8px; padding: 2px 2px 2px 0; }
+.bl-folder-bar[hidden] { display: none !important; }
+.bl-folder-bar > i { color: var(--bl-notes-accent); font-size: 13px; }
+.bl-folder-bar input.bl-folder-name { flex: 1 1 auto; min-width: 0; height: 30px !important; min-height: 0 !important; margin: 0 !important; padding: 0 8px !important; border: 0 !important; border-radius: var(--bl-r-sm, 6px) !important; background: transparent !important; color: var(--bl-notes-text) !important; font: inherit !important; font-size: 14px !important; font-weight: 700 !important; box-shadow: none !important; outline: none !important; }
+.bl-folder-bar input.bl-folder-name:focus { background: var(--bl-notes-hover) !important; }
+/* 합치기 · 반짝 · 놓을 곳 */
+.bl-notes-list > .bl-note.is-merge, .bl-notes-list > .bl-note.is-drop, .bl-sticky.is-drop, #bl-notes-bar.is-drop { box-shadow: 0 0 0 2px var(--bl-notes-accent) !important; }
+.bl-note-ghost.is-merge { transform: scale(.9) rotate(0deg); opacity: .8; }
+.bl-note-ghost.is-merge::after { content: '폴더로'; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 4px 10px; border-radius: 999px; background: var(--bl-notes-accent); color: var(--salty-on-accent, #fff); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.bl-sticky.is-dropping { opacity: .7; }
+.bl-notes-list > .bl-note.is-flash { animation: bl-note-flash 1.3s ease; }
+@keyframes bl-note-flash { 0%, 45% { box-shadow: 0 0 0 2px var(--bl-notes-accent); } 100% { box-shadow: 0 0 0 0 transparent; } }
+/* 폴더 칩 (입력창 위 메모 줄) */
+.bl-notes-chip.bl-notes-chip-folder { gap: 6px; }
+.bl-notes-chip.bl-notes-chip-folder i { font-size: 11px; opacity: .8; }
+/* 폴더 쪽지 (PC) — 높이는 줄 수만큼, 너비만 늘리고 줄인다 */
+.bl-sticky.bl-sticky-folder { height: auto; min-height: 0; max-height: 70vh; resize: horizontal; }
+.bl-sticky-folder .bl-sticky-scroll { padding: 4px 6px 8px; }
+.bl-sticky-foldericon { margin: 0 4px 0 4px; color: var(--bl-notes-accent); font-size: 13px; }
+.bl-sticky.bl-sticky-folder .bl-sticky-head .bl-sticky-title { max-width: calc(100% - 92px) !important; }
+
+/* ── 연결 보기 (그래프) ── */
+.bl-notes-dialog.bl-notes-graph { width: min(960px, 96vw); height: min(680px, 88dvh); overflow: hidden; padding-bottom: 12px !important; }
+.bl-notes-dialog.bl-notes-graph[open] { display: flex; flex-direction: column; }
+.bl-graph-stage { position: relative; flex: 1 1 auto; min-height: 240px; border-radius: var(--bl-notes-r); background: var(--bl-notes-card); overflow: hidden; }
+.bl-graph-stage canvas { display: block; touch-action: none; cursor: grab; }
+.bl-graph-empty { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); max-width: 80%; margin: 0; color: var(--bl-notes-muted); font-size: 13px; text-align: center; pointer-events: none; }
+.bl-graph-empty.is-hint { top: auto; bottom: 14px; transform: translateX(-50%); }
+.bl-notes-graph [data-g="tags"].is-on { color: var(--bl-notes-accent); }
+@media (max-width: 480px) { .bl-notes-dialog.bl-notes-graph { height: 100dvh; } }
+
+/* ── 사용방법 창 (한글화 패널 사용방법과 같은 모양) ── */
+.bl-notes-help {
+    --h-accent: var(--salty-accent, var(--SmartThemeQuoteColor, #3975b8));
+    --h-line: var(--salty-line, rgba(127, 127, 127, .22));
+    --h-muted: var(--salty-muted, rgba(127, 127, 127, .9));
+    margin: auto; width: min(680px, calc(100vw - 24px)); max-width: calc(100vw - 24px); height: min(760px, calc(100dvh - 24px)); max-height: calc(100dvh - 24px);
+    padding: 0; border: 0; border-radius: 18px; box-sizing: border-box; overflow: hidden;
+    background: var(--salty-surface, var(--SmartThemeBlurTintColor, #25262a)); color: var(--salty-text, var(--SmartThemeBodyColor, #eee));
+    box-shadow: var(--bl-e3, 0 16px 60px rgba(0, 0, 0, .4)); text-align: left; font-family: var(--mainFontFamily, system-ui, sans-serif);
+}
+.bl-notes-help[open] { display: flex; flex-direction: column; }
+.bl-notes-help::backdrop { background: rgba(8, 12, 20, .5); }
+.bl-notes-help * { box-sizing: border-box; }
+.bl-notes-help [hidden] { display: none !important; }
+.bl-notes-help > header { display: flex; flex: none; align-items: center; justify-content: space-between; gap: 8px; padding: 18px 14px 10px 22px; }
+.bl-notes-help header small { color: var(--h-accent); font-size: 10px; font-weight: 700; letter-spacing: .08em; }
+.bl-notes-help h2 { margin: 4px 0 0; color: inherit; font-size: 19px; font-weight: 700; line-height: 1.4; }
+.bl-notes-help > header .bl-note-btn { min-width: 38px; height: 38px; font-size: 16px; }
+.bl-notes-help nav { display: grid; flex: none; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 4px 14px 10px; border-bottom: 1px solid var(--h-line); }
+.bl-notes-help nav button { min-width: 0; min-height: 40px; padding: 6px 4px; border: 0; border-radius: 10px; background: transparent; color: var(--h-muted); font: inherit; font-size: 13px; font-weight: 500; line-height: 1.3; word-break: keep-all; cursor: pointer; }
+.bl-notes-help nav button[aria-selected="true"] { background: color-mix(in srgb, var(--h-accent) 14%, transparent); color: var(--h-accent); font-weight: 700; }
+.bl-notes-help-body { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 18px 20px 24px; }
+.bl-notes-help-lead { margin: 0 2px 16px; color: var(--h-muted); line-height: 1.7; }
+.bl-notes-help details { margin: 0 0 10px; padding: 2px 18px; border-radius: 14px; background: var(--bl-card, var(--salty-card, rgba(127, 127, 127, .08))); }
+.bl-notes-help summary { padding: 13px 0; font-size: 14px; font-weight: 700; cursor: pointer; }
+.bl-notes-help details > div { padding: 0 0 14px; font-size: 13.5px; line-height: 1.75; }
+.bl-notes-help details p { margin: 0 0 8px; }
+.bl-notes-help details ol, .bl-notes-help details ul { margin: 0 0 8px; padding-left: 1.3em; }
+.bl-notes-help details li + li { margin-top: 5px; }
+.bl-notes-help dl { margin: 0 0 6px; }
+.bl-notes-help dt { margin-top: 12px; font-weight: 700; }
+.bl-notes-help dt:first-child { margin-top: 0; }
+.bl-notes-help dd { margin: 3px 0 0; color: color-mix(in srgb, currentColor 80%, transparent); }
+.bl-notes-help code { padding: 1px 6px; border-radius: 6px; background: rgba(127, 127, 127, .16); font-size: .92em; }
+.bl-notes-help footer { display: flex; flex: none; justify-content: flex-end; padding: 10px 16px; border-top: 1px solid var(--h-line); }
+.bl-notes-help-open { display: inline-flex; align-items: center; gap: 8px; height: 38px; margin: 0; padding: 0 18px; border: 0; border-radius: 10px; background: var(--h-accent); color: var(--salty-on-accent, #fff); font: inherit; font-size: 13px; font-weight: 700; white-space: nowrap; writing-mode: horizontal-tb; cursor: pointer; }
+.bl-notes-help-open:hover { filter: brightness(1.06); }
+@media (max-width: 480px) {
+    .bl-notes-help { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; border-radius: 0; }
+    .bl-notes-help > header { padding: 14px 10px 8px 16px; }
+    .bl-notes-help nav { padding: 4px 8px 8px; gap: 2px; }
+    .bl-notes-help nav button { font-size: 12px; }
+    .bl-notes-help-body { padding: 14px 14px 20px; }
+    .bl-notes-help details { padding: 2px 14px; }
+}
+
+/* ── 메모 설정: 숨 쉬게 — 묶음(글자 · 한 줄에 메모 · 서식 버튼)마다 제목과 여백, 상자 대신 가는 선 ── */
+.bl-notes-dialog.bl-notes-look { width: min(560px, 94vw); padding: 0 22px 24px !important; }
+.bl-notes-dialog.bl-notes-look > header { margin: 0 -22px 2px; padding: 14px 14px 10px 22px; }
+.bl-look-sec { padding: 20px 0 22px; border-top: 1px solid var(--salty-line, color-mix(in srgb, var(--bl-notes-text) 10%, transparent)); }
+.bl-look-sec.bl-look-top { padding-top: 4px; border-top: 0; }
+.bl-look-sec:last-child { padding-bottom: 4px; }
+.bl-look-title { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 0 0 16px; color: var(--bl-notes-text); font-size: 13px; font-weight: 700; letter-spacing: .01em; }
+.bl-look-title small { color: var(--bl-notes-muted); font-size: 11px; font-weight: 500; }
+.bl-notes-look .bl-look-sample, body.salty :is(#salty-nochat, .bl-notes-look .bl-look-sample.salty-preview) { margin: 0 !important; padding: 16px 18px !important; border-radius: 12px !important; }
+.bl-look-note { margin: 12px 2px 0; color: var(--bl-notes-muted); font-size: 12px; line-height: 1.6; }
+.bl-notes-look .bl-look-item { padding: 0 !important; }
+.bl-notes-look .bl-look-item[data-param="font"] { margin-bottom: 24px; }
+.bl-notes-look .bl-look-fontbtn { height: 42px; padding: 0 14px; border-radius: 10px; }
+.bl-notes-look .bl-look-grid { gap: 24px 30px !important; }
+.bl-notes-look .bl-look-grid .bl-look-head { display: flex; align-items: center; gap: 8px; min-height: 24px; margin: 0 0 12px !important; }
+.bl-look-name { color: var(--bl-notes-text); font-size: 13px; font-weight: 600; white-space: nowrap; }
+.bl-look-val { display: inline-flex; align-items: baseline; gap: 2px; margin-left: auto; color: var(--bl-notes-text); font-variant-numeric: tabular-nums; }
+.bl-notes-look .bl-look-val input[type="number"] { width: 3.3em !important; height: 24px !important; min-height: 0 !important; margin: 0 !important; padding: 0 2px !important; border: 0 !important; border-radius: 4px !important; background: transparent !important; box-shadow: none !important; color: var(--bl-notes-text) !important; font: inherit !important; font-size: 13px !important; text-align: right !important; outline: none !important; -moz-appearance: textfield; appearance: textfield; }
+.bl-notes-look .bl-look-val input[type="number"]::-webkit-inner-spin-button, .bl-notes-look .bl-look-val input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.bl-notes-look .bl-look-val input[type="number"]:focus { background: var(--bl-notes-hover) !important; }
+.bl-notes-look .bl-look-val input[type="number"]:disabled { opacity: .45; }
+.bl-notes-look .bl-look-val .bl-look-unit { min-width: 0; color: var(--bl-notes-muted); font-size: 11px; }
+.bl-notes-look .bl-look-val .bl-look-unit:empty { display: none; }
+.bl-notes-look .bl-look-grid .bl-look-same { flex: none; gap: 5px; padding: 3px 9px 3px 7px; border-radius: 999px; background: var(--bl-notes-card); font-size: 11px; }
+.bl-notes-look .bl-look-grid .bl-look-same:has(input:checked) { background: color-mix(in srgb, var(--bl-notes-accent) 16%, transparent); color: var(--bl-notes-accent); }
+.bl-notes-look .bl-look-grid .bl-look-ctl { min-height: 0; }
+.bl-notes-look .bl-look-grid .bl-look-ctl input[type="range"] { width: 100%; margin: 0; }
+.bl-notes-look .bl-look-grid .bl-look-ctl input[type="range"]:disabled { opacity: .35; }
+.bl-notes-look .bl-look-seg { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; padding: 3px; border-radius: 10px; }
+.bl-notes-look .bl-look-segbtn { height: 36px; border-radius: 8px; font-size: 13px; }
+.bl-notes-look .bl-look-hint { margin: 12px 2px 0; font-size: 12px; }
+.bl-notes-look .bl-look-fmtlist { gap: 0 24px; }
+.bl-notes-look .bl-look-fmtrow { gap: 10px; height: 44px; padding: 0 2px 0 0; border-radius: 0; background: transparent; border-bottom: 1px solid var(--salty-line, color-mix(in srgb, var(--bl-notes-text) 8%, transparent)); font-size: 13px; }
+@media (max-width: 480px) {
+    .bl-notes-dialog.bl-notes-look { padding: 0 16px 20px !important; }
+    .bl-notes-dialog.bl-notes-look > header { margin: 0 -16px 2px; padding: 12px 10px 8px 16px; }
+    .bl-notes-look .bl-look-grid { gap: 22px 22px !important; }
+    .bl-notes-look .bl-look-fmtlist { gap: 0 16px; }
+}
+/* 테마 미리보기 칸 규칙(.salty-preview > * { pointer-events: none })이 메모 보기 안까지 막아 체크 상자 · 태그 · 연결이 안 눌렸다 → 메모 안에서는 되살린다 */
+body.salty .bl-notes-view.salty-preview > *, .bl-notes-view.salty-preview > * { pointer-events: auto !important; }
+/* 머리 한 줄 유지: 버튼이 늘어서(태그 · 연결 보기) 찾기 칸을 열면 줄이 넘쳤다 → 찾기 칸이 남는 자리만큼 줄고, 좁은 화면에서는 찾는 동안 개수 · 버전을 숨긴다 */
+.bl-notes-mini > .bl-notes-peek-head { flex-wrap: nowrap !important; }
+.bl-notes-mini > .bl-notes-peek-head > b { flex: 0 1 auto !important; min-width: 0; }
+.bl-notes-mini > .bl-notes-peek-head > .bl-notes-find, .bl-notes-dialog > header .bl-notes-find { flex: 1 1 auto; width: auto !important; min-width: 64px; max-width: 160px; }
+.bl-notes-mini > .bl-notes-peek-head > .bl-notes-find { margin-left: 4px !important; }
+.bl-notes-mini > .bl-notes-peek-head:has(.bl-notes-find:not([hidden])) .bl-notes-count { display: none; }
+.bl-notes-dialog > header b { flex: 0 1 auto; min-width: 0; white-space: nowrap; }
+.bl-notes-dialog > header .bl-notes-head-tools { flex: 1 1 auto; flex-wrap: nowrap; justify-content: flex-end; min-width: 0; }
+@media (max-width: 480px) { .bl-notes-dialog > header:has(.bl-notes-find:not([hidden])) :is(.bl-notes-ver, .bl-notes-count) { display: none; } .bl-notes-dialog > header { gap: 6px; } }

@@ -165,6 +165,14 @@ export const DEFAULT_SETTINGS = {
             words: 'horn, horns, horned, horn-like, antler, antlers',
             onlyFor: 'Satan, Satanael, 사탄, 사타나엘, サタン',
         },
+        {
+            // 1.9.3 — only Michael, Lucifer, Uriel and Zadkiel wear gloves (the exceptions below); everyone else's hands are bare.
+            id: 'gloves',
+            name: '장갑',
+            enabled: true,
+            description: 'gloves worn by a character (gloves, gloved hands, fingerless or leather gloves, gauntlets) — drop the gloves and keep the bare hand and the action; gloves that are only objects in the scene (rubber gloves on a shelf, oven mitts) are fine',
+            words: 'glove, gloves, gloved, gauntlet, gauntlets',
+        },
         ...(USER_COLORS_RULE ? [USER_COLORS_RULE] : []),
         ...(USER_HAIR_RULE ? [USER_HAIR_RULE] : []),
         ...(USER_NAILS_RULE ? [USER_NAILS_RULE] : []),
@@ -196,7 +204,7 @@ export const DEFAULT_SETTINGS = {
         },
     ],
     // Default rule ids already offered to this install; newer ones get added once on load (see loadSettings).
-    offeredRules: ['glasses', 'glasses_color', 'beard', 'tan', 'cane', 'ears', 'gray_nails', 'horns', 'user_colors', 'fufu', 'chest_hair'],
+    offeredRules: ['glasses', 'glasses_color', 'beard', 'tan', 'cane', 'ears', 'gray_nails', 'horns', 'gloves', 'user_colors', 'fufu', 'chest_hair'],
     exceptions: [
         {
             id: 'belford',
@@ -210,9 +218,34 @@ export const DEFAULT_SETTINGS = {
             names: 'Adelstein, Adel, 아델스타인, 아델, アデルシュタイン, アデル',
             allow: ['ears', 'gray_nails'],
         },
+        // 1.9.3 — the glove wearers: Michael (black), Lucifer (white), Uriel (fingerless tactical), Zadkiel (white).
+        {
+            id: 'michael',
+            enabled: true,
+            names: 'Michael, 미카엘, ミカエル',
+            allow: ['gloves'],
+        },
+        {
+            id: 'lucifer',
+            enabled: true,
+            names: 'Lucifer, Lucifel, 루시퍼, 루시펠, ルシファー, ルシフェル',
+            allow: ['gloves'],
+        },
+        {
+            id: 'uriel',
+            enabled: true,
+            names: 'Uriel, 우리엘, ウリエル',
+            allow: ['gloves'],
+        },
+        {
+            id: 'zadkiel',
+            enabled: true,
+            names: 'Zadkiel, Zad, 자드키엘, 자드, ザドキエル, ザド',
+            allow: ['gloves'],
+        },
     ],
     // Default exception ids already offered; newer ones get added once on load, a deleted one stays deleted.
-    offeredExceptions: ['belford', 'adelstein'],
+    offeredExceptions: ['belford', 'adelstein', 'michael', 'lucifer', 'uriel', 'zadkiel'],
     // One-off setting upgrades already applied (see upgrades.js); a fresh install needs none of them.
     appliedUpgrades: ['words-1.7', 'belford-nails-1.7', 'multilingual-1.7.7', 'two-colors-1.7.9'],
 };

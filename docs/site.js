@@ -5,7 +5,7 @@ const topics = [
   "id": "new498",
   "label": "새 기능",
   "title": "그림도 번역도, 내 방식으로",
-  "sub": "메모부터 전개 지시 · 그림 관리 · 번역까지 실제 사용 흐름을 살펴보세요. 메모는 5.3.2, 전개 지시는 5.2.1, 에셋은 5.2.0, 번역·한글화 새 기능은 5.0.0, 기존 LLM 위치·탭과 메뉴 순서는 4.9.8 촬영본이에요.",
+  "sub": "메모부터 전개 지시 · 그림 관리 · 번역까지 실제 사용 흐름을 살펴보세요. 영상은 5.3.2 화이트 테마로 찍었어요. 메모 태그 · 연결 · 폴더는 5.3.3 에서 생겼어요.",
   "tall": true,
   "cards": [
     ["532-notes-write.mp4", "메모 · 적고 체크하고 색 입히기", "입력창 위 ☰ 로 메모 목록을 열어요. 체크박스는 눌러서 체크하고, 목록 줄에서 엔터를 누르면 다음 줄이 이어져요. 메모지 색 · 글자색은 테마 팔레트 색이나 내 색으로 골라요.", "532-notes-write.jpg"],
@@ -589,7 +589,8 @@ document.addEventListener('bl-theme',()=>{for(const video of document.querySelec
  if(video.controls)video.src=video.dataset.src;
  if(playing&&!document.hidden){video.src=video.dataset.src;video.play().catch(()=>{});}
 }});
-const RETAKEN={};
+// 532light: 새 기능 18개를 5.3.2 라이트(블루 레몬에이드 · 화이트)로 다시 찍음 — 같은 파일 이름
+const RETAKEN={"532-notes-write.mp4":"532light","532-notes-write.jpg":"532light","532-notes-arrange.mp4":"532light","532-notes-arrange.jpg":"532light","524-direction.mp4":"532light","524-direction.jpg":"532light","524-ade-presets.mp4":"532light","524-ade-presets.jpg":"532light","524-ade-toggle.mp4":"532light","524-ade-toggle.jpg":"532light","500-llm-glossary-world.mp4":"532light","500-llm-glossary-world.jpg":"532light","500-llm-glossary-chat.mp4":"532light","500-llm-glossary-chat.jpg":"532light","500-llm-send-context.mp4":"532light","500-llm-send-context.jpg":"532light","500-llm-split-language.mp4":"532light","500-llm-split-language.jpg":"532light","500-llm-send-display.mp4":"532light","500-llm-send-display.jpg":"532light","498-llm-location.mp4":"532light","498-llm-location.jpg":"532light","498-llm-settings.mp4":"532light","498-llm-settings.jpg":"532light","500-panel-mobile.mp4":"532light","500-panel-mobile.jpg":"532light","500-panel-guide.mp4":"532light","500-panel-guide.jpg":"532light","500-panel-parameters.mp4":"532light","500-panel-parameters.jpg":"532light","500-regex-phone.mp4":"532light","500-regex-phone.jpg":"532light","498-menu-order.mp4":"532light","498-menu-order.jpg":"532light","500-modes.mp4":"532light","500-modes.jpg":"532light"};
 const mv=file=>'?v='+(RETAKEN[file]||'s1')+'-ade-488';
 
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
@@ -657,7 +658,7 @@ lightbox.querySelector('.close').onclick=()=>lightbox.close();lightbox.onclick=e
  dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});
  dialog.addEventListener('close',()=>{video.pause();video.removeAttribute('src');delete video.dataset.modeBase;video.load();});}
 const SHOWN_NOTES=3;
-fetch('release-notes.json?v=532', {cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error('notes');return r.json();}).then(notes=>{$('#notes').replaceChildren();
+fetch('release-notes.json?v=533', {cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error('notes');return r.json();}).then(notes=>{$('#notes').replaceChildren();
   // one card per day, like the theme's own notice: a busy day reads as "v4.1.2 ~ v4.2.4 · 업데이트 13번"
   const days=[];for(const note of notes){const last=days.at(-1);if(last&&last.date===note.date)last.notes.push(note);else days.push({date:note.date,notes:[note]});}
   days.forEach((day,i)=>{const d=element('details','note');d.open=i===0;d.hidden=i>=SHOWN_NOTES;const s=element('summary'),first=day.notes.at(-1).version,latest=day.notes[0].version;

@@ -12,17 +12,33 @@ import { dressBody } from '../../dem-expressive.js';
 import { allFonts, findFont, loadFont, fontStack, fontsFor, previewStack, queuePreview, GROUPS, SAMPLES } from '../../fonts.js';
 import { restorePreviewRules } from '../../lite.js';
 import { PALETTES, PALETTE_FAMILIES } from '../../palettes.js';
+import { NOTES_VERSION } from './version.js';
 
-export const VERSION = '1.1.0';
+export const VERSION = NOTES_VERSION;
 const MODULE = 'bl-notes';
 const TITLE = '메모';
 const MAX_NOTES = 300;
 const LOOK_DEFAULT = { font: '', size: 100, lh: '', ls: '', weight: '', cols: 'auto', sort: 'manual' };
 
+// 1.2.0: 목록을 부를 때마다 새 배열 · 새 객체로 바꾸면(1.1.x) 앞에서 잡아 둔 배열에 한 일이 버려졌다
+//        (위 · 아래 버튼이 안 움직이던 원인) → 한 배열은 한 번만, 제자리에서 다듬는다
+const tidied = new WeakSet();
+const HEX6 = /^#[0-9a-f]{6}$/i;
 function store() {
     const s = extension_settings[MODULE] ??= {};
     if (!Array.isArray(s.notes)) s.notes = [];
-    s.notes = s.notes.filter(n => n && typeof n === 'object').map(n => ({ id: String(n.id || uid()), title: String(n.title ?? ''), body: String(n.body ?? ''), updated: Number(n.updated) || 0, color: /^#[0-9a-f]{6}$/i.test(String(n.color || '')) ? n.color : '', ink: /^#[0-9a-f]{6}$/i.test(String(n.ink || '')) ? n.ink : '', ...(n.owner && typeof n.owner === 'object' ? { owner: n.owner } : {}) }));
+    if (!tidied.has(s.notes)) {
+        s.notes = s.notes.filter(n => n && typeof n === 'object');
+        for (const n of s.notes) {
+            n.id = String(n.id || uid()); n.title = String(n.title ?? ''); n.body = String(n.body ?? ''); n.updated = Number(n.updated) || 0;
+            n.color = HEX6.test(String(n.color || '')) ? n.color : ''; n.ink = HEX6.test(String(n.ink || '')) ? n.ink : '';
+            if (!(n.owner && typeof n.owner === 'object')) delete n.owner;
+            if (!(typeof n.folder === 'string' && n.folder)) delete n.folder;
+        }
+        tidied.add(s.notes);
+    }
+    if (!Array.isArray(s.folders)) s.folders = [];
+    if (!tidied.has(s.folders)) { s.folders = s.folders.filter(f => f && f.id); for (const f of s.folders) { f.id = String(f.id); f.name = String(f.name ?? ''); } tidied.add(s.folders); }
     if (!s.look || typeof s.look !== 'object') s.look = { ...LOOK_DEFAULT };
     s.version = VERSION;
     return s;
@@ -51,6 +67,93 @@ export function orderedNotes() {
     return list;
 }
 
+// ── 태그 · 연결 · 폴더 ─────────────────────────────────────
+// #태그: 띄어쓰기 없이 · '/' 로 하위 태그. 코드 칸 안 · 숫자만인 것(#1) · 제목(# 뒤 띄어쓰기)은 태그가 아니다
+const TAG_RE = /(^|\s)#([\p{L}\p{N}_\-\/]*[\p{L}_\-][\p{L}\p{N}_\-\/]*)/gu;
+// [[제목]] 연결 · ![[제목]] 끌어오기 · [[제목|보일 이름]]
+const LINK_RE = /(!?)\[\[([^\[\]\n|]+?)(?:\|([^\[\]\n]+?))?\]\]/g;
+const stripCode = text => String(text || '').replace(/```[\s\S]*?```/g, ' ').replace(/`[^`\n]*`/g, ' ');
+export function tagsOf(text) { const out = new Set(); for (const m of stripCode(text).matchAll(TAG_RE)) out.add(m[2].replace(/\/+$/, '')); out.delete(''); return [...out]; }
+export function linksOf(text) { return [...stripCode(text).matchAll(LINK_RE)].map(m => ({ title: m[2].trim(), embed: !!m[1] })).filter(l => l.title); }
+const tagHit = (tags, q) => { const want = q.toLowerCase(); return tags.some(t => { const v = t.toLowerCase(); return v === want || v.startsWith(want + '/'); }); };
+/** 보이는 메모에 쓰인 태그 [[태그, 개수]] — 많은 순 */
+export function allTags() { const count = new Map(); for (const n of visibleNotes()) for (const t of tagsOf(n.body)) count.set(t, (count.get(t) || 0) + 1); return [...count].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'ko')); }
+/** 제목으로 메모 찾기 (대소문자 무시) — 지금 보이는 메모를 먼저 */
+export function findByTitle(title) {
+    const key = String(title || '').trim().toLowerCase(); if (!key) return null;
+    const hit = n => n.title.trim().toLowerCase() === key;
+    return visibleNotes().find(hit) || notes().find(hit) || null;
+}
+/** 내용 첫 줄을 글자만 (폴더 · 고르기 목록의 한 줄 미리보기) */
+const plainLine = body => {
+    for (const raw of String(body || '').split('\n')) {
+        const line = raw.replace(/<[^>]+>/g, '').replace(/^\s*(#{1,6}\s+|[-*+]\s+\[[ xX]\]\s+|[-*+]\s+|\d+\.\s+|>\s*)/, '').replace(/!?\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (all, t, alias) => alias || t).replace(/[*_~`]+/g, '').trim();
+        if (line) return line;
+    }
+    return '';
+};
+// 폴더: 메모마다 folder(폴더 id) · 폴더 목록 { id, name }. 목록에서는 폴더의 첫 메모 자리에 폴더 칸 하나로 보인다
+export const folders = () => store().folders;
+const folderById = id => (id ? folders().find(f => f.id === id) || null : null);
+const folderName = f => (f?.name || '').trim() || '폴더';
+/** 메모가 둘 미만인 폴더는 풀고, 없는 폴더를 가리키는 메모는 뗀다 */
+function tidyFolders() {
+    const s = store(), gone = [];
+    for (const n of s.notes) if (n.folder && !s.folders.some(f => f.id === n.folder)) delete n.folder;
+    s.folders = s.folders.filter(f => { const members = s.notes.filter(n => n.folder === f.id); if (members.length >= 2) return true; members.forEach(n => { delete n.folder; }); gone.push(f.id); return false; });
+    for (const fid of gone) closeSticky('f:' + fid);
+}
+/** target = { id } (메모) 또는 { folder } 쪽으로 ids 메모를 모은다 → 폴더 id. 모은 메모는 폴더의 마지막 메모 뒤로 */
+function joinFolder(target, ids) {
+    const s = store(); let fid = target.folder;
+    if (!fid) {
+        const t = s.notes.find(n => n.id === target.id); if (!t) return null;
+        fid = t.folder;
+        if (!fid || !s.folders.some(f => f.id === fid)) { fid = 'f' + uid(); s.folders.push({ id: fid, name: '' }); t.folder = fid; }
+    }
+    if (!s.folders.some(f => f.id === fid)) return null;
+    const moving = s.notes.filter(n => ids.includes(n.id) && n.folder !== fid);
+    const rest = s.notes.filter(n => !moving.includes(n));
+    moving.forEach(n => { n.folder = fid; });
+    let at = -1; rest.forEach((n, i) => { if (n.folder === fid) at = i; });
+    rest.splice(at + 1, 0, ...moving);
+    s.notes = rest; tidyFolders(); save();
+    return folderById(fid) ? fid : null;
+}
+function leaveFolder(id) {
+    const s = store(), i = s.notes.findIndex(n => n.id === id); if (i < 0) return;
+    const n = s.notes[i], fid = n.folder; if (!fid) return;
+    s.notes.splice(i, 1); delete n.folder;
+    let at = -1; s.notes.forEach((m, k) => { if (m.folder === fid) at = k; });
+    s.notes.splice(at + 1, 0, n); tidyFolders(); save();
+}
+function breakFolder(fid) { const s = store(); s.notes.forEach(n => { if (n.folder === fid) delete n.folder; }); tidyFolders(); save(); }
+/** 목록에 그릴 칸: 폴더 안이면 그 폴더 메모만, 밖이면 폴더는 첫 메모 자리에 한 칸 */
+function displayItems(fid) {
+    const list = orderedNotes();
+    if (fid) return list.filter(n => n.folder === fid).map(note => ({ note }));
+    const out = [], seen = new Set(), live = new Set(folders().map(f => f.id));
+    for (const note of list) {
+        if (note.folder && live.has(note.folder)) { if (seen.has(note.folder)) continue; seen.add(note.folder); out.push({ folder: note.folder }); }
+        else out.push({ note });
+    }
+    return out;
+}
+/** 제목을 바꾸면 다른 메모의 [[옛 제목]] 도 새 제목으로 (같은 옛 제목 메모가 또 있으면 그쪽 연결이라 두고) */
+function renameLinks(from, to, selfId) {
+    const a = String(from || '').trim(), b = String(to || '').trim();
+    if (!a || !b || a.toLowerCase() === b.toLowerCase()) return;
+    if (notes().some(n => n.id !== selfId && n.title.trim().toLowerCase() === a.toLowerCase())) return;
+    const pattern = a.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp('(!?\\[\\[)\\s*' + pattern + '\\s*((?:\\|[^\\]\\n]*)?\\]\\])', 'gi');
+    let changed = 0;
+    for (const n of [...notes()]) {
+        const next = n.body.replace(re, (all, open, close) => { changed++; return open + b + close; });
+        if (next !== n.body) updateNote(n.id, { body: next });
+    }
+    if (changed) globalThis.toastr?.info(`다른 메모의 연결 ${changed}곳도 새 제목으로 바꿨어요.`, TITLE, { timeOut: 2500 });
+}
+
 // ── 자료 ───────────────────────────────────────────────────
 export function addNote(title = '', body = '', at = 0) {
     const list = notes();
@@ -61,7 +164,7 @@ export function addNote(title = '', body = '', at = 0) {
     save(); return note;
 }
 export function removeNote(id) { const list = notes(), i = list.findIndex(n => n.id === id); if (i < 0) return false; list.splice(i, 1); save(); return true; }
-export function duplicateNote(id) { const list = notes(), i = list.findIndex(n => n.id === id); if (i < 0) return null; const made = addNote(list[i].title, list[i].body, i + 1); if (made) { made.color = list[i].color || ''; made.ink = list[i].ink || ''; if (list[i].owner) made.owner = { ...list[i].owner }; save(); } return made; }
+export function duplicateNote(id) { const list = notes(), i = list.findIndex(n => n.id === id); if (i < 0) return null; const made = addNote(list[i].title, list[i].body, i + 1); if (made) { made.color = list[i].color || ''; made.ink = list[i].ink || ''; if (list[i].owner) made.owner = { ...list[i].owner }; if (list[i].folder) made.folder = list[i].folder; save(); } return made; }
 export function moveNote(id, delta) {
     // 보이는 메모끼리 자리 바꿈 (다른 채팅 메모는 건너뜀)
     const list = notes(), vis = orderedNotes().map(n => n.id), vi = vis.indexOf(id), vj = vi + delta;
@@ -99,7 +202,48 @@ function drawTasks(body, onToggle) {
         li.classList.add('bl-task'); li.classList.toggle('is-done', done); li.parentElement?.classList.add('bl-tasklist');
     }
 }
-function renderView(host, text, onToggle) {
+// 그린 본문의 글자에서 #태그 · [[연결]] · ![[끌어오기]] 를 누를 수 있는 조각으로 (코드 · 링크 안은 그대로)
+const DECOR_RE = /(!?)\[\[([^\[\]\n|]+?)(?:\|([^\[\]\n]+?))?\]\]|(^|\s)#([\p{L}\p{N}_\-\/]*[\p{L}_\-][\p{L}\p{N}_\-\/]*)/gu;
+const tagEl = tag => { const b = document.createElement('button'); b.type = 'button'; b.className = 'bl-note-tag'; b.dataset.tag = tag; b.textContent = '#' + tag; b.title = `#${tag} 메모만 보기`; return b; };
+function linkEl(title, alias, target) {
+    const b = document.createElement('button'); b.type = 'button';
+    b.className = 'bl-note-link' + (target ? '' : ' is-missing'); b.dataset.noteLink = title;
+    b.textContent = String(alias || title).trim(); b.title = target ? `'${title}' 메모로` : `'${title}' — 누르면 새 메모로 만들어요`;
+    return b;
+}
+function embedEl(target, depth) {
+    const box = document.createElement('div'); box.className = 'bl-note-embed'; box.dataset.embed = target.id;
+    if (target.color) { box.classList.add('has-color'); box.style.setProperty('--bl-note-c', target.color); }
+    const head = linkEl(target.title, '', target); head.classList.add('bl-note-embed-title');
+    head.innerHTML = `<i class="fa-regular fa-note-sticky" aria-hidden="true"></i> ${escA(target.title)}`;
+    const inner = document.createElement('div'); inner.className = 'bl-note-embed-body';
+    box.append(head, inner);
+    const text = String(target.body || '').trim();
+    if (!text) { inner.innerHTML = '<p class="bl-note-embed-empty">비어 있는 메모예요.</p>'; return box; }
+    try { inner.innerHTML = messageFormatting(text, '', false, false, -1, {}, false); } catch { inner.textContent = text; }
+    try { drawTasks(inner, k => { const n = notes().find(x => x.id === target.id); if (n) updateNote(n.id, { body: toggleTask(n.body, k) }); }); } catch { /* 표시용 */ }
+    try { decorate(inner, target.id, depth + 1); } catch { /* 표시용 */ }
+    return box;
+}
+function decorate(body, selfId = '', depth = 0) {
+    const skip = 'code, pre, a, button, textarea, .bl-note-embed-title';
+    const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT, { acceptNode: node => (node.parentElement?.closest(skip) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) });
+    const nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode);
+    for (const node of nodes) {
+        const text = node.data; if (!text.includes('[[') && !text.includes('#')) continue;
+        const parts = []; let last = 0;
+        for (const m of text.matchAll(DECOR_RE)) {
+            if (m[5] !== undefined) { const at = m.index + m[4].length; parts.push(text.slice(last, at), tagEl(m[5].replace(/\/+$/, ''))); last = m.index + m[0].length; continue; }
+            const title = m[2].trim(), target = findByTitle(title);
+            parts.push(text.slice(last, m.index), m[1] && depth < 1 && target && target.id !== selfId ? embedEl(target, depth) : linkEl(title, m[3], target));
+            last = m.index + m[0].length;
+        }
+        if (!parts.length) continue;
+        parts.push(text.slice(last));
+        node.replaceWith(...parts.filter(p => p !== ''));
+    }
+}
+function renderView(host, text, onToggle, selfId = '') {
     // 채팅 서식의 사본 규칙(.salty-preview …)은 시작 속도 때문에 꺼져 있다 — 처음 그릴 때 한 번 켠다 (북마크 창과 같음)
     if (!previewRulesOn) { previewRulesOn = true; try { restorePreviewRules(); } catch { /* 표시용 */ } }
     if (!host.firstChild) host.innerHTML = '<div class="mes"><div class="mes_block"><div class="mes_text"></div></div></div>';
@@ -109,6 +253,7 @@ function renderView(host, text, onToggle) {
     try { body.innerHTML = messageFormatting(raw, '', false, false, -1, {}, false); }
     catch (error) { console.warn('[메모] 본문 그리기 실패:', error); body.textContent = raw; }
     try { drawTasks(body, onToggle); } catch (error) { console.warn('[메모] 체크 상자:', error); }
+    try { decorate(body, selfId, 0); } catch (error) { console.warn('[메모] 태그 · 연결:', error); }
     try { wrapSpanningQuotes(body); } catch { /* 표시용 */ }
     try { dressBody(body, { mes: raw, extra: {} }); } catch { /* 표시용 */ }
 }
@@ -121,21 +266,33 @@ function renderView(host, text, onToggle) {
 const FMT_ALL = {
     b: ['fa-bold', '굵게', '**', '**'], i: ['fa-italic', '기울기 (속마음)', '*', '*'], s: ['fa-strikethrough', '취소선', '~~', '~~'], u: ['fa-underline', '밑줄', '<u>', '</u>'],
     h: ['fa-heading', '제목 (H1 · H2 · H3)', '', ''], list: ['fa-list-ul', '목록 (점 · 번호 · 체크)', '', ''], code: ['fa-code', '코드', '`', '`'], mark: ['fa-highlighter', '형광펜 (테마 형광펜 색)', '<mark>', '</mark>'],
+    link: ['fa-link', '링크 (외부 링크 · 메모 끌어오기)', '', ''],
     quote: ['fa-quote-left', '대사 따옴표', '"', '"'], color: ['fa-palette', '글자색', '', ''],
 };
-const FMT_DEFAULT = [['b', 1], ['i', 1], ['s', 1], ['u', 1], ['h', 1], ['list', 1], ['code', 1], ['mark', 1], ['quote', 0], ['color', 0]];
+// 설정 목록에 쓰는 짧은 이름 (버튼 풍선말은 FMT_ALL 의 긴 이름)
+const FMT_SHORT = { b: '굵게', i: '기울기', s: '취소선', u: '밑줄', h: '제목', list: '목록', code: '코드', mark: '형광펜', link: '링크', quote: '따옴표', color: '글자색' };
+const FMT_DEFAULT = [['b', 1], ['i', 1], ['s', 1], ['u', 1], ['h', 1], ['list', 1], ['code', 1], ['mark', 1], ['link', 1], ['quote', 0], ['color', 0]];
 const SWATCHES = ['#e05a5a', '#e8913a', '#e6c23a', '#5fbf6a', '#3fb8c4', '#6f9cf5', '#a37ef0', '#f28cc0', '#9aa0a6'];
 /** [{ k, on }] — 저장된 순서를 따르고, 새로 생긴 버튼은 기본값으로 뒤에 붙인다 */
 function fmtButtons() {
     const saved = Array.isArray(look().fmtButtons) ? look().fmtButtons.filter(x => x && FMT_ALL[x.k]) : [];
-    const seen = new Set(saved.map(x => x.k));
-    return [...saved.map(x => ({ k: x.k, on: !!x.on })), ...FMT_DEFAULT.filter(([k]) => !seen.has(k)).map(([k, on]) => ({ k, on: !!on }))];
+    const out = saved.map(x => ({ k: x.k, on: !!x.on })), seen = new Set(out.map(x => x.k));
+    // 새로 생긴 버튼은 기본 순서의 앞 버튼 바로 뒤에 (링크 → 형광펜 옆)
+    FMT_DEFAULT.forEach(([k, on], i) => {
+        if (seen.has(k)) return;
+        const prev = FMT_DEFAULT.slice(0, i).map(([p]) => p).reverse().find(p => seen.has(p));
+        const at = prev ? out.findIndex(x => x.k === prev) + 1 : 0;
+        out.splice(at, 0, { k, on: !!on }); seen.add(k);
+    });
+    return out;
 }
+const LINK_MENU = `<button type="button" class="bl-note-btn bl-note-linkopt" data-link-mode="url" title="인터넷 주소를 링크로" aria-label="외부 링크"><i class="fa-solid fa-globe"></i><span>외부 링크</span></button><button type="button" class="bl-note-btn bl-note-linkopt" data-link-mode="note" title="다른 메모를 연결하거나 내용째 끌어와요" aria-label="메모 끌어오기"><i class="fa-regular fa-note-sticky"></i><span>메모 끌어오기</span></button>`;
 const popHtml = (key, inner) => `<span class="bl-note-fmt-h"><button type="button" class="bl-note-btn" data-fmt="${key}" title="${FMT_ALL[key][1]}" aria-label="${FMT_ALL[key][1]}"><i class="fa-solid ${FMT_ALL[key][0]}"></i></button><span class="bl-note-fmt-hs" data-pop="${key}" hidden>${inner}</span></span>`;
 function toolsHtml() {
     return fmtButtons().filter(x => x.on).map(({ k }) => {
         if (k === 'h') return popHtml('h', [1, 2, 3].map(n => `<button type="button" class="bl-note-btn" data-heading="${n}" title="제목 ${n}" aria-label="제목 ${n}">H${n}</button>`).join(''));
         if (k === 'list') return popHtml('list', [['- ', 'fa-list-ul', '점 목록'], ['1. ', 'fa-list-ol', '번호 목록'], ['- [ ] ', 'fa-list-check', '체크박스 목록']].map(([mark, icon, name]) => `<button type="button" class="bl-note-btn" data-list="${mark}" title="${name}" aria-label="${name}"><i class="fa-solid ${icon}"></i></button>`).join(''));
+        if (k === 'link') return popHtml('link', LINK_MENU);
         if (k === 'color') return popHtml('color', SWATCHES.map(c => `<button type="button" class="bl-note-swatch" data-color="${c}" title="${c}" aria-label="${c}" style="--sw:${c}"></button>`).join('') + '<button type="button" class="bl-note-swatch" data-color="" title="색 지우기" aria-label="색 지우기"><i class="fa-solid fa-ban"></i></button>');
         const [icon, name] = FMT_ALL[k];
         return `<button type="button" class="bl-note-btn" data-fmt="${k}" title="${name}" aria-label="${name}"><i class="fa-solid ${icon}"></i></button>`;
@@ -165,10 +322,10 @@ function surround(area, before, after, lineMode = false) {
 }
 /** 버튼 아래 팝업: 목록 상자(스크롤 칸)에 잘리지 않게 화면 기준(fixed)으로 띄우고, 화면 좌우 · 아래 8px 안으로 맞춘다.
  *  fixed 의 기준이 화면이 아닌 조상(변형 · 필터가 걸린 칸)이면 그린 뒤 어긋난 만큼 되돌려 맞춘다 */
-function placePop(pop) {
+function placePop(pop, anchor = null) {
     if (pop.hidden) { pop.style.position = ''; return; }
     const button = pop.parentElement?.querySelector(':scope > button') || pop.previousElementSibling;
-    const b = button.getBoundingClientRect(), vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;
+    const b = anchor || button.getBoundingClientRect(), vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;
     Object.assign(pop.style, { position: 'fixed', right: 'auto', bottom: 'auto', left: '0px', top: '0px' });
     const w = pop.offsetWidth, h = pop.offsetHeight;
     let x = Math.min(Math.max(8, b.left), vw - 8 - w), y = b.bottom + 4;
@@ -178,15 +335,36 @@ function placePop(pop) {
     if (Math.abs(r.left - x) > 1 || Math.abs(r.top - y) > 1) { pop.style.left = `${Math.round(2 * x - r.left)}px`; pop.style.top = `${Math.round(2 * y - r.top)}px`; }
 }
 // 스크롤 · 창 크기가 바뀌면 열린 팝업을 닫는다 (버튼에서 떨어져 떠 있지 않게)
-addEventListener('resize', () => document.querySelectorAll('.bl-note-fmt-hs:not([hidden])').forEach(p => { p.hidden = true; p.style.position = ''; }));
-document.addEventListener('scroll', e => { if (e.target?.closest?.('.bl-notes-dialog, .bl-notes-mini, #chat')) document.querySelectorAll('.bl-note-fmt-hs:not([hidden])').forEach(p => { p.hidden = true; p.style.position = ''; }); }, true);
+// (주소 · 찾기 칸에 글을 쓰는 중인 팝업은 닫지 않고 자리만 — 폰 자판이 올라오면 화면 크기가 바뀐다)
+const closeLoosePops = () => document.querySelectorAll('.bl-note-fmt-hs:not([hidden])').forEach(p => { if (p.contains(document.activeElement)) { if (!p.classList.contains('bl-note-ac')) placePop(p); return; } p.hidden = true; p.style.position = ''; });
+addEventListener('resize', closeLoosePops);
+document.addEventListener('scroll', e => { if (e.target?.closest?.('.bl-notes-dialog, .bl-notes-mini, #chat')) closeLoosePops(); }, true);
+/** 편집 칸 안 글자 커서의 화면 위치 (거울 칸으로 잰다) — [[ 고르기 목록을 커서 밑에 */
+function caretRect(area) {
+    const cs = getComputedStyle(area), m = document.createElement('div');
+    for (const p of ['boxSizing', 'width', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'letterSpacing', 'lineHeight', 'wordSpacing', 'tabSize']) m.style[p] = cs[p];
+    Object.assign(m.style, { position: 'fixed', visibility: 'hidden', whiteSpace: 'pre-wrap', overflowWrap: 'break-word', top: '0px', left: '-9999px', borderStyle: 'solid' });
+    m.textContent = area.value.slice(0, area.selectionStart ?? 0);
+    const mark = document.createElement('span'); mark.textContent = '​'; m.append(mark); document.body.append(m);
+    const r = area.getBoundingClientRect(), lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.5 || 20;
+    const x = Math.min(mark.offsetLeft, r.width - 24), y = mark.offsetTop - area.scrollTop; m.remove();
+    const top = Math.max(r.top, Math.min(r.bottom - lh, r.top + y));
+    return { left: r.left + x, right: r.left + x, top, bottom: top + lh, width: 0, height: lh };
+}
+/** 메모 고르기 줄 (연결 · 끌어오기 · [[ 자동 목록 공용) — 제목 있는 메모만 */
+function pickNotes(q, selfId) {
+    const needle = String(q || '').trim().toLowerCase();
+    return visibleNotes().filter(n => n.id !== selfId && n.title.trim() && (!needle || n.title.toLowerCase().includes(needle))).slice(0, 30);
+}
+const pickRow = (n, on = false) => `<button type="button" class="bl-note-pickrow${on ? ' on' : ''}" data-pick-note="${n.id}"><b>${escA(n.title.trim())}</b><small>${escA(plainLine(n.body))}</small></button>`;
 function formatBar(area) {
     const bar = document.createElement('div'); bar.className = 'bl-note-fmt'; bar.hidden = true;
-    bar.innerHTML = `<button type="button" class="bl-note-btn bl-note-fmt-toggle" data-fmt="toggle" title="서식 버튼 펼치기 · 접기" aria-label="서식 버튼 펼치기 · 접기"><i class="fa-solid fa-pen-nib"></i></button><span class="bl-note-fmt-tools">${toolsHtml()}</span>`;
+    bar.innerHTML = `<button type="button" class="bl-note-btn bl-note-fmt-toggle" data-fmt="toggle" title="서식 버튼 펼치기 · 접기" aria-label="서식 버튼 펼치기 · 접기"><i class="fa-solid fa-pen-nib"></i></button><span class="bl-note-fmt-tools">${toolsHtml()}</span><span class="bl-note-fmt-hs bl-note-ac" hidden></span>`;
     bar.classList.toggle('is-open', !!look().fmtOpen);
-    bar.addEventListener('pointerdown', event => event.preventDefault()); // 편집 칸의 초점(blur → 보기 전환)을 뺏지 않는다
+    bar.addEventListener('pointerdown', event => { if (!event.target.closest('input')) event.preventDefault(); }); // 편집 칸의 초점(blur → 보기 전환)을 뺏지 않는다 (팝업 안 입력 칸은 제외)
     const pops = () => bar.querySelectorAll('.bl-note-fmt-hs');
     const closePops = (keep = null) => pops().forEach(p => { if (p !== keep) p.hidden = true; });
+    bar._closePops = closePops;
     const done = () => { closePops(); area.focus({ preventScroll: true }); };
     bar.addEventListener('click', event => {
         const heading = event.target.closest('[data-heading]'); if (heading) { surround(area, '#'.repeat(Number(heading.dataset.heading)) + ' ', '', true); done(); return; }
@@ -201,7 +379,7 @@ function formatBar(area) {
         const key = event.target.closest('[data-fmt]')?.dataset.fmt; if (!key) return;
         if (key === 'toggle') { store().look.fmtOpen = !look().fmtOpen; save(); document.querySelectorAll('.bl-note-fmt').forEach(b => b.classList.toggle('is-open', !!look().fmtOpen)); area.focus({ preventScroll: true }); return; }
         const pop = bar.querySelector(`[data-pop="${key}"]`);
-        if (pop) { closePops(pop); pop.hidden = !pop.hidden; placePop(pop); return; }
+        if (pop) { closePops(pop); if (key === 'link') { pop.innerHTML = LINK_MENU; pop.classList.remove('is-pick', 'is-url'); bar._sel = [area.selectionStart, area.selectionEnd]; } pop.hidden = !pop.hidden; placePop(pop); return; }
         const f = FMT_ALL[key]; if (f) surround(area, f[2], f[3], false);
         done();
     });
@@ -209,21 +387,93 @@ function formatBar(area) {
 }
 function bodyField(view, area, getText, commit, mount = fmt => area.before(fmt)) {
     const fmt = formatBar(area); mount(fmt);
+    const selfId = () => area.dataset.noteId || '';
     const toggleAt = k => { const next = toggleTask(getText(), k); area.value = next; commit(next, true); draw(); };
-    const draw = () => renderView(view, getText(), toggleAt);
+    const draw = () => renderView(view, getText(), toggleAt, selfId());
     const show = editing => {
         const text = getText();
         const edit = editing || !text.trim();
         view.hidden = edit; area.hidden = !edit; fmt.hidden = !edit;
-        if (!edit) draw();
+        if (!edit) { acClose(); fmt._closePops?.(); draw(); }
         else grow(area);
     };
+    const leave = () => { acClose(); commit(area.value, true); show(false); };
     view.title = '눌러서 고치기';
     view.addEventListener('click', event => { if (event.target.closest('a, details, summary, button, .bl-note-check')) return; show(true); area.focus({ preventScroll: true }); try { area.setSelectionRange(area.value.length, area.value.length); } catch { /* 표시용 */ } });
-    area.addEventListener('blur', () => { commit(area.value, true); show(false); });
-    area.addEventListener('input', () => { grow(area); commit(area.value, false); });
+    // 서식 줄 팝업 안 입력 칸(주소 · 메모 찾기)으로 초점이 가면 편집을 끝내지 않는다
+    area.addEventListener('blur', event => { if (fmt.contains(event.relatedTarget)) return; leave(); });
+    fmt.addEventListener('focusout', event => { if (fmt.contains(event.relatedTarget) || event.relatedTarget === area) return; fmt._closePops?.(); leave(); });
+    area.addEventListener('input', () => { grow(area); commit(area.value, false); acCheck(); });
+    // ── 넣기 도우미: 선택 자리 → 글 넣기 ──
+    const insert = (text, s, e) => { area.focus({ preventScroll: true }); area.setRangeText(text, s, e, 'end'); area.dispatchEvent(new Event('input', { bubbles: true })); };
+    // ── [[ 치면 메모 목록 (커서 밑) — 위아래 · 엔터 · 탭 · Esc ──
+    const ac = fmt.querySelector('.bl-note-ac'); let acFrom = -1, acBang = '', acIndex = 0, acList = [];
+    function acClose() { if (ac) ac.hidden = true; acFrom = -1; acList = []; }
+    function acDraw() { ac.innerHTML = acList.map((n, i) => pickRow(n, i === acIndex)).join(''); }
+    function acCheck() {
+        if (!ac) return;
+        const pos = area.selectionStart; if (pos !== area.selectionEnd) return acClose();
+        const m = /(!?)\[\[([^\[\]\n|]{0,40})$/.exec(area.value.slice(0, pos));
+        if (!m) return acClose();
+        acList = pickNotes(m[2], selfId()).slice(0, 8);
+        if (!acList.length) return acClose();
+        acFrom = m.index; acBang = m[1]; acIndex = Math.min(acIndex, acList.length - 1);
+        acDraw(); ac.hidden = false; placePop(ac, caretRect(area));
+    }
+    const acPick = id => {
+        const n = notes().find(x => x.id === id); if (!n || acFrom < 0) return;
+        const pos = area.selectionStart, end = area.value.slice(pos, pos + 2) === ']]' ? pos + 2 : pos;
+        const from = acFrom; acClose(); insert(`${acBang}[[${n.title.trim()}]]`, from, end);
+    };
+    // ── 링크 버튼 팝업: 외부 링크(주소) · 메모 끌어오기(연결 / 내용째) ──
+    let pickEmbed = false;
+    const linkPop = () => fmt.querySelector('[data-pop="link"]');
+    const drawPick = (pop, q = '') => {
+        const rows = pickNotes(q, selfId());
+        pop.querySelector('.bl-note-picklist').innerHTML = rows.map(n => pickRow(n)).join('') || `<p class="bl-note-picknone">${q ? '그런 제목의 메모가 없어요.' : '제목이 있는 다른 메모가 없어요.'}</p>`;
+    };
+    fmt.addEventListener('click', event => {
+        const pickBtn = event.target.closest('[data-pick-note]');
+        if (pickBtn) {
+            if (pickBtn.closest('.bl-note-ac')) { acPick(pickBtn.dataset.pickNote); return; }
+            const n = notes().find(x => x.id === pickBtn.dataset.pickNote); if (!n) return;
+            const [s, e] = fmt._sel || [area.selectionStart, area.selectionEnd];
+            fmt._closePops?.(); insert(`${pickEmbed ? '!' : ''}[[${n.title.trim()}]]`, s, e); return;
+        }
+        const kind = event.target.closest('[data-pick-kind]');
+        if (kind) { pickEmbed = kind.dataset.pickKind === 'embed'; kind.parentElement.querySelectorAll('[data-pick-kind]').forEach(b => b.classList.toggle('on', b === kind)); return; }
+        const mode = event.target.closest('[data-link-mode]')?.dataset.linkMode, pop = linkPop();
+        if (mode === 'url' && pop) {
+            pop.classList.add('is-url'); pop.classList.remove('is-pick');
+            pop.innerHTML = `<span class="bl-note-urlrow"><i class="fa-solid fa-globe" aria-hidden="true"></i><input type="url" inputmode="url" placeholder="https://" spellcheck="false" autocomplete="off" aria-label="링크 주소"><button type="button" class="bl-note-btn" data-link-ok title="넣기" aria-label="넣기"><i class="fa-solid fa-check"></i></button></span>`;
+            placePop(pop); pop.querySelector('input').focus({ preventScroll: true }); return;
+        }
+        if (mode === 'note' && pop) {
+            pickEmbed = false; pop.classList.add('is-pick'); pop.classList.remove('is-url');
+            pop.innerHTML = `<span class="bl-note-pickhead"><span class="bl-note-pickseg" role="radiogroup" aria-label="넣는 방식"><button type="button" class="on" data-pick-kind="link" title="[[제목]] — 누르면 그 메모로 가요">연결</button><button type="button" data-pick-kind="embed" title="![[제목]] — 그 메모 내용을 여기 그대로 보여요">내용째</button></span><input type="search" placeholder="메모 찾기" spellcheck="false" autocomplete="off" aria-label="메모 찾기"></span><span class="bl-note-picklist"></span>`;
+            drawPick(pop); placePop(pop); return;
+        }
+        if (event.target.closest('[data-link-ok]')) insertUrl();
+    });
+    const insertUrl = () => {
+        const input = linkPop()?.querySelector('input[type="url"]'); let url = input?.value.trim(); if (!url) return;
+        if (!/^[a-z][\w+.-]*:/i.test(url)) url = 'https://' + url;
+        const [s, e] = fmt._sel || [area.selectionStart, area.selectionEnd];
+        const text = area.value.slice(s, e).trim() || url.replace(/^https?:\/\//i, '');
+        fmt._closePops?.(); insert(`[${text.replace(/[\[\]]/g, '')}](${url})`, s, e);
+    };
+    fmt.addEventListener('input', event => { const pop = linkPop(); if (pop && event.target.closest('.bl-note-pickhead')) drawPick(pop, event.target.value); });
+    fmt.addEventListener('keydown', event => {
+        if (event.target.matches('input[type="url"]') && event.key === 'Enter') { event.preventDefault(); insertUrl(); }
+        if (event.key === 'Escape' && event.target.matches('input')) { event.preventDefault(); fmt._closePops?.(); area.focus({ preventScroll: true }); }
+    });
     // 목록 이어 쓰기: 엔터 → 다음 줄에 같은 표시(- · - [ ] · 다음 번호). 표시만 남은 빈 항목에서 엔터 → 표시를 지우고 목록 끝
     area.addEventListener('keydown', event => {
+        if (ac && !ac.hidden && acList.length) {
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); acIndex = (acIndex + (event.key === 'ArrowDown' ? 1 : -1) + acList.length) % acList.length; acDraw(); return; }
+            if ((event.key === 'Enter' || event.key === 'Tab') && !event.isComposing) { event.preventDefault(); acPick(acList[acIndex].id); return; }
+            if (event.key === 'Escape') { event.preventDefault(); acClose(); return; }
+        }
         if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
         const s = area.selectionStart, e = area.selectionEnd, value = area.value;
         if (s !== e) return;
@@ -235,12 +485,17 @@ function bodyField(view, area, getText, commit, mount = fmt => area.before(fmt))
         const marker = m[3] ? `${Number(m[3]) + 1}. ` : (m[2].startsWith('- [') ? '- [ ] ' : '- ');
         area.setRangeText('\n' + m[1] + marker, s, e, 'end'); area.dispatchEvent(new Event('input', { bubbles: true }));
     });
+    area.addEventListener('click', acCheck);
     show(false);
     return { show, refresh: () => { if (area.hidden) draw(); else if (document.activeElement !== area && area.value !== getText()) { area.value = getText(); grow(area); } } };
 }
 /** 저장된 값이 바뀌면(다른 보기에서 고침) 열린 카드 · 펼침 · 쪽지를 맞춘다 */
 function syncViews(id) {
     for (const el of document.querySelectorAll(`.bl-note[data-id="${id}"], .bl-sticky[data-id="${id}"], .bl-notes-peek[data-id="${id}"]`)) el._sync?.();
+    // 이 메모를 담은 폴더 칸 · 폴더 쪽지, 이 메모를 끌어온(![[ ]]) 다른 메모
+    for (const el of document.querySelectorAll('.bl-note-folder, .bl-sticky-folder')) if ((el.dataset.ids || '').split('|').includes(id)) el._sync?.();
+    const hosts = new Set([...document.querySelectorAll(`.bl-note-embed[data-embed="${id}"]`)].map(e => e.closest('.bl-note, .bl-sticky, .bl-notes-peek')).filter(Boolean));
+    hosts.forEach(el => el._sync?.());
 }
 
 // ── 메모지 색: 테마 팔레트(에이드마다 한 색 — 나이트 쪽 파스텔이라 밝은 · 어두운 테마 모두 어울림) + 내 색 ──
@@ -390,108 +645,260 @@ const whenFull = ts => { if (!ts) return ''; const d = new Date(ts); return `${d
 const when = ts => { if (!ts) return ''; const d = new Date(ts), now = new Date(); if (d.toDateString() === now.toDateString()) return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; return d.getFullYear() === now.getFullYear() ? `${pad2(d.getMonth() + 1)}.${pad2(d.getDate())}` : `${d.getFullYear()}.${pad2(d.getMonth() + 1)}.${pad2(d.getDate())}`; };
 const grow = area => { if (area.hidden) return; area.style.height = 'auto'; area.style.height = Math.min(area.scrollHeight + 2, 480) + 'px'; };
 
-function card(note, index, total) {
+function card(note, index, total, inFolder = false) {
     const el = document.createElement('article');
     el.className = 'bl-note'; el.dataset.id = note.id; paintNote(el, note.color, note.ink);
     el.innerHTML = `<div class="bl-note-head"><input class="bl-note-title" type="text" maxlength="120" placeholder="제목" spellcheck="false"></div>
 <div class="bl-note-view bl-notes-view salty-preview" hidden></div>
 <textarea class="bl-note-body" rows="2" placeholder="내용" spellcheck="false"></textarea>
 <div class="bl-note-tools">${colorButton(note.id)}<time class="bl-note-time"></time>${ownerBadge(note)}
- <button type="button" class="bl-note-btn" data-act="up" title="위로" aria-label="위로" ${index === 0 ? 'disabled' : ''}><i class="fa-solid fa-chevron-up"></i></button>
- <button type="button" class="bl-note-btn" data-act="down" title="아래로" aria-label="아래로" ${index === total - 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-down"></i></button>
+ ${inFolder ? '<button type="button" class="bl-note-btn" data-act="unfolder" title="폴더에서 빼기" aria-label="폴더에서 빼기"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>' : `<button type="button" class="bl-note-btn" data-act="up" title="위로" aria-label="위로" ${index === 0 ? 'disabled' : ''}><i class="fa-solid fa-chevron-up"></i></button>
+ <button type="button" class="bl-note-btn" data-act="down" title="아래로" aria-label="아래로" ${index === total - 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-down"></i></button>`}
  <button type="button" class="bl-note-btn" data-act="copy" title="복제" aria-label="복제"><i class="fa-regular fa-clone"></i></button>
  <button type="button" class="bl-note-btn bl-note-pop" data-act="pop" title="화면에 꺼내 두기 (PC)" aria-label="화면에 꺼내 두기"><i class="fa-solid fa-arrow-up-right-from-square"></i></button>
  <button type="button" class="bl-note-btn bl-note-danger" data-act="del" title="지우기" aria-label="지우기"><i class="fa-regular fa-trash-can"></i></button>
 </div>`;
     const title = el.querySelector('.bl-note-title'), body = el.querySelector('.bl-note-body'), view = el.querySelector('.bl-note-view'), time = el.querySelector('.bl-note-time');
-    title.value = note.title; body.value = note.body; time.textContent = when(note.updated); time.title = whenFull(note.updated);
+    title.value = note.title; body.value = note.body; time.textContent = when(note.updated); time.title = whenFull(note.updated); body.dataset.noteId = note.id;
     let timer = 0;
     const current = () => notes().find(n => n.id === note.id) ?? note;
     const commit = (value, now) => { clearTimeout(timer); const run = () => { const n = current(); if (n.title !== title.value || n.body !== body.value) { updateNote(note.id, { title: title.value, body: body.value }); time.textContent = when(Date.now()); } }; now ? run() : (timer = setTimeout(run, 350)); };
     title.addEventListener('input', () => commit(null, false));
-    title.addEventListener('blur', () => commit(null, true));
+    let titleBefore = null; // 제목을 고치기 시작할 때의 제목 — 칸에서 나가면 다른 메모의 [[연결]] 도 새 제목으로
+    title.addEventListener('focus', () => { titleBefore = current().title; });
+    title.addEventListener('blur', () => { commit(null, true); if (titleBefore !== null && titleBefore !== title.value) renameLinks(titleBefore, title.value, note.id); titleBefore = null; });
     title.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); field.show(true); body.focus(); } });
     const field = bodyField(view, body, () => body.value, commit, fmt => title.after(fmt));
     el._sync = () => { const n = current(); if (document.activeElement !== title) title.value = n.title; if (document.activeElement !== body) body.value = n.body; field.refresh(); time.textContent = when(n.updated); };
     return el;
 }
 
+/** 폴더 칸 — 작게 접혀서 메모마다 제목 + 내용 첫 줄 한 줄 (좁으면 제목만). 누르면 폴더 안으로 */
+const folderRow = n => `<div class="bl-folder-row${n.color ? ' has-color' : ''}" data-act="folder-open" data-note="${n.id}" role="button" tabindex="0"${n.color ? ` style="--bl-note-c:${n.color}"` : ''}><b>${escA(n.title.trim() || '제목 없음')}</b><span>${escA(plainLine(n.body))}</span></div>`;
+function folderCard(fid) {
+    const el = document.createElement('article');
+    el.className = 'bl-note bl-note-folder'; el.dataset.folder = fid;
+    const draw = () => {
+        const f = folderById(fid); if (!f) return;
+        const list = orderedNotes().filter(n => n.folder === fid);
+        el.dataset.ids = list.map(n => n.id).join('|');
+        el.innerHTML = `<div class="bl-folder-head" data-act="folder-open" role="button" tabindex="0" title="폴더 열기"><i class="fa-solid fa-folder" aria-hidden="true"></i><b>${escA(folderName(f))}</b><small>${list.length}</small><i class="fa-solid fa-chevron-right bl-folder-go" aria-hidden="true"></i></div><div class="bl-folder-rows">${list.map(folderRow).join('')}</div>`;
+    };
+    draw(); el._sync = draw;
+    return el;
+}
+/** 폴더 안에 들어가 있으면 목록 위에 ‹ 폴더 이름 줄 */
+function syncFolderBar(root, fid) {
+    const host = root.querySelector('.bl-notes-list'); let bar = root.querySelector('.bl-folder-bar');
+    if (!bar) {
+        bar = document.createElement('div'); bar.className = 'bl-folder-bar';
+        bar.innerHTML = `<button type="button" class="bl-note-btn" data-act="folder-back" title="폴더 밖으로" aria-label="폴더 밖으로"><i class="fa-solid fa-chevron-left"></i></button><i class="fa-solid fa-folder-open" aria-hidden="true"></i><input class="bl-folder-name" type="text" maxlength="40" placeholder="폴더" spellcheck="false" aria-label="폴더 이름"><button type="button" class="bl-note-btn bl-note-pop" data-act="folder-pop" title="폴더째 화면에 꺼내 두기 (PC)" aria-label="폴더째 화면에 꺼내 두기"><i class="fa-solid fa-arrow-up-right-from-square"></i></button><button type="button" class="bl-note-btn" data-act="folder-break" title="폴더 풀기 (메모는 그대로)" aria-label="폴더 풀기"><i class="fa-solid fa-folder-minus"></i></button>`;
+        bar.querySelector('input').addEventListener('input', event => { const f = folderById(root.dataset.folder); if (!f) return; f.name = event.target.value; save(); syncFolderNames(f.id); });
+        host.before(bar);
+    }
+    bar.hidden = !fid;
+    const input = bar.querySelector('input'); if (fid && document.activeElement !== input) input.value = folderById(fid)?.name || '';
+}
+function syncFolderNames(fid) { document.querySelectorAll(`.bl-note-folder[data-folder="${fid}"]`).forEach(el => el._sync?.()); stickies.get('f:' + fid)?._sync?.(); }
+
 /** 카드 목록을 그린다 — 큰 창(.bl-notes-dialog)과 입력창 위 미니 목록(.bl-notes-mini)이 같은 카드 · 같은 처리 */
 function renderList(root) {
     if (!root) return;
-    const list = orderedNotes(), host = root.querySelector('.bl-notes-list');
-    host.replaceChildren(...list.map((note, i) => card(note, i, list.length)));
+    if (root.dataset.folder && !folderById(root.dataset.folder)) delete root.dataset.folder;
+    const fid = root.dataset.folder || '';
+    const items = displayItems(fid), host = root.querySelector('.bl-notes-list');
+    host.replaceChildren(...items.map((x, i) => (x.folder ? folderCard(x.folder) : card(x.note, i, items.length, !!fid))));
     host.classList.toggle('is-sorted', (look().sort || 'manual') !== 'manual');
-    root.dataset.key = listKey();
+    host.classList.toggle('is-folder', !!fid);
+    syncFolderBar(root, fid);
+    root.dataset.key = listKey(root);
     if (!host._drag) { host._drag = true; enableDrag(root, host); }
     applyFind(root);
-    const empty = root.querySelector('.bl-notes-empty'); if (empty) empty.hidden = list.length > 0;
-    const count = root.querySelector('.bl-notes-count'); if (count) count.textContent = list.length ? String(list.length) : '';
+    const empty = root.querySelector('.bl-notes-empty'); if (empty) empty.hidden = items.length > 0;
+    const count = root.querySelector('.bl-notes-count'); const total = visibleNotes().length; if (count) count.textContent = total ? String(total) : '';
 }
 function render() { renderList(dialog); }
-const listKey = () => `${look().sort || 'manual'}:` + orderedNotes().map(n => n.id).join('|');
+const listKey = root => `${look().sort || 'manual'}:${root?.dataset.folder || ''}:` + orderedNotes().map(n => n.id + (n.folder ? '@' + n.folder : '')).join('|');
 
-/** 찾기: 제목 · 내용에 글이 든 카드만 (대소문자 무시) */
+/** 찾기: 제목 · 내용에 글이 든 카드만 (대소문자 무시). '#태그' 면 그 태그(하위 태그 포함)가 든 메모만. 폴더는 맞는 메모 줄만 남긴다 */
 function applyFind(root) {
     if (!root) return;
-    const q = (root.querySelector('.bl-notes-find input')?.value || '').trim().toLowerCase();
+    const raw = (root.querySelector('.bl-notes-find input')?.value || '').trim(), q = raw.toLowerCase();
+    const tag = /^#[^\s#]+$/.test(raw) ? raw.slice(1) : '';
+    const all = notes();
+    const hitNote = note => !!note && (!q || (tag ? tagHit(tagsOf(note.body), tag) : `${note.title}\n${note.body}`.toLowerCase().includes(q)));
     let shown = 0;
     root.querySelectorAll('.bl-notes-list > .bl-note').forEach(el => {
-        const note = notes().find(n => n.id === el.dataset.id);
-        const hit = !q || `${note?.title ?? ''}\n${note?.body ?? ''}`.toLowerCase().includes(q);
+        let hit;
+        if (el.dataset.folder) { hit = false; el.querySelectorAll('.bl-folder-row').forEach(row => { const h = hitNote(all.find(n => n.id === row.dataset.note)); row.hidden = !h; hit ||= h; }); }
+        else hit = hitNote(all.find(n => n.id === el.dataset.id));
         el.hidden = !hit; if (hit) shown++;
     });
     const none = root.querySelector('.bl-notes-nohit'); if (none) none.hidden = !q || shown > 0;
+    root.querySelector('[data-act="tags"]')?.classList.toggle('is-on', !!tag);
+}
+function setFind(root, q) {
+    const row = root.querySelector('.bl-notes-find'); if (!row) return;
+    row.hidden = !q; row.querySelector('input').value = q; applyFind(root);
 }
 /** 모든 목록 · 메모 줄을 새 순서로 */
-function rerenderAll() { if (dialog) render(); const mini = document.querySelector('#bl-notes-bar .bl-notes-mini'); if (mini && !mini.hidden) renderList(mini); renderBar(); }
+function rerenderAll() {
+    if (dialog) render();
+    const mini = document.querySelector('#bl-notes-bar .bl-notes-mini'); if (mini && !mini.hidden) renderList(mini);
+    renderBar();
+    stickies.forEach((el, key) => { if (key.startsWith('f:')) el._sync?.(); });
+}
 
 /** 창을 닫거나 다시 그리기 전에 타이핑 중이던 값을 바로 저장 */
 function flush(root = dialog) {
-    root?.querySelectorAll('.bl-note').forEach(el => {
-        const id = el.dataset.id, title = el.querySelector('.bl-note-title').value, body = el.querySelector('.bl-note-body').value;
-        const note = notes().find(n => n.id === id);
-        if (note && (note.title !== title || note.body !== body)) updateNote(id, { title, body });
+    root?.querySelectorAll('.bl-note[data-id]').forEach(el => {
+        const t = el.querySelector('.bl-note-title'), b = el.querySelector('.bl-note-body'); if (!t || !b) return;
+        const id = el.dataset.id, note = notes().find(n => n.id === id);
+        if (note && (note.title !== t.value || note.body !== b.value)) updateNote(id, { title: t.value, body: b.value });
     });
 }
 
+// ── 태그 · 연결 · 그래프로 옮겨 다니기 ──────────────────────
+/** 목록(큰 창 · 작은 목록) 하나를 고른다: 누른 자리의 목록 → 열린 큰 창 → 입력창 위 작은 목록 → 큰 창 새로 */
+function listRootFor(from) {
+    const root = from?.closest?.('.bl-notes-mini, .bl-notes-dialog');
+    if (root?.querySelector('.bl-notes-list')) return root;
+    if (dialog?.open) return dialog;
+    const bar = document.getElementById(BAR_ID);
+    if (bar) { if (!miniOpen) { miniOpen = true; peekId = null; renderBar(); } return bar.querySelector('.bl-notes-mini'); }
+    openPanel(); return dialog;
+}
+function flashCard(el) { if (!el) return; el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); el.classList.remove('is-flash'); void el.offsetWidth; el.classList.add('is-flash'); setTimeout(() => el.classList.remove('is-flash'), 1400); }
+/** 그 메모를 보여 준다 — 쪽지에서 누르면 옆 쪽지로(PC), 펼침에서 누르면 그 메모 펼침, 아니면 목록에서 찾아 반짝 */
+function revealNote(id, from) {
+    const note = notes().find(n => n.id === id); if (!note) return;
+    if (!visibleNotes().some(n => n.id === id)) { globalThis.toastr?.info(`${note.owner?.name || '다른'} 채팅에 귀속된 메모예요${note.owner?.chat ? ` (${note.owner.chat})` : ''}.`, TITLE); return; }
+    if (from?.closest?.('.bl-sticky') && isWide()) { openSticky(id); return; }
+    if (from?.closest?.('.bl-notes-peek')) { peekId = id; miniOpen = false; renderBar(); return; }
+    const root = listRootFor(from); if (!root) return;
+    flush(root);
+    const want = note.folder && folderById(note.folder) ? note.folder : '';
+    if (want) root.dataset.folder = want; else delete root.dataset.folder;
+    const find = root.querySelector('.bl-notes-find'); if (find && !find.hidden) { find.querySelector('input').value = ''; find.hidden = true; }
+    renderList(root);
+    flashCard(root.querySelector(`.bl-notes-list > .bl-note[data-id="${id}"]`));
+}
+/** [[제목]] 을 누름 — 없는 제목이면 그 제목으로 새 메모 */
+function openLinked(title, from) {
+    let note = findByTitle(title);
+    if (!note) { note = addNote(String(title).trim(), '', 0); if (!note) return; globalThis.toastr?.success(`'${String(title).trim()}' 메모를 새로 만들었어요.`, TITLE, { timeOut: 2000 }); rerenderAll(); }
+    revealNote(note.id, from);
+}
+/** #태그 를 누름 — 그 목록을 태그로 거른다 (쪽지 · 펼침이면 작은 목록 · 큰 창을 열어서) */
+function showTag(tag, from) {
+    let root = from?.closest?.('.bl-notes-mini, .bl-notes-dialog');
+    if (!root?.querySelector('.bl-notes-list')) root = listRootFor(null);
+    if (!root) return;
+    if (root.dataset.folder) { delete root.dataset.folder; renderList(root); }
+    setFind(root, '#' + tag);
+}
+document.addEventListener('click', event => {
+    const el = event.target.closest?.('.bl-note-tag, .bl-note-link'); if (!el || !el.closest('.bl-notes-view')) return;
+    event.preventDefault(); event.stopPropagation();
+    if (el.classList.contains('bl-note-tag')) showTag(el.dataset.tag, el); else openLinked(el.dataset.noteLink, el);
+}, true);
+// 폴더 칸 · 폴더 줄은 div(끌기가 되게) — 키보드로도 누르기
+document.addEventListener('keydown', event => { if ((event.key === 'Enter' || event.key === ' ') && event.target.matches?.('.bl-folder-row, .bl-folder-head')) { event.preventDefault(); event.target.click(); } });
+function graphData(withTags) {
+    const list = visibleNotes(), byTitle = new Map();
+    for (const n of list) { const k = n.title.trim().toLowerCase(); if (k && !byTitle.has(k)) byTitle.set(k, n); }
+    const nodes = list.map(n => ({ id: n.id, label: label(n), color: n.color || '', kind: 'note' }));
+    const edges = [], seen = new Set();
+    const link = (a, b) => { const k = a < b ? `${a}>${b}` : `${b}>${a}`; if (a !== b && !seen.has(k)) { seen.add(k); edges.push([a, b]); } };
+    for (const n of list) for (const l of linksOf(n.body)) { const t = byTitle.get(l.title.toLowerCase()); if (t) link(n.id, t.id); }
+    if (withTags) {
+        const tags = new Set();
+        for (const n of list) for (const t of tagsOf(n.body)) { tags.add(t); link(n.id, 'tag:' + t); }
+        for (const t of tags) nodes.push({ id: 'tag:' + t, label: '#' + t, kind: 'tag', tag: t });
+    }
+    return { nodes, edges };
+}
+async function openGraphFor(root) {
+    const { openGraph } = await import('./graph.js');
+    const anchor = () => (root?.isConnected ? root.querySelector('.bl-notes-list') : null);
+    openGraph({ build: graphData, onPick: id => revealNote(id, anchor()), onTag: tag => showTag(tag, anchor()) });
+}
+function tagPopHtml(root) {
+    const tags = allTags(), cur = (root.querySelector('.bl-notes-find input')?.value || '').trim();
+    if (!tags.length) return '<p class="bl-notes-tagnone">내용에 <b>#태그</b> 를 적으면 여기 모여요.</p>';
+    return tags.map(([t, n]) => `<button type="button" class="bl-note-btn bl-notes-sortbtn${cur === '#' + t ? ' on' : ''}" data-act="tag-set" data-tag="${escA(t)}" title="#${escA(t)} 메모만 보기" aria-label="#${escA(t)} 메모만 보기"><i class="fa-solid fa-hashtag"></i><span>${escA(t)}</span><small>${n}</small></button>`).join('');
+}
+
 /** 카드 도구 처리 (큰 창 · 미니 목록 공용). close 는 호출한 쪽이 처리 */
-function handleAct(act, id, root, rerender) {
+function handleAct(act, id, root, rerender, button = null) {
     flush(root);
     if (act === 'look') { openLook(); return; }
+    if (act === 'guide') { import('./guide.js').then(m => m.showNotesGuide()); return; }
+    if (act === 'graph') { openGraphFor(root); return; }
     if (act === 'find') { const row = root.querySelector('.bl-notes-find'); if (!row) return; row.hidden = !row.hidden; const input = row.querySelector('input'); if (row.hidden) { input.value = ''; applyFind(root); } else input.focus({ preventScroll: true }); return; }
-    if (act === 'sort') { const pop = root.querySelector('.bl-notes-sortpop'); if (pop) { pop.hidden = !pop.hidden; pop.querySelectorAll('[data-sort]').forEach(b => b.classList.toggle('on', b.dataset.sort === (look().sort || 'manual'))); placePop(pop); } return; }
+    if (act === 'sort') { const pop = root.querySelector('.bl-notes-sortpop'); if (pop) { root.querySelector('.bl-notes-tagpop')?.setAttribute('hidden', ''); pop.hidden = !pop.hidden; pop.querySelectorAll('[data-sort]').forEach(b => b.classList.toggle('on', b.dataset.sort === (look().sort || 'manual'))); placePop(pop); } return; }
     if (act === 'sort-set') { const mode = id; store().look.sort = mode; save(); root.querySelector('.bl-notes-sortpop').hidden = true; rerenderAll(); return; }
-    if (act === 'add') { const note = addNote('', '', 0); if (!note) return; rerender(); root.querySelector('.bl-note-title')?.focus(); return; }
+    if (act === 'tags') { const pop = root.querySelector('.bl-notes-tagpop'); if (!pop) return; root.querySelector('.bl-notes-sortpop')?.setAttribute('hidden', ''); if (pop.hidden) pop.innerHTML = tagPopHtml(root); pop.hidden = !pop.hidden; placePop(pop); return; }
+    if (act === 'tag-set') {
+        root.querySelector('.bl-notes-tagpop').hidden = true;
+        const cur = (root.querySelector('.bl-notes-find input')?.value || '').trim();
+        if (root.dataset.folder) { delete root.dataset.folder; rerender(); }
+        setFind(root, cur === '#' + id ? '' : '#' + id); return;
+    }
+    if (act === 'folder-back') { delete root.dataset.folder; rerender(); return; }
+    if (act === 'folder-open') {
+        const fid = button?.closest('[data-folder]')?.dataset.folder; if (!fid || !folderById(fid)) return;
+        root.dataset.folder = fid; rerender();
+        if (id) flashCard(root.querySelector(`.bl-notes-list > .bl-note[data-id="${id}"]`));
+        return;
+    }
+    if (act === 'folder-break') { const fid = root.dataset.folder; if (!fid) return; breakFolder(fid); delete root.dataset.folder; rerenderAll(); return; }
+    if (act === 'folder-pop') {
+        const fid = root.dataset.folder; if (!fid) return;
+        if (!isWide()) { globalThis.toastr?.info('화면에 꺼내 두기는 넓은 화면(PC)에서만 돼요.', TITLE); return; }
+        delete root.dataset.folder; if (root === dialog) dialog.close(); else { miniOpen = false; renderBar(); }
+        openSticky('f:' + fid); return;
+    }
+    if (act === 'add') {
+        const note = addNote('', '', 0); if (!note) return;
+        if (root.dataset.folder) joinFolder({ folder: root.dataset.folder }, [note.id]);
+        rerender(); root.querySelector(`.bl-note[data-id="${note.id}"] .bl-note-title`)?.focus(); return;
+    }
     if (!id) return;
+    if (act === 'unfolder') { leaveFolder(id); if (!folderById(root.dataset.folder)) delete root.dataset.folder; rerenderAll(); return; }
     if (act === 'up' || act === 'down') { moveNote(id, act === 'up' ? -1 : 1); rerender(); root.querySelector(`.bl-note[data-id="${id}"]`)?.scrollIntoView({ block: 'nearest' }); }
     else if (act === 'copy') { const made = duplicateNote(id); rerender(); if (made) root.querySelector(`.bl-note[data-id="${made.id}"] .bl-note-title`)?.focus(); }
     else if (act === 'pop') { if (root === dialog) dialog.close(); else { miniOpen = false; renderBar(); } openSticky(id); }
     else if (act === 'del') {
         const note = notes().find(n => n.id === id);
         if (note && (note.title || note.body) && !confirm(`"${note.title || note.body.slice(0, 20) || '메모'}" 를 지울까요?`)) return;
-        closeSticky(id); removeNote(id); rerender();
+        closeSticky(id); removeNote(id); tidyFolders(); if (!folderById(root.dataset.folder)) delete root.dataset.folder; rerenderAll();
     }
 }
-const HEAD_TOOLS = `<button type="button" class="bl-note-btn" data-act="find" title="메모에서 찾기" aria-label="메모에서 찾기"><i class="fa-solid fa-magnifying-glass"></i></button><span class="bl-notes-find" hidden><input type="search" placeholder="찾기" spellcheck="false" aria-label="메모에서 찾기"></span>`
+/** 목록 머리 버튼 누름 → handleAct 에 넘길 값 (정렬 방식 · 태그 · 폴더 줄의 메모 · 카드의 메모) */
+const actArg = button => button.dataset.sort || button.dataset.tag || button.dataset.note || button.closest('.bl-note[data-id]')?.dataset.id;
+const HEAD_TOOLS = `<button type="button" class="bl-note-btn" data-act="find" title="메모에서 찾기" aria-label="메모에서 찾기"><i class="fa-solid fa-magnifying-glass"></i></button><span class="bl-notes-find" hidden><input type="search" placeholder="찾기 · #태그" spellcheck="false" aria-label="메모에서 찾기"></span>`
+    + `<span class="bl-note-fmt-h bl-notes-tagwrap"><button type="button" class="bl-note-btn" data-act="tags" title="태그 모아보기" aria-label="태그 모아보기"><i class="fa-solid fa-hashtag"></i></button><span class="bl-note-fmt-hs bl-notes-sortpop bl-notes-tagpop" hidden></span></span>`
     + `<span class="bl-note-fmt-h bl-notes-sortwrap"><button type="button" class="bl-note-btn" data-act="sort" title="정렬" aria-label="정렬"><i class="fa-solid fa-arrow-down-wide-short"></i></button><span class="bl-note-fmt-hs bl-notes-sortpop" hidden>${SORTS.map(([key, name, icon]) => `<button type="button" class="bl-note-btn bl-notes-sortbtn" data-act="sort-set" data-sort="${key}" title="${name}" aria-label="${name}"><i class="fa-solid ${icon}"></i><span>${name}</span></button>`).join('')}</span></span>`
+    + `<button type="button" class="bl-note-btn" data-act="graph" title="연결 보기 (메모 · 태그 그래프)" aria-label="연결 보기"><i class="fa-solid fa-share-nodes"></i></button>`
     + `<button type="button" class="bl-note-btn" data-act="look" title="메모 글꼴 · 크기 · 한 줄 장수 설정" aria-label="메모 설정"><i class="fa-solid fa-gear"></i></button><button type="button" class="bl-note-btn bl-note-add" data-act="add" title="새 메모" aria-label="새 메모"><i class="fa-solid fa-plus"></i></button>`;
 const FIND_ROW = `<p class="bl-notes-nohit" hidden>찾는 글이 든 메모가 없어요.</p>`;
+const EMPTY_ROW = `<p class="bl-notes-empty">+ 를 눌러 첫 메모를 적어 보세요. <button type="button" class="bl-notes-guidelink" data-act="guide">쓰는 법 보기</button></p>`;
 
 export function openPanel() {
     if (dialog?.open) return;
     const previous = document.activeElement;
     dialog = document.createElement('dialog');
     dialog.className = 'bl-notes-dialog'; dialog.setAttribute('aria-label', TITLE);
-    dialog.innerHTML = `<header><b><i class="fa-solid fa-note-sticky" aria-hidden="true"></i> ${TITLE} <small class="bl-notes-count"></small></b><div class="bl-notes-head-tools">${HEAD_TOOLS}<button type="button" class="bl-note-btn" data-act="close" title="닫기" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button></div></header>
-${FIND_ROW}<p class="bl-notes-empty">+ 를 눌러 첫 메모를 적어 보세요.</p>
+    dialog.innerHTML = `<header><b><i class="fa-solid fa-note-sticky" aria-hidden="true"></i> ${TITLE} <small class="bl-notes-count"></small><button type="button" class="bl-notes-ver" data-act="guide" title="메모 사용방법" aria-label="메모 사용방법">v${VERSION}</button></b><div class="bl-notes-head-tools">${HEAD_TOOLS}<button type="button" class="bl-note-btn" data-act="close" title="닫기" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button></div></header>
+${FIND_ROW}${EMPTY_ROW}
 <div class="bl-notes-list"></div>`;
     document.body.append(dialog);
     dialog.addEventListener('click', event => {
         const button = event.target.closest('[data-act]'); if (!button) return;
-        const act = button.dataset.act, id = button.dataset.sort || button.closest('.bl-note')?.dataset.id;
+        const act = button.dataset.act;
         if (act === 'close') { dialog.close(); return; }
-        handleAct(act, id, dialog, render);
+        handleAct(act, actArg(button), dialog, render, button);
     });
     dialog.addEventListener('input', event => { if (event.target.closest('.bl-notes-find')) applyFind(dialog); });
     dialog.addEventListener('close', () => { flush(); dialog.remove(); dialog = null; if (previous?.isConnected) previous.focus(); }, { once: true });
@@ -555,26 +962,30 @@ export function openLook() {
     const rows = PARAMS.map(([key, name, min, max, step, unit, fallback]) => {
         const same = key === 'size' ? Number(l[key] || 100) === 100 : (l[key] === '' || l[key] == null);
         const value = same ? fallback : Number(l[key]);
+        // 1.2.0: 이름 · 값 · 같게를 한 줄에, 슬라이더는 그 아래 넓게 (숫자 칸은 상자 없이 글자처럼)
         return `<div class="bl-look-item" data-param="${key}">
-<div class="bl-look-head"><span>${name}</span><label class="bl-look-same"><input type="checkbox" data-look-same="${key}" ${same ? 'checked' : ''}><span>같게</span></label></div>
-<div class="bl-look-ctl"><input type="range" min="${min}" max="${max}" step="${step}" value="${value}" data-look-range="${key}" ${same ? 'disabled' : ''}><input type="number" inputmode="decimal" min="${min}" max="${max}" step="${step}" value="${value}" data-look-key="${key}" ${same ? 'disabled' : ''}><span class="bl-look-unit">${unit}</span></div>
+<div class="bl-look-head"><span class="bl-look-name">${name}</span><span class="bl-look-val"><input type="number" inputmode="decimal" min="${min}" max="${max}" step="${step}" value="${value}" data-look-key="${key}" aria-label="${name} 값" ${same ? 'disabled' : ''}><span class="bl-look-unit">${unit}</span></span><label class="bl-look-same" title="채팅 본문 설정 따라가기"><input type="checkbox" data-look-same="${key}" ${same ? 'checked' : ''}><span>같게</span></label></div>
+<div class="bl-look-ctl"><input type="range" min="${min}" max="${max}" step="${step}" value="${value}" data-look-range="${key}" aria-label="${name}" ${same ? 'disabled' : ''}></div>
 </div>`; }).join('');
     lookDialog = document.createElement('dialog');
     lookDialog.className = 'bl-notes-dialog bl-notes-look'; lookDialog.setAttribute('aria-label', '메모 설정');
     lookDialog.innerHTML = `<header><b><i class="fa-solid fa-gear" aria-hidden="true"></i> 메모 설정</b><div class="bl-notes-head-tools"><button type="button" class="bl-note-btn" data-look="reset" title="기본값으로" aria-label="기본값으로"><i class="fa-solid fa-rotate-left"></i></button><button type="button" class="bl-note-btn" data-look="close" title="닫기" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button></div></header>
-<div class="bl-notes-view salty-preview bl-look-sample"></div>
-<p class="bl-notes-empty">메모 안 글에만 쓰여요. '본문과 같게'면 채팅 본문 설정을 따라가요.</p>
+<section class="bl-look-sec bl-look-top"><div class="bl-notes-view salty-preview bl-look-sample"></div>
+<p class="bl-look-note">메모 안 글에만 쓰여요. '같게'를 켜 두면 채팅 본문 설정을 따라가요.</p></section>
+<section class="bl-look-sec"><h4 class="bl-look-title">글자</h4>
 <div class="bl-look-item" data-param="font"><div class="bl-look-head"><span>글꼴</span></div><div class="bl-look-ctl"><button type="button" class="bl-look-fontbtn" data-look="fonts" title="글꼴 고르기"><span class="bl-look-fontname">${esc(fontLabel(findFont(l.font)))}</span><i class="fa-solid fa-chevron-down"></i></button></div>
 <div class="bl-look-fonts" hidden><div class="bl-look-fonttags" role="tablist" aria-label="글꼴 묶음"></div><input type="search" class="bl-look-fontfind" placeholder="찾기" spellcheck="false"><div class="bl-look-fontlist"></div></div></div>
-<div class="bl-look-grid">${rows}</div>
-<div class="bl-look-item" data-param="cols"><div class="bl-look-head"><span>한 줄에 메모</span></div><div class="bl-look-seg" role="radiogroup" aria-label="한 줄에 메모">${[['auto', '자동'], ['1', '1장'], ['2', '2장'], ['3', '3장']].map(([v, n]) => `<button type="button" class="bl-look-segbtn${String(l.cols || 'auto') === v ? ' on' : ''}" data-look-cols="${v}" role="radio" aria-checked="${String(l.cols || 'auto') === v}">${n}</button>`).join('')}</div><p class="bl-look-hint">자동은 PC 한 줄 3장 · 폰 1장이에요.</p></div>
-<div class="bl-look-item" data-param="fmt"><div class="bl-look-head"><span>서식 버튼</span><span class="bl-look-hint">켜고 끄기 · 끌어서 순서</span></div><div class="bl-look-fmtlist"></div></div>`;
+<div class="bl-look-grid">${rows}</div></section>
+<section class="bl-look-sec"><h4 class="bl-look-title">한 줄에 메모</h4>
+<div class="bl-look-item" data-param="cols"><div class="bl-look-seg" role="radiogroup" aria-label="한 줄에 메모">${[['auto', '자동'], ['1', '1장'], ['2', '2장'], ['3', '3장']].map(([v, n]) => `<button type="button" class="bl-look-segbtn${String(l.cols || 'auto') === v ? ' on' : ''}" data-look-cols="${v}" role="radio" aria-checked="${String(l.cols || 'auto') === v}">${n}</button>`).join('')}</div><p class="bl-look-hint">자동은 PC 한 줄 3장 · 폰 1장이에요.</p></div></section>
+<section class="bl-look-sec"><h4 class="bl-look-title">서식 버튼 <small>켜고 끄기 · 끌어서 순서</small></h4>
+<div class="bl-look-item" data-param="fmt"><div class="bl-look-fmtlist"></div></div></section>`;
     document.body.append(lookDialog);
     const sample = lookDialog.querySelector('.bl-look-sample');
     renderView(sample, '메모 안 글은 이렇게 보여요. *속마음*과 "대사"도 채팅과 같은 색이에요.');
     // 서식 버튼 목록: 켜기 · 끄기(스위치), 손잡이를 잡거나 줄을 꾹 눌러 끌면 순서가 바뀐다 → 열려 있는 서식 줄에 바로 반영
     const fmtHost = lookDialog.querySelector('.bl-look-fmtlist');
-    const drawFmtList = () => { fmtHost.innerHTML = fmtButtons().map(({ k, on }) => `<div class="bl-look-fmtrow${on ? '' : ' is-off'}" data-k="${k}"><span class="bl-look-grip" title="끌어서 순서 바꾸기" aria-hidden="true"><i class="fa-solid fa-grip-vertical"></i></span><i class="fa-solid ${FMT_ALL[k][0]} bl-look-fmticon" aria-hidden="true"></i><span class="bl-look-fmtname">${FMT_ALL[k][1]}</span><label class="bl-look-switch" title="${on ? '끄기' : '켜기'}"><input type="checkbox" data-fmt-on="${k}" ${on ? 'checked' : ''} aria-label="${FMT_ALL[k][1]}"><span></span></label></div>`).join(''); };
+    const drawFmtList = () => { fmtHost.innerHTML = fmtButtons().map(({ k, on }) => `<div class="bl-look-fmtrow${on ? '' : ' is-off'}" data-k="${k}"><span class="bl-look-grip" title="끌어서 순서 바꾸기" aria-hidden="true"><i class="fa-solid fa-grip-vertical"></i></span><i class="fa-solid ${FMT_ALL[k][0]} bl-look-fmticon" aria-hidden="true"></i><span class="bl-look-fmtname" title="${FMT_ALL[k][1]}">${FMT_SHORT[k] || FMT_ALL[k][1]}</span><label class="bl-look-switch" title="${on ? '끄기' : '켜기'}"><input type="checkbox" data-fmt-on="${k}" ${on ? 'checked' : ''} aria-label="${FMT_ALL[k][1]}"><span></span></label></div>`).join(''); };
     const saveFmt = () => { store().look.fmtButtons = [...fmtHost.querySelectorAll('.bl-look-fmtrow')].map(r => ({ k: r.dataset.k, on: r.querySelector('input').checked })); save(); rebuildFmtBars(); };
     drawFmtList();
     fmtHost.addEventListener('change', event => { const box = event.target.closest('[data-fmt-on]'); if (!box) return; box.closest('.bl-look-fmtrow').classList.toggle('is-off', !box.checked); saveFmt(); });
@@ -641,6 +1052,7 @@ function placeSticky(el, pos) {
     Object.assign(el.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
 }
 function rememberSticky(id, el) {
+    if (!el.isConnected || stickies.get(id) !== el) return; // 닫힌 쪽지(목록에 다시 넣음)는 자리를 다시 적지 않는다
     const r = el.getBoundingClientRect();
     stickyStore()[id] = { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) };
     save();
@@ -649,7 +1061,9 @@ function raiseSticky(el) { stickies.forEach(other => other.classList.toggle('is-
 
 // ── 꾹 눌러 끌기 (버튼 없이 손으로) ─────────────────────────
 //    목록 안에서 끌면 칸 자리가 바뀌고(놓으면 '직접 정한 순'으로 저장), PC 에서 목록 밖에 놓으면 그 자리에 스티커로 뜬다.
+//    다른 메모 한가운데에 잠깐 머물면 테두리가 빛나고, 놓으면 두 메모가 폴더로 (폴더 칸에 놓으면 그 폴더에)
 const PRESS_MS = 380;
+const MERGE_MS = 280;
 let dragging = null, dragEndedAt = 0;
 function enableDrag(root, host) {
     host.addEventListener('pointerdown', event => {
@@ -664,60 +1078,130 @@ function enableDrag(root, host) {
     });
     // 끄는 동안 화면이 같이 스크롤되지 않게 (미리 붙여 둬야 폰 브라우저가 기다린다)
     host.addEventListener('touchmove', e => { if (dragging) e.preventDefault(); }, { passive: false });
-    host.addEventListener('contextmenu', e => { if (dragging || e.target.closest('.bl-note-view')) e.preventDefault(); });
-    // 놓은 직후의 click(보기 → 편집 전환)은 먹는다
+    host.addEventListener('contextmenu', e => { if (dragging || e.target.closest('.bl-note-view, .bl-note-folder')) e.preventDefault(); });
+    // 놓은 직후의 click(보기 → 편집 전환 · 폴더 열기)은 먹는다
     root.addEventListener('click', e => { if (Date.now() - dragEndedAt < 350) { e.preventDefault(); e.stopPropagation(); } }, true);
 }
+const cardIds = el => (el.dataset.id ? [el.dataset.id] : (el.dataset.ids || '').split('|').filter(Boolean));
 function startDrag(root, host, cardEl, sx, sy) {
-    const id = cardEl.dataset.id, r = cardEl.getBoundingClientRect(), dx = sx - r.left, dy = sy - r.top, wide = isWide();
+    const isFolder = !cardEl.dataset.id, id = cardEl.dataset.id || 'f:' + cardEl.dataset.folder;
+    const r = cardEl.getBoundingClientRect(), dx = sx - r.left, dy = sy - r.top, wide = isWide();
     const ghost = cardEl.cloneNode(true);
-    ghost.classList.add('bl-note-ghost'); ghost.removeAttribute('data-id'); ghost.setAttribute('aria-hidden', 'true');
+    ghost.classList.add('bl-note-ghost'); ghost.removeAttribute('data-id'); ghost.removeAttribute('data-folder'); ghost.setAttribute('aria-hidden', 'true');
     Object.assign(ghost.style, { width: `${r.width}px`, height: `${r.height}px`, left: `${r.left}px`, top: `${r.top}px` });
     (root.closest('dialog') || document.body).append(ghost); // 모달 창 안이면 창 안에 (맨 위 층)
     cardEl.classList.add('is-dragging'); document.documentElement.classList.add('bl-notes-dragging');
     dragging = { id };
-    let lx = sx, ly = sy, outside = false;
+    let lx = sx, ly = sy, outside = false, merge = null, mergeCand = null, mergeTimer = 0;
+    const canMerge = !isFolder && !root.dataset.folder; // 폴더 밖 목록에서 메모를 끌 때만
+    const clearMerge = () => { clearTimeout(mergeTimer); mergeTimer = 0; mergeCand = null; merge?.classList.remove('is-merge'); merge = null; ghost.classList.remove('is-merge'); };
     const move = e => {
         lx = e.clientX; ly = e.clientY;
         ghost.style.left = `${lx - dx}px`; ghost.style.top = `${ly - dy}px`;
         const b = root.getBoundingClientRect();
         outside = wide && (lx < b.left || lx > b.right || ly < b.top || ly > b.bottom);
         ghost.classList.toggle('is-pop', outside); cardEl.classList.toggle('is-leaving', outside);
-        if (outside) return;
+        if (outside) { clearMerge(); return; }
         const over = document.elementsFromPoint(lx, ly).map(el => el.closest?.('.bl-note')).find(el => el && el !== ghost && host.contains(el));
-        if (!over || over === cardEl || !host.contains(over)) return;
-        const or = over.getBoundingClientRect(), cols = getComputedStyle(host).gridTemplateColumns.split(' ').filter(Boolean).length;
+        if (!over || over === cardEl || !host.contains(over)) { if (over !== mergeCand) clearMerge(); return; }
+        const or = over.getBoundingClientRect(), fx = (lx - or.left) / or.width, fy = (ly - or.top) / or.height;
+        if (canMerge && fx > 0.2 && fx < 0.8 && fy > 0.22 && fy < 0.78) { // 한가운데: 잠깐 머물면 합치기
+            if (mergeCand !== over) { clearMerge(); mergeCand = over; mergeTimer = setTimeout(() => { merge = over; over.classList.add('is-merge'); ghost.classList.add('is-merge'); navigator.vibrate?.(8); }, MERGE_MS); }
+            return;
+        }
+        clearMerge();
+        const cols = getComputedStyle(host).gridTemplateColumns.split(' ').filter(Boolean).length;
         const after = cols > 1 ? (Math.abs(ly - (or.top + or.height / 2)) < or.height / 2 ? lx > or.left + or.width / 2 : ly > or.top + or.height / 2) : ly > or.top + or.height / 2;
         if (after) { if (over.nextElementSibling !== cardEl) over.after(cardEl); } else if (over.previousElementSibling !== cardEl) over.before(cardEl);
     };
     const end = () => {
         document.removeEventListener('pointermove', move, true); document.removeEventListener('pointerup', end, true); document.removeEventListener('pointercancel', end, true);
+        const target = merge; clearTimeout(mergeTimer); merge?.classList.remove('is-merge');
         ghost.remove(); cardEl.classList.remove('is-dragging', 'is-leaving'); document.documentElement.classList.remove('bl-notes-dragging');
         dragging = null; dragEndedAt = Date.now();
+        if (target) { // 폴더로 합치기
+            flush(root);
+            joinFolder(target.dataset.folder ? { folder: target.dataset.folder } : { id: target.dataset.id }, [id]);
+            rerenderAll(); flashCard([...host.children].find(el => el.dataset.folder && (el.dataset.ids || '').split('|').includes(id)));
+            return;
+        }
         if (outside) { // PC: 그 자리에 스티커로
             flush(root);
-            const w = 260, h = 220;
+            const w = isFolder ? 230 : 260, h = 220;
             stickyStore()[id] = { x: Math.round(lx - 40), y: Math.round(ly - 16), w, h }; save(); // 놓은 곳이 쪽지 머리띠 왼쪽 위쯤
             const old = stickies.get(id); if (old) { old.remove(); stickies.delete(id); }
             if (root === dialog) dialog.close(); else { miniOpen = false; renderBar(); }
             openSticky(id);
             return;
         }
-        applyOrder([...host.children].map(el => el.dataset.id).filter(Boolean));
+        applyOrder([...host.children].flatMap(cardIds));
         rerenderAll();
     };
     document.addEventListener('pointermove', move, true); document.addEventListener('pointerup', end, true); document.addEventListener('pointercancel', end, true);
     navigator.vibrate?.(12);
 }
-/** 보이는 순서를 저장 순서로 (정렬 방식은 '직접 정한 순'으로) */
+/** 보이는 순서를 저장 순서로 (정렬 방식은 '직접 정한 순'으로) — 안 보이는 메모(다른 채팅)는 제자리, 보이는 메모는 첫 자리부터 새 순서로 */
 function applyOrder(ids) {
-    const s = store(), byId = new Map(s.notes.map(n => [n.id, n]));
-    const ordered = ids.map(id => byId.get(id)).filter(Boolean);
-    s.notes = [...ordered, ...s.notes.filter(n => !ids.includes(n.id))];
-    s.look.sort = 'manual'; save();
+    const s = store(), set = new Set(ids), byId = new Map(s.notes.map(n => [n.id, n]));
+    const first = s.notes.findIndex(n => set.has(n.id));
+    const rest = s.notes.filter(n => !set.has(n.id));
+    rest.splice(Math.max(0, first), 0, ...ids.map(id => byId.get(id)).filter(Boolean));
+    s.notes = rest; s.look.sort = 'manual'; save();
+}
+
+// ── 쪽지 머리띠 끌기: 옮기기 · 다른 쪽지에 놓으면 폴더 · 메모 줄(작은 목록)에 놓으면 다시 목록으로 ──
+function stickyTargetAt(x, y, self) {
+    for (const hit of document.elementsFromPoint(x, y)) {
+        if (self.contains(hit)) continue;
+        const other = hit.closest?.('.bl-sticky'); if (other) return other;
+        const cardEl = hit.closest?.('.bl-notes-mini .bl-notes-list > .bl-note');
+        if (cardEl && !cardEl.closest('.bl-notes-mini').dataset.folder && !(cardEl.dataset.id && self.dataset.id === cardEl.dataset.id)) return cardEl;
+        const bar = hit.closest?.('#' + BAR_ID); if (bar) return bar;
+    }
+    return null;
+}
+function stickyMove(el, id) {
+    const head = el.querySelector('.bl-sticky-head');
+    head.addEventListener('pointerdown', event => {
+        if (event.button !== 0 || event.target.closest('input, button')) return;
+        const r = el.getBoundingClientRect(), dx = event.clientX - r.left, dy = event.clientY - r.top;
+        head.setPointerCapture(event.pointerId); el.classList.add('is-dragging');
+        let drop = null;
+        const setDrop = next => { if (drop === next) return; drop?.classList.remove('is-drop'); drop = next; drop?.classList.add('is-drop'); el.classList.toggle('is-dropping', !!drop); };
+        const move = e => {
+            el.style.left = clamp(e.clientX - dx, 0, innerWidth - r.width) + 'px'; el.style.top = clamp(e.clientY - dy, 0, innerHeight - r.height) + 'px';
+            setDrop(stickyTargetAt(e.clientX, e.clientY, el));
+        };
+        const up = () => {
+            head.removeEventListener('pointermove', move); head.removeEventListener('pointerup', up); head.removeEventListener('pointercancel', up);
+            el.classList.remove('is-dragging'); const target = drop; setDrop(null);
+            if (target) dropSticky(id, target); else rememberSticky(id, el);
+        };
+        head.addEventListener('pointermove', move); head.addEventListener('pointerup', up); head.addEventListener('pointercancel', up);
+        event.preventDefault();
+    });
+}
+function dropSticky(id, target) {
+    stickies.get(id)?._flush?.();
+    const isFolder = id.startsWith('f:'), moving = isFolder ? notes().filter(n => n.folder === id.slice(2)).map(n => n.id) : [id];
+    if (target.id === BAR_ID) { closeSticky(id); rerenderAll(); return; } // 다시 목록으로
+    if (target.classList.contains('bl-sticky')) { // 쪽지끼리 → 폴더 쪽지 (놓인 쪽지 자리)
+        const tid = target.dataset.id, r = target.getBoundingClientRect();
+        const fid = tid.startsWith('f:') ? joinFolder({ folder: tid.slice(2) }, moving) : joinFolder({ id: tid }, moving);
+        if (!fid) return;
+        closeSticky(id); if (!tid.startsWith('f:')) closeSticky(tid);
+        const key = 'f:' + fid;
+        if (!stickyStore()[key]) { stickyStore()[key] = { x: Math.round(r.left), y: Math.round(r.top), w: 230, h: 0 }; save(); }
+        openSticky(key)?._sync?.(); rerenderAll(); return;
+    }
+    // 작은 목록의 메모 · 폴더 위 → 그 메모와 폴더로 (쪽지는 목록으로 들어간다)
+    const fid = target.dataset.folder ? joinFolder({ folder: target.dataset.folder }, moving) : joinFolder({ id: target.dataset.id }, moving);
+    if (!fid) return;
+    closeSticky(id); rerenderAll();
 }
 
 export function openSticky(id) {
+    if (String(id).startsWith('f:')) return openFolderSticky(String(id).slice(2));
     const note = notes().find(n => n.id === id);
     if (!note) return null;
     if (stickies.has(id)) { const el = stickies.get(id); raiseSticky(el); return el; }
@@ -725,33 +1209,59 @@ export function openSticky(id) {
     el.className = 'bl-sticky'; el.dataset.id = id; paintNote(el, note.color, note.ink); el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', TITLE);
     el.innerHTML = `<header class="bl-sticky-head"><input class="bl-sticky-title" type="text" maxlength="120" placeholder="제목" spellcheck="false">${colorButton(id)}<button type="button" class="bl-note-btn" data-sticky="list" title="메모 목록" aria-label="메모 목록"><i class="fa-solid fa-bars"></i></button><button type="button" class="bl-note-btn" data-sticky="close" title="닫기" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button></header><div class="bl-sticky-scroll"><div class="bl-sticky-view bl-notes-view salty-preview" hidden></div><textarea class="bl-sticky-body" placeholder="내용" spellcheck="false"></textarea></div>`;
     const title = el.querySelector('.bl-sticky-title'), body = el.querySelector('.bl-sticky-body'), view = el.querySelector('.bl-sticky-view');
-    title.value = note.title; body.value = note.body;
+    title.value = note.title; body.value = note.body; body.dataset.noteId = id;
     let timer = 0;
     const current = () => notes().find(n => n.id === id) ?? note;
     const commit = (value, now) => { clearTimeout(timer); const run = () => { const n = current(); if (n.title !== title.value || n.body !== body.value) updateNote(id, { title: title.value, body: body.value }); }; now ? run() : (timer = setTimeout(run, 350)); };
-    title.addEventListener('input', () => commit(null, false)); title.addEventListener('blur', () => commit(null, true));
+    title.addEventListener('input', () => commit(null, false));
+    let titleBefore = null;
+    title.addEventListener('focus', () => { titleBefore = current().title; });
+    title.addEventListener('blur', () => { commit(null, true); if (titleBefore !== null && titleBefore !== title.value) renameLinks(titleBefore, title.value, id); titleBefore = null; });
     title.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); field.show(true); body.focus(); } });
     const field = bodyField(view, body, () => body.value, commit, fmt => title.after(fmt)); // 서식 줄은 머리띠 안(제목 옆)
     el._sync = () => { const n = current(); if (document.activeElement !== title) title.value = n.title; if (document.activeElement !== body) body.value = n.body; field.refresh(); };
+    el._flush = () => commit(null, true);
     el.querySelector('[data-sticky="close"]').onclick = () => { commit(null, true); closeSticky(id); };
     el.querySelector('[data-sticky="list"]').onclick = () => openPanel();
     el.addEventListener('pointerdown', () => raiseSticky(el), true);
-    // 머리띠를 끌어 옮기기 (입력칸 · 버튼은 제외)
-    const head = el.querySelector('.bl-sticky-head');
-    head.addEventListener('pointerdown', event => {
-        if (event.button !== 0 || event.target.closest('input, button')) return;
-        const r = el.getBoundingClientRect(), dx = event.clientX - r.left, dy = event.clientY - r.top;
-        head.setPointerCapture(event.pointerId); el.classList.add('is-dragging');
-        const move = e => { el.style.left = clamp(e.clientX - dx, 0, innerWidth - r.width) + 'px'; el.style.top = clamp(e.clientY - dy, 0, innerHeight - r.height) + 'px'; };
-        const up = () => { head.removeEventListener('pointermove', move); head.removeEventListener('pointerup', up); head.removeEventListener('pointercancel', up); el.classList.remove('is-dragging'); rememberSticky(id, el); };
-        head.addEventListener('pointermove', move); head.addEventListener('pointerup', up); head.addEventListener('pointercancel', up);
-        event.preventDefault();
-    });
+    stickyMove(el, id);
     // 크기는 CSS resize — 끝나면(포인터를 뗄 때) 기억
     el.addEventListener('pointerup', () => rememberSticky(id, el));
     new ResizeObserver(() => { if (!el.isConnected) return; clearTimeout(el._rs); el._rs = setTimeout(() => rememberSticky(id, el), 400); }).observe(el);
     placeSticky(el, stickyStore()[id] || {});
     document.body.append(el); stickies.set(id, el); raiseSticky(el); rememberSticky(id, el);
+    return el;
+}
+/** 폴더 쪽지: 작게, 메모마다 제목 + 첫 줄 한 줄 (좁으면 제목만). 줄을 누르면 그 메모가 옆에 쪽지로 */
+function openFolderSticky(fid) {
+    const key = 'f:' + fid;
+    if (!folderById(fid)) { closeSticky(key); return null; }
+    if (stickies.has(key)) { const el = stickies.get(key); el._sync?.(); raiseSticky(el); return el; }
+    const el = document.createElement('section');
+    el.className = 'bl-sticky bl-sticky-folder'; el.dataset.id = key; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', '메모 폴더');
+    el.innerHTML = `<header class="bl-sticky-head"><i class="fa-solid fa-folder bl-sticky-foldericon" aria-hidden="true"></i><input class="bl-sticky-title" type="text" maxlength="40" placeholder="폴더" spellcheck="false" aria-label="폴더 이름"><button type="button" class="bl-note-btn" data-sticky="list" title="메모 목록" aria-label="메모 목록"><i class="fa-solid fa-bars"></i></button><button type="button" class="bl-note-btn" data-sticky="close" title="닫기" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button></header><div class="bl-sticky-scroll"><div class="bl-folder-rows"></div></div>`;
+    const name = el.querySelector('.bl-sticky-title'), rows = el.querySelector('.bl-folder-rows');
+    name.addEventListener('input', () => { const f = folderById(fid); if (!f) return; f.name = name.value; save(); document.querySelectorAll(`.bl-note-folder[data-folder="${fid}"]`).forEach(c => c._sync?.()); document.querySelectorAll('.bl-folder-bar input').forEach(i => { if (i.closest('.bl-notes-mini, .bl-notes-dialog')?.dataset.folder === fid && document.activeElement !== i) i.value = f.name; }); });
+    el._sync = () => {
+        const f = folderById(fid); if (!f) { closeSticky(key); return; }
+        const list = orderedNotes().filter(n => n.folder === fid);
+        el.dataset.ids = list.map(n => n.id).join('|'); rows.innerHTML = list.map(folderRow).join('');
+        if (document.activeElement !== name) name.value = f.name || '';
+    };
+    el._sync();
+    rows.addEventListener('click', event => {
+        const row = event.target.closest('[data-note]'); if (!row) return;
+        const nid = row.dataset.note, r = el.getBoundingClientRect();
+        if (!stickyStore()[nid]) { stickyStore()[nid] = { x: Math.round(r.right + 10 + 260 > innerWidth ? Math.max(0, r.left - 270) : r.right + 10), y: Math.round(r.top), w: 260, h: 220 }; save(); }
+        openSticky(nid);
+    });
+    el.querySelector('[data-sticky="close"]').onclick = () => closeSticky(key);
+    el.querySelector('[data-sticky="list"]').onclick = () => openPanel();
+    el.addEventListener('pointerdown', () => raiseSticky(el), true);
+    stickyMove(el, key);
+    el.addEventListener('pointerup', () => rememberSticky(key, el));
+    placeSticky(el, stickyStore()[key] || { w: 230 }); el.style.height = ''; // 높이는 줄 수만큼
+    document.body.append(el); stickies.set(key, el); raiseSticky(el); rememberSticky(key, el);
     return el;
 }
 export function closeSticky(id) {
@@ -760,9 +1270,12 @@ export function closeSticky(id) {
 }
 function restoreStickies() {
     if (!isWide()) return;
-    for (const id of Object.keys(stickyStore())) { if (notes().some(n => n.id === id)) openSticky(id); else { delete stickyStore()[id]; save(); } }
+    for (const id of Object.keys(stickyStore())) {
+        const ok = id.startsWith('f:') ? !!folderById(id.slice(2)) : notes().some(n => n.id === id);
+        if (ok) openSticky(id); else { delete stickyStore()[id]; save(); }
+    }
 }
-addEventListener('resize', () => stickies.forEach((el, id) => placeSticky(el, stickyStore()[id] || {})));
+addEventListener('resize', () => stickies.forEach((el, id) => { placeSticky(el, stickyStore()[id] || {}); if (id.startsWith('f:')) el.style.height = ''; }));
 
 export function mountInline(host) {
     const button = document.createElement('button');
@@ -781,26 +1294,40 @@ const label = note => (note.title || note.body.split('\n').find(l => l.trim()) |
 function renderBar() {
     const bar = document.getElementById(BAR_ID);
     if (!bar) return;
-    const list = orderedNotes(), row = bar.querySelector('.bl-notes-row');
+    const list = orderedNotes(), row = bar.querySelector('.bl-notes-row'), mini = bar.querySelector('.bl-notes-mini');
     if (peekId && !list.some(n => n.id === peekId)) peekId = null;
-    const chips = list.map(note => { const b = document.createElement('button'); b.type = 'button'; b.className = 'bl-notes-chip' + (note.id === peekId ? ' is-open' : ''); b.dataset.id = note.id; b.textContent = label(note); paintNote(b, note.color); b.title = note.title || label(note); return b; });
-    const more = document.createElement('button'); more.type = 'button'; more.className = 'bl-notes-chip bl-notes-more' + (miniOpen ? ' is-open' : ''); more.dataset.bar = 'list'; more.setAttribute('aria-label', '메모 목록 (길게 누르면 큰 창)'); more.title = '메모 목록 · 길게 누르면 큰 창'; more.innerHTML = list.length ? '<i class="fa-solid fa-bars"></i>' : '<i class="fa-solid fa-plus"></i> 메모';
+    // 폴더는 칩 하나 (누르면 작은 목록이 그 폴더 안으로 열린다)
+    const chips = displayItems('').map(x => {
+        const b = document.createElement('button'); b.type = 'button';
+        if (x.folder) {
+            const f = folderById(x.folder), count = list.filter(n => n.folder === x.folder).length;
+            b.className = 'bl-notes-chip bl-notes-chip-folder' + (miniOpen && mini?.dataset.folder === x.folder ? ' is-open' : ''); b.dataset.folder = x.folder;
+            b.innerHTML = `<i class="fa-solid fa-folder" aria-hidden="true"></i><span></span>`; b.querySelector('span').textContent = folderName(f); b.title = `${folderName(f)} · 메모 ${count}개`;
+            return b;
+        }
+        const note = x.note;
+        b.className = 'bl-notes-chip' + (note.id === peekId ? ' is-open' : ''); b.dataset.id = note.id; b.textContent = label(note); paintNote(b, note.color); b.title = note.title || label(note); return b;
+    });
+    const more = document.createElement('button'); more.type = 'button'; more.className = 'bl-notes-chip bl-notes-more' + (miniOpen && !mini?.dataset.folder ? ' is-open' : ''); more.dataset.bar = 'list'; more.setAttribute('aria-label', '메모 목록 (길게 누르면 큰 창)'); more.title = '메모 목록 · 길게 누르면 큰 창'; more.innerHTML = list.length ? '<i class="fa-solid fa-bars"></i>' : '<i class="fa-solid fa-plus"></i> 메모';
     row.replaceChildren(more, ...chips);
     renderMini(); renderPeek();
 }
+// 목록 열쇠의 앞(정렬 · 폴더) · 뒤(메모 구성) — 쓰는 중에는 순서만 바뀐 것으로 다시 만들지 않는다
+const keyHead = k => (k || '').split(':').slice(0, -1).join(':');
+const keySet = k => (k || '').split(':').pop().split('|').sort().join('|');
 function renderMini() {
     const bar = document.getElementById(BAR_ID); if (!bar) return;
     const host = bar.querySelector('.bl-notes-mini');
-    if (!miniOpen) { flush(host); host.hidden = true; host.replaceChildren(); delete host.dataset.key; return; }
+    if (!miniOpen) { flush(host); host.hidden = true; host.replaceChildren(); delete host.dataset.key; delete host.dataset.folder; return; }
     host.hidden = false;
-    if (!host.querySelector('.bl-notes-list')) host.innerHTML = `<div class="bl-notes-peek-head"><b><i class="fa-solid fa-note-sticky" aria-hidden="true"></i> ${TITLE} <small class="bl-notes-count"></small></b>${HEAD_TOOLS}</div>${FIND_ROW}<p class="bl-notes-empty">+ 를 눌러 첫 메모를 적어 보세요.</p><div class="bl-notes-list"></div>`;
+    if (!host.querySelector('.bl-notes-list')) host.innerHTML = `<div class="bl-notes-peek-head"><b><i class="fa-solid fa-note-sticky" aria-hidden="true"></i> ${TITLE} <small class="bl-notes-count"></small></b>${HEAD_TOOLS}</div>${FIND_ROW}${EMPTY_ROW}<div class="bl-notes-list"></div>`;
     // 카드는 목록의 구성(순서 · 개수)이 바뀔 때만 다시 만든다 — 타이핑마다 다시 만들면 편집 칸이 사라지고 초점을 잃는다 (폰 제보)
-    const key = listKey();
+    const key = listKey(host);
     // 칸에 초점이 있고 메모 개수 · 구성이 그대로면(가나다 · 최근 순이라 순서만 바뀜) 쓰는 동안은 다시 만들지 않는다 — 칸에서 나가면 맞춘다
-    const same = (a, b) => (a || '').split(':').pop().split('|').sort().join('|') === (b || '').split(':').pop().split('|').sort().join('|') && (a || '').split(':')[0] === (b || '').split(':')[0];
+    const same = (a, b) => keyHead(a) === keyHead(b) && keySet(a) === keySet(b);
     if (host.dataset.key !== key && !(host.contains(document.activeElement) && same(host.dataset.key, key))) { host.dataset.key = key; renderList(host); }
     else { const count = host.querySelector('.bl-notes-count'); if (count) count.textContent = visibleNotes().length ? String(visibleNotes().length) : ''; }
-    if (!host._blurSort) { host._blurSort = true; host.addEventListener('focusout', () => setTimeout(() => { if (!host.hidden && !host.contains(document.activeElement) && host.dataset.key !== listKey()) renderList(host); }, 0)); }
+    if (!host._blurSort) { host._blurSort = true; host.addEventListener('focusout', () => setTimeout(() => { if (!host.hidden && !host.contains(document.activeElement) && host.dataset.key !== listKey(host)) renderList(host); }, 0)); }
 }
 function renderPeek() {
     const bar = document.getElementById(BAR_ID); if (!bar) return;
@@ -838,10 +1365,17 @@ export function syncBar() {
     bar.addEventListener('contextmenu', event => { if (event.target.closest('.bl-notes-more') && event.pointerType !== 'mouse') event.preventDefault(); });
     bar.addEventListener('click', event => {
         const chip = event.target.closest('.bl-notes-chip'), barAct = event.target.closest('[data-bar]')?.dataset.bar, act = event.target.closest('[data-act]')?.dataset.act;
-        if (barAct === 'list') { if (longFired) { longFired = false; return; } miniOpen = !miniOpen; if (miniOpen) peekId = null; renderBar(); return; }
+        const mini = bar.querySelector('.bl-notes-mini');
+        if (barAct === 'list') { if (longFired) { longFired = false; return; } if (miniOpen && mini.dataset.folder) { flush(mini); delete mini.dataset.folder; renderBar(); return; } miniOpen = !miniOpen; if (miniOpen) peekId = null; renderBar(); return; }
+        if (chip?.dataset.folder) { // 폴더 칩: 작은 목록을 그 폴더 안으로 (한 번 더 누르면 닫기)
+            const same = miniOpen && mini.dataset.folder === chip.dataset.folder;
+            if (miniOpen) flush(mini);
+            miniOpen = !same; peekId = null; if (miniOpen) mini.dataset.folder = chip.dataset.folder;
+            renderBar(); return;
+        }
         if (barAct === 'close') { peekId = null; miniOpen = false; renderBar(); return; }
         if (barAct === 'pop') { const id = peekId; peekId = null; renderBar(); openSticky(id); return; }
-        if (act) { const mini = bar.querySelector('.bl-notes-mini'), btn = event.target.closest('[data-act]'); handleAct(act, btn.dataset.sort || event.target.closest('.bl-note')?.dataset.id, mini, () => renderList(mini)); return; }
+        if (act) { const mini = bar.querySelector('.bl-notes-mini'), btn = event.target.closest('[data-act]'); handleAct(act, actArg(btn), mini, () => renderList(mini), btn); return; }
         if (chip?.dataset.id) { miniOpen = false; peekId = peekId === chip.dataset.id ? null : chip.dataset.id; renderBar(); }
     });
     bar.addEventListener('input', event => { if (event.target.closest('.bl-notes-find')) applyFind(bar.querySelector('.bl-notes-mini')); });
