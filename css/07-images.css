@@ -49,6 +49,12 @@ body.salty #chat .mes_text :is(img.character-asset-rendered, img.eh-img) {
 body.salty #chat .mes_text p > :is(img.character-asset-rendered, img.eh-img):only-child {
   margin-block: 0 !important;
 }
+/* 5.2.6: 그림 태그 바로 다음 줄에 글이 이어지면(태그
+글) 마크다운이 <img><br>글 로 만든다 — 그림은 블록이라 <br> 이 빈 줄 하나를 더 만들어
+   그림 아래만 위보다 줄 높이만큼 더 벌어졌다 (사용자 제보: 위아래 여백이 다름). 블록 그림 뒤의 <br> 은 필요 없으니 숨긴다 */
+body.salty #chat .mes_text :is(img.character-asset-rendered, img.eh-img) + br {
+  display: none !important;
+}
 
 /* 가로 꽉 */
 body.salty.salty-img-bleed #chat .mes_text :is(.custom-cac-wrap, [class*="custom-imageWrapper"]) {

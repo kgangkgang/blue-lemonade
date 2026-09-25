@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.2.5";
+export const BUILD_VERSION = "5.2.6";
 export const FILE_HASHES = {
   "index.js": "12169:6abf0b36:2502931a",
-  "manifest.json": "365:fca40375:f1f94009",
+  "manifest.json": "365:c29f56c0:fd4bf162",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -118,7 +118,7 @@ export const FILE_HASHES = {
   "src/addons/translator/buttons.html": "417:3bc7c8b0:1b53077b",
   "src/addons/translator/current-connection.js": "2878:89e80a9b:052deb3c",
   "src/addons/translator/index.html": "51930:5637e0c7:83f8ce0a",
-  "src/addons/translator/index.js": "377299:d1e39096:b02cc91b",
+  "src/addons/translator/index.js": "378791:1bf3481a:ff9c0f23",
   "src/addons/translator/menu-visibility.js": "1137:ae729d76:8ea71da6",
   "src/addons/translator/persona-bridge.js": "3140:1b658491:2dbebd54",
   "src/addons/translator/selection/core.js": "2945:4ba9f6e4:cab2a284",
@@ -201,7 +201,7 @@ export const FILE_HASHES = {
   "src/marquee.js": "4394:b21eba98:bf26831b",
   "src/menu-position.js": "3312:4d17612e:af7476d7",
   "src/mes-pins.js": "9110:58a88535:74b20064",
-  "src/notice-data.js": "109172:dcd8ba2b:25e1abae",
+  "src/notice-data.js": "109842:f172d4b3:7616dd2f",
   "src/notice.js": "4623:c387a90d:e051d1f2",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "930:4be2a1fd:48f02c7b",
@@ -264,5 +264,5 @@ export const FILE_HASHES = {
   "src/weather.js": "29151:893fa4f6:d26e0a3b",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "22770:07c345df:f825c7fc",
-  "style.css": "857595:4b90bae6:fb6cea1b"
+  "style.css": "857844:4ac0919a:d3037074"
 };

@@ -1810,8 +1810,21 @@ async function translate(text, options = {}) {
                             const out = parseBatchResult(await callWithLayouts(batchPayload(group), layouts), group.length).map(tidyKana);
                             succeeded++;
                             return out;
-                        } catch (error) {
+                        } catch (caught) {
+                            let error = caught;
                             if (error?.cancelled) throw error;
+                            // 5.2.6: 답 형식이 안 맞으면(번호 표시를 빼먹음 · 문단을 합침) 거절이 아니다 — 번호 없이 통짜로 한 번 더 보낸다 (화살표 재번역과 같은 요청).
+                            //        문단 수가 같으면 자리별로 붙이고 캐시에 넣는다. 전엔 '차단된 문단' 으로 남아 SFW 글이 검열된 것처럼 보였다.
+                            if (error?.format) {
+                                console.warn('[LLM Translator] 묶음 답 형식이 맞지 않아 통짜로 다시 보내요:', error.message);
+                                try {
+                                    const plain = String(await callWithLayouts(group.join('\n\n'), PROMPT_LAYOUTS.slice(0, 1)));
+                                    const paras = plain.split(/\n[\t ]*\n(?:[\t ]*\n)*/).map(p => p.trim()).filter(Boolean);
+                                    if (paras.length === group.length) { succeeded++; return paras.map(tidyKana); }
+                                    if (group.length === 1 && plain.trim()) { succeeded++; return [tidyKana(plain.trim())]; }
+                                    console.warn(`[LLM Translator] 통짜 답의 문단 수(${paras.length})가 원문(${group.length})과 달라 원문으로 남겨요`);
+                                } catch (again) { if (again?.cancelled) throw again; error = again; }
+                            }
                             if (group.length > 1 && error?.refused && splits < SPLIT_CAP) { // 형식 오류는 나눠도 안 낫고 요청만 는다 — 거절만
                                 splits++;
                                 console.warn(`[LLM Translator] 묶음(${group.length}문단)이 막혀 반으로 나눠 다시 보내요:`, error.message);

@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.2.5.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.2.6.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.2.5 · 최신 업데이트</summary>
+<summary>5.2.6 · 최신 업데이트</summary>
+
+- 번역 묶음 답의 번호 형식이 맞지 않을 때(모델이 번호를 빼먹거나 문단을 합쳐 돌려줌) '차단된 문단'으로 남기던 것을 고쳤어요. 거절이 아니라 형식 문제라, 번호 없이 통째로 한 번 더 보내서 문단 수가 맞으면 그대로 붙여요. 평범한 글이 검열된 것처럼 보이던 경우예요.
+- 캐릭터 에셋 그림 바로 다음 줄에 글이 이어질 때 그림 아래 여백이 위보다 한 줄만큼 더 벌어지던 것을 맞췄어요. 줄바꿈이 빈 줄 하나를 더 만들던 것이라, 그림 뒤의 줄바꿈을 숨겨요.
+
+</details>
+
+<details>
+<summary>5.2.5 · 접기 보기 문단 간격 · 에셋 여백</summary>
 
 - LLM 번역의 보기 방식을 접기·원문 먼저 보기로 두면 문단 사이 간격이 사라져 붙어 보이던 문제를 고쳤어요. 문단마다 접기 상자를 만들면서 빈 줄이 버려지던 것이라, 상자 사이에 테마 문단 간격을 넣어요. 문단 수가 달라 통째로 보일 때도 줄바꿈을 살려요.
 - 캐릭터 에셋 그림 아래에 문단 간격의 두 배로 벌어지던 여백을 없앴어요. 이제 그림 위아래가 보통 문단 간격과 같아요.
