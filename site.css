@@ -100,7 +100,7 @@ h1{font-size:clamp(58px,7.6vw,108px);line-height:1.06;letter-spacing:-.058em;fon
 
 /* sections */
 .section{max-width:1200px;margin:0 auto;padding:128px 32px}
-.section-head{max-width:680px;margin-bottom:52px}
+.section-head{max-width:900px;margin-bottom:52px}
 .eyebrow{display:inline-block;font-size:13px;font-weight:650;letter-spacing:.04em;color:var(--blue);text-transform:uppercase}
 .section-head h2,.install h2{font-size:clamp(32px,3.7vw,48px);line-height:1.18;letter-spacing:-.045em;font-weight:780;margin:12px 0 0}
 .section-head p{font-size:17px;line-height:1.7;color:var(--muted);margin:16px 0 0;text-wrap:pretty}
