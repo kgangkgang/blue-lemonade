@@ -39,6 +39,26 @@ def addon_css_versions():
     return [(*entry, 'VERSION')[:4] for entry in ADDON_CSS_VERSIONS]
 
 
+# 5.3.7: 번역기 서랍 · 한글화 패널은 화면에 버전을 글자로 박아 둔다 (index.html · guide.js · settings-ui.js).
+# 번역 서랍이 v2.1.6 으로 남은 채 2.1.9 까지 나간 일이 있어 manifest 와 같은지 본다.
+EMBEDDED_VERSIONS = (
+    ('translator/manifest.json', 'translator/index.html', r'>v(\d+\.\d+\.\d+)<'),
+    ('prompt/manifest.json', 'prompt/guide.js', r'textContent\s*=\s*[\'"`]v(\d+\.\d+\.\d+)[\'"`]'),
+    ('prompt/manifest.json', 'prompt/settings-ui.js', r'>v(\d+\.\d+\.\d+)<'),
+)
+
+
+def validate_embedded_versions(files):
+    for manifest, source, pattern in EMBEDDED_VERSIONS:
+        manifest, source = 'src/addons/' + manifest, 'src/addons/' + source
+        if manifest not in files and source not in files:
+            continue
+        expected = json.loads(files.get(manifest, b'{}').decode('utf-8-sig')).get('version')
+        shown = re.findall(pattern, files.get(source, b'').decode('utf-8'))
+        require(bool(expected) and bool(shown) and set(shown) == {expected},
+                f'Embedded version mismatch: {source} shows {shown or "nothing"}, {manifest} is {expected}')
+
+
 def validate_addon_css(files):
     for source, folder, variable, constant in addon_css_versions():
         source = 'src/addons/' + source
@@ -109,6 +129,7 @@ def validate(files, kind):
     require(manifest.get('js') == 'index.js' and manifest.get('css') == 'style.css', 'Unexpected manifest entry points')
     if kind == 'theme':
         validate_addon_css(files)
+        validate_embedded_versions(files)
         if b'./preview-art/' in files.get('src/panel.js', b''):
             for name in PREVIEW_ARTWORK:
                 data = files.get('src/preview-art/' + name, b'')
