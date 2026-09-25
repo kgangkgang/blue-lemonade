@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.1.6";
+export const BUILD_VERSION = "5.1.7";
 export const FILE_HASHES = {
   "index.js": "12169:6abf0b36:2502931a",
-  "manifest.json": "365:37cd9221:6c212ea6",
+  "manifest.json": "365:7337b632:cd0dd8f5",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -39,9 +39,9 @@ export const FILE_HASHES = {
   "src/addons/bookmarks/viewers.js": "17995:5f33977b:9e28d9c4",
   "src/addons/customstyle/index.js": "27292:0bb74d8a:8d79a8a3",
   "src/addons/customstyle/style.css": "1160:fb77987e:ab7a706c",
-  "src/addons/direction/index.js": "33509:3c22ae50:f7f9f01f",
+  "src/addons/direction/index.js": "34625:e63d7be3:309bead9",
   "src/addons/direction/prompt.js": "1462:bffce8b4:e4bff72e",
-  "src/addons/direction/style.css": "14874:2b06bd90:b73c2053",
+  "src/addons/direction/style.css": "14982:176b99b3:acb5db64",
   "src/addons/models/index.js": "2778:4d87d95d:aa6f10d6",
   "src/addons/models/inject.js": "15193:ec1c41d6:a693fd8d",
   "src/addons/models/panel.js": "11863:f2a5e9e0:bb03d704",
@@ -200,7 +200,7 @@ export const FILE_HASHES = {
   "src/marquee.js": "4394:b21eba98:bf26831b",
   "src/menu-position.js": "3312:4d17612e:af7476d7",
   "src/mes-pins.js": "9110:58a88535:74b20064",
-  "src/notice-data.js": "105732:e1beda8a:73c29fcb",
+  "src/notice-data.js": "105984:ffdb7daa:135288a9",
   "src/notice.js": "4623:c387a90d:e051d1f2",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "930:4be2a1fd:48f02c7b",
@@ -263,5 +263,5 @@ export const FILE_HASHES = {
   "src/weather.js": "29151:893fa4f6:d26e0a3b",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "22770:07c345df:f825c7fc",
-  "style.css": "856796:a52ed7c9:d6f1d690"
+  "style.css": "856796:838c2832:57b0d02c"
 };

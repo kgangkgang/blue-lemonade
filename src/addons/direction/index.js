@@ -203,9 +203,9 @@ function refreshButton() {
     button.classList.toggle('is-on', on);
     button.classList.toggle('has-content', filled);
     button.setAttribute('aria-pressed', String(on));
-    button.title = !on
+    button.title = (!on
         ? '전개 지시 꺼짐 · 눌러서 열기'
-        : filled ? `전개 지시 켜짐 · ${preview(settings().direction.content)}` : '전개 지시 켜짐 · 내용이 비어 있어 AI가 알아서 전개해요';
+        : filled ? `전개 지시 켜짐 · ${preview(settings().direction.content)}` : '전개 지시 켜짐 · 내용이 비어 있어 AI가 알아서 전개해요') + ' · 길게 누르면 켜기/끄기';
     if (popup) refreshPopup();
 }
 
@@ -222,7 +222,27 @@ function ensureButton(attempt = 0) {
     button.tabIndex = 0;
     button.setAttribute('role', 'button');
     button.innerHTML = '<i class="fa-solid fa-feather-pointed"></i><span class="jj-dot" aria-hidden="true"></span>';
-    button.addEventListener('click', togglePopup);
+    // 5.1.7: 보내기 번역 💬 와 같은 조작 — 길게 누르면 켜기/끄기, 짧게 누르면 입력창. 길게 누른 뒤 따라오는 click 은 삼킨다
+    let pressTimer = null, longPressed = false;
+    const cancelPress = () => { clearTimeout(pressTimer); pressTimer = null; };
+    button.addEventListener('pointerdown', () => {
+        longPressed = false;
+        cancelPress();
+        pressTimer = setTimeout(() => {
+            longPressed = true;
+            navigator.vibrate?.(20);
+            const store = settings();
+            store.direction.enabled = !store.direction.enabled;
+            save();
+            refreshButton();
+        }, 550);
+    });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(type => button.addEventListener(type, cancelPress));
+    button.addEventListener('contextmenu', (event) => event.preventDefault()); // 길게 누를 때 폰 메뉴가 뜨지 않게
+    button.addEventListener('click', () => {
+        if (longPressed) { longPressed = false; return; }
+        togglePopup();
+    });
     button.addEventListener('keydown', (event) => {
         if (event.key !== 'Enter' && event.key !== ' ') return;
         event.preventDefault();
@@ -620,7 +640,7 @@ export const ready = new Promise((resolve, reject) => jQuery(() => {
 }));
 
 export function showHelp() {
-    return callGenericPopup('<h3>전개 지시 사용방법</h3><p>입력창 옆 깃털 버튼을 눌러 다음 장면이나 이야기의 방향을 적어요. 켜짐 스위치를 켜면 이후 대화 요청마다 지시가 들어가요.</p><p>한 번만 보내는 기능이 아니에요. 원하는 장면이 끝나면 끄거나 내용을 고쳐 주세요. 꺼도 적어 둔 내용은 남아요.</p><p>삽입 위치 0은 프롬프트 맨 끝, 1은 마지막 메시지 앞이에요. 프롬프트의 {{direction}} 자리에 적은 내용이 들어가요. 이 도구는 별도 모델을 호출하지 않고 현재 대화 요청에 지시를 추가해요.</p><p>입력창 버튼을 끄면 버튼과 지시 삽입이 함께 꺼져요. 기존 단독 전개 지시 확장과 동시에 켜지 마세요.</p>', POPUP_TYPE.TEXT, '', {okButton:'닫기'});
+    return callGenericPopup('<h3>전개 지시 사용방법</h3><p>깃털 버튼을 길게 누르면 켜고 끌 수 있어요. </p><p>입력창 옆 깃털 버튼을 눌러 다음 장면이나 이야기의 방향을 적어요. 켜짐 스위치를 켜면 이후 대화 요청마다 지시가 들어가요.</p><p>한 번만 보내는 기능이 아니에요. 원하는 장면이 끝나면 끄거나 내용을 고쳐 주세요. 꺼도 적어 둔 내용은 남아요.</p><p>삽입 위치 0은 프롬프트 맨 끝, 1은 마지막 메시지 앞이에요. 프롬프트의 {{direction}} 자리에 적은 내용이 들어가요. 이 도구는 별도 모델을 호출하지 않고 현재 대화 요청에 지시를 추가해요.</p><p>입력창 버튼을 끄면 버튼과 지시 삽입이 함께 꺼져요. 기존 단독 전개 지시 확장과 동시에 켜지 마세요.</p>', POPUP_TYPE.TEXT, '', {okButton:'닫기'});
 }
 let settingsDialog = null;
 export async function openPanel() {

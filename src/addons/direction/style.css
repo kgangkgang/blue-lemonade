@@ -12,6 +12,7 @@
 /* ── 입력창 버튼 ─────────────────────────────────────────── */
 
 #jj-button {
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; /* 5.1.7 길게 누르기 */
     order: 3;
     position: relative;
     display: flex;
