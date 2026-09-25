@@ -44,6 +44,9 @@ export function markAssetBreaks(root){
 }
 export function typesetRoot(root) {
     if(!active||!root?.querySelectorAll)return;
+    // 5.3.6: 그림 옆 <br> · 그림 뒤 들여쓰기 칸은 조판하는 모든 곳에서 (북마크 카드 · 설정 미리보기도 — 채팅에서만 달아서 북마크는 그림 아래가 벌어졌다).
+    // 대사 줄 표시(bl-line-dialogue)가 이 칸을 보고 정해지므로 먼저
+    markAssetBreaks(root);
     // The same Markdown separators appear in chat and bookmark renderings.
     // Reuse the targeted cleanup; preserve line breaks inside actual prose.
     normalizeTrackerSpacing(root);
@@ -87,9 +90,8 @@ export function syncTypography(on) {
         document.querySelectorAll(`br.${IMG_BR}`).forEach(node=>node.classList.remove(IMG_BR));
         document.querySelectorAll(`.${IMG_INDENT}`).forEach(node=>node.remove());return;
     }
-    // 그림 뒤 들여쓰기 칸을 먼저 — 대사 줄 표시(bl-line-dialogue: 앞이 <br> 인 q)가 그 칸을 보고 정해져야 두 번 들이지 않는다
-    markAssetBreaks(document.getElementById('chat'));
-    typesetRoot(document);
+    typesetRoot(document); // 그림 옆 표시(markAssetBreaks)도 이 안에서 먼저
+
     const chat=document.getElementById('chat');if(!chat)return;
     // 4.7.8: 답이 오는 동안(body[data-generating]) 그 메시지는 걸음마다 다시 그려지므로 조판해 봐야 다음 걸음에 사라진다 —
     // 생성 중에는 표시줄 뒤 빈 줄만 정리하고, 나머지 조판은 답이 끝나면 한 번에 처리한다.

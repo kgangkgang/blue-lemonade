@@ -788,18 +788,35 @@ const NOTE_RE = /\{\{\s*\/\/([\s\S]*?)\}\}/;
 // the 주석 itself is translated into — it marks the block, it isn't content.
 const NOTE_LABEL = '[내용 번역]';
 const NOTE_FENCE = '========';
-// Tolerated on read: the fence line, the label line (any [...] variant), and
-// the closing fence. Notes stored by older versions had none of these and are
-// still parsed correctly, then re-fenced the next time the item is translated.
-const NOTE_OPEN_RE  = /^={3,}[ \t]*(?:\r?\n|$)/;
-const NOTE_LABEL_RE = /^[ \t]*\[[^\]]*\][ \t]*(?:\r?\n|$)/;
+// Recognised as ours on read (load path, re-translate path and a model answer
+// alike): the fence line followed by the exact label — today's [내용 번역], or
+// [🌐내용 번역], which the standalone prompt translator wrote before it became
+// this add-on (same fence, same layout, only the emoji differs). The very first
+// versions wrote a bare {{// note}} with no fence or label; that shape cannot be
+// told apart from a comment the author wrote, so it is NOT accepted any more —
+// such an old note simply stays in the text as an ordinary comment.
+const NOTE_LABEL_SRC = '\\[(?:\\u{1F310})?내용 번역\\]';
+const NOTE_LABEL_RE = new RegExp(`^[ \\t]*${NOTE_LABEL_SRC}[ \\t]*(?:\\r?\\n|$)`, 'u');
 const NOTE_CLOSE_RE = /(?:\r?\n)?[ \t]*={3,}[ \t]*$/;
 
 // Global twin of NOTE_RE, for scanning every comment in a piece of source text.
 const NOTE_RE_G = /\{\{\s*\/\/([\s\S]*?)\}\}/g;
-// The fence line + the exact [내용 번역] label at the start is what makes a comment *ours*.
+// The fence line + the exact label at the start is what makes a comment *ours*.
 // Any other [...] (e.g. an author's {{// [OOC] …}}) is someone else's comment and stays in source.
-const NOTE_MARK_RE = /^\s*={3,}[ \t]*\r?\n[ \t]*\[내용 번역\][ \t]*(?:\r?\n|$)/;
+const NOTE_MARK_RE = new RegExp(`^\\s*={3,}[ \\t]*\\r?\\n[ \\t]*${NOTE_LABEL_SRC}[ \\t]*(?:\\r?\\n|$)`, 'u');
+
+// The one recogniser every path uses: the first {{// … }} in `text` that is
+// ours, as { index, length, note } — or null when the text holds none of ours.
+function findOwnNote(text) {
+    const t = typeof text === 'string' ? text : '';
+    if (!t || !t.includes('내용 번역]')) return null;
+    NOTE_RE_G.lastIndex = 0;
+    for (const m of t.matchAll(NOTE_RE_G)) {
+        if (!NOTE_MARK_RE.test(m[1] || '')) continue;   // someone else's comment
+        return { index: m.index, length: m[0].length, note: unwrapNoteBody(m[1] || '') };
+    }
+    return null;
+}
 
 // Once a 주석 번역 has been applied to a preset/WI/card, the annotation lives in
 // the file itself. Re-loading that file later, the extension has to tell its own
@@ -814,23 +831,22 @@ const NOTE_MARK_RE = /^\s*={3,}[ \t]*\r?\n[ \t]*\[내용 번역\][ \t]*(?:\r?\n|
 // Comments that are NOT ours are left in source untouched.
 function extractOwnNote(text) {
     const t = typeof text === 'string' ? text : '';
-    if (!t || !t.includes(NOTE_LABEL)) return { source: t, note: '' };
-    NOTE_RE_G.lastIndex = 0;
-    for (const m of t.matchAll(NOTE_RE_G)) {
-        if (!NOTE_MARK_RE.test(m[1] || '')) continue;   // someone else's comment
-        const note = unwrapNoteBody(m[1] || '');
-        const source = (t.slice(0, m.index) + t.slice(m.index + m[0].length)).trim();
-        return { source, note };
-    }
-    return { source: t, note: '' };
+    const own = findOwnNote(t);
+    if (!own) return { source: t, note: '' };
+    const source = (t.slice(0, own.index) + t.slice(own.index + own.length)).trim();
+    return { source, note: own.note };
 }
 
-// Peel the fence/label decoration off a note's inner text.
+// Peel the fence/label decoration off a note's inner text. Only our own
+// decoration is removed: a translated note may itself start with "[System]"
+// or "===", and that is content.
 function unwrapNoteBody(inner) {
     let t = (inner || '').trim();
-    t = t.replace(NOTE_OPEN_RE, '');
-    t = t.replace(NOTE_LABEL_RE, '');
-    t = t.replace(NOTE_CLOSE_RE, '');
+    if (NOTE_MARK_RE.test(t)) {
+        t = t.replace(/^\s*={3,}[ \t]*\r?\n/, '').replace(NOTE_LABEL_RE, '').replace(NOTE_CLOSE_RE, '');
+    } else {
+        t = t.replace(NOTE_LABEL_RE, '');   // label without the fence (model echo)
+    }
     return t.trim();
 }
 
@@ -838,14 +854,14 @@ function wrapNote(note) {
     return `{{// ${NOTE_FENCE}\n${NOTE_LABEL}\n\n${note}\n\n${NOTE_FENCE}}}`;
 }
 
-// Split a stored body part into its 본문 and 주석 halves.
+// Split a stored body part into its 본문 and 주석 halves. Same recogniser as the
+// load path: an author's own {{// … }} in the body stays in the body.
 function splitBodyAndNote(bodyText) {
     const t = typeof bodyText === 'string' ? bodyText : '';
-    const m = t.match(NOTE_RE);
-    if (!m) return { body: t.trim(), note: '' };
-    const note = unwrapNoteBody(m[1] || '');
-    const body = (t.slice(0, m.index) + t.slice(m.index + m[0].length)).trim();
-    return { body, note };
+    const own = findOwnNote(t);
+    if (!own) return { body: t.trim(), note: '' };
+    const body = (t.slice(0, own.index) + t.slice(own.index + own.length)).trim();
+    return { body, note: own.note };
 }
 
 // Re-join 본문 + 주석 into the canonical stored shape.

@@ -76,9 +76,12 @@ const CODE_RE = /```[\s\S]*?```|`[^`\n]*`/g;
 const stripCode = text => String(text || '').replace(CODE_RE, ' ');
 /** 코드 칸 밖의 글에만 fn 을 적용 (코드 칸은 그대로) */
 const outsideCode = (text, fn) => { const s = String(text || ''); let out = '', last = 0; for (const m of s.matchAll(CODE_RE)) { out += fn(s.slice(last, m.index)) + m[0]; last = m.index + m[0].length; } return out + fn(s.slice(last)); };
-// #fff · #1a2b3c 같은 색 값은 태그가 아니다 — 세기(tagsOf)와 그리기(decorate)가 같은 규칙
-const HEX_TAG = /^(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
-const tagName = raw => { const t = raw.replace(/\/+$/, ''); return t && !HEX_TAG.test(t) ? t : ''; };
+// #fff · #1a2b3c 같은 색 값은 태그가 아니다 — 세기 · 목록(tagsOf · allTags) · 그래프 · 그리기(decorate) · 찾기(applyFind)가 모두 tagName 하나로
+// 5.3.5 규칙: 16진수 3·4·6·8자리이면서 ① 숫자가 섞였거나(#000 #1a2b3c #ff0) ② 한 글자만 되풀이(#fff #ffffff #eee)
+// ③ 6·8자리가 두 글자씩 겹친 꼴(#ffeedd) · 두 글자가 번갈아(#fafafa) 일 때만 색. 영어 낱말(#add #bad #cafe #face #fade #decade #bead #abc)은 태그
+const HEX_SHAPE = /^(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
+const isHexColor = t => { if (!HEX_SHAPE.test(t)) return false; const s = t.toLowerCase(); return /\d/.test(s) || /^(.)\1*$/.test(s) || (s.length >= 6 && (/^(?:(.)\1)+$/.test(s) || /^(..)\1+$/.test(s))); };
+const tagName = raw => { const t = raw.replace(/\/+$/, ''); return t && !isHexColor(t) ? t : ''; };
 // 그린 보기는 HTML 태그 속성 · 링크(a) 안 글을 태그로 안 그린다 — 셀 때도 뺀다
 const stripForTags = text => stripCode(text).replace(/<[^>]*>/g, ' ').replace(/!?\[[^\]\n]*\]\([^)\n]*\)/g, ' ');
 export function tagsOf(text) { const out = new Set(); for (const m of stripForTags(text).matchAll(TAG_RE)) out.add(tagName(m[2])); out.delete(''); return [...out]; }
@@ -812,7 +815,7 @@ const listKey = root => `${look().sort || 'manual'}:${root?.dataset.folder || ''
 function applyFind(root) {
     if (!root) return;
     const raw = (root.querySelector('.bl-notes-find input')?.value || '').trim(), q = raw.toLowerCase();
-    const tag = /^#[^\s#]+$/.test(raw) ? raw.slice(1) : '';
+    const tag = /^#[^\s#]+$/.test(raw) ? tagName(raw.slice(1)) : ''; // 5.3.5: 색 값(#fff)은 태그가 아니라 글로 찾음 — tagsOf 와 같은 규칙
     const all = notes();
     const hitNote = note => !!note && (!q || (tag ? tagHit(tagsOf(note.body), tag) : `${note.title}\n${note.body}`.toLowerCase().includes(q)));
     let shown = 0;

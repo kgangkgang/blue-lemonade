@@ -140,7 +140,7 @@ function usedCustomFonts(data, s) {
     for (const slot of Object.values(data.fonts || {})) {
         if (isObj(slot)) Object.values(slot).forEach(id => ids.add(id));
     }
-    return (s.customFonts || []).filter(f => ids.has(f.id));
+    return (s.customFonts || []).filter(f => ids.has(f?.id) && safeFont(f)); // 5.3.5: 적용 못 하는 저장 글꼴은 코드에 싣지 않음 (받는 쪽이 어차피 버림)
 }
 
 /** 나누기용 묶음: 저장한 도형은 그림을 채워 넣는다 (받는 쪽에는 그 도형이 없으니) */

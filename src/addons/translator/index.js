@@ -1153,14 +1153,26 @@ const REFUSAL_PATTERN = new RegExp([
  * 원문이 어느 정도 길고(80자+) 결과가 원문의 40% · 700자 이하로 짧을 때만 앞부분에서 거절 말투를 찾는다.
  * (영→한 정상 번역은 원문 글자 수의 55~70% 쯤이다)
  */
+// 5.3.6: 원문 길이와 상관없이 쓰는 '모델 목소리' 거절 — 거절 말투에 더해 요청 · 내용 · 번역 · 정책 얘기가 있어야 하고,
+//        원문에 거절 · 사과 · 못 함 말이 없어야 한다 (대사 "I can't." → "못 해." · "미안, 도와줄 수 없어" 같은 정상 번역은 원문에도 그 말이 있다)
+const REFUSAL_TOPIC = /translat|request|content|text\b|passage|material|guideline|polic(?:y|ies)|explicit|sexual|appropriate|\bassist|번역|요청|내용|콘텐츠|텍스트|가이드라인|정책|지침|규정|선정적|성적|부적절/i;
+// 원문 쪽은 넓게 본다 (부정 · 사과 · 거절 말이 하나라도 있으면 이 규칙을 쓰지 않는다 — 놓치면 예전과 같고, 잘못 잡으면 정상 번역이 버려진다)
+const SOURCE_DECLINES = new RegExp([
+    REFUSAL_PATTERN.source,
+    "\\b(?:not|no|never|nothing|cannot|unfortunately|sadly|afraid|regret\\w*|sorry|apolog\\w*|unable|impossible|den(?:y|ied|ies)|reject\\w*|refus\\w*|declin\\w*|forbid\\w*|prohibit\\w*)\\b|n't\\b|n’t\\b",
+    '않|없|못|안 |아니|죄송|미안|유감|안타깝|거절|싫|불가|어렵|곤란',
+    'ない|ません|ず[、。]|無理|断|申し訳|すみません|ごめん|残念',
+    '不|没|沒|無|无|抱歉|对不起|對不起|遗憾|遺憾|拒',
+].join('|'), 'i');
 function looksLikeRefusal(original, translation) {
     const source = String(original ?? '').trim();
     const output = String(translation ?? '').trim();
     // [2.0.4] 예전 버전이 번역문으로 붙였거나 캐시에 넣은 입력 차단 문구도 거절로 본다 (캐시 조회 · 자동 번역 재확인이 이 함수를 쓴다)
     if (looksLikeInputBlock(output)) return true;
-    if (!output || source.length < 80) return false;
-    if (output.length > Math.min(700, source.length * 0.4)) return false;
-    return REFUSAL_PATTERN.test(output.slice(0, 400));
+    if (!output) return false;
+    if (source.length >= 80 && output.length <= Math.min(700, source.length * 0.4) && REFUSAL_PATTERN.test(output.slice(0, 400))) return true;
+    // 5.3.6: 짧은 대사 문단의 거절문도 캐시에 들어갔다 (80자 미만은 아예 안 봤다) — 짧은 답이 통째로 모델 목소리의 거절일 때만
+    return output.length <= 300 && REFUSAL_PATTERN.test(output) && REFUSAL_TOPIC.test(output) && !SOURCE_DECLINES.test(source);
 }
 
 // [2.0.4] 중계 서버가 입력 차단을 오류가 아니라 HTTP 200 · finish=stop 의 "답"으로 돌려준다
@@ -1492,7 +1504,8 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
         if (/cloudflare|<!doctype html|<html/i.test(rawText)) {
             const code = /error code:?\s*(\d{3})|errorcode_(\d{3})/i.exec(rawText);
             const status = code ? (code[1] || code[2]) : '';
-            throw Object.assign(new Error(`중계 서버가 제때 답하지 않아 Cloudflare 가 끊었어요${status ? ` (${status})` : ''}. 잠시 뒤 다시 하거나 요청을 줄여 주세요.`), status === '524' ? { timeout: true } : { transient: true });
+            // 5.3.6: 상태 코드 없는 HTML 은 다시 보내지 않는다 — 시간 초과 페이지일 수 있고, 그러면 서버가 아직 처리 중이라 두 번 청구된다
+            throw Object.assign(new Error(`중계 서버가 제때 답하지 않아 Cloudflare 가 끊었어요${status ? ` (${status})` : ''}. 잠시 뒤 다시 하거나 요청을 줄여 주세요.`), status === '524' ? { timeout: true } : { transient: /^(?:429|50[0-3]|529)$/.test(status) });
         }
         throw new Error(`서버 응답을 읽을 수 없어요: ${rawText.slice(0, 80)}`);
     }
@@ -1853,7 +1866,7 @@ async function translate(text, options = {}) {
                                 try {
                                     // 5.3.4: 머리말 · 꼬리 메모를 걷고, 줄 단위로 온 답은 빈 줄을 되살린 뒤 문단을 센다 (전엔 한 문단으로 보고 괜히 반으로 나눴다)
                                     const joinedGroup = group.join('\n\n');
-                                    const plain = restoreParagraphBreaks(joinedGroup, stripReplyWrapping(await callWithLayouts(joinedGroup, error.format ? PROMPT_LAYOUTS.slice(0, 1) : layouts)));
+                                    const plain = restoreParagraphBreaks(joinedGroup, stripReplyWrapping(await callWithLayouts(joinedGroup, error.format ? PROMPT_LAYOUTS.slice(0, 1) : layouts), joinedGroup)); // 5.3.6: 원문과 견줘 걷는다
                                     const paras = plain.split(/\n[\t ]*\n(?:[\t ]*\n)*/).map(p => p.trim()).filter(Boolean);
                                     if (paras.length === group.length) { succeeded++; return paras.map(tidyKana); }
                                     if (group.length === 1 && plain.trim()) { succeeded++; return [tidyKana(plain.trim())]; }

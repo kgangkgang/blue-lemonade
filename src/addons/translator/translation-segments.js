@@ -121,26 +121,57 @@ export function batchPayloadLegacy(bodies) {
         bodies.map((text, id) => `⟦${id}⟧ ${text}`).join('\n\n');
 }
 // 5.3.4: 답에 덧붙은 머리말 · 꼬리 메모. 원문 문단에는 빈 줄이 없으니(segmentParagraphs) 빈 줄 뒤에 따로 붙은 "Note: …" 는 번역이 아니다.
-const NOTE_BLOCK = /^[\s>*_(\[（【]*(?:(?:translator'?s?|translation|tl)\s*notes?|notes?|n\.b\.|번역\s*(?:메모|노트|참고|주석)|역주|참고|주석)\s*[)\]】）*_]*\s*[:：]|^[\s>*_(\[（【]*※/i;
+const NOTE_OPEN = String.raw`^[\s>*_(\[（【]*`;
+const NOTE_BLOCK = new RegExp(`${NOTE_OPEN}(?:(?:translator'?s?|translation|tl)\\s*notes?|notes?|n\\.b\\.|번역\\s*(?:메모|노트|참고|주석)|역주|참고|주석|訳注|注|備考)\\s*[)\\]】）*_]*\\s*[:：]|${NOTE_OPEN}※`, 'i');
+// 5.3.6: 문단 수가 원문과 같아도 걷는 '분명한' 번역 메모 (이야기 글에 나올 일이 없는 머리)
+const STRONG_NOTE = new RegExp(`${NOTE_OPEN}(?:(?:translator'?s?|translation|tl)\\s*notes?|번역\\s*(?:메모|노트|참고|주석)|역주|訳注)\\s*[)\\]】）*_]*\\s*[:：]`, 'i');
 const RULE_BLOCK = /^[\t ]*(?:-{3,}|\*{3,}|_{3,})[\t ]*$/;
-const PREAMBLE_BLOCK = /^(?:(?:here(?:'s| is| are)|sure|certainly|okay|ok|below is|the following)(?![a-z])[^\n]{0,100}|(?:translation|번역)[^\n]{0,60}|(?:다음은|아래는)[^\n]{0,60}번역[^\n]{0,40})[:：]\s*$/i;
-/** 빈 줄로 떨어진 꼬리 메모(와 그 앞 구분선)를 걷는다. 첫 덩이는 건드리지 않는다. */
-export function stripTrailingNote(text) {
+// 5.3.6: '번역' 을 말하는 순수 머리말만 (예전엔 "Okay, here is what we do:" 같은 이야기 줄도 걷었다)
+const PREAMBLE_BLOCK = new RegExp('^(?:' + [
+    String.raw`(?:(?:okay|ok|sure|certainly|of course|alright)[,!.]?\s+)?(?:here(?:'s| is| are)|below is|the following is)\s+(?:[\w-]+\s+){0,4}translat(?:ion|ed)\b[^\n:：]{0,60}`,
+    String.raw`(?:[a-z]+\s+)?translation(?:\s*\([^)\n]{0,30}\))?`,
+    String.raw`(?:한국어\s*|영어\s*|일본어\s*)?번역(?:문|본|\s*결과)?(?:\s*\([^)\n]{0,30}\))?(?:입니다|이에요|예요)?`,
+    String.raw`(?:다음은|아래는|여기)[^\n]{0,40}번역[^\n]{0,30}`,
+].join('|') + ')\\s*[:：]\\s*$', 'i');
+const paragraphsOf = text => String(text ?? '').replace(/\r\n?/g, '\n').split(/\n[\t ]*\n(?:[\t ]*\n)*/).map(p => p.trim()).filter(Boolean);
+/** 덩이가 번역 메모인가 — 맨 위의 구분선(---, ***, ___) 줄은 건너뛰고 본다 ("---\nNote: …") */
+const noteBlock = (block, pattern = NOTE_BLOCK) => {
+    const lines = block.split('\n');
+    while (lines.length && (!lines[0].trim() || RULE_BLOCK.test(lines[0]))) lines.shift();
+    return lines.length > 0 && pattern.test(lines.join('\n'));
+};
+/** 5.3.6: 맨 끝 덩이가 번역 메모일 때만 (그 앞 구분선과 함께) 걷는다. 가운데 문단이 ※ · 참고: 로 시작해도 뒤를 버리지 않는다.
+ *  source 를 주면 견준다: 원문 마지막 문단도 메모 꼴이면 그 번역이니 두고, 문단 수가 원문과 같으면 '분명한' 메모(Translator's note · 역주 …)만 걷는다.
+ *  첫 덩이는 건드리지 않는다. 마지막 덩이 안에서 본문 바로 밑에 붙은 "---\nNote: …" 도 걷는다. */
+export function stripTrailingNote(text, source) {
     const blocks = String(text ?? '').split(/(\n[\t ]*\n(?:[\t ]*\n)*)/);
-    for (let k = 2; k < blocks.length; k += 2) {
-        if (!NOTE_BLOCK.test(blocks[k])) continue;
-        let cut = k - 1;
-        if (cut >= 2 && RULE_BLOCK.test(blocks[cut - 1])) cut -= 2;
-        return blocks.slice(0, cut).join('').replace(/\s+$/, '');
+    const src = source == null ? null : paragraphsOf(source);
+    if (src && src.length && NOTE_BLOCK.test(src.at(-1))) return blocks.join('');
+    const count = () => blocks.filter((b, i) => i % 2 === 0 && b.trim()).length;
+    let stripped = false;
+    while (blocks.length >= 3) {
+        const last = blocks.at(-1);
+        if (!last.trim() || (stripped && RULE_BLOCK.test(last))) { blocks.splice(-2); continue; }
+        const strong = noteBlock(last, STRONG_NOTE) || (/^\s*(?:-{3,}|\*{3,}|_{3,})[\t ]*\n/.test(last) && noteBlock(last));
+        if (!(strong || (noteBlock(last) && (!src || count() !== src.length)))) break;
+        blocks.splice(-2); stripped = true;
     }
-    return blocks.join('');
+    // 빈 줄 없이 붙은 "본문\n---\nNote: …" — 구분선이 있을 때만 (구분선 없는 "Note:" 줄은 본문일 수 있다)
+    const last = blocks.at(-1), rule = /\n[\t ]*(?:-{3,}|\*{3,}|_{3,})[\t ]*\n/.exec(last);
+    if (rule && last.slice(0, rule.index).trim() && noteBlock(last.slice(rule.index + 1))) {
+        blocks[blocks.length - 1] = last.slice(0, rule.index);
+        stripped = true;
+    }
+    return stripped ? blocks.join('').replace(/\s+$/, '') : blocks.join('');
 }
-/** 평문 답: 앞의 "Here is the translation:" 같은 한 줄 머리말과 꼬리 메모를 걷는다 (머리말이 문단 하나로 세어져 자리가 밀리지 않게) */
-export function stripReplyWrapping(text) {
+/** 평문 답: 앞의 "Here is the translation:" 같은 한 줄 머리말과 꼬리 메모를 걷는다 (머리말이 문단 하나로 세어져 자리가 밀리지 않게).
+ *  5.3.6: source(보낸 원문)를 주면 견준다 — 원문 첫 문단이 같은 꼴이면 머리말로 보지 않고, 꼬리 메모는 stripTrailingNote 규칙대로. */
+export function stripReplyWrapping(text, source) {
     let out = String(text ?? '').replace(/\r\n?/g, '\n').replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
     const first = /^([^\n]*)\n[\t ]*\n/.exec(out);
-    if (first && PREAMBLE_BLOCK.test(first[1].trim())) out = out.slice(first[0].length).replace(/^\s*\n/, '');
-    return stripTrailingNote(out).trim();
+    const srcFirst = source == null ? '' : paragraphsOf(source)[0] ?? '';
+    if (first && PREAMBLE_BLOCK.test(first[1].trim()) && !PREAMBLE_BLOCK.test(srcFirst)) out = out.slice(first[0].length).replace(/^\s*\n/, '');
+    return stripTrailingNote(out, source).trim();
 }
 /** meta.renumbered: 1부터 다시 매긴 답을 한 칸 내려 받았다 (문단 하나를 빼먹고 끝에 지어낸 답과 구별이 안 돼 캐시에 넣지 않는다) */
 export function parseBatchResult(raw, count, meta = {}) {

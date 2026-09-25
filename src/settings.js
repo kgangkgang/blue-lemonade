@@ -124,17 +124,44 @@ export const DATA_IMAGE = /^data:image\/(png|jpeg|webp|gif|avif);base64,[a-z\d+/
 export const isDataImage = value => typeof value === 'string' && value.length <= 8000000 && DATA_IMAGE.test(value);
 // 5.3.4: body 클래스로 들어가는 값은 아는 것만 — 공백이 든 값 하나로 classList.add 가 던져 시작할 때마다 테마가 죽었다
 const CLASS_VALUES = { user: ['bubble', 'card', 'table', 'plain'], header: ['full', 'name', 'none'], icons: ['line', 'default'], layout: ['bleed', 'column', 'inset'], style: ['marker', 'full', 'bold', 'tint', 'plain'], tilt: ['flat', 'slant', 'steep'] };
-// 5.3.4: 내 글꼴 항목 거르기 — family · 주소가 <style> 과 @font-face 에 그대로 들어간다. 공유 코드로 받은 항목도 이 검사를 지난다
-const FONT_FAMILY = /^(?:'[^'"\\;{}<>\r\n]{1,100}'|[^'"\\;{}<>\r\n,()]{1,100})$/;
-const FONT_URL = /^(?:https:\/\/[^\s"'()<>\\]{1,2000}|\/(?!\/)[^\s"'()<>\\]{1,500}|data:(?:font|application)\/[\w.+-]{1,40};base64,[a-z\d+/=]+)$/i;
+// 5.3.4: 내 글꼴 항목 거르기 — family · 주소가 <style> 과 @font-face 에 들어간다. 공유 코드로 받은 항목도 이 검사를 지난다
+// 5.3.5: 따옴표 없는 이름은 글자 · 숫자 · 띄어쓰기 · _ - 만 ('x /* ' 한 줄이 변수 시트 9KB 를 주석으로 삼켰다), 따옴표 안은 /* */ \ 제어 문자 금지.
+// 쓰는 쪽(fonts.js)은 늘 cssFamily · cssUrl 을 거친 값만 CSS 에 넣는다
+const GENERIC_FAMILIES = new Set(['serif', 'sans-serif', 'monospace', 'cursive', 'fantasy', 'system-ui', 'ui-serif', 'ui-sans-serif', 'ui-monospace', 'ui-rounded', 'math', 'emoji', 'fangsong']);
+const FAMILY_BARE = /^[\p{L}\p{N}\p{M} _-]{1,200}$/u;
+const FAMILY_QUOTED = /^[^'"\\;{}<>\p{Cc}]{1,200}$/u;
+/** 글꼴 가족 이름 하나 → CSS 에 넣을 값 ('이름' 으로 감쌈, 기본 가족은 그대로). 못 쓰는 이름이면 null */
+export function cssFamily(value) {
+    if (typeof value !== 'string') return null;
+    const v = value.trim();
+    const q = /^(['"])([\s\S]*)\1$/.exec(v);
+    if (q) {
+        const body = q[2];
+        return body.trim() && FAMILY_QUOTED.test(body) && !body.includes('/*') && !body.includes('*/') ? `'${body}'` : null;
+    }
+    if (!FAMILY_BARE.test(v) || !v.trim()) return null;
+    return GENERIC_FAMILIES.has(v.toLowerCase()) ? v : `'${v}'`;
+}
+const FONT_DATA = /^data:(?:font|application)\/[\w.+-]{1,40};base64,[a-z\d+/=]+$/i;
+/** 글꼴 파일 주소 → url("…") 안에 넣을 값. https:// · 같은 서버(/…) · data: 글꼴만, 따옴표 · 괄호 · 공백 · \ 는 %XX 로 바꿈. 못 쓰면 null */
+export function cssUrl(value) {
+    if (typeof value !== 'string') return null;
+    const v = value.trim();
+    if (/^data:/i.test(v)) return v.length <= 64000000 && FONT_DATA.test(v) ? v : null;
+    if (v.length > 2000 || /\p{Cc}/u.test(v) || !(/^https:\/\/[^\s/\\]/i.test(v) || /^\/(?![/\\])/.test(v))) return null;
+    return v.replace(/[\s"'()\\<>]/g, c => `%${c.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')}`);
+}
+// 글꼴 CSS 주소 (fetch · <link href> 로만 쓰임 — CSS 글에는 안 들어감): https 만, 제어 문자 없이
+export const cssLink = u => typeof u === 'string' && u.length <= 2000 && /^https:\/\/[^\s/\\]/i.test(u.trim()) && !/\p{Cc}/u.test(u);
+/** 이 글꼴 항목을 적용해도 되는지. 공유 코드 · 가져오기는 이것을 못 지나면 버리고, 저장된 내 글꼴은 남겨 두되 적용만 안 함 (fonts.js allFonts) */
 export function safeFont(f) {
-    if (!isObj(f) || typeof f.id !== 'string' || !/^[\w.-]{1,80}$/.test(f.id) || typeof f.family !== 'string' || !FONT_FAMILY.test(f.family.trim())) return false;
+    if (!isObj(f) || typeof f.id !== 'string' || !/^[\w.-]{1,80}$/.test(f.id) || cssFamily(f.family) === null) return false;
     if (f.label !== undefined && typeof f.label !== 'string') return false;
-    if (f.google !== undefined && (typeof f.google !== 'string' || !/^[\w+-]{1,100}(:[\w@.;,]{1,100})?$/.test(f.google))) return false;
-    if (f.fa !== undefined && (typeof f.fa !== 'string' || !/^[\w-]{1,100}$/.test(f.fa))) return false;
-    if (f.css !== undefined && ![].concat(f.css).every(u => typeof u === 'string' && /^https:\/\/[^\s"'()<>\\]{1,2000}$/i.test(u))) return false;
-    if (f.file !== undefined && (typeof f.file !== 'string' || !FONT_URL.test(f.file))) return false;
-    if (f.files !== undefined && !(Array.isArray(f.files) && f.files.every(x => isObj(x) && typeof x.url === 'string' && FONT_URL.test(x.url)
+    if (f.google !== undefined && (typeof f.google !== 'string' || !/^[^\s&#"'<>\\\p{Cc}]{1,300}$/u.test(f.google))) return false;
+    if (f.fa !== undefined && (typeof f.fa !== 'string' || !/^[\w.-]{1,100}$/.test(f.fa))) return false;
+    if (f.css !== undefined && ![].concat(f.css).every(cssLink)) return false;
+    if (f.file !== undefined && cssUrl(f.file) === null) return false;
+    if (f.files !== undefined && !(Array.isArray(f.files) && f.files.every(x => isObj(x) && cssUrl(x.url) !== null
         && (x.weight == null || /^\d{1,3}( \d{1,3})?$/.test(String(x.weight))) && (x.style == null || ['normal', 'italic', 'oblique'].includes(x.style))))) return false;
     return true;
 }
@@ -547,8 +574,10 @@ export function getSettings() {
     { const tidy = tidyGradients(s.gradients); if (JSON.stringify(tidy) !== JSON.stringify(s.gradients)) s.gradients = tidy; } // 이미 정돈돼 있으면 같은 객체 그대로
     tidyFlags(s);
     tidyStyles(s);
-    // 5.3.4: 내 글꼴 — 이름 · 주소가 CSS 에 그대로 들어가니 모양이 맞는 항목만 (멀쩡하면 배열을 새로 만들지 않음)
-    if (!s.customFonts.every(safeFont)) s.customFonts = s.customFonts.filter(safeFont);
+    // 5.3.5: 저장된 내 글꼴은 지우지 않는다 (5.3.4 는 괄호 · 공백 든 주소, 긴 이름을 업데이트 때 영영 지웠다) —
+    // 못 쓰는 항목도 남기고, 적용할 때 fonts.js 가 safeFont 로 거른다. 항목 모양이 아닌 것만 뺌 (멀쩡하면 배열을 새로 만들지 않음)
+    if (!Array.isArray(s.customFonts)) s.customFonts = [];
+    else if (!s.customFonts.every(isObj)) s.customFonts = s.customFonts.filter(isObj);
     if (!Array.isArray(s.customPalettes)) s.customPalettes=[];
     if (typeof s.activeCustomPalette !== 'string') s.activeCustomPalette='';
     if (!isObj(s.addons)) s.addons=structuredClone(DEFAULTS.addons);

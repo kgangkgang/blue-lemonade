@@ -3,7 +3,7 @@
 //  - 언어별 글꼴 합치기: 한국어·영어·일본어·중국어 글꼴을 unicode-range 로 잘라 하나의 가족('Salty Text' 등)으로 묶음.
 //    글꼴 CSS(@font-face)를 직접 받아와 가족 이름과 unicode-range 만 바꿔 다시 씀.
 //  - 고르기 목록 미리보기: 보이는 글자만 담은 작은 구글 폰트 파일(&text=)
-import { getSettings, saveSettings, FONT_SLOTS } from './settings.js';
+import { getSettings, saveSettings, FONT_SLOTS, cssFamily, cssUrl, cssLink, safeFont } from './settings.js';
 import { CATALOG } from './catalog.js';
 
 export { CATALOG };
@@ -22,8 +22,19 @@ export const langFamily = (slot, lang) => lang === 'ko' ? SLOT_FAMILY[slot] : `'
 const GOOGLE = 'https://fonts.googleapis.com/css2?';
 
 // ───────── 목록 ─────────
+// 5.3.5: 저장된 내 글꼴 가운데 적용 못 하는 항목(이름 · 주소 모양이 안 맞음)은 지우지 않고 '(못 씀)' 으로 보여 주기만 —
+// unusable 이 붙은 항목은 fontStack · facesFor · loadFont · probeSource 가 CSS 에 넣지 않는다
+const fontViews = new WeakMap();
+function fontView(f) {
+    let view = fontViews.get(f);
+    if (!view) {
+        view = safeFont(f) ? f : { ...f, id: String(f.id), label: `${typeof f.label === 'string' && f.label ? f.label : String(f.id)} (못 씀)`, group: 'custom', unusable: true };
+        fontViews.set(f, view);
+    }
+    return view;
+}
 export function allFonts() {
-    return [...CATALOG, ...getSettings().customFonts];
+    return [...CATALOG, ...getSettings().customFonts.map(fontView)];
 }
 
 export function findFont(id) {
@@ -36,7 +47,7 @@ export function fontsFor(lang) {
 }
 
 export function fontStack(font, lang = 'ko') {
-    const family = font ? font.family : 'system-ui';
+    const family = (font && !font.unusable && cssFamily(font.family)) || 'system-ui'; // 5.3.5: 이름은 늘 cssFamily 로 감싸서 (주석 · 규칙 끼워 넣기 방지)
     const tail = lang === 'ko'
         ? (font?.group === 'serif' ? ["'Noto Serif KR'", 'serif'] : ["'Pretendard Variable'", "'Apple SD Gothic Neo'", "'Noto Sans KR'", 'sans-serif'])
         : (font?.group === 'serif' ? ['serif'] : ['sans-serif']);
@@ -152,11 +163,16 @@ export function parseFaces(cssText, baseUrl) {
             if (k && v) d[k] = v;
         }
         if (!d.src) continue;
-        d.src = d.src.replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g, (_, q, u) => `url("${absolute(u, baseUrl)}")`);
+        d.src = d.src.replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g, (_, q, u) => `url("${urlText(absolute(u, baseUrl))}")`);
         faces.push(d);
     }
     return faces;
 }
+
+// 5.3.5: url("…") 안에 들어가는 주소 — 따옴표 · 괄호 · 공백 · \ · 제어 문자는 %XX 로 (받아온 CSS 의 주소도)
+const urlText = u => String(u).replace(/[\s"'()\\<>\p{Cc}]/gu, c => `%${c.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')}`);
+// 받아온 CSS 의 값을 우리 <style> 에 옮겨 쓸 때: 주석 · 중괄호 · \ · 태그가 섞인 face 는 버림
+const faceTextOk = v => !/\/\*|\*\/|[{}<>\\]|\p{Cc}/u.test(v);
 
 const unquote = s => String(s || '').trim().replace(/^['"]|['"]$/g, '').toLowerCase();
 
@@ -173,12 +189,19 @@ function sourceUrls(font) {
 function fileFaces(font, family, ranges) {
     const files = font.files || (font.file ? [{ url: font.file, weight: null }] : []);
     const range = ranges ? `unicode-range:${formatRange(ranges)};` : '';
-    return files.map(f => `@font-face{font-family:${family};${f.weight ? `font-weight:${f.weight};` : ''}${f.style ? `font-style:${f.style};` : ''}font-display:swap;src:url("${f.url}");${range}}`);
+    // 5.3.5: 주소 · 굵기 · 모양도 검사한 값만 (family 는 langFamily 가 만든 이름)
+    return files.flatMap((f) => {
+        const url = cssUrl(f?.url);
+        if (!url) return [];
+        const weight = f.weight != null && /^\d{1,3}( \d{1,3})?$/.test(String(f.weight)) ? `font-weight:${f.weight};` : '';
+        const style = ['normal', 'italic', 'oblique'].includes(f.style) ? `font-style:${f.style};` : '';
+        return [`@font-face{font-family:${family};${weight}${style}font-display:swap;src:url("${url}");${range}}`];
+    });
 }
 
 /** 글꼴 하나를 family 이름으로, ranges 범위만 맡도록 @font-face 로 다시 씀 */
 async function facesFor(font, ranges, family) {
-    if (!ranges.length) return [];
+    if (!ranges.length || font.unusable) return [];
     if (font.file || font.files) return fileFaces(font, family, ranges);
     const urls = sourceUrls(font);
     if (!urls.length) return []; // 기기 기본 글꼴 등: 합치지 않음 (가족 목록 뒤쪽에서 받음)
@@ -192,6 +215,7 @@ async function facesFor(font, ranges, family) {
         const r = intersect(orig, ranges);
         if (!r.length) continue;
         const desc = ['font-style', 'font-weight', 'font-stretch'].filter(k => f[k]).map(k => `${k}:${f[k]};`).join('');
+        if (!faceTextOk(desc + f.src)) continue;
         out.push(`@font-face{font-family:${family};${desc}font-display:swap;src:${f.src};unicode-range:${formatRange(r)}}`);
     }
     return out;
@@ -238,11 +262,12 @@ function inkOf(family, ch) {
 
 /** 검사용으로 받을 src 하나 (기본 굵기 우선). 구글 글꼴은 조각(unicode-range)으로 나뉘어 있고 이런 문제가 없어 검사하지 않음 */
 async function probeSource(font) {
-    if (font.google || font.cors === false) return null;
+    if (font.google || font.cors === false || font.unusable) return null;
     if (font.file || font.files) {
         const files = font.files || [{ url: font.file, weight: null }];
         const pick = files.find(f => !f.weight || String(f.weight) === '400') || files[0];
-        return pick ? `url("${pick.url}")` : null;
+        const url = cssUrl(pick?.url);
+        return url ? `url("${url}")` : null;
     }
     let faces = [];
     for (const url of sourceUrls(font)) faces.push(...parseFaces(await fetchCss(url), url));
@@ -328,6 +353,7 @@ export async function buildComposite(slot, set, hanja, depth = 0) {
         const font = findFont(id);
         if (!font) continue;
         const fail = () => { failed.push(font.id); if (lang === 'ko') loadFont(font); else failedLangs.push(lang); };
+        if (font.unusable) continue; // 5.3.5: 모양이 안 맞는 저장 글꼴 — 합치지도 불러오지도 않음 (가족 목록 뒤쪽 기기 글꼴)
         if (font.cors === false) { fail(); continue; } // CSS 를 직접 못 읽는 주소: 통째로만
         jobs.push(facesFor(font, ranges[lang], langFamily(slot, lang)).then(faces => parts.push(...faces), fail));
     }
@@ -356,11 +382,11 @@ function addLink(id, href) {
  */
 const loadedFonts = new Set();
 export function loadFont(font) {
-    if (!font || loadedFonts.has(font.id)) return;
+    if (!font || font.unusable || loadedFonts.has(font.id)) return;
     loadedFonts.add(font.id);
     if (font.file || font.files) {
         const files = font.files || [{ url: font.file, weight: null }];
-        addFaces(files.map(f => ({ 'font-family': font.family, src: `url("${f.url}")`, 'font-weight': f.weight, 'font-style': f.style })));
+        addFaces(files.flatMap(f => (cssUrl(f?.url) ? [{ 'font-family': font.family, src: `url("${cssUrl(f.url)}")`, 'font-weight': f.weight, 'font-style': f.style }] : [])));
         return;
     }
     sourceUrls(font).forEach((url, i) => {
@@ -488,7 +514,7 @@ async function settlePreview(font, family) {
 
 /** 고르기 목록에 보이는 글꼴의 미리보기 파일 요청 (모아서 한 번에) */
 export function queuePreview(font) {
-    if (!font || previewed.has(font.id)) return;
+    if (!font || font.unusable || previewed.has(font.id)) return; // 5.3.5: 못 쓰는 저장 글꼴은 미리보기도 안 받음
     previewQueue.push(font);
     if (!previewTimer) previewTimer = setTimeout(flushPreviews, 120);
 }
@@ -508,7 +534,7 @@ function upsert(font) {
 export async function addGoogleFont(name) {
     const family = String(name || '').trim().replace(/\s+/g, ' ').replace(/['"]/g, '');
     if (!family) throw new Error('글꼴 이름을 적어 주세요');
-    if (!/^[\w -]{1,100}$/.test(family)) throw new Error('구글 폰트 이름은 영문 · 숫자 · 띄어쓰기만 적어 주세요'); // 5.3.4: 이름이 CSS 에 그대로 들어간다
+    if (!/^[\w -]{1,100}$/.test(family) || !cssFamily(`'${family}'`)) throw new Error('구글 폰트 이름은 영문 · 숫자 · 띄어쓰기만 적어 주세요'); // 5.3.4: 이름이 CSS 에 그대로 들어간다
     const param = family.replace(/ /g, '+');
     const res = await fetch(`${GOOGLE}family=${param}&text=${encodeURIComponent('가A')}`);
     if (!res.ok) throw new Error(`구글 폰트에서 "${family}"를 못 찾았어요. 이름을 fonts.google.com 에 적힌 그대로 적어 주세요.`);
@@ -526,9 +552,9 @@ export async function addGoogleFont(name) {
 export async function addCssFont(url, name) {
     const href = String(url || '').trim();
     const family = String(name || '').trim().replace(/['"]/g, '');
-    if (!/^https:\/\/[^\s"'()<>\\]+$/i.test(href)) throw new Error('https:// 로 시작하는 CSS 주소를 적어 주세요');
+    if (!cssLink(href)) throw new Error('https:// 로 시작하는 CSS 주소를 적어 주세요'); // 5.3.5: 저장 · 공유 코드와 같은 검사 (괄호 · 공백 든 주소도 됨)
     if (!family) throw new Error('CSS 안의 font-family 이름을 적어 주세요');
-    if (/[\\;{}<>\r\n]/.test(family)) throw new Error('글꼴 이름에 쓸 수 없는 글자가 있어요'); // 5.3.4: 이름이 CSS 에 그대로 들어간다
+    if (!cssFamily(`'${family}'`)) throw new Error('글꼴 이름에 쓸 수 없는 글자가 있어요'); // 5.3.5: settings.js cssFamily 와 같은 규칙 (/* */ \ ; {} <> 제어 문자)
     const font = { id: `c-${slug(family)}`, label: family, family: `'${family}'`, group: 'custom', css: href };
     let res;
     try {

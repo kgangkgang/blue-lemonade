@@ -1,13 +1,25 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.3.5.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.3.6.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.3.5 · 최신 업데이트</summary>
+<summary>5.3.6 · 최신 업데이트</summary>
+
+- 북마크 카드와 앞뒤 문맥 창에서 캐릭터 에셋 그림 아래가 위보다 넓게 벌어지고, 그림 바로 아래 글에 첫 줄 들여쓰기가 빠지던 것을 고쳤어요. 5.3.4 에서 채팅에만 적용한 처리를 북마크 · 설정 미리보기에도 똑같이 적용해요.
+- LLM 번역: 짧은 대사 문단에 온 거절 문구도 번역 기록에 남지 않아요. 답 끝의 '---' 아래 Note 를 걷고, 평문으로 다시 받을 때 가운데 문단이나 이야기 첫 줄까지 잘라 내던 것을 고쳤어요. 시간 초과로 HTML 페이지가 온 요청은 한 번 더 보내지 않아요.
+- 다시 쓰기: '자드였어 · 미카엘하고 · 루시퍼였어' 처럼 이름 뒤에 조사나 어미가 붙으면 그 캐릭터 예외가 꺼지던 것을 고쳤어요 (5.3.4 에서 생긴 문제).
+- 프롬프트 번역: 다시 번역할 때 작성자가 써 둔 {{// …}} 주석을 번역 메모로 옮기던 것을 고쳤어요. 예전 번역기가 남긴 [🌐내용 번역] 메모도 다시 알아봐요.
+- 내 글꼴: 업데이트할 때 주소에 괄호 · 공백이 든 글꼴이 목록에서 지워지던 것을 고쳤어요. 쓸 수 없는 글꼴은 지우지 않고 '(못 씀)' 으로만 표시해요. 공유 코드의 글꼴 이름으로 테마가 깨지던 것도 막았어요.
+- 메모: #cafe · #fade 같은 영어 태그가 색 값으로 잘못 걸러지던 것을 고쳤어요. #fff · #000 같은 색 값만 태그에서 빠져요.
+
+</details>
+
+<details>
+<summary>5.3.5 · 정규식 버전 표시</summary>
 
 - 5.3.4 에서 프롬프트 연동 정규식을 켜 두면 '파일 버전이 달라요 (코드 1.0.2, 스타일 1.0.1)' 경고가 뜨던 것을 고쳤어요. 스타일 파일의 버전 표시만 빠진 것이라 기능은 그대로였어요.
 
