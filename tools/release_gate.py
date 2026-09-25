@@ -27,18 +27,27 @@ ADDON_CSS_VERSIONS = (
     ('perf/perfassist.js', 'perf', '--pa-css-version'),
     ('perf/state.js', 'perf', '--rl-css-version'),
     ('perf/savededupe.js', 'perf', '--sv-css-version'),
+    # Names that do not follow the --xx-css-version / const VERSION pattern.
+    ('regexlink/index.js', 'regexlink', '--rl-version'),
+    ('modelswitch/index.js', 'modelswitch', '--ms-version'),
+    ('notes/version.js', 'notes', '--bl-notes-css-version', 'NOTES_VERSION'),
 )
 
 
+def addon_css_versions():
+    # (source, folder, css variable, code constant); the constant defaults to VERSION.
+    return [(*entry, 'VERSION')[:4] for entry in ADDON_CSS_VERSIONS]
+
+
 def validate_addon_css(files):
-    for source, folder, variable in ADDON_CSS_VERSIONS:
+    for source, folder, variable, constant in addon_css_versions():
         source = 'src/addons/' + source
         css_path = f'src/addons/{folder}/style.css'
         if source not in files and css_path not in files:
             continue
         code = files.get(source, b'').decode('utf-8')
         css = files.get(css_path, b'').decode('utf-8')
-        code_version = re.search(r'\bconst\s+VERSION\s*=\s*[\'\"]([^\'\"]+)', code)
+        code_version = re.search(r'\bconst\s+' + constant + r'\s*=\s*[\'\"]([^\'\"]+)', code)
         css_versions = re.findall(re.escape(variable) + r'\s*:\s*[\'\"]([^\'\"]+)', css)
         require(code_version is not None and css_versions == [code_version[1]],
                 f'Addon CSS version mismatch: {source} / {variable}')

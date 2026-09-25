@@ -1,9 +1,9 @@
 name: Release consistency
 on:
   push:
-    paths: ['src/**', 'index.js', 'style.css', 'manifest.json', 'README.md', 'docs/downloads/**', 'tools/**', '.github/workflows/release-check.yml']
+    paths: ['src/**', 'css/**', 'index.js', 'style.css', 'manifest.json', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'docs/downloads/**', 'tools/**', '.github/workflows/release-check.yml']
   pull_request:
-    paths: ['src/**', 'index.js', 'style.css', 'manifest.json', 'README.md', 'docs/downloads/**', 'tools/**', '.github/workflows/release-check.yml']
+    paths: ['src/**', 'css/**', 'index.js', 'style.css', 'manifest.json', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'docs/downloads/**', 'tools/**', '.github/workflows/release-check.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -43,7 +43,21 @@ jobs:
           node tools/tests/optimization-cache.mjs
           node tools/tests/preferences-safety.mjs .
           node tools/tests/appearance-comfort.mjs .
+          node tools/tests/gradients-core.mjs .
+          node tools/tests/regexlink-engine.mjs .
           node tools/build-integrity.mjs . --check
+      - name: Check that generated files match their sources
+        # Regenerate in the throwaway checkout, then fail if anything changed:
+        # css/43-user-profile.gen.css, css/23-preview.gen.css (check mode fails on new root declarations),
+        # src/scripts/plain/*, style.css and src/lazy-panel.gen.css.
+        run: |
+          node tools/gen-user-profile.cjs
+          node tools/gen-preview-css.js --quiet
+          node tools/build-plain-scripts.mjs
+          node tools/build-css.cjs
+          git status --porcelain
+          git diff --exit-code --stat
+          test -z "$(git status --porcelain)"
       - name: Verify the current downloadable ZIP byte for byte
         run: |
           python -c "import json,subprocess,sys; v=json.load(open('manifest.json'))['version']; subprocess.run([sys.executable,'tools/release_gate.py','--kind','theme','--source','.','--zip',f'docs/downloads/blue-lemonade-{v}.zip'],check=True)"
