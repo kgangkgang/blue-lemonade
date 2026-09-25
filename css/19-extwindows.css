@@ -73,6 +73,32 @@ html body.salty :is(.cg-overlay, .cg-sheet-overlay, .cg-window, .cg-sheet, .cg-s
   backdrop-filter: none !important;
 }
 
+/* ---------- 캐릭터 에셋(5.2.0): 창 · 카드 · 선 · 포인트를 에이드 색으로 — 확장은 글자색을 섞어 만든 회색만 썼다 ---------- */
+html body.salty .eh-root {
+  --eh-text: var(--salty-text);
+  --eh-accent: var(--salty-accent);
+  --eh-accent-ink: var(--salty-on-accent);
+  --eh-muted: var(--salty-muted);
+  --eh-faint: var(--salty-faint);
+  --eh-line: var(--salty-line);
+  --eh-line-strong: var(--salty-shade-2);
+  --eh-hover: var(--salty-shade);
+  --eh-card: var(--salty-fill-surface, var(--salty-surface));
+  --eh-well: var(--salty-fill-surface-shade, var(--salty-surface-shade));
+  --eh-tile-bg: var(--salty-fill-surface-shade, var(--salty-surface-shade));
+  --eh-accent-soft: var(--salty-fill-tint-14, var(--salty-tint-14));
+  --eh-accent-line: var(--salty-accent-28);
+  --eh-accent-text: var(--salty-accent);
+  --eh-danger: var(--bl-danger);
+}
+/* 세부 설정 창 바탕은 페이지 톤, 그 위 카드는 표면 톤 (북마크 창과 같은 층 구조). 그림 크게 보기(.eh-viewer)는 검정 그대로 */
+html body.salty .bl-assets-dialog {
+  background: var(--bl-page);
+  color: var(--salty-text);
+  border-color: var(--salty-line);
+  box-shadow: var(--bl-e5);
+}
+
 /* ---------- 타번 헬퍼 고르기 칸: 고른 칸을 다른 세그먼트와 같은 '떠 있는 칩' 으로 ---------- */
 /* 설정 창 탭(.salty-tabs .on) · 실리태번 탭(.ui-tabs-active) 은 떠 있는 칩인데 여기만 꽉 찬 알약이라
    나란히 놓으면 서로 다른 디자인처럼 보였음 (surfaces:sweep 의 앞 규칙을 한 점 무겁게 덮음) */

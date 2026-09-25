@@ -1,13 +1,20 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.1.9.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.2.0.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.1.9 · 최신 업데이트</summary>
+<summary>5.2.0 · 최신 업데이트</summary>
+
+- 캐릭터 에셋 창이 에이드 색을 받아요. 바탕·카드·선·포인트색이 다른 창처럼 고른 에이드와 나이트를 따라가요. 홈페이지의 에셋 시연 영상도 그 모습으로 다시 찍었어요.
+
+</details>
+
+<details>
+<summary>5.1.9 · 봇카드 탭 정리</summary>
 
 - 한글화 패널 봇카드 탭의 빈 화면에 있던 카드 이모티콘을 없앴어요. 다른 탭과 같은 모양이에요.
 
