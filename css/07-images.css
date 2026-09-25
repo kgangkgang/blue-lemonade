@@ -45,6 +45,10 @@ body.salty #chat .mes_text :is(.custom-cac-img, img.character-asset-rendered, im
 body.salty #chat .mes_text :is(img.character-asset-rendered, img.eh-img) {
   margin: 1.4em 0 !important;
 }
+/* 5.2.5: 문단으로 감싸인 그림(<p><img></p>)은 문단 간격(--salty-para)만 — 1.4em 에 문단 여백까지 더해져 그림 아래가 두 배로 벌어졌다 (사용자 제보) */
+body.salty #chat .mes_text p > :is(img.character-asset-rendered, img.eh-img):only-child {
+  margin-block: 0 !important;
+}
 
 /* 가로 꽉 */
 body.salty.salty-img-bleed #chat .mes_text :is(.custom-cac-wrap, [class*="custom-imageWrapper"]) {

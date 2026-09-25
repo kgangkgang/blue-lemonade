@@ -7,6 +7,8 @@ body.salty #chat .mes .mes_text {
   margin: 0 !important;
   padding: 0 !important;
 }
+/* 5.2.5 번역 접기 보기의 문단 간격 = 테마 문단 간격 */
+body.salty #chat .mes .mes_text :is(.llmt-para-gap, .custom-llmt-para-gap) { height: var(--salty-para); }
 body.salty #chat .mes .mes_text p:empty {
   display: none;
 }

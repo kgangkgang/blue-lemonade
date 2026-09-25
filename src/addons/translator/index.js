@@ -6524,18 +6524,19 @@ function renderAllInOne(transQueue, origQueue, displayMode, hasMask, skeleton,
         return fullTransText + separator + fullOrigText;
     }
 
-    // 2. 텍스트만 있는 경우 -> <details> 사용 가능
+    // 2. 텍스트만 있는 경우 -> <details> 사용 가능 (5.2.5: 요약/본문 안은 마크다운 문단이 안 되므로 빈 줄 · 줄바꿈을 <br> 로)
+    const br = text => String(text ?? '').replace(/\n[\t ]*\n(?:[\t ]*\n)*/g, '<br><br>').replace(/\n/g, '<br>');
     if (displayMode === 'original_first') {
         return `<details class="llm-translator-details mode-original-first">
-            <summary class="llm-translator-summary">${fullOrigText}</summary>
-            ${fullTransText}
+            <summary class="llm-translator-summary">${br(fullOrigText)}</summary>
+            ${br(fullTransText)}
         </details>`;
     }
     
     // 기본 (folded, unfolded 등)
     return `<details class="llm-translator-details mode-folded">
-        <summary class="llm-translator-summary">${fullTransText}</summary>
-        ${fullOrigText}
+        <summary class="llm-translator-summary">${br(fullTransText)}</summary>
+        ${br(fullOrigText)}
     </details>`;
 }
 
@@ -6545,7 +6546,10 @@ function renderInterleaved(skeleton, transQueue, origQueue, displayMode) {
 
     skeleton.forEach(node => {
         // SKELETON 타입 추가 (그대로 출력)
-        if (node.type === 'MASK' || node.type === 'EMPTY' || node.type === 'SKELETON') {
+        if (node.type === 'EMPTY' && displayMode !== 'unfolded') {
+            // 5.2.5: 접기 · 원문 먼저 보기는 문단마다 <details> 블록이라 빈 줄이 마크다운 문단 간격을 못 만든다 → 간격 요소로 (CSS: --salty-para)
+            htmlParts.push('<div class="llmt-para-gap"></div>');
+        } else if (node.type === 'MASK' || node.type === 'EMPTY' || node.type === 'SKELETON') {
             htmlParts.push(node.content);
         } 
         else if (node.type === 'TEXT') {

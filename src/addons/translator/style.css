@@ -114,6 +114,9 @@ body.expandMessageActions .mes .mes_buttons .extraMesButtons {
 
 
 /* LLM 번역기 확장 기능: details 기본 화살표 숨기기 (SillyTavern 적용 후) */
+/* 5.2.5 접기 · 원문 먼저 보기의 문단 간격 (블루레몬에이드는 --salty-para 로 덮는다) */
+.mes_text :is(.llmt-para-gap, .custom-llmt-para-gap) { height: 0.8em; }
+
 .custom-llm-translator-details > summary.custom-llm-translator-summary {
   list-style: none; /* 대부분의 브라우저용 */
   -webkit-appearance: none; /* Safari 등 Webkit 추가 처리 */

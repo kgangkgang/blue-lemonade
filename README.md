@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.2.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.2.5.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.2.4 · 최신 업데이트</summary>
+<summary>5.2.5 · 최신 업데이트</summary>
+
+- LLM 번역의 보기 방식을 접기·원문 먼저 보기로 두면 문단 사이 간격이 사라져 붙어 보이던 문제를 고쳤어요. 문단마다 접기 상자를 만들면서 빈 줄이 버려지던 것이라, 상자 사이에 테마 문단 간격을 넣어요. 문단 수가 달라 통째로 보일 때도 줄바꿈을 살려요.
+- 캐릭터 에셋 그림 아래에 문단 간격의 두 배로 벌어지던 여백을 없앴어요. 이제 그림 위아래가 보통 문단 간격과 같아요.
+
+</details>
+
+<details>
+<summary>5.2.4 · 번역 문단 빈 줄</summary>
 
 - 번역 뒤 문단 사이 빈 줄이 사라지던 문제를 고쳤어요. 코드 블록이나 카드가 든 답은 통째로 번역하는데, 모델이 문단을 한 줄씩 붙여 돌려주면 원문 문단 수에 맞춰 빈 줄을 되살려요. 문단 묶음 번역은 원래 빈 줄을 그대로 둬요.
 
