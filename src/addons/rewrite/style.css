@@ -9,7 +9,7 @@
     --bwr-accent-soft: color-mix(in srgb, var(--bwr-accent) 18%, transparent);
     --bwr-danger: #e5484d;
     /* Compared with index.js after load: a mismatch may be a packaging, cache, or installation issue. */
-    --bwr-css-version: "1.9.5";
+    --bwr-css-version: "1.9.6";
 }
 
 /* 서랍 안쪽 — .inline-drawer-content 는 실리태번이 열고 닫으므로 display 를 주지 않고 안에 한 겹 더 둔다 */

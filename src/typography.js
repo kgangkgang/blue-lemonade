@@ -35,7 +35,10 @@ export function markAssetBreaks(root){
     for(const br of root.querySelectorAll(`br.${IMG_BR}`))if(!want.has(br))br.classList.remove(IMG_BR);
     for(const br of want)if(!br.classList.contains(IMG_BR))br.classList.add(IMG_BR);
     for(const pad of root.querySelectorAll(`.${IMG_INDENT}`))if(!spots.has(pad.nextSibling)){pad.remove();changed=true;}
-    for(const spot of spots)if(!spot.previousSibling?.classList?.contains(IMG_INDENT)){
+    for(let spot of spots)if(!spot.previousSibling?.classList?.contains(IMG_INDENT)){
+        // 5.3.7: 글 마디가 줄바꿈 · 빈칸으로 시작하면("\n나이트…") 칸 뒤의 그 빈칸이 띄어쓰기 한 칸으로 그려져 들여쓰기가 1em+빈칸(16px → 20px)이었다.
+        // 접히는 빈칸만 떼어 칸 앞(줄 머리 — 그려지지 않는다)에 두고, 글자 바로 앞에 칸을 끼운다. 글자는 그대로 (마디만 둘로)
+        if(spot.nodeType===3){const lead=/^[ \t\n\r\f]+/.exec(spot.data)?.[0].length;if(lead)spot=spot.splitText(lead);}
         const pad=document.createElement('span');pad.className=IMG_INDENT;pad.setAttribute('aria-hidden','true');
         spot.before(pad);changed=true;
         if(spot.nodeName==='Q')spot.classList.remove('bl-line-dialogue'); // 앞이 <br> 이던 대사 줄 들여쓰기와 겹치지 않게 (다음 조판이 다시 정한다)

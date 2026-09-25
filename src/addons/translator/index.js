@@ -1159,10 +1159,12 @@ const REFUSAL_TOPIC = /translat|request|content|text\b|passage|material|guidelin
 // 원문 쪽은 넓게 본다 (부정 · 사과 · 거절 말이 하나라도 있으면 이 규칙을 쓰지 않는다 — 놓치면 예전과 같고, 잘못 잡으면 정상 번역이 버려진다)
 const SOURCE_DECLINES = new RegExp([
     REFUSAL_PATTERN.source,
-    "\\b(?:not|no|never|nothing|cannot|unfortunately|sadly|afraid|regret\\w*|sorry|apolog\\w*|unable|impossible|den(?:y|ied|ies)|reject\\w*|refus\\w*|declin\\w*|forbid\\w*|prohibit\\w*)\\b|n't\\b|n’t\\b",
-    '않|없|못|안 |아니|죄송|미안|유감|안타깝|거절|싫|불가|어렵|곤란',
-    'ない|ません|ず[、。]|無理|断|申し訳|すみません|ごめん|残念',
-    '不|没|沒|無|无|抱歉|对不起|對不起|遗憾|遺憾|拒',
+    "\\b(?:not|no|never|nothing|cannot|can ?not|won't|wont|can't|cant|unfortunately|sadly|afraid|regret\\w*|sorry|apolog\\w*|unable|impossible|den(?:y|ied|ies)|reject\\w*|refus\\w*|declin\\w*|forbid\\w*|prohibit\\w*|hard|difficult|tough|too much)\\b|n't\\b|n’t\\b",
+    '않|없|못|안 |아니|죄송|미안|유감|안타깝|거절|싫|불가|어렵|곤란|힘들|힘든|힘드|무리|버거|벅차|난감|곤혹',
+    'ない|ません|ず[、。]|無理|断|申し訳|すみません|ごめん|残念|難し|厳し|できな|出来な',
+    '不|没|沒|無|无|抱歉|对不起|對不起|遗憾|遺憾|拒|难|難',
+    // 5.3.7: 원문이 '번역' 자체를 말하면 (대사 "그건 번역하기 힘들어.") 번역문에 translate 가 나오는 게 당연하다 — 거절로 보지 않는다
+    'translat|번역|통역|翻訳|翻译|翻譯|通訳|通译',
 ].join('|'), 'i');
 function looksLikeRefusal(original, translation) {
     const source = String(original ?? '').trim();
@@ -1844,7 +1846,7 @@ async function translate(text, options = {}) {
                         watcher.check();
                         try {
                             const meta = {};
-                            const out = parseBatchResult(await callWithLayouts(batchPayload(group), layouts), group.length, meta).map(tidyKana);
+                            const out = parseBatchResult(await callWithLayouts(batchPayload(group), layouts), group.length, meta, group).map(tidyKana); // 5.3.7: 원문 문단과 견줘 꼬리 메모를 걷는다
                             if (meta.renumbered) for (const body of group) noCache.add(body);
                             succeeded++;
                             return out;

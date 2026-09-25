@@ -6,10 +6,11 @@ import { POPUP_TYPE, callGenericPopup } from '../../../../../../popup.js';
 
 import { getChatCompletionModel, oai_settings } from '../../../../../../openai.js';
 import { insertDirection } from './prompt.js';
+import { badgeTextHit } from '../../badge-hit.js';
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
-const VERSION = '1.1.2';
+const VERSION = '1.1.3';
 
 // AI에게 보내는 글이라 원래 확장의 영어 프롬프트를 그대로 쓴다. (뜻은 설정 화면에 한국어로 적어 둠)
 const DEFAULT_PROMPT = `<direction>
@@ -485,7 +486,7 @@ function buildSettings() {
         </div>`;
     container.append(wrapper);
     settingsRoot = wrapper;
-    wrapper.querySelector(".jj-version").onclick = event => {event.preventDefault();event.stopPropagation();showHelp();};
+    wrapper.querySelector(".jj-version").onclick = event => {if (!badgeTextHit(event)) return; event.preventDefault();event.stopPropagation();showHelp();};
 
     const colorCode = wrapper.querySelector('#jj_on_color');
     const swatch = wrapper.querySelector('#jj_on_color_swatch');

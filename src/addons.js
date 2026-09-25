@@ -1,5 +1,6 @@
 import { addonsEnabled } from './usage-mode.js';
 import { toolSection } from './addon-layout.js';
+import { leaveSettingsDialog } from './settings-dialog.js';
 // Optional integrations share standalone settings, but only one owner runs per page.
 import { getSettings, saveSettings } from './settings.js';
 import { NOTES_VERSION } from './addons/notes/version.js';
@@ -162,6 +163,7 @@ export function bindAddons(root,refresh){
         try{await persist();}catch(error){globalThis.toastr?.warning(error.message,'Blue Lemonade');}await syncAddonIcons();refresh();
     }));
     root.querySelectorAll('[data-addon-open]').forEach(button=>button.addEventListener('click',async()=>{
+        if(['bookmarks','prompt'].includes(button.dataset.addonOpen))leaveSettingsDialog(button); // 5.3.7 body 창은 dialog 아래에 깔린다 — 나머지는 dialog · 팝업이라 위에 뜬다
         if(button.dataset.addonOpen==='direction'){(await import('./addons/direction/index.js')).openPanel();return;}
         if(button.dataset.addonOpen==='assets'){(await import('./addons/assets/index.js')).openPanel();return;}
         if(button.dataset.addonOpen==='prompt'){(await import('./addons/prompt/index.js')).openPanel();return;}

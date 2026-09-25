@@ -85,3 +85,10 @@ html body .bl-editor .bl-setting-reset[hidden] { display:none !important; }
 .bl-editor-category { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:2px 6px; }
 .bl-editor-category h4 { grid-column:1 / -1; }
 .bl-editor-category button { min-width:0; margin:0; overflow-wrap:anywhere; }
+/* 5.3.7: 폰(설정 창 폭 480 이하)에서 윗줄 단추들이 ~320px 를 차지해 설정 이름이 세 글자로 잘렸다 → 이름은 남는 폭을 다 쓰고, '전체 화면 · 작은 창'은 아이콘만 (글자는 읽기 프로그램용으로 남김) */
+.bl-editor .bl-settings-toprow .bl-editor-choose { flex:1 1 auto; min-width:0; }
+@container bl-editor (max-width:480px) {
+  html body .bl-editor .bl-settings-toprow .bl-settings-expand { position:relative; width:34px; padding:0; font-size:0; }
+  html body .bl-editor .bl-settings-toprow .bl-settings-expand::before { content:''; position:absolute; inset:0; margin:auto; width:16px; height:16px; background:currentColor; -webkit-mask:var(--bl-expand-icon) center / contain no-repeat; mask:var(--bl-expand-icon) center / contain no-repeat; --bl-expand-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 8V3h5M12 3h5v5M17 12v5h-5M8 17H3v-5'/%3E%3C/svg%3E"); }
+  html body .bl-editor .bl-settings-toprow .bl-settings-expand[aria-pressed="true"]::before { --bl-expand-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 3v5H3M17 8h-5V3M12 17v-5h5M3 12h5v5'/%3E%3C/svg%3E"); }
+}

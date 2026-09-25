@@ -30,7 +30,12 @@ body.salty .menu_button:is(.disabled, [disabled]):not(#salty-none) {
 body.salty::selection,
 body.salty .hljs::selection,
 body.salty .hljs ::selection {
-  background: var(--salty-fill-accent-28, var(--salty-accent-28));
+  /* 5.3.7: 단색만 — ::selection 은 background-color 만 쓰므로 그라데이션(--salty-fill-accent-28)을 주면 선택 색이 투명해졌다 */
+  background-color: var(--salty-accent-28);
+}
+/* 5.3.7: 입력칸은 폰(안드로이드 엣지)에서 body 의 선택 색을 물려받지 않아 선택이 안 보였다 — 입력칸에만 직접 (맨 끝이 textarea · input 이라 다른 요소는 안 맞춰 봄) */
+body.salty :is(textarea, input)::selection {
+  background-color: var(--salty-accent-28);
 }
 body.salty ::-webkit-scrollbar {
   width: 6px;

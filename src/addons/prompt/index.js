@@ -3,6 +3,7 @@ import { forEachLimited } from './cache-loading.js';
 // Modified 2026-09-24: Blue Lemonade personal preview 1.1.0; based on supplied 개인개조+++ ZIP.
 import { installRegexPage } from './regex-ui.js';
 import { installGuide } from './guide.js';
+import { leaveSettingsDialog } from '../../settings-dialog.js';
 import { settingsHTML } from './settings-ui.js';
 import { requestActive, applyCustomConnection, customEndpoint, bindConnection } from './connection.js';
 /**
@@ -4591,7 +4592,7 @@ export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
 
 export function mountInline(host){
  const text=document.createElement('p');text.className='salty-note';text.textContent='프리셋·월드인포·봇카드를 한 화면에서 읽고 번역해요. 버전 버튼에서 사용방법을 볼 수 있어요.';
- const button=document.createElement('button');button.type='button';button.className='salty-btn';button.textContent='한글화 패널 열기';button.onclick=openPanel;host.replaceChildren(text,button);return()=>host.replaceChildren();
+ const button=document.createElement('button');button.type='button';button.className='salty-btn';button.textContent='한글화 패널 열기';button.onclick=()=>{leaveSettingsDialog(button);openPanel();};host.replaceChildren(text,button);return()=>host.replaceChildren();
 }
 
 // Model switch changes the shared config without triggering provider defaults.

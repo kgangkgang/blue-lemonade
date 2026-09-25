@@ -1,4 +1,5 @@
 // Blue Lemonade guide and accessible controls. Modified 2026-09-24. AGPL-3.0.
+import { badgeTextHit } from '../../badge-hit.js';
 const chapters = [
  ['처음이라면 이 순서로', `<ol><li>메뉴부터 한글로 보고 싶다면 <b>한글화</b> 탭에서 필요한 항목을 켜세요. 기존 설정을 이어 쓰며 API를 호출하지 않아요.</li><li><b>프리셋</b> 탭에서 평소 쓰는 프리셋 이름을 고르고 <b>불러오기</b>를 누르세요. 불러오기와 검색은 번역 API를 호출하지 않아요.</li><li>항목을 펼쳐 원문을 읽어 보세요. 체크박스는 작업할 항목을 고르는 것이며 실리태번의 실제 프롬프트 켜짐/꺼짐을 바꾸는 스위치가 아니에요.</li><li>상단 <b>설정 → 연결</b>에서 공급자·모델·언어를 확인하세요. 이 패널의 연결 설정은 채팅 번역기와 별개예요.</li><li>한 항목만 선택하고 <b>번역</b>을 눌러 결과를 확인하세요. 번역은 선택한 공급자에 내용을 보내고 API 요금이 발생할 수 있어요.</li><li>마음에 들면 필요한 항목을 더 번역하거나 복사·내보내기를 쓰세요. 읽기만 할 때는 <b>원본에 적용</b>할 필요가 없어요.</li></ol>`],
  ['이 패널로 무엇을 하나요?', `<p>여러 화면에 흩어진 프롬프트를 <b>읽기·검색·번역·내보내기</b>하는 작업대예요. 외국어 프리셋의 각 토글이 무엇을 하는지 읽고 싶거나, 월드인포 내용을 비교하거나, 봇카드의 특정 설명만 번역할 때 편해요.</p><p>채팅 메시지를 자동으로 번역하는 LLM 번역기와는 달라요. 여기서는 프리셋·월드인포·봇카드를 직접 선택해서 작업합니다. 패널을 여는 것만으로 대화가 생성되거나 전체 자료가 번역되지는 않아요.</p>`],
@@ -25,7 +26,7 @@ export function installGuide({doc,cfg,save,openPanel,closePanel}) {
  const panel=doc.getElementById('pt-panel');if(!panel||panel.dataset.blGuide)return;
  panel.dataset.blGuide='true';panel.setAttribute('aria-label','한글화 패널');
  const header=panel.querySelector('#pt-panel-header'),tabs=panel.querySelector('#pt-tabs'),content=panel.querySelector('#pt-panel-content');
- const version=doc.createElement('button');version.type='button';version.className='pt-version';version.dataset.ptGuide='';version.textContent='v1.1.0';version.setAttribute('aria-label','한글화 패널 사용방법');header.querySelector('h3').append(version);
+ const version=doc.createElement('button');version.type='button';version.className='pt-version';version.dataset.ptGuide='';version.textContent='v1.1.1';version.setAttribute('aria-label','한글화 패널 사용방법');header.querySelector('h3').append(version);
  const settingsTab=doc.createElement('button');settingsTab.type='button';settingsTab.className='pt-tab';settingsTab.dataset.tab='settings';settingsTab.textContent='설정';tabs.append(settingsTab);
  const settingsPage=doc.createElement('div');settingsPage.id='pt-page-settings';settingsPage.className='pt-page';content.append(settingsPage);settingsPage.append(doc.getElementById('pt-settings-form'));
  const icons={localization:'language',preset:'sliders',wi:'book-open',char:'address-card',regex:'code',settings:'gear'};
@@ -71,7 +72,7 @@ export function installGuide({doc,cfg,save,openPanel,closePanel}) {
   dialog.addEventListener('close',()=>{dialog.remove();dialog=null;if(returnFocus?.isConnected)returnFocus.focus();},{once:true});
   dialog.showModal();cfg().blIntroSeen110=true;save();
  }
- doc.querySelectorAll('[data-pt-guide]').forEach(button=>{button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();showGuide();});if(button.tagName!=='BUTTON')button.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();showGuide();}});});
+ doc.querySelectorAll('[data-pt-guide]').forEach(button=>{button.addEventListener('click',event=>{if(!badgeTextHit(event))return;event.preventDefault();event.stopPropagation();showGuide();});if(button.tagName!=='BUTTON')button.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();showGuide();}});});
  panel.addEventListener('pt:opened',()=>{if(!cfg().blIntroSeen110)showGuide();});
  panel.addEventListener('keydown',event=>{if(event.key==='Escape'&&!dialog?.open){event.stopPropagation();closePanel();}});
  activate('localization');

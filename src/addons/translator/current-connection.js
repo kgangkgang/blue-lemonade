@@ -2,10 +2,13 @@
 // 5.3.4: ST 서비스 오류에는 상태 코드가 없어 문구로 일시 오류(429 · 5xx · 네트워크)를 가린다 — 이것만 다시 보낸다.
 // 524(Cloudflare 가 기다리다 끊음)는 서버가 아직 처리 중일 수 있어 뺀다 (두 번 청구).
 // 5.3.6: HTML · JSON 파싱 실패(SyntaxError · unexpected token · not valid json)는 시간 초과 페이지일 수 있어 429 · 5xx 코드가 같이 있을 때만 다시 보낸다.
-const TRANSIENT_CODE=/\b(?:429|50[0-3]|529)\b/;
-const TRANSIENT_MESSAGE=/\b(?:429|50[0-3]|529)\b|too many requests|rate.?limit|resource.?exhausted|overloaded|unavailable|bad gateway|internal server error|failed to fetch|networkerror|network error|econnreset|socket hang up/i;
+// 5.3.7: 코드는 떨어진 숫자일 때만 — "at position 502" · "line 3 column 429" 같은 파싱 오류 위치를 상태 코드로 오해해 다시 보냈다
+const CODE=String.raw`(?<!(?:position|pos|line|column|col|offset|char(?:acter)?|index|byte|length)[\s:#=]*)(?<![\d.,])\b`;
+const TRANSIENT_CODE=new RegExp(String.raw`${CODE}(?:429|50[0-3]|529)\b(?![.,]\d)`);
+const TRANSIENT_MESSAGE=new RegExp(String.raw`${CODE}(?:429|50[0-3]|529)\b(?![.,]\d)|too many requests|rate.?limit|resource.?exhausted|overloaded|unavailable|bad gateway|internal server error|failed to fetch|networkerror|network error|econnreset|socket hang up`,'i');
+const CLOUDFLARE_524=new RegExp(String.raw`${CODE}524\b(?![.,]\d)`);
 const PARSE_FAILURE=/unexpected token|not valid json|unexpected end of json|<!doctype|<html/i;
-const isTransient=(error,reason)=>!/\b524\b/.test(reason)&&(error?.name==='SyntaxError'||PARSE_FAILURE.test(reason)?TRANSIENT_CODE.test(reason):TRANSIENT_MESSAGE.test(reason));
+const isTransient=(error,reason)=>!CLOUDFLARE_524.test(reason)&&(error?.name==='SyntaxError'||PARSE_FAILURE.test(reason)?TRANSIENT_CODE.test(reason):TRANSIENT_MESSAGE.test(reason));
 export async function requestCurrentConnection({context,messages,overrides={},maxTokens=0,buildChat,buildText,log}) {
     const ctx=context(), controller=new AbortController();
     const timeout=overrides.timeoutMs>0?overrides.timeoutMs:90000;

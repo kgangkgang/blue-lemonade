@@ -1,5 +1,6 @@
 // 북마크 — 채팅 메시지 북마크. 단독 확장(chat-bookmarks)의 코드를 블루 레몬에이드 애드온으로 옮긴 것 (설정 칸 chaekgalpi · 자료 chat_metadata.favorites 는 그대로라 서로 이어진다)
 import { verifyAddonCss } from '../../addon-files-check.js';
+import { leaveSettingsDialog } from '../../settings-dialog.js';
 import { eventSource, event_types } from '../../../../../../../script.js';
 import { VERSION, initSettings, hooks, applyColors, colorsFor, currentChatKey, iconName, settings, themeColors } from './state.js';
 import { currentRecord, bookmarkAt, addBookmark, removeBookmark, syncAnchors } from './data.js';
@@ -306,6 +307,6 @@ jQuery(() => {
 /** 테마 설정 창 안 칸: 북마크 창은 제 화면이 따로 있어 여는 단추만 둔다 */
 export function mountInline(host) {
     host.innerHTML = '<p class="salty-note">메시지의 북마크 단추를 누르면 표시가 남고, 길게 누르면 메모를 적어요. 모아 보기는 ✦ 메뉴의 북마크로도 열려요.</p><button type="button" class="salty-btn bl-tool-primary">북마크 모아 보기</button>';
-    host.querySelector('button').onclick = () => openPanel();
+    host.querySelector('button').onclick = (event) => { leaveSettingsDialog(event.currentTarget); openPanel(); }; // 5.3.7 설정 dialog 아래에 깔리지 않게
     return () => host.replaceChildren();
 }

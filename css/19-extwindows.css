@@ -121,6 +121,8 @@ html body.salty .ms-chip.on { background:var(--salty-accent); color:var(--salty-
 html body.salty :is(.ms-icon,.ms-pull,.ms-option,.mr-item-buttons .menu_button) { min-width:44px; min-height:44px; border:0; border-radius:10px; }
 html body.salty :is(.ms-target,.ms-lock,.rlk-keep) small { color:var(--salty-muted); opacity:1; line-height:1.5; }
 html body.salty .rl-module-head small { color:var(--salty-muted); opacity:1; }
+/* 5.3.7: 테마 설정 창의 작은 글자 — 실리태번의 small{opacity:.7} 이 테마의 옅은 글자색과 겹쳐 라이트에서 대비 2.3~2.8:1 이었다. 일부러 더 옅게 둔 곳(.bl-script-card · 글꼴 표본 등)은 더 무거운 규칙이라 그대로 */
+.salty-panel small:where(:not(.mes_text small)) { opacity:1; } /* 미리보기 속 메시지 본문의 small 은 채팅과 같게 둔다 */
 html body.salty .rl-owner { padding:3px 9px; color:var(--salty-muted); background:var(--salty-shade); opacity:1; }
 html body.salty .rl-owner.on { color:var(--salty-text); background:var(--salty-tint-14); }
 html body.salty .mr-item.is-picked { box-shadow:inset 0 0 0 2px var(--salty-accent); }

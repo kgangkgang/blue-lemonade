@@ -115,8 +115,10 @@ function labelHistoryControl(label, control) {
 function syncHistoryButtons() {
     for (const panel of panels) {
         const undo = panel.querySelector('[data-act="history-undo"]'), redo = panel.querySelector('[data-act="history-redo"]');
-        if (undo) undo.disabled = !history.pending && !history.undoStack.length;
-        if (redo) redo.disabled = !!history.pending || !history.redoStack.length;
+        // 5.3.7 바뀔 때만 쓴다 (슬라이더 틱마다 불림)
+        const undoOff = !history.pending && !history.undoStack.length, redoOff = !!history.pending || !history.redoStack.length;
+        if (undo && undo.disabled !== undoOff) undo.disabled = undoOff;
+        if (redo && redo.disabled !== redoOff) redo.disabled = redoOff;
     }
 }
 function historyLabel(path) {
@@ -181,7 +183,7 @@ function installSettingResets(root) {
 }
 function syncSettingResets() {
     const settings = getSettings();
-    for (const panel of panels) for (const button of panel.querySelectorAll('.bl-setting-reset')) button.hidden = !settingChanged(settings, button.dataset.setting);
+    for (const panel of panels) for (const button of panel.querySelectorAll('.bl-setting-reset')) { const hide = !settingChanged(settings, button.dataset.setting); if (button.hidden !== hide) button.hidden = hide; }
 }
 function jumpToSetting(root, path) {
     if (!settingDefault(getSettings(),path).allowed) return;
@@ -458,7 +460,7 @@ function qrSample(showFind = true) {
     if (count < 16) groups.push(EXAMPLES.slice(0, 16 - count));
     // 3.7.1 입력창 모형을 같이 그린다 — '자리'(입력창 아래 · 위)가 미리보기에서 바로 보이게. 모형은 body.salty-qr-top 에 따라 순서가 바뀐다 (css/36-qr-place.css)
     const inputMock = '<div class="bl-qr-inputmock" aria-hidden="true"><span class="bl-qr-inputmock-box">메시지를 입력하세요…</span><span class="bl-qr-inputmock-btn"><i class="fa-solid fa-paper-plane"></i></span></div>';
-    return `<div class="bl-qr-sample-wrap"><div class="bl-qr-sample" data-qr-sample tabindex="0" aria-label="퀵 리플라이 미리보기">${showFind ? '<span class="bl-qr-find-sample" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>' : ''}${groups.map(g => `<div class="qr--buttons">${g.map(label => `<div class="qr--button"><div class="qr--button-label">${esc(label)}</div></div>`).join('')}</div>`).join('')}</div>${inputMock}</div>`;
+    return `<div class="bl-qr-sample-wrap"><div class="bl-qr-sample" data-qr-sample tabindex="0" aria-label="퀵 리플라이 미리보기">${showFind ? '<span class="bl-qr-find-sample" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>' : ''}${groups.map(g => `<div class="qr--buttons" inert aria-hidden="true">${g.map(label => `<div class="qr--button"><div class="qr--button-label">${esc(label)}</div></div>`).join('')}</div>`).join('')}</div>${inputMock}</div>`;
 }
 
 function row(label, control, note = '') {
@@ -613,6 +615,7 @@ function uiSample() {
 // 메타 세 칸은 늘 채워 넣는다 — 실리태번이 body.no-timer 류로 문서 전체에서 감추고
 // 테마의 말풍선 위 여백도 같은 바디 클래스로 갈라지니, 실리태번 쪽 설정이 그대로 반영된다
 const PREV_META = '<div class="mesIDDisplay">#42</div><div class="mes_timer">2.4s</div><div class="tokenCounterDisplay">318t</div>';
+// 5.3.7 무대 칸은 inert — 실리태번이 .mes_button · details 에 tabindex 를 달아 Tab 이 가짜 버튼에 멈췄다
 // ⋯ · 연필: 아이콘 설정(선 아이콘 · 기본)이 보이는 자리 (icons.js TARGETS 가 미리보기까지 노려야 바뀜)
 const PREV_BTNS = '<div class="mes_buttons"><div class="mes_button extraMesButtonsHint fa-solid fa-ellipsis"></div><div class="mes_button mes_edit fa-solid fa-pencil"></div></div>';
 
@@ -633,7 +636,7 @@ function prevMes(user, name, text) {
 // 채팅 무대: 상대 한 줄(폰에서 두 줄로 꺾이는 길이) + 내 한 줄.
 // 본문에 「대사」 · 굵게 · 기울임 · 코드를 섞어 글꼴 · 형광펜 · 강조 · 코드 글꼴이 한눈에 보이게 함
 function chatStage() {
-    return `<div class="salty-preview" data-prev="chat" aria-hidden="true">
+    return `<div class="salty-preview" data-prev="chat" aria-hidden="true" inert>
         ${prevMes('false', '에이드', '<p>에이드의 배 위에서 <strong>나이트</strong>가 눈을 가늘게 떴다. <q>「아, 알았어. 안 움직일게.」</q> <em>이 인간 또 움직이네... 눌러버려야겠다...</em></p>')}
         ${prevMes('true', '나', '<p><q>「벌써 <code>4시</code>야.」</q> 나는 웃으며 게임기를 내려놓았다.</p>')}
     </div>`;
@@ -642,7 +645,7 @@ function chatStage() {
 // 그림 무대: 에셋 확장 DOM 네 겹 그대로. .mes_text 가 있어야 테마의 에셋 규칙이 걸리고,
 // .mes 가 있어야 '가로 꽉'의 음수 여백(좌우 --salty-gutter)이 되돌릴 여백을 갖는다. src 는 fillPreviews 가 꽂음
 function imgStage(art) {
-    return `<div class="salty-preview" data-prev="img" data-art="${art}" aria-hidden="true">
+    return `<div class="salty-preview" data-prev="img" data-art="${art}" aria-hidden="true" inert>
         <div class="mes"><div class="mes_block"><div class="mes_text">
             <div class="custom-cac-wrap"><div class="custom-cac-frame"><div class="custom-cac-inner">
                 <img class="custom-cac-img" alt="">
@@ -659,7 +662,7 @@ function regexStage() {
     const head = (icon, title, tag) => `<summary><span class="custom-dem-card__icon">${icon}</span><span class="custom-dem-card__title">${title}</span>${tag ? `<span class="custom-dem-card__tag">${tag}</span>` : ''}<span class="custom-dem-card__caret">▸</span></summary>`;
     const step = (phase, phaseName, label, value) => `<div class="custom-dem-scene-plan__phase custom-dem-scene-plan__phase--${phase}"><span>${phaseName}</span></div><div class="custom-dem-scene-plan__step custom-dem-scene-plan__step--${phase}"><span class="custom-dem-scene-plan__label">${label}</span><span class="custom-dem-scene-plan__value">${value}</span></div>`;
     const item = (kind, icon, value, extra = '') => `<div class="custom-dem-track__item custom-dem-track__item--${kind}"><span class="custom-dem-track__icon">${icon}</span><span class="custom-dem-track__value">${value}</span>${extra}</div>`;
-    return `<div class="salty-preview" data-prev="regex" aria-hidden="true">
+    return `<div class="salty-preview" data-prev="regex" aria-hidden="true" inert>
         ${prevMes('false', '에이드', `<div class="custom-dem-track">${item('time', '🕐', '오후 4:12')}${item('date', '🗓️', '3일째 · 목요일')}${item('location', '📍', '항구 → 등대 아래 찻집')}${item('weather', '⛅', '맑음', '<span class="custom-dem-track__temp">18°C</span>')}</div>
         <p class="bl-fx-line"><span class="custom-dem-expressive custom-dem-expressive--shout bl-fx-lead"><font color="#e64553" class="bl-ink-sample" style="--bl-ink:#e64553"><q>「거기 서!」</q></font></span> <span class="custom-dem-expressive custom-dem-expressive--trembling"><q>「…무, 무서워.」</q></span> <span class="custom-dem-expressive custom-dem-expressive--crying"><font color="#1e88c7" class="bl-ink-sample" style="--bl-ink:#1e88c7"><q>「가지 마…」</q></font></span> 감정 대사예요.</p>
         <details class="custom-dem-card custom-dem-scene-plan" open>${head('🗺️', '장면 계획', '흐름도')}<div class="custom-dem-scene-plan__body">${step('inputs', 'Inputs', '상황 맥락', '찻집 약속 직전, 에이드는 편지를 숨긴다.')}${step('constraints', 'Constraints', 'Character Realism', '들뜬 마음을 쉽게 드러내지 않는다.')}${step('plan', 'Plan', 'Prose Plan', '편지 이야기는 마지막 문단까지 아껴 둔다.')}</div></details>
@@ -675,7 +678,7 @@ function regexStage() {
 function phoneMock(s) {
     const lines = widths => `<p>${widths.map(w => (w < 0 ? `<i class="q" style="width:${-w}%"></i>` : `<i style="width:${w}%"></i>`)).join('')}</p>`;
     const buttons = s.onehand?.on ? ['swipe', 'swipe', '', 'imp', 'cont', 'regen'].filter(key => !key || s.onehand[key] !== false).map(key => (key ? '<b></b>' : '<span></span>')).join('') : '';
-    return `<div class="salty-phonemock${s.reader?.autoHide ? ' is-reader' : ''}${s.onehand?.on ? ' is-onehand' : ''}" aria-hidden="true">
+    return `<div class="salty-phonemock${s.reader?.autoHide ? ' is-reader' : ''}${s.onehand?.on ? ' is-onehand' : ''}" aria-hidden="true" inert>
         <div class="pm-body"><div class="pm-scroll">${lines([96, 90, 62])}${lines([-84, -58])}${lines([94, 88, 91, 40])}${lines([-76])}${lines([92, 86, 70])}${lines([95, 60])}</div></div>
         <div class="pm-top"><i></i><i></i><i></i><i></i><i></i></div>
         <div class="pm-form">${buttons ? `<div class="pm-onehand">${buttons}</div>` : ''}<div class="pm-input"><i></i><u></u></div></div>
@@ -706,7 +709,7 @@ function colorPreview() {
 }
 
 function colorStage() {
-    return `<div class="salty-preview" data-prev="color" aria-hidden="true">
+    return `<div class="salty-preview" data-prev="color" aria-hidden="true" inert>
         ${prevMes('false', '에이드', '<p><font color="#e64553">붉게 칠한 글자</font>와 <span style="color:#40a02b">초록으로 칠한 글자</span>, <q>「그리고 대사.」</q></p><p><span style="color:#7c6cf0">보라색 혼잣말</span>이 <font color="#df8e1d">노랗게</font> 끝났다.</p>')}
     </div>`;
 }
@@ -1643,7 +1646,35 @@ function tabImage(s, sub) {
 }
 
 // ───────── 그리기 ─────────
+// 5.3.7 다시 그리기 전후로 키보드 초점을 지킨다 — innerHTML 을 갈면 초점이 body 로 떨어져, 설정 하나 바꿀 때마다 Tab 이 처음부터였다.
+// 같은 data-* 를 가진 새 요소를 찾아(colorpick.js sameAnchor 와 같은 방식) 초점 · 글자 커서 · 가로 스크롤을 되돌린다
+const FOCUS_VOLATILE = new Set(['def', 'min', 'max', 'armed']);
+function focusSnapshot(root) {
+    const el = document.activeElement;
+    if (!el || el === root || !root.contains(el)) return null;
+    const entries = Object.entries(el.dataset || {}).filter(([key]) => !FOCUS_VOLATILE.has(key));
+    const attrs = entries.map(([key, value]) => `[data-${key.replace(/[A-Z]/g, c => '-' + c.toLowerCase())}="${CSS.escape(value)}"]`).join('');
+    const label = el.getAttribute('aria-label');
+    const selector = el.tagName.toLowerCase() + (attrs || (el.id ? `#${CSS.escape(el.id)}` : label ? `[aria-label="${CSS.escape(label)}"]` : ''));
+    if (selector === el.tagName.toLowerCase()) return null;
+    let index = 0;
+    try { index = Math.max(0, [...root.querySelectorAll(selector)].indexOf(el)); } catch { return null; }
+    let caret = null;
+    try { if (typeof el.selectionStart === 'number') caret = [el.selectionStart, el.selectionEnd, el.selectionDirection]; } catch { /* number · color 칸은 커서가 없다 */ }
+    return { selector, index, caret, scrollLeft: el.scrollLeft };
+}
+function restoreFocus(root, snap) {
+    if (!snap || (document.activeElement && document.activeElement !== document.body && !root.contains(document.activeElement))) return;
+    let el = null;
+    try { const list = root.querySelectorAll(snap.selector); el = list[snap.index] || list[0]; } catch { return; }
+    if (!el || el.disabled || el.closest('[hidden],[inert]')) return;
+    el.focus({ preventScroll: true });
+    if (snap.caret) try { el.setSelectionRange(...snap.caret); } catch { /* 형식이 바뀐 칸 */ }
+    if (snap.scrollLeft) el.scrollLeft = snap.scrollLeft;
+}
+
 function render(root) {
+    const focusSnap = focusSnapshot(root);
     root._stopComparison?.();
     root._captureCleanup?.(); root._captureCleanup=null;
     root._addonCleanup?.(); root._addonCleanup=null;
@@ -1713,6 +1744,7 @@ function render(root) {
     root.querySelector('.salty-sec').scrollTop = root._editorScroll.get(root._editorRoute) || 0;
     const paneScroll = root._addonScroll.get(root._editorRoute) || [0, 0];
     [".bl-addon-main", ".bl-addon-config"].forEach((selector, i) => { const pane = root.querySelector(selector); if (pane) pane.scrollTop = paneScroll[i]; });
+    restoreFocus(root, focusSnap);
 
     // 색 고르기: 처음 그릴 때 나는 change 는 무시하고, 사용자가 만진 뒤부터 저장
     bindGradientColors(root,getSettings,update);
@@ -2556,8 +2588,9 @@ function bind(root) {
                 $('#hideChatAvatarsEnabled').prop('checked', target.checked).trigger('input').trigger('change');
                 return;
             }
-            const m = path.match(/^fonts\.(dialogue|ui|em|strong|code|name)\.same$/);
-            if (m) {
+            // 5.3.7 슬롯 목록은 FONT_SLOTS 에서 — userName 이 빠져 '내 이름' 스위치가 오류로 멈췄다
+            const m = path.match(/^fonts\.([A-Za-z]+)\.same$/);
+            if (m && m[1] !== 'text' && FONT_SLOTS.includes(m[1])) {
                 ui.picker = null;
                 update((st) => { st.fonts[m[1]] = target.checked ? 'same' : structuredClone(st.fonts.text); });
                 return;

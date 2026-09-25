@@ -4,7 +4,7 @@ import { extension_settings, getContext } from '../../../../../../extensions.js'
 import { saveSettingsDebounced } from '../../../../../../../script.js';
 
 export const MODULE = 'chaekgalpi';
-export const VERSION = '1.3.5';
+export const VERSION = '1.3.6';
 
 export const DEFAULT_COLORS = Object.freeze({ accent: '#a98bd9', user: '#5aa9e6', icon: '#f2c14e' });
 const COLOR_KEYS = Object.keys(DEFAULT_COLORS);

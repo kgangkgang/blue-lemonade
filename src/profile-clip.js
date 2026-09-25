@@ -34,6 +34,15 @@ function scan(root) {
     const imgs = [...root.querySelectorAll(selector)]; if (root.matches(selector)) imgs.push(root);
     for (const img of imgs) { if (!active[ownerOf(img)]) continue; if (!tracked.has(img)) { tracked.add(img); resize.observe(img); } queue(img); }
 }
+// Hiding/unhiding only flips is_system on an existing message.
+function toggle(mes) {
+    for (const img of mes.querySelectorAll('.mesAvatarWrapper > .avatar img')) {
+        if (img.matches(selector)) continue;
+        if (tracked.has(img)) { resize.unobserve(img); tracked.delete(img); dirty.delete(img); }
+        img.style.removeProperty('--bl-photo-clip');
+    }
+    scan(mes);
+}
 function loaded(event) { if (tracked.has(event.target)) queue(event.target); }
 function stop() {
     observer?.disconnect(); resize?.disconnect(); cancelAnimationFrame(frame); frame = 0;
@@ -52,10 +61,13 @@ export function syncProfileClip(settings) {
         stop(); roots = nextRoots;
         resize ||= new ResizeObserver(entries => entries.forEach(e => queue(e.target)));
         observer ||= new MutationObserver(records => {
-            for (const rec of records) for (const node of rec.addedNodes) scan(node);
+            for (const rec of records) {
+                if (rec.type === 'attributes') { if (rec.target.classList.contains('mes')) toggle(rec.target); continue; }
+                for (const node of rec.addedNodes) scan(node);
+            }
             if (records.some(rec => [...rec.removedNodes].some(node => node.nodeType === 1 && (node.tagName === 'IMG' || node.querySelector('img'))))) queue();
         });
-        for (const root of roots) { observer.observe(root, { childList: true, subtree: true }); root.addEventListener('load', loaded, true); scan(root); }
+        for (const root of roots) { observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['is_system'] }); root.addEventListener('load', loaded, true); scan(root); }
     }
     const next = ['profile', 'userProfile'].map(owner => { const p = settings[owner]; return p && active[owner] ? [p.positionX, p.positionY, p.visibleHeight, p.radius, p.edgeGap, p.decor.on].join('/') : ''; }).join('|');
     if (signature !== next) { signature = next; for (const img of tracked) queue(img); }

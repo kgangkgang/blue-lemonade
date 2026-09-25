@@ -657,6 +657,10 @@ export function applyAll() {
     const cutoutBefore = cls.contains('salty-cutout-same');
     [...cls].filter(c => (c === 'salty' || c.startsWith('salty-')) && !want.has(c)).forEach(c => cls.remove(c));
     want.forEach(c => { if (!cls.contains(c)) cls.add(c); });
+    // 5.3.7: html 바탕색은 클래스로 — 예전 html:has(> body.salty:not(.salty-bgimg)) 는 인라인 style 이 바뀔 때마다 html 까지 :has 를 다시 따지게 한다 (리뷰 측정: 설정 창을 연 뒤 스트리밍이 크게 느려짐)
+    // 조건은 body 의 salty · salty-bgimg 와 똑같이 (테마를 끄면 둘 다 빠지듯 이것도 빠짐)
+    const htmlBg = want.has('salty') && !want.has('salty-bgimg');
+    if (document.documentElement.classList.contains('salty-html-bg') !== htmlBg) document.documentElement.classList.toggle('salty-html-bg', htmlBg);
     // 컷 취급이 바뀌면 이미 분류한 그림의 .salty-cutout 을 다시 정해야 한다 (스위치를 누른 순간 채팅에 바로 보이게)
     if (cutoutBefore !== cls.contains('salty-cutout-same')) classifyAll();
 

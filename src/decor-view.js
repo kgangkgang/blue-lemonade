@@ -3,6 +3,10 @@ const ASSET = '.mes_text :is(.custom-cac-img, img.character-asset-rendered, img.
 const PROFILE = '.mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar img';
 const USER_PROFILE = '.mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar img';
 const wrapped = new Map();
+// 숨기기·보이기는 이미 그려진 메시지의 is_system 만 바꾼다. 그 메시지는 다시 맞춰 본다.
+const SELECTORS = { image: ASSET, profile: PROFILE, userProfile: USER_PROFILE };
+const toggled = new Set();
+const isMes = node => node.nodeType === 1 && node.classList.contains('mes');
 let state = { image: false, profile: false, userProfile: false }, observer = null, roots = [], frame = 0;
 const dirty = new Set();
 const hasImage = node => node.nodeType === 1 && (node.tagName === 'IMG' || node.querySelector('img'));
@@ -68,12 +72,18 @@ function scan(root) {
         for (const img of root.querySelectorAll(selector)) wrap(img, kind);
     }
 }
-function listen() { for (const root of roots) observer.observe(root, { childList: true, subtree: true }); }
+function listen() { for (const root of roots) observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['is_system'] }); }
+function note(records) {
+    for (const rec of records) {
+        if (rec.type === 'attributes') { if (isMes(rec.target)) toggled.add(rec.target); continue; }
+        for (const node of rec.addedNodes) if (hasImage(node)) dirty.add(node);
+    }
+}
 function flush() {
     frame = 0;
     // 직접 만든 감싸기 요소의 변경 알림은 남기지 않는다.
     const queued = observer?.takeRecords() || [];
-    for (const rec of queued) for (const node of rec.addedNodes) if (hasImage(node)) dirty.add(node);
+    note(queued);
     observer?.disconnect();
     for (const [img, info] of wrapped) {
         if (!info.host.contains(img)) {
@@ -87,6 +97,15 @@ function flush() {
         if (!img.isConnected) { undo(img, info); continue; }
         if (!state[info.kind]) undo(img, info);
     }
+    for (const mes of toggled) {
+        // 숨긴 메시지의 사진은 액자에서 꺼내고, 다시 보이면 아래 scan 이 감싼다.
+        for (const img of mes.querySelectorAll('.mesAvatarWrapper > .avatar img')) {
+            const info = wrapped.get(img);
+            if (info && info.kind !== 'image' && !img.matches(SELECTORS[info.kind])) undo(img, info);
+        }
+        if (mes.isConnected) dirty.add(mes);
+    }
+    toggled.clear();
     for (const root of dirty) scan(root);
     dirty.clear();
     if (state.image || state.profile || state.userProfile) listen();
@@ -98,9 +117,9 @@ export function syncDecorView(settings) {
     if (observer && next.image === state.image && next.profile === state.profile && next.userProfile === state.userProfile && nextRoots.length === roots.length && nextRoots.every((root, i) => root === roots[i])) return;
     state = next; roots = nextRoots;
     if (!observer) observer = new MutationObserver(records => {
-        for (const rec of records) for (const node of rec.addedNodes) if (hasImage(node)) dirty.add(node);
+        note(records);
         // 삭제만 된 경우에도 참조를 해제한다.
-        if (!frame && (dirty.size || records.some(rec => [...rec.removedNodes].some(hasImage)))) frame = requestAnimationFrame(flush);
+        if (!frame && (dirty.size || toggled.size || records.some(rec => [...rec.removedNodes].some(hasImage)))) frame = requestAnimationFrame(flush);
     });
     cancelAnimationFrame(frame); frame = 0;
     if (state.image || state.profile || state.userProfile) for (const root of roots) dirty.add(root);

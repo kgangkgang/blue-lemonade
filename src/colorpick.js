@@ -335,6 +335,10 @@ export function closeColorPick() {
     if (!layer) return;
     const s = session;
     clearTimeout(s?.timer);
+    // 5.3.7 초점이 창 안(또는 어디에도 없음)이었으면 색 칸으로 돌려준다 — 다시 그려져 바뀐 칸이면 같은 data-* 칸
+    const active = document.activeElement;
+    const giveBack = !active || active === document.body || layer.contains(active);
+    s?.stopEsc?.();
     layer.remove();
     layer = null;
     session = null;
@@ -342,6 +346,12 @@ export function closeColorPick() {
     window.removeEventListener('resize', onResize);
     window.visualViewport?.removeEventListener('resize', onResize);
     if (!s) return;
+    if (giveBack) {
+        const anchor = s.anchor?.isConnected ? s.anchor : s.anchor && sameAnchor(s.anchor);
+        anchor?.focus?.({ preventScroll: true });
+        // toolcool-color-picker 는 겉 요소가 초점을 못 받는다 — 속 단추로
+        if (anchor && document.activeElement !== anchor && !anchor.contains(document.activeElement)) anchor.shadowRoot?.querySelector('button,[tabindex]')?.focus({ preventScroll: true });
+    }
     const value = cssOf(current(s.state));
     if (s.dirty && value !== s.lastValue) s.onInput(value);
     if (s.dirty && value !== s.original) pushRecent(value);
@@ -420,6 +430,7 @@ export function openColorPick({ anchor, value, alpha = false, onInput, onClose }
         ${recent.length ? `<div class="bl-cp-sws bl-cp-recent">${swatchButtons(recent, 'recent')}</div>` : ''}
     </div>`;
     const box = layer.firstElementChild;
+    box.tabIndex = -1; // 5.3.7 폰에서도 초점이 창 안으로 — 전에는 body 에 남아 Esc 가 설정 창(dialog)을 통째로 닫았다
     const board = box.querySelector('.bl-cp-board');
     const hue = box.querySelector('.bl-cp-hue');
     const alphaBar = box.querySelector('.bl-cp-alpha');
@@ -538,6 +549,13 @@ export function openColorPick({ anchor, value, alpha = false, onInput, onClose }
         if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeColorPick(); }
     });
 
+    // 5.3.7 창이 열린 동안 Esc 는 이 창만 닫는다 — 초점이 어디에 있든 설정 dialog 의 cancel 까지 가지 않게
+    const escKey = (e) => { if (e.key === 'Escape' && layer) { e.preventDefault(); e.stopImmediatePropagation(); closeColorPick(); } };
+    const escCancel = (e) => { if (layer) e.preventDefault(); };
+    document.addEventListener('keydown', escKey, true);
+    const dialog = host.matches?.('dialog') ? host : null;
+    dialog?.addEventListener('cancel', escCancel);
+    session.stopEsc = () => { document.removeEventListener('keydown', escKey, true); dialog?.removeEventListener('cancel', escCancel); };
     host.append(layer);
     // 실리태번 팝업(dialog) 안이나 transform 걸린 조상 밑에서는 fixed 기준이 화면이 아닐 수 있음 → 층을 화면 원점으로 되돌림
     const origin = layer.getBoundingClientRect();

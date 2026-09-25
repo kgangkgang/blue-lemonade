@@ -35,6 +35,7 @@ function noticeSeenChanged() {
     document.querySelectorAll('#salty-drawer .bl-version').forEach(badge => badge.classList.toggle('is-new', unseen));
 }
 import { loadVersion, hasUnseenNotice, openNotice } from './src/notice.js';
+import { badgeTextHit } from './src/badge-hit.js';
 import { setFeatureHooks } from './src/features.js';
 import { deferPreviewRules, restorePreviewRules, deferredPreviewRuleCount, startMenuOpenMark, startAnchorGate, widenSelectorCache, deferPanelHasRules, panelHasRuleCount, panelCssEnabled } from './src/lite.js';
 
@@ -87,6 +88,7 @@ async function showVersion(badge) {
     badge.tabIndex = 0;
     badge.setAttribute('aria-label', '공지사항');
     const open = (event) => {
+        if (!badgeTextHit(event, badge)) return; // 5.3.7 글자 밖은 서랍 펴기로
         event.preventDefault();
         event.stopPropagation();
         openNotice(noticeSeenChanged);

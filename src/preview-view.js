@@ -48,12 +48,17 @@ export function bindPreviewViews(root, section) {
             row.lastElementChild.onclick = () => { state.height = null; measure(); };
         }
         if (!toolsToggle.isConnected) { box.classList.add('bl-view-float'); box.append(toolsToggle); }
+        // 5.3.7 같은 값이면 쓰지 않는다 — 슬라이더 틱마다 변환 · 글자 · disabled 를 다시 써 작은 재계산이 붙었다
+        let painted = '';
         function paint() {
             raf = 0;
             const extraX = Math.max(0, width * (state.scale - 1));
             state.x = Math.max(-extraX / 2, Math.min(extraX / 2, state.x));
             state.y = Math.max(Math.min(0, viewHeight - height * state.scale), Math.min(0, state.y));
-            scene.style.transform = `translate(${(width - width * state.scale) / 2 + state.x}px,${state.y}px) scale(${state.scale})`;
+            const transform = `translate(${(width - width * state.scale) / 2 + state.x}px,${state.y}px) scale(${state.scale})`;
+            if (transform === painted && scene.style.transform === transform) return;
+            painted = transform;
+            scene.style.transform = transform;
             output.textContent = `${Math.round(state.scale * 100)}%`;
             minus.disabled = state.scale <= .5; plus.disabled = state.scale >= 3;
         }
@@ -125,10 +130,19 @@ export function bindPreviewViews(root, section) {
             // Hidden drawers and folded previews have zero dimensions. Keep pan
             // until the same view becomes visible again instead of clamping to 0.
             if (!scene.offsetWidth || !scene.offsetHeight) return;
+            // 5.3.7 읽기를 모두 끝낸 뒤 쓴다 — 전에는 높이를 쓰고 나서 heightLimit() 이 다시 재어 강제 레이아웃이 한 번 더 났다. 같은 높이면 쓰지 않는다
             width = scene.offsetWidth; height = scene.offsetHeight;
-            viewHeight = Number.isFinite(state.height) ? Math.max(48, Math.min(state.height, heightLimit())) : Math.min(height, heightLimit(), sideBySide() && grip ? heightLimit() : Math.min(window.innerHeight * .28, 230));
-            viewport.style.height = `${viewHeight}px`; schedule();
-            if (grip) { grip.setAttribute('aria-valuemin', '48'); grip.setAttribute('aria-valuemax', String(Math.round(heightLimit()))); grip.setAttribute('aria-valuenow', String(Math.round(viewHeight))); }
+            const limit = heightLimit();
+            viewHeight = Number.isFinite(state.height) ? Math.max(48, Math.min(state.height, limit)) : Math.min(height, limit, sideBySide() && grip ? limit : Math.min(window.innerHeight * .28, 230));
+            const px = `${viewHeight}px`;
+            if (viewport.style.height !== px) viewport.style.height = px;
+            schedule();
+            if (grip) {
+                const max = String(Math.round(limit)), now = String(Math.round(viewHeight));
+                if (grip.getAttribute('aria-valuemin') !== '48') grip.setAttribute('aria-valuemin', '48');
+                if (grip.getAttribute('aria-valuemax') !== max) grip.setAttribute('aria-valuemax', max);
+                if (grip.getAttribute('aria-valuenow') !== now) grip.setAttribute('aria-valuenow', now);
+            }
         };
         const resize = new ResizeObserver(measure);
         const dispose = () => { resize.disconnect(); cancelAnimationFrame(raf); pointers.clear(); resizeStart = null; window.removeEventListener('resize', measure); root.removeEventListener('bl:preview-resize', measure); };

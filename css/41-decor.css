@@ -75,5 +75,7 @@ body.salty.salty-profile-banner.salty-profile-layout-bleed #chat .mes:not([is_us
 .bl-frame-library img { width: 48px; height: 64px; object-fit: contain; }
 .bl-frame-library span { font-size: var(--bl-fs-sm, 13px); overflow-wrap: anywhere; }
 
+/* A frame left on a hidden message stays inside its avatar box instead of filling the message. */
+body.salty #chat .mes:is([is_system="true"], .smallSysMes) > .mesAvatarWrapper > .avatar.bl-art-frame { position: relative !important; overflow: hidden !important; }
 /* Avatar reset rules disable filters globally; keep the composed frame shadow. */
 body.salty #chat .bl-art-frame { filter: var(--bl-art-shadow, none) !important; }

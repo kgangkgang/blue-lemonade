@@ -59,6 +59,7 @@ export function setIndex(next) {
     resolvable = new Map();
     generation++;
     schedulePass();
+    document.dispatchEvent(new CustomEvent('char-assets:index')); // 5.3.7: 채팅 밖 보기(메모)가 새 목록으로 다시 그리게
 }
 
 export function clearIndex() {
@@ -66,6 +67,7 @@ export function clearIndex() {
     similar = new Map();
     resolvable = new Map();
     generation++;
+    document.dispatchEvent(new CustomEvent('char-assets:index')); // 5.3.7: 채팅 밖 보기(메모)가 새 목록으로 다시 그리게
 }
 
 // 실리태번이 내보내는 변수 (살아 있는 바인딩). 이름이 없는 옛/새 버전이면 getContext() 로 돌아간다.

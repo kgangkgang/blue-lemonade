@@ -33,6 +33,7 @@ import {
     splitNames,
 } from './core.js';
 import { DEFAULT_SETTINGS } from './defaults.js';
+import { badgeTextHit } from '../../badge-hit.js';
 import { PERSONAL } from './defaults-personal.js';
 import { isEditingMessage } from './guards.js';
 import { createSpanFinder } from './spans.js';
@@ -41,7 +42,7 @@ import { capturedMessages, capturedRequest, holdGeneration, regenerateReply, rep
 import { applyUpgrades } from './upgrades.js';
 import { startQuickBan, setQuickBanEnabled } from './quick-ban.js';
 
-const VERSION = '1.9.5';
+const VERSION = '1.9.6';
 const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];
@@ -1253,6 +1254,7 @@ async function openSceneHelp() {
 function bindGuide() {
     const open = event => {
         if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+        if (!badgeTextHit(event)) return; // 5.3.7 글자 밖은 서랍 펴기로
         // The badge sits inside the drawer header: opening the guide must not fold the drawer.
         event.preventDefault();
         event.stopPropagation();

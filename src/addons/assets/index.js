@@ -8,6 +8,7 @@ import { initSettings, settings, saveSettings, VERSION, TITLE, currentFolder } f
 import { runtime, reload, expandedPrompt } from './store.js';
 import { setupRenderer, schedulePass } from './render.js';
 import { toast, watchThemeVars, refreshThemeVars } from './ui.js';
+import { badgeTextHit } from '../../badge-hit.js';
 
 initSettings();
 
@@ -87,6 +88,7 @@ function lazyPanel() {
         + `<div class="inline-drawer-content" style="display:none"></div></div>`;
     container.append(stub);
     stub.querySelector(".eh-version").onclick = async event => {
+        if (!badgeTextHit(event)) return; // 5.3.7 글자 밖은 서랍 펴기로
         event.preventDefault(); event.stopPropagation();
         await ensurePanel?.();
         (await import("./panel.js")).showHelp();

@@ -11,6 +11,8 @@ import { wrapSpanningQuotes } from '../../dialogue-span.js';
 import { dressBody } from '../../dem-expressive.js';
 import { allFonts, findFont, loadFont, fontStack, fontsFor, previewStack, queuePreview, GROUPS, SAMPLES } from '../../fonts.js';
 import { restorePreviewRules } from '../../lite.js';
+import { typesetRoot } from '../../typography.js';
+import { classifyAll } from '../../assets.js';
 import { PALETTES, PALETTE_FAMILIES } from '../../palettes.js';
 import { NOTES_VERSION } from './version.js';
 
@@ -281,7 +283,9 @@ function renderView(host, text, onToggle, selfId = '') {
     if (!previewRulesOn) { previewRulesOn = true; try { restorePreviewRules(); } catch { /* 표시용 */ } }
     if (!host.firstChild) host.innerHTML = '<div class="mes"><div class="mes_block"><div class="mes_text"></div></div></div>';
     const body = host.querySelector('.mes_text');
+    if (selfId) host.firstElementChild.dataset.ehSeed = 'note:' + selfId; // 에셋 번호 묶음을 고를 때의 씨앗 (채팅 밖 자리 규칙 — 북마크와 같은 data-eh-seed)
     const raw = String(text ?? '').trim();
+    const reuse = assetImages(body);
     if (!raw) { body.innerHTML = ''; return; }
     try { body.innerHTML = messageFormatting(raw, '', false, false, -1, {}, false); }
     catch (error) { console.warn('[메모] 본문 그리기 실패:', error); body.textContent = raw; }
@@ -289,7 +293,47 @@ function renderView(host, text, onToggle, selfId = '') {
     try { decorate(body, selfId, 0); } catch (error) { console.warn('[메모] 태그 · 연결:', error); }
     try { wrapSpanningQuotes(body); } catch { /* 표시용 */ }
     try { dressBody(body, { mes: raw, extra: {} }); } catch { /* 표시용 */ }
+    try { drawAssets(body, reuse); } catch (error) { console.warn('[메모] 에셋 그림:', error); }
 }
+// ── 캐릭터 에셋 그림 ({{img::이름}}) — 채팅 밖 자리(북마크 카드와 같은 길) ──
+// 5.3.7 (사용자: "메모도 에셋 그려"): 에셋 애드온에게 이 칸을 그려 달라고 알리고(char-assets:render — 애드온이 꺼졌거나 없으면 아무 일도 없어
+// 태그는 글자 그대로), 그 뒤 테마 조판(typesetRoot: 그림 옆 <br> 숨김 · 그림 뒤 글 들여쓰기 칸)을 이 칸에만 돌린다.
+// chat-bookmarks:render 는 보내지 않는다 — 그 신호를 듣는 tone.js 가 메모에서 고른 글자색(서식 줄 글자색)의 채도 · 밝기를 바꾼다.
+// 끌어온 메모(![[ ]])는 이 본문 안에 그려지므로 같이 처리된다.
+const ASSET_IMGS = 'img.eh-img, img.character-asset-rendered';
+/** 다시 그리기 전의 그림 — 같은 주소면 새로 만든 <img> 대신 이것을 다시 끼운다 (다시 그릴 때마다 그림을 새로 읽어 깜빡이지 않게) */
+function assetImages(body) {
+    const out = new Map();
+    for (const img of body.getElementsByTagName('img')) {
+        if (!img.matches(ASSET_IMGS)) continue;
+        const key = img.getAttribute('src') || ''; if (!out.has(key)) out.set(key, []); out.get(key).push(img);
+    }
+    return out;
+}
+function drawAssets(body, reuse) {
+    // 태그가 없으면 알리지 않는다 (애드온은 소문자 '{{img::' 만 그린다 — 같은 기준)
+    if (body.textContent.includes('{{img::')) document.dispatchEvent(new CustomEvent('char-assets:render', { detail: { root: body } }));
+    if (reuse.size) for (const img of [...body.getElementsByTagName('img')]) {
+        if (!img.matches(ASSET_IMGS)) continue;
+        const keep = reuse.get(img.getAttribute('src') || '')?.shift();
+        if (keep && keep !== img) img.replaceWith(keep);
+    }
+    // 채팅의 그림과 같은 모양 표시(.salty-asset · 투명 컷 · 비율 · 테두리 자동 색 — src/assets.js) — 그림이 있을 때만
+    if (body.querySelector(ASSET_IMGS)) classifyAll(body);
+    typesetRoot(body);
+}
+/** 에셋 목록이 바뀌면(캐릭터를 바꿈 · 에셋 애드온이 늦게 켜짐) 그림 · 태그가 든 보기를 다시 그린다 — 에셋 애드온이 'char-assets:index' 를 보낼 때 */
+let assetRedraw = 0;
+document.addEventListener('char-assets:index', () => {
+    clearTimeout(assetRedraw);
+    assetRedraw = setTimeout(() => {
+        const hosts = new Set();
+        for (const view of document.querySelectorAll('.bl-notes-view')) {
+            if (view.querySelector(ASSET_IMGS) || view.textContent.includes('{{img::')) hosts.add(view.closest('.bl-note, .bl-sticky, .bl-notes-peek'));
+        }
+        hosts.forEach(el => el?._sync?.());
+    }, 60);
+});
 /**
  * 내용 칸 = 그린 보기(.bl-notes-view) + 편집 textarea. 보기를 누르면 편집, 편집 칸에서 나가면 다시 보기.
  * 내용이 비어 있으면 편집 칸을 바로 보인다. commit(value, now) 는 저장 담당.

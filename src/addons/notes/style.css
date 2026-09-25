@@ -5,7 +5,7 @@
    ============================================================ */
 :root {
     /* index.js 의 VERSION 과 같아야 한다 */
-    --bl-notes-css-version: "1.2.2";
+    --bl-notes-css-version: "1.2.3";
     --bl-notes-surface: var(--salty-surface, var(--SmartThemeBlurTintColor, #25262a));
     --bl-notes-card: var(--bl-card, var(--salty-card, rgba(255, 255, 255, .04)));
     --bl-notes-text: var(--salty-text, var(--SmartThemeBodyColor, #eee));
@@ -186,6 +186,8 @@
 .bl-note-swatches button { width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: var(--sw, transparent); color: var(--bl-notes-muted); cursor: pointer; display: grid; place-items: center; font-size: 11px; }
 .bl-note-swatches button:hover { outline: 2px solid var(--bl-notes-accent); outline-offset: 1px; }
 /* 사본 규칙의 미리보기 무대 배경(--salty-fill-bg)도 메모 안에서는 끈다 — 카드 위에 상자가 하나 더 보였다 */
+/* 5.3.7: 이미지 › '가로 꽉' 그림이 채팅 좌우 여백(--salty-gutter)만큼 밖으로 뻗어 메모 칸(여백 6px)을 넘었다 → 메모 안에서는 본문 폭까지만 */
+.bl-notes-view.salty-preview { --salty-gutter: 0px; }
 .bl-notes-view.salty-preview, .bl-notes-view.salty-preview .mes .mes_text, .bl-notes-view.salty-preview .mes .mes_block { background: transparent !important; background-image: none !important; }
 /* 사본 규칙은 :is(#salty-nochat, …) 라 id 무게(1,1,2) — 같은 무게로 맞춰 뒤에 실린 이 파일이 이긴다 */
 body.salty :is(#salty-nochat, .bl-notes-view) .mes, body.salty :is(#salty-nochat, .bl-notes-view) .mes .mes_block, body.salty :is(#salty-nochat, .bl-notes-view) .mes .mes_text {

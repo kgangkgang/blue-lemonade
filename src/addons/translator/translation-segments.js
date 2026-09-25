@@ -140,25 +140,39 @@ const noteBlock = (block, pattern = NOTE_BLOCK) => {
     while (lines.length && (!lines[0].trim() || RULE_BLOCK.test(lines[0]))) lines.shift();
     return lines.length > 0 && pattern.test(lines.join('\n'));
 };
+// 5.3.7: 원문 없이 볼 때(견줄 게 없을 때) ※ 줄은 번역 이야기를 할 때만 메모로 본다 — "[상태창]\n***\n※ 호감도 +5" 같은 상태창이 흔하다
+const META_WORDS = /번역|역주|원문|translat|original|\bTL\b|訳|原文|翻译|翻譯/i;
+const MARK_LINE = /^[\s>*_(\[（【]*※/;
+const noteNoSource = block => noteBlock(block) && (!noteBlock(block, new RegExp(`${NOTE_OPEN}※`)) || META_WORDS.test(block));
+/** 원문 문단이 메모 · 상태창 꼴을 품었나 — 메모 꼴 덩이, 아무 줄이나 메모 머리(※ · 참고: · Note: …), 또는 구분선 밑에 내용이 있음 */
+const noteLike = block => noteBlock(block) || block.split('\n').some(line => NOTE_BLOCK.test(line) || MARK_LINE.test(line)) ||
+    /(?:^|\n)[\t ]*(?:-{3,}|\*{3,}|_{3,})[\t ]*\n[\s\S]*\S/.test(block);
 /** 5.3.6: 맨 끝 덩이가 번역 메모일 때만 (그 앞 구분선과 함께) 걷는다. 가운데 문단이 ※ · 참고: 로 시작해도 뒤를 버리지 않는다.
- *  source 를 주면 견준다: 원문 마지막 문단도 메모 꼴이면 그 번역이니 두고, 문단 수가 원문과 같으면 '분명한' 메모(Translator's note · 역주 …)만 걷는다.
- *  첫 덩이는 건드리지 않는다. 마지막 덩이 안에서 본문 바로 밑에 붙은 "---\nNote: …" 도 걷는다. */
+ *  source 를 주면 견준다: 문단 수가 원문과 같으면 '분명한' 메모(Translator's note · 역주 …)만 걷는다.
+ *  5.3.7: 원문 끝 문단에 짝이 되는 덩이(메모 꼴 · ※ 줄 · 구분선 밑 내용 = 상태창)가 있으면 그 번역이니 걷지 않는다 —
+ *         원문에 없는 '분명한' 메모가 문단 수보다 더 붙었을 때만 걷는다. 원문이 없으면 ※ 줄은 번역 이야기일 때만 메모로 본다.
+ *  첫 덩이는 건드리지 않는다. 마지막 덩이 안에서 본문 바로 밑에 붙은 "---\nNote: …" 도 (원문에 그런 꼴이 없을 때만) 걷는다. */
 export function stripTrailingNote(text, source) {
     const blocks = String(text ?? '').split(/(\n[\t ]*\n(?:[\t ]*\n)*)/);
     const src = source == null ? null : paragraphsOf(source);
-    if (src && src.length && NOTE_BLOCK.test(src.at(-1))) return blocks.join('');
+    const srcTail = Boolean(src?.length) && noteLike(src.at(-1));
+    const srcStrong = Boolean(src) && src.some(p => p.split('\n').some(line => STRONG_NOTE.test(line)));
     const count = () => blocks.filter((b, i) => i % 2 === 0 && b.trim()).length;
+    const weak = src ? noteBlock : noteNoSource;
     let stripped = false;
     while (blocks.length >= 3) {
         const last = blocks.at(-1);
         if (!last.trim() || (stripped && RULE_BLOCK.test(last))) { blocks.splice(-2); continue; }
-        const strong = noteBlock(last, STRONG_NOTE) || (/^\s*(?:-{3,}|\*{3,}|_{3,})[\t ]*\n/.test(last) && noteBlock(last));
-        if (!(strong || (noteBlock(last) && (!src || count() !== src.length)))) break;
+        const strong = noteBlock(last, STRONG_NOTE) && !srcStrong;
+        const cut = srcTail ? strong && count() > src.length
+            : strong || (/^\s*(?:-{3,}|\*{3,}|_{3,})[\t ]*\n/.test(last) && weak(last)) || (weak(last) && (!src || count() !== src.length));
+        if (!cut) break;
         blocks.splice(-2); stripped = true;
     }
-    // 빈 줄 없이 붙은 "본문\n---\nNote: …" — 구분선이 있을 때만 (구분선 없는 "Note:" 줄은 본문일 수 있다)
+    // 빈 줄 없이 붙은 "본문\n---\nNote: …" — 구분선이 있을 때만 (구분선 없는 "Note:" 줄은 본문일 수 있다) · 원문 끝 문단에 짝이 있으면 두지 않는다
     const last = blocks.at(-1), rule = /\n[\t ]*(?:-{3,}|\*{3,}|_{3,})[\t ]*\n/.exec(last);
-    if (rule && last.slice(0, rule.index).trim() && noteBlock(last.slice(rule.index + 1))) {
+    const tail = rule && last.slice(rule.index + 1);
+    if (rule && last.slice(0, rule.index).trim() && (srcTail ? noteBlock(tail, STRONG_NOTE) && !srcStrong : weak(tail))) {
         blocks[blocks.length - 1] = last.slice(0, rule.index);
         stripped = true;
     }
@@ -173,8 +187,9 @@ export function stripReplyWrapping(text, source) {
     if (first && PREAMBLE_BLOCK.test(first[1].trim()) && !PREAMBLE_BLOCK.test(srcFirst)) out = out.slice(first[0].length).replace(/^\s*\n/, '');
     return stripTrailingNote(out, source).trim();
 }
-/** meta.renumbered: 1부터 다시 매긴 답을 한 칸 내려 받았다 (문단 하나를 빼먹고 끝에 지어낸 답과 구별이 안 돼 캐시에 넣지 않는다) */
-export function parseBatchResult(raw, count, meta = {}) {
+/** meta.renumbered: 1부터 다시 매긴 답을 한 칸 내려 받았다 (문단 하나를 빼먹고 끝에 지어낸 답과 구별이 안 돼 캐시에 넣지 않는다)
+ *  5.3.7: sources(보낸 원문 문단 배열)를 주면 꼬리 메모를 원문 문단과 견줘 걷는다 — 원문에 있는 상태창 · 메모 줄은 번역이다 */
+export function parseBatchResult(raw, count, meta = {}, sources) {
     // 앞의 <think>…</think> · 코드 펜스 · 표시 앞의 설명문은 걷어 낸다. 개수 · 번호 · 중복 · 빈 글 검사는 엄격하다.
     const text = String(raw).replace(/\r\n?/g, '\n').replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/^\s*```[a-z]*[ \t]*\n|\n[ \t]*```\s*$/g, '').trim();
     const mark = text.includes('⟦') ? MARK : MARK_ALT;
@@ -183,8 +198,8 @@ export function parseBatchResult(raw, count, meta = {}) {
     let id = null, buffer = [];
     const flush = () => {
         if (id === null) return;
-        const body = stripTrailingNote(buffer.join('\n')).replace(/^\n+|\s+$/g, ''); // 빈 줄만 걷고 첫 줄 들여쓰기(코드 · 목록)는 둔다 · 꼬리 메모는 뺀다
-        if (!body || found.has(id)) fail();
+        const body = buffer.join('\n'); // 꼬리 메모는 번호를 맞춘 뒤(1부터 매긴 답) 원문 문단과 견줘 뺀다
+        if (!body.trim() || found.has(id)) fail();
         found.set(id, body);
     };
     for (const line of text.split('\n')) {
@@ -200,7 +215,11 @@ export function parseBatchResult(raw, count, meta = {}) {
         meta.renumbered = true;
     }
     for (const key of found.keys()) if (!Number.isInteger(key) || key < 0 || key >= count) fail();
-    return Array.from({length: count}, (_, i) => found.get(i));
+    return Array.from({length: count}, (_, i) => {
+        const body = stripTrailingNote(found.get(i), sources?.[i]).replace(/^\n+|\s+$/g, ''); // 빈 줄만 걷고 첫 줄 들여쓰기(코드 · 목록)는 둔다
+        if (!body) fail();
+        return body;
+    });
 }
 export async function translateSegments({ parts, signature, request, check = () => {}, progress = () => {}, cacheable = () => true, blockedMarker }) {
     const stamp = epoch, output = [...parts], total = Math.ceil(parts.length / 2), missing = new Map();

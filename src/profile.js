@@ -3,7 +3,7 @@
 const SELECTOR = '.mes:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar img';
 let active = { profile: false, userProfile: false };
 let enabled = false, chat = null, waiting = false;
-let changes = null, visible = null;
+let changes = null, visible = null, flags = null;
 const swapped = new Map();
 let failed = new WeakMap();
 
@@ -29,6 +29,20 @@ function scan(root) {
     if (root.matches(SELECTOR)) watch(root);
     for (const img of root.querySelectorAll(SELECTOR)) watch(img);
 }
+// 숨기기·보이기: 다시 보이면 원본을 걸고, 숨기면 썸네일로 되돌린다.
+function toggle(records) {
+    for (const { target } of records) {
+        if (!target.classList?.contains('mes')) continue;
+        for (const img of target.querySelectorAll('.mesAvatarWrapper > .avatar img')) {
+            if (img.matches(SELECTOR)) { watch(img); continue; }
+            visible?.unobserve(img);
+            const previous = swapped.get(img);
+            if (!previous) continue;
+            if (img.src === previous.full) img.src = previous.thumb;
+            swapped.delete(img);
+        }
+    }
+}
 function load(event) { if (event.target instanceof HTMLImageElement) watch(event.target); }
 function error(event) {
     const img = event.target, previous = swapped.get(img);
@@ -37,7 +51,7 @@ function error(event) {
     img.src = previous.thumb;
 }
 function stop() {
-    changes?.disconnect(); visible?.disconnect(); changes = visible = null;
+    changes?.disconnect(); visible?.disconnect(); flags?.disconnect(); changes = visible = flags = null;
     chat?.removeEventListener('load', load, true); chat?.removeEventListener('error', error, true);
     for (const [img, previous] of swapped) if (img.src === previous.full) img.src = previous.thumb;
     swapped.clear(); failed = new WeakMap(); chat = null;
@@ -71,6 +85,8 @@ function start() {
     });
     // 본문 스트림은 감시하지 않고 메시지 추가·삭제만 받는다.
     changes.observe(chat, { childList: true });
+    flags = new MutationObserver(toggle);
+    flags.observe(chat, { subtree: true, attributes: true, attributeFilter: ['is_system'] });
     chat.addEventListener('load', load, true); chat.addEventListener('error', error, true);
     scan(chat);
 }

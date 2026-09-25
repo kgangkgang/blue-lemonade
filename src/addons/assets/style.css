@@ -4,7 +4,7 @@
    ============================================================ */
 
 /* state.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
-:root { --eh-css-version: "1.4.2"; }
+:root { --eh-css-version: "1.4.3"; }
 
 .eh-root {
     --eh-text: var(--SmartThemeBodyColor, #ccc);
