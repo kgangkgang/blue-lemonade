@@ -10,10 +10,10 @@
   const motion=document.createElement('button'),visibility=document.createElement('button');motion.type=visibility.type='button';
   const treat=document.createElement('button');treat.type='button';treat.textContent='간식주기';
   controls.append(label,motion,visibility,treat);
-  const help=document.createElement('p');help.className='pet-help';help.textContent='에이드와 나이트를 잡아서 옮겨 보세요.';
+  const help=document.createElement('p');help.className='pet-help';const touchOnly=matchMedia('(hover:none),(pointer:coarse)').matches;help.textContent=touchOnly?'에이드와 나이트를 길게 눌러서 옮겨 보세요.':'에이드와 나이트를 잡아서 옮겨 보세요.';
   const announcement=document.createElement('span');announcement.className='palette-sr-only';announcement.setAttribute('role','status');
   controls.append(announcement);document.body.append(layer,controls,help);
-  let width=innerWidth,height=innerHeight,lastActivity=performance.now(),lastTick=0,raf=0,transitionUntil=0;
+  let width=innerWidth,height=innerHeight,lastActivity=performance.now(),lastTick=0,raf=0,slow=0,transitionUntil=0,loaded=false,press=null;
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   let sprites={};
   const sheets={};
@@ -38,7 +38,7 @@
     f.x=clamp(f.x,20,width-20);f.el.style.transform=`translate(${f.x-f.w/2}px,${f.y}px)`;
   }
   function feed(){
-    if(treat.disabled||!sprites.treats)return;
+    if(!loaded||treat.disabled||!sprites.treats)return;
     activity();help.hidden=true;
     for(const p of pets){
       const s=sprites.treats,[sx,sy,sw,sh]=s.frames[p.kind==='ade'?2:5];
@@ -69,7 +69,9 @@
   function cancelDrag(p){if(p.pointer!==null){const id=p.pointer;p.pointer=null;p.drag=null;if(p.el.hasPointerCapture(id))p.el.releasePointerCapture(id);}}
   function resize(){width=innerWidth;height=innerHeight;for(const p of pets){p.size=width<=760?(p.kind==='ade'?96:84):(p.kind==='ade'?122:106);p.el.style.setProperty('--pet-size',p.size+'px');p.x=clamp(p.x,0,Math.max(0,width-p.size));p.y=clamp(p.y,0,floor(p));p.frame=-1;draw(p);} }
   // Decode dimensions before displaying, so CSS crops the original atlas without altering art.
-  const ready=fetch('mascot-atlas.json').then(r=>{if(!r.ok)throw new Error('atlas');return r.json();}).then(atlas=>{sprites=atlas;return Promise.all(Object.entries(sprites).map(([key,s])=>new Promise(resolve=>{const image=new Image();image.onload=()=>{s.width=image.naturalWidth;s.height=image.naturalHeight;sheets[key]=image;resolve(true);};image.onerror=()=>resolve(false);image.src=`media/mascots/${s.file}.webp`;})));});
+  // 스프라이트는 첫 화면이 다 뜬 뒤(load 이후 한가할 때) 받아서 첫 페인트와 경쟁하지 않게 함
+  const idle=new Promise(resolve=>{const go=()=>window.requestIdleCallback?requestIdleCallback(resolve,{timeout:2500}):setTimeout(resolve,300);if(document.readyState==='complete')go();else addEventListener('load',go,{once:true});});
+  const ready=idle.then(()=>fetch('mascot-atlas.json')).then(r=>{if(!r.ok)throw new Error('atlas');return r.json();}).then(atlas=>{sprites=atlas;return Promise.all(Object.entries(sprites).map(([key,s])=>new Promise(resolve=>{const image=new Image();image.onload=()=>{s.width=image.naturalWidth;s.height=image.naturalHeight;sheets[key]=image;resolve(true);};image.onerror=()=>resolve(false);image.src=`media/mascots/${s.file}.webp`;})));});
   function frameFor(p){
     const reactionRow=p.kind==='ade'?0:4;
     if(p.state==='stone')return ['reactions',reactionRow];
@@ -82,7 +84,7 @@
       // Contact, weight transfer and passing poses on both sides. Advance by
       // distance travelled so shorter mobile steps do not skate over the floor.
       if(sprites[`${p.kind}-cycle`])return [`${p.kind}-cycle`,Math.floor(p.gait*6)%6];
-      return ['quiet-walk',(p.kind==='night'?2:0)+Math.floor(p.age*3.5)%2];
+      return [p.kind,0];
     }
     if(p.state==='peek'||p.state==='wiggle')return [p.kind,5];
     if(p.state==='leap'||p.state==='fall')return [p.kind,6];
@@ -92,6 +94,7 @@
   function draw(p){
     const [key,frame]=frameFor(p);const sheet=sprites[key];if(!sheet)return;
     if(p.frame!==frame||p.sheet!==key){
+      if(!sheet.frames[frame])return;
       const [sx,sy,sw,sh]=sheet.frames[frame];
       const scale=p.size*.92/(p.kind==='ade'?489:454)*(sheet.scaleFactors?.[frame]||sheet.scaleFactor||1),w=sw*scale,h=sh*scale;
       const alignedHeight=(sheet.referenceHeight||sh)*scale;
@@ -120,7 +123,7 @@
     p.dir=p.x<50?1:p.x>width-p.size-50?-1:(Math.random()<.5?-1:1);p.vx=p.dir*(p.kind==='ade'?23:29);state(p,'walk',3+Math.random()*3);
   }
   function tick(now){
-    raf=0;const dt=Math.min(.04,(now-lastTick)/1000||.016);lastTick=now;
+    raf=0;const dt=Math.min(calm()?.15:.04,(now-lastTick)/1000||.016);lastTick=now;
     if(document.hidden||document.querySelector('dialog[open]')){lastTick=0;return;}
     for(const p of pets){
       p.age+=dt;
@@ -142,7 +145,7 @@
         }
       }
       if(!p.food&&now-lastActivity>35000&&!['fall','leap','land','sleep'].includes(p.state)){p.y=floor(p);state(p,'sleep',Infinity);}
-      if(p.state==='walk'){p.gait=(p.gait+Math.abs(p.vx)*dt/(p.size*.25))%1;p.x+=p.vx*dt;p.y=floor(p);if(p.x<0||p.x>width-p.size){p.x=clamp(p.x,0,width-p.size);p.dir*=-1;p.vx*=-1;state(p,p.kind==='ade'?'peek':'wiggle',p.kind==='ade'?3:.9);}else if(p.age>p.duration)next(p);}
+      if(p.state==='walk'){const gait=p.size>0?(p.gait+Math.abs(p.vx)*dt/(p.size*.25))%1:0;p.gait=Number.isFinite(gait)?gait:0;p.x+=p.vx*dt;p.y=floor(p);if(p.x<0||p.x>width-p.size){p.x=clamp(p.x,0,width-p.size);p.dir*=-1;p.vx*=-1;state(p,p.kind==='ade'?'peek':'wiggle',p.kind==='ade'?3:.9);}else if(p.age>p.duration)next(p);}
       else if(p.state==='peek'){p.y=floor(p)-Math.sin(Math.min(p.age/3.2,1)*Math.PI)*75;if(p.age>p.duration){p.y=floor(p);next(p);}}
       else if(p.state==='wiggle'){if(p.age>p.duration)launch(p);}
       else if(p.state==='fall'||p.state==='leap'){
@@ -154,9 +157,14 @@
       else if((p.state==='idle'||p.state==='sit')&&p.age>p.duration)next(p);
       draw(p);
     }
-    if(!prefs.hidden&&!prefs.frozen||pets.some(p=>['hide','show'].includes(p.state)))raf=requestAnimationFrame(tick);
+    if(!prefs.hidden&&!prefs.frozen||pets.some(p=>['hide','show'].includes(p.state))){
+      // 모두 자거나 가만히 있으면 숨쉬기만 보이므로 초당 10번 정도만 그림
+      if(calm())slow=setTimeout(()=>{slow=0;raf=requestAnimationFrame(tick);},100);else raf=requestAnimationFrame(tick);
+    }
   }
-  function start(){if(!raf&&!document.hidden){lastTick=performance.now();raf=requestAnimationFrame(tick);}}
+  function calm(){return pets.every(p=>['sleep','idle','sit'].includes(p.state)&&!p.food&&p.pointer===null);}
+  // 스프라이트가 준비되기 전(p.size 0)에는 돌리지 않음
+  function start(){if(!loaded||raf||document.hidden)return;if(slow){if(calm())return;clearTimeout(slow);slow=0;}else lastTick=performance.now();raf=requestAnimationFrame(tick);}
   function activity(){lastActivity=performance.now();for(const p of pets)if(p.state==='sleep'){state(p,'wake',.8);}start();}
   motion.addEventListener('click',()=>{prefs.frozen=!prefs.frozen;for(const p of pets){clearFood(p);cancelDrag(p);state(p,prefs.frozen?'stone':'wake',.8);draw(p);}help.hidden=true;labels();save();announcement.textContent=prefs.frozen?'에이드와 나이트가 돌로 굳었어요.':'에이드와 나이트가 다시 움직여요.';start();});
   visibility.addEventListener('click',()=>{
@@ -167,31 +175,57 @@
     transitionUntil=performance.now()+(reduced.matches?0:1200);labels();save();start();
     announcement.textContent=prefs.hidden?'에이드와 나이트가 들어갔어요.':'에이드와 나이트가 나타났어요.';
   });
+  function grab(p,e){
+    clearFood(p);activity();help.hidden=true;p.pointer=e.pointerId;try{p.el.setPointerCapture(e.pointerId);}catch{}
+    p.drag={x:e.clientX,y:e.clientY,time:performance.now(),vx:0,vy:0};state(p,'held');p.x=clamp(e.clientX-p.size*.5,0,width-p.size);p.y=clamp(e.clientY-p.size*.16,0,floor(p));draw(p);start();
+  }
+  // 휴대폰에서는 펫이 터치를 가로채지 않음(CSS pointer-events:none) — 짧은 탭·스크롤은 아래 내용으로 그대로 가고,
+  // 펫 그림 위에서 움직이지 않고 380ms 누르고 있을 때만 잡음
+  const endPress=()=>{if(press){clearTimeout(press.timer);press=null;}};
+  document.addEventListener('pointerdown',e=>{
+    endPress();
+    if(e.pointerType==='mouse'||!e.isPrimary||!loaded||prefs.frozen||prefs.hidden||layer.hidden||layer.inert)return;
+    const p=pets.find(p=>{if(p.pointer!==null||['hide','show'].includes(p.state))return false;const b=p.pose.getBoundingClientRect();return e.clientX>=b.left&&e.clientX<=b.right&&e.clientY>=b.top&&e.clientY<=b.bottom;});
+    if(!p)return;
+    press={p,pointerId:e.pointerId,clientX:e.clientX,clientY:e.clientY,x:e.clientX,y:e.clientY,timer:setTimeout(()=>{const q=press;press=null;if(!prefs.frozen&&!prefs.hidden)grab(q.p,q);},380)};
+  },true);
+  document.addEventListener('pointermove',e=>{if(press&&press.pointerId===e.pointerId){if(Math.hypot(e.clientX-press.x,e.clientY-press.y)>10)endPress();else{press.clientX=e.clientX;press.clientY=e.clientY;}}},true);
+  for(const name of ['pointerup','pointercancel'])document.addEventListener(name,e=>{if(press&&press.pointerId===e.pointerId)endPress();},true);
+  addEventListener('scroll',endPress,{passive:true});
+  // 잡은 동안에는 페이지가 스크롤되거나 길게 누르기 메뉴가 뜨지 않게
+  document.addEventListener('touchmove',e=>{if(e.cancelable&&pets.some(p=>p.pointer!==null))e.preventDefault();},{passive:false});
+  document.addEventListener('contextmenu',e=>{if(press||pets.some(p=>p.pointer!==null))e.preventDefault();},true);
   for(const p of pets){
+    // 마우스는 바로 잡기. 터치·펜은 위의 길게 누르기로만 잡음
     p.el.addEventListener('pointerdown',e=>{
-      if(e.button!==0||prefs.frozen||prefs.hidden||['hide','show'].includes(p.state))return;
-      e.preventDefault();clearFood(p);activity();help.hidden=true;p.pointer=e.pointerId;p.el.setPointerCapture(e.pointerId);
-      p.drag={x:e.clientX,y:e.clientY,time:performance.now(),vx:0,vy:0};state(p,'held');p.x=clamp(e.clientX-p.size*.5,0,width-p.size);p.y=clamp(e.clientY-p.size*.16,0,floor(p));draw(p);
+      if(e.pointerType!=='mouse'||e.button!==0||prefs.frozen||prefs.hidden||['hide','show'].includes(p.state))return;
+      e.preventDefault();grab(p,e);
     });
-    p.el.addEventListener('pointermove',e=>{
+    const move=e=>{
       if(p.pointer!==e.pointerId||!p.drag)return;
       const now=performance.now(),dt=Math.max(12,now-p.drag.time)/1000;
       const vx=clamp((e.clientX-p.drag.x)/dt,-850,850),vy=clamp((e.clientY-p.drag.y)/dt,-700,700);
       p.drag={x:e.clientX,y:e.clientY,time:now,vx,vy};p.tilt=-vx/35;
       p.x=clamp(e.clientX-p.size*.5,0,width-p.size);p.y=clamp(e.clientY-p.size*.16,0,floor(p));lastActivity=now;draw(p);
-    });
+    };
+    p.el.addEventListener('pointermove',move);
     const release=(e,cancelled=false)=>{
       if(p.pointer!==e.pointerId)return;const d=p.drag;cancelDrag(p);
       const fresh=d&&performance.now()-d.time<120;p.vx=!cancelled&&fresh?d.vx*.7:0;p.vy=!cancelled&&fresh?d.vy*.7:0;p.dir=p.vx<0?-1:1;state(p,'fall');activity();
     };
     p.el.addEventListener('pointerup',e=>release(e));p.el.addEventListener('pointercancel',e=>release(e,true));p.el.addEventListener('lostpointercapture',e=>release(e,true));
+    // 길게 눌러 잡은 터치는 펫이 pointer-events:none 이라 포착(capture)이 안 되는 브라우저도 있음 → 그때는 문서에서 받아 옮기고 놓음
+    const loose=e=>p.pointer===e.pointerId&&!p.el.hasPointerCapture(e.pointerId);
+    document.addEventListener('pointermove',e=>{if(loose(e))move(e);},true);
+    document.addEventListener('pointerup',e=>{if(loose(e))release(e);},true);
+    document.addEventListener('pointercancel',e=>{if(loose(e))release(e,true);},true);
     p.el.addEventListener('keydown',e=>{
       if(prefs.frozen||prefs.hidden)return;
       if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter',' '].includes(e.key)){e.preventDefault();activity();if(e.key==='Enter'||e.key===' ')launch(p);else{p.x=clamp(p.x+({'ArrowLeft':-24,'ArrowRight':24}[e.key]||0),0,width-p.size);p.y=clamp(p.y+({'ArrowUp':-24,'ArrowDown':24}[e.key]||0),0,floor(p));state(p,'fall');p.vx=p.vy=0;}draw(p);}
     });
   }
   for(const name of ['pointermove','pointerdown','keydown','wheel','scroll'])document.addEventListener(name,activity,{passive:true});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden){if(raf)cancelAnimationFrame(raf);raf=0;for(const p of pets){dropHeldFood(p);if(p.pointer!==null){cancelDrag(p);state(p,'fall');p.vx=p.vy=0;}}}else{lastActivity=performance.now();start();}});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){if(raf)cancelAnimationFrame(raf);raf=0;clearTimeout(slow);slow=0;endPress();for(const p of pets){dropHeldFood(p);if(p.pointer!==null){cancelDrag(p);state(p,'fall');p.vx=p.vy=0;}}}else{lastActivity=performance.now();start();}});
   addEventListener('blur',()=>{for(const p of pets){dropHeldFood(p);if(p.pointer!==null){cancelDrag(p);state(p,'fall');p.vx=p.vy=0;}}});
   addEventListener('resize',()=>{resize();start();});
   reduced.addEventListener('change',()=>{if(reduced.matches&&!prefs.frozen){prefs.frozen=true;for(const p of pets){clearFood(p);cancelDrag(p);state(p,'stone');draw(p);}labels();save();}});
@@ -199,5 +233,5 @@
   const modalObserver=new MutationObserver(()=>{const modal=!!document.querySelector('dialog[open]');layer.inert=modal;controls.inert=modal;layer.style.opacity=modal?'0':'1';controls.style.opacity=modal?'0':'1';if(!modal)start();});
   document.querySelectorAll('dialog').forEach(d=>modalObserver.observe(d,{attributes:true,attributeFilter:['open']}));
   layer.hidden=true;help.hidden=true;labels();
-  ready.then(results=>{if(results.some(ok=>!ok)){controls.hidden=true;return;}resize();for(const p of pets){p.y=floor(p);state(p,prefs.frozen?'stone':'show');draw(p);}layer.hidden=prefs.hidden;help.hidden=prefs.hidden;start();setTimeout(()=>help.hidden=true,8500);}).catch(()=>{controls.hidden=true;layer.hidden=true;help.hidden=true;});
+  ready.then(results=>{if(results.some(ok=>!ok)){controls.hidden=true;return;}loaded=true;resize();for(const p of pets){p.y=floor(p);state(p,prefs.frozen?'stone':'show');draw(p);}layer.hidden=prefs.hidden;help.hidden=prefs.hidden;start();setTimeout(()=>help.hidden=true,8500);}).catch(()=>{controls.hidden=true;layer.hidden=true;help.hidden=true;});
 })();
