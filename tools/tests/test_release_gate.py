@@ -29,6 +29,20 @@ class GateTests(unittest.TestCase):
                 with self.assertRaisesRegex(gate.GateError,'Addon CSS'):gate.validate(f,'theme')
                 del f[key]
                 with self.assertRaisesRegex(gate.GateError,'Addon CSS'):gate.validate(f,'theme')
+    def test_embedded_version_displays(self):
+        f=self.fixture('theme')
+        f['src/addons/translator/manifest.json']=b'{"version":"2.1.9"}'
+        f['src/addons/translator/index.html']=b'<small class="ver">v2.1.9</small>'
+        f['src/addons/prompt/manifest.json']=b'{"version":"1.1.1"}'
+        f['src/addons/prompt/guide.js']=b"ver.textContent='v1.1.1';"
+        f['src/addons/prompt/settings-ui.js']=b'<span class="ver">v1.1.1</span>'
+        self.assertEqual(gate.validate(f,'theme'),'1.3.1')
+        for key,old in [('src/addons/translator/index.html',b'>v2.1.6<'),('src/addons/prompt/guide.js',b"textContent='v1.1.0'"),('src/addons/prompt/settings-ui.js',b'>v1.0.9<')]:
+            with self.subTest(file=key):
+                g=dict(f);g[key]=old
+                with self.assertRaisesRegex(gate.GateError,'Embedded version'):gate.validate(g,'theme')
+        g=dict(f);g['src/addons/translator/index.html']=b'<small class="ver"></small>'
+        with self.assertRaisesRegex(gate.GateError,'Embedded version'):gate.validate(g,'theme')
     def test_stale_css_blocks(self):
         f=self.fixture();f['style.css']=b'--lm-css-version: "1.2.9";'
         with self.assertRaisesRegex(gate.GateError,'CSS'):gate.validate(f,'memory')
