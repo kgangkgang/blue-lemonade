@@ -519,6 +519,11 @@ export function applyAll() {
         '--bl-mtone-s': `${(s.chat.markerTone?.[pal.mode === 'dark' ? 'dark' : 'light']?.s ?? (pal.mode === 'dark' ? 62 : 88))}%`,
         '--bl-mtone-l': `${(s.chat.markerTone?.[pal.mode === 'dark' ? 'dark' : 'light']?.l ?? (pal.mode === 'dark' ? 46 : 72))}%`,
 
+        // 5.3.2 취소선 (css/06 del · s)
+        '--salty-strike-color': s.strike?.own ? s.strike.color : 'currentColor',
+        '--salty-strike-thick': s.strike?.line === false ? '0px' : `${s.strike?.thickness ?? 2}px`,
+        '--salty-strike-style': s.strike?.italic ? 'italic' : 'normal',
+        '--salty-strike-fade': `${s.strike?.fade ?? 55}%`,
         '--salty-em-style': s.em.italic ? 'italic' : 'normal',
         '--salty-em-weight': String(s.em.weight),
         '--salty-strong-weight': String(s.strong.weight),

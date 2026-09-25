@@ -82,6 +82,37 @@ body.salty.salty-indent :is(#chat, .cg-root) .custom-dem-expressive.bl-fx-lead.b
   margin-left: 0;
   text-indent: inherit;
 }
+/* 5.3.2: 감정 효과를 꺼 두면 테마가 칸을 훑지 않아 .bl-fx-long 표시가 없다 — 그때는 프리셋 칸을 전부 inline 으로 (움직임은 어차피 안 씀).
+   북마크 창(.cg-root)의 카드도 같은 규칙 — 사용자 제보: 북마크 인용에서 긴 대사 앞줄이 벌어짐 */
+body.salty:not(.salty-demfx-go) :is(#chat, .cg-root) .custom-dem-expressive {
+  display: inline !important;
+}
+/* 5.3.2: 북마크 창(.cg-root)은 읽는 목록 — 카드 본문 · 메모 칸(.cg-note-text 는 테마가 훑지 않아 .bl-fx-long 이 안 붙는다) 모두 감정 칸을 inline 으로.
+   움직임 대신 줄 잇기 (사용자 제보: 메모 칸에서 긴 대사 앞줄이 벌어짐) */
+body.salty .cg-root .custom-dem-expressive {
+  display: inline !important;
+}
+
+/* 5.3.2 아이폰 · 맥 사파리(애플 웹킷): 줄을 넘는 inline 칸의 '글자 모양 배경'(background-clip: text)을 마지막 줄에만 칠해서,
+   글자색이 투명한 감정 대사는 앞줄이 통째로 사라지고 끝 조각만 보였다 (5.3.1 의 줄 잇기부터 — 커뮤니티 제보 · 진단 5.3.1 / Version 27).
+   ① 모든 브라우저: 줄마다 배경을 따로(clone) — 색 흐름이 줄마다 다시 시작할 뿐 모양은 같다.
+   ② 애플 웹킷: 그래도 못 믿으니 inline 감정 칸은 글자 모양 배경을 쓰지 않고 대사 색 글자로 (색 흐름만 빠지고 빛 · 흐림 · 형광펜 띠는 그대로) */
+body.salty :is(#chat, .cg-root) .custom-dem-expressive.bl-fx-long,
+body.salty :is(#chat, .cg-root) .bl-fx-long .custom-dem-expressive,
+body.salty:not(.salty-demfx-go) :is(#chat, .cg-root) .custom-dem-expressive,
+body.salty .cg-root .custom-dem-expressive {
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+:root.bl-apple-webkit body.salty :is(#chat, .cg-root) :is(.custom-dem-expressive.bl-fx-long, .bl-fx-long .custom-dem-expressive),
+:root.bl-apple-webkit body.salty:not(.salty-demfx-go) :is(#chat, .cg-root) .custom-dem-expressive,
+:root.bl-apple-webkit body.salty .cg-root .custom-dem-expressive {
+  background-image: none !important;
+  -webkit-background-clip: border-box !important;
+  background-clip: border-box !important;
+  color: var(--salty-marker-ink, var(--salty-dialogue)) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
 
 /* 빛: 글자를 그리는 안쪽 요소의 제 색으로 (span 자신은 transparent 라 빛이 안 보인다) */
 body.salty.salty-demfx-go.salty-demfx-glow :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none),

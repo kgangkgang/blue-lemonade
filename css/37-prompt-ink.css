@@ -50,6 +50,19 @@ body.salty.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#sal
     padding: 0;
   }
 }
+/* 5.3.2 애플 웹킷: 여러 줄 인라인 마스크는 끝 줄 조각에만 그려져 줄을 넘는 대사가 사라졌다(아이폰 제보) → 마스크 없이 반투명 띠 */
+:root.bl-apple-webkit body.salty.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q,
+:root.bl-apple-webkit body.salty.salty-tone.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"])[style*="--bl-hue"] q:not(q q) {
+  -webkit-mask: none !important;
+  mask: none !important;
+  background-color: color-mix(in srgb, currentColor 34%, transparent) !important;
+  background-image: none !important;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+:root.bl-apple-webkit body.salty.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q q {
+  background-color: transparent !important;
+}
 /* 전체 칠 대사는 붓자국이 아니라 통째 띠 — 마스크를 빼고 모서리만 둥글게 (기본 규칙과 같은 모양)
    -webkit-mask: none 이 두 층 · mask-clip 까지 한꺼번에 되돌린다 */
 body.salty.salty-dlg-full.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q {

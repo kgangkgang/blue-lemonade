@@ -1,4 +1,10 @@
 import { themeEnabled } from './src/usage-mode.js';
+// 5.3.2: 애플 웹킷 표시 — 여러 줄 인라인 마스크를 끝 줄 조각에만 그리는 버그 피하기용 (css/37-prompt-ink.css)
+try {
+    const ua = navigator.userAgent || '';
+    const apple = /iP(hone|ad|od)/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) || (/Safari\//.test(ua) && /Macintosh/.test(ua) && !/Chrome|Chromium|Edg|OPR|Firefox/.test(ua));
+    if (apple) document.documentElement.classList.add('bl-apple-webkit');
+} catch { /* 표시용 */ }
 import { startAddons, syncAddonIcons } from './src/addons.js';
 import { installCredits } from './src/credits.js';
 // Blue Lemonade · 블루 레몬에이드 — 실리태번 테마 확장 (폴더·설정 키는 예전 이름 salty 그대로)

@@ -52,11 +52,11 @@ const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 const TABS = [['theme', '테마'], ['text', '글자'], ['chat', '채팅'], ['image', '이미지'], ['prompt', '프롬프트'], ['extensions', '확장']];
 const SUBS = {
     theme: [['palette', '색'], ['colors', '색 고치기'], ['styles', '스타일'], ['changes', '변경한 설정'], ['backup', '백업'], ['update', '업데이트'], ['etc', '기타 설정']],
-    text: [['text', '본문'], ['dialogue', '대사'], ['ui', '메뉴'], ['em', '속마음'], ['strong', '강조'], ['code', '코드'], ['para', '문단'], ['shadow', '그림자 · 외곽선']],
+    text: [['text', '본문'], ['dialogue', '대사'], ['ui', '메뉴'], ['em', '속마음'], ['strike', '취소선'], ['strong', '강조'], ['code', '코드'], ['para', '문단'], ['shadow', '그림자 · 외곽선']],
     chat: [['message', '메시지'], ['profile', '캐릭터 프로필'], ['user-profile', '내 프로필'], ['name', '캐릭터 이름·시간'], ['user-name', '내 이름·시간'], ['screen', '화면'], ['etc', '기타']],
     image: [['layout', '배치'], ['shape', '모양'], ['frame', '테두리'], ['size', '크기'], ['fade', '흐림']],
     prompt: [['deus', '데우스 엑스 마키나']],
-    extensions: [['assets', '캐릭터 에셋'], ['words', '단어 치환'], ['capture', '채팅 캡처'], ['order', '확장 순서'], ['perf', '성능 보조'], ['models', '모델 관리'], ['bookmarks', '북마크'], ['translator', 'LLM 번역'], ['prompt','한글화 패널'], ['customstyle','커스텀 CSS 조절'], ['rewrite', '다시 쓰기'], ['direction', '전개 지시'], ],
+    extensions: [['assets', '캐릭터 에셋'], ['words', '단어 치환'], ['capture', '채팅 캡처'], ['order', '확장 순서'], ['perf', '성능 보조'], ['models', '모델 관리'], ['bookmarks', '북마크'], ['notes', '메모'], ['translator', 'LLM 번역'], ['prompt','한글화 패널'], ['customstyle','커스텀 CSS 조절'], ['rewrite', '다시 쓰기'], ['direction', '전개 지시'], ],
 };
 
 const panels = new Set();
@@ -590,7 +590,7 @@ function sample() {
     return `<div class="salty-sample">
         <p>창밖으로 바닷바람이 스며들었다. 그는 식은 찻잔을 내려놓고 <strong>천천히</strong> 고개를 들었다.</p>
         <p><q>「……레몬 한 조각이면 충분해.」</q> <em>(정말 그걸로 될까.)</em></p>
-        <p><code>【오후 4시 · 맑음】</code> 그는 잔을 다시 채워 내 쪽으로 밀어 놓았다.</p>
+        <p><code>【오후 4시 · 맑음】</code> 그는 잔을 <del>비우고</del> 다시 채워 내 쪽으로 밀어 놓았다.</p>
         <p class="salty-sample-more">Lemonade keeps the summer awake — 1234567890 · 夏の海 · 夏日海边</p>
     </div>`;
 }
@@ -1148,6 +1148,18 @@ function tabText(s, sub) {
             </div>
             ${roleType('속마음', [sizeOpt('em.size', '크기', '본문과 같게', ...TEXT_LIMIT.roleSize), slider('em.weight', '굵기', 300, 700, 1), sizeOpt('em.letterSpacing', '자간', '본문과 같게', ...TEXT_LIMIT.letterSpacing)])}
             ${cap('속마음 글꼴')}${fontBlock(s, 'em')}`;
+    } else if (sub === 'strike') {
+        const st = s.strike || { line: true, own: false, color: '#ff7a7a', thickness: 2, fade: 55, italic: false };
+        body = `${cap('취소선', mdLabel('~~취소선~~'))}
+            <div class="salty-group">
+                ${row('선 긋기', toggle('strike.line', st.line !== false), '끄면 선 없이 흐리게만')}
+                ${st.line !== false ? row('선 색 따로 정하기', toggle('strike.own', st.own), '끄면 글자 색으로 그어요') : ''}
+                ${st.line !== false && st.own ? `<div class="salty-row"><span>선 색</span><input type="color" data-color-path="strike.color" value="${esc(st.color)}" aria-label="취소선 색"></div>` : ''}
+                ${st.line !== false ? slider('strike.thickness', '선 굵기', 1, 4, 0.5) : ''}
+                ${row('기울이기', toggle('strike.italic', st.italic), '지워진 글자를 기울여 써요')}
+                ${slider('strike.fade', '흐리기', 20, 100, 5)}
+            </div>
+            <p class="salty-note">흐리기는 지워진 글자를 얼마나 남길지예요. 100이면 그대로, 낮을수록 옅어져요. 선은 글자 가운데에 곧게 그어져 글꼴이 달라도 보여요.</p>`;
     } else if (sub === 'strong') {
         body = `${cap('강조', mdLabel('**굵게**'))}
             <div class="salty-group">
@@ -2553,7 +2565,7 @@ function bind(root) {
             // 2.9.2: 본문 색 지정 → '글자색 톤 맞추기' 줄, 톤 맞추기 → 톤 값 슬라이더 넷, 투명 그림도 똑같이 → 설명 문구가 스위치에 따라
             // 보였다 안 보였다 하는데 다시 그리지 않아, 끈 뒤에도 슬라이더가 남아 있었다
             // 감정 대사 효과(움직임 · 빛 · 색 흐름) · 백그라운드 버티는 방식 줄도 스위치를 따라 보였다 안 보였다 한다
-            update(st => setPath(st, path, target.checked), ['deviceLayouts.on', 'chat.weatherReadability', 'chat.weatherIllustrated', 'enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on', 'deus.fx.on', 'deus.fx.flow', 'deus.fx.force', 'bgWindow.on'].includes(path));
+            update(st => setPath(st, path, target.checked), ['strike.line', 'strike.own', 'strike.italic', 'deviceLayouts.on', 'chat.weatherReadability', 'chat.weatherIllustrated', 'enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on', 'deus.fx.on', 'deus.fx.flow', 'deus.fx.force', 'bgWindow.on'].includes(path));
             return;
         }
         if (target.matches('input[data-file="font"]') && target.files?.[0]) {

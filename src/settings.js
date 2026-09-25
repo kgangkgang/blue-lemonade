@@ -66,7 +66,8 @@ export const DEFAULTS = {
     // 글자 외곽선 (3.7.0): 켬/끔 + 어디에(전체 · 데우스 프롬프트가 칠한 글자만) + 두께 · 색 · 진하기.
     // 그림자와 달리 -webkit-text-stroke + paint-order 라 글자 속을 파먹지 않는다. 색이 진한 대사가 배경에 묻힐 때 읽히게 하는 용도
     outline: { on: false, color: '#000000', alpha: 100, width: 1 },   // 전체(메시지 본문) 외곽선 · width: px(0.2~3) · alpha: %
-    em: { italic: true, weight: 400, size: null, letterSpacing: null },   // *속마음* — 기울일지, 굵기, 크기(px · null = 본문과 같게), 자간(1/100 em · null = 본문과 같게)
+    em: { italic: true, weight: 400, size: null, letterSpacing: null },
+    strike: { line: true, own: false, color: '#ff7a7a', thickness: 2, fade: 55, italic: false },   // ~~취소선~~ — own: 선 색을 따로(false 면 글자 색), thickness px, fade: 지워진 글자를 남기는 정도 %   // *속마음* — 기울일지, 굵기, 크기(px · null = 본문과 같게), 자간(1/100 em · null = 본문과 같게)
     strong: { weight: 650, size: null, letterSpacing: null },              // **강조**
     chat: { user: 'bubble', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, bgAlpha: 82, mesPins: [], unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, colorPop: true, streamFade: false, demSkin: false, demFold: true, weather: 'off', weatherReadability: false, weatherAutoRest: true, weatherLevel: 2, weatherAmount: null, weather2Amount: null, weatherOpacity: 100, weatherSize: 100, weatherSpeed: 100, weatherAngle: -9, weatherMotion: 'natural', weatherSway: 100, weatherSpin: 100, weatherCurvature:65, weatherOrbitSize:100, weatherOrbitDirection:'right', weatherArtStyle:'real', weatherIllustrated:false, weatherArtOutline:false, weatherColorMode:'auto', weatherColor:'#91cfff', weatherImage: '', weatherImageId: '', qrScroll: 'x', qrFind: true, qrRows: 2, qrPlace: 'bottom', demInk: false, demInkMode: 'text', toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } }, markerTone: { light: { s: 88, l: 72 }, dark: { s: 62, l: 46 } } }, // streamFade: 스트리밍 중 새 글자만 가볍게 페이드 인 (2.9.5, streamfade.js — 실리태번 페이드 인이 켜져 있으면 쉼) · tone: 톤 맞추기의 채도 · 밝기(%) 화이트/나이트 따로 (2.6.1) · toneInline: 본문 글자색의 색상만 두고 채도 · 밝기를 테마에 맞춤 (2.6.0, unifyInline 이 꺼져 있을 때) · selectPop: 실리태번 select 를 테마가 그린 목록 팝업으로 (2.5.0) · colorPop: 설정 창 밖 색 칸도 테마 색 고르기로 (3.5.0, colorpop.js) · regexIcons: 정규식 카드 제목 앞 이모티콘 보이기 · unifyRegex: 프리셋 정규식 카드(DEM 등)의 모듈별 색 → 포인트색 하나 · unifyInline: 메시지에 적힌 글자색(<font color> · style) 무시
     // 3.1.0: 몰입 읽기(폰 — 아래로 밀면 위 바 · 입력창 숨김, reader.js) · 한 손 버튼 줄(입력판 위 ‹ › 사칭 · 이어 쓰기 · 다시 생성, onehand.js)
@@ -91,8 +92,8 @@ export const DEFAULTS = {
     weatherImages: [],
     customPalettes: [],
     activeCustomPalette: '',
-    addons: { direction: false, assets: false, order: false, perf: false, words: false, capture: false, models: false, modelorder: false, modelswitch: false, regexlink: false, rewrite: false, bookmarks: false, translator: false, prompt: false, customstyle: false, conflicts: false },
-    addonUI: { translatorDrawer: true, orderIcon: false, perfIcon: false, wordsMenu: false, captureMenu: false, modelswitchMenu: true, perfMenu: { watchdog:false, timer:true, perf:false, log:true, dedupe:false },
+    addons: { direction: false, assets: false, order: false, perf: false, words: false, capture: false, models: false, modelorder: false, modelswitch: false, regexlink: false, rewrite: false, bookmarks: false, notes: false, translator: false, prompt: false, customstyle: false, conflicts: false },
+    addonUI: { translatorDrawer: true, orderIcon: false, perfIcon: false, wordsMenu: false, captureMenu: false, modelswitchMenu: true, notesMenu: true, notesBarMenu: true, perfMenu: { watchdog:false, timer:true, perf:false, log:true, dedupe:false },
         // 4.5.5: 성능 보조의 도구를 아예 안 불러오게 (perfMenu 는 '메뉴에 보이기', 이것은 '불러오기').
         // 기본은 전부 켬 — 지금 쓰던 대로 돌아가고, 안 쓰는 도구를 끄면 그만큼 시작이 가벼워진다.
         perfLoad: { watchdog:true, timer:true, perf:true, log:true, dedupe:true } },
@@ -221,6 +222,12 @@ function tidyRoles(s) {
         s[role].letterSpacing = num(s[role].letterSpacing, TEXT_LIMIT.letterSpacing);
         s[role].weight = num(s[role].weight, TEXT_LIMIT.weight) ?? DEFAULTS[role].weight;
     }
+    // 5.3.2 취소선
+    if (!isObj(s.strike)) s.strike = structuredClone(DEFAULTS.strike);
+    s.strike.own = !!s.strike.own; s.strike.line = s.strike.line !== false; s.strike.italic = !!s.strike.italic;
+    if (!/^#[0-9a-f]{6}$/i.test(String(s.strike.color))) s.strike.color = DEFAULTS.strike.color;
+    s.strike.thickness = Number.isFinite(parseFloat(s.strike.thickness)) ? clampTo(parseFloat(s.strike.thickness), [1, 4]) : DEFAULTS.strike.thickness;
+    s.strike.fade = Number.isFinite(parseFloat(s.strike.fade)) ? clampTo(parseFloat(s.strike.fade), [20, 100]) : DEFAULTS.strike.fade;
     if (isObj(s.dialogue)) {
         s.dialogue.letterSpacing = num(s.dialogue.letterSpacing, TEXT_LIMIT.letterSpacing);
         s.dialogue.weight = num(s.dialogue.weight, TEXT_LIMIT.weight) ?? DEFAULTS.dialogue.weight;

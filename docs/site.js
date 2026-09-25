@@ -5,9 +5,11 @@ const topics = [
   "id": "new498",
   "label": "새 기능",
   "title": "그림도 번역도, 내 방식으로",
-  "sub": "전개 지시부터 그림 관리와 번역까지 실제 사용 흐름을 살펴보세요. 전개 지시는 5.2.1, 에셋은 5.2.0, 번역·한글화 새 기능은 5.0.0, 기존 LLM 위치·탭과 메뉴 순서는 4.9.8 촬영본이에요.",
+  "sub": "메모부터 전개 지시 · 그림 관리 · 번역까지 실제 사용 흐름을 살펴보세요. 메모는 5.3.2, 전개 지시는 5.2.1, 에셋은 5.2.0, 번역·한글화 새 기능은 5.0.0, 기존 LLM 위치·탭과 메뉴 순서는 4.9.8 촬영본이에요.",
   "tall": true,
   "cards": [
+    ["532-notes-write.mp4", "메모 · 적고 체크하고 색 입히기", "입력창 위 ☰ 로 메모 목록을 열어요. 체크박스는 눌러서 체크하고, 목록 줄에서 엔터를 누르면 다음 줄이 이어져요. 메모지 색 · 글자색은 테마 팔레트 색이나 내 색으로 골라요.", "532-notes-write.jpg"],
+    ["532-notes-arrange.mp4", "메모 · 꾹 눌러 옮기고 찾기", "메모를 꾹 눌러 끌면 칸 자리가 바뀌어요. 정렬 · 찾기는 머리에서 바로 쓰고, 채팅 안에서 만든 메모는 그 채팅에서만 보여요. PC 에서는 목록 밖에 놓으면 스티커로 떠요.", "532-notes-arrange.jpg"],
     ["524-direction.mp4", "전개 지시 · 다음 장면을 깃펜에", "원하는 전개를 적고 켜면 대화 요청마다 지시가 들어가요. 끄면 내용은 남고 삽입만 멈춰요. 깃펜을 길게 누르면 창 없이 바로 켜고 꺼요. 켜짐은 깃펜의 빛으로 표시합니다.", "524-direction.jpg"],
     ["524-ade-presets.mp4", "캐릭터 에셋 · 그림 프리셋을 따로", "그림을 폴더별로 나누고 프리셋 전체를 켜거나 꺼요. 같은 파일 이름은 켜진 폴더 중 위쪽 것이 우선해요. 시연 그림은 테마 마스코트 에이드와 나이트예요.", "524-ade-presets.jpg"],
     ["524-ade-toggle.mp4", "캐릭터 에셋 · 쓸 그림만 골라요", "그림을 크게 보고 하나씩 껐다 켜요. 끈 그림은 파일을 지우지 않고 AI에게 알려 주는 목록에서 제외해요. 시연 그림은 테마 마스코트 에이드와 나이트예요.", "524-ade-toggle.jpg"],
@@ -655,7 +657,7 @@ lightbox.querySelector('.close').onclick=()=>lightbox.close();lightbox.onclick=e
  dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});
  dialog.addEventListener('close',()=>{video.pause();video.removeAttribute('src');delete video.dataset.modeBase;video.load();});}
 const SHOWN_NOTES=3;
-fetch('release-notes.json?v=531', {cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error('notes');return r.json();}).then(notes=>{$('#notes').replaceChildren();
+fetch('release-notes.json?v=532', {cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error('notes');return r.json();}).then(notes=>{$('#notes').replaceChildren();
   // one card per day, like the theme's own notice: a busy day reads as "v4.1.2 ~ v4.2.4 · 업데이트 13번"
   const days=[];for(const note of notes){const last=days.at(-1);if(last&&last.date===note.date)last.notes.push(note);else days.push({date:note.date,notes:[note]});}
   days.forEach((day,i)=>{const d=element('details','note');d.open=i===0;d.hidden=i>=SHOWN_NOTES;const s=element('summary'),first=day.notes.at(-1).version,latest=day.notes[0].version;

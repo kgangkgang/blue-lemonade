@@ -53,11 +53,16 @@ export function syncTypography(on) {
     // 생성 중에는 표시줄 뒤 빈 줄만 정리하고, 나머지 조판은 답이 끝나면 한 번에 처리한다.
     const flush=()=>{timer=0;if(document.body.dataset.generating==='true'){for(const root of dirty)if(root?.isConnected){normalizeTrackerSpacing(root);restoreDialogueTildes(root);}timer=setTimeout(flush,400);return;}for(const root of dirty)if(root?.isConnected)typesetRoot(root);dirty.clear();};
     observer=new MutationObserver(records=>{
+        const generating=document.body.dataset.generating==='true',now=new Set();
         for(const record of records){
             const element=record.target.nodeType===1?record.target:record.target.parentElement;
-            const mes=element?.closest('.mes');if(mes)dirty.add(mes);
+            const mes=element?.closest('.mes');if(mes){dirty.add(mes);if(generating)now.add(mes);}
             for(const node of record.addedNodes)if(node.nodeType===1)dirty.add(node.parentElement||node);
         }
+        // 5.3.2: 생성 중 표시줄 뒤 빈 줄은 그리기 전에(이 콜백은 화면을 그리기 전 마이크로태스크) 바로 지운다.
+        // 예전엔 120ms 뒤에 지워서, 글자 조각이 올 때마다 빈 줄이 생겼다 사라져 답이 위아래로 흔들렸다 (사용자 제보: 떡방아).
+        // 지우면서 생긴 기록은 버린다 (다시 이 콜백을 부르지 않게).
+        if(now.size){for(const mes of now)if(mes.isConnected)normalizeTrackerSpacing(mes);observer.takeRecords();}
         clearTimeout(timer);timer=setTimeout(flush,120);
     });
     observer.observe(chat,{childList:true,subtree:true,characterData:true});

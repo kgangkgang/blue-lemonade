@@ -119,6 +119,17 @@ body.salty .mes_text .bl-quote-lead,
 }
 
 /* 속마음 · 강조 · 기타 */
+/* 5.3.2 취소선: 글꼴에 따라 line-through 가 글자 아래에 그어져 거의 안 보였다(사용자 스크린샷) → 선을 배경으로 글자 가운데에 직접 긋는다.
+   색 · 굵기 · 흐리기는 글자 › 취소선. 흐리기는 text-fill 로만 옅게 해서 선(currentColor)은 그대로 진하다 */
+:is(body.salty #chat .mes .mes_text, .salty-sample) :is(del, s, strike) {
+  text-decoration: none;
+  font-style: var(--salty-strike-style, normal);
+  -webkit-text-fill-color: color-mix(in srgb, currentColor var(--salty-strike-fade, 55%), transparent);
+  background: linear-gradient(var(--salty-strike-color, currentColor), var(--salty-strike-color, currentColor)) 0 calc(50% + 0.06em) / 100% var(--salty-strike-thick, 2px) no-repeat;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  padding: 0 0.04em;
+}
 :is(body.salty #chat .mes .mes_text, .salty-sample) em {
   font-family: var(--salty-font-em, inherit); /* 속마음 칸이 '본문과 같게'면 둘레 글꼴 그대로 (대사 안이면 대사 글꼴) */
   font-style: var(--salty-em-style);
