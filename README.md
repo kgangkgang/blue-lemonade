@@ -1,13 +1,20 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.2.1.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.2.2.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.2.1 · 최신 업데이트</summary>
+<summary>5.2.2 · 최신 업데이트</summary>
+
+- 두 줄 넘게 이어지는 따옴표 대사에 색이 안 들어가던 문제를 고쳤어요. 실리태번이 한 줄 안의 따옴표만 대사로 잡아서 생기던 것이라, 줄을 넘어 닫히는 “ ” · " " · 「 」 대사를 테마가 찾아 색과 형광펜을 입혀요. 저장된 글은 그대로예요.
+
+</details>
+
+<details>
+<summary>5.2.1 · 속마음 기울임 기본값</summary>
 
 - 속마음 기울임은 직접 끄기 전엔 늘 켜져 있어요. '소설책' 스타일을 골라도 기울임을 끄지 않아요. 홈페이지 꾸미기 화면도 같은 기본값이에요.
 - 캐릭터 에셋 창 색은 5.1.9 때 모습으로 되돌렸어요.

@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.2.1";
+export const BUILD_VERSION = "5.2.2";
 export const FILE_HASHES = {
   "index.js": "12169:6abf0b36:2502931a",
-  "manifest.json": "365:e423db51:414ef557",
+  "manifest.json": "365:c537460c:cfe3ca81",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -176,6 +176,7 @@ export const FILE_HASHES = {
   "src/demskin.js": "2167:c0308caa:b58b2d08",
   "src/device-layouts.js": "2454:23885a09:84be226a",
   "src/diagnose.js": "4513:a62e174b:ce6de801",
+  "src/dialogue-span.js": "4704:1de3ca35:5c2c464a",
   "src/dialogue-tildes.js": "1375:4ae6b6f4:c812d7de",
   "src/draft.js": "4876:96701944:1ebeb7be",
   "src/features.js": "7255:d6e4fe00:8554d053",
@@ -200,7 +201,7 @@ export const FILE_HASHES = {
   "src/marquee.js": "4394:b21eba98:bf26831b",
   "src/menu-position.js": "3312:4d17612e:af7476d7",
   "src/mes-pins.js": "9110:58a88535:74b20064",
-  "src/notice-data.js": "107071:9a5a2cf4:ce1809f7",
+  "src/notice-data.js": "107454:84357029:b9afde0d",
   "src/notice.js": "4623:c387a90d:e051d1f2",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "930:4be2a1fd:48f02c7b",
@@ -248,7 +249,7 @@ export const FILE_HASHES = {
   "src/theme-update.js": "4737:41f75f4f:a8cb353c",
   "src/tone.js": "6264:fdd77fd3:430a20c6",
   "src/touch-sliders.js": "1802:90ccf7ef:7832805d",
-  "src/typography.js": "4161:c9ab3f40:85f75044",
+  "src/typography.js": "4390:c23b8f73:01b59232",
   "src/usage-mode.js": "274:97f75b3d:dfa5bb08",
   "src/vendor/gif-writer.js": "15523:55aa4c9a:308694e8",
   "src/vendor/image-q.js": "105671:f2e1c3b1:86833578",
@@ -263,5 +264,5 @@ export const FILE_HASHES = {
   "src/weather.js": "29151:893fa4f6:d26e0a3b",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "22770:07c345df:f825c7fc",
-  "style.css": "856856:ab699cb8:68a97693"
+  "style.css": "856856:400b9332:52dce32e"
 };

@@ -1,6 +1,7 @@
 // Presentation-only fixes. Saved message text and translator source hashes are untouched.
 import { normalizeTrackerSpacing } from './addons/bookmarks/tracker-spacing.js';
 import { restoreDialogueTildes, resetDialogueTildes } from './dialogue-tildes.js';
+import { wrapSpanningQuotes, resetSpanningQuotes } from './dialogue-span.js';
 let active=false, observer=null, timer=0;
 const originals=new Map(), dirty=new Set();
 export function typesetRoot(root) {
@@ -9,6 +10,7 @@ export function typesetRoot(root) {
     // Reuse the targeted cleanup; preserve line breaks inside actual prose.
     normalizeTrackerSpacing(root);
     restoreDialogueTildes(root);
+    wrapSpanningQuotes(root); // 5.2.2 줄을 넘는 따옴표 대사 — 실리태번은 한 줄 안에서만 <q> 로 감싼다
     for(const q of root.querySelectorAll('.mes_text q, .salty-sample q')) {
         if(q.closest('pre,code,details[class*="custom-dem-card"],.custom-dem-track'))continue;
         let previous=q.previousSibling;
@@ -42,7 +44,7 @@ export function syncTypography(on) {
                 value.lead?.remove();node.textContent=value.before;
             }else if(value.lead?.isConnected)value.lead.replaceWith(...value.lead.childNodes);
         }
-        resetDialogueTildes();
+        resetDialogueTildes();resetSpanningQuotes();
         originals.clear();document.querySelectorAll('.bl-line-dialogue').forEach(node=>node.classList.remove('bl-line-dialogue'));return;
     }
     typesetRoot(document);
