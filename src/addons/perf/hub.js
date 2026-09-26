@@ -8,7 +8,7 @@ import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
 import { getSettings, saveSettings } from '../../settings.js';
 
 export const SUITE_TITLE = '설정';
-export const SUITE_VERSION = '2.1.3';
+export const SUITE_VERSION = '2.1.4';
 const BUTTON_ID = 'pa-hub-open';
 const TAB_KEY = 'pa_hub_tab';
 

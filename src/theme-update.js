@@ -25,7 +25,7 @@ async function run(action){
         const host=await import('../../../../extensions.js');
         const installation=installationFrom(import.meta.url,host.extensionTypes);
         const data=await requestThemeUpdate(action,installation,{headers:SillyTavern.getContext().getRequestHeaders()});
-        if(action==='version'&&!data.remoteUrl){state.stage='zip';state.message='Git 저장소로 설치되지 않았어요. 아래 링크에서 ZIP을 받아 교체해 주세요.';}
+        if(action==='version'&&!data.remoteUrl){state.stage='zip';state.message='이 설치 폴더에서 Git 정보를 찾지 못했어요. 다른 기기와 폴더를 동기화하고 있다면 링크로 설치한 기기에서 업데이트해 주세요. 아니면 확장 관리에서 지운 뒤 GitHub 링크로 다시 설치하거나 ZIP으로 덮어써 주세요.';} // 5.4.0: 링크로 설치했는데 ZIP 만 권해 헷갈렸다 — 제보자는 Syncthing 으로 폰에 동기화한 폴더라 .git 이 없었다
         else if(action==='version'){state.stage=data.isUpToDate?'current':'available';state.message=data.isUpToDate?'설치된 파일이 최신이에요.':'새 업데이트가 있어요. 업데이트 버튼으로 설치할 수 있어요.';}
         else{state.stage='done';state.message='확인·업데이트가 끝났어요. 새로고침하면 설치된 파일이 적용돼요.';}
     }catch(error){state.stage='error';state.message=error.name==='TimeoutError'?'서버 응답을 기다리다 시간이 초과됐어요. 업데이트 중이었다면 서버 작업이 계속될 수 있으니 잠시 뒤 다시 확인해 주세요.':error.message;}

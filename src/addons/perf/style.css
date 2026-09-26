@@ -135,7 +135,7 @@
 
 /* ===== 요청 로그 (parts/request-log.css) ===== */
 /* 요청 로그 (Request Log) — 설정 서랍 · 로그·집계 창 */
-:root { --rl-css-version: "1.2.6"; }
+:root { --rl-css-version: "1.2.7"; }
 
 .rl-settings, .rl-root {
     --rl-text: var(--SmartThemeBodyColor, #e8e8ec);

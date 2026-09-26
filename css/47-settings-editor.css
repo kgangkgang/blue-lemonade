@@ -97,5 +97,9 @@ html body .bl-editor .bl-setting-reset[hidden] { display:none !important; }
   .bl-editor .bl-editor-actions { gap:2px; }
   html body .bl-editor .bl-settings-toprow .bl-editor-choose { gap:6px; padding-inline:6px 2px; }
   html body .bl-editor .bl-settings-toprow [data-compare] { position:relative; width:32px; padding:0; font-size:0; }
+  /* 5.4.0: 실제 Pretendard 로 390 폰에서 재니 제목 칸 100px < "데우스 엑스 마키나" 103px 로 아직 잘렸다 (닫기가 56 의 폰 44px 규칙으로 44 폭) → 오른쪽 아이콘 6개를 모두 32 폭(높이 44 그대로)으로 맞추고, 그래도 넓은 글꼴이면 말줄임 대신 두 줄까지 (윗줄 높이 44 유지) */
+  html body .salty-panel.bl-editor .bl-settings-toprow .bl-editor-actions :is(.bl-settings-expand,.bl-settings-close) { width:32px; min-width:0; }
+  html body .bl-editor .bl-settings-toprow .bl-editor-choose { padding-block:4px; }
+  .bl-editor .bl-settings-toprow .bl-editor-choose span { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; white-space:normal; word-break:keep-all; overflow-wrap:anywhere; line-height:1.2; }
   html body .bl-editor .bl-settings-toprow [data-compare]::before { content:''; position:absolute; inset:0; margin:auto; width:16px; height:16px; background:currentColor; -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='14' height='12' rx='2'/%3E%3Cpath d='M10 2v16'/%3E%3C/svg%3E") center / contain no-repeat; mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='14' height='12' rx='2'/%3E%3Cpath d='M10 2v16'/%3E%3C/svg%3E") center / contain no-repeat; }
 }

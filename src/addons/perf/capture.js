@@ -231,6 +231,7 @@ export function absorbChunk(json, acc) {
     if (json.type === 'message_delta') {
         if (json.usage) acc.usage = { ...(acc.usage ?? {}), completion: numberOr(json.usage.output_tokens) };
         if (json.delta?.stop_reason) acc.finish = String(json.delta.stop_reason);
+        if (json.delta?.stop_details) acc.stopDetail = String(json.delta.stop_details.category ?? json.delta.stop_details.explanation ?? ''); // 1.2.7: 거절(refusal) 분류
     }
     if (json.type === 'message' && Array.isArray(json.content)) {
         for (const block of json.content) {
@@ -238,6 +239,7 @@ export function absorbChunk(json, acc) {
             if (block?.type === 'thinking' && typeof block.thinking === 'string') acc.reasoning += block.thinking;
         }
         if (json.stop_reason) acc.finish = String(json.stop_reason);
+        if (json.stop_details) acc.stopDetail = String(json.stop_details.category ?? json.stop_details.explanation ?? '');
         if (json.usage) acc.usage = { prompt: numberOr(json.usage.input_tokens)+numberOr(json.usage.cache_read_input_tokens)+numberOr(json.usage.cache_creation_input_tokens), completion: numberOr(json.usage.output_tokens), cached: numberOr(json.usage.cache_read_input_tokens) };
     }
 
@@ -370,6 +372,8 @@ async function finishEntry(context, response, acc, marks, failure) {
         estimated = true;
     }
 
+    // 1.2.7: Claude 는 안전 분류기가 거절하면 HTTP 200 + 빈 글 + stop_reason 'refusal' 을 준다 — 실리태번은 빈 답으로만 보여 원인을 몰랐다
+    if (acc.finish === 'refusal' && !acc.error && !acc.text) acc.error = `모델이 거절했어요${acc.stopDetail ? ` (${acc.stopDetail})` : ''}`;
     const status = response?.status ?? 0;
     const ok = !failure && !!response?.ok && !acc.error;
     const error = failure ? (context.aborted ? '중단됨' : String(failure.message ?? failure)) : (acc.error ?? (response && !response.ok ? `HTTP ${status}` : null));

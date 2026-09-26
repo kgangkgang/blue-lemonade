@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.3.9.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.4.0.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.3.9 · 최신 업데이트</summary>
+<summary>5.4.0 · 최신 업데이트</summary>
+
+- 요청 로그: Claude 가 요청을 거절해서 빈 답이 온 경우, '성공 · 빈 응답' 대신 '모델이 거절했어요 (거절 분류)' 로 보여요. 스트리밍을 켜 둔 요청에서 보여요.
+- 폰에서 설정 제목이 실제 글꼴로도 잘리지 않게 했어요. 윗줄 아이콘을 모두 같은 폭으로 맞추고, 그래도 길면 두 줄로 보여요.
+- 테마 업데이트 확인에서 Git 정보를 못 찾으면 ZIP 만 권하던 안내를 고쳤어요. 폴더를 다른 기기와 동기화하는 경우엔 링크로 설치한 기기에서 업데이트하라고, 아니면 GitHub 링크로 다시 설치하는 방법을 알려 줘요.
+
+</details>
+
+<details>
+<summary>5.3.9 · 단어 치환 바꾸기 단추</summary>
 
 - 단어 치환: 규칙 가운데 → 를 누르면 찾을 말과 바꿀 말이 서로 바뀌어요. 반대로 적었을 때 지우고 다시 쓰지 않아도 돼요.
 - LLM 번역: 5.3.7 에서 원문에 '무리 · hard' 같은 흔한 말이 있으면 진짜 거절 문구를 번역으로 받아들이던 것을 고쳤어요.

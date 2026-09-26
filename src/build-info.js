@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.3.9";
+export const BUILD_VERSION = "5.4.0";
 export const FILE_HASHES = {
   "index.js": "13064:44899f26:6822826e",
-  "manifest.json": "365:062dbbee:a1b1a0ab",
+  "manifest.json": "365:cc0153b0:cc4049d9",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -65,9 +65,9 @@ export const FILE_HASHES = {
   "src/addons/order/style.css": "4452:85f2c1cc:f24f08aa",
   "src/addons/perf/attribution.js": "4254:08ed8b91:cd95e81b",
   "src/addons/perf/budget.js": "25202:fb289dd1:168bf855",
-  "src/addons/perf/capture.js": "28001:e3a5f856:0af08574",
+  "src/addons/perf/capture.js": "28624:cde818e8:2b39e4da",
   "src/addons/perf/help.js": "1775:e6de0a66:7165a9f7",
-  "src/addons/perf/hub.js": "8890:7c24069d:a53a470d",
+  "src/addons/perf/hub.js": "8890:7d5322d8:ba4d4bd8",
   "src/addons/perf/loadtimer.js": "20065:666f497e:3c9d75fb",
   "src/addons/perf/menu.js": "1174:ba0a6bf3:07b60639",
   "src/addons/perf/morph.js": "14819:6b4ae09b:e3bacbe5",
@@ -81,9 +81,9 @@ export const FILE_HASHES = {
   "src/addons/perf/savededupe.js": "35534:b0c72d04:c757a58d",
   "src/addons/perf/savesend.js": "13482:1ece8843:3be88d12",
   "src/addons/perf/start.js": "1008:4d5ee41e:764be632",
-  "src/addons/perf/state.js": "8400:cc9b427a:e0a06165",
+  "src/addons/perf/state.js": "8400:7d9def3b:9736f800",
   "src/addons/perf/store.js": "12582:2fe8ccb9:8e00d569",
-  "src/addons/perf/style.css": "27101:204b0a31:1aaca1a6",
+  "src/addons/perf/style.css": "27101:1212337e:a2fc46f5",
   "src/addons/perf/switchcode.js": "4599:da84fc54:7b0fcddf",
   "src/addons/perf/switchflush.js": "16169:df3206f6:07f6ae5c",
   "src/addons/perf/switchguard.js": "6421:fabb31c5:9e1d4436",
@@ -207,7 +207,7 @@ export const FILE_HASHES = {
   "src/marquee.js": "4394:b21eba98:bf26831b",
   "src/menu-position.js": "3312:4d17612e:af7476d7",
   "src/mes-pins.js": "9110:58a88535:74b20064",
-  "src/notice-data.js": "125700:0390852b:e4955898",
+  "src/notice-data.js": "126426:e8d550b4:076590d2",
   "src/notice.js": "4623:c387a90d:e051d1f2",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "1144:1da72451:b2e66e80",
@@ -254,7 +254,7 @@ export const FILE_HASHES = {
   "src/streamfade.js": "14136:0e2127b6:06593cf1",
   "src/sttheme.js": "7403:8c6d1799:5e2a866d",
   "src/styles.js": "13753:511acb82:07bb9f0f",
-  "src/theme-update.js": "4737:41f75f4f:a8cb353c",
+  "src/theme-update.js": "5069:83714290:f7f10db7",
   "src/tone.js": "6264:fdd77fd3:430a20c6",
   "src/touch-sliders.js": "1802:90ccf7ef:7832805d",
   "src/typography.js": "9835:d0013328:b6f54586",
@@ -272,5 +272,5 @@ export const FILE_HASHES = {
   "src/weather.js": "29151:893fa4f6:d26e0a3b",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "23565:7cbb2053:90822ae4",
-  "style.css": "863764:b2f40223:dea96ef5"
+  "style.css": "864291:41d03edf:42469ef7"
 };
