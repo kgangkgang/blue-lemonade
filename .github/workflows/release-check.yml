@@ -1,9 +1,9 @@
 name: Release consistency
 on:
   push:
-    paths: ['src/**', 'css/**', 'index.js', 'style.css', 'manifest.json', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'docs/downloads/**', 'tools/**', '.github/workflows/release-check.yml']
+    paths: ['src/**', 'css/**', 'index.js', 'style.css', 'manifest.json', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'tools/**', '.github/workflows/release-check.yml']
   pull_request:
-    paths: ['src/**', 'css/**', 'index.js', 'style.css', 'manifest.json', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'docs/downloads/**', 'tools/**', '.github/workflows/release-check.yml']
+    paths: ['src/**', 'css/**', 'index.js', 'style.css', 'manifest.json', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'tools/**', '.github/workflows/release-check.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -12,6 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # The website and the downloadable ZIP live on the gh-pages branch; tests and the ZIP check read them from docs/
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: docs
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'

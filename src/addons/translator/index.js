@@ -1,7 +1,7 @@
 // Modified 2026-09-24: Blue Lemonade bundled adapter; original settings and translation DB retained.
 import { createGuards, watchGuard } from './translation-guard.js';
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
-import { segmentParagraphs, translateSegments, clearSegmentCache, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER } from './translation-segments.js';
+import { segmentParagraphs, translateSegments, clearSegmentCache, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho } from './translation-segments.js';
 import { syncSelectionRetranslate } from './selection/index.js';
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
@@ -1832,7 +1832,7 @@ async function translate(text, options = {}) {
             const failReasons = new Map(); // 5.2.9: 문단 본문 → 실패 원인
             const noCache = new Set(); // 5.3.4: 붙이긴 하되 캐시에 넣지 않을 문단 (1부터 다시 매긴 답 — 한 칸 밀린 답과 구별이 안 된다)
             const result = await translateSegments({ parts: paragraphParts,
-                signature: () => setupDigest, check: watcher.check, progress, blockedMarker: body => failMarkOf(failReasons.get(body)),
+                signature: () => setupDigest, check: watcher.check, progress, blockedMarker: (body, error) => failMarkOf(failReasons.get(body) ?? error), // 5.4.1: 원문 되풀이 = 형식 오류
                 cacheable: (body, out) => {
                     const marks = value => JSON.stringify(value.match(/\[\[__VAR_\d+__\]\]/g) || []);
                     // 5.3.4: 묶음 중 한 문단만 거절문으로 온 경우도 30일 캐시에 넣지 않는다
@@ -5201,6 +5201,8 @@ async function readCachedTranslation(originalText) {
     catch (error) { console.warn('[LLM Translator] 번역 캐시 읽기 실패 — 새로 번역해요:', error?.message || error); return null; }
 }
 async function storeTranslationQuietly(originalText, translation) {
+    // 5.4.1: 원문을 베껴 품은 번역(원문+화살표+번역 · ⟦n] 표시)은 캐시에 넣지 않는다 — 다시 번역해도 캐시에서 같은 글이 나왔다
+    if (hasSourceEcho(originalText, translation)) { console.warn('[LLM Translator] 번역문에 원문이 섞여 있어 캐시에 넣지 않았어요'); return; }
     try { await addTranslationToDB(originalText, translation); }
     catch (error) { console.warn('[LLM Translator] 번역 캐시 저장 실패 — 번역문은 붙였어요:', error?.message || error); }
 }
@@ -5218,7 +5220,8 @@ async function getTranslationFromDB(originalText) {
             // [1.9.2] 같은 원문 줄이 여럿이면(예전 버전의 중복) 가장 새 줄부터 거절문이 아닌 것을 쓴다 — 가장 오래된 줄이 거절문이면
             //         뒤에 넣은 좋은 번역이 있어도 '없음' 이었다
             const records = event.target.result || [];
-            const record = records.reverse().find(item => !looksLikeRefusal(originalText, item.translation));
+            // 5.4.1: 원문 되풀이가 섞인 번역(원문+화살표+번역 · ⟦n] 표시)도 없는 셈 친다 — 다시 번역하면 새로 받는다
+            const record = records.reverse().find(item => !looksLikeRefusal(originalText, item.translation) && !hasSourceEcho(originalText, item.translation));
             resolve(record ? record.translation : null);
         };
         request.onerror = (e) => {

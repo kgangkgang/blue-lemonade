@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.4.0.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.4.1.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.4.0 · 최신 업데이트</summary>
+<summary>5.4.1 · 최신 업데이트</summary>
+
+- LLM 번역: 모델이 번호표를 망가뜨리고 영어 원문을 따라 쓴 뒤 '->' 다음에 번역을 붙여 보내면, 원문까지 그대로 화면에 붙고 번역 기록에도 남던 것을 고쳤어요. 번역 부분만 남기고, 이미 기록에 남은 잘못된 문단은 다시 번역해요.
+- GitHub 링크로 설치할 때 받는 양이 크게 줄었어요. 홈페이지 영상 · 그림을 저장소의 별도 브랜치로 옮겨서, 테마 코드만 받아요. ZIP 다운로드와 홈페이지 주소는 그대로예요.
+
+</details>
+
+<details>
+<summary>5.4.0 · 거절 표시 · 폰 제목</summary>
 
 - 요청 로그: Claude 가 요청을 거절해서 빈 답이 온 경우, '성공 · 빈 응답' 대신 '모델이 거절했어요 (거절 분류)' 로 보여요. 스트리밍을 켜 둔 요청에서 보여요.
 - 폰에서 설정 제목이 실제 글꼴로도 잘리지 않게 했어요. 윗줄 아이콘을 모두 같은 폭으로 맞추고, 그래도 길면 두 줄로 보여요.

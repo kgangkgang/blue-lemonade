@@ -6,7 +6,8 @@ __pycache__/
 *.pyc
 
 # Only Blue Lemonade is distributed from this repository.
-/docs/downloads/*.json
+# The website (docs/) is the gh-pages branch, checked out here as a separate worktree
+/docs/
 
 # 개발 원본 · 개인 메모는 공개 저장소로 나가지 않는다 (4.5.6).
 # 같은 내용이 .git/info/exclude 에도 있지만 그 파일은 clone · 백업에 따라오지 않는다 —
