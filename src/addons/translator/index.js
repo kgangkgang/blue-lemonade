@@ -1,7 +1,7 @@
 // Modified 2026-09-24: Blue Lemonade bundled adapter; original settings and translation DB retained.
 import { createGuards, watchGuard } from './translation-guard.js';
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
-import { segmentParagraphs, translateSegments, clearSegmentCache, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho } from './translation-segments.js';
+import { segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho } from './translation-segments.js';
 import { syncSelectionRetranslate } from './selection/index.js';
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
@@ -1781,6 +1781,12 @@ async function translate(text, options = {}) {
             : [chatCtx?.groupId ?? null, chatCtx?.characters?.[chatCtx?.characterId]?.avatar ?? null, extensionSettings.glossary_entries ?? null]]));
         const key = chunks.length > 1 ? await checkpointKey(JSON.stringify([setupDigest, text])) : '';
         watcher.check();
+        // 5.4.2: 번역문 삭제 — 이 글의 문단 캐시 · 이어하기 줄만 지우고 요청은 하지 않는다 (키는 번역할 때와 같은 재료로)
+        if (options.forget) {
+            if (paragraphParts) await forgetSegments(paragraphParts, () => setupDigest);
+            if (key) await clearCheckpoints(key);
+            return '';
+        }
 
         // ==================================================================================
         // 4. API 호출 및 결과 처리 (신규 기능 포함)
@@ -2418,6 +2424,8 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                 }
                 if (report.partial) toastr.warning(`문단 ${report.blockedChunks}/${report.chunks}덩이는 차단돼 원문으로 남겼어요. 다시 번역하면 다시 시도해요.`, '번역', { timeOut: 8000 });
                 else await storeTranslationQuietly(originalText, translation);
+                // 5.4.2: 문단이 모두 캐시에서 왔으면(요청 0) 알린다 — 전엔 '번역을 시작합니다' 뒤 같은 글만 조용히 다시 붙었다
+                if (source !== 'auto' && source !== 'batch' && !report.partial && report.reusedParagraphs > 0 && !report.translatedParagraphs) toastr.info('IndexedDB에서 번역문을 가져왔습니다.');
             }
 
             // [1.9.2] 번역하는 동안 채팅을 바꾸거나 · 스와이프 · 수정 · 앞 메시지 삭제로 그 자리 글이 바뀌었으면 붙이지 않는다 (캐시에는 남음)
@@ -3029,7 +3037,9 @@ async function editTranslation(messageId) {
         // 삭제 로직
         if (newText.trim() === "") {
             try {
-                await deleteTranslationByOriginalText(originalTextForDbKey);
+                await forgetParagraphCache(originalTextForDbKey); // 5.4.2
+                // 5.4.2: 이 기기 DB 에 줄이 없어도(캐시에 안 넣은 번역 · 다른 기기) 붙은 번역문은 지운다 — 휴지통과 같게
+                await deleteTranslationByOriginalText(originalTextForDbKey).catch(error => { if (!String(error?.message).includes('no matching data')) throw error; });
                 delete message.extra.display_text; // 명시적 삭제
                 delete message.extra.original_translation_backup; // [1.9.2] 치워 둔 번역문도 함께
                 await refreshMessageBlock(messageId, message);
@@ -5200,6 +5210,12 @@ async function readCachedTranslation(originalText) {
     try { return await getTranslationFromDB(originalText); }
     catch (error) { console.warn('[LLM Translator] 번역 캐시 읽기 실패 — 새로 번역해요:', error?.message || error); return null; }
 }
+// 5.4.2: 사용자가 번역문을 지우면(휴지통 · 수정 창에서 비우기 · 삭제 명령) 그 글의 문단 캐시도 지운다 — 메시지 캐시만 지워서
+//        다시 번역하면 요청 없이 문단 캐시가 옛 번역을 그대로 돌려줬다 ('번역을 시작합니다' 만 뜨고 같은 글)
+async function forgetParagraphCache(originalText) {
+    try { await translate(originalText, { segmentCache: true, forget: true }); }
+    catch (error) { console.warn('[LLM Translator] 문단 캐시 지우기 실패:', error?.message || error); }
+}
 async function storeTranslationQuietly(originalText, translation) {
     // 5.4.1: 원문을 베껴 품은 번역(원문+화살표+번역 · ⟦n] 표시)은 캐시에 넣지 않는다 — 다시 번역해도 캐시에서 같은 글이 나왔다
     if (hasSourceEcho(originalText, translation)) { console.warn('[LLM Translator] 번역문에 원문이 섞여 있어 캐시에 넣지 않았어요'); return; }
@@ -5930,6 +5946,7 @@ async function deleteTranslationById(messageIdStr, swipeNumberStr) {
 
     // 4. DB에서 해당 번역 데이터 삭제 시도
     try {
+        await forgetParagraphCache(originalText); // 5.4.2
         try {
             await deleteTranslationByOriginalText(originalText); // 기존에 만든 DB 삭제 함수 사용
         } catch (error) {

@@ -65,6 +65,26 @@ export async function clearSegmentCache() {
     } catch { /* Memory-only environment. */ } finally { handle?.close(); }
 }
 
+const paragraphKey = (signature, body) => checkpointKey(JSON.stringify(['paragraph-v2', signature, body]));
+const skipBody = body => !body.trim() || /^(\s*\[\[__VAR_\d+__\]\]\s*)+$/.test(body);
+/** 5.4.2: 한 메시지의 문단 캐시 줄을 지운다 (사용자가 번역문을 지웠을 때) — 남아 있으면 다시 번역해도 요청 없이 옛 번역이 그대로 나왔다 */
+export async function forgetSegments(parts, signature) {
+    const keys = [];
+    for (let i = 0; i < parts.length; i += 2) if (!skipBody(parts[i])) keys.push(await paragraphKey(signature(parts[i]), parts[i]));
+    if (!keys.length) return 0;
+    for (const key of keys) memory.delete(key);
+    let handle;
+    try {
+        handle = await db();
+        await new Promise((resolve, reject) => {
+            const tx = handle.transaction('parts', 'readwrite'), store = tx.objectStore('parts');
+            for (const key of keys) store.delete(key);
+            tx.oncomplete = resolve; tx.onerror = tx.onabort = reject;
+        });
+    } catch { /* Memory-only environment. */ } finally { handle?.close(); }
+    return keys.length;
+}
+
 export function segmentParagraphs(text) {
     // Never split structured HTML or code across separate model requests.
     if (/```|~~~|<\/?(?:div|details|table|pre|script|style|ul|ol|blockquote)\b/i.test(text)) return null;
@@ -208,6 +228,9 @@ const scriptOf = key => {
     for (const [name, pattern] of SCRIPTS) { const n = (key.match(pattern) || []).length; if (n > most) { best = name; most = n; } }
     return best;
 };
+/** 5.4.2: 태그 · 자리표시 뼈대. 원문 문단을 그대로 둔 번역(맨 위 <tracker> 줄) 뒤에 태그가 다른 번역 문단이 오면 되풀이가 아니다 —
+ *  5.4.1 은 다른 문단이 빈 줄로 갈라져 덩이가 하나 늘면 <tracker> 줄을 되풀이로 보고 걷었고, 메시지 캐시에도 넣지 않았다 */
+const skeletonOf = text => (String(text ?? '').match(/<\/?[a-z][\w-]*|\[\[__VAR_\d+__\]\]/gi) || []).join(' ').toLowerCase();
 /** 덩이 앞머리가 원문 문단 하나를 통째로 베낀 것이면(뒤에 화살표, 또는 줄바꿈 뒤 다른 글자의 번역) 번역만 돌려준다.
  *  원문+화살표뿐이면 '' (그 덩이를 뺀다), 해당 없으면 null. keys: 원문 문단 키 모음 */
 function cutEcho(block, keys, longest) {
@@ -218,7 +241,7 @@ function cutEcho(block, keys, longest) {
         const tail = block.slice(cut.index), arrow = ECHO_ARROW_HEAD.test(tail);
         const rest = tail.replace(ECHO_HEAD, ''), restKey = echoKey(rest);
         if (!restKey) return arrow && !rest.trim() ? '' : null; // 원문+화살표뿐인 덩이만 뺀다 (화살표 뒤 태그만 남는 "A → B → `<prose>`" 는 원문 그대로)
-        if (arrow || (head.length >= 20 && !keys.has(restKey) && scriptOf(restKey) !== scriptOf(head))) return rest;
+        if (arrow || (head.length >= 20 && !keys.has(restKey) && scriptOf(restKey) !== scriptOf(head) && skeletonOf(block.slice(0, cut.index)) === skeletonOf(rest))) return rest;
         return null;
     }
     return null;
@@ -251,7 +274,8 @@ export function removeSourceEcho(source, output) {
     let extra = content.length - paras.length;
     for (let n = 0; extra > 0 && n < content.length - 1; n++) {
         const key = echoKey(blocks[content[n]]), next = echoKey(blocks[content[n + 1]]);
-        if (key.length >= 20 && keys.has(key) && next && !keys.has(next) && scriptOf(next) !== scriptOf(key)) { blocks[content[n]] = ''; extra--; changed = true; }
+        if (key.length >= 20 && keys.has(key) && next && !keys.has(next) && scriptOf(next) !== scriptOf(key) &&
+            skeletonOf(blocks[content[n]]) === skeletonOf(blocks[content[n + 1]])) { blocks[content[n]] = ''; extra--; changed = true; }
     }
     if (!changed) return out;
     let joined = '';
@@ -340,8 +364,8 @@ export async function translateSegments({ parts, signature, request, check = () 
     for (let i = 0; i < parts.length; i += 2) {
         check();
         const body = parts[i];
-        if (!body.trim() || /^(\s*\[\[__VAR_\d+__\]\]\s*)+$/.test(body)) continue;
-        keyed.push([i, body, await checkpointKey(JSON.stringify(['paragraph-v2', signature(body), body]))]);
+        if (skipBody(body)) continue;
+        keyed.push([i, body, await paragraphKey(signature(body), body)]);
     }
     const saved = await readMany([...new Set(keyed.map(row => row[2]))]);
     check();

@@ -1,13 +1,20 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.4.1.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.4.2.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.4.1 · 최신 업데이트</summary>
+<summary>5.4.2 · 최신 업데이트</summary>
+
+- LLM 번역: 번역문을 휴지통으로 지우고 다시 번역해도 예전 번역이 그대로 돌아오고, '번역을 시작합니다' 만 뜨던 것을 고쳤어요. 지우면 그 메시지의 문단 기록까지 같이 지워서 새로 번역해요. 5.4.1 에서 태그 줄(트래커)을 원문 따라 쓰기로 잘못 보던 것도 고쳤어요.
+
+</details>
+
+<details>
+<summary>5.4.1 · 번역 원문 섞임 · 가벼운 설치</summary>
 
 - LLM 번역: 모델이 번호표를 망가뜨리고 영어 원문을 따라 쓴 뒤 '->' 다음에 번역을 붙여 보내면, 원문까지 그대로 화면에 붙고 번역 기록에도 남던 것을 고쳤어요. 번역 부분만 남기고, 이미 기록에 남은 잘못된 문단은 다시 번역해요.
 - GitHub 링크로 설치할 때 받는 양이 크게 줄었어요. 홈페이지 영상 · 그림을 저장소의 별도 브랜치로 옮겨서, 테마 코드만 받아요. ZIP 다운로드와 홈페이지 주소는 그대로예요.
