@@ -15,3 +15,5 @@ __pycache__/
 /.handoff/
 /AGENTS.md
 /CLAUDE.md
+# 5.4.1: 홈페이지는 site 브랜치 — 로컬 · CI 모두 여기에 받아 둔다 (git worktree add docs site)
+/docs/

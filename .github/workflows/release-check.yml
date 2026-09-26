@@ -1,9 +1,9 @@
 name: Release consistency
 on:
   push:
-    paths: ['src/**', 'css/**', 'index.js', 'style.css', 'manifest.json', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'docs/downloads/**', 'tools/**', '.github/workflows/release-check.yml']
+    paths: ['src/**', 'css/**', 'index.js', 'style.css', 'manifest.json', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'tools/**', '.github/workflows/release-check.yml']
   pull_request:
-    paths: ['src/**', 'css/**', 'index.js', 'style.css', 'manifest.json', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'docs/downloads/**', 'tools/**', '.github/workflows/release-check.yml']
+    paths: ['src/**', 'css/**', 'index.js', 'style.css', 'manifest.json', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'tools/**', '.github/workflows/release-check.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -12,6 +12,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Put the website (site branch) at docs/
+        # 5.4.1: 홈페이지 · 공개 ZIP 은 site 브랜치에 있다 (main 을 받는 설치에 홈페이지가 딸려 가지 않게).
+        # 테스트(설정 파일 받기 · 팔레트 · 미리보기)와 ZIP 비교가 docs/ 경로를 그대로 쓰도록 여기에 풀어 둔다.
+        run: |
+          git fetch --depth 1 origin site
+          mkdir docs
+          git archive FETCH_HEAD | tar -x -C docs
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
