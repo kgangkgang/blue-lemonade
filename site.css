@@ -1,9 +1,9 @@
 /* Blue Lemonade site — tokens follow the theme's own 블루 레몬에이드 (white) / 블루 아워 (night) palettes */
 :root{
   --bg:#F9FCFF;--surface:#FDFEFF;--tint:#F3F7FC;--tint-2:#E5F1FF;
-  --ink:#1C293B;--text:#28384D;--muted:#5A6F87;--faint:#8596AD;
+  --ink:#1C293B;--text:#28384D;--muted:#566B83;--faint:#8596AD;
   --line:#DBE2EB;--line-strong:#DBE2EB;--shade:rgba(31,50,71,.045);--shade-2:rgba(31,50,71,.075);--shade-3:rgba(31,50,71,.13);
-  --blue:#247CDD;--blue-strong:#2264A5;--on-blue:#FDFEFF;
+  --blue:#2477D3;--blue-strong:#2264A5;--on-blue:#FDFEFF;
   --lemon:#FFE873;--lemon-deep:#FFE23C;--marker:rgba(20,165,255,.24);--marker-strong:rgba(20,150,255,.3);
   --band:#141F2E;--band-text:#ABBACE;
   --shadow-sm:0 1px 2px rgba(17,38,60,.05),0 4px 14px -6px rgba(17,38,60,.12);

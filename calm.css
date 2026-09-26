@@ -164,7 +164,7 @@
 }
 
 /* The homepage uses the theme's light palette; dark remains inside theme previews. */
-:root[data-theme=light]{--bg:#F9FCFF;--surface:#FDFEFF;--tint:#E5F1FF;--tint-2:#E5F1FF;--ink:#141E2A;--text:#222D3A;--muted:#5A6F87;--faint:#75889F;--line:rgba(31,50,71,.07);--line-strong:#A4C7ED;--blue:#247CDD;--blue-strong:#2264A5;--on-blue:#FDFEFF;--lemon:#FFE873;--lemon-deep:#FFE23C;--marker:rgba(62,177,255,.27);--marker-strong:rgba(62,177,255,.27);--header-bg:rgba(249,252,255,.94);--band:#141F2E;--band-text:#DBE2EB;color-scheme:light}
+:root[data-theme=light]{--bg:#F9FCFF;--surface:#FDFEFF;--tint:#E5F1FF;--tint-2:#E5F1FF;--ink:#141E2A;--text:#222D3A;--muted:#566B83;--faint:#62758B;--line:rgba(31,50,71,.07);--line-strong:#A4C7ED;--blue:#2477D3;--blue-strong:#2264A5;--on-blue:#FDFEFF;--lemon:#FFE873;--lemon-deep:#FFE23C;--marker:rgba(62,177,255,.27);--marker-strong:rgba(62,177,255,.27);--header-bg:rgba(249,252,255,.94);--band:#141F2E;--band-text:#DBE2EB;color-scheme:light}
 .lemon{display:inline-flex;align-items:center;justify-content:center;background:none;box-shadow:none;border-radius:0;color:var(--lemon-deep)}
 .lemon svg{display:block;width:100%;height:100%}
 .top .lemon{animation:none}
