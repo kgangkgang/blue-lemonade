@@ -44,3 +44,20 @@ GitHub Actions는 커밋된 런타임과 현재 공개 ZIP을 비교하고 설�
 ## 설정 갱신 검사
 
 같은 서버에서 tests/settings-refresh.html?dev를 엽니다. 단순 수치 되돌리기에서 입력칸과 미리보기 DOM 유지, 두 패널 동기화, 자간 단위 변환, nullable 설정과 밝기 전환의 전체 갱신, 팔레트 농도 카드, 1,000개 합성 메시지의 되돌리기 시간을 확인합니다. 로딩 중인 에셋을 100번 검사할 때 대기 콜백이 한 개이며 로드 후 정상 분류되는지도 확인합니다. 알림 검사는 최신 이력 한 개로 교체하되 다른 확장 알림은 보존하는지 확인합니다.
+
+## 홈페이지 · 공개 ZIP (5.4.1~)
+
+홈페이지와 공개 ZIP 은 `gh-pages` 브랜치의 뿌리에 있고, GitHub Pages 가 그 브랜치를 배포합니다. 테마를 설치할 때 받는 `main` 에는 홈페이지 파일이 없습니다(설치 약 20MB).
+`main` 의 `.gitignore` 가 `/docs/` 를 빼 두므로, 저장소 루트에 한 번만 받아 두면 위 명령의 `docs/…` 경로를 그대로 씁니다.
+
+~~~powershell
+git worktree add docs gh-pages
+~~~
+
+릴리스 순서:
+
+1. `docs/`(gh-pages)에서 ZIP · 버전 표시 · release-notes.json 을 커밋하고 **gh-pages 를 먼저 push** 합니다.
+2. 그다음 `main` 을 push 합니다. main 의 CI 는 gh-pages 를 `docs/` 에 받아 테스트하고 공개 ZIP 을 한 바이트씩 비교하므로, 순서가 바뀌면 새 버전 ZIP 을 찾지 못해 실패합니다.
+
+사이트만 고치는 PR 은 `gh-pages` 를 대상으로 엽니다.
+
