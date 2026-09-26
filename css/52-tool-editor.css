@@ -171,3 +171,6 @@ dialog.popup.bl-roomy-dialog .popup-content { margin-left:0 !important; margin-r
 .bl-addon-group-tool { padding:18px; border:0; border-radius:20px; background:var(--salty-fill-surface,var(--salty-surface)); box-shadow:var(--bl-e1); }
 .bl-addon-group-tool .bl-addon-header { border:0; margin-bottom:10px; }
 .bl-addon-group-tool .salty-note { margin:6px 0 14px; }
+
+/* 5.3.9: 치환 규칙 가운데 → 는 누르면 찾을 말 ↔ 바꿀 말을 바꾸는 단추 — 모양은 예전 글자 화살표 그대로 (칸 폭 · 상자 없음) */
+.bl-word-rule button.bl-rule-swap, .bl-extension-page .bl-word-rule button.bl-rule-swap { min-width:0; min-height:0; width:100%; padding:0; border:0; background:none; color:inherit; font:inherit; align-self:stretch; cursor:pointer; }

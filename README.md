@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.3.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](docs/downloads/blue-lemonade-5.3.9.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.3.8 · 최신 업데이트</summary>
+<summary>5.3.9 · 최신 업데이트</summary>
+
+- 단어 치환: 규칙 가운데 → 를 누르면 찾을 말과 바꿀 말이 서로 바뀌어요. 반대로 적었을 때 지우고 다시 쓰지 않아도 돼요.
+- LLM 번역: 5.3.7 에서 원문에 '무리 · hard' 같은 흔한 말이 있으면 진짜 거절 문구를 번역으로 받아들이던 것을 고쳤어요.
+- 폰에서 설정 제목이 잘리던 것을 더 줄였어요. 좁은 화면에서는 '비교' 단추도 아이콘만 보여요.
+
+</details>
+
+<details>
+<summary>5.3.8 · 숫자칸 쉼표</summary>
 
 - 설정 창 등의 숫자칸에서 1,000 이상인 숫자를 30,000 처럼 쉼표로 보여 줘요. 칸을 누르면 원래 숫자가 보이고, 저장되는 값은 그대로 숫자예요. 채팅 › 화면 › '큰 숫자는 쉼표로' 에서 끌 수 있어요.
 

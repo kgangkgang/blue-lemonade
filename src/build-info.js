@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.3.8";
+export const BUILD_VERSION = "5.3.9";
 export const FILE_HASHES = {
   "index.js": "13064:44899f26:6822826e",
-  "manifest.json": "365:58c1870d:64c87500",
+  "manifest.json": "365:062dbbee:a1b1a0ab",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -122,8 +122,8 @@ export const FILE_HASHES = {
   "src/addons/translator/bridge.js": "2424:a5f7039a:a01b8040",
   "src/addons/translator/buttons.html": "417:3bc7c8b0:1b53077b",
   "src/addons/translator/current-connection.js": "4438:b17c2578:0c91a0b8",
-  "src/addons/translator/index.html": "51930:680b3b80:e0ee8d93",
-  "src/addons/translator/index.js": "387683:965065ab:e8e3389b",
+  "src/addons/translator/index.html": "51930:bf676756:bdf7f3c3",
+  "src/addons/translator/index.js": "388482:cff9a391:8ad4c528",
   "src/addons/translator/menu-visibility.js": "1137:ae729d76:8ea71da6",
   "src/addons/translator/persona-bridge.js": "3140:1b658491:2dbebd54",
   "src/addons/translator/selection/core.js": "2945:4ba9f6e4:cab2a284",
@@ -207,7 +207,7 @@ export const FILE_HASHES = {
   "src/marquee.js": "4394:b21eba98:bf26831b",
   "src/menu-position.js": "3312:4d17612e:af7476d7",
   "src/mes-pins.js": "9110:58a88535:74b20064",
-  "src/notice-data.js": "125186:ecea3514:e9499725",
+  "src/notice-data.js": "125700:0390852b:e4955898",
   "src/notice.js": "4623:c387a90d:e051d1f2",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "1144:1da72451:b2e66e80",
@@ -271,6 +271,6 @@ export const FILE_HASHES = {
   "src/weather-worker.js": "1504:8d909ab4:0555d7c0",
   "src/weather.js": "29151:893fa4f6:d26e0a3b",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
-  "src/word-tools.js": "22770:07c345df:f825c7fc",
-  "style.css": "862365:127326a6:27bc0210"
+  "src/word-tools.js": "23565:7cbb2053:90822ae4",
+  "style.css": "863764:b2f40223:dea96ef5"
 };

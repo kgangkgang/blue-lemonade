@@ -1157,14 +1157,17 @@ const REFUSAL_PATTERN = new RegExp([
 //        원문에 거절 · 사과 · 못 함 말이 없어야 한다 (대사 "I can't." → "못 해." · "미안, 도와줄 수 없어" 같은 정상 번역은 원문에도 그 말이 있다)
 const REFUSAL_TOPIC = /translat|request|content|text\b|passage|material|guideline|polic(?:y|ies)|explicit|sexual|appropriate|\bassist|번역|요청|내용|콘텐츠|텍스트|가이드라인|정책|지침|규정|선정적|성적|부적절/i;
 // 원문 쪽은 넓게 본다 (부정 · 사과 · 거절 말이 하나라도 있으면 이 규칙을 쓰지 않는다 — 놓치면 예전과 같고, 잘못 잡으면 정상 번역이 버려진다)
+// 5.3.9: 평범한 글에도 흔한 낱말(hard day · 늑대 무리 · 难过 · 判断)은 '못 한다'는 말투일 때만 본다 — 그냥 두면 진짜 거절이 번역문으로 붙었다
 const SOURCE_DECLINES = new RegExp([
     REFUSAL_PATTERN.source,
-    "\\b(?:not|no|never|nothing|cannot|can ?not|won't|wont|can't|cant|unfortunately|sadly|afraid|regret\\w*|sorry|apolog\\w*|unable|impossible|den(?:y|ied|ies)|reject\\w*|refus\\w*|declin\\w*|forbid\\w*|prohibit\\w*|hard|difficult|tough|too much)\\b|n't\\b|n’t\\b",
-    '않|없|못|안 |아니|죄송|미안|유감|안타깝|거절|싫|불가|어렵|곤란|힘들|힘든|힘드|무리|버거|벅차|난감|곤혹',
-    'ない|ません|ず[、。]|無理|断|申し訳|すみません|ごめん|残念|難し|厳し|できな|出来な',
-    '不|没|沒|無|无|抱歉|对不起|對不起|遗憾|遺憾|拒|难|難',
+    "\\b(?:not|no|never|nothing|cannot|can ?not|won't|wont|can't|cant|unfortunately|regret\\w*|sorry|apolog\\w*|unable|impossible|den(?:y|ied|ies)|reject\\w*|refus\\w*|declin\\w*|forbid\\w*|prohibit\\w*)\\b|n't\\b|n’t\\b",
+    "(?:'m|’m|\\bam) afraid\\b|\\b(?:hard|difficult|tough|too much)(?=\\s*(?:[.!?,…~\"'”’)]|for me\\b|$))",
+    '않|없|못|안 |아니|죄송|미안|유감|안타깝|거절|싫|불가|어렵|곤란|힘들|힘드|무리(?:야|예요|에요|입니다|이다|다|지|네|라|인|일|하|해|겠)|버거|벅차(?!오|올)|난감|곤혹',
+    'ない|ません|ず[、。]|無理|断(?:る|り|ら|れ|っ|わ)|申し訳|すみません|ごめん|残念|難し|厳し|できな|出来な',
+    '不|没|沒|無|无|抱歉|对不起|對不起|遗憾|遺憾|拒|[难難](?=\\s*(?:[。！？!?，,…~」』"”]|$|了|啊|吧|以|办|辦|做))',
     // 5.3.7: 원문이 '번역' 자체를 말하면 (대사 "그건 번역하기 힘들어.") 번역문에 translate 가 나오는 게 당연하다 — 거절로 보지 않는다
-    'translat|번역|통역|翻訳|翻译|翻譯|通訳|通译',
+    // 5.3.9: 단, 부탁 · 되묻기 대사일 때만 ("통역 좀 해 줄래?"). 서술문 "She translated the letter." 의 거절은 거절이다
+    "^(?=[\\s\\S]*(?:translat|번역|통역|翻訳|翻译|翻譯|通訳|通译))(?=[\\s\\S]*(?:[?？]|\\b(?:please|can you|could you|would you|will you)\\b|해 ?(?:줘|줄래|주세요|주실|달라)|して|てくれ|ください|お願い|帮|幫|请|請|一下))",
 ].join('|'), 'i');
 function looksLikeRefusal(original, translation) {
     const source = String(original ?? '').trim();
