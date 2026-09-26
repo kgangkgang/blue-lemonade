@@ -11,6 +11,18 @@ function frame(id) {
     box.showModal(); dialog = box; return box;
 }
 export function closeTools() { dialog?.close(); }
+// http:// 로 연 폰(LAN 접속)에는 clipboard API 가 없다(보안 컨텍스트 전용) — 옛 복사 명령으로 대신한다.
+// 글 칸은 이 창(box) 안에 붙인다: showModal 창이 떠 있으면 창 밖(body)은 inert 라 고를 수 없어서, 성공 알림만 뜨고 복사는 안 됐다 (실리태번 copyText 도 열린 dialog 에 붙인다)
+async function copyInside(box, text) {
+    try { await navigator.clipboard.writeText(text); return; } catch { /* 아래 옛 방식 */ }
+    const back = document.activeElement, area = document.createElement('textarea');
+    area.value = text; area.readOnly = true; area.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+    box.append(area); area.select(); area.setSelectionRange(0, area.value.length); // iOS 는 readOnly 칸에서 select() 만으로 안 골라질 때가 있다
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch { ok = false; }
+    area.remove(); back?.focus?.({ preventScroll: true });
+    if (!ok) throw Error('복사하지 못했어요.');
+}
 function status(box, message) { if (box.isConnected) box.querySelector('[role=status]').textContent = message; }
 async function action(box, button, fn, busy = '처리 중…') {
     button.disabled = true; status(box, busy);
@@ -31,7 +43,7 @@ export async function openTool(id) {
             body.querySelector('[data-copy]').disabled = false;
         }, '점검 중…');
         body.querySelector('[data-check]').onclick = run;
-        body.querySelector('[data-copy]').onclick = event => action(box, event.currentTarget, async () => { await navigator.clipboard.writeText(report); globalThis.toastr?.success('진단을 복사했어요.'); });
+        body.querySelector('[data-copy]').onclick = event => action(box, event.currentTarget, async () => { await copyInside(box, report); globalThis.toastr?.success('진단을 복사했어요.'); });
         await run();
     }
 }

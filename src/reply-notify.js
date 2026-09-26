@@ -52,6 +52,8 @@ function replyPreview() {
 
 async function notify() {
     if (!on || document.visibilityState === 'visible') return;
+    // 켬/끔은 서버 설정이라 다른 기기에서 켠 값이 이 기기에도 온다 — 이 기기에서 허용하지 않았으면 워커를 등록하지도 않는다 (설정 창 스위치도 꺼진 채로 보인다)
+    if ('Notification' in window && Notification.permission !== 'granted') return;
     if (Date.now() - lastShown < 3000) return; // 끝 이벤트가 겹쳐 두 번 오는 것
     lastShown = Date.now();
     const { title, body } = replyPreview();
@@ -78,10 +80,26 @@ export function syncReplyNotify(enabled) {
     try {
         const { eventSource, event_types } = SillyTavern.getContext();
         const listen = (name, fn) => { if (event_types[name]) { eventSource.on(event_types[name], fn); offs.push(() => eventSource.removeListener?.(event_types[name], fn)); } };
-        // 프롬프트 관리자의 토큰 세기(dryRun) · 사칭 · 조용한 생성은 답이 아니다
-        let real = false;
-        listen('GENERATION_STARTED', (type, _params, dryRun) => { real = !dryRun && !['quiet', 'impersonate'].includes(type); });
-        listen('GENERATION_ENDED', () => { if (real) { real = false; notify(); } });
+        // 프롬프트 관리자의 토큰 세기(dryRun) · 사칭 · 조용한 생성은 답이 아니다.
+        // dryRun 은 정지 버튼을 띄우지 않아 끝 이벤트도 없다 — 도는 생성 사이에 끼어들어도 기다리던 알림을 지우지 않게 건너뛴다
+        let real = false, before = null;
+        listen('GENERATION_STARTED', (type, _params, dryRun) => {
+            if (dryRun) return;
+            real = !['quiet', 'impersonate'].includes(type);
+            const chat = SillyTavern.getContext().chat;
+            before = { length: chat?.length ?? 0, mes: chat?.at?.(-1)?.mes };
+        });
+        // API 오류 · 서버 끊김으로 끝나도 정지 버튼이 내려가며 GENERATION_ENDED 가 온다 — 새 답(또는 바뀐 답)이 생겼을 때만 알린다.
+        // 스와이프 · 이어 쓰기가 실패하면 마지막 글은 옛 답 그대로이고, 첫 토큰 전에 끊긴 스트리밍은 자리표시 '...' 만 남는다 (실리태번도 ['', '...'] 를 빈 답으로 본다)
+        listen('GENERATION_ENDED', () => {
+            if (!real) return;
+            real = false;
+            const chat = SillyTavern.getContext().chat, last = chat?.at?.(-1);
+            const text = String(last?.mes ?? '').trim();
+            if (!last || last.is_user || text === '' || text === '...') return;
+            if (chat.length === before?.length && last.mes === before?.mes) return;
+            notify();
+        });
     } catch { /* 이벤트를 못 걸면 알림도 없다 */ }
 }
 

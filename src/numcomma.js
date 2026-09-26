@@ -32,7 +32,7 @@ const VARS = ['--bl-num-ghost', '--bl-num-size', '--bl-num-under', '--bl-num-und
 let on = false;
 let frame = 0;
 let sweepAt = 400;
-const tracked = new Set();          // value 를 덧씌운 칸 (끌 때 되돌림 · 설정 적용 때 다시 그림). 떨어져 나간 칸은 그릴 때 · 쌓이면 뺀다
+const tracked = new Set();          // value 를 덧씌운 칸 (끌 때 되돌림 · 설정 적용 때 다시 그림). 떨어져 나간 칸은 요소가 빠진 다음 프레임(prune) · 그릴 때 · 쌓이면 뺀다
 const queue = new Set();            // 다음 프레임에 그릴 칸
 const roots = new Set();            // 다음 프레임에 숫자 칸을 찾아볼 요소 (관찰자가 넘긴 것)
 const drawn = new WeakMap();        // 칸 → { key, text } 마지막으로 깐 그림
@@ -83,6 +83,8 @@ function found(el) {
 function onMutation(m) {
     if (m.type === 'childList') {
         for (const n of m.addedNodes) if (n.nodeType === 1) roots.add(n);
+        // 빠진 요소 안에 우리가 덧씌운 칸이 있었을 수 있다 — 다음 프레임에 떨어진 칸을 놓아준다 (prune)
+        if (!pruneDue) for (const n of m.removedNodes) if (n.nodeType === 1 && (n.tagName === 'INPUT' || n.firstElementChild)) { pruneDue = true; break; }
     } else {
         const t = m.target;
         // 칸 자신의 class · style 변화는 대개 우리가 쓴 것 — 되먹임이 없게 넘긴다. body · html 은 설정 적용이 따로 다시 그린다
@@ -90,6 +92,18 @@ function onMutation(m) {
         roots.add(t);
     }
     schedule();
+}
+// 5.4.4 떨어진 칸 놓아주기: 닫힌 설정 창 안의 칸이 tracked 에 남아 칸 → 창(.salty-panel._onClose → Popup → dialog) 전체를 붙잡았다 —
+// 열고 닫을 때마다 노드 +588 · 리스너 +48 이 GC 뒤에도 남았다 (sweepAt 을 넘을 때까지). 덧씌운 값 · 그림도 떼 둔다 — 다시 붙으면
+// 관찰자가 새로 붙은 요소로 넘겨 처음처럼 찾는다
+let pruneDue = false;
+function prune() {
+    pruneDue = false;
+    for (const el of tracked) {
+        if (el.isConnected) continue;
+        tracked.delete(el); queue.delete(el); unverified.delete(el);
+        clear(el); unhook(el);
+    }
 }
 function scanRoots() {
     for (const root of roots) {
@@ -310,6 +324,7 @@ function render(text, L) {
 function flush() {
     frame = 0;
     if (!on) return;
+    if (pruneDue) prune();
     if (roots.size) scanRoots();
     // 두 번에 나눈다: 먼저 모든 칸을 재고 그리고(읽기), 그다음 한꺼번에 쓴다. 칸마다 재고 쓰기를 번갈아 하면 쓸 때마다 다음 칸의
     // getClientRects 가 스타일을 새로 계산했다 (폰 4배 느린 CPU 에서 칸 8개에 16ms × 8)
@@ -407,6 +422,7 @@ function stop() {
     if (frame) cancelAnimationFrame(frame);
     if (verifyFrame) cancelAnimationFrame(verifyFrame);
     frame = verifyFrame = 0;
+    pruneDue = false;
     unverified.clear();
     for (const el of tracked) { clear(el); unhook(el); }
     resize?.disconnect();

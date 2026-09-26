@@ -35,9 +35,11 @@ const source={on:(k,f)=>events.set(k,f),removeListener:k=>events.delete(k)};
 const ctx={eventSource:source,event_types:Object.fromEntries(['GENERATION_STARTED','GENERATION_ENDED','GENERATION_STOPPED','CHAT_CHANGED'].map(k=>[k,k]))};
 const {bindWeatherRest}=await import(new URL('src/weather-rest.js',root));let rest=false,enabled=true;
 const binding=bindWeatherRest({rest:v=>rest=v},()=>enabled,doc,ctx);
-events.get('GENERATION_STARTED')('normal',{},true);assert.equal(rest,false);
-events.get('GENERATION_STARTED')();assert.equal(rest,true);
-events.get('GENERATION_STOPPED')();assert.equal(rest,false);
+// 생성 중은 body[data-generating] 만 본다 — GENERATION_STARTED 로 켜면 /echo · ping 실패처럼 끝 이벤트 없이 빠지는 길에서 쉬기가 남았다
+assert.equal(events.has('GENERATION_STARTED'),false);
+doc.body.dataset.generating='true';observerCallback();assert.equal(rest,true);
+delete doc.body.dataset.generating;events.get('GENERATION_STOPPED')();assert.equal(rest,false);
+listeners.get('input')({target:{matches:()=>true}});assert.equal(rest,true);events.get('GENERATION_ENDED')();assert.equal(rest,false); // 끝 이벤트는 입력 중 표시를 푼다
 doc.body.dataset.generating='false';observerCallback();assert.equal(rest,false);
 doc.body.dataset.generating='true';observerCallback();assert.equal(rest,true);
 delete doc.body.dataset.generating;observerCallback();assert.equal(rest,false);

@@ -1,26 +1,26 @@
 /* ===== css/52-tool-editor.css ===== */
 /* Compact controls and an independent desktop workspace. */
-.bl-extension-page { --bl-tool-gap:10px; }
-.bl-addon-header { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 2px 10px; margin-bottom:10px; border-bottom:1px solid var(--salty-line); }
-.bl-addon-header h3 { margin:0; font-size:17px; line-height:1.4; color:var(--salty-text); }
-.bl-addon-header .bl-addon-ver { margin-left:8px; padding:2px 10px; border:1px solid var(--salty-line); border-radius:999px; background:color-mix(in srgb, var(--salty-accent) 12%, transparent); color:var(--salty-accent); font:inherit; font-size:12px; font-weight:600; line-height:1.5; vertical-align:.12em; cursor:pointer; }
+.bl-extension-page { --bl-tool-gap:10px; font-size:var(--salty-ui-size,var(--mainFontSize,15px)); font-weight:var(--salty-ui-weight,normal); letter-spacing:var(--bl-settings-tracking,normal); }
+.bl-addon-header { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 2px 6px; margin-bottom:0; border-bottom:1px solid var(--salty-line); }
+.bl-addon-header h3 { margin:0; min-width:0; font-size:1em; line-height:1.4; color:var(--salty-text); overflow-wrap:anywhere; }
+.bl-addon-header .bl-addon-ver { margin-left:8px; padding:2px 10px; border:1px solid var(--salty-line); border-radius:999px; background:color-mix(in srgb, var(--salty-accent) 12%, transparent); color:var(--salty-accent-ink, var(--salty-accent)); font:inherit; font-size:12px; font-weight:600; line-height:1.5; vertical-align:.12em; cursor:pointer; }
 .bl-addon-header .bl-addon-ver:hover, .bl-addon-header .bl-addon-ver:focus-visible { background:color-mix(in srgb, var(--salty-accent) 22%, transparent); outline:none; }
 .bl-addon-header .bl-addon-status { margin:3px 0 0; color:var(--salty-muted); font-size:11px; line-height:1.4; }
-.bl-addon-header .bl-addon-status.is-on { color:var(--salty-accent); }
-.bl-addon-power { display:flex; align-items:center; gap:8px; min-height:44px; flex:none; font-size:12px; }
+.bl-addon-header .bl-addon-status.is-on { color:var(--salty-accent-ink, var(--salty-accent)); }
+.bl-addon-power { display:flex; align-items:center; gap:8px; min-height:36px; flex:none; font-size:12px; }
 .bl-addon-power input { accent-color:var(--salty-accent); width:19px; height:19px; margin:0; }
 .bl-addon-layout { display:flex; flex-direction:column; gap:10px; min-width:0; min-height:0; }
 .bl-addon-main,.bl-addon-config { display:flex; flex-direction:column; gap:10px; min-width:0; }
 .bl-tool-section { flex:none; min-width:0; border:1px solid var(--salty-line); border-radius:12px; background:var(--bl-fill-card,var(--salty-surface)); overflow:clip; }
-html body .bl-tool-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; min-height:44px; margin:0; padding:9px 10px; border:0; border-radius:0; box-shadow:none; background:transparent; color:var(--salty-text); text-align:left; font:600 13px/1.4 var(--salty-font-ui,inherit); cursor:pointer; }
+html body .bl-tool-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; min-height:36px; margin:0; padding:7px 10px; border:0; border-radius:0; box-shadow:none; background:transparent; color:var(--salty-text); text-align:left; font:600 13px/1.4 var(--salty-font-ui,inherit); cursor:pointer; }
 .bl-tool-heading small { display:block; margin-top:2px; color:var(--salty-muted); font-size:10px; font-weight:400; }
 .bl-tool-chevron { flex:none; opacity:.6; transition:transform .15s; }
 .bl-tool-heading[aria-expanded=false] .bl-tool-chevron { transform:rotate(-90deg); }
-.bl-tool-body { display:grid; grid-template-columns:minmax(0,1fr); gap:10px; min-width:0; padding:0 10px 10px; }
+.bl-tool-body { display:grid; grid-template-columns:minmax(0,1fr); gap:8px; min-width:0; padding:0 10px 10px; }
 .bl-tool-body > * { min-width:0; max-width:100%; box-sizing:border-box; }
 .bl-tool-body .salty-note { margin:0; line-height:1.5; font-size:11px; }
 .bl-tool-body .bl-tool-section { background:transparent; border-radius:8px; }
-.bl-tool-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 12px; min-width:0; align-items:start; }
+.bl-tool-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,max(11em,calc((100% - 12px)/2))),1fr)); gap:8px 12px; min-width:0; align-items:start; }
 .bl-tool-grid > * { min-width:0; max-width:100%; overflow-wrap:anywhere; }
 .bl-tool-grid .bl-addon-toggle,.bl-tool-grid.bl-word-options label { align-items:center; gap:7px; margin:0; min-height:40px; font-size:12px; line-height:1.45; }
 .bl-tool-grid input[type=checkbox] { flex:none; margin:0; width:17px; height:17px; accent-color:var(--salty-accent); }
@@ -33,13 +33,18 @@ body.salty-dark :is(.bl-extension-page,.bl-capture-dialog) { color-scheme:dark; 
 .bl-tool-label,.bl-mask-heading { display:flex; justify-content:space-between; align-items:center; gap:8px; }
 .bl-mask-heading small { color:var(--salty-muted); font-size:10px; }
 .bl-extension-page [hidden],.bl-capture-dialog [hidden] { display:none!important; }
-.bl-tool-body .bl-word-presets { margin:0; }
+.bl-tool-section[data-tool-section="presets"] { container:bl-presets / inline-size; }
+.bl-tool-body .bl-word-presets { margin:0; align-items:end; }
+.bl-tool-body .bl-word-presets > .bl-word-actions { grid-column:1 / -1; }
+@container bl-presets (min-width:32em) {
+  .bl-tool-body .bl-word-presets { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
 .bl-extension-page .bl-message-choices { max-height:200px; border:1px solid var(--salty-line); border-radius:8px; }
 .bl-extension-page .bl-message-choice { padding:9px 8px; font-size:12px; }
 .bl-extension-page .bl-message-choice small { line-height:1.45; font-size:11px; }
 .bl-extension-page .bl-message-actions { margin:0; gap:6px; }
 .bl-extension-page .bl-word-actions,.bl-extension-page .bl-addon-actions { margin:0; gap:8px; }
-.bl-extension-page .bl-word-actions > button,.bl-extension-page .bl-addon-actions > button { flex-basis:100px; font-size:12px; }
+.salty-panel .bl-extension-page :is(.bl-word-actions,.bl-addon-actions) > button:where(:not(.bl-word-help)) { flex:0 1 auto; min-height:36px; padding:6px 10px; font-size:12px; }
 .bl-extension-page .bl-word-actions > .bl-word-help { flex:0 0 32px; width:32px; height:32px; min-height:32px; align-self:center; padding:0; }
 .bl-rule-caption { display:grid; grid-template-columns:1fr 1fr; gap:20px; padding:0 32px 0 24px; font-size:10px; color:var(--salty-muted); }
 .bl-extension-page .bl-word-rule { grid-template-columns:18px minmax(0,1fr) 12px minmax(0,1fr) 26px; gap:4px; }
@@ -67,7 +72,7 @@ body.salty-dark :is(.bl-extension-page,.bl-capture-dialog) { color-scheme:dark; 
 .bl-mask-customize input[type=range]:focus-visible { outline:2px solid var(--salty-accent)!important; outline-offset:2px; border-radius:6px!important; }
 .bl-capture-options input:is([type=checkbox],[type=radio]) { appearance:auto!important; -webkit-appearance:auto!important; accent-color:var(--salty-accent); width:18px!important; height:18px!important; min-width:18px; margin:0!important; padding:0!important; box-shadow:none!important; color-scheme:light; }
 body.salty-dark .bl-capture-options input:is([type=checkbox],[type=radio]) { color-scheme:dark; }
-.bl-mask-color { display:grid; grid-template-columns:minmax(0,1fr); gap:5px; font-size:11px; }
+.bl-mask-color { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:8px 10px; font-size:11px; }
 .bl-mask-color input[type=color] { -webkit-appearance:none!important; appearance:none!important; width:100%; height:34px; min-height:34px; margin:0; padding:4px!important; border:1px solid var(--salty-line)!important; border-radius:8px!important; background:var(--salty-field)!important; box-shadow:none!important; cursor:pointer; }
 .bl-mask-color input[type=color]::-webkit-color-swatch-wrapper { padding:0; }
 .bl-mask-color input[type=color]::-webkit-color-swatch { border:0; border-radius:4px; }
@@ -88,7 +93,7 @@ html body .salty-panel .bl-tool-primary { color:var(--salty-text); border:1px so
 .bl-wand-preview-menu p { margin:0; padding:6px 8px; font-size:12px; }
 @container bl-editor (min-width:720px) {
   html body .bl-editor .bl-extension-page { display:flex; flex-direction:column; overflow:hidden; padding:10px; }
-  .bl-extension-page .bl-addon-header { flex:none; margin:0 0 10px; }
+  .bl-extension-page .bl-addon-header { flex:none; margin:0; }
   .bl-extension-page .bl-addon-layout { flex:1; display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:14px; min-height:0; }
   .bl-addon-main,.bl-addon-config { overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; padding-right:4px; padding-bottom:12px; }
   .bl-addon-config { border-left:1px solid var(--salty-line); padding-left:12px; }
@@ -114,7 +119,7 @@ html body .bl-addon-credit-all { display:inline-block; min-height:0; margin:-5px
 html body .bl-addon-credit-all:hover,html body .bl-addon-credit-all:focus-visible { color:var(--salty-text); outline:none; }
 /* Desktop embeds the actual controls; mobile keeps the existing focused dialog. */
 .bl-addon-inline { display:none; }
-.bl-inline-title { margin:0; font-size:15px; line-height:1.5; }
+.bl-inline-title { margin:0; font-size:1em; font-weight:inherit; line-height:1.5; }
 .bl-addon-inline-content { min-width:0; }
 .bl-addon-inline-content > * { min-width:0; max-width:100%; box-sizing:border-box; }
 .bl-addon-inline-content :is(.po-title,.pa-hub-title,.inline-drawer-header) { display:none!important; }
@@ -122,8 +127,8 @@ html body .bl-addon-credit-all:hover,html body .bl-addon-credit-all:focus-visibl
 /* 프롬프트 연동 정규식 · 모델 전환은 자기 세로 flex(칸 사이 12px)를 쓴다 */
 .bl-addon-inline-content :is(#regex-link-settings,#model-switch-settings) > .inline-drawer-content { display:flex!important; }
 .bl-addon-inline-content :is(.po-dialog,.pa-hub,.mr-settings) { width:100%; padding:0; }
-.bl-addon-inline-content .pa-hub-tabs { flex-wrap:wrap; gap:6px; }
-.bl-addon-inline-content .pa-hub-tab { flex:1 1 100px; min-width:0; white-space:normal; }
+.bl-addon-inline-content .pa-hub-tabs { gap:8px 10px; }
+.bl-addon-inline-content .pa-hub-tab { min-width:0; white-space:normal; }
 @container bl-editor (min-width:720px) {
   .bl-extension-page .bl-addon-embedded-layout { grid-template-columns:minmax(240px,.75fr) minmax(0,1.25fr); }
   /* 5.1.3 묶음 페이지(성능 보조·모델 관리)는 페이지가 overflow:hidden 이라 묶음 자체가 스크롤해야 한다 */
@@ -167,10 +172,48 @@ dialog.popup.bl-roomy-dialog .popup-content { margin-left:0 !important; margin-r
 .salty-panel .bl-spot-side{min-width:0;flex:1;display:grid;gap:8px;}
 
 /* Group related tools without changing their saved settings. */
-.bl-addon-group { display:flex; flex-direction:column; gap:20px; min-width:0; }
-.bl-addon-group-tool { padding:18px; border:0; border-radius:20px; background:var(--salty-fill-surface,var(--salty-surface)); box-shadow:var(--bl-e1); }
+.bl-addon-group { display:flex; flex-direction:column; gap:12px; min-width:0; }
+.bl-addon-group-tool { padding:12px; border:0; border-radius:var(--bl-r-md,12px); background:var(--salty-fill-surface,var(--salty-surface)); box-shadow:var(--bl-e1); }
 .bl-addon-group-tool .bl-addon-header { border:0; margin-bottom:10px; }
 .bl-addon-group-tool .salty-note { margin:6px 0 14px; }
 
 /* 5.3.9: 치환 규칙 가운데 → 는 누르면 찾을 말 ↔ 바꿀 말을 바꾸는 단추 — 모양은 예전 글자 화살표 그대로 (칸 폭 · 상자 없음) */
 .bl-word-rule button.bl-rule-swap, .bl-extension-page .bl-word-rule button.bl-rule-swap { min-width:0; min-height:0; width:100%; padding:0; border:0; background:none; color:inherit; font:inherit; align-self:stretch; cursor:pointer; }
+
+/* Tool labels scale with user UI text; controls grow when a label wraps. */
+.bl-addon-header { flex-wrap:wrap; gap:8px 10px; }
+.bl-addon-power { margin-inline-start:auto; font-size:.85em; gap:10px; }
+.bl-addon-header :is(.bl-addon-ver,.bl-addon-status) { font-size:.8em; font-weight:inherit; }
+html body .bl-tool-heading { gap:10px; font:inherit; font-size:.9em; line-height:1.45; }
+.bl-tool-heading small,.bl-tool-field small,.bl-mask-heading small { font-size:var(--bl-ts-meta,var(--bl-fs-sub)); font-weight:inherit; line-height:1.5; color:var(--salty-muted); opacity:1; }
+.bl-tool-body .salty-note { font-size:.85em; }
+.bl-tool-grid .bl-addon-toggle,.bl-tool-grid.bl-word-options label { min-height:36px; gap:10px; font-size:.9em; }
+.bl-tool-field { gap:8px; font-size:.9em; }
+.bl-tool-caption { font-size:.9em; font-weight:inherit; }
+.bl-tool-label,.bl-mask-heading { flex-wrap:wrap; gap:8px 10px; }
+.bl-extension-page .bl-message-choice { font-size:.9em; }
+.bl-extension-page .bl-message-choice small { font-size:var(--bl-ts-meta,var(--bl-fs-sub)); opacity:1; }
+.bl-extension-page :is(.bl-message-actions,.bl-word-actions,.bl-addon-actions) { gap:8px 10px; }
+.salty-panel .bl-extension-page :is(.bl-word-actions,.bl-addon-actions) > button:where(:not(.bl-word-help)) {
+ font-size:.9em; font-weight:inherit; letter-spacing:inherit; line-height:1.45; white-space:normal; height:auto;
+}
+.bl-rule-caption { font-size:.8em; }
+.bl-extension-page .bl-word-rule :is(input[type=text],button) { font-size:.9em; }
+.bl-capture-options .bl-mask-options {
+ grid-template-columns:repeat(auto-fit,minmax(min(100%,max(10em,calc((100% - 10px)/2))),1fr)); gap:8px 10px;
+}
+.bl-capture-options .bl-mask-options label { font-size:.85em; gap:10px; min-height:36px; }
+.bl-mask-customize .bl-mask-number { font-size:.85em; gap:8px; }
+.bl-mask-customize .bl-mask-number-head { flex-wrap:wrap; gap:8px 10px; }
+.bl-mask-customize .bl-mask-number input[type=number] { flex:0 1 5em; width:5em; height:auto; font:inherit; letter-spacing:inherit; }
+.bl-mask-color { font-size:.85em; }
+.bl-capture-empty b { font-size:.95em; font-weight:inherit; }
+.bl-capture-empty p { font-size:.85em; }
+.bl-extension-page .bl-addon-position-preview > small,.bl-wand-preview > small { font-size:.85em; }
+.bl-extension-page .bl-addon-position-preview > div,.bl-extension-page .bl-wand-preview-input,.bl-wand-preview-menu p { font-size:.9em; }
+.bl-wand-preview-menu { display:flex; flex-wrap:wrap; gap:8px 10px; }
+.bl-wand-preview-menu p { padding:4px 6px; }
+.bl-addon-credit { font-size:.75em; letter-spacing:inherit; }
+.bl-tool-section { border-radius:var(--bl-r-md,12px); }
+.bl-tool-body .bl-tool-section { border-radius:var(--bl-r-sm,8px); }
+.bl-extension-page .bl-addon-position-preview,.bl-extension-page .bl-wand-preview { border-radius:var(--bl-r-sm,8px); padding:8px; }

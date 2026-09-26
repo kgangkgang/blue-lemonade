@@ -186,7 +186,7 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
   border: 0 !important;
   border-radius: 999px !important;
   background: var(--salty-fill-accent-13, var(--salty-accent-13)) !important;
-  color: var(--salty-accent) !important;
+  color: var(--salty-accent-ink, var(--salty-accent)) !important;
   font-size: 0.86em;
   font-weight: 700;
 }
@@ -274,7 +274,7 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.cu
   border: 0 !important;
   border-radius: 999px !important;
   background: var(--salty-fill-accent-13, var(--salty-accent-13)) !important;
-  color: var(--salty-accent) !important;
+  color: var(--salty-accent-ink, var(--salty-accent)) !important;
 }
 
 /* ---------- 폰 접기 ---------- */

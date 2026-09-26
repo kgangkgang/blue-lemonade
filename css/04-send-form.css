@@ -118,8 +118,11 @@ body.salty #nonQRFormItems > #rightSendForm {
   }
 }
 
+/* 5.4.4: 메뉴는 버튼 윗변에서 위로 커진다(실리태번 Popper, 아래 끝 고정) — 화면에서 위 막대 · 여백 6px · 버튼 아래(--bl-menu-foot:
+   layout.js 가 여는 클릭 때 잰 버튼 윗변 ~ 화면 아래)를 뺀다. 예전엔 위 막대만 빼서 항목이 많으면 윗부분이 화면 밖으로 나갔다.
+   못 쟀으면 실리태번 원래 값처럼 입력판 두 칸 + 10px */
 body.salty :is(#options, #extensionsMenu) {
-  max-height: calc(100dvh - var(--topBarBlockSize, 40px) - 12px);
+  max-height: calc(100dvh - var(--topBarBlockSize, 40px) - 6px - var(--bl-menu-foot, calc(2 * var(--bottomFormBlockSize, 40px) + 10px)));
   overflow-y: auto;
   overscroll-behavior-y: contain;
 }
@@ -147,7 +150,7 @@ body.salty :is(#options, #extensionsMenu) {
 
 @media not all and (max-width: 1000px) { /* 5.3.4: 1001px 이면 1000~1001px(배율 · 소수 폭)에서 폰 · PC 규칙 둘 다 빠졌다 — max-width: 1000px 의 정확한 반대 */
   body.salty :is(#options, #extensionsMenu) {
-    max-height: calc(100dvh - var(--topBarBlockSize) - 12px);
+    max-height: calc(100dvh - var(--topBarBlockSize) - 6px - var(--bl-menu-foot, calc(2 * var(--bottomFormBlockSize) + 10px))); /* 위 5.4.4 설명 */
     overflow-y: auto;
     overscroll-behavior-y: contain;
   }

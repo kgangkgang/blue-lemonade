@@ -7,7 +7,7 @@ import { frameVars } from './frames.js';
 import { syncProfile } from './profile.js';
 // 설정 → :root CSS 변수(--salty-*) + 실리태번 색 변수 덮기 + body 클래스 + 글꼴 합치기
 import { getSettings, fontSet, FONT_SLOTS, DEFAULTS } from './settings.js';
-import { PALETTES, LEGACY, TOKEN_KEYS, paletteColors, parseColor, sameColor, onColor } from './palettes.js';
+import { PALETTES, LEGACY, TOKEN_KEYS, paletteColors, parseColor, sameColor, onColor, toRgba } from './palettes.js';
 import { buildComposite, slotStack, findFont } from './fonts.js';
 import { iconsCss } from './icons.js';
 import { classifyAll } from './assets.js';
@@ -84,10 +84,48 @@ function mix(a, b, pa) {
     const y = parseColor(b);
     return `rgb(${[0, 1, 2].map(i => Math.round(x[i] * pa + y[i] * (1 - pa))).join(', ')})`;
 }
+/** 상대 휘도 (WCAG 2, 알파는 무시) */
+function luminance(color) {
+    return parseColor(color).slice(0, 3).reduce((sum, v, i) => { v /= 255; return sum + [0.2126, 0.7152, 0.0722][i] * (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4); }, 0);
+}
+const inkMemo = new Map();
+/** 글자로 쓰는 색: backs 모두에서 target : 1 이 될 때까지만 toward 쪽으로 1% 씩 섞는다 — 이미 넘으면 그 색 그대로 (applyAll 은 자주 돌아 같은 물음은 기억) */
+function readableInk(color, toward, backs, target = 4.5) {
+    const key = `${color}|${toward}|${backs.join('|')}`;
+    if (inkMemo.has(key)) return inkMemo.get(key);
+    const lums = backs.map(luminance);
+    let ink = toward;
+    for (let k = 0; k <= 100; k++) {
+        const c = k ? mix(toward, color, k / 100) : color, l = luminance(c);
+        if (lums.every(b => (Math.max(l, b) + 0.05) / (Math.min(l, b) + 0.05) >= target)) { ink = c; break; }
+    }
+    if (inkMemo.size > 256) inkMemo.clear();
+    inkMemo.set(key, ink);
+    return ink;
+}
+// 실리태번 코드 블록 구문 강조 테마(public/css/bright.min.css — 검은 바탕용 색)의 색 무리. 키 = --salty-hl-* (css/06-chat-text.css 가 같은 선택자 묶음으로 입힘)
+const HLJS = { variable: '#FB0120', number: '#FC6D24', title: '#FDA331', string: '#A1C659', builtin: '#76C7B7', func: '#6FB3D2', keyword: '#D381C3', meta: '#BE643C', comment: '#B0B0B0' };
+/** 코드 칸 바탕(backs) 위 구문 강조 색. 섞는 쪽은 팔레트 모드가 아니라 실제 바탕 밝기로 — 가장 나쁜 바탕에서 흰 글자가 더 잘 보이면 흰색, 아니면 검정 쪽
+ *  (화이트 팔레트에 어두운 bg · surface 를 고른 경우 검정 쪽으로 섞으면 토큰이 안 보임. 기본 화이트 · 나이트는 예전과 같은 쪽) */
+function codeInks(backs) {
+    const lums = backs.map(luminance);
+    const toward = 1.05 / (Math.max(...lums) + 0.05) > (Math.min(...lums) + 0.05) / 0.05 ? '#FFFFFF' : '#000000';
+    return Object.fromEntries(Object.entries(HLJS).map(([key, base]) => [key, readableInk(base, toward, backs)]));
+}
 
 /** 1.0.0 버그로 저장된 "직접 고친 색" 중 그때 기본값과 같은 것은 지움 (안 지우면 새 기본 색이 안 보임) */
 export function dropStaleOverrides(s = getSettings()) {
     let changed = false;
+    // 커스텀 에이드의 흐림 글자: 예전 비율(글자 54%)로 만든 값 그대로면 새 비율로 (custompalette.js makeCustomPalette 와 같은 값 · 색 고치기로 직접 고친 값은 그대로)
+    const customSets = [['custom-light', s.colorOverrides?.['custom-light']], ['custom-night', s.colorOverrides?.['custom-night']], ...(Array.isArray(s.customPalettes) ? s.customPalettes : []).flatMap(item => [['custom-light', item?.light], ['custom-night', item?.dark]])];
+    for (const [id, colors] of customSets) {
+        if (!colors?.faint) continue;
+        const { text, surface } = { ...PALETTES[id], ...colors };
+        const next = toRgba(parseColor(mix(text, surface, id === 'custom-night' ? 0.56 : 0.68)));
+        if (sameColor(colors.faint, next) || !sameColor(colors.faint, mix(text, surface, 0.54))) continue;
+        colors.faint = next;
+        changed = true;
+    }
     for (const [pal, colors] of Object.entries(s.colorOverrides || {})) {
         for (const [token, value] of Object.entries(colors || {})) {
             const legacy = (LEGACY[pal] || []).map(old => old[token]).filter(Boolean);
@@ -359,22 +397,23 @@ function imageShape(image) {
 // ───────── 자동완성 색 ─────────
 // 실리태번 'theme' 모양은 어두운 화면용 고정 색(연어색 값 · 민트 타입 · 보라 괄호) + 회색 판 고른 줄이라 흰 바탕에서 안 보임
 //   → 이름은 밝은 글자, 인자 이름은 파랑, 값은 무채색, 고른 줄은 옅은 포인트 면 (모든 글자가 고른 줄 위에서도 4.5:1 이상)
-function autocompleteVars(pal, mode) {
+function autocompleteVars(pal, mode, ink = {}) {
     const dark = mode === 'dark';
     const bg = pal.surface;
     const link = dark ? mix(pal.accent, pal.dialogue, 0.6) : mix(pal.accent, pal.text, 0.7); // 글자로 쓰는 포인트
+    const accent = ink.accent || pal.accent, pop = ink.pop || pal.pop || pal.accent; // 글자로 쓰는 포인트 · 두 번째 포인트 (applyAll 의 --salty-*-ink — 밝은 테마는 고른 줄 위에서도 4.5 : 1)
     const value = dark ? pal.text : pal.dialogue; // 값(true · 문자열 · 숫자): 무채색 — 레몬으로 칠하면 긴 목록이 노란 벽이 됨
     const quiet = dark ? mix(pal.muted, pal.dialogue, 0.55) : pal.muted;
     const vars = {
         background: bg, border: 'transparent', text: pal.text,
-        matchedBackground: 'transparent', matchedText: pal.accent,
+        matchedBackground: 'transparent', matchedText: accent,
         selectedBackground: mix(pal.accent, bg, dark ? 0.16 : 0.1), selectedText: dark ? pal.dialogue : pal.text,
         notSelectableBackground: mix(pal.text, bg, 0.08), notSelectableText: pal.muted,
         hoveredBackground: mix(pal.text, bg, 0.05), hoveredText: pal.text,
-        cmd: dark ? pal.dialogue : pal.text, argName: link, type: quiet, symbol: pal.accent,
-        string: value, number: value, variable: link, variableLanguage: pal.accent, keyword: pal.accent,
-        punctuation: quiet, punctuationL1: link, punctuationL2: pal.accent, currentParenthesis: pal.pop || pal.accent,
-        comment: dark ? pal.muted : pal.em, abort: pal.pop || pal.accent,
+        cmd: dark ? pal.dialogue : pal.text, argName: link, type: quiet, symbol: accent,
+        string: value, number: value, variable: link, variableLanguage: accent, keyword: accent,
+        punctuation: quiet, punctuationL1: link, punctuationL2: accent, currentParenthesis: pop,
+        comment: dark ? pal.muted : pal.em, abort: pop,
     };
     return Object.fromEntries(Object.entries(vars).map(([k, v]) => [`--ac-style-color-${k}`, v]));
 }
@@ -418,6 +457,20 @@ export function applyAll() {
     vars['--salty-pop-glow'] = mode === 'dark'
         ? `0 0 0 1.5px ${alpha(pop, 0.5)}, 0 0 16px -2px ${alpha(pop, 0.5)}`
         : `0 0 0 3px ${alpha(pop, 0.22)}, 0 3px 12px -3px ${alpha(pop, 0.55)}`;
+    // 글자색을 맞출 바탕 후보: 팔레트 색 하나 + 믹스 · 그라데이션이면 그 색들
+    const tones = key => [pal[key], ...(gradientFor(s, key)?.colors || [])];
+    // 글자 · 아이콘으로 쓰는 포인트(잉크). 밝은 테마는 흰 면 · 고른 칸(포인트 18%, 음영 판 위 13%) 위에서 4.5 : 1 이 될 때까지만 본문색 쪽으로 섞는다
+    //   (이미 넘는 색 · 나이트는 그대로, 믹스 · 그라데이션이면 그 색들 위에서도). 흰 종이에서 3 : 1 도 안 되는 파스텔 pop(멜론 · 레몬 · 피치 · 자몽)은 포인트색에서 만든다
+    const shaded = mix(pal.text, pal.bg, 0.06);
+    const inkBacks = [...tones('bg'), ...tones('surface'), ...tones('accent').flatMap(c => [mix(c, pal.surface, 0.18), mix(c, shaded, 0.13)])];
+    vars['--salty-accent-ink'] = mode === 'dark' ? pal.accent : readableInk(pal.accent, pal.text, inkBacks);
+    vars['--salty-pop-ink'] = mode === 'dark' ? pop : readableInk(luminance(pop) <= 0.3 ? pop : pal.accent, pal.text, inkBacks);
+    // 코드 블록 구문 강조: 색상은 그대로, 코드 칸(글자색 6% 음영) 위에서 4.5 : 1 이 될 때까지만 — 칸이 밝으면 검정 · 어두우면 흰색 쪽으로 (codeInks)
+    //   밝은 테마는 음영 한 겹(css/06) · 캐릭터 글 바탕과 내 말풍선 둘 다, 나이트는 지금처럼 두 겹 · 캐릭터 글 바탕만 (말풍선까지 맞추면 빨강 · 보라가 분홍 · 연보라가 됨)
+    const codeBacks = mode === 'dark'
+        ? tones('bg').map(c => mix(pal.text, mix(pal.text, c, 0.06), 0.06))
+        : [...tones('bg'), vars['--salty-user-bg'], ...(gradientFor(s, 'marker')?.colors || []).map(c => mix(c, pal.surface, 0.16))].map(c => mix(pal.text, c, 0.06));
+    for (const [key, ink] of Object.entries(codeInks(codeBacks))) vars[`--salty-hl-${key}`] = ink;
     // 파생 톤은 JS 로 계산 (color-mix 를 모르는 예전 브라우저에서도 면·입력칸·포커스 링이 나오게)
     Object.assign(vars, {
         '--salty-shade': alpha(pal.text, 0.06),
@@ -540,6 +593,8 @@ export function applyAll() {
         '--bl-qr-rows': String(s.chat.qrRows ?? 2), // 3.5.4 세로 스크롤일 때 보이는 퀵 리플라이 줄 수                                     // 내 메시지 글자 진하기
         '--salty-ui-weight': s.ui?.weight ? String(s.ui.weight) : 'normal',
         '--salty-ui-ls': roleSpacing(s.ui?.letterSpacing, 'normal'),
+        '--bl-settings-tracking': `${(s.ui?.letterSpacing ?? 0) / 100}em`,
+        '--bl-settings-choice-weight': String(s.ui?.weight ?? 600),
         '--salty-img-radius': `${s.image.radius}px`,
         // 테두리 파라미터 (설정 창 슬라이더 → CSS 가 이 값으로 두께 · 진하기 · 번짐을 계산)
         '--salty-edge-thick': `${s.image.edgeThick}px`,
@@ -587,7 +642,7 @@ export function applyAll() {
         if (s.type.uiSize) st['--mainFontSize'] = 'var(--salty-ui-size)';
         css += `\n:root {\n${declarations(st, true)}\n}`;
         // 자동완성 색은 실리태번이 body 에 박는 변수라 :root 로는 안 덮임 → body.salty 에
-        css += `\nbody.salty {\n${declarations(autocompleteVars(pal, mode), true)}\n}`;
+        css += `\nbody.salty {\n${declarations(autocompleteVars(pal, mode, { accent: vars['--salty-accent-ink'], pop: vars['--salty-pop-ink'] }), true)}\n}`;
     }
     const variables = styleTag('salty-vars');
     if (variables.textContent !== css) variables.textContent = css;

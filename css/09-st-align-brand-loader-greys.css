@@ -219,7 +219,7 @@ body.salty #loader.splash-screen .splash-message::after {
 body.salty #loader.splash-screen #load-spinner {
   order: 3;
   margin-top: var(--bl-s2);
-  color: var(--bl-pop) !important;
+  color: var(--bl-pop-ink) !important;
   font-size: 1.7em !important; /* fa-3x(3em)는 이 화면에서 너무 큼 */
   opacity: 1 !important;
 }

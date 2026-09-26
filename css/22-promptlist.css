@@ -72,7 +72,7 @@ body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_ent
 body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .bl-prow-tok {
   flex: 0 0 auto;
   margin-left: auto;
-  color: var(--bl-pop);
+  color: var(--bl-pop-ink);
   text-align: right;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
@@ -80,7 +80,7 @@ body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_ent
 }
 body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .bl-prow-t {
   margin-left: 2px;
-  color: var(--bl-pop) !important;
+  color: var(--bl-pop-ink) !important;
   font-size: 0.75em;
   font-weight: 500;
 }

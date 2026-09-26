@@ -23,7 +23,7 @@ body.salty {
   /* 포커스 테: 비치는 빨강은 흰 종이에서 분홍이 돼서, 바탕색 틈 + 꽉 찬 빨강 두 겹으로 */
   --bl-danger-ring: 0 0 0 2px var(--salty-surface), 0 0 0 4px var(--bl-danger);
   /* 호박 · 초록 · 파랑 — 알림 동그라미 · 띠처럼 색 자체로 쓰는 자리용
-     (글자로 쓰는 호박은 예전대로 --bl-warn: 흰 면에서 4.5 : 1 넘음) */
+     (글자 · 아이콘으로 쓰는 주의색은 --bl-pop-ink: 밝은 테마도 흰 면에서 4.5 : 1 넘음. --bl-warn 은 면 · 테두리 · 점용) */
   --bl-warning: var(--bl-pop);
   --bl-warning-ink: var(--bl-on-pop);
   --bl-warning-soft: var(--bl-warn-bg);

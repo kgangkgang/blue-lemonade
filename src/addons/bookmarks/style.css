@@ -5,7 +5,7 @@
    ============================================================ */
 
 /* state.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
-:root { --cg-css-version: "1.3.7"; }
+:root { --cg-css-version: "1.3.8"; }
 
 .cg-root {
     --cg-accent-fallback: #a98bd9;
@@ -1625,12 +1625,14 @@ body.cg-previewing #chat .mes .swipes-counter { display: none !important; }
 /* 머리: 큰 제목 하나. 아바타 고리 · 작은 윗글 없이 */
 .cg-root .cg-header { border-bottom: 0; padding: 18px 16px 6px 20px; gap: 10px; }
 .cg-root .cg-hero-avatar { width: 34px; height: 34px; border-radius: 12px; box-shadow: none; }
-.cg-root .cg-eyebrow { letter-spacing: 0; font-weight: 600; color: var(--bl-pop, var(--salty-accent)); }
+.cg-root .cg-eyebrow { letter-spacing: 0; font-weight: 600; color: var(--salty-pop-ink, var(--bl-pop, var(--salty-accent))); }
 .cg-root .cg-title { font-weight: 750; letter-spacing: -.01em; }
 .cg-root .cg-icon-btn { border: 0; border-radius: 14px; background: transparent; }
 .cg-root .cg-icon-btn:hover, .cg-root .cg-icon-btn:focus-visible { background: var(--salty-shade); }
 .cg-root .cg-toolbar { padding: 8px 20px 12px; }
 .cg-root :is(.cg-chip, .cg-badge, .cg-preview-chip) { border: 0; border-radius: 999px; background: var(--salty-shade); }
+/* '현재 채팅' 알약 글자: 포인트 70% 는 밝은 커스텀 포인트(분홍 등)에서 음영 면 위 4.5:1 이 안 돼 글자용 잉크에서 섞음 (나이트는 잉크 = 포인트라 그대로) */
+.cg-root .cg-badge { color: color-mix(in srgb, var(--salty-accent-ink, var(--cg-accent, var(--cg-accent-fallback))) 70%, var(--cg-text)); }
 .cg-root .cg-chip.is-on, .cg-root .cg-chip[aria-pressed="true"] { background: var(--salty-accent); color: var(--salty-on-accent, #fff) !important; }
 .cg-root :is(.cg-btn, .cg-sub-btn, .cg-page-btn, .cg-preview-btn) { border: 0; border-radius: 14px; background: var(--salty-shade); }
 .cg-root .cg-btn--primary { background: var(--salty-accent); color: var(--salty-on-accent, #fff) !important; }
@@ -1691,7 +1693,7 @@ body.cg-previewing #chat .mes .swipes-counter { display: none !important; }
 .cg-root .cg-action > i { font-size: 15px; }
 .cg-root .cg-action > :not(i) { display: none; }
 .cg-root .cg-action:hover, .cg-root .cg-action:focus-visible { background: color-mix(in srgb, var(--salty-text) 8%, transparent); color: var(--salty-text) !important; }
-.cg-root .cg-action--mark.is-on > i, .cg-root .cg-action.is-open > i { color: var(--bl-pop, var(--salty-accent)); }
+.cg-root .cg-action--mark.is-on > i, .cg-root .cg-action.is-open > i { color: var(--salty-pop-ink, var(--bl-pop, var(--salty-accent))); }
 .cg-root .cg-action[data-card-act="delete"] > i, .cg-root .cg-action[data-card-act="remove"] > i { color: #e5484d; }
 .cg-root .cg-expand { border: 0; background: transparent; width: 44px; height: 32px; padding: 0; margin: 2px auto 0; justify-content: center; }
 .cg-root .cg-expand > span { display: none; }
@@ -1705,9 +1707,12 @@ body.cg-previewing #chat .mes .swipes-counter { display: none !important; }
 .cg-root .cg-chat-item.is-active { background: var(--salty-accent-13, var(--salty-shade)); box-shadow: none !important; }
 .cg-root .cg-chat-dot { width: 8px; height: 8px; box-shadow: none; background: var(--salty-faint, currentColor); }
 .cg-root .cg-chat-item.is-active .cg-chat-dot { background: var(--bl-pop, var(--salty-accent)); }
-.cg-root .cg-chat-meta em { color: var(--salty-accent, inherit); }
+.cg-root .cg-chat-meta em { color: var(--salty-accent-ink, var(--salty-accent, inherit)); }
 .cg-root .cg-chat-count { background: color-mix(in srgb, var(--salty-text) 8%, transparent); color: var(--salty-muted, inherit); }
 .cg-root .cg-chat-item.is-active .cg-chat-count { background: var(--salty-accent); color: var(--salty-on-accent, #fff); }
+/* 채팅 목록 메타(메시지 수 · 날짜): 흐림색은 목록 면 · 켜진 줄의 포인트 면 위에서 4.5:1 이 안 돼 보조색으로 — 켜진 줄은 본문색 쪽으로 한 걸음 더 */
+.cg-root .cg-chat-meta { color: var(--cg-muted); }
+.cg-root .cg-chat-item.is-active .cg-chat-meta { color: color-mix(in srgb, var(--cg-muted) 75%, var(--cg-text)); }
 @media (max-width: 760px) {
     .cg-root .cg-sidebar { background: var(--bl-card, var(--salty-surface, var(--salty-bg, var(--cg-base)))); border-radius: 0 26px 26px 0; box-shadow: none; }
     /* 그림자는 열렸을 때만 — 닫힌 서랍의 그림자가 창 왼쪽 가장자리로 새어 나왔다 */
@@ -1776,4 +1781,68 @@ body.cg-previewing #chat .mes .swipes-counter { display: none !important; }
     .cg-root .cg-card-actions { gap: 0; margin-top: 8px; }
     .cg-root .cg-action { flex: 1 1 44px; min-width: 44px; max-width: 48px; }
     .cg-root .cg-action.is-danger { margin-left: auto; }
+}
+
+/* UI geometry follows menu typography; message formatting and saved colors stay independent. */
+body.salty .cg-root {
+    font-family: var(--salty-font-ui, inherit);
+    font-size: var(--bl-ts-ui, var(--mainFontSize, 15px));
+    font-weight: var(--salty-ui-weight, normal);
+    letter-spacing: var(--salty-ui-ls, normal);
+}
+body.salty .cg-root :is(.cg-window, .cg-sheet) { border-radius: var(--bl-r-lg, 16px); }
+body.salty .cg-root :is(.cg-btn, .cg-sub-btn, .cg-page-btn, .cg-preview-btn, .cg-icon-btn, .cg-action, .cg-chip, .cg-expand) {
+    height: auto;
+    min-height: max(34px, 1.5em + 12px);
+    border-radius: var(--bl-r-sm, 8px);
+    font-weight: var(--salty-ui-weight, normal);
+    letter-spacing: var(--salty-ui-ls, normal);
+    line-height: 1.5;
+    white-space: normal;
+}
+body.salty .cg-root :is(.cg-input, .cg-textarea, .cg-search-field) { border-radius: var(--bl-r-sm, 8px); }
+body.salty .cg-root .cg-input { height: auto; min-height: max(38px, 1.5em + 12px); padding-block: 6px; }
+body.salty .cg-root :is(.cg-title, .cg-sheet-title, .cg-page-title, .cg-setting-text b, .cg-section-title) { font-weight: bolder; letter-spacing: inherit; }
+body.salty .cg-root .cg-setting { flex-direction: row; flex-wrap: wrap; column-gap: max(12px, .7em); row-gap: 8px; }
+body.salty .cg-root .cg-setting-text { flex: 1 1 12em; overflow-wrap: anywhere; }
+body.salty .cg-root .cg-segmented {
+    display: flex;
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+    max-width: 100%;
+    min-width: 0;
+    gap: 8px max(10px, .6em);
+    border-radius: var(--bl-r-md, 12px);
+}
+body.salty .cg-root .cg-segmented button {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: auto;
+    min-height: max(34px, 1.5em + 12px);
+    padding: 6px 10px;
+    border-radius: var(--bl-r-sm, 8px);
+    font-weight: var(--salty-ui-weight, normal);
+    letter-spacing: var(--salty-ui-ls, normal);
+    line-height: 1.5;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+body.salty .cg-root .cg-segmented button:is(.is-on, .is-active, [aria-pressed="true"], [aria-checked="true"]) { border-radius: var(--bl-r-sm, 8px); font-weight: bolder; }
+body.salty .cg-root .cg-stepper { max-width: 100%; border-radius: var(--bl-r-md, 12px); }
+body.salty .cg-root .cg-stepper :is(button, input) {
+    height: auto;
+    min-height: max(34px, 1.5em + 12px);
+    font-size: var(--bl-ts-ctl, 1em);
+    font-weight: var(--salty-ui-weight, normal);
+    letter-spacing: var(--salty-ui-ls, normal);
+    line-height: 1.5;
+}
+body.salty .cg-root .cg-stepper-label { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+body.salty .cg-root .cg-sheet-foot { flex-wrap: wrap; gap: max(8px, .5em); }
+body.salty .cg-root .cg-btn--danger { color: var(--cg-danger, var(--salty-danger)) !important; }
+body.salty .cg-root .cg-action:is([data-card-act="delete"], [data-card-act="remove"]) > i { color: var(--cg-danger, var(--salty-danger)); }
+body.salty .cg-root .cg-setting-text small {
+    color: var(--cg-muted);
+    opacity: 1;
+    line-height: 1.55;
 }

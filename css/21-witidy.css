@@ -15,11 +15,14 @@ body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-head
 body.salty #WorldInfo .world_entry .inline-drawer-header > .drag-handle { grid-area: 1 / 1; width: 14px; margin: 0; }
 /* 3.0.0: 여기 있던 규칙 'body.salty #WorldInfo .world_entry .WIEntryTitleAndStatus' 은 지움 — grid-area · gap → 이 파일 아래 (같은 선택자 규칙이 덮음) */
 body.salty #WorldInfo .world_entry textarea[name="comment"] {
-  min-height: 34px !important; height: 34px !important; max-height: 68px;
-  padding: 6px 4px !important; font-size: 13px !important;
+  min-height: max(34px, calc(1.45em + 14px)) !important; height: auto !important;
+  max-height: max(68px, calc(2.9em + 14px));
+  padding: 6px 4px !important; font-size: var(--bl-fs-ctl) !important;
 }
 body.salty #WorldInfo .world_entry select[name="entryStateSelector"] {
-  width: 36px !important; height: 34px !important; padding: 0 12px 0 2px !important;
+  width: max(36px, 2em) !important; height: auto !important;
+  min-height: max(34px, calc(1.4em + 8px)) !important;
+  padding: 4px 12px 4px 2px !important; font-size: var(--bl-fs-ctl) !important; line-height: 1.4;
   background-position: right 1px center !important;
 }
 body.salty #WorldInfo .world_entry .inline-drawer-header .killSwitch { margin: 0 !important; /* 3.0.0: grid-area → 이 파일 아래 (같은 선택자 규칙이 덮음) */ }
@@ -31,17 +34,21 @@ body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-head
   /* 3.0.0: grid-template-columns → css/25-palette-maker.css (같은 선택자 규칙이 덮음) */
 }
 body.salty #WorldInfo .world_entry .WIEnteryHeaderControls > .world_entry_form_control {
-  flex-direction: row; align-items: center; gap: 4px !important; min-width: 0;
+  flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 10px !important; min-width: 0;
 }
 body.salty #WorldInfo .world_entry .WIEnteryHeaderControls .WIEntryHeaderTitleMobile {
-  font-size: 10px !important; line-height: 1.2; white-space: nowrap; text-align: left;
+  font-size: var(--bl-fs-cap) !important; line-height: 1.4; white-space: normal; text-align: left;
+  flex: 0 1 auto; min-width: 0; max-width: 100%; word-break: keep-all; overflow-wrap: anywhere;
   margin: 0 !important; padding: 0 !important;
 }
 body.salty #WorldInfo .world_entry .WIEnteryHeaderControls .world_entry_form_control > :is(input, select) {
-  flex: 1 1 0; width: 0 !important; max-width: none !important; min-width: 0 !important;
-  height: 28px !important; min-height: 30px !important; margin: 0 !important;
-  padding-block: 3px !important; padding-left: 7px !important; font-size: 12px !important;
+  flex: 1 1 4.5em; width: 0 !important; max-width: 100% !important; min-width: min(100%, 4.5em) !important;
+  height: auto !important; min-height: max(30px, calc(1.4em + 8px)) !important; margin: 0 !important;
+  padding-block: 3px !important; padding-left: 7px !important; font-size: var(--bl-fs-ctl) !important; line-height: 1.4;
 }
+/* 제목과 상태 선택은 같은 줄에 들어갈 때만 나란히 둔다. 사용자 글자 크기는 유지한다. */
+body.salty #WorldInfo .world_entry .WIEntryTitleAndStatus { flex-wrap: wrap !important; }
+body.salty #WorldInfo .world_entry .WIEntryTitleAndStatus > .flex-container { flex: 1 1 8em !important; }
 .bl-wi-actions { display: contents; }
 .bl-wi-actions > summary, .bl-wi-actions .bl-wi-action-list span { display: none; }
 .bl-favorites-heading, .bl-fav-name { display: none; }
@@ -52,13 +59,12 @@ body.salty:not(#salty-none) #WorldInfo .world_entry > form > .inline-drawer > .i
   column-gap: 10px !important;
 }
 body.salty:not(#salty-none) #WorldInfo .world_entry .inline-drawer-header .inline-drawer-toggle { grid-area: 1 / 1; width: 22px; justify-content: flex-start; }
-/* 이름 칸의 시작선 = 아래 줄 위치 드롭다운의 시작선 (둘 다 여백 8 + 4 뒤 44px).
-   "위치:" 글자 폭이 글꼴마다 달라 드롭다운 시작이 흔들려서, 글자 칸을 28px 로 고정 (꺾쇠 22 + 간격 10 = 28 + 간격 4) */
+/* 번역된 위치 이름과 큰 사용자 글꼴도 읽도록 고정 28px 대신 내용 폭을 쓴다. */
 body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls > [name="PositionBlock"] > .WIEntryHeaderTitleMobile {
-  flex: 0 0 28px;
-  width: 28px;
-  min-width: 28px;
-  overflow: hidden;
+  flex: 0 1 auto;
+  width: auto;
+  min-width: 0;
+  overflow: visible;
 }
 body.salty:not(#salty-none) #WorldInfo .world_entry .WIEntryTitleAndStatus { grid-area: 1 / 2; gap: 10px !important; }
 body.salty:not(#salty-none) #WorldInfo .world_entry .inline-drawer-header .killSwitch { grid-area: 1 / 3; }
@@ -106,9 +112,9 @@ body.salty #floatingPrompt .inline-drawer-content { padding-left: 0 !important; 
 body.salty #right-nav-panel #CharListButtonAndHotSwaps { align-items: flex-start; padding: 6px 8px !important; gap: 8px !important; }
 body.salty #right-nav-panel #CharListButtonAndHotSwaps > .flex-container { flex-flow: column !important; padding-top: 20px; }
 body.salty #right-nav-panel #HotSwapWrapper { display: flex; flex-direction: column !important; align-items: stretch !important; min-width: 0; gap: 5px; }
-body.salty #right-nav-panel #HotSwapWrapper .bl-favorites-heading { width: 100%; flex: none; display: flex; align-items: center; gap: 6px; color: var(--salty-muted); font-size: 11px; font-weight: 600; }
-body.salty #right-nav-panel #HotSwapWrapper .bl-favorites-heading i { color: var(--salty-pop); font-size: 10px; }
-body.salty #right-nav-panel #HotSwapWrapper .bl-favorites-heading small { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--salty-faint); }
+body.salty #right-nav-panel #HotSwapWrapper .bl-favorites-heading { width: 100%; flex: none; display: flex; align-items: center; gap: 6px; color: var(--salty-muted); font-size: var(--bl-fs-cap); font-weight: 600; line-height: 1.4; }
+body.salty #right-nav-panel #HotSwapWrapper .bl-favorites-heading i { color: var(--bl-pop-ink); font-size: 1em; }
+body.salty #right-nav-panel #HotSwapWrapper .bl-favorites-heading small { margin-left: auto; font-size: inherit; font-variant-numeric: tabular-nums; color: var(--salty-muted); }
 body.salty #right-nav-panel #HotSwapWrapper .hotswap { display: flex; align-items: flex-start; gap: 6px; width: 100%; height: auto !important; max-height: none !important; flex-wrap: nowrap !important; padding: 3px 0; overflow-x: auto; scrollbar-width: none; }
 body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar {
   display: flex; flex-direction: column; justify-content: flex-start; flex: 0 0 64px;
@@ -130,7 +136,7 @@ body.salty #right-nav-panel #rm_print_characters_block .character_select > .avat
 body.salty .salty-panel .bl-preview-tools { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 6px 0; }
 body.salty .salty-panel .bl-preview-kinds, body.salty .salty-panel .bl-preview-samples:not([hidden]) { display: flex; align-items: center; gap: 2px; }
 body.salty .salty-panel .bl-preview-tools button { min-height: 30px; padding: 4px 7px; border: 0; border-radius: 7px; background: transparent; color: var(--salty-muted); font: inherit; font-size: 11px; cursor: pointer; }
-body.salty .salty-panel .bl-preview-tools button[aria-pressed="true"] { background: var(--salty-fill-accent-13, var(--salty-accent-13)); color: var(--salty-accent); }
+body.salty .salty-panel .bl-preview-tools button[aria-pressed="true"] { background: var(--salty-fill-accent-13, var(--salty-accent-13)); color: var(--salty-accent-ink, var(--salty-accent)); }
 body.salty .salty-panel .bl-preview-samples button { min-width: 28px; font-size: 21px; }
 body.salty .salty-panel .bl-preview-samples span { min-width: 30px; color: var(--salty-muted); text-align: center; font-size: 11px; }
 body.salty .salty-panel .salty-sec[data-tab="image"] .salty-group { padding-inline: 10px; }

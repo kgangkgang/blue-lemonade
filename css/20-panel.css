@@ -137,7 +137,7 @@ body.salty-dark .salty-panel {
   position: relative; /* 빛(::after)이 알약 크기로 — 없으면 서랍 전체 크기의 둥근 빛이 됨 */
   border-color: color-mix(in srgb, var(--salty-accent) 70%, transparent);
   background: color-mix(in srgb, var(--salty-accent) 16%, transparent);
-  color: var(--salty-accent);
+  color: var(--salty-accent-ink, var(--salty-accent));
   font-weight: 600;
 }
 :is(.salty-ver, body.salty #rm_extensions_block #salty-drawer .bl-version).is-new::after {
@@ -363,7 +363,7 @@ body.salty .popup:has(.salty-notice) .popup-content {
 .salty-hint {
   margin-left: 4px;
   font-weight: 500;
-  color: var(--salty-faint);
+  color: var(--salty-muted);
 }
 /* 라벨 속 *기울임* · **굵게** 예시: 별표는 옅게, 글자는 진짜로 기울이고 굵게 (한글 글꼴도 기울어지게 합성 허용) */
 .salty-md {
@@ -549,7 +549,7 @@ body.salty-dark .salty-shapes button.on {
   background: color-mix(in srgb, var(--salty-text) 18%, var(--salty-surface));
 }
 .salty-shapes button.on svg {
-  color: var(--bl-pop, var(--salty-accent));
+  color: var(--bl-pop-ink, var(--salty-accent));
 }
 
 /* 슬라이더 */
@@ -856,7 +856,7 @@ body.salty-dark .salty-shapes button.on {
   font-size: var(--fs-small);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
-  color: var(--salty-faint);
+  color: var(--salty-muted);
 }
 @media (hover: hover) {
   .salty-fonttags button:not(.on):hover,
@@ -871,7 +871,7 @@ body.salty-dark .salty-shapes button.on {
 }
 .salty-fonttags button.on span {
   color: inherit;
-  opacity: 0.72;
+  opacity: 1;
 }
 .salty-fonttags button.none:not(.on) {
   opacity: 0.5;
@@ -957,12 +957,12 @@ body.salty-dark .salty-shapes button.on {
   color: var(--salty-muted);
 }
 .salty-fontitem.on .salty-fontinfo b {
-  color: var(--salty-accent);
+  color: var(--salty-accent-ink, var(--salty-accent));
 }
 .salty-fontinfo b i {
   font-style: normal;
   font-weight: 500;
-  color: var(--salty-faint);
+  color: var(--salty-muted);
 }
 .salty-fontinfo b em {
   padding: 1px 6px;
@@ -1108,7 +1108,7 @@ body.salty-dark .salty-shapes button.on {
   --tool-cool-color-picker-btn-bg: transparent;
   --tool-cool-color-picker-btn-border-color: transparent;
   --tool-cool-color-picker-btn-border-radius: 9px;
-  --tool-cool-color-picker-btn-inner-border-radius: 7px;
+  --tool-cool-color-picker-btn-border-radius-inner: 7px;
   flex: none;
   border-radius: 9px;
   box-shadow: inset 0 0 0 1px var(--shade-2);

@@ -306,7 +306,8 @@ export function uiOpenKnown() {
 export function startMenuOpenMark() {
     const chat = document.getElementById('chat');
     if (!chat) return;
-    const sync = (el) => { const visible = el.classList.contains('visible'); el.closest('.mes')?.classList.toggle('bl-menu-open', visible); positionMessageMenu(el, visible); };
+    // _blClosedAt: 이 메뉴가 마지막으로 닫힌 때 (아래 0.45초 뒤 강제 닫기가 '실리태번이 이미 닫았다가 사용자가 다시 연 메뉴'를 가려낼 때 쓴다)
+    const sync = (el) => { const visible = el.classList.contains('visible'); if (!visible) el._blClosedAt = performance.now(); el.closest('.mes')?.classList.toggle('bl-menu-open', visible); positionMessageMenu(el, visible); };
     // 2.9.4: ··· 메뉴 위치가 쓰는 #chat 앵커(--salty-chat)는 열린 메뉴가 있을 때만 — style.css 가 #chat.bl-mes-menu-open 에만 이름을 준다
     const syncChat = () => chat.classList.toggle('bl-mes-menu-open', !!chat.querySelector(':scope > .mes.bl-menu-open'));
     chat.querySelectorAll('.extraMesButtons').forEach(sync);
@@ -332,9 +333,11 @@ export function startMenuOpenMark() {
         if (document.body.classList.contains('expandMessageActions') || event.target?.closest?.('.extraMesButtons, .extraMesButtonsHint')) return;
         const open = chat.querySelectorAll('.extraMesButtons.visible, .extraMesButtons[style*="display: flex"], .extraMesButtons[style*="display:flex"]');
         if (!open.length) return;
+        const at = performance.now();
         setTimeout(() => {
             for (const menu of open) {
-                if (!menu.isConnected || (!menu.classList.contains('visible') && getComputedStyle(menu).display === 'none')) continue;
+                // 이 클릭 뒤에 실리태번이 한 번 닫았으면(= 지금 열려 있는 건 0.45초 안에 사용자가 다시 연 것) 건드리지 않는다
+                if (!menu.isConnected || (menu._blClosedAt || 0) >= at || (!menu.classList.contains('visible') && getComputedStyle(menu).display === 'none')) continue;
                 menu.classList.remove('visible'); menu.style.display = 'none'; menu.style.opacity = '';
                 const hint = menu.parentElement?.querySelector(':scope > .extraMesButtonsHint');
                 if (hint) { hint.style.display = ''; hint.style.opacity = ''; }

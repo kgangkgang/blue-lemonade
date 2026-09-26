@@ -271,6 +271,18 @@ export function startCompactLayout() {
         wasEnabled = enabled; wasQrTop = qrTop; wasQrVertical = qrVertical; wasFindOff = findOff;
     }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
     mobile.addEventListener('change', placeQuickReplies);
+    // 5.4.4 ≡ · ✦ 메뉴 높이: PC 는 실리태번 Popper 가 메뉴 아래 끝을 버튼 윗변에 붙이고 위로 키운다. 최대 높이가 '화면 - 위 막대'뿐이라
+    // 항목이 많으면(확장을 여럿 켜 20줄) 버튼 아래 입력판 높이만큼 위 막대 위 · 화면 밖으로 밀려 첫 항목을 못 눌렀다 (1440×900 에서 top -51px).
+    // 여는 클릭 때(실리태번 핸들러보다 먼저, capture) 버튼 윗변 ~ 화면 아래를 재어 메뉴에 --bl-menu-foot 로 넣는다 → css/04-send-form.css 가 뺀다.
+    // 아래에서 잰 값이라 창 높이만 바뀌어도 맞다. 폰(앵커 배치)은 CSS 가 입력판 위에 맞추므로 이 값을 안 쓴다
+    const SEND_MENU_OF = { options_button: 'options', extensionsMenuButton: 'extensionsMenu' };
+    document.addEventListener('click', event => {
+        const button = event.target.closest?.('#options_button, #extensionsMenuButton');
+        const menu = button && document.getElementById(SEND_MENU_OF[button.id]);
+        if (!menu || !document.body.classList.contains('salty')) return;
+        const foot = `${Math.max(0, Math.round(window.innerHeight - button.getBoundingClientRect().top))}px`;
+        if (menu.style.getPropertyValue('--bl-menu-foot') !== foot) menu.style.setProperty('--bl-menu-foot', foot);
+    }, true);
     // 실리태번이 최근 대화 화면을 다시 그려도 버전 전체를 두 줄로 유지한다.
     function refreshWelcome() {
         for (const label of document.querySelectorAll('.welcomeHeaderVersionDisplay')) {

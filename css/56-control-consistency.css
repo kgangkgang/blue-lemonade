@@ -2,30 +2,47 @@
    설정 조작의 크기와 상태를 통일한다. 채팅 본문과 사용자 선택 밀도는 유지한다.
    ===== */
 .salty-panel {
-  --bl-settings-control: 40px;
-  --bl-settings-radius: 8px;
-  --bl-settings-gap: 8px;
+  --bl-settings-control: 34px;
+  --bl-settings-chip: 32px;
+  --bl-settings-radius: var(--bl-r-sm, 8px);
+  --bl-settings-gap: max(6px, .4em);
+  --bl-settings-label-gap: max(10px, .6em);
+  --num-h: max(34px, calc(1.5em + 12px));
+  --row-h: 40px;
+  letter-spacing: var(--salty-ui-ls, normal);
 }
 .salty-panel :is(.salty-btn, .salty-seg button, .salty-fonttags button, .salty-fontempty button) {
   min-height: var(--bl-settings-control);
   border-radius: var(--bl-settings-radius);
-  padding: 8px 12px;
+  padding: 6px 10px;
   line-height: 1.4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
+.salty-panel :is(.salty-seg button, .salty-fonttags button, .salty-fontempty button) {
+  min-height: var(--bl-settings-chip);
+  padding-block: 4px;
+}
+.salty-panel .salty-seg.salty-mini button { min-height: var(--bl-settings-chip); padding:4px 9px; }
+.salty-panel :is(.salty-fonttags button,.salty-fontempty button) { height:auto; }
 .salty-panel :is(.salty-btns, .bl-palette-actions) { gap: var(--bl-settings-gap); }
-.salty-panel .salty-seg { gap: 4px; padding: 4px; border-radius: 12px; max-width: 100%; }
-.salty-panel .salty-seg button { flex-shrink: 1; }
+.salty-panel .salty-seg { gap: 3px; padding: 3px; border-radius: 10px; max-width: 100%; }
+.salty-panel .salty-seg button { flex-shrink: 1; font-weight:var(--bl-settings-choice-weight,600); }
 /* 선택은 옅은 면과 안쪽 선, 실행은 기존 primary의 진한 면으로 구분. */
 html body .salty-panel :is(.salty-seg button, .salty-fonttags button, .salty-fontempty button).on {
   background: var(--salty-fill-accent-10, var(--salty-accent-10));
-  color: var(--salty-accent);
+  color: var(--salty-accent-ink, var(--salty-accent));
   box-shadow: inset 0 0 0 1px var(--salty-accent);
-  font-weight: 700;
+  font-weight: bolder;
 }
 html body .salty-panel.bl-editor .bl-settings-toprow button {
-  min-height: var(--bl-settings-control);
+  min-height: 38px;
   border-radius: var(--bl-settings-radius);
 }
+html body .salty-panel.bl-editor .bl-editor-actions button { display:inline-flex; align-items:center; justify-content:center; }
+.bl-editor .bl-editor-actions svg { display:block; }
 html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
   width: var(--bl-settings-control);
 }
@@ -35,7 +52,7 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
 }
 .salty-panel .bl-editor-category button[aria-current="page"] {
   background: var(--salty-fill-accent-10, var(--salty-accent-10));
-  color: var(--salty-accent);
+  color: var(--salty-accent-ink, var(--salty-accent));
   font-weight: 700;
   box-shadow: inset 3px 0 0 var(--salty-accent);
 }
@@ -49,12 +66,13 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
   outline-offset: 2px;
 }
 @media (max-width: 760px), (pointer: coarse) {
-  .salty-panel { --bl-settings-control: 44px; }
+  .salty-panel { --bl-settings-control: 36px; --bl-settings-chip: 34px; }
+  html body .salty-panel.bl-editor .bl-settings-toprow button { min-height:40px; }
   html body .salty-panel.bl-editor .bl-setting-reset {
-    width: 44px;
-    min-width: 44px;
-    height: 44px;
-    min-height: 44px;
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
+    min-height: 32px;
     border: 0;
     border-radius: var(--bl-settings-radius);
   }
@@ -69,18 +87,40 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
   .salty-panel .salty-seg.salty-mini { flex-wrap: wrap; max-width: 100%; }
   .salty-panel .salty-row { flex-wrap: wrap; gap: var(--bl-settings-gap); }
 }
+.salty-panel .salty-sizeopt-ctl { margin-inline-start:auto; justify-content:flex-end; }
+.salty-panel .salty-row { padding-block:5px; }
+/* 사용자 글꼴·크기·자간은 유지하고, 조작부와의 거리를 확보한다. */
+.salty-panel.bl-editor .salty-row,
+.salty-panel.bl-editor .salty-sec .salty-group .salty-slider > header {
+  flex-wrap:wrap;
+  column-gap:var(--bl-settings-label-gap);
+  row-gap:8px;
+}
+.salty-panel.bl-editor .salty-row > :is(.salty-switch,.salty-seg,.salty-btn,.salty-btns,.salty-sizeopt-ctl),
+.salty-panel.bl-editor .salty-slider > header > .salty-num { margin-inline-start:auto; }
+.salty-panel .salty-num { gap:max(5px,.3em); }
+.salty-panel .salty-num i { white-space:nowrap; }
+.salty-panel .salty-num i.salty-unit { flex:none; width:max-content; min-width:1.5em; }
+.salty-panel.bl-editor .salty-stack { row-gap:max(8px,.4em); }
+/* Labels keep their size; reduce the repeated space around controls instead. */
+.salty-panel .bl-editor-group-summary { color:var(--salty-muted); }
+.salty-panel .salty-fontrow { min-height:38px; padding-block:6px; }
+/* Short preservation switches fit side by side without squeezing their labels. */
+.salty-panel .salty-group.bl-setting-locks { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,max(9em,calc((100% - 20px) / 2))),1fr)); column-gap:20px; }
+.salty-panel .bl-setting-locks > :not(.salty-row) { grid-column:1 / -1; }
+.salty-panel .bl-setting-locks .salty-row { flex-wrap:wrap; }
 
 /* 점검의 실행 버튼과 결과는 별도 행으로 유지한다. */
 .salty-panel .bl-install-health { display:grid; gap:16px; padding:16px; margin:16px 0; border:1px solid var(--salty-line); border-radius:12px; background:var(--salty-panel-card,var(--salty-surface)); min-width:0; }
 .salty-panel .bl-health-head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; }
 .salty-panel .bl-health-head > div { flex:1 1 180px; min-width:0; }
-.salty-panel .bl-health-head h3 { margin:0 0 4px; font-size:15px; line-height:1.5; }
+.salty-panel .bl-health-head h3 { margin:0 0 4px; font-size:calc(15 * var(--sp)); line-height:1.5; }
 .salty-panel .bl-health-head p,.salty-panel .bl-health-item p { margin:0; line-height:1.6; overflow-wrap:anywhere; }
-.salty-panel .bl-health-head p { color:var(--salty-muted); font-size:12px; }
+.salty-panel .bl-health-head p { color:var(--salty-muted); font-size:calc(12 * var(--sp)); }
 .salty-panel .bl-install-health .salty-btn { flex:none; width:auto; margin:0; white-space:normal; word-break:keep-all; }
-.salty-panel [data-health-result] { display:grid; gap:12px; min-width:0; font-size:13px; }
+.salty-panel [data-health-result] { display:grid; gap:12px; min-width:0; font-size:calc(13 * var(--sp)); }
 .salty-panel .bl-health-summary { display:grid; gap:5px; padding:12px 14px; border-radius:9px; background:var(--salty-fill-accent-10,var(--salty-accent-10)); border-left:3px solid var(--salty-accent); }
-.salty-panel .bl-health-summary strong { font-size:14px; line-height:1.5; }
+.salty-panel .bl-health-summary strong { font-size:calc(14 * var(--sp)); line-height:1.5; }
 .salty-panel .bl-health-summary span { color:var(--salty-muted); line-height:1.6; }
 .salty-panel .bl-health-summary[data-state="attention"] { border-left-style:double; border-left-width:5px; }
 .salty-panel .bl-health-item { display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; padding:12px 0; border-bottom:1px solid var(--salty-line); }
@@ -91,19 +131,43 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
 .salty-panel .bl-health-details ul { padding-left:20px; max-height:240px; overflow:auto; }
 .salty-panel .bl-health-versions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:0 0 12px; }
 .salty-panel .bl-health-versions > div { display:grid; gap:4px; padding:10px; background:var(--salty-fill-shade,var(--salty-shade)); border-radius:8px; min-width:0; }
-.salty-panel .bl-health-versions dt { font-size:12px; color:var(--salty-muted); }
+.salty-panel .bl-health-versions dt { font-size:calc(12 * var(--sp)); color:var(--salty-muted); }
 .salty-panel .bl-health-versions dd { margin:0; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
 
 .salty-panel .bl-usage-mode { display:block; padding:12px; margin:0 0 14px; border:1px solid var(--salty-line); border-radius:10px; }
 .salty-panel .bl-usage-mode label { display:grid; gap:8px; font-weight:600; }
 .salty-panel .bl-usage-mode select { width:100%; min-width:0; min-height:44px; font:inherit; }
-.salty-panel .bl-usage-mode p { margin:0; color:var(--salty-muted); font-size:12px; line-height:1.6; }
+.salty-panel .bl-usage-mode p { margin:0; color:var(--salty-muted); font-size:calc(12 * var(--sp)); line-height:1.6; }
 .salty-panel .bl-usage-mode button { margin:0; }
 .salty-panel .bl-usage-mode [role="status"]:empty { display:none; }
 
-.salty-panel .bl-prompt-source { margin:4px 0 14px; color:var(--salty-muted); font-size:12px; line-height:1.7; }
+.salty-panel .bl-prompt-source { margin:4px 0 14px; color:var(--salty-muted); font-size:calc(12 * var(--sp)); line-height:1.7; }
 .salty-panel .bl-prompt-source a { color:var(--salty-accent); text-underline-offset:3px; }
 
-.salty-panel .bl-usage-mode summary { cursor:pointer; min-height:32px; line-height:1.7; font-size:14px; }
+.salty-panel .bl-usage-mode summary { cursor:pointer; min-height:32px; line-height:1.7; font-size:calc(14 * var(--sp)); }
 .salty-panel .bl-usage-mode summary strong { font-weight:600; }
 .salty-panel .bl-usage-mode-body { display:grid; gap:12px; padding-top:16px; }
+
+/* 공통 조작부의 모양. 색 견본/스위치/사진에 사용자가 고른 모양은 별개다. */
+html body.salty :is(dialog.popup, .bl-settings-dialog, .bl-capture-dialog, .bl-tool-dialog,
+  .bl-translator-dialog, .bl-assets-dialog, .bl-ctsi-dialog, .bl-direction-dialog,
+  .bl-rewrite-dialog, .bl-notes-dialog, .bl-credits-dialog) {
+  border-radius:var(--bl-r-lg);
+}
+html body.salty :is(.salty-panel, .popup-content) :is(.salty-btn, .menu_button, .text_pole):where(:not(input[type="color"])) {
+  border-radius:var(--bl-r-sm);
+}
+html body.salty input[type="color"] {
+  flex:0 0 34px; width:34px!important; min-width:34px; max-width:34px;
+  height:34px!important; min-height:34px; padding:0!important; border:0;
+  border-radius:50%!important; background:transparent; cursor:pointer;
+}
+html body.salty input[type="color"]::-webkit-color-swatch-wrapper { padding:0; }
+html body.salty input[type="color"]::-webkit-color-swatch { border:1px solid var(--salty-line); border-radius:50%; }
+html body.salty input[type="color"]::-moz-color-swatch { border:1px solid var(--salty-line); border-radius:50%; }
+html body.salty .salty-panel .salty-row > input[type="color"] { margin-inline-start:auto; }
+html body.salty toolcool-color-picker {
+  --tool-cool-color-picker-btn-border-radius:50%;
+  --tool-cool-color-picker-btn-border-radius-inner:50%;
+  border-radius:50%;
+}

@@ -21,7 +21,8 @@ self.onmessage = ({ data }) => {
     if (!engine) return;
     if (data.type === 'resize') {
         engine.resize(data.w, data.h, data.dpr);
-        if (!loop.running()) engine.draw();
+        // 크기가 바뀐 캔버스는 비어 있다. 루프가 도는 중이어도 다음 틱은 30/20fps 문턱으로 건너뛸 때가 많아 빈 프레임이 화면에 올라갔다(창을 끄는 동안 깜빡임) — 이 메시지 안에서 바로 다시 그린다
+        engine.draw();
     } else if (data.type === 'config') {
         engine.config(data);
         apply();
@@ -29,6 +30,9 @@ self.onmessage = ({ data }) => {
         paused=true;loop.stop();
     } else if (data.type === 'resume') {
         paused=false;apply();
+    } else if (data.type === 'reduce') {
+        // 기기의 '동작 줄이기'를 열어 둔 채 바꿨을 때 (weather.js 가 matchMedia change 로 보낸다)
+        reduce=!!data.reduce;apply();
     }
 };
 

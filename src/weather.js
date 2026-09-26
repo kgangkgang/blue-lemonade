@@ -15,8 +15,13 @@ const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const WEATHER_VALUE = '.custom-dem-track__item--weather .custom-dem-track__value, .custom-dem-track-recovery__item--context .custom-dem-track-recovery__value';
 
 // 날씨 글자 → 비 · 눈. 한국어는 낱말 앞(띄어쓰기 · 쉼표 뒤)에서만 — "준비", "비밀", "눈부신" 같은 말에 걸리지 않게
-const SNOW = /(?:^|[\s,·/(~→-])(?:눈(?!부)|함박눈|진눈깨비|싸락눈|눈보라|폭설|첫눈|눈발)|snow|sleet|blizzard|flurr/i;
+// 띄어 쓴 "눈이 부신 햇살"도 눈이 아니다 ("눈이 부슬부슬"은 눈). 구형 Safari 가 lookbehind 를 못 읽으니 앞쪽 조건은 쓰지 않는다
+const SNOW = /(?:^|[\s,·/(~→-])(?:눈(?!부|\s*이?\s*부[시신실셔셨심])|함박눈|진눈깨비|싸락눈|눈보라|폭설|첫눈|눈발)|snow|sleet|blizzard|flurr/i;
 const RAIN = /(?:^|[\s,·/(~→-])(?:비(?![밀행슷교록용])|이슬비|가랑비|보슬비|안개비|장대비|여우비|소나기|폭우|호우|장마|빗|폭풍우|뇌우)|rain|drizzl|shower|storm|thunder|downpour|monsoon|sun\s*shower/i;
+// 영어의 rain · shower · storm 이 들어 있지만 비가 아닌 말 — 비를 보기 전에 지운다 (Rainbow · Snowstorm · snow showers · meteor shower · sandstorm)
+const NOT_RAIN = /rainbows?|snow\s*(?:storms?|showers?)|meteor\s*showers?|(?:sand|dust)\s*storms?/gi;
+// 바람: window · August 의 wind · gust 는 빼고 (crosswind · whirlwind 처럼 붙여 쓴 바람은 그대로)
+const BREEZE = /바람|산들|breez|wind(?!ow)|\bgust/i;
 
 const FOG = /안개|연무|박무|물안개|fog|mist|haze/i; // '안개비'는 위의 비에서 먼저 걸린다
 
@@ -33,15 +38,16 @@ export function detectWeatherAll(text) {
     const value = String(text || '');
     const found = [];
     if (SNOW.test(value)) found.push('snow');
-    if (RAIN.test(value) && !INDOOR.test(value)) found.push('rain'); // Retired glass effect: indoor rain stays clear.
+    if (RAIN.test(value.replace(NOT_RAIN, ' ')) && !INDOOR.test(value)) found.push('rain'); // Retired glass effect: indoor rain stays clear.
     if (/무지개|rainbow/i.test(value)) found.push('rainbow');
     if (FOG.test(value) || HAZE.test(value)) found.push('fog');
     const outdoors = !INDOOR.test(value) || /햇[살빛볕]|sunlight|sunshine|sunlit/i.test(value); // "창으로 드는 햇살"은 실내라도 켠다
     const dusk = DUSK.test(value);
     if (outdoors && !NIGHT.test(value) && !GLOOM.test(value) && (dusk || SUN.test(value) || /여우비|sun\s*shower/i.test(value))) found.push('sun');
     if (outdoors && NIGHT.test(value) && !GLOOM.test(value)) found.push('star'); // 맑은 밤 · 밤 → 별
-    if (/바람|산들|breez|wind|gust/i.test(value)) found.push('breeze');
-    return { modes: found.slice(0, 2), warm: dusk };
+    if (BREEZE.test(value)) found.push('breeze');
+    // all: 트래커 '제외할 날씨'는 자르기 전에 걸러야 셋째 효과가 빈자리를 채운다 (plan)
+    return { modes: found.slice(0, 2), all: found, warm: dusk };
 }
 export function detectWeather(text) {
     return detectWeatherAll(text).modes[0] || 'off';
@@ -99,10 +105,12 @@ async function createRenderer(canvas, init, replaceCanvas) {
     apply();
     return {
         post(message) {
-            if (message.type === 'resize') { engine.resize(message.w, message.h, message.dpr); if (!loop.running()) engine.draw(); }
+            // 크기가 바뀐 캔버스는 비어 있다 — 루프가 돌아도 다음 틱을 기다리지 않고 바로 다시 그린다 (weather-worker.js 와 같음)
+            if (message.type === 'resize') { engine.resize(message.w, message.h, message.dpr); engine.draw(); }
             else if (message.type === 'config') { engine.config(message); apply(); }
             else if (message.type === 'pause') {paused=true;loop.stop();}
             else if (message.type === 'resume') {paused=false;apply();}
+            else if (message.type === 'reduce') {reduce=!!message.reduce;apply();}
         },
         stop: () => {loop.stop();engine.dispose();},
         kind: 'main',
@@ -156,6 +164,10 @@ function createLayer(host, className, virtual = false) {
     };
     document.addEventListener('visibilitychange',syncPaused);
     cleanup.add(()=>document.removeEventListener('visibilitychange',syncPaused));
+    // 기기의 '동작 줄이기'는 켜 둔 채로도 바뀐다 — 처음 한 번만 읽으면 새로고침 전까지 계속 움직이거나(켬) 멈춘 한 장으로 남았다(끔)
+    const syncReduce=()=>renderer?.post({type:'reduce',reduce:reduceMotion.matches});
+    reduceMotion.addEventListener?.('change',syncReduce);
+    cleanup.add(()=>reduceMotion.removeEventListener?.('change',syncReduce));
     if(typeof IntersectionObserver==='function') {
         const visible=new IntersectionObserver(entries=>{
             if(!host.isConnected){api.destroy();return;}
@@ -184,6 +196,7 @@ function createLayer(host, className, virtual = false) {
         renderer = r;
         if(destroyed){r.stop();return r;}
         if(paused)r.post({type:'pause'});
+        r.post({type:'reduce',reduce:reduceMotion.matches}); // 워커가 준비되는 동안 바뀐 동작 줄이기 값
         r.post({ type: 'resize', ...dimensions() }); // 워커가 준비되는 동안 바뀐 크기는 버려졌다 — 지금 크기로 한 번 맞춤
         if (pending) r.post(pending);
         pending = null;
@@ -241,7 +254,7 @@ let trackerTimer = 0;
 function trackerWeather() {
     const values = document.querySelectorAll(`#chat .mes:not([is_user="true"]) :is(${WEATHER_VALUE})`);
     const last = values[values.length - 1];
-    return last ? detectWeatherAll(last.textContent) : { modes: [], warm: false };
+    return last ? detectWeatherAll(last.textContent) : { modes: [], all: [], warm: false };
 }
 const trackerMode = () => trackerWeather().modes[0] || 'off';
 // 그 날씨를 골랐을 때 맞춰 둔 값(날씨마다 따로 기억)을 쓴다 — 트래커 · 둘째 효과가 안개를 부르면 안개 탭에서 다듬은 모양 그대로 나온다
@@ -250,7 +263,8 @@ const profileOf = (chat, mode) => (mode === chat.weather ? chat : chat.weatherPr
 function plan(chat, level) {
     if (chat.weather === 'tracker') {
         const found = trackerWeather(), warm = found.warm, skip = Array.isArray(chat.weatherTrackerSkip) ? chat.weatherTrackerSkip : [];
-        const modes = found.modes.filter(mode => !skip.includes(mode)); // 제외해 둔 날씨는 트래커에 나와도 그리지 않는다
+        // 제외해 둔 날씨는 트래커에 나와도 그리지 않는다 — 두 자리로 자르기 전에 걸러서 셋째로 잡힌 날씨가 빈자리를 채운다 ("안개비, 바람"에서 비를 빼면 안개 + 바람)
+        const modes = found.all.filter(mode => !skip.includes(mode)).slice(0, 2);
         if (!modes.length) return { mode: 'off', level, params: {} };
         // 트래커 따라에는 제 조절 값이 없다: 세기까지 그 날씨를 골랐을 때 맞춰 둔 값을 쓴다 (예전에는 비 · 눈을 다르게 맞춰 놔도 트래커 쪽 값 하나로 똑같이 나왔다)
         const levelOf = mode => { const n = Number(profileOf(chat, mode).weatherLevel); return [1, 2, 3].includes(n) && chat.weatherProfiles?.[mode] ? n : 2; };

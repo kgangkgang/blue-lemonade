@@ -1,0 +1,390 @@
+/* ===== css/59-prompt-ux.css =====
+   프롬프트 관리자 · 생성 설정 · 고급 서식.
+   API/선택값/끄기 상태는 원본에 맡기고, 글씨 크기와 실제 칸 폭에 맞춰 배치한다.
+   ===== */
+body.salty :is(#left-nav-panel,#AdvancedFormatting,#completion_prompt_manager_popup) {
+  --bl-prompt-control-height:34px;
+}
+@media (max-width:1000px) {
+  body.salty :is(#left-nav-panel,#AdvancedFormatting,#completion_prompt_manager_popup) {
+    --bl-prompt-control-height:36px;
+  }
+}
+body.salty #left-nav-panel {
+  container:bl-generation / inline-size;
+  font-size:var(--bl-fs-body);
+}
+
+/* Kobold/텍스트 생성의 30% 세 칸은 이름과 숫자를 동시에 담기엔 좁다.
+   슬라이더는 아래 한 줄, 이름은 위 한 줄 전체를 사용한다. */
+body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
+  flex:1 1 11em;
+  min-width:0;
+  max-width:100%;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:8px 10px;
+  padding:4px 0;
+}
+body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child {
+  grid-column:1 / -1;
+  grid-row:1;
+  min-width:0;
+  opacity:1;
+  line-height:1.45;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child :is(.fa-circle-info,.fa-circle-question) {
+  color:var(--salty-muted);
+  opacity:1;
+}
+body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-slider {
+  grid-column:1;
+  grid-row:2;
+  min-width:0;
+  width:100%!important;
+}
+body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
+  grid-column:2;
+  grid-row:2;
+  width:calc(5.5ch + 18px + 6 * max(0px,var(--bl-settings-tracking,0px)))!important;
+  max-width:100%;
+  height:auto!important;
+  min-height:max(var(--bl-prompt-control-height),calc(1.45em + 8px))!important;
+  font-size:var(--bl-fs-ctl)!important;
+  line-height:1.45;
+}
+body.salty #left-nav-panel #kobold_api-settings > .flex-container {
+  gap:8px 10px;
+}
+body.salty #left-nav-panel #kobold_api-settings [name="miroStatBlock-kobold"] > .flex-container {
+  flex-wrap:wrap;
+  gap:8px 10px;
+}
+/* 긴 초기화/선택 버튼도 사용자가 키운 글씨 그대로 줄바꿈한다. */
+body.salty #left-nav-panel #textgenerationwebui_api-settings > .flex-container:has(#samplerResetButton) {
+  gap:8px 10px;
+}
+body.salty #left-nav-panel #textgenerationwebui_api-settings small:has(> :is(#samplerResetButton,#samplerSelectButton)) {
+  min-width:0;
+  max-width:100%;
+  gap:8px 10px;
+}
+body.salty #left-nav-panel #textgenerationwebui_api-settings :is(#samplerResetButton,#samplerSelectButton) {
+  flex:1 1 auto;
+  min-width:0;
+  max-width:100%;
+  height:auto!important;
+  min-height:max(var(--bl-prompt-control-height),calc(1.45em + 10px))!important;
+  padding:5px 10px!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere;
+  line-height:1.45!important;
+}
+body.salty #left-nav-panel #pro-settings-block > :is(#amount_gen_block,#max_context_block) {
+  flex:1 1 11em;
+  min-width:0;
+}
+body.salty #left-nav-panel #pro-settings-block > :is(#amount_gen_block,#max_context_block) > small {
+  opacity:1;
+  color:var(--salty-muted);
+  font-size:var(--bl-fs-sub);
+  line-height:1.45;
+}
+
+/* Chat Completion도 2열을 강제하지 않고 큰 글씨일 때 한 칸으로 내려온다. */
+body.salty #left-nav-panel #range_block_openai:not([style*="display: none"]):not([style*="display:none"]) {
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,11em),1fr));
+  gap:8px 10px;
+}
+body.salty #left-nav-panel #range_block_openai > .range-block:has(#oai_max_context_unlocked,#stream_toggle,#openai_max_context,#openai_max_tokens,#n_openai) {
+  grid-column:auto;
+}
+body.salty #left-nav-panel .range-block-title {
+  min-width:0;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter input {
+  width:calc(5.5ch + 18px + 6 * max(0px,var(--bl-settings-tracking,0px)))!important;
+  max-width:100%;
+  height:auto!important;
+  min-height:max(var(--bl-prompt-control-height),calc(1.45em + 8px))!important;
+  font-size:var(--bl-fs-ctl)!important;
+  line-height:1.45;
+}
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> #bl-response-range) > .wide100p {
+  width:calc(6ch + 18px + 6 * max(0px,var(--bl-settings-tracking,0px)))!important;
+  max-width:100%;
+}
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p > input {
+  height:auto!important;
+  min-height:max(var(--bl-prompt-control-height),calc(1.45em + 8px))!important;
+  font-size:var(--bl-fs-ctl)!important;
+  line-height:1.45;
+}
+body.salty #left-nav-panel #openai_settings .inline-drawer-header > .flex-container {
+  flex-wrap:wrap;
+  gap:8px 10px;
+}
+body.salty #left-nav-panel #openai_settings .inline-drawer-header > .flex-container > small,
+body.salty #left-nav-panel #openai_settings .inline-drawer-content > label.checkbox_label > small {
+  opacity:1;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+
+/* 목록은 넓을 때 기존 한 행을 유지한다. 좁거나 큰 글씨이면 이름 한 줄과
+   토큰/조작 한 줄로 나눠 이름·숫자·버튼이 같은 칸을 다투지 않게 한다. */
+body.salty #completion_prompt_manager {
+  container:bl-prompt-list / inline-size;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  font-size:var(--bl-fs-body);
+}
+body.salty #completion_prompt_manager .completion_prompt_manager_header {
+  flex-wrap:wrap;
+  gap:8px 10px;
+}
+body.salty #completion_prompt_manager .completion_prompt_manager_header > div {
+  min-width:0;
+  max-width:100%;
+  overflow-wrap:anywhere;
+}
+body.salty #left-nav-panel #openai_settings #completion_prompt_manager > .range-block {
+  --pm-tok:max(46px,6ch);
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt_disabled :is(.completion_prompt_manager_prompt_name,.completion_prompt_manager_prompt_name .prompt-manager-inspect-action,.completion_prompt_manager_prompt_name > span:not(.fa-solid),.prompt_manager_prompt_tokens) {
+  color:var(--salty-muted)!important;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt_name .prompt-manager-injection-depth {
+  color:var(--salty-muted);
+  opacity:1;
+}
+body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt_name > :is(a.prompt-manager-inspect-action,span:not([class])) {
+  white-space:normal;
+  overflow-wrap:anywhere;
+  text-overflow:clip;
+}
+@container bl-prompt-list (max-width:19em) {
+  body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt {
+    grid-template-columns:minmax(0,1fr) auto!important;
+    gap:8px 10px!important;
+  }
+  body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt > .completion_prompt_manager_prompt_name {
+    grid-column:1 / -1;
+    grid-row:1;
+    flex-wrap:wrap;
+    gap:4px 10px;
+    overflow:visible!important;
+    white-space:normal!important;
+  }
+  body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt_name > :is(a.prompt-manager-inspect-action,span:not([class])) {
+    white-space:normal;
+    overflow-wrap:anywhere;
+    text-overflow:clip;
+  }
+  body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt > .prompt_manager_prompt_tokens {
+    grid-column:1;
+    grid-row:2;
+    justify-self:start;
+    padding-left:var(--pm-icon);
+  }
+  body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt > span:has(> .prompt_manager_prompt_controls) {
+    grid-column:2;
+    grid-row:2;
+  }
+}
+@container bl-generation (max-width:22em) {
+  body.salty #completion_prompt_manager .completion_prompt_manager_footer {
+    flex-wrap:wrap!important;
+    gap:8px 10px!important;
+  }
+  body.salty #completion_prompt_manager .completion_prompt_manager_footer > select {
+    flex:1 1 100%!important;
+    margin:0!important;
+  }
+  body.salty #completion_prompt_manager .completion_prompt_manager_footer > .menu_button {
+    width:var(--bl-prompt-control-height)!important;
+    height:var(--bl-prompt-control-height)!important;
+    min-height:var(--bl-prompt-control-height)!important;
+    margin:0!important;
+  }
+}
+
+/* 편집/검사 시트. 저장 아이콘도 공통 버튼 크기를 따르고, 숨겨진 마커 본문은
+   원본처럼 편집할 수 없는 상태를 유지하면서 빈 높이만 접는다. */
+body.salty #completion_prompt_manager_popup {
+  container:bl-prompt-popup / inline-size;
+  font-size:var(--bl-fs-body);
+}
+body.salty #completion_prompt_manager_popup :is(#completion_prompt_manager_popup_edit,#completion_prompt_manager_popup_inspect),
+body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form {
+  height:auto;
+  min-height:0;
+}
+body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form > .flex-container {
+  gap:8px 10px!important;
+}
+body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_control {
+  flex-basis:9em;
+  padding-bottom:8px;
+}
+body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_control:has(> #completion_prompt_manager_popup_entry_form_name) > .text_muted {
+  display:none; /* 이름 라벨 바로 밑의 '이 프롬프트의 이름' 반복 설명 */
+}
+body.salty #completion_prompt_manager_popup .text_muted {
+  opacity:1;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+}
+/* Select2를 쓸 때만 숨긴 원본 select를 복구한다. 원본 select를 직접 쓰는
+   모바일/설정은 위의 여섯 항목 목록을 그대로 유지한다. */
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_injection_trigger.select2-hidden-accessible {
+  position:absolute!important;
+  width:1px!important;
+  min-width:0!important;
+  max-width:1px!important;
+  height:1px!important;
+  min-height:0!important;
+  max-height:1px!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  clip:rect(0 0 0 0)!important;
+  clip-path:inset(50%)!important;
+  white-space:nowrap!important;
+  field-sizing:fixed;
+}
+body.salty #completion_prompt_manager_popup :is(.completion_prompt_manager_popup_entry_form_control > label,label[for="completion_prompt_manager_popup_entry_form_prompt"],.completion_prompt_manager_popup_header > label) {
+  gap:8px 10px;
+  flex-wrap:wrap;
+  line-height:1.45;
+}
+body.salty #completion_prompt_manager_popup :is(#completion_prompt_manager_depth_block,#completion_prompt_manager_order_block,#completion_prompt_manager_forbid_overrides_block):is([style*="visibility: hidden"],[style*="visibility:hidden"]) {
+  display:none;
+}
+body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_control > .flex-container.alignItemsCenter {
+  gap:8px 10px;
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_prompt {
+  min-height:max(8em,min(240px,28dvh))!important;
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_prompt:disabled {
+  display:none;
+}
+body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_control:has(#completion_prompt_manager_popup_entry_form_prompt:disabled) {
+  flex:0 0 auto;
+}
+body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_footer {
+  flex-wrap:wrap;
+  gap:8px 10px;
+  padding-bottom:8px;
+}
+body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_footer > .menu_button,
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_save {
+  width:auto!important;
+  height:auto!important;
+  min-width:max(var(--bl-prompt-control-height),calc(1em + 12px))!important;
+  min-height:max(var(--bl-prompt-control-height),calc(1em + 12px))!important;
+  padding:6px!important;
+  border-radius:var(--bl-r-sm)!important;
+  font-size:var(--bl-fs-ctl)!important;
+  line-height:1;
+}
+@container bl-prompt-popup (min-width:40em) {
+  body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_control:has(> #completion_prompt_manager_popup_entry_form_name) {
+    flex:2 1 18em;
+  }
+  body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_control:has(> #completion_prompt_manager_popup_entry_form_role) {
+    flex:1 1 10em;
+  }
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .inline-drawer-header > .bl-prow {
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  gap:8px 10px;
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list {
+  margin-inline:0!important;
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .completion_prompt_manager_prompt > .inline-drawer-header {
+  padding:8px 2px!important;
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .completion_prompt_manager_prompt > .inline-drawer-content {
+  margin:0 0 12px!important;
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .bl-prow-name {
+  white-space:normal;
+  overflow-wrap:anywhere;
+  text-overflow:clip;
+}
+body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .bl-prow-role {
+  font-size:var(--bl-fs-sub);
+}
+@container bl-prompt-popup (max-width:24em) {
+  body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .inline-drawer-header > .bl-prow {
+    grid-template-columns:minmax(0,1fr) auto;
+  }
+  body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .bl-prow-role { grid-area:1 / 1; }
+  body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .bl-prow-tok { grid-area:1 / 2; }
+  body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .bl-prow-name { grid-area:2 / 1 / auto / -1; }
+}
+
+/* 고급 서식: 저장된 입력 높이·자동 높이·비활성 API 표시는 그대로 둔다. */
+body.salty #AdvancedFormatting :is(#ContextSettings,#InstructSettingsColumn,#SystemPromptColumn) {
+  flex:1 1 18em!important;
+  min-width:0!important;
+}
+body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) {
+  gap:8px 10px!important;
+}
+body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) > select {
+  flex:1 1 12em!important;
+  max-width:100%;
+}
+body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) > .flex-container {
+  flex-wrap:wrap;
+  max-width:100%;
+  gap:8px 10px!important;
+}
+body.salty #AdvancedFormatting > .spaceEvenly label.flex-container:has(> small + .editor_maximize) {
+  gap:8px 10px;
+}
+body.salty #AdvancedFormatting > .spaceEvenly label.flex-container:has(> small + .editor_maximize) > small {
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+body.salty #AdvancedFormatting .editor_maximize {
+  flex:none;
+  align-self:center;
+}
+body.salty #AdvancedFormatting > .spaceEvenly .flex-container:has(> .flex1 > label[for^="context_"]) {
+  gap:8px 10px!important;
+}
+body.salty #AdvancedFormatting > .spaceEvenly .flex-container:has(> .flex1 > label[for^="context_"]) > .flex1 {
+  flex:1 1 10em;
+  min-width:0;
+}
+body.salty #AdvancedFormatting details .flexAuto {
+  flex:1 1 12em;
+}
+body.salty #AdvancedFormatting :is(#context_story_string_position_block,#instructSettingsBlock div:has(> #instruct_names_behavior)) {
+  flex-wrap:wrap!important;
+  gap:8px 10px!important;
+}
+body.salty #AdvancedFormatting :is(#context_story_string_position_block,#instructSettingsBlock div:has(> #instruct_names_behavior)) > :is(small,label) {
+  max-width:100%;
+}
+body.salty #AdvancedFormatting :is(#context_story_string_position_block,#instructSettingsBlock div:has(> #instruct_names_behavior)) select {
+  flex:1 1 12em!important;
+  height:auto!important;
+  min-height:max(var(--bl-prompt-control-height),calc(1.45em + 8px))!important;
+}
+body.salty #AdvancedFormatting :is([name="tokenPaddingBlock"] > input,#reasoning_max_additions) {
+  width:calc(6ch + 20px + 6 * max(0px,var(--bl-settings-tracking,0px)))!important;
+  max-width:100%;
+  height:auto!important;
+  min-height:max(var(--bl-prompt-control-height),calc(1.45em + 8px))!important;
+}

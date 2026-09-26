@@ -7,9 +7,10 @@
     --bwr-well: color-mix(in srgb, var(--bwr-text) 11%, transparent);
     --bwr-track: color-mix(in srgb, var(--bwr-text) 28%, transparent);
     --bwr-accent-soft: color-mix(in srgb, var(--bwr-accent) 18%, transparent);
+    --bwr-accent-ink: var(--salty-accent-ink, var(--bwr-accent)); /* 옅은 포인트 면 위 글자 — 블루 레몬에이드 밝은 테마면 진한 잉크 */
     --bwr-danger: #e5484d;
     /* Compared with index.js after load: a mismatch may be a packaging, cache, or installation issue. */
-    --bwr-css-version: "1.9.6";
+    --bwr-css-version: "1.9.7";
 }
 
 /* 서랍 안쪽 — .inline-drawer-content 는 실리태번이 열고 닫으므로 display 를 주지 않고 안에 한 겹 더 둔다 */
@@ -215,7 +216,7 @@
 .bwr_settings .bwr_seg.active {
     opacity: 1;
     font-weight: 600;
-    color: var(--bwr-accent);
+    color: var(--bwr-accent-ink);
     background: var(--bwr-accent-soft);
 }
 
@@ -313,7 +314,7 @@
 
 .bwr_settings .bwr_chip.active {
     font-weight: 600;
-    color: var(--bwr-accent);
+    color: var(--bwr-accent-ink);
     background: var(--bwr-accent-soft);
 }
 
@@ -600,7 +601,7 @@ dialog.popup.bwr_dialog .popup-content {
 .bwr_settings .bwr_help:hover,
 .bwr_settings .bwr_help:focus-visible {
     background: var(--bwr-accent-soft);
-    color: var(--bwr-accent);
+    color: var(--bwr-accent-ink);
     opacity: 1;
     outline: none;
 }
@@ -629,3 +630,64 @@ dialog.popup.bwr_dialog .popup-content {
 .bwr_quickban[hidden] { display: none; }
 .bwr_quickban > span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .bwr_spans .bwr_repeat_of { display: block; opacity: .7; margin-top: 2px; }
+
+/* Keep every setting reachable when menu text or tracking is enlarged. */
+body.salty .bwr_settings {
+    --bwr-accent: var(--salty-accent, var(--SmartThemeQuoteColor));
+    --bwr-text: var(--salty-text, var(--SmartThemeBodyColor));
+    --bwr-accent-ink: var(--salty-accent-ink, var(--bwr-accent));
+    --bwr-danger: var(--salty-danger, #e5484d);
+    font-family: var(--salty-font-ui, inherit);
+    font-size: var(--bl-ts-ui, var(--mainFontSize, 15px));
+    font-weight: var(--salty-ui-weight, normal);
+    letter-spacing: var(--salty-ui-ls, normal);
+}
+body.salty .bwr_settings :is(.bwr_tabs, .bwr_segment) {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 6.5em), 1fr));
+    gap: 8px max(10px, .6em);
+    border-radius: var(--bl-r-md, 12px);
+}
+body.salty .bwr_settings :is(.bwr_tab, .bwr_seg) {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px max(10px, .6em);
+    min-height: max(34px, 1.5em + 12px);
+    padding: 6px 8px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.5;
+    font-weight: var(--salty-ui-weight, normal);
+    letter-spacing: inherit;
+    border-radius: var(--bl-r-sm, 8px);
+}
+body.salty .bwr_settings .bwr_tab > span:not(.bwr_badge) { min-width: 0; overflow: visible; text-overflow: clip; }
+body.salty .bwr_settings .bwr_tab .bwr_badge { position: static; min-width: 0; flex: none; }
+body.salty .bwr_settings :is(.bwr_tab, .bwr_seg):is(.active, .is-active) { font-weight: bolder; }
+body.salty .bwr_settings :is(.menu_button, .text_pole, .bwr_chip) {
+    height: auto;
+    min-height: max(34px, 1.5em + 12px);
+    gap: 8px max(10px, .6em);
+    border-radius: var(--bl-r-sm, 8px);
+    font-weight: var(--salty-ui-weight, normal);
+    letter-spacing: var(--salty-ui-ls, normal);
+    line-height: 1.5;
+}
+body.salty .bwr_settings .bwr_editor_head .bwr_delete { width: auto; min-width: 36px; height: auto; }
+body.salty .bwr_settings .bwr_grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 12em), 1fr)); }
+body.salty .bwr_settings .bwr_switch_row { gap: max(10px, .6em); }
+body.salty .bwr_settings .bwr_switch_row > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+body.salty .bwr_settings .bwr_switch::after { background: var(--salty-raised, #fff); }
+body.salty .bwr_settings input:checked + .bwr_switch::after { background: var(--salty-on-accent, #fff); }
+body.salty .bwr_settings :is(.bwr_card, .bwr_editor, .bwr_status, .bwr_guide) { border-radius: var(--bl-r-md, 12px); }
+body.salty dialog.popup.bwr_dialog { border-radius: var(--bl-r-lg, 16px) !important; }
+
+/* Muted text conveys inactive UI without dimming every descendant a second time. */
+body.salty .bwr_settings :is(.bwr_tab, .bwr_seg) { color: var(--salty-muted, var(--bwr-text)); opacity: 1; }
+body.salty .bwr_settings :is(.bwr_tab, .bwr_seg):is(.active, .is-active) {
+    background: var(--salty-fill-accent-10, var(--salty-accent-10));
+    color: var(--bwr-accent-ink);
+    box-shadow: inset 0 0 0 1px var(--salty-accent);
+}
+body.salty .bwr_settings .bwr_chip.bwr_off { color: var(--salty-muted, var(--bwr-text)); opacity: 1; }
+body.salty .bwr_settings .bwr_chip .bwr_scope { font-size: var(--bl-ts-meta, .9em); color: inherit; opacity: 1; }
+body.salty .bwr_settings .bwr_badge { color: var(--salty-text); background: var(--bl-well); }

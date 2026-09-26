@@ -1066,13 +1066,13 @@ function tabBackup() {
     const locks=getSettings().settingLocks;
     const archive=appearanceArchive(getSettings());
     const archiveMarkup=`<div class="salty-group">${cap('최근 꾸미기 복구함')}<p class="salty-note">스타일·프리셋 적용 전 모습을 최대 8개 기억해요. 복구는 잠금과 관계없이 그때 모습으로 돌아가요.</p>${archive.length?archive.map(x=>row(esc(x.label),`<button class="salty-btn" data-act="appearance-restore" data-id="${esc(x.id)}">복구</button>`,new Date(x.at).toLocaleString())).join(''):'<p class="salty-note">아직 보관한 모습이 없어요.</p>'}</div>`;
-    return `${archiveMarkup}<div class="salty-group">${cap('스타일을 바꿔도 유지할 설정')}${LOCK_GROUPS.map(([id,label])=>row(label,toggle('settingLocks.'+id,locks[id]))).join('')}<p class="salty-note">스타일·공유 프리셋·캐릭터 연결에 적용돼요. 직접 조절과 전체 설정 파일 복원·초기화에는 적용하지 않아요.</p></div><div class="salty-group">
+    return `${archiveMarkup}<div class="bl-backup-layout"><div class="salty-group bl-setting-locks">${cap('스타일을 바꿔도 유지할 설정')}${LOCK_GROUPS.map(([id,label])=>row(label,toggle('settingLocks.'+id,locks[id]))).join('')}<p class="salty-note">스타일·공유 프리셋·캐릭터 연결에 적용돼요. 직접 조절과 전체 설정 파일 복원·초기화에는 적용하지 않아요.</p></div><div class="salty-group bl-backup-actions">
             ${row('실리태번 설정', `<button class="salty-btn" data-act="st-theme">${matched ? '다시 맞추기' : '맞추기'}</button>`,
         matched ? '지금 이 테마에 맞게 돼 있어요' : '흐림 · 그림자 · 말풍선 모양을 이 테마에 맞춰요')}
             ${row('프리셋 공유', '<span class="salty-btns"><button class="salty-btn" data-act="preset-export">공유하기</button><button class="salty-btn" data-act="preset-import">불러오기</button></span>', '형광펜 · 날씨처럼 묶음만 골라요')}
             ${row('전체 설정 파일', '<span class="salty-btns"><button class="salty-btn" data-act="export">내보내기</button><button class="salty-btn" data-act="import">가져오기</button></span>')}
             ${row('처음 설정으로', '<button class="salty-btn salty-btn-danger" data-act="reset">되돌리기</button>', '무엇을 되돌릴지 골라요')}
-        </div>
+        </div></div>
         <input type="file" accept=".json" hidden data-file="settings"><input type="file" accept=".json" hidden data-file="preset">`;
 }
 
@@ -1128,15 +1128,15 @@ function tabText(s, sub) {
         // 대사: 표시 · 형광펜 모양 · 색 → 글자(크기 · 굵기 · 자간) → 글꼴. 2.7.0 부터 한 화면 (미리보기를 접을 수 있어 길어도 됨)
         const marker = s.dialogue.style === 'marker';
         const pen = marker || s.dialogue.style === 'full';
-        body = `${cap('대사', '"…"')}
-            <div class="salty-group">
+        body = `
+            <div class="salty-group bl-control-grid bl-dialogue-controls">
                 ${stack('표시', seg('dialogue.style', [['marker', '형광펜'], ['full', '전체 칠'], ['bold', '굵게'], ['tint', '색'], ['plain', '없음']]))}
                 ${marker ? stack('형광펜 모양', seg('dialogue.markerShape', [['stroke', '펜 자국'], ['rectangle', '직사각형'], ['pill', '알약']], 'stroke')) : ''}
                 ${marker && s.dialogue.markerShape === 'stroke' ? stack('형광펜 기울기', seg('dialogue.tilt', [['flat', '일직선'], ['slant', '대각선'], ['steep', '완전 대각선']])) : ''}
                 ${marker ? stack('형광펜 위치', seg('dialogue.markerPos', [['center', '가운데'], ['bottom', '아래']], 'center'), '아래: 밑줄 긋듯 글자 아랫부분에') : ''}
                 ${marker ? slider('dialogue.markerThick', '형광펜 굵기', ...TEXT_LIMIT.markerThick, 1, 54) : ''}
-                ${pen ? color('marker', '형광펜 색') : ''}
-                ${color('dialogue', '글자 색')}
+                ${pen ? `<div class="bl-color-field">${color('marker', '형광펜 색')}</div>` : ''}
+                <div class="bl-color-field">${color('dialogue', '글자 색')}</div>
             </div>
             ${roleType('대사', [sizeOpt('type.dialogueSize', '크기', '본문과 같게', ...TEXT_LIMIT.dialogueSize), slider('dialogue.weight', '굵기', 300, 800, 1), sizeOpt('dialogue.letterSpacing', '자간', '본문과 같게', ...TEXT_LIMIT.letterSpacing)])}
             ${cap('대사 글꼴')}${fontBlock(s, 'dialogue')}`;
@@ -1144,7 +1144,7 @@ function tabText(s, sub) {
         body = `${gradientControls(s,'ui','메뉴 글자',{slider,esc})}${roleType('메뉴', [sizeOpt('type.uiSize', '크기', '기본', ...TEXT_LIMIT.uiSize), sizeOpt('ui.weight', '굵기', '기본', 300, 800), sizeOpt('ui.letterSpacing', '자간', '기본', ...TEXT_LIMIT.letterSpacing)], '메뉴 · 단추 · 설정창 글자')}
             ${cap('메뉴 글꼴')}${fontBlock(s, 'ui')}`;
     } else if (sub === 'em') {
-        body = `${cap('속마음', mdLabel('*기울임*'))}
+        body = `
             <div class="salty-group">
                 ${row('기울여 쓰기', toggle('em.italic', s.em.italic), '끄면 바로 세워서 색으로만 구분')}
                 ${color('em', '글자 색')}
@@ -1153,7 +1153,7 @@ function tabText(s, sub) {
             ${cap('속마음 글꼴')}${fontBlock(s, 'em')}`;
     } else if (sub === 'strike') {
         const st = s.strike || { line: true, own: false, color: '#ff7a7a', thickness: 2, fade: 55, italic: false };
-        body = `${cap('취소선', mdLabel('~~취소선~~'))}
+        body = `
             <div class="salty-group">
                 ${row('선 긋기', toggle('strike.line', st.line !== false), '끄면 선 없이 흐리게만')}
                 ${st.line !== false ? row('선 색 따로 정하기', toggle('strike.own', st.own), '끄면 글자 색으로 그어요') : ''}
@@ -1164,7 +1164,7 @@ function tabText(s, sub) {
             </div>
             <p class="salty-note">흐리기는 지워진 글자를 얼마나 남길지예요. 100이면 그대로, 낮을수록 옅어져요. 선은 글자 가운데에 곧게 그어져 글꼴이 달라도 보여요.</p>`;
     } else if (sub === 'strong') {
-        body = `${cap('강조', mdLabel('**굵게**'))}
+        body = `
             <div class="salty-group">
                 ${color('strong', '글자 색')}${color('gold','강조 형광펜 색')}
             </div>
@@ -1318,7 +1318,7 @@ function tabChat(s, sub) {
         ${cap('메시지 버튼', '··· 메뉴 밖에 늘 보일 버튼')}<div class="salty-group">
             ${mesPinPicker(s)}
         </div>
-        ${cap('퀵 리플라이')}<div class="salty-group">
+        ${cap('퀵 리플라이')}<div class="salty-group bl-control-grid bl-qr-controls">
             <div class="bl-inline-preview" data-pv="qr">${qrSample(s.chat.qrFind !== false)}</div>
             ${row('QR 검색 버튼', toggle('chat.qrFind', s.chat.qrFind !== false), '돋보기만 숨겨요. 빠른 답장 버튼은 그대로 사용할 수 있어요')}
             ${stack('자리', seg('chat.qrPlace', [['bottom', '입력창 아래'], ['top', '입력창 위']], 'bottom'), '입력창 옆에 아이콘이 많으면 위가 넓어요')}
@@ -1368,13 +1368,13 @@ function tabChat(s, sub) {
             ${row('스크롤하면 바 숨기기', toggle('reader.autoHide', !!s.reader?.autoHide), '아래로 읽으면 숨고, 살짝 올리거나 누르면 나와요')}
             ${row('백그라운드에서도 계속 (실험)', toggle('bgWindow.on', !!s.bgWindow?.on), '답을 기다리는 동안 다른 앱을 봐도 생성 · 번역이 멈추지 않게 해요. 보내기 · 스와이프를 누를 때 켜지고 끝나면 꺼져요')}
             ${s.bgWindow?.on ? stack('버티는 방식', seg('bgWindow.mode', [['audio', '소리 없이 버티기'], ['pip', '작은 창 띄우기']], 'audio'), s.bgWindow?.mode === 'pip' ? '진행 상황이 보이는 작은 창(PIP)이 떠요. 가장 확실하지만 창이 화면에 남아요' : '창 없이 버텨요. 귀에 안 들리는 아주 작은 소리를 내서 브라우저가 탭을 재우지 못하게 해요. 폰에 따라 안 통할 수 있어요 — 그러면 작은 창 방식을 써 보세요') : ''}
-            ${row('답이 오면 알려 주기', toggle('replyNotify.on', !!s.replyNotify?.on), '다른 앱을 보고 있을 때 답이 끝나면 알림 · 진동으로 알려요. 처음 켤 때 브라우저가 알림 허용을 물어요. 화면을 보고 있을 땐 알리지 않아요')}
+            ${row('답이 오면 알려 주기', toggle('replyNotify.on', !!s.replyNotify?.on && globalThis.Notification?.permission === 'granted'), '다른 앱을 보고 있을 때 답이 끝나면 알림 · 진동으로 알려요. 처음 켤 때 브라우저가 알림 허용을 물어요. 화면을 보고 있을 땐 알리지 않아요')}
             ${row('한 손 버튼 줄', toggle('onehand.on', !!s.onehand?.on), '입력창 위에 스와이프 · 사칭 · 이어 쓰기 · 다시 생성')}
             ${s.onehand?.on ? stack('버튼', chips([['onehand.swipe', '스와이프'], ['onehand.imp', '사칭'], ['onehand.cont', '이어 쓰기'], ['onehand.regen', '다시 생성']])) : ''}
         </div>`;
     }
     const hideAvatars = document.getElementById('hideChatAvatarsEnabled')?.checked ?? false;
-    return `${chatPreview()}<div class="salty-group">
+    return `${chatPreview()}<div class="salty-group bl-control-grid bl-message-controls">
         ${stack('내 메시지', seg('chat.user', [['bubble', '말풍선'], ['card', '카드'], ['table', '테이블'], ['plain', '글자만']]))}
         ${stack('이름 줄', seg('chat.header', [['full', '이름+시간'], ['name', '이름만'], ['none', '숨김']]))}
         ${row('작은 아바타 숨기기', toggle('st.hideAvatars', hideAvatars), '숨기면 이미지가 화면 끝까지 넓어져요')}
@@ -1628,7 +1628,7 @@ function tabImage(s, sub) {
     }
     if (sub === 'size') {
         // 비율 유지 = 최대 높이(더 짧은 그림은 그대로) · 높이 맞춤 = 모든 그림을 이 높이로 (둘 다 화면 높이 %, 범위는 settings.js IMAGE_RANGE)
-        return `${imagePreview(s, sub)}<div class="salty-group">
+        return `${imagePreview(s, sub)}<div class="salty-group bl-control-grid bl-image-size-controls">
             <div class="salty-stack">${seg('image.fit', [['ratio', '비율 유지'], ['fixed', '높이 맞춤']])}</div>
             ${fit === 'fixed' ? slider('image.height', '높이', ...IMAGE_RANGE.height, 1) : slider('image.maxh', '최대 높이', ...IMAGE_RANGE.maxh, 1)}
         </div>`;
@@ -2567,13 +2567,15 @@ function bind(root) {
             const path = target.dataset.toggle;
             if (path === 'replyNotify.on' && target.checked) {
                 // 4.8.7 알림 허용은 누르는 순간(사용자 동작 안)에 물어야 폰 크롬이 제대로 띄운다 — 모듈은 그 뒤에 불러온다
+                // 켬/끔(replyNotify.on)은 서버 설정이라 모든 기기가 같이 쓰지만 알림 허용은 기기마다 따로다. 그래서 스위치는 '켬 + 이 기기에서 허용'일 때만
+                // 켜진 채로 그린다(다른 기기에서 켠 값이면 여기서는 꺼져 보여, 누르면 이 경로로 허용 창이 뜬다). 이 기기에서 거절해도 원래 켜져 있던 값은 끄지 않는다
+                const wasOn = !!getSettings().replyNotify?.on;
                 const ask = !('Notification' in window) ? Promise.resolve('unsupported')
                     : Notification.permission === 'default' ? Notification.requestPermission().catch(() => Notification.permission)
                         : Promise.resolve(Notification.permission);
                 ask.then(state => import('./reply-notify.js').then(m => m.afterPermission(state))).then((ok) => {
-                    if (ok) return;
-                    update(st => { st.replyNotify.on = false; });
-                    refreshPanels();
+                    if (!ok && !wasOn) update(st => { st.replyNotify.on = false; });
+                    else refreshPanels(); // 스위치를 이 기기의 허용 상태로 다시 그린다
                 }).catch(() => {});
             }
             if (path === 'st.streamFadeIn') {

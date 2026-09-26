@@ -175,7 +175,7 @@
 #pt-panel[data-pt-theme="lemonade"],.pt-bl-settings-dialog,.pt-extension-settings {
  --pt-bg:var(--salty-surface,#172434);--pt-bg-alt:var(--salty-surface,#203248);--pt-bg-item:var(--salty-surface,#203248);
  --pt-text:var(--salty-text,#e0ebfa);--pt-text-dim:var(--salty-muted,#a7bdd8);
- --pt-accent:var(--salty-accent,#93c9ff);--pt-accent-strong:var(--salty-accent,#93c9ff);--pt-accent-soft:color-mix(in srgb,var(--pt-accent) 13%,transparent);
+ --pt-accent:var(--salty-accent,#93c9ff);--pt-accent-strong:var(--salty-accent-ink,var(--salty-accent,#93c9ff));--pt-accent-ink:var(--salty-accent-ink,var(--pt-accent));--pt-accent-soft:color-mix(in srgb,var(--pt-accent) 13%,transparent);
  --pt-border:color-mix(in srgb,var(--pt-text) 12%,transparent);--pt-border-strong:color-mix(in srgb,var(--pt-accent) 32%,transparent);--pt-highlight:transparent;
  --pt-select-bg:var(--pt-bg-alt);--pt-select-text:var(--pt-text);--pt-content-bg:var(--pt-bg-alt);--pt-content-border:var(--pt-border);--pt-content-text:var(--pt-text);
  --pt-trans-bg:var(--pt-accent-soft);--pt-trans-text:var(--pt-text);--pt-btn-primary-bg:var(--pt-accent);--pt-btn-primary-hover:var(--pt-accent);--pt-btn-primary-text:var(--salty-on-accent,#10263f);
@@ -257,6 +257,7 @@
  --pt-accent-soft:color-mix(in srgb,var(--pt-accent) 12%,transparent);
  font-family:var(--mainFontFamily,system-ui,sans-serif);color:var(--pt-text);
 }
+.pt-help-dialog{--pt-accent-ink:var(--salty-accent-ink,var(--pt-accent))}
 #pt-panel{box-shadow:0 16px 70px #081a3a35;border:1px solid var(--pt-border)}
 #pt-panel-header h3{display:flex;align-items:center;gap:8px;flex-wrap:wrap;text-align:left}
 #pt-panel .pt-version {
@@ -264,7 +265,7 @@
  font:600 12px/1.4 var(--mainFontFamily,system-ui,sans-serif)!important;
  width:auto!important;min-width:54px;max-width:none!important;height:auto!important;min-height:32px;
  padding:5px 9px!important;border:1px solid var(--pt-border,#cdd9e8);border-radius:99px;
- background:var(--pt-accent-soft,#eaf1f9);color:var(--pt-accent,#3975b8);cursor:pointer;
+ background:var(--pt-accent-soft,#eaf1f9);color:var(--pt-accent-ink,var(--pt-accent,#3975b8));cursor:pointer;
  white-space:nowrap!important;writing-mode:horizontal-tb!important;word-break:keep-all!important;
 }
 #pt-tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));flex:none;border-radius:13px}
@@ -274,7 +275,7 @@
 #pt-settings-form{display:flex;flex-direction:column;min-height:0;height:100%;width:100%;overflow:hidden}
 #pt-panel .pt-settings-nav,.pt-help-dialog nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:8px 12px;flex:none;border-bottom:1px solid var(--pt-border)}
 #pt-panel .pt-settings-nav button,.pt-help-dialog nav button{font:500 13px/1.4 var(--mainFontFamily,system-ui,sans-serif);min-width:0;min-height:42px;padding:6px 4px;background:transparent;color:var(--pt-text-dim);border:0;border-radius:9px;cursor:pointer;white-space:normal;word-break:keep-all}
-#pt-panel .pt-settings-nav button[aria-selected="true"],.pt-help-dialog nav button[aria-selected="true"]{background:var(--pt-accent-soft);color:var(--pt-accent);font-weight:700}
+#pt-panel .pt-settings-nav button[aria-selected="true"],.pt-help-dialog nav button[aria-selected="true"]{background:var(--pt-accent-soft);color:var(--pt-accent-ink,var(--pt-accent));font-weight:700}
 #pt-panel .pt-settings-scroll{overflow:auto;min-height:0;padding:14px;overscroll-behavior:contain}
 #pt-panel .pt-card{padding:16px;margin:0 0 12px;border:1px solid var(--pt-border);border-radius:16px;background:var(--pt-bg)}
 #pt-panel .pt-card h4{margin:0 0 14px;font-size:15px;line-height:1.5;text-align:left;color:var(--pt-text)}
@@ -375,7 +376,7 @@
 #pt-panel .pt-localization-list{display:grid;gap:12px}
 #pt-panel .pt-localization-list .pt-card{margin:0}
 #pt-panel .pt-localization-list .pt-check{font-weight:650}
-#pt-panel .pt-localization-list small{display:inline-block;font-size:12px;color:var(--pt-accent);padding:2px 8px;background:var(--pt-accent-soft);border-radius:6px}
+#pt-panel .pt-localization-list small{display:inline-block;font-size:12px;color:var(--pt-accent-ink,var(--pt-accent));padding:2px 8px;background:var(--pt-accent-soft);border-radius:6px}
 #pt-panel #pt-params-wrap{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 #pt-panel #pt-params-wrap .pt-param-row{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;margin:0;min-width:0;padding:12px 10px;background:var(--pt-bg);border-radius:10px;border:1px solid var(--pt-border)}
 #pt-panel #pt-params-wrap .pt-param-label{grid-column:auto;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
@@ -451,3 +452,89 @@ body.salty #pt-panel .pt-card h4{font-size:15px!important;color:var(--pt-text)!i
 
 #pt-panel .pt-empty{padding:12px 8px}
 #pt-panel .pt-empty-icon:empty{display:none}
+
+/* Match UI controls to the selected theme typography. Original/translated text
+   keeps its independent size settings. */
+body.salty #pt-panel {
+ font-size:var(--salty-ui-size,var(--bl-ts-ui,15px));
+ font-family:var(--salty-font-ui,inherit); font-weight:var(--salty-ui-weight,normal);
+ letter-spacing:var(--bl-settings-tracking,normal); border-radius:var(--bl-r-lg,16px);
+}
+body.salty #pt-panel[data-pt-theme="lemonade"],body.salty .pt-bl-settings-dialog,body.salty .pt-extension-settings {
+ --pt-ok:var(--salty-accent-ink,var(--salty-accent));
+ --pt-warn:var(--bl-pop-ink,var(--salty-accent-ink)); --pt-bad:var(--bl-danger,var(--salty-danger));
+ --pt-shadow:transparent; --pt-overlay:var(--bl-scrim);
+}
+body.salty #pt-panel :is(.pt-btn,.pt-ui-button,.pt-tab,.pt-settings-nav button,.pt-more-actions>summary,
+ .pt-select,.pt-combo-input,.pt-combo-item,.pt-param-num,.pt-field>label,.pt-check,.pt-search,.pt-block-name) {
+ font-size:inherit; font-family:inherit; font-weight:inherit; letter-spacing:inherit;
+ line-height:1.45;
+}
+body.salty #pt-panel :is(.pt-btn,.pt-ui-button,.pt-search,.pt-combo-input,#pt-panel-refresh,.pt-export-group>.pt-btn-icon) {
+ height:auto; min-height:36px; padding:6px 10px; max-width:100%; white-space:normal;
+ border-radius:var(--bl-r-sm,8px);
+}
+body.salty #pt-panel #pt-panel-refresh { font-size:.85em; }
+body.salty #pt-panel .pt-card h4 { font-size:1em!important; font-weight:inherit; gap:10px; margin-bottom:10px; }
+body.salty #pt-panel :is(.pt-bl-help,.pt-param-label,.pt-block-meta,.pt-token-count,.pt-status-badge,
+ .pt-info-chip,.pt-selected-chip,.pt-original-label,.pt-translated-label,#pt-statusbar,.pt-localization-list small) { font-size:.85em; }
+body.salty #pt-panel #pt-params-reset { font-size:.85em!important; }
+body.salty #pt-panel :is(.pt-toolbar,.pt-controls,.pt-controls-scroll,.pt-select-row,.pt-export-group) { gap:8px 10px; flex-wrap:wrap; }
+body.salty #pt-panel #pt-tabs { grid-template-columns:repeat(auto-fit,minmax(min(100%,7em),1fr)); gap:8px 10px; }
+body.salty #pt-panel #pt-tabs .pt-tab { gap:10px; font-size:.9em; padding:6px 8px; border-radius:var(--bl-r-sm,8px); }
+body.salty #pt-panel :is(#pt-params-wrap,.pt-regex-toolbar,.pt-more-actions-body,.pt-localization-list) {
+ grid-template-columns:repeat(auto-fit,minmax(min(100%,max(10em,calc((100% - 10px)/2))),1fr)); gap:8px 10px;
+}
+body.salty #pt-panel .pt-info-chip,body.salty #pt-panel .pt-selected-chip { white-space:normal; }
+body.salty #pt-panel[data-pt-theme="lemonade"] :is(.pt-selected-chip,.pt-status-on) {
+ background:var(--salty-accent-13,var(--salty-shade)); border-color:var(--salty-accent-28); color:var(--pt-ok);
+}
+body.salty #pt-panel[data-pt-theme="lemonade"] .pt-btn-stop { background:var(--bl-warn-bg); border-color:var(--salty-line); }
+body.salty #pt-panel[data-pt-theme="lemonade"] .pt-btn-danger { background:var(--salty-danger-soft); border-color:var(--salty-line); }
+.pt-translation-error { color:var(--pt-bad,var(--salty-danger,#ef4444)); font-size:.85em; }
+
+/* Help and version controls use the same menu scale as the panel. */
+body.salty .pt-help-dialog {
+ font-family:var(--salty-font-ui,inherit); font-size:var(--salty-ui-size,var(--bl-ts-ui,15px));
+ font-weight:var(--salty-ui-weight,normal); letter-spacing:var(--salty-ui-ls,normal);
+ border-radius:var(--bl-r-lg,16px);
+}
+body.salty .pt-help-dialog::backdrop { background:var(--bl-scrim); backdrop-filter:none; }
+body.salty .pt-help-dialog :is(.pt-help-body,.pt-help-chapter summary,nav button,header small,h2) {
+ font:inherit; letter-spacing:inherit; line-height:1.55;
+}
+body.salty .pt-help-dialog h2 { font-size:1.1em; }
+body.salty .pt-help-dialog header small { font-size:.8em; color:var(--salty-muted); }
+body.salty .pt-help-dialog .pt-help-body { font-size:.9em; }
+body.salty .pt-help-dialog :is(header,footer) { gap:8px 10px; padding:10px 12px; }
+body.salty .pt-help-dialog header > div { min-width:0; }
+body.salty #pt-panel .pt-settings-nav,body.salty .pt-help-dialog nav {
+ grid-template-columns:repeat(auto-fit,minmax(min(100%,6em),1fr)); gap:8px 10px; padding:8px 10px;
+}
+body.salty .pt-help-dialog nav button { min-height:36px; padding:6px 8px; font-size:.9em; overflow-wrap:anywhere; border-radius:var(--bl-r-sm,8px); }
+body.salty .pt-help-dialog nav button[aria-selected=true] { font-weight:inherit; }
+body.salty .pt-help-dialog .pt-help-chapter { border-radius:var(--bl-r-md,12px); }
+body.salty .pt-help-dialog .pt-help-chapter summary { padding:10px 12px; }
+body.salty #pt-panel .pt-ui-button,body.salty .pt-help-dialog .pt-ui-button {
+ font:inherit!important; letter-spacing:inherit; line-height:1.45!important;
+ height:auto; min-height:36px; padding:6px 10px; border-radius:var(--bl-r-sm,8px);
+}
+body.salty #pt-panel .pt-version {
+ font-family:inherit!important; font-size:.8em!important; font-weight:inherit!important;
+ line-height:1.45!important; letter-spacing:inherit; border-radius:var(--bl-r-sm,8px);
+}
+body.salty #pt-panel #pt-panel-header h3 { min-width:0; font-size:1.1em; font-weight:inherit; gap:8px 10px; }
+body.salty #pt-panel #pt-settings-form :is(input,select,textarea):not([type=checkbox]):not([type=range]) {
+ font-family:inherit; font-size:inherit; font-weight:inherit; letter-spacing:inherit; line-height:1.5;
+}
+body.salty #pt-panel .pt-localization-list small[data-locale-state] { opacity:1; }
+body.salty #pt-panel .pt-status-model { font-size:inherit; opacity:1; }
+/* 큰 메뉴 글씨에서도 제목과 작업을 감싸 닫기 버튼을 화면 안에 둔다. */
+body.salty #pt-panel #pt-panel-header { flex-wrap:wrap; }
+body.salty #pt-panel #pt-panel-header h3 { flex:1 1 10em; max-width:100%; }
+body.salty #pt-panel #pt-panel-header > div {
+ min-width:0; max-width:100%; margin-inline-start:auto;
+ flex-wrap:wrap; gap:8px 10px!important;
+}
+body.salty #pt-panel #pt-panel-refresh { flex:0 1 auto; max-width:calc(100% - 54px); }
+body.salty #pt-panel #pt-status-text { white-space:nowrap; }

@@ -1,0 +1,127 @@
+/* ===== css/57-native-ux.css =====
+   실리태번 기본 화면의 정보 밀도. 사용자가 고른 목록/격자 모드와 입력 내용은 유지.
+   ===== */
+body.salty :is(#PersonaManagement,#right-nav-panel,#regex_container,#qr--settings,.regex_editor,#qr--modalEditor) {
+  --bl-native-gap: max(10px,.6em);
+}
+body.salty .regex_editor { container:bl-regex / inline-size; text-align:left; }
+@media(min-width:900px) {
+  html body.salty dialog.popup:has(.regex_editor) { width:min(880px,calc(100dvw - 40px))!important; max-width:calc(100dvw - 40px)!important; }
+}
+body.salty .regex_editor > h3 { flex-wrap:wrap; gap:8px 10px; margin-block:2px 10px; }
+/* 제목과 ? 링크로 이미 전달하는 입문 설명. 오류/정규식 힌트는 그대로 표시한다. */
+body.salty .regex_editor > .extensions_info { display:none; }
+body.salty .regex_editor > hr { margin-block:6px; }
+body.salty .regex_editor > .flexFlowColumn { gap:10px; }
+body.salty .regex_editor .title_restorable { margin-block:4px; }
+body.salty .regex_editor :is(input.text_pole,textarea.text_pole) { margin-block:4px; min-width:0; border-radius:var(--bl-r-sm); }
+body.salty .regex_editor > .flex-container:not(.flexFlowColumn) { gap:12px 18px; flex-wrap:wrap; }
+body.salty .regex_editor > .flex-container > .flex1 { min-width:min(100%,12em); }
+body.salty .regex_editor label.checkbox { column-gap:10px; row-gap:8px; align-items:center; }
+@container bl-regex (min-width:38em) {
+  body.salty .regex_editor > .flexFlowColumn { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:18px; }
+}
+
+/* 페르소나 이름과 여섯 아이콘은 분리, 추가 선택칸은 남은 폭이 충분할 때만 옆에. */
+body.salty #PersonaManagement > .flex-container > .flex-container:first-child > .flex1 { flex:1 1 14em!important; min-width:0; }
+body.salty #PersonaManagement h3 { white-space:normal; min-width:0; }
+body.salty #PersonaManagement h3 > span { min-width:0; }
+body.salty #PersonaManagement > .flex-container > .flex-container:first-child > .flex-container:last-child { flex-wrap:wrap!important; gap:8px 10px!important; }
+body.salty #PersonaManagement > .flex-container > .flex-container:first-child > .flex-container:last-child > .menu_button { flex:0 1 auto; max-width:100%; height:auto; min-height:34px; padding:6px 10px!important; gap:8px!important; white-space:normal; }
+body.salty #PersonaManagement #persona_search_bar { flex:1 1 7em!important; }
+body.salty #PersonaManagement .paginationjs { flex-wrap:wrap; gap:6px 8px; }
+body.salty #PersonaManagement .paginationjs-size-changer select { height:auto!important; min-height:34px; }
+body.salty #PersonaManagement #persona_controls:not(#salty-none) {
+  display:flex; flex-wrap:wrap; gap:8px 10px!important;
+}
+body.salty #PersonaManagement #persona_controls > .bl-persona-title-row { flex:1 0 100%; flex-wrap:wrap; gap:8px 10px; }
+body.salty #PersonaManagement #persona_controls:not(#salty-none) .persona_controls_buttons_block { order:1; flex:0 1 auto!important; flex-wrap:wrap!important; gap:6px!important; }
+body.salty #PersonaManagement #persona_controls:not(#salty-none) > label { order:2; flex:1 1 7em!important; width:auto!important; height:auto!important; }
+body.salty #PersonaManagement #persona_controls:not(#salty-none) #persona-management-dropdown { height:auto!important; min-height:36px!important; }
+body.salty #PersonaManagement #persona_controls > .bl-persona-title-row > h4 { font-size:var(--bl-fs-micro)!important; }
+body.salty #PersonaManagement #persona_controls > .bl-persona-title-row > .persona_name { font-size:var(--bl-fs-body)!important; }
+body.salty #PersonaManagement #persona_description { min-height:120px; }
+body.salty #PersonaManagement #persona_description:not([style*="height"]) { height:clamp(120px,18dvh,180px); }
+body.salty #PersonaManagement .persona_management_current_persona > .flex-container { column-gap:10px; row-gap:8px; }
+body.salty #PersonaManagement #persona_connections_buttons { flex-wrap:wrap!important; gap:8px 10px!important; }
+body.salty #PersonaManagement #persona_connections_buttons > .menu_button { flex:1 1 7em; height:auto; min-height:36px; padding:6px 8px!important; }
+body.salty #PersonaManagement #persona_connections_buttons > .menu_button > div { white-space:normal; overflow:visible; }
+
+/* 봇 편집: 프로필 도구의 반복 여백을 줄이고 제목/액션 사이 여유는 남긴다. */
+body.salty #right-nav-panel #avatar-and-name-block { border-radius:var(--bl-r-md); }
+body.salty #right-nav-panel #avatar_controls .form_create_bottom_buttons_block { gap:8px!important; }
+body.salty #right-nav-panel #avatar_controls .form_create_bottom_buttons_block > .menu_button { height:auto!important; min-height:36px!important; padding:6px!important; }
+body.salty #right-nav-panel .hotswap:not(:has(.avatar)) > small { display:none; }
+body.salty #right-nav-panel #rm_button_selected_ch h2 { letter-spacing:var(--salty-ui-ls,normal); }
+body.salty #right-nav-panel .title_restorable { flex-wrap:wrap; column-gap:10px; row-gap:8px; }
+body.salty #character_popup #depth_prompt_div > div:last-child { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.5fr); gap:8px 14px; }
+body.salty #character_popup #depth_prompt_div > div:last-child > h4 { margin:0!important; }
+body.salty #character_popup #depth_prompt_div > div:last-child > h4:nth-of-type(2) { grid-column:2; grid-row:1; }
+body.salty #character_popup #depth_prompt_div > div:last-child > :is(input,select) { width:100%; min-width:0; grid-row:2; }
+body.salty #character_popup #depth_prompt_div > div:last-child > .extension_token_counter { grid-column:1/-1; }
+
+/* 빠른 답장: 작게 고정된 글자/입력 높이를 메뉴 글꼴에 맞추고 긴 도구 줄은 줄바꿈. */
+body.salty #rm_extensions_block #qr--settings { container:bl-qr / inline-size; }
+body.salty #rm_extensions_block #qr--settings :is(.qr--title,.qr--set-itemLabel,.qr--set-itemMessage,.qr--setList .qr--item > select) { font-size:var(--bl-fs-ctl); }
+body.salty #rm_extensions_block #qr--settings .qr--set-itemMessage { font-size:var(--bl-fs-ctl)!important; }
+body.salty #rm_extensions_block #qr--settings .qr--head > small { font-size:var(--bl-fs-micro); }
+body.salty #rm_extensions_block #qr--settings :is(.qr--visible,label small),
+body.salty #rm_extensions_block #qr--settings #qr--set-settings > label.flex-container small { font-size:var(--bl-fs-sub); color:var(--salty-muted); }
+body.salty #rm_extensions_block #qr--settings label small { opacity:1; }
+body.salty #rm_extensions_block #qr--settings :is(.inline-drawer-content,#qr--set-settings) > label.flex-container { font-size:var(--bl-fs-sub); gap:10px!important; }
+body.salty #rm_extensions_block #qr--settings :is(.qr--set-itemLabel,.qr--setList .qr--item > select) { height:auto; min-height:max(34px,calc(1.5em + 10px)); }
+body.salty #rm_extensions_block #qr--settings :is(.qr--actions,.qr--content > .qr--actions) { flex-wrap:wrap; gap:6px!important; }
+body.salty #rm_extensions_block #qr--editor > .qr--head > .qr--actions { flex-wrap:wrap!important; gap:6px!important; }
+body.salty #rm_extensions_block #qr--editor > .qr--head #qr--set { flex:1 1 12em!important; min-width:min(100%,12em); height:auto; min-height:34px; font-size:var(--bl-fs-ctl); }
+body.salty #rm_extensions_block #qr--settings .qr--setList .qr--item { grid-template-columns:12px minmax(0,1fr) auto 30px 30px; gap:6px; }
+body.salty #rm_extensions_block #qr--settings :is(.menu_button_icon,.qr--action) { width:30px!important; min-width:30px!important; height:34px!important; min-height:34px!important; border-radius:var(--bl-r-sm); }
+body.salty #rm_extensions_block #qr--settings .qr--set-item > .qr--content { grid-template-columns:14px minmax(0,1fr) 30px; gap:8px; }
+body.salty #rm_extensions_block #qr--settings :is(#qr--global,#qr--chat,#qr--character,#qr--editor) { border-radius:var(--bl-r-md); margin-top:10px; padding:8px; }
+@container bl-qr (max-width:25em) {
+  body.salty #rm_extensions_block #qr--settings .qr--setList .qr--item { grid-template-columns:12px minmax(0,1fr) 30px 30px; }
+  body.salty #rm_extensions_block #qr--settings .qr--setList .qr--item > select { grid-column:2/-1; }
+  body.salty #rm_extensions_block #qr--settings .qr--visible { grid-column:2; justify-self:start; }
+}
+body.salty #regex_container .inline-drawer-content > .flex-container:first-child { grid-template-columns:repeat(auto-fit,minmax(min(100%,8em),1fr)); gap:8px!important; }
+body.salty #regex_container .inline-drawer-content > .flex-container:first-child > .menu_button { min-height:36px; padding:6px 8px!important; gap:8px!important; }
+body.salty #regex_container .inline-drawer-content > .flex-container:first-child > .menu_button > small { font-size:var(--bl-fs-sub)!important; }
+body.salty #regex_container .regex-script-label { gap:10px!important; }
+body.salty #regex_container .regex-script-label > .flex-container { flex-wrap:wrap; gap:6px!important; }
+/* 꺼진 묶음도 다시 켜는 토글과 편집 도구는 읽을 수 있게 한다.
+   상태는 옅은 면·본문색·원래의 off 아이콘/취소선으로 구별한다. */
+body.salty #regex_container :is(#scoped_scripts_block:not(:has(#regex_scoped_toggle:checked)),#preset_scripts_block:not(:has(#regex_preset_toggle:checked))) {
+  opacity:1;
+  background:var(--bl-fill-hover,var(--bl-hover));
+  border-radius:var(--bl-r-md);
+}
+body.salty #regex_container :is(#scoped_scripts_block:not(:has(#regex_scoped_toggle:checked)),#preset_scripts_block:not(:has(#regex_preset_toggle:checked))) .regex_script_name {
+  color:var(--salty-muted);
+}
+body.salty #regex_container .regex-toggle-off { opacity:1; color:var(--salty-muted); }
+
+/* 기본 팝업도 공통 모서리·팔레트. 바깥/본문에 겹쳐 붙는 모바일 여백을 한 번만 둔다. */
+html body.salty dialog.popup { border-radius:var(--bl-r-lg)!important; color:var(--salty-text); }
+html body.salty dialog.popup .popup-controls { flex-wrap:wrap; justify-content:center; gap:8px 10px; }
+html body.salty dialog.popup .popup-controls > .menu_button {
+  flex:0 1 auto; width:auto; min-width:5.5em; max-width:100%;
+  height:auto; min-height:36px; padding:7px 16px; border-radius:var(--bl-r-sm);
+  white-space:normal; line-height:1.4;
+}
+/* 타번 헬퍼 폴더 색판은 body로 옮겨 열린다. 색을 담는 canvas는 그대로 둔다. */
+html body.salty > .picker[pick-colors-theme],
+html body.salty > .picker[pick-colors-theme] :is(.picker-inner,.selector) {
+  background:var(--salty-surface); color:var(--salty-text);
+  border-radius:var(--bl-r-lg); box-shadow:var(--bl-e4);
+}
+html body.salty > .picker[pick-colors-theme] { max-width:calc(100dvw - 16px); }
+html body.salty > .picker[pick-colors-theme] :is(input,.label) {
+  color:var(--salty-text)!important; background:var(--salty-field)!important;
+  border-color:var(--salty-line)!important; border-radius:var(--bl-r-sm);
+}
+@media(max-width:760px) {
+  html body.salty dialog.popup:not(.bl-settings-dialog):not(.transparent_dialogue_popup) {
+    max-width:calc(100dvw - 16px)!important; max-height:calc(100dvh - 16px)!important;
+    padding:12px 10px!important;
+  }
+  html body.salty dialog.popup:not(.bl-settings-dialog) .popup-content { margin-inline:0; padding-inline:2px; scrollbar-gutter:auto!important; }
+}

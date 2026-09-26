@@ -18,7 +18,7 @@ export function makeCustomPalette(colors, mode) {
         bg, surface, text, accent, pop: accent, brand: accent,
         raised: mix(accent, surface, dark ? 0.13 : 0.09),
         dialogue: text, strong: dark ? accent : text,
-        em: mix(text, bg, 0.70), muted: mix(text, surface, 0.72), faint: mix(text, surface, 0.54),
+        em: mix(text, bg, 0.70), muted: mix(text, surface, 0.72), faint: mix(text, surface, dark ? 0.56 : 0.68), // 흐림: 바탕 · 패널 위 4.5:1 (예전 0.54 로 만든 값은 apply.js dropStaleOverrides 가 옮김)
         marker: alpha(accent, dark ? 0.25 : 0.18), gold: alpha(accent, dark ? 0 : 0.18),
         line: alpha(text, 0.08), shadow: alpha(dark ? '#000000' : text, dark ? 0.72 : 0.14),
     };

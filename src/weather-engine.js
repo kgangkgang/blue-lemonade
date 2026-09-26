@@ -176,7 +176,11 @@ function createCore(ctx, first, shared = {}) {
         get art() { return materials; }, get artStyle() { return artStyle; }, get colors() { return colors; }, get light() { return colors.snowAlpha < .7; }, get tintRGB() { return tintRGB; }, get gradient() { return !!rgbB; }, get opts() { return sceneOpts; }, get spots() { return spots?.[mode] || null; } };
     const make = anywhere => (mode === 'star' ? star() : mode === 'firefly' ? firefly() : mode === 'sun' ? mote(anywhere) : mode === 'fog' ? puff(anywhere) : mode === 'rain' ? drop(anywhere) : mode === 'snow' ? flake(anywhere) : mode === 'meteor' ? comet(anywhere) : piece(anywhere));
 
+    // 입자를 뿌린 크기. resize 는 바로 앞 크기가 아니라 이 크기와 비교한다 — 창을 끌어 조금씩(몇~몇십 px) 바꾸면 한 번도 문턱을 넘지 않아
+    // 새로 드러난 쪽에 별 · 유성이 안 생기고, 좁히면 넓을 때의 입자 수가 좁은 화면에 몰렸다
+    let seedW = 0, seedH = 0;
     function seed() {
+        seedW = W; seedH = H;
         scene?.dispose?.(); scene = null;
         if (SCENE_MODES.includes(mode)) {
             if (!scenesModule) { items = []; const wantMode = mode; loadScenes().then(() => { if (mode === wantMode && !scene) { seed(); shared.wake?.(); } }, () => {}); return; } // 받는 동안은 비어 있다가, 받으면 다시 뿌린다
@@ -615,7 +619,7 @@ function createCore(ctx, first, shared = {}) {
         resize(w, h, ratio) {
             const width=Math.max(1,Math.round(w*ratio)),height=Math.max(1,Math.round(h*ratio));
             if(w===W && h===H && ratio===dpr && ctx.canvas.width===width && ctx.canvas.height===height)return;
-            const changed = Math.abs(w - W) > 40 || Math.abs(h - H) > 80;
+            const changed = Math.abs(w - seedW) > 40 || Math.abs(h - seedH) > 80; // 폰 주소창(높이 ±56px)은 여전히 넘지 않는다
             W = w;
             H = h;
             dpr = ratio;
@@ -623,7 +627,7 @@ function createCore(ctx, first, shared = {}) {
             if(ctx.canvas.height!==height)ctx.canvas.height=height;
             // 장면(무지개 · 물결 · 그림자 …)은 크기가 바뀌어도 다시 만들지 않는다: 폰에서 주소창이 들락거릴 때마다 화면 높이가 바뀌는데,
             // 그때마다 물결 무늬 · 물방울 그림을 새로 구워 효과가 멈칫했다가 처음부터 다시 도는 것처럼 보였다. 장면은 매 프레임 지금 크기를 읽는다
-            if (scene) { if (changed) scene.resize?.(); }
+            if (scene) { if (changed) { seedW = W; seedH = H; scene.resize?.(); } }
             else if (changed || !items.length) seed();
         },
         config(next) {
@@ -738,7 +742,9 @@ export function createLoop(engine, raf, caf) {
         id = raf(tick);
         const FRAME = 1000 / (engine.fps?.() || 30); // 천천히 움직이는 효과는 20fps
         if (last && now - last < FRAME - 2) return;
-        const dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
+        // 상한이 0.05초(= 20fps 효과의 한 칸)면 30Hz · 50Hz 화면이나 프레임을 놓칠 때 시간이 잘려 안개 · 햇살 · 별 흐름이 75~83% 속도로 느려졌다.
+        // 숨겼다 돌아온 탭은 start() 가 last=0 으로 되돌리니, 긴 공백 막기에는 0.1초면 된다
+        const dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
         last = now;
         engine.step(dt, now);
         engine.draw();

@@ -4,7 +4,7 @@ import { extension_settings, getContext } from '../../../../../../extensions.js'
 import { saveSettingsDebounced } from '../../../../../../../script.js';
 
 export const MODULE = 'chaekgalpi';
-export const VERSION = '1.3.7';
+export const VERSION = '1.3.8';
 
 export const DEFAULT_COLORS = Object.freeze({ accent: '#a98bd9', user: '#5aa9e6', icon: '#f2c14e' });
 const COLOR_KEYS = Object.keys(DEFAULT_COLORS);
@@ -120,7 +120,7 @@ export function baseColors() {
 /**
  * 블루 레몬에이드(설정 키 salty)가 켜져 있으면 지금 팔레트에서 뽑은 색. 꺼져 있거나 없으면 null.
  * 그 테마는 팔레트 색을 :root 변수(--salty-accent, --salty-pop)로 써 두고, 켜져 있을 때만 body에 salty 클래스를 붙인다.
- * 포인트 · 유저 = 포인트색, 아이콘 = 두 번째 포인트(블루 아워는 레몬, 나머지는 포인트색).
+ * 포인트 · 유저 = 포인트색, 아이콘 = 두 번째 포인트의 글자용 잉크(블루 아워는 레몬, 밝은 테마는 흰 바탕에서 보이게 진하게 — apply.js --salty-pop-ink).
  */
 // 4.7.8: getComputedStyle(:root) 은 밀린 스타일 계산을 그 자리에서 돌린다 — 시작할 때 메시지마다 · head 가 바뀔 때마다 불려
 // 부팅의 0.3~0.4s@4x 였다. 테마 색은 <style id="salty-vars"> 글자와 body 의 salty-dark 로 정해지니 그것이 같으면 지난 값을 준다.
@@ -136,7 +136,7 @@ export function themeColors() {
         return rgb ? `#${rgb.map(channel => Math.round(channel).toString(16).padStart(2, '0')).join('')}` : null;
     };
     const accent = hexOf('--salty-accent');
-    const value = accent ? { accent, user: accent, icon: hexOf('--salty-pop') ?? accent } : null;
+    const value = accent ? { accent, user: accent, icon: hexOf('--salty-pop-ink') ?? hexOf('--salty-pop') ?? accent } : null;
     // 변수가 아직 안 쓰였을 때(시작 직후)의 null 은 기억하지 않는다 — 다음 호출이 다시 읽는다
     if (vars && value) themeMemo = { sig, value };
     return value ? { ...value } : null;

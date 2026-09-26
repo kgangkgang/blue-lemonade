@@ -34,10 +34,10 @@ body.salty {
   /* 1.6.13: 기존 카드 구성을 유지하고 둥글기·하이라이트만 한 단계 덜어낸다. */
 
   --bl-r-xs: 6px;     /* 체크박스 */
-  --bl-r-sm: 6px;    /* 버튼 · 입력칸 · 줄 · 메뉴 항목 */
-  --bl-r-md: 10px;    /* 카드 · 알림 · 드롭다운 */
-  --bl-r-menu: 10px;  /* 메뉴 (항목 10 + 여백 6) */
-  --bl-r-lg: 14px;    /* 팝업 · 시트 아래 모서리 · 시작 화면 */
+  --bl-r-sm: 8px;    /* 버튼 · 입력칸 · 줄 · 메뉴 항목 */
+  --bl-r-md: 12px;   /* 카드 · 알림 · 드롭다운 */
+  --bl-r-menu: var(--bl-r-md);
+  --bl-r-lg: 16px;   /* 팝업 · 시트 아래 모서리 · 시작 화면 */
   --bl-r-pill: 999px;
   /* 높이 */
   --bl-h-num: 32px;   /* 숫자칸 */
@@ -63,13 +63,14 @@ body.salty {
   --bl-selected: var(--salty-tint-18);
   --bl-check-off: var(--salty-shade-2); /* 꺼진 체크박스 · 스위치 칸 */
   /* 상태색 — 팔레트 밖이라 여기서만: 파랑 · 무채색 · 레몬 · 흐린 호박 (분홍 · 빨강 · 초록 없음) */
-  --bl-warn: var(--bl-pop); /* 주의는 팔레트의 기존 포인트 */
+  --bl-warn: var(--bl-pop); /* 주의는 팔레트의 기존 포인트 — 면 · 테두리 · 점용. 글자 · 아이콘은 --bl-pop-ink (밝은 테마 파스텔 pop 은 흰 면에서 안 보임) */
   --bl-warn-bg: var(--salty-toast-warning);
   --bl-warn-halo: var(--salty-shade-2);
   --bl-lemon: var(--bl-pop); /* 4.1.2: 즐겨찾기 별 · 고정 표시도 팔레트의 포인트색 (예전엔 밝은 테마에서 늘 레몬색) */
   /* 두 번째 포인트: 블루 아워는 레몬, 레몬에이드는 포인트 파랑 (apply.js --salty-pop)
      쓰는 곳은 보내기 버튼 · 지금 있는 곳(열린 서랍 · 고른 탭 · 고르기 칸) · 즐겨찾기만 — 켜짐(스위치)과 고른 항목(카드 · 줄)엔 안 씀 (아래 "두 번째 포인트" 규칙) */
   --bl-pop: var(--salty-pop, var(--salty-accent));
+  --bl-pop-ink: var(--salty-pop-ink, var(--bl-pop)); /* 글자 · 아이콘으로 쓰는 두 번째 포인트 — 밝은 테마는 흰 면 · 고른 칸에서 4.5 : 1 (apply.js), 나이트는 --bl-pop 과 같음 */
   --bl-on-pop: var(--salty-on-pop, var(--salty-on-accent));
   /* 그림자 — apply.js 가 --salty-e* 를 팔레트 그림자색으로 계산, 없으면 아래 값 (기본 팔레트 계산값과 같음) */
   --bl-e1: var(--salty-e1, 0 1px 2px rgba(15, 34, 56, 0.05), 0 2px 10px -2px rgba(15, 34, 56, 0.07));
@@ -192,30 +193,30 @@ body.salty .rm_tag_filter .tag.actionable.clearAllFilters {
   box-shadow: none !important;
   color: var(--salty-faint) !important;
 }
-/* 글자 태그: 안 고른 것은 흐리게 (고름 · 뺌과 구분) */
+/* 선택 전에도 읽을 수 있어야 한다. 고름/뺌은 위아래의 면·안쪽 선으로 구분한다. */
 body.salty .rm_tag_filter .tag:not(.actionable):not(.selected):not(.excluded) {
-  opacity: 0.55 !important;
+  opacity: 1 !important;
 }
 /* 고른 것: 옅은 포인트 면 + 포인트 테두리 */
 body.salty .rm_tag_filter .tag.selected {
   background-color: var(--bl-selected) !important;
   box-shadow: inset 0 0 0 2px var(--salty-accent), var(--bl-e1) !important;
-  color: var(--salty-accent) !important;
+  color: var(--salty-accent-ink, var(--salty-accent)) !important;
   opacity: 1 !important;
 }
 body.salty .rm_tag_filter .tag.filterByFavorites.selected {
-  color: var(--bl-lemon) !important;
+  color: var(--bl-pop-ink) !important;
 }
 /* 뺀 것: 흐린 호박 면 + 호박 테두리 + × */
 body.salty .tag.excluded,
 body.salty .rm_tag_filter .tag.excluded {
   background-color: var(--bl-warn-bg) !important;
   box-shadow: inset 0 0 0 2px var(--bl-warn) !important;
-  color: var(--bl-warn) !important;
+  color: var(--bl-pop-ink) !important;
   opacity: 1 !important;
 }
 body.salty .tag.excluded::after {
-  color: var(--bl-warn) !important;
+  color: var(--bl-pop-ink) !important;
   text-shadow: none !important;
 }
 body.salty .rm_tag_filter .tag.actionable.excluded::after {
@@ -396,7 +397,7 @@ body.salty .macroBrowser .macro-source.isExtension.isCore {
   color: var(--salty-accent);
 }
 body.salty .macroBrowser .macro-source.isExtension.isThirdParty {
-  color: var(--bl-warn);
+  color: var(--bl-pop-ink);
 }
 /* 자동완성 창: 테두리 대신 떠 있는 메뉴 그림자 (글자색은 apply.js 가 --ac-style-color-* 로) */
 body.salty :is(.autoComplete, .autoComplete-details) {
@@ -409,6 +410,6 @@ body.salty .autoComplete-details > .specs > .head > .source.isCore.isExtension {
 }
 body.salty .autoComplete-details > .specs > .head > .source.isThirdParty.isExtension,
 body.salty .autoComplete > .item.macro-ac-item > .macro-source.isThirdParty {
-  color: var(--bl-warn);
+  color: var(--bl-pop-ink);
 }
 /* ===== /surfaces:foundation ===== */

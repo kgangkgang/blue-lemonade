@@ -146,6 +146,10 @@ body.salty .popup .popup-controls .menu_button.popup-button-cancel {
   box-shadow: none !important;
   color: var(--salty-text) !important;
 }
+/* 키보드 포커스: 취소(아니요)도 링 — 위 box-shadow: none !important 가 02-controls 의 :focus-visible 링을 덮고 있었다 */
+body.salty .popup .popup-controls .menu_button.popup-button-cancel:focus-visible {
+  box-shadow: var(--bl-ring) !important;
+}
 body.salty .popup .popup-controls .menu_button:is(:hover, :focus, :focus-visible) {
   filter: none !important;
 }

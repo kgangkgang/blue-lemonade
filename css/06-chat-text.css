@@ -187,6 +187,22 @@ body.salty #chat .mes .mes_text :is(code, pre) {
   border-radius: 8px !important;
   color: var(--salty-text) !important;
 }
+/* 밝은 테마 코드 블록: 음영은 한 겹만 — pre 와 code 가 두 번 깔아 바탕이 어두워지던 것. 코드 글자 그라데이션이 code 에 걸리므로 pre 쪽을 뺀다 */
+body.salty.salty-light #chat .mes .mes_text pre:has(> code) {
+  background: transparent !important;
+}
+/* 코드 블록 구문 강조: 실리태번 hljs 테마(bright.min.css)는 검은 바탕용 색이라 밝은 칸에서 안 보였다 — 같은 선택자 묶음 · 같은 순서로
+   apply.js 가 코드 칸 위 4.5 : 1 로 맞춘 색(--salty-hl-*)을 입힌다. 스크립트(stscript) 블록은 실리태번 규칙(자동완성 색)이 더 무거워 그대로 */
+body.salty .mes_text .hljs-comment { color: var(--salty-hl-comment); }
+body.salty:where(.salty-light) .mes_text :is(.hljs-tag, .hljs-operator, .hljs-punctuation, .hljs-subst) { color: var(--salty-text); }
+body.salty .mes_text .hljs-bullet, body.salty .mes_text .hljs-deletion, body.salty .mes_text .hljs-name, body.salty .mes_text .hljs-selector-tag, body.salty .mes_text .hljs-template-variable, body.salty .mes_text .hljs-variable { color: var(--salty-hl-variable); }
+body.salty .mes_text .hljs-attr, body.salty .mes_text .hljs-link, body.salty .mes_text .hljs-literal, body.salty .mes_text .hljs-number, body.salty .mes_text .hljs-symbol, body.salty .mes_text .hljs-variable.constant_ { color: var(--salty-hl-number); }
+body.salty .mes_text .hljs-class .hljs-title, body.salty .mes_text .hljs-title, body.salty .mes_text .hljs-title.class_, body.salty .mes_text .hljs-strong { color: var(--salty-hl-title); }
+body.salty .mes_text .hljs-addition, body.salty .mes_text .hljs-code, body.salty .mes_text .hljs-string, body.salty .mes_text .hljs-title.class_.inherited__ { color: var(--salty-hl-string); }
+body.salty .mes_text .hljs-built_in, body.salty .mes_text .hljs-doctag, body.salty .mes_text .hljs-keyword.hljs-atrule, body.salty .mes_text .hljs-quote, body.salty .mes_text .hljs-regexp { color: var(--salty-hl-builtin); }
+body.salty .mes_text .hljs-attribute, body.salty .mes_text .hljs-function .hljs-title, body.salty .mes_text .hljs-section, body.salty .mes_text .hljs-title.function_, body.salty .mes_text .ruby .hljs-property { color: var(--salty-hl-func); }
+body.salty .mes_text .diff .hljs-meta, body.salty .mes_text .hljs-keyword, body.salty .mes_text .hljs-template-tag, body.salty .mes_text .hljs-type, body.salty .mes_text .hljs-emphasis { color: var(--salty-hl-keyword); }
+body.salty .mes_text .hljs-meta, body.salty .mes_text .hljs-meta .hljs-keyword, body.salty .mes_text .hljs-meta .hljs-string { color: var(--salty-hl-meta); }
 /* 코드 글자(`코드`): 글꼴 칸 '코드' · 크기 칸 '코드' 를 따름 (안 정하면 둘레 글꼴 · 같은 크기).
    기본은 도트 글꼴(Neo둥근모) — 도트는 이음자(ligature)가 없어야 획이 또렷 */
 :is(body.salty #chat .mes .mes_text, .salty-sample) :is(code, kbd, samp) {

@@ -90,7 +90,7 @@ function buildCss(s) {
     const bg = read('--salty-bg', dark ? '#071C2E' : '#F1F8FD');
     const text = read('--salty-text', dark ? '#E6EEF5' : '#222D3A');
     const muted = read('--salty-muted', dark ? '#9FB0C0' : '#5B6B7B');
-    const pop = read('--bl-pop', dark ? '#FFE973' : '#428DF0');
+    const pop = read('--bl-pop-ink', read('--bl-pop', dark ? '#FFE973' : '#428DF0')); // 톱니는 글자용 잉크 (밝은 테마에서 파스텔 pop 이 흰 바탕에 묻히지 않게)
     const font = safeFont(cs.getPropertyValue('--salty-font-ui'));
     const faces = splashFaces(font);
     // 로딩 칸의 글자 크기 · 줄 간격도 (톱니가 1.7em 이라 테마가 팝업 글자를 --bl-fs-body · 1.55 로 바꾸는 순간 커져 레몬 · 글이 3px 밀렸음)

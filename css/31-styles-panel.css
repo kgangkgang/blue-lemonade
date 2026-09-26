@@ -130,7 +130,7 @@
   padding: 7px 12px;
   border-radius: var(--r-md);
   background: var(--salty-fill-accent-10, var(--salty-accent-10));
-  color: var(--salty-accent);
+  color: var(--salty-accent-ink, var(--salty-accent));
   font-size: var(--fs-small);
   font-weight: 600;
 }

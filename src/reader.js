@@ -88,6 +88,9 @@ function markWheel() { userUntil = performance.now() + USER_WHEEL_MS; }
 function onTap(event) {
     if (performance.now() - lastScrollAt < 250) return; // 관성 스크롤을 멈추려고 누른 것
     if (event.target.closest?.(TAP_IGNORE)) return;
+    // 떠 있는 ··· 메뉴를 닫으려는 톡 — 실리태번은 document 의 click 에서 메뉴를 닫아서 #chat 에서 먼저 받는 여기서는 아직 열려 있다.
+    // 메뉴만 닫히게 두고 바는 그대로 (lite.js 의 바깥 클릭 닫기와 같은 '열림' 기준. 늘 펼침(expandMessageActions)은 메뉴가 아니다)
+    if (!body.classList.contains('expandMessageActions') && chat.querySelector('.extraMesButtons.visible, .extraMesButtons[style*="display: flex"], .extraMesButtons[style*="display:flex"]')) return;
     if (event.target.closest?.('.mes')?.querySelector('.edit_textarea')) return; // 편집 중인 메시지
     if (!window.getSelection()?.isCollapsed) return; // 글자를 고르는 중
     if (hidden()) show();
@@ -95,7 +98,8 @@ function onTap(event) {
 }
 
 function onFocusIn(event) {
-    if (event.target.closest?.('#form_sheld')) show();
+    // 위 바는 숨겨도 화면 밖으로 밀릴 뿐 Tab 순서에는 남는다(실리태번이 서랍 아이콘에 tabindex 를 준다) — Shift+Tab 으로 들어가면 보이게 꺼낸다
+    if (event.target.closest?.('#form_sheld, #top-bar, #top-settings-holder')) show();
 }
 
 function measureForm() {

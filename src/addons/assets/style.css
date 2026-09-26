@@ -4,7 +4,7 @@
    ============================================================ */
 
 /* state.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
-:root { --eh-css-version: "1.4.4"; }
+:root { --eh-css-version: "1.4.5"; }
 
 .eh-root {
     --eh-text: var(--SmartThemeBodyColor, #ccc);
@@ -741,6 +741,9 @@
     background: rgba(8, 7, 12, .94);
     color: #fff;
     overflow: hidden;
+    /* 창 위의 두 손가락 벌리기는 그림 확대(viewer.js)만 — 브라우저가 페이지를 확대 · 스크롤하지 않게 */
+    touch-action: none;
+    overscroll-behavior: contain;
 }
 
 .eh-viewer:not([open]) { display: none; }
@@ -773,16 +776,38 @@
     align-items: center;
     justify-content: center;
     padding: 0 8px;
-    touch-action: pan-y;
+    /* 확대한 그림은 무대 안에서만 보인다 (위 제목 줄 · 아래 단추 줄을 덮지 않게) */
+    overflow: hidden;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .eh-viewer-img {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
-    border-radius: 8px;
+    /* 확대하면 둥글기도 같이 커지므로 배율(viewer.js 가 넣는 --eh-zoom-scale)로 나눠 늘 8px 로 보이게 */
+    border-radius: calc(8px / var(--eh-zoom-scale, 1));
     user-select: none;
     -webkit-user-drag: none;
+    transform-origin: 50% 50%;
+}
+
+/* 두 번 톡 · 손을 뗀 뒤 1배로 돌아오기 · 휠 한 칸만 부드럽게. 손가락을 따라갈 때는 바로 그린다. */
+.eh-viewer-img.is-easing { transition: transform var(--eh-zoom-ms, .26s) var(--eh-ease); }
+/* 누르는 동안만 GPU 층 (viewer.js setMoving) — 손을 떼면 확대한 크기로 선명하게 다시 그린다 */
+.eh-viewer.is-gesturing .eh-viewer-img { will-change: transform; }
+
+/* 확대해서 보는 동안은 넘기기 단추를 치운다 (← → 키 · 두 번 톡으로 되돌린 뒤 넘기기는 그대로).
+   visibility 로 숨기면 단추에 있던 키보드 초점이 창 밖(body)으로 떨어져 ← → 가 실리태번 스와이프로 샌다 — 투명하게만 */
+.eh-viewer.is-zoomed .eh-viewer-nav { opacity: 0; pointer-events: none; }
+
+/* PC 마우스: 그림 위에서는 확대 커서, 확대 중에는 잡아 끄는 손 — 돋보기 단추 대신 */
+@media (hover: hover) and (pointer: fine) {
+    .eh-viewer:not(.is-zoomed) .eh-viewer-img { cursor: zoom-in; }
+    .eh-viewer.is-zoomed .eh-viewer-stage { cursor: grab; }
+    .eh-viewer.is-zoomed.is-gesturing .eh-viewer-stage { cursor: grabbing; }
 }
 
 .eh-viewer-nav {
@@ -800,7 +825,7 @@
     font-size: 1.1rem;
     cursor: pointer;
     transform: translateY(-50%);
-    transition: background .15s;
+    transition: background .15s, opacity .15s;
 }
 
 .eh-viewer-nav:hover { background: rgba(0, 0, 0, .7); }
@@ -844,6 +869,14 @@
     .eh-viewer-actions { gap: 6px; padding: 8px 8px; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
     .eh-vbtn { height: 36px; padding: 0 10px; gap: 5px; font-size: .78rem; }
 }
+
+/* 움직임 줄이기 (기기 설정 · 실리태번의 Reduced Motion) — 확대 · 되돌리기를 바로 바꾼다 */
+@media (prefers-reduced-motion: reduce) {
+    .eh-viewer-img.is-easing,
+    .eh-viewer-nav { transition: none; }
+}
+body.reduced-motion .eh-viewer-img.is-easing,
+body.reduced-motion .eh-viewer-nav { transition: none; }
 
 /* ── 채팅에 그려지는 그림 (정규식 없이 확장이 직접 바꾼 것) ── */
 

@@ -73,11 +73,19 @@ body.salty.salty-icons-line #chat .mes .bl-pinned.mes_to_image { --salty-mi: var
 
 /* 눈 아이콘 길게 누르기 (src/mes-fold.js): 꺼내기 · 접기 두 줄. 고르기 목록 팝업(.salty-pick-float, css/28)의 모양을 그대로 쓰고
    폭만 글자에 맞춘다. 층(.bl-eye-layer)은 popover 라 기본 테두리 · 바탕을 스크립트가 인라인으로 지운다 */
+/* 5.4.4: 두 줄뿐이라 목록 팝업의 42px 줄은 컸다 (사용자: 글자 크기에 맞춰 슬림하게) — 줄 높이를 글자 + 위아래 여백으로.
+   폰 412 에서 13.5px 글자 → 줄 33px (누르는 칸이 이름 줄 버튼 32px 보다 작아지지 않게 여백 8px) */
 body.salty .bl-eye-pick {
   width: max-content;
-  min-width: 96px;
+  min-width: 0;
+  padding: 4px;
+  border-radius: 12px;
 }
 body.salty .bl-eye-pick .salty-pick-rows > button {
+  min-height: 0;
+  padding: 8px 16px;
+  border-radius: 8px;
+  line-height: 1.25;
   justify-content: center;
   -webkit-user-select: none;
   user-select: none;

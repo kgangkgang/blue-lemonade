@@ -154,7 +154,7 @@ export function bindWordTools(root, refresh) {
             }
             if(action==='replace'){undoDraft=draft;draft=replaceText(draft,cfg.rules,cfg).text;}
             if(action==='undo-draft'&&undoDraft!==null){[draft,undoDraft]=[undoDraft,draft];}
-            if(action==='copy'){await navigator.clipboard.writeText(draft);globalThis.toastr?.success('복사했어요.','Blue Lemonade');}
+            if(action==='copy'){await copyText(draft,section);globalThis.toastr?.success('복사했어요.','Blue Lemonade');}
             if(action==='preview') {
                 if(!ids.length)throw Error('메시지를 먼저 선택해 주세요.');
                 await loadHash();
@@ -183,6 +183,17 @@ export function bindWordTools(root, refresh) {
     }));
 }
 
+// http:// 로 연 폰(LAN 접속)에는 clipboard API 가 없다 — 옛 복사 명령으로 대신한다. 설정 창이 실리태번 팝업(showModal)이면 창 밖(body)은 inert 라
+// 거기 붙인 글 칸은 골라지지 않아 복사가 안 된다 → 누른 단추가 든 창(dialog) 안에 붙인다
+async function copyText(text,near) {
+    try{await navigator.clipboard.writeText(text);return;}catch{/* 아래 옛 방식 */}
+    const back=document.activeElement,area=document.createElement('textarea');
+    area.value=text;area.readOnly=true;area.style.cssText='position:fixed;top:0;left:0;opacity:0';
+    (near?.closest('dialog[open]')||document.body).append(area);area.select();area.setSelectionRange(0,area.value.length); // iOS 는 readOnly 칸에서 select() 만으로 안 골라질 때가 있다
+    let ok=false;try{ok=document.execCommand('copy');}catch{ok=false;}
+    area.remove();back?.focus?.({preventScroll:true});
+    if(!ok)throw Error('복사하지 못했어요.');
+}
 function popup(html) {
     const dialog=document.createElement('dialog');dialog.className='bl-tool-dialog';dialog.innerHTML=html;
     document.body.append(dialog);dialog.showModal();dialog.addEventListener('close',()=>dialog.remove(),{once:true});return dialog;

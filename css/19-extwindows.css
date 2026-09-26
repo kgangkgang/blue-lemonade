@@ -162,9 +162,9 @@ html body.salty #autopic_settings_container .gen-checkbox-label input[type="chec
 /* 인라인으로 박힌 고정 색 셋 — 밝은 팔레트에서 흰 종이에 묻힌다 (각각 파일에 한 번씩만 쓰임) */
 html body.salty #autopic_settings_container [style*="#cccccc"] { color: var(--salty-muted) !important; }
 html body.salty #autopic_settings_container [style*="#e07b7b"] { color: var(--bl-danger) !important; }
-html body.salty #autopic_settings_container [style*="#ff9f43"] { color: var(--bl-warning, var(--salty-em)) !important; }
+html body.salty #autopic_settings_container [style*="#ff9f43"] { color: var(--bl-pop-ink, var(--salty-em)) !important; }
 
-html body.salty #model-switch-settings .ms-actions .ms-apply { border-radius:10px!important; }
+html body.salty #model-switch-settings .ms-actions .ms-apply { border-radius:var(--bl-r-sm,8px)!important; }
 /* Source and license notices: one click from the theme version. */
 .bl-copyright{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;width:30px;min-height:30px;padding:2px;border:0;border-radius:50%;font:500 20px/1 system-ui;background:transparent;color:var(--salty-muted,#64748b);cursor:pointer}
 .bl-copyright:focus-visible{outline:2px solid var(--salty-accent,#3975b8)}
@@ -173,3 +173,159 @@ html body.salty #model-switch-settings .ms-actions .ms-apply { border-radius:10p
 .bl-credits-dialog>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;flex:none;border-bottom:1px solid var(--salty-line,#cdd9e8)}
 .bl-credits-dialog h2{font-size:18px;margin:0}.bl-credits-dialog header button{width:40px;height:40px;border:0;background:transparent;color:inherit;font:400 26px/1 system-ui;cursor:pointer}
 .bl-credits-body{overflow:auto;min-height:0;padding:4px 18px 18px;font-size:13px;line-height:1.8;word-break:keep-all;overflow-wrap:anywhere}.bl-credits-body section{padding:10px 0;border-bottom:1px solid var(--salty-line,#cdd9e8)}.bl-credits-body h3{font-size:15px;margin:8px 0}.bl-credits-body a{color:var(--salty-accent,#3975b8);text-decoration:underline}
+
+/* Embedded tools also open outside the editor. Keep their controls on the same
+   palette and let text size determine when rows need another line. */
+html body.salty :is(.llmt-settings,.llmt-gl-expanded,.llmt-gl-pick,.mr-settings,
+  #model-switch-settings,#regex-link-settings,.pa-hub,.po-dialog,.bl-ctsi-dialog,.jj-settings) {
+  font-family:var(--salty-font-ui,inherit);
+  font-size:var(--salty-ui-size,var(--bl-ts-ui,15px));
+  font-weight:var(--salty-ui-weight,normal);
+  letter-spacing:var(--bl-settings-tracking,normal);
+  color:var(--salty-text);
+  min-width:0;
+}
+html body.salty :is(.llmt-settings,.llmt-gl-expanded,.llmt-gl-pick) {
+  --llmt-accent:var(--salty-accent);
+  --llmt-border:var(--salty-line);
+  --llmt-text:var(--salty-text);
+  --llmt-dim:var(--salty-muted);
+  --llmt-card-bg:var(--salty-fill-surface,var(--salty-surface));
+  --llmt-head-bg:var(--salty-shade);
+  --llmt-radius:var(--bl-r-md,12px);
+}
+html body.salty :is(.llmt-settings,.llmt-gl-expanded,.llmt-gl-pick,.mr-settings,
+  #model-switch-settings,#regex-link-settings,.pa-hub,.bl-ctsi-dialog)
+  :is(input[type=text],input[type=number],input[type=password],input[type=url],textarea,select) {
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+  background:var(--salty-fill-field,var(--salty-field))!important;
+  color:var(--salty-text)!important;
+  border-radius:var(--bl-r-sm,8px)!important;
+  font-family:inherit;
+  font-size:inherit;
+  font-weight:inherit;
+  letter-spacing:inherit;
+}
+html body.salty :is(.llmt-settings,.llmt-gl-expanded,.llmt-gl-pick) :is(.llmt-desc,.llmt-tagline) {
+  color:var(--salty-muted); opacity:1; font-size:.85em; line-height:1.5;
+}
+html body.salty :is(.mr-settings,#model-switch-settings,#regex-link-settings,.pa-hub,.po-dialog,.bl-ctsi-dialog,.jj-settings)
+  :is(button,.menu_button):where(:not(.fa,.fas,.far,.fa-solid,.fa-regular,.fa-brands)) {
+  font-weight:var(--salty-ui-weight,normal); letter-spacing:var(--bl-settings-tracking,normal);
+}
+html body.salty .llmt-settings { container:bl-translator-settings / inline-size; }
+html body.salty .llmt-tabs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 10px; overflow:visible; border:0; margin:8px 0 10px; }
+html body.salty .llmt-tab {
+  /* 줄 상자와 실제 아이콘·한글 잉크 중심의 차이만 보정. 총 패딩/클릭 높이는 유지. */
+  --bl-tab-optical-shift:clamp(1px,.17em,4px);
+  flex-direction:column; gap:8px; min-width:0; margin:0;
+  padding:calc(7px + var(--bl-tab-optical-shift)) 5px calc(7px - var(--bl-tab-optical-shift));
+  border:0; border-radius:var(--bl-r-sm,8px); white-space:normal;
+  background:var(--salty-shade); color:var(--salty-muted); line-height:1.45; word-break:keep-all;
+}
+html body.salty .llmt-tab > span { word-break:keep-all; overflow-wrap:normal; }
+@container bl-translator-settings (min-width:22em) {
+  html body.salty .llmt-tabs { grid-template-columns:repeat(4,minmax(0,1fr)); }
+}
+@container bl-translator-settings (min-width:40em) {
+  html body.salty .llmt-tab { --bl-tab-optical-shift:clamp(.5px,.08em,2px); flex-direction:row; gap:10px; }
+}
+html body.salty .llmt-tab.active { background:var(--salty-accent-13,var(--salty-shade)); color:var(--salty-accent-ink,var(--salty-accent)); font-weight:inherit; }
+html body.salty .llmt-tab.active i { color:inherit; }
+html body.salty .llmt-settings .preset-controls { flex-wrap:wrap; gap:8px 10px; }
+html body.salty .llmt-settings .preset-controls select { flex:1 1 10em; }
+html body.salty .llmt-settings :is(.llmt-card-body,.llmt-field,.llmt-inline-row) { min-width:0; }
+html body.salty .llmt-settings :is(.llmt-label,.llmt-section-title) { font-weight:inherit; }
+html body.salty .llmt-settings .llmt-field { gap:8px; }
+html body.salty .llmt-settings .llmt-checks--grid { grid-template-columns:repeat(auto-fit,minmax(min(100%,12em),1fr)); gap:8px 10px; }
+html body.salty .llmt-settings .llmt-card--accent { padding:10px; box-shadow:none; }
+html body.salty .llmt-settings .llmt-card-body { padding:10px; }
+html body.salty .llmt-settings :is(.menu_button,.llmt-gl-scope,.llmt-gl-sort) {
+  height:auto; min-height:36px; max-width:100%; white-space:normal;
+  line-height:1.45; font-weight:inherit; letter-spacing:inherit;
+}
+/* 닫기는 내용만큼, 큰 메뉴 글자에서는 아이콘과 패딩 높이를 확보한다. */
+html body.salty .bl-translator-dialog > header > button {
+  --bl-translator-close-min:34px;
+  display:inline-grid; place-items:center; flex:0 0 auto; box-sizing:border-box;
+  width:auto; height:auto; min-width:max(var(--bl-translator-close-min),1em + 8px);
+  min-height:max(var(--bl-translator-close-min),1em + 8px); padding:4px;
+  border-radius:var(--bl-r-sm,8px); font-size:max(20px,var(--salty-ui-size,15px)); line-height:1;
+}
+@media(max-width:1000px) {
+  html body.salty .bl-translator-dialog > header > button { --bl-translator-close-min:36px; }
+}
+
+html body.salty :is(.ms-target,.ms-lock,.rlk-keep,.rl-module,.mr-item) { padding:8px 10px; border-radius:var(--bl-r-md,12px); }
+html body.salty :is(.ms-chip,.ms-options) { border-radius:var(--bl-r-sm,8px); }
+html body.salty :is(.ms-icon,.ms-pull,.ms-option,.mr-item-buttons .menu_button) {
+  min-width:34px; min-height:34px; border-radius:var(--bl-r-sm,8px);
+}
+html body.salty .mr-item { flex-wrap:wrap; column-gap:10px; row-gap:8px; }
+html body.salty .mr-name { flex:1 1 9em; }
+html body.salty .mr-item-buttons { flex-wrap:wrap; gap:8px 10px; margin-inline-start:auto; }
+html body.salty .mr-row { gap:8px 10px; }
+html body.salty .mr-warn { color:var(--bl-pop-ink,var(--salty-accent-ink)); }
+html body.salty #model-switch-settings { container:bl-model-switch / inline-size; }
+html body.salty :is(.ms-row,.ms-form label) { grid-template-columns:minmax(4em,max-content) minmax(0,1fr); gap:8px 10px; }
+html body.salty .ms-presets { grid-template-columns:repeat(auto-fit,minmax(min(100%,10em),1fr)); gap:8px 10px; }
+html body.salty .ms-model { flex-wrap:wrap; gap:8px 10px; }
+html body.salty .ms-model .text_pole { flex:1 1 8em; }
+html body.salty .ms-actions { flex-wrap:wrap; gap:8px 10px; }
+html body.salty .ms-actions .menu_button { flex:0 1 auto; height:auto; white-space:normal; }
+html body.salty #model-switch-settings .ms-actions .ms-apply { flex:0 1 auto; min-height:36px; padding:7px 12px!important; line-height:1.45; font-weight:inherit; }
+html body.salty :is(.ms-chip b,.ms-target b,.ms-lock b) { font-weight:inherit; }
+html body.salty :is(.ms-chip b,.ms-chip small,.ms-target small) { white-space:normal; overflow-wrap:anywhere; }
+@container bl-model-switch (width < 24em) {
+  html body.salty :is(.ms-row,.ms-form label) { grid-template-columns:minmax(0,1fr); }
+}
+
+html body.salty .pa-hub { --pa-hub-line:var(--salty-line); --pa-hub-accent:var(--salty-accent); }
+html body.salty .pa-hub-tabs { grid-template-columns:repeat(auto-fit,minmax(min(100%,7em),1fr)); gap:8px 10px; }
+html body.salty .pa-hub-tab {
+  --bl-tab-optical-shift:clamp(1px,.17em,4px);
+  justify-content:center;
+  padding:calc(7px + var(--bl-tab-optical-shift)) 8px calc(7px - var(--bl-tab-optical-shift));
+  border-radius:var(--bl-r-sm,8px); gap:6px;
+}
+html body.salty .pa-hub-tab > span { white-space:normal; overflow:visible; text-overflow:clip; overflow-wrap:anywhere; }
+html body.salty .sw-settings .sw-row { flex-wrap:wrap; gap:8px 10px; }
+html body.salty .sw-settings .sw-num { margin-inline-start:auto; }
+html body.salty .rl-settings .rl-price-add { flex-wrap:wrap; gap:8px 10px; }
+html body.salty .rl-settings .rl-price-add input[type=number] { width:6em; max-width:100%; flex:1 1 6em; }
+html body.salty :is(.rl-root,.rl-settings) { --rl-ok:var(--salty-accent-ink,var(--salty-accent)); --rl-error:var(--bl-danger); --rl-warn:var(--bl-pop-ink,var(--salty-accent-ink)); }
+html body.salty .lt-table tr.is-error td { color:var(--bl-danger); }
+html body.salty .rl-msg.is-reasoning { border-left-color:var(--salty-em); }
+html body.salty :is(.rl-tab,.rl-chip) { height:auto; min-height:34px; padding:6px 10px; border-radius:var(--bl-r-sm,8px); white-space:normal; line-height:1.45; }
+
+html body.salty .bl-ctsi-dialog #ctsi-drawer-content { font-size:inherit!important; }
+html body.salty .bl-ctsi-dialog :is(p,small) { font-size:.85em; }
+html body.salty .bl-ctsi-dialog .ctsi-button-container { flex-wrap:wrap; gap:8px 10px; margin:12px 0; }
+html body.salty .bl-ctsi-dialog #ctsi-drawer-content .flex-container { flex-wrap:wrap; gap:8px 10px; }
+html body.salty .bl-ctsi-dialog #ctsi-drawer-content :is(span,select,input) { min-width:0; overflow-wrap:anywhere; }
+html body.salty .jj-settings .jj-switch[aria-checked=true] span { background:var(--salty-on-accent); }
+html body.salty .jj-settings .jj-switch[aria-checked=false] span { background:var(--salty-text); }
+
+/* Image pixels and their overlaid captions keep their own contrast. The viewer
+   chrome follows the palette like the settings dialog. */
+html body.salty .eh-root {
+  --eh-text:var(--salty-text); --eh-accent:var(--salty-accent);
+  --eh-accent-ink:var(--salty-on-accent)!important;
+  --eh-muted:var(--salty-muted); --eh-faint:var(--salty-muted);
+  --eh-line:var(--salty-line); --eh-line-strong:var(--salty-shade-2);
+  --eh-hover:var(--salty-shade); --eh-card:var(--salty-surface); --eh-well:var(--salty-field);
+  --eh-accent-text:var(--salty-accent-ink,var(--salty-accent)); --eh-danger:var(--bl-danger);
+}
+html body.salty .eh-viewer { background:var(--salty-bg); color:var(--salty-text); }
+html body.salty :is(.eh-viewer-meta,.eh-viewer.is-off .eh-viewer-name) { color:var(--salty-muted); }
+html body.salty .eh-viewer-state { background:var(--salty-shade); color:var(--salty-text); }
+html body.salty .eh-icon-btn--light { color:var(--salty-muted)!important; }
+html body.salty .eh-icon-btn--light:hover { background:var(--salty-shade); color:var(--salty-text)!important; }
+html body.salty :is(.eh-vbtn,.eh-viewer-nav) { background:var(--salty-control,var(--salty-surface)); color:var(--salty-text)!important; border-color:var(--salty-line); border-radius:var(--bl-r-sm,8px); }
+html body.salty .eh-vbtn { height:auto; min-height:36px; max-width:100%; padding:7px 10px; line-height:1.45; white-space:normal; gap:10px; }
+html body.salty .eh-vbtn--danger { color:var(--bl-danger)!important; }
+html body.salty .eh-vbtn--danger:hover { background:var(--salty-danger-soft); }
+html body.salty .eh-toolbar { flex-wrap:wrap; column-gap:10px; row-gap:8px; }
+html body.salty .eh-viewer-actions { gap:8px 10px; }

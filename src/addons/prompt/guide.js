@@ -26,7 +26,7 @@ export function installGuide({doc,cfg,save,openPanel,closePanel}) {
  const panel=doc.getElementById('pt-panel');if(!panel||panel.dataset.blGuide)return;
  panel.dataset.blGuide='true';panel.setAttribute('aria-label','한글화 패널');
  const header=panel.querySelector('#pt-panel-header'),tabs=panel.querySelector('#pt-tabs'),content=panel.querySelector('#pt-panel-content');
- const version=doc.createElement('button');version.type='button';version.className='pt-version';version.dataset.ptGuide='';version.textContent='v1.1.1';version.setAttribute('aria-label','한글화 패널 사용방법');header.querySelector('h3').append(version);
+ const version=doc.createElement('button');version.type='button';version.className='pt-version';version.dataset.ptGuide='';version.textContent='v1.1.2';version.setAttribute('aria-label','한글화 패널 사용방법');header.querySelector('h3').append(version);
  const settingsTab=doc.createElement('button');settingsTab.type='button';settingsTab.className='pt-tab';settingsTab.dataset.tab='settings';settingsTab.textContent='설정';tabs.append(settingsTab);
  const settingsPage=doc.createElement('div');settingsPage.id='pt-page-settings';settingsPage.className='pt-page';content.append(settingsPage);settingsPage.append(doc.getElementById('pt-settings-form'));
  const icons={localization:'language',preset:'sliders',wi:'book-open',char:'address-card',regex:'code',settings:'gear'};

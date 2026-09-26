@@ -75,9 +75,9 @@
 body.salty #user-settings-block-content .flex-container:has(> #blur_strength) > small:first-child::after,
 body.salty #user-settings-block-content .flex-container:has(> #shadow_width) > small:first-child::after {
   content: "테마가 끔";
-  font-size: var(--bl-fs-micro);
+  font-size: var(--bl-fs-sub);
   font-weight: 400;
-  color: var(--salty-faint);
+  color: var(--salty-muted);
 }
 body.salty #user-settings-block-content .flex-container:has(> #blur_strength) > :is(.neo-range-slider, .neo-range-input),
 body.salty #user-settings-block-content .flex-container:has(> #shadow_width) > :is(.neo-range-slider, .neo-range-input) {

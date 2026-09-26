@@ -1,37 +1,37 @@
 // 에이드 팔레트. 화이트/나이트 바탕을 공유하고 형광펜과 포인트색으로 구분한다.
 export const PALETTES = {
     salt: {
-        label: '블루 레몬에이드 · 화이트', desc: '하늘빛 흰 종이 · 파란 형광펜', mode: 'light', bg: '#F9FCFF', surface: '#FDFEFF', raised: '#E5F1FF', text: '#222D3A', dialogue: '#141E2A', em: '#3975AC', strong: '#2264A5', muted: '#5A6F87', faint: '#75889F', danger: '#E23B2E', accent: '#247CDD', pop: '#398EE8', marker: 'rgba(62, 177, 255, 0.27)', gold: 'rgba(255, 226, 60, 0.62)', line: 'rgba(31, 50, 71, 0.07)', shadow: 'rgba(35, 62, 92, 0.12)',
+        label: '블루 레몬에이드 · 화이트', desc: '하늘빛 흰 종이 · 파란 형광펜', mode: 'light', bg: '#F9FCFF', surface: '#FDFEFF', raised: '#E5F1FF', text: '#222D3A', dialogue: '#141E2A', em: '#336FA6', strong: '#2264A5', muted: '#566B83', faint: '#62758B', danger: '#E23B2E', accent: '#2477D3', pop: '#398EE8', marker: 'rgba(62, 177, 255, 0.27)', gold: 'rgba(255, 226, 60, 0.62)', line: 'rgba(31, 50, 71, 0.07)', shadow: 'rgba(35, 62, 92, 0.12)',
     },
     night: {
         label: '블루 아워', desc: '푸른 밤 · 파란 형광펜 · 레몬 강조', mode: 'dark', bg: '#141F2E', surface: '#1C293B', raised: '#28384D', text: '#DBE2EB', dialogue: '#F3F7FC', em: '#A4C7ED', strong: '#FFE873', muted: '#ABBACE', faint: '#8596AD', danger: '#FF6F62', accent: '#93C9FF', pop: '#FFE873', marker: 'rgba(96, 169, 255, 0.35)', gold: 'rgba(255, 232, 115, 0)', line: 'rgba(184, 201, 224, 0.08)', shadow: 'rgba(0, 0, 0, 0.6)',
     },
     'black-light': {
-        label: '리얼 블랙에이드 · 화이트', desc: '흰 종이 · 차콜', mode: 'light', bg: '#FCFCFC', surface: '#FEFEFE', raised: '#EEEEEE', text: '#2E2E2E', dialogue: '#1F1F1F', em: '#6B6B6B', strong: '#525252', muted: '#6C6C6C', faint: '#888888', danger: '#E23B2E', accent: '#5C5C5C', pop: '#5C5C5C', brand: '#5C5C5C', marker: 'rgba(140, 140, 140, 0.22)', gold: 'rgba(189, 189, 189, 0.16)', line: 'rgba(51, 51, 51, 0.07)', shadow: 'rgba(64, 64, 64, 0.12)',
+        label: '리얼 블랙에이드 · 화이트', desc: '흰 종이 · 차콜', mode: 'light', bg: '#FCFCFC', surface: '#FEFEFE', raised: '#EEEEEE', text: '#2E2E2E', dialogue: '#1F1F1F', em: '#696969', strong: '#525252', muted: '#6C6C6C', faint: '#888888', danger: '#E23B2E', accent: '#5C5C5C', pop: '#5C5C5C', brand: '#5C5C5C', marker: 'rgba(140, 140, 140, 0.22)', gold: 'rgba(189, 189, 189, 0.16)', line: 'rgba(51, 51, 51, 0.07)', shadow: 'rgba(64, 64, 64, 0.12)',
     },
     black: {
         label: '리얼 블랙에이드 · 나이트', desc: '검정 · 분필', mode: 'dark', bg: '#141414', surface: '#1F1F1F', raised: '#2E2E2E', text: '#E3E3E3', dialogue: '#F7F7F7', em: '#B3B3B3', strong: '#CCCCCC', muted: '#BDBDBD', faint: '#999999', danger: '#FF6F62', accent: '#D6D6D6', pop: '#D6D6D6', brand: '#D6D6D6', marker: 'rgba(153, 153, 153, 0.2)', gold: 'rgba(214, 214, 214, 0)', line: 'rgba(204, 204, 204, 0.08)', shadow: 'rgba(0, 0, 0, 0.6)',
     },
     melon: {
-        label: '멜론 에이드 · 화이트', desc: '허니듀 흰 종이 · 라임 형광펜', mode: 'light', bg: '#FCFEF9', surface: '#FEFFFD', raised: '#EDF9DE', text: '#2F3A22', dialogue: '#1F2A14', em: '#59823C', strong: '#438222', muted: '#63764F', faint: '#7E9366', danger: '#E23B2E', accent: '#4B831F', pop: '#BBEA83', brand: '#BBEA83', marker: 'rgba(168, 238, 100, 0.34)', gold: 'rgba(219, 248, 129, 0.48)', line: 'rgba(52, 71, 31, 0.07)', shadow: 'rgba(66, 92, 35, 0.12)',
+        label: '멜론 에이드 · 화이트', desc: '허니듀 흰 종이 · 라임 형광펜', mode: 'light', bg: '#FCFEF9', surface: '#FEFFFD', raised: '#EDF9DE', text: '#2F3A22', dialogue: '#1F2A14', em: '#4E7631', strong: '#3B7A18', muted: '#63764F', faint: '#7E9366', danger: '#E23B2E', accent: '#4B831F', pop: '#BBEA83', brand: '#BBEA83', marker: 'rgba(168, 238, 100, 0.34)', gold: 'rgba(219, 248, 129, 0.48)', line: 'rgba(52, 71, 31, 0.07)', shadow: 'rgba(66, 92, 35, 0.12)',
     },
     'melon-night': {
         label: '멜론 에이드 · 나이트', desc: '초록 밤 · 파스텔 라임', mode: 'dark', bg: '#212919', surface: '#2B3423', raised: '#3B4431', text: '#E3EBDB', dialogue: '#F7FCF3', em: '#BDDEA3', strong: '#D3F99F', muted: '#BDCEAB', faint: '#99AD85', danger: '#FF6F62', accent: '#CAF59E', pop: '#CAF59E', brand: '#CAF59E', marker: 'rgba(185, 245, 112, 0.32)', gold: 'rgba(193, 242, 125, 0)', line: 'rgba(204, 224, 184, 0.08)', shadow: 'rgba(0, 0, 0, 0.6)',
     },
     grapefruit: {
-        label: '자몽 에이드 · 화이트', desc: '자몽빛 흰 종이 · 코럴 형광펜', mode: 'light', bg: '#FFFAF9', surface: '#FFFDFD', raised: '#FFE7E0', text: '#3A2722', dialogue: '#2A1814', em: '#B15555', strong: '#AE4146', muted: '#856259', faint: '#9F7D75', danger: '#E23B2E', accent: '#C34B43', pop: '#FF9C95', brand: '#FF9C95', marker: 'rgba(255, 132, 129, 0.32)', gold: 'rgba(255, 184, 148, 0.36)', line: 'rgba(71, 39, 31, 0.07)', shadow: 'rgba(92, 47, 35, 0.12)',
+        label: '자몽 에이드 · 화이트', desc: '자몽빛 흰 종이 · 코럴 형광펜', mode: 'light', bg: '#FFFAF9', surface: '#FFFDFD', raised: '#FFE7E0', text: '#3A2722', dialogue: '#2A1814', em: '#AB4F50', strong: '#AE4146', muted: '#856259', faint: '#9F7D75', danger: '#E23B2E', accent: '#C34B43', pop: '#FF9C95', brand: '#FF9C95', marker: 'rgba(255, 132, 129, 0.32)', gold: 'rgba(255, 184, 148, 0.36)', line: 'rgba(71, 39, 31, 0.07)', shadow: 'rgba(92, 47, 35, 0.12)',
     },
     'grapefruit-night': {
         label: '자몽 에이드 · 나이트', desc: '코럴 밤 · 파스텔 자몽', mode: 'dark', bg: '#2C1A17', surface: '#37231F', raised: '#49312D', text: '#EBDDDB', dialogue: '#FCF4F3', em: '#E9B6B2', strong: '#F9B19F', muted: '#CEB1AB', faint: '#AD8B85', danger: '#FF6F62', accent: '#FFB0A8', pop: '#FFB0A8', brand: '#FFB0A8', marker: 'rgba(255, 141, 139, 0.33)', gold: 'rgba(243, 156, 134, 0)', line: 'rgba(224, 190, 184, 0.08)', shadow: 'rgba(0, 0, 0, 0.6)',
     },
     peach: {
-        label: '피치 에이드 · 화이트', desc: '복숭아빛 흰 종이 · 피치 형광펜', mode: 'light', bg: '#FFFCF9', surface: '#FFFEFD', raised: '#FFEDDE', text: '#3A2D22', dialogue: '#2A1E14', em: '#A86C53', strong: '#A75031', muted: '#7F6855', faint: '#9D8672', danger: '#E23B2E', accent: '#B45B37', pop: '#FFC19C', brand: '#FFC19C', marker: 'rgba(255, 184, 143, 0.40)', gold: 'rgba(248, 197, 129, 0.42)', line: 'rgba(71, 50, 31, 0.07)', shadow: 'rgba(92, 62, 35, 0.12)',
+        label: '피치 에이드 · 화이트', desc: '복숭아빛 흰 종이 · 피치 형광펜', mode: 'light', bg: '#FFFCF9', surface: '#FFFEFD', raised: '#FFEDDE', text: '#3A2D22', dialogue: '#2A1E14', em: '#985D45', strong: '#A75031', muted: '#7F6855', faint: '#9D8672', danger: '#E23B2E', accent: '#B45B37', pop: '#FFC19C', brand: '#FFC19C', marker: 'rgba(255, 184, 143, 0.40)', gold: 'rgba(248, 197, 129, 0.42)', line: 'rgba(71, 50, 31, 0.07)', shadow: 'rgba(92, 62, 35, 0.12)',
     },
     'peach-night': {
         label: '피치 에이드 · 나이트', desc: '복숭아 밤 · 파스텔 피치', mode: 'dark', bg: '#2B1F17', surface: '#372920', raised: '#48382E', text: '#EBE1DB', dialogue: '#FCF6F3', em: '#EBC4AC', strong: '#FBCBA7', muted: '#CEB9AB', faint: '#AD9585', danger: '#FF6F62', accent: '#FFCEA9', pop: '#FFCEA9', brand: '#FFCEA9', marker: 'rgba(255, 182, 130, 0.32)', gold: 'rgba(244, 187, 144, 0)', line: 'rgba(224, 200, 184, 0.08)', shadow: 'rgba(0, 0, 0, 0.6)',
     },
     lemon: {
-        label: '레몬 블루에이드 · 화이트', desc: '흰 종이 · 노란 형광펜 · 파란 강조', mode: 'light', bg: '#F9FCFF', surface: '#FDFEFF', raised: '#E5F1FF', text: '#222D3A', dialogue: '#141E2A', em: '#3975AC', strong: '#2264A5', muted: '#5A6F87', faint: '#75889F', danger: '#E23B2E', accent: '#247CDD', pop: '#F6E77A', marker: 'rgba(255, 232, 83, 0.43)', gold: 'rgba(20, 165, 255, 0.30)', line: 'rgba(31, 50, 71, 0.07)', shadow: 'rgba(35, 62, 92, 0.12)',
+        label: '레몬 블루에이드 · 화이트', desc: '흰 종이 · 노란 형광펜 · 파란 강조', mode: 'light', bg: '#F9FCFF', surface: '#FDFEFF', raised: '#E5F1FF', text: '#222D3A', dialogue: '#141E2A', em: '#336FA6', strong: '#2264A5', muted: '#5A6F87', faint: '#75889F', danger: '#E23B2E', accent: '#2477D3', pop: '#F6E77A', marker: 'rgba(255, 232, 83, 0.43)', gold: 'rgba(20, 165, 255, 0.30)', line: 'rgba(31, 50, 71, 0.07)', shadow: 'rgba(35, 62, 92, 0.12)',
     },
     'lemon-night': {
         label: '레몬 블루에이드 · 나이트', desc: '푸른 밤 · 레몬 형광펜 · 파란 강조', mode: 'dark', /* 대사 글자는 흰색(사용자: "글자가 노란색이라니까 흰색으로"), 레몬은 반투명 띠(블루 레몬에이드의 파란 띠와 같은 세기)에만 */ bg: '#141F2E', surface: '#1C293B', raised: '#28384D', text: '#DBE2EB', dialogue: '#F3F7FC', em: '#A4C7ED', strong: '#93C9FF', muted: '#ABBACE', faint: '#8596AD', danger: '#FF6F62', accent: '#93C9FF', pop: '#FFF095', marker: 'rgba(255, 237, 112, 0.30)', gold: 'rgba(125, 184, 242, 0)', line: 'rgba(184, 201, 224, 0.08)', shadow: 'rgba(0, 0, 0, 0.6)',
@@ -68,8 +68,10 @@ for (const [id, name, markerName, light, dark, rgb] of newAdes) {
         };
     }
 }
-Object.assign(PALETTES.watermelon, {strong:'#BC3851', pop:'#E9617C', gold:'rgba(221, 70, 90, 0.22)'});
+Object.assign(PALETTES.watermelon, {em:'#1A7B40', strong:'#BC3851', pop:'#E9617C', gold:'rgba(221, 70, 90, 0.22)'});
 Object.assign(PALETTES['watermelon-night'], {strong:'#FFA3B6', pop:'#FFA3B6', gold:'rgba(235, 99, 120, 0.20)'});
+// 화이트 속마음 · 강조: 포인트색 그대로는 흰 바탕 · 내 말풍선 위에서 4.5:1 이 안 돼 한 단계 진하게 (버튼 · 선택 표시 등 포인트색은 그대로)
+for (const [id, ink] of [['strawberry', '#B73E78'], ['mint', '#087970'], ['orange', '#AA5412']]) Object.assign(PALETTES[id], { em: ink, strong: ink });
 PALETTES.night.label = '블루 레몬에이드 · 나이트';
 // Default surface tint: white 0.5%, charcoal 1%. The editor can increase each independently.
 for (const palette of Object.values(PALETTES)) {
@@ -119,6 +121,7 @@ export const LEGACY = {
         { bg: '#F1F8FD', surface: '#FFFFFF', raised: '#DFEEF9', text: '#1C252E', dialogue: '#0F2238', em: '#50708C', strong: '#141B22', muted: '#56697A', faint: '#778EA2', danger: '#D0231A', accent: '#0E6BCB', marker: 'rgba(20, 165, 255, 0.24)', gold: 'rgba(255, 226, 60, 0.62)', line: 'rgba(15, 34, 56, 0.08)', shadow: 'rgba(15, 34, 56, 0.14)' },
         { bg: '#F6FAFF', surface: '#FBFDFF', raised: '#E0EFFF', text: '#222D3A', dialogue: '#141E2A', em: '#476990', strong: '#1F4E84', muted: '#596D85', faint: '#75889F', danger: '#E23B2E', accent: '#2774CB', pop: '#2774CB', brand: '#2774CB', marker: 'rgba(20, 165, 255, 0.24)', gold: 'rgba(255, 226, 60, 0.62)', line: 'rgba(31, 50, 71, 0.07)', shadow: 'rgba(35, 62, 92, 0.12)' },
         { bg: '#F6FAFF', surface: '#FBFDFF', raised: '#E0EFFF', text: '#222D3A', dialogue: '#141E2A', em: '#476990', strong: '#1F4E84', muted: '#596D85', faint: '#75889F', danger: '#E23B2E', accent: '#2774CB', pop: '#2774CB', marker: 'rgba(20, 165, 255, 0.24)', gold: 'rgba(255, 226, 60, 0.62)', line: 'rgba(31, 50, 71, 0.07)', shadow: 'rgba(35, 62, 92, 0.12)' },
+        { accent: '#247CDD' }, // 5.4.2 까지의 포인트 — 흰 글자가 4.2 : 1 이라 글자색 쪽으로 6% 짙게 (색상 그대로)
     ],
     night: [
         { bg: '#0C1117', surface: '#121922', raised: '#1A2430', text: '#CFD9E0', dialogue: '#ECF8FA', em: '#7F939F', muted: '#84959F', faint: '#566874', accent: '#5CD3E6', marker: 'rgba(72, 212, 232, 0.20)', line: 'rgba(160, 230, 245, 0.08)', shadow: 'rgba(0, 0, 0, 0.55)' },
@@ -170,6 +173,7 @@ export const LEGACY = {
         { bg: '#FFFEF2', surface: '#FFFFFB', raised: '#FFF9C7', text: '#3A3722', dialogue: '#2A2714', em: '#79733C', strong: '#1F4E84', muted: '#777350', faint: '#959068', danger: '#E23B2E', accent: '#2774CB', pop: '#2774CB', marker: 'rgba(242, 223, 54, 0.48)', gold: 'rgba(20, 165, 255, 0.30)', line: 'rgba(71, 67, 31, 0.07)', shadow: 'rgba(92, 87, 35, 0.12)' },
         { bg: '#FFFEF7', surface: '#FDFEFF', raised: '#FFFAD1', text: '#222D3A', dialogue: '#141E2A', em: '#476990', strong: '#1F4E84', muted: '#5A6F87', faint: '#75889F', danger: '#E23B2E', accent: '#2775CE', pop: '#2775CE', marker: 'rgba(242, 223, 54, 0.48)', gold: 'rgba(20, 165, 255, 0.30)', line: 'rgba(31, 50, 71, 0.07)', shadow: 'rgba(35, 62, 92, 0.12)' },
         { bg: '#FFFEF7', surface: '#FDFEFF', raised: '#FFFAD1', text: '#222D3A', dialogue: '#141E2A', em: '#476990', strong: '#1F4E84', muted: '#5A6F87', faint: '#75889F', danger: '#E23B2E', accent: '#2775CE', pop: '#F2DE5F', marker: 'rgba(242, 223, 54, 0.48)', gold: 'rgba(20, 165, 255, 0.30)', line: 'rgba(31, 50, 71, 0.07)', shadow: 'rgba(35, 62, 92, 0.12)' },
+        { accent: '#247CDD' }, // 5.4.2 까지의 포인트 — 흰 글자가 4.2 : 1 이라 글자색 쪽으로 6% 짙게 (색상 그대로)
     ],
     'lemon-night': [
         { bg: '#16130B', surface: '#211C12', raised: '#2F281A', text: '#ECE5D2', dialogue: '#FFE98A', em: '#B7A782', strong: '#FFC93D', muted: '#BDB091', faint: '#948869', danger: '#FF5247', accent: '#FFD447', pop: '#FFD447', brand: '#FFD447', marker: 'rgba(255, 236, 170, 0.12)', gold: 'rgba(255, 212, 71, 0)', line: 'rgba(230, 210, 150, 0.08)', shadow: 'rgba(0, 0, 0, 0.72)' },
@@ -181,6 +185,9 @@ export const LEGACY = {
 };
 
 for (const [id, colors] of Object.entries(previousSurfaces)) (LEGACY[id] ??= []).push(colors);
+// 글자 대비(4.5:1)를 맞추며 바꾼 화이트 기본값의 예전 값 — 저장돼 있어도 새 색이 보이게. 보조 · 흐림은 모든 화이트가 salt 것을 물려받음
+const inkBefore = { salt: { em: '#3975AC' }, lemon: { em: '#3975AC' }, 'black-light': { em: '#6B6B6B' }, melon: { em: '#59823C', strong: '#438222' }, grapefruit: { em: '#B15555' }, peach: { em: '#A86C53' }, strawberry: { em: '#BB427B', strong: '#BB427B' }, mint: { em: '#117D73', strong: '#117D73' }, orange: { em: '#B55E20', strong: '#B55E20' }, watermelon: { em: '#218044' } };
+for (const [id, palette] of Object.entries(PALETTES)) if (palette.mode === 'light' && !id.startsWith('custom-')) (LEGACY[id] ??= []).push({ muted: '#5A6F87', faint: '#75889F', ...inkBefore[id] });
 
 export const TOKEN_KEYS = ['bg', 'surface', 'raised', 'text', 'dialogue', 'em', 'strong', 'muted', 'faint', 'accent', 'marker', 'gold', 'line', 'shadow'];
 
@@ -240,10 +247,12 @@ export function safeColor(value) {
     return toRgba(parseColor(value));
 }
 
-/** 포인트색 위에 놓일 글자색: 밝은 포인트면 어두운 글자 */
+/** 포인트색 위에 놓일 글자색: 밝은 포인트면 어두운 글자
+ *  문턱 0.22 = 흰 글자 3.9 : 1 · 어두운 글자 4.9 : 1 인 밝기. 예전 0.36 은 분홍 #E8559A 에도 흰 글자(3.4 : 1)를 올렸다.
+ *  더 어두운 중간 밝기(파랑 · 주황)는 흰 글자 그대로 — APCA 로는 흰 쪽이 훨씬 잘 읽히고, 블루 레몬에이드 파란 버튼 모양도 지킴 */
 export function onColor(value) {
     const [r, g, b] = parseColor(value);
     const lin = c => { c /= 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
     const L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
-    return L > 0.36 ? '#0B1216' : '#FFFFFF';
+    return L > 0.22 ? '#0B1216' : '#FFFFFF';
 }

@@ -35,7 +35,7 @@
 .bl-assist-actions { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:14px 0; }
 .bl-assist article { display:flex; align-items:flex-start; gap:12px; margin:10px 0; padding:16px; border:0; border-radius:14px; background:var(--ba-card); box-shadow:var(--bl-e1,none); }
 .bl-assist article>i { display:grid; place-items:center; flex:none; width:32px; height:32px; border-radius:50%; background:color-mix(in srgb,var(--ba-accent) 12%,transparent); color:var(--ba-accent); }
-.bl-assist article[data-state=notice]>i { color:var(--bl-warn,#c9a365); background:color-mix(in srgb,var(--bl-warn,#c9a365) 14%,transparent); }
+.bl-assist article[data-state=notice]>i { color:var(--bl-pop-ink,var(--bl-warn,#c9a365)); background:color-mix(in srgb,var(--bl-warn,#c9a365) 14%,transparent); }
 .bl-assist article>div { min-width:0; }
 .bl-assist article b { font-size:.9em; font-weight:600; }
 .bl-assist article p { color:var(--ba-muted); margin:5px 0 0; }

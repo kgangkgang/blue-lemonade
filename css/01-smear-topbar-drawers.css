@@ -180,11 +180,11 @@ body.salty .info-block :is(i, .fa-solid) {
   color: var(--salty-accent) !important;
 }
 body.salty .info-block:is(.warning, .error) :is(i, .fa-solid) {
-  color: var(--bl-warn) !important;
+  color: var(--bl-pop-ink) !important;
 }
-/* 여닫는 줄: 46px 설정 줄, 흐린 꺾쇠 */
+/* Short drawer headings stay compact; longer labels can still grow. */
 body.salty .inline-drawer-header:where(:not(.salty-panel *, .world_entry *)) {
-  min-height: var(--bl-h-row);
+  min-height: 40px;
   gap: var(--bl-s3);
   padding: 0 2px !important;
   border: 0 !important;
@@ -199,7 +199,7 @@ body.salty .inline-drawer-header:where(:not(.salty-panel *, .world_entry *)) :is
   font-weight: 600;
 }
 body.salty .inline-drawer-icon {
-  color: var(--salty-faint) !important;
+  color: var(--salty-muted) !important;
   font-size: var(--bl-ic) !important;
   opacity: 1 !important;
 }

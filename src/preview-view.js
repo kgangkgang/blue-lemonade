@@ -133,7 +133,8 @@ export function bindPreviewViews(root, section) {
             // 5.3.7 읽기를 모두 끝낸 뒤 쓴다 — 전에는 높이를 쓰고 나서 heightLimit() 이 다시 재어 강제 레이아웃이 한 번 더 났다. 같은 높이면 쓰지 않는다
             width = scene.offsetWidth; height = scene.offsetHeight;
             const limit = heightLimit();
-            viewHeight = Number.isFinite(state.height) ? Math.max(48, Math.min(state.height, limit)) : Math.min(height, limit, sideBySide() && grip ? limit : Math.min(window.innerHeight * .28, 230));
+            // A stacked preview leaves room for settings; an explicitly resized view keeps its height.
+            viewHeight = Number.isFinite(state.height) ? Math.max(48, Math.min(state.height, limit)) : Math.min(height, limit, sideBySide() && grip ? limit : Math.min(window.innerHeight * .22, 180));
             const px = `${viewHeight}px`;
             if (viewport.style.height !== px) viewport.style.height = px;
             schedule();

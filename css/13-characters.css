@@ -196,7 +196,7 @@ body.salty #right-nav-panel #result_info_text small {
   font-size: var(--bl-fs-micro) !important;
 }
 body.salty #right-nav-panel #result_info #chartokenwarning {
-  color: var(--bl-warn) !important;
+  color: var(--bl-pop-ink) !important;
 }
 /* 새 캐릭터(제목이 빈 때): 토큰 수가 큰 제목 자리에 떠 있지 않게 오른쪽 아이콘 옆으로 */
 body.salty #right-nav-panel #right-nav-panel-tabs:has(> #rm_button_selected_ch h2:empty) #result_info_text {
@@ -384,7 +384,7 @@ body.salty #right-nav-panel .rm_tag_filter .tag.actionable.excluded::after {
   border-radius: 50%;
   background: var(--bl-warn);
   box-shadow: var(--bl-e2);
-  color: var(--salty-bg) !important;
+  color: var(--bl-on-pop) !important; /* pop 면 위 글자색 — 바탕색이면 멜론 · 레몬 · 피치 · 자몽 화이트의 파스텔 pop 에서 × 가 안 보임 (1.1~1.9 : 1) */
   font-size: 13px !important;
   font-weight: 700;
   line-height: 1 !important;
@@ -447,7 +447,7 @@ body.salty #right-nav-panel .paginationjs-pages ul li.disabled a {
 }
 body.salty #right-nav-panel .paginationjs-pages ul li.active a {
   background: var(--salty-fill-accent-10, var(--salty-accent-10));
-  color: var(--salty-accent) !important;
+  color: var(--salty-accent-ink, var(--salty-accent)) !important;
 }
 @media (hover: hover) {
   body.salty #right-nav-panel .paginationjs-pages ul li:not(.disabled, .active) a:hover {
@@ -524,7 +524,7 @@ body.salty #right-nav-panel #rm_print_characters_pagination:has(~ #rm_print_char
   color: var(--salty-accent) !important;
 }
 body.salty #right-nav-panel #rm_print_characters_pagination > #bulkDeleteButton {
-  color: var(--bl-warn) !important;
+  color: var(--bl-pop-ink) !important;
 }
 
 /* ---------- 목록 줄: 한 장씩 떠 있는 카드 ---------- */
@@ -597,7 +597,7 @@ body.salty #right-nav-panel #rm_print_characters_block .character_select.charact
   border-radius: 50%;
   background: var(--salty-fill-accent, var(--salty-accent));
   box-shadow: 0 0 0 2px var(--salty-row-bg, var(--bl-card)), var(--bl-e2);
-  color: var(--salty-bg);
+  color: var(--salty-on-accent); /* 포인트 면 위 글자색 — 밝은 커스텀 포인트(노랑 등)에서도 ✓ 가 보이게 */
   font: 900 11px/1 "Font Awesome 6 Free";
 }
 /* 아바타: 떠 있는 사진(e2) — 목록에서는 한 단 크고 깊게 (큰 아바타 설정이면 64×96, e3) */
@@ -743,10 +743,10 @@ body.salty #right-nav-panel :is(#rm_print_characters_block, #rm_group_chats_bloc
 }
 body.salty #right-nav-panel :is(#rm_print_characters_block, #rm_group_chats_block) .tags_inline .tag {
   min-height: 20px !important;
-  padding: 0 8px !important;
+  padding: 2px 8px !important;
   font-size: var(--bl-fs-micro) !important;
   font-weight: 600;
-  line-height: 20px;
+  line-height: 1.35;
 }
 body.salty #right-nav-panel :is(#rm_print_characters_block, #rm_group_chats_block) .tags_inline .tag:not([style*="background"]) {
   color: var(--salty-muted) !important;
@@ -758,8 +758,8 @@ body.salty #right-nav-panel #rm_print_characters_block .tags_inline {
 }
 body.salty #right-nav-panel #rm_print_characters_block .tags_inline .tag {
   min-height: 22px !important;
-  padding: 0 9px !important;
-  line-height: 22px;
+  padding: 2px 9px !important;
+  line-height: 1.35;
   box-shadow: var(--bl-well-in) !important;
 }
 body.salty #right-nav-panel #rm_print_characters_block .tags_inline .tag:not([style*="background"]) {
@@ -973,7 +973,7 @@ body.salty #right-nav-panel #avatar-and-name-block :is(#character_name_pole, #ch
 }
 /* 즐겨찾기 켜짐은 레몬 별 (아이콘 버튼 공용 규칙이 흐린 색으로 덮지 않게) */
 body.salty #right-nav-panel :is(#favorite_button, #group_favorite_button).fav_on {
-  color: var(--bl-lemon) !important;
+  color: var(--bl-pop-ink) !important;
 }
 /* 태그 */
 body.salty #right-nav-panel .tag_controls {
@@ -1160,7 +1160,7 @@ body.salty #right-nav-panel #GroupFavDelOkBack .checkbox_label {
   font-size: var(--bl-fs-sub);
 }
 body.salty #right-nav-panel #rm_group_delete {
-  color: var(--bl-warn) !important;
+  color: var(--bl-pop-ink) !important;
 }
 /* 멤버 목록: 회색 판 · 테두리 없이 카드 위에 바로 (그림자 자리만 남김) */
 body.salty #right-nav-panel :is(#rm_group_members, #rm_group_add_members) {
@@ -1321,7 +1321,7 @@ body.salty #character_popup h5 {
   font-weight: 500;
 }
 body.salty #character_popup .warning {
-  color: var(--bl-warn) !important;
+  color: var(--bl-pop-ink) !important;
 }
 
 /* 폰: 고급 정의 시트 높이를 서랍과 같게 (밑에 서랍 끝이 비쳐 보이지 않게), 바 밑 시트 그림자 */

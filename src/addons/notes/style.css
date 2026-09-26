@@ -5,7 +5,7 @@
    ============================================================ */
 :root {
     /* index.js 의 VERSION 과 같아야 한다 */
-    --bl-notes-css-version: "1.2.4";
+    --bl-notes-css-version: "1.2.5";
     --bl-notes-surface: var(--salty-surface, var(--SmartThemeBlurTintColor, #25262a));
     --bl-notes-card: var(--bl-card, var(--salty-card, rgba(255, 255, 255, .04)));
     --bl-notes-text: var(--salty-text, var(--SmartThemeBodyColor, #eee));
@@ -333,7 +333,7 @@ body.salty :is(#salty-nochat, .bl-look-sample.salty-preview) { margin: 0 0 8px !
 .bl-notes-nohit[hidden], .bl-notes-list > .bl-note[hidden] { display: none !important; }
 .bl-notes-sortpop { left: auto; right: 0; flex-direction: column; align-items: stretch; min-width: 150px; }
 .bl-notes-sortpop .bl-notes-sortbtn { justify-content: flex-start; display: flex; gap: 8px; width: 100%; height: 32px; padding: 0 10px; font-size: 12px; font-weight: 500; }
-.bl-notes-sortpop .bl-notes-sortbtn.on { color: var(--bl-notes-accent); background: color-mix(in srgb, var(--bl-notes-accent) 14%, transparent); }
+.bl-notes-sortpop .bl-notes-sortbtn.on { color: var(--salty-accent-ink, var(--bl-notes-accent)); background: color-mix(in srgb, var(--bl-notes-accent) 14%, transparent); }
 .bl-notes-list.is-sorted .bl-note-tools [data-act="up"], .bl-notes-list.is-sorted .bl-note-tools [data-act="down"] { display: none; }
 .bl-look-seg { display: inline-flex; gap: 2px; padding: 2px; border-radius: var(--bl-r-sm, 6px); background: var(--bl-notes-card); }
 .bl-look-segbtn { min-width: 52px; height: 30px; padding: 0 10px; border: 0; border-radius: calc(var(--bl-r-sm, 6px) - 2px); background: transparent; color: var(--bl-notes-muted); font: inherit; font-size: 12px; cursor: pointer; }
@@ -515,7 +515,7 @@ body.salty :is(#salty-nochat, .bl-look-sample.salty-preview) { margin: 0 0 8px !
 
 /* ══════════ 1.2.0 ══════════ */
 /* ── 태그 · 연결 · 끌어오기 (그린 본문 안) ── */
-.bl-notes-view .bl-note-tag { display: inline; margin: 0 .05em; padding: 0 .4em; border: 0; border-radius: 999px; background: color-mix(in srgb, var(--bl-notes-accent) 16%, transparent); color: var(--bl-notes-accent); font: inherit; font-size: .88em; line-height: inherit; vertical-align: baseline; cursor: pointer; }
+.bl-notes-view .bl-note-tag { display: inline; margin: 0 .05em; padding: 0 .4em; border: 0; border-radius: 999px; background: color-mix(in srgb, var(--bl-notes-accent) 16%, transparent); color: var(--salty-accent-ink, var(--bl-notes-accent)); font: inherit; font-size: .88em; line-height: inherit; vertical-align: baseline; cursor: pointer; }
 .bl-notes-view .bl-note-tag:hover { background: color-mix(in srgb, var(--bl-notes-accent) 28%, transparent); }
 .bl-notes-view .bl-note-link { display: inline; margin: 0; padding: 0; border: 0; background: none; color: var(--bl-notes-accent); font: inherit; line-height: inherit; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--bl-notes-accent) 45%, transparent); text-underline-offset: .2em; cursor: pointer; }
 .bl-notes-view .bl-note-link.is-missing { color: var(--bl-notes-muted); text-decoration-style: dashed; }
@@ -532,9 +532,9 @@ body.salty :is(#salty-nochat, .bl-look-sample.salty-preview) { margin: 0 0 8px !
 .bl-notes-sortpop .bl-notes-sortbtn small { margin-left: auto; padding-left: 12px; color: var(--bl-notes-muted); font-size: 11px; font-weight: 400; font-variant-numeric: tabular-nums; }
 .bl-notes-tagnone { margin: 6px 10px; color: var(--bl-notes-muted); font-size: 12px; white-space: nowrap; }
 .bl-notes-tagwrap > [data-act="tags"].is-on { color: var(--bl-notes-accent) !important; }
-.bl-notes-ver { margin-left: 2px; padding: 1px 8px; border: 0; border-radius: 999px; background: color-mix(in srgb, var(--bl-notes-accent) 14%, transparent); color: var(--bl-notes-accent); font: inherit; font-size: 11px; font-weight: 600; line-height: 1.6; cursor: pointer; }
+.bl-notes-ver { margin-left: 2px; padding: 1px 8px; border: 0; border-radius: 999px; background: color-mix(in srgb, var(--bl-notes-accent) 14%, transparent); color: var(--salty-accent-ink, var(--bl-notes-accent)); font: inherit; font-size: 11px; font-weight: 600; line-height: 1.6; cursor: pointer; }
 .bl-notes-ver:hover { background: color-mix(in srgb, var(--bl-notes-accent) 24%, transparent); }
-.bl-notes-guidelink { padding: 0; border: 0; background: none; color: var(--bl-notes-accent); font: inherit; text-decoration: underline; text-underline-offset: .2em; cursor: pointer; }
+.bl-notes-guidelink { padding: 0; border: 0; background: none; color: var(--salty-accent-ink, var(--bl-notes-accent)); font: inherit; text-decoration: underline; text-underline-offset: .2em; cursor: pointer; }
 
 /* ── 서식 줄 링크 팝업 · [[ 자동 목록 ── */
 .bl-note-fmt-hs[data-pop="link"] { flex-direction: column; align-items: stretch; gap: 2px; padding: 6px; min-width: 170px; }
@@ -623,7 +623,7 @@ body.salty :is(#salty-nochat, .bl-look-sample.salty-preview) { margin: 0 0 8px !
 .bl-notes-help > header .bl-note-btn { min-width: 38px; height: 38px; font-size: 16px; }
 .bl-notes-help nav { display: grid; flex: none; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 4px 14px 10px; border-bottom: 1px solid var(--h-line); }
 .bl-notes-help nav button { min-width: 0; min-height: 40px; padding: 6px 4px; border: 0; border-radius: 10px; background: transparent; color: var(--h-muted); font: inherit; font-size: 13px; font-weight: 500; line-height: 1.3; word-break: keep-all; cursor: pointer; }
-.bl-notes-help nav button[aria-selected="true"] { background: color-mix(in srgb, var(--h-accent) 14%, transparent); color: var(--h-accent); font-weight: 700; }
+.bl-notes-help nav button[aria-selected="true"] { background: color-mix(in srgb, var(--h-accent) 14%, transparent); color: var(--salty-accent-ink, var(--h-accent)); font-weight: 700; }
 .bl-notes-help-body { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 18px 20px 24px; }
 .bl-notes-help-lead { margin: 0 2px 16px; color: var(--h-muted); line-height: 1.7; }
 .bl-notes-help details { margin: 0 0 10px; padding: 2px 18px; border-radius: 14px; background: var(--bl-card, var(--salty-card, rgba(127, 127, 127, .08))); }
@@ -673,7 +673,7 @@ body.salty :is(#salty-nochat, .bl-look-sample.salty-preview) { margin: 0 0 8px !
 .bl-notes-look .bl-look-val .bl-look-unit { min-width: 0; color: var(--bl-notes-muted); font-size: 11px; }
 .bl-notes-look .bl-look-val .bl-look-unit:empty { display: none; }
 .bl-notes-look .bl-look-grid .bl-look-same { flex: none; gap: 5px; padding: 3px 9px 3px 7px; border-radius: 999px; background: var(--bl-notes-card); font-size: 11px; }
-.bl-notes-look .bl-look-grid .bl-look-same:has(input:checked) { background: color-mix(in srgb, var(--bl-notes-accent) 16%, transparent); color: var(--bl-notes-accent); }
+.bl-notes-look .bl-look-grid .bl-look-same:has(input:checked) { background: color-mix(in srgb, var(--bl-notes-accent) 16%, transparent); color: var(--salty-accent-ink, var(--bl-notes-accent)); }
 .bl-notes-look .bl-look-grid .bl-look-ctl { min-height: 0; }
 .bl-notes-look .bl-look-grid .bl-look-ctl input[type="range"] { width: 100%; margin: 0; }
 .bl-notes-look .bl-look-grid .bl-look-ctl input[type="range"]:disabled { opacity: .35; }
@@ -699,3 +699,129 @@ body.salty .bl-notes-view.salty-preview > *, .bl-notes-view.salty-preview > * { 
 .bl-notes-dialog > header b { flex: 0 1 auto; min-width: 0; white-space: nowrap; }
 .bl-notes-dialog > header .bl-notes-head-tools { flex: 1 1 auto; flex-wrap: nowrap; justify-content: flex-end; min-width: 0; }
 @media (max-width: 480px) { .bl-notes-dialog > header:has(.bl-notes-find:not([hidden])) :is(.bl-notes-ver, .bl-notes-count) { display: none; } .bl-notes-dialog > header { gap: 6px; } }
+
+/* UI controls follow the menu typography; note contents keep their own look variables. */
+body.salty :is(.bl-notes-dialog, .bl-notes-help, .bl-notes-mini, .bl-notes-peek, .bl-sticky) {
+    font-family: var(--salty-font-ui, inherit);
+    font-size: var(--bl-ts-ui, var(--mainFontSize, 15px));
+    font-weight: var(--salty-ui-weight, normal);
+    letter-spacing: var(--salty-ui-ls, normal);
+}
+body.salty :is(.bl-notes-dialog, .bl-notes-help) { border-radius: var(--bl-r-lg, 16px) !important; }
+body.salty :is(.bl-note-btn, .bl-look-fontbtn, .bl-look-fontfind, .bl-look-fonttag, .bl-fontitem, .bl-look-segbtn, .bl-notes-sortbtn, .bl-notes-help-open) {
+    border-radius: var(--bl-r-sm, 8px);
+    height: auto;
+    min-height: max(32px, 1.5em + 10px);
+    font-size: var(--bl-ts-ctl, 1em);
+    font-weight: var(--salty-ui-weight, normal);
+    letter-spacing: var(--salty-ui-ls, normal);
+    line-height: 1.45;
+}
+body.salty .bl-note-btn { min-width: 32px; padding-block: 4px; }
+body.salty .bl-notes-dialog > header,
+body.salty .bl-notes-dialog > header .bl-notes-head-tools,
+body.salty .bl-notes-mini > .bl-notes-peek-head { flex-wrap: wrap !important; row-gap: 8px; }
+body.salty :is(.bl-notes-dialog > header b, .bl-notes-help h2, .bl-look-title) {
+    font-size: var(--bl-ts-ui, 1em);
+    font-weight: bolder;
+    letter-spacing: inherit;
+    white-space: normal;
+}
+body.salty .bl-notes-look { --bl-look-gap: max(16px, 1em); }
+body.salty .bl-notes-look .bl-look-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, max(10em, calc((100% - var(--bl-look-gap)) / 2))), 1fr));
+    gap: var(--bl-look-gap) !important;
+}
+body.salty .bl-notes-look .bl-look-fmtlist {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, max(10em, calc((100% - var(--bl-look-gap)) / 2))), 1fr));
+    gap: 0 var(--bl-look-gap);
+}
+body.salty .bl-notes-look .bl-look-grid .bl-look-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    margin-bottom: 8px !important;
+}
+body.salty .bl-notes-look .bl-look-grid .bl-look-name { flex: 0 1 auto; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+body.salty .bl-notes-look .bl-look-grid .bl-look-same { max-width: 100%; padding-inline: 5px; }
+body.salty .bl-notes-look .bl-look-grid .bl-look-val { max-width: 100%; margin-inline-start: auto; }
+body.salty .bl-notes-look :is(.bl-look-name, .bl-look-title small, .bl-look-note, .bl-look-hint, .bl-look-unit, .bl-look-same, .bl-look-fmtrow) {
+    font-size: var(--bl-ts-meta, .9em);
+    font-weight: inherit;
+    letter-spacing: inherit;
+    white-space: normal;
+    line-height: 1.5;
+}
+body.salty .bl-notes-look .bl-look-val { flex: 0 0 auto; gap: max(4px, .25em); }
+body.salty .bl-notes-look .bl-look-val input[type="number"] {
+    --bl-look-number-tracking: max(0px, var(--bl-settings-tracking, 0px));
+    box-sizing: border-box;
+    width: calc(4ch + 4px + 4 * var(--bl-look-number-tracking)) !important;
+    height: auto !important;
+    min-height: max(30px, 1.5em + 8px) !important;
+    font-size: var(--bl-ts-ctl, 1em) !important;
+    font-weight: var(--salty-ui-weight, normal) !important;
+    letter-spacing: var(--salty-ui-ls, normal) !important;
+    line-height: 1.5 !important;
+}
+/* 자간은 -0.09까지 다섯 글자. 부호도 같은 폭인 사용자 글꼴에서 잘리지 않게 한다. */
+body.salty .bl-notes-look [data-param="ls"] .bl-look-val input[type="number"] {
+    width: calc(5ch + 4px + 5 * var(--bl-look-number-tracking)) !important;
+}
+body.salty .bl-notes-look .bl-look-val .bl-look-unit { white-space: nowrap; }
+body.salty .bl-notes-look .bl-look-grid .bl-look-same { font-size: var(--bl-ts-meta, .9em); border-radius: var(--bl-r-sm, 8px); }
+body.salty .bl-notes-look .bl-look-fmtrow { height: auto; min-height: max(40px, 1.5em + 12px); padding-block: 6px; }
+body.salty .bl-notes-look .bl-look-fmtname { white-space: normal; overflow-wrap: anywhere; }
+body.salty .bl-notes-look .bl-look-seg { grid-template-columns: repeat(auto-fit, minmax(min(100%, 4.5em), 1fr)); border-radius: var(--bl-r-md, 12px); }
+body.salty .bl-notes-look .bl-look-segbtn { min-width: 0; padding: 6px 10px; white-space: normal; }
+body.salty .bl-notes-help :is(nav button, summary, details > div, .bl-notes-help-lead) { font-size: var(--bl-ts-ui, 1em); font-weight: inherit; letter-spacing: inherit; }
+body.salty .bl-notes-help nav { grid-template-columns: repeat(auto-fit, minmax(min(100%, 6em), 1fr)); }
+body.salty .bl-notes-help nav button { border-radius: var(--bl-r-sm, 8px); }
+body.salty .bl-notes-help code { background: var(--bl-notes-hover); }
+
+/* Keep inherited values and disabled format names readable without changing their state. */
+body.salty .bl-notes-look .bl-look-val input[type="number"]:disabled {
+    opacity: 1;
+    filter: none; /* ST also halves disabled input brightness; inherited values remain useful. */
+    color: var(--bl-notes-muted) !important;
+    background: var(--bl-notes-hover) !important;
+}
+body.salty .bl-notes-look .bl-look-fmtrow.is-off :is(.bl-look-fmticon, .bl-look-fmtname) {
+    opacity: 1;
+    color: var(--bl-notes-muted);
+}
+body.salty :is(.bl-notes-dialog, .bl-notes-mini) .bl-notes-find {
+    box-sizing: border-box;
+    height: auto;
+    min-height: max(30px, 1.5em + 8px);
+    padding-block: 4px;
+    font-size: var(--bl-ts-ctl, 1em);
+}
+body.salty :is(.bl-notes-dialog, .bl-notes-mini) .bl-notes-find input[type="search"],
+body.salty .bl-bind-head input[type="search"] {
+    height: auto !important;
+    font-size: var(--bl-ts-ctl, 1em) !important;
+    font-weight: var(--salty-ui-weight, normal) !important;
+    letter-spacing: var(--salty-ui-ls, normal) !important;
+    line-height: 1.5 !important;
+}
+body.salty .bl-bind-head { flex-wrap: wrap; gap: 8px 10px; }
+body.salty .bl-bind-head input[type="search"] {
+    max-width: 100%;
+    min-height: max(30px, 1.5em + 8px) !important;
+}
+body.salty .bl-notes-look .bl-fontgroup {
+    font-size: var(--bl-ts-meta, .9em);
+    font-weight: bolder;
+    letter-spacing: inherit;
+}
+body.salty .bl-notes-look :is(.bl-fontgroup small, .bl-look-fonttag span) {
+    font-size: var(--bl-ts-meta, .9em);
+    color: inherit;
+    opacity: 1;
+}
+body.salty .bl-notes-look .bl-fontinfo b {
+    font-size: var(--bl-ts-meta, .9em);
+    font-weight: var(--salty-ui-weight, normal);
+}

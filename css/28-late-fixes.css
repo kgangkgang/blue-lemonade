@@ -232,7 +232,7 @@ body.salty .salty-sample.salty-shadow-text:not(.salty-shadow-code) :is(code, pre
   min-height: 42px; padding: 0 12px 0 14px; border: 0; border-radius: 10px;
   background: transparent; color: var(--salty-text); font: inherit; font-size: 13.5px; font-weight: 550; text-align: left; cursor: pointer;
 }
-.salty-panel .salty-pick > button.on { color: var(--salty-accent); font-weight: 650; }
+.salty-panel .salty-pick > button.on { color: var(--salty-accent-ink, var(--salty-accent)); font-weight: 650; }
 body.salty-dark .salty-panel .salty-pick > button.on { color: var(--bl-pop, var(--salty-accent)); }
 /* 라디오 동그라미: 고른 것은 포인트색 고리 + 가운데 점 */
 .salty-panel .salty-pick > button > i { flex: none; width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--salty-faint); }
@@ -292,7 +292,7 @@ body.salty .salty-pick-rows > button {
 }
 body.salty .salty-pick-rows > button > span { min-width: 0; overflow-wrap: anywhere; }
 body.salty .salty-pick-rows > button[disabled] { opacity: 0.45; cursor: default; }
-body.salty .salty-pick-rows > button.on { color: var(--salty-accent); font-weight: 650; }
+body.salty .salty-pick-rows > button.on { color: var(--salty-accent-ink, var(--salty-accent)); font-weight: 650; }
 body.salty-dark .salty-pick-rows > button.on { color: var(--bl-pop, var(--salty-accent)); }
 body.salty .salty-pick-rows > button > i { flex: none; width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--salty-faint); }
 body.salty .salty-pick-rows > button.on > i { box-shadow: inset 0 0 0 2px currentColor; background: radial-gradient(circle, currentColor 0 4px, transparent 4.5px); }
@@ -310,17 +310,17 @@ body.salty .salty-pick-empty { padding: 12px 14px; color: var(--salty-muted); }
 body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px 10px !important;
+  gap: 8px 10px !important;
   margin-top: 4px;
 }
 body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] > .world_entry_form_control {
   flex-direction: column !important;
   align-items: stretch !important;
   justify-content: flex-start;
-  gap: 4px;
+  gap: 8px;
   min-height: 0;
   padding: 6px 8px;
-  border-radius: var(--r-sm, 10px);
+  border-radius: var(--bl-r-md);
   background: var(--salty-fill-shade, var(--salty-shade));
 }
 body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] > .world_entry_form_control:has(> input[name="automationId"]) {
@@ -340,12 +340,16 @@ body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] > .world
   background: var(--salty-fill-surface, var(--salty-surface)) !important;
 }
 body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] > .world_entry_form_control > select {
+  flex: none !important;
   width: 100% !important;
   max-width: none !important;
   padding-left: 0 !important;
   text-align: left;
   text-align-last: left;
   color: var(--salty-text) !important;
+}
+@container bl-wi-entry (max-width: 22em) {
+  body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* ---------- 글자색 톤 맞추기 (2.6.0, src/tone.js · body.salty-tone) ----------

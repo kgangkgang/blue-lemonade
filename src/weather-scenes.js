@@ -172,7 +172,8 @@ function breeze(env) {
             const { ctx } = env;
             for (const p of items) {
                 const a = Math.min(1, (.45 + p.depth * .55) * env.opacity), size = p.s * env.size;
-                if (!p.leaf) { ctx.fillStyle = `rgba(${inkOf(env, p.tone, '252,246,214')},${a.toFixed(3)})`; ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(.8, size * .16), 0, TAU); ctx.fill(); continue; }
+                // 꽃가루 점은 화면 좌표로 찍는다 — 앞 잎이 걸어 둔 회전 · 이동 변환이 남아 있으면 점이 잎을 따라 돌며 튀거나 화면 밖에 찍혔다
+                if (!p.leaf) { ctx.setTransform(env.dpr, 0, 0, env.dpr, 0, 0); ctx.fillStyle = `rgba(${inkOf(env, p.tone, '252,246,214')},${a.toFixed(3)})`; ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(.8, size * .16), 0, TAU); ctx.fill(); continue; }
                 const cos = Math.cos(p.rot) * env.dpr, sin = Math.sin(p.rot) * env.dpr;
                 ctx.setTransform(cos, sin, -sin, cos, p.x * env.dpr, p.y * env.dpr);
                 const material = env.art?.get('leaf', env.tintRGB ? inkOf(env, Math.round(p.tone * 4) / 4, '') : null);

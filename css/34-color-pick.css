@@ -1,6 +1,6 @@
 /* ===== css/34-color-pick.css =====
    3.5.0 색 고르기 팝업 (src/colorpick.js · colorpop.js) — 실리태번 toolcool 색 칸 · input[type=color] 대신 뜨는 판.
-   판(채도 · 밝기) → 비교 동그라미 + 색상 · 투명도 막대 → 코드 칸 → 테마 색 · 최근 색. 글자 없이 모양으로만.
+   원형 색판(색상 · 채도) → 비교 동그라미 + 밝기 · 투명도 막대 → 코드 칸 → 테마 색 · 최근 색.
    층(.bl-cp-layer)은 화면 전체 투명 막 — 바깥을 누르면 닫힘. 판은 층 안에 absolute (JS 가 화면 좌표로 놓음)
    ===== */
 body.salty .bl-cp-layer {
@@ -17,12 +17,15 @@ body.salty .bl-cp {
   gap: 10px;
   box-sizing: border-box;
   padding: 10px;
-  border-radius: 16px;
+  border-radius: var(--bl-r-lg, 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: var(--bl-card, var(--salty-surface));
   color: var(--salty-text);
   box-shadow: var(--bl-e4, 0 12px 32px rgb(0 0 0 / 0.28)), 0 0 0 1px color-mix(in srgb, var(--salty-text) 8%, transparent);
   font-family: var(--salty-font-ui, inherit);
-  font-size: 13px;
+  font-size: var(--bl-fs-sub, 13px);
+  letter-spacing: var(--salty-ui-ls, normal);
   animation: bl-cp-in 0.14s ease-out;
   -webkit-tap-highlight-color: transparent;
 }
@@ -39,27 +42,33 @@ body.salty .bl-cp *::before,
 body.salty .bl-cp *::after {
   box-sizing: border-box;
 }
+body.salty .bl-cp > * { flex-shrink:0; }
 body.salty .bl-cp :focus-visible {
   outline: 2px solid var(--salty-accent);
   outline-offset: 2px;
 }
 
-/* 판: 가로 = 채도, 세로 = 밝기 */
+/* 원형 색판: 각도 = 색상, 중심으로부터의 거리 = 채도. 밝기는 아래 막대. */
 body.salty .bl-cp-board {
   position: relative;
-  height: 148px;
-  border-radius: 10px;
+  flex: none;
+  align-self: center;
+  width: 152px;
+  height: 152px;
+  margin: 4px;
+  border-radius: 50%;
   background:
-    linear-gradient(to top, #000, transparent),
-    linear-gradient(to right, #fff, var(--hue));
+    linear-gradient(rgb(0 0 0 / var(--dim, 0)), rgb(0 0 0 / var(--dim, 0))),
+    radial-gradient(circle closest-side, #fff, #fff0),
+    conic-gradient(from 90deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
   cursor: crosshair;
   touch-action: none;
   outline-offset: 2px;
 }
 @media (max-width: 599px) {
-  body.salty .bl-cp-board { height: 168px; }
+  body.salty .bl-cp-board { width:144px; height:144px; }
 }
-body.salty .bl-cp :is(.bl-cp-board, .bl-cp-hue, .bl-cp-alpha) > i {
+body.salty .bl-cp :is(.bl-cp-board, .bl-cp-value, .bl-cp-alpha) > i {
   position: absolute;
   left: var(--x);
   top: var(--y, 50%);
@@ -110,7 +119,7 @@ body.salty .bl-cp-bars {
   min-width: 0;
   padding: 0 9px;
 }
-body.salty .bl-cp :is(.bl-cp-hue, .bl-cp-alpha) {
+body.salty .bl-cp :is(.bl-cp-value, .bl-cp-alpha) {
   position: relative;
   height: 12px;
   border-radius: 999px;
@@ -118,23 +127,23 @@ body.salty .bl-cp :is(.bl-cp-hue, .bl-cp-alpha) {
   touch-action: none;
 }
 /* 손가락 닿는 곳은 막대보다 넓게 */
-body.salty .bl-cp :is(.bl-cp-hue, .bl-cp-alpha)::before {
+body.salty .bl-cp :is(.bl-cp-value, .bl-cp-alpha)::before {
   content: '';
   position: absolute;
   inset: -8px -9px;
 }
-body.salty .bl-cp-hue {
-  background: linear-gradient(to right, #f00 0%, #ff0 16.66%, #0f0 33.33%, #0ff 50%, #00f 66.66%, #f0f 83.33%, #f00 100%);
+body.salty .bl-cp-value {
+  background: linear-gradient(to right, #000, var(--full, #fff));
 }
 body.salty .bl-cp-alpha {
   background: linear-gradient(to right, transparent, rgb(var(--rgb))), var(--checker);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--salty-text) 12%, transparent);
 }
-body.salty .bl-cp :is(.bl-cp-hue, .bl-cp-alpha) > i {
+body.salty .bl-cp :is(.bl-cp-value, .bl-cp-alpha) > i {
   top: 50%;
 }
-body.salty .bl-cp-hue > i {
-  background: var(--hue);
+body.salty .bl-cp-value > i {
+  background: var(--now);
 }
 body.salty .bl-cp-alpha > i {
   background: linear-gradient(var(--now), var(--now)), #fff;
@@ -143,20 +152,25 @@ body.salty .bl-cp-alpha > i {
 /* 코드 칸 + 스포이트 */
 body.salty .bl-cp-code {
   display: flex;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 8px 10px;
 }
 body.salty .bl-cp .bl-cp-hex {
-  flex: 1;
-  min-width: 0;
-  height: 34px !important;
+  /* #RRGGBBAA 아홉 글자. 큰 글씨·자간에서는 도구를 다음 줄로 보낸다. */
+  --bl-cp-code-width: calc(9ch + 16px + 9 * max(0px, var(--bl-settings-tracking, 0px)));
+  flex: 1 1 var(--bl-cp-code-width);
+  min-width: min(100%, var(--bl-cp-code-width));
+  max-width: 100%;
+  height: auto !important;
+  min-height: 34px;
   margin: 0 !important;
-  padding: 0 10px !important;
+  padding: 6px 8px !important;
   border: 0 !important;
-  border-radius: 9px !important;
+  border-radius: var(--bl-r-sm, 8px) !important;
   background: var(--salty-fill-shade, var(--salty-shade)) !important;
   color: var(--salty-text) !important;
-  font: 500 13px/34px ui-monospace, 'SFMono-Regular', Consolas, monospace !important;
-  letter-spacing: 0.04em;
+  font: var(--salty-ui-weight, 500) var(--bl-fs-ctl, 1em)/1.5 ui-monospace, 'SFMono-Regular', Consolas, monospace !important;
+  letter-spacing: var(--salty-ui-ls, normal);
   text-align: center;
   box-shadow: none !important;
   outline: none;
@@ -170,13 +184,16 @@ body.salty .bl-cp .bl-cp-hex[aria-invalid="true"] {
   box-shadow: inset 0 0 0 1.5px var(--salty-danger, #e5484d) !important;
 }
 body.salty .bl-cp-drop {
+  display: grid;
+  place-items: center;
   flex: none;
   width: 34px;
-  height: 34px;
+  height: auto;
+  min-height: 34px;
   margin: 0;
   padding: 0;
   border: 0;
-  border-radius: 9px;
+  border-radius: var(--bl-r-sm, 8px);
   background: var(--salty-fill-shade, var(--salty-shade));
   color: var(--salty-muted);
   cursor: pointer;
@@ -188,7 +205,8 @@ body.salty .bl-cp-drop:hover {
 /* 테마 색 · 최근 색 */
 body.salty .bl-cp-sws {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(22px, 1fr));
+  grid-template-columns: repeat(auto-fit, 28px);
+  justify-content: center;
   gap: 6px;
 }
 body.salty .bl-cp-recent {
@@ -202,7 +220,7 @@ body.salty .bl-cp-sw {
   margin: 0;
   padding: 0;
   border: 0;
-  border-radius: 7px;
+  border-radius: 50%;
   background: linear-gradient(var(--c), var(--c)), var(--checker);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--salty-text) 16%, transparent);
   cursor: pointer;
@@ -212,7 +230,7 @@ body.salty .bl-cp-sw:hover {
   transform: scale(1.08);
 }
 @media (max-width: 599px) {
-  body.salty .bl-cp-sws { grid-template-columns: repeat(auto-fill, minmax(28px, 1fr)); gap: 8px; }
+  body.salty .bl-cp-sws { grid-template-columns: repeat(auto-fit, 30px); gap: 8px; }
 }
 
 /* ---------- 3.5.1 이미지에서 색 따기 ----------
@@ -305,7 +323,7 @@ body.salty .bl-cp-pic-tools button {
 }
 body.salty .bl-cp.pic-on .bl-cp-drop[data-act="pic"] {
   background: color-mix(in srgb, var(--salty-accent) 22%, transparent);
-  color: var(--salty-accent);
+  color: var(--salty-accent-ink, var(--salty-accent));
 }
 body.salty .bl-cp.pic-loading .bl-cp-drop[data-act="pic"] {
   opacity: 0.5;

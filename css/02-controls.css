@@ -35,10 +35,10 @@ body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #
 body.salty .menu_button:is(.toggleEnabled, .active, .toggled):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)) {
   background: var(--bl-fill-selected, var(--bl-selected)) !important;
   box-shadow: var(--bl-well-in) !important;
-  color: var(--salty-accent) !important;
+  color: var(--salty-accent-ink, var(--salty-accent)) !important;
 }
 body.salty .menu_button:is(.toggleEnabled, .active, .toggled):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)) > :is(i, .fa-solid, .fa-regular) {
-  color: var(--salty-accent);
+  color: var(--salty-accent-ink, var(--salty-accent));
 }
 /* 아이콘만 있는 버튼: 면 없이 흐린 아이콘(34px), 누르면 옅은 면
    (i 하나 + 맨 글자는 CSS 로 못 가려서 아이콘 버튼처럼 보임 → 화면별로 예외 추가) */
@@ -82,7 +82,7 @@ body.salty .menu_button:is(.redWarningBG, .red_button):where(:not(#nonQRFormItem
   border-radius: var(--bl-r-sm) !important;
   background: var(--bl-warn-bg) !important;
   box-shadow: none !important;
-  color: var(--bl-warn) !important;
+  color: var(--bl-pop-ink) !important;
   opacity: 1 !important;
 }
 /* 머리줄 바로가기(시작 화면 ? · 깃허브 · 디스코드 · 임시 채팅): 떠 있는 칩이면 줄이 넘쳐서 조용한 버튼으로 */
@@ -136,7 +136,7 @@ body.salty textarea:where(:not(#send_textarea, .select2-search__field, .salty-pa
   line-height: 1.55 !important;
 }
 body.salty ::placeholder {
-  color: var(--salty-faint) !important;
+  color: var(--salty-muted) !important;
   opacity: 1 !important;
 }
 body.salty select:not([multiple]) {
@@ -163,8 +163,8 @@ body.salty select[multiple]:where(:not(.salty-panel *)) option {
 }
 body.salty select[multiple]:where(:not(.salty-panel *)) option:checked {
   background: linear-gradient(var(--salty-tint-18), var(--salty-tint-18)) !important;
-  color: var(--salty-accent) !important;
-  -webkit-text-fill-color: var(--salty-accent);
+  color: var(--salty-accent-ink, var(--salty-accent)) !important;
+  -webkit-text-fill-color: var(--salty-accent-ink, var(--salty-accent));
   font-weight: 600;
 }
 /* 숫자칸(슬라이더 옆): 작고 가운데, 자리 맞춘 숫자 */
@@ -490,7 +490,7 @@ body.salty .select2-container--default .select2-results__option--highlighted.sel
 body.salty .select2-container--default .select2-results__option[aria-selected="true"],
 body.salty .select2-container--default .select2-results__option--selected {
   background: var(--salty-fill-accent-10, var(--salty-accent-10)) !important;
-  color: var(--salty-accent) !important;
+  color: var(--salty-accent-ink, var(--salty-accent)) !important;
 }
 body.salty .select2-container--default .select2-search--dropdown .select2-search__field {
   border: 0 !important;

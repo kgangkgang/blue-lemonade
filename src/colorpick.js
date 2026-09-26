@@ -1,6 +1,6 @@
 // 색 고르기 팝업 (3.5.0) — 실리태번의 toolcool 색 칸 · <input type="color"> 를 누르면 뜨는 테마 색 고르기.
 // 사용자: "모바일 색깔 선택화면 안 보임 · PC 도 좀 더 괜찮은 색 고르는 거 없어?" — toolcool 팝업은 칸 옆에 고정 위치로 떠서
-// 폰에서 화면 밖으로 잘렸다. 이것은 칸 밑(모자라면 위)에 보이는 화면 안으로 띄우고, 판 · 색상 · 투명도 막대 · 코드 칸 ·
+// 폰에서 화면 밖으로 잘렸다. 이것은 칸 밑(모자라면 위)에 보이는 화면 안으로 띄우고, 원형 색판 · 밝기 · 투명도 막대 · 코드 칸 ·
 // 지금 테마 색 · 최근 색을 한 장에. 만지는 동안 바로 칠하고(짧게 솎아서), 닫을 때 한 번 더 확정.
 // 문서 갈고리는 colorpop.js (늘 로드), 이 파일은 처음 누를 때 불러온다.
 import { getSettings } from './settings.js';
@@ -220,8 +220,9 @@ function place(box, anchor) {
     const v = viewport();
     const edge = 8, gap = 8;
     const phone = v.w < 600;
-    const width = Math.min(phone ? 360 : 272, v.w - edge * 2);
+    const width = Math.min(296, v.w - edge * 2);
     box.style.width = `${width}px`;
+    box.style.maxHeight = `${Math.max(120, v.h - edge * 2)}px`;
     // 칸이 화면 오른쪽 반에 있으면 칸의 오른쪽 끝에(설정 줄의 색 칸), 왼쪽 반이면 왼쪽 끝에(실리태번 테마 색상 줄) — 화면 안으로
     const edgeAt = r.left + r.width / 2 > v.x + v.w / 2 ? r.right - width : r.left;
     const left = phone ? v.x + (v.w - width) / 2 : clamp(edgeAt, v.x + edge, v.x + v.w - width - edge);
@@ -245,10 +246,18 @@ function render(state) {
     box.style.setProperty('--rgb', `${Math.round(r)} ${Math.round(g)} ${Math.round(b)}`);
     box.style.setProperty('--now', cssOf([r, g, b, a]));
     const board = box.querySelector('.bl-cp-board');
-    board.style.setProperty('--x', `${s * 100}%`);
-    board.style.setProperty('--y', `${(1 - v) * 100}%`);
-    box.querySelector('.bl-cp-hue').style.setProperty('--x', `${(h / 360) * 100}%`);
+    const angle = h * Math.PI / 180;
+    board.style.setProperty('--x', `${50 + Math.cos(angle) * s * 50}%`);
+    board.style.setProperty('--y', `${50 + Math.sin(angle) * s * 50}%`);
+    board.style.setProperty('--dim', `${1 - v}`);
+    board.setAttribute('aria-valuetext', `색상 ${Math.round(h)}°, 채도 ${Math.round(s * 100)}%`);
+    board.setAttribute('aria-valuenow', String(Math.round(h)));
+    const valueBar = box.querySelector('.bl-cp-value');
+    valueBar.style.setProperty('--x', `${v * 100}%`);
+    valueBar.style.setProperty('--full', hexOf(hsvToRgb(h, s, 1)));
+    valueBar.setAttribute('aria-valuenow', String(Math.round(v * 100)));
     box.querySelector('.bl-cp-alpha')?.style.setProperty('--x', `${a * 100}%`);
+    box.querySelector('.bl-cp-alpha')?.setAttribute('aria-valuenow', String(Math.round(a * 100)));
     const input = box.querySelector('.bl-cp-hex');
     if (document.activeElement !== input) input.value = state.alpha && a < 1 ? `${hexOf([r, g, b])}${hex2(a * 255).toUpperCase()}` : hexOf([r, g, b]);
     input.removeAttribute('aria-invalid');
@@ -283,14 +292,15 @@ function setFrom(rgba, { keepHue = true } = {}) {
     if (st.alpha) st.a = clamp(rgba[3], 0, 1);
 }
 
-function drag(el, onMove) {
+function drag(el, onMove, { clampPoint = true } = {}) {
     el.addEventListener('pointerdown', (e) => {
         if (e.button > 0) return;
         e.preventDefault();
         try { el.setPointerCapture(e.pointerId); } catch { /* 합성 누름 */ }
         const move = (ev) => {
             const rect = el.getBoundingClientRect();
-            onMove(clamp((ev.clientX - rect.left) / rect.width, 0, 1), clamp((ev.clientY - rect.top) / rect.height, 0, 1));
+            const x = (ev.clientX - rect.left) / rect.width, y = (ev.clientY - rect.top) / rect.height;
+            onMove(clampPoint ? clamp(x, 0, 1) : x, clampPoint ? clamp(y, 0, 1) : y);
             render(session.state);
             emit();
         };
@@ -402,7 +412,7 @@ export function openColorPick({ anchor, value, alpha = false, onInput, onClose }
     layer.className = 'bl-cp-layer';
     layer.style.cssText = 'top:0;left:0;width:100vw;height:100vh;height:100lvh';
     layer.innerHTML = `<div class="bl-cp" role="dialog" aria-label="색 고르기">
-        <div class="bl-cp-board" tabindex="0" role="slider" aria-label="채도 · 밝기"><i></i></div>
+        <div class="bl-cp-board" tabindex="0" role="slider" aria-label="색상 · 채도" aria-valuemin="0" aria-valuemax="360" aria-description="좌우 방향키로 색상, 위아래 방향키로 채도를 조절해요"><i></i></div>
         <div class="bl-cp-pic">
             <canvas class="bl-cp-pic-canvas" aria-label="이미지에서 색 따기"></canvas>
             <i class="bl-cp-pic-ring"></i>
@@ -416,8 +426,8 @@ export function openColorPick({ anchor, value, alpha = false, onInput, onClose }
         <div class="bl-cp-mid">
             <button type="button" class="bl-cp-cmp" data-act="revert" aria-label="처음 색으로" style="--was:${original}"><i></i><b></b></button>
             <div class="bl-cp-bars">
-                <div class="bl-cp-hue" tabindex="0" role="slider" aria-label="색상"><i></i></div>
-                ${alpha ? '<div class="bl-cp-alpha" tabindex="0" role="slider" aria-label="투명도"><i></i></div>' : ''}
+                <div class="bl-cp-value" tabindex="0" role="slider" aria-label="밝기" aria-valuemin="0" aria-valuemax="100"><i></i></div>
+                ${alpha ? '<div class="bl-cp-alpha" tabindex="0" role="slider" aria-label="투명도" aria-valuemin="0" aria-valuemax="100"><i></i></div>' : ''}
             </div>
         </div>
         <div class="bl-cp-code">
@@ -432,14 +442,18 @@ export function openColorPick({ anchor, value, alpha = false, onInput, onClose }
     const box = layer.firstElementChild;
     box.tabIndex = -1; // 5.3.7 폰에서도 초점이 창 안으로 — 전에는 body 에 남아 Esc 가 설정 창(dialog)을 통째로 닫았다
     const board = box.querySelector('.bl-cp-board');
-    const hue = box.querySelector('.bl-cp-hue');
+    const valueBar = box.querySelector('.bl-cp-value');
     const alphaBar = box.querySelector('.bl-cp-alpha');
     const input = box.querySelector('.bl-cp-hex');
 
-    drag(board, (x, y) => { session.state.s = x; session.state.v = 1 - y; });
-    drag(hue, (x) => { session.state.h = x * 360; });
-    keys(board, (dx, dy) => { const st = session.state; st.s = clamp(st.s + dx, 0, 1); st.v = clamp(st.v - dy, 0, 1); });
-    keys(hue, (dx, dy) => { const st = session.state; st.h = clamp(st.h + (dx || -dy) * 360, 0, 360); });
+    drag(board, (x, y) => {
+        const dx = x * 2 - 1, dy = y * 2 - 1, st = session.state;
+        st.s = clamp(Math.hypot(dx, dy), 0, 1);
+        if (st.s > .001) st.h = (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360;
+    }, { clampPoint: false });
+    drag(valueBar, (x) => { session.state.v = x; });
+    keys(board, (dx, dy) => { const st = session.state; st.h = (st.h + dx * 360 + 360) % 360; st.s = clamp(st.s - dy, 0, 1); });
+    keys(valueBar, (dx, dy) => { const st = session.state; st.v = clamp(st.v + (dx || -dy), 0, 1); });
     if (alphaBar) {
         drag(alphaBar, (x) => { session.state.a = Math.round(x * 100) / 100; });
         keys(alphaBar, (dx, dy) => { const st = session.state; st.a = clamp(Math.round((st.a + (dx || -dy)) * 100) / 100, 0, 1); });
