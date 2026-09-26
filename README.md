@@ -1,13 +1,24 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.4.2.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.4.3.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.4.2 · 최신 업데이트</summary>
+<summary>5.4.3 · 최신 업데이트</summary>
+
+- 채팅 · 북마크 · 메모에 나온 캐릭터 에셋 그림을 꾹 누르면(PC 는 오른쪽 클릭) 그 그림의 보기 창이 바로 열려요. 끄기 · 태그 복사 · 이름 바꾸기 · 지우기를 거기서 해요. 다른 캐릭터에서 불러온 그림은 끄기 · 태그 복사만 보여요.
+- ··· 메뉴의 눈(숨기기) 아이콘을 꾹 누르면 꺼내기 · 접기를 골라요. 접기는 메시지를 숨기면서 보이는 글(번역문이 있으면 번역문)을 ▶ 로 접고, 접힌 메시지에서는 펼치기로 되돌려요.
+- 대사 색: 여러 줄에 걸친 "…" 대사에 강조 · 형광펜 · 스트리밍 페이드 인이 섞여도 색이 들어가요. ”…” · “…" 처럼 따옴표 방향이 뒤집히거나 섞여도 한 줄 안이면 대사로 칠해요. 번역을 원문과 번갈아 보는 방식에서도 줄마다 제 대사만 칠해요.
+- 데우스 감정 대사를 '흐르는 색' 으로 볼 때 겹친 감정 대사 글자가 안 보이던 것, 다른 확장의 형광펜 옆 ~~ 가 취소선으로 바뀌던 것을 고쳤어요.
+- ··· 를 누르면 꺼내 둔 버튼(번역 등)과 ··· 자리가 바뀌던 것을 고쳤어요. 숨긴 메시지를 북마크하면 북마크 창에서도 눈 감은 모양으로 보여요.
+
+</details>
+
+<details>
+<summary>5.4.2 · 번역 삭제 · 캐시</summary>
 
 - LLM 번역: 번역문을 휴지통으로 지우고 다시 번역해도 예전 번역이 그대로 돌아오고, '번역을 시작합니다' 만 뜨던 것을 고쳤어요. 지우면 그 메시지의 문단 기록까지 같이 지워서 새로 번역해요. 5.4.1 에서 태그 줄(트래커)을 원문 따라 쓰기로 잘못 보던 것도 고쳤어요.
 

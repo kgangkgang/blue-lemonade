@@ -338,4 +338,5 @@ body.salty.salty-user-table #chat .mes[is_user="true"]::before {
 body.salty.salty-user-table #chat .mes[is_user="true"].selected::before { background: var(--bl-fill-selected, var(--bl-selected)); box-shadow: 0 0 0 100vmax var(--bl-selected); }
 
 /* A speaker label and the following dialogue may share a Markdown paragraph. */
-:is(body.salty.salty-indent #chat .mes .mes_text, .salty-sample.salty-indent) q.bl-line-dialogue { margin-inline-start: 1em; }
+/* 줄 머리가 형광펜 <mark>(다른 확장) 칸이면 표시는 그 칸에 — q 에 주면 칸 배경이 들여 쓴 빈자리까지 칠해진다 (typography.js) */
+:is(body.salty.salty-indent #chat .mes .mes_text, .salty-sample.salty-indent) :is(q, mark).bl-line-dialogue { margin-inline-start: 1em; }

@@ -5,7 +5,7 @@
    ===== */
 /* ===== 미리보기 자동 생성 (surfaces:preview) =====
    tools/gen-preview-css.js 가 #chat 규칙을 여기 복사한다 — 손으로 고치지 말 것.
-   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 334개 (88.7KB).
+   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 335개 (89.0KB).
    style.css 의 채팅 · 에셋 규칙을 고치면 `node tools/gen-preview-css.js` 를 다시 돌린다.
    이 칸을 다른 자리로 옮기지 말 것: 사본이 손으로 쓴 채팅 규칙보다 뒤에 있어야 같은 무게에서 이기고,
    바로 뒤의 보정 칸이 사본을 눌러 줄 수 있다. 앞으로 옮기면 아바타 모서리처럼 순서로만 갈리는 것이 뒤집힌다 */
@@ -273,6 +273,9 @@ body.salty:not(.expandMessageActions) :is(#salty-nochat, .salty-preview) .mes.bl
     position-visibility: anchors-visible;
   }
 }
+body.salty:not(.expandMessageActions) :is(#salty-nochat, .salty-preview) .mes .mes_buttons:has(> .extraMesButtons.visible) > .bl-pinned {
+  order: -2;
+}
 body.salty:not(.expandMessageActions) :is(#salty-nochat, .salty-preview) .mes .mes_buttons:has(> .extraMesButtons.visible)::before {
   content: "";
   flex: none;
@@ -284,11 +287,11 @@ body.salty:not(.expandMessageActions) :is(#salty-nochat, .salty-preview) .mes .m
 }
 body.salty:not(.expandMessageActions) :is(#salty-nochat, .salty-preview) .mes .mes_buttons:has(> .extraMesButtons.visible)::after {
   content: "\f141";
-  position: absolute;
-  top: 0;
-  left: 0;
+  flex: none;
+  order: -1;
   width: 32px;
   height: 32px;
+  margin-left: calc(-32px - var(--salty-mes-btn-gap, 0px));
   color: var(--salty-accent);
   font: 900 16px/32px "Font Awesome 6 Free";
   text-align: center;
@@ -296,10 +299,9 @@ body.salty:not(.expandMessageActions) :is(#salty-nochat, .salty-preview) .mes .m
 }
 body.salty:not(.expandMessageActions).salty-icons-line :is(#salty-nochat, .salty-preview) .mes .mes_buttons:has(> .extraMesButtons.visible)::after {
   content: "";
-  top: 8px;
-  left: 8px;
   width: 16px;
   height: 16px;
+  margin: 0 8px 0 calc(-24px - var(--salty-mes-btn-gap, 0px));
   background-color: var(--salty-accent);
   -webkit-mask: var(--salty-ico-more) center / contain no-repeat;
   mask: var(--salty-ico-more) center / contain no-repeat;
@@ -620,7 +622,7 @@ body.salty.salty-user-table :is(#salty-nochat, .salty-preview) .mes[is_user="tru
 body.salty.salty-user-table :is(#salty-nochat, .salty-preview) .mes[is_user="true"].selected::before {
   background: var(--bl-fill-selected, var(--bl-selected)); box-shadow: 0 0 0 100vmax var(--bl-selected);
 }
-:is(body.salty.salty-indent :is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-sample.salty-indent) q.bl-line-dialogue {
+:is(body.salty.salty-indent :is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-sample.salty-indent) :is(q, mark).bl-line-dialogue {
   margin-inline-start: 1em;
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-wrap, [class*="custom-imageWrapper"]) {
@@ -1333,6 +1335,7 @@ body.salty.salty-profile-banner :is(#salty-nochat, .salty-preview) .mes:not([is_
 body.salty.salty-profile-banner :is(#salty-nochat, .salty-preview) .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) .ch_name > :is(.mes_buttons, .mes_edit_buttons) {
   grid-area: 2 / 4; min-width: 0; max-width: 100%; flex-wrap: wrap;
   gap: var(--bl-button-gap) !important; justify-content: var(--bl-name-justify); justify-self: var(--bl-name-justify);
+  --salty-mes-btn-gap: var(--bl-button-gap);
   position: relative; inset: auto;
   margin: 0 !important;
 }
@@ -1487,6 +1490,7 @@ body.salty.salty-user-profile-banner :is(#salty-nochat, .salty-preview) .mes[is_
 body.salty.salty-user-profile-banner :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) .ch_name > :is(.mes_buttons, .mes_edit_buttons) {
   grid-area: 2 / 4; min-width: 0; max-width: 100%; flex-wrap: wrap;
   gap: var(--bl-user-button-gap) !important; justify-content: var(--bl-user-name-justify); justify-self: var(--bl-user-name-justify);
+  --salty-mes-btn-gap: var(--bl-user-button-gap);
   position: relative; inset: auto;
   margin: 0 !important;
 }

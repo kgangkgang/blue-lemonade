@@ -27,6 +27,7 @@ body.salty.salty-profile-banner #chat .mes:not([is_user="true"]):not([is_system=
 body.salty.salty-profile-banner #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) .ch_name > :is(.mes_buttons, .mes_edit_buttons) {
   grid-area: 2 / 4; min-width: 0; max-width: 100%; flex-wrap: wrap;
   gap: var(--bl-button-gap) !important; justify-content: var(--bl-name-justify); justify-self: var(--bl-name-justify);
+  --salty-mes-btn-gap: var(--bl-button-gap); /* ⋯ 메뉴가 열린 동안의 표시(css/05-chat)가 이 간격만큼 더 겹친다 */
   position: relative; inset: auto;
   margin: 0 !important;
 }

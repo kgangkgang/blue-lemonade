@@ -133,19 +133,32 @@ export function syncMesPins(on, list, themeOn = on) {
 }
 
 // 4.7.1 길게 누르기: ··· 메뉴 안 버튼을 길게 누르면 이름 줄로 꺼내고, 꺼낸 버튼을 길게 누르면 메뉴로 돌려놓는다 (설정 창 없이)
+// 눈(숨기기) 버튼만은 바로 꺼내지 않고 '꺼내기(넣기) · 접기(펼치기)' 를 고르게 한다 — 고르기 창과 접기는 mes-fold.js (그때만 읽음)
 const HOLD_MS = 550, MOVE_PX = 8;
-let gesture = null, hold = 0, held = null, gestureOn = false, gestureBound = false;
+const EYE = '.mes_hide, .mes_unhide';
+let gesture = null, hold = 0, held = null, gestureOn = false, gestureBound = false, foldModule = null;
+// 눈을 누르기 시작할 때 미리 읽어 두어 길게 누름이 끝나는 순간 바로 띄운다. 못 읽으면 다음에 다시 시도
+const loadFold = () => (foldModule ||= import('./mes-fold.js').catch((error) => {
+    foldModule = null;
+    console.warn('[Blue Lemonade] 눈 길게 누르기', error);
+    return null;
+}));
 function startPinGesture(on) {
     gestureOn = on;
-    if (!on || gestureBound) { if (!on) clearTimeout(hold); return; }
+    if (!on || gestureBound) { if (!on) { clearTimeout(hold); foldModule?.then(m => m?.closeEyeChoice()); } return; }
     gestureBound = true;
     document.addEventListener('pointerdown', (event) => {
+        // 새 누름이 시작되면 앞 길게 누르기의 click 은 이미 왔거나 오지 않는다 (폰은 길게 누른 뒤 click 을 건너뛰기도 함).
+        // 남겨 두면 고르기 창의 첫 톡이 막혔다 — 여기서 푼다
+        held = null;
         if (!gestureOn || (event.pointerType === 'mouse' && event.button !== 0)) return;
         const el = event.target?.closest?.('.mes_buttons > .extraMesButtons > *, .mes_buttons > .bl-pinned');
         if (!el || el.matches('.extraMesButtonsHint')) return;
+        const eye = el.matches(EYE);
+        if (eye) loadFold();
         clearTimeout(hold);
         gesture = { el, x: event.clientX, y: event.clientY };
-        hold = setTimeout(() => { if (gesture?.el === el) { gesture = null; togglePin(el); } }, HOLD_MS);
+        hold = setTimeout(() => { if (gesture?.el === el) { gesture = null; (eye ? eyeChoice : togglePin)(el); } }, HOLD_MS);
     }, true);
     const cancel = () => { clearTimeout(hold); gesture = null; };
     document.addEventListener('pointermove', (event) => { if (gesture && Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) > MOVE_PX) cancel(); }, true);
@@ -158,6 +171,25 @@ function startPinGesture(on) {
         if (fresh) { event.stopPropagation(); event.preventDefault(); }
     }, true);
     document.addEventListener('contextmenu', (event) => { if (held && Date.now() - held.at < 800) event.preventDefault(); }, true);
+}
+// 눈 길게 누르기: 손을 뗄 때의 click 은 위와 같이 막고, 고르기 창을 띄운다. 창을 못 띄우면 예전처럼 바로 꺼내기 · 넣기
+function eyeChoice(el) {
+    held = { el, at: Date.now() };
+    try { navigator.vibrate?.(15); } catch { /* 진동이 없는 기기 */ }
+    loadFold().then((mod) => {
+        if (!gestureOn || !el.isConnected) return;
+        if (mod) {
+            try {
+                // 창에서 꺼내기 · 넣기를 고르면 togglePin 이 막기를 다시 걸므로 바로 푼다 (다음 톡이 먹히지 않게)
+                mod.openEyeChoice(el, () => { togglePin(el); held = null; });
+                return;
+            } catch (error) {
+                console.warn('[Blue Lemonade] 눈 길게 누르기', error);
+                try { mod.closeEyeChoice(); } catch { /* 반쯤 그린 창 */ }
+            }
+        }
+        togglePin(el);
+    });
 }
 function togglePin(el) {
     const key = pinKey(el);

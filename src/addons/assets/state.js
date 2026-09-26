@@ -5,7 +5,7 @@ import { saveSettingsDebounced } from '../../../../../../../script.js';
 
 export const MODULE = 'esetham';
 export const OLD_MODULE = 'character-assets';
-export const VERSION = '1.4.3';
+export const VERSION = '1.4.4';
 export const TITLE = '캐릭터 에셋';
 
 // AI에게 보내는 글이라 영어로 둔다. {{img_keywords_autogen}} 자리에 지금 캐릭터의 그림 이름 목록이 들어간다.

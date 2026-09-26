@@ -5,7 +5,7 @@
    ============================================================ */
 :root {
     /* index.js 의 VERSION 과 같아야 한다 */
-    --bl-notes-css-version: "1.2.3";
+    --bl-notes-css-version: "1.2.4";
     --bl-notes-surface: var(--salty-surface, var(--SmartThemeBlurTintColor, #25262a));
     --bl-notes-card: var(--bl-card, var(--salty-card, rgba(255, 255, 255, .04)));
     --bl-notes-text: var(--salty-text, var(--SmartThemeBodyColor, #eee));

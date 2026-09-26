@@ -71,6 +71,19 @@ body.salty.salty-icons-line #chat .mes .bl-pinned.mes_create_branch { --salty-mi
 body.salty.salty-icons-line #chat .mes .bl-pinned.mes_copy { --salty-mi: var(--salty-mi-copy); }
 body.salty.salty-icons-line #chat .mes .bl-pinned.mes_to_image { --salty-mi: var(--salty-mi-camera); }
 
+/* 눈 아이콘 길게 누르기 (src/mes-fold.js): 꺼내기 · 접기 두 줄. 고르기 목록 팝업(.salty-pick-float, css/28)의 모양을 그대로 쓰고
+   폭만 글자에 맞춘다. 층(.bl-eye-layer)은 popover 라 기본 테두리 · 바탕을 스크립트가 인라인으로 지운다 */
+body.salty .bl-eye-pick {
+  width: max-content;
+  min-width: 96px;
+}
+body.salty .bl-eye-pick .salty-pick-rows > button {
+  justify-content: center;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
 /* 설정 창의 고르기: 두 칸 목록 — 아이콘 · 이름 · 고른 표시(체크) */
 .salty-panel .bl-mespins {
   display: grid;

@@ -647,11 +647,13 @@ function renderCard(record, fav, index) {
         : '<p class="cg-missing-text"><i class="fa-solid fa-link-slash"></i> 원본 메시지를 찾을 수 없어요. 지워졌거나 번호가 바뀌었을 수 있어요.</p>';
     const collapsed = settings().collapseLong && !view.expanded.has(fav.id);
     const indexLabel = Number.isFinite(index) && index !== Number.MAX_SAFE_INTEGER ? `#${index}` : '#?';
+    // 5.4.3: 채팅에서 숨긴 메시지(유령 · is_system)는 눈 감은 모양으로 — 채팅의 숨김 표시와 같게
+    const eye = message?.is_system ? 'fa-eye-slash' : 'fa-eye';
     const footer = fav.virtual
-        ? `${actionButton('preview', 'fa-eye', '채팅에서', { disabled: missing })}
+        ? `${actionButton('preview', eye, '채팅에서', { disabled: missing })}
            ${actionButton('context', 'fa-layer-group', '앞뒤 문맥', { disabled: missing })}
            ${actionButton('mark', iconName(), '북마크', { className: 'cg-action--mark', disabled: missing })}`
-        : `${actionButton('preview', 'fa-eye', '채팅에서', { disabled: missing })}
+        : `${actionButton('preview', eye, '채팅에서', { disabled: missing })}
            ${actionButton('context', 'fa-layer-group', '앞뒤 문맥', { disabled: missing })}
            ${actionButton('note', 'fa-feather-pointed', fav.note ? '메모 수정' : '메모')}
            ${actionButton('edit', 'fa-pen-to-square', '원문 수정', { disabled: missing })}

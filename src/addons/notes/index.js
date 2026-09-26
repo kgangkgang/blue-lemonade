@@ -1201,11 +1201,18 @@ function raiseSticky(el) { stickies.forEach(other => other.classList.toggle('is-
 const PRESS_MS = 380;
 const MERGE_MS = 280;
 let dragging = null, dragEndedAt = 0;
+/** 캐릭터 에셋 애드온(assets/hold.js)이 이 자리의 꾹 누르기를 맡는지 묻는다 — 목록에 있는 에셋 그림이면 맡아 크게 보기 창을 연다. 애드온이 꺼져 있으면 답이 없어 칸 끌기 그대로 */
+function assetHold(target) {
+    const ask = { target, hold: false };
+    document.dispatchEvent(new CustomEvent('char-assets:hold-check', { detail: ask }));
+    return ask.hold;
+}
 function enableDrag(root, host) {
     host.addEventListener('pointerdown', event => {
         if (dragging || (event.pointerType === 'mouse' && event.button !== 0)) return;
         const cardEl = event.target.closest('.bl-note');
         if (!cardEl || !host.contains(cardEl) || event.target.closest('input, textarea, button, select, a, summary, .bl-note-fmt, .bl-note-owner, .bl-note-colorwrap')) return;
+        if (assetHold(event.target)) return; // 에셋 그림은 칸 끌기 대신 그 그림의 창 — 칸은 그 밖 어디서나 끈다
         const sx = event.clientX, sy = event.clientY; let timer = 0;
         const cancel = () => { clearTimeout(timer); document.removeEventListener('pointermove', pre, true); document.removeEventListener('pointerup', cancel, true); document.removeEventListener('pointercancel', cancel, true); };
         const pre = e => { if (Math.hypot(e.clientX - sx, e.clientY - sy) > 8) cancel(); };

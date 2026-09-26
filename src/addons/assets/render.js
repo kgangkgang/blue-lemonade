@@ -658,8 +658,8 @@ function replaceTagOnlyCode(text, seen, blocks) {
 
 // ── 이미 그려진 <img> 맞추기 ─────────────────────────────────────
 
-/** '/characters/폴더/파일' 주소면 { folder, file } */
-function parseCharacterUrl(src) {
+/** '/characters/폴더/파일' 주소면 { folder, file } — 꾹 누르기(hold.js)도 이것으로 화면의 그림을 목록의 파일에 맞춘다 */
+export function parseCharacterUrl(src) {
     let pathname;
     try {
         pathname = decodeURIComponent(new URL(src, location.href).pathname);

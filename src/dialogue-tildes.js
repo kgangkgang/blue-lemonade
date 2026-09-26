@@ -1,12 +1,15 @@
 // Showdown treats two sentence-ending elongations as a deletion pair.
 // Repair only that punctuation pattern; keep ordinary deletion markup intact.
 const repairs = new Map();
+// 옆이 글 속 요소여도(다른 확장의 형광펜 <mark> · 실리태번 '스트리밍 페이드 인'의 낱말 칸 span · 강조) 그 글자로 본다
+const INLINE = /^(MARK|SPAN|FONT|EM|STRONG|I|B|U)$/;
+const textLike = node => node?.nodeType === 3 || (node?.nodeType === 1 && INLINE.test(node.nodeName));
 export function restoreDialogueTildes(root) {
     for (const del of root.querySelectorAll('.mes_text del, .salty-sample del')) {
         if (del.attributes.length || del.closest('pre, code')) continue;
         const before = del.previousSibling;
         const after = del.nextSibling;
-        if (before?.nodeType !== 3 || after?.nodeType !== 3) continue;
+        if (!textLike(before) || !textLike(after)) continue;
         if (!/[\p{L}\p{N}]$/u.test(before.textContent) ||
             !/^[!！?？]/u.test(del.textContent) ||
             !/[\p{L}\p{N}]$/u.test(del.textContent) ||

@@ -68,8 +68,15 @@ body.salty.salty-indent :is(#chat, .cg-root, .salty-preview) .custom-dem-express
 }
 /* 5.3.1 유령 글자: <whispering><anxious>"…"</anxious></whispering> 처럼 감정 칸이 겹치면 바깥 칸의 글자 모양 배경(background-clip: text)이
    안쪽 inline-block 칸의 들여쓰기(.bl-fx-lead 의 text-indent) · 움직임을 못 따라가 같은 대사가 1em 옆에 한 번 더 그려졌다 (2026-09-25 격리 서버 재현).
-   글자는 맨 안쪽 칸 · q 가 그리니 바깥 칸의 배경은 없어도 된다 */
-body.salty :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:has(> .custom-dem-expressive) {
+   글자는 맨 안쪽 칸 · q 가 그리니 바깥 칸의 배경은 없어도 된다.
+   단 프리셋 정규식은 태그가 하나여도 빈 칸(.custom-dem-expressive--, display: contents · 배경 없음)을 세 겹 더 씌운다 —
+   <shout>"…"</shout> 는 '감정 칸 > 빈 칸 > 빈 칸 > 빈 칸 > q'. 색 흐름(q 글자 투명)에서 빈 칸만 든 칸까지 배경을 지우면
+   글자를 그리는 칸이 하나도 없어 대사가 통째로 안 보였다 → 색 흐름에서는 안에 진짜 감정 칸이 있을 때만 지운다.
+   색 흐름이 아니면 q 가 제 색으로 그리므로 예전 그대로 (배경을 되살리면 글자 가장자리에 무지개 테가 번졌다) */
+body.salty:not(.salty-demfx-flow) :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:has(> .custom-dem-expressive) {
+  background-image: none !important;
+}
+body.salty.salty-demfx-flow :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:has(.custom-dem-expressive:not(.custom-dem-expressive--)) {
   background-image: none !important;
 }
 /* 5.3.1 긴 감정 대사: 프리셋 칸은 inline-block 이라 줄 중간에 못 들어가면 통째로 아랫줄로 넘어가고, 양끝 맞춤이면 윗줄 낱말 사이가 크게 벌어졌다.

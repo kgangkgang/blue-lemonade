@@ -7,6 +7,7 @@ import { power_user } from '../../../../../../power-user.js';
 import { initSettings, settings, saveSettings, VERSION, TITLE, currentFolder } from './state.js';
 import { runtime, reload, expandedPrompt } from './store.js';
 import { setupRenderer, schedulePass } from './render.js';
+import { setupHold } from './hold.js';
 import { toast, watchThemeVars, refreshThemeVars } from './ui.js';
 import { badgeTextHit } from '../../badge-hit.js';
 
@@ -127,6 +128,8 @@ async function boot() {
     lazyPanel();
     watchThemeVars();
     setupRenderer();
+    // 채팅 · 북마크 카드 · 메모에 나온 그림을 꾹 누르면(PC 는 오른쪽 클릭) 그 그림의 크게 보기 창을 연다
+    setupHold();
     // 그림 목록 읽기(/api/sprites/get 여러 번)는 기다리지 않는다 — ready 를 붙잡으면 뒤 확장들이 다 늦어진다
     void reload().catch(error => console.error(`[${TITLE}] 그림 목록 읽기 실패`, error));
 

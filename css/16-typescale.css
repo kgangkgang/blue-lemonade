@@ -298,5 +298,5 @@ body.salty :is(.replacement-rule label small, .tti-replace-modal .replacement-ru
 }
 /* ===== /surfaces:typescale ===== */
 
-body.salty.salty-indent :is(.cg-mes,.cg-bubble-text,.cg-note-text) q.bl-line-dialogue { margin-inline-start: 1em; }
+body.salty.salty-indent :is(.cg-mes,.cg-bubble-text,.cg-note-text) :is(q, mark).bl-line-dialogue { margin-inline-start: 1em; }
 body.salty .cg-note-text p { text-indent: 0; }

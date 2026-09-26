@@ -4,13 +4,14 @@ import { fixToastrForDialogs } from '../../../../../../popup.js';
 import { disabledSet, setDisabled } from './state.js';
 import { deleteAsset, renameAsset, sanitizeBase, sameBaseSiblings } from './assets.js';
 import { toast, confirmDialog, inputDialog, copyText, applyThemeVars } from './ui.js';
-import { runtime, reload, recompute } from './store.js';
+import { runtime, reload, recompute, sourceByKey } from './store.js';
 
 let dialog = null;
 
 /** 창을 닫고 바로 치운다. 실리태번이 toast 컨테이너를 dialog 안으로 옮겨 두므로, 치우기 전에 body로 되돌린다. */
 function dispose(element) {
     if (dialog === element) dialog = null;
+    element._escGuard?.(); // 5.4.3: 창 위 Esc 가로채기 풀기
     if (element.open) element.close();
     fixToastrForDialogs();
     element.remove();
@@ -42,7 +43,7 @@ export function openViewer({ items, start = 0 }) {
                     <span class="eh-viewer-state" hidden><i class="fa-solid fa-eye-slash"></i> 꺼짐 · AI에게 알려 주지 않아요</span>
                 </span>
             </div>
-            <button type="button" class="eh-icon-btn eh-icon-btn--light" data-act="close" title="닫기" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button>
+            <button type="button" class="eh-icon-btn eh-icon-btn--light" data-act="close" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="eh-viewer-stage">
             <button type="button" class="eh-viewer-nav eh-viewer-nav--prev" data-act="prev" aria-label="이전"><i class="fa-solid fa-chevron-left"></i></button>
@@ -51,9 +52,9 @@ export function openViewer({ items, start = 0 }) {
         </div>
         <div class="eh-viewer-actions">
             <button type="button" class="eh-vbtn" data-act="toggle"><i class="fa-solid fa-eye-slash"></i><span>끄기</span></button>
-            <button type="button" class="eh-vbtn" data-act="copy" title="{{img::파일 이름}} 태그를 복사해요"><i class="fa-solid fa-tag"></i><span>태그 복사</span></button>
-            <button type="button" class="eh-vbtn" data-act="rename" title="파일 이름을 바꿔요"><i class="fa-solid fa-pen"></i><span>이름 바꾸기</span></button>
-            <button type="button" class="eh-vbtn eh-vbtn--danger" data-act="delete" title="파일을 지워요"><i class="fa-solid fa-trash"></i><span>지우기</span></button>
+            <button type="button" class="eh-vbtn" data-act="copy"><i class="fa-solid fa-tag"></i><span>태그 복사</span></button>
+            <button type="button" class="eh-vbtn" data-act="rename"><i class="fa-solid fa-pen"></i><span>이름 바꾸기</span></button>
+            <button type="button" class="eh-vbtn eh-vbtn--danger" data-act="delete"><i class="fa-solid fa-trash"></i><span>지우기</span></button>
         </div>`;
 
     const element = dialog;
@@ -64,8 +65,12 @@ export function openViewer({ items, start = 0 }) {
     const prev = element.querySelector('[data-act="prev"]');
     const next = element.querySelector('[data-act="next"]');
     const toggle = element.querySelector('[data-act="toggle"]');
+    const rename = element.querySelector('[data-act="rename"]');
+    const remove = element.querySelector('[data-act="delete"]');
 
     const current = () => list[cursor];
+    /** 이름 바꾸기 · 지우기가 되는 파일인지 — 이 캐릭터의 폴더(원본 · 프리셋)만. 불러온 남의 폴더는 설정 칸처럼 그 캐릭터에서만 (panel.js ownActive) */
+    const ownFile = asset => sourceByKey(asset.folder)?.own === true;
 
     function show() {
         const asset = current();
@@ -76,7 +81,6 @@ export function openViewer({ items, start = 0 }) {
         img.src = asset.url;
         img.alt = asset.file;
         name.textContent = asset.file;
-        name.title = asset.file;
         count.textContent = `${cursor + 1} / ${list.length}`;
         prev.hidden = list.length < 2;
         next.hidden = list.length < 2;
@@ -86,8 +90,9 @@ export function openViewer({ items, start = 0 }) {
         state.hidden = !off;
         toggle.querySelector('i').className = `fa-solid ${off ? 'fa-eye' : 'fa-eye-slash'}`;
         toggle.querySelector('span').textContent = off ? '켜기' : '끄기';
-        toggle.title = off ? '누르면 켜요. 켜진 그림은 AI가 고를 수 있어요.' : '누르면 꺼요. 꺼진 그림은 파일은 남지만 AI에게 알려 주지 않아요.';
         toggle.setAttribute('aria-pressed', String(off));
+        rename.hidden = !ownFile(asset);
+        remove.hidden = !ownFile(asset);
     }
 
     function step(delta) {
@@ -112,6 +117,7 @@ export function openViewer({ items, start = 0 }) {
 
     async function onRename() {
         const asset = current();
+        if (!ownFile(asset)) return;
         const input = await inputDialog(`새 이름을 적어 주세요. (확장자 .${asset.ext}는 그대로예요)\n번호 묶음으로 만들려면 이름 뒤에 -1, -2처럼 번호를 붙여요.`, asset.base, { ok: '바꾸기' });
         if (input === null) return;
         const newBase = sanitizeBase(input);
@@ -189,6 +195,7 @@ export function openViewer({ items, start = 0 }) {
 
     async function onDelete() {
         const asset = current();
+        if (!ownFile(asset)) return;
         // 서버는 확장자만 다른 같은 이름의 파일도 함께 지운다.
         const siblings = sameBaseSiblings(runtime.sources.find(source => source.key === asset.folder)?.assets ?? [], asset);
         const extra = siblings.length ? `\n같은 이름의 ${siblings.map(item => item.file).join(', ')}도 함께 지워져요.` : '';
@@ -200,6 +207,8 @@ export function openViewer({ items, start = 0 }) {
             for (const file of gone) setDisabled(asset.folder, file, false);
             toast('success', `'${asset.file}'을(를) 지웠어요.`);
             await reload();
+            // 채팅 · 북마크 카드 · 메모에 이미 떠 있는 그 그림을 숨기게 알린다 (hold.js)
+            document.dispatchEvent(new CustomEvent('char-assets:deleted', { detail: { folder: asset.folder, files: [...gone] } }));
             list = list.filter(item => !gone.has(item.file) && runtime.sources.some(source => source.assets.some(other => other.folder === item.folder && other.file === item.file)));
             if (!list.length) {
                 closeViewer();
@@ -232,11 +241,13 @@ export function openViewer({ items, start = 0 }) {
     });
     stage.addEventListener('pointercancel', () => { swipeStart = null; });
 
+    // 채팅의 그림을 꾹 눌러 열었을 때(hold.js) 손을 떼며 오는 click 이 어두운 곳에 닿아도 바로 닫히지 않게 — hold.js 가 먼저 먹지만 한 번 더
+    const openedAt = Date.now();
     element.addEventListener('click', (event) => {
         const action = event.target.closest('[data-act]')?.dataset.act;
         if (!action) {
             // 그림 바깥(어두운 곳)을 누르면 닫는다
-            if (Date.now() - lastSwipeAt < 400) return;
+            if (Date.now() - lastSwipeAt < 400 || Date.now() - openedAt < 350) return;
             if (event.target === element || event.target.classList.contains('eh-viewer-stage')) closeViewer();
             return;
         }
@@ -269,6 +280,19 @@ export function openViewer({ items, start = 0 }) {
     element.addEventListener('close', () => {
         if (element.isConnected) dispose(element);
     });
+    // 5.4.3: 북마크 창 · 앞뒤 문맥 창 위에서 연 경우(채팅 그림 꾹 누르기) 그 창들의 document 캡처 Esc 가 먼저 받아 밑의 창을 닫고
+    // preventDefault 로 이 창의 Esc 닫기까지 막았다 — 이 창이 맨 위일 때만 window 캡처로 먼저 받아 이 창만 닫는다.
+    // 창 위에 확인 · 입력 팝업이 떠 있으면 그 팝업이 맨 위이므로 건드리지 않는다.
+    const onEsc = (event) => {
+        if (event.key !== 'Escape' || !element.open) return;
+        const open = [...document.querySelectorAll('dialog[open]')];
+        if (open[open.length - 1] !== element) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        dispose(element);
+    };
+    window.addEventListener('keydown', onEsc, true);
+    element._escGuard = () => window.removeEventListener('keydown', onEsc, true);
 
     document.body.append(element);
     show();

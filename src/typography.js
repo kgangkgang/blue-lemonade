@@ -1,7 +1,7 @@
 // Presentation-only fixes. Saved message text and translator source hashes are untouched.
 import { normalizeTrackerSpacing } from './addons/bookmarks/tracker-spacing.js';
 import { restoreDialogueTildes, resetDialogueTildes } from './dialogue-tildes.js';
-import { wrapSpanningQuotes, resetSpanningQuotes } from './dialogue-span.js';
+import { wrapSpanningQuotes, resetSpanningQuotes, isSpanPiece } from './dialogue-span.js';
 let active=false, observer=null, timer=0;
 const originals=new Map(), dirty=new Set();
 // 5.3.4: 에셋 그림에 곧장 붙은 <br> (사이에 빈칸 · 주석만) — 뒤로 셋, 앞으로 둘까지 .bl-img-br (css/07-images 가 숨김).
@@ -41,10 +41,15 @@ export function markAssetBreaks(root){
         if(spot.nodeType===3){const lead=/^[ \t\n\r\f]+/.exec(spot.data)?.[0].length;if(lead)spot=spot.splitText(lead);}
         const pad=document.createElement('span');pad.className=IMG_INDENT;pad.setAttribute('aria-hidden','true');
         spot.before(pad);changed=true;
-        if(spot.nodeName==='Q')spot.classList.remove('bl-line-dialogue'); // 앞이 <br> 이던 대사 줄 들여쓰기와 겹치지 않게 (다음 조판이 다시 정한다)
+        if(spot.nodeName==='Q'||spot.nodeName==='MARK')spot.classList.remove('bl-line-dialogue'); // 앞이 <br> 이던 대사 줄 들여쓰기와 겹치지 않게 (다음 조판이 다시 정한다)
     }
     return changed;
 }
+// 앞의 빈 글은 건너뛴다: 공백 노드, 실리태번 '스트리밍 페이드 인'이 줄바꿈 · 띄어쓰기를 따로 담은 낱말 칸(span.text_segment)
+const blankBefore=node=>{let p=node.previousSibling;while(p&&(p.nodeType===3||p.matches?.('span.text_segment'))&&!p.textContent.trim())p=p.previousSibling;return p;};
+// 맨 앞에 든 대사면 그 칸 앞을 볼 감싸개: 형광펜 <mark>(다른 확장의 하이라이트) · 페이드 인 낱말 칸.
+// 여러 줄 대사 조각은 *강조* 등 글 속 꾸밈도 (그 줄만 들여쓰기가 빠지지 않게 — 실리태번 q 는 예전 그대로)
+const HOST='mark, span.text_segment',PIECE_HOST='mark, span.text_segment, em, strong, u, del, font, span.bl-dialogue-tildes';
 export function typesetRoot(root) {
     if(!active||!root?.querySelectorAll)return;
     // 5.3.6: 그림 옆 <br> · 그림 뒤 들여쓰기 칸은 조판하는 모든 곳에서 (북마크 카드 · 설정 미리보기도 — 채팅에서만 달아서 북마크는 그림 아래가 벌어졌다).
@@ -55,11 +60,17 @@ export function typesetRoot(root) {
     normalizeTrackerSpacing(root);
     restoreDialogueTildes(root);
     wrapSpanningQuotes(root); // 5.2.2 줄을 넘는 따옴표 대사 — 실리태번은 한 줄 안에서만 <q> 로 감싼다
+    const marks=new Set();
     for(const q of root.querySelectorAll('.mes_text q, .salty-sample q')) {
         if(q.closest('pre,code,details[class*="custom-dem-card"],.custom-dem-track'))continue;
-        let previous=q.previousSibling;
-        while(previous?.nodeType===3&&!previous.textContent.trim())previous=previous.previousSibling;
-        q.classList.toggle('bl-line-dialogue',previous?.nodeName==='BR');
+        let host=q,mark=null,previous=blankBefore(q);
+        const up=isSpanPiece(q)?PIECE_HOST:HOST;
+        // 감싸개 맨 앞에 든 대사는 그 칸 앞을 본다 (칸이 없을 때와 같은 줄 표시)
+        while(!previous&&host.parentElement?.matches(up)){host=host.parentElement;if(host.nodeName==='MARK')mark=host;previous=blankBefore(host);}
+        const line=previous?.nodeName==='BR';
+        // 형광펜 칸이 줄 머리면 들여쓰기는 그 칸에 (q 에 주면 칸 배경이 들여 쓴 빈자리까지 칠해진다)
+        q.classList.toggle('bl-line-dialogue',line&&!mark);
+        if(line&&mark){mark.classList.add('bl-line-dialogue');marks.add(mark);}
         const walker=document.createTreeWalker(q,NodeFilter.SHOW_TEXT);
         const first=walker.nextNode();if(!first)continue;
         if(first.parentElement?.closest('.bl-quote-lead'))continue;
@@ -76,6 +87,7 @@ export function typesetRoot(root) {
             first.textContent=after;first.before(lead);
         }else if(cleaned!==text) {originals.set(first,{before:text,after:cleaned});first.textContent=cleaned;}
     }
+    for(const mark of root.querySelectorAll('.mes_text mark.bl-line-dialogue, .salty-sample mark.bl-line-dialogue'))if(!marks.has(mark))mark.classList.remove('bl-line-dialogue');
     for(const node of originals.keys())if(!node.isConnected)originals.delete(node);
 }
 export function syncTypography(on) {
