@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.5.0";
+export const BUILD_VERSION = "5.5.1";
 export const FILE_HASHES = {
   "index.js": "13797:958797d2:0a6609e3",
-  "manifest.json": "365:fb273443:4afa157a",
+  "manifest.json": "365:aefe1cc4:cd30f406",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -218,14 +218,14 @@ export const FILE_HASHES = {
   "src/mes-fold.js": "14768:30e2ebec:1b724386",
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/modal.js": "671:b74e0164:71228d7c",
-  "src/notice-data.js": "135441:bf70319e:5abe9705",
+  "src/notice-data.js": "135693:48f68509:54faa77a",
   "src/notice.js": "4646:b947f2a6:e551e710",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "1144:1da72451:b2e66e80",
   "src/numcomma.js": "27910:76387095:a423cebb",
   "src/onehand.js": "3884:55946dd4:4f42d7a8",
   "src/palettes.js": "33894:d739cf1f:f0700eaa",
-  "src/panel.js": "218725:0d054eff:c52aadb7",
+  "src/panel.js": "220031:b77b5387:05cc18be",
   "src/preset-sharing.js": "10586:288420d6:21b6f020",
   "src/preview-view.js": "12377:1b6c4956:85b171b8",
   "src/profile-clip.js": "4837:9b817c36:29f305b7",
@@ -259,9 +259,9 @@ export const FILE_HASHES = {
   "src/settings-favorites.js": "3202:43eff96b:1a42f5d8",
   "src/settings-history.js": "3491:c0f06c71:b7a64e71",
   "src/settings-labels.js": "33146:5d2f4bbe:6c21f980",
-  "src/settings-search.js": "25879:c9dacf35:29f6df34",
+  "src/settings-search.js": "25996:77190226:73bb991e",
   "src/settings.js": "59611:4921f1b6:74adc688",
-  "src/splash.js": "14172:e474be32:e7f74c46",
+  "src/splash.js": "17635:cb0b9ec7:54630f34",
   "src/streamfade.js": "14136:0e2127b6:06593cf1",
   "src/sttheme.js": "7566:767ea5d8:7cfe12ab",
   "src/styles.js": "15875:817b31b4:8a11c0fe",
@@ -284,5 +284,5 @@ export const FILE_HASHES = {
   "src/weather.js": "33405:96f4eabb:71394dc5",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "25209:66cc392d:dbcd59cf",
-  "style.css": "1118271:05abd83a:23da7b59"
+  "style.css": "1118271:bae59b06:19dd9e82"
 };

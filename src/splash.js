@@ -43,6 +43,65 @@ export function syncFavicon(on) {
     }
 }
 
+// 5.5.1: 탭 아이콘 파일 자체도 레몬으로 (사용자: "새로고침 화면처럼 바로 할 수 있게"). 위의 링크 교체는 실리태번이 확장을 부를 때까지
+// (PC 약 3.7초 · 폰 10초 남짓) ST 로고가 먼저 보인다. 확장은 public/ 에 쓸 수 없으니 새로고침 화면처럼 사용자 파일에 레몬 아이콘을
+// 올려 두고, 한 번 실행하는 명령으로 public/favicon.ico 를 그 파일로 바꾼다. 되돌리기: git -C ~/SillyTavern checkout -- public/favicon.ico
+export const FAVICON_FILE = 'blue-lemonade-favicon.ico';
+const FAVICON_MARK = 'BLLEMON';   // 파일 끝 표식 — 기기마다 PNG 바이트가 달라도 '이미 레몬' 을 알아본다
+let faviconFileNow = null, faviconChecking = null;
+export function faviconFileState() { return faviconFileNow; }
+const endsWithMark = (buf) => {
+    const b = new Uint8Array(buf), m = new TextEncoder().encode(FAVICON_MARK);
+    return b.length > m.length && m.every((x, i) => b[b.length - m.length + i] === x);
+};
+/** 실리태번 public/favicon.ico 가 이미 우리 레몬인지 (페이지마다 한 번) */
+export function checkFaviconFile(onChange) {
+    faviconChecking ??= fetch('/favicon.ico', { cache: 'no-store' })
+        .then(res => (res.ok ? res.arrayBuffer() : null))
+        .catch(() => null)
+        .then((buf) => {
+            const next = buf && endsWithMark(buf) ? 'on' : 'off';
+            const changed = next !== faviconFileNow;
+            faviconFileNow = next;
+            if (changed) onChange?.();
+            return faviconFileNow;
+        });
+    return faviconChecking;
+}
+// PNG 한 장을 담은 ICO (브라우저는 ICO 안의 PNG 를 읽는다) + 끝 표식
+function lemonIcoBytes() {
+    const url = lemonFavicon();
+    if (!url.startsWith('data:image/png')) return null;
+    const png = Uint8Array.from(atob(url.split(',')[1]), c => c.charCodeAt(0));
+    const mark = new TextEncoder().encode(FAVICON_MARK);
+    const out = new Uint8Array(22 + png.length + mark.length), v = new DataView(out.buffer);
+    v.setUint16(2, 1, true); v.setUint16(4, 1, true);                       // ICONDIR: 종류 1(아이콘) · 1개
+    out[6] = 64; out[7] = 64; v.setUint16(10, 1, true); v.setUint16(12, 32, true);
+    v.setUint32(14, png.length, true); v.setUint32(18, 22, true);           // 크기 · 자리
+    out.set(png, 22); out.set(mark, 22 + png.length);
+    return out;
+}
+/** 명령 복사 전에: 사용자 파일에 레몬 아이콘을 올리고, 한 번 실행할 명령을 돌려준다 */
+export async function prepareFaviconCommand() {
+    const bytes = lemonIcoBytes();
+    if (!bytes) throw new Error('레몬 아이콘을 못 그림');
+    let bin = '';
+    for (const x of bytes) bin += String.fromCharCode(x);
+    const res = await fetch('/api/files/upload', {
+        method: 'POST',
+        headers: SillyTavern.getContext().getRequestHeaders(),
+        body: JSON.stringify({ name: FAVICON_FILE, data: btoa(bin) }),
+    });
+    if (!res.ok) throw new Error(`아이콘 파일을 못 올림 (${res.status})`);
+    let handle = 'default-user';
+    try { handle = (await import('/scripts/user.js')).getCurrentUserHandle() || handle; } catch { /* 옛 실리태번 */ }
+    handle = String(handle).replace(/[^\w.-]/g, '');
+    return {
+        handle,
+        command: `f=~/SillyTavern/data/${handle}/user/files/${FAVICON_FILE}; [ -f "$f" ] && cp "$f" ~/SillyTavern/public/favicon.ico && echo OK`,
+    };
+}
+
 let state = null;   // null 모름 · 'on' 줄 있음 · 'late' 줄은 있는데 다른 규칙 뒤라 무시됨 · 'off' 없음
 let checking = null;
 let served = null;  // 서버에 있는 스플래시 파일 내용 (한 번 읽음)

@@ -36,7 +36,7 @@ import { openNotice, currentVersion, hasUnseenNotice } from './notice.js';
 import { customCssReport, buildDiagnosis } from './diagnose.js';
 import { PRESETS, MAX_STYLES, captureStyle, applyStyleData, sameStyle, sharePayload, encodeStyle, decodeStyle, newStyleId, uniqueName, mergeFonts, currentKey, keyLabel } from './styles.js';
 import { charStyleModule } from './features.js';
-import { splashState, checkSplash, SPLASH_COMMAND, SPLASH_IMPORT } from './splash.js';
+import { splashState, checkSplash, SPLASH_COMMAND, SPLASH_IMPORT, faviconFileState, checkFaviconFile, prepareFaviconCommand, FAVICON_FILE } from './splash.js';
 import { decodeAnyImage, imageWidth, imageHeight, IMAGE_ACCEPT } from './imagedecode.js';
 import { bindSettingsSearch, searchMarkup, paintSettingsSearch } from './settings-search.js';
 import { favoritesMarkup, bindFavorites } from './settings-favorites.js';
@@ -464,6 +464,15 @@ function splashRow() {
     return row('새로고침 화면', state === 'on'
         ? '<span class="salty-splash-on"><i class="fa-solid fa-check" aria-hidden="true"></i></span>'
         : '<button class="salty-btn" data-act="splash-copy">명령 복사</button>', note);
+}
+
+// 5.5.1 탭 아이콘: 실리태번 public/favicon.ico 를 레몬 파일로 — 새로고침 화면처럼 명령 한 번 (테마가 뜨기 전 ST 로고가 안 보이게)
+function faviconRow() {
+    const state = faviconFileState();
+    if (state === null) checkFaviconFile(refreshPanels);
+    return row('탭 아이콘', state === 'on'
+        ? '<span class="salty-splash-on"><i class="fa-solid fa-check" aria-hidden="true"></i></span>'
+        : '<button class="salty-btn" data-act="favicon-copy">명령 복사</button>', state === 'on' ? '처음부터 레몬으로 떠요' : '실리태번 ST 로고 없이 처음부터 레몬 — 명령을 한 번 실행');
 }
 
 // 3.5.4 퀵 리플라이 줄 미리보기: 내 QR 이름(보이는 세트 세 개, 열 개씩)으로, 없으면 예시 이름. 입력판 줄과 같은 규칙 · 휠 · 끌기 · 스냅
@@ -1366,6 +1375,7 @@ function tabChat(s, sub) {
             ${row('색 고르기 팝업', toggle('chat.colorPop', s.chat.colorPop !== false), '실리태번 색 칸도 테마 색 고르기로')}
             ${row('큰 숫자는 쉼표로', toggle('chat.numComma', s.chat.numComma !== false), '숫자 칸의 30000 을 30,000 으로 보여 줘요 · 누르면 원래대로, 값은 그대로')}
             ${splashRow()}
+            ${faviconRow()}
             ${row('가벼운 페이드 인', toggle('chat.streamFade', !!s.chat.streamFade), '스트리밍 중 새 글자만 스며들게')}
             ${s.chat.streamFade && stFade ? row('실리태번 페이드 인', toggle('st.streamFadeIn', true), '끄면 빨라지고 위 옵션이 대신해요') : ''}
         </div>
@@ -2437,6 +2447,13 @@ function bind(root) {
                     const text = await buildDiagnosis();
                     if (await copyText(text)) toastr.success('진단을 복사했어요. 제보 글에 붙여 넣으면 돼요', 'Blue Lemonade');
                     else toastr.info(esc(text).replace(/\n/g, '<br>'), '진단 (직접 복사)', { escapeHtml: false, timeOut: 20000, extendedTimeOut: 20000 });
+                    break;
+                }
+                case 'favicon-copy': {
+                    try {
+                        const { handle, command } = await prepareFaviconCommand();
+                        if (await copyText(command)) toastr.success(`Termux 에 붙여 넣고 새로고침해 주세요. PC 는 data/${handle}/user/files/${FAVICON_FILE} 를 public/favicon.ico 로 복사`, 'Blue Lemonade', { timeOut: 9000 });
+                    } catch (error) { toastr.error(String(error.message || error), 'Blue Lemonade'); }
                     break;
                 }
                 case 'splash-copy': {
