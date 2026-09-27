@@ -23,9 +23,9 @@ export function websitePreset(reading, palette) {
     const mix = palette.mixes[mode], id = paletteId(palette.selected,mode);
     flatten(mix,`gradients.${mode}`,colors);
     const base = palette.families.find(f => f.id === palette.selected)[mode];
-    for (const [key,value] of Object.entries(base)) {
+    for (const key of Object.keys(base)) {
       if (['label','desc','mode'].includes(key)) continue;
-      (key === 'marker' ? marker : colors)[`colorOverrides.${id}.${key}`] = value;
+      (key === 'marker' ? marker : colors)[`colorOverrides.${id}.${key}`] = ''; // Use the installed palette default, not a frozen site snapshot.
     }
     // Explicit bands also replace a previously customized gradient on import.
     for (const key of ['bg','surface','raised','accent','marker','gold','text','dialogue','em','strong','muted','faint','name','userName','ui','code']) {
