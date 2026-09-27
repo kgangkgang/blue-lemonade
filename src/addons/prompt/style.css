@@ -313,6 +313,10 @@
 #pt-panel .pt-block-meta,#pt-panel .pt-token-count,#pt-panel .pt-status-badge{font-size:12px;opacity:1}
 #pt-panel .pt-original-label,#pt-panel .pt-translated-label{font-size:13px;margin-bottom:8px}
 #pt-panel .pt-original-text,#pt-panel .pt-translated-text{line-height:1.85;padding:12px;max-height:320px}
+/* 5.4.9: 번역문 칸도 원문 칸처럼 넘치면 칸 안에서 굴린다 — 높이 320px 만 막고 overflow 가 없어서(4.9.9부터)
+   긴 번역이 칸 밖으로 넘치고 카드 테두리에 잘려 끝까지 못 읽었다 */
+#pt-panel .pt-translated-text{overflow-y:auto}
+.pt-translated-text::-webkit-scrollbar{width:3px}.pt-translated-text::-webkit-scrollbar-thumb{background:var(--pt-border-strong);border-radius:2px}
 #pt-panel .pt-edit-btn{width:32px;height:32px;font-size:12px}
 #pt-panel #pt-page-regex{gap:16px;padding:12px}
 #pt-panel .pt-regex-toolbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}

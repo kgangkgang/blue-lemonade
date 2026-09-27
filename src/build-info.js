@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.4.8";
+export const BUILD_VERSION = "5.4.9";
 export const FILE_HASHES = {
   "index.js": "13797:958797d2:0a6609e3",
-  "manifest.json": "365:6ac019c8:ae04965a",
+  "manifest.json": "365:a02db497:6551589c",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -94,13 +94,13 @@ export const FILE_HASHES = {
   "src/addons/prompt/cache-loading.js": "384:766f047d:4f5c117c",
   "src/addons/prompt/connection.js": "5436:9d7c4707:e713fe02",
   "src/addons/prompt/current-connection.js": "3055:67fc264b:5c2798bc",
-  "src/addons/prompt/guide.js": "23381:54376397:88137fa5",
+  "src/addons/prompt/guide.js": "23381:f091f510:3cb2ee5b",
   "src/addons/prompt/index.js": "245453:be4f3244:4615b578",
   "src/addons/prompt/localization-ui.js": "5184:dc4fc22e:b88401c4",
   "src/addons/prompt/regex-ui.js": "6773:8e66c330:0233b208",
   "src/addons/prompt/request-errors.js": "1558:9bebebff:d7f4f644",
-  "src/addons/prompt/settings-ui.js": "7671:11269360:8b4517f7",
-  "src/addons/prompt/style.css": "47981:fef17081:25b087dc",
+  "src/addons/prompt/settings-ui.js": "7671:fda4f509:70f7b7ff",
+  "src/addons/prompt/style.css": "48413:5c2ed66d:4c01dc7a",
   "src/addons/regexlink/engine.js": "7000:1a79547b:398ef9e1",
   "src/addons/regexlink/index.js": "15171:33ea1303:9cd81167",
   "src/addons/regexlink/style.css": "1271:777f780c:5b8800b6",
@@ -218,7 +218,7 @@ export const FILE_HASHES = {
   "src/mes-fold.js": "14768:30e2ebec:1b724386",
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/modal.js": "671:b74e0164:71228d7c",
-  "src/notice-data.js": "134972:5f56879a:6f6ef4d1",
+  "src/notice-data.js": "135193:ee333deb:bc8553ee",
   "src/notice.js": "4646:b947f2a6:e551e710",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "1144:1da72451:b2e66e80",
@@ -284,5 +284,5 @@ export const FILE_HASHES = {
   "src/weather.js": "33405:96f4eabb:71394dc5",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "25209:66cc392d:dbcd59cf",
-  "style.css": "1118271:c99c38ab:61809df1"
+  "style.css": "1118271:24cd7f1a:b35dd0c2"
 };

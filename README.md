@@ -1,13 +1,20 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.4.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.4.9.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.4.8 · 최신 업데이트</summary>
+<summary>5.4.9 · 최신 업데이트</summary>
+
+- 한글화 패널: 긴 번역문이 칸 밖으로 넘치고 스크롤이 안 되던 것을 고쳤어요. 이제 번역문 칸 안에서 굴려 끝까지 읽어요.
+
+</details>
+
+<details>
+<summary>5.4.8 · 다른 확장 색 · 메모 캐릭터 귀속 · 북마크 접기</summary>
 
 - 테마 → 기타 설정에 '다른 확장 색 유지'를 추가했어요. 켜면 확장 설정창과 지원되는 팝업이 확장이 정한 원래 글자 · 배경색을 써요. 기본은 꺼져 있어요.
 - 메모: 귀속 창에 '이 캐릭터 전체'(그룹은 '이 그룹 전체')를 추가했어요. 고르면 그 캐릭터의 모든 채팅에서 메모가 보여요. 다른 캐릭터를 고를 때도 '모든 채팅'을 고를 수 있어요.
