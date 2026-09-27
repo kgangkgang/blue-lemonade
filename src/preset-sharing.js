@@ -38,7 +38,7 @@ function groupFor(path) {
         return 'colors';
     }
     if (['palette','nightTint','lightTint','customName'].includes(a)) return 'colors';
-    if (['fonts','type','ui','code','em','strong','shadow','outline','strike'].includes(a)) return 'text';
+    if (['fonts','type','markdown','ui','code','em','strong','shadow','outline','strike'].includes(a)) return 'text';
     if (a==='deus'&&['ink','fx'].includes(b)) return 'text';
     if (['profile','userProfile'].includes(a)) return 'profile';
     if (a==='image') return 'image';

@@ -1,0 +1,53 @@
+/* ===== css/60-chat-graph.css ===== */
+/* Chat file management: lazy branch map, using the active theme palette. */
+.bl-chat-view-tabs, .bl-chat-graph { display: none; }
+body.salty .bl-chat-view-tabs { display: flex; flex: none; flex-wrap: wrap; gap: 4px; width: fit-content; max-width: 100%; padding: 4px; border-radius: 12px; background: var(--salty-fill-shade,var(--salty-shade)); }
+body.salty .bl-chat-view-tabs button { display: flex; align-items: center; justify-content: center; flex: 1 0 auto; gap: 8px; min-height: 34px; padding: 5px 14px; border: 0; border-radius: 8px; background: transparent; color: var(--salty-muted); font: inherit; white-space: nowrap; cursor: pointer; }
+body.salty .bl-chat-view-tabs button[aria-selected="true"] { color: var(--salty-accent-ink,var(--salty-accent)); background: var(--bl-fill-card,var(--salty-surface)); box-shadow: var(--bl-e1); }
+body.salty #select_chat_popup.bl-chat-map-on :is(#select_chat_div,#select_chat_search,.chatBackupsList) { display: none !important; }
+body.salty #select_chat_popup.bl-chat-map-on { width: min(1180px,96vw); max-width: min(1180px,96vw); }
+body.salty .bl-chat-graph:not([hidden]) { display: flex; flex-direction: column; gap: 8px; flex: 1 1 auto; min-height: 0; font: inherit; }
+body.salty .bl-chat-graph-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; flex: none; }
+body.salty .bl-chat-graph-tools button, body.salty .bl-chat-graph-detail button { display: inline-flex; align-items: center; justify-content: center; flex: none; gap: 8px; min-width: 32px; min-height: 34px; padding: 6px 9px; border: 0; border-radius: 8px; background: var(--salty-fill-shade,var(--salty-shade)); color: var(--salty-text); font: inherit; line-height: 1.3; cursor: pointer; }
+body.salty .bl-chat-graph-search { display: flex; align-items: center; gap: 8px; flex: 1 1 110px; min-width: 100px; margin: 0; padding: 0 10px; border-radius: 8px; background: var(--salty-fill-shade,var(--salty-shade)); color: var(--salty-muted); }
+body.salty #select_chat_popup .bl-chat-graph-search input { width: 100%; min-width: 0; margin: 0; padding: 8px 0; border: 0; background: transparent !important; color: var(--salty-text); font: inherit; box-shadow: none !important; }
+body.salty .bl-chat-graph-search:focus-within { outline: 2px solid var(--salty-accent); outline-offset: 1px; }
+body.salty .bl-chat-graph-search input:focus { outline: none; }
+body.salty .bl-chat-graph-zoom { display: flex; align-items: center; gap: 2px; }
+body.salty .bl-chat-graph-zoom output { min-width: 3.6em; text-align: center; font-size: .85em; font-variant-numeric: tabular-nums; color: var(--salty-muted); }
+body.salty .bl-chat-graph-viewport { position: relative; flex: 1 1 auto; min-height: 180px; height: min(57dvh,640px); overflow: hidden; touch-action: none; border: 1px solid var(--salty-line); border-radius: 12px; background-color: var(--salty-bg); background-image: radial-gradient(circle,var(--salty-line) 1px,transparent 1px); background-size: var(--bl-chat-graph-grid,24px) var(--bl-chat-graph-grid,24px); background-position: var(--bl-chat-graph-grid-x,0) var(--bl-chat-graph-grid-y,0); cursor: grab; user-select: none; }
+body.salty .bl-chat-graph-viewport:active { cursor: grabbing; }
+body.salty .bl-chat-graph-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+body.salty .bl-chat-graph-stage svg { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
+body.salty .bl-chat-graph-stage path { fill: none; stroke: var(--salty-accent); stroke-width: 2; opacity: .75; }
+body.salty .bl-chat-graph-node { position: absolute; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 6px; margin: 0; padding: 12px 14px; box-sizing: border-box; border: 1px solid var(--salty-line); border-radius: 12px; background: var(--bl-fill-card,var(--salty-surface)); color: var(--salty-text); font: inherit; line-height: 1.35; text-align: left; box-shadow: var(--bl-e2); cursor: pointer; }
+body.salty .bl-chat-graph-node::before, body.salty .bl-chat-graph-node::after { content: ''; position: absolute; top: calc(50% - 4px); width: 8px; height: 8px; border-radius: 50%; background: var(--salty-accent); }
+body.salty .bl-chat-graph-node::before { left: -5px; } body.salty .bl-chat-graph-node::after { right: -5px; }
+body.salty .bl-chat-graph[data-layout="vertical"] .bl-chat-graph-node { gap: 5px; padding: 10px; }
+body.salty .bl-chat-graph[data-layout="vertical"] .bl-chat-graph-node::before,
+body.salty .bl-chat-graph[data-layout="vertical"] .bl-chat-graph-node::after { left: calc(50% - 4px); right: auto; }
+body.salty .bl-chat-graph[data-layout="vertical"] .bl-chat-graph-node::before { top: -5px; }
+body.salty .bl-chat-graph[data-layout="vertical"] .bl-chat-graph-node::after { top: auto; bottom: -5px; }
+body.salty .bl-chat-graph-node b { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; width: 100%; overflow-wrap: anywhere; font-weight: 650; }
+body.salty .bl-chat-graph-node-badge, body.salty .bl-chat-graph-node-meta { color: var(--salty-muted); font-size: .82em; white-space: nowrap; max-width: 100%; text-overflow: ellipsis; overflow: hidden; }
+body.salty .bl-chat-graph-node.is-current { border-color: var(--salty-accent); }
+body.salty .bl-chat-graph-node.is-current .bl-chat-graph-node-badge { color: var(--salty-accent-ink,var(--salty-accent)); font-weight: 650; }
+body.salty .bl-chat-graph-node[aria-pressed="true"], body.salty .bl-chat-graph-node.is-match { outline: 2px solid var(--salty-accent); outline-offset: 3px; }
+body.salty .bl-chat-graph-node.is-dim { opacity: .42; }
+body.salty .bl-chat-graph-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; color: var(--salty-muted); font-size: .85em; }
+body.salty .bl-chat-graph-detail:not([hidden]) { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 10px 12px; border-radius: 12px; background: var(--salty-fill-shade,var(--salty-shade)); }
+body.salty .bl-chat-graph-detail > div { display: flex; flex-direction: column; gap: 3px; flex: 1 1 160px; min-width: 0; }
+body.salty .bl-chat-graph-detail b { overflow-wrap: anywhere; line-height: 1.35; font-size: .95em; }
+body.salty .bl-chat-graph-detail span { color: var(--salty-muted); font-size: .85em; overflow-wrap: anywhere; }
+body.salty .bl-chat-graph-detail [data-act="open"] { color: var(--salty-on-accent); background: var(--salty-accent); }
+body.salty .bl-chat-graph-detail button:disabled { opacity: .6; cursor: default; }
+body.salty .bl-chat-graph-empty:not([hidden]) { position: absolute; inset: 24px; display: grid; place-items: center; color: var(--salty-muted); text-align: center; pointer-events: none; }
+body.salty :is(.bl-chat-view-tabs,.bl-chat-graph) button:focus-visible, body.salty .bl-chat-graph-viewport:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 3px; }
+@media (max-width: 600px) {
+  body.salty #select_chat_popup.bl-chat-map-on { width: calc(100vw - 16px); }
+  body.salty .bl-chat-graph-tools { gap: 4px; }
+  body.salty .bl-chat-graph-search { flex-basis: 100px; }
+  body.salty .bl-chat-graph-tools button { min-width: 30px; padding-inline: 6px; }
+  body.salty .bl-chat-graph-viewport { min-height: 160px; }
+  body.salty .bl-chat-graph-hint { display: none; }
+}

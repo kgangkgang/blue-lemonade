@@ -21,12 +21,16 @@ const view = {
     loadingOthers: false,
     progress: '',
     expanded: new Set(),
+    sourceCollapse: null,
+    sourceToggles: new Map(), // 저장값은 그대로 두고 이번 목록에서 누른 원문만 접거나 펼친다.
     subOpen: null, // 번역 줄이 펼쳐진 북마크 id (한 번에 하나만)
     session: 0, // 새로 열 때마다 늘려서, 늦게 도착한 이전 요청 결과를 버린다.
     open: false,
 };
 
 const $ = selector => view.root.querySelector(selector);
+let sourceId = 0;
+let notePointer = null;
 
 // ── 뼈대 ────────────────────────────────────────────────────
 
@@ -82,6 +86,10 @@ function buildShell() {
     document.body.append(root);
     view.root = root;
 
+    root.addEventListener('pointerdown', (event) => {
+        const note = event.target.closest('.cg-note--summary');
+        notePointer = note ? { note, x: event.clientX, y: event.clientY } : null;
+    });
     root.addEventListener('click', onClick);
     root.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' && (event.ctrlKey || event.altKey)) event.stopPropagation();
@@ -140,6 +148,7 @@ export async function openPanel({ keepState = false } = {}) {
         view.noteOnly = false;
         view.allMessages = false;
         view.expanded.clear();
+        view.sourceToggles.clear();
         view.subOpen = null;
         const input = $('.cg-searchbar input');
         input.value = '';
@@ -272,6 +281,7 @@ async function selectChat(key) {
     view.selectedKey = key;
     view.page = 1;
     view.expanded.clear();
+    view.sourceToggles.clear();
     view.subOpen = null;
     applyColors(colorsFor(key));
     renderSidebar();
@@ -435,6 +445,10 @@ function renderListState(state, detail = '') {
 
 function renderMain() {
     view.bodyObserver?.disconnect();
+    if (view.sourceCollapse !== settings().collapseLong) {
+        view.sourceCollapse = settings().collapseLong;
+        view.sourceToggles.clear();
+    }
     const record = selectedRecord();
     if (!record) {
         renderToolbar(null, null);
@@ -669,7 +683,21 @@ function renderCard(record, fav, index) {
     const body = message
         ? renderMessageHtml(message, formatIndex)
         : '<p class="cg-missing-text"><i class="fa-solid fa-link-slash"></i> 원본 메시지를 찾을 수 없어요. 지워졌거나 번호가 바뀌었을 수 있어요.</p>';
-    const collapsed = settings().collapseLong && !view.expanded.has(fav.id);
+    // 전체 메시지 검색에서는 메모가 아닌 본문에서 찾은 결과도 바로 읽을 수 있게 한다.
+    const sourcePreview = fav.virtual || view.allMessages;
+    const collapsed = sourcePreview && settings().collapseLong && !view.expanded.has(fav.id);
+    const sourceOpen = view.sourceToggles.get(fav.id) ?? !settings().collapseLong;
+    const regionId = `cg-source-${++sourceId}`;
+    const source = `${reasoning ? `<details class="cg-reasoning"><summary><i class="fa-solid fa-brain"></i> 생각 과정</summary><div class="mes_text">${reasoning}</div></details>` : ''}
+        <div class="cg-message-surface">
+            <div class="cg-card-body${collapsed ? ' is-collapsed' : ''}"><div class="salty-preview cg-chatlike" data-prev="bookmark"><div class="mes" is_user="${isUser}"><div class="mes_block"><div class="cg-mes mes_text">${body}</div></div></div></div></div>
+            ${sourcePreview ? '<button type="button" class="cg-expand" hidden><span>전체 보기</span><i class="fa-solid fa-chevron-down"></i></button>' : ''}
+        </div>`;
+    const noteContent = note ? `<div class="cg-note${sourcePreview ? '' : ' cg-note--summary'}" role="note" aria-label="메모·발췌"><div class="salty-preview cg-chatlike" data-prev="bookmark"><div class="mes" is_user="${isUser}"><div class="mes_block"><div class="cg-note-text mes_text">${note}</div></div></div></div></div>` : '';
+    const content = sourcePreview ? source + noteContent : `
+        ${noteContent}
+        <button type="button" class="cg-source-toggle" aria-expanded="${sourceOpen}" aria-controls="${regionId}"><span>${sourceOpen ? '메시지 접기' : '메시지 펼치기'}</span><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
+        <div class="cg-source-content" id="${regionId}"${sourceOpen ? '' : ' hidden'}>${source}</div>`;
     const indexLabel = Number.isFinite(index) && index !== Number.MAX_SAFE_INTEGER ? `#${index}` : '#?';
     // 5.4.3: 채팅에서 숨긴 메시지(유령 · is_system)는 눈 감은 모양으로 — 채팅의 숨김 표시와 같게
     const eye = message?.is_system ? 'fa-eye-slash' : 'fa-eye';
@@ -694,12 +722,7 @@ function renderCard(record, fav, index) {
                     ${showTimestamp ? `<span>${indexLabel}${date ? ` · ${escapeHtml(date)}` : ''}</span>` : ''}
                 </div>
             </header>` : ''}
-            ${reasoning ? `<details class="cg-reasoning"><summary><i class="fa-solid fa-brain"></i> 생각 과정</summary><div class="mes_text">${reasoning}</div></details>` : ''}
-            <div class="cg-message-surface">
-            <div class="cg-card-body${collapsed ? ' is-collapsed' : ''}"><div class="salty-preview cg-chatlike" data-prev="bookmark"><div class="mes" is_user="${isUser}"><div class="mes_block"><div class="cg-mes mes_text">${body}</div></div></div></div></div>
-            <button type="button" class="cg-expand" hidden><span>전체 보기</span><i class="fa-solid fa-chevron-down"></i></button>
-            </div>
-            ${note ? `<div class="cg-note" role="note" aria-label="메모"><div class="salty-preview cg-chatlike" data-prev="bookmark"><div class="mes" is_user="${isUser}"><div class="mes_block"><div class="cg-note-text mes_text">${note}</div></div></div></div></div>` : ''}
+            ${content}
             <footer class="cg-card-actions">
                 ${footer}
             </footer>
@@ -739,6 +762,30 @@ function updateExpandButton(card) {
     button.setAttribute('aria-expanded', String(expanded));
     button.setAttribute('aria-label', expanded ? '본문 접기' : '본문 전체 보기');
     button.querySelector('span').textContent = expanded ? '접기' : '전체 보기';
+}
+
+function toggleSource(card) {
+    const content = card.querySelector('.cg-source-content');
+    const button = card.querySelector('.cg-source-toggle');
+    if (!content || !button) return;
+    const expanding = content.hidden;
+    view.sourceToggles.set(card.dataset.favId, expanding);
+    content.hidden = !expanding;
+    button.setAttribute('aria-expanded', String(expanding));
+    button.querySelector('span').textContent = expanding ? '메시지 접기' : '메시지 펼치기';
+}
+
+function noteCanToggle(event, note) {
+    // 메모 안의 링크·위젯·미디어와 드래그 선택은 원문 접기와 별개로 동작한다.
+    if (event.defaultPrevented || event.detail > 1 || event.target.closest('a, button, input, textarea, select, label, summary, details, iframe, audio, video, img, [role="button"], [contenteditable]:not([contenteditable="false"])')) return false;
+    if (notePointer?.note === note && Math.hypot(event.clientX - notePointer.x, event.clientY - notePointer.y) > 6) return false;
+    const selection = window.getSelection();
+    if (selection && !selection.isCollapsed) {
+        for (let i = 0; i < selection.rangeCount; i++) {
+            if (selection.getRangeAt(i).intersectsNode(note)) return false;
+        }
+    }
+    return true;
 }
 
 function toggleExpand(card) {
@@ -974,6 +1021,10 @@ function onClick(event) {
         onCardAction(cardAction.dataset.cardAct, cardAction.closest('.cg-card'));
         return;
     }
+    const sourceToggle = target.closest('.cg-source-toggle');
+    if (sourceToggle) return toggleSource(sourceToggle.closest('.cg-card'));
+    const note = target.closest('.cg-note--summary');
+    if (note && noteCanToggle(event, note)) return toggleSource(note.closest('.cg-card'));
     const expand = target.closest('.cg-expand');
     if (expand) return toggleExpand(expand.closest('.cg-card'));
 

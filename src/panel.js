@@ -42,6 +42,7 @@ import { bindSettingsSearch, searchMarkup, paintSettingsSearch } from './setting
 import { favoritesMarkup, bindFavorites } from './settings-favorites.js';
 import { bindPreviewViews } from './preview-view.js';
 import { PRESET_GROUPS, capturePreset, readPreset, applyPreset } from './preset-sharing.js';
+import { MARKDOWN_CONTROLS } from './markdown.js';
 
 // 브랜드 레몬 — ✦ 메뉴 · 확장 서랍 · 스플래시와 같은 속찬 레몬(폰트어썸 fa-lemon U+F094) 윤곽 그대로
 export const MARK = '<svg viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path transform="translate(0 448) scale(1 -1)" d="M448 352Q447 379 429 397Q411 415 384 416Q374 416 365 413Q348 407 330 404Q311 400 294 404Q237 418 180 399Q124 379 80 336Q37 292 17 236Q-2 179 12 122Q16 105 12 86Q9 68 3 51Q0 42 0 32Q1 5 19 -13Q37 -31 64 -32Q74 -32 83 -29Q100 -23 118 -20Q137 -16 154 -20Q211 -34 268 -15Q324 5 368 48Q411 92 431 148Q450 205 436 262Q432 279 436 298Q439 316 445 333Q448 342 448 352ZM213 321Q171 308 139 277Q108 245 95 203Q90 190 76 193Q62 198 65 212Q80 262 117 299Q154 336 204 351Q218 354 223 340Q226 326 213 321Z"/></svg>';
@@ -52,7 +53,7 @@ const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 const TABS = [['theme', '테마'], ['text', '글자'], ['chat', '채팅'], ['image', '이미지'], ['prompt', '프롬프트'], ['extensions', '확장']];
 const SUBS = {
     theme: [['palette', '색'], ['colors', '색 고치기'], ['styles', '스타일'], ['changes', '변경한 설정'], ['backup', '백업'], ['update', '업데이트'], ['etc', '기타 설정']],
-    text: [['text', '본문'], ['dialogue', '대사'], ['ui', '메뉴'], ['em', '속마음'], ['strike', '취소선'], ['strong', '강조'], ['code', '코드'], ['para', '문단'], ['shadow', '그림자 · 외곽선']],
+    text: [['text', '본문'], ['dialogue', '대사'], ['ui', '메뉴'], ['em', '속마음'], ['strike', '취소선'], ['strong', '강조'], ['code', '코드'], ['para', '문단'], ['markdown', '마크다운'], ['shadow', '그림자 · 외곽선']],
     chat: [['message', '메시지'], ['profile', '캐릭터 프로필'], ['user-profile', '내 프로필'], ['name', '캐릭터 이름·시간'], ['user-name', '내 이름·시간'], ['screen', '화면'], ['etc', '기타']],
     image: [['layout', '배치'], ['shape', '모양'], ['frame', '테두리'], ['size', '크기'], ['fade', '흐림']],
     prompt: [['deus', '데우스 엑스 마키나']],
@@ -107,8 +108,8 @@ const previewChat = s => !s.enabled || s.chat?.weather === 'tracker' && !s.deus?
 const history = new SettingsHistory();
 for (const event of ["bl:device-layout", "bl:settings-replaced"]) window.addEventListener(event, () => { history.clear(); syncHistoryButtons(); });
 let historyToast;
-const historyLabels = new Map(Object.entries(SETTING_LABELS));
-const historyOptions = new Map(Object.entries(SETTING_VALUES));
+const historyLabels = new Map([...Object.entries(SETTING_LABELS), ...MARKDOWN_CONTROLS.map(({ key, label }) => [`markdown.${key}`, label])]);
+const historyOptions = new Map([...Object.entries(SETTING_VALUES), ...MARKDOWN_CONTROLS.flatMap(({ key, options }) => options.map(([value, label]) => [`markdown.${key}:${value}`, label]))]);
 function labelHistoryControl(label, control) {
     const path = control.match(/data-(?:path|toggle)="([^"]+)"/)?.[1];
     if (path && !historyLabels.has(path)) historyLabels.set(path, label.replace(/<[^>]*>/g, ''));
@@ -129,7 +130,7 @@ function historyLabel(path) {
         const key=path.split('.')[3],label=TOKEN_GROUPS.flatMap(([,list])=>list).find(([id])=>id===key)?.[1]||({name:'캐릭터 이름',userName:'내 이름',ui:'메뉴',code:'코드'})[key]||'색';
         return `${PALETTES[path.split('.')[2]]?.label || '테마'} · 그라데이션 · ${label}`;
     }
-    const scope = ({'type.dialogueSize':'대사','type.uiSize':'메뉴','type.codeSize':'코드'})[path] ?? { ui:'메뉴', code:'코드', profile: '캐릭터 프로필', userProfile: '내 프로필', image: '에셋 이미지', type: '본문', dialogue: '대사', em: '속마음', strong: '강조', chat: '채팅' }[path.split('.')[0]];
+    const scope = ({'type.dialogueSize':'대사','type.uiSize':'메뉴','type.codeSize':'코드'})[path] ?? { markdown:'마크다운', ui:'메뉴', code:'코드', profile: '캐릭터 프로필', userProfile: '내 프로필', image: '에셋 이미지', type: '본문', dialogue: '대사', em: '속마음', strong: '강조', chat: '채팅' }[path.split('.')[0]];
     if (path.startsWith('colorOverrides.')) {
         const [, palette, token] = path.split('.');
         return `${PALETTES[palette]?.label || '테마'} · ${TOKEN_GROUPS.flatMap(([,list]) => list).find(([key]) => key === token)?.[1] || token}`;
@@ -664,6 +665,24 @@ function chatStage() {
     </div>`;
 }
 
+// Separate Markdown specimen: rendered HTML only, never a real chat/message.
+// Keep this stage when controls repaint so an opened disclosure stays open.
+function markdownStage() {
+    return `<div class="salty-preview bl-markdown-stage" data-prev="markdown" aria-label="마크다운 통합 미리보기">
+        <div class="mes"><div class="mes_block"><div class="mes_text bl-md-preview">
+            <div class="bl-md-heading-sample"><h1>큰 제목</h1><h2>작은 제목</h2><h3>제목 3</h3><h4>제목 4</h4><h5>제목 5</h5><h6>제목 6</h6></div>
+            <hr>
+            <blockquote><p>서두르지 않아도 괜찮아요.</p><p>인용한 문장은 이렇게 이어져요.</p></blockquote>
+            <ul><li>창가에 앉아 읽기</li><li>좋았던 문장 남기기<ul><li>다음에 다시 펼쳐 보기</li></ul></li></ul>
+            <ol start="3"><li>책갈피를 꽂아요.</li><li>다음 장으로 넘어가요.</li></ol>
+            <ul class="bl-md-task-sample"><li><input type="checkbox" checked disabled aria-label="완료한 항목"> 읽은 책 정리</li><li><input type="checkbox" disabled aria-label="아직 하지 않은 항목"> 다음 책 고르기</li></ul>
+            <p><a href="#bl-md-link-example">링크 예시</a> · <mark>강조 표시</mark> · <u>밑줄 문장</u></p>
+            <table><thead><tr><th>기록</th><th>내용</th></tr></thead><tbody><tr><td>오늘</td><td>마음에 남은 문장</td></tr><tr><td>다음</td><td>길게 이어지는 글도 칸 안에서 편하게 읽어요.</td></tr></tbody></table>
+            <details open><summary>접었다 펼치는 기록</summary><p>제목을 눌러 접기와 펼치기를 확인해 보세요.</p></details>
+        </div></div></div>
+    </div>`;
+}
+
 // 그림 무대: 에셋 확장 DOM 네 겹 그대로. .mes_text 가 있어야 테마의 에셋 규칙이 걸리고,
 // .mes 가 있어야 '가로 꽉'의 음수 여백(좌우 --salty-gutter)이 되돌릴 여백을 갖는다. src 는 fillPreviews 가 꽂음
 function imgStage(art) {
@@ -788,13 +807,14 @@ function prevFaces(stage) {
 function fillPreviews(root) {
     root._pv ??= {};
     for (const box of root.querySelectorAll('.salty-prevbox[data-pv]')) {
-        const kinds = box.dataset.pv === 'regex' ? ['regex'] : box.dataset.pv === 'color' ? ['color'] : box.dataset.pv !== 'img' ? ['chat'] : [box.dataset.kind || 'photo'];
+        const kinds = box.dataset.pv === 'markdown' ? ['markdown'] : box.dataset.pv === 'regex' ? ['regex'] : box.dataset.pv === 'color' ? ['color'] : box.dataset.pv !== 'img' ? ['chat'] : [box.dataset.kind || 'photo'];
         for (const kind of kinds) {
             let stage = root._pv[kind];
             if (!stage) {
                 const holder = document.createElement('div');
-                holder.innerHTML = kind === 'chat' ? chatStage() : kind === 'regex' ? regexStage() : kind === 'color' ? colorStage() : imgStage(kind);
+                holder.innerHTML = kind === 'markdown' ? markdownStage() : kind === 'chat' ? chatStage() : kind === 'regex' ? regexStage() : kind === 'color' ? colorStage() : imgStage(kind);
                 stage = root._pv[kind] = holder.firstElementChild;
+                if (kind === 'markdown') stage.addEventListener('click', event => { if (event.target.closest('a')) event.preventDefault(); });
             }
             // 표본 고르기가 바뀌면 그림만 갈아 끼운다 (무대는 그대로 — 깜빡임 없음).
             // 같은 값을 넣으면 브라우저가 다시 불러오지 않는다
@@ -816,7 +836,7 @@ function fillPreviews(root) {
                 const chatSettings = previewChat(getSettings());
                 if ((chatSettings.weather && chatSettings.weather !== 'off' && getSettings().enabled) || stage._blWeather) import('./weather.js').then(m => m.previewWeather(stage, chatSettings)).catch(() => {});
             }
-            else if (kind !== 'regex' && kind !== 'color') classifyAll(stage);
+            else if (!['regex', 'color', 'markdown'].includes(kind)) classifyAll(stage);
             syncDecor(getSettings());
             syncProfileClip(getSettings());
         }
@@ -1116,6 +1136,13 @@ async function askPresetGroups(incoming = null) {
 
 // ───────── 글자 ─────────
 function tabText(s, sub) {
+    if (sub === 'markdown') {
+        const controls = list => list.map(({ key, label, options }) => row(label, seg(`markdown.${key}`, options, options[0][0]))).join('');
+        return `${s.enabled ? prevBox('data-pv="markdown"') : ''}
+            <div class="salty-group bl-markdown-controls"><div class="bl-control-grid">${controls(MARKDOWN_CONTROLS.slice(0, 2))}</div></div>
+            <div class="salty-group bl-markdown-controls"><div class="bl-control-grid">${controls(MARKDOWN_CONTROLS.slice(2))}</div></div>
+            `;
+    }
     let body = '';
     if (sub === 'para') {
         body = `<div class="salty-group">${row('폰 · PC 배치 따로 기억', toggle('deviceLayouts.on', s.deviceLayouts.on), '글자 크기·간격·여백·프로필 배치를 기기별로 기억해요. 색과 글꼴은 함께 써요.')}<p class="salty-note">지금은 ${deviceKind() === 'mobile' ? '모바일' : 'PC'} 배치를 편집하고 있어요.</p></div><div class="salty-group">

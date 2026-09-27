@@ -1,13 +1,24 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.4.6.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.4.7.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.4.6 · 최신 업데이트</summary>
+<summary>5.4.7 · 최신 업데이트</summary>
+
+- 글자 → 마크다운에서 제목·구분선·인용·목록·링크·표·접기 등을 한 화면에서 조정해요. 전용 미리보기로 확인하고, 구분선은 점 세 개와 선 중에서 골라요.
+- 채팅 파일 관리에 분기 지도를 추가했어요. PC는 가로, 폰은 세로로 연결을 보고, 채팅 이름 찾기·이동·확대를 할 수 있어요. 노드를 고른 뒤 채팅 열기로 이동해요.
+- 북마크에서 메모·발췌를 먼저 보여 주고, 누르면 원문이 아래로 펼쳐져요. 설정 창에서 밝게·어둡게를 바꾸면 열린 화면과 입력칸에도 바로 적용돼요.
+- 대사 색을 형광펜에만 적용할 때 취소선 글자가 어둡게 묻히던 것을 고쳤어요. 원문과 취소선의 흐리기·선 색·굵기는 그대로 유지해요.
+- 본문 색 통일을 켰는데 일부 글자 채움색이 남던 경우를 보완했어요. 사용자가 고른 글자색과 그라데이션은 유지해요.
+
+</details>
+
+<details>
+<summary>5.4.6 · 팝업 선택 · 대사 들여쓰기</summary>
 
 - 외부 스크립트 팝업에서 선택 목록이 뒤로 가려지거나, 목록을 누를 때 팝업까지 닫히던 충돌을 고쳤어요. 목록 검색과 스크롤, 원래 선택 동작은 그대로예요.
 - 줄을 바꾼 대사에 색상·강조 같은 꾸밈이 있어도 첫 줄 들여쓰기를 적용해요. 긴 대사가 화면 폭 때문에 접힌 다음 줄에는 들여쓰기를 반복하지 않아요.

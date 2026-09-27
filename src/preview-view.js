@@ -95,6 +95,7 @@ export function bindPreviewViews(root, section) {
         plus.onclick = () => zoom(state.scale + .25);
         reset.onclick = () => { Object.assign(state, { scale: 1, x: 0, y: 0 }); schedule(); };
         viewport.onkeydown = e => {
+            if (box.dataset.pv === 'markdown' && e.target !== viewport) return;
             if (e.key === '+' || e.key === '=') zoom(state.scale + .25);
             else if (e.key === '-') zoom(state.scale - .25);
             else if (e.key === 'Home' || e.key === '0') reset.click();
@@ -106,6 +107,7 @@ export function bindPreviewViews(root, section) {
         };
         viewport.onpointerdown = e => {
             if (e.button !== 0) return;
+            if (box.dataset.pv === 'markdown' && e.target.closest('summary,a,button,input,select,textarea')) return;
             pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
             viewport.setPointerCapture(e.pointerId); e.preventDefault();
         };

@@ -1,6 +1,6 @@
 // A render-only snapshot: never replace the persisted settings object.
 let preview = null, owner = null;
-const keys = ['palette','gradients','nightTint','lightTint','colorOverrides','customName','fonts','type','dialogue','ui','code','em','strong','shadow','outline','strike','profile','userProfile','image','chat'];
+const keys = ['palette','gradients','nightTint','lightTint','colorOverrides','customName','fonts','type','markdown','dialogue','ui','code','em','strong','shadow','outline','strike','profile','userProfile','image','chat'];
 export function appearanceSnapshot(settings) {
     return {...Object.fromEntries(keys.map(k => [k, structuredClone(settings[k])])), deus: {ink:structuredClone(settings.deus?.ink),fx:structuredClone(settings.deus?.fx)}};
 }

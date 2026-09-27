@@ -1,5 +1,6 @@
 import { syncDeviceLayout, saveDeviceLayout } from './device-layouts.js';
 import { MASK_STYLES, normalizeMaskStyle } from './capture-style.js';
+import { MARKDOWN_DEFAULTS, tidyMarkdown } from './markdown.js';
 import { MIX_DEFAULT, tidyGradients } from './gradients.js';
 import { tidyPins } from './mes-pins.js';
 import { syncWeatherProfile } from './weather-profiles.js';
@@ -44,6 +45,7 @@ export const DEFAULTS = {
         hanja: 'auto',            // 한자(漢字)는 어느 글꼴로: auto | ko | ja | zh
     },
     customFonts: [],              // [{ id, label, family, group: 'custom', lang?, google? | css? | file? }]
+    markdown: { ...MARKDOWN_DEFAULTS },
     type: {
         size: 16,                 // px, 본문
         dialogueSize: null,       // px, 대사 — null = 본문과 같게
@@ -541,6 +543,7 @@ export function getSettings() {
     if (!isObj(s.compat)) s.compat = structuredClone(DEFAULTS.compat);
     s.compat.muteCustomCss = flag(s.compat.muteCustomCss, false);
     if (isObj(s.type)) tidyType(s.type);
+    tidyMarkdown(s.markdown);
     tidyRoles(s);
     tidyClassValues(s);
     if (isObj(s.fonts)) {

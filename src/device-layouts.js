@@ -3,6 +3,7 @@ export const DEVICE_QUERY = '(max-width: 760px), (pointer: coarse)';
 export const deviceKind = () => globalThis.matchMedia?.(DEVICE_QUERY).matches ? 'mobile' : 'pc';
 export const LAYOUT_PATHS = [
     ...['size','dialogueSize','uiSize','codeSize','lineHeight','letterSpacing','para','measure','gutter','indent','align'].map(k => `type.${k}`),
+    'markdown.size', 'markdown.space',
     'em.size', 'strong.size', 'dialogue.letterSpacing', 'em.letterSpacing', 'strong.letterSpacing', 'code.letterSpacing', 'chat.userSize',
     ...['profile','userProfile'].flatMap(p => ['mode','layout','sizing','screenHeight','maxHeight','visibleHeight','width','height','gap','headerLayout','headerGap','nameSize','metaSize'].map(k => `${p}.${k}`)),
 ];

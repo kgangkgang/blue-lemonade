@@ -16,6 +16,7 @@ import { weatherReadability } from './weather-readability.js';
 import { themeEnabled, addonsEnabled } from './usage-mode.js';
 import { syncFeatures } from './features.js';
 import { syncSplash } from './splash.js';
+import { markdownClasses } from './markdown.js';
 
 function profileVars(p, pal, user = false) {
     const vars = Object.assign(frameVars(p, 'profile', pal.accent), decorVars(p.decor, 'profile', p.radius), {
@@ -471,6 +472,7 @@ export function applyAll() {
     for (const [key, ink] of Object.entries(codeInks(codeBacks))) vars[`--salty-hl-${key}`] = ink;
     // 파생 톤은 JS 로 계산 (color-mix 를 모르는 예전 브라우저에서도 면·입력칸·포커스 링이 나오게)
     Object.assign(vars, {
+        '--salty-text-20': scaleAlpha(pal.text, 0.2),
         '--salty-shade': alpha(pal.text, 0.06),
         '--salty-shade-2': alpha(pal.text, 0.11),
         '--salty-field': mix(pal.raised, pal.surface, 0.6),
@@ -692,6 +694,7 @@ export function applyAll() {
         if (deus && s.chat.demSkin) want.add('salty-dem-skin');          // 3.1.0 데우스 카드 스킨 (css/30-dem-skin.css)
         if (deus && s.chat.demSkin && s.chat.demFold !== false) want.add('salty-dem-fold'); // 폰: 트래커 한 줄 · 펼쳐 오는 카드 접기 (demskin.js)
         if (s.type.indent) want.add('salty-indent');
+        for (const name of markdownClasses(s.markdown)) want.add(name);
         want.add(`salty-align-${s.type.align}`);
         if (mode === 'light' && s.image.blendWhite && !s.chat.bgImage) want.add('salty-blend');
         if (s.image.cutoutSame) want.add('salty-cutout-same'); // assets.js 가 이 클래스를 보고 .salty-cutout 을 안 붙임 → 컷도 보통 그림 규칙을 탐

@@ -5,7 +5,7 @@
    ============================================================ */
 
 /* state.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
-:root { --cg-css-version: "1.3.9"; }
+:root { --cg-css-version: "1.4.0"; }
 
 .cg-root {
     --cg-accent-fallback: #a98bd9;
@@ -1760,9 +1760,10 @@ body.cg-previewing #chat .mes .swipes-counter { display: none !important; }
 
 /* 북마크 창만 밝게 / 어둡게 (alt-palette.js 가 같은 에이드의 반대쪽 팔레트 변수를 이 창에 넣는다).
    body 의 salty-dark / salty-light 에 걸린 테마 토큰은 창 안에서 다시 잡아 준다 */
-.cg-root[data-bl-alt] { color: var(--salty-text); }
-.cg-root[data-bl-alt="light"] { --bl-card: var(--salty-card, var(--salty-surface)); --bl-well: var(--salty-field); --bl-pop: var(--salty-pop, var(--salty-accent)); --bl-e4: 0 18px 50px -18px rgba(10, 30, 60, .35); color-scheme: light; }
-.cg-root[data-bl-alt="dark"] { --bl-card: var(--salty-card, var(--salty-surface)); --bl-well: var(--salty-surface); --bl-pop: var(--salty-pop, #FFE973); --bl-e4: 0 18px 50px -18px rgba(0, 0, 0, .6); color-scheme: dark; }
+/* body에서 이미 계산된 면 토큰도 창 안의 반대 팔레트로 다시 연결한다. */
+.cg-root[data-bl-alt] { --bl-page: var(--salty-bg); color: var(--salty-text); }
+.cg-root[data-bl-alt="light"] { --bl-field: var(--salty-control, var(--salty-surface)); --bl-field-sh: var(--salty-e1); --bl-card: var(--salty-card, var(--salty-surface)); --bl-well: var(--salty-field); --bl-pop: var(--salty-pop, var(--salty-accent)); --bl-e4: 0 18px 50px -18px rgba(10, 30, 60, .35); color-scheme: light; }
+.cg-root[data-bl-alt="dark"] { --bl-field: var(--salty-sunk, var(--salty-bg)); --bl-field-sh: var(--salty-well-in); --bl-card: var(--salty-card, var(--salty-surface)); --bl-well: var(--salty-surface); --bl-pop: var(--salty-pop, #FFE973); --bl-e4: 0 18px 50px -18px rgba(0, 0, 0, .6); color-scheme: dark; }
 
 /* 모바일에서도 여섯 도구가 한 줄에 들어가고, 긴 날짜는 이름 아래로 자연스럽게 흐른다. */
 @media (max-width: 760px) {
@@ -1846,3 +1847,43 @@ body.salty .cg-root .cg-setting-text small {
     opacity: 1;
     line-height: 1.55;
 }
+
+/* 메모·발췌를 먼저 읽고 필요한 원문만 아래에 펼친다. */
+.cg-root .cg-note--summary {
+    margin: 0;
+    padding: 6px 12px;
+    color: var(--cg-text);
+    cursor: pointer;
+    overflow-wrap: anywhere;
+}
+.cg-root .cg-source-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    width: fit-content;
+    max-width: 100%;
+    min-height: 34px;
+    margin: 8px 0 0;
+    padding: 6px 10px;
+    border: 0;
+    border-radius: var(--bl-r-sm, 8px);
+    background: transparent;
+    color: var(--cg-muted);
+    font: inherit;
+    font-size: var(--bl-ts-ctl, 1em);
+    font-weight: var(--salty-ui-weight, normal);
+    letter-spacing: inherit;
+    line-height: 1.5;
+    text-align: start;
+    white-space: normal;
+    cursor: pointer;
+}
+.cg-root .cg-source-toggle span { min-width: 0; overflow-wrap: anywhere; }
+.cg-root .cg-source-toggle i { flex: 0 0 auto; font-size: .8em; }
+.cg-root .cg-source-toggle[aria-expanded="true"] i { transform: rotate(180deg); }
+.cg-root .cg-source-toggle:is(:hover, :focus-visible) { color: var(--cg-text); background: var(--cg-tint); }
+.cg-root .cg-source-toggle:focus-visible { outline: 2px solid var(--cg-accent); outline-offset: 2px; }
+.cg-root .cg-source-content { min-width: 0; margin-top: 8px; }
+.cg-root .cg-source-content[hidden] { display: none !important; }
+@media (max-width: 600px) { .cg-root .cg-source-toggle { min-height: 36px; } }

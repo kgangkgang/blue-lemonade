@@ -77,6 +77,7 @@ export function settingRoute(path) {
     if (path === 'userProfile.metaSide') return {tab:'chat',sub:'user-profile'}; // 번호 · 시간 줄 위치는 작은 사진 옆이라 내 프로필에
     if (scope === 'profile' || scope === 'userProfile') return {tab:'chat',sub:/^(name|header|meta|button)/.test(key) ? scope === 'profile' ? 'name' : 'user-name' : scope === 'profile' ? 'profile' : 'user-profile'};
     if (scope === 'type') return {tab:'text',sub:({dialogueSize:'dialogue',uiSize:'ui',codeSize:'code',para:'para',gutter:'para',measure:'para',indent:'para',align:'para'})[key] || 'text'};
+    if (scope === 'markdown') return {tab:'text',sub:'markdown'};
     if (['dialogue','em','strong','ui','code','strike'].includes(scope)) return {tab:'text',sub:scope};
     if (scope === 'usageMode') return {tab:'theme',sub:'etc'};
     if (['shadow','outline'].includes(scope)) return {tab:'text',sub:'shadow'};

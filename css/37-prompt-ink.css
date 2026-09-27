@@ -38,6 +38,11 @@ body.salty.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#sal
   background-image: none !important;
 }
 @supports (-webkit-mask-clip: text) {
+/* 형광펜 모드의 글자는 테마 잉크를 쓴다. 취소선도 같은 글자색에서 흐리되,
+   원문 color/사용자 선 색·굵기·기울임은 그대로 둔다. */
+body.salty.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q :is(del, s, strike) {
+  -webkit-text-fill-color: color-mix(in srgb, var(--salty-marker-ink, var(--salty-dialogue)) var(--salty-strike-fade, 55%), transparent);
+}
   body.salty.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q {
     -webkit-mask: linear-gradient(#000 0 0), var(--salty-marker-bg);
     -webkit-mask-clip: text, border-box; /* 줄임말(-webkit-mask)은 text 를 못 받는다 → 반드시 그 뒤에 따로 */

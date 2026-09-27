@@ -7,7 +7,7 @@ import { FRAME_PRESETS } from './frame-presets.js';
 // — 모양만 바꾸고 쓰는 방식은 그대로 두려고. 저장한 도형을 쓰는 스타일은 그림 대신 도형 id 만 담는다 (설정 파일이 무거워지지 않게).
 import { getSettings, DEFAULTS, FONT_SET, isCssColor, safeFont } from './settings.js';
 
-export const STYLE_KEYS = ['gradients', 'palette', 'nightTint', 'lightTint', 'customName', 'colorOverrides', 'fonts', 'type', 'dialogue', 'ui', 'code', 'em', 'strong', 'shadow', 'outline', 'strike', 'deus', 'chat', 'image', 'profile', 'userProfile'];
+export const STYLE_KEYS = ['gradients', 'palette', 'nightTint', 'lightTint', 'customName', 'colorOverrides', 'fonts', 'type', 'markdown', 'dialogue', 'ui', 'code', 'em', 'strong', 'shadow', 'outline', 'strike', 'deus', 'chat', 'image', 'profile', 'userProfile'];
 const CHAT_BEHAVIOR = ['triangleFold', 'weatherAutoRest', 'selectPop', 'colorPop', 'numComma', 'streamFade', 'demFold', 'qrFind'];
 export const MAX_STYLES = 20;
 const CODE_PREFIX = 'BLS1.';     // deflate-raw + base64url
@@ -109,7 +109,7 @@ export const PRESETS = [
     {
         id: 'default', name: '처음 모습', desc: '블루 레몬에이드 기본 글자',
         data: () => ({
-            fonts: structuredClone(DEFAULTS.fonts), type: structuredClone(DEFAULTS.type), dialogue: structuredClone(DEFAULTS.dialogue),
+            fonts: structuredClone(DEFAULTS.fonts), type: structuredClone(DEFAULTS.type), markdown: structuredClone(DEFAULTS.markdown), dialogue: structuredClone(DEFAULTS.dialogue),
             ui: structuredClone(DEFAULTS.ui), code: structuredClone(DEFAULTS.code), em: structuredClone(DEFAULTS.em), strong: structuredClone(DEFAULTS.strong),
             shadow: structuredClone(DEFAULTS.shadow), chat: { user: DEFAULTS.chat.user, header: DEFAULTS.chat.header, userSize: 100, userInk: 100 },
         }),

@@ -599,6 +599,7 @@ const NOTE_COLORS = () => Object.entries(PALETTE_FAMILIES).filter(([key]) => key
 function paintNote(el, color, ink) {
     if (color) { el.style.setProperty('--bl-note-c', color); el.classList.add('has-color'); } else { el.style.removeProperty('--bl-note-c'); el.classList.remove('has-color'); }
     if (ink !== undefined) { if (ink) { el.style.setProperty('--bl-note-ink', ink); el.classList.add('has-ink'); } else { el.style.removeProperty('--bl-note-ink'); el.classList.remove('has-ink'); } }
+    if (ink !== undefined) { if (HEX6.test(ink)) el.style.setProperty('--salty-text-20', `${ink}33`); else el.style.removeProperty('--salty-text-20'); }
 }
 function colorButton(id) { return `<span class="bl-note-fmt-h bl-note-colorwrap"><button type="button" class="bl-note-btn bl-note-colorbtn" data-note-color="${id}" title="메모지 색" aria-label="메모지 색"><span class="bl-note-colordot"></span></button><span class="bl-note-fmt-hs bl-note-colorpop" hidden></span></span>`; }
 /** 색 고르기 팝업 — 메모지(기본 · 테마 팔레트 · 내 색) / 글자(기본 · 흰색 · 검정 · 테마 팔레트 · 내 색) */

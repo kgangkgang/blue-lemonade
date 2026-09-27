@@ -28,6 +28,7 @@ function stepper(name, min, max, value) {
 const GUIDE = [
     [null, '북마크 달기', '메시지의 북마크 아이콘을 누르면 북마크가 생기고, 다시 누르면 없어져요. <b>길게 누르면</b>(PC는 우클릭) 메모를 바로 쓸 수 있어요.'],
     ['fa-wand-magic-sparkles', '목록 열기', '입력창 왼쪽 마법봉 메뉴 → <b>북마크</b>'],
+    ['fa-chevron-down', '메시지 펼치기', '카드의 메모·발췌나 <b>메시지 펼치기</b>를 누르면 북마크한 메시지가 아래에 보여요. 메모가 없어도 펼치기 버튼으로 볼 수 있어요.'],
     ['fa-comments', '채팅 고르기', '같은 캐릭터의 다른 채팅 북마크도 볼 수 있어요. 넓은 화면은 왼쪽 목록, 좁은 화면은 왼쪽 위 <i class="fa-solid fa-bars-staggered"></i> 버튼을 누르세요.'],
     ['fa-magnifying-glass', '검색', '메시지와 메모를 함께 찾아요. <b>메모만</b>을 켜면 메모에서만 찾아요.'],
     ['fa-eye', '채팅에서 보기', '그 메시지 주변 대화를 채팅 화면에 잠깐 불러와요. 아래 막대에서 목록으로 돌아가거나 끝낼 수 있어요.'],
@@ -79,7 +80,7 @@ export function renderSettingsPage(page, viewingChat, onBack) {
                     ${segmented('iconStyle', [['bookmark', '북마크', 'fa-bookmark'], ['star', '별', 'fa-star']], store.iconStyle)}
                 </div>
                 <div class="cg-setting">
-                    <div class="cg-setting-text"><b>긴 메시지 접기</b><small>목록에서 긴 메시지를 접어 두고 '전체 보기'로 펼쳐요.</small></div>
+                    <div class="cg-setting-text"><b>원문 접어서 보기</b><small>메모·발췌를 누르면 아래에 메시지가 펼쳐져요. 끄면 처음부터 함께 보여요.</small></div>
                     <button type="button" class="cg-switch" role="switch" data-setting="collapseLong" aria-checked="${store.collapseLong}"><span></span></button>
                 </div>
             </section>

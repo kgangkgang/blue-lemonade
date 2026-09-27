@@ -31,6 +31,12 @@ body.salty.salty-unify-inline:not(.salty-dem-ink) :is(#chat .mes, .cg-root) .mes
 body.salty.salty-unify-inline.salty-dem-ink :is(#chat .mes, .cg-root) .mes_text :is(font[color], [style*="color"]):not(:has(q)) {
   color: inherit !important;
 }
+/* 본문 색 통일이 켜져 있을 때만 원문의 별도 글자 채움색도 되돌린다.
+   inherit는 대사 그라데이션의 투명 채움도 보존한다. 낮은 특이도는 같은 요소의 테마 그라데이션을 우선하게 한다. */
+:where(body.salty.salty-unify-inline:not(.salty-dem-ink) :is(#chat .mes, .cg-root) .mes_text [style*="-webkit-text-fill-color" i]),
+:where(body.salty.salty-unify-inline.salty-dem-ink :is(#chat .mes, .cg-root) .mes_text [style*="-webkit-text-fill-color" i]:not(:has(q))) {
+  -webkit-text-fill-color: inherit !important;
+}
 /* 정규식 카드 이모티콘: 데우스 카드는 제목 · 항목 앞 그림을 …__icon 스팬에 넣음 (모델 본문에는 거의 없음) → 스팬째 숨김.
    [class*="__icon"] 은 다른 프리셋 카드의 BEM 아이콘 칸도 같이 잡는다 */
 body.salty.salty-regex-noicons :is(#chat, .cg-root) .mes_text [class*="custom-"][class*="__icon"] {

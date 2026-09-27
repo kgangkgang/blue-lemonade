@@ -21,6 +21,7 @@ import { startDraftKeep } from './src/draft.js';
 import { startCardInk } from './src/cardink.js';
 import { startSelectPop } from './src/selects.js';
 import { startColorPop } from './src/colorpop.js';
+import { startChatGraph } from './src/chat-graph-launcher.js';
 import { startInlineTone, retoneAll } from './src/tone.js';
 import { startStreamFade, streamFadeState } from './src/streamfade.js';
 // 4.1.2: 설정 창(panel.js 와 거기에만 딸린 모듈 24개 · 310KB)은 설정 창을 처음 열 때 불러온다 — 시작할 때 읽는 모듈 64 → 40개.
@@ -175,6 +176,7 @@ jQuery(() => {
     startCardInk(); // 메시지 안 HTML 카드가 제 배경만 칠했을 때 글자색을 읽히게
     startSelectPop();   // select 를 테마가 그린 목록 팝업으로 (2.5.0)
     startColorPop();    // 색 칸을 테마 색 고르기로 (3.5.0)
+    startChatGraph();   // 채팅 파일 관리: 목록 / 분기 지도
     startInlineTone();  // 본문 글자색의 채도 · 밝기 맞춤 (2.6.0)
     startStreamFade();  // 스트리밍 중 새 글자만 가볍게 페이드 인 (2.9.5)
     $(document).on('change', 'input[data-toggle="chat.toneInline"], input[data-toggle="chat.unifyInline"]', () => setTimeout(retoneAll, 50));

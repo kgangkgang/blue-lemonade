@@ -1,6 +1,7 @@
 // Local settings index. Hidden aliases include controls that are currently folded
 // or disabled. Searching never renders all sections or sends text to a server.
 import { favoriteButton } from './settings-favorites.js';
+import { MARKDOWN_CONTROLS } from './markdown.js';
 const rows = [
  ['extensions','prompt','한글화 패널','실리태번 헬퍼 데우스 샤진 거문고 한글화 프리셋 월드인포 봇카드 정규식 번역 제목 검색 사용방법'],
  ['chat','etc','펼친 카드 아래에 접기 버튼','삼각형 접기 카드 아래 접기','', 'chat.triangleFold'],
@@ -78,9 +79,16 @@ rows.push(['extensions','words','단어 치환','단어 바꾸기 조사 규칙 
  ['theme','update','테마 업데이트','업데이트 새 버전 확인 최신 버전 받기 공지사항 달라진 점'],
  ['chat','screen','백그라운드에서도 계속','백그라운드 다른 앱 앱 전환 탭 잠 멈춤 소리 없이 무음 작은 창 pip 버티기 번역 계속','', 'bgWindow.on'],
  ['chat','screen','답이 오면 알려 주기','알림 진동 푸시 답 도착 완료 알려 주기 다른 앱 폰 백그라운드','', 'replyNotify.on']);
+const markdownAliases = {
+ size:'h1 h2 h3 h4 h5 h6 헤딩 큰글씨 작은글씨', space:'여백 간격 문단 촘촘히 넉넉히', heading:'h1 h2 h3 h4 h5 h6 헤더 헤딩 밑선',
+ hr:'hr 수평선 가로선 장면 전환 별표 세개 점 세개 선', quote:'blockquote 인용 문장 옆선 배경', list:'ul ol 글머리 기호 번호 숫자 순서 중첩 체크리스트 체크박스',
+ link:'a 링크 하이퍼링크 주소 URL 밑줄', table:'table 표 행 열 테이블 줄무늬', details:'details summary 접기 펼치기 요약 카드', mark:'mark 하이라이트 형광 표시', underline:'u 밑줄 물결',
+};
+for (const { key, label, options } of MARKDOWN_CONTROLS) rows.push(['text','markdown',`마크다운 · ${label}`,`markdown 마크다운 ${markdownAliases[key]} ${options.map(([,name])=>name).join(' ')}`,'',`markdown.${key}`]);
 const tabs={extensions:'확장',theme:'테마',text:'글자',chat:'채팅',image:'이미지',prompt:'프롬프트'};
 const subs={notes:'메모',strike:'취소선',direction:'전개 지시',assets:'캐릭터 에셋',prompt:'한글화 패널',customstyle:'커스텀 CSS 조절',translator:'LLM 번역',conflicts:'확장 충돌 진단',words:'단어 치환',capture:'채팅 캡처',order:'확장 순서',perf:'성능 보조',models:'모델 관리',modelswitch:'모델 전환',regexlink:'프롬프트 연동 정규식',rewrite:'다시 쓰기',bookmarks:'북마크',scripts:'스크립트',update:'업데이트',changes:'변경한 설정',palette:'색',colors:'색 고치기',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
-const normalize = value => String(value).normalize('NFKC').toLowerCase().replace(/퀵\s*리플라이|quick\s*repl(?:y|ies)|큐알|\bqr\b/g,'퀵리플라이').replace(/프사|아바타/g,'프로필').replace(/글씨|글자\s*간격/g,m=>m==='글씨'?'글자':'자간').replace(/확대\s*축소/g,'확대 축소').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+subs.markdown = '마크다운';
+const normalize = value => String(value).normalize('NFKC').toLowerCase().replace(/^\s*(?:\*\s*){3,}$/,'구분선').replace(/퀵\s*리플라이|quick\s*repl(?:y|ies)|큐알|\bqr\b/g,'퀵리플라이').replace(/프사|아바타/g,'프로필').replace(/글씨|글자\s*간격/g,m=>m==='글씨'?'글자':'자간').replace(/확대\s*축소/g,'확대 축소').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 // 한글을 초성 · 자모로 풀어 둔다: 'ㅂㄱ' → 배경, '배겨'(치다 만 글자) → 배경, 한 글자 틀린 말도 찾는다.
 const CHO='ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ', JUNG='ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ', JONG=['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
 const syllable=c=>{const k=c.charCodeAt(0)-0xAC00;return k>=0&&k<11172?k:-1;};
