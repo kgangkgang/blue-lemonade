@@ -191,6 +191,13 @@ function numberOr(...values) {
 /** 응답 조각(스트림 한 덩이 또는 전체 응답)에서 글·생각·토큰 사용량을 뽑아 acc에 더한다. */
 export function absorbChunk(json, acc) {
     if (!json || typeof json !== 'object') return;
+    if (!json.error) {
+        if (typeof json.token === 'string') acc.text += json.token;
+        if (typeof json.content === 'string' && !json.choices && !json.type) acc.text += json.content;
+        if (Array.isArray(json.results) && typeof json.results[0]?.text === 'string') acc.text += json.results[0].text;
+        if (typeof json.output === 'string') acc.text += json.output;
+        if (typeof json.response === 'string') acc.text += json.response;
+    }
 
     if(Array.isArray(json.output))for(const item of json.output)for(const part of item.content||[])if(part.type==='output_text')acc.text+=part.text||'';
     if(json.type==='response.output_text.delta')acc.text+=json.delta||'';
@@ -461,7 +468,7 @@ async function watch(nativeFetch, input, init, body, caller=callerFromStack()) {
         type: null,
         source: firstNonEmpty(body.chat_completion_source, body.api_type, body.api_server ? 'textgen' : ''),
         model: firstNonEmpty(body.model, body.custom_model, body.claude_model, body.google_model,modelFromPath(endpoint)),
-        stream: !!body.stream,
+        stream: !!(body.stream || body.streaming),
         chatId: safeChatId(),
         character: safeName(),
         messages: slimMessages(body.messages),
@@ -470,7 +477,8 @@ async function watch(nativeFetch, input, init, body, caller=callerFromStack()) {
         aborted: false,
         rawError: null,
     };
-    if (context.caller === 'chat') context.type = generationType ?? 'quiet';
+    if (endpoint === '/api/novelai/generate' && typeof body.input === 'string') context.prompt = body.input;
+    if (context.caller === 'chat') context.type = (/\/chat-completions\/generate$/.test(endpoint) && ['normal', 'regenerate', 'swipe', 'continue', 'impersonate', 'quiet'].includes(body.type) ? body.type : null) ?? generationType ?? 'quiet';
     Object.assign(context,attribution.resolve({explicit:init?.requestLog,caller:context.caller,type:context.type,kind,body}));
     if (context.caller === 'chat' && !NOT_SEND_TYPES.includes(context.type)) context.sendTrace = takeSendTrace();
     if (settings().ignoreCallers.includes(context.caller)) return nativeFetch(input, init);

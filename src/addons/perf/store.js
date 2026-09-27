@@ -2,6 +2,7 @@
 // 기록은 이 기기의 브라우저에만 남는다 (settings.json에 넣기엔 너무 크고, 폰과 PC의 요청은 따로 세는 게 맞다).
 // IndexedDB를 쓸 수 없는 창(시크릿 모드 등)에서는 메모리에만 남겨서 창을 닫으면 사라진다.
 import { settings } from './state.js';
+import { compareEntries } from './entry-order.js';
 
 const DB_NAME = 'request_log';
 const DB_VERSION = 2;
@@ -93,15 +94,15 @@ export async function getEntry(id) {
 }
 
 /** 최근 것부터. before를 주면 그 시각보다 앞선 것만 (페이지 넘기기). */
-export async function listEntries({ limit = 50, before = null } = {}) {
+export async function listEntries({ limit = 50, before = null, inclusive = false } = {}) {
     const db = await openDb();
     if (!db) {
-        return memory.entries.filter(entry => before === null || entry.at < before).slice(0, limit);
+        return memory.entries.filter(entry => before === null || (inclusive ? entry.at <= before : entry.at < before)).sort(compareEntries).slice(0, limit);
     }
     return new Promise((resolve, reject) => {
         const out = [];
         const index = db.transaction(ENTRIES, 'readonly').objectStore(ENTRIES).index('at');
-        const range = before === null ? null : IDBKeyRange.upperBound(before, true);
+        const range = before === null ? null : IDBKeyRange.upperBound(before, !inclusive);
         const cursorRequest = index.openCursor(range, 'prev');
         cursorRequest.onsuccess = () => {
             const cursor = cursorRequest.result;

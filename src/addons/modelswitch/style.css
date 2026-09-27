@@ -1,4 +1,4 @@
-#model-switch-settings{--ms-version:"1.0.3"}
+#model-switch-settings{--ms-version:"1.0.4"}
 #model-switch-settings .inline-drawer-content{display:flex;flex-direction:column;gap:12px;text-align:left}
 .ms-presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
 .ms-presets:empty{display:none}
@@ -56,3 +56,7 @@ body.bl-ms-lock-rewrite :is(#bwr_connection .bwr_seg,#bwr_provider,#bwr_model,#b
 body.bl-ms-lock-memory .lm-root :is([data-set-radio="apiMode"],[data-set="direct.source"],[data-set^="direct.models."],[data-set^="direct.customModels."],[data-set="direct.customUrl"]){opacity:.42;cursor:not-allowed;caret-color:transparent}
 
 body.bl-ms-lock-prompt :is(#pt-connection-mode, #pt-provider, #pt-model-select, #pt-model-custom, #pt-custom-url, #pt-fetch-models, #pt-import-llm){opacity:.42;cursor:not-allowed;caret-color:transparent}
+
+/* Do not inherit ST min-content width for the Korean action label. */
+#model-switch-settings .ms-actions{flex-wrap:wrap;gap:8px 10px}
+#model-switch-settings .ms-actions .ms-apply{width:auto;flex:1 1 auto;min-width:min(100%,7em);max-width:100%;white-space:normal;word-break:keep-all;overflow-wrap:anywhere}

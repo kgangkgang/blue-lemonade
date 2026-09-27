@@ -1,3 +1,4 @@
+import { showThemeModal } from '../../modal.js';
 // 전개 지시 — 다음 전개를 적어 두면 보낼 때마다 프롬프트에 끼워 넣는다.
 // Direction-Manager-Lite를 한국어로 새로 만든 확장. 입력창 버튼 색으로 켜짐/꺼짐을 바로 알 수 있다.
 import { extension_settings, getContext } from '../../../../../../extensions.js';
@@ -6,11 +7,12 @@ import { POPUP_TYPE, callGenericPopup } from '../../../../../../popup.js';
 
 import { getChatCompletionModel, oai_settings } from '../../../../../../openai.js';
 import { insertDirection } from './prompt.js';
+import { verifyAddonCss } from '../../addon-files-check.js';
 import { badgeTextHit } from '../../badge-hit.js';
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
-const VERSION = '1.1.3';
+const VERSION = '1.1.4';
 
 // AI에게 보내는 글이라 원래 확장의 영어 프롬프트를 그대로 쓴다. (뜻은 설정 화면에 한국어로 적어 둠)
 const DEFAULT_PROMPT = `<direction>
@@ -166,7 +168,7 @@ function trackGeneration(type) {
 function injectDirection(eventData) {
     const type = generationType;
     generationType = null;
-    if (!isActive() || isRawGeneration() || type === 'quiet' || type === 'impersonate') return;
+    if (!isActive() || type === null || isRawGeneration() || type === 'quiet' || type === 'impersonate') return;
     const store = settings();
     const template = store.directionPrompt;
     const messages = eventData?.chat;
@@ -315,7 +317,7 @@ function onPopupKeydown(event) {
 
 function openPopup() {
     const store = settings();
-    const host = document.getElementById('nonQRFormItems') ?? button.parentElement;
+    const host = document.getElementById('send_form') ?? button.parentElement;
     popup = document.createElement('div');
     popup.id = 'jj-popup';
     popup.innerHTML = `
@@ -602,6 +604,7 @@ export const ready = new Promise((resolve, reject) => jQuery(() => {
     buildSettings();
     ensureButton();
     eventSource.on(event_types.GENERATION_STARTED, trackGeneration);
+    for (const name of ['GENERATION_ENDED', 'GENERATION_STOPPED']) if (event_types[name]) eventSource.on(event_types[name], () => { generationType = null; });
     eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, injectDirection);
     // 테마를 바꾸면 테마 색을 쓰는 경우의 글자색(켜짐 배지)도 다시 계산한다.
     eventSource.on(event_types.SETTINGS_UPDATED, syncOnColor); // 5.1.3: 저장마다 계산 스타일을 읽지 않고 값싼 서명이 바뀔 때만
@@ -630,14 +633,7 @@ export const ready = new Promise((resolve, reject) => jQuery(() => {
     watchTheme.observe(document.head, { childList: true, subtree: true, characterData: true });
     watchTheme.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
-    // 배포 ZIP 자체의 버전 누락도 가능하므로 전달 전에 실제 CSS와 검사한다.
-    // style.css의 버전 표시가 코드와 다르면 알려 준다.
-    setTimeout(() => {
-        const cssVersion = getComputedStyle(document.documentElement).getPropertyValue('--jj-css-version').trim().replace(/["']/g, '');
-        if (cssVersion !== VERSION) {
-            toastr.warning(`전개 지시 파일이 섞였어요 (코드 ${VERSION}, 스타일 ${cssVersion || '예전 것'}). 블루레몬에이드를 업데이트한 뒤 설치 점검을 실행해 주세요.`, '전개 지시', { timeOut: 15000 });
-        }
-    }, 2000);
+    verifyAddonCss({ folder: 'direction', name: '--jj-css-version', version: VERSION, title: '전개 지시' });
 
     resolve();
     } catch(error) { reject(error); }
@@ -660,7 +656,7 @@ export async function openPanel() {
     document.body.append(settingsDialog);settingsDialog.querySelector('.bl-direction-body').append(settingsRoot);
     settingsDialog.querySelector('header button').onclick = () => settingsDialog.close();
     settingsDialog.addEventListener('close', () => {body.style.display=display;anchor.replaceWith(settingsRoot);settingsDialog.remove();settingsDialog=null;if(previous?.isConnected)previous.focus();},{once:true});
-    settingsDialog.showModal();
+    showThemeModal(settingsDialog);
 }
 export function mountInline(host) {
     const button=document.createElement('button');button.type='button';button.className='salty-btn';button.textContent='전개 지시 설정 열기';button.onclick=openPanel;host.replaceChildren(button);return()=>host.replaceChildren();

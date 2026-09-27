@@ -1,3 +1,4 @@
+import { showThemeModal } from '../modal.js';
 import { LABELS, esc } from './core.js';
 import { enabled } from './state.js';
 import { diagnose } from './diagnostics.js';
@@ -8,7 +9,7 @@ function frame(id) {
     box.innerHTML = `<header><span class="bl-assist-title"><i class="fa-solid fa-stethoscope" aria-hidden="true"></i><h3>${LABELS[id]}</h3></span><button type="button" data-close aria-label="닫기"><i class="fa-solid fa-xmark"></i></button></header><div class="bl-assist-body"></div><p class="bl-assist-status" role="status" aria-live="polite"></p>`;
     document.body.append(box); box.querySelector('[data-close]').onclick = () => box.close();
     box.addEventListener('close', () => { box.remove(); if (dialog === box) dialog = null; });
-    box.showModal(); dialog = box; return box;
+    showThemeModal(box); dialog = box; return box;
 }
 export function closeTools() { dialog?.close(); }
 // http:// 로 연 폰(LAN 접속)에는 clipboard API 가 없다(보안 컨텍스트 전용) — 옛 복사 명령으로 대신한다.

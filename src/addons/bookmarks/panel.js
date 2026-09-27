@@ -1,9 +1,9 @@
 // 북마크 — 모아 보기 패널
 import { restorePreviewRules } from '../../lite.js';
 import { hooks, settings, saveSettings, applyTheme, applyColors, colorsFor, currentChatKey, iconName } from './state.js';
-import { getOwner, currentRecord, listOtherChats, loadRecord, findBookmark, bookmarkAt, addBookmark } from './data.js';
+import { getOwner, currentRecord, listOtherChats, loadRecord, findBookmark, bookmarkAt, addBookmark, bookmarkMessage } from './data.js';
 import { escapeHtml, formatDate, renderMessageHtml, renderReasoningHtml, renderNoteHtml, noteToPlainText, messageText, avatarForMessage, hydrateHtmlBlocks, highlightMatches, clearHighlights } from './render.js';
-import { hasOpenSheet, closeTopSheet, confirmSheet } from './ui-kit.js';
+import { confirmSheet } from './ui-kit.js';
 import { openNoteEditor, openMessageEditor, openContextViewer, confirmDeleteBookmark, enterPreview, isPreviewing, openTranslationEditor, confirmClearTranslation } from './viewers.js';
 import { hasTranslator, hasTranslation, isShowingOriginal, translateMessage, restoreTranslation } from './translate.js';
 import { renderSettingsPage, disposeSettingsPage } from './settings-view.js';
@@ -83,6 +83,9 @@ function buildShell() {
     view.root = root;
 
     root.addEventListener('click', onClick);
+    root.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && (event.ctrlKey || event.altKey)) event.stopPropagation();
+    });
     const input = $('.cg-searchbar input');
     let searchTimer = null;
     input.addEventListener('input', () => {
@@ -116,6 +119,7 @@ export function isPanelOpen() {
 export async function openPanel({ keepState = false } = {}) {
     restorePreviewRules(); // 카드 본문은 채팅 서식의 사본 규칙(.salty-preview)을 쓴다 — 테마가 시작 때 꺼 둔 것을 켠다
     if (!view.root) buildShell();
+    if (!view.open) view.previousFocus = document.activeElement;
     // 알림 없이 메시지 번호가 바뀌었을 수 있으니 현재 채팅의 북마크 번호부터 맞춘다 (미리보기 중이면 하지 않는다).
     hooks.syncBookmarks();
     const reuse = (keepState || isPreviewing()) && view.records.length > 0;
@@ -156,6 +160,7 @@ export async function openPanel({ keepState = false } = {}) {
     view.open = true;
     applyColors(colorsFor(view.selectedKey ?? currentChatKey()));
     renderAll();
+    if (!view.root.contains(document.activeElement)) $('[data-act="close"]').focus({ preventScroll: true });
 
     if (!reuse) {
         loadOthers();
@@ -166,6 +171,13 @@ export async function openPanel({ keepState = false } = {}) {
 export function closePanel({ keepColors = false } = {}) {
     if (!view.open) return;
     view.open = false;
+    if (!keepColors) {
+        // 닫은 뒤 늦게 도착한 다른 채팅 목록도 버린다. 미리보기에서 돌아올 때만 재사용한다.
+        view.session++;
+        view.records = [];
+        view.loadingOthers = false;
+        allMessageMatches = new WeakMap();
+    }
     closeSettings({ immediate: true });
     view.root.classList.remove('is-open');
     setTimeout(() => {
@@ -174,9 +186,12 @@ export function closePanel({ keepColors = false } = {}) {
         // 4.5.6: 닫힌 창의 목록은 문서에 남을 이유가 없다 — 카드 수십 장과 그에 걸린 관찰자가 그대로 살아 있었다.
         // 숨긴 뒤에 비운다(바로 비우면 닫히는 0.2초 동안 빈칸이 번쩍인다). 다시 열면 renderAll 이 그린다.
         const list = view.root.querySelector('.cg-list');
+        view.bodyObserver?.disconnect();
+        clearHighlights();
         if (list) list.replaceChildren();
     }, 200);
     if (!keepColors) applyColors(colorsFor(currentChatKey()));
+    if (!keepColors && view.previousFocus?.isConnected) view.previousFocus.focus({ preventScroll: true });
 }
 
 export async function refreshPanel() {
@@ -340,7 +355,7 @@ function visibleBookmarks(record) {
         const note = fold(noteToPlainText(fav.note));
         if (view.noteOnly) return note.includes(query);
         if (note.includes(query)) return true;
-        const message = record.messages?.[index];
+        const message = bookmarkMessage(record, fav);
         const rest = `${messageText(message)}\n${message?.mes ?? ''}\n${message?.name ?? fav.sender ?? ''}`;
         return fold(rest).includes(query);
     });
@@ -353,16 +368,25 @@ function virtualFav(record, index) {
 }
 
 /** 전체 메시지 검색: 검색어가 있을 때만, 이 채팅의 모든 메시지에서 찾는다. */
+let allMessageMatches = new WeakMap();
+
 function searchAllMessages(record, direction) {
     if (!view.query) return [];
     const query = view.query.toLowerCase();
+    const cased = view.query !== query || view.query !== view.query.toUpperCase();
     const messages = record.messages ?? [];
     const items = [];
     for (let index = 0; index < messages.length; index++) {
         const message = messages[index];
         if (!message) continue;
-        const haystack = `${messageText(message)}\n${message.mes ?? ''}\n${message.name ?? ''}`.toLowerCase();
-        if (!haystack.includes(query)) continue;
+        const display = messageText(message), original = message.mes ?? '', name = message.name ?? '';
+        let match = allMessageMatches.get(message);
+        if (!match || match.query !== query || match.cased !== cased || match.display !== display || match.original !== original || match.name !== name) {
+            const text = `${display}\n${original}\n${name}`;
+            match = { query, cased, display, original, name, found: (cased ? text.toLowerCase() : text).includes(query) };
+            allMessageMatches.set(message, match);
+        }
+        if (!match.found) continue;
         items.push({ fav: bookmarkAt(record, index) ?? virtualFav(record, index), index });
     }
     if (direction < 0) items.reverse();
@@ -504,7 +528,7 @@ function cardElement(favId) {
 function refreshTranslateUi(record, fav, index) {
     const card = cardElement(fav.id);
     if (!card) return;
-    const message = record.messages?.[index];
+    const message = bookmarkMessage(record, fav);
     const missing = !message;
     card.querySelector('[data-card-act="translate"]').outerHTML = translateButton(fav, record, index, message, missing);
     card.querySelector('.cg-card-sub')?.remove();
@@ -583,7 +607,7 @@ function afterTranslate(record, fav, index, changed) {
 async function runTranslate(record, fav, index) {
     if (isTranslating(record, index)) return;
     const key = translatingKey(record, index);
-    const message = record.messages?.[index];
+    const message = bookmarkMessage(record, fav);
 
     // 채팅 화면에서 '원문 보기'로 치워 둔 번역문은 번역기를 부르지 않고 되살리기만 한다.
     if (isShowingOriginal(message)) {
@@ -632,7 +656,7 @@ async function runTranslate(record, fav, index) {
 }
 
 function renderCard(record, fav, index) {
-    const message = record.messages?.[index];
+    const message = bookmarkMessage(record, fav);
     const missing = !message;
     const isUser = message ? !!message.is_user : fav.role === 'user';
     const formatIndex = record.isCurrent ? index : null;
@@ -689,7 +713,7 @@ function activateCard(card) {
     const noteRoot = card.querySelector('.cg-note-text');
     if (noteRoot) hydrateHtmlBlocks(noteRoot);
     view.bodyObserver.observe(mes);
-    updateExpandButton(card);
+    // ResizeObserver의 첫 알림에서 한꺼번에 측정한다 (카드별 DOM쓰기→강제 layout 방지).
     if (view.query) {
         highlightMatches(mes, view.query);
         const note = card.querySelector('.cg-note-text');
@@ -727,7 +751,8 @@ function toggleExpand(card) {
     // 접을 때는 카드 머리로 돌아가서 읽던 자리를 잃지 않게 한다.
     if (!expanding) {
         const list = $('.cg-list');
-        if (card.offsetTop < list.scrollTop) list.scrollTop = card.offsetTop - 8;
+        const top = card.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop;
+        if (top < list.scrollTop) list.scrollTop = Math.max(0, top - 8);
     }
 }
 
@@ -847,6 +872,7 @@ async function onCardAction(action, card) {
     const index = Number(card.dataset.index);
     const fav = record && (card.dataset.virtual ? virtualFav(record, index) : findBookmark(record, card.dataset.favId));
     if (!fav) return;
+    if (fav.blOrphaned && action !== 'note' && action !== 'delete') return;
     switch (action) {
         case 'mark': {
             // 전체 메시지 검색에서 찾은 메시지를 북마크로 만든다. 이미 있으면 그대로 둔다.
@@ -1019,9 +1045,10 @@ function onClick(event) {
 // Esc: 맨 위 창부터 하나씩 닫는다. 실리태번의 Esc 처리보다 먼저 받는다.
 document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
+    // 페이지 입력의 Escape는 입력 자체가 취소한다. 패널을 닫으면 blur가 입력값을 적용한다.
+    if (event.target.closest?.('.cg-page-now input')) return;
     let handled = false;
-    if (hasOpenSheet()) handled = closeTopSheet();
-    else if (view.open && isSettingsOpen()) { closeSettings(); handled = true; }
+    if (view.open && isSettingsOpen()) { closeSettings(); handled = true; }
     else if (view.open && isDrawerOpen()) { closeDrawer(); handled = true; }
     else if (view.open) { closePanel(); handled = true; }
     if (handled) {

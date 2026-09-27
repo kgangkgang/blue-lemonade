@@ -16,6 +16,14 @@ export function closeTopSheet() {
     return true;
 }
 
+// 메모 시트는 모아 보기 패널을 읽기 전에도 열리므로 여기서 먼저 받는다.
+window.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || !hasOpenSheet()) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    closeTopSheet();
+}, true);
+
 /**
  * @param {object} options
  * @param {string} options.title
@@ -29,6 +37,7 @@ export function closeTopSheet() {
  * @param {(result: any) => void} [options.onClose]
  */
 export function openSheet({ title, subtitle = '', icon = '', size = 'md', body = '', actions = [], dismissOnBackdrop = true, onClose = null, className = '' }) {
+    const previousFocus = document.activeElement;
     const overlay = document.createElement('div');
     overlay.className = `cg-root cg-sheet-overlay ${className}`.trim();
     applyTheme(overlay);
@@ -65,6 +74,7 @@ export function openSheet({ title, subtitle = '', icon = '', size = 'md', body =
             openSheets.splice(openSheets.indexOf(sheet), 1);
             overlay.classList.remove('is-open');
             setTimeout(() => overlay.remove(), 200);
+            if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
             onClose?.(result);
             resolveClosed(result);
         },
@@ -93,11 +103,16 @@ export function openSheet({ title, subtitle = '', icon = '', size = 'md', body =
     overlay.addEventListener('click', (event) => {
         if (dismissOnBackdrop && event.target === overlay) sheet.close(null);
     });
+    overlay.addEventListener('keydown', (event) => {
+        // 편집칸의 저장 처리는 먼저 두고, 실리태번의 다시 생성/이어 쓰기로는 넘기지 않는다.
+        if (event.key === 'Enter' && (event.ctrlKey || event.altKey)) event.stopPropagation();
+    });
 
     document.body.append(overlay);
     openSheets.push(sheet);
     void overlay.offsetWidth; // 애니메이션 시작점을 확정한다 (requestAnimationFrame 없이)
     overlay.classList.add('is-open');
+    (foot?.querySelector('button') ?? overlay.querySelector('[data-sheet-close]')).focus({ preventScroll: true });
     return sheet;
 }
 
@@ -154,6 +169,7 @@ export async function textSheet({ title, subtitle = '', icon = 'fa-pen', value =
     });
     // 모바일에서 키보드가 올라오며 창이 흔들리지 않도록 애니메이션 뒤에 초점을 준다.
     setTimeout(() => {
+        if (!openSheets.includes(sheet)) return;
         textarea.focus({ preventScroll: true });
         textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
     }, 220);

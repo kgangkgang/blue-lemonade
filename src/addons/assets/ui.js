@@ -64,16 +64,30 @@ export async function copyText(text) {
         return true;
     } catch {
         // http로 열었거나 권한이 없을 때
+        const previousFocus = document.activeElement;
+        // showModal() 바깥의 body는 inert라 select/copy가 성공처럼 보여도 빈 글만 복사된다.
+        const host = previousFocus?.closest?.('dialog[open]')
+            || [...document.querySelectorAll('dialog[open]')].pop()
+            || document.body;
         const area = document.createElement('textarea');
         area.value = text;
         area.setAttribute('readonly', '');
         area.style.position = 'fixed';
         area.style.opacity = '0';
-        document.body.append(area);
-        area.select();
         let ok = false;
-        try { ok = document.execCommand('copy'); } catch { ok = false; }
-        area.remove();
+        host.append(area);
+        try {
+            area.focus({ preventScroll: true });
+            area.select();
+            area.setSelectionRange(0, area.value.length);
+            if (document.activeElement === area && area.selectionStart === 0 && area.selectionEnd === area.value.length) {
+                ok = document.execCommand('copy');
+            }
+        } catch { ok = false; }
+        finally {
+            area.remove();
+            if (previousFocus?.isConnected) previousFocus.focus?.({ preventScroll: true });
+        }
         return ok;
     }
 }

@@ -2,7 +2,8 @@
 import { verifyAddonCss } from '../../addon-files-check.js';
 import { leaveSettingsDialog } from '../../settings-dialog.js';
 import { eventSource, event_types } from '../../../../../../../script.js';
-import { VERSION, initSettings, hooks, applyColors, colorsFor, currentChatKey, iconName, settings, themeColors } from './state.js';
+import { getSanitizedFilename } from '../../../../../../utils.js';
+import { VERSION, initSettings, hooks, applyColors, colorsFor, currentChatKey, chatKey, renameChatColors, iconName, settings, themeColors } from './state.js';
 import { currentRecord, bookmarkAt, addBookmark, removeBookmark, syncAnchors } from './data.js';
 import { openNoteEditor, previewRecord, isPreviewing, exitPreview, abandonPreviewForGeneration } from './viewers.js';
 
@@ -44,7 +45,7 @@ function ensureMessageButtons() {
 function refreshMessageIcons() {
     ensureMessageButtons();
     const record = targetRecord();
-    const marked = new Set((record?.favorites ?? []).map(fav => String(fav.messageId)));
+    const marked = new Set((record?.favorites ?? []).filter(fav => !fav.blOrphaned).map(fav => String(fav.messageId)));
     const icon = iconName();
     document.querySelectorAll(`#chat .mes .${BUTTON_CLASS}`).forEach((button) => {
         const isMarked = marked.has(String(button.closest('.mes')?.getAttribute('mesid')));
@@ -172,7 +173,8 @@ document.addEventListener('contextmenu', (event) => {
 
 document.addEventListener('keydown', (event) => {
     const button = event.target.closest?.(`.${BUTTON_CLASS}`);
-    if (!button || (event.key !== 'Enter' && event.key !== ' ')) return;
+    // Enter는 실리태번 keyboard.js가 interactable.click()으로 처리한다.
+    if (!button || event.key !== ' ') return;
     event.preventDefault();
     toggleFromButton(button);
 });
@@ -202,9 +204,9 @@ function addWandButton(attempt = 0) {
  * 북마크 번호를 메시지에 맞추고(data.js syncAnchors), 지운 메시지의 북마크를 지웠으면 알린다.
  * 미리보기 중에는 채팅 화면에 다른 채팅이 그려져 있으니 하지 않는다 (끝내면 채팅을 다시 불러오며 맞춘다).
  */
-function syncBookmarks() {
+function syncBookmarks(options = {}) {
     if (isPreviewing()) return;
-    const { removed, orphaned } = syncAnchors();
+    const { removed, orphaned } = syncAnchors({ settled: options?.settled === true });
     if (removed) toastr.info(`지운 메시지에 달린 북마크 ${removed}개도 지웠어요.`, '북마크', { timeOut: 2500 });
     // 가지 · 체크포인트 파일은 원래 채팅의 북마크를 통째로 물려받는다 — 잘려 나간 메시지의 것
     if (orphaned) toastr.info(`이 채팅에 없는 메시지의 북마크 ${orphaned}개를 지웠어요.`, '북마크', { timeOut: 2500 });
@@ -223,10 +225,29 @@ function scheduleIconRefresh(delay = 0) {
 eventSource.on(event_types.CHAT_CHANGED, async () => {
     if (isPreviewing()) await exitPreview({ reload: false });
     applyColors(colorsFor(currentChatKey()));
-    syncBookmarks();
+    syncBookmarks({ settled: true });
     notifyChatChanged();
     scheduleIconRefresh(120);
 });
+
+async function onChatRenamed(data) {
+    // 이벤트 파일명은 확장자를 포함한다. 실제 chat ID로 만든 뒤 state의 key 규칙을 적용한다.
+    const oldId = String(data?.oldFileName || '').replace(/\.jsonl$/i, '');
+    const requested = String(data?.newFileName || '');
+    const chats = settings()?.colors?.chats;
+    if (!oldId || !requested || !chats || !Object.hasOwn(chats, chatKey(oldId))) return;
+    let filename;
+    try { filename = await getSanitizedFilename(requested); }
+    catch (error) { console.warn('[북마크] 바뀐 채팅 이름 확인 실패:', error); return; }
+    if (typeof filename !== 'string' || !filename) return;
+    // 서버 rename은 sanitize 뒤 path.parse(filename).name을 쓴다 (UTF-8 길이 제한 포함).
+    const dot = filename.lastIndexOf('.');
+    const newId = dot > 0 ? filename.slice(0, dot) : filename;
+    if (!renameChatColors(oldId, newId)) return;
+    if (hooks.isPanelOpen()) await hooks.refreshPanel();
+    else applyColors(colorsFor(currentChatKey()));
+}
+if (event_types.CHAT_RENAMED) eventSource.on(event_types.CHAT_RENAMED, onChatRenamed);
 
 // 1.2.9: 미리보기 중에 답 만들기가 시작되면(다시 생성 · 이어 쓰기 · 슬래시 명령 등) 먼저 지금 채팅 화면으로 돌아간다 (viewers.js 참고).
 // 속으로 도는 생성(번역 · 기억 같은 quiet)과 프롬프트 미리 계산(dryRun)은 화면을 건드리지 않으니 그대로 둔다.
@@ -236,7 +257,7 @@ eventSource.on(event_types.GENERATION_STARTED, async (type, _options, dryRun) =>
 });
 
 eventSource.on(event_types.MESSAGE_DELETED, () => {
-    syncBookmarks();
+    syncBookmarks({ settled: true });
     scheduleIconRefresh();
 });
 

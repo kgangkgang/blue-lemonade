@@ -52,6 +52,7 @@ export function syncChat() {
     const wantId = key && s.charStyles[key] && s.styles.some(x => x.id === s.charStyles[key]) ? s.charStyles[key] : '';
     const active = s.activeStyle;
     if (active && active.id === wantId && active.key === key) return false;
+    if (!active && !wantId && !s.baseStyle) return false;
     clearTimeout(commitTimer);
     if (active) commit();
     if (wantId) {
@@ -64,6 +65,7 @@ export function syncChat() {
         s.activeStyle = null;
     }
     invalidateSettings(); // 5.2.3: 스타일을 제자리에 입힌 뒤 정리(범위 · 형식)를 다시 거치게
+    globalThis.window?.dispatchEvent(new Event('bl:settings-replaced'));
     paint(); // 5.3.4: 입혀 본 뒤에 저장 — 적용이 죽는 스타일을 먼저 저장하면 새로고침할 때마다 다시 죽었다
     saveSettings();
     return true;
@@ -78,6 +80,7 @@ export function styleRemoved(id) {
         s.baseStyle = null;
         s.activeStyle = null;
         invalidateSettings();
+        globalThis.window?.dispatchEvent(new Event('bl:settings-replaced'));
         paint();
         saveSettings();
     }
@@ -89,6 +92,14 @@ export function startCharStyles(applyAll, refreshPanels) {
     listening = true;
     const { eventSource, event_types } = SillyTavern.getContext();
     eventSource.on(event_types.CHAT_CHANGED, () => syncChat());
+    if (event_types.CHARACTER_RENAMED) eventSource.on(event_types.CHARACTER_RENAMED, (oldAvatar,newAvatar) => {
+        if (typeof oldAvatar!=='string'||typeof newAvatar!=='string'||!oldAvatar||!newAvatar||oldAvatar===newAvatar)return;
+        const s=getSettings(),from=`c:${oldAvatar}`,to=`c:${newAvatar}`;
+        if (!Object.hasOwn(s.charStyles,from))return;
+        s.charStyles[to]=s.charStyles[from];delete s.charStyles[from];
+        if(s.activeStyle?.key===from)s.activeStyle.key=to;
+        saveSettings();
+    });
     // 실리태번이 막 켜져 채팅을 아직 안 열었으면 CHAT_CHANGED 를 기다린다 (지금 맞추면 원래 모습으로 한 번 깜빡임)
     if (SillyTavern.getContext().getCurrentChatId?.()) syncChat();
 }

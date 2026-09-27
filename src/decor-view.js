@@ -1,4 +1,4 @@
-import { hasDecor } from './decor.js';
+import { decorEnabled } from './decor.js';
 const ASSET = '.mes_text :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img)';
 const PROFILE = '.mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar img';
 const USER_PROFILE = '.mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar img';
@@ -111,7 +111,7 @@ function flush() {
     if (state.image || state.profile || state.userProfile) listen();
 }
 export function syncDecorView(settings) {
-    const next = { image: settings.enabled && hasDecor(settings.image.decor), profile: settings.enabled && settings.profile.mode === 'banner' && hasDecor(settings.profile.decor), userProfile: settings.enabled && settings.userProfile?.mode === 'banner' && hasDecor(settings.userProfile.decor) };
+    const next = decorEnabled(settings);
     syncWindows(settings, next);
     const nextRoots = [...document.querySelectorAll('#chat, .salty-preview')];
     if (observer && next.image === state.image && next.profile === state.profile && next.userProfile === state.userProfile && nextRoots.length === roots.length && nextRoots.every((root, i) => root === roots[i])) return;

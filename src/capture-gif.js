@@ -22,7 +22,7 @@ export async function captureGif(ids,progress=()=>{},options={},signal){
         for(let i=0;i<frames;i++){
             signal?.throwIfAborted();
             // Background videos keep their existing playback state. Pace frames in real time.
-            const delay=start+i*1000/fps-performance.now();if(delay>0)await new Promise(r=>setTimeout(r,delay));
+            const delay=start+i*1000/fps-performance.now();if(motion.realtime!==false&&delay>0)await new Promise(r=>setTimeout(r,delay));
             signal?.throwIfAborted();if(gone)throw gone;motion.draw(i?1/fps:0,i*1000/fps,i/fps);
             const rgba=motion.ctx.getImageData(0,0,width,height).data.buffer;
             await request({type:'frame',rgba,delay:100/fps},[rgba]);progress(`움짤 만드는 중… ${i+1} / ${frames}장`);

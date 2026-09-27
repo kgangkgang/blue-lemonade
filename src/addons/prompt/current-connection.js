@@ -1,3 +1,4 @@
+import { isTransientFailure } from './request-errors.js';
 // Snapshot the active connection for each request. Never select/change a profile.
 export async function requestCurrentConnection({context,messages,overrides={},maxTokens=0,buildChat,buildText,log}) {
     const ctx=context(), controller=new AbortController();
@@ -28,11 +29,12 @@ export async function requestCurrentConnection({context,messages,overrides={},ma
         throw new Error('현재 연결의 API 방식은 아직 지원하지 않아요. 채팅 완성 또는 텍스트 완성 연결을 사용하거나 API 중 선택으로 전환해 주세요.');
     }catch(error){
         if(overrides.signal?.aborted)throw overrides.signal.reason;
-        if(controller.signal.aborted)throw new Error(`${Math.round(timeout/1000)}초 안에 번역 답이 오지 않았어요.`);
+        if(controller.signal.aborted)throw Object.assign(new Error(`${Math.round(timeout/1000)}초 안에 번역 답이 오지 않았어요.`),{timeout:true});
         if(/^bad request$/i.test(String(error?.message||'').trim())){
             const rejected=new Error('요청이 거절됐어요 (400 Bad Request). 내용 차단(PROHIBITED_CONTENT) 또는 현재 연결의 요청 설정을 확인해 주세요. 기존 번역은 유지했어요.');
             rejected.refused=true;throw rejected;
         }
-        throw new Error(`현재 연결 번역 실패: ${error?.cause?.message||error?.message||String(error)}`);
+        const reason=error?.cause?.message||error?.message||String(error);
+        throw Object.assign(new Error(`현재 연결 번역 실패: ${reason}`),{transient:isTransientFailure(error,reason)});
     }finally{clearTimeout(timer);overrides.signal?.removeEventListener('abort',abort);release?.();}
 }

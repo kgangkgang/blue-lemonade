@@ -300,7 +300,7 @@ body.salty .select2-results__options[aria-multiselectable="true"] .select2-resul
   text-align: center;
 }
 body.salty .select2-results__options[aria-multiselectable="true"] .select2-results__option--selected::before {
-  content: '¹3';
+  content: '\2713';
   color: var(--salty-on-accent, #fff);
   background-color: var(--salty-accent);
   box-shadow: none;

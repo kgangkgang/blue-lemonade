@@ -1,3 +1,4 @@
+import { showThemeModal } from '../../../modal.js';
 import { LABELS, esc } from './core.js';
 import { enabled } from './state.js';
 import { prepareTranslation, applyTranslation } from './translation.js';
@@ -25,7 +26,7 @@ function frame(id) {
         window.visualViewport?.removeEventListener('scroll', fit);
         observer.disconnect(); box.remove(); if (dialog === box) dialog = null;
     });
-    box.showModal(); fit(); dialog = box; return box;
+    showThemeModal(box); fit(); dialog = box; return box;
 }
 export function closeTools() { dialog?.close(); selected = null; }
 function status(box, message) { if (box.isConnected) box.querySelector('[role=status]').textContent = message; }
@@ -38,11 +39,13 @@ async function action(box, button, fn, busy = '처리 중…') {
 export async function openTool(id) {
     if (!enabled(id)) { globalThis.toastr?.info('번역 설정 → 번역 동작에서 선택 부분 재번역을 켜 주세요.'); return; }
     const snapshot = selected; dialog?.close(); const box = frame(id), body = box.querySelector('.llmt-selection-body');
+    let closed = false;
+    box.addEventListener('close', () => { closed = true; }, { once: true });
     if (id === 'retranslate') {
         body.innerHTML = '<p>선택한 문단을 원문으로 다시 번역해요. 확인한 뒤 교체하세요.</p>' + (snapshot ? textBlock('선택한 번역문', snapshot.text) : '<p>창을 닫고 채팅 본문에서 문장이나 문단을 선택한 뒤, 나타나는 언어 버튼을 눌러 주세요.</p>') + '<button data-translate data-primary><i class="fa-solid fa-language" aria-hidden="true"></i> 다시 번역</button><div data-preview></div>';
         const button = body.querySelector('[data-translate]'); button.disabled = !snapshot;
         button.onclick = () => action(box, button, async () => {
-            const job = await prepareTranslation(snapshot); if (!box.isConnected) return;
+            const job = await prepareTranslation(snapshot, () => closed || !box.open); if (!box.isConnected) return;
             const preview = body.querySelector('[data-preview]');
             preview.innerHTML = textBlock('교체할 기존 문단', job.translated.slice(job.span.start,job.span.end)) + textBlock('대응 원문 확인 (AI 대조)', job.original) + `<label>새 번역<textarea data-new rows="7">${esc(job.result)}</textarea></label><div class="llmt-selection-actions"><button data-apply data-primary><i class="fa-solid fa-check" aria-hidden="true"></i> 이 부분 교체</button><button data-undo disabled><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> 되돌리기</button></div>`;
             let undo = null;

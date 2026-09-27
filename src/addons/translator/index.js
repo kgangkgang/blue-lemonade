@@ -1,8 +1,8 @@
 // Modified 2026-09-24: Blue Lemonade bundled adapter; original settings and translation DB retained.
+import { isPreset, validSettings, validImport, validPromptList, validPresetList, exportPresets, restoreTranslationRows } from './preset-data.js';
 import { createGuards, watchGuard } from './translation-guard.js';
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
 import { segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho } from './translation-segments.js';
-import { syncSelectionRetranslate } from './selection/index.js';
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
 import { requestCurrentConnection } from './current-connection.js';
@@ -284,6 +284,8 @@ function updateConnectionVisibility() {
 }
 
 function loadSettings() {
+    $('#llm_glossary_enabled').prop('checked', extensionSettings.glossary_enabled !== false);
+    $('#llm_glossary_apply_send').prop('checked', extensionSettings.glossary_apply_send !== false);
     if (typeof extensionSettings.selection_retranslate !== 'boolean') extensionSettings.selection_retranslate = extension_settings.salty?.addons?.retranslate === true;
     // [2.1.1] 예전 버전이 따로 쌓아 둔 겹치는 용어집 항목을 한 번 정리한다
     if (Array.isArray(extensionSettings.glossary_entries)) {
@@ -432,7 +434,7 @@ function loadSettings() {
     // 체크박스 상태 설정 및 버튼 업데이트
     syncTranslatorMenus(extensionSettings);
     $('#llm_selection_retranslate').prop('checked', extensionSettings.selection_retranslate);
-    syncSelectionRetranslate({settings:extensionSettings, translate, render:processTranslationText, capture: message => guards.capture(message)});
+    syncSelection();
     $('#llm_translation_button_toggle').prop('checked', extensionSettings.show_input_translate_button);
     updateInputTranslateButton();
 
@@ -811,17 +813,7 @@ function loadParameterValues(provider) {
         }
     });
 
-    // 공통 파라미터(Temperature, Max Length) 업데이트
-    ['max_length', 'temperature'].forEach(param => {
-        if (params.hasOwnProperty(param)) {
-            const value = params[param];
-            const input = $(`#${param}`);
-            if (input.length) {
-                input.val(value);
-                input.prev('.neo-range-slider').val(value);
-            }
-        }
-    });
+
 }
 
 // 선택된 공급자의 파라미터 값을 저장
@@ -829,9 +821,6 @@ function saveParameterValues(provider) {
     // 1. [데이터 타겟] 저장할 대상 객체 복사 (OpenRouter 등)
     const params = { ...extensionSettings.parameters[provider] };
 
-    // 공통 파라미터 저장
-    params.max_length = parseInt($('#max_length').val());
-    params.temperature = parseFloat($('#temperature').val());
 
     // 2. [UI 소스] 값을 읽어올 화면 요소 결정
     let targetUiSuffix = provider;
@@ -857,18 +846,10 @@ function saveParameterValues(provider) {
 // 공급자별 특정 파라미터 추출
 function getProviderSpecificParams(provider, params) {
     switch (provider) {
-        case 'profile': {
-            const content = data.choices?.[0]?.message?.content ?? data.choices?.[0]?.text ??
-                data.results?.[0]?.text ?? data.candidates?.[0]?.content ?? data.message?.content ??
-                data.content ?? data.generations?.[0]?.text ?? data.text;
-            result = (typeof content === 'string' ? content :
-                Array.isArray(content) ? content.filter(p => !p.type || p.type === 'text').map(p => p.text || '').join('') :
-                content?.parts?.filter(p => !p.thought).map(p => p.text || '').join('') || '').trim();
-            break;
-        }
         case 'openai':
         case 'openrouter':
         case 'custom':
+        case 'deepseek':
             return {
                 frequency_penalty: params.frequency_penalty,
                 presence_penalty: params.presence_penalty,
@@ -1314,7 +1295,7 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
             }
         }
 
-        const role = extensionSettings.connection_mode === 'direct' && (provider === 'google' || provider === 'vertexai') ? 'model' : 'assistant';
+        const role = 'assistant'; // ST converts the role according to the provider/model's prefill support.
         messages.push({ role, content: prefillContent });
     }
 
@@ -1519,6 +1500,8 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
 
 // 결과 추출 로직 분리  
 function extractTranslationResult(data, provider) {
+    const finish = String(data?.choices?.[0]?.finish_reason ?? data?.candidates?.[0]?.finishReason ?? data?.stop_reason ?? data?.finish_reason ?? data?.finishReason ?? '');
+    if (/^(?:length|max_tokens|max_output_tokens)$/i.test(finish)) throw Object.assign(new Error('출력 한도에 닿아 번역이 잘렸어요. 출력 길이를 늘린 뒤 다시 번역해 주세요.'), { truncated: true, resumable: true });
     // [1.9.0] 막힌 응답: 중간에 끊긴 번역도 붙이지 않는다
     const blocked = blockedReasonOf(data);
     if (blocked) {
@@ -1630,8 +1613,8 @@ function activeConnectionFields(c) {
         if (c.mainApi === 'openai') {
             const o = c.chatCompletionSettings || {};
             let model = ''; try { model = getChatCompletionModel(o); } catch { model = o[`${o.chat_completion_source}_model`] ?? ''; }
-            return [o.chat_completion_source, model, o.custom_url, o.reverse_proxy, Boolean(o.proxy_password), o.temperature, o.top_p, o.top_k,
-                o.frequency_penalty, o.presence_penalty, o.openai_max_tokens, o.openai_max_context];
+            return [o.chat_completion_source, model, o.custom_url, o.reverse_proxy, Boolean(o.proxy_password), o.temp_openai, o.top_p_openai, o.top_k_openai,
+                o.freq_pen_openai, o.pres_pen_openai, o.openai_max_tokens];
         }
         if (c.mainApi === 'textgenerationwebui') {
             const t = c.textCompletionSettings || {};
@@ -1680,6 +1663,12 @@ async function translate(text, options = {}) {
                 return placeholder;
             });
         });
+
+        let compareText = options.checkSource ?? maskedText;
+        if (options.checkSource !== undefined) {
+            let index = 0;
+            for (const regex of regexes) compareText = compareText.replace(regex, () => createPlaceholder(index++));
+        }
 
         // [디버그: 마스킹 추적] 원문에서 기대하는 마스킹 개수 저장
         const expectedMaskCount = protectedBlocks.length;
@@ -1798,12 +1787,15 @@ async function translate(text, options = {}) {
         /** 한 덩어리를 배치 순서대로 보낸다. 끝까지 막히면 refused 오류를 던진다. */
         const callWithLayouts = async (body, layouts) => {
             let out = '';
-            for (const layout of layouts) {
-                const last = layout === layouts.at(-1);
+            const promptOf = layout => prepared.get(body)?.[PROMPT_LAYOUTS.indexOf(layout)] ?? buildFullPrompt(layout, body);
+            const seen = new Set();
+            const tries = layouts.filter(layout => { const prompt = promptOf(layout); if (seen.has(prompt)) return false; seen.add(prompt); return true; });
+            for (const layout of tries) {
+                const last = layout === tries.at(-1);
                 // [2.0.6] 중계가 400 prompt_blocked / PROHIBITED_CONTENT 로 끊어도(refused 오류) 같은 이유로 배치를 바꿔 본다 —
                 //         2.0.4 는 200 으로 오는 차단 문구만 다시 보냈고, 400 은 곧장 오류로 냈다. 실제로 같은 글이 배치 1 로는 통과했다.
                 try {
-                    out = await request(prepared.get(body)?.[PROMPT_LAYOUTS.indexOf(layout)] ?? buildFullPrompt(layout, body));
+                    out = await request(promptOf(layout));
                 } catch (error) {
                     if (!error?.refused || last) throw error;
                     console.warn(`[LLM Translator] 요청이 차단됨 (배치 ${layout}) — 배치를 바꿔 다시 보내요:`, error.message);
@@ -1815,7 +1807,7 @@ async function translate(text, options = {}) {
             if (looksLikeInputBlock(out)) throw inputBlockError();
             // [1.9.0] 거절문은 번역문이 아니다 — 여기서 던지면 붙이지도 캐시에 넣지도 않는다 (마스킹된 원문끼리 길이를 견준다)
             // 5.2.9: 묶음 머리말은 원문이 아니다 — 머리말을 뺀 길이로 견준다 (머리말 탓에 짧은 묶음의 정상 번역이 거절로 오인됐다)
-            if (looksLikeRefusal(body.startsWith(BATCH_HEADER) ? body.slice(BATCH_HEADER.length) : body, out)) throw refusalError(out);
+            if (looksLikeRefusal(isRetranslation ? compareText : (body.startsWith(BATCH_HEADER) ? body.slice(BATCH_HEADER.length) : body), out)) throw refusalError(out);
             return out;
         };
 
@@ -1930,7 +1922,7 @@ async function translate(text, options = {}) {
             translatedText = await runChunks();
         } else {
             progress({ stage: 'whole' });
-            try { translatedText = restoreParagraphBreaks(maskedText, await callWithLayouts(maskedText, PROMPT_LAYOUTS)); } // 5.2.4 빠진 문단 빈 줄 되살리기
+            try { translatedText = restoreParagraphBreaks(isRetranslation ? compareText : maskedText, await callWithLayouts(maskedText, PROMPT_LAYOUTS)); } // 5.2.4 빠진 문단 빈 줄 되살리기
             catch (error) {
                 if (!error?.refused || chunks.length < 2) throw error;
                 translatedText = await runChunks();
@@ -2016,9 +2008,7 @@ async function translate(text, options = {}) {
             throw new Error('네트워크 연결 오류: 인터넷 연결을 확인해주세요.');
         }
         // 일반적인 에러
-        const wrapped = new Error(`번역 실패: ${error.message}`);
-        if (error.refused) wrapped.refused = true;
-        throw wrapped;
+        throw error; // 알림 제목이 이미 실패를 설명한다. 중복 접두어와 오류 속성 손실을 피한다.
     } finally { watcher.close(); }
 }
 
@@ -2183,7 +2173,7 @@ async function retranslateMessage(messageId, promptType, forceRetranslate = fals
         const sourceMes = message.mes;          // [1.9.2] 끝났을 때 같은 글인지 보려고
         const chatId = context.chatId;
         const originalText = substituteParams(message.mes, context.name1, message.name);
-        const existingTranslation = await readCachedTranslation(originalText);
+        const existingTranslation = await localOrDisplayedTranslation(message, originalText);
 
         let textToRetranslate, prompt;
 
@@ -2238,7 +2228,7 @@ async function retranslateMessage(messageId, promptType, forceRetranslate = fals
         const badge = progressBadge(messageId, message, sourceMes, chatId);
         let retranslation;
         try {
-            retranslation = await translate(textToRetranslate, { ...options, assertValid: () => runToken.guard.assert(), onProgress: badge.update, report });
+            retranslation = await translate(textToRetranslate, { ...options, checkSource: originalText, assertValid: () => runToken.guard.assert(), onProgress: badge.update, report });
         } finally {
             badge.remove();
         }
@@ -2327,6 +2317,20 @@ function publishArchiveReady(message, sourceText, chatId, type) {
     }}));
 }
 
+// 이어쓰기 등으로 원문이 바뀌었는데 번역이 실패하면, 옛 번역이 새 원문을 가리지 않게 한다.
+// 우리 해시가 있는 표시만 치운다. 기존 원문용 IndexedDB 캐시는 보존한다.
+async function hideStaleTranslation(message, onHide = null) {
+    const context = getContext(), id = context.chat.indexOf(message), extra = message?.extra;
+    if (id < 0 || !extra?.original_text_hash || (!extra.display_text && !extra.original_translation_backup)) return false;
+    const original = substituteParams(message.mes, context.name1, message.name);
+    if (extra.original_text_hash === originalHashOf(original)) return false;
+    delete extra.display_text; delete extra.original_translation_backup;
+    onHide?.();
+    refreshMessageBlock(id, message); syncMesToSwipe(id);
+    try { await context.saveChat(); } catch (error) { console.warn('[LLM Translator] 원문 표시 저장 실패:', error); }
+    return true;
+}
+
 // 단순화된 메시지 번역 함수
 async function translateMessage(messageId, forceTranslate = false, source = 'manual') {
     const context = getContext();
@@ -2357,6 +2361,8 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
         const sourceMes = message.mes;          // [1.9.2] 끝났을 때 같은 글인지 보려고
         const chatId = context.chatId;
         const originalText = substituteParams(message.mes, context.name1, message.name);
+        await hideStaleTranslation(message, () => runToken.guard.acceptDisplay());
+        runToken.guard.assert();
 
         // [추가할 코드] 원문이 없거나 공백뿐이면 즉시 종료 (무한 루프 방지)
         if (!originalText || !originalText.trim()) return;
@@ -2477,6 +2483,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
         if (message.extra?.original_text_hash === originalHashOf(originalText)) publishArchiveReady(message, sourceMes, chatId, 'translation');
     } catch (error) {
         runToken.error = error;
+        if (runToken.chatGuard.valid()) await hideStaleTranslation(message);
         if (source === 'batch') throw error;
         if (error?.cancelled) {
             if (source === 'auto' && runToken.chatGuard.valid() &&
@@ -2486,7 +2493,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                     if (runToken.chatGuard.valid() && id >= 0 && !skipCutAutoTranslate(message, id))
                         translateMessage(id, false, 'auto').catch(() => {});
                 });
-            } else if (source !== 'auto') toastr.info(error.message);
+            } else toastr.info(error.message, '번역 중단', { timeOut: 4000 });
             return;
         }
         (error?.refused ? console.warn : console.error)('Translation error:', error);
@@ -2846,6 +2853,12 @@ async function onTranslationsClearClick() {
     for (const mes of chat) {
         if (mes.extra) {
             delete mes.extra.display_text;
+            delete mes.extra.original_translation_backup;
+        }
+        for (const info of Array.isArray(mes.swipe_info) ? mes.swipe_info : []) {
+            if (!info?.extra || typeof info.extra !== 'object') continue;
+            delete info.extra.display_text;
+            delete info.extra.original_translation_backup;
         }
     }
 
@@ -2977,7 +2990,7 @@ async function editTranslation(messageId) {
     const originalMessageText = substituteParams(message.mes, context.name1, message.name);
     let originalDbTranslation;
     try {
-        originalDbTranslation = await getTranslationFromDB(originalMessageText);
+        originalDbTranslation = await localOrDisplayedTranslation(message, originalMessageText);
         if (originalDbTranslation === null) {
             toastr.error('오류: 화면에는 번역문이 있으나 DB에서 원본을 찾을 수 없습니다.');
             return;
@@ -3054,7 +3067,7 @@ async function editTranslation(messageId) {
         else if (newText !== originalDbTranslation) {
             try {
                 // DB 업데이트
-                await updateTranslationByOriginalText(originalTextForDbKey, newText);
+                await addTranslationToDB(originalTextForDbKey, newText);
 
                 // 화면 표시 업데이트
                 const processedNewText = processTranslationText(originalTextForDbKey, newText);
@@ -3092,21 +3105,40 @@ async function editTranslation(messageId) {
 }
 
 // 입력 번역 버튼
+let inputButtonLoad = null;
 function updateInputTranslateButton() {
     if (extensionSettings.show_input_translate_button) {
-        if ($('#llm_translate_input_button').length === 0) {
-            // sendform.html 로드
-            $.get(`${extensionFolderPath}/sendform.html`, function (data) {
+        if (!document.getElementById('llm_translate_input_button')) {
+            inputButtonLoad ??= $.get(`${extensionFolderPath}/sendform.html`).then(data => {
+                inputButtonLoad = null;
+                if (!extensionSettings.show_input_translate_button || document.getElementById('llm_translate_input_button')) return;
                 $('#rightSendForm').append(data);
                 bindSendButton(document.getElementById('llm_translate_input_button'));
                 refreshSendButton();
-            });
+            }, () => { inputButtonLoad = null; });
         } else {
             refreshSendButton();
         }
     } else {
-        $('#llm_translate_input_button').remove();
+        document.querySelectorAll('#llm_translate_input_button').forEach(button => button.remove());
     }
+}
+
+let selectionModule = null;
+function syncSelection() {
+    if (!selectionModule && extensionSettings.selection_retranslate !== true) return;
+    selectionModule ??= import('./selection/index.js');
+    selectionModule.then(module => module.syncSelectionRetranslate({
+        settings: extensionSettings, translate, render: processTranslationText,
+        capture: message => guards.capture(message),
+        refresh: (id, message) => refreshMessageBlock(id, message),
+        complete: (id, message, source) => {
+            emitTranslationUIUpdate(id, 'retranslation');
+            eventSource.emit('EXTENSION_LLM_TRANSLATE_DONE', { messageId: id, message, sourceText: message.mes,
+                chatId: getContext().chatId, originalText: source, translatedText: message.extra.display_text, type: 'retranslation' });
+            publishArchiveReady(message, message.mes, getContext().chatId, 'retranslation');
+        },
+    })).catch(error => { selectionModule = null; console.warn('[LLM Translator] 선택 재번역 초기화 실패:', error); });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -3258,18 +3290,22 @@ async function onMessageSentTranslate(messageId) {
 
     const toast = toastr.info(`${sendLangLabel()}로 번역해서 보내는 중…`, '보내기 번역', { timeOut: 0, extendedTimeOut: 0, tapToDismiss: false });
     setSendButtonBusy(true);
+    let stopped = false;
+    const onStop = () => { stopped = true; };
+    const assertSend = () => { if (stopped) throw Object.assign(new Error('보내기 번역을 멈췄어요. 입력한 원문은 그대로예요.'), { cancelled: true }); sendGuard.assert(); };
+    if (event_types.GENERATION_STOPPED) eventSource.on(event_types.GENERATION_STOPPED, onStop);
     try {
         let prompt = (s.llm_prompt_send || defaultSettings.llm_prompt_send)
             .replace(/\{\{languageRules\}\}/g, sendLanguageRules())
             .replace(/\{\{targetLang\}\}/g, sendLang())
             .replace(/\{\{dialogueLang\}\}/g, sendDialogueLang() || sendLang());
         const reference = await buildSendReference(text);
-        sendGuard.assert();
+        assertSend();
         if (reference) prompt += `\n\n${reference}`;
         prompt += '\n\n[Message to translate]';
-        const translated = String(await translate(text, { prompt, isInputTranslation: true, assertValid: () => sendGuard.assert() }) || '').trim();
+        const translated = String(await translate(text, { prompt, isInputTranslation: true, assertValid: assertSend }) || '').trim();
         if (!translated) throw new Error('번역 결과가 비어 있어요');
-        sendGuard.assert();
+        assertSend();
         message.extra.llmt_sent_original = text;
         message.mes = translated;                                   // AI 에게 가는 글 (저장되는 원문도 이것)
         if ((s.send_display || 'original') === 'original') {
@@ -3284,6 +3320,7 @@ async function onMessageSentTranslate(messageId) {
         console.error('[LLM Translator] 보내기 번역 실패 — 원문 그대로 보냅니다:', error);
         toastr.error(error?.message || String(error), '보내기 번역 실패 — 원문 그대로 보냄', { timeOut: 8000 });
     } finally {
+        if (event_types.GENERATION_STOPPED) eventSource.removeListener(event_types.GENERATION_STOPPED, onStop);
         toastr.clear(toast);
         setSendButtonBusy(false);
     }
@@ -3355,7 +3392,7 @@ jQuery(async () => {
         $('#llm_selection_retranslate').off('change').on('change', function () {
             extensionSettings.selection_retranslate = this.checked;
             saveSettingsDebounced();
-            syncSelectionRetranslate({settings:extensionSettings, translate, render:processTranslationText, capture: message => guards.capture(message)});
+            syncSelection();
         });
 
         // 프리셋 드롭다운 업데이트
@@ -3364,7 +3401,7 @@ jQuery(async () => {
         }
 
         logDebug('LLM Translator extension initialized successfully');
-        globalThis[Symbol.for('blue-lemonade.translator')] = { processTranslationText };
+        publishTranslatorAPI();
         resolve();
     } catch (error) {
         console.error('Error initializing LLM Translator extension:', error);
@@ -3560,12 +3597,12 @@ function translateIncomingMessage(messageId) {
     }
 
     // [2.0.5] 끊김 감시(블루 레몬에이드 성능 보조)가 끊은 답은 자동 번역하지 않는다 — 반쪽짜리 글에 번역 요청을 쓰지 않게.
-    //         끊김 감시가 남긴 표시를 받아 그때의 글 길이를 메시지에 적어 두고, 글이 그대로인 동안만 건너뛴다(이어쓰기 · 편집으로 글이 바뀌면 다시 번역).
+    //         끊김 감시가 남긴 표시를 받아 그때의 글 길이를 메시지에 적어 두고, 글이 그대로인 동안만 건너뛴다. 이어쓰기 · 편집으로 표시는 풀리지만 편집 자체가 자동 번역을 요청하지는 않는다.
     //         번역 버튼으로 직접 번역하는 것은 막지 않는다.
     if (cutByWatchdog(message)) {
         console.info('[LLM Translator] 끊긴 답이라 자동 번역을 건너뜀', messageId);
         if (typeof toastr !== 'undefined') toastr.info('끊긴 답이라 자동 번역을 건너뛰었어요. 번역하려면 메시지의 번역 버튼을 누르세요.', 'LLM 번역', { timeOut: 4000 });
-        return;
+        return hideStaleTranslation(message);
     }
 
     // 백그라운드에서 번역 실행
@@ -3581,6 +3618,8 @@ function translateOutgoingMessage(messageId) {
     if (!message) {
         return;
     }
+
+    if (message.extra?.llmt_sent_original !== undefined && extensionSettings.send_display === 'sent') return;
 
     if (typeof message.extra !== 'object') {
         message.extra = {};
@@ -3605,6 +3644,17 @@ function originalHashOf(text) {
 function markTranslatedOriginal(message, originalText) {
     message.extra.original_text_hash = originalHashOf(originalText);
     delete message.extra.original_text_for_translation;
+}
+
+async function localOrDisplayedTranslation(message, originalText) {
+    const cached = await readCachedTranslation(originalText);
+    if (cached !== null) return cached;
+    // Other-device chats carry the source hash and raw display text but no local IndexedDB row.
+    // Never feed processed HTML, a stale translation, or the original-text view back to the model/editor.
+    if (message?.extra?.original_text_hash !== originalHashOf(originalText)) return null;
+    const displayed = message.extra.original_translation_backup || message.extra.display_text;
+    if (typeof displayed !== 'string' || !displayed.trim() || displayed === originalText || /<[a-z][\s\S]*>/i.test(displayed)) return null;
+    return displayed;
 }
 function migrateOriginalCopies(chat) {
     let n = 0;
@@ -4429,83 +4479,6 @@ function initializeEventHandlers() {
 
 
 
-    // 새로운 클릭 리스너 추가 (SillyTavern 방식 적용)
-    $(document).off('click', '.prompt-editor-button').on('click', '.prompt-editor-button', async function () {
-        // 1. data-for 속성에서 원본 textarea ID 가져오기
-        const originalTextareaId = $(this).data('for'); // 'llm_prompt_chat', 'llm_prompt_input' 등
-        const originalTextarea = $(`#${originalTextareaId}`); // jQuery 객체
-
-        // 원본 textarea를 찾았는지 확인
-        if (!originalTextarea.length) {
-            console.error(`[LLM Translator] Could not find original textarea with id: ${originalTextareaId}`);
-            toastr.error('편집할 원본 텍스트 영역을 찾을 수 없습니다.');
-            return;
-        }
-
-        // 2. callGenericPopup에 전달할 요소들 동적 생성
-        const wrapper = document.createElement('div');
-        // SillyTavern과 유사한 스타일링 적용 (필요시 클래스 추가)
-        wrapper.classList.add('height100p', 'wide100p', 'flex-container', 'flexFlowColumn');
-
-        const popupTextarea = document.createElement('textarea');
-        popupTextarea.dataset.for = originalTextareaId; // 참조용으로 추가 (선택 사항)
-        popupTextarea.value = originalTextarea.val(); // 원본 내용 복사
-        // SillyTavern과 유사한 스타일링 적용 + LLM Translator 필요 스타일
-        popupTextarea.classList.add('height100p', 'wide100p'); // 기본 크기
-        // popupTextarea.classList.add('maximized_textarea'); // ST 클래스 (필요 여부 확인)
-        // 원본에 monospace 클래스가 있다면 복사 (LLM Translator에 해당 클래스가 있다면)
-        // if (originalTextarea.hasClass('monospace')) { popupTextarea.classList.add('monospace'); }
-
-        // 3. 새 textarea 변경 시 원본 textarea 실시간 업데이트
-        popupTextarea.addEventListener('input', function () {
-            // 원본 textarea 값 변경 및 input 이벤트 트리거 (SillyTavern 방식)
-            originalTextarea.val(popupTextarea.value).trigger('input');
-            // LLM Translator의 설정 저장 로직도 트리거해야 할 수 있음 (확인 필요)
-            // 예: saveSettingsDebounced(); 또는 해당 설정 값 직접 업데이트
-            if (originalTextareaId === 'llm_prompt_editor') {
-                // 통합 프롬프트 편집기의 경우 현재 선택된 프롬프트에 저장
-                const selectorElement = $('#prompt_select');
-                if (selectorElement.length > 0) {
-                    const selectedPromptKey = selectorElement.val();
-                    if (selectedPromptKey) {
-                        // 커스텀 프롬프트 확인
-                        const customPrompt = promptManager.customPrompts.find(p => p.id === selectedPromptKey);
-                        if (customPrompt) {
-                            customPrompt.content = popupTextarea.value;
-                            promptManager.saveToLocalStorage();
-                        } else {
-                            // 기본 프롬프트
-                            extensionSettings[selectedPromptKey] = popupTextarea.value;
-                            $(`#${selectedPromptKey}`).val(popupTextarea.value);
-                        }
-                    }
-                }
-            }
-            saveSettingsDebounced(); // 디바운스 저장 호출
-        });
-
-        wrapper.appendChild(popupTextarea);
-
-        // 4. SillyTavern의 callGenericPopup 호출!
-        try {
-            // POPUP_TYPE.TEXT 는 SillyTavern 전역 스코프에 정의되어 있어야 함
-            if (typeof callGenericPopup === 'function' && typeof POPUP_TYPE !== 'undefined' && POPUP_TYPE.TEXT) {
-                // 제목 가져오기 (선택 사항, 버튼의 title 속성 등 활용)
-                const popupTitle = $(this).attr('title') || '프롬프트 편집'; // 버튼의 title 사용
-                await callGenericPopup(wrapper, POPUP_TYPE.TEXT, popupTitle, { wide: true, large: true });
-                // 팝업이 닫힌 후 포커스를 원래 버튼이나 다른 곳으로 이동시킬 수 있음 (선택적)
-                $(this).focus();
-            } else {
-                console.error('[LLM Translator] callGenericPopup or POPUP_TYPE.TEXT is not available.');
-                toastr.error('SillyTavern의 팝업 기능을 사용할 수 없습니다.');
-            }
-        } catch (error) {
-            console.error('[LLM Translator] Error calling callGenericPopup:', error);
-            toastr.error('팝업을 여는 중 오류가 발생했습니다.');
-        }
-    });
-
-
     // 번역 표시 모드 변경 이벤트 핸들러 추가
     $('#translation_display_mode').off('change').on('change', function () {
         const selectedMode = $(this).val(); // 선택된 값 가져오기
@@ -4527,6 +4500,7 @@ function initializeEventHandlers() {
     const restoreButton = document.getElementById("llm_translation_restore");
     restoreButton?.addEventListener("change", function (event) {
         const file = event.target.files[0];
+        event.target.value = '';
         if (file) {
             restoreDB(file);
         }
@@ -5040,7 +5014,9 @@ async function getAllTranslationsFromDB() {
 
 // 다운로드
 async function downloadDB() {
-    const data = await getAllTranslationsFromDB();
+    let data;
+    try { data = await getAllTranslationsFromDB(); }
+    catch { toastr.error('번역 데이터를 내보내지 못했어요.'); return; }
     if (data && data.length > 0) {
         const jsonData = JSON.stringify(data);
         const blob = new Blob([jsonData], { type: 'application/json' });
@@ -5087,73 +5063,16 @@ function getBrowserName() {
 
 //DB 복원
 async function restoreDB(file) {
-    const db = await openDB();
-    const reader = new FileReader();
-    reader.onload = async function (event) {
-        try {
-            const backupData = JSON.parse(event.target.result);
-            return new Promise(async (resolve, reject) => {
-                const transaction = db.transaction(STORE_NAME, 'readwrite');
-                const store = transaction.objectStore(STORE_NAME);
-
-                for (const item of backupData) {
-                    const index = store.index('originalText');
-                    const request = index.get(item.originalText);
-
-                    await new Promise((resolveGet) => {
-                        request.onsuccess = async (event) => {
-                            const record = event.target.result;
-                            if (record) {
-                                // 기존에 데이터가 있으면 갱신
-                                await new Promise((resolvePut) => {
-                                    const updateRequest = store.put({ ...record, translation: item.translation, provider: item.provider, model: item.model, date: item.date });
-                                    updateRequest.onsuccess = () => {
-                                        resolvePut();
-                                    }
-                                    updateRequest.onerror = (e) => {
-                                        reject(new Error("restore put error"));
-                                        resolvePut();
-                                    }
-                                })
-                            } else {
-                                // 없으면 추가
-                                await new Promise((resolveAdd) => {
-                                    const addRequest = store.add(item);
-                                    addRequest.onsuccess = () => {
-                                        resolveAdd();
-                                    }
-                                    addRequest.onerror = (e) => {
-                                        reject(new Error("restore add error"));
-                                        resolveAdd();
-                                    }
-                                })
-                            }
-                            resolveGet();
-                        }
-                        request.onerror = (e) => {
-                            reject(new Error("restore get error"));
-                            resolveGet();
-                        }
-                    })
-                }
-
-                transaction.oncomplete = function () {
-                    db.close();
-                    toastr.success('데이터를 복원했습니다.');
-                    globalThis[Symbol.for('blue-lemonade.translator')] = { processTranslationText };
-        resolve();
-                }
-
-                transaction.onerror = function (event) {
-                    db.close();
-                    reject(new Error("restore transaction error"));
-                }
-            });
-        } catch (e) {
-            toastr.error("올바르지 않은 파일형식입니다.");
-        }
-    }
-    reader.readAsText(file);
+    let db;
+    try {
+        const rows = JSON.parse(await file.text());
+        if (!Array.isArray(rows)) throw new TypeError('올바르지 않은 파일형식입니다.');
+        db = await openDB();
+        await restoreTranslationRows(db, STORE_NAME, rows);
+        toastr.success('데이터를 복원했습니다.');
+    } catch (error) {
+        toastr.error(error instanceof SyntaxError || error instanceof TypeError ? '올바르지 않은 파일형식입니다.' : '번역 데이터를 복원하지 못했어요.');
+    } finally { db?.close(); }
 }
 
 
@@ -5185,7 +5104,7 @@ async function updateTranslationByOriginalText(originalText, newTranslation) {
                 rest.forEach(extra => store.delete(extra.id));
                 const updateRequest = store.put({ ...record, translation: newTranslation, provider: provider, model: model, date: date });
                 updateRequest.onsuccess = () => {
-                    globalThis[Symbol.for('blue-lemonade.translator')] = { processTranslationText };
+                    publishTranslatorAPI();
         resolve();
                 };
                 updateRequest.onerror = (e) => {
@@ -5215,6 +5134,15 @@ async function readCachedTranslation(originalText) {
 async function forgetParagraphCache(originalText) {
     try { await translate(originalText, { segmentCache: true, forget: true }); }
     catch (error) { console.warn('[LLM Translator] 문단 캐시 지우기 실패:', error?.message || error); }
+}
+function publishTranslatorAPI() {
+    if (!duplicate) globalThis[Symbol.for('blue-lemonade.translator')] = {
+        processTranslationText, readCachedTranslation, storeTranslationQuietly, deleteCachedTranslation,
+    };
+}
+async function deleteCachedTranslation(originalText) {
+    await forgetParagraphCache(originalText);
+    return deleteTranslationByOriginalText(originalText);
 }
 async function storeTranslationQuietly(originalText, translation) {
     // 5.4.1: 원문을 베껴 품은 번역(원문+화살표+번역 · ⟦n] 표시)은 캐시에 넣지 않는다 — 다시 번역해도 캐시에서 같은 글이 나왔다
@@ -5268,7 +5196,7 @@ async function deleteDB() {
         const request = indexedDB.deleteDatabase(DB_NAME);
         request.onsuccess = () => {
             toastr.success('모든 번역 데이터가 삭제되었습니다.');
-            globalThis[Symbol.for('blue-lemonade.translator')] = { processTranslationText };
+            publishTranslatorAPI();
         resolve();
         };
         request.onerror = (event) => {
@@ -5295,7 +5223,7 @@ async function deleteTranslationByOriginalText(originalText) {
                 rest.forEach(extra => store.delete(extra.id));
                 const deleteRequest = store.delete(record.id);
                 deleteRequest.onsuccess = () => {
-                    globalThis[Symbol.for('blue-lemonade.translator')] = { processTranslationText };
+                    publishTranslatorAPI();
         resolve();
                 }
                 deleteRequest.onerror = (e) => {
@@ -5331,9 +5259,10 @@ function logDebug(...args) {
  * 현재 브라우저의 번역 캐시(IndexedDB)를 현재 로드된 채팅의 메타데이터에 백업합니다.
  * @returns {Promise<void>}
  */
+let dbMetadataTaskRunning = false;
 async function backupTranslationsToMetadata() {
     const DEBUG_PREFIX = `[${extensionName} - Backup]`;
-    if (isChatTranslationInProgress) {
+    if (dbMetadataTaskRunning) {
         toastr.warning('이미 백업 작업이 진행 중입니다.');
         logDebug('Backup already in progress. Exiting.');
         return;
@@ -5348,7 +5277,7 @@ async function backupTranslationsToMetadata() {
     // }
 
     try {
-        isChatTranslationInProgress = true;
+        dbMetadataTaskRunning = true;
         toastr.info('번역 캐시 백업 시작... (데이터 양에 따라 시간이 걸릴 수 있습니다)');
         logDebug('Starting backup to metadata...');
 
@@ -5393,7 +5322,7 @@ async function backupTranslationsToMetadata() {
         console.error(`${DEBUG_PREFIX} Error during backup:`, error);
         toastr.error(`백업 중 오류 발생: ${error.message || '알 수 없는 오류'}`);
     } finally {
-        isChatTranslationInProgress = false;
+        dbMetadataTaskRunning = false;
         logDebug('Backup process finished.');
     }
 }
@@ -5406,7 +5335,7 @@ async function backupTranslationsToMetadata() {
  */
 async function restoreTranslationsFromMetadata() {
     const DEBUG_PREFIX = `[${extensionName} - Restore AddOnly Progress]`;
-    if (isChatTranslationInProgress) {
+    if (dbMetadataTaskRunning) {
         toastr.warning('이미 복원 작업이 진행 중입니다.');
         logDebug('Restore already in progress. Exiting.');
         return;
@@ -5421,7 +5350,7 @@ async function restoreTranslationsFromMetadata() {
     // ---
 
     try {
-        isChatTranslationInProgress = true;
+        dbMetadataTaskRunning = true;
         logDebug('Starting restore from metadata (Add-Only mode)...');
         // Toastr 시작 메시지 제거 (프로그레스 바가 대신함)
 
@@ -5593,7 +5522,7 @@ async function restoreTranslationsFromMetadata() {
             logDebug('Progress bar UI was not found or already removed.');
         }
         // ---
-        isChatTranslationInProgress = false;
+        dbMetadataTaskRunning = false;
         logDebug('Restore process finished.');
     }
 }
@@ -5604,7 +5533,7 @@ async function restoreTranslationsFromMetadata() {
  */
 async function clearBackupFromMetadata() {
     const DEBUG_PREFIX = `[${extensionName} - Cleanup]`;
-    if (isChatTranslationInProgress) {
+    if (dbMetadataTaskRunning) {
         toastr.warning('이미 정리 작업이 진행 중입니다.');
         logDebug('Cleanup already in progress. Exiting.');
         return;
@@ -5626,7 +5555,7 @@ async function clearBackupFromMetadata() {
     logDebug('User confirmed metadata cleanup.');
 
     try {
-        isChatTranslationInProgress = true;
+        dbMetadataTaskRunning = true;
         toastr.info('백업 데이터 삭제 시작...');
         logDebug('Starting cleanup of metadata backup...');
 
@@ -5652,7 +5581,7 @@ async function clearBackupFromMetadata() {
         console.error(`${DEBUG_PREFIX} Error during cleanup:`, error);
         toastr.error(`백업 데이터 삭제 중 오류 발생: ${error.message || '알 수 없는 오류'}`);
     } finally {
-        isChatTranslationInProgress = false;
+        dbMetadataTaskRunning = false;
         logDebug('Cleanup process finished.');
     }
 }
@@ -5704,7 +5633,7 @@ async function getTranslationById(messageIdStr) {
 
     // 4. DB에서 해당 번역문 조회
     try {
-        const translation = await getTranslationFromDB(originalText);
+        const translation = await localOrDisplayedTranslation(message, originalText);
 
         if (translation) {
             logDebug(`Translation found for message ID ${messageId}`);
@@ -5814,7 +5743,7 @@ async function getTranslationsInRange(startIdStr, endIdStr, includeOriginal = fa
 
         try {
             // DB에서 번역문 조회
-            const translation = await getTranslationFromDB(originalText);
+            const translation = await localOrDisplayedTranslation(message, originalText);
 
             if (translation && translation.trim() !== '') {
                 // 번역문이 있는 경우
@@ -6262,34 +6191,8 @@ async function prepareQrAndCharacterForDbManagement() {
 }
 
 //----------v3 end
-/**
- * 연속된 백틱을 하나로 줄이고, 홀수 개의 백틱이 있을 경우 마지막에 백틱을 추가합니다.
- * (코드 블록 깨짐 방지 목적)
- * @param {string} input - 처리할 문자열
- * @returns {string} 처리된 문자열
- */
-function correctBackticks(input) {
-	return input;
-    // 입력값이 문자열이 아니거나 비어있으면 그대로 반환
-    if (typeof input !== 'string' || input === null) {
-        return input;
-    }
-
-    // 연속된 백틱을 하나로 줄이는 처리
-    let correctedInput = input.replace(/`{2,}/g, '`');
-
-    // 백틱(`)의 개수를 셈
-    const backtickCount = (correctedInput.match(/`/g) || []).length;
-
-    // 백틱이 홀수개일 경우
-    if (backtickCount % 2 !== 0) {
-        // 문자열의 끝에 백틱 추가 (단, 이미 백틱으로 끝나면 짝수를 위해 하나 더 붙임)
-        correctedInput += '`';
-    }
-
-    // 백틱이 짝수개일 경우 원본(연속 백틱 처리된) 그대로 반환
-    return correctedInput;
-}
+// Preserve model formatting; earlier backtick rewriting is intentionally disabled.
+function correctBackticks(input) { return input; }
 // [추가] 정규식 목록을 통합하여 가져오는 헬퍼 함수
 function getCombinedRegexes() {
     const specialBlockRegexes = [
@@ -7196,7 +7099,8 @@ class PromptManager {
     }
 
     loadFromSettings() {
-        this.customPrompts = extensionSettings.customPrompts || [];
+        this.customPrompts = validPromptList(extensionSettings.customPrompts);
+        extensionSettings.customPrompts = this.customPrompts;
         this.updatePromptDropdown();
 
         // 저장된 선택 프롬프트 복원
@@ -7552,7 +7456,8 @@ class PresetManager {
     }
 
     loadFromSettings() {
-        this.presets = extensionSettings.presets || [];
+        this.presets = validPresetList(extensionSettings.presets, defaultSettings);
+        extensionSettings.presets = this.presets;
     }
 
     saveToSettings() {
@@ -7710,7 +7615,7 @@ class PresetManager {
     // 드롭다운 선택 시 바로 적용 (확인 없이)
     applyPreset(selectedId) {
         const preset = this.presets.find(p => p.id === selectedId);
-        if (!preset) {
+        if (!isPreset(preset) || !validSettings(preset.settings, defaultSettings)) {
             toastr.error('선택한 프리셋을 찾을 수 없습니다.');
             return;
         }
@@ -7727,6 +7632,9 @@ class PresetManager {
         //         프리셋을 고르기만 해도 용어집 항목이 전부 사라지고 보내기 번역이 꺼졌다.
         const myGlossary = Array.isArray(extensionSettings.glossary_entries) ? extensionSettings.glossary_entries : [];
         const mySendTranslate = !!extensionSettings.send_translate;
+        const deviceState = Object.fromEntries(['show_chat_translate_menu', 'show_input_translate_menu', 'current_connection_v1']
+            .filter(key => Object.hasOwn(extensionSettings, key)).map(key => [key, extensionSettings[key]]));
+        const myProxyPassword = extensionSettings.reverse_proxy_password;
 
         // 3. 기존 설정 싹 지우기 (여기서 customPrompts도 같이 지워짐)
         Object.keys(extensionSettings).forEach(key => {
@@ -7742,6 +7650,8 @@ class PresetManager {
         extensionSettings.custom_model_lists = myModelLists;
         extensionSettings.glossary_entries = myGlossary;       // [1.9.2]
         extensionSettings.send_translate = mySendTranslate;    // [1.9.2]
+        Object.assign(extensionSettings, deviceState);
+        if (!Object.hasOwn(loadedSettings, 'reverse_proxy_password')) extensionSettings.reverse_proxy_password = myProxyPassword;
 
         // 6. 클래스 변수 동기화 및 매니저 리로드
         this.presets = myCurrentPresets; 
@@ -7752,6 +7662,7 @@ class PresetManager {
 
         // 7. UI 및 설정 저장
         loadSettings();
+        renderGlossary();
 
         if (promptManager && typeof promptManager.loadPromptToEditor === 'function') {
             promptManager.loadPromptToEditor();
@@ -7835,7 +7746,7 @@ class PresetManager {
 
 		// 팝업 띄우기
 		const confirm = await callGenericPopup(
-			`"${preset.name}" 프리셋을 현재 설정으로 업데이트하시겠습니까?\n(기존 프리셋 내용이 덮어쓰기됩니다.)`,
+			`"${escapeHtmlText(preset.name)}" 프리셋을 현재 설정으로 업데이트하시겠습니까?\n(기존 프리셋 내용이 덮어쓰기됩니다.)`,
 			POPUP_TYPE.CONFIRM
 		);
 
@@ -7882,7 +7793,7 @@ class PresetManager {
         }
 
         const confirm = await callGenericPopup(
-            `"${preset.name}" 프리셋을 삭제하시겠습니까?`,
+            `"${escapeHtmlText(preset.name)}" 프리셋을 삭제하시겠습니까?`,
             POPUP_TYPE.CONFIRM
         );
 
@@ -7904,7 +7815,7 @@ class PresetManager {
             version: 1,
             exportDate: new Date().toISOString(),
             customPrompts: extensionSettings.customPrompts || [],
-            presets: this.presets
+            presets: exportPresets(this.presets)
         };
 
         const jsonStr = JSON.stringify(exportData, null, 2);
@@ -7928,15 +7839,15 @@ class PresetManager {
             const data = JSON.parse(text);
 
             // 버전 및 데이터 유효성 검사
-            if (!data.customPrompts && !data.presets) {
+            if (!validImport(data, defaultSettings)) {
                 toastr.error('유효하지 않은 JSON 파일입니다.');
                 return;
             }
 
             const confirm = await callGenericPopup(
                 `JSON 파일을 가져오시겠습니까?\n\n` +
-                `• 커스텀 프롬프트: ${data.customPrompts?.length || 0}개\n` +
-                `• 프리셋: ${data.presets?.length || 0}개\n\n` +
+                `• 커스텀 프롬프트: ${Array.isArray(data.customPrompts) ? data.customPrompts.length : 0}개\n` +
+                `• 프리셋: ${Array.isArray(data.presets) ? data.presets.length : 0}개\n\n` +
                 `(기존 데이터는 덮어쓰기됩니다.)`,
                 POPUP_TYPE.CONFIRM
             );

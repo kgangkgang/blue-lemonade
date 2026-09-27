@@ -1,4 +1,5 @@
 import { preserveLocks } from './setting-locks.js';
+import { FRAME_PRESETS } from './frame-presets.js';
 // 스타일 (3.1.0) — 지금 모습(팔레트 · 색 · 글꼴 · 글자 · 채팅 모양 · 이미지 모양)을 이름 붙여 저장하고, 코드 · 파일로 나누고,
 // 완성된 스타일(소설책 · 메신저 …)을 입힌다. 캐릭터별 연결은 charstyle.js.
 //
@@ -6,7 +7,7 @@ import { preserveLocks } from './setting-locks.js';
 // — 모양만 바꾸고 쓰는 방식은 그대로 두려고. 저장한 도형을 쓰는 스타일은 그림 대신 도형 id 만 담는다 (설정 파일이 무거워지지 않게).
 import { getSettings, DEFAULTS, FONT_SET, isCssColor, safeFont } from './settings.js';
 
-export const STYLE_KEYS = ['gradients', 'palette', 'nightTint', 'lightTint', 'customName', 'colorOverrides', 'fonts', 'type', 'dialogue', 'ui', 'code', 'em', 'strong', 'shadow', 'chat', 'image', 'profile', 'userProfile'];
+export const STYLE_KEYS = ['gradients', 'palette', 'nightTint', 'lightTint', 'customName', 'colorOverrides', 'fonts', 'type', 'dialogue', 'ui', 'code', 'em', 'strong', 'shadow', 'outline', 'strike', 'deus', 'chat', 'image', 'profile', 'userProfile'];
 const CHAT_BEHAVIOR = ['triangleFold', 'weatherAutoRest', 'selectPop', 'colorPop', 'numComma', 'streamFade', 'demFold', 'qrFind'];
 export const MAX_STYLES = 20;
 const CODE_PREFIX = 'BLS1.';     // deflate-raw + base64url
@@ -24,10 +25,29 @@ function cleanOverrides(overrides) {
     }
 }
 
+function mergeKnownAppearance(target, source, defaults) {
+    for (const [key, value] of Object.entries(source)) {
+        if (UNSAFE.has(key) || !Object.hasOwn(defaults, key)) continue;
+        if (isObj(defaults[key])) {
+            if (!isObj(value)) continue;
+            if (!isObj(target[key])) target[key] = structuredClone(defaults[key]);
+            mergeKnownAppearance(target[key], value, defaults[key]);
+        } else if (typeof value === typeof defaults[key]) target[key] = structuredClone(value);
+    }
+}
+
 /** 지금 설정에서 스타일 데이터 떼어 내기 */
 export function captureStyle(s = getSettings()) {
     const data = {};
-    for (const key of STYLE_KEYS) data[key] = structuredClone(s[key]);
+    for (const key of STYLE_KEYS) data[key] = key === 'deus' ? Object.fromEntries(['ink','fx'].filter(part => s.deus?.[part] !== undefined).map(part => [part, structuredClone(s.deus[part])])) : structuredClone(s[key]);
+    // Built-in frames can be redrawn from their design parameters. Keep uploaded
+    // and library frames byte-for-byte; this only changes the captured copy.
+    for (const owner of ['image', 'profile', 'userProfile']) {
+        const decor = data[owner]?.decor;
+        if (decor?.presetId && !decor.libraryId && FRAME_PRESETS.some(([id]) => id === decor.presetId)) {
+            decor.art = ''; decor.mask = ''; delete decor.presetVersion;
+        }
+    }
     for (const key of CHAT_BEHAVIOR) delete data.chat[key];
     delete data.image.masks;
     if (data.image.maskId && s.image.masks?.some(m => m.id === data.image.maskId)) data.image.mask = '';
@@ -43,6 +63,14 @@ export function applyStyleData(s, data) {
     for (const key of STYLE_KEYS) {
         const value = data[key];
         if (value === undefined || value === null || !sameShape(key, value)) continue;
+        if (key === 'deus') {
+            s.deus ??= structuredClone(DEFAULTS.deus);
+            for (const part of ['ink','fx']) if (isObj(value[part])) {
+                s.deus[part] ??= structuredClone(DEFAULTS.deus[part]);
+                mergeKnownAppearance(s.deus[part], value[part], DEFAULTS.deus[part]);
+            }
+            continue;
+        }
         if (key === 'chat' || key === 'image' || key === 'profile' || key === 'userProfile') {
             // 아는 칸만 (기본값에 있거나 정리된 설정에 이미 있는 이름) — Object.assign 은 own __proto__ 까지 옮겨 붙였다 (5.1.2)
             if (!isObj(s[key])) s[key] = structuredClone(DEFAULTS[key]);
@@ -173,6 +201,7 @@ export async function encodeStyle(payload) {
 export async function decodeStyle(input) {
     const text = String(input || '').trim();
     let payload = null;
+    try {
     if (text.startsWith('{')) {
         payload = JSON.parse(text);
     } else {
@@ -188,10 +217,15 @@ export async function decodeStyle(input) {
         }
         payload = JSON.parse(new TextDecoder().decode(bytes));
     }
+    } catch (error) {
+        if (['이 브라우저는 압축된 코드를 못 읽어요','블루 레몬에이드 스타일 코드가 아니에요'].includes(error?.message)) throw error;
+        throw new Error('스타일 코드나 파일을 읽지 못했어요. 전체 내용을 다시 복사하거나 파일을 확인해 주세요.');
+    }
     if (!isObj(payload) || !payload.saltyStyle || !isObj(payload.style)) throw new Error('블루 레몬에이드 스타일이 아니에요');
     const style = {};
     for (const key of STYLE_KEYS) if (payload.style[key] !== undefined && sameShape(key, payload.style[key])) style[key] = payload.style[key]; // 생김새가 다른 칸은 버림 (5.1.2)
     if (style.colorOverrides) cleanOverrides(style.colorOverrides);
+    if (style.deus) style.deus = Object.fromEntries(['ink','fx'].filter(key => isObj(style.deus[key])).map(key => [key, style.deus[key]]));
     if (!Object.keys(style).length) throw new Error('스타일 안에 든 값이 없어요');
     // 5.3.4: 글꼴 이름 · 주소도 거른다 — family 가 <style> 에, css 주소가 <link> 로 들어가 받은 코드가 임의의 CSS 를 넣을 수 있었다
     const fonts = Array.isArray(payload.fonts) ? payload.fonts.filter(f => safeFont(f) && f.cors !== false) : [];

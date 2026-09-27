@@ -1,3 +1,4 @@
+import { showThemeModal } from '../../modal.js';
 // 메모 — 제목 + 내용을 적어 두는 쪽지 묶음 (커뮤니티 요청 2026-09-25: 껐다 켜도 남고, 항목마다 제목·내용, 지우기·복제·순서 바꾸기)
 // 저장: extension_settings['bl-notes'] (실리태번 설정 파일에 같이 저장 → 새로고침 · 기기 사이 동기화에도 남는다)
 //   { notes:[{id,title,body,updated}], stickies:{id:{x,y,w,h}}, look:{font,size,lh,ls,weight} }
@@ -5,6 +6,7 @@
 // 내용은 채팅 본문과 같은 길(messageFormatting → 표시 정규식 · 마크다운 · 대사 색 · 감정 대사)로 그리고, 누르면 편집 칸으로 바뀐다.
 import { extension_settings, getContext } from '../../../../../../extensions.js';
 import { saveSettingsDebounced, messageFormatting, eventSource, event_types, getThumbnailUrl, getRequestHeaders } from '../../../../../../../script.js';
+import { getSanitizedFilename } from '../../../../../../utils.js';
 import { verifyAddonCss } from '../../addon-files-check.js';
 import { getSettings } from '../../settings.js';
 import { wrapSpanningQuotes } from '../../dialogue-span.js';
@@ -61,10 +63,11 @@ export function currentOwner() {
 export function visibleNotes() { const key = currentOwner()?.key; return notes().filter(n => !n.owner || n.owner.key === key || strayOwner(n.owner)); }
 const SORTS = [['manual', '직접 정한 순', 'fa-grip-lines'], ['name', '가나다순', 'fa-arrow-down-a-z'], ['time', '최근 고친 순', 'fa-clock-rotate-left']];
 const sortName = note => (note.title || note.body || '').trim();
+const nameOrder = new Intl.Collator('ko', { numeric: true, sensitivity: 'base' });
 /** 보이는 순서: 직접 정한 순(저장 순서) · 가나다순(제목, 없으면 내용) · 최근 고친 순 */
 export function orderedNotes() {
     const list = [...visibleNotes()], mode = look().sort || 'manual';
-    if (mode === 'name') list.sort((a, b) => sortName(a).localeCompare(sortName(b), 'ko', { numeric: true, sensitivity: 'base' }));
+    if (mode === 'name') list.sort((a, b) => nameOrder.compare(sortName(a), sortName(b)));
     else if (mode === 'time') list.sort((a, b) => (b.updated || 0) - (a.updated || 0));
     return list;
 }
@@ -83,7 +86,10 @@ const outsideCode = (text, fn) => { const s = String(text || ''); let out = '', 
 // ③ 6·8자리가 두 글자씩 겹친 꼴(#ffeedd) · 두 글자가 번갈아(#fafafa) 일 때만 색. 영어 낱말(#add #bad #cafe #face #fade #decade #bead #abc)은 태그
 const HEX_SHAPE = /^(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
 const isHexColor = t => { if (!HEX_SHAPE.test(t)) return false; const s = t.toLowerCase(); return /\d/.test(s) || /^(.)\1*$/.test(s) || (s.length >= 6 && (/^(?:(.)\1)+$/.test(s) || /^(..)\1+$/.test(s))); };
-const tagName = raw => { const t = raw.replace(/\/+$/, ''); return t && !isHexColor(t) ? t : ''; };
+const TAG_BODY = /^[\p{L}\p{N}_\-\/]*[\p{L}_\-][\p{L}\p{N}_\-\/]*$/u;
+const tagName = raw => { const t = raw.replace(/\/+$/, ''); return t && TAG_BODY.test(t) && !isHexColor(t) ? t : ''; };
+// 줄 첫머리 #태그를 Markdown 제목으로 삼지 않게 한다. # 제목과 코드 칸은 그대로 둔다.
+const formatNoteText = text => outsideCode(text, chunk => chunk.replace(/^([ \t]*)#([\p{L}\p{N}_\-\/]*[\p{L}_\-][\p{L}\p{N}_\-\/]*)/gmu, (all, lead, word) => tagName(word) ? lead + '&#35;' + word : all));
 // 그린 보기는 HTML 태그 속성 · 링크(a) 안 글을 태그로 안 그린다 — 셀 때도 뺀다
 const stripForTags = text => stripCode(text).replace(/<[^>]*>/g, ' ').replace(/!?\[[^\]\n]*\]\([^)\n]*\)/g, ' ');
 export function tagsOf(text) { const out = new Set(); for (const m of stripForTags(text).matchAll(TAG_RE)) out.add(tagName(m[2])); out.delete(''); return [...out]; }
@@ -255,7 +261,7 @@ function embedEl(target, depth) {
     box.append(head, inner);
     const text = String(target.body || '').trim();
     if (!text) { inner.innerHTML = '<p class="bl-note-embed-empty">비어 있는 메모예요.</p>'; return box; }
-    try { inner.innerHTML = messageFormatting(text, '', false, false, -1, {}, false); } catch { inner.textContent = text; }
+    try { inner.innerHTML = messageFormatting(formatNoteText(text), '', false, false, -1, {}, false); } catch { inner.textContent = text; }
     try { drawTasks(inner, k => { const n = notes().find(x => x.id === target.id); if (n) updateNote(n.id, { body: toggleTask(n.body, k) }); }); } catch { /* 표시용 */ }
     try { decorate(inner, target.id, depth + 1); } catch { /* 표시용 */ }
     return box;
@@ -287,7 +293,7 @@ function renderView(host, text, onToggle, selfId = '') {
     const raw = String(text ?? '').trim();
     const reuse = assetImages(body);
     if (!raw) { body.innerHTML = ''; return; }
-    try { body.innerHTML = messageFormatting(raw, '', false, false, -1, {}, false); }
+    try { body.innerHTML = messageFormatting(formatNoteText(raw), '', false, false, -1, {}, false); }
     catch (error) { console.warn('[메모] 본문 그리기 실패:', error); body.textContent = raw; }
     try { drawTasks(body, onToggle); } catch (error) { console.warn('[메모] 체크 상자:', error); }
     try { decorate(body, selfId, 0); } catch (error) { console.warn('[메모] 태그 · 연결:', error); }
@@ -627,17 +633,22 @@ const escA = v => String(v ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<'
 const ownerImg = o => o.group ? (o.avatar || '') : (o.avatar ? getThumbnailUrl('avatar', o.avatar) : '');
 function ownerBadge(note) {
     const o = note.owner;
-    if (!o) return `<span class="bl-note-owner is-global" data-owner="${note.id}" title="전체 메모 · 꾹 누르면 채팅에 귀속" role="button" tabindex="0"><i class="fa-solid fa-earth-asia"></i><span class="bl-note-owner-name" hidden>전체 메모</span></span>`;
+    if (!o) return `<span class="bl-note-owner is-global" data-owner="${note.id}" aria-label="전체 메모 · 채팅 귀속 바꾸기" title="전체 메모 · 꾹 누르면 채팅에 귀속" role="button" tabindex="0"><i class="fa-solid fa-earth-asia"></i><span class="bl-note-owner-name" hidden>전체 메모</span></span>`;
     const img = ownerImg(o);
-    return `<span class="bl-note-owner" data-owner="${note.id}" title="${escA(o.name)} · ${escA(o.chat)} (꾹 누르면 귀속 바꾸기)" role="button" tabindex="0">${img ? `<img src="${escA(img)}" alt="" loading="lazy" draggable="false">` : '<i class="fa-solid fa-user"></i>'}<span class="bl-note-owner-name" hidden>${escA(o.chat)}</span></span>`;
+    return `<span class="bl-note-owner" data-owner="${note.id}" aria-label="${escA(o.name)} · ${escA(o.chat)} · 채팅 귀속 바꾸기" title="${escA(o.name)} · ${escA(o.chat)} (꾹 누르면 귀속 바꾸기)" role="button" tabindex="0">${img ? `<img src="${escA(img)}" alt="" loading="lazy" draggable="false">` : '<i class="fa-solid fa-user"></i>'}<span class="bl-note-owner-name" hidden>${escA(o.chat)}</span></span>`;
 }
 // 누르면 채팅방 이름을 옆에 · 꾹 누르면 귀속 바꾸기 창
 let ownerPress = 0, ownerLong = false;
-document.addEventListener('pointerdown', e => { const b = e.target.closest?.('[data-owner]'); if (!b) return; ownerLong = false; clearTimeout(ownerPress); ownerPress = setTimeout(() => { ownerLong = true; navigator.vibrate?.(12); openBind(b.dataset.owner); }, 500); }, true);
+document.addEventListener('pointerdown', e => { const b = e.target.closest?.('.bl-note-owner[data-owner]'); if (!b) return; ownerLong = false; clearTimeout(ownerPress); ownerPress = setTimeout(() => { ownerLong = true; navigator.vibrate?.(12); openBind(b.dataset.owner); }, 500); }, true);
 ['pointerup', 'pointercancel'].forEach(type => document.addEventListener(type, () => clearTimeout(ownerPress), true));
-document.addEventListener('pointermove', e => { if (ownerPress && e.target.closest?.('[data-owner]') == null) clearTimeout(ownerPress); }, true);
-document.addEventListener('click', e => { const b = e.target.closest?.('[data-owner]'); if (!b) return; e.preventDefault(); e.stopPropagation(); if (ownerLong) { ownerLong = false; return; } const name = b.querySelector('.bl-note-owner-name'); name.hidden = !name.hidden; b.classList.toggle('is-open', !name.hidden); }, true);
-document.addEventListener('contextmenu', e => { if (e.target.closest?.('[data-owner]')) e.preventDefault(); }, true);
+document.addEventListener('pointermove', e => { if (ownerPress && e.target.closest?.('.bl-note-owner[data-owner]') == null) clearTimeout(ownerPress); }, true);
+document.addEventListener('click', e => { const b = e.target.closest?.('.bl-note-owner[data-owner]'); if (!b) return; e.preventDefault(); e.stopPropagation(); if (ownerLong) { ownerLong = false; return; } const name = b.querySelector('.bl-note-owner-name'); if (!name) return; name.hidden = !name.hidden; b.classList.toggle('is-open', !name.hidden); }, true);
+document.addEventListener('contextmenu', e => { if (e.target.closest?.('.bl-note-owner[data-owner]')) e.preventDefault(); }, true);
+document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const badge = e.target.closest?.('.bl-note-owner[data-owner]'); if (!badge) return;
+    e.preventDefault(); e.stopPropagation(); clearTimeout(ownerPress); ownerLong = false; openBind(badge.dataset.owner);
+}, true);
 
 function setOwner(id, owner) {
     const note = notes().find(n => n.id === id); if (!note) return;
@@ -663,7 +674,9 @@ async function openBind(id) {
     const aux = ctx.powerUserSettings?.aux_field || 'character_version';
     const people = [...(ctx.characters || []).map((ch, i) => ({ type: 'char', i, name: ch.name, avatar: ch.avatar, img: getThumbnailUrl('avatar', ch.avatar), version: String(ch.data?.[aux] || ''), desc: String(ch.data?.creator_notes || ch.creatorcomment || ''), tags: tagNames(ch.avatar) })),
         ...(ctx.groups || []).map(g => ({ type: 'group', id: g.id, name: g.name, img: g.avatar_url || '', chats: g.chats || [], version: '', desc: `${(g.members || []).length}명 그룹`, tags: tagNames(g.id) }))].sort((a, b) => String(a.name).localeCompare(String(b.name), 'ko'));
+    const activeDialog = bindDialog; let viewEpoch = 0;
     const drawPeople = () => {
+        viewEpoch++; delete list.dataset.person;
         const q = find.value.trim().toLowerCase();
         const hit = x => !q || [x.name, x.version, x.desc, ...x.tags.map(tg => tg.name)].some(v => String(v).toLowerCase().includes(q)); // 이름 · 버전 · 메모 · 태그로 찾기
         list.classList.add('is-cards');
@@ -672,7 +685,9 @@ ${x.img ? `<img src="${escA(x.img)}" alt="" loading="lazy">` : `<i class="fa-sol
 <span class="bl-bind-info"><span class="bl-bind-namerow"><b>${escA(x.name)}</b>${x.version ? `<em>${escA(x.version)}</em>` : ''}</span>${x.desc ? `<small class="bl-bind-desc">${escA(x.desc)}</small>` : ''}${x.tags.length ? `<span class="bl-bind-tags">${x.tags.map(tg => `<span style="${tg.color ? `background:${escA(tg.color)};` : ''}${tg.color2 ? `color:${escA(tg.color2)};` : ''}">${escA(tg.name)}</span>`).join('')}</span>` : ''}</span></button>`).join('') || '<p class="bl-notes-empty">없어요.</p>';
     };
     const drawChats = async x => {
-        list.classList.remove('is-cards'); list.innerHTML = '<p class="bl-notes-empty">채팅 목록을 불러오는 중…</p>';
+        if (!x) return;
+        const epoch = ++viewEpoch; delete list.dataset.person;
+        list.classList.remove('is-cards'); list.innerHTML = '<button type="button" class="bl-bind-back" data-bind="back"><i class="fa-solid fa-chevron-left"></i> 돌아가기</button><p class="bl-notes-empty">채팅 목록을 불러오는 중…</p>';
         let chats = [];
         try {
             if (x.type === 'group') chats = [...x.chats].reverse().map(c => ({ chat: String(c), when: '' }));
@@ -682,6 +697,7 @@ ${x.img ? `<img src="${escA(x.img)}" alt="" loading="lazy">` : `<i class="fa-sol
                 chats = Object.values(data || {}).filter(c => c && c.file_name).map(c => ({ chat: String(c.file_name).replace(/\.jsonl$/i, ''), when: c.last_mes ? String(c.last_mes).slice(0, 16) : '' })).sort((a, b) => String(b.when).localeCompare(String(a.when)));
             }
         } catch (error) { console.warn('[메모] 채팅 목록:', error); }
+        if (epoch !== viewEpoch || bindDialog !== activeDialog || !activeDialog.open) return;
         list.innerHTML = `<button type="button" class="bl-bind-back" data-bind="back"><i class="fa-solid fa-chevron-left"></i> ${escA(x.name)}</button>`
             + (chats.map(c => `<button type="button" class="bl-bind-chat" data-chat="${escA(c.chat)}"><i class="fa-regular fa-comment"></i><span>${escA(c.chat)}</span>${c.when ? `<small>${escA(c.when)}</small>` : ''}</button>`).join('') || '<p class="bl-notes-empty">채팅이 없어요.</p>');
         list.dataset.person = String(people.indexOf(x));
@@ -702,8 +718,8 @@ ${x.img ? `<img src="${escA(x.img)}" alt="" loading="lazy">` : `<i class="fa-sol
             bindDialog.close();
         }
     });
-    bindDialog.addEventListener('close', () => { bindDialog.remove(); bindDialog = null; }, { once: true });
-    bindDialog.showModal();
+    bindDialog.addEventListener('close', () => { viewEpoch++; activeDialog.remove(); if (bindDialog === activeDialog) bindDialog = null; }, { once: true });
+    showThemeModal(bindDialog);
 }
 // 채팅을 바꾸면 보이는 메모가 달라진다 · 채팅 이름을 바꾸면 귀속도 따라간다 · 캐릭터 이름이 바뀌면 표시 이름도
 function onChatChanged() {
@@ -712,8 +728,15 @@ function onChatChanged() {
     if (cur) { let changed = false; for (const n of notes()) if (n.owner?.key === cur.key && (n.owner.name !== cur.name || n.owner.avatar !== cur.avatar)) { n.owner = { ...n.owner, name: cur.name, avatar: cur.avatar }; changed = true; } if (changed) save(); }
     peekId = null; rerenderAll();
 }
-function onChatRenamed(data) {
-    const from = String(data?.oldFileName || '').replace(/\.jsonl$/i, ''), to = String(data?.newFileName || '').replace(/\.jsonl$/i, '');
+async function onChatRenamed(data) {
+    const from = String(data?.oldFileName || '').replace(/\.jsonl$/i, '');
+    const affected = notes().filter(n => n.owner?.chat === from && (data.groupId ? n.owner.group === data.groupId : n.owner.avatar === data.avatarId));
+    if (!from || !affected.length) return;
+    let filename;
+    try { filename = await getSanitizedFilename(String(data?.newFileName || '')); }
+    catch (error) { console.warn('[메모] 바뀐 채팅 이름 확인 실패:', error); return; }
+    // 서버 rename은 sanitize 뒤 path.parse(...).name을 채팅 id로 쓴다 (UTF-8 길이 제한도 서버와 동일).
+    const dot = filename.lastIndexOf('.'), to = dot > 0 ? filename.slice(0, dot) : filename;
     if (!from || !to) return;
     let changed = false;
     for (const n of notes()) {
@@ -1038,7 +1061,7 @@ ${FIND_ROW}${EMPTY_ROW}
     dialog.addEventListener('input', event => { if (event.target.closest('.bl-notes-find')) applyFind(dialog); });
     dialog.addEventListener('close', () => { flush(); dialog.remove(); dialog = null; if (previous?.isConnected) previous.focus(); }, { once: true });
     render();
-    dialog.showModal();
+    showThemeModal(dialog);
 }
 
 // ── 메모 전용 글꼴 · 크기 · 줄 간격 · 자간 · 굵기 (톱니) ──────
@@ -1172,7 +1195,7 @@ export function openLook() {
         else if (same) readParam(same.dataset.lookSame);
     });
     lookDialog.addEventListener('close', () => { observer.disconnect(); lookDialog.remove(); lookDialog = null; }, { once: true });
-    lookDialog.showModal();
+    showThemeModal(lookDialog);
 }
 
 // ── 화면에 꺼내 둔 쪽지 (PC — 윈도우 스티커 메모처럼 채팅 옆에 떠 있고, 자리 · 크기를 기억한다) ──
@@ -1182,12 +1205,15 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const isWide = () => matchMedia('(min-width: 900px)').matches;
 
 function placeSticky(el, pos) {
-    const w = clamp(pos.w || 260, 180, innerWidth - 20), h = clamp(pos.h || 220, 120, innerHeight - 20);
-    const x = clamp(pos.x ?? innerWidth - w - 24, 0, innerWidth - w), y = clamp(pos.y ?? 80, 0, innerHeight - h);
+    el.hidden = !isWide();
+    if (el.hidden) return;
+    const edge = 24;
+    const w = clamp(pos.w || 260, 180, innerWidth - edge * 2), h = clamp(pos.h || 220, 120, innerHeight - 20);
+    const x = clamp(pos.x ?? innerWidth - w - edge, edge, innerWidth - w - edge), y = clamp(pos.y ?? 80, 0, innerHeight - h);
     Object.assign(el.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
 }
 function rememberSticky(id, el) {
-    if (!el.isConnected || stickies.get(id) !== el) return; // 닫힌 쪽지(목록에 다시 넣음)는 자리를 다시 적지 않는다
+    if (!el.isConnected || el.hidden || stickies.get(id) !== el) return; // 닫힌 쪽지(목록에 다시 넣음)는 자리를 다시 적지 않는다
     const r = el.getBoundingClientRect(), next = { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) }, old = stickyStore()[id];
     if (old && old.x === next.x && old.y === next.y && old.w === next.w && old.h === next.h) return; // 쪽지 안을 누르기만 했으면(자리 · 크기 그대로) 저장하지 않는다
     stickyStore()[id] = next;
@@ -1291,11 +1317,10 @@ function startDrag(root, host, cardEl, sx, sy) {
 function applyOrder(ids) { placeVisible(ids); store().look.sort = 'manual'; save(); }
 /** ids 순서대로 저장 순서를 고친다 (안 보이는 메모는 제자리) — 배열은 제자리에서 (store() 의 한 배열 규칙) */
 function placeVisible(ids) {
-    const list = notes(), set = new Set(ids), byId = new Map(list.map(n => [n.id, n]));
-    const first = list.findIndex(n => set.has(n.id));
-    const rest = list.filter(n => !set.has(n.id));
-    rest.splice(Math.max(0, first), 0, ...ids.map(id => byId.get(id)).filter(Boolean));
-    list.splice(0, list.length, ...rest);
+    const list = notes(), byId = new Map(list.map(n => [n.id, n]));
+    const ordered = [...new Set(ids)].map(id => byId.get(id)).filter(Boolean), selected = new Set(ordered.map(n => n.id));
+    let at = 0;
+    for (let i = 0; i < list.length; i++) if (selected.has(list[i].id)) list[i] = ordered[at++];
 }
 
 // ── 쪽지 머리띠 끌기: 옮기기 · 다른 쪽지에 놓으면 폴더 · 메모 줄(작은 목록)에 놓으면 다시 목록으로 ──
@@ -1547,7 +1572,7 @@ export function syncMenu() {
     item.innerHTML = `<div class="fa-solid fa-note-sticky extensionsMenuExtensionButton"></div><span>${TITLE}</span>`;
     const open = () => openPanel();
     item.addEventListener('click', open);
-    item.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); open(); } });
+    item.addEventListener('keydown', event => { if (event.key === ' ') { event.preventDefault(); open(); } });
     container.append(item);
 }
 

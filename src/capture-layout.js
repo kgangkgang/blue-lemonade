@@ -3,7 +3,11 @@ const INFO_SELECTORS={showName:'.name_text,.mes_name',showTimestamp:'.timestamp'
 export function applyCaptureDisplay(clone,options={},model=''){
     for(const [key,selector] of Object.entries(INFO_SELECTORS))if(options[key]===false)clone.querySelectorAll(selector).forEach(el=>el.remove());
     if(options.showAvatar===false)clone.querySelectorAll('.avatar').forEach(el=>el.remove());
-    if(options.showAssets===false)clone.querySelectorAll('.mes_text img,.mes_text picture,.mes_text svg,.mes_text canvas').forEach(el=>el.remove());
+    if(options.showAssets===false){
+        clone.querySelectorAll('.mes_text img,.mes_text picture,.mes_text svg,.mes_text canvas').forEach(el=>el.remove());
+        // The theme's frame owns a fixed illustration height even after its image is gone.
+        clone.querySelectorAll('.mes_text .bl-art-frame').forEach(el=>{if(!el.textContent.trim())el.remove();});
+    }
     const header=clone.querySelector('.ch_name,.mes_header');
     if(options.showName===false&&header)for(const node of [...header.childNodes])if(node.nodeType===3)node.remove();
     if(options.showModel!==false&&model&&header&&!header.querySelector('.mes_model,.model_name')){

@@ -6,9 +6,10 @@ function update() {
     const selection = document.getSelection();
     const selected = selection && !selection.isCollapsed &&
         (inside(selection.anchorNode) || inside(selection.focusNode));
-    document.body.classList.toggle('bl-dem-selecting', !!(pressing || selected));
+    document.body.toggleAttribute('data-bl-dem-selecting', !!(pressing || selected));
 }
 function down(event) {
+    if (document.body.classList.contains('cg-previewing')) return;
     if (event.button !== 0 || !inside(event.target)) return;
     clearTimeout(releaseTimer);
     pressing = true;
@@ -32,6 +33,6 @@ export function syncDemSelection(on) {
     else {
         clearTimeout(releaseTimer);
         pressing = false;
-        document.body.classList.remove('bl-dem-selecting');
+        document.body.removeAttribute('data-bl-dem-selecting');
     }
 }

@@ -45,7 +45,7 @@ function replyPreview() {
         const chat = SillyTavern.getContext().chat;
         const last = chat?.at?.(-1);
         if (!last || last.is_user) return { title: '답이 도착했어요', body: '' };
-        const text = String(last.mes || '').replace(/<[^>]+>/g, ' ').replace(/[*_`#>]/g, '').replace(/\s+/g, ' ').trim();
+        const text = String(last.mes || '').replace(/\{\{[^{}]*\}\}/g, ' ').replace(/<[^>]+>/g, ' ').replace(/[*_`#>]/g, '').replace(/\s+/g, ' ').trim();
         return { title: `${last.name || '답'} · 답이 도착했어요`, body: text.slice(0, 120) };
     } catch { return { title: '답이 도착했어요', body: '' }; }
 }
@@ -73,7 +73,7 @@ async function notify() {
 
 export function syncReplyNotify(enabled) {
     on = !!enabled;
-    if (!on) return;
+    if (!on) { for (const off of offs.splice(0)) off(); bound = false; return; }
     if ('Notification' in window && Notification.permission === 'granted') ensureWorker();
     if (bound) return;
     bound = true;

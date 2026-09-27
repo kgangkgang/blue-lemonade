@@ -662,19 +662,7 @@ body.salty #WorldInfo .world_entry select[name="entryStateSelector"] {
    전에는 네 칸 격자 두 줄이라 위치 줄 오른쪽 145px · 도구 줄 왼쪽 190px 이 늘 비어 있었음
    display 에 !important 금지 — 실리태번이 확률 칸을 jQuery show/hide (inline display) 로 켜고 끔 */
 /* 3.0.0: 여기 있던 규칙 'body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-head…' 은 지움 — display → css/21-witidy.css (같은 선택자 규칙이 덮음) */
-/* 줄바꿈용 빈 가상 요소: ::before = 제목 줄 뒤, ::after = 위치 · 순서 줄 뒤 */
-body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header::before,
-body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header::after {
-  /* 3.0.0: content → css/21-witidy.css (같은 선택자 규칙이 덮음) */
-  flex: 0 0 100%;
-  height: 0;
-}
-body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header::before {
-  order: 1;
-}
-body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header::after {
-  order: 3;
-}
+/* 머리줄은 css/21의 격자가 배치한다. */
 /* 칸 묶음(이름표 + 입력) = 글자 폭만 차지하는 한 줄 */
 body.salty #WorldInfo .world_entry .WIEnteryHeaderControls > .world_entry_form_control {
   display: flex;

@@ -11,7 +11,7 @@ const HIDE_AFTER = 48;   // px — 이만큼 아래로 밀면 숨김
 const SHOW_AFTER = 40;   // px — 이만큼 위로 올리면 꺼냄 (읽다가 살짝 흔들린 것에는 안 나오게)
 const USER_TOUCH_MS = 1200; // 손가락을 뗀 뒤에도 관성 스크롤은 손으로 민 것으로 친다
 const USER_WHEEL_MS = 350;
-const TAP_IGNORE = 'a, button, input, textarea, select, label, summary, video, audio, iframe, img, [role="button"], [onclick], [contenteditable="true"], .mes_buttons, .mes_button, .extraMesButtons, .swipe_left, .swipe_right, .swipes-counter, .mes_edit_buttons, .mesAvatarWrapper, .menu_button, .interactable, .mes_reasoning_header, .custom-cac-wrap, .ch_name, .mes_img_controls, .qr--button, .custom-dem-track, .custom-dem-track-recovery, .thk-fold';
+const TAP_IGNORE = 'a, button, input, textarea, select, label, summary, video, audio, iframe, img, [role="button"], [onclick], [contenteditable="true"], .mes_buttons, .mes_button, .extraMesButtons, .swipe_left, .swipe_right, .swipes-counter, .mes_edit_buttons, .mesAvatarWrapper, .menu_button, .interactable, .mes_reasoning_header, .custom-cac-wrap, .ch_name, .mes_img_controls, .qr--button, .custom-dem-track, .custom-dem-track-recovery, .thk-fold, mark[data-note], .stbs-chapter-div';
 
 const mq = window.matchMedia('(max-width: 1000px)');
 let wanted = false;

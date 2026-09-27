@@ -7,13 +7,14 @@ const {insertDirection}=await import(new URL('src/addons/direction/prompt.js',ur
 const ext={};globalThis.__directionTest={ext,insertDirection};globalThis.window={matchMedia:()=>({matches:false})};
 const source=(await fs.readFile(path.join(root,'src/addons/direction/index.js'),'utf8')).split('// ── 시작')[0].replace(/^import .*;$/gm,'');
 const prelude='const {ext:extension_settings,insertDirection}=globalThis.__directionTest;const saveSettingsDebounced=()=>{};const getChatCompletionModel=()=>"example-model";const oai_settings={};';
-const m=await import('data:text/javascript;base64,'+Buffer.from(prelude+source+'\nexport {initSettings,settings,injectDirection};').toString('base64'));
+const m=await import('data:text/javascript;base64,'+Buffer.from(prelude+source+'\nexport {initSettings,settings,injectDirection,trackGeneration};').toString('base64'));
 ext['Direction-Manager-Lite']={extensionEnabled:false,direction:{enabled:true,content:'literal $& direction'},directionPrompt:'Custom {{direction}}',promptDepth:3};
 m.initSettings();assert.equal(m.settings().extensionEnabled,false);assert.equal(m.settings().direction.content,'literal $& direction');assert.equal(m.settings().promptDepth,3);
 m.settings().onColor='#123456';m.initSettings();assert.equal(m.settings().onColor,'#123456');
 let chat=[{role:'user',content:'hello'}];m.injectDirection({chat});assert.equal(chat.length,1);
-m.settings().extensionEnabled=true;m.injectDirection({chat});assert.equal(chat[0].content,'Custom literal $& direction');
-chat=[{role:'user',content:'hello'}];function generateRaw(){m.injectDirection({chat});}generateRaw();assert.equal(chat.length,1);
+m.settings().extensionEnabled=true;m.injectDirection({chat});assert.equal(chat.length,1);m.trackGeneration('normal');m.injectDirection({chat});assert.equal(chat[0].content,'Custom literal $& direction');
+chat=[{role:'user',content:'hello'}];function generateRaw(){m.trackGeneration('normal');m.injectDirection({chat});}generateRaw();assert.equal(chat.length,1);
+for(const type of ['quiet','impersonate']){m.trackGeneration(type);m.injectDirection({chat});assert.equal(chat.length,1);}
 m.settings().direction.enabled=false;m.injectDirection({chat});assert.equal(chat.length,1);
 const answer={role:'assistant',content:'original answer'};chat=[answer];insertDirection(chat,'{{direction}}','next',0,'gemini-2.5-pro');assert.equal(chat[0],answer);assert.equal(chat.at(-1).role,'user');assert.equal(chat[1].role,'system');
 chat=[{...answer,tool_calls:[{id:'tool'}]}];insertDirection(chat,'{{direction}}','next',1,'gemini-2.5-pro');assert.equal(chat.length,2);assert.equal(chat.at(-1).role,'assistant');

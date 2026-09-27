@@ -8,9 +8,10 @@ import { extension_settings } from '../../../../../../extensions.js';
 import { getPresetManager } from '../../../../../../preset-manager.js';
 import { saveSettingsDebounced, eventSource, event_types } from '../../../../../../../script.js';
 import { oai_settings, promptManager } from '../../../../../../openai.js';
-import { plan, textHasModule } from './engine.js';
+import { verifyAddonCss } from '../../addon-files-check.js';
+import { plan, textHasModuleLow } from './engine.js';
 
-const VERSION = '1.0.3';
+const VERSION = '1.0.4';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const holder = document.createElement('div'); holder.hidden = true; document.body.append(holder);
 let root, inlineHost = null, opening = false, timer = 0, lastRows = [], lastNote = '', applied = new Map(), stopped = false;
@@ -47,12 +48,13 @@ function recentHasFactory() {
     const s = store();
     if (!s.keepRecent) return () => false;
     const chat = SillyTavern.getContext().chat || [];
-    const tail = chat.slice(-s.recent);
+    const tail = chat.slice(-s.recent).filter(m => m && !m.is_user);
+    const lowered = new Map();
     const cache = new Map();
     return (keys) => {
         const k = keys.join('|');
         if (cache.has(k)) return cache.get(k);
-        const hit = tail.some(m => m && !m.is_user && textHasModule(m.mes, keys));
+        const hit = tail.some(m => { if (!lowered.has(m)) lowered.set(m, String(m.mes || '').toLowerCase()); return textHasModuleLow(lowered.get(m), keys); });
         cache.set(k, hit);
         return hit;
     };
@@ -161,12 +163,12 @@ function mount() {
         else if ('recent' in el.dataset) { store().recent = Number(el.value) || 30; saveSettingsDebounced(); sync(); }
         else if (el.dataset.module) { const s = store(); if (el.value === 'auto') delete s.modules[el.dataset.module]; else s.modules[el.dataset.module] = el.value; saveSettingsDebounced(); sync(); }
     });
-    const css = getComputedStyle(root).getPropertyValue('--rl-version').trim().replace(/["']/g, '');
-    if (css !== VERSION) globalThis.toastr?.warning(`프롬프트 연동 정규식 파일 버전이 달라요 (코드 ${VERSION}, 스타일 ${css || '없음'}).`);
+    verifyAddonCss({ folder: 'regexlink', name: '--rl-version', version: VERSION, title: '프롬프트 연동 정규식', selector: '#regex-link-settings' });
 }
 
 const listened = [];
 function listen() {
+    if (listened.length) return;
     const t = event_types;
     for (const name of [t.SETTINGS_UPDATED, t.OAI_PRESET_CHANGED_AFTER, t.CHAT_CHANGED, t.MESSAGE_RECEIVED, t.MESSAGE_SWIPED, t.MESSAGE_DELETED].filter(Boolean)) { eventSource.on(name, schedule); listened.push(name); }
 }
@@ -191,6 +193,12 @@ export async function stop() {
     catch (error) { console.warn('[Blue Lemonade] 프롬프트 연동 정규식: 프리셋 파일을 되돌리지 못했어요', error); return; }
     for (const id of keep) delete s.origin[id];
     saveSettingsDebounced();
+}
+
+/** 사용 모드 저장 실패를 되돌릴 때만 재개한다. 일반 끄기→켜기는 기존 새로고침 흐름을 따른다. */
+export async function resume() {
+    if (!stopped) return;
+    stopped = false; listen(); sync();
 }
 
 jQuery(() => { mount(); if (!stopped) { listen(); schedule(); } });

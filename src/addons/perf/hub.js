@@ -8,7 +8,7 @@ import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
 import { getSettings, saveSettings } from '../../settings.js';
 
 export const SUITE_TITLE = '설정';
-export const SUITE_VERSION = '2.1.5';
+export const SUITE_VERSION = '2.1.6';
 const BUTTON_ID = 'pa-hub-open';
 const TAB_KEY = 'pa_hub_tab';
 
@@ -116,14 +116,18 @@ export function markBroken(id, error) {
 const builders = new Map();
 const built = new Set();
 export function onFirstShow(id, build) {
-    if (built.has(id)) { build(); return; }   // 이미 한 번 보였으면 그 자리에서
+    if (built.has(id)) { runBuilder(id, build); return; }   // 이미 한 번 보였으면 그 자리에서
     builders.set(id, build);
 }
 function runBuilders() {
     for (const [id, build] of builders) {
         builders.delete(id); built.add(id);
-        try { build(); } catch (error) { console.error('[Blue Lemonade]', error); }
+        runBuilder(id, build);
     }
+}
+function runBuilder(id, build) {
+    const fail = error => { console.error('[Blue Lemonade]', error); markBroken(id, error); };
+    try { const result = build(); if (result?.catch) result.catch(fail); } catch (error) { fail(error); }
 }
 
 let open = false;

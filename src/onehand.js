@@ -23,7 +23,10 @@ function listen() {
     listening = true;
     const { eventSource, event_types } = SillyTavern.getContext();
     // 흐리게만 한다 (누르는 것은 막지 않음 — 실리태번이 알아서 무시). 번역 · 기억 같은 조용한 생성은 빼고
-    eventSource.on(event_types.GENERATION_STARTED, (type, options, dryRun) => { if (!dryRun && type !== 'quiet') markBusy(true); });
+    const sync = () => markBusy(document.body.dataset.generating === 'true');
+    const observer = new MutationObserver(sync);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['data-generating'] });
+    sync();
     for (const name of ['GENERATION_ENDED', 'GENERATION_STOPPED', 'MESSAGE_RECEIVED', 'CHAT_CHANGED']) {
         if (event_types[name]) eventSource.on(event_types[name], () => markBusy(false));
     }
@@ -71,4 +74,5 @@ export function syncOneHand(on, options = {}) {
         listen();
     }
     if (row.parentElement !== form) form.prepend(row);
+    markBusy(document.body.dataset.generating === 'true');
 }

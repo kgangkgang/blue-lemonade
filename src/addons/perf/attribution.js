@@ -14,7 +14,7 @@ export function requestKind(path) {
  if(/\/audio\/speech|\/api\/tts\//.test(path)&&!/voices|models|speakers|status/.test(path))return 'audio.speech';
  if(/\/images\/(generations|edits)|\/api\/sd\/.*generate|\/api\/.*\/generate-image/.test(path))return 'image.generate';
  if(/\/api\/.*\/caption/.test(path))return 'image.caption';
- if(/\/api\/backends\/.*\/generate$|\/(chat\/completions|completions|responses|messages)$|:(streamGenerateContent|generateContent)$/.test(path))return 'text';
+ if(/\/api\/backends\/.*\/generate$|\/api\/novelai\/generate$|\/(chat\/completions|completions|responses|messages)$|:(streamGenerateContent|generateContent)$/.test(path))return 'text';
  return '';
 }
 export function createAttribution() {

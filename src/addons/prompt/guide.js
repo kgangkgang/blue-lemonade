@@ -1,3 +1,4 @@
+import { showThemeModal } from '../../modal.js';
 // Blue Lemonade guide and accessible controls. Modified 2026-09-24. AGPL-3.0.
 import { badgeTextHit } from '../../badge-hit.js';
 const chapters = [
@@ -26,7 +27,7 @@ export function installGuide({doc,cfg,save,openPanel,closePanel}) {
  const panel=doc.getElementById('pt-panel');if(!panel||panel.dataset.blGuide)return;
  panel.dataset.blGuide='true';panel.setAttribute('aria-label','한글화 패널');
  const header=panel.querySelector('#pt-panel-header'),tabs=panel.querySelector('#pt-tabs'),content=panel.querySelector('#pt-panel-content');
- const version=doc.createElement('button');version.type='button';version.className='pt-version';version.dataset.ptGuide='';version.textContent='v1.1.2';version.setAttribute('aria-label','한글화 패널 사용방법');header.querySelector('h3').append(version);
+ const version=doc.createElement('button');version.type='button';version.className='pt-version';version.dataset.ptGuide='';version.textContent='v1.1.3';version.setAttribute('aria-label','한글화 패널 사용방법');header.querySelector('h3').append(version);
  const settingsTab=doc.createElement('button');settingsTab.type='button';settingsTab.className='pt-tab';settingsTab.dataset.tab='settings';settingsTab.textContent='설정';tabs.append(settingsTab);
  const settingsPage=doc.createElement('div');settingsPage.id='pt-page-settings';settingsPage.className='pt-page';content.append(settingsPage);settingsPage.append(doc.getElementById('pt-settings-form'));
  const icons={localization:'language',preset:'sliders',wi:'book-open',char:'address-card',regex:'code',settings:'gear'};
@@ -70,7 +71,7 @@ export function installGuide({doc,cfg,save,openPanel,closePanel}) {
   const nav=dialog.querySelector('nav');keyboardTabs(nav);
   nav.querySelectorAll('button').forEach(button=>button.onclick=()=>{for(const tab of nav.children){const on=tab===button;tab.setAttribute('aria-selected',String(on));tab.tabIndex=on?0:-1;}for(const page of dialog.querySelectorAll('[data-help-page]'))page.hidden=page.dataset.helpPage!==button.dataset.helpGroup;dialog.querySelector('.pt-help-body').scrollTop=0;});
   dialog.addEventListener('close',()=>{dialog.remove();dialog=null;if(returnFocus?.isConnected)returnFocus.focus();},{once:true});
-  dialog.showModal();cfg().blIntroSeen110=true;save();
+  showThemeModal(dialog);cfg().blIntroSeen110=true;save();
  }
  doc.querySelectorAll('[data-pt-guide]').forEach(button=>{button.addEventListener('click',event=>{if(!badgeTextHit(event))return;event.preventDefault();event.stopPropagation();showGuide();});if(button.tagName!=='BUTTON')button.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();showGuide();}});});
  panel.addEventListener('pt:opened',()=>{if(!cfg().blIntroSeen110)showGuide();});

@@ -4,7 +4,7 @@ import { extension_settings, getContext } from '../../../../../../extensions.js'
 import { saveSettingsDebounced } from '../../../../../../../script.js';
 
 export const MODULE = 'chaekgalpi';
-export const VERSION = '1.3.8';
+export const VERSION = '1.3.9';
 
 export const DEFAULT_COLORS = Object.freeze({ accent: '#a98bd9', user: '#5aa9e6', icon: '#f2c14e' });
 const COLOR_KEYS = Object.keys(DEFAULT_COLORS);
@@ -100,6 +100,19 @@ export function chatKey(chatId) {
 
 export function currentChatKey() {
     return chatKey(getContext().chatId);
+}
+
+/** 이름 변경 뒤 전용 색을 옮긴다. 목적지에 저장된 값이 있으면 양쪽 모두 보존한다. */
+export function renameChatColors(oldChatId, newChatId) {
+    const from = chatKey(oldChatId), to = chatKey(newChatId);
+    const chats = settings()?.colors?.chats;
+    if (!from || !to || from === to || !chats || typeof chats !== 'object' || Array.isArray(chats)) return false;
+    if (!Object.hasOwn(chats, from) || Object.hasOwn(chats, to)) return false;
+    // '__proto__'도 채팅 이름일 수 있다. 일반 대입의 prototype setter를 거치지 않는다.
+    Object.defineProperty(chats, to, { value: chats[from], enumerable: true, configurable: true, writable: true });
+    delete chats[from];
+    saveSettings();
+    return true;
 }
 
 // ── 색 ──────────────────────────────────────────────────────

@@ -7,7 +7,7 @@
 import { power_user, applyPowerUserSettings } from '../../../../power-user.js';
 import { saveSettingsDebounced } from '../../../../../script.js';
 import { getRequestHeaders } from '../../../../../script.js';
-import { PALETTES } from './palettes.js';
+import { paletteColors, parseColor } from './palettes.js';
 import { getSettings } from './settings.js';
 
 /** 팔레트 색을 실리태번이 쓰는 rgba 문자열로 */
@@ -20,7 +20,8 @@ function toRgba(color, alpha = 1) {
         return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
     }
     if (/^rgba?\(/i.test(hex)) return hex;
-    return `rgba(0, 0, 0, ${alpha})`;
+    const [r,g,b,a] = parseColor(hex);
+    return `rgba(${r}, ${g}, ${b}, ${a * alpha})`;
 }
 
 /**
@@ -29,7 +30,7 @@ function toRgba(color, alpha = 1) {
  */
 export function themeValues() {
     const s = getSettings();
-    const pal = { ...(PALETTES[s.palette] || PALETTES.night), ...(s.colorOverrides?.[s.palette] || {}) };
+    const pal = paletteColors(s);
     return {
         // ── 색: 확장이 칠하는 것과 같은 값을 실리태번 쪽에도 적어 둔다 (색 고르개·내보내기와 어긋나지 않게)
         main_text_color: toRgba(pal.text),
@@ -124,13 +125,15 @@ export async function saveAsSillyTavernTheme(name) {
         body: JSON.stringify(theme),
     });
     if (!response.ok) throw new Error(`테마를 저장하지 못했어요 (HTTP ${response.status})`);
-    // 테마 목록에도 넣어 두면 새로 고치지 않고 바로 고를 수 있다
+    // ST keeps its theme objects in a private module array. A new/updated option
+    // cannot safely be selected again until ST reloads that array from disk.
     const select = document.getElementById('themes');
-    if (select && !Array.from(select.options).some(option => option.value === name)) {
-        const option = document.createElement('option');
+    if (select) {
+        const option = Array.from(select.options).find(option => option.value === name) || document.createElement('option');
         option.value = name;
-        option.innerText = name;
-        select.append(option);
+        option.textContent = `${name} (새로고침 후 다시 선택)`;
+        option.disabled = true;
+        if (!option.isConnected) select.append(option);
     }
     if (select) select.value = name;
     power_user.theme = name;

@@ -15,7 +15,7 @@ export const SAMPLES = {
     ja: '月夜に海の塩がきらめいた。あいうえお カキクケコ',
     zh: '月光下的海盐闪闪发光。你好，世界',
 };
-export const SLOT_FAMILY = { text: "'Salty Text'", dialogue: "'Salty Dialogue'", ui: "'Salty UI'", em: "'Salty Em'", strong: "'Salty Strong'", code: "'Salty Code'" };
+export const SLOT_FAMILY = { text: "'Salty Text'", dialogue: "'Salty Dialogue'", ui: "'Salty UI'", em: "'Salty Em'", strong: "'Salty Strong'", code: "'Salty Code'", name: "'Salty Name'", userName: "'Salty UserName'" };
 /** 칸·언어별 가족 이름: 'Salty Text' / 'Salty Text EN' … (언어마다 가족을 따로 둬야 굵기 descriptor 가 달라도 글자별로 넘어감) */
 export const langFamily = (slot, lang) => lang === 'ko' ? SLOT_FAMILY[slot] : `'${SLOT_FAMILY[slot].slice(1, -1)} ${lang.toUpperCase()}'`;
 
@@ -498,7 +498,7 @@ async function settlePreview(font, family) {
     let faces = [];
     try {
         // loadFont 는 CSS 를 받은 뒤에야 FontFace 를 등록한다 — 가족이 생길 때까지 잠깐 기다림 (최대 10초)
-        for (let i = 0; i < 50 && ![...document.fonts].some(f => unquote(f.family) === family); i++) await sleep(200);
+        for (let i = 0; i < 50 && ![...document.fonts].some(f => unquote(f.family) === unquote(family)); i++) await sleep(200);
         faces = await document.fonts.load(`16px "${family}"`, sample);
     } catch { /* 못 받음 — 아래에서 준비된 것으로 치고 기기 글꼴 그대로 */ }
     const blank = faces.length > 0 && [...sample].some(ch => inkOf('serif', ch) > 0 && inkOf(`"${family}", serif`, ch) === 0);

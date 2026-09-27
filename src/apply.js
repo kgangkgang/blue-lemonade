@@ -7,7 +7,7 @@ import { frameVars } from './frames.js';
 import { syncProfile } from './profile.js';
 // 설정 → :root CSS 변수(--salty-*) + 실리태번 색 변수 덮기 + body 클래스 + 글꼴 합치기
 import { getSettings, fontSet, FONT_SLOTS, DEFAULTS } from './settings.js';
-import { PALETTES, LEGACY, TOKEN_KEYS, paletteColors, parseColor, sameColor, onColor, toRgba } from './palettes.js';
+import { PALETTES, LEGACY, TOKEN_KEYS, paletteColors, parseColor, sameColor, onColor, toRgba, mixColor } from './palettes.js';
 import { buildComposite, slotStack, findFont } from './fonts.js';
 import { iconsCss } from './icons.js';
 import { classifyAll } from './assets.js';
@@ -79,11 +79,7 @@ function scaleAlpha(color, k) {
     return `rgba(${r}, ${g}, ${b}, ${Number((a * k).toFixed(3))})`;
 }
 /** a 를 pa 만큼, b 를 나머지만큼 섞은 불투명 색 */
-function mix(a, b, pa) {
-    const x = parseColor(a);
-    const y = parseColor(b);
-    return `rgb(${[0, 1, 2].map(i => Math.round(x[i] * pa + y[i] * (1 - pa))).join(', ')})`;
-}
+const mix = mixColor;
 /** 상대 휘도 (WCAG 2, 알파는 무시) */
 function luminance(color) {
     return parseColor(color).slice(0, 3).reduce((sum, v, i) => { v /= 255; return sum + [0.2126, 0.7152, 0.0722][i] * (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4); }, 0);
@@ -143,6 +139,7 @@ export function dropStaleOverrides(s = getSettings()) {
 // ───────── 글꼴 ─────────
 let fontGen = 0;
 const compositeCache = new Map();
+const compositeFailedAt = new Map();
 let lastFaces = null;
 const fontRetry = { timer: 0, count: 0 };
 
@@ -180,10 +177,11 @@ async function applyFonts(s) {
     const sets = slotSets(s);
     const jobs = Object.entries(sets).filter(([, set]) => set).map(([slot, set]) => {
         const key = `${slot}|${JSON.stringify(set)}|${s.fonts.hanja}|${s.customFonts.map(f => f.id + ':' + (f.google || f.css || f.file || '') + (f.cors === false ? '!' : '')).join(',')}`;
+        if (compositeFailedAt.has(key) && Date.now() - compositeFailedAt.get(key) >= 3000) { compositeCache.delete(key); compositeFailedAt.delete(key); }
         if (!compositeCache.has(key)) {
             const p = buildComposite(slot, set, s.fonts.hanja);
-            // 못 받아온 글꼴이 있으면 다음 적용 때 다시 시도 (fetchCss 도 실패한 주소는 캐시에서 지움)
-            p.then(r => { if (r.failed.length) compositeCache.delete(key); }, () => compositeCache.delete(key));
+            // 실패 직후의 슬라이더 적용은 같은 결과를 사용하고 재시도 타이머가 다시 받는다.
+            p.then(r => { if (r.failed.length) compositeFailedAt.set(key, Date.now()); }, () => compositeFailedAt.set(key, Date.now()));
             compositeCache.set(key, p);
         }
         return compositeCache.get(key);

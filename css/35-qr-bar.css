@@ -304,3 +304,15 @@ body.salty .ctx-blocker .ctx-menu > .ctx-item + .ctx-header {
   margin-top: 4px !important;
   border-top: 1px solid var(--bl-line, rgba(127, 127, 127, 0.2)) !important;
 }
+/* Keep the sticky background mask while showing keyboard focus. */
+html body.salty #send_form #qr--bar :is(#bl-qr-find, #qr--popoutTrigger):focus-visible {
+  outline:2px solid var(--salty-accent)!important;
+  outline-offset:-2px;
+}
+@media (max-width:1000px) {
+  body.salty #nonQRFormItems > #qr--bar::after { right:-4px; margin-right:-4px; }
+}
+@media (pointer:coarse) {
+  html body.salty #send_form #qr--bar :is(.qr--button, #bl-qr-find, #qr--popoutTrigger),
+  html body.salty .ctx-blocker .ctx-menu > .ctx-item { min-height:32px; }
+}

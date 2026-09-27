@@ -9,7 +9,7 @@ const {appearanceSnapshot,beginComparison,endComparison,comparisonView,bindCompa
 const {weatherReadability}=await import(new URL('src/weather-readability.js',base));
 const {readPreset,applyPreset,capturePreset}=await import(new URL('src/preset-sharing.js',base));
 const {tidyGradients,gradientFor}=await import(new URL('src/gradients.js',base));
-const {PALETTE_FAMILIES}=await import(new URL('src/palettes.js',base));
+const {PALETTES,PALETTE_FAMILIES}=await import(new URL('src/palettes.js',base));
 const {websitePreset}=await import('../../docs/preset-export.mjs');
 const s=structuredClone(DEFAULTS);syncDeviceLayout(s,'pc');s.deviceLayouts.on=true;syncDeviceLayout(s,'pc');
 s.type.size=22;s.type.gutter=32;s.profile.mode='banner';s.palette='night';saveDeviceLayout(s);
@@ -37,9 +37,11 @@ s.chat.weather='tracker';assert.equal(weatherReadability(s,'light').active,false
 assert.equal(capturePreset(s,['weather']).groups.weather['chat.weatherReadability'],true);
 const reading={text:{font:DEFAULTS.fonts.text,size:19,weight:500,spacing:2},dialogue:{font:'same',size:21,weight:600,spacing:1,style:'marker',shape:'round',tilt:'slant',pos:'bottom',thick:35},em:{font:'same',size:null,weight:400,spacing:null,italic:true},strong:{font:'same',size:22,weight:700,spacing:null},code:{font:DEFAULTS.fonts.code,size:null,weight:null,spacing:null},para:{line:2,gap:1.2,gutter:30,align:'justify-word',indent:true},hanja:'ja',shadow:DEFAULTS.shadow,outline:DEFAULTS.outline};
 const families=JSON.parse(fs.readFileSync(new URL('../../docs/theme-palettes.json',import.meta.url)));
+for(const family of families)for(const mode of ['light','dark'])assert.deepEqual(family[mode],PALETTES[PALETTE_FAMILIES[family.id][mode]],'website and installed palette differ');
 for(const selected of families.map(f=>f.id)) for(const mode of ['light','dark']) for(const picks of [['melon'],['peach','blue','strawberry']]) {
  const mixes={light:{on:true,families:picks,weights:[20,70,40],angle:135,blend:83},dark:{on:false,families:['blue'],weights:[50,50,50],angle:90,blend:20}};
  const packet=readPreset(websitePreset(reading,{selected,mode,mixes,families}));
+ for(const group of [packet.groups.colors,packet.groups.marker])for(const [key,value] of Object.entries(group))if(key.startsWith('colorOverrides.'))assert.equal(value,'','site defaults must follow the installed palette');
  const dst=structuredClone(DEFAULTS);dst.gradients.overrides[packet.groups.colors.palette]={bg:{mode:'solid'},text:{mode:'gradient',colors:['#000','#fff']}};
  applyPreset(dst,packet,['colors','text','marker']);dst.gradients=tidyGradients(dst.gradients);
  assert.equal(dst.palette,PALETTE_FAMILIES[selected][mode]);assert.equal(dst.type.size,19);assert.equal(dst.type.dialogueSize,21);assert.equal(dst.dialogue.markerShape,'round');assert.equal(dst.fonts.hanja,'ja');assert.equal(dst.em.italic,true);

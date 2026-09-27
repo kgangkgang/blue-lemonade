@@ -522,3 +522,5 @@ body.salty .world_entry {
 body.salty .world_entry .inline-drawer-content {
   background: transparent !important;
 }
+
+html body.salty .menu_button.menu_button:focus-visible { box-shadow: var(--bl-ring), var(--bl-e2) !important; }

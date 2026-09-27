@@ -126,6 +126,7 @@ export function createPromptEngine(doc = document) {
             const containsTarget=node=>node.nodeType===1&&(node.matches(watched)||!!node.querySelector(watched));
             // body · #chat 조상에 새로 붙은 가지(팝업 등)도 보기 시작한다
             for(const record of records)if(record.type==='childList'&&(record.target===doc.body||chain.has(record.target)))record.addedNodes.forEach(watch);
+            if(timer)return; // render re-reads all targets; another pending record cannot add work.
             if(records.some(record=>{
                 const el=record.target.nodeType===1?record.target:record.target.parentElement;
                 if(!el||el.closest('#chat,.bl-scripts,.bl-script-hint'))return false;

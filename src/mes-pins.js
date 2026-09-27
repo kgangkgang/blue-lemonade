@@ -19,10 +19,18 @@ let timers = [];
 let bound = null;
 
 /** 버튼 하나의 이름표: 공통 클래스를 뺀 첫 클래스 (mes_translate · mes_llm_translate …) */
+const basePinKey = el => [...(el.classList || [])].find(name => !GENERIC.test(name)) || '';
 export function pinKey(el) {
-    for (const name of el.classList || []) if (!GENERIC.test(name)) return name;
-    return '';
+    const base = basePinKey(el);
+    // Extensions can use one common class for several actions. Keep the saved
+    // stock keys, but distinguish stable action attributes without using titles.
+    const action = ['data-action', 'data-act', 'data-stbs', 'data-event'].map(key => el.getAttribute(key)).filter(value => value !== null).join('|');
+    if (!base || !action) return base;
+    let hash = 2166136261;
+    for (const char of action) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
+    return `${base.slice(0, 50)}__${(hash >>> 0).toString(36)}`;
 }
+const wantedKey = (el, wanted) => wanted.has(pinKey(el)) || wanted.has(basePinKey(el));
 
 export function tidyPins(list) {
     if (!Array.isArray(list)) return [];
@@ -74,7 +82,9 @@ function pin(el) {
     const menu = el.parentElement;
     const bar = menu?.parentElement;
     if (!bar?.classList.contains('mes_buttons')) return;
-    const rank = order.indexOf(pinKey(el));
+    if ([...bar.querySelectorAll(':scope > .bl-pinned')].some(other => pinKey(other) === pinKey(el))) return;
+    const ownRank = order.indexOf(pinKey(el));
+    const rank = ownRank >= 0 ? ownRank : order.indexOf(basePinKey(el));
     const slot = document.createComment('bl-pin');
     menu.insertBefore(slot, el);
     slots.set(el, slot);
@@ -88,9 +98,9 @@ function pin(el) {
 function sweep(root = document.getElementById('chat')) {
     if (!root) return;
     const wanted = new Set(active ? order : []);
-    root.querySelectorAll('.mes_buttons > .bl-pinned').forEach((el) => { if (!wanted.has(pinKey(el))) restore(el); });
+    root.querySelectorAll('.mes_buttons > .bl-pinned').forEach((el) => { if (!wantedKey(el, wanted)) restore(el); });
     if (!wanted.size) return;
-    root.querySelectorAll(order.map(k => `.mes_buttons > .extraMesButtons > .${CSS.escape(k)}`).join(',')).forEach(pin);
+    root.querySelectorAll('.mes_buttons > .extraMesButtons > *').forEach(el => { if (wantedKey(el, wanted)) pin(el); });
 }
 
 function schedule() {
@@ -145,6 +155,7 @@ const loadFold = () => (foldModule ||= import('./mes-fold.js').catch((error) => 
 }));
 function startPinGesture(on) {
     gestureOn = on;
+    if (on) loadFold().then(module => module?.startFoldRepair());
     if (!on || gestureBound) { if (!on) { clearTimeout(hold); foldModule?.then(m => m?.closeEyeChoice()); } return; }
     gestureBound = true;
     document.addEventListener('pointerdown', (event) => {
@@ -198,9 +209,10 @@ function togglePin(el) {
     const current = tidyPins(s.chat.mesPins || []);
     // 짝(mes_unhide 는 mes_hide 의 짝)은 앞 이름으로 고른다
     const own = Object.entries(PAIRS).find(([, pair]) => pair.includes(key))?.[0] || key;
-    const pinned = el.classList.contains('bl-pinned') || current.includes(own);
+    const legacy = basePinKey(el);
+    const pinned = el.classList.contains('bl-pinned') || current.includes(own) || current.includes(legacy);
     let next;
-    if (pinned) next = current.filter(k => k !== own);
+    if (pinned) next = current.filter(k => k !== own && k !== legacy);
     else if (current.length >= PIN_LIMIT) { globalThis.toastr?.warning(`버튼은 ${PIN_LIMIT}개까지 꺼내 둘 수 있어요.`, 'Blue Lemonade'); return; }
     else next = [...current, own];
     held = { el, at: Date.now() };

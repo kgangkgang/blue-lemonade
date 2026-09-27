@@ -1,13 +1,26 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.4.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.4.5.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.4.4 · 최신 업데이트</summary>
+<summary>5.4.5 · 최신 업데이트</summary>
+
+- 메시지 버튼이 많아도 이름이 눌리지 않도록 줄을 나눠요. 월드 인포 정렬 손잡이, 메모 검색 줄, 전개 지시 창의 간격과 위치도 다듬었어요.
+- 낮은 화면에서 팝업 버튼이 잘리거나, 팝업 뒤로 안내가 숨어 보이지 않던 것을 고쳤어요. 키보드 초점과 작은 스위치의 누르는 영역도 보강했어요.
+- 프리셋·스타일을 가져올 때 선택한 항목과 잠금을 더 정확히 따르고, 날씨별 크기·글자 윤곽선·캐릭터 스타일 연결을 보존해요. 설정 적용에 실패하면 바꾸기 전 상태로 돌아가요.
+- 번역을 멈추면 대기 중인 요청도 취소해요. 이어쓰기 번역이 실패해도 추가된 원문이 가려지지 않고, 길이 제한으로 잘린 번역을 정상 결과로 저장하지 않아요.
+- 북마크·메모·에셋·다시 쓰기의 저장 실패와 이름 변경 처리를 보강하고, 미리보기에서 실제 대화를 바꾸는 동작을 막았어요.
+- 복잡한 그라데이션의 가독성 검사, 채팅 스트리밍 그리기, 기본 액자를 저장하는 방식을 가볍게 했어요. 사용자가 올린 그림과 기존 저장 스타일은 그대로 유지해요.
+- 홈페이지 프리셋의 기본색이 설치된 테마 팔레트를 따르게 하고, 설정 파일에 포함되는 범위를 더 분명히 표시했어요.
+
+</details>
+
+<details>
+<summary>5.4.4 · 화면 정리 · 에셋 확대</summary>
 
 - 에셋 보기 창에서 그림을 확대해 볼 수 있어요. 폰은 두 손가락으로 벌리거나 두 번 톡, PC 는 휠이나 더블클릭으로 확대하고, 확대한 채로 끌어서 옮겨요.
 - 눈 아이콘을 꾹 누르면 뜨는 꺼내기 · 접기 창을 글자 크기에 맞게 슬림하게 줄였어요.

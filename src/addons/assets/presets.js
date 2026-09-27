@@ -30,12 +30,6 @@ export function folderKey(character, name) {
     return name ? `${character}/${name}` : character;
 }
 
-/** 폴더 키에서 캐릭터 폴더만 ('char/preset' → 'char') */
-export function characterOf(key) {
-    const slash = String(key).indexOf('/');
-    return slash < 0 ? String(key) : String(key).slice(0, slash);
-}
-
 function basePreset() {
     return { id: BASE_ID, name: '', enabled: true };
 }
@@ -186,8 +180,10 @@ function ownerOrder(store, owner, id) {
 export function sourcesFor(store, character) {
     const out = [];
     if (!character) return out;
-    for (const preset of presetsOf(store, character)) out.push({ key: folderKey(character, preset.name), owner: character, preset, own: true });
-    const links = linksOf(store, character);
+    // 읽기만 한 캐릭터에는 빈 설정을 만들지 않는다. 저장된 프리셋은 편집에 쓰는 원래 객체를 유지한다.
+    const own = Array.isArray(store.presets?.[character]) ? presetsOf(store, character) : [basePreset()];
+    for (const preset of own) out.push({ key: folderKey(character, preset.name), owner: character, preset, own: true });
+    const links = Array.isArray(store.links?.[character]) ? linksOf(store, character) : [];
     const owners = [...new Set(links.map(link => link.owner))];
     const sorted = links.map((link, at) => ({ link, at }))
         .sort((a, b) => owners.indexOf(a.link.owner) - owners.indexOf(b.link.owner)

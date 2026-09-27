@@ -20,7 +20,7 @@ const MAX_SPAN_UNITS = 40; // 이만큼 뒤 토막까지만 닫는 따옴표를 
 const MAX_STRAIGHT_UNITS = 6; // 곧은따옴표는 여닫음이 같은 글자라 짝 잃은 것 하나가 멀리까지 칠할 수 있어 짧게만
 const BLOCK = /^(BR|P|DIV|LI|UL|OL|DL|DT|DD|BLOCKQUOTE|H[1-6]|DETAILS|SUMMARY|TABLE|THEAD|TBODY|TFOOT|TR|TD|TH|CAPTION|PRE|HR|SECTION|ARTICLE|ASIDE|HEADER|FOOTER|NAV|MAIN|FIGURE|FIGCAPTION|CENTER|ADDRESS|FIELDSET|LEGEND|FORM|MENU|DIALOG|HGROUP|SEARCH)$/;
 const INLINE = /^(EM|STRONG|U|DEL|MARK|FONT)$/; // 마크다운이 만드는 꾸밈 · 형광펜 · 글자색 (그 밖의 요소는 예전처럼 토막을 끊는다)
-const through = el => INLINE.test(el.nodeName) || el.matches('span.text_segment, span.bl-dialogue-tildes');
+const through = el => INLINE.test(el.nodeName) || el.matches('span.text_segment, span.bl-dialogue-tildes, span.bl-img-indent');
 // LLM 번역기의 줄 칸(번역문 · 원문)은 서로 다른 글 — 짝은 같은 쪽 줄끼리만 (lane: 't' 번역문, 'o' 원문, '' 그 밖)
 const laneAt = el => { for (let p = el.parentElement; p && !p.matches('.mes_text, .salty-sample'); p = p.parentElement) if (laneOf(p)) return true; return false; };
 const laneOf = el => /(^|\s)(custom-)?translated_text(\s|$)/.test(el.className) ? 't' : /(^|\s)(custom-)?original_text(\s|$)/.test(el.className) ? 'o' : null;
@@ -97,7 +97,7 @@ function unclosedOpener(text) {
 }
 // 곧은따옴표는 여닫음이 같은 글자라 자리로 가른다: 앞이 처음 · 공백 · 여는 괄호면 여는 것, 뒤가 끝 · 공백 · 문장부호면 닫는 것
 const opensStraight = (text, i) => i === 0 || /[\s([{【〈《「『—-]/.test(text[i - 1]);
-const closesStraight = (text, i) => i === text.length - 1 || /[\s)\]}】〉》」』.,!?;:…—-]/.test(text[i + 1]);
+const closesStraight = (text, i) => i === text.length - 1 || /[\s)\]}】〉》」』.,!?;:…—-]/.test(text[i + 1]) || (i > 0 && !/[\s\d]/.test(text[i - 1]) && /\p{L}/u.test(text[i + 1]));
 
 /** 여는 따옴표 open 아래 토막 글에서 닫는 자리 (없으면 -1, 짝이 안 맞아 그만둘 때 -2) */
 function closeAt(text, open) {

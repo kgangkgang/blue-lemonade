@@ -13,7 +13,6 @@
 // [1.1.1] 스트리밍 답을 마무리하는 중(잠금은 풀렸지만 실리태번의 끝 저장 전)이면 그 저장이 끝날 때까지 기다린다.
 //         끊긴 스트림의 답(실리태번이 저장하지 않는다)도 바꾸기 전에 저장한다. 기다리는 사이 답 받기가 다시 시작되면 멈춘다 (blocked).
 
-export const FLUSH_MARKER = 'saveDedupeSwitchFlush';
 
 /** 채팅을 바꾸는 클릭 (선택자, 그 안에서 제외할 것). README 의 목록과 맞출 것 */
 export const SWITCH_ENTRIES = Object.freeze([
@@ -51,7 +50,7 @@ export function matchSwitchEntry(target, entries = SWITCH_ENTRIES) {
 /** 실리태번 debounce 저장 타이머를 만든 함수 이름 → 종류 (스택 문자열에서) */
 export function timerKind(stack) {
     // getContext().saveMetadataDebounced() 처럼 객체에서 부르면 "at Object.saveMetadataDebounced" 로 찍힌다
-    const m = /\n\s*at (?:async )?(?:[\w$<>]+\.)?(saveChatDebounced|saveMetadataDebounced) [([]/.exec(String(stack));
+    const m = /(?:^|\n)\s*(?:at (?:async )?(?:[\w$<>]+\.)?)?(saveChatDebounced|saveMetadataDebounced)(?: [([]|@)/.exec(String(stack));
     if (!m) return null;
     return m[1] === 'saveChatDebounced' ? 'chat' : 'meta';
 }
@@ -176,6 +175,7 @@ export function createSwitchFlush(env, options = {}) {
     const stats = { intercepted: 0, saved: 0, nothing: 0, failed: 0, timeout: 0, chatChanged: 0, gaveUp: 0, blocked: 0 };
     const log = [];
     let active = null;
+    let unsaved = null;
 
     function note(ev, extra = {}) {
         log.push({ t: Math.round(env.now()), ev, ...extra });
@@ -188,8 +188,13 @@ export function createSwitchFlush(env, options = {}) {
     const finishing = () => env.finishing?.() === true;
     const generating = () => env.generating?.() === true;
     const erroredUnsaved = live => !!live && env.erroredUnsaved?.(live) === true;
+    const failedUnsaved = live => {
+        if (unsaved && (!sameChat(live, unsaved) || env.savedSince(unsaved.key, unsaved.since))) unsaved = null;
+        return !!unsaved;
+    };
 
     function needsSave(live) {
+        if (failedUnsaved(live)) return true;
         if (env.timers.waitingFor(live) > 0) return true;
         if (erroredUnsaved(live)) return true;
         const p = env.recoveryPending();
@@ -199,6 +204,7 @@ export function createSwitchFlush(env, options = {}) {
     /** 저장할 것이 남았거나 저장 중인지 — 참일 때만 채팅 바꾸는 클릭을 붙잡는다 */
     function pending() {
         if (active) return true;
+        if (failedUnsaved(env.live())) return true;
         if (env.timers.waitingFor() > 0 || env.timers.running() > 0) return true;
         if (env.isSaving() === true) return true;
         if (finishing()) return true;
@@ -231,7 +237,7 @@ export function createSwitchFlush(env, options = {}) {
         }
     }
 
-    // 이 함수 이름(FLUSH_MARKER)이 fetch 래퍼의 비동기 스택에 보이면 그 저장 요청은 여기서 부른 것이다 (멈추면 끊는다).
+    // 이름은 디버깅 스택용이다. 시작한 저장은 취소하지 않고 끝나도록 둔다.
     async function saveDedupeSwitchFlush() {
         await env.save();
     }
@@ -259,6 +265,8 @@ export function createSwitchFlush(env, options = {}) {
             state.saves++;
             env.timers.cancelFor(live);
             const started = env.now();
+            // Cancelling a debounce must not erase the only evidence of an unsaved edit.
+            unsaved = { key: live.key, integrity: live.integrity, since: started };
             note('save', { attempt: state.saves, key: live.key });
             const saving = saveDedupeSwitchFlush();
             // 큰 채팅은 저장 한 번이 5초를 넘기도 한다 — 마지막 성공한 저장의 2배까지 기다린다 (합계 상한도 그만큼 늘린다)

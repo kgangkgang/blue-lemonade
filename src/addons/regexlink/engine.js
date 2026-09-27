@@ -30,7 +30,16 @@ export function modulesOf(script) {
 const hasWords = (hay, needle) => ` ${hay} `.includes(` ${needle} `);
 const escapeRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 /** 소문자 글에 @키 태그가 있나 (뒤에 글자가 이어지면 다른 낱말: @map ≠ @mapping) */
-const tagIn = (low, key) => new RegExp(`@${escapeRe(key).replace(/ /g, '\\s+')}(?![a-z0-9])`).test(low);
+const tagPatterns = new Map();
+const tagIn = (low, key) => {
+    let pattern = tagPatterns.get(key);
+    if (!pattern) {
+        pattern = new RegExp(`@${escapeRe(key).replace(/ /g, '\\s+')}(?![a-z0-9])`);
+        if (tagPatterns.size >= 256) tagPatterns.delete(tagPatterns.keys().next().value);
+        tagPatterns.set(key, pattern);
+    }
+    return pattern.test(low);
+};
 
 /** 프롬프트 이름을 견줄 수 있게: 「 」 | ! ⚠️ ❗ 와 괄호 안을 뗀다 */
 export const promptKey = name => keyOf(String(name || '').replace(/\([^)]*\)/g, ' ').replace(/[「」|!⚠️❗{}]/g, ' '));
@@ -77,7 +86,7 @@ export function plan({ scripts, prompts, enabled, origin = {}, overrides = {}, r
         const mine = modulesOf(script);
         const base = origin[id] ?? !!script.disabled; // 원래 상태 (사용자가 손으로 꺼 둔 것은 존중)
         const row = { id, name: script.scriptName, keys: mine, owners: [], linked: false, reason: '', want: null };
-        if (mine.length && mine.some(k => overrides[k] === 'on')) return { ...row, linked: true, reason: '늘 켜기', want: true };
+        if (mine.length && mine.some(k => overrides[k] === 'on')) return { ...row, linked: true, reason: base ? '원래 꺼 둔 것' : '늘 켜기', want: !base };
         if (mine.length && mine.every(k => overrides[k] === 'off')) return { ...row, linked: true, reason: '늘 끄기', want: false };
         const ownerIds = [...new Set(mine.filter(k => overrides[k] !== 'off').flatMap(k => owners.get(k) || []))];
         row.owners = ownerIds;
@@ -94,6 +103,8 @@ export function plan({ scripts, prompts, enabled, origin = {}, overrides = {}, r
 
 /** 메시지 글에 모듈 태그가 있나 (대소문자 무시, @ 있든 없든) */
 export function textHasModule(text, keys) {
-    const low = String(text || '').toLowerCase();
+    return textHasModuleLow(String(text || '').toLowerCase(), keys);
+}
+export function textHasModuleLow(low, keys) {
     return keys.some(k => tagIn(low, k) || low.includes(`! ${k} !`) || (k === 'thinking' && low.includes('<thinking')));
 }

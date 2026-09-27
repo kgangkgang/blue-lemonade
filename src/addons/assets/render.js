@@ -105,10 +105,9 @@ function liveIndex() {
 /**
  * 1.4.1: 그림이 한 장도 없는 캐릭터에서는 메시지를 훑을 이유가 없다 — 전에는 60ms 마다
  * mes_text 전체의 textContent 를 만들고 #chat 변경 기록을 돌았다 (그림 없는 카드가 더 많다).
- * 다만 방금 전까지 그려 둔 그림이 남아 있으면 지워야 하므로 그때는 평소대로 돈다.
  */
 function nothingToRender(live) {
-    return live.byName.size === 0 && !document.querySelector('#chat img.eh-img');
+    return live.byName.size === 0;
 }
 
 /** 처리 결과를 바꿀 수 있는 값들. 목록이 바뀌면 generation 이 오른다. */
@@ -697,12 +696,16 @@ function messageSeed(mes) {
     return `${item?.extra?.eh_seed ?? item?.send_date ?? mesid}|${item?.swipe_id ?? 0}`;
 }
 
+function imageVersion(src) {
+    try { return new URL(src, location.href).searchParams.get('t'); }
+    catch { return null; }
+}
+
 /** @param {HTMLImageElement[]} imgs 지금 text 안의 모든 <img> (문서 순서) — src 가 있는 것만 본다 (예전 querySelectorAll('img[src]')) */
-function fixImages(text, mes, imgs) {
+function fixImages(text, mes, imgs, { random = settings().randomGroups } = {}) {
     const images = imgs.filter(img => img.hasAttribute('src'));
     if (!images.length) return;
     const stamp = String(generation);
-    const random = settings().randomGroups;
     let seed = null;
     const picks = new Map();
     const usedByGroup = new Map();
@@ -748,7 +751,10 @@ function fixImages(text, mes, imgs) {
         // 같은 이름이 여러 폴더(원본·프리셋·불러온 폴더)에 있을 수 있으니 폴더까지 같이 본다.
         const shown = img.dataset.ehFile || parsed.file;
         const shownFolder = img.dataset.ehFolder || parsed.folder;
-        if (target && (target.file !== shown || target.folder !== shownFolder)) {
+        // 같은 파일을 덮어쓴 경우 서버의 수정 시각도 비교한다. 시각 없는 사용자 URL은 그대로 둔다.
+        const nowVersion = target && imageVersion(img.getAttribute('src') || '');
+        const nextVersion = target && imageVersion(target.url);
+        if (target && (target.file !== shown || target.folder !== shownFolder || (nowVersion && nextVersion && nowVersion !== nextVersion))) {
             img.src = target.url;
             img.dataset.ehFile = target.file;
             img.dataset.ehFolder = target.folder;
@@ -831,7 +837,7 @@ export function redrawNow() {
  * 채팅 밖에서 메시지를 따로 그리는 확장(북마크 카드 · 앞뒤 문맥 창 등)이 그린 칸의 태그를 그림으로 바꾼다.
  * 그 확장이 `document.dispatchEvent(new CustomEvent('char-assets:render', { detail: { root } }))`를 보내면 된다.
  * 서로 import 하지 않으므로 둘 중 하나만 깔려 있어도 아무 일도 없다.
- * 이미 그려진 <img> 맞추기(fixImages)는 메시지 시각으로 그림을 고르는 채팅 전용이라 여기서는 하지 않는다.
+ * 이미 그려진 <img>의 이름·확장자도 맞춘다. 채팅 밖에서는 현재 채팅의 시각으로 번호 묶음을 다시 고르지 않는다.
  */
 function renderOutside(root) {
     if (!(root instanceof Element) || !liveIndex()) return;
@@ -840,6 +846,7 @@ function renderOutside(root) {
     for (const text of targets) {
         try {
             replaceInText(text);
+            fixImages(text, null, [...text.getElementsByTagName('img')], { random: false });
         } catch (error) {
             console.debug('[캐릭터 에셋] 채팅 밖 그리기 실패', error);
         }

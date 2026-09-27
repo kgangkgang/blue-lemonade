@@ -23,7 +23,7 @@ PROFILE_JSON:\n${JSON.stringify(masked)}`;
             if(/[가-힣]/.test(result[key]))throw new Error('영어로 번역되지 않은 항목이 있어요. 다시 번역해 주세요.');
             const tokens=s=>(s.match(/__PN_MACRO_\d+__/g)||[]).sort().join('|');
             if(tokens(original)!==tokens(result[key]))throw new Error('번역에서 매크로가 바뀌었어요. 기존 적용본을 유지했어요.');
-            for(const [token,value] of protectedValues)result[key]=result[key].replaceAll(token,value);
+            for(const [token,value] of protectedValues)result[key]=result[key].replaceAll(token,()=>value);
         }
         return result;
     }};

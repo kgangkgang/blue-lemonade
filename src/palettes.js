@@ -229,7 +229,35 @@ export function parseColor(value) {
         const a = m[4] === undefined ? 1 : (m[4].endsWith('%') ? Number(m[4].slice(0, -1)) / 100 : Number(m[4]));
         return [Number(m[1]), Number(m[2]), Number(m[3]), a];
     }
+    m = s.match(/^#([0-9a-f]{4}|[0-9a-f]{8})$/i);
+    if (m) {
+        const hex = m[1].length === 4 ? [...m[1]].map(c=>c+c).join('') : m[1];
+        return [0,2,4,6].map((i,n)=>parseInt(hex.slice(i,i+2),16)/(n===3?255:1));
+    }
+    m = s.match(/^(rgba?|hsla?)\(([^()]+)\)$/i);
+    if (m) {
+        const parts = m[2].trim().split(/[\s,/]+/);
+        const number = /^[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[-+]?\d+)?%?$/i;
+        const clip = (n,max=1)=>Math.max(0,Math.min(max,n));
+        const alpha = parts[3] === undefined ? 1 : number.test(parts[3]) ? clip(parseFloat(parts[3])/(parts[3].endsWith('%')?100:1)) : NaN;
+        if (parts.length >= 3 && parts.length <= 4 && Number.isFinite(alpha)) {
+            if (/^rgb/i.test(m[1]) && parts.slice(0,3).every(x=>number.test(x))) return [...parts.slice(0,3).map(x=>clip(parseFloat(x)*(x.endsWith('%')?2.55:1),255)),alpha];
+            const hue = /^([-+]?(?:\d+(?:\.\d*)?|\.\d+))(deg|grad|rad|turn)?$/i.exec(parts[0]);
+            if (/^hsl/i.test(m[1]) && hue && parts.slice(1,3).every(x=>number.test(x)&&x.endsWith('%'))) {
+                const degrees=Number(hue[1])*({deg:1,grad:.9,rad:180/Math.PI,turn:360}[hue[2]?.toLowerCase()]||1);
+                const h=((degrees%360)+360)%360/60, sat=clip(parseFloat(parts[1])/100), l=clip(parseFloat(parts[2])/100);
+                const c=(1-Math.abs(2*l-1))*sat,x=c*(1-Math.abs(h%2-1)),off=l-c/2;
+                const rgb=h<1?[c,x,0]:h<2?[x,c,0]:h<3?[0,c,x]:h<4?[0,x,c]:h<5?[x,0,c]:[c,0,x];
+                return [...rgb.map(v=>Math.round((v+off)*255)),alpha];
+            }
+        }
+    }
     return [128, 128, 128, 1];
+}
+
+export function mixColor(a, b, amount) {
+    const x=parseColor(a),y=parseColor(b);
+    return `rgb(${[0,1,2].map(i=>Math.round(x[i]*amount+y[i]*(1-amount))).join(', ')})`;
 }
 
 export function sameColor(a, b) {

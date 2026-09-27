@@ -95,7 +95,7 @@ async function rawPreview(file) {
         if (bytes[i] !== 0xff || bytes[i + 1] !== 0xd8 || bytes[i + 2] !== 0xff || !marks.has(bytes[i + 3])) continue;
         tried++;
         try {
-            const bitmap = await createImageBitmap(new Blob([bytes.subarray(i)], { type: 'image/jpeg' }));
+            const bitmap = await createImageBitmap(file.slice(i, file.size, 'image/jpeg'));
             if (!best || bitmap.width * bitmap.height > best.width * best.height) { best?.close?.(); best = bitmap; } else bitmap.close?.();
         } catch { /* 가짜 표지 */ }
     }

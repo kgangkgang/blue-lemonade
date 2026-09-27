@@ -4,10 +4,11 @@
 import { verifyAddonCss } from '../../addon-files-check.js';
 import { onFirstShow } from './hub.js';
 import { eventSource, event_types } from '../../../../../../../script.js';
-import { TITLE, VERSION, FOLDER, initSettings } from './state.js';
+import { TITLE, VERSION, FOLDER, initSettings, settings } from './state.js';
 import { installCapture, setGenerationType, clearGenerationType, beginSendTrace, markSend } from './capture.js';
 import { trimEntries } from './store.js';
-import { refresh as refreshBudget, refreshSoon as refreshBudgetSoon } from './budget.js';
+let budgetPromise = null;
+const budgetModule = () => (budgetPromise ??= import('./budget.js'));
 
 initSettings();
 // 다른 확장보다 먼저 fetch를 감싸야 그 확장의 요청도 잡힌다 (loading_order가 낮다).
@@ -18,7 +19,7 @@ function toast(kind, message, options = {}) {
 }
 
 // 채팅 생성의 종류(보내기·스와이프·이어쓰기 …)를 기억해 두었다가 기록에 붙인다.
-eventSource.on(event_types.GENERATION_STARTED, (type) => { setGenerationType(type); markSend('생성 시작'); });
+eventSource.on(event_types.GENERATION_STARTED, (type, _params, dryRun) => { if (dryRun) return; setGenerationType(type); markSend('생성 시작'); });
 eventSource.on(event_types.GENERATION_AFTER_COMMANDS, () => markSend('명령 처리 끝'));
 eventSource.on(event_types.MESSAGE_SENT, () => markSend('메시지 전송 이벤트'));
 eventSource.on(event_types.USER_MESSAGE_RENDERED, () => markSend('내 메시지 표시'));
@@ -31,7 +32,7 @@ document.addEventListener('keydown', (event) => {
     if (event.key === 'Enter' && !event.shiftKey && event.target?.id === 'send_textarea') beginSendTrace('Enter');
 }, true);
 // 요청이 끝나면 몇 초 뒤 중계 서버의 잔액·과금을 다시 가져온다 (1분에 한 번까지)
-eventSource.on(event_types.GENERATION_ENDED, () => { clearGenerationType(); refreshBudgetSoon(); });
+eventSource.on(event_types.GENERATION_ENDED, () => { clearGenerationType(); if (settings().budget?.enabled) budgetModule().then(m => m.refreshSoon()).catch(() => {}); });
 eventSource.on(event_types.GENERATION_STOPPED, () => clearGenerationType());
 
 // 폰에서 zip을 덧씌우면 예전 파일이 그대로 남는 일이 있다. 코드와 스타일의 판이 다르면 알려 준다.
@@ -45,7 +46,7 @@ function checkFilesMatch() {
 // 마법봉 단추는 12줄짜리라 여기서 직접 만들고, 누를 때 비로소 panel.js 를 받는다.
 let panelPromise = null;
 const panel = () => (panelPromise ??= import('./panel.js'));
-async function openDialog() { (await panel()).openDialog(); }
+async function openDialog() { try { (await panel()).openDialog(); } catch (error) { console.error('[요청 로그]', error); } }
 function mountWandButton() {
     if (document.getElementById('rl-wand-button')) return;
     const container = document.getElementById('data_bank_wand_container') ?? document.getElementById('extensionsMenu');
@@ -85,5 +86,5 @@ jQuery(async () => {
     setTimeout(() => { let done = false; const go = () => { if (!done) { done = true; checkFilesMatch(); } }; requestAnimationFrame(() => setTimeout(go, 0)); setTimeout(go, 5000); }, 3000);
     // 4.5.8: 첫 정리는 시작 경로에서 빼 예산 확인과 같은 타이머에 얹는다 —
     // jQuery ready 에서 곧장 IndexedDB 를 readwrite 커서로 최대 500행 훑었고 보통은 지울 것이 없다.
-    setTimeout(() => { trimEntries().catch(() => {}); refreshBudget().catch(() => {}); }, 6000);
+    setTimeout(() => { trimEntries().catch(() => {}); if (settings().budget?.enabled) budgetModule().then(m => m.refresh()).catch(() => {}); }, 6000);
 });

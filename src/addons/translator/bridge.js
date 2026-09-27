@@ -1,3 +1,4 @@
+import { showThemeModal } from '../../modal.js';
 import { getSettings } from '../../settings.js';
 import { ready, duplicate } from './index.js';
 export { ready, duplicate };
@@ -37,6 +38,7 @@ export async function openPanel() {
     await ready;
     if (dialog?.open) return;
     if (owner) { owner.scrollIntoView({block:'nearest'}); return; }
+    if (!findRoot()) { globalThis.toastr?.error('번역 설정을 찾지 못했어요. 새로고침해 주세요.', 'LLM 번역'); return; }
     dialog = document.createElement('dialog'); dialog.className = 'bl-translator-dialog';
     dialog.setAttribute('aria-label','LLM 번역 설정');
     dialog.innerHTML = '<header><b>LLM 번역</b><button type="button" aria-label="번역 설정 닫기">×</button></header><div class="bl-translator-dialog-body"></div>';
@@ -44,7 +46,7 @@ export async function openPanel() {
     const release = take(dialog.querySelector('.bl-translator-dialog-body'));
     dialog.querySelector('button').onclick = () => dialog.close();
     dialog.addEventListener('close', () => { release?.(); dialog.remove(); dialog=null; }, {once:true});
-    dialog.showModal();
+    showThemeModal(dialog);
 }
 export function mountInline(host) {
     const release = take(host);

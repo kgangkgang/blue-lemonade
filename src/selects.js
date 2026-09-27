@@ -13,6 +13,7 @@ import { getSettings } from './settings.js';
 const SEARCH_FROM = 12; // 항목이 이보다 많으면 찾기칸
 let layer = null;       // 열린 팝업 (한 번에 하나)
 let owner = null;       // 팝업을 연 select
+let refocus = false;
 let touchStart = null;  // 손가락 시작점 — 밀기(스크롤)와 톡을 가름
 let openedAt = 0;       // 연 시각 (연 직후의 scroll · resize 로 닫히지 않게)
 let openedWidth = 0;    // 연 순간의 창 너비 — 높이만 바뀌는 resize(자판 · 주소창)는 닫지 않고 자리만 다시 잡음
@@ -93,10 +94,13 @@ const ownerWatch = new MutationObserver(() => { if (owner && !owner.isConnected)
 function close() {
     ownerWatch.disconnect();
     if (!layer) return;
+    const back = refocus && owner?.isConnected && layer.contains(document.activeElement) ? owner : null;
     layer.remove();
     layer = null;
     owner = null;
     closedAt = Date.now();
+    refocus = false;
+    back?.focus({ preventScroll: true });
 }
 
 function pick(index) {
@@ -112,6 +116,7 @@ function open(sel) {
     if (owner === sel) { close(); return; }
     close();
     owner = sel;
+    refocus = document.activeElement === sel;
     openedAt = Date.now();
     openedWidth = window.innerWidth;
     // 어디에 꽂나: 실리태번 팝업(dialog) 안이면 그 안(top layer 밖은 inert), 아니면 body.
@@ -229,7 +234,9 @@ export function startSelectPop() {
         if (window.innerWidth !== openedWidth) { if (Date.now() - openedAt > GRACE) close(); return; }
         if (owner) place(layer.firstElementChild, owner);
     });
-    document.addEventListener('scroll', (e) => { if (layer && !layer.contains(e.target) && Date.now() - openedAt > GRACE) close(); }, true);
+    document.addEventListener('scroll', (e) => {
+        if (layer && !layer.contains(e.target) && (e.target === document || (e.target instanceof Node && e.target.contains(owner))) && Date.now() - openedAt > GRACE) close();
+    }, true);
     // 연 select 가 문서에서 빠지면(실리태번이 다시 그림) 닫음
 
 }

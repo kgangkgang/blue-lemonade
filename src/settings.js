@@ -113,15 +113,24 @@ export const DEFAULTS = {
 
 DEFAULTS.userProfile = { ...structuredClone(DEFAULTS.profile), mode: 'none', side: 'auto', metaSide: 'auto' }; // auto = 말풍선이면 오른쪽(메신저처럼), 나머지 모양은 왼쪽
 
-// 5.1.2: 스타일 시트에 그대로 들어가는 색 문자열 — #hex · rgb(a) · hsl(a) 만. 괄호 안에 { } ; 가 못 들어오니 규칙을 끼워 넣을 수 없다
+// 스타일 시트에 그대로 들어가는 색 문자열 — #hex · rgb(a) · hsl(a) 만.
+// 주석·따옴표·역슬래시도 거른다: 닫히지 않은 토큰은 뒤의 변수 선언까지 삼킨다.
 // (직접 고친 색 · 나눈 스타일 · 선택 공유 프리셋이 같이 씀)
-export const CSS_COLOR = /^(#[0-9a-f]{3,8}|rgba?\([^(){};]*\)|hsla?\([^(){};]*\))$/i;
+export const CSS_COLOR = /^(#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})|(?:rgba?|hsla?)\([\w .,%+\-/]*\))$/i;
 export const isCssColor = value => typeof value === 'string' && CSS_COLOR.test(value.trim());
 const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 // 5.3.4: 그림 data URL 은 base64 글자만 — 'data:image/' 로 시작하는지만 보면 따옴표 · 괄호가 섞여 style 속성 · CSS url() 을 빠져나갔다 (공유 코드로 스크립트 실행)
 // 지금 설정 창이 만드는 것은 PNG 뿐이지만 예전에 저장한 다른 형식도 그대로 읽히게
 export const DATA_IMAGE = /^data:image\/(png|jpeg|webp|gif|avif);base64,[a-z\d+/=]+$/i;
 export const isDataImage = value => typeof value === 'string' && value.length <= 8000000 && DATA_IMAGE.test(value);
+// 큰 그림은 내용이 바뀔 때만 재검사한다. 소유 객체가 사라지면 캐시도 함께 회수된다.
+const checkedImages = new WeakMap();
+function validOwnedImage(owner, value) {
+    if (typeof value === 'string' && checkedImages.get(owner) === value) return true;
+    if (!isDataImage(value)) { checkedImages.delete(owner); return false; }
+    checkedImages.set(owner, value);
+    return true;
+}
 // 5.3.4: body 클래스로 들어가는 값은 아는 것만 — 공백이 든 값 하나로 classList.add 가 던져 시작할 때마다 테마가 죽었다
 const CLASS_VALUES = { user: ['bubble', 'card', 'table', 'plain'], header: ['full', 'name', 'none'], icons: ['line', 'default'], layout: ['bleed', 'column', 'inset'], style: ['marker', 'full', 'bold', 'tint', 'plain'], tilt: ['flat', 'slant', 'steep'] };
 // 5.3.4: 내 글꼴 항목 거르기 — family · 주소가 <style> 과 @font-face 에 들어간다. 공유 코드로 받은 항목도 이 검사를 지난다
@@ -228,12 +237,15 @@ function tidyImage(image) {
     if (!IMAGE_FADES.includes(image.fade)) image.fade = fadeLevel(image.fade);
     if (!IMAGE_EDGES.includes(image.edge)) image.edge = 'none';
     // 커스텀 도형의 마스크는 data URL 만 (아직 안 골랐으면 빈 값 — 모양은 custom 인 채로 두어 고르기 칸이 보이게, CSS 는 mask none 이라 그대로 보임)
-    if (!isDataImage(image.mask)) image.mask = ''; // 5.3.4: base64 글자만 (url("…") 에 그대로 들어간다)
+    if (!validOwnedImage(image, image.mask)) image.mask = ''; // base64 글자만 (url("…") 에 그대로 들어간다)
     if (!MASK_FITS.includes(image.maskFit)) image.maskFit = 'stretch';
     // 저장한 도형 목록 [{ id, name, data }] — 깨진 항목은 버리고, 가리키는 칸이 없으면 '저장 안 된 그림' 상태로
     if (!Array.isArray(image.masks)) image.masks = [];
-    image.masks = image.masks.filter(item => item && typeof item === 'object' && typeof item.id === 'string' && /^[\w-]{1,40}$/.test(item.id) && isDataImage(item.data))
-        .map(item => ({ id: item.id, name: typeof item.name === 'string' && item.name.trim() ? item.name.trim().slice(0, 24) : '커스텀', data: item.data }));
+    const maskName = item => typeof item.name === 'string' && item.name.trim() ? item.name.trim().slice(0, 24) : '커스텀';
+    const validMask = item => isObj(item) && typeof item.id === 'string' && /^[\w-]{1,40}$/.test(item.id) && validOwnedImage(item, item.data);
+    if (!image.masks.every(item => validMask(item) && Object.keys(item).length === 3 && item.name === maskName(item))) {
+        image.masks = image.masks.filter(validMask).map(item => ({ id: item.id, name: maskName(item), data: item.data }));
+    }
     if (typeof image.maskId !== 'string' || !image.masks.some(item => item.id === image.maskId)) image.maskId = '';
     // 자동 색은 불리언 — 가져온 파일의 "false" 는 문자열이라 그냥 두면 참으로 읽힌다 (tidyType 의 justify 와 같은 방식).
     // fill() 이 먼저 돌아 없는 키는 이미 기본값이라 여기서 undefined 를 볼 일은 없다 — 이 줄은 반드시 fill() 뒤여야 한다
@@ -329,7 +341,7 @@ function tidyStyles(s) {
     if (s.activeStyle !== null && !(isObj(s.activeStyle) && typeof s.activeStyle.id === 'string' && typeof s.activeStyle.key === 'string')) s.activeStyle = null;
     if (s.baseStyle !== null && !isObj(s.baseStyle)) s.baseStyle = null;
     // 3.3.1 날씨 그림 목록
-    const okImage = x => isObj(x) && typeof x.id === 'string' && /^[\w-]{1,40}$/.test(x.id) && isDataImage(x.data); // 5.3.4: id 는 data-id 속성에, 그림은 style 속성에 들어간다
+    const okImage = x => isObj(x) && typeof x.id === 'string' && /^[\w-]{1,40}$/.test(x.id) && validOwnedImage(x, x.data); // id 는 data-id 속성에, 그림은 style 속성에 들어간다
     if (!Array.isArray(s.weatherImages)) s.weatherImages = [];
     else if (s.weatherImages.length > 12 || !s.weatherImages.every(okImage)) s.weatherImages = s.weatherImages.filter(okImage).slice(0, 12);
 }
@@ -398,7 +410,7 @@ function tidyFlags(s) {
         s.chat.demInk = flag(s.chat.demInk, false);
         // 3.7.1 그 색을 어디에: text 글자 색 | marker 형광펜 띠 색 (글자는 테마 색 그대로)
         if (!['text', 'marker'].includes(s.chat.demInkMode)) s.chat.demInkMode = 'text';
-        if (s.chat.weatherImage !== '' && !isDataImage(s.chat.weatherImage)) s.chat.weatherImage = ''; // 5.3.4: base64 글자만 — 설정 창 style 속성에 그대로 들어가 스크립트가 돌았다
+        if (s.chat.weatherImage !== '' && !validOwnedImage(s.chat, s.chat.weatherImage)) s.chat.weatherImage = ''; // base64 글자만 — 설정 창 style 속성에 들어간다
         if (typeof s.chat.weatherImageId !== 'string') s.chat.weatherImageId = '';
     }
 }
@@ -507,7 +519,7 @@ export function invalidateSettings() { memo = null; }
 export function getSettings() {
     const ext = SillyTavern.getContext().extensionSettings;
     if (memo && ext[KEY] === memo) return memo;
-    if (!ext[KEY]) ext[KEY] = structuredClone(DEFAULTS);
+    if (!isObj(ext[KEY])) ext[KEY] = structuredClone(DEFAULTS);
     migrate(ext[KEY]);
     // 3.4.0 전 설정: 데우스 카드 스킨이나 트래커 날씨를 쓰던 사람이면 호환을 켠 채로 시작 (한 번만)
     // 5.3.4: 아래 5.1.2 칸 채우기보다 먼저 본다 — 채운 뒤에 보면 deus · userProfile 이 늘 있어 두 옮기기가 5.1.3 부터 한 번도 안 돌았다.
@@ -593,7 +605,7 @@ export function getSettings() {
     if (!isObj(s.wordTools)) s.wordTools=structuredClone(DEFAULTS.wordTools);
     s.wordTools.messageView=s.wordTools.messageView==='original'?'original':'translation';
     if (!Array.isArray(s.wordTools.rules)) s.wordTools.rules=[];
-    s.wordTools.rules=s.wordTools.rules.filter(rule=>rule&&typeof rule==='object').slice(0,500);
+    if (!s.wordTools.rules.every(rule=>rule&&typeof rule==='object')) s.wordTools.rules=s.wordTools.rules.filter(rule=>rule&&typeof rule==='object');
     if(!Array.isArray(s.wordTools.presets))s.wordTools.presets=[];
     s.wordTools.presets=s.wordTools.presets.filter(p=>p&&typeof p.id==='string'&&Array.isArray(p.rules)).slice(0,24);
     if(migrateWordSyntax) {
@@ -616,6 +628,12 @@ export function getSettings() {
     if(!isObj(s.captureTools.maskStyles))s.captureTools.maskStyles={};
     for(const style of MASK_STYLES)s.captureTools.maskStyles[style]=normalizeMaskStyle(s.captureTools.maskStyles[style]);
     s.customPalettes=s.customPalettes.filter(item=>item&&typeof item.id==='string'&&typeof item.name==='string'&&isObj(item.light)&&isObj(item.dark)).slice(0,24);
+    for (const item of s.customPalettes) for (const mode of ['light', 'dark']) {
+        for (const [token, value] of Object.entries(item[mode])) {
+            if (UNSAFE_KEYS.has(token) || !isCssColor(value)) delete item[mode][token];
+            else item[mode][token] = value.trim();
+        }
+    }
     if (firstDeus) s.deus.on = !!(s.chat?.demSkin || s.chat?.weather === 'tracker');
     // 직접 고친 색: 팔레트 id 는 아는 것만, 값은 색 문자열만 — 값이 <style> 에 그대로 들어가니 "red} body{display:none}" 같은 것이 화면을 지웠다 (5.1.2)
     for (const [id, colors] of Object.entries(s.colorOverrides)) {
@@ -639,8 +657,8 @@ export function saveSettings() {
 // 4.7.0: 무엇을 되돌릴지 고른다 — look(테마 모습) · addons(애드온 켬 · 설정) · tools(단어 치환 · 캡처) · library(프레임 · 팔레트 · 날씨 그림 · 모양)
 // 내 글꼴 · 본 공지 · 내 스타일 · 캐릭터 연결은 늘 남긴다 (입혀 둔 캐릭터 스타일 상태는 비움)
 const RESET_GROUPS = { addons: ['addons', 'addonUI'], tools: ['wordTools', 'captureTools'], library: ['frameLibrary', 'customPalettes', 'weatherImages'] };
-// 5.1.2: 테마 모습이 아닌 쓰는 방식(켬 · 사용 모드 · 잠금 · 자동 화이트/나이트 · 한 손 · 몰입 읽기 · 백그라운드 창 · 알림 · 다른 CSS · 고른 커스텀 에이드)은 '테마 모습' 초기화에 남긴다
-const RESET_KEEP = ['appearanceHistory', 'customFonts', 'noticeSeen', 'styles', 'charStyles', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify', 'activeCustomPalette'];
+// 테마 모습이 아닌 쓰는 방식(켬 · 사용 모드 · 잠금 · 자동 화이트/나이트 · 한 손 · 몰입 읽기 · 백그라운드 창 · 알림 · 다른 CSS)은 '테마 모습' 초기화에 남긴다
+const RESET_KEEP = ['appearanceHistory', 'customFonts', 'noticeSeen', 'styles', 'charStyles', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify'];
 export function resetSettings(groups = { look: true }) {
     const ext = SillyTavern.getContext().extensionSettings;
     const old = ext[KEY] || {};
@@ -660,7 +678,7 @@ export function resetSettings(groups = { look: true }) {
     }
     for (const [group, keys] of Object.entries(RESET_GROUPS)) for (const key of keys) next[key] = structuredClone(groups[group] ? DEFAULTS[key] : (old[key] ?? DEFAULTS[key]));
     if (!next.image || typeof next.image !== 'object') next.image = structuredClone(DEFAULTS.image);
-    if (groups.library) { next.image.masks = []; next.image.maskId = ''; if (next.image.shape === 'custom') next.image.shape = 'rect'; }
+    if (groups.library) { next.activeCustomPalette = ''; next.image.masks = []; next.image.maskId = ''; if (next.image.shape === 'custom') next.image.shape = 'rect'; }
     else if (groups.look) next.image.masks = structuredClone(old.image?.masks || []);
     ext[KEY] = next;
     memo = null;

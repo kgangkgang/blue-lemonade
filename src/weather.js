@@ -10,8 +10,10 @@ import { bindWeatherRest } from './weather-rest.js';
 import { weatherAmount, weatherPixelRatio, activeWeather } from './weather-options.js';
 import { parseColor } from './palettes.js';
 import { getSettings, saveSettings } from './settings.js';
+import { loadWeatherModule } from './weather-load.js';
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+let rendererRetryAfter = 0;
 const WEATHER_VALUE = '.custom-dem-track__item--weather .custom-dem-track__value, .custom-dem-track-recovery__item--context .custom-dem-track-recovery__value';
 
 // 날씨 글자 → 비 · 눈. 한국어는 낱말 앞(띄어쓰기 · 쉼표 뒤)에서만 — "준비", "비밀", "눈부신" 같은 말에 걸리지 않게
@@ -92,7 +94,7 @@ async function createRenderer(canvas, init, replaceCanvas) {
             console.info('[Blue Lemonade] 날씨 효과를 워커로 못 돌려 메인에서 그려요', error);
         }
     }
-    const { createEngine, createLoop } = await import('./weather-engine.js');
+    const { createEngine, createLoop } = await loadWeatherModule(new URL('./weather-engine.js', import.meta.url), ['createEngine', 'createLoop']);
     const engine = createEngine(canvas.getContext('2d'));
     const loop = createLoop(engine, fn => requestAnimationFrame(fn), id => cancelAnimationFrame(id));
     let reduce = !!init.reduce, paused = false;
@@ -179,7 +181,7 @@ function createLayer(host, className, virtual = false) {
     }
     // 설정 창 표본(virtual): 표본 칸은 낮아서 그 크기로 그리면 무지개 · 햇살 · 그림자가 실제 채팅보다 훨씬 작게 나왔다.
     // 캔버스를 '표본 너비 × 실제 채팅 화면 비율'의 키로 잡고 표본 칸에는 그 위쪽(아래에 깔리는 효과는 아래쪽)만 보이게 한다 — 크기가 실제와 같다
-    let anchorBottom = false;
+    let anchorBottom = false, fitStage = false;
     const size = () => {
         // 표본은 돋보기 배율(transform: scale)이 걸려 있을 수 있다. getBoundingClientRect 는 배율이 곱해진 값이라 그것으로 캔버스 키를 잡으면
         // 배율만큼 세로로 눌려 보였다(레몬이 납작해짐) → 배율과 무관한 배치 크기(clientWidth/Height)로 잰다
@@ -187,7 +189,7 @@ function createLayer(host, className, virtual = false) {
         if (!virtual) return { w: Math.round(rect.width), h: Math.round(rect.height) };
         const sheld = document.querySelector('body > #sheld') || document.getElementById('sheld');
         const ratio = sheld?.clientWidth > 0 && sheld.clientHeight > 0 ? sheld.clientHeight / sheld.clientWidth : 1.9;
-        const h = Math.max(Math.round(rect.height), Math.round(rect.width * Math.min(2.4, Math.max(.5, ratio))));
+        const h = fitStage ? Math.round(rect.height) : Math.max(Math.round(rect.height), Math.round(rect.width * Math.min(2.4, Math.max(.5, ratio))));
         canvas.style.height = `${h}px`; canvas.style.top = anchorBottom ? 'auto' : '0'; canvas.style.bottom = anchorBottom ? '0' : 'auto';
         return { w: Math.round(rect.width), h };
     };
@@ -201,7 +203,7 @@ function createLayer(host, className, virtual = false) {
         if (pending) r.post(pending);
         pending = null;
         return r;
-    });
+    }, error => { rendererRetryAfter = Date.now() + 2500; console.warn('[Blue Lemonade] 날씨 효과를 시작하지 못했어요', error); api.destroy(); return null; });
     const observer = new ResizeObserver(() => renderer?.post({ type: 'resize', ...dimensions() }));
     observer.observe(host);
     const api = {
@@ -210,8 +212,11 @@ function createLayer(host, className, virtual = false) {
         ready,
         set(mode, level, params = {}, spriteData = '') {
             if(destroyed)return;
-            const low = (mode === 'water' && (params.scene?.waterArea ?? 'bottom') === 'bottom') || (mode === 'fog' && params.fog?.area === 'bottom');
-            if (virtual && low !== anchorBottom) { anchorBottom = low; renderer?.post({ type: 'resize', ...dimensions() }); }
+            const lowOf = (m, p) => (m === 'water' && (p?.scene?.waterArea ?? 'bottom') === 'bottom') || (m === 'fog' && p?.fog?.area === 'bottom');
+            const topOf = (m, p) => (m === 'fog' && ['top', 'both'].includes(p?.fog?.area)) || (m === 'water' && p?.scene?.waterArea === 'top');
+            const low = lowOf(mode, params) || (!topOf(mode, params) && lowOf(params.second?.mode, params.second));
+            const fit = (mode === 'fog' && params.fog?.area === 'both') || (params.second?.mode === 'fog' && params.second.fog?.area === 'both');
+            if (virtual && (low !== anchorBottom || fit !== fitStage)) { anchorBottom = low; fitStage = fit; renderer?.post({ type: 'resize', ...dimensions() }); }
             current = { mode, level, ...params };
             canvas.style.opacity = resting ? "0.15" : params.readability ? "0.55" : "1";
             const message = { type: 'config', mode, level, colors: colorsNow(), ...params };
@@ -222,7 +227,7 @@ function createLayer(host, className, virtual = false) {
                 const gen = ++spriteGen;
                 const send = (bitmap) => {
                     if (destroyed || gen !== spriteGen) { bitmap?.close?.(); return; }
-                    ready.then(r => {if(destroyed||gen!==spriteGen){bitmap?.close?.();return;}r.post({...current,type:'config',colors:colorsNow(),sprite:bitmap},bitmap?[bitmap]:[]);});
+                    ready.then(r => {if(!r||destroyed||gen!==spriteGen){bitmap?.close?.();return;}r.post({...current,type:'config',colors:colorsNow(),sprite:bitmap},bitmap?[bitmap]:[]);});
                 };
                 if (wantKey) spriteBitmap(wantKey).then(send, () => send(null));
                 else send(null);
@@ -238,7 +243,7 @@ function createLayer(host, className, virtual = false) {
             if(destroyed)return;destroyed=true;spriteGen++;pending=null;
             for(const fn of cleanup)fn();cleanup.clear();
             observer.disconnect();
-            ready.then(r => r.stop());
+            ready.then(r => r?.stop());
             canvas.remove();
         },
     };
@@ -254,7 +259,13 @@ let trackerTimer = 0;
 function trackerWeather() {
     const values = document.querySelectorAll(`#chat .mes:not([is_user="true"]) :is(${WEATHER_VALUE})`);
     const last = values[values.length - 1];
-    return last ? detectWeatherAll(last.textContent) : { modes: [], all: [], warm: false };
+    return last ? detectWeatherAll(last.matches('.custom-dem-track-recovery__value') ? recoveryWeatherText(last.textContent) : last.textContent) : { modes: [], all: [], warm: false };
+}
+function recoveryWeatherText(value) {
+    const raw = String(value || '');
+    if (raw.includes('|')) return raw.slice(raw.lastIndexOf('|') + 1).trim();
+    const emoji = [...raw.matchAll(/\p{Extended_Pictographic}/gu)].at(-1);
+    return emoji ? raw.slice(emoji.index) : raw;
 }
 const trackerMode = () => trackerWeather().modes[0] || 'off';
 // 그 날씨를 골랐을 때 맞춰 둔 값(날씨마다 따로 기억)을 쓴다 — 트래커 · 둘째 효과가 안개를 부르면 안개 탭에서 다듬은 모양 그대로 나온다
@@ -310,6 +321,7 @@ export function syncWeather(on, chat = {}) {
     const host = document.querySelector('body > #sheld') || document.getElementById('sheld');
     if (!host) return;
     if (!layer || !layer.canvas.isConnected || layer.canvas.parentElement !== host) {
+        if (Date.now() < rendererRetryAfter) return;
         layer?.destroy();
         restBinding?.dispose();
         layer = createLayer(host, 'bl-weather');
@@ -333,7 +345,7 @@ function moreLines(stage, on) {
     if (have.length || !text) return;
     text.insertAdjacentHTML('beforeend', '<p class="bl-weather-more">창밖으로 오후의 빛이 길게 기울었다. 그는 말없이 잔을 한 번 돌리고, 식어 버린 차 위로 떠오른 레몬 조각을 가만히 바라보았다.</p><p class="bl-weather-more"><q>「오늘은 하늘이 좋네.」</q> 낮은 목소리가 조용한 방 안에 천천히 번졌다.</p>');
 }
-const SEE_THROUGH = ['--salty-user-bg', '--salty-raised', '--salty-card', '--salty-shade'];
+const SEE_THROUGH = ['--salty-raised', '--salty-card', '--salty-shade'];
 function seeThrough(stage, on) {
     const root = getComputedStyle(document.documentElement);
     for (const name of SEE_THROUGH) {
@@ -357,6 +369,7 @@ export function previewWeather(stage, chat = {}) {
         return;
     }
     if (!preview) {
+        if (Date.now() < rendererRetryAfter) return;
         preview = stage._blWeather = createLayer(stage, 'bl-weather-pv', true);
         // 창을 닫아 표본이 문서에서 떨어지면 워커를 끝낸다
         // A host removed while already outside the viewport need not produce
@@ -378,19 +391,28 @@ export function weatherState() {
 }
 
 /** A still of the current effect, rendered at export resolution for long captures. */
+function readableCapture(canvas, readability) {
+    if (!readability) return;
+    const ctx = canvas.getContext('2d');
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalCompositeOperation = 'destination-in'; ctx.globalAlpha = .55;
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.restore();
+}
 export async function captureWeather(width, height, scale) {
     if (!wanted.on || !layer) return '';
     const current = { ...layer.current() }, spriteData = wanted.sprite;
     if (current.mode === 'off') return '';
-    const { createEngine } = await import('./weather-engine.js');
+    const { createEngine } = await loadWeatherModule(new URL('./weather-engine.js', import.meta.url), ['createEngine']);
     const canvas = document.createElement('canvas');
     const engine = createEngine(canvas.getContext('2d'));
     const bitmap = current.mode === 'custom' ? await spriteBitmap(spriteData) : null;
     try {
         engine.resize(width, height, scale);
-        engine.config({ ...current, colors: colorsNow(), sprite: bitmap });
+        const liveArea = Math.max(1, layer.canvas.clientWidth * layer.canvas.clientHeight || width * window.innerHeight);
+        engine.config({ ...current, capScale: width * height / liveArea, colors: colorsNow(), sprite: bitmap });
         await engine.ready();
         engine.draw();
+        readableCapture(canvas, current.readability);
         return canvas.toDataURL('image/png');
     } finally { engine.dispose(); canvas.width = canvas.height = 1; }
 }
@@ -398,11 +420,11 @@ export async function captureWeather(width, height, scale) {
 export async function captureWeatherAnimation(width,height,scale=1) {
     if(!wanted.on||!layer)return null;
     const current={...layer.current()},spriteData=wanted.sprite;if(current.mode==='off')return null;
-    const {createEngine}=await import('./weather-engine.js');
+    const {createEngine}=await loadWeatherModule(new URL('./weather-engine.js', import.meta.url), ['createEngine']);
     const canvas=document.createElement('canvas'),engine=createEngine(canvas.getContext('2d'));
     const bitmap=current.mode==='custom'?await spriteBitmap(spriteData):null;
     engine.resize(width,height,scale);engine.config({...current,colors:colorsNow(),sprite:bitmap});await engine.ready();
-    return {canvas,draw(dt,now){engine.step(dt,now);engine.draw();},close(){engine.dispose();canvas.width=canvas.height=1;}};
+    return {canvas,draw(dt,now){engine.step(dt,now);engine.draw();readableCapture(canvas,current.readability);},close(){engine.dispose();canvas.width=canvas.height=1;}};
 }
 
 // ───────── 채팅 화면에서 자리 정하기 ─────────
@@ -417,7 +439,7 @@ export function placeWeatherSpots(mode, defaults, onDone) {
     const list = defaults.map(([x, y], i) => ({ ...(s.chat.weatherSpots?.[mode]?.[i] || { x, y }) }));
     const box = document.createElement('div');
     box.id = 'bl-weather-place';
-    box.innerHTML = `<div class="bl-weather-place-bar"><span>점을 끌어 자리를 정해요</span><button type="button" data-place="auto">자동 배치</button><button type="button" data-place="cancel">취소</button><button type="button" data-place="done">완료</button></div>${list.map((_, i) => `<button type="button" class="bl-weather-place-dot" data-index="${i}">${list.length > 1 ? i + 1 : ''}</button>`).join('')}`;
+    box.innerHTML = `<div class="bl-weather-place-bar"><span>점을 끌어 자리를 정해요</span><button type="button" data-place="auto">자동 배치</button><button type="button" data-place="cancel">취소</button><button type="button" data-place="done">완료</button></div>${list.map((_, i) => `<button type="button" class="bl-weather-place-dot" data-index="${i}" aria-label="자리 ${i + 1}">${list.length > 1 ? i + 1 : ''}</button>`).join('')}`;
     host.append(box);
     const dots = [...box.querySelectorAll('.bl-weather-place-dot')];
     const paint = () => dots.forEach((dot, i) => { dot.style.left = `${list[i].x * 100}%`; dot.style.top = `${list[i].y * 100}%`; });
@@ -428,7 +450,12 @@ export function placeWeatherSpots(mode, defaults, onDone) {
         cancelAnimationFrame(queued); queued = requestAnimationFrame(refresh);
     };
     const live = () => apply({ ...(s.chat.weatherSpots || {}), [mode]: list.map(p => ({ x: Math.round(p.x * 1000) / 1000, y: Math.round(p.y * 1000) / 1000 })) });
-    const close = (reopen) => { box.remove(); if (reopen) onDone?.(); };
+    const previousFocus = document.activeElement;
+    const close = (reopen) => { document.removeEventListener('keydown', onKey, true); box.remove(); if (reopen) onDone?.(); else if (previousFocus?.isConnected) previousFocus.focus({preventScroll:true}); };
+    const cancel = () => { apply(JSON.parse(before)); close(true); };
+    const onKey = event => { if (event.key === 'Escape' && !event.isComposing) { event.preventDefault(); event.stopImmediatePropagation(); cancel(); } };
+    document.addEventListener('keydown', onKey, true);
+    box.querySelector('[data-place="cancel"]')?.focus({preventScroll:true});
     paint();
     box.addEventListener('pointerdown', (event) => {
         const dot = event.target.closest('.bl-weather-place-dot');
@@ -443,7 +470,7 @@ export function placeWeatherSpots(mode, defaults, onDone) {
     box.addEventListener('click', (event) => {
         const act = event.target.closest('[data-place]')?.dataset.place;
         if (act === 'done') { live(); saveSettings(); close(true); }
-        else if (act === 'cancel') { apply(JSON.parse(before)); close(true); }
+        else if (act === 'cancel') cancel();
         else if (act === 'auto') { const spots = { ...(s.chat.weatherSpots || {}) }; delete spots[mode]; apply(spots); saveSettings(); close(true); }
     });
 }

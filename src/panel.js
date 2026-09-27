@@ -10,7 +10,7 @@ import { listMenuButtons, PIN_LIMIT } from './mes-pins.js';
 import {updateMarkup,bindThemeUpdate} from './theme-update.js';
 import { bindAddonLayout } from './addon-layout.js';
 import { typesetRoot } from './typography.js';
-import { addonMarkup, bindAddons, syncRegexlinkFlag } from './addons.js';
+import { addonMarkup, bindAddons, syncRegexlinkFlag, syncAddonIcons } from './addons.js';
 import { wordToolsMarkup, bindWordTools } from './word-tools.js';
 import { gradientControls, mixControls, gradientAction, bindGradientColors } from './gradient-ui.js';
 import { bindEditor, openEditorCatalog, arrangeEditor, revealEditorTarget, selectEditorGroup } from './settings-editor.js';
@@ -22,7 +22,7 @@ import { syncProfileClip } from './profile-clip.js';
 import { refreshPreset, FRAME_PRESETS, FRAME_LIMIT, presetFrame, saveFrame, useFrame, deleteFrame } from './frame-library.js';
 import { syncDecor } from './decor.js';
 import { FRAME_RANGE } from './frames.js';
-import { customLibrary, newCustomPalette, useCustomPalette, openCustomBuilder, customBuilder, bindCustomBuilder, setCustomMode, seedCustom, saveCustomPalette } from './custompalette.js';
+import { customLibrary, newCustomPalette, useCustomPalette, openCustomBuilder, customBuilder, bindCustomBuilder, setCustomMode, seedCustom, saveCustomPalette, saveCurrentPalette } from './custompalette.js';
 // 설정 창. 확장 서랍과 ✦ 메뉴 팝업 두 곳에 같은 창을 띄울 수 있음.
 // 위에서 대분류(탭) → 아래에서 소분류(칩)를 골라 한 번에 한 묶음만 보여 줌 (폰에서 창이 아래로 길어지지 않게)
 import { getSettings, invalidateSettings, saveSettings, resetSettings, FONT_SET, FONT_SLOTS, IMAGE_RANGE, PROFILE_RANGE, TEXT_LIMIT, FADE_AMOUNT, isDataImage } from './settings.js';
@@ -87,7 +87,7 @@ const ui = {
 const OLD_SUBS = { size: 'text', shape: 'text', marker: 'dialogue' };
 if (ui.tab === 'font') { ui.tab = 'text'; if (ui.subs.font && !ui.subs.text) ui.subs.text = ui.subs.font; }
 function subOf(tab) {
-    if(tab==='extensions') ui.subs.extensions=({modelswitch:'models',regexlink:'perf',conflicts:'perf',taste:'perf',requestview:'perf',retranslate:'perf'})[ui.subs.extensions]||ui.subs.extensions;
+    if(tab==='extensions') ui.subs.extensions=({scripts:'prompt',modelswitch:'models',regexlink:'perf',conflicts:'perf',taste:'perf',requestview:'perf',retranslate:'perf'})[ui.subs.extensions]||ui.subs.extensions;
     if (tab === 'theme' && ui.subs.theme === 'custom') return 'custom';
     const list = SUBS[tab] || [];
     if (tab === 'text' && OLD_SUBS[ui.subs.text]) ui.subs.text = OLD_SUBS[ui.subs.text];
@@ -103,14 +103,15 @@ function setPath(obj, path, value) {
 }
 const isNum = v => typeof v === 'number' && Number.isFinite(v);
 const isSet = v => !!v && typeof v === 'object'; // 글꼴 칸이 언어별 묶음인지 ('same' 이 아닌지)
+const previewChat = s => !s.enabled || s.chat?.weather === 'tracker' && !s.deus?.on ? { ...s.chat, weather:'off' } : s.chat;
 const history = new SettingsHistory();
-window.addEventListener("bl:device-layout", () => history.clear());
+for (const event of ["bl:device-layout", "bl:settings-replaced"]) window.addEventListener(event, () => { history.clear(); syncHistoryButtons(); });
 let historyToast;
 const historyLabels = new Map(Object.entries(SETTING_LABELS));
 const historyOptions = new Map(Object.entries(SETTING_VALUES));
 function labelHistoryControl(label, control) {
     const path = control.match(/data-(?:path|toggle)="([^"]+)"/)?.[1];
-    if (path) historyLabels.set(path, label.replace(/<[^>]*>/g, ''));
+    if (path && !historyLabels.has(path)) historyLabels.set(path, label.replace(/<[^>]*>/g, ''));
 }
 function syncHistoryButtons() {
     for (const panel of panels) {
@@ -126,9 +127,9 @@ function historyLabel(path) {
         if(historyLabels.has(path))return historyLabels.get(path);
         if(/^gradients\.(light|dark)/.test(path))return (path.startsWith('gradients.dark')?'나이트':'라이트')+' 에이드 혼합 · '+(path.endsWith('families')?'색 조합':path.endsWith('angle')?'방향':path.endsWith('blend')?'번짐':path.includes('weights')?'색 비중':'켜기/끄기');
         const key=path.split('.')[3],label=TOKEN_GROUPS.flatMap(([,list])=>list).find(([id])=>id===key)?.[1]||({name:'캐릭터 이름',userName:'내 이름',ui:'메뉴',code:'코드'})[key]||'색';
-        return `그라데이션 · ${label}`;
+        return `${PALETTES[path.split('.')[2]]?.label || '테마'} · 그라데이션 · ${label}`;
     }
-    const scope = { profile: '캐릭터 프로필', userProfile: '내 프로필', image: '에셋 이미지', type: '본문', dialogue: '대사', em: '속마음', strong: '강조', chat: '채팅' }[path.split('.')[0]];
+    const scope = ({'type.dialogueSize':'대사','type.uiSize':'메뉴','type.codeSize':'코드'})[path] ?? { ui:'메뉴', code:'코드', profile: '캐릭터 프로필', userProfile: '내 프로필', image: '에셋 이미지', type: '본문', dialogue: '대사', em: '속마음', strong: '강조', chat: '채팅' }[path.split('.')[0]];
     if (path.startsWith('colorOverrides.')) {
         const [, palette, token] = path.split('.');
         return `${PALETTES[palette]?.label || '테마'} · ${TOKEN_GROUPS.flatMap(([,list]) => list).find(([key]) => key === token)?.[1] || token}`;
@@ -152,10 +153,26 @@ function historyValue(value, path) {
     if (typeof value === 'string' && (/^(data:|https?:)/.test(value) || value.length > 100)) return '이미지·사용자 자료';
     return typeof value === 'number' ? `${numText(path, value)}${NUM[path]?.unit || ''}` : String(value);
 }
-function stepHistory(redo) {
+async function syncChangedAddons(paths) {
+    if (!paths.some(path => /^(addons|addonUI)(\.|$)|^(enabled|usageMode)$/.test(path))) return;
+    await syncRegexlinkFlag();
+    await syncAddonIcons();
+}
+async function stepHistory(redo) {
     const changes = history.step(getSettings(), redo);
     if (!changes.length) { syncHistoryButtons(); return; }
-    saveSoon(); applyAll(); refreshPanels(changes);
+    invalidateSettings();
+    try { applyAll(); }
+    catch (error) {
+        history.step(getSettings(), !redo); invalidateSettings();
+        try { applyAll(); } catch { /* Keep the last stored settings. */ }
+        refreshPanels();
+        toastr.error(`적용하지 못해 되돌렸어요: ${error.message || error}`, 'Blue Lemonade');
+        return;
+    }
+    saveSoon();
+    await syncChangedAddons(changes.map(change => change.path));
+    refreshPanels(changes);
     const rows = changes.slice(0, 8).map(c => `<div>${esc(historyLabel(c.path))}: <b>${esc(historyValue(c.from, c.path))}</b> → <b>${esc(historyValue(c.to, c.path))}</b></div>`).join('');
     // Only replace this editor's history notice; errors and other extensions' notices stay.
     if (historyToast?.[0]?.isConnected) historyToast.stop(true, true).trigger('click').stop(true, true);
@@ -164,13 +181,13 @@ function stepHistory(redo) {
 
 function settingsChanges(s) {
     const changes = changedSettings(s);
-    return `<p class="salty-note">기본값에서 바뀐 설정 ${changes.length}개예요. 저장한 액자·글꼴·스타일 보관함은 유지해요. 복원도 상단 화살표로 되돌릴 수 있어요.</p><div class="bl-changes-list">${changes.map(({path,before,value}) => `<article class="bl-setting-change"><b>${esc(historyLabel(path))}</b><small>기본 ${esc(historyValue(before,path))} → 현재 ${esc(historyValue(value,path))}</small><div><button type="button" class="salty-btn" data-act="setting-jump" data-setting="${esc(path)}">설정으로</button><button type="button" class="salty-btn" data-act="setting-reset" data-setting="${esc(path)}">기본값</button></div></article>`).join('') || '<p class="salty-note">모두 기본값을 사용하고 있어요.</p>'}</div>`;
+    return `<p class="salty-note">기본값에서 바뀐 설정 ${changes.length}개예요. 저장한 액자·글꼴·스타일 보관함은 유지해요. 복원도 상단 화살표로 되돌릴 수 있어요.</p><div class="bl-changes-list">${changes.map(({path,before,value}) => `<article class="bl-setting-change"><b>${esc(historyLabel(path))}</b><small>기본 ${esc(historyValue(before,path))} → 현재 ${esc(historyValue(value,path))}</small><div><button type="button" class="salty-btn" data-act="setting-jump" data-setting="${esc(path)}">설정으로</button>${path === 'usageMode' ? '' : `<button type="button" class="salty-btn" data-act="setting-reset" data-setting="${esc(path)}">기본값</button>`}</div></article>`).join('') || '<p class="salty-note">모두 기본값을 사용하고 있어요.</p>'}</div>`;
 }
 function installSettingResets(root) {
     const settings = getSettings();
     for (const control of root.querySelectorAll('[data-range],[data-num],[data-path],[data-toggle],[data-color-path],[data-time-path],toolcool-color-picker[data-token]')) {
         const path = control.dataset.range || control.dataset.num || control.dataset.path || control.dataset.toggle || control.dataset.colorPath || control.dataset.timePath || `colorOverrides.${settings.palette}.${control.dataset.token}`;
-        if (!settingDefault(settings, path).allowed) continue;
+        if (!settingDefault(settings, path).allowed || control.matches('[data-act="chip"]')) continue;
         const row = control.closest('.salty-sizeopt,.salty-slider,.salty-row,.salty-stack');
         const label = row?.querySelector(':scope > header > span,:scope > span,:scope > .salty-row > span');
         if (!label || [...label.querySelectorAll('[data-act="setting-reset"]')].some(b => b.dataset.setting === path)) continue;
@@ -183,14 +200,14 @@ function installSettingResets(root) {
 }
 function syncSettingResets() {
     const settings = getSettings();
-    for (const panel of panels) for (const button of panel.querySelectorAll('.bl-setting-reset')) { const hide = !settingChanged(settings, button.dataset.setting); if (button.hidden !== hide) button.hidden = hide; }
+    for (const panel of panels) for (const button of panel.querySelectorAll('.bl-setting-reset')) { const hide = !settingChanged(settings, button.dataset.setting) || button.dataset.setting === 'replyNotify.on' && globalThis.Notification?.permission !== 'granted'; if (button.hidden !== hide) button.hidden = hide; }
 }
 function jumpToSetting(root, path) {
     if (!settingDefault(getSettings(),path).allowed) return;
     const route = settingRoute(path);
     root._catalogOpen = false; ui.tab = route.tab; ui.subs[route.tab] = route.sub; ui.picker = null;
     // Inspecting an override for another palette should not silently change the active theme.
-    if (path.startsWith('colorOverrides.') && path.split('.')[1] !== getSettings().palette) {
+    if ((path.startsWith('colorOverrides.') && path.split('.')[1] !== getSettings().palette) || (path.startsWith('gradients.overrides.') && path.split('.')[2] !== getSettings().palette)) {
         toastr.info('이 색은 다른 테마에 저장돼 있어요. 색 목록에서 해당 테마를 선택해 주세요.', '저장된 테마 색');
         ui.subs.theme = 'palette';
     }
@@ -329,11 +346,13 @@ export function refreshPanels(changes) {
         syncHistoryButtons(); syncSettingResets();
         return;
     }
+    const popupOpen = [...panels].some(root => root.isConnected && root.classList.contains('in-popup'));
     for (const root of panels) {
         if (!root.isConnected) {
             unmountPanel(root);
             continue;
         }
+        if (popupOpen && !root.classList.contains('in-popup')) continue;
         render(root);
     }
 }
@@ -350,18 +369,19 @@ function syncWeatherPreview(root, path) {
         weatherFrames.delete(root);
         if (!stage.isConnected) return;
         const s = comparisonView(getSettings());
-        import('./weather.js').then(m => m.previewWeather(stage, s.enabled ? s.chat : { weather: 'off' })).catch(() => {});
+        import('./weather.js').then(m => m.previewWeather(stage, previewChat(s))).catch(() => {});
     }));
 }
 
 // 5.1.2: 적용이 죽으면 저장하지 않고 방금 고친 것을 되돌린다 — 전에는 saveSoon 이 먼저라 망가진 설정이 저장돼 다음 시작부터 창이 안 열렸다
-function safeApply() {
+function safeApply(committed = false) {
     const hadPending = !!history.pending; // 이번 틱의 변경이 있을 때만 되돌린다 — 없으면 앞서 확정한 항목을 뽑아 버리게 된다
     try { applyAll(); return true; }
     catch (error) {
         console.error('[Blue Lemonade] 설정 적용', error);
-        if (hadPending && history.step(getSettings()).length) { history.redoStack.pop(); invalidateSettings(); try { applyAll(); } catch { /* 되돌려도 안 되면 그대로 — 저장은 안 한다 */ } }
-        toastr.error(`적용하지 못해 되돌렸어요: ${error.message || error}`, 'Blue Lemonade');
+        let reverted = false;
+        if ((hadPending || committed) && history.step(getSettings()).length) { reverted = true; history.redoStack.pop(); invalidateSettings(); try { applyAll(); } catch { /* 저장하지 않는다 */ } }
+        toastr.error(`${reverted ? '적용하지 못해 되돌렸어요' : '설정을 적용하지 못했어요'}: ${error.message || error}`, 'Blue Lemonade');
         refreshPanels();
         return false;
     }
@@ -376,12 +396,14 @@ function applySoon() {
 
 function update(mutator, rerender = true, group = '') {
     const oldTint = `${getSettings().nightTint}/${getSettings().lightTint}`;
+    const previousEntry = history.undoStack.at(-1);
     history.run(getSettings(), mutator, group);
+    const committed = !group && history.undoStack.at(-1) !== previousEntry;
     invalidateSettings(); // 고친 값을 정리(범위 · 형식)한 채로 그린다
     if (group && !rerender) applySoon();
     else {
         if (applyFrame) { cancelAnimationFrame(applyFrame); applyFrame = 0; }
-        if (!safeApply()) return;
+        if (!safeApply(committed)) return false;
         saveSoon();
     }
     if (rerender) refreshPanels();
@@ -406,14 +428,14 @@ function seg(path, options, fallback, cls = '') {
     const value = getPath(getSettings(), path);
     const current = value === undefined || value === null ? fallback : value;
     return `<div class="salty-seg${cls ? ` ${cls}` : ''}">${options.map(([v, label]) =>
-        `<button data-act="seg" data-path="${path}" data-value="${esc(v)}" class="${String(current) === String(v) ? 'on' : ''}">${label}</button>`).join('')}</div>`;
+        `<button data-act="seg" data-path="${path}" data-value="${esc(v)}" aria-pressed="${String(current) === String(v)}" class="${String(current) === String(v) ? 'on' : ''}">${label}</button>`).join('')}</div>`;
 }
 
 // 여러 개를 동시에 켜는 칩 줄 (seg 는 하나만 고르는 것) — 테두리를 그릴 면 고르기에 씀
 function chips(items) {
     const s = getSettings();
     return `<div class="salty-seg">${items.map(([path, label]) =>
-        `<button data-act="chip" data-path="${path}" class="${getPath(s, path) ? 'on' : ''}">${label}</button>`).join('')}</div>`;
+        `<button data-act="chip" data-path="${path}" aria-pressed="${!!getPath(s,path)}" class="${getPath(s, path) ? 'on' : ''}">${label}</button>`).join('')}</div>`;
 }
 
 // ··· 메뉴 버튼 고르기 (4.1.3): 지금 실리태번 · 다른 확장이 메뉴에 넣어 둔 버튼을 그대로 보여 준다
@@ -428,7 +450,7 @@ function mesPinPicker(s) {
 }
 
 function toggle(path, checked) {
-    return `<label class="salty-switch"><input type="checkbox" data-toggle="${path}" ${checked ? 'checked' : ''}><span></span></label>`;
+    return `<label class="salty-switch"><input type="checkbox" data-toggle="${path}" aria-label="${esc(historyLabel(path))}" ${checked ? 'checked' : ''}><span></span></label>`;
 }
 
 // 3.5.1 새로고침 첫 화면: user.css 에 한 줄이 있으면 실리태번 뇌 로고 없이 처음부터 레몬 (splash.js)
@@ -561,7 +583,7 @@ function sliderParts(path, min, max, step, def) {
 }
 
 function slider(path, label, min, max, step, def) {
-    if (!['nightTint', 'lightTint'].includes(path)) historyLabels.set(path, label.replace(/<[^>]*>/g, ''));
+    if (!historyLabels.has(path) && !['nightTint', 'lightTint'].includes(path)) historyLabels.set(path, label.replace(/<[^>]*>/g, ''));
     const { num, range } = sliderParts(path, min, max, step, def);
     const aria = esc(label.replace(/<[^>]*>/g, ''));
     return `<div class="salty-slider"><header><span>${label}</span>${num.replace('<input ', `<input aria-label="${aria}" `)}</header>${range.replace('<input ', `<input aria-label="${aria}" `)}</div>`;
@@ -572,7 +594,7 @@ function slider(path, label, min, max, step, def) {
 function sizeOpt(path, label, sameLabel, min, max) {
     const own = isNum(getPath(getSettings(), path));
     const choice = `<div class="salty-seg salty-mini">${[['same', sameLabel], ['own', '직접']].map(([id, text]) =>
-        `<button data-act="size" data-path="${path}" data-value="${id}" data-min="${min}" data-max="${max}" class="${(id === 'own') === own ? 'on' : ''}">${text}</button>`).join('')}</div>`;
+        `<button data-act="size" data-path="${path}" data-value="${id}" data-min="${min}" data-max="${max}" aria-pressed="${(id === 'own') === own}" class="${(id === 'own') === own ? 'on' : ''}">${text}</button>`).join('')}</div>`;
     if (!own) return `<div class="salty-sizeopt">${row(label, choice)}</div>`;
     const { num, range } = sliderParts(path, min, max, 1);
     return `<div class="salty-sizeopt">${row(label, `<span class="salty-sizeopt-ctl">${choice}${num}</span>`)}<div class="salty-slider salty-slider-wide">${range}</div></div>`;
@@ -791,8 +813,8 @@ function fillPreviews(root) {
             // 떨어졌다 다시 붙은 무대는 ResizeObserver 가 스스로 빠져 있으니 꽂을 때마다 한 번 더 부름
             if (kind === 'chat') {
                 prevFaces(stage);
-                const chatSettings = getSettings().chat;
-                if ((chatSettings.weather && chatSettings.weather !== 'off' && getSettings().enabled) || stage._blWeather) import('./weather.js').then(m => m.previewWeather(stage, getSettings().enabled ? chatSettings : { weather: 'off' })).catch(() => {});
+                const chatSettings = previewChat(getSettings());
+                if ((chatSettings.weather && chatSettings.weather !== 'off' && getSettings().enabled) || stage._blWeather) import('./weather.js').then(m => m.previewWeather(stage, chatSettings)).catch(() => {});
             }
             else if (kind !== 'regex' && kind !== 'color') classifyAll(stage);
             syncDecor(getSettings());
@@ -802,7 +824,7 @@ function fillPreviews(root) {
 }
 
 // ───────── 글꼴 ─────────
-const sizeBadge = f => f.size >= 1000 ? `${(f.size / 1000).toFixed(1)}MB` : (f.size ? `${f.size}KB` : '');
+const sizeBadge = f => Number.isFinite(Number(f.size)) && Number(f.size) > 0 ? (Number(f.size) >= 1000 ? `${(Number(f.size) / 1000).toFixed(1)}MB` : `${Number(f.size)}KB`) : ''; 
 
 function fontRow(slot, lang, set) {
     const id = set[lang];
@@ -843,7 +865,7 @@ function fontItem(f, lang, current) {
     const blank = isPreviewBlank(f.id);
     const stack = esc(previewStack(f, f.lang || lang));
     const family = blank ? 'inherit' : (isPreviewReady(f.id) || f.group === 'custom' ? stack : 'inherit');
-    return `<button class="salty-fontitem ${on ? 'on' : ''}${blank ? ' blank' : ''}" data-act="font" data-id="${esc(f.id)}" data-preview="${esc(f.id)}">
+    return `<button class="salty-fontitem ${on ? 'on' : ''}${blank ? ' blank' : ''}" data-act="font" data-id="${esc(f.id)}" data-preview="${esc(f.id)}"${f.group === 'custom' ? ' aria-keyshortcuts="Delete"' : ''}>
         <span class="salty-fontinfo"><b>${esc(f.label)}${f.native ? ` <i>${esc(f.native)}</i>` : ''}${f.size ? `<em>${sizeBadge(f)}</em>` : ''}${f.single ? '<em>굵기 하나</em>' : ''}${blank ? BLANK_BADGE : ''}</b>
         <small data-font="${stack}" style="font-family:${family}">${esc(SAMPLES[f.lang || lang] || SAMPLES.ko)}</small></span>
         ${on ? `<span class="salty-check-ic">${CHECK}</span>` : ''}
@@ -970,7 +992,7 @@ function tabStyles(s) {
     const charBlock = key ? `${cap(esc(keyLabel(key)))}<div class="salty-group">
             ${s.styles.length
         ? stack('이 캐릭터 스타일', `<div class="salty-seg salty-wrap">${[['', '없음'], ...s.styles.map(st => [st.id, st.name])].map(([id, name]) =>
-            `<button data-act="char-style" data-id="${id}" class="${linked === id ? 'on' : ''}">${esc(name)}</button>`).join('')}</div>`, linked ? '이 채팅을 열면 이 스타일로 바뀌어요. 여기서 바꾼 모습은 이 스타일에 저장돼요' : '')
+            `<button data-act="char-style" data-id="${esc(id)}" aria-pressed="${linked === id}" class="${linked === id ? 'on' : ''}">${esc(name)}</button>`).join('')}</div>`, linked ? '이 채팅을 열면 이 스타일로 바뀌어요. 여기서 바꾼 모습은 이 스타일에 저장돼요' : '')
         : '<p class="salty-note">스타일을 저장하면 캐릭터에 이어 둘 수 있어요.</p>'}
         </div>` : '';
     const others = Object.entries(s.charStyles).filter(([k]) => k !== key);
@@ -1019,7 +1041,11 @@ function styleSwatch(data) {
 /** 스타일을 입히기 전 모습을 되돌리기용으로 남기고 입힌다 */
 function wearStyle(data, label) {
     const before = captureStyle(getSettings());
-    update(st => { if(!rememberAppearance(st,label+' 적용 전'))toastr.info('그림 데이터가 커서 복구함에 담지 못했어요. 전체 설정 파일로 보관해 주세요.'); applyStyleData(st, data); });
+    const candidate = {...getSettings(), ...structuredClone(before)};
+    candidate.image.masks=getSettings().image.masks;
+    applyStyleData(candidate,data);
+    if(sameStyle(before,captureStyle(candidate))){toastr.info('이미 그 모습이에요','Blue Lemonade');return;}
+    update(st => { if(!rememberAppearance(st,label+' 적용 전'))toastr.info('그림 데이터가 커서 복구함에 담지 못했어요. 테마 설정 파일로 보관해 주세요.'); applyStyleData(st, data); });
     if (sameStyle(before, captureStyle(getSettings()))) {
         toastr.info('이미 그 모습이에요', 'Blue Lemonade');
         return;
@@ -1066,11 +1092,11 @@ function tabBackup() {
     const locks=getSettings().settingLocks;
     const archive=appearanceArchive(getSettings());
     const archiveMarkup=`<div class="salty-group">${cap('최근 꾸미기 복구함')}<p class="salty-note">스타일·프리셋 적용 전 모습을 최대 8개 기억해요. 복구는 잠금과 관계없이 그때 모습으로 돌아가요.</p>${archive.length?archive.map(x=>row(esc(x.label),`<button class="salty-btn" data-act="appearance-restore" data-id="${esc(x.id)}">복구</button>`,new Date(x.at).toLocaleString())).join(''):'<p class="salty-note">아직 보관한 모습이 없어요.</p>'}</div>`;
-    return `${archiveMarkup}<div class="bl-backup-layout"><div class="salty-group bl-setting-locks">${cap('스타일을 바꿔도 유지할 설정')}${LOCK_GROUPS.map(([id,label])=>row(label,toggle('settingLocks.'+id,locks[id]))).join('')}<p class="salty-note">스타일·공유 프리셋·캐릭터 연결에 적용돼요. 직접 조절과 전체 설정 파일 복원·초기화에는 적용하지 않아요.</p></div><div class="salty-group bl-backup-actions">
+    return `${archiveMarkup}<div class="bl-backup-layout"><div class="salty-group bl-setting-locks">${cap('스타일을 바꿔도 유지할 설정')}${LOCK_GROUPS.map(([id,label])=>row(label,toggle('settingLocks.'+id,locks[id]))).join('')}<p class="salty-note">스타일·공유 프리셋·캐릭터 연결에 적용돼요. 직접 조절과 테마 설정 파일 복원·초기화에는 적용하지 않아요.</p></div><div class="salty-group bl-backup-actions">
             ${row('실리태번 설정', `<button class="salty-btn" data-act="st-theme">${matched ? '다시 맞추기' : '맞추기'}</button>`,
         matched ? '지금 이 테마에 맞게 돼 있어요' : '흐림 · 그림자 · 말풍선 모양을 이 테마에 맞춰요')}
             ${row('프리셋 공유', '<span class="salty-btns"><button class="salty-btn" data-act="preset-export">공유하기</button><button class="salty-btn" data-act="preset-import">불러오기</button></span>', '형광펜 · 날씨처럼 묶음만 골라요')}
-            ${row('전체 설정 파일', '<span class="salty-btns"><button class="salty-btn" data-act="export">내보내기</button><button class="salty-btn" data-act="import">가져오기</button></span>')}
+            ${row('테마 설정 파일', '<span class="salty-btns"><button class="salty-btn" data-act="export">내보내기</button><button class="salty-btn" data-act="import">가져오기</button></span>', '테마 꾸미기·라이브러리를 담아요. 내장 확장 자료와 대화는 제외돼요.')}
             ${row('처음 설정으로', '<button class="salty-btn salty-btn-danger" data-act="reset">되돌리기</button>', '무엇을 되돌릴지 골라요')}
         </div></div>
         <input type="file" accept=".json" hidden data-file="settings"><input type="file" accept=".json" hidden data-file="preset">`;
@@ -1336,7 +1362,7 @@ function tabChat(s, sub) {
             ${['rain','snow'].includes(weatherMode(s)) ? slider('chat.weatherAmount', weatherMode(s)==='rain'?'비의 양':'눈의 양', 0, 200, 1, 100)+'<p class="salty-note">100%가 기본 양이에요. 숫자를 직접 입력해도 돼요.</p>' : !['off', 'tracker'].includes(weatherMode(s)) ? stack('세기', seg('chat.weatherLevel', [[1, '약하게'], [2, '보통'], [3, '강하게']])) : ''}
             ${weatherMode(s) === 'tracker' ? `<p class="salty-note">세기 · 색 · 모양은 그 날씨를 직접 골랐을 때 맞춰 둔 값을 그대로 써요. 비는 비대로, 눈은 눈대로요.</p>
             <button type="button" class="salty-btn bl-weather-skip-fold" data-act="weather-skip-fold" aria-expanded="${!!ui.weatherSkipOpen}">제외할 날씨${(s.chat.weatherTrackerSkip || []).length ? ` · ${s.chat.weatherTrackerSkip.length}` : ''} <i class="fa-solid fa-chevron-${ui.weatherSkipOpen ? 'up' : 'down'}"></i></button>
-            ${ui.weatherSkipOpen ? `<div class="salty-seg bl-weather-choices bl-weather-skip">${[['rain', '비'], ['snow', '눈'], ['fog', '안개'], ['sun', '햇살'], ['star', '별'], ['rainbow', '무지개'], ['breeze', '흩날림']].map(([value, label]) => `<button data-act="weather-skip" data-value="${value}" class="${(s.chat.weatherTrackerSkip || []).includes(value) ? 'on' : ''}">${label}</button>`).join('')}</div><p class="salty-note">고른 날씨는 트래커에 나와도 화면에 그리지 않아요.</p>` : ''}` : ''}
+            ${ui.weatherSkipOpen ? `<div class="salty-seg bl-weather-choices bl-weather-skip">${[['rain', '비'], ['snow', '눈'], ['fog', '안개'], ['sun', '햇살'], ['star', '별'], ['rainbow', '무지개'], ['breeze', '흩날림']].map(([value, label]) => `<button data-act="weather-skip" data-value="${value}" aria-pressed="${(s.chat.weatherTrackerSkip || []).includes(value)}" class="${(s.chat.weatherTrackerSkip || []).includes(value) ? 'on' : ''}">${label}</button>`).join('')}</div><p class="salty-note">고른 날씨는 트래커에 나와도 화면에 그리지 않아요.</p>` : ''}` : ''}
             ${weatherMode(s) !== 'off' ? `${slider('chat.weatherBubble', '내 메시지 농도', 30, 100, 1, 70)}<p class="salty-note">날씨를 켠 동안 내 메시지 면(말풍선 · 카드 · 테이블)이 이만큼만 칠해져 그 뒤의 날씨가 비쳐요. 100이면 불투명해요.</p>` : ''}
             ${weatherMixing(s) && s.chat.weather2 && s.chat.weather2 !== 'off' ? ['rain','snow'].includes(s.chat.weather2) ? slider('chat.weather2Amount', s.chat.weather2==='rain'?'함께 내리는 비의 양':'함께 내리는 눈의 양',0,200,1,100) : stack('둘째 날씨 세기', seg('chat.weather2Level', [[1, '약하게'], [2, '보통'], [3, '강하게']], 2), '둘째 날씨의 세부 값은 그 날씨를 첫째로 골랐을 때 맞춰 둔 값을 써요') : ''}
         </div>
@@ -1446,15 +1472,15 @@ function weatherSeg(s) {
     const cats = WEATHER_CATS.map(([id, label, items]) => [id, label, items.filter(allowed)]).filter(cat => cat[2].length);
     const cat = cats.find(c => c[0] === ui.weatherCat) || cats.find(c => c[2].some(item => item[0] === current)) || cats[0];
     const button = (value, label) => `<button data-act="seg" data-path="${path}" data-value="${value}" class="${current === value ? 'on' : ''}">${label}</button>`;
-    return `${mixing ? `<div class="salty-seg bl-weather-slots"><button data-act="weather-slot" data-slot="1" class="${slot === 1 ? 'on' : ''}">1 · ${weatherLabel(first)}</button><button data-act="weather-slot" data-slot="2" class="${slot === 2 ? 'on' : ''}">2 · ${weatherLabel(s.chat.weather2)}</button></div>` : ''}
-        <div class="salty-seg bl-weather-cats">${button('off', slot === 2 ? '없음' : '끔')}${cats.map(([id, label]) => `<button data-act="weather-cat" data-cat="${id}" class="${cat[0] === id && current !== 'off' ? 'on' : cat[0] === id ? 'open' : ''}">${label}</button>`).join('')}</div>
+    return `${mixing ? `<div class="salty-seg bl-weather-slots"><button data-act="weather-slot" data-slot="1" aria-pressed="${slot === 1}" class="${slot === 1 ? 'on' : ''}">1 · ${weatherLabel(first)}</button><button data-act="weather-slot" data-slot="2" aria-pressed="${slot === 2}" class="${slot === 2 ? 'on' : ''}">2 · ${weatherLabel(s.chat.weather2)}</button></div>` : ''}
+        <div class="salty-seg bl-weather-cats">${button('off', slot === 2 ? '없음' : '끔')}${cats.map(([id, label]) => `<button data-act="weather-cat" data-cat="${id}" aria-pressed="${cat[0] === id && current !== 'off'}" class="${cat[0] === id && current !== 'off' ? 'on' : cat[0] === id ? 'open' : ''}">${label}</button>`).join('')}</div>
         <div class="salty-seg bl-weather-choices">${cat[2].map(([value, label]) => button(value, label)).join('')}</div>
         ${!['off', 'tracker'].includes(first) ? `<button type="button" class="salty-btn bl-weather-mix" data-act="weather-mix">${mixing ? '혼합 끄기' : '날씨 혼합하기'}</button>` : ''}`;
 }
 
 // ───────── 프롬프트 (3.4.0) ─────────
 // 프리셋마다 한 칸. 지금은 데우스 엑스 마키나 — 호환을 켜야 카드 표본 · 카드 설정 · 트래커 설정이 보이고 적용된다
-function tabExtensions(s, sub) { if(!addonsEnabled(s))return '<p class="salty-note">현재 사용 모드에서는 내장 확장을 실행하지 않아요. 테마 → 기타 설정 → 사용 모드에서 테마 + 확장 또는 확장만을 고르면 저장한 설정으로 다시 사용할 수 있어요.</p>';  if(sub==='scripts')sub='prompt'; return addonMarkup(s,sub) + (['words','capture'].includes(sub) && s.addons[sub] ? wordToolsMarkup(s,sub) : ''); }
+function tabExtensions(s, sub) { if(!addonsEnabled(s))return '<p class="salty-note">현재 사용 모드에서는 내장 확장을 실행하지 않아요. 테마 → 기타 설정 → 사용 모드에서 테마 + 확장 또는 확장만을 고르면 저장한 설정으로 다시 사용할 수 있어요.</p>';  return addonMarkup(s,sub) + (['words','capture'].includes(sub) && s.addons[sub] ? wordToolsMarkup(s,sub) : ''); }
 
 function tabPrompt(s) {
     const on = !!s.deus?.on;
@@ -1707,7 +1733,7 @@ function render(root) {
         ? `<div class="salty-head">
             <div class="salty-mark">${MARK}</div>
             <div><div class="salty-title">Blue Lemonade${currentVersion() ? ` <button type="button" class="salty-ver${hasUnseenNotice() ? ' is-new' : ''}" data-act="notice" aria-label="공지사항">v${currentVersion()}</button>` : ''} <button type="button" class="bl-copyright" data-bl-credits aria-label="출처·라이선스" title="출처·라이선스">ⓒ</button></div><div class="salty-sub">읽기 편한 테마</div></div>
-            <label class="salty-switch" title="블루레몬에이드 사용"><input type="checkbox" data-toggle="enabled" ${s.enabled ? 'checked' : ''}><span></span></label>
+            <label class="salty-switch" title="블루레몬에이드 사용"><input type="checkbox" data-toggle="enabled" aria-label="테마 켜기" ${s.enabled ? 'checked' : ''}><span></span></label>
         </div>`
         : `<div class="salty-head salty-head-slim"><span>블루레몬에이드 사용</span>${toggle('enabled', s.enabled)}</div>`;
     root.innerHTML = `
@@ -1726,7 +1752,7 @@ function render(root) {
         const button=event.currentTarget, status=root.querySelector('[data-usage-status]');
         button.disabled=true;status.textContent='설정을 저장하고 있어요…';
         const previous=s.usageMode;s.usageMode=root.querySelector('[data-usage-mode]').value;
-        try{await saveAddonsNow();location.reload();}catch(error){s.usageMode=previous;status.textContent=error.message;button.disabled=false;}
+        try{await syncRegexlinkFlag();await saveAddonsNow();location.reload();}catch(error){s.usageMode=previous;await syncRegexlinkFlag({resume:true});status.textContent=error.message;button.disabled=false;}
     });
     bindCustomBuilder(root);
     paintSettingsSearch(root);
@@ -1738,7 +1764,7 @@ function render(root) {
     bindHealth(root,applyAll);
     bindWordTools(root, refreshPanels);
     bindAddonLayout(root);
-    bindPreviewViews(root, `${ui.tab}/${ui.subs[ui.tab]}`);
+    bindPreviewViews(root, `${ui.tab}/${sub}`);
     syncSamples(s); // 미리보기 문단 클래스 맞추기
     installSettingResets(root);
     // Preview sizing changes the available scroll height; restore after it is measured.
@@ -1748,7 +1774,7 @@ function render(root) {
     restoreFocus(root, focusSnap);
 
     // 색 고르기: 처음 그릴 때 나는 change 는 무시하고, 사용자가 만진 뒤부터 저장
-    bindGradientColors(root,getSettings,update);
+    bindGradientColors(root,getSettings,update,()=>{history.flush(getSettings());syncHistoryButtons();});
     // 끌 때마다 나는 change 는 색 하나당 한 단계로 묶고, 칸을 새로 누르면 앞 단계를 닫는다 (되돌리기 기록이 안 넘치게)
     root.querySelectorAll('toolcool-color-picker[data-token]').forEach((picker) => {
         const arm = () => { picker._armed = true; history.flush(getSettings()); syncHistoryButtons(); };
@@ -1950,23 +1976,24 @@ function bind(root) {
         try {
             switch (act) {
                 case 'readability-fix':
-                    update(st=>{rememberAppearance(st,'가독성 보정 전');fixReadability(st,el.dataset.key);});
+                    update(st=>{if(!rememberAppearance(st,'가독성 보정 전'))toastr.info('그림 데이터가 커서 복구함에 담지 못했어요. 테마 설정 파일로 보관해 주세요.');fixReadability(st,el.dataset.key);});
                     break;
                 case 'appearance-restore':
-                    update(st=>restoreAppearance(st,el.dataset.id));
+                    update(st=>restoreAppearance(st,el.dataset.id,()=>toastr.info('그림 데이터가 커서 복구 전 모습을 담지 못했어요. 테마 설정 파일로 보관해 주세요.')));
                     toastr.success('보관한 모습으로 복구했어요.', 'Blue Lemonade');
                     break;
                 case 'setting-jump': jumpToSetting(root, el.dataset.setting); break;
                 case 'setting-reset': {
                     const path = el.dataset.setting, settings = getSettings();
-                    if (!settingChanged(settings,path)) break;
+                    if (path === 'usageMode' || !settingChanged(settings,path)) break;
                     const before = historyValue(getPath(settings,path),path);
                     update(st => { resetSetting(st,path); if (/^(image|profile|userProfile)\.decor\./.test(path)) refreshPreset(st[path.split('.')[0]].decor); });
+                    await syncChangedAddons([path]);
                     toastr.info(`${esc(historyLabel(path))}: ${esc(before)} → ${esc(historyValue(getPath(getSettings(),path),path))}`, '기본값으로 복원했어요', {escapeHtml:false});
                     break;
                 }
-                case 'history-undo': stepHistory(false); break;
-                case 'history-redo': stepHistory(true); break;
+                case 'history-undo': await stepHistory(false); break;
+                case 'history-redo': await stepHistory(true); break;
                 case 'editor-catalog': openEditorCatalog(root, true); break;
                 case 'editor-search': openEditorCatalog(root, true, true); break;
                 case 'editor-catalog-close': openEditorCatalog(root, false); break;
@@ -2034,7 +2061,7 @@ function bind(root) {
                     update(st => { st.auto.on = !st.auto.on; });
                     break;
                 case 'custom-keep':
-                    update(st => { newCustomPalette(st, PALETTES[st.palette]?.mode); saveCustomPalette(st); });
+                    update(st => saveCurrentPalette(st));
                     break;
                 case 'custom-use':
                     update(st => useCustomPalette(st,el.dataset.id));
@@ -2292,7 +2319,7 @@ function bind(root) {
                     const name = `Blue Lemonade · ${PALETTES[getSettings().palette]?.label || '테마'}`;
                     try {
                         await saveAsSillyTavernTheme(name);
-                        toastr.success(changed ? `${changed}개를 맞추고 "${name}" 테마로 저장했어요.` : `이미 맞춰져 있어요. "${name}" 테마로 저장했어요.`, 'Blue Lemonade');
+                        toastr.success(`${changed ? `${changed}개를 맞추고` : '이미 맞춰져 있어요.'} "${name}" 테마로 저장했어요. 목록에서 다시 고르려면 새로고침해 주세요.`, 'Blue Lemonade');
                     } catch (error) {
                         toastr.warning(`설정은 맞췄지만 테마 파일로는 못 남겼어요: ${error.message}`, 'Blue Lemonade');
                     }
@@ -2459,6 +2486,20 @@ function bind(root) {
         }
     });
 
+    root.addEventListener('keydown', event => {
+        if(event.key==='Delete' && event.target.matches('.salty-fontitem')){
+            const remove=event.target.querySelector('[data-act="rmfont"]');
+            if(remove){event.preventDefault();event.stopPropagation();remove.click();}
+        }
+        const dot=event.target.closest?.('.bl-spot');
+        if(!dot || !['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key))return;
+        event.preventDefault();event.stopPropagation();
+        const pad=dot.closest('[data-spot-mode]'),mode=pad.dataset.spotMode,index=Number(dot.dataset.spot),step=event.shiftKey ? .1 : .01;
+        const old=getSettings().chat.weatherSpots?.[mode]?.[index] || {x:SPOT_DEFAULTS[mode][index][0],y:SPOT_DEFAULTS[mode][index][1]};
+        const spot={x:Math.max(0,Math.min(1,old.x+(event.key==='ArrowLeft'?-step:event.key==='ArrowRight'?step:0))),y:Math.max(0,Math.min(1,old.y+(event.key==='ArrowUp'?-step:event.key==='ArrowDown'?step:0)))};
+        update(st=>{const spots={...(st.chat.weatherSpots||{})},list=[...(spots[mode]||[])];for(let i=0;i<index;i++)list[i]??={x:SPOT_DEFAULTS[mode][i][0],y:SPOT_DEFAULTS[mode][i][1]};list[index]=spot;spots[mode]=list;st.chat.weatherSpots=spots;});
+        root.querySelector(`[data-spot-mode="${mode}"] [data-spot="${index}"]`)?.focus({preventScroll:true});
+    });
     // 숫자 칸에서 Enter = 입력 확정 (팝업의 Enter 닫기로 넘어가지 않게)
     // 날씨 자리 점 끌기: 끄는 동안은 점만 움직이고, 놓을 때 저장한다 (저장하면 화면이 다시 그려져 끌던 점이 바뀌므로)
     root.addEventListener('pointerdown', (event) => {
@@ -2603,6 +2644,7 @@ function bind(root) {
             // 보였다 안 보였다 하는데 다시 그리지 않아, 끈 뒤에도 슬라이더가 남아 있었다
             // 감정 대사 효과(움직임 · 빛 · 색 흐름) · 백그라운드 버티는 방식 줄도 스위치를 따라 보였다 안 보였다 한다
             update(st => setPath(st, path, target.checked), ['strike.line', 'strike.own', 'strike.italic', 'deviceLayouts.on', 'chat.weatherReadability', 'chat.weatherIllustrated', 'enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on', 'deus.fx.on', 'deus.fx.flow', 'deus.fx.force', 'bgWindow.on'].includes(path));
+            await syncChangedAddons([path]);
             return;
         }
         if (target.matches('input[data-file="font"]') && target.files?.[0]) {
@@ -2662,7 +2704,8 @@ function bind(root) {
         if (target.matches('input[data-file="preset"]') && target.files?.[0]) {
             try {
                 if (target.files[0].size > 1024 * 1024) throw new Error('프리셋 파일이 너무 커요');
-                const incoming = readPreset(JSON.parse(await target.files[0].text()));
+                let parsed;try { parsed=JSON.parse(await target.files[0].text()); } catch { throw new Error('선택 공유 프리셋 파일이 아니에요'); }
+                const incoming = readPreset(parsed);
                 const selected = await askPresetGroups(incoming);
                 if (selected) {update(st=>{if(!rememberAppearance(st,'프리셋 불러오기 전'))toastr.info('그림 데이터가 커서 복구함에 담지 못했어요.');applyPreset(st,incoming,selected);});toastr.success('선택한 프리셋을 불러왔어요','Blue Lemonade');}
             } catch (error) {toastr.error(error.message || String(error),'Blue Lemonade');}
@@ -2670,7 +2713,7 @@ function bind(root) {
         }
         if (target.matches('input[data-file="settings"]') && target.files?.[0]) {
             try {
-                const data = JSON.parse(await target.files[0].text());
+                let data;try { data=JSON.parse(await target.files[0].text()); } catch { throw new Error('이 테마의 설정 파일이 아니에요'); }
                 const incoming = data?.settings;
                 if (!data?.saltySettings || !incoming || typeof incoming !== 'object' || Array.isArray(incoming)) throw new Error('이 테마의 설정 파일이 아니에요');
                 const ext = SillyTavern.getContext().extensionSettings;

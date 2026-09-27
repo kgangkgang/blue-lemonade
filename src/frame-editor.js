@@ -1,3 +1,4 @@
+import { showThemeModal } from './modal.js';
 import { decodeAnyImage, imageWidth, imageHeight } from './imagedecode.js';
 import { removeBackground, findInterior } from './frame-region.js';
 
@@ -20,7 +21,7 @@ export async function editFrame(file) {
     const range = (key, name, min, max, value) => `<label>${name}<span><input data-opt="${key}" aria-label="${name}" type="range" min="${min}" max="${max}" value="${value}"><output>${value}</output></span></label>`;
     dialog.innerHTML = `<form method="dialog"><header><strong>장식 액자 만들기</strong><button value="cancel" aria-label="닫기">×</button></header>
         <p>파란 영역에 사진이 들어가요. 그림의 안쪽을 눌러 직접 고를 수 있어요.</p>
-        <canvas class="bl-frame-canvas" aria-label="사진이 들어갈 안쪽 선택" tabindex="0"></canvas>
+        <canvas class="bl-frame-canvas" role="img" aria-label="사진이 들어갈 안쪽 미리보기. 키보드로는 사진 영역의 직접 크기 지정을 사용하세요."></canvas>
         <p role="status" class="bl-frame-status"></p>
         <label>배경 제거<select data-opt="bg" aria-label="배경 제거"><option value="keep">투명 PNG 그대로</option><option value="white">흰색 · 밝은 체크무늬</option><option value="black">검은색</option><option value="custom">직접 고른 색</option></select></label>
         <label>지울 색<input type="color" data-opt="color" value="#ffffff" aria-label="지울 색"></label>
@@ -91,7 +92,7 @@ export async function editFrame(file) {
             }
         }
     });
-    document.body.append(dialog); dialog.showModal(); render();
+    document.body.append(dialog); showThemeModal(dialog); render();
     return new Promise(resolve => dialog.addEventListener('close', () => {
         closed = true; clearTimeout(timer);
         const result = dialog.returnValue === 'save' && valid ? prepared : null;

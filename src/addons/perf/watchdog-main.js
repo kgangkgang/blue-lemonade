@@ -11,7 +11,7 @@ import { isStreamRequest, watchRequest, clampIdle, clampFirst, STALL_NAME } from
 
 const MODULE = 'stream_watchdog';
 const FOLDER = 'blue-lemonade'; // 2.0.0 성능 보조로 합침
-const VERSION = '1.1.2';
+const VERSION = '1.1.3';
 const TITLE = '끊김 감시';
 
 const DEFAULTS = Object.freeze({ enabled: true, idleSeconds: 20, firstSeconds: 0 }); // firstSeconds: 첫 글자까지 최대 대기 (1.1.0, 0 = 끔)

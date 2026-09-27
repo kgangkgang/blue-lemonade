@@ -261,17 +261,28 @@ export function similarity(a, b) {
 
 /**
  * @param {string} text 이번 답
- * @param {string[]} previous 최근 답들의 글
+ * @param {(string|{mes:string})[]} previous 최근 답들 (메시지 객체는 같은 글의 분석 결과를 재사용)
  * @param {{threshold?: number, minLength?: number}} [options] threshold 0~1, minLength 정규화한 글자 수
  * @returns {{start:number,end:number,text:string,rules:object[],repeatOf:string,score:number}[]}
  */
+const repeatCache = new WeakMap();
+let repeatSources = new Set();
 export function findRepeats(text, previous, { threshold = 0.6, minLength = 14 } = {}) {
+    const sources = new Set(previous.filter(reply => reply && typeof reply === 'object'));
+    for (const reply of repeatSources) if (!sources.has(reply)) repeatCache.delete(reply);
+    repeatSources = sources; // Keep analysis for the active lookback only, not every loaded reply.
     const earlier = [];
     for (const reply of previous) {
-        for (const sentence of splitSentences(reply)) {
-            const norm = normalizeSentence(sentence.text);
-            if (norm.length >= minLength) earlier.push({ text: sentence.text, norm, sh: shingles(norm) });
+        const object = reply && typeof reply === 'object', text = object ? String(reply.mes ?? '') : reply;
+        let cached = object ? repeatCache.get(reply) : null;
+        if (!cached || cached.text !== text) {
+            cached = { text, sentences: splitSentences(text).map(sentence => {
+                const norm = normalizeSentence(sentence.text);
+                return { text: sentence.text, norm, sh: shingles(norm) };
+            }) };
+            if (object) repeatCache.set(reply, cached);
         }
+        for (const sentence of cached.sentences) if (sentence.norm.length >= minLength) earlier.push(sentence);
     }
     if (earlier.length === 0) return [];
     const spans = [];
@@ -480,7 +491,7 @@ export function checkRewrite(span, rewrite, compiled) {
     if (rewrite === undefined) return 'missing';
     const text = rewrite.trim();
     if (!text) return 'empty';
-    if (text === span.text) return 'kept';
+    if (text === span.text) return span.repeatOf ? 'banned' : 'kept';
     if (text.length > span.text.length * 2 + 80) return 'too-long';
     if (FORMAT_MARKS.some(mark => countOf(text, mark) !== countOf(span.text, mark))) return 'format';
     // 줄 수가 달라지면 문단을 합치거나 쪼갠 것이다.
@@ -491,6 +502,10 @@ export function checkRewrite(span, rewrite, compiled) {
     if (span.rules.some(rule => !rule.repeat && !exempt.includes(rule))) {
         const counted = compiled.filter(entry => !exempt.includes(entry.rule));
         if (countMatches(text, counted) >= countMatches(span.text, counted)) return 'banned';
+    } else if (span.repeatOf) {
+        // A repeat-only rewrite must not introduce a new banned detail.
+        const counted = compiled.filter(entry => !entry.rule.repeat && !exempt.includes(entry.rule));
+        if (countMatches(text, counted) > countMatches(span.text, counted)) return 'banned';
     }
     // 1.9.2 반복 표현: 고친 글이 여전히 이전 문장(또는 원문)과 거의 같으면 안 고친 것
     if (span.repeatOf && (similarity(text, span.repeatOf) >= (span.repeatThreshold ?? 0.6) || similarity(text, span.text) >= 0.85)) return 'banned';

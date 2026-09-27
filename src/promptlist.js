@@ -63,21 +63,20 @@ function sweep(root) {
 let watcher = null;
 export function startPromptList() {
     if (watcher) return;
-    // 목록은 팝업이 열릴 때 만들어지고 그 안에서 다시 그려진다 → 문서 전체를 얕게 지켜본다.
-    // 줄이 한 번 바뀌면 data-bl-row 로 표시해 두므로 같은 줄을 두 번 건드리지 않는다
-    watcher = new MutationObserver((list) => {
-        for (const m of list) {
-            // 프롬프트 목록은 채팅 본문 안에 없다 — 답변이 자라며 오는 변화는 건너뜀 (2.5.2)
-            const target = m.target.nodeType === 1 ? m.target : m.target.parentElement;
-            if (target?.closest?.('#chat, #send_form')) continue;
-            m.addedNodes.forEach((n) => {
-                if (n.nodeType !== 1) return;
-                if (n.matches?.('.completion_prompt_manager_prompt') || n.querySelector?.('.completion_prompt_manager_prompt')) sweep(n);
-                else if (n.matches?.(ROW)) rewrite(n);
-            });
-            if (m.type === 'characterData' && m.target.parentElement?.matches?.(ROW)) rewrite(m.target.parentElement);
-        }
-    });
-    watcher.observe(document.body, { childList: true, subtree: true, characterData: true });
-    sweep(document.body);
+    const id = 'completion_prompt_manager_popup_entry_form_inspect_list';
+    let scope = null, discovery = null;
+    watcher = new MutationObserver(() => { sweep(scope); watcher.takeRecords(); });
+    const attach = () => {
+        const list = document.getElementById(id);
+        if (!list || list === scope) return;
+        watcher.disconnect(); scope = list;
+        watcher.observe(list, {childList:true, subtree:true, characterData:true});
+        sweep(list); watcher.takeRecords();
+        discovery?.disconnect(); discovery = null;
+    };
+    attach();
+    if (!scope) {
+        discovery = new MutationObserver(attach);
+        discovery.observe(document.getElementById('completion_prompt_manager') || document.body, {childList:true, subtree:true});
+    }
 }

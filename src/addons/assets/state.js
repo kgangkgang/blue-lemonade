@@ -5,7 +5,7 @@ import { saveSettingsDebounced } from '../../../../../../../script.js';
 
 export const MODULE = 'esetham';
 export const OLD_MODULE = 'character-assets';
-export const VERSION = '1.4.5';
+export const VERSION = '1.4.6';
 export const TITLE = '캐릭터 에셋';
 
 // AI에게 보내는 글이라 영어로 둔다. {{img_keywords_autogen}} 자리에 지금 캐릭터의 그림 이름 목록이 들어간다.
@@ -191,6 +191,49 @@ export function pruneDisabled(folder, existingFiles) {
     if (kept.length === list.length && kept.every((name, at) => name === list[at])) return;
     if (kept.length) store.disabled[folder] = kept;
     else delete store.disabled[folder];
+    saveSettings();
+}
+
+/** 경량화 이력만 정리한다. 파일을 못 읽었을 수 있는 빈 목록으로는 지우지 않는다. */
+export function pruneOptimized(folder, existingFiles) {
+    if (!folder || !existingFiles.length) return;
+    const existing = new Set(existingFiles);
+    changeOptimized(folder, file => !existing.has(file));
+}
+
+/** 성공한 삭제만 반영한다. files 생략은 프리셋 전체를 지운 뒤에만 쓴다. */
+export function forgetOptimized(folder, files = null) {
+    const gone = files === null ? null : new Set(files);
+    changeOptimized(folder, file => gone === null || gone.has(file));
+}
+
+function changeOptimized(folder, remove) {
+    const record = settings().optimizedImages;
+    if (!folder || !record || typeof record !== 'object' || Array.isArray(record)) return;
+    let changed = false;
+    for (const key of Object.keys(record)) {
+        let pair;
+        try { pair = JSON.parse(key); } catch { continue; }
+        if (!Array.isArray(pair) || pair.length !== 2 || pair[0] !== folder || typeof pair[1] !== 'string' || !remove(pair[1])) continue;
+        delete record[key];
+        changed = true;
+    }
+    if (changed) saveSettings();
+}
+
+/** 같은 바이트를 복사한 새 파일도 기존 경량화 안내를 유지한다. 원본 이력은 삭제 성공 후 정리한다. */
+export function copyOptimized(fromFolder, fromFile, toFolder, toFile) {
+    const record = settings().optimizedImages;
+    if (!record || typeof record !== 'object' || Array.isArray(record)) return;
+    const from = JSON.stringify([fromFolder, fromFile]), to = JSON.stringify([toFolder, toFile]);
+    if (from === to) return;
+    if (typeof record[from] === 'string') {
+        if (record[to] === record[from]) return;
+        record[to] = record[from];
+    } else {
+        if (!Object.hasOwn(record, to)) return;
+        delete record[to];
+    }
     saveSettings();
 }
 

@@ -19,7 +19,10 @@ export function bindEditor(root) {
     root.addEventListener('keydown', event => {
         const catalog = root.querySelector('.bl-editor-catalog');
         if (!catalog || catalog.hidden) return;
-        if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); openEditorCatalog(root, false); }
+        if (event.key === 'Escape') {
+            if (event.target.closest?.('.bl-settings-search')?.querySelector('[data-settings-search]')?.value) return;
+            event.preventDefault(); event.stopPropagation(); openEditorCatalog(root, false);
+        }
         if (event.key !== 'Tab') return;
         const items = [...catalog.querySelectorAll('button,input,[tabindex="0"]')].filter(el => !el.disabled && el.getClientRects().length);
         if (!items.length) return;

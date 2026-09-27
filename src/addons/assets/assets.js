@@ -158,7 +158,7 @@ export async function deleteAsset(folder, base) {
 
 /** 확장자만 다른 같은 이름의 파일들 (서버는 지울 때 이것들을 함께 지운다. 대소문자까지 같아야 한다) */
 export function sameBaseSiblings(assets, asset) {
-    return assets.filter(other => other !== asset && other.base === asset.base);
+    return assets.filter(other => other.file !== asset.file && other.base === asset.base);
 }
 
 /**

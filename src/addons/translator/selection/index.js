@@ -11,7 +11,7 @@ function positionToolbar() {
     const bottom = Math.min(top + height - 12, composer?.top > top ? composer.top - 8 : top + height - 90);
     bar.style.top = `${Math.max(top + 8, bottom - bar.offsetHeight)}px`;
 }
-const ICONS = { conflicts: 'stethoscope', retranslate: 'language' };
+const ICONS = { retranslate: 'language' };
 function selectionChanged() {
     clearTimeout(selectionTimer);
     selectionTimer = setTimeout(() => {

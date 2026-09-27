@@ -1,5 +1,5 @@
 // 커스텀 에이드 작업대. 미리보기만 바꾸다가 '완성 · 적용'에서 두 모드의 레시피를 저장한다.
-import { PALETTES, paletteFamily, paletteVariant, parseColor, safeColor, onColor } from './palettes.js';
+import { PALETTES, paletteFamily, paletteVariant, parseColor, safeColor, onColor, sameColor, paletteColors } from './palettes.js';
 
 const KEYS = [['bg', '바탕'], ['surface', '패널'], ['text', '글자'], ['accent', '포인트']];
 const hex = value => '#' + parseColor(value).slice(0, 3).map(n => Math.round(n).toString(16).padStart(2, '0')).join('');
@@ -31,29 +31,43 @@ function recipe(palette) {
 export function openCustomBuilder(settings, mode) {
     const source = paletteFamily(settings.palette);
     const saved = settings.customName || settings.colorOverrides?.['custom-light'] || settings.colorOverrides?.['custom-night'];
-    draft = { id: settings.activeCustomPalette || '', name: settings.customName || '나만의 에이드', mode: mode === 'dark' ? 'dark' : 'light' };
+    draft = { id: saved ? settings.activeCustomPalette || '' : '', name: settings.customName || '나만의 에이드', mode: mode === 'dark' ? 'dark' : 'light', extra: {} };
     for (const kind of ['light', 'dark']) {
         const id = paletteVariant(saved ? 'custom' : source, kind);
-        draft[kind] = recipe({ ...PALETTES[id], ...(settings.colorOverrides?.[id] || {}) });
+        const current={ ...PALETTES[id], ...(settings.colorOverrides?.[id] || {}) };
+        draft[kind] = recipe(current);
+        const generated=makeCustomPalette(draft[kind],kind);
+        draft.extra[kind]=saved ? Object.fromEntries(Object.entries(settings.colorOverrides?.[id] || {}).filter(([key,value])=>!KEYS.some(([k])=>k===key)&&!sameColor(value,generated[key]))) : {};
     }
 }
 
 export function setCustomMode(mode) { if (draft) draft.mode = mode === 'dark' ? 'dark' : 'light'; }
-export function seedCustom(family) { if (draft) draft[draft.mode] = recipe(PALETTES[paletteVariant(family, draft.mode)]); }
+export function seedCustom(family) { if (draft) { draft[draft.mode] = recipe(PALETTES[paletteVariant(family, draft.mode)]); draft.extra[draft.mode]={}; } }
 export function saveCustomPalette(settings) {
     if (!draft) return;
     const library=settings.customPalettes;
     const index=library.findIndex(item=>item.id===draft.id);
     if(index<0 && library.length>=24)throw Error('에이드는 24개까지 저장할 수 있어요.');
     settings.customName = draft.name.trim().slice(0, 24) || '나만의 에이드';
-    for (const mode of ['light', 'dark']) settings.colorOverrides[paletteVariant('custom', mode)] = makeCustomPalette(draft[mode], mode);
+    for (const mode of ['light', 'dark']) settings.colorOverrides[paletteVariant('custom', mode)] = { ...makeCustomPalette(draft[mode], mode), ...draft.extra[mode] };
     settings.palette = paletteVariant('custom', draft.mode);
     const entry={id:draft.id||crypto.randomUUID(),name:settings.customName,light:structuredClone(settings.colorOverrides['custom-light']),dark:structuredClone(settings.colorOverrides['custom-night'])};
     if(index<0)library.push(entry);else library[index]=entry;
     draft.id=entry.id;settings.activeCustomPalette=entry.id;
 }
 
-export function newCustomPalette(settings, mode) { openCustomBuilder(settings,mode);draft.id='';draft.name='새 에이드';for(const kind of ['light','dark']) {const id=paletteVariant(paletteFamily(settings.palette),kind);draft[kind]=recipe({...PALETTES[id],...(settings.colorOverrides?.[id]||{})});} }
+export function newCustomPalette(settings, mode) { openCustomBuilder(settings,mode);draft.id='';draft.name='새 에이드';draft.extra={light:{},dark:{}};for(const kind of ['light','dark']) {const id=paletteVariant(paletteFamily(settings.palette),kind);draft[kind]=recipe({...PALETTES[id],...(settings.colorOverrides?.[id]||{})});} }
+export function saveCurrentPalette(settings) {
+    if(settings.customPalettes.length>=24)throw Error('에이드는 24개까지 저장할 수 있어요.');
+    const family=paletteFamily(settings.palette), id=crypto.randomUUID();
+    const colors=mode=>{
+        const palette=paletteVariant(family,mode),full=paletteColors({...settings,palette});
+        return Object.fromEntries(Object.entries(full).filter(([,value])=>typeof value==='string'&&/^(#|rgba?\(|hsla?\()/i.test(value)));
+    };
+    const entry={id,name:settings.customName||'새 에이드',light:colors('light'),dark:colors('dark')};
+    settings.customPalettes.push(entry);
+    useCustomPalette(settings,id);
+}
 export function useCustomPalette(settings,id) {
     const entry=settings.customPalettes.find(item=>item.id===id);if(!entry)return;
     settings.customName=entry.name;settings.activeCustomPalette=id;
@@ -80,7 +94,7 @@ function contrast(text, bg) {
 
 export function customBuilder(settings) {
     if (!draft) openCustomBuilder(settings, PALETTES[settings.palette]?.mode);
-    const mode = draft.mode, colors = draft[mode], palette = makeCustomPalette(colors, mode);
+    const mode = draft.mode, colors = draft[mode], palette = {...makeCustomPalette(colors, mode),...draft.extra[mode]};
     return `<div class="salty-custom-builder">
         <div class="salty-palette-toolbar"><button type="button" class="salty-custom-back" data-act="custom-back"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> 에이드 목록</button>
             <div class="salty-mode-switch" role="group" aria-label="커스텀 미리보기 밝기">${['light', 'dark'].map(kind => `<button type="button" data-act="custom-mode" data-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'} 미리보기" aria-pressed="${mode === kind}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}</div>
@@ -104,7 +118,7 @@ export function bindCustomBuilder(root) {
     const builder = root.querySelector('.salty-custom-builder');
     if (!builder || !draft) return;
     const sync = () => {
-        const palette = makeCustomPalette(draft[draft.mode], draft.mode);
+        const palette = {...makeCustomPalette(draft[draft.mode], draft.mode),...draft.extra[draft.mode]};
         builder.querySelector('.salty-custom-preview').style.cssText = previewStyle(palette);
         builder.querySelector('[data-draft-name]').textContent = draft.name || '나만의 에이드';
         builder.querySelector('[data-draft-contrast]').textContent = `글자 대비 ${contrast(palette.text, palette.bg)}:1`;

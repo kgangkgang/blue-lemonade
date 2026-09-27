@@ -11,7 +11,7 @@ import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
 const TITLE = '로딩 시간';
 const MODULE = 'load_timer';
 /** manifest.json 과 같아야 한다 (build-zip.ps1 이 확인한다) */
-const VERSION = '1.0.6';
+const VERSION = '1.0.7';
 
 // [1.0.3] 재는 건 늘 하고, 켤 때·채팅 열 때 토스트만 켜고 끈다 (표는 마법봉 메뉴에서 언제든)
 function settings() {

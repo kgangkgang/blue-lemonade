@@ -8,11 +8,12 @@ export function jsonAnswer(raw) {
     try { return JSON.parse(text); } catch { throw Error('AI 답변 형식을 읽지 못했어요. 기존 내용은 유지돼요.'); }
 }
 // Return offsets into the original string, never offsets into a normalized copy.
-export function uniqueSpan(text, excerpt) {
+export function uniqueSpan(text, excerpt, markers = new Set()) {
     text = String(text ?? ''); const key = norm(excerpt);
     if (!key) return null;
     let normalized = '', offsets = [];
     for (let i = 0; i < text.length; i++) {
+        if (markers.has(i)) continue;
         if (/\s/u.test(text[i])) { if (normalized.endsWith(' ')) continue; normalized += ' '; }
         else normalized += text[i];
         offsets.push(i);
@@ -21,14 +22,20 @@ export function uniqueSpan(text, excerpt) {
     if (start < 0 || normalized.indexOf(key, start + 1) >= 0) return null;
     return { start: offsets[start], end: offsets[start + key.length - 1] + 1 };
 }
-export function validateAlignment(data, source) {
-    if (data?.uncertain !== false || typeof data.source !== 'string' || !data.source.trim()) throw Error('선택한 번역문의 원문을 확실히 찾지 못했어요. 문단 전체를 선택해 주세요.');
-    const span = uniqueSpan(source, data.source);
-    if (!span) throw Error('원문이 없거나 여러 곳에 반복돼요. 다른 문단과 함께 선택해 주세요.');
-    return source.slice(span.start, span.end);
-}
+
 export function paragraphSpan(text, selected) {
-    const found = uniqueSpan(text, selected);
+    // The selection comes from rendered text, while the cache retains inline Markdown.
+    // Ignore paired delimiters only; literal unmatched punctuation keeps its meaning.
+    const markers = new Set();
+    const scan = (part, base = 0) => {
+        for (const match of part.matchAll(/(\*{1,3}|_{1,3}|~~|`+)(?=\S)([\s\S]*?\S)\1/g)) {
+            const start = base + match.index, width = match[1].length;
+            for (let i = 0; i < width; i++) { markers.add(start + i); markers.add(start + match[0].length - width + i); }
+            scan(match[2], start + width);
+        }
+    };
+    scan(text);
+    const found = uniqueSpan(text, selected) ?? uniqueSpan(text, selected, markers);
     if (!found) return null;
     const breaks = [...text.matchAll(/\n\s*\n/g)];
     const before = breaks.filter(m => m.index + m[0].length <= found.start).at(-1);

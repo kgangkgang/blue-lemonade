@@ -69,6 +69,7 @@ body.salty .salty-preview.bl-weather-pv-on > .mes {
   background: rgba(0, 0, 0, .12);
 }
 #bl-weather-place .bl-weather-place-bar {
+  width: max-content;
   position: absolute;
   left: 50%;
   bottom: 96px;
@@ -84,6 +85,11 @@ body.salty .salty-preview.bl-weather-pv-on > .mes {
   font-size: 13px;
   white-space: nowrap;
   box-shadow: 0 6px 24px rgba(0, 0, 0, .35);
+}
+#bl-weather-place .bl-weather-place-bar > span {
+  min-width: 0;
+  white-space: normal;
+  word-break: keep-all;
 }
 #bl-weather-place .bl-weather-place-bar button {
   border: 0;

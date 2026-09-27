@@ -19,7 +19,7 @@ export function syncAltPalette(wanted) {
     const other = paletteVariant(paletteFamily(s.palette), wanted);
     if (!PALETTES[other] || other === s.palette) { tag?.remove(); cacheKey = ''; return ''; }
     const source = document.getElementById('salty-vars');
-    const key = `${s.palette}>${other}|${source?.textContent.length ?? 0}`;
+    const key = `${s.palette}>${other}|${source?.textContent ?? ''}`;
     if (key === cacheKey && tag) return wanted;
     const original = s.palette;
     let text = '';
@@ -37,6 +37,6 @@ export function syncAltPalette(wanted) {
     const style = tag ?? Object.assign(document.createElement('style'), { id: STYLE_ID });
     style.textContent = `.cg-root[data-bl-alt="${wanted}"] {\n${blocks}\n}`;
     if (!tag) document.head.append(style);
-    cacheKey = `${s.palette}>${other}|${document.getElementById('salty-vars')?.textContent.length ?? 0}`;
+    cacheKey = `${s.palette}>${other}|${document.getElementById('salty-vars')?.textContent ?? ''}`;
     return wanted;
 }

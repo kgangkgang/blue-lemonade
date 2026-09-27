@@ -28,6 +28,7 @@ export function syncDeviceLayout(s, device = deviceKind()) {
     if (!previous?.on || previous.device !== device) {
         if (previous?.on) d[previous.device] = capture(s);
         const initial = capture(s);
+        if (previous && !previous.on && previous.device === device) d[device] = structuredClone(initial);
         for (const key of ['pc','mobile']) { const merged=structuredClone(initial); restore(merged,d[key]); d[key]=merged; }
         restore(s, d[device]);
     }

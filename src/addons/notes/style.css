@@ -5,7 +5,7 @@
    ============================================================ */
 :root {
     /* index.js 의 VERSION 과 같아야 한다 */
-    --bl-notes-css-version: "1.2.5";
+    --bl-notes-css-version: "1.2.6";
     --bl-notes-surface: var(--salty-surface, var(--SmartThemeBlurTintColor, #25262a));
     --bl-notes-card: var(--bl-card, var(--salty-card, rgba(255, 255, 255, .04)));
     --bl-notes-text: var(--salty-text, var(--SmartThemeBodyColor, #eee));
@@ -690,8 +690,8 @@ body.salty :is(#salty-nochat, .bl-look-sample.salty-preview) { margin: 0 0 8px !
 }
 /* 테마 미리보기 칸 규칙(.salty-preview > * { pointer-events: none })이 메모 보기 안까지 막아 체크 상자 · 태그 · 연결이 안 눌렸다 → 메모 안에서는 되살린다 */
 body.salty .bl-notes-view.salty-preview > *, .bl-notes-view.salty-preview > * { pointer-events: auto !important; }
-/* 머리 한 줄 유지: 버튼이 늘어서(태그 · 연결 보기) 찾기 칸을 열면 줄이 넘쳤다 → 찾기 칸이 남는 자리만큼 줄고, 좁은 화면에서는 찾는 동안 개수 · 버전을 숨긴다 */
-.bl-notes-mini > .bl-notes-peek-head { flex-wrap: nowrap !important; }
+/* 찾기 칸은 남는 자리에 맞추고, 큰 사용자 글꼴에서는 필요한 만큼 줄을 바꾼다. */
+.bl-notes-mini > .bl-notes-peek-head { flex-wrap: wrap; }
 .bl-notes-mini > .bl-notes-peek-head > b { flex: 0 1 auto !important; min-width: 0; }
 .bl-notes-mini > .bl-notes-peek-head > .bl-notes-find, .bl-notes-dialog > header .bl-notes-find { flex: 1 1 auto; width: auto !important; min-width: 64px; max-width: 160px; }
 .bl-notes-mini > .bl-notes-peek-head > .bl-notes-find { margin-left: 4px !important; }
@@ -825,3 +825,25 @@ body.salty .bl-notes-look .bl-fontinfo b {
     font-size: var(--bl-ts-meta, .9em);
     font-weight: var(--salty-ui-weight, normal);
 }
+
+.bl-sticky[hidden]{display:none!important}
+.bl-note-btn:focus-visible,.bl-note-owner:focus-visible{outline:2px solid var(--bl-notes-accent);outline-offset:2px}
+@media(max-width:480px){
+ body.salty .bl-notes-dialog:not(.bl-notes-look){width:calc(100vw - 16px)!important;max-width:calc(100vw - 16px)!important;height:auto;max-height:calc(100dvh - max(8px,env(safe-area-inset-top)) - max(8px,env(safe-area-inset-bottom)));margin:auto!important}
+ body.salty :is(.bl-notes-dialog,.bl-notes-mini,.bl-notes-peek) .bl-note-owner{min-width:32px;min-height:32px}
+ body.salty .bl-note-tools .bl-note-btn{min-width:32px;height:32px}
+}
+
+/* Fixed pixel offsets cannot follow custom fonts or 32px controls. Keep head actions in normal flow. */
+body.salty .bl-sticky .bl-sticky-head,
+body.salty .bl-notes-peek > .bl-notes-peek-head { column-gap: 4px; padding-right: 6px; }
+body.salty .bl-sticky-head > :is([data-sticky], .bl-note-colorwrap),
+body.salty .bl-notes-peek > .bl-notes-peek-head > [data-bar] { position: static; flex: 0 0 auto; }
+body.salty .bl-sticky .bl-sticky-head .bl-sticky-title { flex: 1 1 0; min-width: 0 !important; max-width: 100% !important; width: 0 !important; }
+body.salty .bl-sticky .bl-sticky-head .bl-note-fmt { order: 5; flex: 0 0 100% !important; }
+body.salty .bl-notes-peek > .bl-notes-peek-head > b { flex: 1 1 0; min-width: 0; }
+body.salty .bl-notes-peek > .bl-notes-peek-head > .bl-note-fmt { order: 5; flex: 0 0 100%; }
+/* While searching, the search field already identifies the toolbar; retain every action. */
+body.salty .bl-notes-mini > .bl-notes-peek-head:has(.bl-notes-find:not([hidden])) > b { display: none; }
+body.salty .bl-notes-mini > .bl-notes-peek-head .bl-notes-find { flex: 1 1 6em; min-width: 4em; width: auto; max-width: none; padding-inline: 6px; }
+body.salty .bl-notes-mini .bl-notes-list { grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); }

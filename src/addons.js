@@ -7,7 +7,7 @@ import { NOTES_VERSION } from './addons/notes/version.js';
 import { restorePendingAddons, saveAddonsNow } from './addon-save.js';
 import { IDS as ASSIST_IDS, LABELS as ASSIST_LABELS, DUPLICATES } from './assist/core.js';
 const running=new Set(),failed=new Map(),loading=new Set();
-let started=false,saving=0,saveError='';
+let started=false,saving=0,saveError='',regexlinkStopped=false;
 // 단독 확장 폴더 후보는 assist/core.js 의 DUPLICATES 한 표만 쓴다 (첫 이름은 안내 문구용)
 const folders=Object.fromEntries(Object.entries(DUPLICATES).map(([id,list])=>[id,list[0]]));
 const names={direction:'전개 지시',assets:'캐릭터 에셋',prompt:'한글화 패널',customstyle:'커스텀 CSS 조절',translator:'LLM 번역',order:'확장 순서',perf:'성능 보조',words:'단어 치환',capture:'채팅 캡처',models:'모델 등록',modelswitch:'모델 전환',regexlink:'프롬프트 연동 정규식',rewrite:'다시 쓰기',bookmarks:'북마크',notes:'메모'};
@@ -135,12 +135,18 @@ export function addonMarkup(s,id,nested=false){
 async function stopRegexlink(){
     try{await (await import('./addons/regexlink/index.js')).stop();}catch(error){console.warn('[Blue Lemonade]',error);}
     running.delete('regexlink');
+    regexlinkStopped=true;
 }
 // 설정 초기화 · 가져오기 뒤: 돌고 있는 정규식 연동을 새 켜짐 값에 맞춘다 (안 돌던 것은 불러오지 않는다)
-export async function syncRegexlinkFlag(){
-    if(!running.has('regexlink'))return;
+export async function syncRegexlinkFlag({resume=false}={}){
+    if(!running.has('regexlink')&&!(resume&&regexlinkStopped))return;
     try{
-        if(getSettings().addons?.regexlink)(await import('./addons/regexlink/index.js')).sync();
+        const s=getSettings();
+        if(addonsEnabled(s)&&s.addons?.regexlink){
+            const module=await import('./addons/regexlink/index.js');
+            if(resume&&regexlinkStopped){await module.resume();running.add('regexlink');regexlinkStopped=false;changed();}
+            else module.sync();
+        }
         else{await stopRegexlink();changed();}
     }catch(error){console.warn('[Blue Lemonade]',error);}
 }
@@ -196,7 +202,7 @@ export async function syncAddonIcons(){
         if(old)continue;
         const button=document.createElement('div');button.id=key;button.className='list-group-item flex-container flexGap5 interactable';button.tabIndex=0;button.setAttribute('role','button');
         button.innerHTML=`<div class="fa-fw fa-solid ${id==='words'?'fa-arrow-right-arrow-left':'fa-camera'} extensionsMenuExtensionButton"></div><span>${names[id]}</span>`;
-        const open=()=>window.Salty?.openPopup(false,id);button.onclick=open;button.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();open();}};menu.append(button);
+        const open=()=>window.Salty?.openPopup(false,id);button.onclick=open;button.onkeydown=event=>{if(event.key===' '){event.preventDefault();open();}};menu.append(button);
     }
     for(const id of ['order','perf']){
         const buttonId=id==='order'?'po-open':'pa-hub-open';

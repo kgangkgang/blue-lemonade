@@ -14,6 +14,7 @@ body.salty:not(.salty-bgimg) #sheld {
 /* 5.3.7: html:has(> body…) 대신 apply.js 가 붙이는 클래스 (조건 같음: body.salty 이고 .salty-bgimg 아님) — 문서 뿌리의 :has 를 없앤다 */
 html.salty-html-bg { background-color: var(--salty-bg); }
 body.salty #send_form {
+  position: relative; /* 전개 지시 팝업의 위치 기준: 메모바를 포함한 입력 영역 */
   background: var(--salty-fill-surface, var(--salty-surface)) !important;
   border: 0 !important;
   border-radius: var(--bl-r-lg) !important;
@@ -547,12 +548,25 @@ body.salty #dialogue_del_mes .menu_button:hover {
 }
 /* 삭제는 팔레트의 빨강 하나. 캐릭터·프롬프트 삭제와 동일하다. */
 /* 3.0.0: 여기 있던 규칙 'body.salty #dialogue_del_mes #dialogue_del_mes_ok' 은 지움 — background · color → css/21-witidy.css (같은 선택자 규칙이 덮음) */
-body.salty #dialogue_del_mes #dialogue_del_mes_ok:hover {
-  background: var(--bl-danger) !important;
+@media (hover: hover) {
+  body.salty #dialogue_del_mes #dialogue_del_mes_ok:hover {
+    background: var(--bl-danger) !important;
+    color: var(--bl-danger-ink) !important;
+  }
 }
 @media (max-width: 1000px) {
   body.salty #dialogue_del_mes .menu_button {
     width: calc(50% - 6px);
     min-width: 0;
   }
+}
+html body.salty #send_form #jj-button:focus-visible {
+  outline:2px solid var(--salty-accent)!important;
+  outline-offset:2px;
+}
+@media (pointer:coarse) {
+  body.salty #jj-popup .jj-switch::after {
+    content:''; position:absolute; inset:-6px 0;
+  }
+  body.salty #jj-popup .jj-icon-btn { min-width:32px; min-height:32px; }
 }

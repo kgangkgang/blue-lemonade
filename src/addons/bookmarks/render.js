@@ -1,6 +1,5 @@
 // 북마크 — 메시지·메모 렌더링, 날짜·이름 표시
 import { dressBody } from '../../dem-expressive.js';
-import { typesetRoot } from '../../typography.js';
 import { messageFormatting, getThumbnailUrl } from '../../../../../../../script.js';
 import { user_avatar } from '../../../../../../personas.js';
 import { timestampToMoment } from '../../../../../../utils.js';
@@ -62,10 +61,9 @@ function themed(html, message) {
     const holder = document.createElement('div');
     holder.className = 'mes_text';
     holder.innerHTML = html;
-    try { dressBody(holder, message); typesetRoot(holder.parentNode ?? wrapFor(holder)); } catch (error) { console.warn('[북마크] 테마 서식을 입히지 못했습니다:', error); }
+    try { dressBody(holder, message); /* Typography runs once on the live hydrated card. */ } catch (error) { console.warn('[북마크] 테마 서식을 입히지 못했습니다:', error); }
     return holder.innerHTML;
 }
-function wrapFor(holder) { const wrap = document.createElement('div'); wrap.append(holder); return wrap; }
 
 // 데우스 엑스 마키나 답은 장면 계획 · 트래커 · 상태창 같은 덩어리가 본문 앞뒤에 붙는다. '본문만 보기'면 <prose> 안만(없으면 그 덩어리들을 뺀 나머지) 그린다.
 // 감정 대사 태그 · 대사 색 · 에셋 그림은 본문 안에 있으니 그대로 남는다. 원문은 건드리지 않는다 — 그리기 전의 사본에서만.

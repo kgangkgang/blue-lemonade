@@ -1,3 +1,4 @@
+import { updateQrEdges } from './layout.js';
 // Viewing state belongs to the open panel, never to a saved theme.
 export function bindPreviewViews(root, section) {
     root._previewViews ??= new Map();
@@ -125,6 +126,9 @@ export function bindPreviewViews(root, section) {
             pointers.set(e.pointerId, next); schedule(); e.preventDefault();
         };
         viewport.onpointerup = viewport.onpointercancel = viewport.onlostpointercapture = e => pointers.delete(e.pointerId);
+        const qrSample = box.dataset.pv === 'qr' && scene.querySelector('[data-qr-sample]');
+        const syncQr = () => { if (qrSample && state.scale === 1) updateQrEdges(qrSample); };
+        qrSample?.addEventListener?.('scroll', syncQr, {passive:true});
         const measure = () => {
             if (!box.isConnected) { dispose(); return; }
             // Hidden drawers and folded previews have zero dimensions. Keep pan
@@ -144,13 +148,17 @@ export function bindPreviewViews(root, section) {
                 if (grip.getAttribute('aria-valuemax') !== max) grip.setAttribute('aria-valuemax', max);
                 if (grip.getAttribute('aria-valuenow') !== now) grip.setAttribute('aria-valuenow', now);
             }
+            syncQr();
         };
         const resize = new ResizeObserver(measure);
-        const dispose = () => { resize.disconnect(); cancelAnimationFrame(raf); pointers.clear(); resizeStart = null; window.removeEventListener('resize', measure); root.removeEventListener('bl:preview-resize', measure); };
+        const dispose = () => { qrSample?.removeEventListener?.('scroll',syncQr); resize.disconnect(); cancelAnimationFrame(raf); pointers.clear(); resizeStart = null; window.removeEventListener('resize', measure); root.removeEventListener('bl:preview-resize', measure); };
         measure();
         resize.observe(scene);
         window.addEventListener('resize', measure, { passive: true });
         root.addEventListener('bl:preview-resize', measure);
+        root.addEventListener('bl:preview-resize',syncQr);
+        cleanups.push(()=>root.removeEventListener('bl:preview-resize',syncQr));
+        syncQr();
         cleanups.push(dispose);
     }
 }

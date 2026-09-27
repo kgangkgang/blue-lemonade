@@ -9,9 +9,9 @@ export function rememberAppearance(s,label='꾸미기 변경 전'){
     list.unshift(entry);let bytes=0;
     s.appearanceHistory=list.slice(0,HISTORY_LIMIT).filter(x=>{bytes+=JSON.stringify(x).length;return bytes<=2000000;});return true;
 }
-export function restoreAppearance(s,id){
+export function restoreAppearance(s,id,onSnapshotFailure){
     const entry=appearanceArchive(s).find(x=>x.id===id);if(!entry)return false;
-    const data=structuredClone(entry.data);rememberAppearance(s,'복구하기 전');
+    const data=structuredClone(entry.data);if(!rememberAppearance(s,'복구하기 전'))onSnapshotFailure?.();
     const locks=s.settingLocks;s.settingLocks={};
     try{applyStyleData(s,data);}finally{s.settingLocks=locks;}
     return true;

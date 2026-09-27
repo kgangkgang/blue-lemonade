@@ -70,7 +70,7 @@ export function renderSettingsPage(page, viewingChat, onBack) {
         <div class="cg-page-scroll">
             <section class="cg-section">
                 <h3 class="cg-section-title"><i class="fa-solid fa-palette"></i>모양</h3>
-                <div class="cg-setting" data-manual ${store.followTheme ? 'hidden' : ''}>
+                <div class="cg-setting">
                     <div class="cg-setting-text"><b>테마</b><small>자동은 지금 실리태번 테마의 글자색·배경색을 그대로 써요. 밝게·어둡게는 대사 색이 아래 색상 설정을 따라요.</small></div>
                     ${segmented('theme', [['auto', '자동', 'fa-wand-magic-sparkles'], ['light', '밝게', 'fa-sun'], ['dark', '어둡게', 'fa-moon']], store.theme)}
                 </div>

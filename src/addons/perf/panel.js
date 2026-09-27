@@ -4,6 +4,7 @@ import { pane } from './hub.js';
 import { callGenericPopup, POPUP_TYPE, POPUP_RESULT } from '../../../../../../popup.js';
 import { TITLE, VERSION, settings, saveSettings, costOf, callerLabel, typeLabel, money } from './state.js';
 import { listEntries, getEntry, listDaily, clearEntries, clearDaily, repriceDaily, dayKeyOf, isMemoryOnly, trimEntries } from './store.js';
+import { mergeEntries } from './entry-order.js';
 import { onEntry } from './capture.js';
 import * as budget from './budget.js';
 
@@ -333,22 +334,6 @@ function renderPrices() {
         </div>`).join('');
 }
 
-// ── 마법봉 메뉴 ─────────────────────────────────────────────
-
-export function mountWandButton() {
-    if (document.getElementById('rl-wand-button')) return;
-    const container = document.getElementById('data_bank_wand_container') ?? document.getElementById('extensionsMenu');
-    if (!container) return;
-    const item = document.createElement('div');
-    item.id = 'rl-wand-button';
-    item.className = 'list-group-item flex-container flexGap5 interactable';
-    item.tabIndex = 0;
-    item.setAttribute('role', 'button');
-    item.innerHTML = `<div class="fa-solid fa-receipt extensionsMenuExtensionButton"></div><span>${TITLE}</span>`;
-    item.addEventListener('click', () => openDialog());
-    container.append(item);
-}
-
 // ── 로그·집계 창 ───────────────────────────────────────────
 
 /** 열려 있는 창. 닫히면 null. */
@@ -426,10 +411,14 @@ export async function openDialog({ tab = 'log' } = {}) {
         renderList(state);
     });
 
-    const stop = onEntry(() => {
+    const stop = onEntry(entry => {
         if (dialog !== state) return;
-        if (state.tab === 'log' && !state.detailId) loadFirstPage(state);
-        else if (state.tab === 'stats') renderStats(state);
+        if (state.tab === 'stats') { renderStats(state); return; }
+        if (state.tab !== 'log') return;
+        const last = state.entries.at(-1);
+        if (state.exhausted || !last || entry.at >= last.at) state.entries = mergeEntries(state.entries, [entry]);
+        renderCallerFilter(state);
+        if (!state.detailId) renderList(state);
     });
     const stopBudget = budget.onBudget(() => {
         if (dialog !== state) return;
@@ -603,7 +592,7 @@ function renderBudget(state) {
     holder.innerHTML = `
         <div class="rl-budget-top">
             <span class="rl-dim">${data.updatedAt ? `${shortTime(data.updatedAt)} 기준` : ''}${waitText ? ` · ${waitText}` : ''} ${loading}</span>
-            <button type="button" class="rl-icon-btn" data-act="budget-refresh" aria-label="새로 고침" title="${waitText || '새로 고침'}" ${budget.canRefreshNow() ? '' : 'disabled'}><i class="fa-solid fa-rotate"></i></button>
+            <button type="button" class="rl-icon-btn" data-act="budget-refresh" aria-label="새로 고침" ${budget.canRefreshNow() ? '' : 'disabled'}><i class="fa-solid fa-rotate"></i></button>
         </div>
         ${error}
         ${headline}
@@ -618,9 +607,11 @@ function renderBudget(state) {
 
 async function loadFirstPage(state) {
     state.loading = true;
+    const existing = new Set(state.entries.map(entry => entry.id));
     try {
-        state.entries = await listEntries({ limit: PAGE });
-        state.exhausted = state.entries.length < PAGE;
+        const first = await listEntries({ limit: PAGE });
+        state.entries = mergeEntries(first, state.entries.filter(entry => !existing.has(entry.id)));
+        state.exhausted = first.length < PAGE;
     } catch (error) {
         console.warn('[요청 로그] 기록을 읽지 못했어요', error);
         state.entries = [];
@@ -644,8 +635,10 @@ async function loadMore(state) {
     state.loading = true;
     const last = state.entries[state.entries.length - 1];
     try {
-        const more = await listEntries({ limit: PAGE, before: last ? last.at : null });
-        state.entries.push(...more);
+        const seen = new Set(state.entries.map(entry => entry.id));
+        const ties = last ? state.entries.filter(entry => entry.at === last.at).length : 0;
+        const more = (await listEntries({ limit: PAGE + ties, before: last ? last.at : null, inclusive: true })).filter(entry => !seen.has(entry.id));
+        state.entries = mergeEntries(state.entries, more);
         state.exhausted = more.length < PAGE;
     } finally {
         state.loading = false;

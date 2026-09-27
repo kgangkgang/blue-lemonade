@@ -2,7 +2,7 @@
 let active=false;
 export function syncFold(on){
  if(!on){if(active)window.__thkFold?.destroy();active=false;return;}
- if(active)return;active=true;
+ if(active&&window.__thkFold)return;active=true;
 
 // ▲ 접기 (Tavern Helper 전역 스크립트)
 // 펼친 접기 칸(<details>) 맨 아래에 ▲ 버튼을 붙인다. 누르면 칸을 접고, 제목 줄이 화면 밖으로
@@ -364,7 +364,7 @@ ${B}:focus-visible::before {
 
   const instance = { version: VERSION, destroy };
   ST[INSTANCE] = instance;
-  window.addEventListener('pagehide', destroy);
+  // The main document survives bfcache pagehide; observers resume with it.
   stDoc.addEventListener('visibilitychange', scheduleSweep);
   if (typeof eventOn === 'function' && typeof tavern_events === 'object') {
     for (const name of SWEEP_EVENTS) {

@@ -1,5 +1,7 @@
+import { showThemeModal } from '../../modal.js';
 import { installLocalizationPage } from './localization-ui.js';
 import { forEachLimited } from './cache-loading.js';
+import { isTransientFailure, responseError } from './request-errors.js';
 // Modified 2026-09-24: Blue Lemonade personal preview 1.1.0; based on supplied 개인개조+++ ZIP.
 import { installRegexPage } from './regex-ui.js';
 import { installGuide } from './guide.js';
@@ -205,6 +207,17 @@ const translationMap = new Map();  // key → translation string
 const keyShard       = new Map();  // key → shard file
 const shardKeys      = new Map();  // shard file → Set<key>
 const dirtyShards    = new Set();
+// Only local edits are merged into the freshest shard; stale tabs must not
+// overwrite other entries. null is an explicit deletion, never a missing key.
+const pendingEntries = new Map();
+const removedShards = new Set();
+const addedShards = new Set();
+function pendingEntry(file, key, value) {
+    if (!pendingEntries.has(file)) pendingEntries.set(file, new Map());
+    pendingEntries.get(file).set(key, value);
+}
+const withCacheLock = task => globalThis.navigator?.locks?.request
+    ? navigator.locks.request('blue-lemonade-prompt-cache', task) : task();
 // Shards listed in the index that failed to load. Writing them would replace
 // the unread file with only this session's entries, so they are never saved.
 const brokenShards   = new Set();
@@ -270,6 +283,7 @@ function memPut(file, key, t) {
 function cachePut(ns, key, t) {
     const file = shardFileForNS(ns);
     memPut(file, key, t);
+    pendingEntry(file, key, t);
     markDirty(file);
 }
 function cacheDelete(key) {
@@ -277,7 +291,7 @@ function cacheDelete(key) {
     translationMap.delete(key);
     const file = keyShard.get(key);
     keyShard.delete(key);
-    if (file) { shardKeys.get(file)?.delete(key); markDirty(file); }
+    if (file) { shardKeys.get(file)?.delete(key); pendingEntry(file, key, null); markDirty(file); }
 }
 
 function markDirty(file) {
@@ -294,7 +308,8 @@ function flushTranslationCache() {
     return saveChain;
 }
 
-async function doFlush() {
+async function doFlush() { return withCacheLock(doFlushLocked); }
+async function doFlushLocked() {
     if (!cacheWritable || (!dirtyShards.size && !indexDirty)) return;
     const files = [...dirtyShards];
     dirtyShards.clear();
@@ -303,22 +318,34 @@ async function doFlush() {
         if (brokenShards.has(file)) continue;
         const keys = shardKeys.get(file);
         try {
-            if (!keys || !keys.size) {
-                if (indexShards.has(file)) {
-                    await fileDelete(file);
-                    indexShards.delete(file);
-                    indexDirty = true;
-                }
-                shardKeys.delete(file);
-                continue;
+            const pending = new Map(pendingEntries.get(file) || []);
+            // The only untracked writes are the one-time legacy migration.
+            if (!pending.size) for (const key of keys || []) pending.set(key, translationMap.get(key));
+            const latest = await fileGetJSON(file);
+            const entries = { ...(latest?.entries || {}) };
+            for (const [key, value] of pending) {
+                if (value == null) delete entries[key]; else entries[key] = value;
             }
-            const entries = {};
-            for (const k of keys) {
-                const v = translationMap.get(k);
-                if (v != null) entries[k] = v;
+            if (!Object.keys(entries).length) {
+                await fileDelete(file);
+                indexShards.delete(file); removedShards.add(file); addedShards.delete(file); indexDirty = true;
+            } else {
+                await filePutJSON(file, { entries });
+                removedShards.delete(file); addedShards.add(file); indexDirty = true;
+                if (!indexShards.has(file)) { indexShards.add(file); indexDirty = true; }
             }
-            await filePutJSON(file, { entries });
-            if (!indexShards.has(file)) { indexShards.add(file); indexDirty = true; }
+            const live = pendingEntries.get(file);
+            for (const [key, value] of pending) if (live?.get(key) === value) live.delete(key);
+            if (live && !live.size) pendingEntries.delete(file);
+            // Refresh untouched memory entries without overwriting edits made
+            // while the network request was in flight.
+            for (const key of [...(shardKeys.get(file) || [])]) {
+                if (pendingEntries.get(file)?.has(key)) continue;
+                if (!Object.hasOwn(entries, key)) { translationMap.delete(key); keyShard.delete(key); shardKeys.get(file)?.delete(key); }
+            }
+            for (const [key, value] of Object.entries(entries)) {
+                if (!pendingEntries.get(file)?.has(key) && typeof value === 'string') memPut(file, key, value);
+            }
         } catch (e) {
             console.warn(`[${EXT}] cache save failed: ${file}`, e);
             failed.push(file);
@@ -341,25 +368,36 @@ async function doFlush() {
     }
 }
 
-const writeCacheIndex = () => filePutJSON(CACHE_INDEX_FILE, { version: 1, shards: [...indexShards] });
+async function writeCacheIndex(reset = false) {
+    const latest = reset ? null : await fileGetJSON(CACHE_INDEX_FILE);
+    const merged = new Set([...(Array.isArray(latest?.shards) ? latest.shards : []), ...addedShards]);
+    for (const file of removedShards) merged.delete(file);
+    await filePutJSON(CACHE_INDEX_FILE, { version: 1, shards: [...merged] });
+    indexShards = merged;
+    removedShards.clear(); addedShards.clear();
+}
 
 // Remove every translation (memory + files). The index is kept (empty) so the
 // one-time IndexedDB migration does not run again.
 async function clearTranslationCache() {
     clearTimeout(saveTimer);
     await saveChain.catch(() => {});
-    const files = new Set([...indexShards, ...shardKeys.keys()]);
+    return withCacheLock(async () => {
+    const latest = await fileGetJSON(CACHE_INDEX_FILE);
+    const files = new Set([...(Array.isArray(latest?.shards) ? latest.shards : []), ...indexShards, ...shardKeys.keys()]);
     translationMap.clear();
     keyShard.clear();
     shardKeys.clear();
     dirtyShards.clear();
     brokenShards.clear();
+    pendingEntries.clear(); removedShards.clear(); addedShards.clear();
     for (const f of files) {
         try { await fileDelete(f); } catch (e) { console.warn(`[${EXT}] cache delete failed: ${f}`, e); }
     }
     indexShards = new Set();
     indexDirty = false;
-    try { await writeCacheIndex(); } catch (e) { console.warn(`[${EXT}] cache index save failed`, e); }
+    try { await writeCacheIndex(true); } catch (e) { console.warn(`[${EXT}] cache index save failed`, e); }
+    });
 }
 
 // Old versions kept translations in this browser's IndexedDB. Read it once
@@ -529,7 +567,7 @@ function estimateTokens(text) {
     return Math.ceil(cjk/1.5+(text.length-cjk)/4);
 }
 
-let isBusy=false, stopReq=false;
+let isBusy=false, stopReq=false, statusResetTimer=null;
 
 // 진행 중인 요청과 "요청 간 대기" 타이머를 모아 둔다. 중단 버튼은 예전에 플래그만
 // 세웠기 때문에 이미 날아간 요청의 응답과 대기 시간이 끝나야 멈췄다. 이제 둘 다
@@ -629,17 +667,24 @@ async function runCompletionOnce(messages, tweak) {
         let payload = messages;
         try { if (svc.constructPrompt) payload = svc.constructPrompt(messages, profileId); }
         catch (e) { console.warn(`[${EXT}] constructPrompt failed, sending raw messages`, e); }
-        const data = await svc.sendRequest(profileId, payload, budgetFor(messages), {
-            stream: false,
-            extractData: true,
-            // The profile's completion preset supplies sampling; its instruct
-            // template is irrelevant to a chat-completion translation but is
-            // what makes text-completion profiles work, so leave both on.
-            includePreset: true,
-            includeInstruct: true,
-        });
-        const out = typeof data === 'string' ? data : (data?.content || '');
-        return (out || '').trim();
+        const ac = new AbortController();
+        inFlight.add(ac);
+        let timedOut = false;
+        const timer = setTimeout(() => { timedOut = true; ac.abort(); }, requestTimeoutMs());
+        try {
+            const data = await svc.sendRequest(profileId, payload, budgetFor(messages), {
+                stream: false, extractData: true, includePreset: true, includeInstruct: true,
+                signal: ac.signal,
+            });
+            const out = typeof data === 'string' ? data : (data?.content || '');
+            return (out || '').trim();
+        } catch (error) {
+            if (stopReq) throw stopError();
+            if (timedOut) throw Object.assign(new Error('연결 프로필 요청 시간 초과'), { timeout: true });
+            if (error?.name === 'AbortError') throw error;
+            const reason = error?.cause?.message || error?.message || String(error);
+            throw Object.assign(new Error(reason), { transient: isTransientFailure(error, reason) });
+        } finally { clearTimeout(timer); inFlight.delete(ac); }
     }
 
     const prov = c.provider || 'openai';
@@ -647,6 +692,7 @@ async function runCompletionOnce(messages, tweak) {
     const model = (c.model === '__custom__' ? (c.customModelName || '') : (c.model || '')) || '';
     const { params } = getCurrentParams();
     const providerParams = getProviderSpecificParams(prov, params);
+    if (prov === 'claude' && !providerParams.max_tokens) providerParams.max_tokens = budgetFor(messages);
     const parameters = { model, messages, stream: false, chat_completion_source: source, ...providerParams };
     if (source === 'vertexai') {
         // Read Vertex auth mode and region from ST's main API settings (oai_settings).
@@ -692,6 +738,7 @@ async function runCompletionOnce(messages, tweak) {
             throw e;
         }
         const d = await res.json();
+        if (d?.error) throw responseError(d);
         return (d.choices?.[0]?.message?.content?.trim()
             || d.content?.[0]?.text?.trim()
             || d.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '').trim();
@@ -714,8 +761,9 @@ async function runCompletionOnce(messages, tweak) {
 function isRetryableError(e) {
     if (!e || e.__stopped || e.name === 'AbortError') return false;
     if (e.timeout) return true;
+    if (typeof e.transient === 'boolean') return e.transient;
     const s = e.status;
-    if (typeof s === 'number') return s === 429 || (s >= 500 && s <= 599);
+    if (typeof s === 'number') return s !== 524 && (s === 429 || (s >= 500 && s <= 599));
     return /network|failed to fetch|networkerror|econnreset|socket hang up|timeout|timed out/i.test(e.message || '');
 }
 
@@ -748,25 +796,13 @@ async function runCompletion(messages, tweak) {
     throw lastErr;
 }
 
-// Prefill rides as an assistant/model turn. A profile hides its source, so read
-// the role off the profile's api string instead.
-function prefillRole(source) {
-    const t = String(source || '').toLowerCase();
-    return (t.includes('makersuite') || t.includes('google') || t.includes('vertexai')) ? 'model' : 'assistant';
-}
-
+// ST maps the public assistant role to each provider's wire format, including
+// Gemini models which require a final user turn rather than assistant prefill.
 function buildMessages(prompt) {
     const c = cfg();
     const messages = [{ role: 'user', content: prompt }];
-    if (c.prefillEnabled && c.prefillText?.trim()) {
-        let src;
-        if(c.connectionMode==='current'){src=getContext()?.chatCompletionSettings?.chat_completion_source;} else if (usingStProfile()) {
-            const pr = listStProfiles().find(x => x.id === c.stProfileId);
-            src = pr?.api || '';
-        } else {
-            src = PROVIDER_TO_SOURCE[c.provider || 'openai'] || c.provider;
-        }
-        messages.push({ role: prefillRole(src), content: c.prefillText.trim() });
+    if (c.prefillEnabled && typeof c.prefillText === 'string' && c.prefillText.trim()) {
+        messages.push({ role: 'assistant', content: c.prefillText.trim() });
     }
     return messages;
 }
@@ -782,7 +818,6 @@ function buildMessages(prompt) {
 //     ========}}
 // so 본문 and 주석 can be produced by two separate runs (better model output
 // than asking for both at once) and still end up merged into one entry.
-const NOTE_RE = /\{\{\s*\/\/([\s\S]*?)\}\}/;
 
 // The 주석 block is fenced and labelled so it is easy to spot while scrolling a
 // long prompt. The label is always this exact Korean string, whatever language
@@ -1334,7 +1369,7 @@ async function readCharCard(charIdOrAvatar) {
 // attribute values. Quotes matter: prompt/entry names are placed into
 // title="..." attributes, and an unescaped quote there would let a crafted
 // name break out of the attribute.
-const esc = s => (s||'')
+const esc = s => String(s ?? '')
     .replace(/&/g,'&amp;')
     .replace(/</g,'&lt;')
     .replace(/>/g,'&gt;')
@@ -1406,7 +1441,7 @@ function makeBlockItem(block, ns, selectable, onEdited) {
         : `<span class="pt-status-badge ${block.enabled!==false?'pt-status-on':'pt-status-off'}">${block.enabled!==false?'ON':'OFF'}</span>`;
 
     // Select-all checkbox when selectable
-    const checkboxHtml = selectable ? `<input type="checkbox" class="pt-checkbox">` : '';
+    const checkboxHtml = selectable ? `<input type="checkbox" class="pt-checkbox" aria-label="${esc(block.name)} 선택">` : '';
 
     // Compact metadata strip (world info only). Display-only, never translated.
     const m = block.meta;
@@ -1415,9 +1450,9 @@ function makeBlockItem(block, ns, selectable, onEdited) {
         const dot = m.strategy === 'const' ? '' : (m.strategy === 'vector' ? '' : '');
         const bits = [`${dot}`];
         if (m.position)             bits.push(`pos ${esc(m.position)}`);
-        if (m.depth != null)        bits.push(`depth ${m.depth}`);
-        if (m.order != null)        bits.push(`order ${m.order}`);
-        if (m.probability != null && m.probability !== 100) bits.push(`trig ${m.probability}%`);
+        if (m.depth != null)        bits.push(`depth ${esc(m.depth)}`);
+        if (m.order != null)        bits.push(`order ${esc(m.order)}`);
+        if (m.probability != null && m.probability !== 100) bits.push(`trig ${esc(m.probability)}%`);
         metaHtml = `<div class="pt-block-meta">${bits.join('<span class="pt-meta-sep">·</span>')}</div>`;
     }
 
@@ -1425,7 +1460,7 @@ function makeBlockItem(block, ns, selectable, onEdited) {
         <div class="pt-block-header">
             ${checkboxHtml}
             ${statusBadge}
-            <span class="pt-block-name" title="${esc(block.name)}">${esc(block.name)}</span>
+            <span class="pt-block-name" tabindex="0" role="button" aria-expanded="false" title="${esc(block.name)}">${esc(block.name)}</span>
             ${clipBadge}${regexBadge}${groupBadge}${runnerBadge}
             <span class="pt-token-count">${tokens}</span>
             <span class="pt-block-chevron">▶</span>
@@ -1440,7 +1475,13 @@ function makeBlockItem(block, ns, selectable, onEdited) {
 
     el.querySelector('.pt-block-header').addEventListener('click', e => {
         if (e.target.classList.contains('pt-checkbox')) return;
-        el.classList.toggle('expanded');
+        const expanded = el.classList.toggle('expanded');
+        el.querySelector('.pt-block-name').setAttribute('aria-expanded', String(expanded));
+    });
+
+    el.querySelector('.pt-block-name').addEventListener('keydown', e => {
+        if (e.target !== e.currentTarget || !['Enter', ' '].includes(e.key)) return;
+        e.preventDefault(); e.currentTarget.click();
     });
 
     // ── Direct edit: let the person hand-fix a translated title/body ────
@@ -1503,11 +1544,12 @@ function makeBlockItem(block, ns, selectable, onEdited) {
                 clearNS(ns, [id]);
                 trTextEl.innerHTML = '<span class="pt-no-trans">번역 전</span>';
             } else {
-                const combined = newTitle ? `### ${newTitle}\n\n${newBody}` : newBody;
+                const combined = `### ${newTitle || block.name || block.id}\n\n${newBody}`;
                 setCache(ns, id, combined);
                 clearCachedTitle(ns, id); // full translation now wins over any stale title-only entry
                 trTextEl.innerHTML = esc(combined);
             }
+            delete trTextEl.dataset.origHtml;
             closeEditForm();
 
             // Keep the search index in sync (same fields setBlockHTML() indexes).
@@ -1554,7 +1596,7 @@ function setBlockHTML(list, id, htmlContent) {
     const item = list.querySelector(`[data-id="${CSS.escape(id)}"]`);
     if (!item) return;
     const ta = item.querySelector('.pt-translated-text');
-    if (ta) ta.innerHTML = htmlContent;
+    if (ta) { delete ta.dataset.origHtml; ta.innerHTML = htmlContent; }
     if (typeof htmlContent === 'string') {
         // Always use the original name for search indexing.
         // When the  toggle is ON, the displayed name may be the translated title,
@@ -1572,7 +1614,8 @@ function setBlockHTML(list, id, htmlContent) {
 // half already exists is carried over untouched, so running both modes in turn
 // merges into the canonical "본문\n{{// 주석}}" shape.
 async function runTranslation({ items, list, ns, pBar, pLabel, pWrap, btnStop, forceRetranslate, mode }) {
-    if (isBusy) return;
+    if (isBusy) { if (typeof toastr !== 'undefined') toastr.info('다른 번역이 진행 중이에요. 완료 후 다시 시도해 주세요.'); return; }
+    clearTimeout(statusResetTimer);
     const runMode = mode === 'note' ? 'note' : 'body';
 
     const selected=[...list.querySelectorAll('.pt-block-item.selected')].map(el=>el.dataset.id);
@@ -1697,7 +1740,7 @@ async function runTranslation({ items, list, ns, pBar, pLabel, pWrap, btnStop, f
     if (stTxt) stTxt.textContent=stopReq?'중단됨':(forceRetranslate?`${modeLabel} 재번역 완료 `:`${modeLabel} 완료 `);
     pWrap.classList.remove('visible');
     if (btnStop) btnStop.disabled=true;
-    setTimeout(()=>{const t=PDOC.getElementById('pt-status-text');if(t)t.textContent='대기 중';},3000);
+    statusResetTimer=setTimeout(()=>{const t=PDOC.getElementById('pt-status-text');if(t&&!isBusy)t.textContent='대기 중';},3000);
     if (skipped && typeof toastr!=='undefined') {
         toastr.info(`제목 전용 항목 ${skipped}개는 본문 번역에서 제외됨 ( 제목으로 이름만 번역 가능)`);
     }
@@ -1730,65 +1773,49 @@ function downloadBlob(blob, filename) {
 // Resolves to the chosen value, or null if cancelled / dismissed.
 function askChoice(title, opts) {
     return new Promise(resolve => {
-        const existing = PDOC.getElementById('pt-choice-modal');
-        if (existing) existing.remove();
-
-        const backdrop = PDOC.createElement('div');
+        PDOC.getElementById('pt-choice-modal')?._ptClose?.(null);
+        const previous = PDOC.activeElement;
+        const backdrop = PDOC.createElement('dialog');
         backdrop.id = 'pt-choice-modal';
         backdrop.className = 'pt-choice-backdrop';
-        backdrop.innerHTML = `
-          <div class="pt-choice-box" role="dialog" aria-modal="true">
+        backdrop.setAttribute('aria-label', title);
+        backdrop.innerHTML = `<div class="pt-choice-box">
             <div class="pt-choice-title">${esc(title)}</div>
-            <div class="pt-choice-btns">
-              ${opts.map(o => `<button type="button" data-v="${esc(o.v)}">${esc(o.label)}</button>`).join('')}
-            </div>
+            <div class="pt-choice-btns">${opts.map(o => `<button type="button" data-v="${esc(o.v)}">${esc(o.label)}</button>`).join('')}</div>
             <div class="pt-choice-cancel"><button type="button" data-v="__cancel__">취소</button></div>
-          </div>`;
+        </div>`;
+        // Native dialog escapes the drawer's scroll/transform containing block.
+        // Carry only this panel's palette tokens to its top-layer sheet.
         const panel = PDOC.getElementById('pt-panel');
-        (panel || PDOC.body).appendChild(backdrop);
-
-        const close = (val) => { backdrop.remove(); resolve(val); };
+        if (panel) {
+            const styles = PAR.getComputedStyle(panel);
+            for (const key of styles) if (key.startsWith('--pt-')) backdrop.style.setProperty(key, styles.getPropertyValue(key));
+        }
+        let settled = false;
+        const close = val => {
+            if (settled) return;
+            settled = true; backdrop.close(); backdrop.remove();
+            if (previous?.isConnected) previous.focus({ preventScroll: true });
+            resolve(val);
+        };
+        backdrop._ptClose = close;
+        backdrop.addEventListener('cancel', e => { e.preventDefault(); close(null); });
+        backdrop.addEventListener('close', () => close(null));
+        backdrop.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(null); }
+        });
         backdrop.addEventListener('click', e => {
             if (e.target === backdrop) return close(null);
-            const btn = e.target.closest('button[data-v]');
-            if (!btn) return;
-            const v = btn.dataset.v;
-            close(v === '__cancel__' ? null : v);
+            const button = e.target.closest('button[data-v]');
+            if (button) close(button.dataset.v === '__cancel__' ? null : button.dataset.v);
         });
+        PDOC.body.appendChild(backdrop);
+        showThemeModal(backdrop);
+        backdrop.querySelector('button')?.focus({ preventScroll: true });
     });
 }
-
 function askTextChoice(title) {
-    return new Promise(resolve => {
-        const existing = PDOC.getElementById('pt-choice-modal');
-        if (existing) existing.remove();
-
-        const backdrop = PDOC.createElement('div');
-        backdrop.id = 'pt-choice-modal';
-        backdrop.className = 'pt-choice-backdrop';
-        backdrop.innerHTML = `
-          <div class="pt-choice-box" role="dialog" aria-modal="true">
-            <div class="pt-choice-title">${esc(title)}</div>
-            <div class="pt-choice-btns">
-              <button type="button" data-v="original">원문만</button>
-              <button type="button" data-v="translated">번역문만</button>
-              <button type="button" data-v="both">둘 다</button>
-            </div>
-            <div class="pt-choice-cancel"><button type="button" data-v="cancel">취소</button></div>
-          </div>`;
-        // mount to panel if exists, else body
-        const panel = PDOC.getElementById('pt-panel');
-        (panel || PDOC.body).appendChild(backdrop);
-
-        const close = (val) => { backdrop.remove(); resolve(val); };
-        backdrop.addEventListener('click', e => {
-            if (e.target === backdrop) close(null); // click outside = cancel
-            const btn = e.target.closest('button[data-v]');
-            if (!btn) return;
-            const v = btn.dataset.v;
-            close(v === 'cancel' ? null : v);
-        });
-    });
+    return askChoice(title, [{ v:'original', label:'원문만' }, { v:'translated', label:'번역문만' }, { v:'both', label:'둘 다' }]);
 }
 
 // Format text for export/copy according to choice.
@@ -1836,10 +1863,12 @@ async function copyTextToClipboard(text) {
         ta.value = text;
         ta.style.position = 'fixed';
         ta.style.left = '-9999px';
-        document.body.appendChild(ta);
-        ta.select();
+        const back = document.activeElement;
+        const host = back?.closest?.('dialog[open]') || [...document.querySelectorAll('dialog[open]')].at(-1) || document.body;
+        host.appendChild(ta);
+        ta.select(); ta.setSelectionRange(0, ta.value.length);
         const ok = document.execCommand('copy');
-        document.body.removeChild(ta);
+        ta.remove(); back?.focus?.({preventScroll:true});
         return ok;
     } catch(e) { return false; }
 }
@@ -2594,7 +2623,7 @@ function exportPresetJSON(presetName) {
     const STRIP_KEYS = [
         'custom_url', 'custom_model', 'custom_include_body', 'custom_exclude_body',
         'custom_include_headers', 'custom_prompt_post_processing',
-        'reverse_proxy', 'proxy_password',
+        'reverse_proxy', 'proxy_password', 'azure_base_url', 'azure_deployment_name', 'workers_ai_account_id',
         'vertexai_region', 'vertexai_auth_mode', 'vertexai_express_project_id',
         'vertexai_template', 'vertexai_model',
         'openrouter_model', 'openrouter_use_fallback', 'openrouter_group_models',
@@ -2803,7 +2832,7 @@ function applyWiEntryTranslation(entry, ns, entryId, titlesOnly) {
 
     const cached = getTranslated(ns, entryId);
     const title = getTranslatedTitle(ns, entryId);
-    if (title) { entry.comment = title; changed++; }
+    if (title && String(entry.comment || '').trim()) { entry.comment = title; changed++; }
     // Titles-only leaves content AND the trigger keywords alone — keys are part
     // of how the entry fires, not part of its label.
     if (titlesOnly || !cached) return changed;
@@ -3176,6 +3205,17 @@ async function applyCharacterLive(charIdRaw, selectedIds) {
     } catch (e) { console.warn(`[${EXT}] CHARACTER_EDITED emit failed`, e); }
 
     const isCurrent = ctx?.characterId != null && Number(ctx.characterId) === idx;
+    if (PDOC.getElementById('avatar_url_pole')?.value === char.avatar) {
+        const fields = { description:'description_textarea', personality:'personality_textarea', scenario:'scenario_pole', first_mes:'firstmessage_textarea', mes_example:'mes_example_textarea', creator_notes:'creator_notes_textarea', system_prompt:'system_prompt_textarea', post_history_instructions:'post_history_instructions_textarea' };
+        for (const [key, id] of Object.entries(fields)) {
+            const input = PDOC.getElementById(id);
+            if (input && Object.hasOwn(update, key)) input.value = update[key];
+        }
+        const depth = update.data?.extensions?.depth_prompt;
+        if (depth && PDOC.getElementById('depth_prompt_prompt')) PDOC.getElementById('depth_prompt_prompt').value = depth.prompt;
+        const raw = PDOC.getElementById('character_json_data');
+        if (raw && characters[idx]?.json_data) raw.value = characters[idx].json_data;
+    }
     return { targetName: char.name || `#${idx}`, applied, isCurrent };
 }
 
@@ -3247,7 +3287,8 @@ Now output the ${names.length} numbered lines, translated into ${lang}.`;
 }
 
 async function runTitleTranslation({ items, list, ns, pBar, pLabel, pWrap, btnStop, onDone }) {
-    if (isBusy) return;
+    if (isBusy) { if (typeof toastr !== 'undefined') toastr.info('다른 번역이 진행 중이에요. 완료 후 다시 시도해 주세요.'); return; }
+    clearTimeout(statusResetTimer);
 
     // Respect selection; otherwise operate on everything loaded.
     const selected = [...list.querySelectorAll('.pt-block-item.selected')].map(el => el.dataset.id);
@@ -3359,7 +3400,7 @@ async function runTitleTranslation({ items, list, ns, pBar, pLabel, pWrap, btnSt
     pWrap.classList.remove('visible');
     if (btnStop) btnStop.disabled = true;
     if (stTxt) stTxt.textContent = stopReq ? '중단됨' : '제목 번역 완료 ';
-    setTimeout(() => { const t = PDOC.getElementById('pt-status-text'); if (t) t.textContent = '대기 중'; }, 3000);
+    statusResetTimer=setTimeout(() => { const t = PDOC.getElementById('pt-status-text'); if (t && !isBusy) t.textContent = '대기 중'; }, 3000);
 
     if (typeof toastr !== 'undefined') {
         if (failCount) toastr.warning(`제목 ${okCount}개 번역 완료, ${failCount}개 실패`);
@@ -3370,7 +3411,7 @@ async function runTitleTranslation({ items, list, ns, pBar, pLabel, pWrap, btnSt
 
 // ── Page factory ──────────────────────────────────────────────────────
 function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsync, kind }) {
-    let items=[], ns='';
+    let items=[], ns='', loadedVal='';
 
     // Buttons + search on same row
     page.innerHTML = `
@@ -3407,10 +3448,10 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
                     <button class="pt-btn pt-btn-danger"  id="${idPfx}-clr" title="번역 캐시 비우기"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
                     <button class="pt-btn-icon pt-btn-eye" id="${idPfx}-eye" title="토글 제목을 번역본으로 보기 (다시 누르면 원어로)" aria-pressed="false"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
                 </div>
-                <input type="text" class="pt-search" id="${idPfx}-search" placeholder=" 검색">
+                <input type="text" class="pt-search" id="${idPfx}-search" aria-label="불러온 항목 검색" placeholder=" 검색">
             </div>
             ${selectable ? `<div class="pt-select-row" id="${idPfx}-sarow" style="display:none;">
-                <input type="checkbox" class="pt-checkbox" id="${idPfx}-allcb">
+                <input type="checkbox" class="pt-checkbox" id="${idPfx}-allcb" aria-label="보이는 항목 모두 선택">
                 <span class="pt-info-chip" id="${idPfx}-cnt"></span>
                 <span class="pt-selected-chip" style="display:none;"></span>
             </div>` : `<div class="pt-select-row" id="${idPfx}-sarow" style="display:none;">
@@ -3657,7 +3698,8 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
     let loadSeq = 0;
     page.querySelector(`#${idPfx}-load`).addEventListener('click', async () => {
         if (pageRunning) { if (typeof toastr !== 'undefined') toastr.info('번역이 끝나면 불러올 수 있어요', '', { preventDuplicates: true }); return; }
-        const val=sel.value;
+        const val=kind==='preset' ? (sel.value || oai_settings?.preset_settings_openai || '') : sel.value;
+        const loadedName=sel.options[sel.selectedIndex]?.textContent || val;
         // Character tab: require explicit selection (no implicit "current character" fallback)
         if (kind === 'char' && !val) {
             showEmpty('불러올 데이터가 없습니다.');
@@ -3681,6 +3723,8 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
         }
         if (mine!==loadSeq) return;
         ns=nextNs;
+        loadedVal=val;
+        page.dataset.loadedName=kind==='preset' ? val : loadedName;
         items=loaded;
         // 이 확장이 예전에 적용해 둔 주석 블록은 "원문"이 아니다. 원문에서 떼어
         // 내어, ① 모델에 우리 주석을 원문인 양 다시 보내지 않고 ② 로컬 캐시가
@@ -3780,13 +3824,15 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
         const scope = selectedIds.length ? `선택한 ${selectedIds.length}개 항목` : `로드된 전체 ${items.length}개 항목`;
         if(!confirm(`${scope}의 번역 캐시를 비울까요?`)) return;
         clearNS(ns, targetIds);
+        applyEyeMode();
+        updateCacheStatsUI();
         // Update UI: reset translated text only for cleared items
         const targetSet = new Set(targetIds);
         list.querySelectorAll('.pt-block-item').forEach(el => {
             if (!targetSet.has(el.dataset.id)) return;
-            const trEl = el.querySelector('.pt-translated-text');
-            if (trEl) trEl.innerHTML = '<span class="pt-no-trans">번역 전</span>';
+            setBlockHTML(list, el.dataset.id, '<span class="pt-no-trans">번역 전</span>');
         });
+        applySearchFilter(searchEl?.value.trim().toLowerCase() || '');
     });
 
     // ── Export: Copy ──────────────────────────────────────────────────
@@ -3831,7 +3877,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
         if (!items.length) { if (typeof toastr!=='undefined') toastr.warning('로드된 데이터가 없습니다'); return; }
         try {
             const srcSel = page.querySelector(`#${idPfx}-sel`);
-            const srcVal = srcSel?.value || '';
+            const srcVal = loadedVal;
 
             // Build set of selected item ids (for partial export in WI/char)
             const checkedIds = new Set(
@@ -4029,7 +4075,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
 
                 const hasBodyRaw = !!(match.contentTranslated && match.contentTranslated.trim());
                 const hasBody  = hasBodyRaw && bodyVerified;
-                const hasTitle = !!(match.nameTranslated && match.nameTranslated.trim()) && titleVerified;
+                const hasTitle = !!(match.nameTranslated && match.nameTranslated.trim()) && match.nameTranslated.trim() !== name && titleVerified;
                 if (hasBodyRaw && !bodyVerified) staleBody++;
                 if (!hasBody && !hasTitle) { skipped++; continue; }
 
@@ -4048,9 +4094,9 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
                     // Store in the same "### {title}\n\n{body}" shape a real
                     // translation run produces, so every reader of the cache
                     // (JSON export, live-apply, , etc.) sees a normal entry.
-                    const heading = hasTitle ? match.nameTranslated.trim() : name;
+                    const heading = hasTitle ? match.nameTranslated.trim() : (getTranslatedTitle(ns, it.id) || name);
                     setCache(ns, it.id, `### ${heading}\n\n${match.contentTranslated.trim()}`);
-                    clearCachedTitle(ns, it.id);
+                    if (hasTitle) clearCachedTitle(ns, it.id);
                 } else {
                     setCacheTitle(ns, it.id, match.nameTranslated.trim());
                 }
@@ -4078,7 +4124,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
     page.querySelector(`#${idPfx}-apply`)?.addEventListener('click', async () => {
         if (!items.length) { if (typeof toastr!=='undefined') toastr.warning('로드된 데이터가 없습니다'); return; }
         const srcSel = page.querySelector(`#${idPfx}-sel`);
-        const srcVal = srcSel?.value || '';
+        const srcVal = loadedVal;
         const label = getSourceName(kind, page, idPfx);
 
         const checkedIds = new Set(
@@ -4180,6 +4226,7 @@ function collectTargetItems(page, items, idPfx, ns) {
 
 // Get the source name (preset/world/char name) from the select box
 function getSourceName(kind, page, idPfx) {
+    if (page.dataset.loadedName) return page.dataset.loadedName;
     const sel = page.querySelector(`#${idPfx}-sel`);
     if (!sel) return 'untitled';
     const opt = sel.options[sel.selectedIndex];
@@ -4222,7 +4269,7 @@ export function openPanel() {
 }
 function closePanel() {
     dockPanel();
-    PDOC.getElementById('pt-choice-modal')?.remove();
+    PDOC.getElementById('pt-choice-modal')?._ptClose?.(null);
 }
 
 // Shows the model configured in the extension settings next to the status
@@ -4381,7 +4428,7 @@ function updateModelDropdown() {
     const sel=document.getElementById('pt-model-select'); if(!sel) return;
     const models=prov==='custom'?(c.customModelLists?.[customEndpoint(c,oai_settings).url]||[]):(PROVIDER_MODELS[prov]||[]), current=c.model||'';
     let html='<option value="">모델 선택...</option>';
-    models.forEach(m=>{html+=`<option value="${m}" ${current===m?'selected':''}>${m}</option>`;});
+    models.forEach(m=>{html+=`<option value="${esc(m)}" ${current===m?'selected':''}>${esc(m)}</option>`;});
     if(current && current!=='__custom__' && !models.includes(current))html+=`<option value="${esc(current)}" selected>${esc(current)}</option>`;
     html+=`<option value="__custom__" ${current==='__custom__'?'selected':''}> 커스텀 모델 입력</option>`;
     sel.innerHTML=html;
@@ -4438,7 +4485,7 @@ export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
         $('#extensions_settings').append(buildSettingsHTML());
     } catch(e) {
         console.error(`[${EXT}] buildSettingsHTML failed`, e);
-        return;
+        throw e;
     }
     if (CSS_URL && !Array.from(PDOC.querySelectorAll('link[rel="stylesheet"]')).some(link=>link.href===CSS_URL)) {
         $('<link>',{id:'pt-main-css',rel:'stylesheet',href:CSS_URL}).appendTo('head');
@@ -4561,21 +4608,29 @@ export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
     installRegexPage({doc:PDOC,cfg,save:saveSettingsDebounced,
         list:async()=>{const module=await import(new URL('../../../../../../extensions/regex/engine.js',import.meta.url).href);return module.getRegexScripts({allowedOnly:false});},
         translate:async(prompt)=>{if(isBusy)throw Error('다른 번역이 진행 중이에요. 완료 후 다시 시도해 주세요.');isBusy=true;regexOwnsRequest=true;stopReq=false;try{return await runCompletion([{role:'user',content:prompt}]);}finally{isBusy=false;regexOwnsRequest=false;}},
-        cancel:()=>{if(regexOwnsRequest){stopReq=true;for(const controller of inFlight)controller.abort();}},
+        cancel:()=>{if(regexOwnsRequest)requestStop();},
     });
     installGuide({doc:PDOC, cfg, save:saveSettingsDebounced, openPanel, closePanel});
-    bindConnection({doc:PDOC,cfg,save:saveSettingsDebounced,host:oai_settings,extensions:extension_settings,headers:getRequestHeaders,models:PROVIDER_MODELS,escape:esc,refresh:()=>{updateModelDropdown();buildParamsUI();applyProviderModeUI();updateStatusModel();}});
+    bindConnection({doc:PDOC,cfg,save:saveSettingsDebounced,host:oai_settings,extensions:extension_settings,headers:getRequestHeaders,models:PROVIDER_MODELS,refresh:()=>{updateModelDropdown();buildParamsUI();applyProviderModeUI();updateStatusModel();}});
     updateModelDropdown();buildParamsUI();applyProviderModeUI();
 
     dockPanel();
     const drawerContent = PDOC.getElementById('pt-drawer-host').parentElement;
-    // Only the drawer content, its own .inline-drawer and #extensions_settings
-    // change when the drawer opens/closes; watching every ancestor up to <html>
+    // Watch only the local drawer and ST extension drawer boundaries;
+    // watching every ancestor up to <html>
     // made each body class toggle (streaming etc.) flush layout via getClientRects.
     const drawerObserver = new MutationObserver(syncDrawerPages);
-    const drawerWatch = new Set([drawerContent, drawerContent.closest('.inline-drawer'), PDOC.getElementById('extensions_settings')]);
+    const drawerWatch = new Set([drawerContent, drawerContent.closest('.inline-drawer'), PDOC.getElementById('extensions_settings'), PDOC.getElementById('rm_extensions_block')]);
     for (const el of drawerWatch) {
-        if (el) drawerObserver.observe(el, {attributes:true, attributeFilter:['style','class']});
+        if (!el) continue;
+        drawerObserver.observe(el, {attributes:true, attributeFilter:['style','class']});
+        // ST can transition display with allow-discrete. The initial style
+        // mutation still has a layout box; release rows once it is really hidden.
+        const afterTransition = event => {
+            if (event.target === el && ['display', 'height'].includes(event.propertyName)) syncDrawerPages();
+        };
+        el.addEventListener('transitionend', afterTransition);
+        el.addEventListener('transitioncancel', afterTransition);
     }
     PDOC.querySelector('.pt-extension-settings .inline-drawer-toggle').addEventListener('click', () => {
         setTimeout(() => {

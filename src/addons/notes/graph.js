@@ -1,3 +1,4 @@
+import { showThemeModal } from '../../modal.js';
 // 연결 보기 — 메모끼리 [[연결]] · #태그 를 점과 선으로 (옵시디언 그래프처럼). 캔버스 한 장 + 힘 배치.
 // 점을 누르면 그 메모로, 끌면 점이 움직이고, 빈 곳을 끌면 화면 이동 · 휠 / 두 손가락으로 확대.
 const TITLE = '연결 보기';
@@ -165,6 +166,6 @@ export function openGraph({ build, onPick, onTag, withTags = false }) {
     const size = () => { const r = stage.getBoundingClientRect(); dpr = Math.min(2, devicePixelRatio || 1); W = Math.max(1, r.width); H = Math.max(1, r.height); canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr); canvas.style.width = W + 'px'; canvas.style.height = H + 'px'; kick(); };
     const ro = new ResizeObserver(size);
     d.addEventListener('close', () => { ro.disconnect(); cancelAnimationFrame(raf); raf = 0; d.remove(); if (current === d) current = null; }, { once: true });
-    d.showModal(); readColors(); ro.observe(stage); size(); load();
+    showThemeModal(d); readColors(); ro.observe(stage); size(); load();
     return d;
 }

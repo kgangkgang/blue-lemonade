@@ -23,6 +23,7 @@ export async function checkInstallation(full=false){
             if(!response.ok)throw Error();report.disk=(await response.json()).version;
             if(full)report.files=await verifyFiles(FILE_HASHES,async path=>{const r=await fetch(new URL(path,base),{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error();return r.arrayBuffer();},digest);
         }catch{report.error='설치 파일을 읽지 못했어요. 서버 연결을 확인하고 다시 검사해 주세요.';if(full&&!report.files)report.files={checked:0,failures:[],error:true};}  // 실패도 검사한 것으로 남긴다 — 다시 그릴 때마다 전체 검사가 되풀이되지 않게
+        if(!full&&!report.error&&result?.files&&!result.files.error&&result.disk===report.disk)report.files=result.files;
         result=report;return report;
     })();
     paint();

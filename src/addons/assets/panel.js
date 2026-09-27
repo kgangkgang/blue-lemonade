@@ -2,7 +2,7 @@
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
 import { getThumbnailUrl } from '../../../../../../../script.js';
 import { getContext } from '../../../../../../extensions.js';
-import { settings, saveSettings, VERSION, TITLE, THUMB_SIZES, DEFAULT_PROMPT, isGroupChat, disabledSet, setDisabled, folderOf } from './state.js';
+import { settings, saveSettings, VERSION, TITLE, THUMB_SIZES, DEFAULT_PROMPT, isGroupChat, disabledSet, setDisabled, folderOf, forgetOptimized, copyOptimized } from './state.js';
 import { runtime, hooks, reload, recompute, groupsOf, sourceByKey, expandedPrompt } from './store.js';
 import { isAllowedName, isZipName, uploadImage, uploadZip, deleteAsset, baseOf, sameBaseSiblings, fetchAssets } from './assets.js';
 import { escapeHtml, toast, confirmDialog, inputDialog, pickDialog, copyText, applyThemeVars } from './ui.js';
@@ -563,16 +563,26 @@ async function deletePresetFlow() {
     if (notReady()) return;
     const source = ownActive();
     if (!source || source.preset.id === BASE_ID) return;
+    if (source.error) { toast('warning', '이 프리셋의 목록을 못 읽었어요. 새로고침을 먼저 눌러 주세요.'); return; }
+    const owner = source.owner, folder = source.key;
     const count = source.assets.length;
     const ok = await confirmDialog(`'${source.label}' 프리셋을 지울까요?${count ? `\n안의 그림 ${count}장이 함께 지워지고 되돌릴 수 없어요.` : ''}`, { ok: '지우기' });
     if (!ok) return;
-    const folder = source.key;
+    if (runtime.folder !== owner) { toast('warning', '확인하는 사이 캐릭터가 바뀌어서 지우지 않았어요.'); return; }
     setBusy(true);
     const failed = [];
+    const gone = [];
     try {
-        for (const base of new Set(source.assets.map(asset => asset.base))) {
+        let members;
+        try { members = await fetchAssets(folder); }
+        catch (error) { toast('error', `목록을 다시 읽지 못해서 프리셋을 남겨 뒀어요: ${error.message}`); return; }
+        if (!members.length && source.assets.length) { toast('warning', '목록이 비어 보여서 지우지 않았어요. 새로고침을 먼저 눌러 주세요.'); return; }
+        for (const base of new Set(members.map(asset => asset.base))) {
             try {
                 await deleteAsset(folder, base);
+                const files = members.filter(asset => asset.base === base).map(asset => asset.file);
+                gone.push(...files);
+                forgetOptimized(folder, files);
             } catch (error) {
                 console.error('[캐릭터 에셋] 프리셋 그림 지우기 실패', base, error);
                 failed.push(base);
@@ -584,13 +594,16 @@ async function deletePresetFlow() {
     if (failed.length) {
         toast('error', `${failed.length}장을 지우지 못해서 프리셋은 남겨 뒀어요: ${failed.slice(0, 3).join(', ')}`);
         await reload();
+        document.dispatchEvent(new CustomEvent('char-assets:deleted', { detail: { folder, files: gone } }));
         return;
     }
-    removePreset(settings(), runtime.folder, source.preset.id);
+    removePreset(settings(), owner, source.preset.id);
     delete settings().disabled[folder];
+    forgetOptimized(folder);
     saveSettings();
-    activeKey = runtime.folder;
+    if (runtime.folder === owner) activeKey = owner;
     await reload();
+    document.dispatchEvent(new CustomEvent('char-assets:deleted', { detail: { folder, files: gone } }));
     toast('success', `'${source.label}' 프리셋을 지웠어요.`);
 }
 
@@ -897,9 +910,11 @@ async function bulkMove() {
                 const blob = await response.blob();
                 const file = new File([blob], asset.file, { type: blob.type || 'application/octet-stream' });
                 await uploadImage(targetKey, file, asset.base);
+                copyOptimized(asset.folder, asset.file, targetKey, asset.file);
                 const wasOff = disabledSet(asset.folder).has(asset.file);
                 if (wasOff) setDisabled(targetKey, asset.file, true);
                 await deleteAsset(asset.folder, asset.base);
+                forgetOptimized(asset.folder, [asset.file]);
                 setDisabled(asset.folder, asset.file, false);
                 moved++;
             } catch (error) {
@@ -944,6 +959,7 @@ async function bulkDelete() {
     setBusy(true);
     const failed = [];
     let deleted = 0;
+    const gone = [];
     let aborted = false;
     try {
         for (const base of bases) {
@@ -956,8 +972,10 @@ async function bulkDelete() {
                 for (const asset of targets) {
                     if (asset.base !== base) continue;
                     setDisabled(folder, asset.file, false);
+                    gone.push(asset.file);
                     deleted++;
                 }
+                forgetOptimized(folder, targets.filter(asset => asset.base === base).map(asset => asset.file));
             } catch (error) {
                 console.error('[캐릭터 에셋] 지우기 실패', base, error);
                 failed.push(base);
@@ -968,6 +986,7 @@ async function bulkDelete() {
     }
     selected.clear();
     await reload();
+    document.dispatchEvent(new CustomEvent('char-assets:deleted', { detail: { folder, files: gone } }));
     if (aborted) toast('warning', `캐릭터가 바뀌어서 ${deleted}장만 지우고 멈췄어요.`);
     else if (failed.length) toast('error', `${failed.length}개는 지우지 못했어요: ${failed.slice(0, 3).join(', ')}`);
     else toast('success', `그림 ${deleted}장을 지웠어요.`);

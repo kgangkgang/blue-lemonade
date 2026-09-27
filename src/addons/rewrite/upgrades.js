@@ -113,7 +113,8 @@ export const UPGRADES = [
             const known = new Set(parseEntries(rule.words).map(entryKey));
             const extra = parseEntries(USER_COLORS_EXTRA).filter(entry => !known.has(entryKey(entry)));
             if (extra.length) rule.words = [rule.words || '', ...extra.map(renderEntry)].join('\n');
-            if ((rule.description ?? '') === OLD_USER_COLORS_DESCRIPTION) rule.description = defaultRule('user_colors').description;
+            const fresh = defaultRule('user_colors');
+            if (fresh && (rule.description ?? '') === OLD_USER_COLORS_DESCRIPTION) rule.description = fresh.description;
         },
     },
     {

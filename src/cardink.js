@@ -73,9 +73,15 @@ function paintedBg(el) {
     return base;
 }
 
-function fixOne(el) {
-    // 우리가 지난번에 넣은 색은 지우고 다시 잰다 (메시지가 고쳐지거나 스와이프될 수 있다)
-    if (el.dataset[MARK]) { el.style.removeProperty('color'); delete el.dataset[MARK]; }
+const originalInk = new WeakMap();
+function restoreOne(el) {
+    if (!el.dataset[MARK]) return;
+    const previous = originalInk.get(el);
+    if (previous?.value) el.style.setProperty('color', previous.value, previous.priority);
+    else el.style.removeProperty('color');
+    delete el.dataset[MARK]; originalInk.delete(el);
+}
+function plannedInk(el) {
     const own = parse(getComputedStyle(el).backgroundColor);
     if (!own || own.a < 0.5) return;           // 제 배경이 없으면 물려받은 색 그대로가 맞다
     if (!el.textContent.trim()) return;
@@ -84,10 +90,14 @@ function fixOne(el) {
     if (!fg) return;
     if (ratio(over(fg, bg), bg) >= MIN) return; // 멀쩡하면 손 대지 않는다
     const light = hex(INK_LIGHT), dark = hex(INK_DARK);
-    const ink = ratio(light, bg) >= ratio(dark, bg) ? INK_LIGHT : INK_DARK;
+    return ratio(light, bg) >= ratio(dark, bg) ? INK_LIGHT : INK_DARK;
+}
+function writeInk(el, ink) {
+    if (!ink) return;
     // !important 로 넣는다 — 인라인 color 를 다는 순간 '색 통일'(css/08-regex-unify.css:25 의
     // [style*="color"] { color: inherit !important })에 걸려 도로 지워진다. 인라인 !important 가 그것을 이긴다.
     // 읽히지 않는 칸만 손대므로 색 통일의 뜻(모델이 칠한 색을 테마 색으로)과 어긋나지 않는다.
+    originalInk.set(el, {value:el.style.getPropertyValue('color'),priority:el.style.getPropertyPriority('color')});
     el.style.setProperty('color', ink, 'important');
     el.dataset[MARK] = '1';
 }
@@ -95,22 +105,36 @@ function fixOne(el) {
 function fixRoot(root) {
     if (!root || root.nodeType !== 1) return;
     for (const text of root.matches?.('.mes_text') ? [root] : root.querySelectorAll('.mes_text')) {
-        for (const el of text.querySelectorAll(CANDIDATES)) fixOne(el);
+        const candidates=[...text.querySelectorAll(CANDIDATES)],set=new Set(candidates),levels=[];
+        for (const el of candidates) restoreOne(el);
+        for (const el of candidates) {
+            let depth=0;
+            for(let p=el.parentElement;p&&p!==text;p=p.parentElement)if(set.has(p))depth++;
+            (levels[depth]??=[]).push(el);
+        }
+        // Read siblings together; a nested card must still see its parent's final ink.
+        for (const level of levels) {
+            const plans=level.map(el=>[el,plannedInk(el)]);
+            for(const [el,ink] of plans)writeInk(el,ink);
+        }
     }
 }
 
 let queued = false;
+let whole = false, started = false;
 const pending = new Set();
 function schedule(root) {
-    if (root) pending.add(root);
+    if (root) pending.add(root); else whole = true;
     if (queued) return;
     queued = true;
     // rAF 가 아니라 타이머 — 탭이 숨어 있으면 rAF 는 멈춘다(실측: hidden 인 탭에서 한 번도 안 불림).
     // 백그라운드에서 답이 와도 돌아 있어야 탭을 다시 열었을 때 이미 읽히는 상태다.
     setTimeout(() => {
         queued = false;
-        const roots = pending.size ? [...pending] : [document.getElementById('chat')];
+        const roots = whole || !pending.size ? [document.getElementById('chat'),...pending] : [...pending];
+        whole = false;
         pending.clear();
+        if (!document.body.classList.contains('salty')) return;
         for (const r of roots) fixRoot(r);
     });
 }
@@ -121,6 +145,8 @@ const mesOf = (id) => {
 };
 
 export function startCardInk() {
+    if (started) return;
+    started = true;
     const { eventSource, event_types } = SillyTavern.getContext();
     const on = (name, fn) => { if (event_types[name]) eventSource.on(event_types[name], fn); };
 
@@ -131,11 +157,20 @@ export function startCardInk() {
     // 채팅을 열면 통째로. 답이 끝나면 방금 끝난 답(마지막 메시지)만 — 4.7.8: 채팅 전체를 다시 재면 답마다 카드 수백 개의
     // 계산 스타일을 강제로 읽어 답 끝의 긴 작업에 얹혔다(폰 리그 답 끝 forced style·layout 41ms@4x). 스트리밍 도중에는 카드가 아직 덜 그려져 있다.
     on('CHAT_CHANGED', () => schedule(null));
+    on('MORE_MESSAGES_LOADED', () => schedule(null));
     on('GENERATION_ENDED', () => schedule(document.querySelector('#chat > .mes:last-of-type') || document.getElementById('chat')));
     // 북마크 창이 메시지를 다시 그릴 때도 (테마의 다른 모듈과 같은 신호)
     document.addEventListener('chat-bookmarks:render', (event) => {
         const root = event.detail?.root;
         if (root?.nodeType === 1 && root.isConnected) schedule(root);
     });
+    let active=document.body.classList.contains('salty');
+    new MutationObserver(()=>{
+        const next=document.body.classList.contains('salty');
+        if(next===active)return;
+        active=next;
+        if(active)schedule(null);
+        else for(const el of document.querySelectorAll('[data-bl-ink]'))restoreOne(el);
+    }).observe(document.body,{attributes:true,attributeFilter:['class']});
     schedule(null);
 }

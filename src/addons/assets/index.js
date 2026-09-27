@@ -1,3 +1,4 @@
+import { showThemeModal } from '../../modal.js';
 // 캐릭터 에셋 — 캐릭터 그림(에셋)을 올려 두면 AI가 {{img::파일명}}으로 골라 쓰고, 채팅에 그림으로 나온다.
 // 이전 '캐릭터 에셋 확장(character-assets)'을 새로 만든 확장. 그림은 같은 폴더(characters/<캐릭터>/)를 그대로 쓴다.
 import { eventSource, event_types } from '../../../../../../../script.js';
@@ -181,7 +182,7 @@ export async function openPanel() {
         dialog.remove(); dialog = null;
         if (previous?.isConnected) previous.focus();
     }, {once:true});
-    dialog.showModal();
+    showThemeModal(dialog);
 }
 export function mountInline(host) {
     const button = document.createElement('button');

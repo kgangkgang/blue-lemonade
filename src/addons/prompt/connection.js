@@ -24,7 +24,7 @@ export async function requestActive({cfg,context,messages,inFlight,hostModules})
   return typeof result==='string'?result.trim():String(result?.content||result?.choices?.[0]?.message?.content||result?.results?.[0]?.text||'').trim();
  } finally {inFlight.delete(controller);}
 }
-export function bindConnection({doc,cfg,save,host,extensions,headers,refresh,models,escape}) {
+export function bindConnection({doc,cfg,save,host,extensions,headers,refresh,models}) {
  const by=id=>doc.getElementById(id);
  const status=message=>{by('pt-connection-status').textContent=message;};
  by('pt-connection-mode').value=cfg().connectionMode;
@@ -46,7 +46,8 @@ export function bindConnection({doc,cfg,save,host,extensions,headers,refresh,mod
    const data=await response.json();const rows=Array.isArray(data)?data:(data.data||data.models);
    if(!Array.isArray(rows))throw Error('모델 목록 형식이 올바르지 않아요.');
    const ids=[...new Set(rows.map(r=>typeof r==='string'?r:r?.id||r?.name).filter(v=>typeof v==='string'&&v.length<300))].sort();
-   c.customModelLists={...(c.customModelLists||{}),[config.url]:ids};
+   const recent={...(c.customModelLists||{})};delete recent[config.url];recent[config.url]=ids;
+   c.customModelLists=recent;
    // Retain only recent endpoint lists, as in the LLM extension.
    c.customModelLists=Object.fromEntries(Object.entries(c.customModelLists).slice(-3));save();
    if(customEndpoint(cfg(),host).url===config.url){refresh();target.textContent=`모델 ${ids.length}개를 불러왔어요.`;}

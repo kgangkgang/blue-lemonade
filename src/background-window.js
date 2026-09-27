@@ -4,7 +4,7 @@
 // 브라우저가 얼리지 않는 예외 가운데 소리를 쓰지 않는 것이 'PIP(화면 속 작은 창)로 재생 중인 영상'이다 — 소리 없는 영상이라 유튜브 소리를 끊지 않는다.
 // 보내기 · 스와이프 · 다시 생성을 누르는 그 순간(사용자 동작이 있어야 PIP 를 열 수 있다) 진행 상황을 그린 작은 영상을 PIP 로 띄운다.
 // 작은 창에는 '생성 중 · 글자 수 · 끝남'이 보이고, 실리태번으로 돌아오면 저절로 닫힌다. 켜 두었을 때만 불러온다 (features.js).
-const TRIGGERS = '#send_but, #option_regenerate, #option_continue, #mes_continue, .swipe_right, .swipe_left, .bl-onehand button, #mes_impersonate, #option_impersonate, .qr--button';
+const TRIGGERS = '#send_but, #option_regenerate, #option_continue, #mes_continue, .swipe_right, .swipe_left, #bl-onehand .bl-onehand-btn, #mes_impersonate, #option_impersonate, .qr--button, .bl-qrf-layer button[data-i], .ctx-blocker .ctx-item';
 let mode = 'audio';
 // 소리 방식: 창 없이 버틴다. 브라우저는 '소리를 내고 있는 탭'을 얼리지 않는다 — 귀에 안 들리는 아주 낮고 작은 소리(30Hz · 0.1% 크기)를 WebAudio 로 낸다.
 // <audio> 재생과 달리 WebAudio 는 다른 앱의 재생을 멈추게 하지 않는 편이지만(유튜브가 계속 나옴), 폰 · 브라우저마다 다를 수 있어 실험 기능이다
@@ -21,7 +21,7 @@ function startHum() {
 }
 function stopHum() { try { hum?.osc.stop(); hum?.osc.disconnect(); hum?.gain.disconnect(); } catch { /* 이미 멈춤 */ } hum = null; audio?.suspend?.(); }
 let humTimer = 0;
-let on = false, bound = false, canvas = null, video = null, ctx = null, timer = 0, offs = [];
+let on = false, bound = false, canvas = null, video = null, ctx = null, timer = 0;
 const state = { phase: 'idle', chars: 0, since: 0, doneAt: 0, preview: '' };
 // 멈춘 '생성 중' 걸러내기: 눌렀는데 생성이 안 시작되거나(스와이프만 넘김 · 빠른 답장 · / 명령) 끝 이벤트 없이 멈추면 'working' 이 남아 소리가 안 꺼졌다.
 // 실리태번이 생성 중(body[data-generating])이 아니고 누름 · 시작 · 글자 신호도 90초 동안 없으면 내려놓는다. 끝난 뒤('done') 90초는 그대로
@@ -78,7 +78,10 @@ function closeWindow() {
 }
 
 function arm() { Object.assign(state, { phase: 'working', chars: 0, since: Date.now(), preview: '' }); lastSign = Date.now(); openWindow(); }
-function onTap(event) { if (on && event.target?.closest?.(TRIGGERS)) arm(); }
+function onTap(event) {
+    if (event.target?.closest?.('.qr--button-expander,.ctx-expander') || document.body.classList.contains('salty') && event.target?.closest?.('.qr--hasCtx')) return;
+    if (on && event.target?.closest?.(TRIGGERS)) arm();
+}
 // Enter 는 실리태번이 실제로 생성할 때만 (RossAscends-mods.js processHotkeys 와 같은 조건 — 폰은 기본값이 줄바꿈).
 // Alt+Enter(이어쓰기) · Ctrl+Enter(다시 생성)는 <a> 를 jQuery 로 눌러 클릭 이벤트가 안 오므로 여기서 켠다. 생성이 안 되면 위 걸러내기가 내려놓는다
 function onKey(event) {
@@ -109,7 +112,7 @@ export function syncBackgroundWindow(enabled, how = 'audio') {
     document.addEventListener('visibilitychange', onVisible);
     try {
         const { eventSource, event_types } = SillyTavern.getContext();
-        const listen = (name, fn) => { if (event_types[name]) { eventSource.on(event_types[name], fn); offs.push(() => eventSource.removeListener?.(event_types[name], fn)); } };
+        const listen = (name, fn) => { if (event_types[name]) { eventSource.on(event_types[name], fn); } };
         // 프롬프트 관리자의 토큰 세기(dryRun)는 생성이 아니다 — 끝 이벤트가 없어 'working' 이 남았다
         listen('GENERATION_STARTED', (_type, _params, dryRun) => { if (dryRun) return; lastSign = Date.now(); if (state.phase !== 'working') Object.assign(state, { phase: 'working', chars: 0, since: Date.now(), preview: '' }); });
         listen('STREAM_TOKEN_RECEIVED', (text) => { lastSign = Date.now(); if (typeof text === 'string') { state.chars = text.length; state.preview = text; } });

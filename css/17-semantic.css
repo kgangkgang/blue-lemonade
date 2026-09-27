@@ -449,3 +449,5 @@ body.salty .popup .popup-controls .menu_button.popup-button-custom:is([data-i18n
   color: var(--bl-danger-ink) !important;
 }
 /* ===== /surfaces:semantic ===== */
+
+html body.salty .menu_button.menu_button:is(.redWarningBG, .red_button):focus-visible { box-shadow: var(--bl-danger-ring) !important; }

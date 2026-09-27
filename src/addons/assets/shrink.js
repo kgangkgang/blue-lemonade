@@ -24,8 +24,10 @@ async function shrinkOne(asset){
  if(format.animated)return skip('animated');
  // Old releases did not record conversion history: preserve all existing WebP too.
  if(format.type==='webp'){
+  const known=settings().optimizedImages?.[JSON.stringify([asset.folder||'',asset.file||''])];
+  if(typeof known!=='string')return skip('webp');
   const hash=await digest(bytes);
-  return skip(settings().optimizedImages?.[JSON.stringify([asset.folder||'',asset.file||''])]===hash?'optimized':'webp');
+  return skip(known===hash?'optimized':'webp');
  }
  if(!format.supported)return skip('unsupported');
  let bitmap;try{bitmap=await decodeStill(blob,format);}catch{return skip('unsupported');}

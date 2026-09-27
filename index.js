@@ -55,7 +55,8 @@ function mountDrawer() {
     host.prepend(drawer);
     showVersion(drawer.querySelector('.bl-version'));
     // 미리보기 CSS 는 서랍을 펼 때 되돌린다 (lite.js) — 실리태번의 토글 핸들러보다 먼저 받게 capture 로
-    drawer.querySelector('.inline-drawer-toggle').addEventListener('click', restorePreviewRules, { capture: true });
+    const pillHit = event => { const pill=event.target.closest?.('.bl-version'); return !!pill && !pill.hidden && badgeTextHit(event,pill); };
+    drawer.querySelector('.inline-drawer-toggle').addEventListener('click', event=>{if(!pillHit(event))restorePreviewRules();}, { capture: true });
     drawer.querySelector('.inline-drawer-toggle').addEventListener('click', () => setTimeout(retoneAll, 400)); // 서랍 미리보기도 톤 맞춤
     // 4.1.2: 서랍 속 설정 창은 처음 펼칠 때 만든다 — 닫힌 서랍 안에 시작할 때마다 통째로 그리고(버전 · 확장 기능 상태가 올 때마다 다시)
     // 미리보기 크기까지 재던 것 (폰 리그 시작 한 번에 0.45초). 실리태번의 토글 핸들러보다 먼저 받게 capture 로.
@@ -72,7 +73,7 @@ function mountDrawer() {
         finally { drawer._blMounting = false; }
     };
     drawer._blEnsurePanel = ensurePanel;
-    drawer.querySelector('.inline-drawer-toggle').addEventListener('click', ensurePanel, { capture: true });
+    drawer.querySelector('.inline-drawer-toggle').addEventListener('click', event=>{if(!pillHit(event))ensurePanel();}, { capture: true });
 }
 
 // 버전 배지는 manifest.json 을 읽어서 적음 (버전을 코드에 두 번 적지 않게)
@@ -91,7 +92,7 @@ async function showVersion(badge) {
         if (!badgeTextHit(event, badge)) return; // 5.3.7 글자 밖은 서랍 펴기로
         event.preventDefault();
         event.stopPropagation();
-        openNotice(noticeSeenChanged);
+        openNotice(noticeSeenChanged).catch(error => console.error('[Blue Lemonade] 공지사항',error));
     };
     badge.addEventListener('click', open);
     badge.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') open(event); });
@@ -115,7 +116,7 @@ async function openPopup(fullscreen = false, extension = null) {
             panel._onClose = () => popup.completeAffirmative();
             setPanelFullscreen(panel, fullscreen);
         } });
-    } finally { unmountPanel(panel); }
+    } finally { unmountPanel(panel); refreshPanels(); }
 }
 
 function addMenuItem() {
@@ -159,7 +160,10 @@ jQuery(() => {
     for (const id of ['extensions-settings-button', 'extensionsMenuButton']) document.getElementById(id)?.addEventListener('pointerdown', () => { loadPanel().catch(() => {}); }, { capture: true, passive: true });
     syncAddonIcons();
     addMenuItem();
-    if (themeEnabled(getSettings())) {
+    let themeRuntimeStarted = false;
+    const startThemeRuntime = () => {
+        if (themeRuntimeStarted || !themeEnabled(getSettings())) return;
+        themeRuntimeStarted = true;
     startAssetWatcher();
     startPromptList(); // 검사 창 프롬프트 목록 줄을 세 조각으로 쪼갬 (CSS 로는 순서를 못 바꿈)
     startCurrentMark();
@@ -178,7 +182,11 @@ jQuery(() => {
     const { eventSource, event_types } = SillyTavern.getContext();
     eventSource.on(event_types.CHAT_CHANGED, () => setTimeout(classifyAll, 300));
 
-    }
+        classifyAll();
+    };
+    startThemeRuntime();
+    new MutationObserver(startThemeRuntime).observe(document.body, {attributes:true,attributeFilter:['class']});
+
     // 실리태번 쪽 설정이 바뀌면 설정 점검을 다시
     let refreshTimer = null;
     $(document).on('change input', '#chat_display, #hideChatAvatarsEnabled, #customCSS, #stream_fade_in', (event) => {

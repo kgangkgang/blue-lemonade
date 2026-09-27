@@ -36,7 +36,9 @@ export function createCaptureResources() {
             let entry = styles.get(source);
             if (!entry) {
                 const style = getComputedStyle(source);
-                for (const property of style) clone.style.setProperty(property, style.getPropertyValue(property));
+                // Resolved properties already contain their var() values. Inherited custom
+                // properties can contain whole frame images and need not repeat on every node.
+                for (const property of style) if (!property.startsWith('--')) clone.style.setProperty(property, style.getPropertyValue(property));
                 bakeMarker(style, clone.style);
                 if (source.tagName === 'Q' && ['none', 'normal', '""', "''"].includes(getComputedStyle(source, '::before').content)) clone.style.quotes = 'none';
                 entry = { css: clone.style.cssText, background: style.backgroundImage };

@@ -45,6 +45,7 @@ jobs:
           node tools/tests/glass-motion.mjs .
           node tools/tests/preset-sharing.mjs .
           node tools/tests/appearance-workflow.mjs .
+          node tools/tests/audit-regressions.mjs .
           node tools/tests/optimization-cache.mjs
           node tools/tests/preferences-safety.mjs .
           node tools/tests/appearance-comfort.mjs .

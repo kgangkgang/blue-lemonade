@@ -235,7 +235,7 @@ body.salty :is(#chat, .cg-root) q .custom-dem-expressive.bl-fx-made {
 }
 
 /* Native selection menus must not chase moving text. Freeze at the current frame. */
-body.salty.bl-dem-selecting :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(#salty-none):not(#salty-none),
-body.salty.bl-dem-selecting :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(#salty-none):not(#salty-none) * {
+body.salty[data-bl-dem-selecting] :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(#salty-none):not(#salty-none),
+body.salty[data-bl-dem-selecting] :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(#salty-none):not(#salty-none) * {
   animation-play-state: paused !important;
 }

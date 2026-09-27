@@ -207,7 +207,7 @@ function hookDocument() {
     window.addEventListener('resize', () => { if (layer && anchor?.isConnected) place(layer.firstElementChild); else closeQrFind(); });
     // 초점이 팝업 밖(돋보기 단추)에 있어도 Esc 로 닫힘
     document.addEventListener('keydown', (e) => {
-        if (layer && e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeQrFind(); }
+        if (layer && e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); const back = anchor; closeQrFind(); if(back?.isConnected)back.focus({preventScroll:true}); }
     }, true);
 }
 
@@ -241,7 +241,7 @@ export function openQrFind(button) {
     box.addEventListener('keydown', (e) => {
         const list = [...rows.querySelectorAll('button[data-i]')];
         const at = list.indexOf(document.activeElement);
-        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeQrFind(); anchor?.focus?.(); return; }
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); const back = anchor; closeQrFind(); if(back?.isConnected)back.focus({preventScroll:true}); return; }
         if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
             e.preventDefault();
             const next = e.key === 'ArrowDown' ? Math.min(list.length - 1, at + 1) : Math.max(-1, at - 1);

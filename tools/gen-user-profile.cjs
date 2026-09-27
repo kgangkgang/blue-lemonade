@@ -12,7 +12,7 @@ const decor = fs.readFileSync(path.join(css, '41-decor.css'), 'utf8');
 const binding = decor.match(/\.bl-art-frame\[data-bl-frame="profile"\] \{[\s\S]*?\}/)[0];
 generated += '\n' + map(binding).replace('data-bl-frame="profile"', 'data-bl-frame="userProfile"');
 for (const match of decor.matchAll(/body\.salty\.salty-profile[^{}]+\{[^{}]*\}/g)) generated += '\n' + map(match[0]);
-const user = 'body.salty.salty-user-profile-mode-small #chat .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes)';
+const user = 'body.salty.salty-user-profile-mode-small #chat .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone)';
 generated += `
 ${user} { display: grid !important; grid-template-columns: 34px 12px auto auto auto minmax(0, 1fr) !important; grid-template-rows: auto auto !important; }
 ${user} > .mesAvatarWrapper { display: contents !important; }

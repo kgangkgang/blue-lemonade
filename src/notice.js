@@ -76,6 +76,7 @@ async function noticeHtml() {
  */
 export async function openNotice(onSeen) {
     await loadVersion();
+    const html = await noticeHtml();
     const s = getSettings();
     if (version && s.noticeSeen !== version) {
         s.noticeSeen = version;
@@ -84,7 +85,7 @@ export async function openNotice(onSeen) {
     onSeen?.();
     const ctx = SillyTavern.getContext();
     const wrap = document.createElement('div');
-    wrap.innerHTML = await noticeHtml();
+    wrap.innerHTML = html;
     wrap.addEventListener('click', (event) => {
         const toggle = event.target.closest('.salty-notice-toggle');
         if (!toggle) return;

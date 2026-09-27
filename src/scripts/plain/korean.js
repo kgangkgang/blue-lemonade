@@ -19,6 +19,7 @@ export default function blueLemonadeScript(BlueLemonade) {
   // Everything outside the chat column plus the input bar. Drawers, popups, menus and toasts are <body> children.
   const SCOPE = 'body > :not(#sheld, script, style, link, template), #form_sheld';
   const SKIP = [
+    '.bl-capture-stage', '.bl-sticky', '.bl-notes-dialog', '#bl-notes-bar', '.bl-qrf-layer', '.bwr_quickban',
     'script', 'style', 'pre', 'code', 'svg', '[contenteditable="true"]', '.monaco-editor', '.cm-editor',
     '#chat', '#completion_prompt_manager_list', '.completion_prompt_manager_prompt',
     '#rm_print_characters_block', '.character_select', '.group_select', '.group_member', '#rm_button_selected_ch',
@@ -526,7 +527,7 @@ export default function blueLemonadeScript(BlueLemonade) {
     for(const pop of doc.querySelectorAll('.TH-popup'))watchHelper(pop);
   }
 
-  host[INSTANCE_KEY] = { version: '1.4.3', cleanup };
+  host[INSTANCE_KEY] = { version: '1.4.4', cleanup };
   window.addEventListener('pagehide', cleanup, { once: true });
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', init, { once: true });
   else init();

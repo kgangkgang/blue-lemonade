@@ -1,8 +1,8 @@
 // A render-only snapshot: never replace the persisted settings object.
 let preview = null, owner = null;
-const keys = ['palette','gradients','nightTint','lightTint','colorOverrides','customName','fonts','type','dialogue','ui','code','em','strong','shadow','outline','profile','userProfile','image','chat'];
+const keys = ['palette','gradients','nightTint','lightTint','colorOverrides','customName','fonts','type','dialogue','ui','code','em','strong','shadow','outline','strike','profile','userProfile','image','chat'];
 export function appearanceSnapshot(settings) {
-    return Object.fromEntries(keys.map(k => [k, structuredClone(settings[k])]));
+    return {...Object.fromEntries(keys.map(k => [k, structuredClone(settings[k])])), deus: {ink:structuredClone(settings.deus?.ink),fx:structuredClone(settings.deus?.fx)}};
 }
 export function beginComparison(token, snapshot) { owner = token; preview = snapshot; }
 export function endComparison(token) {
@@ -10,7 +10,7 @@ export function endComparison(token) {
     preview = null; owner = null; return true;
 }
 export function comparisonView(settings) {
-    return preview ? {...settings, ...structuredClone(preview)} : settings;
+    return preview ? {...settings, ...structuredClone(preview), deus:{...settings.deus,...structuredClone(preview.deus || {})}} : settings;
 }
 export function bindComparison(root, settings, apply) {
     let baseline = appearanceSnapshot(settings);

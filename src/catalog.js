@@ -19,12 +19,12 @@ export const CATALOG = [
     { id: 'kopubdotum', label: 'KoPub 돋움', family: 'KoPubWorldDotum', group: 'sans', lang: 'ko', files: [{ url: 'https://cdn.jsdelivr.net/gh/projectnoonnu/2507-1@1.0/KoPubWorldDotumLight.woff2', weight: 400 }, { url: 'https://cdn.jsdelivr.net/gh/projectnoonnu/2507-1@1.0/KoPubWorldDotumBold.woff2', weight: 700 }], size: 1680 },
     { id: 'system', label: '기기 기본 글꼴', family: 'system-ui', group: 'sans', lang: 'ko' },
     { id: 'maruburi', label: '마루 부리', family: 'MaruBuri', group: 'serif', lang: 'ko', css: 'https://hangeul.pstatic.net/hangeul_static/css/maru-buri.css', size: 424 },
-    { id: 'ridibatang', label: '리디바탕', family: 'RIDIBatang', group: 'serif', lang: 'ko', files: [{ url: 'https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.0/RIDIBatang.woff', weight: 400 }], size: 708 },
+    { id: 'ridibatang', single: true, label: '리디바탕', family: 'RIDIBatang', group: 'serif', lang: 'ko', files: [{ url: 'https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.0/RIDIBatang.woff', weight: 400 }], size: 708 },
     { id: 'kopubbatang', label: 'KoPub 바탕', family: 'KoPubBatang', group: 'serif', lang: 'ko', files: [{ url: 'https://cdn.jsdelivr.net/gh/projectnoonnu/2507-1@1.0/KoPubBatangMedium.woff2', weight: 400 }, { url: 'https://cdn.jsdelivr.net/gh/projectnoonnu/2507-1@1.0/KoPubBatangBold.woff2', weight: 700 }], size: 1800 },
     { id: 'eulyoo1945', label: '을유1945', family: 'Eulyoo1945', group: 'serif', lang: 'ko', files: [{ url: 'https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2102-01@1.0/Eulyoo1945-Regular.woff', weight: 400 }, { url: 'https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2102-01@1.0/Eulyoo1945-SemiBold.woff', weight: 700 }], size: 1580 },
-    { id: 'cafe24ssurround', label: '카페24 써라운드', family: 'Cafe24Ssurround', group: 'display', lang: 'ko', files: [{ url: 'https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2105_2@1.0/Cafe24Ssurround.woff', weight: 400 }], size: 398 },
-    { id: 'ownglyph-parkdahyun', label: '온글잎 박다현체', family: 'Ownglyph_ParkDaHyun', group: 'display', lang: 'ko', files: [{ url: 'https://cdn.jsdelivr.net/gh/projectnoonnu/2411-3@1.0/Ownglyph_ParkDaHyun.woff2', weight: 400 }], size: 964 },
-    { id: 'ownglyph-meetme', label: '온글잎 밑미', family: 'Ownglyph_meetme-Rg', group: 'display', lang: 'ko', files: [{ url: 'https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2402_1@1.0/Ownglyph_meetme-Rg.woff2', weight: 400 }], size: 739 },
+    { id: 'cafe24ssurround', single: true, label: '카페24 써라운드', family: 'Cafe24Ssurround', group: 'display', lang: 'ko', files: [{ url: 'https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2105_2@1.0/Cafe24Ssurround.woff', weight: 400 }], size: 398 },
+    { id: 'ownglyph-parkdahyun', single: true, label: '온글잎 박다현체', family: 'Ownglyph_ParkDaHyun', group: 'display', lang: 'ko', files: [{ url: 'https://cdn.jsdelivr.net/gh/projectnoonnu/2411-3@1.0/Ownglyph_ParkDaHyun.woff2', weight: 400 }], size: 964 },
+    { id: 'ownglyph-meetme', single: true, label: '온글잎 밑미', family: 'Ownglyph_meetme-Rg', group: 'display', lang: 'ko', files: [{ url: 'https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2402_1@1.0/Ownglyph_meetme-Rg.woff2', weight: 400 }], size: 739 },
     // ── 도트(비트맵) 글꼴: 코드 글자에 쓰라고 넣음. 라틴 글자가 반칸 고정폭이라 영어 칸에도 보임(latin)
     // 라이선스: 둥근모꼴+ Fixedsys 는 퍼블릭 도메인(원본 둥근모꼴 = 김중태, 1990년대 DOS 비트맵 글꼴), Neo둥근모·갈무리는 OFL 1.1 — 셋 다 마음껏 씀
     { id: 'dunggeunmo', label: '둥근모꼴', family: 'DungGeunMo', group: 'mono', lang: 'ko', latin: true, files: [{ url: 'https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff', weight: 400 }], size: 1615, single: true }, // woff 뿐이라 무거움
@@ -894,7 +894,7 @@ export const CATALOG = [
     { id: 'advent-pro', label: 'Advent Pro', family: "'Advent Pro'", group: 'sans', lang: 'en', google: 'Advent+Pro:wght@100..900' },
     { id: 'libre-caslon-text', label: 'Libre Caslon Text', family: "'Libre Caslon Text'", group: 'serif', lang: 'en', google: 'Libre+Caslon+Text:wght@400;700' },
     { id: 'special-elite', label: 'Special Elite', family: "'Special Elite'", group: 'display', lang: 'en', google: 'Special+Elite', single: true },
-    { id: 'noto-sans-mono', label: 'Noto Sans Mono', family: "'Noto Sans Mono'", group: 'sans', lang: 'en', google: 'Noto+Sans+Mono:wght@100..900' },
+    { id: 'noto-sans-mono', label: 'Noto Sans Mono', family: "'Noto Sans Mono'", group: 'mono', lang: 'en', google: 'Noto+Sans+Mono:wght@100..900' },
     { id: 'cantarell', label: 'Cantarell', family: "'Cantarell'", group: 'sans', lang: 'en', google: 'Cantarell:wght@400;700' },
     { id: 'pt-mono', label: 'PT Mono', family: "'PT Mono'", group: 'mono', lang: 'en', google: 'PT+Mono', single: true },
     { id: 'noticia-text', label: 'Noticia Text', family: "'Noticia Text'", group: 'serif', lang: 'en', google: 'Noticia+Text:wght@400;700' },

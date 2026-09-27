@@ -137,10 +137,7 @@ export const BATCH_HEADER = '[Translate every numbered passage below using the t
 export function batchPayload(bodies) {
     return BATCH_HEADER + bodies.map((text, id) => `⟦${id}⟧ ${text}`).join('\n\n');
 }
-export function batchPayloadLegacy(bodies) {
-    return '[Translate every numbered passage below using the translation instructions above. Each passage starts with a marker like ⟦3⟧. Keep every marker exactly as it is at the start of its translated passage, translate the passage after it completely, keep markup and placeholders, and do not merge, split, reorder, add or drop passages.]\n\n' +
-        bodies.map((text, id) => `⟦${id}⟧ ${text}`).join('\n\n');
-}
+
 // 5.3.4: 답에 덧붙은 머리말 · 꼬리 메모. 원문 문단에는 빈 줄이 없으니(segmentParagraphs) 빈 줄 뒤에 따로 붙은 "Note: …" 는 번역이 아니다.
 const NOTE_OPEN = String.raw`^[\s>*_(\[（【]*`;
 const NOTE_BLOCK = new RegExp(`${NOTE_OPEN}(?:(?:translator'?s?|translation|tl)\\s*notes?|notes?|n\\.b\\.|번역\\s*(?:메모|노트|참고|주석)|역주|참고|주석|訳注|注|備考)\\s*[)\\]】）*_]*\\s*[:：]|${NOTE_OPEN}※`, 'i');

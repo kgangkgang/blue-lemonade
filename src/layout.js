@@ -191,6 +191,7 @@ export function startCompactLayout() {
     // Delegate to the native expander so chaining and menu execution stay in Quick Reply.
     document.addEventListener('click', event => {
         if (!document.body.classList.contains('salty')) return;
+        if (event.ctrlKey) return;
         const button = event.target.closest?.('#qr--bar .qr--button.qr--hasCtx, #qr--popout .qr--button.qr--hasCtx');
         if (!button || event.target.closest('.qr--button-expander')) return;
         const expander = button.querySelector('.qr--button-expander');

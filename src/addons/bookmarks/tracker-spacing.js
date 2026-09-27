@@ -21,7 +21,8 @@ function trimLeading(container) {
     return false;
 }
 export function normalizeTrackerSpacing(root) {
-    for (const tracker of root.querySelectorAll(TRACKERS)) {
+    const trackers = root.getElementsByClassName ? [...root.getElementsByClassName('custom-dem-track'), ...root.getElementsByClassName('custom-dem-track-recovery')] : root.querySelectorAll(TRACKERS);
+    for (const tracker of trackers) {
         const boundary = tracker.closest('.mes_text') || root;
         let cursor = tracker;
         while (cursor && cursor !== boundary) {

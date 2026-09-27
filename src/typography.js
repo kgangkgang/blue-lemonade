@@ -25,16 +25,17 @@ function nearBreaks(img,dir,limit,out){
 export function markAssetBreaks(root){
     if(!root?.querySelectorAll)return false;
     const want=new Set(),spots=new Set();
-    for(const img of root.querySelectorAll(`.mes_text :is(${ASSET_IMG})`)){
+    for(const img of root.getElementsByTagName?.('img') || root.querySelectorAll('img')){
+        if(!img.matches(ASSET_IMG)||!img.closest('.mes_text'))continue;
         const next=nearBreaks(img,'nextSibling',3,want);nearBreaks(img,'previousSibling',2,want);
         // 문단 안(들여쓰기가 걸리는 곳)에서 그림 뒤에 글이 이어질 때만. 카드 · 트래커 안은 들여쓰기가 없다
         if(next&&img.parentElement?.nodeName==='P'&&(next.nodeType===3||(next.nodeType===1&&!NOT_INLINE.test(next.nodeName)&&!next.matches(ASSET_IMG)))
             &&!img.closest('details[class*="custom-dem-card"],.custom-dem-track,.custom-dem-track-recovery'))spots.add(next);
     }
     let changed=false;
-    for(const br of root.querySelectorAll(`br.${IMG_BR}`))if(!want.has(br))br.classList.remove(IMG_BR);
+    for(const br of [...(root.getElementsByClassName?.(IMG_BR) || root.querySelectorAll(`br.${IMG_BR}`))])if(!want.has(br))br.classList.remove(IMG_BR);
     for(const br of want)if(!br.classList.contains(IMG_BR))br.classList.add(IMG_BR);
-    for(const pad of root.querySelectorAll(`.${IMG_INDENT}`))if(!spots.has(pad.nextSibling)){pad.remove();changed=true;}
+    for(const pad of [...(root.getElementsByClassName?.(IMG_INDENT) || root.querySelectorAll(`.${IMG_INDENT}`))])if(!spots.has(pad.nextSibling)){pad.remove();changed=true;}
     for(let spot of spots)if(!spot.previousSibling?.classList?.contains(IMG_INDENT)){
         // 5.3.7: 글 마디가 줄바꿈 · 빈칸으로 시작하면("\n나이트…") 칸 뒤의 그 빈칸이 띄어쓰기 한 칸으로 그려져 들여쓰기가 1em+빈칸(16px → 20px)이었다.
         // 접히는 빈칸만 떼어 칸 앞(줄 머리 — 그려지지 않는다)에 두고, 글자 바로 앞에 칸을 끼운다. 글자는 그대로 (마디만 둘로)
@@ -62,7 +63,7 @@ export function typesetRoot(root) {
     wrapSpanningQuotes(root); // 5.2.2 줄을 넘는 따옴표 대사 — 실리태번은 한 줄 안에서만 <q> 로 감싼다
     const marks=new Set();
     for(const q of root.querySelectorAll('.mes_text q, .salty-sample q')) {
-        if(q.closest('pre,code,details[class*="custom-dem-card"],.custom-dem-track'))continue;
+        if(q.closest('pre,code,details[class*="custom-dem-card"],.custom-dem-track,.custom-dem-track-recovery'))continue;
         let host=q,mark=null,previous=blankBefore(q);
         const up=isSpanPiece(q)?PIECE_HOST:HOST;
         // 감싸개 맨 앞에 든 대사는 그 칸 앞을 본다 (칸이 없을 때와 같은 줄 표시)
@@ -110,7 +111,7 @@ export function syncTypography(on) {
     const chat=document.getElementById('chat');if(!chat)return;
     // 4.7.8: 답이 오는 동안(body[data-generating]) 그 메시지는 걸음마다 다시 그려지므로 조판해 봐야 다음 걸음에 사라진다 —
     // 생성 중에는 표시줄 뒤 빈 줄만 정리하고, 나머지 조판은 답이 끝나면 한 번에 처리한다.
-    const flush=()=>{timer=0;if(document.body.dataset.generating==='true'){for(const root of dirty)if(root?.isConnected){normalizeTrackerSpacing(root);restoreDialogueTildes(root);}timer=setTimeout(flush,400);return;}for(const root of dirty)if(root?.isConnected)typesetRoot(root);dirty.clear();};
+    const flush=()=>{timer=0;if(document.body.dataset.generating==='true'){for(const root of dirty)if(root?.isConnected){normalizeTrackerSpacing(root);restoreDialogueTildes(root);}timer=setTimeout(flush,400);return;}for(const root of dirty)if(root?.isConnected)typesetRoot(root);dirty.clear();observer?.takeRecords();};
     observer=new MutationObserver(records=>{
         const generating=document.body.dataset.generating==='true',now=new Set(),touched=new Set();
         for(const record of records){

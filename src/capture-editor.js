@@ -1,3 +1,4 @@
+import { showThemeModal } from './modal.js';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 // 그림만 든 문단(에셋 등)은 글이 없어 편집 창에서 빈칸으로만 보였다 → 작은 그림과 파일 이름을 같이 보여 준다 (표시용 — 캡처에는 원래 그림이 그대로 들어간다)
 function mediaOf(node){
@@ -52,6 +53,6 @@ export function editCaptureDraft(ids,current){
    else if(button.dataset.editMove&&index>=0){const to=index+Number(button.dataset.editMove);if(to>=0&&to<blocks.length)[blocks[index],blocks[to]]=[blocks[to],blocks[index]];}
    render();
   };
-  let result=null;dialog.querySelector('[data-edit-apply]').onclick=()=>{result={draft};dialog.close();};dialog.querySelector('[data-edit-reset]').onclick=()=>{result={draft:null};dialog.close();};dialog.querySelector('[data-edit-cancel]').onclick=()=>dialog.close();dialog.addEventListener('close',()=>{dialog.remove();resolve(result);},{once:true});render();document.body.append(dialog);dialog.showModal();
+  let result=null;dialog.querySelector('[data-edit-apply]').onclick=()=>{result={draft};dialog.close();};dialog.querySelector('[data-edit-reset]').onclick=()=>{result={draft:null};dialog.close();};dialog.querySelector('[data-edit-cancel]').onclick=()=>dialog.close();dialog.addEventListener('close',()=>{dialog.remove();resolve(result);},{once:true});render();document.body.append(dialog);showThemeModal(dialog);
  });
 }

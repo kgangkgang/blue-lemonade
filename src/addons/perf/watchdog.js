@@ -145,7 +145,7 @@ export function watchResponse(response, { idleMs, firstMs = 0, firstWaited = 0, 
         if(typeof value==='string')return value.length>0;
         if(Array.isArray(value))return value.some(meaningful);
         if(!value||typeof value!=='object')return false;
-        return Object.entries(value).some(([key,v])=>['content','text','reasoning','reasoning_content','thinking','token','completion','tool_calls','function_call','arguments','delta','choices','reasoning_details'].includes(key)&&meaningful(v));
+        return Object.entries(value).some(([key,v])=>['content','text','reasoning','reasoning_content','thinking','token','completion','tool_calls','function_call','arguments','delta','choices','reasoning_details','candidates','parts','message'].includes(key)&&meaningful(v));
     };
     function startsOutput(chunk){
         if(!sse)return true;

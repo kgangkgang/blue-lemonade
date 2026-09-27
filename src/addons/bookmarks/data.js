@@ -296,7 +296,12 @@ export function findBookmark(record, favId) {
 }
 
 export function bookmarkAt(record, index) {
-    return record.favorites.find(fav => String(fav.messageId) === String(index)) ?? null;
+    return record.favorites.find(fav => !fav.blOrphaned && String(fav.messageId) === String(index)) ?? null;
+}
+
+/** 연결이 끊긴 북마크의 메모는 남기되 같은 번호의 새 메시지를 보여 주지 않는다. */
+export function bookmarkMessage(record, fav) {
+    return fav?.blOrphaned ? null : record.messages?.[Number(fav?.messageId)] ?? null;
 }
 
 function newBookmark(index, message) {
@@ -366,10 +371,13 @@ export async function setNote(record, favId, note) {
  * MESSAGE_UPDATED를 듣는 확장(LLM 번역기가 바뀐 원문의 번역문을 지우는 것 등)이 한 일까지 함께 저장된다.
  * 다른 채팅은 번역기가 끼어들 수 없으니, 번역기가 하듯 원문이 바뀌면 번역문을 지운다. 고치는 것은 파일의 최신본이다 (updateOtherChat).
  */
-export async function editMessageText(record, index, text) {
+export async function editMessageText(record, index, text, expected = null) {
     await loadRecord(record);
     const message = record.messages[index];
     if (!message) throw new Error('메시지를 찾을 수 없습니다.');
+    if ((record.isCurrent && currentChatKey() !== record.key) || (expected && !sameMessage(message, expected))) {
+        throw new Error(CHAT_CHANGED_MEANWHILE);
+    }
     if (!record.isCurrent) {
         await updateOtherChat(record, (fresh) => {
             const target = fresh.messages[index];
@@ -442,6 +450,8 @@ function rememberVerified(fav, message) {
 }
 
 function stillVerified(fav, messages) {
+    const index = Number(fav.messageId);
+    if (fav.blOrphaned || !Number.isInteger(index) || index < 0) return true;
     const seen = verified.get(fav.id);
     const message = messages[Number(fav.messageId)];
     return !!seen && !!message && seen.message === message && seen.anchor === fav.anchor
@@ -453,13 +463,26 @@ function stillVerified(fav, messages) {
  * 옮기거나 지웠으면 저장을 맡긴다. 새 지문만 적었으면(예전 북마크 · 스와이프 · 수정) 따로 저장하지 않고 다음 채팅 저장에 실려 간다.
  * @returns {{ moved: number, removed: number, orphaned: number }} removed = 지운 메시지의 북마크, orphaned = 이 채팅에 없는 메시지의 북마크
  */
-export function syncAnchors() {
+export function syncAnchors({ settled = false } = {}) {
     const none = { moved: 0, removed: 0, orphaned: 0 };
     const context = getContext();
     const messages = context.chat ?? [];
     const key = currentChatKey();
-    // 채팅을 비우고 다음 채팅을 불러오는 사이(메시지 0개)에는 건드리지 않는다.
-    if (!key || !messages.length) return none;
+    if (!key) return none;
+    // 전환 중의 빈 배열은 건드리지 않는다. CHAT_CHANGED/삭제 완료가 알려 준 실제 빈 채팅만
+    // 예전 북마크의 연결을 끊는다 — 첫 메시지가 생겨도 #0 메모가 그 메시지로 옮겨 붙지 않게.
+    if (!messages.length) {
+        const favorites = context.chatMetadata?.favorites;
+        let detached = false;
+        if (settled && Array.isArray(favorites)) for (const fav of favorites) {
+            const index = Number(fav?.messageId);
+            if (!fav || fav.anchor || fav.blOrphaned || !Number.isInteger(index) || index < 0) continue;
+            fav.blOrphaned = true;
+            detached = true;
+        }
+        if (detached) saveCurrentMetadataSoon();
+        return none;
+    }
     const metadata = context.chatMetadata ?? null;
     const favorites = Array.isArray(metadata?.favorites) ? metadata.favorites : null;
 
@@ -478,9 +501,10 @@ export function syncAnchors() {
     // (anchors.js 는 빈 칸을 건너뛰도록 돼 있다).
     if (favorites.every(fav => fav && stillVerified(fav, messages))) return none;
 
+    const detachedBefore = favorites.filter(fav => fav.blOrphaned).length;
     const result = resolveAnchors(messages, favorites, { hash: textHash, removeMissing: shrunk, preferBackward: shrunk });
     for (const fav of result.removed) verified.delete(fav.id);
     for (const fav of favorites) rememberVerified(fav, messages[Number(fav.messageId)]);
-    if (result.moved || result.removed.length) saveCurrentMetadataSoon();
+    if (result.moved || result.removed.length || favorites.filter(fav => fav.blOrphaned).length > detachedBefore) saveCurrentMetadataSoon();
     return { moved: result.moved, removed: result.removed.length - result.orphaned, orphaned: result.orphaned };
 }

@@ -378,6 +378,11 @@ function sameAnchor(old) {
     try { return (layer?.parentElement || document).querySelector(selector); } catch { return null; }
 }
 export function repositionColorPick() { onResize(); }
+export function colorPickAnchorIn(node) {
+    if (!session) return false;
+    const anchor = session.anchor?.isConnected ? session.anchor : session.anchor && sameAnchor(session.anchor);
+    return !anchor || (node instanceof Node && node.contains(anchor));
+}
 function onResize() {
     if (!layer || !session) return;
     replace(layer.firstElementChild);

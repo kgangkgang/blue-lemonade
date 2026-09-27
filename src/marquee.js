@@ -27,8 +27,7 @@ body.salty #completion_prompt_manager #completion_prompt_manager_list .completio
   text-overflow: clip;
 }
 @media (prefers-reduced-motion: reduce) {
-  body.salty .regex-script-label > .regex_script_name.${CLASS},
-  body.salty #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt_name > .${CLASS}.${CLASS} {
+  body.salty .regex-script-label > .regex_script_name.${CLASS} {
     white-space: normal;
   }
 }`;

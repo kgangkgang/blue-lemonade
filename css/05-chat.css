@@ -141,7 +141,7 @@ body.salty #chat .mes .ch_name {
   margin: 0 0 6px !important;
 }
 body.salty #chat .mes .ch_name > .flex1 {
-  min-width: 0;
+  min-width: min(6em, 40%);
 }
 body.salty #chat .mes .ch_name .alignItemsBaseline {
   align-items: baseline !important;
@@ -238,6 +238,7 @@ html body.salty #chat .mes > .mes_block {
 }
 html body.salty #chat .mes > .mes_block > .ch_name {
   max-width: 100% !important;
+  flex-wrap: wrap;
 }
 html body.salty #chat .mes .ch_name > .mes_buttons {
   flex-wrap: wrap !important;

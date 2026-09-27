@@ -60,6 +60,8 @@ export async function prepareMotion(ids, progress, options, signal) {
         };
         draw(0,0,0);
         try{ctx.getImageData(0,0,1,1);}catch{throw Error('배경 영상의 외부 접근 제한 때문에 저장할 수 없어요. 배경 포함을 끄거나 같은 서버의 영상을 사용해 주세요.');}
-        return {canvas,ctx,layout,draw,close,result:{...still,moving:!!moving,width:layout.width,height:layout.height,duration:layout.duration,scrolling:layout.travel>0,weather:!!weather,background:backgrounds.length>0}};
+        // Background images may be animated GIF/WebP too. Only exports with no
+        // live background can safely render the synthetic weather/text clock faster.
+        return {canvas,ctx,layout,draw,close,realtime:backgrounds.length>0,result:{...still,moving:!!moving,width:layout.width,height:layout.height,duration:layout.duration,scrolling:layout.travel>0,weather:!!weather,background:backgrounds.length>0}};
     }catch(error){close();throw error;}
 }

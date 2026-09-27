@@ -2,18 +2,23 @@
 // 설정 창을 열지 않고도 "이 말 그만"을 그 자리에서 — 규칙 이름 · 낱말은 고른 글 그대로, 설명은 core 가 프롬프트에 쓸 한 줄.
 // 선택은 브라우저에 맡긴다(폰은 길게 누르면 낱말이 골라진다): 우리는 selectionchange 만 듣고, 칩은 선택 아래에 둔다(안드로이드 선택 메뉴는 위에 뜬다).
 const MAX = 40;
-let chip = null, timer = 0, current = '', onAdd = null, enabled = true, bound = false;
+let chip = null, timer = 0, current = '', onAdd = null, enabled = true, bound = false, canSelect = () => true;
 
 function selectedText() {
+    if (document.body.classList.contains('cg-previewing')) return null;
     const selection = document.getSelection();
     if (!selection || selection.isCollapsed || selection.rangeCount !== 1) return null;
     const range = selection.getRangeAt(0);
     const inside = node => (node?.nodeType === 1 ? node : node?.parentElement)?.closest?.('#chat .mes_text');
-    if (!inside(range.startContainer) || !inside(range.endContainer)) return null;
+    const container = inside(range.startContainer);
+    if (!container || container !== inside(range.endContainer)) return null;
+    const translated = node => (node?.nodeType === 1 ? node : node?.parentElement)?.closest?.('.translated_text');
+    if (translated(range.startContainer) || translated(range.endContainer)) return null;
     // 앞뒤 따옴표 · 괄호 · 문장부호는 낱말이 아니다 (폰이 길게 눌러 고른 낱말에는 따옴표가 딸려 온다)
     const EDGE = /^[\s"'“”‘’「」『』()\[\]{}<>,.!?…:;~*_-]+|[\s"'“”‘’「」『』()\[\]{}<>,.!?…:;~*_-]+$/g;
     const text = selection.toString().replace(/\s+/g, ' ').trim().replace(EDGE, '');
     if (!text || text.length > MAX || /\n/.test(selection.toString().trim())) return null;
+    if (!canSelect(container, text)) return null;
     return { text, rect: range.getBoundingClientRect() };
 }
 
@@ -60,8 +65,9 @@ function check() {
 }
 
 /** 켠다. add(text) 는 규칙을 만들고 참/거짓(이미 있음)을 돌려준다. */
-export function startQuickBan(add) {
+export function startQuickBan(add, allowSelection = () => true) {
     onAdd = add;
+    canSelect = allowSelection;
     if (bound) return;
     bound = true;
     document.addEventListener('selectionchange', () => { clearTimeout(timer); if (enabled) timer = setTimeout(check, 250); });

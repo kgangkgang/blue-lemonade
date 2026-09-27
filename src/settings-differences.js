@@ -1,6 +1,7 @@
 import { DEFAULTS } from './settings.js';
 import { PALETTES, paletteColors } from './palettes.js';
 import { presetColors } from './frame-presets.js';
+import { GRADIENT_KEYS } from './gradients.js';
 const read = (obj, path) => path.split('.').reduce((v, k) => v != null && Object.hasOwn(v,k) ? v[k] : undefined, obj);
 const equal = (a, b) => a === b || (!!a && !!b && typeof a === 'object' && typeof b === 'object' && Object.keys(a).length === Object.keys(b).length && Object.keys(a).every(k => equal(a[k], b[k])));
 const omitted = new Set(['appearanceHistory','version','noticeSeen','frameLibrary','customFonts','styles','charStyles','activeStyle','baseStyle','weatherImages','customPalettes','activeCustomPalette','wordTools']);
@@ -8,7 +9,10 @@ const omittedPaths = new Set(['deviceLayouts.pc','deviceLayouts.mobile','image.m
 const safe = path => typeof path === 'string' && !path.split('.').some(k => ['__proto__','constructor','prototype'].includes(k));
 export function settingDefault(settings, path) {
     if (!safe(path) || omitted.has(path.split('.')[0]) || omittedPaths.has(path)) return { allowed: false };
-    if (path === 'gradients.overrides' || path.startsWith('gradients.overrides.')) return {allowed:true,value:path==='gradients.overrides'?{}:undefined};
+    if (path === 'gradients.overrides' || path.startsWith('gradients.overrides.')) {
+        const [, , palette, token, extra] = path.split('.');
+        return {allowed: !extra && !!PALETTES[palette] && GRADIENT_KEYS.includes(token), value:undefined};
+    }
     if (path.startsWith('colorOverrides.')) {
         const [, palette, token, extra] = path.split('.');
         return { allowed: !extra && !!PALETTES[palette] && Object.hasOwn(PALETTES[palette], token), value: undefined };
@@ -25,6 +29,7 @@ export function settingChanged(settings, path) {
     return def.allowed && !equal(read(settings, path), def.value);
 }
 export function resetSetting(settings, path) {
+    if (path === 'usageMode') return false; // The dedicated control saves durably before reloading.
     const def = settingDefault(settings, path);
     if (!def.allowed) return false;
     const keys = path.split('.'), key = keys.pop(); let target = settings;
@@ -40,7 +45,14 @@ export function changedSettings(settings) {
     function visit(defaults, value, path) {
         if (omitted.has(path.split('.')[0]) || omittedPaths.has(path)) return;
         // Uploaded frame artwork and its mask are an atomic pair; saved copies remain untouched.
-        if (path === 'gradients.overrides' || path.endsWith('.decor') || path === 'image.mask' || !defaults || typeof defaults !== 'object' || Array.isArray(defaults)) {
+        if (path === 'gradients.overrides') {
+            for (const [palette, tokens] of Object.entries(value || {})) for (const [token, gradient] of Object.entries(tokens || {})) {
+                const itemPath = `${path}.${palette}.${token}`;
+                if (settingDefault(settings,itemPath).allowed) result.push({path:itemPath,before:undefined,value:gradient});
+            }
+            return;
+        }
+        if (path.endsWith('.decor') || path === 'image.mask' || !defaults || typeof defaults !== 'object' || Array.isArray(defaults)) {
             if (!equal(defaults, value)) result.push({ path, before: defaults, value });
             return;
         }
@@ -57,7 +69,7 @@ export function settingRoute(path) {
     const [scope, key] = path.split('.');
     if (scope === 'addons') return {tab:'extensions',sub:['modelorder','modelswitch'].includes(key) ? 'models' : ['regexlink','conflicts'].includes(key) ? 'perf' : key}; // 모델 순서는 모델 등록으로 합쳐짐
     if (scope === 'captureTools') return {tab:'extensions',sub:'capture'};
-    if (scope === 'addonUI') return {tab:'extensions',sub:/^modelswitch/.test(key) ? 'models' : /^perf/.test(key) ? 'perf' : /^words/.test(key) ? 'words' : /^capture/.test(key) ? 'capture' : 'order'};
+    if (scope === 'addonUI') return {tab:'extensions',sub:/^modelswitch/.test(key) ? 'models' : /^perf/.test(key) ? 'perf' : /^words/.test(key) ? 'words' : /^capture/.test(key) ? 'capture' : /^translator/.test(key) ? 'translator' : /^notes/.test(key) ? 'notes' : 'order'};
     if (scope === 'gradients') return {tab:'theme',sub:key!=='overrides'?'palette':'colors'};
     if (scope === 'colorOverrides') return { tab:'theme', sub:'colors' };
     if (['palette','lightTint','nightTint','auto','enabled','customName'].includes(scope)) return {tab:'theme',sub:'palette'};
@@ -65,7 +77,8 @@ export function settingRoute(path) {
     if (path === 'userProfile.metaSide') return {tab:'chat',sub:'user-profile'}; // 번호 · 시간 줄 위치는 작은 사진 옆이라 내 프로필에
     if (scope === 'profile' || scope === 'userProfile') return {tab:'chat',sub:/^(name|header|meta|button)/.test(key) ? scope === 'profile' ? 'name' : 'user-name' : scope === 'profile' ? 'profile' : 'user-profile'};
     if (scope === 'type') return {tab:'text',sub:({dialogueSize:'dialogue',uiSize:'ui',codeSize:'code',para:'para',gutter:'para',measure:'para',indent:'para',align:'para'})[key] || 'text'};
-    if (['dialogue','em','strong','ui','code'].includes(scope)) return {tab:'text',sub:scope};
+    if (['dialogue','em','strong','ui','code','strike'].includes(scope)) return {tab:'text',sub:scope};
+    if (scope === 'usageMode') return {tab:'theme',sub:'etc'};
     if (['shadow','outline'].includes(scope)) return {tab:'text',sub:'shadow'};
     if (scope === 'image') return {tab:'image',sub:key.startsWith('edge') || key === 'decor' ? 'frame' : /^(fit|maxh|height)$/.test(key) ? 'size' : /^(fade|blendWhite)/.test(key) ? 'fade' : key === 'layout' ? 'layout' : 'shape'};
     // 카드 · 색 통일 · 톤 값은 데우스 화면에 있다 (채팅 › 기타에는 커스텀 CSS 끄기만)

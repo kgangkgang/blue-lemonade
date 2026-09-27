@@ -10,7 +10,7 @@ export function syncPerfMenu(){
         if(button)continue;
         button=document.createElement('div');button.id=id;button.className='list-group-item flex-container flexGap5 interactable';button.tabIndex=0;button.setAttribute('role','button');
         button.innerHTML=`<div class="fa-solid ${tab.icon} extensionsMenuExtensionButton"></div><span>${tab.title}</span>`;
-        button.onclick=()=>openHub(tab.id);button.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openHub(tab.id);}};container.append(button);
+        button.onclick=()=>openHub(tab.id);button.onkeydown=event=>{if(event.key===' '){event.preventDefault();openHub(tab.id);}};container.append(button);
     }
     document.body.classList.toggle('bl-hide-perf-timer',!cfg.timer);
     document.body.classList.toggle('bl-hide-perf-log',!cfg.log);

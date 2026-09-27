@@ -1,3 +1,4 @@
+import { showThemeModal } from '../../modal.js';
 // Copyright (c) 2025 IceFog72. MIT License: see LICENSE.
 // Modified 2026-09-24 by Blue Lemonade: embedded dialog, Korean UI, settings preservation.
 // Import statements
@@ -321,7 +322,6 @@ class CustomThemeSettingsManager {
      * that might not bubble correctly for delegation in all contexts.
      */
     bindColorPickers() {
-        const pickers = document.querySelectorAll(`${CTS_CONTENT_ID} toolcool-color-picker`); // Use specific selector if possible, or query inside container
         const container = document.getElementById(CTS_CONTENT_ID);
         if (!container) return;
 
@@ -347,7 +347,7 @@ class CustomThemeSettingsManager {
      * Event Handler: Clicks (Buttons)
      */
     handleDelegatedClick(event) {
-        const target = event.target.closest('.interactable, .ctsi-inline-drawer-maximize');
+        const target = event.target.closest('.interactable');
         if (!target) return;
 
         if (target.id === 'ctsi-copy-to-clipboard') {
@@ -358,56 +358,25 @@ class CustomThemeSettingsManager {
             this.resetDefaults();
         } else if (target.id === 'insert-default-css') { // ID for the empty state button
             this.insertDefaultCSS();
-        } else if (target.classList.contains('ctsi-inline-drawer-maximize')) {
-            this.toggleMaximize(target);
         }
     }
 
-    toggleMaximize(btn) {
-        const icon = btn.querySelector('i');
-        const drawer = document.getElementById(CTS_DRAWER_ID);
-        const movingDivs = document.getElementById('movingDivs');
-        const originalParent = document.querySelector('[name="FontBlurChatWidthBlock"]'); // Fallback anchor
-
-        if (!drawer || !movingDivs) return;
-
-        if (icon.classList.contains('fa-window-maximize')) {
-            // Maximize
-            icon.classList.replace('fa-window-maximize', 'fa-window-restore');
-            // Store original parent if needed, but we know where it goes
-            drawer.dataset.originalParentIdx = Array.from(drawer.parentNode.children).indexOf(drawer);
-
-            movingDivs.appendChild(drawer);
-            drawer.classList.remove('inline-drawer');
-            drawer.classList.add('ctsi-drawer-content', 'flexGap5', 'maximized');
-            drawer.style.display = 'flex';
-            drawer.style.opacity = '1';
-        } else {
-            // Restore
-            icon.classList.replace('fa-window-restore', 'fa-window-maximize');
-
-            // Try to put it back exactly where it was, or append to original container
-            // Since we inject at specific point, simple append might displace it if multiple extensions
-            // But usually safe to append to the container found by selector
-            if (originalParent) {
-                originalParent.insertAdjacentElement('beforeend', drawer); // Or try to respect index
-            }
-
-            drawer.classList.add('inline-drawer');
-            drawer.classList.remove('ctsi-drawer-content', 'flexGap5', 'maximized');
-            drawer.style.display = '';
-            drawer.style.opacity = '';
-        }
-    }
-
-    copyToClipboard() {
+    async copyToClipboard() {
         const cssContent = this.generateCSSContent();
-        navigator.clipboard.writeText(cssContent).then(() => {
-            toastr.success('CSS content copied to clipboard');
-        }).catch(err => {
-            console.error('[CTSI] Clipboard error:', err);
-            toastr.error('Failed to copy to clipboard');
-        });
+        try {
+            try { await navigator.clipboard.writeText(cssContent); }
+            catch {
+                const back = document.activeElement, area = document.createElement('textarea');
+                area.value = cssContent; area.readOnly = true;
+                area.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+                (document.querySelector('.bl-ctsi-dialog[open]') || document.body).append(area);
+                let copied = false;
+                try { area.select(); area.setSelectionRange(0, area.value.length); copied = document.execCommand('copy'); }
+                finally { area.remove(); back?.focus?.({preventScroll:true}); }
+                if (!copied) throw Error('Clipboard unavailable');
+            }
+            toastr.success('CSS를 복사했어요.');
+        } catch { toastr.error('CSS를 복사하지 못했어요.'); }
     }
 
     /**
@@ -416,7 +385,7 @@ class CustomThemeSettingsManager {
     updateCustomCSSFile() {
         const customCSSArea = document.getElementById('customCSS');
         if (!customCSSArea) {
-            toastr.error('CustomCSS element not found');
+            toastr.error('커스텀 CSS 입력칸을 찾지 못했어요.');
             return;
         }
 
@@ -470,10 +439,10 @@ class CustomThemeSettingsManager {
             customCSSArea.value = newContent;
             // Trigger input event to let other systems know (e.g., ST saving)
             customCSSArea.dispatchEvent(new Event('input', { bubbles: true }));
-            toastr.success('CustomCSS updated');
+            toastr.success('커스텀 CSS에 저장했어요.');
         } else {
             // Even if content is same, user expected an update/save confirmation
-            toastr.success('CustomCSS is already up to date');
+            toastr.success('커스텀 CSS에 이미 같은 내용이 있어요.');
         }
     }
 
@@ -545,14 +514,14 @@ class CustomThemeSettingsManager {
 
         const parsedEntries = this._parseCSSConfig(CSS_THEME_STYLE_VAR);
 
+        this.syncSettingsWithConfig(parsedEntries);
+
         if (parsedEntries.length === 0) {
             row1.innerHTML = '<p class="alert-message">이 CSS에는 조절 항목이 아직 없어요. 아래 예제 형식을 참고해 주세요.</p>';
             row2.innerHTML = '<button id="insert-default-css" class="menu_button menu_button_icon interactable flex1">예제 CSS 추가</button>';
             this.updateCSSVariables({});
             return;
         }
-
-        this.syncSettingsWithConfig(parsedEntries);
 
         parsedEntries.forEach((entry, index) => {
             const html = this.generateEntryHTML(entry, this.settings.entries[entry.varId]);
@@ -654,6 +623,6 @@ export function openPanel(){
  const dialog=document.createElement('dialog');currentDialog=dialog;dialog.className='bl-ctsi-dialog';dialog.setAttribute('aria-label','커스텀 CSS 조절');
  dialog.innerHTML='<header><b>커스텀 CSS 조절</b><button type="button" aria-label="커스텀 CSS 조절 닫기">×</button></header><p>CSS에 정의된 색·크기·텍스트 값을 입력칸으로 조절해요.</p><div class="bl-ctsi-body"></div><small>Copyright © 2025 <a href="https://github.com/IceFog72/SillyTavern-CustomThemeStyleInputs" target="_blank" rel="noopener noreferrer">IceFog72</a> · <a href="https://github.com/IceFog72/SillyTavern-CustomThemeStyleInputs/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT</a></small>';
  document.body.append(dialog);dialog.querySelector('.bl-ctsi-body').append(drawer);dialog.querySelector('header button').onclick=()=>dialog.close();
- dialog.addEventListener('close',()=>{holder.append(drawer);dialog.remove();currentDialog=null;},{once:true});dialog.showModal();
+ dialog.addEventListener('close',()=>{holder.append(drawer);dialog.remove();currentDialog=null;},{once:true});showThemeModal(dialog);
 }
 export function mountInline(host){const button=document.createElement('button');button.type='button';button.className='salty-btn';button.textContent='커스텀 CSS 조절 열기';button.onclick=openPanel;host.replaceChildren(button);return()=>host.replaceChildren();}

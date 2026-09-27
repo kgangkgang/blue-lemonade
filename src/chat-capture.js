@@ -4,6 +4,24 @@ import { applyCaptureDisplay, reflowCaptureText, capturePagePlan } from './captu
 import { createCaptureResources } from './capture-resources.js';
 import { collectAnimated, prepareAnimated } from './capture-animate.js';
 const urls = text => [...text.matchAll(/url\((?:"([^"]*)"|'([^']*)'|([^)]*))\)/g)].map(m=>({raw:m[0],url:m[1]??m[2]??m[3]}));
+const fontFamilies = value => {
+    const families=[];let part='',quote='',escaped=false;
+    for(const char of value){
+        if(escaped){part+=char;escaped=false;continue;}
+        if(char==='\\'){part+=char;escaped=true;continue;}
+        if(quote){part+=char;if(char===quote)quote='';continue;}
+        if(char==='"'||char==="'"){quote=char;part+=char;continue;}
+        if(char===','){families.push(part);part='';}else part+=char;
+    }
+    families.push(part);
+    return families.map(name=>name.trim().replace(/^(?:"(.*)"|'(.*)')$/s,(_,a,b)=>a??b).toLowerCase());
+};
+const usesFontRange = (range,codepoints) => !range || range.split(',').some(part=>{
+    const match=/^U\+([\da-f?]+)(?:-([\da-f]+))?$/i.exec(part.trim());
+    if(!match)return true; // Unknown syntax must never drop a needed face.
+    const start=parseInt(match[1].replace(/\?/g,'0'),16),end=parseInt(match[2]||match[1].replace(/\?/g,'f'),16);
+    return codepoints.some(point=>point>=start&&point<=end);
+});
 // Render only the selected, already loaded messages. Everything used by the SVG is embedded.
 const limited = (promise, ms, message) => new Promise((resolve,reject)=>{
     const timer=setTimeout(()=>reject(Error(message)),ms);
@@ -42,7 +60,7 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
     const width=Math.ceil(Math.max(...nodes.map(node=>node.getBoundingClientRect().width)));
     if(width<100)throw Error('채팅 화면을 연 뒤 다시 시도해 주세요.');
     const resources=options.resources||createCaptureResources();
-    const wrapper=document.createElement('div');wrapper.style.cssText=`width:${width}px;position:fixed;left:-20000px;top:0;overflow:hidden;`;
+    const wrapper=document.createElement('div');wrapper.className='bl-capture-stage';wrapper.style.cssText=`width:${width}px;position:fixed;left:-20000px;top:0;overflow:hidden;`;
     const background=getComputedStyle(document.documentElement).getPropertyValue('--salty-bg').trim() || getComputedStyle(document.body).backgroundColor;
     wrapper.style.background=options.videoLayer?'transparent':background;
     document.body.append(wrapper);
@@ -52,6 +70,7 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
     const timer=setTimeout(abort,25000);
     const moving=[];
     let skippedImages=0;
+    let rasterImage=null,rasterCanvas=null;
     try {
         for(const [i,node] of nodes.entries()) {
             progress(`메시지 ${i+1}/${nodes.length} 만드는 중…`);
@@ -88,13 +107,14 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
         // Embed used webfonts; inaccessible stylesheets are left to platform font fallbacks.
         progress('글꼴 담는 중…');
         let fonts='';
-        const used=[...wrapper.querySelectorAll('*')].filter(el=>el.style).map(el=>({family:el.style.fontFamily,weight:Number(el.style.fontWeight)||400,style:el.style.fontStyle||'normal'}));
+        const used=[...wrapper.querySelectorAll('*')].filter(el=>el.style).map(el=>({families:fontFamilies(el.style.fontFamily),weight:Number(el.style.fontWeight)||400,style:el.style.fontStyle||'normal'}));
+        const codepoints=[...new Set([...wrapper.textContent].map(char=>char.codePointAt(0)))];
         for(const sheet of document.styleSheets) {
             let rules;try{rules=sheet.cssRules;}catch{continue;}
             for(const rule of rules)if(rule.type===CSSRule.FONT_FACE_RULE) {
-                const family=rule.style.fontFamily.replace(/["']/g,'');
+                const family=fontFamilies(rule.style.fontFamily)[0];
                 const weights=(rule.style.fontWeight||'400').split(/\s+/).map(v=>v==='bold'?700:Number(v)||400);
-                if(!used.some(font=>font.family.includes(family)&&font.style===(rule.style.fontStyle||'normal')&&font.weight>=weights[0]&&font.weight<=weights.at(-1)))continue;
+                if(!used.some(font=>font.families.includes(family)&&font.style===(rule.style.fontStyle||'normal')&&font.weight>=weights[0]&&font.weight<=weights.at(-1))||!usesFontRange(rule.style.unicodeRange,codepoints))continue;
                 let css=rule.cssText;
                 // A font-face's URLs are alternative formats, not separate fonts.
                 for(const hit of urls(rule.style.src)) {
@@ -122,12 +142,12 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
         const exportRoot=wrapper.cloneNode(true);exportRoot.style.position='static';exportRoot.style.removeProperty('left');exportRoot.style.removeProperty('top');
         const html=new XMLSerializer().serializeToString(exportRoot);
         const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${pixelWidth}" height="${pixelHeight}" viewBox="0 ${page.top} ${width} ${height}"><foreignObject width="${width}" height="${fullHeight}"><div xmlns="http://www.w3.org/1999/xhtml"><style>${fonts.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</style>${html}</div></foreignObject></svg>`;
-        const image=new Image();
+        const image=rasterImage=new Image();
         await limited(new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(Error('이 브라우저에서 캡처를 만들지 못했어요.'));image.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);}),10000,'이미지 변환 시간이 초과됐어요. 메시지를 나누어 다시 시도해 주세요.');
         controller.signal.throwIfAborted();
-        const canvas=document.createElement('canvas');canvas.width=pixelWidth;canvas.height=pixelHeight;canvas.getContext('2d').drawImage(image,0,0);
+        const canvas=rasterCanvas=document.createElement('canvas');canvas.width=pixelWidth;canvas.height=pixelHeight;canvas.getContext('2d').drawImage(image,0,0);
         // toBlob 은 부를 때 그림을 떠 두므로 바로 큰 캔버스를 놓아도 된다 (최대 64MB — GC 를 기다리지 않는다)
-        let blob;try{blob=await limited(new Promise(resolve=>canvas.toBlob(resolve,'image/png')),8000,'PNG 저장 시간이 초과됐어요.');}finally{canvas.width=canvas.height=0;image.removeAttribute('src');}
+        let blob;try{blob=await limited(new Promise(resolve=>canvas.toBlob(resolve,'image/png')),8000,'PNG 저장 시간이 초과됐어요.');}finally{canvas.width=canvas.height=0;}
         if(!blob)throw Error('이미지 저장에 실패했어요.');
         controller.signal.throwIfAborted();
         return {blob,width:pixelWidth,height:pixelHeight,scale,weather:!!weather,pageIndex,pageCount:pages.length,animator,skippedImages,...privacy};
@@ -135,5 +155,9 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
         if(signal?.aborted)throw new DOMException("캡처를 취소했어요.","AbortError");
         if(controller.signal.aborted)throw Error('이미지 또는 글꼴 응답이 늦어요. 메시지를 나누어 다시 시도해 주세요.');
         throw error;
-    } finally {clearTimeout(timer);signal?.removeEventListener("abort",abort);controller.abort();wrapper.remove();if(!options.resources)resources.close();}
+    } finally {
+        if(rasterImage){rasterImage.onload=rasterImage.onerror=null;rasterImage.src='';}
+        if(rasterCanvas)rasterCanvas.width=rasterCanvas.height=0;
+        clearTimeout(timer);signal?.removeEventListener("abort",abort);controller.abort();wrapper.remove();if(!options.resources)resources.close();
+    }
 }

@@ -7,9 +7,10 @@
 // 장면(무지개 · 물결 …) 코드는 그 날씨를 처음 고를 때만 받는다 — 비 · 눈만 쓰면 읽지 않는다
 import { weatherAmount, wrapWeatherCoordinate as wrap } from './weather-options.js';
 import { createWeatherArt } from './weather-art.js';
+import { loadWeatherModule } from './weather-load.js';
 const SCENE_MODES = ['rainbow', 'shadow', 'breeze', 'glass', 'water'];
 let scenesModule = null, scenesLoading = null;
-const loadScenes = () => (scenesLoading ??= import('./weather-scenes.js').then(m => { scenesModule = m; return m; }));
+const loadScenes = () => (scenesLoading ??= loadWeatherModule(new URL('./weather-scenes.js', import.meta.url), ['createScene']).then(m => { scenesModule = m; return m; }).catch(error => { scenesLoading = null; throw error; }));
 
 const LEVEL = [0, 0.55, 1, 1.7];
 const DENSITY = { rain: 0.00022, snow: 0.00016, custom: 0.0001, lemon: 0.0001, petal: 0.00012, feather: 0.000045, butterfly: 0.000025, meteor: 0.00005, fog: 0.00003, sun: 0.00008, star: 0.00034, firefly: 0.00007 };
@@ -123,7 +124,7 @@ function createCore(ctx, first, shared = {}) {
             speed: 7 + depth * 15 * fog.depth, sway: 8 + depth * 14, freq: rand(.12, .3), phase: rand(0, Math.PI * 2), puffFreq: rand(.18, .4), flat: rand(.5, .72), rot: (fogTilt = rand(-.2, .2)), rot0: fogTilt, spin: rand(-.02, .02), base: .5 + Math.random() * .5 };
     }
     let motion = 'natural', swayK = 1, spinK = 1;
-    let curvature=.65, orbitSize=1, orbitDirection=-1;
+    let curvature=.65, orbitSize=1, orbitDirection=-1, capScale=1;
     let items = [];
     const rand = (a, b) => a + Math.random() * (b - a);
 
@@ -191,7 +192,7 @@ function createCore(ctx, first, shared = {}) {
         const active = DENSITY[mode] && (mode !== 'custom' || sprite);
         if (mode === 'fog') fogPaint();
         if (mode === 'sun') sunbeams();
-        const cap = mode === 'fog' ? 22 : mode === 'meteor' ? 160 : 500; // 안개: 큰 덩어리를 겹쳐 찍는 값이 커서 수를 묶는다 (예전 36)
+        const cap = (mode === 'fog' ? 22 : mode === 'meteor' ? 160 : 500) * capScale; // live caps stay unchanged; long still exports scale by viewport area
         const sortFog = () => { if (mode === 'fog') items.sort((a, b) => a.depth - b.depth); }; // 먼 덩어리부터 그린다
         items = active ? Array.from({ length: Math.min(cap, Math.round(area * DENSITY[mode] * k * (mode==='meteor'?Math.pow(1/orbitSize,1.5):1))) }, () => make(true)) : [];
         sortFog();
@@ -263,8 +264,9 @@ function createCore(ctx, first, shared = {}) {
             p.x += v * slant * dt;
             p.x += Math.sin(t * p.freq + p.phase) * p.sway * dt * swayK * (motion === 'straight' ? 0 : motion === 'flutter' ? 2 : 1);
             if (mode === 'feather') p.rot = p.rot0 + Math.sin(t * .65 * speedK + p.phase) * .7 * spinK;
-            else if (mode !== 'snow') p.rot += p.spin * dt * Math.min(2, speedK) * spinK;
+            else if (mode !== 'snow' && mode !== 'rain') p.rot += p.spin * dt * Math.min(2, speedK) * spinK;
             if (mode === 'rain') {
+                p.rot = motion === 'straight' ? 0 : Math.sin(t * p.freq + p.phase) * .06 * spinK;
                 // Side exits must enter the opposite side at the same height.
                 // Sending them back to the top leaves a dry triangle downwind.
                 p.x = wrap(p.x, W, margin + 60);
@@ -280,7 +282,7 @@ function createCore(ctx, first, shared = {}) {
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         if (first) ctx.clearRect(0, 0, W, H); // 겹친 둘째 효과는 지우지 않고 위에 그린다
         if (!items.length) return;
-        if (scene) { scene.draw(clock); return; }
+        if (scene) { if (W > 0 && H > 0) scene.draw(clock); return; }
         if (mode === 'rain') {
             ctx.lineCap = 'round';
             BANDS.forEach(([from, to], b) => {
@@ -664,7 +666,10 @@ function createCore(ctx, first, shared = {}) {
                 fog=wanted;
             }
             const fogFlip=fogChanged||next.mode==='fog'&&Number.isFinite(next.angle)&&(next.angle<0)!==(slant<0); // 흐르는 방향이 바뀌면 다시 뿌린다
-            const reseed = (Number.isFinite(next.orbitSize)&&next.orbitSize/100!==orbitSize) || next.mode !== mode || next.level !== level || (spriteChanged && next.mode === 'custom');
+            const nextOrbit = Number.isFinite(next.orbitSize) ? Math.max(.4, Math.min(2.4, next.orbitSize / 100)) : orbitSize;
+            const nextCap = Number.isFinite(next.capScale) ? Math.max(1, Math.min(40, next.capScale)) : capScale;
+            const reseed = nextOrbit !== orbitSize || nextCap !== capScale || next.mode !== mode || next.level !== level || (spriteChanged && next.mode === 'custom');
+            capScale = nextCap;
             const nextAmount=weatherAmount(next.amount,next.level), amountChanged=nextAmount!==amount;
             mode = next.mode;
             level = next.level;
@@ -672,7 +677,7 @@ function createCore(ctx, first, shared = {}) {
             if (next.colors) colors = next.colors;
             if (next.motion) motion = next.motion;
             if(Number.isFinite(next.curvature))curvature=Math.max(0,Math.min(1,next.curvature/100));
-            if(Number.isFinite(next.orbitSize))orbitSize=Math.max(.4,Math.min(2.4,next.orbitSize/100));
+            orbitSize = nextOrbit;
             if(next.orbitDirection)orbitDirection=next.orbitDirection==='left'?1:-1;
             if (Number.isFinite(next.sway)) swayK = Math.max(0, Math.min(3, next.sway / 100));
             if (Number.isFinite(next.spin)) spinK = Math.max(0, Math.min(3, next.spin / 100));
@@ -682,10 +687,10 @@ function createCore(ctx, first, shared = {}) {
             if (Number.isFinite(next.angle)) slant = Math.tan(Math.min(60, Math.max(-60, next.angle)) * Math.PI / 180);
             if (mode === 'fog') fogPaint(); // 색(테마 · 직접 고른 색)이 바뀌었으면 덩어리 그림을 다시 만든다
             shared.art?.request(mode, artStyle);
-            if (reseed || fogFlip || starChanged || artChanged) seed();
+            if (reseed || fogFlip || starChanged || artChanged || (SCENE_MODES.includes(mode) && !scene && !scenesModule)) seed();
             else if(amountChanged && ['rain','snow'].includes(mode)){
                 // A slider changes population without teleporting existing drops.
-                const count=Math.min(500,Math.round(Math.max(0,W*H)*DENSITY[mode]*amount/100));
+                const count=Math.min(500 * capScale,Math.round(Math.max(0,W*H)*DENSITY[mode]*amount/100));
                 if(items.length>count)items.length=count;
                 while(items.length<count)items.push(make(true));
             }
@@ -722,7 +727,7 @@ export function createEngine(ctx) {
             if (key !== artColorKey) {artColorKey = key; shared.art.clearTint();}
             main.config(next);
             const second = next.second && typeof next.second === 'object' && next.second.mode && next.second.mode !== 'off' && next.second.mode !== next.mode && next.second.mode !== 'custom' ? next.second : null;
-            extra.config(second ? { colors: next.colors, tint: null, tint2: null, ...second } : { mode: 'off', level: next.level });
+            extra.config(second ? { colors: next.colors, tint: null, tint2: null, ...second, capScale: next.capScale } : { mode: 'off', level: next.level });
         },
         step(dt, now) { main.step(dt, now); extra.step(dt, now); },
         draw() { main.draw(); extra.draw(); },

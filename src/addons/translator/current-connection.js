@@ -40,10 +40,14 @@ export async function requestCurrentConnection({context,messages,overrides={},ma
         if(overrides.signal?.aborted)throw overrides.signal.reason;
         if(controller.signal.aborted)throw Object.assign(new Error(`${Math.round(timeout/1000)}초 안에 번역 답이 오지 않았어요.`),{timeout:true});
         if(/^bad request$/i.test(String(error?.message||'').trim())){
-            const rejected=new Error('요청이 거절됐어요 (400 Bad Request). 내용 차단(PROHIBITED_CONTENT) 또는 현재 연결의 요청 설정을 확인해 주세요. 기존 번역은 유지했어요.');
+            const rejected=new Error('요청이 거절됐어요 (400 Bad Request). 내용 차단(PROHIBITED_CONTENT) 또는 현재 연결의 요청 설정을 확인해 주세요. 원문은 그대로예요.');
             rejected.refused=true;throw rejected;
         }
         const reason=error?.cause?.message||error?.message||String(error);
-        throw Object.assign(new Error(`현재 연결 번역 실패: ${reason}`),{transient:isTransient(error,reason)});
+        const transient = isTransient(error,reason);
+        const message = transient && /too many requests|rate.?limit|resource.?exhausted|\b429\b/i.test(reason) ? '요청 한도를 넘었어요. 잠시 뒤 다시 시도해 주세요.'
+            : transient && /failed to fetch|networkerror|network error|econnreset|socket hang up/i.test(reason) ? '서버에 연결하지 못했어요. 연결 상태를 확인해 주세요.'
+            : transient ? '서버가 일시적으로 응답하지 못했어요. 잠시 뒤 다시 시도해 주세요.' : reason;
+        throw Object.assign(new Error(message),{transient});
     }finally{clearTimeout(timer);overrides.signal?.removeEventListener('abort',abort);release?.();}
 }

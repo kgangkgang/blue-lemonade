@@ -34,7 +34,7 @@ export function createSpanHandler({ compileRule, findSpans }, limit = 64) {
 /**
  * 화면 쪽: find(text, active) → findSpans 와 같은 모양의 결과를 약속으로.
  * 워커가 안 만들어지거나 · 오류면 그 뒤로는 fallback(= findSpans)만 쓴다.
- * timeoutMs 안에 답이 없으면 화면에서 다시 돌리지 않고 [] (워커는 새로 만든다).
+ * timeoutMs 안에 답이 없으면 []로 끝내고 같은 규칙 조합은 다시 실행하지 않는다. 수정된 조합은 새 워커로 검사한다.
  * @param {object} options
  * @param {() => Worker} options.createWorker
  * @param {(text: string, active: object[]) => object[]} options.fallback
@@ -45,9 +45,11 @@ export function createSpanFinder({ createWorker, fallback, timeoutMs = 5000, set
     let seq = 0;
     let timeouts = 0;
     const waits = new Map();
+    const blocked = new Set();
+    const keyOf = active => JSON.stringify(active.map(entry => String(entry.rule.words ?? '')));
 
     // 시간 초과는 대개 사용자 정규식이 끝없이 도는 것 — 화면 스레드에서 다시 돌리면 화면이 멈춘다.
-    // 워커만 버리고(다음에 새로 만든다) 기다리던 찾기는 '찾은 것 없음'으로 끝낸다.
+    // 워커와 그때 기다리던 규칙 조합을 막는다. UI는 isBlocked로 시간 초과와 정상 빈 결과를 구분한다.
     const timedOut = () => {
         timeouts++;
         warn(`no reply in ${timeoutMs} ms — 이번 답은 찾지 않고 넘어가요`);
@@ -56,6 +58,7 @@ export function createSpanFinder({ createWorker, fallback, timeoutMs = 5000, set
         const pending = [...waits.values()];
         waits.clear();
         for (const wait of pending) {
+            blocked.add(wait.key);
             clearTimer(wait.timer);
             wait.skip();
         }
@@ -104,7 +107,10 @@ export function createSpanFinder({ createWorker, fallback, timeoutMs = 5000, set
     };
 
     return {
+        isBlocked(active) { return blocked.has(keyOf(active)); },
         find(text, active) {
+            const key = keyOf(active);
+            if (blocked.has(key)) return Promise.resolve([]);
             const current = ensure();
             if (!current) return Promise.resolve(fallback(text, active));
             return new Promise((resolve) => {
@@ -116,6 +122,7 @@ export function createSpanFinder({ createWorker, fallback, timeoutMs = 5000, set
                     resolve(spans);
                 };
                 const wait = {
+                    key,
                     done: raw => finish(raw.map(span => ({
                         start: span.start,
                         end: span.end,

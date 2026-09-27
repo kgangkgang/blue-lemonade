@@ -64,7 +64,7 @@ export function prepareAnimated(pairs, wrapper, page, fonts) {
     /** 한 바퀴를 frames 장으로. scale = 내보낼 그림의 배율(css px → px). 돌려주는 값: 조각마다 { y, height, images[] } (px) */
     async function render(scale, frames, progress = () => {}, signal = null) {
         const count = Math.max(2, Math.min(frames, Math.floor(BUDGET / Math.max(1, units.reduce((sum, u) => sum + Math.ceil(width * scale) * Math.ceil(u.height * scale) * 4, 0)))));
-        const animations = units.flatMap(u => u.sourceParts.flatMap(el => el.getAnimations().filter(endless)));
+        const animations = [...new Set(units.flatMap(u => u.sourceParts.flatMap(el => el.getAnimations().filter(endless))))];
         const saved = animations.map(a => ({ a, time: a.currentTime }));
         const cycles = new Map(animations.map((a) => {
             const timing = a.effect.getComputedTiming();
@@ -75,8 +75,10 @@ export function prepareAnimated(pairs, wrapper, page, fonts) {
         try {
             for (let k = 0; k < count; k++) {
                 signal?.throwIfAborted();
-                for (const a of animations) { a.pause(); a.currentTime = (k / count) * cycles.get(a); }
                 for (const [i, unit] of units.entries()) {
+                    // Seeking does not override CSS animation-play-state, unlike pause/play.
+                    // Re-seek before each synchronous style read after an image decode await.
+                    for (const a of animations) a.currentTime = (k / count) * cycles.get(a);
                     unit.sourceParts.forEach((el, n) => {
                         if (unit.targetParts[n].closest('[data-bl-mask]')) return; // 이름 가림 그림 · 가린 글자에는 움직임을 적지 않는다
                         const live = getComputedStyle(el), to = unit.targetParts[n].style;
@@ -102,7 +104,7 @@ export function prepareAnimated(pairs, wrapper, page, fonts) {
             closeAnimated({ pieces: out }); // 굽다 멈추면(취소 · 설정 바뀜) 모은 조각 그림을 GC 를 기다리지 않고 바로 놓는다
             throw error;
         } finally {
-            for (const { a, time } of saved) { try { a.currentTime = time; a.play(); } catch { /* 메시지가 사라짐 */ } }
+            for (const { a, time } of saved) { try { a.currentTime = time; } catch { /* 메시지가 사라짐 */ } }
         }
         return { loop: LOOP, count, pieces: out };
     }

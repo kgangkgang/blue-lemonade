@@ -90,11 +90,16 @@ export function resolveAnchors(messages, favorites, { hash, removeMissing = fals
     for (const fav of favorites) {
         const index = toIndex(fav?.messageId);
         if (index === null) continue; // 번호가 아닌 북마크는 건드리지 않는다.
+        if (fav.blOrphaned) continue; // 메모를 남긴 채 연결을 끊은 예전 북마크는 새 메시지에 붙이지 않는다.
         if (!fav.anchor) {
             // 예전 북마크: 지금 그 번호의 메시지를 기준으로 삼는다. 자리를 차지하지는 않는다(옮겨 올 북마크를 막지 않게).
             if (messages[index]) {
                 fav.anchor = messageAnchor(messages[index], hash);
                 result.adopted++;
+            } else if (index >= messages.length) {
+                // 지문이 없으므로 나중에 같은 번호가 생겨도 옛 메시지인지 판별할 수 없다.
+                // messageId와 메모는 보존하고 이 확장의 연결 표시만 저장한다.
+                fav.blOrphaned = true;
             }
             continue;
         }

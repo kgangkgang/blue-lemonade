@@ -31,10 +31,11 @@ export function gradientAction(action,el,s) {
         const colors=entries[key].colors;if(colors.length===3)colors.pop();else colors.push(paletteColors(s).strong);
     }
 }
-export function bindGradientColors(root,getSettings,update) {
+export function bindGradientColors(root,getSettings,update,onArm) {
     root.querySelectorAll('toolcool-color-picker[data-gradient-color]').forEach(picker=>{
         let armed=false;
-        picker.addEventListener('pointerdown',()=>{armed=true});picker.addEventListener('keydown',()=>{armed=true});
+        const arm=()=>{armed=true;onArm?.();};
+        picker.addEventListener('pointerdown',arm);picker.addEventListener('keydown',arm);
         picker.addEventListener('change',event=>{
             if(!armed)return;const color=safeColor(event.detail?.rgba||picker.color),key=picker.dataset.gradientColor,index=Number(picker.dataset.index);
             update(s=>{const g=s.gradients.overrides[s.palette]?.[key];if(g&&index>=0&&index<g.colors.length)g.colors[index]=color;},false,`gradient-${key}-${index}`);

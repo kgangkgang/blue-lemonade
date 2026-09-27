@@ -2,7 +2,7 @@
 //
 // 1.2.0: 캐릭터 하나에 폴더(프리셋)가 여럿이다 — 원본(캐릭터 폴더) + 하위 폴더들 + 다른 캐릭터에서 불러온 폴더.
 // 폴더마다 따로 읽어 runtime.sources 에 두고, 켜진 폴더를 우선순위대로 합친 것이 runtime.assets (AI 목록 · 채팅 표시용).
-import { settings, currentCharacter, folderOf, disabledSet, pruneDisabled } from './state.js';
+import { settings, currentCharacter, folderOf, disabledSet, pruneDisabled, pruneOptimized } from './state.js';
 import { fetchAssets, keywordText, buildIndex, buildGroups } from './assets.js';
 import { setIndex, clearIndex } from './render.js';
 import { sourcesFor, mergeAssets, presetLabel } from './presets.js';
@@ -82,7 +82,11 @@ export async function reload() {
     runtime.error = own?.error ?? '';
     // 빈 목록은 '폴더가 비었다'와 '서버가 못 읽었다'를 구분할 수 없어 정리하지 않는다 (pruneDisabled도 한 번 더 막는다).
     for (const source of results) {
-        if (source.loaded && source.assets.length) pruneDisabled(source.key, source.assets.map(asset => asset.file));
+        if (source.loaded && source.assets.length) {
+            const files = source.assets.map(asset => asset.file);
+            pruneDisabled(source.key, files);
+            pruneOptimized(source.key, files);
+        }
     }
     recompute();
 }
@@ -123,11 +127,6 @@ export function groupsOf(key) {
     const source = sourceByKey(key);
     if (!source) return [];
     return buildGroups(source.assets, disabledSet(key), settings().randomGroups);
-}
-
-/** (예전 이름) 원본 폴더의 묶음 목록 */
-export function currentGroups() {
-    return groupsOf(runtime.folder);
 }
 
 /**

@@ -23,7 +23,7 @@ import { createCodeGuard, isClickTrigger, CODE_SWITCH_KEYS } from './switchcode.
 
 const MODULE = 'save_dedupe';
 const FOLDER = 'blue-lemonade'; // 2.0.0 성능 보조로 합침
-const VERSION = '1.1.3';
+const VERSION = '1.1.4';
 const TITLE = '저장 정리';
 const SAVE_PATHS = ['/api/chats/save', '/api/chats/group/save'];
 
@@ -369,9 +369,12 @@ function showBlocked() {
  * @returns {Promise<boolean>} 막았으면 true
  */
 async function commandBlocked() {
-    if (guardOn() && switchGuard.state() === 'generating') return true;
-    if (flushOn() && switchFlush.pending()) await switchFlush.run();
-    return guardOn() && !!switchGuard.state();
+    if (guardOn() && switchGuard.state() === 'generating') return 'generating';
+    if (flushOn() && switchFlush.pending()) {
+        const result = await switchFlush.run();
+        if (result === 'failed' || result === 'timeout') return 'saving';
+    }
+    return guardOn() && switchGuard.state();
 }
 
 const guardedCommands = new WeakSet();
@@ -379,10 +382,11 @@ function installCommandGuard() {
     try {
         const commands = context()?.SlashCommandParser?.commands;
         wrapCommands(commands, GUARD_COMMANDS, original => async function saveDedupeGuardedCommand(args, value) {
-            if (await commandBlocked()) {
+            const blocked = await commandBlocked();
+            if (blocked) {
                 if (switchGuard) switchGuard.stats.commands++;
-                showBlocked();
-                try { args?._abortController?.abort?.('답을 받는 중', true); } catch { /* 명령 줄은 그대로 */ }
+                if (blocked === 'saving') showSaveBlocked(); else showBlocked();
+                try { args?._abortController?.abort?.(blocked === 'saving' ? '저장을 아직 못 마쳤어요. 잠시 후 다시 눌러 주세요.' : '답을 받는 중', true); } catch { /* 명령 줄은 그대로 */ }
                 return '';
             }
             return original.call(this, args, value);
@@ -395,6 +399,7 @@ function installCommandGuard() {
 let replaying = false;
 /** 붙잡은 동안 마지막으로 누른 채팅 바꾸기 클릭 */
 let queued = null;
+let ownQueuedFlush = false, watchingExternalFlush = false;
 
 function clickInit(event) {
     const init = { bubbles: true, cancelable: true, composed: true, view: window };
@@ -439,12 +444,27 @@ function switchDecision(target) {
 function queueSwitch(entry) {
     queued = entry;
     switchFlush.stats.intercepted++;
-    if (switchFlush.active()) return;
+    if (switchFlush.active()) {
+        if (!ownQueuedFlush && !watchingExternalFlush) {
+            watchingExternalFlush = true;
+            switchFlush.run().then(result => {
+                if (ownQueuedFlush) return;
+                queued = null;
+                if (typeof toastr !== 'undefined') {
+                    const failed = result === 'failed' || result === 'timeout';
+                    toastr[failed ? 'warning' : 'info'](failed ? '저장을 아직 못 마쳤어요. 잠시 후 다시 눌러 주세요.' : '저장을 마쳤어요. 다시 눌러 주세요', TITLE, { preventDuplicates: true });
+                }
+            }).finally(() => { watchingExternalFlush = false; });
+        }
+        return;
+    }
+    ownQueuedFlush = true;
     let toast = null;
     const toastTimer = setTimeout(() => {
         if (typeof toastr !== 'undefined') toast = toastr.info('저장을 마치고 넘어가요', TITLE, { timeOut: 0, extendedTimeOut: 0, tapToDismiss: false });
     }, 700);
     switchFlush.run().then((result) => {
+        ownQueuedFlush = false;
         clearTimeout(toastTimer);
         if (toast && typeof toastr !== 'undefined') toastr.clear(toast);
         // 저장을 못 마쳤으면(시간 초과 · 실패) 도는 저장은 끊지 않고 그대로 끝나게 두며, 붙잡은 누름은 버린다 — 넘어가면 그 저장이 사라진다
@@ -558,7 +578,7 @@ function installReloadGuard() {
     if (!mutex || typeof mutex.callback !== 'function' || mutex.callback.name === 'saveDedupeGuardedReload') return;
     const original = mutex.callback;
     mutex.callback = async function saveDedupeGuardedReload(...args) {
-        await codeGuard.hold('reload');
+        await holdCodeSwitch('reload');
         return original.apply(this, args);
     };
 }
@@ -584,12 +604,22 @@ function guardedSwitchFn(original) {
     let wrapper = codeWrapped.get(original);
     if (!wrapper) {
         wrapper = async function saveDedupeGuardedSwitch(...args) {
-            await codeGuard.hold('switch');
+            await holdCodeSwitch('switch');
             return original.apply(this, args);
         };
         codeWrapped.set(original, wrapper);
     }
     return wrapper;
+}
+function showSaveBlocked() {
+    if (typeof toastr !== 'undefined') toastr.warning('저장을 아직 못 마쳤어요. 잠시 후 다시 눌러 주세요.', TITLE, { preventDuplicates: true, timeOut: 5000 });
+}
+async function holdCodeSwitch(kind) {
+    const result = await codeGuard.hold(kind);
+    if (result === 'failed' || result === 'timeout') {
+        showSaveBlocked();
+        throw Object.assign(new Error('저장을 아직 못 마쳤어요. 잠시 후 다시 눌러 주세요.'), { savePending: true });
+    }
 }
 
 /**

@@ -1,5 +1,5 @@
 /* ===== css/48-settings-favorites.css ===== */
-.bl-favorites { padding: 0 0 16px; margin-bottom: 12px; border-bottom: 1px solid var(--salty-border); }
+.bl-favorites { padding: 0 0 16px; margin-bottom: 12px; border-bottom: 1px solid var(--salty-line); }
 .bl-favorites header, .bl-favorites header > span, .bl-favorite-row, .bl-search-result-row { display: flex; align-items: center; gap: 8px; }
 .bl-favorites header { justify-content: space-between; }
 .bl-favorites header > span { font-size: 12px; color: var(--salty-muted); }

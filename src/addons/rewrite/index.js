@@ -12,6 +12,8 @@ import {
 } from '../../../../../../../script.js';
 import { extension_settings, getContext } from '../../../../../../extensions.js';
 import { ChatCompletionService } from '../../../../../../custom-request.js';
+import { power_user } from '../../../../../../power-user.js';
+import { getTokenCountAsync } from '../../../../../../tokenizers.js';
 import { oai_settings } from '../../../../../../openai.js';
 import { POPUP_TYPE, callGenericPopup } from '../../../../../../popup.js';
 import { SECRET_KEYS, secret_state } from '../../../../../../secrets.js';
@@ -21,6 +23,7 @@ import {
     checkReplyStart,
     compilePattern,
     compileRule,
+    escapeRegex,
     findActiveExceptions,
     findRepeats,
     findSpans,
@@ -42,7 +45,7 @@ import { capturedMessages, capturedRequest, holdGeneration, regenerateReply, rep
 import { applyUpgrades } from './upgrades.js';
 import { startQuickBan, setQuickBanEnabled } from './quick-ban.js';
 
-const VERSION = '1.9.7';
+const VERSION = '1.9.8';
 const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];
@@ -456,6 +459,24 @@ const spanFinder = createSpanFinder({
     warn: reason => console.warn(`[${TITLE}] 금지 묘사 찾기 워커:`, reason),
 });
 
+let warnedSlowSearch = false;
+function warnSlowSearch() {
+    if (warnedSlowSearch) return;
+    warnedSlowSearch = true;
+    toastr.warning('찾기 제한 시간을 넘겨 이 규칙 조합의 검사를 멈췄어요. 규칙을 수정하거나 끈 뒤 다시 확인해 주세요.', TITLE);
+}
+
+async function findSafeSpans(text, active) {
+    const spans = await spanFinder.find(text, active);
+    if (spanFinder.isBlocked(active)) {
+        const error = new Error('찾기 제한 시간을 넘긴 규칙 조합이에요. 규칙을 수정하거나 꺼 주세요.');
+        error.name = 'SpanSearchTimeoutError';
+        throw error;
+    }
+    warnedSlowSearch = false;
+    return spans;
+}
+
 // 1.7.6 알림은 화면이 한 번 그려진 뒤에 띄운다. 답을 다시 그린 바로 뒤에 toastr 가 나타나는 애니메이션을 시작하면
 // jQuery 가 계산 스타일을 읽어 채팅 전체의 스타일 계산을 그 자리에서 강제로 돌렸다 (폰 흉내 4배 CPU 답 한 번 0.4초).
 // 화면이 꺼져 있으면 requestAnimationFrame 이 안 와서 1초 뒤에는 그냥 띄운다
@@ -493,12 +514,16 @@ function laterToast(show) {
 function friendlyError(error) {
     const text = String(error?.message ?? error ?? '').trim();
     if (!text) return '';
+    // generateRaw has already shown the provider body and only returns this
+    // status. Do not infer quota/server failure from that incomplete message.
+    const bareStatus = /^Got response status\s+(\d{3})\b\s*\.?$/i.exec(text);
+    if (bareStatus) return `연결에서 오류가 났어요 (HTTP ${bareStatus[1]}).`;
     const lower = text.toLowerCase();
     const has = (...words) => words.some(word => lower.includes(word));
     const status = (...codes) => new RegExp(
         String.raw`(?:\[\s*(?:${codes.join('|')})\s*\]|(?:status|code|http|error)\D{0,10}(?:${codes.join('|')}))(?!\d)`, 'i').test(text);
     if (has('rate limit', 'rate_limit', 'too many requests')) return '요청이 너무 잦아요. 잠깐 쉬었다 다시 해 주세요.';
-    if (has('resource has been exhausted', 'resource_exhausted', 'quota', '额度', '余额不足') || status('429'))
+    if (has('resource has been exhausted', 'resource_exhausted', 'quota', '额度', '余额不足'))
         return '쓸 수 있는 양(할당량)을 다 썼어요. 잠시 뒤에 다시 하거나 다른 모델·키를 써 주세요.';
     if (has('prohibited_content', 'safety', 'blocked', 'recitation', 'content filter', 'content_filter'))
         return '모델이 이 내용을 거절했어요 (안전 필터). 같은 내용은 다시 해도 막혀요.';
@@ -506,6 +531,7 @@ function friendlyError(error) {
         return 'API 키가 없거나 권한이 없어요. 키와 주소를 확인해 주세요.';
     if (has('overloaded', 'unavailable', 'service_unavailable', 'capacity', '饱和') || status('502', '503'))
         return '모델 쪽 서버가 붐벼요. 잠시 뒤에 다시 해 주세요.';
+    if (status('429')) return '요청이 너무 잦아요. 잠깐 쉬었다 다시 해 주세요.';
     if (has('deadline', 'timed out', 'timeout', 'etimedout')) return '시간 안에 답이 오지 않았어요.';
     if (has('failed to fetch', 'network error', 'networkerror', 'err_network', 'econnrefused', 'enotfound'))
         return '연결이 끊겼어요. 인터넷과 주소를 확인해 주세요.';
@@ -553,7 +579,7 @@ function previousReplies(chat, messageId) {
     for (let i = messageId - 1; i >= 0 && out.length < settings.repeat.lookback; i--) {
         const message = chat[i];
         if (!message || message.is_user || message.is_system || typeof message.mes !== 'string') continue;
-        out.push(message.mes);
+        out.push(message);
     }
     return out;
 }
@@ -584,15 +610,23 @@ async function cleanMessage(messageId, manual, signal) {
     }
 
     const original = message.mes;
+    // Auto-parse runs after this listener without streaming. Preserve the hidden prefix verbatim.
+    const visible = visibleText(message);
+    const visibleOffset = original === visible ? 0 : original.lastIndexOf(visible);
+    if (visibleOffset < 0) return;
     const recent = recentText(chat, messageId);
     const active = rulesFor(recent);
     // 1.7.6 찾기를 워커에서 기다리는 동안 같은 답을 또 검사하지 않게 먼저 잡아 둔다
     busy.add(key);
     let spans;
     try {
-        spans = await spanFinder.find(original, active);
+        spans = await findSafeSpans(visible, active);
     } catch (error) {
         busy.delete(key);
+        if (error.name === 'SpanSearchTimeoutError') {
+            warnSlowSearch();
+            return;
+        }
         throw error;
     }
     // 기다리는 사이 답이 바뀌었으면(스와이프 · 편집) 이 검사는 버린다 — 바뀐 답은 제 이벤트로 다시 검사된다
@@ -602,8 +636,8 @@ async function cleanMessage(messageId, manual, signal) {
     }
     // 1.9.2 최근 답과 거의 같은 문장도 같은 길로 고친다
     if (settings.repeat.on) {
-        const repeats = findRepeats(original, previousReplies(chat, messageId), repeatOptions());
-        if (repeats.length > 0) spans = mergeSpans(original, spans, repeats);
+        const repeats = findRepeats(visible, previousReplies(chat, messageId), repeatOptions());
+        if (repeats.length > 0) spans = mergeSpans(visible, spans, repeats);
     }
     if (spans.length === 0) {
         busy.delete(key);
@@ -629,7 +663,7 @@ async function cleanMessage(messageId, manual, signal) {
         : null;
     try {
         const result = await rewriteText({
-            text: original,
+            text: visible,
             spans,
             exceptions,
             compiled: active,
@@ -646,20 +680,39 @@ async function cleanMessage(messageId, manual, signal) {
         }
         if (result.error) console.warn(`[${TITLE}] 요청 실패:`, result.error);
 
-        if (result.text !== original) {
+        if (result.text !== visible) {
+            const replacement = original.slice(0, visibleOffset) + result.text + original.slice(visibleOffset + visible.length);
+            let tokenCount;
+            if (power_user.message_token_count_enabled) {
+                try {
+                    tokenCount = await getTokenCountAsync((message.extra?.reasoning || '') + replacement, 0);
+                } catch (error) {
+                    console.warn(`[${TITLE}] 토큰 수 갱신 실패:`, error);
+                }
+            }
+            if (signal?.aborted) return;
             const current = getContext().chat[messageId];
             if (current !== message || current.mes !== original) {
                 toastr.warning('고치는 동안 메시지가 바뀌어서 적용하지 않았어요.', TITLE);
                 return;
             }
-            message.mes = result.text;
+            message.mes = replacement;
+            if (tokenCount !== undefined) {
+                message.extra = message.extra && typeof message.extra === 'object' ? message.extra : {};
+                message.extra.token_count = tokenCount;
+            }
             if (Array.isArray(message.swipes)) {
-                message.swipes[message.swipe_id ?? 0] = result.text;
+                message.swipes[message.swipe_id ?? 0] = replacement;
             }
             // Without streaming the new message isn't on screen yet; SillyTavern renders it from chat[] afterwards.
             // 1.7.5: 편집 창이 열려 있으면 다시 그리지 않는다 (편집 창이 지워져 ✓ 를 누르면 화면 글자가 원문이 된다). 취소하면 실리태번이 고친 글을 그린다.
             if ($(`#chat .mes[mesid="${messageId}"]`).length > 0 && !isEditingMessage(document, messageId)) {
                 updateMessageBlock(messageId, message);
+            }
+            if (tokenCount !== undefined) {
+                $(`#chat .mes[mesid="${messageId}"] .tokenCounterDisplay`).text(`${tokenCount}t`);
+                const swipe = message.swipe_info?.[message.swipe_id ?? 0];
+                if (swipe?.extra && typeof swipe.extra === 'object') swipe.extra.token_count = tokenCount;
             }
             if (manual) {
                 // Lets LLM Translator drop the stale translation and translate the fixed text.
@@ -788,7 +841,7 @@ async function ensureScenePlan(messageId, end, stopSignal) {
             }
             if (settings.notify) {
                 const times = outcome.attempts > 1 ? `${outcome.attempts}번 만에 ` : '';
-                toastr.success(`${reason} ${times}다시 생성했어요.`, TITLE);
+                afterPaint().then(() => toastr.success(`${reason} ${times}다시 생성했어요.`, TITLE));
             }
         } else if (stopSignal.aborted) {
             toastr.info('다시 생성을 멈췄어요. 처음 답변을 그대로 뒀어요.', TITLE);
@@ -853,7 +906,7 @@ function savedTab() {
 
 function showTab(tab) {
     $('.bwr_settings .bwr_tab').each(function () {
-        $(this).toggleClass('active', this.dataset.tab === tab);
+        $(this).toggleClass('active', this.dataset.tab === tab).attr('aria-pressed', String(this.dataset.tab === tab));
     });
     $('.bwr_settings .bwr_panel').each(function () {
         $(this).toggleClass('active', this.dataset.panel === tab);
@@ -873,15 +926,15 @@ function updateBadges() {
 }
 
 function chip(label, { id, active = false, off = false } = {}) {
-    const element = $('<div class="bwr_chip"><span class="bwr_chip_label"></span></div>');
+    const element = $('<div class="bwr_chip interactable" role="button" tabindex="0"><span class="bwr_chip_label"></span></div>');
     element.find('.bwr_chip_label').text(label);
-    element.toggleClass('active', active).toggleClass('bwr_off', off);
+    element.toggleClass('active', active).toggleClass('bwr_off', off).attr('aria-pressed', String(active));
     if (id) element.attr('data-id', id);
     return element;
 }
 
 function addChip(onClick) {
-    return $('<div class="bwr_chip bwr_add" title="추가"><i class="fa-solid fa-plus"></i><span>추가</span></div>').on('click', onClick);
+    return $('<div class="bwr_chip bwr_add interactable" role="button" tabindex="0" title="추가"><i class="fa-solid fa-plus"></i><span>추가</span></div>').on('click', onClick);
 }
 
 function findChip(container, id) {
@@ -953,7 +1006,7 @@ function renderModels() {
 
 function syncConnection() {
     $('#bwr_connection .bwr_seg').each(function () {
-        $(this).toggleClass('active', this.dataset.value === settings.connection);
+        $(this).toggleClass('active', this.dataset.value === settings.connection).attr('aria-pressed', String(this.dataset.value === settings.connection));
     });
     $('#bwr_connection_hint').text(CONNECTION_HINTS[settings.connection] ?? '');
     $('#bwr_profile_box').toggle(settings.connection === 'profile');
@@ -974,8 +1027,16 @@ function syncConnection() {
 function importTranslatorSettings() {
     const translator = extension_settings[TRANSLATOR_MODULE];
     const provider = translator?.llm_provider;
-    if (!translator || !PROVIDERS[provider]) {
+    if (!translator || (translator.connection_mode === 'direct' && !PROVIDERS[provider])) {
         toastr.warning('LLM 번역기 설정을 찾지 못했어요.', TITLE);
+        return;
+    }
+    // The embedded translator uses the current ST connection unless explicitly set to direct.
+    if (translator.connection_mode !== 'direct') {
+        settings.connection = 'current';
+        syncConnection();
+        saveSettingsDebounced();
+        toastr.success('LLM 번역기 설정을 가져왔어요: 현재 연결', TITLE);
         return;
     }
     settings.connection = 'direct';
@@ -1177,7 +1238,7 @@ function addRule() {
 
 // ── 1.8.0: rules written by an AI, and the how-to behind the version badge ─────────────────
 
-async function copyText(text) {
+async function copyText(text, host = document.body) {
     try {
         await navigator.clipboard.writeText(text);
         return true;
@@ -1186,7 +1247,8 @@ async function copyText(text) {
         const area = document.createElement('textarea');
         area.value = text;
         area.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
-        document.body.append(area);
+        host.append(area);
+        area.focus();
         area.select();
         let copied = false;
         try { copied = document.execCommand('copy'); } catch { /* shown as not copied */ }
@@ -1210,7 +1272,7 @@ async function openAiHelper() {
     const result = box.find('.bwr_ai_result');
     box.find('.bwr_ai_copy').on('click', async () => {
         const prompt = buildAiPrompt(box.find('.bwr_ai_wish').val(), settings.rules);
-        const copied = await copyText(prompt);
+        const copied = await copyText(prompt, box[0]);
         // When copying is blocked the prompt is shown so it can be selected by hand.
         box.find('.bwr_ai_prompt').val(prompt).prop('hidden', copied);
         result.text(copied ? '복사했어요. AI 채팅창에 붙여넣고, 받은 답을 아래 칸에 넣어 주세요.' : '자동 복사가 막혀 있어요. 위 글을 직접 복사해 주세요.');
@@ -1418,7 +1480,7 @@ function bindScene() {
         saveSettingsDebounced();
     });
     const bindNumber = (selector, key, min, max) => $(selector).on('change', function () {
-        const value = Math.min(max, Math.max(min, Math.round(Number(this.value)) || DEFAULT_SETTINGS.scenePlan[key]));
+        const value = Math.min(max, Math.max(min, integerInput(this.value, DEFAULT_SETTINGS.scenePlan[key])));
         scene()[key] = value;
         this.value = value;
         saveSettingsDebounced();
@@ -1430,12 +1492,14 @@ function bindScene() {
 // ── Test tab ──────────────────────────────────────────
 
 // The pasted text stands in for the recent messages too, so limited rules need their character's name in it.
-function detectTestText() {
+async function detectTestText() {
     const text = String($('#bwr_test_input').val() ?? '');
     const active = rulesFor(text);
     // activateRules hands back copies of the limited rules, so compare by id.
     const skipped = compiled.filter(entry => !active.some(item => item.rule.id === entry.rule.id)).map(entry => entry.rule.name || '이름 없음');
-    let spans = findSpans(text, active);
+    const snapshot = JSON.stringify(settings);
+    let spans = await findSafeSpans(text, active);
+    if (text !== String($('#bwr_test_input').val() ?? '') || snapshot !== JSON.stringify(settings)) return null;
     if (settings.repeat.on) {
         // 시험 글은 채팅에 없으니 지금 채팅의 마지막 답들 전부와 견준다
         let previous = [];
@@ -1445,11 +1509,20 @@ function detectTestText() {
     }
     const exceptions = findActiveExceptions(text, settings.exceptions);
     prepareSpans(spans, exceptions);
-    return { text, spans, exceptions, active, skipped };
+    return { text, spans, exceptions, active, skipped, snapshot };
 }
 
-function showDetection() {
-    const { text, spans, exceptions, skipped } = detectTestText();
+let testRun = 0;
+async function showDetection() {
+    const run = ++testRun;
+    let detection;
+    try { detection = await detectTestText(); }
+    catch (error) {
+        if (run === testRun) $('#bwr_test_result').empty().text(error.message);
+        return;
+    }
+    if (!detection || run !== testRun) return;
+    const { text, spans, exceptions, skipped } = detection;
     const result = $('#bwr_test_result').empty();
     if (text.trim()) {
         const verdict = checkReplyStart(text, startPattern);
@@ -1488,15 +1561,24 @@ let previewing = false;
 
 async function previewRewrite() {
     if (previewing) return;
-    const { text, spans, exceptions, active } = detectTestText();
-    if (spans.length === 0) {
-        showDetection();
-        return;
-    }
     previewing = true;
-    const result = $('#bwr_test_result').empty().append($('<div>').text('AI에게 요청하는 중…'));
+    const run = ++testRun;
+    const result = $('#bwr_test_result');
+    let detection;
+    const stillCurrent = () => run === testRun && detection
+        && detection.text === String($('#bwr_test_input').val() ?? '')
+        && detection.snapshot === JSON.stringify(settings);
     try {
+        detection = await detectTestText();
+        if (!stillCurrent()) return;
+        const { text, spans, exceptions, active } = detection;
+        if (spans.length === 0) {
+            await showDetection();
+            return;
+        }
+        result.empty().append($('<div>').text('AI에게 요청하는 중…'));
         const output = await rewriteText({ text, spans, exceptions, compiled: active, generate, maxAttempts: settings.maxAttempts, log });
+        if (!stillCurrent()) return;
         const kept = spans.length - output.fixed - output.failed;
         if (output.error) console.warn(`[${TITLE}] 테스트 고쳐 쓰기 실패:`, output.error);
         const error = output.error ? ` (${friendlyError(output.error)})` : '';
@@ -1505,10 +1587,15 @@ async function previewRewrite() {
             .append($('<pre class="bwr_preview">').text(output.text));
     } catch (error) {
         console.warn(`[${TITLE}] 테스트 오류:`, error);
-        result.empty().append($('<div>').text(`오류: ${friendlyError(error)}`));
+        if (run === testRun && (!detection || stillCurrent())) result.empty().text(`오류: ${friendlyError(error)}`);
     } finally {
         previewing = false;
     }
+}
+
+function integerInput(raw, fallback) {
+    const value = Number(raw);
+    return String(raw).trim() && Number.isFinite(value) ? Math.round(value) : fallback;
 }
 
 // ── Setup ─────────────────────────────────────────────
@@ -1538,7 +1625,7 @@ function bindSettings() {
         saveSettingsDebounced();
     });
     const bindNumber = (selector, key, min, max) => $(selector).on('change', function () {
-        const value = Math.min(max, Math.max(min, Math.round(Number(this.value)) || DEFAULT_SETTINGS[key]));
+        const value = Math.min(max, Math.max(min, integerInput(this.value, DEFAULT_SETTINGS[key])));
         settings[key] = value;
         this.value = value;
         saveSettingsDebounced();
@@ -1562,7 +1649,7 @@ function bindSettings() {
         saveSettingsDebounced();
     });
     const bindRepeatNumber = (selector, key, min, max) => $(selector).on('change', function () {
-        const value = Math.min(max, Math.max(min, Math.round(Number(this.value)) || DEFAULT_SETTINGS.repeat[key]));
+        const value = Math.min(max, Math.max(min, integerInput(this.value, DEFAULT_SETTINGS.repeat[key])));
         settings.repeat[key] = value;
         this.value = value;
         saveSettingsDebounced();
@@ -1577,6 +1664,7 @@ function bindSettings() {
         showTab(this.dataset.tab);
     });
     $('#bwr_check_last').on('click', checkLastMessage);
+    $('#bwr_test_input').on('input', () => { testRun++; });
     $('#bwr_test_detect').on('click', showDetection);
     $('#bwr_test_rewrite').on('click', previewRewrite);
     $('#bwr_reset').on('click', async () => {
@@ -1689,9 +1777,22 @@ function start() {
         }),
         '답변 검사': () => eventSource.makeFirst(event_types.MESSAGE_RECEIVED, onMessageReceived),
         // 1.9.0 채팅에서 고른 낱말 옆의 금지 칩 (quick-ban.js)
-        '빠른 금지': () => { setQuickBanEnabled(settings.quickBan); startQuickBan(addQuickRule); },
+        '빠른 금지': () => { setQuickBanEnabled(settings.quickBan); startQuickBan(addQuickRule, (container, text) => {
+            const id = Number(container.closest('.mes')?.getAttribute('mesid'));
+            const message = getContext().chat[id];
+            if (!message) return false;
+            // Mixed original/translation layouts may have no source wrapper (masked content).
+            return visibleText(message).replace(/\s+/g, ' ').toLocaleLowerCase().includes(text.toLocaleLowerCase());
+        }); },
     });
     if (!EMBEDDED) ensureUi();
+}
+
+function quickRuleWords(word) {
+    if (!/[,*/…'’\-]|\.{3}/.test(word)) return word;
+    const boundary = '[\\p{L}\\p{N}_]';
+    const body = word.split(' ').map(escapeRegex).join('[^\\S\\r\\n]+');
+    return `/${/^[A-Za-z0-9]/.test(word) ? `(?<!${boundary})` : ''}${body}${/[A-Za-z0-9]$/.test(word) ? `(?!${boundary})` : ''}/`;
 }
 
 /** 1.9.0 — 고른 글 그대로를 낱말로 하는 규칙 하나. 같은 낱말의 규칙이 있으면 만들지 않는다. */
@@ -1699,13 +1800,15 @@ export function addQuickRule(text) {
     const word = String(text || '').replace(/\s+/g, ' ').trim();
     if (!word) return false;
     // 쉼표로 이어 쓴 줄도 낱말 단위로 견준다 (기본 규칙의 목록은 한 줄에 여러 낱말)
-    const wanted = word.toLowerCase();
-    const same = settings.rules.find(rule => parseEntries(rule.words).some(entry => 'word' in entry && entry.word.toLowerCase() === wanted));
+    const words = quickRuleWords(word);
+    const wanted = words.toLowerCase();
+    const same = settings.rules.find(rule => parseEntries(rule.words).some(entry =>
+        ('word' in entry ? entry.word : `/${entry.regex}/`).toLowerCase() === wanted));
     if (same) {
         toastr.info(`"${same.name || word}" 규칙에 이미 있어요`, TITLE);
         return false;
     }
-    const rule = { id: newId('rule'), name: word, enabled: true, words: word, description: `the exact wording "${word}"`, onlyFor: '', near: '' };
+    const rule = { id: newId('rule'), name: word, enabled: true, words, description: `the exact wording "${word}"`, onlyFor: '', near: '' };
     settings.rules.push(rule);
     selectedRuleId = rule.id;
     recompile();
@@ -1744,7 +1847,9 @@ export async function openPanel() {
     try {
         await callGenericPopup(root, POPUP_TYPE.TEXT, '', { okButton: '닫기', wide: true, large: true, allowVerticalScrolling: true, onOpen: roomyPopup });
     } finally {
-        (inlineHost?.isConnected ? inlineHost : holder).replaceChildren(root);
+        const embedded = Boolean(inlineHost?.isConnected);
+        (embedded ? inlineHost : holder).replaceChildren(root);
+        root.classList.toggle('bl-embedded-settings', embedded);
         opening = false;
     }
 }

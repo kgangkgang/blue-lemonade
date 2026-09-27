@@ -75,3 +75,5 @@ body.salty.salty-profile-mode-none #chat .mes:not([is_user="true"]):not([is_syst
 body.salty.salty-profile-mode-none #chat .mes:not([is_user="true"]):not([is_system="true"]) > .mes_block { padding-left: 0 !important; }
 body.salty.salty-profile-mode-small #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar { display: block !important; }
 body.salty.salty-profile-mode-small #chat .mes:not([is_user="true"]):not([is_system="true"]) > .mes_block { padding-left: 12px !important; }
+
+body.salty.salty-profile-banner #chat .mes.displayNone:not(#salty-none) { display: none !important; }

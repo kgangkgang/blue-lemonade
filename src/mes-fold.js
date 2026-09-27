@@ -42,17 +42,47 @@ export function isFolded(message) {
 /** 글만 바꾼다 (저장 · 다시 그리기는 부른 쪽). 번역문이 있으면 번역문과 '원문 보기' 때 치워 둔 번역문, 없으면 본문 */
 export function rewriteFold(message, fold) {
     const extra = message.extra;
+    let changed = false;
     const slots = translated(message) ? [[extra, 'display_text'], [extra, 'original_translation_backup']] : [[message, 'mes']];
     for (const [owner, key] of slots) {
         if (typeof owner[key] !== 'string') continue;
         const inner = unwrapFold(owner[key]);
-        if (fold && inner === null) owner[key] = wrapFold(owner[key]);
+        if (fold && inner === null) { owner[key] = wrapFold(owner[key]); changed = true; }
         else if (!fold && inner !== null) owner[key] = inner;
     }
     // 펼칠 때: 번역하기 전에 접어 둔 본문(우리 틀 그대로)도 벗긴다 — 번역문만 보고 풀면 본문에 틀이 남아 숨김을 풀었을 때 프롬프트로 갔다
     if (!fold && translated(message) && typeof message.mes === 'string' && message.mes.startsWith(HEAD) && message.mes.endsWith(TAIL)) {
         message.mes = message.mes.slice(HEAD.length, message.mes.length - TAIL.length);
     }
+    // Only newly wrapped messages get a provenance flag. Identical user-written
+    // or legacy details markup must not be silently unwrapped on native unhide.
+    if (fold && changed) { message.extra ??= {}; message.extra.bl_folded = true; }
+    else if (!fold && message.extra) delete message.extra.bl_folded;
+}
+
+let repairBound = false;
+export function repairUnhiddenFolds() {
+    const ctx = SillyTavern.getContext(), changed = [];
+    for (const [id, message] of (ctx.chat || []).entries()) {
+        if (message.is_system || message.extra?.bl_folded !== true) continue;
+        rewriteFold(message, false); delete message.extra.bl_fold_was_hidden;
+        if (message.swipes && Number.isInteger(message.swipe_id)) message.swipes[message.swipe_id] = message.mes;
+        if (message.swipe_info?.[message.swipe_id]) message.swipe_info[message.swipe_id].extra = structuredClone(message.extra);
+        ctx.updateMessageBlock(id, message); changed.push(id);
+    }
+    if (changed.length) Promise.resolve(ctx.saveChat()).catch(error => console.warn('[Blue Lemonade] 펼친 메시지 저장', error));
+    return changed;
+}
+export function startFoldRepair() {
+    if (repairBound) return;
+    const chat = document.getElementById('chat'); if (!chat) return;
+    repairBound = true;
+    new MutationObserver(records => {
+        if (records.some(record => record.target.getAttribute('is_system') === 'false')) repairUnhiddenFolds();
+    }).observe(chat, {subtree:true, attributes:true, attributeFilter:['is_system']});
+    const ctx = SillyTavern.getContext(), types = ctx.eventTypes || ctx.event_types;
+    for (const name of ['CHAT_CHANGED', 'GENERATION_STARTED']) if (types?.[name]) ctx.eventSource.on(types[name], repairUnhiddenFolds);
+    repairUnhiddenFolds();
 }
 
 /** 지금 그 메시지를 다시 그리면 안 되는 때: 답이 들어오는 마지막 메시지 · 고치는 중인 메시지 */

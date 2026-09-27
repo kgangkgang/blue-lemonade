@@ -16,6 +16,7 @@ export function tidyDecor(owner) {
     if (d.radius !== null) { const n = Number(d.radius); d.radius = Number.isFinite(n) ? Math.max(0, Math.min(120, n)) : null; }
 }
 export const hasDecor = d => !!(d?.on && d.art && d.mask);
+export const decorEnabled = settings => ({image:!!(settings.enabled && hasDecor(settings.image?.decor)),profile:!!(settings.enabled && settings.profile?.mode === 'banner' && hasDecor(settings.profile?.decor)),userProfile:!!(settings.enabled && settings.userProfile?.mode === 'banner' && hasDecor(settings.userProfile?.decor))});
 export function decorVars(d, prefix, radius = 0) {
     return { [`--bl-${prefix}-decor-ratio`]: String(d.ratio * (d.frameWidth || 100) / (d.frameHeight || 100)), [`--bl-${prefix}-decor-opacity`]: String(d.opacity / 100),
         [`--bl-${prefix}-decor-zoom`]: String(d.zoom / 100), [`--bl-${prefix}-decor-position`]: `${d.x}% ${d.y}%`, [`--bl-${prefix}-decor-fit`]: d.fit, [`--bl-${prefix}-decor-radius`]: `${d.radius ?? radius}px` };
@@ -35,7 +36,8 @@ export function syncDecor(settings) {
     latest = settings;
     // 큰 PNG 문자열은 슬라이더를 움직일 때마다 CSS로 다시 쓰지 않는다.
     const owners = ['image', 'profile', 'userProfile'];
-    const sources = settings.enabled ? owners.flatMap(owner => [settings[owner]?.decor.art || '', settings[owner]?.decor.mask || '']) : [];
+    const enabled = decorEnabled(settings);
+    const sources = owners.flatMap(owner => enabled[owner] ? [settings[owner].decor.art, settings[owner].decor.mask] : ['', '']);
     if (sources.length !== previousSources.length || sources.some((value, i) => value !== previousSources[i])) {
         let style = document.getElementById('bl-decor-data');
         if (!style) { style = document.createElement('style'); style.id = 'bl-decor-data'; document.head.append(style); }
@@ -45,7 +47,7 @@ export function syncDecor(settings) {
         }).join('') + '}';
         previousSources = sources;
     }
-    if (!moduleJob && (!settings.enabled || (!hasDecor(settings.image.decor) && !(settings.profile.mode === 'banner' && hasDecor(settings.profile.decor)) && !(settings.userProfile?.mode === 'banner' && hasDecor(settings.userProfile.decor))))) return;
+    if (!moduleJob && !Object.values(enabled).some(Boolean)) return;
     moduleJob ||= import('./decor-view.js');
     moduleJob.then(m => m.syncDecorView(latest)).catch(error => { moduleJob = null; console.warn('[Blue Lemonade] 액자를 불러오지 못했어요', error); });
 }

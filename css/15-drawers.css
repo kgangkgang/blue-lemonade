@@ -1196,7 +1196,7 @@ body.salty #tavern_helper .inline-drawer-content > .flex-col > .border-x-2 > div
 }
 
 /* 묶음 상자: 1px 테 대신 오목한 페이지 톤 칸 (팝업 체크 묶음과 같은 모양) */
-body.salty .TH-custom-tailwind div.rounded-md.p-1[class~="border-(--grey5050a)"],
+body.salty .TH-custom-tailwind div.rounded-md.p-1.border-\(--grey5050a\),
 body.salty .TH-custom-tailwind fieldset.TH-fieldset > :not(legend) {
   padding: var(--bl-s3);
   border: 0;
@@ -1225,7 +1225,7 @@ body.salty .TH-custom-tailwind fieldset.TH-fieldset > legend {
 body.salty .TH-custom-tailwind .grow[class~="bg-(--grey5050a)"] {
   background: transparent;
 }
-body.salty .TH-custom-tailwind [class~="border-t"][class~="border-(--grey5050a)"] {
+body.salty .TH-custom-tailwind [class~="border-t"].border-\(--grey5050a\) {
   border-top-color: transparent;
 }
 
@@ -1401,7 +1401,7 @@ body.salty :is(.TH-custom-tailwind, #rm_extensions_block .jj-settings-body) {
 body.salty.salty-dark :is(.TH-custom-tailwind, #rm_extensions_block .jj-settings-body) {
   --sw-field: var(--bl-well);
 }
-body.salty:not(.salty-dark) #tavern_helper :is(div.rounded-md.p-1[class~="border-(--grey5050a)"], fieldset.TH-fieldset) :is(input.text_pole, select, textarea):where(:not(:focus)),
+body.salty:not(.salty-dark) #tavern_helper :is(div.rounded-md.p-1.border-\(--grey5050a\), fieldset.TH-fieldset) :is(input.text_pole, select, textarea):where(:not(:focus)),
 body.salty:not(.salty-dark) #rm_extensions_block .jj-settings-body :is(input.text_pole, textarea.text_pole):where(:not(:focus)) {
   background-color: var(--sw-field) !important;
 }
@@ -1436,14 +1436,14 @@ body.salty .dialog-teleported > .TH-custom-tailwind[role="dialog"] {
   box-shadow: none;
   color: var(--salty-text);
 }
-body.salty .dialog-teleported [role="dialog"] > [class~="bg-(--SmartThemeQuoteColor)"]:first-child {
+body.salty .dialog-teleported [role="dialog"] > .bg-\(--SmartThemeQuoteColor\):first-child {
   min-height: max(40px, calc(1.5em + 10px));
   gap: max(10px, .6em);
   padding: var(--bl-s1) var(--bl-s2) var(--bl-s1) var(--bl-s4);
   background: var(--bl-fill-card, var(--bl-card));
 }
 /* 제목 · 아이콘: 확장이 포인트색에 맞춘 글자색을 인라인으로 박음 → 테마 글자색 */
-body.salty .dialog-teleported [role="dialog"] > [class~="bg-(--SmartThemeQuoteColor)"] > .cursor-move {
+body.salty .dialog-teleported [role="dialog"] > .bg-\(--SmartThemeQuoteColor\) > .cursor-move {
   min-width: 0;
   overflow: hidden;
   color: var(--salty-text) !important;
@@ -1454,28 +1454,28 @@ body.salty .dialog-teleported [role="dialog"] > [class~="bg-(--SmartThemeQuoteCo
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-body.salty .dialog-teleported [role="dialog"] > [class~="bg-(--SmartThemeQuoteColor)"] > .shrink-0 {
+body.salty .dialog-teleported [role="dialog"] > .bg-\(--SmartThemeQuoteColor\) > .shrink-0 {
   align-items: center;
   gap: 2px;
   color: var(--salty-muted) !important;
 }
-body.salty .dialog-teleported [role="dialog"] > [class~="bg-(--SmartThemeQuoteColor)"] > .shrink-0 > div {
+body.salty .dialog-teleported [role="dialog"] > .bg-\(--SmartThemeQuoteColor\) > .shrink-0 > div {
   width: max(32px, 1.6em);
   height: max(32px, 1.6em);
   border-radius: var(--bl-r-sm);
   transition: background-color 0.12s ease;
 }
 /* 닫기만 옅은 면 (설정 팝업 X 와 같게) */
-body.salty .dialog-teleported [role="dialog"] > [class~="bg-(--SmartThemeQuoteColor)"] > .shrink-0 > div:last-child {
+body.salty .dialog-teleported [role="dialog"] > .bg-\(--SmartThemeQuoteColor\) > .shrink-0 > div:last-child {
   background: var(--bl-fill-hover, var(--bl-hover));
 }
 @media (hover: hover) {
-  body.salty .dialog-teleported [role="dialog"] > [class~="bg-(--SmartThemeQuoteColor)"] > .shrink-0 > div:hover {
+  body.salty .dialog-teleported [role="dialog"] > .bg-\(--SmartThemeQuoteColor\) > .shrink-0 > div:hover {
     background: var(--bl-fill-hover, var(--bl-hover));
     color: var(--salty-text);
   }
 }
-body.salty .dialog-teleported [role="dialog"] > [class~="bg-(--SmartThemeQuoteColor)"] > .shrink-0 > div:active {
+body.salty .dialog-teleported [role="dialog"] > .bg-\(--SmartThemeQuoteColor\) > .shrink-0 > div:active {
   background: var(--bl-fill-press-bg, var(--bl-press-bg));
 }
 /* 처음 여는 사람용 ? 깜빡임: 진한 파랑 대신 포인트색 */
@@ -1617,7 +1617,7 @@ body.salty .TH-popup .color-picker > canvas.color-item {
   height: 32px !important;
   border-radius: 50% !important;
   margin: 0;
-  outline: 1px solid var(--salty-border);
+  outline: 1px solid var(--salty-line);
   outline-offset: 2px;
 }
 body.salty .TH-popup .flex.flex-wrap.items-center:has(> .color-picker) {

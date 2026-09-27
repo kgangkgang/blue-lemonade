@@ -1,4 +1,5 @@
 import { syncModelSwitchMenu } from './menu.js';
+import { verifyAddonCss } from '../../addon-files-check.js';
 import { getSettings } from '../../settings.js';
 // 모델 전환 — 번역 · 장기 기억 · 다시 쓰기처럼 제 모델을 따로 고르는 확장들의 공급자 · 모델을 한 번에 바꾼다.
 // 중계 서버가 안 될 때 공식 API 로, 되면 다시 중계로: 조합을 저장해 두고 눌러서 바꾼다.
@@ -10,7 +11,7 @@ import { SOURCES } from '../models/sources.js';
 import { listTargets, supports, registry } from './targets.js';
 import { setLocks, withoutLock } from './lock.js';
 
-const VERSION = '1.0.3';
+const VERSION = '1.0.4';
 const MAX_LISTS = 3;
 const MAX_PRESETS = 8;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -44,11 +45,12 @@ const cleanUrl = url => String(url || '').trim().replace(/\/+$/, '');
 // 주소 칸이 비면 실리태번 본체의 Custom 주소가 쓰인다
 const listUrl = () => cleanUrl(store().draft.url) || cleanUrl(oai_settings.custom_url);
 
-/** Custom 주소의 모델 목록을 서버를 거쳐 받아 온다 (키는 실리태번에 저장된 Custom 키). 주소별로 최근 3개만 보관. */
+/** 실리태번에 설정한 Custom 주소의 모델 목록을 받아 온다 (저장된 Custom 키). 주소별로 최근 3개만 보관. */
 async function fetchModels() {
     const url = listUrl();
     if (fetching) return;
     if (!/^https?:\/\//i.test(url)) { note = '주소를 먼저 넣어 주세요 (http…)'; render(); return; }
+    if (url !== cleanUrl(oai_settings.custom_url)) { note = '실리태번 Custom 연결 주소를 먼저 이 주소로 바꿔 주세요. 저장된 키는 설정한 주소에만 보내요.'; render(); return; }
     fetching = true; note = '모델 목록을 불러오는 중…'; render();
     try {
         const own = url === cleanUrl(oai_settings.custom_url);
@@ -217,8 +219,7 @@ function mount() {
             saveSettingsDebounced(); render();
         }
     });
-    const css = getComputedStyle(root).getPropertyValue('--ms-version').trim().replace(/["']/g, '');
-    if (css !== VERSION) globalThis.toastr?.warning(`모델 전환 파일 버전이 달라요 (코드 ${VERSION}, 스타일 ${css || '없음'}).`);
+    verifyAddonCss({ folder: 'modelswitch', name: '--ms-version', version: VERSION, title: '모델 전환', selector: '#model-switch-settings' });
 }
 
 export function syncMenu() {

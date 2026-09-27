@@ -5,7 +5,7 @@ import { saveSettingsDebounced } from '../../../../../../../script.js';
 
 export const MODULE = 'panel_order';
 export const FOLDER = 'blue-lemonade';
-export const VERSION = '1.1.2';
+export const VERSION = '1.1.3';
 export const TITLE = '확장 순서';
 
 /**

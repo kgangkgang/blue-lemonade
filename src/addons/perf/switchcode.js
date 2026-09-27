@@ -39,7 +39,7 @@ export function createCodeGuard(env, options = {}) {
     /**
      * 지금 바꾸면 잃는 것이 있으면 없어질 때까지 기다린다.
      * @param {'reload'|'switch'|'trigger'} kind
-     * @returns {Promise<'off'|'free'|'waited'|'timeout'>}
+     * @returns {Promise<'off'|'free'|'waited'|'timeout'|'failed'>}
      */
     async function hold(kind) {
         let state = null;
@@ -70,7 +70,10 @@ export function createCodeGuard(env, options = {}) {
                 }
                 if (state === 'saving' && flushes < o.maxFlushes) {
                     flushes++;
-                    try { await env.flush(); } catch { /* 그냥 기다린다 */ }
+                    try {
+                        const outcome = await env.flush();
+                        if (outcome === 'failed' || outcome === 'timeout') { result = outcome; break; }
+                    } catch { result = 'failed'; break; }
                 } else {
                     await env.sleep(o.tickMs);
                 }

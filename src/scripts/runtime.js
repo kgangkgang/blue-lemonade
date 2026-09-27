@@ -11,6 +11,7 @@ let revision=0;
 // 상태는 '사용 중'인데 메뉴는 중국어 · 영어로 남았다. 닫힌 것을 알아채 다시 시작하고, 진단에 보이게 적어 둔다.
 const ALIVE_KEYS={korean:'__sillyTavernKoreanUI_v1',helper:'__tavernHelperKoreanUI_v1'}; // 내장 스크립트가 도는 동안 걸어 두는 표시
 const deaths=[],restarts=new Map();let wanted=false;
+const restartBlocked=id=>(restarts.get(id)||[]).filter(at=>Date.now()-at<600000).length>6;
 export const scriptDeaths=()=>deaths.slice(-6);
 function died(id,frame,why){
     const item=running.get(id);if(!item||item.frame!==frame)return; // stop() 이 닫은 것이거나 이미 새 틀로 바뀜
@@ -82,7 +83,7 @@ export async function syncScripts(on){
     const current=++revision,state=scriptSettings();wanted=!!on;
     for(const item of SCRIPT_CATALOG) if(!on||!state.enabled[item.id]){stop(item.id);restarts.delete(item.id);status(item.id,'꺼짐');} // 끄면 다시 시작 한도도 처음부터
     if(!on)return;
-    await Promise.all(SCRIPT_CATALOG.filter(item=>state.enabled[item.id]).map(item=>startOne(item,state,current)));
+    await Promise.all(SCRIPT_CATALOG.filter(item=>state.enabled[item.id]).filter(item=>!restartBlocked(item.id)).map(item=>startOne(item,state,current)));
 }
 /** 켜 두었는데 돌고 있지 않은 스크립트가 있나 — 있으면 다시 시작한다 (화면을 열 때 · 시작 뒤 몇 번 확인) */
 export function healScripts(on){

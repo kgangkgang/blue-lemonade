@@ -5,7 +5,7 @@ let frame = 0, resize;
 const schedule = () => { if (!frame && open.size) frame = requestAnimationFrame(place); };
 function clear(menu) {
     open.delete(menu); resize?.unobserve(menu);
-    if (menu.matches(':popover-open')) menu.hidePopover();
+    if (typeof menu.hidePopover === 'function' && menu.matches(':popover-open')) menu.hidePopover();
     menu.removeAttribute('popover'); menu.classList.remove('bl-positioned-menu');
     for (const key of ['--bl-menu-x', '--bl-menu-y', '--bl-menu-height']) menu.style.removeProperty(key);
 }

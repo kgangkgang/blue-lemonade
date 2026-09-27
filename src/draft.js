@@ -89,6 +89,17 @@ function onChatChanged() {
     restore(true);              // 그 채팅의 초안으로 갈아끼운다 (없으면 빈칸)
 }
 
+// ST emits the requested filename even when the server removed reserved chars.
+const renamedChatKey = value => String(value || '').replace(/[<>:"/\\|?*\x00-\x1f\x80-\x9f]/g, '').replace(/[ .]+$/, '').replace(/\.jsonl$/i, '');
+function onChatRenamed(data) {
+    const from = String(data?.oldFileName || '').replace(/\.jsonl$/i, ''), to = renamedChatKey(data?.newFileName);
+    if (!from || !to || from === to) return;
+    const all = load(), source = all[from];
+    if (!source) return;
+    all[to] = source; delete all[from]; save();
+    if (currentId === to && !box()?.value) restore(true);
+}
+
 export function startDraftKeep() {
     const el = box();
     if (!el) return;
@@ -101,6 +112,7 @@ export function startDraftKeep() {
     window.addEventListener('pagehide', flush);
 
     eventSource.on(event_types.CHAT_CHANGED, onChatChanged);
+    if (event_types.CHAT_RENAMED) eventSource.on(event_types.CHAT_RENAMED, onChatRenamed);
     // 보내고 나면 그 채팅 초안은 버린다 (실리태번이 칸을 비울 때 input 이 안 올 수 있음)
     // 칸에 남은 글은 지킨다 — /sys · /send 같은 명령이나 스크립트가 보낸 것이면 쓰던 글이 그대로 있다
     if (event_types.MESSAGE_SENT) {

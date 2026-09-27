@@ -102,7 +102,7 @@ body.expandMessageActions .mes .mes_buttons .extraMesButtons:has(> .mes_llm_tran
 }
 
 /* 번역 삭제 */
-.translation_settings .menu_button {
+.llmt-settings .menu_button {
     width: fit-content;
     display: flex;
     gap: 10px;
@@ -159,23 +159,12 @@ body.expandMessageActions .mes .mes_buttons .extraMesButtons:has(> .mes_llm_tran
 
 
 /* 5.3.4: 없는 변수(--text-color 등) 대신 ST 변수 */
-.llmt-settings .prompt-editor-button {
-    cursor: pointer;
-    padding: 5px;
-    color: var(--SmartThemeBodyColor);
-    transition: color 0.3s ease;
-}
-
-.llmt-settings .prompt-editor-button:hover {
-    color: var(--SmartThemeQuoteColor);
-}
-
 .llmt-settings .gap5 {
     gap: 5px;
 }
 
 /* 아이콘 수직 정렬 */
-.llmt-settings :is(.prompt-editor-button, .rule-prompt-editor-button, .fa-info-circle) {
+.llmt-settings :is(.rule-prompt-editor-button, .fa-info-circle) {
     display: inline-flex;
     align-items: center;
     height: 20px;

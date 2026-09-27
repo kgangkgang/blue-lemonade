@@ -1,3 +1,4 @@
+import { showThemeModal } from './modal.js';
 import { CAPTURE_INFO_KEYS } from './capture-layout.js';
 import { createCaptureResources } from './capture-resources.js';
 import { toolSection, bindAddonLayout } from './addon-layout.js';
@@ -118,12 +119,12 @@ export async function openCapturePreview(ids, mount = null, selectedIds = () => 
     const preview=`<section class="bl-capture-preview"><p data-capture-progress role="status"></p><label class="bl-tool-field" data-capture-parts hidden>파일 미리보기<select data-capture-part></select></label><img alt="저장할 채팅 캡처 미리보기" hidden><video controls playsinline muted hidden aria-label="저장할 채팅 영상 미리보기"></video></section>`;
     const footer=`<footer class="bl-capture-stage-actions"><button type="button" class="salty-btn" data-capture-edit>캡처용 글 편집</button><button type="button" class="salty-btn" data-capture-quick>빠른 미리보기</button><button type="button" class="salty-btn" data-capture-render>파일 만들기</button><button type="button" class="salty-btn" data-capture-clear hidden>지우기</button><a class="salty-btn bl-tool-primary" data-capture-save download hidden>이 파일 저장</a><a class="salty-btn bl-tool-primary" data-capture-zip download="blue-lemonade-chat.zip" hidden>전체 파일 ZIP 저장</a></footer>`;
     dialog.innerHTML=mount?preview+footer:`<header><h3>채팅 캡처 미리보기</h3><button type="button" data-capture-close aria-label="미리보기 닫기">×</button></header><div class="bl-capture-layout"><section>${captureOptionsMarkup()}</section>${preview}</div>${footer}`;
-    if(!mount){document.body.append(dialog);dialog.showModal();}
+    if(!mount){document.body.append(dialog);showThemeModal(dialog);}
     const alive=()=>mount?dialog.isConnected:dialog.open;
     const memory=keptFor();
     let revision=0,busy=false,edits=memory.edits,controller=null,outputs=[],zipURL='',stale=false;
     const video=dialog.querySelector('video'),img=dialog.querySelector('img'),save=dialog.querySelector('[data-capture-save]'),zip=dialog.querySelector('[data-capture-zip]'),status=dialog.querySelector('[data-capture-progress]'),render=dialog.querySelector('[data-capture-render]'),part=dialog.querySelector('[data-capture-part]');
-    const release=()=>{video.pause();video.removeAttribute('src');video.load();img.removeAttribute('src');for(const item of outputs)URL.revokeObjectURL(item.url);outputs=[];if(zipURL)URL.revokeObjectURL(zipURL);zipURL='';};
+    const release=()=>{video.pause();video.removeAttribute('src');video.load();img.src='';for(const item of outputs)URL.revokeObjectURL(item.url);outputs=[];if(zipURL)URL.revokeObjectURL(zipURL);zipURL='';};
     const clearButton=dialog.querySelector('[data-capture-clear]'),quick=dialog.querySelector('[data-capture-quick]');
     const wipe=()=>{release();video.hidden=img.hidden=save.hidden=zip.hidden=true;save.removeAttribute('href');zip.removeAttribute('href');dialog.querySelector('[data-capture-parts]').hidden=true;};
     // 설정 · 선택이 바뀌어도 만들어 둔 파일은 지우지 않는다 — '바꾸기 전 파일'이라고만 알리고, 다시 만들면 그때 바뀐다
@@ -192,7 +193,7 @@ export async function openCapturePreview(ids, mount = null, selectedIds = () => 
     }
     quick.onclick=quickLook;
     clearButton.onclick=()=>{revision++;controller?.abort();memory.files=null;memory.archive=null;memory.edits=null;memory.ids='';memory.stale=false;edits=null;stale=false;wipe();clearButton.hidden=true;status.textContent='만든 파일과 캡처용 글 편집을 지웠어요.';};
-    dialog.querySelector('[data-capture-edit]').onclick=async()=>{try{const ids=selectedIds(),result=await(await import('./capture-editor.js')).editCaptureDraft(ids,edits);if(result){edits=result.draft?[...(edits||[]).filter(m=>!ids.includes(m.id)),...result.draft]:null;memory.edits=edits;clearButton.hidden=!(memory.files?.length||memory.edits);invalidate();}}catch(error){status.textContent=error.message;}};
+    dialog.querySelector('[data-capture-edit]').onclick=async()=>{try{const ids=selectedIds(),result=await(await import('./capture-editor.js')).editCaptureDraft(ids,edits);if(result){const next=[...(edits||[]).filter(m=>!ids.includes(m.id)),...(result.draft||[])];edits=next.length?next:null;memory.edits=edits;clearButton.hidden=!(memory.files?.length||memory.edits);invalidate();}}catch(error){status.textContent=error.message;}};
     render.onclick=generate;
     // 열 때: 만들어 둔 파일이 있으면 그대로 보여 주고, 없으면 굽지 않고 빠른 미리보기만
     if(memory.files?.length){

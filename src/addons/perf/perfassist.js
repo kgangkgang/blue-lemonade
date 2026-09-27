@@ -17,7 +17,7 @@ import { createSaveSender } from './savesend.js';
 
 const MODULE = 'perf_assist';
 const FOLDER = 'blue-lemonade';
-const VERSION = '1.0.1';
+const VERSION = '1.0.2';
 const TITLE = '성능 보조';
 
 const DEFAULTS = Object.freeze({ morphStream: true, deferPromptList: true, saveInWorker: true });
@@ -68,13 +68,13 @@ function installMorph() {
     es.on(ev.STREAM_TOKEN_RECEIVED, () => {
         if (settings().morphStream === false) return;
         const processor = 'streamingProcessor' in script ? script.streamingProcessor : context().streamingProcessor;
-        if (!processor || (processor === lastProcessor && morph.attached() === processor.messageTextDom)) return;
+        if (!processor || processor.isStopped || processor.isFinished || (processor === lastProcessor && morph.attached() === processor.messageTextDom)) return;
         lastProcessor = processor;
         // 실리태번 '스트리밍 페이드 인'은 스스로 morphdom 을 쓴다 — 그때는 할 일 없음
         if (powerUser.power_user?.stream_fade_in) return;
         morph.attach(processor);
     });
-    const release = () => morph.release();
+    const release = () => { morph.release(); lastProcessor = null; };
     for (const name of ['GENERATION_ENDED', 'GENERATION_STOPPED', 'CHAT_CHANGED']) if (ev[name]) es.on(ev[name], release);
     if (ev.MESSAGE_RECEIVED) (typeof es.makeFirst === 'function' ? es.makeFirst(ev.MESSAGE_RECEIVED, release) : es.on(ev.MESSAGE_RECEIVED, release));
 }
@@ -200,7 +200,7 @@ function buildDrawer() {
     drawer.innerHTML = `
         <div class="inline-drawer">
             <div class="inline-drawer-toggle inline-drawer-header">
-                <b><i class="fa-solid fa-gauge-high"></i> ${TITLE} <span class="pa-version ext-version">v${VERSION}</span> <button type="button" class="bl-word-help" data-pa-help aria-label="성능 보조 기능 설명">?</button></b>
+                <b><i class="fa-solid fa-gauge-high"></i> ${TITLE} <span class="pa-version ext-version">v${VERSION}</span></b>
                 <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
             </div>
             <div class="inline-drawer-content">
@@ -210,7 +210,6 @@ function buildDrawer() {
             </div>
         </div>`;
     container.append(drawer);
-    drawer.querySelector('[data-pa-help]').addEventListener('click',event=>{event.stopPropagation();import('./help.js').then(api=>api.showPerfHelp());});
     for (const input of drawer.querySelectorAll('input[data-pa-key]')) {
         const key = input.dataset.paKey;
         input.checked = settings()[key] !== false;

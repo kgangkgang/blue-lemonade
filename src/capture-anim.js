@@ -147,36 +147,41 @@ export async function captureAnimated(ids, progress = () => {}, options = {}, si
         const { width, height, duration } = motion.layout, limit = Math.max(0, Number(options.maxMB) || 0) * 1024 * 1024, ladder = LADDER[kind];
         let clock = 0; // 그림 속 시간(초) — 시험 굽기와 다시 굽기에서도 날씨 · 글자가 이어서 흐른다
         /** 한 번 굽기: frames 장을 [scale, quality, fps] 로. stopAt 장만 굽고 멈출 수도 있다(시험) */
-        const encode = async ([scale, quality, fps], seconds, note) => {
+        const encode = async ([scale, quality, fps], seconds, note, measureFirst = false) => {
             const w = even(width * scale), h = even(height * scale), frames = Math.max(2, Math.ceil(seconds * fps));
             small.width = w; small.height = h;
             const encoder = kind === 'webp' ? createWebp(w, h, quality) : createApng(w, h);
+            let firstFrameSize = 0;
             const start = performance.now();
             for (let i = 0; i < frames; i++) {
                 if (signal?.aborted) throw abortError();
                 if (failure) throw failure;
-                const wait = start + i * 1000 / fps - performance.now(); if (wait > 0) await new Promise(r => setTimeout(r, wait)); // 배경 영상은 실제 시간으로 흐른다
+                const wait = start + i * 1000 / fps - performance.now(); if (motion.realtime !== false && wait > 0) await new Promise(r => setTimeout(r, wait)); // 배경 영상·움짤만 실제 시간으로 흐른다
                 motion.draw(i || clock ? 1 / fps : 0, clock * 1000, clock); clock += 1 / fps;
                 let data;
                 if (scale === 1) data = motion.ctx.getImageData(0, 0, width, height).data;
                 else { smallCtx.clearRect(0, 0, w, h); smallCtx.drawImage(motion.canvas, 0, 0, w, h); data = smallCtx.getImageData(0, 0, w, h).data; }
                 await encoder.add(new Uint8Array(data.buffer), 1000 / fps);
+                if (measureFirst && i === 0) firstFrameSize = encoder.finish().size;
                 progress(`${label} ${note}… ${i + 1} / ${frames}장`);
             }
-            return encoder.finish();
+            return { blob: encoder.finish(), firstFrameSize };
         };
         let step = 0;
         if (limit) {
-            const probeSeconds = Math.min(duration, 1.2), probe = await encode(ladder[0], probeSeconds, '용량 재는 중');
-            const expected = probe.size / probeSeconds * duration * 1.08;
+            const probeSeconds = Math.min(duration, 1.2), { blob: probe, firstFrameSize } = await encode(ladder[0], probeSeconds, '용량 재는 중', true);
+            // A full first frame is written once. Only the later changed regions
+            // grow with duration; multiplying the first frame needlessly shrank still text.
+            const firstSeconds = 1 / ladder[0][2];
+            const expected = (firstFrameSize + Math.max(0, probe.size - firstFrameSize) / Math.max(firstSeconds, probeSeconds - firstSeconds) * Math.max(0, duration - firstSeconds)) * 1.08;
             while (step < ladder.length - 1 && expected * ladder[step][3] > limit * .94) step++;
         }
-        let blob = await encode(ladder[step], duration, '만드는 중');
+        let { blob } = await encode(ladder[step], duration, '만드는 중');
         // 예상이 빗나갔으면 실제 크기로 다시 골라 한 번 더 (최대 두 번)
         for (let retry = 0; limit && blob.size > limit && step < ladder.length - 1 && retry < 2; retry++) {
             const need = limit * .94 / blob.size * ladder[step][3];
             do step++; while (step < ladder.length - 1 && ladder[step][3] > need);
-            blob = await encode(ladder[step], duration, '용량에 맞춰 다시 만드는 중');
+            ({ blob } = await encode(ladder[step], duration, '용량에 맞춰 다시 만드는 중'));
         }
         const [scale, quality, fps] = ladder[step];
         return { ...motion.result, width: even(width * scale), height: even(height * scale), blob, format: kind, extension: kind === 'webp' ? 'webp' : 'png',

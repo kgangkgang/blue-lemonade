@@ -5,7 +5,7 @@
    ===== */
 /* ===== 미리보기 자동 생성 (surfaces:preview) =====
    tools/gen-preview-css.js 가 #chat 규칙을 여기 복사한다 — 손으로 고치지 말 것.
-   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 336개 (89.2KB).
+   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 338개 (89.9KB).
    style.css 의 채팅 · 에셋 규칙을 고치면 `node tools/gen-preview-css.js` 를 다시 돌린다.
    이 칸을 다른 자리로 옮기지 말 것: 사본이 손으로 쓴 채팅 규칙보다 뒤에 있어야 같은 무게에서 이기고,
    바로 뒤의 보정 칸이 사본을 눌러 줄 수 있다. 앞으로 옮기면 아바타 모서리처럼 순서로만 갈리는 것이 뒤집힌다 */
@@ -119,7 +119,7 @@ body.salty :is(#salty-nochat, .salty-preview) .mes .ch_name {
   margin: 0 0 6px !important;
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes .ch_name > .flex1 {
-  min-width: 0;
+  min-width: min(6em, 40%);
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes .ch_name .alignItemsBaseline {
   align-items: baseline !important;
@@ -200,6 +200,7 @@ html body.salty :is(#salty-nochat, .salty-preview) .mes > .mes_block {
 }
 html body.salty :is(#salty-nochat, .salty-preview) .mes > .mes_block > .ch_name {
   max-width: 100% !important;
+  flex-wrap: wrap;
 }
 html body.salty :is(#salty-nochat, .salty-preview) .mes .ch_name > .mes_buttons {
   flex-wrap: wrap !important;
@@ -1266,6 +1267,9 @@ body.salty.salty-profile-mode-small :is(#salty-nochat, .salty-preview) .mes:not(
 body.salty.salty-profile-mode-small :is(#salty-nochat, .salty-preview) .mes:not([is_user="true"]):not([is_system="true"]) > .mes_block {
   padding-left: 12px !important;
 }
+body.salty.salty-profile-banner :is(#salty-nochat, .salty-preview) .mes.displayNone:not(#salty-none) {
+  display: none !important;
+}
 body.salty :is(#salty-nochat, .salty-preview) .mes_text .bl-art-frame {
   display: block; position: relative; isolation: isolate;
   width: min(100%, calc(var(--salty-img-cap) * var(--bl-decor-ratio))); height: auto; aspect-ratio: var(--bl-decor-ratio); margin: 16px auto;
@@ -1463,6 +1467,9 @@ body.salty.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes
 body.salty.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]) > .mes_block {
   padding-left: 12px !important;
 }
+body.salty.salty-user-profile-banner :is(#salty-nochat, .salty-preview) .mes.displayNone:not(#salty-none) {
+  display: none !important;
+}
 body.salty.salty-user-profile-banner :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) .ch_name {
   display: grid !important; grid-template-columns: var(--bl-user-meta-leading) minmax(0, max-content) auto auto var(--bl-user-meta-trailing);
   align-items: center; gap: var(--bl-user-header-gap) 0; width: 100%;
@@ -1532,70 +1539,70 @@ body.salty.salty-user-profile-banner.salty-user-profile-sizing-ratio :is(#salty-
 body.salty.salty-user-profile-banner.salty-user-profile-layout-bleed :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar.bl-art-frame {
   width: min(calc(100% + var(--salty-gutter) * 2), calc(var(--bl-user-profile-max-height) * var(--bl-decor-ratio))) !important;
 }
-body.salty.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) {
+body.salty.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) {
   display: grid !important; grid-template-columns: 34px 12px auto auto auto minmax(0, 1fr) !important; grid-template-rows: auto auto !important;
 }
-body.salty.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper {
+body.salty.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mesAvatarWrapper {
   display: contents !important;
 }
-body.salty.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar {
+body.salty.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mesAvatarWrapper > .avatar {
   grid-area: 2 / 1 !important;
 }
-body.salty.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mes_block {
+body.salty.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mes_block {
   grid-area: 2 / 3 / 3 / -1 !important; width: 100% !important; padding-inline: 0 !important;
 }
-body.salty.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .mesIDDisplay {
+body.salty.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mesAvatarWrapper > .mesIDDisplay {
   grid-area: 1 / 3 !important;
 }
-body.salty.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .mes_timer {
+body.salty.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mesAvatarWrapper > .mes_timer {
   grid-area: 1 / 4 !important;
 }
-body.salty.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .tokenCounterDisplay {
+body.salty.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mesAvatarWrapper > .tokenCounterDisplay {
   grid-area: 1 / 5 !important;
 }
-body.salty.salty-user-profile-side-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) {
+body.salty.salty-user-profile-side-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) {
   grid-template-columns: auto auto auto minmax(0, 1fr) 12px 34px !important;
 }
-body.salty.salty-user-profile-side-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar {
+body.salty.salty-user-profile-side-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mesAvatarWrapper > .avatar {
   grid-area: 2 / 6 !important;
 }
-body.salty.salty-user-profile-side-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mes_block {
+body.salty.salty-user-profile-side-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mes_block {
   grid-area: 2 / 1 / 3 / 5 !important;
 }
-body.salty.salty-user-profile-side-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .mesIDDisplay {
+body.salty.salty-user-profile-side-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mesAvatarWrapper > .mesIDDisplay {
   grid-area: 1 / 1 !important;
 }
-body.salty.salty-user-profile-side-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .mes_timer {
+body.salty.salty-user-profile-side-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mesAvatarWrapper > .mes_timer {
   grid-area: 1 / 2 !important;
 }
-body.salty.salty-user-profile-side-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .tokenCounterDisplay {
+body.salty.salty-user-profile-side-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mesAvatarWrapper > .tokenCounterDisplay {
   grid-area: 1 / 3 !important;
 }
-body.salty.salty-user-meta-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) {
+body.salty.salty-user-meta-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) {
   grid-template-columns: 34px 12px minmax(0, 1fr) auto auto auto !important;
 }
-body.salty.salty-user-meta-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .mesIDDisplay {
+body.salty.salty-user-meta-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mesAvatarWrapper > .mesIDDisplay {
   grid-area: 1 / 4 !important;
 }
-body.salty.salty-user-meta-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .mes_timer {
+body.salty.salty-user-meta-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mesAvatarWrapper > .mes_timer {
   grid-area: 1 / 5 !important;
 }
-body.salty.salty-user-meta-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .tokenCounterDisplay {
+body.salty.salty-user-meta-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mesAvatarWrapper > .tokenCounterDisplay {
   grid-area: 1 / 6 !important;
 }
-body.salty.salty-user-meta-right.salty-user-profile-side-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) {
+body.salty.salty-user-meta-right.salty-user-profile-side-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) {
   grid-template-columns: minmax(0, 1fr) auto auto auto 12px 34px !important;
 }
-body.salty.salty-user-meta-right.salty-user-profile-side-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mes_block {
+body.salty.salty-user-meta-right.salty-user-profile-side-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mes_block {
   grid-area: 2 / 1 / 3 / 5 !important;
 }
-body.salty.salty-user-meta-right.salty-user-profile-side-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .mesIDDisplay {
+body.salty.salty-user-meta-right.salty-user-profile-side-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mesAvatarWrapper > .mesIDDisplay {
   grid-area: 1 / 2 !important;
 }
-body.salty.salty-user-meta-right.salty-user-profile-side-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .mes_timer {
+body.salty.salty-user-meta-right.salty-user-profile-side-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mesAvatarWrapper > .mes_timer {
   grid-area: 1 / 3 !important;
 }
-body.salty.salty-user-meta-right.salty-user-profile-side-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .tokenCounterDisplay {
+body.salty.salty-user-meta-right.salty-user-profile-side-right.salty-user-profile-mode-small :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mesAvatarWrapper > .tokenCounterDisplay {
   grid-area: 1 / 4 !important;
 }
 body.salty:is(.salty-user-bubble, .salty-user-card).salty-user-profile-custom :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mes_block {

@@ -1,3 +1,4 @@
+import { showThemeModal } from './modal.js';
 import { toolSection } from './addon-layout.js';
 import { getSettings, saveSettings } from './settings.js';
 import { replaceText, importRuleSets } from './word-tools-core.js';
@@ -6,6 +7,7 @@ const esc = v => String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>
 const selected = new Set();
 let chatKey, draft='', undoDraft=null, proposal=null, undoChat=null;
 const context = () => SillyTavern.getContext();
+const userError = message => Object.assign(Error(message), { user: true });
 function syncChat() {
     const key=context().chatId;
     if(key!==chatKey){chatKey=key;selected.clear();proposal=null;undoChat=null;}
@@ -75,8 +77,9 @@ function write(m,data) {
 }
 async function applyTransaction(transaction, reverse=false) {
     const ctx=context();
-    if(ctx.chatId!==transaction.key || document.body.dataset.generating==='true')throw Error('채팅이 바뀌었거나 응답 생성 중이에요. 다시 확인해 주세요.');
-    for(const row of transaction.rows)if(ctx.chat[row.id]!==row.message || !same(snapshot(row.message),reverse?row.after:row.before))throw Error('미리보기 이후 메시지가 바뀌었어요. 다시 전후 보기를 눌러 주세요.');
+    if(document.body.classList.contains('cg-previewing'))throw userError('다른 채팅 미리보기를 닫은 뒤 적용해 주세요.');
+    if(ctx.chatId!==transaction.key || document.body.dataset.generating==='true')throw userError('채팅이 바뀌었거나 응답 생성 중이에요. 다시 확인해 주세요.');
+    for(const row of transaction.rows)if(ctx.chat[row.id]!==row.message || !same(snapshot(row.message),reverse?row.after:row.before))throw userError('미리보기 이후 메시지가 바뀌었어요. 다시 전후 보기를 눌러 주세요.');
     for(const row of transaction.rows)write(row.message,reverse?row.before:row.after);
     try { await ctx.saveChat(); }
     catch(error){for(const row of transaction.rows)write(row.message,reverse?row.after:row.before);throw error;}
@@ -84,7 +87,7 @@ async function applyTransaction(transaction, reverse=false) {
     for(const row of transaction.rows){
         // The text is already saved. A different extension's event handler must
         // not turn a successful edit into a failure and discard its undo record.
-        try { ctx.updateMessageBlock(row.id,row.message);await ctx.eventSource.emit(ctx.eventTypes.MESSAGE_UPDATED,row.id); }
+        try { ctx.updateMessageBlock(row.id,row.message);if((reverse?row.before:row.after).display===undefined)await ctx.eventSource.emit(ctx.eventTypes.MESSAGE_UPDATED,row.id); }
         catch(error) { console.warn('[Blue Lemonade] 저장 후 화면 갱신',error); }
     }
 }
@@ -115,28 +118,29 @@ export function bindWordTools(root, refresh) {
     section.querySelectorAll('[data-word-action]').forEach(button=>button.addEventListener('click',async()=>{
         try {
             const action=button.dataset.wordAction,ctx=context(),cfg=getSettings().wordTools;
+            if(document.body.classList.contains('cg-previewing')&&['load-older','all','pull-original','pull-translation','preview','apply','undo-chat','capture'].includes(action))throw userError('다른 채팅 미리보기를 닫은 뒤 메시지를 선택해 주세요.');
             const oldKey=chatKey;syncChat();if(oldKey!==chatKey) {refresh();return;}
             const ids=[...selected].sort((a,b)=>a-b);
             if(action==='help'){showHelp();return;}
             if(action==='load-older') {
                 const count=await askCount();if(count===null)return;
-                if(context().chatId!==oldKey)throw Error('채팅이 바뀌었어요. 다시 선택해 주세요.');
+                if(context().chatId!==oldKey)throw userError('채팅이 바뀌었어요. 다시 선택해 주세요.');
                 const first=Number(document.querySelector('#chat .mes[mesid]')?.getAttribute('mesid'));
                 if(first===0){globalThis.toastr?.info('이전 메시지를 모두 불러왔어요.','Blue Lemonade');return;}
                 const host=await import('../../../../../script.js');
-                if(context().chatId!==oldKey)throw Error('채팅이 바뀌었어요. 다시 선택해 주세요.');
+                if(context().chatId!==oldKey)throw userError('채팅이 바뀌었어요. 다시 선택해 주세요.');
                 await host.showMoreMessages(count);syncChat();
             }
             if(action==='save-preset') {
                 const name=section.querySelector('[data-word-preset-name]').value.trim();
-                if(!name)throw Error('저장할 프리셋 이름을 입력해 주세요.');
-                if(cfg.presets.length>=24)throw Error('프리셋은 최대 24개까지 저장할 수 있어요.');
+                if(!name)throw userError('저장할 프리셋 이름을 입력해 주세요.');
+                if(cfg.presets.length>=24)throw userError('프리셋은 최대 24개까지 저장할 수 있어요.');
                 const preset={id:globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random()}`,name,rules:structuredClone(cfg.rules),caseSensitive:cfg.caseSensitive,wholeWords:cfg.wholeWords,particles:cfg.particles};
                 cfg.presets.push(preset);saveSettings();
             }
             if(['load-preset','delete-preset'].includes(action)) {
                 const id=section.querySelector('[data-word-preset]').value,preset=cfg.presets.find(p=>p.id===id);
-                if(!preset)throw Error('프리셋을 먼저 선택해 주세요.');
+                if(!preset)throw userError('프리셋을 먼저 선택해 주세요.');
                 if(action==='delete-preset'){cfg.presets=cfg.presets.filter(p=>p.id!==id);if(getSettings().captureTools.preset===id)getSettings().captureTools.preset='';}
                 else{for(const key of ['rules','caseSensitive','wholeWords','particles'])cfg[key]=structuredClone(preset[key]);invalidate();}
                 saveSettings();
@@ -145,10 +149,10 @@ export function bindWordTools(root, refresh) {
             if(action==='none')selected.clear();
             if(action==='all')section.querySelectorAll('[data-word-message]').forEach(input=>selected.add(Number(input.dataset.wordMessage)));
             if(action==='pull-original'||action==='pull-translation') {
-                if(!ids.length)throw Error('가져올 메시지를 먼저 선택해 주세요.');
+                if(!ids.length)throw userError('가져올 메시지를 먼저 선택해 주세요.');
                 const translated=action==='pull-translation';
                 const missing=ids.filter(id=>!ctx.chat[id]||(translated&&!(typeof ctx.chat[id].extra?.display_text==='string'&&ctx.chat[id].extra.display_text.trim())));
-                if(missing.length)throw Error(translated?`#${missing.join(', #')}에 번역문이 없어요. 번역된 메시지만 선택해 주세요.`:'선택한 메시지가 바뀌었어요. 다시 선택해 주세요.');
+                if(missing.length)throw userError(translated?`#${missing.join(', #')}에 번역문이 없어요. 번역된 메시지만 선택해 주세요.`:'선택한 메시지가 바뀌었어요. 다시 선택해 주세요.');
                 undoDraft=draft;
                 draft=ids.map(id=>translated?ctx.chat[id].extra.display_text:ctx.chat[id].mes).join('\n\n');
             }
@@ -156,7 +160,7 @@ export function bindWordTools(root, refresh) {
             if(action==='undo-draft'&&undoDraft!==null){[draft,undoDraft]=[undoDraft,draft];}
             if(action==='copy'){await copyText(draft,section);globalThis.toastr?.success('복사했어요.','Blue Lemonade');}
             if(action==='preview') {
-                if(!ids.length)throw Error('메시지를 먼저 선택해 주세요.');
+                if(!ids.length)throw userError('메시지를 먼저 선택해 주세요.');
                 await loadHash();
                 proposal={key:ctx.chatId,rows:ids.map(id=>{
                     const message=ctx.chat[id],before=snapshot(message),after={...before};
@@ -167,19 +171,19 @@ export function bindWordTools(root, refresh) {
                     if(before.swipeText!==undefined)after.swipeText=after.mes;
                     return {id,message,before,after,count:result.count};
                 }).filter(row=>!same(row.before,row.after))};
-                if(!proposal.rows.length){proposal=null;throw Error('선택한 메시지에서 바뀔 내용이 없어요.');}
+                if(!proposal.rows.length){proposal=null;throw userError('선택한 메시지에서 바뀔 내용이 없어요.');}
             }
             if(action==='apply'&&proposal){await applyTransaction(proposal);undoChat=proposal;proposal=null;}
             if(action==='undo-chat'&&undoChat){await applyTransaction(undoChat,true);undoChat=null;}
             if(action==='capture') {
-                if(!ids.length)throw Error('메시지를 먼저 선택해 주세요.');
+                if(!ids.length)throw userError('메시지를 먼저 선택해 주세요.');
                 button.disabled=true;await openCapturePreview(ids,section.querySelector('[data-capture-stage]'),()=>[...selected].sort((a,b)=>a-b));button.disabled=false;button.hidden=true;return;
             }
             if(action==='pull-original'||action==='pull-translation')root._addonFolds?.set(`${root._editorRoute}/workspace`,true);
             if(action==='preview')root._addonFolds?.set(`${root._editorRoute}/apply`,true);
             refresh();
             if(action==='pull-original'||action==='pull-translation'){const area=root.querySelector('[data-word-draft]');area?.scrollIntoView({block:'center',behavior:'smooth'});area?.focus({preventScroll:true});}
-        } catch(error){console.error('[Blue Lemonade] 글 도구',error);const status=section.querySelector('[data-word-status]');if(status)status.textContent=error.message||'작업에 실패했어요.';globalThis.toastr?.warning(error.message||'작업을 마치지 못했어요.','Blue Lemonade');button.disabled=false;if(button.dataset.wordAction==='capture')button.textContent='선택한 메시지 캡처';}
+        } catch(error){if(!error.user)console.error('[Blue Lemonade] 글 도구',error);const status=section.querySelector('[data-word-status]');if(status)status.textContent=error.message||'작업에 실패했어요.';globalThis.toastr?.warning(error.message||'작업을 마치지 못했어요.','Blue Lemonade');button.disabled=false;if(button.dataset.wordAction==='capture')button.textContent='캡처 미리보기 만들기';}
     }));
 }
 
@@ -192,11 +196,11 @@ async function copyText(text,near) {
     (near?.closest('dialog[open]')||document.body).append(area);area.select();area.setSelectionRange(0,area.value.length); // iOS 는 readOnly 칸에서 select() 만으로 안 골라질 때가 있다
     let ok=false;try{ok=document.execCommand('copy');}catch{ok=false;}
     area.remove();back?.focus?.({preventScroll:true});
-    if(!ok)throw Error('복사하지 못했어요.');
+    if(!ok)throw userError('복사하지 못했어요.');
 }
 function popup(html) {
     const dialog=document.createElement('dialog');dialog.className='bl-tool-dialog';dialog.innerHTML=html;
-    document.body.append(dialog);dialog.showModal();dialog.addEventListener('close',()=>dialog.remove(),{once:true});return dialog;
+    document.body.append(dialog);showThemeModal(dialog);dialog.addEventListener('close',()=>dialog.remove(),{once:true});return dialog;
 }
 function showHelp() {
     const dialog=popup(`<h3>치환 규칙 도움말</h3><p><b>여러 찾을 말</b><br>같은 단어의 다른 표기나 같은 결과로 바꿀 표현을 쉼표로 적어요. <code>레몬, lemon</code> → <code>귤</code>이면 ‘레몬’도 ‘lemon’도 ‘귤’로 바뀌어요. 한 단어로 합치는 뜻은 아니에요.</p><p><b>대소문자 구분</b><br>ON: <code>lemon</code>만 바뀌고 <code>Lemon</code>은 남아요.<br>OFF: <code>lemon</code>, <code>Lemon</code>, <code>LEMON</code>을 모두 찾아요.</p><p><b>낱말 단위</b><br>ON: ‘사과’는 찾지만 ‘사과나무’ 속 ‘사과’는 바꾸지 않아요. 조사 자동 보정을 함께 켜면 ‘사과는’처럼 조사가 붙은 말도 찾아요.<br>OFF: 다른 단어 안에 들어 있는 글자도 찾아요.</p><p><b>조사 자동 보정</b><br><code>사과 → 귤</code>이면 ‘사과는’ → ‘귤은’, ‘사과를’ → ‘귤을’로 맞춰요. OFF면 ‘귤는’, ‘귤를’처럼 원래 조사가 남아요.</p><button type="button" class="salty-btn">닫기</button>`);

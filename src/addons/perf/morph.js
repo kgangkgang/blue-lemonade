@@ -45,8 +45,14 @@ export function morphOptions(el, drawn, seen = null) {
         }
         for (const node of seen.touched) if (node !== el && el.contains(node)) mark(node);
     }
+    // Equal parents still need a walk when they contain foreign nodes or live form state.
+    const mustWalk = new WeakSet();
+    const walkParents = node => { for (let p = node; p && p !== el; p = p.parentElement) mustWalk.add(p); };
+    for (const node of foreign.keys()) walkParents(node);
+    for (const node of el.querySelectorAll?.('input,textarea,select,option') || []) walkParents(node);
     return {
         childrenOnly: true,
+        onBeforeElUpdated: (from, to) => mustWalk.has(from) || !from.isEqualNode(to),
         getNodeKey: node => foreign.get(node),
         onNodeAdded: (node) => {
             if (node.nodeType === 1) drawn.add(node);

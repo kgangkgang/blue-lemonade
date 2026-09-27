@@ -5,7 +5,7 @@
    실제 팝업의 두 id 를 포함한다. 옛 카드 규칙이 더 무거워 여백 수정이 가려지던 문제를 막는다.
    제목과 역할은 왼쪽, 토큰은 오른쪽. 원문은 담백한 면 안에서 왼쪽 정렬로 읽는다. */
 body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list {
-  margin: var(--bl-s3) calc(var(--pp, 12px) * -1) 0 !important;
+  margin: var(--bl-s3) calc(var(--bl-gutter, 12px) * -1) 0 !important;
   padding: 0 !important;
   width: auto !important;
   text-align: left;

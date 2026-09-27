@@ -2,11 +2,10 @@
 import { addOneMessage, reloadCurrentChat } from '../../../../../../../script.js';
 // isGenerating은 실리태번 버전에 따라 없을 수 있어서 이름으로 import하지 않는다 (없는 이름을 import하면 확장 전체가 안 뜬다).
 import * as sillyTavern from '../../../../../../../script.js';
-import { hooks, settings, saveSettings, iconName } from './state.js';
-import { loadRecord, removeBookmark, setNote, editMessageText, flushBookmarkSave } from './data.js';
+import { hooks, settings, saveSettings, iconName, applyColors, colorsFor, currentChatKey } from './state.js';
+import { loadRecord, removeBookmark, setNote, editMessageText, flushBookmarkSave, bookmarkMessage } from './data.js';
 import { escapeHtml, formatDate, renderMessageHtml, renderReasoningHtml, avatarForMessage, hydrateHtmlBlocks } from './render.js';
-import { openSheet, confirmSheet, textSheet } from './ui-kit.js';
-import { hasTranslation, originalTextOf, editableTranslation, setTranslation, clearTranslation } from './translate.js';
+import { openSheet, confirmSheet, textSheet, hasOpenSheet } from './ui-kit.js';
 import { isBlockedPreviewKey } from './preview-guard.js';
 
 const NOTE_HINT = '*기울기*, **굵게**, &lt;br&gt; 같은 HTML도 쓸 수 있어요. Ctrl+Enter로 저장.';
@@ -16,7 +15,7 @@ const NOTE_HINT = '*기울기*, **굵게**, &lt;br&gt; 같은 HTML도 쓸 수 �
  * @returns {Promise<boolean>} 북마크가 남아 있으면 true
  */
 export async function openNoteEditor(record, fav, { createdNow = false } = {}) {
-    const message = record.messages?.[Number(fav.messageId)];
+    const message = bookmarkMessage(record, fav);
     const note = await textSheet({
         title: createdNow ? '북마크 + 메모' : '메모',
         subtitle: `${message?.name ?? fav.sender ?? ''} · #${fav.messageId}`,
@@ -47,6 +46,7 @@ export async function openMessageEditor(record, index) {
         toastr.error('메시지를 찾을 수 없습니다.', '북마크');
         return false;
     }
+    const expected = { mes: message.mes, send_date: message.send_date, name: message.name, is_user: message.is_user };
     const translatedNote = message.extra?.display_text
         ? '번역문이 있는 메시지예요. 원문을 바꾸면 번역문은 지워지고 원문이 보여요.<br>'
         : '';
@@ -61,7 +61,7 @@ export async function openMessageEditor(record, index) {
     });
     if (text === null || text === message.mes) return false;
     try {
-        await editMessageText(record, index, text);
+        await editMessageText(record, index, text, expected);
         toastr.success('원문을 고쳤어요.', '북마크');
         return true;
     } catch (error) {
@@ -78,6 +78,7 @@ export async function openMessageEditor(record, index) {
  * @returns {Promise<boolean>} 바꿨으면 true
  */
 export async function openTranslationEditor(record, index) {
+    const { hasTranslation, originalTextOf, editableTranslation, setTranslation, clearTranslation } = await import('./translate.js');
     let current;
     try {
         await loadRecord(record);
@@ -126,6 +127,7 @@ export async function openTranslationEditor(record, index) {
 
 /** @returns {Promise<boolean>} 지웠으면 true */
 export async function confirmClearTranslation(record, index) {
+    const { hasTranslation, originalTextOf, clearTranslation } = await import('./translate.js');
     let expected;
     try {
         await loadRecord(record);
@@ -216,7 +218,7 @@ export async function openContextViewer(record, index) {
         for (let i = first; i <= last; i++) body.append(renderBubble(record, i, i === index));
         hydrateHtmlBlocks(body);
         const focus = body.querySelector('.is-focus');
-        if (focus) sheet.body.scrollTop = Math.max(0, focus.offsetTop - 12);
+        if (focus) sheet.body.scrollTop = Math.max(0, focus.getBoundingClientRect().top - sheet.body.getBoundingClientRect().top + sheet.body.scrollTop - 12);
     };
 
     sheet.extra.addEventListener('click', (event) => {
@@ -338,7 +340,7 @@ export async function enterPreview(record, index) {
 // 화면에는 다른 채팅이 그려져 있지만 실리태번의 데이터는 지금 채팅이라, 그대로 두면 지금 채팅의 답을 지우고 새 답을 미리보기 화면에 그렸다.
 // (입력창 위 버튼들은 style.css가 #form_sheld 안에서 미리보기 막대만 남기고 숨긴다.)
 window.addEventListener('keydown', (event) => {
-    if (!preview || !isBlockedPreviewKey(event)) return;
+    if (!(preview || hooks.isPanelOpen() || hasOpenSheet()) || !isBlockedPreviewKey(event)) return;
     event.preventDefault();
     event.stopPropagation();
 }, true);
@@ -352,6 +354,7 @@ export async function abandonPreviewForGeneration() {
     if (!preview) return;
     preview = null;
     document.body.classList.remove('cg-previewing');
+    applyColors(colorsFor(currentChatKey()));
     if (typeof sillyTavern.printMessages === 'function') {
         document.getElementById('chat')?.replaceChildren();
         await sillyTavern.printMessages();
@@ -370,6 +373,7 @@ export async function exitPreview({ reload = true } = {}) {
     }
     preview = null;
     document.body.classList.remove('cg-previewing');
+    applyColors(colorsFor(currentChatKey()));
     if (reload) {
         // 미리보기 중에 단 현재 채팅 북마크는 실리태번의 debounce 저장에 맡겨져 있는데, 다시 불러오기(clearChat)가 그 저장을 취소한다.
         await flushBookmarkSave();

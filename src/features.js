@@ -17,6 +17,7 @@ const load = (name, url) => (modules[name] ??= import(url).catch((error) => {
 }));
 
 // 스크립트 런타임: 시작할 때 파일을 못 받으면(폰에서 가끔) 예전에는 다음 설정 변경 때까지 다섯 개가 전부 '꺼짐'으로 남았다 — 몇 번 다시 받는다
+const ignoredHan=new Set(); let pendingHan=null;
 let scriptsWanted=false,scriptRetry=0,scriptHeal=[],scriptWatch=false,scriptsKey='';
 function startScripts(tries=4){
     clearTimeout(scriptRetry);
@@ -34,8 +35,10 @@ function startScripts(tries=4){
                     // 그래도 헬퍼 항목이 중국어로 남아 있으면(스크립트는 '사용 중') 헬퍼 한글화를 새로 시작한다 — 새로 시작하면 메뉴 전체를 처음부터 다시 훑는다
                     for(const ms of [700,2500])setTimeout(()=>{
                         if(!scriptsWanted||m.scriptStatus('helper')!=='사용 중')return;
-                        const left=[...document.querySelectorAll('#extensionsMenu .list-group-item, #extensionsMenu .extension_container span')].some(node=>/[一-鿿]/.test(node.textContent));
-                        if(left)m.reviveScript('helper','메뉴에 한자가 남음');
+                        const labels=[...document.querySelectorAll('#extensionsMenu .list-group-item, #extensionsMenu .extension_container span')].map(node=>node.textContent.trim()).filter(text=>/[一-鿿]/.test(text));
+                        if(pendingHan){for(const text of labels)if(pendingHan.has(text))ignoredHan.add(text);pendingHan=null;}
+                        const left=labels.filter(text=>!ignoredHan.has(text));
+                        if(left.length&&m.reviveScript('helper','메뉴에 한자가 남음'))pendingHan=new Set(left);
                     },ms);
                 },true);
                 document.addEventListener('visibilitychange',()=>{if(!document.hidden)m.healScripts(scriptsWanted);});}
@@ -54,7 +57,7 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     const fold=on&&!!(s.chat?.triangleFold??SillyTavern.getContext().extensionSettings?.blue_lemonade_scripts?.enabled?.fold);
     if(fold||modules.fold)load('fold','./fold.js').then(m=>m?.syncFold(fold));
     const scriptsEnabled=SillyTavern.getContext().extensionSettings?.blue_lemonade_scripts?.enabled||{};
-    const scriptsRequested=Object.values(scriptsEnabled).some(v=>v===true);
+    const scriptsRequested=Object.entries(scriptsEnabled).some(([id,v])=>id!=='fold'&&v===true);
     // The editor can start the runtime before this module has imported it.
     scriptsWanted=addonsOn&&scriptsRequested;
     // 5.3.4: applyAll 마다(슬라이더를 끌면 프레임마다) 되살림 타이머 일곱 개를 지우고 다시 걸었다 — 처음 · 스크립트 켜고 끔이 바뀔 때만

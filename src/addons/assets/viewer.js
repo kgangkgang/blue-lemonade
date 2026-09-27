@@ -1,7 +1,7 @@
 // 캐릭터 에셋 — 그림 크게 보기 (넘기기, 확대, 켜기/끄기, 태그 복사, 이름 바꾸기, 지우기)
 // <dialog>의 맨 위 층(top layer)에 띄워서, 폰에서 html에 transform이 걸려 있어도 화면 밖으로 밀리지 않는다.
 import { fixToastrForDialogs } from '../../../../../../popup.js';
-import { disabledSet, setDisabled } from './state.js';
+import { disabledSet, setDisabled, forgetOptimized, copyOptimized } from './state.js';
 import { deleteAsset, renameAsset, sanitizeBase, sameBaseSiblings } from './assets.js';
 import { toast, confirmDialog, inputDialog, copyText, applyThemeVars } from './ui.js';
 import { runtime, reload, recompute, sourceByKey } from './store.js';
@@ -527,7 +527,10 @@ export function openViewer({ items, start = 0 }) {
             await renameAsset(asset, newBase, {
                 taken,
                 // 새 파일이 생기자마자 꺼짐 상태를 옮겨서, 예전 파일 지우기가 실패해도 숨긴 그림이 AI에게 새지 않게 한다.
-                afterUpload: () => { if (wasOff) setDisabled(asset.folder, newFile, true); },
+                afterUpload: () => {
+                    copyOptimized(asset.folder, asset.file, asset.folder, newFile);
+                    if (wasOff) setDisabled(asset.folder, newFile, true);
+                },
             });
         } catch (error) {
             console.error('[캐릭터 에셋] 이름 바꾸기 실패', error);
@@ -540,7 +543,10 @@ export function openViewer({ items, start = 0 }) {
             toast('warning', error.message, { timeOut: 10000 });
         }
         try {
-            if (!partial) setDisabled(asset.folder, asset.file, false);
+            if (!partial) {
+                setDisabled(asset.folder, asset.file, false);
+                forgetOptimized(asset.folder, [asset.file, ...siblings.map(item => item.file)]);
+            }
             await reload();
             const fresh = runtime.sources.find(source => source.key === asset.folder)?.assets.find(other => other.file.toLowerCase() === newFile.toLowerCase()) ?? null;
             // 덮어쓴 파일과 함께 지워진 같은 이름 파일은 넘겨 보기 목록에서도 뺀다
@@ -583,6 +589,7 @@ export function openViewer({ items, start = 0 }) {
             await deleteAsset(asset.folder, asset.base);
             const gone = new Set([asset, ...siblings].map(item => item.file));
             for (const file of gone) setDisabled(asset.folder, file, false);
+            forgetOptimized(asset.folder, [...gone]);
             toast('success', `'${asset.file}'을(를) 지웠어요.`);
             await reload();
             // 채팅 · 북마크 카드 · 메모에 이미 떠 있는 그 그림을 숨기게 알린다 (hold.js)

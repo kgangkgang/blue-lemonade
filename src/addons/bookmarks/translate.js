@@ -172,14 +172,19 @@ async function withStore(mode, task) {
 }
 
 function dbGet(original) {
+    const read = globalThis[Symbol.for('blue-lemonade.translator')]?.readCachedTranslation;
+    if (typeof read === 'function') return read(original);
     return withStore('readonly', async (store) => {
-        const record = await requestToPromise(store.index('originalText').get(original));
+        const records = await requestToPromise(store.index('originalText').getAll(original));
+        const record = records.reverse().find(item => typeof item?.translation === 'string');
         return typeof record?.translation === 'string' ? record.translation : null;
     });
 }
 
 /** 같은 원문이 있으면 그 줄을 고치고, 없으면 새로 적는다. 날짜는 번역기와 같은 방식(한국 시간을 더한 ISO)으로 쓴다. */
 function dbPut(original, translation) {
+    const storeTranslation = globalThis[Symbol.for('blue-lemonade.translator')]?.storeTranslationQuietly;
+    if (typeof storeTranslation === 'function') return storeTranslation(original, translation);
     const settings = extension_settings[TRANSLATOR_MODULE] ?? {};
     const fields = {
         translation,
@@ -188,15 +193,19 @@ function dbPut(original, translation) {
         date: new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString(),
     };
     return withStore('readwrite', async (store) => {
-        const existing = await requestToPromise(store.index('originalText').get(original));
-        await requestToPromise(existing ? store.put({ ...existing, ...fields }) : store.add({ originalText: original, ...fields }));
+        const existing = await requestToPromise(store.index('originalText').getAll(original));
+        const newest = existing.at(-1);
+        await requestToPromise(newest ? store.put({ ...newest, ...fields }) : store.add({ originalText: original, ...fields }));
+        for (const row of existing.slice(0, -1)) await requestToPromise(store.delete(row.id));
     });
 }
 
 function dbDelete(original) {
+    const deleteTranslation = globalThis[Symbol.for('blue-lemonade.translator')]?.deleteCachedTranslation;
+    if (typeof deleteTranslation === 'function') return deleteTranslation(original);
     return withStore('readwrite', async (store) => {
-        const existing = await requestToPromise(store.index('originalText').get(original));
-        if (existing) await requestToPromise(store.delete(existing.id));
+        const existing = await requestToPromise(store.index('originalText').getAll(original));
+        for (const row of existing) await requestToPromise(store.delete(row.id));
     });
 }
 

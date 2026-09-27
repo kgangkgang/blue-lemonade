@@ -241,3 +241,12 @@ body.salty #dialogue_del_mes #dialogue_del_mes_ok { background: var(--salty-dang
   body.salty #user-settings-block #user-settings-block-content .flex-container:has(> :is(span, label) + select):not(#UI-language-block) > select { width: 100% !important; max-width: none !important; min-width: 0 !important; text-align: left !important; text-align-last: left !important; background-color: var(--bl-control) !important; border-radius: 8px !important; }
 }
 /* ===== /surfaces:witidy ===== */
+
+/* Custom sorting gives the drag handle a column beside the expand button. */
+body.salty:not(#salty-none) #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header:has(> .drag-handle) {
+  grid-template-columns: 22px 22px minmax(0, 1fr) 36px 28px;
+}
+body.salty:not(#salty-none) #WorldInfo .world_entry .inline-drawer-header:has(> .drag-handle) .inline-drawer-toggle { grid-area: 1 / 2; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .inline-drawer-header:has(> .drag-handle) .WIEntryTitleAndStatus { grid-area: 1 / 3; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .inline-drawer-header:has(> .drag-handle) .killSwitch { grid-area: 1 / 4; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .inline-drawer-header:has(> .drag-handle) .bl-wi-actions { grid-area: 1 / 5; }

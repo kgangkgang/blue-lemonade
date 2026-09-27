@@ -971,10 +971,10 @@ body.salty .popup.swipe_picker_popup .popup-controls input {
     min-width: 0;
   }
   /* 날짜가 길어 한 줄에 다 안 들어감 → 파일 크기는 접고 날짜 · 개수만 (여는 괄호는 개수 앞에 다시 붙임) */
-  body.salty :is(.select_chat_block, .swipe_picker_block) .select_chat_info .chat_file_size {
+  body.salty .select_chat_block:not(.swipe_picker_block) .select_chat_info .chat_file_size {
     display: none;
   }
-  body.salty :is(.select_chat_block, .swipe_picker_block) .select_chat_info .chat_messages_num::before {
+  body.salty .select_chat_block:not(.swipe_picker_block) .select_chat_info .chat_messages_num::before {
     content: "(";
   }
 }

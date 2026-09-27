@@ -13,7 +13,7 @@ export function customCssReport(css = SillyTavern.getContext().powerUserSettings
     const chat = [];
     let rules = 0;
     // 주석 · @media 껍데기를 벗기고 "선택자 { … }" 조각만 본다
-    const body = text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/@[^{]+\{/g, '');
+    const body = text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/@(?:import|charset|namespace|layer)\b(?:url\([^)]*\)|"[^"]*"|'[^']*'|[^;{}'"])*;/g, '').replace(/@[^{]+\{/g, '');
     for (const match of body.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
         const selector = match[1].replace(/\s+/g, ' ').trim();
         if (!selector || selector.startsWith('@')) continue;
@@ -40,7 +40,7 @@ export async function buildDiagnosis() {
         extensions = (ext.extensionNames || []).filter(n => !disabled.has(n)).map(n => n.replace(/^third-party\//, '')).join(', ') || '없음';
     } catch { /* 실리태번 구조가 다르면 목록 없이 */ }
     const addons = Object.entries(s.addons || {}).filter(([, on]) => on).map(([id]) => id).join(', ') || '없음';
-    const scripts = Object.entries(ctx.extensionSettings?.blue_lemonade_scripts?.enabled || {}).filter(([, on]) => on).map(([id]) => id).join(', ') || '없음';
+    const scripts = Object.entries(ctx.extensionSettings?.blue_lemonade_scripts?.enabled || {}).filter(([, on]) => on).map(([id]) => id + (ctx.extensionSettings?.blue_lemonade_scripts?.overrides?.[id] ? '*' : '')).join(', ') || '없음';
     const lines = [
         `블루 레몬에이드 ${currentVersion() || '?'} · 실리태번 ${stVersion} · ${short(navigator.userAgent)} · ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`,
         `화면 ${window.innerWidth}×${window.innerHeight} @${devicePixelRatio} ${window.innerWidth < window.innerHeight ? '세로' : '가로'} · 실리태번 표시: ${flags.join(' ') || '기본'} · 언어 ${ctx.powerUserSettings?.ui_language || navigator.language}`,

@@ -101,6 +101,8 @@ body.salty #regex_container .regex-toggle-off { opacity:1; color:var(--salty-mut
 
 /* 기본 팝업도 공통 모서리·팔레트. 바깥/본문에 겹쳐 붙는 모바일 여백을 한 번만 둔다. */
 html body.salty dialog.popup { border-radius:var(--bl-r-lg)!important; color:var(--salty-text); }
+/* fit-content minimums can push the controls below a short landscape viewport. */
+html body.salty dialog.popup:not(.transparent_dialogue_popup) { min-height:0!important; }
 html body.salty dialog.popup .popup-controls { flex-wrap:wrap; justify-content:center; gap:8px 10px; }
 html body.salty dialog.popup .popup-controls > .menu_button {
   flex:0 1 auto; width:auto; min-width:5.5em; max-width:100%;
@@ -119,7 +121,7 @@ html body.salty > .picker[pick-colors-theme] :is(input,.label) {
   border-color:var(--salty-line)!important; border-radius:var(--bl-r-sm);
 }
 @media(max-width:760px) {
-  html body.salty dialog.popup:not(.bl-settings-dialog):not(.transparent_dialogue_popup) {
+  html body.salty dialog.popup:not(.bl-settings-dialog, .transparent_dialogue_popup, .bl-roomy-dialog):not(:has(.salty-notice)) {
     max-width:calc(100dvw - 16px)!important; max-height:calc(100dvh - 16px)!important;
     padding:12px 10px!important;
   }
