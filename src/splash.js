@@ -11,6 +11,38 @@ export const SPLASH_COMMAND = `f=~/SillyTavern/data/_css/user.css; mkdir -p "\${
 
 const LEMON_PATH = 'M448 352Q447 379 429 397Q411 415 384 416Q374 416 365 413Q348 407 330 404Q311 400 294 404Q237 418 180 399Q124 379 80 336Q37 292 17 236Q-2 179 12 122Q16 105 12 86Q9 68 3 51Q0 42 0 32Q1 5 19 -13Q37 -31 64 -32Q74 -32 83 -29Q100 -23 118 -20Q137 -16 154 -20Q211 -34 268 -15Q324 5 368 48Q411 92 431 148Q450 205 436 262Q432 279 436 298Q439 316 445 333Q448 342 448 352ZM213 321Q171 308 139 277Q108 245 95 203Q90 190 76 193Q62 198 65 212Q80 262 117 299Q154 336 204 351Q218 354 223 340Q226 326 213 321Z';
 
+// 5.5.0: 테마를 켜면 브라우저 탭 아이콘도 레몬 (사용자: "실리태번 아이콘도 레몬으로 … 전체패치로"). 테마를 끄거나 '확장만' 모드면
+// 원래 실리태번 아이콘으로 돌린다. 실리태번 index.html 의 <link rel="icon"> 하나만 바꾼다 — 홈 화면(manifest) · apple-touch-icon 은 그대로.
+// 폰 크롬까지 보이게 SVG 대신 캔버스로 그린 64px PNG (못 그리면 SVG). 색은 홈페이지 레몬(#FFE23C) + 밝은 탭에서도 보이게 진한 테두리.
+let faviconSaved = null, faviconUrl = '';
+function lemonFavicon() {
+    if (faviconUrl) return faviconUrl;
+    try {
+        const c = document.createElement('canvas'); c.width = c.height = 64;
+        const g = c.getContext('2d'), p = new Path2D(LEMON_PATH);
+        g.scale(64 / 472, 64 / 472); g.translate(12, -20); g.translate(0, 448); g.scale(1, -1);
+        g.fillStyle = '#FFE23C'; g.fill(p, 'evenodd');
+        g.lineWidth = 18; g.lineJoin = 'round'; g.strokeStyle = '#E9BE00'; g.stroke(p);
+        faviconUrl = c.toDataURL('image/png');
+    } catch {
+        faviconUrl = 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='-12 20 472 472'><path fill='#FFE23C' fill-rule='evenodd' stroke='#E9BE00' stroke-width='18' stroke-linejoin='round' transform='translate(0 448) scale(1 -1)' d='${LEMON_PATH}'/></svg>`);
+    }
+    return faviconUrl;
+}
+export function syncFavicon(on) {
+    const link = faviconSaved?.link || document.querySelector('link[rel~="icon"]');
+    if (!link) return;
+    if (on) {
+        if (!faviconSaved) faviconSaved = { link, href: link.getAttribute('href'), type: link.getAttribute('type') };
+        const url = lemonFavicon();
+        if (link.getAttribute('href') !== url) { link.setAttribute('type', url.startsWith('data:image/png') ? 'image/png' : 'image/svg+xml'); link.setAttribute('href', url); }
+    } else if (faviconSaved) {
+        const { href, type } = faviconSaved; faviconSaved = null;
+        if (type == null) link.removeAttribute('type'); else link.setAttribute('type', type);
+        if (href == null) link.removeAttribute('href'); else link.setAttribute('href', href);
+    }
+}
+
 let state = null;   // null 모름 · 'on' 줄 있음 · 'late' 줄은 있는데 다른 규칙 뒤라 무시됨 · 'off' 없음
 let checking = null;
 let served = null;  // 서버에 있는 스플래시 파일 내용 (한 번 읽음)

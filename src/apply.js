@@ -15,7 +15,7 @@ import { comparisonView } from './appearance-compare.js';
 import { weatherReadability } from './weather-readability.js';
 import { themeEnabled, addonsEnabled } from './usage-mode.js';
 import { syncFeatures } from './features.js';
-import { syncSplash } from './splash.js';
+import { syncSplash, syncFavicon } from './splash.js';
 import { markdownClasses } from './markdown.js';
 import { syncExtensionColors } from './extension-colors.js';
 
@@ -724,6 +724,7 @@ export function applyAll() {
     syncSamples(s);
     syncCustomCss(!!(s.enabled && s.compat?.muteCustomCss));
     syncExtensionColors(!!(s.enabled && s.compat?.preserveExtensionColors));
+    syncFavicon(!!s.enabled);   // 5.5.0 탭 아이콘 레몬 (끄면 실리태번 아이콘)
 
     applyFonts(s);
     syncFeatures(s, addonsEnabled(getSettings())); // 3.1.0 켤 때만 불러오는 기능 (features.js)

@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.4.9";
+export const BUILD_VERSION = "5.5.0";
 export const FILE_HASHES = {
   "index.js": "13797:958797d2:0a6609e3",
-  "manifest.json": "365:a02db497:6551589c",
+  "manifest.json": "365:fb273443:4afa157a",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -143,7 +143,7 @@ export const FILE_HASHES = {
   "src/addons/translator/translation-segments.js": "30420:57bb67a5:1a03adb3",
   "src/appearance-archive.js": "1287:215093f5:1c7f1dc7",
   "src/appearance-compare.js": "3140:831ffdf1:a1f78cb0",
-  "src/apply.js": "53742:23b43024:3e609c7f",
+  "src/apply.js": "53849:5cd63585:18b5b33c",
   "src/assets.js": "21834:e50c9dff:52dba6e4",
   "src/assist/core.js": "1438:12c6e305:729cdc05",
   "src/assist/diagnostics.js": "4778:b76a9825:f6e0071b",
@@ -218,7 +218,7 @@ export const FILE_HASHES = {
   "src/mes-fold.js": "14768:30e2ebec:1b724386",
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/modal.js": "671:b74e0164:71228d7c",
-  "src/notice-data.js": "135193:ee333deb:bc8553ee",
+  "src/notice-data.js": "135441:bf70319e:5abe9705",
   "src/notice.js": "4646:b947f2a6:e551e710",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "1144:1da72451:b2e66e80",
@@ -261,7 +261,7 @@ export const FILE_HASHES = {
   "src/settings-labels.js": "33146:5d2f4bbe:6c21f980",
   "src/settings-search.js": "25879:c9dacf35:29f6df34",
   "src/settings.js": "59611:4921f1b6:74adc688",
-  "src/splash.js": "11968:2f106622:ae9be9d1",
+  "src/splash.js": "14172:e474be32:e7f74c46",
   "src/streamfade.js": "14136:0e2127b6:06593cf1",
   "src/sttheme.js": "7566:767ea5d8:7cfe12ab",
   "src/styles.js": "15875:817b31b4:8a11c0fe",
@@ -284,5 +284,5 @@ export const FILE_HASHES = {
   "src/weather.js": "33405:96f4eabb:71394dc5",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "25209:66cc392d:dbcd59cf",
-  "style.css": "1118271:24cd7f1a:b35dd0c2"
+  "style.css": "1118271:05abd83a:23da7b59"
 };
