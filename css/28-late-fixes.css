@@ -264,7 +264,12 @@ body.salty-dark .salty-panel .salty-pick > button.on { color: var(--bl-pop, var(
 /* ---------- 고르기 목록 팝업 (2.5.0, src/selects.js — 실리태번 select 를 테마가 그린 목록으로) ----------
    설정창 소분류 팝업(.salty-panel .salty-pick)과 같은 모양을 설정창 밖에서도 쓰려고 .salty-pick-float 로 한 벌 더.
    .salty-pick-layer 는 화면 전체를 덮는 투명 층 — 바깥을 누르면 닫히고, 뒤 화면은 그동안 안 눌림 (OS 목록과 같음) */
-body.salty .salty-pick-layer { position: fixed; inset: 0; z-index: 100000; background: transparent; }
+body.salty .salty-pick-layer {
+  position: fixed; inset: 0; z-index: 2147483647; background: transparent;
+  /* popover의 브라우저 기본 여백/테두리를 지워 좌표와 클릭 차단 범위를 화면에 맞춘다. */
+  margin: 0; padding: 0; border: 0; box-sizing: border-box; max-width: none; max-height: none; overflow: visible;
+}
+body.salty .salty-pick-layer::backdrop { background: transparent; }
 body.salty .salty-pick-float {
   position: fixed; display: flex; flex-direction: column; box-sizing: border-box;
   padding: 6px; border-radius: 14px;

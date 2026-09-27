@@ -5,7 +5,7 @@
    ===== */
 /* ===== 미리보기 자동 생성 (surfaces:preview) =====
    tools/gen-preview-css.js 가 #chat 규칙을 여기 복사한다 — 손으로 고치지 말 것.
-   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 338개 (89.9KB).
+   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 339개 (90.1KB).
    style.css 의 채팅 · 에셋 규칙을 고치면 `node tools/gen-preview-css.js` 를 다시 돌린다.
    이 칸을 다른 자리로 옮기지 말 것: 사본이 손으로 쓴 채팅 규칙보다 뒤에 있어야 같은 무게에서 이기고,
    바로 뒤의 보정 칸이 사본을 눌러 줄 수 있다. 앞으로 옮기면 아바타 모서리처럼 순서로만 갈리는 것이 뒤집힌다 */
@@ -626,8 +626,11 @@ body.salty.salty-user-table :is(#salty-nochat, .salty-preview) .mes[is_user="tru
 body.salty.salty-user-table :is(#salty-nochat, .salty-preview) .mes[is_user="true"].selected::before {
   background: var(--bl-fill-selected, var(--bl-selected)); box-shadow: 0 0 0 100vmax var(--bl-selected);
 }
-:is(body.salty.salty-indent :is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-sample.salty-indent) :is(q, mark).bl-line-dialogue {
-  margin-inline-start: 1em;
+:is(body.salty.salty-indent :is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-sample.salty-indent) .bl-dialogue-indent {
+  display: inline-block; width: var(--salty-size, 1em); height: 0;
+}
+body.salty.salty-indent :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .mes_text p .bl-dialogue-indent {
+  width: calc(var(--salty-size) * var(--salty-user-scale, 1));
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-wrap, [class*="custom-imageWrapper"]) {
   display: block;

@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.4.5.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.4.6.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.4.5 · 최신 업데이트</summary>
+<summary>5.4.6 · 최신 업데이트</summary>
+
+- 외부 스크립트 팝업에서 선택 목록이 뒤로 가려지거나, 목록을 누를 때 팝업까지 닫히던 충돌을 고쳤어요. 목록 검색과 스크롤, 원래 선택 동작은 그대로예요.
+- 줄을 바꾼 대사에 색상·강조 같은 꾸밈이 있어도 첫 줄 들여쓰기를 적용해요. 긴 대사가 화면 폭 때문에 접힌 다음 줄에는 들여쓰기를 반복하지 않아요.
+
+</details>
+
+<details>
+<summary>5.4.5 · 설정 보존 · 화면과 내장 기능 보강</summary>
 
 - 메시지 버튼이 많아도 이름이 눌리지 않도록 줄을 나눠요. 월드 인포 정렬 손잡이, 메모 검색 줄, 전개 지시 창의 간격과 위치도 다듬었어요.
 - 낮은 화면에서 팝업 버튼이 잘리거나, 팝업 뒤로 안내가 숨어 보이지 않던 것을 고쳤어요. 키보드 초점과 작은 스위치의 누르는 영역도 보강했어요.

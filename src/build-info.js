@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.4.5";
+export const BUILD_VERSION = "5.4.6";
 export const FILE_HASHES = {
   "index.js": "13662:744f7531:9f75b896",
-  "manifest.json": "365:590dcf1b:613ac10c",
+  "manifest.json": "365:b5d99712:b0fdfc4c",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -213,7 +213,7 @@ export const FILE_HASHES = {
   "src/mes-fold.js": "14768:30e2ebec:1b724386",
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/modal.js": "671:b74e0164:71228d7c",
-  "src/notice-data.js": "132536:56bb6a81:e6340c74",
+  "src/notice-data.js": "133011:b3497d0b:24941294",
   "src/notice.js": "4646:b947f2a6:e551e710",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "1144:1da72451:b2e66e80",
@@ -246,7 +246,7 @@ export const FILE_HASHES = {
   "src/scripts/scan.js": "4954:f4ec160d:c53662d2",
   "src/scripts/store.js": "2753:cec72d13:6c6e511e",
   "src/scripts/ui.js": "10407:3e295921:7dd4e356",
-  "src/selects.js": "14227:2902a332:ef54662e",
+  "src/selects.js": "15688:d8ed7579:bc7b590f",
   "src/setting-locks.js": "1163:89aea63d:c0d6b9dd",
   "src/settings-dialog.js": "507:8d5bf18b:340f907b",
   "src/settings-differences.js": "7184:dfad9902:90f7139b",
@@ -263,7 +263,7 @@ export const FILE_HASHES = {
   "src/theme-update.js": "5069:83714290:f7f10db7",
   "src/tone.js": "6264:fdd77fd3:430a20c6",
   "src/touch-sliders.js": "1802:90ccf7ef:7832805d",
-  "src/typography.js": "11529:04c4e22c:0be474af",
+  "src/typography.js": "14011:306f3210:e7bdef88",
   "src/usage-mode.js": "274:97f75b3d:dfa5bb08",
   "src/vendor/gif-writer.js": "15523:55aa4c9a:308694e8",
   "src/vendor/image-q.js": "105671:f2e1c3b1:86833578",
@@ -279,5 +279,5 @@ export const FILE_HASHES = {
   "src/weather.js": "33405:96f4eabb:71394dc5",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "25209:66cc392d:dbcd59cf",
-  "style.css": "946603:8304d9ca:19fbf98b"
+  "style.css": "946975:577f9dad:72d5e931"
 };

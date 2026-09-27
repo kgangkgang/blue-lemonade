@@ -1,9 +1,11 @@
 // Presentation-only fixes. Saved message text and translator source hashes are untouched.
 import { normalizeTrackerSpacing } from './addons/bookmarks/tracker-spacing.js';
 import { restoreDialogueTildes, resetDialogueTildes } from './dialogue-tildes.js';
-import { wrapSpanningQuotes, resetSpanningQuotes, isSpanPiece } from './dialogue-span.js';
+import { wrapSpanningQuotes, resetSpanningQuotes } from './dialogue-span.js';
 let active=false, observer=null, timer=0;
 const originals=new Map(), dirty=new Set();
+const LINE_INDENT='bl-dialogue-indent';
+const mounting=new WeakSet();
 // 5.3.4: 에셋 그림에 곧장 붙은 <br> (사이에 빈칸 · 주석만) — 뒤로 셋, 앞으로 둘까지 .bl-img-br (css/07-images 가 숨김).
 // 예전 CSS 형제 선택자(img + br + br)는 사이의 글자를 건너뛰어 "줄A<br>줄B" 의 줄바꿈까지 숨겼다
 // 5.3.4: 첫 줄 들여쓰기(salty-indent)는 문단의 첫 줄에만 걸려서, <p><img><br>글</p> 의 '글' 은 그림 뒤 새 줄인데도 들여쓰지 않았다
@@ -46,13 +48,48 @@ export function markAssetBreaks(root){
     }
     return changed;
 }
-// 앞의 빈 글은 건너뛴다: 공백 노드, 실리태번 '스트리밍 페이드 인'이 줄바꿈 · 띄어쓰기를 따로 담은 낱말 칸(span.text_segment)
-const blankBefore=node=>{let p=node.previousSibling;while(p&&(p.nodeType===3||p.matches?.('span.text_segment'))&&!p.textContent.trim())p=p.previousSibling;return p;};
-// 맨 앞에 든 대사면 그 칸 앞을 볼 감싸개: 형광펜 <mark>(다른 확장의 하이라이트) · 페이드 인 낱말 칸.
-// 여러 줄 대사 조각은 *강조* 등 글 속 꾸밈도 (그 줄만 들여쓰기가 빠지지 않게 — 실리태번 q 는 예전 그대로)
-const HOST='mark, span.text_segment',PIECE_HOST='mark, span.text_segment, em, strong, u, del, font, span.bl-dialogue-tildes';
+// 글 속 감싸개를 지나 실제 강제 개행만 찾는다. 화면 폭 때문에 접힌 줄은 새 대사가 아니다.
+// 블록 · 독립 inline-block 경계는 넘지 않는다 (자체 text-indent 와 중복되지 않게).
+const INLINE_HOST=/^(SPAN|FONT|MARK|EM|STRONG|B|I|U|S|DEL|INS|A|SMALL|BIG|SUB|SUP|ABBR|CITE|BDI|BDO)$/;
+function dialogueLineStart(q,styles){
+    const style=el=>{let s=styles.get(el);if(!s){const css=getComputedStyle(el);s={display:css.display,whiteSpace:css.whiteSpace};styles.set(el,s);}return s;};
+    const through=el=>INLINE_HOST.test(el.nodeName)&&(/^(inline|contents)$/.test(style(el).display)
+        ||(style(el).display==='inline-block'&&el.classList.contains('custom-dem-expressive')));
+    // null = 내용 없는 조각, false = 앞에 글/독립 상자, true = 보이는 강제 개행.
+    const tail=node=>{
+        if(node.nodeType===8)return null;
+        if(node.nodeType===3){
+            const text=node.data;
+            if(/[\r\n][ \t\r\n\f]*$/.test(text)&&/^(pre|pre-wrap|pre-line|break-spaces)$/.test(style(node.parentElement).whiteSpace))return true;
+            return /^[ \t\r\n\f]*$/.test(text)?null:false;
+        }
+        if(node.nodeType!==1)return false;
+        if(node.classList.contains(LINE_INDENT))return null;
+        if(node.matches('style,script')||style(node).display==='none')return null;
+        if(node.nodeName==='BR')return true;
+        if(node.classList.contains(IMG_INDENT)||!through(node))return false;
+        for(let child=node.lastChild;child;child=child.previousSibling){const found=tail(child);if(found!==null)return found;}
+        return null;
+    };
+    let host=q,mark=null;
+    while(host){
+        for(let prev=host.previousSibling;prev;prev=prev.previousSibling){
+            const found=tail(prev);if(found!==null)return {line:found,mark};
+        }
+        const parent=host.parentElement;
+        if(!parent||!through(parent))break;
+        host=parent;if(host.nodeName==='MARK')mark=host;
+    }
+    return {line:false,mark:null}; // 문단 첫 줄은 기존 p의 text-indent가 맡는다.
+}
 export function typesetRoot(root) {
     if(!active||!root?.querySelectorAll)return;
+    // 메모 카드/팝업은 먼저 조판하고 같은 호출 스택에서 붙인다. 분리된 DOM에서는
+    // 계산 스타일이 비어 있으므로 연결된 뒤 한 번만 실제 개행을 다시 판정한다.
+    if(!root.isConnected&&!mounting.has(root)){
+        mounting.add(root);
+        queueMicrotask(()=>{mounting.delete(root);if(active&&root.isConnected)typesetRoot(root);});
+    }
     // 5.3.6: 그림 옆 <br> · 그림 뒤 들여쓰기 칸은 조판하는 모든 곳에서 (북마크 카드 · 설정 미리보기도 — 채팅에서만 달아서 북마크는 그림 아래가 벌어졌다).
     // 대사 줄 표시(bl-line-dialogue)가 이 칸을 보고 정해지므로 먼저
     markAssetBreaks(root);
@@ -61,17 +98,26 @@ export function typesetRoot(root) {
     normalizeTrackerSpacing(root);
     restoreDialogueTildes(root);
     wrapSpanningQuotes(root); // 5.2.2 줄을 넘는 따옴표 대사 — 실리태번은 한 줄 안에서만 <q> 로 감싼다
-    const marks=new Set();
-    for(const q of root.querySelectorAll('.mes_text q, .salty-sample q')) {
-        if(q.closest('pre,code,details[class*="custom-dem-card"],.custom-dem-track,.custom-dem-track-recovery'))continue;
-        let host=q,mark=null,previous=blankBefore(q);
-        const up=isSpanPiece(q)?PIECE_HOST:HOST;
-        // 감싸개 맨 앞에 든 대사는 그 칸 앞을 본다 (칸이 없을 때와 같은 줄 표시)
-        while(!previous&&host.parentElement?.matches(up)){host=host.parentElement;if(host.nodeName==='MARK')mark=host;previous=blankBefore(host);}
-        const line=previous?.nodeName==='BR';
+    const marks=new Set(),pads=new Set(),styles=new WeakMap();
+    const quotes=[...root.querySelectorAll('.mes_text q, .salty-sample q')]
+        .filter(q=>!q.closest('pre,code,details[class*="custom-dem-card"],.custom-dem-track,.custom-dem-track-recovery'));
+    // 계산 스타일은 DOM을 고치기 전에 한 번에 읽는다 — 대사마다 스타일 재계산을 강제하지 않게.
+    const starts=quotes.map(q=>dialogueLineStart(q,styles));
+    for(let i=0;i<quotes.length;i++) {
+        const q=quotes[i],{line,mark}=starts[i];
         // 형광펜 칸이 줄 머리면 들여쓰기는 그 칸에 (q 에 주면 칸 배경이 들여 쓴 빈자리까지 칠해진다)
         q.classList.toggle('bl-line-dialogue',line&&!mark);
         if(line&&mark){mark.classList.add('bl-line-dialogue');marks.add(mark);}
+        if(line){
+            // q의 margin은 box-decoration-break:clone 때문에 자동으로 접힌 줄에도 반복된다.
+            // 대사/형광펜 바깥에 빈 칸 하나만 두고 CSS가 들여쓰기 설정을 따른다. 원문 글자는 그대로.
+            const target=mark||q;
+            let pad=target.previousSibling;
+            if(!pad?.classList?.contains(LINE_INDENT)){
+                pad=document.createElement('span');pad.className=LINE_INDENT;pad.setAttribute('aria-hidden','true');target.before(pad);
+            }
+            pads.add(pad);
+        }
         const walker=document.createTreeWalker(q,NodeFilter.SHOW_TEXT);
         const first=walker.nextNode();if(!first)continue;
         if(first.parentElement?.closest('.bl-quote-lead'))continue;
@@ -89,6 +135,7 @@ export function typesetRoot(root) {
         }else if(cleaned!==text) {originals.set(first,{before:text,after:cleaned});first.textContent=cleaned;}
     }
     for(const mark of root.querySelectorAll('.mes_text mark.bl-line-dialogue, .salty-sample mark.bl-line-dialogue'))if(!marks.has(mark))mark.classList.remove('bl-line-dialogue');
+    for(const pad of root.querySelectorAll(`.${LINE_INDENT}`))if(!pads.has(pad))pad.remove();
     for(const node of originals.keys())if(!node.isConnected)originals.delete(node);
 }
 export function syncTypography(on) {
@@ -103,6 +150,7 @@ export function syncTypography(on) {
         }
         resetDialogueTildes();resetSpanningQuotes();
         originals.clear();document.querySelectorAll('.bl-line-dialogue').forEach(node=>node.classList.remove('bl-line-dialogue'));
+        document.querySelectorAll(`.${LINE_INDENT}`).forEach(node=>node.remove());
         document.querySelectorAll(`br.${IMG_BR}`).forEach(node=>node.classList.remove(IMG_BR));
         document.querySelectorAll(`.${IMG_INDENT}`).forEach(node=>node.remove());return;
     }

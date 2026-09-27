@@ -14,6 +14,7 @@ const SEARCH_FROM = 12; // 항목이 이보다 많으면 찾기칸
 let layer = null;       // 열린 팝업 (한 번에 하나)
 let owner = null;       // 팝업을 연 select
 let refocus = false;
+let unwatchHost = null; // native 팝업이 DOM을 남기고 닫혀도 목록을 함께 회수
 let touchStart = null;  // 손가락 시작점 — 밀기(스크롤)와 톡을 가름
 let openedAt = 0;       // 연 시각 (연 직후의 scroll · resize 로 닫히지 않게)
 let openedWidth = 0;    // 연 순간의 창 너비 — 높이만 바뀌는 resize(자판 · 주소창)는 닫지 않고 자리만 다시 잡음
@@ -93,6 +94,8 @@ const ownerWatch = new MutationObserver(() => { if (owner && !owner.isConnected)
 
 function close() {
     ownerWatch.disconnect();
+    unwatchHost?.();
+    unwatchHost = null;
     if (!layer) return;
     const back = refocus && owner?.isConnected && layer.contains(document.activeElement) ? owner : null;
     layer.remove();
@@ -123,7 +126,9 @@ function open(sel) {
     // 2.8.0: 전에는 열린 서랍 안에 꽂았는데(실리태번은 문서 click 이 .openDrawer 밖에 떨어지면 서랍을 닫음), 서랍은
     // 스크롤 상자라 폰에서 fixed 층이 서랍 좌표에 묶여 칸이 화면 끝에 걸치면 목록이 잘리거나 엉뚱한 곳에 그려졌다
     // (사용자: "칸이 다 보여야 열림"). 이제 body 에 두고, 층 안의 click 은 문서로 올려 보내지 않아 서랍이 닫히지 않는다.
-    const host = sel.closest('dialog[open]') || document.body;
+    const hostSelector = window.CSS?.supports?.('selector(:popover-open)')
+        ? 'dialog[open], [popover]:popover-open' : 'dialog[open]';
+    const host = sel.closest(hostSelector) || document.body;
     layer = document.createElement('div');
     layer.className = 'salty-pick-layer';
     // 2.9.2: 실리태번은 html 에 transform(translateZ) 을 걸어 두어 fixed 요소의 기준이 화면이 아니라 높이 0 인 html 이 된다.
@@ -166,6 +171,23 @@ function open(sel) {
         }
     });
     host.append(layer);
+    // 외부 스크립트는 body에 아주 높은 z-index의 모달을 만들기도 한다. 수치 경쟁 대신
+    // 수동 popover로 최상위 층에 올린다. dialog 안의 DOM 소속은 유지해 inert를 피하고,
+    // manual은 기존 팝업을 자동으로 닫지 않는다. 구형 브라우저는 CSS 층으로 돌아간다.
+    if (typeof layer.showPopover === 'function') {
+        layer.setAttribute('popover', 'manual');
+        try { layer.showPopover(); }
+        catch { layer.removeAttribute('popover'); }
+    }
+    if (host !== document.body) {
+        // 자동 popover의 안쪽에 두어 선택 클릭이 부모의 바깥 클릭으로 처리되지 않게 한다.
+        // 부모가 DOM을 남긴 채 닫히는 경우도 MutationObserver만으로는 알 수 없다.
+        const onClose = () => { if (!host.open) close(); };
+        const onToggle = (e) => { if (e.target === host && e.newState === 'closed') close(); };
+        host.addEventListener('close', onClose);
+        host.addEventListener('toggle', onToggle);
+        unwatchHost = () => { host.removeEventListener('close', onClose); host.removeEventListener('toggle', onToggle); };
+    }
     ownerWatch.observe(document.body, { childList: true, subtree: true });
     place(box, sel);
     // 고른 줄이 보이게 — 목록 칸만 굴린다. scrollIntoView 는 조상(서랍)까지 굴려서, 항목이 많은 목록(번역기 모델 칸)이
