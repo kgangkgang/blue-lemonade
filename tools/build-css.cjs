@@ -114,6 +114,8 @@ function build(dir = CSS_DIR, { bucket = true } = {}) {
     const names = modules(dir);
     const raw = [];
     const parts = [];
+    const guardedParts = [];
+    const extensionColors = { rules: 0, declarations: 0, borderGeometry: 0, focusShadowKept: 0 };
     let kept = 0;
     for (const name of names) {
         let text = fs.readFileSync(path.join(dir, name), 'utf8').replace(/\r\n/g, '\n');
@@ -126,19 +128,23 @@ function build(dir = CSS_DIR, { bucket = true } = {}) {
         kept += s.kept;
         // style.css 에서 어느 모듈인지 보이게 한 줄만
         parts.push(`/* css/${name} */\n${s.text}\n`);
+        const guarded = require('./extension-color-guard.cjs').guard(s.text, { moduleName: name });
+        for (const key of Object.keys(extensionColors)) extensionColors[key] += guarded.stats[key];
+        guardedParts.push(`/* css/${name} */\n${guarded.text}\n`);
     }
     const stripped = parts.join('');
     const bad = sameStructure(raw.join('\n'), stripped);
     if (bad) throw new Error(`주석을 뺀 결과가 원본과 구조가 다름 — ${bad}`);
     // 3.6.0: 맨 오른쪽 칸이 여러 갈래 :is( … ) 인 선택자를 펼쳐 크롬 규칙 묶음에 넣는다 (tools/css-bucket.cjs — 스스로 뜻 · 특이도를 확인)
-    const expanded = bucket ? require('./css-bucket.cjs').bucketize(stripped).text : stripped;
+    const paintGuarded = guardedParts.join('');
+    const expanded = bucket ? require('./css-bucket.cjs').bucketize(paintGuarded).text : paintGuarded;
     // 4.8.4: 미리보기 전용 규칙은 `@media not all { }` 로 감싸 꺼 둔 채 싣는다 (tools/css-park.cjs — src/lite.js 가 설정창을 열 때 켠다)
     const parked = require('./css-park.cjs').park(expanded);
     const body = parked.text;
     const head = `/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 ${names.length}개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build ${HASH_SLOT}) */\n`;
     const draft = head + body;
     const digest = hashOf(draft);
-    return { text: draft.replace(HASH_SLOT, digest), names, digest, kept, parked };
+    return { text: draft.replace(HASH_SLOT, digest), names, digest, kept, parked, extensionColors };
 }
 function hashOf(textWithSlot) {
     return crypto.createHash('sha1').update(textWithSlot, 'utf8').digest('hex').slice(0, 12);

@@ -67,6 +67,8 @@ body.salty :is(#salty-nochat, .salty-preview):not([data-prev="img"]),
 .bl-editor .salty-stack { align-content:start; padding-block:6px; }
 .bl-editor .bl-backup-layout { display:grid; gap:6px 24px; align-items:start; }
 html body .bl-editor .bl-backup-layout > .salty-group { margin:0; padding:4px 0; background:transparent; box-shadow:none; }
+/* 5.4.8: 테마 › 기타 설정은 사용 모드 · 다른 확장 색 유지를 .bl-etc-grid 로 감싼다 — 설정 창 묶음 바탕 투명 규칙(css/47, 묶음 본문의 바로 아래 자식만)을 틀 안에도 */
+html body .bl-editor .bl-etc-grid > :is(.salty-group):not(.bl-decor-controls) { margin:0 0 6px; padding:4px 0; border-radius:0; background:transparent; box-shadow:none; }
 html body .salty-panel.bl-editor .salty-sec .salty-group.bl-backup-actions { display:flex; flex-direction:column; }
 html body .salty-panel.bl-editor .bl-backup-actions > .salty-row { align-self:stretch; }
 .salty-panel.bl-editor .bl-control-grid > :is(.salty-stack,.salty-slider,.salty-row,.bl-color-field) { min-width:0; }
@@ -94,6 +96,12 @@ html body .salty-panel.bl-editor .bl-backup-actions > .salty-row { align-self:st
   .bl-editor .bl-backup-layout { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .bl-editor .bl-backup-actions { border-left:1px solid var(--salty-line); padding-left:24px !important; }
   .bl-editor .bl-usage-mode { max-width:560px; }
+  /* 5.4.8: 테마 › 기타 설정 — PC 에서는 사용 모드 상자 오른쪽에 '다른 확장 색 유지'.
+     오른쪽 줄은 닫힌 상자 높이(테두리 2 + 안쪽 여백 24 + 요약 줄) 가운데에 맞추고, 상자를 펼쳐도 위에 그대로 있다 */
+  .bl-editor .bl-etc-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:24px; align-items:start; }
+  .bl-editor .bl-etc-grid > .bl-usage-mode { margin:0; max-width:none; }
+  .bl-editor .bl-etc-grid > .bl-ext-colors { box-sizing:border-box; display:flex; align-items:center; min-height:calc(26px + max(32px, 23.8 * var(--sp))); }
+  .bl-editor .bl-etc-grid > .bl-ext-colors > .salty-row { flex:1 1 auto; min-width:0; }
   .salty-panel.bl-editor .bl-mespins { grid-template-columns:repeat(3,minmax(0,1fr)); }
 }
 @container bl-controls (min-width:74em) {

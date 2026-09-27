@@ -86,7 +86,7 @@ export function settingRoute(path) {
     if (scope === 'deus' || scope === 'chat' && /^(dem|unify|tone|markerTone|regexIcons)/.test(key)) return {tab:'prompt',sub:'deus'};
     if (scope === 'deviceLayouts') return {tab:'text',sub:'para'};
     if (scope === 'settingLocks') return {tab:'theme',sub:'backup'};
-    if (scope === 'compat') return {tab:'chat',sub:'etc'};
+    if (scope === 'compat') return key === 'preserveExtensionColors' ? {tab:'theme',sub:'etc'} : {tab:'chat',sub:'etc'};
     if (scope === 'chat' && /^(user|header)/.test(key)) return {tab:'chat',sub:'message'};
     return {tab:'chat',sub:'screen'};
 }

@@ -59,8 +59,11 @@ export function currentOwner() {
     const ch = c.characters?.[c.characterId]; if (!ch) return null;
     return { key: `${ch.avatar}/${c.chatId}`, chat: String(c.chatId), avatar: ch.avatar, name: ch.name };
 }
-/** 지금 보이는 메모: 전체 메모 + 지금 채팅에 귀속된 메모 */
-export function visibleNotes() { const key = currentOwner()?.key; return notes().filter(n => !n.owner || n.owner.key === key || strayOwner(n.owner)); }
+/** 캐릭터(그룹) 전체 귀속 (5.4.8): 그 캐릭터의 모든 채팅에서 보인다. key 에 채팅이 없다 — c:<카드 파일> · gc:<그룹 id> */
+const wholeKey = o => o.group ? `gc:${o.group}` : `c:${o.avatar}`;
+function wholeOwner(o) { return o.group ? { key: wholeKey(o), whole: true, group: o.group, name: o.name, avatar: o.avatar || '' } : { key: wholeKey(o), whole: true, avatar: o.avatar, name: o.name }; }
+/** 지금 보이는 메모: 전체 메모 + 지금 캐릭터 전체에 귀속된 메모 + 지금 채팅에 귀속된 메모 */
+export function visibleNotes() { const cur = currentOwner(), key = cur?.key, whole = cur ? wholeKey(cur) : null; return notes().filter(n => !n.owner || (n.owner.whole ? !!whole && wholeKey(n.owner) === whole : n.owner.key === key) || strayOwner(n.owner)); }
 const SORTS = [['manual', '직접 정한 순', 'fa-grip-lines'], ['name', '가나다순', 'fa-arrow-down-a-z'], ['time', '최근 고친 순', 'fa-clock-rotate-left']];
 const sortName = note => (note.title || note.body || '').trim();
 const nameOrder = new Intl.Collator('ko', { numeric: true, sensitivity: 'base' });
@@ -636,6 +639,7 @@ function ownerBadge(note) {
     const o = note.owner;
     if (!o) return `<span class="bl-note-owner is-global" data-owner="${note.id}" aria-label="전체 메모 · 채팅 귀속 바꾸기" title="전체 메모 · 꾹 누르면 채팅에 귀속" role="button" tabindex="0"><i class="fa-solid fa-earth-asia"></i><span class="bl-note-owner-name" hidden>전체 메모</span></span>`;
     const img = ownerImg(o);
+    if (o.whole) return `<span class="bl-note-owner is-whole" data-owner="${note.id}" aria-label="${escA(o.name)} · 모든 채팅 · 귀속 바꾸기" title="${escA(o.name)} · 모든 채팅 (꾹 누르면 귀속 바꾸기)" role="button" tabindex="0">${img ? `<img src="${escA(img)}" alt="" loading="lazy" draggable="false">` : `<i class="fa-solid ${o.group ? 'fa-users' : 'fa-user'}"></i>`}<span class="bl-note-owner-name" hidden>모든 채팅</span></span>`;
     return `<span class="bl-note-owner" data-owner="${note.id}" aria-label="${escA(o.name)} · ${escA(o.chat)} · 채팅 귀속 바꾸기" title="${escA(o.name)} · ${escA(o.chat)} (꾹 누르면 귀속 바꾸기)" role="button" tabindex="0">${img ? `<img src="${escA(img)}" alt="" loading="lazy" draggable="false">` : '<i class="fa-solid fa-user"></i>'}<span class="bl-note-owner-name" hidden>${escA(o.chat)}</span></span>`;
 }
 // 누르면 채팅방 이름을 옆에 · 꾹 누르면 귀속 바꾸기 창
@@ -655,7 +659,7 @@ function setOwner(id, owner) {
     const note = notes().find(n => n.id === id); if (!note) return;
     if (owner) note.owner = owner; else delete note.owner;
     note.updated = Date.now(); save(); rerenderAll();
-    globalThis.toastr?.success(owner ? `${owner.name} · ${owner.chat} 에 귀속했어요.` : '전체 메모로 바꿨어요.', TITLE, { timeOut: 2500 });
+    globalThis.toastr?.success(!owner ? '전체 메모로 바꿨어요.' : owner.whole ? `${owner.name} ${owner.group ? '그룹' : '캐릭터'} 전체에 귀속했어요.` : `${owner.name} · ${owner.chat} 에 귀속했어요.`, TITLE, { timeOut: 2500 });
 }
 let bindDialog = null;
 async function openBind(id) {
@@ -664,8 +668,9 @@ async function openBind(id) {
     bindDialog = document.createElement('dialog'); bindDialog.className = 'bl-notes-dialog bl-notes-bind'; bindDialog.setAttribute('aria-label', '메모 귀속');
     bindDialog.innerHTML = `<header><b><i class="fa-solid fa-link" aria-hidden="true"></i> 메모 귀속</b><div class="bl-notes-head-tools"><button type="button" class="bl-note-btn" data-bind="close" title="닫기" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button></div></header>
 <p class="bl-notes-empty">'${escA(label(note))}' 메모를 어디에 둘까요?</p>
-<div class="bl-bind-quick">
+<div class="bl-bind-quick${cur ? ' is-three' : ''}">
  <button type="button" class="bl-bind-opt${note.owner ? '' : ' on'}" data-bind="global"><i class="fa-solid fa-earth-asia"></i><span><b>전체 메모</b><small>어느 채팅에서나 보여요</small></span></button>
+ ${cur ? `<button type="button" class="bl-bind-opt is-whole${note.owner?.whole && wholeKey(note.owner) === wholeKey(cur) ? ' on' : ''}" data-bind="whole">${ownerImg(cur) ? `<img src="${escA(ownerImg(cur))}" alt="">` : `<i class="fa-solid ${cur.group ? 'fa-users' : 'fa-user'}"></i>`}<span><b>${cur.group ? '이 그룹 전체' : '이 캐릭터 전체'}</b><small>${escA(cur.name)} · 모든 채팅</small></span></button>` : ''}
  ${cur ? `<button type="button" class="bl-bind-opt${note.owner?.key === cur.key ? ' on' : ''}" data-bind="here">${ownerImg(cur) ? `<img src="${escA(ownerImg(cur))}" alt="">` : '<i class="fa-solid fa-user"></i>'}<span><b>지금 채팅</b><small>${escA(cur.name)} · ${escA(cur.chat)}</small></span></button>` : ''}
 </div>
 <div class="bl-bind-pick"><div class="bl-bind-head"><b>다른 채팅에 귀속</b><input type="search" placeholder="이름 · 태그 · 메모로 찾기" spellcheck="false" aria-label="캐릭터 찾기"></div><div class="bl-bind-list"></div></div>`;
@@ -700,6 +705,7 @@ ${x.img ? `<img src="${escA(x.img)}" alt="" loading="lazy">` : `<i class="fa-sol
         } catch (error) { console.warn('[메모] 채팅 목록:', error); }
         if (epoch !== viewEpoch || bindDialog !== activeDialog || !activeDialog.open) return;
         list.innerHTML = `<button type="button" class="bl-bind-back" data-bind="back"><i class="fa-solid fa-chevron-left"></i> ${escA(x.name)}</button>`
+            + `<button type="button" class="bl-bind-chat bl-bind-whole${note.owner?.whole && wholeKey(note.owner) === wholeKey(x.type === 'group' ? { group: x.id } : { avatar: x.avatar }) ? ' on' : ''}" data-whole="1"><i class="fa-solid fa-layer-group"></i><span>모든 채팅</span></button>`
             + (chats.map(c => `<button type="button" class="bl-bind-chat" data-chat="${escA(c.chat)}"><i class="fa-regular fa-comment"></i><span>${escA(c.chat)}</span>${c.when ? `<small>${escA(c.when)}</small>` : ''}</button>`).join('') || '<p class="bl-notes-empty">채팅이 없어요.</p>');
         list.dataset.person = String(people.indexOf(x));
     };
@@ -710,8 +716,16 @@ ${x.img ? `<img src="${escA(x.img)}" alt="" loading="lazy">` : `<i class="fa-sol
         if (act === 'close') { bindDialog.close(); return; }
         if (act === 'global') { setOwner(id, null); bindDialog.close(); return; }
         if (act === 'here' && cur) { setOwner(id, cur); bindDialog.close(); return; }
+        if (act === 'whole' && cur) { setOwner(id, wholeOwner(cur)); bindDialog.close(); return; }
         if (act === 'back') { drawPeople(); return; }
-        const person = event.target.closest('[data-person]'); if (person) { drawChats(people[Number(person.dataset.person)]); return; }
+        // 5.4.8: 캐릭터 카드만 — 채팅 목록을 그리면 목록 칸 자신에 data-person 이 붙어서, 그 안의 채팅 줄을 눌러도 카드를 누른 것으로 잡혀
+        // 목록만 다시 그리고 귀속이 안 됐다 (다른 캐릭터의 채팅 · 모든 채팅)
+        const person = event.target.closest('.bl-bind-card[data-person]'); if (person) { drawChats(people[Number(person.dataset.person)]); return; }
+        if (event.target.closest('[data-whole]')) {
+            const x = people[Number(list.dataset.person)]; if (!x) return;
+            setOwner(id, wholeOwner(x.type === 'group' ? { group: x.id, name: x.name, avatar: x.img } : { avatar: x.avatar, name: x.name }));
+            bindDialog.close(); return;
+        }
         const chat = event.target.closest('[data-chat]');
         if (chat) {
             const x = people[Number(list.dataset.person)], name = chat.dataset.chat;
@@ -726,7 +740,7 @@ ${x.img ? `<img src="${escA(x.img)}" alt="" loading="lazy">` : `<i class="fa-sol
 function onChatChanged() {
     measureOwners();
     const cur = currentOwner();
-    if (cur) { let changed = false; for (const n of notes()) if (n.owner?.key === cur.key && (n.owner.name !== cur.name || n.owner.avatar !== cur.avatar)) { n.owner = { ...n.owner, name: cur.name, avatar: cur.avatar }; changed = true; } if (changed) save(); }
+    if (cur) { let changed = false; const whole = wholeKey(cur); for (const n of notes()) if ((n.owner?.key === cur.key || (n.owner?.whole && wholeKey(n.owner) === whole)) && (n.owner.name !== cur.name || n.owner.avatar !== cur.avatar)) { n.owner = { ...n.owner, name: cur.name, avatar: cur.avatar }; changed = true; } if (changed) save(); }
     peekId = null; rerenderAll();
 }
 async function onChatRenamed(data) {
@@ -751,7 +765,7 @@ async function onChatRenamed(data) {
 function onCharacterRenamed(oldAvatar, newAvatar) {
     if (!oldAvatar || !newAvatar || oldAvatar === newAvatar) return;
     let changed = false;
-    for (const n of notes()) { const o = n.owner; if (!o || o.group || o.avatar !== oldAvatar) continue; n.owner = { ...o, avatar: newAvatar, key: `${newAvatar}/${o.chat}` }; changed = true; }
+    for (const n of notes()) { const o = n.owner; if (!o || o.group || o.avatar !== oldAvatar) continue; n.owner = { ...o, avatar: newAvatar, key: o.whole ? `c:${newAvatar}` : `${newAvatar}/${o.chat}` }; changed = true; }
     if (changed) { save(); rerenderAll(); }
 }
 /** 지운 채팅의 메모는 전체 메모로 — 안 보이는 채 남지 않게 */
@@ -931,7 +945,7 @@ function flashCard(el) { if (!el) return; el.scrollIntoView({ block: 'nearest', 
 /** 그 메모를 보여 준다 — 쪽지에서 누르면 옆 쪽지로(PC), 펼침에서 누르면 그 메모 펼침, 아니면 목록에서 찾아 반짝 */
 function revealNote(id, from) {
     const note = notes().find(n => n.id === id); if (!note) return;
-    if (!visibleNotes().some(n => n.id === id)) { globalThis.toastr?.info(`${note.owner?.name || '다른'} 채팅에 귀속된 메모예요${note.owner?.chat ? ` (${note.owner.chat})` : ''}.`, TITLE); return; }
+    if (!visibleNotes().some(n => n.id === id)) { globalThis.toastr?.info(note.owner?.whole ? `${note.owner.name} ${note.owner.group ? '그룹' : '캐릭터'}의 채팅에서 보이는 메모예요.` : `${note.owner?.name || '다른'} 채팅에 귀속된 메모예요${note.owner?.chat ? ` (${note.owner.chat})` : ''}.`, TITLE); return; }
     if (from?.closest?.('.bl-sticky') && isWide()) { openSticky(id); return; }
     if (from?.closest?.('.bl-notes-peek')) { peekId = id; miniOpen = false; renderBar(); return; }
     const root = listRootFor(from); if (!root) return;

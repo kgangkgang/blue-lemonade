@@ -445,6 +445,10 @@ body.salty #pt-panel #pt-panel-header > div {
  flex-wrap:wrap; gap:8px 10px!important;
 }
 body.salty #pt-panel #pt-panel-refresh { flex:0 1 auto; max-width:calc(100% - 54px); }
+/* 5.4.8: 확장 서랍 안에서는 닫기 단추가 숨는다 — 새로고침 폭에서 닫기 자리(54px)를 빼지 않고, 묶음이 머리줄 폭을 기준으로 삼는다.
+   전에는 묶음 폭이 단추 자신에 묶여 단추가 53px 로 줄고 '목록 새로고침' 이 두 줄로 튀어나왔다 */
+body.salty #pt-panel.pt-in-drawer #pt-panel-header > div { flex:1 1 auto; justify-content:flex-end; }
+body.salty #pt-panel.pt-in-drawer #pt-panel-refresh { max-width:100%; }
 body.salty #pt-panel #pt-status-text { white-space:nowrap; }
 
 /* Top-layer choice dialogs inherit theme tokens copied from the prompt panel. */

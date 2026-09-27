@@ -17,6 +17,7 @@ import { themeEnabled, addonsEnabled } from './usage-mode.js';
 import { syncFeatures } from './features.js';
 import { syncSplash } from './splash.js';
 import { markdownClasses } from './markdown.js';
+import { syncExtensionColors } from './extension-colors.js';
 
 function profileVars(p, pal, user = false) {
     const vars = Object.assign(frameVars(p, 'profile', pal.accent), decorVars(p.decor, 'profile', p.radius), {
@@ -722,6 +723,7 @@ export function applyAll() {
 
     syncSamples(s);
     syncCustomCss(!!(s.enabled && s.compat?.muteCustomCss));
+    syncExtensionColors(!!(s.enabled && s.compat?.preserveExtensionColors));
 
     applyFonts(s);
     syncFeatures(s, addonsEnabled(getSettings())); // 3.1.0 켤 때만 불러오는 기능 (features.js)

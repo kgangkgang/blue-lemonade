@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.4.7.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.4.8.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.4.7 · 최신 업데이트</summary>
+<summary>5.4.8 · 최신 업데이트</summary>
+
+- 테마 → 기타 설정에 '다른 확장 색 유지'를 추가했어요. 켜면 확장 설정창과 지원되는 팝업이 확장이 정한 원래 글자 · 배경색을 써요. 기본은 꺼져 있어요.
+- 메모: 귀속 창에 '이 캐릭터 전체'(그룹은 '이 그룹 전체')를 추가했어요. 고르면 그 캐릭터의 모든 채팅에서 메모가 보여요. 다른 캐릭터를 고를 때도 '모든 채팅'을 고를 수 있어요.
+- 북마크: 펼친 원문을 한 번 더 누르면 접혀요. 긴 원문 끝에서 접으면 카드 위로 돌아가요.
+- 한글화 패널: 확장 서랍 안의 '목록 새로고침' 단추가 좁아져 글자가 밖으로 튀어나오던 것을 고쳤어요. 프리셋 · 월드인포 · 봇카드 이름 칸을 누르면 모델 칸처럼 넓은 목록이 아래로 떠요(12개가 넘으면 찾기 칸).
+
+</details>
+
+<details>
+<summary>5.4.7 · 마크다운 · 분기 지도</summary>
 
 - 글자 → 마크다운에서 제목·구분선·인용·목록·링크·표·접기 등을 한 화면에서 조정해요. 전용 미리보기로 확인하고, 구분선은 점 세 개와 선 중에서 골라요.
 - 채팅 파일 관리에 분기 지도를 추가했어요. PC는 가로, 폰은 세로로 연결을 보고, 채팅 이름 찾기·이동·확대를 할 수 있어요. 노드를 고른 뒤 채팅 열기로 이동해요.

@@ -87,7 +87,8 @@ function buildShell() {
     view.root = root;
 
     root.addEventListener('pointerdown', (event) => {
-        const note = event.target.closest('.cg-note--summary');
+        // 메모 · 펼친 메시지 둘 다 누르면 원문이 펼쳐지고 접힌다 — 끌어서 글자를 고를 때는 빼려고 누른 자리를 기억
+        const note = event.target.closest('.cg-note--summary, .cg-source-content');
         notePointer = note ? { note, x: event.clientX, y: event.clientY } : null;
     });
     root.addEventListener('click', onClick);
@@ -773,11 +774,18 @@ function toggleSource(card) {
     content.hidden = !expanding;
     button.setAttribute('aria-expanded', String(expanding));
     button.querySelector('span').textContent = expanding ? '메시지 접기' : '메시지 펼치기';
+    // 5.4.8: 긴 메시지 끝에서 눌러 접으면 카드 머리가 화면 위로 사라져 있다 — 전체 보기 접기와 같이 카드 머리로 돌아간다
+    if (!expanding) {
+        const list = $('.cg-list');
+        const top = card.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop;
+        if (top < list.scrollTop) list.scrollTop = Math.max(0, top - 8);
+    }
 }
 
 function noteCanToggle(event, note) {
     // 메모 안의 링크·위젯·미디어와 드래그 선택은 원문 접기와 별개로 동작한다.
-    if (event.defaultPrevented || event.detail > 1 || event.target.closest('a, button, input, textarea, select, label, summary, details, iframe, audio, video, img, [role="button"], [contenteditable]:not([contenteditable="false"])')) return false;
+    // 5.4.8: 데우스 트래커(.custom-dem-track)는 누르면 테마(demskin.js)가 펼치고 접는다 — 원문까지 접으면 안 된다
+    if (event.defaultPrevented || event.detail > 1 || event.target.closest('a, button, input, textarea, select, label, summary, details, iframe, audio, video, img, [role="button"], [contenteditable]:not([contenteditable="false"]), .custom-dem-track, .custom-dem-track-recovery')) return false;
     if (notePointer?.note === note && Math.hypot(event.clientX - notePointer.x, event.clientY - notePointer.y) > 6) return false;
     const selection = window.getSelection();
     if (selection && !selection.isCollapsed) {
@@ -1025,6 +1033,9 @@ function onClick(event) {
     if (sourceToggle) return toggleSource(sourceToggle.closest('.cg-card'));
     const note = target.closest('.cg-note--summary');
     if (note && noteCanToggle(event, note)) return toggleSource(note.closest('.cg-card'));
+    // 5.4.8: 펼친 메시지를 한 번 더 누르면 접힌다 (메모와 같은 규칙: 링크 · 그림 · 생각 과정 · 글자 고르기는 그대로)
+    const opened = target.closest('.cg-source-content');
+    if (opened && !opened.hidden && noteCanToggle(event, opened)) return toggleSource(opened.closest('.cg-card'));
     const expand = target.closest('.cg-expand');
     if (expand) return toggleExpand(expand.closest('.cg-card'));
 

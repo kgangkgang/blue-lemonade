@@ -13,6 +13,7 @@ import { getSettings } from './settings.js';
 const SEARCH_FROM = 12; // 항목이 이보다 많으면 찾기칸
 let layer = null;       // 열린 팝업 (한 번에 하나)
 let owner = null;       // 팝업을 연 select
+let anchorEl = null;    // 5.4.8: select 대신 자리를 잡을 칸 (숨긴 select 를 쓰는 한글화 패널의 이름 칸) — getBoundingClientRect 만 있으면 됨
 let refocus = false;
 let unwatchHost = null; // native 팝업이 DOM을 남기고 닫혀도 목록을 함께 회수
 let touchStart = null;  // 손가락 시작점 — 밀기(스크롤)와 톡을 가름
@@ -101,6 +102,7 @@ function close() {
     layer.remove();
     layer = null;
     owner = null;
+    anchorEl = null;
     closedAt = Date.now();
     refocus = false;
     back?.focus({ preventScroll: true });
@@ -115,10 +117,11 @@ function pick(index) {
     sel.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
-function open(sel) {
+function open(sel, anchor = null) {
     if (owner === sel) { close(); return; }
     close();
     owner = sel;
+    anchorEl = anchor;
     refocus = document.activeElement === sel;
     openedAt = Date.now();
     openedWidth = window.innerWidth;
@@ -189,7 +192,7 @@ function open(sel) {
         unwatchHost = () => { host.removeEventListener('close', onClose); host.removeEventListener('toggle', onToggle); };
     }
     ownerWatch.observe(document.body, { childList: true, subtree: true });
-    place(box, sel);
+    place(box, anchorEl || sel);
     // 고른 줄이 보이게 — 목록 칸만 굴린다. scrollIntoView 는 조상(서랍)까지 굴려서, 항목이 많은 목록(번역기 모델 칸)이
     // 폰에서 서랍을 튕기고 scroll 로 스스로 닫혔다 (2.7.10). 폰(손가락 · 자판)에서는 찾기칸에 초점을 주지 않음
     const on = rows.querySelector('button.on');
@@ -200,15 +203,27 @@ function open(sel) {
 }
 
 /** 열어 보고, 열렸으면 true. 안에서 무엇이 잘못돼도 OS 목록은 살려 둔다 (preventDefault 를 열린 뒤에만 부르도록). */
-function tryOpen(sel) {
+function tryOpen(sel, anchor = null) {
     try {
-        open(sel);
+        open(sel, anchor);
     } catch (error) {
         console.warn('[블루 레몬에이드] 고르기 목록을 못 그림 — OS 목록으로', error);
         close();
         return false;
     }
     return layer !== null;
+}
+
+/** 5.4.8: 테마 목록 팝업을 쓸 수 있나 (테마 켜짐 + '고르기 목록 팝업' 켜짐) */
+export function canPickFor() {
+    return document.body.classList.contains('salty') && getSettings().chat?.selectPop !== false;
+}
+/** 5.4.8: 숨겨 둔 select 를 다른 칸(anchor) 밑에 테마 목록으로 연다 — 한글화 패널의 이름 칸이 설정창 · 모델 칸과 같은 목록을 쓰게.
+ *  이미 열려 있으면 닫는다. 못 열면 false (부른 쪽이 원래 목록을 쓴다) */
+export function openPickFor(sel, anchor) {
+    if (!(sel instanceof HTMLSelectElement) || !canPickFor() || sel.disabled || !sel.options.length) return false;
+    if (owner === sel) { close(); return true; }
+    return tryOpen(sel, anchor);
 }
 
 export function startSelectPop() {
@@ -254,7 +269,7 @@ export function startSelectPop() {
     window.addEventListener('resize', () => {
         if (!layer) return;
         if (window.innerWidth !== openedWidth) { if (Date.now() - openedAt > GRACE) close(); return; }
-        if (owner) place(layer.firstElementChild, owner);
+        if (owner) place(layer.firstElementChild, anchorEl || owner);
     });
     document.addEventListener('scroll', (e) => {
         if (layer && !layer.contains(e.target) && (e.target === document || (e.target instanceof Node && e.target.contains(owner))) && Date.now() - openedAt > GRACE) close();

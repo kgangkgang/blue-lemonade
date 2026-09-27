@@ -87,7 +87,7 @@ def inventory(root, kind):
         for name in ['LICENSE', 'THIRD-PARTY-NOTICES.md']:
             if (root / name).is_file(): names.append(name)
         names += [p.relative_to(root).as_posix() for p in (root / 'css').glob('*.css')]
-        for name in ['build-css.cjs','build-plain-scripts.mjs','gen-preview-css.js','gen-user-profile.cjs','css-lib.cjs','css-bucket.cjs','css-park.cjs']:
+        for name in ['build-css.cjs','build-plain-scripts.mjs','gen-preview-css.js','gen-user-profile.cjs','css-lib.cjs','css-bucket.cjs','css-park.cjs','extension-color-guard.cjs']:
             if (root / 'tools' / name).is_file(): names.append('tools/' + name)
         for folder in ['translator','prompt','customstyle']:
             bundle = root / 'src' / 'addons' / folder

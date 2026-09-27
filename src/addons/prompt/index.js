@@ -6,6 +6,7 @@ import { isTransientFailure, responseError } from './request-errors.js';
 import { installRegexPage } from './regex-ui.js';
 import { installGuide } from './guide.js';
 import { leaveSettingsDialog } from '../../settings-dialog.js';
+import { canPickFor, openPickFor } from '../../selects.js';
 import { settingsHTML } from './settings-ui.js';
 import { requestActive, applyCustomConnection, customEndpoint, bindConnection } from './connection.js';
 /**
@@ -3422,7 +3423,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
                     <span class="pt-combo-caret" aria-hidden="true">▾</span>
                     <div class="pt-combo-list" id="${idPfx}-clist" role="listbox"></div>
                 </div>
-                <select class="pt-select pt-combo-native" id="${idPfx}-sel"><option value="">— 선택 —</option></select>
+                <select class="pt-select pt-combo-native" id="${idPfx}-sel"><option value="" hidden>— 선택 —</option></select>
                 <button class="pt-btn pt-btn-secondary" id="${idPfx}-load"> 로드</button>
                 <div class="pt-export-group">
                     <button class="pt-btn-icon" id="${idPfx}-apply" title="${kind === 'wi' ? '월드인포에 즉시 적용' : kind === 'char' ? '봇카드에 즉시 적용' : '프리셋에 즉시 적용'}"><i class="fa-solid fa-bolt"></i></button>
@@ -3629,7 +3630,8 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
         cList.querySelectorAll('.pt-combo-item').forEach(el => {
             const on = Number(el.dataset.i) === activeIdx;
             el.classList.toggle('active', on);
-            if (on) el.scrollIntoView({ block: 'nearest' });
+            // 5.4.8: 화살표로 옮길 때도 목록 칸만 굴린다 (서랍째 밀리지 않게)
+            if (on) { const top = el.offsetTop, bottom = top + el.offsetHeight; if (top < cList.scrollTop) cList.scrollTop = top; else if (bottom > cList.scrollTop + cList.clientHeight) cList.scrollTop = bottom - cList.clientHeight; }
         });
     };
 
@@ -3640,8 +3642,9 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
         activeIdx = -1;
         renderCombo(query);
         // Put the current entry in view so a long list opens where you left off.
+        // 5.4.8: 목록 칸만 굴린다 — scrollIntoView 는 조상(확장 서랍)까지 굴려 입력칸이 탭 칸 밑으로 밀려 올라갔다
         const cur = cList.querySelector('.pt-combo-item.current');
-        if (cur) cur.scrollIntoView({ block: 'nearest' });
+        if (cur) cList.scrollTop = Math.max(0, cur.offsetTop - cList.clientHeight / 2 + cur.offsetHeight / 2);
     };
 
     const pick = (value) => {
@@ -3650,9 +3653,30 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
         try { sel.dispatchEvent(new (PDOC.defaultView || window).Event('change', { bubbles: true })); } catch (e) {}
     };
 
+    // 5.4.8: 테마가 켜져 있으면 손가락 · 마우스로 누를 때 설정창 · 모델 칸과 같은 테마 목록(맨 위층 · 이 줄 전체 폭 · 아래로 길게, 12개 넘으면 찾기 칸).
+    // 전에는 칸 폭만큼 좁게 떠서 긴 이름이 두 줄로 꺾이고, 목록을 열 때 고른 줄로 굴리느라 서랍째 밀려 위쪽이 탭 칸에 가려졌다.
+    // 자판(Tab 으로 들어와 글자 치기)과 테마를 끈 '확장만' 모드는 원래 목록 그대로
+    const pickAnchor = { getBoundingClientRect() {
+        const i = cInput.getBoundingClientRect(), row = combo?.closest('.pt-toolbar')?.getBoundingClientRect() || i;
+        return { left: row.left, right: row.right, width: row.width, top: i.top, bottom: i.bottom, height: i.height };
+    } };
+    const themePick = (e) => {
+        if (!canPickFor()) return false;
+        e.preventDefault(); e.stopPropagation();
+        if (comboOpen) closeCombo();
+        if (!openPickFor(sel, pickAnchor)) { cInput.focus(); openCombo(''); }
+        return true;
+    };
+    // 누를 때 칸에 초점이 가면 폰 자판이 뜬다 — 테마 목록을 쓸 때만 막는다
+    cInput?.addEventListener('pointerdown', e => { if (e.button === 0 && canPickFor()) e.preventDefault(); });
+    cInput?.addEventListener('click', themePick);
+    sel.addEventListener('change', () => { if (!comboOpen) syncCombo(); });
     cInput?.addEventListener('focus', () => { cInput.select(); openCombo(''); });
     cInput?.addEventListener('input', () => { if (!comboOpen) comboOpen = true; combo?.classList.add('open'); activeIdx = -1; renderCombo(cInput.value); });
+    combo?.querySelector('.pt-combo-caret')?.addEventListener('pointerdown', e => { if (e.button === 0 && canPickFor()) e.preventDefault(); });
+    combo?.querySelector('.pt-combo-caret')?.addEventListener('click', themePick);
     combo?.querySelector('.pt-combo-caret')?.addEventListener('mousedown', e => {
+        if (canPickFor()) return;
         e.preventDefault();
         comboOpen ? closeCombo() : (cInput.focus(), openCombo(''));
     });
@@ -3677,7 +3701,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
 
     const refillSelect = async () => {
         const keep = sel.value;
-        sel.innerHTML='<option value="">— 선택 —</option>';
+        sel.innerHTML='<option value="" hidden>— 선택 —</option>';
         const opts=isAsync?await listFn():listFn();
         opts.forEach(item=>{ const o=PDOC.createElement('option'); o.value=item.id; o.textContent=item.name; sel.appendChild(o); });
         // A refill must not silently drop what the person had chosen.
