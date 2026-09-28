@@ -5,7 +5,7 @@
    ============================================================ */
 :root {
     /* index.js 의 VERSION 과 같아야 한다 */
-    --bl-notes-css-version: "1.2.8";
+    --bl-notes-css-version: "1.2.9";
     --bl-notes-surface: var(--salty-surface, var(--SmartThemeBlurTintColor, #25262a));
     --bl-notes-card: var(--bl-card, var(--salty-card, rgba(255, 255, 255, .04)));
     --bl-notes-text: var(--salty-text, var(--SmartThemeBodyColor, #eee));
@@ -840,6 +840,13 @@ body.salty .bl-notes-look .bl-fontinfo b {
  body.salty .bl-notes-dialog:not(.bl-notes-look){width:calc(100vw - 16px)!important;max-width:calc(100vw - 16px)!important;height:auto;max-height:calc(100dvh - max(8px,env(safe-area-inset-top)) - max(8px,env(safe-area-inset-bottom)));margin:auto!important}
  body.salty :is(.bl-notes-dialog,.bl-notes-mini,.bl-notes-peek) .bl-note-owner{min-width:32px;min-height:32px}
  body.salty .bl-note-tools .bl-note-btn{min-width:32px;height:32px}
+}
+/* 손가락 화면: 메모 줄 칩은 보이는 30px 그대로 두고 누르는 자리만 36px — 칩(overflow:hidden)과 줄(overflow-y:hidden) 때문에 의사요소로는 못 넓혀 투명 테두리로 넓힌다. 버전 단추는 세로 36px 의사요소. */
+@media (pointer: coarse) {
+    body.salty #bl-notes-bar .bl-notes-chip { box-sizing: border-box; min-height: 36px; border-block: 3px solid transparent; background-clip: padding-box; }
+    body.salty #bl-notes-bar .bl-notes-chip.bl-notes-more { min-width: 36px; }
+    body.salty .bl-notes-dialog .bl-notes-ver { position: relative; }
+    body.salty .bl-notes-dialog .bl-notes-ver::after { content: ''; position: absolute; inset: min(0px, 50% - 18px) 0; }
 }
 
 /* Fixed pixel offsets cannot follow custom fonts or 32px controls. Keep head actions in normal flow. */

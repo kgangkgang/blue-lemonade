@@ -78,7 +78,7 @@ export const DEFAULTS = {
     // 3.7.1 데우스 대사 색상 가독성 향상: 프롬프트가 칠한 글자(@Dialogue Color)에만 거는 외곽선 · 그림자.
     // 색에 따라 배경에 묻혀 안 읽히는 경우를 위해 — 둘 다 켜도 되고 하나만 켜도 된다. 파라미터는 전체 외곽선 · 글자 그림자와 같은 것들.
     // 3.7.2 다른 CSS: 사용자 설정 › 커스텀 CSS 를 테마가 켜진 동안 꺼 둘지 (내용은 그대로 — 끄면 바로 돌아온다)
-    compat: { muteCustomCss: false, preserveExtensionColors: false },
+    compat: { muteCustomCss: false, preserveExtensionColors: false, extensionColorsOff: [] },
     deus: {
         on: false,
         ink: {
@@ -543,6 +543,9 @@ export function getSettings() {
     if (!isObj(s.compat)) s.compat = structuredClone(DEFAULTS.compat);
     s.compat.muteCustomCss = flag(s.compat.muteCustomCss, false);
     s.compat.preserveExtensionColors = flag(s.compat.preserveExtensionColors, false);
+    // 5.5.2: 색을 유지하지 않을 확장(키 목록). 기본 빈 목록 = 켜면 전부 유지 (새로 깐 확장도 유지)
+    s.compat.extensionColorsOff = Array.isArray(s.compat.extensionColorsOff)
+        ? [...new Set(s.compat.extensionColorsOff.filter(k => typeof k === 'string' && k && k.length < 200))].slice(0, 200) : [];
     if (isObj(s.type)) tidyType(s.type);
     tidyMarkdown(s.markdown);
     tidyRoles(s);

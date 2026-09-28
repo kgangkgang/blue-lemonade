@@ -14,6 +14,7 @@ import { startAssetWatcher, classifyAll } from './src/assets.js';
 import { startPromptList } from './src/promptlist.js';
 import { startCurrentMark } from './src/current.js';
 import { startDangerMark } from './src/danger.js';
+import { startIconTextMark } from './src/icon-text.js';
 import { startCompactLayout } from './src/layout.js';
 import { startNameMarquee } from './src/marquee.js';
 import { startGutterWatch } from './src/gutter.js';
@@ -169,6 +170,7 @@ jQuery(() => {
     startPromptList(); // 검사 창 프롬프트 목록 줄을 세 조각으로 쪼갬 (CSS 로는 순서를 못 바꿈)
     startCurrentMark();
     startDangerMark();
+    startIconTextMark(); // 아이콘 + 맨 글자 .menu_button 은 아이콘 버튼 규칙에서 뺀다 (CSS 는 글자 노드를 못 봄)
     startCompactLayout();
     startNameMarquee(); // 헬퍼 스크립트 이름: 눌러서 긴 이름 끝까지 보기
     startGutterWatch(); // 스크롤하는 칸에만 양쪽 스크롤바 홈 (PC)

@@ -7,7 +7,7 @@ const {wrapWeatherCoordinate:wrap}=await import(new URL('src/weather-options.js'
 assert.equal(wrap(-101,400,40),379);assert.equal(wrap(1665,400,40),225);assert.equal(wrap(20,400,40),20);
 const realRandom=Math.random;let seed=72137;Math.random=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296);
 try{
- for(const [W,H] of [[360,780],[1280,800]])for(const mode of ['rain','snow','custom','lemon','petal','feather','butterfly','firefly','star','breeze']){
+ for(const [W,H] of [[360,780],[1280,800]])for(const mode of ['rain','snow','custom','lemon','petal','firefly','star','breeze']){
   let points=[];const gradient={addColorStop(){}};
   const ctx=new Proxy({canvas:{width:W,height:H},setTransform(a,b,c,d,x,y){if(x||y)points.push([x,y]);},clearRect(){points=[];},moveTo(x,y){points.push([x,y]);},arc(x,y){points.push([x,y]);},translate(x,y){points.push([x,y]);},createLinearGradient(){return gradient;},createRadialGradient(){return gradient;}},{get:(o,k)=>k in o?o[k]:()=>{}});
   const engine=createEngine(ctx);engine.resize(W,H,1);

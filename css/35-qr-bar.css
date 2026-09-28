@@ -313,6 +313,7 @@ html body.salty #send_form #qr--bar :is(#bl-qr-find, #qr--popoutTrigger):focus-v
   body.salty #nonQRFormItems > #qr--bar::after { right:-4px; margin-right:-4px; }
 }
 @media (pointer:coarse) {
-  html body.salty #send_form #qr--bar :is(.qr--button, #bl-qr-find, #qr--popoutTrigger),
-  html body.salty .ctx-blocker .ctx-menu > .ctx-item { min-height:32px; }
+  html body.salty #send_form #qr--bar :is(.qr--button, #bl-qr-find, #qr--popoutTrigger) { min-height:32px; }
+  /* QR 하위 목록 칸: 위의 :not(#salty-none) 규칙(아이디 무게, min-height 30px)이 이겨 예전 32px 선언이 적용되지 않았다 → 같은 무게로 36px */
+  body.salty:not(#salty-none) .ctx-blocker .ctx-menu > .list-group-item.ctx-item { min-height:36px; }
 }

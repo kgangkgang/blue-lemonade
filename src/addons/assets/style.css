@@ -4,7 +4,7 @@
    ============================================================ */
 
 /* state.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
-:root { --eh-css-version: "1.4.6"; }
+:root { --eh-css-version: "1.4.7"; }
 
 .eh-root {
     --eh-text: var(--SmartThemeBodyColor, #ccc);
@@ -254,6 +254,12 @@
 .eh-segmented button.is-active {
     background: var(--eh-accent);
     color: var(--eh-accent-ink) !important;
+}
+
+/* 손가락 화면: S/M/L 은 보이는 30px 그대로 두고 누르는 자리만 세로 36px (양옆은 이웃 칸이 붙어 있어 넓히지 않는다) */
+@media (pointer: coarse) {
+    .eh-segmented button { position: relative; }
+    .eh-segmented button::after { content: ''; position: absolute; inset: min(0px, 50% - 18px) 0; }
 }
 
 /* ── 도구 줄, 찾기 ─────────────────────────────────────────── */

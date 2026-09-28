@@ -41,8 +41,8 @@ body.salty .menu_button:is(.toggleEnabled, .active, .toggled):where(:not(.redWar
   color: var(--salty-accent-ink, var(--salty-accent));
 }
 /* 아이콘만 있는 버튼: 면 없이 흐린 아이콘(34px), 누르면 옅은 면
-   (i 하나 + 맨 글자는 CSS 로 못 가려서 아이콘 버튼처럼 보임 → 화면별로 예외 추가) */
-body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled)) {
+   (i 하나 + 맨 글자는 CSS 로 못 가려서 src/icon-text.js 가 data-bl-icon-text 를 달아 준다 → 글자 버튼 칩 그대로) */
+body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text])) {
   min-width: var(--bl-h-icon);
   min-height: var(--bl-h-icon);
   padding: 0 !important;
@@ -51,22 +51,22 @@ body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-chi
   color: var(--salty-muted) !important;
   font-size: var(--bl-ic) !important;
 }
-body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *)) > i {
+body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, [data-bl-icon-text])) > i {
   font-size: var(--bl-ic);
   color: inherit;
 }
 @media (hover: hover) {
-  body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled)):hover {
+  body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text])):hover {
     background: var(--bl-fill-hover, var(--bl-hover)) !important;
     color: var(--salty-text) !important;
   }
 }
-body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled)):active {
+body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text])):active {
   background: var(--bl-fill-press-bg, var(--bl-press-bg)) !important;
   color: var(--salty-text) !important;
   transform: none;
 }
-body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):is(.toggleEnabled, .active, .toggled):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *)) {
+body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):is(.toggleEnabled, .active, .toggled):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, [data-bl-icon-text])) {
   min-width: var(--bl-h-icon);
   min-height: var(--bl-h-icon);
   padding: 0 !important;

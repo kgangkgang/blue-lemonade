@@ -42,7 +42,8 @@ jobs:
           node tools/tests/weather-simple.mjs .
           node tools/tests/weather-amount.mjs .
           node tools/tests/weather-coverage.mjs .
-          node tools/tests/glass-motion.mjs .
+          node tools/tests/weather-retired.mjs .
+          node tools/tests/translator-archive-bridge.mjs .
           node tools/tests/preset-sharing.mjs .
           node tools/tests/appearance-workflow.mjs .
           node tools/tests/markdown-settings.mjs .

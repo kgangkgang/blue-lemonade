@@ -12,7 +12,8 @@ import zipfile
 class GateError(ValueError):
     pass
 
-WEATHER_ARTWORK = tuple(f'{pack}{style}.webp' for pack in ('nature', 'light', 'wings') for style in ('', '-anime', '-cel'))
+# wings*.webp belonged to the retired feather / butterfly weather and is no longer shipped.
+WEATHER_ARTWORK = tuple(f'{pack}{style}.webp' for pack in ('nature', 'light') for style in ('', '-anime', '-cel'))
 PREVIEW_ARTWORK = ('ade-game.webp', 'ade-lemon.webp', 'ade-cat.webp', 'ade-nap.webp', 'ade-rain.webp', 'character.webp')
 
 # Embedded tools have their own versions, independent of the theme release.

@@ -723,7 +723,7 @@ export function applyAll() {
 
     syncSamples(s);
     syncCustomCss(!!(s.enabled && s.compat?.muteCustomCss));
-    syncExtensionColors(!!(s.enabled && s.compat?.preserveExtensionColors));
+    syncExtensionColors(!!(s.enabled && s.compat?.preserveExtensionColors), s.compat?.extensionColorsOff);
     syncFavicon(!!s.enabled);   // 5.5.0 탭 아이콘 레몬 (끄면 실리태번 아이콘)
 
     applyFonts(s);

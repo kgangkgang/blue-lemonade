@@ -4,16 +4,16 @@
 // 3.3.1: 투명도 · 크기 · 속도 · 각도 조절 — 입자에는 기본값만 두고 그릴 때 곱하므로 슬라이더를 밀어도 다시 뿌리지 않는다.
 //        내 그림(custom): 받은 ImageBitmap 을 입자마다 돌려 가며 그린다 (눈처럼 흔들리며 내림).
 
-// 장면(무지개 · 물결 …) 코드는 그 날씨를 처음 고를 때만 받는다 — 비 · 눈만 쓰면 읽지 않는다
+// 장면(무지개 · 나무 그림자 · 흩날림) 코드는 그 날씨를 처음 고를 때만 받는다 — 비 · 눈만 쓰면 읽지 않는다
 import { weatherAmount, wrapWeatherCoordinate as wrap } from './weather-options.js';
 import { createWeatherArt } from './weather-art.js';
 import { loadWeatherModule } from './weather-load.js';
-const SCENE_MODES = ['rainbow', 'shadow', 'breeze', 'glass', 'water'];
+const SCENE_MODES = ['rainbow', 'shadow', 'breeze'];
 let scenesModule = null, scenesLoading = null;
 const loadScenes = () => (scenesLoading ??= loadWeatherModule(new URL('./weather-scenes.js', import.meta.url), ['createScene']).then(m => { scenesModule = m; return m; }).catch(error => { scenesLoading = null; throw error; }));
 
 const LEVEL = [0, 0.55, 1, 1.7];
-const DENSITY = { rain: 0.00022, snow: 0.00016, custom: 0.0001, lemon: 0.0001, petal: 0.00012, feather: 0.000045, butterfly: 0.000025, meteor: 0.00005, fog: 0.00003, sun: 0.00008, star: 0.00034, firefly: 0.00007 };
+const DENSITY = { rain: 0.00022, snow: 0.00016, custom: 0.0001, lemon: 0.0001, petal: 0.00012, meteor: 0.00005, fog: 0.00003, sun: 0.00008, star: 0.00034, firefly: 0.00007 };
 const SPRITE_PX = 18; // 내 그림 기본 크기 (긴 변, 크기 100%)
 const BANDS = [[0, 0.34], [0.34, 0.67], [0.67, 1.01]];
 
@@ -92,8 +92,9 @@ function createCore(ctx, first, shared = {}) {
         if (fog.area === 'both') return Math.random() < .5 ? H * (1.02 - band()) : H * (-.02 + band());
         return rand(-H * .05, H * 1.02);
     }
-    // 햇살(4.2.8): 위에서 비스듬히 내리는 빛줄기 몇 가닥 + 빛 속을 떠다니는 먼지. 빛줄기는 제 박자로 밝아졌다 잦아든다
-    let beams = [], warm = false, sunStyle = 'shaft'; // shaft 빛줄기 · holy 성스러운 빛 · anime 애니풍 · flare 렌즈 플레어
+    // 햇살(4.2.8): 렌즈 플레어 + 빛 속을 떠다니는 먼지. 빛 알갱이는 제 박자로 밝아졌다 잦아든다
+    // 햇살 모양은 렌즈 플레어 하나뿐 — 옛 빛줄기 · 성스러운 빛 · 애니풍 값이 와도 렌즈 플레어로 그린다
+    let beams = [], warm = false;
     function mote(anywhere) {
         const depth = Math.random();
         return { x: rand(0, W), y: anywhere ? rand(0, H) : H + rand(4, 30), r: .7 + depth * 1.7, speed: 5 + depth * 12, sway: 8 + depth * 16, freq: rand(.2, .7), phase: rand(0, Math.PI * 2), twinkle: rand(.6, 1.8), depth };
@@ -138,8 +139,6 @@ function createCore(ctx, first, shared = {}) {
     }
     function piece(anywhere) {
         const depth = Math.random();
-        if (mode === 'butterfly') return { x: rand(0, W), y: anywhere ? rand(0, H) : H + 36, s: .65 + depth * .65, speed: 12 + depth * 20, sway: 15 + depth * 22, phase: rand(0, Math.PI * 2), freq: rand(.45, .85), rot: rand(-.2, .2), spin: rand(-.2, .2), depth };
-        if (mode === 'feather') {const rot=rand(-.6,.6);return {x:rand(0,W),y:anywhere?rand(0,H):-40,s:.65+depth*.65,speed:10+depth*22,sway:14+depth*24,phase:rand(0,Math.PI*2),freq:rand(.35,.6),rot,rot0:rot,spin:rand(-.4,.4),depth};}
         return { x: rand(0, W), y: anywhere ? rand(0, H) : rand(-40, -10), s: 0.6 + depth * 0.6, speed: 28 + depth * 62, sway: 10 + depth * 22, phase: rand(0, Math.PI * 2), freq: rand(0.3, 0.9), rot: rand(0, Math.PI * 2), spin: rand(-1.4, 1.4), depth };
     }
     // One scratch buffer per engine; drawing a tail must not allocate 25 objects
@@ -171,7 +170,7 @@ function createCore(ctx, first, shared = {}) {
     }
     // 장면(weather-scenes.js): 화면 전체로 그리는 효과는 그리기를 통째로 맡긴다. env 는 지금 값을 읽는 창
     let spots = null; // 끌어서 정한 자리 (모드별 [{x,y}])
-    let scene = null, sceneOpts = { shadowStyle: 'palm', shadowBlur: 35, waterStyle: 'pool', waterArea: 'bottom' };
+    let scene = null, sceneOpts = { shadowStyle: 'palm', shadowBlur: 35 };
     const env = { ctx, rand, mix, canvas: (w, h) => fogCanvas(w, h), get W() { return W; }, get H() { return H; }, get dpr() { return dpr; }, get level() { return level; }, get k() { return LEVEL[level] ?? 1; },
         get opacity() { return opacity * (artStyle === 'simple' ? .65 : 1); }, get size() { return sizeK; }, get speed() { return speedK; }, get slant() { return slant; }, get sway() { return swayK; }, get spin() { return spinK; }, get motion() { return motion; },
         get art() { return materials; }, get artStyle() { return artStyle; }, get colors() { return colors; }, get light() { return colors.snowAlpha < .7; }, get tintRGB() { return tintRGB; }, get gradient() { return !!rgbB; }, get opts() { return sceneOpts; }, get spots() { return spots?.[mode] || null; } };
@@ -187,7 +186,7 @@ function createCore(ctx, first, shared = {}) {
             if (!scenesModule) { items = []; const wantMode = mode; loadScenes().then(() => { if (mode === wantMode && !scene) { seed(); shared.wake?.(); } }, () => {}); return; } // 받는 동안은 비어 있다가, 받으면 다시 뿌린다
             scene = W > 0 && H > 0 ? scenesModule.createScene(mode, env) : null; items = scene ? [scene] : []; return;
         }
-        const k = (['rain','snow'].includes(mode) ? amount / 100 : (LEVEL[level] ?? 1)) * (artStyle === 'simple' && ['lemon','petal','feather','butterfly','sun','firefly'].includes(mode) ? .55 : 1);
+        const k = (['rain','snow'].includes(mode) ? amount / 100 : (LEVEL[level] ?? 1)) * (artStyle === 'simple' && ['lemon','petal','sun','firefly'].includes(mode) ? .55 : 1);
         const area = Math.max(0, W * H);
         const active = DENSITY[mode] && (mode !== 'custom' || sprite);
         if (mode === 'fog') fogPaint();
@@ -249,22 +248,12 @@ function createCore(ctx, first, shared = {}) {
                 if (dir > 0 ? p.x - reach > W : p.x + reach < 0) items[i] = puff(false);
                 continue;
             }
-            if (mode === 'butterfly') {
-                const flutter = motion === 'straight' ? 0 : motion === 'flutter' ? 1.7 : 1;
-                p.y -= p.speed * speedK * (motion === 'streak' ? 2.5 : 1) * dt;
-                p.x += (Math.sin(t * p.freq + p.phase) * p.sway * swayK * flutter + slant * 14) * speedK * dt;
-                p.rot = Math.sin(t * p.freq + p.phase) * .32 * spinK * flutter;
-                p.x = wrap(p.x, W, margin);
-                if (p.y < -margin) items[i] = piece(false);
-                continue;
-            }
             const streak = motion === 'streak';
             const v = p.speed * speedK * (streak ? 6 : 1);
             p.y += v * dt;
             p.x += v * slant * dt;
             p.x += Math.sin(t * p.freq + p.phase) * p.sway * dt * swayK * (motion === 'straight' ? 0 : motion === 'flutter' ? 2 : 1);
-            if (mode === 'feather') p.rot = p.rot0 + Math.sin(t * .65 * speedK + p.phase) * .7 * spinK;
-            else if (mode !== 'snow' && mode !== 'rain') p.rot += p.spin * dt * Math.min(2, speedK) * spinK;
+            if (mode !== 'snow' && mode !== 'rain') p.rot += p.spin * dt * Math.min(2, speedK) * spinK;
             if (mode === 'rain') {
                 p.rot = motion === 'straight' ? 0 : Math.sin(t * p.freq + p.phase) * .06 * spinK;
                 // Side exits must enter the opposite side at the same height.
@@ -388,59 +377,24 @@ function createCore(ctx, first, shared = {}) {
         } else if (mode === 'sun') {
             const t = clock, light = colors.snowAlpha < .7;
             const base = warm ? (light ? '240,140,60' : '255,178,110') : (light ? '245,176,64' : '255,232,170');
-            const lean = Math.atan(slant) * 1.6 + (slant < 0 ? -.3 : .3); // 각도 슬라이더: 빛이 드는 방향과 기울기
-            const length = H * 1.15, dx = Math.tan(lean) * length;
             const shimmer = beam => (motion === 'straight' ? .8 : .55 + Math.sin(t * beam.freq * speedK * (motion === 'streak' ? 3 : 1) + beam.phase) * .45 * Math.min(1.5, (.5 + swayK * .5) * (motion === 'flutter' ? 1.6 : 1)));
             const turn = t * .06 * spinK; // 회전: 빛살 · 육각이 도는 빠르기
             const inkOf = beam => (rgbB ? mix(beam.tone) : tintRGB || base);
             // 색을 직접 고르면 그 색 그대로 칠한다 — '더하기' 합성에서는 어두운 색(검은 햇빛)이 보이지 않는다
             const core = (rgbB ? mix(.5) : tintRGB) || base;
             ctx.globalCompositeOperation = light || tintRGB ? 'source-over' : 'lighter';
-            const paintedBeam = materials.get('sunbeam');
-            if (paintedBeam) {
+            // 그린 소재(빛 알갱이 그림)가 있으면 그것으로, 없으면(심플 · 받는 중) 도형으로 같은 렌즈 플레어를 그린다
+            if (materials.get('glow')) {
                 const spot = spots?.sun?.[0];
-                if (sunStyle === 'holy') {
-                    const x = spot ? spot.x * W : W * (.5 - Math.max(-.35, Math.min(.35, slant * .9))), y = spot ? spot.y * H : -H * .08;
-                    const angle = lean * .3 + Math.sin(turn + t * .03 * speedK) * .09 * swayK;
-                    const c = Math.cos(angle) * dpr, s = Math.sin(angle) * dpr, width = W * 1.65 * sizeK;
-                    ctx.setTransform(c, s, -s, c, x * dpr, y * dpr);
-                    ctx.globalAlpha = (light ? .4 : .32) * opacity * (.86 + .14 * Math.sin(turn));
-                    ctx.drawImage(materials.get('sunbeam', core), -width / 2, 0, width, Math.max(H * 1.1, width));
-                } else if (sunStyle === 'flare') {
-                    const x = spot ? spot.x * W : W * (.5 - Math.max(-1, Math.min(1, Math.atan(slant) / .35)) * .44), y = spot ? spot.y * H : H * .04;
-                    for (const [i, beam] of beams.entries()) {
-                        const at = i ? beam.at : 0, r = (i ? 14 + beam.width * 140 : Math.min(W, H) * .4) * sizeK;
-                        const gx = x + (W - 2 * x) * at + Math.sin(turn + beam.phase) * 8 * swayK, gy = y + (H - y) * at;
-                        ctx.globalAlpha = Math.max(0, (i ? .24 : .5) * shimmer(beam) * opacity);
-                        ctx.drawImage(materials.get('glow', inkOf(beam)), gx - r, gy - r, r * 2, r * 2);
-                    }
-                } else for (const beam of beams) {
-                    const anime = sunStyle === 'anime', x = W * beam.at + (spot ? (spot.x - .5) * W : 0) + Math.sin(turn + beam.phase) * 14 * swayK;
-                    const y = spot ? spot.y * H : -H * .12;
-                    const width = W * (anime ? .58 : .3) * sizeK, angle = -lean * .5;
-                    const c = Math.cos(angle) * dpr, s = Math.sin(angle) * dpr;
-                    ctx.setTransform(c, s, -s, c, x * dpr, y * dpr);
-                    ctx.globalAlpha = Math.max(0, (anime ? .2 : .15) * shimmer(beam) * opacity);
-                    ctx.drawImage(materials.get('sunbeam', inkOf(beam)), -width / 2, 0, width, H * 1.3);
+                const x = spot ? spot.x * W : W * (.5 - Math.max(-1, Math.min(1, Math.atan(slant) / .35)) * .44), y = spot ? spot.y * H : H * .04;
+                for (const [i, beam] of beams.entries()) {
+                    const at = i ? beam.at : 0, r = (i ? 14 + beam.width * 140 : Math.min(W, H) * .4) * sizeK;
+                    const gx = x + (W - 2 * x) * at + Math.sin(turn + beam.phase) * 8 * swayK, gy = y + (H - y) * at;
+                    ctx.globalAlpha = Math.max(0, (i ? .24 : .5) * shimmer(beam) * opacity);
+                    ctx.drawImage(materials.get('glow', inkOf(beam)), gx - r, gy - r, r * 2, r * 2);
                 }
                 ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.globalAlpha = 1;
-            } else if (sunStyle === 'holy') {
-                // 성스러운 빛: 화면 위 한 점에서 부채꼴로 퍼지는 빛살 + 그 자리의 은은한 후광
-                const spot = spots?.sun?.[0];
-                const cx = spot ? spot.x * W : W * (.5 - Math.max(-.35, Math.min(.35, slant * .9))), cy = spot ? spot.y * H : -H * .1, reach = Math.hypot(W, H) * 1.05;
-                const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, H * .8);
-                halo.addColorStop(0, `rgba(${core},${((light ? .34 : .26) * opacity).toFixed(3)})`); halo.addColorStop(.5, `rgba(${core},${((light ? .1 : .07) * opacity).toFixed(3)})`); halo.addColorStop(1, `rgba(${core},0)`);
-                ctx.fillStyle = halo; ctx.fillRect(0, 0, W, H);
-                for (const beam of beams) {
-                    const alpha = Math.max(0, (light ? .26 : .2) * beam.base * shimmer(beam) * opacity);
-                    if (alpha < .004) continue;
-                    const mid = Math.PI / 2 + (beam.at - .5) * 1.9 + Math.sin(turn * .5 + beam.phase) * .25 * Math.min(1, spinK) + Math.sin(t * .04 * speedK + beam.phase) * .05 * swayK, half = (.03 + beam.width * .45) * sizeK;
-                    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, reach);
-                    g.addColorStop(0, `rgba(${inkOf(beam)},${alpha.toFixed(3)})`); g.addColorStop(.5, `rgba(${inkOf(beam)},${(alpha * .4).toFixed(3)})`); g.addColorStop(1, `rgba(${inkOf(beam)},0)`);
-                    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(cx, cy);
-                    ctx.lineTo(cx + Math.cos(mid - half) * reach, cy + Math.sin(mid - half) * reach); ctx.lineTo(cx + Math.cos(mid + half) * reach, cy + Math.sin(mid + half) * reach); ctx.closePath(); ctx.fill();
-                }
-            } else if (sunStyle === 'flare') {
+            } else {
                 // 렌즈 플레어: 구석의 밝은 빛에서 화면을 가로지르는 축을 따라 육각 빛번짐이 줄지어 놓인다
                 const spot = spots?.sun?.[0];
                 const sx = (spot ? spot.x * W : W * (.5 - Math.max(-1, Math.min(1, Math.atan(slant) / .35)) * .44)) + Math.sin(t * .05 * speedK) * W * .03 * swayK, sy = spot ? spot.y * H : H * .04;
@@ -469,23 +423,6 @@ function createCore(ctx, first, shared = {}) {
                     g.addColorStop(0, `rgba(${core},${((light ? .5 : .4) * opacity).toFixed(3)})`); g.addColorStop(1, `rgba(${core},0)`);
                     ctx.strokeStyle = g; ctx.lineWidth = 1.6 * Math.sqrt(sizeK); ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + Math.cos(q) * far, sy + Math.sin(q) * far); ctx.stroke();
                 }
-            } else {
-                const anime = sunStyle === 'anime';
-                for (const beam of beams) {
-                    const alpha = Math.max(0, (light ? .2 : .16) * beam.base * shimmer(beam) * opacity * (anime ? 1.15 : 1));
-                    if (alpha < .004) continue;
-                    const ink = inkOf(beam);
-                    const span = W + Math.abs(dx), slide = ((beam.at * span + turn * 90 + (spots?.sun?.[0] ? (spots.sun[0].x - .5) * W : 0)) % span + span) % span;
-                    const x0 = slide - (dx > 0 ? dx : 0), w = Math.max(24, beam.width * W * sizeK);
-                    // 애니풍: 끝까지 또렷한 면 + 안쪽에 한 겹 더 밝은 띠 (셀 채색). 빛줄기: 아래로 갈수록 부드럽게 사라진다
-                    for (const [inset, gain] of anime ? [[0, .6], [.28, .75]] : [[0, 1]]) {
-                        const g = ctx.createLinearGradient(x0, 0, x0 + dx, length);
-                        g.addColorStop(0, `rgba(${ink},${(alpha * gain).toFixed(3)})`); g.addColorStop(anime ? .82 : .55, `rgba(${ink},${(alpha * gain * (anime ? .9 : .45)).toFixed(3)})`); g.addColorStop(1, `rgba(${ink},0)`);
-                        ctx.fillStyle = g; ctx.beginPath();
-                        const near = w * inset, spread = anime ? 1.5 : 2.1;
-                        ctx.moveTo(x0 + near, -4); ctx.lineTo(x0 + w - near, -4); ctx.lineTo(x0 + dx + w * spread - near * spread, length); ctx.lineTo(x0 + dx - w * (spread - 1) * .45 + near * spread, length); ctx.closePath(); ctx.fill();
-                    }
-                }
             }
             for (const p of items) {
                 const a = Math.max(0, (.35 + p.depth * .5) * (.55 + Math.sin(t * p.twinkle + p.phase) * .45) * opacity * (light ? .9 : .8));
@@ -493,10 +430,7 @@ function createCore(ctx, first, shared = {}) {
                 const r = p.r * Math.sqrt(sizeK);
                 const glow = materials.get('glow', rgbB ? mix(Math.round(p.depth * 4) / 4) : tintRGB || base);
                 if (glow) {ctx.globalAlpha = a;ctx.drawImage(glow, p.x - r * 2, p.y - r * 2, r * 4, r * 4);ctx.globalAlpha = 1;continue;}
-                ctx.beginPath();
-                if (sunStyle === 'anime' || sunStyle === 'holy') { const k = r * 2.6, n = r * .55; ctx.moveTo(p.x, p.y - k); ctx.quadraticCurveTo(p.x + n * .3, p.y - n * .3, p.x + k, p.y); ctx.quadraticCurveTo(p.x + n * .3, p.y + n * .3, p.x, p.y + k); ctx.quadraticCurveTo(p.x - n * .3, p.y + n * .3, p.x - k, p.y); ctx.quadraticCurveTo(p.x - n * .3, p.y - n * .3, p.x, p.y - k); }
-                else ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
             }
             ctx.globalCompositeOperation = 'source-over';
         } else if (mode === 'fog') {
@@ -568,13 +502,13 @@ function createCore(ctx, first, shared = {}) {
                 ctx.fillStyle = (own && rgbB ? `rgb(${own})` : tintLight) || (light ? '#527f9b' : '#eefbff');ctx.beginPath();ctx.arc(points[0],points[1],width * .65,0,Math.PI*2);ctx.fill();
             }
             ctx.globalAlpha = 1;
-        } else if (['custom', 'lemon', 'petal', 'feather', 'butterfly'].includes(mode)) {
+        } else if (['custom', 'lemon', 'petal'].includes(mode)) {
             const baseArt = mode === 'custom' ? sprite : materials.get(mode);
             const long = Math.max(baseArt?.width || 1, baseArt?.height || 1);
             const bw = (baseArt?.width || 1) / long;
             const bh = (baseArt?.height || 1) / long;
             for (const p of items) {
-                const size = (mode === 'custom' ? SPRITE_PX : mode === 'butterfly' ? 23 : mode === 'feather' ? 24 : mode === 'lemon' ? 17 : 12) * sizeK * p.s;
+                const size = (mode === 'custom' ? SPRITE_PX : mode === 'lemon' ? 17 : 12) * sizeK * p.s;
                 const w = size * bw;
                 const h = size * bh;
                 const cos = Math.cos(p.rot) * dpr;
@@ -584,17 +518,8 @@ function createCore(ctx, first, shared = {}) {
                 if (mode === 'custom' && sprite) ctx.drawImage(tintedSprites[Math.min(4, Math.floor(p.depth * 5))] || tintedSprite || sprite, -w / 2, -h / 2, w, h);
                 else if (baseArt) {
                     const material = materials.get(mode, tintRGB ? mix(Math.round(p.depth * 4) / 4) : null);
-                    const fold = mode === 'butterfly' ? .2 + .8 * Math.abs(Math.sin(clock * (4 + p.depth * 2) * speedK + p.phase)) : mode === 'petal' && motion !== 'straight' ? .58 + .42 * Math.abs(Math.cos(clock * .65 * spinK + p.phase)) : 1;
+                    const fold = mode === 'petal' && motion !== 'straight' ? .58 + .42 * Math.abs(Math.cos(clock * .65 * spinK + p.phase)) : 1;
                     ctx.drawImage(material, -w * fold / 2, -h / 2, w * fold, h);
-                }
-                else if (mode === 'feather') {
-                    ctx.strokeStyle = tint || (colors.snowAlpha < .7 ? '#91a7bf' : '#edf3ff');ctx.lineWidth=Math.max(.7,size*.035);
-                    ctx.beginPath();ctx.moveTo(0,-size*.4);ctx.quadraticCurveTo(size*.12,0,0,size*.4);ctx.stroke();
-                    for(let n=0;n<7;n++){const y=-size*.28+n*size*.08,span=Math.sin((n+1)/8*Math.PI)*size*.2;ctx.beginPath();ctx.moveTo(0,y+size*.09);ctx.lineTo(span,y);ctx.moveTo(0,y+size*.09);ctx.lineTo(-span,y);ctx.stroke();}
-                }
-                else if (mode === 'butterfly') {
-                    const flap=.2+.8*Math.abs(Math.sin(clock*5*speedK+p.phase));ctx.scale(flap,1);ctx.fillStyle=rgbB ? `rgb(${mix(p.depth)})` : tint||'#afc9ef';
-                    for(const sign of [-1,1]){ctx.beginPath();ctx.moveTo(0,0);ctx.bezierCurveTo(sign*size*.6,-size*.5,sign*size*.55,size*.28,0,size*.14);ctx.fill();if(artOutline){ctx.strokeStyle=colors.snowAlpha<.7?'#6c819e':'#dce9ff';ctx.lineWidth=Math.max(.65,size*.03);ctx.stroke();}}
                 }
                 else if (mode === 'lemon') {
                     ctx.beginPath(); ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
@@ -627,8 +552,8 @@ function createCore(ctx, first, shared = {}) {
             dpr = ratio;
             if(ctx.canvas.width!==width)ctx.canvas.width=width;
             if(ctx.canvas.height!==height)ctx.canvas.height=height;
-            // 장면(무지개 · 물결 · 그림자 …)은 크기가 바뀌어도 다시 만들지 않는다: 폰에서 주소창이 들락거릴 때마다 화면 높이가 바뀌는데,
-            // 그때마다 물결 무늬 · 물방울 그림을 새로 구워 효과가 멈칫했다가 처음부터 다시 도는 것처럼 보였다. 장면은 매 프레임 지금 크기를 읽는다
+            // 장면(무지개 · 그림자 · 흩날림)은 크기가 바뀌어도 다시 만들지 않는다: 폰에서 주소창이 들락거릴 때마다 화면 높이가 바뀌는데,
+            // 그때마다 그림을 새로 구워 효과가 멈칫했다가 처음부터 다시 도는 것처럼 보였다. 장면은 매 프레임 지금 크기를 읽는다
             if (scene) { if (changed) { seedW = W; seedH = H; scene.resize?.(); } }
             else if (changed || !items.length) seed();
         },
@@ -653,8 +578,7 @@ function createCore(ctx, first, shared = {}) {
             if(spriteChanged||tintChanged)colorSprite();
             if('warm' in next)warm=!!next.warm;
             if('spots' in next)spots=next.spots&&typeof next.spots==='object'?next.spots:null;
-            if(next.scene&&typeof next.scene==='object')sceneOpts={shadowStyle:next.scene.shadowStyle==='leaf'?'leaf':'palm',shadowBlur:Number.isFinite(Number(next.scene.shadowBlur))?Math.max(0,Math.min(100,Number(next.scene.shadowBlur))):35,waterStyle:next.scene.waterStyle==='sea'?'sea':'pool',waterArea:['bottom','top','all'].includes(next.scene.waterArea)?next.scene.waterArea:'bottom'};
-            if(next.sun&&typeof next.sun==='object')sunStyle=['shaft','holy','anime','flare'].includes(next.sun.style)?next.sun.style:'shaft';
+            if(next.scene&&typeof next.scene==='object')sceneOpts={shadowStyle:next.scene.shadowStyle==='leaf'?'leaf':'palm',shadowBlur:Number.isFinite(Number(next.scene.shadowBlur))?Math.max(0,Math.min(100,Number(next.scene.shadowBlur))):35};
             let starChanged=false;
             if(next.star&&typeof next.star==='object'){const want=next.star.style==='milky'?'milky':'sky';starChanged=want!==starStyle&&next.mode==='star';starStyle=want;}
             let fogChanged=false;
@@ -700,7 +624,7 @@ function createCore(ctx, first, shared = {}) {
         draw,
         dispose() { scene?.dispose?.();scene=null;items=[];for(const canvas of tintedSprites)canvas.width=canvas.height=1;tintedSprites=[];fogDrop();fogKey='';sprite?.close?.();sprite=null;if(tintedSprite)tintedSprite.width=tintedSprite.height=1;tintedSprite=null; },
         idle: () => mode === 'off' || !items.length,
-        fps: () => (['fog', 'sun', 'star', 'rainbow', 'shadow', 'water'].includes(mode) ? 20 : 30),
+        fps: () => (['fog', 'sun', 'star', 'rainbow', 'shadow'].includes(mode) ? 20 : 30),
     };
 }
 

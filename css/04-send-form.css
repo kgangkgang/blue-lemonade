@@ -565,8 +565,10 @@ html body.salty #send_form #jj-button:focus-visible {
   outline-offset:2px;
 }
 @media (pointer:coarse) {
-  body.salty #jj-popup .jj-switch::after {
-    content:''; position:absolute; inset:-6px 0;
+  /* 켜기 스위치(깃털 창 · 전개 지시 설정)는 보이는 크기 그대로 두고, 누르는 자리만 세로 36px */
+  body.salty #jj-popup .jj-switch::after,
+  body.salty .jj-settings-body .jj-switch::after {
+    content:''; position:absolute; inset:min(0px, 50% - 18px) 0;
   }
   body.salty #jj-popup .jj-icon-btn { min-width:32px; min-height:32px; }
 }

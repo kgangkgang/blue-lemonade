@@ -197,7 +197,7 @@ body.salty .menu_button:is(.redWarningBG, .red_button, .danger):where(:not(#nonQ
   color: var(--bl-danger) !important;
 }
 /* 아이콘만이면 면 없이 빨간 아이콘 (다른 아이콘 버튼과 같은 자리 · 같은 크기) */
-body.salty .menu_button:is(.redWarningBG, .red_button, .danger):is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):where(:not(#nonQRFormItems *, .salty-panel *)) {
+body.salty .menu_button:is(.redWarningBG, .red_button, .danger):is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):where(:not(#nonQRFormItems *, .salty-panel *, [data-bl-icon-text])) {
   background: transparent !important;
   box-shadow: none !important;
 }

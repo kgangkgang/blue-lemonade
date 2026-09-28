@@ -63,10 +63,11 @@ class GateTests(unittest.TestCase):
             for name,data in f.items():
                 p=root/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(data)
             art=root/'src/weather-art';art.mkdir()
-            for name in ('nature.webp','light.webp','private.webp'):(art/name).write_bytes(b'RIFF0000WEBPfixture')
+            for name in ('nature.webp','light.webp','private.webp','wings.webp','wings-anime.webp','wings-cel.webp'):(art/name).write_bytes(b'RIFF0000WEBPfixture')
             files=gate.inventory(root,'theme')
             self.assertIn('src/weather-art/nature.webp',files);self.assertIn('src/weather-art/light.webp',files)
             self.assertNotIn('src/weather-art/private.webp',files)
+            for name in ('wings.webp','wings-anime.webp','wings-cel.webp'):self.assertNotIn('src/weather-art/'+name,files)
     def test_bundled_templates_and_licenses_are_required_and_packaged(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d)

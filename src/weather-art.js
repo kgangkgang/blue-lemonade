@@ -1,14 +1,14 @@
 // Weather materials: lazy, same-origin atlases shared by both weather layers.
 // Decode once, trim transparent padding, keep only small reusable sprites.
+// Cells sit in a fixed 3 × 2 grid. Cells no weather draws stay null and are not decoded.
 const PACKS = {
-    nature: ['cloud', 'mist', 'petal', 'lemon', 'leaf', 'snow'],
-    light: ['nebula', 'sunbeam', 'caustic', 'palm', 'droplet', 'glow'],
-    wings: ['feather', 'butterfly', 'featherGold', 'butterflyPink', 'down', 'moth'],
+    nature: [null, null, 'petal', 'lemon', 'leaf', null],
+    light: ['nebula', null, null, 'palm', null, 'glow'],
 };
 const MODES = { petal: ['nature'], lemon: ['nature'], breeze: ['nature'],
-    star: ['light'], sun: ['light'], firefly: ['light'], shadow: ['light', 'nature'], water: ['light'], glass: ['light'], feather: ['wings'], butterfly: ['wings'] };
+    star: ['light'], sun: ['light'], firefly: ['light'], shadow: ['light', 'nature'] };
 const packs = new Map();
-const limits = { cloud: 384, mist: 384, nebula: 512, sunbeam: 384, caustic: 384, palm: 384, droplet: 96, glow: 64 };
+const limits = { nebula: 512, palm: 384, glow: 64 };
 
 async function decodePack(name, canvas) {
     const response = await fetch(new URL(`./weather-art/${name}.webp`, import.meta.url));
@@ -26,6 +26,7 @@ async function decodePack(name, canvas) {
         const textures = new Map();
         try {
             for (const [index, kind] of PACKS[name.replace(/-(anime|cel)$/, '')].entries()) {
+                if (!kind) continue;
                 paint.clearRect(0, 0, cw, ch);
                 paint.drawImage(atlas, index % 3 * cw, Math.floor(index / 3) * ch, cw, ch, 0, 0, cw, ch);
                 const pixels = paint.getImageData(0, 0, cw, ch).data;

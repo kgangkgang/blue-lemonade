@@ -51,9 +51,6 @@ export function detectWeatherAll(text) {
     // all: 트래커 '제외할 날씨'는 자르기 전에 걸러야 셋째 효과가 빈자리를 채운다 (plan)
     return { modes: found.slice(0, 2), all: found, warm: dusk };
 }
-export function detectWeather(text) {
-    return detectWeatherAll(text).modes[0] || 'off';
-}
 
 function rgbText(value, fallback) {
     try {
@@ -124,7 +121,7 @@ async function createRenderer(canvas, init, replaceCanvas) {
 /** 설정의 날씨 값 → 엔진 값 (범위는 settings.js 가 이미 잡음) */
 function paramsFrom(chat = {}) {
     return { amount:weatherAmount(chat.weatherAmount,chat.weatherLevel), artStyle:chat.weatherIllustrated===true?(['anime','cel'].includes(chat.weatherArtStyle)?chat.weatherArtStyle:'real'):'simple', artOutline:!!chat.weatherArtOutline, tint:['custom','gradient'].includes(chat.weatherColorMode)?chat.weatherColor:null, tint2:chat.weatherColorMode==='gradient'?chat.weatherColor2:null,
-        scene:{shadowStyle:chat.weatherShadowStyle,shadowBlur:chat.weatherShadowBlur??35,waterStyle:chat.weatherWaterStyle,waterArea:chat.weatherWaterArea},
+        scene:{shadowStyle:chat.weatherShadowStyle,shadowBlur:chat.weatherShadowBlur??35},
         spots:chat.weatherSpots||null,
         sun:{style:'flare'}, star:{style:chat.weatherStarStyle},
         fog:{style:chat.weatherFogStyle,area:chat.weatherFogArea,stretch:chat.weatherFogStretch,edge:chat.weatherFogEdge,swell:chat.weatherFogSwell,depth:chat.weatherFogDepth}, curvature:Number(chat.weatherCurvature??65),orbitSize:Number(chat.weatherOrbitSize??100),orbitDirection:chat.weatherOrbitDirection||'right', readability: chat.weatherReadability === true, opacity: Number(chat.weatherOpacity) || 100, size: Number(chat.weatherSize) || 100, speed: Number(chat.weatherSpeed) || 100, motion: chat.weatherMotion || 'natural', sway: Number(chat.weatherSway ?? 100), spin: Number(chat.weatherSpin ?? 100), angle: Number.isFinite(Number(chat.weatherAngle)) ? Number(chat.weatherAngle) : -9 };
@@ -212,8 +209,8 @@ function createLayer(host, className, virtual = false) {
         ready,
         set(mode, level, params = {}, spriteData = '') {
             if(destroyed)return;
-            const lowOf = (m, p) => (m === 'water' && (p?.scene?.waterArea ?? 'bottom') === 'bottom') || (m === 'fog' && p?.fog?.area === 'bottom');
-            const topOf = (m, p) => (m === 'fog' && ['top', 'both'].includes(p?.fog?.area)) || (m === 'water' && p?.scene?.waterArea === 'top');
+            const lowOf = (m, p) => m === 'fog' && p?.fog?.area === 'bottom';
+            const topOf = (m, p) => m === 'fog' && ['top', 'both'].includes(p?.fog?.area);
             const low = lowOf(mode, params) || (!topOf(mode, params) && lowOf(params.second?.mode, params.second));
             const fit = (mode === 'fog' && params.fog?.area === 'both') || (params.second?.mode === 'fog' && params.second.fog?.area === 'both');
             if (virtual && (low !== anchorBottom || fit !== fitStage)) { anchorBottom = low; fitStage = fit; renderer?.post({ type: 'resize', ...dimensions() }); }
@@ -236,8 +233,6 @@ function createLayer(host, className, virtual = false) {
             else pending = message;
         },
         current: () => current,
-        pause: () => {paused=true;renderer?.post({ type: 'pause' });},
-        resume: () => {paused=false;renderer?.post({ type: 'resume' });},
         onDestroy(fn) {cleanup.add(fn);},
         destroy() {
             if(destroyed)return;destroyed=true;spriteGen++;pending=null;

@@ -37,6 +37,7 @@ import { customCssReport, buildDiagnosis } from './diagnose.js';
 import { PRESETS, MAX_STYLES, captureStyle, applyStyleData, sameStyle, sharePayload, encodeStyle, decodeStyle, newStyleId, uniqueName, mergeFonts, currentKey, keyLabel } from './styles.js';
 import { charStyleModule } from './features.js';
 import { splashState, checkSplash, SPLASH_COMMAND, SPLASH_IMPORT, faviconFileState, checkFaviconFile, prepareFaviconCommand, FAVICON_FILE } from './splash.js';
+import { listExtensionColorTargets } from './extension-colors.js';
 import { decodeAnyImage, imageWidth, imageHeight, IMAGE_ACCEPT } from './imagedecode.js';
 import { bindSettingsSearch, searchMarkup, paintSettingsSearch } from './settings-search.js';
 import { favoritesMarkup, bindFavorites } from './settings-favorites.js';
@@ -466,13 +467,22 @@ function splashRow() {
         : '<button class="salty-btn" data-act="splash-copy">명령 복사</button>', note);
 }
 
+// 5.5.2 확장별 색 유지 (사용자: "어떤 건 유지하고 어떤 건 유지 안 하고 싶을 수 있잖아") — 켠 확장만 원래 색, 끈 확장은 테마 색.
+// 목록은 지금 설정창에 떠 있는 다른 확장. 끈 확장만 compat.extensionColorsOff 에 적는다 (새로 깐 확장은 기본 유지)
+function extColorList(s) {
+    const items = listExtensionColorTargets();
+    if (!items.length) return '';
+    const off = new Set(s.compat?.extensionColorsOff || []);
+    return `<div class="bl-ext-colors-list">${items.map(({ key, label }) => `<div class="salty-row"><span>${esc(label)}</span><label class="salty-switch"><input type="checkbox" data-act="ext-color" data-key="${esc(key)}" aria-label="${esc(label)}" ${off.has(key) ? '' : 'checked'}><span></span></label></div>`).join('')}</div>`;
+}
+
 // 5.5.1 탭 아이콘: 실리태번 public/favicon.ico 를 레몬 파일로 — 새로고침 화면처럼 명령 한 번 (테마가 뜨기 전 ST 로고가 안 보이게)
 function faviconRow() {
     const state = faviconFileState();
     if (state === null) checkFaviconFile(refreshPanels);
     return row('탭 아이콘', state === 'on'
         ? '<span class="salty-splash-on"><i class="fa-solid fa-check" aria-hidden="true"></i></span>'
-        : '<button class="salty-btn" data-act="favicon-copy">명령 복사</button>', state === 'on' ? '처음부터 레몬으로 떠요' : '실리태번 ST 로고 없이 처음부터 레몬 — 명령을 한 번 실행');
+        : '<button class="salty-btn" data-act="favicon-copy">명령 복사</button>', state === 'on' ? '탭 · 홈 화면 모두 레몬' : '탭 · 홈 화면 아이콘을 처음부터 레몬으로 — 명령을 한 번 실행');
 }
 
 // 3.5.4 퀵 리플라이 줄 미리보기: 내 QR 이름(보이는 세트 세 개, 열 개씩)으로, 없으면 예시 이름. 입력판 줄과 같은 규칙 · 휠 · 끌기 · 스냅
@@ -957,7 +967,7 @@ function fontBlock(s, slot) {
 // ───────── 테마 ─────────
 function tabTheme(s, sub) {
     if(sub==='etc')return `<div class="bl-etc-grid"><details class="bl-usage-mode"><summary>사용 모드: <strong>${({both:'테마 + 확장',theme:'테마만',extensions:'확장만'})[usageMode(s)]}</strong></summary><div class="bl-usage-mode-body"><label>사용 모드<select data-usage-mode aria-label="사용 모드">${[['both','테마 + 확장'],['theme','테마만'],['extensions','확장만']].map(([v,label])=>`<option value="${v}" ${usageMode(s)===v?'selected':''}>${label}</option>`).join('')}</select></label><p>선택한 모드만 실행해요. 기존 설정은 보관해요.</p><button type="button" class="salty-btn" data-usage-apply>저장하고 새로고침</button><span role="status" data-usage-status></span></div></details>
-        <div class="salty-group bl-ext-colors">${row('다른 확장 색 유지', toggle('compat.preserveExtensionColors', !!s.compat?.preserveExtensionColors), '확장 설정창과 지원되는 팝업이 원래 색을 써요')}</div></div>`;
+        <div class="salty-group bl-ext-colors">${row('다른 확장 색 유지', toggle('compat.preserveExtensionColors', !!s.compat?.preserveExtensionColors), '확장 설정창과 지원되는 팝업이 원래 색을 써요')}${s.compat?.preserveExtensionColors ? extColorList(s) : ''}</div></div>`;
     if(sub==='update')return updateMarkup()+healthMarkup();
     if (sub === 'changes') return settingsChanges(s);
     if (sub === 'custom') return customBuilder(s);
@@ -2449,10 +2459,18 @@ function bind(root) {
                     else toastr.info(esc(text).replace(/\n/g, '<br>'), '진단 (직접 복사)', { escapeHtml: false, timeOut: 20000, extendedTimeOut: 20000 });
                     break;
                 }
+                case 'ext-color': {
+                    const { key } = el.dataset;
+                    update((st) => {
+                        const list = st.compat.extensionColorsOff || [];
+                        st.compat.extensionColorsOff = list.includes(key) ? list.filter(k => k !== key) : [...list, key];
+                    });
+                    break;
+                }
                 case 'favicon-copy': {
                     try {
                         const { handle, command } = await prepareFaviconCommand();
-                        if (await copyText(command)) toastr.success(`Termux 에 붙여 넣고 새로고침해 주세요. PC 는 data/${handle}/user/files/${FAVICON_FILE} 를 public/favicon.ico 로 복사`, 'Blue Lemonade', { timeOut: 9000 });
+                        if (await copyText(command)) toastr.success(`Termux 에 붙여 넣고 새로고침해 주세요. 홈 화면 아이콘은 지우고 다시 추가. PC 는 data/${handle}/user/files 의 blue-lemonade-* 를 public/favicon.ico · public/img 로 복사`, 'Blue Lemonade', { timeOut: 10000 });
                     } catch (error) { toastr.error(String(error.message || error), 'Blue Lemonade'); }
                     break;
                 }
@@ -2688,7 +2706,7 @@ function bind(root) {
             // 2.9.2: 본문 색 지정 → '글자색 톤 맞추기' 줄, 톤 맞추기 → 톤 값 슬라이더 넷, 투명 그림도 똑같이 → 설명 문구가 스위치에 따라
             // 보였다 안 보였다 하는데 다시 그리지 않아, 끈 뒤에도 슬라이더가 남아 있었다
             // 감정 대사 효과(움직임 · 빛 · 색 흐름) · 백그라운드 버티는 방식 줄도 스위치를 따라 보였다 안 보였다 한다
-            update(st => setPath(st, path, target.checked), ['strike.line', 'strike.own', 'strike.italic', 'deviceLayouts.on', 'chat.weatherReadability', 'chat.weatherIllustrated', 'enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on', 'deus.fx.on', 'deus.fx.flow', 'deus.fx.force', 'bgWindow.on'].includes(path));
+            update(st => setPath(st, path, target.checked), ['strike.line', 'strike.own', 'strike.italic', 'deviceLayouts.on', 'chat.weatherReadability', 'chat.weatherIllustrated', 'enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on', 'deus.fx.on', 'deus.fx.flow', 'deus.fx.force', 'bgWindow.on', 'compat.preserveExtensionColors'].includes(path));
             await syncChangedAddons([path]);
             return;
         }

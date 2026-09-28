@@ -45,9 +45,13 @@ export function syncFavicon(on) {
 
 // 5.5.1: 탭 아이콘 파일 자체도 레몬으로 (사용자: "새로고침 화면처럼 바로 할 수 있게"). 위의 링크 교체는 실리태번이 확장을 부를 때까지
 // (PC 약 3.7초 · 폰 10초 남짓) ST 로고가 먼저 보인다. 확장은 public/ 에 쓸 수 없으니 새로고침 화면처럼 사용자 파일에 레몬 아이콘을
-// 올려 두고, 한 번 실행하는 명령으로 public/favicon.ico 를 그 파일로 바꾼다. 되돌리기: git -C ~/SillyTavern checkout -- public/favicon.ico
+// 올려 두고, 한 번 실행하는 명령으로 public/favicon.ico 를 그 파일로 바꾼다. 되돌리기: git -C ~/SillyTavern checkout -- public/favicon.ico public/img
 export const FAVICON_FILE = 'blue-lemonade-favicon.ico';
-const FAVICON_MARK = 'BLLEMON';   // 파일 끝 표식 — 기기마다 PNG 바이트가 달라도 '이미 레몬' 을 알아본다
+// 5.5.2: 같은 명령이 홈 화면 아이콘(public/img/apple-icon-*.png — index.html 의 apple-touch-icon · manifest.json)도 바꾼다.
+// 표식을 BLLEMON2 로 바꿔서 5.5.1 명령만 실행한 기기에도 버튼이 다시 뜬다.
+const FAVICON_MARK = 'BLLEMON2';   // 파일 끝 표식 — 기기마다 PNG 바이트가 달라도 '이미 레몬' 을 알아본다
+const HOME_SIZES = [57, 72, 114, 144, 192, 512];
+const homeFile = (n) => `blue-lemonade-apple-icon-${n}x${n}.png`;
 let faviconFileNow = null, faviconChecking = null;
 export function faviconFileState() { return faviconFileNow; }
 const endsWithMark = (buf) => {
@@ -81,24 +85,41 @@ function lemonIcoBytes() {
     out.set(png, 22); out.set(mark, 22 + png.length);
     return out;
 }
-/** 명령 복사 전에: 사용자 파일에 레몬 아이콘을 올리고, 한 번 실행할 명령을 돌려준다 */
+// 홈 화면 아이콘: 원래 ST 아이콘처럼 꽉 찬 어두운 네모(46,46,46) 위에 레몬 — 투명하면 iOS 가 검게 채우고, 안드로이드 원형 마스크에도 안 잘리게 가운데 62%
+function lemonHomePng(n) {
+    const c = document.createElement('canvas'); c.width = c.height = n;
+    const g = c.getContext('2d'), p = new Path2D(LEMON_PATH);
+    g.fillStyle = '#2E2E2E'; g.fillRect(0, 0, n, n);
+    g.translate(n * 0.19, n * 0.19); g.scale(n * 0.62 / 472, n * 0.62 / 472);
+    g.translate(12, -20); g.translate(0, 448); g.scale(1, -1);
+    g.fillStyle = '#FFE23C'; g.fill(p, 'evenodd');
+    g.lineWidth = 18; g.lineJoin = 'round'; g.strokeStyle = '#E9BE00'; g.stroke(p);
+    return c.toDataURL('image/png').split(',')[1];
+}
+async function uploadUserFile(name, data) {
+    const res = await fetch('/api/files/upload', {
+        method: 'POST',
+        headers: SillyTavern.getContext().getRequestHeaders(),
+        body: JSON.stringify({ name, data }),
+    });
+    if (!res.ok) throw new Error(`아이콘 파일을 못 올림 (${res.status})`);
+}
+/** 명령 복사 전에: 사용자 파일에 레몬 아이콘(탭 + 홈 화면)을 올리고, 한 번 실행할 명령을 돌려준다 */
 export async function prepareFaviconCommand() {
     const bytes = lemonIcoBytes();
     if (!bytes) throw new Error('레몬 아이콘을 못 그림');
     let bin = '';
     for (const x of bytes) bin += String.fromCharCode(x);
-    const res = await fetch('/api/files/upload', {
-        method: 'POST',
-        headers: SillyTavern.getContext().getRequestHeaders(),
-        body: JSON.stringify({ name: FAVICON_FILE, data: btoa(bin) }),
-    });
-    if (!res.ok) throw new Error(`아이콘 파일을 못 올림 (${res.status})`);
+    // 하나라도 못 올리면 여기서 멈추고 명령을 복사하지 않는다
+    for (const n of HOME_SIZES) await uploadUserFile(homeFile(n), lemonHomePng(n));
+    await uploadUserFile(FAVICON_FILE, btoa(bin));
     let handle = 'default-user';
     try { handle = (await import('/scripts/user.js')).getCurrentUserHandle() || handle; } catch { /* 옛 실리태번 */ }
     handle = String(handle).replace(/[^\w.-]/g, '');
     return {
         handle,
-        command: `f=~/SillyTavern/data/${handle}/user/files/${FAVICON_FILE}; [ -f "$f" ] && cp "$f" ~/SillyTavern/public/favicon.ico && echo OK`,
+        // 하나라도 못 옮기면 탭 아이콘(표식)은 안 바꾼다 → 버튼이 남아 다시 할 수 있다. exit 는 Termux 창을 닫으니 안 쓴다
+        command: `d=~/SillyTavern/data/${handle}/user/files; ok=1; for n in ${HOME_SIZES.join(' ')}; do cp "$d/blue-lemonade-apple-icon-\${n}x\${n}.png" ~/SillyTavern/public/img/apple-icon-\${n}x\${n}.png || ok=; done; [ -n "$ok" ] && cp "$d/${FAVICON_FILE}" ~/SillyTavern/public/favicon.ico && echo OK`,
     };
 }
 
