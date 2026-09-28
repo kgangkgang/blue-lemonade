@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.5.3";
+export const BUILD_VERSION = "5.5.4";
 export const FILE_HASHES = {
   "index.js": "13994:2fc64c41:f18cbf5f",
-  "manifest.json": "365:fcf27b5a:bcc02375",
+  "manifest.json": "365:3127cf67:21ac844c",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -44,11 +44,11 @@ export const FILE_HASHES = {
   "src/addons/direction/prompt.js": "1462:bffce8b4:e4bff72e",
   "src/addons/direction/style.css": "14982:f13d50bd:61811d74",
   "src/addons/models/index.js": "2778:4d87d95d:aa6f10d6",
-  "src/addons/models/inject.js": "15193:ec1c41d6:a693fd8d",
-  "src/addons/models/panel.js": "11863:f2a5e9e0:bb03d704",
+  "src/addons/models/inject.js": "20041:29f641a5:d8c53265",
+  "src/addons/models/panel.js": "11903:eed9e7c3:12925deb",
   "src/addons/models/sources.js": "5251:0e71e325:8b5932b3",
-  "src/addons/models/state.js": "4785:384b9a3f:46b7bb10",
-  "src/addons/models/style.css": "2819:b0104d1d:d2a8f98d",
+  "src/addons/models/state.js": "4785:8ff17bfe:8e44e86e",
+  "src/addons/models/style.css": "2819:6fad0346:006b6745",
   "src/addons/modelswitch/discover.js": "26550:e71a7cdb:5ef3d317",
   "src/addons/modelswitch/index.js": "19434:b6ef7898:e6972511",
   "src/addons/modelswitch/lock.js": "4564:5b4b3227:e596adc5",
@@ -159,13 +159,13 @@ export const FILE_HASHES = {
   "src/capture-animate.js": "9756:be2d7dae:cc9f1404",
   "src/capture-archive.js": "1734:309d389f:f68e8a85",
   "src/capture-editor.js": "8816:f5b828a7:c79cc879",
-  "src/capture-filter.js": "10896:a998a0ee:bd519397",
+  "src/capture-filter.js": "11965:8214542d:f42894f7",
   "src/capture-gif-worker.js": "2729:f84edeb1:635009c6",
   "src/capture-gif.js": "2980:02379c59:42279cd6",
   "src/capture-layout.js": "6770:279ec915:8d4124dd",
   "src/capture-motion-layout.js": "707:5af116b2:38831ea7",
   "src/capture-motion.js": "6446:ad4fa90f:0058b4c3",
-  "src/capture-options.js": "33158:bc03e4a9:d9fd5e07",
+  "src/capture-options.js": "52571:3960b460:e98dc076",
   "src/capture-privacy.js": "7618:a314b4a6:6fab81be",
   "src/capture-resources.js": "5565:6a64340c:b96c48c8",
   "src/capture-style.js": "2366:f3137eba:cf0a5c05",
@@ -221,7 +221,7 @@ export const FILE_HASHES = {
   "src/mes-fold.js": "14768:30e2ebec:1b724386",
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/modal.js": "671:b74e0164:71228d7c",
-  "src/notice-data.js": "136883:979d5999:ac1c67df",
+  "src/notice-data.js": "137494:7734b3e2:d2469705",
   "src/notice.js": "4646:b947f2a6:e551e710",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "1144:1da72451:b2e66e80",
@@ -286,6 +286,6 @@ export const FILE_HASHES = {
   "src/weather-worker.js": "1953:1834075b:9831021d",
   "src/weather.js": "32976:f4fdcf09:3273a2b9",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
-  "src/word-tools.js": "25209:66cc392d:dbcd59cf",
-  "style.css": "1122634:79ec2d53:ecca8fca"
+  "src/word-tools.js": "25310:f5f47087:b59f32f4",
+  "style.css": "1123884:e9c89a7e:924b25d3"
 };

@@ -82,8 +82,20 @@ body.salty-dark .bl-capture-options input:is([type=checkbox],[type=radio]) { col
 .bl-mask-color input[type=color]::-webkit-color-swatch { border:0; border-radius:4px; }
 .bl-mask-color input[type=color]::-moz-color-swatch { border:0; border-radius:4px; }
 .bl-mask-detail { padding-top:10px; border-top:1px solid var(--salty-line); }
-/* 5.5.3 캡처 필터: 프리셋 + 슬라이더 여섯 — 마스크 슬라이더와 같은 모양. 실제 칸 너비 기준으로 16em 씩 들어가면 2열, 아니면(폰 · 미리보기 옆 좁은 칸) 1열 */
-.bl-capture-filter { grid-template-columns:repeat(auto-fit,minmax(min(100%,max(16em,calc((100% - 12px)/2))),1fr)); }
+/* 5.5.3 캡처 필터: 프리셋 + 슬라이더 여섯 — 마스크 슬라이더와 같은 모양.
+   5.5.4 사용자 요청: 폰에서도 두 열(그레인·밝기 / 대비·채도 / 색온도·비네트) — 필터 칸 너비가 17em 이상이면 두 열, 큰 UI 글씨로 좁아지면 한 열 */
+.bl-tool-section[data-tool-section="filter"] { container:bl-capture-filter / inline-size; }
+.bl-capture-filter { grid-template-columns:minmax(0,1fr); }
+@container bl-capture-filter (min-width:17em) {
+  .bl-capture-filter { grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px 14px; }
+}
+/* 5.5.4 필터 미리보기: 한 열 화면에서 필터 칸 맨 위에 붙어 다닌다(sticky) — 슬라이더를 끄는 동안 바로 보인다. 두 열 화면(미리보기가 옆)은 숨김, 단 만든 파일을 보여 주는 중이거나 키가 낮은 가로 폰이면 켠다 */
+.bl-capture-filter-live { position:sticky; top:0; z-index:2; max-width:none; margin:0 -10px; padding:6px 10px 8px; overflow:hidden; border-bottom:1px solid var(--salty-line); background:var(--bl-fill-card,var(--salty-surface)); }
+.bl-editor .bl-extension-page .bl-capture-filter-live { top:-10px; } /* 설정 창 스크롤 칸의 위 여백(10~12px)만큼 올려 머리줄 선에 붙인다 — 틈으로 슬라이더가 비치지 않게 */
+.bl-capture-dialog .bl-capture-filter-live { top:-14px; } /* 대화 창 안쪽 여백 14px */
+/* 캡처 윗부분만 보여 준다(안에서 스크롤하지 않는다 — 그 위에서 쓸어도 설정 창이 굴러간다). 높이는 JS 가 같은 clamp 로 맞춘다 */
+.bl-capture-filter-live canvas { display:block; width:100%; height:auto; max-height:clamp(88px,30dvh,280px); object-fit:cover; object-position:top; border-radius:var(--bl-r-sm,8px); }
+.bl-capture-filter-live[data-stale] canvas { opacity:.45; } /* 다른 설정을 바꿔 새 바탕을 굽는 중 */
 .bl-capture-filter-range { display:grid; grid-template-columns:minmax(0,1fr); gap:4px; font-size:.9em; line-height:1.45; }
 .bl-capture-filter-head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 10px; min-height:1.45em; }
 .bl-capture-filter-head output { flex:none; min-width:3ch; text-align:right; font-variant-numeric:tabular-nums; color:var(--salty-muted); }
@@ -110,12 +122,17 @@ html body .salty-panel .bl-tool-primary { color:var(--salty-text); border:1px so
   .bl-extension-page [data-word-draft] { min-height:220px; }
   .bl-extension-page .bl-message-choices { max-height:290px; }
   .bl-extension-page .bl-capture-preview { max-height:none; overflow:visible; }
+  .bl-extension-page .bl-capture-filter-live:not([data-files]) { display:none; --bl-live-thumb:0; } /* 미리보기가 옆 칸에 보인다 (만든 파일을 보여 주는 중이면 필터는 이 작은 미리보기로) */
+  .bl-editor .bl-extension-page .bl-capture-filter-live { top:0; } /* 두 열: 오른쪽 칸이 스크롤 칸 (위 여백 없음) */
 }
 @media not all and (max-width:640px) { /* 5.3.4: 641px 이면 640~641px 틈 */
+  .bl-capture-dialog .bl-capture-filter-live:not([data-files]) { display:none; --bl-live-thumb:0; }
   .bl-capture-layout { grid-template-columns:minmax(0,1.35fr) minmax(260px,1fr); }
   .bl-capture-layout > section:first-child { grid-column:2; grid-row:1; }
   .bl-capture-layout > .bl-capture-preview { grid-column:1; grid-row:1; }
 }
+/* 키가 낮은 가로 폰: 두 열이어도 큰 미리보기는 왼쪽 칸 아래라 슬라이더와 함께 안 보인다 → 작은 미리보기를 켠다 ([hidden] 은 그대로 숨김) */
+@media (max-height:500px) { .bl-extension-page .bl-capture-filter-live:not([hidden]), .bl-capture-dialog .bl-capture-filter-live:not([hidden]) { display:block; --bl-live-thumb:1; } }
 @media(prefers-reduced-motion:reduce) { .bl-tool-chevron { transition:none; } }
 
 /* 5.1.2 원작자 출처 — 화면 맨 아래, 엔딩 크레딧처럼 가운데 회색 작은 글씨 (ⓒ 창과 같은 링크) */

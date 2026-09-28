@@ -93,7 +93,7 @@ async function applyTransaction(transaction, reverse=false) {
 }
 export function bindWordTools(root, refresh) {
     const section=root.querySelector('[data-tab="extensions"]');if(!section)return;
-    bindCaptureOptions(section,()=>section.dispatchEvent(new Event('bl:capture-options-changed')));
+    bindCaptureOptions(section,kind=>section.dispatchEvent(new CustomEvent('bl:capture-options-changed',{detail:{kind}}))); // kind 'filter': 필터만 바뀜 (미리보기를 다시 굽지 않는다)
     section.querySelectorAll('[data-message-view]').forEach(button=>button.addEventListener('click',()=>{
         getSettings().wordTools.messageView=button.dataset.messageView;saveSettings();updateMessageView(section);
     }));

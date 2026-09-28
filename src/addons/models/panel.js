@@ -40,7 +40,7 @@ export function buildPanel() {
             </div>
             <div class="inline-drawer-content">
                 <div class="mr-body">
-                    <small class="mr-hint">모델 목록에 없는 이름을 직접 넣어 두면, 그 공급자의 모델 목록 맨 위 “직접 등록한 모델”에 나와요.</small>
+                    <small class="mr-hint">등록한 모델은 그 공급자의 모델 목록 맨 위 “직접 등록한 모델”에 이 순서대로 나와요. 원래 목록에 있던 모델도 이리로 옮겨 와요.</small>
                     <div class="mr-row">
                         <select class="text_pole mr-source"></select>
                     </div>

@@ -45,41 +45,127 @@ function storedModel(source) {
 }
 
 /**
- * 컨트롤 하나에 우리 목록을 넣는다.
- * 실리태번이 이미 갖고 있는 이름은 뺀다 (같은 값이 둘이면 마지막 것이 선택되어 엉뚱한 자리로 튄다).
- * 목록을 다시 만들면 브라우저가 선택을 첫 항목으로 옮기므로, 원래 값이 아직 있으면 조용히 돌려놓는다.
+ * 실리태번 option을 우리 묶음으로 옮겨 올 때 적어 두는 원래 자리 { parent, next }.
+ * 등록을 빼거나 애드온을 끄면 그 자리로 돌려놓는다. option이 사라지면 기록도 같이 사라지도록 WeakMap에 둔다.
+ */
+const homes = new WeakMap();
+
+function makeOption(model) {
+    const option = document.createElement('option');
+    option.value = model;
+    option.textContent = model;
+    return option;
+}
+
+/** 옮기기 직전의 자리를 적고 그대로 돌려준다. */
+function takeFromHome(option) {
+    homes.set(option, { parent: option.parentNode, next: option.nextSibling });
+    return option;
+}
+
+/**
+ * 옮겨 온 option을 원래 자리로 돌려놓는다. 원래 바로 뒤에 있던 것도 우리 묶음으로 옮겨 와 있으면
+ * 그것의 원래 뒤를 따라가 자리를 찾는다 — 여러 개를 어떤 순서로 돌려놓아도 원래 순서가 된다.
+ * 원래 부모가 이 목록에 없으면(실리태번이 목록을 새로 채웠다) 새 목록에 이미 들어 있으니 버린다.
+ */
+function putBack(control, option) {
+    const home = homes.get(option);
+    const parent = home?.parent;
+    if (!parent || !parent.isConnected || !(parent === control || control.contains(parent)) || ownGroupOf(control)?.contains(parent)) {
+        option.remove();
+        return;
+    }
+    let next = home.next;
+    for (let guard = 0; next && next.parentNode !== parent && guard < 10000; guard++) next = homes.get(next)?.next ?? null;
+    parent.insertBefore(option, next && next.parentNode === parent ? next : null);
+}
+
+/** 우리가 옮겨 와서 비게 되어 숨긴 실리태번 묶음. 숨긴 것만 되살린다 (실리태번이 스스로 숨긴 것은 건드리지 않는다). */
+const emptied = new WeakSet();
+
+/**
+ * 모델 하나뿐인 묶음(예: 버텍스 'Gemini 3.8')에서 그 모델을 옮겨 오면 빈 제목만 남는다. 폰 고르기 팝업은 빈 묶음을 빼지만
+ * 원래 목록(데스크톱 · 팝업을 끈 폰)에는 빈 제목이 보이므로 숨겨 둔다. 돌려놓거나 실리태번이 다시 채우면 바로 되살린다.
+ * hidden은 속성만 바꾸므로 목록 감시(childList)를 울리지 않는다. 목록이 그대로여도 실리태번이 묶음을 다시 채웠을 수 있어 매번 본다.
+ */
+function syncEmptied(control) {
+    const group = ownGroupOf(control);
+    const from = new Set();
+    for (const option of group?.children ?? []) {
+        const parent = homes.get(option)?.parent;
+        if (parent) from.add(parent);
+    }
+    for (const other of control.querySelectorAll(':scope > optgroup')) {
+        if (other === group) continue;
+        const hide = from.has(other) && !other.querySelector('option');
+        if (hide && !other.hidden) {
+            other.hidden = true;
+            emptied.add(other);
+        } else if (!hide && emptied.has(other)) {
+            other.hidden = false;
+            emptied.delete(other);
+        }
+    }
+}
+
+/**
+ * 컨트롤 하나에 우리 목록을 넣는다. 등록한 모델은 모두 맨 위 우리 묶음에, 등록한 순서대로 둔다.
+ * 실리태번이 이미 갖고 있는 이름은 새로 만들지 않고 그 option을 옮겨 온다 — 같은 값이 둘이면 마지막 것이 선택되어
+ * 엉뚱한 자리로 튄다. 옮긴 것은 등록을 빼면 원래 자리로 돌아간다. 실리태번이 목록을 새로 채우면 우리 묶음이 통째로
+ * 사라지므로 새 목록에서 다시 옮겨 온다. 실리태번이 우리 묶음은 두고 제 묶음만 새로 채웠으면(OpenAI · Google)
+ * 새로 생긴 쪽을 옮겨 오고 묶음 안의 예전 것은 버린다.
+ * 목록을 다시 만들면 브라우저가 선택을 첫 항목으로 옮기므로, 원래 값이 아직 있으면 조용히 돌려놓는다 (change는 쏘지 않는다).
  */
 function fillControl(control, models) {
     const group = ownGroupOf(control);
-    const taken = new Set(optionValues(control, group));
-    const wanted = models.filter(model => !taken.has(model));
     const before = control.value;
+    const inside = group ? [...group.children] : [];
 
-    if (!wanted.length) {
-        if (group) {
-            group.remove();
-            keepValue(control, before);
-        }
+    // 우리 묶음 밖(실리태번 쪽)에 있는 같은 이름 — 값마다 처음 것
+    const outside = new Map();
+    for (const option of control.querySelectorAll('option')) {
+        if (group && group.contains(option)) continue;
+        if (!outside.has(option.value)) outside.set(option.value, option);
+    }
+
+    const wanted = new Set(models);
+    const kept = new Map();
+    const leaving = [];
+    for (const option of inside) {
+        if (option.tagName !== 'OPTION' || !wanted.has(option.value) || outside.has(option.value) || kept.has(option.value)) leaving.push(option);
+        else kept.set(option.value, option);
+    }
+
+    const settled = group && !leaving.length && inside.length === models.length
+        && models.every((model, index) => inside[index] === kept.get(model));
+    if (settled && control.firstElementChild === group) {
+        syncEmptied(control);
         return;
     }
 
-    const current = group ? [...group.children].map(option => option.value) : null;
-    const sameList = current && current.length === wanted.length && current.every((value, index) => value === wanted[index]);
-    if (sameList && control.firstElementChild === group) return;
+    // 빠지는 것: 실리태번 것이면 제자리로, 우리가 만든 것이면 지운다. 밖에 같은 이름이 새로 생겼으면 그쪽을 쓰므로 지운다.
+    for (const option of leaving) {
+        if (homes.has(option) && !outside.has(option.value)) putBack(control, option);
+        else option.remove();
+    }
+
+    if (!models.length) {
+        if (group) group.remove();
+        syncEmptied(control);
+        keepValue(control, before);
+        return;
+    }
 
     const next = group ?? document.createElement('optgroup');
     next.dataset.modelRegister = '';
     next.label = GROUP_LABEL;
-    if (!sameList) {
-        next.replaceChildren(...wanted.map(model => {
-            const option = document.createElement('option');
-            option.value = model;
-            option.textContent = model;
-            return option;
-        }));
+    if (!settled) {
+        const nodes = models.map(model => kept.get(model) ?? (outside.has(model) ? takeFromHome(outside.get(model)) : makeOption(model)));
+        next.replaceChildren(...nodes);
     }
     // 맨 위에 둔다. 실리태번이 목록을 다시 채우면 우리 묶음은 사라지므로 매번 확인한다.
     if (control.firstElementChild !== next) control.prepend(next);
+    syncEmptied(control);
     keepValue(control, before);
 }
 
@@ -303,8 +389,17 @@ export function watchPicks() {
     }
 }
 
+/** 애드온을 끌 때: 감시를 멈추고, 옮겨 온 실리태번 option은 제자리로 돌려놓고 우리가 넣은 것은 뺀다. */
 export function stopAll() {
     for (const observer of observers.values()) observer.disconnect();
+    for (const element of observers.keys()) {
+        try {
+            if (element.tagName === 'SELECT') fillControl(element, []);
+            else fillDatalist(element, []);
+        } catch (error) {
+            console.error('[모델 등록] 목록을 원래대로 돌려놓지 못했어요', error);
+        }
+    }
     observers.clear();
     for (const timer of timers.values()) clearTimeout(timer);
     timers.clear();

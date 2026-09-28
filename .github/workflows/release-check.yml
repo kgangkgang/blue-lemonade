@@ -46,6 +46,7 @@ jobs:
           node tools/tests/weather-retired.mjs .
           node tools/tests/translator-archive-bridge.mjs .
           node tools/tests/modelswitch-detect.mjs .
+          node tools/tests/model-register-move.mjs .
           node tools/tests/preset-sharing.mjs .
           node tools/tests/appearance-workflow.mjs .
           node tools/tests/markdown-settings.mjs .

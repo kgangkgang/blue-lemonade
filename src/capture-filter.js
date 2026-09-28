@@ -108,9 +108,11 @@ function filterPixels(ctx, width, height, f) {
  * 2D 캔버스에 제자리 적용. 순서: 색(ctx.filter) → 색온도(overlay) → 비네트(multiply) → 그레인(overlay 패턴) → 상태 복원.
  * seed: 페이지 · 용도마다 다른 그레인 무늬, frame: 프레임마다 타일 자리를 옮겨 움직이는 그레인, grainScale: 고배율 정지 캡처에서 그레인 알갱이 크기(축소해 봐도 같은 굵기).
  * colorApplied: 정지 캡처처럼 그릴 때 이미 ctx.filter 로 색을 입혔으면 true (색 단계를 건너뛴다).
+ * region: 미리보기 전용(5.5.4) — 이 캔버스가 더 큰 그림의 한 조각일 때 {width, height, x, y} (전체 크기와 조각의 자리, 이 캔버스 픽셀 단위).
+ *   비네트는 전체 그림 기준으로, 그레인은 조각끼리 이어지게 입힌다. 이때는 grainScale 1 미만도 그대로 쓴다. 파일 만들기는 region 을 넘기지 않는다(예전 그대로).
  * 값이 전부 0 이면 아무것도 하지 않고 false.
  */
-export function applyCaptureFilter(canvas, f, { seed = 1, frame = 0, grainScale = 1, colorApplied = false } = {}) {
+export function applyCaptureFilter(canvas, f, { seed = 1, frame = 0, grainScale = 1, colorApplied = false, region = null } = {}) {
     const v = filterSettings({ ...f, filterPreset: 'custom' });
     if (isNeutral(v) || !canvas?.width || !canvas.height) return false;
     const ctx = canvas.getContext('2d');
@@ -133,7 +135,8 @@ export function applyCaptureFilter(canvas, f, { seed = 1, frame = 0, grainScale 
             ctx.fillRect(0, 0, width, height);
         }
         if (v.vignette) {
-            const cx = width / 2, cy = height / 2, radius = Math.hypot(cx, cy);
+            const full = region ? { w: region.width || width, h: region.height || height } : { w: width, h: height };
+            const cx = full.w / 2 - (region?.x || 0), cy = full.h / 2 - (region?.y || 0), radius = Math.hypot(full.w / 2, full.h / 2);
             const gradient = ctx.createRadialGradient(cx, cy, radius * .55, cx, cy, radius);
             gradient.addColorStop(0, 'rgba(0,0,0,0)'); gradient.addColorStop(1, `rgba(0,0,0,${v.vignette / 100 * .9})`);
             ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = gradient; ctx.fillRect(0, 0, width, height);
@@ -144,8 +147,14 @@ export function applyCaptureFilter(canvas, f, { seed = 1, frame = 0, grainScale 
             ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = v.grain / 100 * .9;
             ctx.imageSmoothingEnabled = false; // 고배율에서도 알갱이가 흐려지지 않게 (restore 가 되돌린다)
             ctx.fillStyle = ctx.createPattern(tileCanvas(seed), 'repeat');
-            ctx.setTransform(scale, 0, 0, scale, ox * scale, oy * scale);
-            ctx.fillRect(-ox, -oy, width / scale + ox, height / scale + oy);
+            if (!region) {
+                ctx.setTransform(scale, 0, 0, scale, ox * scale, oy * scale);
+                ctx.fillRect(-ox, -oy, width / scale + ox, height / scale + oy);
+            } else { // 조각: 무늬 원점을 전체 그림 기준으로 (x · y 만큼 당긴다) — 위아래 조각의 알갱이가 이어진다
+                const fine = Math.max(.25, Number(grainScale) || 1), tx = ox * fine - (region.x || 0), ty = oy * fine - (region.y || 0);
+                ctx.setTransform(fine, 0, 0, fine, tx, ty);
+                ctx.fillRect(-tx / fine, -ty / fine, width / fine, height / fine);
+            }
         }
     } finally { ctx.restore(); }
     return true;

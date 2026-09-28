@@ -14,6 +14,7 @@ const FILTER_LABELS={grain:'필름 그레인',brightness:'밝기',contrast:'대�
 const filterFill=(key,value)=>{const [min,max]=FILTER_RANGES[key],at=v=>(Math.min(max,Math.max(min,v))-min)/(max-min)*100,zero=at(0),here=at(value);return {a:`${Math.min(zero,here)}%`,b:`${Math.max(zero,here)}%`};};
 const fillStyle=(key,value)=>{const f=filterFill(key,value);return `--fill-a:${f.a};--fill-b:${f.b}`;};
 const filterActive=cfg=>FILTER_KEYS.some(key=>filterValue(cfg,key)!==0);
+const NEUTRAL_FILTER=Object.fromEntries([...FILTER_KEYS.map(key=>[key,0]),['filterPreset','none']]);
 let radioGroup=0;
 export function captureOptionsMarkup() {
     const s=getSettings(),cfg=s.captureTools,group=`bl-mask-style-${++radioGroup}`;
@@ -28,7 +29,8 @@ export function captureOptionsMarkup() {
 function filterControls(cfg){
     const preset=FILTER_PRESET_NAMES.map(([key,label])=>`<option value="${key}" ${(cfg.filterPreset||'none')===key?'selected':''}>${label}</option>`).join('');
     const slider=key=>{const value=filterValue(cfg,key),[min,max]=FILTER_RANGES[key],label=FILTER_LABELS[key];return `<label class="bl-capture-filter-range"><span class="bl-capture-filter-head"><span>${label}</span><output data-filter-value="${key}">${value}</output></span><input type="range" data-capture-option="${key}" min="${min}" max="${max}" step="1" value="${value}" style="${fillStyle(key,value)}" aria-label="${label}"></label>`;};
-    return `<label class="bl-tool-field">프리셋<select data-capture-option="filterPreset">${preset}</select></label><div class="bl-tool-grid bl-capture-filter">${FILTER_KEYS.map(slider).join('')}</div><button type="button" class="salty-btn" data-capture-filter-reset>초기화</button>`;
+    // 5.5.4 필터 미리보기: 한 열 화면(폰)에서는 미리보기가 슬라이더보다 한참 위라 끌면서 못 본다 → 이 칸 맨 위에 붙어 다니는 작은 미리보기 (빠른 미리보기가 있을 때만 · 두 열 화면은 CSS 로 숨김)
+    return `<div class="bl-capture-filter-live" data-capture-filter-live hidden><canvas width="0" height="0" role="img" aria-label="필터 미리보기"></canvas></div><label class="bl-tool-field">프리셋<select data-capture-option="filterPreset">${preset}</select></label><div class="bl-tool-grid bl-capture-filter">${FILTER_KEYS.map(slider).join('')}</div><button type="button" class="salty-btn" data-capture-filter-reset>초기화</button>`;
 }
 function maskControls(cfg){
     const p=maskProfile(cfg);
@@ -61,7 +63,8 @@ export function bindCaptureOptions(root,changed=()=>{}) {
         root.querySelectorAll('[data-redact-options]').forEach(el=>el.hidden=!cfg.redact);
         root.querySelectorAll('[data-replace-options]').forEach(el=>el.hidden=!cfg.replace);
     };
-    const save=()=>{syncInfo();visibility();saveSettings();if(kept.files)kept.stale=true;changed();}; // 캡처 창이 닫혀 있어도 만든 파일은 '바꾸기 전' 으로
+    // 캡처 창이 닫혀 있어도 만든 파일은 '바꾸기 전' 으로. kind 'filter': 필터만 바뀜 → 빠른 미리보기를 다시 굽지 않고 필터만 새로 입힌다 (필터 없는 바탕 그림은 그대로 쓸 수 있다)
+    const save=kind=>{syncInfo();visibility();saveSettings();if(kept.files)kept.stale=true;if(kind!=='filter')kept.base=null;changed(kind);};
     bindCapturePresets(root,cfg,values=>{
         for(const [key,value] of Object.entries(values)){if(!PRESET_KEYS.includes(key))continue;cfg[key]=value;const input=root.querySelector(`[data-capture-option="${key}"]`);if(input){if(input.type==='checkbox')input.checked=value!==false;else input.value=String(value);}}
         save();
@@ -78,7 +81,7 @@ export function bindCaptureOptions(root,changed=()=>{}) {
     });
     root.addEventListener('click',event=>{
         if(event.target.closest('[data-mask-reset]')){cfg.maskStyles[cfg.mask]={...MASK_DEFAULTS};rebuild();save();}
-        else if(event.target.closest('[data-capture-filter-reset]')){Object.assign(cfg,FILTER_PRESETS.none,{filterPreset:'none'});syncFilter();save();}
+        else if(event.target.closest('[data-capture-filter-reset]')){Object.assign(cfg,FILTER_PRESETS.none,{filterPreset:'none'});syncFilter();save('filter');}
     });
     draw();
     root.querySelectorAll('[data-capture-option]').forEach(input=>{
@@ -90,7 +93,7 @@ export function bindCaptureOptions(root,changed=()=>{}) {
             if(key==='mask')rebuild();
             else if(key==='filterPreset'){if(value!=='custom')Object.assign(cfg,FILTER_PRESETS[value]||FILTER_PRESETS.none);syncFilter();} // 프리셋 → 여섯 값 채움 ('직접'은 값 유지)
             else if(FILTER_KEYS.includes(key)){cfg.filterPreset='custom';syncFilter();} // 슬라이더 → '직접'
-            save();
+            save(key==='filterPreset'||FILTER_KEYS.includes(key)?'filter':'');
         };
         input.addEventListener('change',commit);
         // Invalidate generated files while typing · dragging too, before focus leaves the field.
@@ -132,43 +135,208 @@ export function captureOptionsSnapshot() {
 }
 // 캡처 창을 닫았다 다시 열어도(배경을 바꾸러 다녀와도) 만든 파일과 캡처용 글 편집이 남는다 — 같은 채팅인 동안, '지우기'를 누르기 전까지.
 // ids · stale: 만든 파일이 어느 선택으로 만들어졌고, 그 뒤 설정 · 편집이 바뀌었는지 (창을 다시 열어도 '바꾸기 전 파일' 표시가 남게)
-const kept={chat:null,edits:null,files:null,archive:null,ids:'',stale:false};
-const keptFor=()=>{const chat=SillyTavern.getContext().chatId;if(kept.chat!==chat){kept.chat=chat;kept.edits=null;kept.files=null;kept.archive=null;kept.ids='';kept.stale=false;}return kept;};
+// base: 필터 없이 구운 빠른 미리보기 한 장 {blob, ids, key, scale, motion, result} — 필터 슬라이더를 끄는 동안 이 위에 필터만 다시 입힌다 (필터 말고 다른 설정 · 선택 · 편집이 바뀌면 버린다)
+const kept={chat:null,edits:null,files:null,archive:null,ids:'',stale:false,base:null};
+const keptFor=()=>{const chat=SillyTavern.getContext().chatId;if(kept.chat!==chat){kept.chat=chat;kept.edits=null;kept.files=null;kept.archive=null;kept.ids='';kept.stale=false;kept.base=null;}return kept;};
+// 바탕 그림을 다시 열 때 이어 써도 되는지: 선택 · 메시지 내용(스와이프 · 번역) · 테마 바탕이 그대로인지 (FNV-1a 한 줄)
+const baseKey=ids=>{const text=[ids.join(','),document.body.classList.contains('salty-dark')?'d':'l',getComputedStyle(document.documentElement).getPropertyValue('--salty-bg').trim(),...ids.map(id=>document.querySelector(`#chat .mes[mesid="${Number(id)}"]`)?.innerHTML||'')].join('\u0001');let h=2166136261;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return `${ids.join(',')}#${h.toString(36)}`;};
+const LIVE_BAND=512; // 큰 미리보기는 이 높이(캔버스 픽셀)의 띠로 나눠 화면에 보이는 띠만 칠한다
+const LIVE_PIXELS=8e6; // 큰 미리보기 캔버스 상한 (약 32MB)
 export async function openCapturePreview(ids, mount = null, selectedIds = () => ids) {
     const {captureMessages}=await import('./chat-capture.js');
     const panel=mount?.closest('.salty-panel');panel?._captureCleanup?.();
     if(!mount)document.querySelector('.bl-capture-dialog')?.close();
     const dialog=mount||document.createElement('dialog');
     if(!mount)dialog.className='bl-capture-dialog';
-    const preview=`<section class="bl-capture-preview"><p data-capture-progress role="status"></p><label class="bl-tool-field" data-capture-parts hidden>파일 미리보기<select data-capture-part></select></label><img alt="저장할 채팅 캡처 미리보기" hidden><video controls playsinline muted hidden aria-label="저장할 채팅 영상 미리보기"></video></section>`;
+    const preview=`<section class="bl-capture-preview"><p data-capture-progress role="status"></p><label class="bl-tool-field" data-capture-parts hidden>파일 미리보기<select data-capture-part></select></label><img alt="저장할 채팅 캡처 미리보기" hidden><canvas data-capture-live role="img" aria-label="저장할 채팅 캡처 미리보기" hidden></canvas><video controls playsinline muted hidden aria-label="저장할 채팅 영상 미리보기"></video></section>`;
     const footer=`<footer class="bl-capture-stage-actions"><button type="button" class="salty-btn" data-capture-edit>캡처용 글 편집</button><button type="button" class="salty-btn" data-capture-quick>빠른 미리보기</button><button type="button" class="salty-btn" data-capture-render>파일 만들기</button><button type="button" class="salty-btn" data-capture-clear hidden>지우기</button><a class="salty-btn bl-tool-primary" data-capture-save download hidden>이 파일 저장</a><a class="salty-btn bl-tool-primary" data-capture-zip download="blue-lemonade-chat.zip" hidden>전체 파일 ZIP 저장</a></footer>`;
     dialog.innerHTML=mount?preview+footer:`<header><h3>채팅 캡처 미리보기</h3><button type="button" data-capture-close aria-label="미리보기 닫기">×</button></header><div class="bl-capture-layout"><section>${captureOptionsMarkup()}</section>${preview}</div>${footer}`;
     if(!mount){document.body.append(dialog);showThemeModal(dialog);}
     const alive=()=>mount?dialog.isConnected:dialog.open;
     const memory=keptFor();
-    let revision=0,busy=false,edits=memory.edits,controller=null,outputs=[],zipURL='',stale=false;
+    // busy: false | 'quick'(빠른 미리보기 — 필터와 무관하게 굽는다) | 'files'(파일 만들기)
+    // bake: 뒤에서 바탕 그림만 굽는 중(필터 칸을 열었거나 필터를 만졌는데 바탕이 없을 때) — 버튼은 막지 않고, 다른 작업이 시작되면 멈춘다
+    let revision=0,busy=false,edits=memory.edits,controller=null,outputs=[],zipURL='',stale=false,base=null,baseInfo=null,liveFrame=0,liveDraft=false,liveTimer=0,filterApi=null;
+    let bake=null,bakeTimer=0,bakePresent=true,bakeAfterFiles=false,bakeFailed=-1,bands=null,bandCanvas=null,thumbDirty=false,liveError=false;
+    const canLive=typeof createImageBitmap==='function';
     const video=dialog.querySelector('video'),img=dialog.querySelector('img'),save=dialog.querySelector('[data-capture-save]'),zip=dialog.querySelector('[data-capture-zip]'),status=dialog.querySelector('[data-capture-progress]'),render=dialog.querySelector('[data-capture-render]'),part=dialog.querySelector('[data-capture-part]');
     const release=()=>{video.pause();video.removeAttribute('src');video.load();img.src='';for(const item of outputs)URL.revokeObjectURL(item.url);outputs=[];if(zipURL)URL.revokeObjectURL(zipURL);zipURL='';};
     const clearButton=dialog.querySelector('[data-capture-clear]'),quick=dialog.querySelector('[data-capture-quick]');
-    const wipe=()=>{release();video.hidden=img.hidden=save.hidden=zip.hidden=true;save.removeAttribute('href');zip.removeAttribute('href');dialog.querySelector('[data-capture-parts]').hidden=true;};
-    // 설정 · 선택이 바뀌어도 만들어 둔 파일은 지우지 않는다 — '바꾸기 전 파일'이라고만 알리고, 다시 만들면 그때 바뀐다
-    const invalidate=()=>{revision++;controller?.abort();if(memory.files?.length)memory.stale=true;if(outputs.length&&outputs[0].kept){stale=true;show();}else{wipe();status.textContent='설정이 바뀌었어요. 빠른 미리보기나 파일 만들기를 눌러 주세요.';}};
+    const live=dialog.querySelector('[data-capture-live]');
+    const freeBig=()=>{live.width=live.height=0;bands=null;};
+    // data-files: 큰 미리보기가 만든 파일을 보여 주는 중 — 두 열 화면(PC · 가로 폰)에서도 필터 칸의 작은 미리보기를 켠다 (큰 미리보기로는 필터가 안 보이니까)
+    const filesShown=on=>{const box=thumbBox();if(!box||box.hasAttribute('data-files')===on)return;box.toggleAttribute('data-files',on);if(on&&base){thumbDirty=true;scheduleLive();}}; // 두 열 화면에서 새로 보이게 됐으면 칠한다 (칸 너비는 그대로라 ResizeObserver 가 안 알려 준다)
+    const wipe=()=>{release();filesShown(false);video.hidden=img.hidden=live.hidden=save.hidden=zip.hidden=true;freeBig();save.removeAttribute('href');zip.removeAttribute('href');dialog.querySelector('[data-capture-parts]').hidden=true;};
+    const stopBake=()=>{clearTimeout(bakeTimer);bake?.abort();bake=null;};
     const settingsRoot=mount?.closest('.salty-sec');
-    const cleanup=()=>{revision++;controller?.abort();release();/* kept 는 남긴다 */settingsRoot?.removeEventListener('bl:capture-options-changed',invalidate);settingsRoot?.removeEventListener('change',selectionChanged);};
+    // 필터 칸 맨 위의 작은 미리보기 (한 열 화면 — 큰 미리보기가 슬라이더보다 한참 위일 때). 설정 창이 다시 그려질 수 있어 매번 찾고, 새 칸이면 다시 지켜본다
+    const thumbBox=()=>(settingsRoot||dialog).querySelector('[data-capture-filter-live]');
+    let watched=null,watchedWidth=-1; // 필터 칸 본문의 너비가 바뀔 때만 (펼침 0 → 너비 · 화면 회전). 끄는 동안 높이가 흔들려도 다시 그리지 않게
+    const watch=typeof ResizeObserver==='function'?new ResizeObserver(entries=>{const width=Math.round(entries.at(-1).contentRect.width);if(width===watchedWidth)return;watchedWidth=width;if(!width)return;if(base){thumbDirty=true;scheduleLive();}else if(wantsThumb())scheduleBake(0);}):null;
+    const watchBox=()=>{const box=thumbBox(),body=box?.parentElement||null;if(body!==watched){watch?.disconnect();watched=body;watchedWidth=-1;if(body)watch?.observe(body);}return box;};
+    // 작은 미리보기를 쓸 자리인지: 필터 칸이 펼쳐져 있고, 두 열 화면이 아닐 때 (CSS 가 숨기는 곳은 --bl-live-thumb:0)
+    const wantsThumb=()=>{const box=watchBox();return !!box&&(box.parentElement?.clientWidth||0)>0&&getComputedStyle(box).getPropertyValue('--bl-live-thumb').trim()!=='0';};
+    watchBox();
+    // 설정 · 선택이 바뀌어도 만들어 둔 파일은 지우지 않는다 — '바꾸기 전 파일'이라고만 알리고, 다시 만들면 그때 바뀐다
+    // 5.5.4 필터만 바뀌면(kind 'filter') 빠른 미리보기를 지우지 않고 필터 없는 바탕 그림(base)에 새 값을 입힌다 — 끄는 동안 바로 보인다. 굽는 중인 파일은 옛 필터라 멈춘다
+    const invalidate=arg=>{
+        const kind=typeof arg==='string'?arg:arg?.detail?.kind;
+        if(kind==='filter'){
+            if(memory.files?.length)memory.stale=true;
+            if(busy==='files'){revision++;controller?.abort();wipe();if(baseInfo?.result)presentQuick(baseInfo.result,baseInfo.motion);else{status.textContent='설정이 바뀌었어요. 빠른 미리보기나 파일 만들기를 눌러 주세요.';bakeAfterFiles=canLive;}}
+            else if(outputs[0]?.kept&&!stale){stale=true;show();}
+            if(base){thumbDirty=true;bands?.fill(false);scheduleLive(true);}
+            else if(busy!=='quick'&&(wantsThumb()||!outputs.length))scheduleBake(0); // 파일 만들기 뒤 · 다른 설정을 바꾼 뒤에도 바로 보이게 바탕을 뒤에서 굽는다
+            return;
+        }
+        // 필터 칸이 펼쳐져 있으면 작은 미리보기 자리는 그대로(흐리게) 두고 새 바탕을 뒤에서 굽는다 — 칸이 사라졌다 생기며 슬라이더가 밀리지 않게
+        const box=thumbBox(),keepThumb=!!box&&!box.hidden&&wantsThumb();
+        stopBake();dropBase({keepThumb});
+        revision++;controller?.abort();if(memory.files?.length)memory.stale=true;if(outputs.length&&outputs[0].kept){stale=true;show();}else{wipe();status.textContent='설정이 바뀌었어요. 빠른 미리보기나 파일 만들기를 눌러 주세요.';}
+        if(keepThumb)scheduleBake(500);
+    };
+    // keep: 창을 닫을 때는 저장해 둔 바탕(memory.base)을 남긴다 — 다시 열면 그대로 이어 쓴다. keepThumb: 작은 미리보기의 마지막 그림을 흐리게 남긴다
+    function dropBase({keep=false,keepThumb=false}={}){
+        if(liveFrame){cancelAnimationFrame(liveFrame);liveFrame=0;}clearTimeout(liveTimer);base?.close();base=null;baseInfo=null;if(!keep)memory.base=null;
+        if(!live.hidden&&outputs[Number(part.value)||0]?.quick){live.hidden=true;img.hidden=false;} // 큰 미리보기가 캔버스였으면 필터 없는 그림으로 (곧 wipe · show 가 정리)
+        freeBig();if(bandCanvas){bandCanvas.width=bandCanvas.height=0;bandCanvas=null;}
+        const box=thumbBox();
+        if(box){if(keepThumb)box.dataset.stale='';else{box.hidden=true;delete box.dataset.stale;const thumb=box.querySelector('canvas');if(thumb)thumb.width=thumb.height=0;}}
+        filterApi?.releaseCaptureFilter(); // 필터 사본 · 그레인 타일도 놓는다 (다음에 칠할 때 다시 만든다)
+    }
+    // 바탕 그림(필터 없이 구운 빠른 미리보기)을 풀어 둔다 — 실패하면 false
+    async function setBase(blob,info,current){
+        let bitmap=null;
+        try{filterApi??=await import('./capture-filter.js');bitmap=await createImageBitmap(blob);}catch(error){console.warn('[Blue Lemonade] 필터 미리보기',error);}
+        if(!bitmap)return false;
+        if(!alive()||revision!==current){bitmap.close();return false;}
+        base?.close();base=bitmap;
+        baseInfo={...info,bg:getComputedStyle(document.documentElement).getPropertyValue('--salty-bg').trim()||(document.body.classList.contains('salty-dark')?'#202226':'#f6f8ff')};
+        memory.base={blob,...info};
+        bands=null;thumbDirty=true;liveError=false;
+        const box=watchBox();if(box){box.hidden=false;delete box.dataset.stale;}
+        return true;
+    }
+    // 바탕 그림을 뒤에서 굽는다 (빠른 미리보기와 같은 조건 · 필터 없이). 만든 파일 화면은 그대로 두고, 큰 미리보기가 비어 있을 때만 빠른 미리보기로 채운다
+    // present: 큰 미리보기가 비어 있으면 빠른 미리보기로 채울지 (파일 만들기가 오류로 끝난 뒤에는 오류 문구를 덮지 않게 false)
+    function scheduleBake(delay,present=true){clearTimeout(bakeTimer);bakePresent=present;if(canLive)bakeTimer=setTimeout(bakeBase,delay);}
+    async function bakeBase(){
+        if(base||busy||bake||!alive()||bakeFailed===revision)return;
+        const captureIds=selectedIds();if(!captureIds.length)return;
+        const current=revision,job=new AbortController(),resources=createCaptureResources();bake=job;
+        try{
+            const options={...captureOptionsSnapshot(),edits,resources},motion=['video','gif','apng','webp'].includes(options.format);
+            const result=await captureMessages(captureIds,()=>{},{...options,...NEUTRAL_FILTER,includeWeather:false,videoLayer:motion,pageIndex:0,animateText:false,maxScale:1.5},job.signal);
+            if(job.signal.aborted||!alive()||revision!==current||base||busy)return;
+            if(!await setBase(result.blob,{ids:captureIds.join(','),key:baseKey(captureIds),scale:result.scale||1,motion,result},current)){bakeFailed=revision;return;}
+            if(!outputs.length&&bakePresent)presentQuick(result,motion);else scheduleLive();
+        }catch(error){if(!job.signal.aborted){bakeFailed=revision;console.warn('[Blue Lemonade] 필터 미리보기',error);}}
+        finally{resources.close();if(bake===job)bake=null;}
+    }
+    let padCache=null;const thumbPad=box=>{if(padCache===null){const s=getComputedStyle(box);padCache=(parseFloat(s.paddingLeft)||0)+(parseFloat(s.paddingRight)||0);}return padCache;}; // 캔버스 너비 = 칸 너비 - 좌우 여백 (캔버스를 읽으면 크기를 바꾼 뒤 레이아웃을 다시 한다)
+    const grainFor=k=>(baseInfo.scale||1)*k; // 그레인 알갱이 = 캡처 CSS 1px (파일과 같은 굵기로 보이게 · 끄는 중 낮은 해상도에서도)
+    // 작은 미리보기: 캡처 윗부분만 칸 높이만큼 (안에서 스크롤하지 않는다 — 그 위에서 쓸어도 설정 창이 굴러간다). 비네트 · 그레인은 전체 그림 기준
+    function paintThumb(f,draft){
+        const box=watchBox(),thumb=box?.querySelector('canvas');
+        if(!thumb||box.hidden||!box.clientWidth)return false;
+        const cssW=box.clientWidth-thumbPad(box),dpr=draft?1:Math.min(2,globalThis.devicePixelRatio||1);
+        const tw=Math.max(1,Math.min(base.width,Math.ceil(cssW*dpr))),k=tw/base.width,fullH=base.height*k;
+        const maxCss=Math.max(88,Math.min(280,Math.round((globalThis.innerHeight||600)*.3))); // CSS 의 clamp(88px,30dvh,280px) 와 같게
+        const th=Math.max(1,Math.min(Math.round(fullH),Math.ceil(maxCss*tw/cssW)));
+        if(thumb.width!==tw)thumb.width=tw;if(thumb.height!==th)thumb.height=th;
+        const t=thumb.getContext('2d');if(!t)return false;
+        t.clearRect(0,0,tw,th);
+        if(baseInfo.motion){t.fillStyle=baseInfo.bg;t.fillRect(0,0,tw,th);} // 영상 · 움짤 바탕 그림은 투명 — 저장 때처럼 테마 바탕 위에 입힌다
+        t.drawImage(base,0,0,base.width,Math.min(base.height,th/k),0,0,tw,th);
+        filterApi.applyCaptureFilter(thumb,f,{seed:1,grainScale:grainFor(k),region:{width:tw,height:fullH,x:0,y:0}});
+        delete box.dataset.stale;
+        return true;
+    }
+    // 큰 미리보기: 캔버스는 보이는 너비 × 화면 배율(최대 2배, 상한 LIVE_PIXELS), 띠마다 칠했는지 기억하고 화면에 보이는 띠만 칠한다 (화면 밖이면 아무것도 안 한다 → 스크롤해 들어오면 그때)
+    function sizeBig(){
+        const dpr=Math.min(2,globalThis.devicePixelRatio||1),room=dialog.querySelector('.bl-capture-preview')?.clientWidth||0;
+        let w=Math.max(1,Math.min(base.width,room?Math.ceil(room*dpr):base.width));
+        if(w*base.height*w/base.width>LIVE_PIXELS)w=Math.max(1,Math.floor(Math.sqrt(LIVE_PIXELS*base.width/base.height)));
+        const h=Math.max(1,Math.round(base.height*w/base.width));
+        const cssWidth=`${Math.min(room||base.width,base.width)}px`;if(live.style.width!==cssWidth)live.style.width=cssWidth; // 그림(img)과 같은 크기로 보이게 (상한으로 캔버스를 줄여도) · 같으면 안 건드린다(레이아웃을 다시 하지 않게)
+        if(live.width!==w||live.height!==h||!bands){live.width=w;live.height=h;bands=new Array(Math.ceil(h/LIVE_BAND)).fill(false);}
+    }
+    function paintBand(i,f,low){
+        const k=live.width/base.width,y=i*LIVE_BAND,bh=Math.min(LIVE_BAND,live.height-y),bw=Math.max(1,Math.round(live.width*low)),bhh=Math.max(1,Math.round(bh*low));
+        bandCanvas??=document.createElement('canvas');if(bandCanvas.width!==bw)bandCanvas.width=bw;if(bandCanvas.height!==bhh)bandCanvas.height=bhh;
+        const b=bandCanvas.getContext('2d');if(!b)return;
+        b.clearRect(0,0,bw,bhh);
+        if(baseInfo.motion){b.fillStyle=baseInfo.bg;b.fillRect(0,0,bw,bhh);}
+        b.drawImage(base,0,y/k,base.width,Math.min(base.height-y/k,bh/k),0,0,bw,bhh);
+        filterApi.applyCaptureFilter(bandCanvas,f,{seed:1,grainScale:grainFor(k*low),region:{width:bw,height:base.height*k*low,x:0,y:y*low}});
+        const ctx=live.getContext('2d');if(!ctx)return;
+        ctx.clearRect(0,y,live.width,bh);ctx.drawImage(bandCanvas,0,0,bw,bhh,0,y,live.width,bh);
+    }
+    // 큰 미리보기에서 실제로 보이는 세로 구간: 화면과, 넘치는 부분을 자르는 조상(폰의 44dvh 미리보기 칸 · 설정 창 스크롤 칸)으로 자른다. 안 보이면 null
+    function bigView(){
+        const r=live.getBoundingClientRect();if(!r.height||!r.width)return null;
+        let top=0,bottom=globalThis.innerHeight||document.documentElement.clientHeight;
+        for(let el=live.parentElement;el&&el!==document.body;el=el.parentElement)if(getComputedStyle(el).overflowY!=='visible'){const c=el.getBoundingClientRect();top=Math.max(top,c.top);bottom=Math.min(bottom,c.bottom);}
+        top=Math.max(0,top-r.top);bottom=Math.min(r.height,bottom-r.top);
+        return bottom>top?{top,bottom,width:r.width,height:r.height}:null;
+    }
+    function paintBig(f,draft,view){
+        if(!view)return;
+        const px=live.height/view.height,first=Math.max(0,Math.floor(view.top*px/LIVE_BAND)),last=Math.min(bands.length-1,Math.floor((view.bottom*px-1)/LIVE_BAND));
+        const low=draft?Math.min(1,view.width/live.width):1; // 끄는 중: CSS 픽셀 해상도(화면 배율 1) — 손을 멈추면 선명하게
+        for(let i=first;i<=last;i++){if(!draft&&bands[i])continue;paintBand(i,f,low);bands[i]=low===1;}
+    }
+    // 끄는 동안은 한 프레임에 한 번. draft: 끄는 중(낮은 해상도) → 160ms 뒤 선명하게 다시
+    function paintLive(){
+        const draft=liveDraft;liveFrame=0;liveDraft=false;
+        if(!base||!filterApi||!alive())return;
+        const f=filterApi.filterSettings(getSettings().captureTools);
+        try{
+            // 읽기(레이아웃) 먼저 · 쓰기(캔버스 크기 · 그리기)는 뒤에 — 한 프레임에 레이아웃을 두 번 하지 않게
+            const item=outputs[Number(part.value)||0],big=!!item?.quick&&!filterApi.isNeutral(f);
+            if(item?.quick&&!big){if(!live.hidden){live.hidden=true;img.hidden=false;}freeBig();} // 필터 없음: 예전처럼 그림(img) 한 장 — 캔버스 메모리를 놓는다
+            if(big&&live.hidden){live.hidden=false;img.hidden=true;bands=null;}
+            let view=null;if(big){sizeBig();view=bigView();}
+            if(thumbDirty&&paintThumb(f,draft))thumbDirty=draft;
+            if(big)paintBig(f,draft,view);
+        }catch(error){
+            console.warn('[Blue Lemonade] 필터 미리보기',error);
+            if(!liveError){liveError=true;status.textContent+=' · 필터 미리보기를 그리지 못했어요';}
+        }
+    }
+    // 선명하게 다시 칠하는 때: 손을 멈춘 뒤 160ms — 느린 폰에서 값이 띄엄띄엄 오면(끄는 중인데 간격이 길면) 그 간격의 1.5배까지 기다린다 (끄는 도중에 무거운 선명한 그림을 굽지 않게)
+    let lastDraftAt=0;
+    function scheduleLive(draft=false){
+        if(!base)return;
+        liveDraft=liveFrame?liveDraft&&draft:draft;if(!liveFrame)liveFrame=requestAnimationFrame(paintLive);
+        if(draft){const now=performance.now(),gap=now-lastDraftAt;lastDraftAt=now;clearTimeout(liveTimer);liveTimer=setTimeout(()=>{thumbDirty=true;scheduleLive();},gap<1000?Math.min(800,Math.max(160,gap*1.5)):160);}
+    }
+    // 큰 미리보기를 스크롤하면 아직 안 칠한 띠를 칠한다
+    const onScroll=()=>{if(!alive()){cleanup();return;}if(base&&!live.hidden&&!liveFrame&&bands?.includes(false))scheduleLive();};
+    document.addEventListener('scroll',onScroll,{capture:true,passive:true});
+    const cleanup=()=>{revision++;controller?.abort();stopBake();release();watch?.disconnect();document.removeEventListener('scroll',onScroll,{capture:true});dropBase({keep:true});/* kept 는 남긴다 */settingsRoot?.removeEventListener('bl:capture-options-changed',invalidate);settingsRoot?.removeEventListener('change',selectionChanged);};
     const selectionChanged=event=>{if(event.target.matches('[data-word-message]'))invalidate();};
     if(mount){panel._captureCleanup=cleanup;settingsRoot.addEventListener('bl:capture-options-changed',invalidate);settingsRoot.addEventListener('change',selectionChanged);}
     else{bindCaptureOptions(dialog,invalidate);bindAddonLayout(dialog);dialog.querySelector('[data-capture-close]').onclick=()=>dialog.close();dialog.addEventListener('close',()=>{cleanup();dialog.remove();},{once:true});}
     const show=()=>{
-        const item=outputs[Number(part.value)||0];if(!item)return;video.pause();video.hidden=img.hidden=true;
-        const media=item.result.format==='video'?video:img;media.src=item.url;media.hidden=false;save.href=item.url;save.download=item.name;save.textContent=`${(item.result.extension||'png').toUpperCase()} ${outputs.length>1?'이 파일 ':''}저장`;save.hidden=!!item.quick;
+        const item=outputs[Number(part.value)||0];if(!item)return;video.pause();video.hidden=img.hidden=live.hidden=true;filesShown(!item.quick);
+        if(item.quick&&base){img.src=item.url;img.hidden=false;bands=null;thumbDirty=true;if(liveFrame){cancelAnimationFrame(liveFrame);liveFrame=0;}liveDraft=false;paintLive();} // 빠른 미리보기: 필터가 있으면 바탕 그림 + 지금 필터 (캔버스)
+        else{freeBig();const media=item.result.format==='video'?video:img;media.src=item.url;media.hidden=false;}save.href=item.url;save.download=item.name;save.textContent=`${(item.result.extension||'png').toUpperCase()} ${outputs.length>1?'이 파일 ':''}저장`;save.hidden=!!item.quick;
         clearButton.hidden=!(memory.files?.length||memory.edits);
         const r=item.result,mb=n=>n>=1048576?`${(n/1048576).toFixed(n>=10485760?1:2)}MB`:`${Math.max(1,Math.round(n/1024))}KB`,total=outputs.reduce((sum,o)=>sum+o.blob.size,0),limit=['apng','webp'].includes(r.format)?(Number(getSettings().captureTools.maxMB)||0)*1048576:0;
         const fit=r.fitted?(r.fitted.overLimit?' · 한도를 못 맞췄어요 — 재생 시간이나 문단 수를 줄여 주세요':r.fitted.step?` · 용량에 맞춰 ${r.fitted.scale<1?'크기 '+Math.round(r.fitted.scale*100)+'% · ':''}${r.fitted.quality<1?'화질 '+Math.round(r.fitted.quality*100)+' · ':''}초당 ${r.fitted.fps}장`:''):'';
         status.textContent=`${item.quick?'빠른 미리보기(저장용 아님) · ':stale?'설정을 바꾸기 전에 만든 파일 · ':''}${outputs.length>1?`${Number(part.value)+1} / ${outputs.length} 파일 · `:''}${mb(item.blob.size)}${outputs.length>1?` (전체 ${mb(total)})`:''}${limit&&item.blob.size>limit?' ⚠ 한도 초과':''}${fit} · ${r.width} × ${r.height} · 치환 ${r.replaced}곳 · 이름 ${r.hidden}곳 가림${r.weather?' · 날씨 포함':''}${r.duration?' · '+r.duration+'초 · 고정 화면':''}${r.skippedImages?` · 그림 ${r.skippedImages}개 못 읽음`:''}`;
+        if(item.quick&&item.firstOnly)status.textContent+=item.firstOnly;
     };
     part.onchange=show;
+    // 빠른 미리보기 한 장을 큰 미리보기에 (바탕 그림에서 · 빠른 미리보기에서)
+    function presentQuick(result,motion){
+        wipe();stale=false;
+        outputs=[{result:{...result,format:'image',extension:'png'},name:'preview.png',blob:result.blob,quick:true,url:URL.createObjectURL(result.blob),firstOnly:motion||(result.pageCount||1)>1?` · 첫 화면만${motion?' · 움직임 · 날씨는 파일 만들기에서':''}`:''}];
+        show();
+    }
     async function generate(){
-        if(busy)return;busy=true;render.disabled=quick.disabled=true;revision++;controller?.abort();wipe();stale=false;const current=revision;controller=new AbortController();const signal=controller.signal;
+        if(busy)return;busy='files';render.disabled=quick.disabled=true;revision++;controller?.abort();stopBake();wipe();stale=false;const current=revision;controller=new AbortController();const signal=controller.signal;
         const resources=createCaptureResources();
         try{
             const captureIds=selectedIds();if(!captureIds.length)throw Error('메시지를 먼저 선택해 주세요.');
@@ -196,27 +364,33 @@ export async function openCapturePreview(ids, mount = null, selectedIds = () => 
             if(archive){zipURL=URL.createObjectURL(archive);zip.href=zipURL;zip.hidden=false;}
             show();render.textContent='파일 다시 만들기';
         }catch(error){if(alive()&&revision===current)status.textContent=error.message||'미리보기를 만들지 못했어요.';}
-        finally{resources.close();busy=false;render.disabled=quick.disabled=false;}
+        finally{resources.close();busy=false;render.disabled=quick.disabled=false;if(bakeAfterFiles){bakeAfterFiles=false;scheduleBake(0);}else if(!base&&alive()&&wantsThumb())scheduleBake(0,false);}
     }
     // 빠른 미리보기: 굽지 않고 첫 화면만 멈춘 그림으로 (움직임 · 날씨 · 나머지 파일은 '파일 만들기'에서). 저장용이 아니다
     async function quickLook(){
-        if(busy)return;busy=true;render.disabled=quick.disabled=true;revision++;controller?.abort();const current=revision;controller=new AbortController();const signal=controller.signal;
+        if(busy)return;busy='quick';render.disabled=quick.disabled=true;revision++;controller?.abort();stopBake();const current=revision;controller=new AbortController();const signal=controller.signal;
         const resources=createCaptureResources();
         try{
             const captureIds=selectedIds();if(!captureIds.length)throw Error('메시지를 먼저 선택해 주세요.');
             const options={...captureOptionsSnapshot(),edits,resources},motion=['video','gif','apng','webp'].includes(options.format);
             status.textContent='빠른 미리보기 만드는 중…';
-            const result=await captureMessages(captureIds,()=>{},{...options,includeWeather:false,videoLayer:motion,pageIndex:0,animateText:false,maxScale:1.5},signal);
+            // 5.5.4 필터는 빼고 굽는다 → 그 위에 지금 필터를 입혀 보여 주고, 슬라이더를 끄는 동안 다시 굽지 않고 필터만 새로 입힌다 (createImageBitmap 이 없으면 예전처럼 필터까지 구운 그림)
+            const look={...options,includeWeather:false,videoLayer:motion,pageIndex:0,animateText:false,maxScale:1.5};
+            let result=await captureMessages(captureIds,()=>{},{...look,...(canLive?NEUTRAL_FILTER:null)},signal);
             signal.throwIfAborted();if(!alive()||revision!==current)return;
-            wipe();stale=false;
-            outputs=[{result:{...result,format:'image',extension:'png'},name:'preview.png',blob:result.blob,quick:true,url:URL.createObjectURL(result.blob)}];
-            show();
-            if(motion||(result.pageCount||1)>1)status.textContent+=` · 첫 화면만${motion?' · 움직임 · 날씨는 파일 만들기에서':''}`;
-        }catch(error){if(alive()&&revision===current)status.textContent=error.message||'미리보기를 만들지 못했어요.';}
+            if(canLive&&!await setBase(result.blob,{ids:captureIds.join(','),key:baseKey(captureIds),scale:result.scale||1,motion,result},current)){
+                if(!alive()||revision!==current)return;
+                dropBase();
+                // 바탕 그림을 못 풀었다(메모리가 모자란 폰 등) → 필터 없는 그림을 필터 켠 채로 보여 주지 않게 필터까지 넣어 한 번 더 굽는다
+                if(filterActive(getSettings().captureTools))result=await captureMessages(captureIds,()=>{},look,signal);
+            }
+            signal.throwIfAborted();if(!alive()||revision!==current)return;
+            presentQuick(result,motion);
+        }catch(error){if(alive()&&revision===current){status.textContent=error.message||'미리보기를 만들지 못했어요.';bakeFailed=revision;}} // 같은 선택 · 설정으로는 뒤에서 바탕을 다시 굽지 않는다 (너무 긴 선택이면 또 몇 초씩 멈춘다)
         finally{resources.close();busy=false;render.disabled=quick.disabled=false;}
     }
     quick.onclick=quickLook;
-    clearButton.onclick=()=>{revision++;controller?.abort();memory.files=null;memory.archive=null;memory.edits=null;memory.ids='';memory.stale=false;edits=null;stale=false;wipe();clearButton.hidden=true;status.textContent='만든 파일과 캡처용 글 편집을 지웠어요.';};
+    clearButton.onclick=()=>{revision++;controller?.abort();stopBake();memory.files=null;memory.archive=null;memory.edits=null;memory.ids='';memory.stale=false;edits=null;stale=false;dropBase();wipe();clearButton.hidden=true;status.textContent='만든 파일과 캡처용 글 편집을 지웠어요.';};
     dialog.querySelector('[data-capture-edit]').onclick=async()=>{try{const ids=selectedIds(),result=await(await import('./capture-editor.js')).editCaptureDraft(ids,edits);if(result){const next=[...(edits||[]).filter(m=>!ids.includes(m.id)),...(result.draft||[])];edits=next.length?next:null;memory.edits=edits;clearButton.hidden=!(memory.files?.length||memory.edits);invalidate();}}catch(error){status.textContent=error.message;}};
     render.onclick=generate;
     // 열 때: 만들어 둔 파일이 있으면 그대로 보여 주고, 없으면 굽지 않고 빠른 미리보기만
@@ -226,5 +400,9 @@ export async function openCapturePreview(ids, mount = null, selectedIds = () => 
         if(memory.archive){zipURL=URL.createObjectURL(memory.archive);zip.href=zipURL;zip.hidden=false;}
         stale=memory.stale||memory.ids!==selectedIds().join(',');
         show();render.textContent='파일 다시 만들기';
+        // 필터 칸의 작은 미리보기: 같은 선택 · 같은 메시지 내용 · 같은 테마로 구워 둔 바탕 그림이 있으면 이어 쓰고, 아니면 필터 칸이 펼쳐져 있을 때 뒤에서 굽는다
+        const saved=memory.base,current=revision;
+        if(saved&&saved.key===baseKey(selectedIds()))setBase(saved.blob,saved,current).then(ok=>{if(ok)scheduleLive();else if(wantsThumb())scheduleBake(0);});
+        else{memory.base=null;if(wantsThumb())scheduleBake(0);}
     }else{clearButton.hidden=!memory.edits;await quickLook();}
 }

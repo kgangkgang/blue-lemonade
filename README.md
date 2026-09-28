@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.5.3.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.5.4.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.5.3 · 최신 업데이트</summary>
+<summary>5.5.4 · 최신 업데이트</summary>
+
+- 채팅 캡처 필터를 만지는 동안 미리보기가 바로바로 바뀌어요. 폰에서는 필터 칸 맨 위에 작은 미리보기가 붙어 다녀서 슬라이더를 끌면서 볼 수 있고, 파일을 만든 뒤에도 그 자리에서 확인할 수 있어요.
+- 필터 값 슬라이더를 두 줄로 나란히 놓아 목록 길이가 절반으로 줄었어요.
+- 모델 등록: 실리태번 목록에 원래 있던 모델도 등록하면 맨 위 '직접 등록한 모델'에 같이 모여요. 등록을 빼면 원래 자리로 돌아가요.
+
+</details>
+
+<details>
+<summary>5.5.3 · 캡처 필터 · 모델 전환 자동 찾기</summary>
 
 - 채팅 캡처에 필터가 생겼어요. 필름 그레인 · 흑백 · 색감(밝기 · 대비 · 채도 · 색온도 · 비네트)을 고르거나 프리셋으로 쓸 수 있고, 사진과 움짤 · 영상 모두 돼요.
 - 확장 목록과 설정 창에서 버전 옆 ⓒ 가 아래로 처져 보이던 것을 가운데로 맞췄어요.
