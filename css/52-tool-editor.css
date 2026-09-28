@@ -12,7 +12,7 @@
 .bl-addon-layout { display:flex; flex-direction:column; gap:10px; min-width:0; min-height:0; }
 .bl-addon-main,.bl-addon-config { display:flex; flex-direction:column; gap:10px; min-width:0; }
 .bl-tool-section { flex:none; min-width:0; border:1px solid var(--salty-line); border-radius:12px; background:var(--bl-fill-card,var(--salty-surface)); overflow:clip; }
-html body .bl-tool-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; min-height:36px; margin:0; padding:7px 10px; border:0; border-radius:0; box-shadow:none; background:transparent; color:var(--salty-text); text-align:left; font:600 13px/1.4 var(--salty-font-ui,inherit); cursor:pointer; }
+html body .bl-tool-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; min-height:36px; margin:0; padding:calc(7px + var(--bl-text-nudge, 0px)) 10px calc(7px - var(--bl-text-nudge, 0px)) /* 5.5.3 세로 중앙 */; border:0; border-radius:0; box-shadow:none; background:transparent; color:var(--salty-text); text-align:left; font:600 13px/1.4 var(--salty-font-ui,inherit); cursor:pointer; }
 .bl-tool-heading small { display:block; margin-top:2px; color:var(--salty-muted); font-size:10px; font-weight:400; }
 .bl-tool-chevron { flex:none; opacity:.6; transition:transform .15s; }
 .bl-tool-heading[aria-expanded=false] .bl-tool-chevron { transform:rotate(-90deg); }
@@ -63,13 +63,17 @@ body.salty-dark :is(.bl-extension-page,.bl-capture-dialog) { color-scheme:dark; 
 .bl-mask-customize .bl-mask-number { display:grid; grid-template-columns:minmax(0,1fr); gap:4px; font-size:11px; }
 .bl-mask-customize .bl-mask-number-head { display:flex; gap:4px; align-items:center; justify-content:space-between; min-height:34px; }
 .bl-mask-customize .bl-mask-number input[type=number] { flex:0 0 48px; width:48px; min-height:32px; padding:3px; margin:0; color:var(--salty-text)!important; background:var(--bl-fill-field,var(--salty-field))!important; }
-.bl-mask-customize .bl-mask-number input[type=range] { -webkit-appearance:none!important; appearance:none!important; display:block; width:100%!important; height:36px!important; min-height:36px; margin:0!important; padding:0!important; border:0!important; border-radius:0!important; background:transparent!important; box-shadow:none!important; touch-action:pan-y pinch-zoom; cursor:pointer; }
-.bl-mask-customize input[type=range]::-webkit-slider-runnable-track { height:4px!important; border:0!important; border-radius:99px!important; background:linear-gradient(to right,var(--salty-accent) var(--mask-fill,0%),var(--salty-line) var(--mask-fill,0%))!important; box-shadow:none!important; }
-.bl-mask-customize input[type=range]::-webkit-slider-thumb { -webkit-appearance:none!important; appearance:none!important; width:18px!important; height:18px!important; margin-top:-7px!important; border:2px solid var(--salty-surface)!important; border-radius:50%!important; background:var(--salty-accent)!important; box-shadow:0 1px 4px #0003!important; }
-.bl-mask-customize input[type=range]::-moz-range-track { height:4px; border:0; border-radius:99px; background:var(--salty-line); }
-.bl-mask-customize input[type=range]::-moz-range-progress { height:4px; border-radius:99px; background:var(--salty-accent); }
-.bl-mask-customize input[type=range]::-moz-range-thumb { width:14px; height:14px; border:2px solid var(--salty-surface); border-radius:50%; background:var(--salty-accent); box-shadow:0 1px 4px #0003; }
-.bl-mask-customize input[type=range]:focus-visible { outline:2px solid var(--salty-accent)!important; outline-offset:2px; border-radius:6px!important; }
+.bl-mask-customize .bl-mask-number input[type=range], .bl-capture-filter .bl-capture-filter-range input[type=range] { -webkit-appearance:none!important; appearance:none!important; display:block; width:100%!important; height:36px!important; min-height:36px; margin:0!important; padding:0!important; border:0!important; border-radius:0!important; background:transparent!important; box-shadow:none!important; touch-action:pan-y pinch-zoom; cursor:pointer; }
+.bl-mask-customize input[type=range]::-webkit-slider-runnable-track, .bl-capture-filter input[type=range]::-webkit-slider-runnable-track { height:4px!important; border:0!important; border-radius:99px!important; background:linear-gradient(to right,var(--salty-accent) var(--mask-fill,0%),var(--salty-line) var(--mask-fill,0%))!important; box-shadow:none!important; }
+.bl-mask-customize input[type=range]::-webkit-slider-thumb, .bl-capture-filter input[type=range]::-webkit-slider-thumb { -webkit-appearance:none!important; appearance:none!important; width:18px!important; height:18px!important; margin-top:-7px!important; border:2px solid var(--salty-surface)!important; border-radius:50%!important; background:var(--salty-accent)!important; box-shadow:0 1px 4px #0003!important; }
+.bl-mask-customize input[type=range]::-moz-range-track, .bl-capture-filter input[type=range]::-moz-range-track { height:4px; border:0; border-radius:99px; background:var(--salty-line); }
+.bl-mask-customize input[type=range]::-moz-range-progress, .bl-capture-filter input[type=range]::-moz-range-progress { height:4px; border-radius:99px; background:var(--salty-accent); }
+.bl-mask-customize input[type=range]::-moz-range-thumb, .bl-capture-filter input[type=range]::-moz-range-thumb { width:14px; height:14px; border:2px solid var(--salty-surface); border-radius:50%; background:var(--salty-accent); box-shadow:0 1px 4px #0003; }
+.bl-mask-customize input[type=range]:focus-visible, .bl-capture-filter input[type=range]:focus-visible { outline:2px solid var(--salty-accent)!important; outline-offset:2px; border-radius:6px!important; }
+/* 5.5.3 캡처 필터 트랙: 0(중립) 자리에서 값까지만 칠한다 (--fill-a ~ --fill-b, capture-options.js) — 양방향 슬라이더가 0 에서 반쯤 차 보이지 않게. Firefox 는 progress 대신 같은 트랙 그라데이션 */
+.bl-capture-filter input[type=range]::-webkit-slider-runnable-track { background:linear-gradient(to right,var(--salty-line) var(--fill-a,0%),var(--salty-accent) var(--fill-a,0%) var(--fill-b,0%),var(--salty-line) var(--fill-b,0%))!important; }
+.bl-capture-filter input[type=range]::-moz-range-track { background:linear-gradient(to right,var(--salty-line) var(--fill-a,0%),var(--salty-accent) var(--fill-a,0%) var(--fill-b,0%),var(--salty-line) var(--fill-b,0%)); }
+.bl-capture-filter input[type=range]::-moz-range-progress { background:transparent; }
 .bl-capture-options input:is([type=checkbox],[type=radio]) { appearance:auto!important; -webkit-appearance:auto!important; accent-color:var(--salty-accent); width:18px!important; height:18px!important; min-width:18px; margin:0!important; padding:0!important; box-shadow:none!important; color-scheme:light; }
 body.salty-dark .bl-capture-options input:is([type=checkbox],[type=radio]) { color-scheme:dark; }
 .bl-mask-color { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:8px 10px; font-size:11px; }
@@ -78,6 +82,12 @@ body.salty-dark .bl-capture-options input:is([type=checkbox],[type=radio]) { col
 .bl-mask-color input[type=color]::-webkit-color-swatch { border:0; border-radius:4px; }
 .bl-mask-color input[type=color]::-moz-color-swatch { border:0; border-radius:4px; }
 .bl-mask-detail { padding-top:10px; border-top:1px solid var(--salty-line); }
+/* 5.5.3 캡처 필터: 프리셋 + 슬라이더 여섯 — 마스크 슬라이더와 같은 모양. 실제 칸 너비 기준으로 16em 씩 들어가면 2열, 아니면(폰 · 미리보기 옆 좁은 칸) 1열 */
+.bl-capture-filter { grid-template-columns:repeat(auto-fit,minmax(min(100%,max(16em,calc((100% - 12px)/2))),1fr)); }
+.bl-capture-filter-range { display:grid; grid-template-columns:minmax(0,1fr); gap:4px; font-size:.9em; line-height:1.45; }
+.bl-capture-filter-head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 10px; min-height:1.45em; }
+.bl-capture-filter-head output { flex:none; min-width:3ch; text-align:right; font-variant-numeric:tabular-nums; color:var(--salty-muted); }
+.bl-capture-options [data-capture-filter-reset] { justify-self:start; } /* 작은 버튼 하나 — 칸 끝까지 늘리지 않고 글자 너비 */
 .bl-capture-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:20px 10px; min-height:140px; border:1px dashed var(--salty-line); border-radius:10px; background:var(--salty-shade); text-align:center; }
 .bl-capture-empty > span { font-size:30px; opacity:.5; }
 .bl-capture-empty b { font-size:13px; font-weight:600; }
@@ -115,8 +125,9 @@ html body .salty-panel .bl-tool-primary { color:var(--salty-text); border:1px so
 /* 글자는 작게 두고 누르는 영역만 넓힌다 (폰 오탭 방지) — 5.1.3 */
 .bl-addon-credit a { display:inline-block; padding:7px 6px; margin:-5px 0; color:inherit; text-decoration:underline dotted; text-underline-offset:3px; }
 .bl-addon-credit a:hover,.bl-addon-credit a:focus-visible { color:var(--salty-text); }
-html body .bl-addon-credit-all { display:inline-block; min-height:0; margin:-5px 0; padding:7px 6px; border:0; border-radius:0; box-shadow:none; background:transparent; color:inherit; font:inherit; letter-spacing:inherit; cursor:pointer; }
+html body .bl-addon-credit-all { display:inline-block; min-height:0; margin:-5px 0; padding:calc(7px + var(--bl-text-nudge, 0px)) 6px calc(7px - var(--bl-text-nudge, 0px)) /* 5.5.3 세로 중앙 */; border:0; border-radius:0; box-shadow:none; background:transparent; color:inherit; font:inherit; letter-spacing:inherit; cursor:pointer; }
 html body .bl-addon-credit-all:hover,html body .bl-addon-credit-all:focus-visible { color:var(--salty-text); outline:none; }
+html body .bl-addon-credit-all:focus-visible { outline:2px solid var(--salty-accent); outline-offset:2px; border-radius:var(--bl-r-sm,8px); } /* 키보드 초점 표시 (마우스 hover 는 색만) */
 /* Desktop embeds the actual controls; mobile keeps the existing focused dialog. */
 .bl-addon-inline { display:none; }
 .bl-inline-title { margin:0; font-size:1em; font-weight:inherit; line-height:1.5; }

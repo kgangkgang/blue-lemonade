@@ -8,10 +8,10 @@ import { extension_settings } from '../../../../../../extensions.js';
 import { saveSettingsDebounced, eventSource, event_types, getRequestHeaders } from '../../../../../../../script.js';
 import { oai_settings } from '../../../../../../openai.js';
 import { SOURCES } from '../models/sources.js';
-import { listTargets, supports, registry } from './targets.js';
+import { listTargets, supports, registry, discoverTargets } from './targets.js';
 import { setLocks, withoutLock } from './lock.js';
 
-const VERSION = '1.0.4';
+const VERSION = '1.0.5';
 const MAX_LISTS = 3;
 const MAX_PRESETS = 8;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -32,7 +32,7 @@ function store() {
     return s;
 }
 
-// 아는 확장은 처음부터 켜 두고, 자동으로 찾은 확장은 직접 켤 때까지 건드리지 않는다
+// 아는 확장은 처음부터 켜 두고, 자동으로 찾은 확장(1.0.5: 켜진 모든 확장의 소스로 찾음)은 직접 켤 때까지 건드리지 않는다
 const isOn = target => store().targets[target.id] ?? !target.auto;
 
 // 잠금: 체크한 확장 중 우리가 화면까지 아는 것(번역 · 장기 기억 · 다시 쓰기)만 그 확장 화면에서 못 바꾸게 한다
@@ -85,12 +85,14 @@ function modelOptions(source) {
 
 function describe(now) {
     if (!now) return '';
-    if (now.follow) return now.follow;
+    // 연결 방식을 모르는 확장: 지금 연결을 따르는 채로 공급자 · 모델만 바뀐다
+    if (now.follow) return now.stays && now.model ? `${now.follow} (${label(now.source)} · ${now.model})` : now.follow;
     return `${label(now.source)} · ${now.model || '모델 없음'}`;
 }
 
 function render() {
     if (!root) return;
+    discoverTargets();
     const s = store(), d = s.draft, targets = listTargets();
     const active = s.presets.findIndex(p => p.source === d.source && p.model === d.model && (p.url || '') === (d.url || ''));
     root.querySelector('.ms-presets').innerHTML = s.presets.map((p, i) => `<button type="button" class="ms-chip ${i === active ? 'on' : ''}" data-preset="${i}"><b>${esc(p.name)}</b><small>${esc(p.model)}</small></button>`).join('')
@@ -130,19 +132,29 @@ async function applyNow() {
     const s = store(), d = { source: s.draft.source, model: s.draft.model.trim(), url: (s.draft.url || '').trim().replace(/\/+$/, '') };
     if (!d.model) return;
     busy = true; note = '바꾸는 중…'; render();
-    const done = [], skipped = [];
+    // 자동 찾기가 느린 서버에서 멈춰도 아는 확장은 바꾼다 (3초까지만 기다림)
+    await Promise.race([discoverTargets().catch(() => {}), new Promise(resolve => setTimeout(resolve, 3000))]);
+    const done = [], partial = [], skipped = [], touched = [];
     for (const target of listTargets()) {
         if (!isOn(target)) continue;
         if (!supports(target, d.source)) { skipped.push(target.name); continue; }
         try {
             await withoutLock(() => target.apply(d));
+            if (target.auto) touched.push(target);
             const now = target.read();
-            if (now && !now.follow && now.source === d.source && now.model === d.model) done.push(target.name); else skipped.push(target.name);
+            if (!now || (now.follow && !now.stays) || now.source !== d.source || now.model !== d.model) skipped.push(target.name);
+            // 연결 방식을 몰라 공급자 · 모델만 바꾼 확장은 여전히 지금 연결(또는 자체 주소)을 쓴다 — 바뀐 것으로 세지 않는다
+            else if (now.follow) partial.push(`${target.name}: 공급자만 바꿈 (${now.follow} 따름)`);
+            // 주소를 넣었는데 이 확장에 주소 칸이 없으면 주소는 예전 그대로
+            else if (d.source === 'custom' && d.url && cleanUrl(now.url) !== d.url) partial.push(`${target.name}: 주소는 그대로`);
+            else done.push(target.name);
         } catch (error) { console.error('[Blue Lemonade] 모델 전환', target.id, error); skipped.push(target.name); }
     }
     saveSettingsDebounced();
+    // 자동으로 찾은 확장은 화면을 다시 그리라고 알릴 길이 이 이벤트뿐 (registry 주석 참고)
+    for (const target of touched) window.dispatchEvent(new CustomEvent('st:model-switch-applied', { detail: { settingsKey: target.settingsKey, path: target.path } }));
     busy = false;
-    note = `${done.length ? `${done.join(' · ')} → ${label(d.source)} · ${d.model}` : '바뀐 확장 없음'}${skipped.length ? ` / 못 바꿈: ${skipped.join(' · ')}` : ''}`;
+    note = [done.length ? `${done.join(' · ')} → ${label(d.source)} · ${d.model}` : '바뀐 확장 없음', ...partial, skipped.length ? `못 바꿈: ${skipped.join(' · ')}` : ''].filter(Boolean).join(' / ');
     if (done.length) globalThis.toastr?.success(note, '모델 전환'); else globalThis.toastr?.warning(note, '모델 전환');
     render();
 }
@@ -171,7 +183,7 @@ function mount() {
     <label class="ms-url"><span>주소</span><input class="text_pole" data-field="url" placeholder="비우면 각 확장의 주소 그대로" autocomplete="off" spellcheck="false"></label>
   </div>
   <div class="ms-targets"></div>
-  <label class="ms-lock"><input type="checkbox" data-lock><span><b><i class="fa-solid fa-lock" aria-hidden="true"></i> 잠금</b><small>각 확장 화면에서는 못 바꾸게</small></span></label>
+  <label class="ms-lock"><input type="checkbox" data-lock><span><b><i class="fa-solid fa-lock" aria-hidden="true"></i> 잠금</b><small>각 확장 화면에서는 못 바꾸게 · 자동은 제외</small></span></label>
   <div class="ms-actions"><button type="button" class="menu_button ms-apply" data-act="apply"><i class="fa-solid fa-shuffle"></i> 바꾸기</button><button type="button" class="menu_button ms-remove" data-act="remove" aria-label="이 조합 지우기" hidden><i class="fa-solid fa-trash-can"></i></button></div>
   <p class="ms-status" role="status"></p>
 </div>`;

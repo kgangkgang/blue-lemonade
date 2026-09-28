@@ -7,6 +7,9 @@ const upstream=[
  ['Prompt Panel','anon4961','https://github.com/anon4961/prompt-panel','AGPL-3.0','LICENSE','프리셋·월드인포·봇카드 번역'],
  ['CustomThemeStyleInputs','IceFog72 · Copyright © 2025','https://github.com/IceFog72/SillyTavern-CustomThemeStyleInputs','MIT','LICENSE','커스텀 CSS 변수 조절'],
 ];
+// 5.5.3 ⓒ 버튼 아이콘: 글자 ⓒ(U+24D2)는 글꼴(Segoe UI · Roboto · Noto)마다 잉크가 em 상자 아래쪽에 앉아 이름 · 버전 알약보다 낮아 보였다.
+// 원과 c 가 viewBox 가운데(12,12)를 기준으로 위아래 대칭인 SVG → 글꼴과 상관없이 상자 가운데 = 잉크 가운데
+export const COPYRIGHT_ICON='<svg class="bl-copyright-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M14.7 8.78A4.2 4.2 0 1 0 14.7 15.22"/></svg>';
 let dialog;
 export function openCredits(){
  if(dialog?.open)return;

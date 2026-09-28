@@ -33,6 +33,7 @@ import { getIssues } from './checks.js';
 import { applySillyTavernTheme, saveAsSillyTavernTheme, alreadyMatches } from './sttheme.js';
 import { classifyAll } from './assets.js';
 import { openNotice, currentVersion, hasUnseenNotice } from './notice.js';
+import { COPYRIGHT_ICON } from './credits.js';
 import { customCssReport, buildDiagnosis } from './diagnose.js';
 import { PRESETS, MAX_STYLES, captureStyle, applyStyleData, sameStyle, sharePayload, encodeStyle, decodeStyle, newStyleId, uniqueName, mergeFonts, currentKey, keyLabel } from './styles.js';
 import { charStyleModule } from './features.js';
@@ -908,7 +909,7 @@ function fontItem(f, lang, current) {
         <span class="salty-fontinfo"><b>${esc(f.label)}${f.native ? ` <i>${esc(f.native)}</i>` : ''}${f.size ? `<em>${sizeBadge(f)}</em>` : ''}${f.single ? '<em>굵기 하나</em>' : ''}${blank ? BLANK_BADGE : ''}</b>
         <small data-font="${stack}" style="font-family:${family}">${esc(SAMPLES[f.lang || lang] || SAMPLES.ko)}</small></span>
         ${on ? `<span class="salty-check-ic">${CHECK}</span>` : ''}
-        ${f.group === 'custom' ? `<span class="salty-x" data-act="rmfont" data-id="${esc(f.id)}" title="목록에서 지우기">✕</span>` : ''}
+        ${f.group === 'custom' ? `<span class="salty-x" data-act="rmfont" data-id="${esc(f.id)}" aria-label="목록에서 지우기">✕</span>` : ''}
     </button>`;
 }
 
@@ -1003,7 +1004,7 @@ function tabTheme(s, sub) {
             ${stack('자동 기준', seg('auto.by', [['system', '기기 다크 모드'], ['time', '시간']]))}
             ${s.auto.by === 'time' ? `<div class="salty-row"><span>나이트 시작</span><input type="time" class="salty-time" data-time-path="auto.night" value="${esc(s.auto.night)}" aria-label="나이트 시작"></div><div class="salty-row"><span>화이트 시작</span><input type="time" class="salty-time" data-time-path="auto.day" value="${esc(s.auto.day)}" aria-label="화이트 시작"></div>` : ''}
         </div>` : '';
-    return `${chatPreview()}${selected !== 'custom' ? `<div class="bl-palette-tint">${slider(mode === 'dark' ? 'nightTint' : 'lightTint', '배경 테마색 농도', mode === 'dark' ? 1 : .5, 20, .5)}<small>${mode === 'dark' ? '기본 1% · 차콜' : '기본 0.5% · 화이트'}부터 20%까지. 직접 고친 배경색은 유지해요.</small></div>` : ''}<div class="salty-palette-toolbar"><span>${auto ? '자동 · ' : ''}${mode === 'light' ? '화이트' : '나이트'}</span><div class="salty-mode-switch" role="group" aria-label="테마 밝기">${['light', 'dark'].map(kind => `<button type="button" data-act="palette-mode" data-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'} 모드" title="${kind === 'light' ? '화이트' : '나이트'}" aria-pressed="${!auto && mode === kind}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}<button type="button" data-act="palette-auto" aria-label="자동" title="자동" aria-pressed="${auto}"><i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i></button></div></div>${autoOptions}${mixControls(s,{slider,esc})}<div class="salty-palettes">${cards}${custom}</div>${customLibrary(s)}`;
+    return `${chatPreview()}${selected !== 'custom' ? `<div class="bl-palette-tint">${slider(mode === 'dark' ? 'nightTint' : 'lightTint', '배경 테마색 농도', mode === 'dark' ? 1 : .5, 20, .5)}<small>${mode === 'dark' ? '기본 1% · 차콜' : '기본 0.5% · 화이트'}부터 20%까지. 직접 고친 배경색은 유지해요.</small></div>` : ''}<div class="salty-palette-toolbar"><span>${auto ? '자동 · ' : ''}${mode === 'light' ? '화이트' : '나이트'}</span><div class="salty-mode-switch" role="group" aria-label="테마 밝기">${['light', 'dark'].map(kind => `<button type="button" data-act="palette-mode" data-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'} 모드" aria-pressed="${!auto && mode === kind}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}<button type="button" data-act="palette-auto" aria-label="자동" aria-pressed="${auto}"><i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i></button></div></div>${autoOptions}${mixControls(s,{slider,esc})}<div class="salty-palettes">${cards}${custom}</div>${customLibrary(s)}`;
 
 }
 
@@ -1780,14 +1781,14 @@ function render(root) {
     const head = root.classList.contains('in-popup')
         ? `<div class="salty-head">
             <div class="salty-mark">${MARK}</div>
-            <div><div class="salty-title">Blue Lemonade${currentVersion() ? ` <button type="button" class="salty-ver${hasUnseenNotice() ? ' is-new' : ''}" data-act="notice" aria-label="공지사항">v${currentVersion()}</button>` : ''} <button type="button" class="bl-copyright" data-bl-credits aria-label="출처·라이선스" title="출처·라이선스">ⓒ</button></div><div class="salty-sub">읽기 편한 테마</div></div>
-            <label class="salty-switch" title="블루레몬에이드 사용"><input type="checkbox" data-toggle="enabled" aria-label="테마 켜기" ${s.enabled ? 'checked' : ''}><span></span></label>
+            <div><div class="salty-title">Blue Lemonade${currentVersion() ? ` <button type="button" class="salty-ver${hasUnseenNotice() ? ' is-new' : ''}" data-act="notice" aria-label="공지사항">v${currentVersion()}</button>` : ''} <button type="button" class="bl-copyright" data-bl-credits aria-label="출처·라이선스">${COPYRIGHT_ICON}</button></div><div class="salty-sub">읽기 편한 테마</div></div>
+            <label class="salty-switch"><input type="checkbox" data-toggle="enabled" aria-label="테마 켜기" ${s.enabled ? 'checked' : ''}><span></span></label>
         </div>`
         : `<div class="salty-head salty-head-slim"><span>블루레몬에이드 사용</span>${toggle('enabled', s.enabled)}</div>`;
     root.innerHTML = `
         <div class="salty-nav"><div class="bl-settings-toprow">
             <button type="button" class="bl-editor-choose" data-act="editor-catalog" aria-label="설정 선택" aria-haspopup="dialog" aria-expanded="${!!root._catalogOpen}"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/></svg><span>${subLabel}</span></button>
-            <div class="bl-editor-actions"><button type="button" data-compare aria-label="누르는 동안 설정 열기 전 모습 보기" title="누르는 동안 설정 열기 전 모습" aria-pressed="false">비교</button><button type="button" data-act="history-undo" aria-label="되돌리기" title="되돌리기" ${!history.pending && !history.undoStack.length ? 'disabled' : ''}><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4 3 8l4 4M3 8h8a5 5 0 0 1 0 10"/></svg></button><button type="button" data-act="history-redo" aria-label="다시 실행" title="앞으로 가기 · 다시 실행" ${history.pending || !history.redoStack.length ? 'disabled' : ''}><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m13 4 4 4-4 4m4-4H9a5 5 0 0 0 0 10"/></svg></button><button type="button" class="bl-editor-search-button" data-act="editor-search" aria-label="설정 검색"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="m13 13 4 4"/></svg></button><button type="button" class="bl-settings-expand" data-act="panel-fullscreen" aria-pressed="${!!root._fullscreen}">${root._fullscreen ? '작은 창' : '전체 화면'}</button>${root.classList.contains('in-popup') ? '<button type="button" class="bl-settings-close" data-act="panel-close" aria-label="테마 설정 닫기" title="닫기">×</button>' : ''}</div>
+            <div class="bl-editor-actions"><button type="button" data-compare aria-label="누르는 동안 설정 열기 전 모습 보기" aria-pressed="false">비교</button><button type="button" data-act="history-undo" aria-label="되돌리기" ${!history.pending && !history.undoStack.length ? 'disabled' : ''}><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4 3 8l4 4M3 8h8a5 5 0 0 1 0 10"/></svg></button><button type="button" data-act="history-redo" aria-label="다시 실행" ${history.pending || !history.redoStack.length ? 'disabled' : ''}><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m13 4 4 4-4 4m4-4H9a5 5 0 0 0 0 10"/></svg></button><button type="button" class="bl-editor-search-button" data-act="editor-search" aria-label="설정 검색"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="m13 13 4 4"/></svg></button><button type="button" class="bl-settings-expand" data-act="panel-fullscreen" aria-pressed="${!!root._fullscreen}">${root._fullscreen ? '작은 창' : '전체 화면'}</button>${root.classList.contains('in-popup') ? '<button type="button" class="bl-settings-close" data-act="panel-close" aria-label="테마 설정 닫기">×</button>' : ''}</div>
         </div></div>
         <section class="salty-sec" data-tab="${ui.tab}" data-sub="${sub}">${section}</section>
         <div class="bl-editor-catalog" role="dialog" aria-modal="true" aria-label="설정 선택 목록" ${root._catalogOpen ? '' : 'hidden'}>

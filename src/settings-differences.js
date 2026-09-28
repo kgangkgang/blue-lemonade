@@ -2,6 +2,7 @@ import { DEFAULTS } from './settings.js';
 import { PALETTES, paletteColors } from './palettes.js';
 import { presetColors } from './frame-presets.js';
 import { GRADIENT_KEYS } from './gradients.js';
+import { FILTER_KEYS } from './capture-style.js';
 const read = (obj, path) => path.split('.').reduce((v, k) => v != null && Object.hasOwn(v,k) ? v[k] : undefined, obj);
 const equal = (a, b) => a === b || (!!a && !!b && typeof a === 'object' && typeof b === 'object' && Object.keys(a).length === Object.keys(b).length && Object.keys(a).every(k => equal(a[k], b[k])));
 const omitted = new Set(['appearanceHistory','version','noticeSeen','frameLibrary','customFonts','styles','charStyles','activeStyle','baseStyle','weatherImages','customPalettes','activeCustomPalette','wordTools']);
@@ -38,6 +39,10 @@ export function resetSetting(settings, path) {
     else target[key] = structuredClone(def.value);
     if (path === 'image.mask') settings.image.maskId = '';
     if (path === 'chat.weatherImage') settings.chat.weatherImageId = '';
+    // 5.5.3 캡처 필터: 프리셋과 여섯 값은 한 묶음 — 프리셋을 되돌리면 값도, 값 하나를 되돌리면 프리셋은 '직접'(전부 0 이면 '없음')
+    const capture = settings.captureTools;
+    if (capture && path === 'captureTools.filterPreset') for (const k of FILTER_KEYS) capture[k] = DEFAULTS.captureTools[k];
+    else if (capture && keys[0] === 'captureTools' && keys.length === 1 && FILTER_KEYS.includes(key)) capture.filterPreset = FILTER_KEYS.every(k => !Number(capture[k])) ? 'none' : 'custom';
     return true;
 }
 export function changedSettings(settings) {

@@ -1,4 +1,4 @@
-#model-switch-settings{--ms-version:"1.0.4"}
+#model-switch-settings{--ms-version:"1.0.5"}
 #model-switch-settings .inline-drawer-content{display:flex;flex-direction:column;gap:12px;text-align:left}
 .ms-presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
 .ms-presets:empty{display:none}
@@ -31,7 +31,7 @@
 .ms-target{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;margin:0;padding:8px 4px;cursor:pointer}
 .ms-target input{margin:0}
 .ms-target span{display:flex;flex-direction:column;min-width:0}
-.ms-target b{font-weight:600}
+.ms-target b{font-weight:600;overflow-wrap:anywhere}
 .ms-target em{margin-left:4px;font-style:normal;font-size:.75em;font-weight:500;opacity:.6}
 .ms-target small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.7}
 .ms-target.is-off{opacity:.5}

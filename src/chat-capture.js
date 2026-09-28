@@ -3,6 +3,7 @@ import { preparePrivacy, attachMaskShapes } from './capture-privacy.js';
 import { applyCaptureDisplay, reflowCaptureText, capturePagePlan } from './capture-layout.js';
 import { createCaptureResources } from './capture-resources.js';
 import { collectAnimated, prepareAnimated } from './capture-animate.js';
+import { filterSettings, isNeutral, applyCaptureFilter, releaseCaptureFilter, drawFilterCss } from './capture-filter.js';
 const urls = text => [...text.matchAll(/url\((?:"([^"]*)"|'([^']*)'|([^)]*))\)/g)].map(m=>({raw:m[0],url:m[1]??m[2]??m[3]}));
 const fontFamilies = value => {
     const families=[];let part='',quote='',escaped=false;
@@ -70,7 +71,7 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
     const timer=setTimeout(abort,25000);
     const moving=[];
     let skippedImages=0;
-    let rasterImage=null,rasterCanvas=null;
+    let rasterImage=null,rasterCanvas=null,filterUsed=false;
     try {
         for(const [i,node] of nodes.entries()) {
             progress(`메시지 ${i+1}/${nodes.length} 만드는 중…`);
@@ -145,7 +146,15 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
         const image=rasterImage=new Image();
         await limited(new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(Error('이 브라우저에서 캡처를 만들지 못했어요.'));image.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);}),10000,'이미지 변환 시간이 초과됐어요. 메시지를 나누어 다시 시도해 주세요.');
         controller.signal.throwIfAborted();
-        const canvas=rasterCanvas=document.createElement('canvas');canvas.width=pixelWidth;canvas.height=pixelHeight;canvas.getContext('2d').drawImage(image,0,0);
+        const canvas=rasterCanvas=document.createElement('canvas');canvas.width=pixelWidth;canvas.height=pixelHeight;
+        const ctx=canvas.getContext('2d');if(!ctx)throw Error('이미지를 그릴 캔버스를 만들지 못했어요. 메시지를 나누어 다시 시도해 주세요.');
+        // 5.5.3 캡처 필터(그레인 · 흑백 · 색감): 값이 전부 0 이면 캔버스를 건드리지 않는다 → PNG 바이트 그대로. 영상 · 움짤의 투명 바탕 그림(videoLayer)은 capture-motion.js 가 프레임마다 입힌다
+        // 색은 그릴 때 ctx.filter 로 (같은 크기 사본 캔버스 없이 — 폰에서 최대 64MB 절약), 색온도 · 비네트 · 그레인만 뒤에 입힌다
+        const filter=options.videoLayer?null:filterSettings(options),graded=!!filter&&!isNeutral(filter),drawCss=graded?drawFilterCss(filter):'none';
+        if(drawCss!=='none')ctx.filter=drawCss;
+        ctx.drawImage(image,0,0);
+        if(drawCss!=='none')ctx.filter='none';
+        if(graded){filterUsed=true;applyCaptureFilter(canvas,filter,{seed:pageIndex+1,grainScale:scale,colorApplied:drawCss!=='none'});}
         // toBlob 은 부를 때 그림을 떠 두므로 바로 큰 캔버스를 놓아도 된다 (최대 64MB — GC 를 기다리지 않는다)
         let blob;try{blob=await limited(new Promise(resolve=>canvas.toBlob(resolve,'image/png')),8000,'PNG 저장 시간이 초과됐어요.');}finally{canvas.width=canvas.height=0;}
         if(!blob)throw Error('이미지 저장에 실패했어요.');
@@ -158,6 +167,7 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
     } finally {
         if(rasterImage){rasterImage.onload=rasterImage.onerror=null;rasterImage.src='';}
         if(rasterCanvas)rasterCanvas.width=rasterCanvas.height=0;
+        if(filterUsed)releaseCaptureFilter();
         clearTimeout(timer);signal?.removeEventListener("abort",abort);controller.abort();wrapper.remove();if(!options.resources)resources.close();
     }
 }

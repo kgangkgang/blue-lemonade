@@ -14,7 +14,7 @@
 .salty-panel :is(.salty-btn, .salty-seg button, .salty-fonttags button, .salty-fontempty button) {
   min-height: var(--bl-settings-control);
   border-radius: var(--bl-settings-radius);
-  padding: 6px 10px;
+  padding: calc(6px + var(--bl-text-nudge, 0px)) 10px calc(6px - var(--bl-text-nudge, 0px)); /* 5.5.3 세로 중앙 */
   line-height: 1.4;
   display: inline-flex;
   align-items: center;
@@ -23,9 +23,9 @@
 }
 .salty-panel :is(.salty-seg button, .salty-fonttags button, .salty-fontempty button) {
   min-height: var(--bl-settings-chip);
-  padding-block: 4px;
+  padding-block: calc(4px + var(--bl-text-nudge, 0px)) calc(4px - var(--bl-text-nudge, 0px)); /* 5.5.3 세로 중앙 */
 }
-.salty-panel .salty-seg.salty-mini button { min-height: var(--bl-settings-chip); padding:4px 9px; }
+.salty-panel .salty-seg.salty-mini button { min-height: var(--bl-settings-chip); padding:calc(4px + var(--bl-text-nudge, 0px)) 9px calc(4px - var(--bl-text-nudge, 0px)); } /* 5.5.3 세로 중앙 */
 .salty-panel :is(.salty-fonttags button,.salty-fontempty button) { height:auto; }
 .salty-panel :is(.salty-btns, .bl-palette-actions) { gap: var(--bl-settings-gap); }
 .salty-panel .salty-seg { gap: 3px; padding: 3px; border-radius: 10px; max-width: 100%; }
@@ -126,7 +126,8 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
 .salty-panel .bl-health-item { display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; padding:12px 0; border-bottom:1px solid var(--salty-line); }
 .salty-panel .bl-health-item p { flex:1 1 220px; }
 .salty-panel .bl-health-details { min-width:0; }
-.salty-panel .bl-health-details summary { cursor:pointer; padding:12px 0; min-height:44px; color:var(--salty-muted); line-height:1.5; }
+/* 5.5.3 세로 중앙: summary 는 블록이라 min-height 가 남으면 글자가 위에 붙는다 → 남는 높이를 위아래 padding 으로 나눔 (1lh = 한 줄, 높이 그대로 · ▶ 표시 유지) */
+.salty-panel .bl-health-details summary { cursor:pointer; --bl-pad: max(12px, calc((44px - 1lh) / 2)); padding:calc(var(--bl-pad) + var(--bl-text-nudge, 0px)) 0 calc(var(--bl-pad) - var(--bl-text-nudge, 0px)); min-height:44px; color:var(--salty-muted); line-height:1.5; }
 .salty-panel .bl-health-details :is(p,li) { line-height:1.65; overflow-wrap:anywhere; }
 .salty-panel .bl-health-details ul { padding-left:20px; max-height:240px; overflow:auto; }
 .salty-panel .bl-health-versions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:0 0 12px; }
@@ -144,10 +145,21 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
 .salty-panel .bl-prompt-source { margin:4px 0 14px; color:var(--salty-muted); font-size:calc(12 * var(--sp)); line-height:1.7; }
 .salty-panel .bl-prompt-source a { color:var(--salty-accent); text-underline-offset:3px; }
 
-.salty-panel .bl-usage-mode summary { cursor:pointer; min-height:32px; line-height:1.7; font-size:calc(14 * var(--sp)); }
+/* 5.5.3 세로 중앙: 줄 높이(1.7)보다 min-height 32px 가 커서 글자가 위에 붙던 것 → 남는 높이를 위아래로 나눔 (글자가 커서 남는 높이가 없으면 0 · 보정도 그 안에서만) */
+.salty-panel .bl-usage-mode summary { cursor:pointer; min-height:32px; line-height:1.7; font-size:calc(14 * var(--sp)); --bl-pad: max(0px, calc((32px - 1lh) / 2)); padding-top:calc(var(--bl-pad) + clamp(calc(0px - var(--bl-pad)), var(--bl-text-nudge, 0px), var(--bl-pad))); padding-bottom:calc(var(--bl-pad) - clamp(calc(0px - var(--bl-pad)), var(--bl-text-nudge, 0px), var(--bl-pad))); }
 .salty-panel .bl-usage-mode summary strong { font-weight:600; }
 .salty-panel .bl-usage-mode-body { display:grid; gap:12px; padding-top:16px; }
 
+/* 5.5.3 세로 중앙: 크롬은 글꼴 ascent · descent 를 정수 px 로 반올림하고 위쪽 반행간((줄 높이 - 두 값의 합) / 2)의 소수점을 버려 한 줄 글자가 0~1px 위로 뜬다.
+   보정 = 버린 소수점 - k × 반올림 차이의 절반(ascent 가 올라가면 글자도 내려간다). 위 padding 에 더하고 아래에서 빼 상자 높이는 그대로.
+   글꼴 비율 --bl-font-asc · --bl-font-desc · --bl-ink-k 는 apply.js 가 메뉴 글꼴에 맞춰 넣는다(재 본 Pretendard · 프리젠테이션만). 없으면 이 값이 무효 → 쓰는 곳의 0px.
+   값은 1/64px 단위로 맞춘다 — 크롬 배치 단위(1/64px)에서 위 · 아래 padding 이 따로 버림되어 상자마다 1/64px 씩 줄고, 긴 목록 아래쪽 글자가 한 칸씩 어긋났다.
+   --bl-text-nudge-frac 는 버린 소수점만 — 높이가 정해진 flex 가운데 정렬 칸(좁은 폭 설정 고르기)은 반올림 차이까지 따르면 1px 넘게 내려가서 이것을 쓴다.
+   mod() · round() · lh 를 모르는 브라우저도 0 → 예전 그대로. 크롬 계열(Edge · 안드로이드 Chrome)에서만 재 봤다 — Firefox · Safari 는 미검증 */
+@supports (width: mod(3px, 2px)) and (width: round(1.5px, 1px)) and (width: 1lh) {
+  html body { --bl-text-nudge: round(calc(mod(calc((1lh - round(calc(var(--bl-font-asc) * 1em), 1px) - round(calc(var(--bl-font-desc) * 1em), 1px)) / 2), 1px) - (round(calc(var(--bl-font-asc) * 1em), 1px) - var(--bl-font-asc) * 1em - round(calc(var(--bl-font-desc) * 1em), 1px) + var(--bl-font-desc) * 1em) * var(--bl-ink-k) / 2), 0.015625px);
+    --bl-text-nudge-frac: round(mod(calc((1lh - round(calc(var(--bl-font-asc) * 1em), 1px) - round(calc(var(--bl-font-desc) * 1em), 1px)) / 2), 1px), 0.015625px); }
+}
 /* 공통 조작부의 모양. 색 견본/스위치/사진에 사용자가 고른 모양은 별개다. */
 html body.salty :is(dialog.popup, .bl-settings-dialog, .bl-capture-dialog, .bl-tool-dialog,
   .bl-translator-dialog, .bl-assets-dialog, .bl-ctsi-dialog, .bl-direction-dialog,

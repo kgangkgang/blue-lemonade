@@ -6,7 +6,7 @@ try {
     if (apple) document.documentElement.classList.add('bl-apple-webkit');
 } catch { /* 표시용 */ }
 import { startAddons, syncAddonIcons } from './src/addons.js';
-import { installCredits } from './src/credits.js';
+import { installCredits, COPYRIGHT_ICON } from './src/credits.js';
 // Blue Lemonade · 블루 레몬에이드 — 실리태번 테마 확장 (폴더·설정 키는 예전 이름 salty 그대로)
 import { getSettings, saveSettings } from './src/settings.js';
 import { applyAll, dropStaleOverrides } from './src/apply.js';
@@ -50,7 +50,7 @@ function mountDrawer() {
     // 다른 확장들과 같은 머리 모양: 속찬 레몬 + 이름 + 버전 배지
     drawer.innerHTML = `
         <div class="inline-drawer-toggle inline-drawer-header">
-            <b><i class="fa-solid fa-lemon"></i> Blue Lemonade <span class="bl-version ext-version" hidden></span> <button type="button" class="bl-copyright" data-bl-credits aria-label="출처·라이선스" title="출처·라이선스">ⓒ</button></b>
+            <b><i class="fa-solid fa-lemon"></i> Blue Lemonade <span class="bl-version ext-version" hidden></span> <button type="button" class="bl-copyright" data-bl-credits aria-label="출처·라이선스">${COPYRIGHT_ICON}</button></b>
             <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
         </div>
         <div class="inline-drawer-content"></div>`;

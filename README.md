@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.5.2.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.5.3.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.5.2 · 최신 업데이트</summary>
+<summary>5.5.3 · 최신 업데이트</summary>
+
+- 채팅 캡처에 필터가 생겼어요. 필름 그레인 · 흑백 · 색감(밝기 · 대비 · 채도 · 색온도 · 비네트)을 고르거나 프리셋으로 쓸 수 있고, 사진과 움짤 · 영상 모두 돼요.
+- 확장 목록과 설정 창에서 버전 옆 ⓒ 가 아래로 처져 보이던 것을 가운데로 맞췄어요.
+- 테마 상자 안 글자가 위로 치우쳐 보이던 것을 세로 가운데로 맞췄어요.
+- 모델 전환이 API 를 쓰는 확장을 이름 규칙과 상관없이 스스로 모두 찾아요(TTS 대사 분석 등). 새로 찾은 확장은 체크해서 켜 주세요.
+
+</details>
+
+<details>
+<summary>5.5.2 · 확장별 색 스위치 · 홈 화면 아이콘</summary>
 
 - '다른 확장 색 유지'를 확장별로 켜고 끌 수 있어요.
 - '탭 아이콘' 명령이 폰 홈 화면 아이콘 6장도 함께 바꿔요. 실패해도 Termux 창은 그대로 있어요.

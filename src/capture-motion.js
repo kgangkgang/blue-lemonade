@@ -1,5 +1,6 @@
 import { motionLayout } from './capture-motion-layout.js';
 import { drawAnimated, closeAnimated } from './capture-animate.js';
+import { filterSettings, isNeutral, applyCaptureFilter, releaseCaptureFilter } from './capture-filter.js';
 export const abortError = () => new DOMException('캡처를 취소했어요.', 'AbortError');
 function loadImage(src, signal) {
     return new Promise((resolve, reject) => {
@@ -39,7 +40,7 @@ export async function prepareMotion(ids, progress, options, signal) {
     const canvas=document.createElement('canvas'); canvas.width=layout.width;canvas.height=layout.height;
     const ctx=canvas.getContext('2d',{willReadFrequently:options.format==='gif'});
     let weather=null,moving=null;
-    const close=()=>{weather?.close();closeAnimated(moving);animator?.close();image.close();canvas.width=canvas.height=1;};
+    const close=()=>{weather?.close();closeAnimated(moving);animator?.close();image.close();canvas.width=canvas.height=1;releaseCaptureFilter();};
     try {
         if(!ctx)throw Error('영상을 그릴 캔버스를 만들지 못했어요.');
         const backgrounds=options.includeBackground!==false?await backgroundLayers(signal):[];
@@ -49,6 +50,8 @@ export async function prepareMotion(ids, progress, options, signal) {
         if(animator)moving=await animator.render(layout.width/(still.width/still.scale),options.format==='gif'?30:36,progress,signal);
         signal?.throwIfAborted();
         const base=getComputedStyle(document.documentElement).getPropertyValue('--salty-bg').trim()||(document.body.classList.contains('salty-dark')?'#202226':'#f6f8ff');
+        // 5.5.3 캡처 필터: 바탕 · 날씨 · 글 · 움직이는 조각을 다 그린 뒤 프레임마다 같은 룩으로 (그레인은 프레임마다 자리를 옮긴다). 전부 0 이면 프레임을 건드리지 않는다
+        const filter=filterSettings(options),graded=!isNeutral(filter);let frame=0;
         const draw=(dt,now,elapsed)=>{
             ctx.globalAlpha=1;ctx.fillStyle=base;ctx.fillRect(0,0,canvas.width,canvas.height);
             for(const layer of backgrounds){ctx.globalAlpha=layer.opacity;cover(ctx,layer.image,canvas.width,canvas.height);}
@@ -57,9 +60,14 @@ export async function prepareMotion(ids, progress, options, signal) {
             if(weather){weather.draw(dt,now);ctx.drawImage(weather.canvas,0,0,canvas.width,canvas.height);}
             ctx.drawImage(image,0,-layout.offsetAt(elapsed),canvas.width,layout.contentHeight);
             if(moving)drawAnimated(ctx,moving,elapsed,layout.offsetAt(elapsed));
+            // 그레인은 영상에서만 프레임마다 움직인다 — 움짤(GIF · APNG · WebP)은 달라진 곳만 담으므로 멈춘 그레인이어야 용량 · 화질이 지켜진다
+            if(grade)applyCaptureFilter(canvas,filter,{seed:7,frame:options.format==='video'?frame++:0});
         };
+        // 외부 접근 제한(tainted) 검사를 필터보다 먼저 — 픽셀 루프 필터(옛 Safari)가 먼저 getImageData 로 날것의 오류를 내지 않게
+        let grade=false;
         draw(0,0,0);
         try{ctx.getImageData(0,0,1,1);}catch{throw Error('배경 영상의 외부 접근 제한 때문에 저장할 수 없어요. 배경 포함을 끄거나 같은 서버의 영상을 사용해 주세요.');}
+        if(graded){grade=true;draw(0,0,0);}
         // Background images may be animated GIF/WebP too. Only exports with no
         // live background can safely render the synthetic weather/text clock faster.
         return {canvas,ctx,layout,draw,close,realtime:backgrounds.length>0,result:{...still,moving:!!moving,width:layout.width,height:layout.height,duration:layout.duration,scrolling:layout.travel>0,weather:!!weather,background:backgrounds.length>0}};

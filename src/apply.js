@@ -152,9 +152,20 @@ function slotSets(s) {
         : (!s.fonts[slot] || s.fonts[slot] === 'same' ? null : s.fonts[slot])]));
 }
 
+// 5.5.3 세로 중앙: 메뉴 글꼴의 줄 상자 비율(글꼴 ascender · descender ÷ em). 크롬 줄 배치를 재 본 글꼴만 —
+// 모르는 글꼴은 비워 두면 css/56 의 --bl-text-nudge 가 무효 → 0 (5.5.2 그대로). 줄 상자를 정하는 글꼴은 공백을 맡는 쪽: 영어 칸을 따로 골랐으면 그 글꼴
+// [ascent, descent, 반올림 차이를 얼마나 따를지(k)] — k 는 재 본 값: Pretendard 는 한글 잉크가 ascent · descent 반올림을 그대로 따라가고(1),
+// 프리젠테이션은 따라가지 않는다(0, 5.5.3 첫 측정과 같은 식). 2026-09-29 PC 1440 · 폰 412 × 사용자 · 기본 설정 전 화면으로 확인
+const FONT_METRICS = { pretendard: ['.952', '.241', '1'], freesentation: ['.94', '.23', '0'] };
+function metricVars(set) {
+    const id = set && (set.en && set.en !== 'auto' && findFont(set.en) ? set.en : set.ko);
+    const m = Object.hasOwn(FONT_METRICS, id) ? FONT_METRICS[id] : null;
+    return m ? { '--bl-font-asc': m[0], '--bl-font-desc': m[1], '--bl-ink-k': m[2] } : {};
+}
+
 function fontVars(s) {
     const sets = slotSets(s);
-    const vars = {};
+    const vars = metricVars(sets.ui || sets.text);
     for (const [slot, set] of Object.entries(sets)) {
         if (!set) {
             // 메뉴는 본문 글꼴, 대사 · 속마음 · 강조는 둘레 글꼴 그대로 (대사 안의 속마음이면 대사 글꼴)

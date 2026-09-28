@@ -11,6 +11,7 @@ html body .salty-panel.bl-editor .salty-nav { position:relative; top:auto; flex:
 html body .bl-editor .bl-settings-toprow button { min-height:36px; margin:0; border:0; border-radius:8px; padding:6px 8px; color:var(--salty-text); background:transparent; font:inherit; font-size:calc(12 * var(--sp)); line-height:1.3; box-shadow:none; }
 html body .bl-editor .bl-settings-toprow button:hover { background:var(--salty-fill-shade, var(--salty-shade)); }
 html body .bl-editor .bl-settings-toprow .bl-settings-close { font:24px/1 sans-serif; width:34px; padding:0; }
+html body .bl-editor .bl-settings-toprow :is([data-compare], .bl-settings-expand) { padding-top:calc(6px + var(--bl-text-nudge, 0px)); padding-bottom:calc(6px - var(--bl-text-nudge, 0px)); } /* 5.5.3 세로 중앙: 글자 단추만 (아이콘 단추는 그대로) */
 .bl-editor-choose { display:flex; align-items:center; gap:10px; min-width:0; text-align:left; }
 .bl-editor-choose span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:650; font-size:calc(14 * var(--sp)); }
 .bl-editor .bl-settings-toprow svg { width:16px; height:16px; flex:none; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
@@ -23,7 +24,7 @@ html body .bl-editor .bl-settings-toprow .bl-settings-close { font:24px/1 sans-s
 html body .bl-editor .bl-editor-stage .salty-prevbox { position:relative; inset:auto; width:100%; margin:0; padding:0 0 12px; box-shadow:none; background:transparent !important; }
 html body .bl-editor .salty-sec { flex:1; min-width:0; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable both-edges; margin:0; padding:10px 10px 16px; text-align:left; }
 .bl-editor-group { border-top:1px solid var(--bl-editor-line); }
-html body .bl-editor-group-toggle { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; margin:0; padding:6px 0; min-height:38px; border:0; border-radius:0; background:transparent; color:var(--salty-text); font:inherit; font-size:calc(14 * var(--sp)); font-weight:600; text-align:left; box-shadow:none; }
+html body .bl-editor-group-toggle { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; margin:0; padding:calc(6px + var(--bl-text-nudge, 0px)) 0 calc(6px - var(--bl-text-nudge, 0px)) /* 5.5.3 세로 중앙 */; min-height:38px; border:0; border-radius:0; background:transparent; color:var(--salty-text); font:inherit; font-size:calc(14 * var(--sp)); font-weight:600; text-align:left; box-shadow:none; }
 .bl-editor-group-toggle::after { content:'+'; color:var(--salty-muted); font-size:calc(18 * var(--sp)); font-weight:400; }
 .bl-editor-group-toggle[aria-expanded="true"]::after { content:'−'; }
 .bl-editor-group-body { padding:0 0 8px; }
@@ -45,7 +46,7 @@ html body .bl-editor .bl-editor-group-body > :is(.salty-group,.salty-fontrows):n
 .bl-editor-directory-list { min-height:0; overflow:auto; overscroll-behavior:contain; }
 .bl-editor-directory:has(.bl-search-results:not([hidden])) .bl-editor-directory-list { display:none; }
 .bl-editor-category h4 { margin:14px 0 6px; padding:7px 8px; border-left:3px solid var(--salty-accent); border-bottom:1px solid var(--bl-editor-line); border-radius:4px; background:var(--salty-fill-shade, var(--salty-shade)); color:var(--salty-text); font-size:calc(15 * var(--sp)); font-weight:750; line-height:1.4; }
-.bl-editor-category button { display:block; width:100%; margin:2px 0; padding:10px 12px; border:0; border-radius:8px; text-align:left; background:transparent; color:var(--salty-text); font:inherit; font-size:calc(14 * var(--sp)); }
+.bl-editor-category button { display:block; width:100%; margin:2px 0; padding:calc(10px + var(--bl-text-nudge, 0px)) 12px calc(10px - var(--bl-text-nudge, 0px)) /* 5.5.3 세로 중앙 */; border:0; border-radius:8px; text-align:left; background:transparent; color:var(--salty-text); font:inherit; font-size:calc(14 * var(--sp)); }
 .bl-editor-category button:is(:hover,[aria-current="page"]) { background:var(--salty-fill-shade, var(--salty-shade)); color:var(--salty-accent); }
 .bl-editor-directory .salty-head { margin-top:20px; border-top:1px solid var(--bl-editor-line); padding-top:18px; }
 .bl-editor-directory .salty-mark { width:24px; height:28px; }
@@ -105,7 +106,7 @@ html body .bl-editor .bl-setting-reset[hidden] { display:none !important; }
   html body .bl-editor .bl-settings-toprow [data-compare] { position:relative; width:32px; padding:0; font-size:0; }
   /* 5.4.0: 실제 Pretendard 로 390 폰에서 재니 제목 칸 100px < "데우스 엑스 마키나" 103px 로 아직 잘렸다 (닫기가 56 의 폰 44px 규칙으로 44 폭) → 오른쪽 아이콘 6개를 모두 32 폭(높이 44 그대로)으로 맞추고, 그래도 넓은 글꼴이면 말줄임 대신 두 줄까지 (윗줄 높이 44 유지) */
   html body .salty-panel.bl-editor .bl-settings-toprow .bl-editor-actions :is(.bl-settings-expand,.bl-settings-close) { width:32px; min-width:0; }
-  html body .bl-editor .bl-settings-toprow .bl-editor-choose { padding-block:4px; }
+  html body .bl-editor .bl-settings-toprow .bl-editor-choose { padding-block:calc(4px + var(--bl-text-nudge-frac, 0px)) calc(4px - var(--bl-text-nudge-frac, 0px)); } /* 5.5.3 세로 중앙 (높이가 정해진 flex 칸 → 소수점만) */
   .bl-editor .bl-settings-toprow .bl-editor-choose span { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; white-space:normal; word-break:keep-all; overflow-wrap:anywhere; line-height:1.2; }
   html body .bl-editor .bl-settings-toprow [data-compare]::before { content:''; position:absolute; inset:0; margin:auto; width:16px; height:16px; background:currentColor; -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='14' height='12' rx='2'/%3E%3Cpath d='M10 2v16'/%3E%3C/svg%3E") center / contain no-repeat; mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='14' height='12' rx='2'/%3E%3Cpath d='M10 2v16'/%3E%3C/svg%3E") center / contain no-repeat; }
 }

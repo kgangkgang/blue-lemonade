@@ -167,6 +167,11 @@ html body.salty #autopic_settings_container [style*="#ff9f43"] { color: var(--bl
 html body.salty #model-switch-settings .ms-actions .ms-apply { border-radius:var(--bl-r-sm,8px)!important; }
 /* Source and license notices: one click from the theme version. */
 .bl-copyright{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;width:30px;min-height:30px;padding:2px;border:0;border-radius:50%;font:500 20px/1 system-ui;background:transparent;color:var(--salty-muted,#64748b);cursor:pointer}
+/* 5.5.3 ⓒ 는 글자 대신 SVG(credits.js COPYRIGHT_ICON) — 글자 ⓒ 의 잉크가 글꼴마다 em 상자 아래로 처져 이름 · 알약보다 낮아 보였다. 원 가운데 = 상자 가운데 */
+.bl-copyright .bl-copyright-icon{display:block;flex:none;width:18px;height:18px;margin:0;overflow:visible}
+/* 설정 창 제목의 버전 알약은 굵은 제목에 맞춰 1px 올라가 있다(20-panel.css .salty-panel .salty-ver top:-1px) → ⓒ 도 같은 높이로.
+   위아래 padding 합(4px)은 그대로라 버튼 크기 · 누르는 곳 · 초점 테두리는 안 바뀐다 (실측 5.5.3: 1440 · 412 모두 알약 가운데와 1px 차이 → 0) */
+.salty-panel .salty-title .bl-copyright{padding-top:1px;padding-bottom:3px}
 .bl-copyright:focus-visible{outline:2px solid var(--salty-accent,#3975b8)}
 .bl-credits-dialog{margin:auto;width:min(620px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:0;border:1px solid var(--salty-line,#cdd9e8);border-radius:18px;background:var(--salty-surface,#fff);color:var(--salty-text,#24354c);overflow:hidden}
 .bl-credits-dialog[open]{display:flex;flex-direction:column}.bl-credits-dialog::backdrop{background:#07152999}

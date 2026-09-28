@@ -36,6 +36,7 @@ jobs:
           node tools/tests/story-direction.mjs .
           node tools/tests/mix-selection.mjs .
           node tools/tests/capture-motion.mjs .
+          node tools/tests/capture-filter.mjs .
           node tools/tests/capture-resources.mjs
           node tools/tests/weather-budget.mjs
           node tools/tests/weather-styles.mjs .
@@ -44,6 +45,7 @@ jobs:
           node tools/tests/weather-coverage.mjs .
           node tools/tests/weather-retired.mjs .
           node tools/tests/translator-archive-bridge.mjs .
+          node tools/tests/modelswitch-detect.mjs .
           node tools/tests/preset-sharing.mjs .
           node tools/tests/appearance-workflow.mjs .
           node tools/tests/markdown-settings.mjs .
