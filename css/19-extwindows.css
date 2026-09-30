@@ -310,8 +310,7 @@ html body.salty .bl-ctsi-dialog :is(p,small) { font-size:.85em; }
 html body.salty .bl-ctsi-dialog .ctsi-button-container { flex-wrap:wrap; gap:8px 10px; margin:12px 0; }
 html body.salty .bl-ctsi-dialog #ctsi-drawer-content .flex-container { flex-wrap:wrap; gap:8px 10px; }
 html body.salty .bl-ctsi-dialog #ctsi-drawer-content :is(span,select,input) { min-width:0; overflow-wrap:anywhere; }
-html body.salty .jj-settings .jj-switch[aria-checked=true] span { background:var(--salty-on-accent); }
-html body.salty .jj-settings .jj-switch[aria-checked=false] span { background:var(--salty-text); }
+html body.salty .jj-settings .jj-switch span { background:#fff; box-shadow:var(--bl-knob); } /* 5.5.6 전개 지시 스위치 손잡이는 켜짐 · 꺼짐 모두 흰색 (깃털 창과 같게) */
 
 /* Image pixels and their overlaid captions keep their own contrast. The viewer
    chrome follows the palette like the settings dialog. */

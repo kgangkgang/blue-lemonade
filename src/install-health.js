@@ -3,6 +3,7 @@ import { BUILD_VERSION, FILE_HASHES } from './build-info.js';
 import { getIssues } from './checks.js';
 import { customCssReport } from './diagnose.js';
 import { getSettings, saveSettings } from './settings.js';
+import { themeEnabled } from './usage-mode.js';
 const base=new URL('../',import.meta.url);
 let result=null, pending=null;
 const views=new Set();
@@ -39,7 +40,8 @@ function paint(){
         const wasOpen=out.querySelector('details')?.open;
         out.replaceChildren();out.setAttribute('aria-busy',String(!!pending));
         const issues=getIssues(),s=getSettings(),css=customCssReport();
-        const cssRisk=(css.chat.length||issues.some(issue=>issue.fix==='비우기'))&&!s.compat.muteCustomCss;
+        const themeOn=themeEnabled(s); // 5.5.6: 커스텀 CSS 점검 · 잠시 끄기는 테마가 켜져 있을 때만 뜻이 있다 (apply.js 가 테마가 빠지면 끄기를 풀어 준다)
+        const cssRisk=themeOn&&(css.chat.length||issues.some(issue=>issue.fix==='비우기'))&&!s.compat.muteCustomCss;
         const mismatch=result&&!result.error&&(result.disk!==result.version||result.css!==result.version);
         const failures=result?.files?.failures||[];
         const count=issues.filter(issue=>issue.fix!=='비우기').length+Number(!!cssRisk)+Number(!!mismatch)+Number(failures.length>0)+Number(!!result?.error);
@@ -59,7 +61,7 @@ function paint(){
         if(failures.length)line(`내용이 다르거나 읽지 못한 파일이 ${failures.length}개 있어요. 직접 수정한 파일일 수도 있으니 상세 정보를 확인해 주세요.`);
         for(const issue of issues)if(issue.fix!=='비우기')line(issue.text,async()=>{await issue.run?.();paint();},issue.fix);
         if(cssRisk)line('커스텀 CSS가 채팅 배치에 영향을 줄 수 있어요. 원본을 보관한 채 잠시 끌 수 있어요.',()=>{s.compat.muteCustomCss=true;saveSettings();box.dispatchEvent(new CustomEvent('bl:health-fix',{bubbles:true}));paint();},'커스텀 CSS 잠시 끄기');
-        else if(s.compat.muteCustomCss)line('커스텀 CSS를 잠시 끈 상태예요.',()=>{s.compat.muteCustomCss=false;saveSettings();box.dispatchEvent(new CustomEvent('bl:health-fix',{bubbles:true}));paint();},'다시 켜기');
+        else if(themeOn&&s.compat.muteCustomCss)line('커스텀 CSS를 잠시 끈 상태예요.',()=>{s.compat.muteCustomCss=false;saveSettings();box.dispatchEvent(new CustomEvent('bl:health-fix',{bubbles:true}));paint();},'다시 켜기');
         if(result){
             const details=document.createElement('details');details.className='bl-health-details';details.open=!!wasOpen;
             const label=document.createElement('summary');label.textContent='버전 · 파일 상세 정보';details.append(label);

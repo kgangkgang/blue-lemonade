@@ -1,6 +1,6 @@
 /* Blue Lemonade utility sheet: shared surface, spacing and action hierarchy. */
 .bl-assist {
- --ba-bg:var(--salty-fill-raised,var(--salty-raised,var(--SmartThemeBlurTintColor,#24282e)));
+ --ba-bg:var(--salty-fill-raised,var(--salty-raised,var(--bl-opaque-tint,var(--SmartThemeBlurTintColor,#24282e))));
  --ba-card:var(--salty-fill-surface,var(--salty-surface,color-mix(in srgb,var(--SmartThemeBodyColor,#ecf2f8) 7%,var(--SmartThemeBlurTintColor,#24282e))));
  --ba-fg:var(--salty-text,var(--SmartThemeBodyColor,#ecf2f8));
  --ba-muted:var(--salty-muted,var(--SmartThemeEmColor,#aeb8c4));

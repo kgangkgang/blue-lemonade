@@ -1,6 +1,8 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 62개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 3ac828991990) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 62개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 42e454154d8a) */
 /* css/00-base.css */
-:root{--bl-release:"5.5.5";}
+:root{--bl-release:"5.5.6";}
+:root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
+@supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
   --r-sm: 6px;
   --r-md: 10px;
@@ -1559,8 +1561,8 @@ body.salty #jj-popup .jj-switch[aria-checked="true"] {
 }
 body.salty #jj-popup .jj-switch[aria-checked="true"] span {
   transform: translateX(16px);
-  background: var(--bl-jj-ink);
-  box-shadow: none;
+  background: #fff;
+  box-shadow: var(--bl-knob);
 }
 body.salty #jj-popup .jj-textarea {
   resize: none;
@@ -1597,6 +1599,59 @@ body.salty #jj-popup .jj-icon-btn {
   width: 30px;
   height: 30px;
   font-size: 14px;
+}
+body.salty.salty-icons-line #jj-button.is-always i::before,
+body.salty.salty-icons-line #jj-popup.is-always .jj-popup-title i::before {
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  background-image: linear-gradient(135deg, var(--jj-grad-a) 15%, var(--jj-grad-b) 90%);
+}
+body.salty #jj-popup .jj-dots b {
+  background: var(--salty-text-20);
+}
+body.salty #jj-popup .jj-dots b.is-current {
+  background: var(--bl-jj-fg);
+}
+body.salty #jj-popup.is-always .jj-dots b.is-current {
+  background: linear-gradient(135deg, var(--jj-grad-a), var(--jj-grad-b));
+}
+body.salty #jj-popup .jj-icon-btn.is-active {
+  color: var(--bl-jj-fg);
+}
+body.salty #jj-popup .jj-seg {
+  border-radius: 11px;
+  background: var(--salty-shade);
+}
+body.salty #jj-popup .jj-seg button {
+  border-radius: 9px;
+  color: var(--salty-muted);
+}
+body.salty #jj-popup .jj-seg button[aria-selected="true"] {
+  background: var(--salty-control, var(--salty-surface));
+  color: var(--salty-text);
+  box-shadow: var(--salty-e2);
+}
+body.salty.salty-dark #jj-popup .jj-seg button[aria-selected="true"] {
+  background: var(--salty-control-hover, var(--salty-surface));
+}
+body.salty #jj-popup .jj-save-preset {
+  border: 1px dashed var(--salty-text-20);
+  border-radius: 12px;
+  color: var(--salty-muted);
+}
+body.salty #jj-popup .jj-item {
+  border-radius: 12px;
+  background: var(--bl-well);
+  box-shadow: var(--bl-well-in);
+}
+body.salty #jj-popup .jj-item.is-current {
+  box-shadow: var(--bl-well-in), inset 0 0 0 1.5px var(--salty-accent-40);
+}
+body.salty #jj-popup .jj-item-text {
+  color: var(--salty-text);
+}
+body.salty #jj-popup .jj-empty {
+  color: var(--salty-faint);
 }
 body.salty #send_but,
 body.salty #rightSendForm > #mes_stop {
@@ -12060,11 +12115,9 @@ html body.salty .bl-ctsi-dialog #ctsi-drawer-content .flex-container { flex-wrap
 html body.salty .bl-ctsi-dialog #ctsi-drawer-content span,
 html body.salty .bl-ctsi-dialog #ctsi-drawer-content select,
 html body.salty .bl-ctsi-dialog #ctsi-drawer-content input { min-width:0; overflow-wrap:anywhere; }
-html body.salty .jj-settings .jj-switch[aria-checked=true] span:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
-background:var(--salty-on-accent);
-}
-html body.salty .jj-settings .jj-switch[aria-checked=false] span:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
-background:var(--salty-text);
+html body.salty .jj-settings .jj-switch span:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+background:#fff;
+box-shadow:var(--bl-knob);
 }
 html body.salty .eh-root:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 --eh-text:var(--salty-text);
@@ -12285,7 +12338,7 @@ body.salty-dark .salty-panel {
 .salty-notice-item {
   margin-bottom: 8px;
   border-radius: 12px;
-  background: var(--salty-fill-shade, var(--salty-shade));
+  background: var(--salty-fill-shade, var(--salty-shade, rgba(127, 127, 127, 0.12)));
 }
 .salty-notice-toggle {
   display: flex;

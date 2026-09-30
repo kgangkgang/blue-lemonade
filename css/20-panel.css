@@ -182,7 +182,7 @@ body.salty-dark .salty-panel {
 .salty-notice-item {
   margin-bottom: 8px;
   border-radius: 12px;
-  background: var(--salty-fill-shade, var(--salty-shade));
+  background: var(--salty-fill-shade, var(--salty-shade, rgba(127, 127, 127, 0.12))); /* 5.5.6 테마가 빠진 상태(확장만)의 실리태번 팝업 안에서도 칸이 보이게 */
 }
 .salty-notice-toggle {
   display: flex;

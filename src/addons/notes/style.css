@@ -6,7 +6,7 @@
 :root {
     /* index.js 의 VERSION 과 같아야 한다 */
     --bl-notes-css-version: "1.2.9";
-    --bl-notes-surface: var(--salty-surface, var(--SmartThemeBlurTintColor, #25262a));
+    --bl-notes-surface: var(--salty-surface, var(--bl-opaque-tint, var(--SmartThemeBlurTintColor, #25262a)));
     --bl-notes-card: var(--bl-card, var(--salty-card, rgba(255, 255, 255, .04)));
     --bl-notes-text: var(--salty-text, var(--SmartThemeBodyColor, #eee));
     --bl-notes-muted: var(--salty-muted, color-mix(in srgb, var(--bl-notes-text) 60%, transparent));
@@ -618,7 +618,7 @@ body.salty :is(#salty-nochat, .bl-look-sample.salty-preview) { margin: 0 0 8px !
     --h-muted: var(--salty-muted, rgba(127, 127, 127, .9));
     margin: auto; width: min(680px, calc(100vw - 24px)); max-width: calc(100vw - 24px); height: min(760px, calc(100dvh - 24px)); max-height: calc(100dvh - 24px);
     padding: 0; border: 0; border-radius: 18px; box-sizing: border-box; overflow: hidden;
-    background: var(--salty-surface, var(--SmartThemeBlurTintColor, #25262a)); color: var(--salty-text, var(--SmartThemeBodyColor, #eee));
+    background: var(--salty-surface, var(--bl-opaque-tint, var(--SmartThemeBlurTintColor, #25262a))); color: var(--salty-text, var(--SmartThemeBodyColor, #eee));
     box-shadow: var(--bl-e3, 0 16px 60px rgba(0, 0, 0, .4)); text-align: left; font-family: var(--mainFontFamily, system-ui, sans-serif);
 }
 .bl-notes-help[open] { display: flex; flex-direction: column; }

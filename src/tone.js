@@ -6,6 +6,7 @@
 // CSS 값이라 팔레트를 바꿔도 다시 잴 필요가 없다. 회색끼(채도 낮음)는 색상이 뜻이 없으니 테마 글자색으로 (--bl-hue 없음 · bl-tone-grey).
 // 켜짐 여부는 body.salty-tone (apply.js) — 꺼져 있으면 아무것도 안 잰다. 본문 색 지정(unifyInline)이 켜져 있으면 그쪽이 이긴다.
 import { getSettings } from './settings.js';
+import { themeEnabled } from './usage-mode.js';
 
 const SEL = '.mes_text font[color], .mes_text [style*="color"]';
 const GREY = 0.14; // 이 아래 채도는 회색으로 침
@@ -14,7 +15,7 @@ let timer = null;
 
 function enabled() {
     const s = getSettings();
-    return s.enabled && s.chat?.toneInline && !s.chat?.unifyInline;
+    return themeEnabled(s) && s.chat?.toneInline && !s.chat?.unifyInline; // 5.5.6: 확장만 모드에서도 재지 않게 (s.enabled 만 보면 켜진 것으로 친다)
 }
 
 function toRgb(value) {

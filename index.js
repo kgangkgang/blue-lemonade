@@ -192,6 +192,14 @@ jQuery(() => {
     };
     startThemeRuntime();
     new MutationObserver(startThemeRuntime).observe(document.body, {attributes:true,attributeFilter:['class']});
+    // 5.5.6: 테마가 빠져 있는데(확장만 · 테마 끔) '실리태번 설정 맞추기' 값이 실리태번에 남아 있으면 한 번 알린다 — 누르면 되돌리기 (sttheme.js)
+    if (!themeEnabled(getSettings())) {
+        const notice = () => setTimeout(() => import('./src/sttheme.js').then(m => m.noticeRestoreIfNeeded()).catch(error => console.warn('[Blue Lemonade] 실리태번 설정 되돌리기 알림', error)), 2500);
+        try {
+            const { eventSource, event_types } = SillyTavern.getContext();
+            if (document.getElementById('loader')) eventSource.once(event_types.APP_READY, notice); else notice();
+        } catch { notice(); }
+    }
 
     // 실리태번 쪽 설정이 바뀌면 설정 점검을 다시
     let refreshTimer = null;

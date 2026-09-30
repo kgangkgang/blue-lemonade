@@ -906,7 +906,7 @@ body.reduced-motion .eh-viewer-nav { transition: none; }
 .eh-pchip[data-preset] { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
 
 /* Blue Lemonade settings dialog; extension drawer stays inline elsewhere. */
-.bl-assets-dialog {width:min(760px,94vw);max-height:90dvh;padding:16px;border:1px solid var(--SmartThemeBorderColor,#555);border-radius:16px;background:var(--SmartThemeBlurTintColor,#25262a);color:var(--SmartThemeBodyColor,#eee);}
+.bl-assets-dialog {width:min(760px,94vw);max-height:90dvh;padding:16px;border:1px solid var(--SmartThemeBorderColor,#555);border-radius:16px;background:var(--salty-surface,var(--bl-opaque-tint,var(--SmartThemeBlurTintColor,#25262a)));color:var(--SmartThemeBodyColor,#eee);}
 .bl-assets-dialog::backdrop {background:#0008;}
 .bl-assets-dialog > header {display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
 .bl-assets-dialog > header button {background:transparent;border:0;color:inherit;font-size:24px;cursor:pointer;min-width:40px;min-height:40px;}

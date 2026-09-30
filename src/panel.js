@@ -1,4 +1,4 @@
-import { addonsEnabled, usageMode } from './usage-mode.js';
+import { addonsEnabled, themeEnabled, usageMode } from './usage-mode.js';
 import { saveAddonsNow } from './addon-save.js';
 import { readabilityReport, fixReadability } from './readability.js';
 import { appearanceArchive, rememberAppearance, restoreAppearance } from './appearance-archive.js';
@@ -30,7 +30,7 @@ import { PALETTES, PALETTE_FAMILIES, paletteFamily, paletteVariant, TOKEN_GROUPS
 import { GROUPS, LANGS, SAMPLES, fontsFor, findFont, previewStack, queuePreview, isPreviewReady, isPreviewBlank, addGoogleFont, addCssFont, uploadFont, removeCustomFont } from './fonts.js';
 import { applyAll, syncSamples } from './apply.js';
 import { getIssues } from './checks.js';
-import { applySillyTavernTheme, saveAsSillyTavernTheme, alreadyMatches } from './sttheme.js';
+import { applySillyTavernTheme, saveAsSillyTavernTheme, alreadyMatches, restoreState, offerRestore } from './sttheme.js';
 import { classifyAll } from './assets.js';
 import { openNotice, currentVersion, hasUnseenNotice } from './notice.js';
 import { COPYRIGHT_ICON } from './credits.js';
@@ -1130,12 +1130,14 @@ async function copyText(text) {
 
 function tabBackup() {
     const matched = alreadyMatches();
+    // 5.5.6: 맞추기는 테마가 켜져 있을 때만 (확장만 · 테마 끔에서는 실리태번을 테마 모양으로 바꿀 까닭이 없다), 되돌릴 것이 있으면 되돌리기
+    const themeOn = themeEnabled(getSettings()), pending = !!restoreState();
     const locks=getSettings().settingLocks;
     const archive=appearanceArchive(getSettings());
     const archiveMarkup=`<div class="salty-group">${cap('최근 꾸미기 복구함')}<p class="salty-note">스타일·프리셋 적용 전 모습을 최대 8개 기억해요. 복구는 잠금과 관계없이 그때 모습으로 돌아가요.</p>${archive.length?archive.map(x=>row(esc(x.label),`<button class="salty-btn" data-act="appearance-restore" data-id="${esc(x.id)}">복구</button>`,new Date(x.at).toLocaleString())).join(''):'<p class="salty-note">아직 보관한 모습이 없어요.</p>'}</div>`;
     return `${archiveMarkup}<div class="bl-backup-layout"><div class="salty-group bl-setting-locks">${cap('스타일을 바꿔도 유지할 설정')}${LOCK_GROUPS.map(([id,label])=>row(label,toggle('settingLocks.'+id,locks[id]))).join('')}<p class="salty-note">스타일·공유 프리셋·캐릭터 연결에 적용돼요. 직접 조절과 테마 설정 파일 복원·초기화에는 적용하지 않아요.</p></div><div class="salty-group bl-backup-actions">
-            ${row('실리태번 설정', `<button class="salty-btn" data-act="st-theme">${matched ? '다시 맞추기' : '맞추기'}</button>`,
-        matched ? '지금 이 테마에 맞게 돼 있어요' : '흐림 · 그림자 · 말풍선 모양을 이 테마에 맞춰요')}
+            ${themeOn || pending ? row('실리태번 설정', `<span class="salty-btns">${themeOn ? `<button class="salty-btn" data-act="st-theme">${matched ? '다시 맞추기' : '맞추기'}</button>` : ''}${pending ? '<button class="salty-btn" data-act="st-restore">되돌리기</button>' : ''}</span>`,
+        !themeOn ? '맞추기 값이 실리태번에 남아 있어요' : matched ? '지금 이 테마에 맞게 돼 있어요 · 테마를 꺼도 남아요' : '흐림 · 그림자 · 말풍선 모양을 이 테마에 맞춰요 · 테마를 꺼도 남아요') : ''}
             ${row('프리셋 공유', '<span class="salty-btns"><button class="salty-btn" data-act="preset-export">공유하기</button><button class="salty-btn" data-act="preset-import">불러오기</button></span>', '형광펜 · 날씨처럼 묶음만 골라요')}
             ${row('테마 설정 파일', '<span class="salty-btns"><button class="salty-btn" data-act="export">내보내기</button><button class="salty-btn" data-act="import">가져오기</button></span>', '테마 꾸미기·라이브러리를 담아요. 내장 확장 자료와 대화는 제외돼요.')}
             ${row('처음 설정으로', '<button class="salty-btn salty-btn-danger" data-act="reset">되돌리기</button>', '무엇을 되돌릴지 골라요')}
@@ -1800,8 +1802,14 @@ function render(root) {
     root.querySelector('[data-usage-apply]')?.addEventListener('click',async(event)=>{
         const button=event.currentTarget, status=root.querySelector('[data-usage-status]');
         button.disabled=true;status.textContent='설정을 저장하고 있어요…';
-        const previous=s.usageMode;s.usageMode=root.querySelector('[data-usage-mode]').value;
-        try{await syncRegexlinkFlag();await saveAddonsNow();location.reload();}catch(error){s.usageMode=previous;await syncRegexlinkFlag({resume:true});status.textContent=error.message;button.disabled=false;}
+        const previous=s.usageMode,next=root.querySelector('[data-usage-mode]').value;
+        // 5.5.6: 테마가 빠지는 쪽(확장만)으로 바꾸는데 '실리태번 설정 맞추기' 값이 남아 있으면 되돌릴지 먼저 묻는다 — 안 그러면 채팅 바탕이 투명한 채 남는다.
+        // 모드 값은 확인이 끝난 뒤에 넣는다 (확인 창이 떠 있는 동안 다른 저장이 '확장만' 을 새로고침 없이 적어 버리지 않게)
+        if(next==='extensions'&&restoreState()){status.textContent='';try{await offerRestore();}catch(error){toastr.warning(`실리태번 모습은 못 되돌렸어요: ${error.message||error}`,'Blue Lemonade');}}
+        // 되돌리기가 실리태번 칸을 건드리면 설정 창이 다시 그려진다 — 상태 글 · 버튼은 그때마다 새로 찾는다
+        const say=text=>{const node=root.querySelector('[data-usage-status]');if(node)node.textContent=text;};
+        say('설정을 저장하고 있어요…');s.usageMode=next;
+        try{await syncRegexlinkFlag();await saveAddonsNow();location.reload();}catch(error){s.usageMode=previous;await syncRegexlinkFlag({resume:true});refreshPanels();say(error.message);const again=root.querySelector('[data-usage-apply]');if(again)again.disabled=false;}
     });
     bindCustomBuilder(root);
     paintSettingsSearch(root);
@@ -2375,6 +2383,15 @@ function bind(root) {
                     refreshPanels();
                     break;
                 }
+                case 'st-restore': {
+                    try {
+                        if (await offerRestore() === 'restored') toastr.success('실리태번 모습을 되돌렸어요', 'Blue Lemonade');
+                    } catch (error) {
+                        toastr.error(error.message || String(error), 'Blue Lemonade');
+                    }
+                    refreshPanels();
+                    break;
+                }
                 case 'wimg-pick':
                     weatherReplaceId = '';
                     root.querySelector('input[data-file="weather"]')?.click();
@@ -2709,6 +2726,11 @@ function bind(root) {
             // 감정 대사 효과(움직임 · 빛 · 색 흐름) · 백그라운드 버티는 방식 줄도 스위치를 따라 보였다 안 보였다 한다
             update(st => setPath(st, path, target.checked), ['strike.line', 'strike.own', 'strike.italic', 'deviceLayouts.on', 'chat.weatherReadability', 'chat.weatherIllustrated', 'enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on', 'deus.fx.on', 'deus.fx.flow', 'deus.fx.force', 'bgWindow.on', 'compat.preserveExtensionColors'].includes(path));
             await syncChangedAddons([path]);
+            // 5.5.6: 테마를 끄는 순간에도 '맞추기' 값이 남아 있으면 되돌릴지 묻는다
+            if (path === 'enabled' && !target.checked && restoreState()) {
+                try { if (await offerRestore() === 'restored') toastr.success('실리태번 모습을 되돌렸어요', 'Blue Lemonade'); } catch (error) { toastr.warning(`실리태번 모습은 못 되돌렸어요: ${error.message || error}`, 'Blue Lemonade'); }
+                refreshPanels();
+            }
             return;
         }
         if (target.matches('input[data-file="font"]') && target.files?.[0]) {

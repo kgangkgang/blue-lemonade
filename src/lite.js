@@ -1,4 +1,6 @@
 import { positionMessageMenu } from './menu-position.js';
+import { getSettings } from './settings.js';
+import { themeEnabled } from './usage-mode.js';
 // 가볍게 (2.5.2): 테마 설정창 미리보기 전용 CSS 는 설정창을 열 때까지 빼 둔다.
 //
 // css/23-preview.gen.css (style.css 안의 미리보기 사본)는 #chat 규칙을 :is(#salty-nochat, .salty-preview) · .salty-sample 용으로 복사한 것이라
@@ -317,6 +319,8 @@ export function startMenuOpenMark() {
     // 눌러서 연 흔적(.visible · 인라인 display)이 없는데도 보이고 있으면 늘 펼침으로 보고, 실리태번과 같은 표시를 달아 이름 줄 아래 한 줄로 그린다.
     const detectForced = () => {
         const body = document.body, menu = chat.querySelector(':scope > .mes:last-of-type .mes_buttons > .extraMesButtons');
+        // 5.5.6: 테마가 빠진 상태(확장만 · 테마 끔)에서는 실리태번의 표시를 달지 않는다 — 내가 달아 둔 것이 있으면 뗀다
+        if (!themeEnabled(getSettings())) { if (body.classList.contains('bl-forced-expand')) { body.classList.remove('bl-forced-expand'); if (!document.getElementById('expandMessageActions')?.checked) body.classList.remove('expandMessageActions'); } return; }
         if (!menu || document.getElementById('expandMessageActions')?.checked) { body.classList.remove('bl-forced-expand'); return; }
         const mine = body.classList.contains('bl-forced-expand');
         if (mine) body.classList.remove('expandMessageActions'); // 내가 단 표시를 잠깐 떼고 잰다 (같은 태스크 안이라 화면에는 안 보인다)
@@ -325,11 +329,15 @@ export function startMenuOpenMark() {
         if (forced) body.classList.add('expandMessageActions');
     };
     for (const ms of [1500, 5000]) setTimeout(detectForced, ms);
+    // 5.5.6: 접속 중에 테마를 켜고 끄면(설정 창의 스위치 — 새로고침 없음) 다시 잰다. body.salty 가 바뀐 때만 — detectForced 도 body 클래스를 바꾸므로 되먹임을 막는다
+    let themed = document.body.classList.contains('salty');
+    new MutationObserver(() => { const now = document.body.classList.contains('salty'); if (now !== themed) { themed = now; setTimeout(detectForced, 0); } }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
     // 메뉴 안 '가지 만들기'처럼 메뉴가 열린 채 채팅이 바뀌면 떨어져 나간 메뉴의 클래스 변화는 안 잡혀 #chat 앵커가 남았다 — 채팅이 바뀔 때 다시 잰다
     try { const { eventSource, event_types } = SillyTavern.getContext(); eventSource.on(event_types.CHAT_CHANGED, () => { syncChat(); setTimeout(detectForced, 1200); }); } catch { /* 이벤트를 못 걸면 시작할 때 잰 값만 쓴다 */ }
     // 4.2.8 바깥을 눌러도 메뉴가 안 닫히는 환경(예전 실리태번은 ··· 를 누르면 버튼 칸을 열어 두기만 하고 닫지 않는다 · 닫는 애니메이션이 끝나지 않는 폰)에서는
     // 테마가 이 칸을 떠 있는 메뉴로 그리기 때문에 메뉴가 채팅을 가린 채 남았다. 실리태번에게 먼저 맡기고, 0.45초 뒤에도 열려 있으면 테마가 닫는다.
     document.addEventListener('click', (event) => {
+        if (!themeEnabled(getSettings())) return; // 5.5.6: 떠 있는 메뉴로 그리는 건 테마뿐 — 테마가 빠져 있으면 실리태번의 여닫기에 끼지 않는다
         if (document.body.classList.contains('expandMessageActions') || event.target?.closest?.('.extraMesButtons, .extraMesButtonsHint')) return;
         const open = chat.querySelectorAll('.extraMesButtons.visible, .extraMesButtons[style*="display: flex"], .extraMesButtons[style*="display:flex"]');
         if (!open.length) return;

@@ -1,6 +1,6 @@
 /* Blue Lemonade utility sheet: shared surface, spacing and action hierarchy. */
 .llmt-selection {
- --ba-bg:var(--salty-fill-raised,var(--salty-raised,var(--SmartThemeBlurTintColor,#24282e)));
+ --ba-bg:var(--salty-fill-raised,var(--salty-raised,var(--bl-opaque-tint,var(--SmartThemeBlurTintColor,#24282e))));
  --ba-card:var(--salty-fill-surface,var(--salty-surface,color-mix(in srgb,var(--SmartThemeBodyColor,#ecf2f8) 7%,var(--SmartThemeBlurTintColor,#24282e))));
  --ba-fg:var(--salty-text,var(--SmartThemeBodyColor,#ecf2f8));
  --ba-muted:var(--salty-muted,var(--SmartThemeEmColor,#aeb8c4));
@@ -41,6 +41,6 @@
 
 .llmt-selection { margin:0 auto; bottom:auto; }
 .llmt-selection [data-preview]>label { display:block; margin-top:16px; font-size:.86em; font-weight:550; }
-#llmt-selection-selection { display:flex; position:fixed; right:16px; left:auto; bottom:auto; margin:0; padding:4px; border:0; border-radius:16px; overflow:visible; z-index:30000; background:var(--salty-fill-raised,var(--salty-raised,var(--SmartThemeBlurTintColor,#24282e))); box-shadow:var(--bl-e4,0 8px 28px #0004); }
+#llmt-selection-selection { display:flex; position:fixed; right:16px; left:auto; bottom:auto; margin:0; padding:4px; border:0; border-radius:16px; overflow:visible; z-index:30000; background:var(--salty-fill-raised,var(--salty-raised,var(--bl-opaque-tint,var(--SmartThemeBlurTintColor,#24282e)))); box-shadow:var(--bl-e4,0 8px 28px #0004); }
 #llmt-selection-selection button { display:grid; place-items:center; width:48px; height:48px; border:0; border-radius:12px; background:var(--salty-accent,var(--SmartThemeQuoteColor,#93c9ff)); color:var(--salty-on-accent,#162535); font-size:20px; cursor:pointer; }
 #llmt-selection-selection button:focus-visible { outline:2px solid currentColor; outline-offset:2px; }

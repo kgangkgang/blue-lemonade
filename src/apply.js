@@ -623,7 +623,11 @@ export function applyAll() {
     }, imageHeight(s.image), imageShape(s.image), frameVars(s.image, 'img', pal.accent), decorVars(s.image.decor, 'image', s.image.radius), profileVars(s.profile, pal), profileVars(s.userProfile, pal, true));
     Object.assign(vars,gradientFills(s,vars));
     // 테마를 끄면 토큰은 설정 창에만 — :root 에 두면 안 쓰는 변수가 문서 전체에 깔림 (설정 창은 꺼도 자기 색으로 보임)
-    let css = `${s.enabled ? ':root' : '.salty-panel'} {\n${declarations(vars)}\n}`;
+    // 5.5.6: 설정 창 밖에 뜨는 테마 자체 창(캡처 미리보기 · 단어 치환/성능 도움말 · 출처)도 같이 — 확장만 모드에서 이 창들의 버튼 · 입력칸이
+    // 테마 변수를 못 찾아 바탕 · 테두리 없이 글자만 남았다. 제 바탕을 스스로 칠하는 창들이라 실리태번 화면에는 영향이 없다
+    let css = `${s.enabled ? ':root' : '.salty-panel, .bl-capture-dialog, .bl-tool-dialog, .bl-credits-dialog'} {\n${declarations(vars)}\n}`;
+    // 어두운 팔레트면 그 창들의 체크 칸 · 스크롤바 · 목록도 어둡게 (body.salty-dark 가 없는 상태라 style.css 의 어두운 쪽 규칙이 안 걸린다)
+    if (!s.enabled) css += `\ndialog.bl-capture-dialog, dialog.bl-tool-dialog, dialog.bl-credits-dialog { color-scheme: ${mode === 'dark' ? 'dark' : 'light'}; }`;
 
     if (s.enabled) {
         const [ar, ag, ab] = parseColor(pal.accent);

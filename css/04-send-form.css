@@ -373,7 +373,7 @@ body.salty #jj-popup .jj-popup-title {
   font-weight: 600;
   letter-spacing: -0.01em;
 }
-/* 켜기 스위치: 36×20 — 손잡이는 밝은 면(꺼짐) · 포인트색 위 글자색(켜짐) */
+/* 켜기 스위치: 36×20 — 손잡이는 늘 흰색 */
 body.salty #jj-popup .jj-switch {
   flex: 0 0 auto;
   width: 36px;
@@ -395,8 +395,8 @@ body.salty #jj-popup .jj-switch[aria-checked="true"] {
 }
 body.salty #jj-popup .jj-switch[aria-checked="true"] span {
   transform: translateX(16px);
-  background: var(--bl-jj-ink);
-  box-shadow: none;
+  background: #fff; /* 5.5.6 손잡이는 켜져도 흰색 (사용자: 검은 손잡이가 어색하다) — 설정 창의 스위치와 같은 모양 */
+  box-shadow: var(--bl-knob);
 }
 /* 지시 입력칸: 회색 반투명 대신 오목한 칸 (꺼지면 확장이 흐리게 — 그대로) */
 body.salty #jj-popup .jj-textarea {
@@ -437,6 +437,62 @@ body.salty #jj-popup .jj-icon-btn {
   width: 30px;
   height: 30px;
   font-size: 14px;
+}
+/* 5.5.6 전개 지시 1.1.5 — 항상 지시가 켜지면 깃털이 그라데이션. 선 아이콘은 마스크로 오린 면이라
+   글자 오림(text) 대신 면 전체에 그라데이션을 깐다 (색 두 개는 확장이 --jj-grad-a · b 로 계산) */
+body.salty.salty-icons-line #jj-button.is-always i::before,
+body.salty.salty-icons-line #jj-popup.is-always .jj-popup-title i::before {
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  background-image: linear-gradient(135deg, var(--jj-grad-a) 15%, var(--jj-grad-b) 90%);
+}
+/* 두 쪽 점 · 저장/최근 목록: 테마의 알약 · 오목한 칸 모양 */
+body.salty #jj-popup .jj-dots b {
+  background: var(--salty-text-20);
+}
+body.salty #jj-popup .jj-dots b.is-current {
+  background: var(--bl-jj-fg);
+}
+body.salty #jj-popup.is-always .jj-dots b.is-current {
+  background: linear-gradient(135deg, var(--jj-grad-a), var(--jj-grad-b));
+}
+body.salty #jj-popup .jj-icon-btn.is-active {
+  color: var(--bl-jj-fg);
+}
+body.salty #jj-popup .jj-seg {
+  border-radius: 11px;
+  background: var(--salty-shade);
+}
+body.salty #jj-popup .jj-seg button {
+  border-radius: 9px;
+  color: var(--salty-muted);
+}
+body.salty #jj-popup .jj-seg button[aria-selected="true"] {
+  background: var(--salty-control, var(--salty-surface));
+  color: var(--salty-text);
+  box-shadow: var(--salty-e2);
+}
+body.salty.salty-dark #jj-popup .jj-seg button[aria-selected="true"] {
+  background: var(--salty-control-hover, var(--salty-surface));
+}
+body.salty #jj-popup .jj-save-preset {
+  border: 1px dashed var(--salty-text-20);
+  border-radius: 12px;
+  color: var(--salty-muted);
+}
+body.salty #jj-popup .jj-item {
+  border-radius: 12px;
+  background: var(--bl-well);
+  box-shadow: var(--bl-well-in);
+}
+body.salty #jj-popup .jj-item.is-current {
+  box-shadow: var(--bl-well-in), inset 0 0 0 1.5px var(--salty-accent-40);
+}
+body.salty #jj-popup .jj-item-text {
+  color: var(--salty-text);
+}
+body.salty #jj-popup .jj-empty {
+  color: var(--salty-faint);
 }
 
 /* 보내기 · 생성 멈춤: 같은 자리 같은 포인트색 동그라미 (밝은 테마는 포인트색 그림자, 어두운 테마는 빛 대신 중립 그림자) */

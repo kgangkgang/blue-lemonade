@@ -1,4 +1,7 @@
 // 소금과 부딪히는 설정 찾기 → 설정 창 맨 위에 버튼과 함께 표시
+import { getSettings } from './settings.js';
+import { themeEnabled } from './usage-mode.js';
+
 function runSlash(command) {
     const ctx = SillyTavern.getContext();
     const run = ctx.executeSlashCommandsWithOptions || ctx.executeSlashCommands;
@@ -8,6 +11,8 @@ function runSlash(command) {
 export function getIssues() {
     const ctx = SillyTavern.getContext();
     const issues = [];
+    // 5.5.6: 아래는 모두 '테마와 겹친다' 는 점검이다 — 테마가 빠진 상태(확장만 · 테마 끔)에서는 다른 테마 · 말풍선을 쓰는 게 정상이라 고치라고 하지 않는다
+    if (!themeEnabled(getSettings())) return issues;
 
     if (window.MoonlitEchoesTheme || document.getElementById('MoonlitEchosTheme-style')) {
         issues.push({
