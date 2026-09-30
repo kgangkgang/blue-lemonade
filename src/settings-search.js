@@ -3,6 +3,7 @@
 import { favoriteButton } from './settings-favorites.js';
 import { MARKDOWN_CONTROLS } from './markdown.js';
 const rows = [
+ ['extensions','tts','TTS','음성 읽기 목소리 API 감정 대사 재생 색깔 밑줄 확장 탭 설정 표시 요술봉 MiniMax OpenAI ElevenLabs Gemini Azure'],
  ['extensions','prompt','한글화 패널','실리태번 헬퍼 데우스 샤진 거문고 한글화 프리셋 월드인포 봇카드 정규식 번역 제목 검색 사용방법'],
  ['chat','etc','펼친 카드 아래에 접기 버튼','삼각형 접기 카드 아래 접기','', 'chat.triangleFold'],
  ['extensions','notes','메모','노트 북마크 채팅 기록 메모장 요술봉 입력창 메모 줄'],
@@ -88,7 +89,7 @@ const markdownAliases = {
 };
 for (const { key, label, options } of MARKDOWN_CONTROLS) rows.push(['text','markdown',`마크다운 · ${label}`,`markdown 마크다운 ${markdownAliases[key]} ${options.map(([,name])=>name).join(' ')}`,'',`markdown.${key}`]);
 const tabs={extensions:'확장',theme:'테마',text:'글자',chat:'채팅',image:'이미지',prompt:'프롬프트'};
-const subs={notes:'메모',strike:'취소선',direction:'전개 지시',assets:'캐릭터 에셋',prompt:'한글화 패널',customstyle:'커스텀 CSS 조절',translator:'LLM 번역',conflicts:'확장 충돌 진단',words:'단어 치환',capture:'채팅 캡처',order:'확장 순서',perf:'성능 보조',models:'모델 관리',modelswitch:'모델 전환',regexlink:'프롬프트 연동 정규식',rewrite:'다시 쓰기',bookmarks:'북마크',scripts:'스크립트',update:'업데이트',changes:'변경한 설정',palette:'색',colors:'색 고치기',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
+const subs={tts:'TTS',notes:'메모',strike:'취소선',direction:'전개 지시',assets:'캐릭터 에셋',prompt:'한글화 패널',customstyle:'커스텀 CSS 조절',translator:'LLM 번역',conflicts:'확장 충돌 진단',words:'단어 치환',capture:'채팅 캡처',order:'확장 순서',perf:'성능 보조',models:'모델 관리',modelswitch:'모델 전환',regexlink:'프롬프트 연동 정규식',rewrite:'다시 쓰기',bookmarks:'북마크',scripts:'스크립트',update:'업데이트',changes:'변경한 설정',palette:'색',colors:'색 고치기',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
 subs.markdown = '마크다운';
 const normalize = value => String(value).normalize('NFKC').toLowerCase().replace(/^\s*(?:\*\s*){3,}$/,'구분선').replace(/퀵\s*리플라이|quick\s*repl(?:y|ies)|큐알|\bqr\b/g,'퀵리플라이').replace(/프사|아바타/g,'프로필').replace(/글씨|글자\s*간격/g,m=>m==='글씨'?'글자':'자간').replace(/확대\s*축소/g,'확대 축소').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 // 한글을 초성 · 자모로 풀어 둔다: 'ㅂㄱ' → 배경, '배겨'(치다 만 글자) → 배경, 한 글자 틀린 말도 찾는다.

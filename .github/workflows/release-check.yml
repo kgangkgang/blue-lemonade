@@ -28,6 +28,8 @@ jobs:
           python -m unittest discover -s tools/tests -p 'test_release_gate.py'
           node tools/tests/settings-upgrade.mjs .
           node tools/tests/usage-mode.mjs .
+          node tools/tests/stream-follow.mjs .
+          node tools/tests/tts-integration.mjs .
           node tools/tests/translation-cache-loading.mjs .
           node tools/tests/translation-segments.mjs .
           node tools/tests/conversation-assist.mjs .

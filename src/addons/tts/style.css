@@ -1,0 +1,437 @@
+/* TTS (Lemon TTS) v1.3.0 */
+
+#lv_settings .lv-version { background: none; border: 0; color: inherit; font: inherit; padding: 4px 6px; cursor: pointer; text-decoration: underline; text-underline-offset: .18em; }
+#lv_settings .lv-version:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+/* ---------- 공통 변수: 설정 창 · 편집 팝업 · 재생 막대 (ST 테마 색을 따르고, 블루 레몬에이드 변수는 있으면 씀) */
+.lv-settings, .lv-editor, .lv-bar {
+  --lv-css-version: "1.3.0";
+  --lv-accent: var(--salty-accent, var(--SmartThemeQuoteColor, #51a0de));
+  --lv-text: var(--SmartThemeBodyColor, #dcdcd2);
+  --lv-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, .15));
+  --lv-dim: color-mix(in srgb, var(--lv-text) 76%, transparent);
+  --lv-fill: color-mix(in srgb, var(--lv-text) 6%, transparent);
+  --lv-fill-hover: color-mix(in srgb, var(--lv-text) 11%, transparent);
+  --lv-card: color-mix(in srgb, var(--SmartThemeBlurTintColor, #171717) 45%, transparent);
+  --lv-bad: #e0665f;
+  --lv-r-sm: var(--bl-r-sm, 8px);
+  --lv-r-md: var(--bl-r-md, 12px);
+  --lv-r-pill: var(--bl-r-pill, 999px);
+  --lv-h: max(32px, 2.1em);
+}
+
+/* ---------- 몸통 (서랍 자체의 display 는 건드리지 않는다 — ST 가 열고 닫음) */
+.lv-body {
+  container-type: inline-size;
+  container-name: lvbody;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  width: 100%;
+  flex: 1 1 100%;
+  padding: 6px 0 2px;
+  overflow-wrap: anywhere;
+}
+.lv-settings { width: 100%; min-width: 0; }
+.lv-settings > .inline-drawer { width: 100%; min-width: 0; }
+.lv-settings > .inline-drawer > .inline-drawer-content { min-width: 0; width: 100%; }
+.lv-body button { font: inherit; color: inherit; }
+.lv-body .text_pole, .lv-editor .text_pole {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: var(--lv-h);
+  margin: 0;
+  box-sizing: border-box;
+}
+.lv-body textarea.text_pole, .lv-editor textarea.text_pole { min-height: 64px; resize: vertical; }
+.lv-body .menu_button, .lv-editor .menu_button {
+  width: auto; /* ST의 width:min-content를 해제해 글자 한 칸으로 좁아지지 않게 한다. */
+  min-height: var(--lv-h);
+  margin: 0;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.lv-body input[type=range], .lv-editor input[type=range] { width: 100%; margin: 0; }
+.lv-body input[type=search] { -webkit-appearance: none; appearance: none; }
+.lv-tagline { margin: 0; color: var(--lv-dim); font-size: .92em; }
+.lv-dim { color: var(--lv-dim); }
+.lv-desc { display: block; color: var(--lv-dim); font-size: .9em; line-height: 1.45; }
+.lv-empty { margin: 0; color: var(--lv-dim); font-size: .9em; }
+.lv-count { color: var(--lv-dim); font-size: .82em; font-variant-numeric: tabular-nums; }
+
+/* 위쪽 고정 줄: [사용] [자동 읽기] … ⏹ */
+.lv-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.lv-top .lv-stop { margin-left: auto; }
+.lv-toggle.checkbox_label { margin: 0; gap: 6px; min-height: 28px; align-items: center; }
+.lv-toggle input[type=checkbox] { margin: 0; flex: 0 0 auto; }
+/* 설명이 붙은 토글: 설명은 이름 아래 제 줄 (ST 의 .checkbox_label 은 줄바꿈 없는 flex 라 그냥 두면 이름 옆 좁은 틈에 끼어 부서진다).
+   이름은 폭 0 에서 늘어나게 해 좁은 칸에서도 체크박스와 한 줄에 남긴다 */
+.lv-toggle.lv-has-desc { flex-wrap: wrap; row-gap: 2px; }
+.lv-toggle.lv-has-desc > span:not(.lv-desc) { flex: 1 1 0; min-width: 0; }
+.lv-toggle .lv-desc { flex: 1 1 100%; padding-left: 24px; box-sizing: border-box; }
+
+/* 아이콘만 있는 버튼 */
+.lv-icon, .lv-x {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--lv-border);
+  border-radius: var(--lv-r-sm);
+  background: var(--lv-fill);
+  color: var(--lv-text);
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease, filter .15s ease;
+}
+.lv-icon { width: var(--lv-h); height: var(--lv-h); flex: 0 0 auto; }
+.lv-x { width: 22px; height: 22px; border: 0; border-radius: var(--lv-r-pill); background: transparent; opacity: .7; }
+.lv-icon:hover, .lv-x:hover { background: var(--lv-fill-hover); opacity: 1; }
+.lv-icon:focus-visible, .lv-x:focus-visible, .lv-tab:focus-visible { outline: 2px solid var(--lv-accent); outline-offset: 1px; }
+
+/* 탭: 아이콘 + 글자 알약 */
+.lv-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+@container lvbody (min-width: 30em) { .lv-tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@container lvbody (max-width: 17em) { .lv-tabs { grid-template-columns: minmax(0, 1fr); } }
+.lv-tab {
+  flex: 1 1 5em;
+  min-width: 0;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 8px;
+  border: 1px solid var(--lv-border);
+  border-radius: var(--lv-r-pill);
+  background: var(--lv-fill);
+  color: var(--lv-dim);
+  cursor: pointer;
+  font-size: .92em;
+  white-space: normal;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.lv-tab:hover { background: var(--lv-fill-hover); color: var(--lv-text); }
+.lv-tab.active {
+  border-color: color-mix(in srgb, var(--lv-accent) 60%, transparent);
+  background: color-mix(in srgb, var(--lv-accent) 18%, transparent);
+  color: var(--lv-text);
+}
+.lv-tab.active i { color: var(--lv-accent); }
+.lv-pane:not([hidden]) { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+/* 카드 */
+.lv-card {
+  container: lvcard / inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--lv-border);
+  border-radius: var(--bl-r-md, 12px);
+  background: var(--lv-card);
+}
+.lv-card-head { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: .95em; line-height: 1.3; }
+.lv-card-head i { width: 1.1em; text-align: center; color: var(--lv-accent); font-size: .95em; }
+.lv-advanced { min-width: 0; border-top: 1px solid var(--lv-border); padding-top: 8px; }
+.lv-advanced > summary { cursor: pointer; color: var(--lv-dim); line-height: 1.5; }
+.lv-advanced[open] > summary { margin-bottom: 10px; }
+.lv-sub { display: flex; align-items: baseline; gap: 8px; margin-top: 2px; color: var(--lv-dim); font-size: .85em; }
+.lv-sub .lv-desc { display: inline; }
+.lv-actions { display: flex; flex-wrap: wrap; gap: 6px; max-width: 34em; }
+.lv-actions .menu_button, .lv-key .menu_button { white-space: normal; overflow-wrap: anywhere; line-height: 1.3; min-width: 0; }
+.lv-actions .menu_button { flex: 1 1 10em; }
+.lv-key .menu_button { flex: 1 1 5em; }
+.lv-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0; }
+.lv-line > span:first-child { flex: 1 1 auto; }
+
+/* 실제 카드 폭과 사용자의 글씨 크기로 두 칸을 정한다. 좁은 폰·큰 글씨는 한 칸. */
+.lv-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px 14px; align-items: start; }
+.lv-grid .lv-wide { grid-column: 1 / -1; }
+.lv-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; margin: 0; font-weight: normal; }
+.lv-label { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 8px; color: var(--lv-dim); font-size: .92em; line-height: 1.35; }
+.lv-label output { color: var(--lv-text); font-variant-numeric: tabular-nums; }
+.lv-range input[type=range] { margin-top: 4px; }
+@container lvcard (min-width: 18em) {
+  .lv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lv-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container lvbody (min-width: 42em) {
+  #lv_pane_read:not([hidden]), #lv_pane_voices:not([hidden]), #lv_pane_data:not([hidden]) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  #lv_pane_voices > [data-lv-card="list"], #lv_pane_data > [data-lv-card="log"] { grid-column: 1 / -1; }
+  .lv-top { gap: 12px 20px; }
+}
+
+/* 캐릭터별 목소리 */
+.lv-rows { display: flex; flex-direction: column; gap: 6px; }
+.lv-row { display: grid; grid-template-columns: minmax(64px, 26%) minmax(0, 1fr); align-items: center; gap: 8px; margin: 0; font-weight: normal; }
+.lv-row-label { color: var(--lv-dim); font-size: .92em; overflow-wrap: anywhere; }
+.lv-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.lv-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 2px 4px 2px 10px;
+  border: 1px solid var(--lv-border);
+  border-radius: var(--lv-r-pill);
+  font-size: .85em;
+}
+.lv-pill > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 대화 색 표 */
+.lv-colors { display: flex; flex-direction: column; gap: 6px; }
+.lv-color {
+  display: grid;
+  grid-template-columns: 18px minmax(70px, .8fr) minmax(110px, 1.2fr) var(--lv-h) 28px;
+  align-items: center;
+  gap: 6px;
+}
+.lv-swatch { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--lv-border); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .25); }
+.lv-color .lv-count { text-align: right; }
+@container (max-width: 439px) {
+  /* 좁으면 두 줄: 색·이름·고정·횟수 / 목소리 */
+  .lv-color { grid-template-columns: 18px minmax(0, 1fr) var(--lv-h) 28px; }
+  .lv-color .lv-swatch { grid-area: 1 / 1; }
+  .lv-color .lv-color-name { grid-area: 1 / 2; }
+  .lv-color .lv-icon { grid-area: 1 / 3; }
+  .lv-color .lv-count { grid-area: 1 / 4; }
+  .lv-color .lv-color-voice { grid-area: 2 / 2 / 3 / -1; }
+}
+
+/* 목소리 목록 */
+.lv-tools { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 6px; }
+@container (max-width: 439px) { .lv-tools { grid-template-columns: minmax(0, 1fr); } }
+.lv-voices {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 340px;
+  overflow: auto;
+  padding: 4px;
+  border: 1px solid var(--lv-border);
+  border-radius: var(--lv-r-sm);
+}
+.lv-grp { display: flex; align-items: baseline; gap: 6px; padding: 6px 6px 2px; color: var(--lv-dim); font-size: .85em; }
+.lv-voice {
+  display: grid;
+  grid-template-columns: var(--lv-h) minmax(0, 1fr) var(--lv-h) var(--lv-h);
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px;
+  border-radius: var(--lv-r-sm);
+}
+.lv-voice:hover { background: var(--lv-fill); }
+@container lvcard (max-width: 16em) {
+  .lv-voice { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .lv-voice .lv-voice-name { grid-column: 1 / -1; grid-row: 1; }
+  .lv-voice .lv-icon { max-width: 100%; }
+}
+.lv-voice-name { display: flex; align-items: center; gap: 6px; min-width: 0; flex-wrap: wrap; row-gap: 2px; }
+.lv-voice-name b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.lv-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 7px;
+  border: 1px solid var(--lv-border);
+  border-radius: var(--lv-r-pill);
+  color: var(--lv-dim);
+  font-size: .75em;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+/* 엔진 고르기: 드롭다운 하나 (번역기의 모델 목록처럼), 그 아래 고른 엔진의 카드 */
+.lv-engine-pick { width: 100%; }
+/* 대사 분석 키 줄 (읽기 탭 카드 안, 격자 한 줄 통째) */
+.lv-keyrow { gap: 6px; }
+/* 대사 분석 모델 줄 (1.2.1): [목록 ▾ / 이름 칸][↻] — 직접 입력 칸은 그 아래 */
+.lv-modelrow { gap: 6px; }
+.lv-model { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.lv-model .text_pole { flex: 1 1 auto; min-width: 0; width: auto; }
+.lv-model .lv-icon:disabled { opacity: .6; cursor: default; }
+/* 카드 머리의 한 줄 요약 (대사 분석: 쓰는 모델) — 제목 옆 오른쪽, 길면 … */
+.lv-card-head > span:not(.lv-card-note) { flex: 0 1 auto; min-width: 0; }
+.lv-card-note {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 45%;
+  margin-left: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--lv-dim);
+  font-weight: normal;
+  font-size: .85em;
+}
+/* 잠시 꺼진 항목 (번역을 기다리는 동안엔 스트리밍 읽기 꺼짐) — 설명 줄은 읽히게.
+   꺼진 체크박스는 블루 레몬에이드가 이미 흐리게 하니(.45) 겹쳐 흐리지 않는다; 기본 테마만 여기서 */
+.lv-toggle.lv-off > span:not(.lv-desc) { opacity: .75; }
+body:not(.salty) .lv-toggle.lv-off > input { opacity: .5; }
+.lv-toggle.lv-off > input { cursor: default; }
+.lv-key { display: flex; gap: 6px; flex-wrap: wrap; }
+.lv-key .text_pole { flex: 1 1 180px; width: auto; }
+.lv-key-state { display: flex; align-items: center; gap: 6px; color: var(--lv-dim); font-size: .88em; }
+.lv-test-result { font-size: .88em; min-height: 0; }
+.lv-test-result:empty { display: none; }
+.lv-test-result.ok { color: var(--lv-accent); }
+.lv-test-result.bad { color: var(--lv-bad); }
+.lv-test-info:empty { display: none; }   /* 들어보는 동안만: 엔진 · voiceId · 원어 */
+
+/* 최근 기록 */
+.lv-log { display: flex; flex-direction: column; gap: 2px; max-height: 240px; overflow: auto; font-size: .82em; }
+.lv-log-row { display: grid; grid-template-columns: 60px minmax(0, 1fr); gap: 8px; padding: 2px 4px; border-radius: 4px; }
+.lv-log-row time { color: var(--lv-dim); font-variant-numeric: tabular-nums; }
+.lv-log-row span { overflow-wrap: anywhere; }
+.lv-log-err span { color: var(--lv-bad); }
+.lv-log-req span { color: var(--lv-dim); }
+
+/* ---------- 목소리 편집 팝업 (ST 팝업 안) */
+.lv-editor { container: lveditor / inline-size; display: flex; flex-direction: column; gap: 10px; text-align: left; width: 100%; min-width: 0; }
+.lv-editor .lv-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px 14px; }
+.lv-editor .lv-wide { grid-column: 1 / -1; }
+.lv-ed-head { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.lv-ed-head i { color: var(--lv-accent); }
+.lv-ed-head .lv-chip { margin-left: auto; }
+.lv-def { display: inline-flex; align-items: center; gap: 4px; margin: 0; font-size: .85em; color: var(--lv-dim); cursor: pointer; }
+.lv-def input { margin: 0; }
+.lv-param-in:disabled, .lv-param .checkbox_label:has(input:disabled) { opacity: .45; }
+.lv-range-in { display: flex; align-items: center; gap: 8px; }
+.lv-range-in output { min-width: 4.5em; text-align: right; font-variant-numeric: tabular-nums; }
+.lv-mix { display: flex; flex-direction: column; gap: 6px; }
+.lv-mix-row { display: grid; grid-template-columns: minmax(0, 1fr) 72px var(--lv-h); gap: 6px; align-items: center; }
+.lv-picks { display: flex; flex-direction: column; gap: 4px; }
+.lv-picks .lv-toggle { gap: 8px; }
+@container lveditor (min-width: 22em) {
+  .lv-editor .lv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ---------- 블루 레몬에이드 선 아이콘 모드: 메시지 버튼을 다른 버튼과 같은 선 아이콘·크기로 */
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .lv_play::before {
+  content: "" !important;
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+  background-color: currentColor;
+  -webkit-mask: var(--salty-mi) center / contain no-repeat;
+  mask: var(--salty-mi) center / contain no-repeat;
+}
+body.salty.salty-icons-line #chat .mes .extraMesButtons > .lv_play { --salty-mi: var(--salty-mi-volume); }
+#chat .mes .extraMesButtons > .lv_play { font-size: 1em; }
+
+/* ---------- 켜짐·재생 상태는 아이콘 빛남만 — 설정 창 · 재생 막대 안에서만 (요술봉 메뉴는 빛나지 않는다) */
+.lv-settings .lv-on, .lv-bar .lv-on { color: var(--lv-accent, var(--SmartThemeQuoteColor, #51a0de)); filter: drop-shadow(0 0 5px var(--lv-accent, var(--SmartThemeQuoteColor, #51a0de))); }
+.lv-icon.lv-on { border-color: color-mix(in srgb, var(--lv-accent) 60%, transparent); }
+.mes_button.lv_play.lv-on, .mes.lv-playing .mes_button.lv_play {
+  color: var(--SmartThemeQuoteColor, #51a0de);
+  animation: lv-pulse 1.2s ease-in-out infinite;
+}
+@keyframes lv-pulse {
+  0%, 100% { filter: drop-shadow(0 0 3px var(--SmartThemeQuoteColor, #51a0de)); }
+  50% { filter: drop-shadow(0 0 8px var(--SmartThemeQuoteColor, #51a0de)); }
+}
+
+/* 읽는 대사 강조 (CSS Custom Highlight — DOM 은 건드리지 않음) */
+::highlight(lv-now), ::highlight(lv-now-color) {
+  background-color: color-mix(in srgb, var(--SmartThemeQuoteColor, #51a0de) 28%, transparent);
+}
+::highlight(lv-now), ::highlight(lv-now-underline) {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--SmartThemeQuoteColor, #51a0de) 70%, transparent);
+  text-underline-offset: 2px;
+}
+
+/* ---------- 재생 막대: 입력창 위 작은 알약 (player.js 가 만들고 .lv-bar-on 일 때만 보임)
+   위치는 player.js 가 인라인 CSS 변수로 준다: --lv-bar-bottom (아래에서 잰 거리 = innerHeight − 입력창 top + 6) · --lv-bar-left · --lv-bar-width (#sheld 너비 − 16px)
+   bottom 이 아니라 top 으로 앉힌다: ST 의 html { transform: translateZ(0) } 때문에 fixed 의 기준이 <html> 인데, 휴대폰 배치(body 가 fixed)에서는
+   <html> 높이가 0 이라 bottom 기준이면 화면 밖(위)으로 나간다. top = 100dvh − bottom, 그리고 제 높이만큼 위로 당긴다 (translateY(-100%)) */
+.lv-bar {
+  position: fixed;
+  left: var(--lv-bar-left, 8px);
+  top: calc(100vh - var(--lv-bar-bottom, calc(var(--bottomFormBlockSize, 46px) + 14px)));
+  top: calc(100dvh - var(--lv-bar-bottom, calc(var(--bottomFormBlockSize, 46px) + 14px)));
+  bottom: auto;
+  transform: translateY(-100%);
+  z-index: 2500;                       /* 채팅(30) 위 · 서랍·팝업·토스트 아래 */
+  display: none;
+  align-items: center;
+  gap: 6px;
+  width: var(--lv-bar-width, calc(100vw - 16px));
+  max-width: calc(100vw - 16px);
+  box-sizing: border-box;
+  padding: 4px 6px 4px 14px;
+  border: 1px solid var(--lv-border);
+  border-radius: var(--lv-r-pill);
+  background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #171717) 92%, transparent);
+  color: var(--lv-text);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, .35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.lv-bar.lv-bar-on { display: flex; }
+.lv-bar-info {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  overflow: hidden;
+  font-size: .88em;
+}
+.lv-bar-voice { flex: 0 0 auto; max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; color: var(--lv-accent); }
+.lv-bar-text { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--lv-dim); }
+.lv-bar-busy .lv-bar-text { animation: lv-blink 1.1s ease-in-out infinite; }   /* 합성을 기다리는 중 */
+.lv-bar-paused .lv-bar-voice { color: var(--lv-dim); }
+@keyframes lv-blink { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+.lv-bar-btns { display: flex; align-items: center; gap: 2px; flex: 0 0 auto; }
+.lv-bar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--lv-h);
+  height: var(--lv-h);
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--lv-text);
+  font: inherit;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.lv-bar-btn:hover { background: var(--lv-fill-hover); }
+.lv-bar-btn:focus-visible { outline: 2px solid var(--lv-accent); outline-offset: 1px; }
+.lv-bar-btn.lv-on { color: var(--lv-accent); }
+/* 다시 분석 (.lv-bar-analyze — player.js 가 만들고, 대사 분석을 끄면 인라인으로 숨김) · 번역·분석을 기다리는 중 (.lv-bar-wait — 글자 자리에 "번역 기다리는 중…" / "분석 중…") */
+.lv-bar-analyze.lv-on { color: var(--lv-accent); animation: lv-pulse 1.2s ease-in-out infinite; }
+.lv-bar-wait .lv-bar-text { color: var(--lv-accent); animation: lv-blink 1.1s ease-in-out infinite; }
+.lv-bar-wait .lv-bar-voice { color: var(--lv-dim); }
+/* 기다리는 동안엔 정지만 뜻이 있다 — 나머지는 흐리고 눌리지 않게 (내려받기가 번역 전 글로 통째 합성해 요금을 쓰지 않게).
+   분석 중 불빛(.lv-on)이 켜진 다시 분석은 흐리지 않는다 */
+.lv-bar-wait .lv-bar-prev, .lv-bar-wait .lv-bar-toggle, .lv-bar-wait .lv-bar-next, .lv-bar-wait .lv-bar-regen, .lv-bar-wait .lv-bar-down, .lv-bar-wait .lv-bar-analyze:not(.lv-on) { opacity: .45; }
+.lv-bar-wait .lv-bar-prev, .lv-bar-wait .lv-bar-toggle, .lv-bar-wait .lv-bar-next, .lv-bar-wait .lv-bar-regen, .lv-bar-wait .lv-bar-down, .lv-bar-wait .lv-bar-analyze { pointer-events: none; }
+@media (max-width: 600px) {
+  .lv-bar { left: 8px; width: calc(100vw - 16px); padding-left: 12px; }   /* 휴대폰: 화면 너비 − 16px */
+  .lv-bar-voice { max-width: 34%; }
+  .lv-bar-btns { gap: 0; }                                                  /* 버튼 7개(다시 분석 포함)가 360px 에 들어가게 */
+}
+@media (max-width: 400px) {
+  .lv-bar-voice { display: none; }   /* 버튼 7개 × 36px 뒤에 남는 ~66px 은 읽는 글(또는 "분석 중…")에 — 누가 읽는지는 채팅의 강조로 보임 */
+}
+
+/* ---------- 손가락: 누르는 곳은 36px 이상 */
+@media (pointer: coarse) {
+  .lv-settings, .lv-editor, .lv-bar { --lv-h: max(36px, 2.1em); }
+  .lv-tab { min-height: 36px; }
+  .lv-toggle.checkbox_label { min-height: 36px; }
+  .lv-x { width: 36px; height: 36px; }            /* 글자는 작게, 누르는 곳만 36px */
+  .lv-pill { padding: 0 0 0 10px; }               /* 알약 안의 × 가 커져도 높이가 덜 늘게 */
+  .lv-log-row { padding: 4px; }
+}

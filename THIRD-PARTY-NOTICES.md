@@ -7,6 +7,7 @@ Blue Lemonade는 GNU Affero General Public License v3.0 조건으로 배포합�
 
 | 구성요소 | 원작자·출처 | 라이선스 |
 |---|---|---|
+| TTS | Blue Lemonade | [AGPL-3.0](LICENSE) · [별도 고지](src/addons/tts/NOTICE.md) |
 | Direction Manager · 전개 지시 | [temporary0723](https://github.com/temporary0723/Direction-Manager) | [수정·업로드 허락 게시글](https://kkangtong.xyz/posts/104303) · [별도 고지](src/addons/direction/NOTICE.md) |
 | Character Assets | [tincansimagine](https://github.com/tincansimagine/character-assets) / 공유 게시글 작성자 「깡」 | [공유 허락 댓글](https://kkangtong.xyz/posts/122931#comment-7bd0d60e-f2f9-4c2c-9f42-4f395873fa17) · [별도 고지](src/addons/assets/NOTICE.md) |
 | 기반 테마 Moonlit Echoes Theme | [RivelleDays](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme) | [AGPL-3.0](LICENSE) |
@@ -19,6 +20,8 @@ Prompt Panel은 사용자 제공 개인개조+++ 공유본을 기반으로 수�
 2026-09-24 Blue Lemonade 수정: LLM 번역·Prompt Panel·CustomThemeStyleInputs 내장, 설정 화면 연결과 사용 모드 선택, Prompt Panel 상단 탭·도움말·현재 연결 및 직접 연결, 모바일 UI 정리. 각 원작의 기존 라이선스 전문은 해당 폴더에 보존합니다.
 
 Character Assets는 원작자의 개인 수정본 공유 허락에 따라 포함합니다. 원작에 표준 라이선스가 별도 명시된 것으로 간주하지 않으며, 원작 코드의 권리·출처와 공유 허락은 [별도 고지](src/addons/assets/NOTICE.md)를 따릅니다.
+
+2026-09-30 Blue Lemonade 수정: TTS 1.3.0 내장, 엔진·목소리 등록과 캐릭터별 읽기, 별도 감정 분석 연결, 재생 표시 선택을 추가했습니다. 개인 API 키·음성 목록·음원은 포함하지 않습니다.
 
 ## 포함 라이브러리
 

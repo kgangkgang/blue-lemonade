@@ -1,0 +1,32 @@
+<div id="lv_settings" class="lv-settings">
+  <div class="inline-drawer">
+    <div class="inline-drawer-toggle inline-drawer-header">
+      <b><i class="fa-solid fa-volume-high"></i> TTS <button type="button" class="lv-version ext-version" aria-label="TTS 사용법 보기">v1.3.0</button></b>
+      <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+    </div>
+    <div class="inline-drawer-content">
+      <div class="lv-body">
+        <p class="lv-tagline">처음에는 엔진 연결 → 목소리 등록 → 캐릭터 지정 순서로 설정해요. 버전 표시를 누르면 사용법이 열려요.</p>
+
+        <div class="lv-top">
+          <label class="checkbox_label lv-toggle"><input type="checkbox" data-lv-path="enabled"><span>사용</span></label>
+          <label class="checkbox_label lv-toggle"><input type="checkbox" data-lv-path="auto_play"><span>자동 읽기</span></label>
+          <label class="checkbox_label lv-toggle"><input type="checkbox" data-lv-path="wand_menu"><span>요술봉 메뉴</span></label>
+          <button type="button" class="lv-icon lv-stop" id="lv_stop" data-lv-act="stop" aria-label="정지"><i class="fa-solid fa-stop"></i></button>
+        </div>
+
+        <div class="lv-tabs" role="tablist">
+          <button type="button" class="lv-tab" role="tab" data-lv-act="tab" data-tab="read" aria-selected="false"><i class="fa-solid fa-book-open"></i><span>읽기</span></button>
+          <button type="button" class="lv-tab" role="tab" data-lv-act="tab" data-tab="voices" aria-selected="false"><i class="fa-solid fa-microphone-lines"></i><span>목소리</span></button>
+          <button type="button" class="lv-tab" role="tab" data-lv-act="tab" data-tab="engine" aria-selected="false"><i class="fa-solid fa-plug"></i><span>엔진</span></button>
+          <button type="button" class="lv-tab" role="tab" data-lv-act="tab" data-tab="data" aria-selected="false"><i class="fa-solid fa-database"></i><span>데이터</span></button>
+        </div>
+
+        <div class="lv-pane" id="lv_pane_read" data-pane="read" role="tabpanel"></div>
+        <div class="lv-pane" id="lv_pane_voices" data-pane="voices" role="tabpanel" hidden></div>
+        <div class="lv-pane" id="lv_pane_engine" data-pane="engine" role="tabpanel" hidden></div>
+        <div class="lv-pane" id="lv_pane_data" data-pane="data" role="tabpanel" hidden></div>
+      </div>
+    </div>
+  </div>
+</div>

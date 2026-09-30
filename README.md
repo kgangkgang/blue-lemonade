@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.5.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.5.5.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.5.4 · 최신 업데이트</summary>
+<summary>5.5.5 · 최신 업데이트</summary>
+
+- 답이 생성되는 동안 자동 스크롤이 멈추던 경우를 고쳤어요. 직접 위로 읽거나 북마크로 이동한 위치, 자동 스크롤 끄기는 그대로 유지돼요.
+- Android에서 전송 직후 몇 챗 위로 튀는 제보는 아직 재현하지 못했어요. 이번 수정으로 해결됐는지는 확인되지 않았습니다.
+- TTS 1.3.0을 내장했어요. 엔진과 목소리를 등록해 캐릭터별로 읽고, 대사 감정을 분석할 API를 따로 고를 수 있어요. 읽는 부분은 색깔만 · 색깔과 밑줄 · 밑줄만 중에서 표시해요. 확장 › TTS에서 켜고 새로고침해 주세요.
+- TTS 버전 표시를 누르면 처음 설정하는 순서와 사용법을 볼 수 있어요. 새 설정은 자동 읽기·미리 만들기·감정 분석이 꺼져 있고, 기존 설정은 그대로 유지돼요. 본문 필터를 새 기본값으로 맞추고 싶을 때만 ‘본문 필터 기본값’ 버튼을 눌러 주세요. 실리태번 확장 탭에서도 TTS 설정을 바로 열 수 있어요. 확장 › TTS › 표시할 위치의 ‘확장 탭에 TTS 설정 표시’에서 숨기거나 다시 표시할 수 있어요.
+
+</details>
+
+<details>
+<summary>5.5.4 · 캡처 필터 미리보기 · 모델 등록</summary>
 
 - 채팅 캡처 필터를 만지는 동안 미리보기가 바로바로 바뀌어요. 폰에서는 필터 칸 맨 위에 작은 미리보기가 붙어 다녀서 슬라이더를 끌면서 볼 수 있고, 파일을 만든 뒤에도 그 자리에서 확인할 수 있어요.
 - 필터 값 슬라이더를 두 줄로 나란히 놓아 목록 길이가 절반으로 줄었어요.

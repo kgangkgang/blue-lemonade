@@ -18,6 +18,7 @@ PREVIEW_ARTWORK = ('ade-game.webp', 'ade-lemon.webp', 'ade-cat.webp', 'ade-nap.w
 
 # Embedded tools have their own versions, independent of the theme release.
 ADDON_CSS_VERSIONS = (
+    ('tts/version.js', 'tts', '--lv-css-version', 'TTS_VERSION'),
     ('direction/index.js', 'direction', '--jj-css-version'),
     ('assets/state.js', 'assets', '--eh-css-version'),
     ('bookmarks/state.js', 'bookmarks', '--cg-css-version'),
@@ -43,6 +44,7 @@ def addon_css_versions():
 # 5.3.7: 번역기 서랍 · 한글화 패널은 화면에 버전을 글자로 박아 둔다 (index.html · guide.js · settings-ui.js).
 # 번역 서랍이 v2.1.6 으로 남은 채 2.1.9 까지 나간 일이 있어 manifest 와 같은지 본다.
 EMBEDDED_VERSIONS = (
+    ('tts/manifest.json', 'tts/version.js', r'\bTTS_VERSION\s*=\s*[\'\"](\d+\.\d+\.\d+)[\'\"]'),
     ('translator/manifest.json', 'translator/index.html', r'>v(\d+\.\d+\.\d+)<'),
     ('prompt/manifest.json', 'prompt/guide.js', r'textContent\s*=\s*[\'"`]v(\d+\.\d+\.\d+)[\'"`]'),
     ('prompt/manifest.json', 'prompt/settings-ui.js', r'>v(\d+\.\d+\.\d+)<'),
@@ -101,6 +103,12 @@ def inventory(root, kind):
         if (root / 'src/addons/assets').is_dir():
             require((root / 'src/addons/assets/NOTICE.md').is_file(), 'Missing Character Assets permission notice')
             names.append('src/addons/assets/NOTICE.md')
+        # The public TTS bundle has only these non-code resources; never sweep voice data.
+        if (root / 'src/addons/tts').is_dir():
+            for name in ('settings.html', 'manifest.json', 'README.md', 'LICENSE', 'NOTICE.md'):
+                item = root / 'src/addons/tts' / name
+                if item.is_file(): names.append(item.relative_to(root).as_posix())
+            require((root / 'src/addons/tts/settings.html').is_file(), 'Missing TTS settings template')
         if (root / 'src/vendor/README.md').is_file(): names.append('src/vendor/README.md')
         # Only these curated weather atlases are runtime images. Do not sweep
         # arbitrary local images into the public package.

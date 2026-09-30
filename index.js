@@ -25,6 +25,7 @@ import { startColorPop } from './src/colorpop.js';
 import { startChatGraph } from './src/chat-graph-launcher.js';
 import { startInlineTone, retoneAll } from './src/tone.js';
 import { startStreamFade, streamFadeState } from './src/streamfade.js';
+import { startStreamFollow } from './src/stream-follow.js';
 // 4.1.2: 설정 창(panel.js 와 거기에만 딸린 모듈 24개 · 310KB)은 설정 창을 처음 열 때 불러온다 — 시작할 때 읽는 모듈 64 → 40개.
 let panelApi = null, panelLoading = null;
 // 못 불러오면 기억을 지워 다음에 누를 때 다시 부른다 (실패한 약속을 붙들고 있으면 새로고침 전까지 서랍이 빈 채였다)
@@ -181,6 +182,7 @@ jQuery(() => {
     startChatGraph();   // 채팅 파일 관리: 목록 / 분기 지도
     startInlineTone();  // 본문 글자색의 채도 · 밝기 맞춤 (2.6.0)
     startStreamFade();  // 스트리밍 중 새 글자만 가볍게 페이드 인 (2.9.5)
+    startStreamFollow(); // 새 글 뒤에 늦게 온 scroll 이벤트가 자동 스크롤을 잠그지 않게
     $(document).on('change', 'input[data-toggle="chat.toneInline"], input[data-toggle="chat.unifyInline"]', () => setTimeout(retoneAll, 50));
 
     const { eventSource, event_types } = SillyTavern.getContext();

@@ -23,6 +23,10 @@ class GateTests(unittest.TestCase):
                         f['src/addons/'+other]=f"export const {name} = '1.3.5';".encode()
                         key=f'src/addons/{folder}/style.css'
                         f[key]=f.get(key,b'')+(prop+': "1.3.5";\n').encode()
+                # A version source may also be checked against its bundled manifest.
+                for manifest, version_source, _ in gate.EMBEDDED_VERSIONS:
+                    if 'src/addons/'+version_source in f:
+                        f['src/addons/'+manifest]=b'{"version":"1.3.5"}'
                 self.assertEqual(gate.validate(f,'theme'),'1.3.1')
                 key=f'src/addons/{folder}/style.css'
                 f[key]=f[key].replace((variable+': "1.3.5"').encode(),(variable+': "1.3.3"').encode())
