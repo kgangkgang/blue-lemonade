@@ -1,13 +1,29 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.5.6.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.5.8.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.5.6 · 최신 업데이트</summary>
+<summary>5.5.8 · 최신 업데이트</summary>
+
+- TTS 1.3.1: 대사 분석이 ‘차분’이라고 한 대사를 일부러 밋밋하게 읽던 것을 고쳤어요. 이제 감정을 따로 보내지 않고 엔진이 글을 보고 정해요. ‘외침’도 화난 목소리로 바꾸지 않고 음량만 키워요.
+- TTS: MiniMax 2.8 에서 속마음이 대사와 똑같이 들리던 것을 고쳤어요. 속삭임이 없는 모델이면 속삭이는 줄만 같은 등급의 2.6 모델로 읽어요.
+- TTS: 읽기 › 대사 분석에 ‘감정 세기’(약하게 · 보통 · 강하게)와 ‘속마음’(속삭임 · 일반)을 추가했어요. 강하게는 MiniMax 2.8 에서 감정에 맞춰 웃음 · 한숨 · 헉 · 숨소리를 붙이고, 속마음 일반은 속삭이지 않고 엔진이 글을 보고 감정을 정해요.
+
+</details>
+
+<details>
+<summary>5.5.7 · 칠한 손톱</summary>
+
+- 다시 쓰기 1.9.9: ‘색깔 손톱’ 규칙이 색 이름 없이 칠한 손톱도 잡아요 (lacquered nails · painted fingernails · nail polish · 매니큐어를 바른 손톱). 다듬은 손톱은 그대로 두고, 규칙 이름은 ‘색깔 · 칠한 손톱’으로 바뀌어요.
+
+</details>
+
+<details>
+<summary>5.5.6 · 확장만 되돌리기 · 항상 지시</summary>
 
 - ‘확장만’ 모드로 바꾸거나 테마를 껐을 때 채팅 창이 투명해지던 문제를 고쳤어요. ‘실리태번 설정 맞추기’가 바꾼 실리태번 설정을 원래대로 되돌릴 수 있어요. 확장만으로 바꾸거나 테마를 끌 때 되돌릴지 묻고, 테마 › 백업의 ‘되돌리기’로도 할 수 있어요.
 - 테마 없이 쓸 때 북마크 · 메모 · 전개 지시 · 에셋 창의 바탕이 비치거나 버튼 바탕이 사라지던 것, 전개 지시 입력 창이 화면 밖에 뜨던 것을 고쳤어요.

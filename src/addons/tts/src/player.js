@@ -59,9 +59,9 @@ const EMOTION_BY_TAG = {
     anxious: 'fearful', trembling: 'fearful', whispering: 'whisper', whisper: 'whisper', quiet: 'whisper',
     deadpan: 'calm', dizzy: '', intoxicated: '',
 };
-// 대사 분석이 주는 감정 이름 (neutral 은 '' = 엔진 기본)
+// 대사 분석이 주는 감정 이름 (neutral · calm 은 '' = 엔진 기본)
 const ANALYSIS_EMOTIONS = new Set(['neutral', 'happy', 'sad', 'angry', 'fearful', 'disgusted', 'surprised', 'calm', 'whisper', 'shout']);
-// 'shout' 를 그대로 받는 엔진 (그 밖은 angry 로, MiniMax 는 angry + 음량 ×1.15)
+// 'shout' 를 그대로 받는 엔진 (그 밖은 angry 로, MiniMax 는 감정 없이 음량 ×1.15)
 const SHOUT_NATIVE = new Set(['elevenlabs', 'azure', 'gemini']);
 const SHOUT_VOL = 1.15;
 const PRE_MAX = 1;                  // 엔진마다 미리 만들기가 쓸 수 있는 자리 (MAX_CONC 가운데)
@@ -382,7 +382,9 @@ function applyAnalysis(job, aseg, an, s) {
     if (!aseg || !an) return;
     if (an.emotion) {
         const e = String(aseg.emotion || '').toLowerCase();
-        if (ANALYSIS_EMOTIONS.has(e)) job.emotion = e === 'neutral' ? '' : e;
+        // 1.3.1 calm 도 '' — 분석이 대사 대부분에 calm 을 붙여(실제 채팅 3P 1,711줄 중 556) 엔진이 일부러 밋밋하게 읽었다.
+        //   감정을 안 보내면 MiniMax 2.6 · 2.8 은 글을 보고 감정을 고른다 (태그의 deadpan → calm 은 그대로)
+        if (ANALYSIS_EMOTIONS.has(e)) job.emotion = e === 'neutral' || e === 'calm' ? '' : e;
     }
     const lang = job.voice?.lang;
     if (an.translate && lang && detectLang(job.text) !== lang) {
@@ -476,7 +478,7 @@ function needsWait(mesId, mes, s, { force, noWait }) {
 // ---------- 작업 만들기
 function emotionFor(seg, s) {
     if (!s.emotion_from_tags) return '';
-    if (seg.kind === 'thought') return 'whisper';
+    if (seg.kind === 'thought') return s.thought_emotion === 'auto' ? '' : 'whisper';   // 1.3.1 속마음 '일반' = 엔진이 글을 보고
     const tags = Array.isArray(seg.tags) ? seg.tags : [];
     for (let i = tags.length - 1; i >= 0; i--) {           // 안쪽 태그가 우선
         const t = String(tags[i]).toLowerCase();
@@ -615,21 +617,35 @@ export function keyOf(job) {
     const cfg = providerConfig(job.provider.id, job.provider.defaults || {});
     const fields = {};
     for (const f of job.provider.fields || []) if (f.type !== 'password' && f.key !== 'key' && f.key !== 'apiKey' && !f.nokey) fields[f.key] = cfg[f.key];
-    if (typeof job.provider.modelFor === 'function') fields.model = job.provider.modelFor(job.voice, cfg);
+    if (typeof job.provider.modelFor === 'function') fields.model = job.provider.modelFor(job.voice, cfg, job.emotion || job.params?.emotion);   // 1.3.1 속삭임 → 2.6
     const parts = [job.provider.id, job.voice.uid, JSON.stringify(job.voice.mix || []), sortedJson(fields), sortedJson(job.params), job.lang, job.emotion, job.text];
     const ins = String(job.voice.instructions || '').trim();
     if (ins) parts.push(ins);                                     // 1.2.2: 지시문을 바꾸면 새 소리 (OpenAI · Gemini — 비었으면 키는 1.2.1 그대로)
     return keyHash(parts.join('\u0001'));
 }
 const canMerge = (a, b) => a.voice === b.voice && a.provider === b.provider && a.emotion === b.emotion && !!a.loud === !!b.loud && (!a.lang || !b.lang || a.lang === b.lang);
-/** 분석의 'shout' → 엔진별: MiniMax 는 angry + 음량 ×1.15, 받는 엔진은 그대로, 나머지는 angry */
+/**
+ * 분석의 'shout' → 엔진별: MiniMax 는 감정 없이(글을 보고 고름) + 음량 ×1.15, 받는 엔진은 그대로, 나머지는 angry.
+ * 1.3.1 MiniMax 를 angry 로 바꾸면 기뻐서 외치는 줄("勝ったああ!!")까지 화난 소리가 됐다
+ */
 function fitShout(j) {
     if (j.emotion !== 'shout') return;
     if (j.provider.id === 'minimax') {
-        j.emotion = 'angry';
+        j.emotion = '';
         j.loud = true;
         j.params.vol = Math.min(10, Math.round((Number(j.params.vol) || 1) * SHOUT_VOL * 100) / 100);
     } else if (!SHOUT_NATIVE.has(j.provider.id)) j.emotion = 'angry';
+}
+/**
+ * 1.3.1 감정 세기 (MiniMax 에 세기 값이 없어서): weak = 속삭임만 남기고 감정을 안 보냄(엔진이 글을 보고 고름) ·
+ * strong = 엔진이 그 줄을 실제로 바꿀 때만(strengthApplies — MiniMax: 태그가 있는 감정 + 2.8) 표시 → 감탄 소리. params 에 들어가 그 줄만 캐시 키가 갈린다
+ *   (속삭임 속마음 · 2.6 모델 · 태그 없는 감정은 요청이 '보통'과 같으니 키도 같게 — 이미 만든 소리를 다시 사지 않게)
+ */
+function fitStrength(j, s) {
+    const k = s.emotion_strength;
+    if (k === 'weak' && j.emotion !== 'whisper') j.emotion = '';
+    else if (k === 'strong' && j.emotion && typeof j.provider.strengthApplies === 'function'
+        && j.provider.strengthApplies(j.voice, providerConfig(j.provider.id, j.provider.defaults || {}), j.emotion)) j.params.emotion_strength = 'strong';
 }
 function joiner(job, s) {
     const gap = Number(s.gap_ms) || 0;
@@ -685,6 +701,7 @@ function finishJobs(jobs, s, { merge = true, quiet = false } = {}) {
         if (!j.provider) { if (!quiet) toastOnce(`엔진을 찾을 수 없어요: ${j.voice.provider}`, 'error'); continue; }
         j.params = paramsFor(j.provider, j.voice);
         fitShout(j);
+        fitStrength(j, s);
         ready.push(j);
     }
     const merged = [];

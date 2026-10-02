@@ -96,6 +96,8 @@ const READ_CARDS = {
         { key: 'analysis.key', label: 'API 키', type: 'keyrow', show: isCompat },
         { key: 'analysis.model_pick', label: '모델', type: 'html', html: modelPickHtml, show: hasModelPick },
         { key: 'analysis.emotion', label: '감정 붙이기', type: 'toggle' },
+        { key: 'emotion_strength', label: '감정 세기', type: 'select', options: [{ value: 'weak', label: '약하게' }, { value: 'normal', label: '보통' }, { value: 'strong', label: '강하게' }] },
+        { key: 'thought_emotion', label: '속마음', type: 'select', options: [{ value: 'whisper', label: '속삭임' }, { value: 'auto', label: '일반' }] },
         { key: 'analysis.translate', label: '원어로 번역해서 읽기', type: 'toggle' },
         { key: 'analysis.when', label: '언제', type: 'select', options: [{ value: 'auto', label: '자동' }, { value: 'manual', label: '수동' }] },
     ], analysisExtra, analysisNote],

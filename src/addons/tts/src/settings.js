@@ -50,6 +50,8 @@ export const DEFAULTS = Object.freeze({
     pron_dict: '',
     max_chars: 3000,
     emotion_from_tags: true,
+    emotion_strength: 'normal',   // 1.3.1 감정 세기: weak(감정 안 보냄 · 속삭임만) | normal | strong(MiniMax 2.8: 감정 + 감탄 소리)
+    thought_emotion: 'whisper',   // 1.3.1 속마음: whisper(속삭임) | auto(일반 — 감정을 안 보내 엔진이 글을 보고 고름. 대사 분석은 대사만)
     stream_read: false,
     swipe_read: true,
     on_new: 'interrupt',
@@ -324,6 +326,8 @@ export function settings() {
     }
     if (!Array.isArray(s.voices)) s.voices = [];
     if (!HIGHLIGHT_STYLES.includes(s.highlight_style)) s.highlight_style = 'both';
+    if (!['weak', 'normal', 'strong'].includes(s.emotion_strength)) s.emotion_strength = 'normal';
+    if (!['whisper', 'auto'].includes(s.thought_emotion)) s.thought_emotion = 'whisper';
     s.voices = s.voices.filter(v => v && v.uid).map(v => toVoice(v, v.provider));
     // 1.2.3 이름표가 새것이면 한 번: id 이름인 목소리 → 한글 이름 (이름을 고친 목소리는 그대로)
     if (s.known_voices !== KNOWN_SIG) {

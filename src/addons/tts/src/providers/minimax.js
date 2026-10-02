@@ -14,6 +14,8 @@ const HOSTS = [
 const MODELS = ['speech-2.8-hd', 'speech-2.8-turbo', 'speech-2.6-hd', 'speech-2.6-turbo', 'speech-02-hd', 'speech-02-turbo', 'speech-01-hd', 'speech-01-turbo'];
 const EMOTIONS = ['happy', 'sad', 'angry', 'fearful', 'disgusted', 'surprised', 'calm', 'fluent', 'whisper'];
 const SFX = ['spacious_echo', 'auditorium_echo', 'lofi_telephone', 'robotic'];
+// 1.3.1 감정 세기 '강하게': speech-2.8 감탄 태그를 줄 앞에 (글자로 읽지 않고 숨 · 웃음 · 한숨 · 헉 소리를 냄 — 2.6 이하는 글자로 읽을 수 있어 안 붙임)
+const STRONG_TAG = { angry: '(breath)', happy: '(laughs)', sad: '(sighs)', surprised: '(gasps)', fearful: '(inhale)' };
 const LANG_BOOST = { ko: 'Korean', ja: 'Japanese', en: 'English', zh: 'Chinese' };
 // 안 보이는 글자 (폭 없는 공백 U+200B~200D · 단어 결합자 U+2060 · BOM U+FEFF) — 1042 오류 예방. 반드시 이스케이프로 적는다
 const INVISIBLE = /[\u200b-\u200d\u2060\ufeff]/g;
@@ -70,7 +72,7 @@ const params = [
         key: 'emotion', label: '감정', type: 'select', default: '', voice: true, options: [
             { value: '', label: '자동' }, { value: 'happy', label: '기쁨' }, { value: 'sad', label: '슬픔' }, { value: 'angry', label: '화남' },
             { value: 'fearful', label: '두려움' }, { value: 'disgusted', label: '역겨움' }, { value: 'surprised', label: '놀람' }, { value: 'calm', label: '차분' },
-            { value: 'fluent', label: '유창 (2.6 전용)' }, { value: 'whisper', label: '속삭임 (2.6 전용)' },
+            { value: 'fluent', label: '유창 (2.6 전용)' }, { value: 'whisper', label: '속삭임 (2.6 으로 읽음)' },
         ],
     },
     {
@@ -101,12 +103,22 @@ const pickedModel = (c) => (MODELS.includes(c.model) ? c.model : (c.model || def
 /**
  * 1.2.5 실제로 요청할 모델: '목소리를 만든 모델' 이고 목소리가 만든 모델을 알면(섞은 목소리 제외) 그것, 아니면 고른 모델.
  * 모델 전환(Blue Lemonade)은 이 엔진의 모델을 바꾸지 않는다 (대사 분석 LLM 만 등록 — modelswitch.js).
+ * 1.3.1 emotion = 'whisper'(속마음 · 분석 · 목소리 감정)인데 그 모델에 속삭임이 없으면 같은 등급의 2.6 으로 (hd → 2.6-hd, turbo → 2.6-turbo).
+ *   1.3.0 까지는 calm 으로 바꿔 읽어서 속마음이 대사와 똑같이 들렸다. 캐시 키(player.keyOf)도 이 값을 쓴다
  */
-export function modelFor(voice, cfg) {
+export function modelFor(voice, cfg, emotion = '') {
     const c = cfg || providerConfig(ID, defaults);
     const mix = Array.isArray(voice?.mix) && voice.mix.some(m => m && m.voiceId);
     const own = mix ? '' : cleanModel(voice?.model);
-    return c.model_from === 'voice' && own ? own : pickedModel(c);
+    const model = c.model_from === 'voice' && own ? own : pickedModel(c);
+    if (String(emotion || '').toLowerCase() !== 'whisper' || /^speech-2\.6/.test(model)) return model;
+    return /turbo/i.test(model) ? 'speech-2.6-turbo' : 'speech-2.6-hd';
+}
+
+/** 1.3.1 '강하게'가 이 요청을 실제로 바꾸나 (감탄 태그가 붙나: 태그가 있는 감정 + 실제 모델 2.8). 안 바꾸는 줄은 캐시 키도 '보통'과 같게 — player.fitStrength */
+export function strengthApplies(voice, cfg, emotion) {
+    const e = String(emotion || '').toLowerCase();
+    return !!STRONG_TAG[e] && /^speech-2\.8/.test(modelFor(voice, cfg || providerConfig(ID, defaults), e));
 }
 
 function mmError(br) {
@@ -137,7 +149,7 @@ function hexToBlob(hex, type) {
     return new Blob([u8], { type });
 }
 
-/** 모델이 못 받는 감정은 바꾸거나 뺀다: whisper/fluent 는 2.6 만 */
+/** 모델이 못 받는 감정은 바꾸거나 뺀다: whisper/fluent 는 2.6 만 (whisper 는 modelFor 가 이미 2.6 으로 골라 둠 — calm 은 남은 안전망) */
 function fitEmotion(emotion, model) {
     const e = String(emotion || '').toLowerCase();
     if (!EMOTIONS.includes(e)) return '';
@@ -193,8 +205,8 @@ async function synth({ text, voice, cfg, params: p, lang = '', emotion = '', sig
     const c = cfg || providerConfig(ID, defaults);
     if (!c.key) throw new Error('MiniMax API 키를 먼저 저장');
     const q = { ...defaults, ...(p || {}) };
-    const model = modelFor(voice, c);
-    const clean = String(text || '').replace(INVISIBLE, '');
+    const model = modelFor(voice, c, emotion || q.emotion);
+    let clean = String(text || '').replace(INVISIBLE, '');
     if (!clean.trim()) throw new Error('읽을 글이 없어요');
 
     const mix = Array.isArray(voice.mix) ? voice.mix.filter(m => m && m.voiceId).slice(0, 4) : [];
@@ -207,6 +219,7 @@ async function synth({ text, voice, cfg, params: p, lang = '', emotion = '', sig
     if (!vs.voice_id && !mix.length) throw new Error('voice_id 가 비어 있어요');
     const emo = fitEmotion(emotion || q.emotion, model);
     if (emo) vs.emotion = emo;
+    if (q.emotion_strength === 'strong' && STRONG_TAG[emo] && /^speech-2\.8/.test(model)) clean = STRONG_TAG[emo] + clean;
     if (q.text_normalization === true || q.text_normalization === 'true') vs.text_normalization = true;
 
     const body = {
@@ -248,11 +261,12 @@ export default {
     needsKey: true,
     fields,
     params,
-    caps: { emotion: true, instructions: false, mix: true, list: true, blob: true },
+    caps: { emotion: true, instructions: false, mix: true, list: true, blob: true, strength: true },
     defaults,
     maxChars: 3000,
     listVoices,
     synth,
     test,
     modelFor,
+    strengthApplies,
 };

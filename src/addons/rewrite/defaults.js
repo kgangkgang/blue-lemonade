@@ -8,6 +8,22 @@ const NAILS = String.raw`(?:finger|toe)?(?:nails?|manicure)`;
 const NAIL_ADJ = String.raw`long|short|sharp|pointed|curved|hooked|blunt|thick|thin|neat|neatly trimmed|trimmed|filed|manicured|chipped|polished|buffed|glossy|matte|lacquered|painted|jagged|wicked|cruel|slender|elegant|tapered|perfect|clean|little|tiny|bitten|broken|immaculate|pristine`;
 // Grey-ish colours also cover claws and talons (the way Gemini phrased it); other colours only cover nails.
 const GRAYS = String.raw`(?:(?:dark|deep|charcoal|slate|ash|smoky|smoke|steel|iron|storm|stormy|pewter|matte)[- ]?)?(?:gr[ae]y(?:ish)?|charcoal|gunmetal|graphite|pewter)`;
+// 1.9.9 — a coat on the nails with no colour named ("lacquered nails" slipped past every colour line above).
+// Only words that mean a coat: manicured, trimmed, buffed or glossy nails stay fine, and a lacquered desk or a
+// painted wall never has a nail word right behind it. upgrades.js adds these lines to saved settings.
+const NAIL_COAT = String.raw`lacquered|painted|varnished|enamel(?:l)?ed|shellacked`;
+const NAIL_GAP = String.raw`(?:,?\s+(?:${NAIL_ADJ})){0,2},?\s+`;
+export const PAINTED_NAILS_WORDS = [
+    // lacquered nails · painted, pointed fingernails · polished nails · lacquered claws
+    String.raw`/\b(?:${NAIL_COAT}|polished|(?:lacquer|polish|varnish|enamel)[- ]coated)${NAIL_GAP}(?:(?:finger|toe)?nails?|claws?|talons?)\b/`,
+    // lacquered fingertips — "painted fingers" may be real paint, so only the words that are always nail lacquer
+    String.raw`/\b(?:lacquered|varnished|shellacked)${NAIL_GAP}(?:fingertips?|fingers?|thumbs?|toes?)\b/`,
+    // his nails were neatly lacquered
+    String.raw`/\b(?:finger|toe)?nails?\s+(?:were|was|are|is|had been|looked|gleamed|shone|glinted)\s+(?:[\p{L}-]+\s+){0,2}(?:${NAIL_COAT})\b/`,
+    // nail polish · nail lacquer · the lacquer on his nails
+    String.raw`/\bnail[- ]?(?:polish|lacquer|varnish|enamel)\b/`,
+    String.raw`/\b(?:polish|lacquer|varnish|enamel)\s+(?:on|over|across|coating)\s+(?:(?:his|her|their|your|my|its|the|those|these|[\p{L}]+['’]s)\s+)?(?:(?:${NAIL_ADJ})\s+){0,2}(?:finger|toe)?nails?\b/`,
+].join('\n');
 
 // 1.8.9 — eyewear colours. Black and its names are the only allowed frame colour, so the colour list is every
 // other colour the hair/nail rules know plus finishes that are never black (wire, tortoiseshell, clear).
@@ -137,9 +153,9 @@ export const DEFAULT_SETTINGS = {
         },
         {
             id: 'gray_nails',
-            name: '색깔 손톱',
+            name: '색깔 · 칠한 손톱',
             enabled: true,
-            description: 'colored fingernails or nail polish of any color (black nails, red nail polish, dark-gray claws); plain or manicured nails without a color are fine',
+            description: 'colored fingernails or nail polish of any color (black nails, red nail polish, dark-gray claws), and nails with any coat on them even when no color is named (lacquered nails, painted fingernails, nail polish) — keep the hand and the bare nails, and do not swap in another finish or color; trimmed, neat or manicured nails with nothing on them are fine, and so is a bottle of polish that is only an object in the scene',
             words: [
                 // colour (+ modifier) before nails: "lacquered black nails", "blood-red, pointed fingernails"
                 String.raw`/\b(?:(?:${COLOR_MODS})[- ]?)?(?:${COLORS})(?:[- ](?:${COLORS}))?(?:[- ]?(?:painted|lacquered|polished|varnished|tipped|colou?red|tinted|manicured|trimmed|glossed))?(?:,?\s+(?:${NAIL_ADJ}))?,?\s+${NAILS}\b/`,
@@ -155,6 +171,8 @@ export const DEFAULT_SETTINGS = {
                 // 1.9.1 any colour + up to two words + claws/talons: "neatly trimmed black demon claws", "red-tipped talons" — not "the black cat claws at"
                 String.raw`/\b(?:(?:${COLOR_MODS})[- ]?)?(?:${COLORS})\b(?:[- ][\p{L}-]+){0,2}?[- ](?:claws?|talons?)\b(?!\s+(?:at|into|through|his way|her way|its way)\b)/`,
                 String.raw`/\b(?:claws?|talons?)\b[^.!?\n]{0,25}?\b(?:were|was|are|is|painted|lacquered|gleamed|glinted|shone)\b[^.!?\n]{0,12}?\b(?:${COLORS})\b/`,
+                // 1.9.9 a coat with no colour named: lacquered nails · nail polish
+                PAINTED_NAILS_WORDS,
             ].join('\n'),
         },
         {
@@ -248,7 +266,7 @@ export const DEFAULT_SETTINGS = {
     // Default exception ids already offered; newer ones get added once on load, a deleted one stays deleted.
     offeredExceptions: ['belford', 'adelstein', 'michael', 'lucifer', 'uriel', 'zadkiel'],
     // One-off setting upgrades already applied (see upgrades.js); a fresh install needs none of them.
-    appliedUpgrades: ['words-1.7', 'belford-nails-1.7', 'multilingual-1.7.7', 'two-colors-1.7.9', 'gloves-armor'],
+    appliedUpgrades: ['words-1.7', 'belford-nails-1.7', 'multilingual-1.7.7', 'two-colors-1.7.9', 'gloves-armor', 'painted-nails-1.9.9'],
 };
 
 for (const rule of DEFAULT_SETTINGS.rules) {

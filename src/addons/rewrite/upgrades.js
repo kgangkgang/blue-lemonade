@@ -1,9 +1,9 @@
-import { MULTILINGUAL_WORDS, multilingualNear, GLOVES_KO_1_9_3 } from './multilingual.js';
+import { MULTILINGUAL_WORDS, multilingualNear, GLOVES_KO_1_9_3, PAINTED_NAILS_MULTI } from './multilingual.js';
 // One-off changes to saved settings when a default rule or exception changes shape after it was first shipped.
 // Saved settings only ever get missing keys filled in (see loadSettings), so an edited default needs a step here.
 // Each step runs once per install (ids kept in settings.appliedUpgrades); a fresh install lists them all as done.
 import { compileRule, findSpans, parseEntries } from './core.js';
-import { DEFAULT_SETTINGS, USER_COLORS_EXTRA } from './defaults.js';
+import { DEFAULT_SETTINGS, PAINTED_NAILS_WORDS, USER_COLORS_EXTRA } from './defaults.js';
 
 const OLD_USER_COLORS_DESCRIPTION = 'hair, eye, skin, lash, or brow colors (white hair, blue eyes, pale skin, silver-haired, eyes like sapphires)';
 const OLD_EARS_WORDS = 'pointed ear, pointed ears, pointy ear, pointy ears, pointed elven ears, pointed elf ears, elven ears, elfin ears, elfish ears, elf ears';
@@ -16,6 +16,12 @@ const OLD_GRAY_NAILS = {
         String.raw`/\b(?:finger|toe)?(?:nails?|claws?|talons?)\s+(?:(?:were|was|are|is|gleamed|glinted|shone|looked)\s+)?(?:an?\s+)?(?:(?:dark|deep|charcoal|slate|ash|smoky|steel|iron)[- ]?)?(?:gr[ae]y(?:ish)?|charcoal|gunmetal|graphite|pewter)\b/`,
         String.raw`/\b(?:gr[ae]y|charcoal|gunmetal|graphite|pewter)\s+(?:nail\s+(?:polish|lacquer|varnish|paint)|(?:polish|lacquer|varnish)\b[^.!?\n]{0,25}?\b(?:finger|toe)?(?:nails?|claws?))/`,
     ].join('\n'),
+};
+
+// 1.9.8 까지의 색깔 손톱 규칙 이름 · 설명 (색 이름이 있어야만 걸렸다)
+const OLD_COLOR_NAILS = {
+    name: '색깔 손톱',
+    description: 'colored fingernails or nail polish of any color (black nails, red nail polish, dark-gray claws); plain or manicured nails without a color are fine',
 };
 
 // 1.9.3 에 처음 나간 장갑 규칙 (gauntlet 포함 · 중장갑 · 장갑 차량도 걸리던 줄)
@@ -123,6 +129,20 @@ export const UPGRADES = [
         apply(stored) {
             const rule = stored.rules.find(item => item.id === 'gloves');
             if (rule) upgradeRuleWords(rule, defaultRule('gloves'), OLD_GLOVES);
+        },
+    },
+    {
+        // 1.9.9: 색깔 손톱 also covers a coat with no colour named ("lacquered nails"). The saved list stays; the new lines go after it.
+        id: 'painted-nails-1.9.9',
+        apply(stored) {
+            const rule = stored.rules.find(item => item.id === 'gray_nails');
+            if (!rule) return;
+            const fresh = defaultRule('gray_nails');
+            const known = new Set(parseEntries(rule.words).map(entryKey));
+            const extra = parseEntries([PAINTED_NAILS_WORDS, PAINTED_NAILS_MULTI].join('\n')).filter(entry => !known.has(entryKey(entry)));
+            if (extra.length) rule.words = [rule.words || '', ...extra.map(renderEntry)].join('\n');
+            if (rule.name === OLD_COLOR_NAILS.name) rule.name = fresh.name;
+            if ((rule.description ?? '') === OLD_COLOR_NAILS.description) rule.description = fresh.description;
         },
     },
 ];
