@@ -436,8 +436,8 @@
 .jj-status[data-kind="always"].is-on .jj-status-dot { background: linear-gradient(135deg, var(--jj-grad-a, var(--jj-on)), var(--jj-grad-b, var(--jj-on))); }
 
 .jj-status-main { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.35; }
-.jj-status-title { font-size: .95em; }
-.jj-status-text { font-size: .8em; color: var(--jj-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.jj-status-title { font-size: .95em; word-break: keep-all; overflow-wrap: anywhere; }
+.jj-status-text { font-size: .8em; color: var(--jj-muted); white-space: normal; overflow-wrap: anywhere; }
 
 /* 설정 줄: 이름 왼쪽, 조작 오른쪽 */
 .jj-card {
@@ -448,6 +448,7 @@
 
 .jj-row {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 10px;
     min-height: 46px;
@@ -456,17 +457,23 @@
 
 .jj-row + .jj-row { border-top: 1px solid var(--jj-line); }
 
-.jj-row-label { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
-.jj-row-label b { font-size: .92em; font-weight: 600; }
+.jj-row-label { flex: 1 1 8em; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+.jj-row-label b { font-size: .92em; font-weight: 600; word-break: keep-all; overflow-wrap: anywhere; }
 .jj-row-label small { font-size: .76em; color: var(--jj-muted); }
+.jj-row > :is(.jj-switch, .jj-stepper) { margin-inline-start: auto; }
 
 .jj-switch:disabled { opacity: .4; cursor: default; }
 
 .jj-settings .jj-color-row {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
+    justify-content: flex-end;
     gap: 6px;
-    flex-shrink: 0;
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    margin-inline-start: auto;
 }
 
 .jj-settings .jj-swatch {
@@ -494,7 +501,10 @@
 
 .jj-settings .jj-color-row .text_pole {
     width: 6.6em;
-    height: 30px;
+    min-width: 0;
+    max-width: 100%;
+    height: auto;
+    min-height: max(30px, 1.5em);
     margin: 0;
     padding: 0 8px;
     font-family: ui-monospace, Consolas, monospace;

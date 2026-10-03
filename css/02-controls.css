@@ -426,8 +426,12 @@ body.salty .select2-container--default:is(.select2-container--focus, .select2-co
 /* 한 개 고르기: select 와 같은 높이 · 같은 꺾쇠 (삼각형은 테두리로 그린 것이라 테두리만 지움) */
 body.salty .select2-container--default .select2-selection--single {
   height: var(--bl-h-ctl) !important;
+  display: flex;
+  align-items: center;
 }
 body.salty .select2-container--default .select2-selection--single .select2-selection__rendered {
+  width: 100%;
+  min-width: 0;
   padding: 0 30px 0 var(--bl-s3) !important;
   color: var(--salty-text) !important;
   font-size: var(--bl-fs-body);

@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.6.0";
+export const BUILD_VERSION = "5.6.1";
 export const FILE_HASHES = {
   "index.js": "14854:7a82f7ea:f9fb24c4",
-  "manifest.json": "365:53ccaa96:8c748806",
+  "manifest.json": "365:1026fc95:e79fa27b",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -42,7 +42,7 @@ export const FILE_HASHES = {
   "src/addons/customstyle/style.css": "1160:fb77987e:ab7a706c",
   "src/addons/direction/index.js": "56001:858ac161:8f44b719",
   "src/addons/direction/prompt.js": "2284:2904afa0:fe2a6712",
-  "src/addons/direction/style.css": "20734:d6d944f4:e633ea43",
+  "src/addons/direction/style.css": "21102:23cebd13:8466b8b6",
   "src/addons/models/index.js": "2778:4d87d95d:aa6f10d6",
   "src/addons/models/inject.js": "20041:29f641a5:d8c53265",
   "src/addons/models/panel.js": "11903:eed9e7c3:12925deb",
@@ -256,7 +256,7 @@ export const FILE_HASHES = {
   "src/mes-fold.js": "14768:30e2ebec:1b724386",
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/modal.js": "671:b74e0164:71228d7c",
-  "src/notice-data.js": "141483:e308bd8b:95748af8",
+  "src/notice-data.js": "141833:38c311c7:d4150cbc",
   "src/notice.js": "4646:b947f2a6:e551e710",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "1144:1da72451:b2e66e80",
@@ -323,5 +323,5 @@ export const FILE_HASHES = {
   "src/weather.js": "32976:f4fdcf09:3273a2b9",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "25310:f5f47087:b59f32f4",
-  "style.css": "1125937:07306ca5:a54df114"
+  "style.css": "1126002:9f7fdf0d:da0d1037"
 };
