@@ -679,6 +679,7 @@ export function applyAll() {
         shadowClasses(s).forEach(c => want.add(c)); // 글자 그림자 대상별 클래스 (style.css 끝 규칙)
         if (s.chat.bgImage) want.add('salty-bgimg');
         if (s.chat.qrFind === false) want.add('salty-qr-find-off');
+        if (s.chat.personaTall) want.add('salty-persona-tall');
         want.add(`salty-profile-mode-${s.profile.mode}`);
         if (['small', 'banner'].includes(s.userProfile.mode)) want.add('salty-user-profile-custom');
         want.add(`salty-user-profile-mode-${s.userProfile.mode}`);

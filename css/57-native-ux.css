@@ -42,6 +42,9 @@ body.salty #PersonaManagement #persona_controls > .bl-persona-title-row > h4 { f
 body.salty #PersonaManagement #persona_controls > .bl-persona-title-row > .persona_name { font-size:var(--bl-fs-body)!important; }
 body.salty #PersonaManagement #persona_description { min-height:120px; }
 body.salty #PersonaManagement #persona_description:not([style*="height"]) { height:clamp(120px,18dvh,180px); }
+/* 선택한 경우만 기본 높이의 2배. 직접 늘린 inline 높이는 보존하며 끄면 기존 규칙으로 돌아간다. */
+body.salty.salty-persona-tall #PersonaManagement #persona_description { min-height:clamp(240px,36dvh,360px); }
+body.salty.salty-persona-tall #PersonaManagement #persona_description:not([style*="height"]) { height:clamp(240px,36dvh,360px); }
 body.salty #PersonaManagement .persona_management_current_persona > .flex-container { column-gap:10px; row-gap:8px; }
 body.salty #PersonaManagement #persona_connections_buttons { flex-wrap:wrap!important; gap:8px 10px!important; }
 body.salty #PersonaManagement #persona_connections_buttons > .menu_button { flex:1 1 7em; height:auto; min-height:36px; padding:6px 8px!important; }

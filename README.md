@@ -1,13 +1,20 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.5.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.5.9.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.5.8 · 최신 업데이트</summary>
+<summary>5.5.9 · 최신 업데이트</summary>
+
+- 채팅 › 화면에 ‘페르소나 입력창 높이 2배’를 추가했어요. 켜면 페르소나 본문 입력칸이 세로로 늘어나고, 끄면 기존 높이로 돌아와요. 기본은 꺼짐이며 선택은 새로고침 후에도 유지돼요.
+
+</details>
+
+<details>
+<summary>5.5.8 · TTS 감정 설정</summary>
 
 - TTS 1.3.1: 대사 분석이 ‘차분’이라고 한 대사를 일부러 밋밋하게 읽던 것을 고쳤어요. 이제 감정을 따로 보내지 않고 엔진이 글을 보고 정해요. ‘외침’도 화난 목소리로 바꾸지 않고 음량만 키워요.
 - TTS: MiniMax 2.8 에서 속마음이 대사와 똑같이 들리던 것을 고쳤어요. 속삭임이 없는 모델이면 속삭이는 줄만 같은 등급의 2.6 모델로 읽어요.
