@@ -8,7 +8,8 @@
 .bl-view-port:active { cursor:grabbing; }
 .bl-view-port:focus-visible { outline:2px solid var(--salty-accent); outline-offset:-2px; }
 .bl-view-scene { transform-origin:0 0; width:100%; display:flow-root; pointer-events:none; }
-body.salty :is(#salty-nochat,.salty-preview):not([data-prev="img"]):where(.bl-view-scene > *) { max-height:none !important; overflow:visible; }
+/* Match css/24's cap selector so the outer viewport measures and moves the full sample. */
+body.salty :is(#salty-nochat,.salty-preview):not(.cg-chatlike,.bl-notes-view,.bl-sticky-view,.bl-notes-peek-view):not([data-prev="img"]):where(.bl-view-scene > *) { max-height:none !important; overflow:visible; }
 .bl-view-scene > :is(.salty-sample,.salty-uisample) { max-height:none; overflow:visible; margin-block:0; }
 .bl-inline-preview { min-width:0; width:100%; }
 .bl-view-resize { display:grid; grid-template-columns:32px minmax(0,1fr) 32px; align-items:center; gap:4px; height:28px; }

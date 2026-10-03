@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.5.9";
+export const BUILD_VERSION = "5.6.0";
 export const FILE_HASHES = {
   "index.js": "14854:7a82f7ea:f9fb24c4",
-  "manifest.json": "365:35cd53cc:dc1c76b9",
+  "manifest.json": "365:53ccaa96:8c748806",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -256,7 +256,7 @@ export const FILE_HASHES = {
   "src/mes-fold.js": "14768:30e2ebec:1b724386",
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/modal.js": "671:b74e0164:71228d7c",
-  "src/notice-data.js": "141175:09cf40f0:11530962",
+  "src/notice-data.js": "141483:e308bd8b:95748af8",
   "src/notice.js": "4646:b947f2a6:e551e710",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "1144:1da72451:b2e66e80",
@@ -323,5 +323,5 @@ export const FILE_HASHES = {
   "src/weather.js": "32976:f4fdcf09:3273a2b9",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "25310:f5f47087:b59f32f4",
-  "style.css": "1125799:4db5ec5f:83211fdd"
+  "style.css": "1125937:07306ca5:a54df114"
 };

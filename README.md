@@ -1,13 +1,20 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.5.9.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.6.0.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.5.9 · 최신 업데이트</summary>
+<summary>5.6.0 · 최신 업데이트</summary>
+
+- 미리보기에서 큰 프로필 사진 아래가 잘리고 스크롤이 멈추던 문제를 고쳤어요. 높이를 늘려도 빈 공간만 생기던 현상을 해결하고, 폰에서는 손가락으로 밀어 아래 대사까지 볼 수 있어요.
+
+</details>
+
+<details>
+<summary>5.5.9 · 페르소나 입력창 높이 선택</summary>
 
 - 채팅 › 화면에 ‘페르소나 입력창 높이 2배’를 추가했어요. 켜면 페르소나 본문 입력칸이 세로로 늘어나고, 끄면 기존 높이로 돌아와요. 기본은 꺼짐이며 선택은 새로고침 후에도 유지돼요.
 
