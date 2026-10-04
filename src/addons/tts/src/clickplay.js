@@ -32,7 +32,7 @@
 import { chat, substituteParams } from '../../../../../../../../script.js';
 import { getContext } from '../../../../../../../extensions.js';
 import { settings } from './settings.js';
-import { segmentMessage, pairSegments, parseRegexLines, normColor } from './text.js';
+import { segmentMessage, pairSegments, parseRegexLines, normColor, speechDisplay } from './text.js';
 import { resolveSpeaker, canon, knownNames as learnedNames } from './speakers.js';
 import { findVoice, voiceByName } from './voices.js';
 import { speakSegments } from './player.js';
@@ -445,7 +445,7 @@ export function segmentForHit(mes, hit) {
     const orig = safeSegment(sub(mes.mes), opts);
     let disp = null;
     const d = mes.extra?.display_text;
-    if (typeof d === 'string' && d.trim() && d !== mes.mes) { try { disp = pairSegments(orig, safeSegment(sub(d), opts)); } catch { disp = null; } }
+    if (typeof d === 'string' && d.trim() && d !== mes.mes) { try { disp = pairSegments(orig, safeSegment(sub(speechDisplay(d)), opts)); } catch { disp = null; } }
     let seg = null, index = -1;
     if (hit.kind === 'thought') {
         if (!hit.strong && (sameAsOther(disp, hit) || sameAsOther(orig, hit))) return null;
@@ -494,7 +494,7 @@ export function tapSegments(mes, { thoughts = false } = {}) {
     const orig = safeSegment(sub(mes.mes), opts);
     let disp = null;
     const d = mes.extra?.display_text;
-    if (typeof d === 'string' && d.trim() && d !== mes.mes) { try { disp = pairSegments(orig, safeSegment(sub(d), opts)); } catch { disp = null; } }
+    if (typeof d === 'string' && d.trim() && d !== mes.mes) { try { disp = pairSegments(orig, safeSegment(sub(speechDisplay(d)), opts)); } catch { disp = null; } }
     const shown = disp || orig;
     const out = [], later = [];
     for (const x of shown) {

@@ -117,6 +117,65 @@ export function restoreParagraphBreaks(source, output) {
     return lines.join('\n\n');
 }
 
+// ── 5.6.2 원문 병기 보기(접기 · 원문 먼저 · 펼침)의 블록 마크다운 ──
+// 이 보기들은 번역문을 줄마다 <details>/<span> 으로 감싸는데, 줄 머리의 블록 표시(# 제목 · > 인용 · - 목록 · 1. 목록)와 가로줄 · 표까지
+// 감싸 버려 마크다운이 풀리고 표시가 글자 그대로 보였다 (커뮤니티 제보). 표시는 감싸개 밖에 두고(splitBlockPrefix), 줄 전체가 구조인 것
+// (가로줄 · 제목 밑줄 · 표 · 인용 속 빈 줄)은 감싸지 않는다(structureLines). 판정은 실리태번 마크다운(showdown 2.1) 규칙을 따른다 — 보통 화면과 같은 결과가 나오게:
+//  · 목록은 줄 머리 어디서든 시작한다 (빈 줄이 없어도). 맨 바깥에서는 표시 앞 공백이 3칸까지, 열린 목록 안에서는 4칸 · 탭 들여쓰기도 하위 목록이 된다
+//  · 제목(#)은 0열에서만 (인용 표시 바로 뒤는 0열), 목록 표시 뒤의 # 는 제목이 아니다. 줄 끝의 닫는 # 들은 떼어 낸다
+//  · 열린 목록에서 빈 줄 다음의 들여쓴 줄은 그 항목에 딸린 문단 — 앞 공백을 감싸개 밖에 둬야 목록이 안 끊긴다
+const QUOTE_PREFIX = /^(?: {0,3}>[ \t]?)+/, LIST_PREFIX = /^ {0,3}(?:[-+*]|\d{1,9}\.)[ \t]+/, OPEN_LIST_PREFIX = /^[ \t]*(?:[-+*]|\d{1,9}\.)[ \t]+/;
+const HEADING_PREFIX = /^#{1,6}[ \t]*(?=[^#\s])/, INDENT_PREFIX = /^[ \t]+/;
+/** 줄 머리의 블록 표시와 내용을 나눈다 → { prefix, body, quote, list, indent }. 표시가 없거나 표시 뒤가 비면 prefix 는 '' (줄 그대로).
+ *  list: false — 목록 표시는 떼지 않는다 (원문 쪽: 번역문 줄에 목록 표시가 없을 때).
+ *  open: true — 목록이 열려 있다: 표시 앞 들여쓰기를 얼마든 받는다 (하위 목록).
+ *  continued: true — 열린 목록에서 빈 줄 다음 줄: 표시가 없어도 앞 공백을 prefix 로 뗀다 (항목에 딸린 문단). */
+export function splitBlockPrefix(line, { list = true, open = false, continued = false } = {}) {
+    const text = String(line ?? '');
+    let rest = text;
+    const take = pattern => { const hit = pattern.exec(rest)?.[0] ?? ''; rest = rest.slice(hit.length); return hit; };
+    const quote = take(QUOTE_PREFIX);
+    const marker = list ? take(open && !quote ? OPEN_LIST_PREFIX : LIST_PREFIX) : '';
+    const indent = continued && !quote && !marker ? take(INDENT_PREFIX) : '';
+    const heading = marker || indent ? '' : take(HEADING_PREFIX);
+    if (heading) rest = rest.replace(/[ \t]*#+[ \t]*$/, '');
+    const prefix = quote + marker + indent + heading;
+    if (!prefix || !rest.trim()) return { prefix: '', body: text, quote: '', list: false, indent: false };
+    return { prefix, body: rest, quote, list: !!marker, indent: !!indent };
+}
+
+const RULE_LINE = /^ {0,2}(?:(?: ?-){3,}|(?: ?\*){3,}|(?: ?_){3,})[ \t]*$/, UNDERLINE = /^(?:-+|=+)[ \t]*$/, BARE_QUOTE = /^(?: {0,3}>[ \t]?)+[ \t]*$/;
+const TABLE_HEAD = /^ {0,3}\|?.+\|.+$/, TABLE_RULE = /^ {0,3}\|?[ \t]*:?[ \t]*[-=]{2,}[ \t]*:?[ \t]*\|[ \t]*:?[ \t]*[-=]{2,}/;
+const ONE_COLUMN_ROW = /^ {0,3}\|.+\|[ \t]*$/, ONE_COLUMN_RULE = /^ {0,3}\|[ \t]*:?[ \t]*[-=]{2,}[ \t]*:?[ \t]*\|[ \t]*$/;
+const CODE_FENCE = /^\s*`{3,}/;
+/** 제목 밑줄(=== · ---)인가 — 문단 글 바로 아래에 오면 그 윗줄을 제목으로 만든다 (새 블록을 여는 줄이 아니다) */
+export const isHeadingUnderline = line => UNDERLINE.test(String(line ?? ''));
+/** 표시만 있는 인용 줄('>')인가 — 인용 안에서 문단을 나누는 빈 줄 노릇을 한다 (새 블록을 여는 줄이 아니다) */
+export const isBareQuote = line => BARE_QUOTE.test(String(line ?? ''));
+/** 감싸면 마크다운이 깨지는 '구조 줄'의 번호(Set): 가로줄 · 제목 밑줄 · 표(머리 줄 + 구분 줄 + 빈 줄 전까지, 한 칸짜리 표 포함) · 표시만 있는 인용 줄.
+ *  코드 블록 안은 보지 않는다. 원문 · 번역문 양쪽에 같은 판정을 써서 줄 맞춤에서 같이 뺀다 */
+export function structureLines(lines) {
+    const found = new Set(); let fenced = false;
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i], next = lines[i + 1] ?? '';
+        if (CODE_FENCE.test(line)) { fenced = !fenced; continue; }
+        if (fenced) continue;
+        if (RULE_LINE.test(line) || UNDERLINE.test(line) || BARE_QUOTE.test(line)) { found.add(i); continue; }
+        let end = i;
+        if (TABLE_HEAD.test(line) && TABLE_RULE.test(next)) while (end < lines.length && lines[end].trim() && !CODE_FENCE.test(lines[end])) found.add(end++);
+        else if (ONE_COLUMN_ROW.test(line) && ONE_COLUMN_RULE.test(next)) { found.add(end++); found.add(end++); while (end < lines.length && ONE_COLUMN_ROW.test(lines[end])) found.add(end++); }
+        if (end > i) i = end - 1;
+    }
+    return found;
+}
+/** 통째 접기(문단 수가 달라 줄마다 못 맞출 때)의 요약 · 본문: 빈 줄로 나뉜 문단마다 <p> 하나. 문단 안 줄바꿈은 <br>.
+ *  예전엔 <br><br> 로 이어서 첫 줄 들여쓰기가 첫 문단에만 걸렸다. <p> 면 본문 문단과 같은 규칙(간격 · 들여쓰기 · 대사 조판)이 그대로 걸리고,
+ *  번역 기능이나 테마를 꺼도 문단이 붙지 않는다. 줄 중간에 있으므로 마크다운의 블록 처리에 걸리지 않고, 실리태번 정화 뒤에도 summary > p 로 남는다 (격리 서버 확인) */
+export function paragraphBlocks(text) {
+    return String(text ?? '').split(/\n[\t ]*\n(?:[\t ]*\n)*/).filter(part => part.trim())
+        .map(part => `<p>${part.replace(/^\n+|\n+$/g, '').replace(/\n/g, '<br>')}</p>`).join('');
+}
+
 export function batchGroups(bodies, limit = 3600) {
     const groups = []; let group = [], size = 0;
     for (const body of bodies) {

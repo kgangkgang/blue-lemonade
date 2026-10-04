@@ -8,11 +8,15 @@ body.salty #chat .mes .mes_text {
   padding: 0 !important;
 }
 /* 5.2.5 번역 접기 보기의 문단 간격 = 테마 문단 간격 */
-body.salty #chat .mes .mes_text :is(.llmt-para-gap, .custom-llmt-para-gap) { height: var(--salty-para); }
+/* 5.6.2: 높이가 아니라 아래 여백으로 — 문단(<p>)의 아래 여백처럼 뒤따르는 인용 · 코드 · 가로줄 · 제목의 위 여백과 겹쳐지게(높이로 두면 그 여백에 더해져 보통 화면보다 벌어졌다) */
+body.salty #chat .mes .mes_text :is(.llmt-para-gap, .custom-llmt-para-gap) { height: 0; margin: 0 0 var(--salty-para); }
 /* 5.2.8: 외부 LLM 번역기(llm-translator · llm-translator-custom)의 접기 · 원문 먼저 보기 — 문단마다 <details> 를 빈 줄로 이어 붙이지만
    details 는 블록이라 문단 간격이 안 생긴다 (내장 번역기는 5.2.5 부터 간격 요소를 넣음). 붙어 있는 details 사이에만 테마 문단 간격 (커뮤니티 제보) */
 /* 마크다운이 details 사이에 빈 <p></p> 를 끼우므로(테마가 숨김) 인접(+)이 아니라 앞선 형제(~)로 본다. 내장 번역기(간격 요소가 앞에 있음)는 제외 — 간격 요소 뒤에도 빈 <p> 가 끼므로 ~ 로 */
-body.salty #chat .mes .mes_text :is(details.custom-llm-translator-details, details.llm-translator-details) ~ :is(details.custom-llm-translator-details, details.llm-translator-details):not(:is(.llmt-para-gap, .custom-llmt-para-gap) ~ details) { margin-top: var(--salty-para) !important; }
+body.salty #chat .mes .mes_text :is(details.custom-llm-translator-details, details.llm-translator-details) ~ :is(details.custom-llm-translator-details, details.llm-translator-details):not(:is(.llmt-para-gap, .custom-llmt-para-gap) ~ details):not(br + details) { margin-top: var(--salty-para) !important; }
+/* 5.6.2: 같은 문단의 줄(줄바꿈 하나)은 details 사이에 <br> 이 끼어 빈 줄 하나만큼 — 문단 간격보다 넓게 — 벌어졌다. 블록 뒤의 <br> 은 빈 줄만 만드니 숨기고,
+   <br> 바로 뒤의 details(같은 문단의 다음 줄)에는 위 문단 간격을 주지 않는다 (:not(br + details)). 내장 · 외부 번역기 모두 같은 구조 */
+body.salty #chat .mes .mes_text :is(details.custom-llm-translator-details, details.llm-translator-details) + br { display: none; }
 body.salty #chat .mes .mes_text p:empty {
   display: none;
 }
@@ -70,6 +74,23 @@ body.salty .mes_text .bl-quote-lead,
   margin-bottom: 0 !important;
 }
 :is(body.salty.salty-indent #chat .mes .mes_text, .salty-sample.salty-indent) p {
+  text-indent: 1em;
+}
+/* 5.6.2 번역 접기 · 원문 먼저 보기의 첫 줄 들여쓰기 (커뮤니티 제보: 번역하면 들여쓰기가 풀림) — 이 보기들은 문단이 <p> 가 아니라 <details> 라 위 규칙이 안 닿았다.
+   내장 · 외부 LLM 번역기 공통. '사용 안 함' 화면에서 <p> 가 서는 자리의 것만 들인다:
+   · 본문 바로 아래 · 인용 안 · 빈 줄로 띄운 목록 항목(li > p — 마크다운이 <p> 로 감싸고, details 가 그 <p> 를 닫아 빈 <p> 바로 뒤에 선다)
+   · 메시지 접기(눈 길게 누르기)의 틀 안 — 틀은 클래스 없는 details 이고 번역 줄이 그 바로 아래에 선다
+   · 제목 · 붙여 쓴 목록 안은 보통 화면에서도 들이지 않는다
+   · <br> 바로 뒤의 details 는 같은 문단의 다음 줄(줄바꿈 하나)이라 뺀다 — 보통 화면도 문단 첫 줄만 들이고, 대사로 시작하는 줄은 typography.js 가 빈 칸을 끼운다.
+     단 에셋 그림에 붙은 <br>(.bl-img-br) 뒤는 들인다 — 보통 화면이 그림 뒤 글을 들여 쓴다 (5.3.4)
+   어디에 주나:
+   · 요약 줄(접힌 채 보이는 글)은 summary 에
+   · 원문 먼저 보기의 번역문은 글 속 span 이라 details 에 (요약 줄도 물려받는다)
+   · 접기 방식의 원문 칸은 inline-block 이라 칸 안 첫 줄에 — details 에 주면 칸이 놓인 줄과 칸 안 첫 줄, 두 번 들인다
+   통째 접기(문단 수가 달라 줄마다 못 맞출 때)의 문단은 <p> 라서 위의 문단 규칙이 그대로 맡는다 */
+body.salty.salty-indent #chat .mes :is(details.custom-llm-translator-details, details.llm-translator-details):is(.mes_text > details, .mes_text blockquote > details, .mes_text li > p + details, .mes_text > details:not([class]) > details):not(br:not(.bl-img-br) + details) > summary,
+body.salty.salty-indent #chat .mes :is(details.custom-llm-translator-details, details.llm-translator-details):is(.mes_text > details, .mes_text blockquote > details, .mes_text li > p + details, .mes_text > details:not([class]) > details):not(br:not(.bl-img-br) + details):is(.custom-mode-original-first, .mode-original-first),
+body.salty.salty-indent #chat .mes :is(details.custom-llm-translator-details, details.llm-translator-details):is(.mes_text > details, .mes_text blockquote > details, .mes_text li > p + details, .mes_text > details:not([class]) > details):not(br:not(.bl-img-br) + details):is(.custom-mode-folded, .mode-folded) > :is(.custom-original_text, .original_text) {
   text-indent: 1em;
 }
 
@@ -233,6 +254,12 @@ body.salty #chat .mes[is_user="true"] .mes_text {
 body.salty #chat .mes[is_user="true"] .mes_text p {
   font-size: calc(var(--salty-size) * var(--salty-user-scale, 1)) !important; /* 2.7.3: 크기 슬라이더 (100% = 캐릭터 글과 같게, 전엔 0.94 고정) */
 }
+/* 5.6.2: 번역 접기 · 원문 먼저 보기의 줄(<details>)에도 같은 크기 — 문단 자리의 것만 (제목 · 목록 안은 그 블록의 크기를 따른다).
+   문단 간격 요소도 같이 (간격이 em 이라 글자 크기를 따라야 문단 간격이 보통 화면과 같다) */
+body.salty #chat .mes[is_user="true"] .mes_text :is(.llmt-para-gap, .custom-llmt-para-gap),
+body.salty #chat .mes[is_user="true"] .mes_text :is(details.custom-llm-translator-details, details.llm-translator-details):is(.mes_text > details, .mes_text blockquote > details, .mes_text > details:not([class]) > details) {
+  font-size: calc(var(--salty-size) * var(--salty-user-scale, 1)) !important;
+}
 
 /* 말풍선: 오른쪽, 옅은 면 + 쉬는 카드 그림자(e1) — 아바타는 숨김 */
 body.salty.salty-user-bubble #chat .mes[is_user="true"] .mesAvatarWrapper > .avatar {
@@ -358,4 +385,4 @@ body.salty.salty-user-table #chat .mes[is_user="true"].selected::before { backgr
 .bl-dialogue-indent { display: none; }
 :is(body.salty.salty-indent #chat .mes .mes_text, .salty-sample.salty-indent) .bl-dialogue-indent { display: inline-block; width: var(--salty-size, 1em); height: 0; }
 /* 내 메시지 문단에 고른 크기 배율도 첫 줄과 똑같이 따른다. */
-body.salty.salty-indent #chat .mes[is_user="true"] .mes_text p .bl-dialogue-indent { width: calc(var(--salty-size) * var(--salty-user-scale, 1)); }
+body.salty.salty-indent #chat .mes[is_user="true"] .mes_text :is(p, details.custom-llm-translator-details, details.llm-translator-details) .bl-dialogue-indent { width: calc(var(--salty-size) * var(--salty-user-scale, 1)); }

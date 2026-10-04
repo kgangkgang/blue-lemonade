@@ -487,3 +487,21 @@ export function pairSegments(srcSegs, dispSegs) {
         return { ...copy(s), color: o.color || s.color || null, speakerHint: s.speakerHint || o.speakerHint || null, tags: s.tags && s.tags.length ? s.tags.slice() : (o.tags || []).slice() };
     });
 }
+
+/**
+ * 화면 번역문(display_text)을 읽을 글로 — LLM 번역의 '접기 · 원문 먼저 보기' 손질.
+ * 그 보기는 글줄마다 <details class="llm-translator-details …"> 로 감싸고, 그 칸은 '건너뛸 태그'(details)라 읽지 않는다.
+ * 테마 5.6.2 부터 줄 머리의 마크다운 표시(1. · - · # · >)와 표 줄이 칸 밖에 놓이므로, 그대로 조각내면 '1. 2. | 이름 | 체력 |' 같은 것만 읽게 된다.
+ * 칸 밖의 그 표시와 표 줄만 지워 예전과 같은 결과로 만든다 (이 보기에서 번역문을 읽지 않는 것은 예전 그대로). 다른 글은 손대지 않는다.
+ */
+const LLMT_LINE = '<details class="llm-translator-details ';
+export function speechDisplay(display) {
+    const text = String(display ?? '');
+    if (!text.includes(LLMT_LINE)) return text;
+    return text.split('\n').map((line) => {
+        const at = line.indexOf(LLMT_LINE);
+        if (at > 0 && /^[ \t>]*(?:(?:[-+*]|\d{1,9}\.)[ \t]+)?(?:#{1,6}[ \t]*)?$/.test(line.slice(0, at))) return line.slice(at);
+        if (at < 0 && /^ {0,3}\|.*\|[ \t]*$|^ {0,3}\|?[ \t:]*[-=]{2,}[ \t:]*\|/.test(line)) return '';
+        return line;
+    }).join('\n');
+}

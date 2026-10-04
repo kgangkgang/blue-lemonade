@@ -5,7 +5,7 @@
    ===== */
 /* ===== 미리보기 자동 생성 (surfaces:preview) =====
    tools/gen-preview-css.js 가 #chat 규칙을 여기 복사한다 — 손으로 고치지 말 것.
-   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 378개 (109.6KB).
+   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 381개 (111.5KB).
    style.css 의 채팅 · 에셋 규칙을 고치면 `node tools/gen-preview-css.js` 를 다시 돌린다.
    이 칸을 다른 자리로 옮기지 말 것: 사본이 손으로 쓴 채팅 규칙보다 뒤에 있어야 같은 무게에서 이기고,
    바로 뒤의 보정 칸이 사본을 눌러 줄 수 있다. 앞으로 옮기면 아바타 모서리처럼 순서로만 갈리는 것이 뒤집힌다 */
@@ -351,10 +351,13 @@ body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text {
   padding: 0 !important;
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text :is(.llmt-para-gap, .custom-llmt-para-gap) {
-  height: var(--salty-para);
+  height: 0; margin: 0 0 var(--salty-para);
 }
-body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text :is(details.custom-llm-translator-details, details.llm-translator-details) ~ :is(details.custom-llm-translator-details, details.llm-translator-details):not(:is(.llmt-para-gap, .custom-llmt-para-gap) ~ details) {
+body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text :is(details.custom-llm-translator-details, details.llm-translator-details) ~ :is(details.custom-llm-translator-details, details.llm-translator-details):not(:is(.llmt-para-gap, .custom-llmt-para-gap) ~ details):not(br + details) {
   margin-top: var(--salty-para) !important;
+}
+body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text :is(details.custom-llm-translator-details, details.llm-translator-details) + br {
+  display: none;
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text p:empty {
   display: none;
@@ -395,6 +398,11 @@ body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text pre {
   margin-bottom: 0 !important;
 }
 :is(body.salty.salty-indent :is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-sample.salty-indent) p {
+  text-indent: 1em;
+}
+body.salty.salty-indent :is(#salty-nochat, .salty-preview) .mes :is(details.custom-llm-translator-details, details.llm-translator-details):is(.mes_text > details, .mes_text blockquote > details, .mes_text li > p + details, .mes_text > details:not([class]) > details):not(br:not(.bl-img-br) + details) > summary,
+body.salty.salty-indent :is(#salty-nochat, .salty-preview) .mes :is(details.custom-llm-translator-details, details.llm-translator-details):is(.mes_text > details, .mes_text blockquote > details, .mes_text li > p + details, .mes_text > details:not([class]) > details):not(br:not(.bl-img-br) + details):is(.custom-mode-original-first, .mode-original-first),
+body.salty.salty-indent :is(#salty-nochat, .salty-preview) .mes :is(details.custom-llm-translator-details, details.llm-translator-details):is(.mes_text > details, .mes_text blockquote > details, .mes_text li > p + details, .mes_text > details:not([class]) > details):not(br:not(.bl-img-br) + details):is(.custom-mode-folded, .mode-folded) > :is(.custom-original_text, .original_text) {
   text-indent: 1em;
 }
 :is(body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-sample) q {
@@ -522,6 +530,10 @@ body.salty :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .mes_text {
 body.salty :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .mes_text p {
   font-size: calc(var(--salty-size) * var(--salty-user-scale, 1)) !important;
 }
+body.salty :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .mes_text :is(.llmt-para-gap, .custom-llmt-para-gap),
+body.salty :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .mes_text :is(details.custom-llm-translator-details, details.llm-translator-details):is(.mes_text > details, .mes_text blockquote > details, .mes_text > details:not([class]) > details) {
+  font-size: calc(var(--salty-size) * var(--salty-user-scale, 1)) !important;
+}
 body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .mesAvatarWrapper > .avatar {
   display: none !important;
 }
@@ -629,7 +641,7 @@ body.salty.salty-user-table :is(#salty-nochat, .salty-preview) .mes[is_user="tru
 :is(body.salty.salty-indent :is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-sample.salty-indent) .bl-dialogue-indent {
   display: inline-block; width: var(--salty-size, 1em); height: 0;
 }
-body.salty.salty-indent :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .mes_text p .bl-dialogue-indent {
+body.salty.salty-indent :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .mes_text :is(p, details.custom-llm-translator-details, details.llm-translator-details) .bl-dialogue-indent {
   width: calc(var(--salty-size) * var(--salty-user-scale, 1));
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-wrap, [class*="custom-imageWrapper"]) {
@@ -1684,10 +1696,10 @@ body.salty.salty-md-size-large :is(:is(#salty-nochat, .salty-preview) .mes .mes_
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
-body.salty.salty-md-space-compact :is(:is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview) :is(h1, h2, h3, h4, h5, h6, blockquote, ul, ol, table, details):not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+body.salty.salty-md-space-compact :is(:is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview) :is(h1, h2, h3, h4, h5, h6, blockquote, ul, ol, table, details):not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *, .custom-llm-translator-details, .llm-translator-details)) {
   margin-block: .6em !important;
 }
-body.salty.salty-md-space-relaxed :is(:is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview) :is(h1, h2, h3, h4, h5, h6, blockquote, ul, ol, table, details):not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+body.salty.salty-md-space-relaxed :is(:is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview) :is(h1, h2, h3, h4, h5, h6, blockquote, ul, ol, table, details):not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *, .custom-llm-translator-details, .llm-translator-details)) {
   margin-block: 1.35em !important;
 }
 body.salty.salty-md-heading-line :is(:is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview) :is(h1, h2, h3, h4, h5, h6):not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
@@ -1788,7 +1800,7 @@ body.salty.salty-md-table-plain :is(:is(#salty-nochat, .salty-preview) .mes .mes
 body.salty.salty-md-table-plain :is(:is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview) tr:nth-child(even) > td:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
   background: transparent;
 }
-body.salty.salty-md-details-card :is(:is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview) details:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+body.salty.salty-md-details-card :is(:is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview) details:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *, .custom-llm-translator-details, .llm-translator-details)) {
   padding: .65em .8em;
   border: 1px solid var(--salty-text-20, var(--salty-line));
   border-radius: var(--bl-r-md, 12px);

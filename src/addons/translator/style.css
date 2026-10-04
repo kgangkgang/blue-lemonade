@@ -113,7 +113,10 @@ body.expandMessageActions .mes .mes_buttons .extraMesButtons:has(> .mes_llm_tran
 
 /* LLM 번역기 확장 기능: details 기본 화살표 숨기기 (SillyTavern 적용 후) */
 /* 5.2.5 접기 · 원문 먼저 보기의 문단 간격 (블루레몬에이드는 --salty-para 로 덮는다) */
-.mes_text :is(.llmt-para-gap, .custom-llmt-para-gap) { height: 0.8em; }
+/* 5.6.2: 높이가 아니라 아래 여백으로 — 문단의 아래 여백처럼 뒤따르는 인용 · 코드 · 가로줄 · 제목의 위 여백과 겹쳐진다 (높이면 그 여백에 더해져 벌어졌다) */
+.mes_text :is(.llmt-para-gap, .custom-llmt-para-gap) { height: 0; margin: 0 0 0.8em; }
+/* 5.6.2 접기 · 원문 먼저 보기: 같은 문단의 줄(줄바꿈 하나)은 <details> 사이에 <br> 이 끼어 빈 줄 하나만큼 벌어졌다 — 블록 뒤의 <br> 은 빈 줄만 만든다 */
+.mes_text :is(details.custom-llm-translator-details, details.llm-translator-details) + br { display: none; }
 
 .custom-llm-translator-details > summary.custom-llm-translator-summary {
   list-style: none; /* 대부분의 브라우저용 */

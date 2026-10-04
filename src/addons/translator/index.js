@@ -2,7 +2,7 @@
 import { isPreset, validSettings, validImport, validPromptList, validPresetList, exportPresets, restoreTranslationRows } from './preset-data.js';
 import { createGuards, watchGuard } from './translation-guard.js';
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
-import { segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho } from './translation-segments.js';
+import { segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks } from './translation-segments.js';
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
 import { requestCurrentConnection } from './current-connection.js';
@@ -6316,6 +6316,10 @@ export function processTranslationText(originalText, translatedText) {
     try {
         // 1. 선결 마스킹 (Phase 1: Isolation)
         // 원문과 번역문에서 특수 블록(태그, 코드 등)을 미리 격리합니다.
+        // 5.6.2: 줄 끝을 \n 하나로 (인사말처럼 CRLF 로 저장된 글). 아래는 '\n' 으로 줄을 나누므로 \r 이 남으면 가로줄 · 표 · 제목 판정이
+        // 원문 · 번역문에서 어긋나고(줄 수 불일치 → 통째 접기), 감싸개 밖에 둔 제목 표시 줄이 \r 에서 끊겨 접힌 글이 밖으로 샌다. 마크다운도 어차피 \n 으로 바꾼다
+        originalText = String(originalText ?? '').replace(/\r\n?/g, '\n');
+        translatedText = String(translatedText ?? '').replace(/\r\n?/g, '\n');
         const origData = applyIsolation(originalText, 'ORIG');
         const transData = applyIsolation(translatedText, 'TRANS');
 
@@ -6410,11 +6414,12 @@ function analyzeStructure(text) {
     
     // 줄 단위 분해
     const lines = text.split('\n');
+    const structure = structureLines(lines); // 5.6.2 가로줄 · 제목 밑줄 · 표
     let inCodeBlock = false;
 
-    lines.forEach(line => {
+    lines.forEach((line, index) => {
         const trimmedLine = line.trim();
-        
+
         // 코드 블록 펜스 감지 (백틱 3개 이상)
         const isCodeFence = /^\s*`{3,}/.test(line);
 
@@ -6441,6 +6446,10 @@ function analyzeStructure(text) {
         else if (trimmedLine === '') {
             skeleton.push({ type: 'EMPTY', content: line });
         }
+        // 2-1. (5.6.2) 가로줄 · 제목 밑줄 · 표: 감싸면 마크다운이 풀려 표시가 글자 그대로 보인다 → 그대로 둔다 (접기 대상 아님)
+        else if (structure.has(index)) {
+            skeleton.push({ type: 'BLOCK', content: line });
+        }
         // 3. 접기 대상 텍스트
         else {
             skeleton.push({ type: 'TEXT', content: line });
@@ -6454,9 +6463,10 @@ function analyzeStructure(text) {
 function extractPureText(text) {
     const queue = [];
     const lines = text.split('\n');
+    const structure = structureLines(lines); // 5.6.2 번역문 쪽(analyzeStructure)과 같은 줄을 뺀다
     let inCodeBlock = false;
 
-    lines.forEach(line => {
+    lines.forEach((line, index) => {
         const trimmedLine = line.trim();
         const isCodeFence = /^\s*`{3,}/.test(line);
 
@@ -6469,8 +6479,8 @@ function extractPureText(text) {
             return; // 코드 블록 내부도 큐에 넣지 않음
         }
 
-        // 마스킹 아니고, 빈 줄 아니면 큐에 추가
-        if (!/^__MASK_[A-Z]+_[A-Z]+_\d+__$/.test(trimmedLine) && trimmedLine !== '') {
+        // 마스킹 아니고, 빈 줄 아니고, 구조 줄(가로줄 · 표, 5.6.2)이 아니면 큐에 추가
+        if (!/^__MASK_[A-Z]+_[A-Z]+_\d+__$/.test(trimmedLine) && trimmedLine !== '' && !structure.has(index)) {
             queue.push(line);
         }
     });
@@ -6526,7 +6536,8 @@ function renderAllInOne(transQueue, origQueue, displayMode, hasMask, skeleton,
     }
 
     // 2. 텍스트만 있는 경우 -> <details> 사용 가능 (5.2.5: 요약/본문 안은 마크다운 문단이 안 되므로 빈 줄 · 줄바꿈을 <br> 로)
-    const br = text => String(text ?? '').replace(/\n[\t ]*\n(?:[\t ]*\n)*/g, '<br><br>').replace(/\n/g, '<br>');
+    // 5.6.2: 문단마다 <p> 로 — <br><br> 로 이으면 첫 줄 들여쓰기가 첫 문단에만 걸렸다
+    const br = paragraphBlocks;
     if (displayMode === 'original_first') {
         return `<details class="llm-translator-details mode-original-first">
             <summary class="llm-translator-summary">${br(fullOrigText)}</summary>
@@ -6544,24 +6555,57 @@ function renderAllInOne(transQueue, origQueue, displayMode, hasMask, skeleton,
 function renderInterleaved(skeleton, transQueue, origQueue, displayMode) {
     let htmlParts = [];
     let origIndex = 0;
+    // 5.6.2 블록 마크다운: 줄 머리의 제목 · 인용 · 목록 표시는 감싸개 밖에 둔다 (감싸면 표시가 글자 그대로 보였다 — 커뮤니티 제보).
+    // 접힌 화면이 '사용 안 함' 화면과 같은 모양이 되게 한다 (격리 서버에서 마크다운 모양 30여 가지를 두 보기로 그려 블록 구조 · 줄 자리 · 높이를 견줌):
+    //  · 간격 요소(.llmt-para-gap)는 문단(<p>)의 아래 여백 대신이다 → 본문 문단 글(표시 없는 줄) 뒤에만 둔다.
+    //    제목 · 목록 · 인용 · 가로줄 · 표 뒤의 빈 줄은 빈 줄 그대로 — 그것들은 제 여백이 있고, 간격 요소는 목록을 끊어 '1. … (빈 줄) 2. …' 의 번호가 1 로 돌아간다
+    //  · 문단 글 바로 다음 줄에(빈 줄 없이) 제목 · 목록 · 인용 · 가로줄 · 표 · 코드 블록이 오면 보통 화면은 거기서 문단이 끝난다 → 그 앞에도 간격 요소
+    //    (제목 밑줄 === · --- 과 표시만 있는 인용 줄 '>' 은 새 블록을 여는 줄이 아니라 뺀다)
+    //  · 목록 · 인용 줄 다음의 표시 없는 줄은 빈 줄 전까지 그 목록 · 인용에 딸린 줄이다 (문단 글이 아니다)
+    //  · 목록이 열려 있는 동안은 4칸 · 탭으로 들여쓴 표시도 하위 목록이고, 빈 줄 다음의 들여쓴 줄은 그 항목에 딸린 문단이다 (splitBlockPrefix 의 open · continued)
+    //  · 바로 다음 줄이 제목 밑줄이면 이 줄은 통째로 제목 글이다 (마크다운이 표시를 글자로 본다) → 표시를 떼지 않는다
+    const GAP = '<div class="llmt-para-gap"></div>';
+    const folding = displayMode !== 'unfolded'; // 펼침 방식은 마크다운이 문단(<p>)을 만들므로 간격 요소가 필요 없다
+    let paragraph = false; // 바로 앞 줄이 본문 문단 글인가
+    let nested = false;    // 바로 앞 줄이 목록 · 인용 안인가 (빈 줄에서 풀린다)
+    let listOpen = false;  // 목록이 열려 있는가 (빈 줄을 건너서도 — 들여쓰지 않은 보통 줄이나 다른 블록이 오면 닫힌다)
+    let plainGap = true;   // 다음 빈 줄을 간격 요소로 바꿀 것인가 (문단 글 · 보호 블록 · 코드 블록 뒤 — 5.2.5 부터의 동작)
+    let lastType = '';
 
-    skeleton.forEach(node => {
-        // SKELETON 타입 추가 (그대로 출력)
-        if (node.type === 'EMPTY' && displayMode !== 'unfolded') {
+    skeleton.forEach((node, index) => {
+        if (node.type === 'EMPTY') {
             // 5.2.5: 접기 · 원문 먼저 보기는 문단마다 <details> 블록이라 빈 줄이 마크다운 문단 간격을 못 만든다 → 간격 요소로 (CSS: --salty-para)
-            htmlParts.push('<div class="llmt-para-gap"></div>');
-        } else if (node.type === 'MASK' || node.type === 'EMPTY' || node.type === 'SKELETON') {
-            htmlParts.push(node.content);
-        } 
-        else if (node.type === 'TEXT') {
+            htmlParts.push(folding && plainGap ? GAP : node.content);
+            paragraph = false; nested = false;
+        } else if (node.type === 'TEXT') {
             // 접기 대상: 큐에서 하나씩 꺼냄
             const transText = node.content; // === transQueue.shift() 와 논리적으로 같음
-            
+
             // 짝지을 원문이 있으면 가져오고, 없으면 빈 문자열
             const origText = (origIndex < origQueue.length) ? origQueue[origIndex] : '';
             origIndex++;
-            htmlParts.push(createDetailsTag(transText, origText, displayMode));
+            const afterBlank = lastType === 'EMPTY';
+            const next = skeleton[index + 1];
+            const underlined = next?.type === 'BLOCK' && isHeadingUnderline(next.content);
+            const trans = underlined ? { prefix: '', body: transText, quote: '', list: false, indent: false }
+                : splitBlockPrefix(transText, { open: listOpen, continued: listOpen && afterBlank });
+            // 원문 쪽도 같은 종류의 표시를 떼어, 접힌 칸에 표시가 글자로 남지 않게 한다
+            const orig = trans.prefix ? splitBlockPrefix(origText, { list: trans.list, open: true, continued: trans.indent }) : { body: origText };
+            if ((underlined || (trans.prefix && !trans.indent)) && paragraph && folding) htmlParts.push(GAP);
+            htmlParts.push(trans.prefix + createDetailsTag(trans.body, orig.body, displayMode));
+            if (trans.list || trans.indent) listOpen = true; else if (afterBlank || trans.prefix) listOpen = false;
+            if (trans.prefix) nested = !!(trans.quote || trans.list || trans.indent);
+            paragraph = !trans.prefix && !nested && !underlined;
+            plainGap = paragraph;
+        } else {
+            // MASK · SKELETON(코드 블록) · BLOCK(가로줄 · 제목 밑줄 · 표 · 표시만 있는 인용 줄): 그대로 출력
+            const opensBlock = node.type === 'BLOCK' ? !isHeadingUnderline(node.content) && !isBareQuote(node.content) : node.type === 'SKELETON' && lastType !== 'SKELETON';
+            if (opensBlock && paragraph && folding) htmlParts.push(GAP);
+            htmlParts.push(node.content);
+            paragraph = false; nested = false; listOpen = false;
+            plainGap = node.type !== 'BLOCK';
         }
+        lastType = node.type;
     });
 
     return htmlParts.join('\n');

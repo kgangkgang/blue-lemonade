@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.6.1.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.6.2.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.6.1 · 최신 업데이트</summary>
+<summary>5.6.2 · 최신 업데이트</summary>
+
+- LLM 번역을 「접기 방식」이나 「원문 먼저 보기」로 볼 때 번역문의 첫 줄 들여쓰기가 풀리던 문제를 고쳤어요. 같은 문단 안의 줄 사이가 빈 줄만큼 벌어지던 것도 고쳐서, 접은 화면이 보통 화면과 같은 모양으로 보여요. 북마크 카드에서도 같아요.
+- 원문을 함께 보는 번역(접기 · 원문 먼저 · 펼침)에서 제목 · 인용 · 목록 · 가로줄 · 표 같은 마크다운이 기호 그대로 보이던 문제를 고쳤어요. 이미 번역해 둔 메시지는 다시 번역하면 적용돼요.
+
+</details>
+
+<details>
+<summary>5.6.1 · 설정칸 정렬과 큰 글씨 배치</summary>
 
 - 월드 인포 등 선택칸의 글자가 위로 치우치고 아래 여백이 더 넓던 부분을 중앙에 맞췄어요.
 - 전개 지시 설정에서 화면이 좁거나 글씨가 클 때 글자와 색상 입력칸이 눌리지 않게 하고, 잘리던 설명도 볼 수 있게 했어요.

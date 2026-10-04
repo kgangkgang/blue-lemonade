@@ -39,7 +39,7 @@ import { runtimeEnabled, assertRuntime } from './runtime.js';
 import { chat, substituteParams, eventSource, event_types } from '../../../../../../../../script.js';
 import { getContext } from '../../../../../../../extensions.js';
 import { settings, providerConfig, addUsage, addPreUsed } from './settings.js';
-import { segmentMessage, pairSegments, colorsClash, detectLang, parseRegexLines } from './text.js';
+import { segmentMessage, pairSegments, colorsClash, detectLang, parseRegexLines, speechDisplay } from './text.js';
 import { resolveSpeaker, canon, knownNames as learnedNames } from './speakers.js';
 import { voiceFor, findVoice, allVoices } from './voices.js';
 import * as cache from './cache.js';
@@ -214,7 +214,7 @@ function sourcesOf(mes, s, { final = true, text = null, readThoughts = false } =
     if (final && text == null) {
         const d = mes.extra?.display_text;
         if (typeof d === 'string' && d.trim() && d !== mes.mes) {
-            try { disp = pairSegments(orig, safeSegment(sub(d), opts)); } catch { disp = null; }
+            try { disp = pairSegments(orig, safeSegment(sub(speechDisplay(d)), opts)); } catch { disp = null; }
         }
     }
     return { orig, disp };

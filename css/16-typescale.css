@@ -70,6 +70,16 @@ body.salty :is(.cg-mes.mes_text, .cg-bubble-text.mes_text) p:last-child {
 body.salty.salty-indent :is(.cg-mes.mes_text, .cg-bubble-text.mes_text) p {
   text-indent: 1em;
 }
+/* 5.6.2 번역기의 접기 · 원문 먼저 보기 — 채팅(css/06-chat-text)과 같은 규칙을 북마크 카드에도. 미리보기 사본(css/23)은 설정 창을 열기 전엔 꺼져 있어(lite.js)
+   카드에 닿지 않는다: 문단 간격 요소 · 같은 문단 줄 사이의 <br> · 첫 줄 들여쓰기 (통째 접기의 문단은 <p> 라 위 문단 규칙이 맡는다) */
+body.salty :is(.cg-mes.mes_text, .cg-bubble-text.mes_text) :is(.llmt-para-gap, .custom-llmt-para-gap) { height: 0; margin: 0 0 var(--salty-para); }
+body.salty :is(.cg-mes.mes_text, .cg-bubble-text.mes_text) :is(details.custom-llm-translator-details, details.llm-translator-details) ~ :is(details.custom-llm-translator-details, details.llm-translator-details):not(:is(.llmt-para-gap, .custom-llmt-para-gap) ~ details):not(br + details) { margin-top: var(--salty-para) !important; }
+body.salty :is(.cg-mes.mes_text, .cg-bubble-text.mes_text) :is(details.custom-llm-translator-details, details.llm-translator-details) + br { display: none; }
+body.salty.salty-indent :is(.cg-mes.mes_text, .cg-bubble-text.mes_text) :is(details.custom-llm-translator-details, details.llm-translator-details):is(.mes_text > details, .mes_text blockquote > details, .mes_text li > p + details, .mes_text > details:not([class]) > details):not(br:not(.bl-img-br) + details) > summary,
+body.salty.salty-indent :is(.cg-mes.mes_text, .cg-bubble-text.mes_text) :is(details.custom-llm-translator-details, details.llm-translator-details):is(.mes_text > details, .mes_text blockquote > details, .mes_text li > p + details, .mes_text > details:not([class]) > details):not(br:not(.bl-img-br) + details):is(.custom-mode-original-first, .mode-original-first),
+body.salty.salty-indent :is(.cg-mes.mes_text, .cg-bubble-text.mes_text) :is(details.custom-llm-translator-details, details.llm-translator-details):is(.mes_text > details, .mes_text blockquote > details, .mes_text li > p + details, .mes_text > details:not([class]) > details):not(br:not(.bl-img-br) + details):is(.custom-mode-folded, .mode-folded) > :is(.custom-original_text, .original_text) {
+  text-indent: 1em;
+}
 /* 대사 · 속마음 · 강조: 굵기 · 기울기 · 글꼴을 채팅과 같게.
    색과 형광펜 띠는 넘기지 않음 — 이 카드는 팔레트와 따로 어두운 색이라 채팅 글자색을 주면 안 보이게 됨 */
 body.salty :is(.cg-mes, .cg-bubble-text) q {

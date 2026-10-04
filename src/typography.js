@@ -51,6 +51,9 @@ export function markAssetBreaks(root){
 // 글 속 감싸개를 지나 실제 강제 개행만 찾는다. 화면 폭 때문에 접힌 줄은 새 대사가 아니다.
 // 블록 · 독립 inline-block 경계는 넘지 않는다 (자체 text-indent 와 중복되지 않게).
 const INLINE_HOST=/^(SPAN|FONT|MARK|EM|STRONG|B|I|U|S|DEL|INS|A|SMALL|BIG|SUB|SUP|ABBR|CITE|BDI|BDO)$/;
+// 5.6.2 번역 접기 · 원문 먼저 보기(내장 · 외부 LLM 번역기): 줄마다 <details> 블록이고 그 안의 번역문 · 원문 칸이 글줄 하나다.
+const LLMT_BLOCK='details.custom-llm-translator-details, details.llm-translator-details';
+const LLMT_LANE='.custom-translated_text, .translated_text, .custom-original_text, .original_text';
 function dialogueLineStart(q,styles){
     const style=el=>{let s=styles.get(el);if(!s){const css=getComputedStyle(el);s={display:css.display,whiteSpace:css.whiteSpace};styles.set(el,s);}return s;};
     const through=el=>INLINE_HOST.test(el.nodeName)&&(/^(inline|contents)$/.test(style(el).display)
@@ -65,6 +68,8 @@ function dialogueLineStart(q,styles){
         }
         if(node.nodeType!==1)return false;
         if(node.classList.contains(LINE_INDENT))return null;
+        // 5.6.2: 번역 줄 블록 바로 뒤의 <br> 은 CSS 가 숨긴다(블록 뒤라 빈 줄만 만든다) — 숨겨져 있어도 줄바꿈이다 (그 뒤의 감싸지 않은 대사 줄이 줄 머리)
+        if(node.nodeName==='BR'&&node.previousElementSibling?.matches(LLMT_BLOCK))return true;
         if(node.matches('style,script')||style(node).display==='none')return null;
         if(node.nodeName==='BR')return true;
         if(node.classList.contains(IMG_INDENT)||!through(node))return false;
@@ -81,6 +86,20 @@ function dialogueLineStart(q,styles){
         host=parent;if(host.nodeName==='MARK')mark=host;
     }
     return {line:false,mark:null}; // 문단 첫 줄은 기존 p의 text-indent가 맡는다.
+}
+// <br> 바로 뒤의 블록은 같은 문단의 다음 줄 — CSS(css/06-chat-text)는 문단 첫 줄만 들이므로, 대사로 시작하는 줄은 여기서 대사 줄로 본다 (보통 화면의 <br> 뒤 대사와 같게).
+// 단 에셋 그림에 붙은 <br>(.bl-img-br) 뒤의 블록은 CSS 가 문단 첫 줄처럼 들인다 (보통 화면이 그림 뒤 글을 들여 쓰는 것과 같게) → 여기서는 손대지 않는다.
+function translatorLineStart(q){
+    const lane=q.closest(LLMT_LANE),holder=lane?.parentElement;
+    const block=holder?.matches(LLMT_BLOCK)?holder:holder?.nodeName==='SUMMARY'&&holder.parentElement?.matches(LLMT_BLOCK)?holder.parentElement:null;
+    const before=block?.previousElementSibling;
+    if(before?.nodeName!=='BR'||before.classList.contains(IMG_BR))return null;
+    let mark=null;
+    for(let node=q;node!==lane;node=node.parentElement){
+        for(let prev=node.previousSibling;prev;prev=prev.previousSibling)if(!prev.classList?.contains(LINE_INDENT)&&prev.textContent.trim())return null; // 칸 안에서 앞에 글이 있다
+        if(node.nodeName==='MARK')mark=node;
+    }
+    return {line:true,mark};
 }
 export function typesetRoot(root) {
     if(!active||!root?.querySelectorAll)return;
@@ -102,7 +121,7 @@ export function typesetRoot(root) {
     const quotes=[...root.querySelectorAll('.mes_text q, .salty-sample q')]
         .filter(q=>!q.closest('pre,code,details[class*="custom-dem-card"],.custom-dem-track,.custom-dem-track-recovery'));
     // 계산 스타일은 DOM을 고치기 전에 한 번에 읽는다 — 대사마다 스타일 재계산을 강제하지 않게.
-    const starts=quotes.map(q=>dialogueLineStart(q,styles));
+    const starts=quotes.map(q=>translatorLineStart(q)||dialogueLineStart(q,styles));
     for(let i=0;i<quotes.length;i++) {
         const q=quotes[i],{line,mark}=starts[i];
         // 형광펜 칸이 줄 머리면 들여쓰기는 그 칸에 (q 에 주면 칸 배경이 들여 쓴 빈자리까지 칠해진다)

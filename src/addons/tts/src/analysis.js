@@ -37,7 +37,7 @@ import * as ST from '../../../../../../../../script.js';
 import { chat, substituteParams, getRequestHeaders } from '../../../../../../../../script.js';
 import { getContext } from '../../../../../../../extensions.js';
 import { settings, addAnalysisUsage } from './settings.js';
-import { segmentMessage, detectLang, parseRegexLines } from './text.js';
+import { segmentMessage, detectLang, parseRegexLines, speechDisplay } from './text.js';
 import { resolveSpeaker, knownNames as learnedNames } from './speakers.js';
 import { allVoices } from './voices.js';
 import { fetchJson } from './providers/_http.js';
@@ -178,7 +178,7 @@ export function buildPrompt(mes, opts = {}) {
     let display = '';
     if (typeof d === 'string' && d.trim() && d !== mes.mes) {
         let dsegs = [];
-        try { dsegs = segmentMessage(sub(d), segOpts(mes, s, ctx, userName, charName)) || []; }
+        try { dsegs = segmentMessage(sub(speechDisplay(d)), segOpts(mes, s, ctx, userName, charName)) || []; }
         catch { dsegs = []; }
         display = clip(joinByLine(dsegs), max);
     }

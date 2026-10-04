@@ -45,3 +45,33 @@ assert.equal(restoreParagraphBreaks('a\nb','1\n2'),'1\n2');
 assert.equal(restoreParagraphBreaks('a\n\nb','1\n2\n3'),'1\n2\n3');
 assert.equal(restoreParagraphBreaks('a\n\nb','12'),'12');
 console.log('PASS paragraph breaks restored only when paragraph and line counts match');
+// 5.6.2: 원문 병기 보기(접기 · 원문 먼저 · 펼침)의 블록 마크다운 — 줄 머리 표시는 감싸개 밖으로, 구조 줄(가로줄 · 표 · 인용 속 빈 줄)은 감싸지 않는다
+const {splitBlockPrefix,structureLines,paragraphBlocks,isHeadingUnderline,isBareQuote}=await import(new URL('src/addons/translator/translation-segments.js',root));
+const pre=(line,options)=>{const r=splitBlockPrefix(line,options);return [r.prefix,r.body,r.list];};
+assert.deepEqual(pre('# 제목'),['# ','제목',false]);assert.deepEqual(pre('### 상태'),['### ','상태',false]);assert.deepEqual(pre('#해시'),['#','해시',false]);
+assert.deepEqual(pre('## 제목 ##'),['## ','제목',false]);assert.deepEqual(pre('# 가#나'),['# ','가#나',false]);
+assert.deepEqual(pre('> 인용'),['> ','인용',false]);assert.deepEqual(pre('>> 겹 인용'),['>> ','겹 인용',false]);assert.equal(splitBlockPrefix('> 인용').quote,'> ');
+assert.deepEqual(pre('> # 인용 속 제목'),['> # ','인용 속 제목',false]);assert.deepEqual(pre('>  # 두 칸 뒤'),['> ',' # 두 칸 뒤',false]);
+assert.deepEqual(pre('- 항목'),['- ','항목',true]);assert.deepEqual(pre('+ 항목'),['+ ','항목',true]);assert.deepEqual(pre('* 항목'),['* ','항목',true]);
+assert.deepEqual(pre('12. 단계'),['12. ','단계',true]);assert.deepEqual(pre('  - 안쪽 항목'),['  - ','안쪽 항목',true]);
+assert.deepEqual(pre('> - 인용 속 항목'),['> - ','인용 속 항목',true]);assert.deepEqual(pre('> - 인용 속 항목',{list:false}),['> ','- 인용 속 항목',false]);
+assert.deepEqual(pre('- 항목',{list:false}),['','- 항목',false]);
+// 목록 표시 뒤의 # 는 제목이 아니다 (붙여 쓴 목록 항목 안에서는 마크다운이 제목으로 보지 않는다), 0열이 아닌 # 도 제목이 아니다
+assert.deepEqual(pre('- ## 목록 속 제목'),['- ','## 목록 속 제목',true]);
+// 열린 목록 안: 4칸 · 탭으로 들여쓴 표시도 하위 목록, 빈 줄 다음의 들여쓴 줄은 항목에 딸린 문단 (앞 공백이 prefix)
+assert.deepEqual(pre('    - 하위',{open:true}),['    - ','하위',true]);assert.deepEqual(pre('\t1. 하위',{open:true}),['\t1. ','하위',true]);
+assert.deepEqual(pre('  딸린 문단',{open:true,continued:true}),['  ','딸린 문단',false]);assert.equal(splitBlockPrefix('  딸린 문단',{open:true,continued:true}).indent,true);
+assert.deepEqual(pre('  딸린 문단',{open:true}),['','  딸린 문단',false]);assert.deepEqual(pre('딸리지 않은 줄',{open:true,continued:true}),['','딸리지 않은 줄',false]);
+for(const plain of ['*기울임* 글','**굵게** 글','-붙은 글','1) 괄호 번호','— 줄표 대사','    - 깊은 들여쓰기',' # 한 칸 뒤 제목 아님','   ## 세 칸 뒤','####### 일곱','#','# ','>','> ','- ','','보통 글 # 뒤쪽 표시','"대사"'])assert.deepEqual(pre(plain),['',plain,false],plain);
+const marks=lines=>[...structureLines(lines)].sort((a,b)=>a-b);
+assert.deepEqual(marks(['글','---','','***','| a | b |','|---|---|','| 1 | 2 |','','```','---','| x | y |','|--|--|','```','끝']),[1,3,4,5,6]);
+assert.deepEqual(marks(['제목','=====','- - -','___','--','-- 글','== 글','* * 글']),[1,2,3,4]);
+assert.deepEqual(marks(['| 머리만 | 있고 |','구분 줄 없음','','a | b','--|--','1 | 2','끝까지 표','','글']),[3,4,5,6]);
+assert.deepEqual(marks(['| a | b |','|---|---|','```','code','```']),[0,1]);assert.deepEqual(marks([]),[]);
+// 한 칸짜리 표, 표시만 있는 인용 줄
+assert.deepEqual(marks(['| 상태창 |','|---|','| 내용 |','| 둘째 |','표 아님','','글']),[0,1,2,3]);assert.deepEqual(marks(['| 한 줄 |','글']),[]);
+assert.deepEqual(marks(['> 첫 문단','>','> 둘째 문단','> ','>>']),[1,3,4]);
+assert.ok(isHeadingUnderline('---')&&isHeadingUnderline('==  ')&&!isHeadingUnderline('- - -')&&!isHeadingUnderline('***'));assert.ok(isBareQuote('>')&&isBareQuote(' > ')&&!isBareQuote('> 글'));
+assert.equal(paragraphBlocks('a\n\nb\nc\n \n\nd'),'<p>a</p><p>b<br>c</p><p>d</p>');
+assert.equal(paragraphBlocks(''),'');assert.equal(paragraphBlocks('\n\n한 문단\n\n'),'<p>한 문단</p>');
+console.log('PASS block markdown prefixes stay outside the fold wrappers; rules, tables and bare quote lines are left unwrapped; whole-message fold uses paragraphs');

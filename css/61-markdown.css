@@ -102,16 +102,17 @@ body.salty.salty-md-size-large
   overflow-wrap: anywhere;
 }
 
-/* 문단과 본문 글자 설정은 유지하고, 선택한 블록의 세로 여백만 조절한다. */
+/* 문단과 본문 글자 설정은 유지하고, 선택한 블록의 세로 여백만 조절한다.
+   5.6.2: LLM 번역의 접기 · 원문 먼저 보기는 글줄마다 <details> 로 감싼다 — 그 감싸개는 블록이 아니라 문단 줄이므로 뺀다 (줄마다 여백 · 카드가 생겼다). */
 body.salty.salty-md-space-compact
   :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
-  :is(h1, h2, h3, h4, h5, h6, blockquote, ul, ol, table, details):not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  :is(h1, h2, h3, h4, h5, h6, blockquote, ul, ol, table, details):not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *, .custom-llm-translator-details, .llm-translator-details)) {
   margin-block: .6em !important;
 }
 
 body.salty.salty-md-space-relaxed
   :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
-  :is(h1, h2, h3, h4, h5, h6, blockquote, ul, ol, table, details):not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  :is(h1, h2, h3, h4, h5, h6, blockquote, ul, ol, table, details):not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *, .custom-llm-translator-details, .llm-translator-details)) {
   margin-block: 1.35em !important;
 }
 
@@ -278,7 +279,7 @@ body.salty.salty-md-table-plain
 /* summary는 native marker와 display를 유지한다. details의 open 속성에도 손대지 않는다. */
 body.salty.salty-md-details-card
   :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
-  details:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  details:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *, .custom-llm-translator-details, .llm-translator-details)) {
   padding: .65em .8em;
   border: 1px solid var(--salty-text-20, var(--salty-line));
   border-radius: var(--bl-r-md, 12px);
