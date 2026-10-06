@@ -128,6 +128,10 @@ body.salty .popup .popup-controls .menu_button {
   font-size: var(--bl-fs-body) !important;
   font-weight: 650 !important;
 }
+/* 5.6.6 폰(390)에서 팝업 단추 글자가 0.75~1px 위 (사용자 · 기본 글꼴 실측 → −0.25) → 위 2 (높이는 min-height 로 그대로) */
+@media (pointer: coarse) {
+  body.salty .popup .popup-controls .menu_button { padding-top: 2px !important; }
+}
 body.salty .popup .popup-controls .menu_button.popup-button-ok:not(.redWarningBG) {
   background: var(--salty-fill-accent, var(--salty-accent)) !important;
   box-shadow: var(--bl-accent-lift) !important;

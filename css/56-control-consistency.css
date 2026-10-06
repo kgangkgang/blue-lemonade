@@ -26,6 +26,10 @@
   padding-block: calc(4px + var(--bl-text-nudge, 0px)) calc(4px - var(--bl-text-nudge, 0px)); /* 5.5.3 세로 중앙 */
 }
 .salty-panel .salty-seg.salty-mini button { min-height: var(--bl-settings-chip); padding:calc(4px + var(--bl-text-nudge, 0px)) 9px calc(4px - var(--bl-text-nudge, 0px)); } /* 5.5.3 세로 중앙 */
+/* 5.6.6 폰(390)에서는 작은 고르기 글자가 1px 아래였다 (사용자 글꼴 실측 −1.03 → −0.03) → 위 1 줄임 */
+@media (pointer: coarse) {
+  .salty-panel .salty-seg.salty-mini button { padding-top:calc(3px + var(--bl-text-nudge, 0px)); padding-bottom:calc(5px - var(--bl-text-nudge, 0px)); }
+}
 .salty-panel :is(.salty-fonttags button,.salty-fontempty button) { height:auto; }
 .salty-panel :is(.salty-btns, .bl-palette-actions) { gap: var(--bl-settings-gap); }
 .salty-panel .salty-seg { gap: 3px; padding: 3px; border-radius: 10px; max-width: 100%; }

@@ -132,12 +132,25 @@ export function deferPreviewRules(tries = 25) {
     }
 }
 
-/** 설정창을 열 때: 꺼 둔 규칙을 제자리에서 다시 켠다 (한 번만). */
+/** 설정창을 열 때: 꺼 둔 규칙을 제자리에서 다시 켠다 (이 호출은 세션 끝까지 — 설정 창 · 서랍 · 메모 바). */
+let permanent = false, holders = 0;
 export function restorePreviewRules() {
+    permanent = true;
+    turnOn();
+}
+function turnOn() {
     if (restored) return;
     restored = true;
     for (const block of deferred) block.media.mediaText = 'all';
-    deferred = [];
+}
+// 5.6.6 (점검 PAB-4): 북마크 창처럼 닫히는 쪽은 쥐었다 놓는다 — 놓는 쪽이 마지막이고 세션 끝까지 켜 둔 쪽(설정 창 · 메모)이 없으면
+// 352개 미리보기 규칙을 다시 끈다 (예전엔 한 번 열면 그 세션 내내 켜져 있어, 글이 붙을 때마다 채팅 전체를 다시 맞춰 봤다)
+export function holdPreviewRules() { holders++; turnOn(); }
+export function releasePreviewRules() {
+    holders = Math.max(0, holders - 1);
+    if (holders || permanent || !restored) return;
+    for (const block of deferred) block.media.mediaText = 'not all';
+    restored = false;
 }
 
 export function deferredPreviewRuleCount() {

@@ -2,9 +2,13 @@
    에셋 이미지: 배치 · 크기 · 테두리(surfaces:imgedge) · 모양 · 흐림 · 투명 컷.
    ===== */
 /* ---------- 에셋 이미지 ---------- */
-/* 5.6.5 오토픽(AutoPic · 원본 · 개조판) 그림도 같은 규칙: 그림 img[data-autopic-id] · 틀 .autopic-tag-img-wrapper (assets.js ASSET_IMG · HOST 와 같은 짝).
+/* 5.6.6 메시지 아래 그림 칸 모드(.autopic-media-owner .mes_media_wrapper 안의 img.mes_img · 틀 .mes_img_container)도 같은 규칙 — 오토픽이 단 메시지만, 실리태번 기본 첨부 그림은 그대로.
+   오토픽은 그림 칸 바깥(.mes_media_wrapper)을 flex 가운데로 두어 틀이 그림 너비(304px)로 줄었다 → 블록으로 (본문 폭 · 가로 꽉이 에셋 그림과 같게, 작게는 margin auto 로 가운데) */
+body.salty #chat .mes.autopic-media-owner .mes_media_wrapper { display: block !important; }
+/* 5.6.5 오토픽(AutoPic · 원본 · 개조판) 그림도 같은 규칙:
+   5.6.5 오토픽(AutoPic · 원본 · 개조판) 그림도 같은 규칙: 그림 img[data-autopic-id] · 틀 .autopic-tag-img-wrapper (assets.js ASSET_IMG · HOST 와 같은 짝).
    오토픽이 !important 로 박는 둥근 모서리 12px · 그림자 · 테두리 1px · 12px auto 여백 · 호버 확대는 여기(무게가 더 큼)가 이긴다 */
-body.salty #chat .mes_text :is(.custom-cac-wrap, [class*="custom-imageWrapper"], .autopic-tag-img-wrapper) {
+body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :is(.custom-cac-wrap, [class*="custom-imageWrapper"], .autopic-tag-img-wrapper, .autopic-media-owner .mes_img_container) {
   display: block; /* !important 금지: 에셋 확장이 못 불러온 그림을 onerror 로 숨김(인라인 display:none) — 덮으면 깨진 아이콘이 남음 */
   width: auto !important;
   max-width: none !important; /* 5.6.5 오토픽 틀의 max-width: fit-content 가 그림을 원래 크기로 줄여 본문 폭 · 가로 꽉이 안 먹었다 */
@@ -13,7 +17,7 @@ body.salty #chat .mes_text :is(.custom-cac-wrap, [class*="custom-imageWrapper"],
   background: none !important;
   border-radius: 0 !important;
 }
-body.salty #chat .mes_text :is(.custom-cac-frame, .custom-cac-frame:hover, .custom-cac-inner, .custom-cac-img) {
+body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :is(.custom-cac-frame, .custom-cac-frame:hover, .custom-cac-inner, .custom-cac-img) {
   display: block; /* 위와 같은 이유 — 인라인 숨김이 이겨야 함 */
   position: static !important;
   z-index: auto !important;
@@ -22,16 +26,16 @@ body.salty #chat .mes_text :is(.custom-cac-frame, .custom-cac-frame:hover, .cust
   transform: none !important;
   box-shadow: none !important;
 }
-body.salty #chat .mes_text :is(.custom-cac-frame, .custom-cac-frame:hover, .custom-cac-inner) {
+body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :is(.custom-cac-frame, .custom-cac-frame:hover, .custom-cac-inner) {
   overflow: visible !important;
 }
-body.salty #chat .mes_text :is(.custom-cac-halo-img, .custom-cac-glow) {
+body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :is(.custom-cac-halo-img, .custom-cac-glow) {
   display: none !important;
 }
 /* 크기(apply.js 가 svh 로 넣음 → 폰 주소창이 접혀도 안 흔들림): 비율 유지 = 높이 auto + 최대 높이 · 높이 맞춤 = 높이 고정.
    틀을 넘치는 쪽은 잘라 채움 — 얼굴이 남게 가로 가운데, 세로는 그림 비율(--salty-ar)을 따라 세로 그림 위쪽 25% ~ 가로 그림 40%.
    overflow: hidden 필수 — 크롬은 그림에 overflow: visible 이면 잘린 나머지까지 틀 밖(옆 여백 · 위아래 글 위)에 그리고 모서리도 안 둥글림 */
-body.salty #chat .mes_text :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img, img[data-autopic-id]) {
+body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img, img[data-autopic-id], .autopic-media-owner img.mes_img) {
   display: block; /* 위와 같은 이유 — 못 불러온 그림은 숨은 채로 있어야 함 */
   width: 100% !important;
   max-width: none !important;
@@ -46,11 +50,11 @@ body.salty #chat .mes_text :is(.custom-cac-img, img.character-asset-rendered, im
   box-shadow: none !important;
 }
 /* 5.6.5 오토픽의 호버 확대(scale 1.01 !important) · 전환은 끔 — 가로 꽉에서 틀 밖으로 삐져나오고, 테마 모양(마스크 · 액자)과 어긋난다 */
-body.salty #chat .mes_text img[data-autopic-id] {
+body.salty #chat :is(.mes_text img[data-autopic-id], .autopic-media-owner .mes_media_wrapper img.mes_img) {
   transform: none !important;
   transition: none !important;
 }
-body.salty #chat .mes_text :is(img.character-asset-rendered, img.eh-img) {
+body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :is(img.character-asset-rendered, img.eh-img) {
   /* 5.2.7: 아래를 .35em 더 — 글줄은 글자 아래(디센더)가 위보다 비어 있어서 상자 간격이 같아도 눈에는 그림 위가 더 넓어 보인다
      (격리 서버 잉크 측정: 위 33 / 아래 27px @16px → 같게). 사용자 제보 "아래가 짧아 보임" */
   margin: 1.4em 0 1.75em !important;
@@ -76,10 +80,10 @@ body.salty #chat .mes_text .bl-img-indent { display: none; }
 body.salty.salty-indent #chat .mes_text p > .bl-img-indent { display: inline-block; width: 1em; height: 0; }
 
 /* 가로 꽉 */
-body.salty.salty-img-bleed #chat .mes_text :is(.custom-cac-wrap, [class*="custom-imageWrapper"], .autopic-tag-img-wrapper) {
+body.salty.salty-img-bleed #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :is(.custom-cac-wrap, [class*="custom-imageWrapper"], .autopic-tag-img-wrapper, .autopic-media-owner .mes_img_container) {
   margin-inline: calc(var(--salty-gutter) * -1) !important;
 }
-body.salty.salty-img-bleed #chat .mes_text :is(img.character-asset-rendered, img.eh-img) {
+body.salty.salty-img-bleed #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :is(img.character-asset-rendered, img.eh-img) {
   width: calc(100% + var(--salty-gutter) * 2) !important;
   margin-inline: calc(var(--salty-gutter) * -1) !important;
 }
@@ -96,22 +100,22 @@ body.salty.salty-img-bleed #chat .mes_text :is(img.character-asset-rendered, img
     height: 0;
   }
 }
-body.salty.salty-img-bleed #chat .mes_text :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img, img[data-autopic-id]) {
+body.salty.salty-img-bleed #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img, img[data-autopic-id], .autopic-media-owner img.mes_img) {
   border-radius: 0 !important;
 }
 /* 작게 가운데 */
-body.salty.salty-img-inset #chat .mes_text :is(.custom-cac-wrap, [class*="custom-imageWrapper"], img.character-asset-rendered, img.eh-img, .autopic-tag-img-wrapper) {
+body.salty.salty-img-inset #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :is(.custom-cac-wrap, [class*="custom-imageWrapper"], img.character-asset-rendered, img.eh-img, .autopic-tag-img-wrapper, .autopic-media-owner .mes_img_container) {
   width: min(72%, 420px) !important;
   margin-inline: auto !important;
 }
 /* 본문 폭 · 작게의 네모: 종이 위에 놓인 사진처럼 옅은 그림자(e2). 흰 배경 지우기 중엔 틀이 드러나서, 흐림을 켜면 가장자리가 녹아야 해서 뺌 */
-body.salty.salty-shape-rect.salty-fade-off.salty-edge-none:not(.salty-img-bleed):not(.salty-blend) #chat .mes_text :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img, img[data-autopic-id].salty-asset:not(.salty-cutout)) {
+body.salty.salty-shape-rect.salty-fade-off.salty-edge-none:not(.salty-img-bleed):not(.salty-blend) #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img, img[data-autopic-id].salty-asset:not(.salty-cutout), .autopic-media-owner img.mes_img.salty-asset:not(.salty-cutout)) {
   box-shadow: var(--bl-e2) !important;
 }
 
 /* 밝은 테마: 흰 배경을 종이색에 녹임.
    섞일 바탕이 메시지 안에 있어야 됨 — 다른 확장이 .mes 에 contain(격리)을 걸면 투명한 판과 섞여 효과가 사라지므로 메시지에 종이색을 깔아 둠 */
-body.salty.salty-blend #chat .mes_text :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img, img[data-autopic-id]) {
+body.salty.salty-blend #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img, img[data-autopic-id], .autopic-media-owner img.mes_img) {
   mix-blend-mode: multiply;
 }
 body.salty.salty-blend #chat .mes {
@@ -121,7 +125,7 @@ body.salty.salty-blend #chat .mes.selected {
   background: linear-gradient(var(--salty-accent-10), var(--salty-accent-10)) var(--salty-bg) !important;
 }
 /* ===== 에셋 이미지 테두리 (surfaces:imgedge) ===== */
-body.salty.salty-shape-rect:is(.salty-edge-none, .salty-edge-line, .salty-edge-inset, .salty-edge-glow, .salty-edge-prism) #chat .mes_text :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img, img[data-autopic-id]) {
+body.salty.salty-shape-rect:is(.salty-edge-none, .salty-edge-line, .salty-edge-inset, .salty-edge-glow, .salty-edge-prism) #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img, img[data-autopic-id], .autopic-media-owner img.mes_img) {
   border-style: var(--bl-img-frame-style) !important;
   border-color: var(--bl-img-frame-color) !important;
   border-width: var(--bl-img-frame-top) var(--bl-img-frame-right) var(--bl-img-frame-bottom) var(--bl-img-frame-left) !important;
@@ -131,7 +135,7 @@ body.salty.salty-shape-rect:is(.salty-edge-none, .salty-edge-line, .salty-edge-i
   outline-offset: var(--bl-img-frame-offset) !important;
   box-shadow: var(--bl-img-frame-shadow) !important;
 }
-body.salty.salty-edge-auto.salty-shape-rect #chat .mes_text :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img, img[data-autopic-id]) {
+body.salty.salty-edge-auto.salty-shape-rect #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img, img[data-autopic-id], .autopic-media-owner img.mes_img) {
   border-color: rgb(var(--salty-pick-key, 145 165 186) / var(--salty-edge-alpha)) !important;
 }
 /* ===== /surfaces:imgedge ===== */
@@ -153,7 +157,7 @@ body.salty.salty-dark {
   --salty-fade-a2: .26;
   --salty-fade-a3: .66;
 }
-body.salty #chat .mes_text :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img) {
+body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img) {
   --salty-cut: 0px; /* 대각선: 자른 선까지 거리 */
   --salty-mask-angle: 180deg;
   --salty-fy: max(1px, calc(var(--salty-imin, 240px) * var(--salty-feather-y, 0)));
@@ -167,28 +171,28 @@ body.salty #chat .mes_text :is(.salty-asset:not(.salty-cutout) .custom-cac-img, 
 }
 /* 흐림이 켜지면 1px 안쪽으로 자름: 폰의 소수 배율(2.625 · 2.75 · PC 1.5)에서 마스크를 여러 장 겹치면 그림 맨 끝 한 줄이 새어
    빈 바탕에 가는 선이 생김. 흐림 끝은 어차피 투명이라 잘린 게 안 보임 (약함은 옆이 안 흐려서 위아래만) */
-body.salty.salty-fade-soft #chat .mes_text :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img) {
+body.salty.salty-fade-soft #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img) {
   clip-path: inset(1px 0);
 }
-body.salty:is(.salty-fade-medium, .salty-fade-strong) #chat .mes_text :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img) {
+body.salty:is(.salty-fade-medium, .salty-fade-strong) #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img) {
   clip-path: inset(1px);
 }
 /* 중간 · 강함: 흐림 띠 바깥쪽은 거의 투명해서 그림이 글에서 떠 보임 → 위아래 간격을 흐림 폭의 1/3 만큼 당김 (0.6em 은 남김) */
 body.salty:is(.salty-fade-medium, .salty-fade-strong) {
   --salty-fade-pull: 0.34;
 }
-body.salty:is(.salty-fade-medium, .salty-fade-strong):not(.salty-shape-slant) #chat .mes_text :is(img.character-asset-rendered.salty-asset, img.eh-img.salty-asset, .custom-cac-wrap.salty-asset, [class*="custom-imageWrapper"].salty-asset, .autopic-tag-img-wrapper.salty-asset):not(.salty-cutout) {
+body.salty:is(.salty-fade-medium, .salty-fade-strong):not(.salty-shape-slant) #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :is(img.character-asset-rendered.salty-asset, img.eh-img.salty-asset, .custom-cac-wrap.salty-asset, [class*="custom-imageWrapper"].salty-asset, .autopic-tag-img-wrapper.salty-asset, .autopic-media-owner .mes_img_container.salty-asset):not(.salty-cutout) {
   margin-block: max(0.6em, calc(1.4em - var(--salty-imin, 240px) * var(--salty-feather-y, 0) * var(--salty-fade-pull))) !important;
 }
 
 /* 네모: 끔 = 마스크 없음 · 약함 = 위아래 · 중간 · 강함 = 옆까지 (아래 규칙) */
-body.salty.salty-shape-rect:not(.salty-fade-off) #chat .mes_text :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img) {
+body.salty.salty-shape-rect:not(.salty-fade-off) #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img) {
   -webkit-mask-image: var(--salty-mask-y);
   mask-image: var(--salty-mask-y);
 }
 
 /* 네모의 중간 · 강함: 옆도 흐림 */
-body.salty.salty-shape-rect:is(.salty-fade-medium, .salty-fade-strong) #chat .mes_text :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img) {
+body.salty.salty-shape-rect:is(.salty-fade-medium, .salty-fade-strong) #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img) {
   -webkit-mask-image: var(--salty-mask-y), var(--salty-mask-x);
   mask-image: var(--salty-mask-y), var(--salty-mask-x);
   -webkit-mask-composite: source-in;
@@ -199,7 +203,7 @@ body.salty.salty-shape-rect:is(.salty-fade-medium, .salty-fade-strong) #chat .me
 
 /* 투명 캐릭터 컷: 자르지 않고, 아래만 살짝 흐리게 (drop-shadow 필터는 폰에서 번져 보여서 안 씀).
    높이 맞춤이어도 틀을 키우지 않음 (키우면 투명한 빈 칸이 그림 위에 생김) → 고른 높이를 최대 높이로만 씀 */
-body.salty #chat .mes_text :is(.salty-cutout .custom-cac-img, .salty-cutout img, img.salty-cutout) {
+body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :is(.salty-cutout .custom-cac-img, .salty-cutout img, img.salty-cutout) {
   height: auto !important;
   max-height: var(--salty-img-cap, none) !important;
   object-fit: contain !important;

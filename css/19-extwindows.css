@@ -253,6 +253,10 @@ html body.salty .llmt-settings :is(.menu_button,.llmt-gl-scope,.llmt-gl-sort) {
 }
 /* 5.6.4 용어집 정렬 '가': padding 0 에 최소 높이 가운데 정렬이라 반행간 보정 n 만큼 내리려면 위에 2n (높이 36 그대로) — 1.2px 위였다 */
 html body.salty .llmt-settings .llmt-gl-sort { padding-top:calc(2 * var(--bl-text-nudge, 0px)); }
+/* 5.6.6 용어집 범위 단추(이 캐릭터 · 전체) 글자가 1.06px 위 (1440 실측) → 위 1 · 아래 −1 → +0.06. 마우스 기기만 */
+@media (hover: hover) and (pointer: fine) {
+  html body.salty .llmt-settings .llmt-gl-scope { padding-top:5px; padding-bottom:3px; }
+}
 /* 닫기는 내용만큼, 큰 메뉴 글자에서는 아이콘과 패딩 높이를 확보한다. */
 html body.salty .bl-translator-dialog > header > button {
   --bl-translator-close-min:34px;

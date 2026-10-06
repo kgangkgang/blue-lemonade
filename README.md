@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.6.5.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.6.6.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.6.5 · 최신 업데이트</summary>
+<summary>5.6.6 · 최신 업데이트</summary>
+
+- 오토픽(AutoPic) 그림을 메시지 아래 그림 칸에 넣는 모드도 테마의 이미지 설정(배치 · 모양 · 액자 · 크기 · 흐림 · 테두리)을 따라요. 글 사이 모드는 5.6.5부터 그래요. 실리태번 기본 첨부 그림은 그대로예요.
+- 성능: 북마크 창을 닫으면 채팅 서식 사본 규칙 350여 개를 다시 꺼요 (전엔 한 번 열면 그 세션 내내 켜져 있어 글이 붙을 때마다 채팅을 다시 맞춰 봤어요). 기기별 배치를 안 쓰면 PC 창 크기가 760px을 넘나들어도 설정 전체를 다시 적용 · 저장하지 않아요.
+- 글자 · 아이콘 세로 가운데 보정 (잉크 실측): 확장 버전 알약, 설정 창 버전 알약, 공지 머리줄(PC), TTS 단추(PC), 번역 용어집 범위 단추(PC), 폰의 작은 고르기 단추와 팝업 단추, 확장 관리 단추의 아이콘, 모델 등록 손잡이. TTS 1.3.4 · 북마크 1.4.4 · 모델 등록 1.1.3.
+
+</details>
+
+<details>
+<summary>5.6.5 · 오토픽 그림에 테마 이미지 설정</summary>
 
 - 오토픽(AutoPic) 그림도 테마의 이미지 설정을 따라요: 글 사이에 넣은 그림이 캐릭터 에셋 그림과 같은 배치(가로 꽉 · 본문 폭 · 작게) · 모양 · 액자 · 크기 · 흐림 · 테두리로 나와요. 오토픽이 정해 둔 둥근 모서리 · 그림자 · 테두리 · 마우스 확대는 테마가 덮어요. 원본 오토픽과 개조판 모두 되고, 메시지 아래 그림 칸(실리태번 기본)에 넣는 모드는 그대로예요.
 

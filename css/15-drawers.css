@@ -435,6 +435,13 @@ body.salty #rm_extensions_block .extensions_block > .flex-container:first-child 
   order: 1;
   margin: 0 !important;
 }
+/* 5.6.6 '확장 프로그램 관리' 단추의 아이콘이 PC 사용자 글꼴에서 글자보다 0.9px 아래 → 0.5px 올림 (PC 만: 폰 기본 글꼴은 0.5 가 1 기기픽셀이라 +0.8 로 넘어갔다) */
+@media (hover: hover) and (pointer: fine) {
+  body.salty #rm_extensions_block .extensions_block > .flex-container:first-child > .menu_button > i {
+    position: relative;
+    top: -0.5px;
+  }
+}
 body.salty #rm_extensions_block .extensions_block > .flex-container:first-child > label.checkbox_label {
   order: 2;
   flex: 1 1 100% !important;

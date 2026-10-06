@@ -136,7 +136,8 @@ function addMenuItem() {
 }
 
 import { DEVICE_QUERY } from './src/device-layouts.js';
-matchMedia(DEVICE_QUERY).addEventListener('change', () => { window.dispatchEvent(new Event('bl:device-layout')); applyAll(); refreshPanels(); saveSettings(); });
+// 5.6.6 (점검 PC-5): 기기별 배치를 안 쓰면(기본) 760px 을 넘나들어도 바뀔 값이 없다 — 창 크기를 바꿀 때마다 설정 전체를 다시 적용 · 저장(2MB)하지 않는다
+matchMedia(DEVICE_QUERY).addEventListener('change', () => { window.dispatchEvent(new Event('bl:device-layout')); if (!getSettings().deviceLayouts?.on) return; applyAll(); refreshPanels(); saveSettings(); });
 
 // 테마는 가능한 한 빨리 (깜빡임 줄이기)
 setFeatureHooks({ applyAll, refreshPanels }); // 켤 때만 불러오는 기능이 설정 적용 · 창 다시 그리기를 부를 수 있게 (3.1.0)

@@ -1,5 +1,6 @@
 // 북마크 — 모아 보기 패널
-import { restorePreviewRules } from '../../lite.js';
+import { holdPreviewRules, releasePreviewRules } from '../../lite.js';
+let holdingPreviewRules = false;   // 5.6.6 (점검 PAB-4): 창을 여는 동안만 채팅 서식 사본 규칙을 켠다
 import { typesetBatch } from '../../typography.js';
 import { hooks, settings, saveSettings, applyTheme, applyColors, colorsFor, currentChatKey, iconName } from './state.js';
 import { getOwner, currentRecord, listOtherChats, loadRecord, findBookmark, bookmarkAt, addBookmark, bookmarkMessage } from './data.js';
@@ -127,7 +128,7 @@ export function isPanelOpen() {
 }
 
 export async function openPanel({ keepState = false } = {}) {
-    restorePreviewRules(); // 카드 본문은 채팅 서식의 사본 규칙(.salty-preview)을 쓴다 — 테마가 시작 때 꺼 둔 것을 켠다
+    if (!holdingPreviewRules) { holdingPreviewRules = true; holdPreviewRules(); } // 카드 본문은 채팅 서식의 사본 규칙(.salty-preview)을 쓴다 — 테마가 시작 때 꺼 둔 것을 켠다 (닫으면 놓는다)
     if (!view.root) buildShell();
     if (!view.open) view.previousFocus = document.activeElement;
     // 알림 없이 메시지 번호가 바뀌었을 수 있으니 현재 채팅의 북마크 번호부터 맞춘다 (미리보기 중이면 하지 않는다).
@@ -200,6 +201,8 @@ export function closePanel({ keepColors = false } = {}) {
         view.bodyObserver?.disconnect();
         clearHighlights();
         if (list) list.replaceChildren();
+        // 5.6.6 (점검 PAB-4): 카드를 비운 뒤 규칙도 놓는다 — 미리보기로 가는 닫기(keepColors)는 보기 창이 아직 쓰므로 쥔 채로
+        if (!keepColors && holdingPreviewRules) { holdingPreviewRules = false; releasePreviewRules(); }
     }, 200);
     if (!keepColors) applyColors(colorsFor(currentChatKey()));
     if (!keepColors && view.previousFocus?.isConnected) view.previousFocus.focus({ preventScroll: true });

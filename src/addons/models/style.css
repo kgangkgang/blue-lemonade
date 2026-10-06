@@ -1,7 +1,7 @@
 /* 모델 등록 — 설정 화면
    state.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
 .mr-settings {
-    --mr-css-version: "1.1.2";
+    --mr-css-version: "1.1.3";
 }
 
 /* .inline-drawer-content 자체에는 display를 주지 않는다 (실리태번이 접고 펼 때 display를 바꾼다). */
@@ -122,3 +122,8 @@
 }
 .mr-handle:active { cursor: grabbing; }
 .mr-item.mr-dragging { outline: 1px solid currentColor; opacity: 0.85; }
+
+/* 5.6.6 세로 중앙 (1440 실측): 손잡이 ⠿ 가 1.1px 위 → +0.11. 마우스 기기만 */
+@media (hover: hover) and (pointer: fine) {
+  .mr-handle { padding-top: 2px; }
+}
