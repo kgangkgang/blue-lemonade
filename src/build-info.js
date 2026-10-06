@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.6.4";
+export const BUILD_VERSION = "5.6.5";
 export const FILE_HASHES = {
   "index.js": "14854:7a82f7ea:f9fb24c4",
-  "manifest.json": "365:0f8268c2:939f767c",
+  "manifest.json": "365:d35e7bf1:0f521b92",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -181,7 +181,7 @@ export const FILE_HASHES = {
   "src/appearance-archive.js": "1287:215093f5:1c7f1dc7",
   "src/appearance-compare.js": "3140:831ffdf1:a1f78cb0",
   "src/apply.js": "56630:ee900d6d:3ab816a8",
-  "src/assets.js": "21834:e50c9dff:52dba6e4",
+  "src/assets.js": "22280:29e4ed9a:7d43fb41",
   "src/assist/core.js": "1885:5a4f9626:2f307c5d",
   "src/assist/diagnostics.js": "4778:b76a9825:f6e0071b",
   "src/assist/index.js": "1033:4334a8fb:c00ef99f",
@@ -257,14 +257,14 @@ export const FILE_HASHES = {
   "src/mes-fold.js": "15171:6c96c017:9e152087",
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/modal.js": "671:b74e0164:71228d7c",
-  "src/notice-data.js": "148346:c7a13174:ffaaa9c6",
+  "src/notice-data.js": "148891:8fcec9ad:ac2db20e",
   "src/notice.js": "4646:b947f2a6:e551e710",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "1144:1da72451:b2e66e80",
   "src/numcomma.js": "28330:b8ff1af6:e41701dc",
   "src/onehand.js": "3884:55946dd4:4f42d7a8",
   "src/palettes.js": "33894:d739cf1f:f0700eaa",
-  "src/panel.js": "224468:f76cd2b5:3a388edf",
+  "src/panel.js": "224567:30c8cc58:643fae5b",
   "src/preset-sharing.js": "10586:288420d6:21b6f020",
   "src/preview-view.js": "12377:1b6c4956:85b171b8",
   "src/profile-clip.js": "4837:9b817c36:29f305b7",
@@ -324,5 +324,5 @@ export const FILE_HASHES = {
   "src/weather.js": "32976:f4fdcf09:3273a2b9",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "30424:160f46f1:289f971f",
-  "style.css": "1145514:d4a5cdb7:a93f22f5"
+  "style.css": "1148023:ec0db9e1:6eca6248"
 };

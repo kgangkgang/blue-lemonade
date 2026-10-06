@@ -1,7 +1,7 @@
 /* ===== css/00-base.css =====
    맨 앞 — 설계 원칙 주석 · body.salty 기본 변수(둥글기 --r-*) · 배경 그림 가리기.
    ===== */
-:root{--bl-release:"5.6.4";}
+:root{--bl-release:"5.6.5";}
 /* 5.5.6 테마가 빠진 상태(확장만 · 테마 끔)에서 내장 확장의 창 바탕: 실리태번 틴트 색을 불투명하게.
    틴트가 반투명인 실리태번 테마(Azure 등)는 흐림으로 뒤를 가리는데, 확장 창은 흐림 없이 떠서 뒤 채팅이 그대로 비쳤다 */
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}

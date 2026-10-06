@@ -1724,6 +1724,7 @@ function tabImage(s, sub) {
     }
     return `${imagePreview(s, sub)}<div class="salty-group">
             <div class="salty-stack">${seg('image.layout', [['bleed', '가로 꽉'], ['column', '본문 폭'], ['inset', '작게']])}</div>
+            <p class="salty-note">캐릭터 에셋 · 오토픽 그림에 같이 적용돼요.</p>
         </div>`;
 }
 

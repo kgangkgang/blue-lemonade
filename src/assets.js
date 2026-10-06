@@ -1,7 +1,9 @@
 // 에셋 이미지: 가장자리가 투명한 PNG면 .salty-cutout (캐릭터 컷) 표시 + 테두리 자동 색(--salty-pick-*) 뽑기.
 // img.eh-img = 캐릭터 에셋 확장(esetham)이 정규식 없이 {{img::…}}를 바꾼 그림
-const ASSET_IMG = '.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img';
-const HOST = '.custom-cac-wrap, [class*="custom-imageWrapper"]';
+// 5.6.5 img[data-autopic-id] = 오토픽(AutoPic · 원본과 개조판 모두)이 글 사이에 넣은 그림 — 에셋 그림과 같은 배치 · 모양 · 액자 · 크기 · 흐림을 탄다.
+//       틀(.autopic-tag-img-wrapper)은 오토픽이 그린 뒤 감싸므로 처음엔 그림 자신이 host, 감싼 뒤 다시 분류돼 틀이 host 가 된다 (css/07 의 .salty-asset img 규칙)
+const ASSET_IMG = '.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img, img[data-autopic-id]';
+const HOST = '.custom-cac-wrap, [class*="custom-imageWrapper"], .autopic-tag-img-wrapper';
 
 // 투명 판정과 색 뽑기를 한 번의 drawImage + getImageData 로 끝냄 (둘을 따로 돌리면 비용이 두 배).
 // 48×48: 브라우저가 줄이면서 평균해 줘서 노이즈가 이미 죽는다. 96 으로 올리면 정확하지만 읽는 비용이 4배

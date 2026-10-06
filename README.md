@@ -1,13 +1,20 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.6.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.6.5.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.6.4 · 최신 업데이트</summary>
+<summary>5.6.5 · 최신 업데이트</summary>
+
+- 오토픽(AutoPic) 그림도 테마의 이미지 설정을 따라요: 글 사이에 넣은 그림이 캐릭터 에셋 그림과 같은 배치(가로 꽉 · 본문 폭 · 작게) · 모양 · 액자 · 크기 · 흐림 · 테두리로 나와요. 오토픽이 정해 둔 둥근 모서리 · 그림자 · 테두리 · 마우스 확대는 테마가 덮어요. 원본 오토픽과 개조판 모두 되고, 메시지 아래 그림 칸(실리태번 기본)에 넣는 모드는 그대로예요.
+
+</details>
+
+<details>
+<summary>5.6.4 · 성능 · 글자 세로 가운데 · TTS 유료 엔진 미리 만들기</summary>
 
 - 성능: 화면 밖으로 지나간 감정 대사의 움직임을 멈춰요. 가만히 있어도 폰이 바쁘던 것(메인 스레드 99% → 9%)이 사라지고, 글자를 칠 때 한 키에 130ms 걸리던 것이 35ms 로 줄어요. 움직이는 캡처 때는 다시 움직여요.
 - 성능: 설정 서랍을 한 번 연 뒤 채팅에 글이 붙을 때마다 서랍 전용 규칙 350여 개가 채팅 전체를 다시 맞춰 보던 것을 막았어요 (글 붙이기 221 → 53ms 수준). 입력 중 선택 처리 · 북마크 조판 · 부팅 때 색 읽기 · 커스텀 CSS 저장 · 확장 순서 · 캐릭터 에셋 · 메모 바가 스타일을 강제로 다시 계산하던 것도 줄였어요.

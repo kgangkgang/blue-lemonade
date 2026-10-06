@@ -5,7 +5,7 @@
    ===== */
 /* ===== 미리보기 자동 생성 (surfaces:preview) =====
    tools/gen-preview-css.js 가 #chat 규칙을 여기 복사한다 — 손으로 고치지 말 것.
-   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 381개 (111.5KB).
+   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 382개 (112.0KB).
    style.css 의 채팅 · 에셋 규칙을 고치면 `node tools/gen-preview-css.js` 를 다시 돌린다.
    이 칸을 다른 자리로 옮기지 말 것: 사본이 손으로 쓴 채팅 규칙보다 뒤에 있어야 같은 무게에서 이기고,
    바로 뒤의 보정 칸이 사본을 눌러 줄 수 있다. 앞으로 옮기면 아바타 모서리처럼 순서로만 갈리는 것이 뒤집힌다 */
@@ -644,9 +644,10 @@ body.salty.salty-user-table :is(#salty-nochat, .salty-preview) .mes[is_user="tru
 body.salty.salty-indent :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .mes_text :is(p, details.custom-llm-translator-details, details.llm-translator-details) .bl-dialogue-indent {
   width: calc(var(--salty-size) * var(--salty-user-scale, 1));
 }
-body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-wrap, [class*="custom-imageWrapper"]) {
+body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-wrap, [class*="custom-imageWrapper"], .autopic-tag-img-wrapper) {
   display: block;
   width: auto !important;
+  max-width: none !important;
   padding: 0 !important;
   margin: 1.4em 0 !important;
   background: none !important;
@@ -667,7 +668,7 @@ body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-frame, .
 body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-halo-img, .custom-cac-glow) {
   display: none !important;
 }
-body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img) {
+body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img, img[data-autopic-id]) {
   display: block;
   width: 100% !important;
   max-width: none !important;
@@ -680,6 +681,10 @@ body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-img, img
   border: 0 !important;
   border-radius: var(--salty-img-radius) !important;
   box-shadow: none !important;
+}
+body.salty :is(#salty-nochat, .salty-preview) .mes_text img[data-autopic-id] {
+  transform: none !important;
+  transition: none !important;
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(img.character-asset-rendered, img.eh-img) {
   margin: 1.4em 0 1.75em !important;
@@ -696,7 +701,7 @@ body.salty :is(#salty-nochat, .salty-preview) .mes_text .bl-img-indent {
 body.salty.salty-indent :is(#salty-nochat, .salty-preview) .mes_text p > .bl-img-indent {
   display: inline-block; width: 1em; height: 0;
 }
-body.salty.salty-img-bleed :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-wrap, [class*="custom-imageWrapper"]) {
+body.salty.salty-img-bleed :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-wrap, [class*="custom-imageWrapper"], .autopic-tag-img-wrapper) {
   margin-inline: calc(var(--salty-gutter) * -1) !important;
 }
 body.salty.salty-img-bleed :is(#salty-nochat, .salty-preview) .mes_text :is(img.character-asset-rendered, img.eh-img) {
@@ -712,23 +717,23 @@ body.salty.salty-img-bleed :is(#salty-nochat, .salty-preview) .mes_text :is(img.
     height: 0;
   }
 }
-body.salty.salty-img-bleed :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img) {
+body.salty.salty-img-bleed :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img, img[data-autopic-id]) {
   border-radius: 0 !important;
 }
-body.salty.salty-img-inset :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-wrap, [class*="custom-imageWrapper"], img.character-asset-rendered, img.eh-img) {
+body.salty.salty-img-inset :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-wrap, [class*="custom-imageWrapper"], img.character-asset-rendered, img.eh-img, .autopic-tag-img-wrapper) {
   width: min(72%, 420px) !important;
   margin-inline: auto !important;
 }
-body.salty.salty-shape-rect.salty-fade-off.salty-edge-none:not(.salty-img-bleed):not(.salty-blend) :is(#salty-nochat, .salty-preview) .mes_text :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img) {
+body.salty.salty-shape-rect.salty-fade-off.salty-edge-none:not(.salty-img-bleed):not(.salty-blend) :is(#salty-nochat, .salty-preview) .mes_text :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img, img[data-autopic-id].salty-asset:not(.salty-cutout)) {
   box-shadow: var(--bl-e2) !important;
 }
-body.salty.salty-blend :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img) {
+body.salty.salty-blend :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img, img[data-autopic-id]) {
   mix-blend-mode: multiply;
 }
 body.salty.salty-blend :is(#salty-nochat, .salty-preview) .mes {
   background: var(--salty-fill-bg, var(--salty-bg)) !important;
 }
-body.salty.salty-shape-rect:is(.salty-edge-none, .salty-edge-line, .salty-edge-inset, .salty-edge-glow, .salty-edge-prism) :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img) {
+body.salty.salty-shape-rect:is(.salty-edge-none, .salty-edge-line, .salty-edge-inset, .salty-edge-glow, .salty-edge-prism) :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img, img[data-autopic-id]) {
   border-style: var(--bl-img-frame-style) !important;
   border-color: var(--bl-img-frame-color) !important;
   border-width: var(--bl-img-frame-top) var(--bl-img-frame-right) var(--bl-img-frame-bottom) var(--bl-img-frame-left) !important;
@@ -738,7 +743,7 @@ body.salty.salty-shape-rect:is(.salty-edge-none, .salty-edge-line, .salty-edge-i
   outline-offset: var(--bl-img-frame-offset) !important;
   box-shadow: var(--bl-img-frame-shadow) !important;
 }
-body.salty.salty-edge-auto.salty-shape-rect :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img) {
+body.salty.salty-edge-auto.salty-shape-rect :is(#salty-nochat, .salty-preview) .mes_text :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img, img[data-autopic-id]) {
   border-color: rgb(var(--salty-pick-key, 145 165 186) / var(--salty-edge-alpha)) !important;
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes_text :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img) {
@@ -759,7 +764,7 @@ body.salty.salty-fade-soft :is(#salty-nochat, .salty-preview) .mes_text :is(.sal
 body.salty:is(.salty-fade-medium, .salty-fade-strong) :is(#salty-nochat, .salty-preview) .mes_text :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img) {
   clip-path: inset(1px);
 }
-body.salty:is(.salty-fade-medium, .salty-fade-strong):not(.salty-shape-slant) :is(#salty-nochat, .salty-preview) .mes_text :is(img.character-asset-rendered.salty-asset, img.eh-img.salty-asset, .custom-cac-wrap.salty-asset, [class*="custom-imageWrapper"].salty-asset):not(.salty-cutout) {
+body.salty:is(.salty-fade-medium, .salty-fade-strong):not(.salty-shape-slant) :is(#salty-nochat, .salty-preview) .mes_text :is(img.character-asset-rendered.salty-asset, img.eh-img.salty-asset, .custom-cac-wrap.salty-asset, [class*="custom-imageWrapper"].salty-asset, .autopic-tag-img-wrapper.salty-asset):not(.salty-cutout) {
   margin-block: max(0.6em, calc(1.4em - var(--salty-imin, 240px) * var(--salty-feather-y, 0) * var(--salty-fade-pull))) !important;
 }
 body.salty.salty-shape-rect:not(.salty-fade-off) :is(#salty-nochat, .salty-preview) .mes_text :is(.salty-asset:not(.salty-cutout) .custom-cac-img, img.character-asset-rendered.salty-asset:not(.salty-cutout), img.eh-img.salty-asset:not(.salty-cutout), .salty-asset:not(.salty-cutout) img) {
