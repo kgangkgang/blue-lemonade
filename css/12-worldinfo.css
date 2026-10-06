@@ -129,20 +129,8 @@ body.salty #WorldInfo > .flex-container:has(> #WI_panel_pin_div) {
   padding-top: 2px;
 }
 /* 큰 UI 글꼴에서도 제목이 서랍 폭 안에서 자연스럽게 이어진다. */
-body.salty #WorldInfo > .flex-container:has(> #WI_panel_pin_div) > h3 {
-  flex: 1 1 0;
-  min-width: 0;
-  flex-wrap: wrap;
-  gap: 8px 10px;
-  white-space: normal;
-  line-height: 1.4;
-}
-body.salty #WorldInfo > .flex-container:has(> #WI_panel_pin_div) > h3 > span {
-  min-width: 0;
-  max-width: 100%;
-  word-break: normal;
-  overflow-wrap: anywhere;
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #WorldInfo > .flex-container:has(> #WI_panel_pin_div) > h3 */
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #WorldInfo > .flex-container:has(> #WI_panel_pin_div) > h3 > span */
 body.salty #WorldInfo #WI_panel_pin_div {
   flex: none;
   margin-left: -9px;
@@ -315,15 +303,7 @@ body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .ne
   gap: 8px 10px;
   padding: 6px 0 2px;
 }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 0;
-  font-size: var(--bl-fs-body) !important;
-  font-weight: 500;
-  line-height: 1.35;
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > smal … */
 body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child .fa-solid {
   margin: 0 !important;
   font-size: var(--bl-fs-sub);
@@ -353,13 +333,7 @@ body.salty #WorldInfo #wiSliders > .flex-container:has(> #world_info_character_s
   min-height: var(--bl-h-row);
   margin-top: var(--bl-s1);
 }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> #world_info_character_strategy) > small {
-  flex: 1 1 10em;
-  min-width: 0;
-  color: var(--salty-text) !important;
-  font-size: var(--bl-fs-body) !important;
-  font-weight: 500;
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #WorldInfo #wiSliders > .flex-container:has(> #world_info_character_strategy) > small */
 body.salty #WorldInfo #world_info_character_strategy {
   flex: 1 1 12em !important;
   width: auto !important;
@@ -948,7 +922,7 @@ body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] > .world
 body.salty #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control:has(> select[name="entryLogicType"]) {
   margin-top: 4px;
 }
-body.salty #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control:has(> select[name="entryLogicType"]) > small,
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김 (이 규칙의 갈래 1개): #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control:has(> select[name="ent … */
 body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] > .world_entry_form_control > small {
   flex: 1 1 auto;
   min-width: 0;

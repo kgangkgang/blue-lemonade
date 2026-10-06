@@ -1,5 +1,6 @@
 // TTS 설정: 기본값 · 1.0.0 → 1.1.0 → 1.2.0 → 1.2.1 → 1.2.2 → 1.2.3 → 1.2.4 → 1.2.5 옮기기 · 저장
 import { saveSettingsDebounced } from '../../../../../../../../script.js';
+import * as stScript from '../../../../../../../../script.js';   // saveSettings (바로 저장) — 없는 판(테스트 스텁 등)이면 debounce 판으로
 import { extension_settings } from '../../../../../../../extensions.js';
 import { KNOWN_VOICES, KNOWN_SIG } from './known-voices.js';
 import { TTS_VERSION } from '../version.js';
@@ -85,6 +86,8 @@ export const DEFAULTS = Object.freeze({
     wand_menu: true,               // 요술봉 메뉴에 TTS(설정 열기) · TTS 정지 두 줄 (끄면 뺌 — index.js 가 'tts:wand' 로 바로 반영)
     // 1.2.2
     pregen: 'dialogue',            // 미리 만들기: 'off' | 'dialogue' (대사) | 'all' (대사+속마음) — 답장이 오면 누를 줄의 소리를 미리 (pregen.js)
+    // 5.6.4
+    pregen_paid: false,            // 유료 엔진(paid.js — MiniMax 공식 서버 등)도 미리 만들기. 끄면 그 엔진 줄은 누를 때만 만든다 (크레딧 아끼기)
 });
 export const PREGEN_MODES = Object.freeze(['off', 'dialogue', 'all']);
 export const HIGHLIGHT_STYLES = Object.freeze(['color', 'both', 'underline']);
@@ -329,6 +332,7 @@ export function settings() {
     if (!HIGHLIGHT_STYLES.includes(s.highlight_style)) s.highlight_style = 'both';
     if (!['weak', 'normal', 'strong'].includes(s.emotion_strength)) s.emotion_strength = 'normal';
     if (!['whisper', 'auto'].includes(s.thought_emotion)) s.thought_emotion = 'whisper';
+    s.pregen_paid = s.pregen_paid === true;   // 5.6.4 켬끔만 (모르는 값은 끔 — 크레딧 아끼는 쪽)
     s.voices = s.voices.filter(v => v && v.uid).map(v => toVoice(v, v.provider));
     // 1.2.3 이름표가 새것이면 한 번: id 이름인 목소리 → 한글 이름 (이름을 고친 목소리는 그대로)
     if (s.known_voices !== KNOWN_SIG) {
@@ -342,6 +346,44 @@ export function settings() {
 }
 
 export const save = () => saveSettingsDebounced();
+
+// 5.6.4 사용량 숫자는 설정 객체(메모리)에 바로 더하고, 디스크에는 30초에 한 번만 쓴다.
+// 줄마다 saveSettingsDebounced(1초)를 부르면 미리 만들기가 줄을 하나씩 만드는 동안 거의 묶이지 않아 설정 전체(2 MB)를 줄마다 저장했다.
+// 타이머는 걸려 있는 동안 다시 걸지 않는다(밀리지 않게). 화면을 숨기거나 페이지를 떠날 때는 debounce 없이 바로 저장한다(안드로이드가 탭을 얼리기 전에).
+// 5.6.4 리뷰: 30초 타이머도 바로 저장한다 — debounce(1초)로 넘기면 그 1초 안에 탭을 닫을 때 밀린 숫자가 사라졌다
+//   (usagePending 은 이미 false 라 pagehide 의 flushUsage 도 건너뜀). 30초에 한 번이라 바로 저장해도 묶임이 줄지 않는다
+export const USAGE_SAVE_MS = 30000;
+let usageTimer = null, usagePending = false;
+/** 설정을 debounce 없이 저장 (실리태번 saveSettings — 없는 판이면 debounce 판으로) */
+function saveUsageNow() {
+    try { Promise.resolve(typeof stScript.saveSettings === 'function' ? stScript.saveSettings() : saveSettingsDebounced()).catch(e => console.error('[TTS] 사용량 저장 실패', e)); }
+    catch (e) { console.error('[TTS] 사용량 저장 실패', e); }
+}
+function saveUsageLater() {
+    usagePending = true;
+    if (usageTimer) return;
+    usageTimer = setTimeout(() => {
+        usageTimer = null;
+        if (!usagePending) return;
+        usagePending = false;
+        saveUsageNow();
+    }, USAGE_SAVE_MS);
+    usageTimer?.unref?.();   // node 테스트가 30초를 기다리지 않게 (브라우저 타이머 번호엔 없음)
+}
+/** 밀린 사용량을 바로 저장한다. 밀린 게 없으면 false */
+export function flushUsage() {
+    if (!usagePending) return false;
+    usagePending = false;
+    clearTimeout(usageTimer); usageTimer = null;
+    saveUsageNow();
+    return true;
+}
+/** 저장을 기다리는 사용량이 있는지 (테스트 · 확인용) */
+export const usageSavePending = () => usagePending;
+if (typeof globalThis.document?.addEventListener === 'function' && typeof globalThis.window?.addEventListener === 'function') {
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushUsage(); });
+    window.addEventListener('pagehide', flushUsage);
+}
 
 /** 엔진 설정 (기본값을 채워서) */
 export function providerConfig(id, defaults = {}) {
@@ -403,13 +445,13 @@ export function addUsage(chars, { pre = false, model = '' } = {}) {
     if (pre) { u.pre_chars += n; u.pre_requests += 1; }
     const m = cleanModel(model);
     if (m && !['__proto__', 'constructor', 'prototype'].includes(m)) u.models[m] = (Number(u.models[m]) || 0) + n;
-    save();
+    saveUsageLater();
 }
 /** 미리 만든 소리를 실제로 들은 글자 (소리마다 한 번) */
 export function addPreUsed(chars) {
     const s = settings();
     monthUsage(s).pre_used_chars += Math.max(0, Number(chars) || 0);
-    save();
+    saveUsageLater();
 }
 
 /** 이번 달 대사 분석 사용량 더하기 (호출 수 + 토큰; 실리태번 연결은 토큰 0) */
@@ -420,5 +462,5 @@ export function addAnalysisUsage(inTokens = 0, outTokens = 0, calls = 1) {
     s.analysis_usage.calls += Math.max(1, Math.round(Number(calls) || 1));
     s.analysis_usage.in_tokens += Math.max(0, Number(inTokens) || 0);
     s.analysis_usage.out_tokens += Math.max(0, Number(outTokens) || 0);
-    save();
+    saveUsageLater();
 }

@@ -104,7 +104,7 @@ body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2)
 body.salty #rm_extensions_block :is(.ext-version, .jj-version, .eh-version, .wr-version, .mr-version, .bwr-version, .llmt-version, .bl-version) {
   display: inline-block;
   margin-left: var(--bl-s1);
-  padding: 1px 8px;
+  padding: 2px 8px 0; /* 5.6.4 세로 중앙: 숫자가 1px 위로 떠서 아래 1px 를 위로 (높이 그대로) */
   border: 1px solid color-mix(in srgb, var(--salty-text) 16%, transparent);
   border-radius: var(--bl-r-pill);
   background: var(--bl-fill-hover, var(--bl-hover));

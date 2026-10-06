@@ -150,9 +150,7 @@ body.salty #right-nav-panel #rm_button_selected_ch h2:not(:empty) {
   overflow-wrap: anywhere;
 }
 /* 목록 · 그룹 화면(토큰 정보가 숨은 때)에서는 안 켜진 탭이라 흐리게 */
-body.salty #right-nav-panel #right-nav-panel-tabs:has(> #result_info[style*="none"]) #rm_button_selected_ch h2 {
-  color: var(--salty-muted) !important;
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #right-nav-panel #right-nav-panel-tabs:has(> #result_info[style*="none"]) #rm_button_selected_ch h2 */
 @media (hover: hover) {
   body.salty #right-nav-panel #right-nav-panel-tabs #rm_button_selected_ch:hover h2 {
     color: var(--salty-text) !important;

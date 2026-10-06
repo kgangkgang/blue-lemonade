@@ -12,7 +12,7 @@ import { badgeTextHit } from '../../badge-hit.js';
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
-const VERSION = '1.1.6';
+const VERSION = '1.1.7';
 // 1.1.5: 깃털 창에 두 쪽 — 전개 지시(이번 전개) · 항상 지시(적은 글 그대로 매번, 예: <OOC: …>). 옆으로 넘기거나 제목을 눌러 바꾼다
 const KINDS = ['direction', 'always'];
 const KIND_LABEL = { direction: '전개 지시', always: '항상 지시' };
@@ -163,10 +163,10 @@ function parseColorCode(text) {
     return null;
 }
 
-/** 지금 적용되는 켜짐 색 (설정 색 또는 테마의 대사 색)을 #rrggbb로 */
-function effectiveOnColor() {
+/** 지금 적용되는 켜짐 색 (설정 색 또는 테마의 대사 색)을 #rrggbb로. style = 미리 받아 둔 :root 계산 스타일 (applyOnColor) */
+function effectiveOnColor(style = null) {
     if (settings().onColor) return settings().onColor;
-    return parseColorCode(getComputedStyle(document.documentElement).getPropertyValue('--SmartThemeQuoteColor')) ?? '#e18a24';
+    return parseColorCode((style ?? getComputedStyle(document.documentElement)).getPropertyValue('--SmartThemeQuoteColor')) ?? '#e18a24';
 }
 
 function contrastInk(hex) {
@@ -176,8 +176,8 @@ function contrastInk(hex) {
 }
 
 /** 테마 글자색이 밝으면 어두운 테마다. 빠른 편집 창의 불투명 바탕을 여기에 맞춘다. */
-function isDarkTheme() {
-    const text = getComputedStyle(document.documentElement).getPropertyValue('--SmartThemeBodyColor');
+function isDarkTheme(style = null) {
+    const text = (style ?? getComputedStyle(document.documentElement)).getPropertyValue('--SmartThemeBodyColor');
     const channels = text.match(/rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/i)?.slice(1, 4).map(Number);
     if (!channels) return true;
     const [red, green, blue] = channels;
@@ -214,11 +214,11 @@ function hueGap(a, b) {
     return Math.min(gap, 360 - gap);
 }
 
-function gradientColors() {
+function gradientColors(rootStyle = null) {
     const onColor = settings().onColor;
     if (onColor) return [onColor, partnerColor(onColor)];
     if (document.body?.classList.contains('salty')) {
-        const style = getComputedStyle(document.documentElement);
+        const style = rootStyle ?? getComputedStyle(document.documentElement);
         const accent = parseColorCode(style.getPropertyValue('--salty-accent'));
         const pop = parseColorCode(style.getPropertyValue('--salty-pop'));
         if (document.body.classList.contains('salty-dark') && pop) {
@@ -227,20 +227,28 @@ function gradientColors() {
         }
         if (accent) return [accent, partnerColor(accent)];
     }
-    const base = effectiveOnColor();
+    const base = effectiveOnColor(rootStyle);
     return [base, partnerColor(base)];
 }
 
+// 5.6.4 (점검 RP-5): 예전엔 [:root 쓰기 → 계산 스타일 읽기]를 세 번 번갈아 해서 부팅 때 문서 전체 스타일 계산을 3~4번 강제했다 (폰 리그 4배 305~402 ms).
+// 읽을 값을 먼저 다 읽고(계산은 첫 읽기 한 번) 그다음에 쓴다 — 쓰는 --jj-* 변수는 읽는 테마 색에 쓰이지 않는다.
+// 읽은 값으로 syncOnColor 의 서명도 맞춰 둔다 — 부팅 1.5초 뒤의 첫 syncOnColor 가 같은 색이면 다시 칠하지 않게.
 function applyOnColor() {
+    const style = getComputedStyle(document.documentElement);
+    const onInk = contrastInk(effectiveOnColor(style)), base = isDarkTheme(style) ? '#141318' : '#fbf9f6';
+    const [from, to] = gradientColors(style);
+    onColorSignature = colorSignature(style);
     const rootStyle = document.documentElement.style;
     if (settings().onColor) rootStyle.setProperty('--jj-on-color', settings().onColor);
     else rootStyle.removeProperty('--jj-on-color');
-    rootStyle.setProperty('--jj-on-ink', contrastInk(effectiveOnColor()));
-    rootStyle.setProperty('--jj-base', isDarkTheme() ? '#141318' : '#fbf9f6');
-    const [from, to] = gradientColors();
+    rootStyle.setProperty('--jj-on-ink', onInk);
+    rootStyle.setProperty('--jj-base', base);
     rootStyle.setProperty('--jj-grad-a', from);
     rootStyle.setProperty('--jj-grad-b', to);
 }
+const colorSignature = style => [settings().onColor, style.getPropertyValue('--SmartThemeQuoteColor').trim(), style.getPropertyValue('--SmartThemeBodyColor').trim(),
+    style.getPropertyValue('--salty-pop').trim(), style.getPropertyValue('--salty-accent').trim(), document.body.classList.contains('salty-dark')].join('|');
 
 /**
  * 테마 색이 실제로 바뀌었을 때만 다시 계산한다.
@@ -254,12 +262,8 @@ function syncOnColor() {
     const source = [settings().onColor, document.documentElement.getAttribute('style'), document.getElementById('salty-vars')?.textContent, document.body.classList.contains('salty'), document.body.classList.contains('salty-dark'), document.styleSheets.length].join('|');
     if (source === onColorSource) return;
     onColorSource = source;
-    const style = getComputedStyle(document.documentElement);
-    const signature = [settings().onColor, style.getPropertyValue('--SmartThemeQuoteColor').trim(), style.getPropertyValue('--SmartThemeBodyColor').trim(),
-        style.getPropertyValue('--salty-pop').trim(), style.getPropertyValue('--salty-accent').trim(), document.body.classList.contains('salty-dark')].join('|');
-    if (signature === onColorSignature) return;
-    onColorSignature = signature;
-    applyOnColor();
+    if (colorSignature(getComputedStyle(document.documentElement)) === onColorSignature) return;
+    applyOnColor(); // 서명은 applyOnColor 가 읽은 값으로 맞춘다
 }
 
 // ── 프롬프트 주입과 {{direction}} 매크로 ────────────────────

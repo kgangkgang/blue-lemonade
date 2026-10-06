@@ -1,5 +1,6 @@
 // 북마크 — 모아 보기 패널
 import { restorePreviewRules } from '../../lite.js';
+import { typesetBatch } from '../../typography.js';
 import { hooks, settings, saveSettings, applyTheme, applyColors, colorsFor, currentChatKey, iconName } from './state.js';
 import { getOwner, currentRecord, listOtherChats, loadRecord, findBookmark, bookmarkAt, addBookmark, bookmarkMessage } from './data.js';
 import { escapeHtml, formatDate, renderMessageHtml, renderReasoningHtml, renderNoteHtml, noteToPlainText, messageText, avatarForMessage, hydrateHtmlBlocks, highlightMatches, clearHighlights } from './render.js';
@@ -480,7 +481,7 @@ function renderMain() {
 
     const list = $('.cg-list');
     list.innerHTML = pageItems.map(({ fav, index }) => renderCard(record, fav, index)).join('');
-    list.querySelectorAll('.cg-card').forEach(activateCard);
+    activateCards([...list.querySelectorAll('.cg-card')]);
     renderPager(totalPages);
 }
 
@@ -732,10 +733,24 @@ function renderCard(record, fav, index) {
 }
 
 function activateCard(card) {
+    activateCards([card]);
+}
+
+// 5.6.4 (점검 RP-4): 카드마다 조판(typography)이 스타일 재계산을 한 번씩 강제했다 — 한 쪽의 카드를 다 그린 뒤 한 번에 조판한다.
+// 검색어 강조(highlightMatches)는 조판이 글자 마디를 나눈 뒤에 걸어야 하므로 조판 다음에 (카드 하나일 때와 같은 차례)
+function activateCards(cards) {
+    typesetBatch(() => {
+        for (const card of cards) {
+            hydrateHtmlBlocks(card.querySelector('.cg-mes'));
+            const noteRoot = card.querySelector('.cg-note-text');
+            if (noteRoot) hydrateHtmlBlocks(noteRoot);
+        }
+    });
+    for (const card of cards) watchCard(card);
+}
+
+function watchCard(card) {
     const mes = card.querySelector('.cg-mes');
-    hydrateHtmlBlocks(mes);
-    const noteRoot = card.querySelector('.cg-note-text');
-    if (noteRoot) hydrateHtmlBlocks(noteRoot);
     view.bodyObserver.observe(mes);
     // ResizeObserver의 첫 알림에서 한꺼번에 측정한다 (카드별 DOM쓰기→강제 layout 방지).
     if (view.query) {

@@ -235,7 +235,7 @@ html body.salty .llmt-tab > span { word-break:keep-all; overflow-wrap:normal; }
   html body.salty .llmt-tabs { grid-template-columns:repeat(4,minmax(0,1fr)); }
 }
 @container bl-translator-settings (min-width:40em) {
-  html body.salty .llmt-tab { --bl-tab-optical-shift:clamp(.5px,.08em,2px); flex-direction:row; gap:10px; }
+  html body.salty .llmt-tab { --bl-tab-optical-shift:clamp(.25px,calc(.04em * (1 + var(--bl-ink-k, 1))),2px); flex-direction:row; gap:10px; } /* 5.6.4 가로 탭: 프리젠테이션(--bl-ink-k 0)은 .08em 이면 글자가 아이콘보다 0.7~0.95px 아래로 넘어가 .04em, Pretendard(k 1) · 모르는 글꼴은 예전 .08em (반으로 줄이면 아이콘이 1.1px 위로 갔다) */
 }
 html body.salty .llmt-tab.active { background:var(--salty-accent-13,var(--salty-shade)); color:var(--salty-accent-ink,var(--salty-accent)); font-weight:inherit; }
 html body.salty .llmt-tab.active i { color:inherit; }
@@ -251,6 +251,8 @@ html body.salty .llmt-settings :is(.menu_button,.llmt-gl-scope,.llmt-gl-sort) {
   height:auto; min-height:36px; max-width:100%; white-space:normal;
   line-height:1.45; font-weight:inherit; letter-spacing:inherit;
 }
+/* 5.6.4 용어집 정렬 '가': padding 0 에 최소 높이 가운데 정렬이라 반행간 보정 n 만큼 내리려면 위에 2n (높이 36 그대로) — 1.2px 위였다 */
+html body.salty .llmt-settings .llmt-gl-sort { padding-top:calc(2 * var(--bl-text-nudge, 0px)); }
 /* 닫기는 내용만큼, 큰 메뉴 글자에서는 아이콘과 패딩 높이를 확보한다. */
 html body.salty .bl-translator-dialog > header > button {
   --bl-translator-close-min:34px;

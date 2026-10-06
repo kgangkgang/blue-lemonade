@@ -26,7 +26,10 @@ export function applyMenuOrders(){for(const kind of Object.keys(targets)){
  const root=rows[0].el.parentElement,slots=rows.map(r=>{const marker=document.createComment('menu-order');r.el.before(marker);return marker;});
  sorted.forEach((row,i)=>slots[i].replaceWith(row.el));
 }}
-export function startMenuOrdering(){if(watching)return;watching=true;applyMenuOrders();
+// 5.6.4 (점검 PAB-3): 첫 줄 세우기는 한가할 때 — 부팅 중(다른 애드온이 붙는 중)에는 getComputedStyle(#extensionsMenu)이 밀린 스타일 계산을 그 자리에서 돌렸다.
+// 부팅 때 메뉴는 닫혀 있고, 그 사이 메뉴가 바뀌거나 열리면 아래 감시자 · 누름 처리가 같은 일을 한다
+const whenIdle=fn=>typeof requestIdleCallback==='function'?requestIdleCallback(fn,{timeout:2000}):setTimeout(fn,1000);
+export function startMenuOrdering(){if(watching)return;watching=true;whenIdle(()=>applyMenuOrders());
  const schedule=()=>{clearTimeout(timer);timer=setTimeout(applyMenuOrders,80);};
  for(const [,selector] of Object.values(targets)){const root=document.querySelector(selector);if(root)new MutationObserver(records=>{if(records.some(r=>r.type==='childList'||r.target===root))schedule();}).observe(root,{childList:true,subtree:true,attributes:true,attributeFilter:['style']});}
  for(const id of ['extensionsMenuButton','options_button'])document.getElementById(id)?.addEventListener('click',schedule);

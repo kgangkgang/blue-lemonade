@@ -86,6 +86,8 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
   }
   .salty-panel .salty-seg.salty-mini { flex-wrap: wrap; max-width: 100%; }
   .salty-panel .salty-row { flex-wrap: wrap; gap: var(--bl-settings-gap); }
+  /* 5.6.4 글꼴 태그(이름 + 작은 개수)는 34px 폰 칩에서 위 반행간 보정이 넘쳐 0.8px 아래로 갔다 — 보정 없이 4px 씩 */
+  .salty-panel .salty-fonttags button { padding-block: 4px; }
 }
 .salty-panel .salty-sizeopt-ctl { margin-inline-start:auto; justify-content:flex-end; }
 .salty-panel .salty-row { padding-block:5px; }
@@ -182,4 +184,47 @@ html body.salty toolcool-color-picker {
   --tool-cool-color-picker-btn-border-radius:50%;
   --tool-cool-color-picker-btn-border-radius-inner:50%;
   border-radius:50%;
+}
+/* 5.6.4 ↺ · × · ‹ › 글자 단추를 선 그림으로: 이 글자들은 기기의 대체 글꼴(윈도 Cambria Math · Noto, 폰은 또 다른 글꼴)에서 와서
+   상자 안에서 1.8~3px 아래로 처졌다(기본 글꼴의 ‹ › 도 1.75px). 글자는 그대로 두고(읽기 프로그램 · 상자 크기 그대로) 채움만 투명하게,
+   같은 색(currentColor) 마스크 그림을 칸 한가운데에 놓는다 — 그림의 잉크 상자가 viewBox 가운데라 글꼴과 상관없이 가운데 */
+:is(html body .bl-editor .bl-setting-reset, .salty-panel .bl-view-resize > button:not(.bl-view-toggle), .salty-panel .bl-settings-close,
+  .salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"], .salty-panel .bl-search-field > [data-settings-clear],
+  .bl-credits-dialog > header > button, .pt-help-dialog > header > button, body.salty .salty-panel .bl-preview-samples > button) {
+  position:relative;
+  -webkit-text-fill-color:transparent;
+}
+:is(html body .bl-editor .bl-setting-reset, .salty-panel .bl-view-resize > button:not(.bl-view-toggle), .salty-panel .bl-settings-close,
+  .salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"], .salty-panel .bl-search-field > [data-settings-clear],
+  .bl-credits-dialog > header > button, .pt-help-dialog > header > button, body.salty .salty-panel .bl-preview-samples > button)::before {
+  content:'';
+  position:absolute;
+  inset:0;
+  margin:auto;
+  width:var(--bl-glyph-size, 16px);
+  height:var(--bl-glyph-size, 16px);
+  background:currentColor;
+  -webkit-mask:var(--bl-glyph) center / contain no-repeat;
+  mask:var(--bl-glyph) center / contain no-repeat;
+  pointer-events:none;
+}
+/* ↺ 기본값으로 · 미리보기 기본 높이 */
+:is(html body .bl-editor .bl-setting-reset, .salty-panel .bl-view-resize > button:not(.bl-view-toggle)) {
+  --bl-glyph:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8.4 5H10A6.2 6.2 0 1 1 5.62 6.82M10.9 2.5 8.4 5l2.5 2.5'/%3E%3C/svg%3E");
+}
+.salty-panel .bl-view-resize > button:not(.bl-view-toggle) { --bl-glyph-size:14px; }
+/* × 닫기 · 지우기 (예전 글자 잉크 크기에 맞춤: 머리 · 목록 16px, 검색 14.5px, 출처 창 11px) */
+:is(.salty-panel .bl-settings-close, .salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"], .salty-panel .bl-search-field > [data-settings-clear], .bl-credits-dialog > header > button, .pt-help-dialog > header > button) {
+  --bl-glyph:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M3 3l14 14M17 3 3 17'/%3E%3C/svg%3E");
+}
+.salty-panel .bl-settings-close, .salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"] { --bl-glyph-size:20px; }
+.salty-panel .bl-search-field > [data-settings-clear] { --bl-glyph-size:18px; }
+.bl-credits-dialog > header > button, .pt-help-dialog > header > button { --bl-glyph-size:14px; } /* 한글화 패널 사용방법 창 × 도 출처 창과 같은 규칙(26px system-ui) */
+/* ‹ › 미리보기 표본 넘기기 */
+body.salty .salty-panel .bl-preview-samples > button {
+  --bl-glyph:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12.5 5 7.5 10l5 5'/%3E%3C/svg%3E");
+  --bl-glyph-size:14px;
+}
+body.salty .salty-panel .bl-preview-samples > button[data-step="1"] {
+  --bl-glyph:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7.5 5l5 5-5 5'/%3E%3C/svg%3E");
 }

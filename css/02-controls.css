@@ -21,6 +21,10 @@ body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #
   font-size: 15px;
   color: var(--salty-muted);
 }
+/* 5.6.4 캐릭터 표정 서랍: 실리태번이 이 단추들만 baseline 정렬(expressions/style.css) — 위 min-height 로 상자가 내용보다 커지면 글자가 맨 위에 붙었다 (+9~10px) */
+body.salty .expression_buttons .menu_button {
+  align-items: center;
+}
 @media (hover: hover) {
   body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)):hover {
     background: var(--bl-fill-control-hover, var(--bl-control-hover)) !important;
@@ -176,6 +180,14 @@ body.salty :is(.range-block-counter input, input.neo-range-input) {
   font-size: var(--bl-fs-ctl) !important;
   font-variant-numeric: tabular-nums;
   text-align: center;
+}
+/* 5.6.4 마우스 기기(PC 크롬)는 숫자칸 오른쪽에 스핀 단추 자리(15px)를 늘 잡아 가운데 숫자가 7~8px 왼쪽으로 갔다 — 그 폭만큼 왼쪽 여백으로 옮겨 칸 가운데에.
+   터치 기기는 스핀 자리가 없어 그대로. 쉼표 그림(src/numcomma.js)은 계산된 여백 · 스핀 폭을 읽어 같이 따라온다 */
+@media (hover: hover) and (pointer: fine) {
+  body.salty :is(.range-block-counter input, input.neo-range-input)[type="number"] {
+    padding-left: 15px !important;
+    padding-right: 0 !important;
+  }
 }
 /* 5.3.7 큰 숫자는 쉼표로 (src/numcomma.js): 포커스 밖일 때만 칸의 글꼴로 그린 '30,000' 그림을 배경 맨 위 겹으로 깔고 진짜 글자는 투명.
    값 · DOM 은 그대로다. 원래 배경 그림 겹(있으면 --bl-num-under*)은 우리 겹 아래에 그대로 두고, 배경색은 건드리지 않는다.
@@ -528,3 +540,7 @@ body.salty .world_entry .inline-drawer-content {
 }
 
 html body.salty .menu_button.menu_button:focus-visible { box-shadow: var(--bl-ring), var(--bl-e2) !important; }
+/* 5.6.4 메뉴 · 도움말 속 code 칩: 실리태번 전역 code{padding:0 3px} 의 배경은 글꼴 내용 칸뿐이라 _ · p · <> 내림획이 칩 아래 끝에 닿았다(0.03~0.55px) —
+   아래만 .12em 늘린다. 인라인이라 줄 높이는 그대로, 배경만 아래로. 채팅 · 미리보기 · 북마크 카드(모두 .mes 안) · 메모 본문과 코드 블록은 제 규칙대로
+   (설정 표본 .salty-sample 의 code 는 06 의 !important padding 이 이긴다. 미리보기 이름을 선택자에 쓰면 src/lite.js 가 미리보기 전용으로 보고 꺼 둔다) */
+body.salty code:where(:not(pre *, .mes *, .bl-notes-view *)) { padding-bottom: .12em; }

@@ -1,7 +1,7 @@
 /* 모델 등록 — 설정 화면
    state.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
 .mr-settings {
-    --mr-css-version: "1.1.1";
+    --mr-css-version: "1.1.2";
 }
 
 /* .inline-drawer-content 자체에는 display를 주지 않는다 (실리태번이 접고 펼 때 display를 바꾼다). */
@@ -16,7 +16,7 @@
 .mr-version {
     display: inline-block;
     margin-left: 4px;
-    padding: 1px 7px;
+    padding: calc(1px + 1px * (1 - var(--bl-ink-k, 1))) 7px calc(1px * var(--bl-ink-k, 1)); /* 5.6.4 세로 중앙(높이 그대로). 재 본 글꼴만: --bl-ink-k 0(프리젠테이션)이면 아래 1px 를 위로, 1(Pretendard) · 모르는 글꼴(없음 → 1)은 예전 1px/1px — Pretendard 는 1px 옮기면 폰에서 -1px 로 넘어갔다 */
     border-radius: 10px;
     background: color-mix(in srgb, var(--SmartThemeBodyColor, #888) 8%, transparent);
     border: 1px solid color-mix(in srgb, var(--SmartThemeBodyColor, #999) 28%, transparent);

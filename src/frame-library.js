@@ -1,4 +1,4 @@
-import { tidyDecor } from './decor.js';
+import { tidyDecor, isPresetFrame } from './decor.js';
 export const FRAME_LIMIT = 12;
 const BYTE_LIMIT = 12 * 1024 * 1024;
 import { drawPreset, FRAME_PRESETS } from './frame-presets.js';
@@ -17,6 +17,8 @@ export function tidyFrameLibrary(s) {
 }
 export function saveFrame(s, owner, name) {
     const decor = s[owner]?.decor;
+    // 꺼 둔 기본 프리셋은 그림을 비워 둔다 (decor.js slimDecor) — 보관함 액자는 그림을 그대로 가지므로 넣기 전에 다시 그린다
+    if (decor && (!decor.art || !decor.mask) && isPresetFrame(decor)) refreshPreset(decor);
     if (!decor?.art || !decor.mask) throw new Error('먼저 액자를 고르거나 불러와 주세요.');
     if (s.frameLibrary.length >= FRAME_LIMIT) throw new Error(`액자는 최대 ${FRAME_LIMIT}개까지 저장할 수 있어요. 보관함에서 쓰지 않는 액자를 지워 주세요.`);
     const size = s.frameLibrary.reduce((n, item) => n + item.decor.art.length + item.decor.mask.length, 0) + decor.art.length + decor.mask.length;

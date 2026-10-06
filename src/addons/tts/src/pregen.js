@@ -23,6 +23,9 @@ import { runtimeEnabled } from './runtime.js';
 //          같은 줄은 캐시). 아직 안 보낸 요청만 취소 (보낸 것은 캐시에 들어감). player.stop() 은 여기를 건드리지 않는다.
 // 오류: 429 · 1002 → 엔진 줄을 15초 쉬게 하고 그 줄을 다시 (두 번까지) · 키·잔액 → 그 엔진만 멈춤 (채팅을 바꾸거나, 엔진 설정·키가 바뀌거나,
 //       10분 뒤 풀림) · 키가 아직 없음 → 그 줄만 건너뜀 · 그 밖 → 이 답장만 그만. 모두 기록만 (토스트 없음 — 탭하면 재생기가 같은 오류를 알린다)
+// 5.6.4 유료 엔진(paid.js — MiniMax 공식 서버 등)은 미리 만들지 않는다 (설정 pregen_paid 를 켠 사람만): 등록한 목소리가 모두 유료면 답장을
+//       통째로 건너뛰고(분석 · 번역 기다림도 없음, 까닭은 메시지마다 한 번 기록), 섞여 있으면 유료 엔진 줄만 건너뛴다 (rec.skipped · rec.paid,
+//       답장 끝 한 줄에). 집 PC 로컬 게이트웨이처럼 공식이 아닌 MiniMax 주소는 무료라 그대로 만든다. 탭 · 자동 읽기의 작업 · 키는 그대로
 //
 // 밖으로: init() · onRendered(id, type) · onSwipedExisting(id) · pregenMessage(id, { type }) → Promise<기록>|null
 //         pregenCancel(pred) · pregenChanged(id) · protectRecent() · state() (시험용)
@@ -35,6 +38,7 @@ import * as translation from './translation.js';
 import * as cache from './cache.js';
 import { tapSegments } from './clickplay.js';
 import { log } from './log.js';
+import { isPaidProvider, paidOnly, pregenPaid } from './paid.js';   // 5.6.4
 
 const IDLE_CAP_MS = 3000;    // 생성이 끝나기를 기다리는 한계
 const KEEP_RECS = 5;         // 캐시 정리에서 지켜 둘 최근 답장 수
@@ -152,6 +156,7 @@ async function make(rec, jobs) {
     for (const j of jobs) {
         if (!live(rec)) return false;
         if (!j?.key || rec.keys.has(j.key) || j.provider?.caps?.blob === false) continue;
+        if (!pregenPaid(s) && isPaidProvider(j.provider?.id)) { rec.skipped++; rec.paid++; continue; }   // 5.6.4 유료 엔진 줄은 누를 때
         if (isHalted(j.provider?.id)) { rec.skipped++; continue; }
         const known = player.isInflight(j.key) || await Promise.resolve(cache.has(j.key)).catch(() => false);
         if (!live(rec)) return false;
@@ -216,7 +221,8 @@ async function run(rec) {
     }
     rec.state = 'done';
     const sec = Math.round((Date.now() - rec.t0) / 100) / 10;
-    log('info', `미리 만들기 #${id} · ${rec.lines}줄 · ${rec.chars}자 · ${sec}s${rec.skipped ? ` · 한도 넘은 ${rec.skipped}줄` : ''}`);
+    const over = rec.skipped - rec.paid;
+    log('info', `미리 만들기 #${id} · ${rec.lines}줄 · ${rec.chars}자 · ${sec}s${over ? ` · 한도 넘은 ${over}줄` : ''}${rec.paid ? ` · 유료 엔진 ${rec.paid}줄은 누를 때` : ''}`);
 }
 
 function cancelRec(rec) {
@@ -242,7 +248,7 @@ function start(id, mes, type) {
     const old = recs.get(id);
     if (old && old.mes === mes && old.hash === h && !old.ctrl.signal.aborted && (old.state === 'run' || old.state === 'done')) return old.promise;
     if (old) cancelRec(old);
-    const rec = { id, mes, hash: h, type, mode: effMode(settings()), ctrl: new AbortController(), keys: new Set(), chars: 0, made: 0, lines: 0, skipped: 0, state: 'run', t0: Date.now(), seq: ++seq, promise: null };
+    const rec = { id, mes, hash: h, type, mode: effMode(settings()), ctrl: new AbortController(), keys: new Set(), chars: 0, made: 0, lines: 0, skipped: 0, paid: 0, state: 'run', t0: Date.now(), seq: ++seq, promise: null };
     recs.set(id, rec);
     rec.promise = run(rec)
         .catch(e => { if (!isAbort(e)) fail(rec, errMsg(e) || '오류'); })
@@ -273,6 +279,7 @@ function skipReason(id, type) {
     if (!TYPES.has(String(type ?? ''))) return `생성 종류 ${type}`;
     if (id !== chat.length - 1) return '마지막 메시지가 아님';
     if (player.wasStreamRead(id)) return '스트리밍으로 읽음';
+    if (!pregenPaid(s) && paidOnly(s)) return '유료 엔진';   // 5.6.4 목소리가 모두 유료 엔진: 분석 · 번역 기다림 없이 통째로 (누를 때 만든다)
     return '';
 }
 const skipSeen = new Set();
@@ -330,7 +337,7 @@ export function pregenChanged(mesId) {
 }
 /** 시험 · 기록용 */
 export function state() {
-    return { halted: [...halted.keys()].filter(isHalted), recs: [...recs.values()].map(r => ({ id: r.id, state: r.state, lines: r.lines, chars: r.chars, made: r.made, skipped: r.skipped, keys: [...r.keys] })) };
+    return { halted: [...halted.keys()].filter(isHalted), recs: [...recs.values()].map(r => ({ id: r.id, state: r.state, lines: r.lines, chars: r.chars, made: r.made, skipped: r.skipped, paid: r.paid, keys: [...r.keys] })) };
 }
 /** 이벤트 (그만두기 · 다시). 시작은 index.js 가 onRendered · onSwipedExisting 으로 */
 export function init() {

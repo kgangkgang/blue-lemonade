@@ -44,10 +44,10 @@ body.salty-dark :is(.bl-extension-page,.bl-capture-dialog) { color-scheme:dark; 
 .bl-extension-page .bl-message-choice small { line-height:1.45; font-size:11px; }
 .bl-extension-page .bl-message-actions { margin:0; gap:6px; }
 .bl-extension-page .bl-word-actions,.bl-extension-page .bl-addon-actions { margin:0; gap:8px; }
-.salty-panel .bl-extension-page :is(.bl-word-actions,.bl-addon-actions) > button:where(:not(.bl-word-help)) { flex:0 1 auto; min-height:36px; padding:6px 10px; font-size:12px; }
+.salty-panel .bl-extension-page :is(.bl-word-actions,.bl-addon-actions) > button:where(:not(.bl-word-help)) { flex:0 1 auto; min-height:36px; padding:calc(6px + var(--bl-text-nudge, 0px)) 10px calc(6px - var(--bl-text-nudge, 0px)) /* 5.6.4 세로 중앙 (5.5.3 반행간 보정 — 기본 글꼴에서 +0.8px 위) */; font-size:12px; }
 .bl-extension-page .bl-word-actions > .bl-word-help { flex:0 0 32px; width:32px; height:32px; min-height:32px; align-self:center; padding:0; }
-.bl-rule-caption { display:grid; grid-template-columns:1fr 1fr; gap:20px; padding:0 32px 0 24px; font-size:10px; color:var(--salty-muted); }
-.bl-extension-page .bl-word-rule { grid-template-columns:18px minmax(0,1fr) 12px minmax(0,1fr) 26px; gap:4px; }
+.bl-rule-caption { display:grid; grid-template-columns:1fr 1fr; gap:36px; padding:0 32px 0 24px; font-size:10px; color:var(--salty-muted); } /* 5.6.4 gap 20 → 36: 아래 → 칸이 12 → 28px 로 넓어진 만큼 '바꿀 말' 이름을 둘째 입력칸 왼쪽에 그대로 */
+.bl-extension-page .bl-word-rule { grid-template-columns:18px minmax(0,1fr) 28px minmax(0,1fr) 26px; gap:4px; } /* 5.6.4 → 바꾸기 단추 12 → 28px: 누르기 어렵고 글자가 2px 넘쳤다 */
 .bl-extension-page .bl-word-rule :is(input[type=text],button) { min-height:36px; padding:6px; font-size:12px; }
 .bl-extension-page .bl-word-rule input[type=checkbox] { width:16px; height:16px; margin:0; accent-color:var(--salty-accent); }
 .bl-extension-page [data-word-draft] { min-height:160px; margin:0; padding:10px; box-sizing:border-box; border-radius:8px; font:inherit; line-height:1.6; resize:vertical; }
@@ -74,7 +74,7 @@ body.salty-dark :is(.bl-extension-page,.bl-capture-dialog) { color-scheme:dark; 
 .bl-capture-filter input[type=range]::-webkit-slider-runnable-track { background:linear-gradient(to right,var(--salty-line) var(--fill-a,0%),var(--salty-accent) var(--fill-a,0%) var(--fill-b,0%),var(--salty-line) var(--fill-b,0%))!important; }
 .bl-capture-filter input[type=range]::-moz-range-track { background:linear-gradient(to right,var(--salty-line) var(--fill-a,0%),var(--salty-accent) var(--fill-a,0%) var(--fill-b,0%),var(--salty-line) var(--fill-b,0%)); }
 .bl-capture-filter input[type=range]::-moz-range-progress { background:transparent; }
-.bl-capture-options input:is([type=checkbox],[type=radio]) { appearance:auto!important; -webkit-appearance:auto!important; accent-color:var(--salty-accent); width:18px!important; height:18px!important; min-width:18px; margin:0!important; padding:0!important; box-shadow:none!important; color-scheme:light; }
+.bl-capture-options input:is([type=checkbox],[type=radio]) { appearance:auto!important; -webkit-appearance:auto!important; accent-color:var(--salty-accent); width:18px!important; height:18px!important; min-width:18px; margin:0!important; padding:0!important; box-shadow:none!important; color-scheme:light; transform:none!important; } /* 5.6.4 transform: 실리태번 체크박스의 translateY(-0.075em) 를 지움 — 다른 확장 화면 체크박스(아래 :179)와 같게, 상자가 글자보다 1.2px 위였다 */
 body.salty-dark .bl-capture-options input:is([type=checkbox],[type=radio]) { color-scheme:dark; }
 .bl-mask-color { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:8px 10px; font-size:11px; }
 .bl-mask-color input[type=color] { -webkit-appearance:none!important; appearance:none!important; width:100%; height:34px; min-height:34px; margin:0; padding:4px!important; border:1px solid var(--salty-line)!important; border-radius:8px!important; background:var(--salty-field)!important; box-shadow:none!important; cursor:pointer; }

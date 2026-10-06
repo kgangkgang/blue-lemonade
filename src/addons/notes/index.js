@@ -1619,7 +1619,13 @@ try {
     eventSource.on(event_types.CHARACTER_DELETED, () => { measureOwners(); rerenderAll(); });
 } catch (error) { console.warn('[메모] 채팅 이벤트:', error); }
 let tries = 0;
-const mount = () => { syncMenu(); if ((!document.getElementById(MENU_ID) || !document.getElementById(BAR_ID)) && tries++ < 20) setTimeout(mount, 500); };
+// 5.6.4 (점검 PAB-5): 켜 둔 것(요술봉 칸 · 입력창 위 바)이 아직 없을 때만 다시 — 예전엔 꺼 둔 칸이 '없음'으로 보여 10초 동안 바를 20번 다시 그렸다
+const mount = () => {
+    syncMenu();
+    const want = getSettings().addonUI || {};
+    const missing = (want.notesMenu !== false && !document.getElementById(MENU_ID)) || (want.notesBarMenu !== false && !document.getElementById(BAR_ID));
+    if (missing && tries++ < 20) setTimeout(mount, 500);
+};
 mount();
 setTimeout(restoreStickies, 1200); // 화면이 다 그려진 뒤 (꺼내 둔 쪽지는 PC 너비에서만)
 verifyAddonCss({ folder: 'notes', name: '--bl-notes-css-version', version: VERSION, title: TITLE });

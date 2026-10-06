@@ -80,6 +80,7 @@ export async function openPanel() {
     if (inlineHost?.isConnected && inlineHost.offsetParent) { root.scrollIntoView({ block: 'nearest' }); return; }
     if (opening) return; opening = true;
     prepareEmbedded(); placement = 'popup';
+    ui.ensureFresh();   // 5.6.4 닫혀 있는 동안 바뀐 채팅의 목소리 카드
     try { await callGenericPopup(root, POPUP_TYPE.TEXT, '', { okButton: '닫기', wide: true, allowVerticalScrolling: true, onOpen: popup => popup?.dlg?.classList.add('bl-roomy-dialog') }); }
     finally { opening = false; restoreSettingsHome(); }
 }
@@ -89,7 +90,7 @@ export function mountInline(host) {
     ready.then(() => {
         if (cancelled || inlineHost !== host || duplicate || !root) return;
         if (opening) host.textContent = '열린 설정창을 닫으면 여기에 표시돼요.';
-        else { prepareEmbedded(); host.replaceChildren(root); placement = 'inline'; }
+        else { prepareEmbedded(); host.replaceChildren(root); placement = 'inline'; ui.ensureFresh(); }
     }).catch(() => { if (!cancelled) host.textContent = 'TTS 설정을 불러오지 못했어요. 새로고침 후 다시 확인해 주세요.'; });
     return () => { cancelled = true; if (inlineHost !== host) return; inlineHost = null; restoreSettingsHome(); };
 }
@@ -161,7 +162,8 @@ function onRendered(id, isUser, type) {
     // 대화 색 → 말한 사람 배우기 (봇 메시지만, 읽기 여부와 무관, 원문 기준)
     // 인사말은 채팅을 막 연 경우에만: 그룹 채팅은 CHAT_CHANGED 보다 먼저 인사말을 그려서 메타가 아직 이전 채팅 것이다
     if (!isUser && s.enabled && (!greeting || Date.now() - chatChangedAt < FIRST_MS)) {
-        try { speakers.learnFromMessage(mes, segmentsOf(mes, mes.mes)); }
+        // 5.6.4 이 렌더 뒤에 실리태번이 채팅을 저장하면 (보통 답장) 배운 표는 그 저장에 얹는다 — 1초 뒤 같은 채팅을 또 저장하지 않게
+        try { speakers.learnFromMessage(mes, segmentsOf(mes, mes.mes), { deferSave: speakers.chatSavedAfterRender(id, type, getContext().streamingProcessor) }); }
         catch (e) { log('err', `말한 사람 배우기 실패: ${e.message}`); }
     }
     // 1.2.2 미리 만들기: 말한 사람을 배운 뒤, 자동 읽기와 상관없이 (다음 틱에 — 설정 · 마지막 메시지 · 인사말은 pregen 이 거름)

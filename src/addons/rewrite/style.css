@@ -10,7 +10,7 @@
     --bwr-accent-ink: var(--salty-accent-ink, var(--bwr-accent)); /* 옅은 포인트 면 위 글자 — 블루 레몬에이드 밝은 테마면 진한 잉크 */
     --bwr-danger: #e5484d;
     /* Compared with index.js after load: a mismatch may be a packaging, cache, or installation issue. */
-    --bwr-css-version: "2.0.0";
+    --bwr-css-version: "2.0.1";
 }
 
 /* 서랍 안쪽 — .inline-drawer-content 는 실리태번이 열고 닫으므로 display 를 주지 않고 안에 한 겹 더 둔다 */
@@ -223,7 +223,7 @@
 .bwr_settings .bwr_badge {
     flex: 0 0 auto;
     min-width: 18px;
-    padding: 1px 6px;
+    padding: calc(1px + 1px * (1 - var(--bl-ink-k, 1))) 6px calc(1px * var(--bl-ink-k, 1)); /* 5.6.4 세로 중앙(높이 그대로 · 폰 폭 배지는 아래 @container 규칙 그대로). 재 본 글꼴만: --bl-ink-k 0(프리젠테이션)이면 아래 1px 를 위로, 1(Pretendard) · 모르는 글꼴(없음 → 1)은 예전 1px/1px — Pretendard 는 1px 옮기면 폰에서 -1px 로 넘어갔다 */
     border-radius: 999px;
     font-size: 0.75em;
     font-weight: 600;
@@ -424,7 +424,7 @@
 .bwr-version {
     display: inline-block;
     margin-left: 4px;
-    padding: 1px 7px;
+    padding: calc(1px + 1px * (1 - var(--bl-ink-k, 1))) 7px calc(1px * var(--bl-ink-k, 1)); /* 5.6.4 세로 중앙(높이 그대로). 재 본 글꼴만: --bl-ink-k 0(프리젠테이션)이면 아래 1px 를 위로, 1(Pretendard) · 모르는 글꼴(없음 → 1)은 예전 1px/1px — Pretendard 는 1px 옮기면 폰에서 -1px 로 넘어갔다 */
     border-radius: 10px;
     background: color-mix(in srgb, var(--SmartThemeBodyColor, #888) 8%, transparent);
     border: 1px solid color-mix(in srgb, var(--SmartThemeBodyColor, #999) 28%, transparent);
@@ -689,5 +689,7 @@ body.salty .bwr_settings :is(.bwr_tab, .bwr_seg):is(.active, .is-active) {
     box-shadow: inset 0 0 0 1px var(--salty-accent);
 }
 body.salty .bwr_settings .bwr_chip.bwr_off { color: var(--salty-muted, var(--bwr-text)); opacity: 1; }
+/* 5.6.4 세로 중앙: 칩은 위아래 padding 0 에 최소 높이 가운데 정렬 — 반행간 보정 n 만큼 내리려면 위에 2n (높이 그대로) */
+body.salty .bwr_settings .bwr_chip { padding-top: calc(2 * var(--bl-text-nudge, 0px)); }
 body.salty .bwr_settings .bwr_chip .bwr_scope { font-size: var(--bl-ts-meta, .9em); color: inherit; opacity: 1; }
 body.salty .bwr_settings .bwr_badge { color: var(--salty-text); background: var(--bl-well); }

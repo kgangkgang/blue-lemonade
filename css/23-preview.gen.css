@@ -576,7 +576,7 @@ body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="tr
   border-radius: var(--r-lg) var(--r-lg) 6px var(--r-lg) !important;
   box-shadow: var(--bl-e1) !important;
 }
-body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .mes_block:has(.edit_textarea) {
+body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:has(.edit_textarea) .mes_block {
   width: 100% !important;
   max-width: 100% !important;
 }

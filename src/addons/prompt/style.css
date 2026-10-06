@@ -356,7 +356,11 @@ body.salty #pt-panel .pt-card h4{font-size:15px!important;color:var(--pt-text)!i
 #pt-panel .pt-export-group{flex:1 1 100%;width:100%;gap:6px;align-items:start}
 #pt-panel .pt-export-group>.pt-btn-icon{min-height:34px;height:34px;padding:5px 9px;font-size:12px}
 #pt-panel .pt-more-actions{flex:1;min-width:0;text-align:right;border:0;background:none;padding:0;margin:0}
-#pt-panel .pt-more-actions>summary{display:inline-flex;align-items:center;gap:6px;cursor:pointer;list-style:none;min-height:34px;padding:5px 9px;border:1px solid var(--pt-border);border-radius:8px;font-size:12px;box-sizing:border-box}
+#pt-panel .pt-more-actions>summary{display:inline-flex;align-items:center;gap:6px;cursor:pointer;list-style:none;min-height:34px;--bl-pt-nudge:var(--bl-text-nudge,0px);padding:calc(5px + var(--bl-pt-nudge)) 9px calc(5px - var(--bl-pt-nudge));border:1px solid var(--pt-border);border-radius:8px;font-size:12px;box-sizing:border-box} /* 5.6.4 세로 중앙: 테마 5.5.3 반행간 보정 (위 +n · 아래 −n, 높이 그대로) */
+/* 5.6.4 보정은 글자 줄 상자의 반행간 몫이라 옆 아이콘(Font Awesome)은 원래 자리가 맞다 — 같은 n 만큼 되돌려 아이콘은 예전 그대로.
+   --bl-pt-nudge 를 길이로 등록해 단추에서 px 로 계산된 값을 아이콘이 물려받는다 (아이콘의 1em · 1lh 로 다시 재면 다른 값이 된다) */
+@property --bl-pt-nudge { syntax:'<length>'; inherits:true; initial-value:0px; }
+#pt-panel :is(#pt-tabs .pt-tab, .pt-more-actions>summary) > i { position:relative; top:calc(-1 * var(--bl-pt-nudge, 0px)); }
 #pt-panel .pt-more-actions>summary::-webkit-details-marker{display:none}
 #pt-panel .pt-more-actions-body{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding-top:6px}
 #pt-panel .pt-more-actions-body .pt-btn-icon{width:100%;min-height:34px;padding:5px 7px}
@@ -393,7 +397,7 @@ body.salty #pt-panel :is(.pt-bl-help,.pt-param-label,.pt-block-meta,.pt-token-co
 body.salty #pt-panel #pt-params-reset { font-size:.85em!important; }
 body.salty #pt-panel :is(.pt-toolbar,.pt-controls,.pt-controls-scroll,.pt-select-row,.pt-export-group) { gap:8px 10px; flex-wrap:wrap; }
 body.salty #pt-panel #pt-tabs { grid-template-columns:repeat(auto-fit,minmax(min(100%,7em),1fr)); gap:8px 10px; }
-body.salty #pt-panel #pt-tabs .pt-tab { gap:10px; font-size:.9em; padding:6px 8px; border-radius:var(--bl-r-sm,8px); }
+body.salty #pt-panel #pt-tabs .pt-tab { gap:10px; font-size:.9em; --bl-pt-nudge:var(--bl-text-nudge,0px); padding:calc(6px + var(--bl-pt-nudge)) 8px calc(6px - var(--bl-pt-nudge)); border-radius:var(--bl-r-sm,8px); } /* 5.6.4 세로 중앙 (5.5.3 반행간 보정) */
 body.salty #pt-panel :is(#pt-params-wrap,.pt-regex-toolbar,.pt-more-actions-body,.pt-localization-list) {
  grid-template-columns:repeat(auto-fit,minmax(min(100%,max(10em,calc((100% - 10px)/2))),1fr)); gap:8px 10px;
 }
@@ -423,14 +427,18 @@ body.salty .pt-help-dialog header > div { min-width:0; }
 body.salty #pt-panel .pt-settings-nav,body.salty .pt-help-dialog nav {
  grid-template-columns:repeat(auto-fit,minmax(min(100%,6em),1fr)); gap:8px 10px; padding:8px 10px;
 }
-body.salty .pt-help-dialog nav button { min-height:36px; padding:6px 8px; font-size:.9em; overflow-wrap:anywhere; border-radius:var(--bl-r-sm,8px); }
+body.salty .pt-help-dialog nav button { min-height:36px; padding:calc(6px + var(--bl-text-nudge,0px)) 8px calc(6px - var(--bl-text-nudge,0px)); font-size:.9em; overflow-wrap:anywhere; border-radius:var(--bl-r-sm,8px); }
+/* 5.6.4 설정 탭 줄(연결 · 번역 · 화면 · 저장)도 같은 보정 — 사용방법 창 탭 줄과 한 규칙(위 186 · 423) */
+body.salty #pt-panel .pt-settings-nav button { padding-top:calc(6px + var(--bl-text-nudge,0px)); padding-bottom:calc(6px - var(--bl-text-nudge,0px)); }
 body.salty .pt-help-dialog nav button[aria-selected=true] { font-weight:inherit; }
 body.salty .pt-help-dialog .pt-help-chapter { border-radius:var(--bl-r-md,12px); }
 body.salty .pt-help-dialog .pt-help-chapter summary { padding:10px 12px; }
 body.salty #pt-panel .pt-ui-button,body.salty .pt-help-dialog .pt-ui-button {
  font:inherit!important; letter-spacing:inherit; line-height:1.45!important;
- height:auto; min-height:36px; padding:6px 10px; border-radius:var(--bl-r-sm,8px);
+ height:auto; min-height:36px; padding:calc(6px + var(--bl-text-nudge,0px)) 10px calc(6px - var(--bl-text-nudge,0px)); border-radius:var(--bl-r-sm,8px); /* 5.6.4 세로 중앙 */
 }
+/* 5.6.4 패널 안 단추는 위 385 줄(:is 안의 #pt-panel-refresh 때문에 id 2개 무게)의 padding 6px 10px 가 이겼다 — 같은 무게 + 1 로 세로 보정만 */
+body.salty #pt-panel .pt-ui-button:not(#pt-panel-refresh) { padding-top:calc(6px + var(--bl-text-nudge,0px)); padding-bottom:calc(6px - var(--bl-text-nudge,0px)); }
 body.salty #pt-panel .pt-version {
  font-family:inherit!important; font-size:.8em!important; font-weight:inherit!important;
  line-height:1.45!important; letter-spacing:inherit; border-radius:var(--bl-r-sm,8px);

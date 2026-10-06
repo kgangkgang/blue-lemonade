@@ -72,13 +72,7 @@
 /* ---------- 테마가 잠근 실리태번 설정 줄 ---------- */
 /* 흐림 강도 · 텍스트 그림자 너비는 테마가 0 으로 고정함 (폰에서 색이 번져서) →
    숫자만 그대로 있으면 거짓말이라 흐리게 · 못 만지게 하고 까닭을 옆에 적음 (테마를 끄면 원래대로) */
-body.salty #user-settings-block-content .flex-container:has(> #blur_strength) > small:first-child::after,
-body.salty #user-settings-block-content .flex-container:has(> #shadow_width) > small:first-child::after {
-  content: "테마가 끔";
-  font-size: var(--bl-fs-sub);
-  font-weight: 400;
-  color: var(--salty-muted);
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #user-settings-block-content .flex-container:has(> #blur_strength) > small:first-child::after */
 body.salty #user-settings-block-content .flex-container:has(> #blur_strength) > :is(.neo-range-slider, .neo-range-input),
 body.salty #user-settings-block-content .flex-container:has(> #shadow_width) > :is(.neo-range-slider, .neo-range-input) {
   opacity: 0.4 !important; /* 실리태번 · 테마가 슬라이더 흐림을 !important 로 잡고 있어서 */

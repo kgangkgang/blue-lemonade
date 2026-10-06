@@ -11,6 +11,7 @@ import * as analysis from './analysis.js';
 import * as stapi from './stapi.js';
 import * as translation from './translation.js';
 import { entries as logEntries, timeStr, onLog, log } from './log.js';
+import { paidEngines, paidOnly, pregenPaid } from './paid.js';   // 5.6.4 돈이 드는 엔진 (pregen.js 와 같은 판단)
 
 const TEST_LINE = { ko: '안녕, 잘 부탁해.', ja: 'こんにちは、よろしくね。', en: 'Hi there, nice to meet you.', zh: '你好，请多关照。' };
 const TAB_IDS = ['read', 'voices', 'engine', 'data'];   // 탭 버튼은 settings.html 에 고정
@@ -55,36 +56,29 @@ function translatorLabel() {
 /**
  * 5.6.3 돈이 드는 엔진(이름 목록) — 등록한 목소리의 엔진 중 무료(브라우저 내장 · Google 번역)와 내 PC · 집 안 주소의 OpenAI 호환 서버를 뺀 것.
  * 사용자 제보: 미리 만들기(대사+속마음)가 답장 · 스와이프마다 모든 줄을 만들어 10월 첫 엿새에 MiniMax 크레딧을 다 씀 — 미리 만든 글의 12 %만 들음.
+ * 5.6.4 판단은 paid.js 로 옮김 (pregen.js 도 같이 씀): MiniMax 는 공식 서버일 때만 유료 (집 PC 로컬 게이트웨이 = 무료). 유료 엔진은 기본으로 미리 만들지 않는다
  */
-const FREE_ENGINES = new Set(['browser', 'gtranslate']);
-const LOCAL_HOST = /^(localhost|127\.|0\.0\.0\.0|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|\[?::1\]?$|[^.]+$)|\.(local|lan|home\.arpa|ts\.net)$/i;
-function isLocalBase(url) {
-    try { return LOCAL_HOST.test(new URL(String(url || '')).hostname); } catch { return false; }
-}
-export function paidEngines(s = settings()) {
-    const ids = new Set((Array.isArray(s.voices) ? s.voices : []).map(v => v && v.provider).filter(Boolean));
-    const out = [];
-    for (const id of ids) {
-        if (FREE_ENGINES.has(id)) continue;
-        if (id === 'openai_compat') {
-            const base = providerConfig(id, {}).base || 'http://127.0.0.1:8880/v1';
-            if (isLocalBase(base)) continue;
-        }
-        const p = getProvider(id);
-        if (p) out.push(p.name || id);
-    }
-    return out;
-}
-/** 미리 만들기 옆 '!' 를 눌렀을 때의 안내 — 유료 엔진이 없으면 '' (단추도 없음) */
+export { paidEngines };
+/** 미리 만들기 옆 '!' 를 눌렀을 때의 안내 — 유료 엔진이 없으면 '' (단추도 없음). 5.6.4 '유료 엔진도 미리 만들기' 를 켠 때만 닳는다는 경고 */
 function pregenWarn(s) {
     const paid = paidEngines(s);
     if (!paid.length) return '';
+    if (!pregenPaid(s)) return `${paid.join(' · ')} 같은 유료 엔진은 미리 만들지 않아요 — 누른 줄만 만들어 크레딧을 아껴요.`;
     let msg = `답장 · 스와이프마다 모든 줄을 미리 만들어 ${paid.join(' · ')} 크레딧이 빨리 닳아요.`;
     const u = s.usage || {};
     const pre = Number(u.pre_chars) || 0, used = Number(u.pre_used_chars) || 0;
     if (pre >= 1000) msg += ` 이번 달 미리 만든 ${pre.toLocaleString('ko-KR')}자 중 ${Math.round(used / pre * 100)} %만 들었어요.`;
     return msg + ' 아끼려면 끔 또는 대사.';
 }
+/** 미리 만들기 아래 한 줄: 쉬는 까닭 (대사 클릭 · 자동 읽기가 꺼짐 / 5.6.4 목소리가 모두 유료 엔진) */
+function pregenDesc(s) {
+    if (s.pregen === 'off') return '';
+    if (s.click_play === false && !s.auto_play) return '대사 클릭·자동 읽기가 꺼져 쉬어요';
+    if (!pregenPaid(s) && paidOnly(s)) return '유료 엔진이라 쉬어요';
+    return '';
+}
+/** 5.6.4 '유료 엔진도 미리 만들기' 스위치: 유료 엔진이 있고 미리 만들기가 켜져 있을 때만 */
+const showPregenPaid = (s) => s.pregen !== 'off' && paidEngines(s).length > 0;
 /** 새 답장이 번역을 기다리게 되나 — 재생기와 같은 판단(translation.translationExpected)을 새 답장 모양으로 물어본다.
  *  true 면 스트리밍 읽기는 꺼진다 ('켬' 인데 번역기가 없으면 재생기도 안 기다리니 여기서도 false) */
 function waitEffective(s) {
@@ -94,7 +88,8 @@ function waitEffective(s) {
 }
 /** 언제 카드가 그려질 때의 번역기 상태 — 달라졌으면(번역기 자동 번역을 켜고 끔) 카드를 다시 그린다 */
 let whenSig = '';
-const whenSignature = () => `${waitEffective(settings())}|${translatorLabel()}|${paidEngines().join(',')}`;
+// 5.6.4 유료 판단(MiniMax 서버 주소 · 목소리 엔진)이 바뀌면 '!' 안내 · 스위치 · 쉬는 줄이 달라진다 → 서명에 넣음
+const whenSignature = () => { const s = settings(); return `${waitEffective(s)}|${translatorLabel()}|${paidEngines(s).join(',')}|${paidOnly(s)}|${pregenPaid(s)}`; };
 function refreshWhenCard() {
     if (root && whenSignature() !== whenSig) renderReadCard('when');
 }
@@ -137,7 +132,8 @@ const READ_CARDS = {
     when: ['fa-clock', '언제', [
         { key: 'auto_play', label: '새 답장 자동 읽기', type: 'toggle' },
         { key: 'narrate_user', label: '내 메시지도', type: 'toggle' },
-        { key: 'pregen', label: '미리 만들기', type: 'select', options: [{ value: 'off', label: '끔' }, { value: 'dialogue', label: '대사' }, { value: 'all', label: '대사+속마음' }], desc: (s) => (s.pregen !== 'off' && s.click_play === false && !s.auto_play ? '대사 클릭·자동 읽기가 꺼져 쉬어요' : ''), warn: pregenWarn },
+        { key: 'pregen', label: '미리 만들기', type: 'select', options: [{ value: 'off', label: '끔' }, { value: 'dialogue', label: '대사' }, { value: 'all', label: '대사+속마음' }], desc: pregenDesc, warn: pregenWarn },
+        { key: 'pregen_paid', label: '유료 엔진도 미리 만들기', type: 'toggle', show: showPregenPaid },   // 5.6.4
         { key: 'wait_translation', label: '번역 기다리기', type: 'select', options: [{ value: 'auto', label: '자동' }, { value: 'on', label: '켬' }, { value: 'off', label: '끔' }], desc: () => translatorLabel() },
         { key: 'translation_timeout', label: '최대 대기 초', type: 'number', min: 5, max: 600, step: 5, default: 90, show: (s) => s.wait_translation !== 'off' },
         { key: 'stream_read', label: '답장이 오는 동안 읽기', type: 'toggle', disabled: waitEffective, desc: (s) => (waitEffective(s) ? '번역을 기다리는 동안엔 꺼져요' : '') },
@@ -454,7 +450,7 @@ function afterEdit(path, el) {
     if (path === 'highlight' || path === 'highlight_style') player.refreshHighlight();
     if (path === 'wand_menu') { dispatchWand(); return; }                  // index.js 가 요술봉 메뉴 두 줄을 넣고 뺀다
     if (path === 'wait_translation') { renderReadCard('when'); return; }   // 스트리밍 읽기의 켜짐·꺼짐과 대기 초 칸이 따라 바뀐다
-    if (path === 'click_play' || path === 'auto_play' || path === 'pregen') renderReadCard('when');   // 1.2.4 미리 만들기가 쉬는지 한 줄
+    if (path === 'click_play' || path === 'auto_play' || path === 'pregen' || path === 'pregen_paid') renderReadCard('when');   // 1.2.4 미리 만들기가 쉬는지 한 줄 · 5.6.4 '!' 안내 · 스위치
     if (path === 'analysis.engine' || path === 'analysis.provider' || path === 'analysis.custom_url' || path === 'analysis.base') {
         if (path === 'analysis.base') warnAnalysisCleartext();
         if (path === 'analysis.custom_url') warnCustomCleartext();
@@ -470,6 +466,7 @@ function afterEdit(path, el) {
         const p = curProvider();
         if (p && visibleChanged('engine', [...(p.fields || []), ...(p.params || [])], `providers.${p.id}.`, providerConfig(p.id, p.defaults))) rerenderEngineCard(p);
         if (p && ENDPOINT_KEYS.has(path.split('.').pop())) warnCleartext(p);   // 주소를 http:// 바깥 서버로 바꿨을 때
+        refreshWhenCard();   // 5.6.4 MiniMax 서버 · OpenAI 호환 주소가 유료 판단을 바꿨으면 언제 카드('!' · 스위치 · 쉬는 줄)를 (달라졌을 때만)
         return;
     }
     if (path === 'cache_limit' || path === 'cache_mb') {
@@ -603,7 +600,7 @@ function showTab(id) {
     for (const p of root.querySelectorAll('.lv-pane')) p.hidden = p.dataset.pane !== id;
     if (id === 'read') refreshWhenCard();   // 번역기 쪽 자동 번역을 켜고 껐을 수 있음
     if (id === 'data') renderData();
-    if (id === 'voices') renderColors();   // 채팅이 바뀌었을 수 있음
+    if (id === 'voices' && !ensureFresh()) renderColors();   // 채팅이 바뀌었을 수 있음 (바뀐 채팅을 아직 안 그렸으면 캐릭터별 목소리까지)
 }
 
 // ---------- 읽기 탭
@@ -961,14 +958,38 @@ function replaceCard(name, html) {
 export function renderVoices() {
     const pane = q('#lv_pane_voices');
     if (!pane) return;
+    chatDirty = false;
     pane.innerHTML = mapCardHtml() + colorsCardHtml() + listCardHtml();
 }
 function renderMap() { replaceCard('map', mapCardHtml()); }
 export function renderColors() { replaceCard('colors', colorsCardHtml()); }
+// 5.6.4 채팅을 바꿀 때 목소리 탭이 안 보이면 다시 그리지 않고 표시만 해 둔다 (서랍이 닫힌 채로 채팅마다 151~433 ms@4x 를 썼다).
+// 보이게 되면 그린다: 서랍 펼치기 · 팝업(openPanel) · 설정 창 안(mountInline) · 목소리 탭 · 그 밖의 길(확장 창 열기 등)은 ResizeObserver.
+let chatDirty = false;
+/** 목소리 탭이 지금 화면에 있는가 — 닫힌 것이 확실하면 스타일 계산 없이 false */
+function voicesShown() {
+    const pane = q('#lv_pane_voices');
+    if (!pane || !pane.isConnected || pane.closest('[hidden]')) return false;   // 다른 탭 · 꺼진 설정 · 보관함(#bl-tts-holder)
+    const drawer = pane.closest('.drawer-content');
+    if (drawer && !drawer.classList.contains('openDrawer')) return false;     // 실리태번 확장 창이 닫힘
+    return pane.getClientRects().length > 0;
+}
 export function refreshChat() {
     if (!root) return;
+    if (!voicesShown()) { chatDirty = true; return; }
+    chatDirty = false;
     renderMap();
     renderColors();
+}
+/** 채팅이 바뀐 뒤 아직 안 그린 캐릭터별 목소리 · 대화 색 카드를 그린다 (목소리 탭이 다른 탭에 가려 있으면 탭을 열 때). 그렸으면 true */
+export function ensureFresh() {
+    if (!root || !chatDirty) return false;
+    const pane = q('#lv_pane_voices');
+    if (!pane || pane.hidden) return false;
+    chatDirty = false;
+    renderMap();
+    renderColors();
+    return true;
 }
 
 // ---------- 목소리: 들어보기 · 삭제 · 불러오기 · 붙여넣기 · 직접 추가
@@ -1473,6 +1494,8 @@ async function importFile(input) {
         toast('설정을 가져왔어요', 'success');
     } catch (e) { toast(e.message || '가져오기 실패', 'error'); }
 }
+/** 5.6.4 시험용 (tools/tests/tts-pregen-paid.mjs): 미리 만들기 안내 · 쉬는 줄 · 스위치 표시 · 언제 카드 칸 · 설정 가져오기 */
+export const _forTest = { pregenWarn, pregenDesc, showPregenPaid, importSettings, whenFields: () => READ_CARDS.when[2] };
 
 // ---------- 시작
 function renderAll() {
@@ -1500,11 +1523,27 @@ export function init() {
     renderAll();
     // 서랍을 열 때 번역기 상태 줄을 맞춘다 (번역기 쪽 설정은 알림이 없다 — 달라졌을 때만 언제 카드를 다시 그림)
     // 실리태번 API 중 선택이면 분석 카드도 다시 (키 상태 · 본체 화면의 모델 목록이 그 사이 바뀌었을 수 있음) · 비어 있으면 목록을 한 번 받아 봄
-    document.querySelector('#lv_settings .inline-drawer-toggle')?.addEventListener('click', () => setTimeout(() => {
-        refreshWhenCard();
-        if (isProvider(settings())) renderReadCard('analysis'); else updateAnalysisNote();
-        autoFetchModels();
-    }, 0));
+    document.querySelector('#lv_settings .inline-drawer-toggle')?.addEventListener('click', () => {
+        ensureFresh();   // 5.6.4 닫혀 있는 동안 바뀐 채팅 (펼쳐지기 전에)
+        setTimeout(() => {
+            refreshWhenCard();
+            if (isProvider(settings())) renderReadCard('analysis'); else updateAnalysisNote();
+            autoFetchModels();
+        }, 0);
+    });
+    // 5.6.4 클릭이 우리 쪽에 오지 않는 길: 서랍이 펼쳐진 채 실리태번 확장 창을 다시 열 때 (창의 class 가 openDrawer 로 바뀜),
+    // 그 밖에 목소리 탭의 크기가 0 → 보임으로 바뀔 때 (ResizeObserver — 그리기 전에 불린다. 숨은 탭에선 안 불려서 class 감시를 따로 둔다)
+    const extBlock = document.getElementById('rm_extensions_block');
+    if (extBlock && typeof MutationObserver === 'function') {
+        new MutationObserver(() => { if (chatDirty && voicesShown()) ensureFresh(); })
+            .observe(extBlock, { attributes: true, attributeFilter: ['class'] });
+    }
+    const voicesPane = q('#lv_pane_voices');
+    if (voicesPane && typeof ResizeObserver === 'function') {
+        new ResizeObserver((list) => {
+            if (chatDirty && list.some(e => e.contentRect.width > 0 || e.contentRect.height > 0)) ensureFresh();
+        }).observe(voicesPane);
+    }
     onLog(scheduleLogRefresh);
     // 재생기가 상태를 알려 주면 정지 버튼 불빛을 맞춘다 (없어도 동작)
     document.addEventListener('lemon-voice:state', (e) => setPlaying(!!(e.detail && e.detail.playing)));

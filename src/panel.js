@@ -20,7 +20,7 @@ import { changedSettings, settingChanged, settingDefault, resetSetting, settingR
 import { SETTING_LABELS, SETTING_VALUES } from './settings-labels.js';
 import { syncProfileClip } from './profile-clip.js';
 import { refreshPreset, FRAME_PRESETS, FRAME_LIMIT, presetFrame, saveFrame, useFrame, deleteFrame } from './frame-library.js';
-import { syncDecor } from './decor.js';
+import { syncDecor, hasFrame } from './decor.js';
 import { FRAME_RANGE } from './frames.js';
 import { customLibrary, newCustomPalette, useCustomPalette, openCustomBuilder, customBuilder, bindCustomBuilder, setCustomMode, seedCustom, saveCustomPalette, saveCurrentPalette, deleteCustomPalette } from './custompalette.js';
 // 설정 창. 확장 서랍과 ✦ 메뉴 팝업 두 곳에 같은 창을 띄울 수 있음.
@@ -149,7 +149,7 @@ function historyValue(value, path) {
     if (historyOptions.has(`${path}:${value}`)) return historyOptions.get(`${path}:${value}`);
     if (Array.isArray(value)) return `${value.length}개 항목`;
     if (typeof value === 'object') {
-        if (path.endsWith('.decor')) return value.art ? FRAME_PRESETS.find(([id]) => id === value.presetId)?.[1] || '내 액자' : '없음';
+        if (path.endsWith('.decor')) return hasFrame(value) ? FRAME_PRESETS.find(([id]) => id === value.presetId)?.[1] || '내 액자' : '없음';
         if (path.startsWith('fonts.')) return Object.entries(value).map(([lang,id]) => `${lang}: ${findFont(id)?.label || id}`).join(' · ');
         return '사용자 설정';
     }
@@ -1271,14 +1271,15 @@ function roleType(label, controls, hint = '') {
 const frameColor = (path, label, value) => `<div class="salty-row"><span>${label}</span><input type="color" data-color-path="${path}" value="${esc(value)}" aria-label="${label}"></div>`;
 function decorControls(prefix, o) {
     const d = o.decor, settings = getSettings();
+    const framed = hasFrame(d); // 꺼 둔 기본 프리셋은 그림을 비워 두어도(5.6.4) 액자가 있는 것으로 — 켜면 다시 그린다
     const selected = settings.frameLibrary.find(item => item.id === d.libraryId);
     const thumb = (art, name) => `<img src="${esc(art)}" alt="" loading="lazy"><span>${esc(name)}</span>`;
     return `${cap('장식 액자', '테두리 그림을 그대로 얹고 안쪽에만 사진을 넣어요')}<div class="salty-group bl-decor-controls">
         <span class="bl-frame-label">기본 프리셋</span>
         <div class="bl-frame-library" role="group" aria-label="액자 프리셋">${FRAME_PRESETS.map(([id, name]) => `<button type="button" data-act="frame-preset" data-owner="${prefix}" data-id="${id}" aria-pressed="${d.on && d.presetId === id}">${thumb(presetFrame(id).art, name)}</button>`).join('')}</div>
-        <div class="bl-frame-upload-row"><button type="button" class="salty-btn bl-decor-upload" data-act="frame-upload" data-owner="${prefix}">${d.art ? '다른 액자 고르기' : '액자 그림 고르기'}</button><input type="file" data-frame-file="${prefix}" accept="${IMAGE_ACCEPT}" hidden></div>
-        ${d.art ? row('장식 액자 사용', toggle(`${prefix}.decor.on`, d.on), '끄면 보통 테두리 설정으로 돌아와요') : '<p class="salty-note">투명 PNG · 배경색 있는 그림 모두 가능해요. 안쪽 공간을 자동으로 찾고 직접 보정할 수 있어요.</p>'}
-        ${d.art && d.on ? `${slider(`${prefix}.decor.opacity`, '액자 진하기 (%)', 0, 100, 1)}
+        <div class="bl-frame-upload-row"><button type="button" class="salty-btn bl-decor-upload" data-act="frame-upload" data-owner="${prefix}">${framed ? '다른 액자 고르기' : '액자 그림 고르기'}</button><input type="file" data-frame-file="${prefix}" accept="${IMAGE_ACCEPT}" hidden></div>
+        ${framed ? row('장식 액자 사용', toggle(`${prefix}.decor.on`, d.on), '끄면 보통 테두리 설정으로 돌아와요') : '<p class="salty-note">투명 PNG · 배경색 있는 그림 모두 가능해요. 안쪽 공간을 자동으로 찾고 직접 보정할 수 있어요.</p>'}
+        ${framed && d.on ? `${slider(`${prefix}.decor.opacity`, '액자 진하기 (%)', 0, 100, 1)}
             ${d.presetId ? frameColor(`${prefix}.decor.presetColor`, '액자 바탕색', d.presetColor) + frameColor(`${prefix}.decor.presetAccent`, '액자 포인트색', d.presetAccent) : ''}
             ${slider(`${prefix}.decor.frameWidth`, '액자 가로 비율 (%)', 50, 200, 1)}
             ${slider(`${prefix}.decor.frameHeight`, '액자 세로 비율 (%)', 50, 200, 1)}
@@ -1288,7 +1289,7 @@ function decorControls(prefix, o) {
             ${slider(`${prefix}.decor.zoom`, '사진 확대 (%)', 100, 200, 1)}
             ${slider(`${prefix}.decor.x`, '사진 좌우 (%)', 0, 100, 1)}${slider(`${prefix}.decor.y`, '사진 위아래 (%)', 0, 100, 1)}
             <button class="salty-btn" data-act="frame-remove" data-owner="${prefix}">액자 지우기</button>` : ''}
-        ${d.art ? `<div class="bl-frame-save-row"><input type="text" data-frame-name="${prefix}" aria-label="액자 이름" maxlength="40" placeholder="액자 이름" value="${esc(selected?.name || '')}"><button type="button" class="salty-btn" data-act="frame-save" data-owner="${prefix}">새 액자로 저장</button></div>` : ''}
+        ${framed ? `<div class="bl-frame-save-row"><input type="text" data-frame-name="${prefix}" aria-label="액자 이름" maxlength="40" placeholder="액자 이름" value="${esc(selected?.name || '')}"><button type="button" class="salty-btn" data-act="frame-save" data-owner="${prefix}">새 액자로 저장</button></div>` : ''}
         <span class="bl-frame-label">내 액자 ${settings.frameLibrary.length} / ${FRAME_LIMIT}</span>
         <p class="salty-note">불러온 액자는 보관함에 저장돼요. 프로필과 에셋에서 함께 골라 쓸 수 있어요.</p>
         ${settings.frameLibrary.length ? `<div class="bl-frame-library" role="group" aria-label="저장한 액자">${settings.frameLibrary.map(item => `<button type="button" data-act="frame-use" data-owner="${prefix}" data-id="${esc(item.id)}" aria-pressed="${d.libraryId === item.id}">${thumb(item.decor.art, item.name)}</button>`).join('')}</div>` : ''}

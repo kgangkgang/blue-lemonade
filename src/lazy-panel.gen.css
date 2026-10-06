@@ -1,4 +1,345 @@
 
+body.salty #WorldInfo > .flex-container:has(> #WI_panel_pin_div) > h3 {
+  flex: 1 1 0;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  white-space: normal;
+  line-height: 1.4;
+}
+body.salty #WorldInfo > .flex-container:has(> #WI_panel_pin_div) > h3 > span {
+  min-width: 0;
+  max-width: 100%;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 0;
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 500;
+  line-height: 1.35;
+}
+body.salty #WorldInfo #wiSliders > .flex-container:has(> #world_info_character_strategy) > small {
+  flex: 1 1 10em;
+  min-width: 0;
+  color: var(--salty-text) !important;
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 500;
+}
+body.salty #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control:has(> select[name="entryLogicType"]) > small {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0 2px;
+  color: var(--salty-text) !important;
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 500;
+  letter-spacing: 0;
+  white-space: normal;
+}
+body.salty #right-nav-panel #right-nav-panel-tabs:has(> #result_info[style*="none"]) #rm_button_selected_ch h2 {
+  color: var(--salty-muted) !important;
+}
+body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p > input {
+  width: 100% !important;
+  height: var(--bl-h-num) !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 6px !important;
+  border-radius: 8px !important;
+  font-size: var(--bl-fs-ctl) !important;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) + li:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) {
+  --pm-top: inset 0 0 transparent;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) .completion_prompt_manager_prompt_name .prompt-manager-inspect-action:is(bl-s, *),
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) .completion_prompt_manager_prompt_name span:not(.fa-solid) {
+  font-weight: 650;
+}
+body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_control:has(#completion_prompt_manager_popup_entry_form_prompt:disabled) > div:first-child::after {
+  flex-basis: 100%;
+  margin: var(--bl-s1) 0 var(--bl-s2);
+  padding: var(--bl-s3) var(--bl-inset);
+  border-radius: 12px;
+  background: var(--bl-fill-hover, var(--bl-hover));
+  font-size: var(--bl-fs-sub);
+  font-weight: 500;
+  text-align: left;
+  color: var(--salty-muted);
+}
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > span,
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > small,
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > label,
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > label small,
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) small,
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) label {
+flex:0 1 auto;
+min-width:0;
+margin:0 !important;
+padding:0 !important;
+font-size:var(--bl-fs-body) !important;
+font-weight:500 !important;
+line-height:1.35;
+}
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > span:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > label:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > label small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) label:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+color:var(--salty-text) !important;
+}
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > span,
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > small,
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > label,
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > label small,
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) small,
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) label {
+opacity:1 !important;
+}
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) select, body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) select {
+flex:1 1 0% !important;
+width:auto !important;
+min-width:0 !important;
+max-width:none !important;
+height:var(--bl-h-icon) !important;
+min-height:var(--bl-h-icon) !important;
+margin:0 !important;
+padding:0 26px 0 8px !important;
+}
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) select:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) select:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+background-color:transparent !important;
+background-position:right 6px center !important;
+box-shadow:none !important;
+color:var(--salty-muted) !important;
+}
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) select, body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) select {
+font-size:var(--bl-fs-body);
+text-align:right;
+text-align-last:right;
+text-overflow:ellipsis;
+field-sizing:content;
+}
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) select:focus-visible,
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) select:focus-visible {
+  box-shadow: var(--bl-ring) !important;
+}
+body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > label {
+  grid-column: 1;
+  grid-row: 1;
+}
+body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > label small {
+padding:0 !important;
+font-size:var(--bl-fs-body) !important;
+font-weight:500 !important;
+}
+body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > label small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+color:var(--salty-text) !important;
+}
+body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 500 !important;
+}
+body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child span,
+body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child i,
+body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child div {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child :where(i):is(.bl-s, *),
+body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child .fa-solid {
+font-size:12px !important;
+}
+body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child :where(i):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child .fa-solid:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+color:var(--salty-faint) !important;
+}
+body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child :where(i):is(.bl-s, *),
+body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child .fa-solid {
+opacity:1 !important;
+}
+body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:not(:first-child) {
+  font-size: var(--bl-fs-micro) !important;
+}
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer):has(> .inline-drawer-header .inline-drawer-icon.up) > .inline-drawer-header b,
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer):has(> .inline-drawer-header .inline-drawer-icon.up) > .inline-drawer-header strong {
+  font-weight: 600;
+}
+body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) > select {
+  flex: 1 1 180px !important;
+  min-width: 0;
+  margin: 0 !important;
+  text-overflow: ellipsis;
+}
+body.salty #AdvancedFormatting .flex-container:has(> label[for^="reasoning_"]) > div:has(> #reasoning_max_additions) {
+  flex-direction: row-reverse;
+  align-items: center !important;
+  justify-content: space-between;
+  min-height: var(--bl-h-row);
+}
+body.salty #AdvancedFormatting .flex-container:has(> label[for^="reasoning_"]) > div:has(> #reasoning_max_additions) > small {
+padding:0 !important;
+font-size:var(--bl-fs-body) !important;
+font-weight:500;
+}
+body.salty #AdvancedFormatting .flex-container:has(> label[for^="reasoning_"]) > div:has(> #reasoning_max_additions) > small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+color:var(--salty-text) !important;
+}
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > span,
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > small,
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > label,
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) > small,
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) > label {
+  flex: 0 1 auto !important;
+  max-width: 60%;
+}
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) label.checkbox_label:has(> input[type="checkbox"] + span + small:last-child) > span {
+  flex: 1 1 0%;
+  min-width: 0;
+}
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) label.checkbox_label:has(> input[type="checkbox"] + span + small:last-child) > small {
+  flex: 1 1 100%;
+  padding-left: 43px;
+}
+body.salty #user-settings-block-content .flex-container:has(> #blur_strength) > small:first-child::after, body.salty #user-settings-block-content .flex-container:has(> #shadow_width) > small:first-child::after {
+content:"테마가 끔";
+font-size:var(--bl-fs-sub);
+font-weight:400;
+}
+body.salty #user-settings-block-content .flex-container:has(> #blur_strength) > small:first-child:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
+body.salty #user-settings-block-content .flex-container:has(> #shadow_width) > small:first-child:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after {
+color:var(--salty-muted);
+}
+@media (max-width: 1000px) {
+body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .flex-container:has(> .neo-range-slider) > small { grid-column: 1 / -1; width: 100%; text-align: left; }
+body.salty #user-settings-block #user-settings-block-content .flex-container:has(> :is(span, label) + select):not(#UI-language-block) > span,
+body.salty #user-settings-block #user-settings-block-content .flex-container:has(> :is(span, label) + select):not(#UI-language-block) > label { width: 100%; min-width: 0; text-align: left; line-height: 1.4; }
+body.salty #user-settings-block #user-settings-block-content .flex-container:has(> :is(span, label) + select):not(#UI-language-block) > select { width: 100% !important; max-width: none !important; min-width: 0 !important; text-align: left !important; text-align-last: left !important; background-color: var(--bl-control) !important; border-radius: 8px !important; }
+}
+@media (max-width: 1000px) {
+body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) > small,
+body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) > span,
+body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) > label {
+    width: 100%; flex: none !important; min-width: 0; max-width: none; text-align: left; font-size: 11px !important;
+  }
+body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) > select { width: 100%; min-width: 0; max-width: none !important; flex: none !important; margin: 0; font-size: 12px; }
+body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) > small,
+body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) > span,
+body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) > label { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 12px !important; line-height: 1.3 !important; }
+body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) > select { height: 30px !important; min-height: 30px !important; }
+}
+@media not all and (max-width: 1000px) {
+body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > div:has(> select) > select { min-width: 0; max-width: 60%; }
+}
+@media (max-width: 1000px) {
+body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) > span,
+body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) > small,
+body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) > label,
+body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) > label small {
+    max-width: none; font-size: 11px !important; font-weight: 400 !important; line-height: 1.35;
+  }
+body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) select {
+flex:none !important;
+width:100% !important;
+height:26px !important;
+min-height:26px !important;
+padding:0 22px 0 0 !important;
+}
+body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) select:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+background-position:right 2px center !important;
+}
+body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) select {
+font-size:13px !important;
+text-align:left;
+text-align-last:left;
+}
+}
+body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child { grid-column: 1 / -1; grid-row: 1;  }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter input { width: 60px !important; font-size: 11px !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p > input { font-size: 11px !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label > span { font-size: var(--bl-fs-sub) !important; line-height: 1.3; }
+body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > h4 {
+  grid-column: 1;
+  padding: 0 !important;
+  font-size: var(--bl-fs-sub) !important;
+  line-height: 1.3;
+}
+body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > :where(select):is(.bl-s, *):is(.bl-s, *),
+body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > :where(input.text_pole):is(.bl-s, *):is(.bl-s, *),
+body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > .flex-container:has(> .text_pole),
+body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > :where(.flex-container:has(> select)):is(.bl-s, *):is(.bl-s, *) {
+  grid-column: 2;
+}
+body.salty #rm_api_block #openai_api :is(form, div):has(> h4) > div:has(> small:only-child),
+body.salty #rm_api_block #openai_api :is(form, div):has(> h4) > .neutral_warning:is(bl-s, *):is(bl-s, *) {
+  display: none !important;
+}
+body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader > strong {
+  padding-left: 2px;
+}
+body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader + .flex-container > :not(.flex-container) :where(select):is(.bl-s, *),
+body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader + .flex-container > :not(.flex-container) .select2-container {
+  width: 100% !important;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0 !important;
+}
+body.salty #right-nav-panel .hotswap:not(:has(.avatar)) > small { display:none; }
+body.salty .popup:has(#qr--modalEditor) .popup-content > #qr--modalEditor > #qr--main > .qr--labels > :where(label):is(.bl-s, *),
+body.salty .popup:has(#qr--modalEditor) .popup-content > #qr--modalEditor > #qr--main > .qr--labels > .label {
+  flex:1 1 15em;
+  min-width:0;
+  gap:8px;
+}
+body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child {
+  grid-column:1 / -1;
+  grid-row:1;
+  min-width:0;
+  opacity:1;
+  line-height:1.45;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter input {
+  width:calc(5.5ch + 18px + 6 * max(0px,var(--bl-settings-tracking,0px)))!important;
+  max-width:100%;
+  height:auto!important;
+  min-height:max(var(--bl-prompt-control-height),calc(1.45em + 8px))!important;
+  font-size:var(--bl-fs-ctl)!important;
+  line-height:1.45;
+}
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p > input {
+  height:auto!important;
+  min-height:max(var(--bl-prompt-control-height),calc(1.45em + 8px))!important;
+  font-size:var(--bl-fs-ctl)!important;
+  line-height:1.45;
+}
+body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) > select {
+  flex:1 1 12em!important;
+  max-width:100%;
+}
+body.salty #AdvancedFormatting > .spaceEvenly label.flex-container:has(> small + .editor_maximize) > small {
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) > small,
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) > label {
+  max-width:100%;
+}
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) select {
+  flex:1 1 12em!important;
+  height:auto!important;
+  min-height:max(var(--bl-prompt-control-height),calc(1.45em + 8px))!important;
+}
 body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > * {
   grid-column: 1 / -1;
 }

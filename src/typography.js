@@ -101,14 +101,45 @@ function translatorLineStart(q){
     }
     return {line:true,mark};
 }
-export function typesetRoot(root) {
-    if(!active||!root?.querySelectorAll)return;
-    // 메모 카드/팝업은 먼저 조판하고 같은 호출 스택에서 붙인다. 분리된 DOM에서는
-    // 계산 스타일이 비어 있으므로 연결된 뒤 한 번만 실제 개행을 다시 판정한다.
-    if(!root.isConnected&&!mounting.has(root)){
-        mounting.add(root);
-        queueMicrotask(()=>{mounting.delete(root);if(active&&root.isConnected)typesetRoot(root);});
+// 5.6.4 (점검 RP-4): 조판은 [쓰기 → 계산 스타일 읽기 → 쓰기] 라 칸마다 스타일 재계산을 한 번씩 강제했다 (북마크 열기 카드 6장 = 6번).
+// 여러 칸은 typesetRoots 로 — 모든 칸의 앞 쓰기, 한 번의 읽기, 모든 칸의 뒤 쓰기 (칸끼리는 서로의 계산 스타일을 바꾸지 않는다).
+// typesetBatch(fn) 안에서 부른 조판(북마크 카드의 chat-bookmarks:render 포함)은 모았다가 fn 이 끝날 때 한 번에 — 같은 태스크 안이라 화면에는 차이가 없다.
+let batch=null,mountQueue=null;
+export function typesetRoot(root){typesetRoots([root]);}
+export function typesetBatch(fn){
+    if(batch)return fn();
+    batch=new Set();
+    try{return fn();}
+    finally{const roots=[...batch];batch=null;typesetRoots(roots);}
+}
+export function typesetRoots(list){
+    if(!active)return;
+    const roots=[...new Set(list)].filter(root=>root?.querySelectorAll);
+    if(!roots.length)return;
+    if(batch){for(const root of roots)batch.add(root);return;}
+    roots.forEach(prepareRoot);
+    const jobs=roots.map(readRoot); // 읽기는 한 번에 — 첫 읽기에서만 스타일 계산이 돈다
+    jobs.forEach(writeRoot);
+}
+// 메모 카드/팝업은 먼저 조판하고 같은 호출 스택에서 붙인다. 분리된 DOM에서는 계산 스타일이 비어 있으므로
+// 연결된 뒤 한 번만 실제 개행을 다시 판정한다 — 같은 마이크로태스크에 모아서 (메모 카드 여러 장도 스타일 계산 한 번)
+function queueMount(root){
+    mounting.add(root);
+    if(!mountQueue){
+        mountQueue=[];
+        queueMicrotask(()=>{
+            const list=mountQueue;mountQueue=null;
+            for(const root of list)mounting.delete(root);
+            if(!active)return;
+            typesetRoots(list.filter(root=>root.isConnected));
+            // 아직 안 붙은 칸은 예전처럼 제 차례에 한 번 더 본다
+            for(const root of list)if(!root.isConnected)queueMicrotask(()=>{if(active&&root.isConnected)typesetRoot(root);});
+        });
     }
+    mountQueue.push(root);
+}
+function prepareRoot(root){
+    if(!root.isConnected&&!mounting.has(root))queueMount(root);
     // 5.3.6: 그림 옆 <br> · 그림 뒤 들여쓰기 칸은 조판하는 모든 곳에서 (북마크 카드 · 설정 미리보기도 — 채팅에서만 달아서 북마크는 그림 아래가 벌어졌다).
     // 대사 줄 표시(bl-line-dialogue)가 이 칸을 보고 정해지므로 먼저
     markAssetBreaks(root);
@@ -117,11 +148,17 @@ export function typesetRoot(root) {
     normalizeTrackerSpacing(root);
     restoreDialogueTildes(root);
     wrapSpanningQuotes(root); // 5.2.2 줄을 넘는 따옴표 대사 — 실리태번은 한 줄 안에서만 <q> 로 감싼다
-    const marks=new Set(),pads=new Set(),styles=new WeakMap();
+}
+function readRoot(root){
+    const styles=new WeakMap();
     const quotes=[...root.querySelectorAll('.mes_text q, .salty-sample q')]
         .filter(q=>!q.closest('pre,code,details[class*="custom-dem-card"],.custom-dem-track,.custom-dem-track-recovery'));
     // 계산 스타일은 DOM을 고치기 전에 한 번에 읽는다 — 대사마다 스타일 재계산을 강제하지 않게.
     const starts=quotes.map(q=>translatorLineStart(q)||dialogueLineStart(q,styles));
+    return {root,quotes,starts};
+}
+function writeRoot({root,quotes,starts}){
+    const marks=new Set(),pads=new Set();
     for(let i=0;i<quotes.length;i++) {
         const q=quotes[i],{line,mark}=starts[i];
         // 형광펜 칸이 줄 머리면 들여쓰기는 그 칸에 (q 에 주면 칸 배경이 들여 쓴 빈자리까지 칠해진다)
@@ -178,7 +215,7 @@ export function syncTypography(on) {
     const chat=document.getElementById('chat');if(!chat)return;
     // 4.7.8: 답이 오는 동안(body[data-generating]) 그 메시지는 걸음마다 다시 그려지므로 조판해 봐야 다음 걸음에 사라진다 —
     // 생성 중에는 표시줄 뒤 빈 줄만 정리하고, 나머지 조판은 답이 끝나면 한 번에 처리한다.
-    const flush=()=>{timer=0;if(document.body.dataset.generating==='true'){for(const root of dirty)if(root?.isConnected){normalizeTrackerSpacing(root);restoreDialogueTildes(root);}timer=setTimeout(flush,400);return;}for(const root of dirty)if(root?.isConnected)typesetRoot(root);dirty.clear();observer?.takeRecords();};
+    const flush=()=>{timer=0;if(document.body.dataset.generating==='true'){for(const root of dirty)if(root?.isConnected){normalizeTrackerSpacing(root);restoreDialogueTildes(root);}timer=setTimeout(flush,400);return;}typesetRoots([...dirty].filter(root=>root?.isConnected));dirty.clear();observer?.takeRecords();};
     observer=new MutationObserver(records=>{
         const generating=document.body.dataset.generating==='true',now=new Set(),touched=new Set();
         for(const record of records){

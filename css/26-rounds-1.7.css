@@ -102,15 +102,13 @@ body.salty #regex_container :is(.delete_regex, #regex_preset_delete) { color: va
   body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) {
     flex-direction: column; align-items: stretch !important; gap: 4px !important; min-width: 0; padding-block: 3px !important;
   }
-  body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) > :is(small,span,label) {
-    width: 100%; flex: none !important; min-width: 0; max-width: none; text-align: left; font-size: 11px !important;
-  }
-  body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) > select { width: 100%; min-width: 0; max-width: none !important; flex: none !important; margin: 0; font-size: 12px; }
+  /* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageH … */
+  /* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageH … */
   /* 프로필 · 채팅 · 미디어 스타일 · 알림 네 칸: 자주 안 바꾸는 값이라 작게 (195px → 약 120px). 이름은 한 줄 */
   body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) { padding-block: 6px !important; row-gap: 4px !important; }
   body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) { min-height: 0 !important; padding-block: 2px !important; gap: 3px !important; }
-  body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) > :is(small, span, label) { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 12px !important; line-height: 1.3 !important; }
-  body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) > select { height: 30px !important; min-height: 30px !important; }
+  /* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> se … */
+  /* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> se … */
   body.salty #user-settings-block :is([name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > label.checkbox_label {
     width: 100%; min-width: 0; min-height: 38px; margin: 0 !important; padding: 3px 0 !important; gap: 7px !important;
   }
@@ -133,7 +131,7 @@ body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > :is(.check
   }
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > :is(h4, .inline-drawer, div:not(:has(> select))) { grid-column: 1 / -1; }
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > div:has(> select) { min-width: 0; gap: 8px; }
-  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > div:has(> select) > select { min-width: 0; max-width: 60%; }
+  /* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #user-settings-block [name="ChatMessageHandlingToggles"] > div:has(> select) > select */
   /* 5.3.4: 예전 :is(> …) 는 잘못된 선택자라 규칙 전체가 버려졌다 — 두 갈래로 풀어 씀 */
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > label.checkbox_label,
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-container > label.checkbox_label { min-width: 0; }
@@ -146,16 +144,10 @@ body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > :is(.check
   body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) {
     flex-flow: column nowrap !important; align-items: stretch !important; justify-content: center !important; gap: 1px !important; min-height: 38px; padding-block: 2px !important;
   }
-  body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) > :is(span, small, label),
-  body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) > label small {
-    max-width: none; font-size: 11px !important; font-weight: 400 !important; line-height: 1.35;
-  }
+  /* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) > :i … */
   /* 슬라이더 이름도 스위치 이름과 같은 크기 (15px 굵게 → 11px) */
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > h4 + div.flex-container > div > small:first-child > span { font-size: 11px !important; font-weight: 400 !important; }
-  body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) select {
-    flex: none !important; width: 100% !important; height: 26px !important; min-height: 26px !important; padding: 0 22px 0 0 !important;
-    background-position: right 2px center !important; font-size: 13px !important; text-align: left; text-align-last: left;
-  }
+  /* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) sele … */
 }
 
 /* 모바일 월드 인포 활성화 설정: 사용자 설정처럼 두 열 — 이름 위, 막대 · 숫자 아래. 삽입 전략은 전체 폭, 스위치도 두 열. */
@@ -163,7 +155,7 @@ body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > :is(.check
 body.salty #WorldInfo #wiSliders { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px !important; }
 body.salty #WorldInfo #wiSliders > .flex-container { flex: none !important; width: auto; min-width: 0; }
 body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) { grid-template-columns: minmax(0, 1fr) auto; /* 3.0.0: gap · padding → css/12-worldinfo.css (원래 규칙으로 합침) */ }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child { grid-column: 1 / -1; grid-row: 1; /* 3.0.0: min-height → css/12-worldinfo.css (원래 규칙으로 합침) */ }
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > smal … */
 body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-slider { grid-area: 2 / 1 !important; width: 100%; min-width: 0; }
 body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input { grid-area: 2 / 2 !important; min-width: 0 !important; font-size: var(--bl-fs-ctl); /* width/height → css/12-worldinfo.css */ }
 body.salty #WorldInfo #wiSliders > .flex-container:has(> #world_info_character_strategy) { grid-column: 1 / -1; }
@@ -189,20 +181,20 @@ body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-title { grid-column: 1 / -1 !important; grid-row: 1; min-height: 0; font-size: var(--bl-fs-sub) !important; line-height: 1.3; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-range { grid-column: 1 !important; grid-row: 2 !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter { grid-column: 2 !important; grid-row: 2 !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter input { width: 60px !important; font-size: 11px !important; }
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter)  … */
 /* 숫자 하나 칸(최대 응답 길이 · 스와이프 수 · 시드): 이름 위, 숫자 아래 — 응답 길이는 테마 슬라이더가 붙으니 막대 + 숫자 */
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) { grid-column: auto; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 8px; padding: 6px 0 4px !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .range-block-title { grid-column: 1 / -1 !important; grid-row: 1; min-height: 0; font-size: var(--bl-fs-sub) !important; line-height: 1.3; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .toggle-description { display: none; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p { grid-column: 1 / -1 !important; grid-row: 2; width: 100% !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p > input { font-size: 11px !important; }
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"] … */
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> #bl-response-range) > .wide100p { grid-column: 2 !important; width: 60px !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> #bl-response-range) > #bl-response-range { grid-column: 1 !important; grid-row: 2; align-self: center; }
 /* 스위치 칸(제한 해제 · 스트리밍): 이름 + 스위치, 설명 숨김 */
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) { grid-column: auto; display: flex; flex-direction: column; justify-content: center; min-height: 100%; padding: 6px 0 4px !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > .toggle-description { display: none; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label { width: 100%; min-width: 0; min-height: 0; margin: 0 !important; padding: 0 !important; gap: 6px !important; justify-content: space-between; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label > span { font-size: var(--bl-fs-sub) !important; line-height: 1.3; }
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_la … */
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label > input[type="checkbox"] { flex: none; width: 36px !important; height: 20px !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label > input[type="checkbox"]::before { width: 14px !important; height: 14px !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label > input[type="checkbox"]:checked::before { transform: translateX(16px) !important; }

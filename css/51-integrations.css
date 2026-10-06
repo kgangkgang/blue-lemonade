@@ -22,6 +22,8 @@
 .bl-word-rule button { border:0; border-radius:8px; background:var(--salty-shade); color:var(--salty-text); min-height:36px; cursor:pointer; }
 
 .bl-word-help { width:23px; height:23px; border:1px solid currentColor; border-radius:50%; font:700 14px/1 sans-serif; background:transparent; color:var(--salty-accent); cursor:pointer; }
+/* 5.6.4 설정 창 안에서는 .salty-panel button{font:inherit}(css/20)가 위 글꼴을 이겨 15.5px 줄 높이 23px 로 '?' 가 1.6~2.4px 아래였다 — 글꼴을 되살리고 가운데 정렬 */
+.salty-panel .bl-word-help { font:700 14px/1 sans-serif; padding:0; display:inline-flex; align-items:center; justify-content:center; }
 .bl-word-presets { display:grid; grid-template-columns:minmax(0,1fr); gap:10px; margin:16px 0; }
 .bl-capture-options { display:grid; grid-template-columns:minmax(0,1fr); gap:10px; text-align:left; min-width:0; }
 .bl-capture-options > *, .bl-word-presets > * { min-width:0; max-width:100%; overflow-wrap:anywhere; }

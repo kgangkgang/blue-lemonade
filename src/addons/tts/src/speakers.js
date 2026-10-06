@@ -316,11 +316,26 @@ function segmentOpts() {
 
 // ================= 공개 API =================
 
-/** 메시지 하나에서 배운다 (원문 조각으로). 이미 배운 메시지는 건너뛰고, 글이 바뀐(스와이프·수정) 메시지는 예전 표를 걷어낸 뒤 다시 낸다 */
-export function learnFromMessage(mes, segsOriginal) {
+// 5.6.4 CHARACTER_MESSAGE_RENDERED 뒤에 실리태번이 채팅을 저장하는 type — 스트리밍 onFinishStreaming · 보통 Generate · 그림 확장('extension') 은
+// 렌더 이벤트를 기다린 다음 saveChatConditional (chat_metadata 포함) 을 부른다.
+// 저장이 따라오지 않는 것: 채팅을 연 인사말(first_message) · /sendas at= (command: 저장이 렌더보다 먼저) · 모르는 type · 끊긴 스트리밍
+const SAVED_AFTER_RENDER = new Set(['normal', 'swipe', 'regenerate', 'continue', 'quiet', 'extension']);
+/** 이 렌더 뒤에 실리태번이 채팅을 저장하는가 (sp = getContext().streamingProcessor) */
+export function chatSavedAfterRender(id, type, sp) {
+    if (!SAVED_AFTER_RENDER.has(type)) return false;
+    // 끊긴 스트리밍: onErrorStreaming 이 같은 type 으로 렌더 이벤트를 내고 저장하지 않는다 (그 처리기만 isStopped 를 켜고, 끝까지 받은 것은 isFinished)
+    if (sp && Number(sp.messageId) === Number(id) && sp.isStopped && !sp.isFinished) return false;
+    return true;
+}
+
+/**
+ * 메시지 하나에서 배운다 (원문 조각으로). 이미 배운 메시지는 건너뛰고, 글이 바뀐(스와이프·수정) 메시지는 예전 표를 걷어낸 뒤 다시 낸다.
+ * deferSave = 실리태번이 곧 이 채팅을 저장한다 (보통 답장 렌더 뒤 saveChatConditional — chat_metadata 도 함께) → 따로 저장하지 않는다 (5.6.4: 답장마다 1초 뒤 같은 채팅을 한 번 더 저장하던 것)
+ */
+export function learnFromMessage(mes, segsOriginal, { deferSave = false } = {}) {
     if (!mes || mes.is_system || !Array.isArray(segsOriginal)) return false;
     const st = state();
-    if (!st.palette_at) importPalette();
+    if (!st.palette_at) importPalette({ deferSave });
     const chat = Array.isArray(ctx().chat) ? ctx().chat : [];
     const idx = chat.indexOf(mes);
     const h = hashOf(String(mes.mes || ''));
@@ -334,7 +349,7 @@ export function learnFromMessage(mes, segsOriginal) {
     rec.h = h;
     if (idx >= 0) st.learned[idx] = rec;
     // 표·이름·대화문 수가 하나도 안 바뀐 메시지는 채팅 파일을 다시 쓰지 않는다 (큰 채팅의 저장 비용)
-    if (retracted || rec.v.length || rec.n.length || rec.k.length) { resolveAll(st); persist(); }
+    if (retracted || rec.v.length || rec.n.length || rec.k.length) { resolveAll(st); if (!deferSave) persist(); }
     return true;
 }
 
@@ -379,8 +394,8 @@ export function syncChat() {
     return moved + dropped;
 }
 
-/** 켜진 프롬프트와 현재 카드에서 "- 이름 / 별명: #색" 줄을 읽어 잠긴 색으로 넣는다. { '#rrggbb': [이름들] } 을 돌려준다 */
-export function importPalette() {
+/** 켜진 프롬프트와 현재 카드에서 "- 이름 / 별명: #색" 줄을 읽어 잠긴 색으로 넣는다. { '#rrggbb': [이름들] } 을 돌려준다 (deferSave: learnFromMessage 와 같음) */
+export function importPalette({ deferSave = false } = {}) {
     const st = state(), c = ctx();
     const texts = [];
     const oai = c.chatCompletionSettings || {};
@@ -417,7 +432,7 @@ export function importPalette() {
         e.locked = true; e.auto = false; e.aliases = names;
     }
     st.palette_at = Date.now();
-    resolveAll(st); persist();
+    resolveAll(st); if (!deferSave) persist();
     return found;
 }
 

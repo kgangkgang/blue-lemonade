@@ -5,7 +5,7 @@ import { MIX_DEFAULT, tidyGradients } from './gradients.js';
 import { tidyPins } from './mes-pins.js';
 import { syncWeatherProfile } from './weather-profiles.js';
 import { tidyFrameLibrary } from './frame-library.js';
-import { DECOR_DEFAULTS, tidyDecor } from './decor.js';
+import { DECOR_DEFAULTS, tidyDecor, slimDecor } from './decor.js';
 import { FRAME_DEFAULTS, FRAME_RANGE, tidyFrame } from './frames.js';
 // 설정 저장 칸: extension_settings.salty
 import { PALETTES, PALETTE_ALIASES } from './palettes.js';
@@ -559,11 +559,13 @@ export function getSettings() {
     if (s.image && !IMAGE_SHAPES.includes(s.image.shape)) s.image.shape = 'rect'; // 모르는 모양(가져온 파일 · 뺀 유리 조각 · 물방울) → 네모
     if (s.image) { tidyImage(s.image); tidyFrame(s.image); }
     tidyDecor(s.image);
+    slimDecor(s.image.decor); // 5.6.4: 꺼 둔 기본 프리셋 액자의 그림은 저장하지 않음 (켜면 다시 그림) — 예전 설정도 다음 저장부터 가벼워진다
     for (const owner of ['profile', 'userProfile']) {
         if (!isObj(s[owner])) s[owner] = structuredClone(DEFAULTS[owner]);
         fill(s[owner], DEFAULTS[owner]);
         tidyFrame(s[owner]);
         tidyDecor(s[owner]);
+        slimDecor(s[owner].decor);
         for (const key of ['nameAuto', 'nameItalic', 'nameUnderline', 'nameShadow']) s[owner][key] = flag(s[owner][key], DEFAULTS[owner][key]);
         for (const key of ['nameColor', 'nameOutlineColor']) if (!/^#[a-f\d]{6}$/i.test(s[owner][key])) s[owner][key] = DEFAULTS[owner][key];
         if (!['left', 'center', 'right'].includes(s[owner].nameAlign)) s[owner].nameAlign = 'center';

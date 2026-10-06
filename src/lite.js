@@ -157,6 +157,12 @@ export function deferredPreviewRuleCount() {
 // 여기서는 시작 표시 규칙(#salty-lazy-panel-start) 뒤를 통째로 테마 <link> 바로 뒤 <style> 로 옮긴다.
 // 원래도 맨 끝이었으니 옮겨도 폭포 순서가 한 칸도 안 바뀐다. tools/check-order.cjs 가 이것을 확인한다.
 // 규칙 글은 CSSOM 의 cssText 가 아니라 style.css 원문 끝을 잘라 쓴다 (cssText 는 var() 가 든 줄임 속성을 온전히 못 되살린다).
+//
+// 5.6.4 (점검 RP-2): `> *` 뿐 아니라 오른쪽 끝이 태그뿐인 서랍 규칙(`… div:has(> select) > span`)도 옮겼다 (9 → 67개).
+// 크롬은 :has() 왼쪽 칸 규칙들의 오른쪽 끝 태그를 한 목록으로 모아 두는데, 실리태번 코어의
+// `body:has(.drawer-content.maximized) #top-settings-holder:has(.drawer-content.openDrawer …)` 가 서랍을 처음 연 순간 body 에
+// ':has() 영향' 표시를 남긴 뒤로는 채팅에 요소가 붙을 때마다 body 아래에서 그 태그(span · i · select …)를 가진 요소를 전부 다시
+// 계산했다 (폰 리그 4배: 글 붙이기 한 번 35 → 180~210ms, 그중 테마 몫 = 다시 계산하는 요소 1,091 → 791).
 const LAZY_SENTINEL = '#salty-lazy-panel-start';
 const LEGACY_POPUPS = '#character_popup, #world_popup, #select_chat_popup, #shadow_popup, #dialogue_popup, #export_format_popup';
 let panelStyle = null;  // 옮겨 둔 게으른 칸 규칙이 든 <style id="salty-panel-css">
@@ -164,6 +170,15 @@ let panelOn = false;
 let panelCount = 0;
 let panelPending = false;
 let offTimer = 0;
+// 5.6.4 (점검 RP-2): 끄는 것은 서랍이 다 닫힌 뒤에 — 실리태번은 openDrawer 를 떼고도 --animation-duration-2x(기본 250ms) 동안
+// 높이를 줄이며 서랍을 보여 준다. 게으른 칸에 서랍 안 배치 규칙이 늘어서, 0.1초에 끄면 닫히는 서랍 속이 한 번 다시 배치됐다.
+// 서랍을 바꿔 열 때(실리태번이 옛 서랍을 닫고 animation_duration 기다린 뒤 새 서랍을 연다)도 껐다 켰다 하지 않는다.
+// 인라인 style 만 읽는다 (스타일 계산을 부르지 않음). 값이 없으면 실리태번 기본 125ms.
+let closedSeen = 0; // 열린 서랍 · 팝업이 없다고 처음 본 때 (그 뒤 offDelay 가 지나야 끈다)
+function offDelay() {
+    const ms = parseFloat(document.documentElement.style.getPropertyValue('--animation-duration'));
+    return Math.max(100, (Number.isFinite(ms) ? ms : 125) * 2 + 50);
+}
 
 /** 시트 맨 위 목록에서 게으른 칸 시작 표시 규칙의 자리 (없으면 -1) */
 function lazyStart(sheet) {
@@ -190,7 +205,16 @@ function uiOpen() {
 function syncPanelCss() {
     if (!panelStyle) return;
     const want = uiOpen();
+    if (want) closedSeen = 0;
     if (want === panelOn) return;
+    if (!want) {
+        // 5.6.4: 켜기는 바로(그리기 전), 끄기는 닫힌 것을 처음 본 뒤 offDelay() 가 지나서 — 그 사이 다시 열리면 그대로 켜 둠
+        const now = performance.now();
+        if (!closedSeen) closedSeen = now;
+        const left = offDelay() - (now - closedSeen);
+        if (left > 0) { if (!offTimer) offTimer = setTimeout(() => { offTimer = 0; syncPanelCss(); }, left); return; }
+        closedSeen = 0;
+    }
     panelOn = want;
     panelStyle.media = want ? 'all' : 'not all';
 }
@@ -337,9 +361,12 @@ export function startMenuOpenMark() {
     // 4.2.8 바깥을 눌러도 메뉴가 안 닫히는 환경(예전 실리태번은 ··· 를 누르면 버튼 칸을 열어 두기만 하고 닫지 않는다 · 닫는 애니메이션이 끝나지 않는 폰)에서는
     // 테마가 이 칸을 떠 있는 메뉴로 그리기 때문에 메뉴가 채팅을 가린 채 남았다. 실리태번에게 먼저 맡기고, 0.45초 뒤에도 열려 있으면 테마가 닫는다.
     document.addEventListener('click', (event) => {
-        if (!themeEnabled(getSettings())) return; // 5.5.6: 떠 있는 메뉴로 그리는 건 테마뿐 — 테마가 빠져 있으면 실리태번의 여닫기에 끼지 않는다
+        // 5.5.6: 떠 있는 메뉴로 그리는 건 테마뿐 — 테마가 빠져 있으면 실리태번의 여닫기에 끼지 않는다.
+        // 5.6.4 (점검 PC-4): 누를 때마다 설정 전체 정리(getSettings)를 다시 돌렸다 — apply.js 가 themeEnabled 일 때만 다는 body.salty 로 본다.
+        // 열린 메뉴도 클래스 목록으로 먼저 거른다 (style 글자 찾기 선택자로 채팅 전체를 훑지 않게 — 같은 조건)
+        if (!document.body.classList.contains('salty')) return;
         if (document.body.classList.contains('expandMessageActions') || event.target?.closest?.('.extraMesButtons, .extraMesButtonsHint')) return;
-        const open = chat.querySelectorAll('.extraMesButtons.visible, .extraMesButtons[style*="display: flex"], .extraMesButtons[style*="display:flex"]');
+        const open = [...chat.getElementsByClassName('extraMesButtons')].filter(m => m.classList.contains('visible') || /display: ?flex/.test(m.getAttribute('style') || ''));
         if (!open.length) return;
         const at = performance.now();
         setTimeout(() => {

@@ -97,6 +97,66 @@ function markLeads(body) {
     });
 }
 
+// 5.6.4 화면 밖 감정 칸은 멈춘다 (점검 RP-1): 무한 애니메이션이 화면 밖에서도 돌아 가만히 있어도 메인 스레드가 99.7 % 바빴다
+// (폰 리그 4배, 감정 칸 11개 · 애니메이션 21개가 전부 화면 밖). 채팅 · 북마크 창의 바깥 감정 칸마다 IntersectionObserver 를 걸고
+// 화면 밖이면 표시(data-bl-fx-off)를 달아 선택 중 멈춤 규칙(css/55 끝)과 같은 무게로 멈추고, 다시 보이면 멈춘 자리부터 잇는다.
+// 감시자는 숨은 탭에서 안 불린다 — 그래도 기본값이 '움직임'이라 예전 그대로일 뿐이다. 상자가 없는 칸(display: contents · none)은 멈추지 않는다.
+// 움직이는 캡처(capture-options.js)는 holdFx 로 전부 풀고 시작한다 — 멈춘 칸은 움직임으로 안 잡히고, 저장 중 본문이 바뀐 것으로 보이므로.
+const FX_OFF = 'data-bl-fx-off';
+const FX_REAL = '.custom-dem-expressive:not(.custom-dem-expressive--)';
+const FX_OFF_CSS = `body.salty :is(#chat, .cg-root) .custom-dem-expressive[${FX_OFF}]:not(#salty-none):not(#salty-none),
+body.salty :is(#chat, .cg-root) .custom-dem-expressive[${FX_OFF}]:not(#salty-none):not(#salty-none) * { animation-play-state: paused !important; }`;
+let sight = null, holds = 0;
+const watched = new Set(), inView = new WeakMap();
+function forgetFx(el) { sight?.unobserve(el); watched.delete(el); el.removeAttribute(FX_OFF); }
+function onSight(entries, observer) {
+    if (observer !== sight) return; // 효과를 끈 뒤에 늦게 온 알림
+    for (const entry of entries) {
+        const el = entry.target;
+        if (!el.isConnected) { forgetFx(el); continue; }
+        const box = entry.boundingClientRect;
+        const off = !entry.isIntersecting && (box.width > 0 || box.height > 0);
+        inView.set(el, !off);
+        if (!holds) el.toggleAttribute(FX_OFF, off);
+    }
+}
+function watchFx(root) {
+    if (!active || !root?.querySelectorAll || typeof IntersectionObserver !== 'function') return;
+    if (!sight) {
+        sight = new IntersectionObserver(onSight);
+        if (!document.getElementById('bl-fx-offscreen')) {
+            const style = document.createElement('style');
+            style.id = 'bl-fx-offscreen';
+            style.textContent = FX_OFF_CSS;
+            document.head.append(style);
+        }
+    }
+    for (const el of watched) if (!el.isConnected) forgetFx(el); // 다시 그려져 떨어진 칸 (화면 밖이던 칸은 감시자가 알려 주지 않는다)
+    for (const span of root.querySelectorAll(FX_REAL)) {
+        if (watched.has(span) || span.parentElement?.closest(FX_REAL)) continue; // 안쪽 칸은 바깥 칸의 규칙(*)이 같이 멈춘다
+        watched.add(span);
+        sight.observe(span);
+    }
+}
+function stopFx() {
+    sight?.disconnect();
+    sight = null;
+    for (const el of watched) el.removeAttribute(FX_OFF);
+    watched.clear();
+}
+/** 움직이는 캡처가 도는 동안 화면 밖 멈춤을 푼다 (on = true 로 시작, false 로 끝 — capture-options.js 의 bl:fx-hold 신호) */
+function holdFx(on) {
+    holds = Math.max(0, holds + (on ? 1 : -1));
+    if (on && holds === 1) for (const el of watched) el.removeAttribute(FX_OFF);
+    else if (!on && !holds) for (const el of watched) if (el.isConnected) el.toggleAttribute(FX_OFF, inView.get(el) === false);
+}
+document.addEventListener('bl:fx-hold', event => holdFx(!!event.detail)); // capture-options.js 파일 만들기
+// 북마크 창 · 앞뒤 문맥 창이 메시지를 그렸다는 신호 (typography · tone 과 같은 신호)
+document.addEventListener('chat-bookmarks:render', (event) => {
+    const root = event.detail?.root;
+    if (root?.nodeType === 1 && root.isConnected && root.closest('#chat, .cg-root')) watchFx(root);
+});
+
 function undress(root = document) {
     root.querySelectorAll('.bl-fx-lead, .bl-fx-long').forEach(span => span.classList.remove('bl-fx-lead', 'bl-fx-long'));
     root.querySelectorAll(`.${MADE}`).forEach((span) => {
@@ -115,6 +175,7 @@ function sweep() {
         const body = mes.querySelector('.mes_text');
         if (body) markLeads(body);
     });
+    watchFx(document.getElementById('chat'));
 }
 
 function schedule() {
@@ -138,7 +199,7 @@ function onMutations(records) {
         const chat = SillyTavern.getContext().chat || [], bodies = [...changed]; changed = new Set();
         dressing = true;
         try {
-            for (const body of bodies) { const mes = body.closest('.mes[mesid]'); if (mes?.isConnected) { dress(mes, chat[Number(mes.getAttribute('mesid'))]); markLeads(body); } }
+            for (const body of bodies) { const mes = body.closest('.mes[mesid]'); if (mes?.isConnected) { dress(mes, chat[Number(mes.getAttribute('mesid'))]); markLeads(body); watchFx(body); } }
         } finally { queueMicrotask(() => { watcher?.takeRecords(); dressing = false; }); }
     }, 400);
 }
@@ -169,5 +230,5 @@ export function syncDemExpressive(on) {
     if (!!on === active && !!on === !!bound) return;
     active = !!on;
     syncDemSelection(active);
-    if (active) { bind(); schedule(); } else { unbind(); undress(); }
+    if (active) { bind(); schedule(); } else { unbind(); stopFx(); undress(); }
 }

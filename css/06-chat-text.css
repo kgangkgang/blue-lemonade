@@ -310,8 +310,9 @@ body.salty.salty-user-bubble #chat .mes[is_user="true"] .mes_block {
   border-radius: var(--r-lg) var(--r-lg) 6px var(--r-lg) !important;
   box-shadow: var(--bl-e1) !important;
 }
-/* 편집할 때는 가로 꽉 (글 칸이 좁아지지 않게) */
-body.salty.salty-user-bubble #chat .mes[is_user="true"] .mes_block:has(.edit_textarea) {
+/* 편집할 때는 가로 꽉 (글 칸이 좁아지지 않게)
+   5.6.4 :has 는 .mes[is_user] 에 건다 — .mes_block 에 걸면 스트리밍 중인 답 칸까지 조각마다 다시 맞춰 봤다 (4.6.8 의 05-chat 과 같은 고침, 특이도 그대로) */
+body.salty.salty-user-bubble #chat .mes[is_user="true"]:has(.edit_textarea) .mes_block {
   width: 100% !important;
   max-width: 100% !important;
 }

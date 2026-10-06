@@ -128,20 +128,18 @@ body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-containe
   align-items: center;
 }
 /* 3.0.0: 여기 있던 규칙 'body.salty #rm_api_block #openai_api > *, body.salty #rm_api_block #openai_api :is(form, d…' 은 css/99-lazy-panel.css 로 옮김 (서랍 · 팝업이 열렸을 때만 켜짐) */
-body.salty #rm_api_block #openai_api > h4,
-body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > h4 {
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김 (이 규칙의 갈래 1개): #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > h4 */
+body.salty #rm_api_block #openai_api > h4 {
   grid-column: 1;
   padding: 0 !important;
   font-size: var(--bl-fs-sub) !important;
   line-height: 1.3;
 }
-body.salty #rm_api_block #openai_api > :is(select, input.text_pole, .flex-container:has(> .text_pole), .flex-container:has(> select)),
-body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > :is(select, input.text_pole, .flex-container:has(> .text_pole), .flex-container:has(> select)) {
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김 (이 규칙의 갈래 1개): #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > :is(select, input.text_pole, .flex-c … */
+body.salty #rm_api_block #openai_api > :is(select, input.text_pole, .flex-container:has(> .text_pole), .flex-container:has(> select)) {
   grid-column: 2;
 }
-body.salty #rm_api_block #openai_api :is(form, div):has(> h4) > :is(div:has(> small:only-child), .neutral_warning) {
-  display: none !important;
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #rm_api_block #openai_api :is(form, div):has(> h4) > :is(div:has(> small:only-child), .neutral_warning) */
 body.salty #rm_api_block #openai_api > :is(.flex-container:has(> .api_button), .online_status) {
   grid-column: 1 / -1;
 }
@@ -443,20 +441,13 @@ body.salty #left-nav-panel #openai_api-presets > div:is(.bl-s, *) > :is(.standou
   flex: 1 1 auto;
   min-width: 0;
 }
-body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader > strong {
-  padding-left: 2px;
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader > strong */
 body.salty #left-nav-panel #openai_api-presets > div:is(.bl-s, *) > .standoutHeader + .flex-container > :not(.flex-container) {
   width: auto !important;
   margin: 0 !important;
 }
 /* 확장이 감싼 고르기 · select2 칸도 칸 폭을 넘지 않게 */
-body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader + .flex-container > :not(.flex-container) :is(select, .select2-container) {
-  width: 100% !important;
-  max-width: 100%;
-  min-width: 0;
-  margin: 0 !important;
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader + .flex-container > :not(.f … */
 body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > :is(.standoutHeader, .standoutHeader + .flex-container) > .flex-container {
   display: flex !important;
   flex: none;

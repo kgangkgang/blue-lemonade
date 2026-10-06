@@ -11,6 +11,7 @@ import { setupRenderer, schedulePass } from './render.js';
 import { setupHold } from './hold.js';
 import { toast, watchThemeVars, refreshThemeVars } from './ui.js';
 import { badgeTextHit } from '../../badge-hit.js';
+import { verifyAddonCss } from '../../addon-files-check.js';
 
 initSettings();
 
@@ -147,12 +148,9 @@ async function boot() {
     }
 
     // 폰 파일 앱은 압축을 풀 때 덮어쓰지 않고 'style (1).css'처럼 따로 저장해서 예전 파일이 남곤 한다.
-    setTimeout(() => {
-        const cssVersion = getComputedStyle(document.documentElement).getPropertyValue('--eh-css-version').trim().replace(/["']/g, '');
-        if (cssVersion !== VERSION) {
-            toastr.warning(`${TITLE} 파일이 섞였어요 (코드 ${VERSION}, 스타일 ${cssVersion || '예전 것'}). 블루레몬에이드를 업데이트한 뒤 설치 점검을 실행해 주세요.`, TITLE, { timeOut: 15000 });
-        }
-    }, 2000);
+    // 5.6.4 (점검 PAB-3): 2초 타이머에서 :root 계산 스타일을 읽어 부팅 중 스타일 계산을 강제했다 — 다른 애드온과 같은 공용 확인으로
+    // (한가할 때 읽고, 다르면 스타일 파일을 한 번 다시 받아 본 뒤에만 알린다)
+    verifyAddonCss({ folder: 'assets', name: '--eh-css-version', version: VERSION, title: TITLE });
 
 }
 

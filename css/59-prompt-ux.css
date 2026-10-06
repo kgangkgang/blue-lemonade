@@ -25,15 +25,7 @@ body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small
   gap:8px 10px;
   padding:4px 0;
 }
-body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child {
-  grid-column:1 / -1;
-  grid-row:1;
-  min-width:0;
-  opacity:1;
-  line-height:1.45;
-  white-space:normal;
-  overflow-wrap:anywhere;
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #left-nav-panel #advanced-ai-config-block .flex-container:has(> small:first-child + .neo-range-slider + .neo-r … */
 body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child :is(.fa-circle-info,.fa-circle-question) {
   color:var(--salty-muted);
   opacity:1;
@@ -105,24 +97,12 @@ body.salty #left-nav-panel .range-block-title {
   white-space:normal;
   overflow-wrap:anywhere;
 }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter input {
-  width:calc(5.5ch + 18px + 6 * max(0px,var(--bl-settings-tracking,0px)))!important;
-  max-width:100%;
-  height:auto!important;
-  min-height:max(var(--bl-prompt-control-height),calc(1.45em + 8px))!important;
-  font-size:var(--bl-fs-ctl)!important;
-  line-height:1.45;
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter)  … */
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> #bl-response-range) > .wide100p {
   width:calc(6ch + 18px + 6 * max(0px,var(--bl-settings-tracking,0px)))!important;
   max-width:100%;
 }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p > input {
-  height:auto!important;
-  min-height:max(var(--bl-prompt-control-height),calc(1.45em + 8px))!important;
-  font-size:var(--bl-fs-ctl)!important;
-  line-height:1.45;
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"] … */
 body.salty #left-nav-panel #openai_settings .inline-drawer-header > .flex-container {
   flex-wrap:wrap;
   gap:8px 10px;
@@ -340,10 +320,7 @@ body.salty #AdvancedFormatting :is(#ContextSettings,#InstructSettingsColumn,#Sys
 body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) {
   gap:8px 10px!important;
 }
-body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) > select {
-  flex:1 1 12em!important;
-  max-width:100%;
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) > select */
 body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) > .flex-container {
   flex-wrap:wrap;
   max-width:100%;
@@ -352,10 +329,7 @@ body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-
 body.salty #AdvancedFormatting > .spaceEvenly label.flex-container:has(> small + .editor_maximize) {
   gap:8px 10px;
 }
-body.salty #AdvancedFormatting > .spaceEvenly label.flex-container:has(> small + .editor_maximize) > small {
-  min-width:0;
-  overflow-wrap:anywhere;
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #AdvancedFormatting > .spaceEvenly label.flex-container:has(> small + .editor_maximize) > small */
 body.salty #AdvancedFormatting .editor_maximize {
   flex:none;
   align-self:center;
@@ -374,14 +348,8 @@ body.salty #AdvancedFormatting :is(#context_story_string_position_block,#instruc
   flex-wrap:wrap!important;
   gap:8px 10px!important;
 }
-body.salty #AdvancedFormatting :is(#context_story_string_position_block,#instructSettingsBlock div:has(> #instruct_names_behavior)) > :is(small,label) {
-  max-width:100%;
-}
-body.salty #AdvancedFormatting :is(#context_story_string_position_block,#instructSettingsBlock div:has(> #instruct_names_behavior)) select {
-  flex:1 1 12em!important;
-  height:auto!important;
-  min-height:max(var(--bl-prompt-control-height),calc(1.45em + 8px))!important;
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names … */
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names … */
 body.salty #AdvancedFormatting :is([name="tokenPaddingBlock"] > input,#reasoning_max_additions) {
   width:calc(6ch + 20px + 6 * max(0px,var(--bl-settings-tracking,0px)))!important;
   max-width:100%;

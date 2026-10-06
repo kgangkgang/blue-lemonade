@@ -39,8 +39,8 @@ const FATAL = new Set([1004, 1008]); // 키·잔액: 다음 작업도 다 실패
 const num = (v, d) => (Number.isFinite(Number(v)) && v !== '' && v !== null ? Number(v) : d);
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
-/** 서버 주소: 목록에 있는 값 / 직접 입력 / 1.0.0 에서 옮겨온 임의 주소 */
-function hostOf(cfg) {
+/** 서버 주소: 목록에 있는 값 / 직접 입력 / 1.0.0 에서 옮겨온 임의 주소. 5.6.4 paid.js 도 이걸로 공식 서버(유료)인지 본다 */
+export function hostOf(cfg) {
     let h = cfg.host === 'custom' ? cfg.host_custom : cfg.host;
     h = String(h || '').trim().replace(/\/+$/, '');
     if (!h) h = HOSTS[0].value;

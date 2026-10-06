@@ -21,7 +21,7 @@ html body .bl-editor .bl-settings-toprow :is([data-compare], .bl-settings-expand
 .bl-editor .bl-editor-workspace:has(.salty-prevbox.folded) { display:flex !important; flex-direction:column; }
 .bl-editor .bl-editor-stage:has(.salty-prevbox.folded) { flex:none; padding:0 10px; border:0; border-bottom:1px solid var(--bl-editor-line); }
 .bl-editor-stage:has(.salty-prevbox.folded) .bl-editor-caption { display:none; }
-html body .bl-editor .bl-editor-stage .salty-prevbox { position:relative; inset:auto; width:100%; margin:0; padding:0 0 12px; box-shadow:none; background:transparent !important; }
+html body .bl-editor .bl-editor-stage .salty-prevbox { position:relative; inset:auto; width:100%; margin:0; padding:0 0 20px; box-shadow:none; background:transparent !important; } /* 5.6.4 아래 20px = 접기 꺾쇠 자리(css/28, 높이 20 · bottom:0). 12px 이면 꺾쇠가 확대 · 높이 · ↺ 줄 아래 8px 를 덮었다 — panel.js prevBox() 의 상자엔 꺾쇠가 늘 있다 */
 html body .bl-editor .salty-sec { flex:1; min-width:0; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable both-edges; margin:0; padding:10px 10px 16px; text-align:left; }
 .bl-editor-group { border-top:1px solid var(--bl-editor-line); }
 html body .bl-editor-group-toggle { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; margin:0; padding:calc(6px + var(--bl-text-nudge, 0px)) 0 calc(6px - var(--bl-text-nudge, 0px)) /* 5.5.3 세로 중앙 */; min-height:38px; border:0; border-radius:0; background:transparent; color:var(--salty-text); font:inherit; font-size:calc(14 * var(--sp)); font-weight:600; text-align:left; box-shadow:none; }
@@ -94,7 +94,7 @@ html body .bl-editor .bl-setting-reset[hidden] { display:none !important; }
   .bl-editor .bl-settings-toprow .bl-editor-choose { flex:1 1 auto; }
   html body .bl-editor .salty-sec { scrollbar-gutter:auto; scrollbar-width:none; }
   .bl-editor-stage { padding-top:6px; }
-  html body .bl-editor .bl-editor-stage .salty-prevbox { padding-bottom:6px; }
+  html body .bl-editor .bl-editor-stage .salty-prevbox { padding-bottom:20px; } /* 5.6.4 6 → 20: 접기 꺾쇠(20px)가 확대 · ↺ 줄 아래 14px 를 덮어 폰에서 ↺ 아래쪽을 누르면 미리보기가 접혔다 */
   html body .bl-editor .bl-settings-toprow .bl-settings-expand { position:relative; width:34px; padding:0; font-size:0; }
   html body .bl-editor .bl-settings-toprow .bl-settings-expand::before { content:''; position:absolute; inset:0; margin:auto; width:16px; height:16px; background:currentColor; -webkit-mask:var(--bl-expand-icon) center / contain no-repeat; mask:var(--bl-expand-icon) center / contain no-repeat; --bl-expand-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 8V3h5M12 3h5v5M17 12v5h-5M8 17H3v-5'/%3E%3C/svg%3E"); }
   html body .bl-editor .bl-settings-toprow .bl-settings-expand[aria-pressed="true"]::before { --bl-expand-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 3v5H3M17 8h-5V3M12 17v-5h5M3 12h5v5'/%3E%3C/svg%3E"); }

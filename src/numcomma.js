@@ -287,7 +287,12 @@ function render(text, L) {
     const wide = width > inner + 0.5 && L.spin > 0 && width <= inner + L.spin + 0.5;
     if (wide) inner += L.spin;
     else if (width > inner + 0.5) return null;   // 안 들어가면 그리지 않는다 — 원래 글자(가로로 밀림)대로
-    const x = L.pl + (/center/.test(L.align) ? (inner - width) / 2 : /^(right|end)$/.test(L.align) ? inner - width : 0) + L.fx / L.unit;
+    // 5.6.4: PC 숫자칸은 스핀 자리만큼 왼쪽 여백이 더 크다(css/02 의 15px/0) — 스핀 자리까지 쓰는 넓은 그림은 작은 쪽 여백 기준으로 칸 가운데에.
+    // 좌우 여백이 같으면 예전 식(pl + (inner - width) / 2)과 같은 값이다
+    const mid = /center/.test(L.align);
+    const side = wide && mid ? Math.min(L.pl, L.pr) : L.pl;
+    const room = wide && mid ? L.w - 2 * side : inner;
+    const x = side + (mid ? (room - width) / 2 : /^(right|end)$/.test(L.align) ? inner - width : 0) + L.fx / L.unit;
     // 세로: 한 줄 칸은 줄 상자를 내용 칸 가운데에 둔다 → 기준선 = 내용 칸 가운데 + (위 높이 - 아래 깊이)/2 (줄 높이와 상관없음).
     // 브라우저처럼 기기 픽셀로 반올림한 줄에 둔다
     const m = ctx.measureText('0');

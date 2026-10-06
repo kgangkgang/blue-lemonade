@@ -181,17 +181,7 @@ body.salty #left-nav-panel :is(#range_block_openai, #openai_settings) .range-blo
   grid-row: 2;
   margin: 2px 0 0 !important;
 }
-body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p > input {
-  width: 100% !important;
-  height: var(--bl-h-num) !important;
-  min-height: 0 !important;
-  margin: 0 !important;
-  padding: 0 6px !important;
-  border-radius: 8px !important;
-  font-size: var(--bl-fs-ctl) !important;
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range- … */
 
 /* ---------- 한 줄 고르기(추론 강도 · 상세도 · 이미지 품질 등): 이름 왼쪽 · 값은 흐린 글자 + 꺾쇠 ---------- */
 body.salty #left-nav-panel #openai_settings .flex-container.flexFlowColumn:has(> .oneline-dropdown) {
@@ -520,15 +510,11 @@ body.salty #completion_prompt_manager #completion_prompt_manager_list > li.compl
   background: var(--pm-group);
   box-shadow: var(--pm-top), var(--pm-bot);
 }
-body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) + li:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) {
-  --pm-top: inset 0 0 transparent;
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_m … */
 body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)):has(+ li .prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) {
   --pm-bot: inset 0 0 transparent;
 }
-body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) .completion_prompt_manager_prompt_name :is(.prompt-manager-inspect-action, span:not(.fa-solid)) {
-  font-weight: 650;
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_m … */
 @media (hover: hover) {
   body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:hover {
     box-shadow: inset 0 0 0 100vmax var(--bl-hover);
@@ -812,17 +798,7 @@ body.salty #completion_prompt_manager_popup #completion_prompt_manager_forbid_ov
   font-size: var(--bl-fs-sub);
   color: var(--salty-muted);
 }
-body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_control:has(#completion_prompt_manager_popup_entry_form_prompt:disabled) > div:first-child::after {
-  flex-basis: 100%;
-  margin: var(--bl-s1) 0 var(--bl-s2);
-  padding: var(--bl-s3) var(--bl-inset);
-  border-radius: 12px;
-  background: var(--bl-fill-hover, var(--bl-hover));
-  font-size: var(--bl-fs-sub);
-  font-weight: 500;
-  text-align: left;
-  color: var(--salty-muted);
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_control:has(#completion_prompt_ma … */
 body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_source_block {
   justify-content: flex-start;
   flex-wrap: wrap;

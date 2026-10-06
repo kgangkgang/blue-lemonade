@@ -89,10 +89,8 @@ body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instru
   margin: 0 !important;
   padding: 0 !important;
 }
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > :is(span, small, label),
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > label small,
-body.salty #user-settings-block-content #MovingUI-presets-block label[for="movingUIPresets"] > small,
-body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) :is(small, label) {
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김 (이 규칙의 갈래 3개): #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="Chat … */
+body.salty #user-settings-block-content #MovingUI-presets-block label[for="movingUIPresets"] > small {
   flex: 0 1 auto;
   min-width: 0;
   margin: 0 !important;
@@ -103,9 +101,8 @@ body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instru
   color: var(--salty-text) !important;
   opacity: 1 !important;
 }
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) select,
-body.salty #user-settings-block-content #MovingUI-presets-block label[for="movingUIPresets"] select,
-body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) select {
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김 (이 규칙의 갈래 2개): #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="Chat … */
+body.salty #user-settings-block-content #MovingUI-presets-block label[for="movingUIPresets"] select {
   flex: 1 1 0% !important;
   width: auto !important;
   min-width: 0 !important;
@@ -124,9 +121,8 @@ body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instru
   text-overflow: ellipsis;
   field-sizing: content;
 }
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) select:focus-visible,
-body.salty #user-settings-block-content #MovingUI-presets-block label[for="movingUIPresets"] select:focus-visible,
-body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) select:focus-visible {
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김 (이 규칙의 갈래 2개): #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="Chat … */
+body.salty #user-settings-block-content #MovingUI-presets-block label[for="movingUIPresets"] select:focus-visible {
   box-shadow: var(--bl-ring) !important;
 }
 body.salty #user-settings-block-content [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container:has(> .flex1 select) {
@@ -151,16 +147,8 @@ body.salty #user-settings-block-content .flex-container:has(> label + .neo-range
   column-gap: var(--bl-s2);
   padding: 6px 0 4px;
 }
-body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > label {
-  grid-column: 1;
-  grid-row: 1;
-}
-body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > label small {
-  padding: 0 !important;
-  font-size: var(--bl-fs-body) !important;
-  font-weight: 500 !important;
-  color: var(--salty-text) !important;
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > label */
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > label small … */
 body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > .neo-range-input {
   grid-column: 2;
   grid-row: 1;
@@ -322,29 +310,13 @@ body.salty #user-settings-block-content .flex-container:has(> small:first-child 
   flex: 1 1 100% !important;
   padding: 6px 0 4px !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--bl-fs-body) !important;
-  font-weight: 500 !important;
-}
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child :is(span, i, div) {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child :is(i, .fa-solid) {
-  font-size: 12px !important;
-  color: var(--salty-faint) !important;
-  opacity: 1 !important;
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > … */
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > … */
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > … */
 body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
   width: 72px !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:not(:first-child) {
-  font-size: var(--bl-fs-micro) !important;
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > … */
 /* 사용자 테마 입력(다른 확장이 슬라이더 칸에 끼워 넣음): 한 줄 차지 */
 body.salty #user-settings-block [name="FontBlurChatWidthBlock"] > .inline-drawer {
   flex: 1 1 100%;
@@ -525,9 +497,7 @@ body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2)
   border-radius: var(--bl-r-md) var(--bl-r-md) 0 0 !important;
   font-weight: 600;
 }
-body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer):has(> .inline-drawer-header .inline-drawer-icon.up) > .inline-drawer-header :is(b, strong) {
-  font-weight: 600;
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inlin … */
 body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer) > .inline-drawer-content {
   padding: 0 10px var(--bl-s3) !important;
 }
@@ -634,12 +604,7 @@ body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-
   gap: 2px var(--bl-s1) !important;
   padding: 2px 0 var(--bl-s1);
 }
-body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) > select {
-  flex: 1 1 180px !important; /* 폰에선 아이콘이 다음 줄로 — 이름이 'Neutral - Cł' 로 잘리지 않게 */
-  min-width: 0;
-  margin: 0 !important;
-  text-overflow: ellipsis;
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) > select */
 body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) > .flex-container {
   flex-wrap: nowrap;
   gap: 0 !important;
@@ -733,18 +698,8 @@ body.salty #AdvancedFormatting .flex-container:has(> label[for^="reasoning_"]) {
   gap: 0 !important;
 }
 /* 3.0.0: 여기 있던 규칙 'body.salty #AdvancedFormatting .flex-container:has(> label[for^="reasoning_"]) > *' 은 css/99-lazy-panel.css 로 옮김 (서랍 · 팝업이 열렸을 때만 켜짐) */
-body.salty #AdvancedFormatting .flex-container:has(> label[for^="reasoning_"]) > div:has(> #reasoning_max_additions) {
-  flex-direction: row-reverse;
-  align-items: center !important;
-  justify-content: space-between;
-  min-height: var(--bl-h-row);
-}
-body.salty #AdvancedFormatting .flex-container:has(> label[for^="reasoning_"]) > div:has(> #reasoning_max_additions) > small {
-  padding: 0 !important;
-  font-size: var(--bl-fs-body) !important;
-  font-weight: 500;
-  color: var(--salty-text) !important;
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #AdvancedFormatting .flex-container:has(> label[for^="reasoning_"]) > div:has(> #reasoning_max_additions) */
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #AdvancedFormatting .flex-container:has(> label[for^="reasoning_"]) > div:has(> #reasoning_max_additions) > sm … */
 body.salty #AdvancedFormatting [name="tokenizerSelectorBlock"] > select {
   width: 100%;
   margin-bottom: var(--bl-s1) !important;
@@ -1020,9 +975,8 @@ body.salty :is(#rm_extensions_block, #user-settings-block, #AdvancedFormatting, 
   overflow-wrap: break-word;
 }
 /* 드롭다운 줄: 이름이 먼저 자리를 잡고(최대 60%, 넘치면 단어째 줄바꿈) 값은 남은 자리에서 말줄임 */
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > :is(span, small, label),
-body.salty #user-settings-block-content #MovingUI-presets-block label[for="movingUIPresets"] > small,
-body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) > :is(small, label) {
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김 (이 규칙의 갈래 2개): #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="Chat … */
+body.salty #user-settings-block-content #MovingUI-presets-block label[for="movingUIPresets"] > small {
   flex: 0 1 auto !important;
   max-width: 60%;
 }
@@ -1723,14 +1677,8 @@ body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2)
   flex-wrap: wrap;
   row-gap: 0;
 }
-body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) label.checkbox_label:has(> input[type="checkbox"] + span + small:last-child) > span {
-  flex: 1 1 0%;
-  min-width: 0;
-}
-body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) label.checkbox_label:has(> input[type="checkbox"] + span + small:last-child) > small {
-  flex: 1 1 100%;
-  padding-left: 43px; /* 체크박스 앞 10 + 체크박스 18 + 사이 15 — 이름 첫 글자에 맞춤 */
-}
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #rm_extensions_block :is(#extensions_settings, #extensions_settings2) label.checkbox_label:has(> input[type="c … */
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #rm_extensions_block :is(#extensions_settings, #extensions_settings2) label.checkbox_label:has(> input[type="c … */
 /* 이미지 생성: 체크 줄 바로 밑 '근원' 이름이 붙어 있어서 한 칸 띄움 */
 body.salty #rm_extensions_block label[for="sd_source"] {
   display: block;

@@ -5,6 +5,8 @@ import { toolSection, bindAddonLayout } from './addon-layout.js';
 import { MASK_DEFAULTS, MASK_RANGES, maskProfile, FILTER_KEYS, FILTER_RANGES, FILTER_PRESETS, filterValue } from './capture-style.js';
 import { paintMasks } from './capture-privacy.js';
 import { getSettings, saveSettings } from './settings.js';
+// 5.6.4: 움직이는 캡처 동안 화면 밖 감정 대사 멈춤을 푼다 (dem-expressive.js — 효과를 켰을 때만 불러오는 모듈이라 신호로)
+const holdFx = on => document.dispatchEvent(new CustomEvent('bl:fx-hold', { detail: on }));
 const esc = value => String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const styles=[['auto','테마에 맞춘 네모'],['white','흰 네모'],['black','검정 네모'],['mosaic','모자이크 블록'],['tape','마스킹 테이프']];
 // 5.5.3 캡처 필터: 프리셋 하나 + 슬라이더 여섯 (값은 captureTools 에 숫자로 · 슬라이더를 만지면 프리셋은 '직접')
@@ -139,7 +141,7 @@ export function captureOptionsSnapshot() {
 const kept={chat:null,edits:null,files:null,archive:null,ids:'',stale:false,base:null};
 const keptFor=()=>{const chat=SillyTavern.getContext().chatId;if(kept.chat!==chat){kept.chat=chat;kept.edits=null;kept.files=null;kept.archive=null;kept.ids='';kept.stale=false;kept.base=null;}return kept;};
 // 바탕 그림을 다시 열 때 이어 써도 되는지: 선택 · 메시지 내용(스와이프 · 번역) · 테마 바탕이 그대로인지 (FNV-1a 한 줄)
-const baseKey=ids=>{const text=[ids.join(','),document.body.classList.contains('salty-dark')?'d':'l',getComputedStyle(document.documentElement).getPropertyValue('--salty-bg').trim(),...ids.map(id=>document.querySelector(`#chat .mes[mesid="${Number(id)}"]`)?.innerHTML||'')].join('\u0001');let h=2166136261;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return `${ids.join(',')}#${h.toString(36)}`;};
+const baseKey=ids=>{const text=[ids.join(','),document.body.classList.contains('salty-dark')?'d':'l',getComputedStyle(document.documentElement).getPropertyValue('--salty-bg').trim(),...ids.map(id=>document.querySelector(`#chat .mes[mesid="${Number(id)}"]`)?.innerHTML.replaceAll(' data-bl-fx-off=""','')||'')].join('\u0001');let h=2166136261;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return `${ids.join(',')}#${h.toString(36)}`;};
 const LIVE_BAND=512; // 큰 미리보기는 이 높이(캔버스 픽셀)의 띠로 나눠 화면에 보이는 띠만 칠한다
 const LIVE_PIXELS=8e6; // 큰 미리보기 캔버스 상한 (약 32MB)
 export async function openCapturePreview(ids, mount = null, selectedIds = () => ids) {
@@ -338,6 +340,7 @@ export async function openCapturePreview(ids, mount = null, selectedIds = () => 
     async function generate(){
         if(busy)return;busy='files';render.disabled=quick.disabled=true;revision++;controller?.abort();stopBake();wipe();stale=false;const current=revision;controller=new AbortController();const signal=controller.signal;
         const resources=createCaptureResources();
+        holdFx(true); // 5.6.4: 화면 밖에서 멈춘 감정 대사를 다시 움직인 채로 — 움직임으로 잡히고, 저장 중 표시가 바뀌어 '메시지가 바뀌었어요'가 나지 않게 (dem-expressive.js)
         try{
             const captureIds=selectedIds();if(!captureIds.length)throw Error('메시지를 먼저 선택해 주세요.');
             const options={...captureOptionsSnapshot(),edits,resources},motion=['video','gif','apng','webp'].includes(options.format);
@@ -364,7 +367,7 @@ export async function openCapturePreview(ids, mount = null, selectedIds = () => 
             if(archive){zipURL=URL.createObjectURL(archive);zip.href=zipURL;zip.hidden=false;}
             show();render.textContent='파일 다시 만들기';
         }catch(error){if(alive()&&revision===current)status.textContent=error.message||'미리보기를 만들지 못했어요.';}
-        finally{resources.close();busy=false;render.disabled=quick.disabled=false;if(bakeAfterFiles){bakeAfterFiles=false;scheduleBake(0);}else if(!base&&alive()&&wantsThumb())scheduleBake(0,false);}
+        finally{holdFx(false);resources.close();busy=false;render.disabled=quick.disabled=false;if(bakeAfterFiles){bakeAfterFiles=false;scheduleBake(0);}else if(!base&&alive()&&wantsThumb())scheduleBake(0,false);}
     }
     // 빠른 미리보기: 굽지 않고 첫 화면만 멈춘 그림으로 (움직임 · 날씨 · 나머지 파일은 '파일 만들기'에서). 저장용이 아니다
     async function quickLook(){

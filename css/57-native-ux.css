@@ -54,7 +54,7 @@ body.salty #PersonaManagement #persona_connections_buttons > .menu_button > div 
 body.salty #right-nav-panel #avatar-and-name-block { border-radius:var(--bl-r-md); }
 body.salty #right-nav-panel #avatar_controls .form_create_bottom_buttons_block { gap:8px!important; }
 body.salty #right-nav-panel #avatar_controls .form_create_bottom_buttons_block > .menu_button { height:auto!important; min-height:36px!important; padding:6px!important; }
-body.salty #right-nav-panel .hotswap:not(:has(.avatar)) > small { display:none; }
+/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #right-nav-panel .hotswap:not(:has(.avatar)) > small */
 body.salty #right-nav-panel #rm_button_selected_ch h2 { letter-spacing:var(--salty-ui-ls,normal); }
 body.salty #right-nav-panel .title_restorable { flex-wrap:wrap; column-gap:10px; row-gap:8px; }
 body.salty #character_popup #depth_prompt_div > div:last-child { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.5fr); gap:8px 14px; }

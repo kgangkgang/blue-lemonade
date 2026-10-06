@@ -162,7 +162,7 @@ body.salty :is(.mes_edit_delete, .mes_reasoning_delete, .mes_media_delete, .mes_
   body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
     display: grid !important; grid-template-columns: minmax(0, 1fr) auto; width: 100%; gap: 5px 10px;
   }
-  body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .flex-container:has(> .neo-range-slider) > small { grid-column: 1 / -1; width: 100%; text-align: left; }
+  /* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #user-settings-block [name="FontBlurChatWidthBlock"] .flex-container:has(> .neo-range-slider) > small */
   body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .neo-range-slider { width: 100%; min-width: 0; grid-area: 2 / 1 !important; }
   body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .neo-range-input { grid-area: 2 / 2 !important; }
   body.salty #user-settings-block :is(#UI-Customization, #power-user-option-checkboxes) > div[name] { padding-inline: 9px !important; }
@@ -237,8 +237,8 @@ body.salty #dialogue_del_mes #dialogue_del_mes_ok { background: var(--salty-dang
   body.salty #user-settings-block #user-settings-block-content .flex-container:has(> :is(span, label) + select):not(#UI-language-block) {
     display: grid !important; grid-template-columns: minmax(0, 1fr); gap: 5px !important; padding-block: 9px !important; align-items: start !important;
   }
-  body.salty #user-settings-block #user-settings-block-content .flex-container:has(> :is(span, label) + select):not(#UI-language-block) > :is(span, label) { width: 100%; min-width: 0; text-align: left; line-height: 1.4; }
-  body.salty #user-settings-block #user-settings-block-content .flex-container:has(> :is(span, label) + select):not(#UI-language-block) > select { width: 100% !important; max-width: none !important; min-width: 0 !important; text-align: left !important; text-align-last: left !important; background-color: var(--bl-control) !important; border-radius: 8px !important; }
+  /* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #user-settings-block #user-settings-block-content .flex-container:has(> :is(span, label) + select):not(#UI-lan … */
+  /* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #user-settings-block #user-settings-block-content .flex-container:has(> :is(span, label) + select):not(#UI-lan … */
 }
 /* ===== /surfaces:witidy ===== */
 

@@ -51,6 +51,10 @@ body.salty :is(#options .options-content a, #extensionsMenu .list-group-item, #e
   font-size: var(--bl-ic) !important;
   text-align: center;
 }
+/* 5.6.4 Font Awesome fa-lg 는 줄 높이가 .05em(0.75px) — 그 작은 줄 상자의 반올림 때문에 폰 줄(36px)에서 아이콘이 글자보다 1.2~1.5px 위였다 */
+body.salty :is(#options .options-content a, #extensionsMenu .list-group-item, #extensionsMenu > .extension_container > div, #extensionsMenu > div:not(.extension_container)) :is(i, .fa-solid)::before {
+  line-height: 1;
+}
 /* 메뉴 칸 나눔: 선 대신 옅은 띠 */
 body.salty #options .options-content hr {
   height: 5px !important;

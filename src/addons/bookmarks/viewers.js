@@ -7,6 +7,7 @@ import { loadRecord, removeBookmark, setNote, editMessageText, flushBookmarkSave
 import { escapeHtml, formatDate, renderMessageHtml, renderReasoningHtml, avatarForMessage, hydrateHtmlBlocks } from './render.js';
 import { openSheet, confirmSheet, textSheet, hasOpenSheet } from './ui-kit.js';
 import { isBlockedPreviewKey } from './preview-guard.js';
+import { typesetBatch } from '../../typography.js';
 
 const NOTE_HINT = '*기울기*, **굵게**, &lt;br&gt; 같은 HTML도 쓸 수 있어요. Ctrl+Enter로 저장.';
 
@@ -325,18 +326,21 @@ export async function enterPreview(record, index) {
     chatElement.replaceChildren();
     const first = Math.max(0, index - 2);
     const last = Math.min(record.messages.length - 1, index + 2);
-    for (let i = first; i <= last; i++) {
-        // 실리태번이 메시지 객체를 손볼 수 있으니 복사본을 넘긴다.
-        const message = record.messages[i];
-        const element = addOneMessage(structuredClone(message), { forceId: i, scroll: false, showSwipes: false });
-        const node = element?.[0] ?? element;
-        if (node instanceof HTMLElement) {
-            // 캐릭터 에셋(1.4.2~)이 무작위 그림을 이 값으로 고른다 — 없으면 지금 채팅의 같은 번호 메시지로 골라 실제 채팅과 그림이 달랐다.
-            // 식은 캐릭터 에셋 render.js messageSeed 와 같아야 한다 (이어 쓴 메시지는 extra.eh_seed)
-            node.dataset.ehSeed = `${message?.extra?.eh_seed ?? message?.send_date ?? i}|${message?.swipe_id ?? 0}`;
-            hydrateHtmlBlocks(node);
+    // 5.6.4: 메시지 다섯 개의 조판(typography)을 모아 한 번에 — 메시지마다 스타일 재계산을 강제하지 않게 (panel.js activateCards 와 같음)
+    typesetBatch(() => {
+        for (let i = first; i <= last; i++) {
+            // 실리태번이 메시지 객체를 손볼 수 있으니 복사본을 넘긴다.
+            const message = record.messages[i];
+            const element = addOneMessage(structuredClone(message), { forceId: i, scroll: false, showSwipes: false });
+            const node = element?.[0] ?? element;
+            if (node instanceof HTMLElement) {
+                // 캐릭터 에셋(1.4.2~)이 무작위 그림을 이 값으로 고른다 — 없으면 지금 채팅의 같은 번호 메시지로 골라 실제 채팅과 그림이 달랐다.
+                // 식은 캐릭터 에셋 render.js messageSeed 와 같아야 한다 (이어 쓴 메시지는 extra.eh_seed)
+                node.dataset.ehSeed = `${message?.extra?.eh_seed ?? message?.send_date ?? i}|${message?.swipe_id ?? 0}`;
+                hydrateHtmlBlocks(node);
+            }
         }
-    }
+    });
     hooks.refreshMessageIcons();
     setTimeout(() => flashMessage(index), 60);
 }

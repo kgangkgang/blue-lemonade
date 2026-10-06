@@ -592,18 +592,26 @@ class CustomThemeSettingsManager {
         requestAnimationFrame(() => setTimeout(boot, 0));
         setTimeout(boot, 1000);
 
-        let settingsTimer = null;
+        let settingsTimer = null, settingsFrame = 0, settingsLate = null;
+        const checkConfig = () => {
+            cancelAnimationFrame(settingsFrame); clearTimeout(settingsLate); settingsFrame = 0; settingsLate = null;
+            const currentConfig = this._parseCSSConfig(CSS_THEME_STYLE_VAR);
+            // Simple deep compare to see if we need to rebuild inputs
+            if (JSON.stringify(currentConfig) !== JSON.stringify(this.previousStyleValue)) {
+                this.previousStyleValue = currentConfig;
+                this.buildUI();
+                this.updateCSSVariables(this.settings.entries || {});
+            }
+        };
         eventSource.on(event_types.SETTINGS_UPDATED, () => {
             if (!this.isAppReady) return;
             clearTimeout(settingsTimer);
             settingsTimer = setTimeout(() => {
-                const currentConfig = this._parseCSSConfig(CSS_THEME_STYLE_VAR);
-                // Simple deep compare to see if we need to rebuild inputs
-                if (JSON.stringify(currentConfig) !== JSON.stringify(this.previousStyleValue)) {
-                    this.previousStyleValue = currentConfig;
-                    this.buildUI();
-                    this.updateCSSVariables(this.settings.entries || {});
-                }
+                // 5.6.4 (점검 RP-7): 저장마다 :root 계산 스타일을 그 자리에서 읽어 스타일 계산을 강제했다 (채팅 열 때 2~3번, 폰 리그 4배 71~123 ms).
+                // 화면을 한 번 그린 직후에 읽는다 — 스타일이 이미 계산돼 있어 거의 공짜. 숨은 탭은 그리기가 없으니 1초 뒤 그냥 읽는다 (부팅 boot 와 같은 방법)
+                cancelAnimationFrame(settingsFrame); clearTimeout(settingsLate);
+                settingsLate = setTimeout(checkConfig, 1000);
+                settingsFrame = requestAnimationFrame(() => { settingsFrame = 0; clearTimeout(settingsLate); settingsLate = setTimeout(checkConfig, 0); });
             }, 300);
         });
     }
