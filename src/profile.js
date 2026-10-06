@@ -47,12 +47,21 @@ function load(event) { if (event.target instanceof HTMLImageElement) watch(event
 function error(event) {
     const img = event.target, previous = swapped.get(img);
     if (!previous || img.src !== previous.full) return;
+    // 2026-10-06: 우리가 건 원본의 실패만 — ST img error 처리기(사진 → '없는 사용자' 아이콘)까지 가지 않게 막고 썸네일로 되돌린다.
+    event.stopPropagation();
     failed.set(img, previous.full); swapped.delete(img);
     img.src = previous.thumb;
 }
+// 2026-10-06: ST 확대 창은 src 의 마지막 '=' 뒤를 파일명으로 읽는다 → 클릭 동안만 썸네일 주소를 보여 주고, 같은 클릭이 window 까지 올라오면 원본으로 되돌린다.
+function zoomIn(event) {
+    const img = event.target.closest?.('.mes .avatar')?.querySelector(':scope > img'), previous = img && swapped.get(img);
+    if (!previous || img.src !== previous.full) return;
+    img.setAttribute('src', previous.thumb);
+    window.addEventListener('click', () => { if (swapped.get(img) === previous && img.getAttribute('src') === previous.thumb) img.src = previous.full; }, { once: true });
+}
 function stop() {
     changes?.disconnect(); visible?.disconnect(); flags?.disconnect(); changes = visible = flags = null;
-    chat?.removeEventListener('load', load, true); chat?.removeEventListener('error', error, true);
+    chat?.removeEventListener('load', load, true); chat?.removeEventListener('error', error, true); chat?.removeEventListener('click', zoomIn, true);
     for (const [img, previous] of swapped) if (img.src === previous.full) img.src = previous.thumb;
     swapped.clear(); failed = new WeakMap(); chat = null;
 }
@@ -87,7 +96,7 @@ function start() {
     changes.observe(chat, { childList: true });
     flags = new MutationObserver(toggle);
     flags.observe(chat, { subtree: true, attributes: true, attributeFilter: ['is_system'] });
-    chat.addEventListener('load', load, true); chat.addEventListener('error', error, true);
+    chat.addEventListener('load', load, true); chat.addEventListener('error', error, true); chat.addEventListener('click', zoomIn, true);
     scan(chat);
 }
 export function syncProfile(settings) {

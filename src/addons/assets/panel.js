@@ -4,7 +4,7 @@ import { getThumbnailUrl } from '../../../../../../../script.js';
 import { getContext } from '../../../../../../extensions.js';
 import { settings, saveSettings, VERSION, TITLE, THUMB_SIZES, DEFAULT_PROMPT, isGroupChat, disabledSet, setDisabled, folderOf, forgetOptimized, copyOptimized } from './state.js';
 import { runtime, hooks, reload, recompute, groupsOf, sourceByKey, expandedPrompt } from './store.js';
-import { isAllowedName, isZipName, uploadImage, uploadZip, deleteAsset, baseOf, sameBaseSiblings, fetchAssets } from './assets.js';
+import { isAllowedName, isZipName, uploadImage, uploadZip, deleteAsset, baseOf, sameBaseSiblings, fetchAssets, sanitizeBase } from './assets.js';
 import { escapeHtml, toast, confirmDialog, inputDialog, pickDialog, copyText, applyThemeVars } from './ui.js';
 import { BASE_ID, addPreset, checkRename, removePreset, movePreset, findPreset, presetLabel, presetsOf, linksOf, addLink, removeLink } from './presets.js';
 import { openViewer } from './viewer.js';
@@ -762,7 +762,7 @@ async function handleFiles(fileList) {
     // 지금 보고 있는 프리셋 폴더로 들어간다 ('캐릭터' 또는 '캐릭터/프리셋')
     const folder = target.key;
     const files = [...fileList];
-    const images = files.filter(file => isAllowedName(file.name));
+    let images = files.filter(file => isAllowedName(file.name));
     const zips = files.filter(file => isZipName(file.name));
     const skipped = files.length - images.length - zips.length;
     if (!images.length && !zips.length) {
@@ -781,10 +781,20 @@ async function handleFiles(fileList) {
             existing.set(key, [...(existing.get(key) ?? []), asset.file]);
         }
         const dupes = [...new Set(images.flatMap(file => existing.get(baseOf(file.name).toLowerCase()) ?? []))];
-        if (dupes.length) {
-            const preview = dupes.slice(0, 5).join(', ') + (dupes.length > 5 ? ` 외 ${dupes.length - 5}장` : '');
-            const ok = await confirmDialog(`같은 이름의 그림 ${dupes.length}장을 덮어써요:\n${preview}\n\n계속할까요?`, { ok: '덮어쓰기' });
+        // 2026-10-06: 같이 고른 그림끼리 이름이 겹치면(이름.png + 이름.webp 등) 서버에는 하나만 남는다. 예전에는 묻지 않고 둘 다 올려서
+        //             하나가 말없이 사라지고(동시에 올리면 둘 다 남기도 함) 'N장 올렸어요'도 부풀었다 → 함께 알리고 마지막 것만 올린다.
+        const nameOf = file => sanitizeBase(baseOf(file.name)).toLowerCase();
+        const byName = new Map();
+        for (const file of images) if (nameOf(file)) byName.set(nameOf(file), [...(byName.get(nameOf(file)) ?? []), file]);
+        const clashes = [...byName.values()].filter(list => list.length > 1).flat().map(file => file.name);
+        if (dupes.length || clashes.length) {
+            const listOf = names => names.slice(0, 5).join(', ') + (names.length > 5 ? ` 외 ${names.length - 5}장` : '');
+            const lines = [];
+            if (dupes.length) lines.push(`같은 이름의 그림 ${dupes.length}장을 덮어써요:\n${listOf(dupes)}`);
+            if (clashes.length) lines.push(`같이 고른 그림 중 이름이 같은 것은 마지막 하나만 올려요:\n${listOf(clashes)}`);
+            const ok = await confirmDialog(`${lines.join('\n\n')}\n\n계속할까요?`, { ok: dupes.length ? '덮어쓰기' : '올리기' });
             if (!ok) return;
+            if (clashes.length) images = images.filter(file => !nameOf(file) || byName.get(nameOf(file)).at(-1) === file);
         }
     }
     if (zips.length && inFolder().length) {
@@ -912,7 +922,10 @@ async function bulkMove() {
                 await uploadImage(targetKey, file, asset.base);
                 copyOptimized(asset.folder, asset.file, targetKey, asset.file);
                 const wasOff = disabledSet(asset.folder).has(asset.file);
-                if (wasOff) setDisabled(targetKey, asset.file, true);
+                // 2026-10-06: 덮어쓴 같은 이름의 꺼짐은 지우고 옮긴 그림은 제 상태를 가진다. 예전에는 켜진 그림이 덮어쓴 파일의 꺼짐을 물려받았다
+                //             (확장자만 다른 이름.jpg 의 꺼짐도 pruneDisabled 가 새 파일로 옮겼다). 서버가 지우는 건 이름이 똑같은 파일뿐이라 그대로 비교한다.
+                for (const name of disabledSet(targetKey)) if (name !== asset.file && baseOf(name) === asset.base) setDisabled(targetKey, name, false);
+                setDisabled(targetKey, asset.file, wasOff);
                 await deleteAsset(asset.folder, asset.base);
                 forgetOptimized(asset.folder, [asset.file]);
                 setDisabled(asset.folder, asset.file, false);

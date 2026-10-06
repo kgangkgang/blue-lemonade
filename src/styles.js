@@ -8,7 +8,8 @@ import { FRAME_PRESETS } from './frame-presets.js';
 import { getSettings, DEFAULTS, FONT_SET, isCssColor, safeFont } from './settings.js';
 
 export const STYLE_KEYS = ['gradients', 'palette', 'nightTint', 'lightTint', 'customName', 'colorOverrides', 'fonts', 'type', 'markdown', 'dialogue', 'ui', 'code', 'em', 'strong', 'shadow', 'outline', 'strike', 'deus', 'chat', 'image', 'profile', 'userProfile'];
-const CHAT_BEHAVIOR = ['triangleFold', 'weatherAutoRest', 'selectPop', 'colorPop', 'numComma', 'personaTall', 'streamFade', 'demFold', 'qrFind'];
+// 2026-10-06: 퀵 리플라이 배치(qrScroll · qrRows · qrPlace) · ··· 메뉴 고정 버튼(mesPins)도 쓰는 방식 — 초기화(settings.js resetSettings)처럼 스타일에 담지도 덮지도 않는다
+const CHAT_BEHAVIOR = ['triangleFold', 'weatherAutoRest', 'selectPop', 'colorPop', 'numComma', 'personaTall', 'streamFade', 'demFold', 'qrFind', 'qrScroll', 'qrRows', 'qrPlace', 'mesPins'];
 export const MAX_STYLES = 20;
 const CODE_PREFIX = 'BLS1.';     // deflate-raw + base64url
 const PLAIN_PREFIX = 'BLS0.';    // 압축 못 하는 브라우저: base64url 만
@@ -174,6 +175,7 @@ function usedCustomFonts(data, s) {
 /** 나누기용 묶음: 저장한 도형은 그림을 채워 넣는다 (받는 쪽에는 그 도형이 없으니) */
 export function sharePayload(name, data, s = getSettings()) {
     const style = structuredClone(data);
+    if (isObj(style.chat)) for (const key of CHAT_BEHAVIOR) delete style.chat[key]; // 2026-10-06: 예전에 저장한 스타일에 남은 고정 버튼 · 퀵 리플라이 배치도 나눌 때 빼기 (받는 쪽 것을 덮지 않게)
     if (style.image?.maskId && !style.image.mask) {
         const mask = s.image.masks?.find(m => m.id === style.image.maskId);
         if (mask) style.image.mask = mask.data;

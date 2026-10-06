@@ -22,7 +22,7 @@ import { syncProfileClip } from './profile-clip.js';
 import { refreshPreset, FRAME_PRESETS, FRAME_LIMIT, presetFrame, saveFrame, useFrame, deleteFrame } from './frame-library.js';
 import { syncDecor } from './decor.js';
 import { FRAME_RANGE } from './frames.js';
-import { customLibrary, newCustomPalette, useCustomPalette, openCustomBuilder, customBuilder, bindCustomBuilder, setCustomMode, seedCustom, saveCustomPalette, saveCurrentPalette } from './custompalette.js';
+import { customLibrary, newCustomPalette, useCustomPalette, openCustomBuilder, customBuilder, bindCustomBuilder, setCustomMode, seedCustom, saveCustomPalette, saveCurrentPalette, deleteCustomPalette } from './custompalette.js';
 // 설정 창. 확장 서랍과 ✦ 메뉴 팝업 두 곳에 같은 창을 띄울 수 있음.
 // 위에서 대분류(탭) → 아래에서 소분류(칩)를 골라 한 번에 한 묶음만 보여 줌 (폰에서 창이 아래로 길어지지 않게)
 import { getSettings, invalidateSettings, saveSettings, resetSettings, FONT_SET, FONT_SLOTS, IMAGE_RANGE, PROFILE_RANGE, TEXT_LIMIT, FADE_AMOUNT, isDataImage } from './settings.js';
@@ -176,10 +176,12 @@ async function stepHistory(redo) {
     saveSoon();
     await syncChangedAddons(changes.map(change => change.path));
     refreshPanels(changes);
-    const rows = changes.slice(0, 8).map(c => `<div>${esc(historyLabel(c.path))}: <b>${esc(historyValue(c.from, c.path))}</b> → <b>${esc(historyValue(c.to, c.path))}</b></div>`).join('');
+    // 2026-10-06: 내부 표시(지운 에이드 표시 · 옛 기본색 정리 표시)는 설정이 아니라 알림 줄에서 뺀다 — 키 이름이 그대로 보였다
+    const shown = changes.filter(c => !/^(deletedCustomSlot|legacyColorsRev)(\.|$)/.test(c.path));
+    const rows = shown.slice(0, 8).map(c => `<div>${esc(historyLabel(c.path))}: <b>${esc(historyValue(c.from, c.path))}</b> → <b>${esc(historyValue(c.to, c.path))}</b></div>`).join('');
     // Only replace this editor's history notice; errors and other extensions' notices stay.
     if (historyToast?.[0]?.isConnected) historyToast.stop(true, true).trigger('click').stop(true, true);
-    historyToast = toastr.info(`<div class="bl-history-notice">${rows}${changes.length > 8 ? `<small>외 ${changes.length - 8}개 설정도 복원했어요.</small>` : ''}</div>`, redo ? '다시 실행했어요' : '되돌렸어요', { escapeHtml: false, closeButton: false, tapToDismiss: true, onclick: null, hideDuration: 0, timeOut: 6500, extendedTimeOut: 10000 });
+    historyToast = toastr.info(`<div class="bl-history-notice">${rows}${shown.length > 8 ? `<small>외 ${shown.length - 8}개 설정도 복원했어요.</small>` : ''}</div>`, redo ? '다시 실행했어요' : '되돌렸어요', { escapeHtml: false, closeButton: false, tapToDismiss: true, onclick: null, hideDuration: 0, timeOut: 6500, extendedTimeOut: 10000 });
 }
 
 function settingsChanges(s) {
@@ -2125,7 +2127,7 @@ function bind(root) {
                     update(st => useCustomPalette(st,el.dataset.id));
                     break;
                 case 'custom-delete':
-                    update(st => { st.customPalettes=st.customPalettes.filter(item=>item.id!==el.dataset.id); if(st.activeCustomPalette===el.dataset.id)st.activeCustomPalette=''; });
+                    update(st => deleteCustomPalette(st, el.dataset.id)); // 2026-10-06: 지운 에이드 색을 표시해 두어 다음 불러오기 때 되살리지 않게 (custompalette.js)
                     break;
                 case 'custom-library-edit':
                     update(st => useCustomPalette(st,el.dataset.id));

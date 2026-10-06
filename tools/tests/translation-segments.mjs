@@ -75,3 +75,15 @@ assert.ok(isHeadingUnderline('---')&&isHeadingUnderline('==  ')&&!isHeadingUnder
 assert.equal(paragraphBlocks('a\n\nb\nc\n \n\nd'),'<p>a</p><p>b<br>c</p><p>d</p>');
 assert.equal(paragraphBlocks(''),'');assert.equal(paragraphBlocks('\n\n한 문단\n\n'),'<p>한 문단</p>');
 console.log('PASS block markdown prefixes stay outside the fold wrappers; rules, tables and bare quote lines are left unwrapped; whole-message fold uses paragraphs');
+// 2026-10-06 줄을 넘는 강조: 같은 문단 안 짝만 줄마다 닫고 다시 연다 (함께 보기에서 기울임이 사라지던 것)
+{
+const {splitCrossLineEmphasis:em}=await import(new URL('src/addons/translator/translation-segments.js',root));
+assert.equal(em('*a\nb*'),'*a*\n*b*');
+assert.equal(em('*가\n나\n다*'),'*가*\n*나*\n*다*');
+assert.equal(em('"Hi," *she says,\nwaving.* "Bye."'),'"Hi," *she says,*\n*waving.* "Bye."');
+assert.equal(em('**굵게 시작  \n굵게 끝**'),'**굵게 시작**  \n**굵게 끝**');
+assert.equal(em('**bold *it\nstill* bold**'),'**bold *it***\n***still* bold**');
+assert.equal(em('> *a\n> b*'),'> *a*\n> *b*');
+for(const same of ['5 * 3 = 15\nnext line*','* item\n* item2','*a\n\nb*','```\n*a\nb*\n```','*a <span>x</span>\nb*','`*a` b\nc*','\\*a\nb*','*one* two\nthree','plain\ntext'])assert.equal(em(same),same,same);
+console.log('PASS cross-line emphasis is closed and reopened per line inside one paragraph only');
+}

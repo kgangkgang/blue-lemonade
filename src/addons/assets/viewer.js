@@ -2,7 +2,7 @@
 // <dialog>의 맨 위 층(top layer)에 띄워서, 폰에서 html에 transform이 걸려 있어도 화면 밖으로 밀리지 않는다.
 import { fixToastrForDialogs } from '../../../../../../popup.js';
 import { disabledSet, setDisabled, forgetOptimized, copyOptimized } from './state.js';
-import { deleteAsset, renameAsset, sanitizeBase, sameBaseSiblings } from './assets.js';
+import { deleteAsset, renameAsset, sanitizeBase, sameBaseSiblings, baseOf } from './assets.js';
 import { toast, confirmDialog, inputDialog, copyText, applyThemeVars } from './ui.js';
 import { runtime, reload, recompute, sourceByKey } from './store.js';
 
@@ -529,7 +529,10 @@ export function openViewer({ items, start = 0 }) {
                 // 새 파일이 생기자마자 꺼짐 상태를 옮겨서, 예전 파일 지우기가 실패해도 숨긴 그림이 AI에게 새지 않게 한다.
                 afterUpload: () => {
                     copyOptimized(asset.folder, asset.file, asset.folder, newFile);
-                    if (wasOff) setDisabled(asset.folder, newFile, true);
+                    // 2026-10-06: 덮어쓴 같은 이름의 꺼짐은 지우고 새 파일은 제 상태를 가진다 (꺼 둔 이름으로 바꾸면 켜진 그림이 꺼지던 것).
+                    //             올리기가 지우는 건 이름이 똑같은 파일뿐 — 대소문자만 다른 이름의 꺼짐은 pruneDisabled 가 알아서 버린다.
+                    for (const name of disabledSet(asset.folder)) if (name !== newFile && baseOf(name) === newBase) setDisabled(asset.folder, name, false);
+                    setDisabled(asset.folder, newFile, wasOff);
                 },
             });
         } catch (error) {

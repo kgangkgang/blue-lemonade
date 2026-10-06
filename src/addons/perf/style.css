@@ -704,7 +704,7 @@
 
 /* ===== 저장 정리 (parts/save-dedupe.css) ===== */
 /* 저장 정리 (Save Dedupe) — 설정 서랍 */
-:root { --sv-css-version: "1.1.4"; }
+:root { --sv-css-version: "1.1.5"; }
 
 .sv-settings .sv-body {
     display: flex;

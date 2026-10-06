@@ -1,7 +1,7 @@
 // 자동 생성 (tools/build-plain-scripts.mjs) — 고치려면 bundled/korean.js 을 고치고 다시 만든다
 export default function blueLemonadeScript(BlueLemonade) {
 /*BL-SCRIPT-START*/
-// SillyTavern Korean UI (leftover English), v1.4.4
+// SillyTavern Korean UI (leftover English), v1.4.5
 // Replaces exact English UI strings SillyTavern leaves untranslated. Chat messages, names, presets and other
 // user content are never rewritten. Only built-in welcome labels/greetings are handled inside chat.
 // Nothing is saved, and turning the script off restores the original text.
@@ -25,6 +25,8 @@ export default function blueLemonadeScript(BlueLemonade) {
     '#rm_print_characters_block', '.character_select', '.group_select', '.group_member', '#rm_button_selected_ch',
     '.ch_name', '#user_avatar_block', '.persona_name', '.avatar-container', '#bg_menu_content', '.tag',
     '.select2-selection__choice', '.select_chat_block', '.regex-script-label', '.qr--button-label',
+    // 2026-10-06: 타번 헬퍼 스크립트 버튼(.qr--button 안 바로 글자) · 빠른 답장 버튼과 메뉴 항목의 title 은 사용자 · 카드가 지은 이름이다.
+    '.qr--button', '.ctx-item',
     '#tavern_helper', '.TH-popup', '.TH-custom-tailwind', '.bwr_settings',
     // v1.3.1: 북마크 확장 창·시트(.cg-root)는 <body> 바로 아래라 범위에 들어왔는데, 안에 채팅 메시지 본문을 그대로 그린다.
     // 전역 사전이 메시지 글('Summary', 'Error: …', 'Thought for a moment, …')을 바꾸면 안 되므로 통째로 뺀다.

@@ -1544,6 +1544,14 @@ function makeBlockItem(block, ns, selectable, onEdited) {
                 // Both cleared → wipe this item's translation entirely.
                 clearNS(ns, [id]);
                 trTextEl.innerHTML = '<span class="pt-no-trans">번역 전</span>';
+            } else if (!newBody) {
+                // 2026-10-06: 본문이 비면 제목만 번역으로 저장한다. "### 제목\n\n" 을
+                // 완전 번역으로 남기면 적용·내보내기가 원문을 빈 문자열로 덮었다.
+                cacheDelete(ck(ns, id));
+                setCacheTitle(ns, id, newTitle);
+                // 2026-10-06: 표시는 다시 그릴 때(makeBlockItem)와 같게 — 파일의 주석이 있으면 원문+주석.
+                const shown = block.injectedNote ? joinBodyAndNote(block.content || '', block.injectedNote) : null;
+                trTextEl.innerHTML = shown ? esc(shown) : '<span class="pt-no-trans">번역 전</span>';
             } else {
                 const combined = `### ${newTitle || block.name || block.id}\n\n${newBody}`;
                 setCache(ns, id, combined);
@@ -1654,6 +1662,9 @@ async function runTranslation({ items, list, ns, pBar, pLabel, pWrap, btnStop, f
         const prevFull  = getCached(ns, b.id);
         const prevSplit = prevFull ? splitTitleAndBody(prevFull) : { title:null, body:'' };
         const prevParts = splitBodyAndNote(prevSplit.body);
+        // 2026-10-06: 화면 표시용 — 캐시가 없어도 파일에서 찾은 주석은 makeBlockItem 과
+        // 똑같이 원문+주석으로 보여 준다 (건너뛰기·중단 때 번역 칸이 비던 것).
+        const shownPrev = prevFull ?? (b.injectedNote ? joinBodyAndNote(b.content || '', b.injectedNote) : null);
         // 제목 번역이 이미 존재하면 본문만 번역한다. 없을 때에만 제목을 함께
         // 번역하며, 그 경우에도 제목은 패널의 제목 언어 설정을 따른다.
         const existingTitle = getTranslatedTitle(ns, b.id);
@@ -1663,7 +1674,9 @@ async function runTranslation({ items, list, ns, pBar, pLabel, pWrap, btnStop, f
         // 본문"이 아니므로, 나중에 완전 번역을 돌릴 때 이미 번역된 것으로 오인해
         // 건너뛰면 안 된다 — 원문과 글자 그대로 같은지로 구분한다.
         const origBody      = (b.content || '').trim();
-        const bodyIsOrig    = !!prevParts.body && prevParts.body === origBody;
+        // 2026-10-06: 주석만 번역한 모양에는 늘 주석이 있다. 주석 없이 원문과 같으면
+        // 본문 번역을 적용해 파일 내용이 번역문이 된 경우라 다시 보내지 않는다.
+        const bodyIsOrig    = !!prevParts.note && !!prevParts.body && prevParts.body === origBody;
         const haveBody      = !!prevParts.body && !bodyIsOrig;
         // 캐시에 주석이 없더라도, 파일에 이미 적용돼 있던 주석(로드 때 원문에서
         // 떼어낸 것)을 존재하는 주석으로 인정하고 그대로 보존한다.
@@ -1671,7 +1684,7 @@ async function runTranslation({ items, list, ns, pBar, pLabel, pWrap, btnStop, f
         const havePart = runMode === 'note' ? !!prevNote : haveBody;
 
         if (!forceRetranslate && havePart) {
-            setBlockHTML(list,b.id,esc(prevFull));
+            setBlockHTML(list,b.id,shownPrev?esc(shownPrev):'<span class="pt-no-trans">번역 전</span>');
         } else {
             setBlockHTML(list,b.id,`<span class="pt-translating">⟳ ${modeLabel} 중...</span>`);
             try {
@@ -1685,12 +1698,18 @@ async function runTranslation({ items, list, ns, pBar, pLabel, pWrap, btnStop, f
                         if (sp.title) { newTitle = sp.title; part = sp.body; }
                     }
                     part = (part || '').trim();
+                    // 2026-10-06: 원문이 있는데 내용 없는 답이 오면 실패로 보여 준다 —
+                    // 빈 번역을 저장하면 적용 때 원문이 지워지고 주석도 사라졌다.
+                    // 주석 모드는 라벨·빈 울타리만 온 답도 걸러야 해서 벗겨 낸 주석으로 본다.
+                    const noteText = runMode === 'note' ? sanitizeNoteMacros(stripNoteWrapper(part)) : '';
+                    if ((runMode === 'note' ? !noteText : !part) && origBody) {
+                        throw new Error(runMode === 'note' ? '빈 주석 (내용 없음)' : '빈 번역 (본문 없음)');
+                    }
                     const bodyPart = runMode === 'note'
                         // 완전 번역이 아직 없으면 원문을 본문 자리에 남겨 둔다:
                         //   원문
                         //   {{// 주석}}
-                        ? joinBodyAndNote(haveBody ? prevParts.body : origBody,
-                                          sanitizeNoteMacros(stripNoteWrapper(part)))
+                        ? joinBodyAndNote(haveBody ? prevParts.body : origBody, noteText)
                         : joinBodyAndNote(part, prevNote);
                     const combined = newTitle ? `### ${newTitle}\n\n${bodyPart}` : bodyPart;
                     setBlockHTML(list,b.id,esc(combined));
@@ -1705,7 +1724,7 @@ async function runTranslation({ items, list, ns, pBar, pLabel, pWrap, btnStop, f
             } catch(err) {
                 if (err?.__stopped) {
                     // 사용자가 멈춘 것은 실패가 아니다 — 원래 보이던 것을 되돌린다.
-                    setBlockHTML(list,b.id,prevFull?esc(prevFull):'<span class="pt-no-trans">번역 전</span>');
+                    setBlockHTML(list,b.id,shownPrev?esc(shownPrev):'<span class="pt-no-trans">번역 전</span>');
                 } else {
                     setBlockHTML(list,b.id,`<span class="pt-translation-error"> ${esc(err.message)}</span>`);
                 }
@@ -1921,7 +1940,9 @@ function splitTitleAndBody(translated) {
 function getTranslatedBody(ns, id) {
     const t = getTranslated(ns, id);
     if (!t) return null;
-    return splitTitleAndBody(t).body;
+    const body = splitTitleAndBody(t).body;
+    // 2026-10-06: 제목만 있고 본문이 빈 번역은 "본문 번역 없음"으로 본다 — 원문을 ''로 덮지 않게.
+    return (typeof body === 'string' && body.trim()) ? body : null;
 }
 
 // Helper: returns only the translated title (or null if not found in the translation)
@@ -2608,7 +2629,9 @@ function exportPresetJSON(presetName) {
     const cur = getCurrentPresetName();
     let presetObj;
     if (targetName === cur) {
-        presetObj = oai_settings;
+        // 2026-10-06: oai_settings 는 temp_openai 같은 설정 키 이름이라, ST 저장 버튼과
+        // 같은 프리셋 키 형식으로 바꿔 내보낸다 (안 그러면 가져올 때 샘플러가 빠진다).
+        presetObj = typeof getChatCompletionPreset === 'function' ? getChatCompletionPreset(oai_settings) : oai_settings;
     } else {
         const presetIndex = openai_setting_names?.[targetName];
         presetObj = presetIndex !== undefined ? openai_settings[presetIndex] : null;
@@ -2654,7 +2677,8 @@ function exportPresetJSON(presetName) {
             if (title) p.name = title;
             if (!cached) continue;
             const { body } = splitTitleAndBody(cached);
-            if (typeof body === 'string') p.content = body;
+            // 2026-10-06: 빈 본문(제목만 번역)은 원문을 지우지 않는다.
+            if (typeof body === 'string' && body.trim()) p.content = body;
         }
     }
 
@@ -2713,7 +2737,8 @@ async function applyPresetLive(presetName, titlesOnly) {
             if (title) { p.name = title; applied++; }
             if (titlesOnly || !cached) continue;
             const { body } = splitTitleAndBody(cached);
-            if (typeof body === 'string') { p.content = body; applied++; }
+            // 2026-10-06: 빈 본문(제목만 번역)은 원문을 지우지 않는다.
+            if (typeof body === 'string' && body.trim()) { p.content = body; applied++; }
         }
     }
 
@@ -2743,7 +2768,9 @@ async function applyPresetLive(presetName, titlesOnly) {
     // settingsToUpdate, including prompts/prompt_order) off the object we
     // just edited — this is exactly what ST's own save button sends, so
     // nothing else in the preset gets clobbered.
-    const presetBody = getChatCompletionPreset(presetObj);
+    // 2026-10-06: 그건 로드된 프리셋(oai_settings 키 형식)에만 쓴다. 저장된 다른
+    // 프리셋은 이미 파일 형식이라 통과시키면 temperature·top_p 등이 빠졌다.
+    const presetBody = isCurrent ? getChatCompletionPreset(presetObj) : presetObj;
 
     // Save through ST's own PresetManager rather than POSTing to /api/presets/save
     // ourselves. Both write the same file, but savePreset() also calls
@@ -2851,7 +2878,8 @@ function applyWiEntryTranslation(entry, ns, entryId, titlesOnly) {
     // was real content — put it back so nothing is lost.
     let body = parsed.body;
     if ((parsed.keys && !hadKeys) || (parsed.filters && !hadFilters)) body = afterTitle;
-    if (typeof body === 'string') { entry.content = body; changed++; }
+    // 2026-10-06: 빈 본문(제목만 번역)은 원문을 지우지 않는다.
+    if (typeof body === 'string' && body.trim()) { entry.content = body; changed++; }
 
     const mergeList = (orig, added) => {
         const out = [], seen = new Set();

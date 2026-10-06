@@ -176,6 +176,59 @@ export function paragraphBlocks(text) {
         .map(part => `<p>${part.replace(/^\n+|\n+$/g, '').replace(/\n/g, '<br>')}</p>`).join('');
 }
 
+/**
+ * 2026-10-06 줄을 넘는 강조(*기울임* · **굵게** · ***둘 다***)를 줄마다 닫고 다시 연다: '*그녀가 걷는다⏎천천히.*' → '*그녀가 걷는다*⏎*천천히.*'.
+ * 함께 보기(접기 · 원문 먼저 · 펼침)는 줄마다 따로 감싸서 줄을 넘는 강조 짝이 감싸개 사이에서 끊겨 기울임이 통째로 사라지거나 * 가 글자로 보였다.
+ * '사용 안 함' 화면(한 문단 안에서 줄을 넘는 강조 = 두 줄 다 기울임)과 같게 만든다. 줄 수는 그대로라 원문 · 번역문 줄 맞춤이 안 바뀐다.
+ * 같은 문단(빈 줄 없이 이어진 줄) 안에서 짝이 맞는 것만 — 짝 없는 * (5 * 3, 목록 표시)는 손대지 않는다. 코드 블록 · `코드` · \* · 태그(<…>)가 든 줄은 건너뛴다.
+ */
+const EMPH_RUN = /\\\*|`[^`\n]*`|\*{1,3}/g;
+const EMPH_INSERT = /^[ \t>]*(?:(?:[-+*]|\d{1,9}\.)[ \t]+)?(?:#{1,6}[ \t]+)?[ \t]*/;
+export function splitCrossLineEmphasis(text) {
+    const src = String(text ?? '');
+    if (!src.includes('*') || !src.includes('\n')) return src;
+    const lines = src.split('\n');
+    let fence = false, para = [];
+    const flush = () => { if (para.length > 1) balanceParagraph(lines, para); para = []; };
+    lines.forEach((line, i) => {
+        if (CODE_FENCE.test(line)) { flush(); fence = !fence; return; }
+        if (fence || !line.trim()) { flush(); return; }
+        para.push(i);
+    });
+    flush();
+    return lines.join('\n');
+}
+function balanceParagraph(lines, idx) {
+    const stack = [], spans = [];
+    for (let k = 0; k < idx.length; k++) {
+        const line = lines[idx[k]];
+        if (/[<>]/.test(line.replace(/^[ \t>]*/, ''))) { stack.length = 0; continue; } // 태그 줄: 그 앞뒤로 짝을 잇지 않는다
+        EMPH_RUN.lastIndex = 0;
+        let m;
+        while ((m = EMPH_RUN.exec(line))) {
+            const run = m[0];
+            if (run[0] !== '*') continue; // \* · `코드`
+            const before = line[m.index - 1], after = line[m.index + run.length];
+            const canOpen = after !== undefined && !/\s/.test(after);
+            const canClose = before !== undefined && !/\s/.test(before);
+            const top = stack[stack.length - 1];
+            if (top && top.run === run && canClose) { stack.pop(); if (top.k < k) spans.push({ run, from: top.k, to: k, at: top.at }); }
+            else if (canOpen) stack.push({ run, k, at: m.index });
+        }
+    }
+    if (!spans.length) return;
+    // 줄 경계마다 그 경계를 넘는 강조: 앞 줄 끝에 안쪽부터 닫고, 뒷줄 머리(표시 · 들여쓰기 뒤)에 바깥부터 다시 연다
+    for (let k = 0; k < idx.length - 1; k++) {
+        const over = spans.filter(s => s.from <= k && k < s.to).sort((a, b) => a.from - b.from || a.at - b.at);
+        if (!over.length) continue;
+        const open = over.map(s => s.run).join(''), close = over.map(s => s.run).reverse().join('');
+        const a = idx[k], b = idx[k + 1];
+        lines[a] = lines[a].replace(/[ \t]*$/, (tail) => close + tail);
+        const head = EMPH_INSERT.exec(lines[b])[0];
+        lines[b] = head + open + lines[b].slice(head.length);
+    }
+}
+
 export function batchGroups(bodies, limit = 3600) {
     const groups = []; let group = [], size = 0;
     for (const body of bodies) {

@@ -44,6 +44,13 @@ export async function requestCurrentConnection({context,messages,overrides={},ma
             rejected.refused=true;throw rejected;
         }
         const reason=error?.cause?.message||error?.message||String(error);
+        // 2026-10-06: Gemini 입력 차단(HTTP 200 + error 'Prompt was blocked due to : PROHIBITED_CONTENT')도 거절로 — 직접 연결 blockedReasonOf 와 같은 문구로 가린다.
+        //             전엔 일반 오류라 배치 바꾸기 · 통짜 재시도 · 반 나누기 · 차단 표시를 모두 건너뛰고 전체 번역이 멈췄다
+        const block=/blocked due to\s*:?\s*([A-Z_]+)/i.exec(reason)?.[1]||(/PROHIBITED_CONTENT|content[_ ]filter|\bSAFETY\b/i.test(reason)?reason.split('\n').pop().trim().slice(0,80):'');
+        if(block){
+            const rejected=new Error(`안전 필터에 막혀 번역이 오지 않았어요 (${block}). 모델 쪽에서 이 내용을 거절한 거예요.`);
+            rejected.refused=true;throw rejected;
+        }
         const transient = isTransient(error,reason);
         const message = transient && /too many requests|rate.?limit|resource.?exhausted|\b429\b/i.test(reason) ? '요청 한도를 넘었어요. 잠시 뒤 다시 시도해 주세요.'
             : transient && /failed to fetch|networkerror|network error|econnreset|socket hang up/i.test(reason) ? '서버에 연결하지 못했어요. 연결 상태를 확인해 주세요.'

@@ -2,7 +2,7 @@
 import { isPreset, validSettings, validImport, validPromptList, validPresetList, exportPresets, restoreTranslationRows } from './preset-data.js';
 import { createGuards, watchGuard } from './translation-guard.js';
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
-import { segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks } from './translation-segments.js';
+import { segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis } from './translation-segments.js';
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
 import { requestCurrentConnection } from './current-connection.js';
@@ -20,6 +20,7 @@ import {
     syncMesToSwipe,
     callPopup,
     createRawPrompt,
+    amount_gen, // 2026-10-06: 텍스트 완성 응답 길이 (현재 연결 번역 출력 한도)
 } from '../../../../../../../script.js';
 
 import { extension_settings, getContext, saveMetadataDebounced } from '../../../../../../extensions.js';
@@ -492,6 +493,10 @@ function loadSettings() {
                 extensionSettings.selected_translation_prompt = selectedPrompt.content;
                 logDebug('Restored translation prompt:', selectedPrompt.title);
             }
+        } else if (promptSelect && promptManager.customPrompts.some(p => p.id === promptSelect.value)) {
+            // 2026-10-06: 저장된 선택이 기본(채팅 번역)인데 드롭다운에 커스텀이 남아 있으면 (프리셋 적용 뒤) 기본으로 맞춘다
+            //             — 전엔 화면은 커스텀인데 번역은 기본 프롬프트로 했다
+            promptSelect.value = 'llm_prompt_chat';
         }
 
         // 텍스트 필드에 프롬프트 로드 (항상 실행)
@@ -1267,6 +1272,9 @@ function refusalError(output) {
     return error;
 }
 
+// 2026-10-06: 현재 연결 · 텍스트 완성의 출력 한도 = 실리태번 응답 길이, 단 예전 고정값 2048 아래로는 안 줄인다 (요청 · 묶음 크기가 같은 값을 쓴다)
+const textOutputLimit = () => Math.max(Number(amount_gen) || 0, 2048);
+
 /** 안전 필터에 막힌 응답이면 그 사유, 아니면 '' */
 function blockedReasonOf(data) {
     const finish = String(data?.choices?.[0]?.finish_reason ?? data?.candidates?.[0]?.finishReason ?? '');
@@ -1303,7 +1311,8 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
         const data = await requestCurrentConnection({
             context: getContext, messages, overrides, maxTokens: extensionSettings.profile_max_tokens,
             buildChat: async (settings, input) => (await createGenerationParameters(settings, getChatCompletionModel(settings), 'quiet', input)).generate_data,
-            buildText: (settings, input, limit) => createTextGenGenerationData(settings, getTextGenModel(settings), createRawPrompt(input, 'textgenerationwebui', false, false, '', ''), limit || settings.max_new_tokens || 2048, false, false, null, 'quiet'),
+            // 2026-10-06: 텍스트 완성 설정엔 max_new_tokens 가 없어 늘 2048 이었다 — 실리태번 응답 길이(amount_gen)를 따르되 2048 아래로는 안 줄인다
+            buildText: (settings, input, limit) => createTextGenGenerationData(settings, getTextGenModel(settings), createRawPrompt(input, 'textgenerationwebui', false, false, '', ''), limit || settings.max_new_tokens || textOutputLimit(), false, false, null, 'quiet'),
             log: globalThis[Symbol.for('st.request-log.v1')],
         });
         return extractTranslationResult(data, 'profile');
@@ -1708,6 +1717,11 @@ async function translate(text, options = {}) {
                         finalPrompt = currentEditorValue;
                     }
                 }
+                // 3. 2026-10-06: ⚙️ 보조 프롬프트를 열어 보는 중이어도 골라 둔 커스텀 프롬프트로 — 전엔 열어 보기만 해도 재부팅 전까지 기본 프롬프트로 번역했다
+                else if (extensionSettings.selected_translation_prompt_id) {
+                    const selectedPrompt = promptManager?.getSelectedPrompt?.();
+                    if (selectedPrompt?.content?.trim()) finalPrompt = selectedPrompt.content;
+                }
             }
         }
 
@@ -1825,7 +1839,7 @@ async function translate(text, options = {}) {
             // 답 글자 수 ≈ 원문 글자 수, 토큰당 ≈1.2자로 잡아 한도의 1.2배까지만 묶는다 (max_tokens 를 키우면 모델 한도 400 이 날 수 있어 묶음을 줄이는 쪽).
             const s = extensionSettings, live = getContext();
             const outputTokens = s.connection_mode === 'direct' ? Number(s.parameters?.[s.llm_provider]?.max_length) || 0
-                : Number(s.profile_max_tokens) || (live?.mainApi === 'openai' ? Number(live.chatCompletionSettings?.openai_max_tokens) : Number(live?.textCompletionSettings?.max_length)) || 0;
+                : Number(s.profile_max_tokens) || (live?.mainApi === 'openai' ? Number(live.chatCompletionSettings?.openai_max_tokens) : textOutputLimit()) || 0; // 2026-10-06: 텍스트 완성은 없는 max_length 대신 실제 한도
             const groupLimit = outputTokens > 0 ? Math.min(CHUNK_TARGET * 2, Math.max(400, Math.round(outputTokens * 1.2))) : CHUNK_TARGET * 2;
             const failReasons = new Map(); // 5.2.9: 문단 본문 → 실패 원인
             const noCache = new Set(); // 5.3.4: 붙이긴 하되 캐시에 넣지 않을 문단 (1부터 다시 매긴 답 — 한 칸 밀린 답과 구별이 안 된다)
@@ -1843,11 +1857,25 @@ async function translate(text, options = {}) {
                     // 5.1.5: 묶음이 거절되면 그 자리에서 반으로 나눠 다시 보낸다 — 사용자가 화살표로 다시 번역하면
                     // 통과하던 것과 같은 작은 요청이다. 문단 하나까지 막히면 그 문단만 null(차단 표시). 나누기는 메시지당 SPLIT_CAP 번까지.
                     const SPLIT_CAP = 6;
+                    // 2026-10-06: 문단별 거절 판정은 거절 말투 + 모델 목소리 낱말(번역 · 정책 · 가이드라인)이 있을 때만 — 짧게 줄어든 사과 대사
+                    //             ("죄송합니다, 폐하. 그 명령은 따를 수 없습니다." · "그 요청은 들어드릴 수 없습니다.")를 거절로 버리지 않게.
+                    //             요청 · 내용 · 텍스트는 대사에도 흔해서 안 보고, 원문에도 그 얘기(번역 · 규칙)가 있으면 대사로 본다.
+                    //             놓치면 예전처럼 붙고 문단 캐시만 안 된다
+                    const MODEL_VOICE = [
+                        [/translat|번역/i, /translat|interpret|번역|통역|翻訳|翻译|翻譯|通訳|通译|訳し|訳す|訳せ/i],
+                        [/guideline|polic(?:y|ies)|가이드라인|정책|지침|규정/i, /guideline|polic|rule|regulat|protocol|procedure|directive|instruction|가이드라인|정책|지침|규정|규칙|규율|법률|법규|規則|規定|方針|政策|ガイドライン|准则|準則|规定|规则/i],
+                    ];
+                    const paragraphRefused = (source, out) => looksLikeRefusal(source, out)
+                        && (looksLikeInputBlock(out) || MODEL_VOICE.some(([said, cause]) => said.test(out) && !cause.test(source)));
                     const translateGroup = async (group, layouts = PROMPT_LAYOUTS, retried = false) => {
                         watcher.check();
                         try {
                             const meta = {};
                             const out = parseBatchResult(await callWithLayouts(batchPayload(group), layouts), group.length, meta, group).map(tidyKana); // 5.3.7: 원문 문단과 견줘 꼬리 메모를 걷는다
+                            // 2026-10-06: 묶음 중 한 문단만 거절문으로 와도 거절로 — 통짜 재시도 · 반 나누기를 거쳐 끝내 막히면 차단 표시.
+                            //             전엔 거절문이 그 문단 번역으로 붙고 메시지 캐시에 들어가 다시 번역해도 거절문이 돌아왔다 (문단 캐시만 막았다)
+                            const refusedAt = out.findIndex((body, i) => paragraphRefused(group[i], body));
+                            if (refusedAt >= 0) throw Object.assign(refusalError(out[refusedAt]), { partial: out, renumbered: meta.renumbered }); // 나누기 상한이면 나머지 문단은 이 답으로 붙인다
                             if (meta.renumbered) for (const body of group) noCache.add(body);
                             succeeded++;
                             return out;
@@ -1871,6 +1899,10 @@ async function translate(text, options = {}) {
                                     const joinedGroup = group.join('\n\n');
                                     const plain = restoreParagraphBreaks(joinedGroup, stripReplyWrapping(await callWithLayouts(joinedGroup, error.format ? PROMPT_LAYOUTS.slice(0, 1) : layouts), joinedGroup)); // 5.3.6: 원문과 견줘 걷는다
                                     const paras = plain.split(/\n[\t ]*\n(?:[\t ]*\n)*/).map(p => p.trim()).filter(Boolean);
+                                    // 2026-10-06: 통짜 답도 문단별로 거절문을 본다 — 거절이면 아래 반 나누기로 (catch 가 error 로 받는다)
+                                    const plainRefusal = paras.length === group.length ? paras.findIndex((body, i) => paragraphRefused(group[i], body))
+                                        : group.length === 1 && paragraphRefused(group[0], plain.trim()) ? 0 : -1;
+                                    if (plainRefusal >= 0) throw refusalError(paras.length === group.length ? paras[plainRefusal] : plain);
                                     if (paras.length === group.length) { succeeded++; return paras.map(tidyKana); }
                                     if (group.length === 1 && plain.trim()) { succeeded++; return [tidyKana(plain.trim())]; }
                                     console.warn(`[LLM Translator] 통짜 답의 문단 수(${paras.length})가 원문(${group.length})과 달라 ${group.length > 1 ? '나눠서 보내요' : '원문으로 남겨요'}`);
@@ -1884,6 +1916,14 @@ async function translate(text, options = {}) {
                                 // 나눈 조각은 배치 하나로만 — 조각마다 배치 3개를 돌리면 요청이 최대 39회까지 불어난다 (배치 1개면 15회)
                                 const half = PROMPT_LAYOUTS.slice(0, 1);
                                 return [...await translateGroup(group.slice(0, mid), half), ...await translateGroup(group.slice(mid), half)];
+                            }
+                            // 2026-10-06: 번호 묶음 답에서 문단 몇 개만 거절이었고 더 못 나누면 — 거절 문단만 null, 나머지는 그 답의 번역을 붙인다 (전처럼)
+                            if (caught?.partial && group.length > 1) {
+                                const kept = caught.partial.map((body, i) => paragraphRefused(group[i], body) ? null : body);
+                                failed ??= caught;
+                                group.forEach((body, i) => { if (kept[i] === null) failReasons.set(body, caught); else if (caught.renumbered) noCache.add(body); });
+                                if (kept.some(text => text !== null)) succeeded++;
+                                return kept;
                             }
                             // 문단 하나까지 막힘 · 나누기 상한 · 그 밖의 오류: 그 문단들 자리만 null. 전부 실패하면 예전처럼 오류
                             failed ??= error;
@@ -2575,25 +2615,10 @@ function isTranslationCurrentlyDisplayed(messageId) {
         return true;
     }
 
-    // showing-original 플래그가 설정되지 않은 경우 (초기 번역 후 상태)
-    // 현재 화면에 표시된 텍스트와 원본 메시지 텍스트를 비교
-    const originalText = substituteParams(message.mes, context.name1, message.name);
-    const currentDisplayedHtml = textBlock.html();
-
-    // HTML에서 텍스트만 추출하여 비교
-    // Font Manager 등 다른 확장이 추가한 태그를 제거하여 정확한 비교
-    const tempDiv = $('<div>').html(currentDisplayedHtml);
-
-    // Font Manager가 추가한 커스텀 태그 폰트 span 제거
-    tempDiv.find('[data-custom-tag-font]').each(function () {
-        $(this).replaceWith($(this).html());
-    });
-
-    const currentDisplayedText = tempDiv.text().trim();
-    const originalTextTrimmed = originalText.trim();
-
-    // 현재 표시된 텍스트가 원본과 같으면 원문 표시 중, 다르면 번역문 표시 중
-    return currentDisplayedText !== originalTextTrimmed;
+    // showing-original 플래그가 설정되지 않은 경우 (채팅을 다시 열었거나 스와이프로 돌아온 뒤)
+    // 2026-10-06: toggleOriginalText 와 같게 백업(치워 둔 번역문) 유무로 본다 — 전엔 화면 글자와 원문을 견줬는데 문단 · 마크다운이 있으면
+    //             늘 달라 '번역문 표시 중'으로 판정, 원문 보기 상태에서 첫 누름이 화면을 안 바꾸고 '원문으로 전환' 토스트만 떴다
+    return !message.extra.original_translation_backup;
 }
 
 // messageId 유효성 검사 및 기본값 처리 함수
@@ -2746,18 +2771,26 @@ async function onTranslateChatClick() {
         isChatTranslationInProgress = true;
         button.find('.fa-right-left').removeClass('fa-right-left').addClass('fa-stop-circle');
         button.find('span').text('번역 중단'); button.addClass('translating');
+        // 2026-10-06: 모델이 거절한 메시지(구조 HTML · 덩이 하나뿐이라 차단 표시를 못 다는 글)는 원문으로 두고 다음 메시지로 —
+        //             전엔 그 메시지에서 전체 번역이 멈추고, 다시 눌러도 같은 자리에서 또 멈춰 뒤 메시지를 일괄 번역할 수 없었다
+        let refusedCount = 0;
         for (const message of messages) {
             guard.assert();
             if (run.stopped) break;
             const id = getContext().chat.indexOf(message);
             if (id < 0) continue;
-            await translateMessage(id, false, 'batch');
+            try { await translateMessage(id, false, 'batch'); }
+            catch (error) {
+                if (!error?.refused) throw error;
+                refusedCount++;
+                console.warn('[LLM Translator] 전체 번역: 거절된 메시지 건너뜀', id, error.message);
+            }
             guard.assert();
             const delay = Math.max(0, Number(extensionSettings.throttle_delay) || 0);
             if (delay && !run.stopped) await new Promise(resolve => setTimeout(resolve, delay));
         }
         guard.assert();
-        if (!run.stopped) toastr.success('채팅 번역이 완료되었습니다.');
+        if (!run.stopped) refusedCount ? toastr.warning(`채팅 번역 완료 — 모델이 거절한 메시지 ${refusedCount}개는 원문으로 남겼어요.`) : toastr.success('채팅 번역이 완료되었습니다.');
     } catch (error) {
         if (error?.cancelled) toastr.info(error.message);
         else toastr.error(error?.message || '다시 전체 번역을 누르면 완료한 메시지는 건너뛰어요.', '전체 번역 중단', { timeOut: 10000 });
@@ -2988,6 +3021,7 @@ async function editTranslation(messageId) {
 
     // 1. DB에서 원본 번역문 가져오기
     const originalMessageText = substituteParams(message.mes, context.name1, message.name);
+    const openedMes = message.mes, openedSwipe = message.swipe_id; // 2026-10-06: 저장 때 같은 글 · 스와이프인지 본다
     let originalDbTranslation;
     try {
         originalDbTranslation = await localOrDisplayedTranslation(message, originalMessageText);
@@ -3045,6 +3079,13 @@ async function editTranslation(messageId) {
         mesText.show();
         mesBlock.removeClass('translation-editing');
         mesButtons.show();
+        // 2026-10-06: 수정창을 연 채 스와이프 · 새 생성 · 채팅 전환을 했으면 저장 · 삭제하지 않는다 — 전엔 옛 스와이프의 번역문이
+        //             새 스와이프 원문의 번역으로 DB 와 화면에 들어갔다. 열어 둔 동안 못 그린 새 스와이프 화면은 다시 그린다
+        if (getContext().chat?.[messageId] !== message || message.mes !== openedMes || message.swipe_id !== openedSwipe) {
+            toastr.warning('그사이 메시지가 바뀌어 번역문을 저장하지 않았어요.');
+            if (getContext().chat?.[messageId] === message) await refreshMessageBlock(messageId, message);
+            return;
+        }
         const originalTextForDbKey = substituteParams(message.mes, context.name1, message.name);
 
         // 삭제 로직
@@ -4423,6 +4464,9 @@ async function handleMessageEdit(messageId) {
 
             // display_text 삭제 (실제로 수정된 경우에만)
             delete message.extra.display_text;
+            // 2026-10-06: 원문 보기 중에 고쳤으면 치워 둔 옛 번역(백업)도 지운다 — 남으면 아래에서 새 원문 해시가 찍혀 교정 재번역 ·
+            //             /llmGetTranslation 이 고치기 전 번역을 지금 번역으로 썼다 (휴지통 · 수정창 비우기와 같게)
+            delete message.extra.original_translation_backup;
 
             // 현재 원문의 해시를 저장 (나중에 또 수정될 수 있으므로)
             markTranslatedOriginal(message, currentOriginalText);
@@ -4452,6 +4496,7 @@ async function handleMessageEdit(messageId) {
         } else {
             // 기존 동작 유지
             delete message.extra.display_text;
+            delete message.extra.original_translation_backup; // 2026-10-06: 백업도 함께 (위와 같게)
             refreshMessageBlock(messageId, message);
 
             // [변경] 자동 번역 모드 확인 (위와 동일 로직)
@@ -6116,7 +6161,16 @@ async function ensureCharacterExists(characterName, firstMessage) {
  * LLM 번역 DB 관리를 위한 QR과 캐릭터를 준비(확인 및 생성)합니다.
  * 이 함수는 사용자가 버튼을 클릭했을 때 호출됩니다.
  */
+// 2026-10-06: 준비 중에 버튼을 또 누르면 진행 중인 준비를 같이 기다린다 — 전엔 캐릭터 가져오기가 끝나기 전 두 번째 누름이
+//             또 가져와 'llm번역DB백업용' 캐릭터가 둘 생기고 /go 가 어느 쪽으로 갈지 몰랐다
+let dbToolSetupJob = null;
 async function prepareQrAndCharacterForDbManagement() {
+    if (dbToolSetupJob) return dbToolSetupJob;
+    dbToolSetupJob = prepareDbToolOnce().finally(() => { dbToolSetupJob = null; });
+    return dbToolSetupJob;
+}
+
+async function prepareDbToolOnce() {
     const targetCharName = "llm번역DB백업용";
     const targetCharFirstMessage = `LLM 번역 DB 관리 캐릭터입니다. 다음 명령어를 사용할 수 있습니다:\n\n채팅 백업(업로드)\n/llmDBUploadBackup\n\n채팅 복원(다운로드+등록된 DB삭제)\n/llmDBDownloadRestore | /llmDBmetaClearBackup`;
 
@@ -6320,6 +6374,9 @@ export function processTranslationText(originalText, translatedText) {
         // 원문 · 번역문에서 어긋나고(줄 수 불일치 → 통째 접기), 감싸개 밖에 둔 제목 표시 줄이 \r 에서 끊겨 접힌 글이 밖으로 샌다. 마크다운도 어차피 \n 으로 바꾼다
         originalText = String(originalText ?? '').replace(/\r\n?/g, '\n');
         translatedText = String(translatedText ?? '').replace(/\r\n?/g, '\n');
+        // 2026-10-06: 줄을 넘는 *기울임* · **굵게** 는 줄마다 닫고 다시 연다 — 줄마다 따로 감싸면 짝이 감싸개 사이에서 끊겨 강조가 사라졌다 (줄 수는 그대로)
+        originalText = splitCrossLineEmphasis(originalText);
+        translatedText = splitCrossLineEmphasis(translatedText);
         const origData = applyIsolation(originalText, 'ORIG');
         const transData = applyIsolation(translatedText, 'TRANS');
 

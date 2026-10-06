@@ -59,6 +59,7 @@ export const DEFAULTS = Object.freeze({
     master_volume: 1,
     normalize: true,
     target_lufs: -16,
+    dethump: true,                 // 5.6.3 쉼 자리 저음 '쿵' 줄이기 (loudness.dethump)
     gap_ms: 250,
     highlight: true,
     highlight_style: 'both',       // 재생 표시: color | both | underline (기존 표시는 둘 다)

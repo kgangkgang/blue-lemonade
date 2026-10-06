@@ -87,6 +87,11 @@ export async function openTranslationEditor(record, index) {
         toastr.error(error.message, '북마크');
         return false;
     }
+    // 2026-10-06: 번역문은 있는데 고칠 원본이 없으면 열지 않는다 (가공된 글을 저장하면 망가지고, 빈 칸 저장은 번역문을 지운다).
+    if (current === null) {
+        toastr.error('화면에는 번역문이 있지만 이 기기에서 원본 번역문을 찾지 못했어요.', '북마크');
+        return false;
+    }
     const message = record.messages[index];
     if (!message) {
         toastr.error('메시지를 찾을 수 없습니다.', '북마크');

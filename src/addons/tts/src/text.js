@@ -489,19 +489,56 @@ export function pairSegments(srcSegs, dispSegs) {
 }
 
 /**
- * 화면 번역문(display_text)을 읽을 글로 — LLM 번역의 '접기 · 원문 먼저 보기' 손질.
- * 그 보기는 글줄마다 <details class="llm-translator-details …"> 로 감싸고, 그 칸은 '건너뛸 태그'(details)라 읽지 않는다.
- * 테마 5.6.2 부터 줄 머리의 마크다운 표시(1. · - · # · >)와 표 줄이 칸 밖에 놓이므로, 그대로 조각내면 '1. 2. | 이름 | 체력 |' 같은 것만 읽게 된다.
- * 칸 밖의 그 표시와 표 줄만 지워 예전과 같은 결과로 만든다 (이 보기에서 번역문을 읽지 않는 것은 예전 그대로). 다른 글은 손대지 않는다.
+ * 화면 번역문(display_text)을 읽을 글로 — LLM 번역의 '원문 <> 번역문 함께 보기' 손질 (1.3.2).
+ * 세 보기 모두 '사용 안 함'(번역문만) 화면과 같은 글을 읽게 번역문 쪽만 남긴다:
+ *  · 접기:        <details class="llm-translator-details mode-folded"><summary …>번역문</summary>원문</details> → 번역문
+ *  · 원문 먼저:   <details class="llm-translator-details mode-original-first"><summary …>원문</summary>번역문</details> → 번역문
+ *    (줄마다 감싼 것 · 통째로 감싼 것 둘 다. 예전엔 details 가 '건너뛸 태그'라 이 두 보기에서는 번역문을 하나도 안 읽었다)
+ *  · 펼침:        <span class="translated_text mode-unfolded">번역문</span><br><span class="original_text mode-unfolded">원문</span> → 번역문
+ *    (예전엔 줄마다 번역문 다음에 원문까지 읽었다 — 정확성 점검 2026-10-06 #9)
+ *  · 문단 간격 요소(.llmt-para-gap)는 지운다 — 그 자리가 '사용 안 함' 화면의 빈 줄이다.
+ * 줄 머리 표시(1. · - · # · >) · 표 · 가로줄은 칸 밖에 있어 그대로 남는다 → '사용 안 함'과 같다. 다른 글(상태창 details 등)은 손대지 않는다.
+ * 감춤 토큰이 든 통째 보기(마스킹 + 줄 수 불일치)는 표시 없이 원문 · 번역문을 이어 붙인 글이라 가를 수 없어 그대로 둔다.
  */
 const LLMT_LINE = '<details class="llm-translator-details ';
+const LLMT_UNF_ORIG = '<br><span class="original_text mode-unfolded">';
+const LLMT_GAP = '<div class="llmt-para-gap"></div>';
+/** <span class="translated_text …">…</span> 하나뿐이면 그 안 글 */
+function unwrapTranslated(part) {
+    const t = part.trim();
+    const m = /^<span class="translated_text[^"]*">/.exec(t);
+    if (!m) return part;
+    return findClose(t, 'span', m[0].length) === t.length ? t.slice(m[0].length, t.length - '</span>'.length) : part;
+}
 export function speechDisplay(display) {
-    const text = String(display ?? '');
-    if (!text.includes(LLMT_LINE)) return text;
-    return text.split('\n').map((line) => {
-        const at = line.indexOf(LLMT_LINE);
-        if (at > 0 && /^[ \t>]*(?:(?:[-+*]|\d{1,9}\.)[ \t]+)?(?:#{1,6}[ \t]*)?$/.test(line.slice(0, at))) return line.slice(at);
-        if (at < 0 && /^ {0,3}\|.*\|[ \t]*$|^ {0,3}\|?[ \t:]*[-=]{2,}[ \t:]*\|/.test(line)) return '';
-        return line;
-    }).join('\n');
+    let text = String(display ?? '');
+    if (!text.includes(LLMT_LINE) && !text.includes(LLMT_UNF_ORIG) && !text.includes(LLMT_GAP)) return text;
+    // 접기 · 원문 먼저: 감싼 칸마다 번역문 쪽으로 바꿔 끼운다 (칸 안에 다른 details 가 있어도 짝을 세어 닫는 태그를 찾는다)
+    let from = 0;
+    for (;;) {
+        const at = text.indexOf(LLMT_LINE, from);
+        if (at < 0) break;
+        const openEnd = text.indexOf('>', at) + 1;
+        const close = openEnd > 0 ? findClose(text, 'details', openEnd) : -1;
+        if (close < 0) { from = at + LLMT_LINE.length; continue; }
+        const originalFirst = /mode-original-first/.test(text.slice(at, openEnd));
+        const inner = text.slice(openEnd, close - '</details>'.length);
+        const sum = /<summary\b[^<>]*>/i.exec(inner);
+        const sumEnd = sum ? findClose(inner, 'summary', sum.index + sum[0].length) : -1;
+        if (!sum || sumEnd < 0) { from = close; continue; }
+        const kept = unwrapTranslated(originalFirst ? inner.slice(sumEnd) : inner.slice(sum.index + sum[0].length, sumEnd - '</summary>'.length));
+        text = text.slice(0, at) + kept + text.slice(close);
+        from = at + kept.length;
+    }
+    // 펼침: 줄 끝의 원문 칸을 떼고 번역문 칸을 벗긴다 (renderInterleaved 가 줄마다 '\n' 으로 잇는다 — 원문 칸은 늘 그 줄의 끝)
+    if (text.includes(LLMT_UNF_ORIG)) {
+        text = text.split('\n').map((line) => {
+            const u = line.indexOf(LLMT_UNF_ORIG);
+            if (u < 0) return line;
+            const head = line.slice(0, u);
+            const s = head.indexOf('<span class="translated_text mode-unfolded">');
+            return s < 0 ? head : head.slice(0, s) + unwrapTranslated(head.slice(s));
+        }).join('\n');
+    }
+    return text.split(LLMT_GAP).join('');
 }

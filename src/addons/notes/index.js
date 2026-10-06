@@ -781,7 +781,25 @@ function onChatDeleted(name) {
     const chat = String(name || '').replace(/\.jsonl$/i, ''); if (!chat) return;
     const c = getContext(), avatar = c.groupId ? '' : c.characters?.[c.characterId]?.avatar;
     const hit = o => !o.group && o.chat === chat;
-    releaseNotes(avatar && notes().some(n => n.owner && hit(n.owner) && n.owner.avatar === avatar) ? o => hit(o) && o.avatar === avatar : hit);
+    if (avatar && notes().some(n => n.owner && hit(n.owner) && n.owner.avatar === avatar)) return releaseNotes(o => hit(o) && o.avatar === avatar);
+    // 2026-10-06: 이름만으로는 어느 캐릭터의 채팅인지 몰라, 다른 캐릭터의 같은 이름 채팅 메모까지 풀었다
+    // → 그 캐릭터의 채팅 목록에서 정말 없어졌을 때만 푼다. 목록을 못 읽으면 아무것도 풀지 않는다
+    return releaseGoneChats(chat, hit);
+}
+async function releaseGoneChats(chat, hit) {
+    const avatars = [...new Set(notes().filter(n => n.owner && hit(n.owner)).map(n => n.owner.avatar))];
+    const gone = new Set();
+    for (const a of avatars) {
+        if (!a) { gone.add(a); continue; } // 캐릭터를 알 수 없는 귀속은 예전처럼 이름만 보고 푼다
+        try {
+            const res = await fetch('/api/characters/chats', { method: 'POST', headers: getRequestHeaders(), body: JSON.stringify({ avatar_url: a, simple: true }) });
+            if (!res.ok) continue;
+            const data = await res.json();
+            // { error: true } = 그 캐릭터의 채팅 폴더가 없음(캐릭터와 채팅을 함께 지움) → 지운 것으로 본다 (예전과 같게)
+            if (data?.error === true || !Object.values(data || {}).some(c => String(c?.file_name || '') === `${chat}.jsonl`)) gone.add(a);
+        } catch (error) { console.warn('[메모] 지운 채팅 확인:', error); }
+    }
+    if (gone.size) releaseNotes(o => hit(o) && gone.has(o.avatar));
 }
 function onGroupChatDeleted(chatId) { const chat = String(chatId || ''); if (chat) releaseNotes(o => !!o.group && o.chat === chat); }
 // 캐릭터 · 그룹 자체가 없어진 메모(지운 캐릭터 · 이 수정 전에 이름을 바꾼 캐릭터)는 고치지 않고 어느 채팅에서나 보인다
@@ -1209,7 +1227,9 @@ export function openLook() {
         else if (num) { const r = lookDialog.querySelector(`[data-look-range="${num.dataset.lookKey}"]`); if (r) r.value = num.value; readParam(num.dataset.lookKey); }
         else if (same) readParam(same.dataset.lookSame);
     });
-    lookDialog.addEventListener('close', () => { observer.disconnect(); lookDialog.remove(); lookDialog = null; }, { once: true });
+    // 2026-10-06: close 는 나중에 오므로 제 창만 치운다 — '기본값으로'가 곧바로 다시 연 새 창을 지우던 문제
+    const self = lookDialog;
+    self.addEventListener('close', () => { observer.disconnect(); self.remove(); if (lookDialog === self) lookDialog = null; }, { once: true });
     showThemeModal(lookDialog);
 }
 

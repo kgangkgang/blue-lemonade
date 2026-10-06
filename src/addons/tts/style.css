@@ -1,11 +1,11 @@
-/* TTS (Lemon TTS) v1.3.1 */
+/* TTS (Lemon TTS) v1.3.2 */
 
 #lv_settings .lv-version { background: none; border: 0; color: inherit; font: inherit; padding: 4px 6px; cursor: pointer; text-decoration: none; }
 #lv_settings .lv-version:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 
 /* ---------- 공통 변수: 설정 창 · 편집 팝업 · 재생 막대 (ST 테마 색을 따르고, 블루 레몬에이드 변수는 있으면 씀) */
 .lv-settings, .lv-editor, .lv-bar {
-  --lv-css-version: "1.3.1";
+  --lv-css-version: "1.3.2";
   --lv-accent: var(--salty-accent, var(--SmartThemeQuoteColor, #51a0de));
   --lv-text: var(--SmartThemeBodyColor, #dcdcd2);
   --lv-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, .15));
@@ -156,6 +156,17 @@
 .lv-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; margin: 0; font-weight: normal; }
 .lv-label { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 8px; color: var(--lv-dim); font-size: .92em; line-height: 1.35; }
 .lv-label output { color: var(--lv-text); font-variant-numeric: tabular-nums; }
+/* 5.6.3 유료 엔진일 때 '미리 만들기' 이름 옆 '!' — 누르면 아래 안내가 펼쳐짐 (말풍선 없음).
+   단추는 22px 이지만 위아래 −3px 로 줄 높이를 이름 글자와 같게 둬서 옆 칸(번역 기다리기)과 선택칸 높이가 어긋나지 않게 */
+.lv-label.lv-label-warn { justify-content: flex-start; align-items: center; gap: 4px; }
+.lv-body .lv-warn-btn, .lv-warn-btn { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 22px; height: 22px; margin: -3px 0; padding: 0; border: 0; border-radius: var(--lv-r-pill); background: transparent; color: var(--bl-pop-ink, #d08a00); font-size: 14px; line-height: 1; cursor: pointer; }
+.lv-warn-btn > i { display: block; line-height: 1; }
+.lv-body .lv-warn-btn:hover, .lv-body .lv-warn-btn[aria-expanded="true"] { background: var(--lv-fill-hover); }
+/* .lv-body button { color: inherit } 보다 세게 — 주의색(밤 #FFE873 · 밝게는 팔레트의 pop-ink) */
+.lv-body .lv-warn-btn { color: var(--bl-pop-ink, #d08a00); }
+.lv-warn-btn:focus-visible { outline: 2px solid var(--lv-accent); outline-offset: 1px; }
+.lv-warn-note { display: block; margin-top: 4px; color: var(--lv-text); font-size: .9em; line-height: 1.45; }
+.lv-warn-note[hidden] { display: none; }
 .lv-range input[type=range] { margin-top: 4px; }
 @container lvcard (min-width: 18em) {
   .lv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

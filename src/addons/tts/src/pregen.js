@@ -345,6 +345,10 @@ export function init() {
         const id = chat.length - 1;
         pregenCancel(r => r.id === id);
     });
-    on(event_types.MESSAGE_EDITED, (id) => pregenChanged(id));
-    on(event_types.MESSAGE_UPDATED, (id) => pregenChanged(id));
+    // 약속을 돌려주지 않는다: 실리태번 eventSource.emit 은 리스너가 돌려준 약속을 기다린다(lib/eventemitter.js) — 미리 만들기는
+    // 번역을 최대 translation_timeout(90초) 기다리므로, 돌려주면 MESSAGE_UPDATED 를 낸 쪽(다시 쓰기 · 번역기 · 생성 마무리)이 그동안 멈춰
+    // 끊긴 스트림 뒤 입력창이 잠긴 채로 남았다 (2026-10-06, 스모크 --stream --tts 로 재현)
+    const changed = (id) => { try { pregenChanged(id); } catch (e) { log('err', `미리 만들기 갱신 실패: ${errMsg(e)}`); } };
+    on(event_types.MESSAGE_EDITED, changed);
+    on(event_types.MESSAGE_UPDATED, changed);
 }

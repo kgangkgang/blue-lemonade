@@ -230,6 +230,8 @@ function withBridge(code) {
 export function hydrateHtmlBlocks(container, onResize = null) {
     normalizeTrackerSpacing(container);
     container.querySelectorAll('pre').forEach((pre) => {
+        // 2026-10-06: 헬퍼가 없으면 채팅처럼 코드 글자로 둔다 (카드·모델 출력의 스크립트가 실리태번 권한으로 돌지 않게).
+        if (!globalThis.TavernHelper) return;
         const code = pre.textContent ?? '';
         if (!HTML_BLOCK_MARKERS.some(marker => code.includes(marker))) return;
         const iframe = document.createElement('iframe');

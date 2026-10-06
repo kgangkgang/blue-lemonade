@@ -19,6 +19,8 @@ export function cleanPresetName(text) {
         .replace(/^\.+/, '')
         .replace(/\s+/g, ' ')
         .slice(0, 40)
+        // 2026-10-06: 40자에서 자르다 이모지 반쪽(외톨이 서로게이트)이 남으면 encodeURIComponent 가 터져 프리셋을 읽지도 지우지도 못했다 → 뗀다.
+        .replace(/[\uD800-\uDBFF]$/, '')
         // 1.3.2: 끝의 점·빈칸도 뺀다. 서버는 폴더를 'art.' → 'art' 로 만들지만 그림 주소는 'art./이름.png' 라서
         //        그 프리셋의 그림이 격자에서도 채팅에서도 전부 404 였다. 자르기 뒤에 해야 잘린 끝의 점도 빠진다.
         .replace(/[. ]+$/, '')

@@ -330,14 +330,27 @@ export async function restoreTranslation(record, index) {
     return true;
 }
 
-/** 직접 고칠 때 미리 채울 번역문: 번역기 DB의 원본(표시용 가공 전) → 없으면 지금 보이는(또는 치워 둔) 번역문 */
+/**
+ * 직접 고칠 때 미리 채울 번역문: 번역기 DB의 원본(표시용 가공 전) → 없으면 지금 보이는(또는 치워 둔) 번역문.
+ * 번역문이 있는데 쓸 만한 원본이 없으면 null (채팅 화면의 localOrDisplayedTranslation과 같은 기준).
+ */
 export async function editableTranslation(record, index) {
     await loadRecord(record);
     const message = record.messages[index];
     if (!hasTranslation(message)) return '';
-    const cached = await quietly(() => dbGet(originalTextOf(message)), '조회');
+    const original = originalTextOf(message);
+    const cached = await quietly(() => dbGet(original), '조회');
     if (cached) return cached;
-    return message.extra.original_translation_backup || message.extra.display_text || '';
+    // 2026-10-06: 다른 기기에서 번역해 DB 줄이 없을 때, 가공된 HTML(원문 병기)·원문이 바뀐 옛 번역문·원문 보기 글을
+    // 편집 창에 채우면 저장할 때 <details>가 이중으로 감싸지고 DB에도 HTML이 들어간다. 채팅 화면처럼 거절한다.
+    const extra = message.extra;
+    const sameOriginal = extra.original_text_hash !== undefined
+        ? extra.original_text_hash === String(getStringHash(String(original ?? '')))
+        : extra.original_text_for_translation === original; // 해시로 옮기기 전 옛 메시지
+    if (!sameOriginal) return null;
+    const displayed = extra.original_translation_backup || extra.display_text;
+    if (typeof displayed !== 'string' || !displayed.trim() || displayed === original || /<[a-z][\s\S]*>/i.test(displayed)) return null;
+    return displayed;
 }
 
 /**

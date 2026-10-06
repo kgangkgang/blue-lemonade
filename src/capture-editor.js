@@ -6,12 +6,22 @@ function mediaOf(node){
  const items=node.matches('img,video')?[node]:[...node.querySelectorAll('img,video')];
  return items.slice(0,6).map(el=>{const src=el.currentSrc||el.src||el.poster||'';let name=el.getAttribute('alt')||el.getAttribute('title')||'';if(!name){try{name=decodeURIComponent(new URL(src,location.href).pathname.split('/').pop()||'');}catch{name='';}}return {src:src.startsWith('data:')&&src.length>200000?'':src,name:name.slice(0,80),video:el.tagName==='VIDEO'};});
 }
+// 2026-10-06 에셋 그림(assets.js)이 크기 · 불러오기에 맞춰 고쳐 쓰는 표시용 값(--salty-* 인라인 변수, salty-asset · salty-cutout 클래스)은 빼고 비교한다 — 화면 회전 · 폭 변화만으로 '채팅 표시가 바뀌었어요'가 나서 편집이 막혔다. 글 · 문단 · 그 밖의 속성이 바뀌면 그대로 걸린다
+function markupOf(text){
+ if(!text)return undefined;
+ const copy=text.cloneNode(true);
+ for(const el of copy.querySelectorAll('[style],[class]')){
+  if(el.style&&el.hasAttribute('style')){for(const name of [...el.style].filter(n=>n.startsWith('--salty-')))el.style.removeProperty(name);const css=el.style.cssText;css?el.setAttribute('style',css):el.removeAttribute('style');}
+  if(el.classList&&el.hasAttribute('class')){el.classList.remove('salty-asset','salty-cutout');if(!el.classList.length)el.removeAttribute('class');}
+ }
+ return copy.innerHTML;
+}
 export function captureDraft(ids){
- return ids.map(id=>{const message=document.querySelector(`#chat .mes[mesid="${id}"]`),text=message?.querySelector('.mes_text');if(!text)throw Error('선택한 메시지를 찾지 못했어요. 다시 선택해 주세요.');return {id,original:text.innerHTML,blocks:[...text.childNodes].map((node,index)=>({index,text:node.textContent||'',originalText:node.textContent||'',kind:node.nodeType===1?node.tagName:'TEXT',media:mediaOf(node)})).filter(b=>!['STYLE','SCRIPT'].includes(b.kind)&&(b.text.trim()||b.kind!=='TEXT'))};});
+ return ids.map(id=>{const message=document.querySelector(`#chat .mes[mesid="${id}"]`),text=message?.querySelector('.mes_text');if(!text)throw Error('선택한 메시지를 찾지 못했어요. 다시 선택해 주세요.');return {id,original:markupOf(text),blocks:[...text.childNodes].map((node,index)=>({index,text:node.textContent||'',originalText:node.textContent||'',kind:node.nodeType===1?node.tagName:'TEXT',media:mediaOf(node)})).filter(b=>!['STYLE','SCRIPT'].includes(b.kind)&&(b.text.trim()||b.kind!=='TEXT'))};});
 }
 export function applyCaptureDraft(clone,draft,source){
  if(!draft)return;
- if(source.querySelector('.mes_text')?.innerHTML!==draft.original)throw Error('편집을 시작한 뒤 채팅 표시가 바뀌었어요. 캡처용 편집을 초기화하고 다시 확인해 주세요.');
+ if(markupOf(source.querySelector('.mes_text'))!==draft.original)throw Error('편집을 시작한 뒤 채팅 표시가 바뀌었어요. 캡처용 편집을 초기화하고 다시 확인해 주세요.');
  const text=clone.querySelector('.mes_text'),nodes=[...text.childNodes],fixed=nodes.filter(n=>n.nodeType===1&&['STYLE','SCRIPT'].includes(n.tagName));
  const blocks=draft.blocks.map(block=>{
   let node=block.index===null?null:nodes[block.index];

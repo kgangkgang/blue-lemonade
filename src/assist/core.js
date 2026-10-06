@@ -8,5 +8,6 @@ export function knownConflicts(names, disabled, addons) {
     // The host's built-in tts extension is distinct from third-party/tts.
     const thirdParty = new Set(names.filter(n => !disabled.includes(n) && n.startsWith('third-party/')).map(n => n.slice(12)));
     const owner = id => id === 'tts' ? thirdParty : active;
-    return Object.entries(DUPLICATES).filter(([id, name]) => addons[id] && (Array.isArray(name)?name.some(folder=>owner(id).has(folder)):owner(id).has(name))).map(([id, name]) => ({ code: 'duplicate-' + id, level: '확인됨', text: `${Array.isArray(name)?name.filter(folder=>active.has(folder)).join(', '):name}: 내장 기능과 별도 확장이 함께 켜져 있어요. 내장 기능은 대기할 수 있어요.` }));
+    // 2026-10-06: 문구도 조건과 같은 owner(id) 로 — 'tts' 면 실리태번 내장 tts 까지 별도 확장으로 적혔다
+    return Object.entries(DUPLICATES).filter(([id, name]) => addons[id] && (Array.isArray(name)?name.some(folder=>owner(id).has(folder)):owner(id).has(name))).map(([id, name]) => ({ code: 'duplicate-' + id, level: '확인됨', text: `${Array.isArray(name)?name.filter(folder=>owner(id).has(folder)).join(', '):name}: 내장 기능과 별도 확장이 함께 켜져 있어요. 내장 기능은 대기할 수 있어요.` }));
 }

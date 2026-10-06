@@ -12,7 +12,7 @@ import { badgeTextHit } from '../../badge-hit.js';
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
-const VERSION = '1.1.5';
+const VERSION = '1.1.6';
 // 1.1.5: 깃털 창에 두 쪽 — 전개 지시(이번 전개) · 항상 지시(적은 글 그대로 매번, 예: <OOC: …>). 옆으로 넘기거나 제목을 눌러 바꾼다
 const KINDS = ['direction', 'always'];
 const KIND_LABEL = { direction: '전개 지시', always: '항상 지시' };
@@ -276,14 +276,19 @@ function isRawGeneration() {
 // 생성 종류는 GENERATION_STARTED(prepareOpenAIMessages 보다 먼저)에서 받아 둔다. 조용한 생성(/gen · 요약 · 그림 프롬프트 · 표정)과
 // 대신 쓰기(impersonate)에는 넣지 않는다. 한 번 쓰면 비워서 지난 값이 다음 요청에 새지 않게 한다.
 let generationType = null;
-function trackGeneration(type) {
+// 2026-10-06 dry run(프롬프트 관리자 토큰 계산 = Generate('normal', {}, true))은 이 값을 쓰지도 비우지도 않는다 —
+// 겹치면 dry run 이 본 요청의 종류를 먼저 비워 실제 요청에서 지시가 빠졌다. generateRaw 도 본 요청의 값을 비우지 않는다.
+function trackGeneration(type, _params, dryRun) {
+    if (dryRun) return;
     generationType = typeof type === 'string' ? type : null;
 }
 
 function injectDirection(eventData) {
-    const type = generationType;
-    generationType = null;
-    if (!(isActive() || alwaysActive()) || type === null || isRawGeneration() || type === 'quiet' || type === 'impersonate') return;
+    if (isRawGeneration()) return;
+    const dry = !!eventData?.dryRun;
+    const type = dry ? 'normal' : generationType;
+    if (!dry) generationType = null;
+    if (!(isActive() || alwaysActive()) || type === null || type === 'quiet' || type === 'impersonate') return;
     const store = settings();
     const template = store.directionPrompt;
     const messages = eventData?.chat;

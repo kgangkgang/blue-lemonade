@@ -21,7 +21,8 @@ async function backgroundLayers(signal) {
     const layers=[];
     for(const el of document.querySelectorAll('#bg1,#bg2')) {
         const s=getComputedStyle(el); if(s.display==='none'||s.visibility==='hidden'||Number(s.opacity)===0)continue;
-        for(const hit of [...s.backgroundImage.matchAll(/url\(["']?(.*?)["']?\)/g)].reverse())layers.push({image:await loadImage(new URL(hit[1],location.href).href,signal),opacity:Number(s.opacity)});
+        // 2026-10-06 파일 이름에 괄호가 든 배경('image (1).png' · ST 기본 배경 '(by kallmeflocc)')은 첫 ')'에서 잘려 404 → 움짤·영상 저장이 통째로 실패했다. 따옴표를 따라 읽는다 (chat-capture.js urls() 와 같은 식)
+        for(const hit of [...s.backgroundImage.matchAll(/url\((?:"([^"]*)"|'([^']*)'|([^)]*))\)/g)].reverse())layers.push({image:await loadImage(new URL(hit[1]??hit[2]??hit[3],location.href).href,signal),opacity:Number(s.opacity)});
     }
     for(const video of document.querySelectorAll('video')) {
         if(video.closest('#chat,dialog,.salty-panel'))continue;

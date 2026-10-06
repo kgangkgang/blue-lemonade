@@ -678,6 +678,8 @@ export function resetSettings(groups = { look: true }) {
     const next = groups.look ? fresh : structuredClone(old);
     if (groups.look) {
         for (const key of RESET_KEEP) next[key] = structuredClone(old[key] ?? fresh[key]);
+        // 2026-10-06: 예전 기본값 정리 표시도 남긴다 — 지우면 초기화 뒤 고른 나이트 #000000 · 화이트 #FFFFFF 가 다음 새로고침에 다시 지워진다 (apply.js dropStaleOverrides)
+        if ('legacyColorsRev' in old) next.legacyColorsRev = old.legacyColorsRev;
         // 기기별 배치는 켬/끔만 남긴다 — 담긴 pc · mobile 값은 모습이라, 남기면 syncDeviceLayout 이 초기화한 모습 위에 옛 배치를 도로 입힌다
         next.deviceLayouts = { on: old.deviceLayouts?.on === true, pc: {}, mobile: {} };
         // 5.2.3: chat 안의 동작 값과 고정 메시지(데이터)도 모습이 아니다 — 남긴다 (styles.js CHAT_BEHAVIOR 와 같은 목록 + QR 배치 · 고정)

@@ -8,6 +8,7 @@ import { preserveLocks } from './setting-locks.js';
 // 이어 둔 캐릭터가 없으면 이 파일은 불러오지도 않는다 (features.js).
 import { getSettings, saveSettings, invalidateSettings } from './settings.js';
 import { captureStyle, applyStyleData, sameStyle, currentKey } from './styles.js';
+import { deviceKind, LAYOUT_PATHS } from './device-layouts.js';
 
 let listening = false;
 let commitTimer = 0;
@@ -45,6 +46,20 @@ function paint() {
     hooks.refreshPanels?.();
 }
 
+/** 원래 모습(baseStyle)으로 되돌리기
+ *  2026-10-06: '폰 · PC 배치 따로 기억'을 켰고 원래 모습을 다른 기기에서 담았으면 이 기기의 배치(글자 크기 · 프로필 칸 …)는 그대로 둔다 —
+ *  그대로 입히면 다른 기기 배치가 이 기기 배치 기억(deviceLayouts)까지 덮어썼다. 같은 기기 · 기기를 모르는 예전 baseStyle 은 예전처럼 */
+function restoreBase(s) {
+    if (s.baseStyle) {
+        const keep = s.deviceLayouts?.on && s.baseDevice && s.baseDevice !== deviceKind()
+            ? LAYOUT_PATHS.map(path => [path.split('.'), path.split('.').reduce((o, k) => o?.[k], s)]).filter(([, value]) => value !== undefined) : [];
+        applyStyleData(s, s.baseStyle);
+        for (const [[a, b], value] of keep) if (s[a] && typeof s[a] === 'object') s[a][b] = value;
+    }
+    s.baseStyle = null;
+    delete s.baseDevice;
+}
+
 /** 지금 채팅에 맞는 모습으로 (채팅이 바뀔 때 · 이어 두기를 바꿀 때) */
 export function syncChat() {
     const s = getSettings();
@@ -56,12 +71,11 @@ export function syncChat() {
     clearTimeout(commitTimer);
     if (active) commit();
     if (wantId) {
-        if (!active) s.baseStyle = captureStyle(s);
+        if (!active) { s.baseStyle = captureStyle(s); s.baseDevice = deviceKind(); } // 2026-10-06: 담은 기기도 적어 둠 (restoreBase)
         applyStyleData(s, s.styles.find(x => x.id === wantId).data);
         s.activeStyle = { id: wantId, key };
     } else {
-        if (s.baseStyle) applyStyleData(s, s.baseStyle);
-        s.baseStyle = null;
+        restoreBase(s);
         s.activeStyle = null;
     }
     invalidateSettings(); // 5.2.3: 스타일을 제자리에 입힌 뒤 정리(범위 · 형식)를 다시 거치게
@@ -76,8 +90,7 @@ export function styleRemoved(id) {
     const s = getSettings();
     for (const [key, value] of Object.entries(s.charStyles)) if (value === id) delete s.charStyles[key];
     if (s.activeStyle?.id === id) {
-        if (s.baseStyle) applyStyleData(s, s.baseStyle);
-        s.baseStyle = null;
+        restoreBase(s);
         s.activeStyle = null;
         invalidateSettings();
         globalThis.window?.dispatchEvent(new Event('bl:settings-replaced'));

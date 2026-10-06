@@ -17,7 +17,9 @@ export function insertDirection(messages, template, direction, depth, model, opt
 export function insertInstructions(messages, contents, depth, model, { type = '', prefill = '', appendUser = true } = {}) {
     const list = (Array.isArray(contents) ? contents : []).filter(content => typeof content === 'string' && content.trim());
     if (!Array.isArray(messages) || !list.length) return;
-    const offset = Math.max(0, Math.trunc(Number(depth) || 0));
+    // 2026-10-06 이어 쓰기(continue prefill)는 이어 쓸 답이 맨 끝 assistant 턴이다 — 위치 0 이면 그 뒤에 붙어 새 답이 되므로 그 앞에 넣는다
+    const minimum = type === 'continue' && messages.at(-1)?.role === 'assistant' ? 1 : 0;
+    const offset = Math.max(minimum, Math.trunc(Number(depth) || 0));
     messages.splice(Math.max(0, messages.length - offset), 0, ...list.map(content => ({ role: 'system', content })));
 
     if (!appendUser || !/(?:^|[\s/:])gemini[-.]/i.test(String(model ?? ''))) return;

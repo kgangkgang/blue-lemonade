@@ -23,7 +23,7 @@ import { createCodeGuard, isClickTrigger, CODE_SWITCH_KEYS } from './switchcode.
 
 const MODULE = 'save_dedupe';
 const FOLDER = 'blue-lemonade'; // 2.0.0 성능 보조로 합침
-const VERSION = '1.1.4';
+const VERSION = '1.1.5';
 const TITLE = '저장 정리';
 const SAVE_PATHS = ['/api/chats/save', '/api/chats/group/save'];
 
@@ -50,6 +50,8 @@ const stats = { skipped: 0, sent: 0, skippedBytes: 0 };
 const lastOk = new Map();
 /** 마지막으로 서버에 보내 성공한 저장에 걸린 시간 (ms) — 바꾸기 전 저장 기다림을 그 2배까지 늘린다 (switchflush) */
 let lastSaveMs = 0;
+/** 2026-10-06: 지금 도는 우리 저장(바꾸기 전 저장 · 복구 · 마무리 안 저장)마다 시작한 시각 — gzip 저장을 보낸 시각이 아니라 이 시각으로 친다 */
+const ownSaveStarts = new Set();
 /** 밀린 저장 되살리기. 이 실리태번에서 쓸 수 없으면 null (저장 건너뛰기만 동작) */
 let recovery = null;
 let recoveryUnsupported = false;
@@ -79,10 +81,24 @@ function noteOk(key, start) {
     if (key !== null && start > (lastOk.get(key) ?? -Infinity)) lastOk.set(key, start);
 }
 
+/**
+ * 2026-10-06: 우리 저장을 부를 때 시작 시각을 남긴다. gzip 본문은 잠금을 잡을 때 만들어져 압축을 기다린 뒤 나가므로
+ * 보낸 시각으로 치면 압축 대기 중 수정이 덮였다고 오인한다. async 로 await 해야 부른 쪽 이름이 fetch 스택에 남는다.
+ */
+async function trackOwnSave(fn) {
+    const mark = { t: performance.now() };
+    ownSaveStarts.add(mark);
+    try {
+        return await fn();
+    } finally {
+        ownSaveStarts.delete(mark);
+    }
+}
+
 function installDedupe() {
     const nativeFetch = window.fetch;
 
-    function send(self, input, init, path, token, remember, key, start) {
+    function send(self, input, init, path, token, remember, key, start, credit = start) {
         // 같은 경로 저장이 겹치면(앞 요청이 아직 도는 중 · 응답 순서가 뒤바뀜) 서버 파일이 어느 본문인지 모른다 →
         // 가장 늦게 보낸 요청이 끝나고 도는 요청이 없을 때만 본문을 기억하고, 그 밖에는 잊어서 다음 저장을 건너뛰지 않는다
         const seq = (issued.get(path) ?? 0) + 1;
@@ -98,7 +114,7 @@ function installDedupe() {
         request.then((response) => {
             const alone = settle();
             if (response.ok) {
-                noteOk(key, start);
+                noteOk(key, credit);
                 lastSaveMs = performance.now() - start;
                 if (remember && alone) last.set(path, init.body);
                 else last.delete(path);
@@ -121,8 +137,23 @@ function installDedupe() {
             const path = method === 'POST' ? pathOf(input) : '';
             if (SAVE_PATHS.includes(path)) {
                 const body = init?.body;
-                const key = bodyKey(path, body);
+                let key = bodyKey(path, body);
+                // 2026-10-06: 요청 압축(gzip 바이트 본문)이면 키를 못 읽어 성공한 저장도 기록되지 않았다 → 바꾸기 전 저장이 늘 실패로 끝나
+                // 채팅 바꾸기 · reloadCurrentChat 이 새로고침 전까지 막혔다. 우리 저장(바꾸기 전 저장 · 복구 · 마무리 안 저장)만 지금 채팅으로 친다:
+                // gzip 본문은 압축을 기다리기 전에 만들어져 보내는 시각이 본문 시각보다 늦다 → 남의 저장을 치면 그 사이 수정이 실린 줄 안다.
+                // 우리 저장도 보낸 시각이 아니라 우리가 저장을 시작한 시각으로 친다 (압축 대기 중 수정이 덮였다고 오인하지 않게).
+                // 분기 · 체크포인트처럼 이름을 주는 saveChat 과 남의 저장은 그대로 null. 시작 시각 기록(ownSaveStarts)이 없으면 치지 않는다.
+                let ownGzip = false;
+                if (key === null && typeof body !== 'string' && body != null) {
+                    try {
+                        if (ownSaveStarts.size > 0 && stackHas('saveChatConditional')
+                            && (stackHas('saveDedupeSwitchFlush') || stackHas(MARKER) || stackHas('saveInsideFinish'))) key = quickLive()?.key ?? null;
+                    } catch { key = null; }
+                    ownGzip = key !== null;
+                }
                 const start = performance.now();
+                let credit = start;
+                if (ownGzip) for (const mark of ownSaveStarts) credit = Math.min(credit, mark.t);
                 // [1.0.2] 복구가 부른 저장이면 보내기 직전에 채팅이 그대로인지 본다. 다른 저장은 기록만 하고 그대로 보낸다.
                 let token = null;
                 if (recovery) {
@@ -130,13 +161,14 @@ function installDedupe() {
                     const check = recovery.onSaveRequest({ key, own });
                     if (check.block) return Promise.resolve(fakeOk());
                     token = check.token;
+                    if (ownGzip) token.start = Math.min(token.start, credit);
                 }
                 // [1.0.1] 비교하지 않고 그냥 내보내는 저장도 서버 파일을 바꾼다: 확장을 꺼 둔 동안의 저장, 그리고 실리태번 요청 압축
                 // (config.yaml performance.requestCompression)이 켜져 본문이 gzip 바이트로 나가는 저장. 그때 기억해 둔 본문을 버리지 않으면
                 // 나중에 그 전 내용으로 되돌린 저장(메시지 지우기 등)을 "지난번과 같다"며 건너뛰어, 지운 메시지가 서버 파일에 남았다.
                 if (!settings().enabled || typeof body !== 'string') {
                     last.delete(path);
-                    return send(this, input, init, path, token, false, key, start);
+                    return send(this, input, init, path, token, false, key, start, credit);
                 }
                 if (!inflight.get(path) && last.get(path) === body) {
                     stats.skipped++;
@@ -200,7 +232,7 @@ async function installRecovery() {
             isSaving: () => (typeof script.isChatSaving === 'boolean' ? (switchFlush?.active() || script.isChatSaving) : undefined),
             saveTimeout: () => (Number(script.DEFAULT_SAVE_EDIT_TIMEOUT) > 0 ? Number(script.DEFAULT_SAVE_EDIT_TIMEOUT) : 1000),
             live: () => liveChatFrom(context()),
-            save: () => saveFunction()(),
+            save: () => trackOwnSave(() => saveFunction()()),
             enabled: () => settings().recover !== false,
             hidden: () => document.visibilityState === 'hidden',
             onChange: refreshStats,
@@ -346,7 +378,7 @@ function installSwitchFlush() {
         live: quickLive,
         recoveryPending: () => recovery?.pending() ?? null,
         recoveryBusy: () => !!recovery?.inCall(),
-        save: () => script.saveChatConditional(),
+        save: () => trackOwnSave(() => script.saveChatConditional()),
         savedSince: (key, since) => (lastOk.get(key) ?? -Infinity) >= since,
         lastSaveMs: () => lastSaveMs,
         onChange: refreshStats,
@@ -614,7 +646,36 @@ function guardedSwitchFn(original) {
 function showSaveBlocked() {
     if (typeof toastr !== 'undefined') toastr.warning('저장을 아직 못 마쳤어요. 잠시 후 다시 눌러 주세요.', TITLE, { preventDuplicates: true, timeOut: 5000 });
 }
+/**
+ * 2026-10-06: 실리태번이 답을 마무리하는 중(onFinishStreaming 이 MESSAGE_RECEIVED 리스너를 기다리는 중)에 그 리스너가 부른 것인지.
+ * 스택은 await 전에 봐야 부른 쪽이 보인다. await 너머 호출자를 남기지 않는 브라우저는 false → 예전처럼 기다린다.
+ */
+function calledInsideFinish() {
+    try {
+        return codeBusy() === 'finishing' && typeof script.saveChatConditional === 'function'
+            && (stackHas('onFinishStreaming') || stackHas('finalizeIntermediaryMessage'));
+    } catch {
+        return false;
+    }
+}
+
+/** 2026-10-06: 마무리 안에서 부른 바꾸기 · 다시 불러오기 전에 답을 저장한다. 저장이 기록됐으면 true (못 했으면 예전처럼 기다린다) */
+async function saveInsideFinish() {
+    const key = quickLive()?.key ?? null;
+    if (!key) return false;
+    const since = performance.now();
+    try { await trackOwnSave(() => script.saveChatConditional()); } catch { /* 아래에서 기록으로 판단 */ }
+    return (lastOk.get(key) ?? -Infinity) >= since;
+}
+
 async function holdCodeSwitch(kind) {
+    // 2026-10-06: 답 마무리 안에서(타번 헬퍼 setChatMessages refresh · QR 자동 실행 /chat-reload) 부르면 그 마무리가 끝나기를
+    // 기다리느라 답마다 20초 멈추고 끝 저장도 늦었다 (마무리는 이 호출이 돌아와야 끝난다). 답을 먼저 저장하고 기다리지 않는다.
+    if (calledInsideFinish()) {
+        try {
+            if (await saveInsideFinish()) return;
+        } catch { /* 예전처럼 기다린다 */ }
+    }
     const result = await codeGuard.hold(kind);
     if (result === 'failed' || result === 'timeout') {
         showSaveBlocked();

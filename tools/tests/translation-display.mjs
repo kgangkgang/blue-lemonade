@@ -23,7 +23,7 @@ function cut(name) {
 }
 const names = ['processTranslationText', 'applyIsolation', 'analyzeStructure', 'extractPureText', 'renderTranslation', 'renderAllInOne', 'renderInterleaved', 'createDetailsTag', 'restoreContent'];
 const segments = pathToFileURL(path.join(dev, 'src/addons/translator/translation-segments.js')).href;
-const module = `import { splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks } from ${JSON.stringify(segments)};
+const module = `import { splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis } from ${JSON.stringify(segments)};
 const extensionSettings = { translation_display_mode: 'folded', force_sequential_matching: false };
 const window = {}, toastr = { error() {}, warning() {} };
 const correctBackticks = input => input, getCombinedRegexes = () => [], getNoFoldRegexes = () => [];
@@ -104,15 +104,36 @@ assert.ok(whole.includes('<summary class="llm-translator-summary"><p>가</p><p>�
 assert.ok(whole.includes('<p>A</p><p>B</p>'), whole);
 console.log('PASS renderer: plain paragraphs unchanged; block prefixes outside wrappers; gaps only after paragraph text; rules/tables/code left as is; CRLF; whole-fold paragraphs');
 
-// TTS: 접기 줄 칸 밖에 놓인 표시 · 표 줄은 읽지 않는다 (예전과 같은 결과 — 이 보기에서는 번역문 칸이 '건너뛸 태그' 안에 있다)
+// TTS (1.3.2): 세 보기(접기 · 원문 먼저 · 펼침) 모두 '사용 안 함'(번역문만) 화면과 같은 글을 읽는다 — 번역문만, 원문은 안 읽음.
+// (1.3.1 까지: 접기 · 원문 먼저는 번역문을 하나도 안 읽었고, 펼침은 줄마다 번역문 다음에 원문까지 읽었다)
 const { speechDisplay, segmentMessage } = await import(pathToFileURL(path.join(dev, 'src/addons/tts/src/text.js')).href);
-const shown = render('1. Step one\n2. Step two\n\n| Name | HP |\n|---|---|\n| Ann | 10 |\n\n# Title\n"Hi," she said.', '1. 첫 단계\n2. 둘째 단계\n\n| 이름 | 체력 |\n|---|---|\n| 앤 | 10 |\n\n# 제목\n"안녕," 그녀가 말했다.');
-const speech = speechDisplay(shown);
-assert.ok(!/^\s*\d+\.\s|^\s*\||^# /m.test(speech), speech);
-assert.equal((speech.match(/<details class="llm-translator-details /g) || []).length, 4);
-const skip = { skipTags: new Set(['details', 'summary', 'table']), skipCode: true };
-assert.equal((segmentMessage(speech, skip) || []).length, 0);
-assert.ok((segmentMessage(shown, skip) || []).length > 0, 'the guard is what removes the stray pieces');
+const skip = { skipTags: new Set(['details', 'summary', 'table']), skipCode: true, routes: { thought: 'character' } };
+const segs = (t) => (segmentMessage(t, skip) || []).map(x => `${x.kind}:${x.text}`);
+const ORIG = '1. Step one\n2. Step two\n\n| Name | HP |\n|---|---|\n| Ann | 10 |\n\n# Title\n"Hi," she said. *She waves.*\n\n"Ready?" he asked.\n> "Quoted line."';
+const TRANS = '1. 첫 단계\n2. 둘째 단계\n\n| 이름 | 체력 |\n|---|---|\n| 앤 | 10 |\n\n# 제목\n"안녕," 그녀가 말했다. *그녀가 손을 흔든다.*\n\n"준비됐어?" 그가 물었다.\n> "인용한 줄."';
+const plain = segs(TRANS);
+assert.ok(plain.some(x => x === 'dialogue:안녕,') && plain.some(x => x === 'dialogue:준비됐어?'), plain.join(' | '));
+for (const mode of ['folded', 'original_first', 'unfolded']) {
+    const shown = render(ORIG, TRANS, mode);
+    assert.deepEqual(segs(speechDisplay(shown)), plain, `${mode}: TTS must read exactly the plain translation`);
+    assert.ok(!/Hi,|Ready\?|Quoted line/.test(speechDisplay(shown)), `${mode}: original text must not be read`);
+}
+// 통째 보기(줄 수 불일치 → 하나로 접힘): 번역문 문단만
+for (const mode of ['folded', 'original_first']) {
+    const whole = render('"Hi."\n\n"Bye."', '"안녕."\n\n"잘 가."\n"또 봐."', mode);
+    assert.ok(whole.includes('<details class="llm-translator-details '), whole);
+    assert.deepEqual(segs(speechDisplay(whole)).filter(x => x.startsWith('dialogue:')), ['dialogue:안녕.', 'dialogue:잘 가.', 'dialogue:또 봐.'], mode);
+}
+// 다른 글은 그대로: 보통 번역문 · 상태창 details · 번역 칸 안의 상태창 details
 assert.equal(speechDisplay('1. 보통 번역문\n| a | b |'), '1. 보통 번역문\n| a | b |');
-assert.equal(speechDisplay(render('- a', '- 가', 'unfolded')), '- ' + U('가', 'a'));
-console.log('PASS TTS reads no stray list numbers or table rows from a folded translation');
+assert.equal(speechDisplay('<details><summary>상태</summary>HP 10</details>\n"안녕."'), '<details><summary>상태</summary>HP 10</details>\n"안녕."');
+const nested = render('"A <details><summary>s</summary>x</details> B"', '"가 <details><summary>s</summary>x</details> 나"', 'folded', true);
+assert.ok(!speechDisplay(nested).includes('llm-translator-details'), speechDisplay(nested));
+console.log('PASS TTS reads the translation (and only it) in folded, original-first and unfolded views, same as the plain view');
+// 2026-10-06 줄을 넘는 강조: 세 보기 모두 줄마다 닫고 다시 연 강조가 칸 안에 들어간다 (예전엔 짝이 칸 사이에서 끊겨 기울임이 사라졌다)
+for (const mode of ['folded', 'original_first', 'unfolded']) {
+    const html = render('*She walks\nslowly.*', '*그녀가 걷는다\n천천히.*', mode);
+    for (const piece of ['*그녀가 걷는다*', '*천천히.*', '*She walks*', '*slowly.*']) assert.ok(html.includes(piece), `${mode}: ${piece}\n${html}`);
+}
+assert.equal(render('*a\nb*', '*가\n나*', 'disabled'), '*가\n나*', 'plain view untouched');
+console.log('PASS cross-line emphasis survives the per-line wrappers in all three combined views; plain view untouched');

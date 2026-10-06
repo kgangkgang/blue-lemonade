@@ -22,4 +22,5 @@ body.salty :is(#salty-nochat,.salty-preview):not(.cg-chatlike,.bl-notes-view,.bl
 .salty-panel .bl-view-toggle[aria-expanded="true"] { color:var(--salty-accent); }
 .salty-panel .bl-view-resize > .bl-view-toggle { grid-column:1; grid-row:1; }
 .bl-view-float { position:relative; }
-.salty-panel .bl-view-float > .bl-view-toggle { position:absolute; top:4px; right:4px; z-index:2; background:var(--salty-fill-surface, var(--salty-surface)); opacity:.85; }
+/* 5.6.3 top 4px -> 2px: 412px 설정 팝업에서 미리보기 첫 메시지 연필과 2px 겹쳤다 */
+.salty-panel .bl-view-float > .bl-view-toggle { position:absolute; top:2px; right:4px; z-index:2; background:var(--salty-fill-surface, var(--salty-surface)); opacity:.85; }

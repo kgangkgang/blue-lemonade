@@ -34,6 +34,8 @@ const click = el => { el.dispatchEvent(new PointerEvent('pointerdown', { bubbles
 /** 서랍을 차례로 열어 모으고, 연 것은 도로 닫는다. 돌아오는 값: { count, text } */
 export async function scanEnglish(onProgress = () => {}) {
     const seen = new Map();
+    // 2026-10-06: 찾기 전에 열려 있던 서랍 — 서랍 하나를 열면 실리태번이 나머지를 닫아, 한글화 패널이 든 확장 서랍이 닫힌 채 끝났다
+    const wasOpen = [...document.querySelectorAll('.drawer-content.openDrawer')];
     collect(seen);
     for (const id of TOP) {
         const toggle = document.querySelector(`${id} .drawer-toggle`) || document.querySelector(id);
@@ -43,6 +45,8 @@ export async function scanEnglish(onProgress = () => {}) {
         // 안쪽 접이식 패널: 닫혀 있던 것만 열고 기억해 둔다
         const opened = [];
         for (const t of document.querySelectorAll('.drawer-content .inline-drawer-toggle, .drawer-content .inline-drawer-header')) {
+            // 2026-10-06: 한글화 패널 자기 칸은 열지 않는다 — 열면 떠 있던 패널이 서랍으로 들어가 사라졌다 (#pt-panel 은 어차피 안 모은다)
+            if (t.closest('.pt-extension-settings, #pt-panel')) continue;
             const content = t.closest('.inline-drawer')?.querySelector(':scope > .inline-drawer-content');
             if (content && vis(t) && getComputedStyle(content).display === 'none') { t.click(); opened.push(t); }
         }
@@ -56,6 +60,12 @@ export async function scanEnglish(onProgress = () => {}) {
         const a = document.querySelector(open); if (!a) continue;
         click(a); await sleep(350); collect(seen);
         const b = document.querySelector(close); if (b) click(b); await sleep(150);
+    }
+    // 2026-10-06: 처음에 열려 있던 서랍을 도로 연다 (찾는 사이 닫힌 것만)
+    for (const d of wasOpen) {
+        if (d.classList.contains('openDrawer')) continue;
+        const toggle = d.parentElement?.querySelector(':scope > .drawer-toggle');
+        if (toggle) { click(toggle); await sleep(250); }
     }
     const items = [...seen.values()].sort((a, b) => a.kind.localeCompare(b.kind) || a.text.localeCompare(b.text));
     const text = items.length ? items.map(i => `${i.kind} | ${i.text} | ${i.where}`).join('\n') : '남은 영어를 못 찾았어요.';

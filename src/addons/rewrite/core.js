@@ -267,6 +267,12 @@ export function similarity(a, b) {
  */
 const repeatCache = new WeakMap();
 let repeatSources = new Set();
+// 2026-10-06 반복 감지도 findSpans 처럼 코드 · 태그 · 주소를 가리고 나눈다 — 상태창 · 선택지 마크업이 '반복'으로 잡혀 AI 가 고쳐 썼다.
+// 비교(norm)는 가린 글로, 조각 글(text)은 원문에서 자른다 (같은 길이로 가리므로 위치는 그대로)
+function repeatSentencesOf(raw) {
+    const source = String(raw ?? '');
+    return splitSentences(maskProtected(source)).map(sentence => ({ start: sentence.start, end: sentence.end, text: source.slice(sentence.start, sentence.end), norm: normalizeSentence(sentence.text) }));
+}
 export function findRepeats(text, previous, { threshold = 0.6, minLength = 14 } = {}) {
     const sources = new Set(previous.filter(reply => reply && typeof reply === 'object'));
     for (const reply of repeatSources) if (!sources.has(reply)) repeatCache.delete(reply);
@@ -276,18 +282,15 @@ export function findRepeats(text, previous, { threshold = 0.6, minLength = 14 } 
         const object = reply && typeof reply === 'object', text = object ? String(reply.mes ?? '') : reply;
         let cached = object ? repeatCache.get(reply) : null;
         if (!cached || cached.text !== text) {
-            cached = { text, sentences: splitSentences(text).map(sentence => {
-                const norm = normalizeSentence(sentence.text);
-                return { text: sentence.text, norm, sh: shingles(norm) };
-            }) };
+            cached = { text, sentences: repeatSentencesOf(text).map(({ text, norm }) => ({ text, norm, sh: shingles(norm) })) };
             if (object) repeatCache.set(reply, cached);
         }
         for (const sentence of cached.sentences) if (sentence.norm.length >= minLength) earlier.push(sentence);
     }
     if (earlier.length === 0) return [];
     const spans = [];
-    for (const sentence of splitSentences(text)) {
-        const norm = normalizeSentence(sentence.text);
+    for (const sentence of repeatSentencesOf(text)) {
+        const norm = sentence.norm;
         if (norm.length < minLength) continue;
         const sh = shingles(norm);
         let best = null;

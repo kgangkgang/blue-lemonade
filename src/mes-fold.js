@@ -109,7 +109,8 @@ async function applyFold(target, fold) {
         // 접기 전에 이미 숨긴 메시지(일부러 숨긴 글 · 시스템 메모)면 펼쳐도 숨긴 채로 둔다
         message.extra ??= {};
         const keepHidden = fold ? false : !!message.extra.bl_fold_was_hidden;
-        if (fold) { if (message.is_system) message.extra.bl_fold_was_hidden = true; }
+        // 2026-10-06: 이미 우리가 접은 글(bl_folded)을 다시 접는 것은 '일부러 숨긴 글'이 아니다 — 표시하면 펼쳐도 숨김이 안 풀렸다
+        if (fold) { if (message.is_system && message.extra.bl_folded !== true) message.extra.bl_fold_was_hidden = true; }
         else delete message.extra.bl_fold_was_hidden;
         rewriteFold(message, fold);
         // 스와이프 사본도 같이 — 안 하면 옆 스와이프에 갔다 오면 감싸기 전 글이 돌아온다
@@ -193,7 +194,8 @@ export function openEyeChoice(button, pin) {
     const ctx = SillyTavern.getContext();
     const id = Number(mes?.getAttribute('mesid'));
     const message = mes ? ctx.chat?.[id] : null;
-    const folded = !!message && isFolded(message);
+    // 2026-10-06: 번역기가 번역문을 틀 없이 다시 써도(↔ 원문 보기 · 연필 저장 · 교정) 우리가 접은 글이면 '펼치기'
+    const folded = !!message && (message.extra?.bl_folded === true || isFolded(message));
     const target = { mes, message, chatId: ctx.getCurrentChatId?.() };
     const layer = document.createElement('div');
     layer.className = 'salty-pick-layer bl-eye-layer';

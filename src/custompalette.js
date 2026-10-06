@@ -47,33 +47,67 @@ export function saveCustomPalette(settings) {
     if (!draft) return;
     const library=settings.customPalettes;
     const index=library.findIndex(item=>item.id===draft.id);
-    if(index<0 && library.length>=24)throw Error('에이드는 24개까지 저장할 수 있어요.');
+    const orphan=draft.fresh?orphanCustom(settings):null; // 2026-10-06: '새 에이드 만들기'로 저장할 때도 지금 커스텀 색(보관함에 없는 것)을 먼저 남김
+    if(index<0 && library.length+(orphan?1:0)>=24)throw Error('에이드는 24개까지 저장할 수 있어요.');
+    if(orphan)library.push(orphan);
     settings.customName = draft.name.trim().slice(0, 24) || '나만의 에이드';
     for (const mode of ['light', 'dark']) settings.colorOverrides[paletteVariant('custom', mode)] = { ...makeCustomPalette(draft[mode], mode), ...draft.extra[mode] };
     settings.palette = paletteVariant('custom', draft.mode);
     const entry={id:draft.id||crypto.randomUUID(),name:settings.customName,light:structuredClone(settings.colorOverrides['custom-light']),dark:structuredClone(settings.colorOverrides['custom-night'])};
     if(index<0)library.push(entry);else library[index]=entry;
     draft.id=entry.id;settings.activeCustomPalette=entry.id;
+    delete settings.deletedCustomSlot; // 2026-10-06: 슬롯을 덮었으니 삭제 표시는 할 일을 다 함
 }
 
-export function newCustomPalette(settings, mode) { openCustomBuilder(settings,mode);draft.id='';draft.name='새 에이드';draft.extra={light:{},dark:{}};for(const kind of ['light','dark']) {const id=paletteVariant(paletteFamily(settings.palette),kind);draft[kind]=recipe({...PALETTES[id],...(settings.colorOverrides?.[id]||{})});} }
+export function newCustomPalette(settings, mode) { openCustomBuilder(settings,mode);draft.id='';draft.fresh=true;draft.name='새 에이드';draft.extra={light:{},dark:{}};for(const kind of ['light','dark']) {const id=paletteVariant(paletteFamily(settings.palette),kind);draft[kind]=recipe({...PALETTES[id],...(settings.colorOverrides?.[id]||{})});} }
 export function saveCurrentPalette(settings) {
-    if(settings.customPalettes.length>=24)throw Error('에이드는 24개까지 저장할 수 있어요.');
     const family=paletteFamily(settings.palette), id=crypto.randomUUID();
+    const orphan=family==='custom'?null:orphanCustom(settings); // 2026-10-06: 커스텀이 아닌 에이드를 담을 때 지금 커스텀 색(보관함에 없는 것)도 함께 남김
+    if(settings.customPalettes.length+(orphan?1:0)>=24)throw Error('에이드는 24개까지 저장할 수 있어요.');
     const colors=mode=>{
         const palette=paletteVariant(family,mode),full=paletteColors({...settings,palette});
         return Object.fromEntries(Object.entries(full).filter(([,value])=>typeof value==='string'&&/^(#|rgba?\(|hsla?\()/i.test(value)));
     };
-    const entry={id,name:settings.customName||'새 에이드',light:colors('light'),dark:colors('dark')};
+    const entry={id,name:(family==='custom'&&settings.customName)||'새 에이드',light:colors('light'),dark:colors('dark')}; // 2026-10-06: 커스텀 이름은 커스텀 색을 담을 때만 (멜론 색이 내 에이드 이름으로 담겼다)
+    if(orphan)settings.customPalettes.push(orphan);
     settings.customPalettes.push(entry);
     useCustomPalette(settings,id);
 }
+// 2026-10-06: 보관함에 없는 지금 커스텀 색(4.0 전 에이드 · 색 고치기로 바꾼 것 · 프리셋으로 받은 것)을 덮어쓰기 전에 보관함에 먼저 담는다 — 그냥 덮어 영구히 잃었다
+// 같은지는 기본값을 채운 실제 색으로 (dropStaleOverrides 가 기본값과 같은 칸을 지워도 같은 에이드로 보게)
+const isColor = value => typeof value === 'string' && /^(#|rgba?\(|hsla?\()/i.test(value.trim());
+function sameCustom(slot, saved, id) {
+    const a = { ...PALETTES[id], ...(slot || {}) }, b = { ...PALETTES[id], ...(saved || {}) };
+    return [...new Set([...Object.keys(a), ...Object.keys(b)])].every(key => a[key] === b[key] || (isColor(a[key]) && isColor(b[key]) && sameColor(a[key], b[key])));
+}
+function orphanCustom(settings) {
+    const light = settings.colorOverrides?.['custom-light'], dark = settings.colorOverrides?.['custom-night'];
+    if (!Object.keys(light || {}).length && !Object.keys(dark || {}).length) return null;
+    const same = item => sameCustom(light, item.light, 'custom-light') && sameCustom(dark, item.dark, 'custom-night');
+    if (settings.customPalettes.some(same)) return null;
+    // 사용자가 '삭제'한 에이드 색이면 다시 담지 않는다 (deleteCustomPalette 가 남긴 표시 · 새로고침 뒤에도)
+    if (settings.deletedCustomSlot && typeof settings.deletedCustomSlot === 'object' && same(settings.deletedCustomSlot)) return null;
+    const active = settings.customPalettes.find(item => item.id === settings.activeCustomPalette);
+    // '(수정)'은 지금 이름이 그 에이드 이름일 때만 (남의 스타일 · 캐릭터 스타일로 바뀐 색은 그 스타일의 에이드 이름으로)
+    const name = active && settings.customName === active.name ? `${active.name.slice(0, 19)} (수정)` : (settings.customName || '나만의 에이드');
+    return { id: crypto.randomUUID(), name, light: structuredClone(light || {}), dark: structuredClone(dark || {}) };
+}
 export function useCustomPalette(settings,id) {
     const entry=settings.customPalettes.find(item=>item.id===id);if(!entry)return;
+    const orphan=orphanCustom(settings); // 2026-10-06: 지금 색이 보관함에 없으면 먼저 담기 (자리가 없으면 덮어쓰지 않고 멈춤)
+    if(orphan){if(settings.customPalettes.length>=24)throw Error('보관함이 가득 차서 지금 에이드 색을 담을 수 없어요. 하나를 지운 뒤 다시 해 주세요.');settings.customPalettes.push(orphan);}
     settings.customName=entry.name;settings.activeCustomPalette=id;
     settings.colorOverrides['custom-light']=structuredClone(entry.light);
     settings.colorOverrides['custom-night']=structuredClone(entry.dark);
+    delete settings.deletedCustomSlot; // 2026-10-06: 슬롯을 덮었으니 삭제 표시는 할 일을 다 함
     settings.palette=paletteVariant('custom',PALETTES[settings.palette]?.mode||'light');
+}
+// 2026-10-06: 보관함 '삭제' — 지금 슬롯이 지운 에이드 색이면 표시(deletedCustomSlot)를 남겨, 다음 불러오기 · 새 에이드 때 되살리지 않게 (새로고침 뒤에도)
+export function deleteCustomPalette(settings,id) {
+    const entry=settings.customPalettes.find(item=>item.id===id);
+    if(entry&&sameCustom(settings.colorOverrides?.['custom-light'],entry.light,'custom-light')&&sameCustom(settings.colorOverrides?.['custom-night'],entry.dark,'custom-night'))settings.deletedCustomSlot={light:structuredClone(entry.light),dark:structuredClone(entry.dark)};
+    settings.customPalettes=settings.customPalettes.filter(item=>item.id!==id);
+    if(settings.activeCustomPalette===id)settings.activeCustomPalette='';
 }
 export function customLibrary(settings) {
     return `<div class="salty-group"><h4>내 에이드 보관함</h4><p class="salty-note">화이트·나이트 색을 한 쌍으로 24개까지 저장해요. 불러온 뒤 색 고치기에서 조금씩 바꿀 수 있어요.</p><div class="bl-palette-library">${settings.customPalettes.map(item=>`<article><b>${esc(item.name)}</b><button type="button" class="salty-btn" data-act="custom-use" data-id="${esc(item.id)}">불러오기</button><button type="button" class="salty-btn" data-act="custom-library-edit" data-id="${esc(item.id)}">편집</button><button type="button" class="salty-btn" data-act="custom-delete" data-id="${esc(item.id)}">삭제</button></article>`).join('')}</div><div class="salty-btns bl-palette-actions"><button type="button" class="salty-btn" data-act="custom-new">새 에이드 만들기</button><button type="button" class="salty-btn" data-act="custom-keep">현재 에이드 색 저장</button></div></div>`;

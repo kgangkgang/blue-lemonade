@@ -904,9 +904,9 @@ let lastTapMs = null;
  */
 export function prepOpts(job, s) {
     const v = job.voice || {};
-    return { normalize: !!s.normalize, targetLufs: Number(s.target_lufs) || -16, gainDb: Number(v.gainDb) || 0, autoGainDb: Number(v.autoGainDb) || 0 };
+    return { normalize: !!s.normalize, targetLufs: Number(s.target_lufs) || -16, gainDb: Number(v.gainDb) || 0, autoGainDb: Number(v.autoGainDb) || 0, dethump: s.dethump !== false };
 }
-export const prepKey = (key, o) => `${key}|${o.normalize ? 1 : 0}|${o.targetLufs}|${o.gainDb}|${o.autoGainDb}`;
+export const prepKey = (key, o) => `${key}|${o.normalize ? 1 : 0}|${o.targetLufs}|${o.gainDb}|${o.autoGainDb}|${o.dethump === false ? 0 : 1}`;
 /** 음량을 골라 prepared 에 (이미 있으면 그대로) → { blob, lufs } */
 async function prepareInto(job, raw, lufs, s = settings()) {
     const o = prepOpts(job, s);
@@ -1696,6 +1696,10 @@ export function wasStreamRead(mesId) {
     const r = readState.get(mesId);
     return !!mes && !!r && r.streamed === true && r.swipe === (mes.swipe_id ?? 0);
 }
+/** 지워진 메시지(n 번부터)의 읽은 자리를 잊는다 — 다시 생성이 같은 번호로 새 답장을 만들 때 옛 미룸 기록(text '')이 앞 대사를 건너뛰게 하지 않게 (2026-10-06) */
+export function forgetFrom(n) {
+    for (const k of [...readState.keys()]) if (k >= n) readState.delete(k);
+}
 
 // ---------- 공개: 스트리밍 읽기 (호출자가 700 ms 로 묶어서 부름)
 export function onStreamProgress(mesId, text) {
@@ -2091,6 +2095,13 @@ export function init() {
     document.addEventListener('pointerdown', onGesture, { capture: true, passive: true });
     document.addEventListener('keydown', onGesture, { capture: true, passive: true });
     eventSource.on(event_types.CHAT_CHANGED, () => { stop(); readState.clear(); stream = null; renderedAt.clear(); });
+    // 지운 메시지·스와이프의 읽은 자리를 잊음: 같은 번호로 다시 만든 답장을 옛 미룸 자리부터 읽지 않게 (2026-10-06)
+    //   애드온이 꺼져 있을 때 지운 것도 잊도록 runtime 확인 없이 여기서 받는다. 스와이프를 지우면 그 위 번호 기록은 지워졌거나 밀린 것
+    eventSource.on(event_types.MESSAGE_DELETED, () => forgetFrom(chat.length));
+    if (event_types.MESSAGE_SWIPE_DELETED) eventSource.on(event_types.MESSAGE_SWIPE_DELETED, (e) => {
+        const id = Number(e?.messageId), r = readState.get(id);
+        if (r && Number.isInteger(e?.swipeId) && r.swipe >= e.swipeId) readState.delete(id);
+    });
     if (typeof cache.onClear === 'function') cache.onClear(forgetClips);   // 캐시 비우기 → 메모리 사본도
     // 그려진 시각: ▶ 버튼이 "번역이 아직 오는 중"인지 볼 때 (스와이프도 다시 그려지며 번역기가 새로 번역함)
     eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, (id) => noteRendered(id));

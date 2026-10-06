@@ -52,6 +52,39 @@ function translatorLabel() {
         return String(r.label || r.name);
     } catch { return '번역기 없음'; }
 }
+/**
+ * 5.6.3 돈이 드는 엔진(이름 목록) — 등록한 목소리의 엔진 중 무료(브라우저 내장 · Google 번역)와 내 PC · 집 안 주소의 OpenAI 호환 서버를 뺀 것.
+ * 사용자 제보: 미리 만들기(대사+속마음)가 답장 · 스와이프마다 모든 줄을 만들어 10월 첫 엿새에 MiniMax 크레딧을 다 씀 — 미리 만든 글의 12 %만 들음.
+ */
+const FREE_ENGINES = new Set(['browser', 'gtranslate']);
+const LOCAL_HOST = /^(localhost|127\.|0\.0\.0\.0|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|\[?::1\]?$|[^.]+$)|\.(local|lan|home\.arpa|ts\.net)$/i;
+function isLocalBase(url) {
+    try { return LOCAL_HOST.test(new URL(String(url || '')).hostname); } catch { return false; }
+}
+export function paidEngines(s = settings()) {
+    const ids = new Set((Array.isArray(s.voices) ? s.voices : []).map(v => v && v.provider).filter(Boolean));
+    const out = [];
+    for (const id of ids) {
+        if (FREE_ENGINES.has(id)) continue;
+        if (id === 'openai_compat') {
+            const base = providerConfig(id, {}).base || 'http://127.0.0.1:8880/v1';
+            if (isLocalBase(base)) continue;
+        }
+        const p = getProvider(id);
+        if (p) out.push(p.name || id);
+    }
+    return out;
+}
+/** 미리 만들기 옆 '!' 를 눌렀을 때의 안내 — 유료 엔진이 없으면 '' (단추도 없음) */
+function pregenWarn(s) {
+    const paid = paidEngines(s);
+    if (!paid.length) return '';
+    let msg = `답장 · 스와이프마다 모든 줄을 미리 만들어 ${paid.join(' · ')} 크레딧이 빨리 닳아요.`;
+    const u = s.usage || {};
+    const pre = Number(u.pre_chars) || 0, used = Number(u.pre_used_chars) || 0;
+    if (pre >= 1000) msg += ` 이번 달 미리 만든 ${pre.toLocaleString('ko-KR')}자 중 ${Math.round(used / pre * 100)} %만 들었어요.`;
+    return msg + ' 아끼려면 끔 또는 대사.';
+}
 /** 새 답장이 번역을 기다리게 되나 — 재생기와 같은 판단(translation.translationExpected)을 새 답장 모양으로 물어본다.
  *  true 면 스트리밍 읽기는 꺼진다 ('켬' 인데 번역기가 없으면 재생기도 안 기다리니 여기서도 false) */
 function waitEffective(s) {
@@ -61,7 +94,7 @@ function waitEffective(s) {
 }
 /** 언제 카드가 그려질 때의 번역기 상태 — 달라졌으면(번역기 자동 번역을 켜고 끔) 카드를 다시 그린다 */
 let whenSig = '';
-const whenSignature = () => `${waitEffective(settings())}|${translatorLabel()}`;
+const whenSignature = () => `${waitEffective(settings())}|${translatorLabel()}|${paidEngines().join(',')}`;
 function refreshWhenCard() {
     if (root && whenSignature() !== whenSig) renderReadCard('when');
 }
@@ -104,7 +137,7 @@ const READ_CARDS = {
     when: ['fa-clock', '언제', [
         { key: 'auto_play', label: '새 답장 자동 읽기', type: 'toggle' },
         { key: 'narrate_user', label: '내 메시지도', type: 'toggle' },
-        { key: 'pregen', label: '미리 만들기', type: 'select', options: [{ value: 'off', label: '끔' }, { value: 'dialogue', label: '대사' }, { value: 'all', label: '대사+속마음' }], desc: (s) => (s.pregen !== 'off' && s.click_play === false && !s.auto_play ? '대사 클릭·자동 읽기가 꺼져 쉬어요' : '') },
+        { key: 'pregen', label: '미리 만들기', type: 'select', options: [{ value: 'off', label: '끔' }, { value: 'dialogue', label: '대사' }, { value: 'all', label: '대사+속마음' }], desc: (s) => (s.pregen !== 'off' && s.click_play === false && !s.auto_play ? '대사 클릭·자동 읽기가 꺼져 쉬어요' : ''), warn: pregenWarn },
         { key: 'wait_translation', label: '번역 기다리기', type: 'select', options: [{ value: 'auto', label: '자동' }, { value: 'on', label: '켬' }, { value: 'off', label: '끔' }], desc: () => translatorLabel() },
         { key: 'translation_timeout', label: '최대 대기 초', type: 'number', min: 5, max: 600, step: 5, default: 90, show: (s) => s.wait_translation !== 'off' },
         { key: 'stream_read', label: '답장이 오는 동안 읽기', type: 'toggle', disabled: waitEffective, desc: (s) => (waitEffective(s) ? '번역을 기다리는 동안엔 꺼져요' : '') },
@@ -116,6 +149,7 @@ const READ_CARDS = {
         { key: 'master_volume', label: '볼륨', type: 'range', min: 0, max: 1, step: 0.05, default: 1, fmt: (v) => `${Math.round(Number(v) * 100)}%` },
         { key: 'normalize', label: '음량 고르게', type: 'toggle' },
         { key: 'target_lufs', label: '목표 음량', type: 'range', min: -24, max: -10, step: 1, default: -16, unit: ' LUFS', show: (s) => !!s.normalize },
+        { key: 'dethump', label: '쉼 자리 쿵 소리 줄이기', type: 'toggle' },
         { key: 'gap_ms', label: '대사 사이 쉼', type: 'range', min: 0, max: 1000, step: 50, default: 250, unit: ' ms' },
         { key: 'prefetch', label: '다음 줄 준비', type: 'range', min: 0, max: 3, step: 1, default: 2, unit: '개' },
         { key: 'highlight', label: '읽는 대사 강조', type: 'toggle' },
@@ -295,8 +329,13 @@ function control(f, path, value, cfg = null) {
             // 대사 분석 키 줄: 값은 data-lv-path 로 묶지 않는다 (키를 화면에 두지 않으려고). 자리 표시는 data-lv-slot (visibleChanged 가 센다)
             return `<div class="lv-field lv-wide lv-keyrow" data-lv-slot="${esc(path)}">${label}<div class="lv-key"><input type="password" class="text_pole" id="lv_akey_input" placeholder="${esc(f.placeholder || 'API 키')}" autocomplete="off"><button type="button" class="menu_button" data-lv-act="akey-save">저장</button><button type="button" class="menu_button" data-lv-act="akey-test">연결 확인</button></div>`
                 + `<div class="lv-key-state"><span>${value ? `저장됨 ${esc(shownKey(value))}` : '키 없음'}</span>${value ? '<button type="button" class="lv-x" data-lv-act="akey-clear" aria-label="키 지우기"><i class="fa-solid fa-xmark"></i></button>' : ''}</div><div class="lv-test-result" id="lv_atest_result"></div></div>`;
-        case 'select':
-            return `<label class="lv-field${wide}">${label}<select class="text_pole" ${attr}>${optionsHtml(f, value, cfg)}</select>${desc}</label>`;
+        case 'select': {
+            // 5.6.3 warn: 이름 옆 '!' — 누르면 아래에 안내 한 줄 (말풍선 대신 펼침)
+            const w = typeof f.warn === 'function' ? f.warn(settings()) : '';
+            const head = w ? `<span class="lv-label lv-label-warn">${esc(f.label)}<button type="button" class="lv-warn-btn" data-lv-act="warn" aria-label="크레딧 주의" aria-expanded="false"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i></button></span>` : label;
+            const note = w ? `<span class="lv-warn-note" hidden>${esc(w)}</span>` : '';
+            return `<label class="lv-field${wide}">${head}<select class="text_pole" ${attr}>${optionsHtml(f, value, cfg)}</select>${desc}${note}</label>`;
+        }
         case 'range':
             return `<label class="lv-field lv-range${wide}"><span class="lv-label">${esc(f.label)}<output>${esc(fmtRange(f, value))}</output></span><input type="range" ${attr}${numAttrs(f)} value="${esc(value)}">${desc}</label>`;
         case 'number':
@@ -526,6 +565,12 @@ const ACTIONS = {
         toast('이 채팅의 분석을 비웠어요', 'success');
     },
     'engine-pull': () => { const p = curProvider(); if (p) return pullVoices(p); },
+    warn: (b) => {
+        const note = b.closest('.lv-field')?.querySelector('.lv-warn-note');
+        if (!note) return;
+        note.hidden = !note.hidden;
+        b.setAttribute('aria-expanded', String(!note.hidden));
+    },
     'cache-clear': async () => { await cache.clear(); toast('캐시를 비웠어요', 'success'); renderData(); },
     export: () => exportSettings(),
     import: () => q('#lv_import_file')?.click(),

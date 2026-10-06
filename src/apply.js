@@ -111,6 +111,8 @@ function codeInks(backs) {
     return Object.fromEntries(Object.entries(HLJS).map(([key, base]) => [key, readableInk(base, toward, backs)]));
 }
 
+// 2026-10-06: LEGACY 내용으로 만든 지문 — LEGACY 에 예전 기본값을 더하면 저절로 바뀌어 그 값을 한 번 더 지움 (손으로 올릴 숫자를 두면 잊는다)
+const LEGACY_REV = [...JSON.stringify(LEGACY)].reduce((h, c) => Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0, 2166136261);
 /** 1.0.0 버그로 저장된 "직접 고친 색" 중 그때 기본값과 같은 것은 지움 (안 지우면 새 기본 색이 안 보임) */
 export function dropStaleOverrides(s = getSettings()) {
     let changed = false;
@@ -124,9 +126,12 @@ export function dropStaleOverrides(s = getSettings()) {
         colors.faint = next;
         changed = true;
     }
+    // 2026-10-06: 예전 기본값(LEGACY)과 같은 값 지우기는 표시(legacyColorsRev)가 지금 LEGACY 지문과 다를 때 한 번만 —
+    // 매번 지우면 나이트 #000000 바탕 · 화이트 #FFFFFF 카드처럼 직접 고른 같은 색이 새로고침마다 사라졌다
+    const legacyPass = s.legacyColorsRev !== LEGACY_REV;
     for (const [pal, colors] of Object.entries(s.colorOverrides || {})) {
         for (const [token, value] of Object.entries(colors || {})) {
-            const legacy = (LEGACY[pal] || []).map(old => old[token]).filter(Boolean);
+            const legacy = legacyPass ? (LEGACY[pal] || []).map(old => old[token]).filter(Boolean) : [];
             const current = PALETTES[pal]?.[token];
             if (legacy.some(old => sameColor(value, old)) || (current && sameColor(value, current))) {
                 delete colors[token];
@@ -135,6 +140,7 @@ export function dropStaleOverrides(s = getSettings()) {
         }
         if (!Object.keys(colors || {}).length) delete s.colorOverrides[pal];
     }
+    if (legacyPass) { s.legacyColorsRev = LEGACY_REV; changed = true; } // 한 번 지운 뒤 저장 (index.js 가 changed 면 저장)
     return changed;
 }
 

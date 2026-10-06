@@ -17,6 +17,8 @@ export function applyMenuOrders(){for(const kind of Object.keys(targets)){
   const root=document.querySelector(targets.wand[1]);root.style.flexDirection='column';
   if(getComputedStyle(root).display!=='none'&&root.style.display!=='flex')root.style.display='flex';
   for(const box of root.querySelectorAll(':scope > .extension_container'))if(box.style.display!=='none'&&box.style.display!=='contents')box.style.display='contents';
+  // 2026-10-06: 저장한 순서가 없으면 order 를 비워 원래 자리대로 둔다. 처음 훑은 순서를 걸면 나중에 붙은 항목(메모·북마크 등)이 맨 아래로 밀렸다.
+  if(!requested?.length){for(const row of rows)if(row.el.style.order)row.el.style.removeProperty('order');continue;}
   sorted.forEach((row,index)=>{if(row.el.style.order!==String(index))row.el.style.order=String(index);});
   continue;
  }

@@ -19,7 +19,8 @@ export async function requestActive({cfg,context,messages,inFlight,hostModules})
    context,messages,maxTokens:c.activeMaxTokens||0,
    overrides:{signal:controller.signal,timeoutMs:c.requestTimeoutMs},
    buildChat:async(settings,input)=>(await chat.createGenerationParameters(settings,chat.getChatCompletionModel(settings),'quiet',input)).generate_data,
-   buildText:(settings,input,limit)=>text.createTextGenGenerationData(settings,text.getTextGenModel(settings),script.createRawPrompt(input,'textgenerationwebui',false,false,'',''),limit||settings.max_new_tokens||2048,false,false,null,'quiet'),
+   // 2026-10-06: 텍스트 완성 출력 한도가 실리태번 응답 길이(amount_gen)를 따른다 (2048 아래로는 안 줄임) — 전엔 늘 2048이라 긴 번역이 잘렸다
+   buildText:(settings,input,limit)=>text.createTextGenGenerationData(settings,text.getTextGenModel(settings),script.createRawPrompt(input,'textgenerationwebui',false,false,'',''),limit||settings.max_new_tokens||Math.max(Number(script.amount_gen)||0,2048),false,false,null,'quiet'),
   });
   return typeof result==='string'?result.trim():String(result?.content||result?.choices?.[0]?.message?.content||result?.results?.[0]?.text||'').trim();
  } finally {inFlight.delete(controller);}
