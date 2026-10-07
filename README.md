@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.6.7.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.6.8.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.6.7 · 최신 업데이트</summary>
+<summary>5.6.8 · 최신 업데이트</summary>
+
+- 채팅 › 화면에 「숨긴 메시지 흐리게」가 생겼어요. 컨텍스트에서 뺀 메시지(눈 감은 아이콘)를 옅게 보여 주고, 진하기(기본 40 %)와 흑백(기본 30 %)을 슬라이더로 정해요. 마우스를 올리면(폰에서는 누르는 동안) 원래대로 진해져요. 기본은 꺼져 있어요.
+- 실리태번 자체 안내 메시지와 컨텍스트에 들어가는 서술자 메시지는 흐려지지 않아요. 흑백을 0 으로 두면 필터 없이 투명도만 써서 가벼워요.
+
+</details>
+
+<details>
+<summary>5.6.7 · TTS 잔액 줄</summary>
 
 - TTS 1.3.5: 엔진 설정에서 키를 저장하면 키 줄 아래에 잔액 줄이 보여요. ElevenLabs는 남은 글자와 초기화 날짜, Typecast는 남은 크레딧, OpenRouter는 키 한도가 있으면 남은 금액(없으면 쓴 금액), Cartesia는 이번 달 쓴 크레딧이에요. 10분 동안 기억하고, ↻ 를 누르거나 키를 저장·연결 확인하면 바로 다시 물어요. 거의 다 쓰면 주의색으로 바뀌어요.
 - MiniMax는 API로 잔액을 알려 주지 않아서 이번 달 이 엔진으로 쓴 글자와 MiniMax 결제 페이지 링크를 보여 줘요. OpenAI · Gemini · Azure · 직접 서버 · 무료 엔진은 잔액 줄이 없어요.

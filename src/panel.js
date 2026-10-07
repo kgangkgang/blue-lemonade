@@ -567,6 +567,7 @@ const NUM = {
     'code.weight': {}, 'code.letterSpacing': { unit: 'em', scale: 100 },
     'ui.weight': {}, 'ui.letterSpacing': { unit: 'em', scale: 100 },
     'chat.userSize': { unit: '%' }, 'chat.userInk': { unit: '%' }, 'chat.bgAlpha': { unit: '%' },
+    'chat.hiddenOpacity': { unit: '%' }, 'chat.hiddenGray': { unit: '%' },
     'type.para': { unit: '줄' },
     'type.gutter': { unit: 'px' },
     'type.measure': { unit: 'px' },
@@ -1395,6 +1396,10 @@ function tabChat(s, sub) {
             ${faviconRow()}
             ${row('가벼운 페이드 인', toggle('chat.streamFade', !!s.chat.streamFade), '스트리밍 중 새 글자만 스며들게')}
             ${s.chat.streamFade && stFade ? row('실리태번 페이드 인', toggle('st.streamFadeIn', true), '끄면 빨라지고 위 옵션이 대신해요') : ''}
+            ${row('숨긴 메시지 흐리게', toggle('chat.hiddenFade', !!s.chat.hiddenFade), '컨텍스트에서 뺀 메시지(눈 감은 아이콘)를 옅게')}
+            ${s.chat.hiddenFade ? slider('chat.hiddenOpacity', '진하기', 10, 90, 5, 40) : ''}
+            ${s.chat.hiddenFade ? slider('chat.hiddenGray', '흑백', 0, 100, 5, 30) : ''}
+            ${s.chat.hiddenFade ? row('마우스 올리면 진하게', toggle('chat.hiddenHover', s.chat.hiddenHover !== false), '폰에서는 누르는 동안') : ''}
         </div>
         ${cap('메시지 버튼', '··· 메뉴 밖에 늘 보일 버튼')}<div class="salty-group">
             ${mesPinPicker(s)}
@@ -2729,7 +2734,7 @@ function bind(root) {
             // 2.9.2: 본문 색 지정 → '글자색 톤 맞추기' 줄, 톤 맞추기 → 톤 값 슬라이더 넷, 투명 그림도 똑같이 → 설명 문구가 스위치에 따라
             // 보였다 안 보였다 하는데 다시 그리지 않아, 끈 뒤에도 슬라이더가 남아 있었다
             // 감정 대사 효과(움직임 · 빛 · 색 흐름) · 백그라운드 버티는 방식 줄도 스위치를 따라 보였다 안 보였다 한다
-            update(st => setPath(st, path, target.checked), ['strike.line', 'strike.own', 'strike.italic', 'deviceLayouts.on', 'chat.weatherReadability', 'chat.weatherIllustrated', 'enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on', 'deus.fx.on', 'deus.fx.flow', 'deus.fx.force', 'bgWindow.on', 'compat.preserveExtensionColors'].includes(path));
+            update(st => setPath(st, path, target.checked), ['strike.line', 'strike.own', 'strike.italic', 'deviceLayouts.on', 'chat.weatherReadability', 'chat.weatherIllustrated', 'enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'chat.hiddenFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on', 'deus.fx.on', 'deus.fx.flow', 'deus.fx.force', 'bgWindow.on', 'compat.preserveExtensionColors'].includes(path));
             await syncChangedAddons([path]);
             // 5.5.6: 테마를 끄는 순간에도 '맞추기' 값이 남아 있으면 되돌릴지 묻는다
             if (path === 'enabled' && !target.checked && restoreState()) {

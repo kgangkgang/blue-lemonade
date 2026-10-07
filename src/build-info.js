@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.6.7";
+export const BUILD_VERSION = "5.6.8";
 export const FILE_HASHES = {
   "index.js": "15107:255f082b:072f95c8",
-  "manifest.json": "365:094ae3cb:ce56574d",
+  "manifest.json": "365:a3c72e6e:b73d19f0",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -181,7 +181,7 @@ export const FILE_HASHES = {
   "src/addons/tts/version.js": "36:0b9f0733:00a52cfa",
   "src/appearance-archive.js": "1287:215093f5:1c7f1dc7",
   "src/appearance-compare.js": "3140:831ffdf1:a1f78cb0",
-  "src/apply.js": "56630:ee900d6d:3ab816a8",
+  "src/apply.js": "57330:9b70c08a:4bf524de",
   "src/assets.js": "22504:71811062:8a1645c6",
   "src/assist/core.js": "1885:5a4f9626:2f307c5d",
   "src/assist/diagnostics.js": "4778:b76a9825:f6e0071b",
@@ -258,14 +258,14 @@ export const FILE_HASHES = {
   "src/mes-fold.js": "15171:6c96c017:9e152087",
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/modal.js": "671:b74e0164:71228d7c",
-  "src/notice-data.js": "150658:7159a5d2:5b9ddd1e",
+  "src/notice-data.js": "151245:4d7e1a38:7a73fe99",
   "src/notice.js": "4646:b947f2a6:e551e710",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "1144:1da72451:b2e66e80",
   "src/numcomma.js": "28330:b8ff1af6:e41701dc",
   "src/onehand.js": "3884:55946dd4:4f42d7a8",
   "src/palettes.js": "33894:d739cf1f:f0700eaa",
-  "src/panel.js": "224567:30c8cc58:643fae5b",
+  "src/panel.js": "225182:5971b685:65c466c5",
   "src/preset-sharing.js": "10586:288420d6:21b6f020",
   "src/preview-view.js": "12377:1b6c4956:85b171b8",
   "src/profile-clip.js": "4837:9b817c36:29f305b7",
@@ -300,7 +300,7 @@ export const FILE_HASHES = {
   "src/settings-history.js": "3491:c0f06c71:b7a64e71",
   "src/settings-labels.js": "33896:094f79a9:db0b7afe",
   "src/settings-search.js": "26751:d37bbdd2:bfa72e86",
-  "src/settings.js": "61654:9ddc23e4:0838762b",
+  "src/settings.js": "61980:628d8201:095393b6",
   "src/splash.js": "19344:c97fc557:9dcea6a3",
   "src/stream-follow.js": "3886:71695048:ab2a4e3d",
   "src/streamfade.js": "14136:0e2127b6:06593cf1",
@@ -325,5 +325,5 @@ export const FILE_HASHES = {
   "src/weather.js": "32976:f4fdcf09:3273a2b9",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "30424:160f46f1:289f971f",
-  "style.css": "1161328:ce3ea1e1:24a01dfc"
+  "style.css": "1162327:0821965e:f1fa7d62"
 };

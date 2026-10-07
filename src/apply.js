@@ -608,6 +608,8 @@ export function applyAll() {
         '--salty-code-ls': roleSpacing(s.code?.letterSpacing),
         '--salty-user-scale': String(Number(((s.chat.userSize ?? 100) / 100).toFixed(3))), // 내 메시지 크기 (본문 대비)
         '--salty-user-ink': `${s.chat.userInk ?? 100}%`,
+        '--bl-hidden-opacity': String(Math.min(90, Math.max(10, Number(s.chat.hiddenOpacity) || 40)) / 100), // 5.6.8 숨긴 메시지 진하기 (css/05-chat.css)
+        '--bl-hidden-gray': `${Math.min(100, Math.max(0, Number(s.chat.hiddenGray) || 0))}%`,            //       흑백
         '--bl-qr-rows': String(s.chat.qrRows ?? 2), // 3.5.4 세로 스크롤일 때 보이는 퀵 리플라이 줄 수                                     // 내 메시지 글자 진하기
         '--salty-ui-weight': s.ui?.weight ? String(s.ui.weight) : 'normal',
         '--salty-ui-ls': roleSpacing(s.ui?.letterSpacing, 'normal'),
@@ -717,6 +719,11 @@ export function applyAll() {
         if (deus && s.chat.demSkin) want.add('salty-dem-skin');          // 3.1.0 데우스 카드 스킨 (css/30-dem-skin.css)
         if (deus && s.chat.demSkin && s.chat.demFold !== false) want.add('salty-dem-fold'); // 폰: 트래커 한 줄 · 펼쳐 오는 카드 접기 (demskin.js)
         if (s.type.indent) want.add('salty-indent');
+        if (s.chat.hiddenFade) { // 5.6.8 숨긴 메시지 흐리게 — 흑백은 0 이면 filter 자체를 안 걸고(레이어 비용), 마우스 올리면 원래대로는 따로 (css/05-chat.css)
+            want.add('salty-hidden-fade');
+            if ((Number(s.chat.hiddenGray) || 0) > 0) want.add('salty-hidden-gray');
+            if (s.chat.hiddenHover !== false) want.add('salty-hidden-hover');
+        }
         for (const name of markdownClasses(s.markdown)) want.add(name);
         want.add(`salty-align-${s.type.align}`);
         if (mode === 'light' && s.image.blendWhite && !s.chat.bgImage) want.add('salty-blend');

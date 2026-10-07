@@ -526,6 +526,19 @@ body.salty #chat .mes .swipes-counter.swipe-picker-enabled:active {
 body.salty #chat .mes[is_system="true"] .mes_text {
   color: var(--salty-muted);
 }
+/* 5.6.8 숨긴 메시지 흐리게 (채팅 › 화면): 컨텍스트에서 뺀 메시지(is_system)를 옅게 — 진하기 · 흑백은 apply.js 변수,
+   마우스를 올리면(폰은 누르는 동안) 원래대로. 실리태번 자체 안내(.smallSysMes)는 그대로. transition 은 opacity 만 (filter 전환은 레이어를 다시 그림) */
+body.salty.salty-hidden-fade #chat .mes[is_system="true"]:not(.smallSysMes) {
+  opacity: var(--bl-hidden-opacity, .4);
+  transition: opacity .15s ease;
+}
+body.salty.salty-hidden-fade.salty-hidden-gray #chat .mes[is_system="true"]:not(.smallSysMes) {
+  filter: grayscale(var(--bl-hidden-gray, 30%));
+}
+body.salty.salty-hidden-fade.salty-hidden-hover #chat .mes[is_system="true"]:not(.smallSysMes):is(:hover, :focus-within) {
+  opacity: 1;
+  filter: none;
+}
 body.salty #chat .mes .mes_bias {
   color: var(--salty-faint);
   font-family: var(--salty-font-ui);
