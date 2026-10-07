@@ -9,6 +9,7 @@ import { requestCurrentConnection } from './current-connection.js';
 import { createGenerationParameters, getChatCompletionModel } from '../../../../../../openai.js';
 import { createTextGenGenerationData, getTextGenModel } from '../../../../../../textgen-settings.js';
 import { matchingTranslation, translationFromDisplay } from './archive-bridge.js';
+import * as LiveModels from '../../live-models.js'; // [2.2.8] 공용 모델 목록 · 모델별 요청 규칙
 import {
     eventSource,
     event_types,
@@ -503,8 +504,7 @@ function loadSettings() {
         promptManager.loadPromptToEditor();
     }
 
-    // [추가] 커스텀 공급자인데 저장된 주소의 모델 목록이 없으면 (업데이트 직후 등) 조용히 받아온다.
-    autoFetchCustomModelsIfEmpty();
+    // [2.2.8] 페이지를 열 때는 목록을 받지 않는다 — 설정에서 모델 칸이 보이게 될 때 받는다 (watchModelPicker)
 }
 
 // 규칙 프롬프트 관리 함수
@@ -592,14 +592,83 @@ function isValidHttpUrl(url) {
     }
 }
 
-// 지금 유효한 커스텀 주소로 받아 둔 모델 목록 (없으면 빈 배열)
-function getCachedCustomModels() {
-    const url = normalizeCustomUrl(getCustomEndpointConfig().url);
-    if (!url) {
-        return [];
+// [2.2.8] 모델 목록 — 공용 모듈 src/live-models.js (번역 · 다시 쓰기 · TTS · 모델 전환이 같이 씀)
+// 공급자가 지금 주는 목록을 실리태번 서버의 /status 로 받아(키는 서버가 붙인다 — 여기선 값을 읽지 않음) 이 기기의 localStorage 에 하루 둔다.
+// settings.json 에는 더 쓰지 않는다 (폰 ↔ PC 동기화). 예전 custom_model_lists 는 공용 모듈이 옛 캐시로 읽기만 한다 (지우지 않음).
+// 받는 때: 설정에서 모델 칸이 보이게 될 때 · 공급자를 바꿀 때 (없거나 하루 지났을 때만, 조용히) · ↻ · '모델 목록 불러오기'. 페이지를 열 때는 받지 않는다.
+// 새로 입력한 주소로는 저절로 받지 않는다(오타 난 주소로 키가 나가지 않게) — 버튼을 눌러야 한다.
+const MODEL_LIST_TIMEOUT_MS = 30000;
+const LIST_PROXY_SOURCES = new Set(['openai', 'makersuite', 'deepseek']); // 실리태번 /status 가 reverse_proxy 를 따르는 공급자
+const customModelFetches = new Map(); // 정규화된 주소 -> 진행 중인 요청 Promise<{ ok, ids, error }>
+const manualModelRefreshes = new Set(); // ↻ 로 받는 중인 공급자
+const typedCustomUrls = new Set();      // 이번 세션에 손으로 친 주소 (받은 적 없으면 저절로 받지 않음)
+let pendingModelRender = false;         // 목록이 바뀌었는데 모델 칸을 쓰는 중이라 미룸
+let pendingRenderTimer = 0;             // 미룬 동안 가끔 다시 보기 (테마 고르기 팝업은 닫혀도 알려 주지 않는다)
+let customStatusOwner = null;           // Custom 상태 문구를 마지막에 '불러오는 중' 으로 바꾼 요청 (그 요청만 결과를 적는다)
+
+// 고를 모델 목록 → { ids, live, at, key, savedMissing }
+// 받은 목록이 있으면 그 목록(새것 먼저) + 모델 등록. 없으면 모델 등록 → 테마가 아는 최신 이름
+// (Claude · Vertex AI 처럼 목록을 못 받는 곳은 실리태번 화면 목록까지 · Custom 은 본체 주소를 쓸 때 본체가 받은 목록까지)
+function translatorModelList(provider, saved = '') {
+    const source = LiveModels.sourceOf(provider);
+    if (source === 'custom') {
+        const config = getCustomEndpointConfig();
+        return LiveModels.list('custom', { saved, customUrl: config.url, inheritCustom: config.inheritExtras });
     }
-    const entry = extensionSettings.custom_model_lists?.[url];
-    return Array.isArray(entry?.models) ? entry.models : [];
+    return LiveModels.list(source, { saved, page: !LiveModels.canList(source), proxy: translatorListProxy(source) });
+}
+
+// 번역기 리버스 프록시를 켰고 그 공급자의 /status 가 프록시를 따르면 그 프록시 ('' = 직접) — 5.7.1 목록 키도 이것으로 (프록시 목록이 직접 연결 목록과 안 섞이게)
+function translatorListProxy(source) {
+    return extensionSettings.use_reverse_proxy && LIST_PROXY_SOURCES.has(source) ? String(extensionSettings.reverse_proxy_url || '').trim() : '';
+}
+
+// 지금 공급자의 목록 캐시 키 (Custom 은 주소별)
+function modelListKey(provider) {
+    const source = LiveModels.sourceOf(provider);
+    return LiveModels.cacheKey(source, source === 'custom' ? getCustomEndpointConfig().url : undefined, source === 'custom' ? '' : translatorListProxy(source));
+}
+
+// 목록 요청 — 번역 요청과 같은 길로. 받을 수 없는 공급자(Claude · Vertex AI)는 null
+//   Custom: 그 주소 (본체 주소면 본체 추가 헤더도) · 그 밖: 번역기 리버스 프록시를 켰을 때 그 프록시 (본체 프록시는 따르지 않음 — 번역 요청도 안 따른다)
+function modelListRequest(provider) {
+    const source = LiveModels.sourceOf(provider);
+    if (!LiveModels.canList(source)) return null;
+    if (source === 'custom') {
+        const config = getCustomEndpointConfig();
+        const url = config.url;
+        const fetchedBefore = LiveModels.cached(LiveModels.cacheKey('custom', url)).ids.length > 0;
+        return {
+            source, url, proxy: '', config,
+            opts: { customUrl: url, inheritCustom: config.inheritExtras, savedUrl: fetchedBefore || !typedCustomUrls.has(url), timeout: MODEL_LIST_TIMEOUT_MS },
+        };
+    }
+    const proxy = translatorListProxy(source);
+    return {
+        source, url: '', proxy,
+        opts: { body: {}, reverseProxy: proxy, proxyPassword: proxy ? String(extensionSettings.reverse_proxy_password || '') : '', timeout: MODEL_LIST_TIMEOUT_MS },
+    };
+}
+
+// Custom 목록 요청 본문 — 2.2.7 과 글자까지 같게: { chat_completion_source, custom_url, custom_include_headers } (받을 때만 만든다 — 매크로 치환)
+function customListBody(config) {
+    return {
+        custom_url: config.url,
+        custom_include_headers: config.inheritExtras ? substituteParams(oai_settings?.custom_include_headers || '') : '',
+    };
+}
+
+// 받기 실패 문구 (Custom 은 2.2.7 문구 그대로)
+function modelListErrorMessage(error, custom = false) {
+    if (error?.name === 'TimeoutError' || error?.name === 'AbortError') {
+        return `응답 시간이 초과되었습니다. (${MODEL_LIST_TIMEOUT_MS / 1000}초)`;
+    }
+    if (error?.empty) {
+        return custom
+            ? '엔드포인트가 모델 목록을 돌려주지 않았습니다. (서버 연결 실패, 주소 끝의 /v1, API 키를 확인해주세요)'
+            : '모델 목록을 돌려주지 않았습니다. (API 키를 확인해주세요)';
+    }
+    return String(error?.message || error || '알 수 없는 오류');
 }
 
 // 모델 목록 상태 문구 갱신 (message를 주면 그 문구를, 없으면 캐시 상태를 보여준다)
@@ -610,29 +679,20 @@ function updateCustomModelsStatus(message) {
         return;
     }
     const config = getCustomEndpointConfig();
-    const url = normalizeCustomUrl(config.url);
+    const url = config.url;
     if (!url) {
         status.text('주소를 입력하면 그 서버가 제공하는 모델을 아래 목록에 채웁니다.');
         return;
     }
-    const entry = extensionSettings.custom_model_lists?.[url];
+    const entry = LiveModels.cached(LiveModels.cacheKey('custom', url));
     const source = config.inheritExtras ? '본체 설정 주소' : '위 주소';
-    if (!Array.isArray(entry?.models)) {
+    if (!entry.ids.length) {
         status.text(`아직 불러오지 않았습니다. '모델 목록 불러오기'를 누르세요. (${source}: ${url})`);
         return;
     }
-    const when = entry.fetched_at ? new Date(entry.fetched_at).toLocaleString() : '';
-    status.text(`모델 ${entry.models.length}개 (${when} 기준, ${source})`);
+    const when = entry.at ? new Date(entry.at).toLocaleString() : '';
+    status.text(`모델 ${entry.ids.length}개 (${when ? `${when} 기준, ` : ''}${source})`);
 }
-
-// 커스텀 엔드포인트의 /models 목록을 SillyTavern 서버를 통해 받아온다.
-// 본체 API 연결 화면과 같은 경로(/api/backends/chat-completions/status)라서
-// 저장된 Custom API 키는 서버가 알아서 붙이고, 브라우저에서 외부 주소를 직접 부르지 않는다.
-// 새로 입력한 주소로는 자동으로 요청하지 않는다(오타 난 주소로 키가 나가지 않게) — 버튼을 눌러야 한다.
-// 이미 저장돼 있는 주소(번역 요청에 쓰이는 주소)는 목록이 비어 있을 때 조용히 한 번 받아온다.
-const CUSTOM_MODEL_FETCH_TIMEOUT_MS = 30000;
-const CUSTOM_MODEL_LIST_CACHE_LIMIT = 3; // 주소별 목록은 최근 3개만 보관 (settings.json 비대화·옛 주소 잔존 방지)
-const customModelFetches = new Map(); // 정규화된 주소 -> 진행 중인 요청 Promise<{ ok, ids, error }>
 
 // 버튼은 '지금 입력된 주소'로 요청 중일 때만 잠근다 (다른 주소의 요청이 남아 있어도 새 주소는 바로 받아올 수 있게).
 function syncCustomFetchButton() {
@@ -640,63 +700,57 @@ function syncCustomFetchButton() {
     $('#llm_custom_fetch_models').prop('disabled', busy).toggleClass('llmt-loading', busy);
 }
 
-function pruneCustomModelLists(keepUrl) {
-    const lists = extensionSettings.custom_model_lists || {};
-    const entries = Object.entries(lists)
-        .sort((a, b) => String(b[1]?.fetched_at || '').localeCompare(String(a[1]?.fetched_at || '')));
-    const keep = new Set([keepUrl, ...entries.slice(0, CUSTOM_MODEL_LIST_CACHE_LIMIT).map(([url]) => url)]);
-    for (const [url] of entries) {
-        if (!keep.has(url)) {
-            delete lists[url];
+// ↻ — 목록을 받을 수 있는 공급자에서만 (Custom 은 위의 '모델 목록 불러오기'). 받는 중이면 돌고 잠긴다
+function syncModelRefreshButton(provider = $('#llm_provider').val()) {
+    const button = document.getElementById('llm_model_refresh');
+    if (!button) return;
+    const source = LiveModels.sourceOf(provider);
+    button.style.display = LiveModels.canList(source) && source !== 'custom' ? '' : 'none';
+    const busy = manualModelRefreshes.has(source);
+    button.disabled = busy;
+    const icon = button.querySelector?.('i');
+    if (icon) icon.style.animation = busy ? 'llmt-spin 1s linear infinite' : '';
+}
+
+// 모델 칸 · 커스텀 모델 입력란을 쓰는 중이면 목록을 다시 그리지 않는다 (폰에서 고르는 창이 닫히거나 바뀌지 않게) — 손을 떼면 그린다
+// 테마의 고르기 팝업(src/selects.js)이 열려 있어도: 그 팝업은 연 순간의 순서(번호)로 고르므로 그 사이 목록이 바뀌면 다른 모델이 골라진다
+function modelPickerInUse() {
+    const id = document.activeElement?.id;
+    if (id === 'llm_model' || id === 'llm_custom_model') return true;
+    return !!document.querySelector?.('.salty-pick-layer');
+}
+function renderModelListWhenIdle() {
+    if (!$('#llm_provider').length) return;
+    if (modelPickerInUse()) {
+        pendingModelRender = true;
+        if (!pendingRenderTimer) {
+            pendingRenderTimer = setTimeout(() => {
+                pendingRenderTimer = 0;
+                if (pendingModelRender) renderModelListWhenIdle();
+            }, 1500);
         }
+        return;
+    }
+    pendingModelRender = false;
+    updateModelList();
+}
+
+// Custom 목록을 받은 뒤: 자유 입력란에 적어 둔 모델명이 목록에 있으면 그 항목을 골라 준다 (보내는 모델명은 동일)
+function afterCustomModelList(url, ids) {
+    const typedName = getCustomModelName('custom');
+    if (getCustomEndpointConfig().url === url && extensionSettings.provider_model_history.custom === 'custom' && typedName && ids.includes(typedName)) {
+        extensionSettings.provider_model_history.custom = typedName;
+        if (extensionSettings.llm_provider === 'custom' && extensionSettings.llm_model === 'custom') {
+            extensionSettings.llm_model = typedName;
+        }
+        saveSettingsDebounced();
     }
 }
 
-// 실제 요청: 성공하면 정렬·중복 제거된 모델 id 배열, 실패하면 throw
-async function requestCustomModelIds(url, includeHeaders) {
-    const body = {
-        chat_completion_source: 'custom',
-        custom_url: url,
-        custom_include_headers: includeHeaders,
-    };
-    const signal = typeof AbortSignal?.timeout === 'function' ? AbortSignal.timeout(CUSTOM_MODEL_FETCH_TIMEOUT_MS) : undefined;
-    let response;
-    try {
-        response = await fetch('/api/backends/chat-completions/status', {
-            method: 'POST',
-            headers: getRequestHeaders(),
-            body: JSON.stringify(body),
-            cache: 'no-cache',
-            signal,
-        });
-    } catch (error) {
-        if (error?.name === 'TimeoutError' || error?.name === 'AbortError') {
-            throw new Error(`응답 시간이 초과되었습니다. (${CUSTOM_MODEL_FETCH_TIMEOUT_MS / 1000}초)`);
-        }
-        throw error;
-    }
-    if (!response.ok) {
-        throw new Error(`서버 응답 ${response.status} ${response.statusText}`.trim());
-    }
-    const data = await response.json();
-    // 표준은 { data: [...] }지만 배열만 주거나 { models: [...] }로 주는 서버도 있다.
-    const rawList = Array.isArray(data) ? data
-        : Array.isArray(data?.data) ? data.data
-            : Array.isArray(data?.models) ? data.models
-                : [];
-    if (rawList.length === 0 && data?.error) {
-        throw new Error('엔드포인트가 모델 목록을 돌려주지 않았습니다. (서버 연결 실패, 주소 끝의 /v1, API 키를 확인해주세요)');
-    }
-    return [...new Set(rawList
-        .map(item => (item && typeof item === 'object') ? (item.id ?? item.name ?? '') : item)
-        .map(id => String(id ?? '').trim())
-        .filter(id => id && id !== 'custom'))] // 'custom'은 자유 입력 항목의 예약값이라 제외
-        .sort((a, b) => a.localeCompare(b));
-}
-
+// Custom 엔드포인트 목록 받기 — silent: 저절로(없거나 하루 지났을 때만, 알림 없음) · 아니면 버튼(늘 받음, 결과 알림)
 async function fetchCustomModelList({ silent = false } = {}) {
-    const config = getCustomEndpointConfig();
-    const url = config.url;
+    const req = modelListRequest('custom');
+    const url = req.url;
     if (!url || !isValidHttpUrl(url)) {
         updateCustomModelsStatus(url ? `올바른 주소가 아닙니다: ${url}` : '커스텀 엔드포인트 주소가 비어 있습니다.');
         if (!silent) {
@@ -704,59 +758,59 @@ async function fetchCustomModelList({ silent = false } = {}) {
         }
         return [];
     }
+    const key = LiveModels.cacheKey('custom', url);
+    if (silent && !customModelFetches.has(url)) {
+        // 받을 일이 없으면 '불러오는 중' 을 띄우지 않는다 (받을지는 공용 모듈이 한 번 더 본다)
+        const inherited = url === normalizeCustomUrl(oai_settings?.custom_url);
+        if (!LiveModels.isStale(key) || LiveModels.inBackoff(key) || !(req.opts.savedUrl || inherited)) return null;
+    }
 
     const isCurrentUrl = () => getCustomEndpointConfig().url === url;
-    const syncButton = syncCustomFetchButton;
 
     // 같은 주소로 이미 요청 중이면 그 결과를 같이 기다린다 (주소가 다르면 별도 요청).
-    let job = customModelFetches.get(url);
+    // 버튼은 저절로 받는 중이어도 새로 기다린다 — 공용 모듈이 같은 요청 하나로 묶고, 실패하면 그 이유를 알려 준다 (저절로 받기는 실패를 삼킴)
+    let job = silent ? customModelFetches.get(url) : null;
     if (!job) {
-        const includeHeaders = config.inheritExtras ? substituteParams(oai_settings?.custom_include_headers || '') : '';
-        job = (async () => {
-            try {
-                const ids = await requestCustomModelIds(url, includeHeaders);
-                extensionSettings.custom_model_lists[url] = { models: ids, fetched_at: new Date().toISOString() };
-                pruneCustomModelLists(url);
-                // 자유 입력란에 적어 둔 모델명이 목록에 있으면 그 항목을 골라 준다 (보내는 모델명은 동일).
-                const typedName = getCustomModelName('custom');
-                if (isCurrentUrl() && extensionSettings.provider_model_history.custom === 'custom' && typedName && ids.includes(typedName)) {
-                    extensionSettings.provider_model_history.custom = typedName;
-                }
-                saveSettingsDebounced();
-                return { ok: true, ids };
-            } catch (error) {
-                console.error('[LLM Translator] 커스텀 모델 목록 불러오기 실패:', url, error);
+        const opts = { ...req.opts, body: customListBody(req.config) };
+        const request = silent ? LiveModels.autoRefresh('custom', opts) : LiveModels.refresh('custom', opts);
+        job = request.then(
+            ids => ({ ok: true, ids: Array.isArray(ids) ? ids : null }),
+            error => {
+                console.error('[LLM Translator] 커스텀 모델 목록 불러오기 실패:', url, error?.status ?? '', error?.message || '');
                 return { ok: false, ids: [], error };
-            } finally {
-                customModelFetches.delete(url);
-            }
-        })();
+            },
+        ).finally(() => {
+            if (customModelFetches.get(url) === job) customModelFetches.delete(url);
+        });
         customModelFetches.set(url, job);
     }
 
-    syncButton();
+    syncCustomFetchButton();
+    const owner = {};
+    customStatusOwner = owner;
     if (isCurrentUrl()) {
         updateCustomModelsStatus(`모델 목록을 불러오는 중… (${url})`);
     }
 
     const result = await job;
-    const message = result.ok ? '' : String(result.error?.message || result.error || '알 수 없는 오류');
+    if (result.ok && result.ids) afterCustomModelList(url, result.ids);
+    const message = result.ok ? '' : modelListErrorMessage(result.error, true);
 
     // 응답이 오기 전에 주소를 바꿨으면 화면은 건드리지 않는다 (새 주소의 상태는 새 주소의 요청이 처리).
     if (isCurrentUrl()) {
-        if ($('#llm_provider').val() === 'custom') {
-            updateModelList();
+        // 저절로 받기가 건너뛰었거나 조용히 실패했으면(ids 없음) 다시 그리지 않는다 — 받았으면 onChange 도 그린다
+        if ($('#llm_provider').val() === 'custom' && result.ids) {
+            renderModelListWhenIdle();
         }
-        if (!result.ok) {
-            updateCustomModelsStatus(`불러오기 실패: ${message}`);
-        }
+        // 뒤에 누른 버튼의 결과(실패 이유)를 먼저 끝난 저절로 받기가 덮지 않게
+        if (customStatusOwner === owner) updateCustomModelsStatus(result.ok ? '' : `불러오기 실패: ${message}`);
     }
-    syncButton();
+    syncCustomFetchButton();
 
     if (!silent) {
         if (!result.ok) {
             toastr.error(`모델 목록을 불러오지 못했습니다: ${message}`);
-        } else if (result.ids.length === 0) {
+        } else if (!result.ids?.length) {
             toastr.warning('엔드포인트가 빈 모델 목록을 돌려줬습니다.');
         } else {
             toastr.success(`모델 ${result.ids.length}개를 불러왔습니다.`);
@@ -766,7 +820,66 @@ async function fetchCustomModelList({ silent = false } = {}) {
             }
         }
     }
-    return result.ids;
+    return result.ids || [];
+}
+
+// ↻ — Custom 말고 목록을 받을 수 있는 공급자 (OpenAI · Google AI · OpenRouter · DeepSeek · Cohere)
+async function refreshProviderModelList(provider) {
+    const req = modelListRequest(provider);
+    if (!req) return [];
+    if (req.source === 'custom') return fetchCustomModelList({ silent: false });
+    if (manualModelRefreshes.has(req.source)) return [];
+    manualModelRefreshes.add(req.source);
+    syncModelRefreshButton(provider);
+    try {
+        const ids = await LiveModels.refresh(req.source, req.opts);
+        renderModelListWhenIdle();
+        if (ids.length) toastr.success(`모델 ${ids.length}개를 불러왔습니다.`);
+        else toastr.warning('빈 모델 목록을 돌려줬습니다.');
+        return ids;
+    } catch (error) {
+        console.warn('[LLM Translator] 모델 목록 불러오기 실패:', req.source, error?.status ?? '', error?.message || '');
+        toastr.error(`모델 목록을 불러오지 못했습니다: ${modelListErrorMessage(error)}`);
+        return [];
+    } finally {
+        manualModelRefreshes.delete(req.source);
+        syncModelRefreshButton();
+    }
+}
+
+// 저절로 다시 받기 (조용히): 직접 연결 · 목록을 받을 수 있는 공급자 · 없거나 하루 지났을 때 · 키가 있을 때(또는 번역기 프록시)
+function autoRefreshModels() {
+    if (extensionSettings.connection_mode !== 'direct' || !$('#llm_provider').length) return;
+    const provider = $('#llm_provider').val();
+    const req = modelListRequest(provider);
+    if (!req) return;
+    if (req.source === 'custom') {
+        if (isValidHttpUrl(req.url)) fetchCustomModelList({ silent: true });
+        return;
+    }
+    const keyState = LiveModels.keyState(req.source);
+    if (!req.proxy && keyState !== 'yes' && keyState !== 'optional') return;
+    LiveModels.autoRefresh(req.source, req.opts); // 받으면 onChange 가 다시 그린다 · 실패는 조용히 (예전 목록 그대로)
+}
+
+// 모델 칸이 보이게 될 때 (설정 서랍 · 확장 창을 엶 · 연결 탭으로 옴 · 직접 연결로 바꿈): 다시 그리고, 목록이 오래됐으면 조용히 받는다
+function watchModelPicker() {
+    const select = document.getElementById('llm_model');
+    if (!select || typeof ResizeObserver !== 'function') return;
+    let shown = false;
+    new ResizeObserver(entries => {
+        const last = entries[entries.length - 1];
+        const visible = !!last && (last.contentRect.width > 0 || last.contentRect.height > 0);
+        if (visible && !shown) {
+            renderModelListWhenIdle();
+            autoRefreshModels();
+        }
+        shown = visible;
+    }).observe(select);
+}
+function modelPickerShown() {
+    const select = document.getElementById('llm_model');
+    return !!select && select.getClientRects().length > 0;
 }
 
 // 파라미터 섹션 표시/숨김
@@ -890,150 +1003,59 @@ function getProviderSpecificParams(provider, params) {
 // [추가] 마지막으로 모델 목록을 그린 커스텀 주소 (본체 설정 주소를 물려받는 경우 변경 감지용)
 let lastRenderedCustomUrl = null;
 
-// [추가] 저장된 커스텀 주소의 목록이 비어 있으면 조용히 한 번 받아온다 (첫 로드·공급자 전환·본체 주소 변경 시)
-function autoFetchCustomModelsIfEmpty() {
-    if (extensionSettings.connection_mode !== 'direct') return;
-    if ($('#llm_provider').val() !== 'custom') {
-        return;
+// [2.2.8] 커스텀 모델 입력란 자동완성 — 모든 공급자에서 고를 목록과 같은 이름을 제안한다 (같은 내용이면 손대지 않음)
+function fillModelDatalist(ids) {
+    const datalist = document.getElementById('llm_custom_model_datalist');
+    if (!datalist) return;
+    const sig = ids.join('\n');
+    if (datalist.dataset.llmtSig === sig) return;
+    const frag = document.createDocumentFragment();
+    for (const id of ids) {
+        const option = document.createElement('option');
+        option.value = id; // 서버가 돌려준 모델명에 따옴표 등이 섞여 있어도 깨지지 않게 속성으로
+        frag.append(option);
     }
-    if (getCachedCustomModels().length === 0 && isValidHttpUrl(getCustomEndpointConfig().url)) {
-        fetchCustomModelList({ silent: true });
-    }
+    datalist.replaceChildren(frag);
+    datalist.dataset.llmtSig = sig;
 }
 
 // 선택된 공급자의 모델 목록 업데이트
+// [2.2.8] 고정 목록 대신 공용 모듈의 목록 (공급자가 지금 주는 목록 · 모델 등록 · 테마가 아는 최신 이름).
+//         저장된 모델은 목록에 없어도 그대로 고른 채 '(이전 목록)' / '(이 주소 목록에 없음)' 으로 맨 위에 둔다 — 몰래 바꾸지 않는다.
 function updateModelList() {
     // [2.1.3] 설정 화면이 없으면(HTML 을 못 받음) 손대지 않는다 — 공급자를 undefined 로 읽어 llm_model 을 비웠다
     if (!$('#llm_provider').length) return;
     const provider = $('#llm_provider').val();
-    const modelSelect = $('#llm_model');
-    modelSelect.empty();
+    const modelSelect = document.getElementById('llm_model');
+    if (!modelSelect) return;
 
-    // [갱신 2026-09] 각 공급자 공식 문서 · OpenRouter 모델 API 기준 최신 목록 (최신/주력 모델 우선)
-    const geminiModels = [
-        'gemini-3.8-flash',
-        'gemini-3.7-flash',
-        'gemini-3.6-flash',
-        'gemini-3.5-flash',
-        'gemini-3.5-flash-lite',
-        'gemini-3.1-pro-preview',
-        'gemini-3.1-flash-lite',
-        'gemini-3-flash-preview',
-        'gemini-2.5-pro',
-        'gemini-2.5-flash',
-        'gemini-2.5-flash-lite'
-    ];
-    const models = {
-        'openai': [
-            'gpt-6-astra',
-            'gpt-5.6-sol',
-            'gpt-5.6-terra',
-            'gpt-5.6-luna',
-            'gpt-5.6',
-            'gpt-5.5',
-            'gpt-5.4',
-            'gpt-5.4-mini',
-            'gpt-5.4-nano',
-            'gpt-5.3-chat-latest',
-            'gpt-5.2',
-            'gpt-5.1',
-            'gpt-5',
-            'gpt-5-mini',
-            'gpt-5-nano',
-            'gpt-4.1',
-            'gpt-4.1-mini',
-            'gpt-4.1-nano',
-            'o4-mini',
-            'o3',
-            'gpt-4o',
-            'gpt-4o-mini'
-        ],
-        'claude': [
-            'claude-fable-5-1',
-            'claude-opus-5',
-            'claude-sonnet-5',
-            'claude-haiku-4-5',
-            'claude-fable-5',
-            'claude-opus-4-8',
-            'claude-opus-4-7',
-            'claude-opus-4-6',
-            'claude-sonnet-4-6',
-            'claude-opus-4-5',
-            'claude-sonnet-4-5'
-        ],
-        'google': geminiModels,
-        'cohere': [
-            'command-a-plus-05-2026',
-            'command-a-03-2025',
-            'command-r7b-12-2024',
-            'command-r-plus-08-2024',
-            'command-r-08-2024',
-            'c4ai-aya-expanse-32b',
-            'c4ai-aya-expanse-8b'
-        ],
-        'vertexai': geminiModels,
-        'openrouter': [
-            'google/gemini-3.8-flash',
-            'google/gemini-3.7-flash',
-            'google/gemini-3.5-flash-lite',
-            'google/gemini-3.1-pro-preview',
-            'google/gemini-2.5-pro',
-            'anthropic/claude-fable-5.1',
-            'anthropic/claude-opus-5',
-            'anthropic/claude-sonnet-5',
-            'anthropic/claude-haiku-4.5',
-            'openai/gpt-6-astra',
-            'openai/gpt-5.6-terra',
-            'openai/gpt-5.6-luna',
-            'deepseek/deepseek-v4.1-flash',
-            'deepseek/deepseek-v4-pro',
-            'x-ai/grok-4.6',
-            'qwen/qwen3.8-max-0902',
-            'moonshotai/kimi-k3',
-            'z-ai/glm-5.3',
-            'mistralai/mistral-medium-3-5'
-        ],
-        'deepseek': [
-            'deepseek-flash',    // V4.1 Flash
-            'deepseek-v4-pro',
-            'deepseek-v4-flash'  // 구 이름 (V4.1 Flash로 연결됨)
-        ],
-        // Custom (OpenAI-compatible)은 고정 목록 대신 엔드포인트에서 받아 둔 목록을 쓴다 (없으면 커스텀 모델 입력만)
-        'custom': getCachedCustomModels()
-    };
-
-    const providerModels = models[provider] || [];
     const savedModel = extensionSettings.provider_model_history[provider];
-    for (const model of providerModels) {
-        // 서버가 돌려준 모델명에 따옴표 등이 섞여 있어도 깨지지 않게 속성으로 넣는다.
-        modelSelect.append($('<option>').attr('value', model).text(model));
-    }
-    // 목록에서 빠진 예전 모델을 쓰던 경우 선택이 비지 않도록 그대로 남겨 둔다.
-    if (savedModel && savedModel !== 'custom' && !providerModels.includes(savedModel)) {
-        // 커스텀 엔드포인트에서 받은 목록에 없는 모델은 다른 주소에서 고른 것일 수 있으니 따로 표시한다.
-        const suffix = (provider === 'custom' && providerModels.length > 0) ? '(이 주소 목록에 없음)' : '(이전 목록)';
-        modelSelect.append($('<option>').attr('value', savedModel).text(`${savedModel} ${suffix}`));
-    }
-    // [추가] 커스텀 모델 입력란 자동완성: 커스텀 공급자에서 받아 둔 목록만 제안한다.
-    const datalist = $('#llm_custom_model_datalist');
-    datalist.empty();
+    const { ids, live } = translatorModelList(provider, savedModel);
+
+    // 해당 공급자의 마지막 사용 모델 (없을 때만 목록 첫 모델 · 목록도 없으면 커스텀 모델 입력)
+    const lastUsedModel = savedModel || ids[0] || 'custom';
+    const customSelected = lastUsedModel === 'custom';
+    // 커스텀 엔드포인트에서 받은 목록에 없는 모델은 다른 주소에서 고른 것일 수 있으니 따로 표시한다.
+    const missingSuffix = (provider === 'custom' && live) ? ' (이 주소 목록에 없음)' : ' (이전 목록)';
+    LiveModels.fillSelect(modelSelect, ids, {
+        saved: customSelected ? '' : lastUsedModel,
+        missingSuffix,
+        customValue: 'custom',
+        customLabel: '⚙️ 커스텀 모델 입력', // 맨 아래 custom 옵션
+        customSelected,
+    });
+    modelSelect.value = lastUsedModel;
+
+    fillModelDatalist(ids);
     if (provider === 'custom') {
-        for (const model of providerModels) {
-            datalist.append($('<option>').attr('value', model));
-        }
         updateCustomModelsStatus();
         syncCustomFetchButton();
         lastRenderedCustomUrl = getCustomEndpointConfig().url;
     }
-    // 맨 아래에 custom 옵션 추가
-    modelSelect.append(`<option value="custom">⚙️ 커스텀 모델 입력</option>`);
-
-    // 해당 공급자의 마지막 사용 모델을 선택
-    const lastUsedModel = savedModel || providerModels[0];
-    modelSelect.val(lastUsedModel);
+    syncModelRefreshButton(provider);
 
     // custom 선택시 커스텀 입력에 기존 값 표시 (공급자별로 따로 보관)
-    if (lastUsedModel === 'custom') {
+    if (customSelected) {
         $('#custom_model_container').show();
         $('#llm_custom_model').val(getCustomModelName(provider));
     } else {
@@ -1081,40 +1103,8 @@ function substituteCustomPlaceholders(prompt, isInputTranslation = false) {
 }
 
 
-// [추가] 모델별 요청 규칙. SillyTavern 본체(public/scripts/openai.js)가 자기 요청에 적용하는 규칙과 같다.
-// 이 확장은 본체 프론트엔드를 거치지 않고 백엔드로 바로 보내므로, 여기서 맞추지 않으면 최신 모델이 400 오류를 낸다.
-function applyModelRequestRules(provider, model, parameters) {
-    const dropSampling = (...keys) => keys.forEach(key => delete parameters[key]);
-    const useMaxCompletionTokens = () => {
-        // OpenRouter는 max_tokens를 알아서 변환하므로 OpenAI 직접 연결에서만 바꾼다.
-        if (provider === 'openai' && parameters.max_tokens !== undefined) {
-            parameters.max_completion_tokens = parameters.max_tokens;
-            delete parameters.max_tokens;
-        }
-    };
-
-    if ((provider === 'openai' && /^(o1|o3|o4)/.test(model)) || (provider === 'openrouter' && /^openai\/(o1|o3|o4)/.test(model))) {
-        useMaxCompletionTokens();
-        dropSampling('temperature', 'top_p', 'frequency_penalty', 'presence_penalty');
-    }
-
-    // GPT-5 이후(GPT-6 포함): 추론 모드에서는 샘플링 값을 거부한다. GPT-5.1~5.4는 페널티만 거부한다.
-    if ((provider === 'openai' || provider === 'openrouter') && /gpt-(5|6)/.test(model)) {
-        useMaxCompletionTokens();
-        if (/gpt-5-chat-latest/.test(model)) {
-            // 채팅 전용 모델은 샘플링 값을 그대로 받는다.
-        } else if (/gpt-5\.(1|2|3|4)/.test(model) && !/chat-latest/.test(model)) {
-            dropSampling('frequency_penalty', 'presence_penalty');
-        } else {
-            dropSampling('temperature', 'top_p', 'frequency_penalty', 'presence_penalty');
-        }
-    }
-
-    // Claude Fable / Claude 5: 샘플링 값을 모두 거부한다 (OpenRouter 등 프록시 경유 포함).
-    if (/claude-(fable|opus-5|sonnet-5)/.test(model)) {
-        dropSampling('temperature', 'top_p', 'top_k', 'frequency_penalty', 'presence_penalty');
-    }
-}
+// [2.2.8] 모델별 요청 규칙은 공용 모듈(src/live-models.js applyModelRequestRules)로 옮겼다 — 번역 · 다시 쓰기 · TTS 가 한 벌을 쓴다.
+// 2026-10 까지의 이름은 예전 규칙과 결과가 같다 (tools/tests/translator-models.mjs).
 
 // API 호출 로직 (수정됨 - API 키 검증 추가)
 /**
@@ -1394,7 +1384,7 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
     if (Number.isFinite(overrides.maxTokens) && overrides.maxTokens > 0) parameters.max_tokens = overrides.maxTokens;
     if (Number.isFinite(overrides.temperature)) parameters.temperature = overrides.temperature;
 
-    applyModelRequestRules(provider, model, parameters);
+    LiveModels.applyModelRequestRules(provider, model, parameters);
 
     if (provider === 'vertexai') {
         // [수정] 본체의 Vertex AI 접속 설정(인증 방식/리전/Express 프로젝트)을 그대로 따라간다.
@@ -4565,7 +4555,7 @@ function initializeEventHandlers() {
         extensionSettings.connection_mode = this.value === 'direct' ? 'direct' : 'current';
         updateConnectionVisibility();
         saveSettingsDebounced();
-        autoFetchCustomModelsIfEmpty();
+        autoRefreshModels();
     });
     $('#llm_profile_max_tokens').on('change', function () {
         extensionSettings.profile_max_tokens = Math.max(0, Math.min(160000, Math.floor(Number(this.value) || 0)));
@@ -4581,8 +4571,8 @@ function initializeEventHandlers() {
         loadParameterValues(provider);
         updateCustomEndpointVisibility(provider);
         saveSettingsDebounced();
-        // [추가] 커스텀 공급자로 바꿨는데 저장된 주소의 모델 목록이 아직 없으면 조용히 한 번 받아온다.
-        autoFetchCustomModelsIfEmpty();
+        // [2.2.8] 공급자를 바꾸면 그 공급자의 목록이 없거나 하루 지났을 때 조용히 받는다
+        autoRefreshModels();
     });
 
     // llmContext 슬라이더/체크박스 이벤트 핸들러
@@ -4637,6 +4627,7 @@ function initializeEventHandlers() {
     // [추가] 커스텀 엔드포인트 주소 입력 이벤트
     $('#llm_custom_url').on('input', function () {
         extensionSettings.custom_url = $(this).val().trim();
+        typedCustomUrls.add(normalizeCustomUrl(extensionSettings.custom_url)); // [2.2.8] 손으로 친 주소는 저절로 받지 않는다
         saveSettingsDebounced();
         updateCustomModelsStatus();
     });
@@ -4654,6 +4645,20 @@ function initializeEventHandlers() {
     $('#llm_custom_fetch_models').on('click', function () {
         fetchCustomModelList({ silent: false });
     });
+
+    // [2.2.8] ↻ 모델 목록 새로 받기 (Custom 말고 목록을 받을 수 있는 공급자)
+    $('#llm_model_refresh').on('click', function () {
+        refreshProviderModelList($('#llm_provider').val());
+    });
+    // [2.2.8] 받은 목록이 바뀌면 (여기 · 다른 add-on · 실리태번이 연결하며 받은 목록) 지금 공급자 것일 때 다시 그린다 — 쓰는 중이면 손을 뗀 뒤
+    LiveModels.onChange(({ key }) => {
+        if (!$('#llm_provider').length || key !== modelListKey($('#llm_provider').val())) return;
+        renderModelListWhenIdle();
+    });
+    $('#llm_model, #llm_custom_model').on('blur', function () {
+        if (pendingModelRender) setTimeout(renderModelListWhenIdle, 0);
+    });
+    watchModelPicker();
 
     // 프롬프트 관리는 이제 PromptManager 클래스에서 처리됩니다
 
@@ -4838,8 +4843,8 @@ function initializeEventHandlers() {
         if (!config.inheritExtras || config.url === lastRenderedCustomUrl) {
             return;
         }
-        updateModelList();
-        autoFetchCustomModelsIfEmpty();
+        renderModelListWhenIdle();
+        if (modelPickerShown()) autoRefreshModels(); // [2.2.8] 닫혀 있으면 열 때 받는다
     });
 
     eventSource.on(event_types.CHAT_CHANGED, function () {

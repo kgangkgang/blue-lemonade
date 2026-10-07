@@ -1,7 +1,7 @@
 <div class="translation_settings llmt-settings">
     <div class="inline-drawer">
         <div class="inline-drawer-toggle inline-drawer-header">
-            <b><i class="fa-solid fa-language"></i> 번역 <span class="llmt-version ext-version">v2.2.7</span></b>
+            <b><i class="fa-solid fa-language"></i> 번역 <span class="llmt-version ext-version">v2.2.8</span></b>
             <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
         </div>
 
@@ -233,7 +233,7 @@
                                 <small id="llm_custom_models_status" class="llmt-desc"></small>
                             </div>
                             <small class="llmt-desc">
-                                💡 주소를 넣고 '모델 목록 불러오기'를 누르면 그 서버가 제공하는 모델이 아래 목록에 뜹니다. 받은 목록은 저장되며, 설정을 열었을 때 목록이 비어 있으면 저장된 주소로 자동으로 받아옵니다.<br>
+                                💡 주소를 넣고 '모델 목록 불러오기'를 누르면 그 서버가 제공하는 모델이 아래 목록에 뜹니다. 받은 목록은 이 기기에 하루 동안 두고, 설정을 열 때 하루가 지났으면 저장된 주소로 다시 받아옵니다.<br>
                                 💡 비워두면 SillyTavern 본체의 <b>Custom (OpenAI-compatible)</b> 접속 설정(주소/추가 헤더/Body)을 그대로 사용합니다.<br>
                                 🔑 API 키는 본체의 <b>Custom (OpenAI-compatible)</b> 키를 공유합니다. (키가 필요 없는 로컬 서버는 비워두셔도 됩니다.)
                             </small>
@@ -242,9 +242,14 @@
                         <div class="llmt-field">
                             <label for="llm_model" class="llmt-label">모델</label>
                             <small class="llmt-desc">API 키는 SillyTavern 본체의 API 연결 설정에 저장된 키를 씁니다. 목록에 없는 모델은 맨 아래 '커스텀 모델 입력'으로 넣으세요.</small>
-                            <select id="llm_model" class="text_pole">
-                                <!-- 모델 목록은 동적으로 추가됨 -->
-                            </select>
+                            <div class="llmt-model-row" style="display:flex;align-items:center;gap:6px">
+                                <select id="llm_model" class="text_pole" style="flex:1 1 auto;min-width:0">
+                                    <!-- 모델 목록은 동적으로 추가됨 -->
+                                </select>
+                                <button id="llm_model_refresh" class="menu_button small-button" type="button" aria-label="모델 목록 새로 받기" style="flex:none;margin:0;display:none">
+                                    <i class="fa-solid fa-rotate"></i>
+                                </button>
+                            </div>
                             <div id="custom_model_container" style="display: none;">
                                 <input type="text" id="llm_custom_model" class="text_pole" list="llm_custom_model_datalist" autocomplete="off" placeholder="커스텀 모델명 입력 (예: gpt-5-turbo)">
                                 <datalist id="llm_custom_model_datalist"></datalist>

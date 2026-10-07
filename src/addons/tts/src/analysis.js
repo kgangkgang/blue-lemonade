@@ -7,6 +7,8 @@ import { runtimeEnabled, assertRuntime, waitForRuntime } from './runtime.js';
 //   model, at, profile,  분석 설정·프롬프트 해시 (키·주소는 저장하지 않음)
 //   segs: [ { i, h, emotion, speaker?, text: { ja: '…' } } ]   i = 원문 대화문 순번 · h = 정규화한 대사 해시 (번호가 어긋나도 찾게)
 //          speaker = 1.3.6 화자 찾기: 색 · 이름표로 못 정한 줄(보낸 쪽 이름으로 떨어진 줄)에 LLM 이 고른 화자 — 프롬프트에 준 '아는 이름' 가운데 하나만 저장
+//                    1.3.7 엑스트라 목소리를 켜면(settings.extras) 아는 이름 밖의 단역(카페 사장 · 점원 …)도 그 이름으로 저장
+//   people?: { 이름: { g: 'm'|'f', a: 'y'|'a'|'o'|'', l } }   1.3.7 목소리를 안 정한 화자의 성별 · 나이 → voices.noteExtras (엑스트라 목소리)
 // }
 // 저장은 getContext().saveChat() 을 바로 (생성 중이면 끝난 뒤; 지우기는 1초 디바운스) · 스와이프 정보에도 복사 (syncMesToSwipe) 해 되돌아와도 다시 안 묻는다.
 // 비용: 메시지(글 해시 + 언어)마다 요청 한 번. 같은 메시지를 또 부르면 진행 중인 요청에 붙고, 부른 쪽이 모두 그만둬도
@@ -40,7 +42,7 @@ import { getContext } from '../../../../../../../extensions.js';
 import { settings, addAnalysisUsage } from './settings.js';
 import { segmentMessage, detectLang, parseRegexLines, speechDisplay } from './text.js';
 import { resolveSpeaker, knownNames as learnedNames } from './speakers.js';
-import { allVoices } from './voices.js';
+import { allVoices, hasOwnVoice, noteExtras } from './voices.js';
 import { fetchJson } from './providers/_http.js';
 import { log, snip, scrub } from './log.js';
 import * as stapi from './stapi.js';
@@ -74,6 +76,7 @@ const SCHEMA = Object.freeze({
                     required: ['i'],
                 },
             },
+            people: { type: 'object' },   // 1.3.7 엑스트라 목소리 (있을 때만)
         },
         required: ['segs'],
     },
@@ -164,6 +167,40 @@ function matchSpeaker(raw, cands) {
     if (f.length < 2) return '';
     return cands.find(c => { const g = foldName(c); return g.length >= 2 && (g.includes(f) || f.includes(g)); }) || '';
 }
+/** 1.3.7 엑스트라: 아는 이름 밖의 단역 이름 (짧은 이름 · 역할만 — '?' · 내레이터 · 나는 안 받음). 없으면 '' */
+function minorName(raw, built) {
+    const v = cleanName(raw);
+    if (!v || v === '?' || v.length > 24) return '';
+    if (/^(narrator|unknown|none|nobody|n\/a|내레이터|서술|모름|없음)$/i.test(v)) return '';
+    if (built && built.userName && foldName(v) === foldName(built.userName)) return '';
+    return v;
+}
+/** 1.3.7 응답의 people → { 이름: { g, a, l } } (물은 이름 · (?) 줄에 준 화자만 · 성별을 모르면 뺌 · 12명까지) */
+function parsePeople(raw, built, segs) {
+    if (!isObj(raw) || !built || !built.extras) return null;
+    const allowed = new Map();
+    for (const n of built.unvoiced || []) allowed.set(foldName(n), n);
+    for (const g of segs || []) if (g && g.speaker) allowed.set(foldName(g.speaker), g.speaker);
+    const firstLine = (name) => {
+        const f = foldName(name);
+        const hit = built.lines.find(l => foldName(l.speaker) === f) || built.lines.find(l => { const g = (segs || []).find(x => x && x.i === l.i); return g && foldName(g.speaker) === f; });
+        return hit ? hit.text : '';
+    };
+    const out = {};
+    let n = 0;
+    for (const [k, val] of Object.entries(raw)) {
+        const name = allowed.get(foldName(cleanName(k)));
+        if (!name || n >= 12) continue;
+        const t = typeof val === 'string' ? val : isObj(val) ? `${val.gender ?? val.g ?? ''} ${val.age ?? val.a ?? ''}` : '';
+        const low = ` ${String(t).toLowerCase()} `;
+        const g = /[\s,(](f|female|woman|girl|여|여자|여성)[\s,)]/.test(low) ? 'f' : /[\s,(](m|male|man|boy|남|남자|남성)[\s,)]/.test(low) ? 'm' : '';
+        if (!g) continue;
+        const a = /young|child|teen|kid|youth|어린|젊/.test(low) ? 'y' : /old|elder|senior|aged|노인|늙/.test(low) ? 'o' : /adult|middle|mature|어른|중년/.test(low) ? 'a' : '';
+        out[name] = { g, a, l: detectLang(firstLine(name)) || '' };
+        n++;
+    }
+    return n ? out : null;
+}
 function speakerOf(seg, mes, charName, userName) {
     let name = '';
     try { name = String(resolveSpeaker(seg, { mes, charName, userName })?.name || ''); } catch { name = ''; }
@@ -176,9 +213,11 @@ function speakerOf(seg, mes, charName, userName) {
 
 /**
  * 메시지 → 프롬프트 재료 + 본문 (통신 없음)
- * opts: { langs: Set|array, emotion = true, translate = true, context_chars = 1200, speaker = false }
+ * opts: { langs: Set|array, emotion = true, translate = true, context_chars = 1200, speaker = false, extras = false }
  *   speaker (1.3.6): 색 · 이름표로 못 정한 대사(ask)는 LLM 에게 화자를 묻는다 — 후보(speakers)를 함께 보내고 답은 후보 가운데 하나만 받는다
- * → { system, user, lines: [{ i, h, text, speaker, ask }], needs: { i: ['ja'] }, speakers, asked: n, empty }
+ *   extras (1.3.7): 엑스트라 목소리 — (?) 줄에 단역 이름도 받고, 목소리를 안 정한 화자(unvoiced)와 함께 성별 · 나이(people)를 묻는다.
+ *     unvoiced 는 사용자가 정한 목소리(연결표 · 목록)만 보고 엑스트라 표는 보지 않는다 — 엑스트라를 적어도 프롬프트(=저장된 분석의 profile)가 그대로
+ * → { system, user, lines: [{ i, h, text, speaker, ask }], needs: { i: ['ja'] }, speakers, unvoiced, extras, userName, asked: n, empty }
  */
 export function buildPrompt(mes, opts = {}) {
     const s = settings();
@@ -214,8 +253,22 @@ export function buildPrompt(mes, opts = {}) {
         display = clip(joinByLine(dsegs), max);
     }
     const speakers = lines.some(l => l.ask) ? candidateNames(ctx, s, charName, userName) : [];
-    const { system, user, asked } = composePrompt({ lines, needs, context, display, emotion, charName, userName, speakers });
-    return { system, user, lines, needs, speakers, asked, empty: asked === 0 };
+    const extras = opts.extras === true && !mes?.is_user;
+    const unvoiced = [];
+    if (extras) {
+        const seen = new Set([foldName(charName), foldName(userName)]);
+        for (const l of lines) {
+            const n = cleanName(l.ask ? '' : l.speaker);
+            if (!n || /^\{\{.*\}\}$/.test(n) || seen.has(foldName(n))) continue;
+            seen.add(foldName(n));
+            let own = true;
+            try { own = hasOwnVoice(n); } catch { own = true; }
+            if (!own) unvoiced.push(n);
+            if (unvoiced.length >= 8) break;
+        }
+    }
+    const { system, user, asked } = composePrompt({ lines, needs, context, display, emotion, charName, userName, speakers, extras, unvoiced });
+    return { system, user, lines, needs, speakers, unvoiced, extras, userName, asked, empty: asked === 0 };
 }
 /** 조각들을 원래 줄대로 이어 붙인 평문 (대화문은 "…" 로 감쌈) */
 function joinByLine(segs) {
@@ -232,18 +285,22 @@ function joinByLine(segs) {
     return out.join('\n');
 }
 
-/** 프롬프트 본문 (순수 함수). parts: { lines, needs, context, display, emotion, charName, userName, speakers } → { system, user, asked }
+/** 프롬프트 본문 (순수 함수). parts: { lines, needs, context, display, emotion, charName, userName, speakers, extras, unvoiced } → { system, user, asked }
+ *  1.3.7 extras 인데 (?) 줄도 목소리 없는 화자도 없으면 1.3.6 과 글자까지 같다
  *  1.3.6 lines[].ask 인 줄은 '(?)' 로 적고 Known speakers 와 "speaker" 과제를 붙인다 (ask 줄이 없으면 1.3.5 와 글자까지 같은 프롬프트 — 저장된 분석이 그대로 산다) */
 export function composePrompt(parts) {
-    const { lines = [], needs = {}, context = '', display = '', emotion = true, charName = '', userName = '', speakers = [] } = parts || {};
+    const { lines = [], needs = {}, context = '', display = '', emotion = true, charName = '', userName = '', speakers = [], extras = false } = parts || {};
     const asked = lines.filter(l => emotion || (needs[l.i] && needs[l.i].length) || l.ask);
     const askLines = asked.filter(l => l.ask);
     const langsUsed = [...new Set(Object.values(needs).flat())].filter(l => LANGS.includes(l));
+    const unvoiced = extras && asked.length ? (parts.unvoiced || []).filter(n => asked.some(l => !l.ask && cleanName(l.speaker) === n)) : [];
+    const people = extras && (askLines.length > 0 || unvoiced.length > 0);
     const out = [];
     if (charName || userName) out.push(`Character: ${charName || '?'} · User: ${userName || '?'}`);
     if (context) out.push(`Narration around the lines:\n${context}`);
     if (display) out.push(`Korean translation shown on screen (meaning only, do not copy):\n${display}`);
     if (askLines.length && speakers.length) out.push(`Known speakers: ${speakers.join(', ')}`);
+    if (unvoiced.length) out.push(`Speakers without a voice yet: ${unvoiced.join(', ')}`);
     out.push('Dialogue lines:');
     for (const l of asked) {
         const need = needs[l.i] && needs[l.i].length ? `  → needs: ${needs[l.i].join(', ')}` : '';
@@ -251,11 +308,13 @@ export function composePrompt(parts) {
     }
     const tasks = [];
     if (emotion) tasks.push(`For every line give "emotion": one of ${EMOTIONS.join(', ')} — judged from the narration and how the line is said (shout = raised voice, whisper = hushed).`);
-    if (askLines.length) tasks.push('For lines marked (?) give "speaker": who says that line, judged from the narration and the other lines — exactly one name from the known speakers, or "?" if it cannot be told.');
+    if (askLines.length && extras) tasks.push('For lines marked (?) give "speaker": who says that line, judged from the narration and the other lines — one name from the known speakers, or for a minor character who is not among them (a clerk, a passer-by …) a short name or role as the story calls them, or "?" if it cannot be told.');
+    else if (askLines.length) tasks.push('For lines marked (?) give "speaker": who says that line, judged from the narration and the other lines — exactly one name from the known speakers, or "?" if it cannot be told.');
+    if (people) tasks.push('Add "people": {"<name>": "<m|f> <young|adult|old>"} for every speaker without a voice yet and every speaker you give for a (?) line — m = male, f = female.');
     if (langsUsed.length) {
         tasks.push('For lines marked "needs", add one key per listed language with the line as ' + langsUsed.map(l => `"${l}" = ${LANG_HINT[l]}`).join('; ') + '. Translate the meaning as spoken dialogue, no quotation marks, no notes.');
     }
-    tasks.push('Reply with JSON only, no markdown, no extra keys: {"segs":[{"i":0' + (emotion ? ',"emotion":"happy"' : '') + (askLines.length ? `,"speaker":"${speakers[0] || 'Name'}"` : '') + (langsUsed.length ? `,"${langsUsed[0]}":"…"` : '') + '}]}');
+    tasks.push('Reply with JSON only, no markdown, no extra keys: {"segs":[{"i":0' + (emotion ? ',"emotion":"happy"' : '') + (askLines.length ? `,"speaker":"${speakers[0] || 'Name'}"` : '') + (langsUsed.length ? `,"${langsUsed[0]}":"…"` : '') + '}]' + (people ? `,"people":{"${unvoiced[0] || 'Name'}":"f adult"}` : '') + '}');
     out.push(tasks.join('\n'));
     return { system: SYSTEM, user: out.join('\n\n'), asked: asked.length };
 }
@@ -310,7 +369,10 @@ function normalizeSegs(parsed, built, emotionOn) {
             if (t && normText(t) !== normText(l.text)) text[lang] = t;
         }
         const out = { i: l.i, h: l.h, emotion: EMOTION_SET.has(em) ? em : '', text };
-        if (l.ask) { const sp = matchSpeaker(r.speaker, built.speakers); if (sp) out.speaker = sp; }   // 1.3.6 후보 밖 이름 · '?' 는 안 적음 → 보낸 쪽 이름 그대로
+        if (l.ask) {
+            const sp = matchSpeaker(r.speaker, built.speakers) || (built.extras ? minorName(r.speaker, built) : '');   // 1.3.7 엑스트라를 켜면 단역 이름도
+            if (sp) out.speaker = sp;                                                                                 // 1.3.6 후보 밖 이름 · '?' 는 안 적음 → 보낸 쪽 이름 그대로
+        }
         return out;
     });
 }
@@ -617,7 +679,8 @@ function slot(mes, create) {
 }
 const textHash = (mes) => hash(String(mes?.mes ?? ''));
 /** 설정과 실제 분석 입력이 같을 때만 캐시를 쓴다. 인증 값은 포함하지 않는다. */
-function profileOf(mes, cfg, langs, built) {
+const extrasOn = () => settings().extras !== 'off';
+function profileOf(mes, cfg, langs, built, extras = extrasOn()) {
     const engine = engineOf(cfg);
     let model = engine === 'provider' ? stapi.modelOf(cfg) : String(cfg.model || '');
     let provider = engine === 'provider' ? String(cfg.provider || '') : '';
@@ -626,7 +689,7 @@ function profileOf(mes, cfg, langs, built) {
         provider = String(ctx.chatCompletionSettings?.chat_completion_source || ctx.mainApi || '');
         model = stapi.modelOf({ ...cfg, provider, provider_models: {} });
     }
-    const p = built || buildPrompt(mes, { langs, emotion: !!cfg.emotion, translate: !!cfg.translate, context_chars: cfg.context_chars, speaker: cfg.speaker !== false });
+    const p = built || buildPrompt(mes, { langs, emotion: !!cfg.emotion, translate: !!cfg.translate, context_chars: cfg.context_chars, speaker: cfg.speaker !== false, extras });
     return hash(JSON.stringify([1, engine, provider, model, !!cfg.emotion, !!cfg.translate, cfg.temperature ?? 0.2, p.system, p.user]));
 }
 const dropped = new WeakMap();   // mes → { swipe, analysis }  이어쓰기·편집 뒤 같은 줄의 번역을 재사용
@@ -676,7 +739,7 @@ export function getAnalysis(mesId) {
     if (!isObj(a) || !Array.isArray(a.segs)) return null;
     if (a.hash !== textHash(mes)) return null;
     const cfg = settings().analysis || {};
-    if (a.profile !== profileOf(mes, cfg, a.langs)) return null;
+    if (a.profile !== profileOf(mes, cfg, a.langs) && !(extrasOn() && a.profile === profileOf(mes, cfg, a.langs, null, false))) return null;   // 1.3.7 엑스트라 전(1.3.6)에 저장한 분석도 그대로 쓴다 (다시 묻지 않게)
     if (cfg.emotion && a.segs.some(g => !EMOTION_SET.has(g?.emotion))) return null;
     return a;
 }
@@ -756,7 +819,7 @@ async function doAnalyze(entry) {
     if (!force) { const again = getAnalysis(id); if (again && covers(again.langs, langs)) return again; }   // 줄 서는 동안 끝났으면
     if (msgOf(id) !== mes || textHash(mes) !== entry.hash) return null;                                       // 줄 서는 동안 글이 바뀜
     const cfg = settings().analysis || {};
-    const built = buildPrompt(mes, { langs, emotion: !!cfg.emotion, translate: !!cfg.translate, context_chars: cfg.context_chars, speaker: cfg.speaker !== false });
+    const built = buildPrompt(mes, { langs, emotion: !!cfg.emotion, translate: !!cfg.translate, context_chars: cfg.context_chars, speaker: cfg.speaker !== false, extras: extrasOn() });
     if (entry.profile !== profileOf(mes, cfg, langs, built)) return null;
     const h = entry.hash;
     const engine = engineOf(cfg);
@@ -779,10 +842,14 @@ async function doAnalyze(entry) {
         throw koErr('대사 분석 응답에 빠진 감정이 있어요', { retry: true });
     }
     if (!force) segs = carryOver(segs, previousOf(mes));          // 번역만 재사용, 새 문맥의 감정은 유지
-    const analysis = { ...base, segs };
+    const people = parsePeople(parsed.people, built, segs);
+    const analysis = people ? { ...base, segs, people } : { ...base, segs };
     if (msgOf(id) !== mes || textHash(mes) !== h || entry.profile !== profileOf(mes, settings().analysis || {}, langs)) { log('info', `대사 분석 버림 #${id} (글·설정이 바뀜)`); return null; }
     store(id, mes, analysis);
     log('info', `대사 분석 끝 #${id} · ${Math.round((Date.now() - t0) / 100) / 10}s`);
+    if (people) {   // 1.3.7 엑스트라 표에 적고 그 엔진의 기본 목소리 목록을 채운 뒤 돌려준다 (첫 줄부터 그 목소리로 — 오래 걸리면 기다리지 않음)
+        try { await Promise.race([noteExtras(people), new Promise(r => setTimeout(r, 6000))]); } catch { /* 조용히 */ }
+    }
     return analysis;
 }
 

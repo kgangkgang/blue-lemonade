@@ -43,7 +43,8 @@ export const DEFAULT_SETTINGS = {
     connection: 'current',
     profileId: '',
     provider: 'custom',
-    // Last model picked per provider; 'custom' means the typed name in customModels.
+    // Last model picked per provider; 'custom' means the typed name in customModels. These first picks are light
+    // models for rewriting; one a provider stops listing stays picked, marked '(이전 목록)', never swapped silently.
     models: {
         openai: 'gpt-5.4-mini',
         claude: 'claude-haiku-4-5',
@@ -57,8 +58,8 @@ export const DEFAULT_SETTINGS = {
     customModels: {},
     // '' = SillyTavern's own Custom endpoint, with its extra headers/body
     customUrl: '',
-    // Model ids fetched per Custom endpoint address: { [url]: { models: [...], fetchedAt: ISO } }, newest 3 kept
-    customModelLists: {},
+    // Fetched model lists live in this browser (src/live-models.js), not here: settings.json syncs to phones.
+    // Lists saved by 2.0.1 and earlier (customModelLists) are still read from there, never written.
     temperature: 1,
     maxTokens: 4096,
     useReverseProxy: false,

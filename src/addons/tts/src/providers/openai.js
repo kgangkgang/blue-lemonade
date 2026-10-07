@@ -2,10 +2,14 @@
 // openai_compat · openrouter 가 아래 이름 붙은 내보내기를 같이 쓴다
 import { providerConfig } from '../settings.js';
 import { fetchJson, fetchBlob } from './_http.js';
+import { modelOptions as liveOptions, storeModels, shared } from './_models.js';
 
 const ID = 'openai';
 export const DEFAULT_BASE = 'https://api.openai.com/v1';
 export const OPENAI_VOICES = ['alloy', 'ash', 'ballad', 'coral', 'echo', 'fable', 'onyx', 'nova', 'sage', 'shimmer', 'verse', 'marin', 'cedar'];
+// 1.3.7 엑스트라 목소리용 성별 (애매한 alloy · fable 은 뺌)
+export const OPENAI_GENDER = { ash: 'm', ballad: 'm', coral: 'f', echo: 'm', onyx: 'm', nova: 'f', sage: 'f', shimmer: 'f', verse: 'm', marin: 'f', cedar: 'm' };
+// 목록을 못 받았을 때 (1.3.7 키가 있으면 GET {주소}/models 의 TTS 모델로 바뀐다 — listModels)
 const MODELS = ['gpt-4o-mini-tts', 'gpt-4o-mini-tts-2025-12-15', 'tts-1', 'tts-1-hd'];
 export const MIME = { mp3: 'audio/mpeg', wav: 'audio/wav', opus: 'audio/ogg', flac: 'audio/flac', aac: 'audio/aac', pcm: 'audio/pcm' };
 
@@ -60,7 +64,7 @@ export async function postSpeech(url, key, body, signal) {
 const fields = [
     { key: 'key', label: 'API 키', type: 'password', default: '' },
     { key: 'base', label: '주소', type: 'text', default: DEFAULT_BASE, desc: '…/v1 까지' },
-    { key: 'model', label: '모델', type: 'select', default: 'gpt-4o-mini-tts', options: modelOptions(MODELS) },
+    { key: 'model', label: '모델', type: 'select', default: 'gpt-4o-mini-tts', options: modelChoices },
     { key: 'model_custom', label: '모델 이름', type: 'text', default: '', show: (cfg) => cfg.model === 'custom' },
 ];
 const params = [
@@ -69,8 +73,31 @@ const params = [
 ];
 const defaults = Object.fromEntries([...fields, ...params].filter(f => f.default !== undefined).map(f => [f.key, f.default]));
 
+/** 1.3.7 목록은 주소마다 따로 (프록시 주소의 목록을 api.openai.com 에 쓰지 않게) */
+const modelScope = (cfg) => baseOf((cfg || {}).base, DEFAULT_BASE);
+function modelChoices(cfg) {
+    const c = cfg || providerConfig(ID, defaults);
+    return liveOptions(ID, MODELS, c, { scope: modelScope(c) });
+}
+/** 1.3.7 모델 목록: GET {주소}/models 에서 TTS 모델만 (받아 적기 · 실시간 · 검색 모델 빼고) — 새것부터. 과금 없음 */
+async function listModels(cfg) {
+    const c = cfg || providerConfig(ID, defaults);
+    if (!c.key) throw new Error('API 키를 먼저 저장');
+    const base = modelScope(c);
+    return shared(`${ID}|${base}`, async () => {
+        const j = await fetchJson(`${base}/models`, { headers: { Authorization: `Bearer ${c.key}` }, timeout: 20000 });
+        const rows = (Array.isArray(j?.data) ? j.data : Array.isArray(j) ? j : []).filter(m => m && typeof m.id === 'string');
+        const ids = rows
+            .filter(m => /tts/i.test(m.id) && !/transcribe|realtime|audio-preview|search/i.test(m.id))
+            .map((m, i) => ({ id: m.id, at: Number(m.created) || 0, i }))
+            .sort((a, b) => (b.at - a.at) || (a.i - b.i))
+            .map(x => x.id);
+        return storeModels(ID, ids, base);
+    });
+}
+
 async function listVoices() {
-    return OPENAI_VOICES.map(v => ({ voiceId: v, name: v, lang: 'en', group: 'OpenAI' }));
+    return OPENAI_VOICES.map(v => ({ voiceId: v, name: v, lang: 'en', group: 'OpenAI', gender: OPENAI_GENDER[v] || '' }));
 }
 
 async function synth({ text, voice, cfg, params: p, emotion = '', signal }) {
@@ -117,6 +144,8 @@ export default {
     defaults,
     maxChars: 4096,
     listVoices,
+    listModels,
+    modelScope,
     synth,
     test,
 };

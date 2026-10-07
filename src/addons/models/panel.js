@@ -3,9 +3,13 @@ import { callGenericPopup, POPUP_RESULT, POPUP_TYPE } from '../../../../../../po
 import { SOURCES, sourceById } from './sources.js';
 import { TITLE, VERSION, modelsOf, movePick, pickOf, setModels, settings } from './state.js';
 import { applyOne } from './inject.js';
+// 공용 모델 목록 — state.js 는 이것을 불러오면 안 된다 (live-models.js 가 맨 위 await 로 state.js 를 읽음)
+import * as LM from '../../live-models.js';
 
 const LAST_SOURCE_KEY = 'model_register_last_source';
-let root = null;
+const SUGGEST_ID = 'model_register_suggest';
+const MAX_SUGGEST = 300;
+let root = null, suggestLater = false;
 const holder=document.createElement('div');holder.hidden=true;document.body.append(holder);
 let currentId = 'vertexai';
 
@@ -46,7 +50,8 @@ export function buildPanel() {
                     </div>
                     <small class="mr-hint mr-source-note"></small>
                     <div class="mr-row">
-                        <input type="text" class="text_pole mr-input" placeholder="모델 이름 (예: gemini-3.8-flash)" autocomplete="off">
+                        <input type="text" class="text_pole mr-input" placeholder="모델 이름 (예: gemini-3.8-flash)" autocomplete="off" list="${SUGGEST_ID}">
+                        <datalist id="${SUGGEST_ID}"></datalist>
                         <div class="menu_button menu_button_icon mr-add" title="적은 이름을 목록에 넣어요"><i class="fa-solid fa-plus"></i><span>추가</span></div>
                     </div>
                     <div class="mr-list"></div>
@@ -60,10 +65,20 @@ export function buildPanel() {
         currentId = event.target.value;
         localStorage.setItem(LAST_SOURCE_KEY, currentId);
         render();
+        autoList();
     });
     $('.mr-add').addEventListener('click', onAdd);
     $('.mr-input').addEventListener('keydown', event => {
         if (event.key === 'Enter') { event.preventDefault(); onAdd(); }
+    });
+    // 미뤄 둔 제안은 입력칸을 누를 때 · 떠날 때 채운다
+    $('.mr-input').addEventListener('focus', () => { if (suggestLater) renderSuggest(); });
+    $('.mr-input').addEventListener('blur', () => { if (suggestLater) renderSuggest(); });
+    // 새 목록을 받으면 (모델 전환 · 번역 · TTS … 어디서 받았든) 지금 공급자의 제안만 다시 — 입력 중이면 칸을 떠날 때
+    LM.onChange(({ source }) => {
+        if (!root?.isConnected || source !== LM.sourceOf(currentId)) return;
+        if (document.activeElement === $('.mr-input')) { suggestLater = true; return; }
+        renderSuggest();
     });
     $('.mr-list').addEventListener('click', onListClick);
     startDrag($('.mr-list'));
@@ -123,6 +138,30 @@ export function render() {
 
     const total = Object.values(settings().sources).reduce((sum, entries) => sum + entries.length, 0);
     $('.mr-count').textContent = `이 공급자 ${models.length}개 · 전체 ${total}개`;
+    renderSuggest();
+}
+
+/** 등록할 만한 새 이름 (새것 먼저): 공용 목록(받은 목록 · 테마가 아는 최신 이름) 가운데 실리태번 목록에도 등록한 목록에도 없는 것 */
+export function suggestions(sourceId) {
+    const have = new Set([...LM.pageModels(sourceId), ...LM.registered(sourceId)]);
+    return LM.list(sourceId, { proxy: LM.inheritedProxyUrl(sourceId) }).ids.filter(id => !have.has(id)).slice(0, MAX_SUGGEST);   // 5.7.1 본체가 프록시로 받는 목록
+}
+
+/** 입력칸 자동완성 목록 (같은 내용이면 손대지 않음). 창이 숨은 자리에 있으면(페이지를 열 때) 미룬다 */
+function renderSuggest() {
+    suggestLater = false;
+    const list = root?.querySelector(`#${SUGGEST_ID}`);
+    if (!list) return;
+    if (holder.contains(root)) { suggestLater = true; return; }
+    const ids = suggestions(currentId), sig = `${currentId}\n${ids.join('\n')}`;
+    if (list.dataset.sig === sig) return;
+    list.dataset.sig = sig;
+    list.replaceChildren(...ids.map(id => { const option = document.createElement('option'); option.value = id; return option; }));
+}
+
+/** 창을 열 때 · 공급자를 바꿀 때: 그 공급자의 목록이 오래됐으면 조용히 다시 (키가 있을 때만 · Custom 은 실리태번 주소) */
+function autoList() {
+    LM.autoRefresh(currentId).catch(() => {});
 }
 
 // 4.5.2: '모델 순서' 애드온을 여기로 합쳤다. 그 애드온에만 있던 것이 ⠿ 끌기뿐이라(나머지는 sources.js 가
@@ -243,16 +282,16 @@ async function onListClick(event) {
 let opening=false;
 export async function openPanel(){
  if(inlineHost?.isConnected&&inlineHost.offsetParent){root.scrollIntoView({block:'nearest'});return;}
- if(opening)return;opening=true;buildPanel();render();
+ if(opening)return;opening=true;buildPanel();render();autoList();
  root.querySelector('.inline-drawer-content').style.display='block';
- try{await callGenericPopup(root,POPUP_TYPE.TEXT,'',{okButton:'닫기',wide:true,allowVerticalScrolling:true,onOpen: popup => popup?.dlg?.classList.add('bl-roomy-dialog')});}
+ try{await callGenericPopup(root,POPUP_TYPE.TEXT,'',{okButton:'닫기',wide:true,allowVerticalScrolling:true,onOpen: popup => { popup?.dlg?.classList.add('bl-roomy-dialog'); renderSuggest(); }});}
  finally{(inlineHost?.isConnected?inlineHost:holder).replaceChildren(root);opening=false;}
 }
 
 let inlineHost=null;
 export function mountInline(host) {
-    buildPanel();render();
-    inlineHost=host;if(opening)host.textContent='열린 설정창을 닫으면 여기에 표시돼요.';else host.replaceChildren(root);root.classList.add('bl-embedded-settings');
+    buildPanel();render();autoList();
+    inlineHost=host;if(opening)host.textContent='열린 설정창을 닫으면 여기에 표시돼요.';else{host.replaceChildren(root);renderSuggest();}root.classList.add('bl-embedded-settings');
     const content=root.querySelector('.inline-drawer-content');if(content)content.style.display='block';
     return ()=>{if(inlineHost!==host)return;inlineHost=null;root.classList.remove('bl-embedded-settings');if(!opening)holder.append(root);};
 }

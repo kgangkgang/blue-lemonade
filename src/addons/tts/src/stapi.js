@@ -5,23 +5,27 @@
 // 공급자별 접속 설정(Vertex AI 인증·리전, Custom 추가 헤더/본문, Azure 배포, 엔드포인트)은 실리태번 설정(chatCompletionSettings)을 따른다.
 // 리버스 프록시: 고른 공급자가 실리태번의 지금 공급자와 같고 거기에 프록시가 적혀 있을 때만 그대로 (실리태번 본체와 같은 요청).
 //
-// 모델 목록 = 실리태번 화면의 #model_<id>_select 옵션 (본체가 이미 가진 목록 — 번역기와 같은 목록)
-//           + /status 로 받은 목록 (이 브라우저의 localStorage 에 캐시, 최근 MAX_LISTS 개 — settings.json 이 커지지 않고 폰과 오가지 않게)
-// 응답 길이: MAX_TOKENS (생각 토큰도 여기 들어감). 생각을 오래 하는 모델(Claude 5 · Fable · Gemini 3 · OpenAI 추론)은 reasoning_effort 'low'.
+// 모델 목록 = 테마 공용 목록 (src/live-models.js — 번역기 · 다시 쓰기 · 모델 전환과 같은 캐시):
+//           /status 로 받은 목록(새것 먼저, 하루 TTL)이 있으면 그것 + 모델 등록, 없으면 실리태번 화면의 #model_<id>_select 옵션
+//           (목록을 받을 수 없는 공급자 — Claude · Vertex · Z.AI … — 는 테마가 아는 최신 이름 KNOWN 도). 캐시는 이 브라우저의 localStorage
+//           (settings.json 이 커지지 않고 폰과 오가지 않게). 옛 캐시 lemon_voice_model_lists 에도 그대로 적어 둔다 (최근 MAX_LISTS 개 — 예전 판이 읽게)
+// 응답 길이: MAX_TOKENS (생각 토큰도 여기 들어감). 생각을 오래 하는 모델(Claude 5 이후 · Fable · Gemini 3 이후 · OpenAI 추론)은 reasoning_effort 'low'.
 //           그래도 잘리면 analysis.js 가 RETRY_MAX_TOKENS 로 한 번 더 (번역기와 같은 12000)
 //
 // 밖으로:
-//   SOURCES · source(id) · MAX_TOKENS · RETRY_MAX_TOKENS
+//   SOURCES · source(id) · MAX_TOKENS · RETRY_MAX_TOKENS · LIST_TTL
 //   keyState(id) → 'yes' | 'no' | 'optional' | 'unknown' · hasInheritedProxy(id) · autoListOk(id)
 //   customEndpoint(cfg) → { url, inherit }
 //   listKey(cfg) · cachedModels(key) · pageModels(id, cfg) · modelList(cfg) · modelOf(cfg, id?)
 //   modelIds(data) · fetchProviderModels(cfg) · fetchCompatModels(cfg)
+//   needsAutoList(cfg) → 지금 조용히 목록을 다시 받아도 되나 (카드를 열 때) · onListChange(cb) → 그만 듣기 함수
 //   providerProblem(cfg) → '' | 한국어 한 줄 (준비 안 된 까닭) · buildRequest(cfg, system, user, { maxTokens }) → /generate 본문
 //   applyModelRequestRules(provider, model, body)
 import { getRequestHeaders, substituteParams } from '../../../../../../../../script.js';
 import { getContext } from '../../../../../../../extensions.js';
 import { secret_state } from '../../../../../../../secrets.js';
 import { fetchJson } from './providers/_http.js';
+import * as LM from '../../../live-models.js';
 
 export const GENERATE_URL = '/api/backends/chat-completions/generate';
 export const STATUS_URL = '/api/backends/chat-completions/status';
@@ -127,46 +131,13 @@ function inheritedProxy(id) {
 /** 본체 리버스 프록시를 따라가나 (그땐 키가 없어도 됨 — 공급자 목록에 · 키 없음 을 붙이지 않는다) */
 export const hasInheritedProxy = (id) => !!inheritedProxy(id);
 
-/** 공급자별 접속 설정 (본체 설정을 따름) — /generate 와 /status 에 같이 */
+/**
+ * 공급자별 접속 설정 (본체 설정을 따름) — /generate 와 /status 에 같이. 규칙은 공용 live-models.js 의 sourceExtras 하나
+ * (Custom 추가 헤더/본문 · Vertex 인증·리전·Express 프로젝트 · Azure 배포 · Z.AI · SiliconFlow · MiniMax · Pollinations · Workers AI 계정 · 본체 리버스 프록시)
+ */
 function sourceExtras(src, cfg, forStatus) {
-    const c = cs();
-    const out = {};
-    switch (src.id) {
-        case 'custom': {
-            const ep = customEndpoint(cfg);
-            out.custom_url = ep.url;
-            if (ep.inherit) {
-                out.custom_include_headers = sub(c.custom_include_headers);
-                if (!forStatus) {
-                    out.custom_include_body = sub(c.custom_include_body);
-                    out.custom_exclude_body = sub(c.custom_exclude_body);
-                }
-            }
-            break;
-        }
-        case 'vertexai':
-            // 번역기와 같다: 본체의 인증 방식 · 리전 · Express 프로젝트 (리전을 안 보내면 서버가 us-central1 로 고정)
-            if (!forStatus) {
-                out.vertexai_auth_mode = vertexMode();
-                out.vertexai_region = c.vertexai_region || 'us-central1';
-                out.vertexai_express_project_id = c.vertexai_express_project_id || '';
-            }
-            break;
-        case 'azure_openai':
-            out.azure_base_url = str(c.azure_base_url);
-            out.azure_deployment_name = str(c.azure_deployment_name);
-            out.azure_api_version = str(c.azure_api_version);
-            break;
-        case 'zai': if (!forStatus) out.zai_endpoint = c.zai_endpoint || 'common'; break;
-        case 'siliconflow': out.siliconflow_endpoint = c.siliconflow_endpoint || 'global'; break;
-        case 'minimax': out.minimax_endpoint = c.minimax_endpoint || 'global'; break;
-        case 'pollinations': out.pollinations_endpoint = c.pollinations_endpoint || 'authenticated'; break;
-        case 'workers_ai': out.workers_ai_account_id = str(c.workers_ai_account_id); break;
-        default: break;
-    }
-    const proxy = inheritedProxy(src.id);
-    if (proxy) Object.assign(out, proxy);
-    return out;
+    const ep = src.id === 'custom' ? customEndpoint(cfg) : { url: '', inherit: false };
+    return LM.sourceExtras(src.id, { settings: cs(), customUrl: ep.url, inherit: ep.inherit, forStatus, substitute: sub });
 }
 
 // ---------- 모델 목록
@@ -176,8 +147,11 @@ export function listKey(cfg) {
     const c = cfg || {};
     if (c.engine === 'compat') return `compat:${normUrl(c.base)}`;
     const id = str(c.provider) || 'openai';
-    return id === 'custom' ? `custom:${customEndpoint(c).url}` : id;
+    if (id === 'custom') return `custom:${customEndpoint(c).url}`;
+    const px = normUrl(inheritedProxy(id)?.reverse_proxy);   // 5.7.1 본체 프록시로 받은 목록은 '<id>@<프록시>' (live-models.cacheKey 와 같은 꼴)
+    return px ? `${id}@${px}` : id;
 }
+// 옛 캐시 (lemon_voice_model_lists): 공용 캐시와 함께 적어 둔다 — 예전 판으로 돌아가도 목록이 남게. 읽기는 공용 캐시(LM.cached)가 둘 다 본다
 let listMem = null;   // localStorage 를 못 쓰면 이번 세션만
 function lists() {
     if (listMem) return listMem;
@@ -186,38 +160,44 @@ function lists() {
     listMem = isObj(v) ? v : {};
     return listMem;
 }
-/** 테스트용: 모델 목록 캐시 객체 그대로 */
+/** 테스트용: 옛 모델 목록 캐시 객체 그대로 */
 export const _modelListsForTest = () => lists();
 function persistLists() {
     try { globalThis.localStorage?.setItem(LIST_STORE, JSON.stringify(lists())); } catch { /* 저장소 없음 · 가득 참 — 이번 세션만 */ }
 }
+/** 받아 둔 목록 (공용 캐시 · 옛 캐시 가운데 최근 것, 새것 먼저) */
+/** 받아 둔 목록의 시각 (ms · 없으면 0) — 같은 목록을 세션에 두 번 조용히 받지 않게 (ui.autoFetchModels) */
+export const cachedAt = (key) => Number(LM.cached(key).at) || 0;
 export function cachedModels(key) {
-    const e = lists()[key];
-    return isObj(e) && Array.isArray(e.models) ? e.models.filter(m => typeof m === 'string' && m) : [];
+    return LM.cached(str(key)).ids;
 }
-function putModels(key, ids) {
+function putModels(key, ids, at = Date.now()) {
     const all = lists();
-    all[key] = { models: ids.slice(0, MAX_MODELS), at: Date.now() };
+    all[key] = { models: ids.slice(0, MAX_MODELS), at };
     const others = Object.entries(all).filter(([k]) => k !== key).sort((x, y) => (Number(y[1]?.at) || 0) - (Number(x[1]?.at) || 0)).map(([k]) => k);
     const keep = new Set([key, ...others].slice(0, MAX_LISTS));
     for (const k of Object.keys(all)) if (!keep.has(k)) delete all[k];
     persistLists();
 }
-/** 실리태번 화면이 가진 그 공급자의 모델 목록 (#model_<id>_select — 번역기와 같은 목록). Custom 은 본체 주소를 쓸 때만 */
+/** 실리태번 화면이 가진 그 공급자의 모델 목록 (#model_<id>_select — 번역기와 같은 목록 · 웹사이트 고름 · 채팅 모델이 아닌 OpenAI 이름은 뺌). Custom 은 본체 주소를 쓸 때만 */
 export function pageModels(id, cfg) {
     const src = source(id);
-    if (!src || typeof document === 'undefined') return [];
-    if (src.id === 'custom' && !customEndpoint(cfg).inherit) return [];
-    let el = null;
-    try { el = document.getElementById(`model_${src.sel || src.id}_select`); } catch { el = null; }
-    if (!el || !el.options) return [];
-    return uniq([...el.options].map(o => str(o.value).trim()).filter(v => v && v !== OR_WEBSITE));
+    if (!src) return [];
+    return LM.pageModels(src.id, { inheritCustom: src.id !== 'custom' || customEndpoint(cfg).inherit });
 }
-/** 고를 수 있는 모델: provider = 화면 목록 + 받아 둔 목록 · compat = 받아 둔 목록 */
+/**
+ * 고를 수 있는 모델: provider = 공용 목록 (새로 받은 목록이 있으면 그것 + 모델 등록, 오래됐거나 없으면 모델 등록 · KNOWN · 화면 목록도 함께)
+ *                  compat = 받아 둔 목록
+ */
 export function modelList(cfg) {
     const c = cfg || {};
     if (c.engine === 'compat') return cachedModels(listKey(c));
-    return uniq([...pageModels(c.provider, c), ...cachedModels(listKey(c))]);
+    const src = source(c.provider);
+    if (!src) return cachedModels(listKey(c));
+    const ep = src.id === 'custom' ? customEndpoint(c) : null;
+    // 5.7.1: 받은 목록이 오래됐거나(옛 1.3.x 캐시 포함) 없으면 화면 목록 · KNOWN 도 함께 — 오래된 목록 뒤에 새 모델이 숨지 않게
+    const stale = LM.isStale(listKey(c));
+    return LM.list(src.id, { customUrl: ep ? ep.url : undefined, inheritCustom: ep ? ep.inherit : true, known: true, all: stale, proxy: ep ? '' : str(inheritedProxy(src.id)?.reverse_proxy) }).ids;
 }
 /** 실리태번에서 그 공급자에 골라 둔 모델 (Custom 은 본체 주소를 쓸 때만) */
 function stModel(src, cfg) {
@@ -250,10 +230,11 @@ export function modelIds(data) {
         .filter(Boolean);
     return uniq(ids).sort((a, b) => a.localeCompare(b));
 }
-// OpenAI 의 /models 에는 말하는 모델이 아닌 것(임베딩 · 음성 · 그림 …)도 섞여 있다
-const OPENAI_NOT_CHAT = /(embedding|whisper|tts|dall-e|moderation|transcribe|realtime|audio|image|search|babbage|davinci|sora)/i;
 
-/** 실리태번 서버의 /status 로 공급자의 모델 목록을 받아 캐시에 넣는다 (키는 서버가 붙임) → ids */
+/**
+ * 실리태번 서버의 /status 로 공급자의 모델 목록을 받아 캐시에 넣는다 (키는 서버가 붙임) → ids (새것 먼저 · 채팅 모델만)
+ * 받기 · 거르기 · 공용 캐시 · 같은 목록 요청 묶기는 live-models.js 의 refresh. 요청 본문 · 오류 문구는 예전과 같다
+ */
 export async function fetchProviderModels(cfg, { signal } = {}) {
     const c = cfg || {};
     const src = source(c.provider);
@@ -263,32 +244,68 @@ export async function fetchProviderModels(cfg, { signal } = {}) {
     const pre = setupProblem(src);
     if (pre) throw koErr(pre);
     const key = listKey(c);
-    const body = { chat_completion_source: src.id, ...sourceExtras(src, c, true) };
-    let j;
+    const fetcher = async (url, body, opts) => {
+        try {
+            return await fetchJson(url, { method: 'POST', headers: getRequestHeaders(), body, signal: opts?.signal, timeout: LIST_TIMEOUT });
+        } catch (e) {
+            // 실리태번은 키·계정 ID·Azure 설정이 빠지면 빈 400 을 준다 (요청 형식 오류 라고 하면 헷갈림)
+            if (Number(e?.status) === 400 && !(opts?.signal && opts.signal.aborted)) throw koErr('목록을 받지 못했어요 (키·설정 확인)', { status: 400 });
+            throw e;
+        }
+    };
+    let ids;
     try {
-        j = await fetchJson(STATUS_URL, { method: 'POST', headers: getRequestHeaders(), body, signal, timeout: LIST_TIMEOUT });
+        ids = await LM.refresh(src.id, { key, body: sourceExtras(src, c, true), fetcher, signal });
     } catch (e) {
-        // 실리태번은 키·계정 ID·Azure 설정이 빠지면 빈 400 을 준다 (요청 형식 오류 라고 하면 헷갈림)
-        if (Number(e?.status) === 400 && !(signal && signal.aborted)) throw koErr('목록을 받지 못했어요 (키·설정 확인)', { status: 400 });
+        if (e && e.empty) throw koErr('목록을 받지 못했어요 (키·주소 확인)');
         throw e;
     }
-    let ids = modelIds(j);
-    if (src.id === 'openai') ids = ids.filter(m => !OPENAI_NOT_CHAT.test(m));
-    if (!ids.length && j && j.error) throw koErr('목록을 받지 못했어요 (키·주소 확인)');
-    putModels(key, ids);
+    putModels(key, ids, LM.cached(key).at || Date.now());
     return ids;
 }
-/** OpenAI 호환(직접 주소·키): GET {주소}/models → 캐시 → ids (키는 채팅 요청과 같은 서버로만) */
+/** OpenAI 호환(직접 주소·키): GET {주소}/models → 캐시 → ids (키는 채팅 요청과 같은 서버로만 · api.openai.com 이면 채팅 모델만) */
 export async function fetchCompatModels(cfg, { signal } = {}) {
     const c = cfg || {};
     const base = normUrl(c.base);
     if (!validUrl(base)) throw koErr('주소를 먼저 넣어 주세요');
     const headers = str(c.key).trim() ? { Authorization: `Bearer ${str(c.key).trim()}` } : {};
     const j = await fetchJson(`${base}/models`, { method: 'GET', headers, signal, timeout: LIST_TIMEOUT });
-    const ids = modelIds(j);
-    putModels(`compat:${base}`, ids);
+    const key = `compat:${base}`;
+    const entries = LM.modelEntries(/^https?:\/\/api\.openai\.com(\/|$)/i.test(base) ? 'openai' : 'compat', j);
+    LM.put(key, entries);
+    const ids = entries.map(e => e.id);
+    putModels(key, ids, LM.cached(key).at || Date.now());
     return ids;
 }
+export const LIST_TTL = LM.TTL;
+/**
+ * 카드를 열 때 목록을 조용히 다시 받아도 되나 (통신 없음 — 판단만). 받는 것은 부르는 쪽이 fetchProviderModels · fetchCompatModels 로.
+ *   provider: 목록을 받는 공급자 · Azure 아님 · 키가 있음(또는 키 없이 됨 · 본체 리버스 프록시) · 실리태번 쪽 준비됨 ·
+ *             Custom 은 본체 주소이거나 전에 ↻ 로 받아 본 주소 · 목록이 없거나 하루(LIST_TTL)가 지남 · 실패 뒤 기다리는 중이 아님
+ *   compat:   주소 · 키가 있고 전에 ↻ 로 받아 본 주소의 목록이 하루가 지남 (새로 적은 주소로 키가 가지 않게)
+ *   st:       false
+ */
+export function needsAutoList(cfg) {
+    const c = cfg || {};
+    const key = listKey(c);
+    const known = LM.cached(key).at > 0;
+    if (c.engine === 'compat') {
+        return validUrl(normUrl(c.base)) && !!str(c.key).trim() && known && LM.isStale(key) && !LM.inBackoff(key);
+    }
+    if (c.engine && c.engine !== 'provider') return false;
+    const src = source(c.provider);
+    if (!src || !autoListOk(src.id)) return false;
+    const ks = keyState(src.id);
+    if (!(ks === 'yes' || ks === 'optional' || inheritedProxy(src.id))) return false;
+    if (src.id === 'custom') {
+        const ep = customEndpoint(c);
+        if (!validUrl(ep.url) || !(ep.inherit || known)) return false;
+    }
+    if (setupProblem(src)) return false;
+    return LM.isStale(key) && !LM.inBackoff(key);
+}
+/** 받아 둔 목록이 바뀌면 cb({ key, source }) — 실리태번이 연결하며 받은 목록도. 그만 들으려면 돌려준 함수를 부른다 */
+export const onListChange = (cb) => LM.onChange(cb);
 
 // ---------- 요청
 
@@ -316,27 +333,11 @@ export function providerProblem(cfg) {
 }
 
 /**
- * 모델별 요청 규칙 — LLM 번역기(applyModelRequestRules)와 같다. 본체 화면을 거치지 않고 서버로 바로 보내므로 여기서 맞춘다
- * (최신 OpenAI 추론 모델은 max_completion_tokens · 샘플링 값 거부, Claude 5 · Fable 은 샘플링 값 거부)
+ * 모델별 요청 규칙 — 테마 공용 하나(live-models.js, 번역기 · 다시 쓰기와 같음). 본체 화면을 거치지 않고 서버로 바로 보내므로 여기서 맞춘다
+ * (최신 OpenAI 추론 모델은 max_completion_tokens · 샘플링 값 거부, Claude 5 이후 · Fable 은 샘플링 값 거부 — 새 세대 이름도 같은 대접)
  */
 export function applyModelRequestRules(provider, model, body) {
-    const m = str(model);
-    const drop = (...keys) => keys.forEach(k => delete body[k]);
-    const useMaxCompletion = () => {
-        if (provider === 'openai' && body.max_tokens !== undefined) { body.max_completion_tokens = body.max_tokens; delete body.max_tokens; }
-    };
-    if ((provider === 'openai' && /^(o1|o3|o4)/.test(m)) || (provider === 'openrouter' && /^openai\/(o1|o3|o4)/.test(m))) {
-        useMaxCompletion();
-        drop('temperature', 'top_p', 'frequency_penalty', 'presence_penalty');
-    }
-    if ((provider === 'openai' || provider === 'openrouter') && /gpt-(5|6)/.test(m)) {
-        useMaxCompletion();
-        if (/gpt-5-chat-latest/.test(m)) { /* 채팅 전용 모델은 샘플링 값을 받는다 */ }
-        else if (/gpt-5\.(1|2|3|4)/.test(m) && !/chat-latest/.test(m)) drop('frequency_penalty', 'presence_penalty');
-        else drop('temperature', 'top_p', 'frequency_penalty', 'presence_penalty');
-    }
-    if (/claude-(fable|opus-5|sonnet-5)/.test(m)) drop('temperature', 'top_p', 'top_k', 'frequency_penalty', 'presence_penalty');
-    return body;
+    return LM.applyModelRequestRules(provider, model, body);
 }
 
 /** /generate 본문 (통신 없음). 키는 담지 않는다 — 서버가 secrets 에서 붙임 */
@@ -364,13 +365,9 @@ export function buildRequest(cfg, system, user, { maxTokens = MAX_TOKENS } = {})
 }
 /**
  * 생각을 오래 하는 모델은 짧게 (low — 실리태번 서버가 공급자마다 바꿔 보냄): 생각 토큰이 응답 길이를 다 써서 JSON 이 잘리지 않게.
- *   OpenAI: 서버가 추론 모델에만 붙임 · Claude: 적응형 생각 모델(Fable · Claude 5 · Opus 4.7/4.8)만 · Google: Gemini 3 만.
- *   그 밖은 보내지 않는다 (생각을 안 하던 모델이 생각을 시작하거나, 모르는 값을 거절하는 공급자가 있음)
+ *   OpenAI: 서버가 추론 모델에만 붙임 · Claude: 적응형 생각 모델(Fable · Claude 5 이후 · Opus 4.7/4.8)만 · Google: Gemini 3 이후만.
+ *   그 밖은 보내지 않는다 (생각을 안 하던 모델이 생각을 시작하거나, 모르는 값을 거절하는 공급자가 있음). 규칙은 live-models.js 의 lowEffort
  */
 function lowEffort(provider, model) {
-    const m = str(model);
-    if (provider === 'openai') return 'low';
-    if (provider === 'claude' && /claude-(fable|opus-5|sonnet-5|opus-4-[78])/.test(m)) return 'low';
-    if ((provider === 'makersuite' || provider === 'vertexai') && /gemini-3/.test(m)) return 'low';
-    return '';
+    return LM.lowEffort(provider, model);
 }

@@ -69,6 +69,10 @@ export const DEFAULTS = Object.freeze({
     prefetch: 2,
     voices: [],
     char_map: {},
+    account_sync: {},              // 1.3.7 엔진별 마지막 계정 맞춤 시각 (ms) — 목소리 탭을 열 때 6시간에 한 번
+    extras: 'auto',                // 1.3.7 엑스트라 목소리: 'auto' = 목소리를 안 정한 화자(카페 사장 · 점원 …)에게 대사 분석이 알려 준 성별 · 나이로 엔진 기본 목소리를 골라 줌 (같은 이름은 늘 같은 목소리) · 'off' = 기본 목소리 (voices.extraFor)
+    extra_map: {},                 // 1.3.7 { 이름: { g: 'm'|'f', a: 'y'|'a'|'o'|'', l: 언어, t: 처음 본 시각, v: { 엔진 id: voiceId } } } — 300명까지 (오래된 것부터 지움)
+    prefer_provider: '',           // 1.3.7 엔진 자동 맞춤: '' = 지정한 그대로 · 엔진 id = 캐릭터 · 기본 · 나 · 내레이터 목소리를 그 엔진의 같은 이름 목소리로 (voices.preferVoice)
     default_voice: '',
     user_voice: '',
     narrator_voice: '',
@@ -122,6 +126,9 @@ export function toVoice(v, provider = 'minimax') {
         instructions: String(v.instructions || ''),
         prefer_source: ['auto', 'display', 'original'].includes(v.prefer_source) ? v.prefer_source : 'auto',
         mix: Array.isArray(v.mix) ? v.mix.filter(m => m && m.voiceId).slice(0, 4).map(m => ({ voiceId: String(m.voiceId), weight: Math.max(1, Math.min(100, Number(m.weight) || 50)) })) : [],
+        ...(v.gone === true ? { gone: true } : {}),   // 1.3.7 계정 맞춤: 연결된 계정 목록에 없음 → 목록 · 고르기에서 숨김 (voices.syncAccount)
+        ...(cleanModel(v.use_model) ? { use_model: cleanModel(v.use_model) } : {}),
+        ...(v.extra === 'm' || v.extra === 'f' ? { extra: v.extra } : {}),             // 1.3.7 엑스트라로도 쓰기 (남 · 여) — 그 엔진에 이게 있으면 기본 목소리 대신 이것들 가운데서 고른다   // 1.3.7 이 목소리만 쓸 모델 (없으면 엔진에서 고른 모델 — player.voiceCfg)
     };
 }
 
@@ -325,7 +332,7 @@ export function settings() {
     migrate(s);
     for (const [k, v] of Object.entries(DEFAULTS)) {
         if (s[k] === undefined) s[k] = clone(v);
-        else if (isObj(v) && isObj(s[k]) && k !== 'providers' && k !== 'char_map' && k !== 'card_colors') {
+        else if (isObj(v) && isObj(s[k]) && k !== 'providers' && k !== 'char_map' && k !== 'card_colors' && k !== 'extra_map') {
             for (const [kk, vv] of Object.entries(v)) if (s[k][kk] === undefined) s[k][kk] = clone(vv);
         }
     }
@@ -333,6 +340,8 @@ export function settings() {
     if (!HIGHLIGHT_STYLES.includes(s.highlight_style)) s.highlight_style = 'both';
     if (!['weak', 'normal', 'strong'].includes(s.emotion_strength)) s.emotion_strength = 'normal';
     if (!['whisper', 'auto'].includes(s.thought_emotion)) s.thought_emotion = 'whisper';
+    if (!['auto', 'off'].includes(s.extras)) s.extras = 'auto';
+    if (!isObj(s.extra_map)) s.extra_map = {};
     s.pregen_paid = s.pregen_paid === true;   // 5.6.4 켬끔만 (모르는 값은 끔 — 크레딧 아끼는 쪽)
     s.voices = s.voices.filter(v => v && v.uid).map(v => toVoice(v, v.provider));
     // 1.2.3 이름표가 새것이면 한 번: id 이름인 목소리 → 한글 이름 (이름을 고친 목소리는 그대로)

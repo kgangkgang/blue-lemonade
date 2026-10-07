@@ -40,7 +40,7 @@ function rowsHtml(sel, query = '') {
         if (opt.hidden) return;
         const label = opt.label || opt.text || opt.value;
         if (q && !label.toLowerCase().includes(q)) return;
-        out.push(`<button type="button" role="option" data-i="${opt.index}" aria-selected="${opt.selected}" class="${opt.selected ? 'on' : ''}"${opt.disabled ? ' disabled' : ''}><span>${esc(label)}</span><i aria-hidden="true"></i></button>`);
+        out.push(`<button type="button" role="option" data-i="${opt.index}" data-v="${esc(opt.value)}" aria-selected="${opt.selected}" class="${opt.selected ? 'on' : ''}"${opt.disabled ? ' disabled' : ''}><span>${esc(label)}</span><i aria-hidden="true"></i></button>`);
     };
     for (const child of sel.children) {
         if (child.tagName === 'OPTGROUP') {
@@ -108,10 +108,17 @@ function close() {
     back?.focus({ preventScroll: true });
 }
 
-function pick(index) {
+// 5.7.1: 목록이 열린 동안 확장이 select 의 option 을 새로 그리면(모델 목록이 막 도착함) 번호가 가리키는 칸이 달라진다 —
+// 누른 줄의 값으로 고른다 (그 번호의 값이 같으면 그 칸, 아니면 같은 값의 칸, 그 값이 없어졌으면 아무것도 안 바꿈)
+function pick(index, value) {
     const sel = owner;
     close();
-    if (!sel || sel.selectedIndex === index) return;
+    if (!sel) return;
+    if (value !== undefined && sel.options[index]?.value !== value) {
+        index = [...sel.options].findIndex(o => o.value === value);
+        if (index < 0) return;
+    }
+    if (sel.selectedIndex === index) return;
     sel.selectedIndex = index;
     sel.dispatchEvent(new Event('input', { bubbles: true }));
     sel.dispatchEvent(new Event('change', { bubbles: true }));
@@ -157,7 +164,7 @@ function open(sel, anchor = null) {
         // 문서까지 올라가면 실리태번이 "서랍 밖 click" 으로 보고 열린 서랍을 닫는다 — 여기서 멈춤
         e.stopPropagation();
         const btn = e.target.closest('button[data-i]');
-        if (btn && !btn.disabled) pick(Number(btn.dataset.i));
+        if (btn && !btn.disabled) pick(Number(btn.dataset.i), btn.dataset.v);
     });
     const input = box.querySelector('input');
     input?.addEventListener('input', () => { rows.innerHTML = rowsHtml(sel, input.value); });

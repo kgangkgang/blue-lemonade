@@ -2,7 +2,9 @@
 // 공급자 이름은 실리태번의 chat_completion_source 값으로 통일한다 (Google AI Studio = makersuite).
 // 아는 확장은 그 확장의 설정 화면까지 맞춰 주고, 모르는 확장은 켜진 확장의 소스로 설정 키의 주인을 찾아 그 설정의 '공급자 + 모델' 자리 값만 바꾼다 (1.0.5, discover.js).
 import { extension_settings, extensionNames } from '../../../../../../extensions.js';
+import { oai_settings } from '../../../../../../openai.js';
 import { SOURCES } from '../models/sources.js';
+import * as LM from '../../live-models.js';
 import { CORE_KEYS, findNodes, settingsRefs, ownerOf, makeTarget, crawl, skipRegistered, autoSpots } from './discover.js';
 
 const $ = globalThis.jQuery;
@@ -210,3 +212,78 @@ export function listTargets() {
 }
 
 export function supports(target, source) { return !target.sources || target.sources.includes(source); }
+
+// ---------- 모델 고르기 목록 — 공용 목록 src/live-models.js ("항상 최신")
+// 목록 = 공용 목록 (받은 목록이 있으면: 받은 목록 새것 먼저 + 모델 등록 / 없으면: 모델 등록 → 테마가 아는 최신 이름 → 실리태번 화면 목록)
+//      ∪ Custom 에서 주소 칸이 비었을 때(각 확장이 제 주소를 그대로 씀) 그 주소들의 목록 ∪ 대상 확장의 지금 모델 (이름 속 버전 새것 먼저).
+// 'OR_Website' · 직접 입력 표시 · OpenAI 의 채팅 아닌 모델(임베딩 · 음성 · 그림 …)은 뺀다. 아무도 안 쓰는 옛 주소의 목록으로 부풀리지 않는다.
+// 받은 목록은 이 브라우저의 localStorage 에만 둔다 (settings.json 은 폰과 동기화됨). 예전에 설정에 둔 Custom 목록(model_switch.lists)은 읽기만.
+// 받기: ↻ 는 목록을 주는 공급자 모두 · 창을 열 때와 공급자를 바꿀 때는 오래된 목록만 조용히. Custom 은 실리태번 Custom 주소일 때만
+// (실리태번 서버가 저장된 Custom 키를 그 주소로 보낸다 — 새로 친 주소로 키가 가지 않게).
+const MAX_OPTIONS = 1000;
+const cleanUrl = url => String(url || '').trim().replace(/\/+$/, '');
+const isHttp = url => /^https?:\/\//i.test(url);
+/** 목록을 받을 Custom 주소: 모델 전환의 주소 칸 → 비면 실리태번 Custom 주소 */
+export const listUrlOf = url => cleanUrl(url) || cleanUrl(oai_settings?.custom_url);
+const keyOf = (src, url) => LM.cacheKey(src, src === 'custom' ? listUrlOf(url) : undefined);
+
+/** 고를 모델 이름들 (새것 먼저). url = 모델 전환의 주소 칸 */
+export function modelOptions(source, { url = '' } = {}) {
+    const src = LM.sourceOf(source), own = cleanUrl(url);
+    const now = [];
+    for (const target of listTargets()) {
+        try { const r = target.read(); if (r?.source && LM.sourceOf(r.source) === src) now.push(r); } catch { /* 읽지 못한 대상 */ }
+    }
+    const ids = LM.list(src, src === 'custom' ? { customUrl: own } : {}).ids;
+    const extra = [];
+    if (src === 'custom' && !own) {
+        const seen = new Set([listUrlOf('')]);
+        for (const r of now) {
+            const u = cleanUrl(r.url);
+            if (!isHttp(u) || seen.has(u)) continue;
+            seen.add(u);
+            extra.push(...LM.list('custom', { customUrl: u, inheritCustom: false, known: false }).ids);
+        }
+    }
+    for (const r of now) if (r.model) extra.push(String(r.model).trim());
+    return [...new Set([...ids, ...LM.modelIdsFrom(src, extra)])].slice(0, MAX_OPTIONS);
+}
+
+/** 받은 목록이 있나 (이 공급자 · Custom 은 그 주소) */
+export const hasModelList = (source, url = '') => LM.cached(keyOf(LM.sourceOf(source), url)).ids.length > 0;
+
+/** ↻ 로 받을 수 없으면 그 까닭(화면에 그대로), 되면 '' */
+export function fetchBlock(source, url = '') {
+    const src = LM.sourceOf(source);
+    if (!LM.canList(src)) return '이 공급자는 목록을 받아 오지 않아요';
+    if (src === 'custom') {
+        const u = listUrlOf(url);
+        if (!isHttp(u)) return '주소를 먼저 넣어 주세요 (http…)';
+        if (u !== cleanUrl(oai_settings?.custom_url)) return '실리태번 Custom 연결 주소를 먼저 이 주소로 바꿔 주세요. 저장된 키는 설정한 주소에만 보내요.';
+        return '';
+    }
+    if (LM.keyState(src) === 'no') return '실리태번 API 연결에 이 공급자의 키를 먼저 넣어 주세요';
+    return '';
+}
+
+// 목록 요청: Custom 은 예전(설정에 목록을 두던 때)과 글자까지 같은 본문 — custom_url · 실리태번 추가 헤더 · 빈 프록시.
+// 그 밖은 공용 모듈의 본문 (실리태번이 지금 그 공급자에 리버스 프록시를 쓰면 그것까지)
+function listRequest(src, url) {
+    if (src !== 'custom') return { inheritProxy: false };   // 5.7.1 직접 연결의 목록 (본체 프록시 목록은 따로 키 — 바꾸는 애드온들이 그 프록시로 보내지 않음)
+    const u = listUrlOf(url);
+    return { customUrl: u, body: { custom_url: u, custom_include_headers: oai_settings?.custom_include_headers, reverse_proxy: '', proxy_password: '' } };
+}
+
+/** ↻: 받아서 ids (새것 먼저). 못 받으면 던진다 — 예전 목록은 그대로 */
+export function refreshModels(source, url = '') {
+    const src = LM.sourceOf(source), block = fetchBlock(src, url);
+    if (block) return Promise.reject(Object.assign(new Error(block), { blocked: true }));
+    return LM.refresh(src, listRequest(src, url));
+}
+
+/** 창을 열 때 · 공급자를 바꿀 때: 목록이 없거나 하루가 지났으면 조용히 다시 (키가 있을 때만 · 던지지 않음) */
+export function autoModels(source, url = '') {
+    const src = LM.sourceOf(source);
+    if (!LM.canList(src) || (src === 'custom' && listUrlOf(url) !== cleanUrl(oai_settings?.custom_url))) return Promise.resolve(null);
+    return LM.autoRefresh(src, listRequest(src, url));
+}

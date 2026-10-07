@@ -1,4 +1,4 @@
-#model-switch-settings{--ms-version:"1.0.5"}
+#model-switch-settings{--ms-version:"1.0.6"}
 #model-switch-settings .inline-drawer-content{display:flex;flex-direction:column;gap:12px;text-align:left}
 .ms-presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
 .ms-presets:empty{display:none}

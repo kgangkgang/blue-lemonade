@@ -5,14 +5,13 @@ import { getSettings } from '../../settings.js';
 // 중계 서버가 안 될 때 공식 API 로, 되면 다시 중계로: 조합을 저장해 두고 눌러서 바꾼다.
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
 import { extension_settings } from '../../../../../../extensions.js';
-import { saveSettingsDebounced, eventSource, event_types, getRequestHeaders } from '../../../../../../../script.js';
-import { oai_settings } from '../../../../../../openai.js';
+import { saveSettingsDebounced, eventSource, event_types } from '../../../../../../../script.js';
 import { SOURCES } from '../models/sources.js';
-import { listTargets, supports, registry, discoverTargets } from './targets.js';
+import * as LM from '../../live-models.js';
+import { listTargets, supports, registry, discoverTargets, modelOptions, hasModelList, listUrlOf, fetchBlock, refreshModels, autoModels } from './targets.js';
 import { setLocks, withoutLock } from './lock.js';
 
-const VERSION = '1.0.5';
-const MAX_LISTS = 3;
+const VERSION = '1.0.6';
 const MAX_PRESETS = 8;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const label = source => SOURCES.find(s => s.id === source)?.label || source;
@@ -27,6 +26,7 @@ function store() {
     if (!Array.isArray(s.presets)) s.presets = [];
     s.presets = s.presets.filter(p => p && typeof p.name === 'string' && typeof p.source === 'string' && typeof p.model === 'string').slice(0, MAX_PRESETS);
     if (!s.draft || typeof s.draft !== 'object') s.draft = { source: 'custom', model: '', url: '' };
+    // 예전에 받아 둔 Custom 주소별 목록 — 이제 읽기만 한다 (새 목록은 이 브라우저의 localStorage, live-models.js)
     if (!s.lists || typeof s.lists !== 'object' || Array.isArray(s.lists)) s.lists = {};
     s.lock = s.lock === true;
     return s;
@@ -43,44 +43,30 @@ function syncLocks() {
 
 const cleanUrl = url => String(url || '').trim().replace(/\/+$/, '');
 // 주소 칸이 비면 실리태번 본체의 Custom 주소가 쓰인다
-const listUrl = () => cleanUrl(store().draft.url) || cleanUrl(oai_settings.custom_url);
+const listUrl = () => listUrlOf(store().draft.url);
 
-/** 실리태번에 설정한 Custom 주소의 모델 목록을 받아 온다 (저장된 Custom 키). 주소별로 최근 3개만 보관. */
+/** ↻ — 목록을 주는 공급자의 모델 목록을 실리태번 서버로 받아 온다 (키는 서버가 붙임). Custom 은 실리태번에 설정한 주소만 */
 async function fetchModels() {
-    const url = listUrl();
     if (fetching) return;
-    if (!/^https?:\/\//i.test(url)) { note = '주소를 먼저 넣어 주세요 (http…)'; render(); return; }
-    if (url !== cleanUrl(oai_settings.custom_url)) { note = '실리태번 Custom 연결 주소를 먼저 이 주소로 바꿔 주세요. 저장된 키는 설정한 주소에만 보내요.'; render(); return; }
+    const d = store().draft, block = fetchBlock(d.source, d.url);
+    if (block) { note = block; render(); return; }
     fetching = true; note = '모델 목록을 불러오는 중…'; render();
     try {
-        const own = url === cleanUrl(oai_settings.custom_url);
-        const response = await fetch('/api/backends/chat-completions/status', {
-            method: 'POST', headers: getRequestHeaders(), signal: AbortSignal.timeout(30000),
-            body: JSON.stringify({ chat_completion_source: 'custom', custom_url: url, custom_include_headers: own ? oai_settings.custom_include_headers : '', reverse_proxy: '', proxy_password: '' }),
-        });
-        const data = response.ok ? await response.json() : null;
-        const models = [...new Set((Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : []).map(item => String(item?.id ?? item?.name ?? '')).filter(Boolean))].slice(0, 400);
-        if (!models.length) throw Error(data?.error ? '주소나 키를 확인해 주세요' : '목록이 비어 있어요');
-        const s = store(); s.lists[url] = { models, fetchedAt: new Date().toISOString() };
-        for (const old of Object.keys(s.lists).sort((a, b) => String(s.lists[b].fetchedAt).localeCompare(String(s.lists[a].fetchedAt))).slice(MAX_LISTS)) delete s.lists[old];
-        saveSettingsDebounced(); note = `모델 ${models.length}개`; picking = true;
-    } catch (error) { note = `목록을 못 불러왔어요: ${error?.name === 'TimeoutError' ? '시간 초과' : error?.message || error}`; }
+        const models = await refreshModels(d.source, d.url);
+        if (!models.length) throw Error('목록이 비어 있어요');
+        note = `모델 ${models.length}개`; picking = true;
+    } catch (error) {
+        const why = error?.name === 'TimeoutError' || error?.name === 'AbortError' ? '시간 초과'
+            : error?.empty || (error?.status >= 400 && error?.status < 500) ? (d.source === 'custom' ? '주소나 키를 확인해 주세요' : '키를 확인해 주세요') : error?.message || error;
+        note = `목록을 못 불러왔어요: ${why}`;
+    }
     fetching = false; render();
 }
 
-function modelOptions(source) {
-    const names = new Set();
-    // 지금 주소의 목록이 맨 앞
-    if (source === 'custom') for (const name of store().lists[listUrl()]?.models || []) names.add(String(name));
-    const selector = SOURCES.find(s => s.id === source)?.selector;
-    if (selector) document.querySelectorAll(`${selector} option`).forEach(o => { if (o.value) names.add(o.value); });
-    if (source === 'custom') {
-        const lists = [extension_settings['llm-translator-custom']?.custom_model_lists, extension_settings.memoria?.direct?.customModelLists, extension_settings.ban_word_rewrite?.customModelLists];
-        lists.push(extension_settings['prompt-panel']?.customModelLists);
-        for (const byUrl of lists) for (const entry of Object.values(byUrl || {})) for (const name of (Array.isArray(entry) ? entry : entry?.models) || []) names.add(String(name));
-    }
-    for (const target of listTargets()) { try { const now = target.read(); if (now?.source === source && now.model) names.add(now.model); } catch { /* 읽지 못한 대상 */ } }
-    return [...names].slice(0, 400);
+/** 창을 열 때 · 공급자를 바꿀 때: 오래된 목록만 조용히 다시 받는다 (다 받으면 LM.onChange 가 다시 그림) */
+function autoList() {
+    const d = store().draft;
+    autoModels(d.source, d.url).catch(() => {});
 }
 
 function describe(now) {
@@ -106,15 +92,15 @@ function render() {
     if (document.activeElement !== url) url.value = d.url || '';
     root.querySelector('.ms-url').hidden = d.source !== 'custom';
     const fetchButton = root.querySelector('[data-act="fetch"]');
-    fetchButton.hidden = d.source !== 'custom'; fetchButton.disabled = fetching; fetchButton.classList.toggle('is-busy', fetching);
+    fetchButton.hidden = !LM.canList(d.source); fetchButton.disabled = fetching; fetchButton.classList.toggle('is-busy', fetching);
     const box = root.querySelector('.ms-options'); box.hidden = !picking;
     root.querySelector('[data-act="pick"]').setAttribute('aria-expanded', String(picking));
     if (picking) {
-        const all = modelOptions(d.source), typed = d.model.trim().toLowerCase();
+        const all = modelOptions(d.source, { url: d.url }), typed = d.model.trim().toLowerCase();
         const hit = typed && !all.includes(d.model.trim()) ? all.filter(name => name.toLowerCase().includes(typed)) : all;
         const list = hit.length ? hit : all;
         box.innerHTML = list.length ? list.map(name => `<button type="button" class="ms-option ${name === d.model ? 'on' : ''}" data-model="${esc(name)}">${esc(name)}</button>`).join('')
-            : `<p class="ms-empty">${d.source === 'custom' ? '이 주소의 목록이 없어요. ↻ 로 불러오거나 직접 적어 주세요.' : '목록이 없어요. 직접 적어 주세요.'}</p>`;
+            : `<p class="ms-empty">${d.source === 'custom' ? '이 주소의 목록이 없어요. ↻ 로 불러오거나 직접 적어 주세요.' : LM.canList(d.source) ? '목록이 없어요. ↻ 로 불러오거나 직접 적어 주세요.' : '목록이 없어요. 직접 적어 주세요.'}</p>`;
     }
     root.querySelector('.ms-targets').innerHTML = targets.length ? targets.map(target => {
         let now = null; try { now = target.read(); } catch { /* 읽지 못함 */ }
@@ -178,7 +164,7 @@ function mount() {
   <div class="ms-presets"></div>
   <div class="ms-form">
     <label><span>공급자</span><select class="text_pole" data-field="source"></select></label>
-    <div class="ms-row"><span>모델</span><span class="ms-model"><input class="text_pole" data-field="model" autocomplete="off" spellcheck="false" aria-label="모델"><button type="button" class="ms-icon" data-act="fetch" aria-label="이 주소의 모델 목록 불러오기" hidden><i class="fa-solid fa-rotate"></i></button><button type="button" class="ms-icon" data-act="pick" aria-label="모델 고르기" aria-expanded="false"><i class="fa-solid fa-chevron-down"></i></button></span></div>
+    <div class="ms-row"><span>모델</span><span class="ms-model"><input class="text_pole" data-field="model" autocomplete="off" spellcheck="false" aria-label="모델"><button type="button" class="ms-icon" data-act="fetch" aria-label="모델 목록 불러오기" hidden><i class="fa-solid fa-rotate"></i></button><button type="button" class="ms-icon" data-act="pick" aria-label="모델 고르기" aria-expanded="false"><i class="fa-solid fa-chevron-down"></i></button></span></div>
     <div class="ms-options" hidden></div>
     <label class="ms-url"><span>주소</span><input class="text_pole" data-field="url" placeholder="비우면 각 확장의 주소 그대로" autocomplete="off" spellcheck="false"></label>
   </div>
@@ -200,7 +186,7 @@ function mount() {
             const s = store(); s.draft.source = el.value;
             // 공급자를 바꾸면 그 공급자로 저장해 둔 조합의 모델을 먼저 채운다
             const preset = s.presets.find(p => p.source === el.value); s.draft.model = preset?.model || ''; s.draft.url = preset?.url || '';
-            note = ''; saveSettingsDebounced(); render();
+            note = ''; saveSettingsDebounced(); render(); autoList();
         } else if (el.dataset?.field) { render(); }
         else if (el.dataset?.target) { store().targets[el.dataset.target] = el.checked; saveSettingsDebounced(); syncLocks(); render(); }
         else if ('lock' in (el.dataset || {})) { store().lock = el.checked; saveSettingsDebounced(); syncLocks(); }
@@ -210,16 +196,17 @@ function mount() {
         if (pull) {
             event.preventDefault();
             const now = listTargets().find(target => target.id === pull.dataset.pull)?.read();
-            if (now && !now.follow) { store().draft = { source: now.source, model: now.model, url: now.url || '' }; note = ''; saveSettingsDebounced(); render(); }
+            if (now && !now.follow) { store().draft = { source: now.source, model: now.model, url: now.url || '' }; note = ''; saveSettingsDebounced(); render(); autoList(); }
             return;
         }
-        if (chip) { const p = store().presets[Number(chip.dataset.preset)]; if (p) { store().draft = { source: p.source, model: p.model, url: p.url || '' }; note = ''; saveSettingsDebounced(); render(); } return; }
+        if (chip) { const p = store().presets[Number(chip.dataset.preset)]; if (p) { store().draft = { source: p.source, model: p.model, url: p.url || '' }; note = ''; saveSettingsDebounced(); render(); autoList(); } return; }
         const option = event.target.closest('[data-model]');
         if (option) { store().draft.model = option.dataset.model; picking = false; note = ''; saveSettingsDebounced(); render(); return; }
         if (act === 'pick') {
             picking = !picking;
-            // Custom 주소인데 그 주소의 목록이 아직 없으면 열면서 바로 받아 온다
-            if (picking && store().draft.source === 'custom' && !store().lists[listUrl()] && /^https?:/i.test(listUrl())) { fetchModels(); return; }
+            // Custom 주소인데 그 주소의 목록이 아직 없으면 열면서 바로 받아 온다 (그 밖은 오래된 목록만 조용히)
+            if (picking && store().draft.source === 'custom' && !hasModelList('custom', store().draft.url) && /^https?:/i.test(listUrl())) { fetchModels(); return; }
+            if (picking) autoList();
             render(); return;
         }
         if (act === 'fetch') { fetchModels(); return; }
@@ -230,6 +217,13 @@ function mount() {
             s.presets = s.presets.filter(p => !(p.source === d.source && p.model === d.model && (p.url || '') === (d.url || '')));
             saveSettingsDebounced(); render();
         }
+    });
+    // 목록을 새로 받으면 (↻ · 조용히 다시 · 실리태번이 연결하며 받은 목록) 보이는 창만 다시 그린다 — 모델 칸 · 목록을 만지는 중이면 다음 입력 때
+    LM.onChange(({ source }) => {
+        if (!root?.isConnected || root.closest('[hidden]') || source !== LM.sourceOf(store().draft.source)) return;
+        const active = document.activeElement;
+        if (active && (active === root.querySelector('[data-field="model"]') || root.querySelector('.ms-options')?.contains(active))) return;
+        render();
     });
     verifyAddonCss({ folder: 'modelswitch', name: '--ms-version', version: VERSION, title: '모델 전환', selector: '#model-switch-settings' });
 }
@@ -245,14 +239,14 @@ window.addEventListener('bl:model-switch-targets', render);
 
 export async function openPanel() {
     if (inlineHost?.isConnected && inlineHost.offsetParent) { root.scrollIntoView({ block: 'nearest' }); return; }
-    if (opening) return; opening = true; mount(); note = ''; render();
+    if (opening) return; opening = true; mount(); note = ''; render(); autoList();
     root.querySelector('.inline-drawer-content').style.display = 'flex';
     try { await callGenericPopup(root, POPUP_TYPE.TEXT, '', { okButton: '닫기', wide: true, allowVerticalScrolling: true, onOpen: popup => popup?.dlg?.classList.add('bl-roomy-dialog') }); }
     finally { (inlineHost?.isConnected ? inlineHost : holder).replaceChildren(root); opening = false; }
 }
 
 export function mountInline(host) {
-    mount(); note = ''; render();
+    mount(); note = ''; render(); autoList();
     inlineHost = host; if (opening) host.textContent = '열린 설정창을 닫으면 여기에 표시돼요.'; else host.replaceChildren(root); root.classList.add('bl-embedded-settings');
     const content = root.querySelector('.inline-drawer-content'); if (content) content.style.display = 'flex';
     return () => { if (inlineHost !== host) return; inlineHost = null; root.classList.remove('bl-embedded-settings'); if (!opening) holder.append(root); };

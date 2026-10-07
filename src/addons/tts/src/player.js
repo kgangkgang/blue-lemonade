@@ -621,8 +621,21 @@ function paramsFor(provider, voice) {
  * 1.2.5: 엔진이 modelFor 를 주면(MiniMax) model 칸 = 실제로 요청할 모델 ('목소리를 만든 모델'이면 목소리마다 다름), 모드 칸(nokey)은 넣지 않음 —
  *   고른 모델로 읽으면 1.2.4 와 같은 키 (캐시 그대로), 모델이 바뀌면 다른 소리. 미리 만들기 · 대사 클릭 · 자동 읽기 · 내려받기 모두 finishJobs → 여기
  */
+/**
+ * 1.3.7 목소리마다 모델 (목소리 편집 → 모델): 그 목소리에 use_model 이 있고 엔진에 모델 칸이 있으면 그 모델로 읽는다 (직접 입력 칸은 비움).
+ * 없으면 엔진 설정 객체 그대로 — 1.3.6 과 같은 요청 · 같은 캐시 키. 합성 · 캐시 키 · 감정 세기가 모두 이것을 본다
+ */
+export function voiceCfg(provider, voice, cfg) {
+    const c = cfg || providerConfig(provider.id, provider.defaults || {});
+    const m = voice && typeof voice.use_model === 'string' ? voice.use_model.trim() : '';
+    const fields = provider.fields || [];
+    if (!m || !fields.some(f => f.key === 'model')) return c;
+    const out = { ...c, model: m };
+    if (fields.some(f => f.key === 'model_custom')) out.model_custom = '';
+    return out;
+}
 export function keyOf(job) {
-    const cfg = providerConfig(job.provider.id, job.provider.defaults || {});
+    const cfg = voiceCfg(job.provider, job.voice);
     const fields = {};
     for (const f of job.provider.fields || []) if (f.type !== 'password' && f.key !== 'key' && f.key !== 'apiKey' && !f.nokey) fields[f.key] = cfg[f.key];
     if (typeof job.provider.modelFor === 'function') fields.model = job.provider.modelFor(job.voice, cfg, job.emotion || job.params?.emotion);   // 1.3.1 속삭임 → 2.6
@@ -653,7 +666,7 @@ function fitStrength(j, s) {
     const k = s.emotion_strength;
     if (k === 'weak' && j.emotion !== 'whisper') j.emotion = '';
     else if (k === 'strong' && j.emotion && typeof j.provider.strengthApplies === 'function'
-        && j.provider.strengthApplies(j.voice, providerConfig(j.provider.id, j.provider.defaults || {}), j.emotion)) j.params.emotion_strength = 'strong';
+        && j.provider.strengthApplies(j.voice, voiceCfg(j.provider, j.voice), j.emotion)) j.params.emotion_strength = 'strong';
 }
 function joiner(job, s) {
     const gap = Number(s.gap_ms) || 0;
@@ -854,7 +867,7 @@ async function synthRetry(job, cfg, signal, e = null) {
         if (e && keyOf(job) !== job.key) e.moved = true;
         if (e) e.sent = true;
         try {
-            return await job.provider.synth({ text: job.text, voice: job.voice, cfg, params: job.params, lang: job.lang, emotion: job.emotion, signal });
+            return await job.provider.synth({ text: job.text, voice: job.voice, cfg: voiceCfg(job.provider, job.voice, cfg), params: job.params, lang: job.lang, emotion: job.emotion, signal });
         } catch (err) {
             if (signal.aborted || isAbort(err)) throw abortError();
             if (isRate(err)) coolDown(job.provider.id);                // 탭이 받은 429 · 1002 도 미리 만들기 줄을 쉬게 (탭은 그대로)

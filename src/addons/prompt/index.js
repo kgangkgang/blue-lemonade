@@ -8,7 +8,7 @@ import { installGuide } from './guide.js';
 import { leaveSettingsDialog } from '../../settings-dialog.js';
 import { canPickFor, openPickFor } from '../../selects.js';
 import { settingsHTML } from './settings-ui.js';
-import { requestActive, applyCustomConnection, customEndpoint, bindConnection } from './connection.js';
+import { requestActive, bindConnection, directParameters, renderModelSelect, modelListKey, canListModels, watchModelLists, autoListModels, syncModelMemory, restoreModel } from './connection.js';
 /**
   * Prompt Panel
  */
@@ -91,19 +91,7 @@ const PROVIDER_LIST = [
     { key: 'xai',        label: 'xAI (Grok)',       source: 'xai'        },
     { key: 'zai',        label: 'Z.AI (GLM)',       source: 'zai'        },
 ];
-const PROVIDER_MODELS = {
-    openai:     ['gpt-4o','gpt-4o-mini','gpt-4.1','gpt-4.1-mini','gpt-4.1-nano','o3','o3-mini','o4-mini','chatgpt-4o-latest','gpt-4-turbo','gpt-3.5-turbo'],
-    claude:     ['claude-opus-4-6','claude-opus-4-5','claude-sonnet-4-6','claude-sonnet-4-5','claude-haiku-4-5','claude-3-7-sonnet-latest','claude-3-5-sonnet-latest','claude-3-5-haiku-latest','claude-3-opus-20240229'],
-    google:     ['gemini-3.6-flash','gemini-3.5-flash','gemini-3.5-flash-lite','gemini-3.1-pro-preview','gemini-3.1-flash-lite','gemini-3.1-flash-lite-preview','gemini-3-pro-preview','gemini-3-flash-preview','gemini-2.5-pro','gemini-2.5-flash','gemini-2.5-flash-lite'],
-    vertexai:   ['gemini-3.6-flash','gemini-3.5-flash','gemini-3.5-flash-lite','gemini-3.1-pro-preview','gemini-3.1-flash-lite','gemini-3.1-flash-lite-preview','gemini-3-pro-preview','gemini-3-flash-preview','gemini-2.5-pro','gemini-2.5-flash','gemini-2.5-flash-lite'],
-    openrouter: ['deepseek/deepseek-r1','deepseek/deepseek-chat','google/gemini-2.5-pro','google/gemini-2.5-flash','anthropic/claude-3-haiku','meta-llama/llama-3-70b-instruct'],
-    deepseek:   ['deepseek-v4-pro','deepseek-v4-flash'],
-    mistralai:  ['mistral-large-latest','mistral-medium-latest','mistral-small-latest','open-mistral-nemo','pixtral-large-latest'],
-    groq:       ['llama-3.3-70b-versatile','llama-3.1-70b-versatile','gemma2-9b-it','qwen/qwen3-32b','deepseek-r1-distill-llama-70b','mixtral-8x7b-32768'],
-    cohere:     ['command-a-03-2025','command-r-plus','command-r','c4ai-aya-expanse-32b'],
-    xai:        ['grok-4','grok-3','grok-3-mini','grok-2'],
-    zai:        ['glm-5.2','glm-5.1','glm-5','glm-5-turbo','glm-4.7','glm-4.7-flash','glm-4.6','glm-4.5-flash'],
-};
+// 모델 목록은 공용 live-models.js 가 준다 (공급자가 지금 주는 목록 · 없으면 모델 등록 · 테마가 아는 최신 · 실리태번 화면 목록) — connection.js
 const PROVIDER_TO_SOURCE = {
     custom:'custom', openai:'openai', claude:'claude', google:'makersuite', vertexai:'vertexai',
     openrouter:'openrouter', deepseek:'deepseek', mistralai:'mistralai', groq:'groq', cohere:'cohere', xai:'xai', zai:'zai',
@@ -158,6 +146,8 @@ function cfg() {
     if (!c.connectionMode) c.connectionMode = c.provider === ST_PROFILE ? 'profile' : c.provider ? 'direct' : 'current';
     if (!c.provider)      c.provider      = 'openai';
     if (!c.model)         c.model         = 'gpt-4o-mini';
+    // 공급자별로 고른 모델 (c.models[공급자]) — 공급자를 바꿨다 돌아와도 쓰던 모델 그대로. 예전 c.model 은 지금 공급자의 기억으로 옮겨진다
+    syncModelMemory(c);
     if (c.prefillEnabled === undefined) c.prefillEnabled = false;
     if (!c.prefillText)   c.prefillText   = 'Understood. Executing the translation as instructed. Here is the translation:';
     if (c.useReverseProxy === undefined) c.useReverseProxy = false;
@@ -694,24 +684,8 @@ async function runCompletionOnce(messages, tweak) {
     const { params } = getCurrentParams();
     const providerParams = getProviderSpecificParams(prov, params);
     if (prov === 'claude' && !providerParams.max_tokens) providerParams.max_tokens = budgetFor(messages);
-    const parameters = { model, messages, stream: false, chat_completion_source: source, ...providerParams };
-    if (source === 'vertexai') {
-        // Read Vertex auth mode and region from ST's main API settings (oai_settings).
-        // Hardcoding 'full' breaks users whose ST is configured in 'express' mode,
-        // and missing region/project_id causes 404 on certain models.
-        parameters.vertexai_auth_mode = oai_settings?.vertexai_auth_mode || 'full';
-        const region = oai_settings?.vertexai_region;
-        if (region) parameters.vertexai_region = region;
-        if (parameters.vertexai_auth_mode === 'express' && oai_settings?.vertexai_express_project_id) {
-            parameters.vertexai_express_project_id = oai_settings.vertexai_express_project_id;
-        }
-    }
-    if(source==='custom')applyCustomConnection(parameters,c,oai_settings);
-    if (source!=='custom' && c.useReverseProxy && c.reverseProxyUrl?.trim()) {
-        parameters.reverse_proxy = c.reverseProxyUrl.trim();
-        parameters.proxy_password = c.reverseProxyPassword || '';
-    }
-    if (typeof tweak === 'function') tweak(parameters, params, providerParams);
+    // 예전과 같은 본문 + 공용 모델별 요청 규칙 (o 시리즈 · GPT-5 이후 · Claude 5 이후의 샘플링 값) — connection.js directParameters
+    const parameters = directParameters({ c, source, model, messages, params, providerParams, host: oai_settings, tweak });
 
     // 응답이 영영 오지 않는 요청을 끊고, 중단 버튼이 진행 중인 요청까지 즉시
     // 취소할 수 있게 한다. 성공 경로에서 오가는 값은 이전과 동일하다.
@@ -4469,22 +4443,20 @@ function buildProfileOptions() {
 // rather than left showing values that no longer affect anything.
 function applyProviderModeUI() {
  const c=cfg(),mode=c.connectionMode;
- for(const [id,on] of Object.entries({'pt-current-hint':mode==='current','pt-current-options':mode==='current','pt-profile-settings':mode==='profile','pt-direct-settings':mode==='direct','pt-custom-endpoint':c.provider==='custom','pt-proxy-toggle-row':c.provider!=='custom','pt-proxy-wrap':c.provider!=='custom'&&c.useReverseProxy})) {
+ for(const [id,on] of Object.entries({'pt-current-hint':mode==='current','pt-current-options':mode==='current','pt-profile-settings':mode==='profile','pt-direct-settings':mode==='direct','pt-custom-endpoint':c.provider==='custom','pt-proxy-toggle-row':c.provider!=='custom','pt-proxy-wrap':c.provider!=='custom'&&c.useReverseProxy,'pt-fetch-models':canListModels(c)})) {
   const el=document.getElementById(id);if(el)el.style.display=on?'':'none';
  }
  if(mode==='profile')document.getElementById('pt-profile-select').innerHTML=buildProfileOptions();
 }
 
 function updateModelDropdown() {
-    const c=cfg(), prov=c.provider||'openai';
+    const c=cfg();
     const sel=document.getElementById('pt-model-select'); if(!sel) return;
-    const models=prov==='custom'?(c.customModelLists?.[customEndpoint(c,oai_settings).url]||[]):(PROVIDER_MODELS[prov]||[]), current=c.model||'';
-    let html='<option value="">모델 선택...</option>';
-    models.forEach(m=>{html+=`<option value="${esc(m)}" ${current===m?'selected':''}>${esc(m)}</option>`;});
-    if(current && current!=='__custom__' && !models.includes(current))html+=`<option value="${esc(current)}" selected>${esc(current)}</option>`;
-    html+=`<option value="__custom__" ${current==='__custom__'?'selected':''}> 커스텀 모델 입력</option>`;
-    sel.innerHTML=html;
-    const cr=document.getElementById('pt-custom-model-row'); if(cr)cr.style.display=(current==='__custom__')?'':'none';
+    // 저장된 모델은 늘 보이고 골라 둔 채 (목록에 없으면 '(이전 목록)' · '(이 주소 목록에 없음)'), 맨 끝은 커스텀 모델 입력
+    renderModelSelect(sel,c,oai_settings);
+    const ci=document.getElementById('pt-model-custom');
+    if(ci&&ci.ownerDocument.activeElement!==ci&&ci.value!==(c.customModelName||''))ci.value=c.customModelName||'';
+    const cr=document.getElementById('pt-custom-model-row'); if(cr)cr.style.display=(c.model==='__custom__')?'':'none';
 }
 
 function updateCacheStatsUI() {
@@ -4622,20 +4594,27 @@ export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
         applyFontSizes();
     });
     $('#pt-provider').on('change',function(){
-        cfg().provider=this.value;
+        const c=cfg();   // 떠나는 공급자의 모델은 cfg() 가 기억해 둔다
+        c.provider=this.value;
         // Keep the previously chosen model when switching to 프로필 — switching
         // back should land on the same provider/model the person had set up.
-        if (this.value !== ST_PROFILE) cfg().model=(PROVIDER_MODELS[this.value]||[])[0]||'';
+        // 그 공급자에서 쓰던 모델로 돌아온다 (처음 고르는 공급자면 목록 맨 앞)
+        if (this.value !== ST_PROFILE) restoreModel(c, oai_settings);
         saveSettingsDebounced();
+        const note=document.getElementById('pt-models-status'); if(note){note.textContent='';note.hidden=true;}
         if (this.value !== ST_PROFILE) { updateModelDropdown(); buildParamsUI(); }
         applyProviderModeUI();
         updateStatusModel();
+        autoListModels(c, oai_settings);
     });
     $(document).on('change','#pt-profile-select',function(){cfg().stProfileId=this.value;saveSettingsDebounced();updateStatusModel();});
     // The Connection Manager list can change while the drawer sits open.
     $(document).on('mousedown','#pt-profile-select',function(){ const v=cfg().stProfileId||''; this.innerHTML=buildProfileOptions(); this.value=v; });
-    $(document).on('change','#pt-model-select',function(){cfg().model=this.value;saveSettingsDebounced();const cr=document.getElementById('pt-custom-model-row');if(cr)cr.style.display=(this.value==='__custom__')?'':'none';updateStatusModel();});
-    $(document).on('input','#pt-model-custom',function(){cfg().customModelName=this.value;saveSettingsDebounced();updateStatusModel();});
+    $(document).on('change','#pt-model-select',function(){const c=cfg();c.model=this.value;syncModelMemory(c);saveSettingsDebounced();const cr=document.getElementById('pt-custom-model-row');if(cr)cr.style.display=(this.value==='__custom__')?'':'none';updateStatusModel();});
+    $(document).on('input','#pt-model-custom',function(){const c=cfg();c.customModelName=this.value;syncModelMemory(c);saveSettingsDebounced();updateStatusModel();});
+    // 목록을 고르는 중에 새 목록이 오면 다 고른 뒤에 다시 그린다
+    let modelListPending=false;
+    $(document).on('focusout','#pt-model-select',()=>{if(modelListPending){modelListPending=false;updateModelDropdown();}});
     $('#pt-use-proxy').on('change',function(){cfg().useReverseProxy=this.checked;saveSettingsDebounced();$('#pt-proxy-wrap').toggle(this.checked);});
     $(document).on('input','#pt-proxy-url',function(){cfg().reverseProxyUrl=this.value;saveSettingsDebounced();});
     $(document).on('input','#pt-proxy-pw',function(){cfg().reverseProxyPassword=this.value;saveSettingsDebounced();});
@@ -4663,8 +4642,20 @@ export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
         cancel:()=>{if(regexOwnsRequest)requestStop();},
     });
     installGuide({doc:PDOC, cfg, save:saveSettingsDebounced, openPanel, closePanel});
-    bindConnection({doc:PDOC,cfg,save:saveSettingsDebounced,host:oai_settings,extensions:extension_settings,headers:getRequestHeaders,models:PROVIDER_MODELS,refresh:()=>{updateModelDropdown();buildParamsUI();applyProviderModeUI();updateStatusModel();}});
+    bindConnection({doc:PDOC,cfg,save:saveSettingsDebounced,host:oai_settings,extensions:extension_settings,refresh:()=>{updateModelDropdown();buildParamsUI();applyProviderModeUI();updateStatusModel();}});
     updateModelDropdown();buildParamsUI();applyProviderModeUI();
+    // 새 목록이 오면 (받은 뒤 · 실리태번이 연결하며 받은 목록) 이 공급자 것일 때만 다시 그린다 — 고르는 중이면 다 고른 뒤
+    watchModelLists(({key})=>{
+        const sel=PDOC.getElementById('pt-model-select'),c=cfg();
+        if(!sel||c.connectionMode!=='direct'||key!==modelListKey(c,oai_settings))return;
+        if(sel.ownerDocument.activeElement===sel){modelListPending=true;return;}
+        updateModelDropdown();
+    });
+    // 설정 → 연결 화면을 열 때만 조용히 목록을 다시 받는다 (하루 지난 목록 · 키가 있을 때). 페이지를 열 때는 통신하지 않는다
+    const openModelSettings=()=>{updateModelDropdown();autoListModels(cfg(),oai_settings);};
+    PDOC.querySelector('#pt-tabs .pt-tab[data-tab="settings"]')?.addEventListener('click',openModelSettings);
+    PDOC.querySelector('.pt-settings-nav [data-setting-tab="connection"]')?.addEventListener('click',openModelSettings);
+    PDOC.getElementById('pt-panel')?.addEventListener('pt:opened',()=>{if(PDOC.getElementById('pt-page-settings')?.classList.contains('active'))openModelSettings();});
 
     dockPanel();
     const drawerContent = PDOC.getElementById('pt-drawer-host').parentElement;

@@ -137,6 +137,7 @@ export default {
                 name: `${v.LocalName || v.DisplayName || v.ShortName}${gender}`,
                 lang: toLang(v.Locale),
                 group: String(v.Locale || '기타'),
+                gender: v.Gender === 'Female' ? 'f' : v.Gender === 'Male' ? 'm' : '',   // 1.3.7 엑스트라 목소리
             };
         });
     },

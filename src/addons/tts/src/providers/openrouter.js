@@ -1,29 +1,27 @@
 // OpenRouter 음성 합성 (OpenAI 호환 /audio/speech) — Fish Audio · Gemini · MiniMax 등을 한 키로
 import { providerConfig } from '../settings.js';
 import { fetchJson } from './_http.js';
-import { OPENAI_VOICES, joinInstructions, pickModel, postSpeech, num, clamp } from './openai.js';
+import { OPENAI_VOICES, OPENAI_GENDER, joinInstructions, pickModel, postSpeech, num, clamp } from './openai.js';
+import { modelOptions as liveOptions, storeModels, shared } from './_models.js';
 
 const ID = 'openrouter';
 const BASE = 'https://openrouter.ai/api/v1';
-// 목록을 못 받았을 때 보여 줄 모델 (연결 확인·목소리 불러오기가 실제 목록으로 바꿔 준다)
+// 목록을 못 받았을 때 보여 줄 모델 (1.3.7 GET /models?output_modalities=speech 는 키 없이 되어 엔진 카드를 열면 12시간마다 새 목록으로).
+//   10-07 목록 기준: openai/gpt-4o-mini-tts 는 OpenRouter 에서 빠짐 — 고른 사람은 그대로 남고 '목록에 없음' 으로 보임.
+//   맨 앞이 새로 설치할 때의 기본 (google/ 는 목소리 목록을 줄 수 있음)
 const FALLBACK_MODELS = [
-    'openai/gpt-4o-mini-tts',
-    'openai/gpt-4o-mini-tts-2025-12-15',
+    'google/gemini-3.8-flash-tts',
     'google/gemini-3.8-flash-lite-tts',
+    'microsoft/mai-voice-2.1',
+    'minimax/speech-2.8-hd',
     'fish-audio/s2.1-pro',
     'mistralai/voxtral-mini-tts-2603',
-    'microsoft/mai-voice-2',
 ];
 const GEMINI_VOICES = ['Zephyr', 'Puck', 'Charon', 'Kore', 'Fenrir', 'Leda', 'Orus', 'Aoede', 'Callirrhoe', 'Autonoe', 'Enceladus', 'Iapetus', 'Umbriel', 'Algieba', 'Despina', 'Erinome', 'Algenib', 'Rasalgethi', 'Laomedeia', 'Achernar', 'Alnilam', 'Schedar', 'Gacrux', 'Pulcherrima', 'Achird', 'Zubenelgenubi', 'Vindemiatrix', 'Sadachbia', 'Sadaltager', 'Sulafat'];
 
-let modelCache = null; // [{ value, label }] — listModels() 가 채움
-
-function modelOptions() {
-    const list = modelCache ? modelCache.slice() : FALLBACK_MODELS.map(m => ({ value: m, label: m }));
-    const cur = providerConfig(ID, defaults).model;
-    if (cur && cur !== 'custom' && !list.some(o => o.value === cur)) list.push({ value: cur, label: cur });
-    list.push({ value: 'custom', label: '직접 입력' });
-    return list;
+/** 받은 목록(_models.js 캐시 — 새로 고침해도 남음) || 기본 목록, 저장된 값, 직접 입력 */
+function modelOptions(cfg) {
+    return liveOptions(ID, FALLBACK_MODELS, cfg || providerConfig(ID, defaults));
 }
 
 const fields = [
@@ -39,22 +37,26 @@ const defaults = Object.fromEntries([...fields, ...params].filter(f => f.default
 
 const auth = (c) => (c.key ? { Authorization: `Bearer ${c.key}` } : {});
 
-/** TTS 모델 목록 (GET /models?output_modalities=speech) → [{ value, label }], 캐시에 넣음 */
+/** TTS 모델 목록 (GET /models?output_modalities=speech — 키 없이도 됨) → [{ value, label }] 새것부터, _models.js 캐시에 넣음 */
 export async function listModels(cfg) {
     const c = cfg || providerConfig(ID, defaults);
-    const j = await fetchJson(`${BASE}/models?output_modalities=speech`, { headers: auth(c), timeout: 20000 });
-    const rows = ((j && j.data) || []).filter(m => m && m.id);
-    // 필터가 안 먹은 응답이면 output_modalities 로 한 번 더 거른다
-    const speech = rows.filter(m => !m.architecture || !Array.isArray(m.architecture.output_modalities) || m.architecture.output_modalities.includes('speech'));
-    const list = speech.map(m => ({ value: String(m.id), label: String(m.name || m.id) }));
-    if (list.length) modelCache = list;
-    return list;
+    return shared(ID, async () => {
+        const j = await fetchJson(`${BASE}/models?output_modalities=speech`, { headers: auth(c), timeout: 20000 });
+        const rows = ((j && j.data) || []).filter(m => m && m.id);
+        // 필터가 안 먹은 응답이면 output_modalities 로 한 번 더 거른다
+        const speech = rows.filter(m => !m.architecture || !Array.isArray(m.architecture.output_modalities) || m.architecture.output_modalities.includes('speech'));
+        const list = speech
+            .map((m, i) => ({ value: String(m.id), label: String(m.name || m.id), at: Number(m.created) || 0, i }))
+            .sort((a, b) => (b.at - a.at) || (a.i - b.i))
+            .map(({ value, label }) => ({ value, label }));
+        return storeModels(ID, list);
+    });
 }
 
 async function listVoices(cfg) {
     const c = cfg || providerConfig(ID, defaults);
     const model = pickModel(c, FALLBACK_MODELS, defaults.model);
-    if (/^openai\//.test(model)) return OPENAI_VOICES.map(v => ({ voiceId: v, name: v, lang: 'en', group: 'OpenAI' }));
+    if (/^openai\//.test(model)) return OPENAI_VOICES.map(v => ({ voiceId: v, name: v, lang: 'en', group: 'OpenAI', gender: OPENAI_GENDER[v] || '' }));
     if (/^google\//.test(model)) return GEMINI_VOICES.map(v => ({ voiceId: v, name: v, lang: '', group: 'Gemini' }));
     throw new Error('이 모델은 목소리 이름을 직접 적어야 해요 (직접 추가)');
 }
@@ -122,6 +124,7 @@ export default {
     maxChars: 4096,
     listVoices,
     listModels,
+    modelsPublic: true,   // 1.3.7 모델 목록은 키 없이 (엔진 카드를 열면 받아 봄)
     synth,
     test,
     balance,

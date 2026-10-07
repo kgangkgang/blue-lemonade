@@ -1,92 +1,21 @@
-// Providers and model lists for the "직접 선택" connection. Mirrors LLM Translator (2026-09 lists):
-// when refreshing models there, update this file too.
+// Providers for the "직접 선택" connection. The model lists are not kept here any more: they come from the shared
+// live list (src/live-models.js) — what the provider offers right now through SillyTavern's /status, cached in this
+// browser for a day, plus 모델 등록 and the theme's newest-known names when no list has been fetched yet.
 
-const GEMINI = [
-    'gemini-3.8-flash',
-    'gemini-3.7-flash',
-    'gemini-3.6-flash',
-    'gemini-3.5-flash',
-    'gemini-3.5-flash-lite',
-    'gemini-3.1-pro-preview',
-    'gemini-3.1-flash-lite',
-    'gemini-3-flash-preview',
-    'gemini-2.5-pro',
-    'gemini-2.5-flash',
-    'gemini-2.5-flash-lite',
-];
+import * as LM from '../../live-models.js';
 
 /** secrets are SECRET_KEYS names from SillyTavern's secrets.js */
 export const PROVIDERS = {
-    openai: {
-        label: 'OpenAI',
-        source: 'openai',
-        secrets: ['OPENAI'],
-        models: [
-            'gpt-6-astra', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.6', 'gpt-5.5', 'gpt-5.4',
-            'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-5.3-chat-latest', 'gpt-5.2', 'gpt-5.1', 'gpt-5', 'gpt-5-mini',
-            'gpt-5-nano', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'o4-mini', 'o3', 'gpt-4o', 'gpt-4o-mini',
-        ],
-    },
-    claude: {
-        label: 'Claude',
-        source: 'claude',
-        secrets: ['CLAUDE'],
-        models: [
-            'claude-fable-5-1', 'claude-opus-5', 'claude-sonnet-5', 'claude-haiku-4-5', 'claude-fable-5',
-            'claude-opus-4-8', 'claude-opus-4-7', 'claude-opus-4-6', 'claude-sonnet-4-6', 'claude-opus-4-5',
-            'claude-sonnet-4-5',
-        ],
-    },
-    google: {
-        label: 'Google AI Studio',
-        source: 'makersuite',
-        secrets: ['MAKERSUITE'],
-        models: GEMINI,
-    },
-    vertexai: {
-        label: 'Vertex AI',
-        source: 'vertexai',
-        secrets: ['VERTEXAI', 'VERTEXAI_SERVICE_ACCOUNT'],
-        models: GEMINI,
-    },
-    openrouter: {
-        label: 'OpenRouter',
-        source: 'openrouter',
-        secrets: ['OPENROUTER'],
-        models: [
-            'google/gemini-3.8-flash', 'google/gemini-3.7-flash', 'google/gemini-3.5-flash-lite',
-            'google/gemini-3.1-pro-preview', 'google/gemini-2.5-pro', 'anthropic/claude-fable-5.1',
-            'anthropic/claude-opus-5', 'anthropic/claude-sonnet-5', 'anthropic/claude-haiku-4.5', 'openai/gpt-6-astra',
-            'openai/gpt-5.6-terra', 'openai/gpt-5.6-luna', 'deepseek/deepseek-v4.1-flash', 'deepseek/deepseek-v4-pro',
-            'x-ai/grok-4.6', 'qwen/qwen3.8-max-0902', 'moonshotai/kimi-k3', 'z-ai/glm-5.3',
-            'mistralai/mistral-medium-3-5',
-        ],
-    },
-    deepseek: {
-        label: 'DeepSeek',
-        source: 'deepseek',
-        secrets: ['DEEPSEEK'],
-        models: ['deepseek-flash', 'deepseek-v4-pro', 'deepseek-v4-flash'],
-    },
-    cohere: {
-        label: 'Cohere',
-        source: 'cohere',
-        secrets: ['COHERE'],
-        models: [
-            'command-a-plus-05-2026', 'command-a-03-2025', 'command-r7b-12-2024', 'command-r-plus-08-2024',
-            'command-r-08-2024', 'c4ai-aya-expanse-32b', 'c4ai-aya-expanse-8b',
-        ],
-    },
+    openai: { label: 'OpenAI', source: 'openai', secrets: ['OPENAI'] },
+    claude: { label: 'Claude', source: 'claude', secrets: ['CLAUDE'] },
+    google: { label: 'Google AI Studio', source: 'makersuite', secrets: ['MAKERSUITE'] },
+    vertexai: { label: 'Vertex AI', source: 'vertexai', secrets: ['VERTEXAI', 'VERTEXAI_SERVICE_ACCOUNT'] },
+    openrouter: { label: 'OpenRouter', source: 'openrouter', secrets: ['OPENROUTER'] },
+    deepseek: { label: 'DeepSeek', source: 'deepseek', secrets: ['DEEPSEEK'] },
+    cohere: { label: 'Cohere', source: 'cohere', secrets: ['COHERE'] },
     // OpenAI-compatible servers have no fixed list: it is fetched from the endpoint, or the name is typed in.
-    custom: {
-        label: 'Custom (OpenAI 호환)',
-        source: 'custom',
-        secrets: ['CUSTOM'],
-        models: [],
-    },
+    custom: { label: 'Custom (OpenAI 호환)', source: 'custom', secrets: ['CUSTOM'] },
 };
-
-// ── Custom endpoint model lists ───────────────────────
 
 /** Endpoint address without trailing slashes: SillyTavern appends '/chat/completions' and '/models' itself. */
 export function normalizeUrl(url) {
@@ -102,71 +31,133 @@ export function isHttpUrl(url) {
     }
 }
 
+// ── Model lists ───────────────────────────────────────
+
+/** SillyTavern's chat_completion_source for a provider key ('google' → 'makersuite'), '' when unknown. */
+export function sourceOf(provider) {
+    return PROVIDERS[provider]?.source ?? '';
+}
+
+/** Whether SillyTavern can fetch this provider's list (Claude and Vertex AI have no list call). */
+export function canFetch(provider) {
+    const source = sourceOf(provider);
+    return Boolean(source) && LM.canList(source);
+}
+
+/** Custom: our own address, else SillyTavern's (then its extra headers and body come along). */
+export function endpointOf(customUrl) {
+    const own = normalizeUrl(customUrl);
+    return own ? { url: own, inheritExtras: false } : { url: '', inheritExtras: true };
+}
+
+/** Cache key of the list the select shows: the provider's source, or 'custom:<address>'. */
+export function listKey(provider, endpoint = endpointOf('')) {
+    const source = sourceOf(provider);
+    if (!source) return '';
+    return LM.cacheKey(source, source === 'custom' ? endpoint.url : undefined);
+}
+
 /**
- * Model ids from a /models reply as SillyTavern's /status passes it on. The standard shape is {data: [...]}, but
- * some servers send a bare array or {models: [...]}. 'custom' is the free-text entry's value, so it is dropped.
- * @returns {string[] | null} Sorted unique ids, or null when the reply is an error
+ * What the model select offers: { ids (newest first), savedMissing, live, at, key }.
+ * Live list + 모델 등록 once fetched; before that 모델 등록 → newest-known names, plus SillyTavern's own select
+ * where that is the only source (Claude, Vertex AI: no list call) or the server's list (Custom on SillyTavern's
+ * address). A provider that can list never gets SillyTavern's long built-in list padded on — only what it offers.
+ * `saved` is only reported (savedMissing), never changed.
  */
-export function modelIdsFrom(data) {
-    const list = Array.isArray(data) ? data
-        : Array.isArray(data?.data) ? data.data
-            : Array.isArray(data?.models) ? data.models
-                : [];
-    if (list.length === 0 && data?.error) return null;
-    const ids = list
-        .map(item => (item && typeof item === 'object' ? item.id ?? item.name ?? '' : item))
-        .map(id => String(id ?? '').trim())
-        .filter(id => id && id !== 'custom');
-    return [...new Set(ids)].sort((a, b) => a.localeCompare(b));
+export function modelChoices(provider, saved, endpoint = endpointOf('')) {
+    const source = sourceOf(provider);
+    if (!source) return { ids: [], savedMissing: false, live: false, at: 0, key: '' };
+    const want = saved === 'custom' ? '' : saved;
+    if (source !== 'custom') return LM.list(source, { saved: want, page: !LM.canList(source) });
+    return LM.list('custom', { saved: want, customUrl: endpoint.url, inheritCustom: Boolean(endpoint.inheritExtras) });
 }
 
-/** Keeps only the newest `limit` addresses' lists (and `keepUrl`'s), so settings.json doesn't collect old ones. */
-export function pruneModelLists(lists, keepUrl, limit = 3) {
-    const newestFirst = Object.entries(lists)
-        .sort((a, b) => String(b[1]?.fetchedAt ?? '').localeCompare(String(a[1]?.fetchedAt ?? '')));
-    const keep = new Set([keepUrl, ...newestFirst.slice(0, limit).map(([url]) => url)]);
-    for (const [url] of newestFirst) {
-        if (!keep.has(url)) delete lists[url];
-    }
+/** The entry the select shows: the saved one (kept even when the list lost it), else the first listed, else free text. */
+export function pickModel(saved, ids) {
+    return saved || ids[0] || 'custom';
 }
 
-/** The model name to send: the picked list entry, or the typed name when '커스텀 모델 입력' is picked. */
-export function resolveModel({ provider, models, customModels }) {
-    const picked = models?.[provider] || PROVIDERS[provider]?.models[0] || 'custom';
+/** Note after a saved model the list doesn't have. */
+export function missingNote(provider, ids) {
+    return provider === 'custom' && ids.length > 0 ? '이 주소 목록에 없음' : '이전 목록';
+}
+
+/**
+ * The model name to send: the saved entry, else the first listed one, or the typed name when '커스텀 모델 입력'
+ * is picked. There is no built-in default any more, so with nothing saved, listed or typed it is ''.
+ */
+export function resolveModel({ provider, models, customModels, customUrl } = {}, endpoint = endpointOf(customUrl)) {
+    const saved = models?.[provider];
+    const picked = saved || modelChoices(provider, '', endpoint).ids[0] || 'custom';
     return picked === 'custom' ? String(customModels?.[provider] ?? '').trim() : picked;
 }
 
-// Same per-model rules SillyTavern (public/scripts/openai.js) and LLM Translator apply.
-// Requests here go straight to the backend, so without them newer models reject the request.
-export function applyModelRequestRules(provider, model, request) {
-    const dropSampling = (...keys) => keys.forEach(key => delete request[key]);
-    const useMaxCompletionTokens = () => {
-        // OpenRouter converts max_tokens itself, so only direct OpenAI needs the rename.
-        if (provider === 'openai' && request.max_tokens !== undefined) {
-            request.max_completion_tokens = request.max_tokens;
-            delete request.max_tokens;
-        }
+// ── Fetching a list ───────────────────────────────────
+// Through SillyTavern's /status, the same call its own Connect button makes: the server adds the stored key, so the
+// key never reaches the page. Custom keeps the exact request it always sent (address + extra headers).
+
+export const LIST_TIMEOUT_MS = 30000;
+
+function listOptions(provider, { endpoint, includeHeaders = '', headers } = {}) {
+    const isCustom = sourceOf(provider) === 'custom';
+    const options = {
+        timeout: LIST_TIMEOUT_MS,
+        inheritProxy: false,   // 5.7.1 다시 쓰기는 본체 리버스 프록시로 보내지 않는다 — 목록도 직접 연결의 것 (프록시 목록은 따로 키)
+        fetcher: async (url, body, { timeout = LIST_TIMEOUT_MS } = {}) => {
+            let response;
+            try {
+                response = await fetch(url, {
+                    method: 'POST',
+                    headers: typeof headers === 'function' ? headers() : headers,
+                    body: JSON.stringify(body),
+                    cache: 'no-cache',
+                    signal: AbortSignal.timeout(timeout),
+                });
+            } catch (error) {
+                if (error?.name === 'TimeoutError' || error?.name === 'AbortError') {
+                    throw new Error(`${timeout / 1000}초 안에 응답이 없어요`);
+                }
+                throw error;
+            }
+            if (!response.ok) throw new Error(`서버 응답 ${response.status} ${response.statusText}`.trim());
+            return response.json();
+        },
     };
-
-    if ((provider === 'openai' && /^(o1|o3|o4)/.test(model)) || (provider === 'openrouter' && /^openai\/(o1|o3|o4)/.test(model))) {
-        useMaxCompletionTokens();
-        dropSampling('temperature', 'top_p', 'frequency_penalty', 'presence_penalty');
+    if (isCustom) {
+        options.customUrl = endpoint.url;
+        options.body = { custom_url: endpoint.url, custom_include_headers: includeHeaders };
+        // 5.7.1: quietly refresh only an address that was fetched before (↻ or an older list) — a freshly typed or mistyped
+        // address must not get SillyTavern's stored Custom key without the button. SillyTavern's own address is always allowed.
+        options.savedUrl = LM.cached(LM.cacheKey('custom', endpoint.url)).ids.length > 0;
     }
+    return options;
+}
 
-    // GPT-5 and later reject sampling in reasoning mode; GPT-5.1–5.4 only reject penalties.
-    if ((provider === 'openai' || provider === 'openrouter') && /gpt-(5|6)/.test(model)) {
-        useMaxCompletionTokens();
-        if (/gpt-5-chat-latest/.test(model)) {
-            // Chat-only model accepts sampling.
-        } else if (/gpt-5\.(1|2|3|4)/.test(model) && !/chat-latest/.test(model)) {
-            dropSampling('frequency_penalty', 'presence_penalty');
-        } else {
-            dropSampling('temperature', 'top_p', 'frequency_penalty', 'presence_penalty');
-        }
-    }
+function friendlyListError(provider, error) {
+    if (!error?.empty) return error;
+    return new Error(sourceOf(provider) === 'custom'
+        ? '엔드포인트가 모델 목록을 돌려주지 않았어요. 주소(끝의 /v1까지)와 API 키를 확인해 주세요.'
+        : '모델 목록을 돌려주지 않았어요. API 키를 확인해 주세요.');
+}
 
-    // Claude Fable / Claude 5 reject all sampling values, including through proxies.
-    if (/claude-(fable|opus-5|sonnet-5)/.test(model)) {
-        dropSampling('temperature', 'top_p', 'top_k', 'frequency_penalty', 'presence_penalty');
+/**
+ * Fetches the list now (the button) → ids, newest first. Throws on failure; the old list stays.
+ * @param {string} provider
+ * @param {{endpoint?: {url: string, inheritExtras: boolean}, includeHeaders?: string, headers?: object | (() => object)}} [options]
+ */
+export async function fetchModelList(provider, options = {}) {
+    if (!canFetch(provider)) throw new Error('이 공급자는 모델 목록을 받아 오지 않아요');
+    if (sourceOf(provider) === 'custom' && !isHttpUrl(options.endpoint?.url)) throw new Error('커스텀 엔드포인트 주소가 비어 있어요.');
+    try {
+        return await LM.refresh(sourceOf(provider), listOptions(provider, options));
+    } catch (error) {
+        throw friendlyListError(provider, error);
     }
+}
+
+/** Quietly fetches the list when it is missing or a day old (settings opened, provider changed). Never throws. */
+export function autoFetchModelList(provider, options = {}) {
+    if (!canFetch(provider)) return Promise.resolve(null);
+    if (sourceOf(provider) === 'custom' && !isHttpUrl(options.endpoint?.url)) return Promise.resolve(null);
+    return LM.autoRefresh(sourceOf(provider), listOptions(provider, options));
 }

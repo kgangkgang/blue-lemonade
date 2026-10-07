@@ -40,12 +40,13 @@ import { badgeTextHit } from '../../badge-hit.js';
 import { PERSONAL } from './defaults-personal.js';
 import { isEditingMessage } from './guards.js';
 import { createSpanFinder } from './spans.js';
-import { PROVIDERS, applyModelRequestRules, isHttpUrl, modelIdsFrom, normalizeUrl, pruneModelLists, resolveModel } from './providers.js';
+import { PROVIDERS, autoFetchModelList, canFetch, fetchModelList, isHttpUrl, listKey, missingNote, modelChoices, normalizeUrl, pickModel, resolveModel } from './providers.js';
+import { applyModelRequestRules, cached as cachedModels, fillSelect, onChange as onModelListChange } from '../../live-models.js';
 import { capturedMessages, capturedRequest, holdGeneration, regenerateReply, replaceReply, visibleText, watchRequests, withTimeout } from './reroll.js';
 import { applyUpgrades } from './upgrades.js';
 import { startQuickBan, setQuickBanEnabled } from './quick-ban.js';
 
-const VERSION = '2.0.1';
+const VERSION = '2.0.2';
 const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];
@@ -66,6 +67,7 @@ const SKIP_TYPES = ['impersonate', 'quiet', 'first_message', 'command', 'extensi
 // finishes a continue through saveReply as 'appendFinal' (and 'append'), not 'continue'.
 const REROLL_SKIP_TYPES = [...SKIP_TYPES, 'continue', 'appendFinal', 'append'];
 const TAB_STORAGE_KEY = 'bwr_active_tab';
+const FETCH_TITLE_CUSTOM = '이 주소의 /models 목록을 받아와 모델 선택창에 채웁니다. API 키는 본체의 Custom 키를 써요.';
 const CONNECTION_HINTS = {
     current: '지금 채팅에 쓰는 모델로 고쳐요.',
     direct: 'API 키는 SillyTavern 본체 API 연결에 저장된 키를 써요. 목록에 없는 모델은 맨 아래 커스텀 모델 입력으로 넣으세요.',
@@ -111,9 +113,7 @@ function loadSettings() {
         if (stored[key] === undefined) stored[key] = structuredClone(value);
     }
     stored.models = { ...DEFAULT_SETTINGS.models, ...stored.models };
-    if (!stored.customModelLists || typeof stored.customModelLists !== 'object' || Array.isArray(stored.customModelLists)) {
-        stored.customModelLists = {};
-    }
+    // customModelLists (fetched Custom lists up to 2.0.1) is left as it is: the shared list only reads it.
     stored.scenePlan = { ...DEFAULT_SETTINGS.scenePlan, ...stored.scenePlan };
     stored.repeat = { ...DEFAULT_SETTINGS.repeat, ...(stored.repeat && typeof stored.repeat === 'object' ? stored.repeat : {}) };
     return stored;
@@ -159,23 +159,30 @@ function customEndpoint() {
     return { url: normalizeUrl(oai_settings?.custom_url), inheritExtras: true };
 }
 
-// ── Custom endpoint model list ────────────────────────
-// Fetched through SillyTavern's /status, the same call its own Connect button makes: the server adds the stored
-// Custom key and asks <url>/models, so the key never reaches the page. A freshly typed address is only asked when
-// the button is pressed (a typo must not receive the key); the saved one is fetched quietly while it has no list.
+// ── Model lists ───────────────────────────────────────
+// The shared live list (src/live-models.js): what the provider offers now, fetched through SillyTavern's /status —
+// the server adds the stored key, so the key never reaches the page — and kept in this browser for a day. Opening
+// the settings or switching the provider refreshes it quietly once it is a day old; the button asks right away.
+// A freshly typed Custom address is only asked when the button is pressed (a typo must not receive the key).
 
-const MODEL_FETCH_TIMEOUT_MS = 30000;
-/** @type {Map<string, Promise<{ok: boolean, ids: string[], error?: Error}>>} In-flight requests by address */
+/** @type {Map<string, Promise<{ok: boolean, ids: string[], error?: Error}>>} Button requests by list key */
 const modelFetches = new Map();
 let lastRenderedCustomUrl = null;
+// A list that arrived while the model select was in use is shown once it is left.
+let modelsPending = false;
 
-/** The list fetched for `url`: ours, else the one LLM Translator keeps for the same address. */
-function cachedModelList(url) {
-    const own = settings.customModelLists?.[url];
-    if (Array.isArray(own?.models)) return { models: own.models, fetchedAt: own.fetchedAt, from: '' };
-    const translator = extension_settings[TRANSLATOR_MODULE]?.custom_model_lists?.[url];
-    if (Array.isArray(translator?.models)) return { models: translator.models, fetchedAt: translator.fetched_at, from: 'LLM 번역기 목록' };
-    return null;
+function currentEndpoint() {
+    return settings.provider === 'custom' ? customEndpoint() : undefined;
+}
+
+function currentListKey() {
+    return listKey(settings.provider, currentEndpoint());
+}
+
+function listRequest() {
+    const endpoint = currentEndpoint();
+    const includeHeaders = endpoint?.inheritExtras ? substituteParams(oai_settings?.custom_include_headers || '') : '';
+    return { endpoint, includeHeaders, headers: getRequestHeaders };
 }
 
 function renderModelsStatus(message) {
@@ -184,120 +191,122 @@ function renderModelsStatus(message) {
         status.text(message);
         return;
     }
+    const key = currentListKey();
+    const list = cachedModels(key);
+    const when = list.at ? new Date(list.at).toLocaleString() : '';
+    if (settings.provider !== 'custom') {
+        if (!canFetch(settings.provider)) status.text('');
+        else if (modelFetches.has(key)) status.text('모델 목록을 불러오는 중…');
+        else status.text(list.ids.length ? [`모델 ${list.ids.length}개`, when].filter(Boolean).join(' · ') : '아직 안 불러왔어요');
+        return;
+    }
     const { url, inheritExtras } = customEndpoint();
     if (!url) {
         status.text('주소를 넣거나 본체의 Custom 연결을 설정하면 그 서버의 모델 목록을 받아올 수 있어요.');
         return;
     }
     const where = inheritExtras ? '본체 설정 주소' : '위 주소';
-    if (modelFetches.has(url)) {
+    if (modelFetches.has(key)) {
         status.text(`모델 목록을 불러오는 중… (${url})`);
         return;
     }
-    const list = cachedModelList(url);
-    if (!list) {
+    if (!list.ids.length) {
         status.text(`아직 안 불러왔어요 (${where}: ${url})`);
         return;
     }
-    const when = list.fetchedAt ? new Date(list.fetchedAt).toLocaleString() : '';
-    status.text(`모델 ${list.models.length}개 · ${[when, list.from || where].filter(Boolean).join(' · ')}`);
+    status.text(`모델 ${list.ids.length}개 · ${[when, where].filter(Boolean).join(' · ')}`);
 }
 
-// Locked only while the address on screen is being asked; another address can still be fetched right away.
+// Locked only while the list on screen is being asked; another list can still be fetched right away.
 function syncFetchButton() {
-    $('#bwr_fetch_models').toggleClass('bwr_busy', modelFetches.has(customEndpoint().url));
+    $('#bwr_fetch_models').toggleClass('bwr_busy', modelFetches.has(currentListKey()));
 }
 
-async function requestModelIds(url, includeHeaders) {
-    let response;
-    try {
-        response = await fetch('/api/backends/chat-completions/status', {
-            method: 'POST',
-            headers: getRequestHeaders(),
-            body: JSON.stringify({ chat_completion_source: 'custom', custom_url: url, custom_include_headers: includeHeaders }),
-            cache: 'no-cache',
-            signal: AbortSignal.timeout(MODEL_FETCH_TIMEOUT_MS),
-        });
-    } catch (error) {
-        if (error?.name === 'TimeoutError' || error?.name === 'AbortError') {
-            throw new Error(`${MODEL_FETCH_TIMEOUT_MS / 1000}초 안에 응답이 없어요`);
-        }
-        throw error;
-    }
-    if (!response.ok) throw new Error(`서버 응답 ${response.status} ${response.statusText}`.trim());
-    const ids = modelIdsFrom(await response.json());
-    if (!ids) throw new Error('엔드포인트가 모델 목록을 돌려주지 않았어요. 주소(끝의 /v1까지)와 API 키를 확인해 주세요.');
-    return ids;
-}
-
-async function fetchCustomModels({ silent = false } = {}) {
-    const endpoint = customEndpoint();
-    const { url } = endpoint;
-    if (!isHttpUrl(url)) {
+async function fetchModels() {
+    const provider = settings.provider;
+    const isCustom = provider === 'custom';
+    if (!canFetch(provider)) return;
+    const request = listRequest();
+    const url = request.endpoint?.url ?? '';
+    if (isCustom && !isHttpUrl(url)) {
         renderModelsStatus(url ? `올바른 주소가 아니에요: ${url}` : '커스텀 엔드포인트 주소가 비어 있어요.');
-        if (!silent) toastr.warning('커스텀 엔드포인트 주소를 먼저 넣어 주세요. (예: http://127.0.0.1:5001/v1)', TITLE);
+        toastr.warning('커스텀 엔드포인트 주소를 먼저 넣어 주세요. (예: http://127.0.0.1:5001/v1)', TITLE);
         return;
     }
-    const isCurrent = () => customEndpoint().url === url;
+    const key = currentListKey();
+    const isCurrent = () => settings.provider === provider && currentListKey() === key;
 
-    // A second press for the same address waits for the request already running.
-    let job = modelFetches.get(url);
+    // A second press for the same list waits for the request already running.
+    let job = modelFetches.get(key);
     if (!job) {
-        const includeHeaders = endpoint.inheritExtras ? substituteParams(oai_settings?.custom_include_headers || '') : '';
-        job = requestModelIds(url, includeHeaders)
+        job = fetchModelList(provider, request)
             .then((ids) => {
-                settings.customModelLists[url] = { models: ids, fetchedAt: new Date().toISOString() };
-                pruneModelLists(settings.customModelLists, url);
-                // A name typed into the free-text box that the server lists becomes the picked entry (same name sent).
-                const typed = String(settings.customModels.custom ?? '').trim();
-                if (isCurrent() && settings.models.custom === 'custom' && ids.includes(typed)) settings.models.custom = typed;
-                saveSettingsDebounced();
+                // A name typed into the free-text box that the list has becomes the picked entry (same name sent).
+                const typed = String(settings.customModels[provider] ?? '').trim();
+                if (isCurrent() && settings.models[provider] === 'custom' && ids.includes(typed)) {
+                    settings.models[provider] = typed;
+                    saveSettingsDebounced();
+                }
                 return { ok: true, ids };
             })
             .catch((error) => {
-                console.warn(`[${TITLE}] 모델 목록 불러오기 실패:`, url, error);
+                console.warn(`[${TITLE}] 모델 목록 불러오기 실패:`, key, error);
                 return { ok: false, ids: [], error };
             })
-            .finally(() => modelFetches.delete(url));
-        modelFetches.set(url, job);
+            .finally(() => modelFetches.delete(key));
+        modelFetches.set(key, job);
     }
     syncFetchButton();
-    if (isCurrent()) renderModelsStatus(`모델 목록을 불러오는 중… (${url})`);
+    if (isCurrent()) renderModelsStatus(isCustom ? `모델 목록을 불러오는 중… (${url})` : '모델 목록을 불러오는 중…');
 
     const result = await job;
     syncFetchButton();
-    // The address changed while waiting: the screen now belongs to the new address.
+    // The provider or address changed while waiting: the screen now belongs to the new one.
     if (!isCurrent()) return;
-    if (settings.provider === 'custom') renderModels();
-    if (!result.ok) console.warn(`[${TITLE}] 모델 목록 실패:`, result.error);
+    renderModels();
     const reason = result.ok ? '' : friendlyError(result.error?.message || result.error) || '알 수 없는 오류';
-    if (!result.ok) renderModelsStatus(`불러오기 실패: ${reason}`);
-    if (silent) return;
     if (!result.ok) {
+        renderModelsStatus(`불러오기 실패: ${reason}`);
         toastr.error(`모델 목록을 불러오지 못했어요: ${reason}`, TITLE);
     } else if (result.ids.length === 0) {
-        toastr.warning('엔드포인트가 빈 모델 목록을 돌려줬어요.', TITLE);
+        toastr.warning(isCustom ? '엔드포인트가 빈 모델 목록을 돌려줬어요.' : '빈 모델 목록을 받았어요.', TITLE);
     } else {
         toastr.success(`모델 ${result.ids.length}개를 불러왔어요.`, TITLE);
-        const picked = settings.models.custom;
+        const picked = settings.models[provider];
         if (picked && picked !== 'custom' && !result.ids.includes(picked)) {
-            toastr.warning(`지금 고른 모델 '${picked}'은(는) 이 주소의 목록에 없어요. 목록에서 다시 골라 주세요.`, TITLE);
+            toastr.warning(`지금 고른 모델 '${picked}'은(는) ${isCustom ? '이 주소의 ' : ''}목록에 없어요. 목록에서 다시 골라 주세요.`, TITLE);
         }
     }
 }
 
-/** Fetches the saved address's list quietly when it has none yet (first load, switching to Custom). */
+/** Quietly refreshes the list on screen when it is missing or a day old (settings opened, provider switched). */
 function autoFetchModels() {
-    if (settings.connection !== 'direct' || settings.provider !== 'custom') return;
-    const { url } = customEndpoint();
-    if (isHttpUrl(url) && !cachedModelList(url) && !modelFetches.has(url)) fetchCustomModels({ silent: true });
+    if (settings.connection !== 'direct' || !canFetch(settings.provider)) return;
+    autoFetchModelList(settings.provider, listRequest());
+}
+
+/** A list arrived (fetched here or elsewhere in the theme, or by SillyTavern's own connect): show it. */
+function onModelListArrived({ key }) {
+    if (settings.connection !== 'direct' || key !== currentListKey()) return;
+    const active = document.activeElement;
+    if (active && (active.id === 'bwr_model' || active.id === 'bwr_custom_model')) {
+        modelsPending = true;
+        return;
+    }
+    renderModels();
+}
+
+function renderPendingModels() {
+    if (!modelsPending) return;
+    modelsPending = false;
+    renderModels();
 }
 
 // Same request shape as LLM Translator, sent through SillyTavern's ChatCompletionService.
 async function generateDirect(messages, signal) {
     const provider = PROVIDERS[settings.provider];
     if (!provider) throw new Error(`알 수 없는 공급자예요: ${settings.provider}`);
-    const model = resolveModel(settings);
+    const model = resolveModel(settings, currentEndpoint());
     if (!model) throw new Error('모델명이 비어 있어요. 커스텀 모델명을 입력해 주세요.');
 
     const request = {
@@ -972,36 +981,38 @@ function renderProviders() {
 function renderModels() {
     const provider = settings.provider;
     const isCustom = provider === 'custom';
-    const url = isCustom ? customEndpoint().url : '';
-    // Custom has no fixed list: it shows what was fetched from the endpoint address.
-    const list = isCustom ? (cachedModelList(url)?.models ?? []) : (PROVIDERS[provider]?.models ?? []);
+    const endpoint = currentEndpoint();
     const saved = settings.models[provider];
-    const select = $('#bwr_model').empty();
-    for (const model of list) {
-        select.append(new Option(model, model));
-    }
-    // Keep a model that dropped off the list selectable instead of silently switching.
-    if (saved && saved !== 'custom' && !list.includes(saved)) {
-        const note = isCustom && list.length > 0 ? '이 주소 목록에 없음' : '이전 목록';
-        select.append(new Option(`${saved} (${note})`, saved));
-    }
-    select.append(new Option('⚙️ 커스텀 모델 입력', 'custom'));
-
-    const picked = saved || list[0] || 'custom';
-    select.val(picked);
+    // Newest first: the fetched list (+ 모델 등록), or before any fetch the newest names the theme knows.
+    const { ids } = modelChoices(provider, saved, endpoint);
+    // Keep a model that dropped off the list selected (marked) instead of silently switching.
+    const picked = pickModel(saved, ids);
     settings.models[provider] = picked;
+    modelsPending = false;
+    fillSelect(document.getElementById('bwr_model'), ids, {
+        saved: picked,
+        missingSuffix: ` (${missingNote(provider, ids)})`,
+        customValue: 'custom',
+        customLabel: '⚙️ 커스텀 모델 입력',
+        customSelected: picked === 'custom',
+    });
     $('#bwr_custom_model_box').toggle(picked === 'custom');
-    $('#bwr_custom_model').val(settings.customModels[provider] ?? '');
+    const typed = settings.customModels[provider] ?? '';
+    const input = $('#bwr_custom_model');
+    if (input.val() !== typed) input.val(typed);
     $('#bwr_custom_url_box').toggle(isCustom);
-    $('#bwr_fetch_box').toggle(isCustom);
-    // The free-text box suggests the fetched names too.
-    const datalist = $('#bwr_custom_model_datalist').empty();
-    if (isCustom) {
-        for (const model of list) datalist.append($('<option>').attr('value', model));
-        renderModelsStatus();
-        syncFetchButton();
-        lastRenderedCustomUrl = url;
+    $('#bwr_fetch_box').toggle(canFetch(provider));
+    $('#bwr_fetch_models').attr('title', isCustom ? FETCH_TITLE_CUSTOM : null);
+    // The free-text box suggests the listed names too.
+    const datalist = document.getElementById('bwr_custom_model_datalist');
+    const suggestions = ids.join('\n');
+    if (datalist && datalist.dataset.models !== suggestions) {
+        datalist.replaceChildren(...ids.map(model => Object.assign(document.createElement('option'), { value: model })));
+        datalist.dataset.models = suggestions;
     }
+    renderModelsStatus();
+    syncFetchButton();
+    if (isCustom) lastRenderedCustomUrl = endpoint.url;
 }
 
 function syncConnection() {
@@ -1095,8 +1106,10 @@ function bindConnection() {
     // When typing is done, show the list kept for that address (typing alone never sends a request).
     $('#bwr_custom_url').on('change', () => renderModels());
     $('#bwr_fetch_models').on('click', function () {
-        if (!$(this).hasClass('bwr_busy')) fetchCustomModels();
+        if (!$(this).hasClass('bwr_busy')) fetchModels();
     });
+    // A list that arrived while choosing is shown once the select or the free-text box is left.
+    $('#bwr_model, #bwr_custom_model').on('blur', renderPendingModels);
     $('#bwr_temperature').on('change', function () {
         const value = Math.min(2, Math.max(0, Number(this.value)));
         settings.temperature = Number.isFinite(value) ? value : DEFAULT_SETTINGS.temperature;
@@ -1662,6 +1675,7 @@ function bindSettings() {
 
     $('.bwr_settings .bwr_tab').on('click', function () {
         showTab(this.dataset.tab);
+        if (this.dataset.tab === 'connection') autoFetchModels();
     });
     $('#bwr_check_last').on('click', checkLastMessage);
     $('#bwr_test_input').on('input', () => { testRun++; });
@@ -1759,7 +1773,11 @@ function ensureUi() {
                 renderModels();
                 autoFetchModels();
             }),
-            '모델 목록': autoFetchModels,
+            // A list fetched anywhere in the theme (or by SillyTavern's own connect) shows up here too.
+            '목록 따라가기': () => onModelListChange(onModelListArrived),
+            // Inside the theme this runs when the settings are first opened; on its own the drawer is built at
+            // start-up, so there it waits for the drawer to be opened (no request while the page loads).
+            '모델 목록': () => (EMBEDDED ? autoFetchModels() : $('.bwr_settings .inline-drawer-toggle').on('click', () => autoFetchModels())),
         });
         setTimeout(checkFilesMatch, 3000);
     })().catch(error => {
@@ -1837,6 +1855,7 @@ export async function openPanel() {
         toastr.warning('설정 화면을 만들지 못했어요. 새로고침한 뒤에도 같으면 알려 주세요.', TITLE);
         return;
     }
+    autoFetchModels();
     // Connected is not enough: on a slow phone the wide-screen column can hold the settings while it is hidden.
     if (inlineHost?.isConnected && inlineHost.offsetParent) {
         root.scrollIntoView({ block: 'nearest' });
@@ -1862,6 +1881,7 @@ export function mountInline(host) {
         if (inlineHost !== host || !root || opening) return;
         host.replaceChildren(root);
         root.classList.add('bl-embedded-settings');
+        autoFetchModels();
     });
     return () => {
         if (inlineHost !== host) return;

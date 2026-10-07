@@ -5,6 +5,8 @@
 import { settings, providerConfig, cleanModel } from '../settings.js';
 import { fetchJson, safeMsg } from './_http.js';
 import { monthChars } from '../balance.js';
+import { modelOptions, resolveModel, customField, newer } from './_models.js';
+import { koVoiceName } from '../voice-names.js';   // 1.3.7 시스템 목소리 이름 한국어
 
 const ID = 'minimax';
 // 공식(돈이 드는) 서버 이름 — paid.js(유료 판단) · balance(잔액 줄)가 같이 쓴다
@@ -18,7 +20,11 @@ const HOSTS = [
     { value: 'https://api-uw.minimax.io', label: 'api-uw.minimax.io (빠른 응답)' },
     { value: 'https://api.minimaxi.com', label: 'api.minimaxi.com (중국)' },
 ];
-const MODELS = ['speech-2.8-hd', 'speech-2.8-turbo', 'speech-2.6-hd', 'speech-2.6-turbo', 'speech-02-hd', 'speech-02-turbo', 'speech-01-hd', 'speech-01-turbo'];
+// 1.3.7 지금 MiniMax 가 내놓는 모델만 (10-07 모델 소개: 2.8 둘 · 2.6 · 02 는 '이전 모델', 01 은 없음 — 목록 API 가 없어 손으로).
+//   이전 모델도 요청은 그대로 받으니 고른 사람은 그대로 쓰고 (목록에 '이전 모델'로 남음), 새로 고를 땐 직접 입력.
+//   속삭임 줄은 modelFor 가 알아서 2.6 으로 읽는다
+const MODELS = ['speech-2.8-hd', 'speech-2.8-turbo'];
+const LEGACY = new Set(['speech-2.6-hd', 'speech-2.6-turbo', 'speech-02-hd', 'speech-02-turbo', 'speech-01-hd', 'speech-01-turbo']);
 const EMOTIONS = ['happy', 'sad', 'angry', 'fearful', 'disgusted', 'surprised', 'calm', 'fluent', 'whisper'];
 const SFX = ['spacious_echo', 'auditorium_echo', 'lofi_telephone', 'robotic'];
 // 1.3.1 감정 세기 '강하게': speech-2.8 감탄 태그를 줄 앞에 (글자로 읽지 않고 숨 · 웃음 · 한숨 · 헉 소리를 냄 — 2.6 이하는 글자로 읽을 수 있어 안 붙임)
@@ -66,7 +72,8 @@ const fields = [
     { key: 'key', label: 'API 키', type: 'password', default: '' },
     { key: 'host', label: '서버', type: 'select', default: HOSTS[0].value, options: hostOptions },
     { key: 'host_custom', label: '주소', type: 'text', default: '', show: (cfg) => cfg.host === 'custom' },
-    { key: 'model', label: '모델', type: 'select', default: 'speech-2.8-turbo', options: MODELS.map(m => ({ value: m, label: m })) },
+    { key: 'model', label: '모델', type: 'select', default: 'speech-2.8-turbo', options: modelChoices },
+    customField(),   // 1.3.7 직접 입력 (nokey — 캐시 키엔 modelFor 의 실제 모델)
     // 1.2.5 캐시 키에는 이 칸 대신 실제 모델이 들어간다 (nokey — 모드만 바꿔 같은 모델이면 같은 소리)
     { key: 'model_from', label: '읽을 모델', type: 'select', default: 'picked', nokey: true, options: [{ value: 'picked', label: '고른 모델' }, { value: 'voice', label: '목소리를 만든 모델' }] },
 ];
@@ -105,8 +112,20 @@ const params = [
 
 const defaults = Object.fromEntries([...fields, ...params].filter(f => f.default !== undefined).map(f => [f.key, f.default]));
 
-/** 고른 모델 (목록 밖의 이름도 그대로 — 1.0.0 에서 옮겨온 값 등) */
-const pickedModel = (c) => (MODELS.includes(c.model) ? c.model : (c.model || defaults.model));
+/** 모델 select: 지금 모델 + 저장된 값(이전 모델 · 목록 밖) + 직접 입력 */
+function modelChoices(cfg) {
+    return modelOptions(ID, MODELS.map(m => ({ value: m, label: m })), cfg || providerConfig(ID, defaults), { note: (m) => (LEGACY.has(m) ? '이전 모델' : '') });
+}
+/** 고른 모델 (목록 밖의 이름도 그대로 — 1.0.0 에서 옮겨온 값 등 · 1.3.7 직접 입력이면 적은 이름) */
+const pickedModel = (c) => resolveModel(c, defaults.model);
+/**
+ * 1.3.7 모델 버전: speech-2.8-hd → [2, 8] · speech-02-hd → [2, 0] · speech-3-hd → [3, 0] · 모르는 이름(게이트웨이 · 직접 서버) → null.
+ * 감탄 태그는 2.8 그대로 + 2.8 보다 새 버전 (2.9 · 3.0 …). 모르는 이름은 예전처럼 안 붙임 (태그를 글자로 읽을 수 있음).
+ * 속삭임 · 유창은 2.6 만 (공식 안내: 2.8 은 whisper 없음 — 새 모델에 생긴다는 보장이 없어 2.6 을 그대로 둔다)
+ */
+export const versionOf = (m) => { const x = /^speech-(\d+)(?:\.(\d+))?(?!\d)/.exec(String(m || '')); return x ? [Number(x[1]), Number(x[2] || 0)] : null; };
+export const hasTags = (m) => /^speech-2\.8/.test(String(m || '')) || newer(versionOf(m), [2, 8]);
+const has26 = (m) => /^speech-2\.6/.test(String(m || ''));
 /**
  * 1.2.5 실제로 요청할 모델: '목소리를 만든 모델' 이고 목소리가 만든 모델을 알면(섞은 목소리 제외) 그것, 아니면 고른 모델.
  * 모델 전환(Blue Lemonade)은 이 엔진의 모델을 바꾸지 않는다 (대사 분석 LLM 만 등록 — modelswitch.js).
@@ -117,15 +136,16 @@ export function modelFor(voice, cfg, emotion = '') {
     const c = cfg || providerConfig(ID, defaults);
     const mix = Array.isArray(voice?.mix) && voice.mix.some(m => m && m.voiceId);
     const own = mix ? '' : cleanModel(voice?.model);
-    const model = c.model_from === 'voice' && own ? own : pickedModel(c);
-    if (String(emotion || '').toLowerCase() !== 'whisper' || /^speech-2\.6/.test(model)) return model;
+    const use = cleanModel(voice?.use_model);   // 1.3.7 목소리 편집에서 이 목소리만 고른 모델이 먼저 ('목소리를 만든 모델' 보다도)
+    const model = use || (c.model_from === 'voice' && own ? own : pickedModel(c));
+    if (String(emotion || '').toLowerCase() !== 'whisper' || has26(model)) return model;
     return /turbo/i.test(model) ? 'speech-2.6-turbo' : 'speech-2.6-hd';
 }
 
 /** 1.3.1 '강하게'가 이 요청을 실제로 바꾸나 (감탄 태그가 붙나: 태그가 있는 감정 + 실제 모델 2.8). 안 바꾸는 줄은 캐시 키도 '보통'과 같게 — player.fitStrength */
 export function strengthApplies(voice, cfg, emotion) {
     const e = String(emotion || '').toLowerCase();
-    return !!STRONG_TAG[e] && /^speech-2\.8/.test(modelFor(voice, cfg || providerConfig(ID, defaults), e));
+    return !!STRONG_TAG[e] && hasTags(modelFor(voice, cfg || providerConfig(ID, defaults), e));
 }
 
 function mmError(br) {
@@ -160,7 +180,7 @@ function hexToBlob(hex, type) {
 function fitEmotion(emotion, model) {
     const e = String(emotion || '').toLowerCase();
     if (!EMOTIONS.includes(e)) return '';
-    if (/^speech-2\.6/.test(model)) return e;
+    if (has26(model)) return e;
     if (e === 'whisper') return 'calm';
     if (e === 'fluent') return '';
     return e;
@@ -202,9 +222,9 @@ async function listVoices(cfg) {
     if (!c.key) throw new Error('MiniMax API 키를 먼저 저장');
     const j = await call(c, '/v1/get_voice', { voice_type: 'all' }, undefined, 30000);
     const out = [];
-    for (const v of j.voice_cloning || []) out.push({ voiceId: v.voice_id, name: v.voice_id, lang: '', group: '복제', desc: descOf(v) });
-    for (const v of j.voice_generation || []) out.push({ voiceId: v.voice_id, name: v.voice_id, lang: '', group: '생성', desc: descOf(v) });
-    for (const v of j.system_voice || []) out.push({ voiceId: v.voice_id, name: v.voice_name || v.voice_id, lang: guessLang(v.voice_id), group: '시스템', desc: descOf(v) });
+    for (const v of j.voice_cloning || []) out.push({ voiceId: v.voice_id, name: v.voice_id, lang: '', group: '복제', desc: descOf(v), own: true });
+    for (const v of j.voice_generation || []) out.push({ voiceId: v.voice_id, name: v.voice_id, lang: '', group: '생성', desc: descOf(v), own: true });
+    for (const v of j.system_voice || []) out.push({ voiceId: v.voice_id, name: koVoiceName(v.voice_name || v.voice_id), lang: guessLang(v.voice_id), group: '시스템', desc: descOf(v) });
     return out.filter(v => v.voiceId);
 }
 
@@ -226,7 +246,7 @@ async function synth({ text, voice, cfg, params: p, lang = '', emotion = '', sig
     if (!vs.voice_id && !mix.length) throw new Error('voice_id 가 비어 있어요');
     const emo = fitEmotion(emotion || q.emotion, model);
     if (emo) vs.emotion = emo;
-    if (q.emotion_strength === 'strong' && STRONG_TAG[emo] && /^speech-2\.8/.test(model)) clean = STRONG_TAG[emo] + clean;
+    if (q.emotion_strength === 'strong' && STRONG_TAG[emo] && hasTags(model)) clean = STRONG_TAG[emo] + clean;
     if (q.text_normalization === true || q.text_normalization === 'true') vs.text_normalization = true;
 
     const body = {
@@ -282,7 +302,7 @@ export default {
     needsKey: true,
     fields,
     params,
-    caps: { emotion: true, instructions: false, mix: true, list: true, blob: true, strength: true },
+    caps: { emotion: true, instructions: false, mix: true, list: true, blob: true, strength: true, account: true },   // account: 1.3.7 계정 맞춤 (get_voice all = 시스템 + 복제 + 생성 전부)
     defaults,
     maxChars: 3000,
     listVoices,

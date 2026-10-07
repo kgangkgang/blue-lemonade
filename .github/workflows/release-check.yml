@@ -33,6 +33,14 @@ jobs:
           node tools/tests/tts-dethump.mjs .
           node tools/tests/tts-pregen-paid.mjs .
           node tools/tests/tts-balance.mjs .
+          node tools/tests/tts-prefer.mjs .
+          node tools/tests/tts-models.mjs .
+          node tools/tests/tts-extras.mjs .
+          node tools/tests/live-models.mjs .
+          node tools/tests/translator-models.mjs .
+          node tools/tests/rewrite-models.mjs .
+          node tools/tests/prompt-models.mjs .
+          node tools/tests/modelswitch-models.mjs .
           node tools/tests/update-check.mjs .
           node tools/tests/translation-cache-loading.mjs .
           node tools/tests/translation-segments.mjs .

@@ -1,9 +1,20 @@
 // Cartesia (api.cartesia.ai) — 브라우저에서 바로 호출, Bearer + Cartesia-Version
 import { safeMsg, timedFetch } from './_http.js';
+import { modelOptions, resolveModel, keyModel, customField } from './_models.js';
 
+const ID = 'cartesia';
 const API = 'https://api.cartesia.ai';
 const VERSION = '2026-08-14';
+// 1.3.7 모델 목록 API 가 없다 (10-07 문서: sonic-3.6 이 최신 · 기본, sonic-3.5 · sonic-3 · 베타 sonic-preview) → 손으로 + 직접 입력.
+//   목록 밖의 id 도 그대로 보낸다 (sonic-3.7 같은 새 모델). 문을 닫은 모델(2026-10-20 sonic-2 · sonic-turbo 전부 · sonic-3-2025-10-27)만
+//   1.3.6 처럼 sonic-3.6 으로 — 1.3.6 은 목록 밖이면 모두 sonic-3.6 으로 바꿔 보냈다
 const MODELS = ['sonic-3.6', 'sonic-3.5', 'sonic-3'];
+const SUNSET = /^(sonic-2|sonic-turbo|sonic-3-2025-10-27$|sonic(-english|-multilingual)?$)/;
+/** 실제로 보낼 모델 */
+export function cartesiaModel(cfg) {
+    const m = resolveModel(cfg, 'sonic-3.6');
+    return SUNSET.test(m) ? 'sonic-3.6' : m;
+}
 
 // 대사 감정(공통 이름) → Cartesia emotion ('' 이면 설정값 그대로)
 const EMOTION_MAP = {
@@ -32,8 +43,9 @@ const fields = [
     { key: 'key', label: 'API 키', type: 'password', default: '' },
     {
         key: 'model', label: '모델', type: 'select', default: 'sonic-3.6',
-        options: MODELS.map(m => ({ value: m, label: m })),
+        options: (cfg) => modelOptions(ID, MODELS.map(m => ({ value: m, label: m })), cfg, { note: (m) => (SUNSET.test(m) ? '종료' : '') }),
     },
+    customField(),   // 1.3.7 직접 입력 (nokey — 캐시 키엔 modelFor)
 ];
 
 const params = [
@@ -90,13 +102,13 @@ async function call(path, { method = 'GET', key, body, signal, as = 'json', time
 }
 
 const provider = {
-    id: 'cartesia',
+    id: ID,
     name: 'Cartesia',
     direct: true,
     needsKey: true,
     fields,
     params,
-    caps: { emotion: true, instructions: false, mix: false, list: true, blob: true },
+    caps: { emotion: true, instructions: false, mix: false, list: true, blob: true, account: true },   // account: 1.3.7 계정 맞춤 (쪽을 넘겨 끝까지 받음)
     defaults,
     maxChars: 2000,
 
@@ -120,15 +132,20 @@ const provider = {
             name: String(v.name || v.id),
             lang: short(v.language),
             group: v.is_owner ? '내 목소리' : (langName(v.language) || '기타'),
+            own: !!v.is_owner,
             preview: typeof v.preview_file_url === 'string' ? v.preview_file_url : undefined,
+            gender: /^(feminine|female)/i.test(String(v.gender || '')) ? 'f' : /^(masculine|male)/i.test(String(v.gender || '')) ? 'm' : '',   // 1.3.7 엑스트라 목소리
         }));
     },
+
+    /** 캐시 키의 모델 (player.keyOf): 고른 값 그대로 · 직접 입력이면 적은 이름 */
+    modelFor(voice, cfg) { return keyModel(cfg, 'sonic-3.6'); },
 
     async synth({ text, voice, cfg, params: p = {}, lang = '', emotion = '', signal }) {
         if (!cfg?.key) throw fail('API 키를 넣어 주세요', 'nokey');
         if (!voice?.voiceId) throw fail('목소리 ID가 없어요', 'novoice');
         const body = {
-            model_id: MODELS.includes(cfg.model) ? cfg.model : 'sonic-3.6',
+            model_id: cartesiaModel(cfg),
             transcript: text,
             voice: { id: voice.voiceId },
             output_format: { container: 'mp3', sample_rate: 44100, bit_rate: 128000 },

@@ -1,9 +1,19 @@
 // Typecast (api.typecast.ai) — 브라우저에서 바로 호출, 헤더 X-API-KEY
 import { safeMsg, timedFetch } from './_http.js';
+import { modelOptions, storeModels, resolveModel, keyModel, customField, shared } from './_models.js';
 
+const ID = 'typecast';
 const API = 'https://api.typecast.ai';
+// 1.3.7 모델 목록 API 는 없고 GET /v3/voices 의 voices[].models[].version 이 쓸 수 있는 모델 → listModels 가 모아 캐시에.
+//   목록 밖의 id 도 그대로 보낸다 (1.3.6 은 ssfm-v21 이 아니면 모두 ssfm-v30 으로 바꿨다). ssfm-v21 만 예전 갈래, 나머지는 v30 처럼
 const MODELS = ['ssfm-v30', 'ssfm-v21'];
+const LABELS = { 'ssfm-v30': 'ssfm-v30 (감정 7종·문맥 감정)', 'ssfm-v21': 'ssfm-v21 (감정 4종)' };
 const V21_PRESETS = ['normal', 'happy', 'sad', 'angry'];
+const DEFAULT_MODEL = 'ssfm-v30';
+const modelOf = (cfg) => resolveModel(cfg, DEFAULT_MODEL);
+const isV21 = (cfg) => modelOf(cfg) === 'ssfm-v21';
+/** ssfm-v30 → 30 (큰 수가 새 모델) · 모르는 모양은 -1 */
+const verNum = (m) => Number((/^ssfm-v(\d+)/.exec(String(m || '')) || [])[1] ?? -1);
 
 // 대사 감정(공통 이름) → Typecast 프리셋
 const EMOTION_MAP = {
@@ -28,19 +38,17 @@ const FATAL = new Set([401, 402, 403]); // 키·크레딧·권한: 다음 작업
 const fields = [
     { key: 'key', label: 'API 키', type: 'password', default: '' },
     {
-        key: 'model', label: '모델', type: 'select', default: 'ssfm-v30',
-        options: [
-            { value: 'ssfm-v30', label: 'ssfm-v30 (감정 7종·문맥 감정)' },
-            { value: 'ssfm-v21', label: 'ssfm-v21 (감정 4종)' },
-        ],
+        key: 'model', label: '모델', type: 'select', default: DEFAULT_MODEL,
+        options: (cfg) => modelOptions(ID, MODELS.map(value => ({ value, label: LABELS[value] })), cfg, { label: (o) => LABELS[o.value] }),
     },
+    customField(),   // 1.3.7 직접 입력 (nokey — 캐시 키엔 modelFor)
 ];
 
 const params = [
     {
         key: 'emotion_mode', label: '감정', type: 'select', default: 'smart', voice: true,
         options: [{ value: 'smart', label: '문맥에서 자동' }, { value: 'preset', label: '고정' }],
-        show: (cfg) => cfg.model !== 'ssfm-v21',
+        show: (cfg) => !isV21(cfg),
     },
     {
         key: 'emotion_preset', label: '고정 감정', type: 'select', default: 'normal', voice: true,
@@ -49,7 +57,7 @@ const params = [
             { value: 'angry', label: '분노' }, { value: 'whisper', label: '속삭임' },
             { value: 'toneup', label: '톤 올림' }, { value: 'tonedown', label: '톤 내림' },
         ],
-        show: (cfg) => cfg.emotion_mode === 'preset' || cfg.model === 'ssfm-v21',
+        show: (cfg) => cfg.emotion_mode === 'preset' || isV21(cfg),
     },
     { key: 'emotion_intensity', label: '감정 세기', type: 'range', min: 0, max: 2, step: 0.1, default: 1, voice: true },
     { key: 'volume', label: '음량', type: 'range', min: 0, max: 200, step: 5, default: 100, voice: true },
@@ -116,7 +124,7 @@ function buildPrompt(model, p, emotion) {
 }
 
 const provider = {
-    id: 'typecast',
+    id: ID,
     name: 'Typecast',
     direct: true,
     needsKey: true,
@@ -126,9 +134,29 @@ const provider = {
     defaults,
     maxChars: 1800, // API 한도 2000자, 발음 사전 치환 여유
 
+    /** 1.3.7 모델 목록: GET /v3/voices (거르지 않고) 의 models[].version 을 모아 새 것부터 */
+    async listModels(cfg) {
+        if (!cfg?.key) throw fail('API 키를 넣어 주세요', 'nokey');
+        return shared(ID, async () => {
+            const j = await call('/v3/voices', { key: cfg.key, timeout: 30000 });
+            const rows = Array.isArray(j) ? j : (Array.isArray(j?.voices) ? j.voices : []);
+            const seen = new Set();
+            for (const v of rows) for (const m of (Array.isArray(v?.models) ? v.models : [])) {
+                const id = String((m && (m.version || m.model)) || '').trim();
+                if (id) seen.add(id);
+            }
+            const ids = [...seen].sort((a, b) => verNum(b) - verNum(a));
+            return storeModels(ID, ids.map(value => ({ value, label: LABELS[value] || value })));
+        });
+    },
+
+    /** 캐시 키의 모델 (player.keyOf): 고른 값 그대로 · 직접 입력이면 적은 이름 */
+    modelFor(voice, cfg) { return keyModel(cfg, DEFAULT_MODEL); },
+
     async listVoices(cfg) {
         if (!cfg?.key) throw fail('API 키를 넣어 주세요', 'nokey');
-        const q = MODELS.includes(cfg.model) ? `?model=${encodeURIComponent(cfg.model)}` : '';
+        const m = modelOf(cfg);
+        const q = m ? `?model=${encodeURIComponent(m)}` : '';
         let list;
         try {
             list = await call('/v3/voices' + q, { key: cfg.key });
@@ -147,6 +175,8 @@ const provider = {
                 lang: '',
                 group: v.voice_type === 'custom' ? '내 목소리' : (who || '기타'),
                 preview: typeof v.preview_url === 'string' ? v.preview_url : undefined,
+                gender: String(v.gender || ''), age: String(v.age || ''),   // 1.3.7 엑스트라 목소리 (voices.genderOf · ageOf 가 읽음)
+                own: v.voice_type === 'custom',
             };
         });
     },
@@ -154,7 +184,7 @@ const provider = {
     async synth({ text, voice, cfg, params: p = {}, lang = '', emotion = '', signal }) {
         if (!cfg?.key) throw fail('API 키를 넣어 주세요', 'nokey');
         if (!voice?.voiceId) throw fail('목소리 ID가 없어요', 'novoice');
-        const model = cfg.model === 'ssfm-v21' ? 'ssfm-v21' : 'ssfm-v30';
+        const model = modelOf(cfg);
         const format = p.audio_format === 'wav' ? 'wav' : 'mp3';
         const body = {
             model,

@@ -1,17 +1,29 @@
 // TTS · Google Gemini TTS 엔진 (브라우저 → generativelanguage.googleapis.com 직접 호출, 헤더 x-goog-api-key)
 import { koError, safeMsg, timedFetch } from './_http.js';
+import { modelOptions, storeModels, resolveModel, keyModel, customField, shared, atLeast } from './_models.js';
 
+const ID = 'gemini';
 const BASE = 'https://generativelanguage.googleapis.com/v1beta';
 
-const MODELS = [
-    { value: 'gemini-3.8-flash-tts', label: 'Gemini 3.8 Flash TTS' },
-    { value: 'gemini-3.8-flash-lite-tts', label: 'Gemini 3.8 Flash-Lite TTS' },
-    { value: 'gemini-3.1-flash-tts-preview', label: 'Gemini 3.1 Flash TTS (프리뷰)' },
-    { value: 'gemini-2.5-flash-preview-tts', label: 'Gemini 2.5 Flash TTS (프리뷰)' },
-    { value: 'gemini-2.5-pro-preview-tts', label: 'Gemini 2.5 Pro TTS (프리뷰)' },
-];
+// 아는 모델의 짧은 이름 (목록이 주는 displayName 보다 먼저)
+const LABELS = {
+    'gemini-3.8-flash-tts': 'Gemini 3.8 Flash TTS',
+    'gemini-3.8-flash-lite-tts': 'Gemini 3.8 Flash-Lite TTS',
+    'gemini-3.1-flash-tts-preview': 'Gemini 3.1 Flash TTS (프리뷰)',
+    'gemini-2.5-flash-preview-tts': 'Gemini 2.5 Flash TTS (프리뷰)',
+    'gemini-2.5-pro-preview-tts': 'Gemini 2.5 Pro TTS (프리뷰)',
+};
+// 1.3.7 목록을 못 받았을 때: 지금 모델 (10-07 문서 — 3.1 · 2.5 프리뷰는 11-17 부터 끝날 수 있어 뺌. 고른 사람은 그대로 남음).
+//   키가 있으면 GET /v1beta/models 의 TTS 모델로 바뀐다 (listModels)
+const MODELS = ['gemini-3.8-flash-tts', 'gemini-3.8-flash-lite-tts'].map(value => ({ value, label: LABELS[value] }));
+// 11-17 부터 끝날 수 있는 모델 (ai.google.dev/gemini-api/docs/deprecations) — 고른 사람에게 목록에서 '종료 예정'
+const ENDING = new Set(['gemini-3.1-flash-tts-preview', 'gemini-2.5-flash-preview-tts', 'gemini-2.5-pro-preview-tts']);
 
 // 기본 목소리 30개 (이름, 느낌)
+// 1.3.7 엑스트라 목소리용 기본 목소리 성별 (Gemini 음성 생성 안내의 목소리 표)
+const GEMINI_FEMALE = new Set(['Zephyr', 'Kore', 'Leda', 'Aoede', 'Callirrhoe', 'Autonoe', 'Despina', 'Erinome', 'Laomedeia', 'Achernar', 'Gacrux', 'Pulcherrima', 'Vindemiatrix', 'Sulafat']);
+const GEMINI_MALE = new Set(['Puck', 'Charon', 'Fenrir', 'Orus', 'Enceladus', 'Iapetus', 'Umbriel', 'Algieba', 'Algenib', 'Rasalgethi', 'Alnilam', 'Schedar', 'Achird', 'Zubenelgenubi', 'Sadachbia', 'Sadaltager']);
+const GEMINI_GENDER = Object.fromEntries([...[...GEMINI_FEMALE].map(n => [n, 'f']), ...[...GEMINI_MALE].map(n => [n, 'm'])]);
 const PREBUILT = [
     ['Zephyr', '밝은'], ['Puck', '경쾌한'], ['Charon', '설명하는'], ['Kore', '단단한'], ['Fenrir', '들뜬'],
     ['Leda', '젊은'], ['Orus', '단단한'], ['Aoede', '산뜻한'], ['Callirrhoe', '느긋한'], ['Autonoe', '밝은'],
@@ -31,14 +43,17 @@ const EMOTION_STYLE = {
 const LANG = { ko: 'ko', ja: 'ja', en: 'en', zh: 'zh' };
 const toLang = (code) => LANG[String(code || '').slice(0, 2).toLowerCase()] || '';
 
-// 3.8 부터는 말투를 speechMetadata 로, 이전 모델은 글 앞에 "말투: " 로
-const usesMetadata = (model) => /^gemini-(3\.[89]|[4-9])/.test(String(model || ''));
+/** 1.3.7 모델 버전: gemini-3.8-flash-tts → [3, 8] · gemini-4-flash-tts → [4, 0] · 못 읽는 이름(gemini-flash-tts-latest …) → null */
+export const geminiVersion = (model) => { const x = /^gemini-(\d+)(?:\.(\d+))?(?!\d)/.exec(String(model || '')); return x ? [Number(x[1]), Number(x[2] || 0)] : null; };
+// 3.8 부터는 말투를 speechMetadata 로, 이전 모델은 글 앞에 "말투: " 로. 못 읽는 이름은 새 모델로 본다 (3.8 은 글을 그대로 읽어 '말투:' 까지 소리 냄)
+export const usesMetadata = (model) => { const v = geminiVersion(model); return !v || atLeast(v, [3, 8]); };
 // 직접 만든/복제한 목소리 id
 const isCustomVoice = (id) => /^voice(key)?_/.test(String(id || ''));
 
 const fields = [
     { key: 'key', label: 'API 키', type: 'password', default: '' },
-    { key: 'model', label: '모델', type: 'select', options: MODELS, default: 'gemini-3.8-flash-tts' },
+    { key: 'model', label: '모델', type: 'select', options: (cfg) => modelOptions(ID, MODELS, cfg, { label: (o) => LABELS[o.value], note: (m) => (ENDING.has(m) ? '종료 예정' : '') }), default: 'gemini-3.8-flash-tts' },
+    customField(),   // 1.3.7 직접 입력 (nokey — 캐시 키엔 modelFor)
 ];
 
 const params = [
@@ -111,8 +126,10 @@ async function call(path, { key, method = 'GET', body, signal, timeout = 30000 }
     }, { signal, timeout, netMsg: 'Gemini에 연결하지 못했어요' });
 }
 
+const modelOf = (cfg) => resolveModel(cfg, defaults.model);
+
 export default {
-    id: 'gemini',
+    id: ID,
     name: 'Google Gemini',
     direct: true,
     needsKey: true,
@@ -124,7 +141,7 @@ export default {
 
     /** 기본 30개 + (키가 있으면) 내가 만든·복제한 목소리 */
     async listVoices(cfg) {
-        const list = PREBUILT.map(([id, feel]) => ({ voiceId: id, name: `${id} (${feel})`, lang: '', group: '기본' }));
+        const list = PREBUILT.map(([id, feel]) => ({ voiceId: id, name: `${id} (${feel})`, lang: '', group: '기본', gender: GEMINI_GENDER[id] || '' }));
         if (!cfg.key) return list;
         try {
             const j = await call('/voices?page_size=1000&type=prompted&type=replicated', { key: cfg.key });
@@ -139,9 +156,34 @@ export default {
         return list;
     },
 
+    /** 1.3.7 모델 목록: GET /models (생성 없음 · 무료) 에서 이름에 tts 가 든 generateContent 모델 — 새 버전부터 */
+    async listModels(cfg) {
+        if (!cfg?.key) throw new Error('API 키를 먼저 저장하세요');
+        return shared(ID, async () => {
+            const rows = [];
+            let token = '';
+            for (let page = 0; page < 5; page++) {
+                const j = await call(`/models?pageSize=1000${token ? `&pageToken=${encodeURIComponent(token)}` : ''}`, { key: cfg.key });
+                rows.push(...(Array.isArray(j?.models) ? j.models : []));
+                token = String(j?.nextPageToken || '');
+                if (!token) break;
+            }
+            const list = rows
+                .map(m => ({ id: String(m?.name || '').replace(/^models\//, ''), m }))
+                .filter(({ id, m }) => id && /tts/i.test(id) && (!Array.isArray(m.supportedGenerationMethods) || m.supportedGenerationMethods.includes('generateContent')))
+                .map(({ id, m }, i) => ({ id, i, v: geminiVersion(id), label: LABELS[id] || String(m.displayName || id) }))
+                .sort((a, b) => (a.v && b.v ? (b.v[0] - a.v[0]) || (b.v[1] - a.v[1]) || (a.i - b.i) : a.v ? -1 : b.v ? 1 : a.i - b.i))
+                .map(x => ({ value: x.id, label: x.label }));
+            return storeModels(ID, list);
+        });
+    },
+
+    /** 캐시 키의 모델 (player.keyOf): 고른 값 그대로 · 직접 입력이면 적은 이름 */
+    modelFor(voice, cfg) { return keyModel(cfg, defaults.model); },
+
     /** 합성: 글 → WAV Blob (3.8 은 WAV, 이전 모델은 PCM 을 WAV 로 감쌈) */
     async synth({ text, voice, cfg, params: p = {}, emotion = '', signal }) {
-        const model = String(cfg.model || defaults.model);
+        const model = modelOf(cfg);
         const parts = [String(voice?.instructions || p.style || '').trim(), EMOTION_STYLE[emotion] || ''].filter(Boolean);
         const style = parts.join(', ');
         const input = String(text || '');
@@ -167,7 +209,7 @@ export default {
 
     /** 연결 확인: 모델 정보만 조회 (합성 없음) */
     async test(cfg) {
-        const model = String(cfg.model || defaults.model);
+        const model = modelOf(cfg);
         const j = await call(`/models/${encodeURIComponent(model)}`, { key: cfg.key });
         return `연결됨 · ${j?.displayName || model}`;
     },

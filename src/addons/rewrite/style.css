@@ -10,7 +10,7 @@
     --bwr-accent-ink: var(--salty-accent-ink, var(--bwr-accent)); /* 옅은 포인트 면 위 글자 — 블루 레몬에이드 밝은 테마면 진한 잉크 */
     --bwr-danger: #e5484d;
     /* Compared with index.js after load: a mismatch may be a packaging, cache, or installation issue. */
-    --bwr-css-version: "2.0.1";
+    --bwr-css-version: "2.0.2";
 }
 
 /* 서랍 안쪽 — .inline-drawer-content 는 실리태번이 열고 닫으므로 display 를 주지 않고 안에 한 겹 더 둔다 */
