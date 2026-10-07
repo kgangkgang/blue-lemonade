@@ -559,7 +559,15 @@ function buildJobs(mesId, mes, { orig, disp }, { startSeg = 0, final = true, exc
         const oi = origIdxOf(seg);
         if (exclude && oi !== undefined && exclude.has(oi)) continue;   // 스트리밍 때 이미 읽음
         let name = userName, source = 'user', flag = null;
-        if (!mes.is_user) { const r = safeResolve(seg, speakerCtx); name = r.name; source = r.source; if (typeof r.isUser === 'boolean') flag = r.isUser; }
+        if (!mes.is_user) {
+            const r = safeResolve(seg, speakerCtx); name = r.name; source = r.source; if (typeof r.isUser === 'boolean') flag = r.isUser;
+            // 1.3.6 화자 찾기: 색 · 이름표가 없어 보낸 쪽 이름으로 떨어진 대사는 대사 분석이 맥락으로 고른 화자 (후보 이름 가운데 하나)
+            if (source === 'sender' && an?.speaker !== false && seg.kind === 'dialogue') {
+                const g = aseg(seg);
+                const sp = typeof g?.speaker === 'string' ? g.speaker.trim() : '';
+                if (sp && sp !== '?') { name = sp; source = 'analysis'; flag = null; }
+            }
+        }
         name = String(name || '');
         if (/^\{\{user\}\}$/i.test(name)) name = userName;
         const isUser = flag ?? (source === 'user' || name.toLowerCase() === userName.toLowerCase());

@@ -5,7 +5,8 @@ import { runtimeEnabled, assertRuntime, waitForRuntime } from './runtime.js';
 //   hash,            원문(mes.mes) 해시 — 다르면 옛것 (getAnalysis 가 null)
 //   langs: ['ja'],   그때 요청한 번역 언어 (정렬) — 더 필요한 언어가 생기면 다시 분석
 //   model, at, profile,  분석 설정·프롬프트 해시 (키·주소는 저장하지 않음)
-//   segs: [ { i, h, emotion, text: { ja: '…' } } ]   i = 원문 대화문 순번 · h = 정규화한 대사 해시 (번호가 어긋나도 찾게)
+//   segs: [ { i, h, emotion, speaker?, text: { ja: '…' } } ]   i = 원문 대화문 순번 · h = 정규화한 대사 해시 (번호가 어긋나도 찾게)
+//          speaker = 1.3.6 화자 찾기: 색 · 이름표로 못 정한 줄(보낸 쪽 이름으로 떨어진 줄)에 LLM 이 고른 화자 — 프롬프트에 준 '아는 이름' 가운데 하나만 저장
 // }
 // 저장은 getContext().saveChat() 을 바로 (생성 중이면 끝난 뒤; 지우기는 1초 디바운스) · 스와이프 정보에도 복사 (syncMesToSwipe) 해 되돌아와도 다시 안 묻는다.
 // 비용: 메시지(글 해시 + 언어)마다 요청 한 번. 같은 메시지를 또 부르면 진행 중인 요청에 붙고, 부른 쪽이 모두 그만둬도
@@ -69,7 +70,7 @@ const SCHEMA = Object.freeze({
                 type: 'array',
                 items: {
                     type: 'object',
-                    properties: { i: { type: 'integer' }, emotion: { type: 'string' }, ja: { type: 'string' }, en: { type: 'string' }, zh: { type: 'string' }, ko: { type: 'string' } },
+                    properties: { i: { type: 'integer' }, emotion: { type: 'string' }, speaker: { type: 'string' }, ja: { type: 'string' }, en: { type: 'string' }, zh: { type: 'string' }, ko: { type: 'string' } },
                     required: ['i'],
                 },
             },
@@ -135,6 +136,34 @@ function segOpts(mes, s, ctx, userName, charName) {
         userName, charName, knownNames: knownNames(ctx, s), routes: s.routes, final: true,
     };
 }
+/** 1.3.6 화자를 색 · 이름표 · 내 색으로 못 정한 줄인가 (resolveSpeaker 가 보낸 쪽 이름으로 떨어짐) → 화자 찾기가 켜져 있으면 LLM 에게 묻는다 */
+function speakerUnknown(seg, mes, charName, userName) {
+    try { const r = resolveSpeaker(seg, { mes, charName, userName }); return !r || !r.name || r.source === 'sender'; } catch { return true; }
+}
+const foldName = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, '');
+const cleanName = (s) => String(s || '').replace(/[*_`~"'“”‘’「」『』()（）]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40);
+/** 화자 찾기 후보 이름: 지금 캐릭터 · 나 · 목소리를 지정한 이름 · 목소리 이름 · 그룹 · 배운 이름 (순서대로, 겹침 없이, 30개까지) */
+function candidateNames(ctx, s, charName, userName) {
+    const out = [];
+    const seen = new Set();
+    for (const n of [charName, userName, ...knownNames(ctx, s)]) {
+        const c = cleanName(n);
+        if (!c || /^\{\{.*\}\}$/.test(c) || seen.has(foldName(c))) continue;
+        seen.add(foldName(c)); out.push(c);
+        if (out.length >= 30) break;
+    }
+    return out;
+}
+/** LLM 이 준 화자 → 후보 가운데 하나 (정확히 같은 이름, 아니면 한쪽이 다른 쪽을 품는 이름 — 'Lil (maid)' → Lil). 없으면 '' */
+function matchSpeaker(raw, cands) {
+    const v = cleanName(raw);
+    if (!v || v === '?' || !Array.isArray(cands) || !cands.length) return '';
+    const f = foldName(v);
+    const exact = cands.find(c => foldName(c) === f);
+    if (exact) return exact;
+    if (f.length < 2) return '';
+    return cands.find(c => { const g = foldName(c); return g.length >= 2 && (g.includes(f) || f.includes(g)); }) || '';
+}
 function speakerOf(seg, mes, charName, userName) {
     let name = '';
     try { name = String(resolveSpeaker(seg, { mes, charName, userName })?.name || ''); } catch { name = ''; }
@@ -147,13 +176,15 @@ function speakerOf(seg, mes, charName, userName) {
 
 /**
  * 메시지 → 프롬프트 재료 + 본문 (통신 없음)
- * opts: { langs: Set|array, emotion = true, translate = true, context_chars = 1200 }
- * → { system, user, lines: [{ i, h, text, speaker }], needs: { i: ['ja'] }, asked: n, empty }
+ * opts: { langs: Set|array, emotion = true, translate = true, context_chars = 1200, speaker = false }
+ *   speaker (1.3.6): 색 · 이름표로 못 정한 대사(ask)는 LLM 에게 화자를 묻는다 — 후보(speakers)를 함께 보내고 답은 후보 가운데 하나만 받는다
+ * → { system, user, lines: [{ i, h, text, speaker, ask }], needs: { i: ['ja'] }, speakers, asked: n, empty }
  */
 export function buildPrompt(mes, opts = {}) {
     const s = settings();
     const { ctx, userName, charName } = chatCtx(mes);
     const emotion = opts.emotion !== false;
+    const askSpeaker = opts.speaker === true && !mes?.is_user;
     const langs = opts.translate === false ? [] : normLangs(opts.langs);
     const max = Number.isFinite(Number(opts.context_chars)) ? Number(opts.context_chars) : 1200;
     let segs = [];
@@ -167,7 +198,7 @@ export function buildPrompt(mes, opts = {}) {
         if (seg.kind !== 'dialogue') { other.push(seg.text); continue; }
         const i = lines.length;
         const text = String(seg.text).trim();
-        lines.push({ i, h: hash(normText(text)), text, speaker: speakerOf(seg, mes, charName, userName) });
+        lines.push({ i, h: hash(normText(text)), text, speaker: speakerOf(seg, mes, charName, userName), ask: askSpeaker && speakerUnknown(seg, mes, charName, userName) });
         const own = detectLang(text);
         const want = langs.filter(l => l !== own);
         if (want.length) needs[i] = want;
@@ -182,8 +213,9 @@ export function buildPrompt(mes, opts = {}) {
         catch { dsegs = []; }
         display = clip(joinByLine(dsegs), max);
     }
-    const { system, user, asked } = composePrompt({ lines, needs, context, display, emotion, charName, userName });
-    return { system, user, lines, needs, asked, empty: asked === 0 };
+    const speakers = lines.some(l => l.ask) ? candidateNames(ctx, s, charName, userName) : [];
+    const { system, user, asked } = composePrompt({ lines, needs, context, display, emotion, charName, userName, speakers });
+    return { system, user, lines, needs, speakers, asked, empty: asked === 0 };
 }
 /** 조각들을 원래 줄대로 이어 붙인 평문 (대화문은 "…" 로 감쌈) */
 function joinByLine(segs) {
@@ -200,26 +232,30 @@ function joinByLine(segs) {
     return out.join('\n');
 }
 
-/** 프롬프트 본문 (순수 함수). parts: { lines, needs, context, display, emotion, charName, userName } → { system, user, asked } */
+/** 프롬프트 본문 (순수 함수). parts: { lines, needs, context, display, emotion, charName, userName, speakers } → { system, user, asked }
+ *  1.3.6 lines[].ask 인 줄은 '(?)' 로 적고 Known speakers 와 "speaker" 과제를 붙인다 (ask 줄이 없으면 1.3.5 와 글자까지 같은 프롬프트 — 저장된 분석이 그대로 산다) */
 export function composePrompt(parts) {
-    const { lines = [], needs = {}, context = '', display = '', emotion = true, charName = '', userName = '' } = parts || {};
-    const asked = lines.filter(l => emotion || (needs[l.i] && needs[l.i].length));
+    const { lines = [], needs = {}, context = '', display = '', emotion = true, charName = '', userName = '', speakers = [] } = parts || {};
+    const asked = lines.filter(l => emotion || (needs[l.i] && needs[l.i].length) || l.ask);
+    const askLines = asked.filter(l => l.ask);
     const langsUsed = [...new Set(Object.values(needs).flat())].filter(l => LANGS.includes(l));
     const out = [];
     if (charName || userName) out.push(`Character: ${charName || '?'} · User: ${userName || '?'}`);
     if (context) out.push(`Narration around the lines:\n${context}`);
     if (display) out.push(`Korean translation shown on screen (meaning only, do not copy):\n${display}`);
+    if (askLines.length && speakers.length) out.push(`Known speakers: ${speakers.join(', ')}`);
     out.push('Dialogue lines:');
     for (const l of asked) {
         const need = needs[l.i] && needs[l.i].length ? `  → needs: ${needs[l.i].join(', ')}` : '';
-        out.push(`[${l.i}]${l.speaker ? ` (${l.speaker})` : ''} "${l.text}"${need}`);
+        out.push(`[${l.i}]${l.ask ? ' (?)' : (l.speaker ? ` (${l.speaker})` : '')} "${l.text}"${need}`);
     }
     const tasks = [];
     if (emotion) tasks.push(`For every line give "emotion": one of ${EMOTIONS.join(', ')} — judged from the narration and how the line is said (shout = raised voice, whisper = hushed).`);
+    if (askLines.length) tasks.push('For lines marked (?) give "speaker": who says that line, judged from the narration and the other lines — exactly one name from the known speakers, or "?" if it cannot be told.');
     if (langsUsed.length) {
         tasks.push('For lines marked "needs", add one key per listed language with the line as ' + langsUsed.map(l => `"${l}" = ${LANG_HINT[l]}`).join('; ') + '. Translate the meaning as spoken dialogue, no quotation marks, no notes.');
     }
-    tasks.push('Reply with JSON only, no markdown, no extra keys: {"segs":[{"i":0' + (emotion ? ',"emotion":"happy"' : '') + (langsUsed.length ? `,"${langsUsed[0]}":"…"` : '') + '}]}');
+    tasks.push('Reply with JSON only, no markdown, no extra keys: {"segs":[{"i":0' + (emotion ? ',"emotion":"happy"' : '') + (askLines.length ? `,"speaker":"${speakers[0] || 'Name'}"` : '') + (langsUsed.length ? `,"${langsUsed[0]}":"…"` : '') + '}]}');
     out.push(tasks.join('\n'));
     return { system: SYSTEM, user: out.join('\n\n'), asked: asked.length };
 }
@@ -273,7 +309,9 @@ function normalizeSegs(parsed, built, emotionOn) {
             const t = unquote(r[lang]);
             if (t && normText(t) !== normText(l.text)) text[lang] = t;
         }
-        return { i: l.i, h: l.h, emotion: EMOTION_SET.has(em) ? em : '', text };
+        const out = { i: l.i, h: l.h, emotion: EMOTION_SET.has(em) ? em : '', text };
+        if (l.ask) { const sp = matchSpeaker(r.speaker, built.speakers); if (sp) out.speaker = sp; }   // 1.3.6 후보 밖 이름 · '?' 는 안 적음 → 보낸 쪽 이름 그대로
+        return out;
     });
 }
 
@@ -588,7 +626,7 @@ function profileOf(mes, cfg, langs, built) {
         provider = String(ctx.chatCompletionSettings?.chat_completion_source || ctx.mainApi || '');
         model = stapi.modelOf({ ...cfg, provider, provider_models: {} });
     }
-    const p = built || buildPrompt(mes, { langs, emotion: !!cfg.emotion, translate: !!cfg.translate, context_chars: cfg.context_chars });
+    const p = built || buildPrompt(mes, { langs, emotion: !!cfg.emotion, translate: !!cfg.translate, context_chars: cfg.context_chars, speaker: cfg.speaker !== false });
     return hash(JSON.stringify([1, engine, provider, model, !!cfg.emotion, !!cfg.translate, cfg.temperature ?? 0.2, p.system, p.user]));
 }
 const dropped = new WeakMap();   // mes → { swipe, analysis }  이어쓰기·편집 뒤 같은 줄의 번역을 재사용
@@ -718,7 +756,7 @@ async function doAnalyze(entry) {
     if (!force) { const again = getAnalysis(id); if (again && covers(again.langs, langs)) return again; }   // 줄 서는 동안 끝났으면
     if (msgOf(id) !== mes || textHash(mes) !== entry.hash) return null;                                       // 줄 서는 동안 글이 바뀜
     const cfg = settings().analysis || {};
-    const built = buildPrompt(mes, { langs, emotion: !!cfg.emotion, translate: !!cfg.translate, context_chars: cfg.context_chars });
+    const built = buildPrompt(mes, { langs, emotion: !!cfg.emotion, translate: !!cfg.translate, context_chars: cfg.context_chars, speaker: cfg.speaker !== false });
     if (entry.profile !== profileOf(mes, cfg, langs, built)) return null;
     const h = entry.hash;
     const engine = engineOf(cfg);

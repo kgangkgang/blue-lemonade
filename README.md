@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.6.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.6.9.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.6.8 · 최신 업데이트</summary>
+<summary>5.6.9 · 최신 업데이트</summary>
+
+- TTS 1.3.6: 대사 분석에 「화자 찾기」가 생겼어요 (기본 켬). 대사 색이나 이름표가 없어서 누구 말인지 알 수 없던 대사는 서술과 앞뒤 대사를 보고 누구 말인지 골라, 그 이름에 지정한 캐릭터별 목소리로 읽어요. 고르는 이름은 지금 캐릭터 · 나 · 목소리를 지정한 이름 · 그룹 멤버 · 이 채팅에서 배운 이름이에요. 누른 대사도 같아요.
+- 대사 색으로 이미 정해진 대사는 그대로이고, 색으로 다 정해진 메시지는 저장된 분석을 다시 묻지 않아요. 색 없는 대사가 있는 메시지만 다음에 읽을 때 한 번 다시 분석해요. 대사 분석이 꺼져 있으면 전처럼 메시지를 보낸 캐릭터 목소리예요.
+
+</details>
+
+<details>
+<summary>5.6.8 · 숨긴 메시지 흐리게</summary>
 
 - 채팅 › 화면에 「숨긴 메시지 흐리게」가 생겼어요. 컨텍스트에서 뺀 메시지(눈 감은 아이콘)를 옅게 보여 주고, 진하기(기본 40 %)와 흑백(기본 30 %)을 슬라이더로 정해요. 마우스를 올리면(폰에서는 누르는 동안) 원래대로 진해져요. 기본은 꺼져 있어요.
 - 실리태번 자체 안내 메시지와 컨텍스트에 들어가는 서술자 메시지는 흐려지지 않아요. 흑백을 0 으로 두면 필터 없이 투명도만 써서 가벼워요.

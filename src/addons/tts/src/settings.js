@@ -30,6 +30,7 @@ export const ANALYSIS_DEFAULTS = Object.freeze({
     provider_models: {},       // { <공급자>: '<모델 id>' } — 공급자마다 기억 (없으면 실리태번에서 그 공급자에 고른 모델)
     custom_url: '',            // provider 'custom' 의 주소 (비우면 실리태번 Custom 주소 · 추가 헤더/본문)
     emotion: true,             // 감정 붙이기
+    speaker: true,             // 1.3.6 화자 찾기: 색 · 이름표가 없는 대사는 맥락으로 누구 말인지 물어 그 캐릭터 목소리로 (analysis.js ask · player.js buildJobs)
     translate: true,           // 목소리 원어로 번역해서 읽기
     context_chars: 1200,       // 대사 주변 서술을 보내는 최대 글자 (메시지당)
     temperature: 0.2,

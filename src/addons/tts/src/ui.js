@@ -128,6 +128,7 @@ const READ_CARDS = {
         { key: 'emotion_strength', label: '감정 세기', type: 'select', options: [{ value: 'weak', label: '약하게' }, { value: 'normal', label: '보통' }, { value: 'strong', label: '강하게' }] },
         { key: 'thought_emotion', label: '속마음', type: 'select', options: [{ value: 'whisper', label: '속삭임' }, { value: 'auto', label: '일반' }] },
         { key: 'analysis.translate', label: '원어로 번역해서 읽기', type: 'toggle' },
+        { key: 'analysis.speaker', label: '화자 찾기', type: 'toggle', desc: '색 · 이름표가 없는 대사는 누구 말인지 맥락으로 물어 그 캐릭터 목소리로' },
         { key: 'analysis.when', label: '언제', type: 'select', options: [{ value: 'auto', label: '자동' }, { value: 'manual', label: '수동' }] },
     ], analysisExtra, analysisNote],
     when: ['fa-clock', '언제', [
