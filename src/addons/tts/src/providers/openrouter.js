@@ -83,6 +83,24 @@ async function synth({ text, voice, cfg, params: p, emotion = '', signal }) {
     return { blob, mime, usage: { chars: input.length } };
 }
 
+const RESET_KO = { daily: '매일', weekly: '매주', monthly: '매달' };
+/** 1.3.5 잔액 줄 (GET /key — 관리 키 없이 됨): 키에 한도가 있으면 남은 $ / 한도, 없으면 이 키로 쓴 $ (계정 전체 잔액은 관리 키 전용이라 못 봄) */
+async function balance(cfg) {
+    const c = cfg || providerConfig(ID, defaults);
+    if (!c.key) throw new Error('API 키를 먼저 저장');
+    const j = await fetchJson(`${BASE}/key`, { headers: auth(c), timeout: 20000 });
+    const d = (j && j.data) || {};
+    const usd = (v) => (v === null || v === undefined || v === '' || !Number.isFinite(Number(v)) ? null : Number(v));
+    const limit = usd(d.limit), left = usd(d.limit_remaining), used = usd(d.usage), month = usd(d.usage_monthly);
+    if (limit !== null && left !== null) {
+        const reset = RESET_KO[String(d.limit_reset || '').toLowerCase()];
+        return { label: '남은 크레딧', left, total: limit, unit: '$', note: reset ? `${reset} 초기화` : '' };
+    }
+    const notes = ['한도 없음'];
+    if (month !== null) notes.push(`이번 달 $${(Math.round(month * 100) / 100).toFixed(2)}`);
+    return { label: '쓴 크레딧', used: used === null ? 0 : used, unit: '$', note: notes.join(' · ') };
+}
+
 /** 연결 확인: 키 정보(인증) + TTS 모델 목록 */
 async function test(cfg) {
     const c = cfg || providerConfig(ID, defaults);
@@ -106,4 +124,5 @@ export default {
     listModels,
     synth,
     test,
+    balance,
 };

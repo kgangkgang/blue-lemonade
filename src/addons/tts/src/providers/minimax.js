@@ -2,10 +2,17 @@
 // 1.2.5 읽을 모델 (model_from): 'picked' = 고른 모델 (1.2.4 까지와 같음) · 'voice' = 목소리를 만든 모델 (voice.model — 목록 이름표 · 목록 붙여넣기).
 //   만든 모델을 모르는 목소리(시스템 · 섞은 목소리 · 이름표에 없는 것)는 고른 모델. 실제 모델은 modelFor 하나로 정해
 //   합성 요청 · 감정 맞추기(fitEmotion) · 사용량(usage.model) · 캐시 키(player.keyOf 가 modelFor 로 model 칸을 바꿈)가 모두 같은 값을 쓴다
-import { providerConfig, cleanModel } from '../settings.js';
+import { settings, providerConfig, cleanModel } from '../settings.js';
 import { fetchJson, safeMsg } from './_http.js';
+import { monthChars } from '../balance.js';
 
 const ID = 'minimax';
+// 공식(돈이 드는) 서버 이름 — paid.js(유료 판단) · balance(잔액 줄)가 같이 쓴다
+export const OFFICIAL_DOMAINS = Object.freeze(['minimax.io', 'minimaxi.com', 'minimax.chat', 'minimaxi.chat']);
+export function isOfficialHost(url) {
+    try { const h = new URL(String(url || '')).hostname.toLowerCase().replace(/\.$/, ''); return OFFICIAL_DOMAINS.some(d => h === d || h.endsWith(`.${d}`)); } catch { return false; }
+}
+const BALANCE_PAGE = { io: 'https://platform.minimax.io/user-center/payment/balance', cn: 'https://platform.minimaxi.com/user-center/payment/balance' };
 const HOSTS = [
     { value: 'https://api.minimax.io', label: 'api.minimax.io (국제)' },
     { value: 'https://api-uw.minimax.io', label: 'api-uw.minimax.io (빠른 응답)' },
@@ -246,6 +253,20 @@ async function synth({ text, voice, cfg, params: p, lang = '', emotion = '', sig
     return { blob: hexToBlob(hex, 'audio/mpeg'), mime: 'audio/mpeg', usage: { chars: Number.isFinite(used) ? used : clean.length, model } };
 }
 
+/**
+ * 1.3.5 잔액 줄. MiniMax 는 API 로 잔액 · 오디오 포인트를 안 알려줘요 (10-07 확인: /v1/account/balance 는 '관리자 키' 전용 403,
+ * token_plan/remains 는 코딩 플랜(M Plan)만 · 일반 키는 2062, 그 밖의 주소는 404) → 이번 달 이 엔진으로 쓴 글자 + 결제 페이지 링크.
+ * 공식 서버가 아니면(집 PC 게이트웨이 · 직접 서버) 줄 없음. 네트워크 요청 없음.
+ */
+function balance(cfg) {
+    const c = cfg || providerConfig(ID, defaults);
+    if (!c.key) throw new Error('API 키를 먼저 저장');
+    const host = hostOf(c);
+    if (!isOfficialHost(host)) return null;
+    const cn = /(^|\.)minimaxi\.com$/i.test(new URL(host).hostname);
+    return { label: '이번 달 쓴 글자', used: monthChars(settings().usage, (m) => /^speech-/i.test(m)), unit: '자', url: cn ? BALANCE_PAGE.cn : BALANCE_PAGE.io, urlText: 'MiniMax 결제 페이지' };
+}
+
 /** 연결 확인: 과금 없는 목록 조회 */
 async function test(cfg) {
     const c = cfg || providerConfig(ID, defaults);
@@ -267,6 +288,7 @@ export default {
     listVoices,
     synth,
     test,
+    balance,
     modelFor,
     strengthApplies,
 };

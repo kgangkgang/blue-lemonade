@@ -14,12 +14,12 @@
 // 남는 위험: MiniMax 공식 서버로 넘겨 주는 자기 프록시(다른 도메인)는 무료로 보인다 — 그런 주소면 스위치로 직접 정한다.
 import { settings } from './settings.js';
 import { getProvider } from './providers/index.js';
-import { hostOf as minimaxHost } from './providers/minimax.js';
+import { hostOf as minimaxHost, OFFICIAL_DOMAINS } from './providers/minimax.js';
 
 const FREE_ENGINES = new Set(['browser', 'gtranslate']);
 export const LOCAL_HOST = /^(localhost|127\.|0\.0\.0\.0|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|\[?::1\]?$|[^.]+$)|\.(local|lan|home\.arpa|ts\.net)$/i;
 const COMPAT_BASE = 'http://127.0.0.1:8880/v1';   // openai_compat.js DEFAULT_BASE (주소를 비우면 이리로)
-export const MINIMAX_DOMAINS = Object.freeze(['minimax.io', 'minimaxi.com', 'minimax.chat', 'minimaxi.chat']);
+export const MINIMAX_DOMAINS = OFFICIAL_DOMAINS;   // 1.3.5 목록은 minimax.js 한 곳에 (잔액 줄도 같은 목록)
 
 const isObj = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
 /** 주소 → 호스트 이름 (소문자 · 끝 점 뺌). 읽을 수 없으면 null */

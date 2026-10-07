@@ -176,6 +176,15 @@ const provider = {
         return { blob, mime: blob.type, usage: { chars: text.length } };
     },
 
+    /** 1.3.5 잔액 줄: 남은 크레딧 / 요금제 크레딧 (구독 조회) */
+    async balance(cfg) {
+        if (!cfg?.key) throw fail('API 키를 넣어 주세요', 'nokey');
+        const sub = await call('/v1/users/me/subscription', { key: cfg.key });
+        const used = num(sub?.credits?.used_credits, NaN), total = num(sub?.credits?.plan_credits, NaN);
+        if (!Number.isFinite(used) || !Number.isFinite(total)) throw fail('구독 정보에 크레딧이 없어요', 'shape');
+        return { label: '남은 크레딧', left: Math.max(0, total - used), total, unit: '', note: sub?.plan ? String(sub.plan) : '' };
+    },
+
     async test(cfg) {
         if (!cfg?.key) throw fail('API 키를 넣어 주세요', 'nokey');
         try {

@@ -146,6 +146,18 @@ const provider = {
         return { blob, mime: blob.type, usage: { chars: text.length } };
     },
 
+    /** 1.3.5 잔액 줄: 이번 달 쓴 크레딧 (GET /usage/credits 합계 — 남은 양은 API 가 안 알려줘요). 실제 계정으로는 아직 못 봄(10-07) */
+    async balance(cfg) {
+        if (!cfg?.key) throw fail('API 키를 넣어 주세요', 'nokey');
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+        const j = await call(`/usage/credits?interval=month&start=${encodeURIComponent(start)}&end=${encodeURIComponent(now.toISOString())}`, { key: cfg.key });
+        const rows = Array.isArray(j) ? j : (Array.isArray(j?.data) ? j.data : null);
+        if (!rows) throw fail('사용량 응답 형식을 몰라요', 'shape');
+        const used = rows.reduce((n, r) => n + (Number(r?.credits) || 0), 0);
+        return { label: '이번 달 쓴 크레딧', used, unit: '', note: '남은 양은 Cartesia 계정에서' };
+    },
+
     async test(cfg) {
         if (!cfg?.key) throw fail('API 키를 넣어 주세요', 'nokey');
         const j = await call('/voices?limit=1', { key: cfg.key });

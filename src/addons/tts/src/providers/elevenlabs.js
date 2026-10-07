@@ -144,6 +144,15 @@ export default {
         return { blob: blob.type ? blob : new Blob([blob], { type: 'audio/mpeg' }), mime: 'audio/mpeg', usage: { chars: String(text || '').length } };
     },
 
+    /** 1.3.5 잔액 줄: 남은 글자 / 이번 달 한도 · 다음 초기화 · 요금제 (구독 조회 — 합성 없음) */
+    async balance(cfg) {
+        const j = await call('/v1/user/subscription', { key: cfg.key });
+        const used = Number(j?.character_count) || 0;
+        const limit = Number(j?.character_limit) || 0;
+        const reset = Number(j?.next_character_count_reset_unix) || 0;
+        return { label: '남은 글자', left: Math.max(0, limit - used), total: limit, unit: '자', reset: reset ? reset * 1000 : null, note: j?.tier ? String(j.tier) : '' };
+    },
+
     /** 연결 확인: 구독 정보 (합성 없음) */
     async test(cfg) {
         const j = await call('/v1/user/subscription', { key: cfg.key });

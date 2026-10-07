@@ -35,7 +35,7 @@ export function guideHtml() {
         <p><b>엔진 연결 → 목소리 등록 → 캐릭터 지정 → 대사 클릭</b> 순서예요. 아래에서 사용할 엔진을 골라 입력할 값을 확인하세요.</p>
         <label>사용할 엔진 <select class="text_pole" style="display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box" data-tts-guide-provider aria-label="사용법에서 엔진 선택">${providers.map(([id,name])=>`<option value="${id}">${escape(name)}</option>`).join('')}</select></label>
         ${providers.map(([id,,text],i)=>`<p data-tts-guide-help="${id}"${i?' hidden':''}>${escape(text)}</p>`).join('')}
-        <p>키를 저장한 다음 <b>연결 확인</b>을 눌러요. 유료 엔진의 음성 시험과 감정 분석은 API 사용량이 생길 수 있어요. 직접 등록할 때 <b>이름</b>은 화면에 보일 이름, <b>목소리 ID</b>는 서비스가 발급한 값이에요.</p>
+        <p>키를 저장한 다음 <b>연결 확인</b>을 눌러요. 키 줄 아래 <b>잔액 줄</b>에 남은 글자·크레딧이 보여요 (ElevenLabs · Typecast · OpenRouter · Cartesia; MiniMax는 쓴 글자와 결제 페이지 링크). 유료 엔진의 음성 시험과 감정 분석은 API 사용량이 생길 수 있어요. 직접 등록할 때 <b>이름</b>은 화면에 보일 이름, <b>목소리 ID</b>는 서비스가 발급한 값이에요.</p>
       </details>
       <details>
         <summary><b>목소리 목록 JSON은 어떻게 넣나요?</b></summary>

@@ -1,11 +1,11 @@
-/* TTS (Lemon TTS) v1.3.4 */
+/* TTS (Lemon TTS) v1.3.5 */
 
 #lv_settings .lv-version { background: none; border: 0; color: inherit; font: inherit; padding: 4px 6px; cursor: pointer; text-decoration: none; }
 #lv_settings .lv-version:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 
 /* ---------- 공통 변수: 설정 창 · 편집 팝업 · 재생 막대 (ST 테마 색을 따르고, 블루 레몬에이드 변수는 있으면 씀) */
 .lv-settings, .lv-editor, .lv-bar {
-  --lv-css-version: "1.3.4";
+  --lv-css-version: "1.3.5";
   --lv-accent: var(--salty-accent, var(--SmartThemeQuoteColor, #51a0de));
   --lv-text: var(--SmartThemeBodyColor, #dcdcd2);
   --lv-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, .15));
@@ -288,6 +288,12 @@ body:not(.salty) .lv-toggle.lv-off > input { opacity: .5; }
 .lv-key { display: flex; gap: 6px; flex-wrap: wrap; }
 .lv-key .text_pole { flex: 1 1 180px; width: auto; }
 .lv-key-state { display: flex; align-items: center; gap: 6px; color: var(--lv-dim); font-size: .88em; }
+/* 1.3.5 엔진 잔액 줄 (키 상태 줄과 같은 글씨; 거의 다 쓰면 · 실패면 주의색) */
+.lv-balance { display: flex; align-items: center; gap: 6px; color: var(--lv-dim); font-size: .88em; }
+.lv-balance[hidden] { display: none; }
+.lv-balance.low, .lv-balance.bad { color: var(--lv-bad); }
+.lv-balance-text { min-width: 0; overflow-wrap: anywhere; }
+.lv-body .lv-balance-link { color: inherit; text-decoration: underline dotted; text-underline-offset: 3px; }
 .lv-test-result { font-size: .88em; min-height: 0; }
 .lv-test-result:empty { display: none; }
 .lv-test-result.ok { color: var(--lv-accent); }

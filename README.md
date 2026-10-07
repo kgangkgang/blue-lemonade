@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.6.6.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.6.7.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.6.6 · 최신 업데이트</summary>
+<summary>5.6.7 · 최신 업데이트</summary>
+
+- TTS 1.3.5: 엔진 설정에서 키를 저장하면 키 줄 아래에 잔액 줄이 보여요. ElevenLabs는 남은 글자와 초기화 날짜, Typecast는 남은 크레딧, OpenRouter는 키 한도가 있으면 남은 금액(없으면 쓴 금액), Cartesia는 이번 달 쓴 크레딧이에요. 10분 동안 기억하고, ↻ 를 누르거나 키를 저장·연결 확인하면 바로 다시 물어요. 거의 다 쓰면 주의색으로 바뀌어요.
+- MiniMax는 API로 잔액을 알려 주지 않아서 이번 달 이 엔진으로 쓴 글자와 MiniMax 결제 페이지 링크를 보여 줘요. OpenAI · Gemini · Azure · 직접 서버 · 무료 엔진은 잔액 줄이 없어요.
+
+</details>
+
+<details>
+<summary>5.6.6 · 오토픽 그림 칸 모드 · 북마크 규칙 · 세로 가운데</summary>
 
 - 오토픽(AutoPic) 그림을 메시지 아래 그림 칸에 넣는 모드도 테마의 이미지 설정(배치 · 모양 · 액자 · 크기 · 흐림 · 테두리)을 따라요. 글 사이 모드는 5.6.5부터 그래요. 실리태번 기본 첨부 그림은 그대로예요.
 - 성능: 북마크 창을 닫으면 채팅 서식 사본 규칙 350여 개를 다시 꺼요 (전엔 한 번 열면 그 세션 내내 켜져 있어 글이 붙을 때마다 채팅을 다시 맞춰 봤어요). 기기별 배치를 안 쓰면 PC 창 크기가 760px을 넘나들어도 설정 전체를 다시 적용 · 저장하지 않아요.

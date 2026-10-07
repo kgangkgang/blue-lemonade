@@ -12,6 +12,7 @@ import * as stapi from './stapi.js';
 import * as translation from './translation.js';
 import { entries as logEntries, timeStr, onLog, log } from './log.js';
 import { paidEngines, paidOnly, pregenPaid } from './paid.js';   // 5.6.4 돈이 드는 엔진 (pregen.js 와 같은 판단)
+import { balanceParts, balanceLow, BALANCE_TTL } from './balance.js';   // 1.3.5 엔진 카드 잔액 줄
 
 const TEST_LINE = { ko: '안녕, 잘 부탁해.', ja: 'こんにちは、よろしくね。', en: 'Hi there, nice to meet you.', zh: '你好，请多关照。' };
 const TAB_IDS = ['read', 'voices', 'engine', 'data'];   // 탭 버튼은 settings.html 에 고정
@@ -562,6 +563,7 @@ const ACTIONS = {
         toast('이 채팅의 분석을 비웠어요', 'success');
     },
     'engine-pull': () => { const p = curProvider(); if (p) return pullVoices(p); },
+    balance: () => { const p = curProvider(); if (p) return loadBalance(p, 'force'); },
     warn: (b) => {
         const note = b.closest('.lv-field')?.querySelector('.lv-warn-note');
         if (!note) return;
@@ -1274,7 +1276,8 @@ function engineCardHtml(p) {
     if (kf) {
         const has = !!cfg[kf.key];
         head = `<div class="lv-key"><input type="password" class="text_pole" id="lv_key_input" placeholder="${esc(kf.label || 'API 키')}" autocomplete="off"><button type="button" class="menu_button" data-lv-act="key-save">저장</button><button type="button" class="menu_button" data-lv-act="key-test">연결 확인</button></div>`
-            + `<div class="lv-key-state"><span>${has ? `저장됨 ${esc(shownKey(cfg[kf.key]))}` : '키 없음'}</span>${has ? '<button type="button" class="lv-x" data-lv-act="key-clear" aria-label="키 지우기"><i class="fa-solid fa-xmark"></i></button>' : ''}</div>`;
+            + `<div class="lv-key-state"><span>${has ? `저장됨 ${esc(shownKey(cfg[kf.key]))}` : '키 없음'}</span>${has ? '<button type="button" class="lv-x" data-lv-act="key-clear" aria-label="키 지우기"><i class="fa-solid fa-xmark"></i></button>' : ''}</div>`
+            + balanceSlotHtml(p, cfg);
     } else {
         head = '<div class="lv-actions"><button type="button" class="menu_button" data-lv-act="key-test">연결 확인</button></div>';
     }
@@ -1304,6 +1307,56 @@ export function renderEngine() {
     };
     const opts = list.map(p => `<option value="${esc(p.id)}"${p.id === pid ? ' selected' : ''}>${esc(p.name + suffix(p))}</option>`).join('');
     pane.innerHTML = `<select class="text_pole lv-engine-pick" id="lv_engine_pick" aria-label="엔진">${opts}</select>` + engineCardHtml(list.find(p => p.id === pid));
+    void loadBalance(list.find(p => p.id === pid));
+}
+// ---------- 1.3.5 엔진 잔액 줄: 엔진이 balance() 를 주고 키가 저장돼 있을 때만. 10분 캐시(카드를 오가도 다시 안 물음), ↻ · 저장 · 연결 확인은 바로
+const balanceCache = new Map();   // provider id → { at, result | error }
+const balanceInflight = new Map();   // provider id → 진행 중인 약속 (저장 → 카드 그리기 → 연결 확인이 잇달아 불러도 한 번만 묻는다)
+let balanceSeq = 0;
+function balanceSlotHtml(p, cfg) {
+    const kf = keyField(p);
+    if (!p || typeof p.balance !== 'function' || !kf || !cfg[kf.key]) return '';
+    return '<div class="lv-balance" id="lv_balance" hidden><span class="lv-balance-text" id="lv_balance_text"></span><button type="button" class="lv-x" data-lv-act="balance" aria-label="잔액 다시 확인"><i class="fa-solid fa-rotate"></i></button></div>';
+}
+function paintBalance(entry) {
+    const box = q('#lv_balance'), text = q('#lv_balance_text');
+    if (!box || !text) return;
+    box.classList.remove('low', 'bad');
+    if (!entry || entry.loading) { box.hidden = false; text.textContent = '잔액 확인 중…'; return; }
+    if (entry.error) { box.hidden = false; box.classList.add('bad'); text.textContent = `잔액 확인 실패 · ${entry.error}`; return; }
+    const r = entry.result;
+    if (!r) { box.hidden = true; return; }
+    const parts = balanceParts(r);
+    text.replaceChildren(document.createTextNode(parts.main));
+    if (parts.tail) {
+        const a = document.createElement('a');
+        a.className = 'lv-balance-link'; a.href = parts.tail.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = parts.tail.text;
+        text.append(document.createTextNode(parts.tail.before), a, document.createTextNode(parts.tail.after));
+    }
+    box.classList.toggle('low', balanceLow(r));
+    box.hidden = false;
+}
+/** mode: 'cache' = 10분 안이면 캐시 · 'fresh' = 5초 안이면 캐시(저장 → 연결 확인처럼 잇달아 부를 때) · 'force' = 늘 다시 (↻) */
+async function loadBalance(p, mode = 'cache') {
+    if (!p || typeof p.balance !== 'function' || !q('#lv_balance')) return;
+    const hit = balanceCache.get(p.id);
+    const maxAge = mode === 'force' ? 0 : mode === 'fresh' ? 5000 : BALANCE_TTL;
+    if (maxAge && hit && Date.now() - hit.at < maxAge) { paintBalance(hit); return; }
+    paintBalance({ loading: true });
+    const seq = ++balanceSeq;
+    let job = balanceInflight.get(p.id);
+    if (!job) {
+        job = (async () => {
+            try { return { at: Date.now(), result: await p.balance(providerConfig(p.id, p.defaults)) }; }
+            catch (e) { const err = (e && e.message) || '실패'; log('err', `${p.name} 잔액 확인 실패: ${err}`); return { at: Date.now(), error: err }; }
+        })();
+        balanceInflight.set(p.id, job);
+        job.finally(() => { if (balanceInflight.get(p.id) === job) balanceInflight.delete(p.id); });
+    }
+    const entry = await job;
+    balanceCache.set(p.id, entry);
+    if (seq !== balanceSeq) return;                       // 그 사이 다른 확인이 시작됨 — 그쪽이 그린다
+    if (curProvider()?.id === p.id) paintBalance(entry);
 }
 /** 엔진 카드만 다시 그린다 — 아직 저장 안 한 키 입력과 연결 확인 결과는 그대로 둔다 */
 function rerenderEngineCard(p) {
@@ -1315,6 +1368,7 @@ function rerenderEngineCard(p) {
     if (keyIn && typed) keyIn.value = typed;
     const res2 = q('#lv_test_result');
     if (res2 && resText) { res2.textContent = resText; res2.className = resCls; }
+    void loadBalance(p);
 }
 function showTestResult(text, cls, id = 'lv_test_result') {
     const out = q(`#${id}`);
@@ -1335,6 +1389,7 @@ async function keyTest() {
         showTestResult(e.message || '실패', 'bad');
         log('err', `${p.name} 연결 확인 실패: ${e.message}`);
     }
+    void loadBalance(p, 'fresh');   // 1.3.5 키를 확인했으면 잔액도 새로 (방금 물었으면 그대로)
 }
 async function keySave() {
     const p = curProvider();
@@ -1356,6 +1411,7 @@ async function keyClear() {
     if (!p || !kf) return;
     if (!(await confirm(`${p.name} 키를 지울까요?`))) return;
     delete providerConfig(p.id, p.defaults)[kf.key];
+    balanceCache.delete(p.id);
     save();
     renderEngine();
 }
