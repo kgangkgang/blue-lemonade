@@ -95,11 +95,15 @@ async function showVersion(badge) {
         if (!badgeTextHit(event, badge)) return; // 5.3.7 글자 밖은 서랍 펴기로
         event.preventDefault();
         event.stopPropagation();
+        // 5.7.0 노랗게 빛나면(새 버전) 업데이트 창, 아니면 공지사항
+        if (badge.classList.contains('has-update')) { import('./src/update-check.js').then(m => m.openUpdate()).catch(error => console.error('[Blue Lemonade] 업데이트 창', error)); return; }
         openNotice(noticeSeenChanged).catch(error => console.error('[Blue Lemonade] 공지사항',error));
     };
     badge.addEventListener('click', open);
     badge.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') open(event); });
     refreshPanels(); // 설정 창이 버전을 읽기 전에 그려졌으면 알약을 붙여 다시 그림
+    // 5.7.0 새 버전 확인: 부팅이 다 끝난 뒤(8초) 한 번 — 6시간 안에 확인했으면 저장된 값으로 (네트워크 없음). 모듈도 그때 받는다
+    setTimeout(() => { import('./src/update-check.js').then(m => m.startUpdateCheck()).catch(error => console.warn('[Blue Lemonade] 업데이트 확인', error)); }, 8000);
 }
 
 async function openPopup(fullscreen = false, extension = null) {

@@ -22,8 +22,8 @@ export function currentVersion() {
     return version;
 }
 
-/** 'a.b.c' 비교: a > b 면 양수 */
-function compareVersions(a, b) {
+/** 'a.b.c' 비교: a > b 면 양수 (5.7.0 update-check.js 도 씀) */
+export function compareVersions(a, b) {
     const pa = String(a).split('.').map(n => parseInt(n, 10) || 0);
     const pb = String(b).split('.').map(n => parseInt(n, 10) || 0);
     for (let i = 0; i < Math.max(pa.length, pb.length); i++) {

@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.6.9";
+export const BUILD_VERSION = "5.7.0";
 export const FILE_HASHES = {
-  "index.js": "15107:255f082b:072f95c8",
-  "manifest.json": "365:f65af98d:a849ed2f",
+  "index.js": "15742:cac503fa:e28eb88e",
+  "manifest.json": "365:aeb95eb9:0d441313",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -258,14 +258,14 @@ export const FILE_HASHES = {
   "src/mes-fold.js": "15171:6c96c017:9e152087",
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/modal.js": "671:b74e0164:71228d7c",
-  "src/notice-data.js": "152077:f2d65b85:754c7aeb",
-  "src/notice.js": "4646:b947f2a6:e551e710",
+  "src/notice-data.js": "153079:b67f0208:7b05b846",
+  "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "1144:1da72451:b2e66e80",
   "src/numcomma.js": "28330:b8ff1af6:e41701dc",
   "src/onehand.js": "3884:55946dd4:4f42d7a8",
   "src/palettes.js": "33894:d739cf1f:f0700eaa",
-  "src/panel.js": "225182:5971b685:65c466c5",
+  "src/panel.js": "225853:15a83cb7:e435befd",
   "src/preset-sharing.js": "10586:288420d6:21b6f020",
   "src/preview-view.js": "12377:1b6c4956:85b171b8",
   "src/profile-clip.js": "4837:9b817c36:29f305b7",
@@ -300,16 +300,17 @@ export const FILE_HASHES = {
   "src/settings-history.js": "3491:c0f06c71:b7a64e71",
   "src/settings-labels.js": "33896:094f79a9:db0b7afe",
   "src/settings-search.js": "26751:d37bbdd2:bfa72e86",
-  "src/settings.js": "61980:628d8201:095393b6",
+  "src/settings.js": "62228:23836471:f8effc9b",
   "src/splash.js": "19344:c97fc557:9dcea6a3",
   "src/stream-follow.js": "3886:71695048:ab2a4e3d",
   "src/streamfade.js": "14136:0e2127b6:06593cf1",
   "src/sttheme.js": "21112:b0503cd0:8e5dcb5b",
   "src/styles.js": "16386:c6f5e089:42c1c9c3",
-  "src/theme-update.js": "5069:83714290:f7f10db7",
+  "src/theme-update.js": "5574:0d17c87b:d6593178",
   "src/tone.js": "6415:7ed9f3f6:a7e0d13d",
   "src/touch-sliders.js": "1802:90ccf7ef:7832805d",
   "src/typography.js": "17685:79a92c4a:66620547",
+  "src/update-check.js": "15660:a1ffeb18:608036e5",
   "src/usage-mode.js": "274:97f75b3d:dfa5bb08",
   "src/vendor/gif-writer.js": "15523:55aa4c9a:308694e8",
   "src/vendor/image-q.js": "105671:f2e1c3b1:86833578",
@@ -325,5 +326,5 @@ export const FILE_HASHES = {
   "src/weather.js": "32976:f4fdcf09:3273a2b9",
   "src/word-tools-core.js": "4048:61df0538:b393cbb4",
   "src/word-tools.js": "30424:160f46f1:289f971f",
-  "style.css": "1162327:b6b6b4ac:a69d85e9"
+  "style.css": "1164666:ba2149e3:b1c11bca"
 };

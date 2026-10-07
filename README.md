@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.6.9.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.7.0.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.6.9 · 최신 업데이트</summary>
+<summary>5.7.0 · 최신 업데이트</summary>
+
+- 새 버전이 나오면 확장 목록과 설정 창 제목의 버전 표시가 노랗게 빛나요. 누르면 「새 버전이 나왔어요 · 업데이트할까요?」 창에 지금 버전부터 새 버전까지 바뀐 내역이 나오고, 업데이트를 누르면 바로 업데이트해요. 끝나면 새로고침 단추로 적용해요. 확인은 6시간에 한 번 버전 숫자만 받아요 (테마 › 업데이트의 「새 버전 자동 확인」으로 끌 수 있어요).
+- ZIP 으로 깐 경우(폰 · 동기화한 폴더)는 실리태번이 바로 업데이트하지 못해서, 지금 폴더를 백업해 두고 GitHub 링크 설치로 바꿔 업데이트해요. 받지 못하면 백업을 제자리로 돌려놔요. 설정 · 대화는 그대로이고, 한 번 바꾸면 다음부터는 실리태번 기본 업데이트를 써요. 관리자 계정이 아니거나 공용으로 깐 ZIP 이면 ZIP 받기 페이지로 안내해요.
+
+</details>
+
+<details>
+<summary>5.6.9 · TTS 화자 찾기</summary>
 
 - TTS 1.3.6: 대사 분석에 「화자 찾기」가 생겼어요 (기본 켬). 대사 색이나 이름표가 없어서 누구 말인지 알 수 없던 대사는 서술과 앞뒤 대사를 보고 누구 말인지 골라, 그 이름에 지정한 캐릭터별 목소리로 읽어요. 고르는 이름은 지금 캐릭터 · 나 · 목소리를 지정한 이름 · 그룹 멤버 · 이 채팅에서 배운 이름이에요. 누른 대사도 같아요.
 - 대사 색으로 이미 정해진 대사는 그대로이고, 색으로 다 정해진 메시지는 저장된 분석을 다시 묻지 않아요. 색 없는 대사가 있는 메시지만 다음에 읽을 때 한 번 다시 분석해요. 대사 분석이 꺼져 있으면 전처럼 메시지를 보낸 캐릭터 목소리예요.

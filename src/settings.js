@@ -28,6 +28,7 @@ export const DEFAULTS = {
     gradients: { light: structuredClone(MIX_DEFAULT), dark: structuredClone(MIX_DEFAULT), overrides: {} },
     frameLibrary: [],
     noticeSeen: '', // 3.0.0: 공지사항을 열어 본 마지막 버전 — 지금 버전이 더 새것이면 버전 알약이 빛난다 (notice.js)
+    updateCheck: true, // 5.7.0: 6시간에 한 번 GitHub 에서 새 버전만 확인 → 버전 알약이 노랗게 (update-check.js). 끄면 업데이트 탭의 버튼을 누를 때만
     palette: 'salt',
     nightTint: 1,                // Stock night surfaces: theme-color mix, 1–20%.
     lightTint: .5,               // Stock light surfaces: theme-color mix, 0.5–20%.
@@ -594,6 +595,7 @@ export function getSettings() {
     delete s.pastel; // 1.8.2~1.9.1 의 파스텔 스위치 — 파스텔로 정착하며 없앰 (id 는 PALETTE_ALIASES 가 원래 id 로)
     s.customName = typeof s.customName === 'string' ? s.customName.trim().slice(0, 24) : '';
     s.noticeSeen = typeof s.noticeSeen === 'string' ? s.noticeSeen.slice(0, 20) : '';
+    s.updateCheck = s.updateCheck !== false;
     { const tidy = tidyGradients(s.gradients); if (JSON.stringify(tidy) !== JSON.stringify(s.gradients)) s.gradients = tidy; } // 이미 정돈돼 있으면 같은 객체 그대로
     tidyFlags(s);
     tidyStyles(s);
@@ -672,7 +674,7 @@ export function saveSettings() {
 // 내 글꼴 · 본 공지 · 내 스타일 · 캐릭터 연결은 늘 남긴다 (입혀 둔 캐릭터 스타일 상태는 비움)
 const RESET_GROUPS = { addons: ['addons', 'addonUI'], tools: ['wordTools', 'captureTools'], library: ['frameLibrary', 'customPalettes', 'weatherImages'] };
 // 테마 모습이 아닌 쓰는 방식(켬 · 사용 모드 · 잠금 · 자동 화이트/나이트 · 한 손 · 몰입 읽기 · 백그라운드 창 · 알림 · 다른 CSS)은 '테마 모습' 초기화에 남긴다
-const RESET_KEEP = ['appearanceHistory', 'customFonts', 'noticeSeen', 'styles', 'charStyles', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify'];
+const RESET_KEEP = ['appearanceHistory', 'customFonts', 'noticeSeen', 'updateCheck', 'styles', 'charStyles', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify'];
 export function resetSettings(groups = { look: true }) {
     const ext = SillyTavern.getContext().extensionSettings;
     const old = ext[KEY] || {};

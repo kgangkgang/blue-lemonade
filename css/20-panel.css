@@ -160,6 +160,43 @@ body.salty-dark .salty-panel {
     opacity: 0.7;
   }
 }
+/* 5.7.0 새 버전이 있으면(has-update, update-check.js) 버전 알약이 노랗게 빛난다 — 공지 빛(is-new)보다 뒤에 둬서 먼저.
+   테마를 꺼도(서랍 머리) 보이게 body.salty 없이 한 벌 · 밝은 모습은 글자를 짙은 노랑으로 (흰 바탕에 노란 글자는 안 읽힘) */
+:root { --bl-update-ink: #ffd84a; --bl-update-glow: #ffd84a; }
+body.salty.salty-light { --bl-update-ink: #8a6400; --bl-update-glow: #ffc400; }
+:is(.salty-ver, #rm_extensions_block #salty-drawer .bl-version, body.salty #rm_extensions_block #salty-drawer .bl-version).has-update {
+  position: relative;
+  border-color: color-mix(in srgb, var(--bl-update-glow) 75%, transparent);
+  background: color-mix(in srgb, var(--bl-update-glow) 18%, transparent);
+  color: var(--bl-update-ink);
+  font-weight: 700;
+  text-shadow: 0 0 6px color-mix(in srgb, var(--bl-update-glow) 55%, transparent);
+}
+:is(.salty-ver, #rm_extensions_block #salty-drawer .bl-version, body.salty #rm_extensions_block #salty-drawer .bl-version).has-update::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  box-shadow: 0 0 12px 2px color-mix(in srgb, var(--bl-update-glow) 70%, transparent);
+  pointer-events: none;
+  will-change: opacity;
+  animation: salty-ver-glow 1.8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.salty-ver, #rm_extensions_block #salty-drawer .bl-version, body.salty #rm_extensions_block #salty-drawer .bl-version).has-update::after {
+    animation: none;
+    opacity: 0.8;
+  }
+}
+/* 업데이트 창 (공지 창과 같은 판 · .salty-notice) */
+.bl-update .bl-update-ask { margin: 4px 0 10px; font-weight: 700; }
+.bl-update .bl-update-vers { margin-left: 6px; font-weight: 400; color: var(--salty-muted, inherit); font-variant-numeric: tabular-nums; }
+.bl-update .bl-update-vers b { color: var(--bl-update-ink); font-weight: 700; }
+.bl-update .bl-update-status { margin: 0 0 10px; padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--salty-text, #888) 8%, transparent); line-height: 1.5; }
+.bl-update .bl-update-status[hidden] { display: none; }
+.bl-update .bl-update-status.is-ok { color: var(--salty-accent-ink, var(--salty-accent, inherit)); }
+.bl-update .bl-update-status.is-bad { color: var(--bl-danger, #e0665f); }
+.bl-update .bl-update-status.is-warn { color: var(--bl-update-ink); }
 /* 공지사항 팝업 (실리태번 팝업 안): 버전마다 한 칸, 맨 위만 펼침. <details> 대신 단추 — ▲ 접기 스크립트가 details 에 단추를 붙임 */
 .salty-notice {
   text-align: left;

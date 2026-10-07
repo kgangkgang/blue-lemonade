@@ -8,6 +8,7 @@ import { deviceKind } from './device-layouts.js';
 import { bindComparison, comparisonView } from './appearance-compare.js';
 import { listMenuButtons, PIN_LIMIT } from './mes-pins.js';
 import {updateMarkup,bindThemeUpdate} from './theme-update.js';
+import { hasUpdate, latestVersion, openUpdate, checkForUpdate, clearUpdate } from './update-check.js';   // 5.7.0 새 버전 알림
 import { bindAddonLayout } from './addon-layout.js';
 import { typesetRoot } from './typography.js';
 import { addonMarkup, bindAddons, syncRegexlinkFlag, syncAddonIcons } from './addons.js';
@@ -972,7 +973,7 @@ function fontBlock(s, slot) {
 function tabTheme(s, sub) {
     if(sub==='etc')return `<div class="bl-etc-grid"><details class="bl-usage-mode"><summary>사용 모드: <strong>${({both:'테마 + 확장',theme:'테마만',extensions:'확장만'})[usageMode(s)]}</strong></summary><div class="bl-usage-mode-body"><label>사용 모드<select data-usage-mode aria-label="사용 모드">${[['both','테마 + 확장'],['theme','테마만'],['extensions','확장만']].map(([v,label])=>`<option value="${v}" ${usageMode(s)===v?'selected':''}>${label}</option>`).join('')}</select></label><p>선택한 모드만 실행해요. 기존 설정은 보관해요.</p><button type="button" class="salty-btn" data-usage-apply>저장하고 새로고침</button><span role="status" data-usage-status></span></div></details>
         <div class="salty-group bl-ext-colors">${row('다른 확장 색 유지', toggle('compat.preserveExtensionColors', !!s.compat?.preserveExtensionColors), '확장 설정창과 지원되는 팝업이 원래 색을 써요')}${s.compat?.preserveExtensionColors ? extColorList(s) : ''}</div></div>`;
-    if(sub==='update')return updateMarkup()+healthMarkup();
+    if(sub==='update')return `<div class="salty-group">${row('새 버전 자동 확인', toggle('updateCheck', s.updateCheck !== false), '6시간에 한 번 · 새 버전이면 버전 표시가 노랗게 빛나요')}</div>`+updateMarkup()+healthMarkup();
     if (sub === 'changes') return settingsChanges(s);
     if (sub === 'custom') return customBuilder(s);
     if (sub === 'backup') return tabBackup();
@@ -1793,7 +1794,7 @@ function render(root) {
     const head = root.classList.contains('in-popup')
         ? `<div class="salty-head">
             <div class="salty-mark">${MARK}</div>
-            <div><div class="salty-title">Blue Lemonade${currentVersion() ? ` <button type="button" class="salty-ver${hasUnseenNotice() ? ' is-new' : ''}" data-act="notice" aria-label="공지사항">v${currentVersion()}</button>` : ''} <button type="button" class="bl-copyright" data-bl-credits aria-label="출처·라이선스">${COPYRIGHT_ICON}</button></div><div class="salty-sub">읽기 편한 테마</div></div>
+            <div><div class="salty-title">Blue Lemonade${currentVersion() ? ` <button type="button" class="salty-ver${hasUnseenNotice() ? ' is-new' : ''}${hasUpdate() ? ' has-update' : ''}" data-act="notice" aria-label="${hasUpdate() ? `업데이트 v${latestVersion()}` : '공지사항'}">v${currentVersion()}</button>` : ''} <button type="button" class="bl-copyright" data-bl-credits aria-label="출처·라이선스">${COPYRIGHT_ICON}</button></div><div class="salty-sub">읽기 편한 테마</div></div>
             <label class="salty-switch"><input type="checkbox" data-toggle="enabled" aria-label="테마 켜기" ${s.enabled ? 'checked' : ''}><span></span></label>
         </div>`
         : `<div class="salty-head salty-head-slim"><span>블루레몬에이드 사용</span>${toggle('enabled', s.enabled)}</div>`;
@@ -2078,8 +2079,9 @@ function bind(root) {
                     if (root.classList.contains('in-popup')) setPanelFullscreen(root, !root._fullscreen);
                     else root._onFullscreen?.();
                     break;
-                case 'notice': // 3.0.0 제목 옆 버전 알약 → 공지사항 (열면 본 것으로 적고 알약들을 보통 모양으로)
-                    await openNotice(noticeSeenChanged);
+                case 'notice': // 3.0.0 제목 옆 버전 알약 → 공지사항 (열면 본 것으로 적고 알약들을 보통 모양으로) · 5.7.0 노랗게 빛나면(새 버전) 업데이트 창
+                    if (hasUpdate()) await openUpdate();
+                    else await openNotice(noticeSeenChanged);
                     break;
                 case 'tab':
                     ui.tab = el.dataset.tab;
@@ -2736,6 +2738,7 @@ function bind(root) {
             // 감정 대사 효과(움직임 · 빛 · 색 흐름) · 백그라운드 버티는 방식 줄도 스위치를 따라 보였다 안 보였다 한다
             update(st => setPath(st, path, target.checked), ['strike.line', 'strike.own', 'strike.italic', 'deviceLayouts.on', 'chat.weatherReadability', 'chat.weatherIllustrated', 'enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'chat.hiddenFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on', 'deus.fx.on', 'deus.fx.flow', 'deus.fx.force', 'bgWindow.on', 'compat.preserveExtensionColors'].includes(path));
             await syncChangedAddons([path]);
+            if (path === 'updateCheck') { if (target.checked) void checkForUpdate({ force: true }); else clearUpdate(); }   // 5.7.0
             // 5.5.6: 테마를 끄는 순간에도 '맞추기' 값이 남아 있으면 되돌릴지 묻는다
             if (path === 'enabled' && !target.checked && restoreState()) {
                 try { if (await offerRestore() === 'restored') toastr.success('실리태번 모습을 되돌렸어요', 'Blue Lemonade'); } catch (error) { toastr.warning(`실리태번 모습은 못 되돌렸어요: ${error.message || error}`, 'Blue Lemonade'); }
