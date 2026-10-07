@@ -39,7 +39,7 @@ import { runtimeEnabled, assertRuntime, waitForRuntime } from './runtime.js';
 import * as ST from '../../../../../../../../script.js';
 import { chat, substituteParams, getRequestHeaders } from '../../../../../../../../script.js';
 import { getContext } from '../../../../../../../extensions.js';
-import { settings, addAnalysisUsage } from './settings.js';
+import { settings, addAnalysisUsage, USER_AUTO } from './settings.js';
 import { segmentMessage, detectLang, parseRegexLines, speechDisplay } from './text.js';
 import { resolveSpeaker, knownNames as learnedNames } from './speakers.js';
 import { allVoices, hasOwnVoice, noteExtras } from './voices.js';
@@ -256,7 +256,10 @@ export function buildPrompt(mes, opts = {}) {
     const extras = opts.extras === true && !mes?.is_user;
     const unvoiced = [];
     if (extras) {
-        const seen = new Set([foldName(charName), foldName(userName)]);
+        // 1.3.8 「나」 자동이면 페르소나도 목소리를 안 정한 화자처럼 성별 · 나이를 묻는다 (자동이 아니면 1.3.7 과 같은 프롬프트 — 나는 빼고).
+        //   AI 답장 속 내 대사를 읽을 때만 (「내 대사」 = 읽지 않음이면 안 읽으니 묻지도 않음 — 프롬프트 · 저장된 분석이 괜히 바뀌지 않게)
+        const askUser = s.user_voice === USER_AUTO && (s.routes?.user_dialogue ?? 'user') === 'user';
+        const seen = new Set([foldName(charName), ...(askUser ? [] : [foldName(userName)])]);
         for (const l of lines) {
             const n = cleanName(l.ask ? '' : l.speaker);
             if (!n || /^\{\{.*\}\}$/.test(n) || seen.has(foldName(n))) continue;

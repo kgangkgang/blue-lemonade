@@ -58,6 +58,17 @@ const params = [
     { key: 'emotion', label: '감정', type: 'select', default: '', voice: true, options: EMOTIONS.map(([value, label]) => ({ value, label })) },
 ];
 
+// 1.3.8 '?' 도움말: 설정 창 · 목소리 편집에서 이름 옆 ? 를 누르면 아래에 펼쳐진다 (ui.js control · edParam)
+const HELP = {
+    model: "소닉 3.6 이 가장 새롭고 자연스러워요. 10월 20일에 끝나는 소닉 2 · 소닉 빠름은 골라 둬도 3.6 으로 읽어요.",
+    model_custom: "날짜 고정판(sonic-3.6-2026-08-27)이나 베타 sonic-preview 처럼 이름을 그대로 적어요. 문 닫은 모델은 3.6 으로 읽어요.",
+    language: "'글에서 자동'은 줄마다 한·일·영·중을 알아내 알려 줘요. 고정은 모든 줄을 그 언어로 보고, 목소리에 그 억양이 없으면 원래 억양으로 읽어요.",
+    speed: "정확한 배수가 아니라 대략이에요. 조금 바꾸면 티가 덜 나니 느리게는 0.7 쯤으로. 프로 복제 목소리는 속도가 안 바뀌어요.",
+    volume: "1 이 원래 크기예요. 재생의 '음량 고르게'를 켜 두면 줄마다 크기를 맞춰서 바꿔도 거의 티가 안 나요.",
+    emotion: "대사에서 찾은 감정이 없는 줄에 써요. 공식 안내로는 영어 글에서만 먹고, 글 내용과 맞아야 효과가 나요. 자동이면 글을 보고 정해요.",
+};
+for (const f of [...fields, ...params]) if (HELP[f.key]) f.help = HELP[f.key];
+
 const defaults = Object.fromEntries([...fields, ...params].map(f => [f.key, f.default]));
 
 const num = (v, d) => (Number.isFinite(Number(v)) && v !== '' && v !== null ? Number(v) : d);

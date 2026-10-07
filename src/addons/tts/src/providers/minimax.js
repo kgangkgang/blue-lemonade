@@ -110,6 +110,26 @@ const params = [
     { key: 'pronunciation_dict', label: '발음 사전 (MiniMax)', type: 'textarea', default: '', voice: true, desc: '한 줄에 원래말/바꿀말' },
 ];
 
+// 1.3.8 '?' 도움말: 설정 창 · 목소리 편집에서 이름 옆 ? 를 누르면 아래에 펼쳐진다 (ui.js control · edParam)
+const HELP = {
+    host: "minimax.io 계정은 국제를 골라요. 빠른 응답은 미국 서부에서 첫 소리가 빠른 주소예요. minimaxi.com(중국) 계정은 중국을 골라요.",
+    host_custom: "집 PC 게이트웨이처럼 MiniMax 와 같은 방식으로 받는 서버 주소예요. 키 칸에는 그 서버의 토큰을 넣어요.",
+    model: "고음질은 소리가 더 좋고 빠름은 더 빨라요. 2.8 은 감정 세기 '강하게'에서 웃음·한숨 같은 소리를 넣어요. 속삭임 줄은 2.6 으로 읽어요.",
+    model_custom: "목록에서 빠진 이전 모델(speech-2.6-hd · speech-02-hd 등)이나 새 모델 이름을 그대로 적어요.",
+    model_from: "'목소리를 만든 모델'은 그 목소리를 만들 때 쓴 모델로 읽어요. 모르면(시스템·섞은 목소리) 고른 모델로, 목소리 편집에서 고른 모델이 가장 먼저예요.",
+    vol: "1 이 원래 크기예요. 재생의 '음량 고르게'를 켜 두면 줄마다 크기를 맞춰서 바꿔도 거의 티가 안 나요.",
+    emotion: "대사에서 찾은 감정이 없는 줄에만 써요. 자동이면 MiniMax 가 글을 보고 골라요. 유창은 2.6 이 아니면 빠지고 자동이 돼요.",
+    language_boost: "그 언어를 더 잘 알아듣고 읽게 해 줘요. '글에 맞춰'는 줄마다 한·일·영·중을 알아내 보내고, 못 알아내면 자동이에요.",
+    vm_pitch: "높낮이 칸과는 다른 음색 효과예요. 내리면 굵고 깊게, 올리면 밝게 들려요. 0 이면 그대로예요.",
+    vm_intensity: "내리면 힘 있고 센 소리, 올리면 부드러운 소리가 돼요. 0 이면 그대로예요.",
+    vm_timbre: "내리면 꽉 차고 묵직하게, 올리면 맑고 또렷하게 들려요. 0 이면 그대로예요.",
+    text_normalization: "켜면 숫자를 더 잘 읽어요. 공식 안내로는 중국어·영어용이고, 응답이 조금 늦어져요.",
+    sample_rate: "높을수록 소리가 맑고 파일이 커져요. 8000 처럼 낮으면 전화기처럼 먹먹해요. 기본은 32000 Hz 예요.",
+    bitrate: "mp3 압축 음질이에요. 높을수록 깨끗하고 파일이 커져요. 기본은 128 kbps 예요.",
+    pronunciation_dict: "공통 발음 사전과 달리 MiniMax 서버가 바꿔 읽어요. 바꿀말에 일본어 가나나 괄호 속 발음기호도 돼요. #으로 시작하는 줄은 건너뛰어요.",
+};
+for (const f of [...fields, ...params]) if (HELP[f.key]) f.help = HELP[f.key];
+
 const defaults = Object.fromEntries([...fields, ...params].filter(f => f.default !== undefined).map(f => [f.key, f.default]));
 
 /** 모델 select: 지금 모델 + 저장된 값(이전 모델 · 목록 밖) + 직접 입력 */
@@ -155,15 +175,41 @@ function mmError(br) {
     e.code = code;
     e.retry = RETRY.has(code);
     if (FATAL.has(code)) e.fatal = true;
+    e.vendor = tail;   // 5.7.2 hinted() 가 직접 입력 서버의 까닭(토큰 · 집 밖 주소)을 가른다
     return e;
 }
 
 /** POST {host}{path} — HTTP 오류는 _http 가, base_resp 오류는 여기서 */
 async function call(cfg, path, body, signal, timeout = 60000) {
-    const j = await fetchJson(hostOf(cfg) + path, { method: 'POST', headers: { Authorization: `Bearer ${cfg.key}` }, body, signal, timeout });
+    let j;
+    try { j = await fetchJson(hostOf(cfg) + path, { method: 'POST', headers: { Authorization: `Bearer ${cfg.key}` }, body, signal, timeout }); }
+    catch (e) { throw hinted(e, cfg); }
     const br = j && j.base_resp;
-    if (br && Number(br.status_code) !== 0) throw mmError(br);
+    if (br && Number(br.status_code) !== 0) throw hinted(mmError(br), cfg);
     return j || {};
+}
+/**
+ * 5.7.2 서버 설정에 맞춘 말 (사용자 제보: 직접 입력 서버(집 PC)가 꺼졌는데 '인증 실패'만 보여 까닭을 몰랐음):
+ *   직접 입력 서버에 연결 못 함 → 서버가 켜져 있는지 · 직접 입력 서버가 키를 거절 → 그 서버의 토큰
+ *   공식 서버인데 키가 MiniMax 키 모양이 아님(짧음) → 직접 입력 서버의 토큰을 넣은 것 같다
+ * 1.3.8 '직접 입력 서버' = 공식 서버가 아닌 곳 (paid.js 와 같은 규칙 — 옛 설정에 남은 임의 주소도) ·
+ *   응답이 없음(시간 초과) → 다시 시도하지 않음 (한 줄이 6분 가까이 막혔다) · 집 밖에서 막힘(게이트웨이의 주소 잠금)도 말로 ·
+ *   e.dead = 이 엔진은 이번 읽기 동안 안 됨 (재생기가 이 엔진 줄만 건너뛰고 다른 엔진 줄은 읽는다)
+ */
+function hinted(e, cfg) {
+    if (!e || typeof e !== 'object') return e;
+    const custom = !!cfg && !isOfficialHost(hostOf(cfg));
+    const auth = Number(e.code) === 1004 || Number(e.status) === 401;
+    let msg = '';
+    if (custom && Number(e.status) === 408) { msg = '직접 입력 서버가 응답하지 않아요 (꺼져 있거나 주소가 바뀌었어요)'; e.retry = false; }
+    else if (custom && (Number(e.status) === 0 || e.code === 'network')) { msg = '직접 입력 서버에 연결하지 못했어요 (서버가 꺼져 있거나 주소가 바뀌었어요)'; e.retry = false; }
+    else if (custom && auth) msg = /home|network/i.test(String(e.vendor || e.message || '')) ? '직접 입력 서버가 이 네트워크를 막아요 (집에서만 · 토큰은 맞아요)' : '직접 입력 서버가 막았어요 — 토큰이 틀렸거나 집 밖(다른 네트워크)에서 접속했어요';
+    else if (!custom && auth && String(cfg?.key || '').trim().length < 40) msg = 'MiniMax 키가 아니에요 — 로컬 서버 토큰이면 서버를 「직접 입력」으로';
+    if (msg) {
+        try { e.message = msg; } catch { /* 읽기 전용 */ }
+        if (custom) e.dead = true;
+    }
+    return e;
 }
 
 /** hex 문자열 → Blob (parseInt 없이 빠르게) */
@@ -311,4 +357,6 @@ export default {
     balance,
     modelFor,
     strengthApplies,
+    // 5.7.2 계정 맞춤은 공식 서버일 때만: 직접 입력 서버(집 PC 게이트웨이 · 중계)는 그 서버가 가진 목소리만 알려 줘 나머지를 '계정에 없음'으로 숨겼다
+    accountOk: (cfg) => isOfficialHost(hostOf(cfg || providerConfig(ID, defaults))),
 };

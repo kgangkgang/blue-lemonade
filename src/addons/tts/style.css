@@ -1,11 +1,11 @@
-/* TTS (Lemon TTS) v1.3.7 */
+/* TTS (Lemon TTS) v1.3.8 */
 
 #lv_settings .lv-version { background: none; border: 0; color: inherit; font: inherit; padding: 4px 6px; cursor: pointer; text-decoration: none; }
 #lv_settings .lv-version:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 
 /* ---------- 공통 변수: 설정 창 · 편집 팝업 · 재생 막대 (ST 테마 색을 따르고, 블루 레몬에이드 변수는 있으면 씀) */
 .lv-settings, .lv-editor, .lv-bar {
-  --lv-css-version: "1.3.7";
+  --lv-css-version: "1.3.8";
   --lv-accent: var(--salty-accent, var(--SmartThemeQuoteColor, #51a0de));
   --lv-text: var(--SmartThemeBodyColor, #dcdcd2);
   --lv-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, .15));
@@ -167,6 +167,30 @@
 .lv-warn-btn:focus-visible { outline: 2px solid var(--lv-accent); outline-offset: 1px; }
 .lv-warn-note { display: block; margin-top: 4px; color: var(--lv-text); font-size: .9em; line-height: 1.45; }
 .lv-warn-note[hidden] { display: none; }
+/* 1.3.8 '?' 도움말: 이름 바로 뒤 작은 ? (warn 단추와 같은 자리 · 흐린 색), 누르면 아래에 한두 줄 — 말풍선 없음 */
+.lv-name { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
+.lv-body .lv-help-btn, .lv-help-btn { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 22px; height: 22px; margin: -3px 0; padding: 0; border: 0; border-radius: var(--lv-r-pill); background: transparent; color: var(--lv-dim); font-size: 13px; line-height: 1; cursor: pointer; }
+.lv-help-btn > i { display: block; line-height: 1; }
+.lv-body .lv-help-btn:hover, .lv-body .lv-help-btn[aria-expanded="true"], .lv-editor .lv-help-btn:hover, .lv-editor .lv-help-btn[aria-expanded="true"] { background: var(--lv-fill-hover); color: var(--lv-accent); }
+.lv-help-btn:focus-visible { outline: 2px solid var(--lv-accent); outline-offset: 1px; }
+.lv-help-note { display: block; margin-top: 4px; color: var(--lv-text); font-size: .88em; line-height: 1.45; }
+.lv-help-note[hidden] { display: none; }
+.lv-togglebox { display: flex; flex-direction: column; min-width: 0; }
+.lv-toggle .lv-help-btn { margin-left: -2px; }
+/* 1.3.8 말투 칩 (ElevenLabs 오디오 태그 — 한국어 이름, 여러 개): 눌린 칩은 포인트색 */
+.lv-tag-chips { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.lv-body .lv-tag-chip, .lv-tag-chip { display: inline-flex; align-items: center; min-height: 28px; padding: 0 10px; border: 1px solid var(--lv-border); border-radius: var(--lv-r-pill); background: var(--lv-fill); color: var(--lv-dim); font: inherit; font-size: .88em; line-height: 1.3; cursor: pointer; }
+.lv-body .lv-tag-chip[aria-pressed="true"], .lv-editor .lv-tag-chip[aria-pressed="true"] { border-color: color-mix(in srgb, var(--lv-accent) 60%, transparent); background: color-mix(in srgb, var(--lv-accent) 18%, transparent); color: var(--lv-text); }
+.lv-tag-chip:disabled, .lv-tag-chips[aria-disabled="true"] .lv-tag-chip { opacity: .45; cursor: default; }
+.lv-tag-chip:focus-visible { outline: 2px solid var(--lv-accent); outline-offset: 1px; }
+/* 1.3.8 캐릭터 엔진 고정 칩 (「엔진」을 따르지 않는 캐릭터 — 누르면 풂) */
+.lv-body .lv-pin-chip, .lv-pin-chip { display: inline-flex; align-items: center; margin: 0 0 0 6px; padding: 0 7px; border: 1px solid color-mix(in srgb, var(--lv-accent) 55%, transparent); border-radius: var(--lv-r-pill); background: color-mix(in srgb, var(--lv-accent) 12%, transparent); color: var(--lv-text); font: inherit; font-size: .75em; line-height: 1.6; white-space: nowrap; cursor: pointer; vertical-align: middle; }
+.lv-pin-chip:hover { background: color-mix(in srgb, var(--lv-accent) 22%, transparent); }
+.lv-pin-chip:focus-visible { outline: 2px solid var(--lv-accent); outline-offset: 1px; }
+.lv-pill .lv-pin-chip { margin-left: 2px; }
+.lv-color-voicebox { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.lv-color-voicebox > select { flex: 1 1 auto; min-width: 0; }
+.lv-color-voicebox .lv-pin-chip { margin: 0; }
 .lv-range input[type=range] { margin-top: 4px; }
 @container lvcard (min-width: 18em) {
   .lv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -224,7 +248,7 @@
   .lv-color .lv-color-name { grid-area: 1 / 2; }
   .lv-color .lv-icon { grid-area: 1 / 3; }
   .lv-color .lv-count { grid-area: 1 / 4; }
-  .lv-color .lv-color-voice { grid-area: 2 / 2 / 3 / -1; }
+  .lv-color .lv-color-voicebox { grid-area: 2 / 2 / 3 / -1; }
 }
 
 /* 목소리 목록 */
@@ -462,6 +486,9 @@ body.salty.salty-icons-line #chat .mes .extraMesButtons > .lv_play { --salty-mi:
   .lv-toggle.checkbox_label { min-height: 36px; }
   .lv-x { width: 36px; height: 36px; }            /* 글자는 작게, 누르는 곳만 36px */
   .lv-pill { padding: 0 0 0 10px; }               /* 알약 안의 × 가 커져도 높이가 덜 늘게 */
+  .lv-body .lv-help-btn, .lv-help-btn { width: 32px; height: 32px; margin: -8px -5px; }   /* 1.3.8 ? 는 누르는 곳만 크게 (줄 높이는 그대로) */
+  .lv-body .lv-tag-chip, .lv-tag-chip { min-height: 34px; }
+  .lv-body .lv-pin-chip, .lv-pin-chip { min-height: 28px; }
   .lv-log-row { padding: 4px; }
 }
 

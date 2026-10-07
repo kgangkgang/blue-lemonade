@@ -90,7 +90,7 @@ const V = {
     el: { uid: 'elevenlabs:x', provider: 'elevenlabs', voiceId: 'x', name: '일레븐' },
 };
 const OFFICIAL = { key: 'test-key', host: 'https://api.minimax.io' };
-const GATEWAY = { key: 'test-key', host: 'custom', host_custom: 'http://112.168.207.173:8880' };
+const GATEWAY = { key: 'test-key', host: 'custom', host_custom: 'http://198.51.100.7:8880' };
 T.ext.lemon_voice = {
     version: 8, enabled: true, pregen: 'dialogue', click_play: true, auto_play: false,
     voices: [V.mm], providers: { minimax: { ...OFFICIAL } },
@@ -113,14 +113,14 @@ await test('MiniMax 공식 서버(목록 3개 · 기본값)는 유료', () => {
     assert.equal(isPaidProvider('minimax', {}), true, '설정 없음 = 기본 서버 api.minimax.io');
     assert.equal(isPaidProvider('minimax', { host: 'https://api.minimax.io/' }), true, '끝 / ');
 });
-await test('직접 입력 http://112.168.207.173:8880 (집 PC 로컬 게이트웨이 · 공인 IP) 은 무료 · 집 안 · 내 PC 주소도', () => {
+await test('직접 입력 http://198.51.100.7:8880 (집 PC 로컬 게이트웨이 · 공인 IP) 은 무료 · 집 안 · 내 PC 주소도', () => {
     const { isPaidProvider, LOCAL_HOST } = need(paid, 'paid.js');
-    assert.equal(LOCAL_HOST.test('112.168.207.173'), false, '공인 IP 라 LOCAL_HOST 로는 못 가림');
+    assert.equal(LOCAL_HOST.test('198.51.100.7'), false, '공인 IP 라 LOCAL_HOST 로는 못 가림');
     assert.equal(isPaidProvider('minimax', GATEWAY), false);
-    for (const host_custom of ['112.168.207.173:8880', 'http://112.168.207.173:8880/', ' http://192.168.0.10:8880 ', 'http://localhost:8880', 'https://tts.myhome.example']) {
+    for (const host_custom of ['198.51.100.7:8880', 'http://198.51.100.7:8880/', ' http://192.168.0.10:8880 ', 'http://localhost:8880', 'https://tts.myhome.example']) {
         assert.equal(isPaidProvider('minimax', { host: 'custom', host_custom }), false, host_custom);
     }
-    assert.equal(isPaidProvider('minimax', { host: 'http://112.168.207.173:8880' }), false, '1.0.0 에서 옮겨온 임의 주소도 같은 규칙');
+    assert.equal(isPaidProvider('minimax', { host: 'http://198.51.100.7:8880' }), false, '1.0.0 에서 옮겨온 임의 주소도 같은 규칙');
 });
 await test('직접 입력이 MiniMax 공식 도메인이면 유료 (대소문자 · 하위 도메인 · 네 도메인) · 닮은 이름은 아님', () => {
     const { isPaidProvider } = need(paid, 'paid.js');
@@ -140,7 +140,7 @@ await test('직접 입력이 비었거나 읽을 수 없으면 유료 (빈칸 = 
 await test('OpenAI 호환: 내 PC · 집 안(빈 주소 = 127.0.0.1)은 무료, 바깥 주소는 유료 · 브라우저 · Google 번역 무료 · 나머지 · 모르는 엔진 유료', () => {
     const { isPaidProvider } = need(paid, 'paid.js');
     for (const base of [undefined, '', '  ', 'http://127.0.0.1:8880/v1', 'http://192.168.1.5:8880/v1', 'http://kokoro.local/v1', 'http://[::1]:8880/v1']) assert.equal(isPaidProvider('openai_compat', { base }), false, String(base));
-    for (const base of ['https://tts.example.com/v1', 'https://api.openai.com/v1', 'http://112.168.207.173:8880/v1']) assert.equal(isPaidProvider('openai_compat', { base }), true, base);
+    for (const base of ['https://tts.example.com/v1', 'https://api.openai.com/v1', 'http://198.51.100.7:8880/v1']) assert.equal(isPaidProvider('openai_compat', { base }), true, base);
     assert.equal(isPaidProvider('browser'), false);
     assert.equal(isPaidProvider('gtranslate'), false);
     for (const id of ['openai', 'openrouter', 'elevenlabs', 'gemini', 'azure', 'typecast', 'cartesia', 'mystery']) assert.equal(isPaidProvider(id, {}), true, id);
@@ -231,7 +231,7 @@ await test('유료 엔진도 미리 만들기(pregen_paid) 를 켜면 공식 서
     assert.equal(rec.state, 'done');
     assert.equal(rec.skipped, 0);
 });
-await test('MiniMax 서버가 직접 입력 http://112.168.207.173:8880 (로컬 게이트웨이)면 끔이어도 미리 만듦', async () => {
+await test('MiniMax 서버가 직접 입력 http://198.51.100.7:8880 (로컬 게이트웨이)면 끔이어도 미리 만듦', async () => {
     setup({ voices: [V.mm], minimax: GATEWAY, jobs: [job('e', V.mm), job('f', V.mm)] });
     const rec = await pregen.pregenMessage(reply(), { type: 'normal' });
     assert.deepEqual(T.clips, ['e', 'f']);

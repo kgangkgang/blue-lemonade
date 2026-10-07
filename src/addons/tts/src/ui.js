@@ -1,7 +1,7 @@
 // TTS 설정 창: 탭 · 카드 · 스키마 기반 입력칸(data-lv-path) · 목소리 편집 팝업
 import { getContext } from '../../../../../../../extensions.js';
 import { POPUP_TYPE, POPUP_RESULT, callGenericPopup } from '../../../../../../../popup.js';
-import { settings, save, VERSION, DEFAULTS, ANALYSIS_DEFAULTS, READ_PRESETS, maskKey, exportable, applyReadPreset, applyBodyFilters, providerConfig, toVoice, PREGEN_MODES, fillKnownVoices, migrateVoicesV8, fillKnownFacts, hasDb } from './settings.js';
+import { settings, save, VERSION, DEFAULTS, ANALYSIS_DEFAULTS, READ_PRESETS, maskKey, exportable, applyReadPreset, applyBodyFilters, providerConfig, toVoice, PREGEN_MODES, fillKnownVoices, migrateVoicesV8, fillKnownFacts, hasDb, USER_AUTO } from './settings.js';
 import * as player from './player.js';
 import * as voices from './voices.js';
 import * as speakers from './speakers.js';
@@ -127,7 +127,8 @@ const READ_CARDS = {
         { key: 'analysis.key', label: 'API 키', type: 'keyrow', show: isCompat },
         { key: 'analysis.model_pick', label: '모델', type: 'html', html: modelPickHtml, show: hasModelPick },
         { key: 'analysis.emotion', label: '감정 붙이기', type: 'toggle' },
-        { key: 'emotion_strength', label: '감정 세기', type: 'select', options: [{ value: 'weak', label: '약하게' }, { value: 'normal', label: '보통' }, { value: 'strong', label: '강하게' }] },
+        { key: 'emotion_strength', label: '감정 세기', type: 'select', options: [{ value: 'weak', label: '약하게' }, { value: 'normal', label: '보통' }, { value: 'strong', label: '강하게' }],
+            help: '약하게는 감정을 빼고 읽어요 (ElevenLabs 는 안정감 1 로 가장 차분하게). 강하게는 MiniMax 2.8 이 웃음 · 한숨 같은 소리를 넣고, ElevenLabs 는 감정이 붙은 줄의 안정감을 0.3 낮춰 더 크게 연기해요 (v3 는 0 · 0.5 · 1 로 맞춰 0.5 면 0).' },   // 1.3.8
         { key: 'thought_emotion', label: '속마음', type: 'select', options: [{ value: 'whisper', label: '속삭임' }, { value: 'auto', label: '일반' }] },
         { key: 'analysis.translate', label: '원어로 번역해서 읽기', type: 'toggle' },
         { key: 'analysis.speaker', label: '화자 찾기', type: 'toggle', desc: '색 · 이름표가 없는 대사는 누구 말인지 맥락으로 물어 그 캐릭터 목소리로' },
@@ -310,6 +311,26 @@ function optionsHtml(f, value, cfg, voice) {
 }
 const descOf = (f) => (typeof f.desc === 'function' ? f.desc(settings()) : f.desc);
 const isOff = (f) => (typeof f.disabled === 'function' ? !!f.disabled(settings()) : !!f.disabled);
+// ---------- 1.3.8 '?' 도움말: 항목에 help 가 있으면 이름 바로 뒤 작은 ? — 누르면 아래에 한두 줄 (말풍선 없음 · '!' 와 같은 펼침).
+//   도움말이 있는 칸은 겉을 label 이 아닌 div 로 (펼친 글을 눌러도 선택칸이 열리지 않게) · 고르는 칸엔 aria-label 로 이름
+const helpOf = (f) => (f && f.help ? String(typeof f.help === 'function' ? f.help(settings()) : f.help) : '');
+const helpBtn = (f) => (helpOf(f) ? '<button type="button" class="lv-help-btn" data-lv-act="help" aria-label="도움말" aria-expanded="false"><i class="fa-solid fa-circle-question" aria-hidden="true"></i></button>' : '');
+const helpNote = (f) => { const h = helpOf(f); return h ? `<span class="lv-help-note" hidden>${esc(h)}</span>` : ''; };
+/** ? 를 눌렀을 때: 같은 칸(data-lv-help)의 도움말 글을 펴고 접는다 (설정 창 · 목소리 편집 팝업 같이) */
+function toggleHelp(b) {
+    const note = b.closest('[data-lv-help]')?.querySelector('.lv-help-note');
+    if (!note) return;
+    note.hidden = !note.hidden;
+    b.setAttribute('aria-expanded', String(!note.hidden));
+}
+// ---------- 1.3.8 'tags' 항목 (여러 개 고르기 — ElevenLabs 말투): 한국어 이름 칩 (aria-pressed). 값 = 고른 value 배열 (4개까지)
+const TAG_MAX = 4;
+const tagList = (v) => (Array.isArray(v) ? v.map(String) : typeof v === 'string' && v ? v.split(',').map(x => x.trim()).filter(Boolean) : []);
+function tagChipsHtml(f, value, { path = '', disabled = false, cfg = null, voice = null } = {}) {
+    const on = new Set(tagList(value));
+    const chips = optionsOf(f, cfg, voice).map(o => `<button type="button" class="lv-tag-chip" data-lv-act="tag" data-tag="${esc(o.value)}"${path ? ` data-path="${esc(path)}"` : ''} aria-pressed="${on.has(String(o.value)) ? 'true' : 'false'}"${disabled ? ' disabled' : ''}>${esc(o.label)}</button>`).join('');
+    return `<div class="lv-tag-chips${path ? '' : ' lv-param-in'}" role="group" aria-label="${esc(f.label)}"${disabled ? ' aria-disabled="true"' : ''}>${chips}</div>`;
+}
 /** Field 하나 → HTML. path 는 settings() 안의 점 경로, cfg 는 엔진 설정(엔진 탭일 때) */
 function control(f, path, value, cfg = null) {
     FIELDS.set(path, f);
@@ -317,14 +338,22 @@ function control(f, path, value, cfg = null) {
     const d = descOf(f);
     const desc = d ? `<span class="lv-desc">${esc(d)}</span>` : '';
     // 주소·모델 ID·자유 입력은 길어질 수 있어 전체 폭, 짧은 수치·선택·스위치는 두 칸을 쓴다.
-    const wide = f.wide || ['textarea', 'text'].includes(f.type) || /(?:^|\.)(?:host|model|model_from|provider|engine)$/.test(path) ? ' lv-wide' : '';
-    const label = `<span class="lv-label">${esc(f.label)}</span>`;
+    const wide = f.wide || ['textarea', 'text', 'tags'].includes(f.type) || /(?:^|\.)(?:host|model|model_from|provider|engine)$/.test(path) ? ' lv-wide' : '';
+    const help = helpBtn(f), hnote = helpNote(f);
+    const box = hnote ? 'div' : 'label';                                   // 1.3.8 도움말이 있으면 겉은 div
+    const hattr = hnote ? ' data-lv-help' : '';                             // 겉 div 의 표시 (칸 이름은 고르는 칸의 aria-label)
+    const named = hnote ? `${attr} aria-label="${esc(f.label)}"` : attr;
+    const label = hnote ? `<span class="lv-label lv-label-warn">${esc(f.label)}${help}</span>` : `<span class="lv-label">${esc(f.label)}</span>`;
     switch (f.type) {
         case 'toggle': {
             const off = isOff(f);
             // 설명이 있으면 lv-has-desc: 설명을 이름 아래 제 줄로 내린다 (좁은 두 칸 격자에서 이름 옆에 끼어 여러 줄로 부서지지 않게)
-            return `<label class="checkbox_label lv-toggle${desc ? ' lv-has-desc' : ''}${off ? ' lv-off' : ''}"><input type="checkbox" ${attr}${value ? ' checked' : ''}${off ? ' disabled' : ''}><span>${esc(f.label)}</span>${desc}</label>`;
+            const tg = `<label class="checkbox_label lv-toggle${desc ? ' lv-has-desc' : ''}${off ? ' lv-off' : ''}"><input type="checkbox" ${attr}${value ? ' checked' : ''}${off ? ' disabled' : ''}><span>${esc(f.label)}</span>${help}${desc}</label>`;
+            return hnote ? `<div class="lv-togglebox" data-lv-help>${tg}${hnote}</div>` : tg;
         }
+        case 'tags':
+            // 1.3.8 말투 칩 (엔진 기본값 — 목소리 편집에서 목소리마다 따로). 자리 표시는 data-lv-slot (visibleChanged 가 셈)
+            return `<div class="lv-field lv-wide lv-tagsrow" data-lv-slot="${esc(path)}"${hnote ? ' data-lv-help' : ''}>${hnote ? label : `<span class="lv-label">${esc(f.label)}</span>`}${tagChipsHtml(f, value, { path, cfg })}${desc}${hnote}</div>`;
         case 'keyrow':
             // 대사 분석 키 줄: 값은 data-lv-path 로 묶지 않는다 (키를 화면에 두지 않으려고). 자리 표시는 data-lv-slot (visibleChanged 가 센다)
             return `<div class="lv-field lv-wide lv-keyrow" data-lv-slot="${esc(path)}">${label}<div class="lv-key"><input type="password" class="text_pole" id="lv_akey_input" placeholder="${esc(f.placeholder || 'API 키')}" autocomplete="off"><button type="button" class="menu_button" data-lv-act="akey-save">저장</button><button type="button" class="menu_button" data-lv-act="akey-test">연결 확인</button></div>`
@@ -332,25 +361,26 @@ function control(f, path, value, cfg = null) {
         case 'select': {
             // 5.6.3 warn: 이름 옆 '!' — 누르면 아래에 안내 한 줄 (말풍선 대신 펼침)
             const w = typeof f.warn === 'function' ? f.warn(settings()) : '';
-            const head = w ? `<span class="lv-label lv-label-warn">${esc(f.label)}<button type="button" class="lv-warn-btn" data-lv-act="warn" aria-label="크레딧 주의" aria-expanded="false"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i></button></span>` : label;
+            const head = w ? `<span class="lv-label lv-label-warn">${esc(f.label)}<button type="button" class="lv-warn-btn" data-lv-act="warn" aria-label="크레딧 주의" aria-expanded="false"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i></button>${help}</span>` : label;
             const note = w ? `<span class="lv-warn-note" hidden>${esc(w)}</span>` : '';
             // 1.3.7 엔진 모델: 목록을 받아 오는 엔진이면 옆에 ↻ (모든 엔진이 같은 길 — 엔진은 listModels 만 주면 됨)
             const mp = listingProvider(path);
-            if (mp) return `<div class="lv-field lv-wide lv-modelrow">${head}<div class="lv-model"><select class="text_pole" ${attr}>${optionsHtml(f, value, cfg)}</select>${engineModelsBtn(mp)}</div>${desc}${note}</div>`;
-            return `<label class="lv-field${wide}">${head}<select class="text_pole" ${attr}>${optionsHtml(f, value, cfg)}</select>${desc}${note}</label>`;
+            if (mp) return `<div class="lv-field lv-wide lv-modelrow"${hnote ? ' data-lv-help' : ''}>${head}<div class="lv-model"><select class="text_pole" ${named}>${optionsHtml(f, value, cfg)}</select>${engineModelsBtn(mp)}</div>${desc}${note}${hnote}</div>`;
+            return `<${box} class="lv-field${wide}"${hattr}>${head}<select class="text_pole" ${named}>${optionsHtml(f, value, cfg)}</select>${desc}${note}${hnote}</${box}>`;
         }
         case 'range':
+            if (hnote) return `<div class="lv-field lv-range${wide}"${hattr}><span class="lv-label"><span class="lv-name">${esc(f.label)}${help}</span><output>${esc(fmtRange(f, value))}</output></span><input type="range" ${named}${numAttrs(f)} value="${esc(value)}">${desc}${hnote}</div>`;
             return `<label class="lv-field lv-range${wide}"><span class="lv-label">${esc(f.label)}<output>${esc(fmtRange(f, value))}</output></span><input type="range" ${attr}${numAttrs(f)} value="${esc(value)}">${desc}</label>`;
         case 'number':
-            return `<label class="lv-field${wide}">${label}<input type="number" class="text_pole" ${attr}${numAttrs(f)} value="${esc(value)}">${desc}</label>`;
+            return `<${box} class="lv-field${wide}"${hattr}>${label}<input type="number" class="text_pole" ${named}${numAttrs(f)} value="${esc(value)}">${desc}${hnote}</${box}>`;
         case 'textarea':
-            return `<label class="lv-field${wide}">${label}<textarea class="text_pole" ${attr} rows="${Number(f.rows) || 3}" placeholder="${esc(f.placeholder || '')}">${esc(value)}</textarea>${desc}</label>`;
+            return `<${box} class="lv-field${wide}"${hattr}>${label}<textarea class="text_pole" ${named} rows="${Number(f.rows) || 3}" placeholder="${esc(f.placeholder || '')}">${esc(value)}</textarea>${desc}${hnote}</${box}>`;
         case 'password':
             return '';   // 키는 lv-key 줄에서 따로 (값을 화면에 두지 않는다)
         case 'html':
             return typeof f.html === 'function' ? f.html(path) : '';   // 대사 분석 모델 고르기 (자리 표시는 data-lv-slot)
         default:
-            return `<label class="lv-field${wide}">${label}<input type="text" class="text_pole" ${attr} value="${esc(value)}" placeholder="${esc(f.placeholder || '')}" autocomplete="off">${desc}</label>`;
+            return `<${box} class="lv-field${wide}"${hattr}>${label}<input type="text" class="text_pole" ${named} value="${esc(value)}" placeholder="${esc(f.placeholder || '')}" autocomplete="off">${desc}${hnote}</${box}>`;
     }
 }
 /** 지금 보여야 할 항목 (키 칸은 따로, show 조건은 엔진 설정 또는 전체 설정으로 판정) */
@@ -455,6 +485,14 @@ function onEdit(e, live) {
 /** 값이 바뀐 뒤 따라 바뀌어야 하는 부분만 다시 그린다 (보이는 항목이 달라질 때만 카드를 새로 그린다) */
 function afterEdit(path, el) {
     const s = settings();
+    // 1.3.8 「나」 자동을 골랐는데 「내 대사」가 읽지 않음이면 (직접 설정) AI 답장 속 내 대사가 안 읽혀 자동이 아무 일도 안 한다 → 읽게 바꾸고 한 줄 알림
+    if (path === 'user_voice' && s.user_voice === USER_AUTO && isObj(s.routes) && s.routes.user_dialogue === 'skip') {
+        s.routes.user_dialogue = 'user';
+        save();
+        syncPath('routes.user_dialogue');
+        toast('「내 대사」도 읽게 바꿨어요', 'info');
+        return;
+    }
     if (path === 'read_preset') { applyReadPreset(s.read_preset); save(); }
     if (path === 'enabled' && !s.enabled) player.stop();
     if (path === 'highlight' || path === 'highlight_style') player.refreshHighlight();
@@ -493,21 +531,50 @@ function afterEdit(path, el) {
     const name = cardEl && cardEl.dataset.lvCard;
     if (name && READ_CARDS[name] && visibleChanged(name, READ_CARDS[name][2])) renderReadCard(name);
 }
-function onMapChange(el) {
+/**
+ * 1.3.8 캐릭터 목소리 고르기 (캐릭터별 목소리 · 대화 색 · 엑스트라 줄이 같이 씀). 「엔진」을 골라 둔 채:
+ *   다른 엔진 목소리를 고름 → 그 캐릭터는 그 목소리로 고정 (prefer_keep — 사용자: "벨포드는 미니맥스로 듣기")
+ *   「엔진」 엔진의 짝을 다시 고름 → 고정만 풂 (연결표는 원래 목소리 — 「엔진」을 되돌리면 그 목소리)
+ * 「엔진」이 없거나 쓸 수 없으면 1.3.7 처럼 연결표만 (고정 표시는 지움)
+ */
+function setCharVoice(name, uid) {
     const s = settings();
+    if (!name) return;
+    if (!isObj(s.prefer_keep)) s.prefer_keep = {};
+    if (!uid) { delete s.char_map[name]; delete s.prefer_keep[name]; return; }
+    const v = voices.findVoice(uid);
+    const pref = s.prefer_provider;
+    const prefOn = !!pref && voices.engineUsable(pref);
+    // 1.3.8 쓸 수 있는 목소리만 고정 (키 없는 엔진 · 계정에 없는 목소리로 고정하면 그 캐릭터가 '키를 먼저 저장해요' 로 조용해짐)
+    if (prefOn && v && v.provider !== pref && !v.gone && voices.engineUsable(v.provider)) { s.char_map[name] = uid; s.prefer_keep[name] = true; return; }
+    const base = voices.findVoice(s.char_map[name]);
+    if (prefOn && v && base && base.uid !== uid && voices.twinOf(base, pref, name)?.uid === uid) { delete s.prefer_keep[name]; return; }
+    s.char_map[name] = uid;
+    delete s.prefer_keep[name];
+}
+/** 1.3.8 고정 풀기 (칩) — 다시 「엔진」을 따른다 */
+function unpinChar(name) {
+    const s = settings();
+    if (!name || !isObj(s.prefer_keep)) return;
+    const k = String(name).trim().toLowerCase().replace(/\s+/g, '');
+    for (const key of Object.keys(s.prefer_keep)) if (key === name || key.trim().toLowerCase().replace(/\s+/g, '') === k) delete s.prefer_keep[key];
+    save();
+    renderMap();
+    renderColors();
+}
+function onMapChange(el) {
     const name = el.dataset.lvMap;
     if (!name) return;
-    if (el.value) s.char_map[name] = el.value; else delete s.char_map[name];
+    setCharVoice(name, el.value);
     save();
     renderMap();
     renderColors();
 }
 /** 1.3.7 엑스트라 줄에서 목소리를 고르면 그 이름을 캐릭터 목소리로 고정 (엑스트라 표에서는 뺌) */
 function onExtraPin(el) {
-    const s = settings();
     const name = el.dataset.lvExtra;
     if (!name || !el.value) return;
-    s.char_map[name] = el.value;
+    setCharVoice(name, el.value);
     voices.forgetExtra(name);
     save();
     renderMap();
@@ -522,13 +589,13 @@ function onColorName(el) {
     renderColors();
 }
 function onColorVoice(el) {
-    const s = settings();
     const color = el.dataset.lvColorVoice;
     const row = colorRows().find(r => r.color === color);
     if (!row || !row.name) return;
-    if (el.value) s.char_map[row.name] = el.value; else delete s.char_map[row.name];
+    setCharVoice(row.name, el.value);   // 1.3.8 다른 엔진 목소리면 고정
     save();
     renderMap();
+    renderColors();
 }
 
 // ---------- 버튼 (data-lv-act)
@@ -540,7 +607,7 @@ const ACTIONS = {
         applyBodyFilters(); save(); renderReadCard('text');
         toast('본문 필터 기본값을 적용했어요', 'success');
     },
-    'map-remove': (b) => { delete settings().char_map[b.dataset.name]; save(); renderMap(); renderColors(); },
+    'map-remove': (b) => { const s = settings(); delete s.char_map[b.dataset.name]; if (isObj(s.prefer_keep)) delete s.prefer_keep[b.dataset.name]; save(); renderMap(); renderColors(); },
     'color-lock': (b) => {
         const row = colorRows().find(r => r.color === b.dataset.color);
         if (!row) return;
@@ -601,6 +668,18 @@ const ACTIONS = {
         note.hidden = !note.hidden;
         b.setAttribute('aria-expanded', String(!note.hidden));
     },
+    help: (b) => toggleHelp(b),   // 1.3.8 '?' 도움말
+    tag: (b) => {                 // 1.3.8 엔진 카드의 말투 칩 (목소리 편집 팝업의 칩은 bindEditor 가)
+        const path = b.dataset.path;
+        if (!path) return;
+        const t = String(b.dataset.tag || '');
+        const cur = tagList(getPath(settings(), path));
+        if (!cur.includes(t) && cur.length >= TAG_MAX) { toast(`말투는 ${TAG_MAX}개까지 골라요`, 'warning'); return; }
+        const next = cur.includes(t) ? cur.filter(x => x !== t) : [...cur, t];
+        write(path, next.length ? next : undefined);
+        b.setAttribute('aria-pressed', String(next.includes(t)));
+    },
+    unpin: (b) => { unpinChar(b.dataset.name || ''); },   // 1.3.8 캐릭터 엔진 고정 풀기
     'cache-clear': async () => { await cache.clear(); toast('캐시를 비웠어요', 'success'); renderData(); },
     export: () => exportSettings(),
     import: () => q('#lv_import_file')?.click(),
@@ -634,8 +713,9 @@ function showTab(id) {
     if (id === 'read') refreshWhenCard();   // 번역기 쪽 자동 번역을 켜고 껐을 수 있음
     if (id === 'data') renderData();
     if (id === 'voices' && !ensureFresh()) renderColors();   // 채팅이 바뀌었을 수 있음 (바뀐 채팅을 아직 안 그렸으면 캐릭터별 목소리까지)
-    if (id === 'voices') void autoSyncAccounts();   // 1.3.7 계정 맞춤 (6시간에 한 번)
-    if (id === 'engine') autoEngineModels();        // 1.3.7 모델 목록 (12시간에 한 번 · 보일 때만)
+    if (id === 'voices') syncIfShown();             // 1.3.7 계정 맞춤 (6시간에 한 번) — 1.3.8 보일 때만 (페이지를 열 때 닫힌 서랍에선 요청 없음)
+    if (id === 'engine') { autoEngineModels(); balanceIfShown(); }   // 1.3.7 모델 목록 (12시간에 한 번 · 보일 때만) · 1.3.8 잔액도 보일 때만
+    if (id === 'voices' || id === 'engine') flushPendingOffer();     // 1.3.8 닫힌 서랍에서 미뤄 둔 「바꿀까요」
 }
 
 // ---------- 읽기 탭
@@ -894,31 +974,63 @@ async function akeyClear() {
 }
 
 // ---------- 목소리 탭
-/** 목소리 고르기 <option> 들 — 한글 이름만 (엔진·id 는 편집 팝업에서) */
-function voiceOptions(sel) {
+/**
+ * 목소리 고르기 <option> 들 — 한글 이름만 (엔진·id 는 편집 팝업에서).
+ * 1.3.8 auto = 「나」 줄의 '자동' (페르소나도 엑스트라 목소리로) · twins = 이 캐릭터의 같은 사람 목소리를 엔진마다 ('벨포드 · MiniMax') —
+ *   「엔진」으로 고른 엔진 밖의 목소리도 고를 수 있게 (고르면 그 캐릭터만 그 엔진으로 고정)
+ */
+function voiceOptions(sel, { auto = false, twins = [] } = {}) {
     const all = voices.shownVoices();   // 1.3.7 연결된 계정 · 고른 엔진의 목소리만
     const groups = new Map();
     for (const v of all) { const g = v.group || '기타'; if (!groups.has(g)) groups.set(g, []); groups.get(g).push(v); }
     let h = '<option value="">(없음)</option>';
-    if (sel && !all.some(v => v.uid === sel)) {
+    if (auto) h += `<option value="${USER_AUTO}"${sel === USER_AUTO ? ' selected' : ''}>자동</option>`;
+    const twinIds = new Set(twins.map(v => v.uid));
+    if (twins.length) h += '<optgroup label="엔진별">' + twins.map(v => `<option value="${esc(v.uid)}"${v.uid === sel ? ' selected' : ''}>${esc(`${v.name} · ${providerName(v.provider)}`)}</option>`).join('') + '</optgroup>';
+    if (sel && sel !== USER_AUTO && !twinIds.has(sel) && !all.some(v => v.uid === sel)) {
         const hv = voices.findVoice(sel);
         const why = !hv ? '없는 목소리' : hv.gone ? '계정에 없음' : !voices.engineUsable(hv.provider) ? '키 없음' : providerName(hv.provider);
         h += `<option value="${esc(sel)}" selected>${esc(hv ? hv.name : sel)} (${esc(why)})</option>`;
     }
+    const mark = twinIds.has(sel) ? '' : sel;   // 같은 목소리가 위 엔진별에 있으면 그쪽만 고른 표시
     for (const [g, arr] of groups) {
-        h += `<optgroup label="${esc(g)}">` + arr.map(v => `<option value="${esc(v.uid)}"${v.uid === sel ? ' selected' : ''}>${esc(v.name)}</option>`).join('') + '</optgroup>';
+        h += `<optgroup label="${esc(g)}">` + arr.map(v => `<option value="${esc(v.uid)}"${v.uid === mark ? ' selected' : ''}>${esc(v.name)}</option>`).join('') + '</optgroup>';
     }
     return h;
 }
-function mapRow(label, uid, attrs, charName = label) {
+/** 1.3.8 이 캐릭터의 같은 사람 목소리 (연결표 목소리 + 쓸 수 있는 다른 엔진마다 짝 — previewPrefer · voiceFor 와 같은 판단). 엔진이 둘 이상일 때만 */
+function charTwins(name, uid) {
+    const base = uid ? voices.findVoice(uid) : null;
+    if (!name || !base) return [];
+    // 1.3.8 리뷰 p06: 연결표 목소리라도 키가 없는 엔진 · 계정에 없는 목소리는 고르게 하지 않는다 (고르면 그 캐릭터가 조용해짐 — 아래 일반 목록이 '(키 없음)' 으로 보여 줌)
+    const out = !base.gone && voices.engineUsable(base.provider) ? [base] : [];
+    const engines = [...new Set(voices.allVoices().map(v => v.provider))].filter(id => id !== base.provider && voices.engineUsable(id) && getProvider(id));
+    for (const id of engines) {
+        const t = voices.twinOf(base, id, name);
+        if (t && !out.includes(t)) out.push(t);
+    }
+    return out.length > 1 ? out : [];
+}
+/** 1.3.8 고정 칩: 「엔진」을 골랐는데 이 캐릭터는 연결표 목소리(다른 엔진) 그대로 — 누르면 풂 */
+function pinChip(name, uid) {
+    const s = settings();
+    if (!name || !s.prefer_provider || !voices.isPinned(name)) return '';
+    const v = voices.findVoice(uid);
+    return `<button type="button" class="lv-pin-chip" data-lv-act="unpin" data-name="${esc(name)}" aria-label="고정 풀기">${esc(v ? `${providerName(v.provider)} 고정` : '고정')}</button>`;
+}
+function mapRow(label, uid, attrs, charName = label, { auto = false } = {}) {
     // 1.3.7 엔진 자동 맞춤으로 다른 목소리가 읽으면 그 목소리를 이름 밑에 (고른 목소리는 그대로 보여 둔다 — 자동 맞춤을 끄면 다시 그것)
-    const v = uid ? voices.findVoice(uid) : null;
-    const eff = v ? voices.preferVoice(v, charName) : null;   // 고르기 칸엔 실제로 읽는 목소리 (연결표는 그대로 — 「엔진」을 되돌리면 원래 목소리)
-    return `<label class="lv-row"><span class="lv-row-label">${esc(label)}</span><select class="text_pole" ${attrs}>${voiceOptions(eff ? eff.uid : uid)}</select></label>`;
+    const v = uid && uid !== USER_AUTO ? voices.findVoice(uid) : null;
+    const eff = v ? voices.preferVoice(v, charName) : null;   // 고르기 칸엔 실제로 읽는 목소리 (연결표는 그대로 — 「엔진」을 되돌리면 원래 목소리 · 1.3.8 고정이면 연결표 목소리)
+    const opts = voiceOptions(eff ? eff.uid : uid, { auto, twins: charName ? charTwins(charName, uid) : [] });
+    const chip = pinChip(charName, uid);
+    // 1.3.8 리뷰(rig): 고정 칩이 <label> 안에 있으면 칩이 라벨의 대상이 돼 이름을 눌러도 고정이 풀렸다 → 칩이 있는 줄은 <div> + select 에 이름표
+    if (chip) return `<div class="lv-row"><span class="lv-row-label">${esc(label)}${chip}</span><select class="text_pole" ${attrs} aria-label="${esc(label)} 목소리">${opts}</select></div>`;
+    return `<label class="lv-row"><span class="lv-row-label">${esc(label)}</span><select class="text_pole" ${attrs}>${opts}</select></label>`;
 }
 const providerName = (id) => getProvider(id)?.name || id;
 /** 목소리가 있는 엔진들 (엔진 자동 맞춤 고르기) */
-const voiceEngines = () => [...new Set(voices.allVoices().map(v => v.provider).filter(id => getProvider(id)))];
+const voiceEngines = () => [...new Set(voices.allVoices().filter(v => !v.gone && voices.engineUsable(v.provider)).map(v => v.provider).filter(id => getProvider(id)))];   // 5.7.2 쓸 수 있는 목소리가 있는 엔진만
 function preferRowHtml(s) {
     const engines = voiceEngines();
     if (engines.length < 2 && !s.prefer_provider) return '';
@@ -955,35 +1067,82 @@ function setPreferProvider(id, { quiet = false } = {}) {
     renderVoices();   // 목록도 (보이는 엔진이 바뀜)
     if (quiet) return;
     if (!s.prefer_provider) { toast('캐릭터마다 지정한 목소리로 읽어요', 'success'); return; }
-    const { moved, kept } = voices.previewPrefer(s.prefer_provider, Object.keys(s.char_map));
-    toast(`${providerName(s.prefer_provider)}: ${moved.length}명 바뀜${kept.length ? ` · ${kept.length}명은 같은 이름 목소리가 없어 그대로` : ''}`, 'success');
-}
-/** 엔진 목소리를 불러온 뒤: 지금 쓰는 엔진과 다르고, 이름이 맞는 캐릭터가 있으면 그 엔진으로 바꿀지 한 번 묻는다 */
-async function offerPrefer(p) {
-    const s = settings();
-    if (s.prefer_provider === p.id) return;
     const names = Object.keys(s.char_map);
-    const { moved, kept } = voices.previewPrefer(p.id, names);
+    const { moved, kept } = voices.previewPrefer(s.prefer_provider, names);
+    const pinned = names.filter(n => voices.isPinned(n)).length;   // 1.3.8 고정한 캐릭터는 그대로
+    toast(`${providerName(s.prefer_provider)}: ${moved.length}명 바뀜${kept.length ? ` · ${kept.length}명은 같은 이름 목소리가 없어 그대로` : ''}${pinned ? ` · ${pinned}명 고정` : ''}`, 'success');
+}
+/**
+ * 엔진 목소리를 불러온 뒤: 지금 쓰는 엔진과 다르고, 이름이 맞는 캐릭터가 있으면 그 엔진으로 바꿀지 한 번 묻는다.
+ * 1.3.8 같은 엔진은 한 번에 하나 (맞춤 · 불러오기가 겹쳐도 팝업 하나) · 아니요 한 이름들은 기억 (새 이름이 없으면 다시 안 물음) ·
+ *   auto(계정 맞춤)는 설정 창이 안 보이면(페이지를 열 때 · 닫힌 서랍) 미뤘다가 목소리 · 엔진 탭이 보일 때 · 고정한 캐릭터는 셈에서 뺌
+ */
+const offering = new Map();   // 엔진 id → 묻는 중인 약속
+function offerPrefer(p, opts = {}) {
+    if (!p) return Promise.resolve();
+    if (offering.has(p.id)) return offering.get(p.id);
+    const job = offerPreferNow(p, opts).finally(() => offering.delete(p.id));
+    offering.set(p.id, job);
+    return job;
+}
+async function offerPreferNow(p, { auto = false } = {}) {
+    const s = settings();
+    const pend = () => (Array.isArray(s.prefer_pending) ? s.prefer_pending : []);
+    const clearPending = () => { if (pend().includes(p.id)) { s.prefer_pending = pend().filter(x => x !== p.id); save(); } };
+    if (s.prefer_provider === p.id || !voices.engineUsable(p.id)) { clearPending(); return; }
+    const { moved, kept } = voices.previewPrefer(p.id, Object.keys(s.char_map));
     const changed = moved.filter(n => voices.findVoice(s.char_map[n])?.provider !== p.id);
-    if (!changed.length) return;
+    if (!changed.length) { clearPending(); return; }
+    if (!isObjLike(s.prefer_declined)) s.prefer_declined = {};
+    const declined = Array.isArray(s.prefer_declined[p.id]) ? s.prefer_declined[p.id] : [];
+    if (declined.length && changed.every(n => declined.includes(n))) { clearPending(); return; }
+    if (auto && !settingsShown()) { if (!pend().includes(p.id)) { s.prefer_pending = [...pend(), p.id].slice(-12); save(); } return; }   // 1.3.8 리뷰 p11: 엔진마다 (한 칸이면 뒤엣것이 앞엣것을 지웠다)
+    clearPending();
     const list = changed.slice(0, 8).join(', ') + (changed.length > 8 ? ` 외 ${changed.length - 8}명` : '');
-    if (!(await confirm(`${p.name} 목소리 중 캐릭터와 이름이 맞는 게 ${changed.length}명 있어요 (${list}). 이 캐릭터들을 ${p.name} 목소리로 바꿀까요?${kept.length ? ` 맞는 이름이 없는 ${kept.length}명은 그대로예요.` : ''} 목소리 탭의 「엔진」에서 언제든 되돌릴 수 있어요.`))) return;
+    const keptText = kept.length ? ` 맞는 이름이 없는 캐릭터(${kept.slice(0, 3).join(', ')}${kept.length > 3 ? ` 외 ${kept.length - 3}명` : ''})는 그대로예요.` : '';
+    if (!(await confirm(`${p.name} 목소리 중 캐릭터와 이름이 맞는 게 ${changed.length}명 있어요 (${list}). 이 캐릭터들을 ${p.name} 목소리로 바꿀까요?${keptText} 목소리 탭의 「엔진」에서 언제든 되돌릴 수 있어요.`))) {
+        s.prefer_declined[p.id] = [...new Set([...declined, ...changed])].slice(-300);
+        save();
+        return;
+    }
+    delete s.prefer_declined[p.id];
     setPreferProvider(p.id);
 }
+/** 1.3.8 미뤄 둔 「바꿀까요」 (설정 창이 보이면) — 엔진마다 차례로 (하나에 답해야 다음) */
+let flushing = null;
+function flushPendingOffer() {
+    if (flushing || !settingsShown()) return flushing;
+    const s = settings();
+    if (!Array.isArray(s.prefer_pending) || !s.prefer_pending.length) return null;
+    flushing = (async () => {
+        try {
+            for (const id of [...s.prefer_pending]) {
+                if (!settingsShown()) break;                      // 서랍을 닫으면 나머지는 다음에
+                const p = getProvider(id);
+                if (p) await offerPrefer(p);
+                else { s.prefer_pending = s.prefer_pending.filter(x => x !== id); save(); }
+            }
+        } finally { flushing = null; }
+    })();
+    return flushing;
+}
+/** 5.7.2+ 알약 · 목록에 보일 이름: 엔진 자동 맞춤이면 실제로 읽는 목소리 (Lucifer → 루시퍼 (Lucifer), 진우 쿠키 아님) */
+const effName = (uid, n) => { const v = voices.findVoice(uid); return (v ? voices.preferVoice(v, n) : null)?.name || uid; };
 function mapCardHtml() {
     const s = settings();
     const names = chatNames();
-    if (!voices.allVoices().length) return card('map', 'fa-users', '캐릭터별 목소리', '<p class="lv-empty">아래 목소리 목록에서 먼저 불러와요</p>');
+    // 5.7.2 휴대폰에서 '아래 … 불러와요' 바로 아래엔 대화 색 카드의 「프리셋에서 불러오기」가 먼저 보였다 → 단추를 여기에
+    if (!voices.allVoices().length) return card('map', 'fa-users', '캐릭터별 목소리', '<p class="lv-empty">아직 목소리가 없어요</p><div class="lv-actions"><button type="button" class="menu_button" data-lv-act="pull">목소리 불러오기</button></div>');
     const rows = names.map(n => mapRow(n, s.char_map[n] || '', `data-lv-map="${esc(n)}"`));
     rows.push(mapRow('기본', s.default_voice, 'data-lv-path="default_voice"', ''));
-    rows.push(mapRow('나', s.user_voice, 'data-lv-path="user_voice"', ''));
+    rows.push(mapRow('나', s.user_voice, 'data-lv-path="user_voice"', '', { auto: true }));   // 1.3.8 「나」 자동
     rows.push(mapRow('내레이터', s.narrator_voice, 'data-lv-path="narrator_voice"', ''));
     const prefer = preferRowHtml(s);
     if (prefer) rows.unshift(prefer);
     rows.push(extrasHtml(s));
     const pills = Object.entries(s.char_map)
         .filter(([n]) => !names.includes(n))
-        .map(([n, uid]) => `<span class="lv-pill"><span>${esc(n)} → ${esc(voices.findVoice(uid)?.name || uid)}</span><button type="button" class="lv-x" data-lv-act="map-remove" data-name="${esc(n)}" aria-label="빼기"><i class="fa-solid fa-xmark"></i></button></span>`)
+        .map(([n, uid]) => `<span class="lv-pill"><span>${esc(n)} → ${esc(effName(uid, n))}</span>${pinChip(n, uid)}<button type="button" class="lv-x" data-lv-act="map-remove" data-name="${esc(n)}" aria-label="빼기"><i class="fa-solid fa-xmark"></i></button></span>`)
         .join('');
     return card('map', 'fa-users', '캐릭터별 목소리', `<div class="lv-rows">${rows.join('')}</div>${pills ? `<div class="lv-pills">${pills}</div>` : ''}`);
 }
@@ -1004,7 +1163,7 @@ function colorRowHtml(r, s) {
     return `<div class="lv-color" data-color="${esc(r.color)}">
 <span class="lv-swatch" style="background:${safeColor(r.color)}"></span>
 <input type="text" class="text_pole lv-color-name" data-lv-color-name="${esc(r.color)}" value="${esc(name)}" placeholder="${esc(hint)}" autocomplete="off">
-<select class="text_pole lv-color-voice" data-lv-color-voice="${esc(r.color)}"${name ? '' : ' disabled'}>${voiceOptions(effUid(uid, name))}</select>
+<span class="lv-color-voicebox"><select class="text_pole lv-color-voice" data-lv-color-voice="${esc(r.color)}"${name ? '' : ' disabled'}>${voiceOptions(effUid(uid, name), { twins: charTwins(name, uid) })}</select>${pinChip(name, uid)}</span>
 <button type="button" class="lv-icon${r.locked ? ' lv-on' : ''}" data-lv-act="color-lock" data-color="${esc(r.color)}" aria-label="고정" aria-pressed="${r.locked ? 'true' : 'false'}"><i class="fa-solid ${r.locked ? 'fa-lock' : 'fa-lock-open'}"></i></button>
 <span class="lv-count">${esc(cnt)}</span></div>`;
 }
@@ -1017,11 +1176,23 @@ function colorsCardHtml() {
     const btns = '<div class="lv-actions"><button type="button" class="menu_button" data-lv-act="palette">프리셋에서 불러오기</button><button type="button" class="menu_button" data-lv-act="relearn">다시 배우기</button><button type="button" class="menu_button" data-lv-act="colors-clear">비우기</button></div>';
     return card('colors', 'fa-palette', '대화 색 (이 채팅)', body + btns);
 }
-/** 목록 한 줄: 한글 이름만 (언어·엔진·id 는 편집 팝업과 ▶ 들어보기에서) */
+/** 1.3.8 목록 줄의 말투 칩: 그 목소리에 고른 말투(한국어 이름) — 엔진이 말투 이름을 줄 때만 */
+function tagChipText(v) {
+    let p = null;
+    try { p = getProvider(v.provider); } catch { p = null; }
+    const pv = v.params && v.params.voice_tags;
+    if (!p || typeof p.tagLabels !== 'function' || !Array.isArray(pv) || !pv.length) return '';
+    // 1.3.8 리뷰 p09: 그 목소리가 실제로 쓰는 모델(목소리 모델 포함)이 말투를 안 받으면 칩도 없음 (요청 · 키와 같은 판단 — paramsFor 의 when)
+    const f = (p.params || []).find(x => x.key === 'voice_tags');
+    try { if (f && typeof f.when === 'function' && !f.when(player.voiceCfg(p, v))) return ''; } catch { return ''; }
+    try { return p.tagLabels(pv).join(' · '); } catch { return ''; }
+}
+/** 목록 한 줄: 한글 이름만 (언어·엔진·id 는 편집 팝업과 ▶ 들어보기에서) · 1.3.7 목소리 모델 · 1.3.8 말투 이름표 */
 function voiceRowHtml(v) {
+    const tags = tagChipText(v);
     return `<div class="lv-voice" data-uid="${esc(v.uid)}">
 <button type="button" class="lv-icon" data-lv-act="test" data-uid="${esc(v.uid)}" aria-label="들어보기"><i class="fa-solid fa-play"></i></button>
-<div class="lv-voice-name"><b>${esc(v.name)}</b>${v.use_model ? `<span class="lv-chip lv-model-chip">${esc(koModelLabel(v.provider, v.use_model))}</span>` : ''}</div>
+<div class="lv-voice-name"><b>${esc(v.name)}</b>${v.use_model ? `<span class="lv-chip lv-model-chip">${esc(koModelLabel(v.provider, v.use_model))}</span>` : ''}${tags ? `<span class="lv-chip lv-model-chip lv-tag-sum">${esc(tags)}</span>` : ''}</div>
 <button type="button" class="lv-icon" data-lv-act="edit" data-uid="${esc(v.uid)}" aria-label="편집"><i class="fa-solid fa-pen"></i></button>
 <button type="button" class="lv-icon" data-lv-act="del" data-uid="${esc(v.uid)}" aria-label="삭제"><i class="fa-solid fa-xmark"></i></button></div>`;
 }
@@ -1057,7 +1228,9 @@ function listCardHtml() {
     const body = all.length
         ? `<div class="lv-tools"><input type="search" class="text_pole" id="lv_search" placeholder="찾기" value="${esc(state.search)}" autocomplete="off"><input type="text" class="text_pole" id="lv_test_line" placeholder="들어볼 문장 (비우면 기본 문장)" value="${esc(state.testLine)}" autocomplete="off"></div><span class="lv-desc lv-test-info" id="lv_test_info"></span><div class="lv-voices">${voiceRowsHtml()}</div>`
         : '<p class="lv-empty">아직 목소리가 없어요</p>';
-    const hint = hiddenLineHtml() + '<span class="lv-desc">계정에서 불러오거나 목소리 ID를 직접 등록해요. MiniMax 목록은 JSON으로 가져올 수 있어요. 계정에 새로 만든 목소리는 저절로 들어와요.</span>';
+    // 5.7.2 '저절로 들어와요' 는 계정 맞춤이 도는 엔진(키 · 공식 서버)이 있을 때만
+    const auto = providers().some(p => accountTrusted(p) && hasKey(p) && typeof p.listVoices === 'function');
+    const hint = hiddenLineHtml() + `<span class="lv-desc">계정에서 불러오거나 목소리 ID를 직접 등록해요. MiniMax 목록은 JSON으로 가져올 수 있어요.${auto ? ' 계정에 새로 만든 목소리는 저절로 들어와요.' : ''}</span>`;
     let mixable = false;
     try { mixable = !!getProvider('minimax')?.caps?.mix && all.some(v => v.provider === 'minimax' && !(v.mix || []).length); } catch { mixable = false; }
     const btns = `<div class="lv-actions"><button type="button" class="menu_button" data-lv-act="pull">계정에서 불러오기</button><button type="button" class="menu_button" data-lv-act="paste">목록 붙여넣기</button><button type="button" class="menu_button" data-lv-act="add">직접 추가</button>${mixable ? '<button type="button" class="menu_button" data-lv-act="add-mix">섞은 목소리</button>' : ''}</div>`;
@@ -1079,13 +1252,17 @@ export function renderColors() { replaceCard('colors', colorsCardHtml()); }
 // 보이게 되면 그린다: 서랍 펼치기 · 팝업(openPanel) · 설정 창 안(mountInline) · 목소리 탭 · 그 밖의 길(확장 창 열기 등)은 ResizeObserver.
 let chatDirty = false;
 /** 목소리 탭이 지금 화면에 있는가 — 닫힌 것이 확실하면 스타일 계산 없이 false */
-function voicesShown() {
-    const pane = q('#lv_pane_voices');
+function paneShown(sel) {
+    const pane = q(sel);
     if (!pane || !pane.isConnected || pane.closest('[hidden]')) return false;   // 다른 탭 · 꺼진 설정 · 보관함(#bl-tts-holder)
     const drawer = pane.closest('.drawer-content');
     if (drawer && !drawer.classList.contains('openDrawer')) return false;     // 실리태번 확장 창이 닫힘
     return pane.getClientRects().length > 0;
 }
+const voicesShown = () => paneShown('#lv_pane_voices');
+/** 1.3.8 엔진 탭 · 설정 창(목소리 · 엔진 탭)이 지금 보이는가 — 페이지를 열 때 닫힌 서랍에서 팝업 · 요청을 내지 않게 */
+const engineShown = () => paneShown('#lv_pane_engine');
+const settingsShown = () => voicesShown() || engineShown();
 export function refreshChat() {
     if (!root) return;
     if (!voicesShown()) { chatDirty = true; return; }
@@ -1133,90 +1310,201 @@ async function testVoice(btn) {
 async function deleteVoice(uid) {
     const v = voices.findVoice(uid);
     if (!v) return;
-    if (!(await confirm(`${v.name}을(를) 목록에서 뺄까요?`))) return;
+    if (!(await confirm(`「${v.name}」 목소리를 목록에서 뺄까요?`))) return;
     voices.removeVoice(uid);
     save();
     renderVoices();
 }
 /** 엔진 고르기 팝업 → provider | null */
-async function pickProvider(list, title) {
+async function pickProvider(list, title, label = (p) => p.name) {
     if (list.length === 1) return list[0];
     const el = document.createElement('div');
     el.className = 'lv-editor';
-    el.innerHTML = `<div class="lv-ed-head"><i class="fa-solid fa-plug"></i><span>${esc(title)}</span></div><select class="text_pole" name="pid" aria-label="엔진">${list.map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select>`;
+    el.innerHTML = `<div class="lv-ed-head"><i class="fa-solid fa-plug"></i><span>${esc(title)}</span></div><select class="text_pole" name="pid" aria-label="엔진">${list.map(p => `<option value="${esc(p.id)}">${esc(label(p))}</option>`).join('')}</select>`;
     const r = await callGenericPopup(el, POPUP_TYPE.CONFIRM, '', { okButton: '다음', cancelButton: '취소' });
     if (r !== POPUP_RESULT.AFFIRMATIVE) return null;
     const pid = el.querySelector('[name="pid"]').value;
     return list.find(p => p.id === pid) || null;
 }
+/** 5.7.2 묶음의 처음 켜짐: 내 목소리 · 50개 이하이면서 쓰는 언어(한국어 + 목록에 있는 목소리의 원어)이거나 언어를 모르는 묶음 (1.3.7 은 50개 이하면 모두 켜 Azure 657개 중 595개가 들어왔다) */
+function groupOn(g, n, m) {
+    if (m && m.own) return true;
+    if (n > 50) return false;
+    const langs = new Set(m ? m.langs : []);
+    const loc = /^([a-z]{2,3})(?:-[A-Za-z0-9]{2,4})+$/.exec(String(g || ''));   // Azure 묶음 = 지역 이름 (fr-FR · zh-CN …)
+    if (loc) langs.add(loc[1].toLowerCase());
+    if (!langs.size) return true;
+    const want = new Set(['ko', ...voices.allVoices().map(v => v.lang).filter(Boolean)]);
+    return [...langs].some(l => want.has(l));
+}
 /** 큰 목록(시스템 목소리 수백 개)은 묶음을 골라 받는다 → Set | null */
-async function pickGroups(p, groups) {
+async function pickGroups(p, groups, meta = new Map()) {
     const el = document.createElement('div');
     el.className = 'lv-editor';
-    const rows = [...groups.entries()].map(([g, n]) => `<label class="checkbox_label lv-toggle"><input type="checkbox" value="${esc(g)}"${n > 50 ? '' : ' checked'}><span>${esc(g)}</span><span class="lv-count">${n}</span></label>`).join('');
+    const rows = [...groups.entries()].map(([g, n]) => `<label class="checkbox_label lv-toggle"><input type="checkbox" value="${esc(g)}"${groupOn(g, n, meta.get(g)) ? ' checked' : ''}><span>${esc(g)}</span><span class="lv-count">${n}</span></label>`).join('');
     el.innerHTML = `<div class="lv-ed-head"><i class="fa-solid fa-download"></i><span>${esc(p.name)} 목소리 묶음</span></div><div class="lv-picks">${rows}</div>`;
     const r = await callGenericPopup(el, POPUP_TYPE.CONFIRM, '', { okButton: '불러오기', cancelButton: '취소' });
     if (r !== POPUP_RESULT.AFFIRMATIVE) return null;
     return new Set([...el.querySelectorAll('input:checked')].map(i => i.value));
 }
-async function pullVoices(p) {
+/**
+ * 목소리 불러오기. auto = 1.3.8 연결 확인 뒤 저절로 (처음 쓰는 엔진만) — 사용자가 지운 목소리(account_removed)는 빼고 그 표시도 풀지 않는다
+ * (지운 표시는 사용자가 직접 「불러오기」로 고를 때만 풂)
+ */
+async function pullVoices(p, { auto = false } = {}) {
     const cfg = providerConfig(p.id, p.defaults);
     if (!hasKey(p)) { toast(`${p.name} 키를 먼저 저장해요 (엔진 탭)`, 'warning'); return; }
     let list;
     try { list = await p.listVoices(cfg); }
     catch (e) { toast(e.message, 'error'); log('err', `${p.name} 목록 불러오기 실패: ${e.message}`); return; }
+    const full = list;   // 계정 맞춤에는 거르기 전 목록 그대로
+    if (auto && Array.isArray(list)) { const rm = new Set(voices.removedIds(p.id)); if (rm.size) list = list.filter(v => !rm.has(String(v.voiceId))); }
     if (!Array.isArray(list) || !list.length) { toast('불러온 목소리가 없어요', 'warning'); return; }
-    const groups = new Map();
-    for (const v of list) { const g = v.group || '기타'; groups.set(g, (groups.get(g) || 0) + 1); }
+    // 5.7.2 한 묶음뿐인 큰 목록(내 목소리가 없는 MiniMax = 시스템 목소리 전부)은 언어로 나눠 고르게 · 묶음마다 내 목소리 · 언어 (처음 켜짐)
+    const split = list.length > 30 && new Set(list.map(v => v.group || '기타')).size === 1;
+    const keyOf = (v) => `${v.group || '기타'}${split ? ` · ${LANG_LABEL[v.lang] || '기타 언어'}` : ''}`;
+    const groups = new Map(), meta = new Map();
+    for (const v of list) {
+        const g = keyOf(v);
+        groups.set(g, (groups.get(g) || 0) + 1);
+        const m = meta.get(g) || { own: false, langs: new Set() };
+        if (v.own) m.own = true;
+        if (v.lang) m.langs.add(v.lang);
+        meta.set(g, m);
+    }
     let pick = list;
     if (groups.size > 1 && list.length > 30) {
-        const chosen = await pickGroups(p, groups);
+        const chosen = await pickGroups(p, groups, meta);
         if (!chosen) return;
-        pick = list.filter(v => chosen.has(v.group || '기타'));
+        pick = list.filter(v => chosen.has(keyOf(v)));
     }
     if (!pick.length) return;
-    voices.upsertVoices(pick, p.id);
-    if (p.caps?.account) { voices.syncAccount(p.id, list); settings().account_sync[p.id] = Date.now(); }   // 1.3.7 계정에 없는 목소리 숨김
+    const s = settings();
+    const before = s.voices.length;
+    const had = new Set(s.voices.filter(v => v.provider === p.id).map(v => String(v.voiceId)));
+    // 1.3.8 내 목소리(own)가 아닌 줄 = 엔진의 기본 · 시스템 목소리 (stock): 캐릭터 이름만으로는 짝이 되지 않음 (voices.twinOf).
+    //   upsertVoices 가 예전에 지웠던 목소리 표시(account_removed)도 푼다 — 사용자가 직접 골라 넣음
+    const added = Number((voices.upsertVoices(pick.map(v => (v.own === true ? v : { ...v, stock: true })), p.id) || {}).added) || 0;
+    // 1.3.8 새로 들어온 내 목소리도 다른 엔진의 같은 사람에게서 원어 · 묶음을 (계정 맞춤과 같게 — 맞춤이 먼저 넣으면 여기선 이미 있음)
+    voices.inheritNew(p.id, pick.filter(v => v.own === true && !had.has(String(v.voiceId))).map(v => String(v.voiceId)));
+    // 1.3.8 리뷰 p13: 계정 맞춤이 없는 엔진(OpenAI · Azure · Gemini …)은 1.3.7 에 불러온 기본 목소리에도 stock 표시를 (새 줄만 표시해 「nova」가 캐릭터 Nova 의 짝으로 남았다)
+    if (!p.caps?.account) {
+        const stockIds = new Set(list.filter(v => v.own !== true).map(v => String(v.voiceId)));
+        for (const v of s.voices) if (v.provider === p.id && !v.stock && !(v.mix || []).length && stockIds.has(String(v.voiceId))) v.stock = true;
+    }
+    const def = voices.seedDefault(before, p.id);   // 5.7.2 처음 들어온 목소리면 기본 목소리도 (안 정한 화자가 조용하지 않게)
     save();
+    // 1.3.7 계정에 없는 목소리 숨김 — MiniMax 직접 입력 서버는 빼고 (accountTrusted). 불러오기 목록이 거른 것이면(Typecast: 고른 모델) 계정 목록을 따로 받아서
+    if (accountTrusted(p)) {
+        if (typeof p.listFiltered === 'function' && p.listFiltered(cfg)) await autoSyncAccounts({ force: true, only: p.id });
+        else { voices.syncAccount(p.id, full); s.account_sync[p.id] = Date.now(); syncFailAt.delete(p.id); }
+    }
     renderVoices();
-    toast(`${p.name}: ${pick.length}개 불러왔어요`, 'success');
+    toast(`${p.name}: ${added ? `${added}개 불러왔어요` : '새 목소리가 없어요'}${def ? ` · 기본 목소리 ${def.name}` : ''}`, 'success');
     await offerPrefer(p);   // 1.3.7 이름이 맞는 캐릭터가 있으면 이 엔진으로 바꿀지
 }
-// ---------- 1.3.7 계정 맞춤: 목소리 탭을 열 때 엔진마다 6시간에 한 번 (키가 있고 그 엔진 목소리가 있을 때만) — 실패는 조용히 (기록만)
+// ---------- 1.3.7 계정 맞춤: 목소리 탭이 보일 때 엔진마다 6시간에 한 번 (키가 있는 엔진) — 실패는 조용히 (기록만)
+// 5.7.2: 키를 저장 · 연결 확인하면 그 엔진은 바로 맞춘다. 목소리가 아직 하나도 없는 엔진도 (키만 넣고 목소리는 안 들어오던 것 — 사용자 제보)
+//        새 내 목소리가 들어왔고 이름이 맞는 캐릭터가 있으면 그 엔진으로 바꿀지 한 번 묻는다 (offerPrefer)
+// 1.3.8: 엔진마다 따로 · 함께 (꺼진 MiniMax 직접 입력 서버의 30초 시간 초과가 ElevenLabs 맞춤을 붙잡지 않게) ·
+//        실패한 엔진은 10분 쉼 (메모리만 — 설정 파일은 폰과 같이 쓰니 다른 기기의 맞춤을 막지 않게) · 페이지를 열 때(서랍이 닫힘)는 하지 않음
 const ACCOUNT_EVERY = 6 * 60 * 60 * 1000;
-let accountSyncing = false;
-async function autoSyncAccounts({ force = false } = {}) {
-    if (accountSyncing) return;
-    accountSyncing = true;
-    try {
-        const s = settings();
-        if (!isObjLike(s.account_sync)) s.account_sync = {};
-        const msgs = [];
-        let changed = false;
-        for (const p of providers()) {
-            if (!p.caps?.account || typeof p.listVoices !== 'function' || !hasKey(p)) continue;
-            if (!s.voices.some(v => v.provider === p.id)) continue;
-            const at = Number(s.account_sync[p.id]) || 0;
-            if (!force && Date.now() - at >= 0 && Date.now() - at < ACCOUNT_EVERY) continue;
-            let list;
-            try { list = await p.listVoices(providerConfig(p.id, p.defaults)); }
-            catch (e) { log('err', `${p.name} 계정 맞춤 실패: ${(e && e.message) || e}`); continue; }
-            if (!Array.isArray(list) || !list.length) continue;   // 빈 목록은 믿지 않는다 (다 숨기지 않게)
-            const r = voices.syncAccount(p.id, list);
-            s.account_sync[p.id] = Date.now();
-            changed = true;
-            if (r.added || r.gone || r.back) msgs.push(`${p.name}: ${[r.added ? `새 목소리 ${r.added}개` : '', r.gone ? `계정에 없는 ${r.gone}개 숨김` : '', r.back ? `${r.back}개 다시 보임` : ''].filter(Boolean).join(' · ')}`);
-        }
-        if (changed) save();
-        if (msgs.length) { renderVoices(); toast(msgs.join('\n'), 'success'); }
-    } finally { accountSyncing = false; }
+const SYNC_RETRY = 10 * 60 * 1000;
+const syncing = new Map();     // 엔진 id → 진행 중인 맞춤 (약속)
+const syncFailAt = new Map();  // 엔진 id → 마지막 실패 시각
+const syncErr = new Map();     // 5.7.2 엔진 id → 마지막 계정 맞춤 실패 글 (연결 확인 줄에 — 기록에만 남으면 '연결됨' 인데 목소리가 안 들어오는 까닭을 모름)
+const syncLine = (p, r) => `${p.name}: ${[r.added ? `새 목소리 ${r.added}개` : '', r.gone ? `계정에 없는 ${r.gone}개 숨김` : '', r.back ? `${r.back}개 다시 보임` : ''].filter(Boolean).join(' · ')}`;
+/** 5.7.2 계정 맞춤을 믿을 수 있는 설정인가 — MiniMax 직접 입력 서버(집 PC 게이트웨이 · 중계)는 그 서버의 목소리만 알려 줘 나머지를 '계정에 없음'으로 숨긴다 */
+function accountTrusted(p) {
+    if (!p || !p.caps?.account) return false;
+    try { return typeof p.accountOk !== 'function' || p.accountOk(providerConfig(p.id, p.defaults)) !== false; } catch { return false; }
 }
+/** 엔진 하나 계정 맞춤 → { added, gone, back, def? } | null (받지 못함 — 기록만) */
+async function syncOne(p) {
+    syncErr.delete(p.id);
+    let list;
+    try { list = await p.listVoices(providerConfig(p.id, p.defaults), { account: true }); }
+    catch (e) {
+        const m = (e && e.message) || String(e);
+        syncErr.set(p.id, m);
+        syncFailAt.set(p.id, Date.now());
+        log('err', `${p.name} 계정 맞춤 실패: ${m}`);
+        return null;
+    }
+    if (!Array.isArray(list) || !list.length) return null;   // 빈 목록은 믿지 않는다 (다 숨기지 않게)
+    syncFailAt.delete(p.id);
+    const s = settings();
+    if (!isObjLike(s.account_sync)) s.account_sync = {};
+    const before = s.voices.length;
+    const r = voices.syncAccount(p.id, list);
+    s.account_sync[p.id] = Date.now();
+    if (r.added) r.def = voices.seedDefault(before, p.id);   // 5.7.2 처음 들어온 목소리면 기본 목소리도
+    return r;
+}
+/** 엔진의 맞춤 하나 (이미 도는 중이면 그것에 붙음) */
+function syncEngine(p) {
+    let job = syncing.get(p.id);
+    if (!job) {
+        job = syncOne(p).finally(() => { if (syncing.get(p.id) === job) syncing.delete(p.id); });
+        syncing.set(p.id, job);
+    }
+    return job;
+}
+async function autoSyncAccounts({ force = false, only = '' } = {}) {
+    const s = settings();
+    if (!isObjLike(s.account_sync)) s.account_sync = {};
+    const now = Date.now();
+    const due = [];
+    let cleared = 0;
+    for (const p of providers()) {
+        if (only && p.id !== only) continue;
+        if (!p.caps?.account || typeof p.listVoices !== 'function' || !hasKey(p)) continue;
+        if (!accountTrusted(p)) { cleared += voices.clearGone(p.id); continue; }   // 5.7.2 직접 입력 서버 목록으로 숨겼던 목소리를 되돌림
+        if (!force) {
+            if (syncing.has(p.id)) continue;                                    // 다른 쪽이 맞추는 중 (그쪽이 알림)
+            const at = Number(s.account_sync[p.id]) || 0;
+            if (now - at >= 0 && now - at < ACCOUNT_EVERY) continue;
+            const f = syncFailAt.get(p.id) || 0;
+            if (now - f >= 0 && now - f < SYNC_RETRY) continue;
+        }
+        due.push(p);
+    }
+    const results = await Promise.all(due.map(async (p) => {
+        // 강제(키 저장 · 연결 확인): 도는 중인 맞춤은 옛 키였을 수 있다 → 끝난 뒤 새로
+        if (force && syncing.has(p.id)) { try { await syncing.get(p.id); } catch { /* 그쪽 실패는 그쪽에서 */ } }
+        try { return [p, await syncEngine(p)]; } catch { return [p, null]; }
+    }));
+    const msgs = [], offers = [];
+    let changed = false;
+    for (const [p, r] of results) {
+        if (!r) continue;
+        changed = true;
+        if (r.added || r.gone || r.back) msgs.push(syncLine(p, r) + (r.def ? ` · 기본 목소리 ${r.def.name}` : ''));
+        if (r.added) offers.push(p);
+    }
+    if (changed || cleared) save();
+    if (msgs.length || cleared) { renderVoices(); if (msgs.length) toast(msgs.join('\n'), 'success'); }
+    for (const p of offers) await offerPrefer(p, { auto: true });   // 새 목소리가 들어온 엔진: 이름이 맞는 캐릭터를 그 엔진으로 바꿀지 (맞는 게 없으면 안 물음 · 설정 창이 안 보이면 미룸)
+}
+/** 1.3.8 목소리 탭이 보이면 계정 맞춤 (6시간 · 실패 뒤 10분) — 페이지를 열 때 닫힌 서랍에서는 하지 않음 (요청 없음) */
+function syncIfShown() { if (voicesShown()) void autoSyncAccounts(); }
 const isObjLike = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
 async function pullFromAccount() {
-    const ready = providers().filter(p => p.caps && p.caps.list && typeof p.listVoices === 'function' && hasKey(p));
-    if (!ready.length) { toast('먼저 엔진 탭에서 키를 저장해요', 'warning'); return; }
-    const p = await pickProvider(ready, '어느 계정에서 불러올까요');
-    if (p) await pullVoices(p);
+    // 5.7.2 키가 필요한 엔진도 보여 준다: 키 저장됨 → 키 없이 되는 엔진 → 키 없음 (1.3.7 은 키가 없으면 무료 셋만 · 맨 앞 'OpenAI 호환'이 골라져 있었다)
+    const all = providers().filter(p => p.caps && p.caps.list && typeof p.listVoices === 'function');
+    if (!all.length) { toast('쓸 수 있는 엔진이 없어요', 'warning'); return; }
+    const tab = settings().ui.provider_tab;
+    const rank = (p) => (p.needsKey && hasKey(p) ? 0 : p.id === tab ? 1 : !p.needsKey ? 2 : 3);   // 키 저장됨 → 엔진 탭에서 고른 엔진 → 키 없이 되는 엔진 → 키 없음
+    const list = all.slice().sort((a, b) => rank(a) - rank(b));
+    const p = await pickProvider(list, '어느 엔진에서 불러올까요', (x) => x.name + (x.needsKey && !hasKey(x) ? ' · 키 없음' : ''));
+    if (!p) return;
+    if (!hasKey(p)) {   // 키가 없는 엔진: 그 엔진의 키 칸으로
+        settings().ui.provider_tab = p.id; save(); renderEngine(); showTab('engine');
+        q('#lv_key_input')?.focus();
+        toast(`${p.name} 키를 넣고 저장하면 목소리를 불러와요`, 'info');
+        return;
+    }
+    await pullVoices(p);
 }
 async function pasteList() {
     const raw = await callGenericPopup('MiniMax 목소리 목록 JSON을 붙여넣으세요. 예: [{"voiceId":"my_voice_id","name":"안내","lang":"ko","group":"내 목소리"}]', POPUP_TYPE.INPUT, '', { rows: 6, okButton: '가져오기' });
@@ -1246,6 +1534,8 @@ function edField(label, ctl, wide = false, desc = '') {
 function edControl(f, val, disabled, cfg, voice) {
     const dis = disabled ? ' disabled' : '';
     switch (f.type) {
+        case 'tags':
+            return tagChipsHtml(f, val, { disabled, cfg, voice });   // 1.3.8 말투 칩 (lv-param-in)
         case 'toggle':
             return `<label class="checkbox_label lv-toggle"><input type="checkbox" class="lv-param-in"${val ? ' checked' : ''}${dis}><span>켬</span></label>`;
         case 'select':
@@ -1265,7 +1555,9 @@ function edParam(f, params, cfg, voice) {
     EDF.set(f.key, f);
     const has = Object.prototype.hasOwnProperty.call(params, f.key);
     const val = has ? params[f.key] : (cfg[f.key] ?? f.default);
-    return `<div class="lv-field lv-param${f.type === 'textarea' ? ' lv-wide' : ''}" data-key="${esc(f.key)}"><span class="lv-label">${esc(f.label)}<label class="lv-def"><input type="checkbox" class="lv-def-chk"${has ? '' : ' checked'}><span>기본값</span></label></span>${edControl(f, val, !has, cfg, voice)}</div>`;
+    const help = helpBtn(f);   // 1.3.8 '?' 도움말 (이 팝업의 클릭은 bindEditor 가)
+    const name = help ? `<span class="lv-name">${esc(f.label)}${help}</span>` : esc(f.label);
+    return `<div class="lv-field lv-param${f.type === 'textarea' || f.type === 'tags' ? ' lv-wide' : ''}" data-key="${esc(f.key)}"${help ? ' data-lv-help' : ''}><span class="lv-label">${name}<label class="lv-def"><input type="checkbox" class="lv-def-chk"${has ? '' : ' checked'}><span>기본값</span></label></span>${edControl(f, val, !has, cfg, voice)}${helpNote(f)}</div>`;
 }
 function mixRowHtml(m, opts) {
     return `<div class="lv-mix-row"><select class="text_pole lv-mix-voice"><option value="">목소리</option>${opts.map(o => `<option value="${esc(o.voiceId)}"${o.voiceId === m.voiceId ? ' selected' : ''}>${esc(o.name)}</option>`).join('')}</select><input type="number" class="text_pole lv-mix-w" min="1" max="100" step="1" value="${esc(m.weight)}"><button type="button" class="lv-icon lv-mix-del" aria-label="빼기"><i class="fa-solid fa-xmark"></i></button></div>`;
@@ -1333,9 +1625,27 @@ function bindEditor(el) {
         }
         if (!t.classList.contains('lv-def-chk')) return;
         const inp = t.closest('.lv-param')?.querySelector('.lv-param-in');
-        if (inp) inp.disabled = t.checked;
+        if (!inp) return;
+        if (inp.classList.contains('lv-tag-chips')) {   // 1.3.8 말투 칩: 묶음 표시 + 칩마다
+            if (t.checked) inp.setAttribute('aria-disabled', 'true'); else inp.removeAttribute('aria-disabled');
+            for (const c of inp.querySelectorAll('.lv-tag-chip')) c.disabled = t.checked;
+            return;
+        }
+        inp.disabled = t.checked;
     });
     el.addEventListener('click', (e) => {
+        const hb = e.target.closest('.lv-help-btn');                  // 1.3.8 '?' 도움말 (팝업은 설정 창 밖이라 여기서)
+        if (hb) { e.preventDefault(); toggleHelp(hb); return; }
+        const chip = e.target.closest('.lv-tag-chip');                // 1.3.8 말투 칩
+        if (chip) {
+            e.preventDefault();
+            const box = chip.closest('.lv-tag-chips');
+            if (!box || box.getAttribute('aria-disabled') === 'true' || chip.disabled) return;
+            const on = chip.getAttribute('aria-pressed') === 'true';
+            if (!on && box.querySelectorAll('.lv-tag-chip[aria-pressed="true"]').length >= TAG_MAX) { toast(`말투는 ${TAG_MAX}개까지 골라요`, 'warning'); return; }
+            chip.setAttribute('aria-pressed', String(!on));
+            return;
+        }
         const del = e.target.closest('.lv-mix-del');
         if (del) { del.closest('.lv-mix-row')?.remove(); return; }
         if (e.target.closest('.lv-mix-add')) {
@@ -1371,12 +1681,15 @@ function readEditor(el, v, p, o) {
     out.prefer_source = val('prefer_source') || 'auto';
     out.gainDb = clamp(Number(val('gainDb')) || 0, -12, 18);
     if (!o.isMix) out.voiceId = o.isNew ? val('voiceId').trim() : v.voiceId;
-    const params = {};
+    // 1.3.8 리뷰 p10: 저장된 값에서 시작해 그려진 칸만 바꾼다 — 지금 모델이 숨긴 칸(말투 · 속도 …)의 값은 그대로 (모델을 바꿨다 되돌려도 남게)
+    const params = { ...(isObj(v.params) ? v.params : {}) };
     for (const box of el.querySelectorAll('.lv-param')) {
         const f = EDF.get(box.dataset.key);
         const chk = box.querySelector('.lv-def-chk');
         const inp = box.querySelector('.lv-param-in');
-        if (!f || !inp || (chk && chk.checked)) continue;
+        if (!f || !inp) continue;
+        if (chk && chk.checked) { delete params[f.key]; continue; }
+        if (f.type === 'tags') { params[f.key] = [...inp.querySelectorAll('.lv-tag-chip[aria-pressed="true"]')].map(c => c.dataset.tag).filter(Boolean); continue; }   // 1.3.8 [] = 이 목소리는 말투 없음
         params[f.key] = coerce(f, inp);
     }
     out.params = params;
@@ -1477,7 +1790,7 @@ export function renderEngine() {
     };
     const opts = list.map(p => `<option value="${esc(p.id)}"${p.id === pid ? ' selected' : ''}>${esc(p.name + suffix(p))}</option>`).join('');
     pane.innerHTML = `<select class="text_pole lv-engine-pick" id="lv_engine_pick" aria-label="엔진">${opts}</select>` + engineCardHtml(list.find(p => p.id === pid));
-    void loadBalance(list.find(p => p.id === pid));
+    balanceIfShown();   // 1.3.8 보일 때만 (페이지를 열 때 그리는 것은 서랍이 닫혀 있어 건너뜀 — 펼치면 ResizeObserver 가)
     autoEngineModels();   // 1.3.7 보이는 카드일 때만 (페이지를 열 때 그리는 것은 서랍이 닫혀 있어 건너뜀)
 }
 // ---------- 1.3.7 엔진 모델 목록 — 늘 최신. 엔진이 listModels 를 주면: 카드가 보일 때 12시간이 지났으면 조용히 받아 옴 ·
@@ -1549,12 +1862,14 @@ async function refreshEngineModels(p, { quiet = true } = {}) {
     if (!canListModels(p)) { if (!quiet) toast(`${p.name} 키를 먼저 저장해요`, 'warning'); return null; }
     modelBusy.add(p.id);
     setEngineModelsBusy(p);
+    const tag = keyTag(p);   // 1.3.8 그 사이 키를 바꾸면 옛 키의 결과는 알리지도 기록하지도 않음 (틀린 키 → 맞는 키: 'API 키가 맞지 않아요' 가 두 번 남았다)
     try {
         const list = await p.listModels(providerConfig(p.id, p.defaults));
         const n = Array.isArray(list) ? list.length : 0;
-        if (!quiet) toast(n ? `모델 ${fmtNum(n)}개` : '빈 목록이에요', n ? 'success' : 'warning');
+        if (!quiet && keyTag(p) === tag) toast(n ? `모델 ${fmtNum(n)}개` : '빈 목록이에요', n ? 'success' : 'warning');
         return list;
     } catch (e) {
+        if (keyTag(p) !== tag) return null;
         // 토스트엔 상태만 (' · ' 뒤의 업체 글은 싣지 않음) — 기록엔 가린 조각까지
         const m = String((e && e.message) || '실패');
         if (!quiet) toast(`모델 목록 · ${m.split(' · ')[0] || '실패'}`, 'error');
@@ -1612,28 +1927,35 @@ function paintBalance(entry) {
     box.classList.toggle('low', balanceLow(r));
     box.hidden = false;
 }
+/** 5.7.2+ 지금 저장된 키의 표 (키 그대로는 담지 않음) — 잔액 캐시 · 진행 중 확인 · 연결 확인 결과가 이 키의 것인지 */
+const keyTag = (p) => { const kf = keyField(p); return kf ? hash(String(providerConfig(p.id, p.defaults)[kf.key] || '')) : ''; };
 /** mode: 'cache' = 10분 안이면 캐시 · 'fresh' = 5초 안이면 캐시(저장 → 연결 확인처럼 잇달아 부를 때) · 'force' = 늘 다시 (↻) */
 async function loadBalance(p, mode = 'cache') {
     if (!p || typeof p.balance !== 'function' || !q('#lv_balance')) return;
+    const tag = keyTag(p);
     const hit = balanceCache.get(p.id);
     const maxAge = mode === 'force' ? 0 : mode === 'fresh' ? 5000 : BALANCE_TTL;
-    if (maxAge && hit && Date.now() - hit.at < maxAge) { paintBalance(hit); return; }
+    if (maxAge && hit && hit.tag === tag && Date.now() - hit.at < maxAge) { paintBalance(hit); return; }
     paintBalance({ loading: true });
     const seq = ++balanceSeq;
-    let job = balanceInflight.get(p.id);
+    const fk = `${p.id}|${tag}`;   // 키를 바꿔 다시 저장하면 옛 키로 가던 확인에 붙지 않는다
+    let job = balanceInflight.get(fk);
     if (!job) {
         job = (async () => {
-            try { return { at: Date.now(), result: await p.balance(providerConfig(p.id, p.defaults)) }; }
-            catch (e) { const err = (e && e.message) || '실패'; log('err', `${p.name} 잔액 확인 실패: ${err}`); return { at: Date.now(), error: err }; }
+            try { return { tag, at: Date.now(), result: await p.balance(providerConfig(p.id, p.defaults)) }; }
+            catch (e) { const err = (e && e.message) || '실패'; if (keyTag(p) === tag) log('err', `${p.name} 잔액 확인 실패: ${err}`); return { tag, at: Date.now(), error: err }; }
         })();
-        balanceInflight.set(p.id, job);
-        job.finally(() => { if (balanceInflight.get(p.id) === job) balanceInflight.delete(p.id); });
+        balanceInflight.set(fk, job);
+        job.finally(() => { if (balanceInflight.get(fk) === job) balanceInflight.delete(fk); });
     }
     const entry = await job;
+    if (entry.tag !== keyTag(p)) return;                  // 그 사이 키가 바뀜 — 새 키의 확인이 그린다
     balanceCache.set(p.id, entry);
     if (seq !== balanceSeq) return;                       // 그 사이 다른 확인이 시작됨 — 그쪽이 그린다
     if (curProvider()?.id === p.id) paintBalance(entry);
 }
+/** 1.3.8 엔진 탭이 보일 때만 잔액 줄 (10분 캐시라 펼칠 때마다 묻지 않음) */
+function balanceIfShown() { if (engineShown()) { const p = curProvider(); if (p) void loadBalance(p); } }
 /** 엔진 카드만 다시 그린다 — 아직 저장 안 한 키 입력과 연결 확인 결과는 그대로 둔다 */
 function rerenderEngineCard(p) {
     const typed = q('#lv_key_input')?.value || '';
@@ -1644,7 +1966,7 @@ function rerenderEngineCard(p) {
     if (keyIn && typed) keyIn.value = typed;
     const res2 = q('#lv_test_result');
     if (res2 && resText) { res2.textContent = resText; res2.className = resCls; }
-    void loadBalance(p);
+    if (engineShown()) void loadBalance(p);   // 1.3.8 보일 때만 (닫힌 서랍에서 모델 목록이 와 카드를 다시 그려도 잔액은 안 물음)
 }
 function showTestResult(text, cls, id = 'lv_test_result') {
     const out = q(`#${id}`);
@@ -1652,17 +1974,47 @@ function showTestResult(text, cls, id = 'lv_test_result') {
     out.textContent = text;
     out.className = `lv-test-result${cls ? ' ' + cls : ''}`;
 }
+/**
+ * 5.7.2 키가 맞은 뒤: 계정 맞춤(내 목소리 · 캐릭터를 바꿀지 묻기) → 그래도 이 엔진 목소리가 하나도 없으면 목록을 바로 불러온다
+ * (내 목소리가 없는 계정 · 계정 맞춤이 없는 엔진은 키만 넣고 끝나 '목소리를 먼저 정해요' 만 보였다). 계정 맞춤이 실패하면 연결 확인 줄에
+ */
+async function afterKeyOk(p, msg, stale = () => false) {
+    const had = voices.allVoices().some(v => v.provider === p.id);
+    // 1.3.8 리뷰 p02: 이 엔진 목소리를 지운 적이 있으면(account_removed) 저절로 불러오지 않는다 — 처음 쓰는 엔진만 (지운 목소리가 연결 확인마다 되살아났다)
+    const used = had || voices.removedIds(p.id).length > 0;
+    try {
+        if (accountTrusted(p)) {
+            await autoSyncAccounts({ force: true, only: p.id });
+            if (stale()) return;                                  // 그 사이 키를 바꿈 · 다시 확인 — 새 확인이 그린다
+            const err = syncErr.get(p.id);
+            if (err) { if (curProvider() === p) showTestResult(`${msg} · 목소리 목록을 못 받았어요: ${String(err).split(' · ')[0]}`, 'bad'); return; }
+        }
+        if (stale()) return;
+        if (!used && p.caps?.list && typeof p.listVoices === 'function' && !voices.allVoices().some(v => v.provider === p.id)) await pullVoices(p, { auto: true });
+    } catch (e) { log('err', `${p.name} 목소리 불러오기 실패: ${(e && e.message) || e}`); }
+}
+const keyTestSeq = new Map();   // 1.3.8 엔진 id → 연결 확인 번호 (다른 엔진의 확인이 이 엔진의 뒤처리를 끊지 않게)
+let afterKeyJob = null;   // 시험용: 마지막 afterKeyOk (연결 확인 버튼은 기다리지 않음)
 async function keyTest() {
     const p = curProvider();
     if (!p) return;
+    const my = (keyTestSeq.get(p.id) || 0) + 1, tag = keyTag(p);
+    keyTestSeq.set(p.id, my);
+    // 1.3.8 리뷰 p07: 그 사이 다시 확인 · 키를 바꿈 = 모두 그만. 다른 엔진 카드로 넘어감 = 결과 줄만 안 그림 (목소리 불러오기 · 계정 맞춤은 그대로 —
+    //   느린 폰에서 확인 중에 엔진을 바꾸면 맞는 키인데 목소리가 안 들어왔다)
+    const cancelled = () => keyTestSeq.get(p.id) !== my || keyTag(p) !== tag;
+    const shown = () => curProvider() === p;
     showTestResult('확인 중…', '');
     // 1.3.7 연결 확인(키 저장도 여기로) = 모델 목록도 새로 — 조용히 (결과 줄은 연결 확인 것), 받으면 모델 select 만 다시
     if (canListModels(p)) void refreshEngineModels(p);
     try {
         const msg = typeof p.test === 'function' ? await p.test(providerConfig(p.id, p.defaults)) : '연결됨';
-        showTestResult(msg || '연결됨', 'ok');
+        if (cancelled()) return;                              // 늦게 온 옛 결과는 버림 (새 확인이 그린다)
+        if (shown()) showTestResult(msg || '연결됨', 'ok');
+        afterKeyJob = afterKeyOk(p, msg || '연결됨', cancelled);   // 5.7.2 계정의 내 목소리 → 이 엔진 목소리가 하나도 없으면 바로 불러오기 · 실패는 이 줄에
     } catch (e) {
-        showTestResult(e.message || '실패', 'bad');
+        if (cancelled()) return;                              // 옛 키의 늦은 실패: 맞는 키로 이미 다시 확인함 — 덮지도 기록하지도 않음
+        if (shown()) showTestResult(e.message || '실패', 'bad');
         log('err', `${p.name} 연결 확인 실패: ${e.message}`);
     }
     void loadBalance(p, 'fresh');   // 1.3.5 키를 확인했으면 잔액도 새로 (방금 물었으면 그대로)
@@ -1676,6 +2028,7 @@ async function keySave() {
     if (!v) { toast('키를 붙여넣어요', 'warning'); return; }
     providerConfig(p.id, p.defaults)[kf.key] = v;
     input.value = '';
+    balanceCache.delete(p.id);   // 5.7.2+ 옛 키의 잔액은 버림 (keyClear 와 같게)
     save();
     renderEngine();
     warnCleartext(p);
@@ -1828,12 +2181,21 @@ async function importFile(input) {
 }
 /** 5.6.4 시험용 (tools/tests/tts-pregen-paid.mjs): 미리 만들기 안내 · 쉬는 줄 · 스위치 표시 · 언제 카드 칸 · 설정 가져오기 */
 export const _forTest = {
-    pregenWarn, pregenDesc, showPregenPaid, importSettings, whenFields: () => READ_CARDS.when[2],
+    pregenWarn, pregenDesc, showPregenPaid, importSettings, whenFields: () => READ_CARDS.when[2], readFields: (name) => (READ_CARDS[name] || [])[2] || [],
     // 1.3.7 엔진 모델 목록 (tools/tests/tts-models.mjs)
     control, canListModels, listingProvider, autoModelsDue, autoEngineModels, refreshEngineModels, keyTest,
+    // 1.3.8 (tools/tests/tts-onboarding.mjs): 계정 맞춤 · 바꿀까요 · 불러오기 · 도움말 · 말투 칩 · 「나」 자동 · 엔진 고정
+    autoSyncAccounts, offerPrefer, flushPendingOffer, pullVoices, afterKeyJob: () => afterKeyJob, toggleHelp, tagChipsHtml, edParam, voiceRowHtml,
+    voiceOptions, mapCardHtml, colorsCardHtml, setCharVoice, unpinChar, keySave, loadBalance, balanceCache: () => balanceCache,
 };
 
 // ---------- 시작
+/** 1.3.8 설정 창이 보이게 됨 (서랍 펼침): 보이는 탭에 맞춰 계정 맞춤 · 잔액 · 미뤄 둔 「바꿀까요」 */
+function onShown() {
+    syncIfShown();
+    balanceIfShown();
+    flushPendingOffer();
+}
 function renderAll() {
     renderRead();
     renderVoices();
@@ -1866,6 +2228,7 @@ export function init() {
             if (isProvider(settings())) renderReadCard('analysis'); else updateAnalysisNote();
             autoFetchModels();
         }, 0);
+        setTimeout(onShown, 600);   // 1.3.8 계정 맞춤 · 잔액 · 미뤄 둔 「바꿀까요」 (펼침이 끝난 뒤 — 접는 중이면 숨어 있어 건너뜀)
         // 1.3.7 엔진 탭이 열린 채 서랍을 펼치면 모델 목록 (펼침이 끝난 뒤 — 접는 중이면 그때는 숨어 있어 건너뜀). ResizeObserver 와 겹쳐도 한 번만
         setTimeout(autoEngineModels, 600);
     });
@@ -1873,20 +2236,23 @@ export function init() {
     // 그 밖에 목소리 탭의 크기가 0 → 보임으로 바뀔 때 (ResizeObserver — 그리기 전에 불린다. 숨은 탭에선 안 불려서 class 감시를 따로 둔다)
     const extBlock = document.getElementById('rm_extensions_block');
     if (extBlock && typeof MutationObserver === 'function') {
-        new MutationObserver(() => { if (chatDirty && voicesShown()) ensureFresh(); })
+        new MutationObserver(() => { if (chatDirty && voicesShown()) ensureFresh(); if (settingsShown()) onShown(); })
             .observe(extBlock, { attributes: true, attributeFilter: ['class'] });
     }
     // 1.3.7 엔진 탭이 0 → 보임 (서랍을 펼침 · 확장 창을 엶 · 탭을 바꿈): 모델 목록이 오래됐으면 조용히 받아 봄 (닫힌 채 그릴 땐 크기 0 이라 안 함)
     const enginePane = q('#lv_pane_engine');
     if (enginePane && typeof ResizeObserver === 'function') {
         new ResizeObserver((list) => {
-            if (list.some(e => e.contentRect.width > 0 || e.contentRect.height > 0)) autoEngineModels();
+            if (list.some(e => e.contentRect.width > 0 || e.contentRect.height > 0)) { autoEngineModels(); balanceIfShown(); flushPendingOffer(); }
         }).observe(enginePane);
     }
     const voicesPane = q('#lv_pane_voices');
     if (voicesPane && typeof ResizeObserver === 'function') {
         new ResizeObserver((list) => {
-            if (chatDirty && list.some(e => e.contentRect.width > 0 || e.contentRect.height > 0)) ensureFresh();
+            if (!list.some(e => e.contentRect.width > 0 || e.contentRect.height > 0)) return;
+            if (chatDirty) ensureFresh();
+            syncIfShown();          // 1.3.8 서랍을 펼쳐 목소리 탭이 보이게 됨 → 계정 맞춤 (6시간)
+            flushPendingOffer();
         }).observe(voicesPane);
     }
     onLog(scheduleLogRefresh);

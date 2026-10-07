@@ -1,5 +1,5 @@
 // TTS 목소리 찾기: 화자 이름 → 목소리, 목록 관리
-import { settings, save, toVoice, fillKnown, fillKnownFacts, hasDb, providerConfig } from './settings.js';
+import { settings, save, toVoice, fillKnown, fillKnownFacts, hasDb, providerConfig, USER_AUTO } from './settings.js';
 import { getProvider } from './providers/index.js';
 import { koVoiceName } from './voice-names.js';
 
@@ -19,8 +19,10 @@ export function findVoice(uid) {
 export function voiceByName(name) {
     const k = fold(name);
     if (!k) return null;
-    const vs = settings().voices;
-    return vs.find(v => fold(v.name) === k) || vs.find(v => (v.aliases || []).some(a => fold(a) === k)) || null;
+    const vs = settings().voices.filter(v => !v.gone);   // 5.7.2 계정에 없는 목소리는 이름으로 고르지 않음
+    return vs.find(v => fold(v.name) === k) || vs.find(v => (v.aliases || []).some(a => fold(a) === k))
+        // 5.7.2 괄호 앞 이름 · 괄호 안 영문 이름 ('루시퍼 (Lucifer)' ← 캐릭터 Lucifer) — 정확히 같은 이름 · 다른 이름이 없을 때만
+        || vs.find(v => !(v.mix || []).length && nameKeys(v.name).slice(1).includes(k)) || null;
 }
 
 // ---------- 1.3.7 엔진 자동 맞춤 (prefer_provider)
@@ -36,7 +38,11 @@ function nameKeys(name) {
     for (const m of raw.matchAll(/[(（]([^)）]+)[)）]/g)) { const inner = m[1].trim(); if (LATIN_NAME.test(inner)) out.push(fold(inner)); }
     return out.filter(Boolean);
 }
-/** 이 목소리 · 캐릭터 이름과 같은 사람인 그 엔진의 목소리 (없으면 null). 점수: 목소리 이름이 같음 3 · 괄호 앞 이름 2 · 다른 이름 · 캐릭터 이름 1 — 같은 점수면 먼저 등록한 것 */
+/**
+ * 이 목소리 · 캐릭터 이름과 같은 사람인 그 엔진의 목소리 (없으면 null). 점수: 목소리 이름(또는 다른 이름)이 정확히 같음 3 · 괄호 앞 이름 2 ·
+ * 다른 이름 · 캐릭터 이름 1 — 같은 점수면 먼저 등록한 것.
+ * 1.3.8: 정확히 같은 이름이 괄호 붙은 이름(「세라프 (긴 참조)」)보다 늘 앞 · 캐릭터 이름(1점)으로는 엔진의 기본 목소리(stock — 「Alice」)를 짝으로 안 고름
+ */
 export function twinOf(v, provider, charName = '') {
     if (!v || !provider) return null;
     if (v.provider === provider) return v;
@@ -44,43 +50,108 @@ export function twinOf(v, provider, charName = '') {
     const others = new Set([...(v.aliases || []).flatMap(nameKeys), ...nameKeys(charName), ...nameKeys(v.name).slice(2)]);
     let best = null, bestScore = 0;
     for (const x of settings().voices) {
-        if (x.provider !== provider || x.uid === v.uid || (x.mix || []).length) continue;
+        if (x.provider !== provider || x.uid === v.uid || x.gone || (x.mix || []).length) continue;   // 5.7.2 계정에 없는 목소리는 짝이 아님
         const keys = new Set([...nameKeys(x.name), ...(x.aliases || []).flatMap(nameKeys)]);
-        const score = keys.has(full) ? 3 : keys.has(base) ? 2 : [...others].some(k => keys.has(k)) ? 1 : 0;
+        const exact = fold(x.name) === full || (x.aliases || []).some(a => fold(a) === full);
+        const score = exact ? 3 : (keys.has(full) || keys.has(base)) ? 2 : [...others].some(k => keys.has(k)) ? 1 : 0;
+        if (score === 1 && (x.stock || builtIn(x))) continue;
         if (score > bestScore) { best = x; bestScore = score; }
     }
     return best;
 }
-/** 엔진 자동 맞춤이 켜져 있으면 같은 사람의 그 엔진 목소리, 아니면 그대로 */
+/** 1.3.8 엔진에 원래 있는 목소리인가 (목록이 정해진 엔진: OpenAI · Gemini · OpenRouter — stock 표시가 없는 1.3.7 목록도) */
+function builtIn(x) {
+    try { const ids = getProvider(x.provider)?.stockIds?.(); return !!ids && ids.has(String(x.voiceId)); } catch { return false; }
+}
+/**
+ * 1.3.8 「엔진」을 따르지 않고 연결표 목소리 그대로 읽는 캐릭터인가 (settings.prefer_keep — 캐릭터별 목소리 · 대화 색에서 다른 엔진 목소리를 고름).
+ * 이름은 연결표 이름 그대로 · 띄어쓰기 · 대소문자 무시 · 분석이 준 다른 글자 이름(루시퍼 → Lucifer)도
+ */
+export function isPinned(name, { raw = false } = {}) {
+    const s = settings();
+    const keep = s.prefer_keep;
+    if (!keep || typeof keep !== 'object') return false;
+    // 고정은 「엔진」에 맞선 것 — 「지정한 그대로」면 고정이 아님 (기록은 남겨 「엔진」을 다시 켜면 살아남). raw = 그래도 기록을 봄 (previewPrefer: 앞으로 고를 「엔진」)
+    if (!raw && !s.prefer_provider) return false;
+    const n = String(name || '').trim();
+    if (!n) return false;
+    if (keep[n] === true) return true;
+    const k = fold(n);
+    const hit = Object.keys(keep).find(x => keep[x] === true && fold(x) === k);
+    if (hit) return true;
+    const ck = charKeyOf(n);
+    return !!ck && keep[ck] === true;
+}
+/** 엔진 자동 맞춤이 켜져 있으면 같은 사람의 그 엔진 목소리, 아니면 그대로 (1.3.8 고정한 캐릭터도 그대로) */
 export function preferVoice(v, charName = '') {
     const p = settings().prefer_provider;
-    if (!p || !v) return v;
+    if (!p || !v || !engineUsable(p)) return v;   // 5.7.2 키를 지운 엔진이면 지정한 목소리 그대로 (모두 '키를 먼저 저장해요' 로 멈추지 않게)
+    if (charName && isPinned(charName)) return v;
     return twinOf(v, p, charName) || v;
 }
-/** 엔진 자동 맞춤을 그 엔진으로 바꾸면 캐릭터 몇이 바뀌나 (names = 연결표 이름들) → { moved: [이름], kept: [이름] } */
+/** 엔진 자동 맞춤을 그 엔진으로 바꾸면 캐릭터 몇이 바뀌나 (names = 연결표 이름들) → { moved: [이름], kept: [이름] } — 1.3.8 고정한 캐릭터는 셈에서 뺀다 */
 export function previewPrefer(provider, names) {
     const s = settings();
     const moved = [], kept = [];
     for (const n of names) {
+        if (isPinned(n, { raw: true })) continue;   // 「엔진」이 꺼져 있어도 켜면 다시 고정되니 셈에서 뺌
         const v = findVoice(s.char_map[n]) || voiceByName(n);
         if (!v) continue;
         (v.provider === provider || twinOf(v, provider, n) ? moved : kept).push(n);
     }
     return { moved, kept };
 }
+/**
+ * 1.3.8 화자 이름 → 연결표의 이름 (없으면 ''). 그대로 · 띄어쓰기 · 대소문자 무시, 그다음 목소리 이름 · 다른 이름을 거쳐:
+ * 분석이 한글로 준 '루시퍼' → 목소리 '루시퍼 (Lucifer)' 의 괄호 안 이름 → 연결표 'Lucifer' (엑스트라 · 다른 목소리로 새지 않게)
+ */
+export function charKeyOf(name) {
+    const s = settings();
+    const n = String(name || '').trim();
+    const k = fold(n);
+    if (!k) return '';
+    if (Object.prototype.hasOwnProperty.call(s.char_map, n)) return n;
+    const keys = Object.keys(s.char_map);
+    const same = keys.find(x => fold(x) === k);
+    if (same) return same;
+    // 1.3.8 리뷰 p04: voiceByName 과 같은 차례 — 이름이 정확히 같은 목소리 → 다른 이름 → 괄호 앞 · 괄호 안 영문 이름. 맞는 목소리가 있는 첫 단계에서만 찾는다
+    //   (다른 목소리에 남은 옛 다른 이름 '세라프' 의 'Lil' 이 이름이 정확히 'Lil' 인 목소리를 이기지 않게). 연결표 이름은 그 목소리의 이름 · 다른 이름이어야
+    //   (빌린 목소리 '진우 쿠키' 는 그것을 쓰는 Lucifer 가 아님)
+    const vs = s.voices.filter(v => !v.gone && !(v.mix || []).length);
+    const tiers = [
+        vs.filter(v => fold(v.name) === k),
+        vs.filter(v => (v.aliases || []).some(a => fold(a) === k)),
+        vs.filter(v => nameKeys(v.name).slice(1).includes(k)),
+    ];
+    const tier = tiers.find(t => t.length) || [];
+    const exactOther = (x, v) => vs.some(o => o !== v && fold(o.name) === fold(x));
+    for (const v of tier) {
+        const own = nameKeys(v.name), al = (v.aliases || []).map(fold);
+        const hit = keys.find(x => own.includes(fold(x))) || keys.find(x => al.includes(fold(x)) && !exactOther(x, v));
+        if (hit) return hit;
+    }
+    return '';
+}
+/** 1.3.8 「나」 자동인가 (내 목소리 칸 = USER_AUTO) */
+export const userAuto = () => settings().user_voice === USER_AUTO;
+/** 목소리로 쓰는 uid 들 (연결표 · 기본 · 나 · 내레이터 — 「나」 자동 표시는 빼고) */
+export function usedUids() {
+    const s = settings();
+    return new Set([...Object.values(s.char_map), s.default_voice, s.user_voice, s.narrator_voice].filter(u => u && u !== USER_AUTO));
+}
 
 /** 화자 이름 → 목소리. 나 → 내 목소리(없으면 null), 내레이터 → 내레이터(없으면 기본), 그 외 연결표 → 이름·다른 이름 → 기본.
- *  1.3.7 엔진 자동 맞춤(prefer_provider)이면 고른 목소리와 같은 사람인 그 엔진 목소리로 (없으면 원래 목소리) */
+ *  1.3.7 엔진 자동 맞춤(prefer_provider)이면 고른 목소리와 같은 사람인 그 엔진 목소리로 (없으면 원래 목소리)
+ *  1.3.8 「나」 자동: 페르소나도 목소리를 안 정한 화자처럼 (연결표 → 엑스트라 → 기본) · 분석이 다른 글자로 준 이름은 연결표 이름으로 (charKeyOf) */
 export function voiceFor(name, { isUser = false, kind = '' } = {}) {
     const s = settings();
-    if (isUser) return preferVoice(findVoice(s.user_voice), name);
-    if (kind === 'narrator') return preferVoice(findVoice(s.narrator_voice) || findVoice(s.default_voice));
+    if (isUser && s.user_voice !== USER_AUTO) return preferVoice(findVoice(s.user_voice), name);
+    if (kind === 'narrator' && !isUser) return preferVoice(findVoice(s.narrator_voice) || findVoice(s.default_voice));
     const n = String(name || '').trim();
     if (n) {
-        let uid = s.char_map[n];
-        if (!uid) { const k = fold(n); const key = Object.keys(s.char_map).find(x => fold(x) === k); if (key) uid = s.char_map[key]; }
-        const v = findVoice(uid) || voiceByName(n);
-        if (v) return preferVoice(v, n);
+        const key = charKeyOf(n);
+        const v = findVoice(key ? s.char_map[key] : '') || voiceByName(n);
+        if (v) return preferVoice(v, key || n);
         const x = extraFor(n);                    // 1.3.7 목소리를 안 정한 화자 → 엑스트라 목소리 (없으면 기본)
         if (x) return x;
     }
@@ -115,6 +186,7 @@ export function upsertVoices(list, provider = 'minimax', { overwrite = false } =
         if (!cur) {
             if (!overwrite || nv.name === nv.voiceId) fillKnown(nv);
             fillKnownFacts(nv);
+            unremove(nv.provider, nv.voiceId);   // 1.3.8 지웠던 목소리를 다시 넣음 (불러오기 · 붙여넣기) → 계정 맞춤도 다시 따름
             s.voices.push(nv); added++; continue;
         }
         const before = JSON.stringify(cur);
@@ -177,37 +249,135 @@ export function syncAccount(providerId, list) {
     const rows = (Array.isArray(list) ? list : []).filter(x => x && x.voiceId);
     if (!rows.length) return { added: 0, gone: 0, back: 0, hidden: s.voices.filter(v => v.provider === providerId && v.gone).length };
     const ids = new Set(rows.map(x => String(x.voiceId)));
-    let gone = 0, back = 0;
+    const ownIds = new Set(rows.filter(x => x.own === true).map(x => String(x.voiceId)));
+    let gone = 0, back = 0, marked = 0;
     for (const v of s.voices) {
         if (v.provider !== providerId) continue;
         const parts = (v.mix || []).length ? v.mix.map(m => String(m.voiceId)) : [String(v.voiceId)];
         const missing = parts.some(id => !ids.has(id));
         if (missing && !v.gone) { v.gone = true; gone++; }
         else if (!missing && v.gone) { delete v.gone; back++; }
+        // 1.3.8 계정 목록이 알려 준 기본 · 시스템 목소리 표시 (1.3.7 에 불러온 목소리도 — 캐릭터 이름만으로 짝이 되지 않게)
+        if (!(v.mix || []).length && ids.has(String(v.voiceId))) {
+            const stock = !ownIds.has(String(v.voiceId));
+            if (stock && !v.stock) { v.stock = true; marked++; }
+            else if (!stock && v.stock) { delete v.stock; marked++; }
+        }
     }
     const have = new Set(s.voices.filter(v => v.provider === providerId).map(v => String(v.voiceId)));
+    const removed = new Set(removedIds(providerId));   // 1.3.8 사용자가 지운 목소리는 다시 넣지 않음
     storeStock(providerId, rows);                 // 엑스트라 목소리용 기본 목소리 캐시도 같이
-    const fresh = rows.filter(x => x.own && !have.has(String(x.voiceId)));
+    const fresh = rows.filter(x => x.own && !have.has(String(x.voiceId)) && !removed.has(String(x.voiceId)));
     const r = fresh.length ? upsertVoices(fresh, providerId) : { added: 0 };
-    if (gone || back) save();
+    // 5.7.2 새로 들어온 내 목소리가 다른 엔진에 있는 같은 사람(이름 · 괄호 안 영문 이름)이면 그 목소리의 원어 · 묶음 · 다른 이름을 이어받는다
+    //   (MiniMax 에서 일본어로 읽던 캐릭터를 ElevenLabs 로 옮겨도 일본어로 · '복제' 대신 '천지합동청' 묶음에)
+    for (const x of fresh) inheritTwin(s.voices.find(v => v.provider === providerId && v.voiceId === String(x.voiceId)));
+    if (gone || back || marked || fresh.length) save();
     return { added: r.added || 0, gone, back, hidden: s.voices.filter(v => v.provider === providerId && v.gone).length };
+}
+/** 1.3.8 불러오기로 새로 들어온 목소리(voiceId 들)도 다른 엔진의 같은 사람에게서 원어 · 묶음을 이어받는다 (계정 맞춤과 같게) → 이어받은 수 */
+export function inheritNew(providerId, voiceIds) {
+    const s = settings();
+    let n = 0;
+    for (const id of voiceIds || []) if (inheritTwin(s.voices.find(v => v.provider === providerId && v.voiceId === String(id)))) n++;
+    if (n) save();
+    return n;
+}
+/**
+ * 5.7.2 새 목소리 v 의 다른 엔진 쌍둥이(연결된 것 먼저)에서 원어 · 묶음 · 다른 이름을 채운다.
+ * 1.3.8 짝은 목소리 이름으로, 또는 그 목소리를 쓰는 캐릭터 이름으로 (previewPrefer · voiceFor 와 같은 판단 — '진우 쿠키' 를 쓰는 Lucifer ↔ '루시퍼 (Lucifer)').
+ *   캐릭터 이름으로 이어진 짝은 원어 · 묶음만 — 빌려 쓰던 목소리 이름(진우 쿠키)을 다른 이름으로 넣으면 그 목소리를 쓰는 다른 캐릭터까지 이 목소리로 바뀐다
+ */
+const AUTO_GROUPS = new Set(['복제', '생성', '전문', '기타', '내 목소리', '']);
+function inheritTwin(v) {
+    if (!v) return false;
+    const s = settings();
+    const mapped = usedUids();
+    const charsOf = new Map();   // 목소리 uid → 그 목소리를 쓰는 캐릭터 이름들
+    for (const [n, uid] of Object.entries(s.char_map)) if (uid) charsOf.set(uid, [...(charsOf.get(uid) || []), n]);
+    let twin = null, viaChar = false, best = -1;
+    for (const x of s.voices) {
+        if (x.provider === v.provider || (x.mix || []).length || x.gone) continue;
+        const byName = twinOf(x, v.provider)?.uid === v.uid;   // x 에서 보면 v 가 그 엔진의 같은 사람
+        const byChar = !byName && (charsOf.get(x.uid) || []).some(n => twinOf(x, v.provider, n)?.uid === v.uid);
+        if (!byName && !byChar) continue;
+        const rank = (mapped.has(x.uid) ? 2 : 0) + (byName ? 1 : 0);   // 연결된 것 → 이름이 같은 것 → 먼저 등록한 것
+        if (rank > best) { twin = x; viaChar = byChar; best = rank; }
+    }
+    if (!twin) return false;
+    if (twin.lang) v.lang = twin.lang;                        // 사용자가 정해 둔 원어가 먼저 (목록의 언어 표시는 믿지 않음)
+    if (AUTO_GROUPS.has(String(v.group || '')) && twin.group) v.group = twin.group;
+    if (viaChar) return true;
+    const seen = new Set([v.name, ...(v.aliases || [])].map(fold));
+    for (const a of [twin.name, ...(twin.aliases || [])]) { if (a && !seen.has(fold(a))) { v.aliases = [...(v.aliases || []), a]; seen.add(fold(a)); } }
+    return true;
 }
 /** 계정에 없는 목소리 지우기 — 캐릭터 · 기본 · 나 · 내레이터에 연결된 것은 남긴다 → 지운 개수 */
 export function removeGone() {
     const s = settings();
-    const used = new Set([...Object.values(s.char_map), s.default_voice, s.user_voice, s.narrator_voice].filter(Boolean));
+    const used = usedUids();
     const drop = s.voices.filter(v => v.gone && !used.has(v.uid)).map(v => v.uid);
-    for (const uid of drop) removeVoice(uid);
+    for (const uid of drop) removeVoice(uid, { keep: false });
     return drop.length;
 }
+// ---------- 1.3.8 지운 계정 목소리 (account_removed): 계정 맞춤이 다시 넣지 않는다 · 불러오기 · 붙여넣기로 다시 넣으면 풂
+const REMOVED_MAX = 500;
+/** 그 엔진에서 사용자가 지운 voiceId 들 */
+export function removedIds(providerId) {
+    const r = settings().account_removed;
+    const l = r && typeof r === 'object' ? r[providerId] : null;
+    return Array.isArray(l) ? l.map(String) : [];
+}
+function remember(providerId, voiceId) {
+    const s = settings();
+    if (!s.account_removed || typeof s.account_removed !== 'object' || Array.isArray(s.account_removed)) s.account_removed = {};
+    const l = Array.isArray(s.account_removed[providerId]) ? s.account_removed[providerId] : (s.account_removed[providerId] = []);
+    const id = String(voiceId);
+    if (!l.includes(id)) l.push(id);
+    if (l.length > REMOVED_MAX) l.splice(0, l.length - REMOVED_MAX);
+}
+/** 지운 목록에서 뺀다 (다시 넣음) → 뺐으면 true */
+export function unremove(providerId, voiceId) {
+    const s = settings();
+    const l = s.account_removed && s.account_removed[providerId];
+    if (!Array.isArray(l)) return false;
+    const i = l.indexOf(String(voiceId));
+    if (i < 0) return false;
+    l.splice(i, 1);
+    if (!l.length) delete s.account_removed[providerId];
+    return true;
+}
 
-/** 목소리 지우기 (연결표·기본·나·내레이터에서도 뺀다) */
-export function removeVoice(uid) {
+/** 5.7.2 처음 들어온 목소리(그 전 목록이 비어 있었음)면 기본 목소리를 비워 두지 않는다 — 한국어 → 첫 목소리. 고른 목소리 | null */
+export function seedDefault(before, providerId) {
+    const s = settings();
+    if (s.default_voice || before > 0) return null;
+    const pool = s.voices.filter(v => v.provider === providerId && !v.gone && !(v.mix || []).length);
+    const pick = pool.find(v => v.lang === 'ko') || pool[0] || null;
+    if (!pick) return null;
+    s.default_voice = pick.uid;
+    save();
+    return pick;
+}
+/** 5.7.2 그 엔진의 '계정에 없음' 표시를 모두 지운다 (계정 맞춤을 믿을 수 없는 설정 — MiniMax 직접 입력 서버가 숨긴 것) → 되돌린 개수 */
+export function clearGone(providerId) {
+    let n = 0;
+    for (const v of settings().voices) if (v.provider === providerId && v.gone) { delete v.gone; n++; }
+    if (n) save();
+    return n;
+}
+
+/** 목소리 지우기 (연결표·기본·나·내레이터에서도 뺀다). keep = 1.3.8 지운 것으로 기억 (계정 맞춤이 다시 넣지 않음 — 계정에 없어 지운 것은 기억하지 않음) */
+export function removeVoice(uid, { keep = true } = {}) {
     const s = settings();
     const i = s.voices.findIndex(v => v.uid === uid);
     if (i < 0) return false;
-    s.voices.splice(i, 1);
-    for (const [k, v] of Object.entries(s.char_map)) if (v === uid) delete s.char_map[k];
+    const [gone] = s.voices.splice(i, 1);
+    // 1.3.8 계정 맞춤이 지운 내 목소리를 다음 맞춤에서 다시 넣지 않게 (기본 · 시스템 목소리 · 섞은 목소리는 원래 저절로 안 들어옴)
+    let acct = false;
+    try { acct = !!getProvider(gone.provider)?.caps?.account; } catch { acct = false; }
+    if (keep && acct && !gone.stock && !(gone.mix || []).length && gone.voiceId) remember(gone.provider, gone.voiceId);
+    for (const [k, v] of Object.entries(s.char_map)) if (v === uid) { delete s.char_map[k]; if (s.prefer_keep) delete s.prefer_keep[k]; }
     for (const k of ['default_voice', 'user_voice', 'narrator_voice']) if (s[k] === uid) s[k] = '';
     if (s.prefer_provider && !s.voices.some(v => v.provider === s.prefer_provider)) s.prefer_provider = '';   // 1.3.7 그 엔진 목소리가 다 없어지면 자동 맞춤도 끔
     save();
@@ -311,7 +481,7 @@ export function hasOwnVoice(name) {
     if (s.char_map[n]) return true;
     const k = fold(n);
     if (Object.keys(s.char_map).some(x => fold(x) === k)) return true;
-    return !!voiceByName(n);
+    return !!voiceByName(n) || !!charKeyOf(n);   // 1.3.8 분석이 다른 글자로 준 이름 ('루시퍼' → 연결표 Lucifer)
 }
 /** 엑스트라 표의 같은 사람 (이름이 같음 → 띄어쓰기 · 대소문자만 다름 → 한쪽이 다른 쪽을 품음: '카페 사장님' ⊃ '카페 사장') */
 export function extraKey(name) {
@@ -345,7 +515,7 @@ function extraLang(e) {
 /** 엑스트라 한 명에게 그 엔진의 목소리 id 고르기 ('' = 맞는 게 없음 → 기본 목소리) */
 function pickExtra(name, e, pid) {
     const s = settings();
-    const taken = new Set([s.default_voice, s.user_voice, s.narrator_voice, ...Object.values(s.char_map)].filter(Boolean));
+    const taken = usedUids();
     const marked = s.voices.filter(v => v.provider === pid && v.extra && !v.gone && !(v.mix || []).length && !taken.has(v.uid))
         .map(v => ({ voiceId: v.voiceId, g: v.extra, a: '', l: v.lang || '' }));
     let pool = (marked.length ? marked : stockOf(pid).filter(v => !taken.has(`${pid}:${v.voiceId}`))).filter(v => v.g === e.g);

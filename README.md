@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.7.1.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.7.2.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.7.1 · 최신 업데이트</summary>
+<summary>5.7.2 · 최신 업데이트</summary>
+
+- TTS 1.3.8: 새 엔진(ElevenLabs 등) 키를 넣고 연결 확인이 되면 그 계정의 내 목소리가 바로 들어오고, 이름이 맞는 캐릭터를 그 엔진으로 바꿀지 한 번 물어요. 처음 쓰는 경우엔 기본 목소리도 정해 줘요 (키만 연결되고 목소리는 안 들어오던 것을 고쳤어요). 키에 목소리 읽기 권한이 없으면 연결 줄에 그 까닭이 나와요.
+- TTS: 한 캐릭터의 엔진이 안 되면(꺼진 직접 입력 서버 · 키 오류) 그 캐릭터 줄만 건너뛰고 다른 캐릭터 줄은 계속 읽어요. 직접 입력 서버(집 PC 등)의 목소리를 「계정에 없음」으로 숨기던 것을 고치고 숨긴 것도 되돌려요. 「바꿀까요?」는 목소리 · 엔진 탭을 볼 때만 묻고 「아니요」를 기억해요. 지운 목소리는 다시 들어오지 않아요. 직접 입력 서버가 꺼졌을 때 · 응답이 없을 때 · 막았을 때를 나눠 알려 줘요.
+- TTS 캐릭터마다 엔진 고정: 「엔진」을 ElevenLabs 로 골라도 캐릭터 줄에서 다른 엔진의 목소리(예: 벨포드 · MiniMax)를 고르면 그 캐릭터만 그 엔진으로 읽어요. 줄의 「고정」을 누르면 다시 「엔진」을 따라가요. 「나」에는 「자동」이 생겨서 내 페르소나도 엑스트라처럼 목소리를 받아요.
+- TTS ElevenLabs: 감정 세기를 따라요 (약하게 = 안정감 1 · 감정 태그 없음으로 가장 차분하게, 강하게 = 안정감을 낮춰 더 크게). 목소리마다 「말투」를 한국어 단추로 고를 수 있어요 (피곤하게 · 무심하게 · 평온하게 · 부드럽게 · 속삭이듯 · 장난스럽게 · 들뜨게 …, v3 · v4 모델). 엔진 · 목소리 설정의 어려운 항목에는 ? 단추가 있어 누르면 설명이 펼쳐져요.
+
+</details>
+
+<details>
+<summary>5.7.1 · 모델 목록 늘 최신 · TTS 1.3.7</summary>
 
 - 모델 목록이 늘 최신이에요: 번역 · 다시 쓰기 · 한글화 패널 · 모델 전환 · 모델 등록 · TTS 대사 분석의 모델 칸이 공급자가 주는 목록을 받아 와 새 모델이 바로 보여요 (설정을 열 때 하루에 한 번 · ↻ 로 바로 · 이 브라우저에만 저장). 받기 전에도 테마가 아는 최신 이름이 먼저 보이고, 골라 둔 모델은 목록에서 빠져도 그대로예요. 리버스 프록시로 받은 목록은 따로 기억해서 직접 연결 칸에 섞이지 않아요.
 - TTS 1.3.7 엔진 모델도 늘 최신: ElevenLabs(Eleven v4 · v4 빠름 포함) · OpenAI · OpenRouter · Gemini · Typecast 는 서비스가 주는 목록을 받아 오고, MiniMax · Cartesia 는 최신 목록이에요. 모델 이름은 한국어로 보여요 (일레븐 v4 빠름 · 스피치 2.8 고음질 …, 아직 안 나온 모델도). 목록에 없는 모델은 직접 입력으로 적어요. 새로 설치하면 ElevenLabs 기본 모델은 Eleven v4 예요.

@@ -38,10 +38,10 @@ import { runtimeEnabled, assertRuntime } from './runtime.js';
 
 import { chat, substituteParams, eventSource, event_types } from '../../../../../../../../script.js';
 import { getContext } from '../../../../../../../extensions.js';
-import { settings, providerConfig, addUsage, addPreUsed } from './settings.js';
+import { settings, providerConfig, addUsage, addPreUsed, USER_AUTO } from './settings.js';
 import { segmentMessage, pairSegments, colorsClash, detectLang, parseRegexLines, speechDisplay } from './text.js';
 import { resolveSpeaker, canon, knownNames as learnedNames } from './speakers.js';
-import { voiceFor, findVoice, allVoices } from './voices.js';
+import { voiceFor, findVoice, allVoices, twinOf, engineUsable, isPinned } from './voices.js';
 import * as cache from './cache.js';
 import { prepare } from './loudness.js';
 import { log, scrub } from './log.js';
@@ -72,6 +72,9 @@ const WAIT_TEXT = '번역 기다리는 중…';
 const ANALYSE_TEXT = '분석 중…';
 
 // ---------- 작은 도구
+/** 5.7.2 '로/으로' — 한글 끝 글자의 받침으로 (ㄹ 받침 · 받침 없음 = 로). 영문 엔진 이름은 읽으면 모음으로 끝나 '로' */
+const ro = (w) => { const c = String(w || '').trim().slice(-1).charCodeAt(0) - 0xAC00; if (c >= 0 && c < 11172) { const j = c % 28; return j === 0 || j === 8 ? '로' : '으로'; } return '로'; };
+
 function toast(msg, kind = 'info') {
     const t = window.toastr;
     if (!t || typeof t[kind] !== 'function') return;
@@ -577,7 +580,7 @@ function buildJobs(mesId, mes, { orig, disp }, { startSeg = 0, final = true, exc
         if (route === 'user') voice = voiceFor(userName, { isUser: true, kind: seg.kind });
         else if (route === 'narrator') voice = voiceFor(name, { isUser: false, kind: 'narrator' });
         else voice = voiceFor(name, { isUser, kind: seg.kind });
-        if (!voice) { if (route === 'user') missingUser = true; else missing = true; continue; }   // 내 목소리가 없으면 조용히 건너뜀
+        if (!voice) { if (route === 'user' && s.user_voice !== USER_AUTO) missingUser = true; else missing = true; continue; }   // 내 목소리가 없으면 조용히 건너뜀 (1.3.8 「나」 자동이면 다른 화자처럼 — 기본 목소리가 없음)
         // 목소리별 원문/번역문 우선 (스트리밍 중엔 번역이 아직 없으니 원문; 목소리가 번역문을 꼭 원하면 그려질 때까지 미룸)
         const pref = voice.prefer_source && voice.prefer_source !== 'auto' ? voice.prefer_source : '';
         const want = pref || s.text_source;
@@ -602,17 +605,28 @@ function buildJobs(mesId, mes, { orig, disp }, { startSeg = 0, final = true, exc
     }
     return { jobs, missing, missingUser, count: orig.length, deferredAt, held };
 }
-/** 엔진 값: 엔진 기본값 ← 엔진 설정 ← 목소리 값 (감정은 따로 넘김) */
+/**
+ * 엔진 값: 엔진 기본값 ← 엔진 설정 ← 목소리 값 (감정은 따로 넘김).
+ * 1.3.8 빈 목록(말투 태그를 다 끔)은 없는 것 · when(cfg) 이 false 인 값(태그를 안 받는 모델의 말투)은 요청에 안 들어가니 넣지 않는다 —
+ *   둘 다 안 고른 것과 같은 캐시 키 (그 항목이 없는 엔진 · 1.3.7 설정은 그대로)
+ */
 function paramsFor(provider, voice) {
     const cfg = providerConfig(provider.id, provider.defaults || {});
     const out = {};
+    let vcfg = null;
     for (const f of provider.params || []) {
         const k = f.key;
         let v = provider.defaults?.[k];
         if (cfg[k] !== undefined) v = cfg[k];
         const pv = voice.params?.[k];
         if (pv !== undefined && pv !== null && pv !== '') v = pv;
-        if (v !== undefined) out[k] = v;
+        if (v === undefined) continue;
+        if (Array.isArray(v) && !v.length) continue;
+        if (typeof f.when === 'function') {
+            if (!vcfg) vcfg = voiceCfg(provider, voice, cfg);
+            if (!f.when(vcfg)) continue;
+        }
+        out[k] = v;
     }
     return out;
 }
@@ -665,7 +679,13 @@ function fitShout(j) {
 function fitStrength(j, s) {
     const k = s.emotion_strength;
     if (k === 'weak' && j.emotion !== 'whisper') j.emotion = '';
-    else if (k === 'strong' && j.emotion && typeof j.provider.strengthApplies === 'function'
+    // 1.3.8 세기를 직접 다루는 엔진 (ElevenLabs: 약하게 = 안정감 1 · 강하게 = 감정 줄 안정감 −0.3) — 요청이 바뀌는 줄만 params 에 (보통이면 묻지 않음)
+    if (typeof j.provider.strengthFor === 'function') {
+        const lv = k === 'weak' || k === 'strong' ? j.provider.strengthFor(k, { params: j.params, emotion: j.emotion, cfg: voiceCfg(j.provider, j.voice) }) : '';
+        if (lv) j.params.emotion_strength = lv;
+        return;
+    }
+    if (k === 'strong' && j.emotion && typeof j.provider.strengthApplies === 'function'
         && j.provider.strengthApplies(j.voice, voiceCfg(j.provider, j.voice), j.emotion)) j.params.emotion_strength = 'strong';
 }
 function joiner(job, s) {
@@ -1107,7 +1127,7 @@ function prefetch(from, s) {
     const n = Math.max(0, Math.min(3, Number(s.prefetch) || 0));
     for (let i = from; i < Math.min(queue.length, from + n); i++) {
         const j = queue[i];
-        if (!j.audio) ensureAudio(j).catch(() => { /* 재생 때 다시 시도 */ });
+        if (!j.audio && !deadFor(j)) ensureAudio(j).catch(() => { /* 재생 때 다시 시도 */ });
     }
 }
 
@@ -1190,14 +1210,22 @@ export function applyPlayback() {
 async function waitIfPaused(ir) {
     while (paused && !ir.fired) await Promise.race([new Promise(r => resumeWaiters.push(r)), ir.promise]);
 }
+/** 1.3.8 브라우저의 영어 재생 오류(NotSupportedError: 'Failed to load because no supported source was found.' …) → 한국어 (원문은 기록에만) */
+function playError(e) {
+    if (isAbort(e)) return e;
+    log('err', `재생 실패: ${String(e?.name || '')} ${String(e?.message || e).slice(0, 60)}`.trim());
+    const k = new Error('소리를 재생할 수 없어요');
+    k.name = 'PlayError';
+    return k;
+}
 async function startPlay(ir) {
     try { await audio.play(); }
     catch (e) {
-        if (e?.name !== 'NotAllowedError') throw e;
+        if (e?.name !== 'NotAllowedError') throw playError(e);
         if (!gestureToastDone) { gestureToastDone = true; toast('화면을 한 번 누르면 재생돼요', 'info'); }
         await Promise.race([nextGesture(), ir.promise]);
         if (ir.fired) return;
-        await audio.play();
+        try { await audio.play(); } catch (e2) { throw e2?.name === 'NotAllowedError' ? e2 : playError(e2); }
     }
 }
 /** 소리 하나 재생. 끝나면 true, 끊기면 false */
@@ -1253,12 +1281,53 @@ async function playAudio(a, job, ir) {
         URL.revokeObjectURL(url);
     }
 }
-function fail(e) {
+// 1.3.8 이번 읽기에서 안 되는 엔진 (키 문제 · 직접 입력 서버가 꺼짐): 그 엔진 줄만 건너뛰고 다른 엔진 줄은 읽는다.
+//   사용자 제보 (10-08): MiniMax 직접 입력 서버(집 PC)가 꺼져 한 줄이 실패하자 메시지 전체가 멈춰 ElevenLabs 줄도 안 읽혔다.
+//   stop() · 새 읽기 · 큐가 끝나면 비운다
+const deadEngines = new Set();
+// 1.3.8 스트리밍 읽기: 조각(청크)마다 큐가 비었다 다시 차서 위 표가 지워진다 → 그 답장 동안은 따로 기억 (꺼진 서버를 조각마다 다시 기다리지 않게).
+//   사용자가 멈춤 · 처음부터 다시 · 다른 답장 스트리밍 · 채팅 바뀜 · 스트리밍이 끝난 뒤 큐가 다 끝나면 비운다
+let streamDead = null;       // { mesId, set:Set<엔진 id> }
+const deadFor = (job) => !!job?.provider && (deadEngines.has(job.provider.id) || (!!streamDead && job.mesId === streamDead.mesId && streamDead.set.has(job.provider.id)));
+function markDead(job) {
+    const pid = job?.provider?.id;
+    if (!pid) return;
+    deadEngines.add(pid);
+    const mid = job.mesId;
+    if (!(Number.isInteger(mid) && mid >= 0)) return;
+    if (stream && stream.mesId === mid) {
+        if (!streamDead || streamDead.mesId !== mid) streamDead = { mesId: mid, set: new Set() };
+        streamDead.set.add(pid);
+    } else if (streamDead && streamDead.mesId === mid) streamDead.set.add(pid);   // 스트리밍 끝(onStreamEnd)이 넣은 나머지 줄
+}
+/** 실패한 줄과 같은 사람이 다른 (쓸 수 있는) 엔진에 있으면 그 엔진 이름 — '「엔진」에서 바꿀 수 있어요' 안내용 */
+function twinEngineName(job) {
+    if (!job?.voice || !job.provider) return '';
+    const s = settings();
+    const ids = [...new Set(allVoices().map(v => v.provider))].filter(id => id !== job.provider.id && id !== s.prefer_provider && engineUsable(id));
+    for (const id of ids) {
+        try { if (twinOf(job.voice, id, job.speaker)) return getProvider(id)?.name || id; } catch { /* 다음 엔진 */ }
+    }
+    return '';
+}
+function fail(e, job = null) {
     if (isAbort(e)) return;
-    const msg = scrub(String(e?.message || e || '합성 실패')).slice(0, 120) || '합성 실패';   // 업체 메시지에 섞인 키·태그는 토스트에도 안 보이게
+    let msg = scrub(String(e?.message || e || '합성 실패')).slice(0, 120) || '합성 실패';   // 업체 메시지에 섞인 키·태그는 토스트에도 안 보이게
+    const dead = isAuthError(e) || e?.dead === true;
+    if (dead && e?.dead && !isPinned(job?.speaker)) { const other = twinEngineName(job); if (other) msg += ` · 목소리 탭 「엔진」에서 ${other}${ro(other)} 바꿀 수 있어요`; }   // 5.7.2 J4
     toastOnce(msg, 'error');
     log('err', msg.slice(0, 60));
-    if (isAuthError(e)) stop();     // 키 문제면 줄줄이 실패하니 멈춤
+    if (!dead) return;
+    // 1.3.8 키 문제 · 꺼진 직접 입력 서버 = 이 엔진만 안 됨: 남은 이 엔진 줄은 기다리지 않고 건너뛰고 다른 엔진 줄은 읽는다.
+    //   멈추지(stop) 않는다 — 스트리밍 읽기에선 멈추면 뒤에 들어올 다른 엔진 줄까지 버려졌다 (리뷰 p01). 엔진을 모르는 작업만 예전처럼 멈춤
+    if (job?.provider?.id) markDead(job);
+    else if (isAuthError(e)) stop();
+}
+/** 안 되는 엔진의 줄을 건너뛸 때: 고정한 캐릭터면 세션에 한 번 알림 (그 캐릭터만 이 엔진으로 읽게 해 둠) */
+function skipDead(job) {
+    const who = String(job?.speaker || '').trim();
+    if (who && isPinned(who)) toastSession(`pin-dead:${who}|${job.provider?.id}`, `${who}: ${job.provider?.name || job.provider?.id}${ro(job.provider?.name || job.provider?.id)} 고정돼 있어 건너뛰어요 (목소리 탭의 「고정」을 누르면 풀려요)`, 'warning');
+    if (typeof job.done === 'function') { const d = job.done; job.done = null; d(false); }
 }
 /** 키·권한 오류 (엔진마다 code 모양이 다르다: 401/403 · 1004 · 'invalid_api_key' · 'UNAUTHENTICATED' · 'PERMISSION_DENIED' · 'nokey') */
 function isAuthError(e) {
@@ -1274,6 +1343,7 @@ async function run() {
     try {
         while (my === gen && idx < queue.length) {
             const job = queue[idx];
+            if (deadFor(job)) { skipDead(job); idx++; continue; }   // 1.3.8 이번 읽기(스트리밍이면 이 답장)에서 안 되는 엔진
             current = job;
             nav = null;
             const s = settings();
@@ -1292,7 +1362,7 @@ async function run() {
                     if (my === gen && !ir.fired) played = await playAudio(a, job, ir);
                 }
             } catch (e) {
-                if (my === gen && !ir.fired) fail(e);
+                if (my === gen && !ir.fired) fail(e, job);
             }
             if (my !== gen) break;
             currentIr = null;
@@ -1315,8 +1385,11 @@ async function run() {
         }
     }
 }
-function finishAll() {
+function finishAll({ keepDead = false } = {}) {
     current = null;
+    deadEngines.clear();
+    // 1.3.8 스트리밍 중인 답장의 '안 되는 엔진'은 큐가 비어도 남긴다 (다음 조각이 append 로 새 큐를 만든다)
+    if (!keepDead && streamDead && !(stream && stream.mesId === streamDead.mesId && !stream.muted)) streamDead = null;
     currentIr = null;
     unmark();
     setSession('none');
@@ -1362,7 +1435,8 @@ export function stop({ keepStream = false } = {}) {
     if (audio && audioActive && !audio.paused) audio.pause();
     if (speaking) try { window.speechSynthesis?.cancel(); } catch { /* 무시 */ }
     if (!keepStream && stream) stream.muted = true;               // 사용자가 멈춤: 이 답장의 스트리밍 읽기도 끝
-    finishAll();
+    if (!keepStream) streamDead = null;                           // 1.3.8 다시 읽으면 그 엔진도 다시 시도
+    finishAll({ keepDead: keepStream });                          // enqueue 가 새 큐를 넣기 전(keepStream)엔 스트리밍 답장의 표를 남김
 }
 export function pause() {
     if (!current || paused) return;
@@ -1422,6 +1496,7 @@ export function speakMessage(mesId, { force = false, fromStream = false, startSe
     if (!mes || mes.is_system) return false;
     if (!force && !s.enabled) return false;
     if (!force && mes.is_user && !s.narrate_user) return false;
+    if (force && streamDead && streamDead.mesId === mesId) streamDead = null;   // 1.3.8 손으로 다시 읽으면 안 되던 엔진도 다시 시도
     if (stream && stream.mesId === mesId) {
         if (force) stream.muted = true;                            // 처음부터 다시: 스트리밍 쪽은 그만
         else if (!onStreamEnd(mesId)) return true;                 // 스트리밍으로 읽던 중: 나머지만 (번역을 기다리면 아래로 이어감)
@@ -1711,6 +1786,8 @@ export function speakSegments(mesId, segs) {
     runPrepared(mesId, mes, { analyse: true, run });
     return true;
 }
+/** 1.3.8 시험용 (tools/tests/tts-extras.mjs · tts-onboarding.mjs): 작업 마무리(엔진 값 · 세기 · 캐시 키) · 이번 읽기에서 안 되는 엔진 */
+export const _forTest = { finishJobs, paramsFor, deadEngines: () => [...deadEngines], streamDead: () => (streamDead ? { mesId: streamDead.mesId, set: [...streamDead.set] } : null) };
 /** 이 답장을 스트리밍하며 실제로 읽어 줬나 (미리 만들기가 건너뜀 — 분석 전 키라 다시 만들면 두 번 값을 치름) */
 export function wasStreamRead(mesId) {
     const mes = chat[mesId];
@@ -1736,6 +1813,7 @@ export function onStreamProgress(mesId, text) {
         const prev = readState.get(mesId);                        // 이어쓰기: 읽은 자리부터
         const start = prev && prev.swipe === swipe && src.startsWith(prev.text) ? prev.count : 0;
         stream = { mesId, swipe, queued: start, jobs: 0, muted: false, done: new Set(), deferredAt: -1 };
+        streamDead = null;                                        // 1.3.8 새 답장(다시 생성 · 스와이프 포함) = 엔진도 다시 시도
     }
     if (stream.muted) return;
     const { orig } = sourcesOf(mes, s, { final: false, text: src });
@@ -1767,13 +1845,15 @@ export function onStreamEnd(mesId) {
     const text = String(mes.mes || '');
     const { orig } = sourcesOf(mes, s, { final: true, text });   // 번역은 아직 없으니 원문
     const streamed = st.jobs > 0;                                 // 스트리밍으로 실제로 읽어 준 게 있나 (그려질 때 분석을 건너뛸지)
-    if (st.muted || swipe !== st.swipe) { readState.set(mesId, { swipe, text, count: orig.length, streamed }); return false; }
+    const idleDead = () => { if (!running && streamDead && streamDead.mesId === mesId) streamDead = null; };   // 1.3.8 더 읽을 게 없으면 '안 되는 엔진' 표도 끝
+    if (st.muted || swipe !== st.swipe) { readState.set(mesId, { swipe, text, count: orig.length, streamed }); idleDead(); return false; }
     // 미룬 조각이 있으면 그 자리부터 (이미 읽은 번호는 exclude 로 뺌); 아직 하나도 못 읽었으면 처음부터 (대화문 없는 답장 대비)
     if (st.deferredAt >= 0) { readState.set(mesId, { swipe, text: '', count: st.deferredAt, exclude: st.done, streamed }); return true; }
     const from = st.jobs ? st.queued : 0;
     readState.set(mesId, { swipe, text, count: orig.length, streamed });
-    if (orig.length <= from) return false;
+    if (orig.length <= from) { idleDead(); return false; }
     const jobs = finishJobs(buildJobs(mesId, mes, { orig, disp: null }, { startSeg: from, final: true }).jobs, s);
+    if (!jobs.length) { idleDead(); return false; }
     enqueue(jobs, { append: true });
     return false;
 }

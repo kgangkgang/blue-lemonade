@@ -1,6 +1,6 @@
 // TTS · Google Gemini TTS 엔진 (브라우저 → generativelanguage.googleapis.com 직접 호출, 헤더 x-goog-api-key)
 import { koError, safeMsg, timedFetch } from './_http.js';
-import { modelOptions, storeModels, resolveModel, keyModel, customField, shared, atLeast } from './_models.js';
+import { modelOptions, storeModels, resolveModel, keyModel, customField, shared, atLeast, keySig } from './_models.js';
 
 const ID = 'gemini';
 const BASE = 'https://generativelanguage.googleapis.com/v1beta';
@@ -59,6 +59,14 @@ const fields = [
 const params = [
     { key: 'style', label: '말투 지시', type: 'textarea', default: '', voice: true, desc: '예: 차분하게, 낮은 목소리로 · 목소리별 지시가 있으면 그것을 써요' },
 ];
+
+// 1.3.8 '?' 도움말: 설정 창 · 목소리 편집에서 이름 옆 ? 를 누르면 아래에 펼쳐진다 (ui.js control · edParam)
+const HELP = {
+    model: "플래시는 연기·감정이 가장 섬세하고, 플래시 라이트는 더 빠르고 싸요. 미리보기 모델은 내 목소리를 못 쓰고 11월 17일부터 끝날 수 있어요.",
+    model_custom: "목록에 없는 새 모델을 쓸 때요. 보이는 이름 말고 gemini-3.8-flash-tts처럼 정확한 이름을 적어요.",
+    style: "감정·빠르기·크기를 말로 정해요. 속도 칸이 없어 '빠르게'도 여기 적어요. 길게 쓰면 목소리가 흔들릴 수 있어 짧게 적어요.",
+};
+for (const f of [...fields, ...params]) if (HELP[f.key]) f.help = HELP[f.key];
 
 const defaults = Object.fromEntries([...fields, ...params].map(f => [f.key, f.default]));
 
@@ -128,6 +136,8 @@ async function call(path, { key, method = 'GET', body, signal, timeout = 30000 }
 
 const modelOf = (cfg) => resolveModel(cfg, defaults.model);
 
+// 1.3.8 기본 30개 목소리 id (voices.twinOf — 캐릭터 이름만으로는 짝이 안 됨)
+const STOCK = new Set(PREBUILT.map(([id]) => id));
 export default {
     id: ID,
     name: 'Google Gemini',
@@ -136,6 +146,7 @@ export default {
     fields,
     params,
     caps: { emotion: true, instructions: true, mix: false, list: true, blob: true },
+    stockIds: () => STOCK,
     defaults,
     maxChars: 4000,
 
@@ -148,7 +159,7 @@ export default {
             for (const v of (Array.isArray(j?.voices) ? j.voices : [])) {
                 const id = String(v.id || v.name || '');
                 if (!id || !isCustomVoice(id)) continue;
-                list.push({ voiceId: id, name: String(v.display_name || v.displayName || id), lang: toLang(v.language_code || v.languageCode), group: '내 목소리' });
+                list.push({ voiceId: id, name: String(v.display_name || v.displayName || id), lang: toLang(v.language_code || v.languageCode), group: '내 목소리', own: true });   // 1.3.8 내 목소리 (stock 아님)
             }
         } catch (e) {
             if (e?.name === 'AbortError') throw e; // 내 목소리 목록은 없어도 기본 목록은 돌려준다
@@ -159,7 +170,7 @@ export default {
     /** 1.3.7 모델 목록: GET /models (생성 없음 · 무료) 에서 이름에 tts 가 든 generateContent 모델 — 새 버전부터 */
     async listModels(cfg) {
         if (!cfg?.key) throw new Error('API 키를 먼저 저장하세요');
-        return shared(ID, async () => {
+        return shared(`${ID}|${keySig(cfg && cfg.key)}`, async () => {
             const rows = [];
             let token = '';
             for (let page = 0; page < 5; page++) {

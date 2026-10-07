@@ -36,6 +36,7 @@ jobs:
           node tools/tests/tts-prefer.mjs .
           node tools/tests/tts-models.mjs .
           node tools/tests/tts-extras.mjs .
+          node tools/tests/tts-onboarding.mjs .
           node tools/tests/live-models.mjs .
           node tools/tests/translator-models.mjs .
           node tools/tests/rewrite-models.mjs .

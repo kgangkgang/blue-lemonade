@@ -142,6 +142,13 @@ export function shared(key, fn) {
     return job;
 }
 export const pending = (key) => inflight.has(key);
+/** 1.3.8 키의 짧은 표 (키 그대로는 담지 않음) — 진행 중인 목록 요청을 키마다 따로 (키를 바꿔 저장하면 옛 키로 가던 요청에 붙지 않게) */
+export function keySig(key) {
+    let h = 2166136261;
+    const t = String(key || '');
+    for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return (h >>> 0).toString(36);
+}
 
 // ---------- 버전 [major, minor] 비교 (null = 못 읽음)
 export function newer(a, b) {

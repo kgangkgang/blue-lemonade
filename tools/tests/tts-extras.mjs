@@ -1,4 +1,5 @@
 // TTS 1.3.7 엑스트라 목소리 · 목소리마다 모델 — src/addons/tts/src/voices.js (genderOf · storeStock · noteExtras · extraFor · voiceFor)
+//   1.3.8: 기본 길이 1.3.7 과 같은 요청 · 캐시 키 (48줄 고정값) · ElevenLabs 감정 세기 · 말투 태그 · '?' 도움말 · 「나」 자동 프롬프트
 //   · analysis.js composePrompt (엑스트라가 없으면 1.3.6 과 글자까지 같은 프롬프트) · settings.js toVoice (use_model · extra)
 //   node tools/tests/tts-extras.mjs <테마 루트>   (공개 저장소는 '.', 개발본은 'salty-ext')
 // 실리태번 모듈은 data: 스텁으로. 네트워크 없음 (fetch 를 부르면 실패로 끝나고 옛 캐시를 씀).
@@ -299,6 +300,289 @@ if (A) {
             s.extras = 'auto';
             assert.ok(A.getAnalysis(0), '엑스트라를 켠 뒤에도 끈 때(=1.3.6) 저장한 분석을 씀');
         } finally { globalThis.fetch = realFetch; }
+    });
+}
+
+// ---------- 1.3.8 기본 길은 1.3.7 과 같은 요청 · 같은 캐시 키 (말투를 안 고르고 · 감정 세기 보통 · MiniMax 는 세기 모두)
+//   GOLDEN_137 = 공개 1.3.7 (테마 5.7.1, git ea3f441) 의 player.lineJobs → 캐시 키 · 엔진 요청 본문 (MiniMax · ElevenLabs).
+//   목소리: MiniMax(speech-2.8-hd · 공식 서버) · ElevenLabs(eleven_v4) · ElevenLabs(목소리 모델 다국어 v2) · OpenAI · Typecast · Cartesia ·
+//   Gemini · Azure · OpenRouter · OpenAI 호환 · 브라우저 내장 · Google 번역 · 내 메시지(「나」 = ElevenLabs) — 11개 엔진 모두
+const GOLDEN_137 = {
+    "normal|Mina|plain": ["1fu7rlof75w", "{\"url\":\"https://api.minimax.io/v1/t2a_v2\",\"body\":{\"model\":\"speech-2.8-hd\",\"text\":\"안녕하세요.\",\"stream\":false,\"output_format\":\"hex\",\"voice_setting\":{\"voice_id\":\"mm_a\",\"speed\":1,\"vol\":1,\"pitch\":0},\"audio_setting\":{\"sample_rate\":32000,\"bitrate\":128000,\"format\":\"mp3\",\"channel\":1},\"language_boost\":\"Korean\"}}"],
+    "normal|Mina|angry": ["210z0r5d5h4", "{\"url\":\"https://api.minimax.io/v1/t2a_v2\",\"body\":{\"model\":\"speech-2.8-hd\",\"text\":\"화났어!\",\"stream\":false,\"output_format\":\"hex\",\"voice_setting\":{\"voice_id\":\"mm_a\",\"speed\":1,\"vol\":1,\"pitch\":0,\"emotion\":\"angry\"},\"audio_setting\":{\"sample_rate\":32000,\"bitrate\":128000,\"format\":\"mp3\",\"channel\":1},\"language_boost\":\"Korean\"}}"],
+    "normal|Mina|excited": ["1s00co5vfji", "{\"url\":\"https://api.minimax.io/v1/t2a_v2\",\"body\":{\"model\":\"speech-2.8-hd\",\"text\":\"좋아!\",\"stream\":false,\"output_format\":\"hex\",\"voice_setting\":{\"voice_id\":\"mm_a\",\"speed\":1,\"vol\":1,\"pitch\":0,\"emotion\":\"happy\"},\"audio_setting\":{\"sample_rate\":32000,\"bitrate\":128000,\"format\":\"mp3\",\"channel\":1},\"language_boost\":\"Korean\"}}"],
+    "normal|Mina|whisper": ["1ewg4wehwl6", "{\"url\":\"https://api.minimax.io/v1/t2a_v2\",\"body\":{\"model\":\"speech-2.6-hd\",\"text\":\"쉿.\",\"stream\":false,\"output_format\":\"hex\",\"voice_setting\":{\"voice_id\":\"mm_a\",\"speed\":1,\"vol\":1,\"pitch\":0,\"emotion\":\"whisper\"},\"audio_setting\":{\"sample_rate\":32000,\"bitrate\":128000,\"format\":\"mp3\",\"channel\":1},\"language_boost\":\"Korean\"}}"],
+    "normal|Mina|crying": ["5v3kfynp5t", "{\"url\":\"https://api.minimax.io/v1/t2a_v2\",\"body\":{\"model\":\"speech-2.8-hd\",\"text\":\"흑흑.\",\"stream\":false,\"output_format\":\"hex\",\"voice_setting\":{\"voice_id\":\"mm_a\",\"speed\":1,\"vol\":1,\"pitch\":0,\"emotion\":\"sad\"},\"audio_setting\":{\"sample_rate\":32000,\"bitrate\":128000,\"format\":\"mp3\",\"channel\":1},\"language_boost\":\"Korean\"}}"],
+    "normal|Ella|plain": ["1lz8qs92l2d", "{\"url\":\"https://api.elevenlabs.io/v1/text-to-speech/el_a\",\"body\":{\"text\":\"안녕하세요.\",\"model_id\":\"eleven_v4\",\"voice_settings\":{\"stability\":0.5,\"similarity_boost\":0.75,\"style\":0,\"use_speaker_boost\":true},\"language_code\":\"ko\"}}"],
+    "normal|Ella|angry": ["xx6s6ybg88", "{\"url\":\"https://api.elevenlabs.io/v1/text-to-speech/el_a\",\"body\":{\"text\":\"[angry] 화났어!\",\"model_id\":\"eleven_v4\",\"voice_settings\":{\"stability\":0.5,\"similarity_boost\":0.75,\"style\":0,\"use_speaker_boost\":true},\"language_code\":\"ko\"}}"],
+    "normal|Ella|excited": ["2myztyx6ft", "{\"url\":\"https://api.elevenlabs.io/v1/text-to-speech/el_a\",\"body\":{\"text\":\"[happy] 좋아!\",\"model_id\":\"eleven_v4\",\"voice_settings\":{\"stability\":0.5,\"similarity_boost\":0.75,\"style\":0,\"use_speaker_boost\":true},\"language_code\":\"ko\"}}"],
+    "normal|Ella|whisper": ["5bw7ix9i26", "{\"url\":\"https://api.elevenlabs.io/v1/text-to-speech/el_a\",\"body\":{\"text\":\"[whispers] 쉿.\",\"model_id\":\"eleven_v4\",\"voice_settings\":{\"stability\":0.5,\"similarity_boost\":0.75,\"style\":0,\"use_speaker_boost\":true},\"language_code\":\"ko\"}}"],
+    "normal|Ella|crying": ["1d77g6y1scc", "{\"url\":\"https://api.elevenlabs.io/v1/text-to-speech/el_a\",\"body\":{\"text\":\"[sad] 흑흑.\",\"model_id\":\"eleven_v4\",\"voice_settings\":{\"stability\":0.5,\"similarity_boost\":0.75,\"style\":0,\"use_speaker_boost\":true},\"language_code\":\"ko\"}}"],
+    "normal|Elma|plain": ["d5vur0zwaw", "{\"url\":\"https://api.elevenlabs.io/v1/text-to-speech/el_b\",\"body\":{\"text\":\"안녕하세요.\",\"model_id\":\"eleven_multilingual_v2\",\"voice_settings\":{\"stability\":0.5,\"similarity_boost\":0.75,\"style\":0,\"use_speaker_boost\":true,\"speed\":1}}}"],
+    "normal|Elma|angry": ["ffht12dsg", "{\"url\":\"https://api.elevenlabs.io/v1/text-to-speech/el_b\",\"body\":{\"text\":\"화났어!\",\"model_id\":\"eleven_multilingual_v2\",\"voice_settings\":{\"stability\":0.5,\"similarity_boost\":0.75,\"style\":0,\"use_speaker_boost\":true,\"speed\":1}}}"],
+    "normal|Elma|excited": ["241y5q34jn6", "{\"url\":\"https://api.elevenlabs.io/v1/text-to-speech/el_b\",\"body\":{\"text\":\"좋아!\",\"model_id\":\"eleven_multilingual_v2\",\"voice_settings\":{\"stability\":0.5,\"similarity_boost\":0.75,\"style\":0,\"use_speaker_boost\":true,\"speed\":1}}}"],
+    "normal|Elma|whisper": ["1gho5db393e", "{\"url\":\"https://api.elevenlabs.io/v1/text-to-speech/el_b\",\"body\":{\"text\":\"쉿.\",\"model_id\":\"eleven_multilingual_v2\",\"voice_settings\":{\"stability\":0.5,\"similarity_boost\":0.75,\"style\":0,\"use_speaker_boost\":true,\"speed\":1}}}"],
+    "normal|Elma|crying": ["2eer04nzzpm", "{\"url\":\"https://api.elevenlabs.io/v1/text-to-speech/el_b\",\"body\":{\"text\":\"흑흑.\",\"model_id\":\"eleven_multilingual_v2\",\"voice_settings\":{\"stability\":0.5,\"similarity_boost\":0.75,\"style\":0,\"use_speaker_boost\":true,\"speed\":1}}}"],
+    "normal|Ally|plain": ["bpolq6kdh3", null],
+    "normal|Ally|angry": ["1nr4ndvrm99", null],
+    "normal|Tia|plain": ["1qndhuzyr2r", null],
+    "normal|Tia|angry": ["dywjgq5umv", null],
+    "normal|Cara|plain": ["bk1kz2pbxk", null],
+    "normal|Cara|angry": ["13ps0dr84aj", null],
+    "normal|Gina|plain": ["2fn4rsch56m", null],
+    "normal|Gina|angry": ["1475fops15r", null],
+    "normal|Azu|plain": ["1c6we51yaip", null],
+    "normal|Azu|angry": ["dt4kb8bgr2", null],
+    "normal|Rory|plain": ["20l2kfd9znv", null],
+    "normal|Rory|angry": ["1gdsv04c20z", null],
+    "normal|Kiko|plain": ["235fn1t8urb", null],
+    "normal|Kiko|angry": ["1ohrpmwtk2n", null],
+    "normal|Bree|plain": ["280va4ggchy", null],
+    "normal|Bree|angry": ["1o8f88dqqwq", null],
+    "normal|Gogo|plain": ["8kq0k56mhg", null],
+    "normal|Gogo|angry": ["2ar7kyjx4ke", null],
+    "normal|User|plain": ["1lz8qs92l2d", "{\"url\":\"https://api.elevenlabs.io/v1/text-to-speech/el_a\",\"body\":{\"text\":\"안녕하세요.\",\"model_id\":\"eleven_v4\",\"voice_settings\":{\"stability\":0.5,\"similarity_boost\":0.75,\"style\":0,\"use_speaker_boost\":true},\"language_code\":\"ko\"}}"],
+    "normal|User|angry": ["xx6s6ybg88", "{\"url\":\"https://api.elevenlabs.io/v1/text-to-speech/el_a\",\"body\":{\"text\":\"[angry] 화났어!\",\"model_id\":\"eleven_v4\",\"voice_settings\":{\"stability\":0.5,\"similarity_boost\":0.75,\"style\":0,\"use_speaker_boost\":true},\"language_code\":\"ko\"}}"],
+    "weak|Mina|plain": ["1fu7rlof75w", "{\"url\":\"https://api.minimax.io/v1/t2a_v2\",\"body\":{\"model\":\"speech-2.8-hd\",\"text\":\"안녕하세요.\",\"stream\":false,\"output_format\":\"hex\",\"voice_setting\":{\"voice_id\":\"mm_a\",\"speed\":1,\"vol\":1,\"pitch\":0},\"audio_setting\":{\"sample_rate\":32000,\"bitrate\":128000,\"format\":\"mp3\",\"channel\":1},\"language_boost\":\"Korean\"}}"],
+    "weak|Mina|angry": ["12cs8jlwwu0", "{\"url\":\"https://api.minimax.io/v1/t2a_v2\",\"body\":{\"model\":\"speech-2.8-hd\",\"text\":\"화났어!\",\"stream\":false,\"output_format\":\"hex\",\"voice_setting\":{\"voice_id\":\"mm_a\",\"speed\":1,\"vol\":1,\"pitch\":0},\"audio_setting\":{\"sample_rate\":32000,\"bitrate\":128000,\"format\":\"mp3\",\"channel\":1},\"language_boost\":\"Korean\"}}"],
+    "weak|Mina|excited": ["xl379u0vhb", "{\"url\":\"https://api.minimax.io/v1/t2a_v2\",\"body\":{\"model\":\"speech-2.8-hd\",\"text\":\"좋아!\",\"stream\":false,\"output_format\":\"hex\",\"voice_setting\":{\"voice_id\":\"mm_a\",\"speed\":1,\"vol\":1,\"pitch\":0},\"audio_setting\":{\"sample_rate\":32000,\"bitrate\":128000,\"format\":\"mp3\",\"channel\":1},\"language_boost\":\"Korean\"}}"],
+    "weak|Mina|whisper": ["1ewg4wehwl6", "{\"url\":\"https://api.minimax.io/v1/t2a_v2\",\"body\":{\"model\":\"speech-2.6-hd\",\"text\":\"쉿.\",\"stream\":false,\"output_format\":\"hex\",\"voice_setting\":{\"voice_id\":\"mm_a\",\"speed\":1,\"vol\":1,\"pitch\":0,\"emotion\":\"whisper\"},\"audio_setting\":{\"sample_rate\":32000,\"bitrate\":128000,\"format\":\"mp3\",\"channel\":1},\"language_boost\":\"Korean\"}}"],
+    "weak|Mina|crying": ["1dwbjpei9op", "{\"url\":\"https://api.minimax.io/v1/t2a_v2\",\"body\":{\"model\":\"speech-2.8-hd\",\"text\":\"흑흑.\",\"stream\":false,\"output_format\":\"hex\",\"voice_setting\":{\"voice_id\":\"mm_a\",\"speed\":1,\"vol\":1,\"pitch\":0},\"audio_setting\":{\"sample_rate\":32000,\"bitrate\":128000,\"format\":\"mp3\",\"channel\":1},\"language_boost\":\"Korean\"}}"],
+    "weak|Ally|plain": ["bpolq6kdh3", null],
+    "weak|Ally|angry": ["104c2og95vb", null],
+    "weak|Tia|plain": ["1qndhuzyr2r", null],
+    "weak|Tia|angry": ["2c6ybtm6s5z", null],
+    "weak|Cara|plain": ["bk1kz2pbxk", null],
+    "weak|Cara|angry": ["1la4l4lhcx0", null],
+    "weak|Gina|plain": ["2fn4rsch56m", null],
+    "weak|Gina|angry": ["tvobp02p4p", null],
+    "weak|Azu|plain": ["1c6we51yaip", null],
+    "weak|Azu|angry": ["dkahr4ez0d", null],
+    "weak|Rory|plain": ["20l2kfd9znv", null],
+    "weak|Rory|angry": ["1nunyqm89ep", null],
+    "weak|Kiko|plain": ["235fn1t8urb", null],
+    "weak|Kiko|angry": ["28ixj4vm95k", null],
+    "weak|Bree|plain": ["280va4ggchy", null],
+    "weak|Bree|angry": ["11bhirey7sn", null],
+    "weak|Gogo|plain": ["8kq0k56mhg", null],
+    "weak|Gogo|angry": ["19xp3dlkemk", null],
+    "strong|Mina|plain": ["1fu7rlof75w", "{\"url\":\"https://api.minimax.io/v1/t2a_v2\",\"body\":{\"model\":\"speech-2.8-hd\",\"text\":\"안녕하세요.\",\"stream\":false,\"output_format\":\"hex\",\"voice_setting\":{\"voice_id\":\"mm_a\",\"speed\":1,\"vol\":1,\"pitch\":0},\"audio_setting\":{\"sample_rate\":32000,\"bitrate\":128000,\"format\":\"mp3\",\"channel\":1},\"language_boost\":\"Korean\"}}"],
+    "strong|Mina|angry": ["30xxke36p7", "{\"url\":\"https://api.minimax.io/v1/t2a_v2\",\"body\":{\"model\":\"speech-2.8-hd\",\"text\":\"(breath)화났어!\",\"stream\":false,\"output_format\":\"hex\",\"voice_setting\":{\"voice_id\":\"mm_a\",\"speed\":1,\"vol\":1,\"pitch\":0,\"emotion\":\"angry\"},\"audio_setting\":{\"sample_rate\":32000,\"bitrate\":128000,\"format\":\"mp3\",\"channel\":1},\"language_boost\":\"Korean\"}}"],
+    "strong|Mina|excited": ["zyqw9qutmg", "{\"url\":\"https://api.minimax.io/v1/t2a_v2\",\"body\":{\"model\":\"speech-2.8-hd\",\"text\":\"(laughs)좋아!\",\"stream\":false,\"output_format\":\"hex\",\"voice_setting\":{\"voice_id\":\"mm_a\",\"speed\":1,\"vol\":1,\"pitch\":0,\"emotion\":\"happy\"},\"audio_setting\":{\"sample_rate\":32000,\"bitrate\":128000,\"format\":\"mp3\",\"channel\":1},\"language_boost\":\"Korean\"}}"],
+    "strong|Mina|whisper": ["1ewg4wehwl6", "{\"url\":\"https://api.minimax.io/v1/t2a_v2\",\"body\":{\"model\":\"speech-2.6-hd\",\"text\":\"쉿.\",\"stream\":false,\"output_format\":\"hex\",\"voice_setting\":{\"voice_id\":\"mm_a\",\"speed\":1,\"vol\":1,\"pitch\":0,\"emotion\":\"whisper\"},\"audio_setting\":{\"sample_rate\":32000,\"bitrate\":128000,\"format\":\"mp3\",\"channel\":1},\"language_boost\":\"Korean\"}}"],
+    "strong|Mina|crying": ["27m9fxa5p6e", "{\"url\":\"https://api.minimax.io/v1/t2a_v2\",\"body\":{\"model\":\"speech-2.8-hd\",\"text\":\"(sighs)흑흑.\",\"stream\":false,\"output_format\":\"hex\",\"voice_setting\":{\"voice_id\":\"mm_a\",\"speed\":1,\"vol\":1,\"pitch\":0,\"emotion\":\"sad\"},\"audio_setting\":{\"sample_rate\":32000,\"bitrate\":128000,\"format\":\"mp3\",\"channel\":1},\"language_boost\":\"Korean\"}}"],
+    "strong|Ella|plain": ["1lz8qs92l2d", "{\"url\":\"https://api.elevenlabs.io/v1/text-to-speech/el_a\",\"body\":{\"text\":\"안녕하세요.\",\"model_id\":\"eleven_v4\",\"voice_settings\":{\"stability\":0.5,\"similarity_boost\":0.75,\"style\":0,\"use_speaker_boost\":true},\"language_code\":\"ko\"}}"],
+    "strong|Elma|plain": ["d5vur0zwaw", "{\"url\":\"https://api.elevenlabs.io/v1/text-to-speech/el_b\",\"body\":{\"text\":\"안녕하세요.\",\"model_id\":\"eleven_multilingual_v2\",\"voice_settings\":{\"stability\":0.5,\"similarity_boost\":0.75,\"style\":0,\"use_speaker_boost\":true,\"speed\":1}}}"],
+    "strong|Ally|plain": ["bpolq6kdh3", null],
+    "strong|Ally|angry": ["1nr4ndvrm99", null],
+    "strong|Tia|plain": ["1qndhuzyr2r", null],
+    "strong|Tia|angry": ["dywjgq5umv", null],
+    "strong|Cara|plain": ["bk1kz2pbxk", null],
+    "strong|Cara|angry": ["13ps0dr84aj", null],
+    "strong|Gina|plain": ["2fn4rsch56m", null],
+    "strong|Gina|angry": ["1475fops15r", null],
+    "strong|Azu|plain": ["1c6we51yaip", null],
+    "strong|Azu|angry": ["dt4kb8bgr2", null],
+    "strong|Rory|plain": ["20l2kfd9znv", null],
+    "strong|Rory|angry": ["1gdsv04c20z", null],
+    "strong|Kiko|plain": ["235fn1t8urb", null],
+    "strong|Kiko|angry": ["1ohrpmwtk2n", null],
+    "strong|Bree|plain": ["280va4ggchy", null],
+    "strong|Bree|angry": ["1o8f88dqqwq", null],
+    "strong|Gogo|plain": ["8kq0k56mhg", null],
+    "strong|Gogo|angry": ["2ar7kyjx4ke", null],
+    "strong|User|plain": ["1lz8qs92l2d", "{\"url\":\"https://api.elevenlabs.io/v1/text-to-speech/el_a\",\"body\":{\"text\":\"안녕하세요.\",\"model_id\":\"eleven_v4\",\"voice_settings\":{\"stability\":0.5,\"similarity_boost\":0.75,\"style\":0,\"use_speaker_boost\":true},\"language_code\":\"ko\"}}"],
+};
+let TX = null;
+try { TX = await import(pathToFileURL(path.join(root, 'text.js')).href); } catch { TX = null; }
+const gv = (provider, voiceId, name, extra = {}) => ({ uid: `${provider}:${voiceId}`, provider, voiceId, name, lang: '', group: 'g', aliases: [], params: {}, mix: [], ...extra });
+function goldenReset(strength) {
+    const s = settings();
+    s.voices = [gv('minimax', 'mm_a', 'Mina'), gv('elevenlabs', 'el_a', 'Ella'), gv('elevenlabs', 'el_b', 'Elma', { use_model: 'eleven_multilingual_v2' }), gv('openai', 'alloy', 'Ally'), gv('typecast', 'tc_a', 'Tia'), gv('cartesia', 'ca_a', 'Cara'), gv('gemini', 'Kore', 'Gina'), gv('azure', 'ko-KR-SunHiNeural', 'Azu'), gv('openrouter', 'alloy', 'Rory'), gv('openai_compat', 'af_bella', 'Kiko'), gv('browser', 'Google 한국의', 'Bree'), gv('gtranslate', 'ko', 'Gogo')];
+    s.char_map = { Mina: 'minimax:mm_a', Ella: 'elevenlabs:el_a', Elma: 'elevenlabs:el_b', Ally: 'openai:alloy', Tia: 'typecast:tc_a', Cara: 'cartesia:ca_a', Gina: 'gemini:Kore', Azu: 'azure:ko-KR-SunHiNeural', Rory: 'openrouter:alloy', Kiko: 'openai_compat:af_bella', Bree: 'browser:Google 한국의', Gogo: 'gtranslate:ko' };
+    s.default_voice = 'minimax:mm_a';
+    s.user_voice = 'elevenlabs:el_a';
+    s.narrator_voice = '';
+    s.prefer_provider = '';
+    s.emotion_strength = strength;
+    s.pregen = 'dialogue';
+    s.extras = 'auto';
+    s.extra_map = {};
+    s.analysis = { ...s.analysis, enabled: false };
+    s.providers = {
+        minimax: { key: 'mm-test-key-000000000000000000000000000000000000', host: 'https://api.minimax.io', model: 'speech-2.8-hd' },
+        elevenlabs: { key: 'el-test', model: 'eleven_v4' },
+        openai: { key: 'oa-test' }, typecast: { key: 'tc-test' }, cartesia: { key: 'ca-test' }, gemini: { key: 'ge-test' }, azure: { key: 'az-test', region: 'koreacentral' }, openrouter: { key: 'or-test' },
+    };
+    s.mini_player = false;
+}
+const G_LINES = { plain: '"안녕하세요."', angry: '<angry>"화났어!"</angry>', excited: '<excited>"좋아!"</excited>', whisper: '<whispering>"쉿."</whispering>', crying: '<crying>"흑흑."</crying>' };
+/** 한 줄 → { job, body } (lineJobs = 대사를 눌렀을 때 · 미리 만들기와 같은 길) */
+async function lineOf(speaker, text) {
+    const mes = speaker === 'User' ? { name: 'User', is_user: true, mes: text, extra: {}, swipe_id: 0 } : { name: speaker, is_user: false, mes: text, extra: {}, swipe_id: 0 };
+    T.ctx.chat.length = 0; T.ctx.chat.push(mes);
+    T.ctx.name1 = 'User'; T.ctx.name2 = mes.name;
+    const segs = TX.segmentMessage(text, { userName: 'User', charName: mes.name, knownNames: [], routes: settings().routes, final: true, skipTags: new Set(), stripRegex: [] }).filter(x => x.kind === 'dialogue' && x.text);
+    const job = P.lineJobs(0, mes, segs).jobs[0];
+    let body = null;
+    if (job && ['minimax', 'elevenlabs'].includes(job.provider.id)) {
+        const real = globalThis.fetch;
+        globalThis.fetch = async (u, init = {}) => {
+            body = { url: String(u).replace(/\?.*$/, ''), body: init.body ? JSON.parse(init.body) : null };
+            if (/t2a_v2/.test(u)) return new Response(JSON.stringify({ data: { audio: 'fff344c4' }, extra_info: { usage_characters: 3 }, base_resp: { status_code: 0 } }), { status: 200, headers: { 'content-type': 'application/json' } });
+            return new Response(new Uint8Array([1, 2, 3, 4]), { status: 200, headers: { 'content-type': 'audio/mpeg' } });
+        };
+        try { await job.provider.synth({ text: job.text, voice: job.voice, cfg: P.voiceCfg(job.provider, job.voice), params: job.params, lang: job.lang, emotion: job.emotion, signal: new AbortController().signal }); }
+        finally { globalThis.fetch = real; }
+    }
+    return { job, body };
+}
+if (P && PR && TX && typeof P.lineJobs === 'function') {
+    await test('1.3.7 과 같은 요청 · 캐시 키: 말투 없음 · 감정 세기 보통 (11개 엔진 모두) · MiniMax 는 약하게 · 강하게도 — 84줄', async () => {
+        const name1 = T.ctx.name1, name2 = T.ctx.name2;
+        try {
+            let n = 0;
+            for (const [k, [key, body]] of Object.entries(GOLDEN_137)) {
+                const [strength, speaker, ln] = k.split('|');
+                goldenReset(strength);
+                const r = await lineOf(speaker, G_LINES[ln]);
+                assert.ok(r.job, `${k}: 작업`);
+                assert.equal(r.job.key, key, `${k}: 캐시 키`);
+                assert.equal(r.body ? JSON.stringify(r.body) : null, body, `${k}: 요청 본문`);
+                n++;
+            }
+            assert.equal(n, 84);
+        } finally { T.ctx.name1 = name1; T.ctx.name2 = name2; }
+    });
+}
+const EL = PR && PR.getProvider('elevenlabs');
+if (P && PR && TX && EL && typeof EL.strengthFor === 'function') {
+    const name1 = T.ctx.name1, name2 = T.ctx.name2;
+    const elBody = (r) => r.body && r.body.body;
+    await test('ElevenLabs 감정 세기: 약하게 = 안정감 1 · 감정 태그 없음 (속삭임은 남김) · 강하게 = 감정 줄만 안정감 −0.3 · 보통은 1.3.7 그대로', async () => {
+        goldenReset('weak');
+        let r = await lineOf('Ella', G_LINES.angry);
+        assert.equal(elBody(r).voice_settings.stability, 1);
+        assert.equal(elBody(r).text, '화났어!', '감정 태그 없음');
+        assert.equal(r.job.params.emotion_strength, 'weak');
+        r = await lineOf('Ella', G_LINES.whisper);
+        assert.equal(elBody(r).text, '[whispers] 쉿.', '속삭임은 약하게여도 남김 (MiniMax 와 같은 규칙)');
+        goldenReset('strong');
+        r = await lineOf('Ella', G_LINES.angry);
+        assert.equal(elBody(r).voice_settings.stability, 0.2);
+        assert.equal(elBody(r).text, '[angry] 화났어!');
+        assert.equal(r.job.params.emotion_strength, 'strong');
+        r = await lineOf('Ella', G_LINES.plain);
+        assert.equal(r.job.params.emotion_strength, undefined, '감정 없는 줄은 보통과 같은 요청 · 키');
+        assert.equal(r.job.key, GOLDEN_137['normal|Ella|plain'][0]);
+        settings().providers.elevenlabs.stability = 0;
+        r = await lineOf('Ella', G_LINES.angry);
+        assert.equal(r.job.params.emotion_strength, undefined, '이미 0 이면 바뀌는 게 없음 → 표시도 키도 보통과 같게');
+        goldenReset('weak');
+        settings().providers.elevenlabs.stability = 1;
+        r = await lineOf('Ella', G_LINES.plain);
+        assert.equal(r.job.params.emotion_strength, undefined, '이미 1 이면 약하게도 같은 요청');
+        T.ctx.name1 = name1; T.ctx.name2 = name2;
+    });
+    await test('ElevenLabs 감정 세기: v3 는 0 · 0.5 · 1 로 맞춘 뒤 같으면 표시 없음 · MiniMax 는 1.3.7 규칙 그대로 (strengthFor 없음)', () => {
+        assert.equal(EL.strengthFor('strong', { params: { stability: 0.5 }, emotion: 'angry', cfg: { model: 'eleven_v3' } }), 'strong', '0.5 → 0.2 → v3 0');
+        assert.equal(EL.strengthFor('strong', { params: { stability: 0.1 }, emotion: 'angry', cfg: { model: 'eleven_v3' } }), '', '0.1 → 0 · 둘 다 v3 0');
+        assert.equal(EL.strengthFor('weak', { params: { stability: 0.9 }, emotion: '', cfg: { model: 'eleven_v3' } }), '', '0.9 → v3 1 = 1');
+        assert.equal(EL.strengthFor('weak', { params: { stability: 0.9 }, emotion: '', cfg: { model: 'eleven_v4' } }), 'weak');
+        assert.equal(EL.strengthFor('normal', { params: { stability: 0.5 }, emotion: 'angry', cfg: {} }), '');
+        assert.equal(typeof PR.getProvider('minimax').strengthFor, 'undefined');
+    });
+    await test('ElevenLabs 말투 (목소리마다 · 엔진 기본): v3 · v4 에서만 줄 맨 앞 (감정 태그 앞 · 같은 태그는 한 번) · 다른 모델은 요청 · 캐시 키가 말투 없음과 같음 · 빈 목록 = 없음', async () => {
+        goldenReset('normal');
+        const s = settings();
+        V.findVoice('elevenlabs:el_a').params = { voice_tags: ['tired', 'whispers'] };
+        let r = await lineOf('Ella', G_LINES.angry);
+        assert.equal(elBody(r).text, '[tired] [whispers] [angry] 화났어!');
+        assert.notEqual(r.job.key, GOLDEN_137['normal|Ella|angry'][0], '말투가 바뀌면 다른 소리');
+        r = await lineOf('Ella', G_LINES.whisper);
+        assert.equal(elBody(r).text, '[tired] [whispers] 쉿.', '감정 태그와 같은 말투는 한 번');
+        V.findVoice('elevenlabs:el_b').params = { voice_tags: ['tired'] };
+        r = await lineOf('Elma', G_LINES.angry);
+        assert.equal(elBody(r).text, '화났어!', '다국어 v2 는 태그를 안 받음');
+        assert.equal(r.job.params.voice_tags, undefined, '요청에 안 들어가는 값은 캐시 키에도 안 넣음');
+        assert.equal(r.job.key, GOLDEN_137['normal|Elma|angry'][0]);
+        V.findVoice('elevenlabs:el_a').params = { voice_tags: [] };
+        r = await lineOf('Ella', G_LINES.angry);
+        assert.equal(r.job.key, GOLDEN_137['normal|Ella|angry'][0], '빈 목록 = 말투 없음');
+        s.providers.elevenlabs.voice_tags = ['distant'];
+        V.findVoice('elevenlabs:el_a').params = {};
+        r = await lineOf('Ella', G_LINES.plain);
+        assert.equal(elBody(r).text, '[distant] 안녕하세요.', '엔진 기본 말투');
+        V.findVoice('elevenlabs:el_a').params = { voice_tags: [] };
+        r = await lineOf('Ella', G_LINES.plain);
+        assert.equal(elBody(r).text, '안녕하세요.', '목소리에서 기본값을 끄고 다 비우면 이 목소리만 말투 없음');
+        V.findVoice('elevenlabs:el_a').params = { voice_tags: ['nope', 'tired', 'tired'] };
+        r = await lineOf('Ella', G_LINES.plain);
+        assert.equal(elBody(r).text, '[tired] 안녕하세요.', '모르는 태그는 버림');
+        T.ctx.name1 = name1; T.ctx.name2 = name2;
+    });
+    await test('말투 태그 목록: 공식 안내의 태그만 · 한국어 이름 · 목록 줄의 이름표 (tagLabels)', async () => {
+        const mod = await import(pathToFileURL(path.join(root, 'providers/elevenlabs.js')).href);
+        const vals = mod.VOICE_TAGS.map(t => t.value);
+        assert.deepEqual(vals, ['tired', 'bored', 'distant', 'peaceful', 'softly', 'quietly', 'whispers', 'playful', 'sarcastic', 'hesitant', 'thoughtful', 'excited', 'nervous']);
+        assert.ok(mod.VOICE_TAGS.every(t => /^[가-힣 ]+$/.test(t.label)), '이름은 한국어만');
+        assert.deepEqual(EL.tagLabels(['tired', 'distant']), ['피곤하게', '무심하게']);
+        const f = EL.params.find(x => x.key === 'voice_tags');
+        assert.ok(f && f.type === 'tags' && f.default === undefined, '기본값 없음 (1.3.7 설정 · 키 그대로)');
+        assert.equal(f.show({ model: 'eleven_v4' }), true);
+        assert.equal(f.show({ model: 'eleven_multilingual_v2' }), false);
+    });
+}
+if (PR) {
+    await test("'?' 도움말: 엔진 항목에 한국어 도움말 (61 + 말투) · ElevenLabs 긴 설명은 ? 뒤로 (안정감 설명만 1.3.7 그대로)", () => {
+        let n = 0;
+        for (const p of PR.listProviders()) for (const f of [...(p.fields || []), ...(p.params || [])]) {
+            if (!f.help) continue;
+            n++;
+            assert.equal(typeof f.help, 'string');
+            assert.ok(/[가-힣]/.test(f.help), `${p.id}.${f.key} 한국어`);
+            if (f.key !== 'model_custom' && !(p.id === 'openai_compat' && f.key === 'model')) assert.doesNotMatch(f.help, /eleven_|speech-\d|sonic-|ssfm-|gpt-4o|tts-1|google\//, `${p.id}.${f.key}: 직접 적는 칸이 아니면 모델 id 대신 한국어 이름`);
+        }
+        if (n === 0) return;   // 1.3.7 (도움말 없음)
+        assert.equal(n, 62);
+        const el = PR.getProvider('elevenlabs');
+        const desc = (k) => el.params.find(x => x.key === k)?.desc;
+        assert.equal(desc('stability'), 'v3는 0 · 0.5 · 1 중 가까운 값으로 보내요');
+        assert.equal(desc('similarity_boost'), undefined);
+        assert.equal(desc('style'), undefined);
+        assert.equal(desc('use_speaker_boost'), undefined);
+    });
+}
+if (A && typeof V.userAuto === 'function') {
+    await test('「나」 자동: 페르소나도 목소리 없는 화자로 묻는다 (people) · 자동이 아니면 1.3.7 과 같은 프롬프트', async () => {
+        reset();
+        const s = settings();
+        s.analysis = { ...s.analysis, enabled: true, engine: 'compat', base: 'http://analysis.test/v1', key: 'k-test', model: 'm-test', emotion: true, translate: false, speaker: true, when: 'auto' };
+        T.ctx.chat.length = 0;
+        T.ctx.chat.push({ name: '천지합동청', is_user: false, mes: 'Dreamju: "좋아."', extra: {} });
+        const mes = T.ctx.chat[0];
+        const opts = { langs: [], emotion: true, translate: false, speaker: true, extras: true };
+        const before = A.buildPrompt(mes, opts);
+        s.user_voice = '@auto';
+        const auto = A.buildPrompt(mes, opts);
+        // 1.3.8 리뷰(rig): 「내 대사」 = 읽지 않음이면 AI 답장 속 내 대사를 안 읽으니 자동이어도 페르소나를 묻지 않음 (프롬프트 · 저장된 분석이 안 바뀜)
+        const routes0 = s.routes;
+        s.routes = { ...routes0, user_dialogue: 'skip' };
+        const skip = A.buildPrompt(mes, opts);
+        s.routes = routes0;
+        assert.equal(skip.user, before.user, '내 대사를 안 읽으면 1.3.7 과 같은 프롬프트');
+        s.user_voice = '';
+        const after = A.buildPrompt(mes, opts);
+        assert.equal(after.user, before.user, '(없음)이면 그대로');
+        if (before.lines.some(l => l.speaker === 'Dreamju')) {
+            assert.doesNotMatch(before.user, /Speakers without a voice yet: .*Dreamju/);
+            assert.match(auto.user, /Speakers without a voice yet: Dreamju/);
+            assert.match(auto.user, /"people"/);
+        }
+        s.user_voice = '@auto';
+        await V.noteExtras({ Dreamju: { g: 'f', a: 'a' } });
+        assert.ok(s.extra_map.Dreamju, '페르소나도 엑스트라 표에');
+        s.user_voice = '';
     });
 }
 

@@ -52,6 +52,17 @@ const params = [
     { key: 'role', label: '역할', type: 'select', default: '', voice: true, options: () => [{ value: '', label: '없음' }, ...ROLES.map(r => ({ value: r, label: r }))] },
 ];
 
+// 1.3.8 '?' 도움말: 설정 창 · 목소리 편집에서 이름 옆 ? 를 누르면 아래에 펼쳐진다 (ui.js control · edParam)
+const HELP = {
+    region: "Speech 리소스를 만든 지역이에요. 키와 짝이 안 맞으면 연결이 안 돼요. Korea Central은 koreacentral처럼 붙여 적어요.",
+    pitch: "0이 원래 높이예요. +20이면 꽤 높고 +45면 아주 높아요. -쪽은 그만큼 낮아져요.",
+    volume: "100이 가장 커서 줄이기만 돼요. '음량 고르게'가 켜져 있으면 다시 맞춰져 거의 안 바뀌니, 그땐 목소리의 음량 보정을 써요.",
+    style: "목소리마다 되는 말투가 달라 안 되면 평소대로 읽어요. 한국어는 InJoon(sad)·Haena·Junho만 돼요. 감정 붙은 대사는 감정 말투가 먼저예요.",
+    styledegree: "1이 기본이에요. 올리면 말투가 진해져 2면 두 배, 낮추면 살짝만 묻어나요. 말투를 지원하는 목소리에서만 들려요.",
+    role: "같은 목소리로 소녀·노인처럼 나이·성별을 흉내 내요. 중국어 Xiaomo·Yunye·Yunxi·Yunze만 되고, 말투나 대사 감정이 있어야 들려요.",
+};
+for (const f of [...fields, ...params]) if (HELP[f.key]) f.help = HELP[f.key];
+
 const defaults = Object.fromEntries([...fields, ...params].map(f => [f.key, f.default]));
 
 const num = (v, d) => (v === '' || v == null || !Number.isFinite(Number(v)) ? d : Number(v));

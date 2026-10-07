@@ -71,6 +71,15 @@ const params = [
     { key: 'speed', label: '속도', type: 'range', min: 0.25, max: 4, step: 0.05, default: 1, voice: true },
     { key: 'instructions', label: '말투 지시', type: 'textarea', default: '', desc: 'tts-1 계열은 무시해요' },
 ];
+// 1.3.8 '?' 도움말: 설정 창 · 목소리 편집에서 이름 옆 ? 를 누르면 아래에 펼쳐진다 (ui.js control · edParam)
+const HELP = {
+    base: "보통 그대로 둬요. 프록시를 쓸 때만 그 주소로 바꿔요. 끝에 /audio/speech 까지 적어도 알아서 떼요",
+    model: "GPT-4o 미니만 말투 지시를 따르고, 목소리는 marin · cedar 가 가장 좋아요. TTS-1 · TTS-1 고음질은 목소리 9개만 되고, 고음질이 더 깨끗해요",
+    model_custom: "목록에 없는 모델 id 를 그대로 적어요. tts-1 로 시작하는 이름이면 말투 지시는 보내지 않아요",
+    instructions: "억양 · 감정 · 빠르기 · 속삭임을 글로 지시해요. 목소리에 따로 적은 지시가 있으면 이 칸 대신 그걸 쓰고, 줄의 감정은 뒤에 덧붙여요",
+};
+for (const f of [...fields, ...params]) if (HELP[f.key]) f.help = HELP[f.key];
+
 const defaults = Object.fromEntries([...fields, ...params].filter(f => f.default !== undefined).map(f => [f.key, f.default]));
 
 /** 1.3.7 목록은 주소마다 따로 (프록시 주소의 목록을 api.openai.com 에 쓰지 않게) */
@@ -133,6 +142,8 @@ async function test(cfg) {
     return n ? `연결 됨 · TTS 모델 ${n}개` : '연결 됨';
 }
 
+// 1.3.8 엔진에 원래 있는 목소리 id (voices.twinOf: 캐릭터 이름만으로는 짝이 안 됨 — 1.3.7 에 불러와 stock 표시가 없는 「nova」 도)
+const STOCK = new Set(OPENAI_VOICES);
 export default {
     id: ID,
     name: 'OpenAI',
@@ -141,6 +152,7 @@ export default {
     fields,
     params,
     caps: { emotion: true, instructions: true, mix: false, list: true, blob: true },
+    stockIds: () => STOCK,
     defaults,
     maxChars: 4096,
     listVoices,

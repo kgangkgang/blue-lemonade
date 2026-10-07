@@ -3,7 +3,7 @@
 //   3 이상 = 오디오 태그 · 속도 없음(v4 는 속도를 무시 — 10-07 실측 1.2 배에 4.32초 vs 4.24초), 3 만 안정감 0 · 0.5 · 1.
 //   그래서 eleven_v5 같은 새 모델도 코드 고침 없이 최신 갈래처럼 읽는다
 import { koError, safeMsg, timedFetch } from './_http.js';
-import { modelOptions, storeModels, modelMeta, resolveModel, keyModel, customField, shared } from './_models.js';
+import { modelOptions, storeModels, modelMeta, resolveModel, keyModel, customField, shared, keySig } from './_models.js';
 
 const ID = 'elevenlabs';
 const BASE = 'https://api.elevenlabs.io';
@@ -27,10 +27,42 @@ const V3_TAGS = {
     crying: '[crying]', laugh: '[laughs]',
 };
 
+// 1.3.8 목소리마다 말투 태그 (v3 · v4 줄 맨 앞, 감정 태그 앞). 화면엔 한국어 이름만 · 요청엔 영어 태그만.
+//   ElevenLabs 공식 안내에 나온 태그만 (오디오 태그 목록 elevenlabs.io/blog/elevenlabs-audio-tags-list ·
+//   v3 프롬프트 안내 elevenlabs.io/docs/best-practices/prompting/eleven-v3 — 2026-10-08 확인):
+//   tired · bored · distant · peaceful · thoughtful · excited · nervous · playful(감정) · softly · quietly · whispers(전달) · sarcastic(v3 안내) · hesitant(v4 소개)
+export const VOICE_TAGS = Object.freeze([
+    { value: 'tired', label: '피곤하게' },
+    { value: 'bored', label: '지루하게' },
+    { value: 'distant', label: '무심하게' },
+    { value: 'peaceful', label: '평온하게' },
+    { value: 'softly', label: '부드럽게' },
+    { value: 'quietly', label: '조용히' },
+    { value: 'whispers', label: '속삭이듯' },
+    { value: 'playful', label: '장난스럽게' },
+    { value: 'sarcastic', label: '비꼬듯' },
+    { value: 'hesitant', label: '머뭇거리며' },
+    { value: 'thoughtful', label: '생각에 잠겨' },
+    { value: 'excited', label: '들뜨게' },
+    { value: 'nervous', label: '긴장해서' },
+]);
+const TAG_OK = new Set(VOICE_TAGS.map(t => t.value));
+/** 저장된 말투 (배열 · 쉼표 글) → 아는 태그만 '[tired]' 꼴로, 겹침 없이 · 4개까지 */
+export function voiceTagsOf(v) {
+    const arr = Array.isArray(v) ? v : typeof v === 'string' ? v.split(',') : [];
+    const out = [];
+    for (const x of arr) { const t = String(x || '').trim().toLowerCase(); if (TAG_OK.has(t) && !out.includes(t)) out.push(t); }
+    return out.slice(0, 4).map(t => `[${t}]`);
+}
+/** 목록 줄 · 칩에 보일 한국어 이름들 */
+export const voiceTagLabels = (v) => voiceTagsOf(v).map(t => VOICE_TAGS.find(x => `[${x.value}]` === t)?.label).filter(Boolean);
+
 // 목록의 category → 묶음 이름
 const GROUPS = { premade: '기본', cloned: '복제', generated: '생성', professional: '전문', famous: '유명', high_quality: '고음질' };
 // 키·한도·요금제 문제: 다음 작업도 다 실패하니 재생기가 줄을 멈춘다
-const FATAL = new Set(['invalid_api_key', 'unauthorized', 'quota_exceeded', 'free_users_not_allowed', 'paid_plan_required', 'detected_unusual_activity']);
+const FATAL = new Set(['invalid_api_key', 'unauthorized', 'quota_exceeded', 'free_users_not_allowed', 'paid_plan_required', 'detected_unusual_activity', 'missing_permissions']);
+// 5.7.2 권한을 고른 키의 권한 이름 (ElevenLabs › API 키 › 권한)
+const PERM_KO = { voices_read: '목소리 읽기(Voices Read)', text_to_speech: '음성 만들기(Text to Speech)', user_read: '계정 읽기(User Read)', models_read: '모델 읽기(Models Read)' };
 
 const LANG = { ko: 'ko', ja: 'ja', en: 'en', zh: 'zh' };
 const toLang = (code) => LANG[String(code || '').slice(0, 2).toLowerCase()] || '';
@@ -60,22 +92,43 @@ const fields = [
 
 const params = [
     { key: 'stability', label: '안정감', type: 'range', min: 0, max: 1, step: 0.05, default: 0.5, voice: true, desc: 'v3는 0 · 0.5 · 1 중 가까운 값으로 보내요' },
-    { key: 'similarity_boost', label: '원음 유사도', type: 'range', min: 0, max: 1, step: 0.05, default: 0.75, voice: true },
+    // 1.3.8 v3 에는 원음 유사도 · 화자 강화가 없다 (ElevenLabs 안내) → 칸만 숨김 (show — 요청 · 캐시 키는 1.3.7 그대로)
+    { key: 'similarity_boost', label: '원음 유사도', type: 'range', min: 0, max: 1, step: 0.05, default: 0.75, voice: true, show: (cfg) => genOf(modelOf(cfg)) !== 3 },
     { key: 'style', label: '스타일 과장', type: 'range', min: 0, max: 1, step: 0.05, default: 0, voice: true, show: styleOk },
-    { key: 'use_speaker_boost', label: '화자 강화', type: 'toggle', default: true, voice: true, show: boostOk },
+    { key: 'use_speaker_boost', label: '화자 강화', type: 'toggle', default: true, voice: true, show: (cfg) => boostOk(cfg) && genOf(modelOf(cfg)) !== 3 },
     { key: 'speed', label: '속도', type: 'range', min: 0.7, max: 1.2, step: 0.05, default: 1, voice: true, show: (cfg) => sendsSpeed(modelOf(cfg)) },
     { key: 'language_code', label: '언어 코드', type: 'text', default: '', voice: true, desc: '비우면 글에서 자동 (ko, ja, en …)', show: (cfg) => modelOf(cfg) !== 'eleven_multilingual_v2' },
     { key: 'seed', label: '시드', type: 'number', min: 0, max: 4294967295, step: 1, default: '', voice: true },
     { key: 'apply_text_normalization', label: '숫자·기호 읽기', type: 'select', default: 'auto', options: [
         { value: 'auto', label: '자동' }, { value: 'on', label: '항상' }, { value: 'off', label: '끄기' },
     ] },
+    // 1.3.8 말투 (오디오 태그 · 여러 개): 기본값 없음 — 안 고르면 요청 · 캐시 키가 1.3.7 과 같다. 태그를 받는 모델(v3 · v4)에서만 보이고 요청 · 키에 들어간다 (when)
+    { key: 'voice_tags', label: '말투', type: 'tags', options: VOICE_TAGS, voice: true, show: (cfg) => usesTags(modelOf(cfg)), when: (cfg) => usesTags(modelOf(cfg)) },
 ];
+
+// 1.3.8 '?' 도움말: 설정 창 · 목소리 편집에서 이름 옆 ? 를 누르면 아래에 펼쳐진다 (ui.js control · edParam)
+const HELP = {
+    model: "v4 가 음질이 가장 좋아요. 플래시 v2.5 는 글자당 요금이 절반이지만 숫자 읽기가 서툴러요. 감정 태그는 v3 · v4 만 붙어요",
+    model_custom: "목록에 없는 모델 id 를 그대로 적어요. eleven_v3 · eleven_v4 처럼 eleven_v숫자로 시작하면 감정 태그를 붙이고 속도는 안 보내요",
+    stability: "보통 0.5 에서 시작해요. 너무 낮추면 연기가 엉뚱하거나 말이 빨라질 수 있어요. v4 는 0.37 같은 중간 값도 그대로 써요. 감정 세기 '약하게'면 1, '강하게'면 감정이 붙은 줄만 0.3 낮춰 보내요 (v3 는 0 · 0.5 · 1 로 맞춰 0.5 면 0)",
+    similarity_boost: "보통 0.75 쯤 둬요. v4 는 올릴수록 원래 목소리에 딱 붙지만 자연스러움이 조금 줄 수 있어요. v3 에는 없는 설정이라 칸이 숨어요",
+    style: "보통 0 을 권해요. 올리면 목소리가 조금 불안정해질 수 있어요. v4 처럼 스타일이 없는 모델에선 칸이 숨어요",
+    use_speaker_boost: "차이는 대개 작아요. 빨리 나오는 게 중요하면 꺼 보세요. v3 에는 없는 설정이라 칸이 숨어요",
+    speed: "1 이 보통이고 0.7 ~ 1.2 까지만 돼요. 끝 값은 음질이 떨어질 수 있어요. v3 · v4 는 속도 조절이 없어서 이 칸이 숨어요",
+    language_code: "두 글자 언어 코드로 읽을 언어를 못 박아요. 다른 언어처럼 읽거나 숫자를 엉뚱하게 읽을 때 적어 보세요. 모델이 모르는 코드면 무시돼요",
+    seed: "숫자를 적으면 같은 글 · 설정에서 거의 같은 소리가 나요(완전히 같진 않아요). 비우면 매번 조금씩 달라요",
+    apply_text_normalization: "숫자 · 기호를 말로 풀어 읽을지 정해요. 플래시 v2.5 는 기본으로 안 풀고, v2.5 모델의 '항상'은 기업용 요금제만 돼요",
+    voice_tags: "고른 말투를 줄마다 맨 앞에 붙여 읽어요 (v3 · v4 만). 두세 개까지가 자연스러워요. 대사 분석이 찾은 감정은 그 뒤에 붙어요",
+};
+for (const f of [...fields, ...params]) if (HELP[f.key]) f.help = HELP[f.key];
 
 const defaults = Object.fromEntries([...fields, ...params].map(f => [f.key, f.default]));
 
 const num = (v, d) => (v === '' || v == null || !Number.isFinite(Number(v)) ? d : Number(v));
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const snap3 = (v) => [0, 0.5, 1].reduce((a, b) => (Math.abs(b - v) < Math.abs(a - v) ? b : a));
+/** 1.3.8 감정 세기에 맞춘 안정감: weak → 1 · strong → −0.3 (0 아래 없음) · 그 밖은 그대로 */
+const strengthStab = (level, stab) => (level === 'weak' ? 1 : level === 'strong' ? Math.max(0, Math.round((stab - 0.3) * 100) / 100) : stab);
 
 /** 응답 본문(JSON detail) → 한글 오류. 모르면 공용 koError */
 function elError(status, text) {
@@ -88,6 +141,11 @@ function elError(status, text) {
         if (status === 401 || FATAL.has(code)) e.fatal = true;
         return e;
     };
+    // 5.7.2 키는 맞는데 그 기능 권한이 꺼진 키: 연결 확인(구독 조회)은 되고 목록 · 읽기만 401 — '키가 맞지 않아요' 로는 까닭을 모름
+    if (code === 'missing_permissions') {
+        const perm = (/permission\s+([a-z_]+)/i.exec(msg) || [])[1] || '';
+        return make(`키에 ${PERM_KO[perm] || perm || '이 기능'} 권한이 없어요 (ElevenLabs API 키 설정에서 켜요)`);
+    }
     if (status === 401 || code === 'invalid_api_key' || code === 'unauthorized') return make('API 키가 맞지 않아요');
     if (code === 'quota_exceeded') return make('이번 달 글자 한도를 다 썼어요');
     if (code === 'too_many_concurrent_requests' || code === 'system_busy' || status === 429) return make('요청이 몰렸어요. 잠시 뒤 다시 시도해요', true);
@@ -140,7 +198,7 @@ export default {
 
     /** 1.3.7 모델 목록: GET /v1/models 의 말하기 모델 (can_do_text_to_speech) — API 순서 그대로, 영어만 모델은 뒤로 */
     async listModels(cfg) {
-        return shared(ID, async () => {
+        return shared(`${ID}|${keySig(cfg && cfg.key)}`, async () => {
             const j = await call('/v1/models', { key: cfg && cfg.key });
             const rows = (Array.isArray(j) ? j : Array.isArray(j?.models) ? j.models : []).filter(m => m && m.model_id && m.can_do_text_to_speech === true);
             const en = (m) => Array.isArray(m.languages) && m.languages.length === 1 && /^en\b/i.test(String(m.languages[0]?.language_id || ''));
@@ -160,14 +218,35 @@ export default {
     /** 캐시 키의 모델 (player.keyOf): 고른 값 그대로 · 직접 입력이면 적은 이름 */
     modelFor(voice, cfg) { return keyModel(cfg, defaults.model); },
 
+    /** 1.3.8 말투 태그의 한국어 이름 (목소리 목록 줄의 칩) */
+    tagLabels: voiceTagLabels,
+
+    /**
+     * 1.3.8 감정 세기 (player.fitStrength 가 묻는다): 이 줄의 요청을 실제로 바꾸는 세기 → params.emotion_strength 에 (그 줄만 캐시 키가 갈림).
+     *   'weak' = 안정감 1 (사용자가 들어 보니 1 이 가장 차분) · 'strong' = 감정이 붙은 줄만 안정감 −0.3 (0 아래로는 안 감).
+     *   '' = 보통과 같은 요청 (v3 는 0 · 0.5 · 1 로 맞춘 뒤 같으면 '') — 보통이면 묻지도 않는다 (요청 · 키가 1.3.7 과 같다)
+     */
+    strengthFor(level, { params = {}, emotion = '', cfg = {} } = {}) {
+        const stab = clamp(num(params && params.stability, 0.5), 0, 1);
+        const snap = snapsStability(modelOf(cfg || {})) ? snap3 : (x) => x;
+        const to = strengthStab(level, stab);
+        if (level === 'weak') return snap(to) !== snap(stab) ? 'weak' : '';
+        if (level === 'strong') return emotion && snap(to) !== snap(stab) ? 'strong' : '';
+        return '';
+    },
+
     /** 합성: 글 → mp3 Blob */
     async synth({ text, voice, cfg, params: p = {}, lang = '', emotion = '', signal }) {
         const model = modelOf(cfg);
         let input = String(text || '');
-        const tag = usesTags(model) ? V3_TAGS[emotion] : '';
-        if (tag) input = `${tag} ${input}`;
+        const tagged = usesTags(model);
+        const tag = tagged ? V3_TAGS[emotion] : '';
+        // 1.3.8 목소리 말투 태그 → 감정 태그 → 글 (같은 태그는 한 번만). 말투를 안 고르면 1.3.7 과 같은 글
+        const lead = tagged ? voiceTagsOf(p.voice_tags).filter(t => t !== tag) : [];
+        const pre = tag ? [...lead, tag] : lead;
+        if (pre.length) input = `${pre.join(' ')} ${input}`;
 
-        const stab = clamp(num(p.stability, 0.5), 0, 1);
+        const stab = strengthStab(p.emotion_strength, clamp(num(p.stability, 0.5), 0, 1));
         const settings = {
             stability: snapsStability(model) ? snap3(stab) : stab,
             similarity_boost: clamp(num(p.similarity_boost, 0.75), 0, 1),

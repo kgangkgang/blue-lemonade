@@ -125,6 +125,12 @@ const params = [
     { key: 'pitch', label: '높낮이', type: 'range', min: 0, max: 2, step: 0.1, default: 1, voice: true },
 ];
 
+// 1.3.8 '?' 도움말: 설정 창 · 목소리 편집에서 이름 옆 ? 를 누르면 아래에 펼쳐진다 (ui.js control · edParam)
+const HELP = {
+    pitch: "1이 원래 높이, 0이 가장 낮고 2가 가장 높아요. 목소리에 따라 덜 바뀌기도 해요.",
+};
+for (const f of params) if (HELP[f.key]) f.help = HELP[f.key];
+
 const provider = {
     id: 'browser',
     name: '브라우저 내장',

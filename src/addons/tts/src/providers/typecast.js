@@ -1,6 +1,6 @@
 // Typecast (api.typecast.ai) — 브라우저에서 바로 호출, 헤더 X-API-KEY
 import { safeMsg, timedFetch } from './_http.js';
-import { modelOptions, storeModels, resolveModel, keyModel, customField, shared } from './_models.js';
+import { modelOptions, storeModels, resolveModel, keyModel, customField, shared, keySig } from './_models.js';
 
 const ID = 'typecast';
 const API = 'https://api.typecast.ai';
@@ -69,6 +69,19 @@ const params = [
     },
 ];
 
+// 1.3.8 '?' 도움말: 설정 창 · 목소리 편집에서 이름 옆 ? 를 누르면 아래에 펼쳐진다 (ui.js control · edParam)
+const HELP = {
+    model: "v3.0 이 더 자연스럽고 문맥 자동 감정·속삭임·톤 올림/내림이 돼요. v2.1 은 감정 4종뿐인 이전 모델로 응답이 빨라요.",
+    model_custom: "목록에 없는 모델 이름을 그대로 적어요. ssfm-v21 이 아닌 이름은 v3.0 처럼 감정을 보내요.",
+    emotion_mode: "문맥에서 자동은 Typecast 가 그 줄 글을 보고 감정을 골라요. 고정은 '고정 감정'으로 읽어요. 대사에서 찾은 감정이 있으면 그게 먼저예요.",
+    emotion_preset: "톤 올림은 톤을 높여 힘주고, 톤 내림은 톤을 낮춰 말해요. v2.1 은 보통·기쁨·슬픔·분노만 돼서 나머지는 보통으로 읽어요.",
+    emotion_intensity: "0 이면 감정 없이, 1 이 보통, 2 가 가장 세요. 문맥에서 자동일 땐 안 쓰이고 고정 감정이나 대사 감정이 있는 줄에만 먹어요.",
+    volume: "100 이 원래 크기, 0 은 무음이에요. 재생의 '음량 고르게'를 켜 두면 줄마다 크기를 맞춰서 바꿔도 거의 티가 안 나요.",
+    audio_pitch: "한 칸이 반음이에요. 12 면 한 옥타브 높아지고, 많이 바꾸면 나이·성별이 달라 들려요.",
+    audio_format: "mp3 도 320 kbps 로 가장 좋게 압축해요. wav 는 압축 없는 원본이라 파일과 캐시가 훨씬 커요.",
+};
+for (const f of [...fields, ...params]) if (HELP[f.key]) f.help = HELP[f.key];
+
 const defaults = Object.fromEntries([...fields, ...params].map(f => [f.key, f.default]));
 
 const num = (v, d) => (Number.isFinite(Number(v)) && v !== '' && v !== null ? Number(v) : d);
@@ -130,14 +143,14 @@ const provider = {
     needsKey: true,
     fields,
     params,
-    caps: { emotion: true, instructions: false, mix: false, list: true, blob: true },
+    caps: { emotion: true, instructions: false, mix: false, list: true, blob: true, account: true },   // 5.7.2 계정 맞춤 (voice_type custom = 내 목소리)
     defaults,
     maxChars: 1800, // API 한도 2000자, 발음 사전 치환 여유
 
     /** 1.3.7 모델 목록: GET /v3/voices (거르지 않고) 의 models[].version 을 모아 새 것부터 */
     async listModels(cfg) {
         if (!cfg?.key) throw fail('API 키를 넣어 주세요', 'nokey');
-        return shared(ID, async () => {
+        return shared(`${ID}|${keySig(cfg && cfg.key)}`, async () => {
             const j = await call('/v3/voices', { key: cfg.key, timeout: 30000 });
             const rows = Array.isArray(j) ? j : (Array.isArray(j?.voices) ? j.voices : []);
             const seen = new Set();
@@ -153,10 +166,13 @@ const provider = {
     /** 캐시 키의 모델 (player.keyOf): 고른 값 그대로 · 직접 입력이면 적은 이름 */
     modelFor(voice, cfg) { return keyModel(cfg, DEFAULT_MODEL); },
 
-    async listVoices(cfg) {
+    /** 1.3.8 불러오기 목록은 고른 모델로 거른 것 — 계정 맞춤은 따로 (ui.pullVoices) */
+    listFiltered(cfg) { return !!modelOf(cfg || {}); },
+
+    async listVoices(cfg, { account = false } = {}) {
         if (!cfg?.key) throw fail('API 키를 넣어 주세요', 'nokey');
         const m = modelOf(cfg);
-        const q = m ? `?model=${encodeURIComponent(m)}` : '';
+        const q = m && !account ? `?model=${encodeURIComponent(m)}` : '';   // 5.7.2 계정 맞춤은 모델로 거르지 않음 (다른 모델 전용 목소리를 '계정에 없음'으로 숨기지 않게)
         let list;
         try {
             list = await call('/v3/voices' + q, { key: cfg.key });

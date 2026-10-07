@@ -2,7 +2,7 @@
 import { providerConfig } from '../settings.js';
 import { fetchJson } from './_http.js';
 import { OPENAI_VOICES, OPENAI_GENDER, joinInstructions, pickModel, postSpeech, num, clamp } from './openai.js';
-import { modelOptions as liveOptions, storeModels, shared } from './_models.js';
+import { modelOptions as liveOptions, storeModels, shared, keySig } from './_models.js';
 
 const ID = 'openrouter';
 const BASE = 'https://openrouter.ai/api/v1';
@@ -33,6 +33,15 @@ const params = [
     { key: 'speed', label: '속도', type: 'range', min: 0.25, max: 4, step: 0.05, default: 1, voice: true },
     { key: 'instructions', label: '말투 지시', type: 'textarea', default: '', desc: 'openai/ 모델만' },
 ];
+// 1.3.8 '?' 도움말: 설정 창 · 목소리 편집에서 이름 옆 ? 를 누르면 아래에 펼쳐진다 (ui.js control · edParam)
+const HELP = {
+    model: "구글 · 오픈AI 모델만 목소리 목록이 떠요. 다른 모델은 OpenRouter 모델 페이지에 적힌 목소리 id 를 직접 추가해요",
+    model_custom: "회사/모델 모양의 id 를 그대로 적어요 (예: google/gemini-3.8-flash-tts). openai/ 로 시작해야 말투 지시가 가요",
+    speed: "OpenAI 처럼 속도를 지원하는 모델만 따라요. 다른 모델은 무시하거나, 1 이 아니면 오류가 날 수 있어요. 오류가 나면 1 로 두세요",
+    instructions: "억양 · 감정 · 빠르기를 글로 지시해요. 오픈AI 모델에만 가요. 목소리에 따로 적은 지시가 있으면 이 칸 대신 그걸 쓰고, 줄의 감정을 덧붙여요",
+};
+for (const f of [...fields, ...params]) if (HELP[f.key]) f.help = HELP[f.key];
+
 const defaults = Object.fromEntries([...fields, ...params].filter(f => f.default !== undefined).map(f => [f.key, f.default]));
 
 const auth = (c) => (c.key ? { Authorization: `Bearer ${c.key}` } : {});
@@ -40,7 +49,7 @@ const auth = (c) => (c.key ? { Authorization: `Bearer ${c.key}` } : {});
 /** TTS 모델 목록 (GET /models?output_modalities=speech — 키 없이도 됨) → [{ value, label }] 새것부터, _models.js 캐시에 넣음 */
 export async function listModels(cfg) {
     const c = cfg || providerConfig(ID, defaults);
-    return shared(ID, async () => {
+    return shared(`${ID}|${keySig(c.key)}`, async () => {
         const j = await fetchJson(`${BASE}/models?output_modalities=speech`, { headers: auth(c), timeout: 20000 });
         const rows = ((j && j.data) || []).filter(m => m && m.id);
         // 필터가 안 먹은 응답이면 output_modalities 로 한 번 더 거른다
@@ -112,6 +121,8 @@ async function test(cfg) {
     return `연결 됨 · TTS 모델 ${list.length}개`;
 }
 
+// 1.3.8 엔진에 원래 있는 목소리 id (voices.twinOf — 캐릭터 이름만으로는 짝이 안 됨)
+const STOCK = new Set([...OPENAI_VOICES, ...GEMINI_VOICES]);
 export default {
     id: ID,
     name: 'OpenRouter',
@@ -120,6 +131,7 @@ export default {
     fields,
     params,
     caps: { emotion: true, instructions: true, mix: false, list: true, blob: true },
+    stockIds: () => STOCK,
     defaults,
     maxChars: 4096,
     listVoices,

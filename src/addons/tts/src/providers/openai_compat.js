@@ -21,6 +21,15 @@ const params = [
     },
     { key: 'instructions', label: '말투 지시', type: 'textarea', default: '', desc: '지원하는 서버만' },
 ];
+// 1.3.8 '?' 도움말: 설정 창 · 목소리 편집에서 이름 옆 ? 를 누르면 아래에 펼쳐진다 (ui.js control · edParam)
+const HELP = {
+    base: "Kokoro · AllTalk 같은 서버 주소예요. 127.0.0.1 은 지금 이 기기라, 다른 PC 의 서버면 그 PC 주소를 적어요",
+    model: "서버 설명서에 적힌 모델 이름을 적어요. 비우면 tts-1 로 보내요",
+    response_format: "보통 mp3 로 두세요. wav · flac 은 음질 손실이 없지만 파일이 커서 저장해 둔 소리가 빨리 지워져요",
+    instructions: "말투를 글로 지시해요 (예: 낮고 차분하게). 목소리에 따로 적은 지시가 있으면 이 칸 대신 그걸 써요. 줄별 감정은 붙지 않아요",
+};
+for (const f of [...fields, ...params]) if (HELP[f.key]) f.help = HELP[f.key];
+
 const defaults = Object.fromEntries([...fields, ...params].filter(f => f.default !== undefined).map(f => [f.key, f.default]));
 
 const splitList = (s) => String(s || '').split(/[,\n]/).map(x => x.trim()).filter(Boolean);
@@ -36,9 +45,11 @@ async function remoteVoices(c) {
 async function listVoices(cfg) {
     const c = cfg || providerConfig(ID, defaults);
     const out = splitList(c.voices).map(v => ({ voiceId: v, name: v, lang: '', group: '직접 적음' }));
-    let remote = [];
-    try { remote = await remoteVoices(c); } catch { /* 목록 API 가 없는 서버 */ }
+    let remote = [], err = null;
+    try { remote = await remoteVoices(c); } catch (e) { err = e; /* 목록 API 가 없는 서버 */ }
     for (const v of remote) if (!out.some(o => o.voiceId === v)) out.push({ voiceId: v, name: v, lang: '', group: '서버' });
+    // 5.7.2 서버에 닿지도 못함(꺼짐 · 주소 틀림 · 휴대폰에서 127.0.0.1) · 키 거절이면 그 오류 — '목록 API 가 없어요' 로는 까닭을 모름
+    if (!out.length && err && (Number(err.status) === 0 || err.code === 'network' || err.status === 401 || err.status === 403)) throw err;
     if (!out.length) throw new Error('목소리 이름을 쉼표로 적어 두세요 (서버에 목록 API 가 없어요)');
     return out;
 }
