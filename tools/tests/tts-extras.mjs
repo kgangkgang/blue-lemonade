@@ -10,7 +10,7 @@ import { pathToFileURL } from 'node:url';
 
 const root = path.resolve(process.argv[2] || '.', 'src/addons/tts/src');
 const js = (src) => `data:text/javascript,${encodeURIComponent(src)}`;
-const T = globalThis.__ttsExtrasTest = { ext: {}, ctx: { chat: [], chatMetadata: {}, name1: 'Dreamju', name2: '천지합동청' } };
+const T = globalThis.__ttsExtrasTest = { ext: {}, ctx: { chat: [], chatMetadata: {}, name1: 'Hero', name2: '천지합동청' } };
 let fetches = 0;
 globalThis.fetch = async () => { fetches++; throw new Error('시험 중 네트워크 요청'); };
 const store = new Map();
@@ -239,7 +239,7 @@ if (P && PR) {
 if (A) {
     const base = {
         lines: [{ i: 0, h: 'a', text: 'いらっしゃいませ。', speaker: '천지합동청', ask: false }, { i: 1, h: 'b', text: 'コーヒーを。', speaker: '카페 사장', ask: false }],
-        needs: {}, context: 'narration', display: '', emotion: true, charName: '천지합동청', userName: 'Dreamju', speakers: [],
+        needs: {}, context: 'narration', display: '', emotion: true, charName: '천지합동청', userName: 'Hero', speakers: [],
     };
     await test('composePrompt: 엑스트라를 켜도 (?) 줄 · 목소리 없는 화자가 없으면 1.3.6 과 글자까지 같다 (저장된 분석이 그대로)', () => {
         const off = A.composePrompt({ ...base });
@@ -622,7 +622,7 @@ if (A && typeof V.userAuto === 'function') {
         const s = settings();
         s.analysis = { ...s.analysis, enabled: true, engine: 'compat', base: 'http://analysis.test/v1', key: 'k-test', model: 'm-test', emotion: true, translate: false, speaker: true, when: 'auto' };
         T.ctx.chat.length = 0;
-        T.ctx.chat.push({ name: '천지합동청', is_user: false, mes: 'Dreamju: "좋아."', extra: {} });
+        T.ctx.chat.push({ name: '천지합동청', is_user: false, mes: 'Hero: "좋아."', extra: {} });
         const mes = T.ctx.chat[0];
         const opts = { langs: [], emotion: true, translate: false, speaker: true, extras: true };
         const before = A.buildPrompt(mes, opts);
@@ -637,14 +637,14 @@ if (A && typeof V.userAuto === 'function') {
         s.user_voice = '';
         const after = A.buildPrompt(mes, opts);
         assert.equal(after.user, before.user, '(없음)이면 그대로');
-        if (before.lines.some(l => l.speaker === 'Dreamju')) {
-            assert.doesNotMatch(before.user, /Speakers without a voice yet: .*Dreamju/);
-            assert.match(auto.user, /Speakers without a voice yet: Dreamju/);
+        if (before.lines.some(l => l.speaker === 'Hero')) {
+            assert.doesNotMatch(before.user, /Speakers without a voice yet: .*Hero/);
+            assert.match(auto.user, /Speakers without a voice yet: Hero/);
             assert.match(auto.user, /"people"/);
         }
         s.user_voice = '@auto';
-        await V.noteExtras({ Dreamju: { g: 'f', a: 'a' } });
-        assert.ok(s.extra_map.Dreamju, '페르소나도 엑스트라 표에');
+        await V.noteExtras({ Hero: { g: 'f', a: 'a' } });
+        assert.ok(s.extra_map.Hero, '페르소나도 엑스트라 표에');
         s.user_voice = '';
     });
 }

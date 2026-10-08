@@ -1,5 +1,10 @@
 // 1.8.0 — the long how-to behind the version badge. Static HTML only (no user data), shown in a SillyTavern popup.
-/** @param {boolean} personal whether the persona rule (유저 외모 색깔) ships in this build */
+import { USER_COLORS_RULE } from './defaults-personal.js';
+
+// 개인판 규칙의 이름은 개인판 파일(defaults-personal.js)에서만 온다 — 공개 코드에 그 이름을 적지 않는다 (5.7.8)
+const personalRuleName = () => String(USER_COLORS_RULE?.name ?? '').replace(/[<>&"]/g, '');
+
+/** @param {boolean} personal whether the persona rule ships in this build */
 export const guideHtml = personal => `
 <div class="bwr_guide">
   <h3><i class="fa-solid fa-glasses"></i> 다시 쓰기 사용법</h3>
@@ -67,7 +72,7 @@ export const guideHtml = personal => `
       <li><b>이 캐릭터에게만</b> — 이름을 쉼표로 적어요 (여러 언어 표기를 모두). 최근 메시지에 그 이름이 나올 때만 규칙이 켜지고, 고쳐 쓰는 AI에게 "다른 캐릭터는 진짜 그 특징이 있을 수 있다"고 알려 줘서 남의 묘사는 그대로 둬요. <code>{{user}}</code>는 지금 페르소나 이름으로 바뀌어요.</li>
       <li><b>이 말의 것일 때만</b> — 머리 · 눈처럼 다른 캐릭터도 매번 묘사되는 특징이라면 요청이 너무 잦아져요. 여기에 <code>her, she, you, your, 이름</code>처럼 <b>주인을 가리키는 말</b>을 적으면, 그 말이 걸린 단어 바로 앞(세 단어 안)에 있거나, 같은 문장에 있으면서 바로 옆에 his · 누구's 같은 남의 표시가 없을 때만 잡아요.</li>
     </ul>
-${personal ? `<p><b>기본 규칙 "유저 외모 색깔"</b>은 만든 사람의 캐릭터 이름으로 맞춰져 있어요. 쓰시려면 두 칸의 이름을 <b>내 캐릭터 이름</b>이나 <code>{{user}}</code>로 바꾸고, 대명사(her/she ↔ his/he)도 맞춰 주세요. 안 쓰시면 끄거나 지우면 돼요.</p>` : ''}
+${personal ? `<p><b>기본 규칙 "${personalRuleName()}"</b>은 만든 사람의 캐릭터 이름으로 맞춰져 있어요. 쓰시려면 두 칸의 이름을 <b>내 캐릭터 이름</b>이나 <code>{{user}}</code>로 바꾸고, 대명사(her/she ↔ his/he)도 맞춰 주세요. 안 쓰시면 끄거나 지우면 돼요.</p>` : ''}
   </details>
 
   <details>
@@ -104,7 +109,7 @@ ${personal ? `<p><b>기본 규칙 "유저 외모 색깔"</b>은 만든 사람의
       <li>장갑 — 미카엘 · 루시퍼 · 우리엘 · 자드키엘은 예외</li>
       <li>안경 색 — 벨포드에게만, 안경은 두고 검은색이 아닌 색 묘사를 고쳐요</li>
       <li>뿔 — <a href="https://kkangtong.xyz/posts/54677" target="_blank" rel="noopener noreferrer">공유 봇 「천지합동청」</a>의 사탄에게만 (다른 봇에서는 이름을 바꾸거나 지우세요)</li>
-      ${personal ? `<li>유저 외모 색깔 — 내 캐릭터의 머리 · 눈 · 피부색을 AI가 정하지 못하게 (5번 참고)</li>` : ''}
+      ${personal ? `<li>${personalRuleName()} — 내 캐릭터의 머리 · 눈 · 피부색을 AI가 정하지 못하게 (5번 참고)</li>` : ''}
     </ul>
     <p>영어 · 한국어 · 일본어 · 중국어 표현이 함께 들어 있어요. 사탄 · 벨포드 · 아델스타인 · 미카엘 · 루시퍼 · 우리엘 · 자드키엘은 <a href="https://kkangtong.xyz/posts/54677" target="_blank" rel="noopener noreferrer">공유 봇 「천지합동청」</a>의 캐릭터이고, 이 확장을 만든 사람의 캐릭터가 아니에요.</p>
   </details>

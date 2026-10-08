@@ -9,7 +9,7 @@ import { pathToFileURL } from 'node:url';
 
 const root = path.resolve(process.argv[2] || '.', 'src/addons/tts/src');
 const js = (src) => `data:text/javascript,${encodeURIComponent(src)}`;
-const T = globalThis.__ttsPreferTest = { ext: {}, ctx: { chat: [], chatMetadata: {}, name1: 'Dreamju', name2: '천지합동청' } };
+const T = globalThis.__ttsPreferTest = { ext: {}, ctx: { chat: [], chatMetadata: {}, name1: 'Hero', name2: '천지합동청' } };
 globalThis.fetch = async () => { throw new Error('시험 중 네트워크 요청'); };
 const G = 'const T = globalThis.__ttsPreferTest;\n';
 const ST = {
@@ -86,7 +86,7 @@ test('지정한 그대로(기본): voiceFor 는 1.3.6 과 같다', () => {
     assert.equal(uid(V.voiceFor('Seraph')), 'minimax:cj_seraph01');
     assert.equal(uid(V.voiceFor('Lucifer')), 'minimax:crk_jinu01');
     assert.equal(uid(V.voiceFor('Nobody')), 'minimax:cj_lil01', '모르는 이름 → 기본');
-    assert.equal(uid(V.voiceFor('Dreamju', { isUser: true })), 'minimax:cj_seraph01');
+    assert.equal(uid(V.voiceFor('Hero', { isUser: true })), 'minimax:cj_seraph01');
     assert.equal(settings().prefer_provider, '');
 });
 
@@ -95,7 +95,7 @@ test('ElevenLabs 로: 같은 이름(세라프) · 괄호 안 영문 이름(루�
     assert.equal(uid(V.voiceFor('Seraph')), 'elevenlabs:el_seraph');
     assert.equal(uid(V.voiceFor('Lucifer')), 'elevenlabs:el_lucifer', '진우 쿠키를 빌려 쓰는 Lucifer → 루시퍼 (Lucifer)');
     assert.equal(uid(V.voiceFor('Gabriel')), 'elevenlabs:el_gabe', '다른 이름에 가브리엘');
-    assert.equal(uid(V.voiceFor('Dreamju', { isUser: true })), 'elevenlabs:el_seraph', '나 목소리도');
+    assert.equal(uid(V.voiceFor('Hero', { isUser: true })), 'elevenlabs:el_seraph', '나 목소리도');
 });
 
 test('ElevenLabs 로: 맞는 이름이 없으면 원래 목소리 — 같은 목소리를 빌린 다른 캐릭터(Jinu)에 루시퍼가 붙지 않음 · 한글 괄호 설명은 이름이 아님', () => {
@@ -335,17 +335,17 @@ if (has138) {
         reset('');
         const s = settings();
         s.user_voice = '@auto';
-        assert.equal(uid(V.voiceFor('Dreamju', { isUser: true })), 'minimax:cj_lil01', '엑스트라가 없으면 기본 목소리');
+        assert.equal(uid(V.voiceFor('Hero', { isUser: true })), 'minimax:cj_lil01', '엑스트라가 없으면 기본 목소리');
         s.extras = 'auto';
-        s.extra_map = { Dreamju: { g: 'f', a: 'a', l: 'ja', t: 1, v: { minimax: 'cj_seraph_new' } } };
-        assert.equal(uid(V.voiceFor('Dreamju', { isUser: true })), 'minimax:cj_seraph_new', '엑스트라 목소리');
-        s.char_map.Dreamju = 'minimax:cj_gabriel01';
-        assert.equal(uid(V.voiceFor('Dreamju', { isUser: true })), 'minimax:cj_gabriel01', '엑스트라 줄에서 고르면 그 목소리');
+        s.extra_map = { Hero: { g: 'f', a: 'a', l: 'ja', t: 1, v: { minimax: 'cj_seraph_new' } } };
+        assert.equal(uid(V.voiceFor('Hero', { isUser: true })), 'minimax:cj_seraph_new', '엑스트라 목소리');
+        s.char_map.Hero = 'minimax:cj_gabriel01';
+        assert.equal(uid(V.voiceFor('Hero', { isUser: true })), 'minimax:cj_gabriel01', '엑스트라 줄에서 고르면 그 목소리');
         assert.ok(!V.usedUids().has('@auto'));
         s.user_voice = '';
-        assert.equal(V.voiceFor('Dreamju', { isUser: true }), null, '(없음) = 읽지 않음 (1.3.7 그대로)');
+        assert.equal(V.voiceFor('Hero', { isUser: true }), null, '(없음) = 읽지 않음 (1.3.7 그대로)');
         s.user_voice = 'minimax:cj_seraph01';
-        assert.equal(uid(V.voiceFor('Dreamju', { isUser: true })), 'minimax:cj_seraph01');
+        assert.equal(uid(V.voiceFor('Hero', { isUser: true })), 'minimax:cj_seraph01');
     });
 
     test('seedDefault · clearGone: 처음 들어온 목소리면 기본 목소리 (한국어 먼저) · 직접 입력 서버가 숨긴 표시 되돌림', () => {

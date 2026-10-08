@@ -111,7 +111,7 @@ export const UPGRADES = [
         },
     },
     {
-        // v1.7.9: 유저 외모 색깔 gained the several-colours-at-once lines ("golden-silver hair"); the user's list stays.
+        // v1.7.9: the persona colour rule gained the several-colours-at-once lines ("golden-silver hair"); the user's list stays.
         id: 'two-colors-1.7.9',
         apply(stored) {
             const rule = stored.rules.find(item => item.id === 'user_colors');

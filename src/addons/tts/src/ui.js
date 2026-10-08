@@ -1227,7 +1227,7 @@ function colorRowHtml(r, s, alts = []) {
     const cnt = r.count ?? (r.votes ? Object.values(r.votes).reduce((a, b) => a + (Number(b) || 0), 0) : 0);
     const hint = topVote(r) || (r.near && r.near.name) || '이름';   // 이름이 비면 가장 많은 표 → 가까운 색의 이름을 제안
     // 1.4.1 같은 사람이 다른 색으로도 나오면(AI 가 그때그때 다른 색) 줄은 하나 — 점은 원래 색 그대로, 오른쪽 아래에 다른 색 작은 점
-    //   (처음엔 점을 반으로 나눠 칠했는데, 원래 색이 배경과 비슷하면(드림주 짙은 회색) 반쪽만 보여 잘린 것 같았다 — 사용자 10-08)
+    //   (처음엔 점을 반으로 나눠 칠했는데, 원래 색이 배경과 비슷하면(짙은 회색 등) 반쪽만 보여 잘린 것 같았다 — 사용자 10-08)
     const badge = alts.length ? `<span class="lv-swatch-alt" style="background:${safeColor(alts[0])}"></span>` : '';
     // 1.4.1 이름 없는 새 색: 추천 이름을 ✓ 로 바로 받기 (흐린 글씨는 추천일 뿐이라 헷갈렸다)
     const accept = !name && hint && hint !== '이름' ? `<button type="button" class="lv-pin-chip lv-accept-chip" data-lv-act="color-accept" data-color="${esc(r.color)}" data-name="${esc(hint)}" aria-label="${esc(hint)} 으로 정하기"><i class="fa-solid fa-check" aria-hidden="true"></i> ${esc(hint)}</button>` : '';
@@ -1301,7 +1301,7 @@ function colorsCardHtml() {
     const s = settings();
     const rows = colorRows();
     const speakersPart = chatSpeakersHtml(s, rows);   // 1.4.0
-    // 1.4.1 사용자: "동명이인일 때만 두 명이면 좋겠다 · 드림주나 우리엘은 동명이인이 아니잖아" — 이름 없는 새 색인데 추천 이름이
+    // 1.4.1 사용자 요청: 진짜 동명이인일 때만 두 줄 — 이름 없는 새 색인데 추천 이름이
     //   이미 있는 사람이면 따로 줄을 만들지 않고 그 사람 줄의 점에 함께 칠한다. 이름을 직접 같게 적은 두 색(진짜 동명이인)은 두 줄 그대로.
     //   추천도 없이 한 번만 본 색은 숨김 (읽기는 그대로 — 이름 없는 색의 대사는 화자 찾기 · 보낸 이 이름으로)
     const owner = new Map();
