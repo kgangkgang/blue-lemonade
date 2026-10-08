@@ -442,6 +442,22 @@ function appearanceForRender(s) {
     return s;
 }
 
+// 5.7.5 추론 요청을 끄면 지난 추론도 숨기기 (채팅 › 화면): 실리태번 「모델 추론 요청」(채팅 완성 · 지금 공급자에 그 스위치가 보일 때)이
+// 꺼져 있으면 이미 받은 생각 칸도 가린다 — 몸 클래스 salty-reasoning-off 하나 (css/05-chat.css). 스위치 · API · 공급자가 바뀌면 index.js 가 syncReasoningOff
+function stReasoningOff() {
+    const box = document.getElementById('openai_show_thoughts');
+    if (!box || box.checked || document.getElementById('main_api')?.value !== 'openai') return false;
+    const block = box.closest('[data-source]'), source = document.getElementById('chat_completion_source')?.value;
+    if (!block || !source) return true;
+    const listed = block.dataset.source.split(',').includes(source);
+    return block.dataset.sourceMode === 'except' ? !listed : listed;
+}
+const reasoningOff = s => themeEnabled(s) && s.chat?.reasoningFollow !== false && stReasoningOff();
+export function syncReasoningOff() {
+    const on = reasoningOff(getSettings());
+    if (document.body.classList.contains('salty-reasoning-off') !== on) document.body.classList.toggle('salty-reasoning-off', on);
+}
+
 // ───────── 전체 적용 ─────────
 export function applyAll() {
     const rendered = appearanceForRender(getSettings());
@@ -719,6 +735,7 @@ export function applyAll() {
         if (deus && s.chat.demSkin) want.add('salty-dem-skin');          // 3.1.0 데우스 카드 스킨 (css/30-dem-skin.css)
         if (deus && s.chat.demSkin && s.chat.demFold !== false) want.add('salty-dem-fold'); // 폰: 트래커 한 줄 · 펼쳐 오는 카드 접기 (demskin.js)
         if (s.type.indent) want.add('salty-indent');
+        if (reasoningOff(s)) want.add('salty-reasoning-off'); // 5.7.5 추론 요청을 끄면 지난 추론도 숨기기 (위 stReasoningOff)
         if (s.chat.hiddenFade) { // 5.6.8 숨긴 메시지 흐리게 — 흑백은 0 이면 filter 자체를 안 걸고(레이어 비용), 마우스 올리면 원래대로는 따로 (css/05-chat.css)
             want.add('salty-hidden-fade');
             if ((Number(s.chat.hiddenGray) || 0) > 0) want.add('salty-hidden-gray');

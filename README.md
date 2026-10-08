@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.7.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.7.5.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.7.4 · 최신 업데이트</summary>
+<summary>5.7.5 · 최신 업데이트</summary>
+
+- TTS 1.4.1 대화 색: AI 가 같은 사람을 다른 색으로도 칠하면(예: 드림주를 다른 주황으로) 줄을 따로 만들지 않고 그 사람 점의 오른쪽 아래에 그 색을 작은 점으로 보여요. 진짜 동명이인이면 두 색에 같은 이름을 직접 적으면 두 줄로 나와요. 이름이 없는 새 색은 흐린 추천 이름 옆 ✓ 를 누르면 바로 그 이름으로 정하고, 추천도 없이 한 번만 본 색은 숨겨요.
+- 채팅: 실리태번 「모델 추론 요청」을 끄면 이미 있는 메시지의 추론(「○초 동안 생각함」)도 숨겨요. 다시 켜면 보이고, 추론을 고치는 중에는 그대로 보여요. 테마 설정 › 채팅 › 화면 「추론 요청을 끄면 지난 추론도 숨기기」로 끌 수 있어요.
+
+</details>
+
+<details>
+<summary>5.7.4 · TTS 1.4.0 · 캐릭터마다 감정 세기 · 차분한 ElevenLabs</summary>
 
 - TTS 1.4.0: 감정 세기 「약하게」가 ElevenLabs v3 · v4 에서도 차분해요. 안정감만으로는 덜 들뜨지 않아서(ElevenLabs 는 감정을 글과 복제 원본에서 읽어요) 약하게면 느낌표 · 물결 · 음표를 순하게 바꾸고, 말투를 안 고른 목소리엔 「덤덤하게」를 붙여요. 말투 칩에 「덤덤하게」가 생겼어요.
 - TTS: ElevenLabs 계정에서 목소리 이름을 바꾸면 목소리 목록의 이름도 따라 바뀌고, 「엔진」이 같은 이름의 목소리를 짝으로 골라요 (목록에서 직접 바꾼 이름은 그대로). 복제 목소리가 너무 들뜨면 차분한 녹음으로 다시 복제하고 이름을 바꿔 끼우면 캐릭터 설정을 건드리지 않고 바뀌어요.

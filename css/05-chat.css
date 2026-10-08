@@ -707,6 +707,11 @@ body.salty #chat .mes_reasoning {
 body.salty #chat .mes_reasoning_details:has(.reasoning_edit_textarea) {
   padding: 8px !important;
 }
+/* 5.7.5 추론 요청을 끄면 지난 추론도 숨기기 (채팅 › 화면): 실리태번 「모델 추론 요청」이 꺼져 있으면 이미 받은 생각 칸도 가림 — 클래스는 apply.js stReasoningOff.
+   손으로 생각을 적는 중(편집 칸)인 것만 보인다. [id="chat"] 은 설정 창 미리보기 사본을 안 만들려고 (미리보기에는 생각 칸이 없다) */
+body.salty.salty-reasoning-off #sheld > [id="chat"] .mes_reasoning_details:not(:has(.reasoning_edit_textarea)) {
+  display: none !important;
+}
 
 /* 프리셋 카드(DEM 등): 가는 테두리는 지우고 생각 칸과 같은 카드(e1)로, 왼쪽 색 띠는 그대로 */
 body.salty #chat .mes_text details[class*="custom-dem-card"] {

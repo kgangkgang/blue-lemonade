@@ -1401,6 +1401,7 @@ function tabChat(s, sub) {
             ${s.chat.hiddenFade ? slider('chat.hiddenOpacity', '진하기', 10, 90, 5, 40) : ''}
             ${s.chat.hiddenFade ? slider('chat.hiddenGray', '흑백', 0, 100, 5, 30) : ''}
             ${s.chat.hiddenFade ? row('마우스 올리면 진하게', toggle('chat.hiddenHover', s.chat.hiddenHover !== false), '폰에서는 누르는 동안') : ''}
+            ${row('추론 요청을 끄면 지난 추론도 숨기기', toggle('chat.reasoningFollow', s.chat.reasoningFollow !== false), '실리태번 「모델 추론 요청」을 따라가요 · 켜면 다시 보여요')}
         </div>
         ${cap('메시지 버튼', '··· 메뉴 밖에 늘 보일 버튼')}<div class="salty-group">
             ${mesPinPicker(s)}

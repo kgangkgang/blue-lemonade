@@ -9,7 +9,7 @@ import { startAddons, syncAddonIcons } from './src/addons.js';
 import { installCredits, COPYRIGHT_ICON } from './src/credits.js';
 // Blue Lemonade · 블루 레몬에이드 — 실리태번 테마 확장 (폴더·설정 키는 예전 이름 salty 그대로)
 import { getSettings, saveSettings } from './src/settings.js';
-import { applyAll, dropStaleOverrides } from './src/apply.js';
+import { applyAll, dropStaleOverrides, syncReasoningOff } from './src/apply.js';
 import { startAssetWatcher, classifyAll } from './src/assets.js';
 import { startPromptList } from './src/promptlist.js';
 import { startCurrentMark } from './src/current.js';
@@ -206,6 +206,9 @@ jQuery(() => {
         } catch { notice(); }
     }
 
+    // 5.7.5 실리태번 「모델 추론 요청」 · API · 공급자가 바뀌면 지난 추론 숨기기 클래스만 다시 (프리셋을 바꿀 때도 실리태번이 input 을 쏜다 — jQuery trigger 라 jQuery 로 받는다)
+    $(document).on('input change', '#openai_show_thoughts, #main_api, #chat_completion_source', syncReasoningOff);
+    try { const { eventSource, event_types } = SillyTavern.getContext(); if (event_types.SETTINGS_LOADED) eventSource.on(event_types.SETTINGS_LOADED, syncReasoningOff); } catch { /* 이벤트가 없으면 시작 때 applyAll 값 그대로 */ }
     // 실리태번 쪽 설정이 바뀌면 설정 점검을 다시
     let refreshTimer = null;
     $(document).on('change input', '#chat_display, #hideChatAvatarsEnabled, #customCSS, #stream_fade_in', (event) => {

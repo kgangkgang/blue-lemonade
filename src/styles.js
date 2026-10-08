@@ -9,7 +9,7 @@ import { getSettings, DEFAULTS, FONT_SET, isCssColor, safeFont } from './setting
 
 export const STYLE_KEYS = ['gradients', 'palette', 'nightTint', 'lightTint', 'customName', 'colorOverrides', 'fonts', 'type', 'markdown', 'dialogue', 'ui', 'code', 'em', 'strong', 'shadow', 'outline', 'strike', 'deus', 'chat', 'image', 'profile', 'userProfile'];
 // 2026-10-06: 퀵 리플라이 배치(qrScroll · qrRows · qrPlace) · ··· 메뉴 고정 버튼(mesPins)도 쓰는 방식 — 초기화(settings.js resetSettings)처럼 스타일에 담지도 덮지도 않는다
-const CHAT_BEHAVIOR = ['triangleFold', 'weatherAutoRest', 'selectPop', 'colorPop', 'numComma', 'personaTall', 'streamFade', 'demFold', 'qrFind', 'qrScroll', 'qrRows', 'qrPlace', 'mesPins'];
+const CHAT_BEHAVIOR = ['triangleFold', 'weatherAutoRest', 'selectPop', 'colorPop', 'numComma', 'personaTall', 'streamFade', 'reasoningFollow', 'demFold', 'qrFind', 'qrScroll', 'qrRows', 'qrPlace', 'mesPins'];
 export const MAX_STYLES = 20;
 const CODE_PREFIX = 'BLS1.';     // deflate-raw + base64url
 const PLAIN_PREFIX = 'BLS0.';    // 압축 못 하는 브라우저: base64url 만

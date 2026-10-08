@@ -1056,5 +1056,36 @@ await test('1.4.0 이 채팅의 캐릭터 (대화 색 없이): 이름표 · 화�
     delete T.ctx.chatMetadata.lemon_voice;
 });
 
+await test('1.4.1 대화 색: 같은 사람의 다른 색(추천 이름이 이미 있는 사람)은 그 사람 줄의 점으로 · 동명이인(직접 같은 이름)은 두 줄 · 새 이름 추천은 ✓ · 한 번 본 후보 없는 색은 숨김', async () => {
+    await userOnEl();
+    const keep = T.ctx.chat.slice();
+    T.ctx.chat.length = 0;
+    const E = (o) => ({ locked: false, auto: false, votes: {}, tvotes: {}, count: 0, aliases: [], ...o });
+    T.ctx.chatMetadata.lemon_voice = { colors: {
+        '#7ed957': E({ name: 'Uriel', locked: true, count: 7 }),
+        '#9bd6a5': E({ name: null, count: 1, votes: { Uriel: 1 } }),          // 우리엘의 다른 색 (실제 10-08 채팅)
+        '#e8a33d': E({ name: null, count: 2, votes: { Seraph: 1 } }),         // 이미 있는 사람(Seraph)의 다른 색
+        '#1a6b3c': E({ name: 'Seraph', locked: true, count: 3 }),
+        '#123456': E({ name: null, count: 1 }),                                // 후보 없음 · 한 번
+        '#abcdef': E({ name: null, count: 2, votes: { Noel: 2 } }),           // 새 사람 후보
+        '#d4a017': E({ name: 'Uriel', locked: true, count: 2 }),              // 직접 같은 이름 = 동명이인 두 줄
+    } };
+    ui.renderVoices();
+    const col = DOM.cards.colors || '';
+    const rowsOf = (html) => [...html.matchAll(/<div class="lv-color[^"]*" data-color="(#[0-9a-f]{6})">/g)].map(m => m[1]);
+    const rows = rowsOf(col);
+    assert.ok(!rows.includes('#9bd6a5') && !rows.includes('#e8a33d'), '같은 사람의 다른 색은 줄을 따로 안 만듦');
+    assert.ok(!rows.includes('#123456'), '후보 없이 한 번 본 색은 숨김');
+    assert.ok(rows.includes('#abcdef'), '새 사람 후보는 줄');
+    assert.ok(rows.includes('#7ed957') && rows.includes('#d4a017'), '직접 같은 이름을 적은 두 색 = 두 줄 (동명이인)');
+    assert.match(col, /data-color="#7ed957">\s*<span class="lv-swatch" style="background:#7ed957"><span class="lv-swatch-alt" style="background:#9bd6a5"><\/span><\/span>/, '우리엘 점은 원래 색 그대로 + 다른 색 작은 점');
+    assert.match(col, /data-lv-act="color-accept" data-color="#abcdef" data-name="Noel"/, '새 색 ✓ 추천 이름');
+    await click('color-accept', { color: '#abcdef', name: 'Noel' });
+    assert.equal(T.ctx.chatMetadata.lemon_voice.colors['#abcdef'].name, 'Noel', '✓ 를 누르면 그 이름 (잠금)');
+    assert.equal(T.ctx.chatMetadata.lemon_voice.colors['#abcdef'].locked, true);
+    T.ctx.chat.length = 0; T.ctx.chat.push(...keep);
+    delete T.ctx.chatMetadata.lemon_voice;
+});
+
 console.log(`\ntts-onboarding: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

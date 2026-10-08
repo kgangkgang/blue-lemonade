@@ -1,11 +1,11 @@
-/* TTS (Lemon TTS) v1.4.0 */
+/* TTS (Lemon TTS) v1.4.1 */
 
 #lv_settings .lv-version { background: none; border: 0; color: inherit; font: inherit; padding: 4px 6px; cursor: pointer; text-decoration: none; }
 #lv_settings .lv-version:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 
 /* ---------- 공통 변수: 설정 창 · 편집 팝업 · 재생 막대 (ST 테마 색을 따르고, 블루 레몬에이드 변수는 있으면 씀) */
 .lv-settings, .lv-editor, .lv-bar {
-  --lv-css-version: "1.4.0";
+  --lv-css-version: "1.4.1";
   --lv-accent: var(--salty-accent, var(--SmartThemeQuoteColor, #51a0de));
   --lv-text: var(--SmartThemeBodyColor, #dcdcd2);
   --lv-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, .15));
@@ -195,6 +195,8 @@
 .lv-color-voicebox .lv-pin-chip { margin: 0; }
 .lv-color-voicebox > select.lv-strength { flex: 0 0 auto; width: 4.6em; padding-left: 6px; padding-right: 2px; }   /* 1.4.0 줄 옆 감정 세기 */
 .lv-color-voicebox > .lv-icon { flex: 0 0 auto; }
+.lv-color-voicebox > .lv-accept-chip { flex: 0 0 auto; margin: 0; white-space: nowrap; }   /* 1.4.1 새 색 ✓ 추천 이름 */
+.lv-color-new .lv-color-name { opacity: .85; }
 .lv-range input[type=range] { margin-top: 4px; }
 @container lvcard (min-width: 18em) {
   .lv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -243,7 +245,8 @@
   align-items: center;
   gap: 6px;
 }
-.lv-swatch { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--lv-border); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .25); }
+.lv-swatch { position: relative; width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--lv-border); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .25); }
+.lv-swatch-alt { position: absolute; right: -4px; bottom: -4px; width: 9px; height: 9px; border-radius: 50%; box-shadow: 0 0 0 2px var(--SmartThemeBlurTintColor, #171717); }   /* 1.4.1 같은 사람의 다른 색 */
 .lv-color .lv-count { text-align: right; }
 @container (max-width: 439px) {
   /* 좁으면 두 줄: 색·이름·고정·횟수 / 목소리 */

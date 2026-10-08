@@ -428,6 +428,7 @@ const COLORS_HELP = [
     '대사 색으로 누가 말하는지 알아내요 (색은 채팅 글에서 배워요 — 데우스 프리셋이 아니어도 대사에 색이 있으면 돼요). 색마다 캐릭터 이름을 적고 목소리를 골라요.',
     ...STRENGTH_HELP,
     '자물쇠는 이 색의 이름을 고정해요 (다시 배워도 안 바뀌게). 숫자는 이 채팅에서 그 색을 본 횟수예요.',
+    '같은 사람이 다른 색으로도 나오면 줄을 따로 만들지 않고 그 사람 점의 오른쪽 아래에 그 색을 작은 점으로 보여요. 이름이 없는 새 색은 흐린 추천 이름과 ✓ 단추가 보여요 — ✓ 를 누르면 그 이름으로 정해요. 진짜 동명이인이면 두 색에 같은 이름을 직접 적으면 두 줄로 나와요.',
     '대사에 색이 없는 채팅은 「이름: 「…」」 같은 이름표와 대사 분석(화자 찾기)으로 누가 말하는지 찾아요.',
     '「이 채팅의 캐릭터」는 색이 없어도 최근 메시지에 나온 캐릭터(이름표 · 화자 찾기 · 목소리를 정해 둔 이름)예요. 여기서 바로 목소리 · 감정 세기를 정해요.',
 ];
@@ -651,6 +652,13 @@ const ACTIONS = {
         toast('본문 필터 기본값을 적용했어요', 'success');
     },
     'map-remove': (b) => { const s = settings(); delete s.char_map[b.dataset.name]; if (isObj(s.prefer_keep)) delete s.prefer_keep[b.dataset.name]; save(); renderMap(); renderColors(); },
+    'color-accept': (b) => {   // 1.4.1 새 색에 추천 이름을 받음 (잠금 — 다시 배워도 그대로)
+        const name = String(b.dataset.name || '').trim();
+        if (!name) return;
+        speakers.setColor(b.dataset.color, name, true);
+        renderColors();
+        renderMap();
+    },
     'color-lock': (b) => {
         const row = colorRows().find(r => r.color === b.dataset.color);
         if (!row) return;
@@ -1213,15 +1221,20 @@ function topVote(r) {
 }
 /** 1.3.7 고르기 칸에 보일 값: 엔진 자동 맞춤이면 실제로 읽는 목소리 */
 function effUid(uid, name) { const v = uid ? voices.findVoice(uid) : null; const e = v ? voices.preferVoice(v, name) : null; return e ? e.uid : uid; }
-function colorRowHtml(r, s) {
+function colorRowHtml(r, s, alts = []) {
     const name = r.name || '';
     const uid = name ? (s.char_map[name] || '') : '';
     const cnt = r.count ?? (r.votes ? Object.values(r.votes).reduce((a, b) => a + (Number(b) || 0), 0) : 0);
     const hint = topVote(r) || (r.near && r.near.name) || '이름';   // 이름이 비면 가장 많은 표 → 가까운 색의 이름을 제안
-    return `<div class="lv-color" data-color="${esc(r.color)}">
-<span class="lv-swatch" style="background:${safeColor(r.color)}"></span>
+    // 1.4.1 같은 사람이 다른 색으로도 나오면(AI 가 그때그때 다른 색) 줄은 하나 — 점은 원래 색 그대로, 오른쪽 아래에 다른 색 작은 점
+    //   (처음엔 점을 반으로 나눠 칠했는데, 원래 색이 배경과 비슷하면(드림주 짙은 회색) 반쪽만 보여 잘린 것 같았다 — 사용자 10-08)
+    const badge = alts.length ? `<span class="lv-swatch-alt" style="background:${safeColor(alts[0])}"></span>` : '';
+    // 1.4.1 이름 없는 새 색: 추천 이름을 ✓ 로 바로 받기 (흐린 글씨는 추천일 뿐이라 헷갈렸다)
+    const accept = !name && hint && hint !== '이름' ? `<button type="button" class="lv-pin-chip lv-accept-chip" data-lv-act="color-accept" data-color="${esc(r.color)}" data-name="${esc(hint)}" aria-label="${esc(hint)} 으로 정하기"><i class="fa-solid fa-check" aria-hidden="true"></i> ${esc(hint)}</button>` : '';
+    return `<div class="lv-color${name ? '' : ' lv-color-new'}" data-color="${esc(r.color)}">
+<span class="lv-swatch" style="background:${safeColor(r.color)}">${badge}</span>
 <input type="text" class="text_pole lv-color-name" data-lv-color-name="${esc(r.color)}" value="${esc(name)}" placeholder="${esc(hint)}" autocomplete="off">
-<span class="lv-color-voicebox"><select class="text_pole lv-color-voice" data-lv-color-voice="${esc(r.color)}"${name ? '' : ' disabled'}>${voiceOptions(effUid(uid, name), { twins: charTwins(name, uid) })}</select>${pinChip(name, uid)}${name ? voiceToolsHtml(effUid(uid, name)) : ''}</span>
+<span class="lv-color-voicebox">${accept}<select class="text_pole lv-color-voice" data-lv-color-voice="${esc(r.color)}"${name ? '' : ' disabled'}>${voiceOptions(effUid(uid, name), { twins: charTwins(name, uid) })}</select>${pinChip(name, uid)}${name ? voiceToolsHtml(effUid(uid, name)) : ''}</span>
 <button type="button" class="lv-icon${r.locked ? ' lv-on' : ''}" data-lv-act="color-lock" data-color="${esc(r.color)}" aria-label="고정" aria-pressed="${r.locked ? 'true' : 'false'}"><i class="fa-solid ${r.locked ? 'fa-lock' : 'fa-lock-open'}"></i></button>
 <span class="lv-count">${esc(cnt)}</span></div>`;
 }
@@ -1288,8 +1301,23 @@ function colorsCardHtml() {
     const s = settings();
     const rows = colorRows();
     const speakersPart = chatSpeakersHtml(s, rows);   // 1.4.0
-    const body = (rows.length
-        ? `<div class="lv-colors">${rows.map(r => colorRowHtml(r, s)).join('')}</div>`
+    // 1.4.1 사용자: "동명이인일 때만 두 명이면 좋겠다 · 드림주나 우리엘은 동명이인이 아니잖아" — 이름 없는 새 색인데 추천 이름이
+    //   이미 있는 사람이면 따로 줄을 만들지 않고 그 사람 줄의 점에 함께 칠한다. 이름을 직접 같게 적은 두 색(진짜 동명이인)은 두 줄 그대로.
+    //   추천도 없이 한 번만 본 색은 숨김 (읽기는 그대로 — 이름 없는 색의 대사는 화자 찾기 · 보낸 이 이름으로)
+    const owner = new Map();
+    for (const r of rows) if (r.name && !owner.has(foldName(r.name))) owner.set(foldName(r.name), r);
+    const alts = new Map();
+    const shown = [];
+    for (const r of rows) {
+        if (r.name) { shown.push(r); continue; }
+        const sug = topVote(r) || (r.near && r.near.name) || '';
+        const o = sug ? owner.get(foldName(sug)) : null;
+        if (o) { if (!alts.has(o.color)) alts.set(o.color, []); alts.get(o.color).push(r.color); continue; }
+        if (!sug && (Number(r.count) || 0) <= 1) continue;
+        shown.push(r);
+    }
+    const body = (shown.length
+        ? `<div class="lv-colors">${shown.map(r => colorRowHtml(r, s, alts.get(r.color) || [])).join('')}</div>`
         : (speakersPart ? '' : '<p class="lv-empty">아직 배운 색이 없어요</p>')) + speakersPart;
     const btns = '<div class="lv-actions"><button type="button" class="menu_button" data-lv-act="palette">프리셋에서 불러오기</button><button type="button" class="menu_button" data-lv-act="relearn">다시 배우기</button><button type="button" class="menu_button" data-lv-act="colors-clear">비우기</button></div>';
     return card('colors', 'fa-palette', '대화 색 (이 채팅)', body + btns, '', '', COLORS_HELP);
