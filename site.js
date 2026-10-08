@@ -603,7 +603,7 @@ function galleryBlock(topic, device, cards, withHeading){
   const block=element('section','gallery-block'), heading=element('div','gallery-heading'), label=element('div'); block.dataset.device=device;
   label.append(element('h3','',topic.title),element('p','',topic.sub));
   heading.append(label);
-  const track=element('div','track'); track.tabIndex=0; track.setAttribute('aria-label',topic.title+(device==='pc'?' PC':'')+' 갤러리');
+  const track=element('div','track'); track.tabIndex=0; track.setAttribute('aria-label',topic.title+(device==='pc'?' PC':'')+' 모음');
   const arrows=element('div','arrows'), buttons=[];
   for(const [symbol,dir,name] of [['←',-1,'이전'],['→',1,'다음']]){const b=element('button','',symbol);b.setAttribute('aria-label',topic.title+' '+name);b.onclick=()=>track.scrollBy({left:dir*(track.querySelector('.card').offsetWidth+16),behavior:reduceMotion.matches?'instant':'smooth'});arrows.append(b);buttons.push(b);}heading.append(arrows);
   const syncArrows=()=>{buttons[0].disabled=track.scrollLeft<4;buttons[1].disabled=track.scrollLeft+track.clientWidth>=track.scrollWidth-4;};
@@ -659,7 +659,7 @@ lightbox.querySelector('.close').onclick=()=>lightbox.close();lightbox.onclick=e
  dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});
  dialog.addEventListener('close',()=>{video.pause();video.removeAttribute('src');delete video.dataset.modeBase;video.load();});}
 const SHOWN_NOTES=3;
-fetch('release-notes.json?v=577', {cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error('notes');return r.json();}).then(notes=>{$('#notes').replaceChildren();
+fetch('release-notes.json?v=578', {cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error('notes');return r.json();}).then(notes=>{$('#notes').replaceChildren();
   // one card per day, like the theme's own notice: a busy day reads as "v4.1.2 ~ v4.2.4 · 업데이트 13번"
   const days=[];for(const note of notes){const last=days.at(-1);if(last&&last.date===note.date)last.notes.push(note);else days.push({date:note.date,notes:[note]});}
   days.forEach((day,i)=>{const d=element('details','note');d.open=i===0;d.hidden=i>=SHOWN_NOTES;const s=element('summary'),first=day.notes.at(-1).version,latest=day.notes[0].version;
