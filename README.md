@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.7.2.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.7.3.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.7.2 · 최신 업데이트</summary>
+<summary>5.7.3 · 최신 업데이트</summary>
+
+- TTS 1.3.9: 내 대사(페르소나) 목소리가 없을 때 그 줄을 누르면 「내 목소리를 먼저 정해요」 대신 「○○(나) 대사도 자동 목소리로 읽을까요?」를 물어요. 여자 목소리 · 남자 목소리를 고르면 「나」가 자동이 되고 그 자리에서 바로 읽어요. 목소리 탭에서 「나」 = 자동을 고를 때도 성별을 바로 물어요 (대사 분석을 기다리지 않게).
+- 단어 치환: 「치환 전후 보기」에서 바뀐 낱말만 테마 색으로 칠해요. 바꾸기 전은 옅은 바탕에 줄을 긋고, 바꾼 뒤는 진한 바탕에 밑줄을 그어요. 조사가 함께 바뀌면(세라프가 → 미카엘이) 조사까지 칠해요.
+- 번역 2.2.9 용어집: 모델이 같은 이름을 다른 가타카나로 적어도(アデルスタイン · アデルシュタイン, 장음 ー 있고 없음, ヴァ · バ 등) 용어집 줄이 들어가요. 예전에는 표기가 조금만 달라도 그 줄이 빠지고 이름 안에 든 짧은 말(アデル → 아델)만 들어가서 「아델슈타인」처럼 옮겨졌어요. 이미 잘못 옮겨진 메시지는 번역문을 지우고(휴지통) 다시 번역하면 고쳐져요.
+
+</details>
+
+<details>
+<summary>5.7.2 · TTS 1.3.8</summary>
 
 - TTS 1.3.8: 새 엔진(ElevenLabs 등) 키를 넣고 연결 확인이 되면 그 계정의 내 목소리가 바로 들어오고, 이름이 맞는 캐릭터를 그 엔진으로 바꿀지 한 번 물어요. 처음 쓰는 경우엔 기본 목소리도 정해 줘요 (키만 연결되고 목소리는 안 들어오던 것을 고쳤어요). 키에 목소리 읽기 권한이 없으면 연결 줄에 그 까닭이 나와요.
 - TTS: 한 캐릭터의 엔진이 안 되면(꺼진 직접 입력 서버 · 키 오류) 그 캐릭터 줄만 건너뛰고 다른 캐릭터 줄은 계속 읽어요. 직접 입력 서버(집 PC 등)의 목소리를 「계정에 없음」으로 숨기던 것을 고치고 숨긴 것도 되돌려요. 「바꿀까요?」는 목소리 · 엔진 탭을 볼 때만 묻고 「아니요」를 기억해요. 지운 목소리는 다시 들어오지 않아요. 직접 입력 서버가 꺼졌을 때 · 응답이 없을 때 · 막았을 때를 나눠 알려 줘요.

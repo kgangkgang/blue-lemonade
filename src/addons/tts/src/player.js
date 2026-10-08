@@ -41,7 +41,8 @@ import { getContext } from '../../../../../../../extensions.js';
 import { settings, providerConfig, addUsage, addPreUsed, USER_AUTO } from './settings.js';
 import { segmentMessage, pairSegments, colorsClash, detectLang, parseRegexLines, speechDisplay } from './text.js';
 import { resolveSpeaker, canon, knownNames as learnedNames } from './speakers.js';
-import { voiceFor, findVoice, allVoices, twinOf, engineUsable, isPinned } from './voices.js';
+import { voiceFor, findVoice, allVoices, twinOf, engineUsable, isPinned, setPersonaAuto, personaKnown, ensureStock, extraEngine } from './voices.js';
+import { POPUP_TYPE, POPUP_RESULT, callGenericPopup } from '../../../../../../../popup.js';
 import * as cache from './cache.js';
 import { prepare } from './loudness.js';
 import { log, scrub } from './log.js';
@@ -580,7 +581,7 @@ function buildJobs(mesId, mes, { orig, disp }, { startSeg = 0, final = true, exc
         if (route === 'user') voice = voiceFor(userName, { isUser: true, kind: seg.kind });
         else if (route === 'narrator') voice = voiceFor(name, { isUser: false, kind: 'narrator' });
         else voice = voiceFor(name, { isUser, kind: seg.kind });
-        if (!voice) { if (route === 'user' && s.user_voice !== USER_AUTO) missingUser = true; else missing = true; continue; }   // 내 목소리가 없으면 조용히 건너뜀 (1.3.8 「나」 자동이면 다른 화자처럼 — 기본 목소리가 없음)
+        if (!voice) { if (route === 'user') missingUser = true; else missing = true; continue; }   // 5.7.3 「나」 자동이어도 내 대사면 missingUser (누르면 성별을 물어 바로 읽음)   // 내 목소리가 없으면 조용히 건너뜀 (1.3.8 「나」 자동이면 다른 화자처럼 — 기본 목소리가 없음)
         // 목소리별 원문/번역문 우선 (스트리밍 중엔 번역이 아직 없으니 원문; 목소리가 번역문을 꼭 원하면 그려질 때까지 미룸)
         const pref = voice.prefer_source && voice.prefer_source !== 'auto' ? voice.prefer_source : '';
         const want = pref || s.text_source;
@@ -1546,7 +1547,7 @@ function speakNow(mesId, mes, { swipe, text, from, exclude, force, fromStream })
     readState.set(mesId, fromStream && prev && prev.swipe === swipe && typeof prev.streamed === 'boolean' ? { swipe, text, count: built.count, streamed: prev.streamed } : { swipe, text, count: built.count });
     if (!jobs.length) {
         if (built.missing) toastOnce('목소리를 먼저 정해요 (TTS 설정)', 'warning');
-        else if (built.missingUser && force) toastOnce('내 목소리를 먼저 정해요 (TTS 설정)', 'warning');
+        else if (built.missingUser && force) { void askPersonaVoice().then(ok => { if (ok) speakNow(mesId, mes, { swipe, text, from, exclude, force, fromStream }); }); }
         else if (force) toastOnce('읽을 부분이 없어요', 'info');
         return false;
     }
@@ -1774,7 +1775,7 @@ export function speakSegments(mesId, segs) {
         const jobs = finishJobs(t.lines.flat(), s, { merge: !pregenOn(s) });   // 미리 만들기가 켜져 있으면 줄마다 (미리 만든 키와 같게)
         if (!jobs.length) {
             if (t.missing) toastOnce('목소리를 먼저 정해요 (TTS 설정)', 'warning');
-            else if (t.missingUser) toastOnce('내 목소리를 먼저 정해요 (TTS 설정)', 'warning');
+            else if (t.missingUser) { void askPersonaVoice().then(ok => { if (ok) run(); }); }
             return false;
         }
         jobs[0].tapT0 = t0;
@@ -2207,4 +2208,36 @@ export function init() {
     // 그려진 시각: ▶ 버튼이 "번역이 아직 오는 중"인지 볼 때 (스와이프도 다시 그려지며 번역기가 새로 번역함)
     eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, (id) => noteRendered(id));
     eventSource.on(event_types.MESSAGE_SWIPED, (id) => noteRendered(id));
+}
+
+/**
+ * 5.7.3 내 대사(페르소나) 목소리가 없을 때 — 「내 목소리를 먼저 정해요」 대신 그 자리에서 묻는다:
+ * 「<이름>(나) 대사도 자동 목소리로 읽을까요?」 여자 목소리 · 남자 목소리 · 취소 → 「나」 = 자동 + 그 성별로 엔진 기본 목소리를 골라 바로 읽음.
+ * 「나」에 목소리를 직접 정해 두었으면 묻지 않는다 (그 목소리가 지워진 경우만 여기로 옴 — 그때는 안내만). 한 번에 하나만
+ */
+let askingPersona = null;
+export function askPersonaVoice({ quiet = false } = {}) {
+    if (askingPersona) return askingPersona;
+    const s = settings();
+    let name = '';
+    try { name = String(getContext()?.name1 || '').trim(); } catch { name = ''; }
+    if (s.user_voice && s.user_voice !== USER_AUTO) { if (!quiet) toastOnce('내 목소리를 먼저 정해요 (TTS 설정)', 'warning'); return Promise.resolve(false); }
+    if (s.extras === 'off') { if (!quiet) toastOnce('내 목소리를 먼저 정해요 (TTS 설정 · 엑스트라가 꺼져 있어요)', 'warning'); return Promise.resolve(false); }
+    if (s.user_voice === USER_AUTO && personaKnown(name)) {
+        // 성별은 아는데 고를 기본 목소리가 아직 없음 (목록을 받는 중) — 받아 두고 한 번 더
+        askingPersona = Promise.resolve(ensureStock(extraEngine())).then(() => true, () => false).finally(() => { askingPersona = null; });
+        return askingPersona;
+    }
+    const who = name || '나';
+    askingPersona = (async () => {
+        let r = null;
+        try {
+            r = await callGenericPopup(`${who}(나) 대사도 자동 목소리로 읽을까요?`, POPUP_TYPE.TEXT, '', { okButton: '여자 목소리', cancelButton: '취소', customButtons: ['남자 목소리'] });
+        } catch { r = null; }
+        if (r !== POPUP_RESULT.AFFIRMATIVE && r !== 2) return false;
+        setPersonaAuto(name, r === 2 ? 'm' : 'f');
+        try { await ensureStock(extraEngine()); } catch { /* 목록을 못 받으면 기본 목소리 */ }
+        return true;
+    })().finally(() => { askingPersona = null; });
+    return askingPersona;
 }

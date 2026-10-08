@@ -52,6 +52,10 @@ body.salty-dark :is(.bl-extension-page,.bl-capture-dialog) { color-scheme:dark; 
 .bl-extension-page .bl-word-rule input[type=checkbox] { width:16px; height:16px; margin:0; accent-color:var(--salty-accent); }
 .bl-extension-page [data-word-draft] { min-height:160px; margin:0; padding:10px; box-sizing:border-box; border-radius:8px; font:inherit; line-height:1.6; resize:vertical; }
 .bl-word-comparison { display:grid; gap:8px; padding:8px; background:var(--salty-shade); border-radius:8px; }
+/* 5.7.3 전후 보기: 바뀐 글자만 테마 강조색 — 바뀌기 전은 흐린 강조 바탕 + 줄긋기, 바뀐 뒤는 강조 바탕 + 밑줄 · 굵게 */
+.bl-word-comparison mark { padding:0 1px; border-radius:3px; color:inherit; -webkit-box-decoration-break:clone; box-decoration-break:clone; }
+.bl-word-comparison mark.bl-diff-ins { background:var(--salty-accent-28); box-shadow:inset 0 -2px 0 var(--salty-accent); font-weight:600; }
+.bl-word-comparison mark.bl-diff-del { background:var(--salty-accent-10); text-decoration:line-through; text-decoration-color:var(--salty-accent-70); text-decoration-thickness:1px; }
 .bl-tool-status:empty { display:none; }
 .bl-capture-options { gap:10px; }
 .bl-capture-options .bl-mask-options { grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }

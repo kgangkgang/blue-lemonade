@@ -5,6 +5,7 @@ import { checkpointKey, translateChunks, clearCheckpoints } from './translation-
 import { segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis } from './translation-segments.js';
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
+import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey } from './glossary-match.js'; // [2.2.9] 용어집 찾기 (+ 가타카나 표기 흔들림)
 import { requestCurrentConnection } from './current-connection.js';
 import { createGenerationParameters, getChatCompletionModel } from '../../../../../../openai.js';
 import { createTextGenGenerationData, getTextGenModel } from '../../../../../../textgen-settings.js';
@@ -1776,7 +1777,7 @@ async function translate(text, options = {}) {
         watcher.check();
         // 5.4.2: 번역문 삭제 — 이 글의 문단 캐시 · 이어하기 줄만 지우고 요청은 하지 않는다 (키는 번역할 때와 같은 재료로)
         if (options.forget) {
-            if (paragraphParts) await forgetSegments(paragraphParts, () => setupDigest);
+            if (paragraphParts) await forgetSegments(paragraphParts, glossarySegmentSignature(setupDigest));
             if (key) await clearCheckpoints(key);
             return '';
         }
@@ -1834,7 +1835,7 @@ async function translate(text, options = {}) {
             const failReasons = new Map(); // 5.2.9: 문단 본문 → 실패 원인
             const noCache = new Set(); // 5.3.4: 붙이긴 하되 캐시에 넣지 않을 문단 (1부터 다시 매긴 답 — 한 칸 밀린 답과 구별이 안 된다)
             const result = await translateSegments({ parts: paragraphParts,
-                signature: () => setupDigest, check: watcher.check, progress, blockedMarker: (body, error) => failMarkOf(failReasons.get(body) ?? error), // 5.4.1: 원문 되풀이 = 형식 오류
+                signature: glossarySegmentSignature(setupDigest), check: watcher.check, progress, blockedMarker: (body, error) => failMarkOf(failReasons.get(body) ?? error), // 5.4.1: 원문 되풀이 = 형식 오류
                 cacheable: (body, out) => {
                     const marks = value => JSON.stringify(value.match(/\[\[__VAR_\d+__\]\]/g) || []);
                     // 5.3.4: 묶음 중 한 문단만 거절문으로 온 경우도 30일 캐시에 넣지 않는다
@@ -3762,55 +3763,14 @@ function activeGlossaryEntries(scopeKey = glossaryScopeKey()) {
 }
 
 /**
- * [1.8.1] 찾기용 정규화: 소문자로, 하이픈·밑줄·가운뎃점·연속 공백은 한 칸으로.
- * "Heaven And Low-world Office" 와 "Heaven And Low world Office" 를 같은 말로 본다. 프롬프트에는 사용자가 적은 형태가 들어간다.
- */
-function glossaryFold(text) {
-    return String(text ?? '').toLowerCase().replace(/[\s\-‐‑–—_·・]+/g, ' ').trim();
-}
-
-/**
- * 원문에 나오는 항목만 골라 프롬프트 블록을 만든다.
+ * 원문에 나오는 항목만 골라 프롬프트 블록을 만든다. 찾는 규칙은 glossary-match.js (2.2.9 에서 떼어 냄 + 가타카나 표기 흔들림).
  * reverse: 한국어 → 외국어(보내기·입력 번역)라 dst 로 찾고 "dst → src" 로 적는다.
  */
 function buildGlossaryBlock(text, { reverse = false } = {}) {
     const s = extensionSettings;
     if (s.glossary_enabled === false) return '';
     if (reverse && s.glossary_apply_send === false) return '';
-    const haystack = glossaryFold(text);
-    if (!haystack) return '';
-    // [1.8.2] 번역 칸에 쉼표로 여러 개를 적으면 (길드, 조합, 상인회) 모델이 맥락에 맞게 하나를 고른다
-    // [1.8.3] 원문 칸도 쉼표로 여러 표기를 받는다 (Guild, Merchant Guild). 원문에 실제로 나온 표기만 줄에 적는다.
-    const hits = [];
-    for (const entry of activeGlossaryEntries()) {
-        const sources = glossaryAlternatives(entry.src);
-        const targets = glossaryAlternatives(entry.dst);
-        const probes = reverse ? targets : sources;
-        const matched = probes.filter(probe => glossaryOccursIn(haystack, probe));
-        if (matched.length) hits.push({ entry, sources, targets, matched });
-    }
-    // [1.8.12] 더 긴 말 안에 든 짧은 말은 뺀다. 예전에는 "Adelstein" 한 줄과 "Adel" 한 줄이 함께 들어가
-    // 같은 자리를 두 가지로 옮기라고 지시했다. 한글처럼 띄어쓰기로 자를 수 없는 말도 이걸로 걸러진다.
-    // [2.1.3] 긴 말 밖에서도 따로 나오면 남긴다 — "庁長室 … 庁長" 에서 庁長 줄이 빠져 짧은 말을 제멋대로 옮겼다.
-    const longest = hits.flatMap(hit => hit.matched.map(glossaryFold)).sort((a, b) => b.length - a.length);
-    const lines = [];
-    let hasChoice = false;
-    for (const hit of hits) {
-        if (lines.length >= GLOSSARY_MAX_LINES) break;
-        const covered = hit.matched.every((form) => {
-            const folded = glossaryFold(form);
-            const containing = longest.filter(other => other.length > folded.length && other.includes(folded)); // 긴 것부터
-            if (!containing.length) return false;
-            let rest = haystack;
-            for (const other of containing) rest = rest.split(other).join('\u0000');
-            return !glossaryOccursIn(rest, form);
-        });
-        if (covered) continue;
-        const from = hit.matched.join(' / ');
-        const to = (reverse ? hit.sources : hit.targets);
-        if (to.length > 1) hasChoice = true;
-        lines.push(`${from} → ${to.join(' / ')}`);
-    }
+    const { lines, hasChoice } = glossaryLines(activeGlossaryEntries(), text, { reverse, maxLines: GLOSSARY_MAX_LINES });
     if (!lines.length) return '';
     const rule = hasChoice
         ? 'Render these terms exactly as given below (keep the given spelling; Korean particles may attach naturally). Where several options are separated by " / ", pick the one that fits the context and use only options from the list:'
@@ -3818,33 +3778,14 @@ function buildGlossaryBlock(text, { reverse = false } = {}) {
     return `[Glossary]\n${rule}\n` + lines.join('\n');
 }
 
-/**
- * [1.8.12] 정규화한 원문 안에 이 말이 "낱말로" 들어 있나.
- * 알파벳·숫자로 시작하거나 끝나는 말은 앞뒤가 알파벳·숫자가 아니어야 한다 ("Adel" 이 "Adelstein" 에 걸리지 않게).
- * 한자·가나·한글에는 낱말 경계가 없으니 예전처럼 그냥 들어 있으면 맞는 것으로 본다.
- */
-function glossaryOccursIn(haystack, probe) {
-    const folded = glossaryFold(probe);
-    if (!folded) return false;
-    const isWordChar = ch => !!ch && /[a-z0-9]/.test(ch);
-    const needsLeft = isWordChar(folded[0]);
-    const needsRight = isWordChar(folded[folded.length - 1]);
-    if (!needsLeft && !needsRight) return haystack.includes(folded);
-    let from = 0;
-    for (;;) {
-        const at = haystack.indexOf(folded, from);
-        if (at < 0) return false;
-        const before = at > 0 ? haystack[at - 1] : '';
-        const after = haystack[at + folded.length] ?? '';
-        if ((!needsLeft || !isWordChar(before)) && (!needsRight || !isWordChar(after))) return true;
-        from = at + 1;
-    }
-}
-
-/** "길드, 조합, 상인회" → ['길드', '조합', '상인회'] (쉼표·전각 쉼표 기준) */
-function glossaryAlternatives(dst) {
-    const options = String(dst ?? '').split(/[,，]/).map(part => part.trim()).filter(Boolean);
-    return options.length ? options : [String(dst ?? '').trim()];
+/** [2.2.9] 문단 캐시 서명: 표기 흔들림으로 찾은 이름이 있는 문단만 키가 바뀐다 (예전 번역 — 아델슈타인 — 을 캐시에서 다시 꺼내지 않게). 없으면 예전 키 그대로 */
+function glossarySegmentSignature(setupDigest) {
+    if (extensionSettings.glossary_enabled === false) return () => setupDigest;
+    const entries = activeGlossaryEntries();
+    return (body) => {
+        const tag = glossaryVariantTag(entries, body);
+        return tag ? `${setupDigest}|kana:${tag}` : setupDigest;
+    };
 }
 
 function glossaryNewId() {
@@ -4291,7 +4232,9 @@ function parseGlossaryItems(raw) {
 
 /** [1.8.12] 그 범위(캐릭터+전체)에 이미 있는 원문 표기들 — "있음" 표시에 쓴다 */
 function glossaryExistingForms(scopeKey) {
-    return new Set(activeGlossaryEntries(scopeKey).flatMap(entry => glossaryAlternatives(entry.src).map(glossaryFold)));
+    // [2.2.9] 가타카나 이름은 표기 흔들림 열쇠도 넣는다 — 「번역문에서 뽑기」가 アデルシュタイン → 아델슈타인(예전 잘못 옮긴 번역)을
+    //         새 항목으로 켜 둔 채 내놓아, 넣으면 그 표기가 새 항목 것이 되어 고친 것이 도로 풀렸다 (5.7.3 검토). 이제 이미 있는 항목으로 꺼져 나온다
+    return new Set(activeGlossaryEntries(scopeKey).flatMap(entry => glossaryAlternatives(entry.src).flatMap(form => [glossaryFold(form), kanaDuplicateKey(form)]).filter(Boolean)));
 }
 
 /**
@@ -4341,7 +4284,7 @@ function buildGlossaryProposals(items, existing) {
             src,
             dst,
             common,
-            duplicate: sources.some(form => existing.has(glossaryFold(form))),
+            duplicate: sources.some(form => existing.has(glossaryFold(form)) || existing.has(kanaDuplicateKey(form))),
         };
         proposals.push(proposal);
         addForms(proposal);

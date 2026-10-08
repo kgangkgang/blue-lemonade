@@ -32,8 +32,12 @@ export function replaceText(source, rules, options = {}) {
         }
     }
     let count=0;
+    // 5.7.3 options.spans: 바꾼 자리를 글자(코드 포인트) 번호로 돌려준다 — 전후 보기에서 바뀐 곳만 칠하려고. 결과 글은 그대로
+    const spans=options.spans?{src:[],out:[]}:null;
+    let srcBase=0,outBase=0;
     function transform(text) {
         const chars=Array.from(text), out=[];
+        let outLen=0;
         for(let i=0;i<chars.length;) {
             let node=root,hit=null;
             for(let j=i;j<chars.length && node.has(fold(chars[j]));j++) {
@@ -42,20 +46,26 @@ export function replaceText(source, rules, options = {}) {
                 if(options.wholeWords && (wordChar(chars[i-1]) || (wordChar(chars[j+1])&&!p)))continue;
                 if(!hit || rule.rank<hit.rank)hit={...rule,end:j+1,p};
             }
-            if(!hit){out.push(chars[i++]);continue;}
+            if(!hit){out.push(chars[i++]);outLen++;continue;}
             let tail=hit.p;
             if(tail && hit.to) {
                 const pair=pairs.find(a=>a.includes(tail)), jong=ending(hit.to);
                 tail=pair[jong && !(pair[0]==='으로' && jong===8)?0:1];
             }
+            if(spans){const w=Array.from(hit.to).length+Array.from(tail).length;spans.src.push([srcBase+i,srcBase+hit.end+hit.p.length]);spans.out.push([outBase+outLen,outBase+outLen+w]);outLen+=w;}
             out.push(hit.to,tail);i=hit.end+hit.p.length;count++;
         }
         return out.join('');
     }
     // Keep HTML attributes, fenced code and inline code intact when editing chat markup.
     const parts=String(source??'').split(/(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`|<!--[\s\S]*?-->|<[^>]*>)/g);
-    const text=parts.map((part,i)=>i%2?part:transform(part)).join('');
-    return {text,count};
+    const text=parts.map((part,i)=>{
+        if(!spans)return i%2?part:transform(part);
+        const t=i%2?part:transform(part);
+        srcBase+=Array.from(part).length;outBase+=Array.from(t).length;
+        return t;
+    }).join('');
+    return spans?{text,count,spans}:{text,count};
 }
 
 export function importRuleSets(extensionSettings) {

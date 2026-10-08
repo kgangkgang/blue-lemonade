@@ -50,9 +50,24 @@ function choices() {
 // 2026-10-06: 전후 보기가 원문만 보여 줘서 번역문만 바뀌는 메시지가 '0곳 변경'에 같은 글로 보였다 — 번역문이 바뀌면 그 전후도 보여 준다
 //             (원문 보기 상태면 번역문은 original_translation_backup 칸에 있다). 원문이 그대로면 같은 글 두 칸은 뺀다
 const translationSlot=s=>s.backup!==undefined?s.backup:s.display;
+// 5.7.3 전후 보기에서 바뀐 글자만 테마 강조색으로 (사용자: "바뀐 글자에만 블루레몬에이드 테마 색상으로 · 알아보기 쉽게").
+// 엔진(replaceText spans)이 실제로 바꾼 자리를 그대로 칠한다 — 바꾼 낱말 + 바뀐 조사까지. 바꾸기 전은 줄긋기, 바꾼 뒤는 강조 바탕
+function markedHtml(text,ranges,cls){
+    const chars=Array.from(String(text??''));
+    if(!Array.isArray(ranges)||!ranges.length)return esc(chars.join(''));
+    const m=new Uint8Array(chars.length);
+    for(const [a,b] of ranges)for(let i=Math.max(0,a);i<Math.min(chars.length,b);i++)m[i]=1;
+    let out='',run='',on=false;
+    const flush=()=>{if(!run)return;out+=on?`<mark class="${cls}">${esc(run)}</mark>`:esc(run);run='';};
+    for(let i=0;i<chars.length;i++){const f=!!m[i]&&chars[i]!=='\n';if(f!==on){flush();on=f;}run+=chars[i];}
+    flush();return out;
+}
 function comparisonMarkup(r) {
     const before=translationSlot(r.before),after=translationSlot(r.after),changed=before!==after;
-    return `<div class="bl-word-comparison"><b>#${r.id} · ${r.count}곳 변경</b>${r.before.mes!==r.after.mes||!changed?`<label>원문<pre>${esc(r.before.mes)}</pre></label><label>변경 후<pre>${esc(r.after.mes)}</pre></label>`:''}${changed?`<label>번역문<pre>${esc(before)}</pre></label><label>번역문 변경 후<pre>${esc(after)}</pre></label>`:''}</div>`;
+    const mk=r.marks||{},slotMarks=r.before.backup!==undefined?mk.backup:mk.display;
+    const pair=(b,a,sp)=>[markedHtml(b,sp?.src,'bl-diff-del'),markedHtml(a,sp?.out,'bl-diff-ins')];
+    const [mb,ma]=pair(r.before.mes,r.after.mes,mk.mes),[tb,ta]=changed?pair(before,after,slotMarks):['',''];
+    return `<div class="bl-word-comparison"><b>#${r.id} · ${r.count}곳 변경</b>${r.before.mes!==r.after.mes||!changed?`<label>원문<pre>${mb}</pre></label><label>변경 후<pre>${ma}</pre></label>`:''}${changed?`<label>번역문<pre>${tb}</pre></label><label>번역문 변경 후<pre>${ta}</pre></label>`:''}</div>`;
 }
 export function wordToolsMarkup(s, mode) {
     const cfg=s.wordTools, sets=importRuleSets(context().extensionSettings);
@@ -185,17 +200,18 @@ export function bindWordTools(root, refresh) {
                 await loadHash();
                 const next={key:ctx.chatId,rows:ids.map(id=>{
                     const message=ctx.chat[id],before=snapshot(message),after={...before};
-                    const result=replaceText(before.mes,cfg.rules,cfg);after.mes=result.text;
-                    if(before.display!==undefined)after.display=replaceText(before.display,cfg.rules,cfg).text;
+                    const marks={};   // 5.7.3 바꾼 자리 (전후 보기 칠하기 — 전후 글 자체는 그대로)
+                    const result=replaceText(before.mes,cfg.rules,{...cfg,spans:true});after.mes=result.text;marks.mes=result.spans;
+                    if(before.display!==undefined){const d=replaceText(before.display,cfg.rules,{...cfg,spans:true});after.display=d.text;marks.display=d.spans;}
                     // 2026-10-06: 원문 보기 상태의 치워 둔 번역문도 같은 규칙으로
-                    if(before.backup!==undefined)after.backup=replaceText(before.backup,cfg.rules,cfg).text;
+                    if(before.backup!==undefined){const k=replaceText(before.backup,cfg.rules,{...cfg,spans:true});after.backup=k.text;marks.backup=k.spans;}
                     // 번역이 지금 원문 것이었을 때만 표식을 새 원문으로 (오래된 번역은 그대로 → 번역기가 다시 번역)
                     const fresh=before.display!==undefined&&before.hash!==undefined&&before.hash===sourceHash(message,before.mes);
                     if(after.mes!==before.mes&&fresh)after.hash=sourceHash(message,after.mes);
                     if(before.swipeText!==undefined)after.swipeText=after.mes;
                     // 2026-10-06: 원문은 그대로고 번역문만 바뀌면 번역문에서 바뀐 곳 수를 센다 (예전엔 '0곳 변경')
                     const slot=translationSlot(before);
-                    return {id,message,before,after,fresh,count:result.count||(slot!==undefined?replaceText(slot,cfg.rules,cfg).count:0)};
+                    return {id,message,before,after,fresh,marks,count:result.count||(slot!==undefined?replaceText(slot,cfg.rules,cfg).count:0)};
                 }).filter(row=>!same(row.before,row.after))};
                 if(!next.rows.length){proposal=null;throw userError('선택한 메시지에서 바뀔 내용이 없어요.');}
                 // 2026-10-06: 번역기 DB 의 번역(가공 전 글)도 같은 규칙으로 바꿀 몫을 미리 읽어 둔다 — 적용 · 되돌리기 때 씀. 번역문이 지금 원문 것일 때만

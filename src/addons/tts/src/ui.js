@@ -486,11 +486,18 @@ function onEdit(e, live) {
 function afterEdit(path, el) {
     const s = settings();
     // 1.3.8 「나」 자동을 골랐는데 「내 대사」가 읽지 않음이면 (직접 설정) AI 답장 속 내 대사가 안 읽혀 자동이 아무 일도 안 한다 → 읽게 바꾸고 한 줄 알림
-    if (path === 'user_voice' && s.user_voice === USER_AUTO && isObj(s.routes) && s.routes.user_dialogue === 'skip') {
-        s.routes.user_dialogue = 'user';
-        save();
-        syncPath('routes.user_dialogue');
-        toast('「내 대사」도 읽게 바꿨어요', 'info');
+    if (path === 'user_voice' && s.user_voice === USER_AUTO) {
+        // 5.7.3 성별을 아직 모르면 바로 물어 정한다 (분석을 기다리지 않게) · 「내 대사」가 읽지 않음이면 읽게
+        const skip = isObj(s.routes) && s.routes.user_dialogue === 'skip';
+        let name = '';
+        try { name = String(getContext()?.name1 || '').trim(); } catch { name = ''; }
+        if (!voices.personaKnown(name)) void player.askPersonaVoice({ quiet: true }).then(() => { syncPath('routes.user_dialogue'); renderMap(); });
+        if (skip) {
+            s.routes.user_dialogue = 'user';
+            save();
+            syncPath('routes.user_dialogue');
+            toast('「내 대사」도 읽게 바꿨어요', 'info');
+        }
         return;
     }
     if (path === 'read_preset') { applyReadPreset(s.read_preset); save(); }

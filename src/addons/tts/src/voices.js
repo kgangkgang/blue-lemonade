@@ -595,6 +595,30 @@ export async function noteExtras(people) {
     if (pid) { try { await ensureStock(pid); } catch { /* 조용히 */ } }
     return n;
 }
+/**
+ * 5.7.3 「나」를 자동으로 + 페르소나 이름의 성별을 바로 적는다 (사용자가 고른 것 — 분석이 알려 줄 때까지 기다리지 않게).
+ * 「내 대사」가 읽지 않음이면 읽게. 이미 고른 목소리가 있으면 성별이 바뀔 때만 새로 고름
+ */
+export function setPersonaAuto(name, g) {
+    const s = settings();
+    s.user_voice = USER_AUTO;
+    if (s.routes && typeof s.routes === 'object' && s.routes.user_dialogue === 'skip') s.routes.user_dialogue = 'user';
+    const n = String(name || '').trim();
+    if (n && (g === 'm' || g === 'f')) {
+        const key = extraKey(n) || n;
+        const cur = s.extra_map[key];
+        if (cur) { if (cur.g !== g) { cur.g = g; cur.v = {}; } }
+        else s.extra_map[key] = { g, a: '', l: '', t: Date.now(), v: {} };
+    }
+    save();
+    emitExtras();
+}
+/** 5.7.3 페르소나의 엑스트라 성별을 아는가 (「나」 자동인데 아직 모르면 물어봄) */
+export function personaKnown(name) {
+    const key = extraKey(name);
+    const e = key ? settings().extra_map[key] : null;
+    return !!(e && (e.g === 'm' || e.g === 'f'));
+}
 /** 엑스트라 한 명을 표에서 뺀다 (다음에 분석이 다시 알려 주면 새로 고름) */
 export function forgetExtra(name) {
     const s = settings();
