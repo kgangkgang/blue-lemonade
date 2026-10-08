@@ -101,7 +101,7 @@ jobs:
           sha256sum "$out"
           echo "BL_VERSION=$v" >> "$GITHUB_ENV"
           echo "BL_ZIP=$out" >> "$GITHUB_ENV"
-      - name: Verify the release asset byte for byte
+      - name: Verify the release asset against this tree
         # release (published) and manual runs: the asset vX.Y.Z/blue-lemonade-X.Y.Z.zip for the manifest version must exist
         # and be byte for byte the ZIP built above. push / pull_request: a release commit is pushed before its release exists,
         # so a missing asset is only a notice; once the release exists the asset must match (a theme change without a new
@@ -153,8 +153,10 @@ jobs:
               def meta(data):
                   with zipfile.ZipFile(io.BytesIO(data)) as z:
                       return z.comment, [(i.filename, i.date_time, i.external_attr, i.compress_type, i.CRC, i.file_size, i.extra) for i in z.infolist()]
-              only_deflate = meta(asset) == meta(mine)
-              sys.exit('::error::The release asset is not byte for byte the ZIP built from this tree'
-                       + (' (same files, dates and CRCs; only the deflate streams differ: this runner compresses differently from the release machine)' if only_deflate else ''))
-          print('PASS: the release asset is byte for byte the ZIP built from this tree')
+              # 5.8.0: GitHub's runner zlib compresses differently from the release machine, so the bytes can differ while
+              # every file, date and CRC is identical. The contents were already compared with this tree above (gate.compare).
+              if meta(asset) != meta(mine):
+                  sys.exit('::error::The release asset differs from the ZIP built from this tree (file list, dates, attributes or CRCs)')
+              print('::notice::Same files, dates and CRCs as the ZIP built here; only the deflate streams differ (runner zlib).')
+          print('PASS: the release asset matches this tree file by file')
           PY
