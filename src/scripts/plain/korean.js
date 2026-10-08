@@ -1,7 +1,7 @@
 // 자동 생성 (tools/build-plain-scripts.mjs) — 고치려면 bundled/korean.js 을 고치고 다시 만든다
 export default function blueLemonadeScript(BlueLemonade) {
 /*BL-SCRIPT-START*/
-// SillyTavern Korean UI (leftover English), v1.4.5
+// SillyTavern Korean UI (leftover English), v1.4.6
 // Replaces exact English UI strings SillyTavern leaves untranslated. Chat messages, names, presets and other
 // user content are never rewritten. Only built-in welcome labels/greetings are handled inside chat.
 // Nothing is saved, and turning the script off restores the original text.
@@ -440,28 +440,97 @@ export default function blueLemonadeScript(BlueLemonade) {
 
   // Helper release notes are excluded from the general dictionary. Only known
   // update prose is translated here; script editors and arbitrary popups stay intact.
+  // v1.4.6: 실리태번 헬퍼 업데이트 창은 CHANGELOG 를 '설치된 판 다음 ~ 최신 판'만큼 한 창에 보여 준다 (4.10.0 ~ 4.11.3 을 안다).
+  // 버전 제목(h1~h3 의 '4.11.3' 따위) 다음부터 다음 버전 제목 전까지가 한 칸이고, 아는 버전이며 그 칸의 code 에 sign 이 있을 때만 바꾼다.
+  // 문단(h3 · li · p)은 코드 밖 글자 노드들이 원문 조각과 모두 같을 때만 통째로 바꾼다 (같은 '新增'도 문단마다 다르게 옮겨야 해서 낱개 사전은 못 쓴다).
+  // 그 문단 안 code 는 예시 값만(code 표), pre 는 주석 · 예시 문자열만(pre 표) — 함수 · 인자 · 매크로 이름은 그대로. 원문이 바뀐 문단은 중국어 그대로 둔다.
   const helperObservers=new Map();
-  const helperNoticeText=new Map([
-    ['📦函数','📦 함수'],['🐛修复','🐛 수정'],
-    ['现在','이제'],['和','및'],
-    ['在调用最初时会触发','호출을 시작할 때'],
-    ['事件, 允许你监听情况和修改生成配置','이벤트가 발생하여, 생성 요청을 감지하고 생성 설정을 바꿀 수 있어요.'],
-    ['在极端情况下没正常发送世界书提示词的问题','특정 예외 상황에서 월드 정보 프롬프트가 정상적으로 전송되지 않던 문제를 수정했어요.'],
-    ['在酒馆欢迎页面开关“禁用酒馆助手宏”时，酒馆版本号和最近聊天面板消失的问题','시작 화면에서 “헬퍼 매크로 사용 안 함”을 켜거나 끌 때 실리태번 버전과 최근 대화 목록이 사라지던 문제를 수정했어요.'],
-  ].map(([a,b])=>[normalize(a),b]));
-  function processHelperNotice(popup) {
-    if(!popup.querySelector('code')||![...popup.querySelectorAll('h1,h2,h3')].some(h=>normalize(h.textContent)==='4.10.0'))return;
-    const supported=[...popup.querySelectorAll('code')].some(code=>code.textContent.includes('iframe_events.GENERATION_REQUESTED'));
-    if(!supported)return;
-    for(const block of popup.querySelectorAll('h3,li,pre')){
-      const walker=doc.createTreeWalker(block,host.NodeFilter.SHOW_TEXT);
-      while(walker.nextNode()) {
-        const node=walker.currentNode;
-        if(node.parentElement.closest('pre'))swapText(node,text=>{
-          const next=text.replaceAll('你想要监听的生成id','감지할_생성_ID').replaceAll('新的用户输入','새로운 사용자 입력');return next===text?null:next;
-        });
-        else if(!node.parentElement.closest('code'))swapText(node,text=>helperNoticeText.get(normalize(text))??null);
+  const NOTICE_HEADINGS=[
+    ["📦函数", "📦 함수"],
+    ["🐛修复", "🐛 수정"],
+    ["💬酒馆助手宏", "💬 실리태번 헬퍼 매크로"],
+    ["🗣提示词查看器", "🗣 프롬프트 뷰어"],
+    ["🪪许可证", "🪪 라이선스"],
+    ["⏫功能", "⏫ 기능"],
+    ["💻界面", "💻 화면"],
+    ["🎨渲染器", "🎨 렌더러"],
+    ["📕脚本库", "📕 스크립트 라이브러리"],
+    ["📚脚本库", "📚 스크립트 라이브러리"],
+    ["🔧杂项", "🔧 기타"],
+    ["🔢变量管理器", "🔢 변수 관리자"],
+    ["🔍日志查看器", "🔍 로그 뷰어"],
+  ];
+  const HELPER_NOTICES=new Map(Object.entries({
+    "4.11.3":{sign:"{{format_message|chat|character|preset|global_variable_quoted::}}",blocks:[
+      [["新增", "宏 (by @fengzgk).", "相比起", "宏, 它会始终给字符串两边添加双引号.", "例如", "用", "替换后将显示成", ", 避免 AI 误认为是 100 除以 100."],
+       ["새로", "매크로를 추가했어요 (by @fengzgk).", "기존", "매크로와 달리 문자열 양쪽에 항상 큰따옴표를 붙여요.", "예를 들어", "같은 값은", "매크로로 치환하면", "처럼 표시되어, AI 가 100 나누기 100 으로 오해하지 않아요."]],
+    ],code:[["体力值: 100/100", "체력: 100/100"], ["{{format_message_variable_quoted::体力值}}", "{{format_message_variable_quoted::체력}}"], ["体力值: \"100/100\"", "체력: \"100/100\""]]},
+    "4.11.2":{sign:"1.14.0",blocks:[
+      [["对酒馆", "~", "版本的兼容性"],
+       ["실리태번", "~", "버전과의 호환성 문제를 수정했어요."]],
+    ]},
+    "4.11.1":{sign:"should_return_reasoning",blocks:[
+      [["为", "和", "新增", "参数, 启用后将能在返回值中获得 AI 的思考过程和思考签名."],
+       ["이제", "및", "함수에서", "인자를 쓸 수 있어요. 켜면 반환값에 AI 의 추론 과정과 추론 서명이 함께 담겨요."]],
+      [["新增", "实验选项, 容易受第三方插件和脚本影响而显示不准确, 因此开关放在提示词查看器里的某个神秘位置, 默认关闭. 启用后能在提示词查看器中查看提示词内容来源于哪里, 例如来自世界书中名为", "的条目."],
+       ["새로 ", " 실험 옵션을 추가했어요. 다른 확장 프로그램이나 스크립트의 영향으로 틀리게 표시되기 쉬워서, 스위치는 프롬프트 뷰어 속 어딘가 비밀스러운 곳에 두었고 기본값은 꺼짐이에요. 켜면 프롬프트 뷰어에서 프롬프트 내용이 어디에서 왔는지 볼 수 있어요. 예를 들어 로어북의", "항목에서 왔다고 알려 줘요."]],
+    ],code:[["启用内容溯源", "내용 출처 표시 사용"]],pre:[["'你好'", "'안녕하세요'"], ["// 获取 AI 的回复正文", "// AI 답변 본문 가져오기"], ["// 获取 AI 的思考过程 (reasoning)", "// AI 추론 과정 (reasoning) 가져오기"]]},
+    "4.11.0":{sign:"replaceCharacter",blocks:[
+      [["现在", "、", "等函数支持使用角色卡的头像id/文件名称作为参数. 例如如果你在酒馆网页上复制了一张", "角色卡, 两张角色卡虽然都显示成", ", 但它们的头像id/文件名称将分别是", "和", "——现在你可以使用", "或", "来操作对应角色卡."],
+       ["이제", ", ", "등의 함수에서 캐릭터 카드의 아바타 id/파일 이름을 인자로 쓸 수 있어요. 예를 들어 실리태번 웹 화면에서", "캐릭터 카드를 복제하면 두 카드의 표시 이름은 모두", "이지만, 아바타 id/파일 이름은 서로 달라요:", "및", ". 이제", "또는", "이름으로 해당 캐릭터 카드를 다룰 수 있어요."]],
+      [["修复了有多张显示名称相同的角色卡时，酒馆助手脚本只会对其中一张角色卡生效的问题"],
+       ["표시 이름이 같은 캐릭터 카드가 여러 장일 때 실리태번 헬퍼 스크립트가 그중 한 장에만 적용되던 문제를 수정했어요."]],
+      [["从原来的 Aladdin 禁止商业化许可证, 切换为表述更清楚、对开源更宽松的 PolyForm NonCommercial 1.0.0 禁止商业化许可证"],
+       ["라이선스를 기존 Aladdin 상업적 이용 금지 라이선스에서, 표현이 더 분명하고 오픈 소스에 더 너그러운 PolyForm NonCommercial 1.0.0 상업적 이용 금지 라이선스로 바꿨어요."]],
+    ],code:[["'少女歌剧'", "'소녀가극'"], ["'少女歌剧.png'", "'소녀가극.png'"], ["'少女歌剧_1.png'", "'소녀가극_1.png'"]],pre:[["// 显示名称:", "// 표시 이름:"], ["// 头像id/文件名称:", "// 아바타 id/파일 이름:"], ["// 获取 '少女歌剧_1.png' 角色卡对应的数据", "// '소녀가극_1.png' 캐릭터 카드의 데이터 가져오기"], ["少女歌剧", "소녀가극"]]},
+    "4.10.0":{sign:"iframe_events.GENERATION_REQUESTED",blocks:[
+      [["现在", "和", "在调用最初时会触发", "事件, 允许你监听情况和修改生成配置"],
+       ["이제", "및", "호출을 시작할 때", "이벤트가 발생하여, 생성 요청을 감지하고 생성 설정을 바꿀 수 있어요."]],
+      [["在极端情况下没正常发送世界书提示词的问题"],
+       ["특정 예외 상황에서 월드 정보 프롬프트가 정상적으로 전송되지 않던 문제를 수정했어요."]],
+      [["在酒馆欢迎页面开关“禁用酒馆助手宏”时，酒馆版本号和最近聊天面板消失的问题"],
+       ["시작 화면에서 “헬퍼 매크로 사용 안 함”을 켜거나 끌 때 실리태번 버전과 최근 대화 목록이 사라지던 문제를 수정했어요."]],
+    ],pre:[["你想要监听的生成id", "감지할_생성_ID"], ["新的用户输入", "새로운 사용자 입력"]]},
+  }));
+  const noticeKey=texts=>JSON.stringify(texts.map(normalize));
+  for(const notice of HELPER_NOTICES.values()){
+    notice.blocks=new Map([...NOTICE_HEADINGS.map(([zh,ko])=>[[zh],[ko]]),...notice.blocks].map(([zh,ko])=>[noticeKey(zh),ko]));
+    notice.code=new Map((notice.code??[]).map(([zh,ko])=>[normalize(zh),ko]));
+    notice.pre??=[];
+  }
+  const NOTICE_HEADING='h1,h2,h3',NOTICE_BLOCK='h1,h2,h3,h4,h5,h6,li,p',NOTICE_VERSION=/^\d+\.\d+\.\d+$/;
+  function translateNoticeSection(notice,elements){
+    for(const element of elements){
+      const groups=new Map();
+      const walker=doc.createTreeWalker(element,host.NodeFilter.SHOW_TEXT);
+      while(walker.nextNode()){
+        const node=walker.currentNode,parent=node.parentElement;
+        if(parent.closest('pre')){
+          // 앞뒤 공백은 swapText 가 원문에서 다시 붙이므로 잘라서 돌려준다 (1.4.5 까지는 첫 줄 들여쓰기가 두 배가 됐다)
+          swapText(node,text=>{let next=text;for(const [zh,ko] of notice.pre)next=next.replaceAll(zh,ko);return next===text?null:next.trim();});
+          continue;
+        }
+        const block=parent.closest(NOTICE_BLOCK);
+        if(!block||!element.contains(block)||!normalize(node.nodeValue))continue;
+        if(!groups.has(block))groups.set(block,{texts:[],codes:[]});
+        groups.get(block)[parent.closest('code')?'codes':'texts'].push(node);
       }
+      for(const {texts,codes} of groups.values()){
+        const korean=notice.blocks.get(noticeKey(texts.map(node=>node.nodeValue)));
+        if(!korean||korean.length!==texts.length)continue;
+        texts.forEach((node,index)=>swapText(node,()=>korean[index]));
+        for(const node of codes)swapText(node,text=>notice.code.get(normalize(text))??null);
+      }
+    }
+  }
+  function processHelperNotice(popup) {
+    if(!popup.querySelector('code'))return;
+    for(const heading of popup.querySelectorAll(NOTICE_HEADING)){
+      const notice=HELPER_NOTICES.get(normalize(heading.textContent));
+      if(!notice)continue;
+      const elements=[];
+      for(let next=heading.nextElementSibling;next&&!(next.matches(NOTICE_HEADING)&&NOTICE_VERSION.test(normalize(next.textContent)));next=next.nextElementSibling)elements.push(next);
+      if(elements.some(element=>[...element.querySelectorAll('code')].some(code=>code.textContent.includes(notice.sign))))translateNoticeSection(notice,elements);
     }
   }
   function watchHelper(pop) {
@@ -529,7 +598,7 @@ export default function blueLemonadeScript(BlueLemonade) {
     for(const pop of doc.querySelectorAll('.TH-popup'))watchHelper(pop);
   }
 
-  host[INSTANCE_KEY] = { version: '1.4.4', cleanup };
+  host[INSTANCE_KEY] = { version: '1.4.6', cleanup };
   window.addEventListener('pagehide', cleanup, { once: true });
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', init, { once: true });
   else init();

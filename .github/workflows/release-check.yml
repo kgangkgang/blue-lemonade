@@ -4,6 +4,8 @@ on:
     paths: ['src/**', 'css/**', 'index.js', 'style.css', 'manifest.json', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'tools/**', '.github/workflows/release-check.yml']
   pull_request:
     paths: ['src/**', 'css/**', 'index.js', 'style.css', 'manifest.json', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'tools/**', '.github/workflows/release-check.yml']
+  release:
+    types: [published]
   workflow_dispatch:
 permissions:
   contents: read
@@ -12,7 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      # The website and the downloadable ZIP live on the gh-pages branch; tests and the ZIP check read them from docs/
+      # The website lives on the gh-pages branch; some tests read its files from docs/.
+      # The downloadable ZIP is a GitHub Release asset (5.8.0~), checked in the last step.
       - uses: actions/checkout@v5
         with:
           ref: gh-pages
@@ -40,6 +43,7 @@ jobs:
           node tools/tests/word-replace-marks.mjs .
           node tools/tests/translator-glossary.mjs .
           node tools/tests/bookmark-excerpts.mjs .
+          node tools/tests/main-chat-rules.mjs .
           node tools/tests/live-models.mjs .
           node tools/tests/translator-models.mjs .
           node tools/tests/rewrite-models.mjs .
@@ -89,6 +93,68 @@ jobs:
           git status --porcelain
           git diff --exit-code --stat
           test -z "$(git status --porcelain)"
-      - name: Verify the current downloadable ZIP byte for byte
+      - name: Build the release ZIP from this tree
         run: |
-          python -c "import json,subprocess,sys; v=json.load(open('manifest.json'))['version']; subprocess.run([sys.executable,'tools/release_gate.py','--kind','theme','--source','.','--zip',f'docs/downloads/blue-lemonade-{v}.zip'],check=True)"
+          v=$(python -c "import json; print(json.load(open('manifest.json', encoding='utf-8'))['version'])")
+          out="$RUNNER_TEMP/bl-built/blue-lemonade-$v.zip"
+          python tools/release_gate.py --kind theme --source . --build "$out" > "$RUNNER_TEMP/bl-gate.json"
+          sha256sum "$out"
+          echo "BL_VERSION=$v" >> "$GITHUB_ENV"
+          echo "BL_ZIP=$out" >> "$GITHUB_ENV"
+      - name: Verify the release asset byte for byte
+        # release (published) and manual runs: the asset vX.Y.Z/blue-lemonade-X.Y.Z.zip for the manifest version must exist
+        # and be byte for byte the ZIP built above. push / pull_request: a release commit is pushed before its release exists,
+        # so a missing asset is only a notice; once the release exists the asset must match (a theme change without a new
+        # version fails, as the gh-pages ZIP check did).
+        run: |
+          python - <<'PY'
+          import hashlib, io, os, sys, time, urllib.error, urllib.request, zipfile
+          sys.path.insert(0, 'tools')
+          import release_gate as gate
+          version, built = os.environ['BL_VERSION'], os.environ['BL_ZIP']
+          event, tag = os.environ.get('GITHUB_EVENT_NAME', ''), 'v' + version
+          strict = event in ('release', 'workflow_dispatch')
+          if event == 'release' and os.environ.get('GITHUB_REF_NAME') != tag:
+              sys.exit(f"::error::Release tag {os.environ.get('GITHUB_REF_NAME')} does not match the manifest version (expected {tag})")
+          name = f'blue-lemonade-{version}.zip'
+          url = f"{os.environ.get('GITHUB_SERVER_URL', 'https://github.com')}/{os.environ['GITHUB_REPOSITORY']}/releases/download/{tag}/{name}"
+          tries = 10 if event == 'release' else 1   # 'published' can fire while the asset is still uploading
+          for attempt in range(tries):
+              try:
+                  with urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': 'blue-lemonade-ci'}), timeout=120) as r:
+                      asset = r.read()
+                  break
+              except urllib.error.HTTPError as e:
+                  if e.code != 404:
+                      raise
+                  if attempt + 1 < tries:
+                      time.sleep(30)
+          else:
+              if strict:
+                  sys.exit(f'::error::No release asset at {url}')
+              print(f'::notice::No release asset for {version} yet; only the ZIP built from this tree was checked.')
+              sys.exit(0)
+          path = os.path.join(os.environ['RUNNER_TEMP'], 'bl-asset', name)
+          os.makedirs(os.path.dirname(path), exist_ok=True)
+          with open(path, 'wb') as f:
+              f.write(asset)
+          try:
+              packaged = gate.read_zip(path, 'blue-lemonade')
+              gate.validate(packaged, 'theme')
+              gate.compare(gate.inventory('.', 'theme'), packaged, 'Release asset ' + name)
+          except gate.GateError as e:
+              sys.exit(f'::error::{e}')
+          with open(built, 'rb') as f:
+              mine = f.read()
+          a, b = hashlib.sha256(asset).hexdigest(), hashlib.sha256(mine).hexdigest()
+          print(f'asset {len(asset)} bytes sha256 {a}  {url}')
+          print(f'built {len(mine)} bytes sha256 {b}')
+          if a != b:
+              def meta(data):
+                  with zipfile.ZipFile(io.BytesIO(data)) as z:
+                      return z.comment, [(i.filename, i.date_time, i.external_attr, i.compress_type, i.CRC, i.file_size, i.extra) for i in z.infolist()]
+              only_deflate = meta(asset) == meta(mine)
+              sys.exit('::error::The release asset is not byte for byte the ZIP built from this tree'
+                       + (' (same files, dates and CRCs; only the deflate streams differ: this runner compresses differently from the release machine)' if only_deflate else ''))
+          print('PASS: the release asset is byte for byte the ZIP built from this tree')
+          PY

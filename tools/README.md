@@ -8,7 +8,7 @@
 2. 설정 보존과 배포 검사 자체의 실패 검사를 실행합니다.
 3. 원본에서 루트 배포본과 PC 확장의 런타임 파일만 동기화합니다. 사용자 설정은 건드리지 않습니다.
 4. release_gate로 버전·모듈·CSS 빌드·배포본 일치를 확인한 뒤 ZIP을 만듭니다.
-5. 공개 다운로드 위치로 복사한 ZIP을 다시 비교한 후 커밋/푸시합니다. 실패하면 배포하지 않습니다.
+5. 같은 ZIP 을 GitHub 릴리스(vX.Y.Z)의 자산으로 올리고, 공개 주소에서 다시 받아 한 바이트씩 비교합니다. 실패하면 홈페이지를 바꾸지 않습니다.
 
 저장소 루트에서 실행:
 
@@ -17,7 +17,7 @@ python -m unittest discover -s tools/tests -p test_release_gate.py
 node tools/tests/settings-upgrade.mjs salty-ext
 node salty-ext/tools/build-css.cjs --check
 python tools/release_gate.py --kind theme --source salty-ext --mirror . --mirror "PC_EXTENSION_DIRECTORY" --build "OUTPUT_DIRECTORY/blue-lemonade-VERSION.zip"
-python tools/release_gate.py --kind theme --source salty-ext --mirror . --zip "OUTPUT_DIRECTORY/blue-lemonade-VERSION.zip" --zip "docs/downloads/blue-lemonade-VERSION.zip"
+python tools/release_gate.py --kind theme --source salty-ext --mirror . --zip "OUTPUT_DIRECTORY/blue-lemonade-VERSION.zip"
 ~~~
 
 실제 경로와 manifest의 버전으로 자리표시자를 바꿉니다. 기존 ZIP은 덮어쓰지 않습니다. 파일 목록은 런타임·manifest·README만 포함하며 작업 문서, 테스트, 개인 설정을 추가하면 ZIP 비교가 실패합니다. 코드의 설정 구조 버전은 배포 버전과 별개입니다.
@@ -28,7 +28,7 @@ python tools/release_gate.py --kind theme --source salty-ext --mirror . --zip "O
 python tools/release_gate.py --kind memory --source "MEMORY_EXTENSION_DIRECTORY" --zip "OUTPUT_DIRECTORY/long-memory-VERSION.zip"
 ~~~
 
-GitHub Actions는 커밋된 런타임과 현재 공개 ZIP을 비교하고 설정 이전 검사를 반복합니다. 푸시 뒤 CI는 사후 검증입니다. 배포 전 차단은 위 로컬 명령이 담당하므로 이를 생략하지 않습니다. 브랜치 보호나 필수 체크를 자동 설정하지는 않습니다.
+GitHub Actions는 커밋된 런타임으로 ZIP 을 만들어 검사하고, 그 판의 릴리스가 있으면 릴리스 자산과 한 바이트씩 비교합니다 (릴리스가 공개될 때는 태그의 트리로 다시 비교). 푸시 뒤 CI는 사후 검증입니다. 배포 전 차단은 위 로컬 명령이 담당하므로 이를 생략하지 않습니다. 브랜치 보호나 필수 체크를 자동 설정하지는 않습니다.
 
 ## 긴 채팅 검사
 
@@ -45,9 +45,10 @@ GitHub Actions는 커밋된 런타임과 현재 공개 ZIP을 비교하고 설�
 
 같은 서버에서 tests/settings-refresh.html?dev를 엽니다. 단순 수치 되돌리기에서 입력칸과 미리보기 DOM 유지, 두 패널 동기화, 자간 단위 변환, nullable 설정과 밝기 전환의 전체 갱신, 팔레트 농도 카드, 1,000개 합성 메시지의 되돌리기 시간을 확인합니다. 로딩 중인 에셋을 100번 검사할 때 대기 콜백이 한 개이며 로드 후 정상 분류되는지도 확인합니다. 알림 검사는 최신 이력 한 개로 교체하되 다른 확장 알림은 보존하는지 확인합니다.
 
-## 홈페이지 · 공개 ZIP (5.4.1~)
+## 홈페이지 · 공개 ZIP (5.8.0~)
 
-홈페이지와 공개 ZIP 은 `gh-pages` 브랜치의 뿌리에 있고, GitHub Pages 가 그 브랜치를 배포합니다. 테마를 설치할 때 받는 `main` 에는 홈페이지 파일이 없습니다(설치 약 20MB).
+홈페이지는 `gh-pages` 브랜치의 뿌리에 있고, GitHub Pages 가 그 브랜치를 배포합니다. 테마를 설치할 때 받는 `main` 에는 홈페이지 파일이 없습니다.
+공개 ZIP 은 GitHub 릴리스 `vX.Y.Z` 의 자산 `blue-lemonade-X.Y.Z.zip` 입니다. gh-pages 에는 ZIP 을 두지 않습니다 (저장소 이력이 판마다 커지지 않게).
 `main` 의 `.gitignore` 가 `/docs/` 를 빼 두므로, 저장소 루트에 한 번만 받아 두면 위 명령의 `docs/…` 경로를 그대로 씁니다.
 
 ~~~powershell
@@ -56,8 +57,9 @@ git worktree add docs gh-pages
 
 릴리스 순서:
 
-1. `docs/`(gh-pages)에서 ZIP · 버전 표시 · release-notes.json 을 커밋하고 **gh-pages 를 먼저 push** 합니다.
-2. 그다음 `main` 을 push 합니다. main 의 CI 는 gh-pages 를 `docs/` 에 받아 테스트하고 공개 ZIP 을 한 바이트씩 비교하므로, 순서가 바뀌면 새 버전 ZIP 을 찾지 못해 실패합니다.
+1. `main` 커밋을 태그 `vX.Y.Z` 로 먼저 올리고(`git push origin <커밋>:refs/tags/vX.Y.Z`), 그 태그에 릴리스를 만들어 ZIP 을 올립니다.
+2. `docs/`(gh-pages)의 버전 표시 · release-notes.json 을 커밋하고 push 합니다.
+3. 마지막으로 `main` 을 push 합니다. 업데이트 알림은 main 의 manifest 를 보므로, 알림이 뜰 때는 공지와 ZIP 이 이미 공개돼 있습니다.
 
 사이트만 고치는 PR 은 `gh-pages` 를 대상으로 엽니다.
 

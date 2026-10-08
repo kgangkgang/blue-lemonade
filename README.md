@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.7.9.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.8.0/blue-lemonade-5.8.0.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.7.9 · 최신 업데이트</summary>
+<summary>5.8.0 · 최신 업데이트</summary>
+
+- 본채팅에서 Claude Haiku 5.5 처럼 실리태번이 아직 모르는 Claude 5 세대 모델을 쓰면 온도 · top_p · top_k 를 그대로 보내 오류가 나던 것을 막아요 (Claude 5 세대에서만 빼고, 다른 모델은 그대로예요). 다시 쓰기 리롤도 같아요.
+- 실리태번 헬퍼 업데이트 창의 4.11.0 ~ 4.11.3 바뀐 내역도 한글로 보여 줘요.
+- ZIP 은 이제 GitHub 릴리스에서 받아요 (홈페이지 내려받기 단추가 그곳으로 가요). 저장소가 판마다 무거워지지 않게 했어요.
+- 홈페이지: 쓰지 않는 파일을 정리하고, 예전 기능 카드의 설정 위치 줄도 다른 카드처럼 파란 글씨로 맞췄어요.
+
+</details>
+
+<details>
+<summary>5.7.9 · 모델 목록 · 실리태번 헬퍼 4.11 · 도움말</summary>
 
 - 모델 목록: 10-07 에 나온 Claude Haiku 5.5 를 넣고, 끝났거나 곧 끝나는 모델 이름(OpenAI · Groq · xAI · Mistral 등)은 뺐어요. 새로 설치할 때 번역 · 다시 쓰기의 기본 모델도 지금 세대로 올렸어요 (이미 고른 모델은 그대로).
 - 실리태번 헬퍼 4.11 의 새 「내용 출처 표시」(프롬프트 보기의 배지 · 스위치 · 도움말)를 한글로 보여 줘요. 내장 한글화 이름도 「실리태번 헬퍼 한글화」로 맞췄어요.

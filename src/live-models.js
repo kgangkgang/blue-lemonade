@@ -683,7 +683,7 @@ function isOSeries(source, m) {
     return false;
 }
 const isGpt5Plus = (m) => /gpt-(5|6)/.test(m) || inRange(versions(/gpt-(\d+)/g, m), 7, 9);
-const isClaude5Plus = (m) => /claude-(fable|opus-5|sonnet-5)/.test(m) || inRange(versions(/claude-[a-z]+-(\d+)/g, m), 5, 9);
+export const isClaude5Plus = (m) => /claude-(fable|opus-5|sonnet-5)/.test(m) || inRange(versions(/claude-[a-z]+-(\d+)/g, m), 5, 9);
 
 /** 모델별 요청 규칙 — body 를 고쳐서 돌려준다 (source: 실리태번 공급자 id · 'google' 도 받음) */
 export function applyModelRequestRules(source, model, body) {

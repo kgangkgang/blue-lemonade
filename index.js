@@ -26,6 +26,7 @@ import { startChatGraph } from './src/chat-graph-launcher.js';
 import { startInlineTone, retoneAll } from './src/tone.js';
 import { startStreamFade, streamFadeState } from './src/streamfade.js';
 import { startStreamFollow } from './src/stream-follow.js';
+import { startMainChatRules } from './src/main-chat-rules.js';
 // 4.1.2: 설정 창(panel.js 와 거기에만 딸린 모듈 24개 · 310KB)은 설정 창을 처음 열 때 불러온다 — 시작할 때 읽는 모듈 64 → 40개.
 let panelApi = null, panelLoading = null;
 // 못 불러오면 기억을 지워 다음에 누를 때 다시 부른다 (실패한 약속을 붙들고 있으면 새로고침 전까지 서랍이 빈 채였다)
@@ -218,6 +219,9 @@ jQuery(() => {
         refreshTimer = setTimeout(refreshPanels, 400);
     });
 });
+
+// 5.8.0 본채팅 요청의 Claude 5 세대 규칙 (본체가 claude-haiku-5-5 를 Claude 5 로 모르는 동안) — 테마 화면 켜짐과 상관없이
+startMainChatRules();
 
 // Host modules finish evaluating after extensions load; do not hold that cycle open.
 startAddons().catch(error => console.error('[Blue Lemonade] 확장 기능 시작', error));

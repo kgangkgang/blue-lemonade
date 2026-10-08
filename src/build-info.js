@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.7.9";
+export const BUILD_VERSION = "5.8.0";
 export const FILE_HASHES = {
-  "index.js": "16355:98f0f493:a63bfa54",
-  "manifest.json": "365:29d597b2:3705407c",
+  "index.js": "16597:c1d2cd7e:c67267bf",
+  "manifest.json": "365:98caa5a4:ceb1d4dc",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -260,14 +260,15 @@ export const FILE_HASHES = {
   "src/layout.js": "25435:1cdc520d:49c3e545",
   "src/lazy-panel.gen.css": "28863:23588704:4673090d",
   "src/lite.js": "31574:8a46443c:544223f5",
-  "src/live-models.js": "42531:f0f37616:8e944e10",
+  "src/live-models.js": "42538:e81ff5e0:2cbca19f",
+  "src/main-chat-rules.js": "1992:1a5533c3:35b40ad5",
   "src/markdown.js": "2251:976e3f82:8f8ad0d6",
   "src/marquee.js": "4261:042dd0ea:df654cb6",
   "src/menu-position.js": "3354:c5e883de:c4671ab5",
   "src/mes-fold.js": "15171:6c96c017:9e152087",
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/modal.js": "671:b74e0164:71228d7c",
-  "src/notice-data.js": "164592:842d77a0:b501404d",
+  "src/notice-data.js": "165359:8b95719c:93a5e9dc",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "1144:1da72451:b2e66e80",
@@ -287,13 +288,13 @@ export const FILE_HASHES = {
   "src/scripts/bundled/deus.js": "71720:ddbe5bc4:16add9c2",
   "src/scripts/bundled/fold.js": "14773:cf844e0a:169fb52a",
   "src/scripts/bundled/helper.js": "104117:425b163a:31736cc4",
-  "src/scripts/bundled/korean.js": "680951:23ceadff:f4e7ca11",
+  "src/scripts/bundled/korean.js": "688642:8cb541a3:36439a45",
   "src/scripts/bundled/shajin.js": "22111:d00fa2db:4b6a0901",
-  "src/scripts/catalog.js": "7637:3660b40d:3cabcea4",
+  "src/scripts/catalog.js": "7637:0f313ecc:c918737b",
   "src/scripts/plain/deus.js": "66897:632b8c3e:8adc7e2f",
   "src/scripts/plain/fold.js": "13815:b56ce78f:e3189530",
   "src/scripts/plain/helper.js": "97691:f11398d4:3144a19b",
-  "src/scripts/plain/korean.js": "650209:be5aeb33:f4b02519",
+  "src/scripts/plain/korean.js": "657404:110d8b27:610f14d4",
   "src/scripts/plain/shajin.js": "20099:8ad24629:14320e51",
   "src/scripts/prompt-engine.js": "10617:b2d5e420:c3b73ccd",
   "src/scripts/runtime.js": "8502:edb93563:f565a432",
@@ -335,5 +336,5 @@ export const FILE_HASHES = {
   "src/weather.js": "32976:f4fdcf09:3273a2b9",
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "31850:337f1677:b8ad9253",
-  "style.css": "1165274:8e966f6e:980a55ce"
+  "style.css": "1165274:599494d2:8c27579b"
 };
