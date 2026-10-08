@@ -678,7 +678,9 @@ function fitShout(j) {
  *   (속삭임 속마음 · 2.6 모델 · 태그 없는 감정은 요청이 '보통'과 같으니 키도 같게 — 이미 만든 소리를 다시 사지 않게)
  */
 function fitStrength(j, s) {
-    const k = s.emotion_strength;
+    // 1.4.0 목소리마다 감정 세기 (목소리 편집 → 감정 세기) — 없으면 전체 설정 (사용자: 다른 애들은 차분하게, 미카엘 · 우지엘 · 자드키엘은 감정 표현 확실하게)
+    const own = j.voice && j.voice.strength;
+    const k = own === 'weak' || own === 'normal' || own === 'strong' ? own : s.emotion_strength;
     if (k === 'weak' && j.emotion !== 'whisper') j.emotion = '';
     // 1.3.8 세기를 직접 다루는 엔진 (ElevenLabs: 약하게 = 안정감 1 · 강하게 = 감정 줄 안정감 −0.3) — 요청이 바뀌는 줄만 params 에 (보통이면 묻지 않음)
     if (typeof j.provider.strengthFor === 'function') {
@@ -1675,8 +1677,9 @@ function clickedPair(src, seg) {
         if (!n) return null;
         const all = ofKind(list);
         const eq = all.filter(x => normText(x.text) === n);
-        if (!thought) return eq[0] || null;
-        const at = Number.isInteger(seg.thoughtIndex) ? all[seg.thoughtIndex] : null;
+        // 1.4.0 대화문도 누른 쪽의 번호로 (같은 대사를 두 사람이 — 예전엔 대화문이면 늘 첫째라 아래 줄도 위 캐릭터 목소리 · 미리 만들기도 같은 키)
+        const idx = thought ? seg.thoughtIndex : seg.dialogueIndex;
+        const at = Number.isInteger(idx) && idx >= 0 ? all[idx] : null;
         return at && eq.includes(at) ? at : eq[0] || null;
     };
     let d = find(src.disp);

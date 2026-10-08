@@ -264,6 +264,20 @@ export function syncAccount(providerId, list) {
             else if (!stock && v.stock) { delete v.stock; marked++; }
         }
     }
+    // 1.4.0 계정에서 이름을 바꾼 내 목소리는 목록 이름도 따라감 (이름을 계정에서 관리하는 엔진만 — ElevenLabs).
+    //   예: 「세라프」를 「세라프 (예전)」로, 새로 만든 「세라프 (차분)」을 「세라프」로 바꾸면 「엔진」 짝(twinOf — 같은 이름이 3점)이 새 목소리로 넘어간다.
+    //   이 목록에서 직접 바꾼 이름(name_custom)은 그대로
+    let renamed = 0;
+    let named = false;
+    try { named = !!getProvider(providerId)?.accountNames; } catch { named = false; }
+    if (named) {
+        const byId = new Map(rows.filter(x => x.own === true).map(x => [String(x.voiceId), String(x.name || '').trim()]));
+        for (const v of s.voices) {
+            if (v.provider !== providerId || (v.mix || []).length || v.name_custom) continue;
+            const nm = byId.get(String(v.voiceId));
+            if (nm && nm !== String(v.voiceId) && nm !== v.name) { v.name = nm; renamed++; }
+        }
+    }
     const have = new Set(s.voices.filter(v => v.provider === providerId).map(v => String(v.voiceId)));
     const removed = new Set(removedIds(providerId));   // 1.3.8 사용자가 지운 목소리는 다시 넣지 않음
     storeStock(providerId, rows);                 // 엑스트라 목소리용 기본 목소리 캐시도 같이
@@ -272,8 +286,8 @@ export function syncAccount(providerId, list) {
     // 5.7.2 새로 들어온 내 목소리가 다른 엔진에 있는 같은 사람(이름 · 괄호 안 영문 이름)이면 그 목소리의 원어 · 묶음 · 다른 이름을 이어받는다
     //   (MiniMax 에서 일본어로 읽던 캐릭터를 ElevenLabs 로 옮겨도 일본어로 · '복제' 대신 '천지합동청' 묶음에)
     for (const x of fresh) inheritTwin(s.voices.find(v => v.provider === providerId && v.voiceId === String(x.voiceId)));
-    if (gone || back || marked || fresh.length) save();
-    return { added: r.added || 0, gone, back, hidden: s.voices.filter(v => v.provider === providerId && v.gone).length };
+    if (gone || back || marked || renamed || fresh.length) save();
+    return { added: r.added || 0, gone, back, renamed, hidden: s.voices.filter(v => v.provider === providerId && v.gone).length };
 }
 /** 1.3.8 불러오기로 새로 들어온 목소리(voiceId 들)도 다른 엔진의 같은 사람에게서 원어 · 묶음을 이어받는다 (계정 맞춤과 같게) → 이어받은 수 */
 export function inheritNew(providerId, voiceIds) {

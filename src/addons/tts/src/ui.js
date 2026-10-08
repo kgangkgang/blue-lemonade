@@ -128,7 +128,7 @@ const READ_CARDS = {
         { key: 'analysis.model_pick', label: '모델', type: 'html', html: modelPickHtml, show: hasModelPick },
         { key: 'analysis.emotion', label: '감정 붙이기', type: 'toggle' },
         { key: 'emotion_strength', label: '감정 세기', type: 'select', options: [{ value: 'weak', label: '약하게' }, { value: 'normal', label: '보통' }, { value: 'strong', label: '강하게' }],
-            help: '약하게는 감정을 빼고 읽어요 (ElevenLabs 는 안정감 1 로 가장 차분하게). 강하게는 MiniMax 2.8 이 웃음 · 한숨 같은 소리를 넣고, ElevenLabs 는 감정이 붙은 줄의 안정감을 0.3 낮춰 더 크게 연기해요 (v3 는 0 · 0.5 · 1 로 맞춰 0.5 면 0).' },   // 1.3.8
+            help: '약하게는 감정을 빼고 읽어요 (ElevenLabs 는 안정감 1 로 가장 차분하게 · v3 · v4 는 느낌표를 순하게 바꾸고, 말투를 안 고른 목소리엔 덤덤하게를 붙여요). 강하게는 MiniMax 2.8 이 웃음 · 한숨 같은 소리를 넣고, ElevenLabs 는 감정이 붙은 줄의 안정감을 0.3 낮춰 더 크게 연기해요 (v3 는 0 · 0.5 · 1 로 맞춰 0.5 면 0).' },   // 1.3.8
         { key: 'thought_emotion', label: '속마음', type: 'select', options: [{ value: 'whisper', label: '속삭임' }, { value: 'auto', label: '일반' }] },
         { key: 'analysis.translate', label: '원어로 번역해서 읽기', type: 'toggle' },
         { key: 'analysis.speaker', label: '화자 찾기', type: 'toggle', desc: '색 · 이름표가 없는 대사는 누구 말인지 맥락으로 물어 그 캐릭터 목소리로' },
@@ -318,7 +318,7 @@ const helpBtn = (f) => (helpOf(f) ? '<button type="button" class="lv-help-btn" d
 const helpNote = (f) => { const h = helpOf(f); return h ? `<span class="lv-help-note" hidden>${esc(h)}</span>` : ''; };
 /** ? 를 눌렀을 때: 같은 칸(data-lv-help)의 도움말 글을 펴고 접는다 (설정 창 · 목소리 편집 팝업 같이) */
 function toggleHelp(b) {
-    const note = b.closest('[data-lv-help]')?.querySelector('.lv-help-note');
+    const note = (b.closest('[data-lv-help]') || b.closest('.lv-card'))?.querySelector('.lv-help-note');   // 1.4.0 카드 제목 옆 ? 는 그 카드의 첫 설명
     if (!note) return;
     note.hidden = !note.hidden;
     b.setAttribute('aria-expanded', String(!note.hidden));
@@ -402,10 +402,35 @@ function visibleChanged(cardName, list, base = '', cfg = null) {
     const now = [...cardEl.querySelectorAll('[data-lv-path], [data-lv-slot]')].map(e => e.dataset.lvPath || e.dataset.lvSlot);
     return now.length !== want.length || now.some((p, i) => p !== want[i]);
 }
-function card(name, icon, title, inner, cls = '', note = '') {
+function card(name, icon, title, inner, cls = '', note = '', help = null) {
     const n = note ? `<span class="lv-card-note">${esc(note)}</span>` : '';
-    return `<section class="lv-card${cls ? ' ' + cls : ''}" data-lv-card="${esc(name)}"><div class="lv-card-head"><i class="fa-solid ${esc(icon)}"></i><span>${esc(title)}</span>${n}</div>${inner}</section>`;
+    // 1.4.0 카드 제목 옆 ? — 누르면 제목 밑에 설명 (항목 ? 와 같은 펼침 · 줄마다 <br>)
+    const lines = Array.isArray(help) ? help.filter(Boolean) : [];
+    const hb = lines.length ? '<button type="button" class="lv-help-btn" data-lv-act="help" aria-label="도움말" aria-expanded="false"><i class="fa-solid fa-circle-question" aria-hidden="true"></i></button>' : '';
+    const hn = lines.length ? `<div class="lv-help-note lv-card-help" hidden>${lines.map(esc).join('<br>')}</div>` : '';
+    return `<section class="lv-card${cls ? ' ' + cls : ''}" data-lv-card="${esc(name)}"><div class="lv-card-head"><i class="fa-solid ${esc(icon)}"></i><span>${esc(title)}</span>${hb}${n}</div>${hn}${inner}</section>`;
 }
+/** 1.4.0 줄 옆 감정 세기 칸 설명 (캐릭터별 목소리 · 대화 색 ? 가 같이 씀) */
+const STRENGTH_HELP = [
+    '목소리 옆 칸은 그 캐릭터만의 감정 세기예요 (그 캐릭터가 실제로 읽는 목소리에 저장).',
+    '· 전체: 「읽기」 탭의 감정 세기를 따라요.',
+    '· 약: 감정을 빼고 차분하게 — ElevenLabs v3 · v4 는 덤덤하게 + 느낌표를 순하게 바꿔 읽어요.',
+    '· 보통: 대사 분석이 찾은 감정(화남 · 슬픔 …)을 그대로 붙여 읽어요.',
+    '· 강: 감정이 붙은 줄을 더 크게 연기해요 (MiniMax 는 웃음 · 한숨 소리도).',
+    '옆의 조절 단추는 그 목소리 편집(말투 · 안정감 등)을 열어요.',
+];
+const MAP_HELP = [
+    '캐릭터 이름마다 읽을 목소리를 정해요. 「엔진」을 고르면 이름이 같은 그 엔진의 목소리로 읽어요.',
+    '「기본」은 목소리를 못 찾은 화자, 「나」는 내 대사, 「내레이터」는 서술이에요.',
+    ...STRENGTH_HELP,
+];
+const COLORS_HELP = [
+    '대사 색으로 누가 말하는지 알아내요 (색은 채팅 글에서 배워요 — 데우스 프리셋이 아니어도 대사에 색이 있으면 돼요). 색마다 캐릭터 이름을 적고 목소리를 골라요.',
+    ...STRENGTH_HELP,
+    '자물쇠는 이 색의 이름을 고정해요 (다시 배워도 안 바뀌게). 숫자는 이 채팅에서 그 색을 본 횟수예요.',
+    '대사에 색이 없는 채팅은 「이름: 「…」」 같은 이름표와 대사 분석(화자 찾기)으로 누가 말하는지 찾아요.',
+    '「이 채팅의 캐릭터」는 색이 없어도 최근 메시지에 나온 캐릭터(이름표 · 화자 찾기 · 목소리를 정해 둔 이름)예요. 여기서 바로 목소리 · 감정 세기를 정해요.',
+];
 /** 입력칸 값 → 설정에 넣을 값 (숫자·불 변환, 범위 자르기) */
 function coerce(f, el) {
     if (el.type === 'checkbox') return !!el.checked;
@@ -464,6 +489,7 @@ function onEdit(e, live) {
     if (el.dataset.lvMap !== undefined) { if (!live) onMapChange(el); return; }
     if (el.dataset.lvColorName !== undefined) { if (!live) onColorName(el); return; }
     if (el.dataset.lvColorVoice !== undefined) { if (!live) onColorVoice(el); return; }
+    if (el.dataset.lvStrength !== undefined) { if (!live) onStrength(el); return; }   // 1.4.0 줄 옆 감정 세기
     const path = el.dataset.lvPath;
     if (!path) return;
     const f = FIELDS.get(path);
@@ -594,6 +620,16 @@ function onColorName(el) {
     try { speakers.setColor(color, name || null, !!name); }
     catch (err) { toast(err.message, 'error'); }
     renderColors();
+}
+/** 1.4.0 줄 옆 감정 세기: 그 목소리에만 (비우면 전체 설정) — 같은 목소리가 보이는 곳(캐릭터별 목소리 · 대화 색 · 목소리 목록 칩)을 다시 그림 */
+function onStrength(el) {
+    const v = voices.findVoice(el.dataset.lvStrength);
+    if (!v) return;
+    if (['weak', 'normal', 'strong'].includes(el.value)) v.strength = el.value; else delete v.strength;
+    save();
+    renderMap();
+    renderColors();
+    try { renderVoiceRows(); } catch { /* 목소리 탭이 아직 없음 */ }
 }
 function onColorVoice(el) {
     const color = el.dataset.lvColorVoice;
@@ -1025,12 +1061,27 @@ function pinChip(name, uid) {
     const v = voices.findVoice(uid);
     return `<button type="button" class="lv-pin-chip" data-lv-act="unpin" data-name="${esc(name)}" aria-label="고정 풀기">${esc(v ? `${providerName(v.provider)} 고정` : '고정')}</button>`;
 }
+/**
+ * 1.4.0 줄 옆 도구 (캐릭터별 목소리 · 대화 색): 감정 세기(그 목소리만 — 비우면 전체) + 목소리 설정 열기.
+ * 사용자: "대화 색 화면에서도 바로 바꿀 수 있으면 · 감정 세기는 밖에 꺼내 두면". uid = 그 줄이 실제로 읽는 목소리 (엔진 자동 맞춤이면 짝)
+ */
+const STRENGTH_SHORT = [['', '전체'], ['weak', '약'], ['normal', '보통'], ['strong', '강']];
+function voiceToolsHtml(uid) {
+    const v = uid && uid !== USER_AUTO ? voices.findVoice(uid) : null;
+    if (!v) return '';
+    const cur = v.strength || '';
+    const opts = STRENGTH_SHORT.map(([val, lab]) => `<option value="${val}"${val === cur ? ' selected' : ''}>${lab}</option>`).join('');
+    return `<select class="text_pole lv-strength" data-lv-strength="${esc(v.uid)}" aria-label="감정 세기">${opts}</select><button type="button" class="lv-icon" data-lv-act="edit" data-uid="${esc(v.uid)}" aria-label="목소리 설정"><i class="fa-solid fa-sliders"></i></button>`;
+}
 function mapRow(label, uid, attrs, charName = label, { auto = false } = {}) {
     // 1.3.7 엔진 자동 맞춤으로 다른 목소리가 읽으면 그 목소리를 이름 밑에 (고른 목소리는 그대로 보여 둔다 — 자동 맞춤을 끄면 다시 그것)
     const v = uid && uid !== USER_AUTO ? voices.findVoice(uid) : null;
     const eff = v ? voices.preferVoice(v, charName) : null;   // 고르기 칸엔 실제로 읽는 목소리 (연결표는 그대로 — 「엔진」을 되돌리면 원래 목소리 · 1.3.8 고정이면 연결표 목소리)
     const opts = voiceOptions(eff ? eff.uid : uid, { auto, twins: charName ? charTwins(charName, uid) : [] });
     const chip = pinChip(charName, uid);
+    const tools = voiceToolsHtml(eff ? eff.uid : uid);
+    // 1.4.0 도구가 있는 줄도 <div> (label 안에 고르기가 둘이면 이름을 눌렀을 때 엉뚱한 칸이 잡힘)
+    if (tools) return `<div class="lv-row"><span class="lv-row-label">${esc(label)}${chip}</span><span class="lv-color-voicebox"><select class="text_pole" ${attrs} aria-label="${esc(label)} 목소리">${opts}</select>${tools}</span></div>`;
     // 1.3.8 리뷰(rig): 고정 칩이 <label> 안에 있으면 칩이 라벨의 대상이 돼 이름을 눌러도 고정이 풀렸다 → 칩이 있는 줄은 <div> + select 에 이름표
     if (chip) return `<div class="lv-row"><span class="lv-row-label">${esc(label)}${chip}</span><select class="text_pole" ${attrs} aria-label="${esc(label)} 목소리">${opts}</select></div>`;
     return `<label class="lv-row"><span class="lv-row-label">${esc(label)}</span><select class="text_pole" ${attrs}>${opts}</select></label>`;
@@ -1151,7 +1202,7 @@ function mapCardHtml() {
         .filter(([n]) => !names.includes(n))
         .map(([n, uid]) => `<span class="lv-pill"><span>${esc(n)} → ${esc(effName(uid, n))}</span>${pinChip(n, uid)}<button type="button" class="lv-x" data-lv-act="map-remove" data-name="${esc(n)}" aria-label="빼기"><i class="fa-solid fa-xmark"></i></button></span>`)
         .join('');
-    return card('map', 'fa-users', '캐릭터별 목소리', `<div class="lv-rows">${rows.join('')}</div>${pills ? `<div class="lv-pills">${pills}</div>` : ''}`);
+    return card('map', 'fa-users', '캐릭터별 목소리', `<div class="lv-rows">${rows.join('')}</div>${pills ? `<div class="lv-pills">${pills}</div>` : ''}`, '', '', MAP_HELP);
 }
 function colorRows() {
     try { return speakers.colorTable() || []; } catch { return []; }
@@ -1170,18 +1221,78 @@ function colorRowHtml(r, s) {
     return `<div class="lv-color" data-color="${esc(r.color)}">
 <span class="lv-swatch" style="background:${safeColor(r.color)}"></span>
 <input type="text" class="text_pole lv-color-name" data-lv-color-name="${esc(r.color)}" value="${esc(name)}" placeholder="${esc(hint)}" autocomplete="off">
-<span class="lv-color-voicebox"><select class="text_pole lv-color-voice" data-lv-color-voice="${esc(r.color)}"${name ? '' : ' disabled'}>${voiceOptions(effUid(uid, name), { twins: charTwins(name, uid) })}</select>${pinChip(name, uid)}</span>
+<span class="lv-color-voicebox"><select class="text_pole lv-color-voice" data-lv-color-voice="${esc(r.color)}"${name ? '' : ' disabled'}>${voiceOptions(effUid(uid, name), { twins: charTwins(name, uid) })}</select>${pinChip(name, uid)}${name ? voiceToolsHtml(effUid(uid, name)) : ''}</span>
 <button type="button" class="lv-icon${r.locked ? ' lv-on' : ''}" data-lv-act="color-lock" data-color="${esc(r.color)}" aria-label="고정" aria-pressed="${r.locked ? 'true' : 'false'}"><i class="fa-solid ${r.locked ? 'fa-lock' : 'fa-lock-open'}"></i></button>
 <span class="lv-count">${esc(cnt)}</span></div>`;
+}
+// ---------- 1.4.0 이 채팅의 캐릭터 (대화 색이 없어도): 사용자 — "대화 색 프롬프트를 안 쓰는 사람도 캐릭터를 구별해 바로바로 목소리를 줄 수 있게"
+// 최근 메시지에서 모은다: 대사 분석이 고른 화자(화자 찾기 · 단역 people) · 「이름: 「…」」 이름표 · 아는 이름(연결표 · 내 목소리 이름 · 다른 이름)이 글에 나옴.
+// 같은 목소리로 이어지는 이름(Seraph · 세라프)은 한 줄 · 대화 색 줄 · 캐릭터별 목소리 줄에 이미 있는 사람과 나(페르소나)는 뺀다
+const SPEAKER_SCAN = 60, SPEAKER_ROWS = 12;
+const PREFIX_RE = /(?:^|\n)[ \t]*([^\s:：「『"“\[\]()<>*#|]{1,20})[ \t]*[:：][ \t]*[「『"“]/g;
+const foldName = (t) => String(t || '').normalize('NFC').toLowerCase().replace(/\s+/g, ' ').trim();
+function chatSpeakers(s, taken) {
+    const ctx = getContext() || {};
+    const chat = Array.isArray(ctx.chat) ? ctx.chat : [];
+    const score = new Map();
+    const add = (n, w) => { const name = String(n || '').trim(); if (!name || name.length > 30) return; score.set(name, (score.get(name) || 0) + w); };
+    const known = new Map();   // 접은 이름 → 보여 줄 이름 (연결표 이름이 먼저)
+    for (const n of Object.keys(s.char_map || {})) known.set(foldName(n), n);
+    // 목소리 이름 · 다른 이름은 3글자 이상만 — 「이상」 같은 두 글자 목소리 이름이 흔한 낱말(그 이상은)에 걸렸다 (10-08 실제 채팅)
+    for (const v of s.voices || []) {
+        if (v.gone || v.stock || (v.mix || []).length) continue;
+        for (const n of [String(v.name || '').split(/[(（]/)[0].trim(), ...(v.aliases || [])]) { const k = foldName(n); if (k && k.replace(/\s/g, '').length >= 3 && !known.has(k)) known.set(k, n); }
+    }
+    // 낱말의 시작에서만 (앞 글자가 한글 · 영문 · 숫자가 아니어야): 「미카엘」은 「대천사미카엘」 속에서 세지 않는다 · 일본어는 띄어쓰기가 없어 가나 · 한자 뒤여도 셈
+    const LETTER = /[\p{Script=Hangul}A-Za-z0-9]/u;
+    const startsWord = (ft, k) => { for (let i = ft.indexOf(k); i >= 0; i = ft.indexOf(k, i + 1)) if (i === 0 || !LETTER.test(ft[i - 1])) return true; return false; };
+    for (const m of chat.slice(-SPEAKER_SCAN)) {
+        if (!m || m.is_system || m.is_user) continue;
+        const a = m.extra && m.extra.lemon_voice && m.extra.lemon_voice.analysis;
+        if (a && typeof a === 'object') {
+            for (const g of Array.isArray(a.segs) ? a.segs : []) if (g && g.speaker) add(g.speaker, 3);
+            for (const n of Object.keys(a.people && typeof a.people === 'object' ? a.people : {})) add(n, 2);
+        }
+        const text = `${m.extra && typeof m.extra.display_text === 'string' ? m.extra.display_text : ''}\n${String(m.mes || '')}`;
+        for (const mm of text.matchAll(PREFIX_RE)) add(mm[1], 3);
+        const ft = foldName(text);
+        for (const [k, n] of known) if (k.length >= 2 && startsWord(ft, k)) add(n, 1);
+    }
+    // 같은 사람 묶기: 연결표 · 이름으로 이어지는 목소리(엔진 자동 맞춤이면 실제로 읽는 목소리)가 같으면 한 줄
+    const voiceKey = (n) => { const uid = (s.char_map || {})[n] || voices.voiceByName(n)?.uid || ''; return uid ? `v:${effUid(uid, n)}` : `n:${foldName(n)}`; };
+    const persona = foldName(ctx.name1);
+    const groups = new Map();
+    for (const [n, w] of score) {
+        const f = foldName(n);
+        if (!f || f === persona || taken.names.has(f)) continue;
+        const key = voiceKey(n);
+        if (taken.keys.has(key)) continue;
+        const g = groups.get(key) || { names: [], w: 0 };
+        g.names.push(n); g.w += w; groups.set(key, g);
+    }
+    return [...groups.values()].sort((a, b) => b.w - a.w).slice(0, SPEAKER_ROWS).map(g => {
+        const label = g.names.find(n => Object.prototype.hasOwnProperty.call(s.char_map || {}, n)) || g.names.sort((a, b) => (score.get(b) || 0) - (score.get(a) || 0))[0];
+        return label;
+    });
+}
+function chatSpeakersHtml(s, colorRowsList) {
+    const taken = { names: new Set(), keys: new Set() };
+    const keyOf = (n) => { const uid = (s.char_map || {})[n] || voices.voiceByName(n)?.uid || ''; return uid ? `v:${effUid(uid, n)}` : `n:${foldName(n)}`; };
+    for (const n of [...colorRowsList.map(r => r.name).filter(Boolean), ...chatNames()]) { taken.names.add(foldName(n)); taken.keys.add(keyOf(n)); }
+    const names = chatSpeakers(s, taken);
+    if (!names.length) return '';
+    const rows = names.map(n => mapRow(n, (s.char_map || {})[n] || voices.voiceByName(n)?.uid || '', `data-lv-map="${esc(n)}"`, n));
+    return `<div class="lv-sub"><span>이 채팅의 캐릭터</span></div><div class="lv-rows">${rows.join('')}</div>`;
 }
 function colorsCardHtml() {
     const s = settings();
     const rows = colorRows();
-    const body = rows.length
+    const speakersPart = chatSpeakersHtml(s, rows);   // 1.4.0
+    const body = (rows.length
         ? `<div class="lv-colors">${rows.map(r => colorRowHtml(r, s)).join('')}</div>`
-        : '<p class="lv-empty">아직 배운 색이 없어요</p>';
+        : (speakersPart ? '' : '<p class="lv-empty">아직 배운 색이 없어요</p>')) + speakersPart;
     const btns = '<div class="lv-actions"><button type="button" class="menu_button" data-lv-act="palette">프리셋에서 불러오기</button><button type="button" class="menu_button" data-lv-act="relearn">다시 배우기</button><button type="button" class="menu_button" data-lv-act="colors-clear">비우기</button></div>';
-    return card('colors', 'fa-palette', '대화 색 (이 채팅)', body + btns);
+    return card('colors', 'fa-palette', '대화 색 (이 채팅)', body + btns, '', '', COLORS_HELP);
 }
 /** 1.3.8 목록 줄의 말투 칩: 그 목소리에 고른 말투(한국어 이름) — 엔진이 말투 이름을 줄 때만 */
 function tagChipText(v) {
@@ -1195,11 +1306,12 @@ function tagChipText(v) {
     try { return p.tagLabels(pv).join(' · '); } catch { return ''; }
 }
 /** 목록 한 줄: 한글 이름만 (언어·엔진·id 는 편집 팝업과 ▶ 들어보기에서) · 1.3.7 목소리 모델 · 1.3.8 말투 이름표 */
+const STRENGTH_KO = { weak: '약하게', normal: '보통', strong: '강하게' };   // 1.4.0 목소리 줄의 감정 세기 칩
 function voiceRowHtml(v) {
     const tags = tagChipText(v);
     return `<div class="lv-voice" data-uid="${esc(v.uid)}">
 <button type="button" class="lv-icon" data-lv-act="test" data-uid="${esc(v.uid)}" aria-label="들어보기"><i class="fa-solid fa-play"></i></button>
-<div class="lv-voice-name"><b>${esc(v.name)}</b>${v.use_model ? `<span class="lv-chip lv-model-chip">${esc(koModelLabel(v.provider, v.use_model))}</span>` : ''}${tags ? `<span class="lv-chip lv-model-chip lv-tag-sum">${esc(tags)}</span>` : ''}</div>
+<div class="lv-voice-name"><b>${esc(v.name)}</b>${v.use_model ? `<span class="lv-chip lv-model-chip">${esc(koModelLabel(v.provider, v.use_model))}</span>` : ''}${tags ? `<span class="lv-chip lv-model-chip lv-tag-sum">${esc(tags)}</span>` : ''}${v.strength ? `<span class="lv-chip lv-model-chip">감정 ${esc(STRENGTH_KO[v.strength] || '')}</span>` : ''}</div>
 <button type="button" class="lv-icon" data-lv-act="edit" data-uid="${esc(v.uid)}" aria-label="편집"><i class="fa-solid fa-pen"></i></button>
 <button type="button" class="lv-icon" data-lv-act="del" data-uid="${esc(v.uid)}" aria-label="삭제"><i class="fa-solid fa-xmark"></i></button></div>`;
 }
@@ -1606,6 +1718,7 @@ function editorHtml(v, p, o) {
     h += `<label class="lv-field lv-range"><span class="lv-label">음량 보정<output>${fmtDb(v.gainDb)}</output></span><input type="range" name="gainDb" min="-12" max="18" step="0.5" value="${esc(v.gainDb)}"></label>`;
     h += modelFieldHtml(v, p, cfg);
     h += edField('엑스트라', `<select class="text_pole" name="extra">${opt([['', '안 씀'], ['m', '남'], ['f', '여']], v.extra || '')}</select>`);
+    h += edField('감정 세기', `<select class="text_pole" name="strength">${opt([['', '전체 설정대로'], ['weak', '약하게'], ['normal', '보통'], ['strong', '강하게']], v.strength || '')}</select>`);   // 1.4.0
     h += '</div>';
     const merged = { ...cfg, ...v.params, ...(v.use_model ? { model: v.use_model } : {}) };   // 1.3.7 이 목소리의 모델로 조절 항목을 고름
     const params = (p.params || []).filter(f => f.voice && (!f.show || f.show(merged)));
@@ -1686,6 +1799,7 @@ function readEditor(el, v, p, o) {
     out.aliases = val('aliases').split(/[,、]/).map(x => x.trim()).filter(Boolean);
     out.lang = val('lang');
     out.prefer_source = val('prefer_source') || 'auto';
+    { const st = val('strength'); if (['weak', 'normal', 'strong'].includes(st)) out.strength = st; else delete out.strength; }   // 1.4.0 이 목소리만 감정 세기
     out.gainDb = clamp(Number(val('gainDb')) || 0, -12, 18);
     if (!o.isMix) out.voiceId = o.isNew ? val('voiceId').trim() : v.voiceId;
     // 1.3.8 리뷰 p10: 저장된 값에서 시작해 그려진 칸만 바꾼다 — 지금 모델이 숨긴 칸(말투 · 속도 …)의 값은 그대로 (모델을 바꿨다 되돌려도 남게)
@@ -1712,6 +1826,7 @@ function readEditor(el, v, p, o) {
         if (o.isNew) out.voiceId = 'mix-' + hash(out.mix.map(m => `${m.voiceId}:${m.weight}`).sort().join('|'));
     }
     if (!out.name) out.name = o.isMix ? '섞은 목소리' : out.voiceId;
+    if (!o.isNew && out.name !== v.name) out.name_custom = true;   // 1.4.0 직접 바꾼 이름은 계정 맞춤이 덮지 않음
     return out;
 }
 /** 목소리 편집 (uid 없으면 새로 만들기: opts.provider, opts.mix) */

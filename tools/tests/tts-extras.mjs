@@ -459,11 +459,11 @@ const EL = PR && PR.getProvider('elevenlabs');
 if (P && PR && TX && EL && typeof EL.strengthFor === 'function') {
     const name1 = T.ctx.name1, name2 = T.ctx.name2;
     const elBody = (r) => r.body && r.body.body;
-    await test('ElevenLabs 감정 세기: 약하게 = 안정감 1 · 감정 태그 없음 (속삭임은 남김) · 강하게 = 감정 줄만 안정감 −0.3 · 보통은 1.3.7 그대로', async () => {
+    await test('ElevenLabs 감정 세기: 약하게 = 안정감 1 · 감정 태그 없음 (속삭임은 남김) · v3·v4 는 느낌표 순하게 + 덤덤하게 (1.4.0) · 강하게 = 감정 줄만 안정감 −0.3 · 보통은 1.3.7 그대로', async () => {
         goldenReset('weak');
         let r = await lineOf('Ella', G_LINES.angry);
         assert.equal(elBody(r).voice_settings.stability, 1);
-        assert.equal(elBody(r).text, '화났어!', '감정 태그 없음');
+        assert.equal(elBody(r).text, '[flatly] 화났어.', '감정 태그 없음 · 1.4.0 느낌표 순하게 + 말투 없는 목소리엔 덤덤하게');
         assert.equal(r.job.params.emotion_strength, 'weak');
         r = await lineOf('Ella', G_LINES.whisper);
         assert.equal(elBody(r).text, '[whispers] 쉿.', '속삭임은 약하게여도 남김 (MiniMax 와 같은 규칙)');
@@ -481,16 +481,79 @@ if (P && PR && TX && EL && typeof EL.strengthFor === 'function') {
         goldenReset('weak');
         settings().providers.elevenlabs.stability = 1;
         r = await lineOf('Ella', G_LINES.plain);
-        assert.equal(r.job.params.emotion_strength, undefined, '이미 1 이면 약하게도 같은 요청');
+        assert.equal(r.job.params.emotion_strength, 'weak', '1.4.0 v4 는 이미 1 이어도 약하게 (글이 바뀜 — 덤덤하게)');
+        assert.equal(elBody(r).text, '[flatly] 안녕하세요.');
+        r = await lineOf('Elma', G_LINES.angry);
+        assert.equal(r.job.params.emotion_strength, undefined, '태그 없는 모델(multilingual v2)은 예전처럼 — 이미 1 이면 같은 요청 · 키');
+        assert.equal(elBody(r).text, '화났어!', 'v2 는 글을 안 건드림 (태그를 소리 내 읽는 모델)');
         T.ctx.name1 = name1; T.ctx.name2 = name2;
     });
     await test('ElevenLabs 감정 세기: v3 는 0 · 0.5 · 1 로 맞춘 뒤 같으면 표시 없음 · MiniMax 는 1.3.7 규칙 그대로 (strengthFor 없음)', () => {
         assert.equal(EL.strengthFor('strong', { params: { stability: 0.5 }, emotion: 'angry', cfg: { model: 'eleven_v3' } }), 'strong', '0.5 → 0.2 → v3 0');
         assert.equal(EL.strengthFor('strong', { params: { stability: 0.1 }, emotion: 'angry', cfg: { model: 'eleven_v3' } }), '', '0.1 → 0 · 둘 다 v3 0');
-        assert.equal(EL.strengthFor('weak', { params: { stability: 0.9 }, emotion: '', cfg: { model: 'eleven_v3' } }), '', '0.9 → v3 1 = 1');
+        assert.equal(EL.strengthFor('weak', { params: { stability: 0.9 }, emotion: '', cfg: { model: 'eleven_v3' } }), 'weak', '1.4.0 v3 · v4 는 약하게면 글이 바뀌어 늘 표시');
+        assert.equal(EL.strengthFor('weak', { params: { stability: 1 }, emotion: '', cfg: { model: 'eleven_multilingual_v2' } }), '', 'v2: 이미 1 = 같은 요청');
+        assert.equal(EL.strengthFor('weak', { params: { stability: 0.5 }, emotion: '', cfg: { model: 'eleven_multilingual_v2' } }), 'weak');
         assert.equal(EL.strengthFor('weak', { params: { stability: 0.9 }, emotion: '', cfg: { model: 'eleven_v4' } }), 'weak');
         assert.equal(EL.strengthFor('normal', { params: { stability: 0.5 }, emotion: 'angry', cfg: {} }), '');
         assert.equal(typeof PR.getProvider('minimax').strengthFor, 'undefined');
+    });
+    await test('1.4.0 계정 맞춤이 ElevenLabs 계정의 이름 바꿈을 따름 → 「엔진」 짝이 같은 이름의 새 목소리로 · 직접 바꾼 이름 · MiniMax 는 그대로', async () => {
+        goldenReset('normal');
+        const s = settings();
+        V.upsertVoices([{ voiceId: 'mm_ella', name: 'Ella' }], 'minimax');
+        const mmElla = s.voices.find(v => v.provider === 'minimax' && v.voiceId === 'mm_ella');
+        assert.equal(V.twinOf(mmElla, 'elevenlabs')?.voiceId, 'el_a', '처음엔 예전 Ella');
+        V.findVoice('elevenlabs:el_b').name = 'Elma (내 이름)';
+        V.findVoice('elevenlabs:el_b').name_custom = true;
+        const r = V.syncAccount('elevenlabs', [
+            { voiceId: 'el_a', name: 'Ella (예전)', own: true },
+            { voiceId: 'el_b', name: 'Elma', own: true },
+            { voiceId: 'el_new', name: 'Ella', own: true },
+        ]);
+        assert.equal(r.renamed, 1, '이름이 바뀐 내 목소리 하나');
+        assert.equal(V.findVoice('elevenlabs:el_a').name, 'Ella (예전)');
+        assert.equal(V.findVoice('elevenlabs:el_b').name, 'Elma (내 이름)', '이 목록에서 직접 바꾼 이름은 그대로');
+        assert.ok(s.voices.some(v => v.provider === 'elevenlabs' && v.voiceId === 'el_new' && v.name === 'Ella'), '새 목소리는 계정 맞춤이 넣음');
+        assert.equal(V.twinOf(mmElla, 'elevenlabs')?.voiceId, 'el_new', '같은 이름(3점)이 「Ella (예전)」(2점)보다 앞');
+        const before = V.findVoice('minimax:mm_a').name;
+        const m = V.syncAccount('minimax', [{ voiceId: 'mm_a', name: 'something else', own: true }, { voiceId: 'mm_ella', name: 'x', own: true }]);
+        assert.equal(m.renamed, 0, 'MiniMax 는 계정 이름을 따르지 않음 (이름이 목소리 id 거나 다를 수 있음)');
+        assert.equal(V.findVoice('minimax:mm_a').name, before);
+    });
+    await test('1.4.0 목소리마다 감정 세기: 전체는 약하게여도 이 목소리만 보통 · 강하게 · 지우면 다시 전체 · 저장 정리에도 남음', async () => {
+        goldenReset('weak');
+        V.findVoice('elevenlabs:el_a').strength = 'normal';
+        let r = await lineOf('Ella', G_LINES.angry);
+        assert.equal(elBody(r).text, '[angry] 화났어!', '보통: 감정 태그 · 원문 그대로');
+        assert.equal(r.job.params.emotion_strength, undefined, '보통이면 1.3.9 와 같은 요청 · 키');
+        V.findVoice('elevenlabs:el_a').strength = 'strong';
+        r = await lineOf('Ella', G_LINES.angry);
+        assert.equal(r.job.params.emotion_strength, 'strong');
+        assert.equal(elBody(r).voice_settings.stability, 0.2);
+        delete V.findVoice('elevenlabs:el_a').strength;
+        r = await lineOf('Ella', G_LINES.angry);
+        assert.equal(elBody(r).text, '[flatly] 화났어.', '없으면 전체 설정(약하게)');
+        assert.equal(toVoice({ voiceId: 'x', name: 'x', strength: 'normal' }, 'elevenlabs').strength, 'normal');
+        assert.equal(toVoice({ voiceId: 'x', name: 'x', strength: 'loud' }, 'elevenlabs').strength, undefined, '모르는 값은 버림');
+    });
+    await test('1.4.0 ElevenLabs 약하게 = 글 순하게 (calmText) · 고른 말투가 있으면 그 말투만 · 속삭임 줄엔 덤덤하게 안 붙임', async () => {
+        const EP = await import(pathToFileURL(path.join(root, 'providers/elevenlabs.js')).href);
+        assert.equal(EP.calmText('「ちょっと待ってください！この書類、昨日も出しましたよね！？」'), '「ちょっと待ってください。この書類、昨日も出しましたよね？」');
+        assert.equal(EP.calmText('えっ？ね～♪ すごーーい!!'), 'え？ね すごーい.');
+        assert.equal(EP.calmText('……はぁ。もういいです。'), '……はぁ。もういいです。', '말줄임표 · 평범한 글은 그대로');
+        assert.equal(EP.calmText('What?! No!'), 'What? No.');
+        assert.ok(EP.VOICE_TAGS.some(t => t.value === 'flatly' && t.label === '덤덤하게'));
+        goldenReset('weak');
+        V.findVoice('elevenlabs:el_a').params = { voice_tags: ['tired'] };
+        let r = await lineOf('Ella', G_LINES.angry);
+        assert.equal(elBody(r).text, '[tired] 화났어.', '고른 말투가 있으면 덤덤하게를 더하지 않음');
+        V.findVoice('elevenlabs:el_a').params = {};
+        r = await lineOf('Ella', G_LINES.whisper);
+        assert.equal(elBody(r).text, '[whispers] 쉿.', '속삭임 줄은 그대로');
+        goldenReset('normal');
+        r = await lineOf('Ella', G_LINES.angry);
+        assert.equal(elBody(r).text, '[angry] 화났어!', '보통은 1.3.9 그대로');
     });
     await test('ElevenLabs 말투 (목소리마다 · 엔진 기본): v3 · v4 에서만 줄 맨 앞 (감정 태그 앞 · 같은 태그는 한 번) · 다른 모델은 요청 · 캐시 키가 말투 없음과 같음 · 빈 목록 = 없음', async () => {
         goldenReset('normal');
@@ -524,7 +587,7 @@ if (P && PR && TX && EL && typeof EL.strengthFor === 'function') {
     await test('말투 태그 목록: 공식 안내의 태그만 · 한국어 이름 · 목록 줄의 이름표 (tagLabels)', async () => {
         const mod = await import(pathToFileURL(path.join(root, 'providers/elevenlabs.js')).href);
         const vals = mod.VOICE_TAGS.map(t => t.value);
-        assert.deepEqual(vals, ['tired', 'bored', 'distant', 'peaceful', 'softly', 'quietly', 'whispers', 'playful', 'sarcastic', 'hesitant', 'thoughtful', 'excited', 'nervous']);
+        assert.deepEqual(vals, ['tired', 'bored', 'distant', 'flatly', 'peaceful', 'softly', 'quietly', 'whispers', 'playful', 'sarcastic', 'hesitant', 'thoughtful', 'excited', 'nervous']);
         assert.ok(mod.VOICE_TAGS.every(t => /^[가-힣 ]+$/.test(t.label)), '이름은 한국어만');
         assert.deepEqual(EL.tagLabels(['tired', 'distant']), ['피곤하게', '무심하게']);
         const f = EL.params.find(x => x.key === 'voice_tags');
@@ -583,6 +646,45 @@ if (A && typeof V.userAuto === 'function') {
         await V.noteExtras({ Dreamju: { g: 'f', a: 'a' } });
         assert.ok(s.extra_map.Dreamju, '페르소나도 엑스트라 표에');
         s.user_voice = '';
+    });
+}
+
+// 1.4.0 사용자 제보 (10-08): 두 사람이 같은 대사(「다릅니다.」)를 하면 아래 줄을 눌러도 위 캐릭터 목소리로 — 같은 글이면 늘 첫째 조각을 골랐다
+let CP = null;
+try { CP = await import(pathToFileURL(path.join(root, 'clickplay.js')).href); } catch (e) { console.log('  (clickplay.js 를 못 불러와 같은 대사 시험은 건너뜀:', String(e && e.message || e).slice(0, 80), ')'); }
+if (CP && TX) {
+    await test('같은 대사를 두 사람이: 누른 번째의 조각 (탭 sameIndex) · 미리 만들기도 같은 번째 · 하나뿐이면 예전 그대로', async () => {
+        goldenReset('normal');
+        const text = '사탄은 고개를 들었다.\n\n<font color="#d03030">「다릅니다.」</font>\n\n<font color="#9370db">「다릅니다.」</font>\n\n<font color="#3a8a9a">「그게 그거잖아.」</font>';
+        const mes = { name: '천지합동청', is_user: false, mes: text, extra: {}, swipe_id: 0 };
+        T.ctx.chat.length = 0; T.ctx.chat.push(mes);
+        const segs = CP.tapSegments(mes);
+        const dl = segs.filter(x => x.kind === 'dialogue');
+        assert.equal(dl.length, 3);
+        const col = (x) => String(x.color || '').toLowerCase();
+        assert.ok(col(dl[0]) && col(dl[1]) && col(dl[0]) !== col(dl[1]), `미리 만들기: 두 「다릅니다.」 가 서로 다른 색(사람) — ${col(dl[0])} / ${col(dl[1])}`);
+        assert.equal(dl[0].dialogueIndex, 0);
+        assert.equal(dl[1].dialogueIndex, 1, '둘째 「다릅니다.」 는 둘째 대화문');
+        const first = CP.segmentForHit(mes, { kind: 'dialogue', text: '다릅니다.', raw: '다릅니다.', quoted: '「다릅니다.」', sameIndex: 0, line: 2 });
+        const second = CP.segmentForHit(mes, { kind: 'dialogue', text: '다릅니다.', raw: '다릅니다.', quoted: '「다릅니다.」', sameIndex: 1, line: 4 });
+        assert.equal(col(first), col(dl[0]));
+        assert.equal(col(second), col(dl[1]), '아래 줄을 누르면 아래 사람');
+        const only = CP.segmentForHit(mes, { kind: 'dialogue', text: '그게 그거잖아.', raw: '그게 그거잖아.', quoted: '「그게 그거잖아.」', line: 6 });
+        assert.equal(only.dialogueIndex, 2, '같은 글이 하나뿐이면 sameIndex 없이도 예전처럼');
+        const far = CP.segmentForHit(mes, { kind: 'dialogue', text: '다릅니다.', raw: '다릅니다.', quoted: '「다릅니다.」', sameIndex: 9, sameCount: 2, line: 4 });
+        assert.ok(col(far), '번째가 넘치면 가까운 줄');
+        // 검토(10-08): 조각만 맞고 재생기(clickedPair)가 다시 첫째를 골랐다 — 실제 재생 길(lineJobs)의 목소리까지 본다
+        const SP = await import(pathToFileURL(path.join(root, 'speakers.js')).href);
+        SP.setColor('#d03030', 'Ella'); SP.setColor('#9370db', 'Mina');
+        const jobsOf = (seg) => P.lineJobs(0, mes, [seg]).jobs;
+        assert.equal(jobsOf(first)[0].voice.provider, 'elevenlabs', '위 줄 = 위 사람(Ella)');
+        assert.equal(jobsOf(second)[0].voice.provider, 'minimax', '아래 줄 = 아래 사람(Mina)');
+        const pre = P.lineJobs(0, mes, CP.tapSegments(mes)).jobs.filter(j => /다릅니다/.test(j.text));
+        assert.deepEqual(pre.map(j => j.voice.provider), ['elevenlabs', 'minimax'], '미리 만들기도 두 사람');
+        assert.equal(pre[1].key, jobsOf(second)[0].key, '미리 만든 소리 = 누른 소리 (캐시 키 같음)');
+        // 화면에 같은 대사가 더 있어도(속마음이 따라 적음) 색으로 고름
+        const third = CP.segmentForHit(mes, { kind: 'dialogue', text: '다릅니다.', raw: '다릅니다.', quoted: '「다릅니다.」', color: '#9370db', sameIndex: 1, sameCount: 3, line: 4 });
+        assert.equal(col(third), col(dl[1]));
     });
 }
 

@@ -35,6 +35,7 @@ export const VOICE_TAGS = Object.freeze([
     { value: 'tired', label: '피곤하게' },
     { value: 'bored', label: '지루하게' },
     { value: 'distant', label: '무심하게' },
+    { value: 'flatly', label: '덤덤하게' },   // 1.4.0 오디오 태그 안내 'Tone cues' (flatly · deadpan) — 사용자가 들어 보고 가장 덜 들뜬 것으로 고름
     { value: 'peaceful', label: '평온하게' },
     { value: 'softly', label: '부드럽게' },
     { value: 'quietly', label: '조용히' },
@@ -56,6 +57,20 @@ export function voiceTagsOf(v) {
 }
 /** 목록 줄 · 칩에 보일 한국어 이름들 */
 export const voiceTagLabels = (v) => voiceTagsOf(v).map(t => VOICE_TAGS.find(x => `[${x.value}]` === t)?.label).filter(Boolean);
+
+// 1.4.0 감정 세기 '약하게' + v3 · v4: 안정감만으로는 안 차분해진다 (ElevenLabs 안내: 안정감은 '일정함'이고 감정은 글에서 읽는다 · v4 는 복제 원본의 말투를 그대로 따른다).
+//   2026-10-08 벨포드로 들어 보고 재 본 것: 느낌표를 순하게 하면 음높이 흔들림이 6.2 → 5.1~5.5, 말투 태그가 하나라도 있으면 없는 것보다 덜 들뜨고,
+//   사용자는 그중 [flatly](덤덤하게)를 골랐다. 그래서 약하게면 글의 느낌표 · 물결 · 음표를 순하게, 말투를 안 고른 목소리엔 덤덤하게를 붙인다
+export const CALM_TAG = '[flatly]';
+/** 들뜸 신호를 순하게: ！ → 。 · ！？ → ？ (반각도) · 물결 · 음표 · 하트 빼기 · 말끝 っ 빼기 · 장음 겹침 하나로. 말줄임표(머뭇거림)는 그대로 */
+export function calmText(text) {
+    return String(text ?? '')
+        .replace(/！+？+|？+！+/g, '？').replace(/!+\?+|\?+!+/g, '?')
+        .replace(/！+/g, '。').replace(/!+/g, '.')
+        .replace(/[～〜~♪♡❤]+/g, '')
+        .replace(/っ(?=[。、？?」』)\s]|$)/g, '')
+        .replace(/ー{2,}/g, 'ー');
+}
 
 // 목록의 category → 묶음 이름
 const GROUPS = { premade: '기본', cloned: '복제', generated: '생성', professional: '전문', famous: '유명', high_quality: '고음질' };
@@ -172,6 +187,7 @@ async function call(path, { key, method = 'GET', body, signal, as = 'json', time
 
 export default {
     id: 'elevenlabs',
+    accountNames: true,   // 1.4.0 계정에서 바꾼 내 목소리 이름을 계정 맞춤이 따라감 (voices.syncAccount)
     name: 'ElevenLabs',
     direct: true,
     needsKey: true,
@@ -230,7 +246,7 @@ export default {
         const stab = clamp(num(params && params.stability, 0.5), 0, 1);
         const snap = snapsStability(modelOf(cfg || {})) ? snap3 : (x) => x;
         const to = strengthStab(level, stab);
-        if (level === 'weak') return snap(to) !== snap(stab) ? 'weak' : '';
+        if (level === 'weak') return usesTags(modelOf(cfg || {})) || snap(to) !== snap(stab) ? 'weak' : '';   // 1.4.0 v3 · v4 는 글도 바뀐다 (calmText · 덤덤하게)
         if (level === 'strong') return emotion && snap(to) !== snap(stab) ? 'strong' : '';
         return '';
     },
@@ -242,7 +258,12 @@ export default {
         const tagged = usesTags(model);
         const tag = tagged ? V3_TAGS[emotion] : '';
         // 1.3.8 목소리 말투 태그 → 감정 태그 → 글 (같은 태그는 한 번만). 말투를 안 고르면 1.3.7 과 같은 글
-        const lead = tagged ? voiceTagsOf(p.voice_tags).filter(t => t !== tag) : [];
+        let lead = tagged ? voiceTagsOf(p.voice_tags).filter(t => t !== tag) : [];
+        // 1.4.0 약하게: 글을 순하게 + 말투도 감정 태그(속삭임)도 없는 줄엔 덤덤하게
+        if (tagged && p.emotion_strength === 'weak') {
+            input = calmText(input);
+            if (!lead.length && !tag) lead = [CALM_TAG];
+        }
         const pre = tag ? [...lead, tag] : lead;
         if (pre.length) input = `${pre.join(' ')} ${input}`;
 

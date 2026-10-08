@@ -862,7 +862,10 @@ await test('고정 칩이 있는 캐릭터 줄은 <div> (이름을 눌러도 칩
     await change({ dataset: { lvMap: 'Seraph' }, value: 'minimax:cj_seraph01' });
     ui.renderVoices();
     const map = DOM.cards.map || '';
-    assert.match(map, /<div class="lv-row"><span class="lv-row-label">Seraph<button type="button" class="lv-pin-chip"[^>]*>MiniMax 고정<\/button><\/span><select class="text_pole" data-lv-map="Seraph" aria-label="Seraph 목소리">/);
+    // 1.4.0 목소리 칸은 감정 세기 · 설정 단추와 함께 lv-color-voicebox 안 (줄은 그대로 <div> · select 이름표)
+    assert.match(map, /<div class="lv-row"><span class="lv-row-label">Seraph<button type="button" class="lv-pin-chip"[^>]*>MiniMax 고정<\/button><\/span>(?:<span class="lv-color-voicebox">)?<select class="text_pole" data-lv-map="Seraph" aria-label="Seraph 목소리">/);
+    if (map.includes('data-lv-strength')) assert.ok(/class="lv-help-note lv-card-help" hidden>[^<]*캐릭터 이름마다/.test(map) && map.includes('· 보통: 대사 분석이 찾은 감정'), '1.4.0 카드 제목 옆 ? 설명 (감정 세기 칸 뜻)');
+    if (map.includes('data-lv-strength')) assert.match(map, /data-lv-map="Seraph"[\s\S]*?<\/select><select class="text_pole lv-strength" data-lv-strength="minimax:cj_seraph01"[\s\S]*?data-lv-act="edit" data-uid="minimax:cj_seraph01"/, '고정한 캐릭터는 고정 엔진 목소리에 감정 세기 · 설정');
     for (const m of map.matchAll(/<label class="lv-row">([\s\S]*?)<\/label>/g)) assert.doesNotMatch(m[1], /lv-pin-chip/, '칩은 label 안에 없음');
     assert.match(map, /<label class="lv-row"><span class="lv-row-label">기본<\/span><select class="text_pole" data-lv-path="default_voice">/);
 });
@@ -1027,6 +1030,30 @@ await test('모델 목록: 틀린 키를 저장하고 바로 맞는 키로 바�
     const bad = LOG.entries().filter(x => /모델 목록 실패/.test(x.msg));
     assert.equal(bad.length, 0, JSON.stringify(bad));
     assert.match(DOM.text['#lv_test_result'] || '', /^연결됨/);
+});
+
+await test('1.4.0 이 채팅의 캐릭터 (대화 색 없이): 이름표 · 화자 찾기 · 단역이 줄로 · 카드 캐릭터와 같은 목소리(세라프 = Seraph)는 빼고 · 고르면 연결표에', async () => {
+    await userOnEl();
+    const s = S.settings();
+    const keep = T.ctx.chat.slice();
+    T.ctx.chatMetadata.lemon_voice = { colors: {} };
+    T.ctx.chat.length = 0;
+    T.ctx.chat.push({ name: 'Seraph', is_user: false, is_system: false, swipe_id: 0, extra: {}, mes: '세라프: 「안녕.」\n벨포드: 「네, 서류는 여기.」' });
+    T.ctx.chat.push({ name: 'Seraph', is_user: false, is_system: false, swipe_id: 0, mes: '「어서 오세요.」', extra: { lemon_voice: { analysis: { segs: [{ i: 0, speaker: '카페 사장' }], people: { '카페 사장': { g: 'm', a: 'a' } } } } } });
+    T.ctx.chat.push({ name: 'User', is_user: true, is_system: false, swipe_id: 0, extra: {}, mes: '나: 「응.」' });
+    ui.renderVoices();
+    const col = DOM.cards.colors || '';
+    assert.match(col, /이 채팅의 캐릭터/);
+    assert.match(col, /data-lv-map="벨포드"/, '이름표로 찾은 캐릭터');
+    assert.match(col, /data-lv-map="카페 사장"/, '화자 찾기 · 단역');
+    assert.doesNotMatch(col, /data-lv-map="세라프"/, '카드 캐릭터(Seraph)와 같은 목소리는 캐릭터별 목소리에 이미 있음');
+    assert.doesNotMatch(col, /data-lv-map="나"/, '내 메시지는 보지 않음');
+    assert.doesNotMatch(col, /아직 배운 색이 없어요/, '줄이 있으면 빈 안내 대신');
+    await change({ dataset: { lvMap: '카페 사장' }, value: 'minimax:cj_seraph01' });
+    assert.equal(s.char_map['카페 사장'], 'minimax:cj_seraph01', '고르면 연결표에');
+    delete s.char_map['카페 사장'];
+    T.ctx.chat.length = 0; T.ctx.chat.push(...keep);
+    delete T.ctx.chatMetadata.lemon_voice;
 });
 
 console.log(`\ntts-onboarding: ${pass} passed, ${fail} failed`);

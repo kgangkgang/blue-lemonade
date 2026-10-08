@@ -137,7 +137,9 @@ export function toVoice(v, provider = 'minimax') {
         ...(v.gone === true ? { gone: true } : {}),   // 1.3.7 계정 맞춤: 연결된 계정 목록에 없음 → 목록 · 고르기에서 숨김 (voices.syncAccount)
         ...(cleanModel(v.use_model) ? { use_model: cleanModel(v.use_model) } : {}),
         ...(v.extra === 'm' || v.extra === 'f' ? { extra: v.extra } : {}),             // 1.3.7 엑스트라로도 쓰기 (남 · 여) — 그 엔진에 이게 있으면 기본 목소리 대신 이것들 가운데서 고른다   // 1.3.7 이 목소리만 쓸 모델 (없으면 엔진에서 고른 모델 — player.voiceCfg)
-        ...(v.stock === true ? { stock: true } : {}),   // 1.3.8 엔진의 기본 · 시스템 목소리 (불러오기 목록의 own 이 아닌 줄) — 캐릭터 이름만으로는 짝이 되지 않음 (voices.twinOf)
+        ...(v.stock === true ? { stock: true } : {}),
+        ...(v.name_custom === true ? { name_custom: true } : {}),
+        ...(['weak', 'normal', 'strong'].includes(v.strength) ? { strength: v.strength } : {}),   // 1.4.0 이 목소리만 감정 세기 (없으면 전체 설정)   // 1.4.0 이 목록에서 이름을 직접 바꿈 → 계정 이름이 바뀌어도 그대로   // 1.3.8 엔진의 기본 · 시스템 목소리 (불러오기 목록의 own 이 아닌 줄) — 캐릭터 이름만으로는 짝이 되지 않음 (voices.twinOf)
     };
 }
 

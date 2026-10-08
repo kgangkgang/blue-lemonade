@@ -312,7 +312,11 @@ export function findClickedDialogue(root, x, y, opts = {}) {
     if (!LETTER.test(text)) return null;
     const known = new Set((opts.knownNames || []).map(n => fold(n).replace(/\s+/g, '')));
     const quoted = flat.slice(d.start, d.end).replace(/\s+/g, ' ').trim();
-    return { text, raw, quoted, color: colorFromDom(at.node, root) || colorFromBareHex(flat, d.start), speakerHint: prefixHint(flat, d, known), line: lineOf(flat, d.start), start: d.start, end: d.end };
+    // 1.4.0 같은 글의 대사가 여럿이면(두 사람이 따로 「다릅니다.」) 이게 몇 번째 · 모두 몇 개인지 — segmentForHit 은 색 · 이름을 먼저 보고,
+    //       번째는 조각 쪽 개수와 같을 때만 믿는다 (속마음 · 상태창이 같은 대사를 따라 적으면 화면 쪽 개수가 더 많다)
+    const want = fold(text);
+    const same = quotes.filter(q => fold(flat.slice(q.is, q.ie)) === want);
+    return { text, raw, quoted, color: colorFromDom(at.node, root) || colorFromBareHex(flat, d.start), speakerHint: prefixHint(flat, d, known), line: lineOf(flat, d.start), start: d.start, end: d.end, sameIndex: same.indexOf(d), sameCount: same.length };
 }
 
 // ---------- 누른 대화문 → 조각 (text.js 결과에서 찾고, 없으면 즉석)
@@ -456,7 +460,17 @@ export function segmentForHit(mes, hit) {
         else return null;
     } else {
         const want = fold(hit.text);
-        const find = (list) => (list || []).find(x => x.kind === 'dialogue' && x.text && fold(x.text) === want) || null;
+        const find = (list) => {
+            const all = (list || []).filter(x => x.kind === 'dialogue' && x.text && fold(x.text) === want);
+            if (all.length < 2) return all[0] || null;
+            // 1.4.0 같은 대사가 여럿 (사용자 제보: 두 사람이 「다릅니다.」 — 아래를 눌러도 위 캐릭터로 읽음): 누른 줄의 색 → 이름 → 번째(양쪽 개수가 같을 때만) → 가까운 줄
+            const hc = normColor(hit.color);
+            if (hc) { const byColor = all.filter(x => normColor(x.color) === hc); if (byColor.length === 1) return byColor[0]; }
+            const hk = nameKey(hit.speakerHint);
+            if (hk) { const byName = all.filter(x => nameKey(x.speakerHint) === hk); if (byName.length === 1) return byName[0]; }
+            if (Number.isInteger(hit.sameIndex) && hit.sameIndex >= 0 && hit.sameIndex < all.length && hit.sameCount === all.length) return all[hit.sameIndex];
+            return nearest(all, hit.line || 0);
+        };
         const fromDisp = find(disp);
         if (fromDisp) { seg = fromDisp; index = dialogueIndexOf(disp, fromDisp); }
         else { const fromOrig = find(orig); if (fromOrig) { seg = fromOrig; index = dialogueIndexOf(orig, fromOrig); } }
@@ -497,11 +511,18 @@ export function tapSegments(mes, { thoughts = false } = {}) {
     if (typeof d === 'string' && d.trim() && d !== mes.mes) { try { disp = pairSegments(orig, safeSegment(sub(speechDisplay(d)), opts)); } catch { disp = null; } }
     const shown = disp || orig;
     const out = [], later = [];
+    const seen = new Map();   // 1.4.0 같은 글 대사의 번째 · 개수 (탭의 sameIndex · sameCount 와 같게)
+    const count = new Map();
+    for (const x of shown) if (x && x.kind === 'dialogue' && x.text) { const k = fold(x.text); count.set(k, (count.get(k) || 0) + 1); }
     for (const x of shown) {
         if (!x || !x.text) continue;
         let seg = null;
         try {
-            if (x.kind === 'dialogue') seg = segmentForHit(mes, { kind: 'dialogue', text: x.text, raw: x.raw, quoted: x.text, color: x.color || null, speakerHint: x.speakerHint || null, line: x.line || 0 });
+            if (x.kind === 'dialogue') {
+                const k = fold(x.text), n = seen.get(k) || 0;
+                seen.set(k, n + 1);
+                seg = segmentForHit(mes, { kind: 'dialogue', text: x.text, raw: x.raw, quoted: x.text, color: x.color || null, speakerHint: x.speakerHint || null, line: x.line || 0, sameIndex: n, sameCount: count.get(k) || 0 });
+            }
             else if (thoughts && x.kind === 'thought') seg = segmentForHit(mes, { kind: 'thought', strong: true, match: 'any', text: x.text, raw: x.raw, nameHint: x.speakerHint || null, color: x.color || null, line: x.line || 0 });
         } catch (e) { log('err', `미리 만들기 조각 실패: ${String(e?.message || e).slice(0, 40)}`); seg = null; }
         if (!seg) continue;

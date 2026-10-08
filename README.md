@@ -1,13 +1,24 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.7.3.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.7.4.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.7.3 · 최신 업데이트</summary>
+<summary>5.7.4 · 최신 업데이트</summary>
+
+- TTS 1.4.0: 감정 세기 「약하게」가 ElevenLabs v3 · v4 에서도 차분해요. 안정감만으로는 덜 들뜨지 않아서(ElevenLabs 는 감정을 글과 복제 원본에서 읽어요) 약하게면 느낌표 · 물결 · 음표를 순하게 바꾸고, 말투를 안 고른 목소리엔 「덤덤하게」를 붙여요. 말투 칩에 「덤덤하게」가 생겼어요.
+- TTS: ElevenLabs 계정에서 목소리 이름을 바꾸면 목소리 목록의 이름도 따라 바뀌고, 「엔진」이 같은 이름의 목소리를 짝으로 골라요 (목록에서 직접 바꾼 이름은 그대로). 복제 목소리가 너무 들뜨면 차분한 녹음으로 다시 복제하고 이름을 바꿔 끼우면 캐릭터 설정을 건드리지 않고 바뀌어요.
+- TTS: 캐릭터마다 감정 세기 — 캐릭터별 목소리 · 대화 색 줄의 목소리 옆 칸(전체 · 약 · 보통 · 강)에서 바로 바꿔요. 대부분은 차분하게 두고 몇 명만 감정을 살릴 수 있어요. 옆의 설정 단추를 누르면 그 목소리 편집이 바로 열려요. 카드 제목 옆 ? 를 누르면 칸들의 뜻이 펼쳐지고, TTS 사용법(버전 표시)에 캐릭터 목소리 · 감정 세기 · ElevenLabs 가 너무 들뜰 때를 자세히 적었어요.
+- TTS: 이 채팅의 캐릭터 — 대화 색이 없는 채팅도 대화 색 카드 아래에 최근 메시지에 나온 캐릭터(「이름: 「…」」 이름표 · 대사 분석의 화자 찾기 · 목소리를 정해 둔 이름)가 줄로 나와 바로 목소리 · 감정 세기를 골라요.
+- TTS: 두 사람이 같은 대사(예: 둘 다 「다릅니다.」)를 하면 아래 줄을 눌러도 위 캐릭터 목소리로 읽던 것을 고쳤어요. 누른 줄의 캐릭터로 읽고, 미리 만들기도 같아요.
+
+</details>
+
+<details>
+<summary>5.7.3 · TTS 1.3.9 · 단어 치환 강조 · 용어집 표기 흔들림</summary>
 
 - TTS 1.3.9: 내 대사(페르소나) 목소리가 없을 때 그 줄을 누르면 「내 목소리를 먼저 정해요」 대신 「○○(나) 대사도 자동 목소리로 읽을까요?」를 물어요. 여자 목소리 · 남자 목소리를 고르면 「나」가 자동이 되고 그 자리에서 바로 읽어요. 목소리 탭에서 「나」 = 자동을 고를 때도 성별을 바로 물어요 (대사 분석을 기다리지 않게).
 - 단어 치환: 「치환 전후 보기」에서 바뀐 낱말만 테마 색으로 칠해요. 바꾸기 전은 옅은 바탕에 줄을 긋고, 바꾼 뒤는 진한 바탕에 밑줄을 그어요. 조사가 함께 바뀌면(세라프가 → 미카엘이) 조사까지 칠해요.
