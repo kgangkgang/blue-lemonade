@@ -11,6 +11,10 @@ export const OPENAI_VOICES = ['alloy', 'ash', 'ballad', 'coral', 'echo', 'fable'
 export const OPENAI_GENDER = { ash: 'm', ballad: 'm', coral: 'f', echo: 'm', onyx: 'm', nova: 'f', sage: 'f', shimmer: 'f', verse: 'm', marin: 'f', cedar: 'm' };
 // 목록을 못 받았을 때 (1.3.7 키가 있으면 GET {주소}/models 의 TTS 모델로 바뀐다 — listModels)
 const MODELS = ['gpt-4o-mini-tts', 'gpt-4o-mini-tts-2025-12-15', 'tts-1', 'tts-1-hd'];
+// 2027-01-06 에 끝나는 모델 (developers.openai.com/api/docs/deprecations 2026-10-01: /audio/speech 모델 모두 · 대체 gpt-realtime-2.1-mini 는 Realtime 전용).
+//   gpt-4o-mini-tts 는 날짜판(기본 2025-12-15)을 가리키는 이름이라 같이 끝난다. 이름 뒤에 표시만 — 고른 모델 · 요청은 그대로 (gemini.js ENDING 과 같은 방식)
+const ENDING = new Set(['gpt-4o-mini-tts', 'gpt-4o-mini-tts-2025-03-20', 'gpt-4o-mini-tts-2025-12-15', 'tts-1', 'tts-1-hd']);
+const ENDING_NOTE = '2027-01-06 종료 예정';
 export const MIME = { mp3: 'audio/mpeg', wav: 'audio/wav', opus: 'audio/ogg', flac: 'audio/flac', aac: 'audio/aac', pcm: 'audio/pcm' };
 
 // 줄별 감정 → 말투 지시 한 문장 (instructions 뒤에 붙임)
@@ -86,7 +90,9 @@ const defaults = Object.fromEntries([...fields, ...params].filter(f => f.default
 const modelScope = (cfg) => baseOf((cfg || {}).base, DEFAULT_BASE);
 function modelChoices(cfg) {
     const c = cfg || providerConfig(ID, defaults);
-    return liveOptions(ID, MODELS, c, { scope: modelScope(c) });
+    const ending = (m) => (ENDING.has(m) ? ENDING_NOTE : '');
+    return liveOptions(ID, MODELS, c, { scope: modelScope(c), note: ending })
+        .map(o => (ending(o.value) && !o.label.endsWith(`(${ENDING_NOTE})`) ? { ...o, label: `${o.label} (${ENDING_NOTE})` } : o));
 }
 /** 1.3.7 모델 목록: GET {주소}/models 에서 TTS 모델만 (받아 적기 · 실시간 · 검색 모델 빼고) — 새것부터. 과금 없음 */
 async function listModels(cfg) {

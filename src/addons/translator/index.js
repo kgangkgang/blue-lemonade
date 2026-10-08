@@ -112,10 +112,10 @@ const defaultSettings = {
     llm_model: 'gpt-5.4-mini',
     provider_model_history: {
         openai: 'gpt-5.4-mini',
-        claude: 'claude-sonnet-5',
-        google: 'gemini-3.7-flash',
+        claude: 'claude-sonnet-5-5',
+        google: 'gemini-3.8-flash',
         cohere: 'command-a-03-2025',
-        vertexai: 'gemini-3.7-flash',
+        vertexai: 'gemini-3.8-flash',
         openrouter: 'google/gemini-3.5-flash-lite',
         deepseek: 'deepseek-flash',
         custom: 'custom'

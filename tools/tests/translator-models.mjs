@@ -298,8 +298,10 @@ const ST_IDS = ['gpt-6-sol', 'gpt-6-luna', 'gpt-5.5-2026-04-23', 'gpt-5.4-2026-0
     'deepseek-reasoner', 'deepseek-r1', 'grok-4.7', 'grok-4', 'glm-5.3-prime', 'glm-5.3', 'kimi-k3', 'qwen3.8-max-prime', 'mistral-large-4-0', 'mistral-large-latest',
     'MiniMax-M2.7', 'MiniMax-M2.5', 'llama-3.3-70b-versatile', 'custom', '', ' gpt-5 ', 'GPT-5', 'my-relay/gpt-6-sol', 'vendor/claude-sonnet-5-5-thinking'];
 const PROVIDERS = ['openai', 'claude', 'google', 'cohere', 'vertexai', 'openrouter', 'deepseek', 'custom'];
+// 2.2.7 뒤에 나온 이름 (claude-haiku-5-5 2026-10-07): 예전 규칙이 놓쳐 샘플링 값을 보냈다 — 공용 규칙은 Claude 5 처럼 뺀다 (아래 '새 세대' 에서 봄)
+const AFTER_227 = /claude-haiku-5/;
 function allExistingIds() {
-    const base = [...Object.values(OLD_LISTS).flat(), ...Object.values(LM.KNOWN).flat(), ...ST_IDS];
+    const base = [...Object.values(OLD_LISTS).flat(), ...Object.values(LM.KNOWN).flat(), ...ST_IDS].filter(id => !AFTER_227.test(id));
     const vendor = (id) => (/^(gpt|o\d|chatgpt)/.test(id) ? 'openai/' : /^claude/.test(id) ? 'anthropic/' : /^(gemini|gemma)/.test(id) ? 'google/' : /^command/.test(id) ? 'cohere/' : '');
     return [...new Set([...base, ...base.map(id => vendor(id) + id).filter(id => id.includes('/'))])];
 }
@@ -336,7 +338,7 @@ await test('요청 규칙: 새 세대 이름만 가장 새 세대처럼 (o5 · g
     assert.equal(o5.max_completion_tokens, 1000); assert.equal('max_tokens' in o5, false); assert.equal('temperature' in o5, false);
     const gpt7 = run('openrouter', 'openai/gpt-7');
     assert.equal('temperature' in gpt7, false); assert.equal(gpt7.max_tokens, 1000, 'OpenRouter 는 max_tokens 그대로');
-    for (const model of ['claude-opus-6', 'claude-haiku-5', 'anthropic/claude-sonnet-6']) {
+    for (const model of ['claude-opus-6', 'claude-haiku-5', 'claude-haiku-5-5', 'anthropic/claude-sonnet-6', 'anthropic/claude-haiku-5.5']) {
         const b = run(model.includes('/') ? 'openrouter' : 'claude', model);
         assert.equal('temperature' in b || 'top_p' in b || 'top_k' in b, false, model);
     }
@@ -393,11 +395,12 @@ await test('Google AI → 실리태번 makersuite 목록 · Claude / Vertex AI (
     assert.deepEqual(optionValues(), ['gemini-3.7-flash', 'gemini-3.9-flash', 'gemini-3.8-flash', 'custom']);
     assert.equal(A.modelListKey('google'), 'makersuite');
     assert.equal(doc.byId.llm_model_refresh.style.display, '');
-    reset({ provider: 'claude', page: { model_claude_select: ['claude-opus-5-5', 'claude-opus-4-20250514'] } });
+    reset({ provider: 'claude', page: { model_claude_select: ['claude-opus-5-5', 'claude-sonnet-4-5-20250929', 'claude-opus-4-20250514'] } });
     A.updateModelList();
     const values = optionValues();
     assert.deepEqual(values.slice(0, 2), ['claude-sonnet-5-5', 'claude-opus-5-5']);
-    assert.ok(values.includes('claude-opus-4-20250514'), '실리태번 화면 목록');
+    assert.ok(!values.includes('claude-opus-4-20250514'), '끝난 이름은 화면 목록에서도 뺌');
+    assert.ok(values.includes('claude-sonnet-4-5-20250929'), '실리태번 화면 목록');
     assert.equal(doc.byId.llm_model.value, 'claude-sonnet-5');
     assert.equal(doc.byId.llm_model_refresh.style.display, 'none');
     assert.equal(A.modelListRequest('claude'), null);
@@ -602,6 +605,19 @@ await test('불러오기 · 그리기만으로는 통신하지 않음', () => {
     globalThis.fetch = async () => { hits++; throw new Error('x'); };
     for (const p of PROVIDERS) { doc.byId.llm_provider.value = p; A.updateModelList(); A.translatorModelList(p, ''); A.modelListRequest(p); }
     assert.equal(hits, 0);
+});
+
+await test('새로 설치할 때의 기본 모델 = 지금 세대 (KNOWN 에 있는 이름) · 저장해 둔 모델은 그대로', () => {
+    const m = /provider_model_history: \{([^}]*)\}/.exec(source);
+    assert.ok(m, 'defaultSettings.provider_model_history');
+    const defaults = Object.fromEntries([...m[1].matchAll(/(\w+): '([^']*)'/g)].map(x => [x[1], x[2]]));
+    assert.equal(defaults.claude, 'claude-sonnet-5-5');
+    assert.equal(defaults.google, 'gemini-3.8-flash');
+    assert.equal(defaults.vertexai, 'gemini-3.8-flash');
+    for (const [p, id] of Object.entries(defaults)) if (p !== 'custom') assert.ok((LM.KNOWN[LM.sourceOf(p)] || []).includes(id), `${p} ${id}`);
+    // loadSettings: provider_model_history 가 없을 때만 기본값 — 예전 기본값(claude-sonnet-5 …)을 저장해 둔 사람은 그대로 (위 Claude 목록 시험이 그 값을 고름)
+    assert.match(source, /if \(!extensionSettings\.provider_model_history\) \{\s*extensionSettings\.provider_model_history = defaultSettings\.provider_model_history;/);
+    assert.match(source, /if \(!extensionSettings\.hasOwnProperty\(key\)\) \{\s*extensionSettings\[key\] = defaultSettings\[key\];/);
 });
 
 console.log(`\ntranslator-models: ${pass} passed, ${fail} failed`);

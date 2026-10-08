@@ -527,5 +527,16 @@ await test('↻ · 연결 확인: 실패해도 예전 목록 · 고른 모델 �
     } finally { globalThis.document = prevDoc; route = null; }
 });
 
+await test('OpenAI: 2027-01-06 에 끝나는 모델은 이름 뒤에 표시만 (고른 값 · 요청은 그대로) · 끝나지 않는 이름은 예전 그대로', () => {
+    const shown = (model) => Object.fromEntries(opts('openai', setCfg('openai', { key: '', base: 'https://proxy.example/v1', model })).map(o => [o.value, o.label]));
+    const l = shown('gpt-4o-mini-tts');
+    for (const id of ['gpt-4o-mini-tts', 'gpt-4o-mini-tts-2025-12-15', 'tts-1', 'tts-1-hd']) assert.match(l[id], /\(2027-01-06 종료 예정\)$/, id);
+    assert.equal(l.custom, '직접 입력');
+    const old = shown('gpt-4o-mini-tts-2025-03-20')['gpt-4o-mini-tts-2025-03-20'];
+    assert.equal((old.match(/종료 예정/g) || []).length, 1, '목록에 없는 저장값도 한 번만');
+    assert.match(shown('gpt-5-mini-tts')['gpt-5-mini-tts'], /\(목록에 없음\)$/);
+    assert.equal(setCfg('openai', { model: 'tts-1' }).model, 'tts-1', '고른 값은 그대로');
+});
+
 console.log(`\ntts-models: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

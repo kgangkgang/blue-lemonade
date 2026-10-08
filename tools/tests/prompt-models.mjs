@@ -237,8 +237,9 @@ function oldTranslatorRules(provider, model, parameters) {
 }
 
 const PROVIDERS = Object.keys(OLD_PROVIDER_TO_SOURCE);
+// claude-haiku-5-5 (2026-10-07) 는 예전 번역기 규칙이 놓쳐 샘플링 값을 보냈다 — 같음을 보는 목록에서 빼고 아래 '새 모델' 에서 봄
 const IDS = [...new Set([
-    ...Object.values(OLD_PROVIDER_MODELS).flat(), ...Object.values(LM.KNOWN).flat(),
+    ...Object.values(OLD_PROVIDER_MODELS).flat(), ...Object.values(LM.KNOWN).flat().filter(id => !/claude-haiku-5/.test(id)),
     'gpt-5-chat-latest', 'gpt-5.4-mini', 'gpt-5.1-chat-latest', 'o1', 'o3-pro', 'o4-mini-2025-04-16', 'gpt-4o-2024-11-20', 'claude-opus-4-8',
     'claude-opus-4-20250514', 'openai/o4-mini', 'openai/gpt-4o', 'openai/gpt-5.2', 'anthropic/claude-sonnet-4.5', 'deepseek-reasoner',
     'my-relay/model-x', 'MiniMax-M2.7', 'glm-5.3', '',
@@ -327,6 +328,8 @@ await test('요청 본문: 새 모델은 거부되는 샘플링 값을 뺀다 (�
     assert.deepEqual(make('openai', 'gpt-6.1-sol', { tweak: retranslate }), { model: 'gpt-6.1-sol', messages: MSGS, stream: false, chat_completion_source: 'openai' }, '재번역 tweak 뒤에 규칙');
     assert.deepEqual(make('openai', 'gpt-5.4'), { model: 'gpt-5.4', messages: MSGS, stream: false, chat_completion_source: 'openai', temperature: 1, top_p: 1 });
     assert.deepEqual(make('claude', 'claude-sonnet-5-5'), { model: 'claude-sonnet-5-5', messages: MSGS, stream: false, chat_completion_source: 'claude', max_tokens: 2048 });
+    assert.deepEqual(make('claude', 'claude-haiku-5-5'), { model: 'claude-haiku-5-5', messages: MSGS, stream: false, chat_completion_source: 'claude', max_tokens: 2048 });
+    assert.deepEqual(make('openrouter', 'anthropic/claude-haiku-5.5'), { model: 'anthropic/claude-haiku-5.5', messages: MSGS, stream: false, chat_completion_source: 'openrouter' });
     assert.deepEqual(make('openrouter', 'openai/gpt-6.1-sol'), { model: 'openai/gpt-6.1-sol', messages: MSGS, stream: false, chat_completion_source: 'openrouter' });
     assert.deepEqual(make('openrouter', 'anthropic/claude-sonnet-5.5'), { model: 'anthropic/claude-sonnet-5.5', messages: MSGS, stream: false, chat_completion_source: 'openrouter' });
     assert.deepEqual(make('openai', 'o5-mini'), { model: 'o5-mini', messages: MSGS, stream: false, chat_completion_source: 'openai' }, '다음 세대 o 시리즈');

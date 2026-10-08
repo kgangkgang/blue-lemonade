@@ -47,7 +47,7 @@ export const DEFAULT_SETTINGS = {
     // models for rewriting; one a provider stops listing stays picked, marked '(이전 목록)', never swapped silently.
     models: {
         openai: 'gpt-5.4-mini',
-        claude: 'claude-haiku-4-5',
+        claude: 'claude-haiku-5-5',
         google: 'gemini-3.8-flash',
         vertexai: 'gemini-3.8-flash',
         openrouter: 'google/gemini-3.8-flash',

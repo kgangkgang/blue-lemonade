@@ -194,7 +194,8 @@ const IDS = [...new Set([
     'models/gemini-3.8-flash', 'gemini-flash-latest', 'relay-model', 'claude-sonnet-4-5@20250929',
 ])];
 // 새 세대 (예전 규칙이 놓치던 이름) — 공용 규칙이 가장 새 세대처럼 다룬다 (여기서는 같음을 보지 않음)
-const FUTURE = new Set(['o5', 'o5-mini', 'gpt-7', 'gpt-7-mini', 'openai/gpt-7', 'claude-haiku-5', 'claude-opus-6', 'claude-sonnet-6', 'anthropic/claude-opus-6']);
+const FUTURE = new Set(['o5', 'o5-mini', 'gpt-7', 'gpt-7-mini', 'openai/gpt-7', 'claude-haiku-5', 'claude-haiku-5-5', 'anthropic/claude-haiku-5.5', 'claude-opus-6',
+    'claude-sonnet-6', 'anthropic/claude-opus-6']);
 
 // ---------- 1) 요청 본문
 await test('요청 본문: 저장된 모델이면 예전 2.0.1 과 글자까지 같다 (공급자 8개 × 이름 × 온도 · 프록시 · Custom 주소 · Vertex)', () => {
@@ -268,6 +269,7 @@ await test('받기 전: 모델 등록 → 최신 이름(KNOWN, 새것 먼저) ·
     // Claude 는 목록을 받지 못하는 공급자: 모델 등록 · KNOWN · 화면 목록 (실리태번이 새로 넣은 이름도)
     const claude = RW.modelChoices('claude', 'claude-haiku-4-5');
     assert.deepEqual(claude.ids.slice(0, 3), ['claude-x-registered', 'claude-sonnet-5-5', 'claude-opus-5-5']);
+    assert.ok(!claude.ids.includes('claude-3-opus-20240229'), '끝난 이름은 화면 목록에서도 뺌');
     assert.ok(claude.ids.includes('claude-haiku-5'), '실리태번 화면 목록의 새 이름');
     assert.equal(claude.key, 'claude');
     // Google 은 makersuite 목록
@@ -443,6 +445,13 @@ await test('index.js 연결: 화면을 열 때 · 공급자를 바꿀 때만 조
     assert.match(INDEX, /'모델 목록': \(\) => \(EMBEDDED \? autoFetchModels\(\) : /, '단독 서랍은 페이지를 열 때 묻지 않음');
     assert.match(INDEX, /customLabel: '⚙️ 커스텀 모델 입력'/);
     assert.match(INDEX, /missingSuffix: ` \(\$\{missingNote\(provider, ids\)\}\)`/);
+});
+
+await test('새로 설치할 때의 기본 모델 = 지금 세대 (KNOWN 에 있는 이름) · 저장해 둔 모델은 그대로', () => {
+    assert.equal(DEFAULT_SETTINGS.models.claude, 'claude-haiku-5-5');
+    for (const [p, id] of Object.entries(DEFAULT_SETTINGS.models)) if (p !== 'custom') assert.ok((LM.KNOWN[LM.sourceOf(p)] || []).includes(id), `${p} ${id}`);
+    // 불러올 때: 저장된 models 가 기본값보다 앞 — 예전 기본값(claude-haiku-4-5)을 저장해 둔 사람은 그대로
+    assert.match(INDEX, /stored\.models = \{ \.\.\.DEFAULT_SETTINGS\.models, \.\.\.stored\.models \};/);
 });
 
 console.log(`\nrewrite-models: ${pass} passed, ${fail} failed`);

@@ -305,6 +305,7 @@ const ODD = ['', 'custom', '__custom__', 'gpt-35-turbo', 'gpt-35-turbo-16k', 'cl
 const FUTURE = ['o5', 'o5-mini', 'o6-pro', 'openai/o5', 'openai/o5-mini', 'gpt-7', 'gpt-7-mini', 'gpt-7.1-sol', 'gpt-8-chat-latest', 'openai/gpt-7', 'openai/gpt-9-luna',
     'claude-haiku-5', 'claude-haiku-5-5', 'claude-opus-6', 'claude-sonnet-6', 'claude-sonnet-6-1', 'claude-fable-6', 'claude-mythos-5', 'anthropic/claude-opus-6', 'anthropic/claude-haiku-5.1',
     'gemini-4-flash', 'gemini-4.1-pro', 'gemini-5-flash-lite', 'google/gemini-4-flash'];
+// claude-haiku-5-5 · anthropic/claude-haiku-5.5 는 2026-10-07 에 나와 KNOWN 에 있지만, 예전 규칙이 놓치던 이름이라 KNOWN_IDS(예전과 같아야 하는 이름)가 아닌 여기
 const PROVIDERS = ['openai', 'openrouter', 'claude', 'makersuite', 'google', 'vertexai', 'custom', 'deepseek', 'azure_openai', 'xai', 'zai'];
 const BODIES = [
     () => ({ max_tokens: 100, temperature: 0.7, top_p: 0.9, top_k: 40, frequency_penalty: 0.1, presence_penalty: 0.2, stream: false }),
@@ -350,7 +351,7 @@ await test('요청 규칙: 새 세대 이름은 가장 새 세대처럼 (예전 
     assert.deepEqual(rules('openrouter', 'openai/gpt-7'), rules('openrouter', 'openai/gpt-6-sol'));
     assert.deepEqual(rules('openrouter', 'openai/gpt-9-luna'), { max_tokens: 100, top_k: 40, stream: false });
     // Claude 5 이후 (어느 공급자로 가든)
-    for (const id of ['claude-haiku-5', 'claude-haiku-5-5', 'claude-opus-6', 'claude-sonnet-6', 'claude-sonnet-6-1', 'claude-fable-6', 'claude-mythos-5', 'anthropic/claude-opus-6', 'anthropic/claude-haiku-5.1']) {
+    for (const id of ['claude-haiku-5', 'claude-haiku-5-5', 'claude-opus-6', 'claude-sonnet-6', 'claude-sonnet-6-1', 'claude-fable-6', 'claude-mythos-5', 'anthropic/claude-opus-6', 'anthropic/claude-haiku-5.1', 'anthropic/claude-haiku-5.5']) {
         for (const p of ['claude', 'openrouter', 'custom', 'vertexai']) {
             assert.deepEqual(rules(p, id), { max_tokens: 100, stream: false }, `${p} ${id}`);
         }
@@ -370,7 +371,8 @@ await test('요청 규칙: 새 세대 이름은 가장 새 세대처럼 (예전 
         assert.deepEqual(rules(p, id), oldTts(p, id, full()), id);
         assert.equal(LM.lowEffort(p, id), oldLowEffort(p, id), id);
     }
-    for (const id of FUTURE) assert.ok(!KNOWN_IDS.includes(id), `${id} 는 2026-10 목록에 없는 이름`);
+    for (const id of FUTURE) assert.ok(!KNOWN_IDS.includes(id), `${id} 는 예전 규칙과 같아야 하는 이름(KNOWN_IDS)이 아님`);
+    assert.ok(LM.KNOWN.claude.includes('claude-haiku-5-5') && LM.KNOWN.openrouter.includes('anthropic/claude-haiku-5.5'), '2026-10-07 에 나온 Haiku 5.5 는 KNOWN 에');
 });
 
 // ---------- 2) TTS 요청 본문 (1.3.x 로 만든 값)
@@ -438,10 +440,23 @@ await test('sourceOf · canList · STATUS_SOURCES · KNOWN (새것 먼저 · 중
     for (const [s, ids] of Object.entries(LM.KNOWN)) assert.equal(new Set(ids).size, ids.length, `${s} 중복`);
     assert.equal(LM.KNOWN.openai[0], 'gpt-6.1-sol');
     assert.equal(LM.KNOWN.claude[0], 'claude-sonnet-5-5');
+    assert.ok(LM.KNOWN.claude.includes('claude-sonnet-5-5'));
     assert.ok(LM.KNOWN.claude.includes('claude-opus-5-5'));
     assert.deepEqual(LM.KNOWN.zai.slice(0, 4), ['glm-5.3-prime', 'glm-5.3-flashx', 'glm-5.3-flash', 'glm-5.3']);
     assert.ok(LM.KNOWN.openrouter.includes('mistralai/mistral-large-4-0') && LM.KNOWN.openrouter.includes('x-ai/grok-4.7') && LM.KNOWN.openrouter.includes('cohere/command-a-plus'));
     assert.equal(LM.KNOWN.makersuite[0], 'gemini-3.8-flash');
+    // 2026-10-08: 끝났거나 곧 끝나는 이름은 KNOWN 에 없음 (공급자 deprecations 문서)
+    const RETIRED = {
+        openai: ['o4-mini', 'gpt-4.1-nano', 'o3', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-5.1', 'gpt-5.4-nano', 'gpt-5.3-chat-latest'],
+        claude: ['claude-sonnet-4-5'], deepseek: ['deepseek-v4-flash'], cohere: ['c4ai-aya-expanse-8b'], xai: ['grok-4'],
+        mistralai: ['pixtral-large-latest', 'open-mistral-nemo'], groq: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'qwen/qwen3-32b'],
+        openrouter: ['google/gemini-2.5-pro'],
+    };
+    for (const [s, ids] of Object.entries(RETIRED)) for (const id of ids) assert.ok(!LM.KNOWN[s].includes(id), `${s} ${id}`);
+    assert.deepEqual(LM.KNOWN.groq, ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'qwen/qwen3.8-27b']);
+    assert.deepEqual(LM.KNOWN.xai, ['grok-4.7', 'grok-4.6', 'grok-4.5', 'grok-4.3']);
+    assert.equal(LM.KNOWN.mistralai[0], 'mistral-large-4-0');
+    assert.equal(LM.KNOWN.openrouter[0], 'anthropic/claude-haiku-5.5');
     assert.equal(LM.KNOWN.minimax, undefined, 'MiniMax 는 실리태번 화면 목록만 (부풀리지 않음)');
 });
 await test('modelEntries: 채팅 모델만 · 끝난 모델 뺌 · created 큰 것 먼저 · 없으면 이름 속 버전 큰 것 먼저', () => {
@@ -482,6 +497,9 @@ await test('pageModels: #model_<id>_select (Google = model_google_select) · 빈
         model_google_select: opts(['gemini-3.8-flash', 'gemini-3.8-flash-tts']),
         model_openrouter_select: opts(['OR_Website', 'x/y', 'x/y:batch']),
         model_custom_select: opts(['', 'relay-a', 'custom', '__custom__']),
+        model_claude_select: opts(['claude-fable-5-1', 'claude-opus-4-0', 'claude-opus-4-20250514', 'claude-sonnet-4-0', 'claude-sonnet-4-20250514', 'claude-opus-4-1',
+            'claude-opus-4-1-20250805', 'claude-sonnet-4-5', 'claude-opus-4-5-20251101', 'claude-haiku-4-5', 'claude-3-7-sonnet-latest', 'claude-3-5-haiku-20241022',
+            'claude-2.1', 'claude-instant-1.2']),
     })[id] || null };
     try {
         assert.deepEqual(LM.pageModels('openai'), ['my-registered', 'gpt-6-sol', 'gpt-4o']);
@@ -489,7 +507,8 @@ await test('pageModels: #model_<id>_select (Google = model_google_select) · 빈
         assert.deepEqual(LM.pageModels('openrouter'), ['x/y']);
         assert.deepEqual(LM.pageModels('custom'), ['relay-a']);
         assert.deepEqual(LM.pageModels('custom', { inheritCustom: false }), [], '다른 Custom 주소면 본체 목록을 쓰지 않음');
-        assert.deepEqual(LM.pageModels('claude'), []);
+        assert.deepEqual(LM.pageModels('claude'), ['claude-fable-5-1', 'claude-sonnet-4-5', 'claude-opus-4-5-20251101', 'claude-haiku-4-5'],
+            '끝난 Claude (Opus 4 · Sonnet 4 · Opus 4.1 · 3.x · 2.x · instant) 는 뺌');
         // TTS 도 같은 목록 (OpenAI 비채팅이 이제 빠짐)
         assert.deepEqual(stapi.pageModels('openai', { provider: 'openai' }), ['my-registered', 'gpt-6-sol', 'gpt-4o']);
         assert.deepEqual(stapi.pageModels('custom', { provider: 'custom', custom_url: 'https://own.test/v1' }), []);
@@ -575,8 +594,8 @@ await test('list: 받은 목록이 있으면 그것(새것 먼저) + 모델 등�
         // 목록을 받을 수 없는 공급자 (Claude): 등록 → KNOWN(최신 먼저) → 화면 목록
         r = LM.list('claude', { saved: 'claude-opus-4-20250514' });
         assert.deepEqual(r.ids.slice(0, 3), ['claude-test-x', 'claude-sonnet-5-5', 'claude-opus-5-5']);
-        assert.ok(r.ids.includes('my-claude') && r.ids.includes('claude-opus-4-20250514'));
-        assert.equal(r.savedMissing, false);
+        assert.ok(r.ids.includes('my-claude') && !r.ids.includes('claude-opus-4-20250514'), '끝난 이름은 화면 목록에서 빠짐');
+        assert.equal(r.savedMissing, true, '이미 고른 끝난 모델은 바꾸지 않고 (이전 목록) 으로 보임');
         // Custom: 주소별 키 · 본체 주소면 화면 목록
         LM.put('custom:https://relay.test/v1', ['r-1']);
         assert.deepEqual(LM.list('custom', { customUrl: 'https://relay.test/v1/' }).ids, ['r-1']);

@@ -1,7 +1,7 @@
 // 자동 생성 (tools/build-plain-scripts.mjs) — 고치려면 bundled/helper.js 을 고치고 다시 만든다
 export default function blueLemonadeScript(BlueLemonade) {
 /*BL-SCRIPT-START*/
-// Tavern Helper 4.9.5 Korean UI, v1.3.8
+// Tavern Helper 4.11.3 Korean UI, v1.3.9
 // UI text and built-in help popups only: no prompts, script code, user variables, stored names, or settings are rewritten.
 (() => {
   'use strict';
@@ -635,7 +635,10 @@ export default function blueLemonadeScript(BlueLemonade) {
   "'${0}' 文件夹导出的脚本将包含以下内容, 请确认是否保留:": "'${0}' 폴더에서 내보낼 스크립트에 다음 내용이 포함됩니다. 유지할 항목을 확인하세요:",
   "'${0}' folder will export scripts containing the following items. Please confirm whether to keep them:": "'${0}' 폴더에서 내보낼 스크립트에 다음 내용이 포함됩니다. 유지할 항목을 확인하세요:",
   "'${0}' 脚本导出将包含以下内容, 请确认是否保留:": "'${0}' 스크립트를 내보낼 때 다음 내용이 포함됩니다. 유지할 항목을 확인하세요:",
-  "'${0}' script will be exported with the following items. Please confirm whether to keep them:": "'${0}' 스크립트를 내보낼 때 다음 내용이 포함됩니다. 유지할 항목을 확인하세요:"
+  "'${0}' script will be exported with the following items. Please confirm whether to keep them:": "'${0}' 스크립트를 내보낼 때 다음 내용이 포함됩니다. 유지할 항목을 확인하세요:",
+  "启用内容溯源（实验性功能）": "내용 출처 표시 사용 (실험 기능)",
+  "Enable content tracing (Experimental)": "내용 출처 표시 사용 (실험 기능)",
+  "[酒馆助手]读取角色卡数据失败, 将使用空数据": "[실리태번 헬퍼] 캐릭터 카드 데이터를 읽지 못했습니다. 빈 데이터를 사용합니다."
 };
   const HELP = {
   "titles": [
@@ -764,7 +767,13 @@ export default function blueLemonadeScript(BlueLemonade) {
     "直接点击输入框发送按钮": "전송 버튼 <i class=\"fa-solid fa-paper-plane\"></i> 클릭",
     "使用酒馆助手 generate、generateRaw 函数": "실리태번 헬퍼의 <code>generate</code>, <code>generateRaw</code> 함수 사용",
     "其他任何以酒馆方式发送提示词": "그 밖에 실리태번을 통해 프롬프트를 보내는 모든 방법",
-    "查看器都会监听到生成请求, 获得它的提示词发送情况.": "프롬프트 뷰어가 생성 요청을 감지해 최신 프롬프트를 가져옵니다."
+    "查看器都会监听到生成请求, 获得它的提示词发送情况.": "프롬프트 뷰어가 생성 요청을 감지해 최신 프롬프트를 가져옵니다.",
+    "Content Tracing (Experimental)": "내용 출처 표시 (실험 기능)",
+    "After enabling \"Enable content tracing (Experimental)\" , the viewer will annotate the sources of world info entries, preset entries, character descriptions, etc. with badges on the prompt content.": "아래 <code>내용 출처 표시 사용 (실험 기능)</code> 스위치를 켜면, 뷰어가 프롬프트 내용 위에 배지를 달아 로어북 항목, 프리셋 항목, 캐릭터 설명 등이 어디에서 왔는지 표시합니다.",
+    "Note: This is an experimental feature. The content of third-party plugins and scripts cannot be traced back, and in many cases, the tracing results are not accurate, for reference only.": "<strong>주의: 실험 기능입니다. 다른 확장 프로그램이나 스크립트가 넣은 내용은 출처를 찾을 수 없고, 출처가 틀리게 표시되는 경우도 많으니 참고용으로만 보세요.</strong>",
+    "内容溯源(实验性)": "내용 출처 표시 (실험 기능)",
+    "开启「启用内容溯源」后, 查看器会在提示词内容上以徽章标注世界书条目、预设条目、角色描述等内容的来源.": "아래 <code>내용 출처 표시 사용 (실험 기능)</code> 스위치를 켜면, 뷰어가 프롬프트 내용 위에 배지를 달아 로어북 항목, 프리셋 항목, 캐릭터 설명 등이 어디에서 왔는지 표시합니다.",
+    "注意: 这是实验性功能, 无法溯源第三方插件和脚本的内容, 且很多情况下溯源结果并不正确, 仅供参考.": "<strong>주의: 실험 기능입니다. 다른 확장 프로그램이나 스크립트가 넣은 내용은 출처를 찾을 수 없고, 출처가 틀리게 표시되는 경우도 많으니 참고용으로만 보세요.</strong>"
   }
 };
   // Toasts are shared with SillyTavern, but only exact helper strings from the dictionary are replaced there.
@@ -783,6 +792,9 @@ export default function blueLemonadeScript(BlueLemonade) {
     '[data-type="folder"] > div > span.grow',
     '.TH-popup .p-1\\.5.text-left:not(.flex)',
     '.TH-popup .font-bold.break-all',
+    // 1.3.9: 4.11 에서 프롬프트 뷰어 본문 칸이 wrap-break-word 를 잃어 위의 '.wrap-break-word.whitespace-pre-wrap' 이 안 맞는다.
+    // 본문 글은 .TH-prompt-content-block 이 막지만 도구 호출 이름(AI 가 부른 함수 이름)이 드러나 따로 막는다. 출처 배지 줄도 막는다(FIXED_LABELS 만 바꿈).
+    '.tool-call-name > strong', '.TH-wi-badge-row',
   ].join(',');
   // Help popups share their container with user-written script notes, so they stay in SKIP
   // and are only replaced block by block when the popup is a known help document.
@@ -866,14 +878,49 @@ export default function blueLemonadeScript(BlueLemonade) {
     }
   }
 
+  // 1.3.9: 실리태번 헬퍼 4.11 의 '내용 출처 표시'(内容溯源 · Content Tracing). 아래 글은 SKIP 칸 안(도움말 칸 · 프롬프트 본문 칸
+  // .TH-prompt-content-block · 배지 줄)에 있어 일반 번역이 닿지 않는다. 정해진 자리에서 글 전체가 고정 문구와 정확히 같을 때만 바꾼다(패턴은 안 씀).
+  // 배지에는 로어북 항목 이름 · 프리셋 항목 이름도 같은 꼴로 들어오므로(이름 없는 로어북 항목은 "#12") 배지 종류를 아이콘으로 확인하고,
+  // 헬퍼가 넣는 고정 라벨만 바꾼다 — 사용자가 지은 이름은 바꾸지 않는다. korean 이 없으면 위 사전(exact)의 한국어를 쓴다.
+  const FIXED_LABELS = [
+    { at: 'label[for="TH-wi-tracer-enabled"]', texts: ["启用内容溯源（实验性功能）", "Enable content tracing (Experimental)"] },
+    { at: '.TH-wi-badge', icon: 'fa-id-card', texts: ["角色描述", "Character Description"], korean: "캐릭터 설명" },
+    { at: '.TH-wi-badge', icon: 'fa-face-smile', texts: ["用户信息", "User Persona"], korean: "페르소나" },
+    { at: '.TH-wi-badge', icon: 'fa-sliders', texts: ["预设条目", "Preset Entry"], korean: "프리셋 항목" },
+    // 4.11 에서 '내용 접기' 단추가 본문 칸(.TH-prompt-content-block) 안으로 들어갔다 (검색 결과만 보기에서 숨긴 줄을 펼친 뒤).
+    { at: '.TH-prompt-content-block > .cursor-pointer', icon: 'fa-chevron-up', texts: ["收起内容", "Collapse Content"] },
+  ];
+  for (const rule of FIXED_LABELS) rule.keys = new Set(rule.texts.map(normalize));
+  const FIXED_AT = [...new Set(FIXED_LABELS.map(rule => rule.at))].join(', ');
+  function isFixedLabel(node) {
+    return node.nodeType === 3 && Boolean(node.parentElement?.matches(FIXED_AT));
+  }
+  function fixedLabel(text, node) {
+    const element = node.parentElement;
+    const key = normalize(text);
+    for (const rule of FIXED_LABELS) {
+      if (!rule.keys.has(key) || !element?.matches(rule.at)) continue;
+      if (rule.icon && ![...element.children].some(child => child.tagName === 'I' && child.classList.contains(rule.icon))) continue;
+      return rule.korean ?? exact.get(key) ?? null;
+    }
+    return null;
+  }
+  function translateFixedLabels(root) {
+    const elements = [...root.querySelectorAll(FIXED_AT)];
+    if (root.matches(FIXED_AT)) elements.push(root);
+    for (const element of elements) {
+      for (const child of element.childNodes) if (child.nodeType === 3) translateText(child, true, fixedLabel);
+    }
+  }
+
   // Preserve controls, event handlers and user-written content by editing individual UI text nodes.
-  function translateText(node, force = false) {
+  function translateText(node, force = false, lookup = translate) {
     const element = node.parentElement;
     if (!element || (!force && element.closest(SKIP)) || element.closest('input, textarea, option[data-custom]')) return;
     const before = node.nodeValue;
     const previous = textChanges.get(node);
     if (previous && before === previous.after) return;
-    const translated = translate(before);
+    const translated = lookup(before, node);
     if (translated === null) return;
     const whitespace = before.match(/^(\s*)[\s\S]*?(\s*)$/);
     const after = whitespace[1] + translated + whitespace[2];
@@ -921,11 +968,13 @@ export default function blueLemonadeScript(BlueLemonade) {
   function processNode(node) {
     translateHelpAround(node);
     if (node.nodeType === 3) {
-      translateText(node, isLogLabel(node));
+      if (isFixedLabel(node)) translateText(node, true, fixedLabel);
+      else translateText(node, isLogLabel(node));
       return;
     }
     if (node.nodeType !== 1) return;
     translateLogLabels(node);
+    translateFixedLabels(node);
     if (node.closest(SKIP)) return;
     translateAttributes(node);
     const walker = doc.createTreeWalker(node, host.NodeFilter.SHOW_ELEMENT | host.NodeFilter.SHOW_TEXT, {
@@ -942,7 +991,7 @@ export default function blueLemonadeScript(BlueLemonade) {
   }
 
   // 1.3.8: 한 노드에서 오류가 나면 예전에는 그 묶음의 나머지(와 다시 훑기의 뒤쪽 범위)가 통째로 번역되지 않았다. 노드마다 따로 막고 오류는 진단에 남긴다.
-  const info = { version: '1.3.8', errors: 0, lastError: '' };
+  const info = { version: '1.3.9', errors: 0, lastError: '' };
   function safely(node) {
     try { processNode(node); } catch (error) { info.errors++; info.lastError = String(error?.message || error).slice(0, 140); }
   }

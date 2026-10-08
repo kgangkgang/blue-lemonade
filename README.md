@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.7.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.7.9.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.7.8 · 최신 업데이트</summary>
+<summary>5.7.9 · 최신 업데이트</summary>
+
+- 모델 목록: 10-07 에 나온 Claude Haiku 5.5 를 넣고, 끝났거나 곧 끝나는 모델 이름(OpenAI · Groq · xAI · Mistral 등)은 뺐어요. 새로 설치할 때 번역 · 다시 쓰기의 기본 모델도 지금 세대로 올렸어요 (이미 고른 모델은 그대로).
+- 실리태번 헬퍼 4.11 의 새 「내용 출처 표시」(프롬프트 보기의 배지 · 스위치 · 도움말)를 한글로 보여 줘요. 내장 한글화 이름도 「실리태번 헬퍼 한글화」로 맞췄어요.
+- 도움말: 북마크 사용법에 「발췌 고치기」를, TTS 사용법에 「같은 사람이 다른 색으로」를 넣었어요. OpenAI 음성 모델에는 2027-01-06 종료 예정을 표시해요.
+- 홈페이지 「전체 기능」에 5.5.6 뒤로 나온 기능(업데이트 알림 · 모델 목록 늘 최신 · TTS 캐릭터마다 감정 · 글 골라 북마크 등)을 넣었어요.
+
+</details>
+
+<details>
+<summary>5.7.8 · 공개 글 정리</summary>
 
 - 공개 글 정리: 예전 공지 · README · TTS 도움말에 들어 있던 개인 예시 이름을 일반 예시로 바꿨어요. 공유봇 「천지합동청」 캐릭터를 예시로 쓴 공지 · README · TTS 사용법에는 출처를 붙였어요 (예시: 공유봇 천지합동청 → https://kkangtong.xyz/posts/54677).
 - 홈페이지: 예전 판 ZIP 들을 정리하고 지금 판과 바로 전 판만 남겼어요. 예전 공지 문구도 몇 군데 다듬었어요.

@@ -122,28 +122,30 @@ export const canList = (source) => STATUS.has(sourceOf(source));
  */
 const GEMINI = Object.freeze(['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite',
     'gemini-3.1-pro-preview', 'gemini-3.1-flash-lite', 'gemini-3-flash-preview', 'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']);
+// 2026-10-08: claude-haiku-5-5 (10-07) · anthropic/claude-haiku-5.5 · grok-4.6/4.5/4.3 · mistral-large-4-0 를 넣고, 끝났거나 곧 끝나는 이름을 뺌
+//   (각 공급자 deprecations 문서: o4-mini · gpt-4.1-nano 10-23 · gpt-5 · o3 12-11 · gpt-5.1 · gpt-5.4-nano 2027-04-01 · gpt-5.3-chat-latest 08-10 ·
+//   claude-sonnet-4-5 11-30 · groq llama 08-16 · grok-4 05-15 · pixtral-large · open-mistral-nemo · c4ai-aya-expanse-8b · deepseek-v4-flash ·
+//   OpenRouter gemini-2.5-pro 10-20). 이미 고른 값은 savedMissing 으로 그대로 보인다.
 export const KNOWN = Object.freeze({
     openai: Object.freeze(['gpt-6.1-sol', 'gpt-6-astra', 'gpt-6-sol', 'gpt-6-luna', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.6',
-        'gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-5.3-chat-latest', 'gpt-5.2', 'gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano',
-        'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'o4-mini', 'o3', 'gpt-4o', 'gpt-4o-mini']),
-    claude: Object.freeze(['claude-sonnet-5-5', 'claude-opus-5-5', 'claude-fable-5-1', 'claude-opus-5', 'claude-sonnet-5', 'claude-fable-5',
-        'claude-haiku-4-5', 'claude-opus-4-8', 'claude-opus-4-7', 'claude-opus-4-6', 'claude-sonnet-4-6', 'claude-opus-4-5', 'claude-sonnet-4-5']),
+        'gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.2', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4o', 'gpt-4o-mini']),
+    claude: Object.freeze(['claude-sonnet-5-5', 'claude-opus-5-5', 'claude-haiku-5-5', 'claude-fable-5-1', 'claude-opus-5', 'claude-sonnet-5',
+        'claude-fable-5', 'claude-haiku-4-5', 'claude-opus-4-8', 'claude-opus-4-7', 'claude-opus-4-6', 'claude-sonnet-4-6', 'claude-opus-4-5']),
     makersuite: GEMINI,
     vertexai: GEMINI,
-    openrouter: Object.freeze(['mistralai/mistral-large-4-0', 'openai/gpt-6.1-sol', 'anthropic/claude-sonnet-5.5', 'z-ai/glm-5.3-prime',
+    openrouter: Object.freeze(['anthropic/claude-haiku-5.5', 'mistralai/mistral-large-4-0', 'openai/gpt-6.1-sol', 'anthropic/claude-sonnet-5.5', 'z-ai/glm-5.3-prime',
         'qwen/qwen3.8-max-prime', 'anthropic/claude-opus-5.5', 'cohere/command-a-plus', 'openai/gpt-6-sol', 'openai/gpt-6-luna', 'x-ai/grok-4.7',
         'google/gemini-3.8-flash', 'anthropic/claude-fable-5.1', 'openai/gpt-6-astra', 'google/gemini-3.7-flash', 'deepseek/deepseek-v4.1-flash',
         'anthropic/claude-opus-5', 'anthropic/claude-sonnet-5', 'moonshotai/kimi-k3', 'z-ai/glm-5.3', 'google/gemini-3.5-flash-lite',
         'google/gemini-3.1-pro-preview', 'openai/gpt-5.6-terra', 'openai/gpt-5.6-luna', 'qwen/qwen3.8-max-0902', 'x-ai/grok-4.6',
-        'deepseek/deepseek-v4-pro', 'mistralai/mistral-medium-3-5', 'anthropic/claude-haiku-4.5', 'google/gemini-2.5-pro']),
-    deepseek: Object.freeze(['deepseek-flash', 'deepseek-v4-pro', 'deepseek-v4-flash']),
+        'deepseek/deepseek-v4-pro', 'mistralai/mistral-medium-3-5', 'anthropic/claude-haiku-4.5']),
+    deepseek: Object.freeze(['deepseek-flash', 'deepseek-v4-pro']),
     cohere: Object.freeze(['command-a-plus-05-2026', 'command-a-03-2025', 'command-a-vision-07-2025', 'command-r7b-12-2024', 'command-r-plus-08-2024',
-        'command-r-08-2024', 'c4ai-aya-expanse-32b', 'c4ai-aya-expanse-8b']),
+        'command-r-08-2024', 'c4ai-aya-expanse-32b']),
     zai: Object.freeze(['glm-5.3-prime', 'glm-5.3-flashx', 'glm-5.3-flash', 'glm-5.3', 'glm-5.2', 'glm-5-turbo', 'glm-5.1', 'glm-5', 'glm-4.7', 'glm-4.7-flash']),
-    xai: Object.freeze(['grok-4.7', 'grok-4']),
-    mistralai: Object.freeze(['mistral-large-latest', 'mistral-medium-latest', 'mistral-small-latest', 'pixtral-large-latest', 'open-mistral-nemo']),
-    groq: Object.freeze(['llama-3.3-70b-versatile', 'meta-llama/llama-4-maverick-17b-128e-instruct', 'meta-llama/llama-4-scout-17b-16e-instruct',
-        'qwen/qwen3-32b', 'llama-3.1-8b-instant']),
+    xai: Object.freeze(['grok-4.7', 'grok-4.6', 'grok-4.5', 'grok-4.3']),
+    mistralai: Object.freeze(['mistral-large-4-0', 'mistral-large-latest', 'mistral-medium-latest', 'mistral-small-latest']),
+    groq: Object.freeze(['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'qwen/qwen3.8-27b']),
 });
 
 /** 실리태번에 그 공급자의 키가 있나: 'yes' · 'no' · 'optional'(키 없이 됨) · 'unknown'(secrets 를 못 읽음) */
@@ -238,9 +240,13 @@ function sourceOfKey(key) {
 const OPENAI_RESPONSES_ONLY = /^(o\d+|gpt-\d[\w.]*?)(-[a-z]+)*-pro(-|$)/i;
 const OPENAI_NOT_CHAT = /(embedding|whisper|tts|dall-e|moderation|transcribe|realtime|audio|image|search|babbage|davinci|sora|computer-use|codex|deep-research)/i;
 /** 이름만 보고 거르기 (화면 목록 · 옛 캐시에도) */
+// 2026-10-08 끝난 Claude (실리태번 화면 목록에 아직 있음 — platform.claude.com/docs/en/about-claude/model-deprecations):
+//   Opus 4 · Sonnet 4 (06-15) · Opus 4.1 (08-05) · 3.x · 2.x · 1.x · instant. 이미 고른 값은 savedMissing 으로 그대로 보인다
+const CLAUDE_RETIRED = /^claude-(?:(?:opus|sonnet)-4-(?:0|1|20\d{6})(?:-|$)|[123](?:[-.]|$)|instant|v\d)/i;
 function keepId(source, id) {
     switch (source) {
         case 'openai': return !OPENAI_NOT_CHAT.test(id) && !OPENAI_RESPONSES_ONLY.test(id);
+        case 'claude': return !CLAUDE_RETIRED.test(id);
         case 'groq': return !/whisper|guard|tts|orpheus/i.test(id);
         case 'openrouter': return !/:batch$/i.test(id);
         case 'makersuite': case 'vertexai': return !/tts/i.test(id);
