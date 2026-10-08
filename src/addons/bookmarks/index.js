@@ -3,9 +3,14 @@ import { verifyAddonCss } from '../../addon-files-check.js';
 import { leaveSettingsDialog } from '../../settings-dialog.js';
 import { eventSource, event_types } from '../../../../../../../script.js';
 import { getSanitizedFilename } from '../../../../../../utils.js';
+import { getSettings as themeSettings } from '../../settings.js';
+import { addonsEnabled } from '../../usage-mode.js';
 import { VERSION, initSettings, hooks, applyColors, colorsFor, currentChatKey, chatKey, renameChatColors, iconName, settings, themeColors } from './state.js';
-import { currentRecord, bookmarkAt, addBookmark, removeBookmark, syncAnchors } from './data.js';
+import { currentRecord, bookmarkAt, addBookmark, removeBookmark, syncAnchors, addExcerpt } from './data.js';
 import { openNoteEditor, previewRecord, isPreviewing, exitPreview, abandonPreviewForGeneration } from './viewers.js';
+import { confirmSheet, hasOpenSheet } from './ui-kit.js';
+import { excerptList } from './excerpts.js';
+import { startSelectionChip, hideSelectionChip } from './selection-chip.js';
 
 // 4.5.4: 모아 보기 창(panel.js 47KB + 그것만 쓰는 settings-view.js 17.7KB)은 창을 열 때 읽는다.
 // 북마크 표시 · 메모 · 미리보기는 창 없이도 돌아가야 해서 index.js 는 그대로 시작할 때 읽힌다.
@@ -71,11 +76,24 @@ function messageIndexOf(button) {
     return Number.isInteger(index) ? index : null;
 }
 
+let confirmingRemoval = false;
+
 async function toggleFromButton(button) {
     const record = targetRecord();
     const index = messageIndexOf(button);
     if (!record || index === null) return;
     const existing = bookmarkAt(record, index);
+    // 채팅에서 골라 둔 발췌가 있는 북마크는 한 번 눌러 바로 지우지 않는다 (메모 · 발췌 없는 북마크는 예전처럼 바로)
+    if (existing && excerptList(existing).length) {
+        if (confirmingRemoval) return;
+        confirmingRemoval = true;
+        try {
+            if (!await confirmSheet('고른 글이 담긴 북마크예요. 지울까요?', { title: '북마크 삭제', okLabel: '삭제', danger: true, icon: 'fa-trash-can' })) return;
+        } finally {
+            confirmingRemoval = false;
+        }
+        if (bookmarkAt(record, index) !== existing) return;
+    }
     try {
         if (existing) await removeBookmark(record, existing.id);
         else await addBookmark(record, index);
@@ -179,6 +197,47 @@ document.addEventListener('keydown', (event) => {
     toggleFromButton(button);
 });
 
+// ── 고른 글 북마크 (selection-chip.js) ─────────────────────────
+// 채팅에서 글을 고르면 아래에 「북마크」 단추가 뜬다. 누르면 그 글을 보이던 모양 그대로(번역문 · 대사 색 · 띠) 그 메시지의 북마크에 담는다.
+// 북마크가 없던 메시지면 북마크를 만들고, 있으면 발췌만 더한다.
+
+function selectionChipEnabled() {
+    if (settings().selectionChip === false) return false;
+    if (hooks.isPanelOpen() || hasOpenSheet()) return false;
+    // 사용 모드에서 확장을 껐거나 북마크 기능을 끈 뒤(새로고침 전)에는 뜨지 않는다
+    const theme = themeSettings();
+    return !!theme && addonsEnabled(theme) && theme.addons?.bookmarks === true;
+}
+
+async function bookmarkSelection({ index, excerpt }) {
+    const record = targetRecord();
+    if (!record) return;
+    let result;
+    try {
+        result = await addExcerpt(record, index, excerpt);
+    } catch (error) {
+        toastr.error(error.message, '북마크');
+        return;
+    }
+    refreshMessageIcons();
+    if (result.added) {
+        toastr.success('북마크했어요', '', { timeOut: 1500 });
+        const button = document.querySelector(`#chat .mes[mesid="${index}"] .${BUTTON_CLASS}`);
+        if (button) {
+            button.classList.remove('cg-pop');
+            void button.offsetWidth;
+            button.classList.add('cg-pop');
+        }
+        if (hooks.isPanelOpen()) await hooks.refreshPanel({ keepPage: true });
+    } else if (result.reason === 'duplicate') {
+        toastr.info('이미 북마크했어요', '', { timeOut: 1500 });
+    } else if (result.reason === 'full') {
+        toastr.warning('한 메시지에 고른 글은 30개까지예요', '', { timeOut: 2500 });
+    }
+}
+
+hooks.hideSelectionChip = () => hideSelectionChip();
+
 // ── 마법봉 메뉴 ─────────────────────────────────────────────
 
 function addWandButton(attempt = 0) {
@@ -223,6 +282,7 @@ function scheduleIconRefresh(delay = 0) {
 }
 
 eventSource.on(event_types.CHAT_CHANGED, async () => {
+    hideSelectionChip();
     if (isPreviewing()) await exitPreview({ reload: false });
     applyColors(colorsFor(currentChatKey()));
     syncBookmarks({ settled: true });
@@ -294,6 +354,7 @@ jQuery(() => {
     applyColors(colorsFor(currentChatKey()));
     syncBookmarks();
     refreshMessageIcons();
+    startSelectionChip({ enabled: selectionChipEnabled, iconName, onBookmark: bookmarkSelection });
 
     const watchTheme = new MutationObserver(() => {
         clearTimeout(themeTimer);

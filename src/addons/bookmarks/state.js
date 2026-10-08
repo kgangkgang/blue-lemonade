@@ -4,7 +4,7 @@ import { extension_settings, getContext } from '../../../../../../extensions.js'
 import { saveSettingsDebounced } from '../../../../../../../script.js';
 
 export const MODULE = 'chaekgalpi';
-export const VERSION = '1.4.4';
+export const VERSION = '1.4.5';
 
 export const DEFAULT_COLORS = Object.freeze({ accent: '#a98bd9', user: '#5aa9e6', icon: '#f2c14e' });
 const COLOR_KEYS = Object.keys(DEFAULT_COLORS);
@@ -21,6 +21,7 @@ const DEFAULTS = Object.freeze({
     sortOrder: 'asc',       // asc: 처음부터 / desc: 최근부터
     followTheme: true,      // 블루 레몬에이드가 켜져 있으면 테마와 색을 그 팔레트에 맞춘다
     deusProseOnly: true,    // 데우스 엑스 마키나: 카드에 본문만 (끄면 장면 계획 · 트래커 같은 정규식 카드도 같이)
+    selectionChip: true,    // 채팅에서 글을 고르면 아래에 「북마크」 단추 (selection-chip.js)
 });
 
 /** 다른 모듈이 서로를 직접 import하지 않도록 여기에 함수를 걸어 둔다. */
@@ -31,6 +32,7 @@ export const hooks = {
     isPanelOpen: () => false,
     refreshMessageIcons: () => {},
     syncBookmarks: () => {},
+    hideSelectionChip: () => {},
 };
 
 export function settings() {

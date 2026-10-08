@@ -5,7 +5,7 @@
    ============================================================ */
 
 /* state.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
-:root { --cg-css-version: "1.4.4"; }
+:root { --cg-css-version: "1.4.5"; }
 
 .cg-root {
     --cg-accent-fallback: #a98bd9;
@@ -1889,3 +1889,99 @@ body.salty .cg-root .cg-setting-text small {
 .cg-root .cg-source-content { min-width: 0; margin-top: 8px; }
 .cg-root .cg-source-content[hidden] { display: none !important; }
 @media (max-width: 600px) { .cg-root .cg-source-toggle { min-height: 36px; } }
+
+/* ── 글 골라 북마크 (1.4.5 · selection-chip.js · excerpt-capture.js) ──────────────
+   채팅에서 글을 고르면 그 아래에 뜨는 단추. body 에 붙어 .cg-root 밖이라 테마 · 북마크 색 변수를 직접 쓴다.
+   [hidden] 은 표시 규칙보다 무겁게 둔다 (단추에 display 를 !important 로 박지 않는다 — toastr · hidden 함정) */
+.cg-select-chip {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 4100;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px;
+    margin: 0;
+    padding: 0 14px 0 12px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--salty-accent, var(--cg-accent, #a98bd9));
+    color: var(--salty-on-accent, var(--cg-accent-ink, #fff));
+    font: inherit;
+    font-family: var(--salty-font-ui, inherit);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0;
+    white-space: nowrap;
+    text-shadow: none;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .28);
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    animation: cg-chip-in .16s ease-out;
+}
+.cg-select-chip[hidden] { display: none; }
+.cg-select-chip > i { font-size: 12px; color: inherit; }
+.cg-select-chip:focus-visible { outline: 2px solid var(--salty-text, currentColor); outline-offset: 2px; }
+@keyframes cg-chip-in { from { opacity: 0; transform: translateY(-4px) scale(.96); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .cg-select-chip { animation: none; } }
+
+/* 카드의 발췌: 메모 위, 고를 때 보이던 모양 그대로 (색 · 띠는 저장한 인라인 style). 채팅 서식 고리(.mes_text) 밖이라
+   테마의 색 통일 · 대사 규칙이 닿지 않고, 글자 크기 · 줄 간격 · 글꼴만 채팅 본문과 같게 맞춘다 */
+.cg-root .cg-excerpts { display: flex; flex-direction: column; gap: 6px; min-width: 0; margin: 0 0 8px; }
+.cg-root .cg-excerpt {
+    position: relative;
+    min-width: 0;
+    padding: 10px 42px 10px 14px;
+    border-radius: 3px 16px 16px 16px;
+    background: var(--salty-shade, var(--cg-card));
+    color: var(--cg-text);
+}
+.cg-root .cg-excerpts--summary .cg-excerpt { cursor: pointer; }
+.cg-root .cg-excerpt-text {
+    font-family: var(--salty-font-text, inherit);
+    font-size: var(--bl-ts-read, var(--salty-size, 1em));
+    font-weight: var(--salty-weight, normal);
+    line-height: var(--salty-lh, 1.65);
+    letter-spacing: var(--salty-ls, normal);
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+    text-align: start;
+}
+.cg-root .cg-excerpt-text p { margin: 0; text-indent: 0; }
+.cg-root .cg-excerpt-text p + p { margin-top: var(--salty-para, .6em); }
+/* 띠는 줄이 바뀌어도 조각마다 (채팅의 대사 띠와 같이). 형광펜 띠(background-image)는 그 높이만, 꽉 찬 바탕은 모서리만 둥글게 */
+.cg-root .cg-excerpt-text span[style*="background"] { -webkit-box-decoration-break: clone; box-decoration-break: clone; background-repeat: no-repeat; }
+.cg-root .cg-excerpt-text span[style*="background-color"] { border-radius: 4px; }
+.cg-root .cg-excerpt-remove {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--cg-faint);
+    font-size: 13px;
+    cursor: pointer;
+}
+.cg-root .cg-excerpt-remove:is(:hover, :focus-visible) { color: var(--cg-danger, #e5484d); background: color-mix(in srgb, currentColor 10%, transparent); }
+/* 고를 때와 창의 밝기가 다르면(나이트에서 고른 글을 밝은 창에서 등) 그때 바탕을 깔아 밝은 대사 색이 묻히지 않게 */
+.cg-root[data-cg-tone="light"] .cg-excerpt[data-tone="dark"] { background: #1f2329; color: var(--cg-ex-ink, #e9eef4); }
+.cg-root[data-cg-tone="dark"] .cg-excerpt[data-tone="light"] { background: #f6f4f0; color: var(--cg-ex-ink, #2b2733); }
+.cg-root[data-cg-tone="light"] .cg-excerpt[data-tone="dark"] .cg-excerpt-remove { color: rgba(233, 238, 244, .55); }
+.cg-root[data-cg-tone="dark"] .cg-excerpt[data-tone="light"] .cg-excerpt-remove { color: rgba(43, 39, 51, .5); }
+@media (max-width: 760px) {
+    .cg-root .cg-excerpt { padding: 9px 38px 9px 12px; border-radius: 3px 14px 14px 14px; }
+    .cg-root .cg-excerpt-remove { top: 1px; right: 1px; }
+}

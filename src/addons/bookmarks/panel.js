@@ -3,8 +3,9 @@ import { holdPreviewRules, releasePreviewRules } from '../../lite.js';
 let holdingPreviewRules = false;   // 5.6.6 (점검 PAB-4): 창을 여는 동안만 채팅 서식 사본 규칙을 켠다
 import { typesetBatch } from '../../typography.js';
 import { hooks, settings, saveSettings, applyTheme, applyColors, colorsFor, currentChatKey, iconName } from './state.js';
-import { getOwner, currentRecord, listOtherChats, loadRecord, findBookmark, bookmarkAt, addBookmark, bookmarkMessage } from './data.js';
-import { escapeHtml, formatDate, renderMessageHtml, renderReasoningHtml, renderNoteHtml, noteToPlainText, messageText, avatarForMessage, hydrateHtmlBlocks, highlightMatches, clearHighlights } from './render.js';
+import { getOwner, currentRecord, listOtherChats, loadRecord, findBookmark, bookmarkAt, addBookmark, bookmarkMessage, removeExcerptFrom } from './data.js';
+import { escapeHtml, formatDate, renderMessageHtml, renderReasoningHtml, renderNoteHtml, noteToPlainText, messageText, avatarForMessage, hydrateHtmlBlocks, highlightMatches, clearHighlights, renderExcerptsHtml } from './render.js';
+import { excerptsText } from './excerpts.js';
 import { confirmSheet } from './ui-kit.js';
 import { openNoteEditor, openMessageEditor, openContextViewer, confirmDeleteBookmark, enterPreview, isPreviewing, openTranslationEditor, confirmClearTranslation } from './viewers.js';
 import { hasTranslator, hasTranslation, isShowingOriginal, translateMessage, restoreTranslation } from './translate.js';
@@ -89,8 +90,8 @@ function buildShell() {
     view.root = root;
 
     root.addEventListener('pointerdown', (event) => {
-        // 메모 · 펼친 메시지 둘 다 누르면 원문이 펼쳐지고 접힌다 — 끌어서 글자를 고를 때는 빼려고 누른 자리를 기억
-        const note = event.target.closest('.cg-note--summary, .cg-source-content');
+        // 메모 · 발췌 · 펼친 메시지 모두 누르면 원문이 펼쳐지고 접힌다 — 끌어서 글자를 고를 때는 빼려고 누른 자리를 기억
+        const note = event.target.closest('.cg-note--summary, .cg-excerpts--summary, .cg-source-content');
         notePointer = note ? { note, x: event.clientX, y: event.clientY } : null;
     });
     root.addEventListener('click', onClick);
@@ -128,6 +129,7 @@ export function isPanelOpen() {
 }
 
 export async function openPanel({ keepState = false } = {}) {
+    hooks.hideSelectionChip?.(); // 채팅에서 글을 고른 채 창을 열면 고른 글 북마크 단추가 창 위에 남지 않게
     if (!holdingPreviewRules) { holdingPreviewRules = true; holdPreviewRules(); } // 카드 본문은 채팅 서식의 사본 규칙(.salty-preview)을 쓴다 — 테마가 시작 때 꺼 둔 것을 켠다 (닫으면 놓는다)
     if (!view.root) buildShell();
     if (!view.open) view.previousFocus = document.activeElement;
@@ -367,7 +369,9 @@ function visibleBookmarks(record) {
     const cased = view.query !== view.query.toLowerCase() || view.query !== view.query.toUpperCase();
     const fold = cased ? (text => text.toLowerCase()) : (text => text);
     return items.filter(({ fav, index }) => {
-        const note = fold(noteToPlainText(fav.note));
+        // 발췌(채팅에서 골라 북마크한 글)는 메모처럼 읽는다 — '메모만'에서도 찾는다
+        const excerpts = excerptsText(fav);
+        const note = fold(excerpts ? `${noteToPlainText(fav.note)}\n${excerpts}` : noteToPlainText(fav.note));
         if (view.noteOnly) return note.includes(query);
         if (note.includes(query)) return true;
         const message = bookmarkMessage(record, fav);
@@ -699,7 +703,10 @@ function renderCard(record, fav, index) {
             ${sourcePreview ? '<button type="button" class="cg-expand" hidden><span>전체 보기</span><i class="fa-solid fa-chevron-down"></i></button>' : ''}
         </div>`;
     const noteContent = note ? `<div class="cg-note${sourcePreview ? '' : ' cg-note--summary'}" role="note" aria-label="메모·발췌"><div class="salty-preview cg-chatlike" data-prev="bookmark"><div class="mes" is_user="${isUser}"><div class="mes_block"><div class="cg-note-text mes_text">${note}</div></div></div></div></div>` : '';
-    const content = sourcePreview ? source + noteContent : `
+    // 채팅에서 골라 북마크한 글 — 메모 위에, 고를 때 보이던 모양 그대로 (없으면 빈 글이라 예전 카드와 같다)
+    const excerpts = renderExcerptsHtml(fav, { summary: !sourcePreview, removable: !fav.virtual });
+    const content = sourcePreview ? source + excerpts + noteContent : `
+        ${excerpts}
         ${noteContent}
         <button type="button" class="cg-source-toggle" aria-expanded="${sourceOpen}" aria-controls="${regionId}"><span>${sourceOpen ? '메시지 접기' : '메시지 펼치기'}</span><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
         <div class="cg-source-content" id="${regionId}"${sourceOpen ? '' : ' hidden'}>${source}</div>`;
@@ -760,6 +767,8 @@ function watchCard(card) {
         highlightMatches(mes, view.query);
         const note = card.querySelector('.cg-note-text');
         if (note) highlightMatches(note, view.query);
+        const excerpts = card.querySelector('.cg-excerpts');
+        if (excerpts) highlightMatches(excerpts, view.query);
     }
 }
 
@@ -940,13 +949,26 @@ function isDrawerOpen() {
 
 // ── 이벤트 ──────────────────────────────────────────────────
 
-async function onCardAction(action, card) {
+async function onCardAction(action, card, element = null) {
     const record = selectedRecord();
     const index = Number(card.dataset.index);
     const fav = record && (card.dataset.virtual ? virtualFav(record, index) : findBookmark(record, card.dataset.favId));
     if (!fav) return;
-    if (fav.blOrphaned && action !== 'note' && action !== 'delete') return;
+    if (fav.blOrphaned && action !== 'note' && action !== 'delete' && action !== 'excerpt-remove') return;
     switch (action) {
+        case 'excerpt-remove': {
+            const excerptId = element?.closest('[data-excerpt-id]')?.dataset.excerptId;
+            if (!excerptId || fav.virtual) break;
+            if (!await confirmSheet('이 발췌를 지울까요? 북마크와 메시지는 그대로예요.', { title: '발췌 지우기', okLabel: '지우기', danger: true, icon: 'fa-quote-left' })) break;
+            try {
+                await removeExcerptFrom(record, fav.id, excerptId);
+            } catch (error) {
+                toastr.error(error.message, '북마크');
+                break;
+            }
+            if (view.open && selectedRecord() === record) rerenderCard(fav.id);
+            break;
+        }
         case 'mark': {
             // 전체 메시지 검색에서 찾은 메시지를 북마크로 만든다. 이미 있으면 그대로 둔다.
             if (bookmarkAt(record, index)) break;
@@ -1044,12 +1066,13 @@ function onClick(event) {
 
     const cardAction = target.closest('[data-card-act]');
     if (cardAction) {
-        onCardAction(cardAction.dataset.cardAct, cardAction.closest('.cg-card'));
+        onCardAction(cardAction.dataset.cardAct, cardAction.closest('.cg-card'), cardAction);
         return;
     }
     const sourceToggle = target.closest('.cg-source-toggle');
     if (sourceToggle) return toggleSource(sourceToggle.closest('.cg-card'));
-    const note = target.closest('.cg-note--summary');
+    // 메모 · 발췌를 누르면 원문이 펼쳐지고 접힌다 (발췌 안의 지우기 단추는 위 [data-card-act] 가 먼저 받는다)
+    const note = target.closest('.cg-note--summary, .cg-excerpts--summary');
     if (note && noteCanToggle(event, note)) return toggleSource(note.closest('.cg-card'));
     // 5.4.8: 펼친 메시지를 한 번 더 누르면 접힌다 (메모와 같은 규칙: 링크 · 그림 · 생각 과정 · 글자 고르기는 그대로)
     const opened = target.closest('.cg-source-content');

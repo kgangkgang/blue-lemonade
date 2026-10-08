@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.7.5";
+export const BUILD_VERSION = "5.7.6";
 export const FILE_HASHES = {
   "index.js": "16355:98f0f493:a63bfa54",
-  "manifest.json": "365:b2b23cde:cc3c290c",
+  "manifest.json": "365:dd153c37:33a25c3d",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -23,16 +23,19 @@ export const FILE_HASHES = {
   "src/addons/assets/viewer.js": "34411:0c736112:304f0890",
   "src/addons/bookmarks/alt-palette.js": "2573:aedaf8a8:640a84d8",
   "src/addons/bookmarks/anchors.js": "8849:f4b663b8:9cec7cb4",
-  "src/addons/bookmarks/data.js": "26587:7f967959:e3b50384",
+  "src/addons/bookmarks/data.js": "29156:95fa04fd:6c7a57dc",
   "src/addons/bookmarks/edit-guard.js": "905:5a27ecea:5aa23416",
+  "src/addons/bookmarks/excerpt-capture.js": "15224:463bd519:13895fe8",
+  "src/addons/bookmarks/excerpts.js": "12033:26faf42a:9b238e3f",
   "src/addons/bookmarks/frame-fit.js": "1005:b6748dd1:e0b3858c",
-  "src/addons/bookmarks/index.js": "16559:30e884a9:7e62bfef",
-  "src/addons/bookmarks/panel.js": "56356:0f3b730b:fbd06992",
+  "src/addons/bookmarks/index.js": "19528:39ab000d:523aa483",
+  "src/addons/bookmarks/panel.js": "58161:5a22c9f7:c73740bd",
   "src/addons/bookmarks/preview-guard.js": "2019:a2379d1e:e5daa71e",
-  "src/addons/bookmarks/render.js": "13382:788e99a5:a9ce859f",
-  "src/addons/bookmarks/settings-view.js": "18964:dca495e2:2f515b66",
-  "src/addons/bookmarks/state.js": "12073:fdcb31c4:a67ac9ea",
-  "src/addons/bookmarks/style.css": "70471:2be8a619:d3bbd242",
+  "src/addons/bookmarks/render.js": "16275:13ad7419:cb20057f",
+  "src/addons/bookmarks/selection-chip.js": "11006:aff2d06b:24327a8a",
+  "src/addons/bookmarks/settings-view.js": "19686:591a0987:3fb800e7",
+  "src/addons/bookmarks/state.js": "12220:a57cd696:f038056c",
+  "src/addons/bookmarks/style.css": "75025:2f98b8c0:cd0fa039",
   "src/addons/bookmarks/text-match.js": "1928:91c477ac:e2d8e11d",
   "src/addons/bookmarks/tracker-spacing.js": "1970:01692c05:416c0ef4",
   "src/addons/bookmarks/translate.js": "20593:1706c522:6cfe3565",
@@ -263,7 +266,7 @@ export const FILE_HASHES = {
   "src/mes-fold.js": "15171:6c96c017:9e152087",
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/modal.js": "671:b74e0164:71228d7c",
-  "src/notice-data.js": "161481:cc1c0442:9ba53769",
+  "src/notice-data.js": "162186:406d0cfb:8b382928",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "1144:1da72451:b2e66e80",
@@ -331,5 +334,5 @@ export const FILE_HASHES = {
   "src/weather.js": "32976:f4fdcf09:3273a2b9",
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "31850:337f1677:b8ad9253",
-  "style.css": "1165274:b2507ee8:3ddafd71"
+  "style.css": "1165274:696e466e:e50933da"
 };

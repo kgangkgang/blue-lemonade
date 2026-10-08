@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.7.5.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.7.6.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.7.5 · 최신 업데이트</summary>
+<summary>5.7.6 · 최신 업데이트</summary>
+
+- 북마크 1.4.5 「글 골라 북마크」: 메시지에서 글을 길게 눌러(PC 는 끌어서) 고르면 바로 아래에 「북마크」 단추가 떠요. 누르면 고른 부분만 북마크에 담겨요. 화면에 보이는 그대로 — 번역문이면 번역문, 캐릭터 대화 색 · 형광펜 · 기울임까지 같이 가져와요.
+- 북마크 창: 담은 글은 메시지 카드 위에 따로 보여요. ✕ 로 하나씩 지울 수 있고, 이미 담은 부분을 다시 고르면 「이미 북마크했어요」라고 알려 줘요. 단추가 거슬리면 북마크 창 설정 › 모양 「글 골라 북마크」를 끄세요.
+
+</details>
+
+<details>
+<summary>5.7.5 · TTS 1.4.1 대화 색 정리 · 지난 추론 숨기기</summary>
 
 - TTS 1.4.1 대화 색: AI 가 같은 사람을 다른 색으로도 칠하면(예: 드림주를 다른 주황으로) 줄을 따로 만들지 않고 그 사람 점의 오른쪽 아래에 그 색을 작은 점으로 보여요. 진짜 동명이인이면 두 색에 같은 이름을 직접 적으면 두 줄로 나와요. 이름이 없는 새 색은 흐린 추천 이름 옆 ✓ 를 누르면 바로 그 이름으로 정하고, 추천도 없이 한 번만 본 색은 숨겨요.
 - 채팅: 실리태번 「모델 추론 요청」을 끄면 이미 있는 메시지의 추론(「○초 동안 생각함」)도 숨겨요. 다시 켜면 보이고, 추론을 고치는 중에는 그대로 보여요. 테마 설정 › 채팅 › 화면 「추론 요청을 끄면 지난 추론도 숨기기」로 끌 수 있어요.

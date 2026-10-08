@@ -7,6 +7,7 @@ import { findMatches } from './text-match.js';
 import { settings } from './state.js';
 import { fitHtmlFrame } from './frame-fit.js';
 import { normalizeTrackerSpacing } from './tracker-spacing.js';
+import { cleanStyle, excerptList, isCssColor } from './excerpts.js';
 // lib.js의 export는 실리태번 버전마다 달라서, 예전부터 늘 있던 전역 DOMPurify를 쓴다.
 const { DOMPurify } = globalThis;
 
@@ -157,6 +158,48 @@ export function renderNoteHtml(note) {
         console.warn('[북마크] 메모 정규식을 적용하지 못했습니다:', error);
         return renderPlainNoteHtml(text);
     }
+}
+
+// ── 발췌 (채팅에서 골라 북마크한 글 — excerpts.js) ─────────────────
+// 저장된 html 은 파일에 있던 글이라 그릴 때마다 다시 거른다: 태그는 p · br · span · em · strong, 속성은 style 하나,
+// style 안은 글자색 · 띠 · 기울기 · 굵기 · 밑줄/취소선 다섯 가지만 (cleanStyle). 채팅 서식 고리(.mes_text) 밖에 그려서
+// 테마의 색 통일 규칙(.cg-root .mes_text [style*="color"] { color: inherit !important })이 저장한 색을 덮지 않게 한다.
+const EXCERPT_PURIFY = { ALLOWED_TAGS: ['p', 'br', 'span', 'em', 'strong'], ALLOWED_ATTR: ['style'], ALLOW_DATA_ATTR: false, ALLOW_ARIA_ATTR: false, KEEP_CONTENT: true };
+
+export function sanitizeExcerptHtml(html) {
+    const source = String(html ?? '');
+    if (!source.trim() || !DOMPurify) return '';
+    const template = document.createElement('template');
+    template.innerHTML = DOMPurify.sanitize(source, EXCERPT_PURIFY);
+    for (const element of template.content.querySelectorAll('*')) {
+        for (const attribute of [...element.attributes]) {
+            if (attribute.name !== 'style') element.removeAttribute(attribute.name);
+        }
+        if (!element.hasAttribute('style')) continue;
+        const style = cleanStyle(element.getAttribute('style'));
+        if (style) element.setAttribute('style', style);
+        else element.removeAttribute('style');
+    }
+    return template.innerHTML;
+}
+
+/**
+ * 카드의 발췌 목록. summary 면(원문이 접힌 카드) 메모처럼 눌러서 원문을 펼친다.
+ * 고를 때 바탕 밝기(tone)가 지금 창과 다르면 CSS 가 그때 바탕을 깔아 준다 — 밝은 대사 색이 밝은 창에서 묻히지 않게.
+ */
+export function renderExcerptsHtml(fav, { summary = false, removable = true } = {}) {
+    const list = excerptList(fav);
+    if (!list.length) return '';
+    const items = list.map((item) => {
+        const html = sanitizeExcerptHtml(item.html) || escapeHtml(item.text).replace(/\n/g, '<br>');
+        const tone = item.tone === 'dark' || item.tone === 'light' ? ` data-tone="${item.tone}"` : '';
+        const ink = isCssColor(item.ink) ? ` style="--cg-ex-ink:${escapeHtml(item.ink.trim())}"` : '';
+        const remove = removable
+            ? '<button type="button" class="cg-excerpt-remove" data-card-act="excerpt-remove" aria-label="발췌 지우기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>'
+            : '';
+        return `<div class="cg-excerpt" role="listitem" data-excerpt-id="${escapeHtml(item.id ?? '')}"${tone}${ink}><div class="cg-excerpt-text">${html}</div>${remove}</div>`;
+    }).join('');
+    return `<div class="cg-excerpts${summary ? ' cg-excerpts--summary' : ''}" role="list" aria-label="발췌">${items}</div>`;
 }
 
 /** 메모를 검색할 때 쓰는 순수 글자 */

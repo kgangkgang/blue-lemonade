@@ -1,8 +1,9 @@
 // 북마크 — 채팅 불러오기·저장, 북마크 추가·삭제·메모, 메시지 번호가 바뀔 때 북마크 맞추기
 //
 // 저장 위치는 이전 확장(star · 채팅 북마크)과 같다: 각 채팅 파일의 chat_metadata.favorites
-//   [{ id, messageId: '13', sender, role: 'user'|'character', note, anchor }]
-// 그래서 옮길 것 없이 기존 북마크가 그대로 보이고, 이전 확장으로 돌아가도 호환된다. anchor(메시지 지문)는 anchors.js 참고.
+//   [{ id, messageId: '13', sender, role: 'user'|'character', note, anchor, excerpts? }]
+// 그래서 옮길 것 없이 기존 북마크가 그대로 보이고, 이전 확장으로 돌아가도 호환된다. anchor(메시지 지문)는 anchors.js,
+// excerpts(채팅에서 골라 북마크한 글 조각 — 보이던 모양 그대로)는 excerpts.js 참고. 둘 다 이전 확장은 모르는 칸이라 그대로 둔다.
 import { getContext, saveMetadataDebounced } from '../../../../../../extensions.js';
 import { getRequestHeaders, getThumbnailUrl, saveChatConditional, updateMessageBlock, eventSource, event_types } from '../../../../../../../script.js';
 import { isEditingMessage, EDITING_IN_CHAT } from './edit-guard.js';
@@ -10,6 +11,7 @@ import { uuidv4, getStringHash } from '../../../../../../utils.js';
 import { chatKey, currentChatKey } from './state.js';
 import { chatLabel } from './render.js';
 import { anchorHead, messageAnchor, resolveAnchors } from './anchors.js';
+import { appendExcerpt, removeExcerpt as dropExcerpt } from './excerpts.js';
 
 /**
  * favorites 의 빈 칸(null 등 객체가 아닌 것 — 손으로 고친 jsonl 등)을 그 자리에서 빼고 뺀 수를 돌려준다.
@@ -347,6 +349,58 @@ export async function removeBookmark(record, favId) {
     verified.delete(favId);
     await saveRecord(record);
     return true;
+}
+
+/**
+ * 채팅에서 고른 글(발췌)을 그 메시지의 북마크에 더한다. 북마크가 없으면 만든다 — 같은 메시지에 북마크가 둘이 되지 않는다.
+ * @param {object} excerpt excerpt-capture.js 결과 { text, html, pos, tone, ink }
+ * @returns {Promise<{ fav: object, created: boolean, added: boolean, reason?: string }>}
+ */
+export async function addExcerpt(record, index, excerpt) {
+    await loadRecord(record);
+    const message = record.messages[index];
+    if (!message) throw new Error('북마크할 메시지를 찾을 수 없습니다.');
+    const id = uuidv4();
+    const attach = (target, holder) => {
+        const existing = bookmarkAt(holder, index);
+        const fav = existing ?? newBookmark(index, target);
+        const result = appendExcerpt(fav, excerpt, { id });
+        return { fav, created: !existing, ...result };
+    };
+    if (!record.isCurrent) {
+        return updateOtherChat(record, (fresh) => {
+            const target = fresh.messages[index];
+            if (!target || !sameMessage(target, message)) throw new Error(CHAT_CHANGED_MEANWHILE);
+            const value = attach(target, fresh);
+            if (value.created && value.added) fresh.favorites.push(value.fav);
+            return { changed: value.added, value };
+        });
+    }
+    const value = attach(message, record);
+    if (!value.added) return value;
+    if (value.created) {
+        record.favorites.push(value.fav);
+        rememberVerified(value.fav, message);
+    }
+    await saveRecord(record);
+    return value;
+}
+
+/** 발췌 하나를 북마크에서 뺀다. @returns {Promise<boolean>} */
+export async function removeExcerptFrom(record, favId, excerptId) {
+    if (!record.isCurrent) {
+        return updateOtherChat(record, (fresh) => {
+            const fav = findBookmark(fresh, favId);
+            if (!fav) throw new Error('북마크를 찾을 수 없습니다. 그사이 지워졌을 수 있어요.');
+            const removed = dropExcerpt(fav, excerptId);
+            return { changed: removed, value: removed };
+        });
+    }
+    const fav = findBookmark(record, favId);
+    if (!fav) throw new Error('북마크를 찾을 수 없습니다.');
+    const removed = dropExcerpt(fav, excerptId);
+    if (removed) await saveRecord(record);
+    return removed;
 }
 
 export async function setNote(record, favId, note) {

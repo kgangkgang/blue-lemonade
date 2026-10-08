@@ -27,6 +27,7 @@ function stepper(name, min, max, value) {
 // 아이콘이 null이면 지금 고른 메시지 아이콘(별/북마크)을 쓴다.
 const GUIDE = [
     [null, '북마크 달기', '메시지의 북마크 아이콘을 누르면 북마크가 생기고, 다시 누르면 없어져요. <b>길게 누르면</b>(PC는 우클릭) 메모를 바로 쓸 수 있어요.'],
+    ['fa-i-cursor', '글 골라 북마크', '채팅에서 글을 고르면 아래에 <b>북마크</b>가 떠요. 누르면 고른 글이 보이던 그대로(번역문 · 대사 색) 카드 위에 담겨요.'],
     ['fa-wand-magic-sparkles', '목록 열기', '입력창 왼쪽 마법봉 메뉴 → <b>북마크</b>'],
     ['fa-chevron-down', '메시지 펼치기', '카드의 메모·발췌나 <b>메시지 펼치기</b>를 누르면 북마크한 메시지가 아래에 보여요. 메모가 없어도 펼치기 버튼으로 볼 수 있고, 펼친 메시지를 다시 누르면 접혀요.'],
     ['fa-comments', '채팅 고르기', '같은 캐릭터의 다른 채팅 북마크도 볼 수 있어요. 넓은 화면은 왼쪽 목록, 좁은 화면은 왼쪽 위 <i class="fa-solid fa-bars-staggered"></i> 버튼을 누르세요.'],
@@ -78,6 +79,10 @@ export function renderSettingsPage(page, viewingChat, onBack) {
                 <div class="cg-setting">
                     <div class="cg-setting-text"><b>메시지 아이콘</b><small>채팅 메시지 오른쪽 위에 붙는 아이콘 모양</small></div>
                     ${segmented('iconStyle', [['bookmark', '북마크', 'fa-bookmark'], ['star', '별', 'fa-star']], store.iconStyle)}
+                </div>
+                <div class="cg-setting">
+                    <div class="cg-setting-text"><b>글 골라 북마크</b><small>채팅에서 글을 고르면 아래에 북마크 단추가 떠요.</small></div>
+                    <button type="button" class="cg-switch" role="switch" aria-label="글 골라 북마크" data-setting="selectionChip" aria-checked="${store.selectionChip !== false}"><span></span></button>
                 </div>
                 <div class="cg-setting">
                     <div class="cg-setting-text"><b>원문 접어서 보기</b><small>메모·발췌를 누르면 아래에 메시지가 펼쳐져요. 끄면 처음부터 함께 보여요.</small></div>
@@ -240,6 +245,7 @@ export function renderSettingsPage(page, viewingChat, onBack) {
         store[name] = value;
         saveSettings();
         if (name === 'iconStyle') hooks.refreshMessageIcons();
+        if (name === 'selectionChip' && !value) hooks.hideSelectionChip();
         if (name === 'followTheme') {
             page.querySelectorAll('[data-manual]').forEach((element) => { element.hidden = value; });
             if (value) applyColors(colorsFor(chat?.key));
