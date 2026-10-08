@@ -11,7 +11,7 @@ import { uuidv4, getStringHash } from '../../../../../../utils.js';
 import { chatKey, currentChatKey } from './state.js';
 import { chatLabel } from './render.js';
 import { anchorHead, messageAnchor, resolveAnchors } from './anchors.js';
-import { appendExcerpt, removeExcerpt as dropExcerpt } from './excerpts.js';
+import { appendExcerpt, removeExcerpt as dropExcerpt, updateExcerpt, excerptList } from './excerpts.js';
 
 /**
  * favorites 의 빈 칸(null 등 객체가 아닌 것 — 손으로 고친 jsonl 등)을 그 자리에서 빼고 뺀 수를 돌려준다.
@@ -401,6 +401,29 @@ export async function removeExcerptFrom(record, favId, excerptId) {
     const removed = dropExcerpt(fav, excerptId);
     if (removed) await saveRecord(record);
     return removed;
+}
+
+/** 발췌 하나의 글 · 모양을 고친다 (발췌 고치기). @param {{ text: string, html: string }} patch @returns {Promise<boolean>} 바꿨으면 true */
+export async function editExcerptIn(record, favId, excerptId, patch) {
+    // 그사이(다른 기기 · 다른 창) 발췌가 지워졌으면 고친 글을 조용히 버리지 않고 알린다
+    const ensure = (fav) => {
+        if (!excerptList(fav).some(item => String(item.id) === String(excerptId))) throw new Error('발췌를 찾을 수 없습니다. 그사이 지워졌을 수 있어요.');
+    };
+    if (!record.isCurrent) {
+        return updateOtherChat(record, (fresh) => {
+            const fav = findBookmark(fresh, favId);
+            if (!fav) throw new Error('북마크를 찾을 수 없습니다. 그사이 지워졌을 수 있어요.');
+            ensure(fav);
+            const changed = updateExcerpt(fav, excerptId, patch);
+            return { changed, value: changed };
+        });
+    }
+    const fav = findBookmark(record, favId);
+    if (!fav) throw new Error('북마크를 찾을 수 없습니다.');
+    ensure(fav);
+    const changed = updateExcerpt(fav, excerptId, patch);
+    if (changed) await saveRecord(record);
+    return changed;
 }
 
 export async function setNote(record, favId, note) {

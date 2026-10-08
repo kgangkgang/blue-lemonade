@@ -6,6 +6,7 @@ import { hooks, settings, saveSettings, applyTheme, applyColors, colorsFor, curr
 import { getOwner, currentRecord, listOtherChats, loadRecord, findBookmark, bookmarkAt, addBookmark, bookmarkMessage, removeExcerptFrom } from './data.js';
 import { escapeHtml, formatDate, renderMessageHtml, renderReasoningHtml, renderNoteHtml, noteToPlainText, messageText, avatarForMessage, hydrateHtmlBlocks, highlightMatches, clearHighlights, renderExcerptsHtml } from './render.js';
 import { excerptsText } from './excerpts.js';
+import { openExcerptEditor } from './excerpt-editor.js';
 import { confirmSheet } from './ui-kit.js';
 import { openNoteEditor, openMessageEditor, openContextViewer, confirmDeleteBookmark, enterPreview, isPreviewing, openTranslationEditor, confirmClearTranslation } from './viewers.js';
 import { hasTranslator, hasTranslation, isShowingOriginal, translateMessage, restoreTranslation } from './translate.js';
@@ -954,8 +955,14 @@ async function onCardAction(action, card, element = null) {
     const index = Number(card.dataset.index);
     const fav = record && (card.dataset.virtual ? virtualFav(record, index) : findBookmark(record, card.dataset.favId));
     if (!fav) return;
-    if (fav.blOrphaned && action !== 'note' && action !== 'delete' && action !== 'excerpt-remove') return;
+    if (fav.blOrphaned && action !== 'note' && action !== 'delete' && action !== 'excerpt-remove' && action !== 'excerpt-edit') return;
     switch (action) {
+        case 'excerpt-edit': {
+            const excerptId = element?.closest('[data-excerpt-id]')?.dataset.excerptId;
+            if (!excerptId || fav.virtual) break;
+            if (await openExcerptEditor(record, fav, excerptId) && view.open && selectedRecord() === record) rerenderCard(fav.id);
+            break;
+        }
         case 'excerpt-remove': {
             const excerptId = element?.closest('[data-excerpt-id]')?.dataset.excerptId;
             if (!excerptId || fav.virtual) break;
@@ -1071,7 +1078,7 @@ function onClick(event) {
     }
     const sourceToggle = target.closest('.cg-source-toggle');
     if (sourceToggle) return toggleSource(sourceToggle.closest('.cg-card'));
-    // 메모 · 발췌를 누르면 원문이 펼쳐지고 접힌다 (발췌 안의 지우기 단추는 위 [data-card-act] 가 먼저 받는다)
+    // 메모 · 발췌를 누르면 원문이 펼쳐지고 접힌다 (발췌 안의 고치기 · 지우기 단추는 위 [data-card-act] 가 먼저 받는다)
     const note = target.closest('.cg-note--summary, .cg-excerpts--summary');
     if (note && noteCanToggle(event, note)) return toggleSource(note.closest('.cg-card'));
     // 5.4.8: 펼친 메시지를 한 번 더 누르면 접힌다 (메모와 같은 규칙: 링크 · 그림 · 생각 과정 · 글자 고르기는 그대로)

@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.7.6.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://kgangkgang.github.io/blue-lemonade/downloads/blue-lemonade-5.7.7.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.7.6 · 최신 업데이트</summary>
+<summary>5.7.7 · 최신 업데이트</summary>
+
+- 북마크 1.4.6 발췌 고치기: 담아 둔 발췌마다 ✕ 옆에 연필 단추가 생겼어요. 누르면 메모처럼 아래에서 창이 열리고, 카드에 보이던 그대로(대사 색 · 형광펜) 글만 고칠 수 있어요. 비우고 저장하면 그 발췌를 지워요.
+- 북마크: 고친 발췌는 나중에 그 메시지에서 더 넓게 골라 담아도 덮어쓰지 않고 따로 남아요. 연필 · ✕ 단추는 첫 줄 가운데에 맞췄어요.
+
+</details>
+
+<details>
+<summary>5.7.6 · 북마크 1.4.5 글 골라 북마크</summary>
 
 - 북마크 1.4.5 「글 골라 북마크」: 메시지에서 글을 길게 눌러(PC 는 끌어서) 고르면 바로 아래에 「북마크」 단추가 떠요. 누르면 고른 부분만 북마크에 담겨요. 화면에 보이는 그대로 — 번역문이면 번역문, 캐릭터 대화 색 · 형광펜 · 기울임까지 같이 가져와요.
 - 북마크 창: 담은 글은 메시지 카드 위에 따로 보여요. ✕ 로 하나씩 지울 수 있고, 이미 담은 부분을 다시 고르면 「이미 북마크했어요」라고 알려 줘요. 단추가 거슬리면 북마크 창 설정 › 모양 「글 골라 북마크」를 끄세요.

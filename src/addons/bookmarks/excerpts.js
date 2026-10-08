@@ -1,6 +1,6 @@
 // 북마크 — 고른 글 조각(발췌). 채팅에서 글을 골라 북마크하면 화면에 보이던 그대로(번역문 · 대사 색 · 형광펜 띠 · 기울기 · 굵기)를
 // 그 북마크에 함께 둔다. 채팅 파일의 chat_metadata.favorites[n].excerpts:
-//   [{ id, text, html, pos?, at, tone?, ink? }]
+//   [{ id, text, html, pos?, at, edited?, tone?, ink? }]   (edited: 발췌 고치기로 고친 시각 — 1.4.6)
 //   text 찾기 · 겹침 판단용 순수 글 / html 그 모양 — <p> <br> <span style> 만 (STYLE_RULES: 글자색 · 바탕색 · 형광펜 띠 · 기울기 · 굵기 · 밑줄/취소선)
 //   pos 메시지 글에서 시작 자리(카드 안 순서) / at 만든 시각 / tone 고를 때 글 바탕('dark' = 어두운 바탕의 밝은 글) / ink 둘레 글자색
 // 이전 확장 · 예전 판은 모르는 칸이라 그대로 두고 지나간다 (anchor 와 같다).
@@ -51,8 +51,8 @@ export function styleText(style) {
     return Object.entries(pickStyle(style)).map(([name, value]) => `${name}:${value}`).join(';');
 }
 
-/** style 속성 글에서 허용한 속성 · 값만 남긴다 (저장된 html 을 그릴 때 다시 거른다) */
-export function cleanStyle(text) {
+/** style 속성 글 → 허용한 속성 · 값만 담은 모양 객체 (발췌 고치기가 편집 칸의 span 을 다시 읽을 때) */
+export function styleObject(text) {
     const picked = {};
     for (const part of String(text ?? '').split(';')) {
         const at = part.indexOf(':');
@@ -61,7 +61,12 @@ export function cleanStyle(text) {
         const value = part.slice(at + 1).trim().replace(/\s+/g, ' ');
         if (Object.hasOwn(STYLE_RULES, name) && STYLE_RULES[name].test(value)) picked[name] = value;
     }
-    return styleText(picked);
+    return picked;
+}
+
+/** style 속성 글에서 허용한 속성 · 값만 남긴다 (저장된 html 을 그릴 때 다시 거른다) */
+export function cleanStyle(text) {
+    return styleText(styleObject(text));
 }
 
 const isBreak = piece => !!piece && (piece.br === true || piece.p === true);
@@ -145,6 +150,22 @@ export function runsToText(runs) {
     return (Array.isArray(runs) ? runs : []).map(run => (run.p ? '\n\n' : run.br ? '\n' : run.text)).join('');
 }
 
+/**
+ * 글 조각 → 저장할 { text, html } (발췌 고치기). 고를 때(excerpt-capture.js)와 같은 다듬기 · 같은 html 길이 상한:
+ * 모양이 너무 길면 띠 · 기울기만, 그래도 길면 글만. 글이 하나도 없으면 null.
+ */
+export function packExcerpt(pieces) {
+    const { runs } = compactRuns(pieces, EXCERPT_LIMITS.text);
+    if (!runs.some(run => run.text && run.text.trim())) return null;
+    let html = runsToHtml(runs);
+    if (html.length > EXCERPT_LIMITS.html) {
+        const lighter = runs.map(run => (run.text ? { text: run.text, style: { 'background-color': run.style['background-color'], 'font-style': run.style['font-style'] } } : run));
+        html = runsToHtml(compactRuns(lighter, EXCERPT_LIMITS.text).runs);
+        if (html.length > EXCERPT_LIMITS.html) html = runsToHtml(runs, { stylesOff: true });
+    }
+    return { text: runsToText(runs), html };
+}
+
 /** 색 값의 밝기 0~1 (모르면 null). rgb() · rgba() · #hex · color(srgb …) */
 export function colorLuminance(value) {
     const text = String(value ?? '').trim().toLowerCase();
@@ -202,6 +223,7 @@ function makeId(now) {
  * 북마크에 발췌 하나를 더한다 (fav 를 그 자리에서 고친다).
  * - 이미 있는 발췌 안에 든 글이면 더하지 않는다 (duplicate)
  * - 새 글이 예전 발췌를 감싸면(범위를 넓혀 다시 고름) 그 예전 것들을 새것으로 바꾼다 (replaced)
+ *   (손으로 고친 발췌 edited 는 바꾸지 않는다 — 1.4.6)
  * - count 개가 차 있으면 더하지 않는다 (full)
  * @returns {{ added: boolean, reason?: 'empty'|'duplicate'|'full', replaced?: number, excerpt?: object }}
  */
@@ -212,7 +234,8 @@ export function appendExcerpt(fav, excerpt, { limit = EXCERPT_LIMITS.count, now 
     const list = Array.isArray(fav.excerpts) ? fav.excerpts.filter(isExcerpt) : [];
     const holder = list.find(item => norm(item.text).includes(text));
     if (holder) return { added: false, reason: 'duplicate', excerpt: holder };
-    const kept = list.filter(item => !text.includes(norm(item.text)));
+    // 손으로 고친 발췌(edited)는 메시지 글 그대로가 아니라서 '넓혀 다시 고름'으로 보지 않는다 — 새 글에 들어 있어도 남긴다
+    const kept = list.filter(item => item.edited || !text.includes(norm(item.text)));
     if (kept.length >= limit) return { added: false, reason: 'full' };
     const item = { id: String(id ?? excerpt.id ?? makeId(now)), text: String(excerpt.text), html: String(excerpt.html ?? '') };
     if (Number.isFinite(excerpt.pos) && excerpt.pos >= 0) item.pos = Math.floor(excerpt.pos);
@@ -230,5 +253,22 @@ export function removeExcerpt(fav, excerptId) {
     if (index === -1) return false;
     fav.excerpts.splice(index, 1);
     if (!fav.excerpts.some(isExcerpt)) delete fav.excerpts;
+    return true;
+}
+
+/**
+ * 발췌 하나의 글 · 모양을 고친다 (fav 를 그 자리에서 고친다). 자리 · 바탕 · 둘레 글자색 · 만든 시각은 그대로, edited 에 고친 시각.
+ * 빈 글은 받지 않는다 (지우기는 removeExcerpt). @returns {boolean} 바꿨으면 true
+ */
+export function updateExcerpt(fav, excerptId, patch, { now = Date.now() } = {}) {
+    if (!Array.isArray(fav?.excerpts)) return false;
+    const item = fav.excerpts.find(entry => isExcerpt(entry) && String(entry.id) === String(excerptId));
+    const text = typeof patch?.text === 'string' ? patch.text : '';
+    if (!item || !norm(text)) return false;
+    const html = typeof patch?.html === 'string' ? patch.html : '';
+    if (item.text === text && String(item.html ?? '') === html) return false;
+    item.text = text;
+    item.html = html;
+    item.edited = now;
     return true;
 }

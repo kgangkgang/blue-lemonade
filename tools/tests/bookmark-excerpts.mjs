@@ -178,4 +178,67 @@ test('excerpts survive JSON (chat file) round trips and anchor fixing', () => {
     assert.equal(ex.excerptList(legacy[0]).length, 1);
 });
 
+// 1.4.6 발췌 고치기 — 이전 트리(1.4.5)에는 없으니 있을 때만 본다
+if (typeof ex.updateExcerpt === 'function') {
+    test('styleObject reads only the allowed properties (edited spans)', () => {
+        assert.deepEqual(ex.styleObject('Color: rgb(208, 48, 48); font-size: 30px; FONT-STYLE: italic; background:url(x)'), { color: 'rgb(208, 48, 48)', 'font-style': 'italic' });
+        assert.deepEqual(ex.styleObject('color:expression(alert(1));position:fixed'), {});
+        assert.deepEqual(ex.styleObject(null), {});
+        // cleanStyle 은 그대로 (같은 차례 · 같은 거르기)
+        assert.equal(ex.cleanStyle('font-style:italic;color:#d03030'), 'color:#d03030;font-style:italic');
+    });
+
+    test('packExcerpt turns edited pieces into the same html/text shape as a capture', () => {
+        const red = { color: 'rgb(208, 48, 48)' };
+        const packed = ex.packExcerpt([{ text: '「고친 ', style: red }, { text: '대사」', style: red }, { text: ' 지문.' }, { p: true }, { text: '  둘째 문단 ' }, { br: true }, { br: true }, { br: true }]);
+        assert.deepEqual(packed, { text: '「고친 대사」 지문.\n\n둘째 문단', html: '<p><span style="color:rgb(208, 48, 48)">「고친 대사」</span> 지문.</p><p>둘째 문단</p>' });
+        // 글이 없으면(다 지움) null — 부르는 쪽이 발췌를 지운다
+        assert.equal(ex.packExcerpt([]), null);
+        assert.equal(ex.packExcerpt([{ br: true }, { p: true }, { text: '   ' }]), null);
+        // 허용하지 않은 모양은 저장하지 않는다
+        assert.equal(ex.packExcerpt([{ text: '글', style: { color: 'url(x)', 'font-size': '40px' } }]).html, '<p>글</p>');
+        // html 상한을 넘으면 띠 · 기울기만, 그래도 넘으면 글만 (고를 때와 같다)
+        const rainbow = Array.from({ length: 1200 }, (_, i) => ({ text: '가', style: { color: `rgb(${i % 256}, ${(i * 7) % 256}, 9)` } }));
+        const light = ex.packExcerpt(rainbow);
+        assert.ok(light.html.length <= ex.EXCERPT_LIMITS.html, light.html.length);
+        assert.equal(light.text, '가'.repeat(1200));
+    });
+
+    test('updateExcerpt edits one excerpt in place and keeps its place, tone and time', () => {
+        const fav = { id: 'f', excerpts: [{ id: 'a', text: '처음 글', html: '<p>처음 글</p>', pos: 4, at: 1, tone: 'dark', ink: '#eeeeee' }, { id: 'b', text: '다른 글', html: '' }] };
+        assert.equal(ex.updateExcerpt(fav, 'a', { text: '고친 글', html: '<p>고친 글</p>' }, { now: 9 }), true);
+        assert.deepEqual(fav.excerpts[0], { id: 'a', text: '고친 글', html: '<p>고친 글</p>', pos: 4, at: 1, tone: 'dark', ink: '#eeeeee', edited: 9 });
+        assert.deepEqual(fav.excerpts[1], { id: 'b', text: '다른 글', html: '' });
+        // 같은 글 · 같은 모양이면 바꾸지 않는다 (저장도 안 한다)
+        assert.equal(ex.updateExcerpt(fav, 'a', { text: '고친 글', html: '<p>고친 글</p>' }, { now: 10 }), false);
+        assert.equal(fav.excerpts[0].edited, 9);
+        // 빈 글 · 없는 발췌 · 이상한 값은 받지 않는다
+        assert.equal(ex.updateExcerpt(fav, 'a', { text: '   ', html: '<p></p>' }), false);
+        assert.equal(ex.updateExcerpt(fav, 'zz', { text: '새 글', html: '' }), false);
+        assert.equal(ex.updateExcerpt(fav, 'a', null), false);
+        assert.equal(ex.updateExcerpt({}, 'a', { text: 'x' }), false);
+        assert.equal(ex.updateExcerpt(null, 'a', { text: 'x' }), false);
+        assert.equal(fav.excerpts[0].text, '고친 글');
+        // 고친 글로 겹침을 본다 — 고친 글 안에 든 글은 다시 더하지 않는다
+        assert.equal(ex.appendExcerpt(fav, { text: '고친' }).reason, 'duplicate');
+        // JSON 으로 저장했다 읽어도 그대로
+        assert.deepEqual(JSON.parse(JSON.stringify(fav)).excerpts[0].edited, 9);
+    });
+
+    test('a wider new selection never swallows a hand-edited excerpt', () => {
+        const fav = { id: 'f' };
+        ex.appendExcerpt(fav, { text: '나이트가 고개를 들었다. "안녕, 에이드." 그는 조용히 웃었다.' }, { id: 'a', now: 1 });
+        ex.updateExcerpt(fav, 'a', { text: '안녕', html: '<p>안녕</p>' }, { now: 2 });
+        const added = ex.appendExcerpt(fav, { text: '"안녕, 나이트." 에이드가 대답했다.' }, { id: 'b', now: 3 });
+        assert.equal(added.added, true);
+        assert.equal(added.replaced, 0);
+        assert.deepEqual(fav.excerpts.map(item => item.id), ['a', 'b']);
+        // 고치지 않은 발췌는 예전처럼 넓혀 다시 고르면 바뀐다
+        const plain = { id: 'g' };
+        ex.appendExcerpt(plain, { text: '안녕' }, { id: 'p' });
+        assert.equal(ex.appendExcerpt(plain, { text: '안녕, 에이드' }, { id: 'q' }).replaced, 1);
+        assert.deepEqual(plain.excerpts.map(item => item.id), ['q']);
+    });
+}
+
 console.log(`PASS ${passed} bookmark excerpt checks (${root})`);

@@ -194,10 +194,14 @@ export function renderExcerptsHtml(fav, { summary = false, removable = true } = 
         const html = sanitizeExcerptHtml(item.html) || escapeHtml(item.text).replace(/\n/g, '<br>');
         const tone = item.tone === 'dark' || item.tone === 'light' ? ` data-tone="${item.tone}"` : '';
         const ink = isCssColor(item.ink) ? ` style="--cg-ex-ink:${escapeHtml(item.ink.trim())}"` : '';
-        const remove = removable
-            ? '<button type="button" class="cg-excerpt-remove" data-card-act="excerpt-remove" aria-label="발췌 지우기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>'
+        // 고치기 · 지우기 단추는 글 앞에서 오른쪽으로 띄운다 — 첫 줄만 비켜 가고 아랫줄은 끝까지 쓴다 (1.4.6)
+        const tools = removable
+            ? '<div class="cg-excerpt-tools">'
+                + '<button type="button" class="cg-excerpt-btn cg-excerpt-edit" data-card-act="excerpt-edit" aria-label="발췌 고치기"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>'
+                + '<button type="button" class="cg-excerpt-btn cg-excerpt-remove" data-card-act="excerpt-remove" aria-label="발췌 지우기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>'
+                + '</div>'
             : '';
-        return `<div class="cg-excerpt" role="listitem" data-excerpt-id="${escapeHtml(item.id ?? '')}"${tone}${ink}><div class="cg-excerpt-text">${html}</div>${remove}</div>`;
+        return `<div class="cg-excerpt" role="listitem" data-excerpt-id="${escapeHtml(item.id ?? '')}"${tone}${ink}>${tools}<div class="cg-excerpt-text">${html}</div></div>`;
     }).join('');
     return `<div class="cg-excerpts${summary ? ' cg-excerpts--summary' : ''}" role="list" aria-label="발췌">${items}</div>`;
 }

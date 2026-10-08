@@ -5,7 +5,7 @@
    ============================================================ */
 
 /* state.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
-:root { --cg-css-version: "1.4.5"; }
+:root { --cg-css-version: "1.4.6"; }
 
 .cg-root {
     --cg-accent-fallback: #a98bd9;
@@ -1890,7 +1890,7 @@ body.salty .cg-root .cg-setting-text small {
 .cg-root .cg-source-content[hidden] { display: none !important; }
 @media (max-width: 600px) { .cg-root .cg-source-toggle { min-height: 36px; } }
 
-/* ── 글 골라 북마크 (1.4.5 · selection-chip.js · excerpt-capture.js) ──────────────
+/* ── 글 골라 북마크 (1.4.5 · selection-chip.js · excerpt-capture.js · 1.4.6 excerpt-editor.js) ──────────────
    채팅에서 글을 고르면 그 아래에 뜨는 단추. body 에 붙어 .cg-root 밖이라 테마 · 북마크 색 변수를 직접 쓴다.
    [hidden] 은 표시 규칙보다 무겁게 둔다 (단추에 display 를 !important 로 박지 않는다 — toastr · hidden 함정) */
 .cg-select-chip {
@@ -1936,8 +1936,9 @@ body.salty .cg-root .cg-setting-text small {
 .cg-root .cg-excerpts { display: flex; flex-direction: column; gap: 6px; min-width: 0; margin: 0 0 8px; }
 .cg-root .cg-excerpt {
     position: relative;
+    display: flow-root;
     min-width: 0;
-    padding: 10px 42px 10px 14px;
+    padding: 10px 14px;
     border-radius: 3px 16px 16px 16px;
     background: var(--salty-shade, var(--cg-card));
     color: var(--cg-text);
@@ -1956,15 +1957,24 @@ body.salty .cg-root .cg-setting-text small {
 .cg-root .cg-excerpt-text p { margin: 0; text-indent: 0; }
 .cg-root .cg-excerpt-text p + p { margin-top: var(--salty-para, .6em); }
 /* 띠는 줄이 바뀌어도 조각마다 (채팅의 대사 띠와 같이). 형광펜 띠(background-image)는 그 높이만, 꽉 찬 바탕은 모서리만 둥글게 */
-.cg-root .cg-excerpt-text span[style*="background"] { -webkit-box-decoration-break: clone; box-decoration-break: clone; background-repeat: no-repeat; }
+.cg-root .cg-excerpt-text :is(span, font)[style*="background"] { -webkit-box-decoration-break: clone; box-decoration-break: clone; background-repeat: no-repeat; }
 .cg-root .cg-excerpt-text span[style*="background-color"] { border-radius: 4px; }
-.cg-root .cg-excerpt-remove {
-    position: absolute;
-    top: 3px;
-    right: 3px;
+/* 고치기 · 지우기 (1.4.6): 글 앞에 오른쪽으로 띄워 첫 줄만 비켜 간다 — 아래 여백을 당겨 둘째 줄부터는 끝까지 */
+/* 단추(36px) 가운데를 첫 줄 가운데에 — 줄 높이 = 글자 크기 × --salty-lh (사용자 설정을 따라간다). 작은 글씨면 위로는 8px 까지만 (상자 안).
+   아래 여백은 단추 아래 끝이 첫 줄 끝 2px 위에서 끝나게 — 둘째 줄부터는 끝까지 쓴다 */
+.cg-root .cg-excerpt-tools {
+    --cg-ex-line: calc(var(--salty-lh, 1.65) * var(--bl-ts-read, var(--salty-size, 16px)));
+    --cg-ex-lift: max(-8px, calc((var(--cg-ex-line) - 36px) / 2));
+    float: right;
+    display: flex;
+    margin: var(--cg-ex-lift) -11px max(-12px, calc(var(--cg-ex-line) - 38px - var(--cg-ex-lift))) 6px; /* 설정 최소보다 작은 글씨에서 둘째 줄이 단추 밑으로 들어가지 않게 */
+}
+/* 아주 작은 글씨(줄 높이 < 단추)에서도 단추가 상자 밖으로 나가지 않게 (평소 한 줄 상자는 46px 넘어 그대로) */
+.cg-root .cg-excerpts .cg-excerpt { min-height: 40px; }
+.cg-root .cg-excerpt-btn {
     display: grid;
     place-items: center;
-    width: 36px;
+    width: 34px;
     height: 36px;
     min-height: 0;
     padding: 0;
@@ -1975,13 +1985,35 @@ body.salty .cg-root .cg-setting-text small {
     font-size: 13px;
     cursor: pointer;
 }
-.cg-root .cg-excerpt-remove:is(:hover, :focus-visible) { color: var(--cg-danger, #e5484d); background: color-mix(in srgb, currentColor 10%, transparent); }
+.cg-root .cg-excerpt-edit { font-size: 12px; }
+/* 폰은 누른 뒤에도 :hover 가 남는다 — 마우스가 있는 기기에서만 */
+@media (hover: hover) {
+    .cg-root .cg-excerpt-edit:hover { color: var(--salty-accent, var(--cg-accent)); background: color-mix(in srgb, currentColor 10%, transparent); }
+    .cg-root .cg-excerpt-remove:hover { color: var(--cg-danger, #e5484d); background: color-mix(in srgb, currentColor 10%, transparent); }
+}
+.cg-root .cg-excerpt-edit:focus-visible { color: var(--salty-accent, var(--cg-accent)); background: color-mix(in srgb, currentColor 10%, transparent); }
+.cg-root .cg-excerpt-remove:focus-visible { color: var(--cg-danger, #e5484d); background: color-mix(in srgb, currentColor 10%, transparent); }
 /* 고를 때와 창의 밝기가 다르면(나이트에서 고른 글을 밝은 창에서 등) 그때 바탕을 깔아 밝은 대사 색이 묻히지 않게 */
 .cg-root[data-cg-tone="light"] .cg-excerpt[data-tone="dark"] { background: #1f2329; color: var(--cg-ex-ink, #e9eef4); }
 .cg-root[data-cg-tone="dark"] .cg-excerpt[data-tone="light"] { background: #f6f4f0; color: var(--cg-ex-ink, #2b2733); }
-.cg-root[data-cg-tone="light"] .cg-excerpt[data-tone="dark"] .cg-excerpt-remove { color: rgba(233, 238, 244, .55); }
-.cg-root[data-cg-tone="dark"] .cg-excerpt[data-tone="light"] .cg-excerpt-remove { color: rgba(43, 39, 51, .5); }
+.cg-root[data-cg-tone="light"] .cg-excerpt[data-tone="dark"] .cg-excerpt-btn { color: rgba(233, 238, 244, .55); }
+.cg-root[data-cg-tone="dark"] .cg-excerpt[data-tone="light"] .cg-excerpt-btn { color: rgba(43, 39, 51, .5); }
+/* 발췌 고치기 창: 카드의 발췌와 같은 상자 · 글자 그대로 고친다 (iOS 가 확대하지 않게 글자는 16px 이상) */
+.cg-root .cg-excerpt--edit { padding: 12px 14px; border-radius: 14px; transition: box-shadow .15s; }
+.cg-root .cg-excerpt--edit:focus-within { box-shadow: 0 0 0 1.5px var(--salty-accent-40, var(--salty-accent, var(--cg-accent, var(--cg-accent-fallback)))); }
+.cg-root .cg-excerpt--edit .cg-excerpt-text {
+    min-height: 6.5em;
+    max-height: min(52dvh, 460px);
+    overflow-y: auto;
+    outline: none;
+    font-size: max(16px, var(--bl-ts-read, var(--salty-size, 1em)));
+    cursor: text;
+    -webkit-user-select: text;
+    user-select: text;
+    caret-color: var(--salty-accent, var(--cg-accent, currentColor));
+}
 @media (max-width: 760px) {
-    .cg-root .cg-excerpt { padding: 9px 38px 9px 12px; border-radius: 3px 14px 14px 14px; }
-    .cg-root .cg-excerpt-remove { top: 1px; right: 1px; }
+    .cg-root .cg-excerpt { padding: 9px 12px; border-radius: 3px 14px 14px 14px; }
+    .cg-root .cg-excerpt-tools { margin-right: -11px; margin-left: 4px; }
+    .cg-root .cg-excerpt--edit { padding: 11px 12px; border-radius: 14px; }
 }
