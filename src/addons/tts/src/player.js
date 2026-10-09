@@ -1913,8 +1913,11 @@ async function concatWav(blobs, gapMs) {
 }
 /** 지금 읽는 덩이 하나 저장 */
 export async function downloadCurrent() {
+    return downloadJob(current);
+}
+/** 덩이(대사 한 줄 · 같은 화자로 이어 붙인 줄) 하나 저장 — 1.4.3 내려받기의 「이 문장」 */
+async function downloadJob(j) {
     if (!runtimeEnabled()) return false;
-    const j = current;
     if (!j) return false;
     try {
         const a = await ensureAudio(j);
@@ -2049,6 +2052,11 @@ function buildBar() {
         btn('lv-bar-analyze', '다시 분석', 'fa-wand-magic-sparkles') +
         btn('lv-bar-down', '내려받기', 'fa-download') +
         btn('lv-bar-stop', '정지', 'fa-stop') +
+        '</div>' +
+        // 1.4.3 채팅 메시지를 읽는 중에 내려받기를 누르면: 메시지 전체 · 누른(읽는) 문장만
+        '<div class="lv-bar-dlmenu" role="menu" hidden>' +
+        '<button type="button" class="lv-bar-dlopt" data-dl="all" role="menuitem"><i class="fa-solid fa-layer-group"></i><span>전체</span></button>' +
+        '<button type="button" class="lv-bar-dlopt" data-dl="one" role="menuitem"><i class="fa-solid fa-quote-left"></i><span>이 문장</span></button>' +
         '</div>';
     document.body.appendChild(bar);
     barEl.voice = bar.querySelector('.lv-bar-voice');
@@ -2067,15 +2075,64 @@ function buildBar() {
         const id = currentMesId();
         if (id != null && id >= 0) reanalyze(id).catch(e => log('err', `다시 분석 실패: ${String(e?.message || e).slice(0, 40)}`));
     }));
-    bar.querySelector('.lv-bar-down').addEventListener('click', guard(() => {
+    barEl.down = bar.querySelector('.lv-bar-down');
+    barEl.dlmenu = bar.querySelector('.lv-bar-dlmenu');
+    const runDownload = (p) => Promise.resolve(p).catch(e => log('err', `내려받기 실패: ${String(e?.message || e).slice(0, 40)}`));
+    barEl.down.addEventListener('click', guard(() => {
+        if (!barEl.dlmenu.hidden) { closeDownloadMenu(); return; }
         const id = currentMesId();
         if (id == null) return;
-        const p = id >= 0 ? downloadMessage(id) : downloadCurrent();
-        Promise.resolve(p).catch(e => log('err', `내려받기 실패: ${String(e?.message || e).slice(0, 40)}`));
+        // 채팅 밖(미리 듣기 등)이거나 지금 읽는 덩이가 없으면 예전처럼 바로
+        if (id < 0) { runDownload(downloadCurrent()); return; }
+        if (!current) { runDownload(downloadMessage(id)); return; }
+        openDownloadMenu({ mesId: id, job: current });   // 누른 순간의 문장을 잡아 둔다 — 고르는 사이 다음 줄로 넘어가도 그 줄
     }));
+    barEl.dlmenu.addEventListener('click', (e) => {
+        const opt = e.target.closest('.lv-bar-dlopt');
+        if (!opt) return;
+        const pick = dlPick;
+        closeDownloadMenu();
+        if (!pick) return;
+        runDownload(opt.dataset.dl === 'one' ? downloadJob(pick.job) : downloadMessage(pick.mesId));
+    });
     bar.querySelector('.lv-bar-stop').addEventListener('click', () => stop());
 }
 const WAIT_BLOCKED = ['.lv-bar-prev', '.lv-bar-toggle', '.lv-bar-next', '.lv-bar-regen', '.lv-bar-down', '.lv-bar-analyze'];
+// ---------- 1.4.3 내려받기 고르기 (전체 · 이 문장) — 막대 안의 작은 알약, 내려받기 단추 위에
+let dlPick = null;
+function openDownloadMenu(pick) {
+    if (!bar || !barEl.dlmenu) return;
+    dlPick = pick;
+    barEl.dlmenu.hidden = false;
+    positionDownloadMenu();
+    barEl.down.classList.add('lv-on');
+    document.addEventListener('pointerdown', onDownloadMenuOutside, true);
+    document.addEventListener('keydown', onDownloadMenuKey, true);
+}
+/** 내려받기 단추 가운데 위에 (막대 안쪽으로 붙잡아 둠). 화면 크기가 바뀌면 placeBar 가 다시 부른다 */
+function positionDownloadMenu() {
+    const m = barEl.dlmenu, b = barEl.down;
+    if (!bar || !m || m.hidden || !b) return;
+    const center = b.offsetLeft + b.offsetWidth / 2;
+    const left = Math.max(4, Math.min(bar.clientWidth - m.offsetWidth - 4, center - m.offsetWidth / 2));
+    m.style.left = `${Math.round(left)}px`;
+}
+function closeDownloadMenu() {
+    dlPick = null;
+    if (barEl.dlmenu) barEl.dlmenu.hidden = true;
+    barEl.down?.classList.remove('lv-on');
+    document.removeEventListener('pointerdown', onDownloadMenuOutside, true);
+    document.removeEventListener('keydown', onDownloadMenuKey, true);
+}
+function onDownloadMenuOutside(e) {
+    if (barEl.dlmenu?.contains(e.target) || barEl.down?.contains(e.target)) return;
+    closeDownloadMenu();
+}
+function onDownloadMenuKey(e) {
+    if (e.key !== 'Escape') return;
+    e.stopPropagation();
+    closeDownloadMenu();
+}
 const barWaiting = () => !!bar && bar.classList.contains('lv-bar-wait');
 /** 기다리는 동안 흐린 버튼은 aria-disabled 로도 알린다 (눌림 막기는 style.css 의 pointer-events 와 위 guard) */
 function setBlocked(on) {
@@ -2112,6 +2169,7 @@ function showBar(job, busy) {
 function waitBar(mes, text) {
     if (!bar || current) return;
     if (!settings().mini_player) return;
+    closeDownloadMenu();   // 1.4.3 기다리는 동안엔 내려받기를 막으므로 열린 고르기도 닫는다
     barEl.voice.textContent = String(mes?.name || '');
     barEl.text.textContent = text;
     bar.classList.add('lv-bar-on', 'lv-bar-busy', 'lv-bar-wait');
@@ -2123,6 +2181,7 @@ function waitBar(mes, text) {
 }
 function hideBar() {
     if (!bar) return;
+    closeDownloadMenu();
     bar.classList.remove('lv-bar-on', 'lv-bar-busy', 'lv-bar-paused', 'lv-bar-wait');
     setBlocked(false);
     observeBar(false);
@@ -2151,6 +2210,7 @@ function placeBar() {
         bar.style.setProperty('--lv-bar-left', `${Math.round(sr.left + 8)}px`);
         bar.style.setProperty('--lv-bar-width', `${Math.round(sr.width - 16)}px`);
     }
+    positionDownloadMenu();   // 1.4.3 열린 내려받기 고르기도 막대를 따라 (화면 폭이 바뀌어도 화면 안에)
 }
 function observeBar(on) {
     if (on) {

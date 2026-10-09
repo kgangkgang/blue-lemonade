@@ -1,11 +1,11 @@
-/* TTS (Lemon TTS) v1.4.2 */
+/* TTS (Lemon TTS) v1.4.3 */
 
 #lv_settings .lv-version { background: none; border: 0; color: inherit; font: inherit; padding: 4px 6px; cursor: pointer; text-decoration: none; }
 #lv_settings .lv-version:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 
 /* ---------- 공통 변수: 설정 창 · 편집 팝업 · 재생 막대 (ST 테마 색을 따르고, 블루 레몬에이드 변수는 있으면 씀) */
 .lv-settings, .lv-editor, .lv-bar {
-  --lv-css-version: "1.4.2";
+  --lv-css-version: "1.4.3";
   --lv-accent: var(--salty-accent, var(--SmartThemeQuoteColor, #51a0de));
   --lv-text: var(--SmartThemeBodyColor, #dcdcd2);
   --lv-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, .15));
@@ -477,6 +477,38 @@ body.salty.salty-icons-line #chat .mes .extraMesButtons > .lv_play { --salty-mi:
    분석 중 불빛(.lv-on)이 켜진 다시 분석은 흐리지 않는다 */
 .lv-bar-wait .lv-bar-prev, .lv-bar-wait .lv-bar-toggle, .lv-bar-wait .lv-bar-next, .lv-bar-wait .lv-bar-regen, .lv-bar-wait .lv-bar-down, .lv-bar-wait .lv-bar-analyze:not(.lv-on) { opacity: .45; }
 .lv-bar-wait .lv-bar-prev, .lv-bar-wait .lv-bar-toggle, .lv-bar-wait .lv-bar-next, .lv-bar-wait .lv-bar-regen, .lv-bar-wait .lv-bar-down, .lv-bar-wait .lv-bar-analyze { pointer-events: none; }
+/* 1.4.3 내려받기 고르기: 전체 · 이 문장 — 내려받기 단추 위에 뜨는 작은 알약 (player.js 가 left 를 준다) */
+.lv-bar-dlmenu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--lv-border);
+  border-radius: var(--lv-r-pill);
+  background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #171717) 96%, transparent);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, .35);
+  white-space: nowrap;
+}
+.lv-bar-dlmenu[hidden] { display: none; }
+.lv-bar-dlopt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--lv-h);
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--lv-r-pill);
+  background: transparent;
+  color: var(--lv-text);
+  font: inherit;
+  font-size: .88em;
+  cursor: pointer;
+}
+.lv-bar-dlopt > i { color: var(--lv-accent); font-size: .92em; }
+.lv-bar-dlopt:hover { background: var(--lv-fill-hover); }
+.lv-bar-dlopt:focus-visible { outline: 2px solid var(--lv-accent); outline-offset: 1px; }
 @media (max-width: 600px) {
   .lv-bar { left: 8px; width: calc(100vw - 16px); padding-left: 12px; }   /* 휴대폰: 화면 너비 − 16px */
   .lv-bar-voice { max-width: 34%; }

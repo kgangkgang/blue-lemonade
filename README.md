@@ -1,13 +1,20 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.8.0/blue-lemonade-5.8.0.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.8.1/blue-lemonade-5.8.1.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.8.0 · 최신 업데이트</summary>
+<summary>5.8.1 · 최신 업데이트</summary>
+
+- TTS 1.4.3: 재생 막대의 내려받기를 채팅 메시지를 읽는 중에 누르면 「전체」(메시지 전체 음성)와 「이 문장」(누른 순간 읽던 대사 하나) 가운데 골라 저장해요.
+
+</details>
+
+<details>
+<summary>5.8.0 · 본채팅 Claude 5 · ZIP 은 GitHub 릴리스</summary>
 
 - 본채팅에서 Claude Haiku 5.5 처럼 실리태번이 아직 모르는 Claude 5 세대 모델을 쓰면 온도 · top_p · top_k 를 그대로 보내 오류가 나던 것을 막아요 (Claude 5 세대에서만 빼고, 다른 모델은 그대로예요). 다시 쓰기 리롤도 같아요.
 - 실리태번 헬퍼 업데이트 창의 4.11.0 ~ 4.11.3 바뀐 내역도 한글로 보여 줘요.
