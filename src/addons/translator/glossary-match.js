@@ -187,3 +187,41 @@ export function glossaryLines(entries, text, { reverse = false, maxLines = 60 } 
 export function glossaryVariantTag(entries, text) {
     return glossaryHits(entries, text).flatMap(hit => hit.variants.map(spelling => `${spelling}>${hit.entry.id ?? hit.entry.src}`)).sort().join('|');
 }
+
+// ── [2.3.0] TTS 듣는 언어 (테마 5.8.2 · TTS 1.4.4) ─────────────────────────────────
+// TTS 가 읽을 줄을 고른 언어(ko · ja · en · zh)로 옮길 때 붙이는 용어집 줄. 채팅 번역(한국어)용 줄과 따로 만든다:
+//  - ko: 채팅 번역과 같은 줄 (원문 표기 → 번역 칸) — glossaryLines 그대로
+//  - 그 밖: 번역 칸은 한국어라 쓸 수 없고, 원문 칸에 그 언어 글자로 적은 표기가 있으면 그것을 쓰라고 한다
+//    (Adelstein, アデルスタイン → 아델스타인 · 일본어로 들으면 「Adelstein → アデルスタイン」). 그 언어 표기가 없는 항목은 넣지 않는다.
+//    원문이 한국어(번역문 · 내 글)여도 번역 칸(아델스타인)으로 찾아 「아델스타인 → アデルスタイン」.
+/** 표기 하나의 글자 갈래: 'ko' (한글) · 'ja' (가나가 있음) · 'han' (한자만 — 일본어 · 중국어 둘 다) · 'en' (라틴) · '' */
+export function formScript(form) {
+    const s = String(form ?? '');
+    if (/[\uac00-\ud7a3\u3130-\u318f]/.test(s)) return 'ko';
+    if (/[\u3040-\u30ff\u31f0-\u31ff\uff66-\uff9f]/.test(s)) return 'ja';
+    if (/[\u4e00-\u9fff\u3400-\u4dbf]/.test(s)) return 'han';
+    if (/[A-Za-z\u00c0-\u024f]/.test(s)) return 'en';
+    return '';
+}
+const formFits = (form, target) => { const k = formScript(form); return k === target || (k === 'han' && (target === 'ja' || target === 'zh')); };
+/** 목표 언어용 용어집 줄 → { lines, hasChoice } (glossaryLines 와 같은 모양) */
+export function glossaryLinesFor(entries, text, target, { maxLines = 60 } = {}) {
+    if (target === 'ko') return glossaryLines(entries, text, { maxLines });
+    const lines = [];
+    const seen = new Set();
+    let hasChoice = false;
+    for (const reverse of [false, true]) {
+        for (const hit of glossaryHits(entries, text, { reverse })) {
+            if (lines.length >= maxLines) break;
+            const matched = new Set(hit.matched.map(glossaryFold));
+            const forms = hit.sources.filter(form => formFits(form, target) && !matched.has(glossaryFold(form)));
+            if (!forms.length) continue;
+            const line = `${hit.matched.join(' / ')} → ${forms.join(' / ')}`;
+            if (seen.has(line)) continue;
+            seen.add(line);
+            if (forms.length > 1) hasChoice = true;
+            lines.push(line);
+        }
+    }
+    return { lines, hasChoice };
+}

@@ -5,7 +5,8 @@ import { checkpointKey, translateChunks, clearCheckpoints } from './translation-
 import { segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis } from './translation-segments.js';
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
-import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey } from './glossary-match.js'; // [2.2.9] 용어집 찾기 (+ 가타카나 표기 흔들림)
+import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey, glossaryLinesFor } from './glossary-match.js'; // [2.2.9] 용어집 찾기 (+ 가타카나 표기 흔들림) · [2.3.0] TTS 듣는 언어용 줄
+import { SPEECH_LANGS, speechPrompt, speechPayload, speechLine, parseSpeechBatch, unwrapQuotes, cutEchoLine } from './speech-translate.js'; // [2.3.0] TTS 듣는 언어
 import { requestCurrentConnection } from './current-connection.js';
 import { createGenerationParameters, getChatCompletionModel } from '../../../../../../openai.js';
 import { createTextGenGenerationData, getTextGenModel } from '../../../../../../textgen-settings.js';
@@ -5131,7 +5132,138 @@ async function forgetParagraphCache(originalText) {
 function publishTranslatorAPI() {
     if (!duplicate) globalThis[Symbol.for('blue-lemonade.translator')] = {
         processTranslationText, readCachedTranslation, storeTranslationQuietly, deleteCachedTranslation,
+        translateForSpeech, speechReady, speechModelTag, // [2.3.0] TTS 듣는 언어
     };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// [2.3.0] TTS 듣는 언어 (테마 5.8.2 · TTS 1.4.4): 채팅을 영어로 해도 TTS 는 일본어로 듣게 — TTS 가 읽을 줄 묶음을 그 언어로 옮긴다.
+//   연결 · 공급자 · 모델 · 키 · 프리필 · 모델별 요청 규칙 · 중계 오류 처리는 채팅 번역과 같은 callLLMAPI.
+//   채팅 번역 프롬프트 · 목표 언어(화면 번역문) · 규칙 프롬프트 · 번역 캐시(IndexedDB)는 쓰지도 바꾸지도 않는다 — TTS 가 자기 캐시에 둔다.
+//   용어집은 그 언어로 쓸 수 있는 표기만 (glossaryLinesFor). 메시지마다 한 요청(⟦n⟧ 번호 묶음), 빠진 줄은 한 번만 다시, 그래도 없으면 null (원문으로 읽음).
+// ═══════════════════════════════════════════════════════════════════════════════
+const SPEECH_KEYS = { openai: ['OPENAI'], claude: ['CLAUDE'], google: ['MAKERSUITE'], cohere: ['COHERE'], vertexai: ['VERTEXAI', 'VERTEXAI_SERVICE_ACCOUNT'], openrouter: ['OPENROUTER'], deepseek: ['DEEPSEEK'] };
+/** 보내지 않고 미리 보는 준비 상태 (callLLMAPI 가 보내기 전에 막는 것과 같은 판단) → { ok, why } */
+function speechReady() {
+    if (duplicate) return { ok: false, why: '단독 LLM 번역 확장이 돌고 있어 내장 번역을 쓸 수 없어요' };
+    const s = extensionSettings;
+    if (s.connection_mode !== 'direct') {
+        const api = getContext()?.mainApi;
+        return api === 'openai' || api === 'textgenerationwebui' ? { ok: true } : { ok: false, why: '번역 연결(현재 연결)이 채팅 완성 · 텍스트 완성이 아니에요' };
+    }
+    const provider = s.llm_provider;
+    const model = s.llm_model === 'custom' ? getCustomModelName(provider) : s.llm_model;
+    if (provider !== 'custom' && !SPEECH_KEYS[provider]) return { ok: false, why: '번역 공급자를 쓸 수 없어요' };
+    if (!model) return { ok: false, why: '번역 모델이 비어 있어요' };
+    if (provider === 'custom') return getCustomEndpointConfig().url ? { ok: true } : { ok: false, why: '번역 주소가 비어 있어요' };
+    const hasKey = SPEECH_KEYS[provider].some(k => SECRET_KEYS[k] && secret_state[SECRET_KEYS[k]]);
+    return hasKey || s.use_reverse_proxy ? { ok: true } : { ok: false, why: '번역 API 키가 없어요' };
+}
+/** 번역 결과를 가르는 연결 · 모델 (TTS 캐시 키용 — 키 · 비밀번호 · 주소는 넣지 않는다) */
+function speechModelTag() {
+    const s = extensionSettings;
+    if (s.connection_mode === 'direct') return `direct|${s.llm_provider}|${s.llm_model === 'custom' ? getCustomModelName(s.llm_provider) : s.llm_model}`;
+    const fields = activeConnectionFields(getContext());
+    return `current|${String(fields?.[0] ?? '')}|${String(fields?.[1] ?? '')}`;
+}
+function speechGlossaryBlock(text, target) {
+    if (extensionSettings.glossary_enabled === false) return '';
+    const { lines, hasChoice } = glossaryLinesFor(activeGlossaryEntries(), text, target, { maxLines: GLOSSARY_MAX_LINES });
+    if (!lines.length) return '';
+    const rule = `Use these forms for names and terms (keep the given spelling${target === 'ko' ? '; Korean particles may attach naturally' : ''})${hasChoice ? '. Where several options are separated by " / ", pick the one that fits the context' : ''}:`;
+    return `[Glossary]\n${rule}\n${lines.join('\n')}`;
+}
+/** 한 요청: 일시 오류(429 · 5xx · 네트워크)는 1.5초 뒤 한 번 더, 거절 · 입력 차단은 머리말을 바꿔 한 번 더 (채팅 번역의 배치 2) */
+async function speechRequest(prompt, signal) {
+    for (let attempt = 0, layout = 0; ; attempt++) {
+        const full = layout ? `[Fiction translation request]\n\n${prompt}` : prompt;
+        try {
+            const raw = await callLLMAPI(full, { signal, requestPurpose: 'translation.tts' });
+            if (!looksLikeInputBlock(raw)) return raw;
+            if (layout) throw inputBlockError();
+            layout = 1;
+        } catch (error) {
+            if (signal?.aborted || error?.cancelled) throw error;
+            if (attempt < 2 && !layout && error?.refused) { layout = 1; continue; }
+            if (attempt < 1 && isTransientError(error)) { await new Promise(resolve => setTimeout(resolve, 1500)); if (signal?.aborted) throw signal.reason; continue; }
+            throw error;
+        }
+    }
+}
+/**
+ * TTS 듣는 언어: lines (원문 줄 배열) → 같은 길이의 배열 (그 언어 글 또는 null = 못 옮김 · 거절 — 부르는 쪽이 원문으로 읽는다).
+ * target: 'ko' | 'ja' | 'en' | 'zh'. signal 로 그만두면 보낸 요청도 끊는다. 준비가 안 됐으면(키 · 모델 없음) 보내지 않고 notReady 오류.
+ */
+async function translateForSpeech(lines, target, { signal } = {}) {
+    const list = (Array.isArray(lines) ? lines : []).map(line => String(line ?? ''));
+    if (!list.length) return [];
+    if (!SPEECH_LANGS[target]) throw new Error(`듣는 언어를 알 수 없어요: ${target}`);
+    const ready = speechReady();
+    if (!ready.ok) throw Object.assign(new Error(ready.why), { notReady: true });
+    const out = list.map(() => null);
+    const ask = async (indexes) => {
+        const part = indexes.map(i => list[i]);
+        const glossary = speechGlossaryBlock(part.join('\n'), target);
+        const raw = await speechRequest(`${speechPrompt(target, { count: part.length, glossary })}\n\n${speechPayload(part)}`, signal);
+        const got = part.length === 1 ? [unwrapQuotes(cutEchoLine(stripReplyWrapping(String(raw ?? ''), part[0]), part[0]).replace(/\s*\n+\s*/g, ' '), part[0]) || null] : parseSpeechBatch(raw, part.length, part);
+        got.forEach((text, k) => {
+            if (!text) return;
+            const value = target === 'ko' ? tidyKana(text) : text;
+            if (looksLikeRefusal(part[k], value)) { console.warn('[LLM Translator] TTS 줄 번역이 거절문이라 원문으로 둬요'); return; }
+            out[indexes[k]] = value;
+        });
+    };
+    // 보통은 메시지 하나 = 요청 하나. 출력 한도에 닿을 만큼 길면(직접 연결 기본 1000 토큰 · 긴 답장 + 서술까지 읽기) 채팅 번역처럼 나눠 차례로 —
+    // 전엔 통째로 잘려(finish=length) 모든 줄이 원문으로 읽혔다. 한 묶음이 실패해도 다른 묶음의 줄은 받는다 (모두 실패면 그 오류)
+    const limit = speechGroupLimit();
+    const groupsOf = (indexes) => {
+        const groups = [];
+        let group = [], size = 0;
+        for (const i of indexes) {
+            const len = speechLine(list[i]).length;
+            if (group.length && size + len > limit) { groups.push(group); group = []; size = 0; }
+            group.push(i); size += len;
+        }
+        if (group.length) groups.push(group);
+        return groups;
+    };
+    const failed = new Set();
+    let firstError = null;
+    const run = async (indexes, retry = false) => {
+        for (const group of groupsOf(indexes)) {
+            try { await ask(group); }
+            catch (error) {
+                if (signal?.aborted || error?.cancelled) throw error;
+                if (!retry && error?.truncated && group.length > 1) {   // 그래도 잘리면 반씩 한 번
+                    const half = Math.ceil(group.length / 2);
+                    for (const piece of [group.slice(0, half), group.slice(half)]) {
+                        try { await ask(piece); }
+                        catch (e) { if (signal?.aborted || e?.cancelled) throw e; firstError ??= e; for (const i of piece) failed.add(i); }
+                    }
+                    continue;
+                }
+                if (retry) { console.warn('[LLM Translator] TTS 줄 다시 보내기 실패:', error?.message || error); continue; }
+                firstError ??= error;
+                for (const i of group) failed.add(i);
+            }
+        }
+    };
+    await run(list.map((_, i) => i));
+    if (firstError && failed.size === list.length) throw firstError;
+    // 답에 빠진 줄(요청이 실패한 묶음의 줄은 빼고)만 한 번 더
+    const missing = out.map((text, i) => (text === null && !failed.has(i) ? i : -1)).filter(i => i >= 0);
+    if (missing.length && list.length > 1) {
+        console.warn(`[LLM Translator] TTS 줄 ${missing.length}개가 답에 없어 한 번 더 보내요`);
+        await run(missing, true);
+    }
+    return out;
+}
+/** 묶음 크기(원문 글자 수) — 채팅 번역 묶음과 같은 셈: 출력 한도(토큰) × 1.2, 400 ~ 3600자 (한도를 모르면 3600) */
+function speechGroupLimit() {
+    const s = extensionSettings, live = getContext();
+    const outputTokens = s.connection_mode === 'direct' ? Number(s.parameters?.[s.llm_provider]?.max_length) || 0
+        : Number(s.profile_max_tokens) || (live?.mainApi === 'openai' ? Number(live.chatCompletionSettings?.openai_max_tokens) : textOutputLimit()) || 0;
+    return outputTokens > 0 ? Math.min(CHUNK_TARGET * 2, Math.max(400, Math.round(outputTokens * 1.2))) : CHUNK_TARGET * 2;
 }
 async function deleteCachedTranslation(originalText) {
     await forgetParagraphCache(originalText);

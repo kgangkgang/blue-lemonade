@@ -116,6 +116,9 @@ export function gradientTextCss(s,markerBackground) {
         }
         if(key==='code'){fill+=', linear-gradient(var(--salty-shade),var(--salty-shade))';clip+=', border-box';}
         css+=`${selectors[key]}{background:${fill}!important;background-clip:${clip}!important;-webkit-background-clip:${clip}!important;-webkit-text-fill-color:transparent!important;}`;
+        // 5.8.2 캐릭터 말풍선: 말풍선 면(문단 바탕)이 .mes_text 의 글자 모양 바탕을 덮어 글자가 안 보였다 → 말풍선이 같은 그라데이션을 글자 모양으로 한 겹 더 얹는다 (css/06-chat-text.css)
+        // --bl-ub-fill: 같은 것을 내 말풍선 면 색으로 — 말풍선 나누기 '엔터 두 번마다'의 내 문단 말풍선 (통으로는 면이 .mes_block 이라 글자 아래에 있어 괜찮다)
+        if(key==='text')css+=`${scope}{--bl-cb-fill:${fill}, var(--salty-char-bubble-bg, var(--salty-raised));--bl-ub-fill:${fill}, var(--salty-user-bg, var(--salty-raised));--bl-cb-clip:text, border-box;}`;
     }
     const gold=gradientFor(s,'gold');
     if(gold && gold.colors.some(c=>parseColor(c)[3]>0)) {

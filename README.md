@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.8.1/blue-lemonade-5.8.1.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.8.2/blue-lemonade-5.8.2.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.8.1 · 최신 업데이트</summary>
+<summary>5.8.2 · 최신 업데이트</summary>
+
+- 채팅 › 메시지에 「캐릭터 메시지」(글자만 · 말풍선)와 「말풍선 나누기」(통으로 · 엔터 두 번마다)가 생겼어요. 엔터 두 번마다로 고르면 카톡처럼 빈 줄마다 말풍선이 따로 나뉘어요 — 캐릭터 답도, 말풍선으로 고른 내 메시지도. 스타일의 「메신저」를 고르면 한 번에 켜져요. 기본은 지금 모습 그대로예요.
+- TTS 1.4.4 「듣는 언어」: 읽기 탭에서 듣고 싶은 언어(한국어 · 日本語 · English · 中文)를 고르면, 다른 언어로 쓴 대사도 번역 애드온(LLM 번역 2.3.0)의 연결로 그 언어로 옮겨서 읽어요. 메시지 하나는 한 번에 번역하고, 한 번 옮긴 줄은 다시 요청하지 않아요. 기본 「자동」은 지금과 같아요.
+- 성능 보조 2.1.8: 요청 로그에 TTS 번역 요청을 「TTS 번역」으로 따로 보여 줘요.
+
+</details>
+
+<details>
+<summary>5.8.1 · TTS 내려받기 고르기</summary>
 
 - TTS 1.4.3: 재생 막대의 내려받기를 채팅 메시지를 읽는 중에 누르면 「전체」(메시지 전체 음성)와 「이 문장」(누른 순간 읽던 대사 하나) 가운데 골라 저장해요.
 

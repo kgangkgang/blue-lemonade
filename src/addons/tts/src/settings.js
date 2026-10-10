@@ -46,6 +46,7 @@ export const DEFAULTS = Object.freeze({
     read_preset: 'dialogue',
     no_dialogue_fallback: 'narration',
     text_source: 'display',
+    listen_lang: 'auto',          // 1.4.4 듣는 언어: 'auto' (지금처럼) | 'ko' | 'ja' | 'en' | 'zh' — 그 언어가 아닌 줄은 LLM 번역 애드온으로 옮겨 읽음 (listen.js)
     skip_codeblocks: true,
     skip_tags: DEFAULT_SKIP_TAGS,
     strip_regex: '',
@@ -100,6 +101,8 @@ export const DEFAULTS = Object.freeze({
 });
 export const PREGEN_MODES = Object.freeze(['off', 'dialogue', 'all']);
 export const HIGHLIGHT_STYLES = Object.freeze(['color', 'both', 'underline']);
+/** 1.4.4 듣는 언어 고르는 값 (listen.js LISTEN_LANGS 와 같게 — tools/tests/tts-listen.mjs 가 견줌) */
+export const LISTEN_LANGS = Object.freeze(['auto', 'ko', 'ja', 'en', 'zh']);
 
 /** 1.3.8 「나」 자동: 내 목소리 칸의 표시값 (목소리 uid 가 아님) — 페르소나도 목소리를 안 정한 화자처럼 엑스트라 목소리로 (voices.voiceFor) */
 export const USER_AUTO = '@auto';
@@ -352,6 +355,7 @@ export function settings() {
     if (!['weak', 'normal', 'strong'].includes(s.emotion_strength)) s.emotion_strength = 'normal';
     if (!['whisper', 'auto'].includes(s.thought_emotion)) s.thought_emotion = 'whisper';
     if (!['auto', 'off'].includes(s.extras)) s.extras = 'auto';
+    if (!LISTEN_LANGS.includes(s.listen_lang)) s.listen_lang = 'auto';   // 1.4.4 모르는 값은 자동 (지금처럼)
     if (!isObj(s.extra_map)) s.extra_map = {};
     for (const k of ['prefer_keep', 'prefer_declined', 'account_removed']) if (!isObj(s[k])) s[k] = {};   // 1.3.8
     // 1.3.8 미뤄 둔 「바꿀까요」: 엔진 id 목록 (개발판의 글 하나도 받음) — 겹침 없이 12개까지

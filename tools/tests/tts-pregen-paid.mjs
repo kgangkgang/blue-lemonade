@@ -20,6 +20,13 @@ const T = globalThis.__ttsPaidTest = {
     clips: [], analysisCalls: 0, wantAnalysis: false, jobs: [],
     lineJobs() { return { jobs: T.jobs.slice(), held: 0, missing: false }; },
     async ensureClip(job) { T.clips.push(job.key); return { made: true }; },
+    // 1.4.4 듣는 언어: listenPrepare 가 부른 줄 (옮기면 listenPending 을 지운다 — 캐시에 들어간 것처럼)
+    listen: false, listenCalls: [], listenResult: { ok: true, fallback: false },
+    async listenPrepare(jobs) {
+        T.listenCalls.push(jobs.map(j => j.key));
+        if (T.listenResult.ok) for (const j of T.jobs) if (jobs.some(x => x.key === j.key)) delete j.listenPending;
+        return T.listenResult;
+    },
 };
 globalThis.fetch = async () => { throw new Error('시험 중 네트워크 요청'); };
 
@@ -51,7 +58,9 @@ export const analysisWanted = () => T.wantAnalysis;
 export const analysisNeeds = () => ({ langs: [] });
 export const isInflight = () => false;
 export const wasStreamRead = () => false;
-export const coolDown = () => {};`),
+export const coolDown = () => {};
+export const listenOn = () => T.listen;
+export const listenPrepare = (id, mes, jobs) => T.listenPrepare(jobs);`),
     './analysis.js': js(G + 'export async function analyzeMessage() { T.analysisCalls++; return { segs: [] }; }'),
     './translation.js': js(`export const displayReady = () => true;
 export const translationExpected = () => false;
@@ -264,6 +273,56 @@ await test('무료 엔진만(브라우저 내장 제외 — 소리 파일이 없
     const rec = await pregen.pregenMessage(reply(), { type: 'normal' });
     assert.deepEqual(T.clips, ['o']);
     assert.equal(rec.skipped, 0);
+});
+
+// ---------- 3b) 1.4.4 듣는 언어 + 미리 만들기 (player.listenPrepare 스텁)
+const pend = (key, v) => ({ ...job(key, v), listenPending: true, listen: { src: `src ${key}`, target: 'ja' } });
+function listenSetup(o, result = { ok: true, fallback: false }) {
+    setup(o);
+    T.listen = true; T.listenCalls = []; T.listenResult = result;
+}
+await test('듣는 언어: 안 옮긴 무료 엔진 줄이 있으면 메시지 한 번 옮긴 뒤 만든다 (옮긴 줄 = 새 작업)', async () => {
+    try {
+        listenSetup({ voices: [V.cp], jobs: [pend('q1', V.cp), pend('q2', V.cp)] });
+        const rec = await pregen.pregenMessage(reply(), { type: 'normal' });
+        assert.deepEqual(T.listenCalls, [['q1', 'q2']], '한 번에');
+        assert.deepEqual(T.clips, ['q1', 'q2']);
+        assert.equal(rec.listen, 0);
+    } finally { T.listen = false; }
+});
+await test('듣는 언어: 유료 엔진 줄(미리 만들기 끔)은 옮기지도 만들지도 않음 — 그런 줄뿐이면 번역 요청 없음', async () => {
+    try {
+        listenSetup({ voices: [V.mm, V.cp], jobs: [pend('r1', V.mm), job('r2', V.cp)] });
+        const rec = await pregen.pregenMessage(reply(), { type: 'normal' });
+        assert.deepEqual(T.listenCalls, [], '유료 줄만 안 옮겨짐 → 요청 없음');
+        assert.deepEqual(T.clips, ['r2']);
+        assert.equal(rec.paid, 1);
+    } finally { T.listen = false; }
+});
+await test('듣는 언어: 옮기지 못한 줄은 만들지 않음 (원문 소리를 사지 않게 · 누를 때) · 기록 한 줄', async () => {
+    try {
+        listenSetup({ voices: [V.cp], jobs: [pend('s1', V.cp), job('s2', V.cp)] }, { ok: false, fallback: false });
+        logged.length = 0;
+        const id = reply();
+        const rec = await pregen.pregenMessage(id, { type: 'normal' });
+        assert.deepEqual(T.listenCalls, [['s1']]);
+        assert.deepEqual(T.clips, ['s2']);
+        assert.equal(rec.listen, 1);
+        assert.ok(logged.some(m => m.includes(`#${id}`) && /못 옮긴 1줄/.test(m)), logged.join(' | '));
+    } finally { T.listen = false; }
+});
+await test('듣는 언어: 번역기를 못 씀(fallback — 누를 때도 원문)이면 원문으로 만든다 · 자동이면 listenPrepare 를 안 부름', async () => {
+    try {
+        listenSetup({ voices: [V.cp], jobs: [pend('t1', V.cp)] }, { ok: false, fallback: true });
+        const rec = await pregen.pregenMessage(reply(), { type: 'normal' });
+        assert.deepEqual(T.clips, ['t1']);
+        assert.equal(rec.listen, 0);
+        T.listen = false; T.listenCalls = [];
+        setup({ voices: [V.cp], jobs: [job('t2', V.cp)] });
+        await pregen.pregenMessage(reply(), { type: 'normal' });
+        assert.deepEqual(T.listenCalls, []);
+        assert.deepEqual(T.clips, ['t2']);
+    } finally { T.listen = false; }
 });
 
 // ---------- 4) 설정 창

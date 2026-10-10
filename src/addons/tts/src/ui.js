@@ -1,7 +1,7 @@
 // TTS 설정 창: 탭 · 카드 · 스키마 기반 입력칸(data-lv-path) · 목소리 편집 팝업
 import { getContext } from '../../../../../../../extensions.js';
 import { POPUP_TYPE, POPUP_RESULT, callGenericPopup } from '../../../../../../../popup.js';
-import { settings, save, VERSION, DEFAULTS, ANALYSIS_DEFAULTS, READ_PRESETS, maskKey, exportable, applyReadPreset, applyBodyFilters, providerConfig, toVoice, PREGEN_MODES, fillKnownVoices, migrateVoicesV8, fillKnownFacts, hasDb, USER_AUTO } from './settings.js';
+import { settings, save, VERSION, DEFAULTS, ANALYSIS_DEFAULTS, READ_PRESETS, maskKey, exportable, applyReadPreset, applyBodyFilters, providerConfig, toVoice, PREGEN_MODES, fillKnownVoices, migrateVoicesV8, fillKnownFacts, hasDb, USER_AUTO, LISTEN_LANGS } from './settings.js';
 import * as player from './player.js';
 import * as voices from './voices.js';
 import * as speakers from './speakers.js';
@@ -10,6 +10,7 @@ import * as cache from './cache.js';
 import * as analysis from './analysis.js';
 import * as stapi from './stapi.js';
 import * as translation from './translation.js';
+import * as listen from './listen.js';   // 1.4.4 듣는 언어
 import { entries as logEntries, timeStr, onLog, log } from './log.js';
 import { paidEngines, paidOnly, pregenPaid } from './paid.js';   // 5.6.4 돈이 드는 엔진 (pregen.js 와 같은 판단)
 import { balanceParts, balanceLow, BALANCE_TTL } from './balance.js';   // 1.3.5 엔진 카드 잔액 줄
@@ -89,10 +90,19 @@ function waitEffective(s) {
     try { return !!translation.translationExpected({ mes: '', is_user: false, is_system: false, extra: {} }); }
     catch { return false; }
 }
+/** 1.4.4 듣는 언어 */
+const listenOn = (s) => !!listen.listenTarget(s || settings());
+const LISTEN_OPTS = LISTEN_LANGS.map(v => ({ value: v, label: listen.LISTEN_LABELS[v] || v }));
+const LISTEN_HELP = '그 언어가 아닌 줄만 LLM 번역 애드온으로 옮겨 읽어요. 화면 글은 그대로이고, 옮긴 줄은 기억해 다시 요청하지 않아요.';
+/** 듣는 언어 아래 한 줄: 번역기를 쓸 수 없을 때만 (꺼짐 · 모델 · 키 없음) */
+function listenDesc(s) {
+    if (!listenOn(s)) return '';
+    try { const st = listen.translatorState(); return st.ok ? '' : `${st.why} — 원문으로 읽어요`; } catch { return ''; }
+}
 /** 언제 카드가 그려질 때의 번역기 상태 — 달라졌으면(번역기 자동 번역을 켜고 끔) 카드를 다시 그린다 */
 let whenSig = '';
 // 5.6.4 유료 판단(MiniMax 서버 주소 · 목소리 엔진)이 바뀌면 '!' 안내 · 스위치 · 쉬는 줄이 달라진다 → 서명에 넣음
-const whenSignature = () => { const s = settings(); return `${waitEffective(s)}|${translatorLabel()}|${paidEngines(s).join(',')}|${paidOnly(s)}|${pregenPaid(s)}`; };
+const whenSignature = () => { const s = settings(); return `${waitEffective(s)}|${translatorLabel()}|${paidEngines(s).join(',')}|${paidOnly(s)}|${pregenPaid(s)}|${listenOn(s)}`; };
 function refreshWhenCard() {
     if (root && whenSignature() !== whenSig) renderReadCard('when');
 }
@@ -108,6 +118,7 @@ const READ_CARDS = {
     ]],
     text: ['fa-font', '본문과 제외할 내용', [
         { key: 'text_source', label: '읽을 글', type: 'select', options: [{ value: 'display', label: '번역문 (있으면)' }, { value: 'original', label: '원문' }] },
+        { key: 'listen_lang', label: '듣는 언어', type: 'select', options: LISTEN_OPTS, desc: listenDesc, help: LISTEN_HELP },   // 1.4.4
         { key: 'max_chars', label: '한 번에 최대 글자', type: 'number', min: 0, max: 50000, step: 100, default: 3000, desc: '0 = 제한 없음' },
         { key: 'emotion_from_tags', label: '대사 태그로 감정', type: 'toggle', desc: '감정 힌트를 살려 읽어요' },
         { key: 'skip_codeblocks', label: '코드 블록 건너뜀', type: 'toggle' },
@@ -130,7 +141,7 @@ const READ_CARDS = {
         { key: 'emotion_strength', label: '감정 세기', type: 'select', options: [{ value: 'weak', label: '약하게' }, { value: 'normal', label: '보통' }, { value: 'strong', label: '강하게' }],
             help: '약하게는 감정을 빼고 읽어요 (ElevenLabs 는 안정감 1 로 가장 차분하게 · v3 · v4 는 느낌표를 순하게 바꾸고, 말투를 안 고른 목소리엔 덤덤하게를 붙여요). 강하게는 MiniMax 2.8 이 웃음 · 한숨 같은 소리를 넣고, ElevenLabs 는 감정이 붙은 줄의 안정감을 0.3 낮춰 더 크게 연기해요 (v3 는 0 · 0.5 · 1 로 맞춰 0.5 면 0).' },   // 1.3.8
         { key: 'thought_emotion', label: '속마음', type: 'select', options: [{ value: 'whisper', label: '속삭임' }, { value: 'auto', label: '일반' }] },
-        { key: 'analysis.translate', label: '원어로 번역해서 읽기', type: 'toggle' },
+        { key: 'analysis.translate', label: '원어로 번역해서 읽기', type: 'toggle', desc: (s) => (listenOn(s) ? '듣는 언어를 따라요' : '') },   // 1.4.4
         { key: 'analysis.speaker', label: '화자 찾기', type: 'toggle', desc: '색 · 이름표가 없는 대사는 누구 말인지 맥락으로 물어 그 캐릭터 목소리로' },
         { key: 'analysis.when', label: '언제', type: 'select', options: [{ value: 'auto', label: '자동' }, { value: 'manual', label: '수동' }] },
     ], analysisExtra, analysisNote],
@@ -141,7 +152,7 @@ const READ_CARDS = {
         { key: 'pregen_paid', label: '유료 엔진도 미리 만들기', type: 'toggle', show: showPregenPaid },   // 5.6.4
         { key: 'wait_translation', label: '번역 기다리기', type: 'select', options: [{ value: 'auto', label: '자동' }, { value: 'on', label: '켬' }, { value: 'off', label: '끔' }], desc: () => translatorLabel() },
         { key: 'translation_timeout', label: '최대 대기 초', type: 'number', min: 5, max: 600, step: 5, default: 90, show: (s) => s.wait_translation !== 'off' },
-        { key: 'stream_read', label: '답장이 오는 동안 읽기', type: 'toggle', disabled: waitEffective, desc: (s) => (waitEffective(s) ? '번역을 기다리는 동안엔 꺼져요' : '') },
+        { key: 'stream_read', label: '답장이 오는 동안 읽기', type: 'toggle', disabled: (s) => waitEffective(s) || listenOn(s), desc: (s) => (waitEffective(s) ? '번역을 기다리는 동안엔 꺼져요' : listenOn(s) ? '듣는 언어를 고르면 꺼져요' : '') },
         { key: 'swipe_read', label: '스와이프하면 읽기', type: 'toggle' },
         { key: 'on_new', label: '읽는 중 새 답장', type: 'select', options: [{ value: 'interrupt', label: '끊고 읽기' }, { value: 'queue', label: '이어서 읽기' }] },
     ]],
@@ -532,6 +543,7 @@ function afterEdit(path, el) {
     if (path === 'highlight' || path === 'highlight_style') player.refreshHighlight();
     if (path === 'wand_menu') { dispatchWand(); return; }                  // index.js 가 요술봉 메뉴 두 줄을 넣고 뺀다
     if (path === 'wait_translation') { renderReadCard('when'); return; }   // 스트리밍 읽기의 켜짐·꺼짐과 대기 초 칸이 따라 바뀐다
+    if (path === 'listen_lang') { renderReadCard('text'); renderReadCard('when'); renderReadCard('analysis'); return; }   // 1.4.4 안내 줄 · 스트리밍 읽기 · 원어 읽기 줄
     if (path === 'click_play' || path === 'auto_play' || path === 'pregen' || path === 'pregen_paid') renderReadCard('when');   // 1.2.4 미리 만들기가 쉬는지 한 줄 · 5.6.4 '!' 안내 · 스위치
     if (path === 'analysis.engine' || path === 'analysis.provider' || path === 'analysis.custom_url' || path === 'analysis.base') {
         if (path === 'analysis.base') warnAnalysisCleartext();
@@ -731,7 +743,7 @@ const ACTIONS = {
         b.setAttribute('aria-pressed', String(next.includes(t)));
     },
     unpin: (b) => { unpinChar(b.dataset.name || ''); },   // 1.3.8 캐릭터 엔진 고정 풀기
-    'cache-clear': async () => { await cache.clear(); toast('캐시를 비웠어요', 'success'); renderData(); },
+    'cache-clear': async () => { await Promise.all([cache.clear(), listen.clearCache()]); toast('캐시를 비웠어요', 'success'); renderData(); },   // 1.4.4 듣는 언어 번역도
     export: () => exportSettings(),
     import: () => q('#lv_import_file')?.click(),
 };
@@ -2305,6 +2317,7 @@ function importSettings(obj) {
         }
         if (!hasOwn(DEFAULTS, k)) continue;
         if (k === 'pregen' && !PREGEN_MODES.includes(v)) continue;   // 고르는 값은 목록 안의 것만
+        if (k === 'listen_lang' && !LISTEN_LANGS.includes(v)) continue;   // 1.4.4
         const d = DEFAULTS[k];
         if (isObj(d) ? !isObj(v) : Array.isArray(d) ? !Array.isArray(v) : typeof v !== typeof d) continue;   // 모양이 다르면 버린다
         s[k] = v;

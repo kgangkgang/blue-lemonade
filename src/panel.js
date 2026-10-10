@@ -682,10 +682,12 @@ function prevMes(user, name, text) {
 
 // 채팅 무대: 상대 한 줄(폰에서 두 줄로 꺾이는 길이) + 내 한 줄.
 // 본문에 「대사」 · 굵게 · 기울임 · 코드를 섞어 글꼴 · 형광펜 · 강조 · 코드 글꼴이 한눈에 보이게 함
+// 5.8.2: 상대 첫 문단(.bl-pv-char-more)은 hidden — 캐릭터 메시지를 말풍선으로 고르면 CSS 가 보여 줘 문단이 둘이 된다 (글자만이면 예전 무대 그대로)
+//        내 첫 문단(.bl-pv-user-more)도 같은 식 — 내 메시지가 말풍선일 때만. 말풍선 나누기가 통으로면 말풍선 하나에 두 문단, 엔터 두 번마다면 말풍선 둘
 function chatStage() {
     return `<div class="salty-preview" data-prev="chat" aria-hidden="true" inert>
-        ${prevMes('false', '에이드', '<p>에이드의 배 위에서 <strong>나이트</strong>가 눈을 가늘게 떴다. <q>「아, 알았어. 안 움직일게.」</q> <em>이 인간 또 움직이네... 눌러버려야겠다...</em></p>')}
-        ${prevMes('true', '나', '<p><q>「벌써 <code>4시</code>야.」</q> 나는 웃으며 게임기를 내려놓았다.</p>')}
+        ${prevMes('false', '에이드', '<p class="bl-pv-char-more" hidden>오후 햇살이 소파 위로 길게 들었다.</p><p>에이드의 배 위에서 <strong>나이트</strong>가 눈을 가늘게 떴다. <q>「아, 알았어. 안 움직일게.」</q> <em>이 인간 또 움직이네... 눌러버려야겠다...</em></p>')}
+        ${prevMes('true', '나', '<p class="bl-pv-user-more" hidden>나는 기지개를 켰다.</p><p><q>「벌써 <code>4시</code>야.」</q> 나는 웃으며 게임기를 내려놓았다.</p>')}
     </div>`;
 }
 
@@ -1464,6 +1466,8 @@ function tabChat(s, sub) {
     const hideAvatars = document.getElementById('hideChatAvatarsEnabled')?.checked ?? false;
     return `${chatPreview()}<div class="salty-group bl-control-grid bl-message-controls">
         ${stack('내 메시지', seg('chat.user', [['bubble', '말풍선'], ['card', '카드'], ['table', '테이블'], ['plain', '글자만']]))}
+        ${stack('캐릭터 메시지', seg('chat.char', [['plain', '글자만'], ['bubble', '말풍선']]))}
+        ${s.chat.char === 'bubble' || s.chat.user === 'bubble' ? stack('말풍선 나누기', seg('chat.bubbleSplit', [['whole', '통으로'], ['para', '엔터 두 번마다']])) : ''}
         ${stack('이름 줄', seg('chat.header', [['full', '이름+시간'], ['name', '이름만'], ['none', '숨김']]))}
         ${row('작은 아바타 숨기기', toggle('st.hideAvatars', hideAvatars), '숨기면 이미지가 화면 끝까지 넓어져요')}
     </div>

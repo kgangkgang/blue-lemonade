@@ -26,6 +26,9 @@ import { runtimeEnabled } from './runtime.js';
 // 5.6.4 유료 엔진(paid.js — MiniMax 공식 서버 등)은 미리 만들지 않는다 (설정 pregen_paid 를 켠 사람만): 등록한 목소리가 모두 유료면 답장을
 //       통째로 건너뛰고(분석 · 번역 기다림도 없음, 까닭은 메시지마다 한 번 기록), 섞여 있으면 유료 엔진 줄만 건너뛴다 (rec.skipped · rec.paid,
 //       답장 끝 한 줄에). 집 PC 로컬 게이트웨이처럼 공식이 아닌 MiniMax 주소는 무료라 그대로 만든다. 탭 · 자동 읽기의 작업 · 키는 그대로
+// 1.4.4 듣는 언어 (player.listenPrepare): 만들 줄(유료 · 멈춘 · 캐시 없는 엔진 줄은 빼고) 가운데 안 옮긴 줄이 있으면 메시지 한 묶음으로 옮긴 뒤
+//       작업을 다시 만든다 — 번역문이 올 답장은 2차(번역문을 기다린 뒤)에만 (번역을 기다리는 동안엔 옮기지 않음). 옮기지 못한 줄은 만들지 않는다
+//       (누를 때 다시 옮김 — 원문 소리에 값을 치르지 않게. 얼마 전에 못 옮긴 줄이면 누를 때 원문: listen.failedRecently). 번역기를 쓸 수 없으면(꺼짐 · 키 없음) 누를 때도 원문이라 원문으로 만든다
 //
 // 밖으로: init() · onRendered(id, type) · onSwipedExisting(id) · pregenMessage(id, { type }) → Promise<기록>|null
 //         pregenCancel(pred) · pregenChanged(id) · protectRecent() · state() (시험용)
@@ -144,6 +147,23 @@ async function analyse(rec, awaitDisplay) {
         }
     }
 }
+/**
+ * 1.4.4 듣는 언어: 만들 줄 가운데 안 옮긴 줄이 있으면 메시지 한 묶음으로 옮기고 작업을 다시 만든다 → 새 작업 묶음 (그만뒀으면 null).
+ * 유료 엔진(설정이 꺼져 있으면) · 멈춘 엔진 · 캐시 없는 엔진 줄은 만들지 않으니 세지 않는다 — 그런 줄뿐이면 번역도 하지 않는다 (누를 때)
+ */
+async function listenStep(rec, built, awaitDisplay) {
+    if (typeof player.listenPrepare !== 'function' || typeof player.listenOn !== 'function' || !player.listenOn()) return built;
+    const s = settings();
+    const want = (built.jobs || []).filter(j => j?.listenPending && j.provider?.caps?.blob !== false
+        && !(!pregenPaid(s) && isPaidProvider(j.provider?.id)) && !isHalted(j.provider?.id));
+    if (!want.length) return built;
+    let r = { ok: false, fallback: false };
+    try { r = await player.listenPrepare(rec.id, rec.mes, want, { signal: rec.ctrl.signal }); }
+    catch { r = { ok: false, fallback: false }; }
+    if (!live(rec)) return null;
+    if (r.fallback) rec.listenFallback = true;   // 번역기를 못 씀 → 누를 때도 원문이니 원문으로 만든다
+    return build(rec, awaitDisplay);
+}
 /** 누를 줄 → 탭과 같은 작업 */
 function build(rec, awaitDisplay) {
     const segs = tapSegments(rec.mes, { thoughts: rec.mode === 'all' && settings().click_play !== false });
@@ -158,6 +178,7 @@ async function make(rec, jobs) {
         if (!j?.key || rec.keys.has(j.key) || j.provider?.caps?.blob === false) continue;
         if (!pregenPaid(s) && isPaidProvider(j.provider?.id)) { rec.skipped++; rec.paid++; continue; }   // 5.6.4 유료 엔진 줄은 누를 때
         if (isHalted(j.provider?.id)) { rec.skipped++; continue; }
+        if (j.listenPending && !rec.listenFallback) { rec.listen++; continue; }   // 1.4.4 듣는 언어로 못 옮긴 줄은 누를 때 (원문 소리를 사지 않게)
         const known = player.isInflight(j.key) || await Promise.resolve(cache.has(j.key)).catch(() => false);
         if (!live(rec)) return false;
         if (!known && rec.chars + j.text.length > cap) { rec.skipped++; continue; }   // 넘는 줄은 누를 때
@@ -201,7 +222,8 @@ async function run(rec) {
     if (!live(rec)) return;
     const awaitDisplay = !displayReady(mes) && expectsDisplay(mes);
     if (!(await analyse(rec, awaitDisplay))) return;
-    const a = build(rec, awaitDisplay);
+    let a = build(rec, awaitDisplay);
+    if (!awaitDisplay && !(a = await listenStep(rec, a, false))) return;   // 1.4.4 번역문을 기다릴 답장은 2차에서
     if (!(await make(rec, a.jobs))) return;
     if (awaitDisplay) {
         let r = 'none';
@@ -213,7 +235,8 @@ async function run(rec) {
             if (a.held) log('info', `번역 안 옴 · 미룬 ${a.held}줄은 누를 때 #${id}`);
         } else {
             if (!(await analyse(rec, false))) return;
-            const b = build(rec, false);
+            let b = build(rec, false);
+            if (!(b = await listenStep(rec, b, false))) return;   // 1.4.4
             const fresh = b.jobs.filter(j => j?.key && !rec.keys.has(j.key));
             if (r === 'done' && fresh.length > a.held) log('info', `번역 뒤 새로 ${fresh.length - a.held}줄 #${id}`);
             if (!(await make(rec, fresh))) return;
@@ -222,7 +245,7 @@ async function run(rec) {
     rec.state = 'done';
     const sec = Math.round((Date.now() - rec.t0) / 100) / 10;
     const over = rec.skipped - rec.paid;
-    log('info', `미리 만들기 #${id} · ${rec.lines}줄 · ${rec.chars}자 · ${sec}s${over ? ` · 한도 넘은 ${over}줄` : ''}${rec.paid ? ` · 유료 엔진 ${rec.paid}줄은 누를 때` : ''}`);
+    log('info', `미리 만들기 #${id} · ${rec.lines}줄 · ${rec.chars}자 · ${sec}s${over ? ` · 한도 넘은 ${over}줄` : ''}${rec.paid ? ` · 유료 엔진 ${rec.paid}줄은 누를 때` : ''}${rec.listen ? ` · 못 옮긴 ${rec.listen}줄은 누를 때` : ''}`);
 }
 
 function cancelRec(rec) {
@@ -248,7 +271,7 @@ function start(id, mes, type) {
     const old = recs.get(id);
     if (old && old.mes === mes && old.hash === h && !old.ctrl.signal.aborted && (old.state === 'run' || old.state === 'done')) return old.promise;
     if (old) cancelRec(old);
-    const rec = { id, mes, hash: h, type, mode: effMode(settings()), ctrl: new AbortController(), keys: new Set(), chars: 0, made: 0, lines: 0, skipped: 0, paid: 0, state: 'run', t0: Date.now(), seq: ++seq, promise: null };
+    const rec = { id, mes, hash: h, type, mode: effMode(settings()), ctrl: new AbortController(), keys: new Set(), chars: 0, made: 0, lines: 0, skipped: 0, paid: 0, listen: 0, listenFallback: false, state: 'run', t0: Date.now(), seq: ++seq, promise: null };
     recs.set(id, rec);
     rec.promise = run(rec)
         .catch(e => { if (!isAbort(e)) fail(rec, errMsg(e) || '오류'); })

@@ -11,7 +11,7 @@ export const PRESET_GROUPS = [
 ];
 const unsafe = new Set(['__proto__', 'constructor', 'prototype']);
 const marker = new Set(['style', 'markerShape', 'tilt', 'markerThick', 'markerPos']);
-const chatKeys = new Set(['user', 'header', 'userSize', 'userInk', 'icons', 'bgImage', 'bgAlpha']);
+const chatKeys = new Set(['user', 'char', 'bubbleSplit', 'header', 'userSize', 'userInk', 'icons', 'bgImage', 'bgAlpha']);
 const privateKeys = new Set(['art','mask','masks','maskId','libraryId','presetVersion','weatherImage','weatherImageId']);
 const weatherStrings = new Set(['weatherProfileMode','weather','weather2','weatherArtStyle','weatherMotion','weatherOrbitDirection','weatherColorMode','weatherColor','weatherColor2','weatherShadowStyle','weatherWaterStyle','weatherWaterArea','weatherSunStyle','weatherStarStyle','weatherFogStyle','weatherFogArea']);
 function template(path) {

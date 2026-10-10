@@ -35,6 +35,10 @@ import { runtimeEnabled, assertRuntime } from './runtime.js';
 //   stop() 은 부른 쪽의 signal 만 끊는다 — 이미 보낸 요청은 끝까지 받아 캐시에 넣는다 (값을 치른 소리를 버리지 않음).
 //   설정 pregen 이 'off' 가 아니면 자동 읽기·내려받기도 줄마다 (merge 없음 → 미리 만든 소리를 그대로 씀), 감정 태그는 원문 조각에서.
 //   pregen 'off' 는 1.2.1 과 같은 요청·키 (tests/pregen.test.mjs 가 확인).
+// 1.4.4 듣는 언어 (listen_lang, listen.js): 고르면 buildJobs 가 줄마다 고른 글 · 짝 가운데 그 언어인 것을, 없으면 원문을 번역기로 옮긴 글(캐시)을 읽는다.
+//   옮기기는 prepareThen 의 마지막 단계(번역 기다리기 · 분석 뒤) · 대사 클릭(run) · 내려받기 · 미리 만들기(listenPrepare)가 메시지 한 묶음으로.
+//   강조는 parts 의 seg/alt(화면 · 원문 조각)로 찾으니 그대로이고, 재생 막대 글은 job.text(옮긴 글). '자동'이면 1.4.3 과 같은 작업 · 캐시 키.
+//   듣는 언어가 원어 읽기(목소리 언어 · 분석의 번역문)를 대신하고, 스트리밍 읽기는 쉰다 (streamBlocked).
 
 import { chat, substituteParams, eventSource, event_types } from '../../../../../../../../script.js';
 import { getContext } from '../../../../../../../extensions.js';
@@ -49,6 +53,7 @@ import { log, scrub } from './log.js';
 import { getProvider } from './providers/index.js';
 import * as analysis from './analysis.js';
 import * as translation from './translation.js';
+import * as listen from './listen.js';   // 1.4.4 듣는 언어
 
 const TITLE = 'TTS';
 const MAX_CONC = 2;                 // 동시 합성 요청
@@ -71,6 +76,8 @@ const DETACH_MAX = 2;               // 엔진마다 자리를 먼저 돌려준(�
 const DISPLAY_LANG = 'ko';          // 번역기가 붙이는 번역문의 언어 (LLM 번역기 · 블루 레몬에이드 번역)
 const WAIT_TEXT = '번역 기다리는 중…';
 const ANALYSE_TEXT = '분석 중…';
+/** 1.4.4 듣는 언어로 옮기는 동안 막대 글 ("일본어로 번역 중…") */
+const listenText = () => `${listen.langName(listen.listenTarget(settings()))}로 번역 중…`;
 
 // ---------- 작은 도구
 /** 5.7.2 '로/으로' — 한글 끝 글자의 받침으로 (ㄹ 받침 · 받침 없음 = 로). 영문 엔진 이름은 읽으면 모음으로 끝나 '로' */
@@ -381,8 +388,8 @@ function analysisLookup(a, orig, disp, origOf) {
         return find(di, seg.text);
     };
 }
-/** 이 메시지의 대사 작업에 분석을 얹기: 감정(태그보다 우선) · 목소리 원어 번역문(합성 글만) */
-function applyAnalysis(job, aseg, an, s) {
+/** 이 메시지의 대사 작업에 분석을 얹기: 감정(태그보다 우선) · 목소리 원어 번역문(합성 글만). 1.4.4 듣는 언어를 골랐으면(listening) 원어 번역문은 쓰지 않는다 */
+function applyAnalysis(job, aseg, an, s, listening = false) {
     if (!aseg || !an) return;
     if (an.emotion) {
         const e = String(aseg.emotion || '').toLowerCase();
@@ -390,6 +397,7 @@ function applyAnalysis(job, aseg, an, s) {
         //   감정을 안 보내면 MiniMax 2.6 · 2.8 은 글을 보고 감정을 고른다 (태그의 deadpan → calm 은 그대로)
         if (ANALYSIS_EMOTIONS.has(e)) job.emotion = e === 'neutral' || e === 'calm' ? '' : e;
     }
+    if (listening) return;
     const lang = job.voice?.lang;
     if (an.translate && lang && detectLang(job.text) !== lang) {
         const tr = aseg.text && typeof aseg.text === 'object' ? aseg.text[lang] : null;
@@ -422,9 +430,10 @@ export function analysisNeeds(mesId, mes, s = settings(), { awaitDisplay = false
     const an = analysisCfg(s);
     if (!an) return out;
     const built = buildJobs(mesId, mes, sourcesOf(mes, s, { final: true }), { startSeg: 0, final: true, lookup: () => null, awaitDisplay });
+    const listening = !!listen.listenTarget(s);   // 1.4.4 듣는 언어가 원어 읽기를 대신함 → 분석에 원어 번역문을 묻지 않는다 (감정 · 화자만)
     for (const j of built.jobs) {
         if (j.seg?.kind !== 'dialogue') continue;
-        if (an.translate && j.voice?.lang && detectLang(j.text) !== j.voice.lang) out.langs.add(j.voice.lang);
+        if (an.translate && !listening && j.voice?.lang && detectLang(j.text) !== j.voice.lang) out.langs.add(j.voice.lang);
         if (an.emotion && getProvider(j.voice?.provider)?.caps?.emotion !== false) out.emotion = true;
     }
     return out;
@@ -541,6 +550,7 @@ function needsDisplay(seg, voice, want, an) {
  */
 function buildJobs(mesId, mes, { orig, disp }, { startSeg = 0, final = true, exclude = null, lookup = null, tapped = false, awaitDisplay = false } = {}) {
     const s = settings();
+    const lt = listen.listenTarget(s);   // 1.4.4 듣는 언어 ('' = 자동: 1.4.3 과 같은 길)
     const { userName, charName } = chatCtx(mes);
     const { dispOf, origOf } = alignLists(orig, disp);
     const an = analysisCfg(s);
@@ -586,22 +596,41 @@ function buildJobs(mesId, mes, { orig, disp }, { startSeg = 0, final = true, exc
         const pref = voice.prefer_source && voice.prefer_source !== 'auto' ? voice.prefer_source : '';
         const want = pref || s.text_source;
         if (!final && pref === 'display') { if (deferredAt < 0) deferredAt = oi ?? i; continue; }
-        if (awaitDisplay && !disp && needsDisplay(seg, voice, want, an)) { held++; continue; }
+        // 1.4.4 듣는 언어: 번역문이 오기 전(미리 만들기 1차)엔 그 언어가 아닌 줄은 미룬다 — 번역문이 그 언어일 수 있고, 번역을 기다리는 동안엔 옮기지 않는다
+        if (awaitDisplay && !disp && (lt ? !listen.inTarget(seg.text, lt) : needsDisplay(seg, voice, want, an))) { held++; continue; }
         let use = seg;
         if (want === 'display' && !primaryIsDisplay && dispOf.get(seg)) use = dispOf.get(seg);
         else if (want === 'original' && primaryIsDisplay && origOf.get(seg)) use = origOf.get(seg);
-        // 목소리 원어 (원어로 번역해서 읽기): 고른 글이 목소리 언어가 아닌데 짝(원문↔번역문)이 그 언어면 짝을 읽는다 —
-        // 일본어 원문 + 화면 한국어 → 일본어 목소리는 원문 그대로, 영어 원문 + 화면 한국어 → 한국어 목소리는 화면 글 (LLM 번역 없이)
-        if (an?.enabled && an.translate && voice.lang) {
+        let listenSrc = '';
+        if (lt) {
+            // 1.4.4 듣는 언어 (원어 읽기 대신): 고른 글이나 그 짝(원문 ↔ 번역문)이 이미 그 언어면 그 글, 아니면 원문을 번역기로 옮긴 글
+            //   (번역문을 다시 옮기지 않는다 — 뜻이 두 번 흐려짐). 옮긴 글은 listenFill 이 미리 캐시에 넣어 둔다 — 없으면 원문 그대로 (listenPending)
+            if (!listen.inTarget(use.text, lt)) {
+                const pair = use === seg ? (primaryIsDisplay ? origOf.get(seg) : dispOf.get(seg)) : seg;
+                const origSeg = primaryIsDisplay ? (origOf.get(seg) || null) : seg;
+                if (pair?.text && listen.inTarget(pair.text, lt)) use = pair;
+                else listenSrc = listen.normSource((origSeg?.text ? origSeg : use).text);
+            }
+        } else if (an?.enabled && an.translate && voice.lang) {
+            // 목소리 원어 (원어로 번역해서 읽기): 고른 글이 목소리 언어가 아닌데 짝(원문↔번역문)이 그 언어면 짝을 읽는다 —
+            // 일본어 원문 + 화면 한국어 → 일본어 목소리는 원문 그대로, 영어 원문 + 화면 한국어 → 한국어 목소리는 화면 글 (LLM 번역 없이)
             const pair = use === seg ? (primaryIsDisplay ? origOf.get(seg) : dispOf.get(seg)) : seg;
             if (pair?.text && detectLang(use.text) !== voice.lang && detectLang(pair.text) === voice.lang) use = pair;
         }
         const alt = use === seg ? (primaryIsDisplay ? origOf.get(seg) : dispOf.get(seg)) || null : seg;   // 강조 검색용 짝 (화면이 다른 글일 때)
-        const text = applyPron(String(use.text || ''), s).trim();
+        let text = applyPron(String(use.text || ''), s).trim();
+        let lang = '';
+        let pending = false;
+        if (listenSrc) {
+            const tr = listen.peek(listenSrc, lt);
+            if (tr) { text = applyPron(tr, s).trim(); lang = listen.spokenLang(tr, lt); }   // 발음 사전은 옮긴 글에 (읽을 말 기준) · 안 옮겨진 채 온 글이면 글에서 감지
+            else pending = true;
+        } else if (lt) lang = lt;
         if (!text) continue;
         const emo = emotionFor(tagsFromOrig ? (origOf.get(seg) || seg) : seg, s);
-        const job = { mesId, seg: use, segIndex: oi ?? i, parts: [{ seg: use, alt, text }], voice, speaker: name, emotion: emo, text, lang: detectLang(text) || '', loud: false, params: null, provider: null, key: '', audio: null, ctrl: null };
-        applyAnalysis(job, aseg(seg), an, s);   // 감정 · 원어 번역문 (강조는 seg/alt 의 화면 글로 찾으니 그대로)
+        const job = { mesId, seg: use, segIndex: oi ?? i, parts: [{ seg: use, alt, text }], voice, speaker: name, emotion: emo, text, lang: lang || detectLang(text) || '', loud: false, params: null, provider: null, key: '', audio: null, ctrl: null };
+        if (listenSrc) { job.listen = { src: listenSrc, target: lt }; if (pending) job.listenPending = true; }
+        applyAnalysis(job, aseg(seg), an, s, !!lt);   // 감정 · 원어 번역문 (강조는 seg/alt 의 화면 글로 찾으니 그대로)
         jobs.push(job);
     }
     return { jobs, missing, missingUser, count: orig.length, deferredAt, held };
@@ -1166,10 +1195,11 @@ function cancelWaiting() {
  * 같은 메시지의 번역·분석을 이미 기다리는 중이면 끝난 뒤 할 일(run)만 바꿔 끼운다 → true.
  * 대사를 또 누르거나 /lv-read 를 해도 진행 중인 (이미 값을 치른) 분석을 끊지 않는다
  */
-function joinWaiting(mesId, mes, run) {
+function joinWaiting(mesId, mes, run, extra = null) {
     const w = waiting;
     if (!w || w.mesId !== mesId || w.mes !== mes) return false;
     w.run = run;
+    if (extra) w.extra = extra;   // 1.4.4 누른 줄도 듣는 언어 묶음에 (아직 옮기기 전이면)
     return true;
 }
 /** 다시 분석 버튼 불빛: 분석이 도는 동안 (읽는 중에도 보이게) */
@@ -1177,12 +1207,12 @@ function analyzeLight(delta) {
     analysing = Math.max(0, analysing + delta);
     barEl.analyze?.classList.toggle('lv-on', analysing > 0);
 }
-/** 기다리는 자리 하나 만들기 */
-function beginWaiting(mesId, mes, text) {
+/** 기다리는 자리 하나 만들기 (phase: 'translate' 번역문 · 'analyse' 대사 분석 · 'listen' 1.4.4 듣는 언어로 옮기기) */
+function beginWaiting(mesId, mes, text, phase = text === WAIT_TEXT ? 'translate' : 'analyse') {
     cancelWaiting();
     let cancel;
     const cancelled = new Promise(r => { cancel = r; });
-    const w = { mesId, mes, text, cancel, ctrl: new AbortController(), cancelled, phase: text === WAIT_TEXT ? 'translate' : 'analyse', run: null };
+    const w = { mesId, mes, text, cancel, ctrl: new AbortController(), cancelled, phase, run: null, extra: null };
     waiting = w;
     markWaiting(mesId);
     waitBar(mes, text);
@@ -1504,7 +1534,7 @@ export function speakMessage(mesId, { force = false, fromStream = false, startSe
         if (force) stream.muted = true;                            // 처음부터 다시: 스트리밍 쪽은 그만
         else if (!onStreamEnd(mesId)) return true;                 // 스트리밍으로 읽던 중: 나머지만 (번역을 기다리면 아래로 이어감)
     }
-    if (!force && waiting && waiting.mesId === mesId) return true;   // 이미 번역·분석을 기다리는 중
+    if (!force && waiting && waiting.mesId === mesId) return true;   // 이미 번역·분석·(1.4.4) 듣는 언어 번역을 기다리는 중
     const swipe = mes.swipe_id ?? 0;
     const text = String(mes.mes || '');
     let from = Number.isInteger(startSeg) ? startSeg : 0;
@@ -1519,14 +1549,16 @@ export function speakMessage(mesId, { force = false, fromStream = false, startSe
         if (afterStream || text.startsWith(prev.text)) { from = prev.count; exclude = prev.exclude || null; }
     }
     const run = () => speakNow(mesId, mes, { swipe, text, from, exclude, force, fromStream });
-    // /lv-read 등 손으로 부른 것도 같은 메시지를 분석하는 중이면 그 뒤에 읽는다 (값을 치른 분석을 끊지 않음)
-    if (force && waiting && waiting.phase === 'analyse' && joinWaiting(mesId, mes, run)) return true;
+    // /lv-read 등 손으로 부른 것도 같은 메시지를 분석하는(1.4.4 듣는 언어로 옮기는) 중이면 그 뒤에 읽는다 (값을 치른 요청을 끊지 않음)
+    if (force && waiting && (waiting.phase === 'analyse' || waiting.phase === 'listen') && joinWaiting(mesId, mes, run)) return true;
     const wait = needsWait(mesId, mes, s, { force, noWait });
     // 스트리밍으로 실제로 읽어 준 답장의 나머지는 분석으로 늦추지 않는다.
     // 스트리밍 읽기가 번역 기다리기로 꺼져 있었으면(index.js 는 스트리밍 표시를 남겨도) 보통 답장처럼 번역 → 분석 → 읽기
     const streamed = afterStream && prev.streamed === true;
     const analyse = !streamed && analysisWanted(mesId, mes, s);
-    if (!wait && !analyse) return run();
+    // 1.4.4 듣는 언어: 아직 안 옮긴 줄이 있으면 먼저 옮긴다 (번역 기다리기 · 분석이 있으면 prepareThen 이 그 뒤에 본다)
+    const lis = !wait && !analyse && listenNeeds(mesId, mes).length > 0;
+    if (!wait && !analyse && !lis) return run();
     runPrepared(mesId, mes, { wait, analyse, run });
     return true;
 }
@@ -1534,10 +1566,14 @@ export function speakMessage(mesId, { force = false, fromStream = false, startSe
 function runPrepared(mesId, mes, opts) {
     prepareThen(mesId, mes, opts).catch(e => { if (!isAbort(e)) log('err', `읽기 준비 실패: ${String(e?.message || e).slice(0, 40)}`); });
 }
-/** 이 메시지는 번역을 기다리는 설정이라 스트리밍 읽기를 하지 않는가 (index.js 가 스트리밍 표시를 만들지 않게) */
+/**
+ * 이 메시지는 번역을 기다리는 설정이라 스트리밍 읽기를 하지 않는가 (index.js 가 스트리밍 표시를 만들지 않게).
+ * 1.4.4 듣는 언어를 골랐어도 — 답장이 다 온 뒤 메시지 한 묶음으로 옮겨 읽는다 (조각마다 요청하지 않게)
+ */
 export function streamBlocked(mesId) {
     const mes = chat[mesId];
-    return !!mes && waitEffective(mes, settings());
+    const s = settings();
+    return !!mes && (waitEffective(mes, s) || !!listen.listenTarget(s));
 }
 /** 작업을 만들어 바로 읽기 (1.1.0 의 speakMessage 뒷부분) */
 function speakNow(mesId, mes, { swipe, text, from, exclude, force, fromStream }) {
@@ -1562,9 +1598,10 @@ function speakNow(mesId, mes, { swipe, text, from, exclude, force, fromStream })
  * stop()·새 기다림·채팅 바뀜이면 조용히 그만두고, 번역이 늦으면(timeout) 안내 한 번(세션) 뒤 그냥 읽는다.
  * 기다리는 동안 같은 메시지의 대사를 누르면 joinWaiting 이 w.run 을 바꿔 끼운다 → 끝나면 그것을 읽음
  */
-async function prepareThen(mesId, mes, { wait = false, analyse = false, run }) {
-    const w = beginWaiting(mesId, mes, wait ? WAIT_TEXT : ANALYSE_TEXT);
+async function prepareThen(mesId, mes, { wait = false, analyse = false, extra = null, run }) {
+    const w = wait || analyse ? beginWaiting(mesId, mes, wait ? WAIT_TEXT : ANALYSE_TEXT) : beginWaiting(mesId, mes, listenText(), 'listen');
     w.run = run;
+    w.extra = extra;
     const live = () => waiting === w && chat[mesId] === mes;
     try {
         if (wait) {
@@ -1587,10 +1624,81 @@ async function prepareThen(mesId, mes, { wait = false, analyse = false, run }) {
             finally { analyzeLight(-1); }
             if (!live()) return false;
         }
+        // 1.4.4 듣는 언어: 번역 기다리기 · 분석이 끝난 뒤에만 옮긴다 (번역문이 그 언어면 그대로 쓰고, 같은 중계에 요청이 겹치지 않게).
+        //   이 메시지의 자동 읽기 줄 + 누른 줄(w.extra) 가운데 남은 것을 한 요청으로. 못 옮긴 줄은 원문으로 읽는다
+        if (live() && listen.listenTarget(settings())) {
+            const need = listenNeeds(mesId, mes, w.extra);
+            if (need.length) {
+                w.phase = 'listen';
+                w.text = listenText();
+                if (!current) waitBar(mes, w.text);
+                await listenFill(need, { signal: w.ctrl.signal, cancelled: w.cancelled });
+                if (!live()) return false;
+            }
+        }
     } finally {
         endWaiting(w);                                            // run() 의 enqueue → stop 이 내 자리를 건드리지 않게 먼저 치움
     }
     return w.run();
+}
+
+// ---------- 1.4.4 듣는 언어 (listen.js — 번역은 LLM 번역 애드온)
+/** 듣는 언어를 골랐나 (자동이면 false — 1.4.3 과 같은 길) */
+export const listenOn = () => !!listen.listenTarget(settings());
+/** 작업 가운데 아직 안 옮긴 원문 (중복 없음). 얼마 전에 못 옮긴 줄(거절 · 입력 차단 · 오류)은 빼고 — 다시 듣기 · 누르기마다 같은 요청을 또 보내지 않고 원문으로 */
+function listenPendingOf(jobs) {
+    return [...new Set((jobs || []).filter(j => j?.listenPending && j.listen?.src && !listen.failedRecently(j.listen.src, j.listen.target)).map(j => j.listen.src))];
+}
+/** 이 메시지에서 아직 안 옮긴 원문: 자동 읽기로 읽을 줄 전부 + extra (누른 줄 · 미리 만들기 줄 — 배열 또는 그것을 주는 함수) */
+function listenNeeds(mesId, mes, extra = null) {
+    const s = settings();
+    if (!listen.listenTarget(s) || !mes) return [];
+    let jobs = [];
+    try { jobs = buildJobs(mesId, mes, sourcesOf(mes, s, { final: true }), { startSeg: 0, final: true }).jobs; } catch (e) { log('err', `듣는 언어 줄 찾기 실패: ${String(e?.message || e).slice(0, 40)}`); }
+    let more = [];
+    try { more = typeof extra === 'function' ? extra() : extra; } catch { more = []; }
+    return listenPendingOf([...jobs, ...(Array.isArray(more) ? more : [])]);
+}
+/**
+ * 남은 줄을 번역기로 (한 요청 — 다른 쪽이 이미 보낸 줄은 그 요청에 붙음). true = 다 옮김 · false = 못 옮긴 줄이 있음 (원문으로 읽음) · 그만둠도 false.
+ * 번역기를 쓸 수 없으면(애드온이 꺼짐 · 모델 · 키 없음) 보내지 않고 이유마다 세션에 한 번 알림. quiet = 알림 없이 (미리 만들기)
+ */
+async function listenFill(srcs, { signal = null, cancelled = null, quiet = false } = {}) {
+    const lt = listen.listenTarget(settings());
+    if (!lt || !srcs.length) return true;
+    const st = listen.translatorState();
+    if (!st.ok) {
+        if (!quiet) toastSession(`listen:${st.why}`, `${st.why} — 듣는 언어로 옮기지 않고 원문으로 읽어요`, 'warning');
+        log('info', `듣는 언어 번역 못 함: ${scrub(st.why).slice(0, 60)}`);
+        return false;
+    }
+    try {
+        const r = await Promise.race([listen.fill(srcs, lt, { signal }), cancelled || new Promise(() => {})]);
+        if (!r) return false;                                     // 그만둠 (stop · 채팅 바뀜)
+        if (r.failed) {
+            if (!quiet) toastOnce(`${r.failed}줄은 번역이 오지 않아 원문으로 읽어요`, 'warning');
+            log('info', `듣는 언어 번역 빠짐 ${r.failed}줄`);
+            return false;
+        }
+        return true;
+    } catch (e) {
+        if (signal?.aborted || isAbort(e)) return false;
+        const msg = bareMsg(e, '번역 실패');
+        if (!quiet) toastOnce(`듣는 언어 번역 실패: ${msg} — 원문으로 읽어요`, 'warning');
+        log('err', `듣는 언어 번역 실패: ${msg.slice(0, 50)}`);
+        return false;
+    }
+}
+/**
+ * 미리 만들기 (pregen.js): 이 메시지의 남은 줄 + jobs 의 남은 줄을 한 요청으로 옮긴다 (알림 없음).
+ * → { ok: 다 옮김, fallback: 번역기를 쓸 수 없음 — 그러면 누를 때도 원문으로 읽으니 원문으로 만들어도 됨 }
+ */
+export async function listenPrepare(mesId, mes, jobs, { signal = null } = {}) {
+    if (!listen.listenTarget(settings())) return { ok: true, fallback: false };
+    const need = listenNeeds(mesId, mes, jobs);
+    if (!need.length) return { ok: true, fallback: false };
+    if (!listen.translatorState().ok) return { ok: false, fallback: true };
+    return { ok: await listenFill(need, { signal, quiet: true }), fallback: false };
 }
 /**
  * 대사 분석 다시 (막대의 다시 분석 · /lv-analyze): force 로 새로 묻는다 (저장된 것은 새 결과가 오면 그때 바뀜 — 실패하면 옛것 그대로).
@@ -1772,10 +1880,13 @@ export function speakSegments(mesId, segs) {
     // 누른 속마음: 속마음 길이 '건너뛰기'여도 글을 나누고(readThoughts) 읽는다(tapped). 분석은 대화문만 다루니 속마음만이면 기다리지 않음
     const thoughts = segs.some(x => x?.kind === 'thought');
     const thoughtsOnly = segs.every(x => !x?.text || x.kind === 'thought');
-    const run = () => {
+    const run = (tried = false) => {
         const s = settings();
         const t = tapJobs(mesId, mes, segs, { readThoughts: thoughts });
-        const jobs = finishJobs(t.lines.flat(), s, { merge: !pregenOn(s) });   // 미리 만들기가 켜져 있으면 줄마다 (미리 만든 키와 같게)
+        const flat = t.lines.flat();
+        // 1.4.4 듣는 언어: 누른 줄이 아직 안 옮겨졌으면 이 메시지(자동 읽기 줄 + 누른 줄)를 한 요청으로 옮긴 뒤 다시 (한 번만 — 못 옮기면 원문)
+        if (!tried && listenPendingOf(flat).length) { runPrepared(mesId, mes, { extra: flat, run: () => run(true) }); return true; }
+        const jobs = finishJobs(flat, s, { merge: !pregenOn(s) });   // 미리 만들기가 켜져 있으면 줄마다 (미리 만든 키와 같게)
         if (!jobs.length) {
             if (t.missing) toastOnce('목소리를 먼저 정해요 (TTS 설정)', 'warning');
             else if (t.missingUser) { void askPersonaVoice().then(ok => { if (ok) run(); }); }
@@ -1785,13 +1896,16 @@ export function speakSegments(mesId, segs) {
         enqueue(jobs, { append: false });
         return true;
     };
-    if (joinWaiting(mesId, mes, run)) return true;
+    // 1.4.4 누른 줄도 이 메시지의 듣는 언어 묶음에 넣는다 (번역 기다리기 · 분석 뒤 한 요청). 그 단계를 거친 뒤엔 다시 옮기지 않고 읽는다 (run(true)) —
+    //   전엔 누른 줄이 자동 읽기 줄이 아니면 요청이 둘이었고, 못 옮긴 줄은 같은 줄로 한 번 더 보냈다. 이미 옮기는 중(listen)이면 그 요청에 없는 줄일 수 있어 끝난 뒤 한 번 더 본다
+    const tapFlat = () => tapJobs(mesId, mes, segs, { readThoughts: thoughts }).lines.flat();
+    if (joinWaiting(mesId, mes, waiting && waiting.phase !== 'listen' ? () => run(true) : run, tapFlat)) return true;
     if (thoughtsOnly || !analysisWanted(mesId, mes, settings())) return run();
-    runPrepared(mesId, mes, { analyse: true, run });
+    runPrepared(mesId, mes, { analyse: true, extra: tapFlat, run: () => run(true) });
     return true;
 }
 /** 1.3.8 시험용 (tools/tests/tts-extras.mjs · tts-onboarding.mjs): 작업 마무리(엔진 값 · 세기 · 캐시 키) · 이번 읽기에서 안 되는 엔진 */
-export const _forTest = { finishJobs, paramsFor, deadEngines: () => [...deadEngines], streamDead: () => (streamDead ? { mesId: streamDead.mesId, set: [...streamDead.set] } : null) };
+export const _forTest = { finishJobs, paramsFor, listenNeeds, listenPendingOf, deadEngines: () => [...deadEngines], streamDead: () => (streamDead ? { mesId: streamDead.mesId, set: [...streamDead.set] } : null) };
 /** 이 답장을 스트리밍하며 실제로 읽어 줬나 (미리 만들기가 건너뜀 — 분석 전 키라 다시 만들면 두 번 값을 치름) */
 export function wasStreamRead(mesId) {
     const mes = chat[mesId];
@@ -1811,6 +1925,7 @@ export function onStreamProgress(mesId, text) {
     const mes = chat[mesId];
     if (!mes || mes.is_user || mes.is_system) return;
     if (waitEffective(mes, s)) return;                             // 번역을 기다리는 설정이면 스트리밍 읽기는 꺼짐 (그려진 뒤 번역 → 분석 → 읽기)
+    if (listen.listenTarget(s)) return;                            // 1.4.4 듣는 언어도 (그려진 뒤 한 묶음으로 옮겨 읽기 — streamBlocked)
     const swipe = mes.swipe_id ?? 0;
     const src = String(text || '');
     if (!stream || stream.mesId !== mesId || stream.swipe !== swipe) {
@@ -1932,6 +2047,8 @@ export async function downloadMessage(mesId) {
     const mes = chat[mesId];
     if (!mes) return false;
     const s = settings();
+    // 1.4.4 듣는 언어: 안 옮긴 줄이 있으면 먼저 (한 요청 · 못 옮기면 원문)
+    if (listen.listenTarget(s)) { const need = listenNeeds(mesId, mes); if (need.length) await listenFill(need); }
     const jobs = finishJobs(buildJobs(mesId, mes, sourcesOf(mes, s, { final: true }), { startSeg: 0, final: true }).jobs, s, { merge: !pregenOn(s) })
         .filter(j => j.provider.caps?.blob !== false);
     if (!jobs.length) { toast('내려받을 대화문이 없어요', 'warning'); return false; }

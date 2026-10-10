@@ -112,7 +112,7 @@ export const PRESETS = [
         data: () => ({
             fonts: structuredClone(DEFAULTS.fonts), type: structuredClone(DEFAULTS.type), markdown: structuredClone(DEFAULTS.markdown), dialogue: structuredClone(DEFAULTS.dialogue),
             ui: structuredClone(DEFAULTS.ui), code: structuredClone(DEFAULTS.code), em: structuredClone(DEFAULTS.em), strong: structuredClone(DEFAULTS.strong),
-            shadow: structuredClone(DEFAULTS.shadow), chat: { user: DEFAULTS.chat.user, header: DEFAULTS.chat.header, userSize: 100, userInk: 100 },
+            shadow: structuredClone(DEFAULTS.shadow), chat: { user: DEFAULTS.chat.user, char: DEFAULTS.chat.char, bubbleSplit: DEFAULTS.chat.bubbleSplit, header: DEFAULTS.chat.header, userSize: 100, userInk: 100 },
         }),
     },
     {
@@ -130,7 +130,7 @@ export const PRESETS = [
             fonts: { ...structuredClone(DEFAULTS.fonts), text: set('pretendard') },
             type: { ...structuredClone(DEFAULTS.type), size: 15, lineHeight: 1.65, letterSpacing: -1, para: 0.7, indent: false, align: 'left' },
             dialogue: { ...structuredClone(DEFAULTS.dialogue), style: 'tint', weight: 500 },
-            chat: { user: 'bubble', header: 'full', userSize: 96, userInk: 100 },
+            chat: { user: 'bubble', char: 'bubble', bubbleSplit: 'para', header: 'full', userSize: 96, userInk: 100 }, // 5.8.2: 캐릭터도 말풍선 · 엔터 두 번마다 나누기 (메신저 모양 그대로)
         }),
     },
     {

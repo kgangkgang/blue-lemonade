@@ -477,6 +477,10 @@ export function applyAll() {
     const weatherOn = !!s.chat.weather && s.chat.weather !== 'off' && !(s.chat.weather === 'tracker' && !s.deus?.on);
     const userAlpha = Math.min(s.chat.bgImage ? (s.chat.bgAlpha ?? 82) / 100 : 1, weatherOn ? (s.chat.weatherBubble ?? 70) / 100 : 1);
     if (userAlpha < 1) vars['--salty-user-bg'] = scaleAlpha(vars['--salty-user-bg'], userAlpha);
+    // 5.8.2 캐릭터 말풍선 면: 채팅 바탕에 글자색을 조금 섞은 중립색 — 내 말풍선(포인트색 쪽)과 구별되고, 화이트 · 나이트 모두 바탕보다 한 단계 떠 보인다.
+    // 직접 고친 바탕 · 글자색 · 내 테마도 그대로 따라간다. 배경 이미지 · 날씨 때는 내 메시지 면과 같은 농도로 비친다
+    vars['--salty-char-bubble-bg'] = mix(pal.text, pal.bg, mode === 'light' ? 0.075 : 0.085);
+    if (userAlpha < 1) vars['--salty-char-bubble-bg'] = scaleAlpha(vars['--salty-char-bubble-bg'], userAlpha);
     vars['--salty-on-accent'] = onColor(pal.accent); // 포인트색 위 글자색 (밝은 포인트면 어두운 글자)
     // 두 번째 포인트(지금 있는 곳 · 고른 것): 블루 아워는 레몬, 없으면 포인트색. 밝은 pop 위 글자는 어두운 테마면 바탕 남색
     const pop = pal.pop || pal.accent;
@@ -698,7 +702,7 @@ export function applyAll() {
 
     const want = new Set();
     if (s.enabled) {
-        ['salty', `salty-${mode}`, `salty-user-${s.chat.user}`, `salty-header-${s.chat.header}`, `salty-img-${s.image.layout}`, `salty-shape-${s.image.shape}`, `salty-fade-${s.image.fade}`, `salty-edge-${s.image.edge}`, `salty-dlg-${s.dialogue.style}`].forEach(c => want.add(c));
+        ['salty', `salty-${mode}`, `salty-user-${s.chat.user}`, `salty-char-${s.chat.char}`, `salty-bubble-${s.chat.bubbleSplit}`, `salty-header-${s.chat.header}`, `salty-img-${s.image.layout}`, `salty-shape-${s.image.shape}`, `salty-fade-${s.image.fade}`, `salty-edge-${s.image.edge}`, `salty-dlg-${s.dialogue.style}`].forEach(c => want.add(c));
         if (s.chat.icons === 'line') want.add('salty-icons-line');
         shadowClasses(s).forEach(c => want.add(c)); // 글자 그림자 대상별 클래스 (style.css 끝 규칙)
         if (s.chat.bgImage) want.add('salty-bgimg');
