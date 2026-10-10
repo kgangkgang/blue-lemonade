@@ -2050,17 +2050,20 @@ async function translate(text, options = {}) {
  * [2.1.0] 번역 중인 메시지 위의 작은 진행 표시 ("번역 중 · 12초", 문단을 나눌 땐 "문단 2/6"). 끝나면 지운다.
  * 실리태번이 mes_text 를 다시 그리면 사라지므로 매 초 없으면 다시 붙인다.
  */
+/** 번역 진행 문구 (채팅 배지 · [2.3.3] 다른 확장의 표시가 같은 글을 쓰게) — stage: translate() 의 onProgress 가 주는 것, started: 시작 시각 */
+function progressLabel(stage, started) {
+    const sec = Math.round((Date.now() - started) / 1000);
+    if (!stage || typeof stage !== 'object') return `번역 중 · ${sec}초`;
+    if (stage.stage === 'chunks') return `${stage.resumed ? '이어 번역' : '번역 중'} · 문단 ${stage.done + 1}/${stage.total} · ${sec}초`;
+    if (stage.stage === 'segments') return `캐시 ${stage.reused}개 · ${stage.pending ? `수정 문단 ${stage.pending}개 묶음 번역 중` : `새 번역 ${stage.translated}개`} · ${sec}초`;
+    if (stage.stage === 'kana') return `번역 중 · 마무리 · ${sec}초`;
+    return `번역 중 · ${sec}초`;
+}
 function progressBadge(messageId, message = null, sourceMes = message?.mes, chatId = getContext().chatId) {
     const started = Date.now();
     const swipeId = message?.swipe_id ?? 0;
     let stage = { stage: 'whole' }, el = null;
-    const text = () => {
-        const sec = Math.round((Date.now() - started) / 1000);
-        if (stage.stage === 'chunks') return `${stage.resumed ? '이어 번역' : '번역 중'} · 문단 ${stage.done + 1}/${stage.total} · ${sec}초`;
-        if (stage.stage === 'segments') return `캐시 ${stage.reused}개 · ${stage.pending ? `수정 문단 ${stage.pending}개 묶음 번역 중` : `새 번역 ${stage.translated}개`} · ${sec}초`;
-        if (stage.stage === 'kana') return `번역 중 · 마무리 · ${sec}초`;
-        return `번역 중 · ${sec}초`;
-    };
+    const text = () => progressLabel(stage, started);
     const paint = () => {
         // [2.1.3] 번호가 아니라 그 메시지 · 그 스와이프 · 그 글에 붙인다. 번호로만 찾아 스와이프 뒤 새 '...' 에 다시 붙었고,
         //         그러면 isGeneratingSwipe 가 생성 중인 줄 몰라 옛 글을 한 번 더 번역했다. 대상이 바뀌면 떼고, 돌아오면 다시 붙인다.
@@ -5134,7 +5137,7 @@ async function forgetParagraphCache(originalText) {
  * 설정을 따름 · 문단 캐시 사용), target('ko' | 'ja' | 'en' | 'zh') 을 주면 그 언어로 옮기는 짧은 프롬프트. 메시지 번역 캐시에는 남기지 않는다.
  * 준비가 안 됐으면(연결 · 키 · 모델) 보내지 않고 notReady 오류, signal 로 그만두면 cancelled 오류.
  */
-async function translateText(text, { target = '', signal = null } = {}) {
+async function translateText(text, { target = '', signal = null, onProgress = null } = {}) {
     const src = String(text ?? '');
     if (!src.trim()) return '';
     const ready = speechReady();
@@ -5143,15 +5146,16 @@ async function translateText(text, { target = '', signal = null } = {}) {
     if (target) {
         if (!SPEECH_LANGS[target]) throw new Error(`번역 언어를 알 수 없어요: ${target}`);
         const prompt = `Translate the following text into ${SPEECH_LANGS[target]}. Keep the structure, headings, line breaks and markdown exactly as they are; translate every sentence and add nothing else. Output only the translation.`;
-        return String(await translate(src, { prompt, assertValid }) ?? '');
+        return String(await translate(src, { prompt, assertValid, onProgress }) ?? '');
     }
-    return String(await translate(src, { segmentCache: true, assertValid }) ?? '');
+    return String(await translate(src, { segmentCache: true, assertValid, onProgress }) ?? '');
 }
 function publishTranslatorAPI() {
     if (!duplicate) globalThis[Symbol.for('blue-lemonade.translator')] = {
         processTranslationText, readCachedTranslation, storeTranslationQuietly, deleteCachedTranslation,
         translateForSpeech, speechReady, speechModelTag, // [2.3.0] TTS 듣는 언어
-        translateText, // [2.3.2] 다른 확장의 글(문서) — 채팅 번역과 같은 연결 · 프롬프트 · 용어집, 또는 지정 언어
+        translateText, // [2.3.2] 다른 확장의 글(문서) — 채팅 번역과 같은 연결 · 프롬프트 · 용어집, 또는 지정 언어 ([2.3.3] onProgress)
+        translateProgressText: progressLabel, // [2.3.3] 진행 문구 (채팅 배지와 같은 글)
     };
 }
 

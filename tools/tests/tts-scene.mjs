@@ -221,6 +221,21 @@ await test('1.5.4 readText reads another extension\'s text like a message: dialo
     assert.ok(spoken.includes('Hello there.')&&spoken.includes('Bye.')&&!/walked|smiled/.test(spoken),spoken);assert.ok(T.requests.length&&T.requests.every(r=>r.voiceUid==='minimax:nora'));
     assert.equal(P.speakExternal({text:'   '}),false);
 });
+await test('1.5.5 readText with only reads just the tapped dialogue, by text or by dialogue index, through the message pipeline',async()=>{
+    const routes={dialogue:'character',narration:'skip',action:'skip',thought:'skip',user_dialogue:'user'};
+    const text='Nora walked in. "Hello there." She smiled. "Bye now."';
+    await reset();S.settings().routes=routes;
+    assert.equal(P.speakExternal({text,name:'Nora',only:{text:'She smiled. "Bye now."',index:1}}),true);
+    await until(()=>T.plays.length>=1);await idle();
+    assert.deepEqual(T.requests.map(r=>r.text),['Bye now.']);
+    await reset();S.settings().routes=routes;
+    assert.equal(P.speakExternal({text,name:'Nora',only:{text:'번역된 글 (원문과 다름)',index:0}}),true);   // 글이 안 맞으면 차례로
+    await until(()=>T.plays.length>=1);await idle();
+    assert.deepEqual(T.requests.map(r=>r.text),['Hello there.']);
+    assert.equal(P.speakExternal({text,name:'Nora',only:{text:'nothing',index:9}}),false);
+    const a=A.registerExternal({text,name:'Nora'}),b=A.registerExternal({text,name:'Nora'}),c=A.registerExternal({text,name:'Other'});
+    assert.ok(a.id<-1&&a.id===b.id&&a.mes===b.mes&&c.id!==a.id&&A.externalMessage(a.id)===a.mes);
+});
 await test('disabled preference is serializable and excludes manual playback and WAV while preserving speech',async()=>{
     await reset();Library.setSfxEnabled('knock',false);assert.ok(JSON.parse(JSON.stringify(S.settings())).sfx.disabled.includes('knock'));
     const rows=[row('fx','sfx',{sfxId:'knock'}),row('voice','voice')];await P.speakScript(0,rows);await idle();assert.deepEqual(T.plays.map(x=>x.kind),['voice']);

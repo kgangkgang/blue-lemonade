@@ -87,7 +87,22 @@ const SCHEMA = Object.freeze({
 });
 
 const isObj = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
-const msgOf = (id) => (Number.isInteger(id) && id >= 0 ? chat[id] : undefined);
+// 1.5.5 다른 확장의 글(메시지가 아님)을 메시지처럼 분석 · 읽기: 음수 번호(-2 부터; -1 은 speakText 의 임시 번호)로 등록해 둔다.
+//   같은 이름 · 같은 글이면 같은 객체 → 저장된 분석을 다시 쓴다. 8개까지만 기억한다. 채팅에 쓰지도, 저장하지도 않는다.
+const external = new Map();
+let externalSeq = 1;
+export function registerExternal({ text, name = '', isUser = false } = {}) {
+    const key = `${isUser ? 'u' : 'c'}\u0001${name}\u0001${text}`;
+    for (const [id, m] of external) if (m.externalKey === key) { external.delete(id); external.set(id, m); return { id, mes: m }; }
+    const id = -(++externalSeq);
+    const mes = { mes: String(text), name: String(name), is_user: !!isUser, is_system: false, swipe_id: 0, extra: {} };
+    Object.defineProperty(mes, 'externalKey', { value: key });
+    external.set(id, mes);
+    while (external.size > 8) external.delete(external.keys().next().value);
+    return { id, mes };
+}
+export const externalMessage = (id) => external.get(id) || null;
+const msgOf = (id) => (Number.isInteger(id) ? (id >= 0 ? chat[id] : external.get(id)) : undefined);
 function sub(text) { try { return substituteParams(String(text || '')); } catch { return String(text || ''); } }
 
 /** 문자열 해시 (FNV-1a → base36) */

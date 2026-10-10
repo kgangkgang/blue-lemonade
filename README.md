@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.9.5/blue-lemonade-5.9.5.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.9.6/blue-lemonade-5.9.6.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.9.5 · 최신 업데이트</summary>
+<summary>5.9.6 · 최신 업데이트</summary>
+
+- TTS 1.5.5: 다른 확장이 넘긴 글도 채팅 메시지와 똑같이 읽어요. 대사 분석(화자·감정)·효과음·듣는 언어·누른 대사만 읽기까지 TTS 설정을 그대로 따라요.
+- 내장 번역의 연동 창구가 번역 진행 상황을 알려 줘요. 다른 확장에서도 채팅의 번역 진행 표시와 같은 문구를 보여 줄 수 있어요.
+
+[TTS 사용법](src/addons/tts/README.md)
+
+</details>
+
+<details>
+<summary>5.9.5 · 누른 대사 앞 지문의 효과음</summary>
 
 - TTS 1.5.4: 대사를 눌러 읽을 때 그 대사 바로 앞 지문에서 찾은 효과음을 먼저 들려줘요. 지문을 읽지 않는 설정에서도 효과음이 나요. 효과음 · 소리 대본의 「누른 대사 앞 지문의 효과음도」로 끌 수 있고, 저장된 분석이 없으면 먼저 분석해요.
 - 다른 확장이 글을 채팅 메시지와 같은 모양으로 보여 주고, TTS로 읽게 하고, 내장 번역으로 옮길 수 있는 연동 창구를 열었어요. 테마 모습과 TTS의 읽을 글·목소리 설정, 번역 설정을 그대로 따라요.

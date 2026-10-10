@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.9.5";
+export const BUILD_VERSION = "5.9.6";
 export const FILE_HASHES = {
   "index.js": "16730:cd15e850:f32659bb",
-  "manifest.json": "365:6e519844:8b3338e3",
+  "manifest.json": "365:f341b669:046958fb",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -140,8 +140,8 @@ export const FILE_HASHES = {
   "src/addons/translator/buttons.html": "417:3bc7c8b0:1b53077b",
   "src/addons/translator/current-connection.js": "5715:244c0cd2:4c2ec356",
   "src/addons/translator/glossary-match.js": "14236:49d8eedc:fd6087ac",
-  "src/addons/translator/index.html": "52507:981295e6:fc3ffc1b",
-  "src/addons/translator/index.js": "413259:f6763eac:42603aa9",
+  "src/addons/translator/index.html": "52507:351735fd:bd8bb591",
+  "src/addons/translator/index.js": "413728:e1eacffa:413e62f6",
   "src/addons/translator/menu-visibility.js": "1137:ae729d76:8ea71da6",
   "src/addons/translator/persona-bridge.js": "3144:8b7fe451:3e6fe474",
   "src/addons/translator/preset-data.js": "3701:690be659:d11e8b46",
@@ -161,7 +161,7 @@ export const FILE_HASHES = {
   "src/addons/tts/NOTICE.md": "6529:9cd915fd:4389a145",
   "src/addons/tts/credits.js": "3801:45c3d645:65430be4",
   "src/addons/tts/guide.js": "29479:f3ebcb37:0f28c8d5",
-  "src/addons/tts/index.js": "28318:f12b4cdf:06037786",
+  "src/addons/tts/index.js": "28342:781783b1:bdbba1fb",
   "src/addons/tts/script-editor.css": "8960:0eed3f59:dba78b6d",
   "src/addons/tts/settings.html": "2586:4fc6909d:16a47526",
   "src/addons/tts/sfx-extra/LICENSE-CC-BY.txt": "18657:e975071f:4918a281",
@@ -237,7 +237,7 @@ export const FILE_HASHES = {
   "src/addons/tts/sfx/whoosh.mp3": "9295:2408f53b:568290c7",
   "src/addons/tts/sfx/wind.mp3": "36567:1a42a482:6c9fb235",
   "src/addons/tts/sfx/wood_crack.mp3": "12743:96f21e5f:d993bb8b",
-  "src/addons/tts/src/analysis.js": "68228:45daa292:a7206e02",
+  "src/addons/tts/src/analysis.js": "69322:ec16f020:21e478ab",
   "src/addons/tts/src/balance.js": "4406:309bd610:27dd3fa3",
   "src/addons/tts/src/cache.js": "10190:ea530724:cdf2f7e0",
   "src/addons/tts/src/clickplay.js": "35847:758fbd42:7154d64d",
@@ -249,7 +249,7 @@ export const FILE_HASHES = {
   "src/addons/tts/src/modelswitch.js": "5835:367a7699:4c402b69",
   "src/addons/tts/src/paid.js": "5151:654904ec:67fc64ff",
   "src/addons/tts/src/playback-details.js": "1813:dc8c7973:7157b950",
-  "src/addons/tts/src/player.js": "165483:cd7f847d:b875d66b",
+  "src/addons/tts/src/player.js": "166440:deaccaef:cc5ac524",
   "src/addons/tts/src/pregen.js": "24549:bb412d8e:f1e7de14",
   "src/addons/tts/src/providers/_http.js": "8363:666dcabd:c8bf7f25",
   "src/addons/tts/src/providers/_models.js": "8477:f2142bd7:888f22da",
@@ -281,8 +281,8 @@ export const FILE_HASHES = {
   "src/addons/tts/src/ui.js": "173191:d329f030:b9980564",
   "src/addons/tts/src/voice-names.js": "7708:05c816f7:b76ae520",
   "src/addons/tts/src/voices.js": "39816:273e9df9:376164af",
-  "src/addons/tts/style.css": "33025:23250d06:16b453bf",
-  "src/addons/tts/version.js": "36:61de25ac:9eb74091",
+  "src/addons/tts/style.css": "33025:13830a88:441c02f2",
+  "src/addons/tts/version.js": "36:2f21ffe9:1922c28c",
   "src/addons/zipinstall/index.js": "22183:0ac25a5e:32e2e59e",
   "src/addons/zipinstall/style.css": "4434:d6bb24df:89f0a8f4",
   "src/appearance-archive.js": "1287:215093f5:1c7f1dc7",
@@ -367,7 +367,7 @@ export const FILE_HASHES = {
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "176358:84b96c37:c6db49ad",
+  "src/notice-data.js": "176797:7eb29f64:2de14389",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "1144:1da72451:b2e66e80",
@@ -435,5 +435,5 @@ export const FILE_HASHES = {
   "src/weather.js": "32976:f4fdcf09:3273a2b9",
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "31850:337f1677:b8ad9253",
-  "style.css": "1250148:fd217b73:eb22cf1c"
+  "style.css": "1250148:36a42999:41bbc0d5"
 };
