@@ -1430,6 +1430,7 @@ async function run() {
                     await waitIfPaused(ir);
                     if (my === gen && !ir.fired) played = await playSceneJob(job, ir);
                 } else {
+                    if (Number.isInteger(job.segIndex)) sceneAudio.stopBefore(job.segIndex);   // 1.5.9 이어지던 소리가 멈추는 대사에 닿으면 끈다
                     const mine = ensureAudio(job);
                     prefetch(idx + 1, s);
                     const a = await Promise.race([mine, ir.promise]);
@@ -1723,7 +1724,10 @@ export function scriptRows(mesId, { forExport = false } = {}) {
             const at = rows.findIndex(r => r.sourceIndex >= sourceIndex);
             const key = at < 0 ? rows.length : at;
             const list = insertions.get(key) || [];
-            list.push({ id: `a-sfx-${i}`, kind: 'sfx', sfxId: sound.id, text: sound.name, sourceIndex, mode: s.sfx.mode || 'overlay', repeats: cue.repeats || 1, durationMs: cue.durationMs || 0, volume: 1, gapMs: 0, enabled: true }); insertions.set(key, list);
+            // 1.5.9 이어지는 동작은 끝까지 반복하되 stopAfter 번째 대사 앞에서 멈춘다 (stopBefore = 그 대사의 원문 조각 번호)
+            const ongoing = cue.ongoing === true;
+            const stopBefore = ongoing && Number.isInteger(cue.stopAfter) && cue.stopAfter < dialogueIndices.length ? dialogueIndices[cue.stopAfter] : null;
+            list.push({ id: `a-sfx-${i}`, kind: 'sfx', sfxId: sound.id, text: sound.name, sourceIndex, mode: ongoing ? 'loop' : (s.sfx.mode || 'overlay'), repeats: cue.repeats || 1, durationMs: ongoing ? 0 : (cue.durationMs || 0), stopBefore, volume: 1, gapMs: 0, enabled: true }); insertions.set(key, list);
         });
         rows = rows.flatMap((row, i) => [...(insertions.get(i) || []), row]).concat(insertions.get(rows.length) || []);
     }
@@ -1741,7 +1745,7 @@ function sceneJobs(mesId, rows, { effects = true, preview = false, manual = fals
         if (row.kind === 'voice' && !row.text.trim()) continue;
         if (row.kind !== 'voice') {
             if (row.kind === 'sfx' && (!effects || !isSfxEnabled(row.sfxId))) continue;
-            jobs.push({ mesId, sceneKind: row.kind, sceneMode: row.mode || 'sequence', sceneVolume: row.volume, sceneGap: row.gapMs, sceneRepeats: row.repeats, sceneDurationMs: row.durationMs, scenePreview: preview, sfxId: row.sfxId, scriptRowId: row.id, segIndex: row.sourceIndex, parts: [], text: row.kind === 'pause' ? `${row.gapMs} ms 쉬기` : getSfx(row.sfxId)?.name || row.text, voice: { name: row.kind === 'pause' ? '쉼' : '효과음' }, key: `scene:${row.id}` });
+            jobs.push({ mesId, sceneKind: row.kind, sceneMode: row.mode || 'sequence', sceneVolume: row.volume, sceneGap: row.gapMs, sceneRepeats: row.repeats, sceneDurationMs: row.durationMs, scenePreview: preview, sceneStopBefore: row.stopBefore ?? null, sfxId: row.sfxId, scriptRowId: row.id, segIndex: row.sourceIndex, parts: [], text: row.kind === 'pause' ? `${row.gapMs} ms 쉬기` : getSfx(row.sfxId)?.name || row.text, voice: { name: row.kind === 'pause' ? '쉼' : '효과음' }, key: `scene:${row.id}` });
             continue;
         }
         const original = Number.isInteger(row.sourceIndex) ? base.find(j => j.segIndex === row.sourceIndex) : null;
@@ -1775,7 +1779,7 @@ async function playSceneJob(job, ir) {
     if (job.sceneKind === 'pause') return waitScene(job.sceneGap, ir);
     if (!isSfxEnabled(job.sfxId) || (!job.sceneManual && settings().sfx?.enabled !== true)) return false;
     applyPlayback();
-    const pending = sceneAudio.play(job.sfxId, { volume: job.sceneVolume ?? 1, loop: job.sceneMode === 'loop', repeats: job.sceneRepeats, durationMs: job.sceneDurationMs, rate: Number(settings().playback_rate) || 1 });
+    const pending = sceneAudio.play(job.sfxId, { volume: job.sceneVolume ?? 1, loop: job.sceneMode === 'loop', repeats: job.sceneRepeats, durationMs: job.sceneDurationMs, rate: Number(settings().playback_rate) || 1, stopBeforeSeg: job.sceneStopBefore });
     pending.then(handle => { if (ir.fired) handle?.stop(); }, () => {});
     const handle = await Promise.race([pending, ir.promise]);
     if (!handle || ir.fired || !isSfxEnabled(job.sfxId) || (!job.sceneManual && settings().sfx?.enabled !== true)) { handle?.stop(); return false; }
@@ -1824,7 +1828,7 @@ export async function downloadScript(mesId, rows = null, { effects = true } = {}
         const blob = j.sceneKind === 'pause' ? null : j.sceneKind === 'sfx' ? await sfxBlob(j.sfxId) : (await ensureAudio(j)).blob;
         valid();
         if (j.sceneKind !== 'pause' && !blob) throw new Error('효과음 파일을 찾을 수 없어요. 다시 골라 주세요.');
-        clips.push({ kind: j.sceneKind || 'voice', sfxId: j.sfxId, blob, volume: j.sceneVolume ?? 1, gapMs: j.sceneGap, mode: j.sceneMode, repeats: j.sceneRepeats, durationMs: j.sceneDurationMs });
+        clips.push({ kind: j.sceneKind || 'voice', sfxId: j.sfxId, blob, volume: j.sceneVolume ?? 1, gapMs: j.sceneGap, mode: j.sceneMode, repeats: j.sceneRepeats, durationMs: j.sceneDurationMs, sourceIndex: j.segIndex, stopBefore: j.sceneStopBefore ?? null });
     }
     const s = settings();
     const blob = await mixScene(clips, { rate: 1, master: s.master_volume, sfxVolume: s.sfx?.volume, gapMs: s.gap_ms });
@@ -2086,11 +2090,16 @@ function tapSfxJobs(mesId, mes, segs, s) {
     const out = { before: [], after: [] };
     cues.forEach((cue, i) => {
         // 1.5.6 마지막 대사를 눌렀으면 그 뒤 지문(after = 대화문 수)의 소리도 대사 뒤에 이어서 — 그 소리는 붙을 다음 대사가 없다
-        const where = ordinals.has(cue.after) ? 'before' : ordinals.has(dial.length - 1) && cue.after === dial.length ? 'after' : '';
+        // 1.5.9 이어지는 동작(ongoing)은 그 범위(after ≤ 대사 < stopAfter)의 어느 대사를 눌러도 밑에 깔린다
+        const covered = cue.ongoing === true && [...ordinals].some(k => cue.after < k && k < (Number.isInteger(cue.stopAfter) ? cue.stopAfter : dial.length));
+        const where = ordinals.has(cue.after) ? 'before' : covered ? 'ongoing' : ordinals.has(dial.length - 1) && cue.after === dial.length ? 'after' : '';
         if (!where) return;
         const sound = getSfx(cue.id);
         if (!sound || !isSfxEnabled(sound.id)) return;
-        out[where].push({ mesId, sceneKind: 'sfx', sceneMode: where === 'after' ? 'sequence' : (s.sfx.mode || 'overlay'), sceneVolume: 1, sceneGap: 0, sceneRepeats: cue.repeats || 1, sceneDurationMs: cue.durationMs || 0, scenePreview: false,
+        // 지속 가능한 소리(리듬 · 환경음)는 길이 지정이 없으면 누른 대사가 끝날 때까지 반복 — 전엔 한 번만 나서 대사보다 먼저 끝났다
+        const sustain = analysis.canSustainSfx(sound) && !cue.durationMs;
+        const mode = where === 'after' ? 'sequence' : (where === 'ongoing' || sustain) ? 'loop' : (s.sfx.mode || 'overlay');
+        out[where === 'after' ? 'after' : 'before'].push({ mesId, sceneKind: 'sfx', sceneMode: mode, sceneVolume: 1, sceneGap: 0, sceneRepeats: cue.repeats || 1, sceneDurationMs: cue.durationMs || 0, scenePreview: false,
             sfxId: sound.id, scriptRowId: `tap-sfx-${i}`, segIndex: null, parts: [], text: sound.name, voice: { name: '효과음' }, key: `scene:tap-sfx-${mesId}-${i}` });
     });
     return out;

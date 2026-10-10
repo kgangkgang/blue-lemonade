@@ -9,6 +9,10 @@ export function sceneTimeline(clips, { rate = 1, gapMs = 250, master = 1, sfxVol
     let cursor = 0, end = 0;
     const events = [], loops = [];
     for (const clip of clips) {
+        // 1.5.9 이어지는 반복(stopBefore)은 그 대사에 닿으면 거기서 끝난다
+        if (clip.kind !== 'sfx' && Number.isInteger(clip.sourceIndex)) {
+            for (const loop of [...loops]) if (loop.stopBefore != null && clip.sourceIndex >= loop.stopBefore) { loop.duration = Math.max(0, cursor - loop.start); loop.loop = true; loop.stopped = true; loops.splice(loops.indexOf(loop), 1); }
+        }
         if (clip.kind === 'pause') { cursor += clamp(clip.gapMs, 0, 10000, 500) / 1000; end = Math.max(end, cursor); continue; }
         if (!clip.buffer) continue;
         const unit = clip.buffer.duration / rate;

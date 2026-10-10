@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.9.9";
+export const BUILD_VERSION = "6.0.0";
 export const FILE_HASHES = {
   "index.js": "16730:cd15e850:f32659bb",
-  "manifest.json": "365:0dbd6300:cea66dbb",
+  "manifest.json": "365:1e88ffe1:ab1d7866",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -239,7 +239,7 @@ export const FILE_HASHES = {
   "src/addons/tts/sfx/whoosh.mp3": "9295:2408f53b:568290c7",
   "src/addons/tts/sfx/wind.mp3": "36567:1a42a482:6c9fb235",
   "src/addons/tts/sfx/wood_crack.mp3": "12743:96f21e5f:d993bb8b",
-  "src/addons/tts/src/analysis.js": "71875:26edd7b6:2ec54a80",
+  "src/addons/tts/src/analysis.js": "72756:15e67390:d7201be8",
   "src/addons/tts/src/balance.js": "4406:309bd610:27dd3fa3",
   "src/addons/tts/src/cache.js": "10190:ea530724:cdf2f7e0",
   "src/addons/tts/src/clickplay.js": "35847:758fbd42:7154d64d",
@@ -251,7 +251,7 @@ export const FILE_HASHES = {
   "src/addons/tts/src/modelswitch.js": "5835:367a7699:4c402b69",
   "src/addons/tts/src/paid.js": "5151:654904ec:67fc64ff",
   "src/addons/tts/src/playback-details.js": "1813:dc8c7973:7157b950",
-  "src/addons/tts/src/player.js": "167953:fa2c8512:8c1940ce",
+  "src/addons/tts/src/player.js": "169357:ed2e1afd:77c89b47",
   "src/addons/tts/src/pregen.js": "24549:bb412d8e:f1e7de14",
   "src/addons/tts/src/providers/_http.js": "8363:666dcabd:c8bf7f25",
   "src/addons/tts/src/providers/_models.js": "8477:f2142bd7:888f22da",
@@ -268,11 +268,11 @@ export const FILE_HASHES = {
   "src/addons/tts/src/providers/openrouter.js": "8317:cd2601a2:95e24874",
   "src/addons/tts/src/providers/typecast.js": "14319:e4d198a3:62a1ebdb",
   "src/addons/tts/src/runtime.js": "1656:d084eb50:81e92a1c",
-  "src/addons/tts/src/scene-mix.js": "5633:e074071f:0281c1a2",
+  "src/addons/tts/src/scene-mix.js": "6054:0e3eb776:9ff96743",
   "src/addons/tts/src/script-editor.js": "34057:31fa1c4d:f1e0cc94",
-  "src/addons/tts/src/script-store.js": "6484:09c2159f:90ce727e",
+  "src/addons/tts/src/script-store.js": "6667:07897378:ff8e5b3a",
   "src/addons/tts/src/settings.js": "33373:5d627138:890c387d",
-  "src/addons/tts/src/sfx-audio.js": "6285:64ff59b1:fbec6992",
+  "src/addons/tts/src/sfx-audio.js": "6685:37a837cf:bd3ffb93",
   "src/addons/tts/src/sfx-credits.js": "6587:1a7aad53:1c14435d",
   "src/addons/tts/src/sfx-daily.js": "14595:597d7076:a85d6cd7",
   "src/addons/tts/src/sfx-library.js": "27488:fc3c721f:2e914992",
@@ -283,8 +283,8 @@ export const FILE_HASHES = {
   "src/addons/tts/src/ui.js": "174387:b71bec78:eebcce0d",
   "src/addons/tts/src/voice-names.js": "7708:05c816f7:b76ae520",
   "src/addons/tts/src/voices.js": "39816:273e9df9:376164af",
-  "src/addons/tts/style.css": "33025:b4bcb016:0c61ca27",
-  "src/addons/tts/version.js": "36:503fa948:f1fe3e88",
+  "src/addons/tts/style.css": "33025:9b2eedc8:35546393",
+  "src/addons/tts/version.js": "36:c7303d15:286e5707",
   "src/addons/zipinstall/index.js": "22183:0ac25a5e:32e2e59e",
   "src/addons/zipinstall/style.css": "4434:d6bb24df:89f0a8f4",
   "src/appearance-archive.js": "1287:215093f5:1c7f1dc7",
@@ -369,7 +369,7 @@ export const FILE_HASHES = {
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "178597:b67ba939:062fffda",
+  "src/notice-data.js": "179166:5c93ecdc:fb3b5709",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "1144:1da72451:b2e66e80",
@@ -437,5 +437,5 @@ export const FILE_HASHES = {
   "src/weather.js": "32976:f4fdcf09:3273a2b9",
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "31850:337f1677:b8ad9253",
-  "style.css": "1250148:06c81b98:1760f8c5"
+  "style.css": "1250148:876b8aa7:3e5f0bc3"
 };

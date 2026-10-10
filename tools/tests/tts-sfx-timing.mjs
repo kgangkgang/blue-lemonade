@@ -112,6 +112,12 @@ await test('1.5.8 sfx.scene_chars sets the narration budget and is clamped to 1,
     S.settings().sfx.scene_chars='oops'; assert.equal(sceneOf().length,base.length,'bad stored value falls back to the default budget');
     S.settings().sfx.scene_chars=4000;
 });
+await test('1.5.9 ongoing cues need a sustainable sound and a stop position inside the message',()=>{
+    const text='"하나." 그가 한동안 키보드를 두드렸다. "둘." 멈췄다. "셋."';
+    const p=build(text);
+    const out=A.normalizeSfx([{after:1,id:'daily_keyboard',ongoing:true,stopAfter:2},{after:1,id:'drop',ongoing:true,stopAfter:2},{after:1,id:'daily_rain',ongoing:true,stopAfter:9},{after:1,id:'daily_faucet',ongoing:true,stopAfter:1}],p);
+    assert.deepEqual(out.map(c=>[c.id,c.ongoing===true,c.stopAfter]),[['daily_keyboard',true,2],['drop',false,undefined],['daily_rain',true,3],['daily_faucet',true,3]]);
+});
 await test('absence or negation of duration cannot create an ambient loop',()=>{
     for(const text of ['키보드를 눌렀다.','키보드로 한동안 타이핑하지 않았다.','She did not type for a while.','She typed. Her friend waited for 8 seconds.'])
         assert.equal(timing(text,'daily_keyboard',{durationMs:8000}).durationMs,0,text);

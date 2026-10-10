@@ -68,7 +68,7 @@ export function createSfxController() {
         const done = new Promise(r => { resolve = r; });
         const item = { id, url, audio, done, resolve, loop, closed: false, repeats,
             timed: durationMs > 0, remaining: durationMs, timer: null, startedAt: 0,
-            volume: clamp(options.volume, 0, 1, 1), handle: null };
+            volume: clamp(options.volume, 0, 1, 1), handle: null, stopBeforeSeg: Number.isSafeInteger(options.stopBeforeSeg) ? options.stopBeforeSeg : null };
         item.handle = Object.freeze({ id, done, stop: () => finish(item) });
         audio.loop = loop || durationMs > 0;
         audio.playbackRate = requestedRateRevision === rateRevision ? clamp(options.rate, 0.25, 4, rate) : rate;
@@ -123,6 +123,10 @@ export function createSfxController() {
         paused = false;
         for (const item of [...active]) finish(item);
     }
+    /** 1.5.9 이어지는 반복이 멈추는 대사: 그 대사(원문 조각 번호)에 닿으면 stopBeforeSeg 이하인 소리를 끈다 */
+    function stopBefore(seg) {
+        for (const item of [...active]) if (item.stopBeforeSeg != null && seg >= item.stopBeforeSeg) finish(item);
+    }
     function stopDisabled() {
         for (const item of [...active]) if (!isSfxEnabled(item.id)) finish(item);
     }
@@ -135,5 +139,5 @@ export function createSfxController() {
         rateRevision++;
         for (const item of active) item.audio.playbackRate = rate;
     }
-    return Object.freeze({ play, pause, resume, stopAll, stopDisabled, setVolume, setRate });
+    return Object.freeze({ play, pause, resume, stopAll, stopBefore, stopDisabled, setVolume, setRate });
 }

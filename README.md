@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.9.9/blue-lemonade-5.9.9.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.0.0/blue-lemonade-6.0.0.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.9.9 · 최신 업데이트</summary>
+<summary>6.0.0 · 최신 업데이트</summary>
+
+- TTS 1.5.9: 리듬·환경음처럼 지속되는 효과음은 대사를 눌러 읽을 때 그 대사가 끝날 때까지 반복해요. 전에는 한 번만 나서 대사보다 먼저 끝났어요.
+- 대화 내내 이어지는 동작은 분석이 「계속됨」과 멈추는 자리를 함께 답해요. 그 사이의 어느 대사를 눌러도 소리가 밑에 깔리고, 전체 읽기와 WAV 저장에서는 멈추는 대사 앞에서 끝나요. 저장된 분석은 다음 읽기 때 한 번 다시 받아요.
+
+[TTS 사용법](src/addons/tts/README.md)
+
+</details>
+
+<details>
+<summary>5.9.9 · 효과음 찾을 지문 글자</summary>
 
 - TTS 1.5.8: 효과음을 찾을 때 대사 분석에 보내는 지문 글자 수를 직접 정할 수 있어요. 읽기 → 효과음 · 소리 대본 → 효과음 찾을 지문 글자(기본 4,000자, 1,000~40,000). 긴 답장에서 효과음을 놓치면 늘리고, 분석 요청의 토큰을 아끼려면 줄여요.
 - 바꾸면 예산을 넘는 긴 답장의 저장된 분석을 다음 읽기 때 한 번 다시 받아요. 짧은 답장은 그대로예요.

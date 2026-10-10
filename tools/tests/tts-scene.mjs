@@ -56,7 +56,7 @@ class MockAudio extends Element {
         this.onplaying?.(); if (this.paused) return;
         clearTimeout(this.timer); if (!this.loop) this.timer = setTimeout(() => { if (!this.paused) { this.paused = true; T.ends.push({ ...payload, at: performance.now() }); this.onended?.(); this.dispatchEvent(new Event('ended')); } }, payload.ms || 25);
     }
-    pause() { this.paused = true; clearTimeout(this.timer); }
+    pause() { this.paused = true; clearTimeout(this.timer); if (this.payload) { const p = T.plays.find(x => x.node === this); if (p && p.pausedAt == null) p.pausedAt = performance.now(); } }
     removeAttribute(k) { super.removeAttribute(k); if (k === 'src') this.src = ''; }
     load() {};
 }
@@ -220,6 +220,36 @@ await test('1.5.4 readText reads another extension\'s text like a message: dialo
     const spoken=T.requests.map(r=>r.text).join(' ');   // 같은 목소리의 이어진 대사는 한 덩이로 합쳐질 수 있다
     assert.ok(spoken.includes('Hello there.')&&spoken.includes('Bye.')&&!/walked|smiled/.test(spoken),spoken);assert.ok(T.requests.length&&T.requests.every(r=>r.voiceUid==='minimax:nora'));
     assert.equal(P.speakExternal({text:'   '}),false);
+});
+await test('1.5.9 sustained cues loop under the tapped line; ongoing cues cover later lines and stop at stopAfter; export cuts the loop there',async()=>{
+    const routes={dialogue:'character',narration:'skip',action:'skip',thought:'skip',user_dialogue:'user'};
+    const seed=async(text,sfx)=>{await reset();const s=S.settings();Object.assign(s.sfx,{enabled:true,auto:true,mode:'overlay',level:'normal'});s.routes=routes;
+        s.analysis={...s.analysis,enabled:true,engine:'compat',base:'https://mock.invalid/v1',key:'k',model:'m',emotion:true,translate:false,speaker:true,when:'auto',context_chars:1200,temperature:0.2};
+        const mes={mes:text,name:'Mina',is_user:false,is_system:false,swipe_id:0,extra:{}};T.ctx.chat.length=0;T.ctx.chat.push(mes);
+        const p=A.buildPrompt(mes,{langs:[],emotion:true,translate:false,context_chars:1200,speaker:true,extras:s.extras!=='off',sfx:true});
+        mes.extra.lemon_voice={analysis:{hash:A.hash(mes.mes),profile:A.hash(JSON.stringify([1,'compat','','m',true,false,0.2,p.system,p.user])),langs:[],model:'m',at:1,segs:p.lines.map(l=>({i:l.i,h:l.h,emotion:'calm',text:{}})),sfx}};
+        assert.ok(A.getAnalysis(0));return mes;};
+    const tap=(text,i)=>({kind:'dialogue',text,raw:text,color:null,tags:[],speakerHint:null,line:0,dialogueIndex:i});
+    // 지속 가능한 소리(길이 없음)는 누른 대사 동안 반복
+    await seed('"안녕." 그가 한동안 키보드를 두드렸다. "앉아."',[{after:1,id:'daily_keyboard',repeats:1,durationMs:0,strength:2}]);
+    assert.ok(P.speakSegments(0,[tap('앉아.',1)]));await until(()=>T.plays.some(x=>x.kind==='voice'));await idle();
+    const kb=T.plays.find(x=>x.kind==='sfx');assert.ok(kb&&kb.loop===true&&kb.node.paused,'keyboard looped under the line and stopped at its end');
+    // 이어지는 동작: 범위 안의 어느 대사를 눌러도, 멈추는 자리부터는 안 깔린다
+    const text='"하나." 그가 그녀를 찰싹찰싹 때리기 시작했다. "둘." "셋." 그는 멈췄다. "넷."';
+    await seed(text,[{after:1,id:'daily_spanking',repeats:1,durationMs:0,strength:2,ongoing:true,stopAfter:3}]);
+    assert.ok(P.speakSegments(0,[tap('셋.',2)]));await until(()=>T.plays.some(x=>x.kind==='voice'));await idle();
+    assert.deepEqual(T.plays.map(x=>x.kind==='sfx'?x.sfxId+(x.loop?':loop':''):'voice'),['daily_spanking:loop','voice']);
+    await seed(text,[{after:1,id:'daily_spanking',repeats:1,durationMs:0,strength:2,ongoing:true,stopAfter:3}]);
+    assert.ok(P.speakSegments(0,[tap('넷.',3)]));await until(()=>T.plays.some(x=>x.kind==='voice'));await idle();
+    assert.deepEqual(T.plays.map(x=>x.kind),['voice']);
+    // 메시지 전체 읽기: 반복 줄 + 멈추는 대사 앞에서 끔 (대본 줄 stopBefore · 저장도 같은 자리)
+    const mes=await seed(text,[{after:1,id:'daily_spanking',repeats:1,durationMs:0,strength:2,ongoing:true,stopAfter:3}]);
+    const rows=P.scriptRows(0);const fx=rows.find(r=>r.kind==='sfx');
+    assert.equal(fx.mode,'loop');assert.ok(Number.isInteger(fx.stopBefore)&&fx.stopBefore===rows.find(r=>r.kind==='voice'&&r.text==='넷.').sourceIndex,'stopBefore points at the fourth line');
+    P.speakMessage(0,{force:true});await until(()=>T.plays.filter(x=>x.kind==='voice').length>=4);await idle();
+    const loop=T.plays.find(x=>x.kind==='sfx');const fourth=T.plays.find(x=>x.kind==='voice'&&x.text==='넷.');
+    assert.ok(loop&&loop.loop===true&&loop.pausedAt!=null&&fourth&&loop.pausedAt<=fourth.at+1,'loop stopped before the fourth line started');
+    await P.downloadScript(0,rows);const tl=T.renders.at(-1).sources;assert.ok(tl.length>=5,'export rendered voices and the loop');
 });
 await test('1.5.7 effects level filters stored cues at playback without touching the analysis; export keeps at least normal',async()=>{
     await reset();const s=S.settings();Object.assign(s.sfx,{enabled:true,auto:true,level:'normal'});s.routes={dialogue:'character',narration:'skip',action:'skip',thought:'skip',user_dialogue:'user'};
