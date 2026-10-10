@@ -115,8 +115,8 @@
     if(p.state==='hide'){const t=clamp((p.age-.4)/.7,0,1);dy=(height-p.y+p.size)*t*t;opacity=1-t;}
     if(p.state==='show'){const t=clamp(p.age/.75,0,1);dy=(height-p.y+p.size)*(1-t)**3-Math.sin(t*Math.PI)*20;}
     if(p.state==='land'){scaleY=.88+.12*clamp(p.age/.24,0,1);}
-    const dpr=window.devicePixelRatio||1,snap=n=>Math.round(n*dpr)/dpr;
-    p.el.style.transform=`translate3d(${snap(p.x)}px,${snap(p.y+dy)}px,0)`;p.el.style.opacity=String(opacity);
+    // Keep fractional movement: whole-pixel steps stall slow walks between frames.
+    p.el.style.transform=`translate3d(${p.x.toFixed(3)}px,${(p.y+dy).toFixed(3)}px,0)`;p.el.style.opacity=String(opacity);
     const facing=['walk','leap','fall','greet'].includes(p.state)?p.dir:(p.state==='peek'?(p.x<width/2?1:-1):1);
     p.pose.style.transform=`rotate(${angle.toFixed(1)}deg) scale(${facing*scaleX},${scaleY})`;
     p.el.style.visibility=prefs.hidden&&p.state!=='hide'?'hidden':'visible';
@@ -158,8 +158,7 @@
   });
   function tick(now){
     raf=0;
-    // Thirty frames are enough for a six-pose walk, including on high-refresh phones.
-    if(lastTick&&now-lastTick<32&&!calm()){raf=requestAnimationFrame(tick);return;}
+    // Move every display frame; sprite poses still advance by distance travelled.
     const dt=Math.min(calm()?.15:.06,(now-lastTick)/1000||.016);lastTick=now;
     if(document.hidden||document.querySelector('dialog[open]')){lastTick=0;return;}
     for(const p of pets){
