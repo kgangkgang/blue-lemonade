@@ -8,12 +8,27 @@
 
 **Windows:** 테마가 실리태번 확장 폴더에 설치돼 있으면, 서버를 종료하고 테마 안의 `server-plugin/setup-windows.cmd`를 두 번 눌러요. 완료되면 서버를 다시 켜 주세요. 테마 폴더에서 실리태번 위치를 자동으로 찾아요.
 
-**Termux 또는 명령으로 준비하기:**
+**Termux에서 준비하기:**
 
-1. 실행 중인 실리태번을 종료해요.
-2. **SillyTavern 폴더**에서 터미널을 열어요.
-3. `node "테마가 설치된 경로/server-plugin/setup.mjs"`를 실행해요. 예: `node "data/default-user/extensions/blue-lemonade/server-plugin/setup.mjs"`. 폴더 이름이나 계정이 다르면 실제 경로로 바꿔 주세요. 다른 위치에서 실행할 때는 뒤에 SillyTavern 폴더 경로를 두 번째 인자로 넣을 수 있어요.
-4. 실리태번 서버를 다시 켜고 ZIP 설치 화면에서 **연결 확인**을 눌러요.
+1. 실행 중인 실리태번 서버를 종료해요.
+2. 홈 폴더에 `SillyTavern`을 기본 이름으로 설치했다면, 아래 두 줄을 **통째로** 붙여 넣어 실행해요.
+
+```bash
+cd ~/SillyTavern &&
+node "data/default-user/extensions/blue-lemonade/server-plugin/setup.mjs"
+```
+
+**“ZIP 도우미를 준비했어요”**가 나오면 실리태번 서버를 다시 켜고 ZIP 설치 화면에서 **연결 확인**을 눌러요.
+
+**폴더나 파일을 못 찾는다고 나오면**, 아래 명령으로 실제 경로를 찾아요.
+
+```bash
+find "$HOME" -type f -path '*/extensions/*/server-plugin/setup.mjs' 2>/dev/null
+```
+
+검색 결과의 **setup.mjs까지 포함한 전체 경로**를 복사하고, 위 `node` 명령의 따옴표 안 경로를 그 결과로 바꿔 실행해요. `node "찾은 전체 경로"` 모양이지만 **‘찾은 전체 경로’라는 글자를 그대로 입력하지 말고 실제 검색 결과로 바꿔 주세요.** 따옴표는 남겨요. 전체 경로를 쓰면 현재 폴더가 어디든 괜찮아요.
+
+여러 경로가 나오면 지금 사용하는 실리태번에 설치된 테마를 골라요. 아무 결과도 없으면 블루레몬에이드를 최신 버전으로 업데이트한 뒤 다시 찾아 주세요. 다른 환경에서도 실제 `setup.mjs` 전체 경로를 `node`로 실행하면 돼요. 테마가 실리태번 밖에 있을 때는 뒤에 SillyTavern 폴더 경로를 두 번째 인자로 넣을 수 있어요.
 
 설치기는 `plugins/blue-lemonade-zip`에 도우미를 복사하고 `config.yaml`의 `enableServerPlugins`를 켜요. 원래 설정·이전 도우미는 서버의 `.blue-lemonade-zip-setup`에 보관해요. 다른 서버 플러그인이 이미 들어 있는데 실행은 꺼져 있으면 자동 활성화하지 않고 설명을 보여줘요. 이 경우 다른 플러그인을 확인하고 설정을 직접 켠 다음 다시 실행하세요. 사용자 정의 config 파일로 서버를 실행 중이라면 그 파일의 `enableServerPlugins`도 직접 확인해야 해요.
 

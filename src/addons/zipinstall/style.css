@@ -1,4 +1,4 @@
-.blzi { --blzi-css-version:'1.0.0'; color:var(--salty-text, var(--SmartThemeBodyColor)); font-size:14px; line-height:1.65; min-width:0; text-align:left; }
+.blzi { --blzi-css-version:'1.0.1'; color:var(--salty-text, var(--SmartThemeBodyColor)); font-size:14px; line-height:1.65; min-width:0; text-align:left; }
 .blzi-dialog { width:min(640px, calc(100vw - 24px)); max-width:none; max-height:calc(100dvh - 24px); padding:0; border:1px solid var(--salty-line, var(--SmartThemeBorderColor)); border-radius:20px; background:var(--salty-bg, var(--SmartThemeBlurTintColor)); color:var(--salty-text, var(--SmartThemeBodyColor)); box-shadow:0 18px 60px color-mix(in srgb, var(--salty-text, black) 18%, transparent); }
 .blzi-dialog::backdrop { background:color-mix(in srgb, var(--salty-bg, black) 65%, transparent); backdrop-filter:blur(5px); }
 .blzi-dialog > header { display:flex; align-items:center; gap:10px; padding:16px 20px; border-bottom:1px solid var(--salty-line, var(--SmartThemeBorderColor)); }
@@ -31,3 +31,6 @@
 
 .blzi-dialog > header { position:sticky; top:0; z-index:2; background:var(--salty-bg, var(--SmartThemeBlurTintColor)); }
 .blzi-drop-small { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; padding:10px 14px; }
+
+.blzi pre { margin:10px 0; padding:12px; min-width:0; max-width:100%; white-space:pre-wrap; overflow-wrap:anywhere; border-radius:10px; background:var(--salty-bg, var(--SmartThemeBlurTintColor)); color:inherit; user-select:text; }
+.blzi h4 { margin:16px 0 8px; font-size:1em; color:inherit; }

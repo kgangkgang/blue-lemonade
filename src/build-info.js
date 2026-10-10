@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.8.7";
+export const BUILD_VERSION = "5.8.8";
 export const FILE_HASHES = {
   "index.js": "16597:c1d2cd7e:c67267bf",
-  "manifest.json": "365:71012a0d:0fa6f791",
+  "manifest.json": "365:87ff2e2c:565c18d1",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -245,8 +245,8 @@ export const FILE_HASHES = {
   "src/addons/tts/src/voices.js": "39816:273e9df9:376164af",
   "src/addons/tts/style.css": "29936:1080050c:d54dd681",
   "src/addons/tts/version.js": "36:d8b210e0:7434f96a",
-  "src/addons/zipinstall/index.js": "16919:f3f8c3e8:3f08b67b",
-  "src/addons/zipinstall/style.css": "4140:a3e8c74d:f52aab60",
+  "src/addons/zipinstall/index.js": "17839:e2db99c9:6eb5e435",
+  "src/addons/zipinstall/style.css": "4434:45c4a77b:00070446",
   "src/appearance-archive.js": "1287:215093f5:1c7f1dc7",
   "src/appearance-compare.js": "3140:831ffdf1:a1f78cb0",
   "src/apply.js": "60111:5ec6e83f:c2057eba",
@@ -328,7 +328,7 @@ export const FILE_HASHES = {
   "src/mes-fold.js": "15171:6c96c017:9e152087",
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/modal.js": "671:b74e0164:71228d7c",
-  "src/notice-data.js": "169579:049a06b4:aff7b624",
+  "src/notice-data.js": "169928:445bf6ff:20380cf2",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "1144:1da72451:b2e66e80",
@@ -396,5 +396,5 @@ export const FILE_HASHES = {
   "src/weather.js": "32976:f4fdcf09:3273a2b9",
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "31850:337f1677:b8ad9253",
-  "style.css": "1227549:a320d267:a95c03a2"
+  "style.css": "1227549:2d17adc4:e7334885"
 };

@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.8.7/blue-lemonade-5.8.7.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.8.8/blue-lemonade-5.8.8.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.8.7 · 최신 업데이트</summary>
+<summary>5.8.8 · 최신 업데이트</summary>
+
+- ZIP 설치의 Termux 준비 안내를 고쳤어요. 기본 설치 위치에서는 두 줄 명령을 통째로 실행하고, 파일을 못 찾으면 실제 경로를 검색해 바꿔 넣는 순서로 안내해요. 이미 도우미 준비를 마쳤다면 다시 설치할 필요는 없어요.
+
+[ZIP 설치 준비와 사용 안내](server-plugin/README.md)
+
+</details>
+
+<details>
+<summary>5.8.7 · TTS 효과음과 소리 대본</summary>
 
 - TTS 1.5.0에 효과음 47개와 소리 대본 편집을 추가했어요. 메시지의 소리 대본 버튼에서 대사·효과음·쉼을 배치하고 목소리·감정·음량을 줄마다 조절할 수 있어요.
 - 효과음을 대사와 겹치거나 반복하고, 필요한 줄만 다시 생성하거나 전체 소리를 WAV로 저장할 수 있어요. 직접 추가한 효과음은 팩으로 옮길 수 있고, 어려운 항목은 ?에서 사용법을 볼 수 있어요.

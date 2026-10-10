@@ -1,7 +1,8 @@
 import { getSettings } from '../../settings.js';
 import { addonsEnabled } from '../../usage-mode.js';
 import { verifyAddonCss } from '../../addon-files-check.js';
-const VERSION = '1.0.0';
+const VERSION = '1.0.1';
+const HELPER_VERSION = '1.0.0';
 const API = '/api/plugins/blue-lemonade-zip';
 const views = new Set();
 const state = { connection: null, busy: false, message: '', plan: null, preview: null, result: null, backups: null, folder: '', choice: '', restore: null };
@@ -42,7 +43,7 @@ async function work(task) {
     }
 }
 const check = () => work(async () => {
-    try { const status = await request('/status'); if (status.version !== VERSION) throw Error('서버 도우미 버전이 달라요. 새 준비 명령을 실행하고 서버를 다시 켜 주세요.'); state.connection = true; state.message = '준비됐어요. ZIP을 골라 주세요.'; }
+    try { const status = await request('/status'); if (status.version !== HELPER_VERSION) throw Error('서버 도우미 버전이 달라요. 새 준비 명령을 실행하고 서버를 다시 켜 주세요.'); state.connection = true; state.message = '준비됐어요. ZIP을 골라 주세요.'; }
     catch (e) { state.connection = e.status === 403 ? 'denied' : false; throw e; }
 });
 async function choose(file) {
@@ -59,7 +60,8 @@ async function choose(file) {
 }
 function markup() {
     const disabled = state.busy ? 'disabled' : '', p = state.plan, preview = state.preview;
-    const setup = `<section class="blzi-card"><h3>처음 한 번, 서버 도우미 준비 ${help('setup', '서버 도우미')}</h3><p><b>PC:</b> 서버를 끄고 테마 폴더 안의 <code>server-plugin/setup-windows.cmd</code>를 두 번 누른 뒤 서버를 다시 켜요.</p><details><summary>Termux · 명령으로 준비하기</summary><ol><li>실리태번 서버를 종료해요.</li><li>SillyTavern 폴더에서 터미널을 열어요.</li><li>아래 명령의 테마 경로를 실제 설치 경로로 바꿔 실행해요.</li><li>서버를 다시 켜고 연결을 확인해요.</li></ol><p><code>node "data/default-user/extensions/테마폴더/server-plugin/setup.mjs"</code></p><p class="blzi-muted">폴더 이름·계정이 다르면 실제 경로로 바꿔 주세요. 다른 서버 플러그인이 있으면 먼저 확인하도록 안내해요.</p></details><div class="blzi-actions"><a href="${new URL('../../../server-plugin/README.md', import.meta.url).href}" target="_blank" rel="noopener">자세한 준비 안내</a></div></section>`;
+    const setup = `<section class="blzi-card"><h3>처음 한 번, 서버 도우미 준비 ${help('setup', '서버 도우미')}</h3><p><b>PC:</b> 서버를 끄고 테마 폴더 안의 <code>server-plugin/setup-windows.cmd</code>를 두 번 누른 뒤 서버를 다시 켜요.</p><details><summary>Termux · 명령으로 준비하기</summary><p>실리태번 서버를 종료한 뒤, 아래 순서대로 진행해요.</p><h4>1. 먼저 이 두 줄을 통째로 실행해요</h4><p>홈 폴더에 SillyTavern을 기본 이름으로 설치한 경우예요.</p><pre><code>cd ~/SillyTavern &&
+node "data/default-user/extensions/blue-lemonade/server-plugin/setup.mjs"</code></pre><p><b>“ZIP 도우미를 준비했어요”</b>가 나오면 준비 끝이에요. 서버를 다시 켜고 <b>연결 확인</b>을 눌러요.</p><h4>2. 폴더·파일을 못 찾는다고 나오면</h4><p>아래 명령으로 실제 설치 경로를 찾아요.</p><pre><code>find "$HOME" -type f -path '*/extensions/*/server-plugin/setup.mjs' 2&gt;/dev/null</code></pre><p>검색 결과로 나온 <b>setup.mjs까지의 전체 경로</b>를 복사해요. 위 node 명령의 따옴표 안 경로를 그 결과로 바꿔 실행해요. 예를 들어 <code>node "찾은 전체 경로"</code>처럼 입력하되, <b>‘찾은 전체 경로’라는 글자는 실제 결과로 바꿔요.</b> 따옴표는 남겨 두세요. 전체 경로를 쓰면 현재 폴더가 어디든 괜찮아요.</p><p class="blzi-muted">여러 경로가 나오면 지금 사용하는 실리태번의 테마를 골라요. 아무것도 나오지 않으면 테마를 최신 버전으로 업데이트한 뒤 다시 찾아요. 다른 서버 플러그인이 있으면 먼저 확인하도록 안내해요.</p></details><div class="blzi-actions"><a href="${new URL('../../../server-plugin/README.md', import.meta.url).href}" target="_blank" rel="noopener">자세한 준비 안내</a></div></section>`;
     return `<h3><i class="fa-solid fa-file-zipper" aria-hidden="true"></i> ZIP으로 간편 설치 ${help('start', 'ZIP 설치')}</h3><p class="blzi-muted">파일 고르기 → 설치 내용 확인 → 적용</p><div class="blzi-status" role="status" aria-live="polite">${esc(state.message || '서버 도우미 연결을 확인해 주세요.')}</div>
         ${state.connection !== true ? `${state.connection === false ? setup : ''}<button type="button" data-action="check" ${disabled}>연결 확인</button>` : ''}
         ${state.connection === true ? `<section class="blzi-card blzi-drop ${p ? 'blzi-drop-small' : ''}" data-drop>${p ? '<span>다른 파일을 고르려면</span>' : '<h3>확장 ZIP을 여기에</h3><p class="blzi-muted">PC에서는 끌어 놓아도 돼요 · 최대 64MB</p>'}<input type="file" accept=".zip,application/zip" hidden data-file><button type="button" class="blzi-primary" data-action="pick" ${disabled}>ZIP 고르기</button></section>` : ''}
