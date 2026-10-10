@@ -220,6 +220,8 @@ function jumpToSetting(root, path) {
     store('salty_tab',ui.tab); store('salty_subs',JSON.stringify(ui.subs)); refreshPanels();
     const controls = [...root.querySelectorAll('[data-range],[data-num],[data-path],[data-toggle],[data-color-path],[data-time-path],toolcool-color-picker[data-token]')];
     const found = controls.find(el => [el.dataset.range,el.dataset.num,el.dataset.path,el.dataset.toggle,el.dataset.colorPath,el.dataset.timePath].includes(path) || path.startsWith('colorOverrides.') && el.dataset.token === path.split('.')[2]);
+    // 5.8.3 이름·시간 탭은 프로필 모양에 따라 다른 칸만 그린다 — 못 찾으면 왜인지 한 줄
+    if (!found && /^(?:(?:profile|userProfile)\.(?:name|header|meta|button)|fonts\.(?:name|userName)(?:\.|$))/.test(path)) toastr.info(/nameRowAlign$/.test(path) ? '작은 프로필 · 프로필 없음일 때 보여요' : '상단 큰 프로필일 때 보여요', '이름·시간');
     const anchor = path.includes('.decor') ? '장식 액자' : path.includes('.edgeShadow') ? '그림자' : path.includes('.edge') ? '테두리' : path.startsWith('shadow.') ? '글자 그림자' : path.startsWith('outline.') ? '글자 외곽선' : path.startsWith('chat.weather') ? '날씨' : null;
     const group = anchor ? [...root.querySelectorAll('[data-search-anchor]')].find(el => el.dataset.searchAnchor === anchor) : null;
     const target = found?.closest('.salty-slider,.salty-row,.salty-stack') || group || root.querySelector('.salty-sec');
@@ -1303,7 +1305,11 @@ function decorControls(prefix, o) {
 function nameControls(s, prefix = 'profile') {
     const p = s[prefix];
     const range = (key, label, step = 1) => slider(`${prefix}.${key}`, label, ...PROFILE_RANGE[key], step);
-    return `${chatPreview()}<p class="salty-note">${prefix === 'userProfile' ? '내 메시지' : '캐릭터 메시지'}의 상단 큰 프로필 이름과 시간·버튼 배치예요. 프로필 탭에서 큰 사진을 켜 주세요.</p>
+    // 5.8.3 작은 프로필 · 프로필 없음: 이름 글자 · 배치 규칙은 큰 프로필 전용이라 안 먹었다 → 먹는 정보 정렬만 (따로 기억 nameRowAlign, css/62-name-row-align.css)
+    if (p.mode !== 'banner') return `${chatPreview()}<div class="salty-group">
+        ${stack('정보 정렬', seg(`${prefix}.nameRowAlign`, [['left', '왼쪽'], ['center', '가운데'], ['right', '오른쪽']], 'left'), '이름·시간과 메시지 번호·생성 정보를 함께 맞춰요')}
+    </div>${prefix === 'userProfile' && p.mode === 'small' ? '<p class="salty-note">번호·시간 줄은 내 프로필의 「번호 · 시간 줄 위치」가 사진 따라일 때 함께 움직여요.</p>' : ''}<p class="salty-note">이름 글자 · 배치는 상단 큰 프로필에서 바꿔요.</p>`;
+    return `${chatPreview()}<p class="salty-note">${prefix === 'userProfile' ? '내 메시지' : '캐릭터 메시지'}의 상단 큰 프로필 이름과 시간·버튼 배치예요.</p>
     ${fontBlock(s, prefix === 'userProfile' ? 'userName' : 'name')}${cap('이름 글자')}<div class="salty-group">
         ${range('nameSize', '크기 (px)')}${range('nameWeight', '굵기', 50)}${range('nameSpacing', '자간 (1/100em)')}${range('nameHeight', '줄 높이', 0.1)}
         ${stack('정보 정렬', seg(`${prefix}.nameAlign`, [['left', '왼쪽'], ['center', '가운데'], ['right', '오른쪽']]), '이름·시간·버튼과 메시지 번호·생성 정보를 함께 맞춰요')}

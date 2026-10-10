@@ -1,0 +1,131 @@
+/* ===== css/62-name-row-align.css =====
+   5.8.3 정보 정렬 — 큰 프로필이 아닐 때(작은 프로필 · 프로필 없음). 채팅 › 캐릭터 이름·시간 / 내 이름·시간 › 정보 정렬 (profile/userProfile.nameRowAlign).
+   전에는 정보 정렬이 상단 큰 프로필(40 · 42 · 43)에만 먹어서 메신저 모양(내 말풍선 = 오른쪽)에서 오른쪽을 골라도 아무 일이 없었다.
+   apply.js 가 왼쪽(기본)이 아닐 때만 body 에 salty-namerow-<가운데|오른쪽>(캐릭터) · salty-user-namerow-<…>(내 메시지)를 붙인다
+   → 기본값이면 이 파일은 아무것도 안 바꾼다. 큰 프로필이면 클래스가 안 붙는다 (그쪽은 nameAlign 그대로).
+   · 이름 줄: 오른쪽 = 이름 · 시간(· 모델 아이콘)을 버튼(⋯ · 연필, 그대로 줄 끝) 바로 옆으로. 가운데 = 이름 · 시간 · 버튼을 한 묶음으로 줄 가운데.
+   · 메타 줄(#번호 · 걸린 시간 · 토큰): 05-chat 격자의 남는 칸(1fr)을 메타 앞으로 옮긴다 — 세 칸 뒤 --bl-meta-trail 은 카드 안쪽 여백.
+     내 말풍선(프로필 없음)은 메타가 한 줄 묶음(06-chat-text)이라 묶음 안에서 끝/가운데로.
+     작은 사진은 '번호 · 시간 줄 위치'(metaSide)가 '사진 따라'일 때 정보 정렬을 따른다 (apply.js → salty-user-meta-right · -center).
+   · 실리태번 안내(.smallSysMes) · 해설(type=narrator) · 시스템 글은 그대로 — 숨긴 메시지(type 빈 값)는 주인 메시지처럼. */
+
+/* 이름 줄 */
+body.salty.salty-namerow-right :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])) .ch_name > .flex1,
+body.salty.salty-namerow-right :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])) .ch_name > .flex1 > .alignItemsBaseline,
+body.salty.salty-user-namerow-right :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not(.smallSysMes) .ch_name > .flex1,
+body.salty.salty-user-namerow-right :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not(.smallSysMes) .ch_name > .flex1 > .alignItemsBaseline {
+  justify-content: flex-end;
+  text-align: right;
+}
+body.salty.salty-namerow-center :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])) .ch_name > .flex1,
+body.salty.salty-namerow-center :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])) .ch_name > .flex1 > .alignItemsBaseline,
+body.salty.salty-user-namerow-center :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not(.smallSysMes) .ch_name > .flex1,
+body.salty.salty-user-namerow-center :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not(.smallSysMes) .ch_name > .flex1 > .alignItemsBaseline {
+  justify-content: center;
+  text-align: center;
+}
+/* 가운데는 이름 · 시간 · 버튼을 한 묶음으로 줄 가운데에 — 메타 줄과 같은 가운데 선 (버튼만 줄 끝에 두면 두 줄의 가운데가 버튼 폭의 절반만큼 어긋났다: 412px 에서 56~68px) */
+body.salty.salty-namerow-center :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])) .ch_name,
+body.salty.salty-user-namerow-center :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not(.smallSysMes) .ch_name {
+  justify-content: center;
+}
+body.salty.salty-namerow-center :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])) .ch_name > .flex1,
+body.salty.salty-user-namerow-center :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not(.smallSysMes) .ch_name > .flex1 {
+  flex: 0 1 auto;
+}
+
+/* 메타 줄 — 05-chat 격자(체크칸 · 아바타 · 들여쓰기 · 메타 세 칸 · 나머지): 캐릭터, 그리고 내 메시지 중 글자만 · 카드 · 테이블(프로필 없음) */
+body.salty.salty-namerow-right:not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])),
+body.salty.salty-user-namerow-right:not(.salty-user-bubble, .salty-user-profile-custom):not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not(.smallSysMes) {
+  grid-template-columns: auto auto var(--salty-meta-inset, 0px) minmax(0, 1fr) auto auto auto var(--bl-meta-trail, 0px);
+}
+body.salty.salty-namerow-center:not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])),
+body.salty.salty-user-namerow-center:not(.salty-user-bubble, .salty-user-profile-custom):not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not(.smallSysMes) {
+  grid-template-columns: auto auto var(--salty-meta-inset, 0px) minmax(0, 1fr) auto auto auto minmax(0, 1fr) var(--bl-meta-trail, 0px);
+}
+body.salty:is(.salty-namerow-right, .salty-namerow-center):not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])) > .mesAvatarWrapper > .mesIDDisplay,
+body.salty:is(.salty-user-namerow-right, .salty-user-namerow-center):not(.salty-user-bubble, .salty-user-profile-custom):not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not(.smallSysMes) > .mesAvatarWrapper > .mesIDDisplay {
+  grid-area: 1 / 5;
+}
+body.salty:is(.salty-namerow-right, .salty-namerow-center):not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])) > .mesAvatarWrapper > .mes_timer,
+body.salty:is(.salty-user-namerow-right, .salty-user-namerow-center):not(.salty-user-bubble, .salty-user-profile-custom):not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not(.smallSysMes) > .mesAvatarWrapper > .mes_timer {
+  grid-area: 1 / 6;
+}
+body.salty:is(.salty-namerow-right, .salty-namerow-center):not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])) > .mesAvatarWrapper > .tokenCounterDisplay,
+body.salty:is(.salty-user-namerow-right, .salty-user-namerow-center):not(.salty-user-bubble, .salty-user-profile-custom):not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not(.smallSysMes) > .mesAvatarWrapper > .tokenCounterDisplay {
+  grid-area: 1 / 7;
+}
+/* 들여쓰기(--salty-meta-inset)를 글 시작에 맞춘다 — 05-chat 은 실리태번 '아바타 숨김'만 보고 12px 를 정해서,
+   프로필 모드가 사진을 따로 숨기거나(없음) 보이면(작은 사진 + 실리태번 아바타 숨김) 메타 줄이 글보다 12px 안/밖에서 시작했다 → 가운데가 6px 어긋났다.
+   (왼쪽 = 예전 모양은 그대로 두려고 정보 정렬을 고른 때만 · 40/43 처럼 숨긴 메시지(is_system)는 빼고) */
+body.salty.salty-profile-mode-small:is(.salty-namerow-right, .salty-namerow-center) :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes, [type="narrator"]) {
+  --salty-meta-inset: 12px;
+}
+body.salty.salty-profile-mode-none:is(.salty-namerow-right, .salty-namerow-center) :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes, [type="narrator"]),
+body.salty.salty-user-profile-mode-none:is(.salty-user-table, .salty-user-plain):is(.salty-user-namerow-right, .salty-user-namerow-center) :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) {
+  --salty-meta-inset: 0px;
+}
+/* 카드: 메타가 카드 면 위라 오른쪽에도 카드 안쪽 여백(16) */
+body.salty.salty-user-card:is(.salty-user-namerow-right, .salty-user-namerow-center) :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"] {
+  --bl-meta-trail: 16px;
+}
+
+/* 메타 줄 — 내 말풍선(프로필 없음): 메타는 말풍선 칸의 한 줄 묶음 */
+body.salty.salty-user-bubble.salty-user-namerow-right:not(.salty-user-profile-custom):not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not(.smallSysMes) > .mesAvatarWrapper {
+  justify-content: flex-end;
+}
+body.salty.salty-user-bubble.salty-user-namerow-center:not(.salty-user-profile-custom):not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not(.smallSysMes) > .mesAvatarWrapper {
+  justify-content: center;
+}
+
+/* 메타 줄 — 작은 사진 · 가운데 (오른쪽은 43-user-profile 의 salty-user-meta-right 그대로) */
+body.salty.salty-user-meta-center.salty-user-profile-mode-small :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) { grid-template-columns: 34px 12px minmax(0, 1fr) auto auto auto minmax(0, 1fr) !important; }
+body.salty.salty-user-meta-center.salty-user-profile-mode-small :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mesAvatarWrapper > .mesIDDisplay { grid-area: 1 / 4 !important; }
+body.salty.salty-user-meta-center.salty-user-profile-mode-small :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mesAvatarWrapper > .mes_timer { grid-area: 1 / 5 !important; }
+body.salty.salty-user-meta-center.salty-user-profile-mode-small :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mesAvatarWrapper > .tokenCounterDisplay { grid-area: 1 / 6 !important; }
+body.salty.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) { grid-template-columns: minmax(0, 1fr) auto auto auto minmax(0, 1fr) 12px 34px !important; }
+body.salty.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mesAvatarWrapper > .avatar { grid-area: 2 / 7 !important; }
+body.salty.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mes_block { grid-area: 2 / 1 / 3 / 6 !important; }
+body.salty.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mesAvatarWrapper > .mesIDDisplay { grid-area: 1 / 2 !important; }
+body.salty.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mesAvatarWrapper > .mes_timer { grid-area: 1 / 3 !important; }
+body.salty.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mesAvatarWrapper > .tokenCounterDisplay { grid-area: 1 / 4 !important; }
+body.salty.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > :is(.for_checkbox, .del_checkbox) { grid-area: 1 / 7 !important; }
+/* 작은 사진 + 내 말풍선: 말풍선은 사진 옆 칸의 오른쪽 86%(06-chat-text · 43-user-profile)라 칸 가운데에 두면 메타 줄이 말풍선 가운데보다 칸 폭의 7% 왼쪽(412px 에서 23.5px)
+   → 앞에 칸 폭의 14% 빈 칸을 두어 말풍선 가운데에. 고치는 중(편집 칸)에는 말풍선이 칸 전체라 위 규칙 그대로 */
+body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-mode-small :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not(:has(.edit_textarea)) { grid-template-columns: 34px 12px calc((100% - 46px) * .14) minmax(0, 1fr) auto auto auto minmax(0, 1fr) !important; }
+body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-mode-small :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not(:has(.edit_textarea)) > .mesAvatarWrapper > .mesIDDisplay { grid-area: 1 / 5 !important; }
+body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-mode-small :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not(:has(.edit_textarea)) > .mesAvatarWrapper > .mes_timer { grid-area: 1 / 6 !important; }
+body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-mode-small :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not(:has(.edit_textarea)) > .mesAvatarWrapper > .tokenCounterDisplay { grid-area: 1 / 7 !important; }
+body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not(:has(.edit_textarea)) { grid-template-columns: calc((100% - 46px) * .14) minmax(0, 1fr) auto auto auto minmax(0, 1fr) 12px 34px !important; }
+body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not(:has(.edit_textarea)) > .mesAvatarWrapper > .avatar { grid-area: 2 / 8 !important; }
+body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not(:has(.edit_textarea)) > .mes_block { grid-area: 2 / 1 / 3 / 7 !important; }
+body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not(:has(.edit_textarea)) > .mesAvatarWrapper > .mesIDDisplay { grid-area: 1 / 3 !important; }
+body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not(:has(.edit_textarea)) > .mesAvatarWrapper > .mes_timer { grid-area: 1 / 4 !important; }
+body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not(:has(.edit_textarea)) > .mesAvatarWrapper > .tokenCounterDisplay { grid-area: 1 / 5 !important; }
+body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not(:has(.edit_textarea)) > :is(.for_checkbox, .del_checkbox) { grid-area: 1 / 8 !important; }
+/* 숨긴 내 메시지(눈 끔) + 작은 사진: 43-user-profile 의 격자는 is_system 을 빼서 이 메시지는 05-chat 기본 격자로 돌아간다 → 그 격자에서도 메타 줄을 맞춘다 */
+body.salty.salty-user-namerow-right.salty-user-profile-custom:not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"][is_system="true"]:not(.smallSysMes) {
+  grid-template-columns: auto auto var(--salty-meta-inset, 0px) minmax(0, 1fr) auto auto auto var(--bl-meta-trail, 0px);
+}
+body.salty.salty-user-namerow-center.salty-user-profile-custom:not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"][is_system="true"]:not(.smallSysMes) {
+  grid-template-columns: auto auto var(--salty-meta-inset, 0px) minmax(0, 1fr) auto auto auto minmax(0, 1fr) var(--bl-meta-trail, 0px);
+}
+body.salty:is(.salty-user-namerow-right, .salty-user-namerow-center).salty-user-profile-custom:not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"][is_system="true"]:not(.smallSysMes) > .mesAvatarWrapper > .mesIDDisplay {
+  grid-area: 1 / 5;
+}
+body.salty:is(.salty-user-namerow-right, .salty-user-namerow-center).salty-user-profile-custom:not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"][is_system="true"]:not(.smallSysMes) > .mesAvatarWrapper > .mes_timer {
+  grid-area: 1 / 6;
+}
+body.salty:is(.salty-user-namerow-right, .salty-user-namerow-center).salty-user-profile-custom:not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"][is_system="true"]:not(.smallSysMes) > .mesAvatarWrapper > .tokenCounterDisplay {
+  grid-area: 1 / 7;
+}
+
+/* 늘 펼쳐 두기(실리태번 설정): 버튼이 이름 줄 아래 한 줄 — 05-chat 은 왼쪽부터 늘어놓으니 그 줄도 같은 쪽으로 */
+body.salty.expandMessageActions.salty-namerow-right :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])) .mes_buttons,
+body.salty.expandMessageActions.salty-user-namerow-right :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not(.smallSysMes) .mes_buttons {
+  justify-content: flex-end;
+}
+body.salty.expandMessageActions.salty-namerow-center :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])) .mes_buttons,
+body.salty.expandMessageActions.salty-user-namerow-center :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not(.smallSysMes) .mes_buttons {
+  justify-content: center;
+}

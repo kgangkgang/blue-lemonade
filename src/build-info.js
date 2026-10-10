@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.8.2";
+export const BUILD_VERSION = "5.8.3";
 export const FILE_HASHES = {
   "index.js": "16597:c1d2cd7e:c67267bf",
-  "manifest.json": "365:48169e3a:f735dedf",
+  "manifest.json": "365:d38352c9:a4fa33fa",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -191,7 +191,7 @@ export const FILE_HASHES = {
   "src/addons/tts/version.js": "36:447dd7c5:36f396a8",
   "src/appearance-archive.js": "1287:215093f5:1c7f1dc7",
   "src/appearance-compare.js": "3140:831ffdf1:a1f78cb0",
-  "src/apply.js": "59313:b59d58f6:cba72d48",
+  "src/apply.js": "60111:5ec6e83f:c2057eba",
   "src/assets.js": "22504:71811062:8a1645c6",
   "src/assist/core.js": "1885:5a4f9626:2f307c5d",
   "src/assist/diagnostics.js": "4778:b76a9825:f6e0071b",
@@ -237,7 +237,7 @@ export const FILE_HASHES = {
   "src/dem-selection.js": "2216:791047d5:fd7f3486",
   "src/demskin.js": "2167:c0308caa:b58b2d08",
   "src/device-layouts.js": "2619:4a555670:56c3f6ec",
-  "src/diagnose.js": "4687:6ba54361:b019451b",
+  "src/diagnose.js": "4773:d70f8fa9:1ca8c5ef",
   "src/dialogue-span.js": "15914:560ea289:e371ff99",
   "src/dialogue-tildes.js": "1682:2c06cba3:eb7ffb2e",
   "src/draft.js": "10237:f711f4b4:ba76e769",
@@ -270,14 +270,14 @@ export const FILE_HASHES = {
   "src/mes-fold.js": "15171:6c96c017:9e152087",
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/modal.js": "671:b74e0164:71228d7c",
-  "src/notice-data.js": "166599:6cc9e0fd:8e748425",
+  "src/notice-data.js": "167271:4699c157:a713b9c7",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "1144:1da72451:b2e66e80",
   "src/numcomma.js": "28330:b8ff1af6:e41701dc",
   "src/onehand.js": "3884:55946dd4:4f42d7a8",
   "src/palettes.js": "33894:d739cf1f:f0700eaa",
-  "src/panel.js": "226922:00285aac:3f3666cd",
+  "src/panel.js": "228088:a894738a:3ed89387",
   "src/preset-sharing.js": "10609:0e2cdbdc:4e3bc6e5",
   "src/preview-view.js": "12377:1b6c4956:85b171b8",
   "src/profile-clip.js": "4837:9b817c36:29f305b7",
@@ -310,9 +310,9 @@ export const FILE_HASHES = {
   "src/settings-editor.js": "8589:6aa54ddc:6690b32a",
   "src/settings-favorites.js": "3202:43eff96b:1a42f5d8",
   "src/settings-history.js": "3491:c0f06c71:b7a64e71",
-  "src/settings-labels.js": "34192:27e84749:d76e273f",
-  "src/settings-search.js": "27363:96bcb117:c1e353b0",
-  "src/settings.js": "62900:c0dd4b41:0ab4d0a8",
+  "src/settings-labels.js": "34716:1c1dfb48:050331dd",
+  "src/settings-search.js": "27614:99237b03:271d41db",
+  "src/settings.js": "63922:fa601283:6263d4f2",
   "src/splash.js": "19344:c97fc557:9dcea6a3",
   "src/stream-follow.js": "3886:71695048:ab2a4e3d",
   "src/streamfade.js": "14136:0e2127b6:06593cf1",
@@ -338,5 +338,5 @@ export const FILE_HASHES = {
   "src/weather.js": "32976:f4fdcf09:3273a2b9",
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "31850:337f1677:b8ad9253",
-  "style.css": "1207583:4b177f78:1dc9e74e"
+  "style.css": "1224751:670887d6:801cf861"
 };

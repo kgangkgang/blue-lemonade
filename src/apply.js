@@ -714,7 +714,15 @@ export function applyAll() {
         // 자동: 말풍선이면 오른쪽(메신저처럼 말풍선 옆에 붙는다), 나머지 모양은 왼쪽
         const userSide = s.userProfile.side === 'auto' ? (s.chat.user === 'bubble' ? 'right' : 'left') : s.userProfile.side;
         want.add(`salty-user-profile-side-${userSide}`);
-        if ((s.userProfile.metaSide === 'auto' ? userSide : s.userProfile.metaSide) === 'right') want.add('salty-user-meta-right'); // 번호 · 시간 · 토큰 줄도 오른쪽 끝에
+        // 5.8.3 정보 정렬 — 큰 프로필이 아닐 때(작은 · 없음)는 nameRowAlign (css/62-name-row-align.css). 왼쪽(기본)이면 클래스 없음 = 예전 모양 그대로
+        const charRow = s.profile.mode === 'banner' ? 'left' : s.profile.nameRowAlign;
+        const userRow = s.userProfile.mode === 'banner' ? 'left' : s.userProfile.nameRowAlign;
+        if (charRow !== 'left') want.add(`salty-namerow-${charRow}`);
+        if (userRow !== 'left') want.add(`salty-user-namerow-${userRow}`);
+        // 번호 · 시간 · 토큰 줄 (작은 사진): '사진 따라'면 정보 정렬을 고른 경우 그 쪽, 아니면 사진 쪽
+        const metaSide = s.userProfile.metaSide === 'auto' ? (userRow !== 'left' ? userRow : userSide) : s.userProfile.metaSide;
+        if (metaSide === 'right') want.add('salty-user-meta-right'); // 번호 · 시간 · 토큰 줄도 오른쪽 끝에
+        else if (metaSide === 'center') want.add('salty-user-meta-center');
         if (s.userProfile.mode === 'banner') { want.add('salty-user-profile-banner'); want.add(`salty-user-profile-layout-${s.userProfile.layout}`); want.add(`salty-user-profile-sizing-${s.userProfile.sizing}`); want.add(`salty-user-profile-${s.userProfile.headerLayout}`); }
         if (s.profile.mode === 'banner') { want.add('salty-profile-banner'); want.add(`salty-profile-layout-${s.profile.layout}`); want.add(`salty-profile-sizing-${s.profile.sizing}`); want.add(`salty-profile-${s.profile.headerLayout}`); }
         if (s.chat.qrScroll === 'y') want.add('salty-qr-y'); // 3.5.4 퀵 리플라이 세로 스크롤 (css/35-qr-bar.css)

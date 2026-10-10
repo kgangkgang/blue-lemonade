@@ -110,7 +110,7 @@ export const DEFAULTS = {
     charStyles: {},
     activeStyle: null,
     baseStyle: null,
-    profile: { decor: { ...DECOR_DEFAULTS }, nameSize: 24, nameWeight: 650, nameSpacing: 0, nameHeight: 1.3, nameColor: '#91a5ba', nameAuto: true, nameAlign: 'center', nameItalic: false, nameUnderline: false, headerLayout: 'below-two', headerGap: 8, metaSize: 12, metaOpacity: 70, buttonGap: 8, nameOutline: 0, nameOutlineColor: '#000000', nameShadow: false, nameShadowBlur: 4, nameShadowY: 1, nameShadowAlpha: 25, ...FRAME_DEFAULTS, mode: 'small', layout: 'column', sizing: 'pixels', screenHeight: 45, maxHeight: 70, visibleHeight: 100, width: 100, height: 320, fit: 'cover', positionX: 50, positionY: 35, radius: 18, gap: 20, blur: 0, opacity: 100, fadeY: 0, fadeX: 0, original: true },
+    profile: { decor: { ...DECOR_DEFAULTS }, nameSize: 24, nameWeight: 650, nameSpacing: 0, nameHeight: 1.3, nameColor: '#91a5ba', nameAuto: true, nameAlign: 'center', nameRowAlign: 'left', nameItalic: false, nameUnderline: false, headerLayout: 'below-two', headerGap: 8, metaSize: 12, metaOpacity: 70, buttonGap: 8, nameOutline: 0, nameOutlineColor: '#000000', nameShadow: false, nameShadowBlur: 4, nameShadowY: 1, nameShadowAlpha: 25, ...FRAME_DEFAULTS, mode: 'small', layout: 'column', sizing: 'pixels', screenHeight: 45, maxHeight: 70, visibleHeight: 100, width: 100, height: 320, fit: 'cover', positionX: 50, positionY: 35, radius: 18, gap: 20, blur: 0, opacity: 100, fadeY: 0, fadeX: 0, original: true },
     image: { decor: { ...DECOR_DEFAULTS }, ...FRAME_DEFAULTS, layout: 'bleed', shape: 'rect', fit: 'ratio', maxh: 78, height: 40, blendWhite: true, cutoutSame: true, fade: 'soft', fadeY: 10, fadeX: 0, angle: 3, radius: 14, cornerCut: 10, scratchAmount: 45, scratchDirection: 'straight', scratchTexture: 'sharp', edge: 'none', edgeAuto: true, edgeSideTop: true, edgeSideRight: true, edgeSideBottom: true, edgeSideLeft: true, edgeThick: 1, edgeAlpha: 30, edgeGlow: 0, mask: '', maskFit: 'stretch', masks: [], maskId: '' }, // shape: rect | custom(mask = 투명 PNG data URL, maskFit: stretch | contain) — angle · cornerCut · scratch* 는 뺀 모양의 옛 값(CSS 는 남아 있음) · fit(크기): ratio 비율 유지(maxh = 최대 높이) | fixed 높이 맞춤(height = 높이), 둘 다 화면 높이 % · fade(흐림): off | soft | medium | strong · angle: 대각선 기울기(도)
 };
 
@@ -533,6 +533,8 @@ export function getSettings() {
     // 한 번 돈 뒤에는 칸이 생기고(deus) 모드가 정해져(userProfile) 다시 돌지 않는다
     const firstDeus = ext[KEY].deus === undefined;
     const migrateUserMode = !ext[KEY].userProfile || ext[KEY].userProfile.mode === 'inherit';
+    // 5.8.3 정보 정렬(작은 프로필 · 없음)을 처음 보는 설정 — 아래 fill() 이 칸을 채우기 전에 본다 (옮겨 받기는 프로필 정리에서)
+    const rowFresh = Object.fromEntries(['profile', 'userProfile'].map(owner => [owner, isObj(ext[KEY][owner]) && ext[KEY][owner].nameRowAlign === undefined]));
     // 5.1.2: 칸 자체가 깨진 값(fonts: "pretendard" · colorOverrides: "salt" …)이면 그 칸을 기본값으로 — fill() 은 있는 값을 안 건드려 아래 정리 · apply 가 죽었다 (매 시작마다)
     for (const [key, value] of Object.entries(DEFAULTS)) {
         if (isObj(value) ? !isObj(ext[KEY][key]) : Array.isArray(value) ? !Array.isArray(ext[KEY][key]) : false) ext[KEY][key] = structuredClone(value);
@@ -573,12 +575,16 @@ export function getSettings() {
         for (const key of ['nameAuto', 'nameItalic', 'nameUnderline', 'nameShadow']) s[owner][key] = flag(s[owner][key], DEFAULTS[owner][key]);
         for (const key of ['nameColor', 'nameOutlineColor']) if (!/^#[a-f\d]{6}$/i.test(s[owner][key])) s[owner][key] = DEFAULTS[owner][key];
         if (!['left', 'center', 'right'].includes(s[owner].nameAlign)) s[owner].nameAlign = 'center';
+        if (!['left', 'center', 'right'].includes(s[owner].nameRowAlign)) s[owner].nameRowAlign = 'left'; // 5.8.3 큰 프로필이 아닐 때(작은 · 없음)의 정보 정렬 — 기본 왼쪽 = 예전 모양
         if (!['side', 'below-one', 'below-two'].includes(s[owner].headerLayout)) s[owner].headerLayout = 'below-two';
         if (owner === 'profile' && s[owner].modeVersion !== 1) {
             if (s[owner].mode === 'small' && SillyTavern.getContext().powerUserSettings?.hideChatAvatars_enabled) s[owner].mode = 'none';
             s[owner].modeVersion = 1;
         }
         if (!['none', 'small', 'banner'].includes(s[owner].mode)) s[owner].mode = DEFAULTS[owner].mode;
+        // 5.8.3: 5.8.2 까지는 큰 프로필이 아니면 정보 정렬이 안 먹었다 — 그때 '오른쪽'을 골라 둔 사람(기본은 가운데)은 그 뜻 그대로 옮긴다.
+        // 폰 · PC 배치 따로면 nameAlign 이 다른 기기의 큰 프로필 것일 수 있어 건너뛴다
+        if (rowFresh[owner] && s[owner].mode !== 'banner' && !s.deviceLayouts?.on && s[owner].nameAlign === 'right') s[owner].nameRowAlign = 'right';
         if (owner === 'userProfile' && !['auto', 'left', 'right'].includes(s[owner].side)) s[owner].side = 'auto';
         if (owner === 'userProfile' && !['auto', 'left', 'right'].includes(s[owner].metaSide)) s[owner].metaSide = 'auto'; // 번호 · 시간 · 토큰 줄 (auto = 사진을 따라감)
         if (!['cover', 'contain'].includes(s[owner].fit)) s[owner].fit = 'cover';

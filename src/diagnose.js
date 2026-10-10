@@ -44,7 +44,7 @@ export async function buildDiagnosis() {
     const lines = [
         `블루 레몬에이드 ${currentVersion() || '?'} · 실리태번 ${stVersion} · ${short(navigator.userAgent)} · ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`,
         `화면 ${window.innerWidth}×${window.innerHeight} @${devicePixelRatio} ${window.innerWidth < window.innerHeight ? '세로' : '가로'} · 실리태번 표시: ${flags.join(' ') || '기본'} · 언어 ${ctx.powerUserSettings?.ui_language || navigator.language}`,
-        `테마: 팔레트 ${s.palette}${s.customName ? `(${s.customName})` : ''} · 내 메시지 ${s.chat?.user} · 이름 줄 ${s.chat?.header} · 아이콘 ${s.chat?.icons} · 프로필 ${s.profile?.mode}/${s.profile?.headerLayout}/${s.profile?.nameAlign} · 내 프로필 ${s.userProfile?.mode} · 고정 버튼 ${(s.chat?.mesPins || []).length}개 · 좌우 여백 ${s.type?.gutter} · 날씨 ${s.chat?.weather}`,
+        `테마: 팔레트 ${s.palette}${s.customName ? `(${s.customName})` : ''} · 내 메시지 ${s.chat?.user} · 이름 줄 ${s.chat?.header} · 아이콘 ${s.chat?.icons} · 프로필 ${s.profile?.mode}/${s.profile?.headerLayout}/${s.profile?.nameAlign}/${s.profile?.nameRowAlign} · 내 프로필 ${s.userProfile?.mode}/${s.userProfile?.nameAlign}/${s.userProfile?.nameRowAlign} · 고정 버튼 ${(s.chat?.mesPins || []).length}개 · 좌우 여백 ${s.type?.gutter} · 날씨 ${s.chat?.weather}`,
         `커스텀 CSS ${css.lines}줄 ${css.rules}규칙${css.chat.length ? ` · 메시지 칸을 건드림 ${css.chat.length}개: ${css.chat.slice(0, 6).join(' | ')}${css.chat.length > 6 ? ' …' : ''}` : ' · 메시지 칸 무관'}${s.compat?.muteCustomCss ? ' · 테마가 끄는 중' : ''}`,
         `애드온 ${addons} · 스크립트 ${scripts}`,
         `확장 ${extensions}`,
