@@ -18,6 +18,7 @@ PREVIEW_ARTWORK = ('ade-game.webp', 'ade-lemon.webp', 'ade-cat.webp', 'ade-nap.w
 
 # Embedded tools have their own versions, independent of the theme release.
 ADDON_CSS_VERSIONS = (
+    ('zipinstall/index.js', 'zipinstall', '--blzi-css-version'),
     ('tts/version.js', 'tts', '--lv-css-version', 'TTS_VERSION'),
     ('direction/index.js', 'direction', '--jj-css-version'),
     ('assets/state.js', 'assets', '--eh-css-version'),
@@ -85,6 +86,8 @@ def inventory(root, kind):
     root = Path(root).resolve()
     names = ['manifest.json', 'index.js', 'style.css', 'README.md']
     if kind == 'theme':
+        if (root / 'server-plugin').is_dir():
+            names += ['server-plugin/' + n for n in ('setup.mjs', 'setup-windows.cmd', 'README.md', 'blue-lemonade-zip/index.mjs', 'blue-lemonade-zip/archive.mjs', 'blue-lemonade-zip/install.mjs')]
         names += [p.relative_to(root).as_posix() for p in (root / 'src').rglob('*') if p.is_file() and p.suffix in {'.js', '.css'}]
         # Corresponding editable source, build tools and bundled license/template files.
         for name in ['LICENSE', 'THIRD-PARTY-NOTICES.md']:

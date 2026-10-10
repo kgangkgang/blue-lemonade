@@ -1,13 +1,24 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.8.5/blue-lemonade-5.8.5.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.8.6/blue-lemonade-5.8.6.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.8.5 · 최신 업데이트</summary>
+<summary>5.8.6 · 최신 업데이트</summary>
+
+- 내장 확장에 ZIP 설치를 추가했어요. ZIP 파일을 고르면 새 확장을 설치하거나 기존 확장을 찾아 업데이트할 수 있어요. PC에서는 끌어 놓기도 지원해요.
+- 업데이트 전에 기존 폴더를 백업하고, 이전 버전 복원으로 되돌릴 수 있어요. ZIP에 없는 기존 파일과 확장 설정은 유지해요.
+- 처음 한 번 서버 도우미 준비와 실리태번 재시작이 필요해요. Windows는 테마 폴더의 server-plugin/setup-windows.cmd를 실행하고, 다른 환경은 같은 폴더의 README 안내를 따라 주세요. 준비 후 같은 서버에 접속한 PC·모바일에서 사용할 수 있어요.
+
+[ZIP 설치 준비와 사용 안내](server-plugin/README.md)
+
+</details>
+
+<details>
+<summary>5.8.5 · 글 선택 성능</summary>
 
 - 감정 효과가 있는 글을 누르거나 선택할 때, 관련 없는 설정 화면까지 다시 계산하던 작업을 줄였어요. 글 선택 중 효과를 멈추고 선택을 풀면 다시 움직이는 동작은 그대로예요.
 

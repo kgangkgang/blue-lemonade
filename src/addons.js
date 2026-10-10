@@ -11,8 +11,8 @@ const running=new Set(),failed=new Map(),loading=new Set();
 let started=false,saving=0,saveError='',regexlinkStopped=false;
 // 단독 확장 폴더 후보는 assist/core.js 의 DUPLICATES 한 표만 쓴다 (첫 이름은 안내 문구용)
 const folders=Object.fromEntries(Object.entries(DUPLICATES).map(([id,list])=>[id,list[0]]));
-const names={tts:'TTS',direction:'전개 지시',assets:'캐릭터 에셋',prompt:'한글화 패널',customstyle:'커스텀 CSS 조절',translator:'LLM 번역',order:'확장 순서',perf:'성능 보조',words:'단어 치환',capture:'채팅 캡처',models:'모델 등록',modelswitch:'모델 전환',regexlink:'프롬프트 연동 정규식',rewrite:'다시 쓰기',bookmarks:'북마크',notes:'메모'};
-const icons={tts:'fa-volume-high',direction:'fa-feather-pointed',assets:'fa-images',prompt:'fa-table-list',customstyle:'fa-sliders',translator:'fa-language',words:'fa-arrow-right-arrow-left',capture:'fa-camera',order:'fa-arrow-down-short-wide',perf:'fa-gauge-high',models:'fa-circle-plus',modelswitch:'fa-shuffle',regexlink:'fa-link',bookmarks:'fa-bookmark',rewrite:'fa-glasses',notes:'fa-note-sticky'};
+const names={zipinstall:'ZIP 설치',tts:'TTS',direction:'전개 지시',assets:'캐릭터 에셋',prompt:'한글화 패널',customstyle:'커스텀 CSS 조절',translator:'LLM 번역',order:'확장 순서',perf:'성능 보조',words:'단어 치환',capture:'채팅 캡처',models:'모델 등록',modelswitch:'모델 전환',regexlink:'프롬프트 연동 정규식',rewrite:'다시 쓰기',bookmarks:'북마크',notes:'메모'};
+const icons={zipinstall:'fa-file-zipper',tts:'fa-volume-high',direction:'fa-feather-pointed',assets:'fa-images',prompt:'fa-table-list',customstyle:'fa-sliders',translator:'fa-language',words:'fa-arrow-right-arrow-left',capture:'fa-camera',order:'fa-arrow-down-short-wide',perf:'fa-gauge-high',models:'fa-circle-plus',modelswitch:'fa-shuffle',regexlink:'fa-link',bookmarks:'fa-bookmark',rewrite:'fa-glasses',notes:'fa-note-sticky'};
 const tabs=[['watchdog','끊김 감시','heart-pulse'],['timer','로딩 시간','stopwatch'],['perf','성능 보조','gauge-high'],['log','요청 로그','receipt'],['dedupe','저장 정리','floppy-disk']];
 const changed=()=>window.dispatchEvent(new Event('bl:addons-state'));
 export async function conflict(id){
@@ -40,7 +40,9 @@ const DUPLICATE_RUNNING='같은 확장이 이미 켜져 있어요. 단독 확장
 async function startOne(id){
     try{
         let module=null;
-        if(id==='tts'){
+        if(id==='zipinstall'){
+            module=await import('./addons/zipinstall/index.js');
+        }else if(id==='tts'){
             module=await import('./addons/tts/index.js');await module.ready;
         }else if(id==='direction'){
             module=await import('./addons/direction/index.js');await module.ready;
@@ -85,7 +87,7 @@ export async function startAddons(){
     if(restored)whenAppReady(()=>persist().catch(()=>{}));
     const s=getSettings();if(!addonsEnabled(s))return;
     const ids=[];
-    for(const id of ['perf','order','models','modelswitch','regexlink','rewrite','direction','bookmarks','notes','assets','translator','prompt','customstyle','tts','words']){
+    for(const id of ['perf','order','models','modelswitch','regexlink','rewrite','direction','bookmarks','notes','zipinstall','assets','translator','prompt','customstyle','tts','words']){
         if(!s.addons[id])continue;
         if(await conflict(id)){
             failed.set(id,'기존 단독 확장이 켜져 있어 테마 쪽은 대기 중이에요. 둘 중 하나를 끄고 새로고침해 주세요.');
@@ -112,12 +114,12 @@ export function addonMarkup(s,id,nested=false){
         const notes={conflicts:'중복 실행·설치 버전·화면 간섭과 관측된 오류를 확인해요.'};
         return `<div class="bl-addon-header"><h3><i class="fa-solid fa-stethoscope" aria-hidden="true"></i> ${ASSIST_LABELS[id]}</h3><label class="bl-addon-power"><span>기능 켜기</span><input type="checkbox" data-assist-toggle="${id}" ${s.addons[id]?'checked':''}></label></div><p class="salty-note">${notes[id]}</p><button type="button" class="salty-btn bl-tool-primary" data-assist-open="${id}" ${s.addons[id]?'':'disabled'}>열기</button>`;
     }
-    const on=!!s.addons[id],needsReload=['order','perf','models','modelswitch','regexlink','rewrite','direction','bookmarks','notes','assets','translator','prompt','customstyle','tts'].includes(id)&&on!==running.has(id);
+    const on=!!s.addons[id],needsReload=['order','perf','models','modelswitch','regexlink','rewrite','direction','bookmarks','notes','zipinstall','assets','translator','prompt','customstyle','tts'].includes(id)&&on!==running.has(id);
     const status=!addonsEnabled(s)?'사용 모드에서 확장 기능이 꺼져 있어요':saving?'설정 저장 확인 중…':saveError||(loading.has(id)?'기능을 불러오는 중…':failed.get(id))||(needsReload?'새로고침 대기':on?'사용 중':'꺼짐');
     const guideBadge=id==='notes'?`<button type="button" class="bl-addon-ver" data-notes-guide title="메모 사용방법" aria-label="메모 사용방법">v${NOTES_VERSION}</button>`:id==='tts'?`<button type="button" class="bl-addon-ver" data-tts-guide title="TTS 사용방법" aria-label="TTS 사용방법">v${TTS_VERSION}</button>`:'';
     const header=`<header class="bl-addon-header"><div><h3><i class="fa-solid ${icons[id]}" aria-hidden="true"></i> ${names[id]}${guideBadge}</h3><p role="status" class="bl-addon-status ${on?'is-on':''}">${status}</p></div><label class="bl-addon-power"><span>기능 켜기</span><input type="checkbox" data-addon-toggle="${id}" ${on?'checked':''} ${saving?'disabled':''}></label></header>`;
     if(['words','capture'].includes(id))return header+(on?'':`<div class="bl-capture-empty"><b>${names[id]}을 켜서 시작하세요</b><p>필요할 때만 사용하고, 설정은 그대로 보관해요.</p></div>`);
-    const instructions={tts:'채팅 대사를 캐릭터별 목소리로 읽어요. 음성 제공자를 연결하고 음성을 등록한 뒤 캐릭터에 지정하세요. 클라우드 음성 합성과 감정 분석은 연결한 서비스의 요금이 적용될 수 있어요.',notes:'입력창 위 메모 줄의 ☰ 로 열어 쓰는 쪽지예요. 채팅 안에서 만든 메모는 그 채팅에만 보여요. #태그 · [[메모 연결]] · 폴더도 돼요. 자세한 쓰는 법은 제목 옆 버전 버튼을 눌러 보세요.',direction:'입력창의 깃털 버튼에서 다음 전개를 적고 켜면 대화 요청에 지시가 들어가요. 기존 전개 지시 개조본의 설정과 내용을 이어 써요.',assets:'캐릭터별 그림을 관리하고 AI 답변에 표시해요. 기존 그림 폴더와 개조본 설정을 이어 써요. 단독 캐릭터 에셋은 끈 뒤 새로고침해 주세요.',prompt:'프리셋·월드인포·봇카드를 읽고 번역해요. 기존 단독 Prompt Panel은 끈 뒤 사용하세요. 버전 버튼에서 사용방법을 볼 수 있어요.',customstyle:'커스텀 CSS의 변수 정의를 슬라이더·색상·입력칸으로 조절해요. IceFog72의 MIT 확장을 통합했어요.',translator:'기존 LLM 번역의 설정·용어집·번역 기록을 그대로 이어 써요. 기능을 켜려면 기존 단독 LLM 번역을 끈 뒤 새로고침해 주세요.',bookmarks:'메시지에 북마크를 남기고, 모아 보고, 메모하고, 그 자리로 돌아가요. ✦ 메뉴의 북마크로도 열려요.',order:'확장 설정 패널의 순서를 정리해요.',perf:'응답·로딩·저장을 살피고, 아래에서 정규식 연동과 충돌 진단도 관리해요.',models:'공급자 목록에 없는 모델 이름을 직접 등록해요.',modelswitch:'번역 · 장기 기억 · 다시 쓰기처럼 모델을 따로 고르는 확장들을 한 번에 바꿔요.',regexlink:'프롬프트 관리자에서 끈 모듈(모멘텀 엔진 · 상태창 · 선택지 …)의 정규식을 자동으로 끄고, 켜면 돌려놓아요. 꺼진 정규식은 답이 오는 동안 돌지 않아 스트리밍이 가벼워져요.',rewrite:'AI 답변에서 보기 싫은 묘사가 나온 문장만 골라 다시 쓰게 해요. 쓰는 법은 세부 설정의 버전 표시를 눌러 보세요.'};
+    const instructions={zipinstall:'ZIP 파일로 확장을 설치하고 업데이트해요. 처음 한 번 서버 도우미를 준비하면 PC·모바일에서 사용할 수 있어요. 요술봉 메뉴의 ZIP 설치로도 열려요.',tts:'채팅 대사를 캐릭터별 목소리로 읽어요. 음성 제공자를 연결하고 음성을 등록한 뒤 캐릭터에 지정하세요. 클라우드 음성 합성과 감정 분석은 연결한 서비스의 요금이 적용될 수 있어요.',notes:'입력창 위 메모 줄의 ☰ 로 열어 쓰는 쪽지예요. 채팅 안에서 만든 메모는 그 채팅에만 보여요. #태그 · [[메모 연결]] · 폴더도 돼요. 자세한 쓰는 법은 제목 옆 버전 버튼을 눌러 보세요.',direction:'입력창의 깃털 버튼에서 다음 전개를 적고 켜면 대화 요청에 지시가 들어가요. 기존 전개 지시 개조본의 설정과 내용을 이어 써요.',assets:'캐릭터별 그림을 관리하고 AI 답변에 표시해요. 기존 그림 폴더와 개조본 설정을 이어 써요. 단독 캐릭터 에셋은 끈 뒤 새로고침해 주세요.',prompt:'프리셋·월드인포·봇카드를 읽고 번역해요. 기존 단독 Prompt Panel은 끈 뒤 사용하세요. 버전 버튼에서 사용방법을 볼 수 있어요.',customstyle:'커스텀 CSS의 변수 정의를 슬라이더·색상·입력칸으로 조절해요. IceFog72의 MIT 확장을 통합했어요.',translator:'기존 LLM 번역의 설정·용어집·번역 기록을 그대로 이어 써요. 기능을 켜려면 기존 단독 LLM 번역을 끈 뒤 새로고침해 주세요.',bookmarks:'메시지에 북마크를 남기고, 모아 보고, 메모하고, 그 자리로 돌아가요. ✦ 메뉴의 북마크로도 열려요.',order:'확장 설정 패널의 순서를 정리해요.',perf:'응답·로딩·저장을 살피고, 아래에서 정규식 연동과 충돌 진단도 관리해요.',models:'공급자 목록에 없는 모델 이름을 직접 등록해요.',modelswitch:'번역 · 장기 기억 · 다시 쓰기처럼 모델을 따로 고르는 확장들을 한 번에 바꿔요.',regexlink:'프롬프트 관리자에서 끈 모듈(모멘텀 엔진 · 상태창 · 선택지 …)의 정규식을 자동으로 끄고, 켜면 돌려놓아요. 꺼진 정규식은 답이 오는 동안 돌지 않아 스트리밍이 가벼워져요.',rewrite:'AI 답변에서 보기 싫은 묘사가 나온 문장만 골라 다시 쓰게 해요. 쓰는 법은 세부 설정의 버전 표시를 눌러 보세요.'};
     // 5.1.2 원작자 있는 내장 확장은 세부 설정 화면 맨 아래에 엔딩 크레딧처럼 회색 출처 (ⓒ 창과 같은 링크)
     const credits={direction:['temporary0723 · Direction-Manager','https://github.com/temporary0723/Direction-Manager','수정·업로드 허락 게시글','https://kkangtong.xyz/posts/104303'],assets:['tincansimagine · character-assets','https://github.com/tincansimagine/character-assets','공유 허락 댓글','https://kkangtong.xyz/posts/122931#comment-7bd0d60e-f2f9-4c2c-9f42-4f395873fa17'],translator:['1234anon · llm-translator','https://github.com/1234anon/llm-translator','수정판 NamelessKkang','https://github.com/NamelessKkang/llm-translator-custom'],prompt:['anon4961 · prompt-panel','https://github.com/anon4961/prompt-panel','개인개조+++ 게시글 · 「깡」','https://kkangtong.xyz/posts/138394'],customstyle:['IceFog72 · CustomThemeStyleInputs (MIT)','https://github.com/IceFog72/SillyTavern-CustomThemeStyleInputs']};
     const link=(text,url)=>`<a href="${url}" target="_blank" rel="noopener noreferrer">${text}</a>`;
@@ -185,6 +187,7 @@ export function bindAddons(root,refresh){
         if(button.dataset.addonOpen==='regexlink'){(await import('./addons/regexlink/index.js')).openPanel();return;}
         if(button.dataset.addonOpen==='rewrite'){(await import('./addons/rewrite/index.js')).openPanel();return;}
         if(button.dataset.addonOpen==='bookmarks'){(await import('./addons/bookmarks/index.js')).openPanel();return;}
+        if(button.dataset.addonOpen==='zipinstall'){(await import('./addons/zipinstall/index.js')).openPanel();return;}
         if(button.dataset.addonOpen==='notes'){(await import('./addons/notes/index.js')).openPanel();return;}
         if(button.dataset.addonOpen==='models'){(await import('./addons/models/panel.js')).openPanel();return;}
         if(button.dataset.addonOpen==='order')(await import('./addons/order/panel.js')).openDialog();else(await import('./addons/perf/hub.js')).openHub();
@@ -220,6 +223,7 @@ export async function syncAddonIcons(){
         if(!existed){const button=document.getElementById(buttonId);if(button)button.dataset.blAddon=id;}
     }
     if(running.has('modelswitch'))(await import('./addons/modelswitch/index.js')).syncMenu();
+    if(running.has('zipinstall'))(await import('./addons/zipinstall/index.js')).syncMenu();
     if(running.has('notes'))(await import('./addons/notes/index.js')).syncMenu();
     if(running.has('perf'))(await import('./addons/perf/menu.js')).syncPerfMenu();
 }
@@ -236,7 +240,7 @@ function bindInlineAddon(editor,slot) {
         if(disposed||cleanup||mounting||!running.has(id))return;
         mounting=true;const token=++epoch;
         try{
-            const api=await (id==='tts'?import('./addons/tts/index.js'):id==='notes'?import('./addons/notes/index.js'):id==='direction'?import('./addons/direction/index.js'):id==='assets'?import('./addons/assets/index.js'):id==='prompt'?import('./addons/prompt/index.js'):id==='customstyle'?import('./addons/customstyle/index.js'):id==='translator'?import('./addons/translator/bridge.js'):id==='order'?import('./addons/order/panel.js'):id==='perf'?import('./addons/perf/hub.js'):id==='models'?import('./addons/models/panel.js'):id==='modelswitch'?import('./addons/modelswitch/index.js'):id==='regexlink'?import('./addons/regexlink/index.js'):id==='rewrite'?import('./addons/rewrite/index.js'):import('./addons/bookmarks/index.js'));
+            const api=await (id==='zipinstall'?import('./addons/zipinstall/index.js'):id==='tts'?import('./addons/tts/index.js'):id==='notes'?import('./addons/notes/index.js'):id==='direction'?import('./addons/direction/index.js'):id==='assets'?import('./addons/assets/index.js'):id==='prompt'?import('./addons/prompt/index.js'):id==='customstyle'?import('./addons/customstyle/index.js'):id==='translator'?import('./addons/translator/bridge.js'):id==='order'?import('./addons/order/panel.js'):id==='perf'?import('./addons/perf/hub.js'):id==='models'?import('./addons/models/panel.js'):id==='modelswitch'?import('./addons/modelswitch/index.js'):id==='regexlink'?import('./addons/regexlink/index.js'):id==='rewrite'?import('./addons/rewrite/index.js'):import('./addons/bookmarks/index.js'));
             if(disposed||token!==epoch||!slot.isConnected)return;
             host.replaceChildren();cleanup=api.mountInline(host);
         }catch(error){if(!disposed&&token===epoch){host.textContent='설정을 불러오지 못했어요. 화면을 다시 열어 주세요.';console.error('[Blue Lemonade]',error);}}

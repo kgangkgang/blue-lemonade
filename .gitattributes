@@ -10,3 +10,6 @@
 /src/weather-art/*.webp binary
 
 /src/preview-art/*.webp binary
+
+/server-plugin/** text eol=lf
+/server-plugin/setup-windows.cmd -text whitespace=cr-at-eol

@@ -1,0 +1,33 @@
+.blzi { --blzi-css-version:'1.0.0'; color:var(--salty-text, var(--SmartThemeBodyColor)); font-size:14px; line-height:1.65; min-width:0; text-align:left; }
+.blzi-dialog { width:min(640px, calc(100vw - 24px)); max-width:none; max-height:calc(100dvh - 24px); padding:0; border:1px solid var(--salty-line, var(--SmartThemeBorderColor)); border-radius:20px; background:var(--salty-bg, var(--SmartThemeBlurTintColor)); color:var(--salty-text, var(--SmartThemeBodyColor)); box-shadow:0 18px 60px color-mix(in srgb, var(--salty-text, black) 18%, transparent); }
+.blzi-dialog::backdrop { background:color-mix(in srgb, var(--salty-bg, black) 65%, transparent); backdrop-filter:blur(5px); }
+.blzi-dialog > header { display:flex; align-items:center; gap:10px; padding:16px 20px; border-bottom:1px solid var(--salty-line, var(--SmartThemeBorderColor)); }
+.blzi-dialog > header strong { flex:1; text-align:left; }
+.blzi-dialog > [data-content] { padding:20px; }
+.blzi button,.blzi-dialog > header button { font:inherit; cursor:pointer; min-height:40px; padding:8px 13px; border:1px solid var(--salty-line, var(--SmartThemeBorderColor)); border-radius:12px; background:var(--salty-surface, var(--SmartThemeBlurTintColor)); color:var(--salty-text, var(--SmartThemeBodyColor)); box-shadow:none; }
+.blzi button:hover:not(:disabled) { background:var(--salty-raised, var(--SmartThemeBlurTintColor)); }
+.blzi button:disabled { opacity:.5; cursor:default; }
+.blzi :focus-visible,.blzi-dialog > header button:focus-visible { outline:2px solid var(--salty-accent-ink, currentColor); outline-offset:3px; }
+.blzi .blzi-primary { background:var(--salty-accent, var(--SmartThemeQuoteColor)); color:var(--salty-on-accent, var(--SmartThemeBodyColor)); font-weight:700; }
+.blzi .blzi-help { display:inline-grid; place-items:center; border-radius:50%; min-width:32px; min-height:32px; padding:0; margin-left:6px; vertical-align:middle; font-weight:700; }
+.blzi h3 { font-size:1.1em; margin:0 0 8px; color:inherit; }
+.blzi p { margin:8px 0; overflow-wrap:anywhere; }
+.blzi small,.blzi .blzi-muted { color:var(--salty-muted, var(--SmartThemeBodyColor)); }
+.blzi-card { border:1px solid var(--salty-line, var(--SmartThemeBorderColor)); border-radius:16px; padding:16px; margin:14px 0; background:var(--salty-surface, var(--SmartThemeBlurTintColor)); }
+.blzi-drop { text-align:center; border-style:dashed; padding:24px 16px; }
+.blzi-drop.blzi-over { outline:2px solid var(--salty-accent-ink, currentColor); background:var(--salty-raised, var(--SmartThemeBlurTintColor)); }
+.blzi-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.blzi label { display:block; margin:10px 0; }
+.blzi input[type=text],.blzi select { display:block; box-sizing:border-box; width:100%; min-width:0; min-height:42px; font:inherit; padding:8px 10px; border:1px solid var(--salty-line, var(--SmartThemeBorderColor)); border-radius:10px; color:var(--salty-text, var(--SmartThemeBodyColor)); background:var(--salty-bg, var(--SmartThemeBlurTintColor)); }
+.blzi code { white-space:pre-wrap; overflow-wrap:anywhere; user-select:text; font-size:12px; }
+.blzi-status { min-height:24px; padding:8px 0; color:var(--salty-accent-ink, var(--SmartThemeBodyColor)); }
+.blzi dl { display:grid; grid-template-columns:auto minmax(0,1fr); gap:6px 14px; margin:12px 0; }
+.blzi dt { color:var(--salty-muted, var(--SmartThemeBodyColor)); }
+.blzi dd { margin:0; overflow-wrap:anywhere; }
+.blzi-backup { padding:12px 0; border-bottom:1px solid var(--salty-line, var(--SmartThemeBorderColor)); }
+.blzi-backup:last-child { border-bottom:0; }
+.blzi details > summary { cursor:pointer; min-height:40px; padding:8px 0; }
+@media(max-width:480px) { .blzi-dialog > [data-content] { padding:14px; } .blzi-dialog > header { padding:12px 14px; } .blzi button { min-height:44px; } .blzi .blzi-help { min-height:36px; min-width:36px; } .blzi-card { padding:13px; } }
+
+.blzi-dialog > header { position:sticky; top:0; z-index:2; background:var(--salty-bg, var(--SmartThemeBlurTintColor)); }
+.blzi-drop-small { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; padding:10px 14px; }

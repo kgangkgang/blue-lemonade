@@ -1,9 +1,9 @@
 name: Release consistency
 on:
   push:
-    paths: ['src/**', 'css/**', 'index.js', 'style.css', 'manifest.json', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'tools/**', '.github/workflows/release-check.yml']
+    paths: ['server-plugin/**', 'src/**', 'css/**', 'index.js', 'style.css', 'manifest.json', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'tools/**', '.github/workflows/release-check.yml']
   pull_request:
-    paths: ['src/**', 'css/**', 'index.js', 'style.css', 'manifest.json', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'tools/**', '.github/workflows/release-check.yml']
+    paths: ['server-plugin/**', 'src/**', 'css/**', 'index.js', 'style.css', 'manifest.json', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'tools/**', '.github/workflows/release-check.yml']
   release:
     types: [published]
   workflow_dispatch:

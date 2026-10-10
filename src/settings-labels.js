@@ -19,3 +19,5 @@ Object.assign(SETTING_VALUES, {'usageMode:both':'테마 + 확장','usageMode:the
     'chat.weatherOrbitDirection:left':'왼쪽으로 · 반시계','chat.weatherOrbitDirection:right':'오른쪽으로 · 시계'});
 
 Object.assign(SETTING_LABELS, {'image.height':'높이','image.radius':'모서리','image.fadeY':'위아래 가장자리','image.fadeX':'좌우 가장자리','shadow.on':'글자 그림자','outline.on':'글자 외곽선','deus.ink.shadow.on':'데우스 글자 그림자','deus.ink.outline.on':'데우스 글자 외곽선','profile.edgeShadowAlpha':'그림자 진하기','userProfile.edgeShadowAlpha':'그림자 진하기','image.edgeShadowAlpha':'그림자 진하기','chat.weatherSize':'날씨 크기','chat.userSize':'내 메시지 크기','chat.reasoningFollow':'추론 요청을 끄면 지난 추론도 숨기기'});
+
+SETTING_LABELS['addons.zipinstall'] = '확장: ZIP 설치';
