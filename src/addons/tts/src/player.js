@@ -78,7 +78,9 @@ const SHOUT_VOL = 1.15;
 const PRE_MAX = 1;                  // 엔진마다 미리 만들기가 쓸 수 있는 자리 (MAX_CONC 가운데)
 const COOL_MS = 15000;              // 미리 만들기가 429 · 1002 를 받은 뒤 쉬는 시간
 const DETACH_MAX = 2;               // 엔진마다 자리를 먼저 돌려준(아무도 안 기다리는) 보낸 요청의 최대 수
-const DISPLAY_LANG = 'ko';          // 번역기가 붙이는 번역문의 언어 (LLM 번역기 · 블루 레몬에이드 번역)
+const DISPLAY_LANG = 'ko';          // 번역기가 붙이는 번역문의 언어 (LLM 번역기 · 내장 번역)
+// 1.6.1 듣는 언어: LLM 번역 애드온이 없으면 대사 분석 엔진으로 옮긴다 (listen.js 의 ② 길)
+listen.setListenEngine({ ready: () => analysis.listenReady(), tag: () => analysis.listenTag(), translateLines: (lines, target, opts) => analysis.translateLines(lines, target, opts) });
 const WAIT_TEXT = '번역 기다리는 중…';
 const ANALYSE_TEXT = '분석 중…';
 /** 1.4.4 듣는 언어로 옮기는 동안 막대 글 ("일본어로 번역 중…") */

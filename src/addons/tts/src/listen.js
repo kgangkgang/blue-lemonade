@@ -1,6 +1,7 @@
 // TTS 1.4.4 듣는 언어 (설정 listen_lang) — 채팅을 어떤 언어로 하든 TTS 는 고른 언어로 읽는다.
 //   '자동'(기본) = 1.4.3 과 똑같이 (이 모듈을 거치지 않는다 — 요청 · 캐시 키 그대로).
-//   고르면: 읽을 줄 가운데 그 언어가 아닌 줄만 블루 레몬에이드 LLM 번역 애드온(연결 · 모델 · 키 · 용어집)으로 옮긴다.
+//   고르면: 읽을 줄 가운데 그 언어가 아닌 줄만 옮긴다 — 1.6.1: LLM 번역 애드온 API(내장 · 단독 확장 같은 열쇠)가 준비돼 있으면 그것으로,
+//   없으면 대사 분석 엔진(player 가 setListenEngine 으로 꽂음), 그것도 없으면 실리태번 번역 확장의 /translate — 어떤 번역기를 쓰든 듣는 언어가 된다.
 //   화면 글 · 강조 · 화자 · 감정 분석은 그대로이고 소리(와 재생 막대 글)만 바뀐다. 번역기의 화면 번역 언어는 건드리지 않는다.
 //
 // 어느 글을 옮기나 (player.buildJobs):
@@ -15,7 +16,7 @@
 // 엔진에 알릴 언어는 spokenLang: 옮긴 글에 그 언어 글자가 없으면(모델이 안 옮기고 돌려줌) 글에서 감지.
 // 시험: tools/tests/tts-listen.mjs
 
-import { extension_settings } from '../../../../../../../extensions.js';
+import { extension_settings, getContext } from '../../../../../../../extensions.js';
 import { log } from './log.js';
 
 export const LISTEN_LANGS = Object.freeze(['auto', 'ko', 'ja', 'en', 'zh']);
@@ -114,7 +115,7 @@ export function modelTag() {
     const now = Date.now();
     if (now - tagMemo.at < 1000) return tagMemo.v;
     let v = '';
-    try { const api = globalThis[API]; v = typeof api?.speechModelTag === 'function' ? String(api.speechModelTag() ?? '') : ''; } catch { v = ''; }
+    try { const api = translatorState().api; v = typeof api?.speechModelTag === 'function' ? String(api.speechModelTag() ?? '') : ''; } catch { v = ''; }   // 1.6.1 고른 번역기의 지문
     tagMemo = { at: now, v };
     return v;
 }
@@ -215,15 +216,59 @@ export async function clearCache() {
     } catch { /* 없음 */ }
 }
 
-// ---------- 번역기 (블루 레몬에이드 LLM 번역 애드온의 translateForSpeech)
-/** 지금 옮길 수 있나 → { ok, why, api } — 애드온이 꺼졌거나(단독 확장이 돌면 내장판은 대기) 연결 · 모델 · 키가 없으면 ok=false */
+// ---------- 번역기 (1.6.1: 셋 중 쓸 수 있는 첫 것 — 어떤 LLM 번역기를 쓰든 듣는 언어가 된다)
+//   ① LLM 번역 애드온 API: globalThis[Symbol.for('blue-lemonade.translator')].translateForSpeech (내장판 · 단독 확장 · 이름 바꾼 사본 모두 같은 열쇠)
+//   ② 대사 분석 엔진: player.js 가 setListenEngine({ ready, tag, translateLines }) 로 꽂는다 (analysis.listenReady · translateLines)
+//   ③ 실리태번 번역 확장: getContext().executeSlashCommandsWithOptions('/translate target=… 글') — 명령이 등록돼 있을 때만
+let engine = null;
+export function setListenEngine(e) { engine = e && typeof e.translateLines === 'function' && typeof e.ready === 'function' ? e : null; tagMemo = { at: 0, v: '' }; }
+const ST_LANG = Object.freeze({ ko: 'ko', ja: 'ja', en: 'en', zh: 'zh-CN' });
+const NO_TRANSLATOR = 'LLM 번역 애드온 · 대사 분석 엔진 · 실리태번 번역 중 하나가 필요해요';
+function engineApi() {
+    return { speechModelTag: () => { try { return String(engine.tag?.() ?? 'analysis'); } catch { return 'analysis'; } },
+             translateForSpeech: (lines, target, opts) => engine.translateLines(lines, target, opts || {}) };
+}
+/** 실리태번 번역 확장의 /translate (켜져 있고 명령이 등록돼 있을 때) — 줄마다 한 번, 파이프는 이스케이프 */
+function stTranslateApi() {
+    let ctx = null;
+    try { ctx = typeof getContext === 'function' ? getContext() : null; } catch { ctx = null; }
+    const run = ctx?.executeSlashCommandsWithOptions;
+    if (typeof run !== 'function' || !ctx?.SlashCommandParser?.commands?.translate) return null;
+    return {
+        speechModelTag: () => `st-translate:${String(extension_settings?.translate?.provider || '')}`,
+        async translateForSpeech(lines, target, { signal } = {}) {
+            const out = [];
+            for (const line of lines) {
+                if (signal?.aborted) throw abortError();
+                const text = String(line ?? '').replace(/\s*\n+\s*/g, ' ').replace(/\|/g, '\\|');
+                let r = null;
+                try { r = await run.call(ctx, `/translate target=${ST_LANG[target] || target} ${text}`, { handleParserErrors: false, handleExecutionErrors: false }); }
+                catch (e) { if (signal?.aborted) throw abortError(); throw e; }
+                const t = String(r?.pipe ?? '').trim();
+                out.push(t && t !== text ? t : null);
+            }
+            return out;
+        },
+    };
+}
+/** 지금 옮길 수 있나 → { ok, why, api, via } — via: 'addon' | 'analysis' | 'st'. 애드온이 있는데 준비가 안 됐으면(단독 확장이 돌아 대기 · 키 없음) 다음 길로 */
 export function translatorState() {
+    let why = '';
     const api = globalThis[API];
-    const on = !!extension_settings?.salty?.addons?.translator;
-    if (!on || !api || typeof api.translateForSpeech !== 'function') return { ok: false, why: '블루 레몬에이드의 LLM 번역이 꺼져 있어요', api: null };
-    let r = { ok: true };
-    try { if (typeof api.speechReady === 'function') r = api.speechReady() || { ok: false }; } catch (e) { r = { ok: false, why: String(e?.message || e) }; }
-    return r.ok ? { ok: true, why: '', api } : { ok: false, why: String(r.why || 'LLM 번역 설정을 확인해요'), api: null };
+    if (api && typeof api.translateForSpeech === 'function') {
+        let r = { ok: true };
+        try { if (typeof api.speechReady === 'function') r = api.speechReady() || { ok: false }; } catch (e) { r = { ok: false, why: String(e?.message || e) }; }
+        if (r.ok) return { ok: true, why: '', api, via: 'addon' };
+        why = String(r.why || 'LLM 번역 설정을 확인해요');
+    }
+    if (engine) {
+        let r = { ok: false };
+        try { r = engine.ready() || { ok: false }; } catch (e) { r = { ok: false, why: String(e?.message || e) }; }
+        if (r.ok) return { ok: true, why: '', api: engineApi(), via: 'analysis' };
+    }
+    const st = stTranslateApi();
+    if (st) return { ok: true, why: '', api: st, via: 'st' };
+    return { ok: false, why: why || NO_TRANSLATOR, api: null, via: '' };
 }
 const abortError = () => Object.assign(new Error('중단'), { name: 'AbortError' });
 const inflight = new Map();   // 열쇠 → { ctrl, users, keys, promise }

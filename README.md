@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.0.1/blue-lemonade-6.0.1.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.0.2/blue-lemonade-6.0.2.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.0.1 · 최신 업데이트</summary>
+<summary>6.0.2 · 최신 업데이트</summary>
+
+- TTS 1.6.1: 듣는 언어가 어떤 번역기와도 돼요. LLM 번역 애드온(내장·단독)이 있으면 그것으로, 없으면 대사 분석 엔진으로, 그것도 없으면 실리태번 번역으로 옮겨요. 단독 LLM 번역 확장을 쓸 때 「번역이 꺼져 있어요」가 뜨며 원문으로 읽던 걸 고쳤어요.
+- 듣는 언어 아래 안내가 어느 길로 옮기는지 알려 주고, 테마 이름을 적지 않아요.
+
+[TTS 사용법](src/addons/tts/README.md)
+
+</details>
+
+<details>
+<summary>6.0.1 · 친밀한 장면 효과음 10개</summary>
 
 - TTS 1.6.0: 친밀한 장면 효과음 10개를 더했어요(freesound CC0) — 핥기·키스·찔꺽·침대 삐걱·꿀꺽, 각각 한 번과 연속. 연속 소리는 대사 동안 반복돼요. 내장 소리는 81개예요.
 - 같은 답장을 번역 전·후로 두 번 분석하던 걸 고쳤어요. 번역문이 분석 뒤에 붙어도 저장된 분석을 그대로 써요.

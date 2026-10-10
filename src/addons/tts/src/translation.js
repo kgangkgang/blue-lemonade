@@ -82,7 +82,7 @@ function llmTranslator() {
     if (!builtin && !standalone) return null;
     const mode = String(s.auto_mode || 'none');
     // 둘 다 있으면 단독 확장이 돈다 (블루 레몬에이드 내장 애드온은 단독 확장이 켜져 있으면 비켜 감)
-    const name = standalone ? 'LLM 번역기' : '블루 레몬에이드 번역';
+    const name = standalone ? 'LLM 번역기' : '내장 LLM 번역';
     return { name, key: LLM_KEY, mode, incoming: LLM_INCOMING.has(mode), outgoing: LLM_OUTGOING.has(mode), target: 'ko' };
 }
 function stTranslator() {

@@ -94,11 +94,15 @@ function waitEffective(s) {
 /** 1.4.4 듣는 언어 */
 const listenOn = (s) => !!listen.listenTarget(s || settings());
 const LISTEN_OPTS = LISTEN_LANGS.map(v => ({ value: v, label: listen.LISTEN_LABELS[v] || v }));
-const LISTEN_HELP = '그 언어가 아닌 줄만 LLM 번역 애드온으로 옮겨 읽어요. 화면 글은 그대로이고, 옮긴 줄은 기억해 다시 요청하지 않아요.';
-/** 듣는 언어 아래 한 줄: 번역기를 쓸 수 없을 때만 (꺼짐 · 모델 · 키 없음) */
+const LISTEN_HELP = '그 언어가 아닌 줄만 옮겨 읽어요. LLM 번역 애드온(내장 · 단독)이 있으면 그것으로, 없으면 대사 분석 엔진으로, 그것도 없으면 실리태번 번역으로. 화면 글은 그대로이고, 옮긴 줄은 기억해 다시 요청하지 않아요.';
+/** 듣는 언어 아래 한 줄: 어떤 길로 옮기는지 (애드온이면 비움) · 쓸 수 없으면 이유 — 1.6.1 */
 function listenDesc(s) {
     if (!listenOn(s)) return '';
-    try { const st = listen.translatorState(); return st.ok ? '' : `${st.why} — 원문으로 읽어요`; } catch { return ''; }
+    try {
+        const st = listen.translatorState();
+        if (st.ok) return st.via === 'analysis' ? 'LLM 번역 애드온이 없어 대사 분석 엔진으로 옮겨요' : st.via === 'st' ? '실리태번 번역으로 옮겨요' : '';
+        return `${st.why} — 원문으로 읽어요`;
+    } catch { return ''; }
 }
 /** 언제 카드가 그려질 때의 번역기 상태 — 달라졌으면(번역기 자동 번역을 켜고 끔) 카드를 다시 그린다 */
 let whenSig = '';

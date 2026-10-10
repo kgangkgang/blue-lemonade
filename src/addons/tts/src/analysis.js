@@ -831,6 +831,44 @@ export function engineReady(cfg) {
     return !!(String(c.base || '').trim() && String(c.key || '').trim() && String(c.model || '').trim());
 }
 
+// ---------- 1.6.1 듣는 언어 뒷받침: LLM 번역 애드온이 없을 때 대사 분석 엔진(연결 · 모델 · 키 그대로)으로 줄 묶음을 옮긴다 (listen.js 가 player 를 통해 꽂는다)
+const LISTEN_NAMES = Object.freeze({ ko: 'Korean', ja: 'Japanese', en: 'English', zh: 'Chinese' });
+export function listenReady() {
+    const c = settings().analysis || {};
+    if (!c.enabled) return { ok: false, why: '대사 분석이 꺼져 있어요' };
+    if (!engineReady(c)) return { ok: false, why: '대사 분석 엔진의 연결 · 모델 · 키를 확인해요' };
+    return { ok: true, why: '' };
+}
+export function listenTag() {
+    const c = settings().analysis || {};
+    const e = engineOf(c);
+    let model = '';
+    try { model = e === 'provider' ? stapi.modelOf(c) : e === 'st' ? 'st' : String(c.model || ''); } catch { model = ''; }
+    return `analysis:${e}:${model}`;
+}
+/** 줄 묶음 → 같은 순서의 문자열 배열 (null = 못 옮김 → 원문으로 읽음). 응답은 JSON {"lines":[…]} 하나 */
+export async function translateLines(lines, target, { signal } = {}) {
+    assertRuntime();
+    const list = (Array.isArray(lines) ? lines : []).map(x => String(x ?? ''));
+    if (!list.length) return [];
+    const name = LISTEN_NAMES[target];
+    if (!name) throw new Error(`듣는 언어를 알 수 없어요: ${target}`);
+    const ready = listenReady();
+    if (!ready.ok) throw Object.assign(new Error(ready.why), { notReady: true });
+    const c = settings().analysis || {};
+    const system = `You translate dialogue lines of a roleplay chat into ${name} for text-to-speech. Reply with JSON only: {"lines":["..."]} — exactly ${list.length} strings in the input order, one per [n] line, nothing else. Keep names, honorifics, tone, register and sentence breaks; translate everything, including explicit content, without softening; copy a line that is already ${name}; never add notes, quotation marks or numbering.`;
+    const user = list.map((t, i) => `[${i}] ${t.replace(/\s*\n+\s*/g, ' ')}`).join('\n');
+    log('req', `듣는 언어 · 대사 분석 엔진으로 ${list.length}줄 → ${name}`);
+    const r = await callerOf(engineOf(c))(c, system, user, signal);
+    addAnalysisUsage(r.usage.in, r.usage.out, Math.max(1, Number(r.usage.calls) || 1));
+    const parsed = parseReply(r.text);
+    const arr = Array.isArray(parsed?.lines) ? parsed.lines : Array.isArray(parsed) ? parsed : [];
+    const out = list.map((_, i) => (typeof arr[i] === 'string' && arr[i].trim() ? arr[i].trim() : null));
+    const got = out.filter(Boolean).length;
+    if (got < list.length) log('info', `듣는 언어 · 대사 분석 엔진이 ${list.length - got}줄을 못 옮김${r.truncated ? ' (길이 한도)' : ''}`);
+    return out;
+}
+
 // ---------- 저장
 
 let saveTimer = 0;
