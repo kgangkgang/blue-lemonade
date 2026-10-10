@@ -92,6 +92,26 @@ await test('1.5.6 long narration keeps the sound sentences for the model instead
     assert.ok(p.sfxAfters.includes(24)&&p.sfxAfters.includes(25),p.sfxAfters.join(','));
     assert.equal(timing(text,'punch',{repeats:2},24).repeats,2);   // 남긴 문장으로 횟수도 읽는다
 });
+await test('1.5.8 sfx.scene_chars sets the narration budget and is clamped to 1,000~40,000',()=>{
+    const filler='Lorem ipsum dolor amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.';
+    const parts=[];for(let i=0;i<24;i++)parts.push(`${filler} "Line ${i}."`);
+    parts.push(`${filler} He slapped the table twice. ${filler}`,'"Last line."',`${filler} The door creaked open.`);
+    const text=parts.join('\n\n');
+    const sceneOf=()=>A.buildPrompt(bot(text),{emotion:false,translate:false,speaker:false,context_chars:1200}).sfxScene.map(g=>g.text).join('\n');
+    const narration=text.replace(/"[^"]*"/g,'').replace(/\s+/g,' ').trim().length;
+    assert.equal(S.DEFAULTS.sfx.scene_chars,4000);
+    assert.equal(S.sceneCharsOf(S.settings().sfx.scene_chars),4000,'missing or default value = 4,000');   // 이 검사의 가짜 설정은 sfx 를 통째로 바꿔 scene_chars 가 없다 → 기본값
+    const base=sceneOf();
+    S.settings().sfx.scene_chars=1500; const small=sceneOf();
+    assert.ok(small.length<base.length&&small.length<=2100,`smaller budget ${small.length}`);
+    assert.ok(/slapped the table twice/.test(small)&&/door creaked open/.test(small),'sound sentences still kept first');
+    S.settings().sfx.scene_chars=12000; const big=sceneOf();
+    assert.ok(big.length>base.length&&big.length>=narration*0.95,`budget above the message keeps everything ${big.length}/${narration}`);
+    assert.ok(/"Line 3\."|Line 3/.test(text)&&!/Line 3\./.test(big),'dialogue is still not part of the narration excerpt');
+    for(const [v,want] of [[undefined,4000],['abc',4000],[12,1000],[99999,40000],[6000.7,6000],['2500',2500]]) assert.equal(S.sceneCharsOf(v),want,String(v));
+    S.settings().sfx.scene_chars='oops'; assert.equal(sceneOf().length,base.length,'bad stored value falls back to the default budget');
+    S.settings().sfx.scene_chars=4000;
+});
 await test('absence or negation of duration cannot create an ambient loop',()=>{
     for(const text of ['키보드를 눌렀다.','키보드로 한동안 타이핑하지 않았다.','She did not type for a while.','She typed. Her friend waited for 8 seconds.'])
         assert.equal(timing(text,'daily_keyboard',{durationMs:8000}).durationMs,0,text);

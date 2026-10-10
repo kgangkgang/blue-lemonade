@@ -68,7 +68,7 @@ export const DEFAULTS = Object.freeze({
     highlight: true,
     highlight_style: 'both',       // 재생 표시: color | both | underline (기존 표시는 둘 다)
     mini_player: true,
-    sfx: { enabled: false, auto: true, tap: true, level: 'normal', volume: 0.45, mode: 'overlay', custom: [], disabled: [] },
+    sfx: { enabled: false, auto: true, tap: true, scene_chars: 4000, level: 'normal', volume: 0.45, mode: 'overlay', custom: [], disabled: [] },   // 1.5.8 scene_chars = 효과음 찾을 지문 글자 (sceneCharsOf)
     prefetch: 2,
     voices: [],
     char_map: {},
@@ -113,6 +113,13 @@ const NO_MERGE = new Set(['providers', 'char_map', 'card_colors', 'extra_map', '
 const clone = (v) => (v && typeof v === 'object' ? JSON.parse(JSON.stringify(v)) : v);
 const isObj = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
 const clampDb = (n) => Math.max(-12, Math.min(18, n));
+/** 1.5.8 효과음 찾을 지문 글자 (sfx.scene_chars): 대사 분석에 보내는 지문(서술 · 행동)의 최대 글자. 1,000~40,000 정수, 아니면 기본 4,000
+ *  — analysis.js sceneExcerpt 와 ui.js 의 숫자 칸(min · max · default)이 같은 범위를 쓴다 (tools/tests/tts-sfx-timing.mjs) */
+export const SCENE_CHARS = Object.freeze({ min: 1000, max: 40000, def: 4000 });
+export function sceneCharsOf(v) {
+    const n = Math.floor(Number(v));
+    return Number.isFinite(n) ? Math.max(SCENE_CHARS.min, Math.min(SCENE_CHARS.max, n)) : SCENE_CHARS.def;
+}
 /** 값이 든 dB 인가 (null · '' · undefined 는 빈 칸 — Number(null) 이 0 이라 따로 본다) */
 export const hasDb = (x) => x !== null && x !== undefined && x !== '' && typeof x !== 'boolean' && Number.isFinite(Number(x));
 /** 1.2.5 목소리를 만든 모델 이름 (speech-2.8-hd …). 모양이 이상하면 '' */
@@ -357,6 +364,7 @@ export function settings() {
     s.sfx.enabled = s.sfx.enabled === true;
     s.sfx.auto = s.sfx.auto !== false;
     s.sfx.tap = s.sfx.tap !== false;   // 1.5.4 누른 대사 앞 지문의 효과음
+    s.sfx.scene_chars = sceneCharsOf(s.sfx.scene_chars);   // 1.5.8 효과음 찾을 지문 글자 (1,000~40,000 · 기본 4,000)
     if (!['few', 'normal', 'many'].includes(s.sfx.level)) s.sfx.level = 'normal';   // 1.5.7 효과음 넓이
     s.sfx.volume = Number.isFinite(Number(s.sfx.volume)) ? Math.max(0, Math.min(1, Number(s.sfx.volume))) : 0.45;
     if (!['sequence', 'overlay'].includes(s.sfx.mode)) s.sfx.mode = 'overlay';

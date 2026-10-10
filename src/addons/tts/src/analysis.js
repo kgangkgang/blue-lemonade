@@ -41,7 +41,7 @@ import { runtimeEnabled, assertRuntime, waitForRuntime } from './runtime.js';
 import * as ST from '../../../../../../../../script.js';
 import { chat, substituteParams, getRequestHeaders } from '../../../../../../../../script.js';
 import { getContext } from '../../../../../../../extensions.js';
-import { settings, addAnalysisUsage, USER_AUTO } from './settings.js';
+import { settings, addAnalysisUsage, USER_AUTO, sceneCharsOf } from './settings.js';
 import { segmentMessage, detectLang, parseRegexLines, speechDisplay } from './text.js';
 import { resolveSpeaker, knownNames as learnedNames } from './speakers.js';
 import { allVoices, hasOwnVoice, noteExtras } from './voices.js';
@@ -253,7 +253,9 @@ export function sfxWanted(mes) {
 }
 // 1.5.6 효과음용 지문 예산 — 맥락 예산(context_chars, 기본 1,200자)과 별개. 전엔 맥락 예산 안에서 앞 60% · 뒤 40%만 남겨
 //   7,500자 답장의 지문 21부분 가운데 6부분만 모델에 갔고, 그 밖의 소리(slap …)는 모델이 보지도 못했다.
-const SCENE_CHARS = 4000;
+// 1.5.8 예산은 설정 sfx.scene_chars (효과음 · 소리 대본 → 효과음 찾을 지문 글자, 기본 4,000 · 1,000~40,000). 바꾸면 긴 답장의 프롬프트가 달라져
+//   저장된 분석(profile 해시)이 다음 읽기 때 한 번 다시 받아진다 — 짧은 답장(예산 안)은 그대로.
+const sceneChars = () => sceneCharsOf(settings().sfx?.scene_chars);
 const SENTENCE_SPLIT = /(?<=[.!?。！？…]["”」』)]?)\s+/u;
 /** 효과음 낱말(내장 · 내 효과음의 연결 단어)이 든 문장인가 — 키워드 사전과 같은 매칭 */
 function soundy(sentence) { try { return !!matchSfx(sentence); } catch { return false; } }
@@ -263,7 +265,7 @@ function packScene(selected) {
 /** 맥락을 줄여도 [after=N] 표시는 자르지 않는다. 한 서술의 끝이 다른 대사 위치로 붙는 것을 막는다.
  *  예산을 넘으면 문장 단위로: 효과음 낱말이 든 문장을 먼저 전부, 남는 예산에 나머지 문장을 앞에서 60% · 뒤에서 40%. */
 function sceneExcerpt(scene, max) {
-    const budget = Math.max(SCENE_CHARS, Math.floor(Number(max) || 0));
+    const budget = Math.max(sceneChars(), Math.floor(Number(max) || 0));
     const total = scene.reduce((n, g) => n + g.text.length, 0);
     if (!budget || total <= budget) return packScene(scene.map(g => ({ after: g.after, text: g.text })));
     const parts = scene.map((g, i) => ({ index: i, after: g.after, sentences: g.text.split(SENTENCE_SPLIT).filter(x => x.trim().length > 1) }));

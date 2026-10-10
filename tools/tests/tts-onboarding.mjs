@@ -1087,5 +1087,27 @@ await test('1.4.1 대화 색: 같은 사람의 다른 색(추천 이름이 이�
     delete T.ctx.chatMetadata.lemon_voice;
 });
 
+await test('1.5.8 효과음 찾을 지문 글자 — 효과음 · 자동 찾기를 켜면 숫자 칸이 보이고 범위 밖 값은 잘린다', async () => {
+    const s = S.settings();
+    assert.equal(s.sfx.scene_chars, 4000);
+    assert.doesNotMatch(DOM.cards.sfx || '', /sfx\.scene_chars/, '효과음이 꺼져 있으면 칸이 없다');
+    await change({ dataset: { lvPath: 'sfx.enabled' }, type: 'checkbox', tagName: 'INPUT', checked: true });
+    assert.equal(s.sfx.enabled, true);
+    assert.match(DOM.cards.sfx || '', /data-lv-path="sfx\.scene_chars"[^>]*min="1000"[^>]*max="40000"[^>]*value="4000"/, '기본 4,000 · 1,000~40,000');
+    assert.match(DOM.cards.sfx || '', /효과음 찾을 지문 글자/);
+    await change({ dataset: { lvPath: 'sfx.scene_chars' }, type: 'number', tagName: 'INPUT', value: '6000' });
+    assert.equal(s.sfx.scene_chars, 6000);
+    await change({ dataset: { lvPath: 'sfx.scene_chars' }, type: 'number', tagName: 'INPUT', value: '12' });
+    assert.equal(s.sfx.scene_chars, 1000, '최소 1,000');
+    await change({ dataset: { lvPath: 'sfx.scene_chars' }, type: 'number', tagName: 'INPUT', value: '99999' });
+    assert.equal(s.sfx.scene_chars, 40000, '최대 40,000');
+    await change({ dataset: { lvPath: 'sfx.auto' }, type: 'checkbox', tagName: 'INPUT', checked: false });
+    assert.doesNotMatch(DOM.cards.sfx || '', /sfx\.scene_chars/, '자동 찾기를 끄면 칸이 숨는다');
+    await change({ dataset: { lvPath: 'sfx.auto' }, type: 'checkbox', tagName: 'INPUT', checked: true });
+    await change({ dataset: { lvPath: 'sfx.scene_chars' }, type: 'number', tagName: 'INPUT', value: '4000' });
+    await change({ dataset: { lvPath: 'sfx.enabled' }, type: 'checkbox', tagName: 'INPUT', checked: false });
+    assert.equal(s.sfx.scene_chars, 4000);
+});
+
 console.log(`\ntts-onboarding: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
