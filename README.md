@@ -1,13 +1,24 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.9.7/blue-lemonade-5.9.7.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.9.8/blue-lemonade-5.9.8.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.9.7 · 최신 업데이트</summary>
+<summary>5.9.8 · 최신 업데이트</summary>
+
+- TTS 1.5.7: 찰싹 한 번과 엉덩이 찰싹(연속) 효과음을 더했어요(BigSoundBank CC0). 대사 분석이 친밀한 장면의 살 때리는 소리도 효과음으로 다뤄요. 내장 소리는 71개예요.
+- 효과음 · 소리 대본에 「효과음 넓이」(적음 · 보통 · 많이)가 생겼어요. 분석이 소리마다 세기를 함께 답하고, 넓이는 재생 때만 거르기 때문에 바꿔도 분석을 다시 하거나 음성을 다시 만들지 않아요. 적음은 분명한 소리만 3개, 많이는 희미한 소리까지 12개예요. WAV 저장은 적어도 보통으로 넣어요.
+- 지시문이 바뀌어 저장된 분석은 다음 읽기 때 한 번 다시 받아요.
+
+[TTS 사용법](src/addons/tts/README.md) · [효과음·기능 출처](src/addons/tts/NOTICE.md)
+
+</details>
+
+<details>
+<summary>5.9.7 · 긴 답장의 효과음</summary>
 
 - TTS 1.5.6: 긴 답장에서 효과음을 놓치던 문제를 고쳤어요. 대사 분석에 보내는 지문이 맥락 예산(1,200자)에 묶여 중간 지문이 빠졌는데, 이제 효과음용 예산 4,000자를 따로 두고 소리 낱말이 든 문장을 먼저 넣어요. 저장된 분석은 다음 읽기 때 한 번 다시 받아요.
 - 대사를 눌러 읽을 때 그 대사가 마지막 대사면 그 뒤 지문의 효과음도 이어서 나요.

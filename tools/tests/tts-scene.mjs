@@ -183,7 +183,7 @@ await test('ordinary WAV excludes effects when automatic effects are off; explic
 });
 
 await test('muted specific everyday sound never falls back to a generic water sound',async()=>{
-    await reset();assert.equal(Library.listSfx().length,69);assert.equal(Library.matchSfx('pour water').id,'daily_water_pour');
+    await reset();assert.equal(Library.listSfx().length,71);assert.equal(Library.matchSfx('pour water').id,'daily_water_pour');
     Library.setSfxEnabled('daily_water_pour',false);assert.equal(Library.matchSfx('pour water'),null);assert.ok(Library.getSfx('daily_water_pour'));assert.ok(await Library.sfxBlob('daily_water_pour'));
     assert.equal(Library.matchSfx('비가 내린다').id,'daily_rain');assert.equal(Library.matchSfx('키보드를 타이핑한다').id,'daily_keyboard');
 });
@@ -220,6 +220,24 @@ await test('1.5.4 readText reads another extension\'s text like a message: dialo
     const spoken=T.requests.map(r=>r.text).join(' ');   // 같은 목소리의 이어진 대사는 한 덩이로 합쳐질 수 있다
     assert.ok(spoken.includes('Hello there.')&&spoken.includes('Bye.')&&!/walked|smiled/.test(spoken),spoken);assert.ok(T.requests.length&&T.requests.every(r=>r.voiceUid==='minimax:nora'));
     assert.equal(P.speakExternal({text:'   '}),false);
+});
+await test('1.5.7 effects level filters stored cues at playback without touching the analysis; export keeps at least normal',async()=>{
+    await reset();const s=S.settings();Object.assign(s.sfx,{enabled:true,auto:true,level:'normal'});s.routes={dialogue:'character',narration:'skip',action:'skip',thought:'skip',user_dialogue:'user'};
+    s.analysis={...s.analysis,enabled:true,engine:'compat',base:'https://mock.invalid/v1',key:'k',model:'m',emotion:true,translate:false,speaker:true,when:'auto',context_chars:1200,temperature:0.2};
+    const mes={mes:'문이 쾅 닫혔다. "안녕." 그가 잔을 들었다. "앉아." 옷자락이 스쳤다.',name:'Mina',is_user:false,is_system:false,swipe_id:0,extra:{}};
+    T.ctx.chat.length=0;T.ctx.chat.push(mes);
+    const p=A.buildPrompt(mes,{langs:[],emotion:true,translate:false,context_chars:1200,speaker:true,extras:s.extras!=='off',sfx:true});
+    const analysis={hash:A.hash(mes.mes),profile:A.hash(JSON.stringify([1,'compat','','m',true,false,0.2,p.system,p.user])),langs:[],model:'m',at:1,segs:p.lines.map(l=>({i:l.i,h:l.h,emotion:'calm',text:{}})),
+        sfx:[{after:0,id:'door_slam',repeats:1,durationMs:0,strength:1},{after:1,id:'glass_clink',repeats:1,durationMs:0,strength:2},{after:2,id:'daily_zipper',repeats:1,durationMs:0,strength:3}]};
+    mes.extra.lemon_voice={analysis};
+    const ids=()=>P.scriptRows(0).filter(r=>r.kind==='sfx').map(r=>r.sfxId);
+    assert.deepEqual(ids(),['door_slam','glass_clink']);
+    s.sfx.level='few';assert.deepEqual(ids(),['door_slam']);assert.ok(A.getAnalysis(0)&&P.analysisWanted(0,mes)===false,'level change keeps the analysis');
+    assert.deepEqual(P.scriptRows(0,{forExport:true}).filter(r=>r.kind==='sfx').map(r=>r.sfxId),['door_slam','glass_clink']);
+    s.sfx.level='many';assert.deepEqual(ids(),['door_slam','glass_clink','daily_zipper']);
+    s.sfx.level='normal';
+    assert.deepEqual(A.normalizeSfx([{after:0,id:'door_slam',strength:9},{after:0,id:'knock',strength:3},{after:1,id:'paper'}],p).map(c=>c.strength),[2,3,2]);
+    assert.ok(Library.matchSfx('그가 뺨을 찰싹 때렸다').id==='daily_slap'&&Library.matchSfx('엉덩이를 찰싹 때렸다').id==='daily_spanking'&&Library.matchSfx('He slapped her.').id==='daily_slap'&&Library.matchSfx('주먹으로 때렸다').id==='punch');
 });
 await test('1.5.6 tapping the last dialogue also plays the cues of the narration after it',async()=>{
     await reset();const s=S.settings();Object.assign(s.sfx,{enabled:true,auto:true,mode:'overlay'});s.routes={dialogue:'character',narration:'skip',action:'skip',thought:'skip',user_dialogue:'user'};

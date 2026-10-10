@@ -141,6 +141,16 @@ function sortedJson(obj) {
 /** 미리 만들기가 켜져 있나 ('dialogue' · 'all') — 켜져 있으면 자동 읽기도 줄마다, 감정 태그는 원문에서 */
 const pregenOn = (s) => s?.pregen === 'dialogue' || s?.pregen === 'all';
 // 1.5.5 번호 → 메시지: 음수는 다른 확장이 넘긴 글(analysis.registerExternal), 그 밖엔 채팅
+// 1.5.7 효과음 넓이(sfx.level): 저장된 신호를 재생 때 거른다 — 바꿔도 분석을 다시 하거나 음성을 다시 만들지 않는다.
+//   few = 분명한 소리(strength 1)만 3개 · normal = 1~2 를 8개 · many = 전부 12개. WAV 저장은 적어도 normal (사용자: 저장엔 효과음까지).
+const SFX_LEVELS = { few: { max: 3, strength: 1 }, normal: { max: 8, strength: 2 }, many: { max: 12, strength: 3 } };
+function sfxCues(mesId, { forExport = false } = {}) {
+    const cues = cachedAnalysis(mesId)?.sfx || [];
+    let level = settings().sfx?.level; if (!SFX_LEVELS[level]) level = 'normal';
+    if (forExport && level === 'few') level = 'normal';
+    const rule = SFX_LEVELS[level];
+    return cues.filter(c => (Number.isInteger(c.strength) ? c.strength : 2) <= rule.strength).slice(0, rule.max);
+}
 const msg = (id) => (Number.isInteger(id) && id < 0 ? analysis.externalMessage(id) : chat[id]);
 const nowMs = () => (typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now());
 function emitState() {
@@ -1626,7 +1636,7 @@ export function streamBlocked(mesId) {
 function speakNow(mesId, mes, { swipe, text, from, exclude, force, fromStream }) {
     const s = settings();
     const built = buildJobs(mesId, mes, sourcesOf(mes, s, { final: true }), { startSeg: from, final: true, exclude });
-    const staged = resolveScript(mes, []) !== null || (s.sfx?.enabled && s.sfx?.auto && (cachedAnalysis(mesId)?.sfx || []).length);
+    const staged = resolveScript(mes, []) !== null || (s.sfx?.enabled && s.sfx?.auto && sfxCues(mesId).length);
     const jobs = staged ? sceneJobs(mesId, scriptRows(mesId).filter(r => from <= 0 || r.sourceIndex >= from), { effects: s.sfx?.enabled === true }) : finishJobs(built.jobs, s, { merge: !pregenOn(s) });
     const prev = readState.get(mesId);
     // 스트리밍 뒤 그리기: "스트리밍으로 읽음" 표시는 남긴다 (미리 만들기가 같은 틱 뒤에 보고 건너뜀 — 두 번 값을 치르지 않게)
@@ -1692,7 +1702,7 @@ async function prepareThen(mesId, mes, { wait = false, analyse = false, extra = 
 
 // ---------- 소리용 대본 (원문은 그대로). MultiCast-TTS 연출 흐름을 우리 엔진/캐시에 연결.
 // Original inspiration / adapted staging: Copyright (c) 2026 JINSIN2, MIT; ../LICENSE-MultiCast.txt.
-export function scriptRows(mesId) {
+export function scriptRows(mesId, { forExport = false } = {}) {
     const mes = msg(mesId);
     if (!mes || mes.is_system) return [];
     const saved = resolveScript(mes, []);
@@ -1703,10 +1713,10 @@ export function scriptRows(mesId) {
     // A first-time user can assign a voice in the script even when no default exists yet.
     if (!rows.length && (built.missing || built.missingUser)) rows = src.orig.flatMap((seg, i) => seg.text && (s.routes?.[seg.kind] || 'skip') !== 'skip' ? [{ id: `v-${i}`, kind: 'voice', text: seg.text, speaker: seg.speaker || mes.name || '', voiceUid: '', emotion: emotionFor(seg, s), sourceIndex: i, volume: 1, gapMs: Number(s.gap_ms) || 0, enabled: true }] : []);
     if (s.sfx?.enabled && s.sfx?.auto) {
-        const cues = cachedAnalysis(mesId)?.sfx || [];
+        const cues = sfxCues(mesId, { forExport });
         const dialogueIndices = src.orig.flatMap((seg, i) => seg.kind === 'dialogue' && seg.text ? [i] : []);
         const insertions = new Map();
-        cues.slice(0, 8).forEach((cue, i) => {
+        cues.forEach((cue, i) => {
             const sound = getSfx(cue.id);
             if (!sound) return;
             const sourceIndex = cue.after === 0 ? 0 : (dialogueIndices[cue.after - 1] ?? src.orig.length - 1) + 1;
@@ -1797,7 +1807,7 @@ export async function downloadScript(mesId, rows = null, { effects = true } = {}
     if (!runtimeEnabled()) return false;
     const mes = msg(mesId);
     if (!mes) return false;
-    const jobs = sceneJobs(mesId, rows || scriptRows(mesId), { effects });
+    const jobs = sceneJobs(mesId, rows || scriptRows(mesId, { forExport: true }), { effects });   // 1.5.7 저장엔 효과음을 적어도 보통으로
     if (jobs.some(j => !j.sceneKind && j.provider.caps?.blob === false)) throw new Error('브라우저 내장 목소리는 파일로 저장할 수 없어요. 다른 목소리를 골라 주세요.');
     const clips = [], snapshot = scriptFingerprint(mes), selectedChat = getContext().chat, my = gen;
     const preferences = jobs.filter(j => j.sceneKind === 'sfx').map(j => [j.sfxId, sfxPreferenceRevision(j.sfxId)]);
@@ -2056,7 +2066,7 @@ export function lineJobs(mesId, mes, segs, { awaitDisplay = false } = {}) {
  */
 function tapSfxJobs(mesId, mes, segs, s) {
     if (!(s.sfx?.enabled === true && s.sfx?.auto !== false && s.sfx?.tap !== false)) return { before: [], after: [] };
-    const cues = cachedAnalysis(mesId)?.sfx || [];
+    const cues = sfxCues(mesId);
     if (!cues.length) return { before: [], after: [] };
     let src; try { src = sourcesOf(mes, s, { final: true }); } catch { return { before: [], after: [] }; }
     const { origOf } = alignLists(src.orig, src.disp);
@@ -2074,7 +2084,7 @@ function tapSfxJobs(mesId, mes, segs, s) {
     }
     if (!ordinals.size) return { before: [], after: [] };
     const out = { before: [], after: [] };
-    cues.slice(0, 8).forEach((cue, i) => {
+    cues.forEach((cue, i) => {
         // 1.5.6 마지막 대사를 눌렀으면 그 뒤 지문(after = 대화문 수)의 소리도 대사 뒤에 이어서 — 그 소리는 붙을 다음 대사가 없다
         const where = ordinals.has(cue.after) ? 'before' : ordinals.has(dial.length - 1) && cue.after === dial.length ? 'after' : '';
         if (!where) return;
@@ -2316,7 +2326,7 @@ export async function downloadMessage(mesId) {
     if (!runtimeEnabled()) return false;
     const mes = msg(mesId);
     if (!mes) return false;
-    if (resolveScript(mes, []) !== null || (settings().sfx?.enabled && settings().sfx?.auto && cachedAnalysis(mesId)?.sfx?.length)) return downloadScript(mesId, null, { effects: settings().sfx?.enabled === true });
+    if (resolveScript(mes, []) !== null || (settings().sfx?.enabled && settings().sfx?.auto && sfxCues(mesId, { forExport: true }).length)) return downloadScript(mesId, null, { effects: settings().sfx?.enabled === true });
     const s = settings();
     // 1.4.4 듣는 언어: 안 옮긴 줄이 있으면 먼저 (한 요청 · 못 옮기면 원문)
     if (listen.listenTarget(s)) { const need = listenNeeds(mesId, mes); if (need.length) await listenFill(need); }

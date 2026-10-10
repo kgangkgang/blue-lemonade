@@ -107,8 +107,8 @@ await test('prompt requests timing in the existing analysis and inactive prompt 
 });
 await test('scene excerpt anchors and duplicate limits remain valid',()=>{
     const b=build('물건을 두 번 떨어뜨렸다. "Hello." 한동안 타이핑했다.');
-    assert.deepEqual(A.normalizeSfx([{after:0,id:'drop',repeats:2},{after:0,id:'drop',repeats:4},{after:1,id:'daily_keyboard',durationMs:6000},{after:2,id:'drop',repeats:4},{after:0,id:'bad-id'}],b),[
-        {after:0,id:'drop',repeats:2,durationMs:0},{after:1,id:'daily_keyboard',repeats:1,durationMs:6000}]);
+    assert.deepEqual(A.normalizeSfx([{after:0,id:'drop',repeats:2},{after:0,id:'drop',repeats:4},{after:1,id:'daily_keyboard',durationMs:6000,strength:2},{after:2,id:'drop',repeats:4},{after:0,id:'bad-id'}],b),[
+        {after:0,id:'drop',repeats:2,durationMs:0,strength:2},{after:1,id:'daily_keyboard',repeats:1,durationMs:6000,strength:2}]);
 });
 await test('one mocked analysis request preserves timing and reuses its cache',async()=>{
     T.ctx.chat.push(bot('물건을 두 번 떨어뜨렸다.'));

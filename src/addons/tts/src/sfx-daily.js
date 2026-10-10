@@ -495,6 +495,65 @@ const rows = [
       "license": "CC0-1.0",
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
     }
+  },
+  {
+    "id": "daily_slap",
+    "name": "찰싹 한 번",
+    "category": "사람",
+    "words": [
+      "찰싹",
+      "짝 소리",
+      "뺨을 때",
+      "뺨을 치",
+      "따귀",
+      "손바닥으로 때",
+      "손바닥으로 치",
+      "slap",
+      "slapped",
+      "slaps",
+      "smack",
+      "smacked",
+      "slapping"
+    ],
+    "assetPath": "../sfx-extra/daily_slap.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "Joseph SARDIN",
+      "source": "https://bigsoundbank.com/slaps-s0597.html",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  {
+    "id": "daily_spanking",
+    "name": "엉덩이 찰싹 (연속)",
+    "category": "사람",
+    "words": [
+      "엉덩이를 때",
+      "엉덩이를 치",
+      "엉덩이 찰싹",
+      "엉덩이 짝",
+      "스팽킹",
+      "볼기",
+      "spank",
+      "spanked",
+      "spanking",
+      "skin slap",
+      "skin slapping",
+      "flesh slap",
+      "slapping of skin",
+      "살 부딪"
+    ],
+    "assetPath": "../sfx-extra/daily_spanking.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "Joseph SARDIN",
+      "source": "https://bigsoundbank.com/spanking-s1152.html",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
   }
 ];
 export const DAILY_SFX = Object.freeze(rows.map(row => Object.freeze({...row, words: Object.freeze(row.words), credit: Object.freeze(row.credit)})));

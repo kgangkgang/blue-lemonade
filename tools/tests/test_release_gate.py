@@ -183,7 +183,7 @@ class GateTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);self.write_fixture(root,files)
             self.assertEqual(gate.validate(gate.inventory(root,'theme'),'theme'),'1.3.1')
-    def test_everyday_sound_inventory_adds_22_named_sounds_and_both_licenses(self):
+    def test_everyday_sound_inventory_adds_24_named_sounds_and_both_licenses(self):
         files=self.tts_extra_fixture()
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);self.write_fixture(root,files)
@@ -191,7 +191,7 @@ class GateTests(unittest.TestCase):
                 (root/'src/addons/tts/sfx-extra'/name).write_bytes(b'private fixture')
             found=gate.inventory(root,'theme')
             self.assertEqual(set(found),set(files));self.assertEqual(gate.validate(found,'theme'),'1.3.1')
-            self.assertEqual(sum(n.endswith('.mp3') for n in found),69)
+            self.assertEqual(sum(n.endswith('.mp3') for n in found),71)
     def test_everyday_inventory_requires_complete_pack(self):
         files=self.tts_extra_fixture()
         for name in (*gate.TTS_EXTRA_RESOURCES,*(f'sfx-extra/{ident}.mp3' for ident in gate.TTS_EXTRA_IDS)):

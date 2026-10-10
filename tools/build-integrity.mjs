@@ -11,7 +11,7 @@ const ttsAssets=fs.existsSync(sfxCatalog)?['src/addons/tts/sfx/SOURCES.json','sr
   return 'src/addons/tts/'+p;
 })]:[];
 // Inventory is fixed independently of user-editable JSON, matching release_gate.py.
-const extraIds='daily_cat_purr daily_cat_meow daily_water_pour daily_faucet daily_stream daily_rain daily_keyboard daily_zipper daily_clock daily_coffee_stir daily_cup daily_coins daily_scissors daily_snack_bag daily_soup daily_ladle daily_phone_vibration daily_chair_slide daily_pen_cap daily_fridge_door daily_electric_kettle daily_toothbrush'.split(' ');
+const extraIds='daily_cat_purr daily_cat_meow daily_water_pour daily_faucet daily_stream daily_rain daily_keyboard daily_zipper daily_clock daily_coffee_stir daily_cup daily_coins daily_scissors daily_snack_bag daily_soup daily_ladle daily_phone_vibration daily_chair_slide daily_pen_cap daily_fridge_door daily_electric_kettle daily_toothbrush daily_slap daily_spanking'.split(' ');
 const extraDir=path.join(root,'src/addons/tts/sfx-extra');
 const ttsExtraAssets=[];
 if(fs.existsSync(extraDir)||fs.existsSync(path.join(root,'src/addons/tts/src/sfx-daily.js'))){

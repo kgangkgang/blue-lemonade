@@ -80,7 +80,7 @@ const SCHEMA = Object.freeze({
                 },
             },
             people: { type: 'object' },   // 1.3.7 엑스트라 목소리 (있을 때만)
-            sfx: { type: 'array', maxItems: 8, items: { type: 'object', properties: { after: { type: 'integer', minimum: 0 }, id: { type: 'string' }, repeats: { type: 'integer', minimum: 1, maximum: 4 }, durationMs: { type: 'integer', minimum: 0, maximum: 8000 } }, required: ['after', 'id'] } },
+            sfx: { type: 'array', maxItems: 12, items: { type: 'object', properties: { after: { type: 'integer', minimum: 0 }, id: { type: 'string' }, repeats: { type: 'integer', minimum: 1, maximum: 4 }, durationMs: { type: 'integer', minimum: 0, maximum: 8000 }, strength: { type: 'integer', minimum: 1, maximum: 3 } }, required: ['after', 'id'] } },
         },
         required: ['segs'],
     },
@@ -232,7 +232,7 @@ function speakerOf(seg, mes, charName, userName) {
 
 const autoSfxEnabled = () => settings().sfx?.enabled === true && settings().sfx?.auto !== false;
 const sceneKind = (seg) => seg?.kind === 'narration' || seg?.kind === 'action';
-const SUSTAINED_SFX = new Set(['daily_keyboard', 'daily_cat_purr', 'daily_faucet', 'daily_stream', 'daily_rain', 'daily_clock', 'daily_water_pour', 'daily_coffee_stir', 'daily_electric_kettle', 'daily_toothbrush', 'wind', 'footsteps', 'footsteps_wood', 'footsteps_wet', 'running']);
+const SUSTAINED_SFX = new Set(['daily_keyboard', 'daily_cat_purr', 'daily_faucet', 'daily_stream', 'daily_rain', 'daily_clock', 'daily_water_pour', 'daily_coffee_stir', 'daily_electric_kettle', 'daily_toothbrush', 'daily_spanking', 'wind', 'footsteps', 'footsteps_wood', 'footsteps_wet', 'running']);
 const canSustainSfx = sound => !!sound && (SUSTAINED_SFX.has(sound.id) || sound.custom === true && sound.loop === true);
 function sfxCatalog() {
     try {
@@ -399,7 +399,7 @@ export function composePrompt(parts) {
     }
     // Scene SFX alongside dialogue analysis: inspired by JINSIN2/MultiCast-TTS (MIT).
     // https://github.com/JINSIN2/MultiCast-TTS · attribution and full license: ../NOTICE.md
-    if (sfx) tasks.push(`Add "sfx": an array of at most 8 {"after":0,"id":"<library id>","repeats":1,"durationMs":0} entries. Choose ONLY concrete sounds actually occurring in the numbered narration positions above and ONLY exact IDs in the library. Use the matching [after=N] position: N is the number of original dialogue lines before that narration, from 0 (before the first line) to ${lines.length} (after the last line). Never infer sounds from dialogue mentions, thoughts, negation, silence, wishes, possibilities, plans, comparisons or metaphors. Do not invent a sound or use a URL. Prefer one fitting effect per occurrence; no duplicate id at the same position. repeats is 1 by default: a single drop, coin, cup, meow or other action plays once. Increase it only for an explicit count of THAT sound in the same narration ("dropped it twice" / "물건을 두 번 떨어뜨렸다" means 2), capped at 4; unrelated numbers, emphasis and dialogue do not count. durationMs is 0 (natural clip length) by default. Only library entries with sustain:true may have a positive duration: use an explicit duration or a conservative 2000~6000 ms for a clearly ongoing action such as "typed for a while" / "한동안 타이핑했다"; never exceed 8000 ms. A sustained cue uses repeats:1. Do not stretch a single impact into a background loop. If nothing clearly fits, return "sfx": []. Dialogue shown only for position/context needs no seg entry unless an emotion, translation or speaker was requested.`);
+    if (sfx) tasks.push(`Add "sfx": an array of at most 12 {"after":0,"id":"<library id>","repeats":1,"durationMs":0,"strength":2} entries. Choose concrete sounds occurring in the numbered narration positions above and ONLY exact IDs in the library. The reader filters by strength, so include weaker ones too: strength 1 = an unmistakable sound the narration states (a slap lands, a door slams, a phone buzzes); 2 = a clear physical action that makes a sound (sits down, picks up a cup, walks, kisses); 3 = subtle or plausible (cloth rustles, a hand on skin, small movements). Intimate or sexual scenes count the same as any other: skin slapping, spanking, kissing and wet sounds are sounds. Use the matching [after=N] position: N is the number of original dialogue lines before that narration, from 0 (before the first line) to ${lines.length} (after the last line). Never infer sounds from dialogue mentions, thoughts, negation, silence, wishes, possibilities, plans, comparisons or metaphors. Do not invent a sound or use a URL. Prefer one fitting effect per occurrence; no duplicate id at the same position. repeats is 1 by default: a single drop, coin, cup, meow or other action plays once. Increase it only for an explicit count of THAT sound in the same narration ("dropped it twice" / "물건을 두 번 떨어뜨렸다" means 2), capped at 4; unrelated numbers, emphasis and dialogue do not count. durationMs is 0 (natural clip length) by default. Only library entries with sustain:true may have a positive duration: use an explicit duration or a conservative 2000~6000 ms for a clearly ongoing action such as "typed for a while" / "한동안 타이핑했다"; never exceed 8000 ms. A sustained cue uses repeats:1. Do not stretch a single impact into a background loop. If nothing clearly fits, return "sfx": []. Dialogue shown only for position/context needs no seg entry unless an emotion, translation or speaker was requested.`);
     const segExample = asked.length || !sfx ? '[{"i":0' + (emotion ? ',"emotion":"happy"' : '') + (askLines.length ? `,"speaker":"${speakers[0] || 'Name'}"` : '') + (langsUsed.length ? `,"${langsUsed[0]}":"…"` : '') + '}]' : '[]';
     tasks.push('Reply with JSON only, no markdown, no extra keys: {"segs":' + segExample + (people ? `,"people":{"${unvoiced[0] || 'Name'}":"f adult"}` : '') + (sfx ? ',"sfx":[]' : '') + '}');
     out.push(tasks.join('\n'));
@@ -478,6 +478,8 @@ const SFX_TIMING_HINTS = {
     daily_fridge_door: ['냉장고', 'fridge', 'refrigerator'],
     daily_electric_kettle: ['주전자', '전기포트', '전기 포트', '끓', 'kettle', 'boil'],
     daily_toothbrush: ['양치', '칫솔', '이를 닦', 'brush', 'toothbrush'],
+    daily_slap: ['찰싹', '짝', '뺨', '따귀', 'slap', 'smack'],
+    daily_spanking: ['엉덩이', '스팽킹', '볼기', 'spank', 'skin', 'flesh', 'slapping', '살'],
 };
 const COUNT_WORDS = { 한: 1, 두: 2, 세: 3, 네: 4, 다섯: 5, 여섯: 6, 일곱: 7, 여덟: 8, 아홉: 9, 열: 10,
     once: 1, twice: 2, thrice: 3, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
@@ -534,8 +536,10 @@ export function normalizeSfx(raw, built) {
         if (after < 0 || after > built.lines.length || !afters.has(after) || !ids.has(id) || !sound) continue;
         const key = `${after}:${id}`;
         if (seen.has(key)) continue;
-        seen.add(key); out.push({ after, id, ...sfxTiming(cue, built, sound) });
-        if (out.length >= 8) break;
+        // 1.5.7 세기: 1 분명한 소리 · 2 소리 나는 동작 · 3 희미한 소리 (없으면 2). 재생 때 효과음 넓이(sfx.level)가 거른다 — 분석은 그대로
+        const strength = Number.isInteger(cue.strength) && cue.strength >= 1 && cue.strength <= 3 ? cue.strength : 2;
+        seen.add(key); out.push({ after, id, strength, ...sfxTiming(cue, built, sound) });
+        if (out.length >= 12) break;
     }
     return out.sort((a, b) => a.after - b.after);
 }
