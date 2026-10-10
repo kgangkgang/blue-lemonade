@@ -1,13 +1,20 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.8.4/blue-lemonade-5.8.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.8.5/blue-lemonade-5.8.5.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.8.4 · 최신 업데이트</summary>
+<summary>5.8.5 · 최신 업데이트</summary>
+
+- 감정 효과가 있는 글을 누르거나 선택할 때, 관련 없는 설정 화면까지 다시 계산하던 작업을 줄였어요. 글 선택 중 효과를 멈추고 선택을 풀면 다시 움직이는 동작은 그대로예요.
+
+</details>
+
+<details>
+<summary>5.8.4 · 성능과 메신저 정렬</summary>
 
 - 감정 대사 효과가 없는 글을 누를 때도 화면 전체를 다시 계산하던 것을 고쳤어요. 답변이 나오는 동안의 스크롤 확인, 설정 서랍을 여닫을 때의 확인, 그림 크기 맞추기에서 겹치던 작업도 줄였어요.
 - 감정 효과가 있는 글이 화면 밖에 있을 때, 캡처용 글 편집이 ‘채팅 표시가 바뀌었어요’라는 안내로 막히던 오류를 고쳤어요.

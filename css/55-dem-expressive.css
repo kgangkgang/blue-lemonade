@@ -235,8 +235,9 @@ body.salty :is(#chat, .cg-root) q .custom-dem-expressive.bl-fx-made {
 }
 
 /* Native selection menus must not chase moving text. Freeze at the current frame.
-   5.8.4: src/dem-selection.js 는 효과 글이 있을 때만 body 속성을 켠다 (끝의 ' *' 때문에 켜고 끌 때마다 문서 전체를 다시 셈) */
-body.salty[data-bl-dem-selecting] :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(#salty-none):not(#salty-none),
-body.salty[data-bl-dem-selecting] :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(#salty-none):not(#salty-none) * {
+   5.8.5: 멈춤 표시는 가장 바깥 채팅 · 북마크 · 미리보기 칸에 둔다. 특이도는 유지하면서
+   선택할 때마다 설정 창까지 훑는 body 속성의 후손 '*' 재계산을 해당 칸 안으로 한정한다. */
+body.salty :is(#chat[data-bl-dem-paused], .cg-root[data-bl-dem-paused], .salty-preview[data-bl-dem-paused]) .custom-dem-expressive:not(#salty-none):not(#salty-none),
+body.salty :is(#chat[data-bl-dem-paused], .cg-root[data-bl-dem-paused], .salty-preview[data-bl-dem-paused]) .custom-dem-expressive:not(#salty-none):not(#salty-none) * {
   animation-play-state: paused !important;
 }
