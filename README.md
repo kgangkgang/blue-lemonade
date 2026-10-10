@@ -1,13 +1,25 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.9.1/blue-lemonade-5.9.1.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.9.2/blue-lemonade-5.9.2.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.9.1 · 최신 업데이트</summary>
+<summary>5.9.2 · 최신 업데이트</summary>
+
+- TTS 1.5.2: 직접 가져온 효과음 팩의 제작자·원본 링크·라이선스·편집 기록을 함께 보관해요. 보관함에서 확인하고, 다시 내보내는 팩과 WAV의 출처 정보에도 남겨요.
+- 출처가 없던 효과음은 출처가 담긴 같은 팩을 다시 가져와 정보를 채울 수 있어요. 기존 음원과 직접 정한 이름·반복 설정은 유지해요.
+- 다른 기기에서 효과음 목록만 보이고 소리가 나지 않을 때는 같은 팩을 다시 가져와 빠진 음원을 채울 수 있어요. 이미 있는 음원과 사용 여부는 그대로 유지해요.
+- 가져온 출처가 없거나 라이선스가 적혀 있지 않으면 그 상태를 알려줘요. 사용자 팩의 라이선스를 자동으로 확인하거나 임의로 부여하지 않아요. 내장 효과음 63개는 그대로예요.
+
+[TTS 사용법](src/addons/tts/README.md) · [효과음·기능 출처](src/addons/tts/NOTICE.md)
+
+</details>
+
+<details>
+<summary>5.9.1 · 채팅창 자연어 명령</summary>
 
 - 채팅 입력칸에 /240번 채팅으로 가기처럼 적으면 화면의 #240 메시지로 이동해요. /맨 위로·/맨 아래로도 사용할 수 있고, 실행 전에 입력칸 위에서 할 일을 확인할 수 있어요. 번호는 화면 표시와 같은 #0부터예요.
 - /대화 검색 약속으로 현재 대화에서 말을 찾고, 같은 명령을 다시 실행하면 다음 결과로 이동해요. /생성 중지는 진행 중인 답변을 멈춰요. / 또는 /도움말을 입력하면 사용 예시가 보여요.

@@ -1,6 +1,6 @@
 {
   "display_name": "TTS",
   "author": "Blue Lemonade",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "블루 레몬에이드 내장 TTS. 캐릭터별 목소리, 감정 분석, 원어 읽기, 효과음과 소리 대본 편집을 지원합니다."
 }

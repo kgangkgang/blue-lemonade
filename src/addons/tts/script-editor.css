@@ -64,6 +64,8 @@ html body .lvs-dialog.lv-editor button.lvs-button.lvs-help-button[hidden] { disp
 .lvs-source .lv-credits a, .lvs-sound-credit a { text-decoration: underline; text-underline-offset: .15em; }
 .lvs-sound-credit { color: var(--lvs-muted); font-size: .88em; line-height: 1.5; overflow-wrap: anywhere; }
 .lvs-sound-credit a { color: var(--lvs-ink); }
+.lvs-sound-credit > span { display: block; }
+.lvs-sound-credit summary { cursor: pointer; color: var(--lvs-ink); }
 .lvs-sound-usage { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; margin-block: 5px; }
 .lvs-dialog .lvs-sound-unused { border-style: dashed; }
 .lvs-unused { display: inline-block; padding: 2px 7px; border: 1px solid var(--lvs-line); border-radius: var(--bl-r-pill, 999px); color: var(--lvs-text); font-size: .85em; line-height: 1.5; }

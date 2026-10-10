@@ -4,6 +4,7 @@ import * as stScript from '../../../../../../../../script.js';   // saveSettings
 import { extension_settings } from '../../../../../../../extensions.js';
 import { KNOWN_VOICES, KNOWN_SIG } from './known-voices.js';
 import { TTS_VERSION } from '../version.js';
+import { normalizeSfxCredit } from './sfx-credits.js';
 
 export const VERSION = TTS_VERSION;
 export const KEY = 'lemon_voice';          // 설정 키 (데이터 호환 — 폴더 이름과 다르다)
@@ -358,6 +359,13 @@ export function settings() {
     s.sfx.volume = Number.isFinite(Number(s.sfx.volume)) ? Math.max(0, Math.min(1, Number(s.sfx.volume))) : 0.45;
     if (!['sequence', 'overlay'].includes(s.sfx.mode)) s.sfx.mode = 'overlay';
     if (!Array.isArray(s.sfx.custom)) s.sfx.custom = [];
+    // Preserve all existing sound fields and playback preferences; only bound imported attribution.
+    s.sfx.custom = s.sfx.custom.map(row => {
+        if (!isObj(row) || !Object.prototype.hasOwnProperty.call(row, 'credit')) return row;
+        const next = { ...row }, credit = normalizeSfxCredit(row.credit);
+        if (credit) next.credit = credit; else delete next.credit;
+        return next;
+    });
     s.sfx.disabled = [...new Set((Array.isArray(s.sfx.disabled) ? s.sfx.disabled : []).filter(id => typeof id === 'string' && /^[a-zA-Z0-9:_-]{1,90}$/.test(id)))].slice(-256);
     if (!HIGHLIGHT_STYLES.includes(s.highlight_style)) s.highlight_style = 'both';
     if (!['weak', 'normal', 'strong'].includes(s.emotion_strength)) s.emotion_strength = 'normal';

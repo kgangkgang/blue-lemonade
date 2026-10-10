@@ -6,6 +6,7 @@ import { allVoices } from './voices.js';
 import { normalizeRows, saveScript, clearScript, scriptIdentity, scriptFingerprint } from './script-store.js';
 import * as library from './sfx-library.js';
 import { ttsCreditsHtml } from '../credits.js';
+import { sfxCreditElement } from './sfx-credits.js';
 
 const EMOTIONS = [['', '자동'], ['neutral', '담담하게'], ['calm', '차분하게'], ['happy', '기쁘게'], ['sad', '슬프게'], ['angry', '화나게'], ['fearful', '두렵게'], ['disgusted', '불쾌하게'], ['surprised', '놀라게'], ['whisper', '속삭이기'], ['shout', '외치기']];
 const MODES = [['sequence', '순서대로'], ['overlay', '다음 대사와 함께'], ['loop', '끝까지 반복']];
@@ -195,7 +196,7 @@ async function openEditor(mesId, { soundId } = {}) {
         libraryPanel.replaceChildren();
         const actions = element('div', 'lvs-actions');
         actions.append(fileButton('음원 가져오기', 'audio/*,.mp3,.wav,.ogg,.m4a,.flac', true, async files => { let imported = 0; const errors = []; for (const file of files) { if (closed) break; try { await library.importSfx(file, { name: file.name.replace(/\.[^.]+$/, '') }); imported++; } catch (error) { errors.push(error?.message || '가져오기 실패'); } } if (!closed) { renderLibrary(); renderScript(); notice(`${imported}개 효과음을 보관함에 넣었어요.` + (errors.length ? ` ${errors.length}개 실패: ${errors[0]}` : ''), errors.length > 0); } }),
-            fileButton('효과음 팩 가져오기', '.json,application/json', false, async files => { const result = await library.importSfxPack(files[0]); if (!closed) { renderLibrary(); renderScript(); const summary = typeof result === 'number' ? `${result}개` : `추가 ${result?.added || 0}개 · 건너뜀 ${result?.skipped || 0}개 · 실패 ${result?.failed || 0}개`; notice('효과음 팩: ' + summary + (result?.failed ? ' · ' + (result.errors?.[0]?.message || result.errors?.[0] || '파일을 확인해 주세요.') : ''), !!result?.failed); } }));
+            fileButton('효과음 팩 가져오기', '.json,application/json', false, async files => { const result = await library.importSfxPack(files[0]); if (!closed) { renderLibrary(); renderScript(); const summary = typeof result === 'number' ? `${result}개` : `추가 ${result?.added || 0}개 · 건너뜀 ${result?.skipped || 0}개 · 실패 ${result?.failed || 0}개${result?.credited ? ` · 출처 보완 ${result.credited}개` : ''}${result?.restored ? ` · 파일 복원 ${result.restored}개` : ''}`; notice('효과음 팩: ' + summary + (result?.failed ? ' · ' + (result.errors?.[0]?.message || result.errors?.[0] || '파일을 확인해 주세요.') : ''), !!result?.failed); } }));
         const pack = button('내 효과음 팩 저장', () => task(async () => { const blob = await library.exportSfxPack(); if (!closed) { downloadBlob(blob, 'lemon-sound-effects.json'); notice('효과음 팩을 저장했어요.'); } })); pack.dataset.busyLock = ''; actions.append(pack, help('가져온 음원은 이 브라우저 보관함에 저장돼요. 다른 기기로 옮기거나 보관하려면 내 효과음 팩 저장을 이용하세요.'));
         libraryPanel.append(actions);
         const filters = element('div', 'lvs-library-filters'), search = element('input'); search.type = 'search'; search.placeholder = '이름 · 연결 단어 찾기'; search.value = libraryQuery;
@@ -214,12 +215,7 @@ async function openEditor(mesId, { soundId } = {}) {
                 useSound.addEventListener('change', () => { library.setSfxEnabled(sound.id, useSound.checked); syncUsage(); updateControls(); });
                 usageLabel.append(useSound, document.createTextNode('재생에 사용'));
                 usage.append(usageLabel, help('꺼두면 채팅 읽기·대본 재생·WAV 저장에서 제외돼요. 미리듣기로 소리는 확인할 수 있어요.'), unused); syncUsage(); info.append(usage);
-                if (sound.credit && !sound.custom) {
-                    const credit = element('span', 'lvs-sound-credit', [sound.credit.author, sound.credit.license].filter(Boolean).join(' · '));
-                    // Catalog metadata is rendered as text. Only public web URLs become links.
-                    try { const url = new URL(sound.credit.source); if (['http:', 'https:'].includes(url.protocol)) { const link = element('a', '', '출처'); link.href = url.href; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.setAttribute('aria-label', `${sound.name} 음원 출처`); if (credit.textContent) credit.append(document.createTextNode(' · ')); credit.append(link); } } catch { /* Metadata without a valid source remains plain text. */ }
-                    if (credit.textContent) info.append(credit);
-                }
+                const credit = sfxCreditElement(sound); if (credit) info.append(credit);
                 const buttons = element('div', 'lvs-actions'); buttons.append(button('듣기', () => previewSound(sound.id)));
                 if (identity) buttons.append(button('+ 대본에 추가', () => appendRow('sfx', sound.id)));
                 item.append(info, buttons);

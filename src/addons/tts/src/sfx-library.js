@@ -5,6 +5,7 @@
 // Blue Lemonade modifications: Korean labels/search, bounded imports, separate IndexedDB bytes.
 import { settings, save } from './settings.js';
 import { DAILY_SFX } from './sfx-daily.js';
+import { normalizeSfxCredit, importedSfxCredit, customSfxAttribution, sfxSha256 } from './sfx-credits.js';
 
 const UPSTREAM_LIBRARY = [
     // Unsupported bundled sounds must not match unrelated generic words. No paid fallback.
@@ -112,9 +113,10 @@ function cleanMeta(value) {
     const name = textValue(value.name, 80);
     const bytes = Number(value.bytes);
     if (!name || !Number.isSafeInteger(bytes) || bytes <= 0 || bytes > SFX_LIMITS.fileBytes) return null;
+    const credit = normalizeSfxCredit(value.credit);
     return { id: value.id, name, category: textValue(value.category, 32) || '내 효과음',
         words: cleanWords(value.words), custom: true, loop: value.loop === true, bytes,
-        mime: textValue(value.mime, 64), ...(textValue(value.sha256, 64) ? { sha256: value.sha256 } : {}) };
+        mime: textValue(value.mime, 64), ...(sfxSha256(value.sha256) ? { sha256: sfxSha256(value.sha256) } : {}), ...(credit ? { credit } : {}) };
 }
 function customRows() {
     const rows = settings().sfx?.custom;
@@ -157,8 +159,8 @@ export function sfxAttribution(ids) {
     const rows = [...new Set(ids)].map(getSfx).filter(Boolean);
     if (!rows.length) return '';
     return 'Blue Lemonade TTS · 효과음 출처\n\n' + rows.map(row => {
+        if (row.custom) return customSfxAttribution(row);
         if (row.credit) return `${row.name}\n${row.credit.author} · ${row.credit.license}\n${row.credit.source}\n${row.credit.licenseUrl}\n변경: 원본 일부 발췌·음량 조정·페이드·MP3 변환, 대본 설정에 따라 반복/길이 조절·믹싱\n`;
-        if (row.custom) return `${row.name} · 사용자가 추가한 음원\n`;
         return `${row.name}\nJINSIN2/MultiCast-TTS · 원본 저장소의 CC0 표기 (개별 녹음 최초 출처는 독립 검증하지 않음)\nhttps://github.com/JINSIN2/MultiCast-TTS/tree/f48ebeef9b19d814bf8d4568af13613544007e63\nhttps://creativecommons.org/publicdomain/zero/1.0/\n변경: 대본 설정에 따라 반복/길이 조절·믹싱\n`;
     }).join('\n');
 }
@@ -275,7 +277,12 @@ async function commitRows(rows) {
     const before = s.sfx;
     const previous = record(before) ? before.custom : undefined;
     if (!record(s.sfx)) s.sfx = {};
-    s.sfx.custom = rows;
+    const originals = new Map((Array.isArray(previous) ? previous : []).filter(record).map(row => [row.id, row]));
+    s.sfx.custom = rows.map(row => {
+        const next = { ...originals.get(row.id), ...row }, credit = normalizeSfxCredit(row.credit);
+        if (credit) next.credit = credit; else delete next.credit;
+        return next;
+    });
     try { await save(); }
     catch (error) { if (record(before)) { before.custom = previous; s.sfx = before; } else s.sfx = before; throw error; }
 }
@@ -291,12 +298,12 @@ async function hashBlob(blob) {
     if (!globalThis.crypto?.subtle) return '';
     return [...new Uint8Array(await crypto.subtle.digest('SHA-256', await blob.arrayBuffer()))].map(n => n.toString(16).padStart(2, '0')).join('');
 }
-async function addPrepared(prepared) {
-    const current = customRows();
+async function addPrepared(prepared, current = customRows(), restored = []) {
     checkCapacity(current, prepared.map(x => x.meta));
-    await transaction('readwrite', store => { for (const item of prepared) store.put(item.blob, item.meta.id); });
+    const writes = [...prepared, ...restored];
+    await transaction('readwrite', store => { for (const item of writes) store.put(item.blob, item.meta.id); });
     try { await commitRows([...current, ...prepared.map(item => item.meta)]); }
-    catch (error) { await transaction('readwrite', store => { for (const item of prepared) store.delete(item.meta.id); }).catch(() => {}); throw error; }
+    catch (error) { await transaction('readwrite', store => { for (const item of writes) store.delete(item.meta.id); }).catch(() => {}); throw error; }
 }
 export async function importSfx(file, options = {}) {
     const blob = await checkedAudio(file);
@@ -304,6 +311,8 @@ export async function importSfx(file, options = {}) {
     const meta = { id: newId(), name: textValue(opt.name, 80) || textValue(file.name?.replace(/\.[^.]+$/, ''), 80) || '내 효과음',
         category: textValue(opt.category, 32) || '내 효과음', words: cleanWords(opt.words), loop: opt.loop === true,
         custom: true, bytes: blob.size, mime: blob.type, sha256: await hashBlob(blob) };
+    const credit = importedSfxCredit({ credit: opt.credit }, null, meta.sha256);
+    if (credit) meta.credit = credit;
     return mutate(async () => { await addPrepared([{ meta, blob }]); return { ...meta, words: [...meta.words] }; });
 }
 export function updateSfx(id, patch) {
@@ -341,7 +350,8 @@ export function exportSfxPack() {
         for (const meta of customRows()) {
             const blob = await customBlob(meta.id);
             if (!blob) throw new Error(`「${meta.name}」 파일을 찾지 못했어요. 다시 추가한 뒤 내보내 주세요.`);
-            sounds.push({ name: meta.name, category: meta.category, words: meta.words, loop: meta.loop, data: await dataUrl(blob) });
+            sounds.push({ name: meta.name, category: meta.category, words: meta.words, loop: meta.loop,
+                ...(meta.credit ? { credit: normalizeSfxCredit(meta.credit) } : {}), data: await dataUrl(blob) });
         }
         return new Blob([JSON.stringify({ format: SFX_PACK_FORMAT, version: 1, sounds })], { type: 'application/json' });
     });
@@ -374,22 +384,36 @@ export async function importSfxPack(file) {
             const blob = await blobFromData(item.data);
             total += blob.size;
             if (total > SFX_LIMITS.totalBytes) throw new Error('전체 128MB 한도를 넘었어요.');
+            const sha256 = await hashBlob(blob), credit = importedSfxCredit(item, pack.credits, sha256);
             prepared.push({ blob, meta: { id: newId(), name: textValue(item.name, 80), category: textValue(item.category, 32) || '내 효과음',
-                words: cleanWords(item.words), loop: item.loop === true, custom: true, bytes: blob.size, mime: blob.type, sha256: await hashBlob(blob) } });
+                words: cleanWords(item.words), loop: item.loop === true, custom: true, bytes: blob.size, mime: blob.type, sha256, ...(credit ? { credit } : {}) } });
         } catch (error) { errors.push({ index: i, message: error.message }); }
     }
     return mutate(async () => {
         const existing = customRows();
         const seen = new Set(existing.filter(row => row.sha256).map(row => `${row.sha256}|${row.name}|${JSON.stringify(row.words)}|${row.loop}`));
-        const unique = [];
-        let duplicates = 0;
+        const unique = [], restored = [], restoreIds = new Set();
+        let duplicates = 0, credited = 0;
         for (const item of prepared) {
             const key = `${item.meta.sha256}|${item.meta.name}|${JSON.stringify(item.meta.words)}|${item.meta.loop}`;
+            const sameHash = item.meta.sha256 ? existing.filter(row => row.sha256 === item.meta.sha256) : [];
+            const sameSound = sameHash.filter(row => row.name === item.meta.name);
+            const exact = sameSound.filter(row => `${row.sha256}|${row.name}|${JSON.stringify(row.words)}|${row.loop}` === key);
+            const prior = sameSound.length === 1 ? sameSound[0] : exact.length === 1 ? exact[0] : sameHash.length === 1 ? sameHash[0] : null;
+            // Reimport can repair missing attribution, but never replaces user edits or prior credits.
+            if (prior) {
+                if ((sameSound.length === 1 || sameHash.length === 1) && item.meta.credit && !prior.credit) { prior.credit = normalizeSfxCredit(item.meta.credit); credited++; }
+                // Synced settings do not include IndexedDB bytes. Restore only missing audio,
+                // retaining the old id so saved scripts and disabled preferences keep working.
+                if (!restoreIds.has(prior.id) && !await customBlob(prior.id)) { restored.push({ blob: item.blob, meta: prior }); restoreIds.add(prior.id); }
+                duplicates++; continue;
+            }
             if (item.meta.sha256 && seen.has(key)) { duplicates++; continue; }
             if (item.meta.sha256) seen.add(key);
             unique.push(item);
         }
-        if (unique.length) await addPrepared(unique);
-        return { added: unique.length, skipped: errors.length + duplicates, failed: errors.length, duplicates, errors };
+        if (unique.length || restored.length) await addPrepared(unique, existing, restored);
+        else if (credited) await commitRows(existing);
+        return { added: unique.length, skipped: errors.length + duplicates, failed: errors.length, duplicates, credited, restored: restored.length, errors };
     });
 }

@@ -43,6 +43,7 @@ jobs:
           node tools/tests/tts-listen.mjs .
           node tools/tests/tts-scene.mjs .
           node tools/tests/tts-sfx-timing.mjs .
+          node tools/tests/tts-sfx-credits.mjs .
           node tools/tests/zipinstall-remove.mjs .
           node tools/tests/word-replace-marks.mjs .
           node tools/tests/translator-glossary.mjs .
