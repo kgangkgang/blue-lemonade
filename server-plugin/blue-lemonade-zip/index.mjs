@@ -3,7 +3,7 @@ import path from 'node:path';
 import { LIMITS, readArchive, ZipError } from './archive.mjs';
 import { Installer } from './install.mjs';
 export const info = { id: 'blue-lemonade-zip', name: 'Blue Lemonade ZIP', description: 'Install extension ZIPs with private backups' };
-export const VERSION = '1.0.0';
+export const VERSION = '1.1.0';
 export async function init(router) {
     // Use the ZIP reader already shipped by SillyTavern. No npm install or scripts.
     const require = createRequire(path.join(process.cwd(), 'package.json'));
@@ -34,6 +34,9 @@ export async function init(router) {
     }));
     router.post('/preview', wrap((req, base, owner) => installer.preview(base, owner, req.body?.token, req.body?.folder)));
     router.post('/install', wrap((req, base, owner) => installer.install(base, owner, req.body?.token)));
+    router.get('/installed', wrap((req, base) => installer.manageable(base)));
+    router.post('/remove-preview', wrap((req, base, owner) => installer.removalPreview(base, owner, req.body?.folder)));
+    router.post('/remove', wrap((req, base, owner) => installer.remove(base, owner, req.body?.token)));
     router.get('/backups', wrap((req, base) => installer.backups(base)));
     router.post('/restore', wrap((req, base) => installer.restore(base, req.body?.id)));
 }

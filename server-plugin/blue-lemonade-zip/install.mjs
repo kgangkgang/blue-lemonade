@@ -47,10 +47,10 @@ async function manifest(dir) {
 }
 const repo = m => { try { const u = new URL(m.homePage); return u.hostname.toLowerCase() === 'github.com' ? u.pathname.replace(/\.git$|\/$/g, '').toLowerCase() : ''; } catch { return ''; } };
 export class Installer {
-    constructor({ yauzl, readArchive, beforePublish } = {}) { this.yauzl = yauzl; this.readArchive = readArchive; this.beforePublish = beforePublish; this.plans = new Map(); this.locks = new Set(); }
+    constructor({ yauzl, readArchive, beforePublish, beforeRemoveCommit } = {}) { this.yauzl = yauzl; this.readArchive = readArchive; this.beforePublish = beforePublish; this.beforeRemoveCommit = beforeRemoveCommit; this.plans = new Map(); this.locks = new Set(); }
     async locked(base, run) {
         base = path.resolve(base);
-        if (this.locks.has(base)) throw new ZipError('다른 설치가 진행 중이에요. 잠시 후 다시 눌러 주세요.', 409);
+        if (this.locks.has(base)) throw new ZipError('다른 확장 작업이 진행 중이에요. 잠시 후 다시 눌러 주세요.', 409);
         this.locks.add(base); try { return await run(); } finally { this.locks.delete(base); }
     }
     async prepare(base) {
@@ -82,6 +82,60 @@ export class Installer {
         }
         return list;
     }
+    protectedExtension(folder, m) {
+        return key(folder) === 'blue-lemonade' || m?.display_name.trim().toLowerCase() === 'blue lemonade';
+    }
+    async manageable(base) {
+        return this.locked(base, async () => {
+            await this.prepare(base);
+            return (await this.installed(base)).map(m => ({ ...m, protected: this.protectedExtension(m.folder, m) }))
+                .sort((a, b) => a.display_name.localeCompare(b.display_name));
+        });
+    }
+    reserve(base, owner, data) {
+        for (const [id, p] of this.plans) if (Date.now() > p.expires || (p.owner === owner && p.base === path.resolve(base))) this.plans.delete(id);
+        if (this.plans.size >= 2) throw new ZipError('다른 확장을 확인 중이에요. 잠시 후 다시 시도해 주세요.', 429);
+        const token = randomUUID();
+        this.plans.set(token, { ...data, owner, base: path.resolve(base), expires: Date.now() + 10 * 60 * 1000 });
+        const expiry = setTimeout(() => this.plans.delete(token), 10 * 60 * 1000); expiry.unref();
+        return token;
+    }
+    async removalPreview(base, owner, folder) {
+        return this.locked(base, async () => {
+            await this.prepare(base); folder = folderName(folder);
+            const actual = (await fs.readdir(base)).find(n => key(n) === key(folder));
+            if (actual !== folder) throw new ZipError('목록에서 확장을 다시 골라 주세요.', 409);
+            const target = path.join(base, folder), saved = await snapshot(target), m = await manifest(target);
+            if (!saved || !m) throw new ZipError('설치된 확장을 찾지 못했어요. 목록을 새로 불러와 주세요.', 409);
+            if (this.protectedExtension(folder, m)) throw new ZipError('블루레몬에이드는 이 화면에서 삭제할 수 없어요. 삭제 후 복원 화면도 함께 사라지기 때문이에요.');
+            const token = this.reserve(base, owner, { kind: 'remove', selection: { folder, digest: saved.digest } });
+            return { token, folder, manifest: m, files: saved.files.size, bytes: saved.bytes };
+        });
+    }
+    async remove(base, owner, token) {
+        return this.locked(base, async () => {
+            const { vault } = await this.prepare(base), p = this.plan(base, owner, token, 'remove');
+            const { folder, digest } = p.selection, target = path.join(base, folder), saved = await snapshot(target), m = await manifest(target);
+            if (!saved || saved.digest !== digest || !m) throw new ZipError('확장 파일이 바뀌었어요. 삭제할 내용을 다시 확인해 주세요.', 409);
+            if (this.protectedExtension(folder, m)) throw new ZipError('블루레몬에이드는 이 화면에서 삭제할 수 없어요.');
+            const backup = randomUUID(), box = path.join(vault, backup), files = path.join(box, 'files');
+            await fs.mkdir(box);
+            const record = { folder, date: new Date().toISOString(), manifest: m, bytes: saved.bytes, action: 'remove', pending: true };
+            await writeRecord(box, record);
+            // Keep the entire original outside extension discovery. Pending removals
+            // recover through prepare() if the process stops before journal commit.
+            await fs.rename(target, files);
+            try {
+                await this.beforeRemoveCommit?.();
+                record.pending = false; await writeRecord(box, record);
+            } catch (error) {
+                if (!await exists(target)) await fs.rename(files, target);
+                throw error;
+            }
+            this.plans.delete(token);
+            return { folder, backup, removed: true, reload: true };
+        });
+    }
     async inspect(base, owner, buffer, filename) {
         return this.locked(base, async () => {
             await this.prepare(base);
@@ -94,9 +148,7 @@ export class Installer {
             suggested = suggested.replace(/-(main|master|v?\d[\w.-]*)$/i, '');
             try { folderName(suggested); } catch { suggested = 'my-extension'; }
             const matches = list.filter(m => (repo(m) && repo(m) === repo(archive.manifest)) || m.display_name === archive.manifest.display_name || key(m.folder) === key(suggested));
-            const token = randomUUID();
-            this.plans.set(token, { owner, base: path.resolve(base), archive, expires: Date.now() + 10 * 60 * 1000 });
-            const expiry = setTimeout(() => this.plans.delete(token), 10 * 60 * 1000); expiry.unref();
+            const token = this.reserve(base, owner, { kind: 'install', archive });
             return { token, manifest: archive.manifest, count: archive.files.size, bytes: archive.size, suggested, matches, installed: list, expiresIn: 600 };
         });
     }
@@ -113,9 +165,9 @@ export class Installer {
             return { folder, current: old ? await manifest(path.join(base, folder)) : null, incoming: p.archive.manifest, files: p.archive.files.size, replaced, kept: old ? old.files.size - replaced : 0, backupBytes: old?.bytes || 0 };
         });
     }
-    plan(base, owner, token) {
+    plan(base, owner, token, kind = 'install') {
         const p = this.plans.get(token);
-        if (!p || p.owner !== owner || p.base !== path.resolve(base) || p.expires < Date.now()) throw new ZipError('확인 시간이 지났어요. ZIP을 다시 골라 주세요.', 409);
+        if (!p || p.kind !== kind || p.owner !== owner || p.base !== path.resolve(base) || p.expires < Date.now()) throw new ZipError('확인 시간이 지났어요. ZIP이나 관리할 확장을 다시 골라 주세요.', 409);
         return p;
     }
     checkOverlay(files, old) {
@@ -189,7 +241,7 @@ export class Installer {
             const { vault } = await this.prepare(base), result = [];
             for (const id of await fs.readdir(vault)) if (/^[a-f0-9-]{36}$/.test(id)) {
                 const box = path.join(vault, id), record = await this.record(box);
-                if (record && await exists(path.join(box, 'files'))) result.push({ id, folder: folderName(record.folder), date: record.date, manifest: record.manifest, bytes: record.bytes });
+                if (record && await exists(path.join(box, 'files'))) result.push({ id, folder: folderName(record.folder), date: record.date, manifest: record.manifest, bytes: record.bytes, action: record.action });
             }
             return result.sort((a, b) => b.date.localeCompare(a.date));
         });
