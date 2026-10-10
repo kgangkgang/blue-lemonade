@@ -21,9 +21,9 @@
 
 사용자가 추가한 효과음의 권리와 사용 조건은 해당 파일의 출처를 따릅니다. 이 고지가 사용자 파일에 새로운 이용 허락을 부여하지 않습니다.
 
-## 추가 효과음 24개 · 총 71개
+## 추가 효과음 34개 · 총 81개
 
-2026-10-10 TTS 1.5.1에서 아래 생활 효과음 16개를, 같은 날 TTS 1.5.3에서 6개를, 2026-10-11 TTS 1.5.7에서 찰싹 2개를 더 추가했습니다. 기존 MultiCast 47개는 변경하지 않았습니다. 새 파일의 원본 제목·페이지·다운로드 URL·저작자·라이선스·원본 및 가공 파일 SHA-256은 [sfx-extra/SOURCES.json](sfx-extra/SOURCES.json)에 보존합니다.
+2026-10-10 TTS 1.5.1에서 아래 생활 효과음 16개를, 같은 날 TTS 1.5.3에서 6개를, 2026-10-11 TTS 1.5.7에서 찰싹 2개를, 같은 날 TTS 1.6.0에서 친밀한 장면 효과음 10개를 더 추가했습니다. 기존 MultiCast 47개는 변경하지 않았습니다. 새 파일의 원본 제목·페이지·다운로드 URL·저작자·라이선스·원본 및 가공 파일 SHA-256은 [sfx-extra/SOURCES.json](sfx-extra/SOURCES.json)에 보존합니다.
 
 ### BigSoundBank · 20개 · CC0 1.0
 
@@ -44,8 +44,27 @@
 
 [공식 CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) · [동봉 전문](sfx-extra/LICENSE-CC-BY.txt). 이 음원이 들어간 WAV·영상 등을 재배포할 때 저작자·원본 페이지·라이선스 링크와 변경 여부를 표시하고 기존 고지를 유지해야 합니다. 음원에 AGPL만 적용하거나 CC BY가 허용한 이용을 추가로 제한하지 않습니다. 이 표기는 원저작자의 후원·보증을 의미하지 않으며, 음원은 무보증으로 제공됩니다.
 
+### freesound · 10개 · CC0 1.0
+
+각 소리 페이지가 **Creative Commons 0** 링크를 표시합니다(확인한 페이지의 SHA-256은 작업 기록에 보존). 원본은 freesound가 공개한 고음질 미리듣기 MP3입니다.
+
+| 동봉 파일 | 원본 제목 | 저작자 | 원본 페이지 |
+|---|---|---|---|
+| `sfx-extra/daily_licking.mp3` (핥기 (연속)) | wet_sounds_slime_porn_lick_1_1.wav | SundayRecords | [655410](https://freesound.org/people/SundayRecords/sounds/655410/) |
+| `sfx-extra/daily_lick.mp3` (핥기 한 번) | wet_sounds_slime_porn_lick_1_1.wav | SundayRecords | [655410](https://freesound.org/people/SundayRecords/sounds/655410/) |
+| `sfx-extra/daily_kissing.mp3` (키스 (연속)) | Kissing_ses2.wav | freesound | [25268](https://freesound.org/people/freesound/sounds/25268/) |
+| `sfx-extra/daily_kiss.mp3` (키스) | NPX Male Wet Kiss 3.wav | noahpardo | [352345](https://freesound.org/people/noahpardo/sounds/352345/) |
+| `sfx-extra/daily_squelching.mp3` (찔꺽 (연속)) | squelching.mp3 | tiddles451 | [547446](https://freesound.org/people/tiddles451/sounds/547446/) |
+| `sfx-extra/daily_squelch.mp3` (찔꺽) | Squelching SFX [6] | SoundDesignForYou | [649982](https://freesound.org/people/SoundDesignForYou/sounds/649982/) |
+| `sfx-extra/daily_bed_creaking.mp3` (침대 삐걱 (연속)) | Bed Creak Slow | bmusic92 | [251449](https://freesound.org/people/bmusic92/sounds/251449/) |
+| `sfx-extra/daily_bed_creak.mp3` (침대 삐걱) | 25. cama rechinando Bed creaking.wav | cabusta9 | [443796](https://freesound.org/people/cabusta9/sounds/443796/) |
+| `sfx-extra/daily_gulping.mp3` (꿀꺽 (연속)) | Gulp.wav | DeVern | [341651](https://freesound.org/people/DeVern/sounds/341651/) |
+| `sfx-extra/daily_gulp.mp3` (꿀꺽) | Gulp - Hard Swallow | magnuswaker | [531755](https://freesound.org/people/magnuswaker/sounds/531755/) |
+
+[공식 CC0](https://creativecommons.org/publicdomain/zero/1.0/) · [동봉 전문](sfx-extra/LICENSE-CC0.txt).
+
 ### Blue Lemonade 가공 내역
 
-추가 효과음 24개는 원본 녹음의 반복 동작 중 한 동작 또는 짧은 연속 구간만 추출했습니다. 동전은 첫 낙하와 잔향 1.05초, 키보드는 한 타이핑 묶음 2.5초, 골골송·비·물줄기는 7초입니다. 음량을 조정하고 시작 20ms·끝 30ms 페이드, MP3 128kbps / 44.1kHz 인코딩을 적용했습니다. 1.5.3의 6개는 휴대폰 진동 한 묶음 1.355초, 의자 끌기 1.05초, 펜 뚜껑 0.32초, 냉장고 문 0.64초, 전기주전자 3.5초, 양치질 2.3초를 발췌했고 파일별로 10~120ms 페이드와 +1.8~+6dB 음량 조정을 적용했습니다. 전기주전자·양치질은 반복을 합성하지 않았으며, 대사 분석의 지속 표현에 따라 재생 길이를 정합니다. 1.5.7의 찰싹 한 번은 Slaps의 두 번째 타격 0.45초, 엉덩이 찰싹 연속은 Spanking의 연속 4회 2.08초(녹음 리듬 그대로, 반복 합성 없음)입니다. 파일별 시작 시각·길이·음량 조정값은 `SOURCES.json`의 `modifications`에 기록했습니다. 모든 파일의 기본 반복 재생은 꺼져 있습니다.
+추가 효과음 34개는 원본 녹음의 반복 동작 중 한 동작 또는 짧은 연속 구간만 추출했습니다. 동전은 첫 낙하와 잔향 1.05초, 키보드는 한 타이핑 묶음 2.5초, 골골송·비·물줄기는 7초입니다. 음량을 조정하고 시작 20ms·끝 30ms 페이드, MP3 128kbps / 44.1kHz 인코딩을 적용했습니다. 1.5.3의 6개는 휴대폰 진동 한 묶음 1.355초, 의자 끌기 1.05초, 펜 뚜껑 0.32초, 냉장고 문 0.64초, 전기주전자 3.5초, 양치질 2.3초를 발췌했고 파일별로 10~120ms 페이드와 +1.8~+6dB 음량 조정을 적용했습니다. 전기주전자·양치질은 반복을 합성하지 않았으며, 대사 분석의 지속 표현에 따라 재생 길이를 정합니다. 1.5.7의 찰싹 한 번은 Slaps의 두 번째 타격 0.45초, 엉덩이 찰싹 연속은 Spanking의 연속 4회 2.08초(녹음 리듬 그대로, 반복 합성 없음)입니다. 1.6.0의 10개는 핥기 한 번 0.47초·핥기 연속 2.75초(3회, 약 0.9초 간격), 키스 0.45초·키스 연속 4초, 찔꺽 0.6초·찔꺽 연속 2.9초(5회, 약 0.6초 간격), 침대 삐걱 1.95초·침대 삐걱 연속 3.95초(3회, 약 1.3초 간격), 꿀꺽 0.55초·꿀꺽 연속 1.95초(2회)를 발췌했고 파일별로 −7.4~+14dB 음량 조정을 적용했습니다(반복 합성 없음). 파일별 시작 시각·길이·음량 조정값은 `SOURCES.json`의 `modifications`에 기록했습니다. 모든 파일의 기본 반복 재생은 꺼져 있습니다.
 
 공유마당 파일은 원본 페이지가 공개한 재생용 MP3를 가공했으며, 별도 원문 다운로드 파일과의 바이트 동일성은 확인하지 않았습니다.

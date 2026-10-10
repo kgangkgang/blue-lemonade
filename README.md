@@ -1,13 +1,24 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.0.0/blue-lemonade-6.0.0.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.0.1/blue-lemonade-6.0.1.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.0.0 · 최신 업데이트</summary>
+<summary>6.0.1 · 최신 업데이트</summary>
+
+- TTS 1.6.0: 친밀한 장면 효과음 10개를 더했어요(freesound CC0) — 핥기·키스·찔꺽·침대 삐걱·꿀꺽, 각각 한 번과 연속. 연속 소리는 대사 동안 반복돼요. 내장 소리는 81개예요.
+- 같은 답장을 번역 전·후로 두 번 분석하던 걸 고쳤어요. 번역문이 분석 뒤에 붙어도 저장된 분석을 그대로 써요.
+- 대사 분석 응답이 JSON이 아닐 때 모델이 글로만 답했는지, 빈 답인지 알려 주고 진단에 앞부분을 남겨요. 효과음이 늘어 저장된 분석은 다음 읽기 때 한 번 다시 받아요.
+
+[TTS 사용법](src/addons/tts/README.md) · [효과음·기능 출처](src/addons/tts/NOTICE.md)
+
+</details>
+
+<details>
+<summary>6.0.0 · 대사 동안 이어지는 소리</summary>
 
 - TTS 1.5.9: 리듬·환경음처럼 지속되는 효과음은 대사를 눌러 읽을 때 그 대사가 끝날 때까지 반복해요. 전에는 한 번만 나서 대사보다 먼저 끝났어요.
 - 대화 내내 이어지는 동작은 분석이 「계속됨」과 멈추는 자리를 함께 답해요. 그 사이의 어느 대사를 눌러도 소리가 밑에 깔리고, 전체 읽기와 WAV 저장에서는 멈추는 대사 앞에서 끝나요. 저장된 분석은 다음 읽기 때 한 번 다시 받아요.

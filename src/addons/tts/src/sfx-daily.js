@@ -554,6 +554,312 @@ const rows = [
       "license": "CC0-1.0",
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
     }
+  },
+  {
+    "id": "daily_licking",
+    "name": "핥기 (연속)",
+    "category": "사람",
+    "words": [
+      "핥아대",
+      "핥아 대",
+      "핥아 올리",
+      "핥아올리",
+      "핥기 시작",
+      "계속 핥",
+      "할짝할짝",
+      "licking",
+      "cunnilingus",
+      "eats her out",
+      "eating her out",
+      "eats him out",
+      "lapping",
+      "laps hungrily"
+    ],
+    "assetPath": "../sfx-extra/daily_licking.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "SundayRecords",
+      "source": "https://freesound.org/people/SundayRecords/sounds/655410/",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  {
+    "id": "daily_lick",
+    "name": "핥기 한 번",
+    "category": "사람",
+    "words": [
+      "핥",
+      "햝",
+      "할짝",
+      "날름",
+      "lick",
+      "licks",
+      "licked",
+      "lap at",
+      "laps at"
+    ],
+    "assetPath": "../sfx-extra/daily_lick.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "SundayRecords",
+      "source": "https://freesound.org/people/SundayRecords/sounds/655410/",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  {
+    "id": "daily_kissing",
+    "name": "키스 (연속)",
+    "category": "사람",
+    "words": [
+      "키스를 이어",
+      "키스를 계속",
+      "깊은 키스",
+      "딥키스",
+      "딥 키스",
+      "입술을 탐",
+      "입술을 겹",
+      "혀를 얽",
+      "혀가 얽",
+      "혀를 섞",
+      "혀가 섞",
+      "making out",
+      "make out",
+      "deep kiss",
+      "french kiss",
+      "kissing",
+      "kisses her deeply",
+      "kisses him deeply",
+      "tongues tangle"
+    ],
+    "assetPath": "../sfx-extra/daily_kissing.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "freesound",
+      "source": "https://freesound.org/people/freesound/sounds/25268/",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  {
+    "id": "daily_kiss",
+    "name": "키스",
+    "category": "사람",
+    "words": [
+      "키스",
+      "입맞",
+      "입을 맞",
+      "입술을 맞",
+      "입술에 입",
+      "뽀뽀",
+      "쪽 소리",
+      "쪽 하고",
+      "kiss",
+      "kissed",
+      "kisses",
+      "peck",
+      "pecks",
+      "smooch"
+    ],
+    "assetPath": "../sfx-extra/daily_kiss.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "noahpardo",
+      "source": "https://freesound.org/people/noahpardo/sounds/352345/",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  {
+    "id": "daily_squelching",
+    "name": "찔꺽 (연속)",
+    "category": "사람",
+    "words": [
+      "찔꺽찔꺽",
+      "질척질척",
+      "철벅철벅",
+      "질퍽질퍽",
+      "젖은 소리",
+      "물소리가 나",
+      "피스톤",
+      "박아 넣",
+      "박아넣",
+      "쑤셔",
+      "squelching",
+      "wet sounds",
+      "squishing",
+      "fingering",
+      "thrusting",
+      "thrusts",
+      "pounding",
+      "pumping",
+      "slick rhythm"
+    ],
+    "assetPath": "../sfx-extra/daily_squelching.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "tiddles451",
+      "source": "https://freesound.org/people/tiddles451/sounds/547446/",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  {
+    "id": "daily_squelch",
+    "name": "찔꺽",
+    "category": "사람",
+    "words": [
+      "찔꺽",
+      "질척",
+      "철벅",
+      "질퍽",
+      "푹 젖",
+      "squelch",
+      "squelches",
+      "squish",
+      "squishes",
+      "wet squish",
+      "slick sound"
+    ],
+    "assetPath": "../sfx-extra/daily_squelch.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "SoundDesignForYou",
+      "source": "https://freesound.org/people/SoundDesignForYou/sounds/649982/",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  {
+    "id": "daily_bed_creaking",
+    "name": "침대 삐걱 (연속)",
+    "category": "일상·사무",
+    "words": [
+      "침대가 삐걱거",
+      "침대가 삐걱대",
+      "침대가 흔들",
+      "침대가 들썩",
+      "삐걱삐걱",
+      "침대 스프링이 울",
+      "침대가 리듬",
+      "bed creaking",
+      "creaking rhythmically",
+      "bed rocks",
+      "bed rocking",
+      "bed shakes",
+      "bed shaking",
+      "headboard",
+      "mattress creaking",
+      "springs creaking"
+    ],
+    "assetPath": "../sfx-extra/daily_bed_creaking.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "bmusic92",
+      "source": "https://freesound.org/people/bmusic92/sounds/251449/",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  {
+    "id": "daily_bed_creak",
+    "name": "침대 삐걱",
+    "category": "일상·사무",
+    "words": [
+      "침대가 삐걱",
+      "침대 삐걱",
+      "침대가 끼익",
+      "매트리스가",
+      "스프링이 삐걱",
+      "침대가 눌리",
+      "bed creak",
+      "bed creaks",
+      "bed creaked",
+      "mattress creak",
+      "springs creak",
+      "mattress dips",
+      "bed groans"
+    ],
+    "assetPath": "../sfx-extra/daily_bed_creak.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "cabusta9",
+      "source": "https://freesound.org/people/cabusta9/sounds/443796/",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  {
+    "id": "daily_gulping",
+    "name": "꿀꺽 (연속)",
+    "category": "사람",
+    "words": [
+      "꿀꺽꿀꺽",
+      "벌컥벌컥",
+      "꿀떡꿀떡",
+      "꼴깍꼴깍",
+      "들이켰",
+      "들이켜",
+      "단숨에 마",
+      "단숨에 들이",
+      "gulping",
+      "swallowing",
+      "gulps down",
+      "gulps it down",
+      "drinks it down",
+      "chugs",
+      "chugging",
+      "downs the"
+    ],
+    "assetPath": "../sfx-extra/daily_gulping.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "DeVern",
+      "source": "https://freesound.org/people/DeVern/sounds/341651/",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  {
+    "id": "daily_gulp",
+    "name": "꿀꺽",
+    "category": "사람",
+    "words": [
+      "꿀꺽",
+      "꿀떡",
+      "꼴깍",
+      "삼켰",
+      "삼킨",
+      "삼키",
+      "목으로 넘",
+      "목울대가",
+      "gulp",
+      "gulps",
+      "gulped",
+      "swallow",
+      "swallows",
+      "swallowed",
+      "hard swallow"
+    ],
+    "assetPath": "../sfx-extra/daily_gulp.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "magnuswaker",
+      "source": "https://freesound.org/people/magnuswaker/sounds/531755/",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
   }
 ];
 export const DAILY_SFX = Object.freeze(rows.map(row => Object.freeze({...row, words: Object.freeze(row.words), credit: Object.freeze(row.credit)})));

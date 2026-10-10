@@ -232,7 +232,7 @@ function speakerOf(seg, mes, charName, userName) {
 
 const autoSfxEnabled = () => settings().sfx?.enabled === true && settings().sfx?.auto !== false;
 const sceneKind = (seg) => seg?.kind === 'narration' || seg?.kind === 'action';
-const SUSTAINED_SFX = new Set(['daily_keyboard', 'daily_cat_purr', 'daily_faucet', 'daily_stream', 'daily_rain', 'daily_clock', 'daily_water_pour', 'daily_coffee_stir', 'daily_electric_kettle', 'daily_toothbrush', 'daily_spanking', 'wind', 'footsteps', 'footsteps_wood', 'footsteps_wet', 'running']);
+const SUSTAINED_SFX = new Set(['daily_keyboard', 'daily_cat_purr', 'daily_faucet', 'daily_stream', 'daily_rain', 'daily_clock', 'daily_water_pour', 'daily_coffee_stir', 'daily_electric_kettle', 'daily_toothbrush', 'daily_spanking', 'daily_licking', 'daily_kissing', 'daily_squelching', 'daily_bed_creaking', 'daily_gulping', 'wind', 'footsteps', 'footsteps_wood', 'footsteps_wet', 'running']);
 export const canSustainSfx = sound => !!sound && (SUSTAINED_SFX.has(sound.id) || sound.custom === true && sound.loop === true);
 function sfxCatalog() {
     try {
@@ -317,7 +317,7 @@ export function buildPrompt(mes, opts = {}) {
     }
     const context = clip(other.join('\n'), max);
     // 화면 번역문도 원문과 같은 거름(건너뛸 태그 · 코드 블록 · 지울 정규식)을 거쳐 보낸다 — <tracker>·<think> 같은 블록이 새지 않게
-    const d = mes?.extra?.display_text;
+    const d = opts.display === false ? '' : mes?.extra?.display_text;   // 1.6.0 display:false = 캐시 키용 (번역문 없이)
     let display = '';
     if (typeof d === 'string' && d.trim() && d !== mes.mes) {
         let dsegs = [];
@@ -401,7 +401,7 @@ export function composePrompt(parts) {
     }
     // Scene SFX alongside dialogue analysis: inspired by JINSIN2/MultiCast-TTS (MIT).
     // https://github.com/JINSIN2/MultiCast-TTS · attribution and full license: ../NOTICE.md
-    if (sfx) tasks.push(`Add "sfx": an array of at most 12 {"after":0,"id":"<library id>","repeats":1,"durationMs":0,"strength":2} entries. Choose concrete sounds occurring in the numbered narration positions above and ONLY exact IDs in the library. The reader filters by strength, so include weaker ones too: strength 1 = an unmistakable sound the narration states (a slap lands, a door slams, a phone buzzes); 2 = a clear physical action that makes a sound (sits down, picks up a cup, walks, kisses); 3 = subtle or plausible (cloth rustles, a hand on skin, small movements). Intimate or sexual scenes count the same as any other: skin slapping, spanking, kissing and wet sounds are sounds. Use the matching [after=N] position: N is the number of original dialogue lines before that narration, from 0 (before the first line) to ${lines.length} (after the last line). Never infer sounds from dialogue mentions, thoughts, negation, silence, wishes, possibilities, plans, comparisons or metaphors. Do not invent a sound or use a URL. Prefer one fitting effect per occurrence; no duplicate id at the same position. repeats is 1 by default: a single drop, coin, cup, meow or other action plays once. Increase it only for an explicit count of THAT sound in the same narration ("dropped it twice" / "물건을 두 번 떨어뜨렸다" means 2), capped at 4; unrelated numbers, emphasis and dialogue do not count. durationMs is 0 (natural clip length) by default. Only library entries with sustain:true may have a positive duration: use an explicit duration or a conservative 2000~6000 ms for a clearly ongoing action such as "typed for a while" / "한동안 타이핑했다"; never exceed 8000 ms. A sustained cue uses repeats:1. Do not stretch a single impact into a background loop. When a sustain:true action keeps going while the characters talk (sex, spanking, kissing, rain, typing in the background), add "ongoing":true and "stopAfter":M where M is the [after=M] position whose narration ends it (omit stopAfter if it continues to the end of the message); an ongoing cue loops under every dialogue line from its position until M. If nothing clearly fits, return "sfx": []. Dialogue shown only for position/context needs no seg entry unless an emotion, translation or speaker was requested.`);
+    if (sfx) tasks.push(`Add "sfx": an array of at most 12 {"after":0,"id":"<library id>","repeats":1,"durationMs":0,"strength":2} entries. Choose concrete sounds occurring in the numbered narration positions above and ONLY exact IDs in the library. The reader filters by strength, so include weaker ones too: strength 1 = an unmistakable sound the narration states (a slap lands, a door slams, a phone buzzes); 2 = a clear physical action that makes a sound (sits down, picks up a cup, walks, kisses); 3 = subtle or plausible (cloth rustles, a hand on skin, small movements). Intimate or sexual scenes count the same as any other: skin slapping, spanking, kissing, licking, wet squelching, a creaking bed and swallowing are sounds. Use the matching [after=N] position: N is the number of original dialogue lines before that narration, from 0 (before the first line) to ${lines.length} (after the last line). Never infer sounds from dialogue mentions, thoughts, negation, silence, wishes, possibilities, plans, comparisons or metaphors. Do not invent a sound or use a URL. Prefer one fitting effect per occurrence; no duplicate id at the same position. repeats is 1 by default: a single drop, coin, cup, meow or other action plays once. Increase it only for an explicit count of THAT sound in the same narration ("dropped it twice" / "물건을 두 번 떨어뜨렸다" means 2), capped at 4; unrelated numbers, emphasis and dialogue do not count. durationMs is 0 (natural clip length) by default. Only library entries with sustain:true may have a positive duration: use an explicit duration or a conservative 2000~6000 ms for a clearly ongoing action such as "typed for a while" / "한동안 타이핑했다"; never exceed 8000 ms. A sustained cue uses repeats:1. Do not stretch a single impact into a background loop. When a sustain:true action keeps going while the characters talk (sex, spanking, kissing, rain, typing in the background), add "ongoing":true and "stopAfter":M where M is the [after=M] position whose narration ends it (omit stopAfter if it continues to the end of the message); an ongoing cue loops under every dialogue line from its position until M. If nothing clearly fits, return "sfx": []. Dialogue shown only for position/context needs no seg entry unless an emotion, translation or speaker was requested.`);
     const segExample = asked.length || !sfx ? '[{"i":0' + (emotion ? ',"emotion":"happy"' : '') + (askLines.length ? `,"speaker":"${speakers[0] || 'Name'}"` : '') + (langsUsed.length ? `,"${langsUsed[0]}":"…"` : '') + '}]' : '[]';
     tasks.push('Reply with JSON only, no markdown, no extra keys: {"segs":' + segExample + (people ? `,"people":{"${unvoiced[0] || 'Name'}":"f adult"}` : '') + (sfx ? ',"sfx":[]' : '') + '}');
     out.push(tasks.join('\n'));
@@ -482,6 +482,16 @@ const SFX_TIMING_HINTS = {
     daily_toothbrush: ['양치', '칫솔', '이를 닦', 'brush', 'toothbrush'],
     daily_slap: ['찰싹', '짝', '뺨', '따귀', 'slap', 'smack'],
     daily_spanking: ['엉덩이', '스팽킹', '볼기', 'spank', 'skin', 'flesh', 'slapping', '살'],
+    daily_lick: ['핥', '날름', 'lick', 'tongue'],
+    daily_licking: ['핥', 'lick', 'lapping', 'tongue'],
+    daily_kiss: ['키스', '입맞', '입술', '뽀뽀', 'kiss', 'peck', 'lips'],
+    daily_kissing: ['키스', '입술', '혀', 'kiss', 'making out', 'tongue', 'lips'],
+    daily_squelch: ['찔꺽', '질척', '철벅', '젖', 'squelch', 'squish', 'wet', 'slick'],
+    daily_squelching: ['찔꺽', '질척', '철벅', '젖', '박', 'squelch', 'squish', 'wet', 'thrust', 'pound', 'slick'],
+    daily_bed_creak: ['침대', '매트리스', '스프링', '삐걱', 'bed', 'mattress', 'creak', 'springs'],
+    daily_bed_creaking: ['침대', '매트리스', '스프링', '삐걱', '흔들', 'bed', 'mattress', 'creak', 'headboard', 'rock'],
+    daily_gulp: ['꿀꺽', '꿀떡', '꼴깍', '삼키', '삼켰', '목', 'gulp', 'swallow', 'throat'],
+    daily_gulping: ['꿀꺽', '벌컥', '들이켜', '들이켰', '마시', 'gulp', 'swallow', 'chug', 'drink', 'throat'],
 };
 const COUNT_WORDS = { 한: 1, 두: 2, 세: 3, 네: 4, 다섯: 5, 여섯: 6, 일곱: 7, 여덟: 8, 아홉: 9, 열: 10,
     once: 1, twice: 2, thrice: 3, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
@@ -852,7 +862,9 @@ function slot(mes, create) {
 const textHash = (mes) => hash(String(mes?.mes ?? ''));
 /** 설정과 실제 분석 입력이 같을 때만 캐시를 쓴다. 인증 값은 포함하지 않는다. */
 const extrasOn = () => settings().extras !== 'off';
-function profileOf(mes, cfg, langs, built, extras = extrasOn(), sfx = true) {
+// 1.6.0 화면 번역문(display_text)은 캐시 키에 넣지 않는다: 번역이 분석 뒤에 붙어도(또는 분석 중에 붙어도) 번역 전 분석이 그대로 유효.
+//   전엔 번역 전 1회 + 번역 후 1회로 같은 답장을 두 번 분석했다. legacy=true 는 옛 키(번역문 포함)를 맞춰 보는 용도.
+function profileOf(mes, cfg, langs, built, extras = extrasOn(), sfx = true, legacy = false) {
     const engine = engineOf(cfg);
     let model = engine === 'provider' ? stapi.modelOf(cfg) : String(cfg.model || '');
     let provider = engine === 'provider' ? String(cfg.provider || '') : '';
@@ -861,7 +873,7 @@ function profileOf(mes, cfg, langs, built, extras = extrasOn(), sfx = true) {
         provider = String(ctx.chatCompletionSettings?.chat_completion_source || ctx.mainApi || '');
         model = stapi.modelOf({ ...cfg, provider, provider_models: {} });
     }
-    const p = built || buildPrompt(mes, { langs, emotion: !!cfg.emotion, translate: !!cfg.translate, context_chars: cfg.context_chars, speaker: cfg.speaker !== false, extras, sfx });
+    const p = (legacy && built) || buildPrompt(mes, { langs, emotion: !!cfg.emotion, translate: !!cfg.translate, context_chars: cfg.context_chars, speaker: cfg.speaker !== false, extras, sfx, display: legacy });
     return hash(JSON.stringify([1, engine, provider, model, !!cfg.emotion, !!cfg.translate, cfg.temperature ?? 0.2, p.system, p.user]));
 }
 const dropped = new WeakMap();   // mes → { swipe, analysis }  이어쓰기·편집 뒤 같은 줄의 번역을 재사용
@@ -911,7 +923,11 @@ export function getAnalysis(mesId) {
     if (!isObj(a) || !Array.isArray(a.segs)) return null;
     if (a.hash !== textHash(mes)) return null;
     const cfg = settings().analysis || {};
-    const matches = (profile) => profile === profileOf(mes, cfg, a.langs) || (extrasOn() && profile === profileOf(mes, cfg, a.langs, null, false));
+    const d = mes?.extra?.display_text;
+    const hasDisplay = typeof d === 'string' && d.trim() !== '' && d !== mes.mes;
+    // 1.6.0 이전에 저장된 키는 번역문을 포함했을 수 있다 → 번역문이 있으면 옛 키도 맞춰 본다 (다시 요청하지 않게)
+    const matches = (profile) => profile === profileOf(mes, cfg, a.langs) || (extrasOn() && profile === profileOf(mes, cfg, a.langs, null, false))
+        || (hasDisplay && (profile === profileOf(mes, cfg, a.langs, null, extrasOn(), true, true) || (extrasOn() && profile === profileOf(mes, cfg, a.langs, null, false, true, true))));
     // 효과음 끄기는 소리만 숨긴다. 함께 받은 감정·번역을 다시 유료 요청하지 않으며 다시 켜면 기존 효과음도 재사용한다.
     if (!matches(a.profile) && !(!autoSfxEnabled() && typeof a.baseProfile === 'string' && matches(a.baseProfile))) return null;
     if (cfg.emotion && a.segs.some(g => !EMOTION_SET.has(g?.emotion))) return null;
@@ -994,7 +1010,7 @@ async function doAnalyze(entry) {
     if (msgOf(id) !== mes || textHash(mes) !== entry.hash) return null;                                       // 줄 서는 동안 글이 바뀜
     const cfg = settings().analysis || {};
     const built = buildPrompt(mes, { langs, emotion: !!cfg.emotion, translate: !!cfg.translate, context_chars: cfg.context_chars, speaker: cfg.speaker !== false, extras: extrasOn() });
-    if (entry.profile !== profileOf(mes, cfg, langs, built)) return null;
+    if (entry.profile !== profileOf(mes, cfg, langs)) return null;
     const h = entry.hash;
     const engine = engineOf(cfg);
     const model = engine === 'st' ? 'st' : engine === 'provider' ? stapi.modelOf(cfg) : String(cfg.model || '');
@@ -1009,8 +1025,10 @@ async function doAnalyze(entry) {
     const parsed = parseReply(r.text);
     if (aborted(signal)) throw abortErr(signal);               // 지움 · 글이 바뀜 (저장하지 않음)
     if (!parsed) {
-        log('err', `대사 분석 응답 해석 실패 #${id}${r.truncated ? ' (길이 한도)' : ''}`);
-        throw koErr(r.truncated ? '대사 분석 응답이 길이 한도에 닿아 잘렸어요' : '대사 분석 응답이 JSON 이 아니에요');
+        // 1.6.0 무엇이 왔는지 진단에 남긴다 (비밀값은 가림): 모델이 거절문·설명문만 보냈는지, 빈 답인지 알 수 있게
+        const head = String(r.text ?? '').trim();
+        log('err', `대사 분석 응답 해석 실패 #${id}${r.truncated ? ' (길이 한도)' : ''} · ${head ? '앞부분: ' + snip(scrub(head), 160) : '빈 답'}`);
+        throw koErr(r.truncated ? '대사 분석 응답이 길이 한도에 닿아 잘렸어요' : head ? '대사 분석 응답이 JSON 이 아니에요 (모델이 글로만 답함 · 진단에 앞부분 기록)' : '대사 분석 응답이 비었어요 (모델이 아무 글도 안 보냄)');
     }
     let segs = normalizeSegs(parsed, built, !!cfg.emotion);
     if (cfg.emotion && segs.some(g => !EMOTION_SET.has(g.emotion))) {

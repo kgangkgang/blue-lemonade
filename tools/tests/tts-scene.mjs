@@ -183,7 +183,7 @@ await test('ordinary WAV excludes effects when automatic effects are off; explic
 });
 
 await test('muted specific everyday sound never falls back to a generic water sound',async()=>{
-    await reset();assert.equal(Library.listSfx().length,71);assert.equal(Library.matchSfx('pour water').id,'daily_water_pour');
+    await reset();assert.equal(Library.listSfx().length,81);assert.equal(Library.matchSfx('pour water').id,'daily_water_pour');
     Library.setSfxEnabled('daily_water_pour',false);assert.equal(Library.matchSfx('pour water'),null);assert.ok(Library.getSfx('daily_water_pour'));assert.ok(await Library.sfxBlob('daily_water_pour'));
     assert.equal(Library.matchSfx('비가 내린다').id,'daily_rain');assert.equal(Library.matchSfx('키보드를 타이핑한다').id,'daily_keyboard');
 });
@@ -220,6 +220,21 @@ await test('1.5.4 readText reads another extension\'s text like a message: dialo
     const spoken=T.requests.map(r=>r.text).join(' ');   // 같은 목소리의 이어진 대사는 한 덩이로 합쳐질 수 있다
     assert.ok(spoken.includes('Hello there.')&&spoken.includes('Bye.')&&!/walked|smiled/.test(spoken),spoken);assert.ok(T.requests.length&&T.requests.every(r=>r.voiceUid==='minimax:nora'));
     assert.equal(P.speakExternal({text:'   '}),false);
+});
+await test('1.6.0 a translation that lands after or during the analysis keeps the stored analysis; keys saved with the translation still match',async()=>{
+    await reset();const s=S.settings();Object.assign(s.sfx,{enabled:true,auto:true,level:'normal'});s.routes={dialogue:'character',narration:'skip',action:'skip',thought:'skip',user_dialogue:'user'};
+    s.analysis={...s.analysis,enabled:true,engine:'compat',base:'https://mock.invalid/v1',key:'k',model:'m',emotion:true,translate:false,speaker:true,when:'auto',context_chars:1200,temperature:0.2};
+    const mes={mes:'The door slammed. "Hello." He raised his glass. "Sit down."',name:'Mina',is_user:false,is_system:false,swipe_id:0,extra:{}};T.ctx.chat.length=0;T.ctx.chat.push(mes);
+    const opts={langs:[],emotion:true,translate:false,context_chars:1200,speaker:true,extras:s.extras!=='off',sfx:true};
+    const p0=A.buildPrompt(mes,opts);const key=p=>A.hash(JSON.stringify([1,'compat','','m',true,false,0.2,p.system,p.user]));
+    const seed=profile=>{mes.extra.lemon_voice={analysis:{hash:A.hash(mes.mes),profile,langs:[],model:'m',at:1,segs:p0.lines.map(l=>({i:l.i,h:l.h,emotion:'calm',text:{}})),sfx:[{after:0,id:'door_slam',repeats:1,durationMs:0,strength:1}]}};};
+    seed(key(p0));assert.ok(A.getAnalysis(0)&&P.analysisWanted(0,mes)===false,'valid before the translation');
+    mes.extra.display_text='문이 쾅 닫혔다. "안녕." 그가 잔을 들었다. "앉아."';
+    const p1=A.buildPrompt(mes,opts);assert.ok(p1.user!==p0.user&&p1.user.includes('안녕'),'the request still carries the on-screen translation');
+    assert.equal(A.buildPrompt(mes,{...opts,display:false}).user,p0.user,'display:false builds the cache-key prompt without the translation');
+    assert.ok(A.getAnalysis(0)&&P.analysisWanted(0,mes)===false,'the translation landing does not invalidate the analysis');
+    seed(key(p1));assert.ok(A.getAnalysis(0)&&P.analysisWanted(0,mes)===false,'a key saved with the translation (before 1.6.0) still matches');
+    seed('x'.repeat(64));assert.ok(!A.getAnalysis(0)&&P.analysisWanted(0,mes)===true,'other keys still miss');
 });
 await test('1.5.9 sustained cues loop under the tapped line; ongoing cues cover later lines and stop at stopAfter; export cuts the loop there',async()=>{
     const routes={dialogue:'character',narration:'skip',action:'skip',thought:'skip',user_dialogue:'user'};
@@ -268,6 +283,7 @@ await test('1.5.7 effects level filters stored cues at playback without touching
     s.sfx.level='normal';
     assert.deepEqual(A.normalizeSfx([{after:0,id:'door_slam',strength:9},{after:0,id:'knock',strength:3},{after:1,id:'paper'}],p).map(c=>c.strength),[2,3,2]);
     assert.ok(Library.matchSfx('그가 뺨을 찰싹 때렸다').id==='daily_slap'&&Library.matchSfx('엉덩이를 찰싹 때렸다').id==='daily_spanking'&&Library.matchSfx('He slapped her.').id==='daily_slap'&&Library.matchSfx('주먹으로 때렸다').id==='punch');
+    assert.deepEqual(['그가 그녀의 목을 핥았다','그는 그녀를 핥아대기 시작했다','그녀가 그에게 키스했다','깊은 키스를 나눴다','찔꺽 소리가 났다','찔꺽찔꺽 젖은 소리가 이어졌다','침대가 삐걱했다','침대가 삐걱거렸다','그는 꿀꺽 침을 삼켰다','꿀꺽꿀꺽 들이켰다','She licked her lips.','He kept licking her.','He kissed her.','They were making out.','The bed creaked.','The bed was creaking rhythmically.','He gulped.','She was gulping it down.'].map(t=>Library.matchSfx(t)?.id),['daily_lick','daily_licking','daily_kiss','daily_kissing','daily_squelch','daily_squelching','daily_bed_creak','daily_bed_creaking','daily_gulp','daily_gulping','daily_lick','daily_licking','daily_kiss','daily_kissing','daily_bed_creak','daily_bed_creaking','daily_gulp','daily_gulping'],'1.6.0 intimate sounds match by keyword (sustained rows win ties)');
 });
 await test('1.5.6 tapping the last dialogue also plays the cues of the narration after it',async()=>{
     await reset();const s=S.settings();Object.assign(s.sfx,{enabled:true,auto:true,mode:'overlay'});s.routes={dialogue:'character',narration:'skip',action:'skip',thought:'skip',user_dialogue:'user'};

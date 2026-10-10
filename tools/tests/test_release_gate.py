@@ -183,7 +183,7 @@ class GateTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);self.write_fixture(root,files)
             self.assertEqual(gate.validate(gate.inventory(root,'theme'),'theme'),'1.3.1')
-    def test_everyday_sound_inventory_adds_24_named_sounds_and_both_licenses(self):
+    def test_everyday_sound_inventory_adds_34_named_sounds_and_both_licenses(self):
         files=self.tts_extra_fixture()
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);self.write_fixture(root,files)
@@ -191,7 +191,7 @@ class GateTests(unittest.TestCase):
                 (root/'src/addons/tts/sfx-extra'/name).write_bytes(b'private fixture')
             found=gate.inventory(root,'theme')
             self.assertEqual(set(found),set(files));self.assertEqual(gate.validate(found,'theme'),'1.3.1')
-            self.assertEqual(sum(n.endswith('.mp3') for n in found),71)
+            self.assertEqual(sum(n.endswith('.mp3') for n in found),81)
     def test_everyday_inventory_requires_complete_pack(self):
         files=self.tts_extra_fixture()
         for name in (*gate.TTS_EXTRA_RESOURCES,*(f'sfx-extra/{ident}.mp3' for ident in gate.TTS_EXTRA_IDS)):
@@ -221,7 +221,8 @@ class GateTests(unittest.TestCase):
                 with self.assertRaisesRegex(gate.GateError,'ID|path'):gate.validate(files,'theme')
     def test_everyday_catalog_pins_author_license_source_and_download(self):
         gongu=list(gate.TTS_EXTRA_IDS).index(next(iter(gate.TTS_EXTRA_GONGU)))
-        for index in (0,10,gongu):
+        fs=list(gate.TTS_EXTRA_IDS).index(next(iter(gate.TTS_EXTRA_FREESOUND)))
+        for index in (0,10,gongu,fs):
             for key,value in [('source','https://example.invalid/recording'),('author','Other author'),
                               ('license','CC0-1.0' if index==gongu else 'CC-BY-NC-4.0'),
                               ('licenseUrl','https://example.invalid/license'),('downloadUrl','file:///private.mp3')]:

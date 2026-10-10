@@ -7,7 +7,7 @@ Blue Lemonade는 GNU Affero General Public License v3.0 조건으로 배포합�
 
 | 구성요소 | 원작자·출처 | 라이선스 |
 |---|---|---|
-| TTS | Blue Lemonade · MultiCast-TTS / JINSIN2 · BigSoundBank · 한국저작권위원회 / 공유마당 | Blue Lemonade 코드 [AGPL-3.0](LICENSE), MultiCast 코드 MIT, 음원 CC0·CC BY 4.0 등 출처별 조건 · [별도 고지](src/addons/tts/NOTICE.md) |
+| TTS | Blue Lemonade · MultiCast-TTS / JINSIN2 · BigSoundBank · freesound · 한국저작권위원회 / 공유마당 | Blue Lemonade 코드 [AGPL-3.0](LICENSE), MultiCast 코드 MIT, 음원 CC0·CC BY 4.0 등 출처별 조건 · [별도 고지](src/addons/tts/NOTICE.md) |
 | Direction Manager · 전개 지시 | [temporary0723](https://github.com/temporary0723/Direction-Manager) | [수정·업로드 허락 게시글](https://kkangtong.xyz/posts/104303) · [별도 고지](src/addons/direction/NOTICE.md) |
 | Character Assets | [tincansimagine](https://github.com/tincansimagine/character-assets) / 공유 게시글 작성자 「깡」 | [공유 허락 댓글](https://kkangtong.xyz/posts/122931#comment-7bd0d60e-f2f9-4c2c-9f42-4f395873fa17) · [별도 고지](src/addons/assets/NOTICE.md) |
 | 기반 테마 Moonlit Echoes Theme | [RivelleDays](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme) | [AGPL-3.0](LICENSE) |
@@ -46,11 +46,12 @@ Character Assets는 원작자의 개인 수정본 공유 허락에 따라 포함
 
 2026-10-10 Blue Lemonade TTS 1.5.0: [JINSIN2/MultiCast-TTS](https://github.com/JINSIN2/MultiCast-TTS), Copyright (c) 2026 JINSIN2, MIT. 내장 효과음 목록·매칭과 대본 편집·효과음 배치 흐름을 기존 TTS에 연결했습니다. [MIT 전문](src/addons/tts/LICENSE-MultiCast.txt) · [반영 범위와 변경 고지](src/addons/tts/NOTICE.md) · [음원 47개별 원본 URL·해시](src/addons/tts/sfx/SOURCES.json). 원본 커밋은 `f48ebeef9b19d814bf8d4568af13613544007e63`입니다. 음원은 원본 저장소의 CC0 표기를 따르며, 개별 녹음의 최초 출처·라이선스를 독립적으로 확인한 것은 아닙니다.
 
-## 추가 효과음 24개 · 내장 효과음 총 71개
+## 추가 효과음 34개 · 내장 효과음 총 81개
 
-2026-10-10 TTS 1.5.1에서 생활 효과음 16개를 추가했고, 같은 날 TTS 1.5.3에서 휴대폰 진동·의자 끌기·펜 뚜껑·냉장고 문·전기주전자·양치질 6개를, 2026-10-11 TTS 1.5.7에서 찰싹 한 번(Slaps)·엉덩이 찰싹 연속(Spanking) 2개를 더했습니다. 기존 MultiCast 음원 47개는 변경하지 않았습니다.
+2026-10-10 TTS 1.5.1에서 생활 효과음 16개를 추가했고, 같은 날 TTS 1.5.3에서 휴대폰 진동·의자 끌기·펜 뚜껑·냉장고 문·전기주전자·양치질 6개를, 2026-10-11 TTS 1.5.7에서 찰싹 한 번(Slaps)·엉덩이 찰싹 연속(Spanking) 2개를, 같은 날 TTS 1.6.0에서 친밀한 장면 효과음 10개(freesound, CC0)를 더했습니다. 기존 MultiCast 음원 47개는 변경하지 않았습니다.
 
 - **BigSoundBank 20개**: Joseph SARDIN 19개, cecilegatina 1개(탁자 위 컵). 각 원본 페이지가 CC0를 표시하며 재배포를 허용합니다. [이용 조건](https://bigsoundbank.com/licenses.html) · [동봉 CC0 전문](src/addons/tts/sfx-extra/LICENSE-CC0.txt).
 - **공유마당 4개**: 한국저작권위원회, CC BY 4.0. 원본은 [가위질_천천히_짧게](https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?menuNo=100219&wrtSn=13263912), [과자_봉투_만지기_뜯기](https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?menuNo=100219&wrtSn=13263932), [국물_마시기](https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?menuNo=100219&wrtSn=13263933), [국자_나무탁자_내려놓기](https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?menuNo=100219&wrtSn=13263935). [동봉 CC BY 전문](src/addons/tts/sfx-extra/LICENSE-CC-BY.txt).
+- **freesound 10개**: SundayRecords 2개(핥기), noahpardo(키스), freesound(키스 연속), SoundDesignForYou(찔꺽), tiddles451(찔꺽 연속), cabusta9(침대 삐걱), bmusic92(침대 삐걱 연속), magnuswaker(꿀꺽), DeVern(꿀꺽 연속). 각 소리 페이지가 Creative Commons 0을 표시합니다. 원본은 freesound가 공개한 고음질 미리듣기 MP3입니다. [동봉 CC0 전문](src/addons/tts/sfx-extra/LICENSE-CC0.txt).
 
 Blue Lemonade는 새 생활 음원에서 한 동작 또는 짧은 연속 구간을 골라 음량·시작과 끝 페이드·MP3 인코딩을 조정했습니다. [파일별 원본 URL·저작자·라이선스·가공 내역·원본 및 배포 SHA-256](src/addons/tts/sfx-extra/SOURCES.json)을 보존합니다. 공유마당 음원이 들어간 WAV·영상 등을 공유할 때 제작자·원본 출처·CC BY 4.0 링크와 변경 여부를 함께 표시하고 기존 고지를 유지해야 합니다. CC BY 음원에 AGPL만 적용하거나 추가 이용 제한을 붙이지 않습니다. 원작자의 후원·보증을 의미하지 않으며, 파일은 무보증으로 제공합니다.

@@ -57,11 +57,25 @@ TTS_EXTRA_BIGSOUNDBANK = {
 }
 TTS_EXTRA_GONGU = {'daily_scissors': '13263912', 'daily_snack_bag': '13263932',
                    'daily_soup': '13263933', 'daily_ladle': '13263935'}
-TTS_EXTRA_IDS = tuple(TTS_EXTRA_BIGSOUNDBANK) + tuple(TTS_EXTRA_GONGU)
+# 1.6.0 freesound, CC0 only (each sound page shows the Creative Commons 0 link): (sound id, uploader, HQ preview stem).
+# The reviewed original is the public HQ preview MP3; the page URL is rebuilt from the id and uploader.
+TTS_EXTRA_FREESOUND = {
+    'daily_licking': (655410, 'SundayRecords', '655410_2788270'),
+    'daily_lick': (655410, 'SundayRecords', '655410_2788270'),
+    'daily_kissing': (25268, 'freesound', '25268_173513'),
+    'daily_kiss': (352345, 'noahpardo', '352345_6246023'),
+    'daily_squelching': (547446, 'tiddles451', '547446_9912277'),
+    'daily_squelch': (649982, 'SoundDesignForYou', '649982_13085623'),
+    'daily_bed_creaking': (251449, 'bmusic92', '251449_4211564'),
+    'daily_bed_creak': (443796, 'cabusta9', '443796_7262854'),
+    'daily_gulping': (341651, 'DeVern', '341651_2866779'),
+    'daily_gulp': (531755, 'magnuswaker', '531755_11537497'),
+}
+TTS_EXTRA_IDS = tuple(TTS_EXTRA_BIGSOUNDBANK) + tuple(TTS_EXTRA_GONGU) + tuple(TTS_EXTRA_FREESOUND)
 TTS_EXTRA_RESOURCES = ('sfx-extra/SOURCES.json', 'sfx-extra/LICENSE-CC0.txt', 'sfx-extra/LICENSE-CC-BY.txt')
 TTS_EXTRA_MODULE = 'src/addons/tts/src/sfx-daily.js'
 
-# Reviewed 2026-10-10 originals and selected single-action/short-ambience exports (16 in TTS 1.5.1, 6 more in 1.5.3, 2 in 1.5.7).
+# Reviewed 2026-10-10 originals and selected single-action/short-ambience exports (16 in TTS 1.5.1, 6 more in 1.5.3, 2 in 1.5.7, 10 in 1.6.0).
 TTS_EXTRA_SHA256 = {
     'daily_cat_purr': '6d983eda87f313e9f952a69d596748e56da40862d56ef6824f2e411792e95fda',
     'daily_cat_meow': 'c89166f6767b92dfb65de464eb5ae117ea5f0274439f75e02233bd01c0748f43',
@@ -87,6 +101,16 @@ TTS_EXTRA_SHA256 = {
     'daily_toothbrush': '9d7666abde7673c8b3c588f0522e6cdf6e4568c22d8022ba478317ca5ced6e96',
     'daily_slap': 'a94962b422499d710d5949e1aa600224d1a6fbbc9052d20b571195a0ec68d057',
     'daily_spanking': 'a6003d5ee6b7a4b3a6976f01c4beaec4447cf0cd4a712e84300c83ca096dc939',
+    'daily_licking': '58be8efc9d0114b55af738b2067410f8e7b8c028a45812ec45809f92c300ed6d',
+    'daily_lick': 'bc7abe552d01685c935ed3f50bb531c72d691127c031196131c1ed529fb09691',
+    'daily_kissing': '2890c1fdd5d073e5f064347058a2ba7680e373583b39d4daf22d8163ab3d3d7d',
+    'daily_kiss': '02daee7204c37fe0f057e70ba513cc7c3048a7c2c8107a79d42834b3dac5d9bf',
+    'daily_squelching': '28003a3ca86b0d52587901687e6b86ace361a2da7f326cb7254df31bc9d93661',
+    'daily_squelch': '4372056db085290cfe97b98d552d6e3a876fe26e6e35bd7dc95b2d9b76bde39e',
+    'daily_bed_creaking': 'b50d1c03911ba18dc99124b437bd75d44f9c69ce5577fe38d6c0237280916bcf',
+    'daily_bed_creak': '3e067b9439b4a7b92370ea76e26d2ae43391a3557c6e3ed4a5bd66b9a92cb891',
+    'daily_gulping': '4d3f6bcd17422b7b9054f36cb1c39feff8dc75758257000b49f96aefc2a69fab',
+    'daily_gulp': '775cb4ab43de01175e22117d9484bd7b91e28408b1d149d703b7ac12b5b00c2a',
 }
 TTS_EXTRA_SOURCE_SHA256 = {
     'daily_cat_purr': '1809316c24ddd40363201bdf09d1f43ae72a275c2510c552c286fee0ec53cac5',
@@ -113,6 +137,16 @@ TTS_EXTRA_SOURCE_SHA256 = {
     'daily_toothbrush': 'bb6b7cf868ffbf0abf5ac46cef56c1a209a03ba3acf40e4e1a3ac236f5165d26',
     'daily_slap': '7bb0d33f5f058ceaf4cc1c9464cc95941897682e87b7ea97edbd81f6861021c4',
     'daily_spanking': 'a4eb8910029d46f39a103f41a2d92afbeaaa4a12af3549f817f52f79cd8f9782',
+    'daily_licking': 'd15ecb85349062cafbe2e5a69951c5d450256ed37439ac0ed41474e0b7a146ce',
+    'daily_lick': 'd15ecb85349062cafbe2e5a69951c5d450256ed37439ac0ed41474e0b7a146ce',
+    'daily_kissing': 'df8e1cfd27c1f8c7442975719942a951d634895c08a879358b76c6824d02ae4a',
+    'daily_kiss': 'f5a9f84e04041c6611d59b835a6582fdf09d53724355faaa4f8237cdfcebf087',
+    'daily_squelching': 'ee7404008e86ba7986f483adb05a7e784e8fa8ee9494f57e918f816d248e51f6',
+    'daily_squelch': 'adfaf212f4fbb61d9924151a4d07de077a926e0f52d4fc7e8a7cce060719ca70',
+    'daily_bed_creaking': '0ef876c2493c14b6fe2500ff1bc65a2a11f0e92c0ff273ff61091181d3e7350a',
+    'daily_bed_creak': '9fdbbaf9112325932b07a85631267bf168276b26463d8093b7915cd6e3036dfc',
+    'daily_gulping': '5c9c59d833a58f4872643572d4d8f99b96346f28d90ca200ecd2b0dfb20404e7',
+    'daily_gulp': 'ecb89b67ef08c0c1f8c6ee886d1976ab49181f4a398d4cfd6ce6417b031ddf5b',
 }
 
 
@@ -123,6 +157,11 @@ def tts_extra_origin(ident):
         return {'source': 'https://bigsoundbank.com/' + slug, 'author': author,
                 'license': 'CC0-1.0', 'licenseUrl': 'https://creativecommons.org/publicdomain/zero/1.0/',
                 'downloadUrl': f'https://bigsoundbank.com/UPLOAD/mp3/{number}.mp3'}
+    if ident in TTS_EXTRA_FREESOUND:
+        number, user, stem = TTS_EXTRA_FREESOUND[ident]
+        return {'source': f'https://freesound.org/people/{user}/sounds/{number}/', 'author': user,
+                'license': 'CC0-1.0', 'licenseUrl': 'https://creativecommons.org/publicdomain/zero/1.0/',
+                'downloadUrl': f'https://cdn.freesound.org/previews/{number // 1000}/{stem}-hq.mp3'}
     sn = TTS_EXTRA_GONGU[ident]
     return {'source': f'https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?menuNo=100219&wrtSn={sn}',
             'author': '한국저작권위원회', 'license': 'CC-BY-4.0',
