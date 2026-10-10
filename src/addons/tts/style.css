@@ -1,11 +1,18 @@
-/* TTS (Lemon TTS) v1.4.4 */
+/* TTS (Lemon TTS) v1.5.1 */
 
 #lv_settings .lv-version { background: none; border: 0; color: inherit; font: inherit; padding: 4px 6px; cursor: pointer; text-decoration: none; }
 #lv_settings .lv-version:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 
+/* Shared attribution is outside tab panels, so every settings tab has one footer. */
+#lv_settings .lv-settings-credits { min-width: 0; margin-top: 6px; padding: 12px; border: 1px solid var(--lv-border); border-radius: var(--lv-r-md); background: var(--lv-card); font-size: .94em; line-height: 1.6; overflow-wrap: anywhere; }
+#lv_settings .lv-settings-credits summary { cursor: pointer; font-weight: 600; }
+#lv_settings .lv-credits p { margin: 10px 0 0; }
+#lv_settings .lv-credits a { color: var(--salty-accent-ink, var(--lv-accent)); text-decoration: underline; text-underline-offset: .15em; }
+#lv_settings .lv-settings-credits :is(summary,a):focus-visible { outline: 2px solid var(--lv-accent); outline-offset: 3px; }
+
 /* ---------- 공통 변수: 설정 창 · 편집 팝업 · 재생 막대 (ST 테마 색을 따르고, 블루 레몬에이드 변수는 있으면 씀) */
 .lv-settings, .lv-editor, .lv-bar {
-  --lv-css-version: "1.5.0";
+  --lv-css-version: "1.5.1";
   --lv-accent: var(--salty-accent, var(--SmartThemeQuoteColor, #51a0de));
   --lv-text: var(--SmartThemeBodyColor, #dcdcd2);
   --lv-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, .15));
@@ -509,13 +516,30 @@ body.salty.salty-icons-line #chat .mes .extraMesButtons > .lv_play { --salty-mi:
 .lv-bar-dlopt > i { color: var(--lv-accent); font-size: .92em; }
 .lv-bar-dlopt:hover { background: var(--lv-fill-hover); }
 .lv-bar-dlopt:focus-visible { outline: 2px solid var(--lv-accent); outline-offset: 1px; }
+
+/* The bar stays fixed; its positioned details panel opens above it. */
+.lv-bar .lv-bar-details-btn { flex: 0 1 auto; min-width: 0; max-width: 9em; min-height: 30px; padding: 4px 9px; border: 1px solid var(--lv-border); border-radius: var(--lv-r-pill); background: var(--lv-fill); color: var(--lv-accent); font: inherit; font-size: .82em; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.lv-bar .lv-bar-details-btn[aria-expanded=true], .lv-bar .lv-bar-details-btn:hover { background: var(--lv-fill-hover); }
+.lv-bar .lv-bar-details { position: absolute; bottom: calc(100% + 8px); inset-inline: 0; box-sizing: border-box; width: 100%; min-width: 0; max-width: calc(100vw - 16px); max-height: min(55dvh,360px); padding: 12px; overflow: auto; overscroll-behavior: contain; border: 1px solid var(--lv-border); border-radius: var(--lv-r-md); background: var(--SmartThemeBlurTintColor, #171717); color: var(--lv-text); box-shadow: 0 6px 22px #0004; font-size: .9em; line-height: 1.55; text-align: start; overflow-wrap: anywhere; }
+.lv-bar .lv-bar-details[hidden], .lv-bar .lv-bar-details-btn[hidden] { display: none; }
+.lv-bar .lv-bar-original { min-width: 0; margin: 0 0 10px; }
+.lv-bar .lv-bar-original :is(p,div) { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.lv-bar .lv-bar-details :is(h3,h4,strong) { color: inherit; font-size: 1em; margin: 0; }
+.lv-bar .lv-bar-sfx-list { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.lv-bar .lv-bar-sfx-list button { display: block; width: 100%; min-width: 0; max-width: 100%; min-height: 34px; margin: 0; padding: 7px 10px; border: 1px solid var(--lv-border); border-radius: var(--lv-r-sm); background: var(--lv-fill); color: inherit; font: inherit; line-height: 1.5; text-align: start; white-space: normal; overflow-wrap: anywhere; cursor: pointer; }
+.lv-bar .lv-bar-sfx-list button:hover { background: var(--lv-fill-hover); }
+.lv-bar :is(.lv-bar-details-btn,.lv-bar-sfx-list button):focus-visible { outline: 2px solid var(--lv-accent); outline-offset: 2px; }
 @media (max-width: 600px) {
-  .lv-bar { left: 8px; width: calc(100vw - 16px); padding-left: 12px; }   /* 휴대폰: 화면 너비 − 16px */
+  .lv-bar { left: 8px; width: calc(100vw - 16px); padding: 8px 10px; border-radius: var(--lv-r-md); }   /* 휴대폰: 정보와 조작을 두 줄로 분리 */
+  .lv-bar.lv-bar-on { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 5px 8px; }
+  .lv-bar-info { grid-column: 1; }
+  .lv-bar .lv-bar-details-btn { grid-column: 2; }
+  .lv-bar-btns { grid-column: 1 / -1; grid-row: 2; width: 100%; justify-content: space-evenly; }
   .lv-bar-voice { max-width: 34%; }
   .lv-bar-btns { gap: 0; }                                                  /* 버튼 7개(다시 분석 포함)가 360px 에 들어가게 */
 }
 @media (max-width: 400px) {
-  .lv-bar-voice { display: none; }   /* 버튼 7개 × 36px 뒤에 남는 ~66px 은 읽는 글(또는 "분석 중…")에 — 누가 읽는지는 채팅의 강조로 보임 */
+  .lv-bar-voice { max-width: 34%; }   /* 조작 버튼은 다음 줄이므로 좁은 화면에서도 화자 표시를 유지 */
 }
 
 /* ---------- 손가락: 누르는 곳은 36px 이상 */

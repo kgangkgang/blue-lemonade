@@ -52,12 +52,21 @@
 /* Theme-wide button resets must not turn the help marker into bare text. */
 html body .lvs-dialog.lv-editor button.lvs-button.lvs-help-button { --lvs-help-size: max(24px,1.65em); display: inline-flex !important; align-items: center !important; justify-content: center !important; width: var(--lvs-help-size) !important; min-width: var(--lvs-help-size) !important; max-width: var(--lvs-help-size) !important; height: var(--lvs-help-size) !important; min-height: var(--lvs-help-size) !important; max-height: var(--lvs-help-size) !important; margin: 0; padding: 0 !important; border: 1px solid var(--lvs-line) !important; border-radius: 50% !important; background: var(--lvs-fill) !important; color: var(--lvs-ink) !important; font-size: .94em; line-height: 1 !important; text-indent: 0; text-align: center; box-shadow: none !important; flex: none; vertical-align: middle; }
 html body .lvs-dialog.lv-editor button.lvs-button.lvs-help-button:hover { background: var(--bl-fill-control-hover, color-mix(in srgb, var(--lvs-accent) 16%, var(--lvs-bg))) !important; }
+html body .lvs-dialog.lv-editor button.lvs-button.lvs-help-button[hidden] { display: none !important; }
 .lvs-tooltip { position: fixed; z-index: 10; width: min(22rem, calc(100vw - 24px)); padding: 12px; border: 1px solid var(--lvs-line); border-radius: var(--bl-r-md,12px); color: var(--lvs-text); background: var(--lvs-bg); box-shadow: 0 8px 24px #0005; line-height: 1.55; pointer-events: none; overflow-wrap: anywhere; }
 .lvs-footer { display: flex; flex-direction: column; gap: 10px; flex: 0 0 auto; padding: 12px 16px; border-top: 1px solid var(--lvs-line); min-height: 0; max-height: 35dvh; overflow: auto; }
 .lvs-footer > .lvs-actions { justify-content: flex-end; }
 .lvs-source summary, .lvs-sound-edit summary { cursor: pointer; line-height: 1.5; }
 .lvs-source p { margin: 8px 0; }
 .lvs-source a { color: var(--lvs-ink); }
+.lvs-source > summary { font-weight: 600; color: var(--lvs-text); }
+.lvs-source .lv-credits { line-height: 1.65; }
+.lvs-source .lv-credits a, .lvs-sound-credit a { text-decoration: underline; text-underline-offset: .15em; }
+.lvs-sound-credit { color: var(--lvs-muted); font-size: .88em; line-height: 1.5; overflow-wrap: anywhere; }
+.lvs-sound-credit a { color: var(--lvs-ink); }
+.lvs-sound-usage { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; margin-block: 5px; }
+.lvs-dialog .lvs-sound-unused { border-style: dashed; }
+.lvs-unused { display: inline-block; padding: 2px 7px; border: 1px solid var(--lvs-line); border-radius: var(--bl-r-pill, 999px); color: var(--lvs-text); font-size: .85em; line-height: 1.5; }
 .lvs-sound { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .lvs-sound-info { flex: 1 1 12em; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .lvs-sound-edit { flex: 1 1 100%; min-width: 0; }

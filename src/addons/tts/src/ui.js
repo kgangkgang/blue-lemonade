@@ -16,6 +16,7 @@ import { paidEngines, paidOnly, pregenPaid } from './paid.js';   // 5.6.4 돈이
 import { balanceParts, balanceLow, BALANCE_TTL } from './balance.js';   // 1.3.5 엔진 카드 잔액 줄
 import * as ttsModels from './providers/_models.js';   // 1.3.7 엔진 모델 목록 (늘 최신 — localStorage 12시간)
 import { koModelLabel } from './model-names.js';         // 1.3.7 모델 이름 한국어
+import { ttsCreditsHtml } from '../credits.js';
 
 const TEST_LINE = { ko: '안녕, 잘 부탁해.', ja: 'こんにちは、よろしくね。', en: 'Hi there, nice to meet you.', zh: '你好，请多关照。' };
 const TAB_IDS = ['read', 'voices', 'engine', 'data'];   // 탭 버튼은 settings.html 에 고정
@@ -2392,6 +2393,8 @@ export function init() {
     root = document.querySelector('#lv_settings .lv-body');
     if (!root) return;
     for (const el of document.querySelectorAll('#lv_settings .lv-version')) el.textContent = `v${VERSION}`;
+    const credits = root.querySelector('[data-lv-credits]');
+    if (credits) credits.innerHTML = ttsCreditsHtml(); // trusted static attribution; no user content
     root.addEventListener('input', (e) => onEdit(e, true));
     root.addEventListener('change', (e) => onEdit(e, false));
     root.addEventListener('click', onClick);

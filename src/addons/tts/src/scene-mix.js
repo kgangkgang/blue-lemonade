@@ -11,7 +11,10 @@ export function sceneTimeline(clips, { rate = 1, gapMs = 250, master = 1, sfxVol
     for (const clip of clips) {
         if (clip.kind === 'pause') { cursor += clamp(clip.gapMs, 0, 10000, 500) / 1000; end = Math.max(end, cursor); continue; }
         if (!clip.buffer) continue;
-        const seconds = clip.buffer.duration / rate;
+        const unit = clip.buffer.duration / rate;
+        const timed = clip.kind === 'sfx' && clip.mode !== 'loop' ? clamp(clip.durationMs, 0, 8000, 0) / 1000 : 0;
+        const repeats = clip.kind === 'sfx' && !timed && clip.mode !== 'loop' ? Math.round(clamp(clip.repeats, 1, 4, 1)) : 1;
+        const seconds = timed || unit * repeats;
         const event = { ...clip, start: cursor, duration: seconds, rate, gain: clamp(clip.volume, 0, 1, 1) * clamp(master, 0, 1, 1) * (clip.kind === 'sfx' ? clamp(sfxVolume, 0, 1, 0.45) : 1) };
         const looping = clip.kind === 'sfx' && clip.mode === 'loop';
         if (looping) {
@@ -23,7 +26,10 @@ export function sceneTimeline(clips, { rate = 1, gapMs = 250, master = 1, sfxVol
             end = Math.max(end, cursor + seconds);
             if (clip.kind !== 'sfx' || clip.mode !== 'overlay') cursor += seconds + clamp(clip.gapMs, 0, 10000, gapMs) / 1000;
         }
-        events.push(event);
+        if (timed) event.loop = true;
+        if (repeats > 1) {
+            for (let n = 0; n < repeats; n++) events.push({ ...event, start: event.start + n * unit, duration: unit });
+        } else events.push(event);
     }
     // Last line's trailing breath is not added to the exported file.
     const duration = Math.max(end, loops.length && !end ? 5 : 0);

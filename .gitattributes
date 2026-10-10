@@ -15,3 +15,5 @@
 /server-plugin/setup-windows.cmd -text whitespace=cr-at-eol
 
 /src/addons/tts/sfx/*.mp3 binary
+/src/addons/tts/sfx-extra/*.mp3 binary
+/src/addons/tts/sfx-extra/LICENSE-CC-BY.txt whitespace=-blank-at-eof

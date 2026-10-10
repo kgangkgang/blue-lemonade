@@ -9,7 +9,7 @@ import { runtimeEnabled, assertRuntime, waitForRuntime } from './runtime.js';
 //          speaker = 1.3.6 화자 찾기: 색 · 이름표로 못 정한 줄(보낸 쪽 이름으로 떨어진 줄)에 LLM 이 고른 화자 — 프롬프트에 준 '아는 이름' 가운데 하나만 저장
 //                    1.3.7 엑스트라 목소리를 켜면(settings.extras) 아는 이름 밖의 단역(카페 사장 · 점원 …)도 그 이름으로 저장
 //   people?: { 이름: { g: 'm'|'f', a: 'y'|'a'|'o'|'', l } }   1.3.7 목소리를 안 정한 화자의 성별 · 나이 → voices.noteExtras (엑스트라 목소리)
-//   sfx?: [{ after, id }]   서술에서 고른 보관함 효과음. after = 앞에 있는 원문 대화문 수 (0 = 첫 대사 전).
+//   sfx?: [{ after, id, repeats, durationMs }]   서술에서 고른 효과음. after = 앞의 원문 대화문 수; 반복 1~4, 지속 0~8000ms.
 //   baseProfile?: string  효과음을 끄면 기존 감정·번역은 재요청 없이 사용한다.
 // }
 // 저장은 getContext().saveChat() 을 바로 (생성 중이면 끝난 뒤; 지우기는 1초 디바운스) · 스와이프 정보에도 복사 (syncMesToSwipe) 해 되돌아와도 다시 안 묻는다.
@@ -80,7 +80,7 @@ const SCHEMA = Object.freeze({
                 },
             },
             people: { type: 'object' },   // 1.3.7 엑스트라 목소리 (있을 때만)
-            sfx: { type: 'array', maxItems: 8, items: { type: 'object', properties: { after: { type: 'integer', minimum: 0 }, id: { type: 'string' } }, required: ['after', 'id'] } },
+            sfx: { type: 'array', maxItems: 8, items: { type: 'object', properties: { after: { type: 'integer', minimum: 0 }, id: { type: 'string' }, repeats: { type: 'integer', minimum: 1, maximum: 4 }, durationMs: { type: 'integer', minimum: 0, maximum: 8000 } }, required: ['after', 'id'] } },
         },
         required: ['segs'],
     },
@@ -217,10 +217,12 @@ function speakerOf(seg, mes, charName, userName) {
 
 const autoSfxEnabled = () => settings().sfx?.enabled === true && settings().sfx?.auto !== false;
 const sceneKind = (seg) => seg?.kind === 'narration' || seg?.kind === 'action';
+const SUSTAINED_SFX = new Set(['daily_keyboard', 'daily_cat_purr', 'daily_faucet', 'daily_stream', 'daily_rain', 'daily_clock', 'daily_water_pour', 'daily_coffee_stir', 'wind', 'footsteps', 'footsteps_wood', 'footsteps_wet', 'running']);
+const canSustainSfx = sound => !!sound && (SUSTAINED_SFX.has(sound.id) || sound.custom === true && sound.loop === true);
 function sfxCatalog() {
     try {
         return listSfx().filter(x => x && typeof x.id === 'string' && getSfx(x.id)).map(x => ({
-            id: x.id, name: String(x.name || x.id).slice(0, 80),
+            id: x.id, name: String(x.name || x.id).slice(0, 80), sustain: canSustainSfx(x),
             words: (Array.isArray(x.words) ? x.words : []).map(String).map(w => w.slice(0, 80)).filter(Boolean).slice(0, 32),
         })).sort((a, b) => a.id.localeCompare(b.id));
     } catch { return []; }
@@ -253,7 +255,7 @@ function sceneExcerpt(scene, max) {
         take([...selected].reverse(), budget - Math.ceil(budget * 0.6));
         selected = [...kept.values()].sort((a, b) => a.index - b.index).map(g => ({ ...g, text: clip(g.text, g.budget) }));
     }
-    return { text: selected.map(g => `[after=${g.after}] ${g.text}`).join('\n'), afters: [...new Set(selected.map(g => g.after))] };
+    return { text: selected.map(g => `[after=${g.after}] ${g.text}`).join('\n'), afters: [...new Set(selected.map(g => g.after))], scene: selected.map(g => ({ after: g.after, text: g.text })) };
 }
 
 /**
@@ -325,7 +327,7 @@ export function buildPrompt(mes, opts = {}) {
     const sceneParts = sfx ? sceneExcerpt(scene, max) : { text: '', afters: [] };
     const sceneText = sceneParts.text;
     const { system, user, asked } = composePrompt({ lines, needs, context, display, emotion, charName, userName, speakers, extras, unvoiced, sfxLibrary, sceneText });
-    return { system, user, lines, needs, speakers, unvoiced, extras, userName, asked, sfx, sfxIds: sfxLibrary.map(x => x.id), sfxAfters: sceneParts.afters, empty: asked === 0 && !sfx };
+    return { system, user, lines, needs, speakers, unvoiced, extras, userName, asked, sfx, sfxIds: sfxLibrary.map(x => x.id), sfxAfters: sceneParts.afters, sfxScene: sceneParts.scene || [], empty: asked === 0 && !sfx };
 }
 /** 조각들을 원래 줄대로 이어 붙인 평문 (대화문은 "…" 로 감쌈) */
 function joinByLine(segs) {
@@ -378,7 +380,7 @@ export function composePrompt(parts) {
     }
     // Scene SFX alongside dialogue analysis: inspired by JINSIN2/MultiCast-TTS (MIT).
     // https://github.com/JINSIN2/MultiCast-TTS · attribution and full license: ../NOTICE.md
-    if (sfx) tasks.push(`Add "sfx": an array of at most 8 {"after":0,"id":"<library id>"} entries. Choose ONLY concrete sounds actually occurring in the numbered narration positions above and ONLY exact IDs in the library. Use the matching [after=N] position: N is the number of original dialogue lines before that narration, from 0 (before the first line) to ${lines.length} (after the last line). Never infer sounds from dialogue mentions, thoughts, negation, silence, wishes, possibilities, plans, comparisons or metaphors. Do not invent a sound or use a URL. Prefer one fitting effect per occurrence; no duplicate id at the same position. If nothing clearly fits, return "sfx": []. Dialogue shown only for position/context needs no seg entry unless an emotion, translation or speaker was requested.`);
+    if (sfx) tasks.push(`Add "sfx": an array of at most 8 {"after":0,"id":"<library id>","repeats":1,"durationMs":0} entries. Choose ONLY concrete sounds actually occurring in the numbered narration positions above and ONLY exact IDs in the library. Use the matching [after=N] position: N is the number of original dialogue lines before that narration, from 0 (before the first line) to ${lines.length} (after the last line). Never infer sounds from dialogue mentions, thoughts, negation, silence, wishes, possibilities, plans, comparisons or metaphors. Do not invent a sound or use a URL. Prefer one fitting effect per occurrence; no duplicate id at the same position. repeats is 1 by default: a single drop, coin, cup, meow or other action plays once. Increase it only for an explicit count of THAT sound in the same narration ("dropped it twice" / "물건을 두 번 떨어뜨렸다" means 2), capped at 4; unrelated numbers, emphasis and dialogue do not count. durationMs is 0 (natural clip length) by default. Only library entries with sustain:true may have a positive duration: use an explicit duration or a conservative 2000~6000 ms for a clearly ongoing action such as "typed for a while" / "한동안 타이핑했다"; never exceed 8000 ms. A sustained cue uses repeats:1. Do not stretch a single impact into a background loop. If nothing clearly fits, return "sfx": []. Dialogue shown only for position/context needs no seg entry unless an emotion, translation or speaker was requested.`);
     const segExample = asked.length || !sfx ? '[{"i":0' + (emotion ? ',"emotion":"happy"' : '') + (askLines.length ? `,"speaker":"${speakers[0] || 'Name'}"` : '') + (langsUsed.length ? `,"${langsUsed[0]}":"…"` : '') + '}]' : '[]';
     tasks.push('Reply with JSON only, no markdown, no extra keys: {"segs":' + segExample + (people ? `,"people":{"${unvoiced[0] || 'Name'}":"f adult"}` : '') + (sfx ? ',"sfx":[]' : '') + '}');
     out.push(tasks.join('\n'));
@@ -443,6 +445,59 @@ function normalizeSegs(parsed, built, emotionOn) {
     });
 }
 
+const SFX_TIMING_HINTS = {
+    drop: ['떨어뜨', '떨어트', '떨어지', '떨어졌', '떨어진', 'drop', 'fell', 'falls'],
+    daily_coins: ['동전', 'coin'],
+    daily_keyboard: ['타이핑', '타자', '키보드', 'typed', 'typing', 'keyboard'],
+    daily_cat_purr: ['골골', '가르릉', 'purr'],
+    daily_faucet: ['수도', '손을 씻', '손 씻', 'faucet', 'wash'],
+    daily_stream: ['물줄기', '시냇물', '시냇가', 'stream'],
+    daily_rain: ['비가', '빗소리', '빗방울', 'rain'],
+};
+const COUNT_WORDS = { 한: 1, 두: 2, 세: 3, 네: 4, 다섯: 5, 여섯: 6, 일곱: 7, 여덟: 8, 아홉: 9, 열: 10,
+    once: 1, twice: 2, thrice: 3, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
+const timingNumber = value => COUNT_WORDS[String(value).toLowerCase()] || Number(value);
+const escapePattern = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/** A model's timing cannot multiply an unrelated or merely mentioned sound. No extra request. */
+function sfxTiming(cue, built, sound) {
+    const repeats = Number.isInteger(cue.repeats) ? Math.max(1, Math.min(4, cue.repeats)) : 1;
+    const duration = typeof cue.durationMs === 'number' && Number.isFinite(cue.durationMs) ? Math.max(0, Math.min(8000, Math.round(cue.durationMs))) : 0;
+    const words = [...(SFX_TIMING_HINTS[sound.id.replace(/_\d+$/, '')] || []), ...(sound.words || []), sound.name]
+        .filter(w => typeof w === 'string').map(w => w.replace(/^~/, '').trim()).filter(w => w.length >= 2);
+    if (!words.length) return { repeats: 1, durationMs: 0 };
+    const wordPattern = new RegExp(words.sort((a, b) => b.length - a.length).map(w => escapePattern(w).replace(/\s+/g, '\\s*')).join('|'), 'gi');
+    const countPattern = /(\d{1,3}|한|두|세|네|다섯|여섯|일곱|여덟|아홉|열)\s*(?:번|회)(?!째)|\b(once|twice|thrice)\b|\b(one|two|three|four|five|six|seven|eight|nine|ten|\d{1,3})\s+times?\b/gi;
+    const secondsPattern = /(\d+(?:\.\d+)?|한|두|세|네|다섯|여섯|일곱|여덟|아홉|열)\s*초|\b(\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten)\s*(?:seconds?|secs?)\b/gi;
+    let count = 1, explicitMs = 0, ongoing = false, brief = false;
+    for (const scene of built.sfxScene || []) {
+        if (scene.after !== cue.after || typeof scene.text !== 'string') continue;
+        for (const text of scene.text.split(/[!?。！？;；\n…]+|(?<!\d)\.(?!\d)/u)) {
+            // This conservative guard concerns timing only; the existing analysis decides occurrence.
+            if (/\b(?:not|never|neither|without|might|could|would|wish|imagine)\b|n['’]t\b|않|아니|(?:^|[\s,])안\s|뻔|지도\s*모|듯이|것처럼|예정|계획/i.test(text)) continue;
+            const hits = [...text.matchAll(wordPattern)];
+            if (!hits.length) continue;
+            const related = match => hits.some(hit => {
+                const left = Math.min(hit.index + hit[0].length, match.index + match[0].length);
+                const right = Math.max(hit.index, match.index);
+                const between = text.slice(left, right);
+                return right - left <= 40 && !/(?:그리고|하지만|한\s*뒤|그\s*후|[가-힣][고며]\s|면서|했[고다]|\b(?:and|then|but|after|while|when)\b|,)/i.test(between);
+            });
+            for (const match of text.matchAll(countPattern)) {
+                if (text[match.index - 1] !== '-' && related(match)) count = Math.max(count, timingNumber(match[1] || match[2] || match[3]) || 1);
+            }
+            if (!canSustainSfx(sound)) continue;
+            for (const match of text.matchAll(secondsPattern)) {
+                if (text[match.index - 1] !== '-' && related(match)) explicitMs = Math.max(explicitMs, Math.round(timingNumber(match[1] || match[2]) * 1000) || 0);
+            }
+            for (const match of text.matchAll(/한동안|오랫동안|잠시|잠깐|계속|내내|\b(?:for\s+(?:a|some)\s+(?:while|time)|kept|continu\w*|ongoing|briefly)\b/gi)) {
+                if (related(match)) { ongoing = true; brief ||= /잠시|잠깐|briefly/i.test(match[0]); }
+            }
+        }
+    }
+    const durationMs = explicitMs ? Math.min(8000, explicitMs) : ongoing ? Math.min(brief ? 2500 : 8000, duration) : 0;
+    return { repeats: durationMs > 0 ? 1 : Math.min(repeats, count), durationMs };
+}
+
 /** 선택 목록에 있던 ID·실제 서술 위치만 저장한다. 미지원 응답은 효과음 없이 진행하며 유료 재생성을 하지 않는다. */
 export function normalizeSfx(raw, built) {
     if (!built?.sfx || !Array.isArray(raw)) return [];
@@ -450,10 +505,11 @@ export function normalizeSfx(raw, built) {
     for (const cue of raw) {
         if (!isObj(cue) || typeof cue.id !== 'string' || !Number.isInteger(cue.after)) continue;
         const { after, id } = cue;
-        if (after < 0 || after > built.lines.length || !afters.has(after) || !ids.has(id) || !getSfx(id)) continue;
+        const sound = getSfx(id);
+        if (after < 0 || after > built.lines.length || !afters.has(after) || !ids.has(id) || !sound) continue;
         const key = `${after}:${id}`;
         if (seen.has(key)) continue;
-        seen.add(key); out.push({ after, id });
+        seen.add(key); out.push({ after, id, ...sfxTiming(cue, built, sound) });
         if (out.length >= 8) break;
     }
     return out.sort((a, b) => a.after - b.after);

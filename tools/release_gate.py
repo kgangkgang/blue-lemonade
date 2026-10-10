@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path, PurePosixPath
 import re
 import subprocess
@@ -29,6 +30,80 @@ wind.mp3 wood_crack.mp3'''.split())
 TTS_SFX_REPOSITORY = 'https://github.com/JINSIN2/MultiCast-TTS'
 TTS_SFX_COMMIT = 'f48ebeef9b19d814bf8d4568af13613544007e63'
 TTS_SFX_RESOURCES = ('LICENSE-MultiCast.txt', 'NOTICE.md', 'sfx/SOURCES.json', 'script-editor.css')
+
+# Reviewed everyday additions. Keep filenames and origins independent of the
+# shipped catalog so a local recording cannot join the release by editing JSON.
+TTS_EXTRA_BIGSOUNDBANK = {
+    'daily_cat_purr': ('cat-purr-s0436.html', 'Joseph SARDIN'),
+    'daily_cat_meow': ('miaulement-chat-2-s1890.html', 'Joseph SARDIN'),
+    'daily_water_pour': ('cold-water-in-a-mug-2-s3314.html', 'Joseph SARDIN'),
+    'daily_faucet': ('faucet-hands-s0041.html', 'Joseph SARDIN'),
+    'daily_stream': ('small-cascade-s0507.html', 'Joseph SARDIN'),
+    'daily_rain': ('rain-on-puddle-s1290.html', 'Joseph SARDIN'),
+    'daily_keyboard': ('computer-keyboard-s0229.html', 'Joseph SARDIN'),
+    'daily_zipper': ('zip-1-s0014.html', 'Joseph SARDIN'),
+    'daily_clock': ('clock-s0007.html', 'Joseph SARDIN'),
+    'daily_coffee_stir': ('spoon-into-a-mug-of-coffee-s0410.html', 'Joseph SARDIN'),
+    'daily_cup': ('cup-on-a-table-s0627.html', 'cecilegatina'),
+    'daily_coins': ('coins-1-s0193.html', 'Joseph SARDIN'),
+}
+TTS_EXTRA_GONGU = {'daily_scissors': '13263912', 'daily_snack_bag': '13263932',
+                   'daily_soup': '13263933', 'daily_ladle': '13263935'}
+TTS_EXTRA_IDS = tuple(TTS_EXTRA_BIGSOUNDBANK) + tuple(TTS_EXTRA_GONGU)
+TTS_EXTRA_RESOURCES = ('sfx-extra/SOURCES.json', 'sfx-extra/LICENSE-CC0.txt', 'sfx-extra/LICENSE-CC-BY.txt')
+TTS_EXTRA_MODULE = 'src/addons/tts/src/sfx-daily.js'
+
+# Reviewed 2026-10-10 originals and selected single-action/short-ambience exports.
+TTS_EXTRA_SHA256 = {
+    'daily_cat_purr': '6d983eda87f313e9f952a69d596748e56da40862d56ef6824f2e411792e95fda',
+    'daily_cat_meow': 'c89166f6767b92dfb65de464eb5ae117ea5f0274439f75e02233bd01c0748f43',
+    'daily_water_pour': '16c9c2f8dc7cc9d616173439d872e89f1bf2fbaeb60ff07d341b585dea5ebeec',
+    'daily_faucet': '8e953a92ddd2c0c6b64ff20cdc59487ea9beaa225295ce530ee968cd457f0944',
+    'daily_stream': '4683a7b7c248b1f94557c99365861103027a4017d1972761def12bf97bd95012',
+    'daily_rain': '8824a63c4a891163348d7a0012c02629c24773b49a9110ce221b02abc7a864cd',
+    'daily_keyboard': 'b4b0b1b8c7ab7b78f21e6bc563d79004365c52c0350a8fd41ac4ea0670231c1f',
+    'daily_zipper': '59fe614a2b361abfb95b5f612c73e75768000b5b4b97a5c1d97c519d74f3d337',
+    'daily_clock': '153b80ae0facf735aafc71bfb3b36582cc41dedb692401413cb5ead65896e1aa',
+    'daily_coffee_stir': '4314a8bbd18f715898ab9a2a2b813da50a73695191689966877af4e473397f57',
+    'daily_cup': 'a5594e574bd3ce038d594ce34034a539932d709980e5bde0857d2ec6ffa3d2d5',
+    'daily_coins': 'c25336583df688e4bf90393dfaec5cbefba712ffd064ae61327365cfe70354c2',
+    'daily_scissors': 'd1d7ec1e00e45d4f1705e566c2af671113bf61b54d8cff80e6f8f9347e375255',
+    'daily_snack_bag': '1f30a7022ceacb130c20646e3fd977792f89783d187ed233a28810795f53bfdc',
+    'daily_soup': '8a4a3c985618c6f25c3ccab5b2be3ccbf2c9255f52bf7a69f4df5ba808d69638',
+    'daily_ladle': '546d04638480e1a9a0cb899d71a8922e0766348704093f38acf71f7e36c56810',
+}
+TTS_EXTRA_SOURCE_SHA256 = {
+    'daily_cat_purr': '1809316c24ddd40363201bdf09d1f43ae72a275c2510c552c286fee0ec53cac5',
+    'daily_cat_meow': '87fb2d293e3d6ac6bf36b3d2910bc11df9155fe8b196fc273e2e4e52b950f4a2',
+    'daily_water_pour': '28b10f2f09d0cf4e0064663f7a3539fdf04ce5ef1329a300be482be35e281f20',
+    'daily_faucet': '019ae09ac333b50588c4cdc68adf08121209a2679104775ed3e1ee715dbbe023',
+    'daily_stream': '3e6fbaa07e8ef92ba2905f90105f959fba0362b69d8695cafe59b77b5bbd3106',
+    'daily_rain': 'aa5a6824c92440431ec38b3de692a941b61fdfa3c29c69b14307651000269360',
+    'daily_keyboard': 'ee2265725caf7b68e339e5d8ab76e59e0957a9d80a8db62f06753352205bb066',
+    'daily_zipper': '946f17d34d1ae19d35a789a8520c16fb6a8bb04874ce2af5368eacb381e730eb',
+    'daily_clock': '86d8c2af45b11f2abc7ba09acd060d02665e52cebeca162dfde478fcf1c86458',
+    'daily_coffee_stir': 'a0f0adc43205ec0e335b58a2fa62c2a636c67da4cb62229df02a36d2ff9203ab',
+    'daily_cup': '7df9020013eef48851760d08ccad0ef80e289b9c4e5f3fce11fb18b5922930b7',
+    'daily_coins': '63a208f2934fa49e9a9882adec389cb22dcdf1fce65493c10c56247a7d67d461',
+    'daily_scissors': 'f4c8a129e86142ef8290f7284e77fd3f27901538a178e3223760903d60d49d87',
+    'daily_snack_bag': 'e20bc62681279a63359c71be50449118250f23ed9a4e5efb52b469660380ff9f',
+    'daily_soup': '8a6a2ec7b686ac897c7c72c493e0c420263689b766976689d1591419d2c391b4',
+    'daily_ladle': '291b1d6b318853b7bdc8c1b70ea77e5163a3e1ea805396a9541a426907db31a6',
+}
+
+
+def tts_extra_origin(ident):
+    if ident in TTS_EXTRA_BIGSOUNDBANK:
+        slug, author = TTS_EXTRA_BIGSOUNDBANK[ident]
+        number = re.search(r'-s(\d+)\.html$', slug)[1]
+        return {'source': 'https://bigsoundbank.com/' + slug, 'author': author,
+                'license': 'CC0-1.0', 'licenseUrl': 'https://creativecommons.org/publicdomain/zero/1.0/',
+                'downloadUrl': f'https://bigsoundbank.com/UPLOAD/mp3/{number}.mp3'}
+    sn = TTS_EXTRA_GONGU[ident]
+    return {'source': f'https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?menuNo=100219&wrtSn={sn}',
+            'author': '한국저작권위원회', 'license': 'CC-BY-4.0',
+            'licenseUrl': 'https://creativecommons.org/licenses/by/4.0/',
+            'downloadUrl': f'https://gongu.copyright.or.kr/gongu/wrt/cmmn/wrtFileMediaPlay.do?wrtSn={sn}&fileSn=1'}
 
 # Embedded tools have their own versions, independent of the theme release.
 ADDON_CSS_VERSIONS = (
@@ -131,6 +206,64 @@ def validate_tts_sfx(files):
     require(seen == expected, 'TTS sound catalog is incomplete')
 
 
+def validate_tts_extra_sfx(files):
+    prefix = 'src/addons/tts/'
+    actual = {name[len(prefix):] for name in files if name.startswith(prefix + 'sfx-extra/')}
+    if not actual and TTS_EXTRA_MODULE not in files:
+        return  # 5.8.8 and earlier have no everyday pack.
+    expected = {f'sfx-extra/{ident}.mp3' for ident in TTS_EXTRA_IDS}
+    for name in TTS_EXTRA_RESOURCES:
+        require(bool(files.get(prefix + name)), f'Missing TTS everyday sound resource: {name}')
+    require(actual == expected | set(TTS_EXTRA_RESOURCES),
+            'TTS everyday sound file list differs from the reviewed pack')
+    try:
+        catalog = json.loads(files[prefix + 'sfx-extra/SOURCES.json'].decode('utf-8'))
+    except (ValueError, UnicodeError) as error:
+        raise GateError('Invalid TTS everyday sound catalog JSON') from error
+    require(isinstance(catalog, dict) and type(catalog.get('version')) is int and catalog['version'] == 1
+            and catalog.get('collection') == 'Blue Lemonade everyday sounds',
+            'Invalid TTS everyday sound catalog')
+    rows = catalog.get('files')
+    require(isinstance(rows, list) and len(rows) == len(TTS_EXTRA_IDS),
+            'TTS everyday sound catalog must list the complete reviewed pack')
+    seen = set()
+    finite = lambda value: type(value) in (int, float) and math.isfinite(value)
+    digest = lambda value: isinstance(value, str) and re.fullmatch(r'[a-f0-9]{64}', value) is not None
+    for row in rows:
+        require(isinstance(row, dict), 'Invalid TTS everyday sound catalog entry')
+        ident = row.get('id')
+        require(isinstance(ident, str) and ident in TTS_EXTRA_IDS and ident not in seen,
+                'Unknown or duplicate TTS everyday sound ID')
+        seen.add(ident)
+        name = f'sfx-extra/{ident}.mp3'
+        require(row.get('path') == name, 'Unsafe or mismatched TTS everyday sound catalog path')
+        for key, value in tts_extra_origin(ident).items():
+            require(row.get(key) == value, f'TTS everyday sound {key} differs from the reviewed origin: {ident}')
+        content = files[prefix + name]
+        require(type(row.get('bytes')) is int and row['bytes'] > 0 and row['bytes'] == len(content),
+                f'TTS everyday sound byte count differs: {ident}')
+        require(digest(row.get('sha256')) and hashlib.sha256(content).hexdigest() == row['sha256'],
+                f'TTS everyday sound SHA256 differs: {ident}')
+        require(row['sha256'] == TTS_EXTRA_SHA256[ident], f'TTS everyday sound differs from reviewed audio SHA256: {ident}')
+        require(digest(row.get('sourceSha256')) and type(row.get('sourceBytes')) is int and row['sourceBytes'] > 0
+                and finite(row.get('sourceDuration')) and row['sourceDuration'] > 0,
+                f'Invalid TTS everyday sound original-file metadata: {ident}')
+        require(row['sourceSha256'] == TTS_EXTRA_SOURCE_SHA256[ident],
+                f'TTS everyday sound differs from reviewed original SHA256: {ident}')
+        require(isinstance(row.get('retrieved'), str) and re.fullmatch(r'\d{4}-\d{2}-\d{2}', row['retrieved']) is not None,
+                f'Missing TTS everyday sound retrieval date: {ident}')
+        mods = row.get('modifications')
+        require(isinstance(mods, dict), f'Missing TTS everyday sound modification notice: {ident}')
+        for key in ('excerptStart', 'excerptSeconds', 'gainDb', 'fadeInSeconds', 'fadeOutSeconds'):
+            require(finite(mods.get(key)), f'Invalid TTS everyday sound modification notice: {ident}')
+        require(mods['excerptStart'] >= 0 and mods['excerptSeconds'] > 0
+                and mods['excerptStart'] + mods['excerptSeconds'] <= row['sourceDuration'] + 0.1
+                and all(0 <= mods[key] <= mods['excerptSeconds'] for key in ('fadeInSeconds', 'fadeOutSeconds'))
+                and isinstance(mods.get('encoding'), str) and bool(mods['encoding'].strip()),
+                f'Invalid TTS everyday sound modification notice: {ident}')
+    require(seen == set(TTS_EXTRA_IDS), 'TTS everyday sound catalog is incomplete')
+
+
 def inventory(root, kind):
     root = Path(root).resolve()
     names = ['manifest.json', 'index.js', 'style.css', 'README.md']
@@ -166,6 +299,11 @@ def inventory(root, kind):
                     item = root / 'src/addons/tts' / name
                     require(item.is_file(), f'Missing TTS sound resource: {name}')
                     names.append(item.relative_to(root).as_posix())
+            if (root / 'src/addons/tts/sfx-extra').exists() or (root / TTS_EXTRA_MODULE).is_file():
+                for name in (*TTS_EXTRA_RESOURCES, *(f'sfx-extra/{ident}.mp3' for ident in TTS_EXTRA_IDS)):
+                    item = root / 'src/addons/tts' / name
+                    require(item.is_file(), f'Missing TTS everyday sound resource: {name}')
+                    names.append(item.relative_to(root).as_posix())
         if (root / 'src/vendor/README.md').is_file(): names.append('src/vendor/README.md')
         # Only these curated weather atlases are runtime images. Do not sweep
         # arbitrary local images into the public package.
@@ -197,6 +335,7 @@ def validate(files, kind):
         validate_addon_css(files)
         validate_embedded_versions(files)
         validate_tts_sfx(files)
+        validate_tts_extra_sfx(files)
         if b'./preview-art/' in files.get('src/panel.js', b''):
             for name in PREVIEW_ARTWORK:
                 data = files.get('src/preview-art/' + name, b'')

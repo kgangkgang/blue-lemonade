@@ -4,10 +4,11 @@
 // See ../LICENSE-MultiCast.txt, ../NOTICE.md and ../sfx/SOURCES.json.
 // Blue Lemonade modifications: Korean labels/search, bounded imports, separate IndexedDB bytes.
 import { settings, save } from './settings.js';
+import { DAILY_SFX } from './sfx-daily.js';
 
 const UPSTREAM_LIBRARY = [
     // Unsupported bundled sounds must not match unrelated generic words. No paid fallback.
-    { files: [], words: ['phone', 'cellphone', 'ringtone', 'alarm', 'dog', 'bark', 'clap', 'applause', 'heartbeat', 'rain', 'siren', 'car', 'engine', 'horn', 'scream', 'laugh', 'music'] },
+    { files: [], words: ['phone', 'cellphone', 'ringtone', 'alarm', 'dog', 'bark', 'clap', 'applause', 'heartbeat', 'siren', 'car', 'engine', 'horn', 'scream', 'laugh', 'music'] },
     { files: ['door_slam', 'door_slam_2'], words: ['slam', 'door bang', 'door banging'] },
     { files: ['door_creak', 'door_creak_2'], words: ['creak', 'squeak'] },
     { files: ['door_close'], words: ['door close', 'door closing', 'door shut', 'closing door', 'door click'] },
@@ -92,7 +93,7 @@ const BUNDLED = UPSTREAM_LIBRARY.flatMap(group => group.files.map((id, i) => {
     const [name, category, ko] = KOREAN[group.files[0]];
     return Object.freeze({ id, name: name + (group.files.length > 1 ? ` ${i + 1}` : ''), category,
         words: Object.freeze([...group.words, ...ko.split(',')]), custom: false, loop: false });
-}));
+})).concat(DAILY_SFX);
 const BUNDLED_MAP = new Map(BUNDLED.map(row => [row.id, row]));
 export const SFX_LIMITS = Object.freeze({ fileBytes: 16 * 1024 * 1024, totalBytes: 128 * 1024 * 1024,
     count: 64, packBytes: 180 * 1024 * 1024, words: 32 });
@@ -129,7 +130,40 @@ export function getSfx(id) {
     const row = BUNDLED_MAP.get(id) || customRows().find(row => row.id === id);
     return row ? { ...row, words: [...row.words] } : null;
 }
+const preferenceListeners = new Set();
+const preferenceRevisions = new Map();
+export const sfxPreferenceRevision = id => preferenceRevisions.get(id) || 0;
+export function isSfxEnabled(id) { return !!getSfx(id) && !settings().sfx?.disabled?.includes(id); }
+export function onSfxPreferenceChange(listener) {
+    preferenceListeners.add(listener);
+    return () => preferenceListeners.delete(listener);
+}
+/** Playback preferences do not delete audio or prevent an explicit library preview. */
+export function setSfxEnabled(id, enabled) {
+    if (!getSfx(id)) return false;
+    const s = settings();
+    if (!record(s.sfx)) s.sfx = {};
+    const disabled = new Set(Array.isArray(s.sfx.disabled) ? s.sfx.disabled : []);
+    const on = enabled === true;
+    if (on === !disabled.has(id)) return on;
+    if (on) disabled.delete(id); else disabled.add(id);
+    s.sfx.disabled = [...disabled];
+    preferenceRevisions.set(id, sfxPreferenceRevision(id) + 1);
+    save();
+    for (const listener of preferenceListeners) { try { listener(id, on); } catch { /* one UI cannot block playback cancellation */ } }
+    return on;
+}
+export function sfxAttribution(ids) {
+    const rows = [...new Set(ids)].map(getSfx).filter(Boolean);
+    if (!rows.length) return '';
+    return 'Blue Lemonade TTS · 효과음 출처\n\n' + rows.map(row => {
+        if (row.credit) return `${row.name}\n${row.credit.author} · ${row.credit.license}\n${row.credit.source}\n${row.credit.licenseUrl}\n변경: 원본 일부 발췌·음량 조정·페이드·MP3 변환, 대본 설정에 따라 반복/길이 조절·믹싱\n`;
+        if (row.custom) return `${row.name} · 사용자가 추가한 음원\n`;
+        return `${row.name}\nJINSIN2/MultiCast-TTS · 원본 저장소의 CC0 표기 (개별 녹음 최초 출처는 독립 검증하지 않음)\nhttps://github.com/JINSIN2/MultiCast-TTS/tree/f48ebeef9b19d814bf8d4568af13613544007e63\nhttps://creativecommons.org/publicdomain/zero/1.0/\n변경: 대본 설정에 따라 반복/길이 조절·믹싱\n`;
+    }).join('\n');
+}
 function wordList(text) { return String(text ?? '').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(Boolean); }
+const EXTRA_WORDS = { daily_rain: ['비가 내린', '비가 내렸', '비 내린', '비 내렸', '비가 온', '비가 왔'] };
 // Adapted from MultiCast's matchSfx: adjacent prefix matches, exact-match preference,
 // weak keywords, unsupported-sound blockers and deterministic variant selection.
 function matchLibrary(words, library) {
@@ -153,17 +187,20 @@ function matchLibrary(words, library) {
     if (!best) return null;
     let h = 0;
     for (const ch of words.join(' ')) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-    return getSfx(best.files[h % best.files.length]);
+    const enabled = best.files.filter(isSfxEnabled);
+    // Keep the winning category even when muted; never substitute an unrelated sound.
+    return enabled.length ? getSfx(enabled[h % enabled.length]) : { muted: true };
 }
 export function matchSfx(text) {
     const words = wordList(text);
     if (!words.length) return null;
     const custom = customRows().map(row => ({ files: [row.id], words: [...row.words, row.name] }));
     const mine = matchLibrary(words, custom);
-    if (mine) return mine;
-    const library = UPSTREAM_LIBRARY.map(group => ({ files: group.files,
-        words: group.files.length ? BUNDLED_MAP.get(group.files[0]).words : group.words }));
-    return matchLibrary(words, library);
+    if (mine) return mine.muted ? null : mine;
+    const library = [...DAILY_SFX.map(row => ({ files: [row.id], words: [...row.words, row.name, ...(EXTRA_WORDS[row.id] || [])] })), ...UPSTREAM_LIBRARY.map(group => ({ files: group.files,
+        words: group.files.length ? BUNDLED_MAP.get(group.files[0]).words : group.words }))];
+    const result = matchLibrary(words, library);
+    return result?.muted ? null : result;
 }
 
 // Kept separate from the disposable TTS voice cache: clearing/pruning it cannot delete uploads.
@@ -210,7 +247,7 @@ export async function sfxBlob(id) {
     const meta = getSfx(id);
     if (!meta) return null;
     if (meta.custom) return customBlob(id);
-    const response = await fetch(new URL(`../sfx/${id}.mp3`, import.meta.url));
+    const response = await fetch(new URL(meta.assetPath || `../sfx/${id}.mp3`, import.meta.url));
     if (!response.ok) throw new Error('내장 효과음 파일을 불러오지 못했어요.');
     return response.blob();
 }

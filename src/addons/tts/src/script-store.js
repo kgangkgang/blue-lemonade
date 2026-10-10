@@ -41,6 +41,8 @@ export function normalizeRows(rows) {
             sourceIndex: Number.isSafeInteger(r.sourceIndex) && r.sourceIndex >= 0 ? r.sourceIndex : null,
             sfxId: string(r.sfxId, 200, '효과음'),
             mode: ['sequence', 'overlay', 'loop'].includes(r.mode) ? r.mode : 'sequence',
+            repeats: r.kind === 'sfx' ? Math.round(number(r.repeats, 1, 1, 4)) : 1,
+            durationMs: r.kind === 'sfx' ? Math.round(number(r.durationMs, 0, 0, 8000)) : 0,
             volume: number(r.volume, 1, 0, 1),
             gapMs: Math.round(number(r.gapMs, r.kind === 'pause' ? 500 : 0, 0, 10000)),
             enabled: r.enabled !== false,

@@ -5,6 +5,7 @@ import { showThemeModal } from '../../../modal.js';
 import { allVoices } from './voices.js';
 import { normalizeRows, saveScript, clearScript, scriptIdentity, scriptFingerprint } from './script-store.js';
 import * as library from './sfx-library.js';
+import { ttsCreditsHtml } from '../credits.js';
 
 const EMOTIONS = [['', '자동'], ['neutral', '담담하게'], ['calm', '차분하게'], ['happy', '기쁘게'], ['sad', '슬프게'], ['angry', '화나게'], ['fearful', '두렵게'], ['disgusted', '불쾌하게'], ['surprised', '놀라게'], ['whisper', '속삭이기'], ['shout', '외치기']];
 const MODES = [['sequence', '순서대로'], ['overlay', '다음 대사와 함께'], ['loop', '끝까지 반복']];
@@ -22,12 +23,12 @@ function loadStyle() {
 
 /** Explicitly opened only; importing this module performs no generation or chat writes. */
 export async function openScriptEditor(mesId) { return openEditor(Number(mesId)); }
-export async function openSoundLibrary() {
-    if (active?.dialog.isConnected) { active.library(); return active.dialog; }
-    return openEditor(null);
+export async function openSoundLibrary({ soundId } = {}) {
+    if (active?.dialog.isConnected) { active.library(soundId); return active.dialog; }
+    return openEditor(null, { soundId });
 }
 
-async function openEditor(mesId) {
+async function openEditor(mesId, { soundId } = {}) {
     if (active?.dialog.isConnected) { active.dialog.focus(); return active.dialog; }
     const player = await import('./player.js');
     // Recheck after the asynchronous import: two quick clicks must not open two editors.
@@ -36,7 +37,8 @@ async function openEditor(mesId) {
     let rows = identity ? normalizeRows(player.scriptRows(mesId)) : [], saved = copy(rows), undo = [], redo = [];
     let busy = false, closed = false, ownPlayback = false, preparingPlayback = false, ownExport = false, tab = identity ? 'script' : 'library';
     let preview = null, previewUrl = '', previewTimer = 0, previewRequest = 0;
-    let libraryQuery = '', libraryCategory = '', helpPinned = false, asking = null;
+    const initialSound = soundId ? library.getSfx(soundId) : null;
+    let selectedSoundId = initialSound?.id || '', libraryQuery = initialSound?.name || '', libraryCategory = '', helpPinned = false, asking = null;
     const opener = document.activeElement;
     loadStyle();
     const dialog = element('dialog', 'lvs-dialog lv-editor');
@@ -57,16 +59,13 @@ async function openEditor(mesId) {
     const play = button('전체 듣기', () => listen());
     const stop = button('정지', () => { stopPreview(); stopOwnedAudio(); notice('재생과 소리 저장을 멈췄어요.'); });
     const download = button('WAV 저장', () => task(async () => { valid(); ownExport = true; try { const ready = await player.downloadScript(mesId, normalizeRows(rows)); if (!closed) notice(ready ? '대본 음원을 WAV로 준비했어요.' : '저장할 소리가 없거나 음성 기능이 꺼져 있어요.', !ready); } finally { ownExport = false; } }));
-    const exportHelp = help('효과음·반복·쉼·줄 음량을 합쳐요. 파일은 원래 속도(1배속)로 저장돼요. 브라우저 내장 목소리는 저장할 수 없어요.'); exportHelp.hidden = !identity;
-    footerButtons.append(play, stop, download, exportHelp, save); footer.append(footerButtons);
-    const source = element('details', 'lvs-source'), sourceSummary = element('summary', '', '효과음 · 기능 출처');
-    const sourceText = element('p', '', '효과음 묶음과 대본 편집 아이디어: '), origin = element('a', '', 'JINSIN2 / MultiCast-TTS');
-    origin.href = 'https://github.com/JINSIN2/MultiCast-TTS'; origin.target = '_blank'; origin.rel = 'noopener noreferrer';
-    const license = element('a', '', '원본 MIT 라이선스'); license.href = 'https://github.com/JINSIN2/MultiCast-TTS/blob/main/LICENSE'; license.target = '_blank'; license.rel = 'noopener noreferrer';
-    sourceText.append(origin, document.createTextNode(' · '), license, document.createTextNode('. 원본은 동봉 효과음을 CC0로 표시하며, 파일별 최초 출처는 제공하지 않아요. 직접 가져온 음원은 각 출처의 이용 조건을 확인해 주세요.'));
-    const noticeLink = element('a', '', '포함된 출처 고지'); noticeLink.href = new URL('../NOTICE.md', import.meta.url).href; noticeLink.target = '_blank'; noticeLink.rel = 'noopener noreferrer';
-    const catalog = element('a', '', '동봉 음원 출처 목록'); catalog.href = new URL('../sfx/SOURCES.json', import.meta.url).href; catalog.target = '_blank'; catalog.rel = 'noopener noreferrer';
-    source.append(sourceSummary, sourceText, noticeLink, document.createTextNode(' · '), catalog); footer.append(source); shell.append(footer);
+    const attributionIds = () => rows.filter(row => row.enabled && row.kind === 'sfx' && library.isSfxEnabled(row.sfxId)).map(row => row.sfxId);
+    const copyCredits = button('출처 복사', () => task(async () => { valid(); const text = library.sfxAttribution(attributionIds()); if (!text) { notice('복사할 효과음 출처가 없어요.'); return; } try { if (!navigator.clipboard?.writeText) throw new Error(); await navigator.clipboard.writeText(text); } catch { throw new Error('출처를 복사하지 못했어요. 아래 저작권·출처를 펼쳐 직접 복사해 주세요.'); } notice('사용한 효과음 출처를 복사했어요. 공개할 게시물 설명에 함께 붙여 주세요.'); }));
+    const exportHelp = help('효과음·반복·쉼·줄 음량을 합쳐 최대 10분까지 저장해요. 파일은 원래 속도(1배속)이며 출처도 기록돼요. 브라우저 내장 목소리는 저장할 수 없어요. CC BY 음원이 있으면 출처 복사 내용을 공개 게시물에도 함께 적어 주세요.'); exportHelp.hidden = !identity;
+    footerButtons.append(play, stop, download, exportHelp, copyCredits, save); footer.append(footerButtons);
+    const source = element('details', 'lvs-source'), sourceSummary = element('summary', '', '저작권·출처 · TTS와 효과음');
+    const credits = element('div'); credits.innerHTML = ttsCreditsHtml(); // trusted static attribution; no user content
+    source.append(sourceSummary, credits); footer.append(source); shell.append(footer);
     const tooltip = element('div', 'lvs-tooltip'); tooltip.id = 'lvs-help'; tooltip.setAttribute('role', 'tooltip'); tooltip.hidden = true; dialog.append(tooltip);
     let helpButton = null;
 
@@ -87,6 +86,7 @@ async function openEditor(mesId) {
     function updateControls() {
         for (const control of scriptPanel.querySelectorAll('input,textarea,select,button')) control.disabled = busy || control.dataset.unavailable === 'true';
         save.disabled = busy || !dirty(); play.disabled = download.disabled = busy || !rows.some(r => r.enabled); save.hidden = play.hidden = download.hidden = !identity;
+        copyCredits.hidden = !identity; copyCredits.disabled = busy || !attributionIds().length;
         for (const control of libraryPanel.querySelectorAll('[data-busy-lock]')) control.disabled = busy;
         const u = scriptPanel.querySelector('[data-undo]'), r = scriptPanel.querySelector('[data-redo]'); if (u) u.disabled = busy || !undo.length; if (r) r.disabled = busy || !redo.length;
         scriptTab.setAttribute('aria-selected', String(tab === 'script')); libraryTab.setAttribute('aria-selected', String(tab === 'library'));
@@ -146,7 +146,15 @@ async function openEditor(mesId) {
             } else if (row.kind === 'sfx') {
                 const effects = library.listSfx().map(s => [s.id, s.name]); if (row.sfxId && !effects.some(([id]) => id === row.sfxId)) effects.unshift([row.sfxId, '찾을 수 없는 효과음']);
                 grid.append(field('효과음', select(row, 'sfxId', [['', '효과음 선택'], ...effects])));
-                grid.append(field('재생 방식', select(row, 'mode', MODES), '순서대로: 소리가 끝난 뒤 다음 줄로. 함께: 다음 대사 위에 한 번. 반복: 이후 대본 위에서 반복하다 끝나면 멈춰요. 한 줄 미리듣기는 짧게만 들려줘요.'));
+                const mode = options(MODES, row.mode); mode.addEventListener('change', () => mutate(() => { row.mode = mode.value; if (row.mode === 'loop') { row.repeats = 1; row.durationMs = 0; } }));
+                grid.append(field('재생 방식', mode, '순서대로: 소리가 끝난 뒤 다음 줄로. 다음 대사와 함께: 다음 대사를 읽으며 재생. 끝까지 반복: 메시지가 끝날 때까지 반복해요. 한 줄 미리듣기는 짧게만 들려줘요.'));
+                const repeats = options([['1', '1번'], ['2', '2번'], ['3', '3번'], ['4', '4번']], row.repeats || 1);
+                repeats.addEventListener('change', () => mutate(() => { row.repeats = Number(repeats.value); row.durationMs = 0; }));
+                const durations = [['0', '원본 길이'], ['2000', '2초'], ['4000', '4초'], ['6000', '6초'], ['8000', '8초']];
+                if (row.durationMs && !durations.some(([ms]) => Number(ms) === row.durationMs)) durations.push([String(row.durationMs), `${row.durationMs / 1000}초 (현재)`]);
+                const duration = options(durations, row.durationMs || 0); duration.addEventListener('change', () => mutate(() => { row.durationMs = Number(duration.value); row.repeats = 1; }));
+                repeats.dataset.unavailable = duration.dataset.unavailable = String(row.mode === 'loop');
+                grid.append(field('횟수', repeats, '보통은 1번이에요. 두 번 두드리거나 떨어지는 장면은 횟수를 골라요. 길이를 고르면 횟수는 1번으로 돌아가요. 끝까지 반복 모드에서는 쓰지 않아요.'), field('길이', duration, '계속 타이핑하는 것처럼 이어지는 동작만 시간을 골라요. 선택한 시간 동안 음원을 반복해요. 횟수와 함께 적용하지 않고, 끝까지 반복 모드에서는 쓰지 않아요.'));
                 card.append(button('보관함에서 찾기', () => setTab('library')));
             }
             if (row.kind !== 'pause') { const volume = input(row, 'volume', 'number', 0, 1); volume.step = '.05'; grid.append(field('이 줄 음량 (0~1)', volume, '1은 원래 크기, 0.5는 절반 크기예요. 이 줄에만 적용해요.')); }
@@ -196,10 +204,22 @@ async function openEditor(mesId) {
         const results = element('div', 'lvs-sounds'); libraryPanel.append(results);
         const renderResults = () => {
             results.replaceChildren(); const query = libraryQuery.trim().toLocaleLowerCase();
-            const matches = library.listSfx().filter(s => (!libraryCategory || (s.category || '기타') === libraryCategory) && (!query || `${s.name} ${(s.words || []).join(' ')} ${s.category || ''}`.toLocaleLowerCase().includes(query)));
+            const matches = library.listSfx().filter(s => (!selectedSoundId || s.id === selectedSoundId) && (!libraryCategory || (s.category || '기타') === libraryCategory) && (!query || `${s.name} ${(s.words || []).join(' ')} ${s.category || ''}`.toLocaleLowerCase().includes(query)));
             if (!matches.length) results.append(element('p', 'lvs-empty', '맞는 효과음이 없어요. 검색을 바꾸거나 음원을 가져와 주세요.'));
             for (const sound of matches) {
                 const item = element('article', 'lvs-sound'), info = element('div', 'lvs-sound-info'); info.append(element('strong', '', sound.name), element('span', 'lvs-description', `${sound.category || '기타'} · ${sound.custom ? '내 효과음' : '기본 효과음'}`));
+                const usage = element('div', 'lvs-sound-usage'), usageLabel = element('label', 'lvs-check'), useSound = element('input'), unused = element('span', 'lvs-unused', '사용 안 함');
+                useSound.type = 'checkbox'; useSound.checked = library.isSfxEnabled(sound.id); useSound.setAttribute('aria-label', `${sound.name} 재생에 사용`);
+                const syncUsage = () => { unused.hidden = useSound.checked; item.classList.toggle('lvs-sound-unused', !useSound.checked); };
+                useSound.addEventListener('change', () => { library.setSfxEnabled(sound.id, useSound.checked); syncUsage(); updateControls(); });
+                usageLabel.append(useSound, document.createTextNode('재생에 사용'));
+                usage.append(usageLabel, help('꺼두면 채팅 읽기·대본 재생·WAV 저장에서 제외돼요. 미리듣기로 소리는 확인할 수 있어요.'), unused); syncUsage(); info.append(usage);
+                if (sound.credit && !sound.custom) {
+                    const credit = element('span', 'lvs-sound-credit', [sound.credit.author, sound.credit.license].filter(Boolean).join(' · '));
+                    // Catalog metadata is rendered as text. Only public web URLs become links.
+                    try { const url = new URL(sound.credit.source); if (['http:', 'https:'].includes(url.protocol)) { const link = element('a', '', '출처'); link.href = url.href; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.setAttribute('aria-label', `${sound.name} 음원 출처`); if (credit.textContent) credit.append(document.createTextNode(' · ')); credit.append(link); } } catch { /* Metadata without a valid source remains plain text. */ }
+                    if (credit.textContent) info.append(credit);
+                }
                 const buttons = element('div', 'lvs-actions'); buttons.append(button('듣기', () => previewSound(sound.id)));
                 if (identity) buttons.append(button('+ 대본에 추가', () => appendRow('sfx', sound.id)));
                 item.append(info, buttons);
@@ -219,7 +239,7 @@ async function openEditor(mesId) {
             }
             updateControls();
         };
-        search.addEventListener('input', () => { libraryQuery = search.value; renderResults(); }); category.addEventListener('change', () => { libraryCategory = category.value; renderResults(); }); renderResults();
+        search.addEventListener('input', () => { selectedSoundId = ''; libraryQuery = search.value; renderResults(); }); category.addEventListener('change', () => { selectedSoundId = ''; libraryCategory = category.value; renderResults(); }); renderResults();
     }
     function ask(text, confirmText) {
         if (asking) return asking;
@@ -235,7 +255,7 @@ async function openEditor(mesId) {
     dialog.addEventListener('keydown', event => { if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && !event.target.closest('input,textarea')) { event.preventDefault(); history(!event.shiftKey); } });
     content.addEventListener('scroll', hideHelp, { passive: true });
     dialog.addEventListener('close', () => { closed = true; stopPreview(); stopOwnedAudio(); if (active?.dialog === dialog) active = null; dialog.remove(); if (opener?.isConnected) opener.focus(); }, { once: true });
-    document.body.append(dialog); active = { dialog, library: () => setTab('library') }; renderScript(); setTab(tab);
+    document.body.append(dialog); active = { dialog, library: soundId => { if (soundId) { const sound = library.getSfx(soundId); selectedSoundId = sound?.id || ''; libraryQuery = sound?.name || ''; libraryCategory = ''; } setTab('library'); } }; renderScript(); setTab(tab);
     try { showThemeModal(dialog); } catch (error) { active = null; dialog.remove(); throw error; }
     close.focus(); return dialog;
 }

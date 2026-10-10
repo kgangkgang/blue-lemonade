@@ -42,7 +42,7 @@ class Element extends EventTarget {
     constructor(tag = 'div') { super(); this.tagName = tag.toUpperCase(); this.dataset = {}; this.children = []; this.attributes = new Map(); this.style = { setProperty() {} }; this._selectors = new Map(); this.hidden = true;
         const cls = new Set(); this.classList = { add: (...x) => x.forEach(v => cls.add(v)), remove: (...x) => x.forEach(v => cls.delete(v)), contains: x => cls.has(x), toggle: (x,v) => { v ??= !cls.has(x); if (v) cls.add(x); else cls.delete(x); return v; } }; }
     setAttribute(k,v) { this.attributes.set(k,v); } removeAttribute(k) { this.attributes.delete(k); } getAttribute(k) { return this.attributes.get(k); }
-    appendChild(n) { this.children.push(n); return n; } append(...n) { this.children.push(...n); } remove() {} focus() {} contains() { return false; }
+    appendChild(n) { this.children.push(n); return n; } append(...n) { this.children.push(...n); } replaceChildren(...n) { this.children = n; } remove() {} focus() {} contains() { return false; }
     querySelector(s) { if (!this._selectors.has(s)) this._selectors.set(s, new Element()); return this._selectors.get(s); } querySelectorAll() { return []; }
     click() { if (this.tagName === 'A') T.downloads.push({ filename: this.download, blob: T.urls.get(this.href) }); this.dispatchEvent(new Event('click')); }
     getBoundingClientRect() { return { left:0,top:0,width:800,height:40 }; }
@@ -76,7 +76,7 @@ const blob = payload => new Blob([JSON.stringify(payload)], { type:'audio/wav' }
 globalThis.fetch = async (url, init = {}) => {
     const u = String(url);
     if (u === 'https://mock.invalid/voice') { const input=JSON.parse(init.body); T.requests.push(input); return { ok:true, blob:async()=>blob({kind:'voice',...input,seconds:.06,ms:25}) }; }
-    const sfx = u.match(/\/sfx\/([a-z0-9_]+)\.mp3$/);
+    const sfx = u.match(/\/sfx(?:-extra)?\/([a-z0-9_]+)\.mp3$/);
     if (sfx) { if (T.sfxGate) { T.sfxGate.started = true; await T.sfxGate.promise; } return { ok:true, blob:async()=>blob({kind:'sfx',sfxId:sfx[1],seconds:.08,ms:35}) }; }
     throw Error('Blocked non-mock fetch: '+u);
 };
@@ -92,6 +92,7 @@ class OfflineMock {
 globalThis.OfflineAudioContext = OfflineMock;
 const mod = name => import(pathToFileURL(path.join(root,name)).href);
 const S=await mod('settings.js'), V=await mod('voices.js'), P=await mod('player.js'), Store=await mod('script-store.js'), Mix=await mod('scene-mix.js'), Registry=await mod('providers/index.js'), Sfx=await mod('sfx-audio.js');
+const Library=await mod('sfx-library.js'), Details=await mod('playback-details.js');
 for (const id of ['minimax','elevenlabs']) Registry.PROVIDERS[id].synth = async ({text,voice,emotion,lang,signal}) => {
     const response=await fetch('https://mock.invalid/voice',{method:'POST',body:JSON.stringify({text,voiceUid:voice.uid,emotion,lang}),signal});return {blob:await response.blob(),usage:{chars:text.length}};
 };
@@ -181,6 +182,60 @@ await test('ordinary WAV excludes effects when automatic effects are off; explic
     S.settings().sfx.enabled=true;assert.equal(await P.downloadMessage(0),true);assert.deepEqual(T.renders.at(-1).sources.map(s=>s.buffer.payload.kind),['sfx','voice']);
 });
 
+await test('muted specific everyday sound never falls back to a generic water sound',async()=>{
+    await reset();assert.equal(Library.listSfx().length,63);assert.equal(Library.matchSfx('pour water').id,'daily_water_pour');
+    Library.setSfxEnabled('daily_water_pour',false);assert.equal(Library.matchSfx('pour water'),null);assert.ok(Library.getSfx('daily_water_pour'));assert.ok(await Library.sfxBlob('daily_water_pour'));
+    assert.equal(Library.matchSfx('비가 내린다').id,'daily_rain');assert.equal(Library.matchSfx('키보드를 타이핑한다').id,'daily_keyboard');
+});
+await test('disabled preference is serializable and excludes manual playback and WAV while preserving speech',async()=>{
+    await reset();Library.setSfxEnabled('knock',false);assert.ok(JSON.parse(JSON.stringify(S.settings())).sfx.disabled.includes('knock'));
+    const rows=[row('fx','sfx',{sfxId:'knock'}),row('voice','voice')];await P.speakScript(0,rows);await idle();assert.deepEqual(T.plays.map(x=>x.kind),['voice']);
+    await P.downloadScript(0,rows);assert.deepEqual(T.renders.at(-1).sources.map(x=>x.buffer.payload.kind),['voice']);
+});
+await test('muting a playing effect stops it immediately while speech continues',async()=>{
+    await reset();await P.speakScript(0,[row('wind','sfx',{sfxId:'wind',mode:'loop'}),row('voice','voice'),row('pause','pause',{gapMs:80})]);await until(()=>T.plays.some(p=>p.kind==='voice'));
+    const effect=T.plays.find(p=>p.kind==='sfx').node,voice=T.plays.find(p=>p.kind==='voice').node;Library.setSfxEnabled('wind',false);assert.equal(effect.paused,true);assert.equal(voice.paused,false);await idle();
+});
+await test('mute then unmute during a pending fetch cancels that old request',async()=>{
+    await reset();const g=gate();T.sfxGate=g;await P.speakScript(0,[row('slow','sfx',{sfxId:'wind'}),row('voice','voice')]);await until(()=>g.started);
+    Library.setSfxEnabled('wind',false);Library.setSfxEnabled('wind',true);g.release();T.sfxGate=null;await idle();assert.ok(T.plays.every(p=>p.kind!=='sfx'));
+});
+await test('changing a sound preference while rendering cancels the stale WAV',async()=>{
+    await reset();const g=gate();T.renderGate=g;const pending=P.downloadScript(0,[row('fx','sfx',{sfxId:'bell'})]);await until(()=>g.started);Library.setSfxEnabled('bell',false);g.release();await assert.rejects(pending,/효과음 사용 설정/);T.renderGate=null;assert.equal(T.downloads.length,0);
+});
+await test('twice means exactly two live sound starts and two exported events',async()=>{
+    await reset();const rows=[row('twice','sfx',{sfxId:'daily_coins',mode:'sequence',repeats:2})];await P.speakScript(0,rows);await idle();assert.equal(T.plays.length,2);assert.equal(T.ends.length,2);
+    await P.downloadScript(0,rows);const sources=T.renders.at(-1).sources;assert.equal(sources.length,2);assert.equal(sources[0].startAt,0);assert.equal(sources[1].startAt,.08);assert.equal(sources[1].stopAt,.16);
+});
+await test('bounded typing duration pauses its countdown and stops without an infinite tail',async()=>{
+    await reset();const beforeUrls=new Set(T.urls.keys());const c=Sfx.createSfxController();const h=await c.play('daily_keyboard',{durationMs:150});await sleep(30);c.pause();await sleep(180);assert.ok(T.urls.size>0);const start=Date.now();await c.resume();assert.equal(await h.done,'ended');assert.ok(Date.now()-start>=70);assert.ok([...T.urls.keys()].every(url=>beforeUrls.has(url)));
+});
+await test('bounded context duration is identical in the export timeline',async()=>{
+    const out=Mix.sceneTimeline([timelineClip('sfx',2.5,{sfxId:'daily_keyboard',mode:'overlay',durationMs:6000}),timelineClip('voice',3)]);
+    assert.equal(out.events[0].duration,6);assert.equal(out.events[0].loop,true);assert.equal(out.duration,6);
+});
+await test('stopping during an individual effect download prevents a late file',async()=>{
+    await reset();await P.speakScript(0,[row('fx','sfx',{sfxId:'wind',mode:'loop'})]);await until(()=>T.plays.length);P.pause();
+    const g=gate();T.sfxGate=g;const pending=P.downloadCurrent();await until(()=>g.started);P.stop();g.release();assert.equal(await pending,false);T.sfxGate=null;assert.equal(T.downloads.length,0);
+});
+await test('WAV contains attribution and its RIFF length includes the metadata chunk',async()=>{
+    await reset();await P.downloadScript(0,[row('fx','sfx',{sfxId:'daily_scissors'})]);const bytes=await T.downloads[0].blob.arrayBuffer(),view=new DataView(bytes),text=new TextDecoder().decode(bytes);
+    assert.equal(view.getUint32(4,true),bytes.byteLength-8);assert.ok(text.includes('ICMT'));assert.ok(text.includes('한국저작권위원회'));assert.ok(text.includes('CC-BY-4.0'));assert.ok(text.includes('wrtSn=13263912'));assert.ok(text.includes('변경:'));
+});
+await test('identical original text is omitted; translation and edits keep the original plain text',async()=>{
+    assert.equal(Details.playbackOriginal({text:'Same words.',parts:[{original:{text:'Same  words.'}}]}),'');
+    assert.equal(Details.playbackOriginal({text:'안녕하세요.',parts:[{original:{text:'Hello.'}}]}),'Hello.');
+    assert.equal(Details.playbackOriginal({text:'changed',parts:[{original:{text:'<img src=x onerror=bad>'}}]}),'<img src=x onerror=bad>');
+    assert.equal(Details.playbackOriginal({sceneKind:'sfx',text:'bell'}),'');
+    assert.equal(Details.playbackOriginal({text:'First.',parts:[{original:{text:'First. Second.'},text:'First. Second.'}]}),'');
+    assert.equal(Details.playbackOriginal({text:'First.',parts:[{original:{text:'First. Second.'},text:'First.'}]}),'First. Second.');
+});
+await test('compact bar lists only effects that started and resets when another message starts',async()=>{
+    await reset();S.settings().mini_player=true;await P.speakScript(0,[row('fx','sfx',{sfxId:'daily_keyboard',durationMs:120,mode:'overlay'}),row('voice','voice'),row('wait','pause',{gapMs:180}),row('later','sfx',{sfxId:'bell'})]);await until(()=>T.plays.some(x=>x.kind==='voice'));
+    const bar=document.body.children.find(n=>n.className==='lv-bar'),button=bar.querySelector('.lv-bar-details-btn'),list=bar.querySelector('.lv-bar-sfx-list');
+    assert.equal(button.textContent,'효과음 1개');assert.equal(list.children.length,1);assert.equal(list.children[0].textContent,'키보드 타이핑');
+    P.stop();await P.speakScript(0,[row('new','voice',{text:'New one.'}),row('wait','pause',{gapMs:50})]);await until(()=>T.plays.some(x=>x.text==='New one.'));assert.equal(list.children.length,0);await idle();
+});
 P.stop(); for(const node of T.nodes)node.pause();
 console.log(JSON.stringify({passed,failed,mockOnly:true,network:'blocked except synthetic responses',sourceRoot:root},null,2));
 process.exitCode=failed?1:0;
