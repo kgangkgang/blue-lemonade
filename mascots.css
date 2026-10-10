@@ -17,8 +17,8 @@
 .pet-help[hidden]{display:none}
 .pet-options{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end}
 .pet-options[hidden]{display:none}
-.pet-controls button.pet-label{font-weight:650;color:var(--blue-strong);padding-inline:13px;min-height:40px}
-.pet-controls .pet-label::after{content:'⌃';display:inline-block;margin-left:9px}
+.pet-controls button.pet-label{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:650;color:var(--blue-strong);padding-inline:13px;min-height:40px}
+.pet-controls .pet-label::after{content:'';display:block;flex:0 0 12px;width:12px;height:12px;background:currentColor;--pet-chevron:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 7.5 6 4.5 9 7.5' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");-webkit-mask:var(--pet-chevron) center/contain no-repeat;mask:var(--pet-chevron) center/contain no-repeat}
 .pet-controls .pet-label[aria-expanded=true]::after{transform:rotate(180deg)}
 .pet-controls.expanded{border-radius:16px;flex-wrap:wrap;max-width:calc(100vw - 24px)}
 .pet-mood{position:absolute;right:4%;top:-2%;color:var(--blue);font-size:18px;opacity:0;pointer-events:none}
@@ -32,5 +32,5 @@
 /* 터치 기기: 탭·스크롤은 아래 내용으로 통과, 잡기는 mascots.js의 길게 누르기로 */
 @media(hover:none),(pointer:coarse){.site-pet{pointer-events:none}}
 @media(prefers-reduced-motion:reduce){.pet-sleep,.pet-help{animation:none!important;transition:none!important}}
-@media(max-width:760px){.pet-controls .pet-label{display:block}.pet-controls button{min-height:44px;font-size:12px}.pet-controls.expanded{max-width:280px}.pet-options{justify-content:flex-start}.pet-help{max-width:210px}.pet-controls{bottom:calc(10px + env(safe-area-inset-bottom))}}
+@media(max-width:760px){.pet-controls button.pet-label{display:inline-flex;min-height:44px}.pet-controls button{min-height:44px;font-size:12px}.pet-controls.expanded{max-width:280px}.pet-options{justify-content:flex-start}.pet-help{max-width:210px}.pet-controls{bottom:calc(10px + env(safe-area-inset-bottom))}}
 @media(prefers-reduced-motion:reduce){.pet-mood,.pet-pose{animation:none!important;transition:none!important}}
