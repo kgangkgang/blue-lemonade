@@ -70,7 +70,7 @@ export function syncEnabled() {
     if (!on) {
         clearTimeout(streamTimer); streamTimer = 0; stream = null; spoken = null;
         pregen.pregenCancel(); analysis.stopForAddon(); player.stopForAddon(); clickplay.destroy(); modelswitch.unregister();
-        removeWand(); document.querySelectorAll('#chat .lv_play').forEach(el => el.remove());
+        removeWand(); document.querySelectorAll('#chat .lv_play, #chat .lv_script').forEach(el => el.remove());
     } else { clickplay.init(); modelswitch.register(); syncWand(); addButtons(); }
     return on;
 }
@@ -297,11 +297,17 @@ function onMessageChanged(id) {
 function addButtons() {
     if (!runtimeEnabled()) return;
     for (const el of document.querySelectorAll('#chat .mes')) {
-        if (el.querySelector('.lv_play')) continue;
         const mes = msgOf(Number(el.getAttribute('mesid')));
         if (mes && mes.is_system) continue;
         const box = el.querySelector('.extraMesButtons');
         if (!box) continue;
+        if (!el.querySelector('.lv_script')) {
+            const edit = document.createElement('div');
+            edit.className = 'mes_button lv_script fa-solid fa-file-audio interactable';
+            edit.tabIndex = 0; edit.setAttribute('role', 'button'); edit.setAttribute('aria-label', '소리 대본 편집');
+            box.prepend(edit);
+        }
+        if (el.querySelector('.lv_play')) continue;
         const btn = document.createElement('div');
         btn.className = 'mes_button lv_play fa-solid fa-volume-high interactable';
         btn.tabIndex = 0;
@@ -451,6 +457,9 @@ export const ready = new Promise((resolve, reject) => jQuery(() => { (async () =
     // 메시지 버튼
     $(document).on('click', '#chat .mes .lv_play', function () { onPlayClick(this); });
     $(document).on('keydown', '#chat .mes .lv_play', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPlayClick(this); } });
+    const openScript = el => { if (!runtimeEnabled()) return; const id = Number(el.closest('.mes')?.getAttribute('mesid')); if (!chat[id]) return; import('./src/script-editor.js').then(m => m.openScriptEditor(id)).catch(e => toast(e?.message || '소리 대본을 열지 못했어요', 'error')); };
+    $(document).on('click', '#chat .mes .lv_script', function (e) { e.stopPropagation(); openScript(this); });
+    $(document).on('keydown', '#chat .mes .lv_script', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); openScript(this); } });
     const chatEl = document.getElementById('chat');
     if (chatEl) new MutationObserver(() => addButtons()).observe(chatEl, { childList: true });
     addButtons();

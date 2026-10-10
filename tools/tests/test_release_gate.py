@@ -1,4 +1,5 @@
 import importlib.util
+import hashlib
 import json
 from pathlib import Path
 import tempfile
@@ -12,6 +13,23 @@ class GateTests(unittest.TestCase):
         if kind=='theme':
             del files['defs.js'];files['index.js']=b"import './src/notice.js';";files['src/notice.js']=b"import './notice-data.js';";files['src/notice-data.js']=b'export const NOTICES = [{"version":"1.3.1"}];'
         return files
+    def tts_sfx_fixture(self):
+        files=self.fixture('theme');prefix='src/addons/tts/'
+        files[prefix+'src/sfx-library.js']=b'// Synthetic sound library fixture'
+        files[prefix+'settings.html']=b'<p>Sound settings</p>'
+        for name in gate.TTS_SFX_RESOURCES:files[prefix+name]=b'Synthetic bundled resource'
+        rows=[]
+        for name in gate.TTS_SFX_FILES:
+            relative='sfx/'+name;data=b'ID3 synthetic\r\n'+name.encode();files[prefix+relative]=data
+            rows.append({'path':relative,'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest(),
+                         'url':f'https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/{gate.TTS_SFX_COMMIT}/{relative}'})
+        files[prefix+'sfx/SOURCES.json']=json.dumps({'repository':gate.TTS_SFX_REPOSITORY,'commit':gate.TTS_SFX_COMMIT,'files':rows}).encode()
+        return files
+    def write_fixture(self,root,files):
+        for name,data in files.items():
+            p=root/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(data)
+    def edit_sfx_catalog(self,files,edit):
+        key='src/addons/tts/sfx/SOURCES.json';catalog=json.loads(files[key]);edit(catalog);files[key]=json.dumps(catalog).encode()
     def test_valid_memory(self):self.assertEqual(gate.validate(self.fixture(),'memory'),'1.3.1')
     def test_embedded_addon_css_versions(self):
         for source, folder, variable, constant in gate.addon_css_versions():
@@ -87,6 +105,62 @@ class GateTests(unittest.TestCase):
     def test_missing_dependency_blocks(self):
         f=self.fixture();f['index.js']=b"import('./missing.js')"
         with self.assertRaisesRegex(gate.GateError,'missing'):gate.validate(f,'memory')
+    def test_tts_sound_inventory_includes_only_reviewed_pack(self):
+        files=self.tts_sfx_fixture()
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);self.write_fixture(root,files)
+            for name in ('src/addons/tts/sfx/private.mp3','src/addons/tts/voice-recording.wav','src/addons/tts/sfx/unlisted.wav'):
+                p=root/name;p.write_bytes(b'private audio fixture')
+            found=gate.inventory(root,'theme')
+            self.assertEqual(set(found),set(files));self.assertEqual(gate.validate(found,'theme'),'1.3.1')
+            self.assertEqual(sum(n.endswith('.mp3') for n in found),47)
+    def test_tts_sound_inventory_requires_every_resource(self):
+        files=self.tts_sfx_fixture()
+        for name in (*gate.TTS_SFX_RESOURCES,'sfx/'+gate.TTS_SFX_FILES[0]):
+            with self.subTest(resource=name),tempfile.TemporaryDirectory() as d:
+                root=Path(d);self.write_fixture(root,{n:b for n,b in files.items() if n!='src/addons/tts/'+name})
+                with self.assertRaisesRegex(gate.GateError,'Missing TTS sound resource'):gate.inventory(root,'theme')
+    def test_tts_sound_missing_and_extra_zip_resources_block(self):
+        files=self.tts_sfx_fixture()
+        for name in (*gate.TTS_SFX_RESOURCES,'sfx/'+gate.TTS_SFX_FILES[0]):
+            with self.subTest(resource=name):
+                bad=dict(files);del bad['src/addons/tts/'+name]
+                with self.assertRaises(gate.GateError):gate.validate(bad,'theme')
+        bad={**files,'src/addons/tts/sfx/private.mp3':b'local recording'}
+        with self.assertRaisesRegex(gate.GateError,'file list'):gate.validate(bad,'theme')
+    def test_tts_sound_catalog_rejects_path_traversal_unknown_and_duplicate(self):
+        for name in ('../private.mp3','sfx/../../private.mp3','sfx\\bell.mp3','/sfx/bell.mp3','sfx/private.mp3','sfx/bell_2.mp3'):
+            with self.subTest(path=name):
+                files=self.tts_sfx_fixture();self.edit_sfx_catalog(files,lambda c:c['files'][0].update(path=name))
+                with self.assertRaisesRegex(gate.GateError,'path|URL'):gate.validate(files,'theme')
+    def test_tts_sound_catalog_requires_complete_unique_pack(self):
+        files=self.tts_sfx_fixture();self.edit_sfx_catalog(files,lambda c:c['files'].pop())
+        with self.assertRaisesRegex(gate.GateError,'complete reviewed pack'):gate.validate(files,'theme')
+        files=self.tts_sfx_fixture();self.edit_sfx_catalog(files,lambda c:c['files'].__setitem__(1,dict(c['files'][0])))
+        with self.assertRaisesRegex(gate.GateError,'duplicate'):gate.validate(files,'theme')
+    def test_tts_sound_catalog_requires_pinned_source(self):
+        for patch in ({'repository':'https://example.invalid/private'},{'commit':'0'*40}):
+            files=self.tts_sfx_fixture();self.edit_sfx_catalog(files,lambda c:c.update(patch))
+            with self.assertRaisesRegex(gate.GateError,'pinned upstream'):gate.validate(files,'theme')
+        files=self.tts_sfx_fixture();self.edit_sfx_catalog(files,lambda c:c['files'][0].update(url='file:///private/recording.mp3'))
+        with self.assertRaisesRegex(gate.GateError,'source URL'):gate.validate(files,'theme')
+    def test_tts_sound_hash_detects_changed_audio_and_crlf_conversion(self):
+        for convert in (lambda data:b'X'+data[1:],lambda data:data.replace(b'\r\n',b'\n')):
+            files=self.tts_sfx_fixture();key='src/addons/tts/sfx/'+gate.TTS_SFX_FILES[0];files[key]=convert(files[key])
+            with self.assertRaisesRegex(gate.GateError,'SHA256|byte count'):gate.validate(files,'theme')
+    def test_tts_sound_catalog_rejects_invalid_metadata(self):
+        for patch in ({'bytes':True},{'bytes':0},{'bytes':'20'},{'sha256':'invalid'},{'sha256':'0'*64}):
+            with self.subTest(patch=patch):
+                files=self.tts_sfx_fixture();self.edit_sfx_catalog(files,lambda c:c['files'][0].update(patch))
+                with self.assertRaisesRegex(gate.GateError,'byte count|SHA256'):gate.validate(files,'theme')
+        for invalid in (b'not-json',b'[]',b'{"files":[]}'):
+            files=self.tts_sfx_fixture();files['src/addons/tts/sfx/SOURCES.json']=invalid
+            with self.assertRaisesRegex(gate.GateError,'catalog'):gate.validate(files,'theme')
+    def test_older_tts_without_sound_library_remains_supported(self):
+        files=self.fixture('theme');files['src/addons/tts/settings.html']=b'<p>Older TTS</p>'
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);self.write_fixture(root,files)
+            self.assertEqual(gate.validate(gate.inventory(root,'theme'),'theme'),'1.3.1')
     def test_mirror_content_mismatch_blocks(self):
         f=self.fixture();other={**f,'index.js':b'stale'}
         with self.assertRaisesRegex(gate.GateError,'content'):gate.compare(f,other,'mirror')

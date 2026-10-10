@@ -129,6 +129,12 @@ const READ_CARDS = {
     click: ['fa-hand-pointer', '대사 클릭', [
         { key: 'click_play', label: '클릭한 대사 읽기', type: 'toggle', desc: '대사·속마음을 누르면 그 줄만 읽어요' },
     ]],
+    sfx: ['fa-music', '효과음 · 소리 대본', [
+        { key: 'sfx.enabled', label: '채팅 읽기에 효과음', type: 'toggle', help: '켜면 저장한 소리 대본의 효과음도 함께 재생해요. 대본 편집에서 직접 들어보기는 이 설정과 관계없이 쓸 수 있어요.' },
+        { key: 'sfx.auto', label: '서술에서 자동으로 찾기', type: 'toggle', show: s => !!s.sfx?.enabled, help: '대사 분석을 켜면 같은 분석 요청에서 문소리·발소리처럼 실제로 발생한 소리를 찾아요. 맞는 내장·사용자 음원이 없으면 생략해요. 분석 서비스 요금은 기존과 같이 적용돼요.' },
+        { key: 'sfx.mode', label: '자동 효과음 재생', type: 'select', options: [{ value: 'overlay', label: '대사와 겹치기' }, { value: 'sequence', label: '차례로 재생' }], help: '겹치기는 효과음 위로 다음 대사가 이어져요. 차례로는 효과음이 끝나고 다음 대사를 읽어요. 각 줄은 소리 대본에서 따로 바꿀 수 있어요.' },
+        { key: 'sfx.volume', label: '효과음 음량', type: 'range', min: 0, max: 1, step: 0.05, default: 0.45, fmt: v => `${Math.round(Number(v) * 100)}%`, help: '전체 재생 볼륨 안에서 효과음만 조절해요. 반복 소리는 대사를 가리지 않도록 더 작게 재생돼요.' },
+    ], () => '<div class="lv-actions"><button type="button" class="menu_button" data-lv-act="sound-library">효과음 보관함</button><button type="button" class="menu_button" data-lv-act="script-last">마지막 소리 대본</button></div><span class="lv-desc">각 메시지의 소리 대본 버튼에서 대사 · 효과음 · 쉼을 고쳐요. 원문은 그대로예요.</span>'],
     analysis: ['fa-wand-magic-sparkles', '대사 분석 (감정 · 원어 읽기)', [
         { key: 'analysis.enabled', label: '사용', type: 'toggle' },
         { key: 'analysis.engine', label: '엔진', type: 'select', options: ENGINE_OPTS },
@@ -152,7 +158,7 @@ const READ_CARDS = {
         { key: 'pregen_paid', label: '유료 엔진도 미리 만들기', type: 'toggle', show: showPregenPaid },   // 5.6.4
         { key: 'wait_translation', label: '번역 기다리기', type: 'select', options: [{ value: 'auto', label: '자동' }, { value: 'on', label: '켬' }, { value: 'off', label: '끔' }], desc: () => translatorLabel() },
         { key: 'translation_timeout', label: '최대 대기 초', type: 'number', min: 5, max: 600, step: 5, default: 90, show: (s) => s.wait_translation !== 'off' },
-        { key: 'stream_read', label: '답장이 오는 동안 읽기', type: 'toggle', disabled: (s) => waitEffective(s) || listenOn(s), desc: (s) => (waitEffective(s) ? '번역을 기다리는 동안엔 꺼져요' : listenOn(s) ? '듣는 언어를 고르면 꺼져요' : '') },
+        { key: 'stream_read', label: '답장이 오는 동안 읽기', type: 'toggle', disabled: (s) => waitEffective(s) || listenOn(s) || (s.sfx?.enabled && s.sfx?.auto), desc: (s) => (waitEffective(s) ? '번역을 기다리는 동안엔 꺼져요' : listenOn(s) ? '듣는 언어를 고르면 꺼져요' : s.sfx?.enabled && s.sfx?.auto ? '효과음을 자동으로 고를 때는 답장이 끝난 뒤 읽어요' : '') },
         { key: 'swipe_read', label: '스와이프하면 읽기', type: 'toggle' },
         { key: 'on_new', label: '읽는 중 새 답장', type: 'select', options: [{ value: 'interrupt', label: '끊고 읽기' }, { value: 'queue', label: '이어서 읽기' }] },
     ]],
@@ -540,6 +546,7 @@ function afterEdit(path, el) {
     }
     if (path === 'read_preset') { applyReadPreset(s.read_preset); save(); }
     if (path === 'enabled' && !s.enabled) player.stop();
+    if (path.startsWith('sfx.')) { player.applyPlayback(); if (path !== 'sfx.volume') { renderReadCard('sfx'); renderReadCard('when'); } }
     if (path === 'highlight' || path === 'highlight_style') player.refreshHighlight();
     if (path === 'wand_menu') { dispatchWand(); return; }                  // index.js 가 요술봉 메뉴 두 줄을 넣고 뺀다
     if (path === 'wait_translation') { renderReadCard('when'); return; }   // 스트리밍 읽기의 켜짐·꺼짐과 대기 초 칸이 따라 바뀐다
@@ -656,6 +663,8 @@ function onColorVoice(el) {
 
 // ---------- 버튼 (data-lv-act)
 const ACTIONS = {
+    'sound-library': async () => (await import('./script-editor.js')).openSoundLibrary(),
+    'script-last': async () => { const list = getContext().chat || []; const id = list.findLastIndex(m => !m.is_system); if (id < 0) { toast('먼저 채팅 메시지를 열어 주세요'); return; } await (await import('./script-editor.js')).openScriptEditor(id); },
     tab: (b) => showTab(b.dataset.tab),
     stop: () => player.stop(),
     'body-filters': async () => {
@@ -2313,6 +2322,14 @@ function importSettings(obj) {
                 cur[ck] = cv;
             }
             if (kept) held.push('대사 분석');
+            continue;
+        }
+        if (k === 'sfx') {
+            // Sound files and their metadata travel together in a sound pack, never in a settings file.
+            if (!isObj(v)) continue;
+            for (const key of ['enabled', 'auto']) if (typeof v[key] === 'boolean') s.sfx[key] = v[key];
+            if (typeof v.volume === 'number' && Number.isFinite(v.volume)) s.sfx.volume = Math.max(0, Math.min(1, v.volume));
+            if (['sequence', 'overlay'].includes(v.mode)) s.sfx.mode = v.mode;
             continue;
         }
         if (!hasOwn(DEFAULTS, k)) continue;

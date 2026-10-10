@@ -1,0 +1,83 @@
+/* Message script editor: theme tokens, content-sized controls and narrow layouts. */
+.lvs-dialog {
+  --lvs-bg: var(--salty-surface, var(--SmartThemeBlurTintColor, #20232b));
+  --lvs-text: var(--salty-text, var(--SmartThemeBodyColor, #eceef4));
+  --lvs-muted: var(--salty-muted, var(--lv-dim));
+  --lvs-line: var(--salty-line, var(--salty-border, var(--SmartThemeBorderColor, #596171)));
+  --lvs-fill: var(--bl-fill-control, color-mix(in srgb, var(--lvs-text) 6%, var(--lvs-bg)));
+  --lvs-accent: var(--salty-accent, var(--SmartThemeQuoteColor, #79bce9));
+  --lvs-ink: var(--salty-accent-ink, var(--lvs-accent));
+  box-sizing: border-box; width: min(58rem, calc(100vw - 24px)); max-width: calc(100vw - 24px);
+  max-height: min(92dvh, 62rem); min-height: 0; margin: auto; padding: 0; overflow: hidden;
+  border: 1px solid var(--lvs-line); border-radius: var(--bl-r-lg, 16px); color: var(--lvs-text);
+  background: var(--lvs-bg); font-family: var(--salty-font-ui, inherit); font-size: var(--bl-fs-body, 1rem);
+  text-align: start; box-shadow: 0 16px 60px #0005;
+}
+.lvs-dialog::backdrop { background: #0007; }
+.lvs-dialog *, .lvs-dialog *::before, .lvs-dialog *::after { box-sizing: border-box; }
+.lvs-dialog [hidden] { display: none !important; }
+.lvs-shell { display: flex; flex-direction: column; max-height: inherit; min-height: 0; width: 100%; }
+.lvs-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 16px; }
+.lvs-header > div { min-width: 0; }
+.lvs-dialog h2 { margin: 0; color: inherit; font-size: 1.14em; line-height: 1.4; }
+.lvs-description, .lvs-source { color: var(--lvs-muted); font-size: .94em; line-height: 1.5; overflow-wrap: anywhere; }
+.lvs-description { margin: 4px 0 0; }
+.lvs-dialog .lvs-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; min-width: 0; min-height: max(34px, 2.3em); height: auto; margin: 0; padding: 5px 10px; border: 1px solid var(--lvs-line); border-radius: var(--bl-r-sm, 8px); background: var(--lvs-fill); color: inherit; font: inherit; line-height: 1.4; letter-spacing: inherit; white-space: normal; overflow-wrap: anywhere; cursor: pointer; }
+.lvs-dialog .lvs-button:hover { background: color-mix(in srgb, var(--lvs-accent) 16%, var(--lvs-bg)); }
+.lvs-dialog .lvs-button:disabled { color: var(--lvs-muted); cursor: default; background: var(--lvs-fill); }
+.lvs-dialog :is(button,input,select,textarea,summary,a):focus-visible { outline: 2px solid var(--lvs-accent); outline-offset: 2px; }
+.lvs-dialog .lvs-primary, .lvs-tabs [aria-selected=true] { border-color: var(--lvs-accent); background: color-mix(in srgb, var(--lvs-accent) 18%, var(--lvs-bg)); color: var(--lvs-ink); }
+.lvs-tabs { display: flex; gap: 6px; padding: 0 16px; }
+.lvs-tabs .lvs-button { flex: 1; }
+.lvs-status { min-height: 1.5em; margin: 10px 16px; color: var(--lvs-muted); font-size: .94em; line-height: 1.5; overflow-wrap: anywhere; }
+.lvs-error { color: var(--bl-danger, var(--lvs-text)); }
+.lvs-content { min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 0 16px 12px; scrollbar-gutter: stable; }
+.lvs-panel { width: 100%; min-width: 0; container-type: inline-size; container-name: lvs; }
+.lvs-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.lvs-toolbar { margin-bottom: 10px; }
+.lvs-rows, .lvs-sounds { display: grid; gap: 10px; margin-top: 12px; }
+.lvs-row, .lvs-sound { min-width: 0; padding: 12px; border: 1px solid var(--lvs-line); border-radius: var(--bl-r-md, 12px); background: var(--lvs-fill); overflow-wrap: anywhere; }
+.lvs-row { display: flex; flex-direction: column; gap: 10px; }
+.lvs-muted-row { border-style: dashed; }
+.lvs-row-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 10px; }
+.lvs-check { display: inline-flex; align-items: center; gap: 8px; margin: 0; min-width: 0; }
+.lvs-check input { width: 1em; height: 1em; flex: none; margin: 0; }
+.lvs-fields, .lvs-library-filters { display: grid; grid-template-columns: minmax(0,1fr); gap: 10px; }
+.lvs-field { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.lvs-field label { min-width: 0; margin: 0; color: var(--lvs-muted); }
+.lvs-label { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; line-height: 1.5; }
+.lvs-dialog :is(input:not([type=checkbox]):not([type=file]),textarea,select) { width: 100%; min-width: 0; max-width: 100%; min-height: max(34px,2.3em); height: auto; margin: 0; padding: 7px 10px; border: 1px solid var(--lvs-line); border-radius: var(--bl-r-sm,8px); background: var(--lvs-bg); color: var(--lvs-text); font: inherit; line-height: 1.5; letter-spacing: inherit; }
+.lvs-dialog textarea { resize: vertical; min-height: 4.4em; }
+.lvs-dialog option { background: var(--lvs-bg); color: var(--lvs-text); }
+/* Theme-wide button resets must not turn the help marker into bare text. */
+html body .lvs-dialog.lv-editor button.lvs-button.lvs-help-button { --lvs-help-size: max(24px,1.65em); display: inline-flex !important; align-items: center !important; justify-content: center !important; width: var(--lvs-help-size) !important; min-width: var(--lvs-help-size) !important; max-width: var(--lvs-help-size) !important; height: var(--lvs-help-size) !important; min-height: var(--lvs-help-size) !important; max-height: var(--lvs-help-size) !important; margin: 0; padding: 0 !important; border: 1px solid var(--lvs-line) !important; border-radius: 50% !important; background: var(--lvs-fill) !important; color: var(--lvs-ink) !important; font-size: .94em; line-height: 1 !important; text-indent: 0; text-align: center; box-shadow: none !important; flex: none; vertical-align: middle; }
+html body .lvs-dialog.lv-editor button.lvs-button.lvs-help-button:hover { background: var(--bl-fill-control-hover, color-mix(in srgb, var(--lvs-accent) 16%, var(--lvs-bg))) !important; }
+.lvs-tooltip { position: fixed; z-index: 10; width: min(22rem, calc(100vw - 24px)); padding: 12px; border: 1px solid var(--lvs-line); border-radius: var(--bl-r-md,12px); color: var(--lvs-text); background: var(--lvs-bg); box-shadow: 0 8px 24px #0005; line-height: 1.55; pointer-events: none; overflow-wrap: anywhere; }
+.lvs-footer { display: flex; flex-direction: column; gap: 10px; flex: 0 0 auto; padding: 12px 16px; border-top: 1px solid var(--lvs-line); min-height: 0; max-height: 35dvh; overflow: auto; }
+.lvs-footer > .lvs-actions { justify-content: flex-end; }
+.lvs-source summary, .lvs-sound-edit summary { cursor: pointer; line-height: 1.5; }
+.lvs-source p { margin: 8px 0; }
+.lvs-source a { color: var(--lvs-ink); }
+.lvs-sound { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.lvs-sound-info { flex: 1 1 12em; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.lvs-sound-edit { flex: 1 1 100%; min-width: 0; }
+.lvs-sound-edit .lvs-fields { margin: 10px 0; }
+.lvs-library-filters { margin: 12px 0; }
+.lvs-file-button { display: inline-flex; max-width: 100%; }
+.lvs-empty { padding: 12px; margin: 0; color: var(--lvs-muted); }
+.lvs-confirm { width: min(28rem,calc(100vw - 24px)); padding: 16px; overflow: auto; }
+.lvs-confirm > p { margin: 0 0 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.lvs-confirm > .lvs-actions { justify-content: flex-end; }
+@container lvs (min-width: 29em) { .lvs-fields, .lvs-library-filters { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+@media (max-width: 480px) {
+  .lvs-dialog { width: calc(100vw - 12px); max-width: calc(100vw - 12px); max-height: 96dvh; }
+  .lvs-header { padding: 12px; align-items: flex-start; }
+  .lvs-header > .lvs-button { flex-shrink: 0; }
+  .lvs-tabs { padding: 0 12px; }
+  .lvs-status { margin-inline: 12px; }
+  .lvs-content { padding: 0 10px 10px; }
+  .lvs-row, .lvs-sound { padding: 10px; }
+  .lvs-dialog .lvs-button { min-height: max(36px,2.3em); }
+  html body .lvs-dialog.lv-editor button.lvs-button.lvs-help-button { --lvs-help-size: max(28px,1.65em); }
+  .lvs-footer { padding: 10px; }
+}

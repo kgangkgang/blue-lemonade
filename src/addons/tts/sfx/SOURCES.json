@@ -1,0 +1,433 @@
+{
+  "repository": "https://github.com/JINSIN2/MultiCast-TTS",
+  "commit": "f48ebeef9b19d814bf8d4568af13613544007e63",
+  "upstreamVersion": "3.0.8",
+  "upstreamAuthor": "Cao Cao & Claude",
+  "codeLicense": "MIT; see ../LICENSE-MultiCast.txt",
+  "audioLicenseNotice": "Upstream index.js labels these bundled sound effects CC0. Individual original recording sources and their licenses have not been independently verified. Files are copied byte-for-byte from the pinned commit.",
+  "files": [
+    {
+      "path": "sfx/bell.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/bell.mp3",
+      "bytes": 20580,
+      "sha256": "8d7ad27641495255e702b6657bef9fccddd8204ad17434735c90de23e484f39a",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/bell_2.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/bell_2.mp3",
+      "bytes": 19326,
+      "sha256": "47a0047a50e103b375f865576d2342023598bb23893155a3e39a205427897bde",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/box_open.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/box_open.mp3",
+      "bytes": 10235,
+      "sha256": "7beadc1a123dfc8d231ef17eb0c050892c8193929a948903c21fd42adffb2c32",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/bullet_hit.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/bullet_hit.mp3",
+      "bytes": 27200,
+      "sha256": "3452386bd58d7ce9bd1b5a4037d27a92d4de2a5b62e07aeabc84d568ccb20d88",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/clang.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/clang.mp3",
+      "bytes": 13370,
+      "sha256": "cb1d57263ded9cf2a36e1e41365fc6682155528910aa49361c0fd1c606b213c4",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/dishes.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/dishes.mp3",
+      "bytes": 13370,
+      "sha256": "3d04cb8e19ca01d13c424e024598ef14aed77797f242de01b33f11d494bb60c5",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/door_close.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/door_close.mp3",
+      "bytes": 14624,
+      "sha256": "349cbf019bf368199d0dc385c18b259e537b5dcec09175afbf6f0aee6b4c4d00",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/door_creak.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/door_creak.mp3",
+      "bytes": 34999,
+      "sha256": "e2a42f7bfae7488612b950b79d016ae13792045d8e19f77e037b45bf770d0ac3",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/door_creak_2.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/door_creak_2.mp3",
+      "bytes": 33745,
+      "sha256": "adb88b6f7d1b276d063e1a8c41312dc4dfcce9d47678276fc3da7289b6aa2a2f",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/door_open.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/door_open.mp3",
+      "bytes": 10235,
+      "sha256": "0b1409c65286955c2dda190129fc87f964e230bfb0a6ac95b9b569bb5415a35c",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/door_open_2.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/door_open_2.mp3",
+      "bytes": 13997,
+      "sha256": "479263e43919f53e07fd3f48246574eeccf15f9ef6f8a04d640e4c9ed489ada3",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/door_slam.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/door_slam.mp3",
+      "bytes": 11802,
+      "sha256": "ab9aa2fad1d1b22d913c9b448e11e2dafbf24b264ecf675b54f4975747b2a018",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/door_slam_2.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/door_slam_2.mp3",
+      "bytes": 12429,
+      "sha256": "3c49956587c7cd7c53852e3803a485e0f50bc6270407c1d7d524cae3f3daa31c",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/drop.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/drop.mp3",
+      "bytes": 7414,
+      "sha256": "e2ce0326864352477f28dd20888a3ed18b94a53188208dad89846aec05902457",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/explosion.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/explosion.mp3",
+      "bytes": 9295,
+      "sha256": "07089836a999ca05db9e0a68da1eece373f3d0df59486ad539760aebee007186",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/footsteps.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/footsteps.mp3",
+      "bytes": 32805,
+      "sha256": "e454f937cead37ebe194a6dfe02b66082787f3047f03bd47449e8db8ec8a44fe",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/footsteps_wet.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/footsteps_wet.mp3",
+      "bytes": 34059,
+      "sha256": "489f616839bf3014e8f1b4565cc40a1258b106d9ceffdbe9f13b158c1ee89b31",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/footsteps_wood.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/footsteps_wood.mp3",
+      "bytes": 30297,
+      "sha256": "572aa3aa905cf9c6f19c1d545df4c936992bd1726fc4f589d1b84c47beb348a5",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/glass_break.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/glass_break.mp3",
+      "bytes": 9608,
+      "sha256": "d0a5ca8eedab57d0ace77fb9a6bb3a40f7514f08170b1518ab64e3e4e68ac3f6",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/glass_break_2.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/glass_break_2.mp3",
+      "bytes": 12116,
+      "sha256": "1d4826cb30933093e487be918cf8930ff82fd4a303087f09d620beb2bc5c5046",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/glass_clink.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/glass_clink.mp3",
+      "bytes": 7727,
+      "sha256": "74779bee83f39dc8af6b520f44030b81941f3388d4ba85a0abdd7589d2e918a8",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/gong.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/gong.mp3",
+      "bytes": 21520,
+      "sha256": "3075c03e2b7ef026af0436c9c198d8860bec7d22f8c2421fa2503e3a9e6846ad",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/gunshot.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/gunshot.mp3",
+      "bytes": 8981,
+      "sha256": "5c497005fb7e08fa49893b0a54c0d5114cb2a29000bbbffa4b3e94de63fe0a12",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/gunshot_2.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/gunshot_2.mp3",
+      "bytes": 8354,
+      "sha256": "70bc475a9aafa15b8c6cd5290715c478bbd7a77573f0e0d9fa0a2378fc023ef8",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/gunshot_3.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/gunshot_3.mp3",
+      "bytes": 32526,
+      "sha256": "f2b54eb229a551b1dbb91be1d834fad02b108c61302897ed946409ac06f2a3dd",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/impact.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/impact.mp3",
+      "bytes": 22807,
+      "sha256": "097868f38223eb2a776b9b58bcdba9279c80567f3c417a32e7ee1e80df071b4f",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/impact_2.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/impact_2.mp3",
+      "bytes": 19672,
+      "sha256": "dae320a0d76d08b472be7c3a5337538f31da23e23c55c5de116329c488d0fc1b",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/key.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/key.mp3",
+      "bytes": 9922,
+      "sha256": "95589b786cc924a872caf92f7f6fa002778709665e006bcf9ffa69515984058b",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/knock.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/knock.mp3",
+      "bytes": 20266,
+      "sha256": "45d5d84a0eb127b3cbc74c9b18cdc479ec2d58d25c22572372cb5f0002f1d4e5",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/knock_2.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/knock_2.mp3",
+      "bytes": 21520,
+      "sha256": "a8660e8b2c6f13318ced5acb32b623111cc6839c9bb8e183fed23b1f0a387d31",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/paper.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/paper.mp3",
+      "bytes": 13056,
+      "sha256": "6adf1019f6736ab10d26af87ad4622930f655f066d645e00567eea96ecb5f3cb",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/pickup.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/pickup.mp3",
+      "bytes": 10862,
+      "sha256": "0a1b58bae9f4c8a55d7b3ddcb5f89e56f478ea457e11b132215e96956200fe13",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/pistol.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/pistol.mp3",
+      "bytes": 21554,
+      "sha256": "1cd64a349065ecb114664d0c866b4ee5dcbd720ba00bdf71be2ee0acd649dc7f",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/pot.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/pot.mp3",
+      "bytes": 11802,
+      "sha256": "546cefcd477f61387e8d3fa95d195c87cb64ab98a84ed0187dd652332ac9d776",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/punch.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/punch.mp3",
+      "bytes": 9295,
+      "sha256": "f09b12debdae1b68a187c796b3baa4f47e29ab14e7546d4bf3190f6249b5c96b",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/running.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/running.mp3",
+      "bytes": 36567,
+      "sha256": "1570a4fabe124ba92657947b4e231624cacf890413474cb8efe68fcfe600fc5b",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/shotgun.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/shotgun.mp3",
+      "bytes": 23749,
+      "sha256": "ca7b9f35b4ef47db41539cfa115c0bd2b1d3e45e28a050e14ff5ed3960035221",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/smash.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/smash.mp3",
+      "bytes": 30023,
+      "sha256": "f64b8e30972e88b6a10ead5043a1409f21673f73f438408e7d5f3cc49ea928fd",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/splash.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/splash.mp3",
+      "bytes": 12743,
+      "sha256": "7de12445c6560f0fbfb9469b5645cd3d205973f512963fe44ed0e3c7b4fb622d",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/stones.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/stones.mp3",
+      "bytes": 10549,
+      "sha256": "eae46c9fd7ce01e23134747dd2fd875b84a69f3dfdcdd6179dbf8ebe798ba658",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/switch.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/switch.mp3",
+      "bytes": 7414,
+      "sha256": "1bf78b57753dcb3f09bd1db3e67a60024e232c0d8ea6a8fe49d31e4a8d25eb23",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/thud.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/thud.mp3",
+      "bytes": 7727,
+      "sha256": "eaeffc3d8e3ecac5992c306e0ad0c36bfdb5e3146d5fb999d764261be240170f",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/thunder.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/thunder.mp3",
+      "bytes": 57256,
+      "sha256": "81ad2a76744e249857711712e56ac212f70596d02b2208789a586fc8179e185a",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/unlock.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/unlock.mp3",
+      "bytes": 12116,
+      "sha256": "851a004ef1e75082972324b8600a432d88966e5b597e8551eb1022004f2971e1",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/whoosh.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/whoosh.mp3",
+      "bytes": 9295,
+      "sha256": "e03e1bd68d5c46a13b14e919ac072306baa79b02301d5cf1107faee336b5b2da",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/wind.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/wind.mp3",
+      "bytes": 36567,
+      "sha256": "8c7d898f863f845ef3466b3ec403b2b69e3ce0805cbd7ffbdc6a1369c0612fec",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    },
+    {
+      "path": "sfx/wood_crack.mp3",
+      "url": "https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/f48ebeef9b19d814bf8d4568af13613544007e63/sfx/wood_crack.mp3",
+      "bytes": 12743,
+      "sha256": "8359ee2e68996344ca9826bdc418e102fa6c0f38478cc43811f8f33b915b3b6a",
+      "licenseClaim": "CC0-1.0",
+      "licenseClaimBasis": "https://github.com/JINSIN2/MultiCast-TTS/blob/f48ebeef9b19d814bf8d4568af13613544007e63/index.js#L1465",
+      "originalRecordingSourceVerified": false
+    }
+  ]
+}

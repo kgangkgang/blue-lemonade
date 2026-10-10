@@ -13,3 +13,5 @@
 
 /server-plugin/** text eol=lf
 /server-plugin/setup-windows.cmd -text whitespace=cr-at-eol
+
+/src/addons/tts/sfx/*.mp3 binary

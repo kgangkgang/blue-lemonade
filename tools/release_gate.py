@@ -16,6 +16,20 @@ class GateError(ValueError):
 WEATHER_ARTWORK = tuple(f'{pack}{style}.webp' for pack in ('nature', 'light') for style in ('', '-anime', '-cel'))
 PREVIEW_ARTWORK = ('ade-game.webp', 'ade-lemon.webp', 'ade-cat.webp', 'ade-nap.webp', 'ade-rain.webp', 'character.webp')
 
+# Only this reviewed, pinned sound pack may enter a public release. Never sweep
+# arbitrary local recordings or trust a catalog path when constructing inventory.
+TTS_SFX_FILES = tuple('''bell.mp3 bell_2.mp3 box_open.mp3 bullet_hit.mp3 clang.mp3 dishes.mp3
+door_close.mp3 door_creak.mp3 door_creak_2.mp3 door_open.mp3 door_open_2.mp3
+door_slam.mp3 door_slam_2.mp3 drop.mp3 explosion.mp3 footsteps.mp3 footsteps_wet.mp3
+footsteps_wood.mp3 glass_break.mp3 glass_break_2.mp3 glass_clink.mp3 gong.mp3
+gunshot.mp3 gunshot_2.mp3 gunshot_3.mp3 impact.mp3 impact_2.mp3 key.mp3 knock.mp3
+knock_2.mp3 paper.mp3 pickup.mp3 pistol.mp3 pot.mp3 punch.mp3 running.mp3 shotgun.mp3
+smash.mp3 splash.mp3 stones.mp3 switch.mp3 thud.mp3 thunder.mp3 unlock.mp3 whoosh.mp3
+wind.mp3 wood_crack.mp3'''.split())
+TTS_SFX_REPOSITORY = 'https://github.com/JINSIN2/MultiCast-TTS'
+TTS_SFX_COMMIT = 'f48ebeef9b19d814bf8d4568af13613544007e63'
+TTS_SFX_RESOURCES = ('LICENSE-MultiCast.txt', 'NOTICE.md', 'sfx/SOURCES.json', 'script-editor.css')
+
 # Embedded tools have their own versions, independent of the theme release.
 ADDON_CSS_VERSIONS = (
     ('zipinstall/index.js', 'zipinstall', '--blzi-css-version'),
@@ -82,6 +96,41 @@ def require(condition, message):
         raise GateError(message)
 
 
+def validate_tts_sfx(files):
+    prefix = 'src/addons/tts/'
+    if prefix + 'src/sfx-library.js' not in files:
+        return  # Older releases do not contain this feature.
+    for name in TTS_SFX_RESOURCES:
+        require(bool(files.get(prefix + name)), f'Missing TTS sound resource: {name}')
+    expected = {'sfx/' + name for name in TTS_SFX_FILES}
+    actual = {name[len(prefix):] for name in files if name.startswith(prefix + 'sfx/')}
+    require(actual == expected | {'sfx/SOURCES.json'}, 'TTS sound file list differs from the reviewed pack')
+    try:
+        catalog = json.loads(files[prefix + 'sfx/SOURCES.json'].decode('utf-8'))
+    except (ValueError, UnicodeError) as error:
+        raise GateError('Invalid TTS sound catalog JSON') from error
+    require(isinstance(catalog, dict), 'Invalid TTS sound catalog')
+    require(catalog.get('repository') == TTS_SFX_REPOSITORY and catalog.get('commit') == TTS_SFX_COMMIT,
+            'TTS sound catalog source differs from the pinned upstream')
+    rows = catalog.get('files')
+    require(isinstance(rows, list) and len(rows) == len(TTS_SFX_FILES), 'TTS sound catalog must list the complete reviewed pack')
+    seen = set()
+    for row in rows:
+        require(isinstance(row, dict), 'Invalid TTS sound catalog entry')
+        name = row.get('path')
+        require(isinstance(name, str) and name in expected and name not in seen,
+                'Unsafe, unknown or duplicate TTS sound catalog path')
+        seen.add(name)
+        require(row.get('url') == f'https://raw.githubusercontent.com/JINSIN2/MultiCast-TTS/{TTS_SFX_COMMIT}/{name}',
+                f'TTS sound source URL differs: {name}')
+        content = files[prefix + name]
+        require(type(row.get('bytes')) is int and row['bytes'] > 0 and row['bytes'] == len(content),
+                f'TTS sound byte count differs: {name}')
+        require(isinstance(row.get('sha256'), str) and re.fullmatch(r'[a-f0-9]{64}', row['sha256']) is not None
+                and hashlib.sha256(content).hexdigest() == row['sha256'], f'TTS sound SHA256 differs: {name}')
+    require(seen == expected, 'TTS sound catalog is incomplete')
+
+
 def inventory(root, kind):
     root = Path(root).resolve()
     names = ['manifest.json', 'index.js', 'style.css', 'README.md']
@@ -112,6 +161,11 @@ def inventory(root, kind):
                 item = root / 'src/addons/tts' / name
                 if item.is_file(): names.append(item.relative_to(root).as_posix())
             require((root / 'src/addons/tts/settings.html').is_file(), 'Missing TTS settings template')
+            if (root / 'src/addons/tts/src/sfx-library.js').is_file():
+                for name in (*TTS_SFX_RESOURCES, *('sfx/' + name for name in TTS_SFX_FILES)):
+                    item = root / 'src/addons/tts' / name
+                    require(item.is_file(), f'Missing TTS sound resource: {name}')
+                    names.append(item.relative_to(root).as_posix())
         if (root / 'src/vendor/README.md').is_file(): names.append('src/vendor/README.md')
         # Only these curated weather atlases are runtime images. Do not sweep
         # arbitrary local images into the public package.
@@ -142,6 +196,7 @@ def validate(files, kind):
     if kind == 'theme':
         validate_addon_css(files)
         validate_embedded_versions(files)
+        validate_tts_sfx(files)
         if b'./preview-art/' in files.get('src/panel.js', b''):
             for name in PREVIEW_ARTWORK:
                 data = files.get('src/preview-art/' + name, b'')

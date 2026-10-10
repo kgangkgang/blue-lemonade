@@ -54,6 +54,10 @@ import { getProvider } from './providers/index.js';
 import * as analysis from './analysis.js';
 import * as translation from './translation.js';
 import * as listen from './listen.js';   // 1.4.4 듣는 언어
+import { resolveScript, normalizeRows, scriptFingerprint } from './script-store.js';
+import { getSfx, sfxBlob } from './sfx-library.js';
+import { createSfxController } from './sfx-audio.js';
+import { mixScene } from './scene-mix.js';
 
 const TITLE = 'TTS';
 const MAX_CONC = 2;                 // 동시 합성 요청
@@ -413,9 +417,9 @@ const coversLangs = (have, need) => [...need].every(l => (Array.isArray(have) ? 
 export function analysisWanted(mesId, mes, s = settings(), { quiet = false, awaitDisplay = false } = {}) {
     const an = analysisCfg(s);
     if (!an || !an.enabled || !mes || mes.is_user || mes.is_system) return false;
-    if ((an.when || 'auto') !== 'auto' || (!an.emotion && !an.translate)) return false;
+    if ((an.when || 'auto') !== 'auto' || (!an.emotion && !an.translate && !analysis.sfxWanted?.(mes))) return false;
     const need = analysisNeeds(mesId, mes, s, { awaitDisplay });
-    if (!need.langs.size && !need.emotion) return false;                // 결과를 쓸 대사가 없음 (목소리 없음 · 감정을 못 받는 엔진뿐 · 번역 필요 없음)
+    if (!need.langs.size && !need.emotion && !need.sfx) return false;
     const cached = cachedAnalysis(mesId);
     if (cached && coversLangs(cached.langs, need.langs)) return false;
     if (!analysisReady(s)) { if (!quiet) toastSession('analysis-setup', '대사 분석 엔진을 설정하면 감정·원어 읽기가 돼요'); return false; }
@@ -426,7 +430,7 @@ export function analysisWanted(mesId, mes, s = settings(), { quiet = false, awai
  * emotion = 감정을 받는 엔진(caps.emotion)으로 읽을 대화문이 있음. awaitDisplay = 번역문을 기다리는 줄은 빼고
  */
 export function analysisNeeds(mesId, mes, s = settings(), { awaitDisplay = false } = {}) {
-    const out = { langs: new Set(), emotion: false };
+    const out = { langs: new Set(), emotion: false, sfx: !!analysis.sfxWanted?.(mes) };
     const an = analysisCfg(s);
     if (!an) return out;
     const built = buildJobs(mesId, mes, sourcesOf(mes, s, { final: true }), { startSeg: 0, final: true, lookup: () => null, awaitDisplay });
@@ -446,7 +450,7 @@ async function runAnalysis(mesId, mes, { signal, cancelled, force = false } = {}
     const an = analysisCfg(s);
     if (!an) return null;
     const need = analysisNeeds(mesId, mes, s);
-    if (!need.emotion && !need.langs.size) return null;
+    if (!need.emotion && !need.langs.size && !need.sfx) return null;
     const langs = need.langs;
     for (let attempt = 0; ; attempt++) {
         try {
@@ -1159,12 +1163,16 @@ function prefetch(from, s) {
     const n = Math.max(0, Math.min(3, Number(s.prefetch) || 0));
     for (let i = from; i < Math.min(queue.length, from + n); i++) {
         const j = queue[i];
-        if (!j.audio && !deadFor(j)) ensureAudio(j).catch(() => { /* 재생 때 다시 시도 */ });
+        if (!j.sceneKind && !j.audio && !deadFor(j)) ensureAudio(j).catch(() => { /* 재생 때 다시 시도 */ });
     }
 }
 
 // ---------- 재생 상태
 let audio = null;
+const sceneAudio = createSfxController();
+const sceneTails = new Set();
+let sceneManual = false; // Explicit editor playback may use effects while ordinary chat effects are off.
+const exportJobs = new Set();
 let queue = [], idx = 0, running = false, current = null;
 let gen = 0;                 // stop() 마다 +1: 옛 루프는 스스로 끝남
 let nav = null;              // 다음에 갈 색인 (skip / prev / regenerate)
@@ -1235,10 +1243,18 @@ function onGesture() { const w = gestureWaiters; gestureWaiters = []; for (const
 const nextGesture = () => new Promise(r => gestureWaiters.push(r));
 /** 설정의 배속·볼륨을 <audio> 에 (UI 가 range 를 움직일 때도 부를 수 있음) */
 export function applyPlayback() {
-    if (!audio) return;
     const s = settings();
+    if (s.sfx?.enabled !== true && !sceneManual) {
+        sceneAudio.stopAll();
+        sceneTails.clear();
+        // A loading/sequential effect must release its queue slot immediately; speech keeps going.
+        if (current?.sceneKind === 'sfx' && !current.sceneManual) currentIr?.fire();
+    }
+    sceneAudio.setVolume(Math.min(1, Math.max(0, Number(s.master_volume ?? 1))) * Math.min(1, Math.max(0, Number(s.sfx?.volume ?? 0.45))));
+    sceneAudio.setRate?.(Math.min(2, Math.max(0.5, Number(s.playback_rate) || 1)));
+    if (!audio) return;
     audio.playbackRate = Math.min(2, Math.max(0.5, Number(s.playback_rate) || 1));
-    try { audio.volume = Math.min(1, Math.max(0, Number(s.master_volume ?? 1))); } catch { /* iOS: 읽기 전용 */ }
+    try { audio.volume = Math.min(1, Math.max(0, Number(s.master_volume ?? 1) * Number(current?.sceneVolume ?? 1))); } catch { /* iOS: 읽기 전용 */ }
 }
 async function waitIfPaused(ir) {
     while (paused && !ir.fired) await Promise.race([new Promise(r => resumeWaiters.push(r)), ir.promise]);
@@ -1268,7 +1284,7 @@ async function playAudio(a, job, ir) {
         setSession('playing', job);
         // 끊으면 speak() 가 AbortError 로 거절되는데, 그건 오류가 아니다 (처리 안 한 거절 경고 방지)
         // 제스처가 없어 못 말하면(NotAllowedError) <audio> 와 같이 한 번 누를 때까지 기다렸다가 다시
-        const once = () => Promise.resolve().then(() => a.speak());
+        const once = () => Promise.resolve().then(() => a.speak({ volume: job.sceneVolume ?? 1 }));
         const spoken = once().catch(async (e) => {
             if (isAbort(e)) return;
             if (e?.name !== 'NotAllowedError') throw e;
@@ -1376,8 +1392,15 @@ async function run() {
     try {
         while (my === gen && idx < queue.length) {
             const job = queue[idx];
+            if (current && (current.mesId !== job.mesId || !!current.sceneManual !== !!job.sceneManual)) {
+                if (sceneTails.size) await Promise.allSettled([...sceneTails]);
+                if (my !== gen) break;
+                sceneAudio.stopAll(); sceneTails.clear();
+            }
+            if (job.sceneKind === 'sfx' && !job.sceneManual && settings().sfx?.enabled !== true) { idx++; continue; }
             if (deadFor(job)) { skipDead(job); idx++; continue; }   // 1.3.8 이번 읽기(스트리밍이면 이 답장)에서 안 되는 엔진
             current = job;
+            sceneManual = job.sceneManual === true;
             nav = null;
             const s = settings();
             mark(job);
@@ -1386,28 +1409,35 @@ async function run() {
             currentIr = ir;
             let played = false;
             try {
-                const mine = ensureAudio(job);                    // 지금 것을 먼저 요청하고
-                prefetch(idx + 1, s);                             // 그다음 미리 만들기
-                const a = await Promise.race([mine, ir.promise]);
-                if (my === gen && !ir.fired && a) {
+                if (job.sceneKind) {
                     showBar(job, false);
                     await waitIfPaused(ir);
-                    if (my === gen && !ir.fired) played = await playAudio(a, job, ir);
+                    if (my === gen && !ir.fired) played = await playSceneJob(job, ir);
+                } else {
+                    const mine = ensureAudio(job);
+                    prefetch(idx + 1, s);
+                    const a = await Promise.race([mine, ir.promise]);
+                    if (my === gen && !ir.fired && a) {
+                        showBar(job, false);
+                        await waitIfPaused(ir);
+                        if (my === gen && !ir.fired) played = await playAudio(a, job, ir);
+                    }
                 }
             } catch (e) {
                 if (my === gen && !ir.fired) fail(e, job);
             }
             if (my !== gen) break;
-            currentIr = null;
             if (played && premade.delete(job.key)) addPreUsed(job.text.length);   // 미리 만든 소리를 들음 (소리마다 한 번)
             if (nav !== null) { idx = nav; continue; }
             if (typeof job.done === 'function') { const d = job.done; job.done = null; d(played); }   // speakText 의 약속: 합성 실패면 false
             idx++;
-            const gap = Number(s.gap_ms) || 0;
-            if (played && idx < queue.length && gap > 0) await Promise.race([sleep(gap), ir.promise]);
+            const gap = job.sceneKind === 'pause' || (job.sceneKind === 'sfx' && job.sceneMode !== 'sequence') ? 0 : Number(job.sceneGap ?? s.gap_ms) || 0;
+            if (played && idx < queue.length && gap > 0) await waitScene(gap, ir);
             if (my !== gen) break;
             if (nav !== null) idx = nav;                          // 쉬는 동안 건너뛰기
+            currentIr = null;
         }
+        if (my === gen && idx >= queue.length && sceneTails.size) await Promise.allSettled([...sceneTails]);
     } finally {
         running = false;
         if (my === gen) {
@@ -1419,6 +1449,9 @@ async function run() {
     }
 }
 function finishAll({ keepDead = false } = {}) {
+    sceneAudio.stopAll();
+    sceneTails.clear();
+    sceneManual = false;
     current = null;
     deadEngines.clear();
     // 1.3.8 스트리밍 중인 답장의 '안 되는 엔진'은 큐가 비어도 남긴다 (다음 조각이 append 로 새 큐를 만든다)
@@ -1432,6 +1465,7 @@ function finishAll({ keepDead = false } = {}) {
     emitState();
 }
 function cancelCurrent() {
+    sceneAudio.stopAll();
     if (paused) { paused = false; const w = resumeWaiters; resumeWaiters = []; for (const r of w) r(); }
     currentIr?.fire();
     if (audioActive && !audio.paused) audio.pause();
@@ -1455,6 +1489,7 @@ export function stopForAddon() {
 }
 export function stop({ keepStream = false } = {}) {
     gen++;
+    for (const job of exportJobs) job.ctrl?.abort();
     cancelWaiting();                                              // 번역·분석 기다리기도 그만
     for (const j of queue) {
         if (j.audio && j.ctrl && !j.ctrl.signal.aborted) j.ctrl.abort();
@@ -1474,6 +1509,7 @@ export function stop({ keepStream = false } = {}) {
 export function pause() {
     if (!current || paused) return;
     paused = true;
+    sceneAudio.pause();
     if (audioActive && !audio.paused) audio.pause();
     if (speaking) try { window.speechSynthesis?.pause(); } catch { /* 무시 */ }
     setSession('paused');
@@ -1484,6 +1520,7 @@ export function resume() {
     if (!runtimeEnabled()) return false;
     if (!paused) return;
     paused = false;
+    sceneAudio.resume();
     if (audioActive) audio.play().catch(() => { /* 다음 제스처에서 */ });
     if (speaking) try { window.speechSynthesis?.resume(); } catch { /* 무시 */ }
     const w = resumeWaiters; resumeWaiters = [];
@@ -1494,19 +1531,22 @@ export function resume() {
 }
 export function skip() {
     if (!current) return;
-    if (idx + 1 >= queue.length) { stop(); return; }
-    nav = idx + 1;
+    const at = queue.indexOf(current);
+    if (at + 1 >= queue.length) { stop(); return; }
+    nav = at + 1;
     cancelCurrent();
 }
 export function prev() {
     if (!current) return;
-    nav = (idx > 0 && !(audioActive && audio.currentTime > 3)) ? idx - 1 : idx;
+    const at = queue.indexOf(current);
+    nav = (at > 0 && !(audioActive && audio.currentTime > 3)) ? at - 1 : at;
     cancelCurrent();
 }
 export function regenerateCurrent() {
     if (!runtimeEnabled()) return false;
     const j = current;
     if (!j) return;
+    if (j.sceneKind) { nav = idx; cancelCurrent(); return; }
     Promise.resolve(cache.remove(j.key)).catch(() => { /* 무시 */ });
     forgetClip(j.key);                                            // 진행 중 · warm · prepared 사본도 (옛 소리가 어디에도 남지 않게)
     if (j.ctrl && !j.ctrl.signal.aborted) j.ctrl.abort();
@@ -1573,13 +1613,14 @@ function runPrepared(mesId, mes, opts) {
 export function streamBlocked(mesId) {
     const mes = chat[mesId];
     const s = settings();
-    return !!mes && (waitEffective(mes, s) || !!listen.listenTarget(s));
+    return !!mes && (waitEffective(mes, s) || !!listen.listenTarget(s) || (s.sfx?.enabled && s.sfx?.auto) || resolveScript(mes, []) !== null);
 }
 /** 작업을 만들어 바로 읽기 (1.1.0 의 speakMessage 뒷부분) */
 function speakNow(mesId, mes, { swipe, text, from, exclude, force, fromStream }) {
     const s = settings();
     const built = buildJobs(mesId, mes, sourcesOf(mes, s, { final: true }), { startSeg: from, final: true, exclude });
-    const jobs = finishJobs(built.jobs, s, { merge: !pregenOn(s) });   // 미리 만들기가 켜져 있으면 줄마다 (미리 만든 소리 = 같은 키)
+    const staged = resolveScript(mes, []) !== null || (s.sfx?.enabled && s.sfx?.auto && (cachedAnalysis(mesId)?.sfx || []).length);
+    const jobs = staged ? sceneJobs(mesId, scriptRows(mesId).filter(r => from <= 0 || r.sourceIndex >= from), { effects: s.sfx?.enabled === true }) : finishJobs(built.jobs, s, { merge: !pregenOn(s) });
     const prev = readState.get(mesId);
     // 스트리밍 뒤 그리기: "스트리밍으로 읽음" 표시는 남긴다 (미리 만들기가 같은 틱 뒤에 보고 건너뜀 — 두 번 값을 치르지 않게)
     readState.set(mesId, fromStream && prev && prev.swipe === swipe && typeof prev.streamed === 'boolean' ? { swipe, text, count: built.count, streamed: prev.streamed } : { swipe, text, count: built.count });
@@ -1640,6 +1681,131 @@ async function prepareThen(mesId, mes, { wait = false, analyse = false, extra = 
         endWaiting(w);                                            // run() 의 enqueue → stop 이 내 자리를 건드리지 않게 먼저 치움
     }
     return w.run();
+}
+
+// ---------- 소리용 대본 (원문은 그대로). MultiCast-TTS 연출 흐름을 우리 엔진/캐시에 연결.
+// Original inspiration / adapted staging: Copyright (c) 2026 JINSIN2, MIT; ../LICENSE-MultiCast.txt.
+export function scriptRows(mesId) {
+    const mes = chat[mesId];
+    if (!mes || mes.is_system) return [];
+    const saved = resolveScript(mes, []);
+    if (saved !== null) return saved;
+    const s = settings(), src = sourcesOf(mes, s, { final: true });
+    const built = buildJobs(mesId, mes, src, { final: true });
+    let rows = built.jobs.map(j => ({ id: `v-${j.segIndex}`, kind: 'voice', text: j.text, speaker: j.speaker, voiceUid: j.voice.uid, emotion: j.emotion || '', sourceIndex: j.segIndex, volume: 1, gapMs: Number(s.gap_ms) || 0, enabled: true }));
+    // A first-time user can assign a voice in the script even when no default exists yet.
+    if (!rows.length && (built.missing || built.missingUser)) rows = src.orig.flatMap((seg, i) => seg.text && (s.routes?.[seg.kind] || 'skip') !== 'skip' ? [{ id: `v-${i}`, kind: 'voice', text: seg.text, speaker: seg.speaker || mes.name || '', voiceUid: '', emotion: emotionFor(seg, s), sourceIndex: i, volume: 1, gapMs: Number(s.gap_ms) || 0, enabled: true }] : []);
+    if (s.sfx?.enabled && s.sfx?.auto) {
+        const cues = cachedAnalysis(mesId)?.sfx || [];
+        const dialogueIndices = src.orig.flatMap((seg, i) => seg.kind === 'dialogue' && seg.text ? [i] : []);
+        const insertions = new Map();
+        cues.slice(0, 8).forEach((cue, i) => {
+            const sound = getSfx(cue.id);
+            if (!sound) return;
+            const sourceIndex = cue.after === 0 ? 0 : (dialogueIndices[cue.after - 1] ?? src.orig.length - 1) + 1;
+            const at = rows.findIndex(r => r.sourceIndex >= sourceIndex);
+            const key = at < 0 ? rows.length : at;
+            const list = insertions.get(key) || [];
+            list.push({ id: `a-sfx-${i}`, kind: 'sfx', sfxId: sound.id, text: sound.name, sourceIndex, mode: sound.loop ? 'loop' : s.sfx.mode || 'overlay', volume: 1, gapMs: 0, enabled: true }); insertions.set(key, list);
+        });
+        rows = rows.flatMap((row, i) => [...(insertions.get(i) || []), row]).concat(insertions.get(rows.length) || []);
+    }
+    return normalizeRows(rows);
+}
+function sceneJobs(mesId, rows, { effects = true, preview = false, manual = false } = {}) {
+    const mes = chat[mesId];
+    if (!mes) return [];
+    const s = settings(), src = sourcesOf(mes, s, { final: true });
+    const base = buildJobs(mesId, mes, src, { final: true }).jobs;
+    const jobs = [];
+    let chars = 0;
+    for (const row of normalizeRows(rows)) {
+        if (row.enabled === false) continue;
+        if (row.kind === 'voice' && !row.text.trim()) continue;
+        if (row.kind !== 'voice') {
+            if (row.kind === 'sfx' && (!effects || !getSfx(row.sfxId))) continue;
+            jobs.push({ mesId, sceneKind: row.kind, sceneMode: row.mode || 'sequence', sceneVolume: row.volume, sceneGap: row.gapMs, scenePreview: preview, sfxId: row.sfxId, scriptRowId: row.id, segIndex: row.sourceIndex, parts: [], text: row.kind === 'pause' ? `${row.gapMs} ms 쉬기` : getSfx(row.sfxId)?.name || row.text, voice: { name: row.kind === 'pause' ? '쉼' : '효과음' }, key: `scene:${row.id}` });
+            continue;
+        }
+        const original = Number.isInteger(row.sourceIndex) ? base.find(j => j.segIndex === row.sourceIndex) : null;
+        const voice = row.voiceUid ? findVoice(row.voiceUid) : voiceFor(row.speaker || mes.name, { isUser: !!mes.is_user, kind: 'dialogue' });
+        if (!voice) throw new Error(`${row.speaker || '이 줄'}의 목소리를 먼저 골라 주세요.`);
+        const seg = original?.seg || { kind: 'dialogue', text: row.text };
+        const j = { mesId, seg, segIndex: row.sourceIndex, parts: original?.parts || [{ seg, text: row.text }], text: row.text, speaker: row.speaker || voice.name, voice, emotion: row.emotion || '', lang: detectLang(row.text) || '', loud: false, params: null, provider: null, key: '', audio: null, ctrl: null, scriptRowId: row.id, sceneVolume: row.volume, sceneGap: row.gapMs };
+        if (s.max_chars > 0 && chars >= s.max_chars) { toastOnce(`${s.max_chars}자를 넘는 뒷부분은 읽지 않아요`, 'warning'); break; }
+        const finished = finishJobs([j], s.max_chars > 0 ? { ...s, max_chars: s.max_chars - chars } : s, { merge: false });
+        for (let i = 0; i < finished.length - 1; i++) finished[i].sceneGap = 0;
+        chars += finished.reduce((n, part) => n + part.text.length, 0);
+        jobs.push(...finished);
+    }
+    for (const job of jobs) job.sceneManual = manual === true;
+    if (jobs.length && jobs.every(j => j.sceneKind === 'sfx' && j.sceneMode === 'loop')) jobs[jobs.length - 1].scenePreview = true;
+    return jobs;
+}
+async function waitScene(ms, ir) {
+    let left = Math.max(0, Number(ms) || 0);
+    while (left > 0 && !ir.fired) {
+        await waitIfPaused(ir);
+        if (ir.fired) break;
+        const step = Math.min(40, left), at = nowMs();
+        await Promise.race([sleep(step), ir.promise]);
+        if (!paused) left -= Math.max(1, nowMs() - at);
+    }
+    return !ir.fired;
+}
+async function playSceneJob(job, ir) {
+    if (job.sceneKind === 'pause') return waitScene(job.sceneGap, ir);
+    if (!job.sceneManual && settings().sfx?.enabled !== true) return false;
+    applyPlayback();
+    const pending = sceneAudio.play(job.sfxId, { volume: job.sceneVolume ?? 1, loop: job.sceneMode === 'loop', rate: Number(settings().playback_rate) || 1 });
+    pending.then(handle => { if (ir.fired) handle?.stop(); }, () => {});
+    const handle = await Promise.race([pending, ir.promise]);
+    if (!handle || ir.fired || (!job.sceneManual && settings().sfx?.enabled !== true)) { handle?.stop(); return false; }
+    if (paused) sceneAudio.pause();
+    if (job.scenePreview && job.sceneMode === 'loop') { await waitScene(5000, ir); handle.stop(); }
+    else if (job.sceneMode === 'sequence') await Promise.race([handle.done, ir.promise]);
+    else if (job.sceneMode !== 'loop') { sceneTails.add(handle.done); handle.done.finally(() => sceneTails.delete(handle.done)); }
+    return !ir.fired && (job.sceneManual || settings().sfx?.enabled === true);
+}
+export async function speakScript(mesId, rows = null, { rowId = null, regenerate = false } = {}) {
+    if (!runtimeEnabled()) return false;
+    const mes = chat[mesId];
+    if (!mes || mes.is_system) return false;
+    stop();
+    const my = gen;
+    const selected = (rows || scriptRows(mesId)).filter(row => !rowId || row.id === rowId).map(row => rowId ? { ...row, enabled: true } : row);
+    const jobs = sceneJobs(mesId, selected, { preview: !!rowId, manual: true });
+    if (regenerate) for (const j of jobs) if (!j.sceneKind) { forgetClip(j.key); await cache.remove(j.key); }
+    if (my !== gen || chat[mesId] !== mes) return false;
+    if (!jobs.length) { toast('재생할 줄이 없어요'); return false; }
+    enqueue(jobs);
+    return true;
+}
+export async function downloadScript(mesId, rows = null, { effects = true } = {}) {
+    if (!runtimeEnabled()) return false;
+    const mes = chat[mesId];
+    if (!mes) return false;
+    const jobs = sceneJobs(mesId, rows || scriptRows(mesId), { effects });
+    if (jobs.some(j => !j.sceneKind && j.provider.caps?.blob === false)) throw new Error('브라우저 내장 목소리는 파일로 저장할 수 없어요. 다른 목소리를 골라 주세요.');
+    const clips = [], snapshot = scriptFingerprint(mes), selectedChat = getContext().chat, my = gen;
+    const valid = () => { if (my !== gen) throw new Error('소리 저장을 멈췄어요.'); };
+    for (const j of jobs) exportJobs.add(j);
+    try {
+    for (const j of jobs) {
+        valid();
+        if (!runtimeEnabled() || getContext().chat !== selectedChat || chat[mesId] !== mes || scriptFingerprint(mes) !== snapshot) throw new Error('채팅이 바뀌어 저장을 멈췄어요.');
+        const blob = j.sceneKind === 'pause' ? null : j.sceneKind === 'sfx' ? await sfxBlob(j.sfxId) : (await ensureAudio(j)).blob;
+        valid();
+        if (j.sceneKind !== 'pause' && !blob) throw new Error('효과음 파일을 찾을 수 없어요. 다시 골라 주세요.');
+        clips.push({ kind: j.sceneKind || 'voice', sfxId: j.sfxId, blob, volume: j.sceneVolume ?? 1, gapMs: j.sceneGap, mode: j.sceneMode });
+    }
+    const s = settings();
+    const blob = await mixScene(clips, { rate: 1, master: s.master_volume, sfxVolume: s.sfx?.volume, gapMs: s.gap_ms });
+    valid();
+    if (!runtimeEnabled() || getContext().chat !== selectedChat || chat[mesId] !== mes || scriptFingerprint(mes) !== snapshot) throw new Error('채팅이 바뀌어 저장을 멈췄어요.');
+    saveBlob(blob, fileName(mesId, mes.name, 'wav'));
+    return true;
+    } finally { for (const j of jobs) exportJobs.delete(j); }
 }
 
 // ---------- 1.4.4 듣는 언어 (listen.js — 번역은 LLM 번역 애드온)
@@ -2034,6 +2200,8 @@ export async function downloadCurrent() {
 async function downloadJob(j) {
     if (!runtimeEnabled()) return false;
     if (!j) return false;
+    if (j.sceneKind === 'pause') return false;
+    if (j.sceneKind === 'sfx') { const blob = await sfxBlob(j.sfxId); if (blob) saveBlob(blob, fileName(j.mesId, j.text, extOf(blob))); return !!blob; }
     try {
         const a = await ensureAudio(j);
         if (!a.blob) { toast('브라우저 내장 목소리는 내려받을 수 없어요', 'warning'); return false; }
@@ -2046,6 +2214,7 @@ export async function downloadMessage(mesId) {
     if (!runtimeEnabled()) return false;
     const mes = chat[mesId];
     if (!mes) return false;
+    if (resolveScript(mes, []) !== null || (settings().sfx?.enabled && settings().sfx?.auto && cachedAnalysis(mesId)?.sfx?.length)) return downloadScript(mesId, null, { effects: settings().sfx?.enabled === true });
     const s = settings();
     // 1.4.4 듣는 언어: 안 옮긴 줄이 있으면 먼저 (한 요청 · 못 옮기면 원문)
     if (listen.listenTarget(s)) { const need = listenNeeds(mesId, mes); if (need.length) await listenFill(need); }

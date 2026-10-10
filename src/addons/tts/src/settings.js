@@ -67,6 +67,7 @@ export const DEFAULTS = Object.freeze({
     highlight: true,
     highlight_style: 'both',       // 재생 표시: color | both | underline (기존 표시는 둘 다)
     mini_player: true,
+    sfx: { enabled: false, auto: true, volume: 0.45, mode: 'overlay', custom: [] },
     prefetch: 2,
     voices: [],
     char_map: {},
@@ -351,6 +352,12 @@ export function settings() {
         }
     }
     if (!Array.isArray(s.voices)) s.voices = [];
+    if (!isObj(s.sfx)) s.sfx = clone(DEFAULTS.sfx);
+    s.sfx.enabled = s.sfx.enabled === true;
+    s.sfx.auto = s.sfx.auto !== false;
+    s.sfx.volume = Number.isFinite(Number(s.sfx.volume)) ? Math.max(0, Math.min(1, Number(s.sfx.volume))) : 0.45;
+    if (!['sequence', 'overlay'].includes(s.sfx.mode)) s.sfx.mode = 'overlay';
+    if (!Array.isArray(s.sfx.custom)) s.sfx.custom = [];
     if (!HIGHLIGHT_STYLES.includes(s.highlight_style)) s.highlight_style = 'both';
     if (!['weak', 'normal', 'strong'].includes(s.emotion_strength)) s.emotion_strength = 'normal';
     if (!['whisper', 'auto'].includes(s.thought_emotion)) s.thought_emotion = 'whisper';
@@ -450,6 +457,7 @@ export function exportable() {
     delete s.usage;
     delete s.analysis_usage;
     delete s.known_voices;   // 이 기기에서 이름표를 채웠다는 표시 (가져온 쪽에서도 채우게)
+    if (isObj(s.sfx)) delete s.sfx.custom; // 음원과 메타데이터는 효과음 팩으로 함께 옮긴다.
     return s;
 }
 

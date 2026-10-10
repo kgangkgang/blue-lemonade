@@ -168,11 +168,11 @@ const provider = {
             blob: null,
             mime: '',
             usage: { chars: text.length },
-            speak: () => {
+            speak: ({ volume: lineVolume = 1 } = {}) => {
                 // 전체 배속·볼륨은 말할 때 읽는다 (audio 요소가 없으니 여기서 적용)
                 const s = settings();
                 const rate = clamp(baseRate * clamp(num(s.playback_rate, 1), 0.25, 4), 0.1, 10);
-                const volume = clamp(num(s.master_volume, 1), 0, 1);
+                const volume = clamp(num(s.master_volume, 1), 0, 1) * clamp(num(lineVolume, 1), 0, 1);
                 return speak({ chunks, voiceObj, langTag, rate, pitch, volume, signal });
             },
         };
