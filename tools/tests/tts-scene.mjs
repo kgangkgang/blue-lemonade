@@ -92,7 +92,7 @@ class OfflineMock {
 globalThis.OfflineAudioContext = OfflineMock;
 const mod = name => import(pathToFileURL(path.join(root,name)).href);
 const S=await mod('settings.js'), V=await mod('voices.js'), P=await mod('player.js'), Store=await mod('script-store.js'), Mix=await mod('scene-mix.js'), Registry=await mod('providers/index.js'), Sfx=await mod('sfx-audio.js');
-const Library=await mod('sfx-library.js'), Details=await mod('playback-details.js');
+const Library=await mod('sfx-library.js'), Details=await mod('playback-details.js'), A=await mod('analysis.js');
 for (const id of ['minimax','elevenlabs']) Registry.PROVIDERS[id].synth = async ({text,voice,emotion,lang,signal}) => {
     const response=await fetch('https://mock.invalid/voice',{method:'POST',body:JSON.stringify({text,voiceUid:voice.uid,emotion,lang}),signal});return {blob:await response.blob(),usage:{chars:text.length}};
 };
@@ -196,6 +196,30 @@ await test('1.5.3 everyday sounds match concrete actions only and carry CC0 cred
         const sound=Library.getSfx(id);assert.ok(sound&&!sound.custom&&sound.loop===false&&sound.credit.author==='Joseph SARDIN'&&sound.credit.license==='CC0-1.0'&&sound.assetPath===`../sfx-extra/${id}.mp3`,id);
         assert.ok((await Library.sfxBlob(id)).size>0,id);assert.ok(Library.sfxAttribution([id]).includes('bigsoundbank.com'),id);
     }
+});
+await test('1.5.4 tapping a dialogue plays the cues of the narration right before it even when narration is skipped',async()=>{
+    await reset();const s=S.settings();Object.assign(s.sfx,{enabled:true,auto:true});s.routes={dialogue:'character',narration:'skip',action:'skip',thought:'skip',user_dialogue:'user'};
+    s.analysis={...s.analysis,enabled:true,engine:'compat',base:'https://mock.invalid/v1',key:'k',model:'m',emotion:true,translate:false,speaker:true,when:'auto',context_chars:1200,temperature:0.2};
+    const mes={mes:'문이 열렸다. "안녕." 그가 의자를 끌고 앉았다. "앉아." 휴대폰이 두 번 진동했다.',name:'Mina',is_user:false,is_system:false,swipe_id:0,extra:{}};
+    T.ctx.chat.length=0;T.ctx.chat.push(mes);
+    const p=A.buildPrompt(mes,{langs:[],emotion:true,translate:false,context_chars:1200,speaker:true,extras:s.extras!=='off',sfx:true});
+    mes.extra.lemon_voice={analysis:{hash:A.hash(mes.mes),profile:A.hash(JSON.stringify([1,'compat','','m',true,false,0.2,p.system,p.user])),langs:[],model:'m',at:1,
+        segs:p.lines.map(l=>({i:l.i,h:l.h,emotion:'calm',text:{}})),sfx:[{after:0,id:'door_open',repeats:1,durationMs:0},{after:1,id:'daily_chair_slide',repeats:1,durationMs:0},{after:2,id:'daily_phone_vibration',repeats:2,durationMs:0}]}};
+    assert.ok(A.getAnalysis(0));
+    const tap=(text,dialogueIndex)=>({kind:'dialogue',text,raw:text,color:null,tags:[],speakerHint:null,line:0,dialogueIndex});
+    assert.ok(P.speakSegments(0,[tap('앉아.',1)]));await until(()=>T.plays.some(x=>x.kind==='voice'));await idle();
+    assert.deepEqual(T.plays.map(x=>x.kind==='sfx'?x.sfxId:'voice'),['daily_chair_slide','voice']);   // 두 번째 대사 앞 지문의 의자 소리만 (문 소리는 첫 대사 앞)
+    await reset();T.ctx.chat.length=0;T.ctx.chat.push(mes);Object.assign(S.settings().sfx,{enabled:true,auto:true,tap:false});S.settings().routes.narration='skip';S.settings().analysis={...S.settings().analysis,enabled:true,engine:'compat',base:'https://mock.invalid/v1',key:'k',model:'m',emotion:true,translate:false,speaker:true,when:'auto',context_chars:1200,temperature:0.2};
+    assert.ok(P.speakSegments(0,[tap('앉아.',1)]));await until(()=>T.plays.some(x=>x.kind==='voice'));await idle();
+    assert.deepEqual(T.plays.map(x=>x.kind),['voice']);   // 토글을 끄면 전처럼 대사만
+});
+await test('1.5.4 readText reads another extension\'s text like a message: dialogue only by default, mapped voices, no network beyond synthesis',async()=>{
+    await reset();S.settings().routes={dialogue:'character',narration:'skip',action:'skip',thought:'skip',user_dialogue:'user'};
+    assert.equal(P.speakExternal({text:'Nora walked in. "Hello there." She smiled. "Bye."',name:'Nora'}),true);
+    await until(()=>T.plays.length>=1);await idle();
+    const spoken=T.requests.map(r=>r.text).join(' ');   // 같은 목소리의 이어진 대사는 한 덩이로 합쳐질 수 있다
+    assert.ok(spoken.includes('Hello there.')&&spoken.includes('Bye.')&&!/walked|smiled/.test(spoken),spoken);assert.ok(T.requests.length&&T.requests.every(r=>r.voiceUid==='minimax:nora'));
+    assert.equal(P.speakExternal({text:'   '}),false);
 });
 await test('disabled preference is serializable and excludes manual playback and WAV while preserving speech',async()=>{
     await reset();Library.setSfxEnabled('knock',false);assert.ok(JSON.parse(JSON.stringify(S.settings())).sfx.disabled.includes('knock'));

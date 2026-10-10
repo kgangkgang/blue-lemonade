@@ -133,6 +133,7 @@ const READ_CARDS = {
     sfx: ['fa-music', '효과음 · 소리 대본', [
         { key: 'sfx.enabled', label: '채팅 읽기에 효과음', type: 'toggle', help: '켜면 저장한 소리 대본의 효과음도 함께 재생해요. 대본 편집에서 직접 들어보기는 이 설정과 관계없이 쓸 수 있어요.' },
         { key: 'sfx.auto', label: '서술에서 자동으로 찾기', type: 'toggle', show: s => !!s.sfx?.enabled, help: '대사 분석을 켜면 같은 분석 요청에서 문소리·발소리처럼 실제로 발생한 소리를 찾아요. 맞는 내장·사용자 음원이 없으면 생략해요. 분석 서비스 요금은 기존과 같이 적용돼요.' },
+        { key: 'sfx.tap', label: '누른 대사 앞 지문의 효과음도', type: 'toggle', show: s => !!s.sfx?.enabled && s.sfx?.auto !== false, help: '대사를 눌러 읽을 때 그 대사 바로 앞 지문에서 찾은 효과음을 먼저 들려줘요. 지문을 읽지 않는 설정에서도 효과음이 나요. 분석이 아직 없으면 먼저 분석해요.' },
         { key: 'sfx.mode', label: '자동 효과음 재생', type: 'select', options: [{ value: 'overlay', label: '대사와 겹치기' }, { value: 'sequence', label: '차례로 재생' }], help: '겹치기는 효과음 위로 다음 대사가 이어져요. 차례로는 효과음이 끝나고 다음 대사를 읽어요. 각 줄은 소리 대본에서 따로 바꿀 수 있어요.' },
         { key: 'sfx.volume', label: '효과음 음량', type: 'range', min: 0, max: 1, step: 0.05, default: 0.45, fmt: v => `${Math.round(Number(v) * 100)}%`, help: '전체 재생 볼륨 안에서 효과음만 조절해요. 반복 소리는 대사를 가리지 않도록 더 작게 재생돼요.' },
     ], () => '<div class="lv-actions"><button type="button" class="menu_button" data-lv-act="sound-library">효과음 보관함</button><button type="button" class="menu_button" data-lv-act="script-last">마지막 소리 대본</button></div><span class="lv-desc">각 메시지의 소리 대본 버튼에서 대사 · 효과음 · 쉼을 고쳐요. 원문은 그대로예요.</span>'],

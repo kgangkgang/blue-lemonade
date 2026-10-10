@@ -110,6 +110,12 @@ function sameStructure(a, b) {
     return null;
 }
 
+// 5.9.5: 다른 확장이 채팅 메시지와 같은 모양으로 글을 보여 주는 틀 — 선택자의 #chat 을 :is(#chat,.bl-chat-like) 로.
+// :is() 의 특이도는 인자 중 가장 높은 것(아이디)이라 폭포가 그대로이고, 문서에 .bl-chat-like 가 없으면 전과 똑같이 맞는다.
+// (#chat_import_button 처럼 이어지는 이름은 경계로 거른다. 주석을 뺀 본문에만 — css/ 원본은 손대지 않는다)
+const CHAT_ALIAS = ':is(#chat,.bl-chat-like)';
+function aliasChat(text) { return text.replace(/#chat(?![\w-])/g, CHAT_ALIAS); }
+
 function build(dir = CSS_DIR, { bucket = true } = {}) {
     const names = modules(dir);
     const raw = [];
@@ -140,7 +146,7 @@ function build(dir = CSS_DIR, { bucket = true } = {}) {
     const expanded = bucket ? require('./css-bucket.cjs').bucketize(paintGuarded).text : paintGuarded;
     // 4.8.4: 미리보기 전용 규칙은 `@media not all { }` 로 감싸 꺼 둔 채 싣는다 (tools/css-park.cjs — src/lite.js 가 설정창을 열 때 켠다)
     const parked = require('./css-park.cjs').park(expanded);
-    const body = parked.text;
+    const body = aliasChat(parked.text);
     const head = `/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 ${names.length}개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build ${HASH_SLOT}) */\n`;
     const draft = head + body;
     const digest = hashOf(draft);

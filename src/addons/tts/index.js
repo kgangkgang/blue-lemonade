@@ -485,6 +485,8 @@ export const ready = new Promise((resolve, reject) => jQuery(() => { (async () =
     window.LemonVoice = Object.freeze({
         version: VERSION,
         speakText: (text, voice) => player.speakText(String(text ?? ''), resolveVoiceUid(voice) || ''),
+        // 1.5.4 다른 확장의 글을 채팅 메시지처럼 (대사 · 지문 나누기 · 화자 목소리 · 읽을 글 설정 그대로) — { text, name?, isUser? } 또는 글 하나
+        readText: (opts) => player.speakExternal(opts && typeof opts === 'object' ? opts : { text: opts }),
         stop: () => player.stop(),
     });
     setTimeout(() => verifyAddonCss({ folder: 'tts', name: '--lv-css-version', version: VERSION, title: 'TTS', selector: '.lv-settings' }), 3000);

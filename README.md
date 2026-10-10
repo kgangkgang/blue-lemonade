@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.9.4/blue-lemonade-5.9.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.9.5/blue-lemonade-5.9.5.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.9.4 · 최신 업데이트</summary>
+<summary>5.9.5 · 최신 업데이트</summary>
+
+- TTS 1.5.4: 대사를 눌러 읽을 때 그 대사 바로 앞 지문에서 찾은 효과음을 먼저 들려줘요. 지문을 읽지 않는 설정에서도 효과음이 나요. 효과음 · 소리 대본의 「누른 대사 앞 지문의 효과음도」로 끌 수 있고, 저장된 분석이 없으면 먼저 분석해요.
+- 다른 확장이 글을 채팅 메시지와 같은 모양으로 보여 주고, TTS로 읽게 하고, 내장 번역으로 옮길 수 있는 연동 창구를 열었어요. 테마 모습과 TTS의 읽을 글·목소리 설정, 번역 설정을 그대로 따라요.
+
+[TTS 사용법](src/addons/tts/README.md)
+
+</details>
+
+<details>
+<summary>5.9.4 · 생활 효과음 6개</summary>
 
 - TTS 1.5.3에 휴대폰 진동·의자 끌기·펜 뚜껑·냉장고 문·전기주전자·양치질 생활 효과음 6개를 더해 내장 소리가 69개가 됐어요. 모두 BigSoundBank의 CC0 음원이며 원본·제작자·변경 내역을 함께 기록했어요.
 - 전기주전자와 양치질은 “한동안”·“5초 동안” 같은 표현에 맞춰 재생 길이를 고르고, 휴대폰 진동·냉장고 문처럼 되풀이되는 동작은 “두 번” 같은 횟수를 읽어요. 소리 대본에서도 직접 조절할 수 있어요.

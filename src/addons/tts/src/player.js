@@ -2049,6 +2049,39 @@ export function lineJobs(mesId, mes, segs, { awaitDisplay = false } = {}) {
     return { jobs, held: t.held, missing: t.missing };
 }
 /**
+ * 1.5.4 누른 대사 바로 앞 지문(서술 · 행동)에서 찾은 효과음 (설정 sfx.tap). 지문을 읽지 않는 설정에서는 메시지 읽기가 아니라 대사 누르기만 쓰므로
+ * 효과음이 한 번도 안 났다 — 저장된 분석의 신호(after = 앞 대화문 수)를 누른 대사의 차례와 맞춰, 그 대사 앞에 넣는다. 분석이 없으면 speakSegments 가 먼저 분석한다.
+ */
+function tapSfxJobs(mesId, mes, segs, s) {
+    if (!(s.sfx?.enabled === true && s.sfx?.auto !== false && s.sfx?.tap !== false)) return [];
+    const cues = cachedAnalysis(mesId)?.sfx || [];
+    if (!cues.length) return [];
+    let src; try { src = sourcesOf(mes, s, { final: true }); } catch { return []; }
+    const { origOf } = alignLists(src.orig, src.disp);
+    const dial = (src.orig || []).filter(x => x?.kind === 'dialogue' && x.text);
+    const dispDial = (src.disp || []).filter(x => x?.kind === 'dialogue' && x.text);
+    const ordinals = new Set();
+    for (const seg of segs) {
+        if (!seg || seg.kind !== 'dialogue' || !seg.text) continue;
+        const n = normText(seg.text);
+        const pick = (list) => { const eq = list.filter(x => normText(x.text) === n); const at = Number.isInteger(seg.dialogueIndex) ? list[seg.dialogueIndex] : null; return at && eq.includes(at) ? at : eq[0] || null; };
+        let o = pick(dial);
+        if (!o) { const d = pick(dispDial); o = d ? origOf.get(d) || null : null; }
+        const at = o ? dial.indexOf(o) : (Number.isInteger(seg.dialogueIndex) && seg.dialogueIndex < dial.length ? seg.dialogueIndex : -1);
+        if (at >= 0) ordinals.add(at);
+    }
+    if (!ordinals.size) return [];
+    const out = [];
+    cues.slice(0, 8).forEach((cue, i) => {
+        if (!ordinals.has(cue.after)) return;
+        const sound = getSfx(cue.id);
+        if (!sound || !isSfxEnabled(sound.id)) return;
+        out.push({ mesId, sceneKind: 'sfx', sceneMode: s.sfx.mode || 'overlay', sceneVolume: 1, sceneGap: 0, sceneRepeats: cue.repeats || 1, sceneDurationMs: cue.durationMs || 0, scenePreview: false,
+            sfxId: sound.id, scriptRowId: `tap-sfx-${i}`, segIndex: null, parts: [], text: sound.name, voice: { name: '효과음' }, key: `scene:tap-sfx-${mesId}-${i}` });
+    });
+    return out;
+}
+/**
  * 이미 나눈 세그먼트 읽기 (대사 클릭 · 속마음 클릭 · 즉석 조각). 지금 읽던 건 끊는다.
  * 원문·번역문 짝을 찾아 자동 읽기와 같은 규칙(text_source · 목소리별 우선 글 · 원어)으로 고르고,
  * 저장된 분석이 있으면 같은 줄을 찾아(번호·글) 감정·원어 번역문을 얹고, 없는데 auto 면 먼저 분석한다 (true = 시작함 — 속마음만이면 분석 없이).
@@ -2077,7 +2110,7 @@ export function speakSegments(mesId, segs) {
             return false;
         }
         jobs[0].tapT0 = t0;
-        enqueue(jobs, { append: false });
+        enqueue([...tapSfxJobs(mesId, mes, segs, s), ...jobs], { append: false });   // 1.5.4 누른 대사 앞 지문의 효과음을 먼저
         return true;
     };
     // 1.4.4 누른 줄도 이 메시지의 듣는 언어 묶음에 넣는다 (번역 기다리기 · 분석 뒤 한 요청). 그 단계를 거친 뒤엔 다시 옮기지 않고 읽는다 (run(true)) —
@@ -2086,6 +2119,29 @@ export function speakSegments(mesId, segs) {
     if (joinWaiting(mesId, mes, waiting && waiting.phase !== 'listen' ? () => run(true) : run, tapFlat)) return true;
     if (thoughtsOnly || !analysisWanted(mesId, mes, settings())) return run();
     runPrepared(mesId, mes, { analyse: true, extra: tapFlat, run: () => run(true) });
+    return true;
+}
+/**
+ * 1.5.4 다른 확장의 글을 채팅 메시지처럼 읽는다 (window.LemonVoice.readText). 대사 · 지문 · 속마음 나누기, 읽을 글 설정, 화자별 목소리, 태그 감정,
+ * 발음 사전 · 음량 규칙을 자동 읽기와 똑같이 적용한다. 메시지가 아니라서 대사 분석 · 효과음 · 듣는 언어 번역 · 캐시 기록은 하지 않는다.
+ * → true = 읽기 시작 (목소리가 없으면 안내 후 false)
+ */
+export function speakExternal({ text, name = '', isUser = false } = {}) {
+    if (!runtimeEnabled()) return false;
+    const s = settings();
+    const t = String(text || '').trim();
+    if (!t) return false;
+    const ctx = getContext();
+    const mes = { mes: t, name: String(name || (isUser ? ctx.name1 : ctx.name2) || ''), is_user: !!isUser, is_system: false, swipe_id: 0, extra: {} };
+    const built = buildJobs(-1, mes, sourcesOf(mes, s, { final: true }), { startSeg: 0, final: true, lookup: () => null });
+    const jobs = finishJobs(built.jobs, s, { merge: !pregenOn(s) });
+    if (!jobs.length) {
+        if (built.missing) toastOnce('목소리를 먼저 정해요 (TTS 설정)', 'warning');
+        else if (built.missingUser) { void askPersonaVoice().then(ok => { if (ok) speakExternal({ text, name, isUser }); }); }
+        else toastOnce('읽을 부분이 없어요', 'info');
+        return false;
+    }
+    enqueue(jobs, { append: false });
     return true;
 }
 /** 1.3.8 시험용 (tools/tests/tts-extras.mjs · tts-onboarding.mjs): 작업 마무리(엔진 값 · 세기 · 캐시 키) · 이번 읽기에서 안 되는 엔진 */
