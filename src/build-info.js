@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.9.6";
+export const BUILD_VERSION = "5.9.7";
 export const FILE_HASHES = {
   "index.js": "16730:cd15e850:f32659bb",
-  "manifest.json": "365:f341b669:046958fb",
+  "manifest.json": "365:bc45f6da:30c60b21",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -237,7 +237,7 @@ export const FILE_HASHES = {
   "src/addons/tts/sfx/whoosh.mp3": "9295:2408f53b:568290c7",
   "src/addons/tts/sfx/wind.mp3": "36567:1a42a482:6c9fb235",
   "src/addons/tts/sfx/wood_crack.mp3": "12743:96f21e5f:d993bb8b",
-  "src/addons/tts/src/analysis.js": "69322:ec16f020:21e478ab",
+  "src/addons/tts/src/analysis.js": "70500:34780206:dc167a41",
   "src/addons/tts/src/balance.js": "4406:309bd610:27dd3fa3",
   "src/addons/tts/src/cache.js": "10190:ea530724:cdf2f7e0",
   "src/addons/tts/src/clickplay.js": "35847:758fbd42:7154d64d",
@@ -249,7 +249,7 @@ export const FILE_HASHES = {
   "src/addons/tts/src/modelswitch.js": "5835:367a7699:4c402b69",
   "src/addons/tts/src/paid.js": "5151:654904ec:67fc64ff",
   "src/addons/tts/src/playback-details.js": "1813:dc8c7973:7157b950",
-  "src/addons/tts/src/player.js": "166440:deaccaef:cc5ac524",
+  "src/addons/tts/src/player.js": "167066:ef30b25e:ccd428b0",
   "src/addons/tts/src/pregen.js": "24549:bb412d8e:f1e7de14",
   "src/addons/tts/src/providers/_http.js": "8363:666dcabd:c8bf7f25",
   "src/addons/tts/src/providers/_models.js": "8477:f2142bd7:888f22da",
@@ -281,8 +281,8 @@ export const FILE_HASHES = {
   "src/addons/tts/src/ui.js": "173191:d329f030:b9980564",
   "src/addons/tts/src/voice-names.js": "7708:05c816f7:b76ae520",
   "src/addons/tts/src/voices.js": "39816:273e9df9:376164af",
-  "src/addons/tts/style.css": "33025:13830a88:441c02f2",
-  "src/addons/tts/version.js": "36:2f21ffe9:1922c28c",
+  "src/addons/tts/style.css": "33025:8fc2997e:7c029089",
+  "src/addons/tts/version.js": "36:495099f2:55c8b421",
   "src/addons/zipinstall/index.js": "22183:0ac25a5e:32e2e59e",
   "src/addons/zipinstall/style.css": "4434:d6bb24df:89f0a8f4",
   "src/appearance-archive.js": "1287:215093f5:1c7f1dc7",
@@ -367,7 +367,7 @@ export const FILE_HASHES = {
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "176797:7eb29f64:2de14389",
+  "src/notice-data.js": "177312:806b6a0a:cdd1326d",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "1144:1da72451:b2e66e80",
@@ -435,5 +435,5 @@ export const FILE_HASHES = {
   "src/weather.js": "32976:f4fdcf09:3273a2b9",
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "31850:337f1677:b8ad9253",
-  "style.css": "1250148:36a42999:41bbc0d5"
+  "style.css": "1250148:d419e5ab:d5a3fb97"
 };

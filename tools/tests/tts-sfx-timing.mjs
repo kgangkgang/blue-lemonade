@@ -31,6 +31,7 @@ Object.assign(S.settings().analysis,{enabled:true,engine:'compat',base:'https://
 const bot = text => ({mes:text,name:'Test',is_user:false,extra:{},swipe_id:0});
 const build = text => A.buildPrompt(bot(text),{emotion:false,translate:false,speaker:false});
 const timing = (text,id,values={},after=0) => A.normalizeSfx([{after,id,...values}],build(text))[0];
+const L=await import(pathToFileURL(path.join(root,'sfx-library.js')).href);
 const plain = cue => ({repeats:cue.repeats,durationMs:cue.durationMs});
 let passed=0,failed=0;
 async function test(name, fn) { try { await fn();passed++;console.log('PASS '+name); } catch(error) {failed++;console.error('FAIL '+name+'\n'+error.stack);} }
@@ -76,6 +77,20 @@ await test('1.5.3 kettle and toothbrush sustain, phone and fridge count, single 
     assert.equal(timing('한동안 냉장고 문을 열어 두었다.','daily_fridge_door',{durationMs:8000}).durationMs,0);
     for(const [text,id] of [['펜 뚜껑을 닫았다.','daily_pen_cap'],['의자를 끌었다.','daily_chair_slide'],['휴대폰이 진동했다.','daily_phone_vibration']])
         assert.deepEqual(plain(timing(text,id,{repeats:4,durationMs:8000})),{repeats:1,durationMs:0},text);
+});
+await test('1.5.6 long narration keeps the sound sentences for the model instead of only the head and tail',()=>{
+    const filler='Lorem ipsum dolor amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.';
+    assert.equal(L.matchSfx(filler),null);
+    const parts=[];for(let i=0;i<24;i++)parts.push(`${filler} "Line ${i}."`);
+    parts.push(`${filler} He slapped the table twice. ${filler}`,'"Last line."',`${filler} The door creaked open.`);
+    const text=parts.join('\n\n');
+    const p=A.buildPrompt(bot(text),{emotion:false,translate:false,speaker:false,context_chars:1200});
+    const scene=p.sfxScene.map(g=>g.text).join('\n');
+    assert.ok(text.length>8000&&p.sfx,'long message with sfx');
+    assert.ok(/slapped the table twice/.test(scene)&&/door creaked open/.test(scene),'sound sentences kept');
+    assert.ok(scene.length<=4600,`budget ${scene.length}`);
+    assert.ok(p.sfxAfters.includes(24)&&p.sfxAfters.includes(25),p.sfxAfters.join(','));
+    assert.equal(timing(text,'punch',{repeats:2},24).repeats,2);   // 남긴 문장으로 횟수도 읽는다
 });
 await test('absence or negation of duration cannot create an ambient loop',()=>{
     for(const text of ['키보드를 눌렀다.','키보드로 한동안 타이핑하지 않았다.','She did not type for a while.','She typed. Her friend waited for 8 seconds.'])

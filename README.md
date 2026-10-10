@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.9.6/blue-lemonade-5.9.6.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.9.7/blue-lemonade-5.9.7.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.9.6 · 최신 업데이트</summary>
+<summary>5.9.7 · 최신 업데이트</summary>
+
+- TTS 1.5.6: 긴 답장에서 효과음을 놓치던 문제를 고쳤어요. 대사 분석에 보내는 지문이 맥락 예산(1,200자)에 묶여 중간 지문이 빠졌는데, 이제 효과음용 예산 4,000자를 따로 두고 소리 낱말이 든 문장을 먼저 넣어요. 저장된 분석은 다음 읽기 때 한 번 다시 받아요.
+- 대사를 눌러 읽을 때 그 대사가 마지막 대사면 그 뒤 지문의 효과음도 이어서 나요.
+
+[TTS 사용법](src/addons/tts/README.md)
+
+</details>
+
+<details>
+<summary>5.9.6 · 외부 확장의 글도 메시지처럼 읽기</summary>
 
 - TTS 1.5.5: 다른 확장이 넘긴 글도 채팅 메시지와 똑같이 읽어요. 대사 분석(화자·감정)·효과음·듣는 언어·누른 대사만 읽기까지 TTS 설정을 그대로 따라요.
 - 내장 번역의 연동 창구가 번역 진행 상황을 알려 줘요. 다른 확장에서도 채팅의 번역 진행 표시와 같은 문구를 보여 줄 수 있어요.

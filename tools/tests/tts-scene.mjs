@@ -208,7 +208,7 @@ await test('1.5.4 tapping a dialogue plays the cues of the narration right befor
     assert.ok(A.getAnalysis(0));
     const tap=(text,dialogueIndex)=>({kind:'dialogue',text,raw:text,color:null,tags:[],speakerHint:null,line:0,dialogueIndex});
     assert.ok(P.speakSegments(0,[tap('앉아.',1)]));await until(()=>T.plays.some(x=>x.kind==='voice'));await idle();
-    assert.deepEqual(T.plays.map(x=>x.kind==='sfx'?x.sfxId:'voice'),['daily_chair_slide','voice']);   // 두 번째 대사 앞 지문의 의자 소리만 (문 소리는 첫 대사 앞)
+    assert.deepEqual(T.plays.map(x=>x.kind==='sfx'?x.sfxId:'voice'),['daily_chair_slide','voice','daily_phone_vibration','daily_phone_vibration']);   // 앞 지문의 의자 소리, 마지막 대사라 뒤 지문의 진동(2회)도 이어서 (문 소리는 첫 대사 앞)
     await reset();T.ctx.chat.length=0;T.ctx.chat.push(mes);Object.assign(S.settings().sfx,{enabled:true,auto:true,tap:false});S.settings().routes.narration='skip';S.settings().analysis={...S.settings().analysis,enabled:true,engine:'compat',base:'https://mock.invalid/v1',key:'k',model:'m',emotion:true,translate:false,speaker:true,when:'auto',context_chars:1200,temperature:0.2};
     assert.ok(P.speakSegments(0,[tap('앉아.',1)]));await until(()=>T.plays.some(x=>x.kind==='voice'));await idle();
     assert.deepEqual(T.plays.map(x=>x.kind),['voice']);   // 토글을 끄면 전처럼 대사만
@@ -220,6 +220,18 @@ await test('1.5.4 readText reads another extension\'s text like a message: dialo
     const spoken=T.requests.map(r=>r.text).join(' ');   // 같은 목소리의 이어진 대사는 한 덩이로 합쳐질 수 있다
     assert.ok(spoken.includes('Hello there.')&&spoken.includes('Bye.')&&!/walked|smiled/.test(spoken),spoken);assert.ok(T.requests.length&&T.requests.every(r=>r.voiceUid==='minimax:nora'));
     assert.equal(P.speakExternal({text:'   '}),false);
+});
+await test('1.5.6 tapping the last dialogue also plays the cues of the narration after it',async()=>{
+    await reset();const s=S.settings();Object.assign(s.sfx,{enabled:true,auto:true,mode:'overlay'});s.routes={dialogue:'character',narration:'skip',action:'skip',thought:'skip',user_dialogue:'user'};
+    s.analysis={...s.analysis,enabled:true,engine:'compat',base:'https://mock.invalid/v1',key:'k',model:'m',emotion:true,translate:false,speaker:true,when:'auto',context_chars:1200,temperature:0.2};
+    const mes={mes:'"안녕." 그가 나가며 문을 닫았다.',name:'Mina',is_user:false,is_system:false,swipe_id:0,extra:{}};
+    T.ctx.chat.length=0;T.ctx.chat.push(mes);
+    const p=A.buildPrompt(mes,{langs:[],emotion:true,translate:false,context_chars:1200,speaker:true,extras:s.extras!=='off',sfx:true});
+    mes.extra.lemon_voice={analysis:{hash:A.hash(mes.mes),profile:A.hash(JSON.stringify([1,'compat','','m',true,false,0.2,p.system,p.user])),langs:[],model:'m',at:1,segs:p.lines.map(l=>({i:l.i,h:l.h,emotion:'calm',text:{}})),sfx:[{after:1,id:'door_close',repeats:1,durationMs:0}]}};
+    assert.ok(A.getAnalysis(0));
+    assert.ok(P.speakSegments(0,[{kind:'dialogue',text:'안녕.',raw:'안녕.',color:null,tags:[],speakerHint:null,line:0,dialogueIndex:0}]));
+    await until(()=>T.plays.length>=2);await idle();
+    assert.deepEqual(T.plays.map(x=>x.kind==='sfx'?x.sfxId:'voice'),['voice','door_close']);
 });
 await test('1.5.5 readText with only reads just the tapped dialogue, by text or by dialogue index, through the message pipeline',async()=>{
     const routes={dialogue:'character',narration:'skip',action:'skip',thought:'skip',user_dialogue:'user'};

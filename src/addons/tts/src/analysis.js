@@ -48,7 +48,7 @@ import { allVoices, hasOwnVoice, noteExtras } from './voices.js';
 import { fetchJson } from './providers/_http.js';
 import { log, snip, scrub } from './log.js';
 import * as stapi from './stapi.js';
-import { listSfx, getSfx } from './sfx-library.js';
+import { listSfx, getSfx, matchSfx } from './sfx-library.js';
 
 export const EMOTIONS = Object.freeze(['neutral', 'happy', 'sad', 'angry', 'fearful', 'disgusted', 'surprised', 'calm', 'whisper', 'shout']);
 export const LANGS = Object.freeze(['ko', 'ja', 'en', 'zh']);
@@ -251,26 +251,30 @@ export function sfxWanted(mes) {
         return (segmentMessage(sub(mes.mes), segOpts(mes, s, ctx, userName, charName)) || []).some(g => sceneKind(g) && String(g.text || '').trim());
     } catch { return false; }
 }
-/** 맥락을 줄여도 [after=N] 표시는 자르지 않는다. 한 서술의 끝이 다른 대사 위치로 붙는 것을 막는다. */
-function sceneExcerpt(scene, max) {
-    const budget = Math.max(0, Math.floor(Number(max) || 0));
-    const total = scene.reduce((n, g) => n + g.text.length, 0);
-    let selected = scene.map((g, i) => ({ ...g, index: i }));
-    if (budget && total > budget) {
-        const kept = new Map();
-        const take = (items, amount) => {
-            for (const g of items) {
-                if (amount <= 0) break;
-                const old = kept.get(g.index)?.budget || 0;
-                const used = Math.min(amount, g.text.length - old);
-                if (used > 0) { kept.set(g.index, { ...g, budget: old + used }); amount -= used; }
-            }
-        };
-        take(selected, Math.ceil(budget * 0.6));
-        take([...selected].reverse(), budget - Math.ceil(budget * 0.6));
-        selected = [...kept.values()].sort((a, b) => a.index - b.index).map(g => ({ ...g, text: clip(g.text, g.budget) }));
-    }
+// 1.5.6 효과음용 지문 예산 — 맥락 예산(context_chars, 기본 1,200자)과 별개. 전엔 맥락 예산 안에서 앞 60% · 뒤 40%만 남겨
+//   7,500자 답장의 지문 21부분 가운데 6부분만 모델에 갔고, 그 밖의 소리(slap …)는 모델이 보지도 못했다.
+const SCENE_CHARS = 4000;
+const SENTENCE_SPLIT = /(?<=[.!?。！？…]["”」』)]?)\s+/u;
+/** 효과음 낱말(내장 · 내 효과음의 연결 단어)이 든 문장인가 — 키워드 사전과 같은 매칭 */
+function soundy(sentence) { try { return !!matchSfx(sentence); } catch { return false; } }
+function packScene(selected) {
     return { text: selected.map(g => `[after=${g.after}] ${g.text}`).join('\n'), afters: [...new Set(selected.map(g => g.after))], scene: selected.map(g => ({ after: g.after, text: g.text })) };
+}
+/** 맥락을 줄여도 [after=N] 표시는 자르지 않는다. 한 서술의 끝이 다른 대사 위치로 붙는 것을 막는다.
+ *  예산을 넘으면 문장 단위로: 효과음 낱말이 든 문장을 먼저 전부, 남는 예산에 나머지 문장을 앞에서 60% · 뒤에서 40%. */
+function sceneExcerpt(scene, max) {
+    const budget = Math.max(SCENE_CHARS, Math.floor(Number(max) || 0));
+    const total = scene.reduce((n, g) => n + g.text.length, 0);
+    if (!budget || total <= budget) return packScene(scene.map(g => ({ after: g.after, text: g.text })));
+    const parts = scene.map((g, i) => ({ index: i, after: g.after, sentences: g.text.split(SENTENCE_SPLIT).filter(x => x.trim().length > 1) }));
+    const kept = parts.map(p => p.sentences.map(() => false));
+    let left = budget;
+    for (const p of parts) p.sentences.forEach((sent, k) => { if (left > 0 && soundy(sent)) { kept[p.index][k] = true; left -= sent.length; } });
+    const rest = [];
+    for (const p of parts) p.sentences.forEach((sent, k) => { if (!kept[p.index][k]) rest.push([p.index, k, sent]); });
+    const take = (items, amount) => { for (const [i, k, sent] of items) { if (amount <= 0) break; if (!kept[i][k] && sent.length <= amount) { kept[i][k] = true; amount -= sent.length; } } return amount; };
+    if (left > 0) { const head = Math.ceil(left * 0.6); const spare = take(rest, head); take([...rest].reverse(), left - head + spare); }
+    return packScene(parts.map(p => ({ after: p.after, text: p.sentences.filter((_, k) => kept[p.index][k]).join(' ') })).filter(g => g.text));
 }
 
 /**

@@ -2051,14 +2051,14 @@ export function lineJobs(mesId, mes, segs, { awaitDisplay = false } = {}) {
     return { jobs, held: t.held, missing: t.missing };
 }
 /**
- * 1.5.4 누른 대사 바로 앞 지문(서술 · 행동)에서 찾은 효과음 (설정 sfx.tap). 지문을 읽지 않는 설정에서는 메시지 읽기가 아니라 대사 누르기만 쓰므로
+ * 1.5.4 누른 대사 바로 앞 지문(서술 · 행동)에서 찾은 효과음 (설정 sfx.tap) → { before, after }. 1.5.6 마지막 대사 뒤 지문의 소리는 after 로. 지문을 읽지 않는 설정에서는 메시지 읽기가 아니라 대사 누르기만 쓰므로
  * 효과음이 한 번도 안 났다 — 저장된 분석의 신호(after = 앞 대화문 수)를 누른 대사의 차례와 맞춰, 그 대사 앞에 넣는다. 분석이 없으면 speakSegments 가 먼저 분석한다.
  */
 function tapSfxJobs(mesId, mes, segs, s) {
-    if (!(s.sfx?.enabled === true && s.sfx?.auto !== false && s.sfx?.tap !== false)) return [];
+    if (!(s.sfx?.enabled === true && s.sfx?.auto !== false && s.sfx?.tap !== false)) return { before: [], after: [] };
     const cues = cachedAnalysis(mesId)?.sfx || [];
-    if (!cues.length) return [];
-    let src; try { src = sourcesOf(mes, s, { final: true }); } catch { return []; }
+    if (!cues.length) return { before: [], after: [] };
+    let src; try { src = sourcesOf(mes, s, { final: true }); } catch { return { before: [], after: [] }; }
     const { origOf } = alignLists(src.orig, src.disp);
     const dial = (src.orig || []).filter(x => x?.kind === 'dialogue' && x.text);
     const dispDial = (src.disp || []).filter(x => x?.kind === 'dialogue' && x.text);
@@ -2072,13 +2072,15 @@ function tapSfxJobs(mesId, mes, segs, s) {
         const at = o ? dial.indexOf(o) : (Number.isInteger(seg.dialogueIndex) && seg.dialogueIndex < dial.length ? seg.dialogueIndex : -1);
         if (at >= 0) ordinals.add(at);
     }
-    if (!ordinals.size) return [];
-    const out = [];
+    if (!ordinals.size) return { before: [], after: [] };
+    const out = { before: [], after: [] };
     cues.slice(0, 8).forEach((cue, i) => {
-        if (!ordinals.has(cue.after)) return;
+        // 1.5.6 마지막 대사를 눌렀으면 그 뒤 지문(after = 대화문 수)의 소리도 대사 뒤에 이어서 — 그 소리는 붙을 다음 대사가 없다
+        const where = ordinals.has(cue.after) ? 'before' : ordinals.has(dial.length - 1) && cue.after === dial.length ? 'after' : '';
+        if (!where) return;
         const sound = getSfx(cue.id);
         if (!sound || !isSfxEnabled(sound.id)) return;
-        out.push({ mesId, sceneKind: 'sfx', sceneMode: s.sfx.mode || 'overlay', sceneVolume: 1, sceneGap: 0, sceneRepeats: cue.repeats || 1, sceneDurationMs: cue.durationMs || 0, scenePreview: false,
+        out[where].push({ mesId, sceneKind: 'sfx', sceneMode: where === 'after' ? 'sequence' : (s.sfx.mode || 'overlay'), sceneVolume: 1, sceneGap: 0, sceneRepeats: cue.repeats || 1, sceneDurationMs: cue.durationMs || 0, scenePreview: false,
             sfxId: sound.id, scriptRowId: `tap-sfx-${i}`, segIndex: null, parts: [], text: sound.name, voice: { name: '효과음' }, key: `scene:tap-sfx-${mesId}-${i}` });
     });
     return out;
@@ -2112,7 +2114,8 @@ export function speakSegments(mesId, segs) {
             return false;
         }
         jobs[0].tapT0 = t0;
-        enqueue([...tapSfxJobs(mesId, mes, segs, s), ...jobs], { append: false });   // 1.5.4 누른 대사 앞 지문의 효과음을 먼저
+        const cues = tapSfxJobs(mesId, mes, segs, s);
+        enqueue([...cues.before, ...jobs, ...cues.after], { append: false });   // 1.5.4 누른 대사 앞 지문의 효과음을 먼저 · 1.5.6 마지막 대사 뒤 지문은 이어서
         return true;
     };
     // 1.4.4 누른 줄도 이 메시지의 듣는 언어 묶음에 넣는다 (번역 기다리기 · 분석 뒤 한 요청). 그 단계를 거친 뒤엔 다시 옮기지 않고 읽는다 (run(true)) —
