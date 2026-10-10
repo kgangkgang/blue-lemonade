@@ -49,6 +49,7 @@ jobs:
           node tools/tests/translator-speech.mjs .
           node tools/tests/bookmark-excerpts.mjs .
           node tools/tests/main-chat-rules.mjs .
+          node tools/tests/natural-slash.mjs .
           node tools/tests/live-models.mjs .
           node tools/tests/translator-models.mjs .
           node tools/tests/rewrite-models.mjs .

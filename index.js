@@ -27,6 +27,7 @@ import { startInlineTone, retoneAll } from './src/tone.js';
 import { startStreamFade, streamFadeState } from './src/streamfade.js';
 import { startStreamFollow } from './src/stream-follow.js';
 import { startMainChatRules } from './src/main-chat-rules.js';
+import { startNaturalSlash } from './src/natural-slash.js';
 // 4.1.2: 설정 창(panel.js 와 거기에만 딸린 모듈 24개 · 310KB)은 설정 창을 처음 열 때 불러온다 — 시작할 때 읽는 모듈 64 → 40개.
 let panelApi = null, panelLoading = null;
 // 못 불러오면 기억을 지워 다음에 누를 때 다시 부른다 (실패한 약속을 붙들고 있으면 새로고침 전까지 서랍이 빈 채였다)
@@ -182,6 +183,7 @@ jQuery(() => {
     startNameMarquee(); // 헬퍼 스크립트 이름: 눌러서 긴 이름 끝까지 보기
     startGutterWatch(); // 스크롤하는 칸에만 양쪽 스크롤바 홈 (PC)
     startDraftKeep(); // 입력칸에 쓰다 만 글은 새로고침해도 남는다 (채팅마다 따로)
+    startNaturalSlash({ isEnabled: () => themeEnabled(getSettings()) });
     startCardInk(); // 메시지 안 HTML 카드가 제 배경만 칠했을 때 글자색을 읽히게
     startSelectPop();   // select 를 테마가 그린 목록 팝업으로 (2.5.0)
     startColorPop();    // 색 칸을 테마 색 고르기로 (3.5.0)

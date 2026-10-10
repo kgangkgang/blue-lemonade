@@ -1,6 +1,27 @@
 /* ===== css/04-send-form.css =====
    입력창(ㄴ자 두 줄) · 보내기 · 메시지 삭제 모드 바.
    ===== */
+/* Natural slash command preview: only appears while typing a local command. */
+body.salty #bl-natural-slash {
+  width: 100%;
+  min-width: 0;
+  padding: .4em .55em;
+  margin: 0 0 4px;
+  border: 0;
+  border-radius: var(--bl-r-sm, 8px);
+  background: var(--salty-surface2, transparent);
+  color: var(--salty-text);
+  font: inherit;
+  text-align: start;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+body.salty #bl-natural-slash:disabled { cursor: default; opacity: 1; }
+body.salty #bl-natural-slash[hidden], body:not(.salty) #bl-natural-slash { display: none !important; }
+body.salty #bl-natural-slash:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 2px; }
+body.salty[data-bl-natural-slash] > .autoComplete-wrap:not(.isFloating),
+body.salty[data-bl-natural-slash] > .autoComplete-detailsWrap:not(.isFloating) { display: none !important; }
 /* ---------- 입력창: 선 없이 떠 있는 판 (폰은 ㄴ자 두 줄) ---------- */
 body.salty #form_sheld {
   padding: 0 10px 10px !important;

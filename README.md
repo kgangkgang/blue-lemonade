@@ -1,13 +1,25 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.9.0/blue-lemonade-5.9.0.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.9.1/blue-lemonade-5.9.1.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.9.0 · 최신 업데이트</summary>
+<summary>5.9.1 · 최신 업데이트</summary>
+
+- 채팅 입력칸에 /240번 채팅으로 가기처럼 적으면 화면의 #240 메시지로 이동해요. /맨 위로·/맨 아래로도 사용할 수 있고, 실행 전에 입력칸 위에서 할 일을 확인할 수 있어요. 번호는 화면 표시와 같은 #0부터예요.
+- /대화 검색 약속으로 현재 대화에서 말을 찾고, 같은 명령을 다시 실행하면 다음 결과로 이동해요. /생성 중지는 진행 중인 답변을 멈춰요. / 또는 /도움말을 입력하면 사용 예시가 보여요.
+- 지원하는 명령의 작은 오타도 뜻이 하나로 정해지면 알아들어요. 실행 전에 이동할 위치나 할 일이 표시되고, 여러 뜻으로 읽히면 다시 입력하도록 안내해요. 메시지 번호와 검색어는 임의로 고치지 않아요.
+- 지원하는 명령은 AI에 보내지 않고 바로 처리해요. 기존 실리태번·확장 명령은 그대로 사용할 수 있어요. 없는 메시지 번호나 지원하지 않는 표현은 입력을 지우지 않고 안내해요.
+
+[자연어 명령 사용법](https://kgangkgang.github.io/blue-lemonade/#natural-commands)
+
+</details>
+
+<details>
+<summary>5.9.0 · TTS 일상 효과음</summary>
 
 - TTS 1.5.1에 물 따르기·고양이 골골송·키보드 등 일상 효과음 16개를 추가해 내장 소리가 63개가 됐어요. 단발 동작은 짧게 다듬고, 대사 분석이 문맥에 맞춰 횟수와 재생 길이를 골라요. 대본에서도 직접 조절할 수 있어요.
 - 효과음 보관함에서 소리마다 재생에 사용할지 고를 수 있어요. 끈 소리는 채팅 읽기·대본 재생·WAV 저장에서 빠지고, 선택은 저장돼요. 미리듣기는 따로 사용할 수 있어요.

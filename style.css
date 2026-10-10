@@ -1,6 +1,6 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 63개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 0596591b9b5f) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 63개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 50419e695447) */
 /* css/00-base.css */
-:root{--bl-release:"5.9.0";}
+:root{--bl-release:"5.9.1";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -1234,6 +1234,26 @@ font-size:var(--bl-fs-sub);
 font-weight:500;
 }
 /* css/04-send-form.css */
+body.salty #bl-natural-slash {
+  width: 100%;
+  min-width: 0;
+  padding: .4em .55em;
+  margin: 0 0 4px;
+  border: 0;
+  border-radius: var(--bl-r-sm, 8px);
+  background: var(--salty-surface2, transparent);
+  color: var(--salty-text);
+  font: inherit;
+  text-align: start;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+body.salty #bl-natural-slash:disabled { cursor: default; opacity: 1; }
+body.salty #bl-natural-slash[hidden], body:not(.salty) #bl-natural-slash { display: none !important; }
+body.salty #bl-natural-slash:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 2px; }
+body.salty[data-bl-natural-slash] > .autoComplete-wrap:not(.isFloating),
+body.salty[data-bl-natural-slash] > .autoComplete-detailsWrap:not(.isFloating) { display: none !important; }
 body.salty #form_sheld {
   padding: 0 10px 10px !important;
   background: transparent !important;

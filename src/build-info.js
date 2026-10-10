@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "5.9.0";
+export const BUILD_VERSION = "5.9.1";
 export const FILE_HASHES = {
-  "index.js": "16597:c1d2cd7e:c67267bf",
-  "manifest.json": "365:f07b4ae7:6f064cc5",
+  "index.js": "16730:cd15e850:f32659bb",
+  "manifest.json": "365:189154d8:5f92abb9",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -350,7 +350,8 @@ export const FILE_HASHES = {
   "src/mes-fold.js": "15171:6c96c017:9e152087",
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/modal.js": "671:b74e0164:71228d7c",
-  "src/notice-data.js": "171490:c5fbedf3:cd548c31",
+  "src/natural-slash.js": "17591:c1a782d0:a654c101",
+  "src/notice-data.js": "172596:21007c79:5bd33d5e",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "1144:1da72451:b2e66e80",
@@ -418,5 +419,5 @@ export const FILE_HASHES = {
   "src/weather.js": "32976:f4fdcf09:3273a2b9",
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "31850:337f1677:b8ad9253",
-  "style.css": "1227549:1c9d0796:10810dcf"
+  "style.css": "1228355:764b87de:954bf221"
 };
