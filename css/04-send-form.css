@@ -209,8 +209,10 @@ body.salty #leftSendForm > :where(div:not(#options_button, #extensionsMenuButton
   max-width: var(--bottomFormBlockSize);
 }
 /* 색 · 바탕은 약하게(0,1,1): 확장이 id 나 클래스 둘로 정한 켜짐 색 · 바탕은 그대로 이김
-   (위와 같은 이유로 아이콘 버튼에만 — 확장 '창'의 바탕 · 테두리까지 지우면 글자가 채팅 위에 떠 버린다) */
-body.salty :where(#nonQRFormItems > :not(#leftSendForm, #rightSendForm, #send_textarea, #jj-button, #jj-popup, textarea, input, select, .autoComplete-wrap, [role="dialog"], [role="menu"], [popover]):is(.fa-solid, .fa-regular, .fa-brands, :empty, :has(> :is(i, svg, img):only-child))) {
+   (위와 같은 이유로 아이콘 버튼에만 — 확장 '창'의 바탕 · 테두리까지 지우면 글자가 채팅 위에 떠 버린다)
+   5.8.4: 부모 칸을 :where(#nonQRFormItems) > 로 밖에 꺼냈다 (뜻 · 특이도 (0,1,1) 그대로) — 전엔 부모 확인까지 :where 안이라 크롬이 문서의 모든 요소에
+   :not 열두 개 · :has 를 맞춰 봤다(스트리밍 한 걸음 선택자 비용 1위). 이제 조상 블룸 필터가 #nonQRFormItems 밖의 요소를 바로 걸러 낸다 */
+body.salty :where(#nonQRFormItems) > :where(:not(#leftSendForm, #rightSendForm, #send_textarea, #jj-button, #jj-popup, textarea, input, select, .autoComplete-wrap, [role="dialog"], [role="menu"], [popover]):is(.fa-solid, .fa-regular, .fa-brands, :empty, :has(> :is(i, svg, img):only-child))) {
   color: var(--salty-muted);
   background-color: transparent;
   border: 0;

@@ -63,6 +63,7 @@ jobs:
           node tools/tests/mix-selection.mjs .
           node tools/tests/capture-motion.mjs .
           node tools/tests/capture-filter.mjs .
+          node tools/tests/capture-editor.mjs .
           node tools/tests/capture-resources.mjs
           node tools/tests/weather-budget.mjs
           node tools/tests/weather-styles.mjs .

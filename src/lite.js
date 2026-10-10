@@ -209,15 +209,28 @@ export function quickOpen(skipClass = '') {
     for (const el of document.body.children) if (el.tagName === 'DIALOG' && el.open && !(skipClass && el.classList.contains(skipClass))) return true;
     return false;
 }
-function uiOpen() {
-    if (quickOpen()) return true;
-    if (document.querySelector('.openDrawer, dialog[open]')) return true;
+// 5.8.4: 서랍 · dialog 는 class · open 만 본다 (스타일 계산 없음). 옛 팝업은 상자가 있는지(getClientRects)라 스타일 · 배치를 센다 — 따로 뗐다
+function uiOpenQuick() {
+    return quickOpen() || !!document.querySelector('.openDrawer, dialog[open]');
+}
+function legacyOpen() {
     for (const el of document.querySelectorAll(LEGACY_POPUPS)) if (el.getClientRects().length) return true;
     return false;
 }
-function syncPanelCss() {
+let panelFrame = 0;
+function syncPanelCss(inFrame = false) {
     if (!panelStyle) return;
-    const want = uiOpen();
+    const quick = uiOpenQuick();
+    // 5.8.4: 끄는 쪽(켜져 있는데 서랍 · dialog 가 다 닫힘)의 옛 팝업 검사는 다음 프레임 맨 앞(requestAnimationFrame)에서 한다.
+    // 클릭 마이크로태스크 · 끄기 타이머에서 getClientRects 를 부르면 서랍을 닫으며 바뀐 스타일을 그 자리에서 강제로 셌고, 그 뒤 다른 코드가 또 바꾸면
+    // 프레임이 한 번 더 셌다 (폰 리그 4배 서랍 16번 여닫기에 강제 스타일 1.49 s · 배치 0.17 s). 프레임 맨 앞에서 읽으면 그 프레임이 어차피 할 계산과 하나로 묶인다.
+    // 켜는 판정과 그 순간은 그대로다(그리기 전에 바로). 끄는 순간만 프레임 몇 개 안팎으로 옮겨질 수 있다 — 무엇이 열려 있는 동안엔 끄지 않고,
+    // 닫힌 것을 본 뒤 offDelay() 를 기다려 끄는 규칙도 같아서 보이는 것이 없다. 숨은 탭(프레임이 오지 않음)은 예전 그대로 바로 본다.
+    if (!quick && panelOn && inFrame !== true && !document.hidden) {
+        if (!panelFrame) panelFrame = requestAnimationFrame(() => { panelFrame = 0; syncPanelCss(true); });
+        return;
+    }
+    const want = quick || legacyOpen();
     if (want) closedSeen = 0;
     if (want === panelOn) return;
     if (!want) {

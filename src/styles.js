@@ -131,6 +131,7 @@ export const PRESETS = [
             type: { ...structuredClone(DEFAULTS.type), size: 15, lineHeight: 1.65, letterSpacing: -1, para: 0.7, indent: false, align: 'left' },
             dialogue: { ...structuredClone(DEFAULTS.dialogue), style: 'tint', weight: 500 },
             chat: { user: 'bubble', char: 'bubble', bubbleSplit: 'para', header: 'full', userSize: 96, userInk: 100 }, // 5.8.2: 캐릭터도 말풍선 · 엔터 두 번마다 나누기 (메신저 모양 그대로)
+            userProfile: { nameRowAlign: 'right' }, // 5.8.4: 내 이름·시간 · 번호 줄도 말풍선 쪽(오른쪽)으로 — 이 칸만 덮는다 (applyStyleData 가 아는 칸만 합침, 이미 쓰던 사람은 다시 입힐 때만)
         }),
     },
     {

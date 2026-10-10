@@ -12,8 +12,13 @@ function selectedInScope() {
     return !!(selection && !selection.isCollapsed &&
         (inside(selection.anchorNode) || inside(selection.focusNode)));
 }
+// 5.8.4: 데우스 감정 효과 글(.custom-dem-expressive)이 하나도 없으면 멈춤 표시를 켜지 않는다 — 규칙 끝의 ' *' 때문에 body 속성을
+// 바꿀 때마다 문서 전체 스타일을 다시 셌다 (폰 리그 4배 한 번 370~590 ms, 터치마다 두 번). 효과 글이 있으면 5.8.3 그대로.
+// 입력칸에서 칠 때(typingOutside)는 목록도 안 센다 — 글이 바뀐 뒤 첫 .length 는 문서를 한 번 훑는다.
+const fx = document.getElementsByClassName('custom-dem-expressive'); // 살아 있는 목록
 function update() {
-    document.body.toggleAttribute('data-bl-dem-selecting', pressing || selectedInScope());
+    const on = (pressing || !typingOutside(document.activeElement)) && fx.length > 0 && (pressing || selectedInScope());
+    document.body.toggleAttribute('data-bl-dem-selecting', on); // 같은 상태면 바뀌는 것 없음
 }
 function down(event) {
     if (document.body.classList.contains('cg-previewing')) return;

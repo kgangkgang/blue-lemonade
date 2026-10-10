@@ -409,7 +409,7 @@ body.salty.salty-char-bubble.salty-bubble-para :is(#chat, #salty-nochat, .salty-
 body.salty.salty-char-bubble.salty-bubble-para :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="false"]:not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])) .mes_text > details:not([class]) > summary:empty ~ :is(details.custom-llm-translator-details, details.llm-translator-details) > summary > p:not(:has(img, video, iframe, canvas, picture, [data-autopic-slot])),
 body.salty.salty-char-bubble.salty-bubble-para :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="false"]:not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])) .mes_text > details:not([class]) > summary:empty ~ :is(details.custom-llm-translator-details, details.llm-translator-details) > p:not(:has(img, video, iframe, canvas, picture, [data-autopic-slot])) {
   width: fit-content !important;
-  max-width: 86% !important;
+  max-width: var(--bl-cb-max, 86%) !important; /* 5.8.4: 정보 정렬 오른쪽 · 가운데면 글 칸이 이미 말풍선 칸(최대 86%)이라 100% (css/62-name-row-align) */
   margin-bottom: var(--bl-cb-gap, 6px) !important; /* 말풍선 사이 간격 (문단 간격 대신) */
   padding: 7px 14px 8px var(--bl-cb-pad-start, 14px) !important;
   background: var(--bl-cb-fill, var(--salty-char-bubble-bg, var(--salty-raised))) !important; /* 글자색 그라데이션이면 gradients.js 가 '그라데이션, 면 색' 두 겹을 준다 */
@@ -492,7 +492,7 @@ body.salty.salty-char-bubble .salty-preview[data-prev="chat"] .mes[is_user="fals
    · 첫 줄 들여쓰기 · 문단 간격은 보통 화면 그대로 (말풍선 하나 안의 문단이니까). 줄 나눔은 앞에서부터 채우기 — 문단 말풍선과 같은 이유. */
 body.salty.salty-char-bubble.salty-bubble-whole :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="false"]:not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])) .mes_text:not(:empty, :has(> .edit_textarea), .mes[is_system="true"] > .mes_block > .mes_text:has(> details:not([class], [open]) > summary:empty)) {
   width: fit-content !important;
-  max-width: 86% !important;
+  max-width: var(--bl-cb-max, 86%) !important; /* 5.8.4: 정보 정렬 오른쪽 · 가운데면 글 칸이 이미 말풍선 칸(최대 86%)이라 100% (css/62-name-row-align) */
   padding: 9px 16px 11px !important;
   background: var(--bl-cb-fill, var(--salty-char-bubble-bg, var(--salty-raised))) !important;
   -webkit-background-clip: var(--bl-cb-clip, border-box) !important;

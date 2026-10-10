@@ -197,7 +197,7 @@ function writeRoot({root,quotes,starts}){
 export function syncTypography(on) {
     if(active===on)return;active=on;
     if(!on){
-        observer?.disconnect();observer=null;clearTimeout(timer);dirty.clear();
+        observer?.disconnect();observer=null;clearTimeout(timer);timer=0;dirty.clear();
         for(const [node,value] of originals){
             if(!node.isConnected)continue;
             if(node.textContent===value.after&&(!value.lead||value.lead.textContent===value.prefix)){
@@ -215,7 +215,12 @@ export function syncTypography(on) {
     const chat=document.getElementById('chat');if(!chat)return;
     // 4.7.8: 답이 오는 동안(body[data-generating]) 그 메시지는 걸음마다 다시 그려지므로 조판해 봐야 다음 걸음에 사라진다 —
     // 생성 중에는 표시줄 뒤 빈 줄만 정리하고, 나머지 조판은 답이 끝나면 한 번에 처리한다.
-    const flush=()=>{timer=0;if(document.body.dataset.generating==='true'){for(const root of dirty)if(root?.isConnected){normalizeTrackerSpacing(root);restoreDialogueTildes(root);}timer=setTimeout(flush,400);return;}typesetRoots([...dirty].filter(root=>root?.isConnected));dirty.clear();observer?.takeRecords();};
+    // 5.8.4: 변화마다 clearTimeout + setTimeout 하던 것을 타이머 하나 + 마감 시각(due)으로 — 변화가 오면 마감만 뒤로 민다 (성능 보조가 타이머를 감싸 조각마다 값이 났다).
+    // 걸린 타이머가 마감보다 먼저 울리면 남은 만큼 다시 건다 → 마지막 변화 120ms 뒤(생성 중 다시 보기는 400ms 뒤)에 도는 것은 같다. 마감보다 늦게 울릴 타이머면 예전처럼 다시 건다.
+    let due=0,timerAt=0;
+    const fire=()=>{timer=0;const left=due-performance.now();if(left>0.5){timerAt=due;timer=setTimeout(fire,left);return;}flush();};
+    const later=ms=>{due=performance.now()+ms;if(timer&&timerAt<=due)return;clearTimeout(timer);timerAt=due;timer=setTimeout(fire,ms);};
+    const flush=()=>{timer=0;if(document.body.dataset.generating==='true'){for(const root of dirty)if(root?.isConnected){normalizeTrackerSpacing(root);restoreDialogueTildes(root);}later(400);return;}typesetRoots([...dirty].filter(root=>root?.isConnected));dirty.clear();observer?.takeRecords();};
     observer=new MutationObserver(records=>{
         const generating=document.body.dataset.generating==='true',now=new Set(),touched=new Set();
         for(const record of records){
@@ -232,7 +237,7 @@ export function syncTypography(on) {
         // 들여쓰기 칸을 넣고 뺀 기록도 버린다 (우리가 만든 것뿐 — 이 메시지는 이미 dirty 에 있다)
         let padded=false;for(const root of touched)if(root.isConnected&&markAssetBreaks(root))padded=true;
         if(padded)observer.takeRecords();
-        clearTimeout(timer);timer=setTimeout(flush,120);
+        later(120);
     });
     observer.observe(chat,{childList:true,subtree:true,characterData:true});
 }

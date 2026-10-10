@@ -4265,14 +4265,14 @@ function getSourceName(kind, page, idPfx) {
 }
 
 // ── Panel ──────────────────────────────────────────────────────────────
-function dockPanel() {
+function dockPanel({ sync = true } = {}) {
     const panel = PDOC.getElementById('pt-panel');
     const host = PDOC.getElementById('pt-drawer-host');
     if (!panel || !host) return;
     host.append(panel);
     panel.classList.remove('pt-hidden');
     panel.classList.add('pt-in-drawer');
-    syncDrawerPages();
+    if (sync) syncDrawerPages();
 }
 let drawerPagesVisible = null;
 function syncDrawerPages() {
@@ -4657,7 +4657,10 @@ export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
     PDOC.querySelector('.pt-settings-nav [data-setting-tab="connection"]')?.addEventListener('click',openModelSettings);
     PDOC.getElementById('pt-panel')?.addEventListener('pt:opened',()=>{if(PDOC.getElementById('pt-page-settings')?.classList.contains('active'))openModelSettings();});
 
-    dockPanel();
+    // 5.8.4: 시작할 때는 보이는지 재지 않는다 — 막 만든 쪽 목록은 비어 있어 재워도 깨워도 할 일이 없는데, getClientRects 가
+    // 부팅 중 레이아웃을 그 자리에서 강제로 셌다 (폰 리그 4배 부팅 꼬리 syncDrawerPages 30~40 ms). 첫 재기는 아래 서랍 감시가 한다
+    // (drawerPagesVisible 이 null 이라 그때 처음 맞춤 — 결과는 전과 같다)
+    dockPanel({ sync: false });
     const drawerContent = PDOC.getElementById('pt-drawer-host').parentElement;
     // Watch only the local drawer and ST extension drawer boundaries;
     // watching every ancestor up to <html>

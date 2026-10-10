@@ -10,6 +10,9 @@ function mediaOf(node){
 function markupOf(text){
  if(!text)return undefined;
  const copy=text.cloneNode(true);
+ // 5.8.4: 화면 밖에서 멈춘 데우스 감정 효과 표시(data-bl-fx-off, dem-expressive.js)도 뺀다 — 스크롤만으로 바뀌고, 파일 만들기는 시작할 때(holdFx) 전부 떼서
+ // 효과 글이 화면 밖일 때 편집을 시작하면 '채팅 표시가 바뀌었어요'로 막혔다 (capture-options.js baseKey 도 같은 표시를 빼고 본다)
+ for(const el of copy.querySelectorAll('[data-bl-fx-off]'))el.removeAttribute('data-bl-fx-off');
  for(const el of copy.querySelectorAll('[style],[class]')){
   if(el.style&&el.hasAttribute('style')){for(const name of [...el.style].filter(n=>n.startsWith('--salty-')))el.style.removeProperty(name);const css=el.style.cssText;css?el.setAttribute('style',css):el.removeAttribute('style');}
   if(el.classList&&el.hasAttribute('class')){el.classList.remove('salty-asset','salty-cutout');if(!el.classList.length)el.removeAttribute('class');}

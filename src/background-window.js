@@ -12,6 +12,7 @@ let audio = null, hum = null;
 function startHum() {
     try {
         audio ??= new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'playback' }); // 안 들리는 소리라 지연은 상관없다 — 큰 버퍼로 덜 깨운다
+        if (hum && audio.state === 'running') return; // 5.8.4: 이미 소리를 내는 중(답을 기다리며 또 누름)이면 그대로 — 돌고 있는 소리판의 resume() 은 하는 일이 없다
         audio.resume?.();
         if (hum) return;
         const osc = audio.createOscillator(), gain = audio.createGain();
@@ -77,6 +78,12 @@ function closeWindow() {
     video?.pause();
 }
 
+// 5.8.4: 편집 확정 단추가 보이나 — jQuery(':visible' 두 개)로 문서를 훑던 것을 네이티브로 찾고, 찾은 것만 jQuery 와 같은 판정(상자 크기 · 상자 수)으로 본다. 하나 보이면 멈춤
+const EDIT_DONE = '.mes_edit_done, .mes_reasoning_edit_done';
+function editOpen() {
+    for (const el of document.querySelectorAll(EDIT_DONE)) if (el.offsetWidth || el.offsetHeight || el.getClientRects().length) return true;
+    return false;
+}
 function arm() { Object.assign(state, { phase: 'working', chars: 0, since: Date.now(), preview: '' }); lastSign = Date.now(); openWindow(); }
 function onTap(event) {
     if (event.target?.closest?.('.qr--button-expander,.ctx-expander') || document.body.classList.contains('salty') && event.target?.closest?.('.qr--hasCtx')) return;
@@ -92,7 +99,7 @@ function onKey(event) {
     const sendOnEnter = () => !c?.shouldSendOnEnter || c.shouldSendOnEnter();
     if (event.altKey) return arm();
     if (event.ctrlKey) {
-        if (jQuery('.mes_edit_done:visible, .mes_reasoning_edit_done:visible').length) return; // 편집 확정
+        if (editOpen()) return; // 편집 확정
         if (jQuery('#send_textarea').val() !== '' && !sendOnEnter()) return;
         return arm();
     }

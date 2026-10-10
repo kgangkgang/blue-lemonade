@@ -2398,9 +2398,15 @@ export function init() {
     // 5.6.4 클릭이 우리 쪽에 오지 않는 길: 서랍이 펼쳐진 채 실리태번 확장 창을 다시 열 때 (창의 class 가 openDrawer 로 바뀜),
     // 그 밖에 목소리 탭의 크기가 0 → 보임으로 바뀔 때 (ResizeObserver — 그리기 전에 불린다. 숨은 탭에선 안 불려서 class 감시를 따로 둔다)
     const extBlock = document.getElementById('rm_extensions_block');
+    // 1.4.5: 보이는지 확인(paneShown 의 getClientRects)은 다음 프레임 맨 앞에서 한 번 — class 가 바뀐 마이크로태스크에서 읽으면 서랍을 펼치며 바뀐 스타일을
+    // 그 자리에서 강제로 셌다 (폰 리그 4배 서랍 16번 여닫기에 0.1 s). 프레임 맨 앞도 그리기 전이라 펼친 첫 화면은 같다. 숨은 탭(프레임이 오지 않음)은 예전처럼 바로.
     if (extBlock && typeof MutationObserver === 'function') {
-        new MutationObserver(() => { if (chatDirty && voicesShown()) ensureFresh(); if (settingsShown()) onShown(); })
-            .observe(extBlock, { attributes: true, attributeFilter: ['class'] });
+        let shownFrame = 0;
+        const check = () => { shownFrame = 0; if (chatDirty && voicesShown()) ensureFresh(); if (settingsShown()) onShown(); };
+        new MutationObserver(() => {
+            if (document.hidden || typeof requestAnimationFrame !== 'function') { check(); return; }
+            if (!shownFrame) shownFrame = requestAnimationFrame(check);
+        }).observe(extBlock, { attributes: true, attributeFilter: ['class'] });
     }
     // 1.3.7 엔진 탭이 0 → 보임 (서랍을 펼침 · 확장 창을 엶 · 탭을 바꿈): 모델 목록이 오래됐으면 조용히 받아 봄 (닫힌 채 그릴 땐 크기 0 이라 안 함)
     const enginePane = q('#lv_pane_engine');

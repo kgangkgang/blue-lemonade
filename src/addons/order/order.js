@@ -160,6 +160,20 @@ function hideEmptyColumn() {
     col.style.display = sequenceOf(col).length ? '' : 'none';
 }
 
+/** 5.8.4: 서로 다른 수의 줄에서 가장 긴 증가 부분 줄(LIS)에 든 값들 */
+function longestRun(values) {
+    const ends = [], prev = new Array(values.length);
+    for (let i = 0; i < values.length; i++) {
+        let lo = 0, hi = ends.length;
+        while (lo < hi) { const mid = (lo + hi) >> 1; if (values[ends[mid]] < values[i]) lo = mid + 1; else hi = mid; }
+        prev[i] = lo ? ends[lo - 1] : -1;
+        ends[lo] = i;
+    }
+    const out = new Set();
+    for (let i = ends.length ? ends[ends.length - 1] : -1; i >= 0; i = prev[i]) out.add(values[i]);
+    return out;
+}
+
 /** 한 칸을 원하는 차례로 맞춘다. 앞에서부터 이미 맞는 만큼은 건드리지 않는다 (다 떼었다 붙이면 글 쓰던 칸의 초점과 한글 조합이 날아간다).
  *  돌려주는 값: 실제로 옮긴 것이 있는지 */
 function reconcile(col, wantedPanels, wantedNodes) {
@@ -167,10 +181,22 @@ function reconcile(col, wantedPanels, wantedNodes) {
     let same = 0;
     while (same < now.length && same < wantedPanels.length && now[same] === wantedPanels[same]) same++;
     if (same === now.length && same === wantedPanels.length) return false;
-    // 어긋나는 지점부터만 다시 붙인다 (appendChild 는 옮기기라 원래 자리에서 빠진다 — 다른 칸에 있던 창도 이리로 온다)
-    const frag = document.createDocumentFragment();
-    for (let i = same; i < wantedNodes.length; i++) frag.appendChild(wantedNodes[i]);
-    col.appendChild(frag);
+    // 어긋나는 지점부터의 마디를 칸 맨 뒤에 원하는 차례로 둔다 (다른 칸 · 칸막이 안에 있던 창도 이리로 온다).
+    // 5.8.4: 예전엔 그 마디를 모두 떼었다 붙였다 — 부팅 중 늦게 붙는 창 하나마다 그 뒤의 창 전부(정규식 창만 2천 요소)를 다시 옮겼다
+    // (폰 리그 4배 부팅 꼬리 reconcile 65~95 ms). 끝난 모양은 예전과 똑같다: 칸 맨 뒤에 이미 그 차례로 서 있는 마디는 그대로 두고 나머지만 그 사이에 끼운다.
+    // 맨 뒤 구간(옮길 마디만 있는 곳)만 그대로 둘 수 있다 — 그 앞의 옮기지 않는 마디(원하는 목록에 없는 것)는 옮긴 마디들보다 앞에 남아야 하니까
+    const moving = wantedNodes.slice(same);
+    const rank = new Map(moving.map((node, i) => [node, i]));
+    const kids = col.children;
+    let tail = kids.length;
+    while (tail > 0 && rank.has(kids[tail - 1])) tail--;
+    const stay = longestRun(Array.from({ length: kids.length - tail }, (_, i) => rank.get(kids[tail + i])));
+    // 뒤에서부터: 그대로 둘 마디는 다음 기준만 되고, 나머지는 바로 뒤 마디 앞에 (마지막 마디는 칸 맨 뒤에)
+    let next = null;
+    for (let i = moving.length - 1; i >= 0; i--) {
+        if (!stay.has(i)) col.insertBefore(moving[i], next);
+        next = moving[i];
+    }
     // 남은 창(원하는 목록에 없는 것)은 뒤에 그대로 붙어 있으므로 다음 칸의 reconcile 이 가져간다
     return true;
 }

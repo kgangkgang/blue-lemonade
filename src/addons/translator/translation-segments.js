@@ -329,7 +329,18 @@ const ECHO_ARROW_HEAD = new RegExp(String.raw`^\s*${ECHO_ARROW}`);
 /** 모양이 망가진 번호 표시 ⟦1 Vere] · ⟦1] · ⟦ 1 ⟧ · 닫는 괄호 없는 ⟦1 — ⟦ 는 본문에 나올 일이 없다 (묶음 요청에서만 붙인다) */
 const LOOSE_MARK = /^[ \t]*⟦[ \t]*(\d+)(?!\d)(?:[^⟧\]\[\n]{0,40}?[⟧\]])?[ \t]*[:：]?[ \t]*/;
 const LOOSE_MARK_LINES = new RegExp(LOOSE_MARK.source.replace('^[ \\t]*', '^([ \\t]*)'), 'gm');
-const echoKey = text => String(text ?? '').normalize('NFKC').replace(/<[^>]*>|\[\[__VAR_\d+__\]\]/g, '').replace(/[^\p{L}\p{N}]+/gu, '').toLowerCase();
+// [2.3.1] 같은 글의 키는 한 번만 만든다 — 답 끝 hasSourceEcho 가 번역 덩이 × 원문 문단마다 같은 문단 · 문장을 거듭 정규화했다 (폰 리그 4배 45 ms).
+//         글 자체를 열쇠로 기억하므로(글이 바뀌면 다른 칸) 결과는 늘 같고, 지금 도는 일이 끝나면(다음 마이크로태스크) 비워 오래 들고 있지 않는다.
+const echoKeys = new Map();
+const echoKey = text => {
+    const s = String(text ?? '');
+    let key = echoKeys.get(s);
+    if (key !== undefined) return key;
+    key = s.normalize('NFKC').replace(/<[^>]*>|\[\[__VAR_\d+__\]\]/g, '').replace(/[^\p{L}\p{N}]+/gu, '').toLowerCase();
+    if (!echoKeys.size) queueMicrotask(() => echoKeys.clear());
+    if (echoKeys.size < 4096) echoKeys.set(s, key);
+    return key;
+};
 const SCRIPTS = [['hangul', /\p{Script=Hangul}/gu], ['cjk', /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/gu], ['latin', /\p{Script=Latin}/gu], ['cyrillic', /\p{Script=Cyrillic}/gu]];
 /** 가장 많은 글자 갈래 (원문 언어 ≠ 번역 언어인지 가늠 — 번역 언어를 몰라도 된다) */
 const scriptOf = key => {

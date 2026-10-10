@@ -37,4 +37,21 @@ const selectors=[...css.matchAll(/([^{}]+)\{/g)].flatMap(m=>splitTop(m[1])).map(
 assert.ok(selectors.length>10);
 for(const sel of selectors)assert.match(sel,/salty-(?:user-)?namerow-|salty-user-meta-center/,'every rule needs an opt-in class: '+sel.slice(0,80));
 assert.ok(fs.readFileSync(path.join(root,'style.css'),'utf8').includes('salty-user-namerow-right'),'style.css is built with the module');
-console.log('PASS name row align: defaults, carry-over, routes, labels, opt-in CSS');
+// 5.8.4 메신저 스타일: 내 정보 정렬만 오른쪽으로 (다른 내 프로필 칸 · 캐릭터 쪽은 그대로, 프로필 잠금이면 그대로, 되돌리기 · 코드 왕복)
+const {PRESETS,applyStyleData,captureStyle,sharePayload,encodeStyle,decodeStyle}=await import(pathToFileURL(path.join(root,'src/styles.js')));
+const messenger=PRESETS.find(p=>p.id==='messenger');
+assert.deepEqual(messenger.data().userProfile,{nameRowAlign:'right'});
+for(const p of PRESETS.filter(p=>p.id!=='messenger'))assert.equal(p.data().userProfile,undefined,`${p.id} leaves the user profile alone`);
+s=load(structuredClone(DEFAULTS));s.userProfile.mode='small';s.userProfile.side='left';s.userProfile.nameSize=19;s.profile.nameRowAlign='center';
+const before=captureStyle(s);
+applyStyleData(s,messenger.data());
+assert.equal(s.userProfile.nameRowAlign,'right');assert.equal(s.userProfile.mode,'small');assert.equal(s.userProfile.side,'left');assert.equal(s.userProfile.nameSize,19);
+assert.equal(s.profile.nameRowAlign,'center','the character side is not touched');
+assert.equal(s.chat.user,'bubble');
+applyStyleData(s,before);assert.equal(s.userProfile.nameRowAlign,'left','undo restores the old alignment');
+s.settingLocks.profile=true;applyStyleData(s,messenger.data());assert.equal(s.userProfile.nameRowAlign,'left','a profile lock keeps the alignment');
+s.settingLocks.profile=false;
+const shared=await decodeStyle(await encodeStyle(sharePayload('메신저',messenger.data(),s)));
+assert.deepEqual(shared.style.userProfile,{nameRowAlign:'right'},'a partial user profile survives the share code');
+applyStyleData(s,shared.style);assert.equal(s.userProfile.nameRowAlign,'right');
+console.log('PASS name row align: defaults, carry-over, routes, labels, opt-in CSS, messenger preset');

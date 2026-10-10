@@ -319,18 +319,84 @@ function queuePick(img) {
 // 최대 높이 · 높이 맞춤 · 배치 · 아바타에 따라 원래 크기와 달라서, 대각선 자른 선 · 흐림 폭 · 아치 높이가 실제 크기를 따라가게 함.
 // 크기가 바뀔 때만 불리고 마스크 · 위아래 여백만 바뀌니 다시 불리지 않음.
 // 자동 색은 여기서 받은 크기로 잘림을 계산한다 (clientWidth 를 읽지 않아 강제 레이아웃이 없음)
+const SIZE_VARS = ['--salty-iw', '--salty-ih', '--salty-imin', '--salty-rar'];
+function writeSize(host, width, height) {
+    setVar(host, '--salty-iw', `${width.toFixed(1)}px`);
+    setVar(host, '--salty-ih', `${height.toFixed(1)}px`);
+    setVar(host, '--salty-imin', `${Math.min(width, height).toFixed(1)}px`);
+    setVar(host, '--salty-rar', (width / height).toFixed(3));
+}
+
+// 5.8.4: 답이 오는 동안 같은 그림이 걸음마다 새 <img> 로 다시 그려진다 — 캐릭터 에셋이 {{img::…}} 글을 그림으로 바꾸고,
+// 다음 걸음에 본문이 다시 그려지면 글로 돌아갔다가 또 새 그림이 된다 (정규식 그림 틀도 걸음마다 새 틀).
+// 새 그림은 관찰자가 그린 뒤에야 크기 변수를 넣어서, 걸음마다 스타일 · 레이아웃을 한 번 더 했다 (폰 리그 걸음마다 ~11 ms + 레이아웃).
+// 그래서 방금 문서에서 빠진 같은 주소 그림의 마지막 크기를 새 틀에 미리 넣는다. 관찰자는 그리기 전에 실제 크기를 주므로
+// 같으면 아무것도 안 바꾸고(두 번째 계산 없음), 다르면 예전처럼 그 자리에서 고쳐 쓴다 → 화면에 그려지는 값은 늘 예전과 같다.
+// 관찰자가 크기를 못 주면(안 보이는 그림 · 크기 0 · 그 전에 빠짐 · 틀이 바뀜) 미리 넣은 값을 지워 예전 상태(변수 없음)로 되돌린다.
+// 자동 색이 쓰는 boxes 는 미리 채우지 않는다 — 색 뽑기 순서(처음엔 전체 격자, 크기를 받은 뒤 잘린 범위)는 예전 그대로.
+// 빠진 그림은 WeakRef 로만 기억한다 (채팅을 바꿀 때 빠진 메시지 DOM 을 붙잡지 않게). 없는 브라우저는 예전 그대로.
+const canSeed = typeof WeakRef === 'function' && typeof WeakSet === 'function' && !!boxes;
+const lastSize = new Map(); // 주소 → { ref: WeakRef<img>, w, h }: 관찰자가 마지막으로 준 크기 (PROBE_MAX 개까지, 쓴 것은 맨 뒤로)
+const seeded = new Map(); // 크기를 미리 넣고 관찰자를 기다리는 그림 → { host, tick, values }
+const realHosts = canSeed ? new WeakSet() : null; // 관찰자가 실제로 크기를 넣은 틀 (되돌릴 때 건드리지 않음)
+let seedTick = 0;
+let seedFrame = 0;
+function unseed(img) {
+    const seed = seeded.get(img);
+    if (!seed) return;
+    seeded.delete(img);
+    if (realHosts?.has(seed.host)) return;
+    for (const name of SIZE_VARS) if (seed.host.style.getPropertyValue(name) === seed.values[name]) seed.host.style.removeProperty(name);
+}
+// 한 번 그려진 뒤(rAF 두 번)에도 관찰자가 크기를 안 준 그림은 되돌린다 — 관찰자는 그 프레임의 레이아웃 뒤, 그리기 전에 부른다
+function seedWatch() {
+    seedFrame = 0;
+    seedTick++;
+    for (const [img, seed] of seeded) if (seedTick - seed.tick >= 2) unseed(img);
+    if (seeded.size) seedFrame = requestAnimationFrame(seedWatch);
+}
+function seedSize(img, host) {
+    if (!sized || !canSeed || boxes.has(img) || seeded.has(img)) return; // 이미 크기를 받은 그림(주소만 바뀐 같은 요소)은 예전 그대로
+    // 그리기 전에 다시 빠진 그림(탭이 숨어 프레임이 없는 동안 쌓인 것)은 지금 되돌린다 — 관찰자는 빠진 그림의 크기를 주지 않는다
+    for (const old of seeded.keys()) if (!old.isConnected) unseed(old);
+    const key = img.currentSrc || img.src;
+    const last = lastSize.get(key);
+    const before = last?.ref.deref();
+    // 같은 그림이 문서에 아직 있으면 다른 자리라 크기가 다를 수 있다 → 미리 넣지 않음
+    if (!last || before === img || before?.isConnected) return;
+    if (SIZE_VARS.some((name) => host.style.getPropertyValue(name))) return; // 틀에 이미 크기가 있으면 손대지 않는다
+    writeSize(host, last.w, last.h);
+    const values = {};
+    for (const name of SIZE_VARS) values[name] = host.style.getPropertyValue(name);
+    seeded.set(img, { host, tick: seedTick, values });
+    if (!seedFrame) seedFrame = requestAnimationFrame(seedWatch);
+}
+
 const sized = typeof ResizeObserver === 'function' ? new ResizeObserver((entries) => {
     for (const { target: img, contentRect: { width, height } } of entries) {
+        const seed = seeded.get(img);
         if (!img.isConnected) {
+            if (seed) unseed(img);
             sized.unobserve(img); // 채팅에서 빠진 그림
             continue;
         }
-        if (!width || !height) continue;
+        if (!width || !height) {
+            if (seed) unseed(img);
+            continue;
+        }
         const host = img.closest(HOST) || img;
-        setVar(host, '--salty-iw', `${width.toFixed(1)}px`);
-        setVar(host, '--salty-ih', `${height.toFixed(1)}px`);
-        setVar(host, '--salty-imin', `${Math.min(width, height).toFixed(1)}px`);
-        setVar(host, '--salty-rar', (width / height).toFixed(3));
+        if (seed) {
+            if (seed.host !== host) unseed(img); // 크기를 받기 전에 틀이 바뀜 (오토픽이 감쌈) → 옛 틀은 예전처럼 변수 없음
+            else seeded.delete(img);
+        }
+        writeSize(host, width, height);
+        if (canSeed) {
+            realHosts.add(host);
+            const key = img.currentSrc || img.src;
+            lastSize.delete(key);
+            lastSize.set(key, { ref: new WeakRef(img), w: width, h: height });
+            if (lastSize.size > PROBE_MAX) lastSize.delete(lastSize.keys().next().value);
+        }
         const prev = boxes?.get(img);
         boxes?.set(img, { w: width, h: height });
         // 첫 실제 크기이거나 비율이 5% 넘게 바뀐 때만 다시 뽑는다 (회전 · 주소창 접힘)
@@ -355,6 +421,9 @@ function classify(img) {
     host.classList.add('salty-asset');
     sized?.observe(img);
     paintPick(img, host, rec); // 테두리 자동 색 (테두리를 안 켜면 CSS 가 이 변수를 안 읽으니 그냥 남아 있음)
+    // 5.8.4: 걸음마다 새로 그려지는 같은 그림 — 크기 변수를 첫 스타일 계산 전에. 색 변수 뒤에 넣어 style 속성의 순서도
+    // 관찰자가 나중에 덧붙이던 예전과 같다 (--salty-ar · 자동 색 · 크기)
+    seedSize(img, host);
 }
 
 // 문단 맨 앞의 줄바꿈(<br>) 지우기 — 프리셋 카드 뒤에 빈 두 줄이 생기는 것 방지.

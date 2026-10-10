@@ -11,7 +11,7 @@ import * as LM from '../../live-models.js';
 import { listTargets, supports, registry, discoverTargets, modelOptions, hasModelList, listUrlOf, fetchBlock, refreshModels, autoModels } from './targets.js';
 import { setLocks, withoutLock } from './lock.js';
 
-const VERSION = '1.0.6';
+const VERSION = '1.0.7';
 const MAX_PRESETS = 8;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const label = source => SOURCES.find(s => s.id === source)?.label || source;
@@ -233,9 +233,14 @@ export function syncMenu() {
     syncModelSwitchMenu(s.enabled && s.addons.modelswitch && s.addonUI.modelswitchMenu!==false, openPanel);
 }
 
+// 창이 보일 때만 다시 그린다 — 숨은 보관함(holder) 안이면 열 때 openPanel · mountInline 이 먼저 그린다
+const shown = () => !!root?.isConnected && !root.closest('[hidden]');
 jQuery(() => { mount(); syncMenu(); syncLocks(); });
-eventSource.on(event_types.SETTINGS_UPDATED, () => { if (root?.isConnected && !root.closest('[hidden]')) render(); });
-window.addEventListener('bl:model-switch-targets', render);
+eventSource.on(event_types.SETTINGS_UPDATED, () => { if (shown()) render(); });
+// 5.8.4: 대상이 바뀌었다는 알림(다른 확장의 등록 — TTS 가 부팅 때 함 · 자동 찾기 끝)도 보일 때만 그린다. 전엔 숨은 창을 그리다가 render 가
+// 자동 찾기(켜진 확장의 소스 읽기 — 폰 리그 4배 부팅 꼬리 settingsRefs 85~100 ms)를 부팅 때 시작했다. 찾기는 원래 뜻대로 창을 처음 그릴 때
+// (openPanel · mountInline → render) 시작하고, 바꾸기(applyNow)는 그 찾기를 기다린다 — 찾는 대상 · 결과는 같다
+window.addEventListener('bl:model-switch-targets', () => { if (shown()) render(); });
 
 export async function openPanel() {
     if (inlineHost?.isConnected && inlineHost.offsetParent) { root.scrollIntoView({ block: 'nearest' }); return; }

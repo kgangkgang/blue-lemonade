@@ -15,19 +15,27 @@ export function startStreamFollow() {
     started = true;
 
     let streaming = false, generationChat = null;
-    let lastTop = chat.scrollTop, lastHeight = chat.scrollHeight, lastViewport = chat.clientHeight;
-    let pinned = Math.abs(lastHeight - lastViewport - lastTop) < 5;
+    // 5.8.4: 처음 값은 한가할 때 읽는다 — 시작하자마자 읽으면 부팅 중 배치를 그 자리에서 강제로 셌다 (폰 리그 4배 50~75 ms).
+    // 이 값은 스트리밍 중의 늦은 scroll 을 가릴 때만 쓰이고, 그 전에 보내기(GENERATION_STARTED) · scroll 이 늘 새로 읽는다 — 그쪽이 먼저 읽었으면 건너뜀
+    let lastTop = 0, lastHeight = 0, lastViewport = 0, pinned = false, seeded = false;
     let held = false, userUntil = 0;
     const key = () => {
         const current = SillyTavern.getContext();
         return `${current.characterId}:${current.groupId}:${current.getCurrentChatId?.()}`;
     };
     const remember = () => {
+        seeded = true;
         lastTop = chat.scrollTop;
         lastHeight = chat.scrollHeight;
         lastViewport = chat.clientHeight;
         pinned = Math.abs(lastHeight - lastViewport - lastTop) < 5;
     };
+    // 5.8.4: 보내기 직후(GENERATION_STARTED) 바로 읽으면 방금 붙은 내 메시지 때문에 스타일 · 배치를 그 자리에서 강제로 셈
+    // (폰 리그 4배 160~234 ms, 요청이 그만큼 늦게 나감) → 다음 프레임에 읽는다 (그 프레임이 어차피 하는 배치에 얹힘)
+    const nextFrame = typeof requestAnimationFrame === 'function' ? fn => requestAnimationFrame(fn) : fn => fn();
+    const whenIdle = typeof requestIdleCallback === 'function' ? fn => requestIdleCallback(fn, { timeout: 3000 })
+        : typeof setTimeout === 'function' ? fn => setTimeout(fn, 1000) : fn => fn();
+    whenIdle(() => { if (!seeded) remember(); });
     const hold = (ms) => { userUntil = Math.max(userUntil, performance.now() + ms); };
     const passiveCapture = { capture: true, passive: true };
     chat.addEventListener('touchstart', () => { held = true; hold(1500); }, passiveCapture);
@@ -51,10 +59,11 @@ export function startStreamFollow() {
         if (dryRun || type === 'quiet' || type === 'impersonate') return;
         stop();
         generationChat = key();
-        remember();
+        nextFrame(remember);
     });
     on('STREAM_TOKEN_RECEIVED', () => {
-        if (generationChat !== null && generationChat === key()) streaming = true;
+        // 5.8.4: 한 번 켜지면 끝(stop)까지 그대로라 조각마다 getContext() 를 다시 부르지 않는다 (답 하나에 75~92 ms)
+        if (!streaming && generationChat !== null && generationChat === key()) streaming = true;
     });
     on('GENERATION_ENDED', stop);
     on('GENERATION_STOPPED', stop);

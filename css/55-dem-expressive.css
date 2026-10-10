@@ -234,7 +234,8 @@ body.salty :is(#chat, .cg-root) q .custom-dem-expressive.bl-fx-made {
   .salty-preview[data-prev="regex"] .custom-dem-expressive--crying { animation: bl-fx-gradient 2.75s linear infinite, bl-fx-crying 1.55s ease-in-out infinite alternate; }
 }
 
-/* Native selection menus must not chase moving text. Freeze at the current frame. */
+/* Native selection menus must not chase moving text. Freeze at the current frame.
+   5.8.4: src/dem-selection.js 는 효과 글이 있을 때만 body 속성을 켠다 (끝의 ' *' 때문에 켜고 끌 때마다 문서 전체를 다시 셈) */
 body.salty[data-bl-dem-selecting] :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(#salty-none):not(#salty-none),
 body.salty[data-bl-dem-selecting] :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(#salty-none):not(#salty-none) * {
   animation-play-state: paused !important;

@@ -5,7 +5,7 @@
    ============================================================ */
 
 /* state.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
-:root { --cg-css-version: "1.4.7"; }
+:root { --cg-css-version: "1.4.8"; }
 
 .cg-root {
     --cg-accent-fallback: #a98bd9;
@@ -1580,8 +1580,11 @@ body.cg-previewing #chat .mes .swipes-counter { display: none !important; }
 
 /* ── 전체 메시지 검색 ─────────────────────────────────────── */
 
-/* 검색어 강조: DOM을 바꾸지 않는 Highlight API */
-::highlight(cg-hit) {
+/* 검색어 강조: DOM을 바꾸지 않는 Highlight API
+   5.8.4 (북마크 1.4.8): 강조 범위는 북마크 창(.cg-root) 카드 안에만 생긴다 (render.js highlightMatches ← panel.js watchCard) → 창 안 요소에만 건다.
+   전엔 문서의 모든 요소가 맞아서 스타일 계산 때마다 요소마다 강조 스타일을 따로 만들었다 (채팅 스트리밍 · 서랍 여닫기 포함).
+   :where 는 기존 특이도를 유지하므로 사용자가 나중에 쓴 ::highlight(cg-hit) 색도 그대로 이긴다 */
+:where(.cg-root) ::highlight(cg-hit) {
     background-color: color-mix(in srgb, var(--cg-accent, #a98bd9) 38%, transparent);
     color: inherit;
 }
