@@ -2,6 +2,23 @@
 const $ = s => document.querySelector(s);
 function element(tag, cls, text) { const e=document.createElement(tag); if(cls)e.className=cls; if(text)e.textContent=text; return e; }
 document.documentElement.classList.add('js');
+// Open the folded credits when a guide link or shared URL leads directly here.
+function revealSiteCredits(hash) {
+  if(hash !== '#site-credits') return;
+  const credits = $('#site-credits');
+  credits.open = true;
+  credits.scrollIntoView({block:'start', behavior:'instant'});
+}
+document.addEventListener('click', event => {
+  const link = event.target.closest('a[href="#site-credits"]');
+  if(!link) return;
+  event.preventDefault();
+  if(location.hash !== link.hash) history.pushState(null, '', link.hash);
+  revealSiteCredits(link.hash);
+});
+addEventListener('hashchange', () => revealSiteCredits(location.hash));
+addEventListener('load', () => revealSiteCredits(location.hash), {once:true});
+revealSiteCredits(location.hash);
 const lightbox=$('#lightbox');
 {const big=lightbox.querySelector('img');big.addEventListener('load',()=>{lightbox.classList.toggle('tall',big.naturalHeight>big.naturalWidth*1.9);lightbox.scrollTop=0;});}
 lightbox.querySelector('.close').onclick=()=>lightbox.close();lightbox.onclick=e=>{if(e.target===lightbox)lightbox.close();};lightbox.addEventListener('close',()=>{lightbox.querySelector('img').src='';});
@@ -10,7 +27,7 @@ lightbox.querySelector('.close').onclick=()=>lightbox.close();lightbox.onclick=e
  dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});
  dialog.addEventListener('close',()=>{video.pause();video.removeAttribute('src');delete video.dataset.modeBase;video.load();});}
 const SHOWN_NOTES=3;
-fetch('release-notes.json?v=589', {cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error('notes');return r.json();}).then(notes=>{$('#notes').replaceChildren();
+fetch('release-notes.json?v=590', {cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error('notes');return r.json();}).then(notes=>{$('#notes').replaceChildren();
   // one card per day, like the theme's own notice: a busy day reads as "v4.1.2 ~ v4.2.4 · 업데이트 13번"
   const days=[];for(const note of notes){const last=days.at(-1);if(last&&last.date===note.date)last.notes.push(note);else days.push({date:note.date,notes:[note]});}
   days.forEach((day,i)=>{const d=element('details','note');d.open=i===0;d.hidden=i>=SHOWN_NOTES;const s=element('summary'),first=day.notes.at(-1).version,latest=day.notes[0].version;

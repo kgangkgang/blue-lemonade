@@ -3,3 +3,6 @@
 .bundle-source-links{font-size:13px;line-height:1.9;margin:16px 0;color:#58718a}.bundle-source-links a{color:#326a98;text-decoration:underline;text-underline-offset:3px}
 
 .bundle-cards .bundle-tts{grid-column:1 / -1}
+
+/* Keep source notices readable on the footer card and guide background. */
+.site-credits{scroll-margin-top:84px}.site-credits>div{color:#536779;overflow-wrap:anywhere}.site-credits summary{color:#b4c9df}.site-credits summary:focus-visible{outline:2px solid #b4c9df;outline-offset:2px;border-radius:8px}#guide-tts .guide-note a{color:#326a98;text-decoration:underline;text-underline-offset:3px}
