@@ -189,7 +189,10 @@ export function dayKeyOf(at) {
 
 export async function bumpDaily(entry) {
     const day = dayKeyOf(entry.at);
-    const key = `${day}|${entry.model || '?'}|${entry.caller || 'unknown'}|${entry.purpose || 'unknown'}`;
+    // Keep request-time costs; a later connection/price change must not rewrite history.
+    const priceMeta = entry.pricing ? { pricingVersion: 1, currency: entry.pricing.currency, providerLabel: entry.pricing.label } : {};
+    const basis = entry.pricing ? JSON.stringify([entry.pricing.provider, entry.pricing.origin, entry.pricing.currency, entry.pricing.kind, entry.pricing.checked, entry.pricing.rates, entry.pricing.tier]) : '';
+    const key = `${day}|${entry.model || '?'}|${entry.caller || 'unknown'}|${entry.purpose || 'unknown'}|${basis}`;
     const add = {
         requests: 1,
         errors: entry.ok ? 0 : 1,
@@ -204,7 +207,7 @@ export async function bumpDaily(entry) {
     };
     const db = await openDb();
     if (!db) {
-        const row = memory.daily.get(key) ?? { key, day, model: entry.model || '?', caller: entry.caller || 'unknown', purpose: entry.purpose || 'unknown', kind: entry.kind || 'text', ...zeroSums() };
+        const row = memory.daily.get(key) ?? { key, day, model: entry.model || '?', caller: entry.caller || 'unknown', purpose: entry.purpose || 'unknown', kind: entry.kind || 'text', ...priceMeta, ...zeroSums() };
         memory.daily.set(key, sum(row, add));
         return;
     }
@@ -213,7 +216,7 @@ export async function bumpDaily(entry) {
         const store = transaction.objectStore(DAILY);
         const getRequest = store.get(key);
         getRequest.onsuccess = () => {
-            const row = getRequest.result ?? { key, day, model: entry.model || '?', caller: entry.caller || 'unknown', purpose: entry.purpose || 'unknown', kind: entry.kind || 'text', ...zeroSums() };
+            const row = getRequest.result ?? { key, day, model: entry.model || '?', caller: entry.caller || 'unknown', purpose: entry.purpose || 'unknown', kind: entry.kind || 'text', ...priceMeta, ...zeroSums() };
             store.put(sum(row, add));
         };
         transaction.oncomplete = resolve;
@@ -250,6 +253,7 @@ export async function clearDaily() {
 export async function repriceDaily(costOf) {
     const db = await openDb();
     const reprice = (row) => {
+        if (row.pricingVersion) return row;
         const cost = (row.kind&& !['text','embedding'].includes(row.kind))||row.unknownUsage===row.requests?null:costOf(row.model, row.promptTokens, row.completionTokens);
         row.cost = cost ?? 0;
         row.priced = cost === null ? 0 : Math.max(0,row.requests-(row.unknownUsage||0));

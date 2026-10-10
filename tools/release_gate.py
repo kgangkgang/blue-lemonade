@@ -304,6 +304,7 @@ def inventory(root, kind):
                     item = root / 'src/addons/tts' / name
                     require(item.is_file(), f'Missing TTS everyday sound resource: {name}')
                     names.append(item.relative_to(root).as_posix())
+        if (root / 'src/addons/perf/README.md').is_file(): names.append('src/addons/perf/README.md')
         if (root / 'src/vendor/README.md').is_file(): names.append('src/vendor/README.md')
         # Only these curated weather atlases are runtime images. Do not sweep
         # arbitrary local images into the public package.

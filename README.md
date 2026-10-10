@@ -1,13 +1,25 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.9.2/blue-lemonade-5.9.2.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.9.3/blue-lemonade-5.9.3.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.9.2 · 최신 업데이트</summary>
+<summary>5.9.3 · 최신 업데이트</summary>
+
+- 요청 로그 1.5.0: 실제 연결한 API 제공처의 공식 입력·출력·캐시 단가와 확인 날짜를 보여줘요. Claude·OpenAI·DeepSeek 등 제공처별 통화와 과금 조건을 구분하고, 확인되지 않은 가격은 0원으로 계산하지 않아요.
+- 공식 가격표를 매일 확인해 자동 갱신해요. 요청 로그의 현재 연결 가격에서 자동 확인을 켜거나 지금 확인을 누를 수 있어요. 새 가격은 다음 요청부터 사용하며, 진행 중이거나 이미 저장한 요청의 비용은 바꾸지 않아요.
+- 공식 사이트가 응답하지 않거나 가격·단위·모델 구성이 크게 달라지면 해당 제공처의 마지막 확인 가격과 날짜를 유지해요. 다른 제공처의 정상 가격은 계속 갱신하며, 확인이 필요한 상태를 표시해요.
+- 구독·배포·직접 운영 요금은 토큰 단가와 구분해 안내해요. 공식 표의 지원 항목으로 계산한 예상 비용이며 계정별 할인·세금·모든 부가 요금까지 반영한 청구서는 아니에요. 모바일과 큰 글씨에서도 단가와 상태를 펼쳐 볼 수 있어요.
+
+[요청 로그 가격 안내](src/addons/perf/README.md)
+
+</details>
+
+<details>
+<summary>5.9.2 · 효과음 팩 출처와 누락 음원 복원</summary>
 
 - TTS 1.5.2: 직접 가져온 효과음 팩의 제작자·원본 링크·라이선스·편집 기록을 함께 보관해요. 보관함에서 확인하고, 다시 내보내는 팩과 WAV의 출처 정보에도 남겨요.
 - 출처가 없던 효과음은 출처가 담긴 같은 팩을 다시 가져와 정보를 채울 수 있어요. 기존 음원과 직접 정한 이름·반복 설정은 유지해요.

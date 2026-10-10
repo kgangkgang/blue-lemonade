@@ -1,0 +1,999 @@
+{
+  "schema": 1,
+  "sources": {
+    "openrouter-catalog": {
+      "url": "https://openrouter.ai/api/v1/models",
+      "hosts": [
+        "openrouter.ai"
+      ]
+    },
+    "nanogpt-catalog": {
+      "url": "https://nano-gpt.com/api/v1/models?detailed=true",
+      "hosts": [
+        "nano-gpt.com"
+      ]
+    },
+    "electronhub-catalog": {
+      "url": "https://api.electronhub.ai/v1/models",
+      "hosts": [
+        "api.electronhub.ai"
+      ]
+    },
+    "chutes-catalog": {
+      "url": "https://llm.chutes.ai/v1/models",
+      "hosts": [
+        "llm.chutes.ai"
+      ]
+    },
+    "pollinations-catalog": {
+      "url": "https://gen.pollinations.ai/models",
+      "hosts": [
+        "gen.pollinations.ai"
+      ]
+    },
+    "mancer-catalog": {
+      "url": "https://neuro.mancer.tech/oai/v1/models",
+      "hosts": [
+        "neuro.mancer.tech"
+      ]
+    },
+    "aimlapi-price": {
+      "url": "https://aimlapi.com/ai-ml-api-pricing",
+      "hosts": [
+        "aimlapi.com"
+      ]
+    },
+    "workers": {
+      "url": "https://developers.cloudflare.com/workers-ai/platform/pricing/",
+      "hosts": [
+        "developers.cloudflare.com"
+      ]
+    },
+    "together-models": {
+      "url": "https://docs.together.ai/docs/serverless/models",
+      "hosts": [
+        "docs.together.ai"
+      ]
+    },
+    "together": {
+      "url": "https://www.together.ai/pricing",
+      "hosts": [
+        "www.together.ai"
+      ]
+    },
+    "fireworks-doc": {
+      "url": "https://docs.fireworks.ai/serverless/pricing",
+      "hosts": [
+        "docs.fireworks.ai"
+      ]
+    },
+    "deepseek": {
+      "url": "https://api-docs.deepseek.com/quick_start/pricing/",
+      "hosts": [
+        "api-docs.deepseek.com"
+      ]
+    },
+    "ai21-price": {
+      "url": "https://www.ai21.com/pricing/",
+      "hosts": [
+        "www.ai21.com"
+      ]
+    },
+    "cohere": {
+      "url": "https://cohere.com/pricing",
+      "hosts": [
+        "cohere.com"
+      ]
+    },
+    "cohere-a": {
+      "url": "https://docs.cohere.com/docs/command-a",
+      "hosts": [
+        "docs.cohere.com"
+      ]
+    },
+    "cohere-r": {
+      "url": "https://docs.cohere.com/docs/command-r",
+      "hosts": [
+        "docs.cohere.com"
+      ]
+    },
+    "cohere-r7b": {
+      "url": "https://docs.cohere.com/docs/command-r7b",
+      "hosts": [
+        "docs.cohere.com"
+      ]
+    },
+    "minimax-pay": {
+      "url": "https://platform.minimax.io/docs/guides/pricing-paygo.md",
+      "hosts": [
+        "platform.minimax.io"
+      ]
+    },
+    "minimax-cn": {
+      "url": "https://platform.minimax.cn/docs/guides/pricing-paygo.md",
+      "hosts": [
+        "platform.minimax.cn",
+        "platform.minimaxi.com"
+      ]
+    },
+    "moonshot": {
+      "url": "https://platform.kimi.ai/docs/pricing/chat.md",
+      "hosts": [
+        "platform.kimi.ai"
+      ]
+    },
+    "moonshot-cn": {
+      "url": "https://platform.kimi.com/docs/pricing/chat.md",
+      "hosts": [
+        "platform.kimi.com",
+        "platform.moonshot.cn"
+      ]
+    },
+    "zai": {
+      "url": "https://docs.z.ai/guides/overview/pricing.md",
+      "hosts": [
+        "docs.z.ai"
+      ]
+    },
+    "gemini": {
+      "url": "https://ai.google.dev/gemini-api/docs/pricing",
+      "hosts": [
+        "ai.google.dev"
+      ]
+    },
+    "vertex": {
+      "url": "https://cloud.google.com/gemini-enterprise-agent-platform/generative-ai/pricing",
+      "hosts": [
+        "cloud.google.com"
+      ]
+    },
+    "siliconflow-cn": {
+      "url": "https://siliconflow.cn/pricing",
+      "hosts": [
+        "siliconflow.cn"
+      ]
+    },
+    "groq": {
+      "url": "https://console.groq.com/docs/models",
+      "hosts": [
+        "console.groq.com"
+      ]
+    },
+    "mistral": {
+      "url": "https://docs.mistral.ai/inference/pricing",
+      "hosts": [
+        "docs.mistral.ai"
+      ]
+    },
+    "mistral-model-codestral-25-08": {
+      "url": "https://docs.mistral.ai/models/codestral-25-08",
+      "hosts": [
+        "docs.mistral.ai"
+      ]
+    },
+    "mistral-model-codestral-embed-25-05": {
+      "url": "https://docs.mistral.ai/models/codestral-embed-25-05",
+      "hosts": [
+        "docs.mistral.ai"
+      ]
+    },
+    "mistral-model-ministral-3-14b-25-12": {
+      "url": "https://docs.mistral.ai/models/ministral-3-14b-25-12",
+      "hosts": [
+        "docs.mistral.ai"
+      ]
+    },
+    "mistral-model-ministral-3-3b-25-12": {
+      "url": "https://docs.mistral.ai/models/ministral-3-3b-25-12",
+      "hosts": [
+        "docs.mistral.ai"
+      ]
+    },
+    "mistral-model-ministral-3-8b-25-12": {
+      "url": "https://docs.mistral.ai/models/ministral-3-8b-25-12",
+      "hosts": [
+        "docs.mistral.ai"
+      ]
+    },
+    "mistral-model-mistral-large-3-25-12": {
+      "url": "https://docs.mistral.ai/models/mistral-large-3-25-12",
+      "hosts": [
+        "docs.mistral.ai"
+      ]
+    },
+    "mistral-model-mistral-large-4-0": {
+      "url": "https://docs.mistral.ai/models/mistral-large-4-0",
+      "hosts": [
+        "docs.mistral.ai"
+      ]
+    },
+    "mistral-model-mistral-medium-3-5-26-04": {
+      "url": "https://docs.mistral.ai/models/mistral-medium-3-5-26-04",
+      "hosts": [
+        "docs.mistral.ai"
+      ]
+    },
+    "mistral-model-mistral-moderation-26-03": {
+      "url": "https://docs.mistral.ai/models/mistral-moderation-26-03",
+      "hosts": [
+        "docs.mistral.ai"
+      ]
+    },
+    "mistral-model-mistral-small-4-0-26-03": {
+      "url": "https://docs.mistral.ai/models/mistral-small-4-0-26-03",
+      "hosts": [
+        "docs.mistral.ai"
+      ]
+    },
+    "mistral-model-ocr-4-1": {
+      "url": "https://docs.mistral.ai/models/ocr-4-1",
+      "hosts": [
+        "docs.mistral.ai"
+      ]
+    },
+    "mistral-model-voxtral-mini-transcribe-26-02": {
+      "url": "https://docs.mistral.ai/models/voxtral-mini-transcribe-26-02",
+      "hosts": [
+        "docs.mistral.ai"
+      ]
+    },
+    "mistral-model-voxtral-tts-26-03": {
+      "url": "https://docs.mistral.ai/models/voxtral-tts-26-03",
+      "hosts": [
+        "docs.mistral.ai"
+      ]
+    },
+    "mistral-model-zai-glm-5-3": {
+      "url": "https://docs.mistral.ai/models/zai-glm-5-3",
+      "hosts": [
+        "docs.mistral.ai"
+      ]
+    },
+    "siliconflow-price": {
+      "url": "https://www.siliconflow.com/pricing",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-deepseek-v4-1-flash": {
+      "url": "https://www.siliconflow.com/models/deepseek-v4-1-flash",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-deepseek-v4-flash-0731": {
+      "url": "https://www.siliconflow.com/models/deepseek-v4-flash-0731",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-deepseek-v4-flash-vision-exp": {
+      "url": "https://www.siliconflow.com/models/deepseek-v4-flash-vision-exp",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-deepseek-v4-pro": {
+      "url": "https://www.siliconflow.com/models/deepseek-v4-pro",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-deepseek-v4-pro-0813": {
+      "url": "https://www.siliconflow.com/models/deepseek-v4-pro-0813",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-fish-speech-1-5": {
+      "url": "https://www.siliconflow.com/models/fish-speech-1-5",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-flux-1-1-pro": {
+      "url": "https://www.siliconflow.com/models/flux-1-1-pro",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-flux-1-1-pro-ultra": {
+      "url": "https://www.siliconflow.com/models/flux-1-1-pro-ultra",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-flux-1-dev": {
+      "url": "https://www.siliconflow.com/models/flux-1-dev",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-flux-1-kontext-max": {
+      "url": "https://www.siliconflow.com/models/flux-1-kontext-max",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-flux-1-kontext-pro": {
+      "url": "https://www.siliconflow.com/models/flux-1-kontext-pro",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-funaudiollm-cosyvoice2-0-5b": {
+      "url": "https://www.siliconflow.com/models/funaudiollm-cosyvoice2-0-5b",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-gemma-4-12b-it": {
+      "url": "https://www.siliconflow.com/models/gemma-4-12b-it",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-gemma-4-26b-a4b-it": {
+      "url": "https://www.siliconflow.com/models/gemma-4-26b-a4b-it",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-gemma-4-31b-it": {
+      "url": "https://www.siliconflow.com/models/gemma-4-31b-it",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-glm-5": {
+      "url": "https://www.siliconflow.com/models/glm-5",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-glm-5-1": {
+      "url": "https://www.siliconflow.com/models/glm-5-1",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-glm-5-2": {
+      "url": "https://www.siliconflow.com/models/glm-5-2",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-glm-5-3": {
+      "url": "https://www.siliconflow.com/models/glm-5-3",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-glm-5-3-flash": {
+      "url": "https://www.siliconflow.com/models/glm-5-3-flash",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-gpt-oss-120b": {
+      "url": "https://www.siliconflow.com/models/gpt-oss-120b",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-gpt-oss-20b": {
+      "url": "https://www.siliconflow.com/models/gpt-oss-20b",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-hunyuan-a13b-instruct": {
+      "url": "https://www.siliconflow.com/models/hunyuan-a13b-instruct",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-hy3": {
+      "url": "https://www.siliconflow.com/models/hy3",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-indextts-2": {
+      "url": "https://www.siliconflow.com/models/indextts-2",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-kimi-k2-5": {
+      "url": "https://www.siliconflow.com/models/kimi-k2-5",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-kimi-k2-6": {
+      "url": "https://www.siliconflow.com/models/kimi-k2-6",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-kimi-k2-7-code": {
+      "url": "https://www.siliconflow.com/models/kimi-k2-7-code",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-kimi-k3": {
+      "url": "https://www.siliconflow.com/models/kimi-k3",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-minimax-m3": {
+      "url": "https://www.siliconflow.com/models/minimax-m3",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-qwen3-5-122b-a10b": {
+      "url": "https://www.siliconflow.com/models/qwen3-5-122b-a10b",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-qwen3-5-9b": {
+      "url": "https://www.siliconflow.com/models/qwen3-5-9b",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-qwen3-6-27b": {
+      "url": "https://www.siliconflow.com/models/qwen3-6-27b",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-qwen3-6-35b-a3b": {
+      "url": "https://www.siliconflow.com/models/qwen3-6-35b-a3b",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-qwen3-8-2-4t-a95b": {
+      "url": "https://www.siliconflow.com/models/qwen3-8-2-4t-a95b",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-wan2-2-i2v-a14b": {
+      "url": "https://www.siliconflow.com/models/wan2-2-i2v-a14b",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "silicon-model-wan2-2-t2v-a14b": {
+      "url": "https://www.siliconflow.com/models/wan2-2-t2v-a14b",
+      "hosts": [
+        "www.siliconflow.com"
+      ]
+    },
+    "perplexity-models": {
+      "url": "https://docs.perplexity.ai/docs/agent-api/models",
+      "hosts": [
+        "docs.perplexity.ai"
+      ]
+    },
+    "cometapi": {
+      "url": "https://www.cometapi.com/pricing/",
+      "hosts": [
+        "www.cometapi.com"
+      ]
+    },
+    "comet-models": {
+      "url": "https://www.cometapi.com/models/",
+      "hosts": [
+        "www.cometapi.com"
+      ]
+    },
+    "openai": {
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "hosts": [
+        "developers.openai.com"
+      ]
+    },
+    "anthropic": {
+      "url": "https://platform.claude.com/docs/en/about-claude/pricing.md",
+      "hosts": [
+        "platform.claude.com"
+      ]
+    },
+    "xai-price": {
+      "url": "https://docs.x.ai/developers/pricing",
+      "hosts": [
+        "docs.x.ai"
+      ]
+    }
+  },
+  "providers": {
+    "openrouter": {
+      "sources": [
+        "openrouter-catalog"
+      ],
+      "contracts": {
+        "openrouter-catalog": "5a6c17a486974914c73388c06790c7315c2e26a083ef0a21adabf87e1b2ca49d"
+      },
+      "apiShapes": [
+        "02571f12d52ea8d75090e95e2139f9c7ca5a52906139bf623f4196abfbd76228",
+        "08f6fd35f4b97b3dd921c128bdfc5bb34e0c672f3023eba2e130b2b564875108",
+        "0d5f61e9a6466175f2cb5cca13e4812d5e14307eb9098fb3054711595b494bb8",
+        "17a8e4562b3efec7d48b9e11140be0960d6e5a7af672a5aae79e58e62957d12f",
+        "17d5b9b0c5cd2c18c7196cc4eb93805e33cde313315b9dd04501b72b4b413525",
+        "2a0852ccd26e37b0ed577102127ee89a9fca797648d55929db415ebc08b60adb",
+        "33272d93970595edfb05f913c2e18f211ecd7dbbe902b2e34136527b29d6fb52",
+        "49c173fcee4ad717c2bd95dbed672ae0d9f3f160eb3e0e929f98217e97cf9933",
+        "5c003db9e5fb1165aa030d45669fde0fd43f9f6919ff106296a701c6b07ceb2b",
+        "62021c58e29df817ee42f0317e2a1af1ae36c3917e873979c98ee4a65dff3007",
+        "721e074cbef0df7511caed945997dd4e6120f0dfc8ba510d90f84e08dcd9d2cb",
+        "777a6527627a0da3fb1347a14dd278b1a7bb51bdc0c3004df41b34cffc517a54",
+        "79bd9735d045e25679648b43f114251a33830cbe537fb4626d66a793f4b866d0",
+        "7e0acde98987975795b43c719b7a7558a0d94e7dc81c556c51c4b329513d6eab",
+        "80466873c03032ab9c38ea0441d37e675a3726c8579847683374374319db36a5",
+        "8aa56cf5f35e40a5be77daf7bbe115a5f777e5137890e926c84de2aba632fe8c",
+        "9206b7c469eb4fc55b20718e5c41cc36bedfe8f94f4f99923f9f93e639552ee9",
+        "976af1ad159e4c646c7952ce4447454722a1a8901145774389c4dde8658d9316",
+        "9ba21fa1d142d02b5d42e580bbce05b43aeb0c14b94e199ff555dba0143679cf",
+        "9e430da2be05775a94698c6e163cd96e6c2439db11962ffb710fa3d7797cb1f6",
+        "aad6b13fc8ec32eea2fca012a0245022c3aea67f03196240fd9dd48d2826ac33",
+        "b45e28332939591de885bb5d17d019415957cf0f74c8013cbac032ba70d61b3a",
+        "b89b7f3b8ab4324a1369fcd049dd0149238d8c3f3314423dc79a88e15be3c62c",
+        "cac2d0e50f804c979fd2ffa5a7a5ee6b36cc8633314fc920420a6b961b506409",
+        "d44b401218893b81c7df9d5d7058e47778832ff6c1d557a428cd5cac28ce70ea",
+        "d72bf2eb508cf1f5371dbe02da96a6fc1562f2a422f43279e1b120635800cbf6",
+        "e101e70701efd2b19c6272444d221f52ec4a4c278269536e4b300dbdedf2f717",
+        "fcff35dfce3c0d58a2317418fd1c906b082918f802aaa1fb9552f77f8eb7f4e2"
+      ]
+    },
+    "nanogpt": {
+      "sources": [
+        "nanogpt-catalog"
+      ],
+      "contracts": {
+        "nanogpt-catalog": "b7383d4bde3b8950de5d9d1b5e2e5417d369d0e43f6db2a635b8459ae277aa73"
+      },
+      "apiShapes": [
+        "025b8aa822d7f0b50ad9efc567e972d8309fa07f9634f865ac0b0d9d11541254",
+        "0ef1dc7c173929061fce6bbb160fe3c4a63dd3778df0854f81a2d011fe1cc606",
+        "0fca478051eac3ff279fb78c4ec72fa2fcf13ffa4ed56ac8b64e25ec0af90768",
+        "10fc7ae09fef98af48aae632ca0967e3277c93fd786f013214ff0d998d6cf6e6",
+        "14d60cf5a773f6ce164b46eee8dee3c0e09c10ff432d99b449360deaa7495ef1",
+        "330d03663af9ff4625cebb693255b3bede522df50c0dde4fe9f8c956601cfa0b",
+        "33faa74919fbbc57398e29aa02b0e5624ef54bd10eb82abcf16ffcfd65dd0f20",
+        "63992fb3d0d8687047d8b5042f7bf8a6f2150135a43bba656f692ad33d5e7624",
+        "678187457fd44212f24284e88df3bc5abf0cbe27605e1b7520b7bf18dedbc6ba",
+        "6ad116d484ce4259e0c1c124bddf4aeee3ff4641758aa8aeb29e36c5ff3c27dd",
+        "7d33d802bf1c7049b736e103cf4864950bab1a0bdc077cf6265cb55e4c32a0b3",
+        "81300561a11188607770a14c89140576a07599767d2a9e8759eaff308226436e",
+        "a39653ef208b36566ceb6526f29650875d91f4a585975c7bcf2c81476748ecac",
+        "b3c469efa75453a2d2574450e48100d0983eede9ecd351397a72f1198c9702dc",
+        "bec79853dacc49af86f1d8d4e3af40ae5b4834ba17f2e0bd922f80d433f79cd2",
+        "c06864323405f9fed8b57efce0f44835553f2abac18ef6239259b7e715e1ed50",
+        "ceb675013227419ea1f9f287e58016047a227d6a6a572287979cd19881dd9c89",
+        "dcedcec69a6c32559a73018a06173ba996e28c2cd7a454737ace62f33e68df89",
+        "ef59797109083a266ae5921d7acea8d17b631cfcb127ae908fae36f48793893e"
+      ]
+    },
+    "electronhub": {
+      "sources": [
+        "electronhub-catalog"
+      ],
+      "contracts": {
+        "electronhub-catalog": "d59eb0724344b37272b6f43e10f5fae516a3ef43e9bede5f838cc09dad479dd3"
+      },
+      "apiShapes": [
+        "24d7e0ed82c01db9fc0a48866f2c51e96e3fdab34868d320ed9180af1a91cf03",
+        "30050275259fac68a4f02d11af8f796866b2e362a610370f30c9ef129a34f74b",
+        "37afb2af6a7107735d47bd582f6f9be5a6fb1e986f9bf94d298609f6e916b655",
+        "47bbe49a0451511c39770a67ad4a264cbc6665a9147a880c7418700873935da3",
+        "497fafcecd7f174d127d25dbfd513b34bc7e68867ce0df698fe7e20a9b7e62df",
+        "4bdc67bdcb71ac04c6798f8e772d2b902f2c642c75d99d269c3b60ae63f2b180",
+        "4c055aa139d63e32fa737e744fecfd534f6a526ed30379f69a054848478519cb",
+        "4db106785b6da59891e84790dabaf2bcfa858217e726b891af7c5c09336f4f3c",
+        "567cd82249c4c169cc5f7a16af22e9a92df4e60ddb61b5de41e2c254c762f797",
+        "61cd75ee6538a444cb22e855e6b69ec5e745df050d1e2078ec41d251f5de3dee",
+        "6329fbd8f4ca4857ed20ad60e18098f11d96cbbc7dd88e3f9292cc54f7739e12",
+        "66c6e3bd676687715be4dd38f4ce7cdae7106f408893c670004956301044ccbf",
+        "69bb16152767843a135ee2fa0c788640fcc2165e75c1767086b477d8a5dd63b3",
+        "8cea94f0a50d417d453d2836d6b30d56babcb7da2e3dd52a44b8dd20ea443eeb",
+        "919a97b025a5027e2f81c8c5154dacb029484c3487e7f63e6ebd82c3ca99aa15",
+        "96f83eab14a79e853db2d2d008b08f10403a82bac63c95a48ebf8e90013dc13f",
+        "98bbb3323b610d839eb33924e856bd2a6c43cc0381a3604ca8ec361981e77f5b",
+        "a4b7b7c94c774d8f7952f931a2d49e5ce9e34dcd4575c4d537a63673840df9f6",
+        "aba00af8c8414312a501f0f80757936ec7834d38277c55750daa2151d1ae72e8",
+        "abad19b41765ee47cbd5a30bc7e8c31c2887e2f6cf9b2ddc401f86051efc972b",
+        "d2ff78a7731dd7fcb80f7836c28981ea06ea288801c9e86a82a84a4d4118fa27",
+        "d34869ec56d7b6267ddba130473af9ac072acd0b40f07b21e6d8b68ca992ec16",
+        "fea3d1eccc5c4ec5fc7fc42d5caa0e031a58b6937fb95ff31a2e1d79858ee658",
+        "ff1c59a4942acb8cdfaf7201ae31fc2b24e31745c95c7153ab32b97e4807cc15"
+      ]
+    },
+    "chutes": {
+      "sources": [
+        "chutes-catalog"
+      ],
+      "contracts": {
+        "chutes-catalog": "6fbf5d81478d3836d4d0d502bd62667f90c1665356495b4f66119260c46b9f96"
+      },
+      "apiShapes": [
+        "01f8878835fbd5e5995baaa29c26cd50f14b33f682fc0083248b2beb298973d8"
+      ]
+    },
+    "pollinations": {
+      "sources": [
+        "pollinations-catalog"
+      ],
+      "contracts": {
+        "pollinations-catalog": "fd904b5db00134a37347573529e67fba70b466397afe98b583bd3e3d591cd933"
+      },
+      "apiShapes": [
+        "0795762f2555e56ad9b23eab8ef31360c489c8e98d19df0c24c46086e1ad5397",
+        "1175652f375ffc05bed56da44831c7696da04cb5ae7c1b8fae34d0ee3bd1152b",
+        "174aa85babc082de4f594b60da67a43f8c71ba7e54302bcb3d4c07b0bb4c4b2e",
+        "1847083d52832aaf001df23ddbd3ddf7b93f48f532bdb9b26ea68c2100e4adf2",
+        "192c98585c42c83d264f5d3dec7287ea8a80750043b75a576b40e8aceb72f777",
+        "2499aaeb84b0f0b6a0af52a67002aa83e16f33cbd9e5ef545237904dd0e3e857",
+        "278c3df6b898b672de8261186d7f2c97825dc58d223ddd4cd094de3b5f34800d",
+        "2b2756109eff2595311d92f3439dca8ff3e8cd12eb2a6a18dd1b2ac62447327b",
+        "2f7e70a31b4c5b6990852d7dafff9982db1dd36287af0a770ca0c4cf3b9b1300",
+        "446ef5c490957f4f9d78604692b99083e0a027f08922c400607ac5c732058b45",
+        "452b0c96743f022fc381d8a9ad7c2814e49ec7c6704c192f4e82e5d67f786c11",
+        "471250e9baa905e6e6bbed9b243569ca3767d4e1431c43cf8cfbe3e2afc38ff9",
+        "49034af22e419d5831edbea23121c7d4ccf7ba56806b659d1ff8c355b28a9a17",
+        "50b3abc7ebd72de5a5b6ce82345955d3676098836421014a16fd971ef555006c",
+        "5107a8a16ff91f143aea85207c55bfcc8027b8f04d419a6c9f4af77db771bbed",
+        "54d9e418041754ffe5ec7ef18bdabda2ed12fd97bfd80be0d7560a5a970b3af2",
+        "70da38df6bb9290bb7de6df38ddc084b0baec5c651def15610ccfb2053065f37",
+        "716d86b62073d0cf79de8c71303c8b9ed2c78e51fb073b678b911945eae80bd4",
+        "880f7e08da94ebb4f78049c5249ea6b11fba3a20d9fe6392ecce9c39a7dce44c",
+        "9057ce692ae8c961fa4e09a9024a8e0eddba1b27d217491ce93a7a08c7b220a1",
+        "995581a84ac1b22ba6142b9ef62545d18fae87a7352b71df73a4f2a4a52b7842",
+        "9a653cfbe9160211ae18c74391b8abc01ae7c8a609634505cf24e33f24291cad",
+        "9c3cf94792aa9ff3159d62cedf24ada2765736874def0b16482df9fc9ec60dc9",
+        "a24cdd499a01a643aa47cced14528f770992443b0c3ee54bde8a7664891a40ac",
+        "a60e79467c0ad904dbc261fccf8085703d1f2aa975efd1e326478249d7b797df",
+        "a9c51a9db898f800bef32454a967fa9acdf005cb92824c00b737b51ff324ac65",
+        "ad6f3c54d8150998fa08ae362f5c876a52f1b9fea19dbf5dbdc5583654cefcc5",
+        "ae8fe45955c1a1809d2522a54ad10a82f4065c2fd08a9079c71a814eb66b61de",
+        "b4600756c5869040d784d271c86188e3c39bd14648ad8c95b6ba62b90ed863fa",
+        "bb8b5409900bd1fc6e0f7a0fb1558d704df9988ac81a95a0992f63ea2c25d221",
+        "c8bf6b418ce9af3937543ad7ab63c4784850746a6f42789f18fd9b93d1523d36",
+        "cbc6084de1536dceced685de645cd6c49261d431ad349847da2ea9b2ca710c00",
+        "cd0c51ab89284e67f7b926d2267bae54649d53a2525f4f31f542b38663e53065",
+        "cfd876c6dc9c3db949de490162cf6e36a3fa8fce0a555d670cc705bad9685859",
+        "d69f1606d7ebc0599f7b05584091698d7f86057cc283d908cad40e1fc1fe739c",
+        "e4a8786da94f86b3402569dcd888fba418a329e973e13eebb35c7dfac055f8c9",
+        "e87516caf2e548c8b4103a190c48b51998384c0b5b366a77b16260cd27a2ad5c",
+        "ec6c92d3aceae864cf6fe567aeca6afc3b312e60b51cb53686c41e1707d2f69d",
+        "f16df0bc1bb4435a2bab65df40f062df7190bf8a0f1730e209748490595b3823",
+        "f4f863d7aa0b1b4efc351b12caa0be72bfa3d6c04193a6ee234a7ee5df4ccfa9",
+        "f887e7f837b4061dd485e082b65f52099d7abca22c4ba1529df3f8d93bf0b83f",
+        "fadeee53c38afb0a3b42dc8242609878049c5cc3d339dc5cc371e384ccb28356",
+        "ff37cbc954a1a50ac3cfe6ca74422e49912cecfe0ad051be6a2fd8f6a4324b25"
+      ]
+    },
+    "mancer": {
+      "sources": [
+        "mancer-catalog"
+      ],
+      "contracts": {
+        "mancer-catalog": "824f353aeb2f90cbd1c6ce45d3a1ad7980befcdbe43e2be14b559ba75b83a5dc"
+      },
+      "apiShapes": [
+        "f652c41b2f1ee9160d9b9f48ac738564ea2097bb066512778756e598fbbdf471"
+      ]
+    },
+    "aimlapi": {
+      "sources": [
+        "aimlapi-price"
+      ],
+      "contracts": {
+        "aimlapi-price": "009cc6bafc599422f293991f5266c079cf9405d547f62839f926d901cb69beae"
+      }
+    },
+    "workers": {
+      "sources": [
+        "workers"
+      ],
+      "contracts": {
+        "workers": "99f079674a4ccade803630a36596fc2781ed4bc5e4fa9fd77a942c139961182b"
+      }
+    },
+    "together": {
+      "sources": [
+        "together-models",
+        "together"
+      ],
+      "contracts": {
+        "together-models": "d7a07f0ae69bfe3deeebdc2d29a78787a7ca07a67eb84ad4fb2c7dfe595850d6",
+        "together": "1f45ce3ac34a096e6c73318776d079d9ba0b1a74d393ae6aa9b2602331b3ad79"
+      }
+    },
+    "fireworks": {
+      "sources": [
+        "fireworks-doc"
+      ],
+      "contracts": {
+        "fireworks-doc": "ae869a2383edd9e455ee5e1eaadc133d032e64c14a428a66f57f347a2cb57ec6"
+      }
+    },
+    "deepseek": {
+      "sources": [
+        "deepseek"
+      ],
+      "contracts": {
+        "deepseek": "fcff26d46ec047667cfc4775588ab71c90f31b718e246b4dd9b77eb49738abda"
+      }
+    },
+    "ai21": {
+      "sources": [
+        "ai21-price"
+      ],
+      "contracts": {
+        "ai21-price": "1eeb5cdabbe74cbdeedf56f6c50fa1e893fb4457e5a1e7406bdbaa100a6eaa7a"
+      }
+    },
+    "cohere": {
+      "sources": [
+        "cohere",
+        "cohere-a",
+        "cohere-r",
+        "cohere-r7b"
+      ],
+      "contracts": {
+        "cohere": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "cohere-a": "452d7145988c59812e6a099149b5f4b5096c83165e6cf9836f9742497936b106",
+        "cohere-r": "4d467cc1f9c41bc03f6fb4b6718640262b365e7a2748ee18487940b1d99c5f2c",
+        "cohere-r7b": "b8676313320a0451af37fd1d75ef8b16bb222498015642fb843e4c6522fdeac8"
+      }
+    },
+    "xai": {
+      "sources": [
+        "xai-price"
+      ],
+      "contracts": {
+        "xai-price": "1d2923eca23b07cf463f3001be9afa43b78ad366599200468ab14cf80f9e84c0"
+      }
+    },
+    "minimax": {
+      "sources": [
+        "minimax-pay",
+        "minimax-cn"
+      ],
+      "contracts": {
+        "minimax-pay": "0bed902a4f5a9196270b407247a0a8d03e7ab734bdf2796a585a9abcd27d9154",
+        "minimax-cn": "945b099bd2ebbc4301cb18c57db21ed2dfae595a225ff73f12bb0add6119933a"
+      }
+    },
+    "minimax_cn": {
+      "sources": [
+        "minimax-pay",
+        "minimax-cn"
+      ],
+      "contracts": {
+        "minimax-pay": "0bed902a4f5a9196270b407247a0a8d03e7ab734bdf2796a585a9abcd27d9154",
+        "minimax-cn": "945b099bd2ebbc4301cb18c57db21ed2dfae595a225ff73f12bb0add6119933a"
+      }
+    },
+    "moonshot": {
+      "sources": [
+        "moonshot",
+        "moonshot-cn"
+      ],
+      "contracts": {
+        "moonshot": "331a17419abde03e7e2f59a7429eda9fbe116ffe7c4be98d11cf19f16f1b7d82",
+        "moonshot-cn": "e60f9b87df0330c96817ba1f20dcf6fc04ba9fa10775fbcbdd7b3f0ea62967c0"
+      }
+    },
+    "moonshot_cn": {
+      "sources": [
+        "moonshot",
+        "moonshot-cn"
+      ],
+      "contracts": {
+        "moonshot": "331a17419abde03e7e2f59a7429eda9fbe116ffe7c4be98d11cf19f16f1b7d82",
+        "moonshot-cn": "e60f9b87df0330c96817ba1f20dcf6fc04ba9fa10775fbcbdd7b3f0ea62967c0"
+      }
+    },
+    "zai": {
+      "sources": [
+        "zai"
+      ],
+      "contracts": {
+        "zai": "1c3b6c8205b9db28043381cc7648df62caeb85907e0b5da0836a021dd6736575"
+      }
+    },
+    "gemini": {
+      "sources": [
+        "gemini"
+      ],
+      "contracts": {
+        "gemini": "ad0eff376e634e0912cf560c23a72056093bc92d16ced1f4ddbc86f781f14d4b"
+      }
+    },
+    "vertex": {
+      "sources": [
+        "vertex"
+      ],
+      "contracts": {
+        "vertex": "1af49eaed2aa20a66d2185f7d23837f05d6c783a3cc518b546b903d16cff51d1"
+      }
+    },
+    "siliconflow_cn": {
+      "sources": [
+        "siliconflow-cn"
+      ],
+      "contracts": {
+        "siliconflow-cn": "346f5830dbf3b6d0f245899f20a1f4e899117d6fced4dcd726fc2cf249812f2d"
+      }
+    },
+    "groq": {
+      "sources": [
+        "groq"
+      ],
+      "contracts": {
+        "groq": "e1fa91ba33c2275c5a96c782d8bcd0fee5f84d8b52835ff0416bcef2b85bdd7e"
+      }
+    },
+    "mistral": {
+      "sources": [
+        "mistral",
+        "mistral-model-codestral-25-08",
+        "mistral-model-codestral-embed-25-05",
+        "mistral-model-ministral-3-14b-25-12",
+        "mistral-model-ministral-3-3b-25-12",
+        "mistral-model-ministral-3-8b-25-12",
+        "mistral-model-mistral-large-3-25-12",
+        "mistral-model-mistral-large-4-0",
+        "mistral-model-mistral-medium-3-5-26-04",
+        "mistral-model-mistral-moderation-26-03",
+        "mistral-model-mistral-small-4-0-26-03",
+        "mistral-model-ocr-4-1",
+        "mistral-model-voxtral-mini-transcribe-26-02",
+        "mistral-model-voxtral-tts-26-03",
+        "mistral-model-zai-glm-5-3"
+      ],
+      "contracts": {
+        "mistral": "7060cadd15d262cdc1946da96f8cf41c4c683b88387c0f7b52bb2196accd6b03",
+        "mistral-model-codestral-25-08": "d635f58d2a26d9dacade3c06a4fa3660701778796c273c750951b9354481ab13",
+        "mistral-model-codestral-embed-25-05": "2dc4d3b7bae2098a8407783ea0b51acec9bc6d11742146f1dfa1e68db20ec00b",
+        "mistral-model-ministral-3-14b-25-12": "9388e06a2fdf6287034fd72280bc059f83966407ad98152ed85142006be2c06c",
+        "mistral-model-ministral-3-3b-25-12": "05073373712a9621eff154cf11b5ecf3523edb85836c1ff481e9caeed51c8bc9",
+        "mistral-model-ministral-3-8b-25-12": "6d70db8fa41f1c6666e12cf0bf71521a36c39f6f9d8f0fa4f4e189f83a600b79",
+        "mistral-model-mistral-large-3-25-12": "d5e86017abc592264388d7fd3e765d2274515e115d35658ea2251cdb781d7cec",
+        "mistral-model-mistral-large-4-0": "56af7f55bac5c9cb17d9911f390cbf61dc5686ea00af6eca59dcbc62b2ffaf1c",
+        "mistral-model-mistral-medium-3-5-26-04": "91902f8b57364ad4dfd23c9db919229659cc5b5cdf1c8e67f4ac13d7aac4691a",
+        "mistral-model-mistral-moderation-26-03": "54164701b55f1a32055c4dab67e3a08ae8925bc3bb984095b470cd25f0fc4e03",
+        "mistral-model-mistral-small-4-0-26-03": "f1fd7838fb5223de284772f4e3f266d7b8197ee0f013afe4cb9da4923b8e534b",
+        "mistral-model-ocr-4-1": "48be322ecf8de25a01b077d9860330dd2f56361753444ce5125c18af67368a96",
+        "mistral-model-voxtral-mini-transcribe-26-02": "dca728f93aac210cf2f91083e6e6a33359228f2c212aafe864cdbcf95048de23",
+        "mistral-model-voxtral-tts-26-03": "898a9ee2efca519558d1aff701b0351dc5cdb9f538d47b66450c93dcdb2dffa3",
+        "mistral-model-zai-glm-5-3": "a04948e8a543dc3f2cc213216d4c76e3203df522fd5dc9094990fc633b13625d"
+      }
+    },
+    "siliconflow": {
+      "sources": [
+        "siliconflow-price",
+        "silicon-model-deepseek-v4-1-flash",
+        "silicon-model-deepseek-v4-flash-0731",
+        "silicon-model-deepseek-v4-flash-vision-exp",
+        "silicon-model-deepseek-v4-pro",
+        "silicon-model-deepseek-v4-pro-0813",
+        "silicon-model-fish-speech-1-5",
+        "silicon-model-flux-1-1-pro",
+        "silicon-model-flux-1-1-pro-ultra",
+        "silicon-model-flux-1-dev",
+        "silicon-model-flux-1-kontext-max",
+        "silicon-model-flux-1-kontext-pro",
+        "silicon-model-funaudiollm-cosyvoice2-0-5b",
+        "silicon-model-gemma-4-12b-it",
+        "silicon-model-gemma-4-26b-a4b-it",
+        "silicon-model-gemma-4-31b-it",
+        "silicon-model-glm-5",
+        "silicon-model-glm-5-1",
+        "silicon-model-glm-5-2",
+        "silicon-model-glm-5-3",
+        "silicon-model-glm-5-3-flash",
+        "silicon-model-gpt-oss-120b",
+        "silicon-model-gpt-oss-20b",
+        "silicon-model-hunyuan-a13b-instruct",
+        "silicon-model-hy3",
+        "silicon-model-indextts-2",
+        "silicon-model-kimi-k2-5",
+        "silicon-model-kimi-k2-6",
+        "silicon-model-kimi-k2-7-code",
+        "silicon-model-kimi-k3",
+        "silicon-model-minimax-m3",
+        "silicon-model-qwen3-5-122b-a10b",
+        "silicon-model-qwen3-5-9b",
+        "silicon-model-qwen3-6-27b",
+        "silicon-model-qwen3-6-35b-a3b",
+        "silicon-model-qwen3-8-2-4t-a95b",
+        "silicon-model-wan2-2-i2v-a14b",
+        "silicon-model-wan2-2-t2v-a14b"
+      ],
+      "contracts": {
+        "siliconflow-price": "d0d3e0c948b50ae700b7e6442626d527e08fe8a0fc0a96d9720307e2c77bb8a2",
+        "silicon-model-deepseek-v4-1-flash": "f1cec806a1a3e8c0f038db7389b96aa6a2c9451f45426152e9623cdb4b2f714d",
+        "silicon-model-deepseek-v4-flash-0731": "a53310a8d16f5b6141b54f0aafd9745e37da49777e35f691caae3633240cee87",
+        "silicon-model-deepseek-v4-flash-vision-exp": "975abaa043251a5dc9d436f3db64ad3945669cadc05463de0e78e0ec28ca0863",
+        "silicon-model-deepseek-v4-pro": "64d41cef642fb42abf220f5df4632db8db1c42f0878011ed251a233abd59e134",
+        "silicon-model-deepseek-v4-pro-0813": "1f2df54a9cd2553e49a7d21b2594d44084d6765f588fedd27bc630b29afd18d5",
+        "silicon-model-fish-speech-1-5": "85a640d9b88f07dcb614ce59d6a94786410531aab6ae5c07ad4142bfda91e93b",
+        "silicon-model-flux-1-1-pro": "d788f613ac2e863607b3053014b0b01a45ee0d7e15ca5b2723dd58187136dd91",
+        "silicon-model-flux-1-1-pro-ultra": "cce2d7a6260a1b4361ac8fb1f2c1c146ed7b3a8ee2f21d9aa7fefa7f893834e7",
+        "silicon-model-flux-1-dev": "825d6c344de0ee29c227ccebf55b9750f0e0b357aaaf6321038bb34e80331484",
+        "silicon-model-flux-1-kontext-max": "09d613cf8dbd2614932a93bd0e5d2d38dca4dd9e1e1359a49a820ebcffdff08e",
+        "silicon-model-flux-1-kontext-pro": "66c2ad281ded782e5f907b24f8dc08075e736953b25a8fbd00d8e36cd542b23d",
+        "silicon-model-funaudiollm-cosyvoice2-0-5b": "425349f9871333be6185da1ffb5a874d00e40e9a6ad7418a913186280f3e3f43",
+        "silicon-model-gemma-4-12b-it": "dac44ed321bd388fe86da013b109b2e27d18357258ad34097150ae97d46c5cc3",
+        "silicon-model-gemma-4-26b-a4b-it": "185c2ddaa5e841e3027e1053ffd4bb908f89695b8950341ffac5ff2f88196c5e",
+        "silicon-model-gemma-4-31b-it": "a3af8a86e0ce4c4fef4825d5ed189fd687124116dc5f09f8a61bc8c4ea8a5dea",
+        "silicon-model-glm-5": "e07a58a8cac0b1b228f21a6f4dcc7e683a58cda8514928ad190a3be1b890f07a",
+        "silicon-model-glm-5-1": "aa1bd1d97c9d114a917ff664d36dae12c252c0974d882cdbc09df76c751c7145",
+        "silicon-model-glm-5-2": "871c59019725f0d9bfbf1057fdda1102412305faa426ba4ecacf751442ddd1c3",
+        "silicon-model-glm-5-3": "b7e7cd30f5de7484550b7dd51fffc83399ac94ab471ea2960ec1ca38cdda824c",
+        "silicon-model-glm-5-3-flash": "c70094e64fb1ea0e05fe05c44718d49838d296b8638c6b3026cffb4e6c7a6664",
+        "silicon-model-gpt-oss-120b": "3ffc88c300e5610d68d64b92701586fc47e288146a9b268d4c53eff3f733527c",
+        "silicon-model-gpt-oss-20b": "ab03b9ecf98c89122cbc44d393b0545bfc1f4dedaf3e951ce83a2642bfe32e21",
+        "silicon-model-hunyuan-a13b-instruct": "647ca009accca0209e511e3e9c14491dbedb85afe628be42e3c852af2136ab07",
+        "silicon-model-hy3": "2b4b9d6917ebdf807038d53492747293692ececabd411fdd4fc634dc4f02c4cc",
+        "silicon-model-indextts-2": "30494c18d14c4d15c66d5c524198fd8a4f05cd4b17417efd49eedc101eec235e",
+        "silicon-model-kimi-k2-5": "bac68cf45f3232269eaa22086fb85ad34448ccb2cb5ed92640c23b09b6bf3b59",
+        "silicon-model-kimi-k2-6": "14a1f962f20b85eb1c8673dbc87c81243ab9616259e1620ff0131306f1c49abc",
+        "silicon-model-kimi-k2-7-code": "8bd81998c2219cd9527379a9fb6156d105f21212d07c406c870c486f32bbabb2",
+        "silicon-model-kimi-k3": "ece55b3bb6281dbd55a18bf65bf2cc4550d6ba9db0eb1cf05c3dcfd4992ba668",
+        "silicon-model-minimax-m3": "e1b149203e5c8abc4a639bb19585ace5d010b9bffe7be9b06331f09055a48c2f",
+        "silicon-model-qwen3-5-122b-a10b": "16c0d26d6405999c13865d4fe232b5e38960829dc555d9400621ab50cca88913",
+        "silicon-model-qwen3-5-9b": "976e27ebe9eab1e067b1f221559dbffab9b763496d9fc2f4f311aedb269b94cd",
+        "silicon-model-qwen3-6-27b": "dc3835e8bd4daa5a1893c3dab57edd0cc23ef5aecc4efdd7401eaced60f6f5bb",
+        "silicon-model-qwen3-6-35b-a3b": "8cce368c3fedd9dc45373e036469e979e8ec64f3cf8977b5ec2ca402e1d45408",
+        "silicon-model-qwen3-8-2-4t-a95b": "ab9562cbe49af40480a55a5eefb56ca974a1a802be13861fbde93d98f4b1bce6",
+        "silicon-model-wan2-2-i2v-a14b": "ac33d2f64cd55878f516ed6066f92766f913aa94e556f799babfe88cb789d74f",
+        "silicon-model-wan2-2-t2v-a14b": "f0f73fc059a5326193b9f44925e28601b4c5359e4645abb812dc8923279683b1"
+      }
+    },
+    "perplexity": {
+      "sources": [
+        "perplexity-models"
+      ],
+      "contracts": {
+        "perplexity-models": "7dff00a36857063668f393f44cbb55365127d755ade7a5f8fb6afe69843537c8"
+      }
+    },
+    "cometapi": {
+      "sources": [
+        "cometapi",
+        "comet-models"
+      ],
+      "contracts": {
+        "cometapi": "a5b844cc15d4f94f8c3bb5dc0cbf5b1007bdfc231c06a3aa60cbc792bb35756d",
+        "comet-models": "2ebc08a169a8d4e52f5320afbc0ceb3f04984027d03621e32a9a50667c68f49b"
+      }
+    },
+    "openai": {
+      "sources": [
+        "openai"
+      ],
+      "contracts": {
+        "openai": "0deb74cb968527e985427d8e0616539178e1952b242259d3e46999867d0630b3"
+      }
+    },
+    "anthropic": {
+      "sources": [
+        "anthropic"
+      ],
+      "contracts": {
+        "anthropic": "95728beb16feb0c46c61be25ff4b4b2775fd1cdd4cdcecb2f0da5d867a31301d"
+      }
+    }
+  }
+}

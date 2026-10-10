@@ -2,10 +2,11 @@
 // 설정 키(request_log)와 폴더 이름(request-log)은 바꾸지 않는다. 가격표가 여기 들어 있다.
 import { extension_settings } from '../../../../../../extensions.js';
 import { saveSettingsDebounced } from '../../../../../../../script.js';
+import { safeOrigin } from './pricing.js';
 
 export const MODULE = 'request_log';
 export const FOLDER = 'blue-lemonade'; // 2.0.0 성능 보조로 합침
-export const VERSION = '1.2.8';
+export const VERSION = '1.5.0';
 export const TITLE = '요청 로그';
 
 const DEFAULTS = Object.freeze({
@@ -79,6 +80,7 @@ function cleanPrices(prices) {
         };
         // 중계 서버 로그의 배율에서 자동으로 채운 가격 (1.2.0). 직접 고치면 auto가 빠져 자동으로 덮어쓰지 않는다
         if (price.auto === true) out[name].auto = true;
+        if (price.auto === true && safeOrigin(price.origin)) out[name].origin = safeOrigin(price.origin);
     }
     return out;
 }
@@ -124,13 +126,12 @@ export function initSettings() {
 }
 
 /** 금액 표시: 단위 + 크기에 맞는 소수 자리 */
-export function money(value, { empty = '—', signed = false } = {}) {
+export function money(value, { empty = '—', signed = false, unit = settings().unit } = {}) {
     if (value === null || value === undefined || !Number.isFinite(Number(value))) return empty;
     const amount = Number(value);
-    const unit = settings().unit;
     if (amount === 0) return `${unit}0`;
     const size = Math.abs(amount);
-    const digits = size >= 1 ? 2 : size >= 0.01 ? 3 : 4;
+    const digits = size >= 1 ? 2 : size >= 0.01 ? 3 : size >= 0.0001 ? 6 : 8;
     const text = size.toFixed(digits).replace(/(\.\d*?[1-9])0+$|\.0+$/, '$1');
     const sign = amount < 0 ? '-' : (signed ? '+' : '');
     return `${sign}${unit}${text}`;

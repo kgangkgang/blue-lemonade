@@ -7,6 +7,63 @@ import { listEntries, getEntry, listDaily, clearEntries, clearDaily, repriceDail
 import { mergeEntries } from './entry-order.js';
 import { onEntry } from './capture.js';
 import * as budget from './budget.js';
+import { main_api } from '../../../../../../../script.js';
+import { textgenerationwebui_settings, getTextGenServer, getTextGenModel } from '../../../../../../textgen-settings.js';
+import { nai_settings } from '../../../../../../nai-settings.js';
+import { oai_settings, getChatCompletionModel } from '../../../../../../openai.js';
+import { priceFor } from './state.js';
+import { connectionFor, quoteRequest, manualPriceForConnection } from './pricing.js';
+import { priceCard, pricePreview, addCurrencyCost, providerCoverage } from './pricing-view.js';
+import { refreshPrices, pricingSyncStatus } from './pricing-sync.js';
+
+function syncStatusText() {
+    if (settings().priceAutoRefresh === false) return '자동 갱신 꺼짐 · 저장된 가격 사용';
+    const status=pricingSyncStatus();
+    const text=({ loading:'공식 가격 확인 중…', ready:'하루 한 번 자동 확인', cached:'저장된 확인 가격 사용', offline:'연결하지 못했어요 · 마지막 확인 가격 유지', stale:'가격표 갱신 지연 · 마지막 확인 가격 유지', bundled:'설치본 가격 사용 · 자동 확인 대기' })[status.state];
+    return text+(status.memoryOnly ? ' · 이 창에서만 보관' : '');
+}
+function updateSyncControls(root) {
+    const label=root.querySelector('.rl-price-sync-status');
+    if (label) label.textContent=syncStatusText();
+    const button=root.querySelector('[data-act="refresh-pricing"]');
+    if (button) button.disabled=pricingSyncStatus().state==='loading';
+    const old=root.querySelector('.rl-provider-coverage');
+    if (old) { const open=old.open; old.outerHTML=providerCoverage(); root.querySelector('.rl-provider-coverage').open=open; }
+}
+
+function currentPriceCard() {
+    let model = '', body = {}, route = '/api/backends/chat-completions/generate';
+    if (main_api === 'openai') { model = getChatCompletionModel(); body = oai_settings; }
+    else if (main_api === 'textgenerationwebui') {
+        const t = textgenerationwebui_settings;
+        model = t.type === 'ollama' && !t.ollama_model ? '' : getTextGenModel();
+        body = { api_type: t.type, api_server: getTextGenServer() }; route = '/api/backends/text-completions/generate';
+    } else if (main_api === 'novel') { model = nai_settings.model_novel; route = '/api/novelai/generate'; }
+    else if (main_api === 'koboldhorde') route = '/api/horde/generate-text';
+    else if (main_api === 'kobold') { body = { api_server: document.querySelector('#api_url_text')?.value }; route = '/api/backends/kobold/generate'; }
+    const connection = connectionFor(route, body, location.origin);
+    const manualPrice = priceFor(model);
+    const quote = quoteRequest({ connection, model,
+        manualPrice: manualPriceForConnection(manualPrice, connection),
+        manualUnit: settings().unit });
+    return pricePreview(quote);
+}
+
+function refreshCurrentPrice(root) {
+    const holder = root.querySelector('.rl-current-pricing');
+    if (!holder) return;
+    const open = holder.querySelector('details')?.open;
+    holder.innerHTML = currentPriceCard();
+    holder.querySelector('details').open = !!open;
+    updateSyncControls(root);
+}
+document.addEventListener('bl-prices-updated', () => document.querySelectorAll('.rl-root').forEach(refreshCurrentPrice));
+
+function requestMoney(entry) {
+    const unit = entry.pricing?.currency === 'USD' ? 'US$' : entry.pricing?.currency || settings().unit;
+    return esc(money(entry.cost, { unit }));
+}
+
 
 const PAGE = 100;
 
@@ -77,7 +134,7 @@ export function buildDrawer() {
                     </div>
                     <small class="rl-hint">본문 보관 수를 넘긴 요청은 프롬프트·응답 글은 지워지고 토큰 수만 남아요. 날짜별 집계는 지워지지 않아요.</small>
                     <div class="rl-price-head">
-                        <b>가격표</b><small>100만 토큰당</small>
+                        <b>직접 지정 가격표</b><small>공식 API 외 연결용 · 100만 토큰당</small>
                         <label class="rl-unit"><span>단위</span><input type="text" class="text_pole rl-unit-input" maxlength="4"></label>
                     </div>
                     <div class="rl-price-list"></div>
@@ -87,7 +144,7 @@ export function buildDrawer() {
                         <input type="number" class="text_pole rl-price-out" placeholder="출력" min="0" step="0.01" inputmode="decimal">
                         <div class="menu_button menu_button_icon rl-price-save"><i class="fa-solid fa-plus"></i></div>
                     </div>
-                    <small class="rl-hint">가격표 이름이 모델 이름의 앞부분과 같아도 맞춰 써요. 가격을 고치면 지난 집계의 비용도 다시 계산해요. "자동"은 아래 예산 연동이 중계 서버의 배율로 채운 가격이고, 직접 고치면 그때부터는 자동으로 바꾸지 않아요.</small>
+                    <small class="rl-hint">연결한 제공처의 확인된 공식 단가를 자동 적용해요. 정액제·직접 운영 서버는 과금 방식을 안내해요. 이 표는 공식 단가를 확인하지 못한 연결에 써요. "자동"은 중계 서버에서 받은 가격으로, 같은 서버에만 적용해요. 새 로그는 요청 당시 단가를 보존하고, 예전 집계만 수정한 가격으로 다시 계산해요.</small>
                     <div class="rl-price-head rl-budget-head">
                         <b>예산</b><small>중계 서버(new-api 계열)의 실제 과금·잔액</small>
                     </div>
@@ -322,7 +379,7 @@ function renderPrices() {
     const prices = settings().prices;
     const names = Object.keys(prices).sort();
     if (!names.length) {
-        list.innerHTML = '<small class="rl-hint rl-price-empty">아직 없어요. 가격을 넣어 두면 집계에 비용이 나와요. 아래 예산 연동을 켜면 중계 서버의 배율로 자동으로 채워요.</small>';
+        list.innerHTML = '<small class="rl-hint rl-price-empty">직접 지정한 가격이 없어요. 공식 가격표에 있는 모델은 입력하지 않아도 연결처별 단가를 써요.</small>';
         return;
     }
     list.innerHTML = names.map(model => `
@@ -352,6 +409,13 @@ function buildDialog() {
             <span class="rl-top-note">${isMemoryOnly() ? '이 창을 닫으면 사라져요 (저장소 없음)' : '이 기기에만 남아요'}</span>
         </div>
         <section class="rl-view" data-view="log">
+            <div class="rl-current-pricing">${currentPriceCard()}</div>
+            <div class="rl-price-sync-controls">
+                <label><input type="checkbox" data-act="auto-pricing" ${settings().priceAutoRefresh !== false ? 'checked' : ''}> 가격 자동 갱신</label>
+                <button type="button" class="rl-chip" data-act="refresh-pricing">지금 확인</button>
+                <span class="rl-price-sync-status" role="status">${syncStatusText()}</span>
+            </div>
+            ${providerCoverage()}
             <div class="rl-filters">
                 <select class="text_pole rl-filter-caller"><option value="">모두</option></select>
                 <select class="text_pole rl-filter-purpose" aria-label="사용 용도"><option value="">모든 용도</option>${Object.entries(PURPOSES).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select>
@@ -401,6 +465,11 @@ export async function openDialog({ tab = 'log' } = {}) {
     const $ = selector => root.querySelector(selector);
 
     root.addEventListener('click', event => onDialogClick(event, state));
+    root.querySelector('[data-act="auto-pricing"]').addEventListener('change', event => {
+        settings().priceAutoRefresh=event.target.checked;
+        saveSettings(); updateSyncControls(root);
+        if (event.target.checked) void refreshPrices();
+    });
     $('.rl-filter-caller').addEventListener('change', (event) => {
         state.callerFilter = event.target.value;
         renderList(state);
@@ -413,6 +482,7 @@ export async function openDialog({ tab = 'log' } = {}) {
 
     const stop = onEntry(entry => {
         if (dialog !== state) return;
+        refreshCurrentPrice(state.root);
         if (state.tab === 'stats') { renderStats(state); return; }
         if (state.tab !== 'log') return;
         const last = state.entries.at(-1);
@@ -694,14 +764,14 @@ function renderList(state) {
             html.push(`<div class="rl-day">${esc(day.replace(/-/g, '.'))}</div>`);
         }
         const status = statusOf(entry);
-        const cost = entry.cost === null || entry.cost === undefined ? '' : ` · ${money(entry.cost)}`;
+        const cost = entry.cost === null || entry.cost === undefined ? ' · 비용 미확인' : ` · ${requestMoney(entry)}`;
         const error = entry.error && !entry.ok ? `<small class="rl-item-error">${esc(String(entry.error).slice(0, 120))}</small>` : '';
         html.push(`
             <button type="button" class="rl-item ${status.className}" data-id="${esc(entry.id)}">
                 <span class="rl-item-time">${timeOf(entry.at)}</span>
                 <span class="rl-item-main">
                     <b><span class="rl-item-title">${esc(titleOf(entry))}</span><span class="rl-item-model">${esc(entry.model || '?')}</span></b>
-                    <small>${tokensLabel(entry)} · ${seconds(entry.durationMs)}${cost}</small>
+                    <small>${entry.connection?.label ? `${esc(entry.connection.label)} · ` : ''}${tokensLabel(entry)} · ${seconds(entry.durationMs)}${cost}</small>
                     ${error}
                 </span>
                 <i class="rl-item-status fa-solid ${status.icon}" aria-label="${status.label}"></i>
@@ -773,14 +843,17 @@ function renderDetail(entry) {
         chip('걸린 시간', `${seconds(entry.durationMs)}${entry.firstByteMs !== null && entry.firstByteMs !== undefined ? ` <span class="rl-dim">첫 글자 ${seconds(entry.firstByteMs)}</span>` : ''}`),
         chip('토큰', tokensLabel(entry)),
         entry.cachedTokens ? chip('캐시', number(entry.cachedTokens)) : '',
-        chip('비용', entry.cost === null || entry.cost === undefined ? '<span class="rl-dim">가격 없음</span>' : money(entry.cost)),
+        chip('예상 비용', entry.cost === null || entry.cost === undefined ? '<span class="rl-dim">계산 불가</span>' : requestMoney(entry)),
         chip('끝난 이유', entry.finish ? esc(entry.finish) : ''),
         chip('보내기', entry.stream ? '스트림' : '한 번에'),
         chip('메시지', entry.messageCount ? `${number(entry.messageCount)}개 · ${number(entry.promptChars)}자` : ''),
         chip('캐릭터', entry.character ? esc(entry.character) : ''),
         chip('용도',esc(purposeLabel(entry.purpose))),
         chip('사용량',entry.usageKnown?'API 응답':entry.estimated?'토큰 추정':'확인 불가'),
-        chip('비용 기준','설정한 모델 단가로 계산 · 실제 청구액과 다를 수 있어요'),
+        chip('연결처', esc(entry.connection?.label || '예전 기록 · 미확인')),
+        entry.cacheWriteTokens ? chip('캐시 저장', number(entry.cacheWriteTokens)) : '',
+        entry.cacheWrite5mTokens ? chip('5분 저장', number(entry.cacheWrite5mTokens)) : '',
+        entry.cacheWrite1hTokens ? chip('1시간 저장', number(entry.cacheWrite1hTokens)) : '',
         chip('API 경로',esc(entry.endpoint||'')),
         chip('소스', entry.source ? esc(entry.source) : ''),
         entry.swipes > 1 ? chip('스와이프', `${entry.swipes}개`) : '',
@@ -822,6 +895,7 @@ function renderDetail(entry) {
             </div>
         </div>
         <div class="rl-meta">${meta}</div>
+        ${priceCard(entry.pricing)}
         ${error}
         ${trace}
         ${body}
@@ -853,6 +927,7 @@ function groupRows(rows, keyOf, labelOf) {
         const key = keyOf(row);
         const group = groups.get(key) ?? { key, label: labelOf(row), cachedTokens:0,unknownUsage:0, requests: 0, errors: 0, promptTokens: 0, completionTokens: 0, reasoningTokens: 0, estimatedRequests: 0, cost: 0, priced: 0 };
         for (const field of ['cachedTokens','unknownUsage','requests', 'errors', 'promptTokens', 'completionTokens', 'reasoningTokens', 'estimatedRequests', 'cost', 'priced']) group[field] += Number(row[field]) || 0;
+        addCurrencyCost(group, row, settings().unit);
         groups.set(key, group);
     }
     return [...groups.values()];
@@ -861,7 +936,7 @@ function groupRows(rows, keyOf, labelOf) {
 function costCell(group) {
     if (!group.priced) return '<span class="rl-dim">—</span>';
     const partial = group.priced < group.requests ? '<span class="rl-dim">일부</span> ' : '';
-    return `${partial}${money(group.cost)}`;
+    return partial + Object.entries(group.costs || {}).map(([currency, value]) => esc(money(value, { unit: currency === 'USD' ? 'US$' : currency }))).join(' / ');
 }
 
 function approxMark(group) {
@@ -918,13 +993,15 @@ async function renderStats(state) {
         </div>`;
     const byPurpose=groupRows(inRange,row=>row.purpose||'unknown',row=>purposeLabel(row.purpose));
     const byPurposeModel=groupRows(inRange,row=>(row.purpose||'unknown')+'|'+row.model,row=>purposeLabel(row.purpose)+' · '+row.model);
-    const byModel = groupRows(inRange, row => row.model, row => row.model);
+    const byModel = groupRows(inRange, row => row.model + '|' + (row.providerLabel || ''), row => row.model + ' · ' + (row.providerLabel || '예전 기록'));
     const byCaller = groupRows(inRange, row => row.caller, row => callerLabel(row.caller));
     const byDay = groupRows(inRange, row => row.day, row => row.day.replace(/-/g, '.'));
+    const mixedCurrency = Object.keys(total.costs || {}).length > 1;
+    const costSort = mixedCurrency ? 'requests' : 'cost';
     holder.innerHTML = tiles
-        + '<p class="rl-dim">용도별 비용은 모델 단가 기준 예상액이에요. 예전 기록은 용도 분류 불가로 남고, 사용량·가격이 없는 요청은 0원으로 계산하지 않아요. 캐시 입력은 입력에 포함된 참고 수치예요.</p>'
-        + renderTable('용도별 · 비용 많은 순',byPurpose,{sortBy:'cost'})
-        + renderTable('용도 · 모델별',byPurposeModel,{sortBy:'cost'})
+        + '<p class="rl-dim">용도별 비용은 모델 단가 기준 예상액이에요. 예전 기록은 용도 분류 불가로 남고, 사용량·가격이 없는 요청은 0원으로 계산하지 않아요. 새 기록은 요청 당시 연결처·공식 캐시 단가를 반영해요. 단가 확인이 안 된 요청은 합계에서 빠져요. 서로 다른 통화는 나눠 보여요.</p>'
+        + renderTable(mixedCurrency ? '용도별 · 요청 많은 순 (통화가 서로 달라요)' : '용도별 · 비용 많은 순',byPurpose,{sortBy:costSort})
+        + renderTable('용도 · 모델별',byPurposeModel,{sortBy:costSort})
         + renderTable('모델별', byModel)
         + renderTable('보낸 곳별', byCaller)
         + (state.range === 'today' ? '' : renderTable('날짜별', byDay, { sortBy: 'label', desc: true }));
@@ -934,6 +1011,11 @@ async function renderStats(state) {
 
 function onDialogClick(event, state) {
     const target = event.target;
+    if (target.closest('[data-act="refresh-pricing"]')) {
+        refreshCurrentPrice(state.root);
+        void refreshPrices({ force: true }).then(() => refreshCurrentPrice(state.root));
+        return;
+    }
     const tab = target.closest('.rl-tab');
     if (tab) return showTab(state, tab.dataset.tab);
 

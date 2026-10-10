@@ -1,3 +1,4 @@
+import { priceSnapshot } from './pricing-live.js';
 // 요청 로그 — fetch를 가로채서 API 요청과 응답을 기록한다
 //
 // 실리태번(그리고 확장들)은 모두 브라우저에서 서버의 /api/backends/…/generate 로 요청을 보낸다.
@@ -6,7 +7,8 @@ import { LOG_BRIDGE, createAttribution, requestKind } from './attribution.js';
 const attribution=createAttribution();
 import { getCurrentChatId, name2 } from '../../../../../../../script.js';
 import { getTokenCountAsync } from '../../../../../../tokenizers.js';
-import { settings, costOf } from './state.js';
+import { settings, priceFor } from './state.js';
+import { connectionFor, mergeTokenUsage, quoteRequest, manualPriceForConnection } from './pricing.js';
 import { addEntry, bumpDaily, trimEntries } from './store.js';
 
 // Known paid-work endpoints only; auth, status and ordinary local requests stay unlogged.
@@ -201,7 +203,15 @@ export function absorbChunk(json, acc) {
 
     if(Array.isArray(json.output))for(const item of json.output)for(const part of item.content||[])if(part.type==='output_text')acc.text+=part.text||'';
     if(json.type==='response.output_text.delta')acc.text+=json.delta||'';
-    if(json.type==='response.completed'&&json.response?.usage)json={usage:json.response.usage};
+    if(json.type==='response.completed'&&json.response?.usage)json=json.response;
+    const responseMeta = json.message || json;
+    if (typeof json.modelVersion === 'string') acc.model = json.modelVersion;
+    if (json.x_groq?.usage) acc.usage = mergeTokenUsage(acc.usage, json.x_groq.usage);
+    if (json.prompt_eval_count !== undefined || json.eval_count !== undefined) acc.usage = mergeTokenUsage(acc.usage, { prompt_tokens: json.prompt_eval_count, completion_tokens: json.eval_count });
+    if (typeof responseMeta.model === 'string') acc.model = responseMeta.model;
+    if (typeof responseMeta.service_tier === 'string') acc.serviceTier = responseMeta.service_tier;
+    if (typeof responseMeta.usage?.service_tier === 'string') acc.serviceTier = responseMeta.usage.service_tier;
+    if (typeof responseMeta.usage?.speed === 'string') acc.speed = responseMeta.usage.speed;
     // Responses 스트림의 response.output_text.done 도 text(전체 답)를 실어 온다 — delta 로 이미 더했으니 response.* 는 빼고
     if(typeof json.text==='string'&&!json.choices&&!String(json.type??'').startsWith('response.'))acc.text+=json.text;
     // 오류
@@ -229,14 +239,14 @@ export function absorbChunk(json, acc) {
 
     // Claude (메시지 API)
     if (json.type === 'message_start' && json.message?.usage) {
-        acc.usage = { ...(acc.usage ?? {}), prompt: numberOr(json.message.usage.input_tokens)+numberOr(json.message.usage.cache_read_input_tokens)+numberOr(json.message.usage.cache_creation_input_tokens), cached: numberOr(json.message.usage.cache_read_input_tokens) };
+        acc.usage = mergeTokenUsage(acc.usage, json.message.usage, true);
     }
     if (json.type === 'content_block_delta' && json.delta) {
         if (typeof json.delta.text === 'string') acc.text += json.delta.text;
         if (typeof json.delta.thinking === 'string') acc.reasoning += json.delta.thinking;
     }
     if (json.type === 'message_delta') {
-        if (json.usage) acc.usage = { ...(acc.usage ?? {}), completion: numberOr(json.usage.output_tokens) };
+        if (json.usage) acc.usage = mergeTokenUsage(acc.usage, json.usage, true);
         if (json.delta?.stop_reason) acc.finish = String(json.delta.stop_reason);
         if (json.delta?.stop_details) acc.stopDetail = String(json.delta.stop_details.category ?? json.delta.stop_details.explanation ?? ''); // 1.2.7: 거절(refusal) 분류
     }
@@ -247,7 +257,7 @@ export function absorbChunk(json, acc) {
         }
         if (json.stop_reason) acc.finish = String(json.stop_reason);
         if (json.stop_details) acc.stopDetail = String(json.stop_details.category ?? json.stop_details.explanation ?? '');
-        if (json.usage) acc.usage = { prompt: numberOr(json.usage.input_tokens)+numberOr(json.usage.cache_read_input_tokens)+numberOr(json.usage.cache_creation_input_tokens), completion: numberOr(json.usage.output_tokens), cached: numberOr(json.usage.cache_read_input_tokens) };
+        if (json.usage) acc.usage = mergeTokenUsage(acc.usage, json.usage, true);
     }
 
     // Gemini (MakerSuite / Vertex)
@@ -277,23 +287,16 @@ export function absorbChunk(json, acc) {
         acc.text += json.message.content.map(part => part?.text ?? '').join('');
     }
     if (json.type === 'content-delta' && typeof json.delta?.message?.content?.text === 'string') acc.text += json.delta.message.content.text;
-    if (json.type === 'message-end' && json.delta?.usage?.tokens) {
-        acc.usage = { prompt: numberOr(json.delta.usage.tokens.input_tokens), completion: numberOr(json.delta.usage.tokens.output_tokens) };
+    if (json.type === 'message-end' && json.delta?.usage) {
+        const billed = json.delta.usage.billed_units || json.delta.usage.tokens;
+        if (billed) acc.usage = mergeTokenUsage(acc.usage, billed);
     }
-    if (json.usage?.tokens && !json.type) {
-        acc.usage = { prompt: numberOr(json.usage.tokens.input_tokens), completion: numberOr(json.usage.tokens.output_tokens) };
-    }
+    if (json.usage?.tokens && !json.type) acc.usage = mergeTokenUsage(acc.usage, json.usage.billed_units || json.usage.tokens);
 
     // OpenAI 계열 usage (마지막 조각이나 전체 응답에 온다)
-    if (json.usage && (json.usage.prompt_tokens !== undefined || json.usage.completion_tokens !== undefined || json.usage.input_tokens !== undefined)) {
+    if (!['message','message_delta'].includes(json.type) && json.usage && (json.usage.prompt_tokens !== undefined || json.usage.completion_tokens !== undefined || json.usage.input_tokens !== undefined)) {
         const usage = json.usage;
-        const found = {
-            prompt: numberOr(usage.prompt_tokens, usage.input_tokens)+(usage.prompt_tokens===undefined?numberOr(usage.cache_read_input_tokens)+numberOr(usage.cache_creation_input_tokens):0),
-            completion: numberOr(usage.completion_tokens, usage.output_tokens),
-            reasoning: numberOr(usage.completion_tokens_details?.reasoning_tokens, usage.output_tokens_details?.reasoning_tokens),
-            cached: numberOr(usage.prompt_tokens_details?.cached_tokens, usage.cache_read_input_tokens),
-        };
-        acc.usage = found;
+        acc.usage = mergeTokenUsage(acc.usage, usage, usage.prompt_tokens === undefined && (usage.cache_read_input_tokens !== undefined || usage.cache_creation_input_tokens !== undefined));
     }
 }
 
@@ -385,6 +388,12 @@ async function finishEntry(context, response, acc, marks, failure) {
     const ok = !failure && !!response?.ok && !acc.error;
     const error = failure ? (context.aborted ? '중단됨' : String(failure.message ?? failure)) : (acc.error ?? (response && !response.ok ? `HTTP ${status}` : null));
 
+    const model = acc.model || context.model;
+    const pricing = quoteRequest({ ...context.priceContext, model, requestedModel: context.model, requestEnd: Date.now(), usage: { ...acc.usage, prompt: promptTokens, completion: completionTokens }, estimated,
+        serviceTier: acc.serviceTier || context.priceContext.serviceTier, speed: acc.speed || context.priceContext.speed,
+        unsupported: !tokenBased });
+    if (!usageKnown && !estimated && pricing.kind !== 'free') pricing.cost = null;
+    if (context.priceContext.connection.provider === 'horde') pricing.note += ' 이 기록은 대기열 접수 요청이며 최종 생성 결과·kudos 차감은 포함하지 않아요.';
     const entry = {
         id: newId(at),
         at,
@@ -395,7 +404,10 @@ async function finishEntry(context, response, acc, marks, failure) {
         endpoint: context.endpoint,
         type: context.type,
         source: context.source,
-        model: context.model,
+        model,
+        requestedModel: context.model,
+        connection: context.priceContext.connection,
+        pricing,
         stream: context.stream,
         chatId: context.chatId,
         character: context.character,
@@ -414,9 +426,12 @@ async function finishEntry(context, response, acc, marks, failure) {
         completionTokens,
         reasoningTokens,
         cachedTokens,
+        cacheWriteTokens: acc.usage?.cacheWrite || 0,
+        cacheWrite5mTokens: acc.usage?.cacheWrite5m || 0,
+        cacheWrite1hTokens: acc.usage?.cacheWrite1h || 0,
         estimated,
         usageKnown,
-        cost: tokenBased&&(usageKnown||estimated)?costOf(context.model,promptTokens,completionTokens):null,
+        cost: pricing.cost,
         params: context.params,
     };
     if (context.sendTrace) entry.sendTrace = context.sendTrace;
@@ -477,6 +492,10 @@ async function watch(nativeFetch, input, init, body, caller=callerFromStack()) {
         aborted: false,
         rawError: null,
     };
+    const connection = connectionFor(input, body, location.origin);
+    const manualPrice = priceFor(context.model);
+    context.priceContext = { connection, priceData: priceSnapshot(connection.provider), at, hasMedia: /input_audio|inlineData|inline_data|audio_url|video_url/.test(JSON.stringify(body.messages || body.contents || [])), serviceTier: body.service_tier || '', speed: body.speed || '', inferenceGeo: body.inference_geo || '',
+        manualPrice: manualPriceForConnection(manualPrice, connection), manualUnit: settings().unit };
     if (endpoint === '/api/novelai/generate' && typeof body.input === 'string') context.prompt = body.input;
     if (context.caller === 'chat') context.type = (/\/chat-completions\/generate$/.test(endpoint) && ['normal', 'regenerate', 'swipe', 'continue', 'impersonate', 'quiet'].includes(body.type) ? body.type : null) ?? generationType ?? 'quiet';
     Object.assign(context,attribution.resolve({explicit:init?.requestLog,caller:context.caller,type:context.type,kind,body}));

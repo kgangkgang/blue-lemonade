@@ -1,0 +1,23 @@
+// Reviewed USD / 1M: input, output, cache read, 5m write, 1h write.
+export const CLAUDE_RATES = {
+    'claude-fable-5-1': [10,50,.25,12.5,20],
+    'claude-mythos-5-1': [10,50,.25,12.5,20],
+    'claude-fable-5': [10,50,1,12.5,20],
+    'claude-mythos-5': [10,50,1,12.5,20],
+    'claude-opus-5-5': [4,20,.2,5,8],
+    'claude-opus-5': [5,25,.5,6.25,10],
+    'claude-opus-4-8': [5,25,.5,6.25,10],
+    'claude-opus-4-7': [5,25,.5,6.25,10],
+    'claude-opus-4-6': [5,25,.5,6.25,10],
+    'claude-opus-4-5': [5,25,.5,6.25,10],
+    'claude-opus-4-1': [15,75,1.5,18.75,30],
+    'claude-opus-4': [15,75,1.5,18.75,30],
+    'claude-sonnet-5-5': [2,10,.1,2.5,4],
+    'claude-sonnet-5': [2,10,.2,2.5,4],
+    'claude-sonnet-4-6': [3,15,.3,3.75,6],
+    'claude-sonnet-4-5': [3,15,.3,3.75,6],
+    'claude-sonnet-4': [3,15,.3,3.75,6],
+    'claude-haiku-5-5': [.1,.5,.01,.125,.2],
+    'claude-haiku-4-5': [1,5,.1,1.25,2],
+    'claude-3-5-haiku': [.8,4,.08,1,1.6],
+};

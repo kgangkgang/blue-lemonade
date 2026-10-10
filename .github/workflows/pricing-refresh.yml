@@ -1,0 +1,64 @@
+name: Official model prices
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['tools/pricing/**', '.github/workflows/pricing-refresh.yml']
+permissions:
+  contents: read
+concurrency:
+  group: official-model-prices
+  cancel-in-progress: false
+jobs:
+  refresh:
+    if: github.repository == 'kgangkgang/blue-lemonade'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - run: pip install -r tools/pricing/requirements.txt
+      - name: Test failure isolation and price validation
+        run: |
+          python -m unittest discover -s tools/pricing -p 'test_*.py'
+          node tools/pricing/test-client.mjs
+      - name: Load the last published snapshot
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python tools/pricing/publish.py prepare --directory "$RUNNER_TEMP/pricing"
+      - name: Collect public official sources
+        run: python tools/pricing/collect.py --previous "$RUNNER_TEMP/pricing/previous.json" --output "$RUNNER_TEMP/pricing/official-prices.json" --report "$RUNNER_TEMP/pricing/report.json" --sources "$RUNNER_TEMP/pricing/sources"
+      - name: Validate the same schema used by the extension
+        run: node tools/pricing/validate-feed.mjs "$RUNNER_TEMP/pricing/official-prices.json"
+      - name: Publish only verified prices and last-good fallback statuses
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python tools/pricing/publish.py publish --directory "$RUNNER_TEMP/pricing"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pricing-check-report
+          path: ${{ runner.temp }}/pricing/report.json
+          retention-days: 30
+      - name: Flag official sources that need attention
+        run: |
+          python - <<'PY'
+          import json,os,sys
+          from pathlib import Path
+          report=json.loads((Path(os.environ['RUNNER_TEMP'])/'pricing/report.json').read_text())
+          bad={k:v for k,v in report.items() if v['status']!='ok'}
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
+              f.write('| Provider | Result |\n|---|---|\n'+''.join(f"| {k} | {v['status']} |\n" for k,v in report.items()))
+          if bad:
+              print('::error::Kept last verified prices for: '+', '.join(bad))
+              sys.exit(1)
+          PY

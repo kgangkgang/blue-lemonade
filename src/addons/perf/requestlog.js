@@ -1,3 +1,4 @@
+import { loadPriceCache, startPriceSync } from './pricing-sync.js';
 // 요청 로그 (Request Log)
 // 실리태번과 확장이 보내는 API 요청을 모두 기록한다. 프롬프트·응답·오류를 다시 보고, 토큰과 비용을 날짜·모델별로 모아 본다.
 // 기록은 이 기기의 브라우저(IndexedDB)에만 남는다.
@@ -11,6 +12,7 @@ let budgetPromise = null;
 const budgetModule = () => (budgetPromise ??= import('./budget.js'));
 
 initSettings();
+loadPriceCache();
 // 다른 확장보다 먼저 fetch를 감싸야 그 확장의 요청도 잡힌다 (loading_order가 낮다).
 installCapture();
 
@@ -86,5 +88,5 @@ jQuery(async () => {
     setTimeout(() => { let done = false; const go = () => { if (!done) { done = true; checkFilesMatch(); } }; requestAnimationFrame(() => setTimeout(go, 0)); setTimeout(go, 5000); }, 3000);
     // 4.5.8: 첫 정리는 시작 경로에서 빼 예산 확인과 같은 타이머에 얹는다 —
     // jQuery ready 에서 곧장 IndexedDB 를 readwrite 커서로 최대 500행 훑었고 보통은 지울 것이 없다.
-    setTimeout(() => { trimEntries().catch(() => {}); if (settings().budget?.enabled) budgetModule().then(m => m.refresh()).catch(() => {}); }, 6000);
+    setTimeout(() => { startPriceSync(() => settings().priceAutoRefresh !== false); trimEntries().catch(() => {}); if (settings().budget?.enabled) budgetModule().then(m => m.refresh()).catch(() => {}); }, 6000);
 });

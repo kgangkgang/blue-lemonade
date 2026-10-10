@@ -299,6 +299,7 @@ export async function refresh({ force = false } = {}) {
 /** 키로 조회: 누적 사용량 + 최근 로그. 429면 Retry-After만큼(없으면 10분) 물러나고 지난 값은 그대로 둔다 */
 async function fetchKeyData() {
     state.lastKeyFetchAt = Date.now();
+    const pricingOrigin = originOf(baseUrl());
     const [usage, logs] = await Promise.allSettled([
         relayGet('/api/usage/token/', keyHeaders()),
         relayGet(`/api/log/token?key=${encodeURIComponent(config().key)}&p=1&page_size=${RELAY_LOG_LIMIT}`, keyHeaders()),
@@ -333,7 +334,7 @@ async function fetchKeyData() {
         if (state.logs.length) {
             try {
                 state.daily = await mergeRelayDaily(state.logs);
-                await syncPricesFromLogs(state.logs);
+                await syncPricesFromLogs(state.logs, pricingOrigin);
             } catch (error) {
                 console.warn('[요청 로그] 과금 집계를 저장하지 못했어요', error);
             }
@@ -410,7 +411,8 @@ async function mergeRelayDaily(logs) {
  * (model_price가 0보다 크면 토큰이 아니라 건당 요금이라 건너뛴다.)
  * 직접 적은 가격은 건드리지 않고, 자동으로 채운 것(auto)만 새 배율로 고친다.
  */
-async function syncPricesFromLogs(logs) {
+async function syncPricesFromLogs(logs, origin) {
+    if (!origin) return;
     const prices = settings().prices;
     const seen = new Set();
     let changed = false;
@@ -439,8 +441,8 @@ async function syncPricesFromLogs(logs) {
         const output = round(input * completionRatio);
         const current = prices[model];
         if (current && current.auto !== true) continue;
-        if (current && current.input === input && current.output === output) continue;
-        prices[model] = { input, output, auto: true };
+        if (current && current.input === input && current.output === output && current.origin === origin) continue;
+        prices[model] = { input, output, auto: true, origin };
         changed = true;
     }
     if (!changed) return;

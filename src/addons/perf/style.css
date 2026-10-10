@@ -135,7 +135,12 @@
 
 /* ===== 요청 로그 (parts/request-log.css) ===== */
 /* 요청 로그 (Request Log) — 설정 서랍 · 로그·집계 창 */
-:root { --rl-css-version: "1.2.8"; }
+:root { --rl-css-version: "1.5.0"; }
+.rl-price-sync-controls { display:flex; flex-wrap:wrap; align-items:center; gap:.65em 1em; margin:.65em 0; }
+.rl-price-sync-controls label { display:flex; align-items:center; gap:.4em; min-width:0; }
+.rl-price-sync-controls input { flex:0 0 auto; }
+.rl-price-sync-status { flex-basis:100%; opacity:.75; font-size:.9em; overflow-wrap:anywhere; }
+.rl-price-sync-controls .rl-chip { white-space:normal; height:auto; min-height:2.5em; }
 
 .rl-settings, .rl-root {
     --rl-text: var(--SmartThemeBodyColor, #e8e8ec);
@@ -881,4 +886,37 @@
     border-bottom: 1px solid var(--SmartThemeBorderColor, #8884);
     font-size: 0.9em;
     opacity: 0.85;
+}
+
+/* Request-time official pricing, 1.5.0. Flexible columns also work with large UI fonts. */
+.rl-pricing-card { margin-block: .75em; padding: .8em; border: 1px solid var(--rl-line); border-radius: var(--bl-r-md,12px); color: var(--rl-text); min-width: 0; }
+.rl-pricing-head, .rl-pricing-source { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5em 1em; justify-content: space-between; }
+.rl-pricing-card p { margin: .5em 0 0; line-height: 1.5; overflow-wrap: anywhere; }
+.rl-pricing-head > span, .rl-pricing-unit, .rl-pricing-note, .rl-pricing-source { color: var(--rl-muted); }
+.rl-pricing-rates { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,9em),1fr)); gap: .7em 1em; margin: .8em 0; }
+.rl-pricing-rates > div { min-width: 0; }
+.rl-pricing-rates dt { color: var(--rl-muted); line-height: 1.4; }
+.rl-pricing-rates dd { margin: .25em 0 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.rl-pricing-source a { color: var(--salty-accent-ink,var(--rl-accent)); text-decoration: underline; text-underline-offset: .2em; }
+.rl-current-pricing > .rl-dim { margin-block: .5em; }
+.rl-root [data-act="refresh-pricing"] { align-self: flex-start; width: auto; min-height: 34px; }
+.rl-pricing-preview { margin: .6em 0; padding: .75em; border: 1px solid var(--rl-line); border-radius: var(--bl-r-md,12px); min-width: 0; }
+.rl-pricing-preview summary { cursor: pointer; overflow-wrap: anywhere; line-height: 1.5; }
+.rl-pricing-preview summary > span { display: block; margin-top: .35em; }
+.rl-pricing-more { color: var(--salty-accent-ink,var(--rl-accent)); }
+.rl-pricing-preview > .rl-pricing-card { border: 0; border-top: 1px solid var(--rl-line); border-radius: 0; padding: .8em 0 0; }
+.rl-pricing-preview > p { line-height: 1.5; overflow-wrap: anywhere; }
+.rl-provider-coverage { margin: .5em 0 1em; min-width: 0; }
+.rl-provider-coverage summary { cursor: pointer; line-height: 1.5; overflow-wrap: anywhere; }
+.rl-provider-coverage ul { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,14em),1fr)); gap: .5em 1em; list-style: none; padding: 0; }
+.rl-provider-coverage li { display: flex; flex-wrap: wrap; align-items: baseline; gap: .3em .6em; min-width: 0; border-bottom: 1px solid var(--rl-line); padding: .45em 0; }
+.rl-provider-coverage li span { overflow-wrap: anywhere; }
+.rl-provider-coverage small { color: var(--rl-muted); }
+/* Larger fonts need whole rows rather than splitting currency amounts into narrow tiles. */
+.rl-tabs { flex-wrap: wrap; }
+.rl-tab { flex: 0 0 auto; height: auto; min-height: 2.2em; }
+.rl-tab span { white-space: nowrap; }
+@media (max-width: 600px) {
+    .rl-tiles, .rl-meta { grid-template-columns: repeat(auto-fit,minmax(min(100%,9em),1fr)); }
+    .rl-table tr { grid-template-columns: repeat(auto-fit,minmax(min(100%,7em),1fr)); }
 }
