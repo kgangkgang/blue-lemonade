@@ -27,6 +27,7 @@
     document.querySelector('#feature-result').textContent = searching
       ? `${cards.length}가지 중 ${total}가지 기능` : `${cards.length}가지 기능 안내`;
     document.querySelector('#feature-empty').hidden = total > 0;
+    document.dispatchEvent(new Event('bl-feature-filter'));
   }
   query.addEventListener('input', filter);
   document.querySelector('#feature-clear').addEventListener('click', () => {

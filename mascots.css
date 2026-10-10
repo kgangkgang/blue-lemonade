@@ -15,7 +15,22 @@
 .pet-controls .pet-label{padding-left:9px;color:var(--blue-strong);font-weight:650}
 .pet-help{position:fixed;z-index:116;bottom:70px;left:20px;margin:0;padding:7px 11px;border-radius:9px;background:var(--surface);border:1px solid var(--line);font-size:12px;color:var(--muted);pointer-events:none;transition:opacity .3s}
 .pet-help[hidden]{display:none}
+.pet-options{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end}
+.pet-options[hidden]{display:none}
+.pet-controls button.pet-label{font-weight:650;color:var(--blue-strong);padding-inline:13px;min-height:40px}
+.pet-controls .pet-label::after{content:'⌃';display:inline-block;margin-left:9px}
+.pet-controls .pet-label[aria-expanded=true]::after{transform:rotate(180deg)}
+.pet-controls.expanded{border-radius:16px;flex-wrap:wrap;max-width:calc(100vw - 24px)}
+.pet-mood{position:absolute;right:4%;top:-2%;color:var(--blue);font-size:18px;opacity:0;pointer-events:none}
+.site-pet[data-state=greet] .pet-mood{opacity:1;animation:pet-hello 1.8s ease-out both}
+.site-pet.pet-yield{pointer-events:none}
+.site-pet.pet-yield .pet-pose{opacity:1}
+.site-pet.pet-called{pointer-events:none}.site-pet.pet-called .pet-pose{opacity:1}
+.site-pet .pet-pose{transition:opacity .2s ease}
+@keyframes pet-hello{0%{transform:translateY(5px);opacity:0}25%,70%{opacity:1}100%{transform:translateY(-9px);opacity:0}}
 @media(max-width:760px){.pet-controls{left:10px;bottom:calc(14px + env(safe-area-inset-bottom))}.pet-controls .pet-label{display:none}.pet-controls button{font-size:11px;padding-inline:9px}.pet-help{left:12px;font-size:11px;max-width:230px}.site-pet{--pet-size:88px}}
 /* 터치 기기: 탭·스크롤은 아래 내용으로 통과, 잡기는 mascots.js의 길게 누르기로 */
 @media(hover:none),(pointer:coarse){.site-pet{pointer-events:none}}
 @media(prefers-reduced-motion:reduce){.pet-sleep,.pet-help{animation:none!important;transition:none!important}}
+@media(max-width:760px){.pet-controls .pet-label{display:block}.pet-controls button{min-height:44px;font-size:12px}.pet-controls.expanded{max-width:280px}.pet-options{justify-content:flex-start}.pet-help{max-width:210px}.pet-controls{bottom:calc(10px + env(safe-area-inset-bottom))}}
+@media(prefers-reduced-motion:reduce){.pet-mood,.pet-pose{animation:none!important;transition:none!important}}
