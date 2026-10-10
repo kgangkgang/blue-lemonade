@@ -66,6 +66,17 @@ await test('continuous sound classes support bounded duration, impacts do not',(
     assert.equal(timing('한동안 동전이 떨어졌다.','daily_coins',{durationMs:8000}).durationMs,0);
     assert.equal(timing('한동안 물건을 떨어뜨렸다.','drop',{durationMs:8000}).durationMs,0);
 });
+await test('1.5.3 kettle and toothbrush sustain, phone and fridge count, single actions stay single',()=>{
+    assert.equal(timing('전기주전자가 5초 동안 끓었다.','daily_electric_kettle',{durationMs:8000}).durationMs,5000);
+    assert.equal(timing('한동안 양치질을 했다.','daily_toothbrush',{durationMs:6000}).durationMs,6000);
+    assert.equal(timing('잠깐 이를 닦았다.','daily_toothbrush',{durationMs:6000}).durationMs,2500);
+    assert.deepEqual(plain(timing('전기주전자가 끓었다.','daily_electric_kettle',{repeats:3,durationMs:8000})),{repeats:1,durationMs:0});
+    assert.equal(timing('휴대폰이 두 번 진동했다.','daily_phone_vibration',{repeats:2}).repeats,2);
+    assert.equal(timing('냉장고 문을 세 번 여닫았다.','daily_fridge_door',{repeats:3}).repeats,3);
+    assert.equal(timing('한동안 냉장고 문을 열어 두었다.','daily_fridge_door',{durationMs:8000}).durationMs,0);
+    for(const [text,id] of [['펜 뚜껑을 닫았다.','daily_pen_cap'],['의자를 끌었다.','daily_chair_slide'],['휴대폰이 진동했다.','daily_phone_vibration']])
+        assert.deepEqual(plain(timing(text,id,{repeats:4,durationMs:8000})),{repeats:1,durationMs:0},text);
+});
 await test('absence or negation of duration cannot create an ambient loop',()=>{
     for(const text of ['키보드를 눌렀다.','키보드로 한동안 타이핑하지 않았다.','She did not type for a while.','She typed. Her friend waited for 8 seconds.'])
         assert.equal(timing(text,'daily_keyboard',{durationMs:8000}).durationMs,0,text);

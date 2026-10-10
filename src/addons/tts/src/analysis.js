@@ -217,7 +217,7 @@ function speakerOf(seg, mes, charName, userName) {
 
 const autoSfxEnabled = () => settings().sfx?.enabled === true && settings().sfx?.auto !== false;
 const sceneKind = (seg) => seg?.kind === 'narration' || seg?.kind === 'action';
-const SUSTAINED_SFX = new Set(['daily_keyboard', 'daily_cat_purr', 'daily_faucet', 'daily_stream', 'daily_rain', 'daily_clock', 'daily_water_pour', 'daily_coffee_stir', 'wind', 'footsteps', 'footsteps_wood', 'footsteps_wet', 'running']);
+const SUSTAINED_SFX = new Set(['daily_keyboard', 'daily_cat_purr', 'daily_faucet', 'daily_stream', 'daily_rain', 'daily_clock', 'daily_water_pour', 'daily_coffee_stir', 'daily_electric_kettle', 'daily_toothbrush', 'wind', 'footsteps', 'footsteps_wood', 'footsteps_wet', 'running']);
 const canSustainSfx = sound => !!sound && (SUSTAINED_SFX.has(sound.id) || sound.custom === true && sound.loop === true);
 function sfxCatalog() {
     try {
@@ -453,6 +453,12 @@ const SFX_TIMING_HINTS = {
     daily_faucet: ['수도', '손을 씻', '손 씻', 'faucet', 'wash'],
     daily_stream: ['물줄기', '시냇물', '시냇가', 'stream'],
     daily_rain: ['비가', '빗소리', '빗방울', 'rain'],
+    daily_phone_vibration: ['진동', '휴대폰이', '핸드폰이', '스마트폰이', '휴대전화가', '떨렸', '떨린', 'vibrat', 'buzz'],
+    daily_chair_slide: ['의자', 'chair'],
+    daily_pen_cap: ['뚜껑', 'pen cap'],
+    daily_fridge_door: ['냉장고', 'fridge', 'refrigerator'],
+    daily_electric_kettle: ['주전자', '전기포트', '전기 포트', '끓', 'kettle', 'boil'],
+    daily_toothbrush: ['양치', '칫솔', '이를 닦', 'brush', 'toothbrush'],
 };
 const COUNT_WORDS = { 한: 1, 두: 2, 세: 3, 네: 4, 다섯: 5, 여섯: 6, 일곱: 7, 여덟: 8, 아홉: 9, 열: 10,
     once: 1, twice: 2, thrice: 3, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };

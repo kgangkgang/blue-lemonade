@@ -183,9 +183,19 @@ await test('ordinary WAV excludes effects when automatic effects are off; explic
 });
 
 await test('muted specific everyday sound never falls back to a generic water sound',async()=>{
-    await reset();assert.equal(Library.listSfx().length,63);assert.equal(Library.matchSfx('pour water').id,'daily_water_pour');
+    await reset();assert.equal(Library.listSfx().length,69);assert.equal(Library.matchSfx('pour water').id,'daily_water_pour');
     Library.setSfxEnabled('daily_water_pour',false);assert.equal(Library.matchSfx('pour water'),null);assert.ok(Library.getSfx('daily_water_pour'));assert.ok(await Library.sfxBlob('daily_water_pour'));
     assert.equal(Library.matchSfx('비가 내린다').id,'daily_rain');assert.equal(Library.matchSfx('키보드를 타이핑한다').id,'daily_keyboard');
+});
+await test('1.5.3 everyday sounds match concrete actions only and carry CC0 credits',async()=>{
+    await reset();
+    for(const [text,id] of [['휴대폰 진동이 울렸다.','daily_phone_vibration'],['핸드폰이 떨렸다.','daily_phone_vibration'],['의자를 끌어 앉았다.','daily_chair_slide'],['펜 뚜껑을 닫았다.','daily_pen_cap'],['냉장고 문을 열었다.','daily_fridge_door'],['전기주전자가 끓기 시작했다.','daily_electric_kettle'],['양치질을 했다.','daily_toothbrush'],['이를 닦았다.','daily_toothbrush'],['The electric kettle boiled.','daily_electric_kettle'],['She brushed her teeth.','daily_toothbrush']])
+        assert.equal(Library.matchSfx(text)?.id,id,text);
+    assert.equal(Library.matchSfx('휴대폰이 울렸다.'),null);assert.equal(Library.matchSfx('전기주전자를 샀다.'),null);assert.equal(Library.matchSfx('주전자를 꺼냈다.')?.id,'pot');
+    for(const id of ['daily_phone_vibration','daily_chair_slide','daily_pen_cap','daily_fridge_door','daily_electric_kettle','daily_toothbrush']){
+        const sound=Library.getSfx(id);assert.ok(sound&&!sound.custom&&sound.loop===false&&sound.credit.author==='Joseph SARDIN'&&sound.credit.license==='CC0-1.0'&&sound.assetPath===`../sfx-extra/${id}.mp3`,id);
+        assert.ok((await Library.sfxBlob(id)).size>0,id);assert.ok(Library.sfxAttribution([id]).includes('bigsoundbank.com'),id);
+    }
 });
 await test('disabled preference is serializable and excludes manual playback and WAV while preserving speech',async()=>{
     await reset();Library.setSfxEnabled('knock',false);assert.ok(JSON.parse(JSON.stringify(S.settings())).sfx.disabled.includes('knock'));

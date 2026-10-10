@@ -46,6 +46,12 @@ TTS_EXTRA_BIGSOUNDBANK = {
     'daily_coffee_stir': ('spoon-into-a-mug-of-coffee-s0410.html', 'Joseph SARDIN'),
     'daily_cup': ('cup-on-a-table-s0627.html', 'cecilegatina'),
     'daily_coins': ('coins-1-s0193.html', 'Joseph SARDIN'),
+    'daily_phone_vibration': ('mobile-phone-vibrator-1-s0022.html', 'Joseph SARDIN'),
+    'daily_chair_slide': ('chair-s0666.html', 'Joseph SARDIN'),
+    'daily_pen_cap': ('pen-cap-s0054.html', 'Joseph SARDIN'),
+    'daily_fridge_door': ('fridge-door-s1158.html', 'Joseph SARDIN'),
+    'daily_electric_kettle': ('electric-kettle-s0660.html', 'Joseph SARDIN'),
+    'daily_toothbrush': ('toothbrush-s0718.html', 'Joseph SARDIN'),
 }
 TTS_EXTRA_GONGU = {'daily_scissors': '13263912', 'daily_snack_bag': '13263932',
                    'daily_soup': '13263933', 'daily_ladle': '13263935'}
@@ -53,7 +59,7 @@ TTS_EXTRA_IDS = tuple(TTS_EXTRA_BIGSOUNDBANK) + tuple(TTS_EXTRA_GONGU)
 TTS_EXTRA_RESOURCES = ('sfx-extra/SOURCES.json', 'sfx-extra/LICENSE-CC0.txt', 'sfx-extra/LICENSE-CC-BY.txt')
 TTS_EXTRA_MODULE = 'src/addons/tts/src/sfx-daily.js'
 
-# Reviewed 2026-10-10 originals and selected single-action/short-ambience exports.
+# Reviewed 2026-10-10 originals and selected single-action/short-ambience exports (16 in TTS 1.5.1, 6 more in 1.5.3).
 TTS_EXTRA_SHA256 = {
     'daily_cat_purr': '6d983eda87f313e9f952a69d596748e56da40862d56ef6824f2e411792e95fda',
     'daily_cat_meow': 'c89166f6767b92dfb65de464eb5ae117ea5f0274439f75e02233bd01c0748f43',
@@ -71,6 +77,12 @@ TTS_EXTRA_SHA256 = {
     'daily_snack_bag': '1f30a7022ceacb130c20646e3fd977792f89783d187ed233a28810795f53bfdc',
     'daily_soup': '8a4a3c985618c6f25c3ccab5b2be3ccbf2c9255f52bf7a69f4df5ba808d69638',
     'daily_ladle': '546d04638480e1a9a0cb899d71a8922e0766348704093f38acf71f7e36c56810',
+    'daily_phone_vibration': '583ec7c2f4c80f7f98f055b7de395c4bb9466f57cec35ec6725e1b693fdc53e4',
+    'daily_chair_slide': 'c224fa6304d7ad964c75681278fa9a462f2056f788e436181c0ca2a20a66d270',
+    'daily_pen_cap': '3308e0cb4f06199971dd6931ba614b4298a296a394380bbc313fc27793d2da7b',
+    'daily_fridge_door': '857c1cd8860cef9bfe9a9201683da8cc7f8891abe425712e0e2a87f6fca7e3cb',
+    'daily_electric_kettle': 'ae11ffc3e625a088b59b885ebef69106c8093ab20654da8e7cfcec7f744c021c',
+    'daily_toothbrush': '9d7666abde7673c8b3c588f0522e6cdf6e4568c22d8022ba478317ca5ced6e96',
 }
 TTS_EXTRA_SOURCE_SHA256 = {
     'daily_cat_purr': '1809316c24ddd40363201bdf09d1f43ae72a275c2510c552c286fee0ec53cac5',
@@ -89,6 +101,12 @@ TTS_EXTRA_SOURCE_SHA256 = {
     'daily_snack_bag': 'e20bc62681279a63359c71be50449118250f23ed9a4e5efb52b469660380ff9f',
     'daily_soup': '8a6a2ec7b686ac897c7c72c493e0c420263689b766976689d1591419d2c391b4',
     'daily_ladle': '291b1d6b318853b7bdc8c1b70ea77e5163a3e1ea805396a9541a426907db31a6',
+    'daily_phone_vibration': '4d6c8b87974f0908e1b19c93bb875a50803218a7d40ae310cb4e5772b11b8cd0',
+    'daily_chair_slide': 'a451fd9f7e63ee0a79f15a96f881b4110003ef14c3c9398f844d52dccf643bd2',
+    'daily_pen_cap': '6480df160910f48c810244c96902b689eec9ee418c65eba8cfeef3bc140c9576',
+    'daily_fridge_door': '7536e735ff865e71254449404be4c61c78008ca99dcfab5f3ce2e404a83d67d6',
+    'daily_electric_kettle': 'd8a7c2ae150bad90be34432ed18c732291c472a5dc0d845918bfd11f710e09ac',
+    'daily_toothbrush': 'bb6b7cf868ffbf0abf5ac46cef56c1a209a03ba3acf40e4e1a3ac236f5165d26',
 }
 
 

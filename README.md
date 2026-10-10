@@ -1,13 +1,24 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.9.3/blue-lemonade-5.9.3.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v5.9.4/blue-lemonade-5.9.4.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>5.9.3 · 최신 업데이트</summary>
+<summary>5.9.4 · 최신 업데이트</summary>
+
+- TTS 1.5.3에 휴대폰 진동·의자 끌기·펜 뚜껑·냉장고 문·전기주전자·양치질 생활 효과음 6개를 더해 내장 소리가 69개가 됐어요. 모두 BigSoundBank의 CC0 음원이며 원본·제작자·변경 내역을 함께 기록했어요.
+- 전기주전자와 양치질은 “한동안”·“5초 동안” 같은 표현에 맞춰 재생 길이를 고르고, 휴대폰 진동·냉장고 문처럼 되풀이되는 동작은 “두 번” 같은 횟수를 읽어요. 소리 대본에서도 직접 조절할 수 있어요.
+- 새 소리는 효과음 보관함의 일상·사무, 물·주방 종류에서 찾을 수 있어요. © 출처 창과 출처 복사, WAV 저장 기록에도 제작자와 라이선스가 함께 들어가요. 같은 소리를 효과음 팩으로 이미 가져왔다면 내 음원과 내장 소리가 함께 보이며, 내 음원을 지워도 내장 소리는 남아요.
+
+[TTS 사용법](src/addons/tts/README.md) · [효과음·기능 출처](src/addons/tts/NOTICE.md)
+
+</details>
+
+<details>
+<summary>5.9.3 · 요청 로그 공식 가격과 자동 갱신</summary>
 
 - 요청 로그 1.5.0: 실제 연결한 API 제공처의 공식 입력·출력·캐시 단가와 확인 날짜를 보여줘요. Claude·OpenAI·DeepSeek 등 제공처별 통화와 과금 조건을 구분하고, 확인되지 않은 가격은 0원으로 계산하지 않아요.
 - 공식 가격표를 매일 확인해 자동 갱신해요. 요청 로그의 현재 연결 가격에서 자동 확인을 켜거나 지금 확인을 누를 수 있어요. 새 가격은 다음 요청부터 사용하며, 진행 중이거나 이미 저장한 요청의 비용은 바꾸지 않아요.

@@ -354,6 +354,147 @@ const rows = [
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
     }
+  },
+  {
+    "id": "daily_phone_vibration",
+    "name": "휴대폰 진동 한 묶음",
+    "category": "일상·사무",
+    "words": [
+      "휴대폰 진동",
+      "핸드폰 진동",
+      "폰이 진동",
+      "휴대폰이 떨",
+      "핸드폰이 떨",
+      "진동이 울",
+      "phone vibrat",
+      "mobile vibrat"
+    ],
+    "assetPath": "../sfx-extra/daily_phone_vibration.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "Joseph SARDIN",
+      "source": "https://bigsoundbank.com/mobile-phone-vibrator-1-s0022.html",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  {
+    "id": "daily_chair_slide",
+    "name": "의자 한 번 끌기",
+    "category": "일상·사무",
+    "words": [
+      "의자 끌",
+      "의자를 끌",
+      "의자 밀",
+      "의자를 밀",
+      "drag chair",
+      "slide chair",
+      "moving a chair"
+    ],
+    "assetPath": "../sfx-extra/daily_chair_slide.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "Joseph SARDIN",
+      "source": "https://bigsoundbank.com/chair-s0666.html",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  {
+    "id": "daily_pen_cap",
+    "name": "펜 뚜껑 딸깍",
+    "category": "일상·사무",
+    "words": [
+      "펜 뚜껑",
+      "펜뚜껑",
+      "펜의 뚜껑",
+      "볼펜 뚜껑",
+      "pen cap"
+    ],
+    "assetPath": "../sfx-extra/daily_pen_cap.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "Joseph SARDIN",
+      "source": "https://bigsoundbank.com/pen-cap-s0054.html",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  {
+    "id": "daily_fridge_door",
+    "name": "냉장고 문 여닫는 소리",
+    "category": "물·주방",
+    "words": [
+      "냉장고 문",
+      "냉장고문",
+      "냉장고를 열",
+      "냉장고를 닫",
+      "fridge door",
+      "refrigerator door"
+    ],
+    "assetPath": "../sfx-extra/daily_fridge_door.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "Joseph SARDIN",
+      "source": "https://bigsoundbank.com/fridge-door-s1158.html",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  {
+    "id": "daily_electric_kettle",
+    "name": "전기주전자 끓는 소리",
+    "category": "물·주방",
+    "words": [
+      "전기주전자 끓",
+      "전기 주전자 끓",
+      "주전자가 끓",
+      "전기포트 끓",
+      "전기 포트 끓",
+      "주전자 물이 끓",
+      "electric kettle",
+      "kettle boiling",
+      "kettle boils"
+    ],
+    "assetPath": "../sfx-extra/daily_electric_kettle.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "Joseph SARDIN",
+      "source": "https://bigsoundbank.com/electric-kettle-s0660.html",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  {
+    "id": "daily_toothbrush",
+    "name": "양치질",
+    "category": "일상·사무",
+    "words": [
+      "양치질",
+      "칫솔질",
+      "이를 닦",
+      "양치를 하",
+      "양치하",
+      "brush teeth",
+      "brushing teeth",
+      "brushed her teeth",
+      "brushed his teeth",
+      "toothbrushing"
+    ],
+    "assetPath": "../sfx-extra/daily_toothbrush.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "Joseph SARDIN",
+      "source": "https://bigsoundbank.com/toothbrush-s0718.html",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
   }
 ];
 export const DAILY_SFX = Object.freeze(rows.map(row => Object.freeze({...row, words: Object.freeze(row.words), credit: Object.freeze(row.credit)})));
