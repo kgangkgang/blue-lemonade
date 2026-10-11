@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "6.0.9";
+export const BUILD_VERSION = "6.1.1";
 export const FILE_HASHES = {
   "index.js": "16730:cd15e850:f32659bb",
-  "manifest.json": "365:a04c6a6a:95d1e081",
+  "manifest.json": "365:77d24d9d:fc5394b5",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -100,12 +100,12 @@ export const FILE_HASHES = {
   "src/addons/perf/start.js": "1008:4d5ee41e:764be632",
   "src/addons/perf/state.js": "8560:8e2d5146:23d8fd3b",
   "src/addons/perf/store.js": "13232:ab643ac8:d7e63a70",
-  "src/addons/perf/style.css": "30363:299d242b:660d795e",
+  "src/addons/perf/style.css": "30363:96586bcc:9c2e833c",
   "src/addons/perf/switchcode.js": "4772:ff54f73b:6046c3ba",
   "src/addons/perf/switchflush.js": "16557:4ee725f3:e5e33f9f",
   "src/addons/perf/switchguard.js": "6421:fabb31c5:9e1d4436",
-  "src/addons/perf/watchdog-main.js": "8818:f0ce3340:34c6eac7",
-  "src/addons/perf/watchdog.js": "13447:86805263:145cc7fe",
+  "src/addons/perf/watchdog-main.js": "8818:32b6beff:ec6fb42b",
+  "src/addons/perf/watchdog.js": "14310:92c06934:e17ba147",
   "src/addons/prompt/cache-loading.js": "384:766f047d:4f5c117c",
   "src/addons/prompt/connection.js": "11688:73475c37:7a75379c",
   "src/addons/prompt/current-connection.js": "3055:67fc264b:5c2798bc",
@@ -389,7 +389,7 @@ export const FILE_HASHES = {
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "188208:f95d1be4:a6c34e21",
+  "src/notice-data.js": "188781:752166fb:e12f74b4",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "1144:1da72451:b2e66e80",
@@ -459,5 +459,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "34543:a22afe71:9a33c04b",
   "src/wordmask.js": "7487:cc508640:dd5ee3e8",
-  "style.css": "1397617:8b098ee7:68d3eac2"
+  "style.css": "1397617:bd0358d2:21b1db40"
 };

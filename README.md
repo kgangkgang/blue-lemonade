@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.0.9/blue-lemonade-6.0.9.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.1.1/blue-lemonade-6.1.1.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.0.9 · 최신 업데이트</summary>
+<summary>6.1.1 · 최신 업데이트</summary>
+
+- 끊김 감시 1.1.4: 다른 확장에서 답변을 기다릴 때 연결을 너무 일찍 중단하던 문제를 고쳐 호환성을 높였어요.
+- 응답 형식 표시가 없거나 일반 텍스트로 표시된 스트리밍도 구분해요. 연결 준비 정보나 빈 생각 블록만으로 답변이 시작됐다고 판단하지 않아요.
+- 본문이나 생각 글자가 도착한 뒤의 끊김 감시와 직접 중지는 그대로 작동해요. 기존 감시 시간과 켜기·끄기 설정도 유지해요.
+
+</details>
+
+<details>
+<summary>6.0.9 · 이미지 프롬프트와 효과음</summary>
 
 - 캐릭터 에셋 1.5.0: 위쪽 이미지 프롬프트 스위치를 켜면 그림 규칙과 현재 캐릭터의 켜진 그림 목록을 자동으로 보내요. 프리셋에 매크로를 따로 넣지 않아도 되고, 끄면 규칙 전송도 멈춰요.
 - 캐릭터 에셋: 규칙 · 직접 배치에서 규칙을 고치거나 기존 {{img_inprompt}} 위치를 쓰는 직접 배치를 선택해요. 자동 배치에서는 기존 매크로가 중복되지 않으며, 저장한 그림과 규칙은 유지해요.

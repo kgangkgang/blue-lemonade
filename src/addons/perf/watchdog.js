@@ -137,9 +137,12 @@ export function watchRequest(request, { idleMs, firstMs = 0, abort, env }) {
  */
 export function watchResponse(response, { idleMs, firstMs = 0, firstWaited = 0, abort, env }) {
     if (!response?.ok || !response.body) return response;
-    const contentType=response.headers.get('content-type')||'';
+    const contentType=(response.headers.get('content-type')||'').toLowerCase();
     if(contentType.includes('application/json'))return response;
-    const sse=contentType.includes('text/event-stream'),decoder=sse?new TextDecoder():null;
+    // ST의 중계 응답은 SSE여도 Content-Type이 없거나 text/plain일 수 있다.
+    // 첫 metadata/ping을 본문으로 세지 않게 앞부분으로 판별한다. 원래 바이트는 그대로 전달한다.
+    let sse=contentType.includes('text/event-stream');
+    const decoder=new TextDecoder(),fields=['data','event','id','retry'];
     let pending='';
     const meaningful=value=>{
         if(typeof value==='string')return value.length>0;
@@ -148,10 +151,18 @@ export function watchResponse(response, { idleMs, firstMs = 0, firstWaited = 0, 
         return Object.entries(value).some(([key,v])=>['content','text','reasoning','reasoning_content','thinking','token','completion','tool_calls','function_call','arguments','delta','choices','reasoning_details','candidates','parts','message'].includes(key)&&meaningful(v));
     };
     function startsOutput(chunk){
-        if(!sse)return true;
         pending+=decoder.decode(chunk,{stream:true});
         if(pending.length>65536){pending='';return true;}
-        const lines=pending.split(/\r?\n/);pending=lines.pop();
+        if(!sse){
+            const prefix=pending.replace(/^[\r\n]+/,'');
+            if(!prefix)return false; // 빈 청크 또는 UTF-8 문자가 바이트 사이에서 나뉨
+            sse=prefix.startsWith(':')||fields.some(field=>prefix.startsWith(`${field}:`)||prefix.startsWith(`${field}\r`)||prefix.startsWith(`${field}\n`));
+            if(!sse){
+                if(fields.some(field=>`${field}:`.startsWith(prefix)))return false; // 'da' + 'ta:'처럼 나뉜 머리
+                return true; // SSE 머리가 아닌 원시 텍스트는 예전처럼 첫 출력으로 센다
+            }
+        }
+        const lines=pending.split(/\r\n|\r|\n/);pending=lines.pop();
         for(const line of lines){
             if(!line.startsWith('data:'))continue;
             const data=line.slice(5).trim();if(!data||data==='[DONE]')continue;
