@@ -124,7 +124,8 @@ export function openPanel() {
 }
 export function syncMenu() {
     const s = getSettings(), id = 'bl-zip-install-menu', old = document.getElementById(id);
-    if (!addonsEnabled(s) || !s.addons.zipinstall) { old?.remove(); return; }
+    // 6.1.4: 요술봉 메뉴 표시는 설정 (addonUI.zipinstallMenu) — 숨겨도 확장 카드의 세부 설정으로 연다
+    if (!addonsEnabled(s) || !s.addons.zipinstall || s.addonUI?.zipinstallMenu === false) { old?.remove(); return; }
     if (old) return;
     const container = document.getElementById('data_bank_wand_container') || document.getElementById('extensionsMenu'); if (!container) return;
     const item = document.createElement('div'); item.id = id; item.className = 'list-group-item flex-container flexGap5 interactable'; item.tabIndex = 0; item.setAttribute('role', 'button');

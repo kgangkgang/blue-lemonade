@@ -972,7 +972,8 @@ async function onCardAction(action, card, element = null) {
             if (!src || fav.virtual) break;
             if (!await confirmSheet('이 그림을 북마크에서 뗄까요? 메시지와 그림 파일은 그대로예요.', { title: '그림 떼기', okLabel: '떼기', danger: true, icon: 'fa-image' })) break;
             try {
-                await removeImageFrom(record, fav.id, src, { origin: location.origin });
+                // 1.5.1: 그림으로만 생긴 북마크(다른 확장의 즐겨찾기)는 마지막 그림을 떼면 북마크째 사라진다 — 그림을 붙인 확장 쪽에서 ★ 을 끈 것과 같은 결과
+                await removeImageFrom(record, fav.id, src, { dropEmpty: true, origin: location.origin });
             } catch (error) {
                 toastr.error(error.message, '북마크');
                 break;
