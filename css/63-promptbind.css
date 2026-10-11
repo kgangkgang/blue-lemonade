@@ -142,3 +142,32 @@ body.salty .bl-pbind-empty {
   opacity: .7;
   margin: 0;
 }
+/* 6.0.6: 정규식 목록은 한 줄에 하나 — 「DEM - …」 처럼 앞이 같은 긴 이름이 79개라 두 칸 격자에선 다 잘렸다. 곳(전역 · 이 캐릭터 · 프리셋)마다 작은 제목 줄. */
+body.salty .bl-pbind-list.is-regex {
+  grid-template-columns: 1fr;
+  gap: 2px;
+}
+body.salty .bl-pbind-list.is-regex .bl-pbind-item {
+  padding: 5px 8px;
+}
+body.salty .bl-pbind-list.is-regex .bl-pbind-item span:last-child {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+body.salty .bl-pbind-noimg.is-regex {
+  width: 22px;
+  height: 22px;
+  display: inline-grid;
+  place-items: center;
+  font-size: .75em;
+  font-weight: 700;
+  opacity: .8;
+}
+body.salty .bl-pbind-group {
+  grid-column: 1 / -1;
+  font-size: .85em;
+  font-weight: 700;
+  opacity: .7;
+  padding: 8px 8px 2px;
+}

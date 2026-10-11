@@ -11,7 +11,7 @@ import { oai_settings, promptManager } from '../../../../../../openai.js';
 import { verifyAddonCss } from '../../addon-files-check.js';
 import { plan, textHasModuleLow } from './engine.js';
 
-const VERSION = '1.0.4';
+const VERSION = '1.0.5';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const holder = document.createElement('div'); holder.hidden = true; document.body.append(holder);
 let root, inlineHost = null, opening = false, timer = 0, lastRows = [], lastNote = '', applied = new Map(), stopped = false;
@@ -60,14 +60,27 @@ function recentHasFactory() {
     };
 }
 
+/** 1.0.5 프롬프트 귀속(테마 promptbind.js)이 직접 붙인 정규식 id — 그 정규식은 귀속이 켜고 끄므로 여기서는 손대지 않는다
+ *  (같은 정규식을 둘이 서로 다르게 바라면 저장 → SETTINGS_UPDATED → 되맞춤이 끝없이 오가고, 6.0.6 부터 귀속이 바뀔 때 채팅을 다시 그려 폭풍이 된다) */
+function boundByPrompt() {
+    const out = new Set();
+    try {
+        const binds = extension_settings.salty?.promptBinds;
+        if (binds && typeof binds === 'object') for (const b of Object.values(binds)) for (const id of (Array.isArray(b?.regex) ? b.regex : [])) if (typeof id === 'string' && id) out.add(id);
+    } catch { /* 설정 없음 */ }
+    return out;
+}
+
 /** 계산하고 바뀐 것만 쓴다. 되돌린다: restore=true 면 origin 으로 (keep 에 든 id 는 origin 을 남긴다) */
 export function sync({ restore = false, keep = null } = {}) {
     if (stopped && !restore) { render(); return; } // 끈 뒤에는 다시 켜지 않는다 (다시 켜려면 새로고침)
     const s = store();
     const enabled = enabledPrompts();
     const lists = scriptLists();
-    const scripts = lists.flat().filter(x => x && x.id);
-    if (!scripts.length) { lastRows = []; lastNote = '지금 쓰는 정규식이 없어요.'; render(); return; }
+    const bound = boundByPrompt();
+    for (const id of bound) { delete s.origin[id]; applied.delete(id); }   // 귀속이 맡은 정규식은 우리 기록을 지우고 그대로 둔다
+    const scripts = lists.flat().filter(x => x && x.id && !bound.has(x.id));
+    if (!scripts.length) { lastRows = []; lastNote = bound.size ? '지금 쓰는 정규식은 모두 프롬프트 귀속이 맡고 있어요.' : '지금 쓰는 정규식이 없어요.'; render(); return; }
     // 사용자가 정규식 화면에서 직접 바꾼 것: 우리가 마지막에 쓴 값과 다르면 그 값을 새 원래 상태로
     for (const script of lists.filter(list => seenLists.has(list)).flat()) {
         if (!script?.id) continue;

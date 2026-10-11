@@ -234,7 +234,27 @@ await test('1.6.0 a translation that lands after or during the analysis keeps th
     assert.equal(A.buildPrompt(mes,{...opts,display:false}).user,p0.user,'display:false builds the cache-key prompt without the translation');
     assert.ok(A.getAnalysis(0)&&P.analysisWanted(0,mes)===false,'the translation landing does not invalidate the analysis');
     seed(key(p1));assert.ok(A.getAnalysis(0)&&P.analysisWanted(0,mes)===false,'a key saved with the translation (before 1.6.0) still matches');
-    seed('x'.repeat(64));assert.ok(!A.getAnalysis(0)&&P.analysisWanted(0,mes)===true,'other keys still miss');
+    seed('x'.repeat(64));assert.ok(A.getAnalysis(0)&&P.analysisWanted(0,mes)===false,'1.6.4: another key hits too — only the text decides');
+});
+await test('1.6.4 a stored analysis survives voice, sound-library, favourite and model changes; sfx newly on or a missing emotion re-analyses once',async()=>{
+    await reset();const s=S.settings();Object.assign(s.sfx,{enabled:true,auto:true,level:'normal'});s.routes={dialogue:'character',narration:'skip',action:'skip',thought:'skip',user_dialogue:'user'};
+    s.analysis={...s.analysis,enabled:true,engine:'compat',base:'https://mock.invalid/v1',key:'k',model:'m',emotion:true,translate:false,speaker:true,when:'auto',context_chars:1200,temperature:0.2};
+    const mes={mes:'The door slammed. "Hello." He raised his glass. "Sit down."',name:'Mina',is_user:false,is_system:false,swipe_id:0,extra:{}};T.ctx.chat.length=0;T.ctx.chat.push(mes);
+    const p=A.buildPrompt(mes,{langs:[],emotion:true,translate:false,context_chars:1200,speaker:true,extras:s.extras!=='off',sfx:true});
+    const seed=(extra={})=>{mes.extra.lemon_voice={analysis:{hash:A.hash(mes.mes),profile:'stale-profile-from-another-day',langs:[],model:'old-model',at:1,segs:p.lines.map(l=>({i:l.i,h:l.h,emotion:'calm',text:{}})),sfx:[{after:0,id:'door_slam',repeats:1,durationMs:0,strength:1}],...extra}};};
+    seed();assert.ok(A.getAnalysis(0)&&P.analysisWanted(0,mes)===false,'a different prompt key no longer misses');
+    s.sfx.favorites=['door_slam'];s.char_map['Clerk']='minimax:nora';s.analysis.model='another-model';s.analysis.temperature=0.7;
+    assert.ok(A.getAnalysis(0)&&P.analysisWanted(0,mes)===false,'favourite · new voice mapping · model change keep the analysis');
+    assert.equal(await A.analyzeMessage(0,{}),A.getAnalysis(0),'analyzeMessage hands back the stored one without a request');
+    const text=mes.mes;mes.mes+=' "Bye."';assert.ok(!A.getAnalysis(0)&&P.analysisWanted(0,mes)===true,'changed text misses');mes.mes=text;
+    seed({segs:p.lines.map(l=>({i:l.i,h:l.h,emotion:'',text:{}}))});assert.ok(!A.getAnalysis(0)&&P.analysisWanted(0,mes)===true,'emotion on but missing → again');
+    seed({sfx:undefined});assert.ok(!A.getAnalysis(0)&&P.analysisWanted(0,mes)===true,'sfx on but analysed without sfx → once more');
+    s.sfx.enabled=false;assert.ok(A.getAnalysis(0)&&P.analysisWanted(0,mes)===false,'sfx off → the sfx-less analysis is enough');
+    seed();assert.ok(A.getAnalysis(0),'sfx off keeps an analysis that has cues');s.sfx.enabled=true;
+    seed({speaker:false});assert.ok(!A.getAnalysis(0)&&P.analysisWanted(0,mes)===true,'analysed with speaker-asking off, now on → once more');
+    s.analysis.speaker=false;assert.ok(A.getAnalysis(0),'speaker-asking off → fine');s.analysis.speaker=true;
+    seed({speaker:true});assert.ok(A.getAnalysis(0),'analysed with speaker-asking on → hit');
+    seed();assert.ok(A.getAnalysis(0),'pre-1.6.4 record without the marker → hit (no mass re-analysis after the update)');
 });
 await test('1.5.9 sustained cues loop under the tapped line; ongoing cues cover later lines and stop at stopAfter; export cuts the loop there',async()=>{
     const routes={dialogue:'character',narration:'skip',action:'skip',thought:'skip',user_dialogue:'user'};

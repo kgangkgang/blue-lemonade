@@ -254,8 +254,8 @@ export function sfxWanted(mes) {
 }
 // 1.5.6 효과음용 지문 예산 — 맥락 예산(context_chars, 기본 1,200자)과 별개. 전엔 맥락 예산 안에서 앞 60% · 뒤 40%만 남겨
 //   7,500자 답장의 지문 21부분 가운데 6부분만 모델에 갔고, 그 밖의 소리(slap …)는 모델이 보지도 못했다.
-// 1.5.8 예산은 설정 sfx.scene_chars (효과음 · 소리 대본 → 효과음 찾을 지문 글자, 기본 4,000 · 1,000~40,000). 바꾸면 긴 답장의 프롬프트가 달라져
-//   저장된 분석(profile 해시)이 다음 읽기 때 한 번 다시 받아진다 — 짧은 답장(예산 안)은 그대로.
+// 1.5.8 예산은 설정 sfx.scene_chars (효과음 · 소리 대본 → 효과음 찾을 지문 글자, 기본 4,000 · 1,000~40,000). 1.6.3 까지는 바꾸면 긴 답장의 프롬프트가 달라져
+//   저장된 분석(profile 해시)이 다음 읽기 때 한 번 다시 받아졌다 — 1.6.4 부터는 저장된 분석을 그대로 쓰고, 새 예산으로 받으려면 요술봉 › 재생성.
 const sceneChars = () => sceneCharsOf(settings().sfx?.scene_chars);
 const SENTENCE_SPLIT = /(?<=[.!?。！？…]["”」』)]?)\s+/u;
 /** 효과음 낱말(내장 · 내 효과음의 연결 단어)이 든 문장인가 — 키워드 사전과 같은 매칭 */
@@ -904,11 +904,11 @@ function slot(mes, create) {
     return mes.extra.lemon_voice;
 }
 const textHash = (mes) => hash(String(mes?.mes ?? ''));
-/** 설정과 실제 분석 입력이 같을 때만 캐시를 쓴다. 인증 값은 포함하지 않는다. */
 const extrasOn = () => settings().extras !== 'off';
-// 1.6.0 화면 번역문(display_text)은 캐시 키에 넣지 않는다: 번역이 분석 뒤에 붙어도(또는 분석 중에 붙어도) 번역 전 분석이 그대로 유효.
-//   전엔 번역 전 1회 + 번역 후 1회로 같은 답장을 두 번 분석했다. legacy=true 는 옛 키(번역문 포함)를 맞춰 보는 용도.
-function profileOf(mes, cfg, langs, built, extras = extrasOn(), sfx = true, legacy = false) {
+// profile = 분석 때의 프롬프트 · 엔진 지문. 1.6.4 부터 저장된 분석을 꺼낼 때 이 지문을 더 맞춰 보지 않는다 (아래 getAnalysis) —
+//   목소리 · 효과음 보관함 · 우선 효과음 · 배운 이름 · 모델 · 지시문이 바뀔 때마다 들었던 문장을 또(유료) 분석했다. 옛 판이 읽을 수 있게 적기만 한다.
+// 1.6.0 화면 번역문(display_text)은 넣지 않는다 (번역 전 1회 + 번역 후 1회로 같은 답장을 두 번 분석했다).
+function profileOf(mes, cfg, langs, built, extras = extrasOn(), sfx = true) {
     const engine = engineOf(cfg);
     let model = engine === 'provider' ? stapi.modelOf(cfg) : String(cfg.model || '');
     let provider = engine === 'provider' ? String(cfg.provider || '') : '';
@@ -917,7 +917,7 @@ function profileOf(mes, cfg, langs, built, extras = extrasOn(), sfx = true, lega
         provider = String(ctx.chatCompletionSettings?.chat_completion_source || ctx.mainApi || '');
         model = stapi.modelOf({ ...cfg, provider, provider_models: {} });
     }
-    const p = (legacy && built) || buildPrompt(mes, { langs, emotion: !!cfg.emotion, translate: !!cfg.translate, context_chars: cfg.context_chars, speaker: cfg.speaker !== false, extras, sfx, display: legacy });
+    const p = built || buildPrompt(mes, { langs, emotion: !!cfg.emotion, translate: !!cfg.translate, context_chars: cfg.context_chars, speaker: cfg.speaker !== false, extras, sfx, display: false });
     return hash(JSON.stringify([1, engine, provider, model, !!cfg.emotion, !!cfg.translate, cfg.temperature ?? 0.2, p.system, p.user]));
 }
 const dropped = new WeakMap();   // mes → { swipe, analysis }  이어쓰기·편집 뒤 같은 줄의 번역을 재사용
@@ -991,21 +991,21 @@ export function removeManualSfx(mesId, after, id) {
     return true;
 }
 
-/** 저장된 분석 (원문 해시가 맞을 때만) */
+/** 저장된 분석 (같은 글이면 쓴다 — 1.6.4: 프롬프트 지문(profile)은 더 맞춰 보지 않는다).
+ *  전엔 목소리를 하나 더하거나 효과음을 넣거나 우선 ★ 을 켜거나 모델을 바꾸면 프롬프트가 달라져 채팅의 모든 분석이 무효가 됐고,
+ *  분명 들었던 문장을 누를 때마다 다시(유료) 분석했다 (사용자 10-11: "분명 들었던 문장인데 계속 분석 다시하는 오류 … 왜 또 분석하는거지?").
+ *  다시 받는 때: 글이 바뀜 · 감정이 필요한데 빠짐 · 필요한 언어가 빠짐(부르는 쪽의 covers) · 효과음을 켰는데 효과음 없이 받은 분석(한 번). 새로 받고 싶으면 요술봉 › 재생성(force). */
 export function getAnalysis(mesId) {
     const mes = msgOf(Number(mesId));
     const a = slot(mes, false)?.analysis;
     if (!isObj(a) || !Array.isArray(a.segs)) return null;
     if (a.hash !== textHash(mes)) return null;
     const cfg = settings().analysis || {};
-    const d = mes?.extra?.display_text;
-    const hasDisplay = typeof d === 'string' && d.trim() !== '' && d !== mes.mes;
-    // 1.6.0 이전에 저장된 키는 번역문을 포함했을 수 있다 → 번역문이 있으면 옛 키도 맞춰 본다 (다시 요청하지 않게)
-    const matches = (profile) => profile === profileOf(mes, cfg, a.langs) || (extrasOn() && profile === profileOf(mes, cfg, a.langs, null, false))
-        || (hasDisplay && (profile === profileOf(mes, cfg, a.langs, null, extrasOn(), true, true) || (extrasOn() && profile === profileOf(mes, cfg, a.langs, null, false, true, true))));
-    // 효과음 끄기는 소리만 숨긴다. 함께 받은 감정·번역을 다시 유료 요청하지 않으며 다시 켜면 기존 효과음도 재사용한다.
-    if (!matches(a.profile) && !(!autoSfxEnabled() && typeof a.baseProfile === 'string' && matches(a.baseProfile))) return null;
     if (cfg.emotion && a.segs.some(g => !EMOTION_SET.has(g?.emotion))) return null;
+    // 효과음 끄기는 소리만 숨긴다 (감정·번역을 다시 묻지 않고, 다시 켜면 기존 효과음을 그대로). 효과음 없이 받은 분석은 효과음을 켠 뒤 지문이 있는 글이면 한 번 다시 받는다
+    if (!Array.isArray(a.sfx) && autoSfxEnabled() && sfxWanted(mes)) return null;
+    // 화자 찾기를 끈 채 받은 분석(a.speaker === false, 1.6.4 부터 적음)은 켠 뒤 한 번 다시 받는다 — 1.6.3 이하가 적은 것(표시 없음)은 그대로 쓴다 (올리자마자 전부 다시 받지 않게)
+    if (cfg.speaker !== false && a.speaker === false) return null;
     return a;
 }
 
@@ -1060,13 +1060,14 @@ export function analyzeMessage(mesId, opts = {}) {
     if (cached && !opts.force && covers(cached.langs, langs)) return Promise.resolve(cached);
     if (aborted(opts.signal)) return Promise.reject(abortErr(opts.signal));
     const inflight = running.get(id);
-    if (inflight && !inflight.ctrl.signal.aborted && inflight.mes === mes && inflight.hash === textHash(mes) && inflight.profile === profileOf(mes, cfg, inflight.langs) && (!opts.force || inflight.force)) {
+    // 1.6.4 같은 글의 진행 중인 분석이면 붙는다 — 프롬프트 지문이 그새 바뀌었어도 (앞 메시지의 분석이 엑스트라를 적어 목소리 표가 바뀌는 것만으로 다시 묻지 않게)
+    if (inflight && !inflight.ctrl.signal.aborted && inflight.mes === mes && inflight.hash === textHash(mes) && (!opts.force || inflight.force)) {
         if (covers(inflight.langs, langs)) return join(inflight, opts.signal);
         return join(inflight, opts.signal).then(() => analyzeMessage(id, opts));   // 끝나면 저장된 것을 보고 모자란 언어만 다시
     }
     if (!engineReady(cfg)) return Promise.resolve(null);
 
-    const entry = { id, mes, hash: textHash(mes), profile: profileOf(mes, cfg, langs), langs, force: !!opts.force, ctrl: new AbortController(), promise: null, users: 0, pinned: false, sent: false };
+    const entry = { id, mes, hash: textHash(mes), langs, force: !!opts.force, ctrl: new AbortController(), promise: null, users: 0, pinned: false, sent: false };
     const run = () => doAnalyze(entry);
     entry.promise = chain.then(run, run).finally(() => { if (running.get(id) === entry) running.delete(id); });
     running.set(id, entry);
@@ -1085,11 +1086,13 @@ async function doAnalyze(entry) {
     if (msgOf(id) !== mes || textHash(mes) !== entry.hash) return null;                                       // 줄 서는 동안 글이 바뀜
     const cfg = settings().analysis || {};
     const built = buildPrompt(mes, { langs, emotion: !!cfg.emotion, translate: !!cfg.translate, context_chars: cfg.context_chars, speaker: cfg.speaker !== false, extras: extrasOn() });
-    if (entry.profile !== profileOf(mes, cfg, langs)) return null;
     const h = entry.hash;
     const engine = engineOf(cfg);
     const model = engine === 'st' ? 'st' : engine === 'provider' ? stapi.modelOf(cfg) : String(cfg.model || '');
-    const base = { hash: h, profile: entry.profile, langs, model, at: Date.now(), segs: built.lines.map(l => ({ i: l.i, h: l.h, emotion: '', text: {} })) };
+    // profile · baseProfile 은 옛 판(1.6.3 이하)이 읽을 수 있게 적을 뿐, 1.6.4 는 꺼낼 때 보지 않는다 (번역문 없는 키 = 1.6.0 규칙)
+    const dt = mes?.extra?.display_text;
+    const keyBuilt = typeof dt === 'string' && dt.trim() && dt !== mes.mes ? buildPrompt(mes, { langs, emotion: !!cfg.emotion, translate: !!cfg.translate, context_chars: cfg.context_chars, speaker: cfg.speaker !== false, extras: extrasOn(), display: false }) : built;
+    const base = { hash: h, profile: profileOf(mes, cfg, langs, keyBuilt), langs, model, at: Date.now(), speaker: cfg.speaker !== false, segs: built.lines.map(l => ({ i: l.i, h: l.h, emotion: '', text: {} })) };
     if (built.sfx) { base.baseProfile = profileOf(mes, cfg, langs, null, extrasOn(), false); base.sfx = []; }
     if (built.empty) { store(id, mes, base); return base; }   // 물을 게 없음 → 그것도 기억 (토큰 0)
     log('req', `대사 분석 #${id} · ${built.asked}줄 · ${engine === 'provider' ? String(cfg.provider || '') : engine}`);
@@ -1113,9 +1116,8 @@ async function doAnalyze(entry) {
     const people = parsePeople(parsed.people, built, segs);
     const analysis = people ? { ...base, segs, people } : { ...base, segs };
     if (built.sfx) analysis.sfx = normalizeSfx(parsed.sfx, built);
-    const currentProfile = profileOf(mes, settings().analysis || {}, langs);
-    const profileStillValid = entry.profile === currentProfile || (!autoSfxEnabled() && base.baseProfile === currentProfile);
-    if (msgOf(id) !== mes || textHash(mes) !== h || !profileStillValid) { log('info', `대사 분석 버림 #${id} (글·설정이 바뀜)`); return null; }
+    // 1.6.4 받는 동안 설정이 바뀌어도 버리지 않는다 (값을 치른 답) — 글이 바뀌었을 때만
+    if (msgOf(id) !== mes || textHash(mes) !== h) { log('info', `대사 분석 버림 #${id} (글이 바뀜)`); return null; }
     store(id, mes, analysis);
     log('info', `대사 분석 끝 #${id} · ${Math.round((Date.now() - t0) / 100) / 10}s`);
     if (people) {   // 1.3.7 엑스트라 표에 적고 그 엔진의 기본 목소리 목록을 채운 뒤 돌려준다 (첫 줄부터 그 목소리로 — 오래 걸리면 기다리지 않음)

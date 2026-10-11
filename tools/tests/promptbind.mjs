@@ -131,4 +131,78 @@ await test('6.0.5 카드 안(스코프) 정규식도 목록에 들고 같이 켜
     assert.equal(ctx.characters[0].data.extensions.regex_scripts[0].disabled, true, '같은 캐릭터의 다른 채팅이면 끈다');
     delete ctx.characters[0].data; delete ctx.writeExtensionField; ctx.chatId = 'chat-a';
 });
+await test('6.0.6 프리셋 안 정규식도 목록에 들고 같이 켜고 끈다 · 프리셋에 저장한다 · 정규식이 바뀌면 채팅을 다시 그린다', async () => {
+    ctx.characterId = 0; ctx.chatId = 'chat-a';
+    ctx.extensionSettings.regex = [{ id: 'rx-1', scriptName: '속마음 색', disabled: true }];
+    const presetList = [{ id: 'r-preset', scriptName: 'DEM - Dialogue Color', disabled: true }, { id: 'r-other', scriptName: 'DEM - Other', disabled: true }];
+    const tick = () => new Promise(r => setTimeout(r, 5));
+    const pmgr = { name: 'P', stored: presetList,
+        getSelectedPresetName() { return pmgr.name; }, getCompletionPresetByName(n) { return n === 'P' ? { extensions: { regex_scripts: pmgr.stored } } : null; },
+        readPresetExtensionField: ({ path }) => path === 'regex_scripts' ? presetList : null,
+        writePresetExtensionField: async ({ name, path, value }) => { ctx.presetWrote = [name, path, value === presetList]; } };
+    ctx.getPresetManager = () => pmgr;
+    ctx.reloadCurrentChat = async () => { ctx.reloads = (ctx.reloads || 0) + 1; };
+    ctx.saveChat = async () => { ctx.chatSaves = (ctx.chatSaves || 0) + 1; };
+    assert.deepEqual(B.presetRegexScripts().map(s => s.id), ['r-preset', 'r-other']);
+    assert.deepEqual(B.allRegexScripts().map(s => [s.id, s._scope]), [['rx-1', 'global'], ['r-preset', 'preset'], ['r-other', 'preset']], '전역 · 이 캐릭터 · 프리셋 순서');
+    assert.equal(B.regexName('r-preset'), 'DEM - Dialogue Color');
+    ctx.extensionSettings.salty.promptBinds = { bluelock_colors: { keys: ['c:nagi.png'], regex: ['r-preset'] } }; invalidateSettings();
+    order[2].enabled = true;
+    assert.equal(await B.syncPromptBinds('chat'), 1); await tick();
+    assert.equal(presetList[0].disabled, false, '묶은 캐릭터를 열면 프리셋 정규식이 켜진다'); assert.equal(presetList[1].disabled, true, '안 붙인 프리셋 정규식은 그대로');
+    assert.deepEqual(ctx.presetWrote, ['P', 'regex_scripts', true], '읽을 때의 프리셋 이름으로 저장 (같은 배열을 그대로)');
+    assert.equal(ctx.reloads, 1, '정규식이 바뀌면 채팅을 다시 그린다'); assert.equal(ctx.chatSaves, 1, '다시 그리기 전에 저장한다');
+    assert.equal(await B.syncPromptBinds('chat'), 0, '이미 맞으면 바꾸지 않는다'); await tick(); assert.equal(ctx.reloads, 1, '맞으면 다시 그리지 않는다');
+    ctx.characterId = 1; ctx.presetWrote = null;
+    assert.equal(await B.syncPromptBinds('chat'), 2, '프롬프트 + 프리셋 정규식');
+    assert.equal(presetList[0].disabled, true, '나가면 프리셋 정규식도 꺼진다'); assert.deepEqual(ctx.presetWrote, ['P', 'regex_scripts', true]);
+    assert.equal(ctx.reloads, 1, '1.5초 안의 두 번째 바뀜은 바로 그리지 않고'); await new Promise(r => setTimeout(r, 1700)); assert.equal(ctx.reloads, 2, '미뤘다가 다시 그린다');
+    // 설정 저장 뒤의 되맞춤(settle)은 정규식을 바꿔도 다시 그리지 않는다 (다른 확장과 서로 뒤집는 자리)
+    ctx.characterId = 0; ctx.presetWrote = null;
+    assert.equal(await B.syncPromptBinds('settle'), 2); await new Promise(r => setTimeout(r, 1700));
+    assert.equal(presetList[0].disabled, false); assert.equal(ctx.reloads, 2, 'settle 은 다시 그리지 않는다');
+    // 프리셋이 바뀌는 틈(선택은 새 이름 · 설정은 옛 목록)에는 프리셋 정규식을 건드리지도 쓰지도 않는다
+    ctx.characterId = 1; ctx.presetWrote = null; pmgr.stored = [{ id: 'r-new', disabled: false }];
+    assert.equal(await B.syncPromptBinds('chat'), 1, '프롬프트만 끈다'); assert.equal(presetList[0].disabled, false, '옛 목록은 그대로'); assert.equal(ctx.presetWrote, null, '쓰지 않는다');
+    pmgr.stored = presetList;
+    assert.equal(await B.syncPromptBinds('chat'), 1, '프리셋이 자리 잡으면 정규식을 끈다'); assert.equal(presetList[0].disabled, true); assert.deepEqual(ctx.presetWrote, ['P', 'regex_scripts', true]);
+    // 읽은 뒤 쓰기 전에 다른 프리셋을 골랐으면 쓰지 않는다
+    ctx.characterId = 0; ctx.presetWrote = null; let reads = 0; pmgr.getSelectedPresetName = () => (reads++ === 0 ? 'P' : 'Q');
+    assert.equal(await B.syncPromptBinds('chat'), 2); assert.equal(presetList[0].disabled, false); assert.equal(ctx.presetWrote, null, '그새 다른 프리셋을 골랐으면 쓰지 않는다');
+    pmgr.getSelectedPresetName = () => pmgr.name;
+    await new Promise(r => setTimeout(r, 1600));
+    B.clearBinds('bluelock_colors'); delete ctx.getPresetManager; delete ctx.reloadCurrentChat; delete ctx.saveChat; delete ctx.presetWrote; delete ctx.reloads; delete ctx.chatSaves;
+    assert.deepEqual(B.presetRegexScripts(), [], '프리셋 관리자가 없으면 빈 목록');
+});
+await test('6.0.6 두 묶음이 같은 정규식을 서로 다르게 바라면 켜기가 이기고 되돌이표가 없다', async () => {
+    ctx.characterId = 0; ctx.chatId = 'chat-a';
+    ctx.extensionSettings.regex = [{ id: 'rx-1', scriptName: '속마음 색', disabled: true }];
+    order[0].enabled = false; order[2].enabled = false;
+    ctx.extensionSettings.salty.promptBinds = { bluelock_colors: { keys: ['c:nagi.png'], regex: ['rx-1'] }, dialogue_colors: { keys: ['c:seraph.png'], regex: ['rx-1'] } }; invalidateSettings();
+    assert.equal(await B.syncPromptBinds(), 2, '나기: bluelock 켜짐 + 정규식 켜짐 (dialogue 는 이미 꺼짐)');
+    assert.equal(ctx.extensionSettings.regex[0].disabled, false);
+    assert.equal(await B.syncPromptBinds(), 0, '한 번 더 맞춰도 바뀌지 않는다 (묶음마다 뒤집으면 여기서 2 가 나와 되돌이표)');
+    ctx.characterId = 1;
+    assert.equal(await B.syncPromptBinds(), 2, '세라프: bluelock 꺼짐 + dialogue 켜짐, 정규식은 그대로 켜짐');
+    assert.equal(ctx.extensionSettings.regex[0].disabled, false);
+    ctx.groupId = 'g1'; ctx.chatId = 'gchat';
+    assert.equal(await B.syncPromptBinds(), 2, '그룹: dialogue 꺼짐 + 정규식 꺼짐');
+    assert.equal(ctx.extensionSettings.regex[0].disabled, true);
+    ctx.groupId = null; ctx.characterId = 0; ctx.chatId = 'chat-a'; B.clearBinds('bluelock_colors'); B.clearBinds('dialogue_colors');
+});
+await test('6.0.6 찾기: 한글화 스크립트가 정규식 목록 줄에 바꿔 보여 주는 이름으로도 맞는다 · 보이는 이름이 칩 · 창 제목은 편집 창 이름 칸', () => {
+    const rows = { 'r-preset': 'DEM - 대사 색', 'rx-1': '' };
+    globalThis.document = { getElementById: id => id === 'completion_prompt_manager_popup_entry_form_name' ? { value: ' Dialogue Color ' }
+        : (id in rows && rows[id]) ? { classList: { contains: c => c === 'regex-script-label' }, querySelector: sel => sel === '.regex_script_name' ? { textContent: ` ${rows[id]} ` } : null } : null };
+    try {
+        ctx.extensionSettings.regex = [{ id: 'rx-1', scriptName: '속마음 색' }];
+        ctx.getPresetManager = () => ({ readPresetExtensionField: () => [{ id: 'r-preset', scriptName: 'DEM - Dialogue Color' }] });
+        assert.equal(B.regexShownName('r-preset'), 'DEM - 대사 색'); assert.equal(B.regexShownName('rx-1'), '', '목록 줄이 없으면 빈 글자'); assert.equal(B.regexShownName(''), '');
+        assert.equal(B.regexName('r-preset'), 'DEM - 대사 색', '칩 · 목록에는 한글화된 이름'); assert.equal(B.regexName('rx-1'), '속마음 색', '없으면 원래 이름');
+        const s = { id: 'r-preset', scriptName: 'DEM - Dialogue Color' };
+        assert.equal(B.regexMatches(s, '대사'), true, '한글화된 이름'); assert.equal(B.regexMatches(s, 'dialogue'), true, '원래 이름 (대소문자 무시)'); assert.equal(B.regexMatches(s, ' 색 '), true); assert.equal(B.regexMatches(s, 'xyz'), false); assert.equal(B.regexMatches(s, ''), true, '빈 찾기는 전부');
+        assert.equal(B._forTest.promptName('abc-123'), 'Dialogue Color', '편집 창 이름 칸');
+    } finally { delete globalThis.document; delete ctx.getPresetManager; }
+    assert.equal(B._forTest.promptName('abc-123'), '이름:abc-123', 'DOM 이 없으면 프롬프트 관리자');
+});
 console.log(`\npromptbind: ${passed} passed, 0 failed`);

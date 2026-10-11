@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.0.5/blue-lemonade-6.0.5.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.0.6/blue-lemonade-6.0.6.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.0.5 · 최신 업데이트</summary>
+<summary>6.0.6 · 최신 업데이트</summary>
+
+- 프롬프트 귀속 › 정규식: 프리셋 안의 정규식도 목록에 나와요(전역 · 이 캐릭터 카드 · 프리셋으로 묶어서, 한 줄에 하나). 찾기는 한글화 스크립트가 바꿔 보여 주는 이름으로도 돼요. 창 제목이 항목 이름 대신 긴 식별자로 나오던 것도 고쳤어요.
+- 프롬프트 귀속: 묶은 정규식이 켜지거나 꺼지면 채팅을 다시 그려요 — 대사 색처럼 화면에만 쓰는 정규식이 이미 그려진 글에도 바로 먹게. 실리태번 정규식 창의 켜짐 표시도 같이 맞춰요.
+- TTS 1.6.4: 분명 들었던 문장을 또 분석하던 것을 고쳤어요. 목소리를 더하거나 효과음을 넣거나 우선을 켜거나 모델을 바꾸면 저장된 분석이 전부 무효가 되어 누를 때마다 다시(유료) 분석했는데, 이제 같은 글이면 그대로 써요. 새로 받고 싶을 때만 요술봉 › 재생성.
+- 정규식 연결 애드온 1.0.5: 프롬프트 귀속이 직접 붙인 정규식은 정규식 연결이 건드리지 않아요 — 둘이 같은 정규식을 서로 다르게 켜고 끄며 되돌이표를 돌던 것.
+
+</details>
+
+<details>
+<summary>6.0.5 · TTS 1.6.3 효과음 넓이 · 요술봉 메뉴 · 단어 음소거</summary>
 
 - 프롬프트 귀속 고침: 「자동 켜기」 단추가 좁은 화면에서 세 줄로 꺾이던 것을 고쳤고, 「정규식」 목록에 이 캐릭터 카드 안의 정규식도 보여요(전역 정규식이 없어도). 묶은 캐릭터에서 나갈 때 꺼지지 않던 경우도 고쳤어요.
 - TTS 1.6.3 효과음: 「꿀꺽 (연속)」 음원을 바꿨어요(첫 타격이 날카로워 때리는 소리로 들리던 것).
