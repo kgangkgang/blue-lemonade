@@ -16,7 +16,7 @@ import { weatherReadability } from './weather-readability.js';
 import { themeEnabled, addonsEnabled } from './usage-mode.js';
 import { syncFeatures } from './features.js';
 import { syncSplash, syncFavicon } from './splash.js';
-import { markdownClasses } from './markdown.js';
+import { markdownClasses, markdownVariables } from './markdown.js';
 import { syncExtensionColors } from './extension-colors.js';
 
 function profileVars(p, pal, user = false) {
@@ -466,7 +466,7 @@ export function applyAll() {
     const pal = paletteColors(s);
     const mode = (PALETTES[s.palette] || PALETTES.salt).mode;
 
-    const vars = {};
+    const vars = markdownVariables(s.markdown);
     for (const key of TOKEN_KEYS) vars[`--salty-${key}`] = pal[key];
     // Stock light bubbles follow the marker hue; explicit raised colors and custom palettes remain authoritative.
     vars['--salty-user-bg'] = mode === 'light' && !s.palette.startsWith('custom-') && !s.colorOverrides?.[s.palette]?.raised

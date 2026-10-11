@@ -75,6 +75,11 @@ URL.revokeObjectURL = url => T.urls.delete(url);
 const blob = payload => new Blob([JSON.stringify(payload)], { type:'audio/wav' });
 globalThis.fetch = async (url, init = {}) => {
     const u = String(url);
+    if ((u === 'https://mock.invalid/v1/chat/completions' || u === '/api/backends/chat-completions/generate') && T.analysisReply) {
+        const input=JSON.parse(init.body); T.analysisRequests.push(input);
+        if (T.analysisGate) { T.analysisGate.started=true; await T.analysisGate.promise; }
+        return new Response(JSON.stringify({choices:[{message:{content:JSON.stringify(T.analysisReply(input))}}],usage:{prompt_tokens:10,completion_tokens:10}}));
+    }
     if (u === 'https://mock.invalid/voice') { const input=JSON.parse(init.body); T.requests.push(input); return { ok:true, blob:async()=>blob({kind:'voice',...input,seconds:.06,ms:25}) }; }
     const sfx = u.match(/\/sfx(?:-extra)?\/([a-z0-9_]+)\.mp3$/);
     if (sfx) { if (T.sfxGate) { T.sfxGate.started = true; await T.sfxGate.promise; } return { ok:true, blob:async()=>blob({kind:'sfx',sfxId:sfx[1],seconds:.08,ms:35}) }; }
@@ -105,6 +110,7 @@ async function test(name,fn) { try{await fn();passed++;console.log('PASS '+name)
 const voice = (id,name)=>({uid:'minimax:'+id,provider:'minimax',voiceId:id,name,aliases:[],params:{},mix:[],lang:''});
 async function reset() {
     T.sfxGate = T.renderGate = null;
+    T.analysisGate=null;T.analysisReply=null;T.analysisRequests=[];
     P.stop(); await sleep(10); P.forgetClips(); P.forgetFrom(0);T.cache.clear();T.removed.length=T.requests.length=T.plays.length=T.ends.length=T.downloads.length=T.warnings.length=T.renders.length=0;
     const s=S.settings();Object.assign(s,{enabled:true,voices:[voice('mina','Mina'),voice('nora','Nora')],char_map:{Mina:'minimax:mina',Nora:'minimax:nora'},default_voice:'minimax:mina',narrator_voice:'',user_voice:'',prefer_provider:'',normalize:false,dethump:false,emotion_strength:'normal',pregen:'off',prefetch:0,text_source:'original',pron_dict:'',wait_translation:'off',extras:'off',listen_lang:'auto',mini_player:false,highlight:false,master_volume:1,playback_rate:1,gap_ms:0,max_chars:0,
         providers:{minimax:{key:'mock-key',model:'speech-2.8-hd'},elevenlabs:{key:'mock-key',model:'eleven_v3'}},sfx:{enabled:false,auto:false,volume:.5,mode:'overlay',custom:[]},analysis:{...s.analysis,enabled:false},routes:{dialogue:'character',narration:'skip',action:'skip',thought:'skip',user_dialogue:'skip'}});
@@ -380,6 +386,145 @@ await test('compact bar lists only effects that started and resets when another 
     const bar=document.body.children.find(n=>n.className==='lv-bar'),button=bar.querySelector('.lv-bar-details-btn'),list=bar.querySelector('.lv-bar-sfx-list');
     assert.equal(button.textContent,'효과음 1개');assert.equal(list.children.length,1);assert.equal(list.children[0].textContent,'키보드 타이핑');
     P.stop();await P.speakScript(0,[row('new','voice',{text:'New one.'}),row('wait','pause',{gapMs:50})]);await until(()=>T.plays.some(x=>x.text==='New one.'));assert.equal(list.children.length,0);await idle();
+});
+async function analysisSetup() {
+    await reset();
+    Object.assign(S.settings().analysis,{enabled:true,engine:'compat',base:'https://mock.invalid/v1',key:'mock-only',model:'m',emotion:true,translate:true,speaker:true,when:'auto'});
+    T.analysisReply=()=>({segs:[{i:0,emotion:'happy',speaker:'Mina',ja:'最初です。',ko:'첫 번째예요.'},{i:1,emotion:'sad',speaker:'Mina',ja:'次です。',ko:'두 번째예요.'}]});
+    return T.ctx.chat[0];
+}
+const tap = (text, dialogueIndex) => ({kind:'dialogue',text,dialogueIndex});
+await test('one message: first tapped line analyses every dialogue; later taps and whole playback reuse it',async()=>{
+    const mes=await analysisSetup();
+    assert.equal(P.speakSegments(0,[tap('Hello one.',0)]),true);await idle();
+    assert.equal(T.analysisRequests.length,1);const prompt=T.analysisRequests[0].messages[1].content;
+    assert.ok(prompt.includes('Hello one.')&&prompt.includes('Hello two.'));
+    assert.equal(P.speakSegments(0,[tap('Hello two.',1)]),true);await idle();
+    assert.equal(T.plays.at(-1).emotion,'sad');assert.equal(T.analysisRequests.length,1);
+    P.speakMessage(0,{force:true});await idle();assert.equal(T.analysisRequests.length,1);
+    assert.equal(A.getAnalysis(0).segs.length,2);assert.equal(P.analysisWanted(0,mes),false);
+});
+await test('same-message tap during paid analysis joins it and only the latest line starts',async()=>{
+    await analysisSetup();const g=gate();T.analysisGate=g;
+    P.speakSegments(0,[tap('Hello one.',0)]);await until(()=>g.started);
+    P.speakSegments(0,[tap('Hello two.',1)]);g.release();await idle();
+    assert.equal(T.analysisRequests.length,1);assert.deepEqual(T.plays.map(p=>p.text),['Hello two.']);
+});
+await test('adding a requested language retains the completed languages and translations',async()=>{
+    await analysisSetup();await A.analyzeMessage(0,{langs:['ja']});await A.analyzeMessage(0,{langs:['ko']});
+    const combined=A.getAnalysis(0);assert.deepEqual(combined.langs,['ja','ko']);
+    assert.equal(combined.segs[0].text.ja,'最初です。');assert.equal(combined.segs[0].text.ko,'첫 번째예요.');
+    const prompt=T.analysisRequests[1].messages[1].content;assert.ok(!prompt.includes('give "emotion"')&&!prompt.includes('give "speaker"'));
+    assert.equal(combined.segs[0].emotion,'happy');assert.equal(combined.segs[1].speaker,'Mina');
+    await A.analyzeMessage(0,{langs:['ja']});assert.equal(T.analysisRequests.length,2);
+});
+await test('requests arriving before dispatch combine their needed languages in one message request',async()=>{
+    await analysisSetup();const one=A.analyzeMessage(0,{langs:['ja']}),two=A.analyzeMessage(0,{langs:['ko']});
+    const [a,b]=await Promise.all([one,two]);assert.equal(T.analysisRequests.length,1);assert.equal(a,b);assert.deepEqual(a.langs,['ja','ko']);
+});
+await test('external message clicks reuse their stored emotions without re-entering analysis',async()=>{
+    await analysisSetup();const {id,mes}=A.registerExternal({text:'"External one." She waits. "External two."',name:'Mina'});
+    await A.analyzeMessage(id);assert.equal(P.analysisWanted(id,mes),false);
+    P.speakSegments(id,[tap('External two.',1)]);await idle();assert.equal(T.plays.at(-1).emotion,'sad');assert.equal(T.analysisRequests.length,1);
+});
+await test('same-text swipe during a pending analysis cannot save the previous swipe answer',async()=>{
+    const mes=await analysisSetup();const g=gate();T.analysisGate=g;
+    const pending=A.analyzeMessage(0);await until(()=>g.started);mes.swipe_id=1;g.release();
+    assert.equal(await pending,null);assert.equal(A.getAnalysis(0),null);
+});
+await test('message replacement while analysis is pending cannot leak the old answer to the new chat number',async()=>{
+    const mes=await analysisSetup();const g=gate();T.analysisGate=g;
+    const pending=A.analyzeMessage(0);await until(()=>g.started);T.ctx.chat[0]={...mes,extra:{}};g.release();
+    assert.equal(await pending,null);assert.equal(A.getAnalysis(0),null);
+});
+await test('incomplete emotion response fails once for the message; later taps use fallback without paid retries or success cache',async()=>{
+    const mes=await analysisSetup(),valid=T.analysisReply;
+    T.analysisReply=()=>({segs:[{i:0,emotion:'happy',speaker:'Mina'}]});
+    P.speakSegments(0,[tap('Hello one.',0)]);await idle();
+    assert.equal(T.analysisRequests.length,1);assert.equal(A.getAnalysis(0),null);assert.equal(A.hasResponseFailure(0),true);
+    assert.ok(T.warnings.some(w=>w.msg.includes('빠진 감정')&&w.msg.includes('재생성')));const warnings=T.warnings.length;
+    P.speakSegments(0,[tap('Hello two.',1)]);await idle();assert.equal(T.analysisRequests.length,1);assert.equal(T.warnings.length,warnings);
+    assert.equal(T.plays.at(-1).text,'Hello two.');assert.equal(P.analysisWanted(0,mes),false);
+    T.analysisReply=valid;assert.equal(await P.reanalyze(0),true);await idle();
+    assert.equal(T.analysisRequests.length,2);assert.ok(A.getAnalysis(0));assert.equal(A.hasResponseFailure(0),false);
+});
+await test('failed response memory resets with settings, text, swipe, chat object or explicit clearing',async()=>{
+    let mes=await analysisSetup();T.analysisReply=()=>({segs:[]});
+    const fail=async()=>{await assert.rejects(A.analyzeMessage(0),/빠진 감정/);assert.equal(A.hasResponseFailure(0),true);};
+    await fail();S.settings().analysis.model='changed';assert.equal(A.hasResponseFailure(0),false);
+    await fail();mes.mes+=' "Third line."';assert.equal(A.hasResponseFailure(0),false);
+    await fail();mes.swipe_id=1;assert.equal(A.hasResponseFailure(0),false);
+    await fail();T.ctx.chat[0]=mes={...mes,extra:{}};assert.equal(A.hasResponseFailure(0),false);
+    await fail();A.clearAnalysis(0);assert.equal(A.hasResponseFailure(0),false);
+});
+await test('missing translation or speaker is not stored as a successful complete analysis',async()=>{
+    await analysisSetup();T.analysisReply=()=>({segs:[{i:0,emotion:'calm',speaker:'Mina',ja:'最初です。'},{i:1,emotion:'calm',speaker:'Mina'}]});
+    await assert.rejects(A.analyzeMessage(0,{langs:['ja']}),/빠진 번역/);assert.equal(A.getAnalysis(0),null);assert.equal(T.analysisRequests.length,1);
+    A.clearAnalysis(0);T.analysisReply=()=>({segs:[{i:0,emotion:'calm'},{i:1,emotion:'calm'}]});
+    await assert.rejects(A.analyzeMessage(0),/빠진 화자/);assert.equal(A.getAnalysis(0),null);
+});
+await test('completed analysis survives late display translation, learned names, and a changed model',async()=>{
+    const mes=await analysisSetup();await A.analyzeMessage(0,{langs:['ja']});const saved=A.getAnalysis(0);
+    mes.extra.display_text='"첫 번째예요." 기다린다. "두 번째예요."';S.settings().char_map.Clerk='minimax:nora';S.settings().analysis.model='changed';
+    assert.equal(await A.analyzeMessage(0,{langs:['ja']}),saved);assert.equal(T.analysisRequests.length,1);
+});
+await test('an added native source language costs no request and does not erase existing emotions',async()=>{
+    await analysisSetup();await A.analyzeMessage(0,{langs:['ja']});const saved=A.getAnalysis(0);
+    const next=await A.analyzeMessage(0,{langs:['en']});assert.equal(T.analysisRequests.length,1);assert.deepEqual(next.langs,['en','ja']);assert.deepEqual(next.segs,saved.segs);
+});
+await test('stopping after dispatch still stores the paid answer for the next click',async()=>{
+    await analysisSetup();const g=gate();T.analysisGate=g;
+    P.speakSegments(0,[tap('Hello one.',0)]);await until(()=>g.started);P.stop();g.release();await until(()=>A.getAnalysis(0));
+    P.speakSegments(0,[tap('Hello two.',1)]);await idle();assert.equal(T.analysisRequests.length,1);assert.equal(T.plays.at(-1).emotion,'sad');
+});
+await test('turning translation off before dispatch never marks unsent languages as completed',async()=>{
+    await analysisSetup();const pending=A.analyzeMessage(0,{langs:['ja']});S.settings().analysis.translate=false;
+    assert.deepEqual((await pending).langs,[]);S.settings().analysis.translate=true;
+    assert.deepEqual((await A.analyzeMessage(0,{langs:['ja']})).langs,['ja']);assert.equal(T.analysisRequests.length,2);
+});
+await test('non-JSON response reports explicit failure once and preserves manual retry guidance',async()=>{
+    await analysisSetup();T.analysisReply=()=> 'This is not an analysis object.';
+    P.speakSegments(0,[tap('Hello one.',0)]);await idle();assert.equal(A.getAnalysis(0),null);
+    assert.ok(T.warnings.some(w=>w.msg.includes('JSON')&&w.msg.includes('재생성')));
+    const warnings=T.warnings.length;P.speakSegments(0,[tap('Hello two.',1)]);await idle();assert.equal(T.analysisRequests.length,1);assert.equal(T.warnings.length,warnings);
+});
+await test('SFX-only analysis can retry explicitly after a remembered JSON failure',async()=>{
+    const mes=await analysisSetup();mes.mes='"Hello one." She closes the door. "Hello two."';
+    Object.assign(S.settings().analysis,{emotion:false,translate:false,speaker:false});
+    Object.assign(S.settings().sfx,{enabled:true,auto:true});T.analysisReply=()=> 'Not an analysis object.';
+    assert.equal(P.analysisNeeds(0,mes).sfx,true);P.speakSegments(0,[tap('Hello one.',0)]);await idle();
+    assert.equal(T.analysisRequests.length,1);assert.equal(A.hasResponseFailure(0),true);assert.equal(A.getAnalysis(0),null);
+    const warnings=T.warnings.length;
+    P.speakSegments(0,[tap('Hello two.',1)]);await idle();assert.equal(T.analysisRequests.length,1);assert.equal(T.warnings.length,warnings);
+    T.analysisReply=()=>({segs:[],sfx:[{after:1,id:'door_close',strength:1}]});
+    assert.equal(await P.reanalyze(0),true);assert.equal(T.analysisRequests.length,2);assert.equal(A.hasResponseFailure(0),false);
+    assert.equal(A.getAnalysis(0).sfx[0].id,'door_close');
+});
+await test('changing the current SillyTavern model or source clears only a failed response memo',async()=>{
+    const mes=await analysisSetup(),valid=T.analysisReply,old={mainApi:T.ctx.mainApi,chatCompletionSettings:T.ctx.chatCompletionSettings,generateRaw:T.ctx.generateRaw};
+    let calls=0;Object.assign(T.ctx,{mainApi:'openai',chatCompletionSettings:{chat_completion_source:'openai',openai_model:'first'},generateRaw:async()=>{calls++;return JSON.stringify(T.analysisReply());}});
+    try {
+        S.settings().analysis.engine='st';T.analysisReply=()=> 'Not an analysis object.';
+        await assert.rejects(A.analyzeMessage(0),/JSON/);assert.equal(A.hasResponseFailure(0),true);assert.equal(calls,1);
+        T.ctx.chatCompletionSettings.openai_model='second';assert.equal(A.hasResponseFailure(0),false);assert.equal(P.analysisWanted(0,mes),true);
+        await assert.rejects(A.analyzeMessage(0),/JSON/);assert.equal(calls,2);
+        Object.assign(T.ctx.chatCompletionSettings,{chat_completion_source:'custom',custom_model:'third',custom_url:'https://mock.invalid/st'});
+        assert.equal(A.hasResponseFailure(0),false);T.analysisReply=valid;await A.analyzeMessage(0);assert.equal(calls,3);const saved=A.getAnalysis(0);
+        T.ctx.chatCompletionSettings.custom_model='fourth';assert.equal(await A.analyzeMessage(0),saved);assert.equal(calls,3);
+    } finally { Object.assign(T.ctx,old); }
+});
+await test('provider analysis retries after an inherited model or endpoint changes and keeps successful results',async()=>{
+    const mes=await analysisSetup(),valid=T.analysisReply,old=T.ctx.chatCompletionSettings;
+    T.ctx.chatCompletionSettings={chat_completion_source:'custom',custom_model:'first',custom_url:'https://mock.invalid/first'};
+    try {
+        Object.assign(S.settings().analysis,{engine:'provider',provider:'custom',provider_models:{},custom_url:''});T.analysisReply=()=> 'Not an analysis object.';
+        await assert.rejects(A.analyzeMessage(0),/JSON/);assert.equal(A.hasResponseFailure(0),true);
+        T.ctx.chatCompletionSettings.custom_model='second';assert.equal(A.hasResponseFailure(0),false);assert.equal(P.analysisWanted(0,mes),true);
+        await assert.rejects(A.analyzeMessage(0),/JSON/);assert.equal(T.analysisRequests.length,2);
+        T.ctx.chatCompletionSettings.custom_url='https://mock.invalid/second';assert.equal(A.hasResponseFailure(0),false);
+        T.analysisReply=valid;await A.analyzeMessage(0);const saved=A.getAnalysis(0);assert.equal(T.analysisRequests.length,3);
+        T.ctx.chatCompletionSettings.custom_url='https://mock.invalid/third';assert.equal(await A.analyzeMessage(0),saved);assert.equal(T.analysisRequests.length,3);
+    } finally { T.ctx.chatCompletionSettings=old; }
 });
 P.stop(); for(const node of T.nodes)node.pause();
 console.log(JSON.stringify({passed,failed,mockOnly:true,network:'blocked except synthetic responses',sourceRoot:root},null,2));

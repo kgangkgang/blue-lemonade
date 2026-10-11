@@ -4,6 +4,7 @@ export const deviceKind = () => globalThis.matchMedia?.(DEVICE_QUERY).matches ? 
 export const LAYOUT_PATHS = [
     ...['size','dialogueSize','uiSize','codeSize','lineHeight','letterSpacing','para','measure','gutter','indent','align'].map(k => `type.${k}`),
     'markdown.size', 'markdown.space', 'chat.personaTall',
+    ...['hrWidth','hrSpace','quotePadding','listIndent','tablePadding','underlineOffset'].map(key => `markdown.${key}`),
     'em.size', 'strong.size', 'dialogue.letterSpacing', 'em.letterSpacing', 'strong.letterSpacing', 'code.letterSpacing', 'chat.userSize',
     ...['profile','userProfile'].flatMap(p => ['mode','layout','sizing','screenHeight','maxHeight','visibleHeight','width','height','gap','headerLayout','headerGap','nameSize','metaSize'].map(k => `${p}.${k}`)),
 ];

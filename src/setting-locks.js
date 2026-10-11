@@ -2,9 +2,10 @@ export const LOCK_GROUPS = [
     ['fonts','글꼴',['fonts']],
     ['size','글자 크기',['type.size','type.dialogueSize','type.uiSize','type.codeSize','em.size','strong.size','profile.nameSize','userProfile.nameSize','markdown.size']],
     ['spacing','문단 · 여백',['type.lineHeight','type.letterSpacing','type.para','type.gutter','type.measure','type.align','type.indent','dialogue.letterSpacing','em.letterSpacing','strong.letterSpacing','code.letterSpacing','markdown.space']],
-    ['colors','색',['palette','gradients','colorOverrides','nightTint','lightTint','customName']],
+    ['colors','색',['palette','gradients','colorOverrides','nightTint','lightTint','customName','markdown.accentOwn','markdown.accentColor','markdown.quoteAlpha','markdown.strongAlpha']],
     ['profile','프로필 · 이름',['profile','userProfile']],
 ];
+LOCK_GROUPS.find(([id]) => id === 'spacing')[2].push(...['hrWidth','hrSpace','quotePadding','listIndent','tablePadding','underlineOffset'].map(key => `markdown.${key}`));
 const read=(s,p)=>p.split('.').reduce((o,k)=>o?.[k],s);
 export function preserveLocks(settings, source=settings, locks=settings.settingLocks){
     const values=[];

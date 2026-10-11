@@ -1,13 +1,24 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.0.7/blue-lemonade-6.0.7.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.0.8/blue-lemonade-6.0.8.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.0.7 · 최신 업데이트</summary>
+<summary>6.0.8 · 최신 업데이트</summary>
+
+- 글자 › 마크다운에 제목 책갈피·형광펜·별, 별·다이아·점선 구분선, 따옴표·줄노트 인용문 등 꾸미기를 더했어요. 글머리·굵은 강조·코드 글자·표·접기·밑줄도 모양을 고를 수 있어요.
+- 작은 모양 견본으로 고르고, 세부 조절에서 장식 색·두께·길이·여백을 바꿔요. 폰은 한 열, PC는 두 열로 정리했고 접어 둔 상태를 유지해요. 기존 설정과 기본 모양은 그대로예요.
+- TTS 1.6.6: 한 메시지의 대사 전체를 함께 분석해요. 일부 감정·화자·번역이 빠진 응답 때문에 다음 대사를 누를 때마다 같은 분석을 반복하던 경로를 고쳤어요. 잘못된 응답은 저장하지 않고, 요술봉 › 재생성으로 다시 시도할 수 있어요.
+- TTS: 새 언어가 필요하면 그 번역만 보충하고 이미 받은 분석과 번역은 유지해요. 동시에 누른 대사의 요청을 함께 처리하고, 외부 글의 저장된 감정도 재사용해요.
+- TTS: 다른 스와이프로 넘어간 뒤 도착한 분석이 섞이지 않게 했어요. 효과음만 켠 상태의 재생성과 분석 모델·연결을 바꾼 뒤의 재시도도 고쳤어요.
+
+</details>
+
+<details>
+<summary>6.0.7 · 설정 화면 정리</summary>
 
 - 모바일 설정 창의 바깥 여백과 항목 간격을 줄여 한 화면에 더 많이 보여요. 큰 글씨에서도 버튼 이름과 설명이 잘리지 않도록 다듬었어요.
 - 에이드 혼합하기 버튼을 제목 옆에 모으고 설명을 바로 아래에 두었어요.

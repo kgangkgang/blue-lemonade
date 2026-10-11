@@ -45,7 +45,8 @@ import { bindSettingsSearch, searchMarkup, paintSettingsSearch } from './setting
 import { favoritesMarkup, bindFavorites } from './settings-favorites.js';
 import { bindPreviewViews } from './preview-view.js';
 import { PRESET_GROUPS, capturePreset, readPreset, applyPreset } from './preset-sharing.js';
-import { MARKDOWN_CONTROLS } from './markdown.js';
+import { MARKDOWN_CONTROLS, MARKDOWN_TUNING } from './markdown.js';
+import { markdownControls } from './markdown-ui.js';
 
 // 브랜드 레몬 — ✦ 메뉴 · 확장 서랍 · 스플래시와 같은 속찬 레몬(폰트어썸 fa-lemon U+F094) 윤곽 그대로
 export const MARK = '<svg viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path transform="translate(0 448) scale(1 -1)" d="M448 352Q447 379 429 397Q411 415 384 416Q374 416 365 413Q348 407 330 404Q311 400 294 404Q237 418 180 399Q124 379 80 336Q37 292 17 236Q-2 179 12 122Q16 105 12 86Q9 68 3 51Q0 42 0 32Q1 5 19 -13Q37 -31 64 -32Q74 -32 83 -29Q100 -23 118 -20Q137 -16 154 -20Q211 -34 268 -15Q324 5 368 48Q411 92 431 148Q450 205 436 262Q432 279 436 298Q439 316 445 333Q448 342 448 352ZM213 321Q171 308 139 277Q108 245 95 203Q90 190 76 193Q62 198 65 212Q80 262 117 299Q154 336 204 351Q218 354 223 340Q226 326 213 321Z"/></svg>';
@@ -112,6 +113,8 @@ const history = new SettingsHistory();
 for (const event of ["bl:device-layout", "bl:settings-replaced"]) window.addEventListener(event, () => { history.clear(); syncHistoryButtons(); });
 let historyToast;
 const historyLabels = new Map([...Object.entries(SETTING_LABELS), ...MARKDOWN_CONTROLS.map(({ key, label }) => [`markdown.${key}`, label])]);
+for (const {key,label} of MARKDOWN_TUNING) historyLabels.set(`markdown.${key}`,label);
+historyLabels.set('markdown.accentOwn','장식 색 직접 고르기'); historyLabels.set('markdown.accentColor','장식 색');
 const historyOptions = new Map([...Object.entries(SETTING_VALUES), ...MARKDOWN_CONTROLS.flatMap(({ key, options }) => options.map(([value, label]) => [`markdown.${key}:${value}`, label]))]);
 function labelHistoryControl(label, control) {
     const path = control.match(/data-(?:path|toggle)="([^"]+)"/)?.[1];
@@ -225,6 +228,7 @@ function jumpToSetting(root, path) {
     const anchor = path.includes('.decor') ? '장식 액자' : path.includes('.edgeShadow') ? '그림자' : path.includes('.edge') ? '테두리' : path.startsWith('shadow.') ? '글자 그림자' : path.startsWith('outline.') ? '글자 외곽선' : path.startsWith('chat.weather') ? '날씨' : null;
     const group = anchor ? [...root.querySelectorAll('[data-search-anchor]')].find(el => el.dataset.searchAnchor === anchor) : null;
     const target = found?.closest('.salty-slider,.salty-row,.salty-stack') || group || root.querySelector('.salty-sec');
+    for (let parent=target.parentElement; parent && parent!==root; parent=parent.parentElement) if(parent.matches('details[data-md-fold]'))parent.open=true;
     revealEditorTarget(root,target); target.classList.add('bl-search-target'); target.tabIndex = -1; target.focus({preventScroll:true});
     requestAnimationFrame(() => { if (target.isConnected && target !== root.querySelector('.salty-sec')) { const section = root.querySelector('.salty-sec'); section.scrollTop += target.getBoundingClientRect().top - section.getBoundingClientRect().top - 16; } });
     setTimeout(() => target.classList.remove('bl-search-target'),2200);
@@ -267,10 +271,11 @@ export function mountPanel(container, { popup = false, onFullscreen = null } = {
         ui.tab = entry.tab; ui.subs[entry.tab] = entry.sub; ui.picker = null;
         store('salty_tab', ui.tab); store('salty_subs', JSON.stringify(ui.subs));
         refreshPanels();
-        const path = entry.path ? root.querySelector(`[data-toggle="${entry.path}"], [data-path="${entry.path}"]`) : null;
+        const path = entry.path ? root.querySelector(`[data-toggle="${entry.path}"], [data-path="${entry.path}"], [data-range="${entry.path}"], [data-num="${entry.path}"], [data-color-path="${entry.path}"]`) : null;
         const label = entry.anchor ? [...root.querySelectorAll('[data-search-anchor]')].find(el => el.dataset.searchAnchor === entry.anchor) : null;
-        const target = path?.closest('.salty-row, .salty-stack') || label || root.querySelector('.salty-sec');
+        const target = path?.closest('.salty-row, .salty-stack, .salty-slider') || label || root.querySelector('.salty-sec');
         if (target) {
+            for(let parent=target.parentElement;parent&&parent!==root;parent=parent.parentElement)if(parent.matches('details[data-md-fold]'))parent.open=true;
             revealEditorTarget(root, target);
             const box = root.querySelector('.salty-sec');
             target.classList.add('bl-search-target'); target.tabIndex = -1; target.focus({ preventScroll: true });
@@ -593,6 +598,7 @@ const NUM = {
     'shadow.blur': { unit: 'px' },
     'chat.weatherAmount': { unit: '%' }, 'chat.weather2Amount': { unit: '%' }, 'chat.weatherOpacity': { unit: '%' }, 'chat.weatherSize': { unit: '%' }, 'chat.weatherSpeed': { unit: '%' }, 'chat.weatherAngle': { unit: '도' },
 };
+for (const {key,unit} of MARKDOWN_TUNING) NUM[`markdown.${key}`] = {unit};
 const numText = (path, v) => String(Number((Number(v) / (NUM[path]?.scale || 1)).toFixed(4)));
 // 숫자칸 폭 = 값 글자 수 (3.3.0 — 자간 -0.0075 같은 긴 값이 잘리지 않게). CSS 가 1ch 단위로 폭을 잡는다
 const numChars = text => Math.max(3, String(text).length);
@@ -705,6 +711,7 @@ function markdownStage() {
             <ol start="3"><li>책갈피를 꽂아요.</li><li>다음 장으로 넘어가요.</li></ol>
             <ul class="bl-md-task-sample"><li><input type="checkbox" checked disabled aria-label="완료한 항목"> 읽은 책 정리</li><li><input type="checkbox" disabled aria-label="아직 하지 않은 항목"> 다음 책 고르기</li></ul>
             <p><a href="#bl-md-link-example">링크 예시</a> · <mark>강조 표시</mark> · <u>밑줄 문장</u></p>
+            <p><strong>마음에 남은 한 문장</strong>과 <code>기록 한 조각</code></p>
             <table><thead><tr><th>기록</th><th>내용</th></tr></thead><tbody><tr><td>오늘</td><td>마음에 남은 문장</td></tr><tr><td>다음</td><td>길게 이어지는 글도 칸 안에서 편하게 읽어요.</td></tr></tbody></table>
             <details open><summary>접었다 펼치는 기록</summary><p>제목을 눌러 접기와 펼치기를 확인해 보세요.</p></details>
         </div></div></div>
@@ -1168,10 +1175,8 @@ async function askPresetGroups(incoming = null) {
 // ───────── 글자 ─────────
 function tabText(s, sub) {
     if (sub === 'markdown') {
-        const controls = list => list.map(({ key, label, options }) => row(label, seg(`markdown.${key}`, options, options[0][0]))).join('');
         return `${s.enabled ? prevBox('data-pv="markdown"') : ''}
-            <div class="salty-group bl-markdown-controls"><div class="bl-control-grid">${controls(MARKDOWN_CONTROLS.slice(0, 2))}</div></div>
-            <div class="salty-group bl-markdown-controls"><div class="bl-control-grid">${controls(MARKDOWN_CONTROLS.slice(2))}</div></div>
+            ${markdownControls(s, {esc, row, seg, slider, toggle})}
             `;
     }
     let body = '';
@@ -1775,6 +1780,8 @@ function restoreFocus(root, snap) {
 
 function render(root) {
     const focusSnap = focusSnapshot(root);
+    root._mdFolds ??= new Map();
+    for (const item of root.querySelectorAll('details[data-md-fold]')) root._mdFolds.set(item.dataset.mdFold,item.open);
     root._stopComparison?.();
     root._captureCleanup?.(); root._captureCleanup=null;
     root._addonCleanup?.(); root._addonCleanup=null;
@@ -1833,6 +1840,7 @@ function render(root) {
         say('설정을 저장하고 있어요…');s.usageMode=next;
         try{await syncRegexlinkFlag();await saveAddonsNow();location.reload();}catch(error){s.usageMode=previous;await syncRegexlinkFlag({resume:true});refreshPanels();say(error.message);const again=root.querySelector('[data-usage-apply]');if(again)again.disabled=false;}
     });
+    for (const item of root.querySelectorAll('details[data-md-fold]')) if (root._mdFolds.has(item.dataset.mdFold)) item.open=root._mdFolds.get(item.dataset.mdFold);
     bindCustomBuilder(root);
     paintSettingsSearch(root);
     fillPreviews(root); // 미리보기 무대 다시 꽂기 (만들지 않고 옮겨 담기만)
@@ -2744,6 +2752,7 @@ function bind(root) {
                 return;
             }
             // 자동 색은 켜고 끌 때 테두리 설명(edgeHint) 문구가 바뀌니 창을 다시 그린다
+            if (path === 'markdown.accentOwn') { update(st => setPath(st, path, target.checked)); return; }
             // 2.9.2: 본문 색 지정 → '글자색 톤 맞추기' 줄, 톤 맞추기 → 톤 값 슬라이더 넷, 투명 그림도 똑같이 → 설명 문구가 스위치에 따라
             // 보였다 안 보였다 하는데 다시 그리지 않아, 끈 뒤에도 슬라이더가 남아 있었다
             // 감정 대사 효과(움직임 · 빛 · 색 흐름) · 백그라운드 버티는 방식 줄도 스위치를 따라 보였다 안 보였다 한다

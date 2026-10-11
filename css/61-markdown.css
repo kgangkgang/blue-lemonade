@@ -159,7 +159,7 @@ body.salty.salty-md-quote-line
   blockquote:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
   padding: .35em .8em !important;
   border: 0 !important;
-  border-inline-start: 3px solid var(--salty-accent-ink, var(--salty-accent, currentColor)) !important;
+  border-inline-start: 3px solid var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) !important;
   border-radius: 0;
   background: transparent !important;
   color: inherit;
@@ -189,7 +189,7 @@ body.salty.salty-md-quote-plain
 body.salty.salty-md-list-accent
   :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
   :is(ol, ul) > li:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *))::marker {
-  color: var(--salty-accent-ink, var(--salty-accent, currentColor));
+  color: var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor)));
 }
 
 body.salty.salty-md-list-roomy
@@ -211,7 +211,7 @@ body.salty.salty-md-link-soft
   background: var(--salty-fill-accent-10, var(--salty-accent-10));
   border-radius: .2em;
   text-decoration-line: underline;
-  text-decoration-color: var(--salty-accent-ink, var(--salty-accent, currentColor));
+  text-decoration-color: var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor)));
   text-underline-offset: .2em;
 }
 
@@ -288,7 +288,7 @@ body.salty.salty-md-details-card
 
 body.salty.salty-md-details-plain
   :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
-  details:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  details:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *, .custom-llm-translator-details, .llm-translator-details)) {
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -316,7 +316,7 @@ body.salty.salty-md-underline-accent
   :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
   u:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
   text-decoration-line: underline;
-  text-decoration-color: var(--salty-accent-ink, var(--salty-accent, currentColor));
+  text-decoration-color: var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor)));
   text-decoration-style: solid;
   text-decoration-thickness: max(1px, .08em);
   text-underline-offset: .2em;
@@ -326,7 +326,7 @@ body.salty.salty-md-underline-wavy
   :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
   u:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
   text-decoration-line: underline;
-  text-decoration-color: var(--salty-accent-ink, var(--salty-accent, currentColor));
+  text-decoration-color: var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor)));
   text-decoration-style: wavy;
   text-decoration-thickness: max(1px, .06em);
   text-underline-offset: .22em;
@@ -408,4 +408,625 @@ html body.salty:not(#salty-none) :is(#salty-nochat, .salty-preview).bl-markdown-
 html body.salty:not(#salty-none) :is(#salty-nochat, .salty-preview).bl-markdown-stage .bl-md-heading-sample > :is(h1, h2, h3, h4, h5, h6) {
   min-width: 0;
   margin: .15em 0 !important;
+}
+
+/* Additional Markdown finishes — opt-in only. Keep native headings, list markers, text wrapping, and disclosure state.
+   Numeric tuning classes are emitted only when a value differs from its default; the unchanged theme retains its original measurements. */
+
+/* Heading accents stay inside the heading box. The marker is a text decoration, so every wrapped line gets its own stroke. */
+
+body.salty.salty-md-heading-ribbon
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  :is(h1, h2, h3, h4, h5, h6):not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)),
+body.salty.salty-md-heading-marker
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  :is(h1, h2, h3, h4, h5, h6):not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)),
+body.salty.salty-md-heading-ornament
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  :is(h1, h2, h3, h4, h5, h6):not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  line-height:1.4;
+  overflow-wrap:anywhere;
+}
+
+body.salty.salty-md-heading-ribbon
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  :is(h1, h2, h3, h4, h5, h6):not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  border-inline-start:.22em solid var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor)));
+  padding-inline-start:.55em;
+}
+
+body.salty.salty-md-heading-marker
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  :is(h1, h2, h3, h4, h5, h6):not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  text-decoration-line:underline;
+  text-decoration-color:color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) 25%, transparent);
+  text-decoration-thickness:.38em;
+  text-underline-offset:-.24em;
+  text-decoration-skip-ink:none;
+}
+
+body.salty.salty-md-heading-ornament
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  :is(h1, h2, h3, h4, h5, h6):not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  position:relative;
+  padding-inline-start:1em;
+}
+
+body.salty.salty-md-heading-ornament
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  :is(h1, h2, h3, h4, h5, h6):not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *))::before {
+  content:"";
+  position:absolute;
+  inset-inline-start:.15em;
+  top:.525em;
+  width:.35em;
+  height:.35em;
+  background:var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor)));
+  transform:rotate(45deg);
+  pointer-events:none;
+}
+
+/* Separators remain a real hr. Decorative shapes contain no spoken or copied text. */
+
+body.salty.salty-md-hr-star
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)),
+body.salty.salty-md-hr-diamond
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)),
+body.salty.salty-md-hr-fade
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)),
+body.salty.salty-md-hr-dashed
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  position:relative;
+  box-sizing:border-box;
+  width:var(--bl-md-hr-width,100%);
+  max-width:100%;
+  min-height:0;
+  height:0;
+  margin:var(--bl-md-hr-space,1.2em) auto !important;
+  border:0 !important;
+  background:none !important;
+  opacity:1 !important;
+}
+
+body.salty.salty-md-hr-star
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *))::before,
+body.salty.salty-md-hr-diamond
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *))::before,
+body.salty.salty-md-hr-fade
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *))::before,
+body.salty.salty-md-hr-dashed
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *))::before {
+  content:none !important;
+  background:none;
+}
+
+body.salty.salty-md-hr-star
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *))::after,
+body.salty.salty-md-hr-diamond
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *))::after,
+body.salty.salty-md-hr-fade
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *))::after,
+body.salty.salty-md-hr-dashed
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *))::after {
+  content:none !important;
+}
+
+body.salty.salty-md-hr-star
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)),
+body.salty.salty-md-hr-diamond
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  height:.8em;
+}
+
+body.salty.salty-md-hr-star
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *))::before,
+body.salty.salty-md-hr-diamond
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *))::before {
+  content:"" !important;
+  display:block;
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:.65em;
+  height:.65em;
+  margin:0;
+  background:var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor)));
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+}
+
+body.salty.salty-md-hr-star
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *))::before {
+  clip-path:polygon(50% 0,61% 36%,100% 38%,69% 61%,80% 100%,50% 77%,20% 100%,31% 61%,0 38%,39% 36%);
+}
+
+body.salty.salty-md-hr-diamond
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *))::before {
+  clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);
+}
+
+body.salty.salty-md-hr-star
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *))::after,
+body.salty.salty-md-hr-diamond
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *))::after {
+  content:"" !important;
+  position:absolute;
+  inset-inline:0;
+  top:50%;
+  height:1px;
+  background:linear-gradient(to right,color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) 25%, transparent) 0 calc(50% - 1em),transparent calc(50% - 1em) calc(50% + 1em),color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) 25%, transparent) calc(50% + 1em));
+  pointer-events:none;
+}
+
+body.salty.salty-md-hr-fade
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  height:1px;
+  background:linear-gradient(to right,transparent,color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) 55%, transparent),transparent) !important;
+}
+
+body.salty.salty-md-hr-dashed
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  border-block-start:1px dashed color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) 50%, transparent) !important;
+}
+
+/* Quotation marks are drawn as a mask. They reserve their own gutter rather than sitting over the first text line. */
+
+body.salty.salty-md-quote-quotation
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  blockquote:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)),
+body.salty.salty-md-quote-notebook
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  blockquote:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)),
+body.salty.salty-md-quote-border
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  blockquote:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  position:relative;
+  min-width:0;
+  padding:var(--bl-md-quote-padding,.75em) calc(var(--bl-md-quote-padding,.75em) + .25em) !important;
+  border:0 !important;
+  border-radius:var(--bl-r-md,12px);
+  background:color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) var(--bl-md-quote-alpha,10%), transparent) !important;
+  color:inherit;
+  overflow-wrap:anywhere;
+}
+
+body.salty.salty-md-quote-quotation
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  blockquote:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  padding-inline-start:calc(var(--bl-md-quote-padding,.75em) + 1.3em) !important;
+}
+
+body.salty.salty-md-quote-quotation
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  blockquote:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *))::before {
+  content:"";
+  position:absolute;
+  inset-inline-start:var(--bl-md-quote-padding,.75em);
+  top:calc(var(--bl-md-quote-padding,.75em) + .12em);
+  width:1em;
+  height:1em;
+  background:color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) 55%, transparent);
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M10 5C5 5 2 9 2 14v5h8v-8H6c.5-2 1.8-3 4-3zm12 0c-5 0-8 4-8 9v5h8v-8h-4c.5-2 1.8-3 4-3z'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M10 5C5 5 2 9 2 14v5h8v-8H6c.5-2 1.8-3 4-3zm12 0c-5 0-8 4-8 9v5h8v-8h-4c.5-2 1.8-3 4-3z'/%3E%3C/svg%3E") center/contain no-repeat;
+  pointer-events:none;
+}
+
+body.salty.salty-md-quote-notebook
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  blockquote:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  border-inline-start:2px solid color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) 45%, transparent) !important;
+  border-radius:0;
+  background-image:repeating-linear-gradient(to bottom,transparent 0 calc(1em * var(--salty-lh,1.8) - 1px),color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) 16%, transparent) calc(1em * var(--salty-lh,1.8) - 1px) calc(1em * var(--salty-lh,1.8))) !important;
+  background-origin:content-box !important;
+}
+
+body.salty.salty-md-quote-border
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  blockquote:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  border:1px solid color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) 45%, transparent) !important;
+}
+
+/* Only unordered, non-task items get new marks. Native ol numbering and checkbox layout remain intact, including nested lists. */
+
+body.salty.salty-md-listMark-circle
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  ul > li:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)):not(.task-list-item):not(:has(> input[type="checkbox"], > p > input[type="checkbox"], > label > input[type="checkbox"], > p > label > input[type="checkbox"])) {
+  list-style-type:circle;
+}
+
+body.salty.salty-md-listMark-circle
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  ul > li:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)):not(.task-list-item):not(:has(> input[type="checkbox"], > p > input[type="checkbox"], > label > input[type="checkbox"], > p > label > input[type="checkbox"]))::marker {
+  color:var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor)));
+}
+
+body.salty.salty-md-listMark-square
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  ul > li:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)):not(.task-list-item):not(:has(> input[type="checkbox"], > p > input[type="checkbox"], > label > input[type="checkbox"], > p > label > input[type="checkbox"])) {
+  list-style-type:square;
+}
+
+body.salty.salty-md-listMark-square
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  ul > li:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)):not(.task-list-item):not(:has(> input[type="checkbox"], > p > input[type="checkbox"], > label > input[type="checkbox"], > p > label > input[type="checkbox"]))::marker {
+  color:var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor)));
+}
+
+body.salty.salty-md-listMark-diamond
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  ul > li:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)):not(.task-list-item):not(:has(> input[type="checkbox"], > p > input[type="checkbox"], > label > input[type="checkbox"], > p > label > input[type="checkbox"])) {
+  list-style-type:"◆  ";
+}
+
+body.salty.salty-md-listMark-diamond
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  ul > li:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)):not(.task-list-item):not(:has(> input[type="checkbox"], > p > input[type="checkbox"], > label > input[type="checkbox"], > p > label > input[type="checkbox"]))::marker {
+  color:var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor)));
+}
+
+/* Strong keeps its own font, size and colour. Nested emphasis must not double the translucent highlight. */
+
+body.salty.salty-md-strongStyle-marker
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  strong:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)),
+body.salty.salty-md-strongStyle-underline
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  strong:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)),
+body.salty.salty-md-strongStyle-plain
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  strong:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  box-shadow:none;
+  background:none;
+  -webkit-box-decoration-break:clone;
+  box-decoration-break:clone;
+}
+
+body.salty.salty-md-strongStyle-marker
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  strong:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  background:color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) var(--bl-md-strong-alpha,30%), transparent);
+  border-radius:.12em;
+}
+
+body.salty.salty-md-strongStyle-underline
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  strong:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  background:linear-gradient(to top,color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) var(--bl-md-strong-alpha,30%), transparent) 0 var(--bl-md-strong-thick,45%),transparent var(--bl-md-strong-thick,45%) 100%);
+}
+
+body.salty.salty-md-strongStyle-marker
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  strong strong:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)),
+body.salty.salty-md-strongStyle-underline
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  strong strong:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  background:none;
+  box-shadow:none;
+}
+
+/* Inline-code finishes never reach a pre, highlighted code block, or a custom card. Wrapping and code typography remain unchanged. */
+
+body.salty.salty-md-inlineCode-outline
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  code:not(:where(pre, pre *, .hljs, .hljs *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)),
+body.salty.salty-md-inlineCode-pill
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  code:not(:where(pre, pre *, .hljs, .hljs *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)),
+body.salty.salty-md-inlineCode-plain
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  code:not(:where(pre, pre *, .hljs, .hljs *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  -webkit-box-decoration-break:clone;
+  box-decoration-break:clone;
+}
+
+body.salty.salty-md-inlineCode-outline
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  code:not(:where(pre, pre *, .hljs, .hljs *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  background:transparent !important;
+  border:1px solid color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) 40%, transparent) !important;
+  border-radius:.25em !important;
+}
+
+body.salty.salty-md-inlineCode-pill
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  code:not(:where(pre, pre *, .hljs, .hljs *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  background:color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) 12%, transparent) !important;
+  border:0 !important;
+  border-radius:999px !important;
+  padding-inline:.4em !important;
+}
+
+body.salty.salty-md-inlineCode-plain
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  code:not(:where(pre, pre *, .hljs, .hljs *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  background:none !important;
+  border:0 !important;
+  border-radius:0 !important;
+  padding-inline:0 !important;
+  box-shadow:none !important;
+}
+
+/* Grid tables keep their cell order and per-cell alignment; wide tables scroll within the message. */
+
+body.salty.salty-md-table-grid
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  table:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  display:block;
+  max-width:100%;
+  overflow-x:auto;
+  overscroll-behavior-x:contain;
+  border-collapse:collapse;
+}
+
+body.salty.salty-md-table-grid
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  :is(th, td):not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  white-space:normal;
+  overflow-wrap:anywhere;
+  word-break:normal;
+  padding:var(--bl-md-table-padding,.4em) calc(var(--bl-md-table-padding,.4em) + .25em);
+  border:1px solid color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) 25%, transparent) !important;
+}
+
+body.salty.salty-md-tableHead-accent
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  th:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  background:color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) 15%, transparent) !important;
+  color:inherit;
+}
+
+/* Only the summary bar is painted. Its native marker, keyboard operation and open/closed state are unchanged. */
+
+body.salty.salty-md-details-bar
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  details:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *, .custom-llm-translator-details, .llm-translator-details)) {
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+}
+
+body.salty.salty-md-details-bar
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  details:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *, .custom-llm-translator-details, .llm-translator-details)) > summary {
+  padding:.4em .65em;
+  border-radius:var(--bl-r-sm,8px);
+  background:color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) 12%, transparent);
+  color:inherit;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+}
+
+body.salty.salty-md-details-bar
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  details:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *, .custom-llm-translator-details, .llm-translator-details))[open] > summary {
+  margin-block-end:.5em;
+}
+
+body.salty.salty-md-underline-dotted
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  u:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  text-decoration-line:underline;
+  text-decoration-style:dotted;
+  text-decoration-color:var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor)));
+  text-decoration-thickness:var(--bl-md-underline-width,1.5px);
+  text-underline-offset:var(--bl-md-underline-offset,.2em);
+}
+
+body.salty.salty-md-underline-double
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  u:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  text-decoration-line:underline;
+  text-decoration-style:double;
+  text-decoration-color:var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor)));
+  text-decoration-thickness:var(--bl-md-underline-width,1.5px);
+  text-underline-offset:var(--bl-md-underline-offset,.2em);
+}
+
+/* Tune only the changed measurement, including for default shapes. Unrelated defaults keep the current theme values. */
+
+body.salty.salty-md-tune-hrWidth
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  width:var(--bl-md-hr-width,100%);
+  max-width:100%;
+  margin-inline:auto !important;
+}
+
+body.salty.salty-md-tune-hrSpace
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  margin-block:var(--bl-md-hr-space,1.2em) !important;
+}
+
+body.salty.salty-md-tune-quotePadding
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  blockquote:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  padding:var(--bl-md-quote-padding,.75em) calc(var(--bl-md-quote-padding,.75em) + .25em) !important;
+}
+
+body.salty.salty-md-tune-quotePadding.salty-md-quote-quotation
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  blockquote:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  padding-inline-start:calc(var(--bl-md-quote-padding,.75em) + 1.3em) !important;
+}
+
+body.salty.salty-md-tune-quoteAlpha:not(.salty-md-quote-plain,.salty-md-quote-line)
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  blockquote:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  background-color:color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) var(--bl-md-quote-alpha,10%), transparent) !important;
+}
+
+body.salty.salty-md-tune-strongThick:not(.salty-md-strongStyle-marker,.salty-md-strongStyle-underline,.salty-md-strongStyle-plain)
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  strong:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  box-shadow:none;
+  background:linear-gradient(to top,var(--salty-gold) 0 var(--bl-md-strong-thick,45%),transparent var(--bl-md-strong-thick,45%) 100%);
+  -webkit-box-decoration-break:clone;
+  box-decoration-break:clone;
+}
+
+body.salty.salty-md-tune-strongAlpha:not(.salty-md-strongStyle-marker,.salty-md-strongStyle-underline,.salty-md-strongStyle-plain)
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  strong:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  box-shadow:inset 0 -.36em color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) var(--bl-md-strong-alpha,30%), transparent);
+  background:none;
+  -webkit-box-decoration-break:clone;
+  box-decoration-break:clone;
+}
+
+body.salty.salty-md-tune-strongThick
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  strong strong:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)),
+body.salty.salty-md-tune-strongAlpha
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  strong strong:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  background:none;
+  box-shadow:none;
+}
+
+body.salty.salty-md-tune-listIndent
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  :is(ul, ol):not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)):not(.task-list, .contains-task-list, .bl-md-task-sample):not(:has(> li > input[type="checkbox"], > li > p > input[type="checkbox"], > li > label > input[type="checkbox"])) {
+  padding-inline-start:var(--bl-md-list-indent,1.5em);
+}
+
+body.salty.salty-md-tune-tablePadding
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  :is(th, td):not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  padding:var(--bl-md-table-padding,.4em) calc(var(--bl-md-table-padding,.4em) + .25em);
+}
+
+body.salty.salty-md-tune-underlineWidth
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  u:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  text-decoration-thickness:var(--bl-md-underline-width,1.5px);
+}
+
+body.salty.salty-md-tune-underlineOffset
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  u:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  text-underline-offset:var(--bl-md-underline-offset,.2em);
+}
+
+/* A custom decorative colour changes decoration only; role text colours and default theme fills stay separate. */
+
+body.salty.salty-md-custom-accent.salty-md-heading-line
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  :is(h1, h2, h3, h4, h5, h6):not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  border-block-end-color:color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) 45%, transparent);
+}
+
+body.salty.salty-md-custom-accent.salty-md-heading-soft
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  :is(h1, h2, h3, h4, h5, h6):not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  background:color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) 10%, transparent);
+}
+
+body.salty.salty-md-custom-accent:not(.salty-md-quote-plain,.salty-md-quote-line)
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  blockquote:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  background-color:color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) var(--bl-md-quote-alpha,10%), transparent) !important;
+}
+
+body.salty.salty-md-custom-accent.salty-md-link-soft
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  a:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  background:color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) 10%, transparent);
+}
+
+body.salty.salty-md-custom-accent.salty-md-mark-soft
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  mark:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  background:color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) 10%, transparent);
+}
+
+body.salty.salty-md-custom-accent:not(.salty-md-strongStyle-marker,.salty-md-strongStyle-underline,.salty-md-strongStyle-plain)
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  strong:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  box-shadow:inset 0 -.36em color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) var(--bl-md-strong-alpha,30%), transparent);
+}
+
+body.salty.salty-md-custom-accent.salty-md-tune-strongThick:not(.salty-md-strongStyle-marker,.salty-md-strongStyle-underline,.salty-md-strongStyle-plain)
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  strong:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  box-shadow:none;
+  background:linear-gradient(to top,color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) var(--bl-md-strong-alpha,30%), transparent) 0 var(--bl-md-strong-thick,45%),transparent var(--bl-md-strong-thick,45%) 100%);
+}
+
+
+
+/* Custom-colour legacy emphasis must not stack a second translucent stroke in nested strong. */
+body.salty.salty-md-custom-accent:not(.salty-md-strongStyle-marker,.salty-md-strongStyle-underline,.salty-md-strongStyle-plain)
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  strong strong:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  box-shadow:none;
+  background:none;
+}
+
+/* Two independent numeric changes compose without changing either setting silently. */
+body.salty.salty-md-tune-strongThick.salty-md-tune-strongAlpha:not(.salty-md-strongStyle-marker,.salty-md-strongStyle-underline,.salty-md-strongStyle-plain)
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  strong:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  box-shadow:none;
+  background:linear-gradient(to top,color-mix(in srgb, var(--bl-md-accent, var(--salty-accent-ink, var(--salty-accent, currentColor))) var(--bl-md-strong-alpha,30%), transparent) 0 var(--bl-md-strong-thick,45%),transparent var(--bl-md-strong-thick,45%) 100%);
+}
+
+/* Nested legacy emphasis, including combined colour and measurement tuning. */
+body.salty.salty-md-tune-strongThick:not(.salty-md-strongStyle-marker,.salty-md-strongStyle-underline,.salty-md-strongStyle-plain)
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  strong strong:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)),
+body.salty.salty-md-tune-strongAlpha:not(.salty-md-strongStyle-marker,.salty-md-strongStyle-underline,.salty-md-strongStyle-plain)
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  strong strong:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)),
+body.salty.salty-md-tune-strongThick.salty-md-tune-strongAlpha:not(.salty-md-strongStyle-marker,.salty-md-strongStyle-underline,.salty-md-strongStyle-plain)
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  strong strong:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)),
+body.salty.salty-md-custom-accent:not(.salty-md-strongStyle-marker,.salty-md-strongStyle-underline,.salty-md-strongStyle-plain)
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  strong strong:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)),
+body.salty.salty-md-custom-accent.salty-md-tune-strongThick:not(.salty-md-strongStyle-marker,.salty-md-strongStyle-underline,.salty-md-strongStyle-plain)
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  strong strong:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  box-shadow:none;
+  background:none;
+}
+
+/* Existing separator and underline defaults can also use an explicitly chosen decorative colour. */
+body.salty.salty-md-custom-accent.salty-md-hr-line
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  border-block-start-color:color-mix(in srgb,var(--bl-md-accent,var(--salty-accent-ink,var(--salty-accent,currentColor))) 45%,transparent) !important;
+}
+body.salty.salty-md-custom-accent
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  hr:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *))::before {
+  color:var(--bl-md-accent,var(--salty-accent-ink,var(--salty-accent,currentColor)));
+}
+body.salty.salty-md-custom-accent
+  :is(#chat .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
+  u:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
+  text-decoration-color:var(--bl-md-accent,var(--salty-accent-ink,var(--salty-accent,currentColor)));
 }

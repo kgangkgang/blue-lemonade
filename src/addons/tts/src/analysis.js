@@ -2,8 +2,8 @@ import { runtimeEnabled, assertRuntime, waitForRuntime } from './runtime.js';
 // TTS — 대사 분석 (1.2.0 §3): 메시지마다 한 번, LLM 에게 대화문별 감정과 목소리 원어 번역을 물어 채팅에 저장한다
 //
 // 저장 자리: chat[mesId].extra.lemon_voice.analysis = {
-//   hash,            원문(mes.mes) 해시 — 다르면 옛것 (getAnalysis 가 null)
-//   langs: ['ja'],   그때 요청한 번역 언어 (정렬) — 더 필요한 언어가 생기면 다시 분석
+//   hash, swipe?,    원문(mes.mes) 해시 · 스와이프 — 다르면 옛것 (getAnalysis 가 null)
+//   langs: ['ja'],   완료한 번역 언어 (정렬) — 더 필요한 언어만 보충, 이미 받은 감정·화자·효과음은 유지
 //   model, at, profile,  분석 설정·프롬프트 해시 (키·주소는 저장하지 않음)
 //   segs: [ { i, h, emotion, speaker?, text: { ja: '…' } } ]   i = 원문 대화문 순번 · h = 정규화한 대사 해시 (번호가 어긋나도 찾게)
 //          speaker = 1.3.6 화자 찾기: 색 · 이름표로 못 정한 줄(보낸 쪽 이름으로 떨어진 줄)에 LLM 이 고른 화자 — 프롬프트에 준 '아는 이름' 가운데 하나만 저장
@@ -36,6 +36,7 @@ import { runtimeEnabled, assertRuntime, waitForRuntime } from './runtime.js';
 //   carryOver(segs, prev) → segs             같은 글의 번역을 재사용한다. 감정은 새 문맥으로 분석한 값을 유지한다.
 //
 // 실패: 통신·엔진 오류는 한국어 메시지의 Error 를 던진다 (e.retry = 429/5xx/시간 초과 → 재생기가 한 번 더). 중단(signal)은 그대로 던진다.
+// 응답 형식·필수 대사 정보 누락은 성공으로 저장하지 않고 세션 안에서만 실패를 기억한다. 자동 반복 없이 기본 읽기; 요술봉 재생성/원문·분석 설정 변경이면 재시도.
 // 기록(log.js)엔 번호·줄 수·엔진만 (키·프롬프트·글 없음).
 
 import * as ST from '../../../../../../../../script.js';
@@ -393,6 +394,7 @@ export function composePrompt(parts) {
         out.push(`[${l.i}]${l.ask ? ' (?)' : (l.speaker ? ` (${l.speaker})` : '')} "${l.text}"${need}`);
     }
     const tasks = [];
+    if (asked.length) tasks.push(`Return one seg for EVERY requested dialogue index: ${asked.map(l => l.i).join(', ')}. All these lines belong to one message; do not return only the first line.`);
     if (emotion) tasks.push(`For every line give "emotion": one of ${EMOTIONS.join(', ')} — judged from the narration and how the line is said (shout = raised voice, whisper = hushed).`);
     if (askLines.length && extras) tasks.push('For lines marked (?) give "speaker": who says that line, judged from the narration and the other lines — one name from the known speakers, or for a minor character who is not among them (a clerk, a passer-by …) a short name or role as the story calls them, or "?" if it cannot be told.');
     else if (askLines.length) tasks.push('For lines marked (?) give "speaker": who says that line, judged from the narration and the other lines — exactly one name from the known speakers, or "?" if it cannot be told.');
@@ -922,10 +924,35 @@ function profileOf(mes, cfg, langs, built, extras = extrasOn(), sfx = true) {
 }
 const dropped = new WeakMap();   // mes → { swipe, analysis }  이어쓰기·편집 뒤 같은 줄의 번역을 재사용
 const swipeOf = (mes) => Number(mes?.swipe_id) || 0;
+// 잘못된 응답은 성공 분석으로 저장하지 않는다. 같은 대사를 누를 때마다 같은 전체 요청을 다시 보내지 않게 세션 안에서만 기억한다.
+const responseFailures = new WeakMap();
+const endpointOf = (value) => { try { const u = new URL(String(value || '')); return `${u.origin}${u.pathname}`.replace(/\/+$/, ''); } catch { return ''; } };
+/** 실패 메모에만 실제 선택 연결을 포함한다. 본체 모델·상속 주소를 바꾸면 재시도; 비밀번호·추가 헤더는 읽지 않으며 서명은 메모리에만, 저장·로그 없음. */
+function failureConnection(cfg) {
+    const engine = engineOf(cfg);
+    if (engine === 'compat') return [engine];
+    let ctx = null;
+    try { ctx = getContext(); } catch { /* 연결 없음 */ }
+    const cs = ctx?.chatCompletionSettings || {};
+    const provider = String(engine === 'st' ? cs.chat_completion_source || ctx?.mainApi || '' : cfg.provider || '');
+    const selected = engine === 'st' ? { engine: 'provider', provider, provider_models: {} } : cfg;
+    const endpoint = provider === 'custom' ? endpointOf(stapi.customEndpoint(selected).url)
+        : stapi.source(provider)?.proxy && cs.chat_completion_source === provider && String(cs.reverse_proxy || '').trim() ? endpointOf(cs.reverse_proxy)
+            : provider === 'azure_openai' ? endpointOf(cs.azure_base_url) : '';
+    const routing = provider === 'azure_openai' ? [cs.azure_deployment_name, cs.azure_api_version]
+        : provider === 'vertexai' ? [cs.vertexai_auth_mode, cs.vertexai_region, cs.vertexai_express_project_id]
+            : provider === 'workers_ai' ? [cs.workers_ai_account_id] : [cs[`${provider}_endpoint`]];
+    return [engine, engine === 'st' ? ctx?.mainApi : '', provider, stapi.modelOf(selected), endpoint, routing];
+}
+const failureKey = (mes) => { const cfg = settings().analysis || {}; return hash(JSON.stringify([textHash(mes), swipeOf(mes), cfg, failureConnection(cfg)])); };
+export function hasResponseFailure(mesId) {
+    const mes = msgOf(Number(mesId)), failed = mes && responseFailures.get(mes);
+    return !!failed && failed.key === failureKey(mes);
+}
 /** 옛 분석 (같은 메시지 객체 · 같은 스와이프): 칸에 남은 것(해시가 달라도) → 지운 것 */
 function previousOf(mes) {
     const a = slot(mes, false)?.analysis;
-    if (isObj(a) && Array.isArray(a.segs)) return a;
+    if (isObj(a) && Array.isArray(a.segs) && (!Number.isInteger(a.swipe) || a.swipe === swipeOf(mes))) return a;
     const d = dropped.get(mes);
     return d && d.swipe === swipeOf(mes) && Array.isArray(d.analysis?.segs) ? d.analysis : null;
 }
@@ -942,7 +969,9 @@ export function carryOver(segs, prev) {
     });
 }
 function store(id, mes, analysis) {
+    responseFailures.delete(mes);
     slot(mes, true).analysis = analysis;
+    if (id < 0) return;   // 외부 글은 이 세션 메모리에만; 현재 채팅을 저장하지 않는다.
     try { if (typeof ST.syncMesToSwipe === 'function') ST.syncMesToSwipe(id); } catch { /* 스와이프 정보 없음 */ }
     saveNow();
 }
@@ -1000,6 +1029,7 @@ export function getAnalysis(mesId) {
     const a = slot(mes, false)?.analysis;
     if (!isObj(a) || !Array.isArray(a.segs)) return null;
     if (a.hash !== textHash(mes)) return null;
+    if (Number.isInteger(a.swipe) && a.swipe !== swipeOf(mes)) return null;
     const cfg = settings().analysis || {};
     if (cfg.emotion && a.segs.some(g => !EMOTION_SET.has(g?.emotion))) return null;
     // 효과음 끄기는 소리만 숨긴다 (감정·번역을 다시 묻지 않고, 다시 켜면 기존 효과음을 그대로). 효과음 없이 받은 분석은 효과음을 켠 뒤 지문이 있는 글이면 한 번 다시 받는다
@@ -1009,7 +1039,7 @@ export function getAnalysis(mesId) {
     return a;
 }
 
-const running = new Map();   // mesId → entry { id, mes, hash, langs, force, ctrl, promise, users, pinned, sent }
+const running = new Map();   // mesId → entry { id, mes, hash, swipe, langs, force, ctrl, promise, users, pinned, started, sent }
 let chain = Promise.resolve();
 
 /**
@@ -1037,6 +1067,7 @@ function join(entry, signal) {
         }
         signal.addEventListener('abort', onAbort, { once: true });
         entry.promise.then(v => settle(resolve, v), e => settle(reject, e));
+        if (signal.aborted) onAbort();
     });
 }
 
@@ -1059,15 +1090,17 @@ export function analyzeMessage(mesId, opts = {}) {
     const cached = getAnalysis(id);
     if (cached && !opts.force && covers(cached.langs, langs)) return Promise.resolve(cached);
     if (aborted(opts.signal)) return Promise.reject(abortErr(opts.signal));
+    if (!opts.force && hasResponseFailure(id)) return Promise.reject(responseFailures.get(mes).error);
     const inflight = running.get(id);
     // 1.6.4 같은 글의 진행 중인 분석이면 붙는다 — 프롬프트 지문이 그새 바뀌었어도 (앞 메시지의 분석이 엑스트라를 적어 목소리 표가 바뀌는 것만으로 다시 묻지 않게)
-    if (inflight && !inflight.ctrl.signal.aborted && inflight.mes === mes && inflight.hash === textHash(mes) && (!opts.force || inflight.force)) {
+    if (inflight && !inflight.ctrl.signal.aborted && inflight.mes === mes && inflight.hash === textHash(mes) && inflight.swipe === swipeOf(mes) && (!opts.force || inflight.force)) {
+        if (!inflight.started) inflight.langs = normLangs([...inflight.langs, ...langs]);
         if (covers(inflight.langs, langs)) return join(inflight, opts.signal);
-        return join(inflight, opts.signal).then(() => analyzeMessage(id, opts));   // 끝나면 저장된 것을 보고 모자란 언어만 다시
+        return join(inflight, opts.signal).then(() => msgOf(id) === mes && inflight.hash === textHash(mes) && inflight.swipe === swipeOf(mes) ? analyzeMessage(id, opts) : null);
     }
     if (!engineReady(cfg)) return Promise.resolve(null);
 
-    const entry = { id, mes, hash: textHash(mes), langs, force: !!opts.force, ctrl: new AbortController(), promise: null, users: 0, pinned: false, sent: false };
+    const entry = { id, mes, hash: textHash(mes), swipe: swipeOf(mes), langs, force: !!opts.force, ctrl: new AbortController(), promise: null, users: 0, pinned: false, started: false, sent: false };
     const run = () => doAnalyze(entry);
     entry.promise = chain.then(run, run).finally(() => { if (running.get(id) === entry) running.delete(id); });
     running.set(id, entry);
@@ -1079,20 +1112,33 @@ export function stopForAddon() { for (const entry of running.values()) entry.ctr
 
 async function doAnalyze(entry) {
     assertRuntime();
-    const { id, mes, langs, force } = entry;
+    entry.started = true;
+    const { id, mes, force, swipe } = entry;
     const signal = entry.ctrl.signal;
     if (aborted(signal)) throw abortErr(signal);
-    if (!force) { const again = getAnalysis(id); if (again && covers(again.langs, langs)) return again; }   // 줄 서는 동안 끝났으면
-    if (msgOf(id) !== mes || textHash(mes) !== entry.hash) return null;                                       // 줄 서는 동안 글이 바뀜
-    const cfg = settings().analysis || {};
-    const built = buildPrompt(mes, { langs, emotion: !!cfg.emotion, translate: !!cfg.translate, context_chars: cfg.context_chars, speaker: cfg.speaker !== false, extras: extrasOn() });
+    if (msgOf(id) !== mes || textHash(mes) !== entry.hash || swipeOf(mes) !== swipe) return null;
+    const previous = force ? null : getAnalysis(id);
+    if (previous && covers(previous.langs, entry.langs)) return previous;
+    const cfg = { ...(settings().analysis || {}) };
+    const wantedLangs = cfg.translate ? entry.langs : [];
+    const requestLangs = previous ? wantedLangs.filter(l => !(previous.langs || []).includes(l)) : wantedLangs;
+    const langs = normLangs([...(previous?.langs || []), ...wantedLangs]);
+    // 이미 끝난 메시지는 새로 필요한 번역만 보충한다. 감정·화자·효과음과 이전 언어의 완료 기록은 그대로 유지한다.
+    const promptOpts = { langs: requestLangs, emotion: !previous && !!cfg.emotion, translate: !!cfg.translate, context_chars: cfg.context_chars, speaker: !previous && cfg.speaker !== false, extras: !previous && extrasOn(), sfx: !previous };
+    const built = buildPrompt(mes, promptOpts);
+    const failedKey = failureKey(mes);
+    const rejectResponse = (message) => {
+        const error = koErr(`${message}. 요술봉의 재생성으로 다시 시도해 주세요`);
+        if (msgOf(id) === mes && textHash(mes) === entry.hash && swipeOf(mes) === swipe) responseFailures.set(mes, { key: failedKey, error });
+        return error;
+    };
     const h = entry.hash;
     const engine = engineOf(cfg);
     const model = engine === 'st' ? 'st' : engine === 'provider' ? stapi.modelOf(cfg) : String(cfg.model || '');
     // profile · baseProfile 은 옛 판(1.6.3 이하)이 읽을 수 있게 적을 뿐, 1.6.4 는 꺼낼 때 보지 않는다 (번역문 없는 키 = 1.6.0 규칙)
     const dt = mes?.extra?.display_text;
-    const keyBuilt = typeof dt === 'string' && dt.trim() && dt !== mes.mes ? buildPrompt(mes, { langs, emotion: !!cfg.emotion, translate: !!cfg.translate, context_chars: cfg.context_chars, speaker: cfg.speaker !== false, extras: extrasOn(), display: false }) : built;
-    const base = { hash: h, profile: profileOf(mes, cfg, langs, keyBuilt), langs, model, at: Date.now(), speaker: cfg.speaker !== false, segs: built.lines.map(l => ({ i: l.i, h: l.h, emotion: '', text: {} })) };
+    const keyBuilt = typeof dt === 'string' && dt.trim() && dt !== mes.mes ? buildPrompt(mes, { ...promptOpts, display: false }) : built;
+    const base = { ...(previous || {}), hash: h, swipe, profile: profileOf(mes, cfg, langs, keyBuilt), langs, model, at: Date.now(), speaker: previous ? previous.speaker : cfg.speaker !== false, segs: built.lines.map(l => previous?.segs.find(g => g.i === l.i && g.h === l.h) || ({ i: l.i, h: l.h, emotion: '', text: {} })) };
     if (built.sfx) { base.baseProfile = profileOf(mes, cfg, langs, null, extrasOn(), false); base.sfx = []; }
     if (built.empty) { store(id, mes, base); return base; }   // 물을 게 없음 → 그것도 기억 (토큰 0)
     log('req', `대사 분석 #${id} · ${built.asked}줄 · ${engine === 'provider' ? String(cfg.provider || '') : engine}`);
@@ -1106,18 +1152,23 @@ async function doAnalyze(entry) {
         // 1.6.0 무엇이 왔는지 진단에 남긴다 (비밀값은 가림): 모델이 거절문·설명문만 보냈는지, 빈 답인지 알 수 있게
         const head = String(r.text ?? '').trim();
         log('err', `대사 분석 응답 해석 실패 #${id}${r.truncated ? ' (길이 한도)' : ''} · ${head ? '앞부분: ' + snip(scrub(head), 160) : '빈 답'}`);
-        throw koErr(r.truncated ? '대사 분석 응답이 길이 한도에 닿아 잘렸어요' : head ? `대사 분석 응답이 JSON 이 아니에요 — 모델이 글로만 답함: “${snip(scrub(head), 80)}”` : '대사 분석 응답이 비었어요 (모델이 아무 글도 안 보냄)');
+        throw rejectResponse(r.truncated ? '대사 분석 응답이 길이 한도에 닿아 잘렸어요' : head ? '대사 분석 응답이 JSON 형식이 아니에요' : '대사 분석 응답이 비었어요');
     }
-    let segs = normalizeSegs(parsed, built, !!cfg.emotion);
-    if (cfg.emotion && segs.some(g => !EMOTION_SET.has(g.emotion))) {
-        throw koErr('대사 분석 응답에 빠진 감정이 있어요', { retry: true });
+    let segs = normalizeSegs(parsed, built, promptOpts.emotion);
+    if (promptOpts.emotion && segs.some(g => !EMOTION_SET.has(g.emotion))) {
+        throw rejectResponse('대사 분석 응답에 빠진 감정이 있어요');
     }
+    const replyByIndex = new Map();
+    for (const r of parsed.segs) if (isObj(r) && Number.isInteger(Number(r.i)) && !replyByIndex.has(Number(r.i))) replyByIndex.set(Number(r.i), r);
+    if (built.lines.some(l => (built.needs[l.i] || []).some(lang => { const text = replyByIndex.get(l.i)?.[lang]; return typeof text !== 'string' || !unquote(text); }))) throw rejectResponse('대사 분석 응답에 빠진 번역이 있어요');
+    if (built.lines.some(l => { const speaker = replyByIndex.get(l.i)?.speaker; return l.ask && (typeof speaker !== 'string' || !speaker.trim()); })) throw rejectResponse('대사 분석 응답에 빠진 화자가 있어요');
+    if (previous) segs = segs.map(g => { const old = previous.segs.find(p => p.i === g.i && p.h === g.h); return old ? { ...old, text: { ...old.text, ...g.text } } : g; });
     if (!force) segs = carryOver(segs, previousOf(mes));          // 번역만 재사용, 새 문맥의 감정은 유지
     const people = parsePeople(parsed.people, built, segs);
     const analysis = people ? { ...base, segs, people } : { ...base, segs };
     if (built.sfx) analysis.sfx = normalizeSfx(parsed.sfx, built);
     // 1.6.4 받는 동안 설정이 바뀌어도 버리지 않는다 (값을 치른 답) — 글이 바뀌었을 때만
-    if (msgOf(id) !== mes || textHash(mes) !== h) { log('info', `대사 분석 버림 #${id} (글이 바뀜)`); return null; }
+    if (msgOf(id) !== mes || textHash(mes) !== h || swipeOf(mes) !== swipe) { log('info', `대사 분석 버림 #${id} (글·스와이프가 바뀜)`); return null; }
     store(id, mes, analysis);
     log('info', `대사 분석 끝 #${id} · ${Math.round((Date.now() - t0) / 100) / 10}s`);
     if (people) {   // 1.3.7 엑스트라 표에 적고 그 엔진의 기본 목소리 목록을 채운 뒤 돌려준다 (첫 줄부터 그 목소리로 — 오래 걸리면 기다리지 않음)
@@ -1130,9 +1181,10 @@ async function doAnalyze(entry) {
 export function clearAnalysis(target) {
     let n = 0;
     if (target === 'chat' || target === undefined) {
-        for (let i = 0; i < chat.length; i++) { const r = running.get(i); if (r) r.ctrl.abort(new DOMException('지움', 'AbortError')); if (drop(i, chat[i])) n++; }
+        for (let i = 0; i < chat.length; i++) { responseFailures.delete(chat[i]); const r = running.get(i); if (r) r.ctrl.abort(new DOMException('지움', 'AbortError')); if (drop(i, chat[i])) n++; }
     } else {
         const id = Number(target);
+        if (msgOf(id)) responseFailures.delete(msgOf(id));
         const r = running.get(id);
         if (r) r.ctrl.abort(new DOMException('지움', 'AbortError'));
         if (drop(id, msgOf(id))) n++;
@@ -1148,7 +1200,7 @@ export function onMessageChanged(mesId) {
     if (!mes) return;
     const h = textHash(mes);
     const r = running.get(id);
-    if (r && (r.hash !== h || r.mes !== mes)) r.ctrl.abort(new DOMException('글이 바뀜', 'AbortError'));
+    if (r && (r.hash !== h || r.mes !== mes || r.swipe !== swipeOf(mes))) r.ctrl.abort(new DOMException('글이 바뀜', 'AbortError'));
     const a = slot(mes, false)?.analysis;
     if (isObj(a) && a.hash !== h && drop(id, mes, true)) scheduleSave();
 }

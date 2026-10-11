@@ -368,7 +368,7 @@ function analysisReady(s) {
 }
 /** 저장된 분석만 (네트워크 없음). 글이 바뀌었으면 analysis 쪽이 null 을 준다 */
 function cachedAnalysis(mesId) {
-    if (!(Number.isInteger(mesId) && mesId >= 0)) return null;
+    if (!Number.isInteger(mesId) || !msg(mesId)) return null;
     try { const a = analysis.getAnalysis(mesId); return a && Array.isArray(a.segs) ? a : null; } catch { return null; }
 }
 const normText = (t) => String(t || '').replace(/[\s"“”「」『』«»‘’＂]+/g, '').toLowerCase();
@@ -442,6 +442,7 @@ export function analysisWanted(mesId, mes, s = settings(), { quiet = false, awai
     if (!need.langs.size && !need.emotion && !need.sfx) return false;
     const cached = cachedAnalysis(mesId);
     if (cached && coversLangs(cached.langs, need.langs)) return false;
+    if (analysis.hasResponseFailure?.(mesId)) return false;   // 잘못된 전체 응답은 대사를 누를 때마다 다시 보내지 않음. 요술봉 재생성으로 재시도.
     if (!analysisReady(s)) { if (!quiet) toastSession('analysis-setup', '대사 분석 엔진을 설정하면 감정·원어 읽기가 돼요'); return false; }
     return true;
 }
@@ -1930,7 +1931,7 @@ export async function reanalyze(mesId) {
     if (!analysisReady(s)) { toast('대사 분석 엔진을 먼저 설정해요 (TTS 설정)', 'warning'); return false; }
     if (waiting && waiting.mesId === mesId && waiting.mes === mes && waiting.phase === 'analyse') return false;   // 이미 분석 중
     const need = analysisNeeds(mesId, mes, s);
-    if (!need.emotion && !need.langs.size) { toast('분석할 대사가 없어요', 'info'); return false; }
+    if (!need.emotion && !need.langs.size && !need.sfx) { toast('분석할 대사가 없어요', 'info'); return false; }
     const w = beginWaiting(mesId, mes, ANALYSE_TEXT);
     let a = null;
     analyzeLight(1);
