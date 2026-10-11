@@ -156,10 +156,13 @@ await test('6.0.6 프리셋 안 정규식도 목록에 들고 같이 켜고 끈�
     ctx.characterId = 1; ctx.presetWrote = null;
     assert.equal(await B.syncPromptBinds('chat'), 2, '프롬프트 + 프리셋 정규식');
     assert.equal(presetList[0].disabled, true, '나가면 프리셋 정규식도 꺼진다'); assert.deepEqual(ctx.presetWrote, ['P', 'regex_scripts', true]);
-    assert.equal(ctx.reloads, 1, '1.5초 안의 두 번째 바뀜은 바로 그리지 않고'); await new Promise(r => setTimeout(r, 1700)); assert.equal(ctx.reloads, 2, '미뤘다가 다시 그린다');
+    assert.equal(ctx.reloads, 1, '1.5초 안의 두 번째 바뀜은 바로 그리지 않고');
+    // 미뤄 둔 다시 그리기는 1.5초 뒤 — 타이머가 1ms 일찍 깨면 600ms 더 미루므로 (느린 CI 러너에서 1.7초 고정 대기가 어긋났다) 기다리며 본다
+    for (let i = 0; i < 80 && ctx.reloads < 2; i++) await new Promise(r => setTimeout(r, 50));
+    assert.equal(ctx.reloads, 2, '미뤘다가 다시 그린다');
     // 설정 저장 뒤의 되맞춤(settle)은 정규식을 바꿔도 다시 그리지 않는다 (다른 확장과 서로 뒤집는 자리)
     ctx.characterId = 0; ctx.presetWrote = null;
-    assert.equal(await B.syncPromptBinds('settle'), 2); await new Promise(r => setTimeout(r, 1700));
+    assert.equal(await B.syncPromptBinds('settle'), 2); await new Promise(r => setTimeout(r, 2300));
     assert.equal(presetList[0].disabled, false); assert.equal(ctx.reloads, 2, 'settle 은 다시 그리지 않는다');
     // 프리셋이 바뀌는 틈(선택은 새 이름 · 설정은 옛 목록)에는 프리셋 정규식을 건드리지도 쓰지도 않는다
     ctx.characterId = 1; ctx.presetWrote = null; pmgr.stored = [{ id: 'r-new', disabled: false }];
