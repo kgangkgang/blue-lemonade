@@ -1,0 +1,142 @@
+/* ===== css/63-promptbind.css =====
+   프롬프트 귀속 (6.0.4, src/promptbind.js): 실리태번 프롬프트 편집 창 맨 아래 「자동 켜기」 줄과 고르기 창.
+   ===== */
+body.salty .bl-pbind {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--SmartThemeBorderColor, rgba(128,128,128,.35));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+body.salty .bl-pbind-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+body.salty .bl-pbind-title {
+  font-weight: 700;
+  margin-right: 4px;
+}
+body.salty .bl-pbind .menu_button {
+  margin: 0;
+  padding: 4px 10px;
+  min-height: 30px;
+}
+body.salty .bl-pbind .menu_button:disabled {
+  opacity: .45;
+  pointer-events: none;
+}
+body.salty .bl-pbind-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+body.salty .bl-pbind-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 4px 3px 10px;
+  border: 1px solid var(--SmartThemeBorderColor, rgba(128,128,128,.35));
+  border-radius: 999px;
+  font-size: .92em;
+  line-height: 1.3;
+  max-width: 100%;
+}
+body.salty .bl-pbind-chip.is-chat {
+  border-style: dashed;
+}
+body.salty .bl-pbind-x {
+  all: unset;
+  cursor: pointer;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  font-size: 1.05em;
+  line-height: 1;
+  opacity: .75;
+}
+body.salty .bl-pbind-x:hover,
+body.salty .bl-pbind-x:focus-visible {
+  opacity: 1;
+  background: rgba(128,128,128,.25);
+}
+body.salty .bl-pbind-hint {
+  opacity: .7;
+  line-height: 1.4;
+}
+/* 고르기 창 */
+body.salty .bl-pbind-dialog {
+  width: min(92vw, 520px);
+  max-height: 80dvh;
+  padding: 14px;
+  border: 1px solid var(--SmartThemeBorderColor, rgba(128,128,128,.35));
+  border-radius: 14px;
+  background: var(--SmartThemeBlurTintColor, #222);
+  color: var(--SmartThemeBodyColor, #eee);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+body.salty .bl-pbind-dialog::backdrop {
+  background: rgba(0,0,0,.45);
+}
+body.salty .bl-pbind-dhead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+body.salty .bl-pbind-dhead b {
+  flex: 0 1 auto;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body.salty .bl-pbind-search {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+body.salty .bl-pbind-list {
+  overflow: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px;
+  min-height: 60px;
+}
+body.salty .bl-pbind-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+body.salty .bl-pbind-item:hover {
+  background: rgba(128,128,128,.15);
+}
+body.salty .bl-pbind-item input {
+  margin: 0;
+}
+body.salty .bl-pbind-item img,
+body.salty .bl-pbind-noimg {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: none;
+  background: rgba(128,128,128,.2);
+}
+body.salty .bl-pbind-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body.salty .bl-pbind-empty {
+  opacity: .7;
+  margin: 0;
+}

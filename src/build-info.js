@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "6.0.3";
+export const BUILD_VERSION = "6.0.4";
 export const FILE_HASHES = {
   "index.js": "16730:cd15e850:f32659bb",
-  "manifest.json": "365:c053031c:00e8fe97",
+  "manifest.json": "365:ff4ea4c5:23e2dc89",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -350,7 +350,7 @@ export const FILE_HASHES = {
   "src/dialogue-tildes.js": "1682:2c06cba3:eb7ffb2e",
   "src/draft.js": "10237:f711f4b4:ba76e769",
   "src/extension-colors.js": "9262:b93831f6:c18337b9",
-  "src/features.js": "8364:c726b543:4c24d2b3",
+  "src/features.js": "9411:7513ed76:bca669c1",
   "src/file-fingerprint.js": "524:98923ac4:298a0ced",
   "src/fold.js": "14815:8543a1b6:6775b6de",
   "src/fonts.js": "33294:d8a9263f:a396db57",
@@ -363,6 +363,7 @@ export const FILE_HASHES = {
   "src/gradient-ui.js": "5291:b9cb2b2f:15856608",
   "src/gradients.js": "10746:1b5ebec2:b7fb0a19",
   "src/gutter.js": "4022:49ae5ff0:c0bcc337",
+  "src/headswitch.js": "10675:f20319b5:b60e245d",
   "src/icon-text.js": "2514:ef880dd1:7621c347",
   "src/icons.js": "5842:596ce980:f8f9f64f",
   "src/imagedecode.js": "9406:ebf81685:5e366e26",
@@ -379,7 +380,7 @@ export const FILE_HASHES = {
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "180761:87b9a709:6b65b4eb",
+  "src/notice-data.js": "181981:c71fc291:4a27daea",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "1144:1da72451:b2e66e80",
@@ -391,6 +392,7 @@ export const FILE_HASHES = {
   "src/preview-view.js": "12377:1b6c4956:85b171b8",
   "src/profile-clip.js": "4837:9b817c36:29f305b7",
   "src/profile.js": "6026:34f89f44:fc6757bf",
+  "src/promptbind.js": "18404:69b49b91:8b7fc43c",
   "src/promptlist.js": "3698:49fc9d6d:0523b55a",
   "src/qrfind.js": "13470:e1b028e2:75206d84",
   "src/readability.js": "4402:c34b7d47:0d00993d",
@@ -415,13 +417,13 @@ export const FILE_HASHES = {
   "src/selects.js": "17276:8bddc6e5:0e6940c0",
   "src/setting-locks.js": "1196:94636ca6:7e5ed1e1",
   "src/settings-dialog.js": "507:8d5bf18b:340f907b",
-  "src/settings-differences.js": "7958:70f3db3d:6c062c21",
+  "src/settings-differences.js": "7987:7d19c6cf:3e84ed9e",
   "src/settings-editor.js": "8589:6aa54ddc:6690b32a",
   "src/settings-favorites.js": "3202:43eff96b:1a42f5d8",
   "src/settings-history.js": "3491:c0f06c71:b7a64e71",
   "src/settings-labels.js": "34777:a0f474b3:8d6200db",
   "src/settings-search.js": "27754:8ef55e10:78c04cff",
-  "src/settings.js": "63941:167ada10:45b6d920",
+  "src/settings.js": "65699:b6817356:aafc7fc9",
   "src/splash.js": "19344:c97fc557:9dcea6a3",
   "src/stream-follow.js": "5049:55e57322:4b17c247",
   "src/streamfade.js": "14136:0e2127b6:06593cf1",
@@ -446,6 +448,7 @@ export const FILE_HASHES = {
   "src/weather-worker.js": "1953:1834075b:9831021d",
   "src/weather.js": "32976:f4fdcf09:3273a2b9",
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
-  "src/word-tools.js": "31850:337f1677:b8ad9253",
-  "style.css": "1250148:aad18948:a4a9fe50"
+  "src/word-tools.js": "34543:a22afe71:9a33c04b",
+  "src/wordmask.js": "7487:cc508640:dd5ee3e8",
+  "style.css": "1255165:a7b54996:4fcdbdf9"
 };

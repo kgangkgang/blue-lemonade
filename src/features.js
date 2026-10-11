@@ -54,6 +54,8 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     const on = !!s.enabled;
     if (['conflicts'].some(id=>s.addons?.[id]) || modules.assist) load('assist','./assist/index.js').then(m=>m?.syncAssist());
     syncTypography(on);
+    // 6.0.4 단어 치환 › 잠시 가리기: 테마를 끄면 가린 글을 모두 되돌린다 — 모듈을 이미 불러온 뒤에만 (안 썼으면 파일도 안 받는다)
+    if (modules.wordmask) load('wordmask', './wordmask.js').then(m => m?.syncWordMask(on));
     const fold=on&&!!(s.chat?.triangleFold??SillyTavern.getContext().extensionSettings?.blue_lemonade_scripts?.enabled?.fold);
     if(fold||modules.fold)load('fold','./fold.js').then(m=>m?.syncFold(fold));
     const scriptsEnabled=SillyTavern.getContext().extensionSettings?.blue_lemonade_scripts?.enabled||{};
@@ -101,6 +103,10 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
             if (s.activeStyle) m.noteChange();
         });
     }
+    // 6.0.4 프롬프트 귀속: 프롬프트 편집 창에 「자동 켜기」 줄을 붙이고 채팅이 바뀌면 묶인 항목을 켜고 끈다 (테마가 켜져 있으면 늘)
+    if (on || modules.promptbind) load('promptbind', './promptbind.js').then(m => m?.startPromptBinds());
+    // 6.0.4 확장 위 스위치: 확장 창 안의 켜기·끄기를 제목 줄에도 (창 안 「위에도 보이기」로 고른 창만 · 테마를 끄면 뗀다)
+    if (on || modules.headswitch) load('headswitch', './headswitch.js').then(m => m?.syncHeadSwitch(on));
 }
 
 /** 설정 창이 캐릭터 연결을 바꾼 뒤: 모듈을 불러와 지금 채팅에 맞춤 */
@@ -108,6 +114,11 @@ export async function charStyleModule() {
     const m = await load('charstyle', './charstyle.js');
     m?.startCharStyles(hooks.applyAll, hooks.refreshPanels);
     return m;
+}
+
+/** 6.0.4 단어 치환 › 잠시 가리기 모듈 — 설정 창이 스위치를 켤 때 처음 불러온다 (wordmask.js) */
+export function wordMaskModule() {
+    return load('wordmask', './wordmask.js');
 }
 
 /** 시험용: 불러온 모듈 */

@@ -100,7 +100,7 @@ export const DEFAULTS = {
         // 4.5.5: 성능 보조의 도구를 아예 안 불러오게 (perfMenu 는 '메뉴에 보이기', 이것은 '불러오기').
         // 기본은 전부 켬 — 지금 쓰던 대로 돌아가고, 안 쓰는 도구를 끄면 그만큼 시작이 가벼워진다.
         perfLoad: { watchdog:true, timer:true, perf:true, log:true, dedupe:true } },
-    wordTools: { messageView: 'translation', rules: [], presets: [], syntax: 'comma', caseSensitive: false, wholeWords: false, particles: true },
+    wordTools: { messageView: 'translation', rules: [], presets: [], syntax: 'comma', caseSensitive: false, wholeWords: false, particles: true, maskWords: '' }, // maskWords: 6.0.4 잠시 가리기 낱말(한 줄에 하나 · 쉼표) — 스위치는 세션 안에서만, 저장하지 않는다 (wordmask.js)
     captureTools: { replace: false, preset: '', redact: false, names: [], mask: 'auto', maskStyles: {}, format:'image', duration:6, maxMB:8, maxParagraphs:4, resolution:1080, backgroundTint:60, includeWeather:true, includeBackground:true, showName:true, showAvatar:true, showAssets:true, showTimestamp:true, showModel:true, showMessageId:true, showTokens:true, showGenerationTime:true, filterPreset:'none', grain:0, brightness:0, contrast:0, saturation:0, temperature:0, vignette:0 }, // filterPreset · grain … vignette: 5.5.3 캡처 필터 (프리셋 none|mono|film|vintage|cool|warm|custom · 전부 0 이면 결과 픽셀 그대로)
     onehand: { on: false, swipe: true, imp: true, cont: true, regen: true },
     replyNotify: { on: false }, // 4.8.7 답 완료 알림: 다른 앱을 보고 있을 때 답이 끝나면 폰 알림 · 진동 (reply-notify.js)
@@ -108,6 +108,8 @@ export const DEFAULTS = {
     // 3.1.0 스타일: 내 스타일 목록 [{ id, name, data }] · 캐릭터 연결 { 'c:아바타' | 'g:그룹': 스타일 id } · 지금 입힌 캐릭터 스타일 { id, key } · 그 전 원래 모습 (styles.js · charstyle.js)
     styles: [],
     charStyles: {},
+    promptBinds: {},   // 6.0.4 프롬프트 귀속 { <프롬프트 identifier>: { keys: ['c:아바타' | 'g:그룹' | 'c:아바타/채팅' | 'g:그룹/채팅'], regex: [정규식 id] } } (promptbind.js)
+    headSwitches: {},   // 6.0.4 확장 위 스위치 { <창 열쇠 id:…|cls:…>: true } — 창 안 「위에도 보이기」로 고른 확장 창 (headswitch.js)
     activeStyle: null,
     baseStyle: null,
     profile: { decor: { ...DECOR_DEFAULTS }, nameSize: 24, nameWeight: 650, nameSpacing: 0, nameHeight: 1.3, nameColor: '#91a5ba', nameAuto: true, nameAlign: 'center', nameRowAlign: 'left', nameItalic: false, nameUnderline: false, headerLayout: 'below-two', headerGap: 8, metaSize: 12, metaOpacity: 70, buttonGap: 8, nameOutline: 0, nameOutlineColor: '#000000', nameShadow: false, nameShadowBlur: 4, nameShadowY: 1, nameShadowAlpha: 25, ...FRAME_DEFAULTS, mode: 'small', layout: 'column', sizing: 'pixels', screenHeight: 45, maxHeight: 70, visibleHeight: 100, width: 100, height: 320, fit: 'cover', positionX: 50, positionY: 35, radius: 18, gap: 20, blur: 0, opacity: 100, fadeY: 0, fadeX: 0, original: true },
@@ -344,6 +346,17 @@ function tidyStyles(s) {
         if (!/^[cg]:./.test(key) || typeof id !== 'string' || !s.styles.some(x => x.id === id)) delete s.charStyles[key];
     }
     if (s.activeStyle !== null && !(isObj(s.activeStyle) && typeof s.activeStyle.id === 'string' && typeof s.activeStyle.key === 'string')) s.activeStyle = null;
+    // 6.0.4 프롬프트 귀속: 열쇠는 c:/g: 로 시작하는 글자만, 중복 없이 200개까지 · 빈 묶음은 지운다
+    if (!isObj(s.promptBinds)) s.promptBinds = {};
+    for (const [id, bind] of Object.entries(s.promptBinds)) {
+        if (!id || !isObj(bind)) { delete s.promptBinds[id]; continue; }
+        bind.keys = [...new Set((Array.isArray(bind.keys) ? bind.keys : []).filter(k => typeof k === 'string' && /^[cg]:./.test(k)))].slice(0, 200); bind.regex = [...new Set((Array.isArray(bind.regex) ? bind.regex : []).filter(r => typeof r === 'string' && r))].slice(0, 64);
+        if (!bind.keys.length && !bind.regex.length) delete s.promptBinds[id];
+    }
+    // 6.0.4 확장 위 스위치: true 인 글자 열쇠만, 100개까지
+    if (!isObj(s.headSwitches)) s.headSwitches = {};
+    for (const [k, v] of Object.entries(s.headSwitches)) if (!k || v !== true) delete s.headSwitches[k];
+    for (const k of Object.keys(s.headSwitches).slice(100)) delete s.headSwitches[k];
     if (s.baseStyle !== null && !isObj(s.baseStyle)) s.baseStyle = null;
     // 3.3.1 날씨 그림 목록
     const okImage = x => isObj(x) && typeof x.id === 'string' && /^[\w-]{1,40}$/.test(x.id) && validOwnedImage(x, x.data); // id 는 data-id 속성에, 그림은 style 속성에 들어간다
@@ -630,6 +643,7 @@ export function getSettings() {
     if (!s.wordTools.rules.every(rule=>rule&&typeof rule==='object')) s.wordTools.rules=s.wordTools.rules.filter(rule=>rule&&typeof rule==='object');
     if(!Array.isArray(s.wordTools.presets))s.wordTools.presets=[];
     s.wordTools.presets=s.wordTools.presets.filter(p=>p&&typeof p.id==='string'&&Array.isArray(p.rules)).slice(0,24);
+    s.wordTools.maskWords=typeof s.wordTools.maskWords==='string'?s.wordTools.maskWords.slice(0,2000):''; // 6.0.4 잠시 가리기 낱말 (2,000자까지 · 스위치는 저장하지 않는다)
     if(migrateWordSyntax) {
         for(const rules of [s.wordTools.rules,...s.wordTools.presets.map(p=>p.rules)])for(const rule of rules)if(rule&&typeof rule.from==='string')rule.from=rule.from.split('||').join(', ');
         s.wordTools.syntax='comma';
@@ -683,7 +697,7 @@ export function saveSettings() {
 // 내 글꼴 · 본 공지 · 내 스타일 · 캐릭터 연결은 늘 남긴다 (입혀 둔 캐릭터 스타일 상태는 비움)
 const RESET_GROUPS = { addons: ['addons', 'addonUI'], tools: ['wordTools', 'captureTools'], library: ['frameLibrary', 'customPalettes', 'weatherImages'] };
 // 테마 모습이 아닌 쓰는 방식(켬 · 사용 모드 · 잠금 · 자동 화이트/나이트 · 한 손 · 몰입 읽기 · 백그라운드 창 · 알림 · 다른 CSS)은 '테마 모습' 초기화에 남긴다
-const RESET_KEEP = ['appearanceHistory', 'customFonts', 'noticeSeen', 'updateCheck', 'styles', 'charStyles', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify'];
+const RESET_KEEP = ['appearanceHistory', 'customFonts', 'noticeSeen', 'updateCheck', 'styles', 'charStyles', 'promptBinds', 'headSwitches', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify'];
 export function resetSettings(groups = { look: true }) {
     const ext = SillyTavern.getContext().extensionSettings;
     const old = ext[KEY] || {};

@@ -1,0 +1,48 @@
+/* ===== css/64-headswitch.css ===== */
+/* 확장 위 스위치 (6.0.4, src/headswitch.js) — 확장 창 안의 켜기·끄기를 제목 줄에도. 기본은 숨김, 창 안 「위에도 보이기」 줄로 켠다 */
+body.salty #rm_extensions_block .bl-hs-switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bl-check-off, color-mix(in srgb, var(--SmartThemeBodyColor, #888) 24%, transparent));
+  box-shadow: var(--bl-track, none);
+  cursor: pointer;
+  transition: background-color .18s ease;
+}
+body.salty #rm_extensions_block .bl-hs-switch > span {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--bl-knob, 0 1px 2px rgba(0, 0, 0, .25));
+  transition: transform .18s ease;
+}
+body.salty #rm_extensions_block .bl-hs-switch[aria-checked="true"] {
+  background: var(--salty-accent, var(--SmartThemeQuoteColor, #3975b8));
+  box-shadow: none;
+}
+body.salty #rm_extensions_block .bl-hs-switch[aria-checked="true"] > span { transform: translateX(18px); }
+body.salty #rm_extensions_block .bl-hs-switch:focus-visible { outline: none; box-shadow: var(--bl-ring, 0 0 0 2px var(--salty-accent, #3975b8)); }
+/* 제목 줄: 이름 … [스위치] [접기 화살표] */
+body.salty #rm_extensions_block .inline-drawer-header > .bl-hs-head { margin-left: auto; margin-right: 10px; }
+/* 창 안 맨 위 줄: 오른쪽 정렬 · 작은 글 */
+body.salty #rm_extensions_block .bl-hs-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 6px 0 2px;
+  font-size: var(--bl-fs-cap, 12.5px);
+  color: var(--salty-muted, color-mix(in srgb, var(--SmartThemeBodyColor, #888) 62%, transparent));
+}
+body.salty #rm_extensions_block .bl-hs-row .bl-hs-opt { width: 34px; height: 20px; }
+body.salty #rm_extensions_block .bl-hs-row .bl-hs-opt > span { width: 14px; height: 14px; }
+body.salty #rm_extensions_block .bl-hs-row .bl-hs-opt[aria-checked="true"] > span { transform: translateX(14px); }

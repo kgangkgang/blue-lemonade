@@ -1,0 +1,8 @@
+/* ===== css/65-wordmask.css =====
+   6.0.4 단어 치환 › 잠시 가리기 — 적어 둔 낱말을 채팅 화면에서만 ■ 로 가린 조각(.bl-wmask, src/wordmask.js).
+   바탕 · 테두리 없이 글자색 그대로(캡처에도 그대로 ■ 로 찍힌다), ■ 사이가 붙어 보이지 않게 자간만 조금.
+   채팅 데이터는 그대로이고 스위치는 세션 안에서만 켜진다. 설정 창 쪽 줄(.bl-mask-row)은 스위치 + 가린 수 한 줄. */
+.bl-wmask { letter-spacing: .08em; opacity: .85; }
+body.salty .bl-mask-row { display: flex; align-items: center; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+body.salty .bl-mask-row [data-mask-count] { color: var(--salty-muted); font-size: .85em; }
+body.salty [data-mask-words] { min-height: 4.5em; }

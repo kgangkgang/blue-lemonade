@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.0.3/blue-lemonade-6.0.3.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.0.4/blue-lemonade-6.0.4.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.0.3 · 최신 업데이트</summary>
+<summary>6.0.4 · 최신 업데이트</summary>
+
+- 프롬프트 귀속: 프롬프트 관리자에서 항목을 편집하면 맨 아래에 「자동 켜기」 줄이 생겨요. 지금 캐릭터·지금 채팅을 묶거나 목록에서 고르면, 그 채팅을 열 때 이 항목이 켜지고 나가면 꺼져요. 「정규식」으로 전역 정규식 스크립트를 붙이면 그 정규식도 함께 켜지고 꺼져요.
+- 대사 색처럼 특정 캐릭터에게만 쓰는 프롬프트에 쓰세요. 메모의 캐릭터·채팅 귀속과 같은 방식이고, 테마 모습 초기화에도 남아요.
+- 확장 위 스위치: 확장 설정 창 안에 켜기·끄기 스위치가 있으면 창 안 맨 위에 「위에도 보이기」 줄이 생겨요. 켜면 그 확장의 제목 줄에 스위치가 붙어 안의 것과 같이 움직이고, 끄면 사라져요. 기본은 모두 숨김이라 보이는 건 고른 확장뿐이에요.
+- 단어 치환 › 잠시 가리기: 적어 둔 이름을 채팅 화면(본문 · 이름 줄)에서만 ■ 로 잠깐 가려요 — 로그를 나눌 때. 가린 채 캡처하면 캡처에도 ■ 로 찍혀요. 새로고침하면 풀리고 채팅 데이터는 그대로예요.
+
+</details>
+
+<details>
+<summary>6.0.3 · 효과음 크기 맞추기</summary>
 
 - TTS 1.6.2: 읽기 → 효과음 · 소리 대본에 「효과음 크기 맞추기」 토글이 생겼어요. 큰 효과음은 줄이고 작은 효과음은 키워 비슷한 크기로 들려요(목소리 음량 고르기와 같은 기준). 효과음 음량은 그 위에 더해지고, 미리듣기와 WAV 저장에도 적용돼요. 원본 파일은 바꾸지 않아요.
 

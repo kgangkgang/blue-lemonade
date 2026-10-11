@@ -3,6 +3,9 @@ import { toolSection } from './addon-layout.js';
 import { getSettings, saveSettings } from './settings.js';
 import { replaceText, importRuleSets } from './word-tools-core.js';
 import { captureOptionsMarkup, bindCaptureOptions, openCapturePreview } from './capture-options.js';
+import { wordMaskModule } from './features.js';
+let wordMask=null; // 6.0.4 잠시 가리기 모듈 — 스위치를 켤 때 처음 불러온다 (wordmask.js). 안 켜면 파일도 안 받는다
+const loadMask=async()=>wordMask??=await wordMaskModule();
 const esc = v => String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const selected = new Set();
 let chatKey, draft='', undoDraft=null, proposal=null, undoChat=null;
@@ -80,9 +83,12 @@ export function wordToolsMarkup(s, mode) {
         +toolSection('selection','메시지 선택',picker,false,'원문·번역문 가져오기')
         +toolSection('apply','채팅에 적용',`<p class="salty-note">선택한 원문과 표시 번역문을 함께 바꿔요. 먼저 전후를 확인해 주세요.</p><div class="bl-word-actions"><button type="button" class="salty-btn" data-word-action="preview">치환 전후 보기</button><button type="button" class="salty-btn" data-word-action="apply" ${proposal?'':'disabled'}>채팅에 적용</button><button type="button" class="salty-btn" data-word-action="undo-chat" ${undoChat?'':'disabled'}>되돌리기</button></div><div data-word-preview>${proposal?.rows.map(comparisonMarkup).join('')||''}</div>`,!!proposal)
         +toolSection('capture-preview','캡처 미리보기',capture,false,'이름을 가려 이미지·영상으로 저장');
+    // 6.0.4 잠시 가리기: 로그를 나눌 때 이름을 잠깐 가린다 — 화면만 바뀌고, 스위치는 이 세션 안에서만 (설정에는 낱말 목록만 남는다)
+    const masking=!!wordMask?.isMasking();
+    const mask=`<p class="salty-note">로그를 나눌 때 이름을 잠깐 가려요. 화면만 바뀌고 새로고침하면 풀려요.</p><textarea class="text_pole" data-mask-words rows="3" maxlength="2000" placeholder="가릴 단어 · 한 줄에 하나 (쉼표도 돼요)">${esc(cfg.maskWords||'')}</textarea><div class="bl-mask-row"><label class="bl-addon-toggle"><input type="checkbox" data-mask-on ${masking?'checked':''}>지금 가리기</label><small data-mask-count>${masking?'가리는 중':''}</small></div>`;
     const rules=`<p class="salty-note">찾을 말은 쉼표로 묶어요. 레몬, lemon → 귤</p><div class="bl-rule-caption"><span>찾을 말</span><span>바꿀 말</span></div><div class="bl-word-rules">${cfg.rules.map((rule,i)=>`<div class="bl-word-rule" data-rule-index="${i}"><input type="checkbox" data-rule-field="enabled" aria-label="규칙 ${i+1} 사용" ${rule.enabled!==false?'checked':''}><input type="text" data-rule-field="from" aria-label="찾을 말 ${i+1}" placeholder="레몬, lemon" value="${esc(rule.from)}"><button type="button" class="bl-rule-swap" data-rule-swap="${i}" aria-label="찾을 말과 바꿀 말 바꾸기">→</button><input type="text" data-rule-field="to" aria-label="바꿀 말 ${i+1}" placeholder="귤" value="${esc(rule.to)}"><button type="button" data-rule-delete="${i}" aria-label="규칙 ${i+1} 삭제">×</button></div>`).join('')}</div><div class="bl-word-actions"><button type="button" class="salty-btn" data-word-action="add">＋ 규칙 추가</button><button type="button" class="bl-word-help" data-word-action="help" aria-label="치환 규칙 도움말">?</button></div><div class="bl-tool-grid bl-word-options">${[['caseSensitive','대소문자 구분'],['wholeWords','낱말 단위'],['particles','조사 자동 보정']].map(([key,label])=>`<label><input type="checkbox" data-word-option="${key}" ${cfg[key]?'checked':''}>${label}</label>`).join('')}</div>`;
     const presets=`<div class="bl-word-presets"><label>치환 프리셋<select data-word-preset><option value="">프리셋 선택</option>${cfg.presets.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select></label><input type="text" data-word-preset-name placeholder="저장할 프리셋 이름" aria-label="저장할 프리셋 이름"><div class="bl-word-actions"><button type="button" class="salty-btn" data-word-action="save-preset">현재 규칙 저장</button><button type="button" class="salty-btn" data-word-action="load-preset">불러오기</button><button type="button" class="salty-btn" data-word-action="delete-preset">삭제</button></div></div>${sets.length?`<label class="bl-tool-field">기존 규칙 가져오기<select data-word-import><option value="">묶음 선택</option>${sets.map((set,i)=>`<option value="${i}">${esc(set.name)}</option>`).join('')}</select></label>`:''}`;
-    const options=mode==='capture'?captureOptionsMarkup():toolSection('rules','치환 규칙',rules,true)+toolSection('presets','프리셋',presets,false,'저장·불러오기·기존 규칙')+toolSection('capture-settings','캡처 설정',captureOptionsMarkup(),false,'저장 방식·이름 가림');
+    const options=mode==='capture'?captureOptionsMarkup():toolSection('rules','치환 규칙',rules,true)+toolSection('mask','잠시 가리기',mask,masking,'로그 나눌 때 이름 잠깐 가림')+toolSection('presets','프리셋',presets,false,'저장·불러오기·기존 규칙')+toolSection('capture-settings','캡처 설정',captureOptionsMarkup(),false,'저장 방식·이름 가림');
     return `<div class="bl-addon-layout"><div class="bl-addon-main">${main}<p class="bl-tool-status" data-word-status role="status"></p></div><div class="bl-addon-config">${options}${menu}</div></div>`;
 }
 
@@ -150,6 +156,13 @@ export function bindWordTools(root, refresh) {
     section.querySelectorAll('[data-word-message]').forEach(input=>input.addEventListener('change',()=>{input.checked?selected.add(Number(input.dataset.wordMessage)):selected.delete(Number(input.dataset.wordMessage));invalidate();section.querySelector('[data-word-action="apply"]')?.setAttribute('disabled','');}));
     section.querySelector('[data-word-import]')?.addEventListener('change',event=>{if(event.target.value==='')return;getSettings().wordTools.rules.push(...structuredClone(importRuleSets(context().extensionSettings)[Number(event.target.value)].rules));invalidate();saveSettings();refresh();});
     section.querySelector('[data-word-draft]')?.addEventListener('input',event=>{draft=event.target.value;});
+    // 6.0.4 잠시 가리기: 낱말 목록은 저장, 스위치는 세션 안에서만. 켜 둔 채 목록을 고치면 잠시 뒤 새 목록으로 다시 가린다
+    let maskTimer;
+    section.querySelector('[data-mask-words]')?.addEventListener('input',event=>{
+        getSettings().wordTools.maskWords=event.target.value.slice(0,2000);saveSettings();
+        clearTimeout(maskTimer);if(wordMask?.isMasking())maskTimer=setTimeout(()=>applyMask(section,true),300);
+    });
+    section.querySelector('[data-mask-on]')?.addEventListener('change',event=>applyMask(section,event.target.checked));
     section.querySelectorAll('[data-word-action]').forEach(button=>button.addEventListener('click',async()=>{
         try {
             const action=button.dataset.wordAction,ctx=context(),cfg=getSettings().wordTools;
@@ -268,4 +281,18 @@ function askCount() {
         let count=null;dialog.querySelector('form').onsubmit=event=>{event.preventDefault();count=Number(dialog.querySelector('input').value);if(Number.isInteger(count)&&count>=1&&count<=1000)dialog.close();};
         dialog.querySelector('[data-cancel]').onclick=()=>dialog.close();dialog.addEventListener('close',()=>resolve(count),{once:true});
     });
+}
+// 6.0.4 잠시 가리기 켜기 · 끄기 — 모듈은 처음 켤 때 받는다. 목록이 비면 켜지 않는다
+async function applyMask(section,on) {
+    const box=section.querySelector('[data-mask-on]'),count=section.querySelector('[data-mask-count]');
+    try {
+        const m=await loadMask();if(!m)throw userError('가리기 모듈을 불러오지 못했어요.');
+        if(!on){m.stopMask();if(count)count.textContent='';return;}
+        const words=m.parseMaskWords(getSettings().wordTools.maskWords);
+        if(!words.length){m.stopMask();throw userError('가릴 단어를 먼저 적어 주세요.');}
+        const n=m.startMask(words);if(count)count.textContent=`가리는 중 · ${n}곳`;
+    } catch(error) {
+        if(!error.user)console.error('[Blue Lemonade] 잠시 가리기',error);
+        if(count)count.textContent='';globalThis.toastr?.warning(error.message||'가리지 못했어요.','Blue Lemonade');
+    } finally { if(box)box.checked=!!wordMask?.isMasking(); }
 }
