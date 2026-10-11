@@ -12,7 +12,7 @@
 
 /* ---------- 공통 변수: 설정 창 · 편집 팝업 · 재생 막대 (ST 테마 색을 따르고, 블루 레몬에이드 변수는 있으면 씀) */
 .lv-settings, .lv-editor, .lv-bar {
-  --lv-css-version: "1.6.4";
+  --lv-css-version: "1.6.5";
   --lv-accent: var(--salty-accent, var(--SmartThemeQuoteColor, #51a0de));
   --lv-text: var(--SmartThemeBodyColor, #dcdcd2);
   --lv-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, .15));
@@ -575,3 +575,20 @@ body.salty.salty-icons-line #chat .mes .extraMesButtons > .lv_play { --salty-mi:
 .lv-bar-sfxmine[hidden] { display: none; }
 .lv-bar-sfxmineopt { display: inline-flex; align-items: center; gap: 6px; height: var(--lv-h); padding: 0 10px; border: 0; border-radius: var(--lv-r-pill); background: color-mix(in srgb, var(--lv-accent) 18%, transparent); color: var(--lv-text); font: inherit; font-size: .84em; cursor: pointer; }
 .lv-bar-sfxmineopt > i { color: var(--lv-accent); }
+
+/* Reading controls: stable icon centres and one navigation row when it fits. */
+#lv_settings .lv-tabs { gap:4px; }
+#lv_settings .lv-tab { min-height:36px; padding:6.5px 6px 5.5px; border-radius:var(--lv-r-sm); line-height:1.4; }
+#lv_settings .lv-tab > i { display:inline-flex; align-items:center; justify-content:center; width:1.2em; height:1.2em; flex:none; line-height:1; }
+#lv_settings .lv-card-head > i { display:inline-flex; align-items:center; justify-content:center; height:1.2em; line-height:1; flex:none; }
+#lv_settings .lv-body .menu_button { display:inline-flex; align-items:center; justify-content:center; gap:6px; white-space:normal; word-break:keep-all; line-height:1.4; }
+#lv_settings .lv-top { column-gap:10px; row-gap:6px; }
+#lv_settings .lv-tagline { line-height:1.5; font-size:.9em; }
+#lv_settings .lv-settings-credits { padding:8px 10px; }
+#lv_settings .lv-settings-credits summary { min-height:34px; line-height:1.4; padding-block:6px; }
+@container lvbody (min-width:21em) { #lv_settings .lv-tabs { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+@media(pointer:coarse) {
+ #lv_settings .lv-body { gap:8px; }
+ #lv_settings .lv-tab { min-height:38px; }
+ #lv_settings .lv-tag-chip { min-height:34px; }
+}

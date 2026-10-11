@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.0.6/blue-lemonade-6.0.6.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.0.7/blue-lemonade-6.0.7.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.0.6 · 최신 업데이트</summary>
+<summary>6.0.7 · 최신 업데이트</summary>
+
+- 모바일 설정 창의 바깥 여백과 항목 간격을 줄여 한 화면에 더 많이 보여요. 큰 글씨에서도 버튼 이름과 설명이 잘리지 않도록 다듬었어요.
+- 에이드 혼합하기 버튼을 제목 옆에 모으고 설명을 바로 아래에 두었어요.
+- 확장 설정 제목의 아이콘·이름·버전 위치를 맞췄어요. 제목에 붙인 켜기·끄기 스위치는 누르는 범위를 넓히고, 프롬프트 귀속 버튼과 목록도 정리했어요.
+- TTS 1.6.5: 설정 탭과 버튼의 글자·아이콘을 가운데 맞췄어요. 모바일에서도 폭이 충분하면 읽기·목소리·엔진·데이터를 한 줄에 보여요.
+
+</details>
+
+<details>
+<summary>6.0.6 · 프롬프트 귀속 정규식 · TTS 분석 보존</summary>
 
 - 프롬프트 귀속 › 정규식: 프리셋 안의 정규식도 목록에 나와요(전역 · 이 캐릭터 카드 · 프리셋으로 묶어서, 한 줄에 하나). 찾기는 한글화 스크립트가 바꿔 보여 주는 이름으로도 돼요. 창 제목이 항목 이름 대신 긴 식별자로 나오던 것도 고쳤어요.
 - 프롬프트 귀속: 묶은 정규식이 켜지거나 꺼지면 채팅을 다시 그려요 — 대사 색처럼 화면에만 쓰는 정규식이 이미 그려진 글에도 바로 먹게. 실리태번 정규식 창의 켜짐 표시도 같이 맞춰요.

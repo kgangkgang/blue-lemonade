@@ -1,0 +1,44 @@
+/* ===== css/66-ui-rhythm.css =====
+   설정 창의 공통 리듬: 아이콘 축, 줄바꿈, 좁은 화면의 바깥 여백.
+   ===== */
+/* 이름과 버전은 한 기준선, 아이콘은 글꼴의 기준선 대신 제 칸 중앙. */
+body.salty #rm_extensions_block .inline-drawer-header > :is(b,strong) {
+  display:flex; align-items:center; flex-wrap:wrap; column-gap:7px; row-gap:3px; min-width:0;
+}
+body.salty #rm_extensions_block .inline-drawer-header > :is(b,strong) > i {
+  display:inline-flex; align-items:center; justify-content:center; flex:0 0 1.2em;
+  width:1.2em; height:1.2em; line-height:1; margin:0;
+}
+body.salty #rm_extensions_block .inline-drawer-header > :is(b,strong) > .ext-version { margin-inline:0; }
+body.salty #rm_extensions_block .bl-hs-row { padding:3px 0 7px; gap:8px; line-height:1.45; }
+body.salty #rm_extensions_block .bl-hs-row > span { min-width:0; overflow-wrap:anywhere; }
+/* 스위치 모양은 유지하며 실제 누르는 범위만 늘린다. */
+body.salty #rm_extensions_block .bl-hs-switch::before { content:''; position:absolute; inset:-7px 0; }
+body.salty #rm_extensions_block .bl-hs-switch:focus-visible { outline:2px solid var(--salty-accent); outline-offset:3px; }
+body.salty .bl-pbind .menu_button { display:inline-flex; align-items:center; justify-content:center; min-height:36px; line-height:1.4; }
+body.salty .bl-pbind-x { position:relative; flex:none; }
+body.salty .bl-pbind-x::before { content:''; position:absolute; inset:-6px; }
+body.salty .bl-pbind-chip { min-width:0; overflow-wrap:anywhere; }
+body.salty .bl-pbind-hint { color:var(--salty-muted); opacity:1; font-size:.9em; }
+body.salty .bl-pbind-dialog { max-height:calc(100dvh - 24px); }
+body.salty .bl-pbind-list { min-height:0; }
+.salty-panel .bl-mix .bl-mix-heading {
+  display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; justify-content:flex-start; gap:8px;
+}
+.salty-panel .bl-mix .bl-mix-heading > span { flex:0 1 auto; width:auto; }
+.salty-panel .bl-mix .bl-mix-heading > .salty-btn {
+  flex:none; width:auto; margin:0; align-self:center; min-height:34px; padding:7px 10px 5px; font-size:.85em; line-height:1.4;
+}
+.salty-panel .bl-mix .bl-mix-description { margin:4px 0 0; font-size:.85em; line-height:1.5; }
+/* PC의 읽는 폭과 간격을 유지하고, 폰은 창 밖 빈 공간을 작업 영역으로 돌린다. */
+@media(max-width:760px) {
+ html body dialog.popup.bl-settings-dialog:not(.bl-settings-fullscreen):has(.salty-panel.in-popup) {
+  width:calc(100vw - 12px)!important; max-width:calc(100vw - 12px)!important;
+  height:calc(100dvh - 12px)!important; max-height:calc(100dvh - 12px)!important;
+  margin:auto!important;
+ }
+ html body .salty-panel.bl-editor .salty-sec { padding-inline:10px; }
+ .salty-panel.bl-editor .salty-group { margin-block:10px; }
+ .salty-panel.bl-editor .bl-editor-group-head { gap:6px; }
+ body.salty .bl-pbind-dialog { width:calc(100vw - 20px); padding:10px; gap:8px; }
+}
