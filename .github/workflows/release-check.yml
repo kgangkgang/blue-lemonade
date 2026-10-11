@@ -45,6 +45,7 @@ jobs:
           node tools/tests/tts-scene.mjs .
           node tools/tests/tts-sfx-timing.mjs .
           node tools/tests/tts-sfx-credits.mjs .
+          node tools/tests/tts-sfx-level.mjs .
           node tools/tests/chat-like-alias.mjs .
           node tools/tests/zipinstall-remove.mjs .
           node tools/tests/word-replace-marks.mjs .

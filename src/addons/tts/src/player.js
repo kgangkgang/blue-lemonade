@@ -55,7 +55,7 @@ import * as analysis from './analysis.js';
 import * as translation from './translation.js';
 import * as listen from './listen.js';   // 1.4.4 듣는 언어
 import { resolveScript, normalizeRows, scriptFingerprint } from './script-store.js';
-import { getSfx, sfxBlob, isSfxEnabled, sfxPreferenceRevision, onSfxPreferenceChange, sfxAttribution } from './sfx-library.js';
+import { getSfx, sfxBlob, isSfxEnabled, sfxPreferenceRevision, onSfxPreferenceChange, sfxAttribution, sfxLevelOn } from './sfx-library.js';
 import { playbackOriginal, wavWithCredits } from './playback-details.js';
 import { createSfxController } from './sfx-audio.js';
 import { mixScene } from './scene-mix.js';
@@ -1817,10 +1817,11 @@ export async function downloadScript(mesId, rows = null, { effects = true } = {}
     if (jobs.some(j => !j.sceneKind && j.provider.caps?.blob === false)) throw new Error('브라우저 내장 목소리는 파일로 저장할 수 없어요. 다른 목소리를 골라 주세요.');
     const clips = [], snapshot = scriptFingerprint(mes), selectedChat = getContext().chat, my = gen;
     const preferences = jobs.filter(j => j.sceneKind === 'sfx').map(j => [j.sfxId, sfxPreferenceRevision(j.sfxId)]);
+    const level = sfxLevelOn();   // 1.6.2 저장 중에 효과음 크기 맞추기를 바꾸면 맞춘 소리와 원본이 섞이지 않게 멈춘다
     const valid = () => {
         if (my !== gen) throw new Error('소리 저장을 멈췄어요.');
         if (!runtimeEnabled() || getContext().chat !== selectedChat || msg(mesId) !== mes || scriptFingerprint(mes) !== snapshot) throw new Error('채팅이 바뀌어 저장을 멈췄어요.');
-        if (preferences.some(([id, rev]) => !isSfxEnabled(id) || sfxPreferenceRevision(id) !== rev)) throw new Error('효과음 사용 설정이 바뀌었어요. 다시 저장하면 새 설정이 반영돼요.');
+        if (preferences.some(([id, rev]) => !isSfxEnabled(id) || sfxPreferenceRevision(id) !== rev) || sfxLevelOn() !== level) throw new Error('효과음 사용 설정이 바뀌었어요. 다시 저장하면 새 설정이 반영돼요.');
     };
     for (const j of jobs) exportJobs.add(j);
     try {

@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.0.2/blue-lemonade-6.0.2.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.0.3/blue-lemonade-6.0.3.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.0.2 · 최신 업데이트</summary>
+<summary>6.0.3 · 최신 업데이트</summary>
+
+- TTS 1.6.2: 읽기 → 효과음 · 소리 대본에 「효과음 크기 맞추기」 토글이 생겼어요. 큰 효과음은 줄이고 작은 효과음은 키워 비슷한 크기로 들려요(목소리 음량 고르기와 같은 기준). 효과음 음량은 그 위에 더해지고, 미리듣기와 WAV 저장에도 적용돼요. 원본 파일은 바꾸지 않아요.
+
+[TTS 사용법](src/addons/tts/README.md)
+
+</details>
+
+<details>
+<summary>6.0.2 · 듣는 언어 — 어떤 번역기든</summary>
 
 - TTS 1.6.1: 듣는 언어가 어떤 번역기와도 돼요. LLM 번역 애드온(내장·단독)이 있으면 그것으로, 없으면 대사 분석 엔진으로, 그것도 없으면 실리태번 번역으로 옮겨요. 단독 LLM 번역 확장을 쓸 때 「번역이 꺼져 있어요」가 뜨며 원문으로 읽던 걸 고쳤어요.
 - 듣는 언어 아래 안내가 어느 길로 옮기는지 알려 주고, 테마 이름을 적지 않아요.

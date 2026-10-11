@@ -143,6 +143,7 @@ const READ_CARDS = {
             help: '대사 분석에 보내는 지문(서술 · 행동)의 최대 글자예요 (기본 4,000). 긴 답장에서 효과음을 놓치면 늘리고, 분석 요청의 토큰을 아끼려면 줄여요. 모델이 읽는 토큰은 한국어 · 일본어가 글자 수와 비슷하고 영어는 그 1/4 쯤이에요. 바꾸면 긴 답장의 저장된 분석을 다음 읽기 때 다시 받아요.' },   // 1.5.8
         { key: 'sfx.mode', label: '자동 효과음 재생', type: 'select', options: [{ value: 'overlay', label: '대사와 겹치기' }, { value: 'sequence', label: '차례로 재생' }], help: '겹치기는 효과음 위로 다음 대사가 이어져요. 차례로는 효과음이 끝나고 다음 대사를 읽어요. 각 줄은 소리 대본에서 따로 바꿀 수 있어요.' },
         { key: 'sfx.volume', label: '효과음 음량', type: 'range', min: 0, max: 1, step: 0.05, default: 0.45, fmt: v => `${Math.round(Number(v) * 100)}%`, help: '전체 재생 볼륨 안에서 효과음만 조절해요. 반복 소리는 대사를 가리지 않도록 더 작게 재생돼요.' },
+        { key: 'sfx.normalize', label: '효과음 크기 맞추기', type: 'toggle', help: '큰 효과음은 줄이고 작은 효과음은 키워 목소리 음량 고르기의 목표 음량에 맞춰요. 짧은 타격음은 찌그러지지 않는 데까지만 키워요. 효과음 음량은 그 위에 더해지고, 미리듣기와 WAV 저장에도 적용돼요. 원본 파일은 바꾸지 않고, 끄면 다음 소리부터 원본이에요. 60초·2MB 넘는 소리는 그대로예요.' },   // 1.6.2
     ], () => '<div class="lv-actions"><button type="button" class="menu_button" data-lv-act="sound-library">효과음 보관함</button><button type="button" class="menu_button" data-lv-act="script-last">마지막 소리 대본</button></div><span class="lv-desc">각 메시지의 소리 대본 버튼에서 대사 · 효과음 · 쉼을 고쳐요. 원문은 그대로예요.</span>'],
     analysis: ['fa-wand-magic-sparkles', '대사 분석 (감정 · 원어 읽기)', [
         { key: 'analysis.enabled', label: '사용', type: 'toggle' },
@@ -2336,7 +2337,7 @@ function importSettings(obj) {
         if (k === 'sfx') {
             // Sound files and their metadata travel together in a sound pack, never in a settings file.
             if (!isObj(v)) continue;
-            for (const key of ['enabled', 'auto']) if (typeof v[key] === 'boolean') s.sfx[key] = v[key];
+            for (const key of ['enabled', 'auto', 'tap', 'normalize']) if (typeof v[key] === 'boolean') s.sfx[key] = v[key];   // 1.6.2 tap · normalize 도 가져온다
             if (typeof v.volume === 'number' && Number.isFinite(v.volume)) s.sfx.volume = Math.max(0, Math.min(1, v.volume));
             if (['sequence', 'overlay'].includes(v.mode)) s.sfx.mode = v.mode;
             continue;

@@ -279,26 +279,30 @@ export function applyGain(samples, gainDb) {
 const LITTLE_ENDIAN = new Uint8Array(new Uint16Array([1]).buffer)[0] === 1;
 
 /** 16비트 PCM 모노 WAV (ArrayBuffer) */
+/** 16비트 PCM WAV (ArrayBuffer). samples = Float32Array(모노) 또는 채널별 Float32Array 배열 (1.6.2: 효과음은 채널을 지킨다) */
 export function encodeWav(samples, rate) {
-    const n = samples.length;
-    const buf = new ArrayBuffer(44 + n * 2);
+    const chs = Array.isArray(samples) ? samples : [samples];
+    const ch = chs.length, n = chs[0].length;
+    const buf = new ArrayBuffer(44 + n * ch * 2);
     const dv = new DataView(buf);
     const tag = (o, s) => { for (let i = 0; i < s.length; i++) dv.setUint8(o + i, s.charCodeAt(i)); };
-    tag(0, 'RIFF'); dv.setUint32(4, 36 + n * 2, true); tag(8, 'WAVE');
+    tag(0, 'RIFF'); dv.setUint32(4, 36 + n * ch * 2, true); tag(8, 'WAVE');
     tag(12, 'fmt '); dv.setUint32(16, 16, true);
     dv.setUint16(20, 1, true);            // PCM
-    dv.setUint16(22, 1, true);            // 모노
+    dv.setUint16(22, ch, true);           // 채널 수
     dv.setUint32(24, rate, true);
-    dv.setUint32(28, rate * 2, true);     // 바이트/초
-    dv.setUint16(32, 2, true);            // 블록 정렬
+    dv.setUint32(28, rate * ch * 2, true);     // 바이트/초
+    dv.setUint16(32, ch * 2, true);            // 블록 정렬
     dv.setUint16(34, 16, true);           // 비트
-    tag(36, 'data'); dv.setUint32(40, n * 2, true);
-    const pcm = LITTLE_ENDIAN ? new Int16Array(buf, 44, n) : null;
+    tag(36, 'data'); dv.setUint32(40, n * ch * 2, true);
+    const pcm = LITTLE_ENDIAN ? new Int16Array(buf, 44, n * ch) : null;
     for (let i = 0; i < n; i++) {
-        let v = samples[i];
-        v = v > 1 ? 1 : v < -1 ? -1 : v;
-        const s = Math.round(v < 0 ? v * 32768 : v * 32767);
-        if (pcm) pcm[i] = s; else dv.setInt16(44 + i * 2, s, true);
+        for (let c = 0; c < ch; c++) {
+            let v = chs[c][i];
+            v = v > 1 ? 1 : v < -1 ? -1 : v;
+            const s = Math.round(v < 0 ? v * 32768 : v * 32767);
+            if (pcm) pcm[i * ch + c] = s; else dv.setInt16(44 + (i * ch + c) * 2, s, true);
+        }
     }
     return buf;
 }
@@ -341,6 +345,8 @@ export async function measure(blob) {
 
 /**
  * 음량 고르기: { normalize, targetLufs, gainDb, autoGainDb, dethump, lufs? } → { blob, lufs }
+ * 1.6.2 효과음용 옵션: maxSeconds(디코드 길이가 넘으면 원본 그대로 — 긴 환경음의 메모리), keepChannels(스테레오 유지 · 쿵 줄이기와 함께 못 씀),
+ *   peakSafe(참 봉우리가 리미터 무릎 −1.5 dBFS 를 넘지 않게 이득을 깎는다 — 짧은 타격음이 찌그러지지 않게)
  * lufs 를 이미 알면(캐시) 다시 재지 않는다. 디코드 실패, 또는 이득 0 이고 줄일 '쿵'도 없으면 원본 blob 그대로
  */
 export async function prepare(blob, opts = {}) {
@@ -352,6 +358,9 @@ export async function prepare(blob, opts = {}) {
     if (!normalize && !gainDb && !autoGainDb && !thump) return { blob, lufs: known };
     const audio = await decode(blob);
     if (!audio || !audio.length) return { blob, lufs: known };
+    const maxSeconds = Number(opts.maxSeconds) || 0;
+    if (maxSeconds > 0 && audio.length > maxSeconds * audio.sampleRate) return { blob, lufs: known, tooLong: true };   // 1.6.2
+    const chs = opts.keepChannels === true && !thump && audio.numberOfChannels > 1 ? Array.from({ length: audio.numberOfChannels }, (_, c) => audio.getChannelData(c)) : null;
     let mono = monoOf(audio);
     const rate = audio.sampleRate;
     // 음량은 원본으로 잰다 (캐시의 LUFS 와 같은 기준 — 줄인 덩어리는 에너지의 0.1 % 도 안 돼 값이 거의 같다)
@@ -361,9 +370,14 @@ export async function prepare(blob, opts = {}) {
         const r = dethump(mono, rate);
         if (r.regions.length) { mono = r.samples; cleaned = true; }
     }
-    const g = computeGain(lufs, { normalize, targetLufs: opts.targetLufs, gainDb, autoGainDb });
+    let g = computeGain(lufs, { normalize, targetLufs: opts.targetLufs, gainDb, autoGainDb });
+    if (opts.peakSafe === true) {   // 1.6.2 효과음: 참 봉우리가 리미터 무릎을 넘지 않게 — 타격음을 리미터로 뭉개지 않는다
+        let pk = 0;
+        for (const d of (chs || [mono])) for (let i = 0; i < d.length; i++) { const a = d[i] < 0 ? -d[i] : d[i]; if (a > pk) pk = a; }
+        if (pk > 0) g = Math.max(GAIN_MIN, Math.min(g, LIMIT_DB - 20 * Math.log10(pk)));
+    }
     const useGain = Math.abs(g) >= 0.05;
     if (!useGain && !cleaned) return { blob, lufs };
-    const wav = encodeWav(useGain ? applyGain(mono, g) : mono, rate);
-    return { blob: new Blob([wav], { type: 'audio/wav' }), lufs };
+    const wav = chs ? encodeWav(chs.map(d => (useGain ? applyGain(d, g) : d)), rate) : encodeWav(useGain ? applyGain(mono, g) : mono, rate);
+    return { blob: new Blob([wav], { type: 'audio/wav' }), lufs, gainDb: g };
 }

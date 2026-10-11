@@ -6,6 +6,7 @@
 import { settings, save } from './settings.js';
 import { DAILY_SFX } from './sfx-daily.js';
 import { normalizeSfxCredit, importedSfxCredit, customSfxAttribution, sfxSha256 } from './sfx-credits.js';
+import { prepare as levelAudio } from './loudness.js';   // 1.6.2 효과음 크기 맞추기 (목소리 음량 고르기와 같은 측정 · 이득 · 리미터)
 
 const UPSTREAM_LIBRARY = [
     // Unsupported bundled sounds must not match unrelated generic words. No paid fallback.
@@ -245,13 +246,61 @@ async function transaction(mode, act) {
 async function customBlob(id) {
     return transaction('readonly', (store, done) => { const req = store.get(id); req.onsuccess = () => done(req.result instanceof Blob ? req.result : null); });
 }
-export async function sfxBlob(id) {
-    const meta = getSfx(id);
-    if (!meta) return null;
+async function rawSfxBlob(id, meta) {
     if (meta.custom) return customBlob(id);
     const response = await fetch(new URL(meta.assetPath || `../sfx/${id}.mp3`, import.meta.url));
     if (!response.ok) throw new Error('내장 효과음 파일을 불러오지 못했어요.');
     return response.blob();
+}
+// ---------- 1.6.2 효과음 크기 맞추기 (sfx.normalize): 효과음마다 크기가 달라 작은 것은 안 들리고 음량을 올리면 큰 것만 더 커지는 문제.
+//   목소리 음량 고르기와 같은 BS.1770 측정 · 이득(−12~+18 dB) · 소프트 리미터로 목표 음량(target_lufs, 기본 −16 LUFS)에 맞춘 WAV 를 재생 · 미리듣기 · 저장에 쓴다.
+//   짧은 타격음은 참 봉우리가 −1.5 dBFS 를 넘지 않는 데까지만 키우고(peakSafe), 스테레오는 채널을 지킨다(keepChannels).
+//   원본 바이트(내 효과음 팩 · SHA · 내장 파일)는 바꾸지 않는다. 한 세션에 소리마다 한 번 (캐시 48 MB, 열쇠 = id + SHA + 목표),
+//   2 MB 넘는 파일 · 60 초 넘는 소리 · 디코드 못 하는 파일은 원본 그대로. 끄면 다음 소리부터 원본 (재생 중인 소리는 끝날 때까지 그대로).
+const LEVEL_MAX_BYTES = 2 * 1024 * 1024, LEVEL_MAX_SECONDS = 60, LEVEL_CACHE_BYTES = 48 * 1024 * 1024;
+const levelCache = new Map();      // 열쇠 → { blob, at }
+const levelInflight = new Map();   // 열쇠 → 진행 중인 약속 (같은 소리를 동시에 부르면 한 번만 잰다)
+let levelBytes = 0;
+export const sfxLevelOn = () => settings().sfx?.normalize === true;
+/** 목표 음량 = 목소리 음량 고르기의 목표(−24~−10, 기본 −16) — 둘이 같은 기준이어야 효과음이 목소리 옆에서 같은 크기로 들린다 */
+export function sfxLevelTarget() {
+    const t = Number(settings().target_lufs);
+    return Number.isFinite(t) ? Math.max(-24, Math.min(-10, t)) : -16;
+}
+const levelKey = (id, meta, target) => `${id}|${meta?.sha256 || meta?.bytes || ''}|${target}`;
+async function levelledSfxBlob(id, meta, blob) {
+    if (!(blob instanceof Blob) || !blob.size || blob.size > LEVEL_MAX_BYTES) return blob;
+    const target = sfxLevelTarget();
+    const key = levelKey(id, meta, target);
+    const hit = levelCache.get(key);
+    if (hit) { hit.at = Date.now(); return hit.blob; }
+    if (levelInflight.has(key)) return levelInflight.get(key);
+    const task = (async () => {
+        let out = blob;
+        try {
+            const r = await levelAudio(blob, { normalize: true, targetLufs: target, dethump: false, maxSeconds: LEVEL_MAX_SECONDS, keepChannels: true, peakSafe: true });
+            if (r?.blob instanceof Blob && r.blob.size) out = r.blob;
+        } catch { out = blob; }   // 디코드 실패 → 원본 (loudness.prepare 도 같은 규칙)
+        if (out.size <= LEVEL_CACHE_BYTES) {
+            levelCache.set(key, { blob: out, at: Date.now() });
+            levelBytes += out.size;
+            while (levelBytes > LEVEL_CACHE_BYTES && levelCache.size > 1) {
+                const [oldKey, old] = [...levelCache.entries()].sort((a, b) => a[1].at - b[1].at)[0];
+                levelCache.delete(oldKey); levelBytes -= old.blob.size;
+            }
+        }
+        return out;
+    })();
+    levelInflight.set(key, task);
+    try { return await task; } finally { levelInflight.delete(key); }
+}
+/** 효과음 파일 (raw: true = 원본 그대로 — 해시 · 팩 · 출처 확인용). 효과음 크기 맞추기가 켜져 있으면 목표 음량에 맞춘 WAV */
+export async function sfxBlob(id, { raw = false } = {}) {
+    const meta = getSfx(id);
+    if (!meta) return null;
+    const blob = await rawSfxBlob(id, meta);
+    if (raw || !blob || !sfxLevelOn()) return blob;
+    return levelledSfxBlob(id, meta, blob);
 }
 function audioType(bytes) {
     const ascii = (at, word) => [...word].every((c, i) => bytes[at + i] === c.charCodeAt(0));

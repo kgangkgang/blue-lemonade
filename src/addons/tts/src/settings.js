@@ -68,7 +68,7 @@ export const DEFAULTS = Object.freeze({
     highlight: true,
     highlight_style: 'both',       // 재생 표시: color | both | underline (기존 표시는 둘 다)
     mini_player: true,
-    sfx: { enabled: false, auto: true, tap: true, scene_chars: 4000, level: 'normal', volume: 0.45, mode: 'overlay', custom: [], disabled: [] },   // 1.5.8 scene_chars = 효과음 찾을 지문 글자 (sceneCharsOf)
+    sfx: { enabled: false, auto: true, tap: true, scene_chars: 4000, level: 'normal', volume: 0.45, mode: 'overlay', normalize: false, custom: [], disabled: [] },   // 1.6.2 normalize = 효과음 크기 맞추기 · 1.5.8 scene_chars = 효과음 찾을 지문 글자 (sceneCharsOf)
     prefetch: 2,
     voices: [],
     char_map: {},
@@ -368,6 +368,7 @@ export function settings() {
     if (!['few', 'normal', 'many'].includes(s.sfx.level)) s.sfx.level = 'normal';   // 1.5.7 효과음 넓이
     s.sfx.volume = Number.isFinite(Number(s.sfx.volume)) ? Math.max(0, Math.min(1, Number(s.sfx.volume))) : 0.45;
     if (!['sequence', 'overlay'].includes(s.sfx.mode)) s.sfx.mode = 'overlay';
+    s.sfx.normalize = s.sfx.normalize === true;   // 1.6.2 효과음 크기 맞추기 (sfx-library.sfxBlob)
     if (!Array.isArray(s.sfx.custom)) s.sfx.custom = [];
     // Preserve all existing sound fields and playback preferences; only bound imported attribution.
     s.sfx.custom = s.sfx.custom.map(row => {
