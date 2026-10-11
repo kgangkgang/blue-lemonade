@@ -88,6 +88,24 @@ export const usesTags = (model) => genOf(model) >= 3;           // 오디오 태
 export const snapsStability = (model) => genOf(model) === 3;     // 0 · 0.5 · 1 만 받는 건 v3 뿐 (v4 는 0.37 도 받음 — 10-07 실측)
 export const sendsSpeed = (model) => genOf(model) < 3;           // v3 · v4 는 속도가 없음 (v4 는 보내도 무시)
 const modelOf = (cfg) => resolveModel(cfg, defaults.model);
+/** 1.6.3 with-timestamps 응답의 base64 소리 → Blob (없거나 비면 null) */
+function base64Blob(b64) {
+    if (typeof b64 !== 'string' || !b64) return null;
+    try {
+        const bin = atob(b64), bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        return bytes.length ? new Blob([bytes], { type: 'audio/mpeg' }) : null;
+    } catch { return null; }
+}
+/** 1.6.3 alignment { characters[], character_start_times_seconds[], character_end_times_seconds[] } → { chars, start[], end[] } (ms 정수) | null */
+function alignOf(a) {
+    const ch = a?.characters, st = a?.character_start_times_seconds, en = a?.character_end_times_seconds;
+    if (!Array.isArray(ch) || !Array.isArray(st) || !Array.isArray(en) || !ch.length || st.length !== ch.length || en.length !== ch.length) return null;
+    const ms = (v) => { const n = Math.round(Number(v) * 1000); return Number.isFinite(n) ? n : NaN; };
+    const start = st.map(ms), end = en.map(ms);
+    if (start.some(Number.isNaN) || end.some(Number.isNaN)) return null;
+    return { chars: ch.map(c => String(c)).join(''), start, end };
+}
 /** 받은 목록의 can_use_style · can_use_speaker_boost (모르면 v4 부터 스타일 없음 — v4 안내: Style · Speed 없음) */
 function styleOk(cfg) {
     const m = modelOf(cfg), meta = modelMeta(ID, m);
@@ -287,11 +305,24 @@ export default {
         const norm = String(p.apply_text_normalization || 'auto');
         if (norm !== 'auto') body.apply_text_normalization = norm;
 
-        const blob = await call(`/v1/text-to-speech/${encodeURIComponent(voice.voiceId)}?output_format=${OUTPUT}`, {
-            key: cfg.key, method: 'POST', body, signal, as: 'blob', timeout: 120000,
-        });
+        const path = `/v1/text-to-speech/${encodeURIComponent(voice.voiceId)}`;
+        // 1.6.3 글자 시간표(with-timestamps — 요금 같음): 단어 음소거가 정확한 구간을 자른다 (시간표는 보낸 글 기준 — 태그 머리말 포함).
+        //   모델 · 엔드포인트가 거부하면(키 · 한도 · 몰림 · 서버 오류가 아닌 4xx) 예전 엔드포인트로 한 번 물러선다
+        let blob = null, align = null;
+        try {
+            const j = await call(`${path}/with-timestamps?output_format=${OUTPUT}`, { key: cfg.key, method: 'POST', body, signal, timeout: 120000 });
+            blob = base64Blob(j?.audio_base64);
+            align = alignOf(j?.alignment);
+        } catch (e) {
+            if ((signal && signal.aborted) || e?.fatal || e?.retry) throw e;
+            blob = null;
+        }
+        if (!blob) {
+            const b = await call(`${path}?output_format=${OUTPUT}`, { key: cfg.key, method: 'POST', body, signal, as: 'blob', timeout: 120000 });
+            blob = b.type ? b : new Blob([b], { type: 'audio/mpeg' });
+        }
         if (!blob.size) throw new Error('음성 데이터가 비어 있어요');
-        return { blob: blob.type ? blob : new Blob([blob], { type: 'audio/mpeg' }), mime: 'audio/mpeg', usage: { chars: String(text || '').length } };
+        return { blob, mime: 'audio/mpeg', usage: { chars: String(text || '').length }, ...(align ? { align } : {}) };
     },
 
     /** 1.3.5 잔액 줄: 남은 글자 / 이번 달 한도 · 다음 초기화 · 요금제 (구독 조회 — 합성 없음) */

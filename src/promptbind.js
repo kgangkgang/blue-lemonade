@@ -46,7 +46,11 @@ export function bindLabel(key) {
 export function regexScripts() {
     try { const list = SillyTavern.getContext().extensionSettings?.regex; return Array.isArray(list) ? list : []; } catch { return []; }
 }
-export function regexName(id) { return regexScripts().find(s => s && s.id === id)?.scriptName || String(id || ''); }
+/** 6.0.5 지금 캐릭터의 카드 안(스코프) 정규식 스크립트 — 없으면 [] (사용자는 전역 정규식이 0개, 카드 정규식만 썼다) */
+export function scopedRegexScripts() {
+    try { const ctx = SillyTavern.getContext(); const ch = ctx.characters?.[Number(ctx.characterId)]; const list = ch?.data?.extensions?.regex_scripts; return Array.isArray(list) ? list : []; } catch { return []; }
+}
+export function regexName(id) { return [...regexScripts(), ...scopedRegexScripts()].find(s => s && s.id === id)?.scriptName || String(id || ''); }
 
 // ───────── 저장 ─────────
 function binds() { const s = getSettings(); if (!s.promptBinds || typeof s.promptBinds !== 'object') s.promptBinds = {}; return s.promptBinds; }
@@ -115,8 +119,8 @@ export async function syncPromptBinds() {
         const m = await manager();
         if (!m?.activeCharacter || typeof m.getPromptOrderEntry !== 'function') return 0;
         const keys = currentKeys();
-        const scripts = regexScripts();
-        let changed = 0, regexChanged = 0;
+        const scripts = regexScripts(), scoped = scopedRegexScripts();
+        let changed = 0, regexChanged = 0, scopedChanged = 0;
         for (const id of ids) {
             const want = wanted(all[id], keys);
             if (want === null) continue;
@@ -125,7 +129,9 @@ export async function syncPromptBinds() {
             if (entry && (entry.enabled !== false) !== want) { entry.enabled = want; changed++; }
             for (const sid of (Array.isArray(all[id].regex) ? all[id].regex : [])) {
                 const sc = scripts.find(s => s && s.id === sid);
-                if (sc && (sc.disabled === true) !== !want) { sc.disabled = !want; regexChanged++; }
+                if (sc) { if ((sc.disabled === true) !== !want) { sc.disabled = !want; regexChanged++; } continue; }
+                const sp = scoped.find(s => s && s.id === sid);   // 6.0.5 카드 안 정규식 (지금 캐릭터 것만 보인다 — 다른 캐릭터에선 어차피 안 돈다)
+                if (sp && (sp.disabled === true) !== !want) { sp.disabled = !want; scopedChanged++; }
             }
         }
         if (changed) {
@@ -137,7 +143,8 @@ export async function syncPromptBinds() {
             for (const ms of [350, 1200]) setTimeout(() => { syncPromptBinds(); }, ms);
         }
         if (regexChanged && !changed) { try { SillyTavern.getContext().saveSettingsDebounced?.(); } catch { /* 저장 없음 */ } }
-        return changed + regexChanged;
+        if (scopedChanged) { try { const ctx = SillyTavern.getContext(); await ctx.writeExtensionField?.(Number(ctx.characterId), 'regex_scripts', scoped); } catch { /* 카드 저장 실패는 화면만 */ } }
+        return changed + regexChanged + scopedChanged;
     })().finally(() => { syncing = null; if (rerun) { rerun = false; syncPromptBinds(); } });
     return syncing;
 }
@@ -230,9 +237,9 @@ function openPicker(id) {
         setBind(id, cb.dataset.key, cb.checked); renderChips(); await syncPromptBinds();
     });
 }
-/** 정규식 고르기: 전역 정규식 스크립트 가운데 이 프롬프트와 함께 켜고 끌 것 */
+/** 정규식 고르기: 전역 정규식 + 이 캐릭터의 카드 정규식 가운데 이 프롬프트와 함께 켜고 끌 것 */
 function openRegexPicker(id) {
-    const scripts = regexScripts().filter(s => s && s.id);
+    const scripts = [...regexScripts().map(s => ({ ...s, _scope: '' })), ...scopedRegexScripts().map(s => ({ ...s, _scope: ' · 이 캐릭터' }))].filter(s => s && s.id);
     const dialog = dialogShell(`${promptName(id)} · 정규식`);
     const list = dialog.querySelector('.bl-pbind-list');
     list.classList.add('is-regex');
@@ -240,7 +247,7 @@ function openRegexPicker(id) {
         const needle = q.trim().toLowerCase();
         const chosen = new Set(regexOf(id));
         list.innerHTML = scripts.filter(s => !needle || String(s.scriptName || '').toLowerCase().includes(needle)).map(s =>
-            `<label class="bl-pbind-item"><input type="checkbox" data-regex="${esc(s.id)}"${chosen.has(s.id) ? ' checked' : ''}><span class="bl-pbind-noimg is-regex">R</span><span>${esc(s.scriptName || s.id)}</span></label>`).join('') || '<p class="bl-pbind-empty">전역 정규식이 없어요</p>';
+            `<label class="bl-pbind-item"><input type="checkbox" data-regex="${esc(s.id)}"${chosen.has(s.id) ? ' checked' : ''}><span class="bl-pbind-noimg is-regex">R</span><span>${esc(s.scriptName || s.id)}${esc(s._scope)}</span></label>`).join('') || '<p class="bl-pbind-empty">정규식이 없어요 (전역 · 이 캐릭터 카드)</p>';
     };
     paint();
     dialog.querySelector('.bl-pbind-search').addEventListener('input', e => paint(e.target.value));

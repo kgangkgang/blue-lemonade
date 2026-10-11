@@ -12,7 +12,7 @@
 
 /* ---------- 공통 변수: 설정 창 · 편집 팝업 · 재생 막대 (ST 테마 색을 따르고, 블루 레몬에이드 변수는 있으면 씀) */
 .lv-settings, .lv-editor, .lv-bar {
-  --lv-css-version: "1.6.2";
+  --lv-css-version: "1.6.3";
   --lv-accent: var(--salty-accent, var(--SmartThemeQuoteColor, #51a0de));
   --lv-text: var(--SmartThemeBodyColor, #dcdcd2);
   --lv-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, .15));
@@ -559,3 +559,19 @@ body.salty.salty-icons-line #chat .mes .extraMesButtons > .lv_play { --salty-mi:
 @media (hover: hover) and (pointer: fine) {
   .lv-actions .menu_button, .lv-line .menu_button { padding-top: 4px; padding-bottom: 2px; }
 }
+
+/* 1.6.3 요술봉 메뉴(.lv-bar-dlmenu 재사용) · 효과음 고르기 */
+.lv-bar-analyze.lv-open { background: var(--lv-fill-hover); }
+.lv-bar-sfxpick { position: absolute; bottom: calc(100% + 6px); left: 0; width: min(360px, calc(100% - 8px)); display: flex; flex-direction: column; gap: 6px; padding: 8px; border: 1px solid var(--lv-border); border-radius: 12px; background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #171717) 96%, transparent); box-shadow: 0 4px 18px rgba(0, 0, 0, .35); }
+.lv-bar-sfxpick[hidden] { display: none; }
+.lv-bar-sfxsearch { width: 100%; box-sizing: border-box; height: var(--lv-h); padding: 0 10px; border: 1px solid var(--lv-border); border-radius: var(--lv-r-pill); background: transparent; color: var(--lv-text); font: inherit; font-size: .9em; }
+.lv-bar-sfxlist { display: flex; flex-wrap: wrap; gap: 4px; max-height: 38vh; overflow: auto; }
+.lv-bar-sfxopt { height: var(--lv-h); padding: 0 10px; border: 0; border-radius: var(--lv-r-pill); background: color-mix(in srgb, var(--lv-text) 8%, transparent); color: var(--lv-text); font: inherit; font-size: .86em; cursor: pointer; }
+.lv-bar-sfxopt:hover { background: var(--lv-fill-hover); }
+.lv-bar-sfxopt:focus-visible { outline: 2px solid var(--lv-accent); outline-offset: 1px; }
+.lv-bar-sfxopt.lv-fav::before { content: "★ "; color: var(--lv-accent); }
+.lv-bar-sfxempty { margin: 4px 2px; font-size: .86em; opacity: .7; }
+.lv-bar-sfxmine { display: flex; flex-wrap: wrap; gap: 4px; padding-top: 6px; border-top: 1px solid var(--lv-border); }
+.lv-bar-sfxmine[hidden] { display: none; }
+.lv-bar-sfxmineopt { display: inline-flex; align-items: center; gap: 6px; height: var(--lv-h); padding: 0 10px; border: 0; border-radius: var(--lv-r-pill); background: color-mix(in srgb, var(--lv-accent) 18%, transparent); color: var(--lv-text); font: inherit; font-size: .84em; cursor: pointer; }
+.lv-bar-sfxmineopt > i { color: var(--lv-accent); }

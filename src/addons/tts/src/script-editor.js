@@ -214,7 +214,12 @@ async function openEditor(mesId, { soundId } = {}) {
                 const syncUsage = () => { unused.hidden = useSound.checked; item.classList.toggle('lvs-sound-unused', !useSound.checked); };
                 useSound.addEventListener('change', () => { library.setSfxEnabled(sound.id, useSound.checked); syncUsage(); updateControls(); });
                 usageLabel.append(useSound, document.createTextNode('재생에 사용'));
-                usage.append(usageLabel, help('꺼두면 채팅 읽기·대본 재생·WAV 저장에서 제외돼요. 미리듣기로 소리는 확인할 수 있어요.'), unused); syncUsage(); info.append(usage);
+                usage.append(usageLabel, help('꺼두면 채팅 읽기·대본 재생·WAV 저장에서 제외돼요. 미리듣기로 소리는 확인할 수 있어요.'), unused);
+                // 1.6.3 우선(★): 비슷한 소리가 여럿일 때 분석이 이 소리를 먼저 고른다 (지시문만 바뀜 → 다음 읽기 때 한 번 다시 분석)
+                const favLabel = element('label', 'lvs-check'), fav = element('input'); fav.type = 'checkbox'; fav.checked = library.isSfxFavorite(sound.id); fav.setAttribute('aria-label', `${sound.name} 우선`);
+                fav.addEventListener('change', () => { library.setSfxFavorite(sound.id, fav.checked); });
+                favLabel.append(fav, document.createTextNode('우선')); usage.append(favLabel, help('비슷한 소리가 여럿일 때 분석이 이 소리를 먼저 골라요. 지시문이 바뀌어 다음 읽기 때 한 번 다시 분석해요.'));
+                syncUsage(); info.append(usage);
                 const credit = sfxCreditElement(sound); if (credit) info.append(credit);
                 const buttons = element('div', 'lvs-actions'); buttons.append(button('듣기', () => previewSound(sound.id)));
                 if (identity) buttons.append(button('+ 대본에 추가', () => appendRow('sfx', sound.id)));

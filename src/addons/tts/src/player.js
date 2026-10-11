@@ -49,13 +49,14 @@ import { voiceFor, findVoice, allVoices, twinOf, engineUsable, isPinned, setPers
 import { POPUP_TYPE, POPUP_RESULT, callGenericPopup } from '../../../../../../../popup.js';
 import * as cache from './cache.js';
 import { prepare } from './loudness.js';
+import { muteWords, muteText, mutedBlob, muteSig } from './mute.js';   // 1.6.3 단어 음소거
 import { log, scrub } from './log.js';
 import { getProvider } from './providers/index.js';
 import * as analysis from './analysis.js';
 import * as translation from './translation.js';
 import * as listen from './listen.js';   // 1.4.4 듣는 언어
 import { resolveScript, normalizeRows, scriptFingerprint } from './script-store.js';
-import { getSfx, sfxBlob, isSfxEnabled, sfxPreferenceRevision, onSfxPreferenceChange, sfxAttribution, sfxLevelOn } from './sfx-library.js';
+import { getSfx, sfxBlob, isSfxEnabled, sfxPreferenceRevision, onSfxPreferenceChange, sfxAttribution, sfxLevelOn, listSfx, isSfxFavorite } from './sfx-library.js';
 import { playbackOriginal, wavWithCredits } from './playback-details.js';
 import { createSfxController } from './sfx-audio.js';
 import { mixScene } from './scene-mix.js';
@@ -144,14 +145,18 @@ function sortedJson(obj) {
 const pregenOn = (s) => s?.pregen === 'dialogue' || s?.pregen === 'all';
 // 1.5.5 번호 → 메시지: 음수는 다른 확장이 넘긴 글(analysis.registerExternal), 그 밖엔 채팅
 // 1.5.7 효과음 넓이(sfx.level): 저장된 신호를 재생 때 거른다 — 바꿔도 분석을 다시 하거나 음성을 다시 만들지 않는다.
-//   few = 분명한 소리(strength 1)만 3개 · normal = 1~2 를 8개 · many = 전부 12개. WAV 저장은 적어도 normal (사용자: 저장엔 효과음까지).
-const SFX_LEVELS = { few: { max: 3, strength: 1 }, normal: { max: 8, strength: 2 }, many: { max: 12, strength: 3 } };
+//   few = 분명한 소리(strength 1)만 · normal = 1~2 · many = 전부 (3 = 불확실·비슷한 소리, 과해석일 수 있음). WAV 저장은 적어도 normal (사용자: 저장엔 효과음까지).
+//   1.6.3 개수로는 자르지 않는다 (사용자: 1,000자 채팅과 5,000자 지문이 달라 12개는 적을 수 있다) — 분석 쪽 저장 한도가 지문 길이를 따른다(analysis.sfxCap)
+const SFX_LEVELS = { few: { strength: 1 }, normal: { strength: 2 }, many: { strength: 3 } };
 function sfxCues(mesId, { forExport = false } = {}) {
     const cues = cachedAnalysis(mesId)?.sfx || [];
     let level = settings().sfx?.level; if (!SFX_LEVELS[level]) level = 'normal';
     if (forExport && level === 'few') level = 'normal';
     const rule = SFX_LEVELS[level];
-    return cues.filter(c => (Number.isInteger(c.strength) ? c.strength : 2) <= rule.strength).slice(0, rule.max);
+    const auto = cues.filter(c => (Number.isInteger(c.strength) ? c.strength : 2) <= rule.strength);
+    // 1.6.3 손으로 넣은 효과음은 넓이와 상관없이 늘 (같은 자리 같은 소리는 한 번)
+    const manual = analysis.manualSfx(mesId).filter(m => !auto.some(c => c.after === m.after && c.id === m.id));
+    return manual.length ? [...auto, ...manual].sort((a, b) => a.after - b.after) : auto;
 }
 const msg = (id) => (Number.isInteger(id) && id < 0 ? analysis.externalMessage(id) : chat[id]);
 const nowMs = () => (typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now());
@@ -791,6 +796,7 @@ function finishJobs(jobs, s, { merge = true, quiet = false } = {}) {
     for (const j of jobs) {
         j.provider = getProvider(j.voice.provider) || null;
         if (!j.provider) { if (!quiet) toastOnce(`엔진을 찾을 수 없어요: ${j.voice.provider}`, 'error'); continue; }
+        { const w = muteWords(s.mute_words); if (w.length && (s.mute_mode === 'text' || j.provider.caps?.blob === false)) j.text = muteText(j.text, w); }   // 1.6.3 다시 만들기(text) · 브라우저 내장(소리 파일 없음): 글에서 뺀다 → 캐시 열쇠(아래 keyOf)가 바뀌어 그 줄만 새로. 모든 길(자동 읽기 · 누름 · 소리 대본 · 시험)이 여길 지난다
         j.params = paramsFor(j.provider, j.voice);
         fitShout(j);
         fitStrength(j, s);
@@ -996,27 +1002,32 @@ let lastTapMs = null;
  */
 export function prepOpts(job, s) {
     const v = job.voice || {};
-    return { normalize: !!s.normalize, targetLufs: Number(s.target_lufs) || -16, gainDb: Number(v.gainDb) || 0, autoGainDb: Number(v.autoGainDb) || 0, dethump: s.dethump !== false };
+    return { normalize: !!s.normalize, targetLufs: Number(s.target_lufs) || -16, gainDb: Number(v.gainDb) || 0, autoGainDb: Number(v.autoGainDb) || 0, dethump: s.dethump !== false, mute: muteSig(job.text, s) };   // mute: 1.6.3 이 글에 걸리는 음소거 목록의 서명 ('' = 없음)
 }
-export const prepKey = (key, o) => `${key}|${o.normalize ? 1 : 0}|${o.targetLufs}|${o.gainDb}|${o.autoGainDb}|${o.dethump === false ? 0 : 1}`;
+export const prepKey = (key, o) => `${key}|${o.normalize ? 1 : 0}|${o.targetLufs}|${o.gainDb}|${o.autoGainDb}|${o.dethump === false ? 0 : 1}|${o.mute || ''}`;
+/** 1.6.3 소리에서 말을 지운다 (설정 mute_words · audio 모드 · 이 글에 그 말이 있을 때만). 시간표(align)가 있으면 정확히, 없으면 어림. 못 하면 원본 */
+async function muteInto(job, blob, align, s = settings(), key = job.key) {
+    if (!muteSig(job.text, s)) return blob;
+    try { return (await mutedBlob(blob, { text: job.text, words: muteWords(s.mute_words), align: align || null, key })) || blob; } catch { return blob; }
+}
 /** 음량을 골라 prepared 에 (이미 있으면 그대로) → { blob, lufs } */
-async function prepareInto(job, raw, lufs, s = settings()) {
+async function prepareInto(job, raw, lufs, s = settings(), align = null) {
     const o = prepOpts(job, s);
     const pk = prepKey(job.key, o);
     const have = prepared.get(pk);
     if (have) return { blob: have.blob, lufs: have.lufs ?? lufs };
     const g = clipGen;
     const out = await prepare(raw, { ...o, lufs });
-    const blob = out?.blob || raw;
+    const blob = o.mute ? await muteInto(job, out?.blob || raw, align, s, pk) : (out?.blob || raw);   // 1.6.3 음량을 고른 뒤 말을 지운다 (prepared 열쇠에 서명이 들어 있음)
     const got = out?.lufs ?? lufs ?? null;
     if (g === clipGen) prepared.set(pk, { blob, lufs: got }, blob.size || 0);   // 그 사이에 비웠으면 옛 소리를 남기지 않음
     return { blob, lufs: got };
 }
 /** 미리 만든 소리를 메모리에 (원본 + prep 이면 음량 고른 소리). 음량을 안 고르면 lufs 는 모름(null — 탭이 잴 때) */
-async function keepWarm(job, raw, lufs, prep = true) {
-    warm.set(job.key, { raw, lufs }, raw.size || 0);
+async function keepWarm(job, raw, lufs, prep = true, align = null) {
+    warm.set(job.key, { raw, lufs, align }, raw.size || 0);
     if (!prep) return { blob: raw, lufs };
-    try { return await prepareInto(job, raw, lufs); } catch { return { blob: raw, lufs }; }
+    try { return await prepareInto(job, raw, lufs, settings(), align); } catch { return { blob: raw, lufs }; }
 }
 /** 같은 키의 합성 하나 (여러 쪽이 붙음). 캐시에 넣기를 기다린 뒤 자리를 비운다 (그 사이에 온 쪽도 이 결과에 붙음) */
 function startEntry(job, pre, prep = true) {
@@ -1028,8 +1039,9 @@ function startEntry(job, pre, prep = true) {
         const b = rec instanceof Blob ? rec : rec?.blob;
         if (b instanceof Blob && b.size) {
             const lufs = Number.isFinite(rec?.lufs) ? rec.lufs : null;
-            if (e.pre && !e.stale) await keepWarm(job, b, lufs, e.prep);
-            return { raw: b, lufs, hit: true, made: false };
+            const align = rec?.align || null;   // 1.6.3 캐시에 둔 글자 시간표
+            if (e.pre && !e.stale) await keepWarm(job, b, lufs, e.prep, align);
+            return { raw: b, lufs, hit: true, made: false, align };
         }
         throwIfAborted(signal);
         const cfg = providerConfig(job.provider.id, job.provider.defaults || {});
@@ -1048,14 +1060,15 @@ function startEntry(job, pre, prep = true) {
         log('req', `${e.sentPre ? '미리 · ' : `${job.provider.id} · `}${job.voice.name} · ${job.text.length}자${res.usage?.model ? ` · ${res.usage.model}` : ''}`);
         // 캐시에는 엔진이 준 원본(작음)과 잰 음량만 — 음량 고르기는 설정이 바뀌면 다시 (prepared 키에 설정이 들어 있음)
         let lufs = null;
-        if (e.stale || e.moved) return { raw, lufs, hit: false, made: true, moved: e.moved };
-        try { lufs = (e.sentPre ? await keepWarm(job, raw, null, e.prep) : await prepareInto(job, raw, null)).lufs ?? null; }
+        const align = res?.align || null;   // 1.6.3 엔진이 준 글자 시간표 (ElevenLabs with-timestamps)
+        if (e.stale || e.moved) return { raw, lufs, hit: false, made: true, moved: e.moved, align };
+        try { lufs = (e.sentPre ? await keepWarm(job, raw, null, e.prep, align) : await prepareInto(job, raw, null, settings(), align)).lufs ?? null; }
         catch { lufs = null; }
         if (e.sentPre && !e.stale) premade.add(job.key);
-        return { raw, lufs, hit: false, made: true };
+        return { raw, lufs, hit: false, made: true, align };
     })();
     e.promise.then(async (r) => {
-        if (r?.raw && !r.hit && !e.stale && !e.moved) await Promise.resolve(cache.put(job.key, r.raw, { mime: r.raw.type || 'audio/mpeg', lufs: r.lufs })).catch(() => { /* 캐시 실패는 무시 */ });
+        if (r?.raw && !r.hit && !e.stale && !e.moved) await Promise.resolve(cache.put(job.key, r.raw, { mime: r.raw.type || 'audio/mpeg', lufs: r.lufs, ...(r.align ? { align: r.align } : {}) })).catch(() => { /* 캐시 실패는 무시 */ });
     }, () => { /* 부른 쪽이 받음 */ }).finally(() => { if (inflight.get(job.key) === e) inflight.delete(job.key); });
     return e;
 }
@@ -1102,13 +1115,13 @@ async function synthDirect(job, signal) {
     if (!(raw instanceof Blob) || !raw.size) throw new Error('음성 데이터가 비어 있어요');
     addUsage(res.usage?.chars ?? job.text.length, { model: res.usage?.model });
     log('req', `${job.provider.id} · ${job.voice.name} · ${job.text.length}자${res.usage?.model ? ` · ${res.usage.model}` : ''}`);
-    return { raw, lufs: null, hit: false, made: true };
+    return { raw, lufs: null, hit: false, made: true, align: res?.align || null };
 }
 /** 원본 소리: warm → 진행 중인 합성에 붙기 → (캐시 → 엔진). pre = 미리 만들기 줄 (탭이 붙으면 앞줄로) */
 function obtainRaw(job, { pre = false, signal = null, prep = true } = {}) {
     if (job.provider.caps?.blob === false) return synthDirect(job, signal);
     const w = warm.get(job.key);
-    if (w) return Promise.resolve({ raw: w.raw, lufs: w.lufs, hit: true, made: false });
+    if (w) return Promise.resolve({ raw: w.raw, lufs: w.lufs, hit: true, made: false, align: w.align || null });
     let e = inflight.get(job.key);
     if (!e || e.ctrl.signal.aborted || e.stale) { e = startEntry(job, pre, prep); e.origPre = !!pre; }
     else if (!pre && e.pre) { e.pre = false; e.waiter?.promote(); }
@@ -1131,8 +1144,8 @@ function ensureAudio(job) {
             const out = await prepare(r.raw, { ...prepOpts(job, settings()), lufs: null });
             return { blob: out?.blob || r.raw, lufs: out?.lufs, cached: false };
         }
-        const out = r.moved ? await prepare(r.raw, { ...prepOpts(job, settings()), lufs: r.lufs }) : await prepareInto(job, r.raw, r.lufs);   // moved: 옛 키로 메모리에 두지 않음
-        return { blob: out.blob, lufs: out.lufs, cached: !!r.hit };
+        const out = r.moved ? await prepare(r.raw, { ...prepOpts(job, settings()), lufs: r.lufs }) : await prepareInto(job, r.raw, r.lufs, settings(), r.align);   // moved: 옛 키로 메모리에 두지 않음
+        return { blob: r.moved ? await muteInto(job, out?.blob || r.raw, r.align) : out.blob, lufs: out.lufs, cached: !!r.hit };   // 1.6.3 moved 길도 말을 지운다
     })();
     p.catch(() => { if (job.audio === p) job.audio = null; });
     job.audio = p;
@@ -2469,7 +2482,13 @@ function buildBar() {
         '<div class="lv-bar-dlmenu" role="menu" hidden>' +
         '<button type="button" class="lv-bar-dlopt" data-dl="all" role="menuitem"><i class="fa-solid fa-layer-group"></i><span>전체</span></button>' +
         '<button type="button" class="lv-bar-dlopt" data-dl="one" role="menuitem"><i class="fa-solid fa-quote-left"></i><span>이 문장</span></button>' +
-        '</div>';
+        '</div>' +
+        // 1.6.3 요술봉을 누르면: 재생성(다시 분석) · 효과음(보관함에서 골라 지금 대사 앞에)
+        '<div class="lv-bar-wandmenu lv-bar-dlmenu" role="menu" hidden>' +
+        '<button type="button" class="lv-bar-dlopt" data-wand="redo" role="menuitem"><i class="fa-solid fa-rotate"></i><span>재생성</span></button>' +
+        '<button type="button" class="lv-bar-dlopt" data-wand="sfx" role="menuitem"><i class="fa-solid fa-volume-high"></i><span>효과음</span></button>' +
+        '</div>' +
+        '<div class="lv-bar-sfxpick" hidden><input type="search" class="lv-bar-sfxsearch" placeholder="효과음 찾기" aria-label="효과음 찾기"><div class="lv-bar-sfxlist" role="listbox" aria-label="지금 대사 앞에 넣을 효과음"></div><div class="lv-bar-sfxmine" hidden></div></div>';
     document.body.appendChild(bar);
     barEl.voice = bar.querySelector('.lv-bar-voice');
     barEl.text = bar.querySelector('.lv-bar-text');
@@ -2491,11 +2510,24 @@ function buildBar() {
     barEl.toggle.addEventListener('click', guard(() => (paused ? resume() : pause())));
     bar.querySelector('.lv-bar-next').addEventListener('click', guard(skip));
     bar.querySelector('.lv-bar-regen').addEventListener('click', guard(regenerateCurrent));
+    // 1.6.3 요술봉: 바로 다시 분석하지 않고 「재생성 · 효과음」 고르기 (사용자: 내려받기처럼)
+    barEl.wandmenu = bar.querySelector('.lv-bar-wandmenu');
+    barEl.sfxpick = bar.querySelector('.lv-bar-sfxpick');
     barEl.analyze.addEventListener('click', guard(() => {
-        if (waiting) return;                                      // 번역·분석을 기다리는 게 있으면 (다른 메시지 것이라도) 밀어내지 않음
+        if (!barEl.wandmenu.hidden || !barEl.sfxpick.hidden) { closeWandMenu(); return; }
         const id = currentMesId();
-        if (id != null && id >= 0) reanalyze(id).catch(e => log('err', `다시 분석 실패: ${String(e?.message || e).slice(0, 40)}`));
+        if (id == null) return;
+        openWandMenu({ mesId: id, job: current });   // 누른 순간의 문장을 잡아 둔다
     }));
+    barEl.wandmenu.addEventListener('click', (e) => {
+        const opt = e.target.closest('[data-wand]');
+        if (!opt) return;
+        const pick = wandPick;
+        if (opt.dataset.wand === 'sfx') { openSfxPick(pick); return; }
+        closeWandMenu();
+        if (!pick || waiting || pick.mesId < 0) return;                 // 번역·분석을 기다리는 게 있으면 (다른 메시지 것이라도) 밀어내지 않음
+        reanalyze(pick.mesId).catch(e => log('err', `다시 분석 실패: ${String(e?.message || e).slice(0, 40)}`));
+    });
     barEl.down = bar.querySelector('.lv-bar-down');
     barEl.dlmenu = bar.querySelector('.lv-bar-dlmenu');
     const runDownload = (p) => Promise.resolve(p).catch(e => log('err', `내려받기 실패: ${String(e?.message || e).slice(0, 40)}`));
@@ -2606,6 +2638,83 @@ function onDownloadMenuKey(e) {
     e.stopPropagation();
     closeDownloadMenu();
 }
+// ---------- 1.6.3 요술봉 메뉴 · 효과음 직접 넣기
+let wandPick = null, previewAudio = null;
+function positionWandMenu() {
+    for (const m of [barEl.wandmenu, barEl.sfxpick]) {
+        const b = barEl.analyze;
+        if (!bar || !m || m.hidden || !b) continue;
+        const center = b.offsetLeft + b.offsetWidth / 2;
+        m.style.left = `${Math.round(Math.max(4, Math.min(bar.clientWidth - m.offsetWidth - 4, center - m.offsetWidth / 2)))}px`;
+    }
+}
+function openWandMenu(pick) {
+    closeDetails(); closeDownloadMenu();
+    if (!bar || !barEl.wandmenu) return;
+    wandPick = pick;
+    barEl.sfxpick.hidden = true;
+    barEl.wandmenu.hidden = false;
+    positionWandMenu();
+    barEl.analyze.classList.add('lv-open');
+    document.addEventListener('pointerdown', onWandOutside, true);
+    document.addEventListener('keydown', onWandKey, true);
+}
+function closeWandMenu() {
+    wandPick = null;
+    if (barEl.wandmenu) barEl.wandmenu.hidden = true;
+    if (barEl.sfxpick) barEl.sfxpick.hidden = true;
+    barEl.analyze?.classList.remove('lv-open');
+    document.removeEventListener('pointerdown', onWandOutside, true);
+    document.removeEventListener('keydown', onWandKey, true);
+}
+function onWandOutside(e) { if (barEl.wandmenu?.contains(e.target) || barEl.sfxpick?.contains(e.target) || barEl.analyze?.contains(e.target)) return; closeWandMenu(); }
+function onWandKey(e) { if (e.key !== 'Escape') return; e.stopPropagation(); closeWandMenu(); }
+/** 덩이의 원문 조각 번호 → 그 앞 대화문 수 (효과음 신호의 after) */
+function dialogueOrdinal(mesId, job) {
+    if (!job || !Number.isInteger(job.segIndex) || job.segIndex <= 0) return 0;
+    try {
+        const src = sourcesOf(msg(mesId), settings(), { final: true });
+        let n = 0;
+        for (let i = 0; i < (src.orig || []).length && i < job.segIndex; i++) if (src.orig[i]?.kind === 'dialogue' && src.orig[i].text) n++;
+        return n;
+    } catch { return 0; }
+}
+async function previewSfx(id) {
+    try {
+        previewAudio?.pause();
+        const url = URL.createObjectURL(await sfxBlob(id));
+        previewAudio = new Audio(url);
+        previewAudio.volume = Math.max(0, Math.min(1, Number(settings().sfx?.volume ?? 0.45)));
+        previewAudio.onended = () => URL.revokeObjectURL(url);
+        await previewAudio.play();
+    } catch { /* 들려주기 실패는 조용히 — 넣는 건 이미 됐다 */ }
+}
+/** 효과음 고르기: 재생에 쓰는 보관함 소리에서 골라 지금 읽는 대사 앞에 넣는다 (저장돼 다음 읽기 · WAV 에도 들어감). 넣은 것은 아래 줄에서 뺄 수 있다 */
+function openSfxPick(pick) {
+    if (!pick || !barEl.sfxpick) return;
+    barEl.wandmenu.hidden = true;
+    const panel = barEl.sfxpick, list = panel.querySelector('.lv-bar-sfxlist'), mine = panel.querySelector('.lv-bar-sfxmine'), search = panel.querySelector('.lv-bar-sfxsearch');
+    const after = dialogueOrdinal(pick.mesId, pick.job);
+    const render = () => {
+        const q = search.value.trim().toLocaleLowerCase();
+        const sounds = listSfx().filter(x => isSfxEnabled(x.id) && (!q || `${x.name} ${(x.words || []).join(' ')} ${x.category || ''}`.toLocaleLowerCase().includes(q)));
+        sounds.sort((a, b) => Number(isSfxFavorite(b.id)) - Number(isSfxFavorite(a.id)) || String(a.name).localeCompare(String(b.name)));
+        list.replaceChildren(...sounds.slice(0, 120).map(x => { const b = document.createElement('button'); b.type = 'button'; b.className = 'lv-bar-sfxopt' + (isSfxFavorite(x.id) ? ' lv-fav' : ''); b.dataset.id = x.id; b.setAttribute('role', 'option'); b.textContent = x.name; return b; }));
+        if (!sounds.length) { const p = document.createElement('p'); p.className = 'lv-bar-sfxempty'; p.textContent = '맞는 효과음이 없어요'; list.replaceChildren(p); }
+        const cues = analysis.manualSfx(pick.mesId);
+        mine.hidden = !cues.length;
+        mine.replaceChildren(...cues.map(c => { const b = document.createElement('button'); b.type = 'button'; b.className = 'lv-bar-sfxmineopt'; b.dataset.id = c.id; b.dataset.after = String(c.after); const name = getSfx(c.id)?.name || c.id; b.setAttribute('aria-label', `${name} 빼기`); const t = document.createElement('span'); t.textContent = `${c.after + 1}번째 대사 앞 · ${name}`; const i = document.createElement('i'); i.className = 'fa-solid fa-xmark'; b.append(t, i); return b; }));
+    };
+    search.value = ''; render();
+    search.oninput = render;
+    list.onclick = (e) => {
+        const b = e.target.closest('.lv-bar-sfxopt'); if (!b) return;
+        if (!analysis.addManualSfx(pick.mesId, after, b.dataset.id)) { toast('효과음을 넣지 못했어요', 'warning'); return; }
+        previewSfx(b.dataset.id); toast(`「${getSfx(b.dataset.id)?.name || b.dataset.id}」을 ${after + 1}번째 대사 앞에 넣었어요`, 'success'); render();
+    };
+    mine.onclick = (e) => { const b = e.target.closest('.lv-bar-sfxmineopt'); if (!b) return; analysis.removeManualSfx(pick.mesId, Number(b.dataset.after), b.dataset.id); render(); };
+    panel.hidden = false; positionWandMenu(); search.focus();
+}
 const barWaiting = () => !!bar && bar.classList.contains('lv-bar-wait');
 /** 기다리는 동안 흐린 버튼은 aria-disabled 로도 알린다 (눌림 막기는 style.css 의 pointer-events 와 위 guard) */
 function setBlocked(on) {
@@ -2689,7 +2798,8 @@ function placeBar() {
         bar.style.setProperty('--lv-bar-left', `${Math.round(sr.left + 8)}px`);
         bar.style.setProperty('--lv-bar-width', `${Math.round(sr.width - 16)}px`);
     }
-    positionDownloadMenu();   // 1.4.3 열린 내려받기 고르기도 막대를 따라 (화면 폭이 바뀌어도 화면 안에)
+    positionDownloadMenu();   // 1.4.3 열린 내려받기 고르기도 막대를 따라
+    positionWandMenu();       // 1.6.3 요술봉 메뉴 · 효과음 고르기도 (화면 폭이 바뀌어도 화면 안에)
 }
 function observeBar(on) {
     if (on) {

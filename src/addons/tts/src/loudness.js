@@ -321,6 +321,9 @@ async function decode(blob) {
     }
 }
 
+/** 1.6.3 디코드 (AudioBuffer | null) — mute.js 단어 음소거가 같은 디코더를 쓴다 */
+export const decodeAudio = decode;
+
 /** 채널 평균 → 모노 */
 function monoOf(audio) {
     const ch = audio.numberOfChannels;

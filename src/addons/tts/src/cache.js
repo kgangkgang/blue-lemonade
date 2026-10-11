@@ -167,7 +167,9 @@ function pruneIfNeeded() {
 
 // ---------- 공개 API
 
-/** 꺼내기 → { blob, mime, lufs } | null. 마지막 사용 시각을 올린다 (LRU) */
+/** 1.6.3 시간표 모양: chars 문자열 + 같은 길이의 start/end 배열 (mute.js validAlign 과 같은 규칙 — 여기선 import 없이) */
+const validAlign = (a) => !!a && typeof a === 'object' && typeof a.chars === 'string' && a.chars.length > 0 && Array.isArray(a.start) && Array.isArray(a.end) && a.start.length === a.chars.length && a.end.length === a.chars.length;
+/** 꺼내기 → { blob, mime, lufs, align } | null. 마지막 사용 시각을 올린다 (LRU) */
 export async function get(key) {
     if (!key) return null;
     let rec = null;
@@ -186,6 +188,7 @@ export async function get(key) {
         blob: rec.blob,
         mime: rec.mime || rec.blob.type || 'audio/mpeg',
         lufs: Number.isFinite(rec.lufs) ? rec.lufs : null,
+        align: validAlign(rec.align) ? rec.align : null,   // 1.6.3 글자 시간표 { chars, start[], end[] } (ms) — 단어 음소거가 정확한 구간을 자른다
     };
 }
 
@@ -207,6 +210,7 @@ export async function put(key, blob, meta = {}) {
         lufs: Number.isFinite(meta.lufs) ? meta.lufs : null,
         t: Date.now(),
         size: blob.size,
+        ...(validAlign(meta.align) ? { align: meta.align } : {}),   // 1.6.3 엔진이 준 글자 시간표만 (작은 숫자 배열)
     };
     let existed = false;
     const ok = await tx('readwrite', (st) => {

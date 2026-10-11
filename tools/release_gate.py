@@ -68,7 +68,7 @@ TTS_EXTRA_FREESOUND = {
     'daily_squelch': (649982, 'SoundDesignForYou', '649982_13085623'),
     'daily_bed_creaking': (251449, 'bmusic92', '251449_4211564'),
     'daily_bed_creak': (443796, 'cabusta9', '443796_7262854'),
-    'daily_gulping': (341651, 'DeVern', '341651_2866779'),
+    'daily_gulping': (841516, 'aobowser', '841516_13941760'),
     'daily_gulp': (531755, 'magnuswaker', '531755_11537497'),
 }
 TTS_EXTRA_IDS = tuple(TTS_EXTRA_BIGSOUNDBANK) + tuple(TTS_EXTRA_GONGU) + tuple(TTS_EXTRA_FREESOUND)
@@ -109,7 +109,7 @@ TTS_EXTRA_SHA256 = {
     'daily_squelch': '4372056db085290cfe97b98d552d6e3a876fe26e6e35bd7dc95b2d9b76bde39e',
     'daily_bed_creaking': 'b50d1c03911ba18dc99124b437bd75d44f9c69ce5577fe38d6c0237280916bcf',
     'daily_bed_creak': '3e067b9439b4a7b92370ea76e26d2ae43391a3557c6e3ed4a5bd66b9a92cb891',
-    'daily_gulping': '4d3f6bcd17422b7b9054f36cb1c39feff8dc75758257000b49f96aefc2a69fab',
+    'daily_gulping': '7d4c5928eb3f068724a9d69986e65f6b9ee4f1d5291179a26dec1aa8a3b8431f',
     'daily_gulp': '775cb4ab43de01175e22117d9484bd7b91e28408b1d149d703b7ac12b5b00c2a',
 }
 TTS_EXTRA_SOURCE_SHA256 = {
@@ -145,7 +145,7 @@ TTS_EXTRA_SOURCE_SHA256 = {
     'daily_squelch': 'adfaf212f4fbb61d9924151a4d07de077a926e0f52d4fc7e8a7cce060719ca70',
     'daily_bed_creaking': '0ef876c2493c14b6fe2500ff1bc65a2a11f0e92c0ff273ff61091181d3e7350a',
     'daily_bed_creak': '9fdbbaf9112325932b07a85631267bf168276b26463d8093b7915cd6e3036dfc',
-    'daily_gulping': '5c9c59d833a58f4872643572d4d8f99b96346f28d90ca200ecd2b0dfb20404e7',
+    'daily_gulping': '3d0e6dad7ce8b0580741041803fff943ef434727af9334e4220489452f076f52',
     'daily_gulp': 'ecb89b67ef08c0c1f8c6ee886d1976ab49181f4a398d4cfd6ce6417b031ddf5b',
 }
 

@@ -23,6 +23,8 @@ body.salty .bl-pbind .menu_button {
   margin: 0;
   padding: 4px 10px;
   min-height: 30px;
+  flex: 0 0 auto;
+  white-space: nowrap;   /* 6.0.5: 폰에서 「+ 지금 캐릭터」가 세 줄로 꺾였다 */
 }
 body.salty .bl-pbind .menu_button:disabled {
   opacity: .45;

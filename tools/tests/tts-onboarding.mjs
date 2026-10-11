@@ -182,6 +182,7 @@ function route(c, scen) {
         }
         if (u.includes('/v1/models') && scen.elModelsBad && /^bad/.test(key)) return later(300, () => J({ detail: { status: 'invalid_api_key', message: 'Invalid API key' } }, 401));
         if (u.includes('/v1/models')) return J([{ model_id: 'eleven_v4', name: 'Eleven v4', can_do_text_to_speech: true, languages: [{ language_id: 'ko' }, { language_id: 'ja' }] }]);
+        if (u.includes('/with-timestamps')) return J({ audio_base64: '//NExAECAwQ=', alignment: { characters: ['a'], character_start_times_seconds: [0], character_end_times_seconds: [0.1] } });   // 1.6.3 글자 시간표 (AUDIO 와 같은 바이트)
         if (u.includes('/v1/text-to-speech/')) return AUDIO();
     }
     if (/\/v1\/(get_voice|t2a_v2)$/.test(u)) {

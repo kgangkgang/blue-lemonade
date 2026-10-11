@@ -115,4 +115,20 @@ await test('시작: CHAT_CHANGED · 프리셋 바꿈 · 이름 바꿈을 듣고 
     for (const fn of listeners['character_renamed']) fn('nagi.png', 'nagi3.png');
     assert.deepEqual(B.keysOf('bluelock_colors'), ['c:nagi3.png']);
 });
+await test('6.0.5 카드 안(스코프) 정규식도 목록에 들고 같이 켜고 끈다 · 카드에 저장한다', async () => {
+    ctx.characterId = 0; ctx.chatId = 'chat-a';
+    ctx.characters[0].data = { extensions: { regex_scripts: [{ id: 'r-scoped', scriptName: '스코프 정규식', disabled: true }] } };
+    ctx.writeExtensionField = async (chid, key, value) => { ctx.wrote = [chid, key, value.length]; };
+    assert.deepEqual(B.scopedRegexScripts().map(s => s.id), ['r-scoped']);
+    assert.equal(B.regexName('r-scoped'), '스코프 정규식');
+    ctx.extensionSettings.salty.promptBinds = { bluelock_colors: { keys: ['c:nagi.png'], regex: ['r-scoped'] } }; invalidateSettings();
+    order[2].enabled = true;
+    assert.ok(await B.syncPromptBinds() >= 1);
+    assert.equal(ctx.characters[0].data.extensions.regex_scripts[0].disabled, false, '묶인 캐릭터를 열면 카드 정규식이 켜진다');
+    assert.deepEqual(ctx.wrote, [0, 'regex_scripts', 1], '카드에 저장');
+    ctx.chatId = 'other'; ctx.extensionSettings.salty.promptBinds = { bluelock_colors: { keys: ['c:nagi.png/chat-a'], regex: ['r-scoped'] } }; invalidateSettings();
+    await B.syncPromptBinds();
+    assert.equal(ctx.characters[0].data.extensions.regex_scripts[0].disabled, true, '같은 캐릭터의 다른 채팅이면 끈다');
+    delete ctx.characters[0].data; delete ctx.writeExtensionField; ctx.chatId = 'chat-a';
+});
 console.log(`\npromptbind: ${passed} passed, 0 failed`);

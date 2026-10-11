@@ -1,13 +1,25 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.0.4/blue-lemonade-6.0.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.0.5/blue-lemonade-6.0.5.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.0.4 · 최신 업데이트</summary>
+<summary>6.0.5 · 최신 업데이트</summary>
+
+- 프롬프트 귀속 고침: 「자동 켜기」 단추가 좁은 화면에서 세 줄로 꺾이던 것을 고쳤고, 「정규식」 목록에 이 캐릭터 카드 안의 정규식도 보여요(전역 정규식이 없어도). 묶은 캐릭터에서 나갈 때 꺼지지 않던 경우도 고쳤어요.
+- TTS 1.6.3 효과음: 「꿀꺽 (연속)」 음원을 바꿨어요(첫 타격이 날카로워 때리는 소리로 들리던 것).
+- TTS 1.6.3 효과음 넓이: 개수(3 · 8 · 12)로 자르지 않고 해석의 확실함으로 골라요. 적음은 분명히 난 소리만, 보통은 소리 나는 동작까지, 많이는 비슷하거나 불확실한 소리까지(과해석일 수 있어요). 긴 지문이면 그만큼 많이 나요.
+- TTS 1.6.3 요술봉 메뉴: 재생 막대의 요술봉을 누르면 「재생성 · 효과음」을 골라요. 효과음은 보관함에서 골라 지금 읽는 대사 앞에 직접 넣어요(저장되고 WAV 에도 들어가요). 보관함 소리마다 「우선」을 켜면 비슷한 소리가 여럿일 때 그 소리를 먼저 골라요.
+- TTS 1.6.3 단어 음소거: 읽을 글 › 고급에 「음소거할 말」을 적으면 그 말은 소리 내지 않아요. 기본은 이미 만든 소리에서 그 구간만 비워요(ElevenLabs 는 글자 시간표로 정확히, 시간표가 없는 소리는 어림). 「다시 만들기」를 고르면 글에서 빼고 다시 합성해요(요금).
+- 대사 분석 응답이 JSON 이 아닐 때 토스트에 응답 앞부분을 함께 보여요 — 모델이 거절문이나 설명문을 보냈는지 바로 알 수 있게.
+
+</details>
+
+<details>
+<summary>6.0.4 · 프롬프트 귀속 · 확장 위 스위치 · 잠시 가리기</summary>
 
 - 프롬프트 귀속: 프롬프트 관리자에서 항목을 편집하면 맨 아래에 「자동 켜기」 줄이 생겨요. 지금 캐릭터·지금 채팅을 묶거나 목록에서 고르면, 그 채팅을 열 때 이 항목이 켜지고 나가면 꺼져요. 「정규식」으로 전역 정규식 스크립트를 붙이면 그 정규식도 함께 켜지고 꺼져요.
 - 대사 색처럼 특정 캐릭터에게만 쓰는 프롬프트에 쓰세요. 메모의 캐릭터·채팅 귀속과 같은 방식이고, 테마 모습 초기화에도 남아요.

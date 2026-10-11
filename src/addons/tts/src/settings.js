@@ -52,6 +52,8 @@ export const DEFAULTS = Object.freeze({
     skip_tags: DEFAULT_SKIP_TAGS,
     strip_regex: '',
     pron_dict: '',
+    mute_words: '',               // 1.6.3 단어 음소거 — 이 말은 소리 내지 않는다 (한 줄에 하나 · 2,000자 · mute.js)
+    mute_mode: 'audio',           // 1.6.3 'audio' 소리에서 지우기(요금 없음 · 시간표 없으면 어림) | 'text' 글에서 빼고 다시 만들기(요금)
     max_chars: 3000,
     emotion_from_tags: true,
     emotion_strength: 'normal',   // 1.3.1 감정 세기: weak(감정 안 보냄 · 속삭임만) | normal | strong(MiniMax 2.8: 감정 + 감탄 소리)
@@ -360,6 +362,9 @@ export function settings() {
         }
     }
     if (!Array.isArray(s.voices)) s.voices = [];
+    if (typeof s.mute_words !== 'string') s.mute_words = '';                       // 1.6.3 단어 음소거
+    if (s.mute_words.length > 2000) s.mute_words = s.mute_words.slice(0, 2000);
+    if (s.mute_mode !== 'text') s.mute_mode = 'audio';
     if (!isObj(s.sfx)) s.sfx = clone(DEFAULTS.sfx);
     s.sfx.enabled = s.sfx.enabled === true;
     s.sfx.auto = s.sfx.auto !== false;
@@ -378,6 +383,7 @@ export function settings() {
         return next;
     });
     s.sfx.disabled = [...new Set((Array.isArray(s.sfx.disabled) ? s.sfx.disabled : []).filter(id => typeof id === 'string' && /^[a-zA-Z0-9:_-]{1,90}$/.test(id)))].slice(-256);
+    s.sfx.favorites = [...new Set((Array.isArray(s.sfx.favorites) ? s.sfx.favorites : []).filter(id => typeof id === 'string' && /^[a-zA-Z0-9:_-]{1,90}$/.test(id)))].slice(-64);   // 1.6.3 우선 효과음(★)
     if (!HIGHLIGHT_STYLES.includes(s.highlight_style)) s.highlight_style = 'both';
     if (!['weak', 'normal', 'strong'].includes(s.emotion_strength)) s.emotion_strength = 'normal';
     if (!['whisper', 'auto'].includes(s.thought_emotion)) s.thought_emotion = 'whisper';

@@ -156,6 +156,19 @@ export function setSfxEnabled(id, enabled) {
     for (const listener of preferenceListeners) { try { listener(id, on); } catch { /* one UI cannot block playback cancellation */ } }
     return on;
 }
+/** 1.6.3 우선 효과음(★): 비슷한 소리가 여럿일 때 분석이 먼저 고르게 — 지시문에만 들어간다(재생은 그대로). settings().sfx.favorites */
+export function listSfxFavorites() { return (Array.isArray(settings().sfx?.favorites) ? settings().sfx.favorites : []).filter(id => getSfx(id)); }
+export function isSfxFavorite(id) { return listSfxFavorites().includes(id); }
+export function setSfxFavorite(id, on) {
+    if (!getSfx(id)) return false;
+    const s = settings();
+    if (!record(s.sfx)) s.sfx = {};
+    const list = (Array.isArray(s.sfx.favorites) ? s.sfx.favorites : []).filter(x => x !== id);
+    if (on === true) list.push(id);
+    s.sfx.favorites = list.slice(-64);
+    save();
+    return on === true;
+}
 export function sfxAttribution(ids) {
     const rows = [...new Set(ids)].map(getSfx).filter(Boolean);
     if (!rows.length) return '';

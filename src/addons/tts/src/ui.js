@@ -130,6 +130,10 @@ const READ_CARDS = {
         { key: 'skip_tags', label: '건너뛸 태그 (내용 포함)', type: 'text', wide: true, desc: '예: status → <status> 안의 글까지 제외해요. 쉼표로 구분해요. 속마음은 읽을 부분 → 직접 설정에서 골라요.' },
         { key: 'pron_dict', label: '발음 사전', type: 'textarea', rows: 3, placeholder: '원래말=읽을말', desc: '읽을 때만 바꿔요 · 한 줄에 하나' },
         { key: 'strip_regex', label: '추가로 지울 글 (정규식)', type: 'textarea', rows: 3, placeholder: '필요할 때만 입력하세요', desc: '일치한 부분만 읽기에서 빼요 · 한 줄에 하나. 태그 자체는 자동 정리하므로 보통 비워 둬요. 태그를 지우는 규칙은 내용 제외·감정 힌트를 방해할 수 있어요. 저장된 채팅은 바꾸지 않아요.' },
+        { key: 'mute_words', label: '음소거할 말', type: 'textarea', rows: 3, placeholder: '한 줄에 하나', desc: '이 말은 소리 내지 않아요 · 화면 글은 그대로',   // 1.6.3
+            help: '로그를 공유할 때 이름 같은 말을 소리에서 감춰요. 대소문자는 구별하지 않고, 읽는 글(번역문 · 발음 사전 뒤)에서 찾아요. 효과음에는 적용되지 않아요.' },
+        { key: 'mute_mode', label: '음소거 방법', type: 'select', options: [{ value: 'audio', label: '소리에서 지우기' }, { value: 'text', label: '다시 만들기 (요금)' }], show: s => String(s.mute_words || '').trim() !== '',
+            help: '소리에서 지우기는 이미 만든 소리에서 그 말의 구간만 무음으로 바꿔요 — 요금이 없어요. 정확한 자리는 글자별 시간표가 있어야 알아요: ElevenLabs 는 같은 요금으로 시간표를 주며 앞으로 만드는 소리부터 함께 저장돼요. MiniMax · 로컬 · 예전에 만든 소리는 시간표가 없어 글자 위치 비율로 어림해 앞뒤를 넉넉히 비우니 틀릴 수 있어요(기록에 남아요). 다시 만들기는 글에서 그 말을 빼고 새로 합성해요(요금). 브라우저 내장 목소리는 소리 파일이 없어 늘 글에서 빼요.' },
     ]],
     click: ['fa-hand-pointer', '대사 클릭', [
         { key: 'click_play', label: '클릭한 대사 읽기', type: 'toggle', desc: '대사·속마음을 누르면 그 줄만 읽어요' },
@@ -138,7 +142,7 @@ const READ_CARDS = {
         { key: 'sfx.enabled', label: '채팅 읽기에 효과음', type: 'toggle', help: '켜면 저장한 소리 대본의 효과음도 함께 재생해요. 대본 편집에서 직접 들어보기는 이 설정과 관계없이 쓸 수 있어요.' },
         { key: 'sfx.auto', label: '서술에서 자동으로 찾기', type: 'toggle', show: s => !!s.sfx?.enabled, help: '대사 분석을 켜면 같은 분석 요청에서 문소리·발소리처럼 실제로 발생한 소리를 찾아요. 맞는 내장·사용자 음원이 없으면 생략해요. 분석 서비스 요금은 기존과 같이 적용돼요.' },
         { key: 'sfx.tap', label: '누른 대사 앞 지문의 효과음도', type: 'toggle', show: s => !!s.sfx?.enabled && s.sfx?.auto !== false, help: '대사를 눌러 읽을 때 그 대사 바로 앞 지문에서 찾은 효과음을 먼저 들려줘요. 지문을 읽지 않는 설정에서도 효과음이 나요. 분석이 아직 없으면 먼저 분석해요.' },
-        { key: 'sfx.level', label: '효과음 넓이', type: 'select', show: s => !!s.sfx?.enabled && s.sfx?.auto !== false, options: [{ value: 'few', label: '적음' }, { value: 'normal', label: '보통' }, { value: 'many', label: '많이' }], help: '서술을 얼마나 넓게 소리로 해석할지. 적음은 분명한 소리만 3개까지, 보통은 소리 나는 동작까지 8개, 많이는 희미한 소리까지 12개(과해석일 수 있어요). 바꿔도 분석을 다시 하거나 음성을 다시 만들지 않아요. WAV 저장은 적어도 보통으로 넣어요.' },
+        { key: 'sfx.level', label: '효과음 넓이', type: 'select', show: s => !!s.sfx?.enabled && s.sfx?.auto !== false, options: [{ value: 'few', label: '적음' }, { value: 'normal', label: '보통' }, { value: 'many', label: '많이' }], help: '서술을 얼마나 넓게 소리로 해석할지 — 개수가 아니라 해석의 확실함으로 골라요. 적음은 분명히 난 소리만, 보통은 소리 나는 동작까지, 많이는 비슷하거나 불확실한 소리까지(과해석일 수 있어요). 개수로 자르지 않아 긴 지문이면 그만큼 많이 나요. 바꿔도 분석을 다시 하거나 음성을 다시 만들지 않아요. WAV 저장은 적어도 보통으로 넣어요.' },
         { key: 'sfx.scene_chars', label: '효과음 찾을 지문 글자', type: 'number', min: 1000, max: 40000, step: 500, default: 4000, show: s => !!s.sfx?.enabled && s.sfx?.auto !== false,
             help: '대사 분석에 보내는 지문(서술 · 행동)의 최대 글자예요 (기본 4,000). 긴 답장에서 효과음을 놓치면 늘리고, 분석 요청의 토큰을 아끼려면 줄여요. 모델이 읽는 토큰은 한국어 · 일본어가 글자 수와 비슷하고 영어는 그 1/4 쯤이에요. 바꾸면 긴 답장의 저장된 분석을 다음 읽기 때 다시 받아요.' },   // 1.5.8
         { key: 'sfx.mode', label: '자동 효과음 재생', type: 'select', options: [{ value: 'overlay', label: '대사와 겹치기' }, { value: 'sequence', label: '차례로 재생' }], help: '겹치기는 효과음 위로 다음 대사가 이어져요. 차례로는 효과음이 끝나고 다음 대사를 읽어요. 각 줄은 소리 대본에서 따로 바꿀 수 있어요.' },
@@ -560,6 +564,7 @@ function afterEdit(path, el) {
     if (path === 'highlight' || path === 'highlight_style') player.refreshHighlight();
     if (path === 'wand_menu') { dispatchWand(); return; }                  // index.js 가 요술봉 메뉴 두 줄을 넣고 뺀다
     if (path === 'wait_translation') { renderReadCard('when'); return; }   // 스트리밍 읽기의 켜짐·꺼짐과 대기 초 칸이 따라 바뀐다
+    if (path === 'mute_words') { renderReadCard('text'); return; }   // 1.6.3 음소거 방법 줄은 말이 있을 때만 보인다
     if (path === 'listen_lang') { renderReadCard('text'); renderReadCard('when'); renderReadCard('analysis'); return; }   // 1.4.4 안내 줄 · 스트리밍 읽기 · 원어 읽기 줄
     if (path === 'click_play' || path === 'auto_play' || path === 'pregen' || path === 'pregen_paid') renderReadCard('when');   // 1.2.4 미리 만들기가 쉬는지 한 줄 · 5.6.4 '!' 안내 · 스위치
     if (path === 'analysis.engine' || path === 'analysis.provider' || path === 'analysis.custom_url' || path === 'analysis.base') {
@@ -814,14 +819,14 @@ function readCardHtml(name) {
     if (name === 'when') whenSig = whenSignature();
     let content = `<div class="lv-grid">${fieldsHtml(fields)}</div>`;
     if (name === 'text') {
-        const advanced = new Set(['pron_dict', 'strip_regex']);
+        const advanced = new Set(['pron_dict', 'strip_regex', 'mute_words', 'mute_mode']);   // 1.6.3 단어 음소거도 고급에
         const s = settings();
-        const open = state.textAdvancedOpen ?? !!(s.pron_dict || s.strip_regex);
+        const open = state.textAdvancedOpen ?? !!(s.pron_dict || s.strip_regex || s.mute_words);
         content = `<div class="lv-grid">${fieldsHtml(fields.filter(f => !advanced.has(f.key)))}</div>`
             + '<span class="lv-desc">별도 태그가 없는 글도 그대로 읽어요. &lt;prose&gt; 같은 본문 태그는 안쪽 글을 살려요.</span>'
             + '<div class="lv-actions"><button type="button" class="menu_button" data-lv-act="body-filters">본문 필터 기본값</button></div>'
             + '<span class="lv-desc">기존 필터를 바꾸기 전에 적용 내용을 보여 줘요.</span>'
-            + `<details class="lv-advanced" data-lv-detail="text"${open ? ' open' : ''}><summary>고급: 발음 사전 · 정규식</summary><div class="lv-grid">${fieldsHtml(fields.filter(f => advanced.has(f.key)))}</div></details>`;
+            + `<details class="lv-advanced" data-lv-detail="text"${open ? ' open' : ''}><summary>고급: 발음 사전 · 정규식 · 단어 음소거</summary><div class="lv-grid">${fieldsHtml(fields.filter(f => advanced.has(f.key)))}</div></details>`;
     }
     return card(name, icon, title, `${content}${typeof extra === 'function' ? extra(settings()) : ''}`, '', typeof note === 'function' ? note(settings()) : '');
 }

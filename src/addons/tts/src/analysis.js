@@ -80,7 +80,7 @@ const SCHEMA = Object.freeze({
                 },
             },
             people: { type: 'object' },   // 1.3.7 엑스트라 목소리 (있을 때만)
-            sfx: { type: 'array', maxItems: 12, items: { type: 'object', properties: { after: { type: 'integer', minimum: 0 }, id: { type: 'string' }, repeats: { type: 'integer', minimum: 1, maximum: 4 }, durationMs: { type: 'integer', minimum: 0, maximum: 8000 }, strength: { type: 'integer', minimum: 1, maximum: 3 }, ongoing: { type: 'boolean' }, stopAfter: { type: 'integer', minimum: 0 } }, required: ['after', 'id'] } },
+            sfx: { type: 'array', maxItems: 64, items: { type: 'object', properties: { after: { type: 'integer', minimum: 0 }, id: { type: 'string' }, repeats: { type: 'integer', minimum: 1, maximum: 4 }, durationMs: { type: 'integer', minimum: 0, maximum: 8000 }, strength: { type: 'integer', minimum: 1, maximum: 3 }, ongoing: { type: 'boolean' }, stopAfter: { type: 'integer', minimum: 0 } }, required: ['after', 'id'] } },
         },
         required: ['segs'],
     },
@@ -236,8 +236,9 @@ const SUSTAINED_SFX = new Set(['daily_keyboard', 'daily_cat_purr', 'daily_faucet
 export const canSustainSfx = sound => !!sound && (SUSTAINED_SFX.has(sound.id) || sound.custom === true && sound.loop === true);
 function sfxCatalog() {
     try {
+        const fav = new Set(Array.isArray(settings().sfx?.favorites) ? settings().sfx.favorites : []);   // 1.6.3 우선 효과음
         return listSfx().filter(x => x && typeof x.id === 'string' && getSfx(x.id)).map(x => ({
-            id: x.id, name: String(x.name || x.id).slice(0, 80), sustain: canSustainSfx(x),
+            id: x.id, name: String(x.name || x.id).slice(0, 80), sustain: canSustainSfx(x), ...(fav.has(x.id) ? { preferred: true } : {}),
             words: (Array.isArray(x.words) ? x.words : []).map(String).map(w => w.slice(0, 80)).filter(Boolean).slice(0, 32),
         })).sort((a, b) => a.id.localeCompare(b.id));
     } catch { return []; }
@@ -401,7 +402,7 @@ export function composePrompt(parts) {
     }
     // Scene SFX alongside dialogue analysis: inspired by JINSIN2/MultiCast-TTS (MIT).
     // https://github.com/JINSIN2/MultiCast-TTS · attribution and full license: ../NOTICE.md
-    if (sfx) tasks.push(`Add "sfx": an array of at most 12 {"after":0,"id":"<library id>","repeats":1,"durationMs":0,"strength":2} entries. Choose concrete sounds occurring in the numbered narration positions above and ONLY exact IDs in the library. The reader filters by strength, so include weaker ones too: strength 1 = an unmistakable sound the narration states (a slap lands, a door slams, a phone buzzes); 2 = a clear physical action that makes a sound (sits down, picks up a cup, walks, kisses); 3 = subtle or plausible (cloth rustles, a hand on skin, small movements). Intimate or sexual scenes count the same as any other: skin slapping, spanking, kissing, licking, wet squelching, a creaking bed and swallowing are sounds. Use the matching [after=N] position: N is the number of original dialogue lines before that narration, from 0 (before the first line) to ${lines.length} (after the last line). Never infer sounds from dialogue mentions, thoughts, negation, silence, wishes, possibilities, plans, comparisons or metaphors. Do not invent a sound or use a URL. Prefer one fitting effect per occurrence; no duplicate id at the same position. repeats is 1 by default: a single drop, coin, cup, meow or other action plays once. Increase it only for an explicit count of THAT sound in the same narration ("dropped it twice" / "물건을 두 번 떨어뜨렸다" means 2), capped at 4; unrelated numbers, emphasis and dialogue do not count. durationMs is 0 (natural clip length) by default. Only library entries with sustain:true may have a positive duration: use an explicit duration or a conservative 2000~6000 ms for a clearly ongoing action such as "typed for a while" / "한동안 타이핑했다"; never exceed 8000 ms. A sustained cue uses repeats:1. Do not stretch a single impact into a background loop. When a sustain:true action keeps going while the characters talk (sex, spanking, kissing, rain, typing in the background), add "ongoing":true and "stopAfter":M where M is the [after=M] position whose narration ends it (omit stopAfter if it continues to the end of the message); an ongoing cue loops under every dialogue line from its position until M. If nothing clearly fits, return "sfx": []. Dialogue shown only for position/context needs no seg entry unless an emotion, translation or speaker was requested.`);
+    if (sfx) tasks.push(`Add "sfx": an array of {"after":0,"id":"<library id>","repeats":1,"durationMs":0,"strength":2} entries, one per sound that occurs, in narration order. There is no fixed count: a short narration may have none and a long one may have dozens — never stop early to keep the list short. Choose concrete sounds occurring in the numbered narration positions above and ONLY exact IDs in the library. Entries marked "preferred":true are the user's favourites: when more than one library sound fits the same moment, choose the preferred one. The reader filters by strength, so include weaker ones too and grade each one honestly: strength 1 = an unmistakable sound the narration states (a slap lands, a door slams, a phone buzzes); 2 = a clear physical action that makes a sound (sits down, picks up a cup, walks, kisses); 3 = uncertain or merely similar — a plausible sound the text does not state, which the reader may treat as over-interpretation (cloth rustles, a hand on skin, small movements). Intimate or sexual scenes count the same as any other: skin slapping, spanking, kissing, licking, wet squelching, a creaking bed and swallowing are sounds. Use the matching [after=N] position: N is the number of original dialogue lines before that narration, from 0 (before the first line) to ${lines.length} (after the last line). Never infer sounds from dialogue mentions, thoughts, negation, silence, wishes, possibilities, plans, comparisons or metaphors. Do not invent a sound or use a URL. Prefer one fitting effect per occurrence; no duplicate id at the same position. repeats is 1 by default: a single drop, coin, cup, meow or other action plays once. Increase it only for an explicit count of THAT sound in the same narration ("dropped it twice" / "물건을 두 번 떨어뜨렸다" means 2), capped at 4; unrelated numbers, emphasis and dialogue do not count. durationMs is 0 (natural clip length) by default. Only library entries with sustain:true may have a positive duration: use an explicit duration or a conservative 2000~6000 ms for a clearly ongoing action such as "typed for a while" / "한동안 타이핑했다"; never exceed 8000 ms. A sustained cue uses repeats:1. Do not stretch a single impact into a background loop. When a sustain:true action keeps going while the characters talk (sex, spanking, kissing, rain, typing in the background), add "ongoing":true and "stopAfter":M where M is the [after=M] position whose narration ends it (omit stopAfter if it continues to the end of the message); an ongoing cue loops under every dialogue line from its position until M. If nothing clearly fits, return "sfx": []. Dialogue shown only for position/context needs no seg entry unless an emotion, translation or speaker was requested.`);
     const segExample = asked.length || !sfx ? '[{"i":0' + (emotion ? ',"emotion":"happy"' : '') + (askLines.length ? `,"speaker":"${speakers[0] || 'Name'}"` : '') + (langsUsed.length ? `,"${langsUsed[0]}":"…"` : '') + '}]' : '[]';
     tasks.push('Reply with JSON only, no markdown, no extra keys: {"segs":' + segExample + (people ? `,"people":{"${unvoiced[0] || 'Name'}":"f adult"}` : '') + (sfx ? ',"sfx":[]' : '') + '}');
     out.push(tasks.join('\n'));
@@ -537,10 +538,15 @@ function sfxTiming(cue, built, sound) {
     return { repeats: durationMs > 0 ? 1 : Math.min(repeats, count), durationMs };
 }
 
+/** 1.6.3 저장 한도: 개수가 아니라 지문 길이로 — 120자마다 하나, 12~64 (사용자: 1,000자 채팅과 5,000자 지문이 달라 12개는 적을 수 있다) */
+export function sfxCap(built) {
+    const chars = (built?.sfxScene || []).reduce((n, g) => n + String(g?.text || '').length, 0);
+    return Math.max(12, Math.min(64, Math.ceil(chars / 120)));
+}
 /** 선택 목록에 있던 ID·실제 서술 위치만 저장한다. 미지원 응답은 효과음 없이 진행하며 유료 재생성을 하지 않는다. */
 export function normalizeSfx(raw, built) {
     if (!built?.sfx || !Array.isArray(raw)) return [];
-    const ids = new Set(built.sfxIds || []), afters = new Set(built.sfxAfters || []), seen = new Set(), out = [];
+    const ids = new Set(built.sfxIds || []), afters = new Set(built.sfxAfters || []), seen = new Set(), out = [], cap = sfxCap(built);
     for (const cue of raw) {
         if (!isObj(cue) || typeof cue.id !== 'string' || !Number.isInteger(cue.after)) continue;
         const { after, id } = cue;
@@ -548,13 +554,13 @@ export function normalizeSfx(raw, built) {
         if (after < 0 || after > built.lines.length || !afters.has(after) || !ids.has(id) || !sound) continue;
         const key = `${after}:${id}`;
         if (seen.has(key)) continue;
-        // 1.5.7 세기: 1 분명한 소리 · 2 소리 나는 동작 · 3 희미한 소리 (없으면 2). 재생 때 효과음 넓이(sfx.level)가 거른다 — 분석은 그대로
+        // 1.5.7 세기: 1 분명한 소리 · 2 소리 나는 동작 · 3 불확실·비슷한 소리(과해석일 수 있음) (없으면 2). 재생 때 효과음 넓이(sfx.level)가 세기로만 거른다 — 분석은 그대로
         const strength = Number.isInteger(cue.strength) && cue.strength >= 1 && cue.strength <= 3 ? cue.strength : 2;
         // 1.5.9 이어지는 동작: 지속 가능한 소리만, 멈추는 자리(stopAfter)는 그 뒤 대화문 번호 (없으면 끝까지)
         const ongoing = cue.ongoing === true && canSustainSfx(sound);
         const stopAfter = ongoing ? (Number.isInteger(cue.stopAfter) && cue.stopAfter > after && cue.stopAfter <= built.lines.length ? cue.stopAfter : built.lines.length) : undefined;
         seen.add(key); out.push({ after, id, strength, ...(ongoing ? { ongoing: true, stopAfter } : {}), ...sfxTiming(cue, built, sound) });
-        if (out.length >= 12) break;
+        if (out.length >= cap) break;
     }
     return out.sort((a, b) => a.after - b.after);
 }
@@ -954,6 +960,37 @@ function drop(id, mes, remember = false) {
 
 // ---------- 밖으로
 
+// ---------- 1.6.3 손으로 넣은 효과음: 분석과 따로 mes.extra.lemon_voice.manual = { h, cues: [{ after, id }] } — 글(해시)이 바뀌면 버린다. 넓이 필터를 타지 않는다
+const manualOf = (mes) => { const m = slot(mes, false)?.manual; return isObj(m) && Array.isArray(m.cues) && m.h === textHash(mes) ? m : null; };
+/** 저장된 손 효과음 → 재생 신호 모양 [{ after, id, strength: 1, manual: true, repeats: 1, durationMs: 0 }] */
+export function manualSfx(mesId) {
+    const mes = msgOf(Number(mesId)); const m = manualOf(mes);
+    if (!m) return [];
+    return m.cues.filter(c => isObj(c) && Number.isInteger(c.after) && c.after >= 0 && typeof c.id === 'string' && getSfx(c.id))
+        .map(c => ({ after: c.after, id: c.id, strength: 1, manual: true, repeats: 1, durationMs: 0 }));
+}
+/** after 번째 대사 앞에 id 를 넣는다 (같은 자리 같은 소리는 한 번) → 넣었나 */
+export function addManualSfx(mesId, after, id) {
+    const mes = msgOf(Number(mesId));
+    if (!mes || !getSfx(id) || !Number.isInteger(after) || after < 0) return false;
+    const lv = slot(mes, true); const h = textHash(mes);
+    if (!isObj(lv.manual) || lv.manual.h !== h || !Array.isArray(lv.manual.cues)) lv.manual = { h, cues: [] };
+    if (!lv.manual.cues.some(c => isObj(c) && c.after === after && c.id === id)) { lv.manual.cues.push({ after, id }); lv.manual.cues.sort((a, b) => a.after - b.after); }
+    try { if (typeof ST.syncMesToSwipe === 'function') ST.syncMesToSwipe(Number(mesId)); } catch { /* 스와이프 정보 없음 */ }
+    saveNow();
+    return true;
+}
+export function removeManualSfx(mesId, after, id) {
+    const mes = msgOf(Number(mesId)); const lv = slot(mes, false); const m = lv && manualOf(mes);
+    if (!m) return false;
+    const left = m.cues.filter(c => !(isObj(c) && c.after === after && c.id === id));
+    if (left.length === m.cues.length) return false;
+    if (left.length) lv.manual = { h: m.h, cues: left }; else { delete lv.manual; if (!Object.keys(lv).length) delete mes.extra.lemon_voice; }
+    try { if (typeof ST.syncMesToSwipe === 'function') ST.syncMesToSwipe(Number(mesId)); } catch { /* 스와이프 정보 없음 */ }
+    saveNow();
+    return true;
+}
+
 /** 저장된 분석 (원문 해시가 맞을 때만) */
 export function getAnalysis(mesId) {
     const mes = msgOf(Number(mesId));
@@ -1066,7 +1103,7 @@ async function doAnalyze(entry) {
         // 1.6.0 무엇이 왔는지 진단에 남긴다 (비밀값은 가림): 모델이 거절문·설명문만 보냈는지, 빈 답인지 알 수 있게
         const head = String(r.text ?? '').trim();
         log('err', `대사 분석 응답 해석 실패 #${id}${r.truncated ? ' (길이 한도)' : ''} · ${head ? '앞부분: ' + snip(scrub(head), 160) : '빈 답'}`);
-        throw koErr(r.truncated ? '대사 분석 응답이 길이 한도에 닿아 잘렸어요' : head ? '대사 분석 응답이 JSON 이 아니에요 (모델이 글로만 답함 · 진단에 앞부분 기록)' : '대사 분석 응답이 비었어요 (모델이 아무 글도 안 보냄)');
+        throw koErr(r.truncated ? '대사 분석 응답이 길이 한도에 닿아 잘렸어요' : head ? `대사 분석 응답이 JSON 이 아니에요 — 모델이 글로만 답함: “${snip(scrub(head), 80)}”` : '대사 분석 응답이 비었어요 (모델이 아무 글도 안 보냄)');
     }
     let segs = normalizeSegs(parsed, built, !!cfg.emotion);
     if (cfg.emotion && segs.some(g => !EMOTION_SET.has(g.emotion))) {
