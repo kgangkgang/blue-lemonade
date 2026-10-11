@@ -36,6 +36,44 @@ const plain = cue => ({repeats:cue.repeats,durationMs:cue.durationMs});
 let passed=0,failed=0;
 async function test(name, fn) { try { await fn();passed++;console.log('PASS '+name); } catch(error) {failed++;console.error('FAIL '+name+'\n'+error.stack);} }
 
+await test('six added everyday sounds match Korean and English without taking existing keywords',()=>{
+    for(const [id,phrases] of [
+        ['daily_heartbeat',['심장이 두근거렸다.','I heard a heartbeat.','Her heart beat loudly.']],
+        ['daily_pen_write',['펜으로 글을 썼다.','The pen writing was audible.','She was scribbling.']],
+        ['daily_match',['성냥불을 켰다.','He was striking a match.']],
+        ['daily_fireplace',['벽난로에서 타닥타닥 소리가 났다.','A crackling fire warmed the room.']],
+        ['daily_stomach',['배에서 꼬르륵 소리가 났다.','A stomach growl interrupted us.']],
+        ['daily_cork',['코르크 마개를 땄다.','The wine cork popped.']],
+    ]) for(const phrase of phrases) assert.equal(L.matchSfx(phrase)?.id,id,phrase);
+    for(const [phrase,id] of [['펜 뚜껑을 닫았다.','daily_pen_cap'],['키보드를 타이핑했다.','daily_keyboard'],['키스 연속','daily_kissing'],['water pouring','daily_water_pour'],['rain','daily_rain']])
+        assert.equal(L.matchSfx(phrase)?.id,id,phrase);
+    for(const phrase of ['phone ringtone','dog barking','He won the match.','She read the written report.']) assert.equal(L.matchSfx(phrase),null,phrase);
+    L.setSfxEnabled('daily_heartbeat',false);assert.equal(L.matchSfx('heartbeat'),null);L.setSfxEnabled('daily_heartbeat',true);
+});
+await test('new sustained sounds use stated bounded timing; one-shot sounds cannot become ambient',()=>{
+    for(const [id,text] of [['daily_heartbeat','심장이 3초 동안 두근거렸다.'],['daily_pen_write','펜으로 3초 동안 글을 썼다.'],['daily_fireplace','벽난로가 3초 동안 타닥타닥 타올랐다.']]) {
+        assert.equal(A.canSustainSfx(L.getSfx(id)),true,id);
+        assert.equal(timing(text,id,{durationMs:20000,repeats:4}).durationMs,3000,id);
+        assert.equal(timing('한동안 '+text.replace('3초 동안 ',''),id,{durationMs:20000}).durationMs,8000,id);
+        assert.equal(timing(text.replace('3초 동안 ',''),id,{durationMs:8000}).durationMs,0,id);
+    }
+    for(const [id,text] of [['daily_match','성냥을 켰다.'],['daily_stomach','배에서 꼬르륵 소리가 났다.'],['daily_cork','코르크 마개를 땄다.']]) {
+        assert.equal(A.canSustainSfx(L.getSfx(id)),false,id);
+        assert.deepEqual(plain(timing('한동안 '+text,id,{durationMs:8000,repeats:4})),{repeats:1,durationMs:0},id);
+    }
+    assert.equal(timing('성냥을 두 번 그었다.','daily_match',{repeats:4}).repeats,2);
+    assert.equal(timing('코르크 마개를 열 번 땄다.','daily_cork',{repeats:20}).repeats,4);
+});
+await test('only sustainable additions may span dialogue and stop at the message boundary',()=>{
+    const p=build('심장이 뛰었다. "하나." "둘."');
+    const ids=['daily_heartbeat','daily_pen_write','daily_fireplace','daily_match','daily_stomach','daily_cork'];
+    for(const id of ids) {
+        assert.equal(L.getSfx(id).loop,false,'library preview stays one shot: '+id);
+        const cue=A.normalizeSfx([{after:0,id,ongoing:true,stopAfter:999}],p)[0];
+        assert.equal(cue.ongoing===true,A.canSustainSfx(L.getSfx(id)),id);
+        assert.equal(cue.stopAfter,A.canSustainSfx(L.getSfx(id))?2:undefined,id);
+    }
+});
 await test('single actions cannot be multiplied by model timing',()=>{
     for (const [text,id] of [['물건을 떨어뜨렸다.','drop'],['동전이 바닥으로 떨어졌다.','daily_coins'],['He dropped a box.','drop']])
         assert.deepEqual(plain(timing(text,id,{repeats:4,durationMs:8000})),{repeats:1,durationMs:0});

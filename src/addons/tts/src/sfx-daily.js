@@ -639,8 +639,8 @@ const rows = [
     "custom": false,
     "loop": false,
     "credit": {
-      "author": "freesound",
-      "source": "https://freesound.org/people/freesound/sounds/25268/",
+      "author": "renrenrenrenren",
+      "source": "https://freesound.org/people/renrenrenrenren/sounds/825972/",
       "license": "CC0-1.0",
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
     }
@@ -857,6 +857,164 @@ const rows = [
     "credit": {
       "author": "magnuswaker",
       "source": "https://freesound.org/people/magnuswaker/sounds/531755/",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  {
+    "id": "daily_heartbeat",
+    "name": "심장박동",
+    "category": "사람",
+    "words": [
+      "heartbeat",
+      "heart beat",
+      "heart beating",
+      "heart pounding",
+      "심장박동",
+      "심장 박동",
+      "심장이 뛰",
+      "심장이 두근",
+      "심장 두근",
+      "심장이 쿵쿵",
+      "두근두근"
+    ],
+    "assetPath": "../sfx-extra/daily_heartbeat.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "Andy Jack (uploaded by JonasTisell)",
+      "source": "https://freesound.org/people/JonasTisell/sounds/670465/",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  {
+    "id": "daily_pen_write",
+    "name": "펜으로 쓰기",
+    "category": "일상·사무",
+    "words": [
+      "pen writing",
+      "writing with a pen",
+      "writing on paper",
+      "scribbling",
+      "pen scribble",
+      "펜 쓰기",
+      "펜으로 쓰",
+      "펜으로 글",
+      "볼펜으로 쓰",
+      "필기 소리",
+      "사각사각"
+    ],
+    "assetPath": "../sfx-extra/daily_pen_write.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "khenshom",
+      "source": "https://freesound.org/people/khenshom/sounds/565206/",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  {
+    "id": "daily_match",
+    "name": "성냥 켜기",
+    "category": "일상·사무",
+    "words": [
+      "striking a match",
+      "strike a match",
+      "match strike",
+      "lighting a match",
+      "lit a match",
+      "성냥 켜",
+      "성냥을 켜",
+      "성냥을 긋",
+      "성냥불"
+    ],
+    "assetPath": "../sfx-extra/daily_match.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "SamuelGremaud",
+      "source": "https://freesound.org/people/SamuelGremaud/sounds/455373/",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  {
+    "id": "daily_fireplace",
+    "name": "벽난로 장작 타기",
+    "category": "자연·날씨",
+    "words": [
+      "fireplace",
+      "crackling fire",
+      "fire crackling",
+      "burning firewood",
+      "wood fire",
+      "벽난로",
+      "장작 타",
+      "장작이 타",
+      "장작불",
+      "불 타닥",
+      "타닥타닥"
+    ],
+    "assetPath": "../sfx-extra/daily_fireplace.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "jmehlferber",
+      "source": "https://freesound.org/people/jmehlferber/sounds/370938/",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  {
+    "id": "daily_stomach",
+    "name": "배에서 꼬르륵",
+    "category": "사람",
+    "words": [
+      "stomach growl",
+      "stomach rumble",
+      "growling stomach",
+      "rumbling stomach",
+      "belly rumble",
+      "배에서 꼬르륵",
+      "배가 꼬르륵",
+      "배에서 꾸르륵",
+      "꼬르륵",
+      "꾸르륵"
+    ],
+    "assetPath": "../sfx-extra/daily_stomach.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "XxBirdoxX",
+      "source": "https://freesound.org/people/XxBirdoxX/sounds/52293/",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  {
+    "id": "daily_cork",
+    "name": "코르크 마개 따기",
+    "category": "일상·사무",
+    "words": [
+      "cork pop",
+      "cork popping",
+      "uncork",
+      "uncorking",
+      "wine cork",
+      "bottle cork",
+      "코르크",
+      "와인 마개",
+      "병마개 따",
+      "병마개를 따"
+    ],
+    "assetPath": "../sfx-extra/daily_cork.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "dr19",
+      "source": "https://freesound.org/people/dr19/sounds/575527/",
       "license": "CC0-1.0",
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
     }

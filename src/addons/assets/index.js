@@ -6,7 +6,8 @@ import { getContext } from '../../../../../../extensions.js';
 import { MacrosParser } from '../../../../../../macros.js';
 import { power_user } from '../../../../../../power-user.js';
 import { initSettings, settings, saveSettings, VERSION, TITLE, currentFolder } from './state.js';
-import { runtime, reload, expandedPrompt } from './store.js';
+import { runtime, reload } from './store.js';
+import { manualPrompt, setupPrompt } from './prompt.js';
 import { setupRenderer, schedulePass } from './render.js';
 import { setupHold } from './hold.js';
 import { toast, watchThemeVars, refreshThemeVars } from './ui.js';
@@ -34,7 +35,7 @@ async function registerMacros() {
             console.error(`[${TITLE}] 매크로 등록 실패: ${key}`, error);
         }
     };
-    register('img_inprompt', () => expandedPrompt(), '캐릭터 에셋: AI에게 주는 규칙 + 지금 캐릭터의 그림 목록');
+    register('img_inprompt', () => manualPrompt(), '캐릭터 에셋: 수동 배치일 때 AI 규칙 + 지금 캐릭터의 그림 목록');
     register('img_keywords_autogen', () => runtime.keywords, '캐릭터 에셋: 지금 캐릭터의 그림 이름 목록');
     register('img_keywords_grouped', () => runtime.keywords, '캐릭터 에셋: img_keywords_autogen과 같아요');
     register('img_keywords', () => runtime.keywords, '캐릭터 에셋: img_keywords_autogen과 같아요');
@@ -42,7 +43,7 @@ async function registerMacros() {
 }
 registerMacros();
 
-eventSource.on(event_types.CHAT_CHANGED, () => reload());
+setupPrompt();
 
 // 1.4.2: 이어서 쓰기는 마지막 메시지의 send_date 를 새로 찍고 다시 그린다 — 번호 묶음 그림이 시각으로 골라져서
 // 이미 보이던 그림이 바뀌었다. 첫 시각을 extra.eh_seed 에 한 번만 남기고 render.js messageSeed 가 먼저 쓴다.

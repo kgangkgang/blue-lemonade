@@ -233,7 +233,7 @@ function speakerOf(seg, mes, charName, userName) {
 
 const autoSfxEnabled = () => settings().sfx?.enabled === true && settings().sfx?.auto !== false;
 const sceneKind = (seg) => seg?.kind === 'narration' || seg?.kind === 'action';
-const SUSTAINED_SFX = new Set(['daily_keyboard', 'daily_cat_purr', 'daily_faucet', 'daily_stream', 'daily_rain', 'daily_clock', 'daily_water_pour', 'daily_coffee_stir', 'daily_electric_kettle', 'daily_toothbrush', 'daily_spanking', 'daily_licking', 'daily_kissing', 'daily_squelching', 'daily_bed_creaking', 'daily_gulping', 'wind', 'footsteps', 'footsteps_wood', 'footsteps_wet', 'running']);
+const SUSTAINED_SFX = new Set(['daily_keyboard', 'daily_cat_purr', 'daily_faucet', 'daily_stream', 'daily_rain', 'daily_clock', 'daily_water_pour', 'daily_coffee_stir', 'daily_electric_kettle', 'daily_toothbrush', 'daily_spanking', 'daily_licking', 'daily_kissing', 'daily_squelching', 'daily_bed_creaking', 'daily_gulping', 'daily_heartbeat', 'daily_pen_write', 'daily_fireplace', 'wind', 'footsteps', 'footsteps_wood', 'footsteps_wet', 'running']);
 export const canSustainSfx = sound => !!sound && (SUSTAINED_SFX.has(sound.id) || sound.custom === true && sound.loop === true);
 function sfxCatalog() {
     try {
@@ -495,6 +495,12 @@ const SFX_TIMING_HINTS = {
     daily_bed_creaking: ['침대', '매트리스', '스프링', '삐걱', '흔들', 'bed', 'mattress', 'creak', 'headboard', 'rock'],
     daily_gulp: ['꿀꺽', '꿀떡', '꼴깍', '삼키', '삼켰', '목', 'gulp', 'swallow', 'throat'],
     daily_gulping: ['꿀꺽', '벌컥', '들이켜', '들이켰', '마시', 'gulp', 'swallow', 'chug', 'drink', 'throat'],
+    daily_heartbeat: ['심장', '두근', 'heartbeat', 'heart beat', 'heart pound'],
+    daily_pen_write: ['펜으로', '볼펜', '필기', '사각사각', 'pen', 'writ', 'wrot', 'scribbl'],
+    daily_match: ['성냥', 'match'],
+    daily_fireplace: ['벽난로', '장작', '타닥', 'fireplace', 'fire', 'firewood'],
+    daily_stomach: ['꼬르륵', '꾸르륵', 'stomach', 'belly'],
+    daily_cork: ['코르크', '마개', 'cork', 'uncork'],
 };
 const COUNT_WORDS = { 한: 1, 두: 2, 세: 3, 네: 4, 다섯: 5, 여섯: 6, 일곱: 7, 여덟: 8, 아홉: 9, 열: 10,
     once: 1, twice: 2, thrice: 3, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };

@@ -5,7 +5,7 @@ import { saveSettingsDebounced } from '../../../../../../../script.js';
 
 export const MODULE = 'esetham';
 export const OLD_MODULE = 'character-assets';
-export const VERSION = '1.4.9';
+export const VERSION = '1.5.0';
 export const TITLE = '캐릭터 에셋';
 
 // AI에게 보내는 글이라 영어로 둔다. {{img_keywords_autogen}} 자리에 지금 캐릭터의 그림 이름 목록이 들어간다.
@@ -62,6 +62,8 @@ export const THUMB_SIZES = ['s', 'm', 'l'];
 
 const DEFAULTS = Object.freeze({
     prompt: DEFAULT_PROMPT,
+    promptEnabled: true,   // AI에게 그림 규칙 보내기: 자동 주입과 수동 매크로를 함께 켜고 끈다
+    promptPlacement: 'auto', // auto: 답변 요청에 자동으로, manual: {{img_inprompt}}를 넣은 자리에서
     renderEnabled: true,   // 채팅의 {{img::…}}를 그림으로 바꾸고, 정규식이 그린 그림의 이름·묶음을 맞춘다
     randomGroups: true,    // 번호만 다른 파일(이름, 이름-1, 이름-2 …)을 키워드 하나로 묶고 표시할 때 하나를 고른다
     onceOnly: true,        // 번호 묶음(변형)이 없는 그림은 답변 하나에 한 번만 — 같은 메시지 앞쪽에 이미 나온 태그는 그림 없이 지운다 (1.2.3: 앞 메시지는 안 본다)
@@ -112,6 +114,8 @@ export function initSettings() {
     }
     const store = settings();
     if (typeof store.prompt !== 'string') store.prompt = DEFAULT_PROMPT;
+    store.promptEnabled = store.promptEnabled !== false;
+    if (!['auto', 'manual'].includes(store.promptPlacement)) store.promptPlacement = 'auto';
     store.renderEnabled = store.renderEnabled !== false;
     store.randomGroups = store.randomGroups !== false;
     store.onceOnly = store.onceOnly !== false; // 1.1.4 에 생긴 값 — 예전 설정에는 없으므로 여기서 기본 켬

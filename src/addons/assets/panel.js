@@ -4,6 +4,7 @@ import { getThumbnailUrl } from '../../../../../../../script.js';
 import { getContext } from '../../../../../../extensions.js';
 import { settings, saveSettings, VERSION, TITLE, THUMB_SIZES, DEFAULT_PROMPT, isGroupChat, disabledSet, setDisabled, folderOf, forgetOptimized, copyOptimized } from './state.js';
 import { runtime, hooks, reload, recompute, groupsOf, sourceByKey, expandedPrompt } from './store.js';
+import { syncPrompt, promptStatus } from './prompt.js';
 import { isAllowedName, isZipName, uploadImage, uploadZip, deleteAsset, baseOf, sameBaseSiblings, fetchAssets, sanitizeBase } from './assets.js';
 import { escapeHtml, toast, confirmDialog, inputDialog, pickDialog, copyText, applyThemeVars } from './ui.js';
 import { BASE_ID, addPreset, checkRename, removePreset, movePreset, findPreset, presetLabel, presetsOf, linksOf, addLink, removeLink } from './presets.js';
@@ -137,17 +138,28 @@ function template() {
                 <button type="button" class="eh-icon-btn" data-act="redraw" title="채팅 다시 그리기" aria-label="채팅 다시 그리기"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
             </div>
 
+            <section class="eh-card eh-card--prompt">
+                <div class="eh-setting">
+                    <div class="eh-setting-text">
+                        <b>이미지 프롬프트</b>
+                        <small>켜진 그림 목록과 규칙을 AI에게 보내요.</small>
+                    </div>
+                    <button type="button" class="eh-switch" role="switch" data-setting="promptEnabled" data-bl-master aria-checked="${store.promptEnabled}" aria-label="이미지 프롬프트"><span></span></button>
+                </div>
+                <p class="eh-prompt-status" role="status" aria-live="polite"></p>
+            </section>
+
             <section class="eh-card">
                 <details class="eh-guide" ${store.guideOpen ? 'open' : ''}>
-                    <summary><i class="fa-solid fa-book-open"></i><span>사용법</span><small>세 단계면 끝나요</small></summary>
+                    <summary><i class="fa-solid fa-book-open"></i><span>사용법</span><small>그림을 올리고 켜요</small></summary>
                     <ol class="eh-steps">
                         <li>
                             <b>그림 올리기</b>
                             <p>아래 <b>이미지</b>·<b>ZIP</b> 버튼을 누르거나 그림을 격자에 끌어다 놓아요. 파일 이름이 곧 키워드예요. <code>Name_smile.png</code> → <code>Name_smile</code></p>
                         </li>
                         <li>
-                            <b>프롬프트에 한 줄</b>
-                            <p>프리셋·캐릭터 카드·작가 노트 어디든 <code>{{img_inprompt}}</code>를 넣으면, 아래 설정의 규칙과 지금 캐릭터의 그림 목록이 AI에게 전달돼요. 그림이 없거나 모두 꺼진 캐릭터(그룹 채팅 포함)에서는 아무것도 넣지 않아요. <button type="button" class="eh-chip" data-copy="{{img_inprompt}}"><i class="fa-solid fa-copy"></i>복사</button></p>
+                            <b>이미지 프롬프트 켜기</b>
+                            <p>기본값인 <b>자동</b> 배치에서는 위 스위치만 켜면 규칙과 지금 캐릭터의 그림 목록이 다음 답변에 적용돼요. 그림이 없거나 모두 꺼져 있으면 보내지 않아요. 그룹 채팅은 아직 지원하지 않아요.</p>
                         </li>
                         <li>
                             <b>프리셋 (선택)</b>
@@ -159,7 +171,7 @@ function template() {
                         </li>
                     </ol>
                     <div class="eh-macros">
-                        <div><code>{{img_inprompt}}</code><span>규칙 + 그림 목록. 보통 이것만 넣으면 돼요.</span></div>
+                        <div><code>{{img_inprompt}}</code><span>수동 배치용 규칙 + 그림 목록. 자동 배치 중에는 중복되지 않게 비워요.</span></div>
                         <div><code>{{img_keywords_autogen}}</code><span>그림 목록만. 규칙을 직접 쓸 때 써요.</span></div>
                         <div><code>{{charkey}}</code><span>캐릭터 폴더 이름. 정규식에서 <code>/characters/{{charkey}}/…</code>로 써요.</span></div>
                     </div>
@@ -228,17 +240,21 @@ function template() {
                     </div>
                     <button type="button" class="eh-switch" role="switch" data-setting="onceOnly" aria-checked="${store.onceOnly}" aria-label="같은 그림은 한 번만"><span></span></button>
                 </div>
-                <div class="eh-prompt">
+                <details class="eh-prompt eh-prompt-options">
+                    <summary>규칙 · 직접 배치</summary>
+                    <label class="eh-prompt-placement"><span>프롬프트 배치</span><select aria-label="이미지 프롬프트 배치"><option value="auto">자동</option><option value="manual">직접 배치</option></select></label>
+                    <p class="eh-prompt-manual" hidden>프리셋·캐릭터 카드·작가 노트 중 원하는 곳에 <code>{{img_inprompt}}</code>를 넣어요. 위 스위치를 끄면 이 매크로도 비워져요. <button type="button" class="eh-chip" data-copy="{{img_inprompt}}"><i class="fa-solid fa-copy"></i>복사</button></p>
                     <div class="eh-setting-text">
                         <b>AI에게 주는 규칙</b>
-                        <small><code>{{img_inprompt}}</code> 자리에 들어가는 글이에요. 글 속의 <code>{{img_keywords_autogen}}</code>에 지금 캐릭터의 그림 이름이 채워져요.</small>
+                        <small><code>{{img_keywords_autogen}}</code>에 지금 캐릭터의 켜진 그림 이름이 채워져요.</small>
                     </div>
                     <textarea class="eh-textarea" rows="7" spellcheck="false"></textarea>
                     <div class="eh-actions">
                         <button type="button" class="eh-btn eh-btn--small" data-act="prompt-reset"><i class="fa-solid fa-rotate-left"></i><span>기본값</span></button>
                         <button type="button" class="eh-btn eh-btn--small" data-act="prompt-copy" title="그림 이름까지 채운 글을 복사해요"><i class="fa-solid fa-copy"></i><span>완성본 복사</span></button>
                     </div>
-                </div>
+                    <p class="eh-prompt-advanced-note">그림 목록 매크로만 써서 직접 만든 프롬프트는 이 스위치와 별개예요.</p>
+                </details>
             </section>
 
             <p class="eh-version-foot">${TITLE} ${VERSION}</p>
@@ -284,6 +300,9 @@ export function buildPanel(stub) {
     refs.presetChips = root.querySelector('.eh-preset-chips');
     refs.presetCtl = root.querySelector('.eh-preset-ctl');
     refs.prompt = root.querySelector('.eh-textarea');
+    refs.promptPlacement = root.querySelector('.eh-prompt-placement select');
+    refs.promptStatus = root.querySelector('.eh-prompt-status');
+    refs.promptManual = root.querySelector('.eh-prompt-manual');
     refs.inputImages = root.querySelector('[data-input="images"]');
     refs.inputZip = root.querySelector('[data-input="zip"]');
     refs.prompt.value = settings().prompt;
@@ -296,6 +315,7 @@ export function buildPanel(stub) {
 // ── 그리기 ────────────────────────────────────────────────────
 
 function renderAll() {
+    renderPromptState();
     if (runtime.folder !== lastFolder) {
         // 캐릭터가 바뀌면 선택 모드와 고른 것을 비우고 원본 폴더부터 보여 준다 (묶음 이름은 폴더마다 다르다)
         lastFolder = runtime.folder;
@@ -311,6 +331,25 @@ function renderAll() {
 }
 
 // ── 프리셋 줄 ─────────────────────────────────────────────────
+
+function renderPromptState() {
+    const status = promptStatus();
+    const messages = {
+        off: '꺼짐 · 다음 답변에 이미지 규칙을 보내지 않아요.',
+        manual: '직접 배치 · {{img_inprompt}}를 넣은 위치에 적용해요.',
+        group: '그룹 채팅은 아직 지원하지 않아요.',
+        'no-character': '캐릭터 채팅을 열면 그림 목록을 준비해요.',
+        loading: '그림 목록을 준비하고 있어요.',
+        empty: '사용할 그림이 없어요. 그림을 올리거나 켜 주세요.',
+        'empty-rules': '규칙이 비어 있어요. 아래에서 규칙을 쓰거나 기본값을 복원해 주세요.',
+        ready: '자동 적용 · 다음 답변에 그림 목록과 규칙을 보내요.',
+    };
+    const message = messages[status.reason] ?? '';
+    if (refs.promptStatus.textContent !== message) refs.promptStatus.textContent = message;
+    refs.promptPlacement.value = status.placement;
+    refs.promptManual.hidden = status.placement !== 'manual';
+    root.querySelector('[data-setting="promptEnabled"]').setAttribute('aria-checked', String(status.enabled));
+}
 
 function renderPresets() {
     const sources = runtime.sources;
@@ -1009,16 +1048,22 @@ async function bulkDelete() {
 
 function savePromptSoon() {
     clearTimeout(promptTimer);
-    promptTimer = setTimeout(savePromptNow, 500);
+    settings().prompt = refs.prompt.value;
+    syncPrompt();
+    renderPromptState();
+    promptTimer = setTimeout(() => { promptTimer = null; saveSettings(); }, 500);
 }
 
 function savePromptNow() {
+    const pending = promptTimer !== null;
     clearTimeout(promptTimer);
     promptTimer = null;
     const store = settings();
-    if (store.prompt === refs.prompt.value) return;
+    if (!pending && store.prompt === refs.prompt.value) return;
     store.prompt = refs.prompt.value;
     saveSettings();
+    syncPrompt();
+    renderPromptState();
 }
 
 function setSwitch(name, value) {
@@ -1026,6 +1071,7 @@ function setSwitch(name, value) {
     store[name] = value;
     saveSettings();
     recompute(); // 키워드·찾아보기표를 다시 만들고 채팅도 다시 본다
+    syncPrompt();
 }
 
 // ── 이벤트 ────────────────────────────────────────────────────
@@ -1096,6 +1142,14 @@ function bind() {
     refs.prompt.addEventListener('input', savePromptSoon);
     refs.prompt.addEventListener('change', savePromptNow);
     refs.prompt.addEventListener('blur', savePromptNow);
+    refs.promptPlacement.addEventListener('change', () => {
+        const placement = refs.promptPlacement.value === 'manual' ? 'manual' : 'auto';
+        savePromptNow();
+        settings().promptPlacement = placement;
+        saveSettings();
+        syncPrompt();
+        renderPromptState();
+    });
 
     root.querySelector('.eh-guide').addEventListener('toggle', (event) => {
         settings().guideOpen = event.target.open;

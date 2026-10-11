@@ -10,7 +10,7 @@ import { prepare as levelAudio } from './loudness.js';   // 1.6.2 효과음 크�
 
 const UPSTREAM_LIBRARY = [
     // Unsupported bundled sounds must not match unrelated generic words. No paid fallback.
-    { files: [], words: ['phone', 'cellphone', 'ringtone', 'alarm', 'dog', 'bark', 'clap', 'applause', 'heartbeat', 'siren', 'car', 'engine', 'horn', 'scream', 'laugh', 'music'] },
+    { files: [], words: ['phone', 'cellphone', 'ringtone', 'alarm', 'dog', 'bark', 'clap', 'applause', 'siren', 'car', 'engine', 'horn', 'scream', 'laugh', 'music'] },
     { files: ['door_slam', 'door_slam_2'], words: ['slam', 'door bang', 'door banging'] },
     { files: ['door_creak', 'door_creak_2'], words: ['creak', 'squeak'] },
     { files: ['door_close'], words: ['door close', 'door closing', 'door shut', 'closing door', 'door click'] },

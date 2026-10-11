@@ -72,6 +72,7 @@ jobs:
           node tools/tests/addon-menu-routing.mjs .
           node tools/tests/name-row-align.mjs .
           node tools/tests/character-assets.mjs .
+          node tools/tests/character-assets-prompt.mjs .
           node tools/tests/story-direction.mjs .
           node tools/tests/mix-selection.mjs .
           node tools/tests/capture-motion.mjs .

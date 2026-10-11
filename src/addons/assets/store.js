@@ -29,14 +29,54 @@ export const hooks = {
 };
 
 let loadToken = 0;
+let pendingLoad = null;
+let loadedFolder = null;
+const changeListeners = new Set();
+
+/** 설정 패널의 onChanged를 바꾸지 않고 목록 준비 상태를 함께 지켜본다. */
+export function onStoreChange(listener) {
+    changeListeners.add(listener);
+    return () => changeListeners.delete(listener);
+}
+
+function changed() {
+    for (const listener of changeListeners) listener();
+    hooks.onChanged();
+}
+
 /** 마지막으로 읽은 폴더 키 → 그림 목록. 다시 읽기에 실패하면 이전 목록을 그대로 쓴다. */
 const lastGood = new Map();
 
 /** 지금 캐릭터의 폴더들을 다시 읽는다. 캐릭터가 없으면 비운다. */
-export async function reload() {
+export function reload() {
     const token = ++loadToken;
     const character = currentCharacter();
     const folder = folderOf(character);
+    const previous = pendingLoad;
+    let supersede;
+    const superseded = new Promise(resolve => { supersede = resolve; });
+    const promise = load(token, character, folder).finally(() => {
+        if (pendingLoad?.token === token) pendingLoad = null;
+    });
+    pendingLoad = { token, promise, superseded, supersede };
+    previous?.supersede();
+    return promise;
+}
+
+/** 생성 직전: 이미 읽는 중이면 합류하고, 같은 캐릭터를 매 답변마다 다시 읽지 않는다. */
+export async function ensureLoaded() {
+    const folder = folderOf(currentCharacter());
+    if (!folder) return false;
+    while (folder === folderOf(currentCharacter())) {
+        if (runtime.folder !== folder || (!pendingLoad && loadedFolder !== folder)) reload();
+        // 오래된 통신이 끝나지 않아도 새로 시작한 목록 읽기로 기다림을 옮긴다.
+        if (pendingLoad) await Promise.race([pendingLoad.promise, pendingLoad.superseded]);
+        else return !runtime.loading && runtime.folder === folder;
+    }
+    return false;
+}
+
+async function load(token, character, folder) {
     const folderChanged = folder !== runtime.folder;
     runtime.character = character;
     runtime.folder = folder;
@@ -48,25 +88,27 @@ export async function reload() {
         runtime.assets = [];
         runtime.keywords = '';
         lastGood.clear();
+        loadedFolder = null;
         clearIndex();
     }
 
     if (!folder) {
         runtime.loading = false;
-        hooks.onChanged();
+        loadedFolder = folder;
+        changed();
         return;
     }
 
     const plan = sourcesFor(settings(), folder);
     runtime.loading = true;
-    hooks.onChanged();
+    changed();
 
     const results = await Promise.all(plan.map(async (item) => {
         const source = { ...item, label: presetLabel(item.preset), assets: [], error: '', loaded: false };
         try {
             source.assets = await fetchAssets(item.key);
             source.loaded = true;
-            lastGood.set(item.key, source.assets);
+            if (token === loadToken && folder === folderOf(currentCharacter())) lastGood.set(item.key, source.assets);
         } catch (error) {
             console.error('[캐릭터 에셋] 목록 읽기 실패', item.key, error);
             source.error = error?.message || '목록을 읽지 못했어요.';
@@ -75,8 +117,9 @@ export async function reload() {
         }
         return source;
     }));
-    if (token !== loadToken) return; // 그 사이 다른 캐릭터로 바뀜
+    if (token !== loadToken || folder !== folderOf(currentCharacter())) return; // 그 사이 다른 캐릭터로 바뀜
     runtime.loading = false;
+    loadedFolder = folder;
     runtime.sources = results;
     const own = results.find(source => source.own && !source.preset.name);
     runtime.error = own?.error ?? '';
@@ -106,7 +149,7 @@ export function recompute() {
     runtime.keywords = keywordText(runtime.assets, disabled, grouped);
     if (runtime.folder) setIndex(buildIndex(runtime.folder, runtime.assets, disabled, runtime.sources.map(source => source.owner)));
     else clearIndex();
-    hooks.onChanged();
+    changed();
 }
 
 /** 합친 목록 기준의 꺼짐 파일 이름들 (폴더마다 다른 꺼짐 목록을 한 집합으로) */

@@ -57,12 +57,12 @@ TTS_EXTRA_BIGSOUNDBANK = {
 }
 TTS_EXTRA_GONGU = {'daily_scissors': '13263912', 'daily_snack_bag': '13263932',
                    'daily_soup': '13263933', 'daily_ladle': '13263935'}
-# 1.6.0 freesound, CC0 only (each sound page shows the Creative Commons 0 link): (sound id, uploader, HQ preview stem).
+# Reviewed freesound recordings, CC0 only: (sound id, uploader, HQ preview stem).
 # The reviewed original is the public HQ preview MP3; the page URL is rebuilt from the id and uploader.
 TTS_EXTRA_FREESOUND = {
     'daily_licking': (655410, 'SundayRecords', '655410_2788270'),
     'daily_lick': (655410, 'SundayRecords', '655410_2788270'),
-    'daily_kissing': (25268, 'freesound', '25268_173513'),
+    'daily_kissing': (825972, 'renrenrenrenren', '825972_14812013'),
     'daily_kiss': (352345, 'noahpardo', '352345_6246023'),
     'daily_squelching': (547446, 'tiddles451', '547446_9912277'),
     'daily_squelch': (649982, 'SoundDesignForYou', '649982_13085623'),
@@ -70,6 +70,12 @@ TTS_EXTRA_FREESOUND = {
     'daily_bed_creak': (443796, 'cabusta9', '443796_7262854'),
     'daily_gulping': (841516, 'aobowser', '841516_13941760'),
     'daily_gulp': (531755, 'magnuswaker', '531755_11537497'),
+    'daily_heartbeat': (670465, 'JonasTisell', '670465_3910073'),
+    'daily_pen_write': (565206, 'khenshom', '565206_6652872'),
+    'daily_match': (455373, 'SamuelGremaud', '455373_8031303'),
+    'daily_fireplace': (370938, 'jmehlferber', '370938_6621799'),
+    'daily_stomach': (52293, 'XxBirdoxX', '52293_627019'),
+    'daily_cork': (575527, 'dr19', '575527_5984825'),
 }
 TTS_EXTRA_IDS = tuple(TTS_EXTRA_BIGSOUNDBANK) + tuple(TTS_EXTRA_GONGU) + tuple(TTS_EXTRA_FREESOUND)
 TTS_EXTRA_RESOURCES = ('sfx-extra/SOURCES.json', 'sfx-extra/LICENSE-CC0.txt', 'sfx-extra/LICENSE-CC-BY.txt')
@@ -103,7 +109,7 @@ TTS_EXTRA_SHA256 = {
     'daily_spanking': 'a6003d5ee6b7a4b3a6976f01c4beaec4447cf0cd4a712e84300c83ca096dc939',
     'daily_licking': '58be8efc9d0114b55af738b2067410f8e7b8c028a45812ec45809f92c300ed6d',
     'daily_lick': 'bc7abe552d01685c935ed3f50bb531c72d691127c031196131c1ed529fb09691',
-    'daily_kissing': '2890c1fdd5d073e5f064347058a2ba7680e373583b39d4daf22d8163ab3d3d7d',
+    'daily_kissing': 'f60438c0e8bc44bc9279cf010b529eb6cd5565931ad4264393331ec60668eb69',
     'daily_kiss': '02daee7204c37fe0f057e70ba513cc7c3048a7c2c8107a79d42834b3dac5d9bf',
     'daily_squelching': '28003a3ca86b0d52587901687e6b86ace361a2da7f326cb7254df31bc9d93661',
     'daily_squelch': '4372056db085290cfe97b98d552d6e3a876fe26e6e35bd7dc95b2d9b76bde39e',
@@ -111,6 +117,12 @@ TTS_EXTRA_SHA256 = {
     'daily_bed_creak': '3e067b9439b4a7b92370ea76e26d2ae43391a3557c6e3ed4a5bd66b9a92cb891',
     'daily_gulping': '7d4c5928eb3f068724a9d69986e65f6b9ee4f1d5291179a26dec1aa8a3b8431f',
     'daily_gulp': '775cb4ab43de01175e22117d9484bd7b91e28408b1d149d703b7ac12b5b00c2a',
+    'daily_heartbeat': '837c2b0e69b16a025f7bc2238181f7edcda7ba14253964a88b33ca66ce2455e8',
+    'daily_pen_write': '260b0e1383d5672ec7112dd5eb2686d06f7ac13812ffcfb0929a08a2f463e944',
+    'daily_match': '6b811275444d2bce359a2e1eb591c4599a1e367605d19461c819cbc788f1f242',
+    'daily_fireplace': 'e5160bcb148e8022e8021e5f51fcfd0781105191fa6db7c05283348b3821d268',
+    'daily_stomach': '8c8b7358692a21eb9519a4e6d811dd18068043e6fbb05de49249b6e55d81bee2',
+    'daily_cork': '5886dfde834e3937026a2c6567619c5e34ccb5887dd0c0b7c5f03c13ffe54a99',
 }
 TTS_EXTRA_SOURCE_SHA256 = {
     'daily_cat_purr': '1809316c24ddd40363201bdf09d1f43ae72a275c2510c552c286fee0ec53cac5',
@@ -139,7 +151,7 @@ TTS_EXTRA_SOURCE_SHA256 = {
     'daily_spanking': 'a4eb8910029d46f39a103f41a2d92afbeaaa4a12af3549f817f52f79cd8f9782',
     'daily_licking': 'd15ecb85349062cafbe2e5a69951c5d450256ed37439ac0ed41474e0b7a146ce',
     'daily_lick': 'd15ecb85349062cafbe2e5a69951c5d450256ed37439ac0ed41474e0b7a146ce',
-    'daily_kissing': 'df8e1cfd27c1f8c7442975719942a951d634895c08a879358b76c6824d02ae4a',
+    'daily_kissing': '1e6bf43f5986571eab4f7508bb2b01097ed3dcbc8465c06ee7469fa692cc2f76',
     'daily_kiss': 'f5a9f84e04041c6611d59b835a6582fdf09d53724355faaa4f8237cdfcebf087',
     'daily_squelching': 'ee7404008e86ba7986f483adb05a7e784e8fa8ee9494f57e918f816d248e51f6',
     'daily_squelch': 'adfaf212f4fbb61d9924151a4d07de077a926e0f52d4fc7e8a7cce060719ca70',
@@ -147,6 +159,12 @@ TTS_EXTRA_SOURCE_SHA256 = {
     'daily_bed_creak': '9fdbbaf9112325932b07a85631267bf168276b26463d8093b7915cd6e3036dfc',
     'daily_gulping': '3d0e6dad7ce8b0580741041803fff943ef434727af9334e4220489452f076f52',
     'daily_gulp': 'ecb89b67ef08c0c1f8c6ee886d1976ab49181f4a398d4cfd6ce6417b031ddf5b',
+    'daily_heartbeat': '1d5ec4cddbefdbcf3f64cf72ec3980c9f1a0de2b21cb40744ff05d9a282ae867',
+    'daily_pen_write': 'f28f16e168a4ee14e769e79c571b60376f333dd1674725227482a966ac9f7cda',
+    'daily_match': '265f03a000bcd299dd8a4483e69e4c01752be82a1809ce75658a3695cbf8dc73',
+    'daily_fireplace': '1618ec3144c17b6772ae047f531f0a19eee1333ad7e613e86acbab7b33e6d767',
+    'daily_stomach': '72ad6ef95f42b7ed263b3661dd723a07dd56f9dfd995e4f5122db5fd9684dcfc',
+    'daily_cork': '205f32e3304244952b7c56addd7a9f946c516afd9687515bddad5f787a62624b',
 }
 
 
@@ -159,7 +177,9 @@ def tts_extra_origin(ident):
                 'downloadUrl': f'https://bigsoundbank.com/UPLOAD/mp3/{number}.mp3'}
     if ident in TTS_EXTRA_FREESOUND:
         number, user, stem = TTS_EXTRA_FREESOUND[ident]
-        return {'source': f'https://freesound.org/people/{user}/sounds/{number}/', 'author': user,
+        # The heartbeat page credits the recorder separately from its uploader.
+        author = 'Andy Jack (uploaded by JonasTisell)' if ident == 'daily_heartbeat' else user
+        return {'source': f'https://freesound.org/people/{user}/sounds/{number}/', 'author': author,
                 'license': 'CC0-1.0', 'licenseUrl': 'https://creativecommons.org/publicdomain/zero/1.0/',
                 'downloadUrl': f'https://cdn.freesound.org/previews/{number // 1000}/{stem}-hq.mp3'}
     sn = TTS_EXTRA_GONGU[ident]

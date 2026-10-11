@@ -4,7 +4,7 @@
    ============================================================ */
 
 /* state.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
-:root { --eh-css-version: "1.4.9"; }
+:root { --eh-css-version: "1.5.0"; }
 
 .eh-root {
     --eh-text: var(--SmartThemeBodyColor, #ccc);
@@ -632,6 +632,21 @@
     border-color: var(--eh-accent-line);
     box-shadow: 0 0 0 3px var(--eh-accent-soft);
 }
+
+/* Automatic image instructions stay within reach; manual placement is optional. */
+.eh-card--prompt .eh-setting { margin: 0; padding: 0; border: 0; }
+.eh-prompt-status { margin: 7px 0 0; color: var(--eh-muted); font-size: .76rem; line-height: 1.5; overflow-wrap: anywhere; }
+.eh-root details.eh-prompt-options { display: block; }
+.eh-prompt-options > summary { cursor: pointer; font-size: .88rem; font-weight: 600; min-height: 36px; align-content: center; }
+.eh-prompt-options[open] > summary { margin-bottom: 10px; }
+.eh-prompt-placement { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; font-size: .82rem; margin: 0 0 12px; }
+.eh-prompt-placement select { flex: 1 1 180px; min-width: 0; max-width: 100%; width: 100%; min-height: 38px; padding: 6px 9px; border: 1px solid var(--eh-line-strong); border-radius: 8px; background: var(--eh-well); color: var(--eh-text); font: inherit; line-height: 1.4; }
+.eh-prompt-manual, .eh-prompt-advanced-note { color: var(--eh-muted); font-size: .76rem; line-height: 1.5; overflow-wrap: anywhere; }
+.eh-prompt-manual[hidden] { display: none; }
+.eh-prompt-options .eh-textarea { margin-top: 8px; }
+.eh-prompt-options .eh-actions { margin-top: 8px; }
+.eh-prompt-advanced-note { margin-bottom: 0; }
+.eh-prompt-options > summary:focus-visible, .eh-prompt-placement select:focus-visible { outline: 2px solid var(--eh-accent); outline-offset: 3px; }
 
 .eh-actions { display: flex; justify-content: flex-end; gap: 6px; }
 

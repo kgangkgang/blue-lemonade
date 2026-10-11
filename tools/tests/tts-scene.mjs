@@ -189,7 +189,7 @@ await test('ordinary WAV excludes effects when automatic effects are off; explic
 });
 
 await test('muted specific everyday sound never falls back to a generic water sound',async()=>{
-    await reset();assert.equal(Library.listSfx().length,81);assert.equal(Library.matchSfx('pour water').id,'daily_water_pour');
+    await reset();assert.equal(Library.listSfx().length,87);assert.equal(Library.matchSfx('pour water').id,'daily_water_pour');
     Library.setSfxEnabled('daily_water_pour',false);assert.equal(Library.matchSfx('pour water'),null);assert.ok(Library.getSfx('daily_water_pour'));assert.ok(await Library.sfxBlob('daily_water_pour'));
     assert.equal(Library.matchSfx('비가 내린다').id,'daily_rain');assert.equal(Library.matchSfx('키보드를 타이핑한다').id,'daily_keyboard');
 });
@@ -201,6 +201,22 @@ await test('1.5.3 everyday sounds match concrete actions only and carry CC0 cred
     for(const id of ['daily_phone_vibration','daily_chair_slide','daily_pen_cap','daily_fridge_door','daily_electric_kettle','daily_toothbrush']){
         const sound=Library.getSfx(id);assert.ok(sound&&!sound.custom&&sound.loop===false&&sound.credit.author==='Joseph SARDIN'&&sound.credit.license==='CC0-1.0'&&sound.assetPath===`../sfx-extra/${id}.mp3`,id);
         assert.ok((await Library.sfxBlob(id)).size>0,id);assert.ok(Library.sfxAttribution([id]).includes('bigsoundbank.com'),id);
+    }
+});
+await test('new continuous sounds stop with the tapped dialogue and new single events never loop',async()=>{
+    for(const id of ['daily_heartbeat','daily_pen_write','daily_fireplace','daily_match','daily_stomach','daily_cork']) {
+        await reset();const s=S.settings();Object.assign(s.sfx,{enabled:true,auto:true,mode:'overlay',level:'normal'});
+        s.routes={dialogue:'character',narration:'skip',action:'skip',thought:'skip',user_dialogue:'user'};
+        s.analysis={...s.analysis,enabled:true,engine:'compat',base:'https://mock.invalid/v1',key:'k',model:'m',emotion:true,translate:false,speaker:true,when:'auto'};
+        const mes={mes:'A sound was heard. "Hello."',name:'Mina',is_user:false,is_system:false,swipe_id:0,extra:{}};T.ctx.chat.length=0;T.ctx.chat.push(mes);
+        const p=A.buildPrompt(mes,{langs:[],emotion:true,translate:false,speaker:true,sfx:true});
+        mes.extra.lemon_voice={analysis:{hash:A.hash(mes.mes),profile:'saved-before-six-added-sounds',langs:[],model:'old-model',at:1,
+            segs:p.lines.map(l=>({i:l.i,h:l.h,emotion:'calm',text:{}})),sfx:[{after:0,id,repeats:1,durationMs:0,strength:2}]}};
+        assert.equal(P.analysisWanted(0,mes),false,'catalog update keeps saved analysis');
+        assert.ok(P.speakSegments(0,[{kind:'dialogue',text:'Hello.',raw:'Hello.',color:null,tags:[],speakerHint:null,line:0,dialogueIndex:0}]));
+        await until(()=>T.plays.some(x=>x.kind==='voice'));await idle();
+        const fx=T.plays.filter(x=>x.kind==='sfx');assert.equal(fx.length,1,id);assert.equal(fx[0].sfxId,id);
+        assert.equal(fx[0].loop,A.canSustainSfx(Library.getSfx(id)),id);assert.ok(fx[0].node.paused,id+' stops after dialogue');
     }
 });
 await test('1.5.4 tapping a dialogue plays the cues of the narration right before it even when narration is skipped',async()=>{

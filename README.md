@@ -1,13 +1,24 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.0.8/blue-lemonade-6.0.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.0.9/blue-lemonade-6.0.9.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.0.8 · 최신 업데이트</summary>
+<summary>6.0.9 · 최신 업데이트</summary>
+
+- 캐릭터 에셋 1.5.0: 위쪽 이미지 프롬프트 스위치를 켜면 그림 규칙과 현재 캐릭터의 켜진 그림 목록을 자동으로 보내요. 프리셋에 매크로를 따로 넣지 않아도 되고, 끄면 규칙 전송도 멈춰요.
+- 캐릭터 에셋: 규칙 · 직접 배치에서 규칙을 고치거나 기존 {{img_inprompt}} 위치를 쓰는 직접 배치를 선택해요. 자동 배치에서는 기존 매크로가 중복되지 않으며, 저장한 그림과 규칙은 유지해요.
+- TTS 1.6.7: 심장박동·펜으로 쓰기·성냥 켜기·벽난로 장작 타기·배에서 꼬르륵·코르크 마개 따기 6개를 더했어요. 내장 효과음은 총 87개이고, 각 음원의 제작자·원본·라이선스는 출처에서 확인해요.
+- TTS: 키스(연속)를 물기 있는 입소리 음원으로 교체했어요. 심장박동·펜으로 쓰기·벽난로는 지문의 지속 표현에 맞춰 길이를 고르고, 성냥·꼬르륵·코르크는 한 동작 단위로 재생해요.
+- 캐릭터 에셋의 스위치·접기·상태 안내를 정리했어요. 기존 TTS 분석은 보존하므로 이미 분석한 메시지에서 새 효과음을 다시 고르려면 요술봉 › 재생성을 눌러 주세요.
+
+</details>
+
+<details>
+<summary>6.0.8 · 마크다운 꾸미기와 분석 재사용</summary>
 
 - 글자 › 마크다운에 제목 책갈피·형광펜·별, 별·다이아·점선 구분선, 따옴표·줄노트 인용문 등 꾸미기를 더했어요. 글머리·굵은 강조·코드 글자·표·접기·밑줄도 모양을 고를 수 있어요.
 - 작은 모양 견본으로 고르고, 세부 조절에서 장식 색·두께·길이·여백을 바꿔요. 폰은 한 열, PC는 두 열로 정리했고 접어 둔 상태를 유지해요. 기존 설정과 기본 모양은 그대로예요.
