@@ -6,10 +6,12 @@ import { getSanitizedFilename } from '../../../../../../utils.js';
 import { getSettings as themeSettings } from '../../settings.js';
 import { addonsEnabled } from '../../usage-mode.js';
 import { VERSION, initSettings, hooks, applyColors, colorsFor, currentChatKey, chatKey, renameChatColors, iconName, settings, themeColors } from './state.js';
-import { currentRecord, bookmarkAt, addBookmark, removeBookmark, syncAnchors, addExcerpt } from './data.js';
+import { currentRecord, bookmarkAt, addBookmark, removeBookmark, syncAnchors, addExcerpt, addImageTo, removeImageFrom } from './data.js';
 import { openNoteEditor, previewRecord, isPreviewing, exitPreview, abandonPreviewForGeneration } from './viewers.js';
 import { confirmSheet, hasOpenSheet } from './ui-kit.js';
 import { excerptList } from './excerpts.js';
+import { imageList, hasImage } from './images.js';
+import { safeImageSrc } from './render.js';
 import { startSelectionChip, hideSelectionChip } from './selection-chip.js';
 
 // 4.5.4: 모아 보기 창(panel.js 47KB + 그것만 쓰는 settings-view.js 17.7KB)은 창을 열 때 읽는다.
@@ -83,12 +85,13 @@ async function toggleFromButton(button) {
     const index = messageIndexOf(button);
     if (!record || index === null) return;
     const existing = bookmarkAt(record, index);
-    // 채팅에서 골라 둔 발췌가 있는 북마크는 한 번 눌러 바로 지우지 않는다 (메모 · 발췌 없는 북마크는 예전처럼 바로)
-    if (existing && excerptList(existing).length) {
+    // 채팅에서 골라 둔 발췌 · 붙인 그림이 있는 북마크는 한 번 눌러 바로 지우지 않는다 (메모 · 발췌 · 그림 없는 북마크는 예전처럼 바로)
+    if (existing && (excerptList(existing).length || imageList(existing).length)) {
         if (confirmingRemoval) return;
         confirmingRemoval = true;
         try {
-            if (!await confirmSheet('고른 글이 담긴 북마크예요. 지울까요?', { title: '북마크 삭제', okLabel: '삭제', danger: true, icon: 'fa-trash-can' })) return;
+            const what = excerptList(existing).length && imageList(existing).length ? '고른 글과 그림이' : imageList(existing).length ? '붙인 그림이' : '고른 글이';
+            if (!await confirmSheet(`${what} 담긴 북마크예요. 지울까요?`, { title: '북마크 삭제', okLabel: '삭제', danger: true, icon: 'fa-trash-can' })) return;
         } finally {
             confirmingRemoval = false;
         }
@@ -383,6 +386,106 @@ jQuery(() => {
             toastr.warning('이전 “채팅 북마크” 확장이 켜져 있어요. 확장 관리에서 꺼 주세요. 북마크는 그대로 이어져요.', '북마크', { timeOut: 10000 });
         }
     }, 3000);
+});
+
+// ── 다른 확장과의 다리 (1.4.9) ───────────────────────────────
+// 그림을 만드는 확장이 「즐겨찾기」로 북마크를 달 수 있게 한다. 북마크는 그 그림이 든 메시지에 달리고, 그림은 fav.images 에 붙는다 (images.js).
+//   const bm = globalThis[Symbol.for('blue-lemonade.bookmarks')];
+//   await bm.toggleImage(mesId, { src, prompt })  → { marked, bookmark }   marked = 그림이 붙어 있는지 · bookmark = 북마크가 남아 있는지
+//   bm.hasImage(mesId, src) · bm.images(mesId) · bm.has(mesId) · await bm.add(mesId) · await bm.remove(mesId) · bm.open() · bm.onChange(fn) → 끄는 함수
+// 미리보기 중이면 미리보는 채팅(화면에 그려진 채팅)에 단다 — 메시지의 북마크 단추와 같다. 바뀌면 onChange 가 모아서 한 번 알린다.
+const BRIDGE_KEY = Symbol.for('blue-lemonade.bookmarks');
+const changeListeners = new Set();
+let changeTimer = null;
+function notifyBookmarksChanged() {
+    clearTimeout(changeTimer);
+    changeTimer = setTimeout(() => {
+        for (const listener of [...changeListeners]) {
+            try { listener(); } catch (error) { console.warn('[북마크] 다리 알림:', error); }
+        }
+    }, 40);
+}
+hooks.bookmarksChanged = notifyBookmarksChanged;
+
+function bridgeIndex(index) {
+    const number = Number(index);
+    if (!Number.isInteger(number) || number < 0) throw new Error('메시지 번호가 올바르지 않아요.');
+    return number;
+}
+/** 사용 모드에서 애드온을 껐거나 북마크 기능을 끈 뒤(새로고침 전)에는 다리도 쉰다 — 선택 칩(selectionChipEnabled)과 같은 기준 */
+function bridgeEnabled() {
+    const theme = themeSettings();
+    return !!theme && addonsEnabled(theme) && theme.addons?.bookmarks === true;
+}
+function bridgeRecord() {
+    if (!bridgeEnabled()) throw new Error('북마크 기능이 꺼져 있어요.');
+    const record = targetRecord();
+    if (!record) throw new Error('열린 채팅이 없어요.');
+    return record;
+}
+/** 읽기용: 번호가 이상하거나 다리가 쉬면 조용히 없음 */
+function bridgeFav(index) {
+    const number = Number(index);
+    if (!bridgeEnabled() || !Number.isInteger(number) || number < 0) return null;
+    const record = targetRecord();
+    return record ? bookmarkAt(record, number) : null;
+}
+async function afterBridgeChange() {
+    refreshMessageIcons();
+    if (hooks.isPanelOpen()) await hooks.refreshPanel({ keepPage: true });
+}
+globalThis[BRIDGE_KEY] = Object.freeze({
+    version: VERSION,
+    enabled: () => bridgeEnabled(),
+    has(index) { return !!bridgeFav(index); },
+    images(index) {
+        const fav = bridgeFav(index);
+        // 저장은 같은 서버면 경로 — 돌려줄 때는 이 문서 기준 절대 주소로 (받는 쪽이 그대로 <img> 에 쓸 수 있게)
+        return fav ? imageList(fav).map(item => ({ src: safeImageSrc(item.src) || String(item.src), prompt: typeof item.prompt === 'string' ? item.prompt : '', at: item.at })) : [];
+    },
+    hasImage(index, src) {
+        const fav = bridgeFav(index);
+        return !!fav && hasImage(fav, safeImageSrc(src) || src, location.origin);
+    },
+    async add(index) {
+        const fav = await addBookmark(bridgeRecord(), bridgeIndex(index));
+        await afterBridgeChange();
+        return !!fav;
+    },
+    async remove(index) {
+        const record = bridgeRecord();
+        const fav = bookmarkAt(record, bridgeIndex(index));
+        if (!fav) return false;
+        await removeBookmark(record, fav.id);
+        await afterBridgeChange();
+        return true;
+    },
+    async toggleImage(index, image) {
+        const record = bridgeRecord();
+        const number = bridgeIndex(index);
+        const src = safeImageSrc(image?.src);
+        if (!src) throw new Error('그림 주소가 올바르지 않아요.');
+        const origin = location.origin;
+        const fav = bookmarkAt(record, number);
+        if (fav && hasImage(fav, src, origin)) {
+            await removeImageFrom(record, fav.id, src, { dropEmpty: true, origin });
+        } else {
+            const value = await addImageTo(record, number, { src, prompt: typeof image?.prompt === 'string' ? image.prompt : '' }, { origin });
+            if (!value.added && value.reason === 'full') throw new Error('한 메시지에 붙일 수 있는 그림은 30장까지예요.');
+            if (!value.added && value.reason === 'empty') throw new Error('그림 주소가 올바르지 않아요.');
+        }
+        // 결과는 바뀐 뒤의 실제 상태에서 — 거의 동시에 두 번 눌러도 화면과 어긋나지 않게
+        const after = bookmarkAt(targetRecord() ?? record, number);
+        const result = { marked: !!after && hasImage(after, src, origin), bookmark: !!after };
+        await afterBridgeChange();
+        return result;
+    },
+    open() { return openPanel(); },
+    onChange(listener) {
+        if (typeof listener !== 'function') return () => {};
+        changeListeners.add(listener);
+        return () => changeListeners.delete(listener);
+    },
 });
 
 // ── 블루 레몬에이드 애드온 연결 (addons.js) ──────────────────

@@ -1018,6 +1018,43 @@ const rows = [
       "license": "CC0-1.0",
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
     }
+  },
+  {
+    "id": "daily_footsteps",
+    "name": "발소리",
+    "category": "문·이동",
+    "words": [
+      "발소리",
+      "발걸음",
+      "걸음",
+      "걷는 소리",
+      "걸어오",
+      "걸어가",
+      "걸어왔",
+      "걸어갔",
+      "다가오는 발소리",
+      "또각",
+      "뚜벅뚜벅",
+      "footstep",
+      "footsteps",
+      "steps",
+      "walking",
+      "walks",
+      "walked",
+      "pacing",
+      "approach",
+      "approaches",
+      "approaching"
+    ],
+    "assetPath": "../sfx-extra/daily_footsteps.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "SpliceSound",
+      "source": "https://freesound.org/people/SpliceSound/sounds/170506/",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
   }
 ];
 export const DAILY_SFX = Object.freeze(rows.map(row => Object.freeze({...row, words: Object.freeze(row.words), credit: Object.freeze(row.credit)})));

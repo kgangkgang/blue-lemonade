@@ -66,7 +66,7 @@ await test('new sustained sounds use stated bounded timing; one-shot sounds cann
 });
 await test('only sustainable additions may span dialogue and stop at the message boundary',()=>{
     const p=build('심장이 뛰었다. "하나." "둘."');
-    const ids=['daily_heartbeat','daily_pen_write','daily_fireplace','daily_match','daily_stomach','daily_cork'];
+    const ids=['daily_heartbeat','daily_pen_write','daily_fireplace','daily_match','daily_stomach','daily_cork','daily_footsteps'];
     for(const id of ids) {
         assert.equal(L.getSfx(id).loop,false,'library preview stays one shot: '+id);
         const cue=A.normalizeSfx([{after:0,id,ongoing:true,stopAfter:999}],p)[0];

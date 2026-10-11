@@ -84,5 +84,25 @@ await test('손 효과음: 넣기 · 중복 한 번 · 빼기 · 글이 바뀌�
     assert.equal(A.removeManualSfx(id, 1, a), false);
     T.ctx.chat.pop();
 });
+await test('1.6.8 손 효과음: 옛 발소리(lib 없음)는 새 발소리로 · 새로 넣는 군화는 군화 · 옛 목록에 더 넣으면 옮겨 적음', async () => {
+    const mes = bot('발소리가 났다. "안녕." 그는 웃었다. "그래."');
+    T.ctx.chat.push(mes); const id = T.ctx.chat.length - 1;
+    mes.extra.lemon_voice = { manual: { h: A.hash(mes.mes), cues: [{ after: 0, id: 'footsteps' }] } };
+    assert.deepEqual(A.manualSfx(id).map(c => c.id), ['daily_footsteps'], '1.6.8 전 손 효과음의 footsteps 는 그때의 발소리');
+    assert.equal(A.removeManualSfx(id, 0, 'daily_footsteps'), true, '화면에 보인 새 발소리 ID 로 뺄 수 있다');
+    assert.deepEqual(A.manualSfx(id), []);
+    assert.equal(A.addManualSfx(id, 1, 'footsteps'), true);
+    assert.equal(mes.extra.lemon_voice.manual.lib, L.SFX_LIB);
+    assert.deepEqual(A.manualSfx(id).map(c => c.id), ['footsteps'], '1.6.8 부터 넣은 footsteps 는 군화');
+    assert.equal(A.removeManualSfx(id, 1, 'footsteps'), true);
+    mes.extra.lemon_voice = { manual: { h: A.hash(mes.mes), cues: [{ after: 0, id: 'footsteps' }, { after: 1, id: 'bell' }] } };   // 다 빼면 칸이 지워지므로 다시 만든다
+    assert.equal(A.addManualSfx(id, 1, 'footsteps'), true);
+    assert.deepEqual(mes.extra.lemon_voice.manual.cues.map(c => c.id), ['daily_footsteps', 'bell', 'footsteps'], '옛 목록에 더 넣으면 옛 발소리는 daily_footsteps 로 옮겨 적는다');
+    assert.equal(mes.extra.lemon_voice.manual.lib, L.SFX_LIB);
+    assert.deepEqual(A.manualSfx(id).map(c => [c.after, c.id]), [[0, 'daily_footsteps'], [1, 'bell'], [1, 'footsteps']]);
+    assert.equal(A.removeManualSfx(id, 1, 'bell'), true);
+    assert.equal(mes.extra.lemon_voice.manual.lib, L.SFX_LIB, '빼도 판 표시는 남는다');
+    T.ctx.chat.pop();
+});
 console.log(`${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

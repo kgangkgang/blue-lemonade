@@ -76,12 +76,13 @@ TTS_EXTRA_FREESOUND = {
     'daily_fireplace': (370938, 'jmehlferber', '370938_6621799'),
     'daily_stomach': (52293, 'XxBirdoxX', '52293_627019'),
     'daily_cork': (575527, 'dr19', '575527_5984825'),
+    'daily_footsteps': (170506, 'SpliceSound', '170506_1480854'),
 }
 TTS_EXTRA_IDS = tuple(TTS_EXTRA_BIGSOUNDBANK) + tuple(TTS_EXTRA_GONGU) + tuple(TTS_EXTRA_FREESOUND)
 TTS_EXTRA_RESOURCES = ('sfx-extra/SOURCES.json', 'sfx-extra/LICENSE-CC0.txt', 'sfx-extra/LICENSE-CC-BY.txt')
 TTS_EXTRA_MODULE = 'src/addons/tts/src/sfx-daily.js'
 
-# Reviewed 2026-10-10 originals and selected single-action/short-ambience exports (16 in TTS 1.5.1, 6 more in 1.5.3, 2 in 1.5.7, 10 in 1.6.0).
+# Reviewed 2026-10-10 originals and selected single-action/short-ambience exports (16 in TTS 1.5.1, 6 more in 1.5.3, 2 in 1.5.7, 10 in 1.6.0, 6 in 1.6.7, 1 in 1.6.8).
 TTS_EXTRA_SHA256 = {
     'daily_cat_purr': '6d983eda87f313e9f952a69d596748e56da40862d56ef6824f2e411792e95fda',
     'daily_cat_meow': 'c89166f6767b92dfb65de464eb5ae117ea5f0274439f75e02233bd01c0748f43',
@@ -123,6 +124,7 @@ TTS_EXTRA_SHA256 = {
     'daily_fireplace': 'e5160bcb148e8022e8021e5f51fcfd0781105191fa6db7c05283348b3821d268',
     'daily_stomach': '8c8b7358692a21eb9519a4e6d811dd18068043e6fbb05de49249b6e55d81bee2',
     'daily_cork': '5886dfde834e3937026a2c6567619c5e34ccb5887dd0c0b7c5f03c13ffe54a99',
+    'daily_footsteps': '62fa35a98e3c352fa8aac9dc18bbfb6cb91c40149abae9ac5e468100752d37ff',
 }
 TTS_EXTRA_SOURCE_SHA256 = {
     'daily_cat_purr': '1809316c24ddd40363201bdf09d1f43ae72a275c2510c552c286fee0ec53cac5',
@@ -165,6 +167,7 @@ TTS_EXTRA_SOURCE_SHA256 = {
     'daily_fireplace': '1618ec3144c17b6772ae047f531f0a19eee1333ad7e613e86acbab7b33e6d767',
     'daily_stomach': '72ad6ef95f42b7ed263b3661dd723a07dd56f9dfd995e4f5122db5fd9684dcfc',
     'daily_cork': '205f32e3304244952b7c56addd7a9f946c516afd9687515bddad5f787a62624b',
+    'daily_footsteps': '9e48387265b254793e09f8c24fcbb11191b16a0d554ca9cff40c5afb1dd396a2',
 }
 
 

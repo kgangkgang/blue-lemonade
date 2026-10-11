@@ -126,12 +126,12 @@ await test('HTML in attribution stays text and only sanitized links enter the DO
     const all = node => [node,...(node.childNodes || []).flatMap(all)], nodes = all(node);
     assert.ok(nodes.some(x => x.textContent === '<svg onload=alert(2)> · <script>x</script>')); assert.equal(nodes.filter(x => x.tagName === 'a').length, 1); assert.equal(nodes.find(x => x.tagName === 'a').href, valid.licenseUrl); assert.equal(nodes.filter(x => ['script','img','svg'].includes(x.tagName)).length, 0);
 });
-await test('all 40 reviewed everyday files agree with the runtime catalog and actual audio bytes', async () => {
+await test('all 41 reviewed everyday files agree with the runtime catalog and actual audio bytes', async () => {
     const folder=path.join(root,'../sfx-extra');
     const source=JSON.parse(fs.readFileSync(path.join(folder,'SOURCES.json'),'utf8'));
     const {DAILY_SFX}=await mod('sfx-daily.js');
-    assert.equal(source.files.length,40);assert.equal(DAILY_SFX.length,40);
-    assert.equal(L.listSfx().filter(x=>!x.custom).length,87);
+    assert.equal(source.files.length,41);assert.equal(DAILY_SFX.length,41);
+    assert.equal(L.listSfx().filter(x=>!x.custom).length,88);
     assert.deepEqual(new Set(source.files.map(x=>x.id)),new Set(DAILY_SFX.map(x=>x.id)));
     for(const row of source.files) {
         const runtime=L.getSfx(row.id),raw=fs.readFileSync(path.join(folder,row.id+'.mp3'));
@@ -143,13 +143,14 @@ await test('all 40 reviewed everyday files agree with the runtime catalog and ac
     }
     assert.equal(L.getSfx('daily_heartbeat').credit.author,'Andy Jack (uploaded by JonasTisell)');
     assert.equal(L.getSfx('daily_kissing').credit.source,'https://freesound.org/people/renrenrenrenren/sounds/825972/');
+    assert.equal(L.getSfx('daily_footsteps').credit.source,'https://freesound.org/people/SpliceSound/sounds/170506/');assert.equal(L.getSfx('daily_footsteps').credit.author,'SpliceSound');
     assert.equal(L.getSfx('daily_sigh'),null);assert.equal(L.getSfx('daily_gasp'),null);
 });
 await test('visible attribution gives current totals and includes all six new recorders', async () => {
     const {ttsCreditsHtml,ttsCreditsSummaryHtml}=await import(pathToFileURL(path.join(root,'../credits.js')).href);
     const full=ttsCreditsHtml(),summary=ttsCreditsSummaryHtml();
-    assert.match(full,/총 87개/);assert.match(full,/추가 효과음 40개/);assert.match(full,/freesound 효과음 16개/);assert.match(summary,/효과음 87개/);
-    for(const author of ['Andy Jack','JonasTisell','khenshom','SamuelGremaud','jmehlferber','XxBirdoxX','dr19','renrenrenrenren','aobowser']) assert.ok(full.includes(author),author);
-    assert.doesNotMatch(full,/총 81개|추가 효과음 34개|DeVern\(꿀꺽/);
+    assert.match(full,/총 88개/);assert.match(full,/추가 효과음 41개/);assert.match(full,/freesound 효과음 17개/);assert.match(summary,/효과음 88개/);assert.match(summary,/freesound 17/);
+    for(const author of ['Andy Jack','JonasTisell','khenshom','SamuelGremaud','jmehlferber','XxBirdoxX','dr19','renrenrenrenren','aobowser','SpliceSound']) assert.ok(full.includes(author),author);
+    assert.doesNotMatch(full,/총 81개|총 87개|추가 효과음 34개|추가 효과음 40개|freesound 효과음 16개|DeVern\(꿀꺽/);
 });
 console.log(`${passed} attribution groups passed`);

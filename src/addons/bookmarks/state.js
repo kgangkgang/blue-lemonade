@@ -4,7 +4,7 @@ import { extension_settings, getContext } from '../../../../../../extensions.js'
 import { saveSettingsDebounced } from '../../../../../../../script.js';
 
 export const MODULE = 'chaekgalpi';
-export const VERSION = '1.4.8';
+export const VERSION = '1.5.0';
 
 export const DEFAULT_COLORS = Object.freeze({ accent: '#a98bd9', user: '#5aa9e6', icon: '#f2c14e' });
 const COLOR_KEYS = Object.keys(DEFAULT_COLORS);
@@ -33,6 +33,7 @@ export const hooks = {
     refreshMessageIcons: () => {},
     syncBookmarks: () => {},
     hideSelectionChip: () => {},
+    bookmarksChanged: () => {},   // 1.4.9: 북마크가 저장될 때마다 — 다른 확장용 다리(index.js)가 듣는다
 };
 
 export function settings() {

@@ -1576,6 +1576,58 @@
       },
       "sha256": "5886dfde834e3937026a2c6567619c5e34ccb5887dd0c0b7c5f03c13ffe54a99",
       "bytes": 16625
+    },
+    {
+      "id": "daily_footsteps",
+      "name": "발소리",
+      "category": "문·이동",
+      "words": [
+        "발소리",
+        "발걸음",
+        "걸음",
+        "걷는 소리",
+        "걸어오",
+        "걸어가",
+        "걸어왔",
+        "걸어갔",
+        "다가오는 발소리",
+        "또각",
+        "뚜벅뚜벅",
+        "footstep",
+        "footsteps",
+        "steps",
+        "walking",
+        "walks",
+        "walked",
+        "pacing",
+        "approach",
+        "approaches",
+        "approaching"
+      ],
+      "path": "sfx-extra/daily_footsteps.mp3",
+      "source": "https://freesound.org/people/SpliceSound/sounds/170506/",
+      "sourceTitle": "Footsteps, Tile, Male Sneakers, Slow Pace.wav",
+      "author": "SpliceSound",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "licenseEvidence": "Sound page: \"Creative Commons 0\" link (bw-icon-zero) to http://creativecommons.org/publicdomain/zero/1.0/ followed by \"You can copy, modify, distribute and perform the sound, even for commercial purposes, all without the need of asking permission to the author.\"",
+      "sourcePageSha256": "d1f877e6c027577f608d45701aa1a0a785cad8ec9216c0c01935a84de994c282",
+      "downloadUrl": "https://cdn.freesound.org/previews/170/170506_1480854-hq.mp3",
+      "retrieved": "2026-10-11",
+      "sourceSha256": "9e48387265b254793e09f8c24fcbb11191b16a0d554ca9cff40c5afb1dd396a2",
+      "sourceBytes": 522720,
+      "sourceDuration": 22.707875,
+      "modifications": {
+        "excerptStart": 9.25,
+        "excerptSeconds": 2.9,
+        "selectionNote": "Five consecutive sneaker steps on tile at the recording pace (about every 0.64 s), steady loudness, cut between steps; no loop synthesized",
+        "gainDb": 23.456,
+        "fadeInSeconds": 0.01,
+        "fadeOutSeconds": 0.08,
+        "encoding": "MP3 128 kbps / 44.1 kHz"
+      },
+      "sha256": "62fa35a98e3c352fa8aac9dc18bbfb6cb91c40149abae9ac5e468100752d37ff",
+      "bytes": 47961
     }
   ]
 }

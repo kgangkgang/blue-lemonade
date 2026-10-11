@@ -56,7 +56,7 @@ import * as analysis from './analysis.js';
 import * as translation from './translation.js';
 import * as listen from './listen.js';   // 1.4.4 듣는 언어
 import { resolveScript, normalizeRows, scriptFingerprint } from './script-store.js';
-import { getSfx, sfxBlob, isSfxEnabled, sfxPreferenceRevision, onSfxPreferenceChange, sfxAttribution, sfxLevelOn, listSfx, isSfxFavorite } from './sfx-library.js';
+import { getSfx, sfxBlob, isSfxEnabled, sfxPreferenceRevision, onSfxPreferenceChange, sfxAttribution, sfxLevelOn, listSfx, isSfxFavorite, resolveSfxId } from './sfx-library.js';
 import { playbackOriginal, wavWithCredits } from './playback-details.js';
 import { createSfxController } from './sfx-audio.js';
 import { mixScene } from './scene-mix.js';
@@ -149,7 +149,9 @@ const pregenOn = (s) => s?.pregen === 'dialogue' || s?.pregen === 'all';
 //   1.6.3 개수로는 자르지 않는다 (사용자: 1,000자 채팅과 5,000자 지문이 달라 12개는 적을 수 있다) — 분석 쪽 저장 한도가 지문 길이를 따른다(analysis.sfxCap)
 const SFX_LEVELS = { few: { strength: 1 }, normal: { strength: 2 }, many: { strength: 3 } };
 function sfxCues(mesId, { forExport = false } = {}) {
-    const cues = cachedAnalysis(mesId)?.sfx || [];
+    const saved = cachedAnalysis(mesId);
+    // 1.6.8 전 분석(lib 표시 없음)의 'footsteps' 는 그때의 「발소리」 → daily_footsteps 로 읽는다 (sfx-library.resolveSfxId); 새 분석의 'footsteps' 는 군화 그대로. 저장된 분석은 고치지 않는다
+    const cues = (saved?.sfx || []).map(c => { const id = resolveSfxId(c?.id, saved); return id === c?.id ? c : { ...c, id }; });
     let level = settings().sfx?.level; if (!SFX_LEVELS[level]) level = 'normal';
     if (forExport && level === 'few') level = 'normal';
     const rule = SFX_LEVELS[level];

@@ -10,6 +10,7 @@ import { runtimeEnabled, assertRuntime, waitForRuntime } from './runtime.js';
 //                    1.3.7 엑스트라 목소리를 켜면(settings.extras) 아는 이름 밖의 단역(카페 사장 · 점원 …)도 그 이름으로 저장
 //   people?: { 이름: { g: 'm'|'f', a: 'y'|'a'|'o'|'', l } }   1.3.7 목소리를 안 정한 화자의 성별 · 나이 → voices.noteExtras (엑스트라 목소리)
 //   sfx?: [{ after, id, repeats, durationMs }]   서술에서 고른 효과음. after = 앞의 원문 대화문 수; 반복 1~4, 지속 0~8000ms.
+//   lib?: 2          1.6.8 효과음 보관함 판(sfx-library.SFX_LIB). 없으면 1.6.8 전 분석 — 그때의 'footsteps' 는 「발소리」였으니 재생 때 daily_footsteps 로 (resolveSfxId)
 //   baseProfile?: string  효과음을 끄면 기존 감정·번역은 재요청 없이 사용한다.
 // }
 // 저장은 getContext().saveChat() 을 바로 (생성 중이면 끝난 뒤; 지우기는 1초 디바운스) · 스와이프 정보에도 복사 (syncMesToSwipe) 해 되돌아와도 다시 안 묻는다.
@@ -49,7 +50,7 @@ import { allVoices, hasOwnVoice, noteExtras } from './voices.js';
 import { fetchJson } from './providers/_http.js';
 import { log, snip, scrub } from './log.js';
 import * as stapi from './stapi.js';
-import { listSfx, getSfx, matchSfx } from './sfx-library.js';
+import { listSfx, getSfx, matchSfx, resolveSfxId, SFX_LIB } from './sfx-library.js';
 
 export const EMOTIONS = Object.freeze(['neutral', 'happy', 'sad', 'angry', 'fearful', 'disgusted', 'surprised', 'calm', 'whisper', 'shout']);
 export const LANGS = Object.freeze(['ko', 'ja', 'en', 'zh']);
@@ -233,7 +234,7 @@ function speakerOf(seg, mes, charName, userName) {
 
 const autoSfxEnabled = () => settings().sfx?.enabled === true && settings().sfx?.auto !== false;
 const sceneKind = (seg) => seg?.kind === 'narration' || seg?.kind === 'action';
-const SUSTAINED_SFX = new Set(['daily_keyboard', 'daily_cat_purr', 'daily_faucet', 'daily_stream', 'daily_rain', 'daily_clock', 'daily_water_pour', 'daily_coffee_stir', 'daily_electric_kettle', 'daily_toothbrush', 'daily_spanking', 'daily_licking', 'daily_kissing', 'daily_squelching', 'daily_bed_creaking', 'daily_gulping', 'daily_heartbeat', 'daily_pen_write', 'daily_fireplace', 'wind', 'footsteps', 'footsteps_wood', 'footsteps_wet', 'running']);
+const SUSTAINED_SFX = new Set(['daily_keyboard', 'daily_cat_purr', 'daily_faucet', 'daily_stream', 'daily_rain', 'daily_clock', 'daily_water_pour', 'daily_coffee_stir', 'daily_electric_kettle', 'daily_toothbrush', 'daily_spanking', 'daily_licking', 'daily_kissing', 'daily_squelching', 'daily_bed_creaking', 'daily_gulping', 'daily_heartbeat', 'daily_pen_write', 'daily_fireplace', 'daily_footsteps', 'wind', 'footsteps', 'footsteps_wood', 'footsteps_wet', 'running']);
 export const canSustainSfx = sound => !!sound && (SUSTAINED_SFX.has(sound.id) || sound.custom === true && sound.loop === true);
 function sfxCatalog() {
     try {
@@ -995,21 +996,24 @@ function drop(id, mes, remember = false) {
 
 // ---------- 밖으로
 
-// ---------- 1.6.3 손으로 넣은 효과음: 분석과 따로 mes.extra.lemon_voice.manual = { h, cues: [{ after, id }] } — 글(해시)이 바뀌면 버린다. 넓이 필터를 타지 않는다
+// ---------- 1.6.3 손으로 넣은 효과음: 분석과 따로 mes.extra.lemon_voice.manual = { h, lib?, cues: [{ after, id }] } — 글(해시)이 바뀌면 버린다. 넓이 필터를 타지 않는다
+//   lib = 1.6.8 보관함 판 (없으면 1.6.8 전: 'footsteps' 는 그때의 발소리 → resolveSfxId 가 daily_footsteps 로 읽는다)
 const manualOf = (mes) => { const m = slot(mes, false)?.manual; return isObj(m) && Array.isArray(m.cues) && m.h === textHash(mes) ? m : null; };
 /** 저장된 손 효과음 → 재생 신호 모양 [{ after, id, strength: 1, manual: true, repeats: 1, durationMs: 0 }] */
 export function manualSfx(mesId) {
     const mes = msgOf(Number(mesId)); const m = manualOf(mes);
     if (!m) return [];
-    return m.cues.filter(c => isObj(c) && Number.isInteger(c.after) && c.after >= 0 && typeof c.id === 'string' && getSfx(c.id))
-        .map(c => ({ after: c.after, id: c.id, strength: 1, manual: true, repeats: 1, durationMs: 0 }));
+    return m.cues.filter(c => isObj(c) && Number.isInteger(c.after) && c.after >= 0 && typeof c.id === 'string' && getSfx(resolveSfxId(c.id, m)))
+        .map(c => ({ after: c.after, id: resolveSfxId(c.id, m), strength: 1, manual: true, repeats: 1, durationMs: 0 }));
 }
 /** after 번째 대사 앞에 id 를 넣는다 (같은 자리 같은 소리는 한 번) → 넣었나 */
 export function addManualSfx(mesId, after, id) {
     const mes = msgOf(Number(mesId));
     if (!mes || !getSfx(id) || !Number.isInteger(after) || after < 0) return false;
     const lv = slot(mes, true); const h = textHash(mes);
-    if (!isObj(lv.manual) || lv.manual.h !== h || !Array.isArray(lv.manual.cues)) lv.manual = { h, cues: [] };
+    if (!isObj(lv.manual) || lv.manual.h !== h || !Array.isArray(lv.manual.cues)) lv.manual = { h, lib: SFX_LIB, cues: [] };
+    // 1.6.8 전에 넣은 목록(lib 없음)에 더 넣을 때는 옛 ID 를 지금 보관함으로 옮겨 적고 판을 적는다 — 새로 넣는 군화 'footsteps' 와 섞이지 않게
+    else if (!(Number(lv.manual.lib) >= SFX_LIB)) lv.manual = { h, lib: SFX_LIB, cues: lv.manual.cues.map(c => isObj(c) ? { ...c, id: resolveSfxId(c.id, lv.manual) } : c) };
     if (!lv.manual.cues.some(c => isObj(c) && c.after === after && c.id === id)) { lv.manual.cues.push({ after, id }); lv.manual.cues.sort((a, b) => a.after - b.after); }
     try { if (typeof ST.syncMesToSwipe === 'function') ST.syncMesToSwipe(Number(mesId)); } catch { /* 스와이프 정보 없음 */ }
     saveNow();
@@ -1018,9 +1022,9 @@ export function addManualSfx(mesId, after, id) {
 export function removeManualSfx(mesId, after, id) {
     const mes = msgOf(Number(mesId)); const lv = slot(mes, false); const m = lv && manualOf(mes);
     if (!m) return false;
-    const left = m.cues.filter(c => !(isObj(c) && c.after === after && c.id === id));
+    const left = m.cues.filter(c => !(isObj(c) && c.after === after && (c.id === id || resolveSfxId(c.id, m) === id)));   // 화면에 보인(옮겨 읽은) ID 로도 뺀다
     if (left.length === m.cues.length) return false;
-    if (left.length) lv.manual = { h: m.h, cues: left }; else { delete lv.manual; if (!Object.keys(lv).length) delete mes.extra.lemon_voice; }
+    if (left.length) lv.manual = { ...m, cues: left }; else { delete lv.manual; if (!Object.keys(lv).length) delete mes.extra.lemon_voice; }
     try { if (typeof ST.syncMesToSwipe === 'function') ST.syncMesToSwipe(Number(mesId)); } catch { /* 스와이프 정보 없음 */ }
     saveNow();
     return true;
@@ -1145,7 +1149,7 @@ async function doAnalyze(entry) {
     const dt = mes?.extra?.display_text;
     const keyBuilt = typeof dt === 'string' && dt.trim() && dt !== mes.mes ? buildPrompt(mes, { ...promptOpts, display: false }) : built;
     const base = { ...(previous || {}), hash: h, swipe, profile: profileOf(mes, cfg, langs, keyBuilt), langs, model, at: Date.now(), speaker: previous ? previous.speaker : cfg.speaker !== false, segs: built.lines.map(l => previous?.segs.find(g => g.i === l.i && g.h === l.h) || ({ i: l.i, h: l.h, emotion: '', text: {} })) };
-    if (built.sfx) { base.baseProfile = profileOf(mes, cfg, langs, null, extrasOn(), false); base.sfx = []; }
+    if (built.sfx) { base.baseProfile = profileOf(mes, cfg, langs, null, extrasOn(), false); base.sfx = []; base.lib = SFX_LIB; }   // 1.6.8 보관함 판 — 이 표시가 없는 분석의 'footsteps' 는 재생 때 daily_footsteps (sfx-library.resolveSfxId)
     if (built.empty) { store(id, mes, base); return base; }   // 물을 게 없음 → 그것도 기억 (토큰 0)
     log('req', `대사 분석 #${id} · ${built.asked}줄 · ${engine === 'provider' ? String(cfg.provider || '') : engine}`);
     const t0 = Date.now();

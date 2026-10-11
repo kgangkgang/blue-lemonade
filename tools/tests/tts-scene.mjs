@@ -189,9 +189,39 @@ await test('ordinary WAV excludes effects when automatic effects are off; explic
 });
 
 await test('muted specific everyday sound never falls back to a generic water sound',async()=>{
-    await reset();assert.equal(Library.listSfx().length,87);assert.equal(Library.matchSfx('pour water').id,'daily_water_pour');
+    await reset();assert.equal(Library.listSfx().length,88);assert.equal(Library.matchSfx('pour water').id,'daily_water_pour');
     Library.setSfxEnabled('daily_water_pour',false);assert.equal(Library.matchSfx('pour water'),null);assert.ok(Library.getSfx('daily_water_pour'));assert.ok(await Library.sfxBlob('daily_water_pour'));
     assert.equal(Library.matchSfx('비가 내린다').id,'daily_rain');assert.equal(Library.matchSfx('키보드를 타이핑한다').id,'daily_keyboard');
+});
+await test('1.6.8 natural footsteps take the generic footstep words; MultiCast footsteps become boots',async()=>{
+    await reset();
+    for(const [text,id] of [['발소리가 가까워졌다.','daily_footsteps'],['그가 천천히 걸어오고 있었다.','daily_footsteps'],['그가 천천히 걸어왔다.','daily_footsteps'],['그녀는 문 쪽으로 걸어갔다.','daily_footsteps'],['He walked across the room.','daily_footsteps'],['누군가 걸어가는 소리가 났다.','daily_footsteps'],['복도에 발걸음 소리가 울렸다.','daily_footsteps'],['또각또각 구두 소리.','daily_footsteps'],['뚜벅뚜벅 걸어갔다.','daily_footsteps'],['Footsteps approached the door.','daily_footsteps'],['She was walking down the hall.','daily_footsteps'],['He kept pacing.','daily_footsteps'],
+        ['군화 소리가 저벅저벅 다가왔다.','footsteps'],['병사들이 행진했다.','footsteps'],['Heavy boots stomped across the floor.','footsteps'],['They were marching in step.','footsteps'],['The soldiers marched past.','footsteps'],['hurried footsteps','running'],['wet footsteps','footsteps_wet'],['footsteps on the wooden floor','footsteps_wood']])
+        assert.equal(Library.matchSfx(text)?.id,id,text);
+    assert.equal(Library.matchSfx('In March the snow melted.'),null,'the month is not a march');
+    const natural=Library.getSfx('daily_footsteps'),boots=Library.getSfx('footsteps');
+    assert.equal(natural.name,'발소리');assert.equal(natural.category,'문·이동');assert.equal(natural.credit.author,'SpliceSound');assert.equal(natural.credit.license,'CC0-1.0');assert.equal(natural.loop,false);assert.equal(natural.assetPath,'../sfx-extra/daily_footsteps.mp3');
+    assert.equal(boots.name,'군화 발소리');assert.equal(boots.category,'문·이동');assert.equal(boots.credit,undefined);assert.ok(boots.words.includes('군화')&&!boots.words.includes('발소리'));
+    assert.equal(A.canSustainSfx(natural),true);assert.equal(A.canSustainSfx(boots),true);
+    assert.ok((await Library.sfxBlob('daily_footsteps')).size>0);assert.ok(Library.sfxAttribution(['daily_footsteps']).includes('freesound.org/people/SpliceSound/sounds/170506/'));
+});
+await test('1.6.8 saved analyses without a library mark play the natural footsteps; marked analyses keep the boots',async()=>{
+    for(const [lib,expected] of [[undefined,'daily_footsteps'],[2,'footsteps']]) {
+        await reset();const s=S.settings();Object.assign(s.sfx,{enabled:true,auto:true,mode:'overlay',level:'normal'});
+        s.routes={dialogue:'character',narration:'skip',action:'skip',thought:'skip',user_dialogue:'user'};
+        s.analysis={...s.analysis,enabled:true,engine:'compat',base:'https://mock.invalid/v1',key:'k',model:'m',emotion:true,translate:false,speaker:true,when:'auto'};
+        const mes={mes:'Footsteps came closer. "Hello."',name:'Mina',is_user:false,is_system:false,swipe_id:0,extra:{}};T.ctx.chat.length=0;T.ctx.chat.push(mes);
+        const p=A.buildPrompt(mes,{langs:[],emotion:true,translate:false,speaker:true,sfx:true});
+        const stored={after:0,id:'footsteps',repeats:1,durationMs:0,strength:2};
+        mes.extra.lemon_voice={analysis:{hash:A.hash(mes.mes),profile:'saved-before-1.6.8',langs:[],model:'old-model',at:1,...(lib?{lib}:{}),
+            segs:p.lines.map(l=>({i:l.i,h:l.h,emotion:'calm',text:{}})),sfx:[{...stored}]}};
+        assert.equal(P.analysisWanted(0,mes),false,'lib='+lib);
+        assert.deepEqual(P.scriptRows(0).filter(r=>r.kind==='sfx').map(r=>[r.sfxId,r.text]),[[expected,Library.getSfx(expected).name]],'script rows lib='+lib);
+        assert.ok(P.speakSegments(0,[{kind:'dialogue',text:'Hello.',raw:'Hello.',color:null,tags:[],speakerHint:null,line:0,dialogueIndex:0}]));
+        await until(()=>T.plays.some(x=>x.kind==='voice'));await idle();
+        const fx=T.plays.filter(x=>x.kind==='sfx');assert.equal(fx.length,1,'lib='+lib);assert.equal(fx[0].sfxId,expected,'tap play lib='+lib);
+        assert.deepEqual(mes.extra.lemon_voice.analysis.sfx,[stored],'stored analysis is never rewritten');
+    }
 });
 await test('1.5.3 everyday sounds match concrete actions only and carry CC0 credits',async()=>{
     await reset();
@@ -410,6 +440,15 @@ async function analysisSetup() {
     return T.ctx.chat[0];
 }
 const tap = (text, dialogueIndex) => ({kind:'dialogue',text,dialogueIndex});
+await test('1.6.8 a fresh analysis is stamped with the library version so its chosen boots stay boots',async()=>{
+    await analysisSetup();Object.assign(S.settings().sfx,{enabled:true,auto:true,mode:'overlay',level:'normal'});
+    T.analysisReply=()=>({segs:[{i:0,emotion:'happy',speaker:'Mina',ja:'最初です。',ko:'첫 번째예요.'},{i:1,emotion:'sad',speaker:'Mina',ja:'次です。',ko:'두 번째예요.'}],sfx:[{after:1,id:'footsteps',strength:1}]});
+    const saved=await A.analyzeMessage(0);assert.equal(Library.SFX_LIB,2);assert.equal(saved.lib,Library.SFX_LIB);assert.equal(A.getAnalysis(0).lib,Library.SFX_LIB);
+    assert.deepEqual(saved.sfx.map(c=>[c.after,c.id]),[[1,'footsteps']]);
+    assert.deepEqual(P.scriptRows(0).filter(r=>r.kind==='sfx').map(r=>[r.sfxId,r.text]),[['footsteps','군화 발소리']]);
+    assert.equal(Library.resolveSfxId('footsteps',saved),'footsteps');assert.equal(Library.resolveSfxId('footsteps',{}),'daily_footsteps');assert.equal(Library.resolveSfxId('footsteps',null),'daily_footsteps');
+    assert.equal(Library.resolveSfxId('footsteps',{lib:1}),'daily_footsteps');assert.equal(Library.resolveSfxId('footsteps',{lib:3}),'footsteps');assert.equal(Library.resolveSfxId('bell',null),'bell');assert.equal(Library.resolveSfxId(undefined,null),undefined);
+});
 await test('one message: first tapped line analyses every dialogue; later taps and whole playback reuse it',async()=>{
     const mes=await analysisSetup();
     assert.equal(P.speakSegments(0,[tap('Hello one.',0)]),true);await idle();

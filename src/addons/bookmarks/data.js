@@ -8,10 +8,11 @@ import { getContext, saveMetadataDebounced } from '../../../../../../extensions.
 import { getRequestHeaders, getThumbnailUrl, saveChatConditional, updateMessageBlock, eventSource, event_types } from '../../../../../../../script.js';
 import { isEditingMessage, EDITING_IN_CHAT } from './edit-guard.js';
 import { uuidv4, getStringHash } from '../../../../../../utils.js';
-import { chatKey, currentChatKey } from './state.js';
+import { chatKey, currentChatKey, hooks } from './state.js';
 import { chatLabel } from './render.js';
 import { anchorHead, messageAnchor, resolveAnchors } from './anchors.js';
 import { appendExcerpt, removeExcerpt as dropExcerpt, updateExcerpt, excerptList } from './excerpts.js';
+import { appendImage, removeImage as dropImage, shouldDropBookmark } from './images.js';
 
 /**
  * favorites 의 빈 칸(null 등 객체가 아닌 것 — 손으로 고친 jsonl 등)을 그 자리에서 빼고 뺀 수를 돌려준다.
@@ -185,6 +186,7 @@ let pendingSaveKey = null;
 function saveCurrentMetadataSoon() {
     pendingSaveKey = currentChatKey();
     saveMetadataDebounced();
+    hooks.bookmarksChanged();
 }
 
 /** 맡겨 둔 북마크 저장이 있으면 지금 저장한다. (이미 저장됐어도 같은 내용을 한 번 더 쓸 뿐이다) */
@@ -201,7 +203,7 @@ export async function flushBookmarkSave() {
  */
 export async function saveRecord(record, { messagesChanged = false } = {}) {
     if (record.isCurrent) {
-        if (messagesChanged) await saveChatConditional();
+        if (messagesChanged) { await saveChatConditional(); hooks.bookmarksChanged(); }
         else saveCurrentMetadataSoon();
         return;
     }
@@ -227,6 +229,7 @@ export async function saveRecord(record, { messagesChanged = false } = {}) {
         }
         throw error;
     }
+    hooks.bookmarksChanged();
 }
 
 /** 두 메시지가 같은 메시지인지 (번호가 아니라 내용·시각·이름으로 본다) */
@@ -382,6 +385,69 @@ export async function addExcerpt(record, index, excerpt) {
         record.favorites.push(value.fav);
         rememberVerified(value.fav, message);
     }
+    await saveRecord(record);
+    return value;
+}
+
+/**
+ * 그림 하나를 그 메시지의 북마크에 붙인다 (1.4.9 — 다른 확장이 쓰는 다리는 index.js). 북마크가 없으면 만든다.
+ * @param {{ src: string, prompt?: string }} image images.js 참고 (src 는 다리가 절대 주소로 맞춰 준다)
+ * @returns {Promise<{ fav: object, created: boolean, added: boolean, reason?: string }>}
+ */
+export async function addImageTo(record, index, image, { origin = '' } = {}) {
+    await loadRecord(record);
+    const message = record.messages[index];
+    if (!message) throw new Error('북마크할 메시지를 찾을 수 없습니다.');
+    const attach = (target, holder) => {
+        const existing = bookmarkAt(holder, index);
+        const fav = existing ?? { ...newBookmark(index, target), blImageBorn: true };   // 다리가 만든 북마크 표시 — 마지막 그림을 떼면 이것만 지운다
+        const result = appendImage(fav, image, { origin });
+        return { fav, created: !existing, ...result };
+    };
+    if (!record.isCurrent) {
+        return updateOtherChat(record, (fresh) => {
+            const target = fresh.messages[index];
+            if (!target || !sameMessage(target, message)) throw new Error(CHAT_CHANGED_MEANWHILE);
+            const value = attach(target, fresh);
+            if (value.created && value.added) fresh.favorites.push(value.fav);
+            return { changed: value.changed, value };
+        });
+    }
+    const value = attach(message, record);
+    if (!value.changed) return value;
+    if (value.created) {
+        record.favorites.push(value.fav);
+        rememberVerified(value.fav, message);
+    }
+    await saveRecord(record);
+    return value;
+}
+
+/**
+ * 그림 하나를 북마크에서 뗀다. dropEmpty 면 메모 · 발췌 · 그림이 다 없어진 북마크는 북마크째 지운다 (즐겨찾기 끄기).
+ * @returns {Promise<{ removed: boolean, bookmark: boolean }>} bookmark = 뗀 뒤에도 북마크가 남아 있는지
+ */
+export async function removeImageFrom(record, favId, src, { dropEmpty = false, origin = '' } = {}) {
+    const detach = (holder) => {
+        const fav = findBookmark(holder, favId);
+        if (!fav) throw new Error('북마크를 찾을 수 없습니다. 그사이 지워졌을 수 있어요.');
+        const removed = dropImage(fav, src, origin);
+        let bookmark = true;
+        if (removed && dropEmpty && shouldDropBookmark(fav)) {
+            holder.favorites.splice(holder.favorites.indexOf(fav), 1);
+            bookmark = false;
+        }
+        return { removed, bookmark };
+    };
+    if (!record.isCurrent) {
+        return updateOtherChat(record, (fresh) => {
+            const value = detach(fresh);
+            return { changed: value.removed, value };
+        });
+    }
+    const value = detach(record);
+    if (!value.removed) return value;
+    if (!value.bookmark) verified.delete(favId);
     await saveRecord(record);
     return value;
 }

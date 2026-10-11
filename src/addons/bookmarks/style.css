@@ -5,7 +5,7 @@
    ============================================================ */
 
 /* state.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
-:root { --cg-css-version: "1.4.8"; }
+:root { --cg-css-version: "1.5.0"; }
 
 .cg-root {
     --cg-accent-fallback: #a98bd9;
@@ -2020,3 +2020,66 @@ body.salty .cg-root .cg-setting-text small {
     .cg-root .cg-excerpt-tools { margin-right: -11px; margin-left: 4px; }
     .cg-root .cg-excerpt--edit { padding: 11px 12px; border-radius: 14px; }
 }
+
+/* ── 붙인 그림 (다른 확장의 즐겨찾기 — images.js · 1.5.0) ────────────────── */
+.cg-root .cg-images { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 2px; }
+.cg-root .cg-image { position: relative; width: 96px; margin: 0; }
+.cg-root .cg-image-open {
+    display: block;
+    width: 96px;
+    height: 128px;
+    min-height: 0;
+    padding: 0;
+    border: 1px solid var(--cg-line);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--cg-hover);
+    cursor: zoom-in;
+}
+.cg-root .cg-image-open img { display: block; width: 100%; height: 100%; object-fit: cover; margin: 0; border: 0; }
+.cg-root .cg-image-open:focus-visible { outline: 2px solid var(--salty-accent, var(--cg-accent)); outline-offset: 2px; }
+/* 떼기: 발췌의 × 와 같은 단추를 그림 위 오른쪽에 (누르는 영역 34×36 유지) */
+.cg-root .cg-image-remove {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 36px;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--cg-card) 72%, transparent);
+    color: var(--cg-faint);
+    font-size: 13px;
+    cursor: pointer;
+}
+@media (hover: hover) {
+    .cg-root .cg-image-remove:hover { color: var(--cg-danger, #e5484d); background: color-mix(in srgb, var(--cg-card) 92%, transparent); }
+}
+.cg-root .cg-image-remove:focus-visible { color: var(--cg-danger, #e5484d); background: color-mix(in srgb, var(--cg-card) 92%, transparent); }
+/* 크게 보기 창 */
+.cg-root .cg-image-view { display: grid; place-items: center; }
+.cg-root .cg-image-view img { display: block; max-width: 100%; max-height: min(70dvh, 760px); width: auto; height: auto; margin: 0; border-radius: 12px; object-fit: contain; }
+.cg-root .cg-image-prompt {
+    margin: 12px 0 0;
+    padding: 10px 12px;
+    max-height: 9em;
+    overflow: auto;
+    border-radius: 12px;
+    background: var(--cg-hover);
+    color: var(--cg-muted);
+    font: inherit;
+    font-size: .86rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+@media (max-width: 760px) {
+    .cg-root .cg-image, .cg-root .cg-image-open { width: 84px; }
+    .cg-root .cg-image-open { height: 112px; }
+}
+/* 주소가 깨진 칸(손으로 고친 jsonl 등): 회색 자리표 — 떼기는 된다 */
+.cg-root .cg-image.is-broken .cg-image-open { display: grid; place-items: center; cursor: default; color: var(--cg-faint); font-size: 18px; }

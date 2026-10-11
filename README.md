@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.1.1/blue-lemonade-6.1.1.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.1.3/blue-lemonade-6.1.3.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.1.1 · 최신 업데이트</summary>
+<summary>6.1.3 · 최신 업데이트</summary>
+
+- 북마크 1.5.0: 다른 확장이 그림을 북마크에 붙일 수 있는 연결을 더했어요. 붙인 그림은 카드 위에 작은 그림으로 보이고, 눌러서 크게 보거나 ×로 뗄 수 있어요. 같은 서버의 그림은 경로로 저장해 PC와 폰에서 번갈아 열어도 깨지지 않아요.
+- 그림만 붙었던 북마크는 그림을 떼면 북마크도 같이 사라져요. 직접 단 별표와 메모·고른 글이 있는 북마크는 그대로 남고, 그림이 든 북마크를 지울 때는 한 번 물어봐요.
+- TTS 1.6.8: 운동화로 실내 바닥을 천천히 걷는 자연스러운 발소리를 더했어요. 기존의 딱딱한 발소리는 「군화 발소리」로 이름을 바꿨고, 예전에 분석한 메시지의 발소리도 새 소리로 나와요.
+
+</details>
+
+<details>
+<summary>6.1.1 · 끊김 감시 호환성</summary>
 
 - 끊김 감시 1.1.4: 다른 확장에서 답변을 기다릴 때 연결을 너무 일찍 중단하던 문제를 고쳐 호환성을 높였어요.
 - 응답 형식 표시가 없거나 일반 텍스트로 표시된 스트리밍도 구분해요. 연결 준비 정보나 빈 생각 블록만으로 답변이 시작됐다고 판단하지 않아요.

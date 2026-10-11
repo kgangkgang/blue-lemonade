@@ -183,7 +183,7 @@ class GateTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);self.write_fixture(root,files)
             self.assertEqual(gate.validate(gate.inventory(root,'theme'),'theme'),'1.3.1')
-    def test_everyday_sound_inventory_adds_40_named_sounds_and_both_licenses(self):
+    def test_everyday_sound_inventory_adds_41_named_sounds_and_both_licenses(self):
         files=self.tts_extra_fixture()
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);self.write_fixture(root,files)
@@ -191,7 +191,7 @@ class GateTests(unittest.TestCase):
                 (root/'src/addons/tts/sfx-extra'/name).write_bytes(b'private fixture')
             found=gate.inventory(root,'theme')
             self.assertEqual(set(found),set(files));self.assertEqual(gate.validate(found,'theme'),'1.3.1')
-            self.assertEqual(sum(n.endswith('.mp3') for n in found),87)
+            self.assertEqual(sum(n.endswith('.mp3') for n in found),88)
     def test_everyday_inventory_requires_complete_pack(self):
         files=self.tts_extra_fixture()
         for name in (*gate.TTS_EXTRA_RESOURCES,*(f'sfx-extra/{ident}.mp3' for ident in gate.TTS_EXTRA_IDS)):
@@ -223,7 +223,7 @@ class GateTests(unittest.TestCase):
         gongu=list(gate.TTS_EXTRA_IDS).index(next(iter(gate.TTS_EXTRA_GONGU)))
         fs=list(gate.TTS_EXTRA_IDS).index(next(iter(gate.TTS_EXTRA_FREESOUND)))
         added = [list(gate.TTS_EXTRA_IDS).index(ident) for ident in
-                 ('daily_kissing','daily_heartbeat','daily_pen_write','daily_match','daily_fireplace','daily_stomach','daily_cork')]
+                 ('daily_kissing','daily_heartbeat','daily_pen_write','daily_match','daily_fireplace','daily_stomach','daily_cork','daily_footsteps')]
         for index in (0,10,gongu,fs,*added):
             for key,value in [('source','https://example.invalid/recording'),('author','Other author'),
                               ('license','CC0-1.0' if index==gongu else 'CC-BY-NC-4.0'),
@@ -238,6 +238,11 @@ class GateTests(unittest.TestCase):
         kiss=gate.tts_extra_origin('daily_kissing')
         self.assertEqual(kiss['author'],'renrenrenrenren')
         self.assertEqual(kiss['downloadUrl'],'https://cdn.freesound.org/previews/825/825972_14812013-hq.mp3')
+        steps=gate.tts_extra_origin('daily_footsteps')
+        self.assertEqual(steps['author'],'SpliceSound')
+        self.assertEqual(steps['source'],'https://freesound.org/people/SpliceSound/sounds/170506/')
+        self.assertEqual(steps['downloadUrl'],'https://cdn.freesound.org/previews/170/170506_1480854-hq.mp3')
+        self.assertEqual(steps['license'],'CC0-1.0')
     def test_everyday_catalog_rejects_invalid_or_incomplete_json(self):
         for invalid in (b'[]',b'null',b'not json',b'{"version":true}',b'{"version":1,"files":[]}'):
             files=self.tts_extra_fixture();files['src/addons/tts/sfx-extra/SOURCES.json']=invalid

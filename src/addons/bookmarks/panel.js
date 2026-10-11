@@ -3,11 +3,12 @@ import { holdPreviewRules, releasePreviewRules } from '../../lite.js';
 let holdingPreviewRules = false;   // 5.6.6 (점검 PAB-4): 창을 여는 동안만 채팅 서식 사본 규칙을 켠다
 import { typesetBatch } from '../../typography.js';
 import { hooks, settings, saveSettings, applyTheme, applyColors, colorsFor, currentChatKey, iconName } from './state.js';
-import { getOwner, currentRecord, listOtherChats, loadRecord, findBookmark, bookmarkAt, addBookmark, bookmarkMessage, removeExcerptFrom } from './data.js';
-import { escapeHtml, formatDate, renderMessageHtml, renderReasoningHtml, renderNoteHtml, noteToPlainText, messageText, avatarForMessage, hydrateHtmlBlocks, highlightMatches, clearHighlights, renderExcerptsHtml } from './render.js';
+import { getOwner, currentRecord, listOtherChats, loadRecord, findBookmark, bookmarkAt, addBookmark, bookmarkMessage, removeExcerptFrom, removeImageFrom } from './data.js';
+import { escapeHtml, formatDate, renderMessageHtml, renderReasoningHtml, renderNoteHtml, noteToPlainText, messageText, avatarForMessage, hydrateHtmlBlocks, highlightMatches, clearHighlights, renderExcerptsHtml, renderImagesHtml, safeImageSrc } from './render.js';
 import { excerptsText } from './excerpts.js';
+import { imageList, imageKey } from './images.js';
 import { openExcerptEditor } from './excerpt-editor.js';
-import { confirmSheet } from './ui-kit.js';
+import { confirmSheet, openSheet } from './ui-kit.js';
 import { openNoteEditor, openMessageEditor, openContextViewer, confirmDeleteBookmark, enterPreview, isPreviewing, openTranslationEditor, confirmClearTranslation } from './viewers.js';
 import { hasTranslator, hasTranslation, isShowingOriginal, translateMessage, restoreTranslation } from './translate.js';
 import { renderSettingsPage, disposeSettingsPage } from './settings-view.js';
@@ -706,7 +707,10 @@ function renderCard(record, fav, index) {
     const noteContent = note ? `<div class="cg-note${sourcePreview ? '' : ' cg-note--summary'}" role="note" aria-label="메모·발췌"><div class="salty-preview cg-chatlike" data-prev="bookmark"><div class="mes" is_user="${isUser}"><div class="mes_block"><div class="cg-note-text mes_text">${note}</div></div></div></div></div>` : '';
     // 채팅에서 골라 북마크한 글 — 메모 위에, 고를 때 보이던 모양 그대로 (없으면 빈 글이라 예전 카드와 같다)
     const excerpts = renderExcerptsHtml(fav, { summary: !sourcePreview, removable: !fav.virtual });
-    const content = sourcePreview ? source + excerpts + noteContent : `
+    // 붙인 그림(다른 확장의 즐겨찾기 — 1.4.9)은 발췌 위에. 카드가 왜 생겼는지 먼저 보이게
+    const images = renderImagesHtml(fav, { removable: !fav.virtual });
+    const content = sourcePreview ? source + images + excerpts + noteContent : `
+        ${images}
         ${excerpts}
         ${noteContent}
         <button type="button" class="cg-source-toggle" aria-expanded="${sourceOpen}" aria-controls="${regionId}"><span>${sourceOpen ? '메시지 접기' : '메시지 펼치기'}</span><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
@@ -955,8 +959,27 @@ async function onCardAction(action, card, element = null) {
     const index = Number(card.dataset.index);
     const fav = record && (card.dataset.virtual ? virtualFav(record, index) : findBookmark(record, card.dataset.favId));
     if (!fav) return;
-    if (fav.blOrphaned && action !== 'note' && action !== 'delete' && action !== 'excerpt-remove' && action !== 'excerpt-edit') return;
+    if (fav.blOrphaned && !['note', 'delete', 'excerpt-remove', 'excerpt-edit', 'image-open', 'image-remove'].includes(action)) return;
     switch (action) {
+        case 'image-open': {
+            const src = element?.closest('[data-image-src]')?.dataset.imageSrc;
+            const item = imageList(fav).find(image => imageKey(image.src, location.origin) === imageKey(src, location.origin));
+            if (item) openImageSheet(item);
+            break;
+        }
+        case 'image-remove': {
+            const src = element?.closest('[data-image-src]')?.dataset.imageSrc;
+            if (!src || fav.virtual) break;
+            if (!await confirmSheet('이 그림을 북마크에서 뗄까요? 메시지와 그림 파일은 그대로예요.', { title: '그림 떼기', okLabel: '떼기', danger: true, icon: 'fa-image' })) break;
+            try {
+                await removeImageFrom(record, fav.id, src, { origin: location.origin });
+            } catch (error) {
+                toastr.error(error.message, '북마크');
+                break;
+            }
+            if (view.open && selectedRecord() === record) rerenderCard(fav.id);
+            break;
+        }
         case 'excerpt-edit': {
             const excerptId = element?.closest('[data-excerpt-id]')?.dataset.excerptId;
             if (!excerptId || fav.virtual) break;
@@ -1043,6 +1066,17 @@ async function onCardAction(action, card, element = null) {
             }
             break;
     }
+}
+
+/** 붙인 그림을 크게 본다 (1.4.9). 그림을 만든 태그가 있으면 아래에 함께 보여 준다. */
+function openImageSheet(item) {
+    const src = safeImageSrc(item.src);
+    if (!src) return;
+    const prompt = typeof item.prompt === 'string' ? item.prompt.trim() : '';
+    openSheet({
+        title: '붙인 그림', icon: 'fa-image', size: 'lg', className: 'cg-image-sheet',
+        body: `<div class="cg-image-view"><img src="${escapeHtml(src)}" alt=""></div>${prompt ? `<pre class="cg-image-prompt">${escapeHtml(prompt)}</pre>` : ''}`,
+    });
 }
 
 /** 전체 메시지 검색을 켜고 끈다. 끌 때 북마크 없는 다른 채팅을 보고 있었으면 현재 채팅으로 돌아간다. */

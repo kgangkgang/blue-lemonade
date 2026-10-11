@@ -8,6 +8,7 @@ import { settings } from './state.js';
 import { fitHtmlFrame } from './frame-fit.js';
 import { normalizeTrackerSpacing } from './tracker-spacing.js';
 import { cleanStyle, excerptList, isCssColor } from './excerpts.js';
+import { imageList, safeImageSrc as safeImageUrl } from './images.js';
 // lib.js의 export는 실리태번 버전마다 달라서, 예전부터 늘 있던 전역 DOMPurify를 쓴다.
 const { DOMPurify } = globalThis;
 
@@ -204,6 +205,28 @@ export function renderExcerptsHtml(fav, { summary = false, removable = true } = 
         return `<div class="cg-excerpt" role="listitem" data-excerpt-id="${escapeHtml(item.id ?? '')}"${tone}${ink}>${tools}<div class="cg-excerpt-text">${html}</div></div>`;
     }).join('');
     return `<div class="cg-excerpts${summary ? ' cg-excerpts--summary' : ''}" role="list" aria-label="발췌">${items}</div>`;
+}
+
+// ── 붙인 그림 (다른 확장이 북마크에 담은 그림 — images.js · 1.4.9) ──────────
+/** 그림 주소: http(s) 만, '#조각' 없이 절대 주소로 (빈 글 · '#…' · '?…' 는 ''). images.js 의 순수 함수에 이 문서를 기준으로 */
+export function safeImageSrc(src) {
+    return safeImageUrl(src, document.baseURI);
+}
+
+/** 카드의 그림 줄. 누르면 크게 보고(image-open), × 로 뗀다(image-remove). 주소가 이상한 칸은 그리지 않는다. */
+export function renderImagesHtml(fav, { removable = true } = {}) {
+    const items = imageList(fav).map((item) => {
+        const src = safeImageSrc(item.src);
+        const remove = removable
+            ? '<button type="button" class="cg-image-remove" data-card-act="image-remove" aria-label="그림 떼기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>'
+            : '';
+        // 주소가 깨진 칸(손으로 고친 jsonl 등)도 자리표로 보여 떼게 한다
+        const body = src
+            ? `<button type="button" class="cg-image-open" data-card-act="image-open" aria-label="그림 크게 보기"><img src="${escapeHtml(src)}" alt="" loading="lazy" decoding="async"></button>`
+            : '<span class="cg-image-open" role="img" aria-label="주소가 잘못된 그림"><i class="fa-solid fa-image-slash" aria-hidden="true"></i></span>';
+        return `<figure class="cg-image${src ? '' : ' is-broken'}" role="listitem" data-image-src="${escapeHtml(item.src)}">${body}${remove}</figure>`;
+    }).filter(Boolean).join('');
+    return items ? `<div class="cg-images" role="list" aria-label="붙인 그림">${items}</div>` : '';
 }
 
 /** 메모를 검색할 때 쓰는 순수 글자 */

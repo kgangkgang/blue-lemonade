@@ -19,7 +19,8 @@ const UPSTREAM_LIBRARY = [
     { files: ['footsteps_wood'], words: ['wooden floor', 'floorboard', 'stairs', 'creaking floor'] },
     { files: ['footsteps_wet'], words: ['wet footsteps', 'puddle', 'splashing steps'] },
     { files: ['running'], words: ['running', 'run', 'sprint', 'rushing', 'hurried footsteps'] },
-    { files: ['footsteps'], words: ['footstep', 'steps', 'walking', 'pacing', '~approach'] },
+    // 1.6.8 MultiCast 발소리는 「군화 발소리」 — 보통 발소리(footstep · walking · 발소리 · 걸음)는 sfx-daily.js 의 daily_footsteps 가 받는다 (DAILY_SFX 가 먼저 매칭)
+    { files: ['footsteps'], words: ['boots', 'boot steps', 'military boots', 'marching', 'marched', 'stomping', 'heavy footsteps', 'jackboots'] },
     { files: ['glass_break', 'glass_break_2'], words: ['shatter', 'glass break', 'breaking glass', 'window break', 'glass crash'] },
     { files: ['glass_clink'], words: ['clink', 'cheers', 'glasses', 'toast'] },
     { files: ['shotgun'], words: ['shotgun'] },
@@ -60,7 +61,7 @@ const KOREAN = {
     footsteps_wood: ['나무 바닥 발소리', '문·이동', '나무 바닥,마룻바닥,계단 발소리'],
     footsteps_wet: ['젖은 발소리', '문·이동', '젖은 발소리,물웅덩이 발소리,철벅 발소리'],
     running: ['달리는 발소리', '문·이동', '달리는,달리기,뛰는 발소리,뜀박질'],
-    footsteps: ['발소리', '문·이동', '발소리,걸음,걷는 소리,또각'],
+    footsteps: ['군화 발소리', '문·이동', '군화,구둣발,군홧발,행진,저벅저벅,쿵쿵 걸'],
     glass_break: ['유리 깨짐', '사물', '유리 깨,유리가 깨,창문 깨,창문이 깨,쨍그랑'],
     glass_clink: ['잔 부딪침', '사물', '건배,잔 부딪,잔을 부딪,잔이 부딪'],
     shotgun: ['산탄총', '전투', '산탄총,샷건'],
@@ -132,6 +133,17 @@ export function getSfx(id) {
     if (typeof id !== 'string') return null;
     const row = BUNDLED_MAP.get(id) || customRows().find(row => row.id === id);
     return row ? { ...row, words: [...row.words] } : null;
+}
+// 1.6.8 보관함 판: MultiCast 'footsteps' 가 「군화 발소리」가 되고 보통 발소리는 새 daily_footsteps 로 갔다. 1.6.8 전에 저장된 분석 · 손 효과음에는
+//   판 표시(lib)가 없고 그때의 'footsteps' 는 「발소리」였으니, 재생 · 표시에서 daily_footsteps 로 읽는다 (저장된 글은 고치지 않는다).
+//   1.6.8 부터는 저장할 때 lib: SFX_LIB 를 적고(analysis.js), 그 뒤에 고른 'footsteps' 는 군화 그대로.
+export const SFX_LIB = 2;
+const LEGACY_SFX = Object.freeze({ footsteps: 'daily_footsteps' });
+/** 저장된 분석 · 손 효과음(saved: { lib? })의 효과음 ID → 지금 보관함의 ID */
+export function resolveSfxId(id, saved) {
+    if (typeof id !== 'string' || !own(LEGACY_SFX, id)) return id;
+    const lib = Number(saved?.lib);
+    return Number.isInteger(lib) && lib >= SFX_LIB ? id : LEGACY_SFX[id];
 }
 const preferenceListeners = new Set();
 const preferenceRevisions = new Map();
