@@ -33,6 +33,7 @@ const rows = [
  ['text','strong','강조 글자','강조 굵은 글씨 볼드 별표 두개 글자 색 크기 굵기 자간 폰트'],
  ['text','code','코드 글자','코드 백틱 도트 글꼴 네오둥근모 글씨 색 크기 굵기 자간 폰트'],
  ['text','para','문단·줄·글자 간격','문단 간격 들여쓰기 첫줄 정렬 왼쪽 가운데 오른쪽 양쪽 줄바꿈 자간 행간 글 폭 가독성 읽기 폭'],
+ ['image','cutedge','투명 그림 외곽선 · 그림자','투명 배경 캐릭터 컷 에셋 생성 그림 이미지 외곽선 테두리 둘레 실루엣 윤곽 그림자 붕 떠 보임 떠있는 두께 진하기 퍼짐 블러 흐림 각도 거리 투명도 색 가장자리 색 맞추기 칸 밖 잘림'],
  ['text','shadow','글자 그림자·외곽선','글자 글씨 본문 그림자 외곽선 테두리 가독성 색 진하기 투명도 각도 거리 번짐 퍼짐 두께 대상 대사 속마음 강조'],
  ['chat','message','내 메시지 모양','말풍선 카드 테이블 글자만 사용자 내 메시지 채팅 모양 이름 줄 시간 숨김 작은 아바타 숨기기 글자 크기 진하기'],
  ['chat','message','캐릭터 메시지 말풍선','캐릭터 상대 봇 AI 답 메시지 말풍선 버블 카톡 카카오톡 메신저 글자만','','chat.char'],
@@ -99,7 +100,7 @@ for (const { key, label, options } of MARKDOWN_CONTROLS) rows.push(['text','mark
 for (const {key,label,group} of MARKDOWN_TUNING) rows.push(['text','markdown',`마크다운 · ${MARKDOWN_CONTROLS.find(c=>c.key===group).label} · ${label}`,`마크다운 꾸미기 ${markdownAliases[group]} ${label}`,'',`markdown.${key}`]);
 rows.push(['text','markdown','마크다운 · 장식 색 직접 고르기','마크다운 꾸미기 색 색상 포인트 직접 선택','','markdown.accentOwn'],['text','markdown','마크다운 · 장식 색','마크다운 꾸미기 색 색상 포인트','','markdown.accentColor']);
 const tabs={extensions:'확장',theme:'테마',text:'글자',chat:'채팅',image:'이미지',prompt:'프롬프트'};
-const subs={zipinstall:'ZIP 설치',tts:'TTS',notes:'메모',strike:'취소선',direction:'전개 지시',assets:'캐릭터 에셋',prompt:'한글화 패널',customstyle:'커스텀 CSS 조절',translator:'LLM 번역',conflicts:'확장 충돌 진단',words:'단어 치환',capture:'채팅 캡처',order:'확장 순서',perf:'성능 보조',models:'모델 관리',modelswitch:'모델 전환',regexlink:'프롬프트 연동 정규식',rewrite:'다시 쓰기',bookmarks:'북마크',scripts:'스크립트',update:'업데이트',changes:'변경한 설정',palette:'색',colors:'색 고치기',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
+const subs={cutedge:'투명 그림',zipinstall:'ZIP 설치',tts:'TTS',notes:'메모',strike:'취소선',direction:'전개 지시',assets:'캐릭터 에셋',prompt:'한글화 패널',customstyle:'커스텀 CSS 조절',translator:'LLM 번역',conflicts:'확장 충돌 진단',words:'단어 치환',capture:'채팅 캡처',order:'확장 순서',perf:'성능 보조',models:'모델 관리',modelswitch:'모델 전환',regexlink:'프롬프트 연동 정규식',rewrite:'다시 쓰기',bookmarks:'북마크',scripts:'스크립트',update:'업데이트',changes:'변경한 설정',palette:'색',colors:'색 고치기',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
 subs.markdown = '마크다운';
 const normalize = value => String(value).normalize('NFKC').toLowerCase().replace(/^\s*(?:\*\s*){3,}$/,'구분선').replace(/퀵\s*리플라이|quick\s*repl(?:y|ies)|큐알|\bqr\b/g,'퀵리플라이').replace(/프사|아바타/g,'프로필').replace(/글씨|글자\s*간격/g,m=>m==='글씨'?'글자':'자간').replace(/확대\s*축소/g,'확대 축소').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 // 한글을 초성 · 자모로 풀어 둔다: 'ㅂㄱ' → 배경, '배겨'(치다 만 글자) → 배경, 한 글자 틀린 말도 찾는다.

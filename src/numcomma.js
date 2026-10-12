@@ -11,7 +11,7 @@
 //  · 실리태번이 .val(x) 로 넣는 값(프리셋 바꾸기 · 설정 불러오기)은 이벤트가 없어서, 찾은 칸마다 value · valueAsNumber 를 그 칸에만
 //    덧씌워 넣는 순간 다시 그리기를 건다 (읽기는 원래 것 그대로, 끄면 지운다).
 //  · 그리기는 한 프레임에 몰아서, 모양(값 · 글꼴 · 색 · 크기)이 그대로면 다시 안 그린다. 스트리밍 글자는 #chat 안이라 넘어오지 않는다.
-import { groupedNumber } from './numbers.js';
+import { groupedNumber, fitNumberText, scaledFont } from './numbers.js';
 import { tapPanelChanges, panelWatching } from './lite.js';
 
 const CLS = 'bl-num-ghost';
@@ -284,9 +284,25 @@ function render(text, L) {
     let inner = L.w - L.pl - L.pr - L.spin;     // 글자가 놓이는 칸 폭 (스핀 단추 자리 뺌)
     // 좁은 칸(실리태번 슬라이더 옆 60px 칸의 30000): 스핀 단추 자리까지 쓰면 들어가면 그 폭으로 — 원래 글자도 이미 잘려 보이던 칸이다.
     // 그동안 스핀 단추는 누르기 전까지 안 보이게(bl-num-wide) 해서 올렸을 때 숫자 위에 겹치지 않게 한다
-    const wide = width > inner + 0.5 && L.spin > 0 && width <= inner + L.spin + 0.5;
+    // 6.1.6: 그래도 넘치면(6자리 128,000 · 7자리 1,000,000) 글자를 칸에 맞게 줄여 그린다 (한도 72%, numbers.js fitNumberText) —
+    // 예전엔 그리지 않아서 여섯 자리부터 쉼표가 사라진 것처럼 보였다. 더 줄여야 하면 예전처럼 원래 글자
+    // 가운데 정렬 칸은 스핀 자리를 숨기면 아래에서 칸 전체(작은 쪽 여백 기준)에 가운데로 그린다 — 줄일 때는 그 폭에서 양쪽 1px 를 남겨 맞춘다
+    const centered = /center/.test(L.align);
+    const shrinkRoom = L.spin > 0 && centered ? L.w - 2 * Math.min(L.pl, L.pr) - 2 : inner + L.spin;
+    const fit = fitNumberText(width, inner, L.spin, undefined, shrinkRoom);
+    if (!fit) return null;
+    const wide = fit.wide;
     if (wide) inner += L.spin;
-    else if (width > inner + 0.5) return null;   // 안 들어가면 그리지 않는다 — 원래 글자(가로로 밀림)대로
+    let font = L.font, ls = L.ls;
+    if (fit.scale < 1) {
+        font = scaledFont(L.font, L.cs.fontSize, fit.scale);
+        if (!font) return null;
+        ls = L.ls * fit.scale;
+        ctx.font = font;
+        if (glyphs) glyphs = glyphs.map(([ch, cell]) => [ch, cell * fit.scale]);
+        if (LETTER && !glyphs) ctx.letterSpacing = `${ls}px`;
+        width = glyphs ? glyphs.reduce((a, g) => a + g[1] + ls, 0) : ctx.measureText(text).width;
+    }
     // 5.6.4: PC 숫자칸은 스핀 자리만큼 왼쪽 여백이 더 크다(css/02 의 15px/0) — 스핀 자리까지 쓰는 넓은 그림은 작은 쪽 여백 기준으로 칸 가운데에.
     // 좌우 여백이 같으면 예전 식(pl + (inner - width) / 2)과 같은 값이다
     const mid = /center/.test(L.align);
@@ -299,31 +315,31 @@ function render(text, L) {
     const ascent = Math.round(m.fontBoundingBoxAscent), descent = Math.round(m.fontBoundingBoxDescent);
     const contentH = L.h - L.pt - L.pb;
     const y = Math.round(L.fy + (L.pt + (contentH - ascent - descent) / 2 + ascent) * L.unit) / L.unit;
-    const imgKey = [text, L.font, L.tabular, L.ink, L.ls, L.kerning, x, y, L.w, L.h, L.dpr].join('|');
+    const imgKey = [text, font, L.tabular, L.ink, ls, L.kerning, x, y, L.w, L.h, L.dpr].join('|');
     let url = images.get(imgKey);
-    if (url) return { url, wide };
+    if (url) return { url, wide, scale: fit.scale };
     canvas.width = Math.max(1, Math.ceil(L.w * L.dpr));
     canvas.height = Math.max(1, Math.ceil(L.h * L.dpr));
     ctx.setTransform(L.dpr, 0, 0, L.dpr, 0, 0);
-    ctx.font = L.font;   // 크기를 바꾸면 그리기 상태가 처음으로 돌아간다
+    ctx.font = font;     // 크기를 바꾸면 그리기 상태가 처음으로 돌아간다 (6.1.6: 줄여 맞춘 글꼴이면 그 크기)
     ctx.fontKerning = L.kerning === 'none' ? 'none' : 'normal';
     ctx.fillStyle = L.ink;
     ctx.textBaseline = 'alphabetic';
     if (!glyphs) {
-        if (LETTER) ctx.letterSpacing = `${L.ls}px`;
+        if (LETTER) ctx.letterSpacing = `${ls}px`;
         ctx.fillText(text, x, y);
     } else {
         if (LETTER) ctx.letterSpacing = '0px';
         let at = x;
         for (const [ch, cell] of glyphs) {
             ctx.fillText(ch, at + (cell - ctx.measureText(ch).width) / 2, y);
-            at += cell + L.ls;
+            at += cell + ls;
         }
     }
     url = canvas.toDataURL('image/png');
     if (images.size > 300) images.clear();
     images.set(imgKey, url);
-    return { url, wide };
+    return { url, wide, scale: fit.scale };
 }
 
 function flush() {

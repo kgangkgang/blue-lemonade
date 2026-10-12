@@ -7,6 +7,7 @@ import { syncWeatherProfile } from './weather-profiles.js';
 import { tidyFrameLibrary } from './frame-library.js';
 import { DECOR_DEFAULTS, tidyDecor, slimDecor } from './decor.js';
 import { FRAME_DEFAULTS, FRAME_RANGE, tidyFrame } from './frames.js';
+import { cutEdgeDefaults, tidyCutEdge } from './cutedge.js';
 // 설정 저장 칸: extension_settings.salty
 import { PALETTES, PALETTE_ALIASES } from './palettes.js';
 
@@ -113,7 +114,7 @@ export const DEFAULTS = {
     activeStyle: null,
     baseStyle: null,
     profile: { decor: { ...DECOR_DEFAULTS }, nameSize: 24, nameWeight: 650, nameSpacing: 0, nameHeight: 1.3, nameColor: '#91a5ba', nameAuto: true, nameAlign: 'center', nameRowAlign: 'left', nameItalic: false, nameUnderline: false, headerLayout: 'below-two', headerGap: 8, metaSize: 12, metaOpacity: 70, buttonGap: 8, nameOutline: 0, nameOutlineColor: '#000000', nameShadow: false, nameShadowBlur: 4, nameShadowY: 1, nameShadowAlpha: 25, ...FRAME_DEFAULTS, mode: 'small', layout: 'column', sizing: 'pixels', screenHeight: 45, maxHeight: 70, visibleHeight: 100, width: 100, height: 320, fit: 'cover', positionX: 50, positionY: 35, radius: 18, gap: 20, blur: 0, opacity: 100, fadeY: 0, fadeX: 0, original: true },
-    image: { decor: { ...DECOR_DEFAULTS }, ...FRAME_DEFAULTS, layout: 'bleed', shape: 'rect', fit: 'ratio', maxh: 78, height: 40, blendWhite: true, cutoutSame: true, fade: 'soft', fadeY: 10, fadeX: 0, angle: 3, radius: 14, cornerCut: 10, scratchAmount: 45, scratchDirection: 'straight', scratchTexture: 'sharp', edge: 'none', edgeAuto: true, edgeSideTop: true, edgeSideRight: true, edgeSideBottom: true, edgeSideLeft: true, edgeThick: 1, edgeAlpha: 30, edgeGlow: 0, mask: '', maskFit: 'stretch', masks: [], maskId: '' }, // shape: rect | custom(mask = 투명 PNG data URL, maskFit: stretch | contain) — angle · cornerCut · scratch* 는 뺀 모양의 옛 값(CSS 는 남아 있음) · fit(크기): ratio 비율 유지(maxh = 최대 높이) | fixed 높이 맞춤(height = 높이), 둘 다 화면 높이 % · fade(흐림): off | soft | medium | strong · angle: 대각선 기울기(도)
+    image: { decor: { ...DECOR_DEFAULTS }, ...FRAME_DEFAULTS, layout: 'bleed', shape: 'rect', fit: 'ratio', maxh: 78, height: 40, blendWhite: true, cutoutSame: true, fade: 'soft', fadeY: 10, fadeX: 0, angle: 3, radius: 14, cornerCut: 10, scratchAmount: 45, scratchDirection: 'straight', scratchTexture: 'sharp', edge: 'none', edgeAuto: true, edgeSideTop: true, edgeSideRight: true, edgeSideBottom: true, edgeSideLeft: true, edgeThick: 1, edgeAlpha: 30, edgeGlow: 0, mask: '', maskFit: 'stretch', masks: [], maskId: '', cutEdge: cutEdgeDefaults() }, // cutEdge: 6.1.6 투명 그림 외곽선 · 그림자 (cutedge.js) · shape: rect | custom(mask = 투명 PNG data URL, maskFit: stretch | contain) — angle · cornerCut · scratch* 는 뺀 모양의 옛 값(CSS 는 남아 있음) · fit(크기): ratio 비율 유지(maxh = 최대 높이) | fixed 높이 맞춤(height = 높이), 둘 다 화면 높이 % · fade(흐림): off | soft | medium | strong · angle: 대각선 기울기(도)
 };
 
 DEFAULTS.userProfile = { ...structuredClone(DEFAULTS.profile), mode: 'none', side: 'auto', metaSide: 'auto' }; // auto = 말풍선이면 오른쪽(메신저처럼), 나머지 모양은 왼쪽
@@ -259,6 +260,8 @@ function tidyImage(image) {
     image.edgeAuto = image.edgeAuto === true || image.edgeAuto === 'true';
     // 투명 배경 캐릭터 컷도 보통 그림과 같은 모양 · 흐림 · 테두리 (2.7.8, 기본 켬) — 끄면 예전처럼 자르지 않고 아래만 살짝 흐림
     image.cutoutSame = image.cutoutSame !== false && image.cutoutSame !== 'false';
+    // 6.1.6 투명 그림 외곽선 · 그림자: 범위 · 색 · 켬/끔을 그 자리에서 정리 (가져온 파일의 문자열 "false" 도)
+    tidyCutEdge(image);
     // 테두리를 그릴 면 — 가져온 설정의 문자열 "false" 를 걸러낸다 (자동 색과 같은 방식)
     for (const face of ['Top', 'Right', 'Bottom', 'Left']) {
         const key = `edgeSide${face}`;

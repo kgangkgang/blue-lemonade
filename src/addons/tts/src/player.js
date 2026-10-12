@@ -60,6 +60,7 @@ import { getSfx, sfxBlob, isSfxEnabled, sfxPreferenceRevision, onSfxPreferenceCh
 import { playbackOriginal, wavWithCredits } from './playback-details.js';
 import { createSfxController } from './sfx-audio.js';
 import { mixScene } from './scene-mix.js';
+import { paintColorHighlights, clearColorHighlights } from './highlight-colors.js';
 
 const TITLE = 'TTS';
 const MAX_CONC = 2;                 // 동시 합성 요청
@@ -2397,7 +2398,8 @@ function markWaiting(mesId) {
 }
 const highlightOk = () => typeof Highlight === 'function' && typeof CSS !== 'undefined' && CSS.highlights;
 const HIGHLIGHT_NAMES = Object.freeze({ both: 'lv-now', color: 'lv-now-color', underline: 'lv-now-underline' });
-function clearHighlight() { if (highlightOk()) try { for (const name of Object.values(HIGHLIGHT_NAMES)) CSS.highlights.delete(name); } catch { /* 무시 */ } }
+// 6.1.6 색별 이름(lv-now-c-rrggbb …)까지 지운다 (highlight-colors.js)
+function clearHighlight() { if (highlightOk()) clearColorHighlights(); }
 /** 설정 선택을 재생 중인 범위에도 바로 적용한다. 글·색·서식과 오디오는 그대로 둔다. */
 export function refreshHighlight() {
     clearHighlight();
@@ -2415,8 +2417,9 @@ function highlightJob(job) {
         const r = findRange(index, [p.seg?.raw, p.seg?.text, p.alt?.raw, p.alt?.text].filter(Boolean));
         if (r) ranges.push(r);
     }
-    const name = HIGHLIGHT_NAMES[settings().highlight_style] || HIGHLIGHT_NAMES.both;
-    if (ranges.length) try { CSS.highlights.set(name, new Highlight(...ranges)); } catch { /* 무시 */ }
+    // 1.6.9 밑줄이 그 글자의 색(대사 인물색 · 속마음 색)을 따라간다 — 보통 글자 · 색칠은 예전처럼 테마 색, 스위치(highlight_text_color)를 끄면 전부 테마 색 (highlight-colors.js)
+    const style = HIGHLIGHT_NAMES[settings().highlight_style] ? settings().highlight_style : 'both';
+    if (ranges.length) try { paintColorHighlights(root, ranges, style, { follow: settings().highlight_text_color !== false }); } catch { /* 무시 */ }
 }
 /** 요소 안 글자 노드를 이어 붙이고, 공백을 하나로 접은 문자열과 원래 자리 지도를 만든다 */
 function textIndex(root) {

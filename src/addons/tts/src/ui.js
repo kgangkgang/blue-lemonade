@@ -186,6 +186,7 @@ const READ_CARDS = {
         { key: 'prefetch', label: '다음 줄 준비', type: 'range', min: 0, max: 3, step: 1, default: 2, unit: '개' },
         { key: 'highlight', label: '읽는 대사 강조', type: 'toggle' },
         { key: 'highlight_style', label: '재생 표시', type: 'select', options: [{ value: 'color', label: '색깔만' }, { value: 'both', label: '색깔 + 밑줄' }, { value: 'underline', label: '밑줄만' }], show: (s) => !!s.highlight },
+        { key: 'highlight_text_color', label: '밑줄 색: 글자색 따라가기', type: 'toggle', show: (s) => !!s.highlight && s.highlight_style !== 'color' },   // 1.6.9 밑줄을 고른 사람에게만
         { key: 'mini_player', label: '재생 막대', type: 'toggle' },
     ]],
 };
@@ -561,7 +562,7 @@ function afterEdit(path, el) {
     if (path === 'read_preset') { applyReadPreset(s.read_preset); save(); }
     if (path === 'enabled' && !s.enabled) player.stop();
     if (path.startsWith('sfx.')) { player.applyPlayback(); if (path !== 'sfx.volume') { renderReadCard('sfx'); renderReadCard('when'); } }
-    if (path === 'highlight' || path === 'highlight_style') player.refreshHighlight();
+    if (path === 'highlight' || path === 'highlight_style' || path === 'highlight_text_color') player.refreshHighlight();
     if (path === 'wand_menu') { dispatchWand(); return; }                  // index.js 가 요술봉 메뉴 두 줄을 넣고 뺀다
     if (path === 'wait_translation') { renderReadCard('when'); return; }   // 스트리밍 읽기의 켜짐·꺼짐과 대기 초 칸이 따라 바뀐다
     if (path === 'mute_words') { renderReadCard('text'); return; }   // 1.6.3 음소거 방법 줄은 말이 있을 때만 보인다

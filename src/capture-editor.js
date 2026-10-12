@@ -15,7 +15,7 @@ function markupOf(text){
  for(const el of copy.querySelectorAll('[data-bl-fx-off]'))el.removeAttribute('data-bl-fx-off');
  for(const el of copy.querySelectorAll('[style],[class]')){
   if(el.style&&el.hasAttribute('style')){for(const name of [...el.style].filter(n=>n.startsWith('--salty-')))el.style.removeProperty(name);const css=el.style.cssText;css?el.setAttribute('style',css):el.removeAttribute('style');}
-  if(el.classList&&el.hasAttribute('class')){el.classList.remove('salty-asset','salty-cutout');if(!el.classList.length)el.removeAttribute('class');}
+  if(el.classList&&el.hasAttribute('class')){el.classList.remove('salty-asset','salty-cutout','salty-alpha');if(!el.classList.length)el.removeAttribute('class');}
  }
  return copy.innerHTML;
 }

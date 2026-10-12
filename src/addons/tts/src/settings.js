@@ -69,6 +69,7 @@ export const DEFAULTS = Object.freeze({
     gap_ms: 250,
     highlight: true,
     highlight_style: 'both',       // 재생 표시: color | both | underline (기존 표시는 둘 다)
+    highlight_text_color: true,    // 1.6.9 밑줄 색이 그 글자색(대사 인물색 · 속마음 색)을 따라감 — 밑줄이 들어가는 표시에서만 보이는 스위치, 끄면 테마 색 (highlight-colors.js)
     mini_player: true,
     sfx: { enabled: false, auto: true, tap: true, scene_chars: 4000, level: 'normal', volume: 0.45, mode: 'overlay', normalize: false, custom: [], disabled: [] },   // 1.6.2 normalize = 효과음 크기 맞추기 · 1.5.8 scene_chars = 효과음 찾을 지문 글자 (sceneCharsOf)
     prefetch: 2,
@@ -385,6 +386,7 @@ export function settings() {
     s.sfx.disabled = [...new Set((Array.isArray(s.sfx.disabled) ? s.sfx.disabled : []).filter(id => typeof id === 'string' && /^[a-zA-Z0-9:_-]{1,90}$/.test(id)))].slice(-256);
     s.sfx.favorites = [...new Set((Array.isArray(s.sfx.favorites) ? s.sfx.favorites : []).filter(id => typeof id === 'string' && /^[a-zA-Z0-9:_-]{1,90}$/.test(id)))].slice(-64);   // 1.6.3 우선 효과음(★)
     if (!HIGHLIGHT_STYLES.includes(s.highlight_style)) s.highlight_style = 'both';
+    s.highlight_text_color = s.highlight_text_color !== false && s.highlight_text_color !== 'false';   // 1.6.9 처음 값 켬 (가져온 파일의 문자열 "false" 도)
     if (!['weak', 'normal', 'strong'].includes(s.emotion_strength)) s.emotion_strength = 'normal';
     if (!['whisper', 'auto'].includes(s.thought_emotion)) s.thought_emotion = 'whisper';
     if (!['auto', 'off'].includes(s.extras)) s.extras = 'auto';

@@ -3,6 +3,8 @@
 // 5.6.5 img[data-autopic-id] = 오토픽(AutoPic · 원본과 개조판 모두)이 글 사이에 넣은 그림 — 에셋 그림과 같은 배치 · 모양 · 액자 · 크기 · 흐림을 탄다.
 //       틀(.autopic-tag-img-wrapper)은 오토픽이 그린 뒤 감싸므로 처음엔 그림 자신이 host, 감싼 뒤 다시 분류돼 틀이 host 가 된다 (css/07 의 .salty-asset img 규칙)
 // 5.6.6 메시지 아래 그림 칸 모드(실리태번 기본 mes_img — 오토픽이 .autopic-media-owner 를 단 메시지만)도 같은 규칙
+// 6.1.6 투명 판정은 '투명 그림도 똑같이'와 상관없이 .salty-alpha 로도 남긴다 — 외곽선 · 그림자(cutedge.js)는 두 경우 다 건다
+import { paintCutEdge } from './cutedge.js';
 const ASSET_IMG = '.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img, img[data-autopic-id], .autopic-media-owner img.mes_img';
 const HOST = '.custom-cac-wrap, [class*="custom-imageWrapper"], .autopic-tag-img-wrapper, .autopic-media-owner .mes_img_container';
 
@@ -416,6 +418,11 @@ function classify(img) {
     const rec = probe(img);
     // 투명 컷 표시는 '투명 그림도 똑같이' 가 꺼졌을 때만 — 켜져 있으면 보통 그림과 같은 모양 · 흐림 · 테두리 규칙을 탄다 (2.7.8)
     host.classList.toggle('salty-cutout', rec.cutout && !document.body.classList.contains('salty-cutout-same'));
+    host.classList.toggle('salty-alpha', rec.cutout); // 6.1.6 외곽선 · 그림자 대상 (css/68-cutout-edge.css)
+    paintCutEdge(host, rec); // 그림 가장자리 색 필터 (색 고르기가 '그림 가장자리 색'일 때 CSS 가 이 변수를 쓴다)
+    // 처음엔 그림 자신이 틀이었다가 그림을 넣은 확장이 틀로 감싸면 틀이 바뀐다 — 그림에 남은 옛 표시는 지운다
+    // (안 지우면 같은 <img> 의 주소가 배경 있는 그림으로 바뀌어도 img.salty-alpha 로 외곽선이 남는다)
+    if (host !== img) { img.classList.remove('salty-alpha'); paintCutEdge(img, null); }
     // 그림 원래 비율(가로/세로) → 세로로 잘릴 때 얼굴이 남는 위치(object-position)에 씀
     if (img.naturalHeight) host.style.setProperty('--salty-ar', (img.naturalWidth / img.naturalHeight).toFixed(3));
     host.classList.add('salty-asset');

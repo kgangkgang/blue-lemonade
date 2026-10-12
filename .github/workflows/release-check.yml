@@ -51,6 +51,7 @@ jobs:
           node tools/tests/tts-sfx-credits.mjs .
           node tools/tests/tts-sfx-level.mjs .
           node tools/tests/tts-mute.mjs .
+          node tools/tests/tts-highlight-colors.mjs .
           node tools/tests/tts-wand.mjs .
           node tools/tests/chat-like-alias.mjs .
           node tools/tests/zipinstall-remove.mjs .
@@ -60,6 +61,8 @@ jobs:
           node tools/tests/bookmark-excerpts.mjs .
           node tools/tests/bookmark-images.mjs .
           node tools/tests/wi-help-data.mjs .
+          node tools/tests/cutout-edge.mjs .
+          node tools/tests/numcomma-fit.mjs .
           node tools/tests/main-chat-rules.mjs .
           node tools/tests/natural-slash.mjs .
           node tools/tests/live-models.mjs .

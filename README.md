@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.1.5/blue-lemonade-6.1.5.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.1.6/blue-lemonade-6.1.6.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.1.5 · 최신 업데이트</summary>
+<summary>6.1.6 · 최신 업데이트</summary>
+
+- 이미지 › 투명 그림: 배경이 투명한 캐릭터 그림에 실루엣을 따라가는 외곽선과 그림자를 넣었어요. 그림이 채팅 위에 둥 떠 보이지 않게 해 줘요. 처음엔 흰 외곽선과 아래 그림자가 켜져 있어요.
+- 외곽선은 색(직접 고르기 · 그림 가장자리 색) · 두께 · 진하기 · 퍼짐을, 그림자는 색 · 투명도 · 각도 · 거리 · 퍼짐을 조절해요. 「그림 칸 밖으로도 그리기」로 그림 칸 밖까지 보일지 골라요.
+- TTS 1.6.9: 읽는 줄의 밑줄이 그 글자색을 따라가요. 대사는 인물 색, 속마음은 그 글자색으로 그어지고, 재생 표시를 밑줄로 고르면 보이는 「밑줄 색: 글자색 따라가기」로 끌 수 있어요.
+- 「큰 숫자는 쉼표로」가 좁은 숫자 칸에서 여섯 자리(128,000)부터 안 보이던 문제를 고쳤어요. 칸보다 길면 글자를 조금 줄여 맞춰요.
+
+</details>
+
+<details>
+<summary>6.1.5 · 월드인포 설명 · 한글화 패널</summary>
 
 - 월드인포 설정과 항목 칸 옆에 ?를 붙였어요. 스캔 깊이 · 컨텍스트 % · 재귀 스캔 같은 칸의 뜻과 추천값을 볼 수 있어요. 많다 싶으면 채팅 › 화면의 「설명 ? 단추」로 숨겨요.
 - 한글화 패널: 탭과 작업 단추를 한 줄씩으로 정리해 목록 칸을 넓혔어요. 눈 단추에 「번역본 · 원문」 이름을 붙였고, 「설명」 단추로 단추마다 뜻을 볼 수 있어요.

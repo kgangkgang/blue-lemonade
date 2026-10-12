@@ -33,6 +33,7 @@ import { applyAll, syncSamples } from './apply.js';
 import { getIssues } from './checks.js';
 import { applySillyTavernTheme, saveAsSillyTavernTheme, alreadyMatches, restoreState, offerRestore } from './sttheme.js';
 import { classifyAll } from './assets.js';
+import { CUT_EDGE_RANGES, cutEdgeDefaults, imageFrameOn } from './cutedge.js';
 import { openNotice, currentVersion, hasUnseenNotice } from './notice.js';
 import { COPYRIGHT_ICON } from './credits.js';
 import { customCssReport, buildDiagnosis } from './diagnose.js';
@@ -59,7 +60,7 @@ const SUBS = {
     theme: [['palette', '색'], ['colors', '색 고치기'], ['styles', '스타일'], ['changes', '변경한 설정'], ['backup', '백업'], ['update', '업데이트'], ['etc', '기타 설정']],
     text: [['text', '본문'], ['dialogue', '대사'], ['ui', '메뉴'], ['em', '속마음'], ['strike', '취소선'], ['strong', '강조'], ['code', '코드'], ['para', '문단'], ['markdown', '마크다운'], ['shadow', '그림자 · 외곽선']],
     chat: [['message', '메시지'], ['profile', '캐릭터 프로필'], ['user-profile', '내 프로필'], ['name', '캐릭터 이름·시간'], ['user-name', '내 이름·시간'], ['screen', '화면'], ['etc', '기타']],
-    image: [['layout', '배치'], ['shape', '모양'], ['frame', '테두리'], ['size', '크기'], ['fade', '흐림']],
+    image: [['layout', '배치'], ['shape', '모양'], ['frame', '테두리'], ['size', '크기'], ['fade', '흐림'], ['cutedge', '투명 그림']],
     prompt: [['deus', '데우스 엑스 마키나']],
     extensions: [['tts', 'TTS'], ['assets', '캐릭터 에셋'], ['words', '단어 치환'], ['capture', '채팅 캡처'], ['order', '확장 순서'], ['perf', '성능 보조'], ['models', '모델 관리'], ['bookmarks', '북마크'], ['notes', '메모'], ['zipinstall', 'ZIP 설치'], ['translator', 'LLM 번역'], ['prompt','한글화 패널'], ['customstyle','커스텀 CSS 조절'], ['rewrite', '다시 쓰기'], ['direction', '전개 지시'], ],
 };
@@ -592,6 +593,9 @@ const NUM = {
     'image.cornerCut': { unit: '%' },
     'image.scratchAmount': { unit: '%' },
     'shadow.alpha': { unit: '%' },
+    // 6.1.6 투명 그림 외곽선 · 그림자
+    'image.cutEdge.outline.width': { unit: 'px' }, 'image.cutEdge.outline.alpha': { unit: '%' }, 'image.cutEdge.outline.blur': { unit: 'px' },
+    'image.cutEdge.shadow.alpha': { unit: '%' }, 'image.cutEdge.shadow.angle': { unit: '도' }, 'image.cutEdge.shadow.distance': { unit: 'px' }, 'image.cutEdge.shadow.blur': { unit: 'px' },
     'chat.tone.light.s': { unit: '%' }, 'chat.tone.light.l': { unit: '%' }, 'chat.tone.dark.s': { unit: '%' }, 'chat.tone.dark.l': { unit: '%' }, 'chat.markerTone.light.s': { unit: '%' }, 'chat.markerTone.light.l': { unit: '%' }, 'chat.markerTone.dark.s': { unit: '%' }, 'chat.markerTone.dark.l': { unit: '%' },
     'shadow.angle': { unit: '도' },
     'shadow.distance': { unit: 'px' },
@@ -792,6 +796,8 @@ function colorStage() {
 
 function imagePreview(s, sub) {
     if (!s.enabled) return '';
+    // 6.1.6 투명 그림 탭은 투명 표본만 (외곽선 · 그림자는 투명 그림에만 걸린다) — 고르기 줄 없이
+    if (sub === 'cutedge') return prevBox(`data-pv="img" data-sub="${sub}" data-fit="${s.image.fit}" data-kind="cut"`);
     // 표본 선택은 그림 밖 도구 줄에 두어 효과를 가리지 않는다.
     return prevBox(`data-pv="img" data-sub="${sub}" data-fit="${s.image.fit}" data-kind="${ui.previewKind}"`, `
         <div class="bl-preview-tools">
@@ -1713,6 +1719,39 @@ async function readMaskImage(file) {
     return canvas.toDataURL('image/png');
 }
 
+// 6.1.6 투명 그림 외곽선 · 그림자 (cutedge.js · css/68-cutout-edge.css) — 글자 › 그림자 · 외곽선과 같은 모양 · 말투. 끄면 아래 칸은 숨긴다
+function cutEdgeControls(s) {
+    const e = s.image.cutEdge, o = e.outline, d = e.shadow;
+    const framed = imageFrameOn(s.image);
+    const R = key => CUT_EDGE_RANGES[key];
+    const color = (path, label, value) => `<div class="salty-row"><span>${label}</span><input type="color" data-color-path="${path}" value="${esc(value)}" aria-label="${esc(label)}"></div>`;
+    return `${cap('외곽선')}
+        <div class="salty-group">
+            ${row('외곽선', toggle('image.cutEdge.outline.on', o.on), '배경이 투명한 그림의 실루엣을 따라 둘러요')}
+            ${o.on ? stack('색 고르기', seg('image.cutEdge.outline.colorMode', [['custom', '직접'], ['picture', '그림 가장자리 색']]), o.colorMode === 'picture' ? '그림마다 가장 바깥 테두리 색을 뽑아요' : '') : ''}
+            ${o.on ? color('image.cutEdge.outline.color', o.colorMode === 'picture' ? '색을 못 뽑을 때' : '색', o.color) : ''}
+            ${o.on ? slider('image.cutEdge.outline.width', '두께', ...R('outline.width')) : ''}
+            ${o.on ? slider('image.cutEdge.outline.alpha', '진하기', ...R('outline.alpha')) : ''}
+            ${o.on ? slider('image.cutEdge.outline.blur', '퍼짐', ...R('outline.blur')) : ''}
+        </div>
+        ${cap('그림자')}
+        <div class="salty-group">
+            ${row('그림자', toggle('image.cutEdge.shadow.on', d.on), '실루엣 모양 그림자를 깔아요')}
+            ${d.on ? color('image.cutEdge.shadow.color', '색', d.color) : ''}
+            ${d.on ? slider('image.cutEdge.shadow.alpha', '투명도', ...R('shadow.alpha')) : ''}
+            ${d.on ? slider('image.cutEdge.shadow.angle', '각도', ...R('shadow.angle')) : ''}
+            ${d.on ? slider('image.cutEdge.shadow.distance', '거리', ...R('shadow.distance')) : ''}
+            ${d.on ? slider('image.cutEdge.shadow.blur', '퍼짐', ...R('shadow.blur')) : ''}
+        </div>
+        ${cap('그리는 범위')}
+        <div class="salty-group">
+            ${row('그림 칸 밖으로도 그리기', toggle('image.cutEdge.overflow', e.overflow), e.overflow ? '칸 밖까지 보여요 · 투명 그림의 흐림은 빠져요' : '그림 크기에 맞춰 잘라요')}
+            ${row('처음 값', '<button type="button" class="salty-btn" data-act="cutedge-reset" aria-label="외곽선 · 그림자 처음 값으로"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>')}
+        </div>
+        ${framed ? '<p class="salty-note">이미지 › 테두리를 쓰는 동안은 테두리가 먼저라 외곽선 · 그림자가 쉬어요.</p>' : ''}
+        <p class="salty-note">배경이 투명한 그림(캐릭터 에셋 등)에만 걸려요. 각도 0 = 오른쪽, 90 = 아래. 퍼짐을 크게 올리면 폰에서 무거워져요.</p>`;
+}
+
 function tabImage(s, sub) {
     const light = PALETTES[s.palette]?.mode === 'light';
     const { layout, shape, fit } = s.image;
@@ -1730,6 +1769,7 @@ function tabImage(s, sub) {
 
         </div>`;
     }
+    if (sub === 'cutedge') return `${imagePreview(s, sub)}${cutEdgeControls(s)}`;
     if (sub === 'size') {
         // 비율 유지 = 최대 높이(더 짧은 그림은 그대로) · 높이 맞춤 = 모든 그림을 이 높이로 (둘 다 화면 높이 %, 범위는 settings.js IMAGE_RANGE)
         return `${imagePreview(s, sub)}<div class="salty-group bl-control-grid bl-image-size-controls">
@@ -2237,6 +2277,9 @@ function bind(root) {
                     else { ui.weatherMix = true; ui.weatherSlot = 2; ui.weatherCat = ''; refreshPanels(); }
                     break;
                 }
+                case 'cutedge-reset': // 6.1.6 투명 그림 외곽선 · 그림자를 처음 값(사용자가 고른 시제품 값)으로
+                    update(st => { st.image.cutEdge = cutEdgeDefaults(); });
+                    break;
                 case 'pvkind': {
                     ui.previewKind = el.dataset.kind === 'cut' ? 'cut' : 'photo';
                     refreshPanels();
@@ -2757,7 +2800,7 @@ function bind(root) {
             // 2.9.2: 본문 색 지정 → '글자색 톤 맞추기' 줄, 톤 맞추기 → 톤 값 슬라이더 넷, 투명 그림도 똑같이 → 설명 문구가 스위치에 따라
             // 보였다 안 보였다 하는데 다시 그리지 않아, 끈 뒤에도 슬라이더가 남아 있었다
             // 감정 대사 효과(움직임 · 빛 · 색 흐름) · 백그라운드 버티는 방식 줄도 스위치를 따라 보였다 안 보였다 한다
-            update(st => setPath(st, path, target.checked), ['strike.line', 'strike.own', 'strike.italic', 'deviceLayouts.on', 'chat.weatherReadability', 'chat.weatherIllustrated', 'enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'chat.streamFade', 'chat.hiddenFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on', 'deus.fx.on', 'deus.fx.flow', 'deus.fx.force', 'bgWindow.on', 'compat.preserveExtensionColors'].includes(path));
+            update(st => setPath(st, path, target.checked), ['strike.line', 'strike.own', 'strike.italic', 'deviceLayouts.on', 'chat.weatherReadability', 'chat.weatherIllustrated', 'enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'image.cutEdge.outline.on', 'image.cutEdge.shadow.on', 'image.cutEdge.overflow', 'chat.streamFade', 'chat.hiddenFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on', 'deus.fx.on', 'deus.fx.flow', 'deus.fx.force', 'bgWindow.on', 'compat.preserveExtensionColors'].includes(path));
             await syncChangedAddons([path]);
             if (path === 'updateCheck') { if (target.checked) void checkForUpdate({ force: true }); else clearUpdate(); }   // 5.7.0
             // 5.5.6: 테마를 끄는 순간에도 '맞추기' 값이 남아 있으면 되돌릴지 묻는다
