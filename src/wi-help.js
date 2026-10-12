@@ -34,7 +34,8 @@ export function placeHelpButtons(root, anchors) {
                 const label = document.createElement('span');
                 label.setAttribute('data-i18n', key);
                 label.append(...target.childNodes);
-                target.removeAttribute('data-i18n');
+                // 지우면 실리태번 i18n 관찰자가 속성이 사라진 것도 알려 와 getAttribute → null.split 로 터진다 (페이지를 열 때마다 오류 한 줄) → 빈 값으로 둔다
+                target.setAttribute('data-i18n', '');
                 target.append(label);
             }
             target.append(makeButton(id));

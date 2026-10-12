@@ -11,7 +11,7 @@ import * as LM from '../../live-models.js';
 import { listTargets, supports, registry, discoverTargets, modelOptions, hasModelList, listUrlOf, fetchBlock, refreshModels, autoModels } from './targets.js';
 import { setLocks, withoutLock } from './lock.js';
 
-const VERSION = '1.0.8';
+const VERSION = '1.0.9';
 const MAX_PRESETS = 8;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const label = source => SOURCES.find(s => s.id === source)?.label || source;
@@ -170,7 +170,7 @@ function mount() {
   </div>
   <div class="ms-targets"></div>
   <label class="ms-lock"><input type="checkbox" data-lock><span><b><i class="fa-solid fa-lock" aria-hidden="true"></i> 잠금</b><small>각 확장 화면에서는 못 바꾸게 · 자동은 제외</small></span></label>
-  <div class="ms-actions"><button type="button" class="menu_button ms-apply" data-act="apply"><i class="fa-solid fa-shuffle"></i> 바꾸기</button><button type="button" class="menu_button ms-remove" data-act="remove" aria-label="이 조합 지우기" hidden><i class="fa-solid fa-trash-can"></i></button></div>
+  <div class="ms-actions"><button type="button" class="menu_button ms-apply" data-act="apply"><i class="fa-solid fa-shuffle"></i> 바꾸기</button><button type="button" class="menu_button ms-invert" data-act="invert" aria-label="체크 반전"><i class="fa-solid fa-right-left"></i></button><button type="button" class="menu_button ms-remove" data-act="remove" aria-label="이 조합 지우기" hidden><i class="fa-solid fa-trash-can"></i></button></div>
   <p class="ms-status" role="status"></p>
 </div>`;
     holder.append(root);
@@ -211,6 +211,8 @@ function mount() {
         }
         if (act === 'fetch') { fetchModels(); return; }
         if (act === 'apply') applyNow();
+        // 체크 반전 (사용자 10-12 「선택된 상태로 반전 선택 가능하게 — 누르면 안 선택한 애들 선택되고 선택한 애 안 선택되게」): 지금 보이는 확장만 뒤집는다
+        else if (act === 'invert') { const s = store(); for (const target of listTargets()) s.targets[target.id] = !isOn(target); note = ''; saveSettingsDebounced(); syncLocks(); render(); }
         else if (act === 'save') savePreset();
         else if (act === 'remove') {
             const s = store(), d = s.draft;

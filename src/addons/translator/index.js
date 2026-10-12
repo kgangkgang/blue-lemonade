@@ -2,7 +2,7 @@
 import { isPreset, validSettings, validImport, validPromptList, validPresetList, exportPresets, restoreTranslationRows } from './preset-data.js';
 import { createGuards, watchGuard } from './translation-guard.js';
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
-import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis } from './translation-segments.js';
+import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, fixPlaceholderVariants, dropLeftoverPlaceholders, repairTagPairs } from './translation-segments.js';
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
 import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey, glossaryLinesFor } from './glossary-match.js'; // [2.2.9] 용어집 찾기 (+ 가타카나 표기 흔들림) · [2.3.0] TTS 듣는 언어용 줄
@@ -1574,7 +1574,8 @@ function extractTranslationResult(data, provider) {
 function fixMalformedPlaceholders(text) {
     if (!text) return '';
 
-    let fixedText = text;
+    // 6.2.1 닫는 태그 자리에 / 를 붙인 [[/__VAR_3__]] · 괄호 하나 [__VAR_3__] 같은 변형도 — 못 되돌리면 태그가 사라져 속마음 짝이 깨졌다
+    let fixedText = fixPlaceholderVariants(text);
 
     // 1. 공백 허용 복구 ([[  __VAR_0__  ]] -> [[__VAR_0__]])
     // LLM이 괄호 사이에 공백을 넣는 경우가 가장 흔함
@@ -2037,6 +2038,17 @@ async function translate(text, options = {}) {
             translatedText = translatedText.replace(placeholderRegex, () => block);
         }
 
+        // 6.2.1 태그 짝을 원문 구조대로 — 모델이 닫는 태그를 빠뜨리면 표시 정규식이 다음 짝까지 칠해 서술까지 속마음 모양이 됐다 (재번역은 원문 부분과 견준다)
+        const tagMarker = '\n\n[Translated Text]:\n';
+        const tagSource = isRetranslation && text.startsWith('[Original Text]:\n') && text.includes(tagMarker)
+            ? text.slice('[Original Text]:\n'.length, text.indexOf(tagMarker)) : text;
+        const tagFixed = repairTagPairs(tagSource, translatedText);
+        if (tagFixed !== translatedText) {
+            console.warn('[LLM Translator] 번역문의 태그 짝을 원문대로 맞췄어요 (빠진 닫는 태그 · 남는 태그)');
+            if (report) report.repairedTags = true;
+            translatedText = tagFixed;
+        }
+
         watcher.check();
         if (checkpointComplete) await clearCheckpoints(key);
         watcher.check();
@@ -2369,6 +2381,32 @@ function publishArchiveReady(message, sourceText, chatId, type) {
     document.dispatchEvent(new CustomEvent('llm-translator:ready',{detail:{
         messageId:id,message,sourceText,chatId,translatedText:message.extra.display_text,type
     }}));
+}
+
+// 6.2.1 저장된 번역문의 태그 짝을 보여 줄 때 고친다 — 모델이 닫는 태그를 빠뜨린 번역(또는 못 풀린 [[/__VAR_n__]])은
+//       실리태번 표시 정규식이 다음 짝까지 칠해 서술까지 속마음 모양이 됐다. 지금 원문의 번역(해시가 맞는 것) · 번역 중이 아닌 것 · 번역문 그대로 보기만
+//       (접기 · 원문 먼저 보기는 줄마다 감싼 글이라 다시 번역하면 고쳐진다). 고친 글은 메모리에만 — 실리태번이 다음에 저장할 때 같이 저장된다.
+function repairShownTranslation(id, message, context = getContext()) {
+    const extra = message?.extra;
+    if (!extra?.original_text_hash || message.is_user || isTranslationInProgress(id)) return false;
+    const original = substituteParams(message.mes, context.name1, message.name);
+    if (extra.original_text_hash !== originalHashOf(original)) return false;
+    let changed = false;
+    for (const field of ['display_text', 'original_translation_backup']) {
+        const shown = extra[field];
+        if (typeof shown !== 'string' || !shown || shown === original || shown.includes('llm-translator-details')) continue;
+        const repaired = repairTagPairs(original, dropLeftoverPlaceholders(shown, original));
+        if (repaired !== shown) { extra[field] = repaired; changed = true; }
+    }
+    if (changed && extra.display_text) refreshMessageBlock(id, message);
+    return changed;
+}
+function repairShownTranslations() {
+    const context = getContext();
+    let count = 0;
+    (context.chat || []).forEach((message, id) => { try { if (repairShownTranslation(id, message, context)) count++; } catch (error) { console.warn('[LLM Translator] 번역문 태그 고치기 실패:', error); } });
+    if (count) console.warn(`[LLM Translator] 저장된 번역문 ${count}개의 태그 짝을 원문대로 맞춰 보여 줘요`);
+    return count;
 }
 
 // 이어쓰기 등으로 원문이 바뀌었는데 번역이 실패하면, 옛 번역이 새 원문을 가리지 않게 한다.
@@ -4734,6 +4772,7 @@ function initializeEventHandlers() {
             const current = substituteParams(message.mes, context.name1, message.name);
             if (message.extra.original_text_hash === originalHashOf(current) && !looksLikeRefusal(current, message.extra.display_text)) {
                 $(`#chat .mes[mesid="${messageId}"] .mes_text`).removeData('showing-original'); // 원문 보기 여부는 그 스와이프의 백업으로 판단
+                setTimeout(() => { if (getContext().chat?.[messageId] === message) repairShownTranslation(Number(messageId), message); }, 0); // 6.2.1 그 스와이프의 번역문 태그 짝
                 return;
             }
             delete message.extra.display_text;
@@ -4826,6 +4865,7 @@ function initializeEventHandlers() {
     eventSource.on(event_types.CHAT_CHANGED, function () {
         migrateOriginalCopies(getContext().chat); // [1.7.1] 원문 사본 → 해시 (파일 크기)
         setTimeout(() => {
+            repairShownTranslations(); // 6.2.1 저장된 번역문의 빠진 닫는 태그 · 못 풀린 자리표시자 (그려진 것만 다시 그린다)
             addButtonsToExistingMessages();
             updateButtonVisibility(); // 설정에 따라 버튼 가시성 업데이트
             loadRulePrompt(); // 채팅이 바뀔 때마다 해당 채팅의 규칙 프롬프트 로드

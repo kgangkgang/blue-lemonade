@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.2.0/blue-lemonade-6.2.0.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.2.1/blue-lemonade-6.2.1.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.2.0 · 최신 업데이트</summary>
+<summary>6.2.1 · 최신 업데이트</summary>
+
+- 번역에서 속마음 닫는 표시가 빠져 다른 글까지 속마음 모양이 되던 것을 고쳤어요. 이미 저장된 번역도 채팅을 열 때 바로잡아 보여 줘요.
+- 모델 전환에 체크 반전 단추를 넣었어요 — 누르면 체크한 것과 안 한 것이 뒤바뀌어요.
+- 월드인포 설명 단추 때문에 페이지를 열 때마다 나던 오류 한 줄을 없앴어요.
+- 애드온 버전: 모델 전환 1.0.9 · LLM 번역 2.3.5
+
+</details>
+
+<details>
+<summary>6.2.0 · 설정 창 촘촘하게 (번역 창 결)</summary>
 
 - 설정 창들을 촘촘하게 다듬었어요. 칸 · 단추 높이를 맞추고, 군데군데 크게 비던 여백을 줄였어요.
 - 폰에서 확장 설정 창의 좌우 여백을 줄였어요. 좁은 화면에서도 글과 칸이 더 넓게 보여요.

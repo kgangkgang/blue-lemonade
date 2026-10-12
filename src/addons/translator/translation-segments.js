@@ -602,3 +602,128 @@ export async function translateSegments({ parts, signature, request, check = () 
     progress({ stage: 'segments', done: total, total, reused, translated, pending: 0 });
     return { text: output.join(''), reused, translated, blocked, total };
 }
+
+// ── 6.2.1 태그 짝 지키기 ──
+// 보호 규칙이 태그를 자리표시자로 가려 보내면 모델이 닫는 태그 자리를 [[/__VAR_3__]] 처럼 바꿔 써서 되돌리지 못했고(태그가 사라지고 글자가 남음),
+// 닫는 태그를 빠뜨린 번역도 있었다. 그러면 실리태번 표시 정규식(<true_thoughts …>…</true_thoughts> 같은 것)이 다음 짝까지 통째로 칠해
+// 서술까지 속마음 모양이 됐다. 자리표시자의 변형을 되돌리고, 번역문의 태그 짝을 원문 구조대로 맞춘다.
+const PLACEHOLDER_VARIANT = /\[{1,2}[ \t]*\/?[ \t]*_{1,2}[ \t]*(?:VAR|VARIABLE|[Vv]ar|변수)[ \t]*_[ \t]*(\d+)[ \t]*_{1,2}[ \t]*\/?[ \t]*\]{1,2}/g;
+/** 모델이 바꿔 쓴 자리표시자([[/__VAR_3__]] · [[__VAR_3__/]] · [__VAR_3__] · [[ __VAR_3 __]] …)를 [[__VAR_3__]] 로 */
+export function fixPlaceholderVariants(text) {
+    return String(text ?? '').replace(PLACEHOLDER_VARIANT, (_, n) => `[[__VAR_${n}__]]`);
+}
+/** 저장된 번역문에 풀리지 못하고 남은 자리표시자를 걷는다 (원문에 그런 글이 없을 때만) — 보여 줄 때 고치기용 */
+export function dropLeftoverPlaceholders(text, source) {
+    const value = String(text ?? '');
+    if (/__VAR_|__변수_/.test(String(source ?? ''))) return value;
+    return value.replace(PLACEHOLDER_VARIANT, '');
+}
+const VOID_TAGS = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
+const TAG_TOKEN = /<(\/?)([a-zA-Z][\w:-]*)((?:[^<>"']|"[^"]*"|'[^']*')*)>/g;
+const PARA_SPLIT = /(\n[\t ]*\n(?:[\t ]*\n)*)/;
+/** 짝을 이루는 태그만 (빈 요소 · <x/> 는 뺀다) → [{ close, name, raw, at, end }] */
+function tagTokens(text) {
+    const out = [];
+    for (const m of String(text).matchAll(TAG_TOKEN)) {
+        const name = m[2].toLowerCase();
+        if (VOID_TAGS.has(name) || /\/\s*$/.test(m[3])) continue;
+        out.push({ close: Boolean(m[1]), name, raw: m[0], at: m.index, end: m.index + m[0].length });
+    }
+    return out;
+}
+const countBy = list => { const map = new Map(); for (const t of list) map.set(t.name, (map.get(t.name) || 0) + 1); return map; };
+/** 원문이 짝이 맞게 열고 닫혔나 (맞지 않으면 무엇이 맞는지 몰라 고치지 않는다) */
+function wellFormed(tags) {
+    const stack = [];
+    for (const t of tags) {
+        if (!t.close) stack.push(t.name);
+        else if (stack.pop() !== t.name) return false;
+    }
+    return stack.length === 0;
+}
+/** 문단 앞머리 태그 줄(글자 앞 · 공백만 사이에 둔 태그들) */
+function leadingTags(text, tags) {
+    const run = []; let at = /^\s*/.exec(text)[0].length;
+    for (const t of tags) { if (t.at !== at) break; run.push(t); at = t.end + /^\s*/.exec(text.slice(t.end))[0].length; }
+    return run;
+}
+/** 번역 문단 하나를 고친다. stack: 앞 문단에서 열린 채 넘어온 태그(고친다) · src: 같은 자리 원문 문단(문단 수가 같을 때) · spanning: 원문에서 문단을 넘는 태그 이름 */
+function repairBody(body, stack, src, spanning) {
+    let text = body;
+    // 1) 원문 문단 앞머리에 있는 여는 태그가 번역 문단에 하나도 없으면 원문의 그 태그를 같은 자리(앞머리)에 넣는다
+    if (src) {
+        const have = countBy(tagTokens(text).filter(t => !t.close)), srcLead = leadingTags(src.text, src.tags);
+        srcLead.forEach((t, p) => {
+            if (t.close || have.get(t.name)) return;
+            const lead = leadingTags(text, tagTokens(text)), before = srcLead[p - 1];
+            const anchor = before ? lead.find(x => x.name === before.name && x.close === before.close) : null;
+            const at = anchor ? anchor.end : /^\s*/.exec(text)[0].length;
+            text = text.slice(0, at) + t.raw + text.slice(at);
+            have.set(t.name, 1);
+        });
+    }
+    // 2) 차례로 짝을 본다: 안쪽에 열린 채 남은 태그는 바깥 태그를 닫기 전에 닫고, 열린 적 없는 닫는 태그는 뺀다.
+    //    원문 문단이 여기서 닫지 않는 태그는 닫지 않는다 (예: 문단을 넘는 </prose> 를 일찍 닫은 번역). 모델이 원문보다 더 연 태그는 제 짝대로 둔다
+    const budget = src ? countBy(src.tags.filter(t => t.close)) : null, opens = src ? countBy(src.tags.filter(t => !t.close)) : null;
+    const spend = name => { if (budget?.has(name)) budget.set(name, budget.get(name) - 1); };
+    let result = '', last = 0;
+    for (const t of tagTokens(text)) {
+        result += text.slice(last, t.at); last = t.end;
+        if (!t.close) {
+            const extra = Boolean(opens) && !(opens.get(t.name) > 0);
+            if (opens?.has(t.name)) opens.set(t.name, opens.get(t.name) - 1);
+            stack.push({ name: t.name, raw: t.raw, extra }); result += t.raw; continue;
+        }
+        let where = -1;
+        for (let k = stack.length - 1; k >= 0; k--) if (stack[k].name === t.name) { where = k; break; }
+        if (where < 0 || (budget && !stack[where].extra && !(budget.get(t.name) > 0))) continue;
+        while (stack.length - 1 > where) { const inner = stack.pop(); result += `</${inner.name}>`; spend(inner.name); }
+        stack.pop(); result += t.raw; spend(t.name);
+    }
+    result += text.slice(last);
+    // 3) 문단 끝: 원문은 이 문단에서 닫았는데 번역에선 열린 채인 태그를 (안쪽부터) 닫는다
+    let keep;
+    if (src) { keep = 0; while (keep < stack.length && keep < src.open.length && stack[keep].name === src.open[keep]) keep++; }
+    else { keep = stack.length; for (let k = 0; k < stack.length; k++) if (!spanning.has(stack[k].name)) { keep = k; break; } }
+    if (stack.length > keep) {
+        let closes = '';
+        while (stack.length > keep) closes += `</${stack.pop().name}>`;
+        result = result.replace(/\s*$/, tail => closes + tail);
+    }
+    return result;
+}
+/**
+ * 번역문의 태그 짝을 원문 구조대로 맞춘다 → 고친 글 (고칠 게 없거나 원문 태그가 짝이 안 맞으면 받은 글 그대로).
+ * 문단 수가 원문과 같으면 문단마다: 빠진 앞머리 여는 태그 넣기 · 빠진 닫는 태그를 그 문단 끝에 · 남는(열린 적 없는) 닫는 태그 빼기 · 꼬인 순서 바로잡기.
+ * 문단 수가 다르면: 원문에서 한 문단 안에서만 열고 닫는 태그(<true_thoughts> · <span> …)는 열린 그 문단 끝에서 닫고, 남는 닫는 태그만 뺀다.
+ * 코드 블록 · HTML 주석이 있는 글은 건드리지 않는다.
+ */
+export function repairTagPairs(source, output) {
+    const original = String(output ?? '');
+    const src = String(source ?? '').replace(/\r\n?/g, '\n'), out = original.replace(/\r\n?/g, '\n');
+    if (!/<[a-zA-Z]/.test(src) || !/[<\]]/.test(out) || /```|~~~|<!--/.test(src) || /```|~~~|<!--/.test(out)) return original;
+    const srcTags = tagTokens(src);
+    if (!srcTags.length || !wellFormed(srcTags)) return original;
+    const sParts = src.split(PARA_SPLIT), oParts = out.split(PARA_SPLIT), aligned = sParts.length === oParts.length;
+    const spanning = new Set(), opened = [], sources = [];
+    for (let i = 0; i < sParts.length; i += 2) {
+        const tags = tagTokens(sParts[i]);
+        for (const t of tags) { if (t.close) opened.pop(); else opened.push(t.name); }
+        opened.forEach(name => spanning.add(name));
+        sources.push({ text: sParts[i], tags, open: [...opened] });
+    }
+    const stack = [];
+    let changed = false;
+    for (let i = 0; i < oParts.length; i += 2) {
+        const fixed = repairBody(oParts[i], stack, aligned ? sources[i / 2] : null, spanning);
+        if (fixed !== oParts[i]) { oParts[i] = fixed; changed = true; }
+    }
+    if (stack.length) { // 원문은 끝에서 다 닫혔다 — 번역에 남은 것도 닫는다
+        let closes = '';
+        while (stack.length) closes += `</${stack.pop().name}>`;
+        const lastBody = oParts.length - 1 - ((oParts.length - 1) % 2);
+        oParts[lastBody] = oParts[lastBody].replace(/\s*$/, tail => closes + tail);
+        changed = true;
+    }
+    return changed ? oParts.join('') : original;
+}
