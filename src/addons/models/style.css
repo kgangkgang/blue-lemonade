@@ -1,7 +1,7 @@
 /* 모델 등록 — 설정 화면
    state.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
 .mr-settings {
-    --mr-css-version: "1.1.4";
+    --mr-css-version: "1.1.5";
 }
 
 /* .inline-drawer-content 자체에는 display를 주지 않는다 (실리태번이 접고 펼 때 display를 바꾼다). */
@@ -127,3 +127,13 @@
 @media (hover: hover) and (pointer: fine) {
   .mr-handle { padding-top: 2px; }
 }
+
+/* 6.2 촘촘하게 (번역 창 결): 설명 · 개수 12.5 muted, 버전 배지 11, 빈 목록 한 줄.
+   팝업에서는 서랍 머리가 제목 한 줄만 (⌄ 숨김 · 눌러도 안 접힘) */
+#model_register_settings .mr-body { gap: 10px; padding: 4px 0 6px; }
+#model_register_settings :is(.mr-hint, .mr-count, .mr-empty) { color: var(--salty-muted, inherit); font-size: var(--bl-ts-meta, 12.5px); line-height: 1.5; opacity: 1; }
+#model_register_settings .mr-version { font-size: var(--bl-fs-micro, 11px); }
+#model_register_settings .mr-empty { padding: 6px; }
+#model_register_settings .mr-row > .menu_button { min-height: var(--bl-h-ctl, 36px); }
+dialog.popup #model_register_settings > .inline-drawer > .inline-drawer-header { min-height: 0; padding: 0 2px 2px !important; pointer-events: none; }
+dialog.popup #model_register_settings > .inline-drawer > .inline-drawer-header .inline-drawer-icon { display: none; }

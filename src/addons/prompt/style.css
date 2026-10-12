@@ -529,3 +529,144 @@ body.salty #pt-panel .pt-page-fixed .pt-act-row > .pt-act { padding:5px 1px; ali
 #pt-panel .pt-page-fixed .pt-more-actions { position:relative; }
 #pt-panel .pt-page-fixed .pt-more-actions-body { position:absolute; right:0; top:calc(100% + 6px); z-index:5; width:min(260px, 80cqw); padding:8px; background:var(--pt-bg); border:1px solid var(--pt-border); border-radius:10px; box-shadow:0 10px 30px #0004; }
 body.salty #pt-panel .pt-page-fixed .pt-export-group { flex-wrap:nowrap; gap:6px; }
+
+/* ── 2026-10-12 촘촘하게: 번역 애드온 설정 창과 같은 결 ──────────────────────────────────────────
+   좌우 여백은 한 겹만 — 확장 서랍 안은 「서랍 내용 10 + 카드 10」(화면 끝 → 칸 31), 떠 있는 창은 「바깥 6 + 몸 10 + 카드 10」.
+   카드 = 머리 띠(37) + 몸(padding 10 · gap 10) · 필드 안 8 · 칸은 테마 높이(36/38) · 설명 12.5/1.5 · 탭은 한 줄 · 아이콘 단추 34.
+   (앞 규칙들 중 #pt-panel-refresh · #pt-statusbar 가 든 :is() 는 id 2개 무게라 여기서도 id 를 하나 더 붙여 이긴다) */
+#pt-panel { --pt-pad-x:10px; }
+#pt-panel.pt-in-drawer { --pt-pad-x:0px; overflow:visible; }
+
+/* 머리: 떠 있는 창은 제목 + 아이콘 둘(새로고침 · 닫기) 한 줄, 서랍 안은 새로고침 아이콘 하나 */
+body.salty #pt-panel #pt-panel-header { gap:8px; min-height:0; padding:6px 6px 6px 12px; }
+body.salty #pt-panel #pt-panel-header > div { gap:2px!important; }
+body.salty #pt-panel #pt-panel-header :is(#pt-panel-refresh,#pt-panel-close) {
+ flex:0 0 auto; width:var(--bl-h-icon,34px); min-width:0; max-width:none; height:var(--bl-h-icon,34px); min-height:0;
+ padding:0; border:0; border-radius:var(--bl-r-sm,8px); background:transparent; box-shadow:none;
+ color:var(--pt-text-dim); font-size:16px; line-height:1; justify-content:center;
+}
+body.salty #pt-panel #pt-panel-header :is(#pt-panel-refresh,#pt-panel-close):hover { background:var(--pt-accent-soft); color:var(--pt-text); }
+body.salty #pt-panel #pt-panel-refresh > span { display:none; }
+body.salty #pt-panel #pt-panel-refresh > i { font-size:15px; }
+body.salty #pt-panel .pt-version { min-height:0; padding:1px 8px!important; }
+body.salty #pt-panel.pt-in-drawer { margin:4px 0 0; }
+body.salty #pt-panel.pt-in-drawer #pt-panel-header { padding:0 0 6px; }
+/* 위에 「확장 탭에 보이기」 줄(테마)이 있으면 새로고침 아이콘은 그 줄 왼쪽 빈자리로 — 혼자 한 줄(36 + 6)을 쓰지 않는다.
+   줄 높이 30(위 3 · 아래 7 · 스위치 20) 기준으로 스위치와 같은 가운데(줄 위 +13)에 28px 단추를 둔다 */
+body.salty .bl-hs-row + #pt-drawer-host > #pt-panel.pt-in-drawer > #pt-panel-header { position:absolute; top:-35px; left:0; z-index:1; padding:0; background:none; }
+body.salty .bl-hs-row + #pt-drawer-host > #pt-panel.pt-in-drawer #pt-panel-refresh { width:28px; height:28px; }
+
+/* 탭: 바탕 상자 없이 한 줄 6칸 — 아이콘 위 · 글자 아래(12.5), 번역 창 탭과 같은 높이(≈51) · 색 */
+body.salty #pt-panel #pt-tabs {
+ display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:4px;
+ margin:0 var(--pt-pad-x) 10px; padding:0; border:0; border-radius:0; background:none; overflow:visible;
+}
+body.salty #pt-panel #pt-tabs .pt-tab {
+ flex-direction:column; gap:4px; min-width:0; min-height:0;
+ padding:calc(7px + .17em) 2px calc(7px - .17em); border:0; border-radius:var(--bl-r-sm,8px); box-shadow:none;
+ background:var(--salty-shade,color-mix(in srgb,var(--pt-text) 5%,transparent)); color:var(--salty-muted,var(--pt-text-dim));
+ font-size:var(--bl-ts-meta,12.5px); line-height:1.45; letter-spacing:-.02em; white-space:nowrap; word-break:keep-all;
+}
+body.salty #pt-panel #pt-tabs .pt-tab.active { background:var(--salty-accent-13,var(--pt-accent-soft)); color:var(--salty-accent-ink,var(--pt-accent)); font-weight:inherit; }
+body.salty #pt-panel #pt-tabs .pt-tab > i { font-size:15px; line-height:1; top:0; }
+@container (min-width:560px) {
+  body.salty #pt-panel #pt-tabs .pt-tab { flex-direction:row; gap:8px; min-height:var(--bl-h-ctl,36px); padding-inline:6px; }
+}
+@container (max-width:340px) {
+  body.salty #pt-panel #pt-tabs { gap:2px; }
+  body.salty #pt-panel #pt-tabs .pt-tab { padding-inline:0; font-size:11px; letter-spacing:-.04em; }
+}
+
+/* 쪽 공통: 좌우는 --pt-pad-x 한 겹, 위는 탭 아래 10 으로 충분 */
+body.salty #pt-panel .pt-page-fixed { padding:0 var(--pt-pad-x); overflow:visible; }
+body.salty #pt-panel .pt-page-scroll { padding:0 var(--pt-pad-x) 8px; }
+body.salty #pt-panel #pt-panel-content .pt-bl-intro { margin:0 0 8px; padding:0 10px; border-radius:var(--bl-r-sm,8px); font-size:inherit; }
+body.salty #pt-panel #pt-panel-content .pt-bl-intro > summary { display:list-item; min-height:0; padding:8px 0; font-size:inherit; font-weight:600; line-height:1.45; }
+body.salty #pt-panel #pt-panel-content .pt-bl-intro > p { margin:0 0 10px; font-size:var(--bl-ts-meta,12.5px); line-height:1.5; }
+body.salty #pt-panel .pt-page-fixed .pt-more-actions > summary { width:var(--bl-h-ctl,36px); min-width:var(--bl-h-ctl,36px); min-height:var(--bl-h-ctl,36px); }
+body.salty #pt-panel .pt-block-list { gap:6px; }
+body.salty #pt-panel .pt-block-header { gap:8px; min-height:36px; padding:6px 10px; }
+body.salty #pt-panel .pt-block-body { padding:10px; }
+body.salty #pt-panel :is(.pt-original-label,.pt-translated-label) { margin-bottom:4px; }
+body.salty #pt-panel :is(.pt-original-text,.pt-translated-text) { padding:8px 10px; }
+body.salty #pt-panel #pt-panel-content [role="status"] { font-size:var(--bl-ts-meta,12.5px); line-height:1.5; }
+
+/* 상태줄: 한 줄 (40.6 → 31) */
+body.salty #pt-panel #pt-statusbar { min-height:0; padding:6px var(--pt-pad-x); font-size:var(--bl-ts-meta,12.5px); line-height:1.5; }
+body.salty #pt-panel:not(.pt-in-drawer) #pt-statusbar { padding-inline:12px; }
+
+/* 한글화 탭: 줄 = 체크 36 + 설명(12.5) · 체크는 들여 쓰지 않고 설명이 이름 아래 맞춤 */
+body.salty #pt-panel #pt-page-localization { padding:0 var(--pt-pad-x) 8px; gap:8px; }
+body.salty #pt-panel #pt-page-localization > .pt-bl-help { margin:0; font-size:var(--bl-ts-meta,12.5px); line-height:1.5; }
+body.salty #pt-panel #pt-page-localization .pt-localization-list { border-color:var(--salty-line,var(--pt-border)); border-radius:var(--bl-r-md,12px); }
+body.salty #pt-panel #pt-page-localization .pt-localization-list .pt-card { gap:0 8px; min-height:0; padding:0 10px; }
+body.salty #pt-panel #pt-page-localization .pt-localization-list .pt-check { gap:8px; min-height:36px; margin:0; }
+body.salty #pt-panel #pt-page-localization .pt-localization-list .pt-check > input { margin:0; }
+body.salty #pt-panel #pt-page-localization .pt-localization-list .pt-bl-help { margin:0 0 8px; padding-left:26px; font-size:var(--bl-ts-meta,12.5px); line-height:1.5; }
+body.salty #pt-panel #pt-page-localization .pt-localization-list small { padding:0 6px; font-size:var(--bl-ts-cap,12px); line-height:1.5; }
+body.salty #pt-panel #pt-page-localization .pt-locale-override { margin:0 0 8px 26px; }
+
+/* 정규식 탭: 단추는 한 줄에 흘려 담고(2열 칸 고아 없음) 줄 카드는 얇게 */
+body.salty #pt-panel #pt-page-regex { padding:0 var(--pt-pad-x) 8px; gap:8px; }
+body.salty #pt-panel #pt-page-regex .pt-regex-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+body.salty #pt-panel #pt-page-regex .pt-regex-toolbar > button { flex:1 1 auto; min-height:var(--bl-h-ctl,36px); padding-inline:12px; }
+body.salty #pt-panel #pt-page-regex .pt-regex-toolbar > .pt-check { flex:0 0 auto; gap:6px; min-height:36px; margin:0; }
+body.salty #pt-panel #pt-page-regex > p { margin:0; font-size:var(--bl-ts-meta,12.5px); line-height:1.5; }
+body.salty #pt-panel #pt-page-regex .pt-regex-list { gap:6px; }
+body.salty #pt-panel #pt-page-regex .pt-regex-row { gap:6px; padding:0 10px 10px; border-radius:var(--bl-r-sm,8px); }
+body.salty #pt-panel #pt-page-regex .pt-regex-row .pt-check { min-height:36px; margin:0; gap:6px; }
+body.salty #pt-panel #pt-page-regex .pt-regex-row input[type=text] { min-height:var(--bl-h-ctl,36px); font-size:inherit; }
+
+/* 설정: 하위 탭은 한 줄 세그먼트(36), 스크롤 칸은 여백 없이, 카드 = 머리 띠 + 몸 */
+body.salty #pt-panel .pt-settings-nav {
+ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:2px; margin:0 var(--pt-pad-x) 10px; padding:2px;
+ border:0; border-radius:var(--bl-r-sm,8px); background:var(--salty-shade,color-mix(in srgb,var(--pt-text) 5%,transparent));
+}
+body.salty #pt-panel .pt-settings-nav button {
+ min-height:32px; padding-inline:4px; border:0; border-radius:6px; background:transparent;
+ color:var(--salty-muted,var(--pt-text-dim)); font-weight:inherit; white-space:nowrap; word-break:keep-all;
+}
+body.salty #pt-panel .pt-settings-nav button[aria-selected="true"] { background:var(--salty-accent-13,var(--pt-accent-soft)); color:var(--salty-accent-ink,var(--pt-accent)); font-weight:inherit; }
+body.salty #pt-panel #pt-settings-form .pt-settings-scroll { padding:0 var(--pt-pad-x); }
+body.salty #pt-panel #pt-settings-form .pt-card {
+ display:flex; flex-direction:column; gap:10px; margin:0 0 12px; padding:0 10px 10px;
+ border:1px solid var(--salty-line,var(--pt-border)); border-radius:var(--bl-r-md,12px);
+ background:var(--salty-fill-surface,var(--salty-surface,var(--pt-bg))); box-shadow:none; overflow:hidden;
+}
+body.salty #pt-panel #pt-settings-form .pt-card > h4 {
+ display:flex; align-items:center; gap:8px; margin:0 -10px!important; padding:10px 12px!important;
+ border-bottom:1px solid var(--salty-line,var(--pt-border))!important; border-radius:0!important; background:var(--salty-shade,var(--pt-accent-soft))!important;
+ font-size:1em!important; font-weight:600!important; line-height:1.2; color:var(--pt-text)!important; text-align:left;
+}
+body.salty #pt-panel #pt-settings-form .pt-card > h4::before { height:14px; }
+body.salty #pt-panel #pt-settings-form :is(.pt-card > p,.pt-field > p) { margin:0; }
+body.salty #pt-panel #pt-settings-form .pt-field { gap:8px; margin:0; }
+body.salty #pt-panel #pt-settings-form .pt-bl-help { margin:0; font-size:var(--bl-ts-meta,12.5px); line-height:1.5; color:var(--salty-muted,var(--pt-text-dim)); }
+body.salty #pt-panel #pt-settings-form #pt-proxy-wrap { display:flex; flex-direction:column; gap:10px; }
+body.salty #pt-panel #pt-settings-form .pt-card > .pt-ui-button { align-self:flex-start; }
+body.salty #pt-panel #pt-settings-form .pt-check { gap:6px; min-height:36px; margin:0; }
+/* 칸은 테마 높이(36/38) · 좌우 12 · 반경 8 — 예전 42px · padding 10px 12px 덮개를 걷는다 (textarea 는 테마 rows=3 그대로) */
+body.salty #pt-panel #pt-settings-form :is(input,select):not([type=checkbox]):not([type=range]) {
+ height:var(--bl-h-ctl,36px); min-height:var(--bl-h-ctl,36px); padding-block:0; border-radius:var(--bl-r-sm,8px); line-height:normal;
+}
+body.salty #pt-panel #pt-settings-form input:not([type=checkbox]):not([type=range]) { padding-inline:12px; }
+/* 칸 바탕은 번역 창처럼 「칸」 색 — 서랍의 오목 칸(--bl-well) 색은 밤 팔레트에서 카드 바탕과 같아 칸이 안 보였다 */
+body.salty #pt-panel #pt-settings-form :is(input,select,textarea):not([type=checkbox]):not([type=range]):not(:focus) { background-color:var(--salty-fill-field,var(--salty-field,var(--pt-bg-alt)))!important; }
+body.salty #pt-panel #pt-settings-form input[type=range] { min-height:0; }
+body.salty #pt-panel #pt-settings-form #pt-fetch-models { flex:0 0 var(--bl-h-icon,34px)!important; width:var(--bl-h-icon,34px); min-width:0; height:var(--bl-h-icon,34px)!important; min-height:0; padding:0; }
+/* 생성 파라미터: 카드 안 카드 대신 「이름 · 숫자」 한 줄 + 슬라이더 */
+body.salty #pt-panel #pt-settings-form #pt-params-wrap { gap:4px 12px; }
+body.salty #pt-panel #pt-settings-form #pt-params-wrap .pt-param-row {
+ grid-template-columns:minmax(0,1fr) minmax(4.5em,5.5em); gap:0 8px; align-items:center; padding:0; border:0; border-radius:0; background:none;
+}
+body.salty #pt-panel #pt-settings-form #pt-params-wrap .pt-param-label { grid-column:1; grid-row:1; font-size:inherit; font-weight:inherit; line-height:1.45; }
+body.salty #pt-panel #pt-settings-form #pt-params-wrap .pt-param-num { grid-column:2; grid-row:1; padding-inline:8px; }
+body.salty #pt-panel #pt-settings-form #pt-params-wrap .pt-param-slider { grid-column:1 / -1; grid-row:2; }
+body.salty #pt-panel #pt-settings-form #pt-params-reset { grid-column:1 / -1; justify-self:start; }
+
+/* ── 6.2.0 (ui-density-620b): 확장 서랍 속 새로고침도 아이콘 단추 34 (기준서 7번 · 번역과 같음) — 28 이었다 ── */
+body.salty .bl-hs-row + #pt-drawer-host > #pt-panel.pt-in-drawer #pt-panel-refresh { width: var(--bl-h-icon, 34px); height: var(--bl-h-icon, 34px); }
+
+/* ── 6.2.0 (ui-density-620c): 설정 카드 제목 앞은 ▌ 막대 대신 아이콘 (번역 · 다른 애드온 카드와 같은 결) ── */
+body.salty #pt-panel #pt-settings-form .pt-card > h4:has(> .pt-card-icon)::before { content: none; display: none; }
+#pt-panel .pt-card > h4 > .pt-card-icon { width: 1.2em; text-align: center; color: var(--salty-accent, var(--pt-accent)); }

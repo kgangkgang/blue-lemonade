@@ -4,7 +4,7 @@
    ============================================================ */
 
 /* state.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
-:root { --eh-css-version: "1.6.0"; }
+:root { --eh-css-version: "1.6.1"; }
 
 .eh-root {
     --eh-text: var(--SmartThemeBodyColor, #ccc);
@@ -960,3 +960,60 @@ body.reduced-motion .eh-viewer-nav { transition: none; }
 /* 연결 고르기: S/M/L 용 30px 칸이 아니라 한 줄 전체를 셋으로 나눈다 (글자가 한 자씩 꺾이지 않게) */
 .eh-root .eh-pick .eh-segmented { display: flex; width: 100%; margin-left: 0; box-sizing: border-box; }
 .eh-root .eh-pick .eh-segmented button { flex: 1 1 0; width: auto; height: auto; min-width: 0; min-height: 32px; padding: 4px 8px; white-space: nowrap; font-size: .9em; }
+
+/* ── 6.2 촘촘하게 (번역 창 결) ───────────────────────────────
+   카드 = 테 1 + 몸 10 · 반경 12, 카드 제목 · 사용법 머리는 띠 38, 단계 본문은 번호 원 옆으로 들여 쓰지 않음(글이 카드 왼쪽 끝부터),
+   스위치 36×20, 아이콘 단추 34 · 글자 단추 36 · 찾기 칸 36, 빈 격자 72. 서랍 · 창 둘 다 (#char_assets_settings) */
+#char_assets_settings .eh-body { gap: 12px; }
+#char_assets_settings .eh-hero { gap: 8px; padding: 0 2px; }
+#char_assets_settings .eh-hero-avatar { width: 40px; height: 40px; }
+#char_assets_settings .eh-icon-btn { width: var(--bl-h-icon, 34px); height: var(--bl-h-icon, 34px); border-radius: var(--bl-r-sm, 8px); }
+#char_assets_settings .eh-card { padding: 10px; border-radius: var(--bl-r-md, 12px); }
+#char_assets_settings .eh-card-title { margin: -10px -10px 0; padding: 10px 12px; border-bottom: 1px solid var(--eh-line); border-radius: calc(var(--bl-r-md, 12px) - 1px) calc(var(--bl-r-md, 12px) - 1px) 0 0; background: var(--salty-shade, var(--eh-hover)); font-weight: 600; line-height: 1.25; }
+#char_assets_settings .eh-setting { gap: 12px; padding: 8px 0; }
+#char_assets_settings .eh-setting-text { gap: 2px; }
+#char_assets_settings .eh-card--prompt .eh-setting { padding: 0; }
+#char_assets_settings .eh-setting-text small { color: var(--eh-muted); }
+#char_assets_settings .eh-switch { width: 36px; height: 20px; }
+#char_assets_settings .eh-switch span { width: 14px; height: 14px; }
+#char_assets_settings .eh-switch[aria-checked="true"] span { transform: translateX(16px); }
+#char_assets_settings .eh-switch--small { width: 36px; height: 20px; }
+#char_assets_settings .eh-prompt-status { margin-top: 6px; }
+#char_assets_settings .eh-root .eh-pick, #char_assets_settings .eh-pick { gap: 10px; margin-top: 10px; padding-top: 10px; }
+#char_assets_settings .eh-pick-body { gap: 10px; }
+#char_assets_settings .eh-pick-row > span { color: var(--eh-text); font-size: var(--bl-ts-ui, 14px); }
+#char_assets_settings .eh-pick .eh-segmented button { min-height: var(--bl-h-ctl, 36px); font-size: var(--bl-ts-meta, 12.5px); }
+#char_assets_settings .eh-pick-model .eh-icon-btn { flex: none; }
+/* 사용법: 접힌 머리 = 카드 한 줄(38), 펼치면 띠 */
+#char_assets_settings .eh-guide > summary { min-height: 38px; margin: -10px; padding: 0 12px; border-radius: calc(var(--bl-r-md, 12px) - 1px); font-size: var(--bl-ts-ui, 14px); font-weight: 600; }
+#char_assets_settings .eh-guide[open] > summary { margin-bottom: 10px; border-bottom: 1px solid var(--eh-line); border-radius: calc(var(--bl-r-md, 12px) - 1px) calc(var(--bl-r-md, 12px) - 1px) 0 0; background: var(--salty-shade, var(--eh-hover)); }
+#char_assets_settings .eh-guide > summary small { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--eh-muted); font-weight: 400; }
+#char_assets_settings .eh-steps { gap: 10px; margin: 0; }
+#char_assets_settings .eh-steps li { padding-left: 0; }
+#char_assets_settings .eh-steps li::before { position: static; display: inline-grid; width: 20px; height: 20px; margin-right: 6px; vertical-align: 1px; line-height: 1; }
+#char_assets_settings .eh-steps li > b { display: inline; line-height: 1.4; }
+#char_assets_settings .eh-steps li p { margin-top: 4px; line-height: 1.5; }
+#char_assets_settings .eh-macros { gap: 6px; margin-top: 10px; padding: 8px 10px; border-radius: var(--bl-r-sm, 8px); }
+/* 안내 줄: flex 라서 글 조각 · 코드 칩이 저마다 좁은 열이 되어 3줄로 꺾였다 → 그냥 한 문단 */
+#char_assets_settings .eh-guide-note { display: block; margin-top: 10px; color: var(--eh-muted); line-height: 1.5; }
+#char_assets_settings .eh-guide-note i { margin: 0 6px 0 0; }
+/* 그림 줄 */
+#char_assets_settings .eh-presets { margin-bottom: 8px; }
+#char_assets_settings .eh-btn { height: var(--bl-h-ctl, 36px); padding: 0 12px; border-radius: var(--bl-r-sm, 8px); }
+#char_assets_settings .eh-btn--small { height: var(--bl-h-icon, 34px); padding: 0 10px; }
+#char_assets_settings .eh-search { height: var(--bl-h-ctl, 36px); margin-top: 8px; border-radius: var(--bl-r-sm, 8px); }
+#char_assets_settings .eh-grid-wrap { margin-top: 8px; }
+#char_assets_settings .eh-empty, #char_assets_settings .eh-empty.is-big { min-height: 72px; gap: 6px; padding: 10px 12px; border-radius: var(--bl-r-sm, 8px); }
+#char_assets_settings .eh-empty i { font-size: 1.4rem; }
+#char_assets_settings .eh-selectbar { margin-top: 8px; padding: 8px; border-radius: var(--bl-r-sm, 8px); }
+#char_assets_settings .eh-prompt { padding-top: 8px; }
+#char_assets_settings .eh-prompt-options > summary { font-weight: 600; }
+#char_assets_settings .eh-prompt-placement select { min-height: var(--bl-h-ctl, 36px); }
+#char_assets_settings .eh-textarea { border-radius: var(--bl-r-sm, 8px); }
+#char_assets_settings .eh-version-foot { margin-top: 0; }
+.bl-assets-dialog { width: min(760px, calc(100vw - 24px)); max-width: calc(100vw - 24px); padding: 12px; }
+.bl-assets-dialog > header { margin-bottom: 8px; }
+.bl-assets-dialog > header button { min-width: var(--bl-h-icon, 34px); min-height: var(--bl-h-icon, 34px); font-size: 22px; }
+
+/* ── 6.2.0 (ui-density-620c): 「그림 고르기」 · 「그림」 묶음에도 제목 띠 — 띠 아래 10 (이 두 카드는 줄 안쪽 여백이 0) ── */
+#char_assets_settings :is(.eh-card--prompt, .eh-card--assets) > .eh-card-title { margin-bottom: 10px; }

@@ -1324,3 +1324,23 @@ body.salty-dark .salty-shapes button.on {
     max-height: 60dvh;
   }
 }
+
+/* 6.2 촘촘하게 (10-12, 번역 설정 창 결)
+   · 스위치 줄: 설명이 길면 스위치가 다음 줄로 떨어져 줄이 ≈70px 이 됐다('큰 숫자는 쉼표로') → 스위치 칸은 고정, 이름 · 설명만 꺾는다
+   · 확장 카드 접기 머리의 꺾쇠 '⌄' 가 기기 글꼴에 따라 글자 'v' 로 보였다 → 글자는 숨기고 아이콘 글꼴 꺾쇠를 그린다 (회전 · 크기 그대로) */
+.salty-panel .salty-row:has(> .salty-switch),
+.salty-panel.bl-editor .salty-row:has(> .salty-switch) { flex-wrap: nowrap; }
+.salty-panel .salty-row:has(> .salty-switch) > span { flex: 1 1 auto; min-width: 0; }
+.salty-panel .salty-row > .salty-switch { flex: none; }
+.salty-panel .bl-tool-chevron { display: inline-grid; place-items: center; width: 14px; height: 14px; font-size: 0; line-height: 1; }
+.salty-panel .bl-tool-chevron::before { content: "\f078"; font: 900 11px/1 "Font Awesome 6 Free"; }
+/* PC 설정 창 오른쪽에 끼운 애드온 설정(.bl-addon-inline-content)
+   · 테마 칸 규칙(02-controls)이 .salty-panel 안을 빼서 칸이 실리태번 기본 26px 이었다 → 확장 서랍과 같은 36 · 안쪽 12
+   · 「확장 탭에 보이기」 줄(headswitch)은 확장 서랍 · 에셋 창에만 모양이 있어 맨 단추(16×8)로 보였다 → 서랍과 같은 34×20 스위치 */
+.salty-panel .bl-addon-inline-content :is(.text_pole, select, input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"])):not(textarea, .neo-range-input) { min-height: var(--bl-h-ctl, 36px); }
+.salty-panel .bl-addon-inline-content :is(.text_pole, input:is([type="text"], [type="search"], [type="password"], [type="url"], [type="email"])):not(textarea, select) { padding-inline: var(--bl-s3, 12px); }
+.salty-panel .bl-addon-inline-content .bl-hs-row { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 6px 0 2px; font-size: var(--bl-fs-cap, 12.5px); color: var(--salty-muted); }
+.salty-panel .bl-addon-inline-content .bl-hs-switch { position: relative; flex: 0 0 auto; width: 34px; height: 20px; margin: 0; padding: 0; border: 0; border-radius: 999px; background: var(--bl-check-off, color-mix(in srgb, var(--salty-text) 24%, transparent)); box-shadow: var(--bl-track, none); cursor: pointer; transition: background-color .18s ease; }
+.salty-panel .bl-addon-inline-content .bl-hs-switch > span { position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: var(--bl-knob, 0 1px 2px rgba(0, 0, 0, .25)); transition: transform .18s ease; }
+.salty-panel .bl-addon-inline-content .bl-hs-switch[aria-checked="true"] { background: var(--salty-accent); box-shadow: none; }
+.salty-panel .bl-addon-inline-content .bl-hs-switch[aria-checked="true"] > span { transform: translateX(14px); }

@@ -10,7 +10,7 @@
     --bwr-accent-ink: var(--salty-accent-ink, var(--bwr-accent)); /* 옅은 포인트 면 위 글자 — 블루 레몬에이드 밝은 테마면 진한 잉크 */
     --bwr-danger: #e5484d;
     /* Compared with index.js after load: a mismatch may be a packaging, cache, or installation issue. */
-    --bwr-css-version: "2.0.5";
+    --bwr-css-version: "2.0.6";
 }
 
 /* 서랍 안쪽 — .inline-drawer-content 는 실리태번이 열고 닫으므로 display 를 주지 않고 안에 한 겹 더 둔다 */
@@ -38,8 +38,8 @@
 .bwr_settings .bwr_card {
     display: flex;
     flex-direction: column;
-    padding: 2px 14px;
-    border-radius: 14px;
+    padding: 0 10px;
+    border-radius: 12px;
     background: var(--bwr-tint);
 }
 
@@ -49,7 +49,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    min-height: 46px;
+    min-height: 36px;
     margin: 0;
     cursor: pointer;
     user-select: none;
@@ -76,8 +76,8 @@
 .bwr_settings .bwr_switch {
     position: relative;
     flex: 0 0 auto;
-    width: 44px;
-    height: 26px;
+    width: 36px;
+    height: 20px;
     border-radius: 999px;
     background: var(--bwr-track);
     transition: background 0.2s;
@@ -88,8 +88,8 @@
     position: absolute;
     top: 3px;
     left: 3px;
-    width: 20px;
-    height: 20px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     background: #fff;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
@@ -101,7 +101,7 @@
 }
 
 .bwr_settings input:checked + .bwr_switch::after {
-    transform: translateX(18px);
+    transform: translateX(16px);
 }
 
 .bwr_settings input:focus-visible + .bwr_switch {
@@ -124,10 +124,10 @@
 /* ── 버튼 ───────────────────────────────────────────── */
 .bwr_settings .bwr_wide {
     width: 100%;
-    min-height: 40px;
+    min-height: 36px;
     justify-content: center;
     gap: 8px;
-    border-radius: 12px;
+    border-radius: 8px;
 }
 
 .bwr_settings .bwr_danger_btn,
@@ -145,9 +145,9 @@
 /* 버튼 두 개가 반씩 */
 .bwr_settings .bwr_row_split > .menu_button {
     flex: 1 1 140px;
-    min-height: 38px;
+    min-height: 36px;
     justify-content: center;
-    border-radius: 12px;
+    border-radius: 8px;
 }
 
 .bwr_settings .menu_button.bwr_busy {
@@ -693,3 +693,50 @@ body.salty .bwr_settings .bwr_chip.bwr_off { color: var(--salty-muted, var(--bwr
 body.salty .bwr_settings .bwr_chip { padding-top: calc(2 * var(--bl-text-nudge, 0px)); }
 body.salty .bwr_settings .bwr_chip .bwr_scope { font-size: var(--bl-ts-meta, .9em); color: inherit; opacity: 1; }
 body.salty .bwr_settings .bwr_badge { color: var(--salty-text); background: var(--bl-well); }
+
+/* 6.2 촘촘하게 (번역 창 결): 탭 여섯 개 한 줄 · 칸 36 · 라벨 14/400 · 설명 12.5 · 스위치 36×20 · 카드 = 테 + 면 */
+body.salty .bwr_settings .bwr_tabs { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px; padding: 3px; }
+body.salty .bwr_settings .bwr_segment { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; padding: 3px; }
+body.salty .bwr_settings .bwr_tab {
+    --bl-tab-optical-shift: clamp(1px, .17em, 4px);
+    position: relative;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 4px;
+    min-height: 0;
+    padding: calc(7px + var(--bl-tab-optical-shift)) 2px calc(7px - var(--bl-tab-optical-shift));
+    font-size: var(--bl-ts-meta, 12.5px);
+    line-height: 1.35;
+    white-space: nowrap;
+    overflow-wrap: normal;
+}
+body.salty .bwr_settings .bwr_tab i { font-size: 1.1em; }
+body.salty .bwr_settings .bwr_tab > span:not(.bwr_badge) { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+body.salty .bwr_settings .bwr_tab .bwr_badge { position: absolute; top: 3px; right: 3px; min-width: 15px; padding: 0 4px; font-size: .8em; line-height: 1.5; }
+body.salty .bwr_settings .bwr_seg { min-height: var(--bl-h-ctl, 36px); padding: 4px 6px; font-size: var(--bl-ts-meta, 12.5px); line-height: 1.35; }
+@container (min-width: 40em) {
+    body.salty .bwr_settings .bwr_tab { flex-direction: row; gap: 8px; min-height: var(--bl-h-ctl, 36px); padding-block: 4px; }
+    body.salty .bwr_settings .bwr_tab .bwr_badge { position: static; }
+}
+body.salty .bwr_settings :is(.menu_button, .text_pole) { min-height: var(--bl-h-ctl, 36px); }
+body.salty .bwr_settings .bwr_chip { min-height: 32px; padding-inline: 12px; font-size: var(--bl-fs-ctl, 13.5px); }
+body.salty .bwr_settings .bwr_editor_head .bwr_delete { min-width: var(--bl-h-icon, 34px); min-height: var(--bl-h-icon, 34px); padding: 0; }
+body.salty .bwr_settings .bwr_field { gap: 6px; }
+body.salty .bwr_settings .bwr_field > span { color: var(--salty-text); font-weight: inherit; line-height: 1.35; opacity: 1; }
+/* 칸 이름은 라벨 크기 — 테마 글자 눈금(16-typescale)이 설명 크기로 !important 를 걸어 한 단 올려 이긴다 */
+body.salty .bwr_settings.bwr_settings .bwr_field > span { font-size: var(--bl-ts-ui, 14px) !important; }
+body.salty .bwr_settings .bwr_hint { color: var(--salty-muted); font-size: var(--bl-ts-meta, 12.5px); line-height: 1.5; opacity: 1; }
+body.salty .bwr_settings :is(.bwr_card, .bwr_editor) { border: 1px solid var(--salty-line); background: var(--salty-fill-surface, var(--salty-surface)); }
+body.salty .bwr_settings .bwr_editor { padding: 10px; }
+/* 밤 팔레트: 카드 면을 salty 면으로 바꾸자 칸(테마 --bl-well)이 카드와 같은 색이 되어 안 보였다 → 번역 설정 창처럼 칸 색 */
+body.salty .bwr_settings :is(.bwr_card, .bwr_editor) :is(input:is([type=text],[type=number],[type=password],[type=url],[type=search],:not([type])),textarea,select):not(:focus) { background-color: var(--salty-fill-field, var(--salty-field, var(--bl-well))) !important; }
+body.salty .bwr_settings .bwr_compact > span:first-child { font-size: var(--bl-ts-meta, 12.5px); }
+
+/* ── 6.2.0 번역 탭 결 (ui-density-620b): 탭 줄의 우물 바탕 없이 칸마다 shade, 켜진 칸 = accent-13 바탕 · 테두리 고리 없음 · 굵기 그대로 (번역 .llmt-tab 과 같은 모양) ── */
+body.salty .bwr_settings .bwr_tabs { gap: 4px; padding: 0; background: none; }
+body.salty .bwr_settings .bwr_tab { border-radius: var(--bl-r-sm, 8px); background: var(--salty-shade); }
+body.salty .bwr_settings :is(.bwr_tab, .bwr_seg):is(.active, .is-active) { background: var(--salty-accent-13, var(--salty-shade)); box-shadow: none; color: var(--salty-accent-ink, var(--salty-accent)); font-weight: inherit; }
+
+/* ── 6.2.0 (ui-density-620c): 맨 위 스위치 묶음에 「기능」 제목 띠 (카드 padding 0 10 → 띠만 -10 으로 끝까지) ── */
+.bwr_settings .bwr_card_title { display: flex; align-items: center; gap: 8px; min-height: 37px; margin: 0 -10px; padding: 8px 12px; border-bottom: 1px solid var(--salty-line, rgba(127, 127, 127, .25)); border-radius: calc(var(--bl-r-md, 12px) - 1px) calc(var(--bl-r-md, 12px) - 1px) 0 0; background: var(--salty-shade, rgba(127, 127, 127, .12)); color: var(--salty-text, inherit); font-size: var(--bl-ts-ui, 14px); font-weight: 600; line-height: 20px; }
+.bwr_settings .bwr_card_title > i { width: 1.2em; text-align: center; color: var(--salty-accent, currentColor); }

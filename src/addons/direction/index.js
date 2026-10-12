@@ -12,7 +12,7 @@ import { badgeTextHit } from '../../badge-hit.js';
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
-const VERSION = '1.1.7';
+const VERSION = '1.1.8';
 // 1.1.5: 깃털 창에 두 쪽 — 전개 지시(이번 전개) · 항상 지시(적은 글 그대로 매번, 예: <OOC: …>). 옆으로 넘기거나 제목을 눌러 바꾼다
 const KINDS = ['direction', 'always'];
 const KIND_LABEL = { direction: '전개 지시', always: '항상 지시' };
@@ -830,6 +830,7 @@ function buildSettings() {
                 </div>
 
                 <div class="jj-card">
+                    <div class="jj-card-title"><i class="fa-solid fa-sliders" aria-hidden="true"></i><span>설정</span></div><!-- ui-density-620c -->
                     <div class="jj-row">
                         <div class="jj-row-label"><b>입력창 버튼</b><small>끄면 버튼이 숨고 보내지 않아요</small></div>
                         <button type="button" class="jj-switch" id="jj_extension_switch" role="switch" aria-label="입력창 버튼 쓰기"><span></span></button>

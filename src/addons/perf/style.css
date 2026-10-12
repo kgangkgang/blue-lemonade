@@ -920,3 +920,29 @@
     .rl-tiles, .rl-meta { grid-template-columns: repeat(auto-fit,minmax(min(100%,9em),1fr)); }
     .rl-table tr { grid-template-columns: repeat(auto-fit,minmax(min(100%,7em),1fr)); }
 }
+
+/* 촘촘하게 (번역 설정 창 결): 탭 다섯 개를 한 줄로 (아이콘 위 · 글자 아래) · 탭 몸에 여백을 또 주지 않음 · 설명은 작게 */
+html body.salty .pa-hub .pa-hub-tabs { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+html body.salty .pa-hub .pa-hub-tab {
+    min-width: 0;
+    gap: 4px;
+    padding: calc(7px + var(--bl-tab-optical-shift, 0px)) 2px calc(7px - var(--bl-tab-optical-shift, 0px));
+    border: 0;
+    border-radius: var(--bl-r-sm, 8px);
+    background: var(--salty-shade, color-mix(in srgb, var(--SmartThemeBodyColor, #888) 8%, transparent));
+    color: var(--salty-muted, inherit);
+    font-size: var(--bl-ts-meta, 12.5px);
+    line-height: 1.45;
+    box-shadow: none;
+}
+html body.salty .pa-hub .pa-hub-tab > span { word-break: keep-all; overflow-wrap: normal; }
+html body.salty .pa-hub .pa-hub-tab.active { background: var(--salty-accent-13, var(--salty-shade)); color: var(--salty-accent-ink, var(--pa-hub-accent)); box-shadow: none; }
+.pa-hub .pa-hub-load { min-height: 36px; margin: 0 0 6px; padding: 0; border-bottom: 1px solid var(--salty-line, var(--pa-hub-line)); font-size: var(--bl-ts-meta, 12.5px); opacity: 1; }
+.pa-hub .pa-hub-note { margin: 0 0 6px; font-size: var(--bl-ts-meta, 12.5px); }
+.pa-hub-pane :is(.sw-body, .pa-body, .sv-body, .rl-body, .lt-drawer) { padding: 0; }
+.pa-hub-pane :is(p, small):is(.sw-hint, .sv-hint, .rl-hint, .lt-note) { margin: 0; font-size: var(--bl-ts-meta, 12.5px); line-height: 1.5; color: var(--salty-muted, var(--rl-muted, inherit)); opacity: 1; }
+.pa-hub-pane .pa-note { font-size: var(--bl-ts-meta, 12.5px); color: var(--salty-muted, inherit); }
+.pa-hub-pane .menu_button { margin: 0; }
+
+/* ── 6.2.0 (ui-density-620b): 창 제목은 카드 제목 크기 (번역 14/600 · PC 15) — 1.1em(15.4px)이 한 단계 컸다 ── */
+.pa-hub .pa-hub-title { font-size: var(--bl-ts-ui, 14px); }

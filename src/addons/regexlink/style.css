@@ -1,4 +1,4 @@
-#regex-link-settings{--rl-version:"1.0.5"}
+#regex-link-settings{--rl-version:"1.0.6"}
 #regex-link-settings .inline-drawer-content{display:flex;flex-direction:column;gap:12px;text-align:left}
 .rl-summary{margin:0}
 .rlk-empty{margin:0;opacity:.75}
@@ -16,3 +16,10 @@
 .rl-owner.on{background:var(--salty-accent-13,var(--salty-shade-2,#4444));color:var(--salty-accent-ink,var(--salty-accent,inherit));opacity:1}
 .rl-mode{align-self:flex-start;min-width:0}
 @media (max-width:600px){.rl-modules{grid-template-columns:1fr}}
+/* 촘촘하게 (번역 설정 창 결): 설명은 작게 · 팝업에서는 접기 꺾쇠 없이 제목만 */
+#regex-link-settings .salty-note{margin:0;font-size:var(--bl-ts-meta,12.5px);line-height:1.5;color:var(--salty-muted,inherit);opacity:1}
+#regex-link-settings .rlk-keep b{font-weight:inherit}
+#regex-link-settings .rlk-keep small{font-size:var(--bl-ts-meta,12.5px);line-height:1.5;color:var(--salty-muted,inherit);opacity:1}
+#regex-link-settings .rl-module-head small{font-size:var(--bl-ts-meta,12.5px);line-height:1.5;color:var(--salty-muted,inherit);opacity:1}
+.popup-content #regex-link-settings:not(.bl-embedded-settings)>.inline-drawer-header{min-height:0!important;padding:0 0 2px!important;cursor:default;pointer-events:none}
+.popup-content #regex-link-settings:not(.bl-embedded-settings)>.inline-drawer-header .inline-drawer-icon{display:none}

@@ -6,7 +6,7 @@
 :root {
     --jj-on: var(--jj-on-color, var(--SmartThemeQuoteColor, #e18a24));
     /* index.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
-    --jj-css-version: "1.1.7";
+    --jj-css-version: "1.1.8";
 }
 
 /* ── 입력창 버튼 ─────────────────────────────────────────── */
@@ -647,3 +647,26 @@
 .bl-direction-dialog > header {display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
 .bl-direction-dialog > header button {background:transparent;border:0;color:inherit;font-size:24px;cursor:pointer;min-width:40px;min-height:40px;}
 .bl-direction-dialog #jj-settings > .inline-drawer > .inline-drawer-header {display:none;}
+
+/* 6.2 촘촘하게 (번역 창 결): 켜기 두 줄은 한 카드로 이어 붙이고(각 줄 색은 그대로), 제목 600 · 줄 40,
+   색 코드 칸은 줄지 않게(「테마 색」이 꽉 차던 57px), 창은 바깥 12 · 머리 34 */
+body.salty #jj-settings.jj-settings .jj-settings-body .jj-status { padding: 7px 12px; }
+body.salty #jj-settings.jj-settings .jj-settings-body .jj-status:has(+ .jj-status) { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+body.salty #jj-settings.jj-settings .jj-settings-body .jj-status + .jj-status { margin-top: -8px; border-top: 1px solid var(--salty-line, var(--jj-line)); border-top-left-radius: 0; border-top-right-radius: 0; }
+body.salty #jj-settings.jj-settings .jj-status-title { font-weight: 600; line-height: 1.35; }
+body.salty #jj-settings.jj-settings .jj-status-text { line-height: 1.4; }
+body.salty #jj-settings.jj-settings .jj-settings-body .jj-row { min-height: var(--bl-h-row, 40px); }
+body.salty #jj-settings.jj-settings .jj-color-row { flex: 0 0 auto; flex-wrap: nowrap; }
+body.salty #jj-settings.jj-settings .jj-color-row .text_pole { width: 7em !important; min-height: var(--bl-h-ctl, 36px); }
+body.salty #jj-settings.jj-settings .jj-color-row .jj-small-btn { min-height: var(--bl-h-ctl, 36px); padding-inline: 10px !important; }
+.bl-direction-dialog { width: min(620px, calc(100vw - 24px)); max-width: calc(100vw - 24px); padding: 12px; }
+.bl-direction-dialog > header { margin-bottom: 8px; }
+.bl-direction-dialog > header button { min-width: var(--bl-h-icon, 34px); min-height: var(--bl-h-icon, 34px); font-size: 22px; }
+
+/* ── 6.2.0 (ui-density-620b): 줄 이름은 라벨 굵기 (번역 라벨 14/400 · 팔레트 굵기 변수) — 600 이었다 ── */
+#jj-settings .jj-row-label > b { font-weight: var(--salty-ui-weight, 400); }
+
+/* ── 6.2.0 (ui-density-620c): 설정 줄 묶음에 제목 띠 (번역 카드 머리: 37 · shade · 아래 줄 · 14/600 · 아이콘 포인트색) ── */
+#jj-settings .jj-card:not(.jj-prompt) { overflow: hidden; }
+#jj-settings .jj-card-title { display: flex; align-items: center; gap: 8px; min-height: 37px; padding: 8px 12px; border-bottom: 1px solid var(--salty-line, var(--jj-line)); background: var(--salty-shade, var(--jj-card)); color: var(--salty-text, inherit); font-size: var(--bl-ts-ui, 14px); font-weight: 600; line-height: 20px; }
+#jj-settings .jj-card-title > i { width: 1.2em; text-align: center; color: var(--salty-accent, currentColor); }

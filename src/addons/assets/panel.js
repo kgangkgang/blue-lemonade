@@ -143,6 +143,7 @@ function template() {
             </div>
 
             <section class="eh-card eh-card--prompt">
+                <h3 class="eh-card-title"><i class="fa-solid fa-wand-magic-sparkles"></i>그림 고르기</h3><!-- ui-density-620c -->
                 <div class="eh-setting">
                     <div class="eh-setting-text">
                         <b>이미지 프롬프트</b>
@@ -221,6 +222,7 @@ function template() {
             </section>
 
             <section class="eh-card eh-card--assets">
+                <h3 class="eh-card-title"><i class="fa-solid fa-images"></i>그림</h3>
                 <div class="eh-presets">
                     <div class="eh-preset-chips" role="tablist" aria-label="프리셋"></div>
                     <div class="eh-preset-ctl" hidden></div>

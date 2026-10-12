@@ -1,4 +1,4 @@
-#model-switch-settings{--ms-version:"1.0.7"}
+#model-switch-settings{--ms-version:"1.0.8"}
 #model-switch-settings .inline-drawer-content{display:flex;flex-direction:column;gap:12px;text-align:left}
 .ms-presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
 .ms-presets:empty{display:none}
@@ -60,3 +60,27 @@ body.bl-ms-lock-prompt :is(#pt-connection-mode, #pt-provider, #pt-model-select, 
 /* Do not inherit ST min-content width for the Korean action label. */
 #model-switch-settings .ms-actions{flex-wrap:wrap;gap:8px 10px}
 #model-switch-settings .ms-actions .ms-apply{width:auto;flex:1 1 auto;min-width:min(100%,7em);max-width:100%;white-space:normal;word-break:keep-all;overflow-wrap:anywhere}
+
+/* 6.2 촘촘하게 (번역 창 결): 대상은 한 카드 안의 36px 줄(이름 · 지금 값 한 줄), 아이콘 단추 34, 설명 12.5.
+   팝업에서는 서랍 머리가 제목 한 줄만 (⌄ 숨김 · 눌러도 안 접힘) */
+#model-switch-settings .ms-presets{display:flex;flex-wrap:wrap;gap:8px}
+#model-switch-settings .ms-chip{flex:1 1 10em;padding:6px 10px}
+#model-switch-settings .ms-chip-add{flex:0 0 auto;width:var(--bl-h-ctl,36px);min-height:var(--bl-h-ctl,36px);padding:0;align-items:center}
+#model-switch-settings .ms-icon{width:var(--bl-h-icon,34px);height:var(--bl-h-icon,34px);min-width:var(--bl-h-icon,34px);min-height:var(--bl-h-icon,34px);border-radius:var(--bl-r-sm,8px)}
+#model-switch-settings .ms-option{min-height:var(--bl-h-icon,34px);padding:6px 10px}
+#model-switch-settings .ms-targets{gap:0;padding:0 10px;border:1px solid var(--salty-line,var(--SmartThemeBorderColor,#5555));border-radius:var(--bl-r-md,12px);background:var(--salty-fill-surface,var(--salty-surface,transparent))}
+#model-switch-settings .ms-targets:empty{display:none}
+#model-switch-settings :is(.ms-target,.ms-lock){min-height:var(--bl-h-ctl,36px);padding:1px 0;border-radius:0;background:none;box-shadow:none;gap:8px}
+#model-switch-settings .ms-target+.ms-target{border-top:1px solid var(--salty-line,var(--SmartThemeBorderColor,#5555))}
+#model-switch-settings .ms-lock{padding:1px 10px;border:1px solid var(--salty-line,var(--SmartThemeBorderColor,#5555));border-radius:var(--bl-r-md,12px);background:var(--salty-fill-surface,var(--salty-surface,transparent))}
+#model-switch-settings :is(.ms-target,.ms-lock) span{flex-direction:row;flex-wrap:wrap;align-items:baseline;column-gap:8px}
+#model-switch-settings :is(.ms-target,.ms-lock) small{font-size:var(--bl-ts-meta,12.5px);line-height:1.4}
+#model-switch-settings .ms-target small{min-width:0}
+#model-switch-settings .ms-pull{width:var(--bl-h-icon,34px);height:var(--bl-h-icon,34px);min-width:var(--bl-h-icon,34px);min-height:var(--bl-h-icon,34px)}
+#model-switch-settings .ms-status{font-size:var(--bl-ts-meta,12.5px);line-height:1.5}
+#model-switch-settings .ms-status:empty{display:none}
+dialog.popup #model-switch-settings>.inline-drawer-header{min-height:0;padding:0 2px 2px!important;pointer-events:none}
+dialog.popup #model-switch-settings>.inline-drawer-header .inline-drawer-icon{display:none}
+
+/* ── 6.2.0 (ui-density-620b): 공급자 · 모델 · 주소도 번역처럼 위 라벨 (라벨 → 칸 8). 테마 공용 규칙(라벨 열 4em)보다 위 ── */
+html body.salty #model-switch-settings .ms-form > :is(label, .ms-row) { grid-template-columns: minmax(0, 1fr); gap: 8px; }

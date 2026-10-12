@@ -57,4 +57,14 @@ await test('6.1.8 줄 이름은 모든 창에서 「확장 탭에 보이기」 �
     assert.ok(!code.includes('위에도 보이기'), '옛 이름이 코드에 남지 않음 (주석의 바뀐 기록만)');
     for (const f of ['src/settings.js', 'src/features.js', 'css/64-headswitch.css']) assert.ok(!fs.readFileSync(path.join(root, f), 'utf8').includes('위에도 보이기'), f);
 });
+await test('6.2.0 (ui-density-620d) 켜기 스위치가 없는 창: data-bl-master="none" 이면 줄을 만들지 않고, id 가운데 -use- 는 힌트가 아니다 (한글화 패널 #pt-use-proxy 오인)', async () => {
+    assert.equal(H.scoreOf({ id: 'pt-use-proxy' }), 1, '가운데 -use- 는 힌트 아님');
+    for (const id of ['use_x', 'autopic_on', 'on', 'use']) assert.equal(H.scoreOf({ id }), 3, id);
+    const box = (blMaster, found = []) => { const content = { querySelector: sel => sel === '[data-bl-master]' && blMaster !== undefined ? { dataset: { blMaster } } : null, querySelectorAll: () => found };
+        return { querySelector: sel => sel === ':scope > .inline-drawer-content' ? content : null }; };
+    assert.equal(H.masterOf(box('none')), null, 'none 이면 스위치 없음');
+    assert.deepEqual(H.masterOf(box('')), { dataset: { blMaster: '' } }, '그냥 data-bl-master 는 그 요소');
+    const fs = await import('node:fs');
+    assert.ok(fs.readFileSync(path.join(root, 'src/addons/prompt/settings-ui.js'), 'utf8').includes('<span hidden data-bl-master="none"></span>'), '한글화 패널은 켜기 스위치 없음을 밝힌다');
+});
 console.log(`${passed} tests passed`);

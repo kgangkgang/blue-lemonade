@@ -5,7 +5,7 @@
    ============================================================ */
 
 /* state.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
-:root { --cg-css-version: "1.5.1"; }
+:root { --cg-css-version: "1.5.2"; }
 
 .cg-root {
     --cg-accent-fallback: #a98bd9;
@@ -2083,3 +2083,40 @@ body.salty .cg-root .cg-setting-text small {
 }
 /* 주소가 깨진 칸(손으로 고친 jsonl 등): 회색 자리표 — 떼기는 된다 */
 .cg-root .cg-image.is-broken .cg-image-open { display: grid; place-items: center; cursor: default; color: var(--cg-faint); font-size: 18px; }
+/* 촘촘하게 (번역 설정 창 결, 10-12): 설정 묶음 = 카드(머리 띠 + 몸) · 줄은 이름 14 + 설명 12.5 · 묶음 사이 12 */
+.cg-root .cg-page-head { padding: 8px 10px; }
+body.salty .cg-root .cg-page-head .cg-page-title { font-size: var(--bl-ts-ui, .95rem); font-weight: 600; }
+.cg-root .cg-page-scroll { padding-top: 10px; }
+.cg-root .cg-page-scroll > .cg-section { margin: 0 auto 12px; padding: 2px 10px; border: 1px solid var(--salty-line, var(--cg-line)); border-radius: var(--bl-r-md, 12px); background: var(--salty-fill-surface, var(--salty-surface, var(--cg-card))); overflow: hidden; }
+.cg-root .cg-page-scroll > .cg-section:first-child { margin-top: 0; }
+/* 제목 없는 묶음(사진 · 날짜)은 위 카드에 이어 붙인다 */
+.cg-root .cg-page-scroll > .cg-section:has(+ .cg-section:not(:has(> .cg-section-title))) { margin-bottom: 0; border-bottom-width: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.cg-root .cg-page-scroll > .cg-section:not(:has(> .cg-section-title)) { border-top-style: dashed; border-top-left-radius: 0; border-top-right-radius: 0; }
+.cg-root .cg-section-title { display: flex; align-items: center; gap: 8px; margin: -2px -10px 2px; padding: 10px 12px; border-bottom: 1px solid var(--salty-line, var(--cg-line)); background: var(--salty-shade, var(--cg-hover)); color: var(--salty-text, var(--cg-text)); font-size: var(--bl-ts-ui, .9rem); line-height: 1.2; }
+.cg-root .cg-section-title i { width: 1.2em; text-align: center; color: var(--salty-accent, var(--cg-accent-text)); font-size: 1em; }
+body.salty .cg-root .cg-section .cg-section-title { font-weight: 600; }
+.cg-root :is(.cg-setting, .cg-color-row) { padding: 8px 0; gap: 10px; }
+.cg-root .cg-setting-text { gap: 2px; }
+body.salty .cg-root .cg-setting-text b { font-size: var(--bl-ts-ui, .9rem); font-weight: var(--salty-ui-weight, 400); line-height: 1.4; }
+body.salty .cg-root .cg-setting-text small,
+.cg-root :is(.cg-section-desc, .cg-scope-note, .cg-color-text small) { font-size: var(--bl-ts-meta, .8rem); line-height: 1.5; color: var(--salty-muted, var(--cg-muted)); opacity: 1; }
+.cg-root .cg-section-desc { margin: 0 0 8px; }
+.cg-root .cg-scope-note { margin: 8px 0 0; }
+.cg-root .cg-scope-note:empty { display: none; }
+.cg-root .cg-color-text b { font-size: var(--bl-ts-ui, .88rem); font-weight: var(--salty-ui-weight, 400); }
+.cg-root .cg-section-actions { margin: 10px 0 10px; }
+body.salty .cg-root .cg-segmented { padding: 2px; }
+body.salty .cg-root .cg-segmented button { min-height: 32px; padding-block: calc(4px + var(--bl-text-nudge, 0px)) calc(4px - var(--bl-text-nudge, 0px)); }
+.cg-root .cg-guide { gap: 10px; margin: 0; padding: 10px 0; border-radius: 0; background: none; }
+.cg-root .cg-guide li { gap: 10px; }
+.cg-root .cg-guide b { font-size: var(--bl-ts-ui, .88rem); font-weight: 600; }
+.cg-root .cg-guide p { font-size: var(--bl-ts-meta, .8rem); line-height: 1.5; }
+.cg-root .cg-version { margin-top: 4px !important; margin-bottom: 12px !important; }
+
+/* ── 6.2.0 (ui-density-620c): 「사용법」은 기본 접힘(details) · 「표시」 묶음에도 제목 띠 ── */
+.cg-root details.cg-section > summary.cg-section-title { cursor: pointer; list-style: none; }
+.cg-root details.cg-section > summary.cg-section-title::-webkit-details-marker { display: none; }
+.cg-root details.cg-section > summary .cg-fold-caret { margin-left: auto; color: var(--salty-muted, var(--cg-muted)); font-size: .85em; transition: transform .18s ease; }
+.cg-root details.cg-section[open] > summary .cg-fold-caret { transform: rotate(180deg); }
+.cg-root .cg-page-scroll > details.cg-section:not([open]) { padding-bottom: 0; }
+.cg-root .cg-page-scroll > details.cg-section:not([open]) > .cg-section-title { margin-bottom: -2px; border-bottom: 0; }

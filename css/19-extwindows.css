@@ -339,3 +339,59 @@ html body.salty .eh-vbtn--danger { color:var(--bl-danger)!important; }
 html body.salty .eh-vbtn--danger:hover { background:var(--salty-danger-soft); }
 html body.salty .eh-toolbar { flex-wrap:wrap; column-gap:10px; row-gap:8px; }
 html body.salty .eh-viewer-actions { gap:8px 10px; }
+
+/* 실리태번 기본 확장 칸 (확장 서랍: Regex · Quick Reply · Summarize · Image Captioning · Download Extensions & Assets ·
+   TTS · Vector Storage · Image Generation · Character Expressions · Translate) — 번역 애드온과 같은 글자 · 간격 눈금.
+   · 설명 · 체크 글 · 단추 글이 모두 <small> 이라 브라우저 기본값(smaller ≈ .83배)으로 11.3~11.7px 이었다 → 설명 12.5 · 체크 글 14 · 단추 글 13.5
+   · 소제목 h4 는 12px/650 + 위 16 → 라벨 크기 600 + 위 8 · 아래 6, 구분선 위아래 12 → 6, 묶음 위아래 14 · 16 → 6 · 8
+   · 칸 높이 · 안쪽 여백은 테마 값 그대로 (덮지 않음). 칸 · 동작 · 설정 키는 그대로 */
+html body.salty #rm_extensions_block :is(.regex_settings,#qr--settings,#memory_settings,.caption_settings,#assets_ui,#tts_settings,
+  .vectors_settings,.sd_settings,.expression_settings,.translation_settings:not(.llmt-settings)) {
+  --bl-core-ext-meta:var(--bl-ts-meta,12.5px);
+}
+html body.salty #rm_extensions_block :is(.regex_settings,#qr--settings,#memory_settings,.caption_settings,#assets_ui,#tts_settings,
+  .vectors_settings,.sd_settings,.expression_settings,.translation_settings:not(.llmt-settings)) .inline-drawer-content small {
+  font-size:var(--bl-core-ext-meta); line-height:1.5;
+}
+html body.salty #rm_extensions_block :is(.regex_settings,#qr--settings,#memory_settings,.caption_settings,#assets_ui,#tts_settings,
+  .vectors_settings,.sd_settings,.expression_settings,.translation_settings:not(.llmt-settings))
+  .inline-drawer-content :is(label.checkbox_label:not(:has(> span, > b, > strong)) > small, label.checkbox_label > span, .menu_button small, .menu_button span:not(.fa-solid)) {
+  font-size:inherit; line-height:inherit;
+}
+html body.salty #rm_extensions_block :is(.regex_settings,#qr--settings,#memory_settings,.caption_settings,#assets_ui,#tts_settings,
+  .vectors_settings,.sd_settings,.expression_settings,.translation_settings:not(.llmt-settings)) .inline-drawer-content h4 {
+  margin:8px 0 6px !important; font-size:var(--bl-ts-ui,14px) !important; font-weight:600 !important; line-height:1.4 !important;
+}
+html body.salty #rm_extensions_block :is(.regex_settings,#qr--settings,#memory_settings,.caption_settings,#assets_ui,#tts_settings,
+  .vectors_settings,.sd_settings,.expression_settings,.translation_settings:not(.llmt-settings)) .inline-drawer-content hr {
+  margin-block:6px !important;
+}
+html body.salty #rm_extensions_block :is(#assets_ui,.expression_settings) .inline-drawer-content .m-b-1 { margin-block:6px; }
+html body.salty #rm_extensions_block .expression_settings #open_chat_expressions > p { margin-block:6px; }
+html body.salty #rm_extensions_block .expression_settings #open_chat_expressions > #image_list { margin:8px 0; }
+html body.salty #rm_extensions_block .sd_settings #sd_dimensions_block { padding-top:8px; }
+/* Quick Reply: 체크 줄 글은 12.5 · 묶음 제목은 13.5/650 이었다 → 라벨 14 · 제목 14/600 (예전 규칙(27~57)보다 html 한 점 무겁게) */
+html body.salty #rm_extensions_block #qr--settings :is(.inline-drawer-content, #qr--set-settings) > label.flex-container { font-size:var(--bl-ts-ui,14px); }
+html body.salty #rm_extensions_block #qr--settings .qr--title:is(.bl-s, *):is(bl-s, *) { font-size:var(--bl-ts-ui,14px); font-weight:600; }
+/* 빠른 답 목록: 카드 묶음(8) 안에서 목록이 양옆 .5em 을 또 들여 써 항목 카드가 한 겹 더 좁았다 → 좌우 한 겹만 */
+html body.salty #rm_extensions_block #qr--settings #qr--set-qrList .qr--set-qrListContents { padding-inline:0; }
+/* 「Edit Quick Replies」: 고르기 칸(12em 이상) 옆에 아이콘 5개, 다음 줄에 지우기 하나만(고아) → 고르기 칸을 8em 부터 줄여 아이콘 6개와 한 줄에 */
+html body.salty #rm_extensions_block #qr--settings #qr--editor > .qr--head > .qr--actions > select#qr--set { flex:1 1 8em !important; min-width:0; }
+/* 실리태번 헬퍼(JS-Slash-Runner): 확장 칸 · 창. 15-drawers.css 의 헬퍼 규칙(탭 · 묶음 · 고르기 칸)을 그대로 두고 같은 무게로 뒤에서 덮는다.
+   · 스위치 44×26 → 36×20 (손잡이 14) · 묶음 안 12 → 10 · 줄 나눔 위아래 7.5 → 4
+   · 단추 글이 <small> 이라 11.3px → 단추 크기 그대로, 스크립트 탭 단추 2열은 내용 폭이 아니라 줄 폭을 나눠 채움 */
+body.salty .TH-custom-tailwind .relative.inline-block:has(> input.peer.sr-only[type="checkbox"] + label) { width:36px; height:20px; }
+body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type="checkbox"] + label::after { top:3px; left:3px; width:14px; height:14px; }
+body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type="checkbox"]:checked + label::after { transform:translateX(16px); }
+body.salty .TH-custom-tailwind div.rounded-md.p-1.border-\(--grey5050a\),
+body.salty .TH-custom-tailwind fieldset.TH-fieldset > :not(legend) { padding:10px; }
+body.salty .TH-custom-tailwind .flex.w-full.items-center.my-0\.5:has(> .grow) { margin-block:4px; }
+body.salty .TH-custom-tailwind .menu_button small { font-size:inherit; line-height:inherit; }
+body.salty #tavern_helper .flex.flex-wrap:has(> .menu_button_icon > .fa-folder-plus) { width:100%; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+/* 헬퍼 스크립트 만들기 · 고치기 창: 묶음 아래 15 + 칸 위아래 5 (묶음 사이 20) → 묶음 사이 12 · 이름 → 칸 6.
+   변수 편집기 도구 줄은 32px 칸 열 개가 폰 창 폭을 넘어 하나만 둘째 줄로 → 30px 칸으로 한 줄 */
+body.salty .TH-script-editor-container { margin-bottom:12px; }
+body.salty .TH-script-editor-container > :is(input.text_pole, textarea.text_pole) { margin:6px 0 0; }
+body.salty .TH-script-editor-container .jse-main { --jse-menu-button-size:30px; }
+/* TTS 재생 속도: 묶음 안 구분선 + 바로 뒤 구분선이 겹쳐(테마엔 가는 선이 없어 둘 다 빈칸) 37px 틈 → 안쪽 것만 뺀다 */
+html body.salty #rm_extensions_block #tts_settings #playback_rate_block > hr { display:none; }

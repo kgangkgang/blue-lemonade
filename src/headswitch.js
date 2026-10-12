@@ -8,7 +8,8 @@ import { getSettings, saveSettings } from './settings.js';
 
 const COLUMNS = ['extensions_settings', 'extensions_settings2'];
 const STRIP = '.ext-version, [class*="-version"], [class*="_version"], .inline-drawer-icon, i, svg, button, input, select, textarea';
-const HINT_ID = /enable|enabled|activ|master|toggle|switch|(^|[_-])(on|use)([_-]|$)/i;
+// 6.2.0 (ui-density-620d) on/use 는 id 의 맨 앞 · 맨 뒤 낱말일 때만 — 가운데 -use- (pt-use-proxy = 리버스 프록시 쓰기)는 켜기 스위치가 아니다
+const HINT_ID = /enable|enabled|activ|master|toggle|switch|^(on|use)([_-]|$)|(^|[_-])(on|use)$/i;
 const HINT_TEXT = /enable|enabled|activ|사용|켜|활성|작동/i;
 export const ROW = 'bl-hs-row', SWITCH = 'bl-hs-switch', HEAD = 'bl-hs-head';
 export const ROW_LABEL = '확장 탭에 보이기';   // 6.1.8 모든 창에서 같은 이름 (확장 이름 · 켜기 이름 없이)
@@ -55,7 +56,7 @@ const headOf = drawer => drawer.querySelector(':scope > .inline-drawer-toggle, :
 export function masterOf(drawer) {
     const content = contentOf(drawer) || drawer;
     const explicit = content.querySelector('[data-bl-master]');
-    if (explicit) return explicit;
+    if (explicit) return explicit.dataset.blMaster === 'none' ? null : explicit;   // 6.2.0 data-bl-master="none" = 켜기 스위치가 없는 창 (줄을 만들지 않는다)
     const found = [...content.querySelectorAll('input[type="checkbox"], [role="switch"]')]
         .filter(el => !el.closest(`.${ROW}`) && !el.classList.contains(SWITCH));
     if (!found.length) return null;

@@ -92,6 +92,7 @@ export function renderSettingsPage(page, viewingChat, onBack) {
             </section>
 
             <section class="cg-section">
+                <h3 class="cg-section-title"><i class="fa-solid fa-id-badge"></i>표시</h3><!-- ui-density-620c -->
                 <div class="cg-setting">
                     <div class="cg-setting-text"><b>프로필 사진·이름 표시</b><small>북마크에 작성자의 사진과 이름을 보여요.</small></div>
                     <button type="button" class="cg-switch" role="switch" aria-label="프로필 사진·이름 표시" data-setting="showIdentity" aria-checked="${store.showIdentity !== false}"><span></span></button>
@@ -151,12 +152,12 @@ export function renderSettingsPage(page, viewingChat, onBack) {
                 </div>
             </section>
 
-            <section class="cg-section">
-                <h3 class="cg-section-title"><i class="fa-solid fa-book-open"></i>사용법</h3>
+            <details class="cg-section cg-section-fold">
+                <summary class="cg-section-title"><i class="fa-solid fa-book-open"></i>사용법<i class="fa-solid fa-chevron-down cg-fold-caret" aria-hidden="true"></i></summary>
                 <ul class="cg-guide">
                     ${GUIDE.map(([icon, title, text]) => `<li><i class="fa-solid ${icon ?? iconName()}"></i><div><b>${title}</b><p>${text}</p></div></li>`).join('')}
                 </ul>
-            </section>
+            </details>
 
             <p class="cg-version">북마크 ${VERSION}</p>
         </div>`;

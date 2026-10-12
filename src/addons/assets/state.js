@@ -5,7 +5,7 @@ import { saveSettingsDebounced } from '../../../../../../../script.js';
 
 export const MODULE = 'esetham';
 export const OLD_MODULE = 'character-assets';
-export const VERSION = '1.6.0';
+export const VERSION = '1.6.1';
 export const TITLE = '캐릭터 에셋';
 
 // AI에게 보내는 글이라 영어로 둔다. {{img_keywords_autogen}} 자리에 지금 캐릭터의 그림 이름 목록이 들어간다.
@@ -68,7 +68,7 @@ const DEFAULTS = Object.freeze({
     randomGroups: true,    // 번호만 다른 파일(이름, 이름-1, 이름-2 …)을 키워드 하나로 묶고 표시할 때 하나를 고른다
     onceOnly: true,        // 번호 묶음(변형)이 없는 그림은 답변 하나에 한 번만 — 같은 메시지 앞쪽에 이미 나온 태그는 그림 없이 지운다 (1.2.3: 앞 메시지는 안 본다)
     thumbSize: 'm',
-    guideOpen: true,
+    guideOpen: false,   // 6.2.0 (ui-density-620b) 사용법은 처음엔 접어 둔다 — 펼치면 그대로 기억
     disabled: {},          // { [폴더 키]: [파일 이름, …] } 꺼 둔 그림 (AI 목록에서 뺀다). 폴더 키 = '캐릭터' 또는 '캐릭터/프리셋'
     presets: {},           // { [캐릭터 폴더]: [ { id, name, enabled } … ] } 프리셋(하위 폴더) 목록, 순서 = 우선순위 (presets.js)
     links: {},             // { [캐릭터 폴더]: [ { owner, presetId, enabled } … ] } 다른 캐릭터의 프리셋을 이 카드에서 쓰기
@@ -151,7 +151,8 @@ export function initSettings() {
     store.randomGroups = store.randomGroups !== false;
     store.onceOnly = store.onceOnly !== false; // 1.1.4 에 생긴 값 — 예전 설정에는 없으므로 여기서 기본 켬
     if (!THUMB_SIZES.includes(store.thumbSize)) store.thumbSize = 'm';
-    store.guideOpen = store.guideOpen !== false;
+    store.guideOpen = store.guideOpen === true;   // 6.2.0 (ui-density-620b) 기본 접힘 — 연 채로 저장한 사람은 그대로
+    if (!store.guideFolded620) { store.guideOpen = false; store.guideFolded620 = true; }   // 6.2.0 지금 쓰는 사람도 한 번만 접는다 (그 뒤엔 사용자가 연 대로)
     if (!store.disabled || typeof store.disabled !== 'object' || Array.isArray(store.disabled)) store.disabled = {};
     if (!store.presets || typeof store.presets !== 'object' || Array.isArray(store.presets)) store.presets = {}; // 1.2.0
     if (!store.links || typeof store.links !== 'object' || Array.isArray(store.links)) store.links = {};

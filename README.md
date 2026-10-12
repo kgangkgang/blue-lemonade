@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.1.9/blue-lemonade-6.1.9.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.2.0/blue-lemonade-6.2.0.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.1.9 · 최신 업데이트</summary>
+<summary>6.2.0 · 최신 업데이트</summary>
+
+- 설정 창들을 촘촘하게 다듬었어요. 칸 · 단추 높이를 맞추고, 군데군데 크게 비던 여백을 줄였어요.
+- 폰에서 확장 설정 창의 좌우 여백을 줄였어요. 좁은 화면에서도 글과 칸이 더 넓게 보여요.
+- 확장 설정 창들이 번역 창과 같은 모양이 됐어요 — 묶음마다 제목 띠, 같은 탭, 같은 칸 높이.
+- 애드온 버전: 캐릭터 에셋 1.6.1 · 북마크 1.5.2 · 커스텀 CSS 조절 0.0.8 · 전개 지시 1.1.8 · 모델 등록 1.1.5 · 모델 전환 1.0.8 · 메모 1.3.2 · 확장 순서 1.1.7 · 성능 보조 2.1.9 · 한글화 패널 1.2.0 · 프롬프트 연동 정규식 1.0.6 · 다시 쓰기 2.0.6 · TTS 1.7.3 · ZIP 설치 1.1.1
+
+</details>
+
+<details>
+<summary>6.1.9 · 캐릭터 에셋 「다른 모델이 고르기」 · 그림 자리 지키기</summary>
 
 - 캐릭터 에셋 1.6.0: 「다른 모델이 고르기」를 켜면 본문 모델에는 그림 규칙 · 목록을 보내지 않고, 답을 받은 뒤 연결한 모델이 대사 앞 자리마다 그림을 골라요(한 답에 1~4장). 고르지 못한 자리는 「그림 다시 고르기」를 눌러요. 모델 전환에도 나와요.
 - 다시 쓰기 2.0.5 · TTS 1.7.2 · 번역: 캐릭터 에셋의 그림 자리도 글로 다루지 않아요. 고치기 · 읽기 · 번역에서 자리는 제자리에 그대로 남아요.

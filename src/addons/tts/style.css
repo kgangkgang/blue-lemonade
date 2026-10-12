@@ -12,7 +12,7 @@
 
 /* ---------- 공통 변수: 설정 창 · 편집 팝업 · 재생 막대 (ST 테마 색을 따르고, 블루 레몬에이드 변수는 있으면 씀) */
 .lv-settings, .lv-editor, .lv-bar {
-  --lv-css-version: "1.7.2";
+  --lv-css-version: "1.7.3";
   --lv-accent: var(--salty-accent, var(--SmartThemeQuoteColor, #51a0de));
   --lv-text: var(--SmartThemeBodyColor, #dcdcd2);
   --lv-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, .15));
@@ -587,17 +587,48 @@ body.salty.salty-icons-line #chat .mes .extraMesButtons > .lv_play { --salty-mi:
 
 /* Reading controls: stable icon centres and one navigation row when it fits. */
 #lv_settings .lv-tabs { gap:4px; }
-#lv_settings .lv-tab { min-height:36px; padding:6.5px 6px 5.5px; border-radius:var(--lv-r-sm); line-height:1.4; }
+#lv_settings .lv-tab { min-height:var(--bl-h-ctl,36px); padding:6.5px 6px 5.5px; border:0; border-radius:var(--lv-r-sm); background:var(--salty-shade,var(--lv-fill)); color:var(--salty-muted,var(--lv-dim)); font-size:var(--bl-ts-meta,12.5px); line-height:1.4; }
+#lv_settings .lv-tab.active { background:var(--salty-accent-13,color-mix(in srgb,var(--lv-accent) 18%,transparent)); color:var(--salty-accent-ink,var(--lv-text)); }
+#lv_settings .lv-tab.active i { color:inherit; }
 #lv_settings .lv-tab > i { display:inline-flex; align-items:center; justify-content:center; width:1.2em; height:1.2em; flex:none; line-height:1; }
 #lv_settings .lv-card-head > i { display:inline-flex; align-items:center; justify-content:center; height:1.2em; line-height:1; flex:none; }
 #lv_settings .lv-body .menu_button { display:inline-flex; align-items:center; justify-content:center; gap:6px; white-space:normal; word-break:keep-all; line-height:1.4; }
 #lv_settings .lv-top { column-gap:10px; row-gap:6px; }
-#lv_settings .lv-tagline { line-height:1.5; font-size:.9em; }
-#lv_settings .lv-settings-credits { padding:8px 10px; }
-#lv_settings .lv-settings-credits summary { min-height:34px; line-height:1.4; padding-block:6px; }
+#lv_settings .lv-tagline { line-height:1.5; font-size:var(--bl-ts-meta,.9em); color:var(--salty-muted,var(--lv-dim)); }
+#lv_settings .lv-settings-credits { padding:0 10px; border-color:var(--salty-line,var(--lv-border)); background:var(--salty-fill-surface,var(--salty-surface,var(--lv-card))); font-size:var(--bl-ts-meta,.94em); }
+#lv_settings .lv-settings-credits summary { min-height:36px; line-height:1.4; padding-block:8px; box-sizing:border-box; font-size:var(--bl-ts-ui,14px); }
+#lv_settings .lv-settings-credits details[open] { padding-bottom:10px; }
 @container lvbody (min-width:21em) { #lv_settings .lv-tabs { grid-template-columns:repeat(4,minmax(0,1fr)); } }
 @media(pointer:coarse) {
  #lv_settings .lv-body { gap:8px; }
- #lv_settings .lv-tab { min-height:38px; }
  #lv_settings .lv-tag-chip { min-height:34px; }
 }
+
+/* 6.2 촘촘하게 (번역 창 결): 카드 = 머리 띠 37 + 몸 10 · 카드 사이 12, 라벨 14 · 설명 12.5, 글자 단추 36 · 아이콘 단추 34.
+   설정 창(#lv_settings — 서랍 · 팝업 둘 다)만. 재생 막대 · 목소리 편집 팝업은 그대로 */
+#lv_settings { --lv-h: var(--bl-h-icon, 34px); }
+#lv_settings .lv-pane:not([hidden]) { gap:12px; }
+#lv_settings .lv-card { gap:10px; padding:10px; border-color:var(--salty-line,var(--lv-border)); border-radius:var(--bl-r-md,12px); background:var(--salty-fill-surface,var(--salty-surface,var(--lv-card))); }
+#lv_settings .lv-card-head { margin:-10px -10px 0; padding:10px 12px; border-bottom:1px solid var(--salty-line,var(--lv-border)); border-radius:calc(var(--bl-r-md,12px) - 1px) calc(var(--bl-r-md,12px) - 1px) 0 0; background:var(--salty-shade,var(--lv-fill)); font-size:var(--bl-ts-ui,14px); font-weight:600; line-height:1.2; }
+#lv_settings .lv-card-head > i:first-child { width:1.2em; font-size:1em; }
+#lv_settings .lv-card-help { margin:0; }
+#lv_settings .lv-field { gap:6px; }
+#lv_settings .lv-label { color:var(--salty-text,var(--lv-text)); font-size:var(--bl-ts-ui,14px); line-height:1.35; }
+#lv_settings .lv-row-label { color:var(--salty-text,var(--lv-text)); font-size:var(--bl-ts-ui,14px); }
+#lv_settings :is(.lv-desc,.lv-empty,.lv-key-state,.lv-balance,.lv-test-result,.lv-help-note,.lv-warn-note) { font-size:var(--bl-ts-meta,12.5px); line-height:1.5; }
+#lv_settings :is(.lv-desc,.lv-empty,.lv-key-state,.lv-sub,.lv-grp) { color:var(--salty-muted,var(--lv-dim)); }
+#lv_settings .lv-body .menu_button { min-height:var(--bl-h-ctl,36px); padding-inline:12px; font-size:var(--bl-fs-ctl,13.5px); }
+/* 단추 여러 개는 한 줄에 글자 폭만큼 (2열 격자에 3개면 마지막이 반쪽 고아로 남았다) */
+#lv_settings .lv-actions { display:flex; flex-wrap:wrap; gap:8px; max-width:none; }
+#lv_settings .lv-actions .menu_button { flex:0 1 auto; }
+#lv_settings .lv-advanced { padding-top:2px; border-top-color:var(--salty-line,var(--lv-border)); }
+#lv_settings :is(.lv-advanced,.lv-extras) > summary { padding-block:6px; font-size:var(--bl-ts-ui,14px); line-height:1.5; }
+#lv_settings .lv-advanced[open] > summary { margin-bottom:6px; }
+@media screen and (min-width:1001px) { #lv_settings .lv-card-head { padding-inline:14px; } }
+/* 팝업 · 설정 창에 들어가면 index.js 가 내용 칸을 flex 로 여는데 방향이 가로라, 맨 위에 붙는 「확장 탭에 보이기」 줄이 몸통 옆 좁은 열이 됐다 → 세로로 쌓는다.
+   팝업에서는 접기 ⌄ 를 숨긴다 (제목 · 버전 단추는 그대로) */
+#lv_settings > .inline-drawer > .inline-drawer-content { flex-direction:column; }
+#lv_settings .lv-body { text-align:start; }   /* 팝업의 가운데 정렬을 물려받지 않게 */
+dialog.popup #lv_settings > .inline-drawer > .inline-drawer-header .inline-drawer-icon { display:none; }
+/* 밤 팔레트: 카드 면을 salty 면으로 바꾸자 칸(테마 --bl-well)이 카드와 같은 색이 되어 안 보였다 → 번역 설정 창처럼 칸 색. 배경색만 (쉼표 숫자 그림은 그대로) */
+body.salty #lv_settings .lv-card :is(input:is([type=text],[type=number],[type=password],[type=url],[type=search],:not([type])),textarea,select):not(:focus) { background-color:var(--salty-fill-field,var(--salty-field,var(--bl-well)))!important; }

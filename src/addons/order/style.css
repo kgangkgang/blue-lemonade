@@ -2,7 +2,7 @@
    index.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이다.
    설정 서랍이 없어서 기댈 우리 요소가 화면에 없으므로 :root 에 둔다. */
 :root {
-    --po-css-version: "1.1.6";
+    --po-css-version: "1.1.7";
 }
 
 /* 확장 서랍 맨 위 버튼 줄의 아이콘 버튼. 옆의 두 버튼과 높이를 맞추고 글자 없이 정사각형에 가깝게. */
@@ -161,9 +161,13 @@
     background: color-mix(in srgb, var(--SmartThemeBodyColor, #888) 35%, transparent);
 }
 
-.po-menu-tabs{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap}.po-menu-tabs button[aria-pressed="true"]{color:var(--salty-accent-ink,var(--salty-accent,var(--SmartThemeQuoteColor,currentColor)));box-shadow:inset 0 0 0 1px currentColor}.po-dialog [data-order-page][hidden]{display:none!important}.po-menu-list{display:grid;gap:8px;margin-top:14px}.po-menu-list .po-item{grid-template-columns:minmax(0,1fr) 44px 44px}.po-menu-list .po-move{min-height:44px;min-width:44px}
+.po-menu-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:4px 0 2px}.po-menu-tabs .salty-btn{min-width:0;min-height:var(--bl-h-ctl,36px);margin:0;border:0;border-radius:var(--bl-r-sm,8px);background:var(--salty-shade,color-mix(in srgb,var(--SmartThemeBodyColor,#888) 8%,transparent));color:var(--salty-muted,inherit);font-size:var(--bl-fs-ctl,13.5px);font-weight:inherit;box-shadow:none}.po-menu-tabs button[aria-pressed="true"]{background:var(--salty-accent-13,var(--salty-shade));color:var(--salty-accent-ink,var(--salty-accent,var(--SmartThemeQuoteColor,currentColor)));box-shadow:none}.po-dialog [data-order-page][hidden]{display:none!important}.po-menu-list{display:grid;gap:3px;margin-top:8px}.po-menu-list .po-move{min-height:32px;min-width:32px}
 .po-dialog [data-order-page]>button+button{margin-inline-start:8px}.po-menu-list{max-height:55vh;overflow:auto}.po-menu-list .po-label{white-space:normal;overflow-wrap:anywhere}
 /* 5.6.4 세로 중앙: 탭 글자가 1.1px 위로 떴다 — .salty-panel 밖이라 테마 5.5.3 반행간 보정을 못 받음. 위 +n · 아래 −n, 높이 그대로 */
-.po-menu-tabs .salty-btn{padding-top:calc(8px + var(--bl-text-nudge,0px));padding-bottom:calc(8px - var(--bl-text-nudge,0px))}
+.po-menu-tabs .salty-btn{padding:calc(6px + var(--bl-text-nudge,0px)) 6px calc(6px - var(--bl-text-nudge,0px))}
+/* 촘촘하게 (번역 설정 창 결): 설명은 작게 · 메뉴 탭 쪽 단추도 36 */
+.po-dialog .po-hint{font-size:var(--bl-ts-meta,12.5px);line-height:1.5;color:var(--salty-muted,inherit);opacity:1}
+.po-dialog [data-order-page]>.salty-btn{min-height:var(--bl-h-ctl,36px);padding:0 12px;font-size:var(--bl-fs-ctl,13.5px)}
+.po-dialog [data-order-page]>.po-hint{margin:0 0 8px}
 
 @media(max-width:768px){.po-item button{min-width:32px;min-height:32px;width:auto;height:auto}}
