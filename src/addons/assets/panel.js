@@ -891,7 +891,7 @@ function tileHtml(group) {
     return `
         <div class="${classes.join(' ')}" data-key="${escapeHtml(group.key)}" role="button" tabindex="0" title="${escapeHtml(title)}">
             <div class="eh-tile-img"><img src="${escapeHtml(shown.url)}" alt="" loading="lazy" decoding="async"></div>
-            <div class="eh-tile-name">${escapeHtml(group.label)}</div>
+            <div class="eh-tile-name">${escapeHtml(group.label).replace(/_/g, '_<wbr>')}</div>
             ${group.members.length > 1 ? `<span class="eh-tile-badge">${partial ? `${group.onCount}/` : ''}${group.members.length}</span>` : ''}
             ${off ? '<span class="eh-tile-off"><i class="fa-solid fa-eye-slash"></i></span>' : ''}
             <span class="eh-tile-check"><i class="fa-solid fa-check"></i></span>

@@ -1,4 +1,4 @@
-#regex-link-settings{--rl-version:"1.0.6"}
+#regex-link-settings{--rl-version:"1.0.7"}
 #regex-link-settings .inline-drawer-content{display:flex;flex-direction:column;gap:12px;text-align:left}
 .rl-summary{margin:0}
 .rlk-empty{margin:0;opacity:.75}
@@ -23,3 +23,11 @@
 #regex-link-settings .rl-module-head small{font-size:var(--bl-ts-meta,12.5px);line-height:1.5;color:var(--salty-muted,inherit);opacity:1}
 .popup-content #regex-link-settings:not(.bl-embedded-settings)>.inline-drawer-header{min-height:0!important;padding:0 0 2px!important;cursor:default;pointer-events:none}
 .popup-content #regex-link-settings:not(.bl-embedded-settings)>.inline-drawer-header .inline-drawer-icon{display:none}
+/* 2026-10-12 쓸데없는 줄바꿈: 「최근 메시지에 그 모듈이 있으면 켜 둠」 줄은 설명이 이름 칸(239px)에 갇혀 두 줄이고, 폰 큰 글씨에서는 이름도 1px 모자라 두 줄이었다
+   → 「체크 · 이름 · 숫자」 한 줄, 설명은 그 아래 이름 칸부터 끝까지(숫자 칸 폭까지). 체크 바깥 여백 0 · 칸 사이 8 로 이름 칸 +11px */
+#regex-link-settings .rlk-keep{column-gap:8px;row-gap:2px}
+#regex-link-settings .rlk-keep>span{display:contents}
+#regex-link-settings .rlk-keep>input[type="checkbox"]{grid-column:1;grid-row:1;margin:0}
+#regex-link-settings .rlk-keep>span>b{grid-column:2;grid-row:1;min-width:0}
+#regex-link-settings .rlk-keep>input[type="number"]{grid-column:3;grid-row:1}
+#regex-link-settings .rlk-keep>span>small{grid-column:2/-1;grid-row:2;min-width:0}

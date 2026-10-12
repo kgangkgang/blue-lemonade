@@ -368,3 +368,13 @@ body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-containe
 
 .bl-editor-actions [data-compare]{touch-action:none;user-select:none;white-space:nowrap;}
 .bl-editor-actions [data-compare][aria-pressed="true"]{background:var(--salty-accent);color:var(--salty-on-accent);}
+
+/* 원래 css/20-panel.css (2026-10-12 쓸데없는 줄바꿈): PC 팝업인데 설정 칸이 좁을 때 설명 · 고르기가 있는 묶음은 한 열.
+   오른쪽 끝이 :not(.salty-slider) 이고 왼쪽에 :has() 라 늘 켜 두면 채팅을 느리게 한다(check-has) → 팝업이 열려 있을 때만 켜지는 이곳으로 (세션 1, 10-13) */
+@container bl-controls (width < 41em) {
+  .salty-panel.in-popup .salty-group:not(.bl-setting-locks):has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)):has(> .salty-row > span > small, > .salty-row > .salty-seg) > :not(.salty-slider),
+  .salty-panel.in-popup .salty-group:not(.bl-setting-locks):has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)):has(> .salty-row > span > small, > .salty-row > .salty-seg) > .salty-slider:not(.salty-slider + *):not(:has(+ .salty-slider)),
+  .salty-panel.in-popup .salty-group:not(.bl-setting-locks):has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)):has(> .salty-row > span > small, > .salty-row > .salty-seg) > :is(:not(.salty-slider) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider:not(:has(+ .salty-slider)) {
+    grid-column: 1 / -1;
+  }
+}

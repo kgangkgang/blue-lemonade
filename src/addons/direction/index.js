@@ -12,7 +12,7 @@ import { badgeTextHit } from '../../badge-hit.js';
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
-const VERSION = '1.1.8';
+const VERSION = '1.1.9';
 // 1.1.5: 깃털 창에 두 쪽 — 전개 지시(이번 전개) · 항상 지시(적은 글 그대로 매번, 예: <OOC: …>). 옆으로 넘기거나 제목을 눌러 바꾼다
 const KINDS = ['direction', 'always'];
 const KIND_LABEL = { direction: '전개 지시', always: '항상 지시' };

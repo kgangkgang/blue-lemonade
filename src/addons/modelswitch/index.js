@@ -11,7 +11,7 @@ import * as LM from '../../live-models.js';
 import { listTargets, supports, registry, discoverTargets, modelOptions, hasModelList, listUrlOf, fetchBlock, refreshModels, autoModels } from './targets.js';
 import { setLocks, withoutLock } from './lock.js';
 
-const VERSION = '1.0.9';
+const VERSION = '1.1.0';
 const MAX_PRESETS = 8;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const label = source => SOURCES.find(s => s.id === source)?.label || source;

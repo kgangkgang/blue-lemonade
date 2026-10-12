@@ -1344,3 +1344,21 @@ body.salty-dark .salty-shapes button.on {
 .salty-panel .bl-addon-inline-content .bl-hs-switch > span { position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: var(--bl-knob, 0 1px 2px rgba(0, 0, 0, .25)); transition: transform .18s ease; }
 .salty-panel .bl-addon-inline-content .bl-hs-switch[aria-checked="true"] { background: var(--salty-accent); box-shadow: none; }
 .salty-panel .bl-addon-inline-content .bl-hs-switch[aria-checked="true"] > span { transform: translateX(14px); }
+
+/* 2026-10-12 쓸데없는 줄바꿈 (찐빠 전수조사) — 옆이 비었는데 꺾이는 글을 없앤다. 칸 높이 · 글자 크기는 그대로, 폭만
+   · 폰 슬라이더 두 열: 슬라이더가 3 · 5개면 마지막 하나가 반 칸에 혼자 남아 이름과 숫자칸이 두 줄('PC에서 본문 최대 폭')
+     → 혼자 남은 끝 칸은 전체 폭 (앞뒤에 짝이 없는 칸은 99-lazy-panel 이 이미 전체 폭)
+   · PC 팝업인데 설정 칸이 좁을 때(화면 1100~1280 → 칸 ≈ 500px) 스위치 · 고르기 줄 두 열(칸 217)에서 설명 · 버튼이 두 줄씩
+     ('큰 숫자는 쉼표로' · '블록 사이 기본 촘촘히 넉넉히') → 설명이나 고르기가 있는 묶음만 폰처럼 한 열(슬라이더 짝은 두 열 그대로).
+     설명 없는 짧은 스위치 묶음은 두 열 그대로 */
+@media (max-width: 1000px) {
+  .salty-panel .salty-group:not(.bl-control-grid, .salty-sizes, .bl-setting-locks):has(> .salty-slider + .salty-slider) > :is(:not(.salty-slider) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider:not(:has(+ .salty-slider)),
+  .salty-panel .salty-group:not(.bl-control-grid, .salty-sizes, .bl-setting-locks):has(> .salty-slider + .salty-slider) > :is(:not(.salty-slider) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider + .salty-slider + .salty-slider:not(:has(+ .salty-slider)) {
+    grid-column: 1 / -1;
+  }
+}
+/* (2026-10-13 세션 1) PC 팝업 좁은 칸 한 열 규칙은 css/99-lazy-panel.css 끝으로 옮김 — :has() 왼쪽 · 오른쪽 끝 :not() 이라 늘 켜 두면 check-has 실패 */
+/* 장식 액자 보관함: 칸 109(폰) · 102(PC 4칸)에 안쪽 여백 10 이라 '스크랩 다이어리'(87px)가 두 줄
+   → 안쪽 좌우 6 · 칸 최소 104 (폰 3칸 그대로, PC 3칸 × 2줄 = 기본 6개가 딱 맞음) */
+.salty-panel .bl-frame-library { grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); }
+.salty-panel .bl-frame-library > button { padding-inline: 6px; }

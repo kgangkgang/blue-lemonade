@@ -946,3 +946,14 @@ html body.salty .pa-hub .pa-hub-tab.active { background: var(--salty-accent-13, 
 
 /* ── 6.2.0 (ui-density-620b): 창 제목은 카드 제목 크기 (번역 14/600 · PC 15) — 1.1em(15.4px)이 한 단계 컸다 ── */
 .pa-hub .pa-hub-title { font-size: var(--bl-ts-ui, 14px); }
+
+/* ── 2026-10-12 쓸데없는 줄바꿈: 「직접 지정 가격표」 머리 ──
+   이름 · 설명 · 단위 칸이 한 줄에 끼어 폰 큰 글씨(15.5)에서 설명이 두 줄('공식 API 외 연결용 · 100만 토큰당').
+   셋이 한 줄에 들어가면 그대로, 칸이 좁으면 「이름 · 단위」 한 줄 + 설명은 그 아래 전체 폭 */
+.rl-settings .rl-body { container: rl-body / inline-size; }
+@container rl-body (width < 26.5em) {
+  .rl-settings .rl-price-head:has(> .rl-unit) { flex-wrap: wrap; align-items: center; row-gap: 2px; }
+  .rl-settings .rl-price-head:has(> .rl-unit) > b { flex: 1 1 auto; min-width: 0; }
+  .rl-settings .rl-price-head:has(> .rl-unit) > .rl-unit { order: 1; }
+  .rl-settings .rl-price-head:has(> .rl-unit) > small { order: 2; flex: 1 1 100%; min-width: 0; }
+}

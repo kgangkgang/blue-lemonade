@@ -1,13 +1,26 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.2.1/blue-lemonade-6.2.1.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.2.2/blue-lemonade-6.2.2.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.2.1 · 최신 업데이트</summary>
+<summary>6.2.2 · 최신 업데이트</summary>
+
+- 좁은 화면(폰 · PC 에서 확장 서랍이 좁을 때)에서 옆에 자리가 남는데도 두 줄로 꺾이던 이름표 · 설명을 한 줄로 고쳤어요.
+- 폰에서 2열로 좁아져 글이 꺾이던 칸은 한 줄씩 넓게 보여 줘요. 칸 밖으로 삐져나오던 글 · 점 · 아이콘은 칸 안으로 넣었어요.
+- 캐릭터 에셋: 그림 이름이 낱말 가운데가 아니라 _ 뒤에서 꺾여요. 좁은 서랍에서도 캐릭터 이름 · 그림 수가 한 줄로 보이고, 「다른 모델이 고르기」 칸이 카드 밖으로 나가지 않아요.
+- 한글화 · 번역: 좁은 서랍에서 작업 줄 단추는 아이콘만 보여요(한 줄 그대로). 프롬프트 선택칸이 단추에 밀려 잘리지 않고, 용어집 원문 칸이 넓어졌어요.
+- TTS: 카드 머리의 모델 이름이 말줄임되지 않고, 이름 옆 ? 단추가 칸 밖으로 나가지 않아요. 테마 설정 서랍이 좁으면 「화면」 고르기 단추가 줄을 다 쓰고 아이콘은 다음 줄로 가요.
+- WorldInfo Info 확장 창이 폰에서 한 글자씩 세로로 꺾이던 것 · 트리거 단추가 요술봉 단추를 덮던 것을 고쳤어요.
+- 애드온 버전: 캐릭터 에셋 1.6.2 · 북마크 1.5.3 · 커스텀 CSS 조절 0.0.9 · 전개 지시 1.1.9 · 모델 전환 1.1.0 · 성능 보조 2.2.0 · 한글화 패널 1.2.1 · 프롬프트 연동 정규식 1.0.7 · 다시 쓰기 2.0.7 · LLM 번역 2.3.6 · TTS 1.7.4
+
+</details>
+
+<details>
+<summary>6.2.1 · 번역 속마음 닫는 태그 · 모델 전환 체크 반전</summary>
 
 - 번역에서 속마음 닫는 표시가 빠져 다른 글까지 속마음 모양이 되던 것을 고쳤어요. 이미 저장된 번역도 채팅을 열 때 바로잡아 보여 줘요.
 - 모델 전환에 체크 반전 단추를 넣었어요 — 누르면 체크한 것과 안 한 것이 뒤바뀌어요.

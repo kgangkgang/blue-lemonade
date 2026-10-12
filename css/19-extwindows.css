@@ -395,3 +395,22 @@ body.salty .TH-script-editor-container > :is(input.text_pole, textarea.text_pole
 body.salty .TH-script-editor-container .jse-main { --jse-menu-button-size:30px; }
 /* TTS 재생 속도: 묶음 안 구분선 + 바로 뒤 구분선이 겹쳐(테마엔 가는 선이 없어 둘 다 빈칸) 37px 틈 → 안쪽 것만 뺀다 */
 html body.salty #rm_extensions_block #tts_settings #playback_rate_block > hr { display:none; }
+/* stwii-phone: WorldInfo Info (LenAnderson/SillyTavern-WorldInfoInfo 1.3.x) — 켜진 월드인포 목록 창.
+   원래는 채팅 옆 빈자리에 띄운다(max-width = (100vw - --sheldWidth)/2 - 3.5em, 앵커 위치 top right). 폰은 빈자리가 0 이하라
+   창이 한 글자 폭이 되어 글이 한 글자씩 세로로 꺾였다.
+   · 폰(1000px 이하): 앵커 위치를 끄고 화면 안 양옆 12px, 위 막대 바로 아래부터 입력창 위까지(65dvh 까지), 글은 14 · 낱말 단위 줄바꿈 · 항목 사이 6.
+     자리는 top 으로 잡는다 — html 에 transform 이 있어 fixed 창의 기준이 높이 0 인 html 이 되므로 bottom 으로 잡으면 화면 위로 나간다.
+   · PC: 자리 · 모양은 그대로, 채팅 옆 빈자리가 16em 보다 좁을 때만 그 폭을 보장 */
+html body.salty .stwii--panel { max-width:max(calc((100vw - var(--sheldWidth, 50vw)) / 2 - 3.5em), 16em); }
+@media (max-width: 1000px) {
+  html body.salty .stwii--panel { position:fixed; position-area:none; position-try-fallbacks:none; inset:calc(var(--topBarBlockSize, 40px) + 8px) 12px auto 12px; width:auto; max-width:none; max-height:min(65dvh, calc(100dvh - var(--topBarBlockSize, 40px) - 18px - var(--bl-form-h, 150px))); margin:0; padding:10px 12px; gap:6px; border:1px solid var(--salty-line, transparent); border-radius:var(--bl-r-md, 12px); background-color:var(--salty-surface, var(--secondaryBg, var(--SmartThemeBlurTintColor))); font-size:var(--bl-ts-ui, 14px); line-height:1.45; word-break:keep-all; overflow-wrap:anywhere; }
+  html body.salty .stwii--panel .stwii--world { margin-top:4px; font-weight:600; }
+  html body.salty .stwii--panel .stwii--entry { align-items:flex-start; gap:8px; padding-left:10px; opacity:.9; }
+  html body.salty .stwii--panel .stwii--entry > * { min-width:0; }
+  html body.salty .stwii--messages .stwii--title { width:auto; font-size:var(--bl-ts-meta, 12.5px); }
+  html body.salty .stwii--panel .stwii--configRow { gap:8px; padding:6px 0; }
+  /* 책 단추(트리거): 원래 자리(왼쪽 아래 0.125em, z 3010)가 입력창의 ✦ 요술봉 단추 아래쪽을 덮어 요술봉이 안 눌렸다 → 입력창 바로 위로.
+     입력창에 앵커를 붙이면 글자마다 문서 전체 레이아웃이 다시 돌아서(04-send-form 2.9.4) 앵커 대신 버튼 크기로 어림한다
+     (단추 줄 둘 + 메모 줄 ≈ 입력창 높이 — 메모 줄이 없으면 조금 더 위에 뜬다). 흐린 25% 는 손가락 화면에서 안 보여 60% */
+  html body.salty .stwii--trigger { bottom:calc(2 * var(--bottomFormBlockSize, 34.5px) + 72px); left:8px; font-size:28px; opacity:.6; }
+}

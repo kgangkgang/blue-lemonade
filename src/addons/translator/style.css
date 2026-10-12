@@ -703,3 +703,22 @@ body.expandMessageActions .mes .mes_buttons .extraMesButtons:has(> .mes_llm_tran
 .bl-translator-dialog > header button{width:44px;height:44px;color:inherit;background:transparent;border:0;font-size:24px;cursor:pointer}
 .bl-translator-dialog-body{overflow:auto;min-height:0;padding:12px;overscroll-behavior:contain}
 .bl-translator-dialog-body .llmt-settings{min-width:0;max-width:100%}
+
+/* ── 2026-10-12 쓸데없는 줄바꿈 · 찐빠 정리 ──
+   ④ 어긋남: 창(dialog)으로 열면 「확장 탭에 보이기」 줄에 테마 스위치 규칙(확장 탭 · 에셋 창 안에서만 먹음)이 닿지 않아
+      스위치가 납작하게 찌그러져 글 아랫줄에 붙었다(세로 중심 -6) → 확장 탭과 같은 줄(오른쪽 정렬 · 작은 글)과 34×20 스위치 */
+body.salty .bl-translator-dialog .bl-hs-row { display:flex; align-items:center; justify-content:flex-end; gap:8px; padding:3px 0 7px; font-size:var(--bl-fs-cap, 12.5px); line-height:1.45; color:var(--salty-muted, color-mix(in srgb, var(--SmartThemeBodyColor, #888) 62%, transparent)); }
+body.salty .bl-translator-dialog .bl-hs-row > span { min-width:0; overflow-wrap:anywhere; }
+body.salty .bl-translator-dialog .bl-hs-row .bl-hs-switch { position:relative; flex:0 0 auto; width:34px; height:20px; min-width:0; min-height:0; margin:0; padding:0; border:0; border-radius:999px; background:var(--bl-check-off, color-mix(in srgb, var(--SmartThemeBodyColor, #888) 24%, transparent)); box-shadow:var(--bl-track, none); cursor:pointer; transition:background-color .18s ease; }
+body.salty .bl-translator-dialog .bl-hs-row .bl-hs-switch > span { position:absolute; top:3px; left:3px; width:14px; height:14px; border-radius:50%; background:#fff; box-shadow:var(--bl-knob, 0 1px 2px rgba(0, 0, 0, .25)); transition:transform .18s ease; }
+body.salty .bl-translator-dialog .bl-hs-row .bl-hs-switch[aria-checked="true"] { background:var(--salty-accent, var(--SmartThemeQuoteColor, #3975b8)); box-shadow:none; }
+body.salty .bl-translator-dialog .bl-hs-row .bl-hs-switch[aria-checked="true"] > span { transform:translateX(14px); }
+body.salty .bl-translator-dialog .bl-hs-row .bl-hs-switch::before { content:''; position:absolute; inset:-7px 0; }
+body.salty .bl-translator-dialog .bl-hs-row .bl-hs-switch:focus-visible { outline:2px solid var(--salty-accent, #3975b8); outline-offset:3px; }
+
+/* ── 2026-10-12 찐빠 2차 (세션 1) ── */
+/* 프롬프트 선택: 단추 셋(저장 · 추가 · 삭제)이 옆을 차지해 237px 서랍에서 선택칸 글 자리가 28px 만 남았다(115>28) → 선택칸이 11em 안 되면 단추 셋은 다음 줄 오른쪽 */
+.llmt-settings .prompt-select-container { flex-wrap: wrap; justify-content: flex-end; row-gap: 6px; }
+.llmt-settings .prompt-select-container select { flex: 1 1 11em; min-width: 0; }
+/* 용어집: 원문 칸이 반(412 에서 124px)이라 여러 표기를 늘어놓은 원문이 말줄임됐다 → 원문 1.4 : 번역 1 (줄마다 열은 그대로 맞음) */
+.llmt-gl-row, .llmt-gl-add, .llmt-gl-pick-row { grid-template-columns: minmax(0, 1.4fr) auto minmax(0, 1fr) auto auto; }

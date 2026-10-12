@@ -11,3 +11,5 @@ html body.salty .bl-ctsi-dialog #ctsi-drawer-content .flex-container:has(>.neo-r
 html body.salty .bl-ctsi-dialog #ctsi-drawer-content .neo-range-slider{flex:1 1 auto;min-width:0;margin:0}
 html body.salty .bl-ctsi-dialog #ctsi-drawer-content .neo-range-input{flex:0 0 4.5em;width:4.5em}
 html body.salty .bl-ctsi-dialog toolcool-color-picker{justify-self:start;line-height:0;border-radius:var(--bl-r-sm,8px);--tool-cool-color-picker-btn-bg:transparent;--tool-cool-color-picker-btn-border-color:var(--salty-line,#ccd7e4);--tool-cool-color-picker-btn-border-radius:var(--bl-r-sm,8px);--tool-cool-color-picker-btn-border-radius-inner:var(--bl-r-xs,6px);--tool-cool-color-picker-btn-border-color-inner:transparent}
+/* 2026-10-12 쓸데없는 줄바꿈: 이름 칸이 min(12em, 46%) = 폰 160px 이라 'CustomCSS background'(174px)가 옆이 빈 색 칸 옆에서 두 줄 → 이름 칸 min(13em, 52%) (폰 181px). 칸 시작은 줄마다 그대로 맞춤 */
+html body.salty .bl-ctsi-dialog #ctsi-drawer-content :is(#cts-row-1,#cts-row-2)>:is(div,label):not(.checkbox_label){grid-template-columns:minmax(0,min(13em,52%)) minmax(0,1fr)}

@@ -12,7 +12,7 @@
 
 /* ---------- 공통 변수: 설정 창 · 편집 팝업 · 재생 막대 (ST 테마 색을 따르고, 블루 레몬에이드 변수는 있으면 씀) */
 .lv-settings, .lv-editor, .lv-bar {
-  --lv-css-version: "1.7.3";
+  --lv-css-version: "1.7.4";
   --lv-accent: var(--salty-accent, var(--SmartThemeQuoteColor, #51a0de));
   --lv-text: var(--SmartThemeBodyColor, #dcdcd2);
   --lv-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, .15));
@@ -632,3 +632,36 @@ body.salty.salty-icons-line #chat .mes .extraMesButtons > .lv_play { --salty-mi:
 dialog.popup #lv_settings > .inline-drawer > .inline-drawer-header .inline-drawer-icon { display:none; }
 /* 밤 팔레트: 카드 면을 salty 면으로 바꾸자 칸(테마 --bl-well)이 카드와 같은 색이 되어 안 보였다 → 번역 설정 창처럼 칸 색. 배경색만 (쉼표 숫자 그림은 그대로) */
 body.salty #lv_settings .lv-card :is(input:is([type=text],[type=number],[type=password],[type=url],[type=search],:not([type])),textarea,select):not(:focus) { background-color:var(--salty-fill-field,var(--salty-field,var(--bl-well)))!important; }
+
+/* 2026-10-12 쓸데없는 줄바꿈: 두 칸 격자에서 이름 · 설명이 반 칸(폰 ≈168px)에 갇혀 옆이 비었는데도 두 줄로 꺾였다
+   (「대사·속마음을 누르면 그 줄만 읽어요」 · 「서술에서 자동으로 찾기」 · 「음색 · 세게↔부드럽게 0」 …).
+   → 항목마다 「한 줄 폭이 반 칸에 들어가면 반 칸, 아니면 제 줄 통째」. 짝 없이 남은 칸은 줄 끝까지 늘어난다.
+   반 칸끼리는 늘 같은 폭(왼쪽 끝이 위아래로 맞음). 칸 높이 · 글자 크기는 그대로, 폭만 바꾼다. 18em 아래 좁은 카드는 원래대로 한 칸.
+   - 입력 · 선택 · 슬라이더는 한 줄 폭 계산에서 뺀다(width 0 + min-width 100% → 칸은 그대로 꽉 참). 고른 값 글자가 길다고 줄을 통째로 차지하지 않게
+   - 설명이 붙은 체크(.lv-has-desc)는 제 줄 통째: 「체크 + 이름」 한 줄, 설명은 그 아래 전체 폭
+   - ? 도움말 · ! 안내 글은 계산에서 뺀다(contain) — 펼쳐도 항목이 자리를 옮기지 않는다 */
+@container lvcard (min-width: 18em) {
+  #lv_settings .lv-grid { display:flex; flex-wrap:wrap; align-items:flex-start; }
+  #lv_settings .lv-grid > * { flex:1 1 calc(50% - 8px); min-width:fit-content; max-width:100%; box-sizing:border-box; }
+  #lv_settings .lv-grid > :is(.lv-wide, .lv-has-desc) { flex-basis:100%; }
+  #lv_settings .lv-grid > .lv-field > :is(.text_pole, input[type=range]) { width:0; min-width:100%; }
+  #lv_settings .lv-grid :is(.lv-help-note, .lv-warn-note) { contain:inline-size; }
+}
+/* ④ 어긋남: 창(dialog)으로 열면 「확장 탭에 보이기」 줄에 테마 스위치 규칙(확장 탭 · 에셋 창 안에서만 먹음)이 닿지 않아
+   줄이 가운데로 몰리고 스위치가 납작하게 찌그러져 글 아랫줄에 붙었다(세로 중심 -6) → 확장 탭과 같은 줄(오른쪽 정렬 · 작은 글)과 34×20 스위치 */
+body.salty dialog #lv_settings .bl-hs-row { display:flex; align-items:center; justify-content:flex-end; gap:8px; padding:3px 0 7px; font-size:var(--bl-fs-cap, 12.5px); line-height:1.45; color:var(--salty-muted, color-mix(in srgb, var(--SmartThemeBodyColor, #888) 62%, transparent)); }
+body.salty dialog #lv_settings .bl-hs-row > span { min-width:0; overflow-wrap:anywhere; }
+body.salty dialog #lv_settings .bl-hs-row .bl-hs-switch { position:relative; flex:0 0 auto; width:34px; height:20px; min-width:0; min-height:0; margin:0; padding:0; border:0; border-radius:999px; background:var(--bl-check-off, color-mix(in srgb, var(--SmartThemeBodyColor, #888) 24%, transparent)); box-shadow:var(--bl-track, none); cursor:pointer; transition:background-color .18s ease; }
+body.salty dialog #lv_settings .bl-hs-row .bl-hs-switch > span { position:absolute; top:3px; left:3px; width:14px; height:14px; border-radius:50%; background:#fff; box-shadow:var(--bl-knob, 0 1px 2px rgba(0, 0, 0, .25)); transition:transform .18s ease; }
+body.salty dialog #lv_settings .bl-hs-row .bl-hs-switch[aria-checked="true"] { background:var(--salty-accent, var(--SmartThemeQuoteColor, #3975b8)); box-shadow:none; }
+body.salty dialog #lv_settings .bl-hs-row .bl-hs-switch[aria-checked="true"] > span { transform:translateX(14px); }
+body.salty dialog #lv_settings .bl-hs-row .bl-hs-switch::before { content:''; position:absolute; inset:-7px 0; }
+body.salty dialog #lv_settings .bl-hs-row .bl-hs-switch:focus-visible { outline:2px solid var(--salty-accent, #3975b8); outline-offset:3px; }
+
+/* ── 2026-10-12 찐빠 2차 (세션 1) ── */
+/* 이름 옆 ? (손가락 화면에서 누르는 곳 32px, 좌우 -5px): 오른쪽 -5px 이 이름 칸 밖으로 나갔다(「안정감」 70>65) → 오른쪽만 0 (? 자리는 그대로) */
+@media (pointer: coarse) { #lv_settings .lv-name > .lv-help-btn { margin-right: 0; } }
+/* 카드 머리: 좁은 카드에서 제목과 모델 이름이 한 줄을 다투어 모델 이름이 말줄임(「gpt-4o-mini」 71>43) · 제목이 두 줄 → 한 줄에 안 들어가면 모델 이름은 다음 줄 오른쪽, 제목은 낱말 사이에서 꺾임 */
+#lv_settings .lv-card-head { flex-wrap: wrap; row-gap: 2px; }
+#lv_settings .lv-card-head > .lv-card-note { margin-left: auto; }
+#lv_settings .lv-card-head > span:not(.lv-card-note) { word-break: keep-all; }

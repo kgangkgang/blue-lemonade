@@ -11,7 +11,7 @@ import { oai_settings, promptManager } from '../../../../../../openai.js';
 import { verifyAddonCss } from '../../addon-files-check.js';
 import { plan, textHasModuleLow } from './engine.js';
 
-const VERSION = '1.0.6';
+const VERSION = '1.0.7';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const holder = document.createElement('div'); holder.hidden = true; document.body.append(holder);
 let root, inlineHost = null, opening = false, timer = 0, lastRows = [], lastNote = '', applied = new Map(), stopped = false;
