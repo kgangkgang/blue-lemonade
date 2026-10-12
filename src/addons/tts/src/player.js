@@ -444,7 +444,8 @@ export function analysisWanted(mesId, mes, s = settings(), { quiet = false, awai
     const need = analysisNeeds(mesId, mes, s, { awaitDisplay });
     if (!need.langs.size && !need.emotion && !need.sfx) return false;
     const cached = cachedAnalysis(mesId);
-    if (cached && coversLangs(cached.langs, need.langs)) return false;
+    // 1.7.0 다시 쓰기로 바뀐 줄의 번역이 남았으면(analysis.redo) 아직 — 그 줄만 묻는 작은 보충 요청이 나간다
+    if (cached && (typeof analysis.analysisCovers === 'function' ? analysis.analysisCovers(cached, need.langs) : coversLangs(cached.langs, need.langs))) return false;
     if (analysis.hasResponseFailure?.(mesId)) return false;   // 잘못된 전체 응답은 대사를 누를 때마다 다시 보내지 않음. 요술봉 재생성으로 재시도.
     if (!analysisReady(s)) { if (!quiet) toastSession('analysis-setup', '대사 분석 엔진을 설정하면 감정·원어 읽기가 돼요'); return false; }
     return true;
@@ -2398,19 +2399,68 @@ function markWaiting(mesId) {
 }
 const highlightOk = () => typeof Highlight === 'function' && typeof CSS !== 'undefined' && CSS.highlights;
 const HIGHLIGHT_NAMES = Object.freeze({ both: 'lv-now', color: 'lv-now-color', underline: 'lv-now-underline' });
-// 6.1.6 색별 이름(lv-now-c-rrggbb …)까지 지운다 (highlight-colors.js)
-function clearHighlight() { if (highlightOk()) clearColorHighlights(); }
+// 6.1.6 색별 이름(lv-now-c-rrggbb …)까지 지운다 (highlight-colors.js). 1.7.0 지켜보기도 그만
+function clearHighlight() { stopHighlightWatch(); if (highlightOk()) clearColorHighlights(); }
 /** 설정 선택을 재생 중인 범위에도 바로 적용한다. 글·색·서식과 오디오는 그대로 둔다. */
 export function refreshHighlight() {
     clearHighlight();
     if (current) highlightJob(current);
 }
 function highlightJob(job) {
-    if (!settings().highlight || !highlightOk()) return;
-    const root = document.querySelector(`#chat .mes[mesid="${job.mesId}"] .mes_text`);
-    if (!root) return;
+    const root = paintHighlight(job);
+    if (root) watchHighlight(job, root);
+}
+// 1.7.0 읽는 줄의 메시지를 지켜본다 — 사용자: 「어떤 건 밑줄이 생기고 어떤 건 안 생긴다??」, 「잠깐 무지개색처럼 보였다가 글자색으로 바뀌는데」.
+//   읽는 동안 메시지가 다시 그려지면(번역이 붙음 · 다시 쓰기 · 편집 · 스트림 뒤 정리 · 테마 후처리) 범위가 무너져 그 줄의 밑줄이 끝까지 사라졌다
+//   (시험대: 누른 뒤 updateMessageBlock → 범위가 빈 채로). → 글 · 꾸밈이 바뀌면 다음 프레임에 그 자리에서 다시 찾아 칠한다.
+//   칠한 뒤 SETTLE_MS 에 한 번씩 더 칠한다 — 그리기 직후 · 효과가 움직이는 중에 읽은 색은 잠깐 다를 수 있다 (같은 색이면 보이는 변화 없음).
+//   팔레트 · 꾸밈을 바꾸면(body class) 지금 줄도 다시 칠한다. 다시 칠하기는 REPAINT_GAP_MS 에 한 번까지 — 스트리밍 중 읽기처럼 글이 계속 바뀌어도
+//   걸음마다 메시지 전체를 훑지 않게. 하이라이트는 DOM 을 바꾸지 않고(밑줄 자리 data-lv-line 은 지켜보는 속성이 아님) 다시 칠해도 지켜보기가 또 깨어나지 않는다.
+//   같은 .mes_text 가 아직 붙어 있으면 그것을 칠한다 — 앞 메시지를 지워 번호가 밀려도 다른 메시지로 옮겨 가지 않게.
+const SETTLE_MS = [120, 600];
+const REPAINT_GAP_MS = 200;
+let hlWatch = null;
+function stopHighlightWatch() {
+    const w = hlWatch;
+    hlWatch = null;
+    if (!w) return;
+    try { w.mo?.disconnect(); } catch { /* 없음 */ }
+    for (const id of w.timers) clearTimeout(id);
+    if (w.raf) cancelAnimationFrame(w.raf);
+    if (w.gap) clearTimeout(w.gap);
+}
+function watchHighlight(job, root) {
+    if (hlWatch && hlWatch.job === job && hlWatch.root === root) return;
+    stopHighlightWatch();
+    const w = { job, root, raf: 0, gap: 0, at: performance.now(), timers: [], mo: null };
+    const again = () => {
+        w.raf = 0;
+        if (hlWatch !== w || current !== job) return;
+        w.at = performance.now();
+        const now = paintHighlight(job, w.root);
+        if (now && now !== w.root) watchHighlight(job, now);   // .mes_text 가 통째로 바뀌었으면 새것을
+    };
+    const later = () => {
+        if (hlWatch !== w || w.raf || w.gap) return;
+        const wait = REPAINT_GAP_MS - (performance.now() - w.at);
+        if (wait > 0) w.gap = setTimeout(() => { w.gap = 0; later(); }, wait);
+        else w.raf = requestAnimationFrame(again);
+    };
+    try {
+        w.mo = new MutationObserver(later);
+        w.mo.observe(root, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class', 'style', 'color'] });
+        w.mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });   // 팔레트 · 형광펜 모양 · 꾸밈을 바꿈
+    } catch { w.mo = null; }
+    w.timers = SETTLE_MS.map(ms => setTimeout(later, ms));
+    hlWatch = w;
+}
+/** 읽는 줄을 칠한다 → 칠한(또는 칠하려던) .mes_text, 강조를 안 쓰면 null. prefer = 지켜보던 .mes_text (아직 붙어 있으면 그것) */
+function paintHighlight(job, prefer = null) {
+    if (!settings().highlight || !highlightOk()) return null;
+    const root = prefer?.isConnected ? prefer : document.querySelector(`#chat .mes[mesid="${job.mesId}"] .mes_text`);
+    if (!root) return null;
     const index = textIndex(root);
-    if (!index.flat.trim()) return;
+    if (!index.flat.trim()) { clearColorHighlights(); return root; }
     const ranges = [];
     for (const p of job.parts || []) {
         // 화면이 번역문인데 원문을 읽는(또는 그 반대) 경우엔 짝(alt)의 글로도 찾는다
@@ -2418,8 +2468,11 @@ function highlightJob(job) {
         if (r) ranges.push(r);
     }
     // 1.6.9 밑줄이 그 글자의 색(대사 인물색 · 속마음 색)을 따라간다 — 보통 글자 · 색칠은 예전처럼 테마 색, 스위치(highlight_text_color)를 끄면 전부 테마 색 (highlight-colors.js)
+    // 1.7.0 띠(형광펜) 위 글자는 보이는 글자색(글자 칠)으로 밑줄 · 그 칠로 글자 고정 (highlight-colors.js 머리말)
     const style = HIGHLIGHT_NAMES[settings().highlight_style] ? settings().highlight_style : 'both';
-    if (ranges.length) try { paintColorHighlights(root, ranges, style, { follow: settings().highlight_text_color !== false }); } catch { /* 무시 */ }
+    if (ranges.length) { try { paintColorHighlights(root, ranges, style, { follow: settings().highlight_text_color !== false }); } catch { /* 무시 */ } }
+    else clearColorHighlights();   // 글이 바뀌어 못 찾음 — 무너진 옛 범위는 남기지 않는다
+    return root;
 }
 /** 요소 안 글자 노드를 이어 붙이고, 공백을 하나로 접은 문자열과 원래 자리 지도를 만든다 */
 function textIndex(root) {

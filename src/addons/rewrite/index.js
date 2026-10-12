@@ -37,6 +37,7 @@ import {
 } from './core.js';
 import { DEFAULT_SETTINGS } from './defaults.js';
 import { badgeTextHit } from '../../badge-hit.js';
+import { markRewrite } from '../../edit-origin.js';
 import { PERSONAL } from './defaults-personal.js';
 import { isEditingMessage } from './guards.js';
 import { createSpanFinder } from './spans.js';
@@ -46,7 +47,7 @@ import { capturedMessages, capturedRequest, holdGeneration, regenerateReply, rep
 import { applyUpgrades } from './upgrades.js';
 import { startQuickBan, setQuickBanEnabled } from './quick-ban.js';
 
-const VERSION = '2.0.2';
+const VERSION = '2.0.3';
 const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];
@@ -706,6 +707,9 @@ async function cleanMessage(messageId, manual, signal) {
                 return;
             }
             message.mes = replacement;
+            // 6.1.7 다시 쓰기가 고쳤다고 적는다 (알리기 전에) — TTS 가 이 표시를 보고 대사 분석을 버리지 않고 새 글로 옮긴다.
+            //   사람이 직접 고친 글에는 표시가 없어 지금처럼 다시 분석한다. 리롤(장면 계획 다시 뽑기)은 글을 새로 쓰는 것이라 적지 않는다.
+            markRewrite(message, original, replacement);
             if (tokenCount !== undefined) {
                 message.extra = message.extra && typeof message.extra === 'object' ? message.extra : {};
                 message.extra.token_count = tokenCount;

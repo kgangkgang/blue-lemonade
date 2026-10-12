@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.1.6/blue-lemonade-6.1.6.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.1.7/blue-lemonade-6.1.7.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.1.6 · 최신 업데이트</summary>
+<summary>6.1.7 · 최신 업데이트</summary>
+
+- TTS 1.7.0 · 다시 쓰기 2.0.3: 다시 쓰기로 고친 답장은 대사 분석을 다시 하지 않아요. 화자 · 감정 · 효과음은 그대로 쓰고, 글이 바뀐 대사만 필요할 때 번역하고 음성도 그 줄만 새로 만들어요. 직접 고친 글은 전처럼 다시 분석해요.
+- TTS 1.7.0: 형광펜 대사에서 재생 밑줄이 띠에 묻혀 안 보이던 문제를 고쳤어요. 프롬프트 색 형광펜은 띠 아래에 인물 색 선이 또렷하게 그어지고, 읽는 동안 대사 글자색이 인물 색으로 바뀌지 않아요.
+- TTS 1.7.0: 대사를 누른 뒤 번역이 붙거나 메시지가 다시 그려져도 읽는 줄의 밑줄이 사라지지 않아요.
+
+</details>
+
+<details>
+<summary>6.1.6 · 투명 그림 외곽선 · TTS 밑줄 색</summary>
 
 - 이미지 › 투명 그림: 배경이 투명한 캐릭터 그림에 실루엣을 따라가는 외곽선과 그림자를 넣었어요. 그림이 채팅 위에 둥 떠 보이지 않게 해 줘요. 처음엔 흰 외곽선과 아래 그림자가 켜져 있어요.
 - 외곽선은 색(직접 고르기 · 그림 가장자리 색) · 두께 · 진하기 · 퍼짐을, 그림자는 색 · 투명도 · 각도 · 거리 · 퍼짐을 조절해요. 「그림 칸 밖으로도 그리기」로 그림 칸 밖까지 보일지 골라요.

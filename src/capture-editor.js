@@ -13,6 +13,8 @@ function markupOf(text){
  // 5.8.4: 화면 밖에서 멈춘 데우스 감정 효과 표시(data-bl-fx-off, dem-expressive.js)도 뺀다 — 스크롤만으로 바뀌고, 파일 만들기는 시작할 때(holdFx) 전부 떼서
  // 효과 글이 화면 밖일 때 편집을 시작하면 '채팅 표시가 바뀌었어요'로 막혔다 (capture-options.js baseKey 도 같은 표시를 빼고 본다)
  for(const el of copy.querySelectorAll('[data-bl-fx-off]'))el.removeAttribute('data-bl-fx-off');
+ // 6.1.7: TTS 가 읽는 동안 형광펜 대사에 다는 밑줄 자리 표시(data-lv-line, highlight-colors.js)도 뺀다 — 다음 줄로 넘어가기만 해도 바뀐다
+ for(const el of copy.querySelectorAll('[data-lv-line]'))el.removeAttribute('data-lv-line');
  for(const el of copy.querySelectorAll('[style],[class]')){
   if(el.style&&el.hasAttribute('style')){for(const name of [...el.style].filter(n=>n.startsWith('--salty-')))el.style.removeProperty(name);const css=el.style.cssText;css?el.setAttribute('style',css):el.removeAttribute('style');}
   if(el.classList&&el.hasAttribute('class')){el.classList.remove('salty-asset','salty-cutout','salty-alpha');if(!el.classList.length)el.removeAttribute('class');}

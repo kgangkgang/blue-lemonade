@@ -52,6 +52,7 @@ jobs:
           node tools/tests/tts-sfx-level.mjs .
           node tools/tests/tts-mute.mjs .
           node tools/tests/tts-highlight-colors.mjs .
+          node tools/tests/rewrite-tts-keep.mjs .
           node tools/tests/tts-wand.mjs .
           node tools/tests/chat-like-alias.mjs .
           node tools/tests/zipinstall-remove.mjs .

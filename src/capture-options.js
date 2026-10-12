@@ -141,7 +141,7 @@ export function captureOptionsSnapshot() {
 const kept={chat:null,edits:null,files:null,archive:null,ids:'',stale:false,base:null};
 const keptFor=()=>{const chat=SillyTavern.getContext().chatId;if(kept.chat!==chat){kept.chat=chat;kept.edits=null;kept.files=null;kept.archive=null;kept.ids='';kept.stale=false;kept.base=null;}return kept;};
 // 바탕 그림을 다시 열 때 이어 써도 되는지: 선택 · 메시지 내용(스와이프 · 번역) · 테마 바탕이 그대로인지 (FNV-1a 한 줄)
-const baseKey=ids=>{const text=[ids.join(','),document.body.classList.contains('salty-dark')?'d':'l',getComputedStyle(document.documentElement).getPropertyValue('--salty-bg').trim(),...ids.map(id=>document.querySelector(`#chat .mes[mesid="${Number(id)}"]`)?.innerHTML.replaceAll(' data-bl-fx-off=""','')||'')].join('\u0001');let h=2166136261;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return `${ids.join(',')}#${h.toString(36)}`;};
+const baseKey=ids=>{const text=[ids.join(','),document.body.classList.contains('salty-dark')?'d':'l',getComputedStyle(document.documentElement).getPropertyValue('--salty-bg').trim(),...ids.map(id=>document.querySelector(`#chat .mes[mesid="${Number(id)}"]`)?.innerHTML.replaceAll(' data-bl-fx-off=""','').replaceAll(' data-lv-line=""','')||'')].join('\u0001');let h=2166136261;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return `${ids.join(',')}#${h.toString(36)}`;};
 const LIVE_BAND=512; // 큰 미리보기는 이 높이(캔버스 픽셀)의 띠로 나눠 화면에 보이는 띠만 칠한다
 const LIVE_PIXELS=8e6; // 큰 미리보기 캔버스 상한 (약 32MB)
 export async function openCapturePreview(ids, mount = null, selectedIds = () => ids) {

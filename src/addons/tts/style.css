@@ -12,7 +12,7 @@
 
 /* ---------- 공통 변수: 설정 창 · 편집 팝업 · 재생 막대 (ST 테마 색을 따르고, 블루 레몬에이드 변수는 있으면 씀) */
 .lv-settings, .lv-editor, .lv-bar {
-  --lv-css-version: "1.6.9";
+  --lv-css-version: "1.7.0";
   --lv-accent: var(--salty-accent, var(--SmartThemeQuoteColor, #51a0de));
   --lv-text: var(--SmartThemeBodyColor, #dcdcd2);
   --lv-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, .15));
@@ -412,6 +412,15 @@ body.salty.salty-icons-line #chat .mes .extraMesButtons > .lv_play { --salty-mi:
   text-decoration: underline;
   text-decoration-color: color-mix(in srgb, var(--SmartThemeQuoteColor, #51a0de) 70%, transparent);
   text-underline-offset: 2px;
+}
+/* 1.7.0 프롬프트 색 형광펜 대사(css/37-prompt-ink.css)는 띠를 마스크(글자 층 + 붓자국 층)로 그려, 그 마스크가 밑줄까지 띠 투명도로 흐렸다
+   (띠 위 밑줄이 안 보임 — 사용자: 「어떤 건 밑줄이 생기고 어떤 건 안 생긴다??」). 읽는 동안만(highlight-colors.js 가 data-lv-line 을 붙였다 뗌)
+   마스크 맨 아래 2px 를 연다 — 띠 아랫단과 밑줄이 인물 색 한 줄로 또렷해진다. 두 층은 테마 규칙과 같고, 한 층만 더한다. */
+@supports (-webkit-mask-clip: text) {
+  #chat .mes_text [data-lv-line] {
+    -webkit-mask: linear-gradient(#000 0 0), linear-gradient(#000 0 0) 0 100% / 100% 2px no-repeat, var(--salty-marker-bg) !important;
+    -webkit-mask-clip: text, border-box, border-box !important;
+  }
 }
 
 /* ---------- 재생 막대: 입력창 위 작은 알약 (player.js 가 만들고 .lv-bar-on 일 때만 보임)

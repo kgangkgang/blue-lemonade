@@ -98,6 +98,7 @@ globalThis.OfflineAudioContext = OfflineMock;
 const mod = name => import(pathToFileURL(path.join(root,name)).href);
 const S=await mod('settings.js'), V=await mod('voices.js'), P=await mod('player.js'), Store=await mod('script-store.js'), Mix=await mod('scene-mix.js'), Registry=await mod('providers/index.js'), Sfx=await mod('sfx-audio.js');
 const Library=await mod('sfx-library.js'), Details=await mod('playback-details.js'), A=await mod('analysis.js');
+const Origin=await import(pathToFileURL(path.join(root,'../../../edit-origin.js')).href);   // 6.1.7 다시 쓰기 출처 표시
 for (const id of ['minimax','elevenlabs']) Registry.PROVIDERS[id].synth = async ({text,voice,emotion,lang,signal}) => {
     const response=await fetch('https://mock.invalid/voice',{method:'POST',body:JSON.stringify({text,voiceUid:voice.uid,emotion,lang}),signal});return {blob:await response.blob(),usage:{chars:text.length}};
 };
@@ -580,6 +581,39 @@ await test('provider analysis retries after an inherited model or endpoint chang
         T.analysisReply=valid;await A.analyzeMessage(0);const saved=A.getAnalysis(0);assert.equal(T.analysisRequests.length,3);
         T.ctx.chatCompletionSettings.custom_url='https://mock.invalid/third';assert.equal(await A.analyzeMessage(0),saved);assert.equal(T.analysisRequests.length,3);
     } finally { T.ctx.chatCompletionSettings=old; }
+});
+// 6.1.7 (TTS 1.7.0) 다시 쓰기로 고친 글: 다시 읽어도 분석 요청이 다시 안 나가고, 글이 바뀐 줄만 새로 만든다 (안 바뀐 줄은 같은 감정 → 같은 캐시 키)
+await test('1.7.0 a rewritten message plays again without a new analysis; only the changed line is synthesised, emotions kept',async()=>{
+    const mes=await analysisSetup();
+    P.speakMessage(0,{force:true});await idle();
+    assert.equal(T.analysisRequests.length,1);assert.equal(T.requests.length,2);
+    assert.deepEqual(T.plays.map(p=>[p.text,p.emotion]),[['Hello one.','happy'],['Hello two.','sad']]);
+    const before=mes.mes,after='"Hello one." She smiles. "Hello there."';
+    mes.mes=after;Origin.markRewrite(mes,before,after);A.onMessageChanged(0);
+    T.plays.length=0;P.speakMessage(0,{force:true});await idle();
+    assert.equal(T.analysisRequests.length,1,'no analysis request after the rewrite');
+    assert.deepEqual(T.plays.map(p=>[p.text,p.emotion]),[['Hello one.','happy'],['Hello there.','sad']]);
+    assert.equal(T.requests.length,3,'only the changed line goes to the engine');assert.equal(T.requests.at(-1).text,'Hello there.');
+});
+await test('1.7.0 the same change typed by hand is analysed again (no rewrite mark)',async()=>{
+    const mes=await analysisSetup();
+    P.speakMessage(0,{force:true});await idle();assert.equal(T.analysisRequests.length,1);
+    mes.mes='"Hello one." She smiles. "Hello there."';A.onMessageChanged(0);
+    P.speakMessage(0,{force:true});await idle();
+    assert.equal(T.analysisRequests.length,2);assert.match(T.analysisRequests[1].messages[1].content,/give "emotion"/);
+});
+await test('1.7.0 voice-language reading: after a rewrite only the changed line is translated again, in one small request',async()=>{
+    const mes=await analysisSetup();S.settings().voices[0].lang='ja';
+    P.speakMessage(0,{force:true});await idle();
+    assert.equal(T.analysisRequests.length,1);assert.deepEqual(T.plays.map(p=>p.text),['最初です。','次です。']);
+    const before=mes.mes,after='"Hello one." She smiles. "Hello there."';
+    mes.mes=after;Origin.markRewrite(mes,before,after);A.onMessageChanged(0);
+    T.analysisReply=()=>({segs:[{i:1,ja:'やあ。'}]});T.plays.length=0;
+    P.speakMessage(0,{force:true});await idle();
+    assert.equal(T.analysisRequests.length,2);const asked=T.analysisRequests[1].messages[1].content;
+    assert.equal((asked.match(/→ needs: ja/g)||[]).length,1,asked);assert.ok(asked.includes('"Hello there."')&&!asked.includes('give "emotion"'));
+    assert.deepEqual(T.plays.map(p=>[p.text,p.emotion]),[['最初です。','happy'],['やあ。','sad']]);
+    assert.equal(T.requests.filter(r=>r.text==='最初です。').length,1,'the unchanged line is not synthesised again');
 });
 P.stop(); for(const node of T.nodes)node.pause();
 console.log(JSON.stringify({passed,failed,mockOnly:true,network:'blocked except synthetic responses',sourceRoot:root},null,2));
