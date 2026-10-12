@@ -1,6 +1,7 @@
 // 확장 위 스위치 (6.0.4) — 확장 설정 창 안의 켜기·끄기 스위치를 창 제목 줄에도 보인다.
 // 사용자: "모든 확장 … 기본은 다 안 보이게 … 안에서 설정하면 밖에 토글 보이게 … 기본값은 안에만 토글 있는 거".
-// 기본은 전부 숨김. 켜기·끄기 스위치가 있는 창에는 안 맨 위에 「위에도 보이기」 줄이 생기고, 켜면 제목 줄에 스위치가 붙어 안의 것과 같이 움직인다.
+// 기본은 전부 숨김. 켜기·끄기 스위치가 있는 창에는 안 맨 위에 「확장 탭에 보이기」 줄이 생기고, 켜면 제목 줄에 스위치가 붙어 안의 것과 같이 움직인다.
+// 6.1.8: 줄 이름은 모든 창에서 「확장 탭에 보이기」 하나로 (전엔 「<켜기 이름>」 위에도 보이기). 사용자: 「~위에도 보이기 버튼 그냥 확장탭에 보이기로 이름 다 통일해 줘 지금 너무 산만하다」
 // 안의 스위치 찾기: [data-bl-master] → id·name 에 enable/active/on/use 힌트 → 라벨 글에 사용/켜/enable 힌트 → 후보가 하나뿐이면 그것 (여럿인데 힌트가 없으면 안 건다).
 // 설정: headSwitches { <창 열쇠>: true } — 열쇠는 창의 id, 없으면 class (확장 순서 애드온 keyOf 와 같은 규칙, data-po-key 가 있으면 그것).
 import { getSettings, saveSettings } from './settings.js';
@@ -10,6 +11,7 @@ const STRIP = '.ext-version, [class*="-version"], [class*="_version"], .inline-d
 const HINT_ID = /enable|enabled|activ|master|toggle|switch|(^|[_-])(on|use)([_-]|$)/i;
 const HINT_TEXT = /enable|enabled|activ|사용|켜|활성|작동/i;
 export const ROW = 'bl-hs-row', SWITCH = 'bl-hs-switch', HEAD = 'bl-hs-head';
+export const ROW_LABEL = '확장 탭에 보이기';   // 6.1.8 모든 창에서 같은 이름 (확장 이름 · 켜기 이름 없이)
 let running = false, observer = null, timer = 0, ticker = 0;
 const masters = new WeakMap();   // 창 → { el, label } (창이 다시 그려져 떨어지면 다시 찾는다)
 
@@ -108,7 +110,7 @@ function makeRow(drawer) {
     const row = document.createElement('div'); row.className = ROW;
     const text = document.createElement('span'); text.className = 'bl-hs-text';
     const opt = makeSwitch('bl-hs-opt');
-    opt.setAttribute('aria-label', '위에도 보이기');
+    opt.setAttribute('aria-label', ROW_LABEL);
     opt.addEventListener('click', (event) => {
         event.preventDefault(); event.stopPropagation();
         setShown(drawer.dataset.blHsKey, opt.getAttribute('aria-checked') !== 'true');
@@ -149,7 +151,7 @@ export function refresh() {
         if (!m) { row?.remove(); sw?.remove(); continue; }
         const want = isShown(key);
         if (!row) { row = makeRow(drawer); content.prepend(row); }
-        setText(row.firstElementChild, `「${m.label || '켜기'}」 위에도 보이기`);
+        setText(row.firstElementChild, ROW_LABEL);
         setAttr(row.lastElementChild, 'aria-checked', want ? 'true' : 'false');
         if (!want) { sw?.remove(); continue; }
         if (!sw) {

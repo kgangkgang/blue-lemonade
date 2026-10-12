@@ -1055,6 +1055,35 @@ const rows = [
       "license": "CC0-1.0",
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
     }
+  },
+  {
+    "id": "daily_squelch_pulse",
+    "name": "질척이는 리듬",
+    "category": "사람",
+    "words": [
+      "꿀럭",
+      "꿀렁",
+      "찔걱",
+      "꿀럭꿀럭",
+      "꿀렁꿀렁",
+      "찔걱찔걱",
+      "찔꺽",
+      "찔꺽찔꺽",
+      "squelch rhythm",
+      "wet rhythm",
+      "squelching rhythm",
+      "pulsing squelch",
+      "rhythmic squelching"
+    ],
+    "assetPath": "../sfx-extra/daily_squelch_pulse.mp3",
+    "custom": false,
+    "loop": false,
+    "credit": {
+      "author": "MrFossy",
+      "source": "https://freesound.org/people/MrFossy/sounds/589456/",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
   }
 ];
 export const DAILY_SFX = Object.freeze(rows.map(row => Object.freeze({...row, words: Object.freeze(row.words), credit: Object.freeze(row.credit)})));

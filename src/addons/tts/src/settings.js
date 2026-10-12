@@ -5,6 +5,7 @@ import { extension_settings } from '../../../../../../../extensions.js';
 import { KNOWN_VOICES, KNOWN_SIG } from './known-voices.js';
 import { TTS_VERSION } from '../version.js';
 import { normalizeSfxCredit } from './sfx-credits.js';
+import { FALLBACK_DEFAULTS, normFallback } from './block-fallback.js';   // 6.1.8 검열되면 다른 모델로
 
 export const VERSION = TTS_VERSION;
 export const KEY = 'lemon_voice';          // 설정 키 (데이터 호환 — 폴더 이름과 다르다)
@@ -36,6 +37,7 @@ export const ANALYSIS_DEFAULTS = Object.freeze({
     context_chars: 1200,       // 대사 주변 서술을 보내는 최대 글자 (메시지당)
     temperature: 0.2,
     when: 'auto',              // 'auto' (첫 읽기 직전에 분석) | 'manual' (버튼으로만)
+    fallback: FALLBACK_DEFAULTS,   // 6.1.8 검열되면 다른 모델로 { enabled, provider, model } (block-fallback.js)
 });
 
 export const DEFAULTS = Object.freeze({
@@ -363,6 +365,7 @@ export function settings() {
         }
     }
     if (!Array.isArray(s.voices)) s.voices = [];
+    if (isObj(s.analysis)) s.analysis.fallback = normFallback(s.analysis.fallback);   // 6.1.8 검열되면 다른 모델로
     if (typeof s.mute_words !== 'string') s.mute_words = '';                       // 1.6.3 단어 음소거
     if (s.mute_words.length > 2000) s.mute_words = s.mute_words.slice(0, 2000);
     if (s.mute_mode !== 'text') s.mute_mode = 'audio';

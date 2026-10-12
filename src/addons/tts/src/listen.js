@@ -50,7 +50,7 @@ export function scriptCounts(text) {
 }
 /**
  * 이 줄이 이미 그 언어인가 (옮길 필요 없음). 한글 · 가나 · 한자 한 글자는 라틴 두 글자로 셈 (한 글자가 담는 말이 더 많다).
- * ko = 한글이 절반 이상 · ja = 가나가 있고 가나+한자가 60 % 이상 (한자만 있는 줄은 중국어일 수도 있어 옮김) ·
+ * ko = 한글이 절반 이상 · ja = 가나 또는 한자가 60 % 이상이고 한글이 거의 없음 (6.1.8: 짧은 한자만 줄 「羽」도 — 일본어 원문을 일본어로 또 옮기려다 멈췄다. 한자 9자 넘게 한자만이면 중국어일 수 있어 옮김) ·
  * en = 라틴이 80 % 이상 · zh = 가나 · 한글 없이 한자가 60 % 이상. 글자가 하나도 없으면(…… · !?) 참 — 옮길 것이 없다
  */
 export function inTarget(text, target) {
@@ -59,7 +59,7 @@ export function inTarget(text, target) {
     if (!total) return true;
     switch (target) {
         case 'ko': return (2 * h) / total >= 0.5;
-        case 'ja': return k > 0 && (2 * (k + c)) / total >= 0.6 && (2 * h) / total < 0.2;
+        case 'ja': return (k > 0 || (c > 0 && c <= 8)) && (2 * (k + c)) / total >= 0.6 && (2 * h) / total < 0.2;
         case 'en': return l / total >= 0.8;
         case 'zh': return k === 0 && h === 0 && (2 * c) / total >= 0.6;
         default: return true;
@@ -357,6 +357,11 @@ export async function fill(srcs, target, { signal = null } = {}) {
     await Promise.all([...joined].map(e => joinBatch(e, signal)));
     const failed = rest.filter(x => memGet(cacheKey(x, target, model)) === undefined).length + skipped;
     return { asked: mine.length, failed };
+}
+/** 6.1.8 제한 시간 안에 안 온 줄: 잠깐(1분) 다시 보내지 않는다 — 누를 때마다 또 기다리지 않게 (원문으로 읽음) */
+export function giveUp(srcs, target) {
+    const model = modelTag();
+    markFailed([...new Set((srcs || []).map(normSource).filter(Boolean))].map(x => cacheKey(x, target, model)), FAIL_SHORT_MS);
 }
 /** 시험용 */
 export const _forTest = { mem, inflight, failedAt, reset() { mem.clear(); inflight.clear(); failedAt.clear(); tagMemo = { at: 0, v: '' }; } };

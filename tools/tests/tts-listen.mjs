@@ -119,13 +119,15 @@ const jobsOf = (mes, opts) => P.lineJobs(0, mes, segsOf(mes), opts);
 const EN = '"Hello there." She smiled. "See you tomorrow."';
 
 // ---------- 1. 글자 갈래 · 설정
-await test('inTarget: 한글 · 가나 · 한자 · 라틴을 세어 이미 그 언어인지 (한자만이면 일본어로는 옮김 · 글자가 없으면 그대로)', () => {
+await test('inTarget: 한글 · 가나 · 한자 · 라틴을 세어 이미 그 언어인지 (6.1.8 짧은 한자만 줄도 일본어 · 글자가 없으면 그대로)', () => {
     assert.equal(L.inTarget('안녕하세요.', 'ko'), true);
     assert.equal(L.inTarget('아델이 Adelstein라고 했다.', 'ko'), true, '한국어 속 영어 이름');
     assert.equal(L.inTarget('Hello there.', 'ko'), false);
     assert.equal(L.inTarget('ありがとう。', 'ja'), true);
     assert.equal(L.inTarget('アデルシュタインさん、おはよう。', 'ja'), true);
-    assert.equal(L.inTarget('大丈夫。', 'ja'), false, '한자만 → 중국어일 수도 있어 옮김');
+    assert.equal(L.inTarget('大丈夫。', 'ja'), true, '6.1.8 짧은 한자만 → 일본어로 봄 (일본어 원문의 「羽」를 또 옮기려다 멈췄다)');
+    assert.equal(L.inTarget('「羽」', 'ja'), true);
+    assert.equal(L.inTarget('날개 羽', 'ja'), false, '한글이 섞이면 아님');
     assert.equal(L.inTarget('大丈夫。', 'zh'), true);
     assert.equal(L.inTarget('你好，我们走吧。', 'zh'), true);
     assert.equal(L.inTarget('ありがとう。', 'zh'), false);
@@ -451,6 +453,62 @@ await test('설정 가져오기: listen_lang 은 목록 안의 값만', () => {
     assert.equal(settings().listen_lang, 'zh', '모르는 값은 버림');
     UI._forTest.importSettings({ listen_lang: 'auto' });
     assert.equal(settings().listen_lang, 'auto');
+});
+
+// ---------- 6.1.8 원문이 일본어인데 「일본어로 번역 중…」에서 멈춤 (사용자: listen_lang ja · 원문 읽기 · 화면은 한국어 번역 · 대사 누르기)
+const dispSegs = (mes) => TX.segmentMessage(mes.extra.display_text, { userName: 'User', charName: mes.name, knownNames: [], routes: settings().routes, final: true, skipTags: new Set(), stripRegex: [] }).filter(x => x.kind === 'dialogue' && x.text);
+await test('6.1.8 Japanese original + Korean display: tapping a Korean line reads the Japanese original, no translation request', () => {
+    reset('ja');
+    settings().text_source = 'original';
+    const mes = message('「よう、来たか」\n\n彼は笑った。\n\n「羽」', { display: '「어이, 왔냐」\n\n그는 웃었다.\n\n「날개」' });
+    const jobs = P.lineJobs(0, mes, dispSegs(mes)).jobs;
+    assert.deepEqual(jobs.map(j => j.text), ['よう、来たか', '羽']);
+    assert.ok(jobs.every(j => !j.listenPending), 'nothing waits for a translation');
+    assert.deepEqual(P._forTest.listenNeeds(0, mes, jobs), [], 'kanji-only 「羽」 is Japanese too');
+    assert.equal(API.calls.length, 0);
+});
+await test('6.1.8 a Korean line whose original cannot be matched takes the original at the same place, else is read as it is — never translated again', () => {
+    reset('ja');
+    settings().text_source = 'original';
+    // 번역문 줄이 하나 더 많다 (번역기가 한 줄을 둘로) — 짝을 못 찾는 줄이 생긴다
+    const mes = message('「よう、来たか。観光か？」', { display: '「어이, 왔냐.」\n\n「관광이야?」' });
+    const segs = dispSegs(mes);
+    const first = P.lineJobs(0, mes, [segs[0]]).jobs;
+    assert.equal(first[0].text, 'よう、来たか。観光か？', 'same place in the original');
+    const second = P.lineJobs(0, mes, [segs[1]]).jobs;
+    assert.ok(second.length === 1 && !second[0].listenPending, 'no original at that place → read as it is, not sent to the translator');
+    assert.equal(API.calls.length, 0);
+});
+await test('6.1.8 a translator that never answers: after the time limit the line reads the original and is not asked again right away', async () => {
+    reset('ja');
+    API.delay = 60000;
+    P._forTest.setListenTimeout(150);
+    try {
+        const t0 = Date.now();
+        const ok = await P._forTest.listenFill(['Hello there.'], { quiet: true });
+        assert.equal(ok, false);
+        assert.ok(Date.now() - t0 < 2000, 'gave up at the limit');
+        assert.equal(API.signals[0]?.aborted, false, 'the request already sent (and paid) is not cut — only the waiting stops');
+        assert.equal(L.failedRecently('Hello there.', 'ja'), true, 'not resent on the next tap (reads the original)');
+        const mes = message('"Hello there."');
+        assert.deepEqual(P._forTest.listenNeeds(0, mes), [], 'the line is read as the original now');
+    } finally { P._forTest.setListenTimeout(20000); API.delay = 0; }
+});
+
+await test('6.1.8 a slow translator: the late answer is kept and the next tap reads it; long kanji-only lines are still translated', async () => {
+    reset('ja');
+    API.delay = 300;
+    P._forTest.setListenTimeout(80);
+    try {
+        assert.equal(await P._forTest.listenFill(['See you tomorrow.'], { quiet: true }), false, 'gave up waiting');
+        await sleep(450);
+        assert.equal(L.peek('See you tomorrow.', 'ja'), '[ja] See you tomorrow.', 'the late answer went into the cache');
+        const mes = message('"See you tomorrow."');
+        assert.deepEqual(jobsOf(mes).jobs.map(j => j.text), ['[ja] See you tomorrow.']);
+        assert.equal(API.calls.length, 1, 'one request in all');
+    } finally { P._forTest.setListenTimeout(20000); API.delay = 0; }
+    assert.equal(L.inTarget('我们今天一起去公园散步吧好吗', 'ja'), false, 'a long kanji-only line may be Chinese → translated');
+    assert.equal(L.inTarget('天使', 'ja'), true);
 });
 
 console.log(`\ntts-listen: ${pass} passed, ${fail} failed`);

@@ -50,6 +50,10 @@ const ENGINE_OPTS = [
 function providerOptions() {
     return stapi.SOURCES.map(p => ({ value: p.id, label: p.name + (stapi.keyState(p.id) === 'no' && !stapi.hasInheritedProxy(p.id) ? ' · 키 없음' : '') }));
 }
+/** 6.1.8 다른 공급자: 맨 위 「안 씀」 + 분석과 같은 목록 */
+function fallbackProviderOptions() {
+    return [{ value: '', label: '안 씀' }, ...providerOptions()];
+}
 /** 번역기 상태 (translation.translatorInfo → { name, incoming, outgoing, label }) → 설정 화면에 보일 한 줄 */
 function translatorLabel() {
     try {
@@ -164,6 +168,11 @@ const READ_CARDS = {
         { key: 'analysis.translate', label: '원어로 번역해서 읽기', type: 'toggle', desc: (s) => (listenOn(s) ? '듣는 언어를 따라요' : '') },   // 1.4.4
         { key: 'analysis.speaker', label: '화자 찾기', type: 'toggle', desc: '색 · 이름표가 없는 대사는 누구 말인지 맥락으로 물어 그 캐릭터 목소리로' },
         { key: 'analysis.when', label: '언제', type: 'select', options: [{ value: 'auto', label: '자동' }, { value: 'manual', label: '수동' }] },
+        // 6.1.8 검열되면 다른 모델로 (block-fallback.js)
+        { key: 'analysis.fallback.enabled', label: '검열되면 다른 모델로', type: 'toggle',
+            help: '내용 차단(검열)으로 분석이 실패하면 아래 모델로 한 번 더 보내요. 실리태번에 저장된 키를 써요. 요청이 잦음(429) · 키 · 연결 문제는 다시 보내지 않아요. 한 번 막힌 답장은 다음부터 이 모델로 바로 보내요. 꺼 둬도 실패 알림의 「다른 모델로 다시」는 써요.' },
+        { key: 'analysis.fallback.provider', label: '다른 공급자', type: 'select', options: fallbackProviderOptions },
+        { key: 'analysis.fallback.pick', label: '다른 모델', type: 'html', html: fallbackPickHtml, show: (s) => !!s.analysis?.fallback?.provider },
     ], analysisExtra, analysisNote],
     when: ['fa-clock', '언제', [
         { key: 'auto_play', label: '새 답장 자동 읽기', type: 'toggle' },
@@ -515,7 +524,16 @@ function onEdit(e, live) {
     if (el.id === 'lv_engine_pick') { if (!live) { settings().ui.provider_tab = el.value; save(); renderEngine(); } return; }
     if (el.id === 'lv_akey_input') return;   // 분석 키는 [저장] 으로만
     if (el.id === 'lv_amodel') { if (!live) pickModel(el.value); return; }
-    if (el.id === 'lv_amodel_manual') { if (!live) { setModel(el.value.trim()); el.value = currentModel(); } return; }   // 미뤄 둔 모델 줄은 blur 때 (renderModelSlot)
+    if (el.id === 'lv_amodel_manual') { if (!live) { setModel(el.value.trim()); el.value = currentModel(); } return; }
+    if (el.id === 'lv_fbmodel') {   // 6.1.8 다른 모델
+        if (live) return;
+        if (el.value === MANUAL) { state.fbModelManual = stapi.listKey(fallbackCfgOf()); renderReadCard('analysis'); q('#lv_fbmodel_manual')?.focus(); return; }
+        state.fbModelManual = '';
+        setFallbackModel(el.value);
+        renderReadCard('analysis');
+        return;
+    }
+    if (el.id === 'lv_fbmodel_manual') { if (!live) { setFallbackModel(el.value); renderReadCard('analysis'); } return; }   // 미뤄 둔 모델 줄은 blur 때 (renderModelSlot)
     if (el.id === 'lv_prefer_provider') { if (!live) setPreferProvider(el.value); return; }   // 1.3.7 엔진 자동 맞춤
     if (el.id === 'lv_extras') { if (!live) { settings().extras = el.value === 'off' ? 'off' : 'auto'; save(); renderMap(); } return; }   // 1.3.7 엑스트라 목소리
     if (el.dataset.lvExtra !== undefined) { if (!live) onExtraPin(el); return; }
@@ -568,6 +586,11 @@ function afterEdit(path, el) {
     if (path === 'mute_words') { renderReadCard('text'); return; }   // 1.6.3 음소거 방법 줄은 말이 있을 때만 보인다
     if (path === 'listen_lang') { renderReadCard('text'); renderReadCard('when'); renderReadCard('analysis'); return; }   // 1.4.4 안내 줄 · 스트리밍 읽기 · 원어 읽기 줄
     if (path === 'click_play' || path === 'auto_play' || path === 'pregen' || path === 'pregen_paid') renderReadCard('when');   // 1.2.4 미리 만들기가 쉬는지 한 줄 · 5.6.4 '!' 안내 · 스위치
+    if (path.startsWith('analysis.fallback.')) {   // 6.1.8 검열되면 다른 모델로
+        if (path === 'analysis.fallback.provider') { if (isObj(s.analysis.fallback)) s.analysis.fallback.model = ''; state.fbModelManual = ''; save(); }
+        renderReadCard('analysis');
+        return;
+    }
     if (path === 'analysis.engine' || path === 'analysis.provider' || path === 'analysis.custom_url' || path === 'analysis.base') {
         if (path === 'analysis.base') warnAnalysisCleartext();
         if (path === 'analysis.custom_url') warnCustomCleartext();
@@ -734,6 +757,7 @@ const ACTIONS = {
     'akey-clear': () => akeyClear(),
     'akey-test': () => akeyTest(),
     amodels: () => refreshModels(),
+    fbmodels: () => refreshFallbackModels(),   // 6.1.8 다른 모델 목록
     'analysis-clear': async () => {
         if (!(await confirm('이 채팅의 대사 분석을 모두 지울까요? 다시 들을 때 새로 분석해요'))) return;
         analysis.clearAnalysis('chat');
@@ -881,6 +905,61 @@ function modelView() {
     const list = stapi.modelList(a);
     const canFetch = a.engine === 'provider' ? !!(stapi.source(a.provider) || {}).status : true;
     return { key, list, cur: currentModel(), canFetch, manual: !list.length || state.amodelManual === key };
+}
+// ---------- 6.1.8 검열되면 다른 모델로 — 다른 모델 고르기
+function fallbackCfgOf() {
+    const a = analysisCfg();
+    const fb = isObj(a.fallback) ? a.fallback : {};
+    return { engine: 'provider', provider: String(fb.provider || ''), provider_models: {}, custom_url: String(a.custom_url || '') };
+}
+function fallbackPickHtml(path) {
+    const a = analysisCfg();
+    const fb = isObj(a.fallback) ? a.fallback : {};
+    const c = fallbackCfgOf();
+    const key = stapi.listKey(c);
+    const list = stapi.modelList(c);
+    const cur = String(fb.model || '');
+    const manual = !list.length || state.fbModelManual === key;
+    const busy = modelFetches.has(key);
+    const btn = (stapi.source(c.provider) || {}).status
+        ? `<button type="button" class="lv-icon" data-lv-act="fbmodels" aria-label="다른 모델 목록 새로고침"${busy ? ' disabled aria-busy="true"' : ''}><i class="fa-solid fa-rotate${busy ? ' fa-spin' : ''}"></i></button>` : '';
+    const input = manual ? `<input type="text" class="text_pole" id="lv_fbmodel_manual" value="${esc(cur)}" placeholder="모델 이름" aria-label="다른 모델 이름" autocomplete="off">` : '';
+    let sel = '';
+    if (list.length) {
+        const extra = manual ? '' : !cur ? '<option value="" selected disabled>모델 선택</option>' : !list.includes(cur) ? `<option value="${esc(cur)}" selected>${esc(cur)}</option>` : '';
+        sel = `<select class="text_pole" id="lv_fbmodel" aria-label="다른 모델">${extra}${list.map(m => `<option value="${esc(m)}"${!manual && m === cur ? ' selected' : ''}>${esc(m)}</option>`).join('')}<option value="${MANUAL}"${manual ? ' selected' : ''}>직접 입력…</option></select>`;
+    }
+    let note = '';
+    if (!cur) note = '아직 안 골랐어요';
+    else {
+        let main = null;
+        try { main = a.engine === 'provider' ? { provider: String(a.provider || ''), model: stapi.modelOf(a) } : null; } catch { main = null; }
+        if (main && main.provider === c.provider && main.model === cur) note = '분석 모델과 같아서 다시 보내지 않아요';
+        else { const why = stapi.providerProblem({ ...c, provider_models: { [c.provider]: cur } }); if (why) note = why; }
+    }
+    const row = sel ? `<div class="lv-model">${sel}${btn}</div>${input}` : `<div class="lv-model">${input}${btn}</div>`;
+    return `<div class="lv-field lv-wide lv-modelrow" data-lv-slot="${esc(path)}"><span class="lv-label">다른 모델</span>${row}${note ? `<span class="lv-desc">${esc(note)}</span>` : ''}</div>`;
+}
+function setFallbackModel(v) {
+    const a = analysisCfg();
+    if (!isObj(a.fallback)) a.fallback = { enabled: true, provider: '', model: '' };
+    a.fallback.model = String(v || '').trim();
+    save();
+}
+async function refreshFallbackModels() {
+    const c = fallbackCfgOf();
+    if (!c.provider) return;
+    const key = stapi.listKey(c);
+    let job = modelFetches.get(key);
+    if (!job) { job = stapi.fetchProviderModels(c).finally(() => modelFetches.delete(key)); modelFetches.set(key, job); renderReadCard('analysis'); }
+    try {
+        const ids = await job;
+        toast(ids.length ? `모델 ${fmtNum(ids.length)}개` : '빈 목록이에요', ids.length ? 'success' : 'warning');
+    } catch (e) {
+        const m = String((e && e.message) || '실패');
+        toast(`모델 목록 · ${m.split(' · ')[0] || '실패'}`, 'error');
+        log('err', `다른 모델 목록 실패: ${m.slice(0, 80)}`);
+    } finally { renderReadCard('analysis'); }
 }
 /** 모델 줄: [목록 ▾ … 직접 입력…][↻] — 목록이 비었거나 직접 입력을 고르면 이름 칸 */
 function modelPickHtml(path) {

@@ -126,12 +126,12 @@ await test('HTML in attribution stays text and only sanitized links enter the DO
     const all = node => [node,...(node.childNodes || []).flatMap(all)], nodes = all(node);
     assert.ok(nodes.some(x => x.textContent === '<svg onload=alert(2)> · <script>x</script>')); assert.equal(nodes.filter(x => x.tagName === 'a').length, 1); assert.equal(nodes.find(x => x.tagName === 'a').href, valid.licenseUrl); assert.equal(nodes.filter(x => ['script','img','svg'].includes(x.tagName)).length, 0);
 });
-await test('all 41 reviewed everyday files agree with the runtime catalog and actual audio bytes', async () => {
+await test('all 42 reviewed everyday files agree with the runtime catalog and actual audio bytes', async () => {
     const folder=path.join(root,'../sfx-extra');
     const source=JSON.parse(fs.readFileSync(path.join(folder,'SOURCES.json'),'utf8'));
     const {DAILY_SFX}=await mod('sfx-daily.js');
-    assert.equal(source.files.length,41);assert.equal(DAILY_SFX.length,41);
-    assert.equal(L.listSfx().filter(x=>!x.custom).length,88);
+    assert.equal(source.files.length,42);assert.equal(DAILY_SFX.length,42);
+    assert.equal(L.listSfx().filter(x=>!x.custom).length,89);
     assert.deepEqual(new Set(source.files.map(x=>x.id)),new Set(DAILY_SFX.map(x=>x.id)));
     for(const row of source.files) {
         const runtime=L.getSfx(row.id),raw=fs.readFileSync(path.join(folder,row.id+'.mp3'));
@@ -144,13 +144,19 @@ await test('all 41 reviewed everyday files agree with the runtime catalog and ac
     assert.equal(L.getSfx('daily_heartbeat').credit.author,'Andy Jack (uploaded by JonasTisell)');
     assert.equal(L.getSfx('daily_kissing').credit.source,'https://freesound.org/people/renrenrenrenren/sounds/825972/');
     assert.equal(L.getSfx('daily_footsteps').credit.source,'https://freesound.org/people/SpliceSound/sounds/170506/');assert.equal(L.getSfx('daily_footsteps').credit.author,'SpliceSound');
+    // 1.7.1 질척이는 리듬 (freesound 589456 MrFossy, CC0 — 반복용 3초 전체)
+    const pulse=L.getSfx('daily_squelch_pulse'),pulseRow=source.files.find(x=>x.id==='daily_squelch_pulse');
+    assert.equal(pulse.name,'질척이는 리듬');assert.equal(pulse.credit.author,'MrFossy');assert.equal(pulse.credit.source,'https://freesound.org/people/MrFossy/sounds/589456/');assert.equal(pulse.credit.license,'CC0-1.0');
+    assert.equal(pulseRow.downloadUrl,'https://cdn.freesound.org/previews/589/589456_129727-hq.mp3');assert.equal(pulseRow.sourceTitle,'SFX_SQUELCH_pulse_loopable_04.wav');
+    assert.equal(pulseRow.sourcePageSha256,'18c9ff7734c8457e908ba966661a955844701ff0d3af0ef20dfefae15a2ef698');assert.equal(pulseRow.modifications.excerptStart,0);assert.equal(pulseRow.modifications.excerptSeconds,3);assert.equal(pulseRow.sourceSha256,'e82e079f5916f22adf47adda958e32a1537f166deacfb658ea67c7bedd357015');
+    for(const word of ['꿀럭','꿀렁','찔걱','꿀럭꿀럭','꿀렁꿀렁','찔걱찔걱','찔꺽']) assert.ok(pulse.words.includes(word),word);
     assert.equal(L.getSfx('daily_sigh'),null);assert.equal(L.getSfx('daily_gasp'),null);
 });
 await test('visible attribution gives current totals and includes all six new recorders', async () => {
     const {ttsCreditsHtml,ttsCreditsSummaryHtml}=await import(pathToFileURL(path.join(root,'../credits.js')).href);
     const full=ttsCreditsHtml(),summary=ttsCreditsSummaryHtml();
-    assert.match(full,/총 88개/);assert.match(full,/추가 효과음 41개/);assert.match(full,/freesound 효과음 17개/);assert.match(summary,/효과음 88개/);assert.match(summary,/freesound 17/);
-    for(const author of ['Andy Jack','JonasTisell','khenshom','SamuelGremaud','jmehlferber','XxBirdoxX','dr19','renrenrenrenren','aobowser','SpliceSound']) assert.ok(full.includes(author),author);
-    assert.doesNotMatch(full,/총 81개|총 87개|추가 효과음 34개|추가 효과음 40개|freesound 효과음 16개|DeVern\(꿀꺽/);
+    assert.match(full,/총 89개/);assert.match(full,/추가 효과음 42개/);assert.match(full,/freesound 효과음 18개/);assert.match(summary,/효과음 89개/);assert.match(summary,/freesound 18/);
+    for(const author of ['Andy Jack','JonasTisell','khenshom','SamuelGremaud','jmehlferber','XxBirdoxX','dr19','renrenrenrenren','aobowser','SpliceSound','MrFossy']) assert.ok(full.includes(author),author);
+    assert.doesNotMatch(full,/총 81개|총 87개|총 88개|추가 효과음 34개|추가 효과음 40개|추가 효과음 41개|freesound 효과음 16개|freesound 효과음 17개|DeVern\(꿀꺽/);
 });
 console.log(`${passed} attribution groups passed`);

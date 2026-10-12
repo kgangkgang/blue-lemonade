@@ -110,7 +110,7 @@ export const DEFAULTS = {
     styles: [],
     charStyles: {},
     promptBinds: {},   // 6.0.4 프롬프트 귀속 { <프롬프트 identifier>: { keys: ['c:아바타' | 'g:그룹' | 'c:아바타/채팅' | 'g:그룹/채팅'], regex: [정규식 id] } } (promptbind.js)
-    headSwitches: {},   // 6.0.4 확장 위 스위치 { <창 열쇠 id:…|cls:…>: true } — 창 안 「위에도 보이기」로 고른 확장 창 (headswitch.js)
+    headSwitches: {},   // 6.0.4 확장 위 스위치 { <창 열쇠 id:…|cls:…>: true } — 창 안 「확장 탭에 보이기」로 고른 확장 창 (headswitch.js)
     activeStyle: null,
     baseStyle: null,
     profile: { decor: { ...DECOR_DEFAULTS }, nameSize: 24, nameWeight: 650, nameSpacing: 0, nameHeight: 1.3, nameColor: '#91a5ba', nameAuto: true, nameAlign: 'center', nameRowAlign: 'left', nameItalic: false, nameUnderline: false, headerLayout: 'below-two', headerGap: 8, metaSize: 12, metaOpacity: 70, buttonGap: 8, nameOutline: 0, nameOutlineColor: '#000000', nameShadow: false, nameShadowBlur: 4, nameShadowY: 1, nameShadowAlpha: 25, ...FRAME_DEFAULTS, mode: 'small', layout: 'column', sizing: 'pixels', screenHeight: 45, maxHeight: 70, visibleHeight: 100, width: 100, height: 320, fit: 'cover', positionX: 50, positionY: 35, radius: 18, gap: 20, blur: 0, opacity: 100, fadeY: 0, fadeX: 0, original: true },

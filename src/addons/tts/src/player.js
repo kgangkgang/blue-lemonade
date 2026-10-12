@@ -45,7 +45,8 @@ import { getContext } from '../../../../../../../extensions.js';
 import { settings, providerConfig, addUsage, addPreUsed, USER_AUTO } from './settings.js';
 import { segmentMessage, pairSegments, colorsClash, detectLang, parseRegexLines, speechDisplay } from './text.js';
 import { resolveSpeaker, canon, knownNames as learnedNames } from './speakers.js';
-import { voiceFor, findVoice, allVoices, twinOf, engineUsable, isPinned, setPersonaAuto, personaKnown, ensureStock, extraEngine } from './voices.js';
+import { voiceFor, findVoice, allVoices, twinOf, engineUsable, isPinned, setPersonaAuto, personaKnown, ensureStock, extraEngine, hasOwnVoice, unknownVoice, shownVoices } from './voices.js';
+import { usesTags } from './providers/elevenlabs.js';   // 6.1.8 다른 확장용 synth — 글 속 오디오 태그를 받는 모델인가
 import { POPUP_TYPE, POPUP_RESULT, callGenericPopup } from '../../../../../../../popup.js';
 import * as cache from './cache.js';
 import { prepare } from './loudness.js';
@@ -60,7 +61,7 @@ import { getSfx, sfxBlob, isSfxEnabled, sfxPreferenceRevision, onSfxPreferenceCh
 import { playbackOriginal, wavWithCredits } from './playback-details.js';
 import { createSfxController } from './sfx-audio.js';
 import { mixScene } from './scene-mix.js';
-import { paintColorHighlights, clearColorHighlights } from './highlight-colors.js';
+import { paintColorHighlights, clearColorHighlights, piecesOf, speakerColor, colorKey } from './highlight-colors.js';
 
 const TITLE = 'TTS';
 const MAX_CONC = 2;                 // 동시 합성 요청
@@ -440,9 +441,9 @@ const coversLangs = (have, need) => [...need].every(l => (Array.isArray(have) ? 
 export function analysisWanted(mesId, mes, s = settings(), { quiet = false, awaitDisplay = false } = {}) {
     const an = analysisCfg(s);
     if (!an || !an.enabled || !mes || mes.is_user || mes.is_system) return false;
-    if ((an.when || 'auto') !== 'auto' || (!an.emotion && !an.translate && !analysis.sfxWanted?.(mes))) return false;
+    if ((an.when || 'auto') !== 'auto' || (!an.emotion && !an.translate && an.speaker === false && !analysis.sfxWanted?.(mes))) return false;
     const need = analysisNeeds(mesId, mes, s, { awaitDisplay });
-    if (!need.langs.size && !need.emotion && !need.sfx) return false;
+    if (!need.langs.size && !need.emotion && !need.sfx && !need.speaker) return false;   // 6.1.8 색 없는 대사만 있어도 화자 찾기
     const cached = cachedAnalysis(mesId);
     // 1.7.0 다시 쓰기로 바뀐 줄의 번역이 남았으면(analysis.redo) 아직 — 그 줄만 묻는 작은 보충 요청이 나간다
     if (cached && (typeof analysis.analysisCovers === 'function' ? analysis.analysisCovers(cached, need.langs) : coversLangs(cached.langs, need.langs))) return false;
@@ -455,7 +456,7 @@ export function analysisWanted(mesId, mes, s = settings(), { quiet = false, awai
  * emotion = 감정을 받는 엔진(caps.emotion)으로 읽을 대화문이 있음. awaitDisplay = 번역문을 기다리는 줄은 빼고
  */
 export function analysisNeeds(mesId, mes, s = settings(), { awaitDisplay = false } = {}) {
-    const out = { langs: new Set(), emotion: false, sfx: !!analysis.sfxWanted?.(mes) };
+    const out = { langs: new Set(), emotion: false, sfx: !!analysis.sfxWanted?.(mes), speaker: false };
     const an = analysisCfg(s);
     if (!an) return out;
     const built = buildJobs(mesId, mes, sourcesOf(mes, s, { final: true }), { startSeg: 0, final: true, lookup: () => null, awaitDisplay });
@@ -465,6 +466,8 @@ export function analysisNeeds(mesId, mes, s = settings(), { awaitDisplay = false
         if (an.translate && !listening && j.voice?.lang && detectLang(j.text) !== j.voice.lang) out.langs.add(j.voice.lang);
         if (an.emotion && getProvider(j.voice?.provider)?.caps?.emotion !== false) out.emotion = true;
     }
+    // 6.1.8 화자 찾기 닭-달걀: 목소리가 있는 줄만 세면 색 없는 엑스트라 대사만 있는 답은 「분석 필요 없음」이 됐다 → 보낸 쪽 이름으로 떨어진 대사(내가 정한 목소리 없음)도 센다
+    if (an.speaker !== false && built.missingSpeaker) out.speaker = true;
     return out;
 }
 /** 오류 글에서 업체가 보낸 뒷부분(' · ' 뒤)은 떼고 상태만 (중계 서버의 오류 쪽글이 토스트에 뜨지 않게) */
@@ -475,7 +478,7 @@ async function runAnalysis(mesId, mes, { signal, cancelled, force = false } = {}
     const an = analysisCfg(s);
     if (!an) return null;
     const need = analysisNeeds(mesId, mes, s);
-    if (!need.emotion && !need.langs.size && !need.sfx) return null;
+    if (!need.emotion && !need.langs.size && !need.sfx && !need.speaker) return null;
     const langs = need.langs;
     for (let attempt = 0; ; attempt++) {
         try {
@@ -489,11 +492,56 @@ async function runAnalysis(mesId, mes, { signal, cancelled, force = false } = {}
                 continue;
             }
             const msg = bareMsg(e, '분석 실패');
-            toastOnce(`대사 분석 실패: ${msg}`, 'warning');
+            gaveUp.set(mes, `${swipeOf(mes)}|${mes.mes}`);   // 6.1.8 이번 글은 분석 없이 — 색 없는 대사는 「모르는 화자」 목소리로
+            if (!blockToast(mesId, mes, e, msg)) toastOnce(`대사 분석 실패: ${msg}`, 'warning');
             log('err', `분석 실패: ${msg.slice(0, 50)}`);
             return null;
         }
     }
+}
+/** 6.1.8 분석을 포기한 글 (mes → 'swipe|글') — 그 글의 색 없는 대사는 「모르는 화자」 목소리로 읽는다 */
+const gaveUp = new WeakMap();
+const swipeOf = (mes) => Number(mes?.swipe_id) || 0;
+/**
+ * 6.1.8 내용 차단으로 분석이 실패했을 때의 토스트 — 다른 모델을 골라 뒀으면 「다른 모델로 다시」(누르면 그 모델로 바로), 아니면 고르는 곳을 알려 줌.
+ * 차단이 아니면 false (보통 실패 토스트)
+ */
+function blockToast(mesId, mes, e, msg) {
+    if (!(e?.blocked || e?.bare400 || e?.fallback || e?.maybeBlocked)) return false;
+    const t = window.toastr;
+    if (!t) return false;
+    const fb = (settings().analysis || {}).fallback || {};
+    const chosen = !!(fb.provider && fb.model) && !e?.fallbackSame;
+    const both = e?.fallback?.blocked === true;   // 다른 모델도 거절 → 같은 모델로 또 하라고 권하지 않음
+    const key = `block|${mesId}|${msg}`;
+    if ((toastSeen.get(key) || 0) > Date.now() - 4000) return true;
+    toastSeen.set(key, Date.now());
+    if (!chosen || both) {
+        const hint = both ? '분석 설정의 「검열되면 다른 모델로」에서 다른 공급자를 골라 보세요' : e?.fallbackSame ? '「검열되면 다른 모델로」가 분석 모델과 같아요. 다른 공급자나 모델을 골라 주세요' : '분석 설정의 「검열되면 다른 모델로」에서 모델을 고르면 그 모델로 다시 보내요';
+        t.warning(`${escHtml(msg)}<br><small>${hint}</small>`, `${TITLE} 대사 분석`, { escapeHtml: false, closeButton: false, timeOut: 7000 });
+        return true;
+    }
+    t.warning(`${escHtml(msg)}<br><button type="button" class="menu_button lv-toast-act">다른 모델로 다시</button>`, `${TITLE} 대사 분석`, {
+        escapeHtml: false, closeButton: false, timeOut: 9000, extendedTimeOut: 6000, tapToDismiss: true,
+        onclick: (ev) => { if (ev?.target?.closest?.('.lv-toast-act')) void retryWithFallback(mesId, mes); },
+    });
+    return true;
+}
+const escHtml = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+/** 「다른 모델로 다시」: 원래 모델을 건너뛰고 고른 모델로 바로 분석 (요청 한 번) */
+async function retryWithFallback(mesId, mes) {
+    if (msg(mesId) !== mes) return false;
+    analyzeLight(1);
+    try {
+        const a = await analysis.analyzeMessage(mesId, { langs: analysisNeeds(mesId, mes).langs, via: 'fallback' });
+        if (a && Array.isArray(a.segs)) { gaveUp.delete(mes); toast('다른 모델로 분석했어요', 'success'); return true; }
+    } catch (e) {
+        if (isAbort(e)) return false;
+        const m = bareMsg(e, '분석 실패');
+        toast(`대사 분석 실패: ${m}`, 'warning');
+        log('err', `다른 모델로 다시 실패: ${m.slice(0, 50)}`);
+    } finally { analyzeLight(-1); }
+    return false;
 }
 const waitMode = (s) => (s.wait_translation === 'on' || s.wait_translation === 'off' ? s.wait_translation : 'auto');
 const waitTimeoutMs = (s) => Math.max(1, Number(s.translation_timeout) || 90) * 1000;
@@ -595,18 +643,29 @@ function buildJobs(mesId, mes, { orig, disp }, { startSeg = 0, final = true, exc
     if (final && !mes.is_user && !hasDialogue && routes.dialogue !== 'skip' && routes.narration === 'skip' && s.no_dialogue_fallback === 'narration') routes.narration = 'character';
     const jobs = [];
     const tagsFromOrig = pregenOn(s) && primaryIsDisplay;   // 1.2.2: 감정 태그는 원문 조각에서 (번역에서 태그가 빠져도 미리 만든 키와 같게)
-    let missing = false, missingUser = false, deferredAt = -1, held = 0;
+    let missing = false, missingUser = false, missingSpeaker = false, deferredAt = -1, held = 0;
+    // 6.1.8 분석이 오지 않는 글인가 (꺼짐 · 수동 · 엔진 없음 · 화자 찾기 끔 · 실패 기억 · 이번 글은 포기) — 그땐 색 없는 대사를 「모르는 화자」로
+    let settled = null;
+    const analysisSettled = () => settled ??= !an?.enabled || (an.when || 'auto') !== 'auto' || an.speaker === false || !analysisReady(s)
+        || !!analysis.hasResponseFailure?.(mesId) || gaveUp.get(mes) === `${swipeOf(mes)}|${mes.mes}`;
+    let unknownSeed = null;
+    const seedOf = () => {
+        if (unknownSeed !== null) return unknownSeed;
+        let ctx = null;
+        try { ctx = getContext(); } catch { ctx = null; }
+        return (unknownSeed = `${ctx?.groupId || ctx?.characters?.[ctx?.characterId]?.avatar || charName || mes.name || ''}|${ctx?.chatId || ''}`);
+    };
     for (let i = first; i < primary.length; i++) {
         const seg = primary[i];
         if (!seg || !seg.text) continue;                         // 화자 표시용 빈 세그먼트
         const oi = origIdxOf(seg);
         if (exclude && oi !== undefined && exclude.has(oi)) continue;   // 스트리밍 때 이미 읽음
-        let name = userName, source = 'user', flag = null;
+        let name = userName, source = 'user', flag = null, g = undefined;
         if (!mes.is_user) {
             const r = safeResolve(seg, speakerCtx); name = r.name; source = r.source; if (typeof r.isUser === 'boolean') flag = r.isUser;
             // 1.3.6 화자 찾기: 색 · 이름표가 없어 보낸 쪽 이름으로 떨어진 대사는 대사 분석이 맥락으로 고른 화자 (후보 이름 가운데 하나)
             if (source === 'sender' && an?.speaker !== false && seg.kind === 'dialogue') {
-                const g = aseg(seg);
+                g = aseg(seg);
                 const sp = typeof g?.speaker === 'string' ? g.speaker.trim() : '';
                 if (sp && sp !== '?') { name = sp; source = 'analysis'; flag = null; }
             }
@@ -620,6 +679,10 @@ function buildJobs(mesId, mes, { orig, disp }, { startSeg = 0, final = true, exc
         if (route === 'user') voice = voiceFor(userName, { isUser: true, kind: seg.kind });
         else if (route === 'narrator') voice = voiceFor(name, { isUser: false, kind: 'narrator' });
         else voice = voiceFor(name, { isUser, kind: seg.kind });
+        const senderLine = source === 'sender' && seg.kind === 'dialogue' && !mes.is_user && route === 'character';
+        if (senderLine && !hasOwnVoice(name)) missingSpeaker = true;   // 6.1.8 화자 찾기가 쓰일 줄 (analysisNeeds)
+        // 6.1.8 분석이 끝내 없거나(실패 · 거절 · 꺼짐) 화자를 못 준 색 없는 대사: 버리지 않고 「모르는 화자」 목소리 하나로 (엑스트라를 켰을 때)
+        if (!voice && senderLine && final && s.extras !== 'off' && (an?.speaker === false || g || analysisSettled())) voice = unknownVoice(seedOf());
         if (!voice) { if (route === 'user') missingUser = true; else missing = true; continue; }   // 5.7.3 「나」 자동이어도 내 대사면 missingUser (누르면 성별을 물어 바로 읽음)   // 내 목소리가 없으면 조용히 건너뜀 (1.3.8 「나」 자동이면 다른 화자처럼 — 기본 목소리가 없음)
         // 목소리별 원문/번역문 우선 (스트리밍 중엔 번역이 아직 없으니 원문; 목소리가 번역문을 꼭 원하면 그려질 때까지 미룸)
         const pref = voice.prefer_source && voice.prefer_source !== 'auto' ? voice.prefer_source : '';
@@ -634,7 +697,7 @@ function buildJobs(mesId, mes, { orig, disp }, { startSeg = 0, final = true, exc
         if (lt) {
             // 1.4.4 듣는 언어 (원어 읽기 대신): 고른 글이나 그 짝(원문 ↔ 번역문)이 이미 그 언어면 그 글, 아니면 원문을 번역기로 옮긴 글
             //   (번역문을 다시 옮기지 않는다 — 뜻이 두 번 흐려짐). 옮긴 글은 listenFill 이 미리 캐시에 넣어 둔다 — 없으면 원문 그대로 (listenPending)
-            if (!listen.inTarget(use.text, lt)) {
+            if (!listen.inTarget(use.text, lt) && !seg.listenAsIs) {   // 6.1.8 listenAsIs = 원문이 그 언어인 메시지의 짝 없는 번역문 줄 (그대로)
                 const pair = use === seg ? (primaryIsDisplay ? origOf.get(seg) : dispOf.get(seg)) : seg;
                 const origSeg = primaryIsDisplay ? (origOf.get(seg) || null) : seg;
                 if (pair?.text && listen.inTarget(pair.text, lt)) use = pair;
@@ -654,7 +717,7 @@ function buildJobs(mesId, mes, { orig, disp }, { startSeg = 0, final = true, exc
             const tr = listen.peek(listenSrc, lt);
             if (tr) { text = applyPron(tr, s).trim(); lang = listen.spokenLang(tr, lt); }   // 발음 사전은 옮긴 글에 (읽을 말 기준) · 안 옮겨진 채 온 글이면 글에서 감지
             else pending = true;
-        } else if (lt) lang = lt;
+        } else if (lt && !seg.listenAsIs) lang = lt;   // 6.1.8 그대로 읽는 줄(listenAsIs)은 글에서 감지
         if (!text) continue;
         const emo = emotionFor(tagsFromOrig ? (origOf.get(seg) || seg) : seg, s);
         const job = { mesId, seg: use, segIndex: oi ?? i, parts: [{ seg: use, alt, original: primaryIsDisplay ? origOf.get(seg) || seg : seg, text }], voice, speaker: name, emotion: emo, text, lang: lang || detectLang(text) || '', loud: false, params: null, provider: null, key: '', audio: null, ctrl: null };
@@ -662,7 +725,7 @@ function buildJobs(mesId, mes, { orig, disp }, { startSeg = 0, final = true, exc
         applyAnalysis(job, aseg(seg), an, s, !!lt);   // 감정 · 원어 번역문 (강조는 seg/alt 의 화면 글로 찾으니 그대로)
         jobs.push(job);
     }
-    return { jobs, missing, missingUser, count: orig.length, deferredAt, held };
+    return { jobs, missing, missingUser, missingSpeaker, count: orig.length, deferredAt, held };
 }
 /**
  * 엔진 값: 엔진 기본값 ← 엔진 설정 ← 목소리 값 (감정은 따로 넘김).
@@ -1168,6 +1231,66 @@ export async function ensureClip(job, { signal = null, prepare: prep = true } = 
 }
 /** 이 키를 지금 만드는 중인가 */
 export const isInflight = (key) => inflight.has(key);
+
+// ---------- 6.1.8 다른 확장용 API (window.LemonVoice.voiceOf · synth · voices — index.js)
+// 다른 확장이 자기 화면에서 TTS 목소리로 소리만 받는다 (일반 API). 재생 · 막대 · 강조 없음.
+// TTS 의 엔진 · 키 · 목소리별 설정(세기 · 모델) · 발음 사전 · 음소거 낱말 · 음량 고르기 · 캐시를 그대로 쓴다 (채팅 읽기와 같은 finishJobs → ensureAudio).
+const bridgeErr = (code, message) => Object.assign(new Error(message), { code });
+const pubVoice = (v) => (v ? { uid: v.uid, name: v.name, provider: v.provider, lang: v.lang || '' } : null);
+/** 화자 이름 → 목소리 (연결표 · 엑스트라 자동 · 내 목소리 · 기본 목소리 — 채팅 읽기와 같은 규칙). 없으면 null */
+export function voiceOfName({ name = '', isUser = false } = {}) {
+    if (!runtimeEnabled()) return null;
+    try { return pubVoice(voiceFor(String(name || '').trim(), { isUser: !!isUser, kind: 'dialogue' })); } catch { return null; }
+}
+/** 목록 보기용: 지금 쓸 수 있는 목소리 [{ uid, name, provider, lang, group }] */
+export function voiceListPublic() {
+    if (!runtimeEnabled()) return [];
+    try { return shownVoices().map(v => ({ ...pubVoice(v), group: v.group || '' })); } catch { return []; }
+}
+/**
+ * 글 → 소리 (재생하지 않음). → { audio: ArrayBuffer, type, voice: { uid, name, provider } }
+ * 실패: Error.code = 'disabled'(TTS 꺼짐) | 'no-voice'(목소리 없음) | 'engine'(엔진 · 키 · 네트워크 · 소리 파일을 못 주는 엔진) | 'aborted'
+ * 글 속 [whispers] 같은 오디오 태그는 그 목소리의 엔진 · 모델이 받으면(ElevenLabs v3 이후) 그대로, 아니면 뺀다. emotion 은 대사 분석의 감정과 같은 값
+ */
+export async function synthForExternal({ text = '', name = '', isUser = false, emotion = '', lang = '', signal = null } = {}) {
+    if (!runtimeEnabled() || settings().enabled === false) throw bridgeErr('disabled', 'TTS 가 꺼져 있어요');
+    if (signal?.aborted) throw bridgeErr('aborted', '그만뒀어요');
+    const s = settings();
+    let voice = null;
+    try { voice = voiceFor(String(name || '').trim(), { isUser: !!isUser, kind: 'dialogue' }); } catch { voice = null; }
+    if (!voice) throw bridgeErr('no-voice', `${String(name || '').trim() || '이 화자'}의 목소리를 TTS 설정에서 정해 주세요`);
+    const provider = getProvider(voice.provider);
+    if (!provider) throw bridgeErr('engine', `엔진을 찾을 수 없어요: ${voice.provider}`);
+    if (provider.caps?.blob === false) throw bridgeErr('engine', `${provider.name || voice.provider} 목소리는 소리 파일을 줄 수 없어요`);
+    let model = '';
+    try { model = String(voiceCfg(provider, voice)?.model || ''); } catch { model = ''; }
+    let body = String(text ?? '');
+    if (!(provider.id === 'elevenlabs' && usesTags(model))) body = body.replace(/\[[A-Za-z][A-Za-z' -]{0,30}\]\s*/g, '');
+    body = applyPron(body, s).trim();
+    if (!body) throw bridgeErr('engine', '읽을 글이 없어요');
+    const e = String(emotion || '').toLowerCase();
+    const seg = { kind: 'dialogue', text: body };
+    const job = { mesId: -1, seg, segIndex: 0, parts: [{ seg, alt: null, original: seg, text: body }], voice, speaker: String(name || '').trim() || voice.name,
+        emotion: ANALYSIS_EMOTIONS.has(e) && e !== 'neutral' && e !== 'calm' ? e : '', text: body, lang: String(lang || '') || detectLang(body) || '',
+        loud: false, params: null, provider: null, key: '', audio: null, ctrl: null, external: true };
+    const jobs = finishJobs([job], s, { merge: false, quiet: true });
+    if (!jobs.length) throw bridgeErr('engine', '읽을 글이 없어요');
+    const parts = [];
+    for (const j of jobs) {   // 엔진 한도보다 긴 글은 나뉜다 — 차례로 만들어 이어 붙인다 (같은 형식)
+        if (signal?.aborted) throw bridgeErr('aborted', '그만뒀어요');
+        const p = ensureAudio(j);
+        const onAbort = () => { try { j.ctrl?.abort(); } catch { /* 이미 끝남 */ } };
+        signal?.addEventListener('abort', onAbort, { once: true });
+        let r;
+        try { r = await p; }
+        catch (err) { throw bridgeErr(signal?.aborted || isAbort(err) ? 'aborted' : 'engine', bareMsg(err, '소리를 만들지 못했어요')); }
+        finally { signal?.removeEventListener('abort', onAbort); }
+        if (!r?.blob) throw bridgeErr('engine', '소리를 만들지 못했어요');
+        parts.push(r.blob);
+    }
+    const blob = parts.length === 1 ? parts[0] : new Blob(parts, { type: parts[0].type || 'audio/mpeg' });
+    return { audio: await blob.arrayBuffer(), type: blob.type || 'audio/mpeg', voice: { uid: voice.uid, name: voice.name, provider: voice.provider } };
+}
 /** 키 하나의 메모리 사본을 버림 (다시 만들기) — 진행 중인 것은 캐시에 넣지 않게 표시 */
 function forgetClip(key) {
     const e = inflight.get(key);
@@ -1769,7 +1892,7 @@ function sceneJobs(mesId, rows, { effects = true, preview = false, manual = fals
             continue;
         }
         const original = Number.isInteger(row.sourceIndex) ? base.find(j => j.segIndex === row.sourceIndex) : null;
-        const voice = row.voiceUid ? findVoice(row.voiceUid) : voiceFor(row.speaker || mes.name, { isUser: !!mes.is_user, kind: 'dialogue' });
+        const voice = row.voiceUid ? (findVoice(row.voiceUid) || (original?.voice?.uid === row.voiceUid ? original.voice : null)) : voiceFor(row.speaker || mes.name, { isUser: !!mes.is_user, kind: 'dialogue' });   // 6.1.8 엑스트라 · 모르는 화자의 임시 목소리
         if (!voice) throw new Error(`${row.speaker || '이 줄'}의 목소리를 먼저 골라 주세요.`);
         const seg = original?.seg || { kind: 'dialogue', text: row.text };
         const parts = original?.parts?.map(part => ({ ...part, text: row.text })) || [{ seg, text: row.text }];
@@ -1884,6 +2007,7 @@ function listenNeeds(mesId, mes, extra = null) {
  * 남은 줄을 번역기로 (한 요청 — 다른 쪽이 이미 보낸 줄은 그 요청에 붙음). true = 다 옮김 · false = 못 옮긴 줄이 있음 (원문으로 읽음) · 그만둠도 false.
  * 번역기를 쓸 수 없으면(애드온이 꺼짐 · 모델 · 키 없음) 보내지 않고 이유마다 세션에 한 번 알림. quiet = 알림 없이 (미리 만들기)
  */
+let LISTEN_TIMEOUT_MS = 20000;   // 6.1.8 듣는 언어 번역을 이만큼만 기다리고 원문으로 (번역기 대기 · 중계 차단 · 응답 없음에 「번역 중…」으로 멈췄다)
 async function listenFill(srcs, { signal = null, cancelled = null, quiet = false } = {}) {
     const lt = listen.listenTarget(settings());
     if (!lt || !srcs.length) return true;
@@ -1894,7 +2018,20 @@ async function listenFill(srcs, { signal = null, cancelled = null, quiet = false
         return false;
     }
     try {
-        const r = await Promise.race([listen.fill(srcs, lt, { signal }), cancelled || new Promise(() => {})]);
+        // 제한 시간이 지나면 기다리기만 그만둔다 — 이미 보낸(값을 치른) 요청은 끊지 않고, 늦게 온 답은 캐시에 남아 다음 누르기부터 쓰인다. ■ (signal) 는 예전처럼 끊음
+        let timer = 0;
+        const late = new Promise(res => { timer = setTimeout(() => res('late'), LISTEN_TIMEOUT_MS); });
+        const filling = listen.fill(srcs, lt, { signal });
+        filling.catch(() => { /* 늦게 난 실패는 기다리는 쪽이 없다 */ });
+        let r;
+        try { r = await Promise.race([filling, cancelled || new Promise(() => {}), late]); }
+        finally { clearTimeout(timer); }
+        if (r === 'late') {
+            listen.giveUp?.(srcs, lt);                            // 1분 동안 새로 보내지 않고 원문으로 (늦게 온 답이 있으면 그것)
+            if (!quiet) toastOnce(`${listen.langName(lt)} 번역이 ${LISTEN_TIMEOUT_MS / 1000}초 안에 오지 않아 원문으로 읽어요`, 'warning');
+            log('info', `듣는 언어 번역 시간 초과 ${srcs.length}줄 → 원문`);
+            return false;
+        }
         if (!r) return false;                                     // 그만둠 (stop · 채팅 바뀜)
         if (r.failed) {
             if (!quiet) toastOnce(`${r.failed}줄은 번역이 오지 않아 원문으로 읽어요`, 'warning');
@@ -1995,7 +2132,7 @@ function nearestOriginal(d, orig, disp, dispOf, thought) {
     for (const x of cands) { const g = Math.abs((x.line || 0) / so - at); if (g < gap) { gap = g; best = x; } }
     return best;
 }
-function clickedPair(src, seg) {
+function clickedPair(src, seg, { lt = '' } = {}) {
     const real = new Map();
     const n = normText(seg.text);
     const thought = seg.kind === 'thought';
@@ -2015,6 +2152,16 @@ function clickedPair(src, seg) {
     let o = d ? origOf.get(d) || null : null;
     if (!d) { o = find(src.orig); d = o ? dispOf.get(o) || null : null; }
     if (d && !o) o = nearestOriginal(d, src.orig, src.disp, dispOf, thought);   // 1.2.4: 차례 맞춤에도 없으면 같은 색·주인의 가까운 원문
+    // 6.1.8 듣는 언어: 원문이 이미 그 언어인 메시지에서 누른 번역문 줄의 원문을 못 찾으면 같은 차례의 원문 줄 — 번역문을 그 언어로 또 옮기지 않게.
+    //   그 차례의 원문도 없으면 옮기지 않고 누른 글 그대로 (asIs)
+    let asIs = false;
+    if (d && !o && lt) {
+        const ol = ofKind(src.orig);
+        if (ol.length && listen.inTarget(ol.map(x => x.text).join(' '), lt)) {
+            const at = ofKind(src.disp).indexOf(d);
+            if (at >= 0 && ol[at] && !dispOf.get(ol[at])) o = ol[at]; else asIs = true;
+        }
+    }
     const keep = (x) => {
         const c = { ...x, tags: (x.tags || []).slice(), color: x.color || seg.color || null, speakerHint: x.speakerHint || seg.speakerHint || null };
         if (Number.isInteger(seg.dialogueIndex)) c.dialogueIndex = seg.dialogueIndex;
@@ -2030,7 +2177,7 @@ function clickedPair(src, seg) {
     }
     const miss = !o && !!src.disp;                                        // 번역문이 있는데 원문을 못 찾음 → 화면 글로 읽음 (기록만)
     if (thought && (o || d)) return { pair: { orig: [named(keep(o || d))], disp: null }, real, miss };
-    if (o || d) return { pair: { orig: [keep(o || d)], disp: null }, real, miss };
+    if (o || d) { const c = keep(o || d); if (asIs) c.listenAsIs = true; return { pair: { orig: [c], disp: null }, real, miss }; }
     return { pair: { orig: [seg], disp: null }, real, miss };             // 화면에만 있는 글 (즉석 조각)
 }
 /**
@@ -2063,7 +2210,7 @@ function tapJobs(mesId, mes, segs, { readThoughts = null, awaitDisplay = false }
     for (const seg of segs) {
         if (!seg || !seg.text) continue;
         const { src, full } = srcFor(readThoughts === null ? seg.kind === 'thought' : !!readThoughts);
-        const { pair, real, miss } = clickedPair(src, seg);
+        const { pair, real, miss } = clickedPair(src, seg, { lt: listen.listenTarget(s) });
         if (miss) noteMiss(mesId, seg);
         const lookup = (x) => full(real.get(x) || x) || (real.has(x) ? full(x) : null);
         const built = buildJobs(mesId, mes, pair, { startSeg: 0, final: true, lookup, tapped: true, awaitDisplay });
@@ -2197,7 +2344,7 @@ function externalTapSegments(mes, { text = '', index = null }) {
     return hit.map(x => ({ kind: 'dialogue', text: x.text, raw: x.raw ?? x.text, color: x.color || null, tags: (x.tags || []).slice(), speakerHint: x.speakerHint || null, line: x.line || 0, dialogueIndex: dial.indexOf(x) }));
 }
 /** 1.3.8 시험용 (tools/tests/tts-extras.mjs · tts-onboarding.mjs): 작업 마무리(엔진 값 · 세기 · 캐시 키) · 이번 읽기에서 안 되는 엔진 */
-export const _forTest = { finishJobs, paramsFor, listenNeeds, listenPendingOf, deadEngines: () => [...deadEngines], streamDead: () => (streamDead ? { mesId: streamDead.mesId, set: [...streamDead.set] } : null) };
+export const _forTest = { finishJobs, paramsFor, listenNeeds, listenPendingOf, listenFill, sceneJobs, setListenTimeout: (ms) => { LISTEN_TIMEOUT_MS = ms; }, deadEngines: () => [...deadEngines], streamDead: () => (streamDead ? { mesId: streamDead.mesId, set: [...streamDead.set] } : null) };
 /** 이 답장을 스트리밍하며 실제로 읽어 줬나 (미리 만들기가 건너뜀 — 분석 전 키라 다시 만들면 두 번 값을 치름) */
 export function wasStreamRead(mesId) {
     const mes = msg(mesId);
@@ -2438,6 +2585,7 @@ function watchHighlight(job, root) {
         if (hlWatch !== w || current !== job) return;
         w.at = performance.now();
         const now = paintHighlight(job, w.root);
+        if (bar?.classList.contains('lv-bar-on') && !bar.classList.contains('lv-bar-wait')) tintBarName(job, true);   // 1.7.1 막대 이름 색도 다시
         if (now && now !== w.root) watchHighlight(job, now);   // .mes_text 가 통째로 바뀌었으면 새것을
     };
     const later = () => {
@@ -2459,20 +2607,61 @@ function paintHighlight(job, prefer = null) {
     if (!settings().highlight || !highlightOk()) return null;
     const root = prefer?.isConnected ? prefer : document.querySelector(`#chat .mes[mesid="${job.mesId}"] .mes_text`);
     if (!root) return null;
-    const index = textIndex(root);
-    if (!index.flat.trim()) { clearColorHighlights(); return root; }
-    const ranges = [];
-    for (const p of job.parts || []) {
-        // 화면이 번역문인데 원문을 읽는(또는 그 반대) 경우엔 짝(alt)의 글로도 찾는다
-        const r = findRange(index, [p.seg?.raw, p.seg?.text, p.alt?.raw, p.alt?.text].filter(Boolean));
-        if (r) ranges.push(r);
-    }
+    const ranges = rangesFor(job, root);
     // 1.6.9 밑줄이 그 글자의 색(대사 인물색 · 속마음 색)을 따라간다 — 보통 글자 · 색칠은 예전처럼 테마 색, 스위치(highlight_text_color)를 끄면 전부 테마 색 (highlight-colors.js)
     // 1.7.0 띠(형광펜) 위 글자는 보이는 글자색(글자 칠)으로 밑줄 · 그 칠로 글자 고정 (highlight-colors.js 머리말)
     const style = HIGHLIGHT_NAMES[settings().highlight_style] ? settings().highlight_style : 'both';
     if (ranges.length) { try { paintColorHighlights(root, ranges, style, { follow: settings().highlight_text_color !== false }); } catch { /* 무시 */ } }
     else clearColorHighlights();   // 글이 바뀌어 못 찾음 — 무너진 옛 범위는 남기지 않는다
     return root;
+}
+/** 읽는 줄의 화면 범위들 (강조 · 막대 이름 색이 같이 쓴다) */
+function rangesFor(job, root) {
+    const index = textIndex(root);
+    if (!index.flat.trim()) return [];
+    const ranges = [];
+    for (const p of job.parts || []) {
+        // 화면이 번역문인데 원문을 읽는(또는 그 반대) 경우엔 짝(alt)의 글로도 찾는다
+        const r = findRange(index, [p.seg?.raw, p.seg?.text, p.alt?.raw, p.alt?.text].filter(Boolean));
+        if (r) ranges.push(r);
+    }
+    return ranges;
+}
+// 1.7.1 재생 막대의 이름 색 — 사용자: 「tts 밑에 이름 뜨는 것도 대사 색깔이랑 맞춰 주삼 대사 색 있는 애들은」 (막대의 이름은 테마 파랑, 그 인물의 속마음은 청록이었다).
+//   읽는 줄의 화면 글자색(highlight-colors.speakerColor) — 본문색과 테마가 정한 글자색(대사 · 형광펜 잉크 · 기울임 · 굵게, 실리태번의 기울임 · 인용 · 본문)은
+//   「색 없음」이라 지금처럼 테마 색 (색 없는 인물의 속마음 · 기울임 · 굵은 글이 테마의 기울임 · 굵게 색으로 이름을 물들이지 않게).
+//   화면에서 못 찾으면(다른 확장이 넘긴 글 · 아직 안 그려짐) 원문의 색 표시(<span style="color"> · <font color> · 데우스 #hex "…")로. 강조를 꺼도 같다.
+//   색은 줄마다 한 번 재고(job.barTint), 그 줄을 다시 칠할 때(메시지가 다시 그려짐 · 팔레트를 바꿈) 다시 잰다. 막대에는 CSS 변수(--lv-name)로 —
+//   인라인 color 로 넣으면 일시정지 · 기다림의 흐린 이름(style.css)을 이겨 버린다.
+const THEME_INKS = ['--salty-dialogue', '--salty-marker-ink', '--salty-em', '--salty-strong', '--SmartThemeEmColor', '--SmartThemeQuoteColor', '--SmartThemeBodyColor'];
+let inkProbe = null;   // 숨긴 칸 하나를 두고 다시 쓴다 (막대가 바뀔 때마다 붙였다 떼지 않게)
+function themeInks() {
+    if (!inkProbe?.isConnected) {
+        inkProbe = document.createElement('span');
+        inkProbe.className = 'lv-ink-probe'; inkProbe.setAttribute('aria-hidden', 'true');
+        inkProbe.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;visibility:hidden;pointer-events:none';
+        document.body.append(inkProbe);
+    }
+    // 테마 변수는 color-mix() 같은 식일 수 있어 그대로는 못 읽는다 → 숨긴 칸의 color 로 풀어 읽는다
+    return THEME_INKS.map(name => { inkProbe.style.color = `var(${name}, transparent)`; return getComputedStyle(inkProbe).color; });
+}
+function barNameColor(job) {
+    try {
+        const root = job.mesId >= 0 ? document.querySelector(`#chat .mes[mesid="${job.mesId}"] .mes_text`) : null;
+        const ranges = root ? rangesFor(job, root) : [];
+        if (ranges.length) return speakerColor(piecesOf(ranges, root), [getComputedStyle(root).color, ...themeInks()]);
+    } catch { /* 화면 없음 → 원문 표시 */ }
+    let off = [];
+    try { off = [getComputedStyle(document.body).color, ...themeInks()]; } catch { off = []; }
+    return speakerColor((job.parts || []).map(p => ({ color: p.seg?.color || p.alt?.color || '', text: p.seg?.text || p.alt?.text || '' })), off);
+}
+/** 막대 이름에 그 줄의 대사 색을 입힌다 (줄마다 한 번 · fresh = 다시 잰다) */
+function tintBarName(job, fresh = false) {
+    if (!bar || !barEl.voice) return;
+    try {   // 이름 색은 꾸밈일 뿐 — 여기서 무엇이 실패해도 재생(run 의 다시 시도)으로 번지지 않게
+        if (fresh || job.barTint === undefined) { let t = ''; try { t = barNameColor(job); } catch { t = ''; } job.barTint = colorKey(t) || ''; }
+        if (job.barTint) barEl.voice.style.setProperty('--lv-name', job.barTint); else barEl.voice.style.removeProperty('--lv-name');
+    } catch { /* 무시 */ }
 }
 /** 요소 안 글자 노드를 이어 붙이고, 공백을 하나로 접은 문자열과 원래 자리 지도를 만든다 */
 function textIndex(root) {
@@ -2796,6 +2985,7 @@ function showBar(job, busy) {
     if (!bar) return;
     if (!settings().mini_player) { hideBar(); return; }
     barEl.voice.textContent = job.voice?.name || '';
+    tintBarName(job);   // 1.7.1 대사 색 있는 인물은 그 색 (없으면 style.css 의 테마 색)
     barEl.text.textContent = snippet(job.text);
     syncDetails(job);
     bar.classList.add('lv-bar-on');
@@ -2817,6 +3007,7 @@ function waitBar(mes, text) {
     barEl.voice.removeAttribute('role');
     closeDownloadMenu();   // 1.4.3 기다리는 동안엔 내려받기를 막으므로 열린 고르기도 닫는다
     barEl.voice.textContent = String(mes?.name || '');
+    try { barEl.voice.style.removeProperty('--lv-name'); } catch { /* 무시 */ }   // 기다리는 동안은 테마 색
     barEl.text.textContent = text;
     bar.classList.add('lv-bar-on', 'lv-bar-busy', 'lv-bar-wait');
     setBlocked(true);

@@ -21,12 +21,13 @@ function cut(name) {
     }
     throw new Error('unbalanced ' + name);
 }
-const names = ['processTranslationText', 'applyIsolation', 'analyzeStructure', 'extractPureText', 'renderTranslation', 'renderAllInOne', 'renderInterleaved', 'createDetailsTag', 'restoreContent'];
+const names = ['processTranslationText', 'applyIsolation', 'analyzeStructure', 'extractPureText', 'renderTranslation', 'renderAllInOne', 'renderInterleaved', 'createDetailsTag', 'restoreContent', 'runtimeRegexes', 'protectedBlockRegexes', 'isProtectedBlock'];
 const segments = pathToFileURL(path.join(dev, 'src/addons/translator/translation-segments.js')).href;
-const module = `import { splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis } from ${JSON.stringify(segments)};
+const module = `import { splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, dropTokens } from ${JSON.stringify(segments)};
 const extensionSettings = { translation_display_mode: 'folded', force_sequential_matching: false };
 const window = {}, toastr = { error() {}, warning() {} };
 const correctBackticks = input => input, getCombinedRegexes = () => [], getNoFoldRegexes = () => [];
+const runtimeProtections = new Map(); // 6.1.8 등록된 보호 블록 (이 검사에서는 없음)
 ${names.map(cut).join('\n')}
 export function render(orig, trans, mode = 'folded', force = false) {
     extensionSettings.translation_display_mode = mode; extensionSettings.force_sequential_matching = force;

@@ -104,6 +104,70 @@ export function segmentParagraphs(text) {
     return parts.length <= 161 ? parts : null;
 }
 
+// ── 6.1.8 보호 블록 (번역하지 않고 제자리에 한 번만 두는 블록 — 그림 자리 같은 것) ──
+const PLACEHOLDER = /\[\[__VAR_\d+__\]\]/g;
+const splitBlank = text => {
+    const parts = String(text ?? '').split(/(\r?\n[\t ]*\r?\n(?:[\t ]*\r?\n)*)/), out = [];
+    for (let i = 0; i < parts.length; i += 2) out.push({ body: parts[i], sep: parts[i + 1] ?? '' });
+    return out;
+};
+const joinBlank = list => list.map((p, i) => p.body + (i < list.length - 1 ? (p.sep || '\n\n') : p.sep)).join('');
+const gapOf = space => (/\n/.test(space) ? '\n' : space ? ' ' : '');
+/**
+ * 6.1.8 모델이 빠뜨린 보호 블록 자리표시자를 원문 문단 자리에 되돌린다.
+ * masked: 모델에 보낸 원문(자리표시자 포함) · output: 모델 답(자리표시자를 풀기 전) · placeholders: 되돌릴 자리표시자.
+ * 자리표시자만 있던 원문 문단이 통째로 빠졌으면 그 문단 자리에, 문단 안에서 빠졌으면 같은 문단의 앞(원문에서 앞에 있었으면) · 뒤에 둔다.
+ * 답의 문단 수가 원문(통째로 빠진 문단을 뺀 수)과 다르면 자리를 믿을 수 없어 끝에 문단으로 붙인다. 원문에 없거나 답에 이미 있는 자리표시자는 건드리지 않는다.
+ */
+export function restoreDroppedPlaceholders(masked, output, placeholders) {
+    const source = String(masked ?? ''), answer = String(output ?? '');
+    const missing = [...new Set(placeholders || [])].filter(ph => ph && source.includes(ph) && !answer.includes(ph));
+    if (!missing.length) return answer;
+    const src = splitBlank(source), out = splitBlank(answer);
+    const holdersOf = body => body.match(PLACEHOLDER) || [];
+    const holderOnly = body => body.trim() !== '' && body.replace(PLACEHOLDER, '').trim() === '';
+    const whole = src.map((p, i) => i).filter(i => holderOnly(src[i].body) && holdersOf(src[i].body).every(ph => missing.includes(ph)));
+    const inside = missing.map(ph => [ph, src.findIndex(p => p.body.includes(ph))]).filter(([, i]) => i >= 0 && !whole.includes(i)).sort((a, b) => a[1] - b[1] || src[a[1]].body.indexOf(a[0]) - src[b[1]].body.indexOf(b[0]));
+    if (out.length !== src.length - whole.length) {
+        const items = [...whole.map(i => [i, src[i].body.trim()]), ...inside.map(([ph, i]) => [i, ph])].sort((a, b) => a[0] - b[0]).map(([, text]) => text);
+        return answer.replace(/\s+$/, '') + '\n\n' + items.join('\n\n');
+    }
+    for (const i of whole) out.splice(i, 0, { body: src[i].body, sep: src[i].sep }); // 원문의 뒤 구분자 그대로 (마지막 문단이면 없음 — 사이는 joinBlank 가 채운다)
+    for (const [ph, i] of inside) {
+        const body = src[i].body, at = body.indexOf(ph), before = body.slice(0, at), after = body.slice(at + ph.length);
+        const target = out[i];
+        if (!before.trim()) target.body = ph + gapOf(/^\s*/.exec(after)[0]) + target.body.replace(/^\s+/, '');
+        else target.body = target.body.replace(/\s+$/, '') + gapOf(/\s*$/.exec(before)[0] || ' ') + ph;
+    }
+    return joinBlank(out);
+}
+/**
+ * 6.1.8 답에서 빠진 보호 블록의 자리표시자. 값으로 센다 — 교정 재번역은 원문 · 기존 번역을 묶어 보내 같은 블록이 두 번(번호 둘) 나가는데,
+ * 답에는 그중 하나만 있으면 된다. blocks: 번호 → 블록 글 · source: 자리를 볼 원문(자리표시자 포함) · output: 모델 답 · isProtected: 지켜야 할 블록인가
+ */
+export function droppedPlaceholders(blocks, source, output, isProtected) {
+    const blockOf = ph => blocks?.[Number(/\d+/.exec(ph)[0])];
+    const wanted = new Map(), present = new Map(), answer = String(output ?? ''), dropped = [];
+    for (const ph of String(source ?? '').match(PLACEHOLDER) || []) {
+        const block = blockOf(ph);
+        if (block === undefined || !isProtected(block)) continue;
+        if (!wanted.has(block)) wanted.set(block, []);
+        wanted.get(block).push(ph);
+    }
+    for (const ph of answer.match(PLACEHOLDER) || []) { const block = blockOf(ph); if (block !== undefined) present.set(block, (present.get(block) || 0) + 1); }
+    for (const [block, list] of wanted) {
+        const deficit = list.length - (present.get(block) || 0);
+        if (deficit > 0) dropped.push(...list.filter(ph => !answer.includes(ph)).slice(0, deficit));
+    }
+    return dropped;
+}
+/** 6.1.8 글에서 토큰(원문 병기 보기의 __MASK_…__)을 지운다 — 보호 블록을 원문 쪽 사본에서 빼 두 번 그리지 않게 */
+export function dropTokens(text, tokens) {
+    let value = String(text ?? '');
+    for (const token of tokens || []) if (token) value = value.split(token).join('');
+    return value;
+}
+
 /** 5.2.4: 통짜/덩이 번역에서 모델이 문단 사이 빈 줄을 빠뜨리면(한 문단 = 한 줄로 돌려줌) 원문 문단 수와 줄 수가 같을 때만 빈 줄을 되살린다.
  *  문단 묶음 경로는 구분자를 원문에서 가져오므로 해당 없음. 줄 수가 다르면(문단 안 줄바꿈 · 합쳐진 문단) 손대지 않는다. */
 export function restoreParagraphBreaks(source, output) {

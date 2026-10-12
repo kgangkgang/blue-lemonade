@@ -130,6 +130,26 @@ export function pieceKey(piece, plainKey, follow = true) {
     }
     return { key, pin };
 }
+/**
+ * 1.7.1 (테마 6.1.8) 재생 막대의 이름 색 = 읽는 줄의 대사 색 (순수 함수). 사용자: 「tts 밑에 이름 뜨는 것도 대사 색깔이랑 맞춰 주삼 대사 색 있는 애들은」.
+ * pieces = piecesOf 조각 (color · start/end), exclude = 「색 없음」으로 볼 색들 (본문 · 테마 대사색 · 형광펜 잉크).
+ * → 그 밖의 색 가운데 가장 많은 글자를 차지한 '#rrggbb', 없으면 '' (색 없는 인물 · 지문 → 테마 색 그대로).
+ * 글자 칠이 아니라 color 를 본다 — 형광펜 대사는 칠이 잉크이고 color 가 인물 색(띠 색)이다. 투명 · 반투명 색(그라데이션 글자)은 세지 않는다.
+ */
+export function speakerColor(pieces, exclude = []) {
+    const skip = (exclude || []).map(colorKey).filter(Boolean);
+    const weight = new Map();
+    for (const p of pieces || []) {
+        if (!p || p.blank) continue;
+        const key = colorKey(p.color);
+        if (!key || skip.some(s => nearColor(key, s))) continue;
+        const n = Number.isInteger(p.start) && Number.isInteger(p.end) ? Math.max(1, p.end - p.start) : Math.max(1, String(p.text || '').length);
+        weight.set(key, (weight.get(key) || 0) + n);
+    }
+    let best = '', most = 0;
+    for (const [key, n] of weight) if (n > most) { best = key; most = n; }
+    return best;
+}
 /** 묶음 이름 ↔ { key, pin } — 'key' 또는 'key|pin' ('' = 테마 색 · 고정 없음) */
 export const groupId = (key, pin) => (pin ? `${key}|${pin}` : key);
 export function splitGroup(id) { const [key = '', pin = ''] = String(id ?? '').split('|'); return { key, pin }; }

@@ -190,7 +190,7 @@ await test('ordinary WAV excludes effects when automatic effects are off; explic
 });
 
 await test('muted specific everyday sound never falls back to a generic water sound',async()=>{
-    await reset();assert.equal(Library.listSfx().length,88);assert.equal(Library.matchSfx('pour water').id,'daily_water_pour');
+    await reset();assert.equal(Library.listSfx().length,89);assert.equal(Library.matchSfx('pour water').id,'daily_water_pour');
     Library.setSfxEnabled('daily_water_pour',false);assert.equal(Library.matchSfx('pour water'),null);assert.ok(Library.getSfx('daily_water_pour'));assert.ok(await Library.sfxBlob('daily_water_pour'));
     assert.equal(Library.matchSfx('비가 내린다').id,'daily_rain');assert.equal(Library.matchSfx('키보드를 타이핑한다').id,'daily_keyboard');
 });

@@ -46,6 +46,8 @@ jobs:
           node tools/tests/tts-extras.mjs .
           node tools/tests/tts-onboarding.mjs .
           node tools/tests/tts-listen.mjs .
+          node tools/tests/tts-block-fallback.mjs .
+          node tools/tests/tts-bridge.mjs .
           node tools/tests/tts-scene.mjs .
           node tools/tests/tts-sfx-timing.mjs .
           node tools/tests/tts-sfx-credits.mjs .
@@ -53,6 +55,7 @@ jobs:
           node tools/tests/tts-mute.mjs .
           node tools/tests/tts-highlight-colors.mjs .
           node tools/tests/rewrite-tts-keep.mjs .
+          node tools/tests/rewrite-tts-slots.mjs .
           node tools/tests/tts-wand.mjs .
           node tools/tests/chat-like-alias.mjs .
           node tools/tests/zipinstall-remove.mjs .
@@ -75,6 +78,7 @@ jobs:
           node tools/tests/translation-cache-loading.mjs .
           node tools/tests/translation-segments.mjs .
           node tools/tests/translation-display.mjs .
+          node tools/tests/translator-protect.mjs .
           node tools/tests/conversation-assist.mjs .
           node tools/tests/addon-menu-routing.mjs .
           node tools/tests/name-row-align.mjs .

@@ -1,13 +1,26 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.1.7/blue-lemonade-6.1.7.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.1.8/blue-lemonade-6.1.8.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.1.7 · 최신 업데이트</summary>
+<summary>6.1.8 · 최신 업데이트</summary>
+
+- TTS 1.7.1: 반복용 질척이는 리듬 효과음을 더해 내장 효과음이 89개가 됐어요(freesound CC0). 「꿀럭」·「꿀렁」 같은 말에 붙고, 그 동작이 이어지는 동안 읽는 줄 아래에서 반복돼요.
+- TTS 1.7.1: 재생 막대의 이름이 그 인물의 대사 색으로 나와요. 색이 없는 인물과 지문은 예전처럼 테마 색이에요.
+- 확장 창 안의 「… 위에도 보이기」 스위치 이름을 모든 창에서 「확장 탭에 보이기」로 통일했어요.
+- TTS 1.7.1: 대사 분석이 검열로 막히면 「검열되면 다른 모델로」에 고른 모델로 한 번 더 보내요. 분석이 끝내 없으면 색 없는 엑스트라 대사도 기본 목소리 하나로 읽어요.
+- TTS 1.7.1: 원문이 이미 듣는 언어면 번역문 줄을 눌러도 원문으로 바로 읽어요. 듣는 언어 번역이 20초 안에 오지 않으면 원문으로 읽어요.
+- 다시 쓰기 2.0.4 · 번역 2.3.4: 다른 확장이 넣은 그림 자리를 글로 다루지 않아요. 고치기 · 번역 · 읽기에서 자리는 제자리에 한 번만 남고, 번역이 빠뜨려도 되돌려 놓아요.
+- TTS 1.7.1: 다른 확장이 TTS 목소리로 소리만 받을 수 있는 API를 더했어요 (LemonVoice.voiceOf · synth · voices). 엔진 · 목소리 설정 · 발음 사전 · 캐시를 그대로 쓰고 재생은 하지 않아요.
+
+</details>
+
+<details>
+<summary>6.1.7 · 다시 쓰기 분석 이어 쓰기 · 형광펜 밑줄</summary>
 
 - TTS 1.7.0 · 다시 쓰기 2.0.3: 다시 쓰기로 고친 답장은 대사 분석을 다시 하지 않아요. 화자 · 감정 · 효과음은 그대로 쓰고, 글이 바뀐 대사만 필요할 때 번역하고 음성도 그 줄만 새로 만들어요. 직접 고친 글은 전처럼 다시 분석해요.
 - TTS 1.7.0: 형광펜 대사에서 재생 밑줄이 띠에 묻혀 안 보이던 문제를 고쳤어요. 프롬프트 색 형광펜은 띠 아래에 인물 색 선이 또렷하게 그어지고, 읽는 동안 대사 글자색이 인물 색으로 바뀌지 않아요.

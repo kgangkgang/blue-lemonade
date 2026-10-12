@@ -31,6 +31,7 @@ import {
     parseEntries,
     prepareSpans,
     promptHasMarker,
+    rebaseSlotLines,
     rerollUntil,
     rewriteText,
     splitNames,
@@ -47,7 +48,7 @@ import { capturedMessages, capturedRequest, holdGeneration, regenerateReply, rep
 import { applyUpgrades } from './upgrades.js';
 import { startQuickBan, setQuickBanEnabled } from './quick-ban.js';
 
-const VERSION = '2.0.3';
+const VERSION = '2.0.4';
 const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];
@@ -619,7 +620,7 @@ async function cleanMessage(messageId, manual, signal) {
         return;
     }
 
-    const original = message.mes;
+    let original = message.mes;   // 6.1.8 고치는 사이 그림 자리 줄만 바뀌면 그 글을 기준으로 다시 적는다 (아래)
     // Auto-parse runs after this listener without streaming. Preserve the hidden prefix verbatim.
     const visible = visibleText(message);
     const visibleOffset = original === visible ? 0 : original.lastIndexOf(visible);
@@ -691,7 +692,7 @@ async function cleanMessage(messageId, manual, signal) {
         if (result.error) console.warn(`[${TITLE}] 요청 실패:`, result.error);
 
         if (result.text !== visible) {
-            const replacement = original.slice(0, visibleOffset) + result.text + original.slice(visibleOffset + visible.length);
+            let replacement = original.slice(0, visibleOffset) + result.text + original.slice(visibleOffset + visible.length);
             let tokenCount;
             if (power_user.message_token_count_enabled) {
                 try {
@@ -703,8 +704,16 @@ async function cleanMessage(messageId, manual, signal) {
             if (signal?.aborted) return;
             const current = getContext().chat[messageId];
             if (current !== message || current.mes !== original) {
-                toastr.warning('고치는 동안 메시지가 바뀌어서 적용하지 않았어요.', TITLE);
-                return;
+                // 6.1.8 그 사이 그림 자리 줄만 더해지거나 빠졌으면 고친 글을 버리지 않고 같은 줄 자리에 다시 끼워 적용한다.
+                //   (다시 쓰기는 줄 수를 바꾸지 않으므로 줄마다 짝이 맞다.) 다른 글이 바뀌었으면 예전처럼 적용하지 않는다.
+                const rebased = current === message ? rebaseSlotLines(original, current.mes, replacement) : null;
+                if (rebased === null) {
+                    toastr.warning('고치는 동안 메시지가 바뀌어서 적용하지 않았어요.', TITLE);
+                    return;
+                }
+                original = current.mes;
+                replacement = rebased;
+                tokenCount = undefined;   // 자리 줄이 더해진 글의 토큰 수는 다시 세야 한다 — 기다리는 사이 또 바뀔 수 있어 여기서는 적지 않는다
             }
             message.mes = replacement;
             // 6.1.7 다시 쓰기가 고쳤다고 적는다 (알리기 전에) — TTS 가 이 표시를 보고 대사 분석을 버리지 않고 새 글로 옮긴다.

@@ -1,5 +1,5 @@
 /* ===== css/64-headswitch.css ===== */
-/* 확장 위 스위치 (6.0.4, src/headswitch.js) — 확장 창 안의 켜기·끄기를 제목 줄에도. 기본은 숨김, 창 안 「위에도 보이기」 줄로 켠다 */
+/* 확장 위 스위치 (6.0.4, src/headswitch.js) — 확장 창 안의 켜기·끄기를 제목 줄에도. 기본은 숨김, 창 안 「확장 탭에 보이기」 줄로 켠다 */
 body.salty :is(#rm_extensions_block, .bl-assets-dialog) .bl-hs-switch {
   position: relative;
   flex: 0 0 auto;

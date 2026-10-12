@@ -162,18 +162,62 @@ function ownedByNear(sentence, index, length, nearNames) {
 // 찾기에서 빼는 부분: 코드(```…``` · `…`) · 태그와 그 속성(<span class="gold">) · 주소(…/gold-rimmed.png). 원문 마크업 위에서 찾다 보니
 // 이런 곳의 낱말까지 문장으로 잡혀 AI 가 고친 글이 마크업 안에 끼워졌다. 같은 길이의 공백으로 바꿔(줄바꿈은 남긴다) 위치는 그대로 두므로
 // 결과 span 은 원문을 그대로 가리키고, message.mes 는 받아들인 span 밖에서는 손대지 않는다.
+// 6.1.8 그림 자리(그림 확장의 슬롯 <span class="autopic-image-slot" data-autopic-slot="…">[AutoPic 이미지]</span>)는 요소 통째로 —
+//   태그만 가리면 안 글자 「[AutoPic 이미지]」가 남아 규칙(이미지 · autopic) · 반복 감지에 문장으로 잡혔고, 문장 가운데 자리는 고칠 범위에 끼어
+//   AI 가 번호나 글자를 바꾸면 그림 확장이 그 자리를 못 찾아 그림을 잃었다. 첫 글자를 줄바꿈으로 가려 문단 경계처럼 — 어떤 범위도 자리를 건너지 않는다.
+//   TTS 의 text.js SLOT_RE 와 같은 식 (tools/tests/rewrite-tts-slots.mjs 가 맞춰 본다). 번호 없는 껍데기(그림 확장이 지우는 것)도 같이 가린다.
+export const SLOT_RE = /<span\b[^>]*\b(?:data-autopic-slot="[^"]*"|class="[^"]*\bautopic-image-slot\b[^"]*")[^>]*>[^<]*<\/span>/g;
+const blankAll = part => part.replace(/[^\n]/g, ' ');
+const blankAsBreak = part => '\n' + blankAll(part.slice(1));
 const PROTECTED = [
-    /```[\s\S]*?```/g,
-    /`[^`\n]*`/g,
-    /<\/?[A-Za-z][^<>]*>/g,
-    /\b[a-z][a-z0-9+.-]*:\/\/[^\s<>"'`)]+/gi,
+    [/```[\s\S]*?```/g, blankAll],
+    [/`[^`\n]*`/g, blankAll],
+    [SLOT_RE, blankAsBreak],
+    [/<\/?[A-Za-z][^<>]*>/g, blankAll],
+    [/\b[a-z][a-z0-9+.-]*:\/\/[^\s<>"'`)]+/gi, blankAll],
 ];
 
-/** Blanks code, tags and URLs with same-length spaces (newlines kept) so match indices still point into the original text. */
+/** Blanks code, tags and URLs with same-length spaces (newlines kept) so match indices still point into the original text. A picture slot becomes a line break. */
 export function maskProtected(text) {
     let masked = text;
-    for (const regex of PROTECTED) masked = masked.replace(regex, part => part.replace(/[^\n]/g, ' '));
+    for (const [regex, mask] of PROTECTED) masked = masked.replace(regex, mask);
     return masked;
+}
+
+/** 글 속 그림 자리 요소들 (차례대로) */
+export function slotElements(text) {
+    return String(text ?? '').match(SLOT_RE) || [];
+}
+
+/** AI 에게 맥락으로 보내는 글에서 그림 자리를 뺀다 (자리만 남은 빈 줄은 하나로) */
+export function stripSlots(text) {
+    return String(text ?? '').replace(SLOT_RE, '').replace(/\n{3,}/g, '\n\n');
+}
+
+const isSlotLine = line => line.trim() !== '' && line.replace(SLOT_RE, '').trim() === '';
+const isFlexLine = line => line.trim() === '' || isSlotLine(line);
+
+/**
+ * 6.1.8 다시 쓰는 사이에 그림 자리 줄만 더해지거나 빠졌으면, 고친 글(replacement)에 같은 자리로 다시 끼운다.
+ * original = 고치기 전 글, current = 지금 글, replacement = original 을 고친 글 (checkRewrite 가 줄 수를 지키므로 줄마다 짝이 맞다).
+ * 자리 줄 · 빈 줄 말고 다른 줄이 바뀌었거나, 그림 자리가 하나도 안 바뀌었으면 null (예전처럼 버린다).
+ * @returns {string|null}
+ */
+export function rebaseSlotLines(original, current, replacement) {
+    if (typeof original !== 'string' || typeof current !== 'string' || typeof replacement !== 'string') return null;
+    if (current === original) return replacement;
+    const O = original.split('\n'), C = current.split('\n'), R = replacement.split('\n');
+    if (R.length !== O.length) return null;
+    const out = [];
+    let i = 0, j = 0, slots = 0;
+    while (i < O.length || j < C.length) {
+        if (i < O.length && j < C.length && O[i] === C[j]) { out.push(R[i]); i++; j++; continue; }
+        if (j < C.length && isFlexLine(C[j])) { if (isSlotLine(C[j])) slots++; out.push(C[j]); j++; continue; }
+        // 빠진 줄: 빈 줄 · 자리 줄은 고칠 범위에 든 적이 없어 고친 글에서도 그대로다
+        if (i < O.length && isFlexLine(O[i]) && R[i] === O[i]) { if (isSlotLine(O[i])) slots++; i++; continue; }
+        return null;
+    }
+    return slots > 0 ? out.join('\n') : null;
 }
 
 /**
@@ -448,7 +492,7 @@ export function buildPrompt(text, spans, retry, exceptions) {
     const user = [
         'Latest reply, for context:',
         '<reply>',
-        text,
+        stripSlots(text),   // 6.1.8 그림 자리는 맥락이 아니다 (토큰만 들고 AI 가 마크업을 본다)
         '</reply>',
         '',
         'Tagged sentences to rewrite:',
@@ -496,6 +540,9 @@ export function checkRewrite(span, rewrite, compiled) {
     if (!text) return 'empty';
     if (text === span.text) return span.repeatOf ? 'banned' : 'kept';
     if (text.length > span.text.length * 2 + 80) return 'too-long';
+    // 6.1.8 그림 자리는 글자 하나 다르지 않게 (번호 · 안 글자가 바뀌면 그림 확장이 그 자리를 못 찾아 그림을 잃는다). 없던 자리를 만들어도 안 된다.
+    const slotsBefore = slotElements(span.text), slotsAfter = slotElements(text);
+    if (slotsBefore.length !== slotsAfter.length || slotsBefore.some((slot, i) => slot !== slotsAfter[i])) return 'format';
     if (FORMAT_MARKS.some(mark => countOf(text, mark) !== countOf(span.text, mark))) return 'format';
     // 줄 수가 달라지면 문단을 합치거나 쪼갠 것이다.
     if (countOf(text, '\n') !== countOf(span.text, '\n')) return 'format';

@@ -2,7 +2,7 @@
 import { isPreset, validSettings, validImport, validPromptList, validPresetList, exportPresets, restoreTranslationRows } from './preset-data.js';
 import { createGuards, watchGuard } from './translation-guard.js';
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
-import { segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis } from './translation-segments.js';
+import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis } from './translation-segments.js';
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
 import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey, glossaryLinesFor } from './glossary-match.js'; // [2.2.9] 용어집 찾기 (+ 가타카나 표기 흔들림) · [2.3.0] TTS 듣는 언어용 줄
@@ -2010,6 +2010,21 @@ async function translate(text, options = {}) {
             } catch (e) { console.error('[Debug] Fixed mask counting error', e); }
         }
 
+        // 6.1.8 보호 블록(그림 자리 같은 것)은 모델이 자리표시자를 빠뜨려도 잃지 않는다 — 원문 문단 자리(못 찾으면 끝)에 되돌리고, 그런 답은 캐시하지 않는다 (report.restoredBlocks).
+        //       값으로 센다: 교정 재번역은 원문 · 기존 번역을 묶어 보내 같은 블록이 두 번(번호 둘) 나가는데, 답에는 그중 하나만 있으면 된다.
+        if (protectedBlocks.length) {
+            const keepRules = protectedBlockRegexes();
+            const marker = '\n\n[Translated Text]:\n';
+            const layoutSource = isRetranslation && maskedText.startsWith('[Original Text]:\n') && maskedText.includes(marker)
+                ? maskedText.slice('[Original Text]:\n'.length, maskedText.indexOf(marker)) : maskedText;
+            const dropped = droppedPlaceholders(protectedBlocks, layoutSource, translatedText, block => isProtectedBlock(block, keepRules));
+            if (dropped.length) {
+                translatedText = restoreDroppedPlaceholders(layoutSource, translatedText, dropped);
+                if (report) report.restoredBlocks = dropped.length;
+                console.warn(`[LLM Translator] 모델이 빠뜨린 보호 블록 ${dropped.length}개를 제자리에 되돌렸어요 (이 번역은 캐시하지 않아요)`);
+            }
+        }
+
         // [신규 기능 유지] 2차 수리: 번역 후 보호된 텍스트 복구 (Unmasking)
         // [1.9.2] 뒤 번호부터 되돌린다: 나중 정규식이 앞서 가린 자리표시자를 품은 블록을 가리면(예: 사용자 <status>…</status> 안의 <think>)
         //         앞 번호부터 되돌릴 때 안쪽 [[__VAR_0__]] 이 그대로 남았다.
@@ -2148,7 +2163,11 @@ function afterGeneration(callback, quietMs = 300) {
 function refreshMessageBlock(messageId, message) {
     const element = document.querySelector(`#chat .mes[mesid="${messageId}"]`);
     if (!element || element.querySelector('.edit_textarea')) return;
-    return updateMessageBlock(messageId, message);
+    const result = updateMessageBlock(messageId, message);
+    // 6.1.8 다시 그린 뒤 알림 — 다른 확장이 본문 안의 자기 블록(그림 자리 등)을 다시 그릴 수 있게. 원문 표시 · 지운 번역 · 실패한 재번역 뒤에도 온다.
+    //       (EXTENSION_LLM_TRANSLATE_UI_UPDATED 는 '새 번역' 뜻으로 TTS 가 듣기 때문에 따로 둔다)
+    try { document.dispatchEvent(new CustomEvent('llm-translator:rendered', { detail: { messageId: Number(messageId) } })); } catch { /* 알림은 그리기를 막지 않는다 */ }
+    return result;
 }
 
 // 재번역 함수 (교정 또는 문단 맞추기)
@@ -2274,7 +2293,7 @@ async function retranslateMessage(messageId, promptType, forceRetranslate = fals
         //         addTranslationToDB 가 이제 같은 원문의 줄을 고쳐 쓴다.
         // [2.1.3] 일부 문단이 차단돼 원문으로 남았으면 캐시에 넣지 않는다 (translateMessage 와 같게)
         if (report.partial) toastr.warning(`문단 ${report.blockedChunks}/${report.chunks}덩이는 차단돼 원문으로 남겼어요. 다시 번역하면 다시 시도해요.`, '번역', { timeOut: 8000 });
-        else await storeTranslationQuietly(originalText, retranslation);
+        else if (!report.restoredBlocks) await storeTranslationQuietly(originalText, retranslation); // 6.1.8 빠진 보호 블록을 되돌린 답은 캐시하지 않는다
 
         // [1.9.2] 재번역하는 동안 채팅 · 스와이프 · 글이 바뀌었으면 붙이지 않는다 (캐시에는 남음)
         const targetIndex = runToken.guard.index();
@@ -2464,7 +2483,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                     badge.remove();
                 }
                 if (report.partial) toastr.warning(`문단 ${report.blockedChunks}/${report.chunks}덩이는 차단돼 원문으로 남겼어요. 다시 번역하면 다시 시도해요.`, '번역', { timeOut: 8000 });
-                else await storeTranslationQuietly(originalText, translation);
+                else if (!report.restoredBlocks) await storeTranslationQuietly(originalText, translation); // 6.1.8 빠진 보호 블록을 되돌린 답은 캐시하지 않는다
                 // 5.4.2: 문단이 모두 캐시에서 왔으면(요청 0) 알린다 — 전엔 '번역을 시작합니다' 뒤 같은 글만 조용히 다시 붙었다
                 if (source !== 'auto' && source !== 'batch' && !report.partial && report.reusedParagraphs > 0 && !report.translatedParagraphs) toastr.info('IndexedDB에서 번역문을 가져왔습니다.');
             }
@@ -3504,9 +3523,18 @@ function queuedTargetOf(messageId) {
  */
 function resolveQueuedTarget(messageId, ref) {
     if (!ref) return messageId;
-    if (!ref.message || !ref.guard?.valid()) return null;
-    const id = ref.guard.index();
-    return id < 0 ? null : id;
+    if (!ref.message) return null;
+    if (ref.guard?.valid()) {
+        const id = ref.guard.index();
+        return id < 0 ? null : id;
+    }
+    // 6.1.8 같은 채팅 · 같은 스와이프 · 같은 revision 인데 글(mes)만 바뀌었으면(대기 0.3초 사이 다른 확장이 그림 자리를 넣는 등) 버리지 않고 지금 글로 번역한다.
+    //       전엔 조용히 건너뛰어 그 답이 끝내 자동 번역되지 않았다 (MESSAGE_UPDATED 는 번역문이 이미 있을 때만 다시 번역한다)
+    if (ref.guard?.sameTarget?.()) {
+        const id = getContext().chat.indexOf(ref.message);
+        return id < 0 ? null : id;
+    }
+    return null;
 }
 
 /**
@@ -3689,7 +3717,8 @@ async function localOrDisplayedTranslation(message, originalText) {
     // Never feed processed HTML, a stale translation, or the original-text view back to the model/editor.
     if (message?.extra?.original_text_hash !== originalHashOf(originalText)) return null;
     const displayed = message.extra.original_translation_backup || message.extra.display_text;
-    if (typeof displayed !== 'string' || !displayed.trim() || displayed === originalText || /<[a-z][\s\S]*>/i.test(displayed)) return null;
+    // 6.1.8 그림 자리 같은 보호 블록은 HTML 로 치지 않는다 — '사용 안 함' 보기의 번역문에 그림 자리가 있다고 교정 재번역 · 다른 기기에서 다시(유료) 번역하지 않게
+    if (typeof displayed !== 'string' || !displayed.trim() || displayed === originalText || FOLD_MARKUP.test(displayed) || /<[a-z][\s\S]*>/i.test(withoutProtectedBlocks(displayed))) return null;
     return displayed;
 }
 function migrateOriginalCopies(chat) {
@@ -5156,6 +5185,10 @@ function publishTranslatorAPI() {
         translateForSpeech, speechReady, speechModelTag, // [2.3.0] TTS 듣는 언어
         translateText, // [2.3.2] 다른 확장의 글(문서) — 채팅 번역과 같은 연결 · 프롬프트 · 용어집, 또는 지정 언어 ([2.3.3] onProgress)
         translateProgressText: progressLabel, // [2.3.3] 진행 문구 (채팅 배지와 같은 글)
+        // 6.1.8 보호 블록: protect(id, /정규식/g, { noFold: true }) — 그 블록은 번역에 보내지 않고 제자리에 한 번만 둔다
+        //       (사용자 규칙 뒤에 붙음 · 메모리에만 · 같은 id 는 바꿔 씀). unprotect(id) 로 뗀다. 성공하면 true
+        protect: (id, regex, options) => protectBlock(id, regex, options),
+        unprotect: id => unprotectBlock(id),
     };
 }
 
@@ -6370,8 +6403,51 @@ function getCombinedRegexes() {
             if (regex) specialBlockRegexes.push(regex);
         });
     }
+    // 6.1.8 다른 확장이 등록한 보호 블록은 사용자 규칙 뒤에 — 앞 규칙의 [[__VAR_n__]] 번호 · 문단 캐시 키가 바뀌지 않게 (같은 source 는 한 번만)
+    specialBlockRegexes.push(...runtimeRegexes({ skip: specialBlockRegexes }));
     return specialBlockRegexes;
 }
+
+// ── 6.1.8 런타임 보호 규칙 (globalThis[Symbol.for('blue-lemonade.translator')].protect / unprotect) ──
+// 다른 확장이 「번역하지 않고 제자리에 한 번만」 둘 블록(예: 그림 자리)을 등록한다. 메모리에만 — 설정 · 보호할 텍스트 칸에는 쓰지 않는다.
+const runtimeProtections = new Map(); // id → { source, flags, noFold }
+function protectBlock(id, regex, { noFold = true } = {}) {
+    const key = String(id ?? '').trim();
+    const compiled = regex instanceof RegExp ? regex : compileUserPattern(regex, 'protected block');
+    if (!key || !compiled) return false;
+    const flags = compiled.flags.includes('g') ? compiled.flags : `${compiled.flags}g`;
+    if (new RegExp(compiled.source, flags.replace('g', '')).test('')) return false; // 빈 글에 맞는 규칙은 글 전체를 쪼갠다
+    runtimeProtections.set(key, { source: compiled.source, flags, noFold: noFold !== false });
+    return true;
+}
+function unprotectBlock(id) { return runtimeProtections.delete(String(id ?? '').trim()); }
+/** 등록된 규칙의 새 정규식 (lastIndex 를 나눠 쓰지 않게). onlyNoFold 면 접기 금지로 등록한 것만, skip 목록과 source 가 같은 것은 뺀다 */
+function runtimeRegexes({ onlyNoFold = false, skip = [] } = {}) {
+    const seen = new Set(skip.map(regex => regex.source)), out = [];
+    for (const rule of runtimeProtections.values()) {
+        if ((onlyNoFold && !rule.noFold) || seen.has(rule.source)) continue;
+        seen.add(rule.source);
+        out.push(new RegExp(rule.source, rule.flags));
+    }
+    return out;
+}
+/** 보호 블록 규칙: 접기 금지(기본 · 사용자 · 등록) + 등록된 보호 규칙 */
+function protectedBlockRegexes() {
+    const list = getNoFoldRegexes();
+    return [...list, ...runtimeRegexes({ skip: list })];
+}
+/** 글이 통째로 보호 블록인가 (그림 자리 하나 · {{img::…}} 하나처럼) */
+function isProtectedBlock(text, regexes = protectedBlockRegexes()) {
+    const value = String(text ?? '');
+    return value.trim() !== '' && regexes.some(regex => value.replace(regex, '') === '');
+}
+/** 보호 블록을 뺀 글 — 'HTML 이면 거절' 검사가 그림 자리 때문에 번역을 버리지 않게 */
+function withoutProtectedBlocks(text, regexes = protectedBlockRegexes()) {
+    let value = String(text ?? '');
+    for (const regex of regexes) value = value.replace(regex, '');
+    return value;
+}
+const FOLD_MARKUP = /llm-translator-details|class="(?:translated|original)_text|llmt-para-gap/;
 
 /**
  * [1.9.2] '보호할 텍스트' · '접기 금지 텍스트' 한 줄을 정규식으로.
@@ -6421,6 +6497,7 @@ function getNoFoldRegexes() {
             if (regex) regexes.push(regex);
         });
     }
+    regexes.push(...runtimeRegexes({ onlyNoFold: true, skip: regexes })); // 6.1.8 등록된 접기 금지 보호 블록
     return regexes;
 }
 
@@ -6482,6 +6559,12 @@ export function processTranslationText(originalText, translatedText) {
         translatedText = splitCrossLineEmphasis(translatedText);
         const origData = applyIsolation(originalText, 'ORIG');
         const transData = applyIsolation(translatedText, 'TRANS');
+        // 6.1.8 보호 블록(그림 자리 같은 것)은 번역문 쪽에만 — 번역문에도 있는 블록은 원문 쪽 사본에서 지운다.
+        //       줄 가운데의 블록이 접힌 원문 칸에 한 번 더, 문단 수가 달라 통째로 보일 때(renderAllInOne)는 원문 전체에 한 번 더 그려졌다.
+        //       (원문 쪽 줄 수는 그대로: 블록만 있던 줄은 원래도 원문 줄 목록에서 빠진다)
+        const keepRules = protectedBlockRegexes(), transBlocks = new Set(Object.values(transData.map));
+        const origOnce = Object.keys(origData.map).filter(token => transBlocks.has(origData.map[token]) && isProtectedBlock(origData.map[token], keepRules));
+        if (origOnce.length) origData.maskedText = dropTokens(origData.maskedText, origOnce);
 
         // 2. 구조 분석 (Phase 2: Structure Analysis)
         // 번역문의 줄바꿈과 마스킹 위치를 기준으로 '골격(Skeleton)'을 만듭니다.
@@ -8119,7 +8202,7 @@ if (!duplicate) globalThis[Symbol.for('st.llm-translator.archive.v1')] = {
                 const display=message.extra.display_text?(message.extra.original_translation_backup||message.extra.display_text):'';
                 const paired=translationFromDisplay(display,source);
                 if(paired)return paired;
-                if(display&&!/<[a-z][\s\S]*>/i.test(display)) { const plain=matchingTranslation(original,display,source);if(plain)return plain; }
+                if(display&&!FOLD_MARKUP.test(display)&&!/<[a-z][\s\S]*>/i.test(withoutProtectedBlocks(display))) { const plain=matchingTranslation(original,display,source);if(plain)return plain; } // 6.1.8 보호 블록은 HTML 로 치지 않는다
             }
             if(!translated)continue;
             const found=matchingTranslation(original,translated,source);

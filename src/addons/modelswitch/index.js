@@ -33,7 +33,7 @@ function store() {
 }
 
 // 아는 확장은 처음부터 켜 두고, 자동으로 찾은 확장(1.0.5: 켜진 모든 확장의 소스로 찾음)은 직접 켤 때까지 건드리지 않는다
-const isOn = target => store().targets[target.id] ?? !target.auto;
+const isOn = target => store().targets[target.id] ?? !(target.auto || target.defaultOff);   // 6.1.8 defaultOff: 스스로 등록한 대상이 처음엔 꺼 두길 원함 (TTS 「검열되면 다른 모델로」)
 
 // 잠금: 체크한 확장 중 우리가 화면까지 아는 것(번역 · 장기 기억 · 다시 쓰기)만 그 확장 화면에서 못 바꾸게 한다
 function syncLocks() {

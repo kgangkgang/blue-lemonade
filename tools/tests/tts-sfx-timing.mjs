@@ -66,7 +66,7 @@ await test('new sustained sounds use stated bounded timing; one-shot sounds cann
 });
 await test('only sustainable additions may span dialogue and stop at the message boundary',()=>{
     const p=build('심장이 뛰었다. "하나." "둘."');
-    const ids=['daily_heartbeat','daily_pen_write','daily_fireplace','daily_match','daily_stomach','daily_cork','daily_footsteps'];
+    const ids=['daily_heartbeat','daily_pen_write','daily_fireplace','daily_match','daily_stomach','daily_cork','daily_footsteps','daily_squelch_pulse'];
     for(const id of ids) {
         assert.equal(L.getSfx(id).loop,false,'library preview stays one shot: '+id);
         const cue=A.normalizeSfx([{after:0,id,ongoing:true,stopAfter:999}],p)[0];
@@ -192,5 +192,20 @@ await test('manual timing is bounded and cannot leak into voice or pause rows',(
     const out=Store.normalizeRows([{kind:'sfx',repeats:99,durationMs:999999},{kind:'sfx',repeats:0,durationMs:-4},{kind:'sfx',repeats:'2',durationMs:'3500'},{kind:'voice',repeats:4,durationMs:8000},{kind:'pause',repeats:4,durationMs:8000}]);
     assert.deepEqual(out.map(plain),[{repeats:4,durationMs:8000},{repeats:1,durationMs:0},{repeats:2,durationMs:3500},{repeats:1,durationMs:0},{repeats:1,durationMs:0}]);
     assert.throws(()=>Store.normalizeRows([{kind:'sfx',durationMs:Infinity}]),/숫자/);
+});
+// 1.7.1 (테마 6.1.8) 질척이는 리듬 — freesound 589456 MrFossy CC0, 반복용. 사용자: 「꿀럭 꿀렁 찔걱에 다 잘 어울리는군」
+await test('1.7.1 squelch rhythm: 꿀럭 · 꿀렁 · 찔걱 (and repeats) call it; 찔꺽 words keep their old sound and list both; offered to the analysis; sustainable',()=>{
+    for(const phrase of ['꿀럭 소리가 났다.','꿀렁꿀렁 움직였다.','찔걱찔걱 소리가 이어졌다.','꿀럭꿀럭','찔걱']) assert.equal(L.matchSfx(phrase)?.id,'daily_squelch_pulse',phrase);
+    assert.equal(L.matchSfx('찔꺽')?.id,'daily_squelch','a single 찔꺽 keeps its one-shot sound');
+    assert.equal(L.matchSfx('찔꺽찔꺽')?.id,'daily_squelching','찔꺽찔꺽 keeps the existing continuous sound');
+    const both=L.listSfx().filter(s=>(s.words||[]).includes('찔꺽')).map(s=>s.id).sort();
+    assert.deepEqual(both,['daily_squelch','daily_squelch_pulse'],'library search for 찔꺽 lists the new rhythm too');
+    assert.equal(L.matchSfx('꿀꺽')?.id,'daily_gulp','gulp unaffected');
+    const sound=L.getSfx('daily_squelch_pulse');assert.equal(A.canSustainSfx(sound),true);assert.equal(sound.loop,false,'library preview stays one shot');
+    const p=build('꿀렁꿀렁 소리가 한동안 이어졌다. "하나." "둘."');
+    assert.ok(p.sfxIds.includes('daily_squelch_pulse'),'offered to the analysis model');
+    const cue=A.normalizeSfx([{after:0,id:'daily_squelch_pulse',ongoing:true,stopAfter:2,durationMs:8000}],p)[0];
+    assert.equal(cue.ongoing,true);assert.equal(cue.stopAfter,2);assert.equal(cue.durationMs,8000,'한동안 → up to 8 s');
+    assert.equal(timing('꿀렁꿀렁 소리가 났다.','daily_squelch_pulse',{durationMs:8000}).durationMs,0,'no stated duration → natural clip length');
 });
 console.log(`\n${passed} passed; ${failed} failed`);if(failed)process.exitCode=1;

@@ -186,7 +186,7 @@ export function sfxAttribution(ids) {
     if (!rows.length) return '';
     return 'Blue Lemonade TTS · 효과음 출처\n\n' + rows.map(row => {
         if (row.custom) return customSfxAttribution(row);
-        if (row.credit) return `${row.name}\n${row.credit.author} · ${row.credit.license}\n${row.credit.source}\n${row.credit.licenseUrl}\n변경: 원본 일부 발췌·음량 조정·페이드·MP3 변환, 대본 설정에 따라 반복/길이 조절·믹싱\n`;
+        if (row.credit) return `${row.name}\n${row.credit.author} · ${row.credit.license}\n${row.credit.source}\n${row.credit.licenseUrl}\n변경: 원본 구간 선택(일부 또는 전체)·음량 조정·페이드·MP3 변환, 대본 설정에 따라 반복/길이 조절·믹싱\n`;
         return `${row.name}\nJINSIN2/MultiCast-TTS · 원본 저장소의 CC0 표기 (개별 녹음 최초 출처는 독립 검증하지 않음)\nhttps://github.com/JINSIN2/MultiCast-TTS/tree/f48ebeef9b19d814bf8d4568af13613544007e63\nhttps://creativecommons.org/publicdomain/zero/1.0/\n변경: 대본 설정에 따라 반복/길이 조절·믹싱\n`;
     }).join('\n');
 }

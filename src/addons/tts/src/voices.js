@@ -545,6 +545,35 @@ function pickExtra(name, e, pid) {
     return least[nameHash(name) % least.length].voiceId;
 }
 const extraVoices = new Map();   // uid → 목록에 없는 기본 목소리로 만든 목소리 객체 (같은 객체를 돌려줘야 재생기가 줄을 합친다)
+/**
+ * 6.1.8 「모르는 화자」: 화자를 끝내 못 찾은 색 없는 대사(대사 분석이 없거나 거절됨)를 버리지 않고 읽는 목소리 하나.
+ * 엑스트라 엔진의 기본 목록(엑스트라로 표시한 내 목소리가 있으면 그것)에서 고르고, 같은 카드 · 채팅(seed)이면 늘 같은 목소리. 엑스트라를 끄면 null
+ */
+export function unknownVoice(seed) {
+    const s = settings();
+    if (s.extras === 'off') return null;
+    const pid = extraEngine();
+    if (!pid) return null;
+    if (!stockFresh(pid)) ensureStock(pid);              // 다음 줄부터 (지금 목록이 비었으면 이번 줄은 목소리 없음)
+    const taken = usedUids();
+    const marked = s.voices.filter(v => v.provider === pid && v.extra && !v.gone && !(v.mix || []).length && !taken.has(v.uid)).map(v => ({ voiceId: v.voiceId, l: v.lang || '' }));
+    let pool = marked.length ? marked : stockOf(pid).filter(v => !taken.has(`${pid}:${v.voiceId}`));
+    if (!pool.length) return null;
+    const lang = extraLang(null);
+    if (lang && pool.some(v => v.l === lang)) pool = pool.filter(v => v.l === lang);
+    pool = [...pool].sort((a, b) => String(a.voiceId).localeCompare(String(b.voiceId)));   // 목록 순서가 바뀌어도 같은 목소리
+    const id = pool[nameHash(`?|${seed}`) % pool.length].voiceId;
+    const own = s.voices.find(v => v.provider === pid && v.voiceId === id && !v.gone);
+    if (own) return own;
+    const uid = `${pid}:${id}`;
+    let tv = extraVoices.get(uid);
+    if (!tv) {
+        const st = stockOf(pid).find(x => x.voiceId === id);
+        tv = toVoice({ voiceId: id, name: st ? st.name : id, group: '엑스트라', lang: (st && st.l) || lang }, pid);
+        extraVoices.set(uid, tv);
+    }
+    return tv;
+}
 const extraListeners = new Set();
 /** 엑스트라 표가 바뀌면 cb() — 목소리 탭이 다시 그리게 (ui). 그만 들으려면 돌려준 함수 */
 export function onExtrasChange(cb) { extraListeners.add(cb); return () => extraListeners.delete(cb); }

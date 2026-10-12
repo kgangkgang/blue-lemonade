@@ -47,4 +47,14 @@ await test('보이기 켜고 끄기: setShown 이 설정에 적고 저장한다'
     assert.deepEqual(getSettings().headSwitches, {});
     assert.ok((ctx.saves || 0) > before, '저장했다');
 });
+await test('6.1.8 줄 이름은 모든 창에서 「확장 탭에 보이기」 하나 (확장 이름 · 켜기 이름 없이) — 사용자: 「~위에도 보이기 … 확장탭에 보이기로 이름 다 통일해 줘」', async () => {
+    assert.equal(H.ROW_LABEL, '확장 탭에 보이기');
+    const fs = await import('node:fs');
+    const src = fs.readFileSync(path.join(root, 'src/headswitch.js'), 'utf8');
+    assert.ok(src.includes("opt.setAttribute('aria-label', ROW_LABEL);"), '스위치 이름표도 같은 이름');
+    assert.ok(src.includes('setText(row.firstElementChild, ROW_LABEL);'), '줄 글자는 창마다 바뀌지 않는다');
+    const code = src.split('\n').filter(l => !l.trim().startsWith('//')).join('\n');
+    assert.ok(!code.includes('위에도 보이기'), '옛 이름이 코드에 남지 않음 (주석의 바뀐 기록만)');
+    for (const f of ['src/settings.js', 'src/features.js', 'css/64-headswitch.css']) assert.ok(!fs.readFileSync(path.join(root, f), 'utf8').includes('위에도 보이기'), f);
+});
 console.log(`${passed} tests passed`);

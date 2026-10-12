@@ -12,7 +12,7 @@
 
 /* ---------- 공통 변수: 설정 창 · 편집 팝업 · 재생 막대 (ST 테마 색을 따르고, 블루 레몬에이드 변수는 있으면 씀) */
 .lv-settings, .lv-editor, .lv-bar {
-  --lv-css-version: "1.7.0";
+  --lv-css-version: "1.7.1";
   --lv-accent: var(--salty-accent, var(--SmartThemeQuoteColor, #51a0de));
   --lv-text: var(--SmartThemeBodyColor, #dcdcd2);
   --lv-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, .15));
@@ -460,7 +460,7 @@ body.salty.salty-icons-line #chat .mes .extraMesButtons > .lv_play { --salty-mi:
   overflow: hidden;
   font-size: .88em;
 }
-.lv-bar-voice { flex: 0 0 auto; max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; color: var(--lv-accent); }
+.lv-bar-voice { flex: 0 0 auto; max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; color: var(--lv-name, var(--lv-accent)); }   /* 1.7.1 --lv-name = 그 줄의 대사 색 (player.js) */
 .lv-bar-text { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--lv-dim); }
 .lv-bar-busy .lv-bar-text { animation: lv-blink 1.1s ease-in-out infinite; }   /* 합성을 기다리는 중 */
 .lv-bar-paused .lv-bar-voice { color: var(--lv-dim); }

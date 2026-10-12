@@ -19,6 +19,11 @@ export function createGuards(getContext) {
             },
             assert() { if (!this.valid()) throw cancelled(); },
             index() { return this.valid() ? getContext().chat.indexOf(message) : -1; },
+            // 6.1.8 글(mes)만 바뀐 같은 대상인가: 같은 채팅 · 같은 메시지 객체 · 같은 스와이프 · 같은 revision · 같은 번역 표시 (대기열이 버리지 않고 지금 글로 번역하게)
+            sameTarget() {
+                return !!message && stamp === epoch && chat === key() && !!getContext().chat?.includes(message) &&
+                    revisions.get(message) === revision && message.swipe_id === swipe && message.extra?.display_text === display;
+            },
             acceptDisplay() { display = message?.extra?.display_text; },
         };
     }

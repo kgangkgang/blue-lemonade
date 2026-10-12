@@ -133,9 +133,18 @@ export function parseRegexLines(text) {
     return out;
 }
 
+// 6.1.8 그림 자리(그림 확장의 슬롯 <span class="autopic-image-slot" data-autopic-slot="…">[AutoPic 이미지]</span>)는 글이 아니다 —
+//   태그만 벗기면 「[AutoPic 이미지]」가 지문 한 구간이 되어 지문 읽기 · 대사 없을 때 지문 읽기에서 소리 내 읽혔고, 미리 만들기 '모두'가 합성했고,
+//   분석 맥락에도 들어갔다. 같은 길이 빈칸(줄바꿈 유지)으로 지워 줄 번호 · 대사 차례는 그대로. 글 해시(textHash)는 원문 그대로라 저장된 분석도 그대로.
+//   다시 쓰기 core.js SLOT_RE 와 같은 식 (tools/tests/rewrite-tts-slots.mjs 가 맞춰 본다).
+export const SLOT_RE = /<span\b[^>]*\b(?:data-autopic-slot="[^"]*"|class="[^"]*\bautopic-image-slot\b[^"]*")[^>]*>[^<]*<\/span>/g;
+export function blankSlots(text) {
+    return String(text ?? '').replace(SLOT_RE, m => m.replace(/[^\n]/g, ' '));
+}
+
 /** 자유 글 → 읽을 글 (태그·엔티티·마크다운 정리, 공백 모음) */
 export function stripForSpeech(text) {
-    const s = String(text ?? '').replace(/\r\n?/g, '\n').replace(/<br\s*\/?>/gi, '\n').replace(/<!--[\s\S]*?(?:-->|$)/g, ' ');
+    const s = blankSlots(String(text ?? '').replace(/\r\n?/g, '\n')).replace(/<br\s*\/?>/gi, '\n').replace(/<!--[\s\S]*?(?:-->|$)/g, ' ');
     return stripMarkup(decodeEntities(s.replace(TAG_RE, ' '))).replace(/\s+/g, ' ').trim();
 }
 
@@ -363,6 +372,7 @@ export function segmentMessage(rawText, opts = {}) {
     let work = String(rawText ?? '').replace(/\r\n?/g, '\n');
     if (!work.trim()) return [];
     work = applyStrip(work, opts.stripRegex);
+    work = blankSlots(work);   // 6.1.8 그림 자리는 읽지도 · 맥락으로 보내지도 않는다 (위 SLOT_RE)
     if (skipCode) work = blankFences(work);
     work = work.replace(/<!--[\s\S]*?(?:-->|$)/g, m => m.replace(/[^\n]/g, ' '));
     work = work.replace(/<br\s*\/?>/gi, '\n');

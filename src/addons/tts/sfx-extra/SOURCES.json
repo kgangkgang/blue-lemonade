@@ -1628,6 +1628,50 @@
       },
       "sha256": "62fa35a98e3c352fa8aac9dc18bbfb6cb91c40149abae9ac5e468100752d37ff",
       "bytes": 47961
+    },
+    {
+      "id": "daily_squelch_pulse",
+      "name": "질척이는 리듬",
+      "category": "사람",
+      "words": [
+        "꿀럭",
+        "꿀렁",
+        "찔걱",
+        "꿀럭꿀럭",
+        "꿀렁꿀렁",
+        "찔걱찔걱",
+        "찔꺽",
+        "찔꺽찔꺽",
+        "squelch rhythm",
+        "wet rhythm",
+        "squelching rhythm",
+        "pulsing squelch",
+        "rhythmic squelching"
+      ],
+      "path": "sfx-extra/daily_squelch_pulse.mp3",
+      "source": "https://freesound.org/people/MrFossy/sounds/589456/",
+      "sourceTitle": "SFX_SQUELCH_pulse_loopable_04.wav",
+      "author": "MrFossy",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "licenseEvidence": "Sound page: \"Creative Commons 0\" link to http://creativecommons.org/publicdomain/zero/1.0/ (\"You can copy, modify, distribute and perform the sound, even for commercial purposes\"); original WAV 3.000 s 44.1 kHz",
+      "sourcePageSha256": "18c9ff7734c8457e908ba966661a955844701ff0d3af0ef20dfefae15a2ef698",
+      "downloadUrl": "https://cdn.freesound.org/previews/589/589456_129727-hq.mp3",
+      "retrieved": "2026-10-12",
+      "sourceSha256": "e82e079f5916f22adf47adda958e32a1537f166deacfb658ea67c7bedd357015",
+      "sourceBytes": 83611,
+      "sourceDuration": 3.0,
+      "modifications": {
+        "excerptStart": 0.0,
+        "excerptSeconds": 3.0,
+        "selectionNote": "The whole 3 s loopable recording (wet pulses about every 0.5-0.6 s); its loop edges are near silent, so the loop is the recording's own; no loop synthesized",
+        "gainDb": -1.233,
+        "fadeInSeconds": 0.005,
+        "fadeOutSeconds": 0.005,
+        "encoding": "MP3 128 kbps / 44.1 kHz"
+      },
+      "sha256": "2de7872428bdd9dca0127edc04c51bb7c7b6587c74a7d03199629282d936b611",
+      "bytes": 49205
     }
   ]
 }

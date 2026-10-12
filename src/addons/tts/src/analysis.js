@@ -53,6 +53,7 @@ import { allVoices, hasOwnVoice, noteExtras } from './voices.js';
 import { fetchJson } from './providers/_http.js';
 import { log, snip, scrub } from './log.js';
 import * as stapi from './stapi.js';
+import { isContentBlock, maybeBlocked, notBlock, bareBadRequest, blockedReasonOf, refusalReply, fallbackTarget, sameTarget, fallbackCfg, runWithBlockFallback } from './block-fallback.js';   // 6.1.8 검열되면 다른 모델로
 import { listSfx, getSfx, matchSfx, resolveSfxId, SFX_LIB } from './sfx-library.js';
 import { rewriteLinked } from '../../../edit-origin.js';
 
@@ -238,7 +239,7 @@ function speakerOf(seg, mes, charName, userName) {
 
 const autoSfxEnabled = () => settings().sfx?.enabled === true && settings().sfx?.auto !== false;
 const sceneKind = (seg) => seg?.kind === 'narration' || seg?.kind === 'action';
-const SUSTAINED_SFX = new Set(['daily_keyboard', 'daily_cat_purr', 'daily_faucet', 'daily_stream', 'daily_rain', 'daily_clock', 'daily_water_pour', 'daily_coffee_stir', 'daily_electric_kettle', 'daily_toothbrush', 'daily_spanking', 'daily_licking', 'daily_kissing', 'daily_squelching', 'daily_bed_creaking', 'daily_gulping', 'daily_heartbeat', 'daily_pen_write', 'daily_fireplace', 'daily_footsteps', 'wind', 'footsteps', 'footsteps_wood', 'footsteps_wet', 'running']);
+const SUSTAINED_SFX = new Set(['daily_keyboard', 'daily_cat_purr', 'daily_faucet', 'daily_stream', 'daily_rain', 'daily_clock', 'daily_water_pour', 'daily_coffee_stir', 'daily_electric_kettle', 'daily_toothbrush', 'daily_spanking', 'daily_licking', 'daily_kissing', 'daily_squelching', 'daily_squelch_pulse', 'daily_bed_creaking', 'daily_gulping', 'daily_heartbeat', 'daily_pen_write', 'daily_fireplace', 'daily_footsteps', 'wind', 'footsteps', 'footsteps_wood', 'footsteps_wet', 'running']);
 export const canSustainSfx = sound => !!sound && (SUSTAINED_SFX.has(sound.id) || sound.custom === true && sound.loop === true);
 function sfxCatalog() {
     try {
@@ -514,6 +515,7 @@ const SFX_TIMING_HINTS = {
     daily_kissing: ['키스', '입술', '혀', 'kiss', 'making out', 'tongue', 'lips'],
     daily_squelch: ['찔꺽', '질척', '철벅', '젖', 'squelch', 'squish', 'wet', 'slick'],
     daily_squelching: ['찔꺽', '질척', '철벅', '젖', '박', 'squelch', 'squish', 'wet', 'thrust', 'pound', 'slick'],
+    daily_squelch_pulse: ['꿀럭', '꿀렁', '찔걱', '찔꺽', '질척', 'squelch', 'squish', 'wet', 'pulse', 'rhythm'],   // 1.7.1
     daily_bed_creak: ['침대', '매트리스', '스프링', '삐걱', 'bed', 'mattress', 'creak', 'springs'],
     daily_bed_creaking: ['침대', '매트리스', '스프링', '삐걱', '흔들', 'bed', 'mattress', 'creak', 'headboard', 'rock'],
     daily_gulp: ['꿀꺽', '꿀떡', '꼴깍', '삼키', '삼켰', '목', 'gulp', 'swallow', 'throat'],
@@ -618,6 +620,18 @@ function koErr(msg, { retry = false, status = 0 } = {}) {
     return e;
 }
 const aborted = (signal) => !!(signal && signal.aborted);
+/** 6.1.8 내용 차단 표시 — block-fallback.maybeBlocked 가 알아보게 (토스트 글은 그대로). 맨 400 = 업체 글이 없거나 'Bad Request' 뿐인 400 */
+function markBlock(e) {
+    if (!e || typeof e !== 'object' || e.name === 'AbortError' || notBlock(e)) return e;   // 429 · 401 · 5xx 는 차단이 아님
+    const raw = String(e.message || '');
+    const at = raw.indexOf(' · ');
+    const vendor = at >= 0 ? raw.slice(at + 3).trim() : '';
+    if (isContentBlock(e)) e.blocked = true;
+    else if (Number(e.status) === 400 && (!vendor || /^(?:bad request|HTTP 400)\.?$/i.test(vendor))) e.bare400 = true;
+    return e;
+}
+/** 6.1.8 200 으로 온 안전 필터 차단 (finish_reason SAFETY · content_filter · promptFeedback.blockReason …) */
+const blockErr = (why) => Object.assign(koErr(`내용 차단 (${snip(scrub(String(why)), 40)})`), { blocked: true });
 function abortErr(signal) {
     const r = signal && signal.reason;
     return r instanceof Error ? r : new DOMException('중단', 'AbortError');
@@ -648,8 +662,9 @@ async function callCompat(cfg, system, user, signal, onSend) {
             const plainBody = { ...body };
             delete plainBody.response_format;
             j = await fetchJson(url, { method: 'POST', headers, body: plainBody, signal, timeout: HTTP_TIMEOUT });
-        } else throw e;
+        } else throw markBlock(e);
     }
+    { const why = blockedReasonOf(j); if (why) throw blockErr(why); }
     const text = contentOf(j);
     const u = isObj(j?.usage) ? j.usage : {};
     return { text, usage: { in: Number(u.prompt_tokens) || 0, out: Number(u.completion_tokens) || 0 } };
@@ -682,7 +697,11 @@ function stError(e) {
     const str = (v) => (typeof v === 'string' ? v : '');
     const raw = str(e?.error?.message) || str(e?.message) || str(e);
     const m = scrub(snip(raw, 120));
-    return koErr(`실리태번 연결 오류${m ? ' · ' + m : ''}`, { retry: /429|5\d\d|timeout|시간|overload|rate limit/i.test(m) });
+    const err = koErr(`실리태번 연결 오류${m ? ' · ' + m : ''}`, { retry: /429|5\d\d|timeout|시간|overload|rate limit/i.test(m) });
+    if (err.retry) { /* 429 · 5xx · 시간 — 차단 아님 */ }
+    else if (isContentBlock(raw)) err.blocked = true;   // 6.1.8 검열되면 다른 모델로
+    else if (/^(?:bad request|HTTP 400(?::\s*(?:bad request)?)?)\.?$/i.test(String(raw).trim())) err.bare400 = true;
+    return err;
 }
 /**
  * 실리태번은 generateRaw 의 글에 매크로 치환을 한 번 더 한다 (createRawPrompt → substituteParams).
@@ -760,9 +779,20 @@ function providerError(j) {
     if (j && j.quota_error) return koErr('잔액·한도 부족');
     const e = j && j.error;
     const raw = typeof e === 'string' ? e : (isObj(e) && typeof e.message === 'string' ? e.message : (typeof j?.message === 'string' ? j.message : ''));
-    for (const [re, ko, retry] of PROVIDER_ERRORS) if (re.test(raw)) return koErr(ko, { retry });
+    for (const [k, [re, ko, retry]] of PROVIDER_ERRORS.entries()) {
+        if (!re.test(raw)) continue;
+        const e = koErr(ko, { retry });
+        // 6.1.8 검열되면 다른 모델로: 거절 줄(맨 끝)에 걸린 것만 — 키 · 한도 · 잦은 요청 · 서버 오류 줄은 글에 'blocked' 가 있어도 아님
+        if (k === PROVIDER_ERRORS.length - 1) {
+            if (isContentBlock(raw)) e.blocked = true;
+            else if (/^(?:bad request|HTTP 400(?::\s*(?:bad request)?)?)\.?$/i.test(raw.trim())) e.bare400 = true;
+        }
+        return e;
+    }
     const m = scrub(snip(raw, 80));
-    return koErr(`API 오류${m ? ' · ' + m : ''}`, { retry: TRANSIENT.test(raw) });
+    const other = koErr(`API 오류${m ? ' · ' + m : ''}`, { retry: TRANSIENT.test(raw) });
+    if (!other.retry && isContentBlock(raw)) other.blocked = true;   // 6.1.8 줄에 없는 검열 글 (OpenRouter 'flagged for moderation' 등)
+    return other;
 }
 /** 응답 글: 실리태번의 extractMessageFromData(openai) 먼저 (Claude 글 블록 · choices · Cohere), 안 되면 번역기와 같은 순서로 */
 function providerText(j) {
@@ -833,9 +863,10 @@ async function callProvider(cfg, system, user, signal, onSend) {
             j = await fetchJson(stapi.GENERATE_URL, { method: 'POST', headers: getRequestHeaders(), body, signal, timeout: HTTP_TIMEOUT });
         } catch (e) {
             if (aborted(signal)) throw e;
-            throw providerHttpError(cfg, e);
+            throw markBlock(providerHttpError(cfg, e));
         }
         if (!j || typeof j !== 'object') throw koErr('빈 응답이에요');
+        { const why = blockedReasonOf(j); if (why) throw blockErr(why); }   // 6.1.8 막힌 답은 길이를 늘려 다시 묻지 않는다
         if (j.error) throw providerError(j);
         const finish = String(j?.choices?.[0]?.finish_reason ?? j?.stop_reason ?? j?.candidates?.[0]?.finishReason ?? '');
         const text = providerText(j);
@@ -955,6 +986,33 @@ const dropped = new WeakMap();   // mes → { swipe, analysis }  이어쓰기·�
 const swipeOf = (mes) => Number(mes?.swipe_id) || 0;
 // 잘못된 응답은 성공 분석으로 저장하지 않는다. 같은 대사를 누를 때마다 같은 전체 요청을 다시 보내지 않게 세션 안에서만 기억한다.
 const responseFailures = new WeakMap();
+// 6.1.8 내용 차단으로 막힌 메시지 (같은 글 · 스와이프) — 다른 모델을 골라 두면 다음엔 원래 모델을 건너뛰고 그 모델로 바로
+const blockedRuns = new WeakMap();
+/** 지금 분석 요청이 가는 곳 { provider, model, url } — 다른 모델이 같은 곳이면 다시 보내지 않는다 */
+function mainIdOf(cfg, engine) {
+    try {
+        if (engine === 'provider') return { provider: String(cfg.provider || ''), model: stapi.modelOf(cfg), url: String(cfg.provider) === 'custom' ? stapi.customEndpoint(cfg).url : '' };
+        if (engine === 'st') {
+            const ctx = getContext() || {};
+            const provider = String(ctx.chatCompletionSettings?.chat_completion_source || '');
+            return { provider, model: stapi.modelOf({ ...cfg, provider, provider_models: {} }), url: provider === 'custom' ? stapi.customEndpoint({}).url : '' };
+        }
+    } catch { /* 모름 */ }
+    return { provider: 'compat', model: String(cfg.model || ''), url: String(cfg.base || '').trim().replace(/\/+$/, '') };
+}
+/** 이 메시지가 내용 차단으로 막혔나 (재생기의 「다른 모델로 다시」) */
+export function wasBlocked(mesId) {
+    const mes = msgOf(Number(mesId)), b = mes && blockedRuns.get(mes);
+    return !!b && b.hash === textHash(mes) && b.swipe === swipeOf(mes);
+}
+let fallbackToastAt = 0;
+function noteFallback(t) {
+    log('info', `대사 분석 · 다른 모델로 해냄 (${t.provider})`);
+    const now = Date.now();
+    if (now - fallbackToastAt < 60000) return;   // 1분에 한 번
+    fallbackToastAt = now;
+    try { globalThis.toastr?.info?.(`검열돼서 ${t.model}로 다시 분석했어요`, 'TTS', { timeOut: 3500 }); } catch { /* 토스트 없음 */ }
+}
 const endpointOf = (value) => { try { const u = new URL(String(value || '')); return `${u.origin}${u.pathname}`.replace(/\/+$/, ''); } catch { return ''; } };
 /** 실패 메모에만 실제 선택 연결을 포함한다. 본체 모델·상속 주소를 바꾸면 재시도; 비밀번호·추가 헤더는 읽지 않으며 서명은 메모리에만, 저장·로그 없음. */
 function failureConnection(cfg) {
@@ -1221,17 +1279,17 @@ export function analyzeMessage(mesId, opts = {}) {
     const cached = getAnalysis(id);
     if (cached && !opts.force && analysisCovers(cached, langs)) return Promise.resolve(cached);
     if (aborted(opts.signal)) return Promise.reject(abortErr(opts.signal));
-    if (!opts.force && hasResponseFailure(id)) return Promise.reject(responseFailures.get(mes).error);
+    if (!opts.force && opts.via !== 'fallback' && hasResponseFailure(id)) return Promise.reject(responseFailures.get(mes).error);   // 6.1.8 「다른 모델로 다시」는 막힌 기억을 넘는다
     const inflight = running.get(id);
     // 1.6.4 같은 글의 진행 중인 분석이면 붙는다 — 프롬프트 지문이 그새 바뀌었어도 (앞 메시지의 분석이 엑스트라를 적어 목소리 표가 바뀌는 것만으로 다시 묻지 않게)
-    if (inflight && !inflight.ctrl.signal.aborted && inflight.mes === mes && inflight.hash === textHash(mes) && inflight.swipe === swipeOf(mes) && (!opts.force || inflight.force)) {
+    if (inflight && !inflight.ctrl.signal.aborted && inflight.mes === mes && inflight.hash === textHash(mes) && inflight.swipe === swipeOf(mes) && (!opts.force || inflight.force) && (inflight.via || '') === (opts.via || '')) {
         if (!inflight.started) inflight.langs = normLangs([...inflight.langs, ...langs]);
         if (covers(inflight.langs, langs)) return join(inflight, opts.signal);
         return join(inflight, opts.signal).then(() => msgOf(id) === mes && inflight.hash === textHash(mes) && inflight.swipe === swipeOf(mes) ? analyzeMessage(id, opts) : null);
     }
     if (!engineReady(cfg)) return Promise.resolve(null);
 
-    const entry = { id, mes, hash: textHash(mes), swipe: swipeOf(mes), langs, force: !!opts.force, ctrl: new AbortController(), promise: null, users: 0, pinned: false, started: false, sent: false };
+    const entry = { id, mes, hash: textHash(mes), swipe: swipeOf(mes), langs, force: !!opts.force, via: opts.via === 'fallback' ? 'fallback' : '', ctrl: new AbortController(), promise: null, users: 0, pinned: false, started: false, sent: false };
     const run = () => doAnalyze(entry);
     entry.promise = chain.then(run, run).finally(() => { if (running.get(id) === entry) running.delete(id); keptRuns.delete(entry); });
     running.set(id, entry);
@@ -1281,14 +1339,47 @@ async function doAnalyze(entry) {
     log('req', `대사 분석 #${id} · ${built.asked}줄 · ${engine === 'provider' ? String(cfg.provider || '') : engine}`);
     const t0 = Date.now();
     const onSend = () => { entry.sent = true; };               // 보낸 뒤로는 부르는 쪽이 모두 그만둬도 끝까지 받아 저장 (join)
-    const r = await callerOf(engine)(cfg, built.system, built.user, signal, onSend);
-    addAnalysisUsage(r.usage.in, r.usage.out, Math.max(1, Number(r.usage.calls) || 1));   // 실리태번 연결도 호출 수는 센다 (토큰은 모름)
+    // 6.1.8 검열되면 다른 모델로: 내용 차단(맨 400 · 거절 글 포함)이면 골라 둔 모델로 한 번만 더. 이미 막힌 메시지 · 「다른 모델로 다시」는 그 모델로 바로
+    const failed = mainIdOf(cfg, engine);
+    const byFallback = previous?.via === 'fallback';   // 다른 모델로 만든 분석의 보충(새 언어)도 그 모델로 — 원래 모델은 또 막힌다
+    let target = fallbackTarget(cfg.fallback, { manual: entry.via === 'fallback' || byFallback });
+    if (target) target = { ...target, url: target.provider === 'custom' ? stapi.customEndpoint(fallbackCfg(cfg, target)).url : '' };
+    let fallbackSame = false;
+    if (target && sameTarget(failed, target)) { target = null; fallbackSame = true; }
+    const seen = blockedRuns.get(mes);
+    const via = entry.via === 'fallback' || (target && (byFallback || (seen && seen.hash === entry.hash && seen.swipe === swipe))) ? 'fallback' : '';
+    const counted = (p) => p.then(x => { addAnalysisUsage(x.usage.in, x.usage.out, Math.max(1, Number(x.usage.calls) || 1)); return x; });   // 실리태번 연결도 호출 수는 센다 (토큰은 모름)
+    let used = null, r;
+    try {
+        r = await runWithBlockFallback({
+            call: () => counted(callerOf(engine)(cfg, built.system, built.user, signal, onSend)),
+            callFallback: (t) => { log('info', `대사 분석 #${id} · ${via ? '막힌 메시지' : '내용 차단'} → 다른 모델(${t.provider})로 한 번`); return counted(callProvider(fallbackCfg(cfg, t), built.system, built.user, signal, onSend)); },
+            target, failed, via,
+            refused: (x) => !parseReply(x?.text) && refusalReply(x?.text),
+            onUsed: (t) => { used = t; },
+        });
+    } catch (e) {
+        const here = !aborted(signal) && msgOf(id) === mes && textHash(mes) === entry.hash && swipeOf(mes) === swipe;
+        // 기억할 실패: 확실한 차단 · 맨 400(같은 요청은 또 400 — 사용자의 중계가 검열을 이 모양으로 줌) · 다른 모델도 거절.
+        //   빈 답('Candidate text empty' — 생각 토큰이 한도를 먹은 것일 수도) · 다른 모델의 429 · 연결 실패는 예전처럼 다음에 다시
+        const hard = e?.fallback ? e.fallback.blocked === true : isContentBlock(e) || bareBadRequest(e);
+        if (here && (hard || (e?.fallback && maybeBlocked(e)))) blockedRuns.set(mes, { hash: entry.hash, swipe });
+        if (here && hard) responseFailures.set(mes, { key: failedKey, error: e });   // 같은 글은 누를 때마다 다시 보내지 않음 — 분석 설정(다른 모델)을 바꾸면 키가 바뀌어 다시
+        if (e && typeof e === 'object' && !e.fallback && !target && maybeBlocked(e)) { e.noFallback = true; if (fallbackSame) e.fallbackSame = true; }   // 재생기: 「검열되면 다른 모델로」를 알려 줌
+        throw e;
+    }
+    if (used) { base.model = used.model; base.via = 'fallback'; blockedRuns.delete(mes); noteFallback(used); }
     const parsed = parseReply(r.text);
     if (aborted(signal)) throw abortErr(signal);               // 지움 · 글이 바뀜 (저장하지 않음)
     if (!parsed) {
         // 1.6.0 무엇이 왔는지 진단에 남긴다 (비밀값은 가림): 모델이 거절문·설명문만 보냈는지, 빈 답인지 알 수 있게
         const head = String(r.text ?? '').trim();
         log('err', `대사 분석 응답 해석 실패 #${id}${r.truncated ? ' (길이 한도)' : ''} · ${head ? '앞부분: ' + snip(scrub(head), 160) : '빈 답'}`);
+        if (refusalReply(head)) {   // 6.1.8 거절 글 — 다른 모델이 없거나 같은 모델이라 그대로 왔다
+            const error = Object.assign(koErr('모델이 이 내용의 분석을 거절했어요'), { blocked: true, noFallback: !target, fallbackSame });
+            if (msgOf(id) === mes && textHash(mes) === entry.hash && swipeOf(mes) === swipe) { blockedRuns.set(mes, { hash: entry.hash, swipe }); responseFailures.set(mes, { key: failedKey, error }); }
+            throw error;
+        }
         throw rejectResponse(r.truncated ? '대사 분석 응답이 길이 한도에 닿아 잘렸어요' : head ? '대사 분석 응답이 JSON 형식이 아니에요' : '대사 분석 응답이 비었어요');
     }
     let segs = normalizeSegs(parsed, built, promptOpts.emotion);

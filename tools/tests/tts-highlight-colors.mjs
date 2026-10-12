@@ -7,7 +7,7 @@ import { pathToFileURL, fileURLToPath } from 'node:url';
 
 const root = path.resolve(process.argv[2] || fileURLToPath(new URL('../..', import.meta.url)));
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
-const { HIGHLIGHT_BASE, COLOR_LIMIT, NEAR_PLAIN, colorKey, nearColor, highlightName, followsTextColor, groupByColor, highlightRule, pieceKey, groupId, splitGroup, alphaOf, paintKey, bandFrom, markerMask } = await import(pathToFileURL(path.join(root, 'src/addons/tts/src/highlight-colors.js')));
+const { HIGHLIGHT_BASE, COLOR_LIMIT, NEAR_PLAIN, colorKey, nearColor, highlightName, followsTextColor, groupByColor, highlightRule, pieceKey, groupId, splitGroup, alphaOf, paintKey, bandFrom, markerMask, speakerColor } = await import(pathToFileURL(path.join(root, 'src/addons/tts/src/highlight-colors.js')));
 
 const results = [];
 function test(name, fn) { try { fn(); results.push({ name, pass: true }); } catch (e) { results.push({ name, pass: false, error: e.stack || e.message }); } }
@@ -120,7 +120,7 @@ test('switch: default on, tidied from strings, shown only for underline styles, 
 
 test('player paints and clears through the colour module with the switch; version stamps agree', () => {
     const player = read('src/addons/tts/src/player.js');
-    assert.match(player, /import \{ paintColorHighlights, clearColorHighlights \} from '\.\/highlight-colors\.js';/);
+    assert.match(player, /import \{ paintColorHighlights, clearColorHighlights(, [a-zA-Z, ]+)? \} from '\.\/highlight-colors\.js';/);
     assert.match(player, /function clearHighlight\(\) \{ stopHighlightWatch\(\); if \(highlightOk\(\)\) clearColorHighlights\(\); \}/);
     assert.match(player, /paintColorHighlights\(root, ranges, style, \{ follow: settings\(\)\.highlight_text_color !== false \}\)/);
     assert.ok(!/CSS\.highlights\.set\(name, new Highlight\(\.\.\.ranges\)\)/.test(player), 'no single theme-colour highlight left in player.js');
@@ -225,6 +225,42 @@ test('1.7.0 player repaints the read line on re-render, theme changes and once m
     assert.match(player, /const root = prefer\?\.isConnected \? prefer : document\.querySelector/, 'stays on the same message element');
     assert.match(player, /else clearColorHighlights\(\);   \/\/ 글이 바뀌어 못 찾음/);
     assert.match(player, /analysis\.analysisCovers\(cached, need\.langs\)/, 'a pending redo of rewritten lines counts as not covered');
+});
+
+// ---------- 1.7.1 (테마 6.1.8) 재생 막대의 이름 색 = 읽는 줄의 대사 색 — 사용자: 「tts 밑에 이름 뜨는 것도 대사 색깔이랑 맞춰 주삼 대사 색 있는 애들은」
+test('1.7.1 bar name colour: the dialogue colour that covers most of the read line; plain text, the theme dialogue colour and marker ink count as no colour', () => {
+    const TEAL = 'rgb(60, 207, 191)', THEME_DIALOGUE = 'rgb(243, 247, 252)', THEME_EM = 'rgb(164, 199, 237)', THEME_STRONG = 'rgb(255, 232, 115)', WHITE_EM = 'rgb(51, 111, 166)';
+    const THEME = [PLAIN, THEME_DIALOGUE, INK, THEME_EM, THEME_STRONG];   // player.js THEME_INKS 를 푼 값 (블루 아워)
+    assert.equal(speakerColor([{ color: TEAL, start: 0, end: 40 }], THEME), '#3ccfbf', 'thought line in the character colour (screenshot case)');
+    assert.equal(speakerColor([{ color: RED, fill: INK, start: 0, end: 10 }], THEME), '#e63946', 'marker dialogue: the band colour (color), not the ink fill');
+    assert.equal(speakerColor([{ color: PLAIN, start: 0, end: 30 }], THEME), '', 'plain narration → theme colour');
+    assert.equal(speakerColor([{ color: THEME_DIALOGUE, start: 0, end: 30 }], THEME), '', 'uncoloured dialogue painted by the theme → theme colour');
+    assert.equal(speakerColor([{ color: INK, start: 0, end: 30 }], THEME), '', 'uncoloured marker dialogue (ink) → theme colour');
+    assert.equal(speakerColor([{ color: THEME_EM, start: 0, end: 30 }], THEME), '', 'an uncoloured character’s thought / italic in the theme em colour → theme colour');
+    assert.equal(speakerColor([{ color: THEME_STRONG, start: 0, end: 30 }], THEME), '', 'bold-only line in the theme strong colour → theme colour');
+    assert.equal(speakerColor([{ color: WHITE_EM, start: 0, end: 30 }], [PLAIN, WHITE_EM]), '', 'other palettes too (화이트 em)');
+    assert.equal(speakerColor([{ color: THEME_EM, start: 0, end: 30 }, { color: TEAL, start: 0, end: 10 }], THEME), '#3ccfbf', 'a real character colour wins even when shorter than theme-coloured words');
+    assert.equal(speakerColor([{ color: RED, start: 0, end: 5 }, { color: TEAL, start: 0, end: 20 }, { blank: true, start: 0, end: 50 }], [PLAIN]), '#3ccfbf', 'most letters win; spaces do not count');
+    assert.equal(speakerColor([{ color: 'rgba(0, 0, 0, 0)', start: 0, end: 30 }], [PLAIN]), '', 'gradient text (transparent) → theme colour');
+    assert.equal(speakerColor([{ color: '#e63946', text: '오늘은 늦었네.' }], []), '#e63946', 'source markup colours (off screen) by text length');
+    assert.equal(speakerColor([], [PLAIN]), '');
+});
+test('1.7.1 bar: name tinted per line from the read range (same ranges as the highlight), reset while waiting; source colours when off screen', () => {
+    const player = read('src/addons/tts/src/player.js');
+    assert.match(player, /import \{ paintColorHighlights, clearColorHighlights, piecesOf, speakerColor, colorKey \} from '\.\/highlight-colors\.js';/);
+    assert.match(player, /tintBarName\(job\);   \/\/ 1\.7\.1/);
+    assert.match(player, /if \(job\.barTint\) barEl\.voice\.style\.setProperty\('--lv-name', job\.barTint\); else barEl\.voice\.style\.removeProperty\('--lv-name'\);/);
+    assert.match(player, /barEl\.voice\.textContent = String\(mes\?\.name \|\| ''\);\s*try \{ barEl\.voice\.style\.removeProperty\('--lv-name'\); \}/);
+    assert.match(player, /if \(fresh \|\| job\.barTint === undefined\)/, 'measured once per line');
+    assert.match(player, /tintBarName\(job, true\);   \/\/ 1\.7\.1 막대 이름 색도 다시/, 're-measured when the line is repainted');
+    assert.ok(!/barEl\.voice\.style\.color =/.test(player), 'no inline colour (it would beat the dimmed paused / waiting name)');
+    const css = read('src/addons/tts/style.css');
+    assert.ok(css.includes('font-weight: 600; color: var(--lv-name, var(--lv-accent)); }'));
+    assert.ok(css.includes('.lv-bar-paused .lv-bar-voice { color: var(--lv-dim); }') && css.includes('.lv-bar-wait .lv-bar-voice { color: var(--lv-dim); }'), 'paused / waiting still dim the name');
+    assert.match(player, /if \(ranges\.length\) return speakerColor\(piecesOf\(ranges, root\), \[getComputedStyle\(root\)\.color, \.\.\.themeInks\(\)\]\);/);
+    assert.match(player, /const THEME_INKS = \['--salty-dialogue', '--salty-marker-ink', '--salty-em', '--salty-strong', '--SmartThemeEmColor', '--SmartThemeQuoteColor', '--SmartThemeBodyColor'\];/);
+    assert.match(player, /return speakerColor\(\(job\.parts \|\| \[\]\)\.map\(p => \(\{ color: p\.seg\?\.color \|\| p\.alt\?\.color \|\| '', text: p\.seg\?\.text \|\| p\.alt\?\.text \|\| '' \}\)\), off\);/, 'off-screen source colours also skip theme colours');
+    assert.match(player, /const ranges = rangesFor\(job, root\);\n/, 'the highlight uses the same range finder');
 });
 
 const failed = results.filter(r => !r.pass);

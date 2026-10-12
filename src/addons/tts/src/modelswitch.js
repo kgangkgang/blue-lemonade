@@ -19,6 +19,7 @@ import { runtimeEnabled } from './runtime.js';
 
 const SYM = Symbol.for('st.model-switch.v1');
 const ID = 'tts-analysis';
+const FALLBACK_ID = 'tts-analysis-fallback';   // 6.1.8 검열되면 다른 모델로 (API 쓰는 기능은 모델 전환에 다 나와야 한다)
 const RETRY_MS = [1000, 3000, 8000, 20000, 60000];
 let joined = null;       // 등록한 레지스트리 (다른 것으로 바뀌면 다시 등록)
 let timers = [];
@@ -59,6 +60,31 @@ export function apply({ source, model, url } = {}) {
     return true;
 }
 
+/** 6.1.8 「검열되면 다른 모델로」의 지금 모델 — 안 골랐으면 { follow: '안 씀' } */
+export function readFallback() {
+    const fb = isObj(cfg().fallback) ? cfg().fallback : {};
+    const source = String(fb.provider || '');
+    if (!source) return { follow: '안 씀' };
+    return { source, model: String(fb.model || ''), url: source === 'custom' ? String(cfg().custom_url || '') : '' };
+}
+/** 다른 모델을 고른 공급자 · 모델로 (켜짐 스위치는 그대로). Custom 주소는 분석의 Custom 주소를 함께 쓴다 */
+export function applyFallback({ source, model } = {}) {
+    const src = stapi.source(source);
+    if (!src) return false;
+    const a = cfg();
+    const main = read();   // 분석 모델과 같은 곳으로는 바꾸지 않는다 (그러면 다시 보낼 곳이 없어진다)
+    if (!main.follow && main.source === src.id && String(main.model || '') === String(model ?? '').trim()) return false;
+    const fb = isObj(a.fallback) && !Object.isFrozen(a.fallback) ? a.fallback : { enabled: true, ...(isObj(a.fallback) ? a.fallback : {}) };
+    fb.provider = src.id;
+    fb.model = String(model ?? '').trim();
+    a.fallback = fb;
+    save();
+    try { document.dispatchEvent(new CustomEvent('tts:analysis', { detail: { source: src.id, fallback: true } })); } catch { /* 화면이 없음 (테스트) */ }
+    return true;
+}
+export function fallbackTarget() {
+    return { id: FALLBACK_ID, name: 'TTS 대사 분석 (검열되면)', sources: stapi.SOURCES.map(s => s.id), settingsKey: KEY, path: 'analysis.fallback', defaultOff: true, read: readFallback, apply: applyFallback };
+}
 /** 레지스트리에 넘기는 대상 */
 export function target() {
     return {
@@ -82,7 +108,7 @@ export function register() {
     if (busy) return false;
     busy = true;
     try {
-        if (reg.register(target()) !== false) joined = reg;
+        if (reg.register(target()) !== false) { joined = reg; try { reg.register(fallbackTarget()); } catch { /* 옛 모델 전환 */ } }
     } catch (e) { log('err', `모델 전환 등록 실패: ${e.message}`); }
     finally { busy = false; }
     if (joined === reg) stopTimers();
@@ -94,7 +120,7 @@ export function unregister() {
     const reg = joined;
     joined = null;
     stopTimers();
-    try { if (reg && typeof reg.unregister === 'function') reg.unregister(ID); } catch { /* 모델 전환이 이미 없음 */ }
+    try { if (reg && typeof reg.unregister === 'function') { reg.unregister(ID); reg.unregister(FALLBACK_ID); } } catch { /* 모델 전환이 이미 없음 */ }
 }
 
 function stopTimers() {

@@ -488,6 +488,10 @@ export const ready = new Promise((resolve, reject) => jQuery(() => { (async () =
         // 1.5.5 다른 확장의 글을 채팅 메시지와 똑같은 길로 (분석 · 효과음 · 듣는 언어까지 TTS 설정 그대로) — { text, name?, isUser?, only?: { text, index } } 또는 글 하나
         readText: (opts) => player.speakExternal(opts && typeof opts === 'object' ? opts : { text: opts }),
         stop: () => player.stop(),
+        // 6.1.8 다른 확장용: 화자의 목소리 · 소리만 받기(재생 없음, ArrayBuffer) · 목소리 목록. 실패는 Error.code (disabled · no-voice · engine · aborted)
+        voiceOf: (opts) => player.voiceOfName(opts && typeof opts === 'object' ? opts : { name: opts }),
+        synth: (opts) => player.synthForExternal(opts && typeof opts === 'object' ? opts : { text: opts }),
+        voices: () => player.voiceListPublic(),
     });
     setTimeout(() => verifyAddonCss({ folder: 'tts', name: '--lv-css-version', version: VERSION, title: 'TTS', selector: '.lv-settings' }), 3000);
 })().then(resolve, reject); }));
