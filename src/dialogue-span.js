@@ -190,6 +190,58 @@ function pairMixed(box) {
     for (const [a, x, b, y] of hits) for (const q of wrapRange(all, a, x, b, y)) mixed.add(q);
 }
 
+// 6.1.5 겹친 같은 괄호: 실리태번은 「…」 를 가장 가까운 」 까지만 q 로 감싼다(script.js 의 「.*?」 게으른 짝).
+// 그래서 「거 봐 … 「도와줘」 하는 표정이었다고.」 처럼 대사 안에 같은 괄호가 또 들어가면 안쪽 」 에서 q 가 끝나고 뒷부분이 서술 색이 됐다.
+// q 안의 여는 괄호가 닫는 괄호보다 많으면, 같은 줄(뒤 형제 노드)에서 깊이가 0 이 되는 닫는 괄호까지 q 안으로 옮긴다.
+// 옮긴 범위 안의 실리태번 q(뒤쪽 「…」 짝)는 풀어서 겹쳐 칠하지 않는다. 짝이 같은 줄에 없거나 꾸밈 요소 안에서 닫히면 그대로 둔다
+const NESTING = { '「': '」', '『': '』', '«': '»' };   // “ 는 뒤집혀 쓰이는 일이 잦아(“…“ — pairMixed 가 따로 맡는다) 겹침으로 세지 않는다
+// q 가 데우스 감정 대사 칸(span.custom-dem-expressive) 안의 유일한 글이면 그 칸 바깥 형제까지 본다 (그 칸이 q 만 먼저 감싼다)
+const lone = el => [...el.parentElement.childNodes].every(n => n === el || (n.nodeType === 3 && !n.data.trim()));
+function extendNestedQuotes(box) {
+    for (const q of box.querySelectorAll('q:not(.bl-q-span)')) {
+        if (!box.contains(q)) continue;   // 앞에서 풀린 q 만 건너뛴다 (아직 붙지 않은 상자도 돌아야 해서 isConnected 로 보지 않는다)
+        const text = q.textContent, open = text[0], close = NESTING[open];
+        if (!close) continue;
+        let depth = 0;
+        for (const ch of text) { if (ch === open) depth++; else if (ch === close) depth--; }
+        if (depth <= 0) continue;
+        let from = q;
+        while (from.parentElement && from.parentElement !== box && from.parentElement.matches('span.custom-dem-expressive') && lone(from)) from = from.parentElement;
+        const moves = [];
+        let end = null;
+        for (let n = from.nextSibling; n; n = n.nextSibling) {
+            if (n.nodeType === 3) {
+                const s = n.data;
+                let k = 0;
+                for (; k < s.length; k++) { if (s[k] === open) depth++; else if (s[k] === close && --depth === 0) break; }
+                if (depth === 0) { end = { node: n, at: k }; break; }
+                moves.push(n);
+                continue;
+            }
+            if (n.nodeType !== 1) { moves.push(n); continue; }
+            if (BLOCK.test(n.nodeName) || (n.matches(SKIP) && n.nodeName !== 'Q')) break;   // 줄 · 블록 · 코드를 넘지 않는다
+            // 꾸밈 칸(실리태번 스트리밍 페이드 인의 낱말 칸 span.text_segment · *강조*) 안에서 닫힐 수 있다
+            const t = n.textContent;
+            let k = 0, closed = false;
+            for (; k < t.length; k++) { if (t[k] === open) depth++; else if (t[k] === close && --depth === 0) { closed = true; break; } }
+            if (!closed) { moves.push(n); continue; }
+            if (!t.slice(k + 1).trim()) { end = { el: n }; break; }   // 」 로 끝나는 칸 — 통째로
+            // 「곁에」라는 처럼 칸 가운데서 닫힘: 글 노드 하나뿐인 칸이면 닫는 괄호 뒤를 같은 칸의 복제로 떼어 낸다
+            if (n.childNodes.length === 1 && n.firstChild.nodeType === 3) {
+                const rest = n.firstChild.splitText(k + 1), twin = n.cloneNode(false);
+                twin.append(rest);
+                n.after(twin);
+                end = { el: n };
+            }
+            break;
+        }
+        if (!end) continue;
+        if (end.node && end.at + 1 < end.node.data.length) end.node.splitText(end.at + 1);
+        q.append(...moves, end.node ?? end.el);
+        for (const inner of [...q.querySelectorAll('q:not(.bl-q-span)')]) inner.replaceWith(...inner.childNodes);
+    }
+}
+
 export function wrapSpanningQuotes(root) {
     if (!root?.querySelectorAll) return;
     for (const box of root.matches?.('.mes_text, .salty-sample') ? [root] : root.querySelectorAll('.mes_text, .salty-sample')) {
@@ -199,6 +251,7 @@ export function wrapSpanningQuotes(root) {
             const t = q.textContent;
             if (PAIRS[t[0]] && !(t.length > 1 && t.trimEnd().endsWith(PAIRS[t[0]])) && laneAt(q)) q.replaceWith(...q.childNodes);
         }
+        extendNestedQuotes(box);   // 6.1.5 「…「안쪽」…」 — 바깥 대사 끝까지
         pairMixed(box);
         let guard = 0;
         // 한 번 감싸면 노드 목록이 바뀌므로 다시 훑는다 (감싼 조각은 q 안이라 다음 훑기에서 빠진다)

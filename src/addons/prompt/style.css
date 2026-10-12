@@ -474,3 +474,58 @@ body.salty .pt-choice-backdrop .pt-choice-btns { gap:8px; }
 /* Existing custom dictionaries stay recoverable without changing enabled state. */
 #pt-panel .pt-locale-override{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px 10px;margin-block:0 8px}
 #pt-panel .pt-locale-override[hidden]{display:none}
+
+/* 6.1.5 작업 줄 한 줄 정리 — 번역 · 재번역 · 제목 · 중단 · 비우기 · 보기 · 설명 7칸을 아이콘 위 · 이름 아래로 같은 폭에.
+   검색은 선택 줄로, 원본에 적용 · 더보기는 불러오기 줄로 올려 목록 칸을 넓힌다 */
+#pt-panel .pt-page-fixed .pt-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:8px; }
+#pt-panel .pt-page-fixed .pt-toolbar > .pt-combo { flex:1 1 140px; min-width:0; }
+#pt-panel .pt-page-fixed .pt-toolbar > .pt-btn { flex:0 0 auto; min-height:40px; }
+#pt-panel .pt-page-fixed .pt-export-group { flex:0 0 auto; width:auto; display:flex; flex-wrap:nowrap; align-items:center; gap:6px; margin:0; }
+#pt-panel .pt-page-fixed .pt-export-group > .pt-btn-icon { min-height:40px; height:40px; padding:0 10px; }
+#pt-panel .pt-page-fixed .pt-more-actions { flex:0 0 auto; text-align:left; }
+#pt-panel .pt-page-fixed .pt-more-actions > summary { min-height:40px; display:inline-flex; align-items:center; gap:6px; padding:0 10px; }
+#pt-panel .pt-page-fixed .pt-controls { display:block; margin-bottom:8px; }
+#pt-panel .pt-page-fixed .pt-act-row { display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:4px; overflow:visible; flex-wrap:nowrap; }
+#pt-panel .pt-page-fixed .pt-act-row > .pt-act { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; width:100%; min-width:0; height:auto; min-height:48px; padding:5px 2px; margin:0; font-size:11px; line-height:1.25; white-space:nowrap; border-radius:10px; }
+#pt-panel .pt-page-fixed .pt-act-row > .pt-act > i { font-size:15px; line-height:1; }
+#pt-panel .pt-page-fixed .pt-act-row > .pt-act > span:not(.pt-qhelp-mark) { display:block; max-width:100%; overflow:hidden; text-overflow:clip; letter-spacing:-.02em; }
+#pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark { display:inline-grid; place-items:center; width:16px; height:16px; border:1px solid currentColor; border-radius:50%; font:700 10px/1 sans-serif; }
+#pt-panel .pt-page-fixed .pt-act-row > .pt-qhelp { background:transparent; color:var(--pt-text-dim); border-color:var(--pt-border); }
+#pt-panel .pt-page-fixed .pt-act-row > .pt-btn-eye.pt-eye-on { background:var(--pt-accent-soft); color:var(--pt-accent); border-color:var(--pt-accent); }
+#pt-panel .pt-page-fixed .pt-select-row { display:flex; flex-wrap:nowrap; align-items:center; gap:8px; margin-bottom:8px; }
+#pt-panel .pt-page-fixed .pt-select-row > .pt-search { flex:1 1 auto; width:auto; min-width:0; height:38px; min-height:38px; margin:0; }
+#pt-panel .pt-page-fixed .pt-select-row > .pt-info-chip, #pt-panel .pt-page-fixed .pt-select-row > .pt-selected-chip { flex:0 0 auto; white-space:nowrap; }
+body.salty #pt-panel .pt-page-fixed .pt-act-row > .pt-act { min-height:48px; height:auto; padding:5px 2px; white-space:nowrap; }
+body.salty #pt-panel .pt-page-fixed .pt-act-row { gap:4px; flex-wrap:nowrap; }
+body.salty #pt-panel .pt-page-fixed .pt-select-row { flex-wrap:nowrap; gap:8px; }
+@media (max-width:360px) { #pt-panel .pt-page-fixed .pt-act-row > .pt-act { font-size:10px; letter-spacing:-.04em; } }
+/* 6.1.5 (2) 이름 줄바꿈 막기 · 같은 높이 · 눈 단추 중립색 · 불러오기 줄에 적용 · 더보기 · 폰에서 탭 한 줄 */
+#pt-panel .pt-page-fixed .pt-act-row > .pt-act { align-self:stretch; padding:5px 1px; }
+#pt-panel .pt-page-fixed .pt-act-row > .pt-act > span:not(.pt-qhelp-mark) { white-space:nowrap; word-break:keep-all; overflow-wrap:normal; font-size:10.5px; letter-spacing:-.04em; }
+#pt-panel .pt-page-fixed .pt-act-row > .pt-btn-eye { background:var(--pt-bg-item); color:var(--pt-text); border:1px solid var(--pt-border); box-shadow:none; }
+#pt-panel .pt-page-fixed .pt-act-row > .pt-btn-danger { background:transparent; color:var(--pt-danger, #e5484d); border-color:color-mix(in srgb, var(--pt-danger, #e5484d) 45%, transparent); }
+#pt-panel .pt-page-fixed .pt-act-row > .pt-btn-stop:disabled { opacity:.45; }
+#pt-panel .pt-page-fixed .pt-toolbar > .pt-combo { flex:1 1 110px; }
+#pt-panel .pt-page-fixed .pt-export-group > .pt-bl-apply { gap:5px; padding:0 9px; white-space:nowrap; }
+#pt-panel .pt-page-fixed .pt-more-actions > summary { width:40px; min-width:40px; justify-content:center; padding:0; }
+body.salty #pt-panel .pt-page-fixed .pt-more-actions > summary { padding:0; min-height:40px; }
+body.salty #pt-panel .pt-page-fixed .pt-act-row > .pt-act { padding:5px 1px; align-self:stretch; }
+@container (max-width:559px) {
+  #pt-panel #pt-tabs { grid-template-columns:repeat(6, minmax(0, 1fr)); gap:2px; overflow:visible; }
+  #pt-panel #pt-tabs .pt-tab { flex-direction:column; gap:3px; min-width:0; min-height:48px; padding:5px 1px; font-size:11px; line-height:1.2; white-space:nowrap; word-break:keep-all; letter-spacing:-.03em; }
+  #pt-panel #pt-tabs .pt-tab > i { font-size:15px; top:0; }
+  body.salty #pt-panel #pt-tabs .pt-tab { min-height:48px; padding:5px 1px; white-space:nowrap; }
+  body.salty #pt-panel #pt-tabs { grid-template-columns:repeat(6, minmax(0, 1fr)); gap:2px; }
+}
+@container (max-width:340px) {
+  #pt-panel .pt-page-fixed .pt-act-row > .pt-act > span:not(.pt-qhelp-mark), #pt-panel #pt-tabs .pt-tab { font-size:9.5px; }
+}
+@container (min-width:560px) {
+  body.salty #pt-panel #pt-tabs { grid-template-columns:repeat(6, minmax(0, 1fr)); }   /* 넓을 때도 탭 6개 한 줄 (auto-fit 7em 이 5개 + 1개로 나눴다) */
+  #pt-panel .pt-page-fixed .pt-act-row > .pt-act > span:not(.pt-qhelp-mark) { font-size:12px; letter-spacing:0; }
+  #pt-panel .pt-page-fixed .pt-act-row > .pt-act > i { font-size:16px; }
+}
+/* 6.1.5 (3) 더보기는 떠 있는 목록 — 펼쳐도 불러오기 줄이 다시 흐르지 않게 */
+#pt-panel .pt-page-fixed .pt-more-actions { position:relative; }
+#pt-panel .pt-page-fixed .pt-more-actions-body { position:absolute; right:0; top:calc(100% + 6px); z-index:5; width:min(260px, 80cqw); padding:8px; background:var(--pt-bg); border:1px solid var(--pt-border); border-radius:10px; box-shadow:0 10px 30px #0004; }
+body.salty #pt-panel .pt-page-fixed .pt-export-group { flex-wrap:nowrap; gap:6px; }

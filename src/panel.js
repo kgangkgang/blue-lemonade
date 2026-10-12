@@ -1405,6 +1405,7 @@ function tabChat(s, sub) {
             ${row('고르기 목록 팝업', toggle('chat.selectPop', s.chat.selectPop !== false), '모델 · 프리셋 같은 목록을 테마가 그린 팝업으로 (끄면 폰 기본 목록)')}
             ${row('색 고르기 팝업', toggle('chat.colorPop', s.chat.colorPop !== false), '실리태번 색 칸도 테마 색 고르기로')}
             ${row('큰 숫자는 쉼표로', toggle('chat.numComma', s.chat.numComma !== false), '숫자 칸의 30000 을 30,000 으로 보여 줘요 · 누르면 원래대로, 값은 그대로')}
+            ${row('설명 ? 단추', toggle('chat.helpMarks', s.chat.helpMarks !== false), '월드인포 설정 · 한글화 패널 칸 옆의 ? 를 보여요 · 끄면 숨겨요')}
             ${row('페르소나 입력창 높이 2배', toggle('chat.personaTall', !!s.chat.personaTall), '페르소나 본문 칸을 세로로 늘려요 · 끄면 기존 높이')}
             ${splashRow()}
             ${faviconRow()}

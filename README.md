@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.1.4/blue-lemonade-6.1.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.1.5/blue-lemonade-6.1.5.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.1.4 · 최신 업데이트</summary>
+<summary>6.1.5 · 최신 업데이트</summary>
+
+- 월드인포 설정과 항목 칸 옆에 ?를 붙였어요. 스캔 깊이 · 컨텍스트 % · 재귀 스캔 같은 칸의 뜻과 추천값을 볼 수 있어요. 많다 싶으면 채팅 › 화면의 「설명 ? 단추」로 숨겨요.
+- 한글화 패널: 탭과 작업 단추를 한 줄씩으로 정리해 목록 칸을 넓혔어요. 눈 단추에 「번역본 · 원문」 이름을 붙였고, 「설명」 단추로 단추마다 뜻을 볼 수 있어요.
+- 대사 안에 같은 괄호가 또 들어간 「…「안쪽」…」 대사에서 안쪽 괄호 뒤부터 대사 색이 빠지던 문제를 고쳤어요.
+
+</details>
+
+<details>
+<summary>6.1.4 · ZIP 설치 요술봉 · 북마크 정리</summary>
 
 - ZIP 설치: 요술봉 메뉴에 ZIP 설치를 보일지 고를 수 있어요. 확장 카드의 「표시할 위치」에서 끄면 메뉴에서 사라지고, 세부 설정에서는 그대로 열려요.
 - 북마크 1.5.1: 북마크 모아 보기에서 ×로 마지막 그림을 떼면, 그림만 붙어 있던 북마크는 함께 사라져요. 그림을 붙인 확장 쪽에서 별을 끈 것과 같은 결과예요.

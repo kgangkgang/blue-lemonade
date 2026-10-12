@@ -1,4 +1,25 @@
 import { showThemeModal } from '../../modal.js';
+import { openHelpSheet } from '../../help-sheet.js';
+// 6.1.5 작업 줄 단추 설명 (? 설명)
+function controlsHelp(kind) {
+    const what = kind === 'wi' ? '월드인포' : kind === 'char' ? '봇카드' : '프리셋';
+    return {
+        title: '작업 줄 단추',
+        body: ['불러온 ' + what + '을(를) 번역하고 읽는 단추들이에요. 번역 결과는 번역 캐시에 저장되고, 「원본에 적용」을 누르기 전에는 원본 ' + what + ' 파일이 바뀌지 않아요.'],
+        list: [
+            ['번역', '체크한 항목(체크가 없으면 불러온 전부)의 본문을 번역해요. 누르면 본문 번역 · 주석 번역 중에서 고르고, 이미 번역된 항목은 저장된 결과를 다시 써요.'],
+            ['재번역', '이미 번역된 항목도 모델에 다시 요청해요. 결과가 마음에 안 들 때.'],
+            ['제목', '항목 제목만 빠르게 번역해요. 본문은 건드리지 않아요. 끝나면 목록이 번역 제목으로 바뀌어요.'],
+            ['중단', '진행 중인 번역을 멈춰요. 이미 끝난 항목의 결과는 남아요.'],
+            ['비우기', '이 자료의 번역 캐시를 지워요(체크한 항목이 있으면 그 항목만). 원본은 그대로예요.'],
+            ['번역본 · 원문 (눈)', '목록에 보이는 항목 제목을 번역 제목 ↔ 원문 제목으로 바꿔 보여 줘요. 화면 표시만 바뀌고 캐시 · 원본은 그대로예요.'],
+            ['⚡ 원본 적용', '번역 결과를 실제 ' + what + ' 파일에 덮어써요. 되돌리는 단추가 없으니, 누르기 전에 실리태번의 ' + what + ' 내보내기로 원본을 따로 저장해 두세요. 더보기의 JSON 내보내기는 번역본이라 백업이 되지 않아요.'],
+            ['더보기', '복사 · TXT · JSON 내보내기, 번역 기록(번역 메모리) 저장 · 가져오기.'],
+            ['체크 · 숫자 칩', '맨 앞 체크는 보이는 항목 모두 선택이에요. 칩은 항목 수와 토큰 추정치예요.'],
+        ].concat(kind === 'wi' ? [['ON · OFF', '월드인포 항목이 켜져 있는지예요(실리태번 월드인포의 항목 스위치와 같아요). 옆 숫자는 그 항목의 토큰 추정치.']] : []),
+        rec: '처음엔 항목 하나만 체크하고 번역해 보세요. 마음에 들면 전부, 원본 적용은 실리태번에서 원본을 내보내 둔 뒤에.',
+    };
+}
 import { installLocalizationPage } from './localization-ui.js';
 import { forEachLimited } from './cache-loading.js';
 import { isTransientFailure, responseError } from './request-errors.js';
@@ -3429,7 +3450,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
                 <button class="pt-btn pt-btn-secondary" id="${idPfx}-load"> 로드</button>
                 <div class="pt-export-group">
                     <button class="pt-btn-icon" id="${idPfx}-apply" title="${kind === 'wi' ? '월드인포에 즉시 적용' : kind === 'char' ? '봇카드에 즉시 적용' : '프리셋에 즉시 적용'}"><i class="fa-solid fa-bolt"></i></button>
-                    <details class="pt-more-actions"><summary><i class="fa-solid fa-ellipsis" aria-hidden="true"></i> 더보기</summary><div class="pt-more-actions-body">
+                    <details class="pt-more-actions"><summary aria-label="더보기 (복사 · 내보내기 · 번역 기록)"><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></summary><div class="pt-more-actions-body">
                     <button class="pt-btn-icon" id="${idPfx}-copy" title="복사"><i class="fa-solid fa-copy" aria-hidden="true"></i><span>복사</span></button>
                     <button class="pt-btn-icon" id="${idPfx}-txt" title="TXT 내보내기"><i class="fa-solid fa-file-lines" aria-hidden="true"></i><span>TXT</span></button>
                     <button class="pt-btn-icon" id="${idPfx}-json" title="JSON 내보내기"><i class="fa-solid fa-file-code" aria-hidden="true"></i><span>JSON</span></button>
@@ -3443,22 +3464,24 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
                 <div class="pt-progress-label" id="${idPfx}-plbl"></div>
             </div>
             <div class="pt-controls" id="${idPfx}-ctrl" style="display:none;">
-                <div class="pt-controls-scroll">
-                    <button class="pt-btn pt-btn-primary" id="${idPfx}-trans"> 번역</button>
-                    <button class="pt-btn pt-btn-retr"    id="${idPfx}-retr">↺ 재번역</button>
-                    <button class="pt-btn pt-btn-title"   id="${idPfx}-titles" title="제목만 빠르게 번역 (본문은 그대로)"> 제목</button>
-                    <button class="pt-btn pt-btn-stop"    id="${idPfx}-stop" disabled>■ 중단</button>
-                    <button class="pt-btn pt-btn-danger"  id="${idPfx}-clr" title="번역 캐시 비우기"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
-                    <button class="pt-btn-icon pt-btn-eye" id="${idPfx}-eye" title="토글 제목을 번역본으로 보기 (다시 누르면 원어로)" aria-pressed="false"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
+                <div class="pt-controls-scroll pt-act-row">
+                    <button class="pt-btn pt-btn-primary pt-act" id="${idPfx}-trans"><i class="fa-solid fa-language" aria-hidden="true"></i><span>번역</span></button>
+                    <button class="pt-btn pt-btn-retr pt-act"    id="${idPfx}-retr"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i><span>재번역</span></button>
+                    <button class="pt-btn pt-btn-title pt-act"   id="${idPfx}-titles" aria-label="제목만 번역"><i class="fa-solid fa-heading" aria-hidden="true"></i><span>제목</span></button>
+                    <button class="pt-btn pt-btn-stop pt-act"    id="${idPfx}-stop" disabled><i class="fa-solid fa-stop" aria-hidden="true"></i><span>중단</span></button>
+                    <button class="pt-btn pt-btn-danger pt-act"  id="${idPfx}-clr" aria-label="번역 캐시 비우기"><i class="fa-solid fa-trash-can" aria-hidden="true"></i><span>비우기</span></button>
+                    <button class="pt-btn pt-btn-eye pt-act" id="${idPfx}-eye" aria-label="번역본으로 보기"><i class="fa-solid fa-eye" aria-hidden="true"></i><span>번역본</span></button>
+                    <button class="pt-btn pt-act pt-qhelp" id="${idPfx}-qhelp" aria-label="작업 줄 단추 설명"><span class="pt-qhelp-mark" aria-hidden="true">?</span><span>설명</span></button>
                 </div>
-                <input type="text" class="pt-search" id="${idPfx}-search" aria-label="불러온 항목 검색" placeholder=" 검색">
             </div>
             ${selectable ? `<div class="pt-select-row" id="${idPfx}-sarow" style="display:none;">
                 <input type="checkbox" class="pt-checkbox" id="${idPfx}-allcb" aria-label="보이는 항목 모두 선택">
                 <span class="pt-info-chip" id="${idPfx}-cnt"></span>
                 <span class="pt-selected-chip" style="display:none;"></span>
+                <input type="text" class="pt-search" id="${idPfx}-search" aria-label="불러온 항목 검색" placeholder="검색">
             </div>` : `<div class="pt-select-row" id="${idPfx}-sarow" style="display:none;">
                 <span class="pt-info-chip" id="${idPfx}-cnt"></span>
+                <input type="text" class="pt-search" id="${idPfx}-search" aria-label="불러온 항목 검색" placeholder="검색">
             </div>`}
         </div>
         <div class="pt-page-scroll">
@@ -3507,10 +3530,15 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
     };
     eyeBtn?.addEventListener('click', () => {
         _eyeOn = !_eyeOn;
-        eyeBtn.setAttribute('aria-pressed', _eyeOn ? 'true' : 'false');
         eyeBtn.classList.toggle('pt-eye-on', _eyeOn);
+        // 6.1.5 눈 = 목록 제목을 번역본 ↔ 원문으로 바꿔 보기 (표시만). 이름이 다음에 할 일을 말한다 (aria-pressed 는 쓰지 않는다 — 이름이 바뀌므로)
+        const label = eyeBtn.querySelector('span'), glyph = eyeBtn.querySelector('i');
+        if (label) label.textContent = _eyeOn ? '원문' : '번역본';
+        if (glyph) glyph.className = `fa-solid ${_eyeOn ? 'fa-eye-slash' : 'fa-eye'}`;
+        eyeBtn.setAttribute('aria-label', _eyeOn ? '원문으로 보기' : '번역본으로 보기');
         applyEyeMode();
     });
+    page.querySelector(`#${idPfx}-qhelp`)?.addEventListener('click', () => openHelpSheet(controlsHelp(kind)));
 
     const showEmpty = msg => { empty.style.display=''; if(msg)emptyP.textContent=msg; ctrl.style.display='none'; if(saRow)saRow.style.display='none'; };
     const hideEmpty = () => { empty.style.display='none'; ctrl.style.display=''; if(saRow)saRow.style.display=''; };
