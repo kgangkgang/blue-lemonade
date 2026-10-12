@@ -45,6 +45,7 @@ jobs:
           node tools/tests/tts-models.mjs .
           node tools/tests/tts-extras.mjs .
           node tools/tests/tts-onboarding.mjs .
+          node tools/tests/tts-paint.mjs .
           node tools/tests/tts-listen.mjs .
           node tools/tests/tts-block-fallback.mjs .
           node tools/tests/tts-bridge.mjs .

@@ -457,6 +457,26 @@ export function resolveSpeaker(seg, rctx = {}) {
 /** 이 채팅의 내 색 ('#rrggbb' | null) */
 export function userColor() { return state().userColor || null; }
 
+/**
+ * 6.2.3 색 없는 대사에 화자 색 (paint.js): 이 채팅에서 그 인물이 쓴 색 ('#rrggbb' | null).
+ * 이름(별명표를 거침)이 같은 색 가운데 가장 많이 본 것(count) — 같으면 잠긴(팔레트) 것. 없고 그 이름이 나면 내 색
+ */
+export function colorOfName(name, { userName = '' } = {}) {
+    const st = state();
+    const { map } = aliasTable(st);
+    const k = fold(canonWith(map, name));
+    if (!k) return null;
+    let best = null, score = -1;
+    for (const [c, e] of Object.entries(st.colors || {})) {
+        if (!e?.name || fold(canonWith(map, e.name)) !== k || !/^#[0-9a-f]{6}$/.test(c)) continue;
+        const v = (Number(e.count) || 0) * 2 + (e.locked ? 1 : 0);
+        if (v > score) { best = c; score = v; }
+    }
+    const me = String(userName || personaName() || '').trim();
+    if (!best && me && st.userColor && fold(canonWith(map, me)) === k) best = st.userColor;
+    return best;
+}
+
 /** 이름 있는 색 가운데 ΔE < 8 로 가까운 것 (UI 제안용; 자동 배정에는 쓰지 않는다) */
 export function nearestKnown(color) {
     const c = normColor(color);

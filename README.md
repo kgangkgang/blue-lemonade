@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.2.2/blue-lemonade-6.2.2.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.2.3/blue-lemonade-6.2.3.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.2.2 · 최신 업데이트</summary>
+<summary>6.2.3 · 최신 업데이트</summary>
+
+- TTS: 대사마다 색을 넣던 답장이 몇 줄만 색을 빠뜨리면 그 줄이 다른 인물의 대사처럼 보였어요. 이제 이름표 · 화자 찾기로 누구 말인지 알면 그 인물이 이 채팅에서 쓴 색으로 칠해요 — 화면에서만, 메시지 글과 채팅 파일은 그대로예요.
+- TTS › 대사 분석 › 「색 없는 대사에 화자 색」(기본 켬). 분석이 없는 새 답장에 화자를 모르는 색 없는 대사가 있을 때만 대사 분석을 한 번 보내고, 나중에 읽을 때 같은 결과를 다시 써요.
+- 애드온 버전: TTS 1.7.5
+
+</details>
+
+<details>
+<summary>6.2.2 · 찐빠 정리 (좁은 화면 줄바꿈 · 칸 넘침)</summary>
 
 - 좁은 화면(폰 · PC 에서 확장 서랍이 좁을 때)에서 옆에 자리가 남는데도 두 줄로 꺾이던 이름표 · 설명을 한 줄로 고쳤어요.
 - 폰에서 2열로 좁아져 글이 꺾이던 칸은 한 줄씩 넓게 보여 줘요. 칸 밖으로 삐져나오던 글 · 점 · 아이콘은 칸 안으로 넣었어요.

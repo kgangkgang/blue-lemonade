@@ -18,6 +18,7 @@ import * as player from './src/player.js';
 import * as ui from './src/ui.js';
 import * as analysis from './src/analysis.js';
 import * as clickplay from './src/clickplay.js';
+import * as paint from './src/paint.js';   // 6.2.3 색 없는 대사에 화자 색
 import * as pregen from './src/pregen.js';
 import * as modelswitch from './src/modelswitch.js';
 import { log } from './src/log.js';
@@ -69,9 +70,9 @@ export function syncEnabled() {
     if (!initialized) return on;
     if (!on) {
         clearTimeout(streamTimer); streamTimer = 0; stream = null; spoken = null;
-        pregen.pregenCancel(); analysis.stopForAddon(); player.stopForAddon(); clickplay.destroy(); modelswitch.unregister();
+        pregen.pregenCancel(); analysis.stopForAddon(); player.stopForAddon(); clickplay.destroy(); paint.destroy(); modelswitch.unregister();
         removeWand(); document.querySelectorAll('#chat .lv_play, #chat .lv_script').forEach(el => el.remove());
-    } else { clickplay.init(); modelswitch.register(); syncWand(); addButtons(); }
+    } else { clickplay.init(); paint.init(); modelswitch.register(); syncWand(); addButtons(); }
     return on;
 }
 export async function openPanel() {
@@ -170,6 +171,9 @@ function onRendered(id, isUser, type) {
     if (!isUser) {
         try { pregen.onRendered(id, type); }
         catch (e) { log('err', `미리 만들기 실패: ${e.message}`); }
+        // 6.2.3 색 없는 대사에 화자 색: 칠하고, 화자를 모르는 색 없는 대사가 있으면 대사 분석 한 번 (말한 사람을 배운 뒤)
+        try { paint.onRendered(id, type); }
+        catch (e) { log('err', `화자 색 실패: ${e.message}`); }
     }
     if (!s.enabled || !s.auto_play) return;
     if (isUser && !s.narrate_user) return;
@@ -224,6 +228,7 @@ function pushStream(id) {
 function onGenStarted(type, _params, dryRun) {
     if (!runtimeEnabled()) return;
     if (dryRun || type === 'quiet' || type === 'impersonate') return;
+    paint.onGenStarted();   // 6.2.3 생성 중인 마지막 메시지는 칠하지 않음
     genStartedAt = Date.now();
     clearTimeout(streamTimer); streamTimer = 0; streamLast = 0;
     stream = null;
@@ -236,6 +241,7 @@ function onGenStarted(type, _params, dryRun) {
 }
 function onGenEnded() {
     if (!runtimeEnabled()) return;
+    paint.onGenEnded();
     clearTimeout(streamTimer); streamTimer = 0;
     if (!stream) return;
     const mes = msgOf(stream.id);
@@ -283,6 +289,8 @@ function onChatChanged() {
     addButtons();
     try { ui.refreshChat(); }
     catch (e) { log('err', `설정 화면 새로 고침 실패: ${e.message}`); }
+    try { paint.onChatChanged(); }   // 6.2.3 다 그려진 뒤 칠하고 마지막 답장을 본다
+    catch (e) { log('err', `화자 색 실패: ${e.message}`); }
 }
 // 글이 바뀐 메시지(편집·스와이프·다시 그림): 저장된 대사 분석은 글 해시로 묶여 있어 analysis 쪽이 낡은 것을 걸러 낸다
 function onMessageChanged(id) {
@@ -443,6 +451,7 @@ export const ready = new Promise((resolve, reject) => jQuery(() => { (async () =
     catch (e) { console.error('[tts] 설정 화면 초기화 실패', e); log('err', `설정 화면 초기화 실패: ${e.message}`); }
     try { player.init(); }
     catch (e) { console.error('[tts] 재생기 초기화 실패', e); log('err', `재생기 초기화 실패: ${e.message}`); }
+    try { paint.init(); } catch (e) { log('err', `화자 색 시작 실패: ${e.message}`); }   // 6.2.3 색 없는 대사에 화자 색 (#chat 관찰)
     try { clickplay.init(); }                                      // 재생기 다음에 (대사 클릭 → player.speakSegments)
     catch (e) { console.error('[tts] 대사 클릭 초기화 실패', e); log('err', `대사 클릭 초기화 실패: ${e.message}`); }
     try { pregen.init(); }                                         // 미리 만들기: 그만두기 · 다시 (시작은 onRendered · onSwiped)

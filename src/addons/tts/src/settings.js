@@ -47,6 +47,7 @@ export const DEFAULTS = Object.freeze({
     narrate_user: false,
     routes: { dialogue: 'character', narration: 'skip', action: 'skip', thought: 'skip', user_dialogue: 'user' },
     read_preset: 'dialogue',
+    speaker_paint: true,          // 6.2.3 색 없는 대사에 화자 색 — 찾은 화자의 이 채팅 색으로 화면에서만 칠함 (paint.js)
     no_dialogue_fallback: 'narration',
     text_source: 'display',
     listen_lang: 'auto',          // 1.4.4 듣는 언어: 'auto' (지금처럼) | 'ko' | 'ja' | 'en' | 'zh' — 그 언어가 아닌 줄은 LLM 번역 애드온으로 옮겨 읽음 (listen.js)

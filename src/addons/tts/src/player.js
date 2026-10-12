@@ -502,6 +502,60 @@ async function runAnalysis(mesId, mes, { signal, cancelled, force = false } = {}
 /** 6.1.8 분석을 포기한 글 (mes → 'swipe|글') — 그 글의 색 없는 대사는 「모르는 화자」 목소리로 읽는다 */
 const gaveUp = new WeakMap();
 const swipeOf = (mes) => Number(mes?.swipe_id) || 0;
+
+/**
+ * 6.2.3 색 없는 대사에 화자 색 (paint.js): 화면 목록(번역문이 있으면 번역문)의 대화문마다 재생기와 같은 화자 [{ text, color, name, source }].
+ * source = resolveSpeaker 의 것('learned' · 'palette' · 'user' · 'hint' · 'sender'), 'analysis' = 대사 분석의 화자 찾기가 고른 화자.
+ * 'sender' = 색 · 이름표 · 분석으로 못 정해 보낸 쪽 이름으로 떨어진 줄. 저장된 분석만 본다 (통신 없음)
+ */
+export function dialogueSpeakers(mesId) {
+    const s = settings();
+    const mes = msg(mesId);
+    if (!mes || mes.is_user || mes.is_system) return [];
+    const { orig, disp } = sourcesOf(mes, s, { final: true });
+    const { origOf } = alignLists(orig, disp);
+    const an = analysisCfg(s);
+    const aseg = an?.enabled && an.speaker !== false ? analysisLookup(cachedAnalysis(mesId), orig, disp, origOf) : () => null;
+    const { charName, userName } = chatCtx(mes);
+    const rctx = { mes, charName, userName };
+    const out = [];
+    for (const seg of disp || orig) {
+        if (!seg || seg.kind !== 'dialogue' || !seg.text) continue;
+        let { name, source } = safeResolve(seg, rctx);
+        if (source === 'sender') {
+            const g = aseg(seg);
+            const sp = typeof g?.speaker === 'string' ? g.speaker.trim() : '';
+            if (sp && sp !== '?') { name = sp; source = 'analysis'; }
+        }
+        out.push({ text: seg.text, color: seg.color || null, name: String(name || ''), source });
+    }
+    return out;
+}
+
+/**
+ * 6.2.3 색 없는 대사에 화자 색 (paint.js): 화자를 모르는 색 없는 대사가 있는 답장의 대사 분석. 저장된 게 있으면 그것, 없으면 재생기가 읽을 때와
+ * 같은 요청을 한 번 (같은 저장 자리 · 같은 언어라 나중에 읽을 때 다시 값을 치르지 않음). 대사 분석 · 화자 찾기가 켜져 있고 「자동」일 때만.
+ * 조용히 — 토스트 없음, 실패는 기록만 (이번 글은 분석 없이: 재생기의 gaveUp 과 같음). 결과 또는 null
+ */
+export async function analyzeForPaint(mesId, { signal = null } = {}) {
+    const s = settings();
+    const an = analysisCfg(s);
+    const mes = msg(mesId);
+    if (!runtimeEnabled() || !s.enabled || !an?.enabled || an.speaker === false || (an.when || 'auto') !== 'auto') return null;
+    if (!mes || mes.is_user || mes.is_system) return null;
+    const cached = cachedAnalysis(mesId);
+    if (cached) return cached;
+    if (analysis.hasResponseFailure?.(mesId) || gaveUp.get(mes) === `${swipeOf(mes)}|${mes.mes}` || !analysisReady(s)) return null;
+    try { await analysis.untilIdle?.(signal); } catch { return null; }
+    if (msg(mesId) !== mes) return null;
+    try {
+        const r = await analysis.analyzeMessage(mesId, { langs: analysisNeeds(mesId, mes, s).langs, signal });
+        return r && Array.isArray(r.segs) ? r : null;
+    } catch (e) {
+        if (!signal?.aborted && !isAbort(e)) { gaveUp.set(mes, `${swipeOf(mes)}|${mes.mes}`); log('err', `화자 색 분석 실패: ${bareMsg(e, '분석 실패')}`); }
+        return null;
+    }
+}
 /**
  * 6.1.8 내용 차단으로 분석이 실패했을 때의 토스트 — 다른 모델을 골라 뒀으면 「다른 모델로 다시」(누르면 그 모델로 바로), 아니면 고르는 곳을 알려 줌.
  * 차단이 아니면 false (보통 실패 토스트)

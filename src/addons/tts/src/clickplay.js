@@ -104,10 +104,12 @@ function toTextNode(node, offset) {
 }
 
 // ---------- 글자 노드 이어 붙이기 (문단 경계 '\n\n' · <br> '\n')
-function textIndex(root) {
+// computed=false (6.2.3 화자 색 · paint.js): 숨김은 hidden 속성 · 인라인 display:none 만 본다 — getComputedStyle 이 다시 그린 직후의 스타일 계산을 앞당기지 않게
+export function textIndex(root, { computed = true } = {}) {
     const nodes = [];
     let flat = '';
-    const walker = document.createTreeWalker(root, SHOW_ELEMENT_AND_TEXT, (n) => (n.nodeType === 1 && (SKIP_TAGS.has(n.tagName) || isHidden(n)) ? FILTER_REJECT : FILTER_ACCEPT));
+    const hidden = computed ? isHidden : (el) => !!el.hidden || el.style?.display === 'none';
+    const walker = document.createTreeWalker(root, SHOW_ELEMENT_AND_TEXT, (n) => (n.nodeType === 1 && (SKIP_TAGS.has(n.tagName) || hidden(n)) ? FILTER_REJECT : FILTER_ACCEPT));
     for (let n; (n = walker.nextNode());) {
         if (n.nodeType === 1) {
             if (n.tagName === 'BR') flat += '\n';
@@ -136,7 +138,7 @@ function findCloser(s, closer, from, to) {
     return -1;
 }
 /** [{ start, end, is, ie, opener }] — start/end 는 여닫이 글자 포함, is/ie 는 안쪽 */
-function scanDialogue(body) {
+export function scanDialogue(body) {
     const out = [], n = body.length;
     let i = 0;
     while (i < n) {
@@ -157,7 +159,7 @@ function scanDialogue(body) {
 
 // ---------- 색 · 이름 힌트
 /** 누른 글자 노드를 감싼 요소의 색 (안쪽부터): style="color:…" · <font color> */
-function colorFromDom(node, root) {
+export function colorFromDom(node, root) {
     for (let el = node.parentNode; el && el !== root; el = el.parentNode) {
         if (el.nodeType !== 1) continue;
         const c = normColor(el.style?.color);
@@ -171,7 +173,7 @@ function computedColor(el) {
     if (!el || typeof getComputedStyle !== 'function') return null;
     try { return normColor(getComputedStyle(el).color); } catch { return null; }
 }
-function colorFromBareHex(flat, start) {
+export function colorFromBareHex(flat, start) {
     const m = HEX_BEFORE.exec(flat.slice(Math.max(0, start - 12), start));
     return m ? `#${m[1].toLowerCase()}` : null;
 }

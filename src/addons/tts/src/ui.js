@@ -11,6 +11,7 @@ import * as analysis from './analysis.js';
 import * as stapi from './stapi.js';
 import * as translation from './translation.js';
 import * as listen from './listen.js';   // 1.4.4 듣는 언어
+import * as paint from './paint.js';     // 6.2.3 색 없는 대사에 화자 색
 import { entries as logEntries, timeStr, onLog, log } from './log.js';
 import { paidEngines, paidOnly, pregenPaid } from './paid.js';   // 5.6.4 돈이 드는 엔진 (pregen.js 와 같은 판단)
 import { balanceParts, balanceLow, BALANCE_TTL } from './balance.js';   // 1.3.5 엔진 카드 잔액 줄
@@ -69,6 +70,14 @@ function translatorLabel() {
  */
 export { paidEngines };
 /** 미리 만들기 옆 '!' 를 눌렀을 때의 안내 — 유료 엔진이 없으면 '' (단추도 없음). 5.6.4 '유료 엔진도 미리 만들기' 를 켠 때만 닳는다는 경고 */
+// 6.2.3 색 없는 대사에 화자 색: 새 답장의 화자를 분석으로 찾지 못하는 때만 한 줄
+function paintNote(s) {
+    if (s.speaker_paint === false) return '';
+    const a = s.analysis || {};
+    if (!a.enabled || a.speaker === false) return '화자 찾기가 꺼져 있어 이름표로 찾은 대사만 칠해요';
+    if ((a.when || 'auto') !== 'auto') return '분석이 수동이라 분석한 답장만 칠해요';
+    return '';
+}
 function pregenWarn(s) {
     const paid = paidEngines(s);
     if (!paid.length) return '';
@@ -167,6 +176,7 @@ const READ_CARDS = {
         { key: 'thought_emotion', label: '속마음', type: 'select', options: [{ value: 'whisper', label: '속삭임' }, { value: 'auto', label: '일반' }] },
         { key: 'analysis.translate', label: '원어로 번역해서 읽기', type: 'toggle', desc: (s) => (listenOn(s) ? '듣는 언어를 따라요' : '') },   // 1.4.4
         { key: 'analysis.speaker', label: '화자 찾기', type: 'toggle', desc: '색 · 이름표가 없는 대사는 누구 말인지 맥락으로 물어 그 캐릭터 목소리로' },
+        { key: 'speaker_paint', label: '색 없는 대사에 화자 색', type: 'toggle', desc: paintNote },   // 6.2.3 (paint.js) — 화면에서만
         { key: 'analysis.when', label: '언제', type: 'select', options: [{ value: 'auto', label: '자동' }, { value: 'manual', label: '수동' }] },
         // 6.1.8 검열되면 다른 모델로 (block-fallback.js)
         { key: 'analysis.fallback.enabled', label: '검열되면 다른 모델로', type: 'toggle',
@@ -586,6 +596,7 @@ function afterEdit(path, el) {
     if (path === 'mute_words') { renderReadCard('text'); return; }   // 1.6.3 음소거 방법 줄은 말이 있을 때만 보인다
     if (path === 'listen_lang') { renderReadCard('text'); renderReadCard('when'); renderReadCard('analysis'); return; }   // 1.4.4 안내 줄 · 스트리밍 읽기 · 원어 읽기 줄
     if (path === 'click_play' || path === 'auto_play' || path === 'pregen' || path === 'pregen_paid') renderReadCard('when');   // 1.2.4 미리 만들기가 쉬는지 한 줄 · 5.6.4 '!' 안내 · 스위치
+    if (path === 'speaker_paint' || path === 'analysis.enabled' || path === 'analysis.speaker' || path === 'analysis.when') { paint.refresh(); renderReadCard('analysis'); }   // 6.2.3 칠하기 · 안내 줄
     if (path.startsWith('analysis.fallback.')) {   // 6.1.8 검열되면 다른 모델로
         if (path === 'analysis.fallback.provider') { if (isObj(s.analysis.fallback)) s.analysis.fallback.model = ''; state.fbModelManual = ''; save(); }
         renderReadCard('analysis');
@@ -679,6 +690,7 @@ function onColorName(el) {
     try { speakers.setColor(color, name || null, !!name); }
     catch (err) { toast(err.message, 'error'); }
     renderColors();
+    paint.refresh();   // 6.2.3 색 ↔ 이름이 바뀌면 칠한 색도
 }
 /** 1.4.0 줄 옆 감정 세기: 그 목소리에만 (비우면 전체 설정) — 같은 목소리가 보이는 곳(캐릭터별 목소리 · 대화 색 · 목소리 목록 칩)을 다시 그림 */
 function onStrength(el) {
