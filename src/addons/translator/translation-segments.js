@@ -612,6 +612,47 @@ const PLACEHOLDER_VARIANT = /\[{1,2}[ \t]*\/?[ \t]*_{1,2}[ \t]*(?:VAR|VARIABLE|[
 export function fixPlaceholderVariants(text) {
     return String(text ?? '').replace(PLACEHOLDER_VARIANT, (_, n) => `[[__VAR_${n}__]]`);
 }
+// 6.2.4 번역 모델이 원문에 없는 로마자 낱말 하나를 줄에 혼자 끼워 넣는다 (사용자 10-13 「Valladolid 이건 어디서 나온 거냐」 —
+//       영어 원문 답에는 없고 한국어 번역에만 "…있었다.\n\nValladolid\n층수 표시등에…"). 번역문이 주로 한글 · 가나 · 한자일 때만,
+//       줄 전체가 로마자 낱말 하나이고 그 낱말이 원문 어디에도 없을 때만 그 줄을 지운다. 영어로 옮긴 글 · 원문에 있는 낱말(이름 · 약어)은 그대로.
+//       지운 줄 때문에 빈 줄이 겹치거나 맨 앞 · 맨 끝에 남으면 빈 줄 하나도 같이 지워 문단 수가 원문과 같게 남는다.
+//       코드 울타리(``` · ~~~) 안은 보지 않는다. 낱말 견주기는 전각 · ’ · 소프트 하이픈 · 늘인 글자(Hmmm = Hmm)를 맞춰서.
+const STRAY_WORD_LINE = /^[\t \r\u00a0]*([A-Za-z][A-Za-z'’-]*[A-Za-z])[\t \r\u00a0]*$/;   // 두 글자 이상
+const FENCE_LINE = /^[\t ]*(?:`{3,}|~{3,})/;
+const blankLine = line => line !== undefined && !line.trim();
+const wordKey = text => String(text).normalize('NFKC').toLowerCase().replace(/\u00ad/g, '').replace(/[’‘]/g, "'").replace(/([a-z])\1{2,}/g, '$1$1');
+export function dropStrayWords(text, source) {
+    const value = String(text ?? '');
+    if (!value.includes('\n')) return value;
+    const src = wordKey(source ?? '');
+    const lines = value.split('\n');
+    let fenced = false;
+    const stray = lines.map(line => {
+        if (FENCE_LINE.test(line)) { fenced = !fenced; return false; }
+        if (fenced) return false;
+        const m = STRAY_WORD_LINE.exec(line);
+        return !!m && !src.includes(wordKey(m[1]));
+    });
+    if (!stray.includes(true)) return value;
+    // 어느 말로 옮긴 글인가는 그 줄들과 태그를 뺀 나머지로 본다 (짧은 번역에서 끼어든 낱말 · <font color=…> 같은 꾸밈이 판정을 뒤집지 않게)
+    const rest = lines.filter((_, i) => !stray[i]).join('\n').replace(/<[^>]*>/g, '');
+    const latin = rest.match(/[A-Za-z]/g)?.length ?? 0;
+    const cjk = rest.match(/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/g)?.length ?? 0;
+    if (cjk <= latin) return value;
+    const out = [];
+    let skipBlank = false;
+    lines.forEach((line, i) => {
+        if (stray[i]) {
+            const next = lines[i + 1];
+            if (blankLine(out.at(-1)) && (next === undefined || blankLine(next))) out.pop();
+            else if (!out.length && blankLine(next)) skipBlank = true;
+            return;
+        }
+        if (skipBlank) { skipBlank = false; if (blankLine(line)) return; }
+        out.push(line);
+    });
+    return out.join('\n');
+}
 /** 저장된 번역문에 풀리지 못하고 남은 자리표시자를 걷는다 (원문에 그런 글이 없을 때만) — 보여 줄 때 고치기용 */
 export function dropLeftoverPlaceholders(text, source) {
     const value = String(text ?? '');

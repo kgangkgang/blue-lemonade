@@ -2,7 +2,7 @@
 import { isPreset, validSettings, validImport, validPromptList, validPresetList, exportPresets, restoreTranslationRows } from './preset-data.js';
 import { createGuards, watchGuard } from './translation-guard.js';
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
-import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, fixPlaceholderVariants, dropLeftoverPlaceholders, repairTagPairs } from './translation-segments.js';
+import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, fixPlaceholderVariants, dropLeftoverPlaceholders, repairTagPairs, dropStrayWords } from './translation-segments.js';
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
 import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey, glossaryLinesFor } from './glossary-match.js'; // [2.2.9] 용어집 찾기 (+ 가타카나 표기 흔들림) · [2.3.0] TTS 듣는 언어용 줄
@@ -2300,6 +2300,7 @@ async function retranslateMessage(messageId, promptType, forceRetranslate = fals
         }
 
         runToken.guard.assert();
+        retranslation = dropStrayWords(retranslation, originalText); // 6.2.4 원문에 없는 낱말 한 줄 — 캐시에도 걷은 글을
         // 결과 저장 및 UI 업데이트
         // [1.9.2] 지우고 넣지 않는다: 캐시에 없던 원문이면 지우기가 'no matching data' 로 실패해서 방금 받은 재번역을 버렸다.
         //         addTranslationToDB 가 이제 같은 원문의 줄을 고쳐 쓴다.
@@ -2318,6 +2319,7 @@ async function retranslateMessage(messageId, promptType, forceRetranslate = fals
         if (!target.extra || typeof target.extra !== 'object') target.extra = {};
 
         target.extra.display_text = processTranslationText(originalText, retranslation);
+        delete target.extra.translation_edited; // 6.2.4 모델이 새로 옮긴 글
         runToken.guard.acceptDisplay();
         // 현재 원문의 해시를 저장 (메시지 수정 감지용, 1.7.1)
         markTranslatedOriginal(target, originalText);
@@ -2395,7 +2397,8 @@ function repairShownTranslation(id, message, context = getContext()) {
     for (const field of ['display_text', 'original_translation_backup']) {
         const shown = extra[field];
         if (typeof shown !== 'string' || !shown || shown === original || shown.includes('llm-translator-details')) continue;
-        const repaired = repairTagPairs(original, dropLeftoverPlaceholders(shown, original));
+        const cleaned = extra.translation_edited === extra.original_text_hash ? shown : dropStrayWords(shown, original); // 6.2.4 저장된 번역의 낱말 한 줄 (손으로 고친 번역은 그대로)
+        const repaired = repairTagPairs(original, dropLeftoverPlaceholders(cleaned, original));
         if (repaired !== shown) { extra[field] = repaired; changed = true; }
     }
     if (changed && extra.display_text) refreshMessageBlock(id, message);
@@ -2404,8 +2407,8 @@ function repairShownTranslation(id, message, context = getContext()) {
 function repairShownTranslations() {
     const context = getContext();
     let count = 0;
-    (context.chat || []).forEach((message, id) => { try { if (repairShownTranslation(id, message, context)) count++; } catch (error) { console.warn('[LLM Translator] 번역문 태그 고치기 실패:', error); } });
-    if (count) console.warn(`[LLM Translator] 저장된 번역문 ${count}개의 태그 짝을 원문대로 맞춰 보여 줘요`);
+    (context.chat || []).forEach((message, id) => { try { if (repairShownTranslation(id, message, context)) count++; } catch (error) { console.warn('[LLM Translator] 저장된 번역문 고치기 실패:', error); } });
+    if (count) console.warn(`[LLM Translator] 저장된 번역문 ${count}개를 고쳐 보여 줘요 (태그 짝 · 못 풀린 자리표시자 · 원문에 없는 낱말 한 줄)`);
     return count;
 }
 
@@ -2520,6 +2523,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                 } finally {
                     badge.remove();
                 }
+                translation = dropStrayWords(translation, originalText); // 6.2.4 원문에 없는 낱말 한 줄 — 캐시에도 걷은 글을
                 if (report.partial) toastr.warning(`문단 ${report.blockedChunks}/${report.chunks}덩이는 차단돼 원문으로 남겼어요. 다시 번역하면 다시 시도해요.`, '번역', { timeOut: 8000 });
                 else if (!report.restoredBlocks) await storeTranslationQuietly(originalText, translation); // 6.1.8 빠진 보호 블록을 되돌린 답은 캐시하지 않는다
                 // 5.4.2: 문단이 모두 캐시에서 왔으면(요청 0) 알린다 — 전엔 '번역을 시작합니다' 뒤 같은 글만 조용히 다시 붙었다
@@ -2533,6 +2537,10 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
             const target = getContext().chat[targetIndex];
             if (!target.extra || typeof target.extra !== 'object') target.extra = {};
 
+            // 6.2.4 캐시에서 온 6.2.4 전 번역도 걷는다 — 손으로 고친 번역(translation_edited = 그 원문 해시)은 그대로 · 모델이 새로 옮긴 글이면 표시를 지운다
+            const editedByHand = !!cachedTranslation && target.extra?.translation_edited === originalHashOf(originalText);
+            if (cachedTranslation && !editedByHand) translation = dropStrayWords(translation, originalText);
+            if (!cachedTranslation) delete target.extra.translation_edited;
             target.extra.display_text = processTranslationText(originalText, translation);
             runToken.guard.acceptDisplay();
             if (cachedTranslation && source !== 'auto') {
@@ -3148,6 +3156,7 @@ async function editTranslation(messageId) {
                 await deleteTranslationByOriginalText(originalTextForDbKey).catch(error => { if (!String(error?.message).includes('no matching data')) throw error; });
                 delete message.extra.display_text; // 명시적 삭제
                 delete message.extra.original_translation_backup; // [1.9.2] 치워 둔 번역문도 함께
+                delete message.extra.translation_edited; // 6.2.4
                 await refreshMessageBlock(messageId, message);
                 await context.saveChat();
                 toastr.success('번역문이 삭제되었습니다.');
@@ -3161,6 +3170,7 @@ async function editTranslation(messageId) {
             try {
                 // DB 업데이트
                 await addTranslationToDB(originalTextForDbKey, newText);
+                message.extra.translation_edited = originalHashOf(originalTextForDbKey); // 6.2.4 손으로 고친 번역은 낱말 걷기를 하지 않는다
 
                 // 화면 표시 업데이트
                 const processedNewText = processTranslationText(originalTextForDbKey, newText);
@@ -3750,7 +3760,7 @@ function markTranslatedOriginal(message, originalText) {
 
 async function localOrDisplayedTranslation(message, originalText) {
     const cached = await readCachedTranslation(originalText);
-    if (cached !== null) return cached;
+    if (cached !== null) return message?.extra?.translation_edited === originalHashOf(originalText) ? cached : dropStrayWords(cached, originalText); // 6.2.4 옛 캐시 줄의 낱말 한 줄
     // Other-device chats carry the source hash and raw display text but no local IndexedDB row.
     // Never feed processed HTML, a stale translation, or the original-text view back to the model/editor.
     if (message?.extra?.original_text_hash !== originalHashOf(originalText)) return null;
@@ -7290,7 +7300,7 @@ registerCommand(SlashCommand.fromProps({
         try {
             // translate 함수는 prompt 옵션이 없으면 기본적으로 llm_prompt_chat을 사용함
             const translatedText = await translate(textToTranslate, { prompt: customPrompt });
-            return translatedText;
+            return dropStrayWords(translatedText, textToTranslate); // 6.2.4 원문에 없는 낱말 한 줄
         } catch (error) {
             (error?.refused ? console.warn : console.error)('LLMTranslate Slash Command Error:', error);
             return `LLM 번역 중 오류 발생: ${error.message}`;

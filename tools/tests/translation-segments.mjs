@@ -87,3 +87,38 @@ assert.equal(em('> *a\n> b*'),'> *a*\n> *b*');
 for(const same of ['5 * 3 = 15\nnext line*','* item\n* item2','*a\n\nb*','```\n*a\nb*\n```','*a <span>x</span>\nb*','`*a` b\nc*','\\*a\nb*','*one* two\nthree','plain\ntext'])assert.equal(em(same),same,same);
 console.log('PASS cross-line emphasis is closed and reopened per line inside one paragraph only');
 }
+{
+const {dropStrayWords}=await import(new URL('src/addons/translator/translation-segments.js',root));
+// 6.2.4 사용자 10-13 실제 사례: 영어 원문에는 없고 한국어 번역에만 「Valladolid」 한 줄
+const src='The right shoe still clings to her other foot, glossy and guilty.\n\nThe floor indicator glows 7, then 6, then 5.';
+assert.equal(dropStrayWords('오른쪽 구두만 다른 쪽 발에 매달려 있었다.\n\nValladolid\n층수 표시등에 7, 6, 그리고 5가 차례로 켜졌다.',src),'오른쪽 구두만 다른 쪽 발에 매달려 있었다.\n\n층수 표시등에 7, 6, 그리고 5가 차례로 켜졌다.');
+assert.equal(dropStrayWords('가나다.\n\nValladolid\n\n라마바.','A.\n\nB.'),'가나다.\n\n라마바.','빈 줄 사이에 혼자 있으면 빈 줄 하나도 같이 — 문단 수 그대로');
+assert.equal(dropStrayWords('가나다.\nValladolid','A.'),'가나다.');
+for(const [t,s] of [['가나다.\n\nEXIT\n\n라마바.','A sign: exit.'],['가나다.\n\nEXIT\n\n라마바.','看板「ＥＸＩＴ」'],['가나다.\n\nZadkiel\n\n라마바.','ザドキエル (Zadkiel)']])assert.equal(dropStrayWords(t,s),t,'원문에 있는 낱말은 그대로');
+assert.equal(dropStrayWords('He waits.\n\nSilence\n\nThen 그.','彼は待つ。'),'He waits.\n\nSilence\n\nThen 그.','영어로 옮긴 글은 손대지 않는다');
+for(const t of ['가나다.\n\nHello.\n라마바','가나다.\n\nNew York\n라마바','가나다\n「Valladolid」\n라마바','가나다\n**Valladolid**\n라마바','가나다\nA\n라마바','가나다\n[[__VAR_0__]]\n라마바'])assert.equal(dropStrayWords(t,'x'),t,t);
+assert.equal(dropStrayWords('Valladolid','x'),'Valladolid');assert.equal(dropStrayWords('',''),'');assert.equal(dropStrayWords(null,null),'');
+// 맨 앞 · 맨 끝 줄이면 남는 빈 줄도 (접어 보기에서 문단 사이 틈이 하나 더 생기지 않게)
+assert.equal(dropStrayWords('Valladolid\n\n가나다 라마바 사아자.','A.'),'가나다 라마바 사아자.');
+assert.equal(dropStrayWords('가나다 라마바 사아자.\n\nValladolid','A.'),'가나다 라마바 사아자.');
+assert.equal(dropStrayWords('Valladolid\n가나다 라마바.','A.'),'가나다 라마바.');
+// CRLF · NBSP 로 둘러싸인 줄도
+assert.equal(dropStrayWords('가나다 라마바.\r\nValladolid\r\n사아자 차카타.','A.'),'가나다 라마바.\r\n사아자 차카타.');
+assert.equal(dropStrayWords('가나다 라마바.\n\u00a0Valladolid\u00a0\n사아자 차카타.','A.'),'가나다 라마바.\n사아자 차카타.');
+// ’ · 늘인 감탄사 · 소프트 하이픈 · 전각은 같은 낱말로 본다
+for(const [t,s] of [['가나다 라마바.\nDon’t\n사아자.',"She said don't."],['가나다 라마바.\nHmmm\n사아자.','Hmm.'],['가나다 라마바.\nHmm\n사아자.','Hmmmmm...'],['가나다 라마바.\nValladolid\n사아자.','Valla\u00addolid'],['가나다 라마바.\nEXIT\n사아자.','ＥＸＩＴ']])assert.equal(dropStrayWords(t,s),t,t);
+// 코드 울타리 안은 보지 않는다
+for(const t of ['가나다 라마바 사아자.\n```\nreturn\n```\n차카타.','가나다 라마바 사아자.\n~~~\nexport\n~~~'])assert.equal(dropStrayWords(t,'x'),t,t);
+// 꾸밈 태그는 언어 판정에 세지 않는다
+assert.equal(dropStrayWords('<font color="#aabbcc">가나다 라마바</font>\nValladolid\n<span style="color:#123456">사아자</span>','A.'),'<font color="#aabbcc">가나다 라마바</font>\n<span style="color:#123456">사아자</span>');
+const idx=(await import('node:fs')).readFileSync(new URL('src/addons/translator/index.js',root),'utf8');
+assert.ok(/translation = await translate\(originalText,[^\n]*\n[^\n]*\} finally \{\n[^\n]*badge\.remove\(\);\n[^\n]*\}\n[\t ]*translation = dropStrayWords\(translation, originalText\);/.test(idx),'새 번역은 캐시에 넣기 전에 걷는다');
+assert.ok(/retranslation = dropStrayWords\(retranslation, originalText\);[^\n]*\n[\s\S]{0,600}storeTranslationQuietly\(originalText, retranslation\)/.test(idx),'다시 번역도 캐시에 넣기 전에');
+assert.ok(/if \(cachedTranslation && !editedByHand\) translation = dropStrayWords\(translation, originalText\);/.test(idx),'캐시에서 온 옛 번역도 (손으로 고친 것 빼고)');
+assert.ok(/extra\.translation_edited === extra\.original_text_hash \? shown : dropStrayWords\(shown, original\)/.test(idx),'보여 줄 때 고치기 — 손으로 고친 번역은 그대로');
+assert.ok(/addTranslationToDB\(originalTextForDbKey, newText\);\n[\t ]*message\.extra\.translation_edited = originalHashOf\(originalTextForDbKey\);/.test(idx),'손으로 고치면 표시');
+assert.ok(/translation_edited === originalHashOf\(originalText\) \? cached : dropStrayWords\(cached, originalText\)/.test(idx),'교정 · 수정 창에 들어가는 캐시 번역도');
+assert.ok(/return dropStrayWords\(translatedText, textToTranslate\);/.test(idx),'/llmTranslate (북마크 번역)');
+assert.ok(/processTranslationText\(originalTextForDbKey, newText\)/.test(idx),'손으로 고친 글은 그대로 보인다');
+console.log('PASS 6.2.4 stray Latin word line dropped only when absent from the source and the translation is mostly CJK');
+}
