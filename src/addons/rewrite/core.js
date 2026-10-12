@@ -166,7 +166,8 @@ function ownedByNear(sentence, index, length, nearNames) {
 //   태그만 가리면 안 글자 「[AutoPic 이미지]」가 남아 규칙(이미지 · autopic) · 반복 감지에 문장으로 잡혔고, 문장 가운데 자리는 고칠 범위에 끼어
 //   AI 가 번호나 글자를 바꾸면 그림 확장이 그 자리를 못 찾아 그림을 잃었다. 첫 글자를 줄바꿈으로 가려 문단 경계처럼 — 어떤 범위도 자리를 건너지 않는다.
 //   TTS 의 text.js SLOT_RE 와 같은 식 (tools/tests/rewrite-tts-slots.mjs 가 맞춰 본다). 번호 없는 껍데기(그림 확장이 지우는 것)도 같이 가린다.
-export const SLOT_RE = /<span\b[^>]*\b(?:data-autopic-slot="[^"]*"|class="[^"]*\bautopic-image-slot\b[^"]*")[^>]*>[^<]*<\/span>/g;
+//   6.1.9 캐릭터 에셋의 빈 자리(<span class="bl-asset-slot" data-asset-slot="…"></span>, 답장 뒤 다른 모델이 고르기)도 같은 그림 자리다.
+export const SLOT_RE = /<span\b[^>]*\b(?:data-(?:autopic|asset)-slot="[^"]*"|class="[^"]*\b(?:autopic-image-slot|bl-asset-slot)\b[^"]*")[^>]*>[^<]*<\/span>/g;
 const blankAll = part => part.replace(/[^\n]/g, ' ');
 const blankAsBreak = part => '\n' + blankAll(part.slice(1));
 const PROTECTED = [

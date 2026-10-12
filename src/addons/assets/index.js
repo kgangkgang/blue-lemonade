@@ -8,6 +8,7 @@ import { power_user } from '../../../../../../power-user.js';
 import { initSettings, settings, saveSettings, VERSION, TITLE, currentFolder } from './state.js';
 import { runtime, reload } from './store.js';
 import { manualPrompt, setupPrompt } from './prompt.js';
+import { setupAfterReply } from './after-reply.js';
 import { setupRenderer, schedulePass } from './render.js';
 import { setupHold } from './hold.js';
 import { toast, watchThemeVars, refreshThemeVars } from './ui.js';
@@ -44,6 +45,8 @@ async function registerMacros() {
 registerMacros();
 
 setupPrompt();
+// 1.6.0 답장 뒤 다른 모델이 고르기 (켜져 있을 때만 일한다 — pick.js pickActive)
+setupAfterReply();
 
 // 1.4.2: 이어서 쓰기는 마지막 메시지의 send_date 를 새로 찍고 다시 그린다 — 번호 묶음 그림이 시각으로 골라져서
 // 이미 보이던 그림이 바뀌었다. 첫 시각을 extra.eh_seed 에 한 번만 남기고 render.js messageSeed 가 먼저 쓴다.

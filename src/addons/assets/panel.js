@@ -11,6 +11,10 @@ import { BASE_ID, addPreset, checkRename, removePreset, movePreset, findPreset, 
 import { openViewer } from './viewer.js';
 import { redrawNow } from './render.js';
 import { canShrink, estimateFolders, shrinkFolders, skipSummary } from './shrink.js';
+import { ConnectionManagerRequestService } from '../../../../../shared.js';
+import { fillSelect, onChange as onModelListChange } from '../../live-models.js';
+import { PROVIDERS, canFetch, fetchModelList, autoFetchModelList, listKey, missingNote, modelChoices, pickModel, isHttpUrl } from '../rewrite/providers.js';
+import { pickSettings, customEndpoint, connectionProblem, connectionLabel, listRequest } from './pick.js';
 
 const SIZE_LABELS = { s: '작게', m: '보통', l: '크게' };
 
@@ -147,6 +151,39 @@ function template() {
                     <button type="button" class="eh-switch" role="switch" data-setting="promptEnabled" data-bl-master aria-checked="${store.promptEnabled}" aria-label="이미지 프롬프트"><span></span></button>
                 </div>
                 <p class="eh-prompt-status" role="status" aria-live="polite"></p>
+                <div class="eh-pick">
+                    <div class="eh-setting">
+                        <div class="eh-setting-text">
+                            <b>다른 모델이 고르기</b>
+                            <small>본문 모델에는 규칙 · 그림 목록을 보내지 않아요. 답을 받은 뒤 아래 모델이 대사 앞에 넣을 그림을 골라요.</small>
+                        </div>
+                        <button type="button" class="eh-switch" role="switch" data-pick="enabled" aria-checked="false" aria-label="다른 모델이 고르기"><span></span></button>
+                    </div>
+                    <div class="eh-pick-body" hidden>
+                        <div class="eh-segmented" data-pick-seg="connection" role="radiogroup" aria-label="고르는 모델 연결">
+                            <button type="button" role="radio" data-value="current">지금 연결</button>
+                            <button type="button" role="radio" data-value="direct">직접 선택</button>
+                            <button type="button" role="radio" data-value="profile">연결 프로필</button>
+                        </div>
+                        <p class="eh-pick-hint"></p>
+                        <div class="eh-pick-direct" hidden>
+                            <label class="eh-pick-row"><span>공급자</span><select data-pick-field="provider" aria-label="고르는 모델 공급자"></select></label>
+                            <div class="eh-pick-row"><span>모델</span>
+                                <div class="eh-pick-model">
+                                    <select data-pick-field="model" aria-label="고르는 모델"></select>
+                                    <button type="button" class="eh-icon-btn" data-act="pick-fetch" title="모델 목록 새로 받기" aria-label="모델 목록 새로 받기"><i class="fa-solid fa-arrows-rotate"></i></button>
+                                </div>
+                            </div>
+                            <label class="eh-pick-row eh-pick-custom-model" hidden><span>모델 이름</span><input type="text" data-pick-field="customModel" list="eh_pick_models" autocomplete="off" spellcheck="false" placeholder="모델 ID"></label>
+                            <datalist id="eh_pick_models"></datalist>
+                            <label class="eh-pick-row eh-pick-url" hidden><span>Custom 주소</span><input type="url" data-pick-field="customUrl" autocomplete="off" spellcheck="false" placeholder="비우면 본체의 Custom 주소 (예: http://127.0.0.1:5001/v1)"></label>
+                            <p class="eh-pick-models-status"></p>
+                        </div>
+                        <label class="eh-pick-row eh-pick-profile" hidden><span>연결 프로필</span><select data-pick-field="profileId" aria-label="고르는 모델 연결 프로필"></select></label>
+                        <label class="eh-pick-row"><span>한 답에 최대</span><select data-pick-field="count" aria-label="한 답에 고를 그림 수"><option value="1">1장</option><option value="2">2장</option><option value="3">3장</option><option value="4">4장</option></select></label>
+                        <p class="eh-pick-problem" role="status"></p>
+                    </div>
+                </div>
             </section>
 
             <section class="eh-card">
@@ -164,6 +201,10 @@ function template() {
                         <li>
                             <b>프리셋 (선택)</b>
                             <p>격자 위의 <b>프리셋</b> 줄에서 폴더를 나눠요. 같은 이름의 그림을 <b>원본</b>과 <b>새 그림</b>에 따로 두고 켜고 끄면, 같은 태그로 둘을 번갈아 볼 수 있어요 (켜진 것 중 위의 폴더가 이겨요). NSFW처럼 따로 두고 싶은 그림도 폴더 하나로 껐다 켰다 해요. 같은 캐릭터의 다른 카드에서는 <b>불러오기</b>로 원래 카드의 폴더를 그대로 써요 — 그림은 한 군데에만 두고, 카드마다 켜고 끄기만 따로예요.</p>
+                        </li>
+                        <li>
+                            <b>다른 모델이 고르기 (선택)</b>
+                            <p>본문 모델이 비싸면 위 카드의 <b>다른 모델이 고르기</b>를 켜고 싼 모델을 골라요. 본문 모델에는 그림 규칙 · 목록을 보내지 않고, 답을 받은 뒤 그 모델이 대사 문단 앞 자리마다 그림을 골라요(한 답에 최대 1~4장). 고르는 동안에도 글은 바뀌지 않아 번역 · TTS · 다시 쓰기와 함께 써도 돼요. 고르지 못한 자리는 <b>그림 다시 고르기</b>를 눌러요. <b>지금 연결</b>은 예전처럼 본문 모델이 직접 태그를 써요.</p>
                         </li>
                         <li>
                             <b>채팅에 그림</b>
@@ -308,6 +349,7 @@ export function buildPanel(stub) {
     refs.prompt.value = settings().prompt;
 
     bind();
+    bindPick();
     hooks.onChanged = () => renderAll();
     renderAll();
 }
@@ -343,12 +385,154 @@ function renderPromptState() {
         empty: '사용할 그림이 없어요. 그림을 올리거나 켜 주세요.',
         'empty-rules': '규칙이 비어 있어요. 아래에서 규칙을 쓰거나 기본값을 복원해 주세요.',
         ready: '자동 적용 · 다음 답변에 그림 목록과 규칙을 보내요.',
+        pick: `답장 뒤 고르기 · ${connectionLabel()}이(가) 대사 앞 그림을 골라요. 본문 모델에는 규칙을 보내지 않아요.`,
     };
     const message = messages[status.reason] ?? '';
     if (refs.promptStatus.textContent !== message) refs.promptStatus.textContent = message;
     refs.promptPlacement.value = status.placement;
     refs.promptManual.hidden = status.placement !== 'manual';
     root.querySelector('[data-setting="promptEnabled"]').setAttribute('aria-checked', String(status.enabled));
+    renderPick();
+}
+
+// ── 1.6.0 다른 모델이 고르기 ──────────────────────────────────────
+// 연결 칸은 다시 쓰기와 같은 모양 (공급자 + 공용 모델 목록 + ↻ · Custom 주소 · 연결 프로필). 저장 칸은 settings().pick.
+
+const PICK_HINTS = {
+    current: '지금 연결 = 예전처럼 본문 모델이 답 안에 그림 태그를 써요 (규칙 · 목록을 본문 모델에 보내요).',
+    direct: '',
+    profile: '',
+};
+let pickFetching = null;
+
+function pickEl(selector) { return root?.querySelector(selector); }
+
+function pickEndpoint(pick) { return pick.provider === 'custom' ? customEndpoint(pick) : undefined; }
+
+function renderPick() {
+    const box = pickEl('.eh-pick');
+    if (!box) return;
+    const pick = pickSettings();
+    pickEl('[data-pick="enabled"]').setAttribute('aria-checked', String(pick.enabled));
+    pickEl('.eh-pick-body').hidden = !pick.enabled;
+    box.querySelectorAll('[data-pick-seg="connection"] [data-value]').forEach(button => {
+        const on = button.dataset.value === pick.connection;
+        button.classList.toggle('is-active', on);
+        button.setAttribute('aria-checked', String(on));
+    });
+    pickEl('.eh-pick-hint').textContent = PICK_HINTS[pick.connection] ?? '';
+    pickEl('.eh-pick-direct').hidden = pick.connection !== 'direct';
+    pickEl('.eh-pick-profile').hidden = pick.connection !== 'profile';
+    pickEl('[data-pick-field="count"]').value = String(pick.count);
+    if (pick.connection === 'direct') renderPickModels(pick);
+    if (pick.connection === 'profile') renderPickProfiles(pick);
+    const problem = pick.enabled ? connectionProblem(pick) : '';
+    pickEl('.eh-pick-problem').textContent = problem === 'current' ? '' : problem;
+}
+
+function renderPickProfiles(pick) {
+    const select = pickEl('[data-pick-field="profileId"]');
+    let profiles = [];
+    try { profiles = ConnectionManagerRequestService.getSupportedProfiles(); } catch { /* 연결 관리자 꺼짐 */ }
+    const options = [new Option('프로필 선택', ''), ...profiles.map(profile => new Option(profile.name, profile.id))];
+    if (pick.profileId && !profiles.some(profile => profile.id === pick.profileId)) options.push(new Option('(찾을 수 없는 프로필)', pick.profileId));
+    select.replaceChildren(...options);
+    select.value = pick.profileId;
+}
+
+function renderPickModels(pick) {
+    const providerSelect = pickEl('[data-pick-field="provider"]');
+    if (providerSelect.options.length !== Object.keys(PROVIDERS).length) {
+        providerSelect.replaceChildren(...Object.entries(PROVIDERS).map(([id, provider]) => new Option(provider.label, id)));
+    }
+    providerSelect.value = pick.provider;
+    const provider = pick.provider;
+    const endpoint = pickEndpoint(pick);
+    const saved = pick.models[provider];
+    const { ids } = modelChoices(provider, saved, endpoint);
+    const picked = pickModel(saved, ids);
+    pick.models[provider] = picked;
+    const modelSelect = pickEl('[data-pick-field="model"]');
+    if (document.activeElement !== modelSelect) {
+        fillSelect(modelSelect, ids, { saved: picked, missingSuffix: ` (${missingNote(provider, ids)})`, customValue: 'custom', customLabel: '⚙️ 커스텀 모델 입력', customSelected: picked === 'custom' });
+    }
+    pickEl('.eh-pick-custom-model').hidden = picked !== 'custom';
+    const typed = pickEl('[data-pick-field="customModel"]');
+    if (document.activeElement !== typed) typed.value = pick.customModels[provider] ?? '';
+    const datalist = pickEl('#eh_pick_models');
+    const joined = ids.join(' ');
+    if (datalist.dataset.models !== joined) {
+        datalist.replaceChildren(...ids.map(id => Object.assign(document.createElement('option'), { value: id })));
+        datalist.dataset.models = joined;
+    }
+    pickEl('.eh-pick-url').hidden = provider !== 'custom';
+    const url = pickEl('[data-pick-field="customUrl"]');
+    if (document.activeElement !== url) url.value = pick.customUrl;
+    const fetchBtn = pickEl('[data-act="pick-fetch"]');
+    fetchBtn.hidden = !canFetch(provider);
+    fetchBtn.classList.toggle('is-busy', pickFetching === listKey(provider, endpoint));
+    pickEl('.eh-pick-models-status').textContent = provider === 'custom' && !endpoint.url ? '주소를 넣거나 본체의 Custom 연결을 설정하면 그 서버의 모델 목록을 받아요.' : '';
+}
+
+function pickChanged({ fetch = false } = {}) {
+    saveSettings();
+    syncPrompt();
+    renderPromptState();
+    if (fetch) autoFetchPickModels();
+}
+
+function autoFetchPickModels() {
+    const pick = pickSettings();
+    if (!pick.enabled || pick.connection !== 'direct' || !canFetch(pick.provider)) return;
+    autoFetchModelList(pick.provider, listRequest(pick));
+}
+
+async function fetchPickModels() {
+    const pick = pickSettings();
+    const provider = pick.provider;
+    if (!canFetch(provider)) return;
+    const request = listRequest(pick);
+    if (provider === 'custom' && !isHttpUrl(request.endpoint?.url)) {
+        toast('warning', 'Custom 주소를 먼저 넣어 주세요. (예: http://127.0.0.1:5001/v1)');
+        return;
+    }
+    const key = listKey(provider, request.endpoint);
+    if (pickFetching === key) return;
+    pickFetching = key;
+    renderPick();
+    try {
+        const ids = await fetchModelList(provider, request);
+        toast(ids.length ? 'success' : 'warning', ids.length ? `모델 ${ids.length}개를 불러왔어요.` : '빈 모델 목록을 받았어요.');
+    } catch (error) {
+        toast('error', `모델 목록을 불러오지 못했어요: ${error?.message || error}`);
+    } finally {
+        if (pickFetching === key) pickFetching = null;
+        renderPick();
+    }
+}
+
+function bindPick() {
+    root.addEventListener('change', (event) => {
+        const field = event.target.closest?.('[data-pick-field]')?.dataset.pickField;
+        if (!field) return;
+        const pick = pickSettings();
+        const value = String(event.target.value ?? '');
+        if (field === 'provider') { pick.provider = PROVIDERS[value] ? value : 'custom'; pickChanged({ fetch: true }); return; }
+        if (field === 'model') { pick.models[pick.provider] = value; pickChanged(); return; }
+        if (field === 'customModel') { pick.customModels[pick.provider] = value.trim(); pickChanged(); return; }
+        if (field === 'customUrl') { pick.customUrl = value.trim(); pickChanged(); return; }
+        if (field === 'profileId') { pick.profileId = value; pickChanged(); return; }
+        if (field === 'count') { pick.count = Math.max(1, Math.min(4, Number(value) || 2)); pickChanged(); }
+    });
+    root.addEventListener('input', (event) => {
+        const field = event.target.closest?.('[data-pick-field]')?.dataset.pickField;
+        const pick = pickSettings();
+        if (field === 'customModel') { pick.customModels[pick.provider] = String(event.target.value ?? '').trim(); saveSettings(); }
+        else if (field === 'customUrl') { pick.customUrl = String(event.target.value ?? '').trim(); saveSettings(); }
+    });
+    // 다른 곳(모델 전환 · 공용 목록 받기)에서 바뀌면 다시 그린다
+    onModelListChange(() => { if (pickSettings().connection === 'direct') renderPick(); });
+    window.addEventListener('bl:assets-pick-changed', () => { syncPrompt(); renderPromptState(); });
 }
 
 function renderPresets() {
@@ -1175,6 +1359,11 @@ async function onClick(event) {
             button.classList.toggle('is-active', active);
             button.setAttribute('aria-checked', String(active));
         });
+        if (group.dataset.pickSeg === 'connection') {
+            pickSettings().connection = option.dataset.value;
+            pickChanged({ fetch: true });
+            return;
+        }
         if (group.dataset.setting === 'thumbSize') {
             settings().thumbSize = option.dataset.value;
             saveSettings();
@@ -1188,6 +1377,13 @@ async function onClick(event) {
         const next = toggle.getAttribute('aria-checked') !== 'true';
         toggle.setAttribute('aria-checked', String(next));
         if (toggle.dataset.pset) setPresetEnabled(next);
+        else if (toggle.dataset.pick === 'enabled') {
+            const store = settings();
+            pickSettings().enabled = next;
+            // 다른 모델이 고르기를 켜면 이미지 프롬프트(이 기능 전체의 스위치)도 켠다
+            if (next && store.promptEnabled === false) store.promptEnabled = true;
+            pickChanged({ fetch: next });
+        }
         else setSwitch(toggle.dataset.setting, next);
         return;
     }
@@ -1302,6 +1498,9 @@ async function onClick(event) {
         case 'search-clear':
             refs.search.value = '';
             refs.search.dispatchEvent(new Event('input'));
+            break;
+        case 'pick-fetch':
+            await fetchPickModels();
             break;
         case 'prompt-reset':
             if (await confirmDialog('AI에게 주는 규칙을 기본값으로 되돌릴까요?', { ok: '되돌리기' })) {

@@ -5,7 +5,7 @@ import { saveSettingsDebounced } from '../../../../../../../script.js';
 
 export const MODULE = 'esetham';
 export const OLD_MODULE = 'character-assets';
-export const VERSION = '1.5.0';
+export const VERSION = '1.6.0';
 export const TITLE = '캐릭터 에셋';
 
 // AI에게 보내는 글이라 영어로 둔다. {{img_keywords_autogen}} 자리에 지금 캐릭터의 그림 이름 목록이 들어간다.
@@ -74,6 +74,37 @@ const DEFAULTS = Object.freeze({
     links: {},             // { [캐릭터 폴더]: [ { owner, presetId, enabled } … ] } 다른 캐릭터의 프리셋을 이 카드에서 쓰기
 });
 
+// 1.6.0 답장 뒤 다른 모델이 고르기 — 설정 칸 (pick.js 가 연결 · 요청, after-reply.js 가 자리 · 기록)
+export const PICK_DEFAULTS = Object.freeze({
+    enabled: false,          // 다른 모델이 고르기 (꺼져 있으면 예전처럼 본문 모델에 규칙 · 목록을 보낸다)
+    connection: 'current',   // 'current' = 본문 모델(예전 방식) · 'direct' = 공급자 + 모델 · 'profile' = 연결 프로필
+    profileId: '',
+    provider: 'custom',
+    models: {},              // 공급자마다 고른 모델 ('custom' = customModels 에 쓴 이름)
+    customModels: {},
+    customUrl: '',           // '' = 실리태번 본체의 Custom 주소 (그 추가 헤더 · 본문과 함께)
+    count: 2,                // 한 답에 최대 N장 (1~4)
+    maxTokens: 1024,
+    timeoutSec: 90,
+});
+
+/** 설정 칸을 맞춘다 (없거나 이상한 값은 기본값) */
+export function normalizePick(store = settings()) {
+    const raw = store.pick && typeof store.pick === 'object' && !Array.isArray(store.pick) ? store.pick : {};
+    const pick = { ...structuredClone(PICK_DEFAULTS), ...raw };
+    pick.enabled = pick.enabled === true;
+    if (!['current', 'direct', 'profile'].includes(pick.connection)) pick.connection = 'current';
+    if (typeof pick.provider !== 'string' || !/^[a-z]+$/.test(pick.provider)) pick.provider = 'custom';
+    for (const key of ['models', 'customModels']) if (!pick[key] || typeof pick[key] !== 'object' || Array.isArray(pick[key])) pick[key] = {};
+    pick.profileId = String(pick.profileId ?? '');
+    pick.customUrl = String(pick.customUrl ?? '');
+    pick.count = Math.max(1, Math.min(4, Math.round(Number(pick.count)) || 2));
+    pick.maxTokens = Math.max(64, Math.min(65536, Math.round(Number(pick.maxTokens)) || PICK_DEFAULTS.maxTokens));
+    pick.timeoutSec = Math.max(10, Math.min(600, Math.round(Number(pick.timeoutSec)) || PICK_DEFAULTS.timeoutSec));
+    store.pick = pick;
+    return pick;
+}
+
 function normalizeText(text) {
     return String(text ?? '').replace(/[`\s]+/g, ' ').trim();
 }
@@ -124,6 +155,7 @@ export function initSettings() {
     if (!store.disabled || typeof store.disabled !== 'object' || Array.isArray(store.disabled)) store.disabled = {};
     if (!store.presets || typeof store.presets !== 'object' || Array.isArray(store.presets)) store.presets = {}; // 1.2.0
     if (!store.links || typeof store.links !== 'object' || Array.isArray(store.links)) store.links = {};
+    normalizePick(store); // 1.6.0 답장 뒤 다른 모델이 고르기 (pick.js · after-reply.js)
 }
 
 // ── 현재 캐릭터 ───────────────────────────────────────────────

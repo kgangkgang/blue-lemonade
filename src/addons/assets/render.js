@@ -19,6 +19,7 @@ import * as stGroups from '../../../../../../group-chats.js';
 import { settings, currentFolder, folderOf } from './state.js';
 import { groupKeyOf, baseOf } from './assets.js';
 import { findSimilar, findSimilarList } from './names.js';
+import { slotView } from './slots.js';
 
 const TAG_PATTERN = /\{\{img::\s*([^{}]+?)\s*\}\}/gi;
 const SKIP_TAGS = new Set(['CODE', 'PRE', 'SCRIPT', 'STYLE', 'TEXTAREA']);
@@ -518,6 +519,7 @@ function processMessage(mes, key) {
     const text = mes.querySelector('.mes_text');
     if (!text) return;
     const before = domEdits;
+    fillSlots(text, mes);
     replaceInText(text);
     const imgs = [...text.getElementsByTagName('img')];
     fixImages(text, mes, imgs);
@@ -552,6 +554,94 @@ function replaceNow(messages) {
             console.debug('[캐릭터 에셋] 즉시 바꾸기 실패', error);
         }
     }
+}
+
+// ── 1.6.0 답장 뒤 다른 모델이 고른 자리 → <img> ───────────────────────
+// 자리(<span data-asset-slot="ID">)는 글에 빈 채로 있고, 고른 이름은 메시지 extra.bl_asset_slots[ID] 에만 있다 (after-reply.js).
+// 고른 것 = 그림 · 없음/모르는 이름 = 아무것도 안 보임(빈 문단도 CSS 로 숨김) · 실패 · 끊긴 고르기 = 까닭 + 다시 고르기 단추.
+// 실리태번이 메시지 HTML 의 class 에 custom- 을 붙이므로 자리는 data 속성으로만 찾는다.
+
+const SLOT_SELECTOR = 'span[data-asset-slot]';
+/** 지금 이 페이지에서 고르는 중인 자리 번호 (pending 인데 여기 없으면 새로 고침 등으로 끊긴 것) */
+export const slotRunning = new Set();
+/** after-reply.js 가 채운다: retry(messageId, slotId) */
+export const slotHooks = { retry: null };
+
+function slotRecordsOf(mes) {
+    const chat = liveBindings ? stScript.chat : getContext().chat;
+    const map = chat?.[Number(mes.getAttribute('mesid'))]?.extra?.bl_asset_slots;
+    return map && typeof map === 'object' && !Array.isArray(map) ? map : {};
+}
+
+function retryButton(id, reason) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'eh-slot-retry';
+    button.dataset.assetRetry = id;
+    button.title = '다른 모델에게 이 자리의 그림을 다시 골라 달라고 해요';
+    const icon = document.createElement('i');
+    icon.className = 'fa-solid fa-rotate';
+    icon.setAttribute('aria-hidden', 'true');
+    const label = document.createElement('span');
+    label.textContent = '그림 다시 고르기';
+    const why = document.createElement('small');
+    why.textContent = reason;
+    button.append(icon, label, why);
+    return button;
+}
+
+/** 이 메시지의 자리들을 기록대로 채운다. 같은 상태면 건드리지 않는다 (감시 → 다시 처리가 저절로 멎게) */
+function fillSlots(text, mes) {
+    const spans = text.querySelectorAll(SLOT_SELECTOR);
+    if (!spans.length || !settings().renderEnabled) return;
+    const records = slotRecordsOf(mes);
+    for (const span of spans) {
+        const host = span.parentElement;
+        if (host && host !== text && host.tagName === 'P') {   // 자리만 든 문단 (글이 같이 든 문단은 자리가 비어도 보인다)
+            const alone = [...host.childNodes].every(n => (n.nodeType === 1 && n.matches?.(SLOT_SELECTOR)) || (n.nodeType === 3 && !n.textContent.trim()) || (n.nodeType === 1 && n.tagName === 'BR'));
+            if (host.hasAttribute('data-eh-slot-only') !== alone) host.toggleAttribute('data-eh-slot-only', alone);
+        }
+        const id = span.dataset.assetSlot;
+        const view = slotView(records[id], slotRunning.has(id));
+        const asset = view.state === 'img' && index ? findAsset(view.name) : null;
+        const sig = `${generation}|${view.state}|${asset ? `${asset.folder}/${asset.file}` : ''}|${view.reason ?? ''}`;
+        if (span.dataset.ehSlot === sig) continue;
+        domEdits++;
+        span.dataset.ehSlot = sig;
+        if (asset) span.replaceChildren(makeImage(asset));
+        else if (view.state === 'retry') span.replaceChildren(retryButton(id, view.reason));
+        else span.replaceChildren();
+    }
+}
+
+/** 이 이름이 지금 캐릭터의 어느 그림인가 (고른 이름 확인용) — { file, group, variants } 또는 null
+ *  번호 묶음 이름만 답해도(night → night-1 · night-2) 그 묶음의 첫 그림으로 — 그리는 쪽이 묶음 안에서 다시 고른다 */
+export function assetInfo(name) {
+    if (!liveIndex()) return null;
+    const asset = findAsset(name) ?? index.groups.get(groupKeyOf(cleanName(name)))?.[0] ?? null;
+    return asset ? { file: asset.file, group: asset.group, variants: hasVariants(asset) } : null;
+}
+
+/** 메시지 하나를 곧 다시 그린다 — 자리 요소가 화면에 있으면 true (없으면 부른 쪽이 메시지를 다시 그린다) */
+export function refreshSlots(messageId) {
+    const mes = document.querySelector(`#chat .mes[mesid="${Number(messageId)}"]`);
+    if (!mes) return false;
+    clean.delete(mes);
+    const has = !!mes.querySelector(`.mes_text ${SLOT_SELECTOR}`);
+    schedulePass([mes]);
+    return has;
+}
+
+// 다시 고르기 단추: TTS 의 대사 누르기 · 메시지 누르기보다 먼저 받는다
+function onRetryClick(event) {
+    const button = event.target?.closest?.('.eh-slot-retry[data-asset-retry]');
+    if (!button) return;
+    if (!event.type.startsWith('touch')) event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    if (event.type !== 'click') return;
+    const mes = button.closest('.mes');
+    if (mes) slotHooks.retry?.(Number(mes.getAttribute('mesid')), button.dataset.assetRetry);
 }
 
 // ── {{img::이름}} → <img> ──────────────────────────────────────
@@ -859,6 +949,7 @@ export function setupRenderer() {
     if (!outsideListening) {
         outsideListening = true;
         document.addEventListener('char-assets:render', event => renderOutside(event.detail?.root));
+        for (const type of ['click', 'pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend']) document.addEventListener(type, onRetryClick, true);
     }
     const chat = document.getElementById('chat');
     if (!chat || observer) return;

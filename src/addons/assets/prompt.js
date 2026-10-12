@@ -4,6 +4,7 @@ import { getContext } from '../../../../../../extensions.js';
 import { addonsEnabled } from '../../usage-mode.js';
 import { settings, currentFolder } from './state.js';
 import { runtime, reload, ensureLoaded, expandedPrompt, onStoreChange } from './store.js';
+import { pickActive } from './pick.js';
 
 const PROMPT_KEY = 'blue_lemonade_character_assets';
 const PREPARE_TIMEOUT = 8000;
@@ -48,9 +49,11 @@ export function promptStatus() {
     const loading = !!folder && (runtime.folder !== folder || runtime.loading);
     const hasImages = !!folder && !loading && !!runtime.keywords;
     const available = hasImages && !!expandedPrompt().trim();
+    // 1.6.0 다른 모델이 고르기가 돌면 본문 모델에는 규칙 · 목록을 보내지 않는다 (답을 받은 뒤 연결한 모델이 고른다)
+    const pick = enabled && pickActive(store);
     const reason = !enabled ? 'off' : context.groupId ? 'group' : !folder ? 'no-character'
-        : loading ? 'loading' : !hasImages ? 'empty' : !available ? 'empty-rules' : placement === 'manual' ? 'manual' : 'ready';
-    return { enabled, placement, loading, available, reason };
+        : loading ? 'loading' : !hasImages ? 'empty' : !available ? 'empty-rules' : pick ? 'pick' : placement === 'manual' ? 'manual' : 'ready';
+    return { enabled, placement, loading, available, reason, pick };
 }
 
 function excludedGeneration() {
@@ -60,14 +63,14 @@ function excludedGeneration() {
 /** 오래된 프리셋에 매크로가 남아 있어도 자동 주입과 중복되지 않는다. */
 export function manualPrompt() {
     const status = promptStatus();
-    return status.enabled && status.placement === 'manual' && status.available && !excludedGeneration() ? expandedPrompt() : '';
+    return status.enabled && !status.pick && status.placement === 'manual' && status.available && !excludedGeneration() ? expandedPrompt() : '';
 }
 
 /** 설정을 바꿀 때 즉시 호출한다. 여기서는 네트워크 요청을 시작하지 않는다. */
 export function syncPrompt() {
     const status = promptStatus();
     if (!status.enabled || !currentFolder()) cancelPreparation();
-    const text = status.enabled && status.placement === 'auto' && status.available && !excludedGeneration() ? expandedPrompt() : '';
+    const text = status.enabled && !status.pick && status.placement === 'auto' && status.available && !excludedGeneration() ? expandedPrompt() : '';
     setExtensionPrompt(PROMPT_KEY, text, extension_prompt_types.IN_CHAT, 1, false, extension_prompt_roles.SYSTEM);
     return status;
 }

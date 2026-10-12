@@ -117,8 +117,31 @@ const prompt = {
         window.dispatchEvent(new Event('bl:prompt-connection-changed'));
     },
 };
-const KNOWN = [translator, prompt, memory, rewrite];
-const KNOWN_KEYS = new Set(['llm-translator-custom', 'prompt-panel', 'memoria', 'ban_word_rewrite', 'model_switch', 'model_register', 'salty']);
+// 6.1.9 캐릭터 에셋 1.6.0 「다른 모델이 고르기」 — 테마 내장 애드온의 연결 (다시 쓰기와 같은 칸: connection · provider · models · customModels · customUrl)
+const assets = {
+    id: 'assets', name: '캐릭터 에셋', folder: '', sources: NARROW,
+    builtin: () => !!extension_settings.salty?.addons?.assets,
+    settings: () => { const p = extension_settings.esetham?.pick; return isObj(p) && p.enabled && p.connection !== 'current' ? p : null; },
+    read() {
+        const s = this.settings();
+        if (!isObj(s)) return null;
+        if (!s.enabled) return { follow: '꺼짐 (본문 모델이 씀)' };
+        if (s.connection !== 'direct') return { follow: s.connection === 'profile' ? '연결 프로필' : '지금 연결' };
+        const provider = String(s.provider || '');
+        const picked = String(s.models?.[provider] || '');
+        return { source: fromGoogle(provider), model: picked === 'custom' ? String(s.customModels?.[provider] || '') : picked, url: provider === 'custom' ? String(s.customUrl || '') : '' };
+    },
+    apply({ source, model, url }) {
+        const s = this.settings(), provider = toGoogle(source);
+        s.connection = 'direct'; s.provider = provider;
+        ownObject(s, 'models', {})[provider] = model;
+        if (provider === 'custom' && url) s.customUrl = url;
+        // 켜고 끄기는 그대로 둔다 — 모델만 바꾼다. 설정 칸이 열려 있으면 다시 그린다
+        window.dispatchEvent(new Event('bl:assets-pick-changed'));
+    },
+};
+const KNOWN = [translator, prompt, memory, rewrite, assets];
+const KNOWN_KEYS = new Set(['llm-translator-custom', 'prompt-panel', 'memoria', 'ban_word_rewrite', 'esetham', 'model_switch', 'model_register', 'salty']);
 const registered = new Map();
 
 /** 다른 확장이 스스로 등록하는 길: globalThis[Symbol.for('st.model-switch.v1')].register({ id, name, read, apply, sources?, settingsKey?, path? })

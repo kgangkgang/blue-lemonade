@@ -136,8 +136,8 @@ export function parseRegexLines(text) {
 // 6.1.8 그림 자리(그림 확장의 슬롯 <span class="autopic-image-slot" data-autopic-slot="…">[AutoPic 이미지]</span>)는 글이 아니다 —
 //   태그만 벗기면 「[AutoPic 이미지]」가 지문 한 구간이 되어 지문 읽기 · 대사 없을 때 지문 읽기에서 소리 내 읽혔고, 미리 만들기 '모두'가 합성했고,
 //   분석 맥락에도 들어갔다. 같은 길이 빈칸(줄바꿈 유지)으로 지워 줄 번호 · 대사 차례는 그대로. 글 해시(textHash)는 원문 그대로라 저장된 분석도 그대로.
-//   다시 쓰기 core.js SLOT_RE 와 같은 식 (tools/tests/rewrite-tts-slots.mjs 가 맞춰 본다).
-export const SLOT_RE = /<span\b[^>]*\b(?:data-autopic-slot="[^"]*"|class="[^"]*\bautopic-image-slot\b[^"]*")[^>]*>[^<]*<\/span>/g;
+//   다시 쓰기 core.js SLOT_RE 와 같은 식 (tools/tests/rewrite-tts-slots.mjs 가 맞춰 본다). 6.1.9 캐릭터 에셋의 빈 자리(data-asset-slot)도.
+export const SLOT_RE = /<span\b[^>]*\b(?:data-(?:autopic|asset)-slot="[^"]*"|class="[^"]*\b(?:autopic-image-slot|bl-asset-slot)\b[^"]*")[^>]*>[^<]*<\/span>/g;
 export function blankSlots(text) {
     return String(text ?? '').replace(SLOT_RE, m => m.replace(/[^\n]/g, ' '));
 }

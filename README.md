@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.1.8/blue-lemonade-6.1.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.1.9/blue-lemonade-6.1.9.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.1.8 · 최신 업데이트</summary>
+<summary>6.1.9 · 최신 업데이트</summary>
+
+- 캐릭터 에셋 1.6.0: 「다른 모델이 고르기」를 켜면 본문 모델에는 그림 규칙 · 목록을 보내지 않고, 답을 받은 뒤 연결한 모델이 대사 앞 자리마다 그림을 골라요(한 답에 1~4장). 고르지 못한 자리는 「그림 다시 고르기」를 눌러요. 모델 전환에도 나와요.
+- 다시 쓰기 2.0.5 · TTS 1.7.2 · 번역: 캐릭터 에셋의 그림 자리도 글로 다루지 않아요. 고치기 · 읽기 · 번역에서 자리는 제자리에 그대로 남아요.
+
+</details>
+
+<details>
+<summary>6.1.8 · 리듬 효과음 · TTS 검열되면 다른 모델로 · 다른 확장용 소리 API</summary>
 
 - TTS 1.7.1: 반복용 질척이는 리듬 효과음을 더해 내장 효과음이 89개가 됐어요(freesound CC0). 「꿀럭」·「꿀렁」 같은 말에 붙고, 그 동작이 이어지는 동안 읽는 줄 아래에서 반복돼요.
 - TTS 1.7.1: 재생 막대의 이름이 그 인물의 대사 색으로 나와요. 색이 없는 인물과 지문은 예전처럼 테마 색이에요.

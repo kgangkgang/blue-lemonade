@@ -25,7 +25,7 @@ function pass(label) { groups++; console.log(`PASS ${label}`); }
 async function fixture(initial = {}) {
     const ext = { salty: { enabled: true, usageMode: 'both', addons: { assets: true } }, ...initial };
     const context = { characters: [{ avatar: 'A.png' }, { avatar: 'B.png' }], characterId: 0, groupId: null, chatId: 'a-chat', chat: [], extensionSettings: ext };
-    let saves = 0, busy = false, stopped = 0;
+    let saves = 0, busy = false, stopped = 0, picking = false;
     context.stopGeneration = () => { stopped++; void eventSource.emit('GENERATION_STOPPED'); };
     const state = await load('state.js', { extension_settings: ext, getContext: () => context, saveSettingsDebounced: () => saves++ });
     state.initSettings();
@@ -48,7 +48,7 @@ async function fixture(initial = {}) {
     const slots = new Map(), history = [];
     const timers = new Map(); let timerId = 0;
     const prompt = await load('prompt.js', {
-        ...state, ...store, addonsEnabled, getContext: () => context, eventSource, event_types,
+        ...state, ...store, addonsEnabled, getContext: () => context, eventSource, event_types, pickActive: () => picking,
         extension_prompt_types: { IN_CHAT: 1 }, extension_prompt_roles: { SYSTEM: 0 },
         isGenerating: () => busy, setSendButtonState: value => { busy = value; },
         setTimeout: (fn, delay) => { const id = ++timerId; timers.set(id, { fn, delay }); return id; }, clearTimeout: id => timers.delete(id),
@@ -58,7 +58,8 @@ async function fixture(initial = {}) {
     const slot = () => slots.get('blue_lemonade_character_assets');
     const waitFor = key => { const item = deferred(); const queue = queues.get(key) ?? []; queue.push(item); queues.set(key, queue); return item; };
     return { ext, context, state, store, prompt, requests, responses, slots, history, slot, waitFor, eventSource, event_types, timers,
-        get saves() { return saves; }, get stopped() { return stopped; }, get busy() { return busy; }, set busy(value) { busy = value; } };
+        get saves() { return saves; }, get stopped() { return stopped; }, get busy() { return busy; }, set busy(value) { busy = value; },
+        set picking(value) { picking = value; } };
 }
 
 {
@@ -274,6 +275,18 @@ async function fixture(initial = {}) {
     await first; assert.equal(g.busy, true, 'the next preparation still owns the shared lock');
     later.resolve(['ready.png']); await second; assert.equal(g.busy, false); assert.equal(g.timers.size, 0);
     pass('pre-existing ST send state and overlapping preparation lock ownership are preserved');
+}
+{
+    // 1.6.0 다른 모델이 고르기: 본문 모델에는 규칙 · 목록을 보내지 않고 (자동 · 수동 둘 다), 끄면 그대로 돌아온다
+    const f = await fixture(); await f.store.reload();
+    assert.match(f.slot().value, /smile\.png/);
+    f.picking = true;
+    assert.equal(f.prompt.syncPrompt().reason, 'pick'); assert.equal(f.slot().value, '');
+    await f.prompt.preparePrompt('normal', {}, false); assert.equal(f.slot().value, '');
+    f.state.settings().promptPlacement = 'manual'; f.prompt.syncPrompt(); assert.equal(f.prompt.manualPrompt(), '');
+    f.picking = false; f.prompt.syncPrompt(); assert.match(f.prompt.manualPrompt(), /smile\.png/);
+    f.state.settings().promptPlacement = 'auto'; f.prompt.syncPrompt(); assert.match(f.slot().value, /smile\.png/);
+    pass('while another model picks after the reply, the main model gets no picture rules in either placement');
 }
 delete globalThis.__assetPromptTest;
 console.log(`PASS Character Assets prompt: ${groups} semantic groups`);
