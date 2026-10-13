@@ -6,7 +6,7 @@
 :root {
     --jj-on: var(--jj-on-color, var(--SmartThemeQuoteColor, #e18a24));
     /* index.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
-    --jj-css-version: "1.2.2";
+    --jj-css-version: "1.2.3";
 }
 
 /* ── 입력창 버튼 ─────────────────────────────────────────── */
@@ -226,6 +226,12 @@
 }
 
 .jj-icon-btn:hover { opacity: 1; background: color-mix(in srgb, var(--SmartThemeBodyColor) 8%, transparent); }
+
+/* 1.2.3 ▶ 바로 보내기: 켜짐 색으로 채운 단추 (실리태번 보내기 단추와 같은 뜻). 테마의 .jj-icon-btn 규칙(1,2,0)보다 한 단 높게.
+   숨길 때는 [hidden] 이 display: grid 에 지므로 여기서 display 를 끈다 */
+#jj-popup .jj-popup-head .jj-icon-btn.jj-send { border-color: transparent; background: var(--jj-on); color: var(--bl-jj-ink, var(--jj-on-ink, #fff)); opacity: 1; }
+#jj-popup .jj-popup-head .jj-icon-btn.jj-send:hover { background: var(--jj-on); color: var(--bl-jj-ink, var(--jj-on-ink, #fff)); filter: brightness(1.08); }
+#jj-popup .jj-popup-head .jj-icon-btn.jj-send[hidden] { display: none; }
 
 .jj-popup-body { padding: 10px; }
 

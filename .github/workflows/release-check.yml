@@ -93,6 +93,7 @@ jobs:
           node tools/tests/assets-after-reply.mjs .
           node tools/tests/assets-slot-pick.mjs .
           node tools/tests/story-direction.mjs .
+          node tools/tests/direction-send.mjs .
           node tools/tests/mix-selection.mjs .
           node tools/tests/capture-motion.mjs .
           node tools/tests/capture-filter.mjs .

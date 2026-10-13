@@ -12,7 +12,7 @@ import { badgeTextHit } from '../../badge-hit.js';
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
-const VERSION = '1.2.2';
+const VERSION = '1.2.3';
 // 1.1.5: 깃털 창에 두 쪽 — 전개 지시(이번 전개) · 항상 지시(적은 글 그대로 매번, 예: <OOC: …>). 옆으로 넘기거나 제목을 눌러 바꾼다
 const KINDS = ['direction', 'always'];
 const KIND_LABEL = { direction: '전개 지시', always: '항상 지시' };
@@ -510,7 +510,31 @@ function refreshPopup() {
     popup.querySelectorAll('.jj-dots b').forEach((dot, index) => dot.classList.toggle('is-current', KINDS[index] === page));
     popup.querySelectorAll('.jj-page').forEach(section => section.classList.toggle('is-off', !kindActive(section.dataset.kind)));
     popup.querySelector('.jj-foot-text').textContent = footText();
+    popup.querySelector('.jj-send').hidden = !sendButton();   // 1.2.3 보내기 단추가 숨은 동안(생성 중 · 스와이프 중 · 명령 실행 중)은 ▶ 도 숨긴다
     if (listView) renderList();
+}
+
+// 1.2.3 깃털 창 안 ▶ — 지시는 적는 대로 저장돼 있으니 창을 닫고 실리태번의 보내기 단추를 누른다. 빈 입력(이어 쓰기) · 생성 중 규칙은 실리태번 것 그대로
+//       (사용자 10-13: 깃털 → 쓰기 → 닫기 → 보내기 네 번을 한 번으로). 글을 넣는 게 아니라 보내기 동작만 — 지시 켜기/끄기는 손대지 않는다
+function sendButton(doc = document) {
+    const element = doc.getElementById('send_but');
+    return element && element.getClientRects().length ? element : null;
+}
+
+function sendNow(doc = document) {
+    const target = sendButton(doc);
+    if (!target) return false;
+    closePopup();
+    target.click();
+    return true;
+}
+
+// 창이 열려 있는 동안 실리태번의 생성 중 표시(body[data-generating] · [data-swiping])를 따라 ▶ 를 숨기고 보인다
+let sendWatch = null;
+function watchSendButton() {
+    sendWatch?.disconnect();
+    sendWatch = typeof MutationObserver === 'function' ? new MutationObserver(() => { if (popup) refreshPopup(); }) : null;
+    sendWatch?.observe(document.body, { attributes: true, attributeFilter: ['data-generating', 'data-swiping'] });
 }
 
 function pageTextarea(kind) {
@@ -709,6 +733,7 @@ function openPopup() {
             <button type="button" class="jj-popup-title" aria-label="전개 지시 · 항상 지시 바꾸기"><i class="fa-solid fa-feather-pointed"></i><span class="jj-title-text"></span><span class="jj-state"></span><span class="jj-dots" aria-hidden="true"><b></b><b></b></span></button>
             <button type="button" class="jj-icon-btn" data-act="list" aria-label="저장 · 최근 지시" aria-expanded="false"><i class="fa-regular fa-bookmark"></i></button>
             <button type="button" class="jj-icon-btn" data-act="clear" aria-label="내용 지우기"><i class="fa-solid fa-eraser"></i></button>
+            <button type="button" class="jj-icon-btn jj-send" data-act="send" aria-label="보내기"><i class="fa-solid fa-paper-plane"></i></button>
             <button type="button" class="jj-icon-btn" data-act="close" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="jj-popup-body">
@@ -746,6 +771,7 @@ function openPopup() {
     popup.querySelectorAll('.jj-seg [data-list]').forEach(tab => tab.addEventListener('click', () => setListView(tab.dataset.list)));
     popup.querySelector('.jj-list').addEventListener('click', onListClick);
     popup.querySelector('[data-act="close"]').addEventListener('click', closePopup);
+    popup.querySelector('[data-act="send"]').addEventListener('click', () => sendNow());   // 1.2.3 ▶ 창을 닫고 실리태번 보내기와 같은 길로
     popup.querySelector('[data-act="clear"]').addEventListener('click', async () => {
         const kind = page;
         const slot = store[kind];
@@ -774,6 +800,7 @@ function openPopup() {
     popup.classList.add('is-open');
     document.addEventListener('pointerdown', onOutsidePointer, true);
     document.addEventListener('keydown', onPopupKeydown, true);
+    watchSendButton();
 }
 
 function closePopup() {
@@ -787,6 +814,8 @@ function closePopup() {
     button?.classList.remove('has-popup');
     document.removeEventListener('pointerdown', onOutsidePointer, true);
     document.removeEventListener('keydown', onPopupKeydown, true);
+    sendWatch?.disconnect();
+    sendWatch = null;
 }
 
 function togglePopup() {
@@ -1069,7 +1098,7 @@ export const ready = new Promise((resolve, reject) => jQuery(() => {
 }));
 
 export function showHelp() {
-    return callGenericPopup('<h3>전개 지시 사용방법</h3><p>깃털 버튼을 길게 누르면 전개 지시를 켜고 끌 수 있어요. </p><p>입력창 옆 깃털 버튼을 눌러 다음 장면이나 이야기의 방향을 적어요. 켜짐 스위치를 켜면 이후 대화 요청마다 지시가 들어가요.</p><p>깃털 창을 옆으로 넘기거나 제목을 누르면 <b>항상 지시</b> 쪽이에요. 여기 적은 글은 틀 없이 그대로 매번 들어가요 (예: &lt;OOC: 캐릭터 에셋 이미지를 2장 이상 출력하시오.&gt;). 항상 지시가 켜져 있으면 깃털이 그라데이션으로 바뀌어요.</p><p>책갈피 단추의 <b>저장</b>에는 자주 쓰는 지시를 모아 두고, <b>최근</b>에는 실제로 보낸 지시가 쌓여요. 누르면 입력칸에 불러와요.</p><p>한 번만 보내는 기능이 아니에요. 원하는 장면이 끝나면 끄거나 내용을 고쳐 주세요. 꺼도 적어 둔 내용은 남아요.</p><p>삽입 위치 0은 프롬프트 맨 끝, 1은 마지막 메시지 앞이에요. 두 지시 모두 같은 자리에 들어가요. 프롬프트의 {{direction}} 자리에 전개 지시가 들어가요. 이 도구는 별도 모델을 호출하지 않고 현재 대화 요청에 지시를 추가해요.</p><p>입력창 버튼을 끄면 버튼과 지시 삽입이 함께 꺼져요. 기존 단독 전개 지시 확장과 동시에 켜지 마세요.</p>', POPUP_TYPE.TEXT, '', {okButton:'닫기'});
+    return callGenericPopup('<h3>전개 지시 사용방법</h3><p>깃털 버튼을 길게 누르면 전개 지시를 켜고 끌 수 있어요. 창 안의 ▶ 를 누르면 창을 닫고 바로 보내요. </p><p>입력창 옆 깃털 버튼을 눌러 다음 장면이나 이야기의 방향을 적어요. 켜짐 스위치를 켜면 이후 대화 요청마다 지시가 들어가요.</p><p>깃털 창을 옆으로 넘기거나 제목을 누르면 <b>항상 지시</b> 쪽이에요. 여기 적은 글은 틀 없이 그대로 매번 들어가요 (예: &lt;OOC: 캐릭터 에셋 이미지를 2장 이상 출력하시오.&gt;). 항상 지시가 켜져 있으면 깃털이 그라데이션으로 바뀌어요.</p><p>책갈피 단추의 <b>저장</b>에는 자주 쓰는 지시를 모아 두고, <b>최근</b>에는 실제로 보낸 지시가 쌓여요. 누르면 입력칸에 불러와요.</p><p>한 번만 보내는 기능이 아니에요. 원하는 장면이 끝나면 끄거나 내용을 고쳐 주세요. 꺼도 적어 둔 내용은 남아요.</p><p>삽입 위치 0은 프롬프트 맨 끝, 1은 마지막 메시지 앞이에요. 두 지시 모두 같은 자리에 들어가요. 프롬프트의 {{direction}} 자리에 전개 지시가 들어가요. 이 도구는 별도 모델을 호출하지 않고 현재 대화 요청에 지시를 추가해요.</p><p>입력창 버튼을 끄면 버튼과 지시 삽입이 함께 꺼져요. 기존 단독 전개 지시 확장과 동시에 켜지 마세요.</p>', POPUP_TYPE.TEXT, '', {okButton:'닫기'});
 }
 let settingsDialog = null;
 export async function openPanel() {
