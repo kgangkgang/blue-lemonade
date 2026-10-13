@@ -11,8 +11,8 @@
 #lv_settings .lv-settings-credits :is(summary,a):focus-visible { outline: 2px solid var(--lv-accent); outline-offset: 3px; }
 
 /* ---------- 공통 변수: 설정 창 · 편집 팝업 · 재생 막대 (ST 테마 색을 따르고, 블루 레몬에이드 변수는 있으면 씀) */
-.lv-settings, .lv-editor, .lv-bar {
-  --lv-css-version: "1.7.9";
+.lv-settings, .lv-editor, .lv-bar, .lv-namevoice {
+  --lv-css-version: "1.8.0";
   --lv-accent: var(--salty-accent, var(--SmartThemeQuoteColor, #51a0de));
   --lv-text: var(--SmartThemeBodyColor, #dcdcd2);
   --lv-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, .15));
@@ -553,7 +553,7 @@ body.salty.salty-icons-line #chat .mes .extraMesButtons > .lv_play { --salty-mi:
 
 /* ---------- 손가락: 누르는 곳은 36px 이상 */
 @media (pointer: coarse) {
-  .lv-settings, .lv-editor, .lv-bar { --lv-h: max(36px, 2.1em); }
+  .lv-settings, .lv-editor, .lv-bar, .lv-namevoice { --lv-h: max(36px, 2.1em); }
   .lv-tab { min-height: 36px; }
   .lv-toggle.checkbox_label { min-height: 36px; }
   .lv-x { width: 36px; height: 36px; }            /* 글자는 작게, 누르는 곳만 36px */
@@ -584,6 +584,19 @@ body.salty.salty-icons-line #chat .mes .extraMesButtons > .lv_play { --salty-mi:
 .lv-bar-sfxmine[hidden] { display: none; }
 .lv-bar-sfxmineopt { display: inline-flex; align-items: center; gap: 6px; height: var(--lv-h); padding: 0 10px; border: 0; border-radius: var(--lv-r-pill); background: color-mix(in srgb, var(--lv-accent) 18%, transparent); color: var(--lv-text); font: inherit; font-size: .84em; cursor: pointer; }
 .lv-bar-sfxmineopt > i { color: var(--lv-accent); }
+/* 6.3.6 요술봉 › 낱말: 칩 한 줄(넘치면 옆으로 밀기) · 고른 칩 = 포인트색 · 고르기 전 효과음 목록은 흐리게 · 이미 그 낱말이 있는 효과음 ✓ */
+.lv-bar-wordchips { display: flex; gap: 4px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; padding-bottom: 2px; }
+.lv-bar-wordchip { flex: 0 0 auto; height: var(--lv-h); padding: 0 10px; border: 1px solid var(--lv-border); border-radius: var(--lv-r-pill); background: transparent; color: var(--lv-text); font: inherit; font-size: .86em; white-space: nowrap; cursor: pointer; }
+.lv-bar-wordchip[aria-pressed="true"] { border-color: var(--lv-accent); background: color-mix(in srgb, var(--lv-accent) 22%, transparent); }
+.lv-bar-wordchip:focus-visible { outline: 2px solid var(--lv-accent); outline-offset: 1px; }
+.lv-bar-wordpick.lv-nochoice .lv-bar-wordsounds .lv-bar-sfxopt { opacity: .55; }
+.lv-bar-wordsounds .lv-bar-sfxopt.lv-has::after { content: " ✓"; color: var(--lv-accent); }
+/* 6.3.6 이름 꾹 눌러 목소리 고르기: 이름 아래 작은 창 (줄마다 이름 · 목소리 고르기) */
+.lv-namevoice { position: fixed; z-index: 10050; width: min(340px, calc(100vw - 16px)); box-sizing: border-box; padding: 8px; border: 1px solid var(--lv-border); border-radius: 12px; background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #171717) 96%, transparent); color: var(--lv-text); box-shadow: 0 4px 18px rgba(0, 0, 0, .35); }
+.lv-namevoice-rows { display: flex; flex-direction: column; gap: 6px; max-height: min(50vh, 360px); overflow: auto; }
+.lv-namevoice-row { display: flex; align-items: center; gap: 8px; margin: 0; }
+.lv-namevoice-name { flex: 0 1 36%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .9em; }
+.lv-namevoice-row > select { flex: 1 1 auto; min-width: 0; height: var(--lv-h); margin: 0; }
 
 /* Reading controls: stable icon centres and one navigation row when it fits. */
 #lv_settings .lv-tabs { gap:4px; }

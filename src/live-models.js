@@ -120,7 +120,8 @@ export const canList = (source) => STATUS.has(sourceOf(source));
  * (claude-sonnet-5-5 2026-09-28 · gpt-6.1-sol 2026-09-29 · glm-5.3 계열 · grok-4.7 · command-a-plus · mistral-large-4-0 …).
  * 실리태번 화면 목록에 이미 있는 옛 이름은 화면 목록이 채운다 — 여기엔 지금 세대만.
  */
-const GEMINI = Object.freeze(['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite',
+// 2026-10-13: gemini-4-argon 출시 (Vertex AI · Google AI Studio · OpenRouter google/gemini-4-argon) — 맨 앞에
+const GEMINI = Object.freeze(['gemini-4-argon', 'gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite',
     'gemini-3.1-pro-preview', 'gemini-3.1-flash-lite', 'gemini-3-flash-preview', 'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']);
 // 2026-10-08: claude-haiku-5-5 (10-07) · anthropic/claude-haiku-5.5 · grok-4.6/4.5/4.3 · mistral-large-4-0 를 넣고, 끝났거나 곧 끝나는 이름을 뺌
 //   (각 공급자 deprecations 문서: o4-mini · gpt-4.1-nano 10-23 · gpt-5 · o3 12-11 · gpt-5.1 · gpt-5.4-nano 2027-04-01 · gpt-5.3-chat-latest 08-10 ·
@@ -133,7 +134,7 @@ export const KNOWN = Object.freeze({
         'claude-fable-5', 'claude-haiku-4-5', 'claude-opus-4-8', 'claude-opus-4-7', 'claude-opus-4-6', 'claude-sonnet-4-6', 'claude-opus-4-5']),
     makersuite: GEMINI,
     vertexai: GEMINI,
-    openrouter: Object.freeze(['anthropic/claude-haiku-5.5', 'mistralai/mistral-large-4-0', 'openai/gpt-6.1-sol', 'anthropic/claude-sonnet-5.5', 'z-ai/glm-5.3-prime',
+    openrouter: Object.freeze(['google/gemini-4-argon', 'anthropic/claude-haiku-5.5', 'mistralai/mistral-large-4-0', 'openai/gpt-6.1-sol', 'anthropic/claude-sonnet-5.5', 'z-ai/glm-5.3-prime',
         'qwen/qwen3.8-max-prime', 'anthropic/claude-opus-5.5', 'cohere/command-a-plus', 'openai/gpt-6-sol', 'openai/gpt-6-luna', 'x-ai/grok-4.7',
         'google/gemini-3.8-flash', 'anthropic/claude-fable-5.1', 'openai/gpt-6-astra', 'google/gemini-3.7-flash', 'deepseek/deepseek-v4.1-flash',
         'anthropic/claude-opus-5', 'anthropic/claude-sonnet-5', 'moonshotai/kimi-k3', 'z-ai/glm-5.3', 'google/gemini-3.5-flash-lite',

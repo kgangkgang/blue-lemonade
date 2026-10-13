@@ -24,6 +24,14 @@ assert.equal(m.sendButton(doc),null,'hidden send button (generating) → none');
 assert.equal(m.sendNow(doc),false);assert.equal(sendBut.clicks,1,'nothing sent while the send button is hidden');
 assert.equal(m.sendNow({getElementById:()=>null}),false,'no send button at all → nothing');
 sendBut.visible=true;assert.equal(m.sendNow(doc),true);assert.equal(sendBut.clicks,2);
+// 명령 실행 중: 실리태번은 visibility 로 숨긴다(상자는 남음) — #form_sheld.isExecutingCommandsFromChatInput 안이거나 계산 스타일이 hidden 이면 없음으로
+sendBut.closest=sel=>sel==='.isExecutingCommandsFromChatInput'?{}:null;
+assert.equal(m.sendButton(doc),null,'executing chat-input commands → none');assert.equal(m.sendNow(doc),false);assert.equal(sendBut.clicks,2,'nothing sent while commands run');
+sendBut.closest=()=>null;
+const styled=visibility=>({getElementById:id=>id==='send_but'?sendBut:null,defaultView:{getComputedStyle:()=>({visibility})}});
+assert.equal(m.sendButton(styled('hidden')),null,'visibility hidden → none');
+assert.equal(m.sendButton(styled('visible')),sendBut,'visible → the button');
+assert.equal(m.sendNow(styled('visible')),true);assert.equal(sendBut.clicks,3);
 
 // 창 안 모양: 아이콘만(aria-label, title 없음) · 닫기 앞 · 눌렀을 때 sendNow · 생성 중 숨김은 refreshPopup + body 감시
 const sendMarkup=js.match(/<button type="button" class="jj-icon-btn jj-send" data-act="send"[^>]*>/)?.[0];
@@ -33,6 +41,8 @@ assert.ok(js.indexOf('data-act="send"')<js.indexOf('data-act="close" aria-label=
 assert.match(js,/querySelector\('\[data-act="send"\]'\)\.addEventListener\('click', \(\) => sendNow\(\)\)/);
 assert.match(js,/popup\.querySelector\('\.jj-send'\)\.hidden = !sendButton\(\);/,'refreshPopup hides ▶ with the send button');
 assert.match(js,/attributeFilter: \['data-generating', 'data-swiping'\]/,'watches the generating state while open');
+assert.match(js,/for \(const id of \['form_sheld', 'send_but'\]\) \{\s*const element = document\.getElementById\(id\);\s*if \(element\) sendWatch\.observe\(element, \{ attributes: true, attributeFilter: \['class', 'style'\] \}\);/,'also watches command execution and the connect state');
+assert.match(js,/창 안의 종이비행기 단추를 누르면/,'help names the paper-plane icon');assert.doesNotMatch(js,/창 안의 ▶/,'no ▶ in the help text');
 assert.match(js,/sendWatch\?\.disconnect\(\);\s*sendWatch = null;/,'stops watching on close');
 assert.match(js,/function sendNow\(doc = document\) \{\s*const target = sendButton\(doc\);\s*if \(!target\) return false;\s*closePopup\(\);\s*target\.click\(\);/,'close first, then the ST send button');
 const css=await read('src/addons/direction/style.css');

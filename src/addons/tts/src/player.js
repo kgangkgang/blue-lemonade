@@ -57,7 +57,8 @@ import * as analysis from './analysis.js';
 import * as translation from './translation.js';
 import * as listen from './listen.js';   // 1.4.4 듣는 언어
 import { resolveScript, normalizeRows, scriptFingerprint } from './script-store.js';
-import { getSfx, sfxBlob, isSfxEnabled, sfxPreferenceRevision, onSfxPreferenceChange, sfxAttribution, sfxLevelOn, listSfx, isSfxFavorite, resolveSfxId } from './sfx-library.js';
+import { getSfx, sfxBlob, isSfxEnabled, sfxPreferenceRevision, onSfxPreferenceChange, sfxAttribution, sfxLevelOn, listSfx, isSfxFavorite, resolveSfxId, updateSfx, SFX_LIMITS } from './sfx-library.js';
+import { chipWords, addWord, removeWord, wordFold } from './word-chips.js';   // 6.3.6 효과음 낱말 붙이기 (요술봉 › 낱말)
 import { playbackOriginal, wavWithCredits } from './playback-details.js';
 import { createSfxController } from './sfx-audio.js';
 import { mixScene } from './scene-mix.js';
@@ -2817,8 +2818,11 @@ function buildBar() {
         '<div class="lv-bar-wandmenu lv-bar-dlmenu" role="menu" hidden>' +
         '<button type="button" class="lv-bar-dlopt" data-wand="redo" role="menuitem"><i class="fa-solid fa-rotate"></i><span>재생성</span></button>' +
         '<button type="button" class="lv-bar-dlopt" data-wand="sfx" role="menuitem"><i class="fa-solid fa-volume-high"></i><span>효과음</span></button>' +
+        '<button type="button" class="lv-bar-dlopt" data-wand="word" role="menuitem"><i class="fa-solid fa-tag"></i><span>낱말</span></button>' +
         '</div>' +
-        '<div class="lv-bar-sfxpick" hidden><input type="search" class="lv-bar-sfxsearch" placeholder="효과음 찾기" aria-label="효과음 찾기"><div class="lv-bar-sfxlist" role="listbox" aria-label="지금 대사 앞에 넣을 효과음"></div><div class="lv-bar-sfxmine" hidden></div></div>';
+        '<div class="lv-bar-sfxpick" hidden><input type="search" class="lv-bar-sfxsearch" placeholder="효과음 찾기" aria-label="효과음 찾기"><div class="lv-bar-sfxlist" role="listbox" aria-label="지금 대사 앞에 넣을 효과음"></div><div class="lv-bar-sfxmine" hidden></div></div>' +
+        // 6.3.6 요술봉 › 낱말: 낱말 칩 하나 → 내 효과음 하나 (붙이기) · 아래 줄 = 방금 붙인 것 되돌리기
+        '<div class="lv-bar-sfxpick lv-bar-wordpick lv-nochoice" hidden><div class="lv-bar-wordchips" role="listbox" aria-label="붙일 낱말"></div><div class="lv-bar-sfxlist lv-bar-wordsounds" role="listbox" aria-label="낱말을 붙일 내 효과음"></div><div class="lv-bar-sfxmine lv-bar-wordundo" hidden></div></div>';
     document.body.appendChild(bar);
     barEl.voice = bar.querySelector('.lv-bar-voice');
     barEl.text = bar.querySelector('.lv-bar-text');
@@ -2843,8 +2847,9 @@ function buildBar() {
     // 1.6.3 요술봉: 바로 다시 분석하지 않고 「재생성 · 효과음」 고르기 (사용자: 내려받기처럼)
     barEl.wandmenu = bar.querySelector('.lv-bar-wandmenu');
     barEl.sfxpick = bar.querySelector('.lv-bar-sfxpick');
+    barEl.wordpick = bar.querySelector('.lv-bar-wordpick');   // 6.3.6
     barEl.analyze.addEventListener('click', guard(() => {
-        if (!barEl.wandmenu.hidden || !barEl.sfxpick.hidden) { closeWandMenu(); return; }
+        if (!barEl.wandmenu.hidden || !barEl.sfxpick.hidden || !barEl.wordpick.hidden) { closeWandMenu(); return; }
         const id = currentMesId();
         if (id == null) return;
         openWandMenu({ mesId: id, job: current });   // 누른 순간의 문장을 잡아 둔다
@@ -2854,6 +2859,7 @@ function buildBar() {
         if (!opt) return;
         const pick = wandPick;
         if (opt.dataset.wand === 'sfx') { openSfxPick(pick); return; }
+        if (opt.dataset.wand === 'word') { openWordPick(pick); return; }   // 6.3.6
         closeWandMenu();
         if (!pick || waiting || pick.mesId < 0) return;                 // 번역·분석을 기다리는 게 있으면 (다른 메시지 것이라도) 밀어내지 않음
         reanalyze(pick.mesId).catch(e => log('err', `다시 분석 실패: ${String(e?.message || e).slice(0, 40)}`));
@@ -2971,7 +2977,7 @@ function onDownloadMenuKey(e) {
 // ---------- 1.6.3 요술봉 메뉴 · 효과음 직접 넣기
 let wandPick = null, previewAudio = null;
 function positionWandMenu() {
-    for (const m of [barEl.wandmenu, barEl.sfxpick]) {
+    for (const m of [barEl.wandmenu, barEl.sfxpick, barEl.wordpick]) {
         const b = barEl.analyze;
         if (!bar || !m || m.hidden || !b) continue;
         const center = b.offsetLeft + b.offsetWidth / 2;
@@ -2983,6 +2989,7 @@ function openWandMenu(pick) {
     if (!bar || !barEl.wandmenu) return;
     wandPick = pick;
     barEl.sfxpick.hidden = true;
+    if (barEl.wordpick) barEl.wordpick.hidden = true;
     barEl.wandmenu.hidden = false;
     positionWandMenu();
     barEl.analyze.classList.add('lv-open');
@@ -2993,11 +3000,12 @@ function closeWandMenu() {
     wandPick = null;
     if (barEl.wandmenu) barEl.wandmenu.hidden = true;
     if (barEl.sfxpick) barEl.sfxpick.hidden = true;
+    if (barEl.wordpick) barEl.wordpick.hidden = true;
     barEl.analyze?.classList.remove('lv-open');
     document.removeEventListener('pointerdown', onWandOutside, true);
     document.removeEventListener('keydown', onWandKey, true);
 }
-function onWandOutside(e) { if (barEl.wandmenu?.contains(e.target) || barEl.sfxpick?.contains(e.target) || barEl.analyze?.contains(e.target)) return; closeWandMenu(); }
+function onWandOutside(e) { if (barEl.wandmenu?.contains(e.target) || barEl.sfxpick?.contains(e.target) || barEl.wordpick?.contains(e.target) || barEl.analyze?.contains(e.target)) return; closeWandMenu(); }
 function onWandKey(e) { if (e.key !== 'Escape') return; e.stopPropagation(); closeWandMenu(); }
 /** 덩이의 원문 조각 번호 → 그 앞 대화문 수 (효과음 신호의 after) */
 function dialogueOrdinal(mesId, job) {
@@ -3044,6 +3052,73 @@ function openSfxPick(pick) {
     };
     mine.onclick = (e) => { const b = e.target.closest('.lv-bar-sfxmineopt'); if (!b) return; analysis.removeManualSfx(pick.mesId, Number(b.dataset.after), b.dataset.id); render(); };
     panel.hidden = false; positionWandMenu(); search.focus();
+}
+/** 6.3.6 낱말 칩의 글: 듣던 대사와 그 앞뒤 조각(대개 지문) — 화면 글(사용자가 읽는 말) 먼저, 그다음 원문. 덩이가 없으면 읽던 글 */
+function wordSources(pick) {
+    const out = [];
+    try {
+        const mes = msg(pick.mesId);
+        const i = Number.isInteger(pick.job?.segIndex) ? pick.job.segIndex : -1;
+        if (mes && i >= 0) {
+            const { orig, disp } = sourcesOf(mes, settings(), { final: true });
+            const { dispOf } = alignLists(orig, disp);
+            const near = [orig[i - 1], orig[i], orig[i + 1]].filter(Boolean);
+            for (const seg of near) { const d = dispOf.get(seg); if (d?.text) out.push(d.text); }
+            for (const seg of near) if (seg.text) out.push(seg.text);
+        }
+    } catch { /* 아래 */ }
+    if (!out.length && pick.job?.text) out.push(pick.job.text);
+    return out;
+}
+/**
+ * 6.3.6 요술봉 › 낱말 (발굴 #5 — 사용자가 열두 날 동안 내 효과음 낱말을 27번 고쳤는데 매번 설정 › TTS › 효과음 보관함까지 들어갔다):
+ * 낱말 칩 하나를 고르고 내 효과음 하나를 누르면 그 효과음의 낱말에 붙는다(다음 분석부터 그 낱말이 든 지문에서 그 소리를 찾는다).
+ * 내장 효과음은 낱말을 바꿀 수 없어 내 효과음만. 같은 낱말 · 꽉 참(32개)은 붙이지 않는다. 방금 붙인 것은 아래 줄로 한 번 되돌린다
+ */
+function openWordPick(pick) {
+    if (!pick || !barEl.wordpick) return;
+    barEl.wandmenu.hidden = true;
+    const panel = barEl.wordpick, chips = panel.querySelector('.lv-bar-wordchips'), list = panel.querySelector('.lv-bar-wordsounds'), undo = panel.querySelector('.lv-bar-wordundo');
+    const words = chipWords(wordSources(pick));
+    let chosen = '', last = null, busy = false;
+    const mine = () => listSfx().filter(x => x.custom);
+    const empty = (text) => { const p = document.createElement('p'); p.className = 'lv-bar-sfxempty'; p.textContent = text; return p; };
+    const render = () => {
+        panel.classList.toggle('lv-nochoice', !chosen);
+        chips.replaceChildren(...(words.length ? words.map(w => { const b = document.createElement('button'); b.type = 'button'; b.className = 'lv-bar-wordchip'; b.dataset.word = w; b.setAttribute('aria-pressed', String(w === chosen)); b.textContent = w; return b; }) : [empty('고를 낱말이 없어요')]));
+        const sounds = mine(), k = chosen ? wordFold(chosen) : '';
+        list.replaceChildren(...(sounds.length ? sounds.map(x => { const b = document.createElement('button'); b.type = 'button'; b.className = 'lv-bar-sfxopt' + (k && x.words.some(w => wordFold(w) === k) ? ' lv-has' : ''); b.dataset.id = x.id; if (busy) b.setAttribute('aria-disabled', 'true'); b.textContent = x.name; return b; }) : [empty('내 효과음이 없어요')]));
+        undo.hidden = !last;
+        if (last) { const b = document.createElement('button'); b.type = 'button'; b.className = 'lv-bar-sfxmineopt'; b.setAttribute('aria-label', `${last.word} 되돌리기`); const t = document.createElement('span'); t.textContent = `${last.word} · ${last.name}`; const i = document.createElement('i'); i.className = 'fa-solid fa-rotate-left'; b.append(t, i); undo.replaceChildren(b); }
+        else undo.replaceChildren();
+    };
+    chips.onclick = (e) => { const b = e.target.closest('.lv-bar-wordchip'); if (!b) return; chosen = chosen === b.dataset.word ? '' : b.dataset.word; render(); };
+    list.onclick = async (e) => {
+        const b = e.target.closest('.lv-bar-sfxopt'); if (!b || busy) return;
+        if (!chosen) { toast('낱말을 먼저 골라 주세요', 'info'); return; }
+        const sound = mine().find(x => x.id === b.dataset.id); if (!sound) return;
+        const word = chosen, r = addWord(sound.words, word, SFX_LIMITS.words);
+        if (!r.ok) { toast(r.why === 'dup' ? `「${word}」은 이미 「${sound.name}」에 있어요` : r.why === 'full' ? `「${sound.name}」 낱말이 꽉 찼어요 (${SFX_LIMITS.words}개)` : '낱말을 골라 주세요', 'info'); return; }
+        busy = true; render();
+        try { await updateSfx(sound.id, { words: r.words }); last = { id: sound.id, word, name: sound.name }; toast(`「${word}」 → 「${sound.name}」`, 'success'); }
+        catch (err) { toast(err?.message || '낱말을 붙이지 못했어요', 'error'); }
+        finally { busy = false; render(); }
+    };
+    undo.onclick = async () => {
+        if (!last || busy) return;
+        const done = last, sound = mine().find(x => x.id === done.id);
+        last = null;
+        if (sound) {
+            busy = true; render();
+            try { await updateSfx(sound.id, { words: removeWord(sound.words, done.word) }); toast(`「${done.word}」 뺐어요`, 'info'); }
+            catch (err) { last = done; toast(err?.message || '되돌리지 못했어요', 'error'); }
+            finally { busy = false; }
+        }
+        render();
+    };
+    render();
+    panel.hidden = false; positionWandMenu();
+    (chips.querySelector('.lv-bar-wordchip') || list.querySelector('.lv-bar-sfxopt'))?.focus({ preventScroll: true });
 }
 const barWaiting = () => !!bar && bar.classList.contains('lv-bar-wait');
 /** 기다리는 동안 흐린 버튼은 aria-disabled 로도 알린다 (눌림 막기는 style.css 의 pointer-events 와 위 guard) */

@@ -157,11 +157,45 @@ function aliasTable(st) {
     }
     const u = personaName(); if (u) put(u, u);
     const ch = charName(); if (ch) put(ch, ch);
+    // 6.3.5 이름 다리 — 사용자가 정한 이름(목소리 · 연결표 · 색 표 · 페르소나 · 캐릭터) 뒤, 배운 이름(속마음 라벨 · 표) 앞:
+    //       배운 라벨이 다리 별명을 가로채지 않게. 끝에서 한 번 더 — 배운 이름끼리도 잇는다 (put 은 이미 있는 이름을 덮지 않는다)
+    const bridge = () => bridgeInto(k => map.has(k), k => map.get(k), put);
+    bridge();
     for (const n of Object.keys(st.names || {})) put(n, n);
     for (const e of Object.values(st.colors)) for (const n of Object.keys(e.votes || {})) put(n, n); // 카드 씨앗 이름도 서술에서 찾도록
+    bridge();
     return { pairs, map };
 }
 const canonWith = (map, n) => { const t = String(n || '').trim(); return map.get(fold(t)) || t; };
+
+// 6.3.5 이름 다리 — 번역 애드온이 용어집의 이름 짝을 globalThis[Symbol.for('blue-lemonade.names')] 로 내놓는다 ({ version: 1, pairs: [{ src, dst }] }).
+// 없으면(번역 애드온 끔 · 옛 테마) 빈 목록. 짝의 한쪽이 이미 아는 이름이면 다른 쪽을 그 대표 이름의 별명으로 — 이미 있는 이름(사용자가 넣은 별명 ·
+// 인물 연결 열쇠 · 색 표)은 건드리지 않고, 두 번 돌아 사슬(영문 ↔ 한글 ↔ 가나)도 잇는다. 양쪽 다 모르는 짝은 아무것도 안 한다
+const NAMES_BRIDGE = Symbol.for('blue-lemonade.names');
+const bridgeFolded = new WeakMap();   // 다리 객체 → 접은 짝 (별명표는 canon 부를 때마다 다시 만드니 접기는 다리가 바뀔 때 한 번만)
+function bridgePairs() {
+    const api = globalThis[NAMES_BRIDGE];
+    if (!api || typeof api !== 'object' || api.version !== 1 || !Array.isArray(api.pairs)) return [];
+    let list = bridgeFolded.get(api);
+    if (!list) {
+        list = api.pairs.filter(p => p && typeof p.src === 'string' && typeof p.dst === 'string' && fold(p.src) && fold(p.dst))
+            .map(p => ({ src: p.src.trim(), dst: p.dst.trim(), ks: fold(p.src), kd: fold(p.dst) }));
+        bridgeFolded.set(api, list);
+    }
+    return list;
+}
+/** has(접은 열쇠) · canonOf(접은 열쇠) → 대표 이름 · put(표면 이름, 대표 이름) */
+function bridgeInto(has, canonOf, put) {
+    const pairs = bridgePairs();
+    if (!pairs.length) return;
+    for (let pass = 0; pass < 2; pass++) {
+        for (const { src, dst, ks, kd } of pairs) {
+            const a = has(ks), b = has(kd);
+            if (a && !b) put(dst, canonOf(ks));
+            else if (b && !a) put(src, canonOf(kd));
+        }
+    }
+}
 /** 별명 → 대표 이름 (모르면 그대로) */
 export function canon(name) { return canonWith(aliasTable(state()).map, name); }
 /** 알려진 이름 전부 (text.js knownNames 용) */
@@ -425,6 +459,7 @@ export function importPalette({ deferSave = false } = {}) {
     const known = new Map();
     for (const k of Object.keys(s.char_map)) known.set(fold(k), k);
     for (const v of s.voices) { known.set(fold(v.name), v.name); for (const a of v.aliases) if (!known.has(fold(a))) known.set(fold(a), v.name); }
+    bridgeInto(k => known.has(k), k => known.get(k), (n, c) => { if (!known.has(fold(n))) known.set(fold(n), c); });   // 6.3.5 이름 다리
     for (const [col, names] of Object.entries(found)) {
         const e = entry(st, col);
         const hit = names.find(n => known.has(fold(n)));

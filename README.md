@@ -1,13 +1,26 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.3.5/blue-lemonade-6.3.5.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.3.6/blue-lemonade-6.3.6.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.3.5 · 최신 업데이트</summary>
+<summary>6.3.6 · 최신 업데이트</summary>
+
+- TTS: 재생 막대 요술봉에 「낱말」이 생겼어요. 듣던 대사와 그 앞뒤 지문의 낱말을 골라 내 효과음에 바로 붙여요 — 방금 붙인 건 한 번 되돌릴 수 있어요.
+- TTS: 답의 이름을 꾹 누르면 그 답에 나온 인물들의 목소리를 그 자리에서 고를 수 있어요.
+- 번역 용어집에 적은 인물 이름 짝(영문 ↔ 한글 ↔ 가나)을 TTS 가 저절로 알아들어요. 다른 표기로 나와도 같은 사람의 목소리 · 색으로 이어져요 — 직접 넣은 별명이 늘 먼저고, 용어집을 끄면 예전 그대로예요.
+- 확장 순서: 요술봉의 테마 항목(메모 · 모델 전환 · ZIP 설치 · 성능 보조 메뉴)은 순서 창의 눈과 「요술봉에 … 표시」가 같은 값을 써요. 꺼서 메뉴에서 빠져도 순서 창에 흐린 줄로 남아 다시 켤 수 있어요. 모델 전환: 긴 상태 이름 뒤의 반쪽 원 아이콘이 다시 보여요.
+- 전개 지시: 명령이 실행되는 동안에는 창 안 보내기 단추가 숨고, 끝나면 바로 돌아와요. 폰에서 「비어 있음」 같은 상태 글이 두 줄로 접히지 않아요.
+- 모델 목록에 Gemini 4 Argon 을 넣었어요 (Google AI Studio · Vertex AI · OpenRouter).
+- 애드온 버전: 전개 지시 1.2.5 · 모델 전환 1.1.4 · 확장 순서 1.1.9 · LLM 번역 2.4.1 · TTS 1.8.0
+
+</details>
+
+<details>
+<summary>6.3.5 · 번역 · 생각하는 모델</summary>
 
 - 번역: 생각하는 모델(Claude 하이쿠 5.5 · Fable · Gemini 3 이후 등)이 생각만 하다 출력 한도에 닿아 「번역 응답이 비어있습니다」로 끝나던 문제를 고쳤어요. 생각은 짧게 시키고 출력 한도를 넉넉히(최소 8192) 잡아요. 그래도 모자라면 「생각하느라 출력 한도를 다 썼어요」라고 알려 줘요.
 - 애드온 버전: LLM 번역 2.4.0

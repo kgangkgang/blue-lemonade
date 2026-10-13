@@ -6,7 +6,7 @@ import { normalizeMenuPrefs } from './menu-plan.js';   // 6.3.3 요술봉 숨김
 
 export const MODULE = 'panel_order';
 export const FOLDER = 'blue-lemonade';
-export const VERSION = '1.1.8';
+export const VERSION = '1.1.9';
 export const TITLE = '확장 순서';
 
 /**
@@ -29,6 +29,8 @@ const DEFAULTS = Object.freeze({
     /** 6.3.3 요술봉(extensionsMenu) 항목 숨김 · 위로 고정 — 키는 menus.js 의 poMenuKey (menuOrders 와 같은 키) */
     menuHidden: { wand: [] },
     menuPinned: { wand: [] },
+    /** 테마가 보일지 정하는 요술봉 항목의 이름 (설정으로 꺼서 메뉴에서 빠져도 창에 줄을 남겨 다시 켤 수 있게) */
+    menuSeen: { wand: {} },
 });
 
 export function settings() {

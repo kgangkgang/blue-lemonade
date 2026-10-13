@@ -677,6 +677,25 @@ function onMapChange(el) {
     renderMap();
     renderColors();
 }
+/** 6.3.6 이름 꾹 눌러 목소리 고르기 (name-voice.js): 목소리 탭 인물 줄과 같은 목록(엔진별 짝 포함) · 고르기 칸엔 실제로 읽는 목소리 */
+export function nameVoiceRowsHtml(names) {
+    const s = settings();
+    return (Array.isArray(names) ? names : []).map(n => {
+        const uid = (s.char_map || {})[n] || voices.voiceByName(n)?.uid || '';
+        const v = uid && uid !== USER_AUTO ? voices.findVoice(uid) : null;
+        const eff = v ? voices.preferVoice(v, n) : null;
+        const opts = voiceOptions(eff ? eff.uid : uid, { twins: charTwins(n, uid) });
+        return `<label class="lv-namevoice-row"><span class="lv-namevoice-name">${esc(n)}</span><select class="text_pole" data-lv-namevoice="${esc(n)}" aria-label="${esc(n)} 목소리">${opts}</select></label>`;
+    }).join('');
+}
+/** 6.3.6 이름 창에서 고름 — 목소리 탭에서 고른 것과 같다 (엔진 고정 규칙 · 저장 · 목소리 탭 · 대화 색 다시 그림) */
+export function pickCharVoice(name, uid) {
+    if (!name) return;
+    setCharVoice(name, uid);
+    save();
+    renderMap();
+    renderColors();
+}
 /** 1.3.7 엑스트라 줄에서 목소리를 고르면 그 이름을 캐릭터 목소리로 고정 (엑스트라 표에서는 뺌) */
 function onExtraPin(el) {
     const name = el.dataset.lvExtra;

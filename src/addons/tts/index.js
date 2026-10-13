@@ -18,6 +18,7 @@ import * as player from './src/player.js';
 import * as ui from './src/ui.js';
 import * as analysis from './src/analysis.js';
 import * as clickplay from './src/clickplay.js';
+import * as namevoice from './src/name-voice.js';   // 6.3.6 이름 꾹 눌러 목소리 고르기
 import * as paint from './src/paint.js';   // 6.2.3 색 없는 대사에 화자 색
 import * as pregen from './src/pregen.js';
 import * as modelswitch from './src/modelswitch.js';
@@ -70,9 +71,9 @@ export function syncEnabled() {
     if (!initialized) return on;
     if (!on) {
         clearTimeout(streamTimer); streamTimer = 0; stream = null; spoken = null;
-        pregen.pregenCancel(); analysis.stopForAddon(); player.stopForAddon(); clickplay.destroy(); paint.destroy(); modelswitch.unregister();
+        pregen.pregenCancel(); analysis.stopForAddon(); player.stopForAddon(); clickplay.destroy(); namevoice.destroy(); paint.destroy(); modelswitch.unregister();
         removeWand(); document.querySelectorAll('#chat .lv_play, #chat .lv_script').forEach(el => el.remove());
-    } else { clickplay.init(); paint.init(); modelswitch.register(); syncWand(); addButtons(); }
+    } else { clickplay.init(); namevoice.init(); paint.init(); modelswitch.register(); syncWand(); addButtons(); }
     return on;
 }
 export async function openPanel() {
@@ -454,6 +455,7 @@ export const ready = new Promise((resolve, reject) => jQuery(() => { (async () =
     try { paint.init(); } catch (e) { log('err', `화자 색 시작 실패: ${e.message}`); }   // 6.2.3 색 없는 대사에 화자 색 (#chat 관찰)
     try { clickplay.init(); }                                      // 재생기 다음에 (대사 클릭 → player.speakSegments)
     catch (e) { console.error('[tts] 대사 클릭 초기화 실패', e); log('err', `대사 클릭 초기화 실패: ${e.message}`); }
+    try { namevoice.init(); } catch (e) { log('err', `이름 목소리 고르기 시작 실패: ${e.message}`); }   // 6.3.6 이름 꾹 눌러 목소리 고르기
     try { pregen.init(); }                                         // 미리 만들기: 그만두기 · 다시 (시작은 onRendered · onSwiped)
     catch (e) { console.error('[tts] 미리 만들기 초기화 실패', e); log('err', `미리 만들기 초기화 실패: ${e.message}`); }
     try { modelswitch.init(); }                                    // 1.2.3 모델 전환(Blue Lemonade)에 대사 분석 등록 (늦게 뜨면 다시 시도)

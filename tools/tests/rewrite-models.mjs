@@ -275,7 +275,7 @@ await test('받기 전: 모델 등록 → 최신 이름(KNOWN, 새것 먼저) ·
     assert.equal(claude.key, 'claude');
     // Google 은 makersuite 목록
     assert.equal(RW.modelChoices('google', '').key, 'makersuite');
-    assert.equal(RW.modelChoices('google', '').ids[0], 'gemini-3.8-flash');
+    assert.equal(RW.modelChoices('google', '').ids[0], 'gemini-4-argon');   // 2026-10-13 출시 — 알려진 최신이 맨 위
     assert.deepEqual(RW.modelChoices('nope', 'x'), { ids: [], savedMissing: false, live: false, at: 0, key: '' });
 });
 await test('받은 뒤: 받은 목록(새것 먼저) + 모델 등록만 · 공급자가 안 주는 옛 이름은 붙이지 않음 · 저장된 모델은 그대로 표시', () => {

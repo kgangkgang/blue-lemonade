@@ -290,7 +290,10 @@ html body.salty #model-switch-settings .ms-actions .ms-apply { flex:0 1 auto; mi
 html body.salty :is(.ms-chip b,.ms-target b,.ms-lock b) { font-weight:inherit; }
 html body.salty :is(.ms-chip b,.ms-chip small,.ms-target small) { white-space:normal; overflow-wrap:anywhere; }
 /* 6.3.3 상태 칩 이름은 한 줄 말줄임 — 20자 이름이 위 줄바꿈 규칙으로 3줄이 되어 칩(같은 줄의 칩까지)이 두 배 가까이 컸다 (412 측정 54→97px); 조합 칩처럼 이름 · 요약 두 줄 높이. 특이도(0,4,3)로 위 규칙을 이긴다 (!important 없이) */
-html body.salty .ms-chip.ms-state .ms-state-go > b { max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; overflow-wrap:normal; }
+/* 고침: 이름만 말줄임 — <b> 끝의 반쪽 원(.ms-part, 공급자 · 모델만)이 말줄임에 같이 잘려 안 보였다. <b> 를 한 줄 flex 로, 이름(.ms-state-name, index.js)만 줄어든다 */
+html body.salty .ms-chip.ms-state .ms-state-go > b { display:flex; align-items:baseline; max-width:100%; min-width:0; white-space:nowrap; overflow:hidden; overflow-wrap:normal; }
+html body.salty .ms-chip.ms-state .ms-state-go > b > .ms-state-name { flex:0 1 auto; min-width:0; margin-left:.3em; overflow:hidden; text-overflow:ellipsis; }
+html body.salty .ms-chip.ms-state .ms-state-go > b > i { flex:none; }
 @container bl-model-switch (width < 24em) {
   html body.salty :is(.ms-row,.ms-form label) { grid-template-columns:minmax(0,1fr); }
 }

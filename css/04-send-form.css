@@ -396,6 +396,11 @@ body.salty #jj-popup .jj-popup-title {
   font-weight: 600;
   letter-spacing: -0.01em;
 }
+/* 6.3.6 폰 폭: 보내기 단추가 들어온 뒤 제목 칸이 모자라 「비어 있음」이 두 줄로 접혔다 → 칸 사이를 조금 좁힌다 (상태 글은 확장 쪽 nowrap) */
+@media (max-width: 440px) {
+  body.salty #jj-popup .jj-popup-head { gap: 6px; }
+  body.salty #jj-popup .jj-popup-title { gap: 5px; }
+}
 /* 켜기 스위치: 36×20 — 손잡이는 늘 흰색 */
 body.salty #jj-popup .jj-switch {
   flex: 0 0 auto;

@@ -5,7 +5,8 @@ import { checkpointKey, translateChunks, clearCheckpoints } from './translation-
 import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, fixPlaceholderVariants, dropLeftoverPlaceholders, repairTagPairs, dropStrayWords } from './translation-segments.js';
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
-import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey, glossaryLinesFor } from './glossary-match.js'; // [2.2.9] 용어집 찾기 (+ 가타카나 표기 흔들림) · [2.3.0] TTS 듣는 언어용 줄
+import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey, glossaryLinesFor } from './glossary-match.js';
+import { publishNames } from './names-bridge.js';   // 6.3.5 이름 다리 — 용어집의 이름 짝을 TTS · 다른 확장이 쓰게 전역으로 // [2.2.9] 용어집 찾기 (+ 가타카나 표기 흔들림) · [2.3.0] TTS 듣는 언어용 줄
 import { SPEECH_LANGS, speechPrompt, speechPayload, speechLine, parseSpeechBatch, unwrapQuotes, cutEchoLine } from './speech-translate.js'; // [2.3.0] TTS 듣는 언어
 import { requestCurrentConnection } from './current-connection.js';
 import { fallbackOf, sameTarget } from '../modelswitch/fallback.js';   // 6.2.9 검열되면 다른 모델로
@@ -297,6 +298,7 @@ function loadSettings() {
         const merged = mergeGlossaryDuplicates(extensionSettings.glossary_entries);
         if (merged) { saveSettingsDebounced(); setTimeout(() => toastr.info(`겹치는 용어집 항목 ${merged}개를 하나로 합쳤어요.`, '용어집', { timeOut: 6000 }), 1500); }
     }
+    publishGlossaryNames();   // 6.3.5 이름 다리 (처음 한 번)
     if (!extensionSettings.current_connection_v1) {
         extensionSettings.connection_mode = 'current';
         extensionSettings.current_connection_v1 = true;
@@ -3869,6 +3871,11 @@ function glossaryEntries() {
  * [1.8.12] 예전에는 `src.toLowerCase()` 로만 견줘서 "Low-world" 와 "Low world" 가 서로 다른 것으로 남아
  * 두 줄이 함께 프롬프트에 들어갔다. 이제 찾기와 같은 정규화(glossaryFold)로 표기마다 견준다.
  */
+/** 6.3.5 이름 다리 — 번역과 같은 범위(지금 캐릭터 + 전체)의 용어집 이름 짝을 내놓는다. 용어집을 끄면(glossary_enabled false) 빈 다리 */
+function publishGlossaryNames() {
+    publishNames(extensionSettings.glossary_enabled === false ? [] : activeGlossaryEntries());
+}
+
 function activeGlossaryEntries(scopeKey = glossaryScopeKey()) {
     const chosen = [];
     const claimed = new Set();
@@ -4043,6 +4050,7 @@ function resetGlossaryEditor() {
 
 /** 설정 화면의 용어집 카드를 다시 그린다 (범위 탭·목록·입력 가능 여부) */
 function renderGlossary() {
+    publishGlossaryNames();   // 6.3.5 항목이 바뀌면(더하기 · 고치기 · 지우기 · 가져오기) · 채팅을 바꾸면 여기를 거친다 — 이름 다리도 갱신 (같으면 아무 일 없음)
     const card = glossaryCard();
     if (!card) return;
     const key = glossaryScopeKey();
@@ -4905,6 +4913,7 @@ function initializeEventHandlers() {
     // 채팅 변경 시 아이콘 추가 및 규칙 프롬프트 로딩을 위해 이벤트 핸들러 등록
     // [추가] 본체 설정 주소를 물려받는 중에 본체의 Custom 주소가 바뀌면 그 주소의 목록으로 다시 그린다.
     eventSource.on(event_types.SETTINGS_UPDATED, function () {
+        publishGlossaryNames();   // 6.3.5 안전망: 다른 길로 용어집이 바뀌어도(설정 가져오기 · 손 편집) 저장 뒤 따라간다 — 서명이 같으면 아무 일 없음
         if ($('#llm_provider').val() !== 'custom') {
             return;
         }
@@ -4917,6 +4926,7 @@ function initializeEventHandlers() {
     });
 
     eventSource.on(event_types.CHAT_CHANGED, function () {
+        publishGlossaryNames();   // 6.3.5 채팅을 바꾸면 바로 — 첫 인사말 렌더 · TTS 팔레트보다 먼저 (100ms 뒤 renderGlossary 는 같으면 아무 일 없음)
         migrateOriginalCopies(getContext().chat); // [1.7.1] 원문 사본 → 해시 (파일 크기)
         setTimeout(() => {
             repairShownTranslations(); // 6.2.1 저장된 번역문의 빠진 닫는 태그 · 못 풀린 자리표시자 (그려진 것만 다시 그린다)

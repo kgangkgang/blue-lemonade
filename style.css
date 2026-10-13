@@ -1,6 +1,6 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 70개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build df4bd0ee99bc) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 70개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 78c63231329c) */
 /* css/00-base.css */
-:root{--bl-release:"6.3.5";}
+:root{--bl-release:"6.3.6";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -1581,6 +1581,10 @@ body.salty #jj-popup .jj-popup-title {
   font-size: 14px;
   font-weight: 600;
   letter-spacing: -0.01em;
+}
+@media (max-width: 440px) {
+  body.salty #jj-popup .jj-popup-head { gap: 6px; }
+  body.salty #jj-popup .jj-popup-title { gap: 5px; }
 }
 body.salty #jj-popup .jj-switch {
   flex: 0 0 auto;
@@ -12292,7 +12296,9 @@ html body.salty :is(.ms-lock b) { font-weight:inherit; }
 html body.salty :is(.ms-chip b),
 html body.salty :is(.ms-chip small),
 html body.salty :is(.ms-target small) { white-space:normal; overflow-wrap:anywhere; }
-html body.salty .ms-chip.ms-state .ms-state-go > b { max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; overflow-wrap:normal; }
+html body.salty .ms-chip.ms-state .ms-state-go > b { display:flex; align-items:baseline; max-width:100%; min-width:0; white-space:nowrap; overflow:hidden; overflow-wrap:normal; }
+html body.salty .ms-chip.ms-state .ms-state-go > b > .ms-state-name { flex:0 1 auto; min-width:0; margin-left:.3em; overflow:hidden; text-overflow:ellipsis; }
+html body.salty .ms-chip.ms-state .ms-state-go > b > i { flex:none; }
 @container bl-model-switch (width < 24em) {
   html body.salty .ms-row:is(bl-s, *),
 html body.salty :is(.ms-form label) { grid-template-columns:minmax(0,1fr); }

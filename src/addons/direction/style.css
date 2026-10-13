@@ -6,7 +6,7 @@
 :root {
     --jj-on: var(--jj-on-color, var(--SmartThemeQuoteColor, #e18a24));
     /* index.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
-    --jj-css-version: "1.2.4";
+    --jj-css-version: "1.2.5";
 }
 
 /* ── 입력창 버튼 ─────────────────────────────────────────── */
@@ -153,10 +153,10 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-.jj-title-text { white-space: nowrap; }
+.jj-title-text { white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }   /* 6.3.6 모자랄 때만 「…」 — 상태 글이 접히지 않게 */
 
 /* 두 쪽 중 지금 쪽 */
-.jj-dots { display: inline-flex; align-items: center; gap: 4px; margin-left: 2px; }
+.jj-dots { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 4px; margin-left: 2px; }
 .jj-dots b {
     width: 5px;
     height: 5px;
@@ -170,6 +170,8 @@
 .jj-popup-title i { color: var(--jj-on); }
 
 .jj-state {
+    flex: 0 0 auto;        /* 6.3.6 「비어 있음」이 「비어 있 / 음」으로 접히지 않게 */
+    white-space: nowrap;
     padding: 2px 9px;
     border-radius: 999px;
     font-size: .74em;

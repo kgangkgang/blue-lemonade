@@ -12,7 +12,7 @@ import { listTargets, supports, registry, discoverTargets, modelOptions, hasMode
 import { setLocks, withoutLock } from './lock.js';
 import { MAX_STATES, entryOf, captureState, changedSince, planRestore, isCurrent, runRestore, limited, summary, keepStates } from './state.js';
 
-const VERSION = '1.1.3';
+const VERSION = '1.1.4';
 const MAX_PRESETS = 8;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const label = source => SOURCES.find(s => s.id === source)?.label || source;
@@ -124,7 +124,7 @@ function renderStates(s, targets) {
     const part = items => limited(items) ? '<i class="fa-solid fa-circle-half-stroke ms-part" role="img" aria-label="공급자 · 모델만"></i>' : '';
     const off = busy ? ' disabled' : '';
     const last = s.last ? `<button type="button" class="ms-chip ms-last" data-state="last"${off}><b><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> 직전${part(s.last.items)}</b><small>${esc(summary(s.last.items))}</small></button>` : '';
-    root.querySelector('.ms-states').innerHTML = last + s.states.map((state, i) => `<div class="ms-chip ms-state ${isCurrent(state.items, targets) ? 'on' : ''}"><button type="button" class="ms-state-go" data-state="${i}"${off}><b><i class="fa-solid fa-layer-group" aria-hidden="true"></i> ${esc(state.name)}${part(state.items)}</b><small>${esc(summary(state.items))}</small></button><button type="button" class="ms-state-x" data-state-del="${i}" aria-label="${esc(state.name)} 지우기"${off}><i class="fa-solid fa-xmark"></i></button></div>`).join('');
+    root.querySelector('.ms-states').innerHTML = last + s.states.map((state, i) => `<div class="ms-chip ms-state ${isCurrent(state.items, targets) ? 'on' : ''}"><button type="button" class="ms-state-go" data-state="${i}"${off}><b><i class="fa-solid fa-layer-group" aria-hidden="true"></i> <span class="ms-state-name">${esc(state.name)}</span>${part(state.items)}</b><small>${esc(summary(state.items))}</small></button><button type="button" class="ms-state-x" data-state-del="${i}" aria-label="${esc(state.name)} 지우기"${off}><i class="fa-solid fa-xmark"></i></button></div>`).join('');
     const snap = root.querySelector('[data-act="snap"]');
     snap.hidden = s.states.length >= MAX_STATES; snap.disabled = busy;
 }
