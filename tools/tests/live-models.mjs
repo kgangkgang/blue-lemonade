@@ -821,5 +821,24 @@ await test('불러오기만으로는 통신하지 않음 · 목록 · 캐시 읽
     assert.equal(hits, 0);
 });
 
+await test('6.3.5 생각하는 모델: thoughtOnly · 바닥 8192 · 번역기 배선 (하이쿠 5.5 + 출력 1000 → 빈 번역)', async () => {
+    assert.equal(LM.THINK_MIN_TOKENS, 8192);
+    assert.equal(LM.thoughtOnly({ content: [{ type: 'thinking', thinking: '', signature: 's' }] }), true);
+    assert.equal(LM.thoughtOnly({ choices: [{ message: { content: '' } }], content: [{ type: 'redacted_thinking', data: 'x' }, { type: 'text', text: '  ' }] }), true, '실리태번이 감싼 꼴 · 빈 글');
+    assert.equal(LM.thoughtOnly({ content: [{ type: 'thinking', thinking: '' }, { type: 'text', text: '번역' }] }), false);
+    assert.equal(LM.thoughtOnly({ content: [{ type: 'text', text: '' }] }), false, '생각 없이 빈 답은 다른 이유');
+    assert.equal(LM.thoughtOnly({ choices: [{ message: { content: 'x' } }] }), false);
+    assert.equal(LM.thoughtOnly(null), false);
+    assert.equal(LM.lowEffort('claude', 'claude-haiku-5-5'), 'low', '하이쿠 5.5 는 생각하는 모델');
+    assert.equal(LM.lowEffort('claude', 'claude-haiku-4-5'), '', '4.5 는 생각을 켜지 않으면 안 함 — 건드리지 않음');
+    const fs = await import('node:fs');
+    const tr = fs.readFileSync(path.join(root, 'src/addons/translator/index.js'), 'utf8');
+    const at = tr.indexOf('const thinkEffort = LiveModels.lowEffort(chatCompletionSource, model);');
+    assert.ok(at > 0 && at < tr.indexOf('LiveModels.applyModelRequestRules(provider, model, parameters);'), '모델 규칙(샘플링 값 빼기) 앞에서');
+    assert.ok(tr.indexOf('parameters.max_tokens = params.max_length;') < at, '사용자 출력 길이 · 호출별 덮어쓰기 뒤에서');
+    assert.match(tr, /if \(parameters\.max_tokens > 0 && parameters\.max_tokens < LiveModels\.THINK_MIN_TOKENS\) parameters\.max_tokens = LiveModels\.THINK_MIN_TOKENS;/);
+    assert.match(tr, /if \(!result && LiveModels\.thoughtOnly\(data\)\) throw Object\.assign\(new Error\('모델이 생각하느라 출력 한도를 다 써서[^']*'\), \{ truncated: true, resumable: true \}\);/);
+});
+
 console.log(`\nlive-models: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

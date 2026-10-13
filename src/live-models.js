@@ -713,6 +713,17 @@ export function applyModelRequestRules(source, model, body) {
  * 생각을 오래 하는 모델은 짧게 → 'low' (아니면 ''): 생각 토큰이 응답 길이를 다 써서 답이 잘리지 않게.
  *   OpenAI: 늘 (서버가 추론 모델에만 붙임) · Claude: 적응형 생각 모델(Fable · Claude 5 이후 · Opus 4.7/4.8) · Google: Gemini 3 이후
  */
+/** 6.3.5 생각하는 모델의 출력 한도 바닥: 생각도 출력 한도를 쓴다 (번역 기본 1000 이면 하이쿠 5.5 가 생각만 하다 글이 안 왔다) */
+export const THINK_MIN_TOKENS = 8192;
+/**
+ * 6.3.5 생각 블록만 오고 글이 없는 답인가 (Claude content 배열 · 실리태번이 감싼 { choices, content } 도) — 출력 한도를 생각에 다 쓴 경우.
+ * 실리태번은 Claude 의 stop_reason 을 넘겨주지 않아서 이것으로 알아본다
+ */
+export function thoughtOnly(data) {
+    const parts = Array.isArray(data?.content) ? data.content : [];
+    if (!parts.some(p => /thinking/.test(String(p?.type || '')))) return false;
+    return !parts.some(p => p?.type === 'text' && String(p.text || '').trim());
+}
 export function lowEffort(source, model) {
     const provider = sourceOf(source);
     const m = str(model);

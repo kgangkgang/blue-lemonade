@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.3.4/blue-lemonade-6.3.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.3.5/blue-lemonade-6.3.5.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.3.4 · 최신 업데이트</summary>
+<summary>6.3.5 · 최신 업데이트</summary>
+
+- 번역: 생각하는 모델(Claude 하이쿠 5.5 · Fable · Gemini 3 이후 등)이 생각만 하다 출력 한도에 닿아 「번역 응답이 비어있습니다」로 끝나던 문제를 고쳤어요. 생각은 짧게 시키고 출력 한도를 넉넉히(최소 8192) 잡아요. 그래도 모자라면 「생각하느라 출력 한도를 다 썼어요」라고 알려 줘요.
+- 애드온 버전: LLM 번역 2.4.0
+
+</details>
+
+<details>
+<summary>6.3.4 · 요술봉 숨기기 · 고정 · 상태 칩 한 줄</summary>
 
 - 확장 순서: 요술봉 메뉴 항목을 창에서 👁 로 숨기거나 📌 로 맨 위에 고정할 수 있어요 — 나중에 추가되는 항목도 같은 규칙이 적용돼요.
 - 모델 전환: 긴 상태 이름이 한 줄로 줄임표 처리돼 칩이 커지지 않아요.

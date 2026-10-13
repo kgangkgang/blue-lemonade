@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "6.3.4";
+export const BUILD_VERSION = "6.3.5";
 export const FILE_HASHES = {
   "index.js": "17384:4de637be:6c351536",
-  "manifest.json": "365:f48af2e4:c3359600",
+  "manifest.json": "365:4c3826e3:850e9334",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -148,8 +148,8 @@ export const FILE_HASHES = {
   "src/addons/translator/buttons.html": "417:3bc7c8b0:1b53077b",
   "src/addons/translator/current-connection.js": "5715:244c0cd2:4c2ec356",
   "src/addons/translator/glossary-match.js": "14236:49d8eedc:fd6087ac",
-  "src/addons/translator/index.html": "52507:4c3b112b:0d52ba17",
-  "src/addons/translator/index.js": "429604:7ca5280f:a3dfb904",
+  "src/addons/translator/index.html": "52507:aa5326f5:ce584e07",
+  "src/addons/translator/index.js": "430682:38a12474:457162be",
   "src/addons/translator/menu-visibility.js": "1137:ae729d76:8ea71da6",
   "src/addons/translator/persona-bridge.js": "3144:8b7fe451:3e6fe474",
   "src/addons/translator/preset-data.js": "3701:690be659:d11e8b46",
@@ -395,7 +395,7 @@ export const FILE_HASHES = {
   "src/layout.js": "25435:1cdc520d:49c3e545",
   "src/lazy-panel.gen.css": "29728:ab948e08:1f328d08",
   "src/lite.js": "33008:219f1d8b:329c590c",
-  "src/live-models.js": "42538:e81ff5e0:2cbca19f",
+  "src/live-models.js": "43297:473096b7:d8cf9940",
   "src/main-chat-rules.js": "1992:1a5533c3:35b40ad5",
   "src/markdown-ui.js": "6146:5cfe42a4:47c863e5",
   "src/markdown.js": "5670:583b23b2:87c60e83",
@@ -405,7 +405,7 @@ export const FILE_HASHES = {
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "204108:8467624f:0fc4ddd2",
+  "src/notice-data.js": "204584:2a2c0a06:4529dca4",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -480,5 +480,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "34543:a22afe71:9a33c04b",
   "src/wordmask.js": "7487:cc508640:dd5ee3e8",
-  "style.css": "1416072:a84544d9:7f554261"
+  "style.css": "1416072:7b855a26:d5aa85e9"
 };

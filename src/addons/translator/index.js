@@ -1389,6 +1389,13 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
     if (Number.isFinite(overrides.maxTokens) && overrides.maxTokens > 0) parameters.max_tokens = overrides.maxTokens;
     if (Number.isFinite(overrides.temperature)) parameters.temperature = overrides.temperature;
 
+    // 6.3.5 생각하는 모델 (Claude 5 · Fable · Gemini 3 이후 · OpenAI 추론 모델): 생각은 짧게(low — TTS 대사 분석과 같은 규칙) ·
+    //   출력 한도는 생각까지 담게 최소 8192 (기본 1000 이면 하이쿠 5.5 가 생각만 하다 글이 안 왔다)
+    const thinkEffort = LiveModels.lowEffort(chatCompletionSource, model);
+    if (thinkEffort) {
+        parameters.reasoning_effort = thinkEffort;
+        if (parameters.max_tokens > 0 && parameters.max_tokens < LiveModels.THINK_MIN_TOKENS) parameters.max_tokens = LiveModels.THINK_MIN_TOKENS;
+    }
     LiveModels.applyModelRequestRules(provider, model, parameters);
 
     if (provider === 'vertexai') {
@@ -1555,6 +1562,8 @@ function extractTranslationResult(data, provider) {
             break;
     }
 
+    // 6.3.5 생각 블록만 오고 글이 없다 = 출력 한도를 생각에 다 썼다 (실리태번이 stop_reason 을 버려 「비어 있음」으로 보이던 것) — 잘림과 같은 길(반씩 한 번 더)
+    if (!result && LiveModels.thoughtOnly(data)) throw Object.assign(new Error('모델이 생각하느라 출력 한도를 다 써서 번역 글이 오지 않았어요. 번역 설정에서 출력 길이를 늘려 주세요.'), { truncated: true, resumable: true });
     if (!result) {
         // [1.9.0] 실리태번이 200 과 함께 넘겨준 오류 문구가 있으면 그걸 보여 준다
         // [1.9.1] 실리태번은 사용자 지정(OpenAI 호환) 서버의 오류 본문을 버리고 상태 문구만 넘긴다. 중계 서버 는 Gemini 입력 차단을
