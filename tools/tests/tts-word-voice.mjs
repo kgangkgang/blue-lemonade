@@ -86,7 +86,7 @@ test('배선: 이름 창 — 시작/끄기 · 목소리 탭과 같은 저장 · 
     assert.match(ix, /clickplay\.destroy\(\); namevoice\.destroy\(\);/);
     assert.match(ix, /clickplay\.init\(\); namevoice\.init\(\);/);
     assert.match(ix, /try \{ namevoice\.init\(\); \} catch/);
-    assert.match(ui, /export function pickCharVoice\(name, uid\) \{\n    if \(!name\) return;\n    setCharVoice\(name, uid\);\n    save\(\);\n    renderMap\(\);\n    renderColors\(\);/);
+    assert.match(ui, /export function pickCharVoice\(name, uid\) \{\n    if \(!name\) return;\n    setCharVoice\(nameVoiceKeys\(name\)\.write, uid\);[^\n]*\n    save\(\);\n    renderMap\(\);\n    renderColors\(\);/);
     assert.match(ui, /export function nameVoiceRowsHtml\(names\)/);
     assert.match(nv, /closest\?\.\('#chat \.mes \.name_text'\)/);
     assert.match(nv, /if \(!mes \|\| mes\.is_user \|\| mes\.is_system\) return null;/);
@@ -102,6 +102,67 @@ test('CSS: 새 창의 변수 · 칩 한 줄 · 이름 창 화면 안', () => {
     assert.match(css, /\.lv-bar-wordchip \{ flex: 0 0 auto;[^}]*white-space: nowrap;/);
     assert.match(css, /\.lv-namevoice \{ position: fixed;[^}]*width: min\(340px, calc\(100vw - 16px\)\);/);
     assert.match(css, /\.lv-bar-sfxpick\[hidden\] \{ display: none; \}/, '낱말 창도 .lv-bar-sfxpick 이라 [hidden] 이 이긴다');
+});
+
+// ── 6.3.6 검토 고침 v2 (세션 5)
+test('messageSpeakers: 재생이 「나」로 읽는 줄(isUser)은 뺀다 · 다 나면 보낸 쪽', () => {
+    const lines = [{ name: 'Ann', isUser: true }, { name: 'Bo' }, { name: 'Ann', isUser: true }, { name: 'Cy', isUser: false }];
+    assert.deepEqual(N.messageSpeakers(lines, { userName: 'User', sender: 'Card' }), ['Bo', 'Cy']);
+    assert.deepEqual(N.messageSpeakers([{ name: 'Ann', isUser: true }], { userName: 'User', sender: 'Card' }), ['Card']);
+});
+test('messageSpeakers: isMe(별명표로 접은 내 이름)면 다른 표기도 뺀다 · isMe 없으면 글자 비교만', () => {
+    const isMe = n => ['user', 'yoo-ja'].includes(String(n).toLowerCase());
+    assert.deepEqual(N.messageSpeakers([{ name: 'Yoo-ja' }, { name: 'Bo' }], { userName: 'User', sender: 'Card', isMe }), ['Bo']);
+    assert.deepEqual(N.messageSpeakers([{ name: 'Yoo-ja' }, { name: 'Bo' }], { userName: 'User', sender: 'Card' }), ['Yoo-ja', 'Bo']);
+    assert.deepEqual(N.messageSpeakers([{ name: 'Bo' }], { userName: 'User', sender: 'Card', isMe: () => { throw new Error('x'); } }), ['Bo'], 'isMe 가 실패해도 목록은 나온다');
+});
+test('배선: 이름 창 — 보이기는 재생 열쇠(charKeyOf), 쓰기는 같은 인물 열쇠일 때만 그 열쇠 (다른 사람 열쇠면 이 이름으로)', () => {
+    const ui = read('src/ui.js');
+    const keys = ui.slice(ui.indexOf('function nameVoiceKeys'), ui.indexOf('export function nameVoiceRowsHtml'));
+    assert.match(keys, /const play = voices\.charKeyOf\(n\) \|\| n;/);
+    assert.match(keys, /return \{ play, write: fold\(play\) === fold\(n\) \? play : n \};/);
+    const rows = ui.slice(ui.indexOf('export function nameVoiceRowsHtml'), ui.indexOf('export function pickCharVoice'));
+    assert.match(rows, /\(s\.char_map \|\| \{\}\)\[play\]/);
+    assert.match(rows, /voices\.preferVoice\(v, play\)/);
+    assert.match(rows, /charTwins\(play, uid\)/);
+    assert.match(rows, /data-lv-namevoice="\$\{esc\(write\)\}"/);
+    assert.match(rows, /<span class="lv-namevoice-name">\$\{esc\(n\)\}<\/span>/, '보이는 이름은 대사의 이름 그대로');
+    // 쓰기 열쇠 규칙을 그대로 옮겨 본다 (fold 가 같으면 재생 열쇠, 다르면 새 이름)
+    const fold = x => String(x || '').trim().toLowerCase().replace(/\s+/g, '');
+    const write = (n, play) => (fold(play) === fold(n) ? play : n);
+    assert.equal(write('Abc', 'A bc'), 'A bc', '띄어쓰기만 다르면 있는 열쇠에 (열쇠가 둘 생기지 않게)');
+    assert.equal(write('abc', 'ABC'), 'ABC');
+    assert.equal(write('Nick', 'Owner'), 'Nick', '옛 별명으로 다른 사람 열쇠에 걸리면 이 이름으로 새 열쇠 (그 사람 목소리를 안 건드림)');
+});
+test('배선: dialogueSpeakers 가 isUser 를 준다 (읽을 때와 같은 판단) · 이름 창은 그 줄을 빼고 내 이름을 canon 으로 견준다', () => {
+    const p = read('src/player.js');
+    const ds = p.slice(p.indexOf('export function dialogueSpeakers'), p.indexOf('export async function analyzeForPaint'));
+    assert.match(ds, /flag = typeof r\.isUser === 'boolean' \? r\.isUser : null;/);
+    assert.match(ds, /name = sp; source = 'analysis'; flag = null;/, '분석이 화자를 고르면 색 판단은 버린다 (읽을 때와 같게)');
+    assert.match(ds, /const isUser = flag \?\? \(source === 'user' \|\| said\.toLowerCase\(\) === String\(userName \|\| ''\)\.toLowerCase\(\)\);/);
+    assert.match(ds, /source, isUser \}\);/);
+    assert.match(p, /const isUser = flag \?\? \(source === 'user' \|\| name\.toLowerCase\(\) === userName\.toLowerCase\(\)\);/, '읽을 때의 판단이 그대로 있다 (둘이 어긋나지 않게)');
+    assert.match(read('src/name-voice-core.js'), /if \(line\?\.isUser !== true\) push\(line\?\.name\);/);
+    const nv = read('src/name-voice.js');
+    assert.match(nv, /import \{ canon \} from '\.\/speakers\.js';/);
+    assert.match(nv, /if \(me\) isMe = \(n\) => fold\(canon\(n\)\) === me;/);
+    assert.match(nv, /return messageSpeakers\(lines, \{ userName, sender: t\.mes\.name, isMe \}\);/);
+});
+test('배선: 요술봉 창은 다른 메시지를 읽거나 기다릴 때만 닫힌다 (hideBar 는 아님 — 이어 듣기 · 스트리밍은 줄마다 hideBar 를 거친다) · 이름 창은 그 답이 바뀌면 닫힌다', () => {
+    const p = read('src/player.js');
+    const hide = p.slice(p.indexOf('function hideBar() {'), p.indexOf('function updateBar() {'));
+    assert.ok(!/closeWandMenu\(\)/.test(hide), 'hideBar 에서 닫지 않는다');
+    const show = p.slice(p.indexOf('function showBar(job, busy) {'), p.indexOf('function waitBar('));
+    assert.match(show, /if \(wandPick && Number\.isInteger\(job\?\.mesId\) && wandPick\.mesId !== job\.mesId\) closeWandMenu\(\);/);
+    const wait = p.slice(p.indexOf('function waitBar('), p.indexOf('function hideBar() {'));
+    assert.match(wait, /if \(wandPick && Number\.isInteger\(waiting\?\.mesId\) && wandPick\.mesId !== waiting\.mesId\) closeWandMenu\(\);/);
+    const nv = read('src/name-voice.js');
+    assert.match(nv, /openId = p\.id;\n    box = document\.createElement\('div'\);/);
+    assert.match(nv, /const onMessageChanged = \(id\) => \{ if \(box && \(openId === null \|\| id === undefined \|\| Number\(id\) === openId\)\) close\(\); \};/);
+    assert.match(nv, /for \(const type of \[event_types\?\.MESSAGE_SWIPED, event_types\?\.MESSAGE_EDITED\]\) if \(type\) eventSource\.on\(type, onMessageChanged\);/);
+    assert.match(nv, /eventSource\.removeListener\?\.\(type, onMessageChanged\);/);
+    assert.match(nv, /eventSource\.on\(event_types\.MESSAGE_DELETED, onMessageDeleted\);/);
+    assert.match(nv, /eventSource\.removeListener\?\.\(event_types\.MESSAGE_DELETED, onMessageDeleted\);/);
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

@@ -6,7 +6,7 @@ import { extension_settings } from '../../../../../../extensions.js';
 import { OLD_MODULE, TITLE, VERSION, initSettings, saveSettings, settings } from './state.js';
 import { applyAll, scheduleAll, watchPicks } from './inject.js';
 import { buildPanel, render } from './panel.js';
-import { offerNewModels } from './offer.js';
+import { offerNewModels, pruneNative } from './offer.js';
 
 initSettings();
 
@@ -48,7 +48,9 @@ function offerWhenReady() {
     const ask = () => {
         if (started) return;
         started = true;
-        setTimeout(() => {
+        setTimeout(async () => {
+            // 1.1.7 실리태번 기본 목록에 들어온 등록부터 뺀다 (그다음 새 모델을 묻는다)
+            try { if ((await pruneNative()).length) render(); } catch (error) { console.warn('[모델 등록] 들어온 모델 정리', error); }
             offerNewModels().then(added => { if (added.length) render(); }).catch(error => console.warn('[모델 등록] 새 모델 묻기', error));
         }, 2500);
     };

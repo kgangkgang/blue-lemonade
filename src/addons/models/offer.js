@@ -8,9 +8,58 @@ import * as LM from '../../live-models.js';
 import { SOURCES } from './sources.js';
 import { TITLE, modelsOf, saveSettings, setModels, settings } from './state.js';
 import { applyOne } from './inject.js';
-import { pickNew, withAdded, withOffered } from './offer-core.js';
+import { pickNew, pruneStep, withAdded, withOffered } from './offer-core.js';
 
 let asking = false;
+
+let builtIn = null;
+
+/**
+ * 1.1.7 실리태번 기본 목록: index.html 원본의 공급자 select option 값 { [공급자]: Set }. 한 번만 받는다 · 못 받으면 null (다음에 다시).
+ * 화면 select 는 다른 확장이 넣은 묶음 · 연결하면 채워지는 계정 목록(OpenAI External · Google Other)이 섞여 있어 쓰지 않는다.
+ */
+export function builtInLists() {
+    builtIn ??= fetch(new URL('index.html', document.baseURI), { cache: 'force-cache' })
+        .then(res => (res.ok ? res.text() : Promise.reject(new Error(`index.html ${res.status}`))))
+        .then((html) => {
+            const page = new DOMParser().parseFromString(html, 'text/html');
+            const lists = {};
+            for (const source of SOURCES) {
+                if (source.kind !== 'select' || source.wiped) continue;
+                const select = page.querySelector(source.selector);
+                if (select) lists[source.id] = new Set([...select.querySelectorAll('option')].map(option => option.value).filter(Boolean));
+            }
+            return lists;
+        })
+        .catch((error) => { builtIn = null; console.warn('[모델 등록] 실리태번 기본 목록을 읽지 못했어요', error); return null; });
+    return builtIn;
+}
+
+/**
+ * 1.1.7 실리태번 기본 목록에 들어온 등록은 뺀다 — 그 모델은 실리태번 메뉴의 제자리에 그대로 나온다. 바뀐 [{ source, gone, back }]
+ * 고정 목록 select 공급자만: 받아 오는 목록(wiped) · Custom 은 계정 · 연결마다 달라 등록이 유일한 길일 수 있다.
+ */
+export async function pruneNative(lists = null) {
+    const builtins = lists ?? await builtInLists();
+    if (!builtins) return [];
+    const store = settings();
+    const changed = [];
+    for (const source of SOURCES) {
+        if (source.kind !== 'select' || source.wiped) continue;
+        const step = pruneStep(modelsOf(source.id), builtins[source.id], store.pruned?.[source.id]);
+        store.pruned ??= {};
+        if (step.memo.length) store.pruned[source.id] = step.memo;
+        else delete store.pruned[source.id];
+        if (!step.gone.length && !step.back.length) continue;
+        setModels(source.id, step.keep);
+        applyOne(source.id);
+        changed.push({ source: source.id, gone: step.gone, back: step.back });
+    }
+    saveSettings();
+    const names = changed.flatMap(item => item.gone);
+    if (names.length && typeof toastr !== 'undefined') toastr.info(`실리태번 목록에 들어온 모델은 등록에서 뺐어요: ${names.join(', ')}`, TITLE, { timeOut: 6000 });
+    return changed;
+}
 
 /** 아직 안 물어본 새 모델 [{ source, label, models }] */
 export function newModels() {

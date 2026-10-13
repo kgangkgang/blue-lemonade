@@ -540,13 +540,17 @@ export function dialogueSpeakers(mesId) {
     const out = [];
     for (const seg of disp || orig) {
         if (!seg || seg.kind !== 'dialogue' || !seg.text) continue;
-        let { name, source } = safeResolve(seg, rctx);
+        const r = safeResolve(seg, rctx);
+        let { name, source } = r, flag = typeof r.isUser === 'boolean' ? r.isUser : null;
         if (source === 'sender') {
             const g = aseg(seg);
             const sp = typeof g?.speaker === 'string' ? g.speaker.trim() : '';
-            if (sp && sp !== '?') { name = sp; source = 'analysis'; }
+            if (sp && sp !== '?') { name = sp; source = 'analysis'; flag = null; }
         }
-        out.push({ text: seg.text, color: seg.color || null, name: String(name || ''), source });
+        // 6.3.6 뒤 고침: 재생이 「나」로 읽는 줄인가 — 읽을 때(speakSegments 의 isUser)와 같은 판단 (색 · 별명 · 이름 다리로 찾은 내 다른 이름도). 이름 창은 이 줄을 뺀다
+        const said = /^\{\{user\}\}$/i.test(String(name || '')) ? String(userName || '') : String(name || '');
+        const isUser = flag ?? (source === 'user' || said.toLowerCase() === String(userName || '').toLowerCase());
+        out.push({ text: seg.text, color: seg.color || null, name: String(name || ''), source, isUser });
     }
     return out;
 }
@@ -3144,6 +3148,9 @@ function syncAnalyzeBtn() {
 }
 function showBar(job, busy) {
     if (!bar) return;
+    // 6.3.6 뒤 고침: 다른 메시지를 읽기 시작하면 앞 메시지에서 연 요술봉 · 효과음 · 낱말 창은 닫는다 (안 그러면 앞 답의 칩 · 대사로 다시 떴다).
+    //   같은 메시지(이어 듣기 · 스트리밍: 줄마다 큐가 끝나 hideBar 를 거쳐 다음 줄이 온다)는 그대로 — 고른 칩 · 검색어 · 되돌리기 줄을 지키게
+    if (wandPick && Number.isInteger(job?.mesId) && wandPick.mesId !== job.mesId) closeWandMenu();
     if (!settings().mini_player) { hideBar(); return; }
     barEl.voice.textContent = job.voice?.name || '';
     tintBarName(job);   // 1.7.1 대사 색 있는 인물은 그 색 (없으면 style.css 의 테마 색)
@@ -3161,6 +3168,7 @@ function showBar(job, busy) {
 /** 번역·분석을 기다리는 동안의 막대 (다른 걸 읽는 중이면 그 표시 유지) */
 function waitBar(mes, text) {
     if (!bar || current) return;
+    if (wandPick && Number.isInteger(waiting?.mesId) && wandPick.mesId !== waiting.mesId) closeWandMenu();   // 6.3.6 뒤 고침: 다른 메시지를 기다리면 앞 창은 닫는다 (showBar 와 같음)
     if (!settings().mini_player) return;
     closeDetails();
     barEl.detailsButton.hidden = true;

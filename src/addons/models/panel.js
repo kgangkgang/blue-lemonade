@@ -3,6 +3,7 @@ import { callGenericPopup, POPUP_RESULT, POPUP_TYPE } from '../../../../../../po
 import { SOURCES, sourceById } from './sources.js';
 import { TITLE, VERSION, modelsOf, movePick, pickOf, setModels, settings } from './state.js';
 import { applyOne } from './inject.js';
+import { builtInLists } from './offer.js';
 // 공용 모델 목록 — state.js 는 이것을 불러오면 안 된다 (live-models.js 가 맨 위 await 로 state.js 를 읽음)
 import * as LM from '../../live-models.js';
 
@@ -44,7 +45,7 @@ export function buildPanel() {
             </div>
             <div class="inline-drawer-content">
                 <div class="mr-body">
-                    <small class="mr-hint">등록한 모델은 그 공급자의 모델 목록 맨 위 “직접 등록한 모델”에 이 순서대로 나와요. 원래 목록에 있던 모델도 이리로 옮겨 와요.</small>
+                    <small class="mr-hint">등록한 모델은 그 공급자의 모델 목록 맨 위 “직접 등록한 모델”에 이 순서대로 나와요. 실리태번 기본 목록에 들어온 모델은 등록에서 저절로 빠져요.</small>
                     <div class="mr-row">
                         <select class="text_pole mr-source"></select>
                     </div>
@@ -211,19 +212,26 @@ function save(sourceId, models) {
     render();
 }
 
-function onAdd() {
+async function onAdd() {
     const input = $('.mr-input');
     const name = String(input.value ?? '').trim();
     if (!name) {
         toast('warning', '모델 이름을 적어 주세요.');
         return;
     }
-    const models = modelsOf(currentId);
-    if (models.includes(name)) {
+    const sourceId = currentId;
+    if (modelsOf(sourceId).includes(name)) {
         toast('info', '이미 등록된 이름이에요.');
         return;
     }
-    save(currentId, [...models, name]);
+    // 1.1.7 실리태번 기본 목록에 이미 있으면 등록하지 않는다 (넣어도 다음에 열 때 저절로 빠진다)
+    if ((await builtInLists())?.[sourceId]?.has(name)) {
+        toast('info', '실리태번 목록에 이미 있는 모델이에요.');
+        return;
+    }
+    const models = modelsOf(sourceId);
+    if (models.includes(name)) return;
+    save(sourceId, [...models, name]);
     input.value = '';
     toast('success', `${name}을(를) 등록했어요.`);
 }

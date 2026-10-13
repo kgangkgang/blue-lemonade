@@ -678,20 +678,31 @@ function onMapChange(el) {
     renderColors();
 }
 /** 6.3.6 이름 꾹 눌러 목소리 고르기 (name-voice.js): 목소리 탭 인물 줄과 같은 목록(엔진별 짝 포함) · 고르기 칸엔 실제로 읽는 목소리 */
+/**
+ * 6.3.6 뒤 고침: 이름 창의 열쇠 둘 — play = 재생이 쓰는 연결표 열쇠 (voiceFor 의 charKeyOf: 띄어쓰기 · 대소문자 · 목소리 이름 · 다른 이름을 거친 열쇠),
+ * write = 고른 것을 적을 열쇠. play 가 같은 이름(띄어쓰기 · 대소문자만 다름)이면 그 열쇠(같은 인물 열쇠가 둘 생기지 않게), 다른 사람 열쇠(목소리 이름 ·
+ * 다른 목소리에 남은 옛 별명을 거쳐 찾은 열쇠)면 이 이름으로 새 열쇠 — 그 사람의 목소리를 바꾸거나 (없음)으로 지우지 않게
+ */
+function nameVoiceKeys(n) {
+    const fold = (x) => String(x || '').trim().toLowerCase().replace(/\s+/g, '');
+    const play = voices.charKeyOf(n) || n;
+    return { play, write: fold(play) === fold(n) ? play : n };
+}
 export function nameVoiceRowsHtml(names) {
     const s = settings();
     return (Array.isArray(names) ? names : []).map(n => {
-        const uid = (s.char_map || {})[n] || voices.voiceByName(n)?.uid || '';
+        const { play, write } = nameVoiceKeys(n);   // 보이기 = 재생 열쇠 · 쓰기 = write
+        const uid = (s.char_map || {})[play] || voices.voiceByName(n)?.uid || '';
         const v = uid && uid !== USER_AUTO ? voices.findVoice(uid) : null;
-        const eff = v ? voices.preferVoice(v, n) : null;
-        const opts = voiceOptions(eff ? eff.uid : uid, { twins: charTwins(n, uid) });
-        return `<label class="lv-namevoice-row"><span class="lv-namevoice-name">${esc(n)}</span><select class="text_pole" data-lv-namevoice="${esc(n)}" aria-label="${esc(n)} 목소리">${opts}</select></label>`;
+        const eff = v ? voices.preferVoice(v, play) : null;
+        const opts = voiceOptions(eff ? eff.uid : uid, { twins: charTwins(play, uid) });
+        return `<label class="lv-namevoice-row"><span class="lv-namevoice-name">${esc(n)}</span><select class="text_pole" data-lv-namevoice="${esc(write)}" aria-label="${esc(n)} 목소리">${opts}</select></label>`;
     }).join('');
 }
 /** 6.3.6 이름 창에서 고름 — 목소리 탭에서 고른 것과 같다 (엔진 고정 규칙 · 저장 · 목소리 탭 · 대화 색 다시 그림) */
 export function pickCharVoice(name, uid) {
     if (!name) return;
-    setCharVoice(name, uid);
+    setCharVoice(nameVoiceKeys(name).write, uid);   // 6.3.6 뒤 고침: 같은 인물의 열쇠면 그 열쇠에, 다른 사람 열쇠면 이 이름으로 (nameVoiceKeys)
     save();
     renderMap();
     renderColors();

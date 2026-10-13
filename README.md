@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.3.8/blue-lemonade-6.3.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.3.9/blue-lemonade-6.3.9.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.3.8 · 최신 업데이트</summary>
+<summary>6.3.9 · 최신 업데이트</summary>
+
+- 모델 등록: 실리태번 기본 목록에 들어온 모델은 등록에서 저절로 빠지고 실리태번 메뉴 제자리에 나와요 (고른 모델은 그대로). 등록 창에 이미 목록에 있는 이름을 넣으면 알려 주고 넣지 않아요. 연결할 때 목록을 받아 오는 공급자(OpenRouter 등)는 예전 그대로예요.
+- TTS: 대답 이름을 꾹 눌러 고르는 목소리가 목소리 탭과 같은 인물 줄에 저장돼요. 내 캐릭터는 다른 이름으로 나와도 목록에 안 보여요. 이어 듣는 동안 요술봉 › 낱말 창이 줄마다 닫히지 않고, 다른 답을 읽기 시작하면 닫혀요.
+- 애드온 버전: 모델 등록 1.1.7 · TTS 1.8.2
+
+</details>
+
+<details>
+<summary>6.3.8 · TTS 원문 짝 · Argon 차례</summary>
 
 - TTS: 대사를 눌러 들을 때 화면의 「…」(점 셋이 바뀐 것) 때문에 원문을 못 찾아 화면 글을 다시 옮겨 읽던 문제를 고쳤어요. 원문을 정말 못 찾은 줄은 「화면 글에서 옮겨 읽음」으로 보여요.
 - 모델을 따로 고르지 않은 번역 · 다시 쓰기 · 한글화 연결의 기본이 6.3.6 부터 Gemini 4 Argon 으로 바뀌던 것을 예전 기본(OpenRouter Claude Haiku 5.5 · Google Gemini 3.8 Flash)으로 되돌렸어요. Argon 은 목록 바로 다음 자리에 그대로 있어요.

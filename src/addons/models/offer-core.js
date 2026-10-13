@@ -33,6 +33,21 @@ export function withOffered(offered, groups) {
     return next;
 }
 
+/**
+ * 1.1.7 한 공급자 정리. native = 실리태번 기본 목록(index.html 원본), pruned = 전에 그 때문에 뺀 이름.
+ * 기본 목록에서 다시 빠진 뺀 이름은 등록 끝으로 되돌리고(back), 기본 목록에 있는 등록은 뺀다(gone). memo = 다음에 적어 둘 뺀 이름.
+ * 기본 목록을 못 읽었으면(native 없음 · 비었음) 아무것도 바꾸지 않는다.
+ */
+export function pruneStep(registered, native, pruned) {
+    const list = clean(registered), before = clean(pruned);
+    if (!native || !native.size) return { keep: list, gone: [], back: [], memo: before };
+    const back = [...new Set(before.filter(model => !native.has(model) && !list.includes(model)))];
+    const all = [...new Set([...list, ...back])];
+    const gone = all.filter(model => native.has(model));
+    const memo = [...new Set([...before, ...gone])].filter(model => native.has(model));
+    return { keep: all.filter(model => !native.has(model)), gone, back, memo };
+}
+
 /** 고른 새 모델을 등록 목록 끝에 (이미 있는 이름은 그대로 한 번) */
 export function withAdded(registered, models) {
     return [...new Set([...clean(registered), ...clean(models)])];

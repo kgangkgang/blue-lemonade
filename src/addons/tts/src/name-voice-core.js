@@ -9,16 +9,18 @@ export function nameFold(name) {
 }
 
 /** dialogueSpeakers(mesId) 의 줄들 [{ name }] → 고를 이름들 */
-export function messageSpeakers(lines, { userName = '', sender = '', limit = NAME_LIMIT } = {}) {
+export function messageSpeakers(lines, { userName = '', sender = '', limit = NAME_LIMIT, isMe = null } = {}) {
     const me = nameFold(userName);
     const seen = new Set(), out = [];
+    // 6.3.6 뒤 고침: isMe(이름) — 별명표(이름 다리 포함)로 접은 내 이름인가 (name-voice.js 가 canon 으로 준다). 없으면 글자 비교만
+    const mine = (name, k) => { if (me && k === me) return true; try { return typeof isMe === 'function' && isMe(name) === true; } catch { return false; } };
     const push = (raw) => {
         const name = String(raw ?? '').trim();
         const k = nameFold(name);
-        if (!name || name === '?' || /^\{\{user\}\}$/i.test(name) || (me && k === me) || seen.has(k)) return;
+        if (!name || name === '?' || /^\{\{user\}\}$/i.test(name) || mine(name, k) || seen.has(k)) return;
         seen.add(k); out.push(name);
     };
-    for (const line of Array.isArray(lines) ? lines : []) push(line?.name);
+    for (const line of Array.isArray(lines) ? lines : []) if (line?.isUser !== true) push(line?.name);   // 6.3.6 뒤 고침: 재생이 「나」로 읽는 줄(내 다른 이름)은 뺀다
     if (!out.length) push(sender);
     return out.slice(0, Math.max(1, limit));
 }

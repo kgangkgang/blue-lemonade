@@ -6,6 +6,7 @@ import { eventSource, event_types } from '../../../../../../../../script.js';
 import { getContext } from '../../../../../../../extensions.js';
 import { runtimeEnabled } from './runtime.js';
 import { dialogueSpeakers } from './player.js';
+import { canon } from './speakers.js';   // 6.3.6 뒤 고침: 내 이름을 별명표(이름 다리 포함)로 접어 견준다
 import { nameVoiceRowsHtml, pickCharVoice } from './ui.js';
 import { messageSpeakers, placeBelow } from './name-voice-core.js';
 import { log } from './log.js';
@@ -15,7 +16,7 @@ const SLOP = 8;                 // 이만큼(px) 움직이면 스크롤로 본�
 const CLICK_AFTER_UP = 400;     // 손을 뗀 뒤 이 안에 오는 click 은 꾹 누르기의 끝
 const BOX_CLASS = 'lv-namevoice';
 
-let press = null, held = null, lastType = '', box = null, started = false;
+let press = null, held = null, lastType = '', box = null, started = false, openId = null;   // openId: 창을 띄운 답 (6.3.6 뒤 고침)
 
 function targetOf(el) {
     const name = el?.closest?.('#chat .mes .name_text');
@@ -89,7 +90,14 @@ function names(t) {
     try { lines = dialogueSpeakers(t.id); } catch (e) { log('err', `이름 목소리: 화자 구하기 실패 ${String(e?.message || e).slice(0, 40)}`); }
     let userName = '';
     try { userName = getContext()?.name1 || ''; } catch { userName = ''; }
-    return messageSpeakers(lines, { userName, sender: t.mes.name });
+    // 6.3.6 뒤 고침 (세션 4 제안 ③): 페르소나가 다른 표기(이름 다리 · 별명)로 나와도 내 이름으로 본다
+    let isMe = null;
+    try {
+        const fold = (x) => String(x || '').trim().toLowerCase().replace(/\s+/g, '');
+        const me = userName ? fold(canon(userName)) : '';
+        if (me) isMe = (n) => fold(canon(n)) === me;
+    } catch { isMe = null; }
+    return messageSpeakers(lines, { userName, sender: t.mes.name, isMe });
 }
 
 function render(list) {
@@ -110,6 +118,7 @@ function open(p) {
     if (!list.length) return;
     if (p.touch) setTimeout(() => { try { const sel = getSelection(); if (sel && p.el.contains(sel.anchorNode)) sel.removeAllRanges(); } catch { /* 무시 */ } }, 0);   // 이름 낱말 선택 막대가 창을 덮지 않게
     try { navigator.vibrate?.(12); } catch { /* 진동 없는 기기 */ }
+    openId = p.id;
     box = document.createElement('div');
     box.className = BOX_CLASS;
     box.setAttribute('role', 'dialog');
@@ -133,11 +142,15 @@ export function close() {
     if (!box) return;
     box.remove();
     box = null;
+    openId = null;
     document.removeEventListener('keydown', onKey, true);
 }
 export const isOpen = () => !!box;
 
 const onScroll = () => close();
+// 6.3.6 뒤 고침: 창을 띄운 그 답이 넘겨지거나(스와이프) · 고쳐지면 닫는다 (창의 이름은 그때 그 답의 화자들), 답이 지워지면 늘 닫는다
+const onMessageChanged = (id) => { if (box && (openId === null || id === undefined || Number(id) === openId)) close(); };
+const onMessageDeleted = () => close();
 export function init() {
     if (started) return;
     started = true;
@@ -150,6 +163,10 @@ export function init() {
     window.addEventListener('resize', onScroll);
     document.getElementById('chat')?.addEventListener('scroll', onScroll, { passive: true });
     try { if (event_types?.CHAT_CHANGED) eventSource.on(event_types.CHAT_CHANGED, onScroll); } catch { /* 시험 */ }
+    try {
+        for (const type of [event_types?.MESSAGE_SWIPED, event_types?.MESSAGE_EDITED]) if (type) eventSource.on(type, onMessageChanged);
+        if (event_types?.MESSAGE_DELETED) eventSource.on(event_types.MESSAGE_DELETED, onMessageDeleted);
+    } catch { /* 시험 */ }
 }
 export function destroy() {
     if (!started) return;
@@ -163,4 +180,8 @@ export function destroy() {
     window.removeEventListener('resize', onScroll);
     document.getElementById('chat')?.removeEventListener('scroll', onScroll);
     try { if (event_types?.CHAT_CHANGED) eventSource.removeListener?.(event_types.CHAT_CHANGED, onScroll); } catch { /* 시험 */ }
+    try {
+        for (const type of [event_types?.MESSAGE_SWIPED, event_types?.MESSAGE_EDITED]) if (type) eventSource.removeListener?.(type, onMessageChanged);
+        if (event_types?.MESSAGE_DELETED) eventSource.removeListener?.(event_types.MESSAGE_DELETED, onMessageDeleted);
+    } catch { /* 시험 */ }
 }
