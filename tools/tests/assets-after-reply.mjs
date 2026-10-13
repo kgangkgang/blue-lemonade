@@ -212,11 +212,11 @@ await test('review 6.1.9: slots never reach the main model; copied slots without
 await test('model switch lists the picker connection; version stamps agree; empty slots are hidden by data attribute', () => {
     const targets = read('src/addons/modelswitch/targets.js');
     assert.match(targets, /settings: \(\) => \{ const p = extension_settings\.esetham\?\.pick; return isObj\(p\) && p\.enabled && p\.connection !== 'current' \? p : null; \}/, 'listed only while picking with its own connection (review 6.1.9)');
-    assert.match(targets, /const KNOWN = \[translator, prompt, memory, rewrite, assets\];/);
+    assert.match(targets, /const KNOWN = \[translator, translatorFallback, prompt, promptFallback, memory, rewrite, rewriteFallback, assets, assetsFallback\];/);   // 6.2.9 검열되면 다른 모델로
     assert.match(targets, /'esetham'/);
     const v = read('src/addons/assets/state.js').match(/VERSION = '([\d.]+)'/)[1];
     assert.ok(read('src/addons/assets/style.css').includes(`--eh-css-version: "${v}";`));
-    assert.equal(v, '1.6.3');
+    assert.equal(v, '1.6.4');
     const css = read('src/addons/assets/style.css');
     assert.ok(css.includes('#chat .mes_text p[data-eh-slot-only]:not(:has(> [data-asset-slot]:not(:empty))) { display: none; }'), 'only a paragraph that holds nothing but slots is hidden');
     assert.ok(!css.includes(':not(:has(> :not([data-asset-slot])))'), 'a paragraph with text is never hidden');

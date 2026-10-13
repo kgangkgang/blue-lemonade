@@ -17,6 +17,9 @@ export const PROVIDERS = {
     custom: { label: 'Custom (OpenAI 호환)', source: 'custom', secrets: ['CUSTOM'] },
 };
 
+/** 6.2.9 검열되면 다른 모델로: 실리태번 chat_completion_source(makersuite …) → 이 칸의 공급자 이름(google …) */
+export const providerKeyOf = source => Object.keys(PROVIDERS).find(key => PROVIDERS[key].source === source) || String(source || '');
+
 /** Endpoint address without trailing slashes: SillyTavern appends '/chat/completions' and '/models' itself. */
 export function normalizeUrl(url) {
     return String(url ?? '').trim().replace(/\/+$/, '');

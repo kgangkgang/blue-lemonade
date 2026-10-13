@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.2.8/blue-lemonade-6.2.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.2.9/blue-lemonade-6.2.9.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.2.8 · 최신 업데이트</summary>
+<summary>6.2.9 · 최신 업데이트</summary>
+
+- 모델 전환: 번역 · 한글화 패널 · 다시 쓰기 · 캐릭터 에셋 「다른 모델이 고르기」에도 「(검열되면)」 대상이 생겼어요. 켜고 공급자 · 모델을 골라 두면, 내용 차단으로 막혔을 때만 그 모델로 한 번 더 보내요. 처음엔 꺼져 있어요.
+- 전개 지시: 즐겨찾기 칩(★)은 뺐어요. 넣어 둔 칩은 위쪽 저장(북마크) 목록으로 옮겨져요.
+- 애드온 버전: 캐릭터 에셋 1.6.4 · 전개 지시 1.2.2 · 모델 전환 1.1.2 · 한글화 패널 1.2.2 · 다시 쓰기 2.0.8 · LLM 번역 2.3.9
+
+</details>
+
+<details>
+<summary>6.2.8 · 전개 지시 즐겨찾기 칩 · TTS 이어 듣기</summary>
 
 - 전개 지시: 입력칸 아래에 즐겨찾기 칩이 생겼어요. ☆ 로 지금 지시를 칩으로 꽂아 두고, 칩을 누르면 그 글로 채워요 (보내기는 직접). × 로 지우고, 12개까지 둘 수 있어요.
 - TTS: 미리 만들기에 「다음 한 줄 · 이어 듣기」가 생겼어요. 대사를 누르면 그 줄이 끝난 뒤 다음 줄을 이어 읽어요 — 그 답장 끝까지. 다른 줄을 누르거나 정지하면 멈춰요.

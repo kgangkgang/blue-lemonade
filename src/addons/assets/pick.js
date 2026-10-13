@@ -8,7 +8,8 @@ import { SECRET_KEYS, secret_state } from '../../../../../../secrets.js';
 import { ConnectionManagerRequestService } from '../../../../../shared.js';
 import { addonsEnabled } from '../../usage-mode.js';
 import { applyModelRequestRules } from '../../live-models.js';
-import { PROVIDERS, normalizeUrl, resolveModel, isHttpUrl } from '../rewrite/providers.js';
+import { PROVIDERS, normalizeUrl, resolveModel, isHttpUrl, providerKeyOf } from '../rewrite/providers.js';
+import { fallbackOf, withFallback } from '../modelswitch/fallback.js';   // 6.2.9 검열되면 다른 모델로
 import { settings, normalizePick, PICK_DEFAULTS } from './state.js';
 
 export { PICK_DEFAULTS, normalizePick };
@@ -67,19 +68,27 @@ export function connectionLabel(pick = pickSettings()) {
     return `${PROVIDERS[pick.provider]?.label ?? pick.provider} · ${model || '모델 없음'}`;
 }
 
-/** 고르는 모델에게 보낸다 → 답 글. signal 로 멈춘다 */
+/** 고르는 모델에게 보낸다 → 답 글. signal 로 멈춘다.
+ *  6.2.9 검열되면 다른 모델로 (모델 전환 「캐릭터 에셋 (검열되면)」 — 켜고 고른 때만): 내용 차단으로 막히면 그 모델로 한 번 더 */
 export async function generatePick(messages, signal) {
     const pick = pickSettings();
-    if (pick.connection === 'profile') {
+    const main = pick.connection === 'direct' ? { provider: PROVIDERS[pick.provider]?.source || pick.provider, model: resolveModel(pick, pick.provider === 'custom' ? customEndpoint(pick) : undefined), url: pick.provider === 'custom' ? customEndpoint(pick).url : '' } : null;
+    return withFallback(() => generatePickOnce(messages, signal), { target: fallbackOf(pick), failed: main, send: target => generatePickOnce(messages, signal, target) });
+}
+
+async function generatePickOnce(messages, signal, via = null) {
+    const pick = pickSettings();
+    if (!via && pick.connection === 'profile') {
         const result = await ConnectionManagerRequestService.sendRequest(pick.profileId, messages, pick.maxTokens, { stream: false, signal, extractData: true, includePreset: true });
         return result?.content ?? '';
     }
-    const provider = PROVIDERS[pick.provider];
-    const endpoint = pick.provider === 'custom' ? customEndpoint(pick) : undefined;
-    const model = resolveModel(pick, endpoint);
+    const key = via ? providerKeyOf(via.provider) : pick.provider;
+    const provider = PROVIDERS[key];
+    const endpoint = key === 'custom' ? customEndpoint(pick) : undefined;
+    const model = via ? String(via.model || '') : resolveModel(pick, endpoint);
     if (!provider || !model) throw new Error('모델이 정해지지 않았어요.');
     const request = { messages, model, chat_completion_source: provider.source, temperature: 0.4, max_tokens: pick.maxTokens, stream: false };
-    if (pick.provider === 'custom') {
+    if (key === 'custom') {
         if (!endpoint.url) throw new Error('Custom 주소가 없어요.');
         request.custom_url = endpoint.url;
         if (endpoint.inheritExtras) {
@@ -88,12 +97,12 @@ export async function generatePick(messages, signal) {
             request.custom_include_headers = substituteParams(oai_settings?.custom_include_headers || '');
         }
     }
-    if (pick.provider === 'vertexai') {
+    if (key === 'vertexai') {
         request.vertexai_auth_mode = oai_settings?.vertexai_auth_mode || 'full';
         request.vertexai_region = oai_settings?.vertexai_region || 'us-central1';
         request.vertexai_express_project_id = oai_settings?.vertexai_express_project_id || '';
     }
-    applyModelRequestRules(pick.provider, model, request);
+    applyModelRequestRules(key, model, request);
     const result = await ChatCompletionService.processRequest(request, {}, true, signal);
     return result?.content ?? '';
 }

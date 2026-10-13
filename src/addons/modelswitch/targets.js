@@ -6,6 +6,7 @@ import { oai_settings } from '../../../../../../openai.js';
 import { SOURCES } from '../models/sources.js';
 import * as LM from '../../live-models.js';
 import { CORE_KEYS, findNodes, settingsRefs, ownerOf, makeTarget, crawl, skipRegistered, autoSpots } from './discover.js';
+import { fallbackTarget } from './fallback.js';   // 6.2.9 검열되면 다른 모델로
 
 const $ = globalThis.jQuery;
 const isObj = value => !!value && typeof value === 'object' && !Array.isArray(value);
@@ -180,7 +181,19 @@ withState(memory, 'apiMode', memoryFields, async () => {
 withState(prompt, 'connectionMode', promptFields, () => window.dispatchEvent(new Event('bl:prompt-connection-changed')));
 withState(assets, 'connection', rewriteFields, () => window.dispatchEvent(new Event('bl:assets-pick-changed')));
 
-const KNOWN = [translator, prompt, memory, rewrite, assets];
+// 6.2.9 검열되면 다른 모델로 — 번역 · 한글화 패널 · 다시 쓰기 · 캐릭터 에셋도 TTS 대사 분석(6.1.8)처럼 본 대상 바로 아래 「<이름> (검열되면)」.
+// 처음엔 꺼 둠(defaultOff): 켜고 공급자 · 모델을 고른 대상만, 본 요청이 내용 차단으로 막힐 때 그 모델로 한 번 더 (fallback.js withFallback).
+// 저장 = 그 확장 설정의 fallback { enabled, provider, model } · Custom 주소는 그 확장의 Custom 주소를 함께 쓴다 · 본 모델과 같은 모델로는 안 바꾼다
+const fallbackFor = (base, customUrl) => ({
+    ...fallbackTarget({ id: `${base.id}-fallback`, name: base.name, sources: base.sources, holder: () => base.settings(), main: () => base.read(), customUrl }),
+    folder: base.folder, builtin: base.builtin, settings: () => base.settings(),
+});
+const translatorFallback = fallbackFor(translator, s => s.custom_url);
+const promptFallback = fallbackFor(prompt, s => s.customUrl);
+const rewriteFallback = fallbackFor(rewrite, s => s.customUrl);
+const assetsFallback = fallbackFor(assets, s => s.customUrl);
+
+const KNOWN = [translator, translatorFallback, prompt, promptFallback, memory, rewrite, rewriteFallback, assets, assetsFallback];
 const KNOWN_KEYS = new Set(['llm-translator-custom', 'prompt-panel', 'memoria', 'ban_word_rewrite', 'esetham', 'model_switch', 'model_register', 'salty']);
 const registered = new Map();
 

@@ -12,14 +12,12 @@ import { badgeTextHit } from '../../badge-hit.js';
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
-const VERSION = '1.2.1';
+const VERSION = '1.2.2';
 // 1.1.5: 깃털 창에 두 쪽 — 전개 지시(이번 전개) · 항상 지시(적은 글 그대로 매번, 예: <OOC: …>). 옆으로 넘기거나 제목을 눌러 바꾼다
 const KINDS = ['direction', 'always'];
 const KIND_LABEL = { direction: '전개 지시', always: '항상 지시' };
 const HISTORY_MAX = 30;   // 최근: 실제로 보낸 지시 (쪽마다)
 const PRESET_MAX = 100;   // 저장: 두 쪽 합쳐서
-const FAVORITE_MAX = 12;  // 1.2.1 즐겨찾기 칩: 전개 지시 입력칸 아래, 누르면 그 글로 채운다 (다 차면 ☆ 숨김)
-const FAVORITE_NAME = 14; // 칩 이름 = 지시 글 앞 14자
 
 // AI에게 보내는 글이라 원래 확장의 영어 프롬프트를 그대로 쓴다. (뜻은 설정 화면에 한국어로 적어 둠)
 const DEFAULT_PROMPT = `<direction>
@@ -39,7 +37,6 @@ const DEFAULTS = Object.freeze({
     onColor: '',                     // 켜짐 표시 색. 비우면 테마의 대사 색
     presets: [],                     // 1.1.5 저장한 지시 [{ id, kind, content, at }] (최근 저장이 앞)
     history: { direction: [], always: [] }, // 1.1.5 실제로 보낸 지시 [{ content, at }] (최근이 앞)
-    favorites: [],                   // 1.2.1 즐겨찾기 칩 [{ text }] — 넣은 순서 그대로 (전개 지시만)
 });
 
 function settings() {
@@ -86,10 +83,16 @@ function initSettings() {
     for (const item of store.presets) if (typeof item.id !== 'string' || !item.id) item.id = newId();
     const history = store.history && typeof store.history === 'object' ? store.history : {};
     store.history = Object.fromEntries(KINDS.map(kind => [kind, unique((Array.isArray(history[kind]) ? history[kind] : []).filter(listed), item => item.content).slice(0, HISTORY_MAX)]));
-    // 1.2.1 즐겨찾기: 다듬은 글 하나씩 · 같은 글은 하나만 · 12개까지 (손으로 고친 설정의 글자열 항목도 받는다)
-    const favSeen = new Set();
-    store.favorites = (Array.isArray(store.favorites) ? store.favorites : []).map(item => ({ text: String((item && typeof item === 'object' ? item.text : item) ?? '').trim() }))
-        .filter(item => item.text && !favSeen.has(item.text) && favSeen.add(item.text)).slice(0, FAVORITE_MAX);
+    // 1.2.2 즐겨찾기 칩(6.2.8)은 뺐다 — 사용자 10-13 「별 빼줘 · 위의 북마크 표시(저장)로 하는 게 나을듯」.
+    //       칩으로 넣어 둔 글은 저장 목록의 전개 지시로 옮기고(같은 글은 한 번만 · 저장 상한 안에서 · 칩 순서대로 맨 위에) 칸은 지운다
+    if (Array.isArray(store.favorites)) {
+        for (const item of [...store.favorites].reverse()) {
+            const text = String((item && typeof item === 'object' ? item.text : item) ?? '').trim();
+            if (!text || store.presets.length >= PRESET_MAX || store.presets.some(entry => entry.kind === 'direction' && entry.content === text)) continue;
+            store.presets.unshift({ id: newId(), kind: 'direction', content: text, at: Date.now() });
+        }
+    }
+    delete store.favorites;
     if (typeof store.directionPrompt !== 'string') store.directionPrompt = DEFAULT_PROMPT;
     store.promptDepth = clampDepth(store.promptDepth);
     store.extensionEnabled = store.extensionEnabled !== false;
@@ -150,32 +153,6 @@ function savePreset(kind, content) {
     store.presets.unshift({ id: newId(), kind, content: text, at: Date.now() });
     save();
     return 'saved';
-}
-
-// ── 1.2.1 즐겨찾기 칩 (전개 지시 입력칸 아래) — 매번 쓰는 지시를 칩으로 꽂아 두고 한 번에 넣는다. 저장은 부르는 쪽이 한다 ──
-
-/** 칩 이름: 지시 글 앞 14자 (한 줄로 다듬어서), 넘치면 … */
-function favoriteName(text) {
-    const line = String(text ?? '').replace(/\s+/g, ' ').trim();
-    return line.length > FAVORITE_NAME ? `${line.slice(0, FAVORITE_NAME)}…` : line;
-}
-
-/** 'added' | 'duplicate' | 'full' | 'empty' — 앞뒤 공백을 뗀 글 그대로(매크로도 그대로), 넣은 순서 뒤에 */
-function addFavorite(content) {
-    const text = String(content ?? '').trim();
-    const store = settings();
-    if (!text) return 'empty';
-    if (store.favorites.some(item => item.text === text)) return 'duplicate';
-    if (store.favorites.length >= FAVORITE_MAX) return 'full';
-    store.favorites.push({ text });
-    return 'added';
-}
-
-function removeFavorite(index) {
-    const list = settings().favorites;
-    if (!Number.isInteger(index) || index < 0 || index >= list.length) return false;
-    list.splice(index, 1);
-    return true;
 }
 
 // ── 색 ──────────────────────────────────────────────────────
@@ -533,7 +510,6 @@ function refreshPopup() {
     popup.querySelectorAll('.jj-dots b').forEach((dot, index) => dot.classList.toggle('is-current', KINDS[index] === page));
     popup.querySelectorAll('.jj-page').forEach(section => section.classList.toggle('is-off', !kindActive(section.dataset.kind)));
     popup.querySelector('.jj-foot-text').textContent = footText();
-    renderFavorites();
     if (listView) renderList();
 }
 
@@ -616,7 +592,6 @@ function renderList() {
     popup.classList.toggle('is-list', !!view);
     toggle.setAttribute('aria-expanded', String(!!view));
     toggle.classList.toggle('is-active', !!view);
-    renderFavorites();   // 목록을 보는 동안은 칩 줄도 숨긴다
     if (!view) {
         if (pages.hidden) {
             pages.hidden = false;
@@ -662,75 +637,6 @@ function renderList() {
 function setListView(view) {
     listView = view === 'presets' || view === 'history' ? view : null;
     renderList();
-}
-
-// ── 1.2.1 즐겨찾기 칩 줄 (모델 전환 상태 칩과 같은 결: ★ 이름 · 오른쪽 ×, 툴팁 없음) ──
-
-/** 칩 줄 · ☆ 단추를 지금 상태로. 칩이 없거나 목록을 보는 중이거나 항상 지시 쪽이면 줄 자체가 없다 ([hidden] + :empty) */
-function renderFavorites() {
-    const row = popup?.querySelector('.jj-favs');
-    const add = popup?.querySelector('[data-act="fav-add"]');
-    if (!row || !add) return;
-    const store = settings();
-    const current = store.direction.content.trim();
-    add.hidden = store.favorites.length >= FAVORITE_MAX;
-    add.disabled = !current || store.favorites.some(item => item.text === current);
-    row.hidden = !store.favorites.length || !!listView || page !== 'direction';
-    row.replaceChildren(...store.favorites.map((item, index) => {
-        const chip = document.createElement('div');
-        chip.className = 'jj-fav';
-        chip.classList.toggle('is-on', item.text === current);
-        const go = document.createElement('button');
-        go.type = 'button';
-        go.className = 'jj-fav-go';
-        go.dataset.act = 'fav-use';
-        go.dataset.index = String(index);
-        go.setAttribute('aria-label', `즐겨찾기 넣기 · ${favoriteName(item.text)}`);
-        go.innerHTML = '<i class="fa-solid fa-star" aria-hidden="true"></i>';
-        const name = document.createElement('span');
-        name.textContent = favoriteName(item.text);
-        go.append(name);
-        const remove = document.createElement('button');
-        remove.type = 'button';
-        remove.className = 'jj-fav-x';
-        remove.dataset.act = 'fav-remove';
-        remove.dataset.index = String(index);
-        remove.setAttribute('aria-label', `${favoriteName(item.text)} 지우기`);
-        remove.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
-        chip.append(go, remove);
-        return chip;
-    }));
-}
-
-/** ☆: 지금 입력칸 글을 칩으로 (빈 글 · 같은 글은 무시, 이름 묻는 창 없음) */
-function onFavoriteAdd() {
-    if (addFavorite(settings().direction.content) !== 'added') return;
-    save();
-    renderFavorites();
-}
-
-function onFavoriteClick(event) {
-    const target = event.target.closest('[data-act]');
-    if (!target || !popup?.contains(target)) return;
-    const store = settings();
-    const index = Number(target.dataset.index);
-    const item = store.favorites[index];
-    if (!item) return;
-    if (target.dataset.act === 'fav-use') {
-        const slot = store.direction;
-        if (slot.content.trim() === item.text) return;   // 이미 같은 글 — 아무것도 안 한다
-        // 덮어쓰기 전에 적어 둔 글이 저장 · 즐겨찾기에 없으면 최근에 남긴다 (목록의 「쓰기」와 같은 예의)
-        if (slot.content.trim() && !isSaved('direction', slot.content) && !store.favorites.some(entry => entry.text === slot.content.trim())) remember('direction', slot.content);
-        slot.content = item.text;
-        const textarea = pageTextarea('direction');
-        if (textarea) textarea.value = item.text;
-        save();
-        refreshButton();   // → refreshPopup → renderFavorites (켜진 칩 표시)
-    } else if (target.dataset.act === 'fav-remove') {
-        if (!removeFavorite(index)) return;   // 확인 없이 바로 — 글은 최근 · 저장에서 되찾는다
-        save();
-        renderFavorites();
-    }
 }
 
 async function onListClick(event) {
@@ -807,9 +713,8 @@ function openPopup() {
         </div>
         <div class="jj-popup-body">
             <div class="jj-pages">${KINDS.map(kind => `
-                <section class="jj-page" data-kind="${kind}" aria-label="${KIND_LABEL[kind]}"><textarea class="jj-textarea" rows="3" spellcheck="false" placeholder="${PLACEHOLDER[kind]}"></textarea>${kind === 'direction' ? '<button type="button" class="jj-icon-btn jj-fav-add" data-act="fav-add" aria-label="즐겨찾기에 넣기"><i class="fa-regular fa-star"></i></button>' : ''}</section>`).join('')}
+                <section class="jj-page" data-kind="${kind}" aria-label="${KIND_LABEL[kind]}"><textarea class="jj-textarea" rows="3" spellcheck="false" placeholder="${PLACEHOLDER[kind]}"></textarea></section>`).join('')}
             </div>
-            <div class="jj-favs" hidden></div>
             <div class="jj-list" hidden>
                 <div class="jj-seg" role="tablist"><button type="button" role="tab" data-list="presets">저장</button><button type="button" role="tab" data-list="history">최근</button></div>
                 <button type="button" class="jj-save-preset" data-act="save-preset"><i class="fa-solid fa-plus"></i><span>지금 내용 저장</span></button>
@@ -840,8 +745,6 @@ function openPopup() {
     popup.querySelector('[data-act="list"]').addEventListener('click', () => setListView(listView ? null : 'presets'));
     popup.querySelectorAll('.jj-seg [data-list]').forEach(tab => tab.addEventListener('click', () => setListView(tab.dataset.list)));
     popup.querySelector('.jj-list').addEventListener('click', onListClick);
-    popup.querySelector('.jj-favs').addEventListener('click', onFavoriteClick);   // 1.2.1 즐겨찾기 칩
-    popup.querySelector('[data-act="fav-add"]').addEventListener('click', onFavoriteAdd);
     popup.querySelector('[data-act="close"]').addEventListener('click', closePopup);
     popup.querySelector('[data-act="clear"]').addEventListener('click', async () => {
         const kind = page;

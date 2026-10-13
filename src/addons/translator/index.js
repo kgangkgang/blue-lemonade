@@ -8,6 +8,7 @@ import { makePersonaBridge } from './persona-bridge.js';
 import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey, glossaryLinesFor } from './glossary-match.js'; // [2.2.9] 용어집 찾기 (+ 가타카나 표기 흔들림) · [2.3.0] TTS 듣는 언어용 줄
 import { SPEECH_LANGS, speechPrompt, speechPayload, speechLine, parseSpeechBatch, unwrapQuotes, cutEchoLine } from './speech-translate.js'; // [2.3.0] TTS 듣는 언어
 import { requestCurrentConnection } from './current-connection.js';
+import { fallbackOf, sameTarget } from '../modelswitch/fallback.js';   // 6.2.9 검열되면 다른 모델로
 import { createGenerationParameters, getChatCompletionModel } from '../../../../../../openai.js';
 import { createTextGenGenerationData, getTextGenModel } from '../../../../../../textgen-settings.js';
 import { matchingTranslation, translationFromDisplay } from './archive-bridge.js';
@@ -1280,7 +1281,9 @@ function blockedReasonOf(data) {
 }
 
 async function callLLMAPI(fullPrompt, overrides = {}) {
-    const provider = extensionSettings.llm_provider;
+    // 6.2.9 검열되면 다른 모델로: overrides.via = { provider(실리태번 source), model } — 그 공급자 · 모델로 직접 연결 (연결 방식 · 리버스 프록시와 상관없이)
+    const via = overrides.via && overrides.via.provider && overrides.via.model ? overrides.via : null;
+    const provider = via ? (via.provider === 'makersuite' ? 'google' : via.provider) : extensionSettings.llm_provider;
     const messages = [{ role: 'user', content: fullPrompt }];
 
     if (extensionSettings.llm_prefill_toggle && overrides.prefill !== false) {
@@ -1299,7 +1302,7 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
         messages.push({ role, content: prefillContent });
     }
 
-    if (extensionSettings.connection_mode !== 'direct') {
+    if (!via && extensionSettings.connection_mode !== 'direct') {
         const data = await requestCurrentConnection({
             context: getContext, messages, overrides, maxTokens: extensionSettings.profile_max_tokens,
             buildChat: async (settings, input) => (await createGenerationParameters(settings, getChatCompletionModel(settings), 'quiet', input)).generate_data,
@@ -1310,10 +1313,10 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
         return extractTranslationResult(data, 'profile');
     }
     // custom 선택 시 해당 공급자에 저장된 커스텀 모델명 사용
-    const model = extensionSettings.llm_model === 'custom'
+    const model = via ? String(via.model) : extensionSettings.llm_model === 'custom'
         ? getCustomModelName(provider)
         : extensionSettings.llm_model;
-    const params = extensionSettings.parameters[provider];
+    const params = extensionSettings.parameters?.[provider] ?? extensionSettings.parameters?.[extensionSettings.llm_provider] ?? {};   // 다른 공급자로 보낼 때 그 값이 없으면 지금 값
 
     // API 키 검증
     let apiKey;
@@ -1357,7 +1360,7 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
     }
 
     // [추가] 커스텀 모델 입력을 골라놓고 모델명이 비어 있으면 API가 엉뚱한 오류를 뱉으므로 먼저 막는다.
-    if (extensionSettings.llm_model === 'custom' && !model) {
+    if (!via && extensionSettings.llm_model === 'custom' && !model) {
         throw new Error(`커스텀 모델명이 비어 있습니다. ${provider} 공급자에 사용할 모델명을 입력해주세요.`);
     }
 
@@ -1366,7 +1369,7 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
         if (!getCustomEndpointConfig().url) {
             throw new Error('커스텀 엔드포인트 주소가 설정되어 있지 않습니다. (예: http://127.0.0.1:5001/v1)');
         }
-    } else if (!apiKey && !extensionSettings.use_reverse_proxy) {
+    } else if (!apiKey && (via || !extensionSettings.use_reverse_proxy)) {
         throw new Error(`${provider.toUpperCase()} API 키가 설정되어 있지 않습니다.`);
     }
 
@@ -1410,7 +1413,7 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
         }
     }
 
-    if (extensionSettings.use_reverse_proxy) {
+    if (!via && extensionSettings.use_reverse_proxy) {
         parameters.reverse_proxy = extensionSettings.reverse_proxy_url;
         parameters.proxy_password = extensionSettings.reverse_proxy_password;
     }
@@ -1635,9 +1638,9 @@ async function translate(text, options = {}) {
         chatGuard.assert(); options.assertValid?.();
         if (connectionSignature() !== connection) throw Object.assign(new Error('번역 연결이나 모델 설정이 바뀌어 멈췄어요. 같은 설정으로 다시 번역하면 저장한 문단부터 이어가요.'), { cancelled: true });
     }, 500); // 5.3.4: 100ms → 500ms (매번 연결 설정을 문자열화한다. 단계마다 check() 도 따로 부른다)
-    const request = async prompt => {
+    const request = async (prompt, extra = {}) => {
         watcher.check();
-        const result = await callLLMAPI(prompt, { signal: watcher.signal });
+        const result = await callLLMAPI(prompt, { signal: watcher.signal, ...extra });
         watcher.check(); return result;
     };
     try {
@@ -1792,7 +1795,7 @@ async function translate(text, options = {}) {
         const { onProgress = null, report = null } = options;
         const progress = (info) => { try { onProgress?.(info); } catch { /* 표시용 */ } };
         /** 한 덩어리를 배치 순서대로 보낸다. 끝까지 막히면 refused 오류를 던진다. */
-        const callWithLayouts = async (body, layouts) => {
+        const callWithLayoutsMain = async (body, layouts) => {
             let out = '';
             const promptOf = layout => prepared.get(body)?.[PROMPT_LAYOUTS.indexOf(layout)] ?? buildFullPrompt(layout, body);
             const seen = new Set();
@@ -1816,6 +1819,36 @@ async function translate(text, options = {}) {
             // 5.2.9: 묶음 머리말은 원문이 아니다 — 머리말을 뺀 길이로 견준다 (머리말 탓에 짧은 묶음의 정상 번역이 거절로 오인됐다)
             if (looksLikeRefusal(isRetranslation ? compareText : (body.startsWith(BATCH_HEADER) ? body.slice(BATCH_HEADER.length) : body), out)) throw refusalError(out);
             return out;
+        };
+        // 6.2.9 검열되면 다른 모델로 (모델 전환 「번역 (검열되면)」 — 켜고 고른 때만): 배치를 바꿔도 끝내 막힌 묶음만 그 모델로 한 번 더.
+        //       해내면 차단 표시 대신 그 번역 (캐시 규칙은 그대로). 다른 모델도 막히거나 실패하면 이 번역 안에서는 더 보내지 않는다
+        //       (막힌 묶음을 반으로 나눌 때마다 요청이 늘지 않게) — 그다음은 예전 그대로 (나누기 · 차단 표시)
+        const fallbackTo = fallbackOf(extensionSettings);
+        const fallbackMain = extensionSettings.connection_mode === 'direct' ? { provider: extensionSettings.llm_provider === 'google' ? 'makersuite' : extensionSettings.llm_provider,
+            model: extensionSettings.llm_model === 'custom' ? getCustomModelName(extensionSettings.llm_provider) : extensionSettings.llm_model } : null;
+        let fallbackSpent = !fallbackTo || sameTarget(fallbackMain, fallbackTo);
+        const callWithLayouts = async (body, layouts) => {
+            try { return await callWithLayoutsMain(body, layouts); }
+            catch (error) {
+                if (!error?.refused || fallbackSpent) throw error;
+                const layout = layouts[0] ?? PROMPT_LAYOUTS[0];
+                const prompt = prepared.get(body)?.[PROMPT_LAYOUTS.indexOf(layout)] ?? buildFullPrompt(layout, body);
+                let out;
+                try { out = await request(prompt, { via: fallbackTo }); }
+                catch (again) {
+                    if (again?.cancelled || again?.name === 'AbortError') throw again;
+                    fallbackSpent = true;
+                    console.warn(`[LLM Translator] 막힌 묶음을 다른 모델(${fallbackTo.model})로 보냈지만 실패:`, again?.message);
+                    throw error;
+                }
+                if (looksLikeInputBlock(out) || looksLikeRefusal(isRetranslation ? compareText : (body.startsWith(BATCH_HEADER) ? body.slice(BATCH_HEADER.length) : body), out)) {
+                    fallbackSpent = true;
+                    console.warn(`[LLM Translator] 다른 모델(${fallbackTo.model})도 거절했어요`);
+                    throw error;
+                }
+                console.info(`[LLM Translator] 막힌 묶음을 다른 모델(${fallbackTo.model})로 번역했어요`);
+                return out;
+            }
         };
 
         let checkpointComplete = false;

@@ -49,6 +49,7 @@ jobs:
           node tools/tests/tts-paint.mjs .
           node tools/tests/tts-listen.mjs .
           node tools/tests/tts-block-fallback.mjs .
+          node tools/tests/modelswitch-fallback.mjs .
           node tools/tests/tts-bridge.mjs .
           node tools/tests/tts-scene.mjs .
           node tools/tests/tts-sfx-timing.mjs .

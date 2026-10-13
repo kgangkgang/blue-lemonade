@@ -18,6 +18,7 @@ import { oai_settings } from '../../../../../../openai.js';
 import { POPUP_TYPE, callGenericPopup } from '../../../../../../popup.js';
 import { SECRET_KEYS, secret_state } from '../../../../../../secrets.js';
 import { ConnectionManagerRequestService } from '../../../../../shared.js';
+import { fallbackOf, withFallback } from '../modelswitch/fallback.js';   // 6.2.9 검열되면 다른 모델로
 import {
     activateRules,
     checkReplyStart,
@@ -42,13 +43,13 @@ import { markRewrite } from '../../edit-origin.js';
 import { PERSONAL } from './defaults-personal.js';
 import { isEditingMessage } from './guards.js';
 import { createSpanFinder } from './spans.js';
-import { PROVIDERS, autoFetchModelList, canFetch, fetchModelList, isHttpUrl, listKey, missingNote, modelChoices, normalizeUrl, pickModel, resolveModel } from './providers.js';
+import { PROVIDERS, autoFetchModelList, canFetch, fetchModelList, isHttpUrl, listKey, missingNote, modelChoices, normalizeUrl, pickModel, resolveModel, providerKeyOf } from './providers.js';
 import { applyModelRequestRules, cached as cachedModels, fillSelect, onChange as onModelListChange } from '../../live-models.js';
 import { capturedMessages, capturedRequest, holdGeneration, regenerateReply, replaceReply, visibleText, watchRequests, withTimeout } from './reroll.js';
 import { applyUpgrades } from './upgrades.js';
 import { startQuickBan, setQuickBanEnabled } from './quick-ban.js';
 
-const VERSION = '2.0.7';
+const VERSION = '2.0.8';
 const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];
@@ -305,10 +306,12 @@ function renderPendingModels() {
 }
 
 // Same request shape as LLM Translator, sent through SillyTavern's ChatCompletionService.
-async function generateDirect(messages, signal) {
-    const provider = PROVIDERS[settings.provider];
-    if (!provider) throw new Error(`알 수 없는 공급자예요: ${settings.provider}`);
-    const model = resolveModel(settings, currentEndpoint());
+// 6.2.9 검열되면 다른 모델로: via = { provider(실리태번 source), model } — 그 공급자 · 모델로 (리버스 프록시는 본 공급자 것이라 안 씀)
+async function generateDirect(messages, signal, via = null) {
+    const key = via ? providerKeyOf(via.provider) : settings.provider;
+    const provider = PROVIDERS[key];
+    if (!provider) throw new Error(`알 수 없는 공급자예요: ${key}`);
+    const model = via ? String(via.model || '') : resolveModel(settings, currentEndpoint());
     if (!model) throw new Error('모델명이 비어 있어요. 커스텀 모델명을 입력해 주세요.');
 
     const request = {
@@ -320,7 +323,7 @@ async function generateDirect(messages, signal) {
         stream: false,
     };
 
-    if (settings.provider === 'custom') {
+    if (key === 'custom') {
         const endpoint = customEndpoint();
         if (!endpoint.url) throw new Error('커스텀 엔드포인트 주소가 없어요. 주소를 넣거나 본체의 Custom 연결을 설정해 주세요.');
         request.custom_url = endpoint.url;
@@ -329,24 +332,30 @@ async function generateDirect(messages, signal) {
             request.custom_exclude_body = substituteParams(oai_settings?.custom_exclude_body || '');
             request.custom_include_headers = substituteParams(oai_settings?.custom_include_headers || '');
         }
-    } else if (!settings.useReverseProxy && !provider.secrets.some(hasSecret)) {
+    } else if ((via || !settings.useReverseProxy) && !provider.secrets.some(hasSecret)) {
         throw new Error(`${provider.label} API 키가 SillyTavern에 저장되어 있지 않아요.`);
     }
 
-    if (settings.provider === 'vertexai') {
+    if (key === 'vertexai') {
         // Follow SillyTavern's Vertex settings; without a region the server pins us-central1.
         request.vertexai_auth_mode = oai_settings?.vertexai_auth_mode || 'full';
         request.vertexai_region = oai_settings?.vertexai_region || 'us-central1';
         request.vertexai_express_project_id = oai_settings?.vertexai_express_project_id || '';
     }
-    if (settings.useReverseProxy && settings.reverseProxyUrl) {
+    if (!via && settings.useReverseProxy && settings.reverseProxyUrl) {
         request.reverse_proxy = settings.reverseProxyUrl;
         request.proxy_password = settings.reverseProxyPassword;
     }
 
-    applyModelRequestRules(settings.provider, model, request);
+    applyModelRequestRules(key, model, request);
     const result = await ChatCompletionService.processRequest(request, {}, true, signal);
     return result?.content ?? '';
+}
+
+/** 본 모델 (직접 연결일 때만 — 같은 모델로는 다시 보내지 않게) */
+function mainModel() {
+    if (settings.connection !== 'direct') return null;
+    return { provider: PROVIDERS[settings.provider]?.source || settings.provider, model: resolveModel(settings, currentEndpoint()), url: settings.provider === 'custom' ? customEndpoint().url : '' };
 }
 
 async function generateWithProfile(messages, signal) {
@@ -388,6 +397,13 @@ async function generate(messages, signal) {
         request = generateWithProfile(messages, controller.signal);
     } else {
         request = generateRaw({ prompt: messages, trimNames: false });
+    }
+    // 6.2.9 검열되면 다른 모델로 (모델 전환 「다시 쓰기 (검열되면)」 — 켜고 고른 때만): 본 요청이 내용 차단으로 막히면 그 모델로 한 번 더.
+    //       시간 제한 · 멈춤은 두 요청을 합쳐서 (Scene Plan 다시 뽑기는 본문 모델의 요청 그대로라 여기에 없다)
+    const fallbackTo = fallbackOf(settings);
+    if (fallbackTo) {
+        const main = request;
+        request = withFallback(() => main, { target: fallbackTo, failed: mainModel(), send: target => generateDirect(messages, controller.signal, target) });
     }
     try {
         return await Promise.race([request, timeout]);

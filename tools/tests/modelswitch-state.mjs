@@ -100,12 +100,17 @@ function registerVoice(cfg) {
     });
     return calls;
 }
+// 6.2.9 검열되면 다른 모델로: 「<이름> (검열되면)」 대상은 처음엔 꺼 둔다 — 일괄 바꾸기 · 상태 칩은 켰을 때만 (index.js isOn · inState).
+//       이 시험의 「모든 대상」은 화면에서 처음 켜져 있는 대상 (꺼 둔 대상은 아래 따로 본다)
+const listNow = () => MS.listTargets().filter(t => !t.defaultOff);
 const byId = id => MS.listTargets().find(t => t.id === id);
 const preset = { source: 'vertexai', model: 'vertex-flash', url: '' };
+assert.deepEqual(MS.listTargets().filter(t => t.defaultOff).map(t => t.id).filter(id => id.endsWith('-fallback')).sort(),
+    MS.listTargets().filter(t => t.id.endsWith('-fallback') && !t.external).map(t => t.id).sort(), '(검열되면) 대상은 모두 처음엔 꺼 둠');
 // index.js applyNow 와 같은 길: 체크한 대상마다 바꾸기 전 한 줄을 남기고 apply → 실제로 바뀐 대상만 「↶ 직전」
 async function applyAll(d, only = () => true) {
     const before = [];
-    for (const t of MS.listTargets()) {
+    for (const t of listNow()) {
         if (!only(t) || !MS.supports(t, d.source)) continue;
         before.push([t, S.entryOf(t)]);
         await t.apply(d);
@@ -115,7 +120,7 @@ async function applyAll(d, only = () => true) {
 // apply · stateApply 부른 횟수 (지금과 같은 대상은 쓰지 않아야 한다)
 function spy() {
     const hits = {}, orig = new Map();
-    for (const t of MS.listTargets()) {
+    for (const t of listNow()) {
         const apply = t.apply;
         orig.set(t, apply);
         t.apply = function (...a) { hits[t.id] = (hits[t.id] || 0) + 1; return apply.apply(this, a); };
@@ -127,7 +132,7 @@ function spy() {
 await test('지금 상태: 대상마다 공급자 · 모델 · 주소 + 아는 확장은 연결 방식(mode) — read() 결과는 예전 그대로', () => {
     reset();
     registerVoice({ engine: 'provider', provider: 'deepseek', models: { deepseek: 'deepseek-pro' } });
-    const targets = MS.listTargets();
+    const targets = listNow();
     assert.deepEqual(targets.map(t => t.id), ['translator', 'prompt', 'memory', 'rewrite', 'assets', 'ext:vtts']);
     // read() 는 고치기 전 코드와 같은 값 (공용 함수로 옮긴 것뿐)
     assert.deepEqual(byId('translator').read(), { source: 'custom', model: 'relay-flash', url: RELAY });
@@ -156,36 +161,36 @@ await test('중계가 죽어 모두 공식으로 → 「↶ 직전」 한 번에
     reset();
     const voice = { engine: 'provider', provider: 'deepseek', models: { deepseek: 'deepseek-pro' } };
     registerVoice(voice);
-    const usualItems = S.captureState(MS.listTargets());
+    const usualItems = S.captureState(listNow());
     const last = await applyAll(preset);
     assert.deepEqual(Object.keys(last), ['translator', 'prompt', 'memory', 'rewrite', 'assets', 'ext:vtts'], '바뀐 대상 모두 「직전」에');
     assert.equal(last.translator.model, 'relay-flash');
-    assert.ok(!S.isCurrent(usualItems, MS.listTargets()));
-    for (const t of MS.listTargets()) assert.deepEqual(t.read(), { source: 'vertexai', model: 'vertex-flash', url: '' }, t.id);
+    assert.ok(!S.isCurrent(usualItems, listNow()));
+    for (const t of listNow()) assert.deepEqual(t.read(), { source: 'vertexai', model: 'vertex-flash', url: '' }, t.id);
 
-    const r = await S.runRestore(S.planRestore(last, MS.listTargets()));
-    assert.deepEqual(r.done, MS.listTargets().map(t => t.name));
+    const r = await S.runRestore(S.planRestore(last, listNow()));
+    assert.deepEqual(r.done, listNow().map(t => t.name));
     assert.deepEqual(r.done.slice(0, 2), ['번역', '한글화 패널']);
     assert.deepEqual([r.partial, r.failed, r.same], [[], [], 0]);
     assert.deepEqual(byId('translator').read(), { source: 'custom', model: 'relay-flash', url: RELAY });
     assert.equal(T.ext['llm-translator-custom'].provider_model_history.custom, 'relay-flash');
     assert.deepEqual(byId('rewrite').read(), { source: 'deepseek', model: 'deepseek-pro', url: '' });
-    assert.ok(S.isCurrent(usualItems, MS.listTargets()), '저장한 「평소」 칩이 다시 켜짐');
+    assert.ok(S.isCurrent(usualItems, listNow()), '저장한 「평소」 칩이 다시 켜짐');
     assert.deepEqual(r.touched.map(t => t.id), Object.keys(last));
     // 새 「직전」 = 방금 되돌리기 전 (공식) → 누르면 다시 공식, 또 누르면 평소
     assert.deepEqual(Object.values(r.before).map(e => e.model), Array(6).fill('vertex-flash'));
-    const back = await S.runRestore(S.planRestore(r.before, MS.listTargets()));
+    const back = await S.runRestore(S.planRestore(r.before, listNow()));
     assert.equal(back.done.length, 6);
     assert.deepEqual(byId('memory').read(), { source: 'vertexai', model: 'vertex-flash', url: '' });
-    const again = await S.runRestore(S.planRestore(back.before, MS.listTargets()));
+    const again = await S.runRestore(S.planRestore(back.before, listNow()));
     assert.equal(again.done.length, 6);
-    assert.ok(S.isCurrent(usualItems, MS.listTargets()));
+    assert.ok(S.isCurrent(usualItems, listNow()));
 });
 
 await test('지금과 같은 대상은 쓰지 않는다 · 체크한 대상만 바꿨으면 「직전」도 그 대상만', async () => {
     reset();
     registerVoice({ engine: 'provider', provider: 'deepseek', models: { deepseek: 'deepseek-pro' } });
-    const usualItems = S.captureState(MS.listTargets());
+    const usualItems = S.captureState(listNow());
     // 번역만 체크를 뺀 채(체크 반전 전) 공식으로 — 번역은 그대로 중계
     const last = await applyAll(preset, t => t.id !== 'translator');
     assert.ok(!('translator' in last));
@@ -194,7 +199,7 @@ await test('지금과 같은 대상은 쓰지 않는다 · 체크한 대상만 �
     assert.deepEqual(await applyAll(preset, t => t.id !== 'translator'), {});
     const s = spy();
     try {
-        const plan = S.planRestore(usualItems, MS.listTargets());
+        const plan = S.planRestore(usualItems, listNow());
         assert.deepEqual(plan.map(p => p.kind), ['same', 'write', 'write', 'write', 'write', 'write']);
         assert.deepEqual(plan.map(p => p.via || ''), ['', 'state', 'state', 'state', 'state', 'apply']);
         const r = await S.runRestore(plan);
@@ -209,14 +214,14 @@ await test('쓰는 순서: 모델 먼저 → 공급자 change → (따름이었�
     reset();
     T.ext['llm-translator-custom'].connection_mode = 'current';
     T.ext.ban_word_rewrite.connection = 'profile';
-    const saved = S.captureState(MS.listTargets());
+    const saved = S.captureState(listNow());
     assert.equal(saved.translator.mode, 'current');
     assert.equal(saved.translator.follow, '지금 연결');
     await applyAll(preset);
     assert.equal(T.ext['llm-translator-custom'].connection_mode, 'direct', '바꾸기는 예전처럼 직접 연결로');
     for (const sel of ['#llm_provider', '#llm_connection_mode', '#llm_custom_url', '#bwr_provider', '#bwr_connection', '#bwr_custom_url']) dom.add(sel);
     log = [];
-    const r = await S.runRestore(S.planRestore(saved, MS.listTargets()));
+    const r = await S.runRestore(S.planRestore(saved, listNow()));
     assert.ok(r.done.includes('번역') && r.done.includes('다시 쓰기'), JSON.stringify(r));
     // 번역: 연결 방식(직접) → 주소 → 공급자 change(그때 모델이 이미 그 공급자 칸에) → 연결 방식 원래대로(지금 연결)
     const tr = log.filter(x => x[1].startsWith('#llm_'));
@@ -238,7 +243,7 @@ await test('쓰는 순서: 모델 먼저 → 공급자 change → (따름이었�
     assert.equal(rwAt.models.deepseek, 'deepseek-pro');
     assert.equal(T.ext.ban_word_rewrite.connection, 'profile');
     assert.deepEqual(byId('rewrite').read(), { follow: '연결 프로필' });
-    assert.ok(S.isCurrent(saved, MS.listTargets()));
+    assert.ok(S.isCurrent(saved, listNow()));
 });
 
 await test('기억 · 한글화 패널 · 캐릭터 에셋: 연결 방식까지 원래대로 (프로필 특수 공급자는 연결 방식만) · 화면 다시 그리기 알림', async () => {
@@ -246,20 +251,20 @@ await test('기억 · 한글화 패널 · 캐릭터 에셋: 연결 방식까지 
     T.ext.memoria.apiMode = 'st';
     Object.assign(T.ext['prompt-panel'], { connectionMode: 'profile', provider: '__st_profile__', model: '' });
     T.ext.esetham.pick.connection = 'profile';
-    const saved = S.captureState(MS.listTargets());
+    const saved = S.captureState(listNow());
     assert.equal(saved.memory.follow, '연결 프로필');
     assert.equal(saved.prompt.mode, 'profile');
     await applyAll(preset);
     assert.equal(T.ext.memoria.apiMode, 'direct');
     events.length = 0;
-    const r = await S.runRestore(S.planRestore(saved, MS.listTargets()));
+    const r = await S.runRestore(S.planRestore(saved, listNow()));
     assert.deepEqual(r.failed, []);
     assert.equal(T.ext.memoria.apiMode, 'st');
     assert.equal(T.ext.memoria.direct.source, 'deepseek', '직접 연결 칸도 원래 값');
     assert.equal(T.ext['prompt-panel'].connectionMode, 'profile');
     assert.equal(T.ext.esetham.pick.connection, 'profile');
     assert.ok(events.includes('bl:prompt-connection-changed') && events.includes('bl:assets-pick-changed'));
-    assert.ok(S.isCurrent(saved, MS.listTargets()));
+    assert.ok(S.isCurrent(saved, listNow()));
 });
 
 // ---------- 4) 공급자 · 모델만 되돌리는 대상
@@ -313,14 +318,14 @@ await test('없어진 대상 · 못 쓰는 공급자 · 던지는 apply: 그 대
 
 await test('run(job) 으로 감싸서 쓴다 (index.js: 잠금을 풀고 쓰기) · 쓰는 동안만', async () => {
     reset();
-    const saved = S.captureState(MS.listTargets());
+    const saved = S.captureState(listNow());
     await applyAll(preset);
     let depth = 0, seen = 0;
     const wrap = async job => { depth++; try { return await job(); } finally { depth--; } };
     const t = byId('memory');
     const apply = t.apply;
     t.apply = async function (...a) { seen += depth; return apply.apply(this, a); };
-    try { await S.runRestore(S.planRestore(saved, MS.listTargets()), wrap); }
+    try { await S.runRestore(S.planRestore(saved, listNow()), wrap); }
     finally { t.apply = apply; }
     assert.equal(seen, 1);
     assert.equal(depth, 0);

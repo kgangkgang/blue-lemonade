@@ -235,8 +235,9 @@ await test('요청 규칙: 자기 사본은 없고 공용 applyModelRequestRules
     assert.equal('applyModelRequestRules' in RW, false, 'providers.js 의 사본은 지움');
     assert.ok(!/function applyModelRequestRules/.test(INDEX) && !/function applyModelRequestRules/.test(PROVIDERS_SRC));
     assert.match(INDEX, /import \{[^}]*\bapplyModelRequestRules\b[^}]*\} from '\.\.\/\.\.\/live-models\.js';/);
-    assert.match(INDEX, /applyModelRequestRules\(settings\.provider, model, request\);/);
-    assert.match(INDEX, /const model = resolveModel\(settings, currentEndpoint\(\)\);/);
+    assert.match(INDEX, /applyModelRequestRules\(key, model, request\);/);   // 6.2.9 검열되면 다른 모델로: key = 본 공급자 (다른 모델로 보낼 때만 그 공급자)
+    assert.match(INDEX, /const key = via \? providerKeyOf\(via\.provider\) : settings\.provider;/);
+    assert.match(INDEX, /const model = via \? String\(via\.model \|\| ''\) : resolveModel\(settings, currentEndpoint\(\)\);/);   // via 가 없으면 예전 그대로
     const body = () => ({ model: 'x', temperature: 1, max_tokens: 100, stream: false });
     assert.deepEqual(LM.applyModelRequestRules('openai', 'gpt-7', body()), { model: 'x', stream: false, max_completion_tokens: 100 });
     assert.deepEqual(LM.applyModelRequestRules('openai', 'o5-mini', body()), { model: 'x', stream: false, max_completion_tokens: 100 });

@@ -23,6 +23,7 @@ function controlsHelp(kind) {
 import { installLocalizationPage } from './localization-ui.js';
 import { forEachLimited } from './cache-loading.js';
 import { isTransientFailure, responseError } from './request-errors.js';
+import { fallbackOf, withFallback } from '../modelswitch/fallback.js';   // 6.2.9 검열되면 다른 모델로
 // Modified 2026-09-24: Blue Lemonade personal preview 1.1.0; based on supplied 개인개조+++ ZIP.
 import { installRegexPage } from './regex-ui.js';
 import { installGuide } from './guide.js';
@@ -653,8 +654,9 @@ function budgetFor(messages) {
 // payload (used by 재번역 to nudge sampling); it is ignored on the profile path,
 // where sampling belongs to the profile's own completion preset.
 // 한 번의 호출 = 한 번의 요청. 타임아웃·재시도는 아래 runCompletion이 감싼다.
-async function runCompletionOnce(messages, tweak) {
-    const c = cfg();
+// 6.2.9 검열되면 다른 모델로: via = { provider(실리태번 source), model } — 그 공급자 · 모델로 직접 연결 (지금 연결 · 프로필과 상관없이)
+async function runCompletionOnce(messages, tweak, via = null) {
+    const c = via ? { ...cfg(), connectionMode: 'direct', provider: Object.keys(PROVIDER_TO_SOURCE).find(key => PROVIDER_TO_SOURCE[key] === via.provider) || via.provider, model: String(via.model || '') } : cfg();
     if(c.connectionMode==='current') {
         return requestActive({cfg,context:getContext,messages,inFlight,hostModules:async()=>{
             const bundled=import.meta.url.includes('/src/addons/prompt/');
@@ -665,7 +667,7 @@ async function runCompletionOnce(messages, tweak) {
         }});
     }
 
-    if (usingStProfile()) {
+    if (!via && usingStProfile()) {
         const svc = getConnSvc();
         if (!svc?.sendRequest) throw new Error('이 SillyTavern 버전에서는 연결 프로필을 쓸 수 없습니다');
         const profileId = c.stProfileId || '';
@@ -773,7 +775,15 @@ function retryWaitMs(attempt, e) {
 
 // 모든 모델 호출의 단일 출입구. 성공 시 반환값은 예전과 같고, 일시적 실패일 때만
 // 사이에 대기를 두고 다시 보낸다.
+// 6.2.9 검열되면 다른 모델로 (모델 전환 「한글화 패널 (검열되면)」 — 켜고 고른 때만): 재시도까지 끝내 내용 차단이면 그 모델로 한 번 더
 async function runCompletion(messages, tweak) {
+    const c = cfg();
+    const main = c.connectionMode === 'direct' ? { provider: PROVIDER_TO_SOURCE[c.provider] || c.provider, model: c.model === '__custom__' ? (c.customModelName || '') : (c.model || '') } : null;
+    return withFallback(() => runCompletionRetry(messages, tweak), { target: fallbackOf(c), failed: main,
+        send: target => { if (stopReq) throw stopError(); return runCompletionOnce(messages, tweak, target); } });
+}
+
+async function runCompletionRetry(messages, tweak) {
     const tries = maxRetries() + 1;
     let lastErr = null;
     for (let attempt = 0; attempt < tries; attempt++) {
