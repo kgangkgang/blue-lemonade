@@ -37,6 +37,12 @@ import { runtimeEnabled } from './runtime.js';
 //       멈춘 엔진 · 듣는 언어로 아직 못 옮긴 줄 · 분석이 아직인 답장(곧 감정이 바뀜) · 번역문이 올 답장은 건너뜀 (누를 때 만든다 — 두 번 값을 치르지 않게).
 //       새로 누르거나 채팅 · 스와이프 · 지움 · 글이 바뀌면 그만 (아직 안 보낸 요청만 — 보낸 것은 캐시에). 토스트 없음, 기록만.
 //
+// 테마 6.2.8 「다음 한 줄 · 이어 듣기」 (pregen 'chain'): 'next' 와 똑같이 다음 한 줄을 미리 만들고, 누른 줄의 재생이 끝나면(player.onEnded —
+//       누른 큐가 저절로 끝났을 때만) 그다음 줄을 누른 것처럼 speakSegments 로 넣는다 → 그 줄이 시작되면 그다음 줄을 미리 … 답장의 마지막 줄까지
+//       (다음 메시지로 넘어가지 않는다 — 자동 읽기와의 경계). 속마음은 읽을 글 › 속마음이 '건너뛰기'가 아닐 때만 순서에 낀다 (chainThoughts).
+//       멈춤: 다른 줄을 누름(그 줄부터 다시) · 재생 바의 정지 · 채팅 바뀜 · 스와이프 · 지움 · 글이 바뀜 · 생성 시작(지금 줄까지) · 합성 실패(played=false, 기존 실패 표시만).
+//       유료 엔진 규칙 그대로: 미리 못 만든 줄도 이어 듣기는 된다 (그 줄은 그때 만들어 준비되는 대로). 토스트 · 새 글 없음.
+//
 // 밖으로: init() · onRendered(id, type) · onSwipedExisting(id) · pregenMessage(id, { type }) → Promise<기록>|null
 //         pregenNext(id, segs) → Promise<기록>|null · pregenCancel(pred) · pregenChanged(id) · protectRecent() · state() (시험용)
 
@@ -63,9 +69,13 @@ const halted = new Map();    // 엔진 id → { until, sig } 키·잔액 오류 
 let seq = 0;
 let wired = false;
 let next = null;             // 6.2.5 「다음 한 줄」 하나: { id, mes, hash, text(만드는 줄), ctrl, keys, made, skipped, state, promise }
+let chainAt = null;          // 6.2.8 「이어 듣기」: 지금 듣는 줄 { id, mes, hash, text, kind } — 그 큐가 끝나면 그다음 줄을 (chain 모드에서만 적힘)
 
 // 답장이 올 때 만드는 모드 — 'next' 는 여기서는 'off' (누를 때 pregenNext 가 한 줄만)
 const modeOf = (s) => (s && (s.pregen === 'dialogue' || s.pregen === 'all') ? s.pregen : 'off');
+// 6.2.8 누를 때 다음 한 줄만 만드는 모드 둘 ('next' · 'chain') — 이어 듣기(chain)가 속마음도 읽나 = 읽을 글 › 속마음이 '건너뛰기'가 아닐 때
+const nextMode = (s) => s?.pregen === 'next' || s?.pregen === 'chain';
+const chainThoughts = (s) => !!(s?.routes && typeof s.routes === 'object' && s.routes.thought && s.routes.thought !== 'skip');
 function hash(str) {
     let h = 2166136261;
     for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
@@ -354,6 +364,7 @@ export function onSwipedExisting(mesId) {
 export function pregenCancel(pred = () => true) {
     for (const rec of [...recs.values()]) if (pred(rec)) cancelRec(rec);
     if (next && pred(next)) cancelNext();
+    if (chainAt && pred(chainAt)) chainAt = null;   // 6.2.8 이어 듣기도 그만 (지금 줄은 끝까지, 그다음은 없음)
     protectRecent();
 }
 
@@ -370,26 +381,34 @@ function cancelNext() {
 function nextLive(job) {
     const s = settings();
     return !job.ctrl.signal.aborted && next === job && chat[job.id] === job.mes && textHash(job.mes) === job.hash
-        && s.pregen === 'next' && !!s.enabled && s.click_play !== false && runtimeEnabled();
+        && nextMode(s) && !!s.enabled && s.click_play !== false && runtimeEnabled();
 }
 const foldText = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
 /**
  * 누른 조각 다음의 대사 한 줄 (clickplay.tapSegments 목록 = 화면 순서, 대사만). 누른 대사는 같은 글 + 같은 번호(dialogueIndex)로 찾고
  * (같은 글이 여럿이면 번호 → 가까운 줄), 속마음을 눌렀으면 그 줄 뒤의 첫 대사. 못 찾거나 마지막 대사면 null
+ * 6.2.8 thoughts: 속마음도 순서에 낀다 (tapSegments 는 속마음을 뒤에 모아 두므로 줄 번호로 다시 세운다) — 누른 속마음은 같은 글(가까운 줄)로 찾아 그다음 조각
  */
-export function nextLine(list, tapped) {
-    const lines = (Array.isArray(list) ? list : []).filter(x => x && x.kind === 'dialogue' && x.text);
+export function nextLine(list, tapped, { thoughts = false } = {}) {
+    let lines = (Array.isArray(list) ? list : []).filter(x => x && x.text && (x.kind === 'dialogue' || (thoughts && x.kind === 'thought')));
+    if (thoughts) lines = lines.map((x, i) => ({ x, i })).sort((a, b) => ((Number(a.x.line) || 0) - (Number(b.x.line) || 0)) || (a.i - b.i)).map(o => o.x);
     if (!tapped || !tapped.text || !lines.length) return null;
+    const near = (a, b) => Math.abs((Number(a.line) || 0) - (Number(tapped.line) || 0)) - Math.abs((Number(b.line) || 0) - (Number(tapped.line) || 0));
     if (tapped.kind === 'thought') {
         // 줄 번호는 0부터 (text.js lineFinder · clickplay lineOf = 앞선 줄바꿈 수) — 첫 줄 속마음도, 같은 줄에 이어지는 대사도 잡는다
         const at = Number(tapped.line);
-        return Number.isFinite(at) && at >= 0 ? lines.find(x => Number(x.line) >= at) || null : null;
+        if (!(Number.isFinite(at) && at >= 0)) return null;
+        if (thoughts) {
+            const want = foldText(tapped.text);
+            const same = lines.filter(x => x.kind === 'thought' && foldText(x.text) === want);
+            if (same.length) return lines[lines.indexOf(same.length === 1 ? same[0] : [...same].sort(near)[0]) + 1] || null;
+        }
+        return lines.find(x => x.kind === 'dialogue' && Number(x.line) >= at) || null;
     }
     const want = foldText(tapped.text);
-    const same = lines.filter(x => foldText(x.text) === want);
+    const same = lines.filter(x => x.kind === 'dialogue' && foldText(x.text) === want);
     if (!same.length) return null;
     const idx = Number.isInteger(tapped.dialogueIndex) && tapped.dialogueIndex >= 0 ? tapped.dialogueIndex : -1;
-    const near = (a, b) => Math.abs((Number(a.line) || 0) - (Number(tapped.line) || 0)) - Math.abs((Number(b.line) || 0) - (Number(tapped.line) || 0));
     const hit = (idx >= 0 && same.find(x => x.dialogueIndex === idx)) || (same.length === 1 ? same[0] : [...same].sort(near)[0]);
     return lines[lines.indexOf(hit) + 1] || null;
 }
@@ -430,13 +449,16 @@ async function runNext(job, seg) {
 export function pregenNext(mesId, segs) {
     if (!runtimeEnabled()) return null;
     const s = settings();
-    if (s.pregen !== 'next' || !s.enabled || s.click_play === false) return null;
+    if (!nextMode(s) || !s.enabled || s.click_play === false) return null;
     const id = Number(mesId);
     const mes = Number.isInteger(id) && id >= 0 ? chat[id] : null;
     if (!mes || mes.is_system || !String(mes.mes || '').trim()) return null;
     const tapped = (Array.isArray(segs) ? segs : [segs]).filter(x => x && x.text);
     if (!tapped.length) return null;
     const last = tapped[tapped.length - 1];
+    // 6.2.8 이어 듣기: 지금 누른(또는 이어서 들어간) 줄을 적어 둔다 — 그 큐가 끝나면 chainNext 가 그다음 줄을 넣는다.
+    //       유료 · 분석 · 번역 때문에 다음 줄을 미리 못 만들어도 이어 듣기는 된다 (그 줄은 그때 만든다) → 건너뛰기 판단보다 앞에
+    chainAt = s.pregen === 'chain' ? { id, mes, hash: textHash(mes), text: foldText(last.text), kind: last.kind || 'dialogue' } : null;
     // 방금 누른 줄이 만드는 중인 바로 그 「다음 한 줄」이면 그만두지 않고 놓아 둔다 (누른 쪽이 같은 요청에 붙거나 캐시에서 받는다 — 효과음이 먼저 나는 등
     // 누른 줄의 요청이 늦게 붙어도 아직 안 보낸 요청이 취소되지 않게). 그 밖에는 앞의 것을 그만둔다
     if (next && next.id === id && next.text === foldText(last.text)) next = null;
@@ -444,7 +466,8 @@ export function pregenNext(mesId, segs) {
     if (!pregenPaid(s) && paidOnly(s)) { noteSkip(id, '다음 한 줄 · 유료 엔진'); return null; }
     if (!displayReady(mes) && expectsDisplay(mes)) return null;                       // 번역문이 아직 — 그 줄은 번역문으로 읽힌다
     if (player.analysisWanted(id, mes, s, { quiet: true })) return null;              // 분석 전 — 분석 뒤 감정 · 원어가 바뀌면 키가 달라진다
-    const seg = nextLine(tapSegments(mes, { thoughts: false }), last);
+    const thoughts = s.pregen === 'chain' && chainThoughts(s);   // 6.2.8 이어 듣기는 읽을 글 › 속마음을 따른다 ('next' 는 대사만)
+    const seg = nextLine(tapSegments(mes, { thoughts }), last, { thoughts });
     if (!seg) return null;
     const job = { id, mes, hash: textHash(mes), text: foldText(seg.text), ctrl: new AbortController(), keys: [], made: 0, skipped: 0, state: 'run', promise: null };
     next = job;
@@ -456,6 +479,26 @@ export function pregenNext(mesId, segs) {
             return job;
         });
     return job.promise;
+}
+/**
+ * 6.2.8 이어 듣기: 누른 줄의 큐가 저절로 끝났다 (player.onEnded) → chain 모드면 그다음 줄을 누른 것처럼 넣는다 (speakSegments → onTapped → 그다음 줄 미리).
+ * 답장의 마지막 줄이면 조용히 끝 (다음 메시지로 넘어가지 않는다). 합성에 실패한 줄(played=false) · 다른 줄의 큐 · 메시지나 글이 바뀜 · 모드가 바뀜 → 그만
+ */
+export function chainNext(mesId, segs, { played = false } = {}) {
+    const at = chainAt;
+    if (!at || !played || !runtimeEnabled()) return null;
+    const s = settings();
+    if (s.pregen !== 'chain' || !s.enabled || s.click_play === false) return null;
+    const id = Number(mesId);
+    const tapped = (Array.isArray(segs) ? segs : [segs]).filter(x => x && x.text);
+    const last = tapped[tapped.length - 1];
+    if (id !== at.id || !last || foldText(last.text) !== at.text) return null;                    // 다른 줄의 큐 (새로 누른 뒤 옛 큐가 끝난 경우 등)
+    if (chat[id] !== at.mes || textHash(at.mes) !== at.hash) { chainAt = null; return null; }     // 메시지 · 글이 바뀜
+    const thoughts = chainThoughts(s);
+    const seg = nextLine(tapSegments(at.mes, { thoughts }), last, { thoughts });
+    chainAt = null;
+    if (!seg) return null;                                                                       // 답장의 마지막 줄 — 조용히 끝
+    return player.speakSegments(id, [seg]) ? seg : null;
 }
 /** 글이 바뀜 (편집 · 갱신): 기록이 있을 때만 — 같은 메시지면 새 기록으로 다시 (바뀐 줄만 새로 만듦), 메시지가 바뀌었으면 그만 */
 export function pregenChanged(mesId) {
@@ -473,17 +516,19 @@ export function pregenChanged(mesId) {
 /** 시험 · 기록용 */
 export function state() {
     return { halted: [...halted.keys()].filter(isHalted), recs: [...recs.values()].map(r => ({ id: r.id, state: r.state, lines: r.lines, chars: r.chars, made: r.made, skipped: r.skipped, paid: r.paid, keys: [...r.keys] })),
-        next: next ? { id: next.id, state: next.state, made: next.made, skipped: next.skipped, keys: [...next.keys] } : null };
+        next: next ? { id: next.id, state: next.state, made: next.made, skipped: next.skipped, keys: [...next.keys] } : null,
+        chain: chainAt ? { id: chainAt.id, text: chainAt.text } : null };
 }
 /** 이벤트 (그만두기 · 다시). 시작은 index.js 가 onRendered · onSwipedExisting 으로 */
 export function init() {
     if (wired) return;
     wired = true;
     const on = (name, fn) => { if (name && typeof eventSource?.on === 'function') eventSource.on(name, fn); };
-    on(event_types.CHAT_CHANGED, () => { pregenCancel(); halted.clear(); try { cache.setProtected?.([]); } catch { /* 없음 */ } });
+    on(event_types.CHAT_CHANGED, () => { chainAt = null; pregenCancel(); halted.clear(); try { cache.setProtected?.([]); } catch { /* 없음 */ } });
     on(event_types.MESSAGE_SWIPED, (id) => pregenCancel(r => r.id === Number(id)));
     on(event_types.MESSAGE_DELETED, () => pregenCancel(r => chat[r.id] !== r.mes));
     on(event_types.GENERATION_STARTED, (type, _params, dryRun) => {
+        if (!dryRun) chainAt = null;   // 6.2.8 생성이 시작되면 이어 듣기는 지금 줄까지
         if (dryRun || (type !== 'swipe' && type !== 'regenerate')) return;
         const id = chat.length - 1;
         pregenCancel(r => r.id === id);
@@ -494,6 +539,7 @@ export function init() {
     const changed = (id) => {
         try { pregenChanged(id); } catch (e) { log('err', `미리 만들기 갱신 실패: ${errMsg(e)}`); }
         if (next && next.id === Number(id) && (chat[next.id] !== next.mes || textHash(chat[next.id]) !== next.hash)) cancelNext();   // 6.2.5 글이 바뀜 → 다음 한 줄은 그만
+        if (chainAt && chainAt.id === Number(id) && (chat[chainAt.id] !== chainAt.mes || textHash(chat[chainAt.id]) !== chainAt.hash)) chainAt = null;   // 6.2.8 글이 바뀜 → 이어 듣기도 그만
     };
     on(event_types.MESSAGE_EDITED, changed);
     on(event_types.MESSAGE_UPDATED, changed);
@@ -502,5 +548,9 @@ export function init() {
         player.onTapped((id, segs) => setTimeout(() => {
             try { pregenNext(id, segs); } catch (e) { log('err', `다음 한 줄 시작 실패: ${errMsg(e)}`); }
         }, 0));
+    }
+    // 6.2.8 「이어 듣기」: 누른 줄의 큐가 저절로 끝나면 그다음 줄을 누른 것처럼 (chain 모드에서만 — chainNext 가 판단)
+    if (typeof player.onEnded === 'function') {
+        player.onEnded((id, segs, info) => { try { chainNext(id, segs, info); } catch (e) { log('err', `이어 듣기 실패: ${errMsg(e)}`); } });
     }
 }

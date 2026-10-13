@@ -103,12 +103,13 @@ export const DEFAULTS = Object.freeze({
     translation_timeout: 90,       // 번역을 기다리는 최대 초
     wand_menu: true,               // 요술봉 메뉴에 TTS(설정 열기) · TTS 정지 두 줄 (끄면 뺌 — index.js 가 'tts:wand' 로 바로 반영)
     // 1.2.2
-    pregen: 'dialogue',            // 미리 만들기: 'off' | 'next' (누른 대사의 다음 한 줄만) | 'dialogue' (대사) | 'all' (대사+속마음) — 답장이 오면 누를 줄의 소리를 미리 (pregen.js)
+    pregen: 'dialogue',            // 미리 만들기: 'off' | 'next' (누른 대사의 다음 한 줄만) | 'chain' (다음 한 줄 · 이어 듣기 — 끝나면 다음 줄을 이어 재생, 테마 6.2.8) | 'dialogue' (대사) | 'all' (대사+속마음) — 답장이 오면 누를 줄의 소리를 미리 (pregen.js)
     // 5.6.4
     pregen_paid: false,            // 유료 엔진(paid.js — MiniMax 공식 서버 등)도 미리 만들기. 끄면 그 엔진 줄은 누를 때만 만든다 (크레딧 아끼기)
 });
 // 'next' (테마 6.2.5): 답장이 와도 만들지 않고, 대사를 누를 때 그 다음 대사 한 줄만 (pregen.js pregenNext)
-export const PREGEN_MODES = Object.freeze(['off', 'next', 'dialogue', 'all']);
+// 'chain' (테마 6.2.8): 'next' 와 같이 만들고, 누른 줄의 재생이 끝나면 다음 줄을 바로 이어 재생 — 그 답장의 끝까지 (pregen.js chainNext). 속마음은 읽을 글 › 속마음이 건너뛰기가 아닐 때만
+export const PREGEN_MODES = Object.freeze(['off', 'next', 'chain', 'dialogue', 'all']);
 export const HIGHLIGHT_STYLES = Object.freeze(['color', 'both', 'underline']);
 /** 1.4.4 듣는 언어 고르는 값 (listen.js LISTEN_LANGS 와 같게 — tools/tests/tts-listen.mjs 가 견줌) */
 export const LISTEN_LANGS = Object.freeze(['auto', 'ko', 'ja', 'en', 'zh']);

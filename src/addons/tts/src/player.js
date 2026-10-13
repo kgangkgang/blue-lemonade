@@ -145,14 +145,23 @@ function sortedJson(obj) {
 }
 /** 미리 만들기가 켜져 있나 ('dialogue' · 'all') — 켜져 있으면 자동 읽기도 줄마다, 감정 태그는 원문에서 */
 const pregenOn = (s) => s?.pregen === 'dialogue' || s?.pregen === 'all';
-/** 6.2.5 누른 대사를 줄마다 만들까 — 미리 만들기가 켜져 있거나 「다음 한 줄」 (미리 만든 다음 줄과 같은 키가 되게. 자동 읽기 · 내려받기는 pregenOn 그대로) */
-const tapByLine = (s) => pregenOn(s) || s?.pregen === 'next';
+/** 6.2.5 누른 대사를 줄마다 만들까 — 미리 만들기가 켜져 있거나 「다음 한 줄」· 6.2.8 「이어 듣기」 (미리 만든 다음 줄과 같은 키가 되게. 자동 읽기 · 내려받기는 pregenOn 그대로) */
+const tapByLine = (s) => pregenOn(s) || s?.pregen === 'next' || s?.pregen === 'chain';
 /** 6.2.5 누른 줄을 재생 줄에 넣은 뒤 부를 함수들 (pregen.js 「다음 한 줄」이 등록 — 서로 import 하지 않게) */
 const tapListeners = new Set();
 export function onTapped(fn) {
     if (typeof fn === 'function') tapListeners.add(fn);
     return () => tapListeners.delete(fn);
 }
+/** 6.2.8 「이어 듣기」: 누른 줄의 큐(speakSegments 가 넣은 것)가 끝까지 재생돼 저절로 끝났을 때 부를 함수들 (pregen.js 가 등록 — 서로 import 하지 않게).
+ *  fn(mesId, segs, { played }) — played = 마지막 대사 조각이 실제로 재생됐나 (합성 실패면 false → 거기서 멈춤).
+ *  정지 · 새로 누름 · 채팅 바뀜으로 끊긴 큐는 부르지 않는다 (stop 이 세대 gen 을 바꾼다). 자동 읽기 · 스트리밍 큐도 아니다 (tapRun 이 없다) */
+const endListeners = new Set();
+export function onEnded(fn) {
+    if (typeof fn === 'function') endListeners.add(fn);
+    return () => endListeners.delete(fn);
+}
+let tapRun = null;   // { gen, mesId, segs, played } — 지금 큐가 누른 줄의 것일 때 (speakSegments 가 넣고, stop · 스트리밍 덧붙임이 지운다)
 // 1.5.5 번호 → 메시지: 음수는 다른 확장이 넘긴 글(analysis.registerExternal), 그 밖엔 채팅
 // 1.5.7 효과음 넓이(sfx.level): 저장된 신호를 재생 때 거른다 — 바꿔도 분석을 다시 하거나 음성을 다시 만들지 않는다.
 //   few = 분명한 소리(strength 1)만 · normal = 1~2 · many = 전부 (3 = 불확실·비슷한 소리, 과해석일 수 있음). WAV 저장은 적어도 normal (사용자: 저장엔 효과음까지).
@@ -1650,6 +1659,7 @@ async function run() {
             }
             if (my !== gen) break;
             if (played && premade.delete(job.key)) addPreUsed(job.text.length);   // 미리 만든 소리를 들음 (소리마다 한 번)
+            if (tapRun && tapRun.gen === my && !job.sceneKind) tapRun.played = played;   // 6.2.8 이어 듣기: 누른 줄의 마지막 대사 조각이 재생됐나 (효과음 조각은 안 봄)
             if (nav !== null) { idx = nav; continue; }
             if (typeof job.done === 'function') { const d = job.done; job.done = null; d(played); }   // speakText 의 약속: 합성 실패면 false
             idx++;
@@ -1664,7 +1674,13 @@ async function run() {
         running = false;
         if (my === gen) {
             if (idx < queue.length) run();                        // 이론상 없음: 안전망
-            else finishAll();
+            else {
+                // 6.2.8 이어 듣기: 누른 줄의 큐가 저절로 끝났다 — 큐를 정리한 뒤 듣는 쪽(pregen.js)에 알린다 (그쪽이 다음 줄을 speakSegments 로 넣는다)
+                const ended = tapRun && tapRun.gen === my ? tapRun : null;
+                tapRun = null;
+                finishAll();
+                if (ended) for (const fn of endListeners) { try { fn(ended.mesId, ended.segs, { played: ended.played }); } catch { /* 듣는 쪽 오류는 재생과 상관없음 */ } }
+            }
         } else if (queue.length && idx < queue.length) {
             run();                                                // stop() 뒤 새 큐가 들어온 경우
         }
@@ -1696,7 +1712,7 @@ function cancelCurrent() {
 /** 큐에 넣고 시작. append 가 아니면 지금 것을 끊고 새로 */
 function enqueue(jobs, { append = false } = {}) {
     if (!jobs.length) return;
-    if (append && isPlaying()) { queue.push(...jobs); run(); return; }
+    if (append && isPlaying()) { tapRun = null; queue.push(...jobs); run(); return; }   // 6.2.8 스트리밍 조각이 덧붙은 큐는 누른 줄의 큐가 아니다 (이어 듣기 없음)
     stop({ keepStream: true });
     queue = jobs;
     idx = 0;
@@ -1711,6 +1727,7 @@ export function stopForAddon() {
 }
 export function stop({ keepStream = false } = {}) {
     gen++;
+    tapRun = null;   // 6.2.8 끊긴 큐는 이어 듣기 없음
     usedEffects.clear();
     for (const job of exportJobs) job.ctrl?.abort();
     cancelWaiting();                                              // 번역·분석 기다리기도 그만
@@ -2365,6 +2382,7 @@ export function speakSegments(mesId, segs) {
         jobs[0].tapT0 = t0;
         const cues = tapSfxJobs(mesId, mes, segs, s);
         enqueue([...cues.before, ...jobs, ...cues.after], { append: false });   // 1.5.4 누른 대사 앞 지문의 효과음을 먼저 · 1.5.6 마지막 대사 뒤 지문은 이어서
+        tapRun = mesId >= 0 ? { gen, mesId, segs, played: false } : null;   // 6.2.8 이어 듣기: 이 큐가 저절로 끝나면 onEnded (채팅 메시지만)
         // 6.2.5 「다음 한 줄」(pregen.js): 분석 · 번역 기다림 · 듣는 언어를 거친 뒤라 다음 줄도 같은 상태로 만든다. 채팅 메시지만 (다른 확장의 글은 음수 번호)
         if (mesId >= 0) for (const fn of tapListeners) { try { fn(mesId, segs); } catch { /* 듣는 쪽 오류는 재생과 상관없음 */ } }
         return true;

@@ -82,7 +82,7 @@ function pregenWarn(s) {
     const paid = paidEngines(s);
     if (!paid.length) return '';
     if (!pregenPaid(s)) return `${paid.join(' · ')} 같은 유료 엔진은 미리 만들지 않아요 — 누른 줄만 만들어 크레딧을 아껴요.`;
-    const next = s.pregen === 'next';   // 6.2.5 「다음 한 줄」: 누를 때 한 줄만
+    const next = s.pregen === 'next' || s.pregen === 'chain';   // 6.2.5 「다음 한 줄」· 6.2.8 「이어 듣기」: 누를 때 한 줄만
     let msg = next ? `누른 대사의 다음 한 줄만 미리 만들어요 — 그 줄을 안 들으면 그만큼 ${paid.join(' · ')} 크레딧이 더 들어요.`
         : `답장 · 스와이프마다 모든 줄을 미리 만들어 ${paid.join(' · ')} 크레딧이 빨리 닳아요.`;
     const u = s.usage || {};
@@ -93,9 +93,10 @@ function pregenWarn(s) {
 /** 미리 만들기 아래 한 줄: 쉬는 까닭 (대사 클릭 · 자동 읽기가 꺼짐 / 5.6.4 목소리가 모두 유료 엔진) */
 function pregenDesc(s) {
     if (s.pregen === 'off') return '';
-    if (s.pregen === 'next') { if (s.click_play === false) return '대사 클릭이 꺼져 쉬어요'; }   // 6.2.5 누를 때만 만드니 자동 읽기와 상관없음
+    if (s.pregen === 'next' || s.pregen === 'chain') { if (s.click_play === false) return '대사 클릭이 꺼져 쉬어요'; }   // 6.2.5 누를 때만 만드니 자동 읽기와 상관없음 (6.2.8 이어 듣기도)
     else if (s.click_play === false && !s.auto_play) return '대사 클릭·자동 읽기가 꺼져 쉬어요';
     if (!pregenPaid(s) && paidOnly(s)) return '유료 엔진이라 쉬어요';
+    if (s.pregen === 'chain') return '끝나면 다음 줄을 이어 읽어요';   // 6.2.8 한 문장
     return '';
 }
 /** 5.6.4 '유료 엔진도 미리 만들기' 스위치: 유료 엔진이 있고 미리 만들기가 켜져 있을 때만 */
@@ -190,7 +191,7 @@ const READ_CARDS = {
     when: ['fa-clock', '언제', [
         { key: 'auto_play', label: '새 답장 자동 읽기', type: 'toggle' },
         { key: 'narrate_user', label: '내 메시지도', type: 'toggle' },
-        { key: 'pregen', label: '미리 만들기', type: 'select', options: [{ value: 'off', label: '끔' }, { value: 'next', label: '다음 한 줄' }, { value: 'dialogue', label: '대사' }, { value: 'all', label: '대사+속마음' }], desc: pregenDesc, warn: pregenWarn },   // 6.2.5 다음 한 줄 = 누른 대사의 다음 줄만 (pregen.js pregenNext)
+        { key: 'pregen', label: '미리 만들기', type: 'select', options: [{ value: 'off', label: '끔' }, { value: 'next', label: '다음 한 줄' }, { value: 'chain', label: '다음 한 줄 · 이어 듣기' }, { value: 'dialogue', label: '대사' }, { value: 'all', label: '대사+속마음' }], desc: pregenDesc, warn: pregenWarn },   // 6.2.5 다음 한 줄 = 누른 대사의 다음 줄만 (pregen.js pregenNext)
         { key: 'pregen_paid', label: '유료 엔진도 미리 만들기', type: 'toggle', show: showPregenPaid },   // 5.6.4
         { key: 'wait_translation', label: '번역 기다리기', type: 'select', options: [{ value: 'auto', label: '자동' }, { value: 'on', label: '켬' }, { value: 'off', label: '끔' }], desc: () => translatorLabel() },
         { key: 'translation_timeout', label: '최대 대기 초', type: 'number', min: 5, max: 600, step: 5, default: 90, show: (s) => s.wait_translation !== 'off' },

@@ -9,7 +9,7 @@ const ext={};const probe={ext,insertInstructions,saves:0,subs:0,macro:null};
 probe.context={substituteParams(text){probe.subs++;if(probe.subFails)throw new Error('macro engine failed');let out=String(text).replace(/\{\{user\}\}|<USER>/gi,()=>'Alice').replace(/\{\{char\}\}/gi,()=>'Robin');if(probe.macro)out=out.replace(/\{\{direction\}\}/gi,()=>probe.macro());return out;}};globalThis.__directionTest=probe;globalThis.window={matchMedia:()=>({matches:false})};
 const source=(await fs.readFile(path.join(root,'src/addons/direction/index.js'),'utf8')).split('// ── 시작')[0].replace(/^import .*;$/gm,'');
 const prelude='const {ext:extension_settings,insertInstructions}=globalThis.__directionTest;const getContext=()=>globalThis.__directionTest.context;const saveSettingsDebounced=()=>{globalThis.__directionTest.saves++;};const getChatCompletionModel=()=>globalThis.__directionTest.model||"example-model";const oai_settings={};';
-const m=await import('data:text/javascript;base64,'+Buffer.from(prelude+source+'\nexport {initSettings,settings,injectDirection,trackGeneration,remember,savePreset,isSaved,alwaysActive,partnerColor,directionMacroText,KINDS,HISTORY_MAX,PRESET_MAX};').toString('base64'));
+const m=await import('data:text/javascript;base64,'+Buffer.from(prelude+source+'\nexport {initSettings,settings,injectDirection,trackGeneration,remember,savePreset,isSaved,alwaysActive,partnerColor,directionMacroText,KINDS,HISTORY_MAX,PRESET_MAX,addFavorite,removeFavorite,favoriteName,FAVORITE_MAX};').toString('base64'));
 ext['Direction-Manager-Lite']={extensionEnabled:false,direction:{enabled:true,content:'literal $& direction'},directionPrompt:'Custom {{direction}}',promptDepth:3};
 m.initSettings();assert.equal(m.settings().extensionEnabled,false);assert.equal(m.settings().direction.content,'literal $& direction');assert.equal(m.settings().promptDepth,3);
 m.settings().onColor='#123456';m.initSettings();assert.equal(m.settings().onColor,'#123456');
@@ -76,6 +76,28 @@ for(let i=t.presets.length;i<m.PRESET_MAX;i++)t.presets.push({id:'p'+i,kind:'dir
 // 그라데이션 짝 색: 형식 · 회색은 밝기만
 for(const c of ['#e18a24','#93c9ff','#ffe873','#5c5c5c','#d6d6d6','#000000','#ffffff'])assert.match(m.partnerColor(c),/^#[0-9a-f]{6}$/);
 assert.notEqual(m.partnerColor('#5c5c5c'),'#5c5c5c');assert.notEqual(m.partnerColor('#e18a24'),'#e18a24');
+// 1.2.1 즐겨찾기 칩: 정리(다듬기 · 중복 · 12개 상한 · 글자열 항목) · 넣기/지우기 · 이름 14자 · 매크로 그대로 · 기존 키 불변 · 화면/CSS 규칙
+assert.equal(m.FAVORITE_MAX,12);
+const before=structuredClone(m.settings());
+ext.jeongaejisi={...structuredClone(before),favorites:[{text:' 다음 장면으로 '},'문자열 항목',{text:'다음 장면으로'},{text:'   '},null,{text:'시간 건너뛰기'},...Array.from({length:14},(_,i)=>({text:`칩 ${i}`}))]};
+m.initSettings();const f=m.settings();
+assert.deepEqual(f.favorites.slice(0,3).map(x=>x.text),['다음 장면으로','문자열 항목','시간 건너뛰기'],'trimmed, string items accepted, duplicates and empties dropped');
+assert.equal(f.favorites.length,12,'capped at 12');
+assert.deepEqual([f.presets,f.history,f.direction,f.always],[before.presets,before.history,before.direction,before.always],'other keys untouched');
+f.favorites=[];f.direction.content='  다음 장면으로 ';
+assert.equal(m.addFavorite(f.direction.content),'added');assert.deepEqual(f.favorites,[{text:'다음 장면으로'}]);
+assert.equal(m.addFavorite('다음 장면으로'),'duplicate');assert.equal(m.addFavorite('   '),'empty');assert.equal(m.addFavorite(null),'empty');
+for(let i=0;i<11;i++)assert.equal(m.addFavorite(`지시 ${i}`),'added');assert.equal(m.addFavorite('하나 더'),'full');assert.equal(f.favorites.length,12);
+assert.equal(f.favorites.at(-1).text,'지시 10','appended in order');
+assert.equal(m.removeFavorite(0),true);assert.equal(f.favorites[0].text,'지시 0');assert.equal(m.removeFavorite(99),false);assert.equal(m.removeFavorite(-1),false);assert.equal(f.favorites.length,11);
+assert.equal(m.addFavorite('{{user}} 를 본다'),'added');assert.equal(f.favorites.at(-1).text,'{{user}} 를 본다','macros kept as written');
+assert.equal(m.favoriteName('가'.repeat(20)),'가'.repeat(14)+'…');assert.equal(m.favoriteName('가'.repeat(14)),'가'.repeat(14));assert.equal(m.favoriteName(' 짧은  글\n둘째 줄 '),'짧은 글 둘째 줄');
+const favIdx=await fs.readFile(path.join(root,'src/addons/direction/index.js'),'utf8'),favCss=await fs.readFile(path.join(root,'src/addons/direction/style.css'),'utf8');
+assert.match(favIdx,/<div class="jj-favs" hidden><\/div>/,'chip row starts hidden');assert.match(favIdx,/data-act="fav-add" aria-label="즐겨찾기에 넣기"/);
+assert.match(favIdx,/row\.hidden = !store\.favorites\.length \|\| !!listView \|\| page !== 'direction';/,'row hidden when empty, while listing, on the always page');
+assert.match(favIdx,/add\.hidden = store\.favorites\.length >= FAVORITE_MAX;/,'☆ hidden when full');
+assert.match(favCss,/#jj-popup \.jj-favs:empty \{ display: none; \}/);assert.match(favCss,/#jj-popup \[hidden\] \{ display: none !important; \}/,'[hidden] beats the display rules');
+assert.ok(!/title=/.test(favIdx.split('// ── 1.2.1 즐겨찾기 칩 줄')[1].split('// ── ')[0]||'x'),'no tooltips on favourite chips');
 const {knownConflicts}=await import(new URL('src/assist/core.js',url));
 for(const folder of ['story-direction','Direction-Manager','Direction-Manager-Lite','jeongaejisi']){const key='third-party/'+folder;assert.equal(knownConflicts([key],[],{direction:true}).length,1);assert.equal(knownConflicts([key],[key],{direction:true}).length,0);assert.equal(knownConflicts([key],[],{direction:false}).length,0);}
 const {DEFAULTS}=await import(new URL('src/settings.js',url));assert.equal(DEFAULTS.addons.direction,false);

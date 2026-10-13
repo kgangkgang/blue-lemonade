@@ -3,6 +3,7 @@
 // 대사를 누르면 그 답장의 바로 다음 대사 한 줄만 미리 만든다. 답장이 올 때는 아무것도 안 만든다. 기본값은 그대로(새 설치 끔).
 // 실리태번 모듈은 data: 스텁, pregen.js 가 부르는 재생기 · 분석 · 번역 · 캐시 · 클릭은 부른 것을 기록만 하는 스텁 (소리 · 네트워크 없음).
 // 타이머를 기다리는 곳은 상태를 폴링한다 (CI 에서 고정 대기는 흔들림).
+// 6.2.8 「다음 한 줄 · 이어 듣기」(chain): 누른 줄의 큐가 끝나면(onEnded) 다음 줄을 누른 것처럼 넣는다 — 4b) 절. 기존 네 모드의 동작은 그대로.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { register } from 'node:module';
@@ -17,7 +18,7 @@ const js = (src) => `data:text/javascript,${encodeURIComponent(src)}`;
 // ---------- 공유 상태 (스텁이 globalThis 로 읽음)
 const T = globalThis.__ttsNextTest = {
     chat: [], ext: {}, ctx: null, handlers: {},
-    clips: [], gate: null, fail: null, wantAnalysis: false, displayReady: true, expect: false, segs: [], segOpts: [], tapFns: [], cooled: [],
+    clips: [], gate: null, fail: null, wantAnalysis: false, displayReady: true, expect: false, segs: [], segOpts: [], tapFns: [], cooled: [], endFns: [], spoken: [],
     voiceFor: () => null,
     jobFor(seg) { const v = T.voiceFor(seg); return v ? { key: `k:${seg.text}`, text: seg.text, voice: v, provider: T.provider(v.provider), ...(seg.listenPending ? { listenPending: true } : {}) } : null; },
     lineJobs(id, mes, segs) { return { jobs: segs.map(seg => T.jobFor(seg)).filter(Boolean), held: 0, missing: false }; },
@@ -62,7 +63,9 @@ export const isInflight = () => false;
 export const wasStreamRead = () => false;
 export const coolDown = (id) => { T.cooled.push(id); };
 export const listenOn = () => false;
-export const onTapped = (fn) => { T.tapFns.push(fn); return () => {}; };`),
+export const onTapped = (fn) => { T.tapFns.push(fn); return () => {}; };
+export const onEnded = (fn) => { T.endFns.push(fn); return () => {}; };
+export const speakSegments = (id, segs) => { T.spoken.push({ id, segs }); for (const fn of T.tapFns) fn(id, segs); return true; };`),
     './analysis.js': js(G + 'export async function analyzeMessage() { return { segs: [] }; }'),
     './translation.js': js(G + `export const displayReady = () => T.displayReady;
 export const translationExpected = () => T.expect;
@@ -124,7 +127,8 @@ function reply() {
 }
 function setup({ mode = 'next', voices = [V.cp], providers = {}, pregenPaid = false, segs = LINES, voiceFor = () => V.cp } = {}) {
     Object.assign(s, { pregen: mode, enabled: true, click_play: true, auto_play: false, voices, providers, pregen_paid: pregenPaid });
-    T.segs = segs; T.voiceFor = voiceFor; T.clips.length = 0; T.gate = null; T.fail = null; T.wantAnalysis = false; T.displayReady = true; T.expect = false; T.cooled.length = 0;
+    T.segs = segs; T.voiceFor = voiceFor; T.clips.length = 0; T.gate = null; T.fail = null; T.wantAnalysis = false; T.displayReady = true; T.expect = false; T.cooled.length = 0; T.spoken.length = 0;
+    s.routes = { ...(s.routes || {}), thought: 'skip' };
     pregen.pregenCancel();
 }
 const keys = () => T.clips.map(c => c.key);
@@ -133,7 +137,7 @@ console.log('TTS 「다음 한 줄」 미리 만들기');
 
 // ---------- 1) 설정
 await test('settings: 고르는 값에 next (끔 다음) · 기존 기본값 그대로 (옛 설정 대사 · 새 설치 끔) · 저장된 next 는 그대로', () => {
-    assert.deepEqual([...S.PREGEN_MODES], ['off', 'next', 'dialogue', 'all']);
+    assert.deepEqual([...S.PREGEN_MODES], ['off', 'next', 'chain', 'dialogue', 'all']);
     assert.equal(S.DEFAULTS.pregen, 'dialogue', '옛 설정의 빈 값을 채우는 기본값은 그대로');
     const keep = T.ext.lemon_voice;
     try {
@@ -149,6 +153,9 @@ await test('설정 가져오기: next 를 받는다 (고르는 값 목록 안)',
     try {
         importSettings({ pregen: 'next' });
         assert.equal(s.pregen, 'next');
+        importSettings({ pregen: 'chain' });
+        assert.equal(s.pregen, 'chain', '6.2.8 이어 듣기도 받는다');
+        importSettings({ pregen: 'next' });
         importSettings({ pregen: 'everything' });
         assert.equal(s.pregen, 'next', '모르는 값은 버림');
     } finally { s.pregen = 'next'; }
@@ -345,12 +352,148 @@ await test('init 이 재생기의 onTapped 에 붙는다 — 누르면 다음 �
     assert.deepEqual(keys(), ['k:「셋」']);
 });
 
+// ---------- 4b) 6.2.8 「다음 한 줄 · 이어 듣기」 (chain)
+const ended = (id, seg, played = true) => T.endFns[0](id, [seg], { played });
+const spokenTexts = () => T.spoken.map(x => x.segs.map(s => s.text).join('+'));
+await test('chain: 첫 줄을 누르면 둘째 줄을 미리(next 와 같은 키) · 그 큐가 끝나면 둘째 줄을 누른 것처럼 넣고 셋째 줄을 미리 … 마지막 줄 뒤엔 조용히 끝', async () => {
+    setup({ mode: 'chain' });
+    assert.equal(T.endFns.length, 1, 'init 이 onEnded 에 한 번 등록');
+    const id = reply();
+    await pregen.pregenNext(id, [LINES[0]]);
+    assert.deepEqual(keys(), ['k:「둘」']);
+    assert.deepEqual(T.segOpts.at(-1), { thoughts: false }, '속마음 건너뛰기면 대사만');
+    assert.deepEqual(pregen.state().chain, { id, text: '「하나」' });
+    ended(id, LINES[0]);
+    assert.deepEqual(spokenTexts(), ['「둘」'], '둘째 줄을 누른 것처럼');
+    await until(() => T.clips.length === 2, '셋째 줄 미리');
+    assert.deepEqual(keys(), ['k:「둘」', 'k:「셋」']);
+    await until(() => pregen.state().chain?.text === '「둘」', '이어 듣는 줄이 옮겨 감');
+    ended(id, LINES[1]);
+    assert.deepEqual(spokenTexts(), ['「둘」', '「셋」']);
+    await until(() => pregen.state().chain?.text === '「셋」', '마지막 줄');
+    assert.equal(T.clips.length, 2, '마지막 줄 뒤엔 만들 것이 없다');
+    ended(id, LINES[2]);
+    assert.deepEqual(spokenTexts(), ['「둘」', '「셋」'], '답장 끝 — 다음 메시지로 넘어가지 않는다');
+    assert.equal(pregen.state().chain, null);
+});
+await test('chain 멈춤: 합성 실패(played false) · 다른 줄의 큐 · 글이 바뀜 · 생성 시작 · 채팅 바뀜 · 모드를 바꿈 → 이어 가지 않음', async () => {
+    const start = async () => { setup({ mode: 'chain' }); const id = reply(); await pregen.pregenNext(id, [LINES[0]]); T.spoken.length = 0; return id; };
+    let id = await start();
+    ended(id, LINES[0], false);
+    assert.deepEqual(spokenTexts(), [], '합성 실패');
+    assert.deepEqual(pregen.state().chain, { id, text: '「하나」' }, '줄은 그대로 (다시 누르면 이어짐)');
+    ended(id, LINES[1]);
+    assert.deepEqual(spokenTexts(), [], '다른 줄의 큐는 무시');
+    ended(id + 5, LINES[0]);
+    assert.deepEqual(spokenTexts(), [], '다른 메시지의 큐는 무시');
+    T.chat[id].mes += ' 고침';
+    ended(id, LINES[0]);
+    assert.deepEqual(spokenTexts(), [], '글이 바뀜');
+    assert.equal(pregen.state().chain, null);
+    id = await start();
+    for (const fn of T.handlers.generation_started) fn('normal', {}, true);
+    assert.deepEqual(pregen.state().chain, { id, text: '「하나」' }, 'dry run 은 그대로');
+    for (const fn of T.handlers.generation_started) fn('normal', {}, false);
+    assert.equal(pregen.state().chain, null, '생성이 시작되면 지금 줄까지');
+    ended(id, LINES[0]);
+    assert.deepEqual(spokenTexts(), []);
+    id = await start();
+    for (const fn of T.handlers.chat_changed) fn();
+    assert.equal(pregen.state().chain, null, '채팅 바뀜');
+    id = await start();
+    for (const fn of T.handlers.message_swiped) fn(id);
+    assert.equal(pregen.state().chain, null, '스와이프');
+    id = await start();
+    for (const fn of T.handlers.message_edited) { T.chat[id].mes += ' 편집'; fn(id); }
+    assert.equal(pregen.state().chain, null, '편집');
+    id = await start();
+    s.pregen = 'next';
+    ended(id, LINES[0]);
+    assert.deepEqual(spokenTexts(), [], '모드를 바꾸면 이어 가지 않음');
+    s.pregen = 'chain';
+    id = await start();
+    s.click_play = false;
+    ended(id, LINES[0]);
+    assert.deepEqual(spokenTexts(), [], '대사 클릭 꺼짐');
+});
+await test('chain: 다른 줄을 새로 누르면 그 줄부터 이어 간다 (옛 줄의 끝은 무시)', async () => {
+    setup({ mode: 'chain', segs: FOUR });
+    const id = reply();
+    await pregen.pregenNext(id, [FOUR[0]]);
+    await pregen.pregenNext(id, [FOUR[2]]);
+    assert.deepEqual(pregen.state().chain, { id, text: '「셋」' });
+    ended(id, FOUR[0]);
+    assert.deepEqual(spokenTexts(), [], '옛 줄');
+    ended(id, FOUR[2]);
+    assert.deepEqual(spokenTexts(), ['「넷」']);
+});
+await test('chain: 유료 엔진뿐이고 「유료 엔진도 미리 만들기」 끔 → 미리는 안 만들지만 이어 듣기는 된다 (그 줄은 누를 때처럼 만듦)', async () => {
+    setup({ mode: 'chain', voices: [V.mm], providers: { minimax: { ...OFFICIAL } }, voiceFor: () => V.mm });
+    const id = reply();
+    assert.equal(pregen.pregenNext(id, [LINES[0]]), null, '미리 만들기는 건너뜀');
+    assert.deepEqual(keys(), []);
+    assert.deepEqual(pregen.state().chain, { id, text: '「하나」' }, '그래도 이어 듣는 줄은 적힘');
+    ended(id, LINES[0]);
+    assert.deepEqual(spokenTexts(), ['「둘」'], '둘째 줄을 누른 것처럼 (재생기가 그때 만든다)');
+    assert.deepEqual(keys(), [], '여전히 미리는 없음');
+    setup({ mode: 'chain', voices: [V.mm, V.cp], providers: { minimax: { ...OFFICIAL } }, voiceFor: (seg) => (seg.text === '「둘」' ? V.mm : V.cp) });
+    const id2 = reply();
+    const job = await pregen.pregenNext(id2, [LINES[0]]);
+    assert.equal(job.skipped, 1, '유료 줄만 건너뜀');
+    ended(id2, LINES[0]);
+    assert.deepEqual(spokenTexts(), ['「둘」']);
+    await new Promise((r) => setTimeout(r, 0));   // 다음 시험 전에 다음 틱을 흘려 보낸다
+});
+const TH = { kind: 'thought', text: '생각', line: 2, dialogueIndex: -1, thoughtIndex: 0 };
+await test('chain: 속마음은 읽을 글 › 속마음이 건너뛰기가 아닐 때만 순서에 낀다 (줄 번호 순서 · 미리 만들기도 속마음까지)', async () => {
+    setup({ mode: 'chain', segs: [...LINES, TH] });   // tapSegments 처럼 속마음은 뒤에
+    let id = reply();
+    await pregen.pregenNext(id, [LINES[0]]);
+    assert.deepEqual(keys(), ['k:「둘」'], '건너뛰기면 대사만');
+    assert.deepEqual(T.segOpts.at(-1), { thoughts: false });
+    ended(id, LINES[0]);
+    assert.deepEqual(spokenTexts(), ['「둘」']);
+    await new Promise((r) => setTimeout(r, 0));   // 앞 단락이 건 다음 틱(둘째 줄 미리 만들기)을 먼저 흘려 보낸다
+    setup({ mode: 'chain', segs: [...LINES, TH] });
+    s.routes.thought = 'character';
+    id = reply();
+    await pregen.pregenNext(id, [LINES[0]]);
+    assert.deepEqual(keys(), ['k:생각'], '속마음이 다음 줄');
+    assert.deepEqual(T.segOpts.at(-1), { thoughts: true });
+    ended(id, LINES[0]);
+    assert.deepEqual(spokenTexts(), ['생각']);
+    await until(() => pregen.state().chain?.text === '생각', '속마음 차례');
+    assert.deepEqual(keys(), ['k:생각', 'k:「둘」'], '속마음 다음은 둘째 대사');
+    ended(id, TH);
+    assert.deepEqual(spokenTexts(), ['생각', '「둘」']);
+});
+await test('next 모드는 그대로: 큐가 끝나도 이어 가지 않는다 · 끔 · 대사 · 대사+속마음도', async () => {
+    for (const mode of ['next', 'off', 'dialogue', 'all']) {
+        setup({ mode });
+        const id = reply();
+        await pregen.pregenNext(id, [LINES[0]]);
+        assert.equal(pregen.state().chain, null, mode);
+        ended(id, LINES[0]);
+        assert.deepEqual(spokenTexts(), [], mode);
+    }
+});
+await test('nextLine: thoughts 옵션 — 기본은 예전 그대로, thoughts 면 속마음도 줄 순서에 끼고 누른 속마음은 글로 찾아 그다음 조각', () => {
+    const list = [D('「하나」', 0, 1), D('「둘」', 1, 3), { kind: 'thought', text: '생각', line: 2 }];
+    assert.equal(pregen.nextLine(list, D('「하나」', 0, 1)).text, '「둘」', '기본: 대사만');
+    assert.equal(pregen.nextLine(list, D('「하나」', 0, 1), { thoughts: true }).text, '생각');
+    assert.equal(pregen.nextLine(list, { kind: 'thought', text: '생각', line: 2 }, { thoughts: true }).text, '「둘」');
+    assert.equal(pregen.nextLine(list, { kind: 'thought', text: '생각', line: 2 }).text, '「둘」', '기본: 속마음 뒤의 첫 대사');
+    assert.equal(pregen.nextLine(list, { kind: 'thought', text: '다른 생각', line: 2 }, { thoughts: true }).text, '「둘」', '못 찾은 속마음은 그 줄 뒤의 첫 대사');
+    assert.equal(pregen.nextLine(list, D('「둘」', 1, 3), { thoughts: true }), null);
+    assert.equal(pregen.nextLine([{ kind: 'thought', text: '생각', line: 2 }], D('「하나」', 0, 1), { thoughts: true }), null, '대사가 없으면 null');
+});
+
 // ---------- 5) 설정 창
 await test('설정 창: 고르기 목록 끔 · 다음 한 줄 · 대사 · 대사+속마음, 「유료 엔진도 미리 만들기」 스위치는 다음 한 줄에도', () => {
     const t = ui._forTest || {};
     const fields = t.whenFields();
     const f = fields.find(x => x.key === 'pregen');
-    assert.deepEqual(f.options, [{ value: 'off', label: '끔' }, { value: 'next', label: '다음 한 줄' }, { value: 'dialogue', label: '대사' }, { value: 'all', label: '대사+속마음' }]);
+    assert.deepEqual(f.options, [{ value: 'off', label: '끔' }, { value: 'next', label: '다음 한 줄' }, { value: 'chain', label: '다음 한 줄 · 이어 듣기' }, { value: 'dialogue', label: '대사' }, { value: 'all', label: '대사+속마음' }]);
     assert.equal(f.title, undefined, '말풍선 없음');
     const st = (o) => ({ pregen: 'next', click_play: true, auto_play: false, voices: [V.mm], providers: { minimax: OFFICIAL }, ...o });
     assert.equal(t.showPregenPaid(st()), true);
@@ -380,13 +523,17 @@ await test('player.js: 누른 줄을 재생 줄에 넣은 뒤 듣는 쪽을 부�
     const call = body.indexOf('if (mesId >= 0) for (const fn of tapListeners) { try { fn(mesId, segs); } catch');
     assert.ok(enq > 0 && call > enq, '재생 줄에 넣은 뒤');
     assert.match(body, /finishJobs\(flat, s, \{ merge: !tapByLine\(s\) \}\)/);
-    assert.match(src, /const tapByLine = \(s\) => pregenOn\(s\) \|\| s\?\.pregen === 'next';/);
+    assert.match(src, /const tapByLine = \(s\) => pregenOn\(s\) \|\| s\?\.pregen === 'next' \|\| s\?\.pregen === 'chain';/);
+    assert.match(src, /export function onEnded\(fn\)/, '6.2.8 누른 큐의 끝 알림');
+    assert.ok(/const ended = tapRun && tapRun\.gen === my \? tapRun : null;\s*tapRun = null;\s*finishAll\(\);/.test(src), '큐를 정리한 뒤에 알린다');
+    assert.ok(/tapRun = mesId >= 0 \? \{ gen, mesId, segs, played: false \} : null;/.test(body), '누른 줄의 큐만');
     assert.match(src, /const pregenOn = \(s\) => s\?\.pregen === 'dialogue' \|\| s\?\.pregen === 'all';/, '자동 읽기 · 감정 태그 규칙은 예전 그대로');
     assert.match(src, /export function onTapped\(fn\)/);
     const pg = fs.readFileSync(path.join(root, 'pregen.js'), 'utf8');
     assert.match(pg, /player\.onTapped\(\(id, segs\) => setTimeout\(\(\) => \{/, '다음 틱에');
     assert.match(pg, /const modeOf = \(s\) => \(s && \(s\.pregen === 'dialogue' \|\| s\.pregen === 'all'\) \? s\.pregen : 'off'\);/, '답장 미리 만들기는 next 에서 끔');
     assert.ok(!/toastr|toast\(/.test(pg.slice(pg.indexOf('// ---------- 6.2.5'))), '토스트 없음');
+    assert.match(pg, /player\.onEnded\(\(id, segs, info\) => \{ try \{ chainNext\(id, segs, info\); \}/, '6.2.8 이어 듣기 등록');
 });
 
 console.log(`\ntts-pregen-next: ${pass} passed, ${fail} failed`);
