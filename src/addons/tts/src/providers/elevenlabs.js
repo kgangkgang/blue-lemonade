@@ -171,6 +171,7 @@ function elError(status, text) {
     const msg = safeMsg(typeof detail === 'string' ? detail : (detail?.message || (Array.isArray(detail) ? detail[0]?.msg : '') || ''), 100);
     const make = (m, retry = false) => {
         const e = new Error(m); e.code = code || status; e.retry = retry;
+        if (status === 429) e.status = 429;   // 6.4.2 v3 code 는 detail.status 글자일 수 있어 HTTP 429 도 (재생기 · 미리 만들기가 잦은 요청으로 알아보게)
         if (status === 401 || FATAL.has(code)) e.fatal = true;
         return e;
     };

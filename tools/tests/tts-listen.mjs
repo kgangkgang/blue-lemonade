@@ -543,5 +543,25 @@ await test('6.3.8 원문 짝이 정말 없는 줄(화면 글에만 있음): 조�
     assert.equal(D.playbackOriginalTitle(null), '지금 읽는 대사의 원문');
 });
 
+// ---------- 6.4.2 막대 「원문」 칩: 읽는 글이 그 줄의 원문과 같은 말이면 숨김 (따옴표 · 줄임표 · 문장부호 · 태그 · 순한 글만 다름)
+await test('6.4.2 원문 칩: 같은 말(따옴표 · 줄임표 · 문장부호 · 태그 · 발음 점 · 말끝 っ · 장음 겹침만 다름)이면 숨김, 옮긴 글 · 화면 글이면 보임', async () => {
+    const D = await mod('playback-details.js');
+    const job = (original, text, extra = {}) => ({ text, parts: [{ seg: { kind: 'dialogue', text: original, ...extra }, original: { kind: 'dialogue', text: original, ...extra }, text }] });
+    for (const [original, spoken] of [
+        ['「ははは、これは名誉の負傷だよ…」', 'ははは、これは名誉の負傷だよ…'],
+        ['ははは、これは名誉の負傷だよ...', 'ははは、これは名誉の負傷だよ……'],
+        ['行こう！', '[happy] 行こう。'],
+        ['えっ、本当？', 'え、本当？'],
+        ['すごーーい！', 'すごーい。'],
+        ['H.A.L.O 本部に行く。', 'HALO 本部に行く。'],
+        ['"Good morning," she said.', 'Good morning, she said'],
+    ]) assert.equal(D.playbackOriginal(job(original, spoken)), '', `${original} ↔ ${spoken}`);
+    assert.equal(D.playbackOriginal(job('좋은 아침.', 'おはよう。')), '좋은 아침.', '듣는 언어로 옮긴 글이면 원문 칩');
+    assert.equal(D.playbackOriginal(job('좋은 아침.', 'おはよう。', { fromDisplay: true })), '좋은 아침.', '화면 글을 옮겨 읽음');
+    assert.equal(D.playbackOriginalTitle(job('좋은 아침.', 'おはよう。', { fromDisplay: true })), '화면 글에서 옮겨 읽음');
+    assert.equal(D.playbackOriginal(job('今日はいい天気だ。', '今日は悪い天気だ。')), '今日はいい天気だ。', '글이 다르면 칩');
+    assert.equal(D.playbackOriginal({ sceneKind: 'sfx', parts: [] }), '');
+});
+
 console.log(`\ntts-listen: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

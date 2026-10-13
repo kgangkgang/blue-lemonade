@@ -6,6 +6,7 @@ import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentPar
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
 import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey, glossaryLinesFor, enforceGlossaryNames, dropDanglingOpenQuote } from './glossary-match.js';
+import { linesToFix, fixNoteFor, stillLeftover } from './leftover-fix.js';   // 6.4.2 다시 보낼 줄 = 남은 가나 + 원문에 있던 한자 덩이
 import { publishNames } from './names-bridge.js';   // 6.3.5 이름 다리 — 용어집의 이름 짝을 TTS · 다른 확장이 쓰게 전역으로 // [2.2.9] 용어집 찾기 (+ 가타카나 표기 흔들림) · [2.3.0] TTS 듣는 언어용 줄
 import { SPEECH_LANGS, speechPrompt, speechPayload, speechLine, parseSpeechBatch, unwrapQuotes, cutEchoLine } from './speech-translate.js'; // [2.3.0] TTS 듣는 언어
 import { requestCurrentConnection } from './current-connection.js';
@@ -1194,8 +1195,9 @@ function failMarkOf(error) {
 //        시간 초과는 서버가 이미 처리 중이라 두 번 청구될 수 있고, 키 오류는 다시 보내도 같다.
 const isTransientError = error => Boolean(error?.transient) && !error?.refused && !error?.format && !error?.cancelled && !error?.timeout;
 const CHUNK_TARGET = 1800; // 한 덩이 글자 수 목표. 너무 작으면 문맥 · 말투가 흔들리고 요청이 많아진다.
-const KANA_RE = /[ぁ-ゖァ-ヺ]/;
 const KANA_FIX_NOTE = '[The numbered lines below are from a Korean translation but still contain Japanese. Translate each fully into Korean, keep the numbering and everything else unchanged, one line per number.]\n';
+// 6.4.2 용어집이 한자로 둔 번역 표기 — 남은 한자로 다시 보내지 않는다. v3: 용어집을 꺼 둬도 뺀다 (사용자가 한자로 두기로 한 표기 — 끈 동안 그 표기를 한글로 바꾸려고 다시 사지 않게)
+const glossaryHanKeep = () => { try { return activeGlossaryEntries().map(entry => String(entry.dst ?? '')).filter(dst => /\p{Script=Han}/u.test(dst)); } catch { return []; } };
 
 /** 빈 줄로 나눈 문단을 CHUNK_TARGET 근처로 묶는다. 자리표시자만 있는 줄은 앞 덩이에 붙인다. */
 function splitForChunks(text) {
@@ -1215,7 +1217,7 @@ function splitForChunks(text) {
 
 /**
  * 한글이 주된 글에서 っ/ッ(끊김 표기)와 한글 사이의 ー(장음)만 지운다. 일본어가 주된 글(일본어로 번역한 경우)은 건드리지 않는다.
- * 남은 가나 낱말은 여기서 안 건드린다 — linesWithKana 가 골라 다시 번역한다.
+ * 남은 가나 낱말은 여기서 안 건드린다 — leftover-fix.js linesToFix 가 골라 다시 번역한다.
  */
 function tidyKana(text) {
     const s = String(text ?? '');
@@ -1227,17 +1229,7 @@ function tidyKana(text) {
         .replace(/([가-힣])ー+(?=[가-힣\s…!?.,」』"'”’)]|$)/gm, '$1');
 }
 
-/** 한글이 주된 글에서 가나가 남은 줄 [index, line]. 자리표시자 · 태그만 있는 줄은 뺀다. 최대 20줄. */
-function linesWithKana(text) {
-    const s = String(text ?? '');
-    const hangul = (s.match(/[가-힣]/g) || []).length, kana = (s.match(/[ぁ-ゖァ-ヺ]/g) || []).length;
-    if (!kana || hangul <= kana) return [];
-    const out = [];
-    s.split('\n').forEach((line, index) => {
-        if (KANA_RE.test(line) && line.trim().length <= 1200 && out.length < 20) out.push([index, line]);
-    });
-    return out;
-}
+// 6.4.2 남은 가나 줄 고르기(linesWithKana)는 leftover-fix.js linesToFix 로 옮김 — 같은 가나 규칙 + 원문에 있던 한자 덩이
 
 /** 다시 번역해 온 "N. …" 줄을 제자리에 넣는다. 번호가 안 맞거나 여전히 가나가 남은 줄은 그대로 둔다. */
 function applyKanaFix(text, kanaLines, fixed) {
@@ -1249,9 +1241,9 @@ function applyKanaFix(text, kanaLines, fixed) {
     }
     // 5.3.4: 번호가 1..N 으로 딱 맞을 때만 — 두 줄을 합치고 번호를 다시 매긴 답은 한 칸씩 엉뚱한 줄에 들어갔다
     if (map.size !== kanaLines.length || kanaLines.some((_, i) => !map.has(i + 1))) return String(text ?? '');
-    kanaLines.forEach(([index, line], i) => {
+    kanaLines.forEach(([index, line, runs], i) => {
         const candidate = map.get(i + 1);
-        if (candidate === undefined || !candidate.trim() || KANA_RE.test(candidate)) return;
+        if (candidate === undefined || !candidate.trim() || stillLeftover(candidate, runs, line)) return;   // 6.4.2 가나나 그 줄의 원문 한자 덩이가 그대로면 넣지 않는다 · v3 가나가 있던 줄은 6.4.1 처럼 가나만 본다
         // 자리표시자 · 태그 개수가 달라지면 넣지 않는다
         const marks = v => (v.match(/\[\[__VAR_\d+__\]\]|<[^>]+>/g) || []).join('|');
         if (marks(candidate) !== marks(line)) return;
@@ -1885,7 +1877,7 @@ async function translate(text, options = {}) {
                 cacheable: (body, out) => {
                     const marks = value => JSON.stringify(value.match(/\[\[__VAR_\d+__\]\]/g) || []);
                     // 5.3.4: 묶음 중 한 문단만 거절문으로 온 경우도 30일 캐시에 넣지 않는다
-                    return marks(body) === marks(out) && !linesWithKana(out).length && !looksLikeRefusal(body, out) && !noCache.has(body);
+                    return marks(body) === marks(out) && !linesToFix(out, body, glossaryHanKeep()).length && !looksLikeRefusal(body, out) && !noCache.has(body);   // 6.4.2 원문 한자가 남은 문단도 캐시에 안 넣는다
                 },
                 request: async bodies => {
                     const translated = [];
@@ -1977,10 +1969,10 @@ async function translate(text, options = {}) {
                         if (globalThis.toastr) toastr.warning(`${failed.refused ? '모델이 거절해서' : failed.format ? '답 형식이 맞지 않아' : '요청 오류로'} 문단 ${count}개를 원문으로 남겼어요 — ${String(failed.message).slice(0, 120)}`, 'LLM 번역', { timeOut: 9000 });
                     }
                     // Any remaining Japanese is repaired in one additional request for the whole batch.
-                    const joined = translated.map(text => text ?? '').join('\n\n'), lines = linesWithKana(joined);
+                    const joined = translated.map(text => text ?? '').join('\n\n'), lines = linesToFix(joined, bodies.join('\n\n'), glossaryHanKeep());   // 6.4.2 원문 한자 덩이가 남은 줄도
                     if (lines.length) {
                         try {
-                            const fixed = await request(buildFullPrompt(0, KANA_FIX_NOTE + lines.map(([, line], i) => `${i + 1}. ${line}`).join('\n')));
+                            const fixed = await request(buildFullPrompt(0, fixNoteFor(lines, KANA_FIX_NOTE) + lines.map(([, line], i) => `${i + 1}. ${line}`).join('\n')));
                             const corrected = applyKanaFix(joined, lines, fixed).split('\n');
                             let offset = 0;
                             for (let i = 0; i < translated.length; i++) {
@@ -2010,11 +2002,11 @@ async function translate(text, options = {}) {
         translatedText = tidyKana(translatedText);
         // 6.4.0 용어집 이름 지키기 · 줄 끝에 홀로 남은 여는 「 (모델이 프롬프트를 어겨도) — 정방향만
         if (!isInputTranslation) translatedText = tidyGlossaryOutput(isRetranslation ? compareText : text, translatedText);
-        const kanaLines = paragraphParts ? [] : linesWithKana(translatedText);
+        const kanaLines = paragraphParts ? [] : linesToFix(translatedText, isInputTranslation ? '' : (isRetranslation ? compareText : text), glossaryHanKeep());   // 6.4.2 원문 한자 덩이도 (입력 번역은 예전처럼 가나만)
         if (kanaLines.length) {
             progress({ stage: 'kana' });
             try {
-                const fixed = await request(buildFullPrompt(0, KANA_FIX_NOTE + kanaLines.map(([, line], i) => `${i + 1}. ${line}`).join('\n')));
+                const fixed = await request(buildFullPrompt(0, fixNoteFor(kanaLines, KANA_FIX_NOTE) + kanaLines.map(([, line], i) => `${i + 1}. ${line}`).join('\n')));
                 translatedText = applyKanaFix(translatedText, kanaLines, fixed);
             } catch (kanaError) {
                 if (kanaError?.cancelled) throw kanaError;

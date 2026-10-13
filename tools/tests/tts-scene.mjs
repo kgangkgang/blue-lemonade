@@ -621,6 +621,336 @@ await test('1.7.0 voice-language reading: after a rewrite only the changed line 
     assert.deepEqual(T.plays.map(p=>[p.text,p.emotion]),[['最初です。','happy'],['やあ。','sad']]);
     assert.equal(T.requests.filter(r=>r.text==='最初です。').length,1,'the unchanged line is not synthesised again');
 });
+// ---------- 6.3.9 효과음 겹침: 대사 소리가 준비된 때 같이 시작 · 이어 듣기는 효과음 꼬리를 기다리지 않음 (v2 — 독립 검증 결함 5개 포함)
+const fxSeed=async(text,sfx,{pregen='off'}={})=>{await reset();const s=S.settings();Object.assign(s.sfx,{enabled:true,auto:true,tap:true,mode:'overlay',level:'normal'});s.pregen=pregen;
+    s.routes={dialogue:'character',narration:'skip',action:'skip',thought:'skip',user_dialogue:'user'};
+    s.analysis={...s.analysis,enabled:true,engine:'compat',base:'https://mock.invalid/v1',key:'k',model:'m',emotion:true,translate:false,speaker:true,when:'auto',context_chars:1200,temperature:0.2};
+    const mes={mes:text,name:'Mina',is_user:false,is_system:false,swipe_id:0,extra:{}};T.ctx.chat.length=0;T.ctx.chat.push(mes);
+    const p=A.buildPrompt(mes,{langs:[],emotion:true,translate:false,context_chars:1200,speaker:true,extras:s.extras!=='off',sfx:true});
+    mes.extra.lemon_voice={analysis:{hash:A.hash(mes.mes),profile:A.hash(JSON.stringify([1,'compat','','m',true,false,0.2,p.system,p.user])),langs:[],model:'m',at:1,segs:p.lines.map(l=>({i:l.i,h:l.h,emotion:'calm',text:{}})),sfx}};
+    assert.ok(A.getAnalysis(0));return mes;};
+const fxTap=(text,i)=>({kind:'dialogue',text,raw:text,color:null,tags:[],speakerHint:null,line:0,dialogueIndex:i});
+const wrapVoice=fn=>{const orig=Registry.PROVIDERS.minimax.synth;Registry.PROVIDERS.minimax.synth=o=>fn(orig,o);return ()=>{Registry.PROVIDERS.minimax.synth=orig;};};
+const chainTo=(from,next)=>P.onEnded((id,segs,info)=>{if(info.played&&segs[0]?.text===from)P.speakSegments(0,[fxTap(...next)]);});
+await test('6.3.9 overlay cue before a line waits for that line\'s voice: nothing sounds while it is synthesised, then both start together (tap and message read)',async()=>{
+    for(const how of ['tap','read']){
+        await fxSeed('문이 열렸다. "안녕." 그가 앉았다. "앉아."',[{after:0,id:'door_open',repeats:1,durationMs:0,strength:2}]);
+        const g=gate();const restore=wrapVoice(async(orig,o)=>{g.started=true;await g.promise;return orig(o);});
+        try{
+            if(how==='tap')assert.ok(P.speakSegments(0,[fxTap('안녕.',0)]));else assert.ok(P.speakMessage(0,{force:true}));
+            await until(()=>g.started);await sleep(80);
+            assert.deepEqual(T.plays.map(x=>x.kind),[],how+': the cue does not sound alone while the line is synthesised');
+            g.release();await until(()=>T.plays.some(x=>x.kind==='voice'));
+            const fx=T.plays.find(x=>x.kind==='sfx'),v=T.plays.find(x=>x.kind==='voice');
+            assert.ok(fx&&fx.sfxId==='door_open',how+': the cue still plays');assert.ok(Math.abs(v.at-fx.at)<60,how+': started together ('+Math.round(v.at-fx.at)+' ms)');
+            await idle();
+        }finally{restore();g.release();}
+    }
+    // 뒤에 대사가 없는 효과음(마지막 대사 뒤 지문)은 예전처럼 제자리 — 누른 마지막 대사 뒤 차례로
+    await fxSeed('"안녕." 그가 앉았다. "앉아." 휴대폰이 두 번 진동했다.',[{after:2,id:'daily_phone_vibration',repeats:1,durationMs:0}]);
+    assert.ok(P.speakSegments(0,[fxTap('앉아.',1)]));await until(()=>T.plays.some(x=>x.kind==='voice'));await idle();
+    assert.deepEqual(T.plays.map(x=>x.kind==='sfx'?x.sfxId:'voice'),['voice','daily_phone_vibration']);
+});
+await test('6.3.9 chain listening does not hold the next line for an overlay tail; the tail sounds to its end under the next line (even after that queue ends), stop cuts it',async()=>{
+    await fxSeed('"안녕." 그가 한동안 키보드를 두드렸다. "앉아." "셋."',[{after:0,id:'daily_keyboard',repeats:1,durationMs:400,strength:2}],{pregen:'chain'});
+    const off=chainTo('안녕.',['앉아.',1]);
+    try{
+        assert.ok(P.speakSegments(0,[fxTap('안녕.',0)]));await until(()=>T.plays.filter(x=>x.kind==='voice').length>=2);
+        const fx=T.plays.find(x=>x.kind==='sfx'),e1=T.ends.find(x=>x.kind==='voice'),v2=T.plays.filter(x=>x.kind==='voice')[1];
+        assert.ok(fx&&fx.loop,'timed overlay cue');assert.ok(v2.at-e1.at<150,'next line did not wait for the 400 ms tail ('+Math.round(v2.at-e1.at)+' ms)');
+        assert.equal(fx.node.paused,false,'the tail is still sounding under the next line');
+        await until(()=>T.ends.filter(x=>x.kind==='voice').length>=2);await sleep(15);
+        assert.equal(fx.node.paused,false,'the carried tail outlives the next line\'s queue (verification 1)');
+        assert.ok(P.isPlaying(),'the bar stays while the carried tail sounds');
+        await until(()=>fx.node.paused,1500);assert.ok(fx.pausedAt-fx.at>=350,'the tail ran its full length ('+Math.round(fx.pausedAt-fx.at)+' ms)');
+        await idle();
+        T.plays.length=T.ends.length=0;assert.ok(P.speakSegments(0,[fxTap('안녕.',0)]));await until(()=>T.plays.filter(x=>x.kind==='voice').length>=2);
+        const fx2=T.plays.find(x=>x.kind==='sfx');P.stop();await sleep(5);assert.equal(fx2.node.paused,true,'stop cuts the carried tail');off();
+        // 이어 듣기가 아니면 예전처럼 큐 끝에서 꼬리를 기다린다
+        S.settings().pregen='off';T.plays.length=T.ends.length=0;
+        assert.ok(P.speakSegments(0,[fxTap('안녕.',0)]));await until(()=>T.ends.some(x=>x.kind==='voice'));const end=T.ends.find(x=>x.kind==='voice').at;
+        await idle();assert.ok(performance.now()-end>=300,'without chain the queue still lets the tail finish');
+    }finally{off();}
+    // 반복음(지속 소리 · 길이 없음)은 이어 듣기로 넘겨도 그 줄과 끝나고, 겹침 꼬리는 다음 줄 밑으로
+    await fxSeed('"안녕." 그가 한동안 키보드를 두드렸다. "앉아." "셋."',[{after:0,id:'daily_keyboard',repeats:1,durationMs:0,strength:2},{after:0,id:'door_open',repeats:1,durationMs:400}],{pregen:'chain'});
+    const off2=chainTo('안녕.',['앉아.',1]);
+    try{
+        assert.ok(P.speakSegments(0,[fxTap('안녕.',0)]));await until(()=>T.plays.filter(x=>x.kind==='voice').length>=2);
+        const loop=T.plays.find(x=>x.kind==='sfx'&&x.sfxId==='daily_keyboard'),door=T.plays.find(x=>x.kind==='sfx'&&x.sfxId==='door_open'),v2=T.plays.filter(x=>x.kind==='voice')[1];
+        assert.ok(loop&&loop.loop&&loop.pausedAt!=null&&loop.pausedAt<=v2.at+1,'the loop ended with the tapped line');
+        assert.ok(door&&door.node.paused===false,'the overlay tail went on under the next line');
+    }finally{off2();}
+});
+await test('6.3.9 verification 2 · 5: a loop still loading at the hand-off does not start later and loop forever; the last line of a reply keeps its tail with the bar',async()=>{
+    // 2) 반복음 파일만 대사 · 0.2 초보다 늦게 옴 (겹침 꼬리는 바로) · 이어 듣기의 답장 마지막 줄(다음 줄 없음) — 늦게 시작해 끝없이 도는 반복음이 없어야
+    await fxSeed('"안녕." 그가 한동안 키보드를 두드렸다. "앉아."',[{after:1,id:'daily_keyboard',repeats:1,durationMs:0,strength:2},{after:1,id:'door_open',repeats:1,durationMs:300}],{pregen:'chain'});
+    const none=P.onEnded(()=>{});
+    const kb=gate(),realFetch=globalThis.fetch;
+    globalThis.fetch=async(url,init)=>{if(/daily_keyboard\.mp3$/.test(String(url))){kb.started=true;await kb.promise;}return realFetch(url,init);};
+    try{
+        assert.ok(P.speakSegments(0,[fxTap('앉아.',1)]));await until(()=>T.ends.some(x=>x.kind==='voice'),2000);
+        await sleep(30);kb.release();await idle();await sleep(60);
+        const loops=T.plays.filter(x=>x.kind==='sfx'&&x.sfxId==='daily_keyboard');
+        assert.ok(loops.every(x=>x.node.paused),'no loop left sounding after the reply ended ('+loops.length+' started)');
+        assert.equal(P.isPlaying(),false);
+    }finally{none();globalThis.fetch=realFetch;kb.release();}
+    // 5) 이어 듣기인데 다음 줄이 없음(답장의 마지막 줄): 꼬리가 끝날 때까지 막대 · 재생 상태가 남고 ■ 로 끈다
+    await fxSeed('"안녕." 그가 한동안 키보드를 두드렸다. "앉아."',[{after:1,id:'daily_keyboard',repeats:1,durationMs:600,strength:2}],{pregen:'chain'});
+    const noop=P.onEnded(()=>{});   // 이어 듣기가 켜져 있지만 다음 줄을 넣지 않음 (chainNext 가 null)
+    try{
+        assert.ok(P.speakSegments(0,[fxTap('앉아.',1)]));await until(()=>T.ends.some(x=>x.kind==='voice'));await sleep(15);
+        const tail=T.plays.find(x=>x.kind==='sfx');
+        assert.ok(tail&&tail.node.paused===false&&P.isPlaying(),'the tail of the last line keeps the bar');
+        P.stop();await sleep(5);assert.equal(tail.node.paused,true,'■ cuts it');
+    }finally{noop();}
+});
+await test('6.3.9 verification 3 · 4: a failed line still plays its cues (also the last line); pause while the cue is loading holds the line',async()=>{
+    // 3) 합성 실패 — 한 줄 탭(큐의 마지막 줄)에서도 효과음은 난다
+    await fxSeed('문이 열렸다. "안녕." 그가 앉았다. "앉아."',[{after:0,id:'door_open',repeats:1,durationMs:0,strength:2}]);
+    let restore=wrapVoice(async()=>{throw Object.assign(new Error('mock 500'),{status:500});});
+    try{
+        assert.ok(P.speakSegments(0,[fxTap('안녕.',0)]));await idle();await sleep(20);
+        assert.deepEqual(T.plays.map(x=>x.kind==='sfx'?x.sfxId:'voice'),['door_open'],'the cue still plays when the line fails');
+    }finally{restore();}
+    // 4) 효과음을 불러오는 동안(≤0.2 초) 누른 일시정지: 대사는 다시 재생을 누를 때까지 안 난다
+    await fxSeed('문이 열렸다. "안녕." 그가 앉았다. "앉아."',[{after:0,id:'door_open',repeats:1,durationMs:0,strength:2}]);
+    assert.ok(P.speakSegments(0,[fxTap('안녕.',0)]));await idle();T.plays.length=T.ends.length=0;   // 대사는 캐시에
+    T.sfxGate=gate();
+    try{
+        assert.ok(P.speakSegments(0,[fxTap('안녕.',0)]));await until(()=>T.sfxGate.started);await sleep(40);P.pause();await sleep(260);
+        assert.equal(T.plays.filter(x=>x.kind==='voice').length,0,'paused before the voice started — it waits');
+        T.sfxGate.release();P.resume();await until(()=>T.plays.some(x=>x.kind==='voice'));await idle();
+    }finally{T.sfxGate=null;}
+});
+await test('6.3.9 v2.1 a cue right before a thought line waits for the next dialogue (no effects under thoughts, like tap play)',async()=>{
+    await fxSeed('"안녕." 그가 의자를 끌었다. <true_thoughts character="Mina">조용하네.</true_thoughts> "앉아."',[{after:1,id:'daily_chair_slide',repeats:1,durationMs:0,strength:2}]);
+    S.settings().routes.thought='character';
+    const rows=P.scriptRows(0);
+    assert.deepEqual(rows.map(r=>r.kind==='sfx'?'sfx':r.text),['안녕.','sfx','조용하네.','앉아.'],'the cue row sits right before the thought row');
+    assert.ok(P.speakMessage(0,{force:true}));await until(()=>T.plays.filter(x=>x.kind==='voice').length>=3,2000);await idle();
+    const order=T.plays.map(x=>x.kind==='sfx'?x.sfxId:x.text);
+    assert.deepEqual(order,['안녕.','조용하네.','daily_chair_slide','앉아.'],'the cue starts with the dialogue after the thought: '+JSON.stringify(order));
+    const fx=T.plays.find(x=>x.kind==='sfx'),v=T.plays.find(x=>x.text==='앉아.'),th=T.ends.find(x=>x.text==='조용하네.');
+    assert.ok(Math.abs(v.at-fx.at)<60&&fx.at>=th.at-1,'with the dialogue, after the thought ended');
+});
+await test('6.3.9 v2.2 a line skipped for a dead engine still plays the cue deferred to it (like a failed line)',async()=>{
+    await fxSeed('"안녕." 그가 문을 세게 닫았다. "앉아."',[{after:1,id:'door_open',repeats:1,durationMs:0,strength:2}]);
+    const restore=wrapVoice(async()=>{throw Object.assign(new Error('mock 401'),{status:401});});
+    try{
+        assert.ok(P.speakMessage(0,{force:true}));await idle();await sleep(20);
+        assert.deepEqual(T.plays.map(x=>x.kind==='sfx'?x.sfxId:'voice'),['door_open'],'the cue before the dead line still plays');
+    }finally{restore();}
+});
+await test('6.3.9 v2.2 lines appended while the last line\'s tail is held (on_new queue) play after it and nothing gets stuck',async()=>{
+    await fxSeed('"안녕." 그가 문을 열었다. "앉아."',[{after:1,id:'door_open',repeats:1,durationMs:400}],{pregen:'chain'});
+    const s=S.settings();s.auto_play=true;s.on_new='queue';
+    const off=P.onEnded(()=>{});   // 이어 듣기는 켜졌지만 다음 줄 없음
+    const f0=globalThis.fetch;   // 덧붙는 첫 줄 「안녕.」을 꼬리보다 길게 — 꼬리가 끝날 때 그 줄이 아직 나는 중
+    globalThis.fetch=async(u,i)=>{if(String(u)==='https://mock.invalid/voice'){const input=JSON.parse(i.body);if(/안녕/.test(input.text)){T.requests.push(input);return {ok:true,blob:async()=>new Blob([JSON.stringify({kind:'voice',...input,seconds:.9,ms:900})],{type:'audio/wav'})};}}return f0(u,i);};
+    try{
+        assert.ok(P.speakSegments(0,[fxTap('앉아.',1)]));await until(()=>T.ends.some(x=>x.kind==='voice'));await sleep(20);
+        assert.ok(P.isPlaying(),'the tail holds the bar');
+        P.speakMessage(0);   // 같은 메시지 자동 읽기가 꼬리 중에 들어옴 → 덧붙음
+        await until(()=>T.plays.some(x=>x.kind==='voice'&&/안녕/.test(x.text)),3000);await sleep(550);   // 꼬리(0.4 초)는 끝났고 덧붙은 「안녕.」(0.9 초)은 아직 나는 중
+        const n0=T.plays.length;assert.ok(P.speakSegments(0,[fxTap('앉아.',1)]));
+        await until(()=>T.plays.slice(n0).some(x=>x.kind==='voice'),2000);await idle();   // 멈춰 버리면 여기서 시간 초과
+        P.stop();await sleep(10);const n1=T.plays.length;assert.ok(P.speakSegments(0,[fxTap('안녕.',0)]));
+        await until(()=>T.plays.slice(n1).some(x=>x.kind==='voice'),2000);await idle();
+    }finally{off();globalThis.fetch=f0;}
+});
+await test('6.3.9 code: deferral only for overlay/loop cues before a voice of the same message; enqueue keeps the tail only for the chained line',async()=>{
+    const src=await (await import('node:fs/promises')).readFile(path.join(root,'player.js'),'utf8');
+    assert.match(src,/const deferFx = \(job\) => job\?\.sceneKind === 'sfx' && job\.sceneMode !== 'sequence' && !job\.scenePreview;/);
+    assert.match(src,/return !j\.sceneKind && j\.mesId === ref\.mesId && !!j\.sceneManual === !!ref\.sceneManual;/);
+    assert.match(src,/const carry = !!fxCarry && jobs\.every\(j => j\.mesId === fxCarry\.mesId\);/);
+    assert.match(src,/if \(keepFx\) sceneAudio\.stopLoops\(\);\s*else \{ sceneAudio\.stopAll\(\); sceneTails\.clear\(\); sceneStarts\.clear\(\); \}/);
+    assert.equal(typeof Sfx.createSfxController().stopLoops,'function');
+});
+await test('6.4.1 auto reading keeps a thought out of a merged request (same voice and emotion as the next lines); tapping it reuses that take',async()=>{
+    await reset();const s=S.settings();s.pregen='off';s.thought_emotion='auto';
+    s.routes={dialogue:'character',narration:'skip',action:'skip',thought:'character',user_dialogue:'user'};
+    T.ctx.chat[0].mes='<true_thoughts character="Mina">조용하네.</true_thoughts> 그녀가 고개를 들었다. "앉아." "천천히 해."';
+    assert.ok(P.speakMessage(0,{force:true}));await until(()=>T.plays.filter(x=>x.kind==='voice').length>=2,2000);await idle();
+    const texts=T.requests.map(r=>r.text);
+    assert.deepEqual(texts,['조용하네.','앉아.','천천히 해.'],'6.4.2 every line its own request: '+JSON.stringify(texts));
+    assert.ok(P.speakSegments(0,[{kind:'thought',text:'조용하네.',raw:'조용하네.',color:null,tags:[],speakerHint:'Mina',line:0,dialogueIndex:-1,thoughtIndex:0}]));
+    await until(()=>T.plays.filter(x=>x.kind==='voice').length>=3,2000);await idle();
+    assert.equal(T.requests.length,3,'the tap plays the cached take of the auto reading (same key)');
+    assert.equal(T.plays.filter(x=>x.kind==='voice').at(-1).text,'조용하네.');
+});
+await test('6.4.1 effect-cue reading (script rows) keeps the listening language for a kanji-only line, so tapping it reuses that take',async()=>{
+    await fxSeed('"大丈夫。" 彼が椅子を引いた。 "座れ。"',[{after:1,id:'daily_chair_slide',repeats:1,durationMs:0,strength:2}]);
+    S.settings().listen_lang='ja';
+    assert.ok(P.speakMessage(0,{force:true}));await until(()=>T.plays.filter(x=>x.kind==='voice').length>=2,2000);await idle();
+    const first=T.requests.filter(r=>r.text==='大丈夫。');
+    assert.equal(first.length,1);assert.equal(first[0].lang,'ja','kanji-only line in a Japanese reply: not zh');
+    assert.equal(T.requests.find(r=>r.text==='座れ。').lang,'ja');
+    const before=T.requests.length;
+    assert.ok(P.speakSegments(0,[fxTap('大丈夫。',0)]));await until(()=>T.plays.filter(x=>x.kind==='voice').length>=3,2000);await idle();
+    assert.equal(T.requests.length,before,'tap = same key as the script row');
+    S.settings().listen_lang='auto';
+});
+await test('6.4.2 auto reading without effect cues reads line by line (pregen off · next · chain), so a tap or a WAV save never buys a line again',async()=>{
+    for (const pregen of ['off','next','chain']) {
+        await reset();const s=S.settings();s.pregen=pregen;s.gap_ms=250;
+        T.ctx.chat[0].mes='"하나." 그녀가 웃었다. "둘." "셋."';
+        assert.ok(P.speakMessage(0,{force:true}));await until(()=>T.plays.filter(x=>x.kind==='voice').length>=3,2000);await idle();
+        assert.deepEqual(T.requests.map(r=>r.text),['하나.','둘.','셋.'],pregen+': '+JSON.stringify(T.requests.map(r=>r.text)));
+        for (const [text,i] of [['하나.',0],['둘.',1],['셋.',2]]) {
+            const plays=T.plays.length;
+            assert.ok(P.speakSegments(0,[{kind:'dialogue',text,raw:text,color:null,tags:[],speakerHint:null,line:0,dialogueIndex:i}]));
+            await until(()=>T.plays.length>plays,2000);await idle();
+        }
+        assert.equal(T.requests.length,3,pregen+': taps reuse the auto reading');
+        assert.equal(await P.downloadMessage(0),true);
+        assert.equal(T.requests.length,3,pregen+': the WAV save reuses them too');
+    }
+});
+await test('6.4.2 v2 an engine that keeps answering 429: one line spends its retries, the rest of that engine is skipped while it cools (one notice), then it reads again',async()=>{
+    await reset();const s=S.settings();s.pregen='off';s.gap_ms=0;T.ctx.chat[0].mes='"하나." "둘." "셋." "넷." "다섯." "여섯."';
+    let attempts=0;const orig=Registry.PROVIDERS.minimax.synth;
+    Registry.PROVIDERS.minimax.synth=async()=>{attempts++;const e=new Error('rate limited');e.status=429;e.code=429;e.retry=true;throw e;};
+    try{
+        const t0=Date.now();assert.ok(P.speakMessage(0,{force:true}));await sleep(50);await until(()=>!P.isPlaying(),20000);
+        assert.equal(attempts,3,'one line x 3 tries, the other five are not sent');assert.ok(Date.now()-t0<9000,'no 33 s of silent retries');
+        assert.equal(T.plays.filter(x=>x.kind==='voice').length,0);
+        assert.equal(T.warnings.filter(w=>/잠시 막고/.test(w.msg)).length,1,'one notice: '+JSON.stringify(T.warnings));
+        assert.ok(P.speakSegments(0,[{kind:'dialogue',text:'둘.',raw:'둘.',color:null,tags:[],speakerHint:null,line:0,dialogueIndex:1}]));await sleep(50);await until(()=>!P.isPlaying(),5000);
+        assert.equal(attempts,3,'a tap while it cools is skipped too');assert.equal(T.warnings.filter(w=>/잠시 막고/.test(w.msg)).length,1);
+    } finally { Registry.PROVIDERS.minimax.synth=orig; }
+    P._forTest.playCool.clear();   // as if the cool-down time had passed
+    assert.ok(P.speakMessage(0,{force:true}));await until(()=>T.requests.length>=6&&!P.isPlaying(),3000);await idle();
+    assert.deepEqual(T.requests.map(r=>r.text),['하나.','둘.','셋.','넷.','다섯.','여섯.'],'after the cool-down it reads normally');
+});
+await test('6.4.2 v3 vendor-shaped 429s start the cool-down, cached lines still play while it cools, prefetch 0 reads the next same-voice line ahead (one request at a time), the log keeps the vendor reason',async()=>{
+    const realFetch=globalThis.fetch,mmSynth=Registry.PROVIDERS.minimax.synth,elSynth=Registry.PROVIDERS.elevenlabs.synth;
+    const Http=await mod('providers/_http.js'),Log=await mod('log.js');
+    const ElReal=(await import(pathToFileURL(path.join(root,'providers/elevenlabs.js')).href+'?v3real')).default.synth;
+    const vendorVoice=(engine,id,name)=>({uid:engine+':'+id,provider:engine,voiceId:id,name,aliases:[],params:{},mix:[],lang:''});
+    const notices=()=>T.warnings.filter(w=>/잠시 막고/.test(w.msg)).length;   // 같은 알림은 toastOnce 가 쉬는 시간(15초) 안에 한 번만 — 앞 시험이 띄웠으면 0
+    const cools=()=>Log.entries().filter(e=>/요청 막힘/.test(e.msg)).length;   // 쉬는 시간이 켜진 횟수 (기록 한 줄씩)
+    try{
+        // 1) the real ElevenLabs and Gemini code with the bodies those services send on 429
+        for (const [engine,host,body] of [
+            ['elevenlabs','https://api.elevenlabs.io/',{detail:{status:'too_many_concurrent_requests',message:'Too many concurrent requests.'}}],
+            ['gemini','https://generativelanguage.googleapis.com/',{error:{code:429,status:'RESOURCE_EXHAUSTED',message:'Resource has been exhausted.'}}],
+        ]) {
+            await reset();const s=S.settings();s.pregen='off';s.prefetch=0;s.gap_ms=0;
+            s.voices=[vendorVoice(engine,'mina','Mina')];s.char_map={Mina:engine+':mina'};s.default_voice=engine+':mina';s.prefer_provider=engine;
+            s.providers={...s.providers,gemini:{key:'mock-key',model:'gemini-2.5-flash-preview-tts'}};
+            T.ctx.chat[0].mes='"하나." "둘." "셋." "넷."';
+            if(engine==='elevenlabs')Registry.PROVIDERS.elevenlabs.synth=ElReal;
+            let attempts=0;
+            globalThis.fetch=async(u,i)=>{if(String(u).startsWith(host)){attempts++;return {ok:false,status:429,headers:new Map(),text:async()=>JSON.stringify(body),json:async()=>body};}return realFetch(u,i);};
+            const c0=cools();const t0=Date.now();assert.ok(P.speakMessage(0,{force:true}));await sleep(50);await until(()=>!P.isPlaying(),20000);
+            assert.equal(attempts,3,engine+': one line spends its retries, the other three are not sent');
+            assert.ok(Date.now()-t0<9000,engine+': no long silent retries');
+            assert.equal(cools()-c0,1,engine+': the cool-down starts once');
+            assert.ok(notices()<=1&&!T.warnings.some(w=>w.kind==='error'),engine+': at most one notice, no error toast per line '+JSON.stringify(T.warnings));
+            globalThis.fetch=realFetch;Registry.PROVIDERS.elevenlabs.synth=elSynth;P._forTest.playCool.clear();
+        }
+        // 2) while an engine cools, lines already in the cache or memory still play; only lines that need a new request are skipped
+        await reset();{const s=S.settings();s.pregen='off';s.prefetch=0;s.gap_ms=0;}
+        T.ctx.chat[0].mes='"하나." "둘."';
+        T.ctx.chat.push({mes:'"셋." "넷."',name:'Mina',is_user:false,is_system:false,swipe_id:0,extra:{}});
+        assert.ok(P.speakMessage(0,{force:true}));await until(()=>T.plays.filter(x=>x.kind==='voice').length>=2,3000);await idle();
+        let sent=0;
+        Registry.PROVIDERS.minimax.synth=async()=>{sent++;throw Object.assign(new Error('rate limited'),{status:429,code:429,retry:false});};
+        const c1=cools();assert.ok(P.speakMessage(1,{force:true}));await sleep(50);await until(()=>!P.isPlaying(),5000);
+        assert.equal(sent,1,'the second line of that message is not sent while the engine cools');
+        let n=T.plays.length;
+        assert.ok(P.speakSegments(0,[{kind:'dialogue',text:'하나.',raw:'하나.',color:null,tags:[],speakerHint:null,line:0,dialogueIndex:0}]));await sleep(50);await until(()=>!P.isPlaying(),3000);
+        assert.deepEqual(T.plays.slice(n).filter(x=>x.kind==='voice').map(x=>x.text),['하나.'],'a tapped cached line plays');
+        n=T.plays.length;
+        assert.ok(P.speakMessage(0,{force:true}));await sleep(50);await until(()=>!P.isPlaying(),3000);
+        assert.deepEqual(T.plays.slice(n).filter(x=>x.kind==='voice').map(x=>x.text),['하나.','둘.'],'a cached message plays');
+        n=T.plays.length;
+        assert.ok(P.speakSegments(1,[{kind:'dialogue',text:'넷.',raw:'넷.',color:null,tags:[],speakerHint:null,line:0,dialogueIndex:1}]));await sleep(50);await until(()=>!P.isPlaying(),3000);
+        assert.equal(T.plays.length,n,'an uncached tap is skipped');assert.equal(sent,1,'and not sent');assert.equal(cools()-c1,1,'the skipped lines do not start the cool-down again');assert.ok(notices()<=1,'no second notice');
+        Registry.PROVIDERS.minimax.synth=mmSynth;P._forTest.playCool.clear();T.ctx.chat.length=1;
+        // 3) prefetch 0: the next line of the same voice and emotion is read ahead once the current line's sound is ready (not at the same time), a thought is not
+        await reset();{const s=S.settings();s.pregen='off';s.prefetch=0;s.gap_ms=250;s.thought_emotion='auto';s.routes={...s.routes,thought:'character'};}
+        T.ctx.chat[0].mes='"하나." "둘." <true_thoughts character="Mina">조용하네.</true_thoughts>';
+        const started={},done={};
+        globalThis.fetch=async(u,i)=>{if(u!=='https://mock.invalid/voice')return realFetch(u,i);const input=JSON.parse(i.body);T.requests.push(input);started[input.text]=performance.now();
+            if(input.text==='하나.')await sleep(200);done[input.text]=performance.now();return {ok:true,blob:async()=>blob({kind:'voice',...input,seconds:.4,ms:400})};};
+        assert.ok(P.speakMessage(0,{force:true}));await sleep(50);await until(()=>T.ends.filter(x=>x.kind==='voice').length>=3,6000);await idle();
+        const endOf=t=>T.ends.find(x=>x.kind==='voice'&&x.text===t).at;
+        assert.deepEqual(T.requests.map(r=>r.text),['하나.','둘.','조용하네.'],'each line once');
+        assert.ok(started['둘.']>=done['하나.'],'read ahead only after the current line\'s request finished (one at a time)');
+        assert.ok(started['둘.']<endOf('하나.'),'the next same-voice line is made while the current one plays');
+        assert.ok(started['조용하네.']>=endOf('둘.'),'a thought is not read ahead with prefetch 0');
+        globalThis.fetch=realFetch;
+        // 4) the rate branch keeps the vendor reason in the log (a 429 that waiting will not fix, like insufficient_quota)
+        await reset();{const s=S.settings();s.pregen='off';s.prefetch=0;}
+        T.ctx.chat[0].mes='"하나."';
+        Registry.PROVIDERS.minimax.synth=async()=>{const e=Http.koError(429,{error:{message:'You exceeded your current quota.',code:'insufficient_quota'}});e.retry=false;throw e;};
+        assert.ok(P.speakMessage(0,{force:true}));await sleep(50);await until(()=>!P.isPlaying(),5000);
+        assert.ok(Log.entries().some(e=>/요청 막힘/.test(e.msg)&&/exceeded your current quota/.test(e.msg)),'vendor reason in the log: '+JSON.stringify(Log.entries().slice(0,3)));
+    } finally {
+        globalThis.fetch=realFetch;Registry.PROVIDERS.minimax.synth=mmSynth;Registry.PROVIDERS.elevenlabs.synth=elSynth;P._forTest.playCool.clear();T.ctx.chat.length=1;
+    }
+});
+await test('6.4.2 v3.1 a failed read-ahead is not sent again by the play loop, a download during the cool-down says why, the rate notice keeps the vendor reason',async()=>{
+    const realFetch=globalThis.fetch,mmSynth=Registry.PROVIDERS.minimax.synth;
+    const Http=await mod('providers/_http.js');
+    const longVoice=(ms)=>async(u,i)=>{if(u!=='https://mock.invalid/voice')return realFetch(u,i);const input=JSON.parse(i.body);T.requests.push(input);return {ok:true,blob:async()=>blob({kind:'voice',...input,seconds:ms/1000,ms:input.text==='하나.'?ms:25})};};
+    try{
+        // 1) prefetch 0: the read-ahead of the next same-voice line fails (bad key) — the play loop uses that error instead of sending the line again
+        await reset();{const s=S.settings();s.pregen='off';s.prefetch=0;s.gap_ms=0;}
+        T.ctx.chat[0].mes='"하나." "둘." "셋."';
+        globalThis.fetch=longVoice(300);
+        const sent=[];
+        Registry.PROVIDERS.minimax.synth=async(o)=>{sent.push(o.text);if(o.text==='둘.')throw Object.assign(new Error('API 키가 맞지 않아요'),{status:401,code:401});return mmSynth(o);};
+        assert.ok(P.speakMessage(0,{force:true}));await sleep(50);await until(()=>!P.isPlaying(),5000);
+        assert.equal(sent.filter(t=>t==='둘.').length,1,'the failed read-ahead line is sent once: '+JSON.stringify(sent));
+        Registry.PROVIDERS.minimax.synth=mmSynth;globalThis.fetch=realFetch;P._forTest.deadEngines().length&&P.stop();
+        // 2) a download while the engine cools: cached lines are used, a line that needs a new request ends with a notice (not silently)
+        await reset();{const s=S.settings();s.pregen='off';s.prefetch=0;s.gap_ms=0;}
+        T.ctx.chat[0].mes='"하나." "둘."';
+        T.ctx.chat.push({mes:'"셋." "넷."',name:'Mina',is_user:false,is_system:false,swipe_id:0,extra:{}});
+        assert.ok(P.speakMessage(0,{force:true}));await until(()=>T.plays.filter(x=>x.kind==='voice').length>=2,3000);await idle();
+        const before=T.requests.length;
+        P._forTest.playCool.set('minimax',Date.now()+60000);
+        assert.equal(await P.downloadMessage(0),true,'a cached message downloads while the engine cools');
+        assert.equal(T.requests.length,before,'from the cache');
+        const w0=T.warnings.length;
+        assert.equal(await P.downloadMessage(1),false);
+        assert.ok(T.warnings.slice(w0).some(w=>/잠시 막고/.test(w.msg)),'the download says why: '+JSON.stringify(T.warnings.slice(w0)));
+        assert.equal(T.requests.length,before,'nothing sent');
+        P._forTest.playCool.clear();T.ctx.chat.length=1;
+        // 3) the rate notice keeps the vendor reason (a 429 that waiting will not fix)
+        //    (a different reason than the v3 test above — the same notice text is shown once per cool-down)
+        await reset();{const s=S.settings();s.pregen='off';s.prefetch=0;}
+        T.ctx.chat[0].mes='"하나."';
+        Registry.PROVIDERS.minimax.synth=async()=>{const e=Http.koError(429,{error:{message:'Billing hard limit has been reached.',code:'billing_hard_limit_reached'}});e.retry=false;throw e;};
+        assert.ok(P.speakMessage(0,{force:true}));await sleep(50);await until(()=>!P.isPlaying(),5000);
+        assert.ok(T.warnings.some(w=>/잠시 막고/.test(w.msg)&&/Billing hard limit has been reached/.test(w.msg)),'vendor reason in the notice: '+JSON.stringify(T.warnings));
+    } finally {
+        globalThis.fetch=realFetch;Registry.PROVIDERS.minimax.synth=mmSynth;P._forTest.playCool.clear();T.ctx.chat.length=1;
+    }
+});
+await test('6.4.2 a line dropped by the cache limit and bought again: one TTS log line on the third, once per session, settings untouched',async()=>{
+    await reset();const s=S.settings();s.pregen='off';s.cache_limit=150;s.cache_mb=200;
+    T.ctx.chat[0].mes='"하나." 그녀가 웃었다. "둘." "셋."';
+    const Cache=await mod('cache.js'),Log=await mod('log.js');
+    const hint=()=>Log.entries().filter(x=>/캐시 한도/.test(x.msg));
+    const before=hint().length;
+    assert.ok(P.speakMessage(0,{force:true}));await until(()=>T.requests.length>=3&&!P.isPlaying(),2000);await idle();
+    assert.equal(T.requests.length,3);assert.equal(hint().length,before,'a first purchase is not a re-buy');
+    const keys=[...T.cache.keys()];assert.equal(keys.length,3);
+    const evict=()=>{T.cache.clear();P.forgetClips();Cache.noteEvicted(keys);};   // as if the limit prune dropped them
+    evict();assert.ok(P.speakMessage(0,{force:true}));await until(()=>T.requests.length>=6&&!P.isPlaying(),2000);await idle();
+    const h=hint();assert.equal(h.length,before+1,'one line on the third re-buy');
+    assert.match(h[0].msg,/3번/);assert.match(h[0].msg,/최대 150개 · 200 MB/);
+    evict();assert.ok(P.speakMessage(0,{force:true}));await until(()=>T.requests.length>=9&&!P.isPlaying(),2000);await idle();
+    assert.equal(hint().length,before+1,'once per session');
+    assert.equal(Cache.takeEvicted(keys[0]),false,'asking forgets the key');
+    assert.equal(s.cache_limit,150,'the user setting stays');assert.equal(s.cache_mb,200);
+    const fsp=await import('node:fs/promises');
+    assert.match(await fsp.readFile(path.join(root,'cache.js'),'utf8'),/for \(const k of pick\.keys\) st\.delete\(k\);\s*noteEvicted\(pick\.keys\);/,'the limit prune (IndexedDB) remembers what it dropped');
+    assert.match(await fsp.readFile(path.join(root,'ui.js'),'utf8'),/key: 'cache_limit',[^\n]*help: '[^'\n]+'/,'one help line beside the limit');
+});
 P.stop(); for(const node of T.nodes)node.pause();
 console.log(JSON.stringify({passed,failed,mockOnly:true,network:'blocked except synthetic responses',sourceRoot:root},null,2));
 process.exitCode=failed?1:0;

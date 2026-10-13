@@ -143,20 +143,123 @@ function countable(matched) {
 // NEAR_WORDS right before the match (her dark eyes / Mina's long white hair), or (1.7.9) the sentence names
 // one anywhere and nobody else owns the trait within OWNER_WORDS on either side: "Golden-silver hair spilled
 // over her shoulders" counts, "his red eyes settled on her" and "the black hair above his temples" do not.
+// 6.4.x 소유 판단 v5 (일본어 · 한국어 · 6.4.x 검토 합침):
+//  · 첫째 판단: 그 사람 이름이 바로 앞 띄어쓰기 낱말 NEAR_WORDS 개 안에 있으면 (예전 창 그대로 — 띄어쓰기 없는 덩이는 덩이 전체가 한 낱말)
+//    그 사람 것. 다만 가장 가까운 그 이름과 고칠 말 사이의 소유 표시가 고칠 말에 닿으면 남의 것 ("Mina watched his red eyes" · 「미나는 렉스의 붉은 눈을」)
+//  · 소유 표시 = his · its · X's · 그의 · 彼の · 彼らの (영어 's 축약 · him · 그를 · 彼を 같은 목적어 · 주어는 아니다). 영어 their · theirs 는 첫째 판단에서
+//    보지 않는다 — 'She closed her eyes, their black lashes trembling.' 의 their 는 그 사람의 눈을 가리킨다 (its 는 사람 몸이 아니고, 彼らの 는 여럿이다)
+//    + 「알려진 다른 인물 이름(+님 · 씨 · さん · 様 …) + 의 / の」. 다른 인물은 activateRules 가 넘긴 otherNames
+//    (이름 다리 · 예외 인물 · 지금 채팅의 캐릭터 · 페르소나 — 그 사람의 묶음은 뺀다). 아무 낱말+의 / の 는 보지 않는다 (자신의 · 특유의 · 위의 · 自分の · その · 目の前).
+//  · 닿는다 = 사이가 띄어쓰기 낱말 하나 이하(띄어쓰기 없는 가나 · 한자는 4글자 이하)이고, 조사로 끝나는 낱말(품에서 · 어깨에 · 손을) ·
+//    を · に · で … · 쉼표 · 마침표 · 비유(のような · の様な · の如き · のごとき)가 끼지 않을 때 — 「렉스의 방 앞에서 하얀 머리를」 · 「人形のような白い肌」은 그 사람 것
+//  · 표시 속의 그 사람 이름: 표시의 이름 부분이 그 사람이면 그 사람 것(Mina's), 남의 표시 안에 든 그 사람 이름 자리(「レックス君の」 속 君)와
+//    다른 인물 이름 바로 뒤의 호칭 자리(「レックス君が」 · 「렉스 씨가」 속 君 · 씨 — near 목록에 호칭 낱말이 있을 때)는 그 사람으로 세지 않는다
+//  · 둘째 판단(문장 어딘가의 그 사람)은 예전 그대로(앞뒤 OWNER_WORDS 낱말에 his · him · 그를 · 彼 … 가 없을 때) + 고칠 말에 닿는 다른 인물 소유가 없을 때
+//    — 두 판단 모두 예전 판단의 부분집합이라 예전보다 더 잡는 일은 없다 (빼기만. 띄어쓰기 없이 여러 글자가 붙은 글은 이름 경계가 달라 드물게 예외)
+//  · 분절하지 않아 한자 · 가타카나 이름이 쪼개지지 않고, 이름 · 표시 · 띄어쓰기 낱말 자리는 문장마다 한 번만 찾는다(memo).
+//    「닿는다」는 사이가 REACH_CHARS 글자 안일 때만 따진다 — 매치마다 앞선 모든 표시의 사이를 잘라 보지 않게 (닿는 사이는 낱말 하나 · 4글자라 결과는 같다)
 const NEAR_WORDS = 3;
 const OWNER_WORDS = 4;
 const OTHER_OWNER = /(?<![\p{L}\p{N}_])(?:he|his|him|himself|their|theirs|its|[\p{L}]+['’]s|[\p{L}]+s['’])(?![\p{L}\p{N}_])|그(?:의|가|는|를|도|에게)(?=\s)|彼(?!女)|他/iu;
+const OTHER_OWNER_ALL = new RegExp(OTHER_OWNER.source, 'giu');
+const OTHER_POSSESSIVE_ALL = /(?<![\p{L}\p{N}_])(?:his|its|(?!(?:it|that|there|here|what|who|he|she|let|where|how|when)['’]s(?![\p{L}]))[\p{L}]+['’]s|[\p{L}]+s['’])(?![\p{L}\p{N}_])|그의(?=\s)|彼(?:ら)?の/giu;
+const KO_CASE_END = /(?:에서|에게|한테|께서|께|에|을|를|으로|로|와|과|하고|이랑|랑|도|만|까지|부터|처럼|보다|이|가)$/u;
+const JA_PARTICLE = /[をにでへがはと]|から|まで|より/u;
+const JA_LIKENESS = /^(?:よう|様[なにだで]|如|ごと)/u;
+const GAP_STOP = /[,，、;；:：—–.。!！?？…]/u;
+const CJK_TEXT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u;
+const POSSESSIVE_GAP_CHARS = 4;
+const REACH_CHARS = 64;
+const HONORIFIC_KO = '(?:[^\\S\\r\\n]?(?:님|씨|양|군|선배|선생님|선생|언니|오빠|누나|형))?';
+const HONORIFIC_JA = '(?:さん|様|さま|ちゃん|くん|君|殿|氏|先輩|先生)?';
+const HONORIFIC_WORDS = new Set(['님', '씨', '양', '군', '선배', '선생님', '선생', '언니', '오빠', '누나', '형', 'さん', '様', 'さま', 'ちゃん', 'くん', '君', '殿', '氏', '先輩', '先生']);
 
-function ownedByNear(sentence, index, length, nearNames) {
+/** 띄어쓰기 낱말 자리들 [{ start, end }] (문장마다 한 번) */
+const tokenSpans = text => [...text.matchAll(/\S+/g)].map(match => ({ start: match.index, end: match.index + match[0].length }));
+/** at 앞 띄어쓰기 낱말 n 개의 시작 — 예전 text.slice(0, at).trim().split(/\s+/).slice(-n) 창 (at 이 낱말 가운데면 그 앞부분이 한 낱말) */
+function windowStart(tokens, at, n) {
+    let lo = 0, hi = tokens.length;
+    while (lo < hi) { const mid = (lo + hi) >> 1; if (tokens[mid].start < at) lo = mid + 1; else hi = mid; }
+    return lo === 0 ? at : tokens[Math.max(0, lo - n)].start;
+}
+/** at 뒤 띄어쓰기 낱말 n 개의 끝 — 예전 text.slice(at).trim().split(/\s+/).slice(0, n) 창 */
+function windowEnd(tokens, at, n) {
+    let lo = 0, hi = tokens.length;
+    while (lo < hi) { const mid = (lo + hi) >> 1; if (tokens[mid].end <= at) lo = mid + 1; else hi = mid; }
+    return lo === tokens.length ? at : tokens[Math.min(tokens.length - 1, lo + n - 1)].end;
+}
+/** 시험용: 글 text 의 자리 at 앞 before 낱말 · 뒤 after 낱말 창 { start, end } */
+export function wordWindow(text, at, before, after) {
+    const tokens = tokenSpans(String(text ?? ''));
+    return { start: windowStart(tokens, at, before), end: windowEnd(tokens, at, after) };
+}
+
+const possessiveCache = new Map();
+/** 다른 인물 이름 + 호칭 + 의 / の (영문 이름의 's 는 OTHER_OWNER 가 이미 본다) */
+function possessiveRegex(names) {
+    const list = [...new Set((Array.isArray(names) ? names : []).map(name => String(name ?? '').trim()).filter(Boolean))].sort((a, b) => b.length - a.length);
+    const key = list.join('\u0001');
+    if (!key) return null;
+    if (possessiveCache.has(key)) return possessiveCache.get(key);
+    const parts = list.map(name => {
+        const guard = /^[\x20-\x7E]+$/.test(name) ? '(?<![A-Za-z0-9_])'
+            : new RegExp(HANGUL, 'u').test(name[0]) ? `(?<!${HANGUL})` : new RegExp(KANA, 'u').test(name[0]) ? `(?<!${KANA})` : '';
+        return `${guard}${escapeRegex(name)}(?:${HONORIFIC_KO}의|${HONORIFIC_JA}[^\\S\\r\\n]?の)`;
+    });
+    const regex = new RegExp(parts.join('|'), 'giu');
+    possessiveCache.set(key, regex);
+    if (possessiveCache.size > 32) possessiveCache.delete(possessiveCache.keys().next().value);
+    return regex;
+}
+/** 소유 표시 뒤 · 고칠 말 앞 사이(between)를 건너 소유가 고칠 말에 닿는가 */
+function possessiveReaches(between) {
+    // 소유 바로 뒤의 쉼표 · 가운뎃점은 이어진다 (「レックスの、赤い瞳」) — 사이에 낀 쉼표 · 마침표는 다른 마디 ("his hand, red eyes")
+    const gap = between.replace(/^[\s、，,・]+/u, '').replace(/・/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!gap) return true;
+    if (GAP_STOP.test(gap) || JA_LIKENESS.test(gap)) return false;   // 「レックスのような赤い瞳」은 비유 — 그 사람의 눈
+    if (!gap.includes(' ') && CJK_TEXT.test(gap)) return gap.length <= POSSESSIVE_GAP_CHARS && !JA_PARTICLE.test(gap);
+    return !gap.includes(' ') && !KO_CASE_END.test(gap);   // 「렉스의 품에서 붉은 눈을」은 렉스의 눈이 아니다
+}
+/** 한 문장의 사실들 (문장마다 한 번): 그 사람 이름 자리 · 띄어쓰기 낱말 · 남의 표시 자리 */
+function ownership(sentence, nearNames, otherNames) {
+    const all = nameHits(sentence, nearNames);
+    if (!all.length) return { near: all, tokens: [], pronouns: [], owners: [], possessives: [] };
+    // 표시의 이름 부분이 그 사람이면 그 사람 것 (Mina's) — 그 사람 이름이 표시 첫머리에서 시작할 때만
+    const hers = mark => all.some(hit => hit.start === mark.start && hit.end <= mark.end);
+    const spans = regex => [...sentence.matchAll(regex)].map(match => ({ start: match.index, end: match.index + match[0].length })).filter(mark => !hers(mark));
+    const possessive = possessiveRegex(otherNames);
+    const pronouns = spans(OTHER_OWNER_ALL), owners = spans(OTHER_POSSESSIVE_ALL), possessives = possessive ? spans(possessive) : [];
+    // 남의 표시 안에 든 그 사람 이름 자리(「レックス君の」 속 君) · 다른 인물 이름 바로 뒤의 호칭 자리(「レックス君が」 · 「렉스 씨가」)는 그 사람이 아니다
+    const marks = [...owners, ...possessives];
+    const others = (Array.isArray(otherNames) ? otherNames : []).map(name => String(name ?? '').trim()).filter(Boolean);
+    const longest = others.reduce((max, name) => Math.max(max, name.length), 0);
+    const titleOfOther = hit => HONORIFIC_WORDS.has(sentence.slice(hit.start, hit.end))
+        && others.some(name => sentence.slice(Math.max(0, hit.start - longest - 1), hit.start).replace(/[^\S\n]$/, '').endsWith(name));
+    const near = all.filter(hit => !marks.some(mark => mark.start < hit.end && hit.start < mark.end) && !titleOfOther(hit));
+    return { near, tokens: tokenSpans(sentence), pronouns, owners, possessives };
+}
+
+function ownedByNear(sentence, index, length, nearNames, otherNames = [], memo = null, key = '') {
     if (!nearNames?.length) return true;
-    const before = sentence.slice(0, index).trim().split(/\s+/);
-    if (nearNames.some(name => mentions(before.slice(-NEAR_WORDS).join(' '), name))) return true;
-    if (!nearNames.some(name => mentions(sentence, name))) return false;
-    const after = sentence.slice(index + length).trim().split(/\s+/).slice(0, OWNER_WORDS).join(' ');
-    // A near name with 's is a possessive too, but it is hers.
-    const around = [before.slice(-OWNER_WORDS).join(' '), after].map(part =>
-        nearNames.reduce((rest, name) => rest.split(new RegExp(escapeRegex(name) + "['’]s", 'giu')).join(' '), part));
-    return !around.some(part => OTHER_OWNER.test(part));
+    let facts = memo?.get(key);
+    if (!facts) {
+        facts = ownership(sentence, nearNames, otherNames);
+        memo?.set(key, facts);
+    }
+    const { near, tokens, pronouns, owners, possessives } = facts;
+    if (!near.length) return false;
+    const end = index + length;
+    const reaches = mark => mark.end <= index && index - mark.end <= REACH_CHARS && possessiveReaches(sentence.slice(mark.end, index));
+    // 1) 그 사람 이름이 바로 앞 띄어쓰기 낱말 NEAR_WORDS 개 안에 — 가장 가까운 그 이름과 고칠 말 사이의 소유 표시가 고칠 말에 닿으면 남의 것
+    const from = windowStart(tokens, index, NEAR_WORDS);
+    let last = null;
+    for (const hit of near) if (hit.start >= from && hit.end <= index && (!last || hit.end > last.end)) last = hit;
+    if (last) return !owners.some(mark => mark.start >= last.end && reaches(mark)) && !possessives.some(mark => mark.start >= last.end && reaches(mark));
+    // 2) 문장 어딘가에 그 사람 — 고칠 말 앞뒤 OWNER_WORDS 낱말 안에 남의 표시가 없고, 고칠 말에 닿는 다른 인물 소유가 없으면 그 사람 것
+    const before = windowStart(tokens, index, OWNER_WORDS);
+    const after = windowEnd(tokens, end, OWNER_WORDS);
+    if (pronouns.some(mark => (mark.start >= before && mark.end <= index) || (mark.start >= end && mark.end <= after))) return false;
+    return !possessives.some(reaches);
 }
 
 // 찾기에서 빼는 부분: 코드(```…``` · `…`) · 태그와 그 속성(<span class="gold">) · 주소(…/gold-rimmed.png). 원문 마크업 위에서 찾다 보니
@@ -230,13 +333,14 @@ export function findSpans(text, compiled) {
     const hits = [];
     const masked = maskProtected(text);
     for (const { rule, regexes } of compiled) {
+        const memo = new Map();   // 6.4.x 문장마다 한 번: 그 사람 이름 · 남의 소유 자리 (ownedByNear)
         for (const regex of regexes) {
             for (const match of masked.matchAll(regex)) {
                 if (!countable(match[0])) continue;
                 const matchEnd = match.index + match[0].length;
                 let start = sentenceStart(masked, match.index);
                 let end = sentenceEnd(masked, matchEnd);
-                if (!ownedByNear(masked.slice(start, end), match.index - start, match[0].length, rule.nearNames)) continue;
+                if (!ownedByNear(masked.slice(start, end), match.index - start, match[0].length, rule.nearNames, rule.otherNames, memo, `${start}:${end}`)) continue;
                 while (start < match.index && /[\s*_]/.test(masked[start])) start++;
                 while (end > matchEnd && /[\s*_]/.test(masked[end - 1])) end--;
                 hits.push({ start, end, rule });
@@ -389,9 +493,10 @@ const KO_LEAD = '(?:였|이었|이였|겠|이겠|하고|한테|에게|께서|님
 const HANGUL = '[가-힣]';
 const KANA = '[\\p{Script=Katakana}ー]';
 
-export function mentions(text, name) {
+/** 이름 하나를 찾는 정규식 { source, flags } — mentions 와 6.4.x nameHits(자리)가 같이 쓴다 */
+function namePattern(name) {
     if (/^[\x20-\x7E]+$/.test(name)) {
-        return new RegExp(`(?<![A-Za-z0-9_])${escapeRegex(name)}(?![A-Za-z0-9_])`, 'i').test(text);
+        return { source: `(?<![A-Za-z0-9_])${escapeRegex(name)}(?![A-Za-z0-9_])`, flags: 'i' };
     }
     // 짧은 이름이 다른 낱말 속에서 걸리지 않게: 한글로 시작하면 앞이 한글이 아니고(위자드 · 블리자드 · 레벨),
     // 한글로 끝나면 뒤에 조사·어미만 온다 (KO_TAIL · KO_LEAD). 가타카나 이름은 앞뒤가 가타카나가 아니어야 한다 (ウィザード).
@@ -399,8 +504,31 @@ export function mentions(text, name) {
     const last = name[name.length - 1];
     const before = new RegExp(HANGUL, 'u').test(first) ? `(?<!${HANGUL})` : new RegExp(KANA, 'u').test(first) ? `(?<!${KANA})` : '';
     const after = new RegExp(HANGUL, 'u').test(last) ? `(?=${KO_LEAD}|${KO_TAIL}{0,10}(?!${HANGUL}))` : new RegExp(KANA, 'u').test(last) ? `(?!${KANA})` : '';
-    if (!before && !after) return text.includes(name);
-    return new RegExp(`${before}${escapeRegex(name)}${after}`, 'u').test(text);
+    if (!before && !after) return { source: escapeRegex(name), flags: '' };
+    return { source: `${before}${escapeRegex(name)}${after}`, flags: 'u' };
+}
+
+export function mentions(text, name) {
+    const { source, flags } = namePattern(name);
+    return new RegExp(source, flags).test(text);
+}
+
+const hitCache = new Map();
+/** 6.4.x 글 속 이름 자리들 [{ start, end }] (mentions 와 같은 경계) */
+function nameHits(text, names) {
+    const out = [];
+    for (const name of Array.isArray(names) ? names : []) {
+        if (!name) continue;
+        let regex = hitCache.get(name);
+        if (!regex) {
+            const { source, flags } = namePattern(name);
+            regex = new RegExp(source, `${flags}g`);
+            hitCache.set(name, regex);
+            if (hitCache.size > 256) hitCache.delete(hitCache.keys().next().value);
+        }
+        for (const match of text.matchAll(regex)) out.push({ start: match.index, end: match.index + match[0].length });
+    }
+    return out;
 }
 
 export function findActiveExceptions(recentText, exceptions) {
@@ -416,15 +544,30 @@ export function findActiveExceptions(recentText, exceptions) {
  * @param {ReturnType<typeof compileRule>[]} compiled
  * @param {string} recentText
  * @param {(names: string) => string[]} [resolveNames] e.g. expands {{user}} before splitting
+ * @param {string[][]} [people] 6.4.x 알려진 인물들 (한 사람의 표기 묶음) — near 규칙의 「남의 소유」 이름(otherNames)이 된다 (그 사람의 묶음은 뺀다)
  */
-export function activateRules(compiled, recentText, resolveNames = splitNames) {
+export function activateRules(compiled, recentText, resolveNames = splitNames, people = []) {
     return compiled.flatMap((entry) => {
         const scopeNames = resolveNames(String(entry.rule.onlyFor ?? ''));
         const nearNames = resolveNames(String(entry.rule.near ?? ''));
         if (scopeNames.length === 0 && nearNames.length === 0) return [entry];
         if (scopeNames.length > 0 && !scopeNames.some(name => mentions(recentText, name))) return [];
-        return [{ ...entry, rule: { ...entry.rule, scopeNames, nearNames } }];
+        const otherNames = nearNames.length > 0 ? othersOf(people, nearNames) : [];
+        return [{ ...entry, rule: { ...entry.rule, scopeNames, nearNames, otherNames } }];
     });
+}
+
+const foldName = name => String(name ?? '').trim().toLowerCase().replace(/\s+/g, '');
+/** 6.4.x people [[한 사람의 표기들], …] → near 가 아닌 사람들의 이름 (그 사람(near 와 같은 표기)이 든 묶음은 통째로 · 중복 · 빈 것 뺌) */
+export function othersOf(people, nearNames) {
+    const near = new Set((Array.isArray(nearNames) ? nearNames : []).map(foldName).filter(Boolean));
+    const out = new Map();
+    for (const group of Array.isArray(people) ? people : []) {
+        const names = (Array.isArray(group) ? group : [group]).map(name => String(name ?? '').trim()).filter(Boolean);
+        if (!names.length || names.some(name => near.has(foldName(name)))) continue;
+        for (const name of names) if (!out.has(foldName(name))) out.set(foldName(name), name);
+    }
+    return [...out.values()];
 }
 
 /**

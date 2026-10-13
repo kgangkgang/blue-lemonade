@@ -92,7 +92,9 @@ function sleep(ms, signal) {
     });
 }
 /** 잦은 요청 (HTTP 429 · MiniMax 1002) */
-const isRate = (e) => e?.status === 429 || e?.code === 429 || e?.code === 1002;
+// 6.4.2 v3 player.js 의 isRate 와 같은 목록 (HTTP 429 · MiniMax 1002 · 1039 · ElevenLabs · Gemini 가 code 에 글자로 주는 429)
+const RATE_CODES = new Set([429, 1002, 1039, 'too_many_concurrent_requests', 'system_busy', 'RESOURCE_EXHAUSTED']);
+const isRate = (e) => e?.status === 429 || RATE_CODES.has(e?.code);
 /** 키 · 잔액 · 권한 (재생기의 isAuthError + 402 · 1008) */
 function isAuth(e) {
     if (!e) return false;

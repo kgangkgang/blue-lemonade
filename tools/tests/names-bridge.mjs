@@ -186,6 +186,23 @@ await test('TTS: 배운 속마음 라벨이 다리 별명을 가로채지 않는
     } finally { lv.names = saved; delete globalThis[KEY]; }
 });
 
+await test('TTS: 두 인물이 나눠 쓰는 표기(Rina · Lina → リナ)는 누구에게도 안 붙는다 — 한 사람만 닿는 표기 · 직접 넣은 별명은 그대로 · 짝 순서와 상관없이', () => {
+    const before = s.voices.length;
+    s.voices.push(toVoice({ voiceId: 'v_rina', name: 'Rina' }), toVoice({ voiceId: 'v_lina', name: 'Lina', aliases: ['리나'] }));
+    try {
+        const pairs = [{ src: 'Rina', dst: 'リナ' }, { src: 'Lina', dst: 'リナ' }, { src: 'Rina', dst: '리나' }, { src: 'Rina', dst: 'リーナ' }, { src: 'リナ', dst: '리나쨩' }, { src: 'リーナ', dst: '리이나' }];
+        for (const list of [pairs, pairs.slice().reverse()]) {
+            bridge(list);
+            assert.equal(SP.canon('リナ'), 'リナ', 'shared kana → nobody');
+            assert.equal(SP.canon('리나쨩'), '리나쨩', 'chained only through the shared kana → nobody');
+            assert.equal(SP.canon('リーナ'), 'Rina', 'one owner → that person');
+            assert.equal(SP.canon('리이나'), 'Rina', 'chain through a one-owner spelling still joins');
+            assert.equal(SP.canon('리나'), 'Lina', 'a typed voice alias wins over the bridge');
+            assert.equal(SP.canon('Rina'), 'Rina');
+        }
+    } finally { s.voices.splice(before); delete globalThis[KEY]; }
+});
+
 await test('TTS: 깨진 다리(version 다름 · pairs 아님 · 빈 글)는 무시', () => {
     globalThis[KEY] = { version: 2, pairs: [{ src: 'Rowan', dst: '로완' }] };
     assert.equal(SP.canon('로완'), '로완');

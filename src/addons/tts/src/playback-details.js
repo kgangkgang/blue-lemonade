@@ -1,11 +1,15 @@
 // Plain text only: original dialogue and effect metadata never become HTML.
 const comparable = value => String(value || '').normalize('NFC').replace(/<#[\d.]+#>/g, ' ').replace(/\s+/g, ' ').trim();
+// 6.4.2 「같은 말」인지 접어서 본다 — 따옴표 · 줄임표 · 문장부호 · 기호 · 쉼 표식 · 오디오 태그 · 장음 겹침 · 말끝 っ(감정 세기 「약하게」의 순한 글)는 다른 말이 아니다.
+//   막대 글이 이미 원문인데 「원문」 칩이 뜨고 같은 글이 나오던 것 — 옮긴 글 · 화면 글을 옮겨 읽음 · 원문 짝이 다른 글일 때만 칩
+const folded = value => String(value || '').normalize('NFKC').replace(/<#[\d.]+#>/g, ' ').replace(/\[[A-Za-z][A-Za-z' -]{0,30}\]/g, ' ')
+    .replace(/ー{2,}/g, 'ー').replace(/っ(?=[\p{P}\p{S}\s]|$)/gu, '').replace(/[\p{P}\p{S}\s]+/gu, '').toLowerCase();
 export function playbackOriginal(job) {
     if (!job || job.sceneKind) return '';
     const parts = job.parts || [];
     const original = parts.map(p => p.original?.text || p.seg?.text || '').filter((s, i, all) => s && (i === 0 || s !== all[i - 1])).join('\n').trim();
     // Compare before engine chunking; splitting a long unchanged line is not an edit.
-    const changed = parts.some(p => comparable(p.original?.text || p.seg?.text || '') !== comparable(p.text ?? job.text));
+    const changed = parts.some(p => folded(p.original?.text || p.seg?.text || '') !== folded(p.text ?? job.text));
     return original && changed ? original : '';
 }
 /** 6.3.8 칸 제목: 원문 짝을 못 찾아 화면 글(번역문)을 옮겨 읽는 줄이면 「원문」이라고 하지 않는다 */

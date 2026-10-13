@@ -6,11 +6,14 @@ import { oai_settings } from '../../../../../../openai.js';
 import { SOURCES } from '../models/sources.js';
 import * as LM from '../../live-models.js';
 import { CORE_KEYS, findNodes, settingsRefs, ownerOf, makeTarget, crawl, skipRegistered, autoSpots } from './discover.js';
+import { folderBase, installedFolder } from '../../extension-folder.js';   // 6.4.2 판 번호가 붙은 설치 폴더('xxx-1.2.3')도 같은 확장으로
 import { fallbackTarget, pairFallbacks } from './fallback.js';   // 6.2.9 검열되면 다른 모델로 · 6.3.0 「(검열되면)」 줄은 본 대상 바로 다음
 
 const $ = globalThis.jQuery;
 const isObj = value => !!value && typeof value === 'object' && !Array.isArray(value);
-const installed = folder => extensionNames.includes(`third-party/${folder}`) && !extension_settings.disabledExtensions?.includes(`third-party/${folder}`);
+const enabled = folder => extensionNames.includes(`third-party/${folder}`) && !extension_settings.disabledExtensions?.includes(`third-party/${folder}`);   // 실제 폴더 이름
+const folderOf = base => installedFolder(base, extensionNames, extension_settings.disabledExtensions);   // 6.4.2 본래 폴더 이름 → 켜진 설치 폴더 (ZIP 이름 그대로 풀린 판 번호 폴더도)
+const installed = base => !!folderOf(base);
 const NARROW = ['openai', 'custom', 'claude', 'cohere', 'makersuite', 'vertexai', 'openrouter', 'deepseek'];
 const toGoogle = source => source === 'makersuite' ? 'google' : source;
 const fromGoogle = provider => provider === 'google' ? 'makersuite' : provider;
@@ -109,7 +112,7 @@ const memory = {
         // 장기 기억의 설정 창은 열려 있을 때만 그려진다. 같은 모듈을 불러 다시 그리게 하고, 안 되면 다음에 열 때 반영된다.
         // 1.5.1+ 는 창을 panel-loader 로 늦게 받는다 — 그쪽 refreshPanel 은 창이 없으면 아무것도 안 한다.
         // panel.js 를 바로 부르면 안 쓸 화면 코드(~230KB)를 받으니, panel-loader 가 없는 1.5.0 이하만 panel.js 로.
-        const lm = file => new URL(`../../../../long-memory/${file}`, import.meta.url).href;
+        const lm = file => new URL(`../../../../${folderOf(memory.folder) || memory.folder}/${file}`, import.meta.url).href;   // 6.4.2 실제 설치 폴더
         try { (await import(lm('panel-loader.js')).catch(() => import(lm('panel.js')))).refreshPanel?.(); } catch { /* 다음에 열 때 반영 */ }
     },
 };
@@ -175,7 +178,7 @@ withState(translator, 'connection_mode', translatorFields, mode => { if (hasDom(
 withState(rewrite, 'connection', rewriteFields, mode => { const v = segValue(mode); if (v && hasDom('#bwr_connection')) $(`#bwr_connection .bwr_seg[data-value="${v}"]`).trigger('click'); });
 // 연결 방식만 바꾼 뒤에도 그 확장 창을 다시 그린다 — memory.apply 끝과 같은 길 (폴더는 memory.folder)
 withState(memory, 'apiMode', memoryFields, async () => {
-    const at = file => new URL(`../../../../${memory.folder}/${file}`, import.meta.url).href;
+    const at = file => new URL(`../../../../${folderOf(memory.folder) || memory.folder}/${file}`, import.meta.url).href;
     try { (await import(at('panel-loader.js')).catch(() => import(at('panel.js')))).refreshPanel?.(); } catch { /* 다음에 열 때 반영 */ }
 });
 withState(prompt, 'connectionMode', promptFields, () => window.dispatchEvent(new Event('bl:prompt-connection-changed')));
@@ -242,7 +245,7 @@ async function fetchText(url, budget = Infinity) {
 export function discoverTargets() {
     const keys = candidateKeys();
     const folders = extensionNames.filter(name => name.startsWith('third-party/')).map(name => name.slice(12))
-        .filter(folder => installed(folder) && folder !== THEME_FOLDER && !KNOWN_FOLDERS.has(folder));
+        .filter(folder => enabled(folder) && folder !== THEME_FOLDER && !KNOWN_FOLDERS.has(folderBase(folder)));   // 6.4.2 판 번호 붙은 아는 확장도 자동 찾기에서 뺀다
     const sig = `${folders.join('|')}#${keys.join('|')}`;
     if (scan?.sig === sig) return scan.promise;
     const job = { sig, done: !keys.length || !folders.length, owners: new Map(), made: new Map() };
@@ -270,7 +273,7 @@ function detected() {
     const own = [...registered.values()];
     const out = [];
     for (const [key, owner] of scan.owners) {
-        if (!installed(owner.folder) || !isObj(extension_settings[key])) continue;
+        if (!enabled(owner.folder) || !isObj(extension_settings[key])) continue;
         // 스스로 등록한 확장(settingsKey · path)과 겹치는 자리는 건너뛴다 · 이름 · 개수 정리는 autoSpots
         const nodes = skipRegistered(findNodes(extension_settings[key], STS), key, own);
         for (const { node, name } of autoSpots({ root: extension_settings[key], nodes, owner, sources: STS })) {

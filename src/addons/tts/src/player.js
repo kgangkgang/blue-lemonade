@@ -146,8 +146,8 @@ function sortedJson(obj) {
 }
 /** 미리 만들기가 켜져 있나 ('dialogue' · 'all') — 켜져 있으면 자동 읽기도 줄마다, 감정 태그는 원문에서 */
 const pregenOn = (s) => s?.pregen === 'dialogue' || s?.pregen === 'all';
-/** 6.2.5 누른 대사를 줄마다 만들까 — 미리 만들기가 켜져 있거나 「다음 한 줄」· 6.2.8 「이어 듣기」 (미리 만든 다음 줄과 같은 키가 되게. 자동 읽기 · 내려받기는 pregenOn 그대로) */
-const tapByLine = (s) => pregenOn(s) || s?.pregen === 'next' || s?.pregen === 'chain';
+// 6.4.2 읽기는 모두 줄마다 (자동 읽기 · 탭 · 스트리밍 · 내려받기 — finishJobs merge false). 전엔 미리 만들기가 꺼져 있으면 자동 읽기가
+//   같은 목소리 · 감정의 대사를 한 요청으로 합쳐, 그 줄을 누르면 글 · 캐시 열쇠가 달라 새로 합성(값을 두 번 · 다른 테이크)했다
 /** 6.2.5 누른 줄을 재생 줄에 넣은 뒤 부를 함수들 (pregen.js 「다음 한 줄」이 등록 — 서로 import 하지 않게) */
 const tapListeners = new Set();
 export function onTapped(fn) {
@@ -857,7 +857,10 @@ export function keyOf(job) {
     if (ins) parts.push(ins);                                     // 1.2.2: 지시문을 바꾸면 새 소리 (OpenAI · Gemini — 비었으면 키는 1.2.1 그대로)
     return keyHash(parts.join('\u0001'));
 }
-const canMerge = (a, b) => a.voice === b.voice && a.provider === b.provider && a.emotion === b.emotion && !!a.loud === !!b.loud && (!a.lang || !b.lang || a.lang === b.lang);
+// 6.4.1 속마음 줄은 이웃 줄과 합치지 않는다 (속마음끼리도) — 합친 덩이는 글 · 캐시 열쇠가 달라 그 속마음을 누르면 새로 합성해 다른 테이크가 났다.
+//   줄마다면 자동 읽기 · 탭 · 미리 만들기가 같은 열쇠 (대사 · 서술끼리 합치기는 그대로)
+const soloThought = (j) => j?.seg?.kind === 'thought' || j?.parts?.[0]?.seg?.kind === 'thought';
+const canMerge = (a, b) => !soloThought(a) && !soloThought(b) && a.voice === b.voice && a.provider === b.provider && a.emotion === b.emotion && !!a.loud === !!b.loud && (!a.lang || !b.lang || a.lang === b.lang);
 /**
  * 분석의 'shout' → 엔진별: MiniMax 는 감정 없이(글을 보고 고름) + 음량 ×1.15, 받는 엔진은 그대로, 나머지는 angry.
  * 1.3.1 MiniMax 를 angry 로 바꾸면 기뻐서 외치는 줄("勝ったああ!!")까지 화난 소리가 됐다
@@ -934,7 +937,7 @@ function cutAtSentence(text, room) {
 }
 /**
  * 엔진 붙이기 → 이웃 합치기(merge) → 긴 덩이 나누기 → 한 번에 최대 글자 → 캐시 키.
- * merge=false: 줄마다 따로 (미리 만들기 · pregen 이 켜진 자동 읽기 — 탭과 같은 키), quiet = 안내 없이 (미리 만들기)
+ * merge=false: 줄마다 따로 (6.4.2 모든 읽기 — 탭 · 미리 만들기와 같은 키), quiet = 안내 없이 (미리 만들기)
  */
 function finishJobs(jobs, s, { merge = true, quiet = false } = {}) {
     const ready = [];
@@ -1093,7 +1096,7 @@ async function synthRetry(job, cfg, signal, e = null) {
         } catch (err) {
             if (signal.aborted || isAbort(err)) throw abortError();
             if (isRate(err)) coolDown(job.provider.id);                // 탭이 받은 429 · 1002 도 미리 만들기 줄을 쉬게 (탭은 그대로)
-            if (!err?.retry || attempt >= RETRY_MS.length) throw err;
+            if (!err?.retry || attempt >= RETRY_MS.length || (isRate(err) && coolingFor(job))) throw err;   // 6.4.2 다른 줄이 이미 쉬게 했으면 다시 안 보냄
             if (e && e.users <= 0) throw abortError();
             log('info', `다시 시도 ${attempt + 1}: ${String(err.message || '').slice(0, 40)}`);
             if (e) e.sent = false;
@@ -1101,8 +1104,10 @@ async function synthRetry(job, cfg, signal, e = null) {
         }
     }
 }
-/** 잦은 요청 (HTTP 429 · MiniMax 1002) */
-const isRate = (err) => err?.status === 429 || err?.code === 429 || err?.code === 1002;
+/** 잦은 요청: HTTP 429 · MiniMax 1002(분당 요청) · 1039(분당 토큰) · 업체가 code 에 글자로 주는 것 (ElevenLabs too_many_concurrent_requests · system_busy, Gemini RESOURCE_EXHAUSTED).
+ *  6.4.2 v3 전엔 ElevenLabs · Gemini 의 429 를 못 알아봐 쉬는 시간이 안 켜졌다 (줄마다 재시도 · 알림이 줄 수만큼). pregen.js 의 isRate 와 같은 목록 */
+const RATE_CODES = new Set([429, 1002, 1039, 'too_many_concurrent_requests', 'system_busy', 'RESOURCE_EXHAUSTED']);
+const isRate = (err) => err?.status === 429 || RATE_CODES.has(err?.code);
 
 /** 작은 LRU (개수 · 바이트 한도) */
 class Lru {
@@ -1174,6 +1179,17 @@ async function keepWarm(job, raw, lufs, prep = true, align = null) {
     if (!prep) return { blob: raw, lufs };
     try { return await prepareInto(job, raw, lufs, settings(), align); } catch { return { blob: raw, lufs }; }
 }
+// 6.4.2 캐시 한도로 지운 줄을 다시 산 횟수 (이 세션) — REBUY_HINT 번째에 TTS 기록에 한 줄, 세션에 한 번. 설정 값은 바꾸지 않는다
+const REBUY_HINT = 3;
+let rebuys = 0, rebuyHinted = false;
+function noteRebuy() {
+    rebuys++;
+    if (rebuyHinted || rebuys < REBUY_HINT) return;
+    rebuyHinted = true;
+    const s = settings(), n = Number(s.cache_limit), mb = Number(s.cache_mb);
+    const lim = [n > 0 ? `최대 ${n}개` : '', mb > 0 ? `${mb} MB` : ''].filter(Boolean).join(' · ');
+    log('info', `캐시 한도${lim ? `(${lim})` : ''}로 지운 소리를 ${rebuys}번 다시 샀어요 · 캐시 칸에서 늘릴 수 있어요`);
+}
 /** 같은 키의 합성 하나 (여러 쪽이 붙음). 캐시에 넣기를 기다린 뒤 자리를 비운다 (그 사이에 온 쪽도 이 결과에 붙음) */
 function startEntry(job, pre, prep = true) {
     const e = { key: job.key, ctrl: new AbortController(), sent: false, sentPre: false, users: 0, tapUsers: 0, pre: !!pre, prep, waiter: null, release: null, stale: false, moved: false, promise: null };
@@ -1189,6 +1205,7 @@ function startEntry(job, pre, prep = true) {
             return { raw: b, lufs, hit: true, made: false, align };
         }
         throwIfAborted(signal);
+        if (!e.pre && coolingFor(job)) throw coolingError();   // 6.4.2 v3 429 로 쉬는 엔진: 캐시에 없는 줄만 보내지 않음 (미리 만들기는 줄의 쉬는 시간을 지킴)
         const cfg = providerConfig(job.provider.id, job.provider.defaults || {});
         const release = await acquire(job.provider.id, { pre: e.pre, signal, waiter: (w) => { e.waiter = w; } });
         let res;
@@ -1202,6 +1219,7 @@ function startEntry(job, pre, prep = true) {
         const raw = res?.blob;
         if (!(raw instanceof Blob) || !raw.size) throw new Error('음성 데이터가 비어 있어요');
         addUsage(res.usage?.chars ?? job.text.length, { pre: e.sentPre, model: res.usage?.model });
+        if (cache.takeEvicted?.(job.key)) noteRebuy();   // 6.4.2 한도로 지운 줄을 다시 삼
         log('req', `${e.sentPre ? '미리 · ' : `${job.provider.id} · `}${job.voice.name} · ${job.text.length}자${res.usage?.model ? ` · ${res.usage.model}` : ''}`);
         // 캐시에는 엔진이 준 원본(작음)과 잰 음량만 — 음량 고르기는 설정이 바뀌면 다시 (prepared 키에 설정이 들어 있음)
         let lufs = null;
@@ -1399,11 +1417,24 @@ function prefetch(from, s) {
         if (!j.sceneKind && !j.audio && !deadFor(j)) ensureAudio(j).catch(() => { /* 재생 때 다시 시도 */ });
     }
 }
+/**
+ * 6.4.2 v3 미리 받기가 0 이어도: 지금 줄 소리가 준비되면(그 요청이 끝난 뒤 — 같은 엔진에 동시 요청을 늘리지 않게) 바로 다음 줄이 이 줄과
+ * 같은 목소리 · 엔진 · 감정 · 언어(예전에 한 요청으로 합치던 줄 · 속마음 빼고 — canMerge)면 그 한 줄을 받아 둔다. 지금 줄을 듣는 동안 만들어져
+ * 같은 사람의 이어진 대사 사이에 합성 시간이 끼지 않는다 (줄마다 합성 뒤 엔진 300 ms → 줄 사이 561 ms). 값은 예전 합친 요청과 같다
+ */
+function lookAhead(from, s) {
+    if ((Number(s.prefetch) || 0) > 0) return;   // 미리 받기가 켜져 있으면 prefetch 가 이미
+    const cur = queue[from - 1], j = queue[from];
+    if (!cur || !j || cur.sceneKind || j.sceneKind || j.audio || deadFor(j) || coolingFor(j) || !canMerge(cur, j)) return;
+    ensureAudio(j).catch((e) => { if (!isAbort(e)) j.aheadErr = e; });   // 6.4.2 v3.1 실패는 그 줄에 남긴다 — 재생 루프가 다시 보내지 않고 이 오류로 fail (쉬는 시간 · 키 오류 판정 그대로)
+}
 
 // ---------- 재생 상태
 let audio = null;
 const sceneAudio = createSfxController();
 const sceneTails = new Set();
+let fxCarry = null;              // 6.3.9 { mesId } 이어 듣기로 넘긴 겹침 효과음 꼬리 — 다음 enqueue 가 같은 메시지의 줄이면 끊지 않는다 (꼬리는 sceneTails 에 남는다)
+const sceneStarts = new Set();   // 6.3.9 아직 시작 중인 미룬 효과음 (파일 · 크기 맞추기) — 큐 끝 판단 전에 기다린다
 const usedEffects = new Map();
 let sceneManual = false; // Explicit editor playback may use effects while ordinary chat effects are off.
 const exportJobs = new Set();
@@ -1573,7 +1604,14 @@ const deadEngines = new Set();
 // 1.3.8 스트리밍 읽기: 조각(청크)마다 큐가 비었다 다시 차서 위 표가 지워진다 → 그 답장 동안은 따로 기억 (꺼진 서버를 조각마다 다시 기다리지 않게).
 //   사용자가 멈춤 · 처음부터 다시 · 다른 답장 스트리밍 · 채팅 바뀜 · 스트리밍이 끝난 뒤 큐가 다 끝나면 비운다
 let streamDead = null;       // { mesId, set:Set<엔진 id> }
-const deadFor = (job) => !!job?.provider && (deadEngines.has(job.provider.id) || (!!streamDead && job.mesId === streamDead.mesId && streamDead.set.has(job.provider.id)));
+const deadFor = (job) => !!job?.provider && (deadEngines.has(job.provider.id) || (!!streamDead && job.mesId === streamDead.mesId && streamDead.set.has(job.provider.id)));   // 6.4.2 v3 429 로 쉬는 엔진은 여기서 빼고 startEntry 에서 (캐시 · 메모리 줄은 나게)
+// 6.4.2 재생 줄이 429 · 1002 로 재시도를 다 쓰면 그 엔진은 쉬는 시간(COOL_MS) 동안 보내지 않고 건너뛴다 (알림은 fail 이 한 번 · 미리 받기도 deadFor 로 멈춤) —
+//   줄마다 합성이라 같은 엔진 줄이 저마다 재시도를 되풀이해 요청 · 시간만 늘었다 (소리 없이 6줄 18번 · 33초). 쉬는 시간이 지나면 다시 보낸다
+const playCool = new Map();   // 엔진 id → 쉬는 끝 시각
+const coolingFor = (job) => !!job?.provider && (playCool.get(job.provider.id) || 0) > Date.now();
+// 6.4.2 v3 쉬는 엔진의 줄: 캐시 · 메모리 · 진행 중인 요청에 있으면 그대로 나고(탭 · 다시 듣기 포함), 새로 사야 하는 줄만 보내지 않는다 —
+//   startEntry 가 캐시를 본 뒤 이 오류를 던지고 fail 은 조용히 넘긴다 (알림은 처음 막힌 줄에서 한 번). 전엔 쉬는 동안 받아 둔 줄까지 소리 없이 건너뛰었다
+const coolingError = () => Object.assign(new Error('엔진이 요청을 잠시 막고 있어요 — 조금 뒤 다시 들어 보세요'), { status: 429, code: 429, cooling: true, retry: false });
 function markDead(job) {
     const pid = job?.provider?.id;
     if (!pid) return;
@@ -1597,6 +1635,16 @@ function twinEngineName(job) {
 }
 function fail(e, job = null) {
     if (isAbort(e)) return;
+    if (e?.cooling && !job) { toast(e.message, 'warning'); return; }   // 6.4.2 v3.1 내려받기 · 다른 확장 요청(줄 없이 부름): 쉬는 동안 새로 사야 하는 줄이면 까닭을 알린다 (캐시 줄만이면 그대로 받아짐)
+    if (e?.cooling) return;   // 6.4.2 v3 쉬는 동안 새로 사야 했던 줄: 조용히 넘김 (알림은 처음 막힌 줄에서 한 번 · 캐시 · 메모리 줄은 이미 났다)
+    if (isRate(e) && job?.provider?.id) {   // 6.4.2 잦은 요청: 이 엔진은 잠시 쉬고 남은 줄은 건너뜀 (알림 한 번)
+        playCool.set(job.provider.id, Date.now() + COOL_MS);
+        const why = scrub(String(e?.message || '')).split(' · ').slice(1).join(' · ').slice(0, 80);   // 6.4.2 v3.1 업체 문구 (「오류 (429) · …」 의 뒤 조각)
+        toastOnce(`엔진이 요청을 잠시 막고 있어요 — 조금 뒤 다시 들어 보세요${why ? ` (${why})` : ''}`, 'warning', COOL_MS);
+        // 6.4.2 v3 업체 문구도 기록에 (기다려도 안 풀리는 429 — 예: OpenAI insufficient_quota — 의 까닭을 알 수 있게)
+        log('err', `${job.provider.name || job.provider.id} 요청 막힘 · ${Math.round(COOL_MS / 1000)}초 동안 이 엔진 줄 건너뜀 · ${scrub(String(e?.message || '')).slice(0, 120)}`);
+        return;
+    }
     let msg = scrub(String(e?.message || e || '합성 실패')).slice(0, 120) || '합성 실패';   // 업체 메시지에 섞인 키·태그는 토스트에도 안 보이게
     const dead = isAuthError(e) || e?.dead === true;
     if (dead && e?.dead && !isPinned(job?.speaker)) { const other = twinEngineName(job); if (other) msg += ` · 목소리 탭 「엔진」에서 ${other}${ro(other)} 바꿀 수 있어요`; }   // 5.7.2 J4
@@ -1610,6 +1658,7 @@ function fail(e, job = null) {
 }
 /** 안 되는 엔진의 줄을 건너뛸 때: 고정한 캐릭터면 세션에 한 번 알림 (그 캐릭터만 이 엔진으로 읽게 해 둠) */
 function skipDead(job) {
+    if (coolingFor(job)) { if (typeof job.done === 'function') { const d = job.done; job.done = null; d(false); } return; }   // 6.4.2 429 로 쉬는 엔진: 알림 없이 (fail 이 한 번 알림)
     const who = String(job?.speaker || '').trim();
     if (who && isPinned(who)) toastSession(`pin-dead:${who}|${job.provider?.id}`, `${who}: ${job.provider?.name || job.provider?.id}${ro(job.provider?.name || job.provider?.id)} 고정돼 있어 건너뛰어요 (목소리 탭의 「고정」을 누르면 풀려요)`, 'warning');
     if (typeof job.done === 'function') { const d = job.done; job.done = null; d(false); }
@@ -1620,11 +1669,66 @@ function isAuthError(e) {
     if (e.status === 401 || e.code === 401 || e.status === 403 || e.code === 403 || e.code === 1004) return true;
     return /^(invalid_api_key|unauthorized|UNAUTHENTICATED|PERMISSION_DENIED|nokey)$/i.test(String(e.code || ''));
 }
+// 6.3.9 효과음 겹침: 겹침 · 반복 효과음은 바로 뒤(사이에 다른 겹침 · 반복 효과음만 있을 때) 같은 메시지 대사의 소리가 준비된 때 같이 시작한다 —
+//   전엔 큐 차례대로 효과음을 먼저 틀고 그다음 대사의 합성을 기다려, 합성하는 동안 효과음만 혼자 났다 (짧은 효과음은 끝난 뒤에야 대사).
+//   차례(sequence) · 쉼 · 미리듣기 · 뒤에 대사가 없는 효과음은 예전처럼 제자리에서
+const FX_START_WAIT = 200;   // 대사가 효과음 준비(파일 · 크기 맞추기)를 기다리는 최대 ms — 대사는 효과음을 기다리지 않는다
+const deferFx = (job) => job?.sceneKind === 'sfx' && job.sceneMode !== 'sequence' && !job.scenePreview;
+// 6.3.9 v2.1 속마음 줄에는 효과음을 깔지 않는다 (탭 길처럼 효과음은 대사에 붙는다 — 분석의 효과음 자리도 대사 순번) → 속마음을 건너 다음 대사와 같이
+const isThoughtJob = (job) => !job?.sceneKind && (job?.seg?.kind === 'thought' || job?.parts?.[0]?.seg?.kind === 'thought');
+function voiceAfter(list, from, ref) {
+    for (let i = from; i < list.length; i++) {
+        const j = list[i];
+        if (deferFx(j)) continue;
+        if (isThoughtJob(j) && j.mesId === ref.mesId) continue;
+        return !j.sceneKind && j.mesId === ref.mesId && !!j.sceneManual === !!ref.sceneManual;
+    }
+    return false;
+}
+/** 미룬 효과음의 파일을 합성을 기다리는 동안 미리 (크기 맞추기 캐시까지) */
+function warmFx(job) { try { Promise.resolve(sfxBlob(job.sfxId)).catch(() => {}); } catch { /* 틀 때 다시 */ } }
+/** 미룬 효과음을 한꺼번에 시작 → 모두 시작했거나 cap ms 가 지나면 (0 = 다 시작할 때까지). 시작 중인 것은 sceneStarts 에 (큐 끝이 기다림) */
+function startFx(list, ir, cap = FX_START_WAIT) {
+    const all = Promise.all(list.map(j => {
+        const p = playSceneJob(j, ir).catch(() => false);
+        sceneStarts.add(p);
+        p.finally(() => sceneStarts.delete(p));
+        return p;
+    }));
+    return Promise.race(cap > 0 ? [all, sleep(cap), ir.promise] : [all, ir.promise]);
+}
+/** 6.3.9 이어 듣기(pregen.js chainNext)가 다음 줄을 넣을 수 있나 — 그 큐는 끝에서 효과음 꼬리를 기다리지 않고 넘긴다 (handOffTails) */
+const chainOn = () => { const s = settings(); return s.pregen === 'chain' && s.enabled !== false && s.click_play !== false && endListeners.size > 0; };
+function notifyEnded(ended) {
+    for (const fn of endListeners) { try { fn(ended.mesId, ended.segs, { played: ended.played }); } catch { /* 듣는 쪽 오류는 재생과 상관없음 */ } }
+}
+/**
+ * 6.3.9 이어 듣기로 넘김: 꼬리를 기다리지 않고 이어 듣기에 먼저 알린다.
+ * 다음 줄이 바로 들어오면 enqueue → stop(keepFx) 가 이 큐를 정리한다 (반복음만 끄고 꼬리는 sceneTails 에 남아 다음 줄 밑에서 끝까지).
+ * 다음 줄이 번역 · 분석을 기다리면 꼬리를 남긴 채 기다림 표시로. 이어 갈 줄이 없으면(답장의 마지막 줄) 예전처럼 꼬리가 끝날 때까지 막대와 함께 기다린 뒤 정리
+ */
+async function handOffTails(ended, my) {
+    fxCarry = { mesId: ended.mesId };
+    notifyEnded(ended);
+    if (gen !== my || running) return;   // 다음 줄이 들어옴(새 큐) · 같은 큐에 줄이 덧붙어 다시 돎 — 그 run 이 꼬리까지 챙긴다
+    if (waiting && waiting.mesId === ended.mesId) { finishAll({ keepFx: true }); return; }
+    fxCarry = null;
+    // 6.3.9 v2.2 이어 갈 줄이 없음: 예전처럼 run 이 꼬리를 기다리던 것과 같게 running 을 쥐고 기다린다 — 그사이 덧붙은 줄(on_new 「차례로」 · 스트리밍)은
+    //   이 기다림 뒤에 이어서 돌고, 꼬리가 끝났다고 그 재생을 finishAll 로 덮지 않는다 (덮으면 current · currentIr 이 지워져 TTS 가 멈췄다)
+    running = true;
+    try {
+        if (sceneStarts.size) await Promise.allSettled([...sceneStarts]);
+        if (gen === my && sceneTails.size) await Promise.allSettled([...sceneTails]);
+    } finally { running = false; }
+    if (gen === my) { if (idx < queue.length) run(); else finishAll(); }
+    else if (queue.length && idx < queue.length) run();   // 기다리는 동안 stop() 뒤 새 큐가 들어옴 (그 run() 은 running 때문에 돌지 못했다)
+}
 /** 큐를 앞에서부터 읽는 루프. stop() 뒤엔 gen 이 달라져 스스로 끝남 */
 async function run() {
     if (running) return;
     running = true;
     const my = gen;
+    let fx = [], handoff = false;   // 6.3.9 미룬 효과음 · 이어 듣기로 꼬리 넘김
     try {
         while (my === gen && idx < queue.length) {
             const job = queue[idx];
@@ -1634,7 +1738,13 @@ async function run() {
                 sceneAudio.stopAll(); sceneTails.clear();
             }
             if (job.sceneKind === 'sfx' && (!isSfxEnabled(job.sfxId) || (!job.sceneManual && settings().sfx?.enabled !== true))) { idx++; continue; }
-            if (deadFor(job)) { skipDead(job); idx++; continue; }   // 1.3.8 이번 읽기(스트리밍이면 이 답장)에서 안 되는 엔진
+            if (deadFor(job)) {   // 1.3.8 이번 읽기(스트리밍이면 이 답장)에서 안 되는 엔진
+                skipDead(job);
+                // 6.3.9 v2.2 그 대사에 미룬 효과음은 버리지 않고 제자리에서 (6.4.0 처럼 · 합성 실패 줄과 같게)
+                if (fx.length && !isThoughtJob(job)) { const ir0 = interruptible(); currentIr = ir0; await startFx(fx.splice(0), ir0, 0); currentIr = null; if (my !== gen) break; }
+                idx++; continue;
+            }
+            if (deferFx(job) && voiceAfter(queue, idx + 1, job)) { fx.push(job); warmFx(job); idx++; continue; }   // 6.3.9 다음 대사 소리가 준비되면 같이
             current = job;
             sceneManual = job.sceneManual === true;
             nav = null;
@@ -1651,18 +1761,24 @@ async function run() {
                     if (my === gen && !ir.fired) played = await playSceneJob(job, ir);
                 } else {
                     if (Number.isInteger(job.segIndex)) sceneAudio.stopBefore(job.segIndex);   // 1.5.9 이어지던 소리가 멈추는 대사에 닿으면 끈다
+                    if (job.aheadErr && !job.audio) { const e = job.aheadErr; job.aheadErr = null; throw e; }   // 6.4.2 v3.1 미리 받다 실패한 줄 (재시도까지 마친 요청 — 다시 보내지 않음)
                     const mine = ensureAudio(job);
                     prefetch(idx + 1, s);
                     const a = await Promise.race([mine, ir.promise]);
                     if (my === gen && !ir.fired && a) {
+                        lookAhead(idx + 1, s);   // 6.4.2 v3 미리 받기 0: 다음 같은 목소리 줄을 지금 줄을 듣는 동안
                         showBar(job, false);
                         await waitIfPaused(ir);
+                        if (my === gen && !ir.fired && fx.length && !isThoughtJob(job)) { await startFx(fx.splice(0), ir); await waitIfPaused(ir); }   // 6.3.9 미룬 효과음을 대사와 같은 때(속마음은 건넘) · 그사이 일시정지
                         if (my === gen && !ir.fired) played = await playAudio(a, job, ir);
                     }
                 }
             } catch (e) {
                 if (my === gen && !ir.fired) fail(e, job);
             }
+            // 6.3.9 미룬 효과음이 남음: 넘김 · 멈춤이면 버리고, 대사가 안 났으면(합성 실패) 예전처럼 들리게 지금 (다 시작할 때까지 — 꼬리로 남는다)
+            if (fx.length && !isThoughtJob(job)) { if (my !== gen || ir.fired) fx = []; else await startFx(fx.splice(0), ir, 0); }
+            else if (fx.length && (my !== gen || (ir.fired && nav !== null))) fx = [];   // 속마음 줄에서 넘김 · 멈춤
             if (my !== gen) break;
             if (played && premade.delete(job.key)) addPreUsed(job.text.length);   // 미리 만든 소리를 들음 (소리마다 한 번)
             if (tapRun && tapRun.gen === my && !job.sceneKind) tapRun.played = played;   // 6.2.8 이어 듣기: 누른 줄의 마지막 대사 조각이 재생됐나 (효과음 조각은 안 봄)
@@ -1675,7 +1791,12 @@ async function run() {
             if (nav !== null) idx = nav;                          // 쉬는 동안 건너뛰기
             currentIr = null;
         }
-        if (my === gen && idx >= queue.length && sceneTails.size) await Promise.allSettled([...sceneTails]);
+        // 6.3.9 이어 듣기로 다음 줄이 이어질 누른 줄의 큐는 겹침 효과음 꼬리(시작 중인 것 포함)를 기다리지 않는다 (대사는 효과음을 기다리지 않음) — handOffTails.
+        //   아니면 시작 중인 효과음이 시작해 꼬리로 잡힌 뒤 그 꼬리까지 기다린다 (합성이 실패한 마지막 줄의 효과음도 끝까지)
+        const atEnd = my === gen && idx >= queue.length;
+        handoff = atEnd && (sceneTails.size > 0 || sceneStarts.size > 0) && !!tapRun && tapRun.gen === my && tapRun.played && chainOn();
+        if (atEnd && !handoff && sceneStarts.size) await Promise.allSettled([...sceneStarts]);
+        if (atEnd && !handoff && my === gen && sceneTails.size) await Promise.allSettled([...sceneTails]);
     } finally {
         running = false;
         if (my === gen) {
@@ -1684,17 +1805,21 @@ async function run() {
                 // 6.2.8 이어 듣기: 누른 줄의 큐가 저절로 끝났다 — 큐를 정리한 뒤 듣는 쪽(pregen.js)에 알린다 (그쪽이 다음 줄을 speakSegments 로 넣는다)
                 const ended = tapRun && tapRun.gen === my ? tapRun : null;
                 tapRun = null;
-                finishAll();
-                if (ended) for (const fn of endListeners) { try { fn(ended.mesId, ended.segs, { played: ended.played }); } catch { /* 듣는 쪽 오류는 재생과 상관없음 */ } }
+                if (handoff && ended) await handOffTails(ended, my);   // 6.3.9 이어 듣기: 먼저 알리고 꼬리는 다음 줄로 (이어 갈 줄이 없으면 예전처럼)
+                else {
+                    finishAll();
+                    if (ended) notifyEnded(ended);
+                }
             }
         } else if (queue.length && idx < queue.length) {
             run();                                                // stop() 뒤 새 큐가 들어온 경우
         }
     }
 }
-function finishAll({ keepDead = false } = {}) {
-    sceneAudio.stopAll();
-    sceneTails.clear();
+function finishAll({ keepDead = false, keepFx = false } = {}) {
+    // 6.3.9 이어 듣기로 넘길 때(keepFx): 반복음만 끄고 겹침 효과음 꼬리는 sceneTails 에 남겨 다음 줄 큐가 끝까지 챙긴다
+    if (keepFx) sceneAudio.stopLoops();
+    else { sceneAudio.stopAll(); sceneTails.clear(); sceneStarts.clear(); }
     sceneManual = false;
     current = null;
     deadEngines.clear();
@@ -1719,7 +1844,8 @@ function cancelCurrent() {
 function enqueue(jobs, { append = false } = {}) {
     if (!jobs.length) return;
     if (append && isPlaying()) { tapRun = null; queue.push(...jobs); run(); return; }   // 6.2.8 스트리밍 조각이 덧붙은 큐는 누른 줄의 큐가 아니다 (이어 듣기 없음)
-    stop({ keepStream: true });
+    const carry = !!fxCarry && jobs.every(j => j.mesId === fxCarry.mesId);   // 6.3.9 이어 듣기가 넣은 다음 줄(같은 메시지): 앞 줄의 겹침 효과음 꼬리를 끊지 않음
+    stop({ keepStream: true, keepFx: carry });
     queue = jobs;
     idx = 0;
     run();
@@ -1731,8 +1857,9 @@ export function stopForAddon() {
     for (const e of inflight.values()) { e.stale = true; e.ctrl.abort(); }
     stop();
 }
-export function stop({ keepStream = false } = {}) {
+export function stop({ keepStream = false, keepFx = false } = {}) {
     gen++;
+    fxCarry = null;   // 6.3.9 넘긴 꼬리는 한 번만 (사용자의 멈춤 · 다른 읽기는 keepFx 없이 → 예전처럼 끊음)
     tapRun = null;   // 6.2.8 끊긴 큐는 이어 듣기 없음
     usedEffects.clear();
     for (const job of exportJobs) job.ctrl?.abort();
@@ -1750,7 +1877,7 @@ export function stop({ keepStream = false } = {}) {
     if (speaking) try { window.speechSynthesis?.cancel(); } catch { /* 무시 */ }
     if (!keepStream && stream) stream.muted = true;               // 사용자가 멈춤: 이 답장의 스트리밍 읽기도 끝
     if (!keepStream) streamDead = null;                           // 1.3.8 다시 읽으면 그 엔진도 다시 시도
-    finishAll({ keepDead: keepStream });                          // enqueue 가 새 큐를 넣기 전(keepStream)엔 스트리밍 답장의 표를 남김
+    finishAll({ keepDead: keepStream, keepFx });                          // enqueue 가 새 큐를 넣기 전(keepStream)엔 스트리밍 답장의 표를 남김
 }
 export function pause() {
     if (!current || paused) return;
@@ -1866,7 +1993,7 @@ function speakNow(mesId, mes, { swipe, text, from, exclude, force, fromStream })
     const s = settings();
     const built = buildJobs(mesId, mes, sourcesOf(mes, s, { final: true }), { startSeg: from, final: true, exclude });
     const staged = resolveScript(mes, []) !== null || (s.sfx?.enabled && s.sfx?.auto && sfxCues(mesId).length);
-    const jobs = staged ? sceneJobs(mesId, scriptRows(mesId).filter(r => from <= 0 || r.sourceIndex >= from), { effects: s.sfx?.enabled === true }) : finishJobs(built.jobs, s, { merge: !pregenOn(s) });
+    const jobs = staged ? sceneJobs(mesId, scriptRows(mesId).filter(r => from <= 0 || r.sourceIndex >= from), { effects: s.sfx?.enabled === true }) : finishJobs(built.jobs, s, { merge: false });
     const prev = readState.get(mesId);
     // 스트리밍 뒤 그리기: "스트리밍으로 읽음" 표시는 남긴다 (미리 만들기가 같은 틱 뒤에 보고 건너뜀 — 두 번 값을 치르지 않게)
     readState.set(mesId, fromStream && prev && prev.swipe === swipe && typeof prev.streamed === 'boolean' ? { swipe, text, count: built.count, streamed: prev.streamed } : { swipe, text, count: built.count });
@@ -1961,6 +2088,16 @@ export function scriptRows(mesId, { forExport = false } = {}) {
     }
     return normalizeRows(rows);
 }
+/**
+ * 6.4.1 대본 줄의 언어 — 자동 읽기 · 탭과 같은 열쇠 · 같은 언어 코드. 고치지 않은 줄은 buildJobs 가 정한 언어(듣는 언어 · 옮긴 글의 언어),
+ * 고친 줄은 듣는 언어에 드는 글이면 그 언어, 아니면 글에서 감지 (전엔 늘 글에서 감지해 듣는 언어가 ja 여도 가나 없는 한자 줄이 zh 로 갔다)
+ */
+function sceneLang(row, original, s) {
+    if (original && original.text === row.text && typeof original.lang === 'string') return original.lang;
+    const lt = listen.listenTarget(s);
+    if (lt && listen.inTarget(row.text, lt)) return lt;
+    return detectLang(row.text) || '';
+}
 function sceneJobs(mesId, rows, { effects = true, preview = false, manual = false } = {}) {
     const mes = msg(mesId);
     if (!mes) return [];
@@ -1981,7 +2118,7 @@ function sceneJobs(mesId, rows, { effects = true, preview = false, manual = fals
         if (!voice) throw new Error(`${row.speaker || '이 줄'}의 목소리를 먼저 골라 주세요.`);
         const seg = original?.seg || { kind: 'dialogue', text: row.text };
         const parts = original?.parts?.map(part => ({ ...part, text: row.text })) || [{ seg, text: row.text }];
-        const j = { mesId, seg, segIndex: row.sourceIndex, parts, text: row.text, speaker: row.speaker || voice.name, voice, emotion: row.emotion || '', lang: detectLang(row.text) || '', loud: false, params: null, provider: null, key: '', audio: null, ctrl: null, scriptRowId: row.id, sceneVolume: row.volume, sceneGap: row.gapMs };
+        const j = { mesId, seg, segIndex: row.sourceIndex, parts, text: row.text, speaker: row.speaker || voice.name, voice, emotion: row.emotion || '', lang: sceneLang(row, original, s), loud: false, params: null, provider: null, key: '', audio: null, ctrl: null, scriptRowId: row.id, sceneVolume: row.volume, sceneGap: row.gapMs };
         if (s.max_chars > 0 && chars >= s.max_chars) { toastOnce(`${s.max_chars}자를 넘는 뒷부분은 읽지 않아요`, 'warning'); break; }
         const finished = finishJobs([j], s.max_chars > 0 ? { ...s, max_chars: s.max_chars - chars } : s, { merge: false });
         for (let i = 0; i < finished.length - 1; i++) finished[i].sceneGap = 0;
@@ -2380,7 +2517,7 @@ export function speakSegments(mesId, segs) {
         const flat = t.lines.flat();
         // 1.4.4 듣는 언어: 누른 줄이 아직 안 옮겨졌으면 이 메시지(자동 읽기 줄 + 누른 줄)를 한 요청으로 옮긴 뒤 다시 (한 번만 — 못 옮기면 원문)
         if (!tried && listenPendingOf(flat).length) { runPrepared(mesId, mes, { extra: flat, run: () => run(true) }); return true; }
-        const jobs = finishJobs(flat, s, { merge: !tapByLine(s) });   // 미리 만들기 · 「다음 한 줄」이 켜져 있으면 줄마다 (미리 만든 키와 같게)
+        const jobs = finishJobs(flat, s, { merge: false });   // 6.4.2 줄마다 (자동 읽기 · 미리 만든 키와 같게)
         if (!jobs.length) {
             if (t.missing) toastOnce('목소리를 먼저 정해요 (TTS 설정)', 'warning');
             else if (t.missingUser) { void askPersonaVoice().then(ok => { if (ok) run(); }); }
@@ -2433,7 +2570,7 @@ function externalTapSegments(mes, { text = '', index = null }) {
     return hit.map(x => ({ kind: 'dialogue', text: x.text, raw: x.raw ?? x.text, color: x.color || null, tags: (x.tags || []).slice(), speakerHint: x.speakerHint || null, line: x.line || 0, dialogueIndex: dial.indexOf(x) }));
 }
 /** 1.3.8 시험용 (tools/tests/tts-extras.mjs · tts-onboarding.mjs): 작업 마무리(엔진 값 · 세기 · 캐시 키) · 이번 읽기에서 안 되는 엔진 */
-export const _forTest = { finishJobs, paramsFor, listenNeeds, listenPendingOf, listenFill, sceneJobs, setListenTimeout: (ms) => { LISTEN_TIMEOUT_MS = ms; }, deadEngines: () => [...deadEngines], streamDead: () => (streamDead ? { mesId: streamDead.mesId, set: [...streamDead.set] } : null) };
+export const _forTest = { finishJobs, paramsFor, listenNeeds, listenPendingOf, listenFill, sceneJobs, setListenTimeout: (ms) => { LISTEN_TIMEOUT_MS = ms; }, deadEngines: () => [...deadEngines], playCool, streamDead: () => (streamDead ? { mesId: streamDead.mesId, set: [...streamDead.set] } : null) };
 /** 이 답장을 스트리밍하며 실제로 읽어 줬나 (미리 만들기가 건너뜀 — 분석 전 키라 다시 만들면 두 번 값을 치름) */
 export function wasStreamRead(mesId) {
     const mes = msg(mesId);
@@ -2469,7 +2606,7 @@ export function onStreamProgress(mesId, text) {
     if (n && orig[n - 1].kind !== 'dialogue' && !/\n\s*$/.test(src)) n--;
     if (n <= stream.queued) return;
     const built = buildJobs(mesId, mes, { orig: orig.slice(0, n), disp: null }, { startSeg: stream.queued, final: false });
-    const jobs = finishJobs(built.jobs, s);
+    const jobs = finishJobs(built.jobs, s, { merge: false });   // 6.4.2 줄마다
     stream.queued = n;
     stream.jobs += jobs.length;
     if (built.deferredAt >= 0 && (stream.deferredAt < 0 || built.deferredAt < stream.deferredAt)) stream.deferredAt = built.deferredAt;
@@ -2499,7 +2636,7 @@ export function onStreamEnd(mesId) {
     const from = st.jobs ? st.queued : 0;
     readState.set(mesId, { swipe, text, count: orig.length, streamed });
     if (orig.length <= from) { idleDead(); return false; }
-    const jobs = finishJobs(buildJobs(mesId, mes, { orig, disp: null }, { startSeg: from, final: true }).jobs, s);
+    const jobs = finishJobs(buildJobs(mesId, mes, { orig, disp: null }, { startSeg: from, final: true }).jobs, s, { merge: false });   // 6.4.2 줄마다
     if (!jobs.length) { idleDead(); return false; }
     enqueue(jobs, { append: true });
     return false;
@@ -2596,7 +2733,7 @@ export async function downloadMessage(mesId) {
     const s = settings();
     // 1.4.4 듣는 언어: 안 옮긴 줄이 있으면 먼저 (한 요청 · 못 옮기면 원문)
     if (listen.listenTarget(s)) { const need = listenNeeds(mesId, mes); if (need.length) await listenFill(need); }
-    const jobs = finishJobs(buildJobs(mesId, mes, sourcesOf(mes, s, { final: true }), { startSeg: 0, final: true }).jobs, s, { merge: !pregenOn(s) })
+    const jobs = finishJobs(buildJobs(mesId, mes, sourcesOf(mes, s, { final: true }), { startSeg: 0, final: true }).jobs, s, { merge: false })   // 6.4.2 줄마다 — 읽어 둔 소리를 그대로 이어 붙인다
         .filter(j => j.provider.caps?.blob !== false);
     if (!jobs.length) { toast('내려받을 대화문이 없어요', 'warning'); return false; }
     toast(`${jobs.length}개 만드는 중…`, 'info');

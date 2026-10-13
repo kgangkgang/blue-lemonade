@@ -50,7 +50,7 @@ import { capturedMessages, capturedRequest, holdGeneration, regenerateReply, rep
 import { applyUpgrades } from './upgrades.js';
 import { startQuickBan, setQuickBanEnabled } from './quick-ban.js';
 
-const VERSION = '2.0.9';
+const VERSION = '2.1.0';
 const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];
@@ -141,9 +141,34 @@ function activeExceptions(text) {
     return list.filter((_, at) => hit.has(at));
 }
 
+// 6.4.x 소유 판단: 「남의 소유」로 볼 다른 인물들 — 한 사람의 표기는 한 묶음. 이름 다리(번역 용어집의 이름 짝 · 3개 언어) · 다시 쓰기 예외 인물 ·
+//   지금 채팅의 캐릭터(그룹이면 멤버) · 페르소나. 규칙의 그 사람(near)이 든 묶음은 activateRules(core.othersOf)가 뺀다
+function peopleNames() {
+    const groups = [];
+    try {
+        const bridge = globalThis[Symbol.for('blue-lemonade.names')];
+        if (bridge?.version === 1 && typeof bridge.groups === 'function') groups.push(...bridge.groups());
+    } catch { /* 번역 애드온이 없거나 꺼짐 */ }
+    for (const exception of Array.isArray(settings.exceptions) ? settings.exceptions : []) {
+        const names = splitNames(exception?.names);
+        if (names.length) groups.push(names);
+    }
+    try {
+        const context = getContext();
+        const add = name => { const text = String(name ?? '').trim(); if (text) groups.push([text]); };
+        add(context.name1);
+        add(context.name2);
+        if (context.groupId) {
+            const group = (context.groups || []).find(item => item.id === context.groupId);
+            for (const avatar of group?.members || []) add((context.characters || []).find(item => item.avatar === avatar)?.name);
+        }
+    } catch { /* 화면 밖 */ }
+    return groups;
+}
+
 /** Rules in play for this text: limited rules only while one of their characters is in the recent messages. */
 function rulesFor(recent) {
-    return activateRules(compiled, recent, resolveNames);
+    return activateRules(compiled, recent, resolveNames, peopleNames());
 }
 
 function newId(prefix) {

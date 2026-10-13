@@ -11,6 +11,7 @@ const clamp = (value, min, max, fallback) => Number.isFinite(Number(value)) ? Ma
 export function createSfxController() {
     const active = new Set();
     let epoch = 0, paused = false, volume = 1, rate = 1, rateRevision = 0;
+    let loopEpoch = 0;   // 6.3.9 stopLoops 가 올림 — 아직 불러오는 중인 반복음도 취소
     function applyVolume(item) {
         item.audio.volume = clamp(item.volume * volume * (item.loop ? 0.3 : 1), 0, 1, 1);
     }
@@ -41,9 +42,10 @@ export function createSfxController() {
         if (!meta || !isSfxEnabled(id)) return null;
         const token = epoch;
         const preference = sfxPreferenceRevision(id);
-        const cancelled = () => token !== epoch || !isSfxEnabled(id) || preference !== sfxPreferenceRevision(id);
         const requestedRateRevision = rateRevision;
         const loop = options.loop === undefined ? meta.loop === true : options.loop === true;
+        const loopToken = loopEpoch;
+        const cancelled = () => token !== epoch || (loop && loopToken !== loopEpoch) || !isSfxEnabled(id) || preference !== sfxPreferenceRevision(id);
         const durationMs = loop ? 0 : clamp(options.durationMs, 0, 8000, 0);
         const repeats = durationMs || loop ? 1 : Math.round(clamp(options.repeats, 1, 4, 1));
         if (loop) {
@@ -127,6 +129,11 @@ export function createSfxController() {
     function stopBefore(seg) {
         for (const item of [...active]) if (item.stopBeforeSeg != null && seg >= item.stopBeforeSeg) finish(item);
     }
+    /** 6.3.9 반복(loop) 소리만 끈다 — 아직 불러오는 중인 반복음도. 이어 듣기로 넘길 때 누른 줄 밑에 깔린 반복음은 그 줄과 끝나고, 겹침 효과음 꼬리는 다음 줄 밑에서 끝까지 */
+    function stopLoops() {
+        loopEpoch++;
+        for (const item of [...active]) if (item.loop) finish(item);
+    }
     function stopDisabled() {
         for (const item of [...active]) if (!isSfxEnabled(item.id)) finish(item);
     }
@@ -139,5 +146,5 @@ export function createSfxController() {
         rateRevision++;
         for (const item of active) item.audio.playbackRate = rate;
     }
-    return Object.freeze({ play, pause, resume, stopAll, stopBefore, stopDisabled, setVolume, setRate });
+    return Object.freeze({ play, pause, resume, stopAll, stopBefore, stopLoops, stopDisabled, setVolume, setRate });
 }

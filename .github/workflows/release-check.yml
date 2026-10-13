@@ -65,6 +65,7 @@ jobs:
           node tools/tests/zipinstall-remove.mjs .
           node tools/tests/word-replace-marks.mjs .
           node tools/tests/translator-glossary.mjs .
+          node tools/tests/translator-leftover.mjs .
           node tools/tests/names-bridge.mjs .
           node tools/tests/names-jp.mjs .
           node tools/tests/translator-speech.mjs .
@@ -76,10 +77,12 @@ jobs:
           node tools/tests/cutout-edge.mjs .
           node tools/tests/numcomma-fit.mjs .
           node tools/tests/main-chat-rules.mjs .
+          node tools/tests/main-chat-finish.mjs .
           node tools/tests/natural-slash.mjs .
           node tools/tests/live-models.mjs .
           node tools/tests/translator-models.mjs .
           node tools/tests/rewrite-models.mjs .
+          node tools/tests/rewrite-owner.mjs .
           node tools/tests/prompt-models.mjs .
           node tools/tests/modelswitch-models.mjs .
           node tools/tests/modelswitch-state.mjs .
@@ -112,6 +115,7 @@ jobs:
           node tools/tests/weather-retired.mjs .
           node tools/tests/translator-archive-bridge.mjs .
           node tools/tests/modelswitch-detect.mjs .
+          node tools/tests/extension-folder.mjs .
           node tools/tests/model-register-move.mjs .
           node tools/tests/model-register-offer.mjs .
           node tools/tests/preset-sharing.mjs .

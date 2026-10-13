@@ -3,6 +3,7 @@
 import { extension_settings } from '../../../../../../extensions.js';
 import { saveSettingsDebounced } from '../../../../../../../script.js';
 import { safeOrigin } from './pricing.js';
+import { folderBase } from '../../extension-folder.js';   // 6.4.2 판 번호가 붙은 설치 폴더 이름도 이름표로
 
 export const MODULE = 'request_log';
 export const FOLDER = 'blue-lemonade'; // 2.0.0 성능 보조로 합침
@@ -176,7 +177,7 @@ const CALLER_LABELS = {
 };
 
 export function callerLabel(caller) {
-    return CALLER_LABELS[caller] ?? String(caller ?? 'unknown');
+    return CALLER_LABELS[caller] ?? CALLER_LABELS[folderBase(caller)] ?? String(caller ?? 'unknown');
 }
 
 /** 채팅 요청의 종류 */

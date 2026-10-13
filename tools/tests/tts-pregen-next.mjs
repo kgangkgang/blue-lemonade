@@ -536,16 +536,16 @@ await test('설정 창 한 줄: 다음 한 줄은 대사 클릭이 꺼지면 쉼
 });
 
 // ---------- 6) 재생기 연결 (원문)
-await test('player.js: 누른 줄을 재생 줄에 넣은 뒤 듣는 쪽을 부른다 (채팅 메시지만) · 다음 한 줄이면 누른 줄도 줄마다 (같은 키) · 자동 읽기 · 내려받기는 그대로', () => {
+await test('player.js: 누른 줄을 재생 줄에 넣은 뒤 듣는 쪽을 부른다 (채팅 메시지만) · 6.4.2 누른 줄 · 자동 읽기 · 내려받기 모두 줄마다 (같은 키)', () => {
     const src = fs.readFileSync(path.join(root, 'player.js'), 'utf8');
     const body = src.slice(src.indexOf('export function speakSegments'), src.indexOf('export function speakExternal'));
     const enq = body.indexOf('enqueue([...cues.before, ...jobs, ...cues.after], { append: false });');
     const call = body.indexOf('if (mesId >= 0) for (const fn of tapListeners) { try { fn(mesId, segs); } catch');
     assert.ok(enq > 0 && call > enq, '재생 줄에 넣은 뒤');
-    assert.match(body, /finishJobs\(flat, s, \{ merge: !tapByLine\(s\) \}\)/);
-    assert.match(src, /const tapByLine = \(s\) => pregenOn\(s\) \|\| s\?\.pregen === 'next' \|\| s\?\.pregen === 'chain';/);
+    assert.match(body, /finishJobs\(flat, s, \{ merge: false \}\)/);
+    assert.ok(!/merge: !(pregenOn|tapByLine)\(s\)/.test(src) && !/const tapByLine/.test(src), '6.4.2 설정에 따라 합치는 읽기 없음');
     assert.match(src, /export function onEnded\(fn\)/, '6.2.8 누른 큐의 끝 알림');
-    assert.ok(/const ended = tapRun && tapRun\.gen === my \? tapRun : null;\s*tapRun = null;\s*finishAll\(\);/.test(src), '큐를 정리한 뒤에 알린다');
+    assert.ok(/const ended = tapRun && tapRun\.gen === my \? tapRun : null;\s*tapRun = null;\s*if \(handoff && ended\) await handOffTails\(ended, my\);[^\n]*\n\s*else \{\s*finishAll\(\);\s*if \(ended\) notifyEnded\(ended\);/.test(src), '큐를 정리한 뒤에 알린다 (6.3.9 이어 듣기로 넘길 때는 handOffTails 가 먼저 알리고 정리)');
     assert.ok(/tapRun = mesId >= 0 \? \{ gen, mesId, segs, played: false \} : null;/.test(body), '누른 줄의 큐만');
     assert.match(src, /const pregenOn = \(s\) => s\?\.pregen === 'dialogue' \|\| s\?\.pregen === 'all';/, '자동 읽기 · 감정 태그 규칙은 예전 그대로');
     assert.match(src, /export function onTapped\(fn\)/);

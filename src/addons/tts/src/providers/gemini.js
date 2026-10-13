@@ -110,7 +110,9 @@ function gError(status, text) {
     const st = String(err?.status || '');
     const msg = safeMsg(err?.message || '', 100);
     const make = (m, { retry = false, fatal = false, code = st || status } = {}) => {
-        const e = new Error(m); e.code = code; e.retry = retry; if (fatal) e.fatal = true; return e;
+        const e = new Error(m); e.code = code; e.retry = retry; if (fatal) e.fatal = true;
+        if (status === 429) e.status = 429;   // 6.4.2 v3 code 는 RESOURCE_EXHAUSTED 같은 글자라 HTTP 429 도 (재생기 · 미리 만들기가 잦은 요청으로 알아보게)
+        return e;
     };
     // 틀린 키는 400 INVALID_ARGUMENT "API key not valid" 로 온다 → 인증 오류 code 로 바꿔 재생기가 줄을 멈추게
     if (status === 401 || st === 'UNAUTHENTICATED' || /api key/i.test(msg)) return make('API 키가 맞지 않아요', { fatal: true, code: 'UNAUTHENTICATED' });

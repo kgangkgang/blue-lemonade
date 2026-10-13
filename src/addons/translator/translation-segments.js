@@ -555,7 +555,8 @@ export async function translateSegments({ parts, signature, request, check = () 
     check();
     for (const [i, body, key] of keyed) {
         // 5.4.1: 예전에 캐시에 들어간 원문 되풀이 답(원문+화살표+번역 · 망가진 ⟦n] 표시)은 없는 셈 치고 다시 요청한다
-        if (saved.has(key) && cleanParagraphEcho(saved.get(key), body) === saved.get(key).replace(/^\n+|\s+$/g, '')) { output[i] = saved.get(key); reused++; continue; }
+        // 6.4.2 v2 지금 규칙으로 캐시에 넣지 않을 문단(예: 6.4.1 이하가 넣은 원문 한자 남은 문단)은 다시 쓰지 않고 번역한다 — 서명은 그대로라 다른 문단 캐시는 산다
+        if (saved.has(key) && cleanParagraphEcho(saved.get(key), body) === saved.get(key).replace(/^\n+|\s+$/g, '') && cacheable(body, saved.get(key))) { output[i] = saved.get(key); reused++; continue; }
         if (!missing.has(key)) missing.set(key, { key, body, indices: [] });
         missing.get(key).indices.push(i);
     }

@@ -214,7 +214,7 @@ const READ_CARDS = {
     ]],
 };
 const CACHE_FIELDS = [
-    { key: 'cache_limit', label: '최대 개수', type: 'number', min: 10, max: 5000, step: 10, default: 1000 },
+    { key: 'cache_limit', label: '최대 개수', type: 'number', min: 10, max: 5000, step: 10, default: 1000, help: '작으면 오래된 소리부터 지워져서, 다시 들을 때 또 사요' },   // 6.4.2
     { key: 'cache_mb', label: '최대 MB', type: 'number', min: 10, max: 2000, step: 10, default: 200 },
 ];
 

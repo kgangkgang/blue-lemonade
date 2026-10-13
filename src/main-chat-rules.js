@@ -5,6 +5,7 @@
 // 쓰는 live-models.js 규칙과 같은 판단. 본체가 이미 빼는 모델(opus-5 · sonnet-5 · fable)은 결과가 같고, Claude 5 가 아닌 모델은 그대로.
 // 다시 쓰기 리롤(reroll.js)은 같은 요청 객체를 잡아 두므로 처리 순서와 상관없이 같은 값으로 다시 보낸다.
 import { isClaude5Plus } from './live-models.js';
+import { mainGoogleBody, isGenerateRequest, createMainGate, stackOrigin, HELPER_EVENTS, tallyOf, finishNotice, NOTICES } from './main-chat-finish.js';   // 6.4.x Google 답의 끝 이유 알림 (v3 본채팅 문지기)
 
 const SAMPLING = ['temperature', 'top_p', 'top_k', 'frequency_penalty', 'presence_penalty'];
 
@@ -14,6 +15,49 @@ export function stripClaude5Sampling(data) {
     const removed = SAMPLING.filter(key => Object.hasOwn(data, key));
     for (const key of removed) delete data[key];
     return removed;
+}
+
+// 6.4.x 본채팅 Google(AI Studio · Vertex AI) 답의 끝 이유 알림 (요청 로그를 꺼도) — main-chat-finish.js 머리말.
+//   fetch 를 한 번 감싸 본채팅 Google 생성 요청이면 응답 사본을 끝까지 읽어 끝 이유 · 서버 오류 글로 한 줄 알림. 한 요청에 한 번
+//   v3: 본채팅인지는 본문 꼴(type · 공급자)에 더해 문지기로 — 본채팅 생성 창 안 · 실리태번 헬퍼 생성 창 밖에서 만든 본문의 표와 맞는 요청만.
+//       헬퍼 generate · generateRaw(type 'normal') 와 다시 쓰기 리롤의 재전송(같은 본문)은 조용하다
+const mainGate = createMainGate();
+const OWN_FOLDER = (() => { try { return decodeURIComponent(new URL('../', import.meta.url).pathname.split('/').filter(Boolean).pop() || ''); } catch { return ''; } })();   // 이 테마 폴더 (스택에서 제 프레임은 안 센다)
+function noticeFinish(text) {
+    const kind = finishNotice(tallyOf(text));
+    if (!kind) return;
+    try { globalThis.toastr?.warning?.(NOTICES[kind], '', { timeOut: 10000 }); } catch { /* 알림 없음 */ }
+}
+function watchMainReplies() {
+    if (typeof window === 'undefined' || typeof window.fetch !== 'function' || window.fetch.blMainReplyWatch) return;
+    const original = window.fetch;
+    const watched = function (input, init) {
+        let main = false;
+        try {
+            const body = mainGoogleBody(input, init); main = body !== null && mainGate.take(body);
+            if (!main && isGenerateRequest(input, init)) mainGate.otherRequestSent();   // 헬퍼가 보낸 요청 — 오류로 끝나도 헬퍼 창이 닫힌다
+        } catch { main = false; }
+        const pending = original.apply(this, arguments);
+        if (!main) return pending;
+        return pending.then((response) => {
+            try {
+                if (response?.ok && response.body) response.clone().text().then(noticeFinish).catch(() => {});
+            } catch { /* 사본을 못 만듦 */ }
+            return response;
+        });
+    };
+    watched.blMainReplyWatch = true;
+    window.fetch = watched;
+}
+/** 문지기에 실리태번 생성 신호 · 헬퍼 생성 신호 · 보내기 직전 본문을 잇는다 */
+function listenMainGate(eventSource, event_types) {
+    const on = (event, fn) => { if (event) eventSource.on(event, (...args) => { try { fn(...args); } catch { /* 알림만 빠진다 */ } }); };
+    on(event_types?.GENERATION_STARTED, (type, _options, dryRun) => mainGate.generationStarted(type, dryRun));
+    on(event_types?.GENERATION_ENDED, () => mainGate.generationEnded());
+    on(event_types?.GENERATION_STOPPED, () => mainGate.generationEnded());
+    // 보내기 직전 본문(CHAT_COMPLETION_SETTINGS_READY)은 Claude 5 규칙과 같은 처리에서 mainGate.settingsReady 로 (처리는 하나)
+    for (const event of HELPER_EVENTS.start) on(event, (id) => mainGate.helperStarted(id));
+    on(HELPER_EVENTS.end, (_text, id) => mainGate.helperEnded(id));
 }
 
 let started = false;
@@ -26,7 +70,10 @@ export function startMainChatRules() {
         if (!name) return;
         eventSource.on(name, (data) => {
             try { stripClaude5Sampling(data); } catch (error) { console.warn('[블루 레몬에이드] 본채팅 Claude 5 규칙', error); }
+            try { mainGate.settingsReady(data, stackOrigin(new Error().stack, OWN_FOLDER)); } catch { /* v3 본채팅 문지기 — 알림만 빠진다 */ }
         });
+        watchMainReplies();   // 6.4.x 본채팅 Google 답의 끝 이유 알림
+        listenMainGate(eventSource, event_types);   // v3 본채팅 문지기 (생성 창 · 헬퍼 창 · 본문 표)
         started = true;
     } catch (error) {
         console.warn('[블루 레몬에이드] 본채팅 Claude 5 규칙을 켜지 못했어요', error);

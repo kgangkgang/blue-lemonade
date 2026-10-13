@@ -184,16 +184,27 @@ function bridgePairs() {
     }
     return list;
 }
-/** has(접은 열쇠) · canonOf(접은 열쇠) → 대표 이름 · put(표면 이름, 대표 이름) */
+/** has(접은 열쇠) · canonOf(접은 열쇠) → 대표 이름 · put(표면 이름, 대표 이름)
+ *  6.4.2 한 차례씩: 아는 이름과 짝인 모르는 표기를 모두 모은 뒤 붙인다 — 서로 다른 두 사람에게 닿는 표기(Ren · Len → レン)는 누구에게도 붙이지 않는다
+ *  (예전: 먼저 나온 짝의 사람이 가져가서 남의 목소리 · 색). 붙인 표기로 다음 차례에 사슬을 잇는다. 짝 순서와 상관없다 */
 function bridgeInto(has, canonOf, put) {
     const pairs = bridgePairs();
     if (!pairs.length) return;
-    for (let pass = 0; pass < 2; pass++) {
+    for (let round = 0; round < 8; round++) {
+        const offers = new Map();   // 접은 표면 → { surface, owners: 접은 대표 → 대표 }
+        const offer = (k, surface, owner) => {
+            let o = offers.get(k);
+            if (!o) offers.set(k, o = { surface, owners: new Map() });
+            o.owners.set(fold(owner), owner);
+        };
         for (const { src, dst, ks, kd } of pairs) {
             const a = has(ks), b = has(kd);
-            if (a && !b) put(dst, canonOf(ks));
-            else if (b && !a) put(src, canonOf(kd));
+            if (a && !b) offer(kd, dst, canonOf(ks));
+            else if (b && !a) offer(ks, src, canonOf(kd));
         }
+        let added = 0;
+        for (const { surface, owners } of offers.values()) if (owners.size === 1) { put(surface, owners.values().next().value); added++; }
+        if (!added) return;
     }
 }
 /** 별명 → 대표 이름 (모르면 그대로) */

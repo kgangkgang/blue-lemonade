@@ -110,6 +110,35 @@ let pruning = null;
 let protectedKeys = new Set();   // 정리에서 빼는 키 (미리 만든 최근 답장)
 const clearSubs = new Set();
 
+// 6.4.2 한도 정리로 지운 열쇠 (최근 EVICT_MAX 개, 오래된 것부터 빠짐) — 그 줄을 다시 사면 재생기가 TTS 기록에 알린다. 비우기 · ↻ 다시 만들기는 넣지 않는다
+const EVICT_KEY = 'lemon_voice_evicted';
+const EVICT_MAX = 1000;
+let evicted = null;
+function evictedSet() {
+    if (evicted) return evicted;
+    try { const v = JSON.parse(localStorage.getItem(EVICT_KEY) || '[]'); evicted = new Set(Array.isArray(v) ? v.filter(k => typeof k === 'string') : []); }
+    catch { evicted = new Set(); }
+    return evicted;
+}
+function saveEvicted() { try { localStorage.setItem(EVICT_KEY, JSON.stringify([...evictedSet()])); } catch { /* 메모리만 */ } }
+/** 한도 정리가 지운 열쇠 기억 */
+export function noteEvicted(keys) {
+    const set = evictedSet();
+    let n = 0;
+    for (const k of keys || []) { if (typeof k !== 'string' || !k) continue; set.delete(k); set.add(k); n++; }
+    if (!n) return;
+    while (set.size > EVICT_MAX) set.delete(set.values().next().value);
+    saveEvicted();
+}
+/** 이 열쇠를 한도 정리로 지웠었나 (물으면 잊는다 — 다시 만들어 캐시에 들어가니까) */
+export function takeEvicted(key) {
+    const set = evictedSet();
+    if (!set.has(key)) return false;
+    set.delete(key);
+    saveEvicted();
+    return true;
+}
+
 /** 정리에서 뺄 키 (미리 만들기가 최근 답장 몇 개의 키를 준다). 전부 바꿔 끼움 */
 export function setProtected(keys) {
     protectedKeys = new Set([...(keys || [])].filter(Boolean));
@@ -154,6 +183,7 @@ export function prune() {
             if (c) { rows.push({ key: c.value.key, size: sizeOf(c.value) }); c.continue(); return; }
             const pick = pickEvictions(rows, lim);
             for (const k of pick.keys) st.delete(k);
+            noteEvicted(pick.keys);   // 6.4.2
             est = { count: pick.count, bytes: pick.bytes };
         };
     }).finally(() => { pruning = null; });
