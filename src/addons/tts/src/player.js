@@ -44,7 +44,7 @@ import { chat, substituteParams, eventSource, event_types } from '../../../../..
 import { getContext } from '../../../../../../../extensions.js';
 import { settings, providerConfig, addUsage, addPreUsed, USER_AUTO } from './settings.js';
 import { segmentMessage, pairSegments, colorsClash, detectLang, parseRegexLines, speechDisplay } from './text.js';
-import { resolveSpeaker, canon, knownNames as learnedNames } from './speakers.js';
+import { resolveSpeaker, canon, knownNames as learnedNames, colorOfName } from './speakers.js';
 import { voiceFor, findVoice, allVoices, twinOf, engineUsable, isPinned, setPersonaAuto, personaKnown, ensureStock, extraEngine, hasOwnVoice, unknownVoice, shownVoices } from './voices.js';
 import { usesTags } from './providers/elevenlabs.js';   // 6.1.8 다른 확장용 synth — 글 속 오디오 태그를 받는 모델인가
 import { POPUP_TYPE, POPUP_RESULT, callGenericPopup } from '../../../../../../../popup.js';
@@ -62,7 +62,7 @@ import { chipWords, addWord, removeWord, wordFold } from './word-chips.js';   //
 import { playbackOriginal, playbackOriginalTitle, wavWithCredits } from './playback-details.js';
 import { createSfxController } from './sfx-audio.js';
 import { mixScene } from './scene-mix.js';
-import { paintColorHighlights, clearColorHighlights, piecesOf, speakerColor, colorKey } from './highlight-colors.js';
+import { paintColorHighlights, clearColorHighlights, piecesOf, speakerColor, colorKey, ownSpeakerColor } from './highlight-colors.js';
 
 const TITLE = 'TTS';
 const MAX_CONC = 2;                 // 동시 합성 요청
@@ -2734,15 +2734,26 @@ function themeInks() {
     // 테마 변수는 color-mix() 같은 식일 수 있어 그대로는 못 읽는다 → 숨긴 칸의 color 로 풀어 읽는다
     return THEME_INKS.map(name => { inkProbe.style.color = `var(${name}, transparent)`; return getComputedStyle(inkProbe).color; });
 }
+/** 6.3.9 그 줄 화자의 팔레트 색 (speakers.colorOfName — 별명 · 이름 다리를 거침, 없으면 '') */
+function speakerPalette(job) {
+    try {
+        const mes = job.mesId >= 0 ? msg(job.mesId) : null;
+        const userName = mes ? chatCtx(mes).userName : '';
+        return colorOfName(job.speaker || '', { userName }) || '';
+    } catch { return ''; }
+}
 function barNameColor(job) {
+    // 6.3.9 화자의 팔레트 색이 그 줄에 보이면 그 색이 먼저 (테마 굵게 #ffe873 근처의 노랑 · 인용 #93c9ff 근처의 하늘색이 「색 없음」으로 빠지던 것 — 사용자 제보)
+    const own = speakerPalette(job);
     try {
         const root = job.mesId >= 0 ? document.querySelector(`#chat .mes[mesid="${job.mesId}"] .mes_text`) : null;
         const ranges = root ? rangesFor(job, root) : [];
-        if (ranges.length) return speakerColor(piecesOf(ranges, root), [getComputedStyle(root).color, ...themeInks()]);
+        if (ranges.length) { const pieces = piecesOf(ranges, root); return ownSpeakerColor(pieces, own) || speakerColor(pieces, [getComputedStyle(root).color, ...themeInks()]); }
     } catch { /* 화면 없음 → 원문 표시 */ }
     let off = [];
     try { off = [getComputedStyle(document.body).color, ...themeInks()]; } catch { off = []; }
-    return speakerColor((job.parts || []).map(p => ({ color: p.seg?.color || p.alt?.color || '', text: p.seg?.text || p.alt?.text || '' })), off);
+    const parts = (job.parts || []).map(p => ({ color: p.seg?.color || p.alt?.color || '', text: p.seg?.text || p.alt?.text || '' }));
+    return ownSpeakerColor(parts, own) || speakerColor(parts, off);
 }
 /** 막대 이름에 그 줄의 대사 색을 입힌다 (줄마다 한 번 · fresh = 다시 잰다) */
 function tintBarName(job, fresh = false) {

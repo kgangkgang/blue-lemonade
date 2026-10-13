@@ -114,10 +114,10 @@ assert.equal(dropStrayWords('<font color="#aabbcc">가나다 라마바</font>\nV
 const idx=(await import('node:fs')).readFileSync(new URL('src/addons/translator/index.js',root),'utf8');
 assert.ok(/translation = await translate\(originalText,[^\n]*\n[^\n]*\} finally \{\n[^\n]*badge\.remove\(\);\n[^\n]*\}\n[\t ]*translation = dropStrayWords\(translation, originalText\);/.test(idx),'새 번역은 캐시에 넣기 전에 걷는다');
 assert.ok(/retranslation = dropStrayWords\(retranslation, originalText\);[^\n]*\n[\s\S]{0,600}storeTranslationQuietly\(originalText, retranslation\)/.test(idx),'다시 번역도 캐시에 넣기 전에');
-assert.ok(/if \(cachedTranslation && !editedByHand\) translation = dropStrayWords\(translation, originalText\);/.test(idx),'캐시에서 온 옛 번역도 (손으로 고친 것 빼고)');
-assert.ok(/extra\.translation_edited === extra\.original_text_hash \? shown : dropStrayWords\(shown, original\)/.test(idx),'보여 줄 때 고치기 — 손으로 고친 번역은 그대로');
+assert.ok(/if \(cachedTranslation && !editedByHand\) translation = tidyGlossaryOutput\(originalText, dropStrayWords\(translation, originalText\)\);/.test(idx),'캐시에서 온 옛 번역도 (손으로 고친 것 빼고) · 6.4.0 용어집 이름까지');
+assert.ok(/extra\.translation_edited === extra\.original_text_hash \? shown : tidyGlossaryOutput\(original, dropStrayWords\(shown, original\)\)/.test(idx),'보여 줄 때 고치기 — 손으로 고친 번역은 그대로 · 6.4.0 용어집 이름까지');
 assert.ok(/addTranslationToDB\(originalTextForDbKey, newText\);\n[\t ]*message\.extra\.translation_edited = originalHashOf\(originalTextForDbKey\);/.test(idx),'손으로 고치면 표시');
-assert.ok(/translation_edited === originalHashOf\(originalText\) \? cached : dropStrayWords\(cached, originalText\)/.test(idx),'교정 · 수정 창에 들어가는 캐시 번역도');
+assert.ok(/translation_edited === originalHashOf\(originalText\) \? cached : tidyGlossaryOutput\(originalText, dropStrayWords\(cached, originalText\)\)/.test(idx),'교정 · 수정 창에 들어가는 캐시 번역도 · 6.4.0 용어집 이름까지');
 assert.ok(/return dropStrayWords\(translatedText, textToTranslate\);/.test(idx),'/llmTranslate (북마크 번역)');
 assert.ok(/processTranslationText\(originalTextForDbKey, newText\)/.test(idx),'손으로 고친 글은 그대로 보인다');
 console.log('PASS 6.2.4 stray Latin word line dropped only when absent from the source and the translation is mostly CJK');
@@ -149,11 +149,11 @@ assert.ok(/const editedByHand = fromCache && isHandEdited\(message\.extra, origi
 assert.ok(/if \(!editedByHand\) delete extra\.translation_edited;/.test(bm),'모델이 새로 옮기면 표시를 지운다');
 assert.ok(/extra\.translation_edited = extra\.original_text_hash;/.test(bm),'북마크 창에서 손으로 고치면 표시');
 assert.ok(/delete extra\.display_text;\n[\t ]*delete extra\.original_translation_backup;\n[\t ]*delete extra\.translation_edited;/.test(bm),'지우면 표시도');
-assert.ok(/\?\.dropStrayWords;/.test(bm)&&/dropStrayWords, \/\/ 6\.2\.5/.test(read('src/addons/translator/index.js')),'번역기 API 로 같은 함수를 쓴다');
+assert.ok(/\?\.dropStrayWords;/.test(bm)&&/dropStrayWords: \(text, source\) => tidyGlossaryOutput\(source, dropStrayWords\(text, source\)\), \/\/ 6\.4\.0/.test(read('src/addons/translator/index.js')),'번역기 API 로 같은 정리를 쓴다');
 const sel=read('src/addons/translator/selection/translation.js');
 assert.ok(/job\.clean\(translation, job\.source, job\.message\) : translation\);/.test(sel),'선택 재번역: 보여 줄 글만 걷는다');
 assert.ok(/await updateCache\(job\.source, job\.translated, translation\);/.test(sel),'캐시 비교-교환은 원문 그대로');
-assert.ok(/clean: \(text, source, message\) => message\?\.extra\?\.translation_edited === originalHashOf\(source\) \? text : dropStrayWords\(text, source\),/.test(read('src/addons/translator/index.js')),'손으로 고친 번역은 그대로');
+assert.ok(/clean: \(text, source, message\) => message\?\.extra\?\.translation_edited === originalHashOf\(source\) \? text : tidyGlossaryOutput\(source, dropStrayWords\(text, source\)\),/.test(read('src/addons/translator/index.js')),'손으로 고친 번역은 그대로');
 assert.ok(/clean: options\.clean,/.test(read('src/addons/translator/selection/state.js')));
 console.log('PASS 6.2.5 bookmarks panel and selection retranslate show stored translations the same way as the chat screen');
 }

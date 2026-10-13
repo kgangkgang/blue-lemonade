@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.3.9/blue-lemonade-6.3.9.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.4.0/blue-lemonade-6.4.0.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.3.9 · 최신 업데이트</summary>
+<summary>6.4.0 · 최신 업데이트</summary>
+
+- 번역: 모델이 용어집을 어기고 내 캐릭터 · 지금 캐릭터 이름을 원문 표기(영문) 그대로 남기면 용어집의 한글 표기로 바꿔요 — 조사도 받침에 맞춰요. 이미 저장된 번역도 채팅을 열 때 고쳐져요(다시 번역하지 않아요). 영어로 두는 줄(상태 · 트래커)과 괄호 병기는 그대로예요.
+- 번역: 원문에 없는 여는 꺽쇠 「가 줄 끝에 홀로 붙은 것을 지워요. 용어집이 태그 속성 글자(꾸밈 태그의 따옴표 등)에 걸려 엉뚱한 줄이 들어가던 것도 고쳤어요.
+- TTS: 재생 막대의 이름이 테마 색과 비슷한 인물 색(옅은 노랑 · 하늘색)도 그 인물 색으로 나와요.
+- 애드온 버전: LLM 번역 2.4.2 · TTS 1.8.3
+
+</details>
+
+<details>
+<summary>6.3.9 · 모델 등록 정리 · 이름 창</summary>
 
 - 모델 등록: 실리태번 기본 목록에 들어온 모델은 등록에서 저절로 빠지고 실리태번 메뉴 제자리에 나와요 (고른 모델은 그대로). 등록 창에 이미 목록에 있는 이름을 넣으면 알려 주고 넣지 않아요. 연결할 때 목록을 받아 오는 공급자(OpenRouter 등)는 예전 그대로예요.
 - TTS: 대답 이름을 꾹 눌러 고르는 목소리가 목소리 탭과 같은 인물 줄에 저장돼요. 내 캐릭터는 다른 이름으로 나와도 목록에 안 보여요. 이어 듣는 동안 요술봉 › 낱말 창이 줄마다 닫히지 않고, 다른 답을 읽기 시작하면 닫혀요.

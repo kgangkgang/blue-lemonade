@@ -136,6 +136,15 @@ export function pieceKey(piece, plainKey, follow = true) {
  * → 그 밖의 색 가운데 가장 많은 글자를 차지한 '#rrggbb', 없으면 '' (색 없는 인물 · 지문 → 테마 색 그대로).
  * 글자 칠이 아니라 color 를 본다 — 형광펜 대사는 칠이 잉크이고 color 가 인물 색(띠 색)이다. 투명 · 반투명 색(그라데이션 글자)은 세지 않는다.
  */
+/**
+ * 6.3.9 그 줄 화자의 팔레트 색(known)이 화면 글자색으로 보이면 그 색 ('#rrggbb'), 아니면 ''. speakerColor 의 「테마 잉크와 가까우면 색 없음」보다 먼저 —
+ * 팔레트 색이 테마의 굵게 · 인용 색과 가까운 인물(레몬 노랑 · 하늘색)도 막대 이름에 제 색이 나오게. tolerance 는 좁게(6): 테마 잉크 그대로인 글자는 거의 늘 그 밖이다
+ */
+export function ownSpeakerColor(pieces, known, tolerance = 6) {
+    const want = colorKey(known);
+    if (!want) return '';
+    return (pieces || []).some(p => p && !p.blank && nearColor(colorKey(p.color), want, tolerance)) ? want.slice(0, 7) : '';
+}
 export function speakerColor(pieces, exclude = []) {
     const skip = (exclude || []).map(colorKey).filter(Boolean);
     const weight = new Map();

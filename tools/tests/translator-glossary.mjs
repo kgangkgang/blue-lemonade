@@ -111,4 +111,62 @@ t('빈 항목 · 빈 원문', () => {
     assert.deepEqual(glossaryHits([], 'アデル'), []);
     assert.equal(glossaryFold(' Low-world  Office '), 'low world office');
 });
+// ── 6.4.0 번역문 마무리 (내 캐릭터 · 지금 캐릭터 이름 지키기 · 홀로 남은 여는 꺽쇠 · 태그 속성은 용어집에 안 걸림) — 이름은 합성 (Mina 미나 · Corvin 코르빈)
+{
+    const M = await import(pathToFileURL(file).href);
+    const NAMES = [{ id: 'mina', scope: 'global', src: 'Mina, ミナ', dst: '미나' }, E('Corvin, コルヴィン', '코르빈', 'corvin'),
+        E('Security', '보안팀', 'security'), E('Hell', '지옥', 'hell'), E('Mina Tower', '미나 탑', 'tower')];
+    const WHO = { names: ['미나', '코르빈'] };
+    t('6.4.0 내 캐릭터 · 지금 캐릭터 이름을 라틴 그대로 남기면 번역 칸으로 (조사 받침 · \'s → 의 · 대소문자)', () => {
+        const src = 'Mina jumps a little in her chair. Corvin nods. His gaze lands on Mina\'s face.';
+        const out = '갑작스러운 등장에 Mina가 의자에서 튀어 오른다. Corvin가 고개를 끄덕인다. 시선이 Mina\'s 얼굴에 닿는다. MINA는 웃었다.';
+        assert.equal(M.enforceGlossaryNames(NAMES, src, out, WHO), '갑작스러운 등장에 미나가 의자에서 튀어 오른다. 코르빈이 고개를 끄덕인다. 시선이 미나의 얼굴에 닿는다. 미나는 웃었다.');
+        assert.equal(M.particleFor('코르빈', '로서'), '으로서');
+        assert.equal(M.particleFor('미나', '으로서'), '로서');
+        assert.equal(M.particleFor('코르빈', '와의'), '과의');
+        assert.equal(M.particleFor('미나', '이에요'), '예요');
+        assert.equal(M.particleFor('코르빈', '예요'), '이에요');
+        assert.equal(M.particleFor('하늘', '으로'), '로');
+        assert.equal(M.particleFor('미나', '에게'), '에게');
+        assert.equal(M.particleFor('미나', '이다'), '이다', '「이」 뒤에 다른 글자 — 주격이 아니면 그대로');
+        assert.equal(M.particleFor('미나', '과장님이'), '과장님이', '띄어 쓰지 않은 직함은 조사가 아님');
+        assert.equal(M.particleFor('코르빈', '나리'), '나리');
+        assert.equal(M.particleFor('코르빈', '라인의'), '라인의');
+        assert.equal(M.particleFor('미나', '이었다'), '였다');
+    });
+    t('6.4.0 일반 낱말 항목 · 이름을 안 줬을 때 · 괄호 병기 · 영어로 둔 말 · 더 긴 표기 · 태그 · 파일 이름 · 영어 줄은 그대로', () => {
+        const src = 'The Security officers stood by. "Hell no!" Mina shouted at Mina Tower.';
+        const out = '보안팀(Security) 직원들이 서 있었다. "Hell no!" 미나(Mina)가 외쳤다. Mina Tower 앞에서 Mina is coming 이라고 했다.';
+        assert.equal(M.enforceGlossaryNames(NAMES, src, out, WHO), out, '일반 낱말(Security · Hell)은 대상 아님 · 괄호 병기 · 뒤에 영어 낱말 · 더 긴 용어집 표기');
+        assert.equal(M.enforceGlossaryNames(NAMES, 'Mina smiled.', 'Mina가 웃었다.'), 'Mina가 웃었다.', '이름 목록이 없으면 아무것도 안 함');
+        for (const kept of ['미나 (Mina)가 창가에서 조용히 웃었다.', '미나（Mina）가 창가에서 조용히 웃었다.', 'Mina(미나)가 창가에서 조용히 웃었다.',
+            '책상 위에는 「Mina\'s Notebook」이라고 적힌 공책이 놓여 있었다.', '"Welcome aboard, Mina!" 하고 그가 크게 외치며 웃었다.'])
+            assert.equal(M.enforceGlossaryNames(NAMES, 'Mina smiled. Mina\'s Notebook. "Welcome aboard, Mina!"', kept, WHO), kept, kept);
+        assert.equal(M.enforceGlossaryNames(NAMES, 'Rex smiled.', 'Mina가 웃었다.', WHO), 'Mina가 웃었다.', '원문에 그 이름이 없으면');
+        const guarded = '<img alt="Mina"> 미나가 창가에 서서 오래도록 바깥 풍경을 바라보며 조용히 웃었다. Mina_2.png';
+        assert.equal(M.enforceGlossaryNames(NAMES, 'Mina smiled.', guarded, WHO), guarded, '태그 속성 · 파일 이름');
+        assert.equal(M.enforceGlossaryNames(NAMES, 'Mina smiled.', '[[__VAR_1__]]Mina가 창가에 서서 오래도록 바깥 풍경을 바라보며 조용히 웃었다.[[/__VAR_1__]]', WHO),
+            '[[__VAR_1__]]미나가 창가에 서서 오래도록 바깥 풍경을 바라보며 조용히 웃었다.[[/__VAR_1__]]', '자리표시자는 그대로, 그 사이 글만');
+        assert.equal(M.enforceGlossaryNames(NAMES, 'Mina smiled. <tracker>Mina\'s Room</tracker>', '<tracker>\n📍 Mina\'s Room | Clear\n</tracker>\nMina가 창가에서 조용히 웃었다.', WHO),
+            '<tracker>\n📍 Mina\'s Room | Clear\n</tracker>\n미나가 창가에서 조용히 웃었다.', '영어로 두는 줄(트래커 · 상태)은 그대로, 한글 줄만');
+        assert.equal(M.enforceGlossaryNames([{ id: 'x', scope: 'global', src: 'Mina', dst: '미나, 민아' }], 'Mina smiled.', 'Mina가 웃었다.', WHO), 'Mina가 웃었다.', '번역 칸이 여럿이면 고르지 않음');
+    });
+    t('6.4.0 줄 끝에 홀로 남은 여는 「 (원문 짝 맞음 · 원문엔 줄 끝 「 없음) 만 지운다', () => {
+        const src = '<true_thoughts>ふむ、いつものざまだ！</true_thoughts>\n「おはよう」';
+        assert.equal(M.dropDanglingOpenQuote('<true_thoughts>흠, 늘 그 꼴이지!「</true_thoughts>\n「안녕」', src), '<true_thoughts>흠, 늘 그 꼴이지!</true_thoughts>\n「안녕」');
+        assert.equal(M.dropDanglingOpenQuote('[[__VAR_0__]]흠, 꼴이지!「[[/__VAR_0__]]', 'ふむ。'), '[[__VAR_0__]]흠, 꼴이지![[/__VAR_0__]]');
+        assert.equal(M.dropDanglingOpenQuote('「여러 줄\n대사」', '「multi\nline」'), '「여러 줄\n대사」', '짝 맞으면 그대로');
+        assert.equal(M.dropDanglingOpenQuote('「가운데에 열림 그대로', 'x'), '「가운데에 열림 그대로', '줄 끝이 아니면 그대로');
+        assert.equal(M.dropDanglingOpenQuote('끝!「', '「x」「y'), '끝!「', '원문 짝이 안 맞으면 그대로');
+        assert.equal(M.dropDanglingOpenQuote('그가 말했다. 「\n긴 이야기다.', '彼は言った。「\n長い話だ」と。'), '그가 말했다. 「\n긴 이야기다.', '원문에도 줄 끝 「 가 있으면 그대로');
+    });
+    t('6.4.0 태그 속성 속 글자는 용어집에 안 걸린다 (" → 「」 항목이 span style 에 걸리던 것) · 태그 아닌 꺾쇠 글은 그대로 찾음', () => {
+        const QUOTE = [E('", "', '「, 」', 'quote')];
+        assert.deepEqual(lines(QUOTE, '<span style="color:#7fd4ea">ふむ</span>'), [], '속성의 따옴표');
+        assert.deepEqual(lines(QUOTE, 'She said "hello".'), ['" / " → 「 / 」'], '본문의 따옴표는 그대로');
+        const CORV = [E('Corvin, コルヴィン', '코르빈', 'corvin')];
+        assert.deepEqual(lines(CORV, '<img alt="コルヴィン">'), [], '속성 속 이름');
+        assert.deepEqual(lines(CORV, 'HP < 30 after the fight. Corvin kneels.\nRex -> runs'), ['Corvin → 코르빈'], '태그가 아닌 < … > 는 지우지 않음');
+    });
+}
 console.log(`translator-glossary: ${n} 통과`);

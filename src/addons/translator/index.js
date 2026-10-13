@@ -5,7 +5,7 @@ import { checkpointKey, translateChunks, clearCheckpoints } from './translation-
 import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, fixPlaceholderVariants, dropLeftoverPlaceholders, repairTagPairs, dropStrayWords } from './translation-segments.js';
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
-import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey, glossaryLinesFor } from './glossary-match.js';
+import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey, glossaryLinesFor, enforceGlossaryNames, dropDanglingOpenQuote } from './glossary-match.js';
 import { publishNames } from './names-bridge.js';   // 6.3.5 이름 다리 — 용어집의 이름 짝을 TTS · 다른 확장이 쓰게 전역으로 // [2.2.9] 용어집 찾기 (+ 가타카나 표기 흔들림) · [2.3.0] TTS 듣는 언어용 줄
 import { SPEECH_LANGS, speechPrompt, speechPayload, speechLine, parseSpeechBatch, unwrapQuotes, cutEchoLine } from './speech-translate.js'; // [2.3.0] TTS 듣는 언어
 import { requestCurrentConnection } from './current-connection.js';
@@ -2008,6 +2008,8 @@ async function translate(text, options = {}) {
 
         // [2.1.0] 한국어 번역문에 남은 가나 정리: っ · ー 는 지우고, 일본어가 통째로 남은 줄만 한 번 더 보낸다 (프롬프트로는 100% 안 막힌다)
         translatedText = tidyKana(translatedText);
+        // 6.4.0 용어집 이름 지키기 · 줄 끝에 홀로 남은 여는 「 (모델이 프롬프트를 어겨도) — 정방향만
+        if (!isInputTranslation) translatedText = tidyGlossaryOutput(isRetranslation ? compareText : text, translatedText);
         const kanaLines = paragraphParts ? [] : linesWithKana(translatedText);
         if (kanaLines.length) {
             progress({ stage: 'kana' });
@@ -2432,6 +2434,25 @@ function publishArchiveReady(message, sourceText, chatId, type) {
 // 6.2.1 저장된 번역문의 태그 짝을 보여 줄 때 고친다 — 모델이 닫는 태그를 빠뜨린 번역(또는 못 풀린 [[/__VAR_n__]])은
 //       실리태번 표시 정규식이 다음 짝까지 칠해 서술까지 속마음 모양이 됐다. 지금 원문의 번역(해시가 맞는 것) · 번역 중이 아닌 것 · 번역문 그대로 보기만
 //       (접기 · 원문 먼저 보기는 줄마다 감싼 글이라 다시 번역하면 고쳐진다). 고친 글은 메모리에만 — 실리태번이 다음에 저장할 때 같이 저장된다.
+/**
+ * 6.4.0 번역문 마무리: 원문에 없는 줄 끝 여는 「 하나 · 내 캐릭터 · 지금 캐릭터 이름을 라틴 글자로 남긴 것 (glossary-match.js).
+ * 펼침 방식 표시(번역과 원문 span 이 한 줄)는 원문 span 까지 바뀌어서 건너뛴다.
+ */
+function tidyGlossaryOutput(source, output) {
+    if (typeof output !== 'string' || output.includes('class="original_text')) return output;
+    const cleaned = dropDanglingOpenQuote(output, source);
+    if (extensionSettings.glossary_enabled === false) return cleaned;
+    const { entries, names } = tidyContext ?? glossaryTidyContext();
+    return enforceGlossaryNames(entries, source, cleaned, { names });
+}
+/** 용어집 항목 · 내 캐릭터 · 지금 캐릭터 이름 — 채팅을 열 때 메시지마다 다시 만들지 않게 repairShownTranslations 가 한 번 만들어 둔다 */
+let tidyContext = null;
+function glossaryTidyContext() {
+    let names = [];
+    try { const ctx = getContext(); names = [ctx.name1, ctx.name2]; } catch { names = []; }
+    return { entries: activeGlossaryEntries(), names };
+}
+
 function repairShownTranslation(id, message, context = getContext()) {
     const extra = message?.extra;
     if (!extra?.original_text_hash || message.is_user || isTranslationInProgress(id)) return false;
@@ -2441,7 +2462,8 @@ function repairShownTranslation(id, message, context = getContext()) {
     for (const field of ['display_text', 'original_translation_backup']) {
         const shown = extra[field];
         if (typeof shown !== 'string' || !shown || shown === original || shown.includes('llm-translator-details')) continue;
-        const cleaned = extra.translation_edited === extra.original_text_hash ? shown : dropStrayWords(shown, original); // 6.2.4 저장된 번역의 낱말 한 줄 (손으로 고친 번역은 그대로)
+        // 6.2.4 저장된 번역의 낱말 한 줄 · 6.4.0 용어집 이름 · 홀로 남은 「 (손으로 고친 번역은 그대로)
+        const cleaned = extra.translation_edited === extra.original_text_hash ? shown : tidyGlossaryOutput(original, dropStrayWords(shown, original));
         const repaired = repairTagPairs(original, dropLeftoverPlaceholders(cleaned, original));
         if (repaired !== shown) { extra[field] = repaired; changed = true; }
     }
@@ -2451,7 +2473,12 @@ function repairShownTranslation(id, message, context = getContext()) {
 function repairShownTranslations() {
     const context = getContext();
     let count = 0;
-    (context.chat || []).forEach((message, id) => { try { if (repairShownTranslation(id, message, context)) count++; } catch (error) { console.warn('[LLM Translator] 저장된 번역문 고치기 실패:', error); } });
+    tidyContext = extensionSettings.glossary_enabled === false ? null : glossaryTidyContext();   // 6.4.0 메시지마다 다시 만들지 않게
+    try {
+        (context.chat || []).forEach((message, id) => { try { if (repairShownTranslation(id, message, context)) count++; } catch (error) { console.warn('[LLM Translator] 저장된 번역문 고치기 실패:', error); } });
+    } finally {
+        tidyContext = null;
+    }
     if (count) console.warn(`[LLM Translator] 저장된 번역문 ${count}개를 고쳐 보여 줘요 (태그 짝 · 못 풀린 자리표시자 · 원문에 없는 낱말 한 줄)`);
     return count;
 }
@@ -2583,7 +2610,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
 
             // 6.2.4 캐시에서 온 6.2.4 전 번역도 걷는다 — 손으로 고친 번역(translation_edited = 그 원문 해시)은 그대로 · 모델이 새로 옮긴 글이면 표시를 지운다
             const editedByHand = !!cachedTranslation && target.extra?.translation_edited === originalHashOf(originalText);
-            if (cachedTranslation && !editedByHand) translation = dropStrayWords(translation, originalText);
+            if (cachedTranslation && !editedByHand) translation = tidyGlossaryOutput(originalText, dropStrayWords(translation, originalText));   // 6.4.0 용어집 이름 · 홀로 남은 「 도
             if (!cachedTranslation) delete target.extra.translation_edited;
             target.extra.display_text = processTranslationText(originalText, translation);
             runToken.guard.acceptDisplay();
@@ -3278,7 +3305,7 @@ function syncSelection() {
     selectionModule.then(module => module.syncSelectionRetranslate({
         settings: extensionSettings, translate, render: processTranslationText,
         // 6.2.5 이어 붙인 번역을 보여 주기 전에 걷는다 (저장된 번역을 보여 줄 때와 같게) — 손으로 고친 번역은 그대로
-        clean: (text, source, message) => message?.extra?.translation_edited === originalHashOf(source) ? text : dropStrayWords(text, source),
+        clean: (text, source, message) => message?.extra?.translation_edited === originalHashOf(source) ? text : tidyGlossaryOutput(source, dropStrayWords(text, source)),
         capture: message => guards.capture(message),
         refresh: (id, message) => refreshMessageBlock(id, message),
         complete: (id, message, source) => {
@@ -3806,7 +3833,7 @@ function markTranslatedOriginal(message, originalText) {
 
 async function localOrDisplayedTranslation(message, originalText) {
     const cached = await readCachedTranslation(originalText);
-    if (cached !== null) return message?.extra?.translation_edited === originalHashOf(originalText) ? cached : dropStrayWords(cached, originalText); // 6.2.4 옛 캐시 줄의 낱말 한 줄
+    if (cached !== null) return message?.extra?.translation_edited === originalHashOf(originalText) ? cached : tidyGlossaryOutput(originalText, dropStrayWords(cached, originalText)); // 6.2.4 옛 캐시 줄의 낱말 한 줄
     // Other-device chats carry the source hash and raw display text but no local IndexedDB row.
     // Never feed processed HTML, a stale translation, or the original-text view back to the model/editor.
     if (message?.extra?.original_text_hash !== originalHashOf(originalText)) return null;
@@ -5286,7 +5313,7 @@ async function translateText(text, { target = '', signal = null, onProgress = nu
 function publishTranslatorAPI() {
     if (!duplicate) globalThis[Symbol.for('blue-lemonade.translator')] = {
         processTranslationText, readCachedTranslation, storeTranslationQuietly, deleteCachedTranslation,
-        dropStrayWords, // 6.2.5 저장된 번역을 보여 줄 때 걷는 것(원문에 없는 낱말 한 줄 · 문단 번호 찌꺼기) — 북마크 창이 캐시 번역을 같은 모양으로 보이게
+        dropStrayWords: (text, source) => tidyGlossaryOutput(source, dropStrayWords(text, source)), // 6.4.0 용어집 이름 · 홀로 남은 「 도 · 6.2.5 저장된 번역을 보여 줄 때 걷는 것(원문에 없는 낱말 한 줄 · 문단 번호 찌꺼기) — 북마크 창이 캐시 번역을 같은 모양으로 보이게
         translateForSpeech, speechReady, speechModelTag, // [2.3.0] TTS 듣는 언어
         translateText, // [2.3.2] 다른 확장의 글(문서) — 채팅 번역과 같은 연결 · 프롬프트 · 용어집, 또는 지정 언어 ([2.3.3] onProgress)
         translateProgressText: progressLabel, // [2.3.3] 진행 문구 (채팅 배지와 같은 글)

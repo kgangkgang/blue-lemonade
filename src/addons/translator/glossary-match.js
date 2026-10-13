@@ -10,6 +10,9 @@ export function glossaryFold(text) {
     return String(text ?? '').toLowerCase().replace(/[\s\-‐‑–—_·・]+/g, ' ').trim();
 }
 
+/** 6.4.0 찾기 전에 태그를 뺀다 — 속성 글자(style="…" 의 따옴표 · alt 의 이름)가 용어집에 걸리지 않게. 프롬프트에 들어가는 원문은 그대로 */
+const withoutTags = text => String(text ?? '').replace(/<\/?[A-Za-z][^<>]*>|<!--[\s\S]*?-->/g, ' ');
+
 /**
  * [1.8.12] 정규화한 원문 안에 이 말이 "낱말로" 들어 있나.
  * 알파벳·숫자로 시작하거나 끝나는 말은 앞뒤가 알파벳·숫자가 아니어야 한다 ("Adel" 이 "Adelstein" 에 걸리지 않게).
@@ -134,7 +137,7 @@ function addKanaVariants(hits, text) {
  * 돌려주는 것: [{ entry, sources, targets, matched(원문에 나온 표기), variants(그중 표기 흔들림으로 찾은 것) }]
  */
 export function glossaryHits(entries, text, { reverse = false } = {}) {
-    const haystack = glossaryFold(text);
+    const haystack = glossaryFold(withoutTags(text));
     if (!haystack) return [];
     const hits = [];
     for (const entry of entries || []) {
@@ -145,7 +148,7 @@ export function glossaryHits(entries, text, { reverse = false } = {}) {
         const matched = probes.filter(probe => glossaryOccursIn(haystack, probe));
         hits.push({ entry, sources, targets, probes, matched, variants: [] });
     }
-    if (!reverse) addKanaVariants(hits, text);
+    if (!reverse) addKanaVariants(hits, withoutTags(text));
     return hits.filter(hit => hit.matched.length);
 }
 
@@ -155,7 +158,7 @@ export function glossaryHits(entries, text, { reverse = false } = {}) {
  * [1.8.3] 원문 칸도 쉼표로 여러 표기를 받는다 (Guild, Merchant Guild). 원문에 실제로 나온 표기만 줄에 적는다.
  */
 export function glossaryLines(entries, text, { reverse = false, maxLines = 60 } = {}) {
-    const haystack = glossaryFold(text);
+    const haystack = glossaryFold(withoutTags(text));
     const hits = glossaryHits(entries, text, { reverse });
     // [1.8.12] 더 긴 말 안에 든 짧은 말은 뺀다. 예전에는 "Adelstein" 한 줄과 "Adel" 한 줄이 함께 들어가
     // 같은 자리를 두 가지로 옮기라고 지시했다. 한글처럼 띄어쓰기로 자를 수 없는 말도 이걸로 걸러진다.
@@ -224,4 +227,121 @@ export function glossaryLinesFor(entries, text, target, { maxLines = 60 } = {}) 
         }
     }
     return { lines, hasChoice };
+}
+
+// ── 6.4.0 번역문 마무리 (번역기 2.4.2) ─────────────────────────────────────────────
+// 사용자 10-14 제보: Claude Haiku 5.5 가 용어집 줄(영문 이름 → 한글 이름)을 받고도 문단 묶음 하나에서 영문 이름 그대로 남겼고,
+// 속마음 줄 끝에 원문에 없는 여는 꺽쇠 「 하나를 붙였다. 프롬프트로는 100% 안 막혀 저장 전에 · 저장된 번역을 보여 줄 때 정리한다.
+// 이름 지키기는 「내 캐릭터 · 지금 캐릭터」 이름 항목만 — 일반 낱말 항목은 영어로 둔 외침 · 괄호 병기를 망가뜨려서 (독립 검증) 손대지 않는다.
+const HANGUL_ALL = /[가-힣]/g;
+const LATIN_ALL = /[A-Za-z]/g;
+/** 라틴 이름꼴: 대문자로 시작하는 낱말(들) — Mina · Mina Park */
+const LATIN_NAME = /^[A-Z][A-Za-z'’]*(?:[ -][A-Za-z][A-Za-z'’]*)*$/;
+/** 태그 · 자리표시자는 건드리지 않는다 (나눈 조각의 홀수 칸) */
+const PROTECTED_PARTS = /(<[^<>]*>|\[\[\/?__VAR_\d+__\]\])/;
+const escapePattern = text => String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+// 받침 있음 / 없음 짝 (긴 것부터) · 그 뒤에 붙어도 되는 말 — 꼬리 앞부분만 떼어 맞추고, 나머지가 이 목록에 없으면(과장님 · 나리 · 라인) 조사가 아니라 그대로 둔다
+const PARTICLE_PAIRS = [
+    ['이에요', '예요', ['']], ['이었', '였', ['다', '어', '어요', '고', '는데', '던', '지', '을', '습니다']], ['이랑', '랑', ['', '은', '도', '의', '만']],
+    ['으로', '로', ['', '서', '써', '부터', '도', '는', '만', '서는', '서도', '의']], ['이라', '라', ['', '고', '는', '서', '도', '면']], ['이나', '나', ['']],
+    ['이든', '든', ['', '지']], ['이며', '며', ['']], ['이야', '야', ['']],
+    ['은', '는', ['']], ['을', '를', ['']], ['과', '와', ['', '의', '는', '도', '만']], ['이', '가', ['']],
+];
+
+/** 받침에 맞는 조사 (조사가 아니거나 짝이 없는 말은 그대로): particleFor('코르빈', '가') → '이', particleFor('미나', '으로서') → '로서' */
+export function particleFor(word, tail) {
+    const code = String(word ?? '').slice(-1).charCodeAt(0) - 0xac00;
+    if (!(code >= 0 && code < 11172) || !tail) return tail;
+    const final = code % 28;
+    for (const [withFinal, withoutFinal, follows] of PARTICLE_PAIRS) {
+        const head = tail.startsWith(withFinal) ? withFinal : tail.startsWith(withoutFinal) ? withoutFinal : '';
+        if (!head) continue;
+        const rest = tail.slice(head.length);
+        if (!follows.includes(rest)) return tail;
+        if (withFinal === '으로') return (final && final !== 8 ? '으로' : '로') + rest;   // ㄹ 받침은 「로」
+        return (final ? withFinal : withoutFinal) + rest;
+    }
+    return tail;
+}
+
+const fold = text => String(text ?? '').toLowerCase().replace(/\s+/g, ' ').trim();
+
+/**
+ * 정방향 한국어 번역에서, 원문에 나온 「내 캐릭터 · 지금 캐릭터」 이름 항목의 라틴 표기를 모델이 그대로 남겼으면 번역 칸 한글로 바꾼다.
+ * names = 그 이름들(페르소나 이름 · 캐릭터 이름). 항목의 번역 칸이나 원문 칸이 이 이름이면 대상 — 없으면 아무것도 안 한다.
+ * 한글이 주된 줄만 · 태그와 자리표시자 밖 · 파일 이름 · 주소 속은 빼고 · 「번역(원문)」 괄호 병기와 뒤에 영어 낱말이 이어지는 자리(영어로 둔 말)도 뺀다.
+ * 그 표기를 품은 더 긴 용어집 표기 자리는 건드리지 않는다. 바로 붙은 조사는 받침에 맞추고, 's 는 「의」로.
+ */
+export function enforceGlossaryNames(entries, source, output, { names = [] } = {}) {
+    const out = String(output ?? '');
+    const wanted = new Set((names || []).map(fold).filter(Boolean));
+    if (!out || !wanted.size) return out;
+    const lower = out.toLowerCase();
+    const swaps = [];
+    for (const entry of entries || []) {
+        if (!entry?.src || !entry?.dst) continue;
+        const targets = glossaryAlternatives(entry.dst);
+        const sources = glossaryAlternatives(entry.src);
+        if (targets.length !== 1 || !/[가-힣]/.test(targets[0]) || /[A-Za-z]/.test(targets[0])) continue;
+        if (!wanted.has(fold(targets[0])) && !sources.some(form => wanted.has(fold(form)))) continue;
+        for (const form of sources) {
+            const spelled = String(form).trim();
+            if (LATIN_NAME.test(spelled) && lower.includes(spelled.toLowerCase())) swaps.push({ form: spelled, dst: targets[0] });
+        }
+    }
+    if (!swaps.length) return out;
+    const haystack = glossaryFold(withoutTags(source));
+    const live = swaps.filter(({ form }) => glossaryOccursIn(haystack, form));
+    if (!live.length) return out;
+    live.sort((a, b) => b.form.length - a.form.length);
+    // 더 긴 용어집 표기(그 이름을 품은 것) — 그 자리는 그대로 둔다
+    const longer = (entries || []).flatMap(entry => glossaryAlternatives(entry?.src)).map(form => String(form).trim())
+        .filter(form => /[A-Za-z]/.test(form) && live.some(swap => form.length > swap.form.length && form.toLowerCase().includes(swap.form.toLowerCase())))
+        .sort((a, b) => b.length - a.length);
+    const patterns = live.map(({ form, dst }) => ({
+        dst,
+        // 's 뒤에 영어 낱말이 이어지면(Mina's Notebook) 소유격이 아니라 영어로 둔 말 — 이름만 잡는 쪽으로 되돌아가도 뒤의 ' 에서 막힌다
+        pattern: new RegExp(`(?<![A-Za-z0-9_./\\\\-])${escapePattern(form).replace(/[ -]+/g, '[ \\t\\-]+')}(?:(['’]s(?![ \\t]+[A-Za-z]))|([\\uac00-\\ud7a3]+))?(?![A-Za-z0-9_/\\\\-]|\\.[A-Za-z0-9]|[ \\t]+[A-Za-z]|['’])`, 'gi'),
+    }));
+    const guards = longer.map(form => new RegExp(escapePattern(form).replace(/[ -]+/g, '[ \\t\\-]+'), 'gi'));
+    return out.split('\n').map((line) => {
+        const parts = line.split(PROTECTED_PARTS);
+        const plain = parts.filter((part, index) => index % 2 === 0).join(' ');
+        if ((plain.match(HANGUL_ALL) || []).length <= (plain.match(LATIN_ALL) || []).length) return line;
+        return parts.map((part, index) => {
+            if (index % 2) return part;
+            const kept = [];
+            let text = part;
+            for (const guard of guards) text = text.replace(guard, whole => `\u0000${kept.push(whole) - 1}\u0000`);
+            for (const { dst, pattern } of patterns) {
+                text = text.replace(pattern, (whole, possessive, tail, offset, all) => {
+                    const before = all.slice(Math.max(0, offset - dst.length - 3), offset);
+                    const after = all.slice(offset + whole.length, offset + whole.length + dst.length + 3);
+                    // 괄호 병기 (미나(Mina) · 미나 (Mina) · 미나（Mina） · Mina(미나)) · 앞이 영어 낱말이면 영어로 둔 말 ("Welcome aboard, Mina!")
+                    if (new RegExp(`${escapePattern(dst)}[ \\t]*[(（]$`).test(before) || new RegExp(`^[ \\t]*[(（]${escapePattern(dst)}`).test(after)) return whole;
+                    if (/[A-Za-z][,.!?]?[ \t]+$/.test(all.slice(Math.max(0, offset - 3), offset))) return whole;
+                    if (possessive) return `${dst}의`;
+                    return dst + (tail ? particleFor(dst, tail) : '');
+                });
+            }
+            return text.replace(/\u0000(\d+)\u0000/g, (whole, at) => kept[Number(at)]);
+        }).join('');
+    }).join('\n');
+}
+
+/**
+ * 원문의 「」 짝이 맞는데 번역문에만 여는 「 가 하나 더 있고, 그것이 줄 끝(닫는 태그 · 자리표시자 앞)에 홀로 있으면 지운다.
+ * 원문에도 줄 끝에 여는 「가 있으면(「 ⏎ … 」 대사) 건드리지 않는다. 여러 줄에 걸친 대사는 번역문 짝이 맞아 그대로다.
+ */
+export function dropDanglingOpenQuote(output, source) {
+    const out = String(output ?? '');
+    const src = String(source ?? '');
+    const count = (text, mark) => text.split(mark).length - 1;
+    if (count(src, '「') !== count(src, '」') || count(out, '「') !== count(out, '」') + 1) return out;
+    const lineEnd = /「(?=[ \t]*(?:(?:<\/[^<>]+>|\[\[\/__VAR_\d+__\]\])[ \t]*)*(?:\r?\n|$))/g;
+    if (lineEnd.test(src)) return out;
+    lineEnd.lastIndex = 0;
+    const lone = [...out.matchAll(lineEnd)];
+    if (lone.length !== 1) return out;
+    return out.slice(0, lone[0].index) + out.slice(lone[0].index + 1);
 }
