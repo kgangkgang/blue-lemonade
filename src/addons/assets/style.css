@@ -4,7 +4,7 @@
    ============================================================ */
 
 /* state.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
-:root { --eh-css-version: "1.6.2"; }
+:root { --eh-css-version: "1.6.3"; }
 
 .eh-root {
     --eh-text: var(--SmartThemeBodyColor, #ccc);
@@ -884,9 +884,17 @@
 .eh-vbtn--danger:hover { background: rgba(229, 72, 77, .25); }
 .eh-vbtn[hidden] { display: none; }
 
+/* 답장의 그림 자리를 꾹 눌러 열었을 때만 (hold.js → viewer.js): 「이 자리」 줄 — 한 줄 두 단추, 그 자리에 이미 있는 그림이면 ✓ 는 흐리게 */
+.eh-viewer-slot { display: flex; justify-content: center; gap: 8px; padding: 10px 12px 0; }
+.eh-vbtn--accent { border-color: var(--eh-accent-line); background: var(--eh-accent-soft); }
+.eh-vbtn:disabled { opacity: .4; cursor: default; }
+.eh-vbtn:disabled:hover { background: rgba(255, 255, 255, .08); }
+.eh-vbtn--accent:disabled:hover { background: var(--eh-accent-soft); }
+
 /* 좁은 화면에서도 글자를 지우지 않는다 (아이콘만으로는 뭘 하는지 알 수 없다) */
 @media (max-width: 480px) {
     .eh-viewer-nav { width: 36px; height: 56px; }
+    .eh-viewer-slot { gap: 6px; padding: 8px 8px 0; }
     .eh-viewer-actions { gap: 6px; padding: 8px 8px; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
     .eh-vbtn { height: 36px; padding: 0 10px; gap: 5px; font-size: .78rem; }
 }

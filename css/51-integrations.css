@@ -132,6 +132,9 @@ body.salty-help-off #pt-panel .pt-page-fixed .pt-act-row { grid-template-columns
 .bl-wi-help-rec { padding:9px 11px; border-radius:var(--bl-r-md, 10px); background:color-mix(in srgb, var(--salty-accent, #888) 12%, transparent); }
 .bl-wi-help-rec b { margin-right:8px; color:var(--salty-accent, inherit); }
 .bl-wi-help-actions { display:flex; justify-content:flex-end; margin-top:4px; }
+/* 2026-10-13 캐릭터 로어북 연결이 빠지면 위쪽 책 아이콘에 빨간 점 하나 (src/wi-link.js — 글자 · 팝업 없음, 고치면 사라짐). 테마가 꺼져 있으면 숨김 */
+body.salty #WIDrawerIcon.bl-wi-unlinked { position:relative; }
+body.salty #WIDrawerIcon.bl-wi-unlinked::after { content:''; position:absolute; top:0; right:0; width:7px; height:7px; border-radius:50%; background:var(--bl-danger, #e5484d); box-shadow:0 0 0 1.5px var(--salty-fill-surface, var(--salty-surface, transparent)); pointer-events:none; }
 @media (max-width: 520px) {
   .bl-wi-help-list { grid-template-columns:minmax(0, 1fr); gap:2px; }
   .bl-wi-help-list dd { margin-bottom:6px; }

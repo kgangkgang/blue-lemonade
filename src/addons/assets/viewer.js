@@ -390,14 +390,21 @@ export function closeViewer() {
 }
 
 /**
- * @param {{ items: import('./assets.js').Asset[], start?: number }} options items는 보이는 순서의 파일 목록
+ * @param {{ items: import('./assets.js').Asset[], start?: number, slot?: { current: import('./assets.js').Asset, apply: (name: string) => Promise<boolean> } | null }} options
+ *   items는 보이는 순서의 파일 목록. slot = 채팅 답장의 그림 자리에서 열었을 때(hold.js) — 아래에 「이 자리」 줄:
+ *   ✓ 지금 보는 그림을 그 자리에 · ⊘ 그 자리에서 빼기 (그 메시지의 그 자리만). 그 자리에 이미 있는 그림이면 ✓ 는 흐리게
  */
-export function openViewer({ items, start = 0 }) {
+export function openViewer({ items, start = 0, slot = null }) {
     closeViewer();
     if (!items.length) return;
     let list = [...items];
     let cursor = Math.min(Math.max(0, start), list.length - 1);
     let working = false;
+    const slotRow = slot ? `
+        <div class="eh-viewer-slot">
+            <button type="button" class="eh-vbtn eh-vbtn--accent" data-act="slot-use"><i class="fa-solid fa-check"></i><span>이 자리에</span></button>
+            <button type="button" class="eh-vbtn" data-act="slot-clear"><i class="fa-solid fa-ban"></i><span>빼기</span></button>
+        </div>` : '';
 
     dialog = document.createElement('dialog');
     dialog.className = 'eh-root eh-viewer';
@@ -417,7 +424,7 @@ export function openViewer({ items, start = 0 }) {
             <button type="button" class="eh-viewer-nav eh-viewer-nav--prev" data-act="prev" aria-label="이전"><i class="fa-solid fa-chevron-left"></i></button>
             <img class="eh-viewer-img" alt="">
             <button type="button" class="eh-viewer-nav eh-viewer-nav--next" data-act="next" aria-label="다음"><i class="fa-solid fa-chevron-right"></i></button>
-        </div>
+        </div>${slotRow}
         <div class="eh-viewer-actions">
             <button type="button" class="eh-vbtn" data-act="toggle"><i class="fa-solid fa-eye-slash"></i><span>끄기</span></button>
             <button type="button" class="eh-vbtn" data-act="copy"><i class="fa-solid fa-tag"></i><span>태그 복사</span></button>
@@ -435,8 +442,11 @@ export function openViewer({ items, start = 0 }) {
     const toggle = element.querySelector('[data-act="toggle"]');
     const rename = element.querySelector('[data-act="rename"]');
     const remove = element.querySelector('[data-act="delete"]');
+    const slotUse = element.querySelector('[data-act="slot-use"]');
 
     const current = () => list[cursor];
+    /** 이 그림이 지금 그 자리에 있는 그림인가 (폴더 · 파일) */
+    const inSlot = asset => !!slot?.current && asset.folder === slot.current.folder && asset.file === slot.current.file;
     /** 이름 바꾸기 · 지우기가 되는 파일인지 — 이 캐릭터의 폴더(원본 · 프리셋)만. 불러온 남의 폴더는 설정 칸처럼 그 캐릭터에서만 (panel.js ownActive) */
     const ownFile = asset => sourceByKey(asset.folder)?.own === true;
 
@@ -471,6 +481,7 @@ export function openViewer({ items, start = 0 }) {
         toggle.setAttribute('aria-pressed', String(off));
         rename.hidden = !ownFile(asset);
         remove.hidden = !ownFile(asset);
+        if (slotUse) slotUse.disabled = inSlot(asset);
     }
 
     function step(delta) {
@@ -612,6 +623,22 @@ export function openViewer({ items, start = 0 }) {
         }
     }
 
+    /** 「이 자리」 줄: name = 지금 보는 그림 파일, '' = 빼기. 바꾸면 창을 닫는다 (채팅의 그 자리가 바로 다시 그려진다) */
+    async function onSlot(name) {
+        if (!slot) return;
+        working = true;
+        let ok = false;
+        try {
+            ok = await slot.apply(name);
+        } catch (error) {
+            console.error('[캐릭터 에셋] 이 자리 바꾸기 실패', error);
+        } finally {
+            working = false;
+        }
+        if (ok) closeViewer();
+        else toast('warning', '이 자리를 바꾸지 못했어요.');
+    }
+
     // 채팅의 그림을 꾹 눌러 열었을 때(hold.js) 손을 떼며 오는 click 이 어두운 곳에 닿아도 바로 닫히지 않게 — hold.js 가 먼저 먹지만 한 번 더
     const openedAt = Date.now();
     element.addEventListener('click', (event) => {
@@ -630,6 +657,8 @@ export function openViewer({ items, start = 0 }) {
         else if (action === 'copy') onCopy();
         else if (action === 'rename') onRename();
         else if (action === 'delete') onDelete();
+        else if (action === 'slot-use') { if (!inSlot(current())) onSlot(current().file); }
+        else if (action === 'slot-clear') onSlot('');
     });
 
     // 실리태번은 html에서 mousedown/touchstart를 받아 '서랍 바깥을 눌렀다'고 보고 확장 서랍을 닫아 버린다.

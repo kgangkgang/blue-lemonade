@@ -79,7 +79,7 @@ export async function prepareTranslation(selection, isClosed) {
         const result = String(await api.command.callback({ assertValid: alive }, original)).trim();
         alive();
         if (!result || /^LLM 번역 중 오류|^번역할 텍스트를/.test(result) || result.includes('[차단된 문단') || result === original || !/[가-힣]/.test(result)) throw Error('새 한국어 번역을 받지 못했어요. 기존 번역은 유지돼요.');
-        return { ...job, source, translated, span, original, result, render: api.render, refresh: api.refresh, complete: api.complete };
+        return { ...job, source, translated, span, original, result, render: api.render, clean: api.clean, refresh: api.refresh, complete: api.complete };
     });
 }
 export async function applyTranslation(job) {
@@ -88,7 +88,8 @@ export async function applyTranslation(job) {
         const translation = replaceSpan(job.translated, job.span, job.result);
         const core = await import('/script.js');
         assertAlive(job);
-        const display = job.render(job.source, translation);
+        // 6.2.5 캐시 줄은 그대로 두고(비교-교환이 원문 그대로를 기대한다) 보여 줄 글만 걷는다
+        const display = job.render(job.source, typeof job.clean === 'function' ? job.clean(translation, job.source, job.message) : translation);
         if (!display) throw Error('번역 표시를 만들지 못했어요.');
         // Cache compare-and-swap prevents overwriting a concurrent translation.
         await updateCache(job.source, job.translated, translation);

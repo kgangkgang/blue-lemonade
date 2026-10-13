@@ -131,7 +131,8 @@ await test('all 42 reviewed everyday files agree with the runtime catalog and ac
     const source=JSON.parse(fs.readFileSync(path.join(folder,'SOURCES.json'),'utf8'));
     const {DAILY_SFX}=await mod('sfx-daily.js');
     assert.equal(source.files.length,42);assert.equal(DAILY_SFX.length,42);
-    assert.equal(L.listSfx().filter(x=>!x.custom).length,89);
+    assert.equal(L.listSfx().filter(x=>!x.custom).length,88);   // 6.2.5 군화 발소리(footsteps)를 뺐다 — 파일 · 출처 기록은 그대로
+    assert.ok(!L.listSfx().some(x=>x.id==='footsteps') && !L.isSfxEnabled('footsteps') && L.getSfx('footsteps'));
     assert.deepEqual(new Set(source.files.map(x=>x.id)),new Set(DAILY_SFX.map(x=>x.id)));
     for(const row of source.files) {
         const runtime=L.getSfx(row.id),raw=fs.readFileSync(path.join(folder,row.id+'.mp3'));

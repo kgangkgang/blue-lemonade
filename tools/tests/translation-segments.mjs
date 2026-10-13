@@ -122,3 +122,38 @@ assert.ok(/return dropStrayWords\(translatedText, textToTranslate\);/.test(idx),
 assert.ok(/processTranslationText\(originalTextForDbKey, newText\)/.test(idx),'손으로 고친 글은 그대로 보인다');
 console.log('PASS 6.2.4 stray Latin word line dropped only when absent from the source and the translation is mostly CJK');
 }
+{
+const {dropStrayWords}=await import(new URL('src/addons/translator/translation-segments.js',root));
+// 6.2.5 실제로 본 모양: 번역 모델이 혼잣말 + 문단 번호 닫는 표시를 줄 머리에 흘림
+const src='The rain stopped before noon.\n\nBoth guards are already standing.';
+assert.equal(dropStrayWords('비는 정오가 되기 전에 그쳤다.\n\nPolite, context-fitting title choice⟧ 두 경비는 이미 서 있었다.',src),'비는 정오가 되기 전에 그쳤다.\n\n두 경비는 이미 서 있었다.');
+assert.equal(dropStrayWords('첫 문단이에요.\n\n⟦1⟧ 둘째 문단이에요.',src),'첫 문단이에요.\n\n둘째 문단이에요.','남은 문단 번호 표시');
+assert.equal(dropStrayWords('Note⟧ 한 줄짜리 번역.','x'),'한 줄짜리 번역.','한 줄이어도');
+for(const t of ['그는 ⟦비밀⟧ 이라고 적었다.\n\n다음 줄.','OK 좋아 ⟧ 그래.\n\n다음.'])assert.equal(dropStrayWords(t,'He wrote ⟦secret⟧.'),t,'원문에 ⟦ ⟧ 가 있으면 손대지 않는다');
+assert.equal(dropStrayWords('OK 좋아 ⟧ 그래.\n\n다음 줄이에요.','x'),'OK 좋아 ⟧ 그래.\n\n다음 줄이에요.','한글이 섞인 글귀는 지우지 않는다');
+// 글귀만 있던 줄이 비면 그 줄과 빈 줄 하나를 같이 지운다 — 문단 수가 그대로 (접힌 보기의 문단 사이가 벌어지지 않는다)
+const three='The rain stopped before noon.\n\nBoth guards are already standing.\n\nThey bowed.';
+assert.equal(dropStrayWords('비는 정오가 되기 전에 그쳤다.\n\n⟦1⟧\n\n두 경비는 이미 서 있었다.\n\n그들은 고개를 숙였다.',three),'비는 정오가 되기 전에 그쳤다.\n\n두 경비는 이미 서 있었다.\n\n그들은 고개를 숙였다.','⟦n⟧ 만 있던 줄');
+assert.equal(dropStrayWords('비는 정오가 되기 전에 그쳤다.\n\nPolite, context-fitting title choice⟧\n\n두 경비는 이미 서 있었다.\n\n그들은 고개를 숙였다.',three),'비는 정오가 되기 전에 그쳤다.\n\n두 경비는 이미 서 있었다.\n\n그들은 고개를 숙였다.','혼잣말만 있던 줄');
+assert.equal(dropStrayWords('Note⟧\n\n비는 정오가 되기 전에 그쳤다.\n\n두 경비는 이미 서 있었다.',three),'비는 정오가 되기 전에 그쳤다.\n\n두 경비는 이미 서 있었다.','맨 앞');
+assert.equal(dropStrayWords('비는 정오가 되기 전에 그쳤다.\n\n두 경비는 이미 서 있었다.\n\n⟦2⟧',three),'비는 정오가 되기 전에 그쳤다.\n\n두 경비는 이미 서 있었다.','맨 끝');
+assert.equal(dropStrayWords('비는 정오가 되기 전에 그쳤다.\n⟦1⟧\n두 경비는 이미 서 있었다.',three),'비는 정오가 되기 전에 그쳤다.\n두 경비는 이미 서 있었다.','빈 줄 없이 붙은 줄');
+assert.equal(dropStrayWords('비는 정오가 되기 전에 그쳤다.\n\n⟦1⟧ 두 경비는.\n\nValladolid\n\n그들은 고개를 숙였다.',three),'비는 정오가 되기 전에 그쳤다.\n\n두 경비는.\n\n그들은 고개를 숙였다.','찌꺼기 걷기 뒤 6.2.4 낱말 한 줄도 이어서');
+console.log('PASS 6.2.5 marker debris (a Latin aside ending in ⟧, leftover ⟦n⟧) is dropped only when the source has no ⟦ ⟧');
+}
+{
+// 6.2.5 다른 길로 보이는 번역도 같은 모양 — 북마크 창(캐시 번역 · 손으로 고친 표시 · 삭제) · 선택 재번역(이어 붙인 글은 걷고, 캐시 줄은 그대로)
+const fsm=await import('node:fs');const read=rel=>fsm.readFileSync(new URL(rel,root),'utf8');
+const bm=read('src/addons/bookmarks/translate.js');
+assert.ok(/const editedByHand = fromCache && isHandEdited\(message\.extra, original\);\n[\t ]*const display = await displayTextOf\(original, editedByHand \? translation : cleanTranslation\(translation, original\)\);/.test(bm),'북마크 번역: 캐시 번역은 걷고 손으로 고친 것은 그대로');
+assert.ok(/if \(!editedByHand\) delete extra\.translation_edited;/.test(bm),'모델이 새로 옮기면 표시를 지운다');
+assert.ok(/extra\.translation_edited = extra\.original_text_hash;/.test(bm),'북마크 창에서 손으로 고치면 표시');
+assert.ok(/delete extra\.display_text;\n[\t ]*delete extra\.original_translation_backup;\n[\t ]*delete extra\.translation_edited;/.test(bm),'지우면 표시도');
+assert.ok(/\?\.dropStrayWords;/.test(bm)&&/dropStrayWords, \/\/ 6\.2\.5/.test(read('src/addons/translator/index.js')),'번역기 API 로 같은 함수를 쓴다');
+const sel=read('src/addons/translator/selection/translation.js');
+assert.ok(/job\.clean\(translation, job\.source, job\.message\) : translation\);/.test(sel),'선택 재번역: 보여 줄 글만 걷는다');
+assert.ok(/await updateCache\(job\.source, job\.translated, translation\);/.test(sel),'캐시 비교-교환은 원문 그대로');
+assert.ok(/clean: \(text, source, message\) => message\?\.extra\?\.translation_edited === originalHashOf\(source\) \? text : dropStrayWords\(text, source\),/.test(read('src/addons/translator/index.js')),'손으로 고친 번역은 그대로');
+assert.ok(/clean: options\.clean,/.test(read('src/addons/translator/selection/state.js')));
+console.log('PASS 6.2.5 bookmarks panel and selection retranslate show stored translations the same way as the chat screen');
+}

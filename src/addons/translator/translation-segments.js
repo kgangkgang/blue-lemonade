@@ -621,8 +621,37 @@ const STRAY_WORD_LINE = /^[\t \r\u00a0]*([A-Za-z][A-Za-z'’-]*[A-Za-z])[\t \r\u
 const FENCE_LINE = /^[\t ]*(?:`{3,}|~{3,})/;
 const blankLine = line => line !== undefined && !line.trim();
 const wordKey = text => String(text).normalize('NFKC').toLowerCase().replace(/\u00ad/g, '').replace(/[’‘]/g, "'").replace(/([a-z])\1{2,}/g, '$1$1');
+/** drop[i] 인 줄을 지운다 — 지운 줄 때문에 빈 줄이 겹치거나 맨 앞 · 맨 끝에 남으면 빈 줄 하나도 같이 지워 문단 수가 그대로 남게 */
+function dropLines(lines, drop) {
+    const out = [];
+    let skipBlank = false;
+    lines.forEach((line, i) => {
+        if (drop[i]) {
+            const next = lines[i + 1];
+            if (blankLine(out.at(-1)) && (next === undefined || blankLine(next))) out.pop();
+            else if (!out.length && blankLine(next)) skipBlank = true;
+            return;
+        }
+        if (skipBlank) { skipBlank = false; if (blankLine(line)) return; }
+        out.push(line);
+    });
+    return out.join('\n');
+}
 export function dropStrayWords(text, source) {
-    const value = String(text ?? '');
+    let value = String(text ?? '');
+    // 6.2.5 문단 번호 표시(⟦n⟧) 찌꺼기 — 번역 모델이 영어 혼잣말을 「… context-fitting title⟧ 번역문 …」처럼 줄 머리에 흘렸다
+    //       (원문에는 없는 글귀). 원문에 ⟦ ⟧ 가 없을 때만:
+    //       줄 머리의 로마자 · 기호뿐인 글귀 + ⟧ (한글 · 가나 · 한자가 섞이면 손대지 않는다), 그리고 남은 ⟦n⟧ 표시를 걷는다.
+    //       글귀만 있던 줄이 비면 그 줄도 지운다 (빈 줄이 겹치지 않게 — 접힌 보기의 문단 사이가 벌어지지 않는다)
+    if (/[⟦⟧]/.test(value) && !/[⟦⟧]/.test(String(source ?? ''))) {
+        const before = value.split('\n');
+        value = value.replace(/^([\t \u00a0]*)(?:⟦\d*⟧[\t ]*)?[A-Za-z][^\n⟦⟧\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]{0,200}?⟧[\t ]*/gm, '$1').replace(/⟦\d+⟧[\t ]*/g, '');
+        const after = value.split('\n');
+        if (after.length === before.length) {
+            const emptied = after.map((line, i) => !line.trim() && !!before[i].trim());
+            if (emptied.includes(true)) value = dropLines(after, emptied);
+        }
+    }
     if (!value.includes('\n')) return value;
     const src = wordKey(source ?? '');
     const lines = value.split('\n');
@@ -639,19 +668,7 @@ export function dropStrayWords(text, source) {
     const latin = rest.match(/[A-Za-z]/g)?.length ?? 0;
     const cjk = rest.match(/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/g)?.length ?? 0;
     if (cjk <= latin) return value;
-    const out = [];
-    let skipBlank = false;
-    lines.forEach((line, i) => {
-        if (stray[i]) {
-            const next = lines[i + 1];
-            if (blankLine(out.at(-1)) && (next === undefined || blankLine(next))) out.pop();
-            else if (!out.length && blankLine(next)) skipBlank = true;
-            return;
-        }
-        if (skipBlank) { skipBlank = false; if (blankLine(line)) return; }
-        out.push(line);
-    });
-    return out.join('\n');
+    return dropLines(lines, stray);
 }
 /** 저장된 번역문에 풀리지 못하고 남은 자리표시자를 걷는다 (원문에 그런 글이 없을 때만) — 보여 줄 때 고치기용 */
 export function dropLeftoverPlaceholders(text, source) {

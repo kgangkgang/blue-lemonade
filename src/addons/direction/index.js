@@ -12,7 +12,7 @@ import { badgeTextHit } from '../../badge-hit.js';
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
-const VERSION = '1.1.9';
+const VERSION = '1.2.0';
 // 1.1.5: 깃털 창에 두 쪽 — 전개 지시(이번 전개) · 항상 지시(적은 글 그대로 매번, 예: <OOC: …>). 옆으로 넘기거나 제목을 눌러 바꾼다
 const KINDS = ['direction', 'always'];
 const KIND_LABEL = { direction: '전개 지시', always: '항상 지시' };
@@ -277,6 +277,23 @@ function isRawGeneration() {
     return /\bgenerateRaw(?:Data)?\b/.test(new Error().stack ?? '');
 }
 
+/**
+ * 2026-10-13 지시 글의 {{user}} · {{char}} 같은 매크로를 보내기 직전에 실제 값으로 바꾼다. 실리태번은 CHAT_COMPLETION_PROMPT_READY 를
+ * 쏜 뒤 매크로를 다시 바꾸지 않아서, 항상 지시 · 전개 지시에 적은 {{user}} 가 글자 그대로 모델에 갔다.
+ * 매크로가 없는 글은 부르지 않고 그대로 둔다 (보내는 글이 한 글자도 안 바뀜). 바꾸다 오류가 나면 적은 그대로 보낸다.
+ */
+const MACRO_HINT = /\{\{|<(?:USER|BOT|CHAR|CHARIFNOTGROUP|GROUP)>/i;
+function substituteMacros(text) {
+    if (typeof text !== 'string' || !MACRO_HINT.test(text)) return text;
+    try {
+        const result = getContext().substituteParams?.(text);
+        return typeof result === 'string' ? result : text;
+    } catch (error) {
+        console.warn('[전개 지시] 매크로를 바꾸지 못해 적은 그대로 보냅니다:', error);
+        return text;
+    }
+}
+
 // 생성 종류는 GENERATION_STARTED(prepareOpenAIMessages 보다 먼저)에서 받아 둔다. 조용한 생성(/gen · 요약 · 그림 프롬프트 · 표정)과
 // 대신 쓰기(impersonate)에는 넣지 않는다. 한 번 쓰면 비워서 지난 값이 다음 요청에 새지 않게 한다.
 let generationType = null;
@@ -303,8 +320,9 @@ function injectDirection(eventData) {
 
     // 항상 지시 먼저, 전개 지시가 끝 쪽 — 같은 자리(삽입 위치)에 system 메시지 둘
     const contents = [];
-    if (always) contents.push(store.always.content);
-    if (direction) contents.push(template.replace(/\{\{direction\}\}/gi, () => store.direction.content));
+    // 틀의 {{direction}} 자리를 먼저 채운 뒤 글 전체의 매크로를 한 번에 바꾼다 (최근 목록에는 적은 그대로 남는다)
+    if (always) contents.push(substituteMacros(store.always.content));
+    if (direction) contents.push(substituteMacros(template.replace(/\{\{direction\}\}/gi, () => store.direction.content)));
     const prefill = type === 'impersonate' ? oai_settings.assistant_impersonation : oai_settings.assistant_prefill;
     insertInstructions(messages, contents, store.promptDepth, getChatCompletionModel(oai_settings), { type, prefill, appendUser: direction });
 
@@ -321,9 +339,20 @@ function injectDirection(eventData) {
 }
 
 // 프리셋 안에서 {{direction}}을 직접 쓸 수도 있게 매크로로도 둔다. 꺼져 있으면 빈칸이 된다.
+// 2026-10-13 실리태번은 {{user}} 를 {{direction}} 보다 먼저 바꾸므로 지시 안의 {{user}} 는 여기서 바꿔 돌려준다.
+// 지시 글에 {{direction}} 이 또 있으면 그 안쪽은 적은 그대로 (끝없이 돌지 않게)
+let expandingMacro = false;
+function directionMacroText() {
+    if (!isActive()) return '';
+    const text = settings().direction.content;
+    if (expandingMacro) return text;
+    expandingMacro = true;
+    try { return substituteMacros(text); } finally { expandingMacro = false; }
+}
+
 function registerDirectionMacro() {
     try {
-        getContext().registerMacro?.('direction', () => (isActive() ? settings().direction.content : ''), '전개 지시에 적은 내용 (꺼져 있으면 빈칸)');
+        getContext().registerMacro?.('direction', directionMacroText, '전개 지시에 적은 내용 (꺼져 있으면 빈칸)');
     } catch (error) {
         console.warn('[전개 지시] {{direction}} 매크로를 등록하지 못했습니다:', error);
     }

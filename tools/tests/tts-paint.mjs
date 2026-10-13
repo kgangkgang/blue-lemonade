@@ -139,6 +139,27 @@ await test('그 인물의 색: 이 채팅에서 가장 많이 본 색 · 같으�
     assert.equal(SP.colorOfName(''), null);
 });
 
+await test('6.2.5 그 인물의 색: 칸의 별명으로도 (분석이 화자를 다른 표기로 줄 때 — 루크 ↔ Rook)', () => {
+    const saved = T.ctx.chatMetadata.lemon_voice;
+    try {
+    T.ctx.chatMetadata.lemon_voice = {
+        colors: {
+            '#b799e8': { name: 'Rook', locked: true, count: 26, aliases: ['Rook', 'Rookie', '루크', 'ルーク'], votes: {}, tvotes: {} },
+            '#7fe03c': { name: 'Ivy', locked: true, count: 9, aliases: ['Ivy', '아이비', 'アイビー'], votes: {}, tvotes: {} },
+        },
+        userColor: '#424c59',
+    };
+    assert.equal(SP.colorOfName('루크'), '#b799e8');
+    assert.equal(SP.colorOfName('ルーク'), '#b799e8');
+    assert.equal(SP.colorOfName('아이비'), '#7fe03c');
+    assert.equal(SP.colorOfName('Rook'), '#b799e8');
+    assert.equal(SP.colorOfName('낯선 사람'), null);
+    const q = [{ text: '오늘 두 시', colored: false }, { text: '안녕', colored: false }];
+    const sp = [{ text: '오늘 두 시', color: null, name: '루크', source: 'analysis' }, { text: '안녕', color: null, name: '아이비', source: 'analysis' }];
+    assert.deepEqual(core.planPaint(q, sp, (n) => SP.colorOfName(n)).map(p => [p.name, p.color]), [['루크', '#b799e8'], ['아이비', '#7fe03c']]);
+    } finally { T.ctx.chatMetadata.lemon_voice = saved; }   // 아래 시험이 앞 시험의 색 표를 쓴다
+});
+
 function message(analysis) {
     const mes = 'Mina: 「Fine.」\n\n<span style="color:#d03030">「Hi there」</span>\n\n「Wait!」\n\n「Who?」';
     const m = { name: 'Narrator', is_user: false, is_system: false, swipe_id: 0, mes, extra: {} };

@@ -1,13 +1,25 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.2.4/blue-lemonade-6.2.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.2.5/blue-lemonade-6.2.5.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.2.4 · 최신 업데이트</summary>
+<summary>6.2.5 · 최신 업데이트</summary>
+
+- 전개 지시: 항상 지시 · 전개 지시에 쓴 이름 매크로({{char}} 등)가 글자 그대로 AI 에게 가던 것을 고쳤어요. 보내기 직전에 진짜 이름으로 바뀌어요.
+- 로어북: 캐릭터 카드에 연결한 로어북이 빠져 있으면 위쪽 책 아이콘에 빨간 점 하나가 떠요. 글자 · 팝업 없이, 다시 연결하면 사라져요.
+- 캐릭터 에셋: 답장 속 그림 자리를 꾹 누르면 그 자리만 ‹ › 로 같은 캐릭터의 다른 그림으로 바꾸거나 뺄 수 있어요. 다른 채팅 · 파일은 그대로예요.
+- TTS: 미리 만들기에 「다음 한 줄」이 생겼어요. 대사를 누르면 바로 다음 한 줄만 미리 만들어 기다림이 줄어요. 효과음 「군화 발소리」는 뺐어요. 색 없는 대사 칠하기가 색 표의 다른 표기(별명)로도 그 인물의 색을 찾아요.
+- 번역: 번역 모델이 문단 머리에 영어 혼잣말(「… title⟧」 같은 것)을 흘리면 지워요. 용어집 「월드인포에서 뽑기」 고르기 창이 폰에서 체크칸만 넓어지고 칸이 잘리던 것도 고쳤어요.
+- 애드온 버전: 캐릭터 에셋 1.6.3 · 북마크 1.5.4 · 전개 지시 1.2.0 · LLM 번역 2.3.8 · TTS 1.7.6
+
+</details>
+
+<details>
+<summary>6.2.4 · 번역에 끼어든 낱말 걷기</summary>
 
 - 번역: 번역 모델이 원문에 없는 영어 낱말 하나를 문단 사이에 한 줄로 끼워 넣는 일이 있었어요(뜬금없는 지명 한 줄 같은 것). 이제 번역문이 주로 한글 · 가나 · 한자일 때, 원문 어디에도 없는 로마자 낱말 하나만 있는 줄은 지워요. 이미 저장된 번역도 채팅을 열 때 같이 정리하고, 손으로 고친 번역문과 영어로 옮긴 글은 그대로예요.
 - 애드온 버전: LLM 번역 2.3.7

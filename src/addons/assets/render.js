@@ -19,7 +19,7 @@ import * as stGroups from '../../../../../../group-chats.js';
 import { settings, currentFolder, folderOf } from './state.js';
 import { groupKeyOf, baseOf } from './assets.js';
 import { findSimilar, findSimilarList } from './names.js';
-import { slotView } from './slots.js';
+import { slotView, isManual } from './slots.js';
 
 const TAG_PATTERN = /\{\{img::\s*([^{}]+?)\s*\}\}/gi;
 const SKIP_TAGS = new Set(['CODE', 'PRE', 'SCRIPT', 'STYLE', 'TEXTAREA']);
@@ -604,11 +604,17 @@ function fillSlots(text, mes) {
         const id = span.dataset.assetSlot;
         const view = slotView(records[id], slotRunning.has(id));
         const asset = view.state === 'img' && index ? findAsset(view.name) : null;
-        const sig = `${generation}|${view.state}|${asset ? `${asset.folder}/${asset.file}` : ''}|${view.reason ?? ''}`;
+        // 꾹 눌러 사용자가 고른 그림(manual)은 그 파일 그대로 — 번호 묶음 고르기(fixImages)가 다른 번호로 바꾸지 않게 data-eh-exact
+        const exact = isManual(records[id]);
+        const sig = `${generation}|${view.state}|${asset ? `${asset.folder}/${asset.file}` : ''}|${view.reason ?? ''}${exact ? '|m' : ''}`;
         if (span.dataset.ehSlot === sig) continue;
         domEdits++;
         span.dataset.ehSlot = sig;
-        if (asset) span.replaceChildren(makeImage(asset));
+        if (asset) {
+            const img = makeImage(asset);
+            if (exact) img.dataset.ehExact = '';
+            span.replaceChildren(img);
+        }
         else if (view.state === 'retry') span.replaceChildren(retryButton(id, view.reason));
         else span.replaceChildren();
     }
@@ -620,6 +626,19 @@ export function assetInfo(name) {
     if (!liveIndex()) return null;
     const asset = findAsset(name) ?? index.groups.get(groupKeyOf(cleanName(name)))?.[0] ?? null;
     return asset ? { file: asset.file, group: asset.group, variants: hasVariants(asset) } : null;
+}
+
+/** 화면의 그 메시지에서 자리마다 지금 보이는 그림 파일 — { 자리 id: 파일 } (그림 없는 자리는 빠진다). 꾹 눌러 한 자리를 정할 때 다른 자리를 고정하는 데 쓴다 */
+export function shownSlotFiles(messageId) {
+    const out = {};
+    const mes = document.querySelector(`#chat .mes[mesid="${Number(messageId)}"]`);
+    if (!mes) return out;
+    for (const span of mes.querySelectorAll(`.mes_text ${SLOT_SELECTOR}`)) {
+        const img = span.querySelector('img');
+        const file = img ? (img.dataset.ehFile || parseCharacterUrl(img.getAttribute('src') || '')?.file || '') : '';
+        if (file) out[span.dataset.assetSlot] = file;
+    }
+    return out;
 }
 
 /** 메시지 하나를 곧 다시 그린다 — 자리 요소가 화면에 있으면 true (없으면 부른 쪽이 메시지를 다시 그린다) */
@@ -820,7 +839,8 @@ function fixImages(text, mes, imgs, { random = settings().randomGroups } = {}) {
         }
 
         let target = null;
-        if (random) {
+        // 꾹 눌러 고른 자리 그림(data-eh-exact)은 묶음 안에서 다시 고르지 않는다. 자리 순서(blockIndex)는 위에서 그대로 세서 다른 그림의 고르기는 그대로
+        if (random && !img.hasAttribute('data-eh-exact')) {
             const members = index.groups.get(groupKeyOf(parsed.file));
             if (members && members.length > 1) {
                 const key = `${blockIndex}|${original}`;
@@ -834,6 +854,14 @@ function fixImages(text, mes, imgs, { random = settings().randomGroups } = {}) {
                     used.add(pick.url);picks.set(key,pick);
                 }
                 target = picks.get(key);
+            }
+        } else if (random && img.hasAttribute('data-eh-exact')) {
+            // 사용자가 정한 그림은 그 묶음의 쓴 번호로 적어 둔다 — 뒤 자리의 자동 고르기가 같은 그림을 다시 고르지 않게
+            const groupKey = groupKeyOf(parsed.file);
+            if ((index.groups.get(groupKey)?.length ?? 0) > 1) {
+                let used = usedByGroup.get(groupKey);
+                if (!used) { used = new Set(); usedByGroup.set(groupKey, used); }
+                used.add(lookup(parsed.file)?.url ?? original);
             }
         }
         if (!target) target = lookup(parsed.file);

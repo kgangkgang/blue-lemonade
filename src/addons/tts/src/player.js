@@ -145,6 +145,14 @@ function sortedJson(obj) {
 }
 /** 미리 만들기가 켜져 있나 ('dialogue' · 'all') — 켜져 있으면 자동 읽기도 줄마다, 감정 태그는 원문에서 */
 const pregenOn = (s) => s?.pregen === 'dialogue' || s?.pregen === 'all';
+/** 6.2.5 누른 대사를 줄마다 만들까 — 미리 만들기가 켜져 있거나 「다음 한 줄」 (미리 만든 다음 줄과 같은 키가 되게. 자동 읽기 · 내려받기는 pregenOn 그대로) */
+const tapByLine = (s) => pregenOn(s) || s?.pregen === 'next';
+/** 6.2.5 누른 줄을 재생 줄에 넣은 뒤 부를 함수들 (pregen.js 「다음 한 줄」이 등록 — 서로 import 하지 않게) */
+const tapListeners = new Set();
+export function onTapped(fn) {
+    if (typeof fn === 'function') tapListeners.add(fn);
+    return () => tapListeners.delete(fn);
+}
 // 1.5.5 번호 → 메시지: 음수는 다른 확장이 넘긴 글(analysis.registerExternal), 그 밖엔 채팅
 // 1.5.7 효과음 넓이(sfx.level): 저장된 신호를 재생 때 거른다 — 바꿔도 분석을 다시 하거나 음성을 다시 만들지 않는다.
 //   few = 분명한 소리(strength 1)만 · normal = 1~2 · many = 전부 (3 = 불확실·비슷한 소리, 과해석일 수 있음). WAV 저장은 적어도 normal (사용자: 저장엔 효과음까지).
@@ -2348,7 +2356,7 @@ export function speakSegments(mesId, segs) {
         const flat = t.lines.flat();
         // 1.4.4 듣는 언어: 누른 줄이 아직 안 옮겨졌으면 이 메시지(자동 읽기 줄 + 누른 줄)를 한 요청으로 옮긴 뒤 다시 (한 번만 — 못 옮기면 원문)
         if (!tried && listenPendingOf(flat).length) { runPrepared(mesId, mes, { extra: flat, run: () => run(true) }); return true; }
-        const jobs = finishJobs(flat, s, { merge: !pregenOn(s) });   // 미리 만들기가 켜져 있으면 줄마다 (미리 만든 키와 같게)
+        const jobs = finishJobs(flat, s, { merge: !tapByLine(s) });   // 미리 만들기 · 「다음 한 줄」이 켜져 있으면 줄마다 (미리 만든 키와 같게)
         if (!jobs.length) {
             if (t.missing) toastOnce('목소리를 먼저 정해요 (TTS 설정)', 'warning');
             else if (t.missingUser) { void askPersonaVoice().then(ok => { if (ok) run(); }); }
@@ -2357,6 +2365,8 @@ export function speakSegments(mesId, segs) {
         jobs[0].tapT0 = t0;
         const cues = tapSfxJobs(mesId, mes, segs, s);
         enqueue([...cues.before, ...jobs, ...cues.after], { append: false });   // 1.5.4 누른 대사 앞 지문의 효과음을 먼저 · 1.5.6 마지막 대사 뒤 지문은 이어서
+        // 6.2.5 「다음 한 줄」(pregen.js): 분석 · 번역 기다림 · 듣는 언어를 거친 뒤라 다음 줄도 같은 상태로 만든다. 채팅 메시지만 (다른 확장의 글은 음수 번호)
+        if (mesId >= 0) for (const fn of tapListeners) { try { fn(mesId, segs); } catch { /* 듣는 쪽 오류는 재생과 상관없음 */ } }
         return true;
     };
     // 1.4.4 누른 줄도 이 메시지의 듣는 언어 묶음에 넣는다 (번역 기다리기 · 분석 뒤 한 요청). 그 단계를 거친 뒤엔 다시 옮기지 않고 읽는다 (run(true)) —

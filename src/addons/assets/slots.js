@@ -4,6 +4,7 @@
 // 왜: 이미지 프롬프트를 켜면 규칙과 그림 목록(캐릭터에 따라 수백 장)이 매 답변 본문 모델에게 간다 — 비싼 모델이면 그만큼 비싸다.
 // 켜 두면 본문 모델에게는 아무것도 보내지 않고, 답을 받는 순간 대사 문단 앞 빈 줄에 빈 자리를 넣은 뒤(글은 그 뒤로 안 바뀐다)
 // 연결한 (싼) 모델이 자리마다 그림 이름을 골라 extra 에만 적는다. 번역기 · TTS · 다시 쓰기는 자리를 글로 보지 않는다.
+import { splitName } from './names.js';
 
 export const SLOT_CLASS = 'bl-asset-slot';
 /** 저장되는 자리 모양 — 이 모양 그대로만 자리로 본다 (번역기 보호 규칙 · 다시 쓰기 · TTS 도 같은 모양) */
@@ -259,6 +260,73 @@ export function recordsFromPicks(ids, picks, info) {
         records[id] = { name: asset.file, pending: false };
     });
     return records;
+}
+
+// ── 꾹 눌러 「이 자리만」 (hold.js → viewer.js 의 「이 자리」 줄 → after-reply.js setSlotPick) ──
+// 답장의 그림 하나를 꾹 누르면 그 자리만 같은 캐릭터의 다른 그림으로 바꾸거나 뺀다. 그 메시지 · 그 스와이프의 그 자리 기록만 바뀐다
+// (다른 자리 · 다른 채팅 · 파일은 그대로). 사용자가 정한 자리(manual)는 다시 고르기가 건드리지 않고, 번호 묶음 고르기도 그 파일 그대로 그린다.
+
+/** 사용자가 정한 자리 기록 — name = 파일 이름, '' = 빼기 */
+export const manualRecord = name => ({ name: String(name ?? ''), pending: false, manual: true });
+export const isManual = record => isObj(record) && record.manual === true;
+
+/**
+ * 한 자리를 손으로 정할 때 같은 답장의 다른 자리(그림이 보이는 자동 자리)를 지금 보이는 파일로 같이 고정한다 — shown = { 자리 id: 보이는 파일 }.
+ * 번호 묶음 고르기는 답장의 그림을 차례로 보며 묶음 안에서 안 쓴 번호를 고르므로, 한 자리만 빠지거나 바뀌면 뒤 자리의 번호가 같이 바뀐다. 고정해 두면 그대로다.
+ * 이미 정한 자리 · 고르는 중 · 빈 자리는 건드리지 않는다
+ */
+export function freezeOthers(map, shown, slotId) {
+    const records = isObj(map) ? map : {};
+    const out = {};
+    for (const [id, file] of Object.entries(isObj(shown) ? shown : {})) {
+        const record = records[id];
+        if (id === slotId || !file || !isObj(record) || isManual(record) || record.pending || !record.name) continue;
+        out[id] = manualRecord(file);
+    }
+    return out;
+}
+
+/** 다시 고르기 단추가 다시 물을 자리: 누른 자리 + 비었거나 실패 · 끊긴 자리. 사용자가 정한 자리는 빼고 */
+export function retryTargets(ids, map, running, slotId) {
+    const records = isObj(map) ? map : {};
+    const busy = id => !!running?.has?.(id);
+    return ids.filter(id => id === slotId || (!isManual(records[id]) && !records[id]?.name && (records[id]?.error || (records[id]?.pending && !busy(id)))));
+}
+
+const NAME_ORDER = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+const baseName = asset => String(asset?.base ?? String(asset?.file ?? '').replace(/\.[^.]+$/, ''));
+const ownerKey = asset => splitName(baseName(asset))?.owner.toLowerCase() ?? '';
+/** 번호 묶음 이름 (assets.js groupLabelOf 와 같은 규칙: Name_smile-1 → Name_smile) — 같은 표정은 번호 없는 파일부터 붙여 놓는다 */
+const groupOf = asset => baseName(asset).replace(/[-_.]\d+$/, '');
+function choiceOrder(a, b) {
+    const ga = groupOf(a), gb = groupOf(b);
+    const byGroup = NAME_ORDER.compare(ga, gb);
+    if (byGroup) return byGroup;
+    const ea = baseName(a).toLowerCase() === ga.toLowerCase(), eb = baseName(b).toLowerCase() === gb.toLowerCase();
+    if (ea !== eb) return ea ? -1 : 1;
+    return NAME_ORDER.compare(a.file, b.file);
+}
+
+/**
+ * 「이 자리」 창에서 ‹ › 로 넘길 그림: 지금 그림과 같은 캐릭터(이름 앞머리 — Name_smile 의 Name)의 그림, 표정(번호 묶음)끼리 이름순 — 번호 없는 파일이 먼저.
+ * 앞머리가 없거나 그 캐릭터의 다른 그림이 없으면 목록 전부. 꺼 둔 그림 · 이 답장에 이미 나온 그림 · 지금 그림과 이름이 같은 다른 폴더 파일은 뺀다 (지금 그림은 늘 남긴다).
+ * @template {{ file: string, base?: string }} A
+ * @param {A[]} assets 켜진 폴더를 합친 목록 (store.js runtime.assets)
+ * @param {A} current 지금 그 자리에 보이는 그림
+ * @param {{ shown?: Iterable<string>, off?: (asset: A) => boolean }} [options] shown = 이 답장의 다른 그림 파일 이름
+ * @returns {{ items: A[], start: number }}
+ */
+export function slotChoices(assets, current, { shown = [], off = () => false } = {}) {
+    const list = Array.isArray(assets) ? assets.filter(asset => asset && asset.file) : [];
+    const owner = current ? ownerKey(current) : '';
+    const mine = owner ? list.filter(asset => ownerKey(asset) === owner) : [];
+    const pool = mine.some(asset => asset !== current) ? mine : list;
+    const seen = new Set([...shown].map(file => String(file).toLowerCase()));
+    const own = String(current?.file ?? '').toLowerCase();
+    const items = pool.filter(asset => asset === current || (String(asset.file).toLowerCase() !== own && !off(asset) && !seen.has(String(asset.file).toLowerCase())));
+    if (current && !items.includes(current)) items.push(current);
+    items.sort(choiceOrder);
+    return { items, start: Math.max(0, items.indexOf(current)) };
 }
 
 /**

@@ -721,4 +721,7 @@ body.salty .bl-translator-dialog .bl-hs-row .bl-hs-switch:focus-visible { outlin
 .llmt-settings .prompt-select-container { flex-wrap: wrap; justify-content: flex-end; row-gap: 6px; }
 .llmt-settings .prompt-select-container select { flex: 1 1 11em; min-width: 0; }
 /* 용어집: 원문 칸이 반(412 에서 124px)이라 여러 표기를 늘어놓은 원문이 말줄임됐다 → 원문 1.4 : 번역 1 (줄마다 열은 그대로 맞음) */
-.llmt-gl-row, .llmt-gl-add, .llmt-gl-pick-row { grid-template-columns: minmax(0, 1.4fr) auto minmax(0, 1fr) auto auto; }
+.llmt-gl-row, .llmt-gl-add { grid-template-columns: minmax(0, 1.4fr) auto minmax(0, 1fr) auto auto; }
+/* 6.2.5 고르기 창 줄은 맨 앞이 체크칸이라 따로 — 위 규칙에 같이 묶였더니 폰에서 체크칸 자리가 1.4fr 로 제일 넓어지고 원문 · 번역 칸이 오른쪽으로 밀려 잘렸다 (사용자 10-13 「용어집 UI UX 깨짐」) */
+@media (min-width: 601px) { .llmt-gl-pick-row { grid-template-columns: auto minmax(0, 1.4fr) auto minmax(0, 1fr) auto; } }
+@media (max-width: 600px) { .llmt-gl-pick-row { grid-template-columns: auto auto minmax(0, 1fr); } }

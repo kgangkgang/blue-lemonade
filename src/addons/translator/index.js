@@ -3233,6 +3233,8 @@ function syncSelection() {
     selectionModule ??= import('./selection/index.js');
     selectionModule.then(module => module.syncSelectionRetranslate({
         settings: extensionSettings, translate, render: processTranslationText,
+        // 6.2.5 이어 붙인 번역을 보여 주기 전에 걷는다 (저장된 번역을 보여 줄 때와 같게) — 손으로 고친 번역은 그대로
+        clean: (text, source, message) => message?.extra?.translation_edited === originalHashOf(source) ? text : dropStrayWords(text, source),
         capture: message => guards.capture(message),
         refresh: (id, message) => refreshMessageBlock(id, message),
         complete: (id, message, source) => {
@@ -5232,6 +5234,7 @@ async function translateText(text, { target = '', signal = null, onProgress = nu
 function publishTranslatorAPI() {
     if (!duplicate) globalThis[Symbol.for('blue-lemonade.translator')] = {
         processTranslationText, readCachedTranslation, storeTranslationQuietly, deleteCachedTranslation,
+        dropStrayWords, // 6.2.5 저장된 번역을 보여 줄 때 걷는 것(원문에 없는 낱말 한 줄 · 문단 번호 찌꺼기) — 북마크 창이 캐시 번역을 같은 모양으로 보이게
         translateForSpeech, speechReady, speechModelTag, // [2.3.0] TTS 듣는 언어
         translateText, // [2.3.2] 다른 확장의 글(문서) — 채팅 번역과 같은 연결 · 프롬프트 · 용어집, 또는 지정 언어 ([2.3.3] onProgress)
         translateProgressText: progressLabel, // [2.3.3] 진행 문구 (채팅 배지와 같은 글)

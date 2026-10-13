@@ -98,6 +98,10 @@ const BUNDLED = UPSTREAM_LIBRARY.flatMap(group => group.files.map((id, i) => {
         words: Object.freeze([...group.words, ...ko.split(',')]), custom: false, loop: false });
 })).concat(DAILY_SFX);
 const BUNDLED_MAP = new Map(BUNDLED.map(row => [row.id, row]));
+// 6.2.5 뺀 효과음 — 사용자 10-13 「군화 발소리는 걍 없애줘」: 분석 목록 · 낱말 찾기 · 보관함 목록에 안 나오고 재생도 안 한다.
+//       저장된 분석에 남은 'footsteps'(1.6.8 뒤 = 군화)는 소리 없이 지나간다. 1.6.8 전 분석의 'footsteps' 는 그때처럼 보통 발소리(daily_footsteps).
+//       파일 · 출처 기록은 그대로 둔다 (getSfx 는 이름 표시를 위해 계속 찾는다)
+export const RETIRED_SFX = Object.freeze(new Set(['footsteps']));
 export const SFX_LIMITS = Object.freeze({ fileBytes: 16 * 1024 * 1024, totalBytes: 128 * 1024 * 1024,
     count: 64, packBytes: 180 * 1024 * 1024, words: 32 });
 export const SFX_PACK_FORMAT = 'blue-lemonade-sfx-pack';
@@ -128,7 +132,7 @@ function customRows() {
         seen.add(row.id); return true;
     }).slice(0, SFX_LIMITS.count);
 }
-export function listSfx() { return [...BUNDLED, ...customRows()].map(row => ({ ...row, words: [...row.words] })); }
+export function listSfx() { return [...BUNDLED.filter(row => !RETIRED_SFX.has(row.id)), ...customRows()].map(row => ({ ...row, words: [...row.words] })); }
 export function getSfx(id) {
     if (typeof id !== 'string') return null;
     const row = BUNDLED_MAP.get(id) || customRows().find(row => row.id === id);
@@ -148,7 +152,7 @@ export function resolveSfxId(id, saved) {
 const preferenceListeners = new Set();
 const preferenceRevisions = new Map();
 export const sfxPreferenceRevision = id => preferenceRevisions.get(id) || 0;
-export function isSfxEnabled(id) { return !!getSfx(id) && !settings().sfx?.disabled?.includes(id); }
+export function isSfxEnabled(id) { return !!getSfx(id) && !RETIRED_SFX.has(id) && !settings().sfx?.disabled?.includes(id); }
 export function onSfxPreferenceChange(listener) {
     preferenceListeners.add(listener);
     return () => preferenceListeners.delete(listener);
@@ -225,7 +229,7 @@ export function matchSfx(text) {
     const custom = customRows().map(row => ({ files: [row.id], words: [...row.words, row.name] }));
     const mine = matchLibrary(words, custom);
     if (mine) return mine.muted ? null : mine;
-    const library = [...DAILY_SFX.map(row => ({ files: [row.id], words: [...row.words, row.name, ...(EXTRA_WORDS[row.id] || [])] })), ...UPSTREAM_LIBRARY.map(group => ({ files: group.files,
+    const library = [...DAILY_SFX.map(row => ({ files: [row.id], words: [...row.words, row.name, ...(EXTRA_WORDS[row.id] || [])] })), ...UPSTREAM_LIBRARY.filter(group => !RETIRED_SFX.has(group.files[0])).map(group => ({ files: group.files,
         words: group.files.length ? BUNDLED_MAP.get(group.files[0]).words : group.words }))];
     const result = matchLibrary(words, library);
     return result?.muted ? null : result;

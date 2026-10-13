@@ -6,10 +6,14 @@
 // 창을 연 뒤에만 그 누르기의 끝을 먹는다: 손을 뗄 때 따라오는 click 하나(메모 보기 → 편집, 몰입 읽기 막대, 북마크 카드 이동, 창 닫기로
 // 새지 않게)와 폰의 길게 누르기 메뉴. 목록에 있는 그림(지금 캐릭터의 폴더 · 프리셋 · 불러온 폴더)일 때만 움직이고,
 // 그 밖의 그림(다른 캐릭터 · 바깥 주소 · 그룹 채팅 · 목록을 아직 못 읽음)은 브라우저가 하던 대로 둔다.
+// 「다른 모델이 고르기」가 채운 답장의 그림 자리(span[data-asset-slot])를 누르면 창 아래에 「이 자리」 줄이 붙는다 — ‹ › 로 같은 캐릭터의
+// 다른 그림을 넘겨 보고 ✓ 로 그 자리만 바꾸거나 ⊘ 로 뺀다 (slots.js slotChoices · after-reply.js setSlotPick). 그 밖에서는 예전 창 그대로.
 import { runtime, groupsOf } from './store.js';
 import { parseCharacterUrl } from './render.js';
 import { toast } from './ui.js';
-import { TITLE } from './state.js';
+import { TITLE, disabledSet } from './state.js';
+import { slotChoices } from './slots.js';
+import { slotRecord, setSlotPick } from './after-reply.js';
 
 const HOLD_MS = 500;          // 실리태번 기본 · 메모의 주인 단추와 같은 길이
 const SLOP = 8;               // 이만큼(px) 움직이면 스크롤이나 끌기로 본다
@@ -18,7 +22,7 @@ const GONE_WAIT = 150;        // 지운 뒤 채팅 다시 맞추기(render.js, 6
 // 테마의 장식 테두리가 그림을 감싼 것 (decor-view.js) — 테두리 가장자리를 눌러도 그 그림으로 친다
 const FRAME = '.bl-art-frame[data-bl-frame="image"]';
 
-/** 누르는 중: { id, x, y, src, img, top, left, timer } */
+/** 누르는 중: { id, x, y, src, img, slot, top, left, timer } — slot = 누른 그림이 든 답장의 그림 자리 (slotAt) */
 let press = null;
 /**
  * 꾹 눌러 창을 연 뒤: { id, up, menu } — up = 손을 뗀 시각 (아직 누르고 있으면 0), menu = 이 누르기의 길게 누르기 메뉴를 이미 막았다.
@@ -79,11 +83,40 @@ function viewerItems(src) {
     return { items, start: Math.max(0, items.indexOf(found.asset)) };
 }
 
-async function open(src) {
+/** 채팅(#chat)의 답장 그림 자리 안 그림이면 { messageId, slotId } — 북마크 카드 · 메모 같은 채팅 밖 사본은 아니다 */
+function slotAt(img) {
+    const span = img?.closest?.('span[data-asset-slot]');
+    const mes = span?.closest?.('#chat .mes[mesid]');
+    const slotId = span?.getAttribute('data-asset-slot') ?? '';
+    if (!mes || !slotId) return null;
+    const messageId = Number(mes.getAttribute('mesid'));
+    return Number.isInteger(messageId) && messageId >= 0 ? { messageId, slotId } : null;
+}
+
+/**
+ * 「이 자리」 창에 넘길 목록: 같은 캐릭터의 그림(slotChoices) + 자리 정보. 그 자리에 고른 그림 기록이 없으면(고르는 중 · 빔) null → 보통 창.
+ * 이 답장의 다른 그림(다른 자리 · 태그로 그린 것)은 화면에서 모은다 — 번호 묶음으로 실제 보이는 파일이라.
+ */
+function slotItems(src, slot) {
+    const found = findAsset(src);
+    const home = found ? slotRecord(slot.messageId, slot.slotId) : null;
+    if (!home?.record?.name) return null;
+    const shown = [];
+    const text = document.querySelector(`#chat .mes[mesid="${home.messageId}"] .mes_text`);
+    for (const other of text?.getElementsByTagName('img') ?? []) {
+        if (other.closest('[data-asset-slot]')?.getAttribute('data-asset-slot') === slot.slotId) continue;
+        const parsed = parseCharacterUrl(other.getAttribute('src') || '');
+        if (parsed) shown.push(parsed.file);
+    }
+    const { items, start } = slotChoices(runtime.assets, found.asset, { shown, off: asset => disabledSet(asset.folder).has(asset.file) });
+    return { items, start, slot: { current: found.asset, apply: name => setSlotPick(home.messageId, slot.slotId, name) } };
+}
+
+async function open(src, slot = null) {
     try {
         const { openViewer } = await loadViewer();
         // 읽는 사이 목록을 다시 읽었을 수 있다 — 지금 목록의 객체로 다시 찾는다
-        const options = viewerItems(src);
+        const options = (slot && slotItems(src, slot)) || viewerItems(src);
         if (options) openViewer(options);
     } catch (error) {
         console.error(`[${TITLE}] 크게 보기 창을 열지 못했어요`, error);
@@ -115,12 +148,12 @@ function cancel() {
 }
 
 function fire() {
-    const { id, src } = press;
+    const { id, src, slot } = press;
     cancel();
     if (notesDragging() || !findAsset(src)) return;
     held = { id, up: 0 };
     if (navigator.userActivation?.hasBeenActive !== false) navigator.vibrate?.(12);
-    open(src);
+    open(src, slot);
 }
 
 // ── 늘 붙어 있는 받기 (누르는 중이 아니면 바로 돌아간다) ──────────────
@@ -140,7 +173,8 @@ function onDown(event) {
     const src = img.getAttribute('src') || '';
     if (!findAsset(src)) return;
     const rect = img.getBoundingClientRect();
-    press = { id: event.pointerId, x: event.clientX, y: event.clientY, src, img, top: rect.top, left: rect.left, timer: setTimeout(fire, HOLD_MS) };
+    // 자리는 누를 때 잡아 둔다 — 0.5초 사이 스트리밍 · 다시 그리기로 그림 요소가 바뀌어도 (주소로 찾듯) 그 자리 번호로 찾는다
+    press = { id: event.pointerId, x: event.clientX, y: event.clientY, src, img, slot: slotAt(img), top: rect.top, left: rect.left, timer: setTimeout(fire, HOLD_MS) };
     for (const [type, handler] of WATCH) window.addEventListener(type, handler, { capture: true, passive: true });
     document.addEventListener('visibilitychange', cancel);
     loadViewer().catch(() => {}); // 실패는 열 때 알린다
@@ -193,7 +227,7 @@ function onContextMenu(event) {
     const id = press ? press.id : (event.pointerType || lastType) !== 'mouse' ? downId : null;
     held = id === null ? null : { id, up: 0, menu: true };
     cancel();
-    open(src);
+    open(src, slotAt(img));
 }
 
 /** 창을 연 뒤 같은 손가락으로 그림을 끌어 버리지 않게. 누르는 중에 끌기가 시작되면 꾹 누르기가 아니다. */

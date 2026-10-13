@@ -5,10 +5,11 @@ import {pathToFileURL} from 'node:url';
 const root=path.resolve(process.argv[2]||'.'), url=pathToFileURL(root+'/');
 const prompt=await import(new URL('src/addons/direction/prompt.js',url));
 const {insertDirection,insertInstructions,CONTINUE_DIRECTION}=prompt;
-const ext={};const probe={ext,insertInstructions,saves:0};globalThis.__directionTest=probe;globalThis.window={matchMedia:()=>({matches:false})};
+const ext={};const probe={ext,insertInstructions,saves:0,subs:0,macro:null};
+probe.context={substituteParams(text){probe.subs++;if(probe.subFails)throw new Error('macro engine failed');let out=String(text).replace(/\{\{user\}\}|<USER>/gi,()=>'Alice').replace(/\{\{char\}\}/gi,()=>'Robin');if(probe.macro)out=out.replace(/\{\{direction\}\}/gi,()=>probe.macro());return out;}};globalThis.__directionTest=probe;globalThis.window={matchMedia:()=>({matches:false})};
 const source=(await fs.readFile(path.join(root,'src/addons/direction/index.js'),'utf8')).split('// ── 시작')[0].replace(/^import .*;$/gm,'');
-const prelude='const {ext:extension_settings,insertInstructions}=globalThis.__directionTest;const saveSettingsDebounced=()=>{globalThis.__directionTest.saves++;};const getChatCompletionModel=()=>globalThis.__directionTest.model||"example-model";const oai_settings={};';
-const m=await import('data:text/javascript;base64,'+Buffer.from(prelude+source+'\nexport {initSettings,settings,injectDirection,trackGeneration,remember,savePreset,isSaved,alwaysActive,partnerColor,KINDS,HISTORY_MAX,PRESET_MAX};').toString('base64'));
+const prelude='const {ext:extension_settings,insertInstructions}=globalThis.__directionTest;const getContext=()=>globalThis.__directionTest.context;const saveSettingsDebounced=()=>{globalThis.__directionTest.saves++;};const getChatCompletionModel=()=>globalThis.__directionTest.model||"example-model";const oai_settings={};';
+const m=await import('data:text/javascript;base64,'+Buffer.from(prelude+source+'\nexport {initSettings,settings,injectDirection,trackGeneration,remember,savePreset,isSaved,alwaysActive,partnerColor,directionMacroText,KINDS,HISTORY_MAX,PRESET_MAX};').toString('base64'));
 ext['Direction-Manager-Lite']={extensionEnabled:false,direction:{enabled:true,content:'literal $& direction'},directionPrompt:'Custom {{direction}}',promptDepth:3};
 m.initSettings();assert.equal(m.settings().extensionEnabled,false);assert.equal(m.settings().direction.content,'literal $& direction');assert.equal(m.settings().promptDepth,3);
 m.settings().onColor='#123456';m.initSettings();assert.equal(m.settings().onColor,'#123456');
@@ -47,6 +48,23 @@ chat=[{role:'user',content:'x'}];(function generateRaw(){m.trackGeneration('norm
 t.direction.enabled=false;probe.model='gemini-2.5-pro';chat=[{role:'assistant',content:'a'}];m.trackGeneration('normal');m.injectDirection({chat});assert.deepEqual(chat.map(x=>x.role),['system','assistant'],'always only: no user turn appended');
 t.direction.enabled=true;chat=[{role:'assistant',content:'a'}];m.trackGeneration('normal');m.injectDirection({chat});assert.equal(chat.at(-1).content,CONTINUE_DIRECTION);
 chat=[{role:'assistant',content:'a'}];m.trackGeneration('continue');m.injectDirection({chat});assert.equal(chat.at(-1).role,'assistant','continue keeps the assistant prefill');assert.equal(chat.length,3);delete probe.model;
+// 2026-10-13 매크로: 보내기 직전 {{user}} · {{char}} 를 실제 이름으로 (항상 지시 · 전개 지시 · 틀). 최근 목록은 적은 그대로
+t.history={direction:[],always:[]};t.directionPrompt='D {{direction}}';t.promptDepth=0;t.always={enabled:true,content:'<OOC: {{user}} and {{char}}>'};t.direction={enabled:true,content:'{{char}} waits for <USER> $& $1'};
+probe.subs=0;chat=[{role:'user',content:'u'}];m.trackGeneration('normal');m.injectDirection({chat});
+assert.deepEqual(chat.map(x=>x.content),['u','<OOC: Alice and Robin>','D Robin waits for Alice $& $1'],'macros in both texts become names; $& stays literal');
+assert.deepEqual([t.history.always[0].content,t.history.direction[0].content],['<OOC: {{user}} and {{char}}>','{{char}} waits for <USER> $& $1'],'history keeps the written text');
+t.directionPrompt='For {{user}}: {{direction}}';chat=[{role:'user',content:'u'}];m.trackGeneration('normal');m.injectDirection({chat,dryRun:true});
+assert.equal(chat.at(-1).content,'For Alice: Robin waits for Alice $& $1','template macros too, also on dry runs (token count matches the real request)');
+t.directionPrompt='D {{direction}}';t.always.content='<OOC: plain text>';t.direction.content='no macro here';probe.subs=0;chat=[{role:'user',content:'u'}];m.trackGeneration('normal');m.injectDirection({chat});
+assert.equal(probe.subs,0,'text without macros is never passed to the macro engine');assert.deepEqual(chat.map(x=>x.content),['u','<OOC: plain text>','D no macro here']);
+probe.subFails=true;t.always.content='<OOC: {{user}}>';chat=[{role:'user',content:'u'}];m.trackGeneration('normal');const warn=console.warn;console.warn=()=>{};m.injectDirection({chat});console.warn=warn;probe.subFails=false;
+assert.equal(chat[1].content,'<OOC: {{user}}>','a failing macro engine sends the written text');
+t.always.enabled=false;t.direction.content='{{user}} sleeps';chat=[{role:'user',content:'u'}];m.trackGeneration('impersonate');m.injectDirection({chat});assert.equal(chat.length,1,'skipped generations stay untouched');
+// {{direction}} 매크로(프리셋에서 직접 쓸 때)도 같은 바꾸기 · 자기 자신을 부르는 지시는 한 번만 펼친다
+probe.macro=m.directionMacroText;assert.equal(m.directionMacroText(),'Alice sleeps');
+t.direction.content='{{char}} then {{direction}}';assert.equal(m.directionMacroText(),'Robin then {{char}} then {{direction}}','self reference expands once, no endless loop');
+t.direction.enabled=false;assert.equal(m.directionMacroText(),'','off: empty');probe.macro=null;
+t.direction={enabled:false,content:''};t.always={enabled:false,content:''};t.directionPrompt='D {{direction}}';t.promptDepth=1;t.history={direction:[],always:[]};
 // 최근: 맨 앞이면 그대로, 다른 자리면 맨 앞으로, 최대 개수
 t.history.direction=[];assert.equal(m.remember('direction','one'),true);assert.equal(m.remember('direction',' one '),false);m.remember('direction','two');assert.equal(m.remember('direction','one'),true);
 assert.deepEqual(t.history.direction.map(x=>x.content),['one','two']);
@@ -62,4 +80,4 @@ const {knownConflicts}=await import(new URL('src/assist/core.js',url));
 for(const folder of ['story-direction','Direction-Manager','Direction-Manager-Lite','jeongaejisi']){const key='third-party/'+folder;assert.equal(knownConflicts([key],[],{direction:true}).length,1);assert.equal(knownConflicts([key],[key],{direction:true}).length,0);assert.equal(knownConflicts([key],[],{direction:false}).length,0);}
 const {DEFAULTS}=await import(new URL('src/settings.js',url));assert.equal(DEFAULTS.addons.direction,false);
 delete globalThis.__directionTest;delete globalThis.window;
-console.log('PASS direction migration, preserved settings, off/raw isolation, insertion and Gemini continuation, always direction, presets and history, duplicate ownership and opt-in');
+console.log('PASS direction migration, preserved settings, off/raw isolation, insertion and Gemini continuation, always direction, macro substitution, presets and history, duplicate ownership and opt-in');

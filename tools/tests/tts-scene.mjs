@@ -147,7 +147,7 @@ await test('timeline: trailing voice gap is omitted and lone loops are bounded t
 await test('timeline: duplicate loop ids reuse one sound',()=>{const r=Mix.sceneTimeline([timelineClip('sfx',1,{mode:'loop',sfxId:'wind'}),timelineClip('voice',1),timelineClip('sfx',1,{mode:'loop',sfxId:'wind'}),timelineClip('voice',1)]);assert.equal(r.events.filter(e=>e.loop&&e.sfxId==='wind').length,1);});
 await test('timeline: fourth unique loop replaces the oldest to match live playback',()=>{const clips=[];for(const id of ['wind','thunder','footsteps','bell']){clips.push(timelineClip('sfx',1,{mode:'loop',sfxId:id}),timelineClip('voice',1));}const r=Mix.sceneTimeline(clips),loops=r.events.filter(e=>e.loop);assert.equal(loops.length,4);assert.equal(loops[0].start,0);assert.equal(loops[0].duration,3);assert.equal(loops.at(-1).sfxId,'bell');assert.equal(loops.at(-1).start,3);});
 await test('timeline: clamps unsafe values and rejects exports longer than ten minutes',()=>{const r=Mix.sceneTimeline([timelineClip('voice',1,{volume:50})],{rate:100,master:100});assert.equal(r.events[0].gain,1);assert.equal(r.events[0].rate,2);assert.throws(()=>Mix.sceneTimeline([timelineClip('voice',601)]),/10분/);});
-await test('live effects controller deduplicates loops and replaces the oldest fourth loop',async()=>{await reset();const existingUrls=T.urls.size,c=Sfx.createSfxController();const one=await c.play('wind',{loop:true}),same=await c.play('wind',{loop:true});assert.equal(one,same);await c.play('thunder',{loop:true});await c.play('footsteps',{loop:true});await c.play('bell',{loop:true});assert.equal(await one.done,'stopped');assert.equal(T.plays.filter(p=>p.loop).length,4);c.stopAll();assert.equal(T.urls.size,existingUrls);});
+await test('live effects controller deduplicates loops and replaces the oldest fourth loop',async()=>{await reset();const existingUrls=T.urls.size,c=Sfx.createSfxController();const one=await c.play('wind',{loop:true}),same=await c.play('wind',{loop:true});assert.equal(one,same);await c.play('thunder',{loop:true});await c.play('knock',{loop:true});await c.play('bell',{loop:true});assert.equal(await one.done,'stopped');assert.equal(T.plays.filter(p=>p.loop).length,4);c.stopAll();assert.equal(T.urls.size,existingUrls);});
 await test('stop during pending effect fetch allows a new voice immediately and drops the late sound',async()=>{await reset();const g=gate();T.sfxGate=g;await P.speakScript(0,[row('slow','sfx',{sfxId:'wind',mode:'sequence'})]);await until(()=>g.started);P.stop();await P.speakScript(0,[row('fresh','voice',{text:'Fresh voice.'})]);await until(()=>T.plays.some(p=>p.text==='Fresh voice.'));g.release();T.sfxGate=null;await idle();assert.ok(T.plays.every(p=>p.kind!=='sfx'));});
 await test('stop during WAV rendering cancels the eventual download',async()=>{await reset();const g=gate();T.renderGate=g;const pending=P.downloadScript(0,[row('a','voice',{text:'Cancel render.'})]);await until(()=>g.started);P.stop();g.release();await assert.rejects(pending,/멈췄/);T.renderGate=null;assert.equal(T.downloads.length,0);});
 await test('message replacement during WAV rendering cancels the eventual download',async()=>{await reset();const g=gate();T.renderGate=g;const pending=P.downloadScript(0,[row('a','voice',{text:'Changing chat.'})]);await until(()=>g.started);T.ctx.chat[0]={mes:'"Replacement."',name:'Mina',extra:{}};g.release();await assert.rejects(pending,/채팅이 바뀌어/);T.renderGate=null;assert.equal(T.downloads.length,0);});
@@ -190,15 +190,19 @@ await test('ordinary WAV excludes effects when automatic effects are off; explic
 });
 
 await test('muted specific everyday sound never falls back to a generic water sound',async()=>{
-    await reset();assert.equal(Library.listSfx().length,89);assert.equal(Library.matchSfx('pour water').id,'daily_water_pour');
+    await reset();assert.equal(Library.listSfx().length,88);   // 6.2.5 군화 발소리 뺌
+    assert.equal(Library.matchSfx('pour water').id,'daily_water_pour');
     Library.setSfxEnabled('daily_water_pour',false);assert.equal(Library.matchSfx('pour water'),null);assert.ok(Library.getSfx('daily_water_pour'));assert.ok(await Library.sfxBlob('daily_water_pour'));
     assert.equal(Library.matchSfx('비가 내린다').id,'daily_rain');assert.equal(Library.matchSfx('키보드를 타이핑한다').id,'daily_keyboard');
 });
-await test('1.6.8 natural footsteps take the generic footstep words; MultiCast footsteps become boots',async()=>{
+await test('1.6.8 natural footsteps take the generic footstep words; 6.2.5 the MultiCast boots are retired (never matched, listed or played)',async()=>{
     await reset();
     for(const [text,id] of [['발소리가 가까워졌다.','daily_footsteps'],['그가 천천히 걸어오고 있었다.','daily_footsteps'],['그가 천천히 걸어왔다.','daily_footsteps'],['그녀는 문 쪽으로 걸어갔다.','daily_footsteps'],['He walked across the room.','daily_footsteps'],['누군가 걸어가는 소리가 났다.','daily_footsteps'],['복도에 발걸음 소리가 울렸다.','daily_footsteps'],['또각또각 구두 소리.','daily_footsteps'],['뚜벅뚜벅 걸어갔다.','daily_footsteps'],['Footsteps approached the door.','daily_footsteps'],['She was walking down the hall.','daily_footsteps'],['He kept pacing.','daily_footsteps'],
-        ['군화 소리가 저벅저벅 다가왔다.','footsteps'],['병사들이 행진했다.','footsteps'],['Heavy boots stomped across the floor.','footsteps'],['They were marching in step.','footsteps'],['The soldiers marched past.','footsteps'],['hurried footsteps','running'],['wet footsteps','footsteps_wet'],['footsteps on the wooden floor','footsteps_wood']])
+        ['hurried footsteps','running'],['wet footsteps','footsteps_wet'],['footsteps on the wooden floor','footsteps_wood']])
         assert.equal(Library.matchSfx(text)?.id,id,text);
+    for(const text of ['군화 소리가 저벅저벅 다가왔다.','병사들이 행진했다.','Heavy boots stomped across the floor.','They were marching in step.','The soldiers marched past.'])
+        assert.notEqual(Library.matchSfx(text)?.id,'footsteps',text);
+    assert.ok(!Library.listSfx().some(x=>x.id==='footsteps')&&!Library.isSfxEnabled('footsteps'),'6.2.5 retired');
     assert.equal(Library.matchSfx('In March the snow melted.'),null,'the month is not a march');
     const natural=Library.getSfx('daily_footsteps'),boots=Library.getSfx('footsteps');
     assert.equal(natural.name,'발소리');assert.equal(natural.category,'문·이동');assert.equal(natural.credit.author,'SpliceSound');assert.equal(natural.credit.license,'CC0-1.0');assert.equal(natural.loop,false);assert.equal(natural.assetPath,'../sfx-extra/daily_footsteps.mp3');
@@ -206,7 +210,7 @@ await test('1.6.8 natural footsteps take the generic footstep words; MultiCast f
     assert.equal(A.canSustainSfx(natural),true);assert.equal(A.canSustainSfx(boots),true);
     assert.ok((await Library.sfxBlob('daily_footsteps')).size>0);assert.ok(Library.sfxAttribution(['daily_footsteps']).includes('freesound.org/people/SpliceSound/sounds/170506/'));
 });
-await test('1.6.8 saved analyses without a library mark play the natural footsteps; marked analyses keep the boots',async()=>{
+await test('1.6.8 saved analyses without a library mark play the natural footsteps; 6.2.5 marked analyses with the retired boots play nothing',async()=>{
     for(const [lib,expected] of [[undefined,'daily_footsteps'],[2,'footsteps']]) {
         await reset();const s=S.settings();Object.assign(s.sfx,{enabled:true,auto:true,mode:'overlay',level:'normal'});
         s.routes={dialogue:'character',narration:'skip',action:'skip',thought:'skip',user_dialogue:'user'};
@@ -220,7 +224,9 @@ await test('1.6.8 saved analyses without a library mark play the natural footste
         assert.deepEqual(P.scriptRows(0).filter(r=>r.kind==='sfx').map(r=>[r.sfxId,r.text]),[[expected,Library.getSfx(expected).name]],'script rows lib='+lib);
         assert.ok(P.speakSegments(0,[{kind:'dialogue',text:'Hello.',raw:'Hello.',color:null,tags:[],speakerHint:null,line:0,dialogueIndex:0}]));
         await until(()=>T.plays.some(x=>x.kind==='voice'));await idle();
-        const fx=T.plays.filter(x=>x.kind==='sfx');assert.equal(fx.length,1,'lib='+lib);assert.equal(fx[0].sfxId,expected,'tap play lib='+lib);
+        const fx=T.plays.filter(x=>x.kind==='sfx');
+        if(expected==='footsteps') assert.equal(fx.length,0,'retired boots are not played lib='+lib);
+        else { assert.equal(fx.length,1,'lib='+lib);assert.equal(fx[0].sfxId,expected,'tap play lib='+lib); }
         assert.deepEqual(mes.extra.lemon_voice.analysis.sfx,[stored],'stored analysis is never rewritten');
     }
 });
@@ -441,12 +447,12 @@ async function analysisSetup() {
     return T.ctx.chat[0];
 }
 const tap = (text, dialogueIndex) => ({kind:'dialogue',text,dialogueIndex});
-await test('1.6.8 a fresh analysis is stamped with the library version so its chosen boots stay boots',async()=>{
+await test('1.6.8 a fresh analysis is stamped with the library version; 6.2.5 a retired boots cue from the model is dropped',async()=>{
     await analysisSetup();Object.assign(S.settings().sfx,{enabled:true,auto:true,mode:'overlay',level:'normal'});
     T.analysisReply=()=>({segs:[{i:0,emotion:'happy',speaker:'Mina',ja:'最初です。',ko:'첫 번째예요.'},{i:1,emotion:'sad',speaker:'Mina',ja:'次です。',ko:'두 번째예요.'}],sfx:[{after:1,id:'footsteps',strength:1}]});
     const saved=await A.analyzeMessage(0);assert.equal(Library.SFX_LIB,2);assert.equal(saved.lib,Library.SFX_LIB);assert.equal(A.getAnalysis(0).lib,Library.SFX_LIB);
-    assert.deepEqual(saved.sfx.map(c=>[c.after,c.id]),[[1,'footsteps']]);
-    assert.deepEqual(P.scriptRows(0).filter(r=>r.kind==='sfx').map(r=>[r.sfxId,r.text]),[['footsteps','군화 발소리']]);
+    assert.deepEqual(saved.sfx.map(c=>[c.after,c.id]),[],'retired boots never saved');
+    assert.deepEqual(P.scriptRows(0).filter(r=>r.kind==='sfx').map(r=>[r.sfxId,r.text]),[]);
     assert.equal(Library.resolveSfxId('footsteps',saved),'footsteps');assert.equal(Library.resolveSfxId('footsteps',{}),'daily_footsteps');assert.equal(Library.resolveSfxId('footsteps',null),'daily_footsteps');
     assert.equal(Library.resolveSfxId('footsteps',{lib:1}),'daily_footsteps');assert.equal(Library.resolveSfxId('footsteps',{lib:3}),'footsteps');assert.equal(Library.resolveSfxId('bell',null),'bell');assert.equal(Library.resolveSfxId(undefined,null),undefined);
 });

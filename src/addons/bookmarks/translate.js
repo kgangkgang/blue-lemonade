@@ -302,14 +302,29 @@ export async function translateMessage(record, index, { fresh = false } = {}) {
         await quietly(() => dbPut(original, translation), '기록');
     }
 
-    const display = await displayTextOf(original, translation);
+    // 6.2.5 캐시에서 온 번역은 채팅 화면처럼 걷어서 보인다 (원문에 없는 낱말 한 줄 · 문단 번호 찌꺼기) — 손으로 고친 번역(translation_edited = 그 원문 해시)은 그대로.
+    //       모델이 새로 옮긴 글이면 손으로 고친 표시를 지운다
+    const editedByHand = fromCache && isHandEdited(message.extra, original);
+    const display = await displayTextOf(original, editedByHand ? translation : cleanTranslation(translation, original));
     await writeExtra(record, index, (extra) => {
         extra.display_text = display;
         markTranslatedOriginal(extra, original);
+        if (!editedByHand) delete extra.translation_edited;
         delete extra.original_translation_backup;
     }, expected, false);
     emitTranslated(record, index, original, display);
     return { fromCache };
+}
+
+/** 손으로 고친 번역인가 — 번역기의 수정 창과 같은 표시(translation_edited = 그 원문의 해시) */
+function isHandEdited(extra, original) {
+    return typeof extra?.translation_edited === 'string' && extra.translation_edited === String(getStringHash(String(original ?? '')));
+}
+
+/** 번역기가 보여 줄 때 걷는 것과 같게 (번역기가 없으면 그대로) */
+function cleanTranslation(translation, original) {
+    const clean = globalThis[Symbol.for('blue-lemonade.translator')]?.dropStrayWords;
+    return typeof clean === 'function' ? clean(translation, original) : translation;
 }
 
 /**
@@ -367,6 +382,7 @@ export async function setTranslation(record, index, text, expected = null) {
     await writeExtra(record, index, (extra) => {
         extra.display_text = display;
         markTranslatedOriginal(extra, original);
+        extra.translation_edited = extra.original_text_hash;   // 6.2.5 손으로 고친 번역은 번역기가 보여 줄 때 걷지 않는다 (수정 창과 같은 표시)
         delete extra.original_translation_backup;
     }, expected, false);
     await quietly(() => dbPut(original, text), '기록');
@@ -386,6 +402,7 @@ export async function clearTranslation(record, index, expected = null) {
     await writeExtra(record, index, (extra) => {
         delete extra.display_text;
         delete extra.original_translation_backup;
+        delete extra.translation_edited;   // 6.2.5 번역기의 삭제와 같게
     }, expected, null);
     await quietly(() => dbDelete(expected.original), '삭제');
     return true;

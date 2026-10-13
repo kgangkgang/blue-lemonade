@@ -30,8 +30,15 @@ import { runtimeEnabled } from './runtime.js';
 //       작업을 다시 만든다 — 번역문이 올 답장은 2차(번역문을 기다린 뒤)에만 (번역을 기다리는 동안엔 옮기지 않음). 옮기지 못한 줄은 만들지 않는다
 //       (누를 때 다시 옮김 — 원문 소리에 값을 치르지 않게. 얼마 전에 못 옮긴 줄이면 누를 때 원문: listen.failedRecently). 번역기를 쓸 수 없으면(꺼짐 · 키 없음) 누를 때도 원문이라 원문으로 만든다
 //
+// 테마 6.2.5 「다음 한 줄」 (pregen 'next'): 답장이 올 때는 아무것도 안 만들고(effMode = off), 대사를 누르면 — player.speakSegments 가 누른 줄을
+//       재생 줄에 넣은 뒤(분석 · 번역 기다림 · 듣는 언어를 거친 뒤) onTapped 로 알려 주면 — 그 답장의 바로 다음 대사 한 줄만 만든다 (pregenNext).
+//       '전부 미리'에서 들은 비율이 12 %였던 것과 달리, 순서대로 누르면 거의 다 듣는다. 탭과 같은 작업(lineJobs) · 같은 키 · 같은 줄
+//       (player 의 미리 만들기 자리 PRE_MAX · 같은 키는 한 요청 inflight · 캐시)을 쓴다. 유료 엔진 줄은 pregen_paid 를 켠 사람만 (규칙 그대로),
+//       멈춘 엔진 · 듣는 언어로 아직 못 옮긴 줄 · 분석이 아직인 답장(곧 감정이 바뀜) · 번역문이 올 답장은 건너뜀 (누를 때 만든다 — 두 번 값을 치르지 않게).
+//       새로 누르거나 채팅 · 스와이프 · 지움 · 글이 바뀌면 그만 (아직 안 보낸 요청만 — 보낸 것은 캐시에). 토스트 없음, 기록만.
+//
 // 밖으로: init() · onRendered(id, type) · onSwipedExisting(id) · pregenMessage(id, { type }) → Promise<기록>|null
-//         pregenCancel(pred) · pregenChanged(id) · protectRecent() · state() (시험용)
+//         pregenNext(id, segs) → Promise<기록>|null · pregenCancel(pred) · pregenChanged(id) · protectRecent() · state() (시험용)
 
 import { chat, eventSource, event_types } from '../../../../../../../../script.js';
 import { settings, providerConfig } from './settings.js';
@@ -55,7 +62,9 @@ const recs = new Map();      // mesId → { id, mes, hash, mode, ctrl, keys, cha
 const halted = new Map();    // 엔진 id → { until, sig } 키·잔액 오류 → 채팅 바뀜 · 엔진 설정 바뀜 · 10분 뒤 풀림
 let seq = 0;
 let wired = false;
+let next = null;             // 6.2.5 「다음 한 줄」 하나: { id, mes, hash, text(만드는 줄), ctrl, keys, made, skipped, state, promise }
 
+// 답장이 올 때 만드는 모드 — 'next' 는 여기서는 'off' (누를 때 pregenNext 가 한 줄만)
 const modeOf = (s) => (s && (s.pregen === 'dialogue' || s.pregen === 'all') ? s.pregen : 'off');
 function hash(str) {
     let h = 2166136261;
@@ -258,11 +267,12 @@ function trimRecs() {
     const done = [...recs.values()].filter(r => r.state !== 'run').sort((a, b) => b.seq - a.seq);
     for (const r of done.slice(KEEP_RECS)) recs.delete(r.id);
 }
-/** 최근 답장 몇 개의 키는 캐시 정리에서 뺀다 */
+/** 최근 답장 몇 개의 키(+ 「다음 한 줄」로 만든 키)는 캐시 정리에서 뺀다 */
 export function protectRecent() {
     const list = [...recs.values()].sort((a, b) => b.seq - a.seq).slice(0, KEEP_RECS);
     const keys = [];
     for (const r of list) keys.push(...r.keys);
+    if (next) keys.push(...next.keys);
     try { if (typeof cache.setProtected === 'function') cache.setProtected(keys); } catch { /* 캐시 없음 */ }
 }
 function start(id, mes, type) {
@@ -340,10 +350,112 @@ export function onSwipedExisting(mesId) {
     if (id !== chat.length - 1) return null;
     return pregenMessage(id, { type: 'swipe' });
 }
-/** 조건에 맞는 기록 그만두기 (아직 안 보낸 요청만 취소) */
+/** 조건에 맞는 기록 그만두기 (아직 안 보낸 요청만 취소) — 「다음 한 줄」도 같은 조건 ({ id, mes }) */
 export function pregenCancel(pred = () => true) {
     for (const rec of [...recs.values()]) if (pred(rec)) cancelRec(rec);
+    if (next && pred(next)) cancelNext();
     protectRecent();
+}
+
+// ---------- 6.2.5 「다음 한 줄」
+
+function cancelNext() {
+    const job = next;
+    if (!job) return;
+    if (!job.ctrl.signal.aborted) job.ctrl.abort();
+    if (job.state === 'run') job.state = 'cancel';
+    next = null;
+}
+/** 「다음 한 줄」이 아직 살아 있나 (새로 누름 · 메시지 객체 · 글 · 설정) */
+function nextLive(job) {
+    const s = settings();
+    return !job.ctrl.signal.aborted && next === job && chat[job.id] === job.mes && textHash(job.mes) === job.hash
+        && s.pregen === 'next' && !!s.enabled && s.click_play !== false && runtimeEnabled();
+}
+const foldText = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
+/**
+ * 누른 조각 다음의 대사 한 줄 (clickplay.tapSegments 목록 = 화면 순서, 대사만). 누른 대사는 같은 글 + 같은 번호(dialogueIndex)로 찾고
+ * (같은 글이 여럿이면 번호 → 가까운 줄), 속마음을 눌렀으면 그 줄 뒤의 첫 대사. 못 찾거나 마지막 대사면 null
+ */
+export function nextLine(list, tapped) {
+    const lines = (Array.isArray(list) ? list : []).filter(x => x && x.kind === 'dialogue' && x.text);
+    if (!tapped || !tapped.text || !lines.length) return null;
+    if (tapped.kind === 'thought') {
+        // 줄 번호는 0부터 (text.js lineFinder · clickplay lineOf = 앞선 줄바꿈 수) — 첫 줄 속마음도, 같은 줄에 이어지는 대사도 잡는다
+        const at = Number(tapped.line);
+        return Number.isFinite(at) && at >= 0 ? lines.find(x => Number(x.line) >= at) || null : null;
+    }
+    const want = foldText(tapped.text);
+    const same = lines.filter(x => foldText(x.text) === want);
+    if (!same.length) return null;
+    const idx = Number.isInteger(tapped.dialogueIndex) && tapped.dialogueIndex >= 0 ? tapped.dialogueIndex : -1;
+    const near = (a, b) => Math.abs((Number(a.line) || 0) - (Number(tapped.line) || 0)) - Math.abs((Number(b.line) || 0) - (Number(tapped.line) || 0));
+    const hit = (idx >= 0 && same.find(x => x.dialogueIndex === idx)) || (same.length === 1 ? same[0] : [...same].sort(near)[0]);
+    return lines[lines.indexOf(hit) + 1] || null;
+}
+/** 다음 한 줄의 작업을 차례로 만든다 (보통 하나 — 엔진 한도보다 긴 줄은 나뉜다) */
+async function runNext(job, seg) {
+    const s = settings();
+    const built = player.lineJobs(job.id, job.mes, [seg], { awaitDisplay: false });
+    for (const j of built?.jobs || []) {
+        if (!nextLive(job)) return;
+        if (!j?.key || j.provider?.caps?.blob === false) continue;
+        if (!pregenPaid(s) && isPaidProvider(j.provider?.id)) { job.skipped++; continue; }   // 유료 엔진 줄은 누를 때 (pregen_paid 를 켠 사람만)
+        if (isHalted(j.provider?.id)) { job.skipped++; continue; }
+        if (j.listenPending) { job.skipped++; continue; }                                         // 듣는 언어로 아직 못 옮긴 줄은 누를 때
+        for (let tries = 0; ; tries++) {
+            try {
+                const r = await player.ensureClip(j, { signal: job.ctrl.signal, prepare: true });
+                job.keys.push(j.key);
+                if (r?.made) job.made++;
+                break;
+            } catch (e) {
+                if (isAbort(e) || !nextLive(job)) return;
+                if (e?.fatal && e.status === undefined && e.code === undefined) { job.skipped++; break; }   // 키가 아직 없음 (보내지 않음)
+                if (isAuth(e)) { halt(j.provider.id); job.skipped++; break; }
+                if (isRate(e) && tries < RATE_TRIES) { player.coolDown(j.provider.id); continue; }
+                job.state = 'fail';
+                log('err', `다음 한 줄 그만 #${job.id} · ${errMsg(e) || '합성 실패'}`);
+                return;
+            }
+        }
+    }
+    job.state = 'done';
+    if (job.made) log('info', `다음 한 줄 미리 #${job.id} · ${job.made}개`);
+}
+/**
+ * 누른 대사(segs — speakSegments 에 넘긴 조각) 다음의 대사 한 줄을 미리 만든다 → 기록의 약속 (건너뛰면 null).
+ * 설정 pregen 이 'next' 이고 TTS · 대사 클릭이 켜져 있을 때만. 앞의 「다음 한 줄」은 그만둔다 (한 번에 하나)
+ */
+export function pregenNext(mesId, segs) {
+    if (!runtimeEnabled()) return null;
+    const s = settings();
+    if (s.pregen !== 'next' || !s.enabled || s.click_play === false) return null;
+    const id = Number(mesId);
+    const mes = Number.isInteger(id) && id >= 0 ? chat[id] : null;
+    if (!mes || mes.is_system || !String(mes.mes || '').trim()) return null;
+    const tapped = (Array.isArray(segs) ? segs : [segs]).filter(x => x && x.text);
+    if (!tapped.length) return null;
+    const last = tapped[tapped.length - 1];
+    // 방금 누른 줄이 만드는 중인 바로 그 「다음 한 줄」이면 그만두지 않고 놓아 둔다 (누른 쪽이 같은 요청에 붙거나 캐시에서 받는다 — 효과음이 먼저 나는 등
+    // 누른 줄의 요청이 늦게 붙어도 아직 안 보낸 요청이 취소되지 않게). 그 밖에는 앞의 것을 그만둔다
+    if (next && next.id === id && next.text === foldText(last.text)) next = null;
+    else cancelNext();
+    if (!pregenPaid(s) && paidOnly(s)) { noteSkip(id, '다음 한 줄 · 유료 엔진'); return null; }
+    if (!displayReady(mes) && expectsDisplay(mes)) return null;                       // 번역문이 아직 — 그 줄은 번역문으로 읽힌다
+    if (player.analysisWanted(id, mes, s, { quiet: true })) return null;              // 분석 전 — 분석 뒤 감정 · 원어가 바뀌면 키가 달라진다
+    const seg = nextLine(tapSegments(mes, { thoughts: false }), last);
+    if (!seg) return null;
+    const job = { id, mes, hash: textHash(mes), text: foldText(seg.text), ctrl: new AbortController(), keys: [], made: 0, skipped: 0, state: 'run', promise: null };
+    next = job;
+    job.promise = runNext(job, seg)
+        .catch(e => { if (!isAbort(e)) { job.state = 'fail'; log('err', `다음 한 줄 실패 #${id} · ${errMsg(e) || '오류'}`); } })
+        .then(() => {
+            if (job.state === 'run') job.state = 'cancel';
+            protectRecent();
+            return job;
+        });
+    return job.promise;
 }
 /** 글이 바뀜 (편집 · 갱신): 기록이 있을 때만 — 같은 메시지면 새 기록으로 다시 (바뀐 줄만 새로 만듦), 메시지가 바뀌었으면 그만 */
 export function pregenChanged(mesId) {
@@ -360,7 +472,8 @@ export function pregenChanged(mesId) {
 }
 /** 시험 · 기록용 */
 export function state() {
-    return { halted: [...halted.keys()].filter(isHalted), recs: [...recs.values()].map(r => ({ id: r.id, state: r.state, lines: r.lines, chars: r.chars, made: r.made, skipped: r.skipped, paid: r.paid, keys: [...r.keys] })) };
+    return { halted: [...halted.keys()].filter(isHalted), recs: [...recs.values()].map(r => ({ id: r.id, state: r.state, lines: r.lines, chars: r.chars, made: r.made, skipped: r.skipped, paid: r.paid, keys: [...r.keys] })),
+        next: next ? { id: next.id, state: next.state, made: next.made, skipped: next.skipped, keys: [...next.keys] } : null };
 }
 /** 이벤트 (그만두기 · 다시). 시작은 index.js 가 onRendered · onSwipedExisting 으로 */
 export function init() {
@@ -378,7 +491,16 @@ export function init() {
     // 약속을 돌려주지 않는다: 실리태번 eventSource.emit 은 리스너가 돌려준 약속을 기다린다(lib/eventemitter.js) — 미리 만들기는
     // 번역을 최대 translation_timeout(90초) 기다리므로, 돌려주면 MESSAGE_UPDATED 를 낸 쪽(다시 쓰기 · 번역기 · 생성 마무리)이 그동안 멈춰
     // 끊긴 스트림 뒤 입력창이 잠긴 채로 남았다 (2026-10-06, 스모크 --stream --tts 로 재현)
-    const changed = (id) => { try { pregenChanged(id); } catch (e) { log('err', `미리 만들기 갱신 실패: ${errMsg(e)}`); } };
+    const changed = (id) => {
+        try { pregenChanged(id); } catch (e) { log('err', `미리 만들기 갱신 실패: ${errMsg(e)}`); }
+        if (next && next.id === Number(id) && (chat[next.id] !== next.mes || textHash(chat[next.id]) !== next.hash)) cancelNext();   // 6.2.5 글이 바뀜 → 다음 한 줄은 그만
+    };
     on(event_types.MESSAGE_EDITED, changed);
     on(event_types.MESSAGE_UPDATED, changed);
+    // 6.2.5 「다음 한 줄」: 누른 줄이 재생 줄에 들어간 뒤 — 다음 틱에 (누른 줄의 재생 시작을 늦추지 않게)
+    if (typeof player.onTapped === 'function') {
+        player.onTapped((id, segs) => setTimeout(() => {
+            try { pregenNext(id, segs); } catch (e) { log('err', `다음 한 줄 시작 실패: ${errMsg(e)}`); }
+        }, 0));
+    }
 }

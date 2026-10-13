@@ -468,7 +468,9 @@ export function colorOfName(name, { userName = '' } = {}) {
     if (!k) return null;
     let best = null, score = -1;
     for (const [c, e] of Object.entries(st.colors || {})) {
-        if (!e?.name || fold(canonWith(map, e.name)) !== k || !/^#[0-9a-f]{6}$/.test(c)) continue;
+        if (!e?.name || !/^#[0-9a-f]{6}$/.test(c)) continue;
+        // 6.2.5 그 칸의 별명도 본다 — 대사 분석이 화자를 다른 표기(한글 이름 · 별명)로 주면 칸 이름(영문 이름)과 안 맞아 색 없는 대사를 못 칠했다
+        if (![e.name, ...(Array.isArray(e.aliases) ? e.aliases : [])].some(n => fold(canonWith(map, n)) === k)) continue;
         const v = (Number(e.count) || 0) * 2 + (e.locked ? 1 : 0);
         if (v > score) { best = c; score = v; }
     }

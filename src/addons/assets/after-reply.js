@@ -7,8 +7,8 @@ import { getContext } from '../../../../../../extensions.js';
 import { TITLE, currentFolder, settings } from './state.js';
 import { runtime, ensureLoaded } from './store.js';
 import { pickActive, pickSettings, generatePick } from './pick.js';
-import { slotSpots, insertSlots, slotIds, markedReply, pickPrompt, parsePicks, rulesForPicker, hasAssetTag, skipReplyType, PROTECT_RE, RECORD_KEY, swipeOf, textOf, writeRecords, recordsFromPicks, stripSlotsForPrompt, dropUnknownSlots } from './slots.js';
-import { assetInfo, refreshSlots, slotRunning, slotHooks } from './render.js';
+import { slotSpots, insertSlots, slotIds, markedReply, pickPrompt, parsePicks, rulesForPicker, hasAssetTag, skipReplyType, PROTECT_RE, RECORD_KEY, swipeOf, textOf, writeRecords, recordsFromPicks, stripSlotsForPrompt, dropUnknownSlots, retryTargets, manualRecord, freezeOthers } from './slots.js';
+import { assetInfo, refreshSlots, slotRunning, slotHooks, shownSlotFiles } from './render.js';
 
 const isObj = value => !!value && typeof value === 'object' && !Array.isArray(value);
 
@@ -117,7 +117,7 @@ function retry(messageId, slotId) {
     }
     const swipe = swipeOf(message);
     const map = isObj(message.extra?.[RECORD_KEY]) ? message.extra[RECORD_KEY] : {};
-    const ids = slotIds(message.mes).filter(id => id === slotId || (!map[id]?.name && (map[id]?.error || (map[id]?.pending && !slotRunning.has(id)))));
+    const ids = retryTargets(slotIds(message.mes), map, slotRunning, slotId);   // 사용자가 정한 자리(꾹 눌러 바꾸기 · 빼기)는 다시 묻지 않는다
     if (!ids.length || ids.some(id => slotRunning.has(id))) return;
     writeRecords(message, swipe, Object.fromEntries(ids.map(id => [id, { name: '', pending: true }])));
     for (const id of ids) slotRunning.add(id);
@@ -126,6 +126,42 @@ function retry(messageId, slotId) {
 }
 
 export const pickBusy = () => busy > 0;
+
+// ── 꾹 눌러 「이 자리만」 (hold.js · viewer.js) ──
+
+/** 이 자리(slotId)가 든 메시지 번호 — 누른 때의 번호에 없으면(앞 메시지를 지움) 채팅에서 찾는다. 없으면 -1 */
+function slotHome(messageId, slotId) {
+    const chat = getContext().chat ?? [];
+    const has = i => typeof chat[i]?.mes === 'string' && chat[i].mes.includes(slotId) && slotIds(chat[i].mes).includes(slotId);
+    const at = Number(messageId);
+    if (Number.isInteger(at) && has(at)) return at;
+    for (let i = chat.length - 1; i >= 0; i--) if (has(i)) return i;
+    return -1;
+}
+
+/** 지금 스와이프의 그 자리 기록 → { messageId, record } (없으면 null) */
+export function slotRecord(messageId, slotId) {
+    const id = slotHome(messageId, slotId);
+    const record = id >= 0 ? getContext().chat[id].extra?.[RECORD_KEY]?.[slotId] : null;
+    return isObj(record) ? { messageId: id, record } : null;
+}
+
+/**
+ * 이 자리만 바꾸기: name = 파일 이름, '' = 빼기. 그 메시지 · 지금 스와이프의 그 자리 기록만 바꿔 저장하고 그 메시지만 다시 그린다.
+ * 고르는 중인 자리 · 사라진 자리(스와이프 · 지움)는 false
+ */
+export async function setSlotPick(messageId, slotId, name) {
+    const id = slotHome(messageId, slotId);
+    const message = id >= 0 ? getContext().chat[id] : null;
+    if (!message || slotRunning.has(slotId)) return false;
+    const swipe = swipeOf(message);
+    // 다른 자리는 지금 보이는 파일로 같이 고정한다 — 번호 묶음 고르기가 이 자리를 빼고 다시 섞여 다른 자리의 그림이 바뀌지 않게
+    const map = isObj(message.extra?.[RECORD_KEY]) ? message.extra[RECORD_KEY] : {};
+    writeRecords(message, swipe, { ...freezeOthers(map, shownSlotFiles(id), slotId), [slotId]: manualRecord(name) });
+    redraw(id, message, swipe);
+    try { await saveChatConditional(); } catch (error) { console.warn(`[${TITLE}] 저장 실패`, error); }
+    return true;
+}
 
 /** 채팅 완성: 메시지마다 글(또는 글 조각)에서 자리를 뺀다 — 같은 배열을 고친다 */
 export function stripChatPrompt(data) {
