@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "6.2.9";
+export const BUILD_VERSION = "6.3.0";
 export const FILE_HASHES = {
   "index.js": "17384:4de637be:6c351536",
-  "manifest.json": "365:9d37dc04:e7f41112",
+  "manifest.json": "365:81c11b78:7143493f",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -59,13 +59,13 @@ export const FILE_HASHES = {
   "src/addons/models/state.js": "4785:8c7a6342:f90b0abd",
   "src/addons/models/style.css": "4253:4614ddaf:986d4108",
   "src/addons/modelswitch/discover.js": "26550:e71a7cdb:5ef3d317",
-  "src/addons/modelswitch/fallback.js": "5511:cc4e3cc5:3c981a13",
-  "src/addons/modelswitch/index.js": "27169:14672ee7:480fd8c1",
+  "src/addons/modelswitch/fallback.js": "7055:311bc88e:62114444",
+  "src/addons/modelswitch/index.js": "27169:d5f0b40c:98b4c85d",
   "src/addons/modelswitch/lock.js": "4564:5b4b3227:e596adc5",
   "src/addons/modelswitch/menu.js": "794:644422e0:cedd047b",
   "src/addons/modelswitch/state.js": "8832:c2b74546:fa22e4a5",
-  "src/addons/modelswitch/style.css": "10615:59dbd70b:af6e2322",
-  "src/addons/modelswitch/targets.js": "24219:a4d54891:fed99e2f",
+  "src/addons/modelswitch/style.css": "10615:63f034be:6ea71c8c",
+  "src/addons/modelswitch/targets.js": "24379:6e47746a:d9b7de39",
   "src/addons/notes/graph.js": "12020:1cdfe68f:2b39d83a",
   "src/addons/notes/guide.js": "13946:68b0c805:a82fe18e",
   "src/addons/notes/index.js": "144746:096df406:11e6d734",
@@ -404,7 +404,7 @@ export const FILE_HASHES = {
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "202383:aa52d1bc:bdc1819c",
+  "src/notice-data.js": "202706:1d89b886:8abdf33c",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -479,5 +479,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "34543:a22afe71:9a33c04b",
   "src/wordmask.js": "7487:cc508640:dd5ee3e8",
-  "style.css": "1415918:b643cffe:879823f9"
+  "style.css": "1415918:7efe5745:3b1a8b9e"
 };

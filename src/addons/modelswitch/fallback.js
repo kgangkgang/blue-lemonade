@@ -26,7 +26,9 @@ export async function withFallback(call, { target = null, failed = null, send = 
     try {
         return await call();
     } catch (error) {
-        if (!target || typeof send !== 'function' || error?.name === 'AbortError' || !isBlocked(error) || sameTarget(failed, target)) throw error;
+        // Custom 다시 보낼 곳은 그 확장의 Custom 주소(= 본 요청과 같은 중계)로 간다 — 주소 없이 견주면 같은 중계 · 같은 모델도 다른 곳으로 보였다
+        const compare = target && target.provider === 'custom' && !target.url && failed?.provider === 'custom' && failed.url ? { ...target, url: failed.url } : target;
+        if (!target || typeof send !== 'function' || error?.name === 'AbortError' || !isBlocked(error) || sameTarget(failed, compare)) throw error;
         let reply;
         try {
             reply = await send(target);
@@ -71,6 +73,27 @@ export function fallbackTarget({ id, name, sources = null, settingsKey, path = '
             return true;
         },
     };
+}
+
+/**
+ * 6.3.0 모델 전환 대상 목록 정렬: id 가 「<본 id>-fallback」 인 대상은 늘 본 대상 바로 다음 줄에 (아는 확장 · 스스로 등록한 확장 · 자동 모두).
+ * 스스로 등록한 확장은 등록 Map 이 본 대상의 자리를 지키고 새 id 만 뒤에 붙어 「(검열되면)」 줄이 다른 확장 뒤로 떨어져 보였다.
+ * 본 대상이 목록에 없으면 그 자리 그대로. 순수 함수 (시험: modelswitch-fallback.mjs)
+ */
+export function pairFallbacks(list) {
+    const items = Array.isArray(list) ? list.filter(Boolean) : [];
+    const ids = new Set(items.map(t => String(t.id)));
+    const mainOf = t => { const id = String(t.id); return id.endsWith('-fallback') ? id.slice(0, -'-fallback'.length) : ''; };
+    const byMain = new Map();
+    for (const t of items) { const main = mainOf(t); if (main && ids.has(main) && !byMain.has(main)) byMain.set(main, t); }
+    const out = [];
+    for (const t of items) {
+        if (byMain.get(mainOf(t)) === t) continue;   // 본 대상 뒤에 붙인다
+        out.push(t);
+        const fb = byMain.get(String(t.id));
+        if (fb) out.push(fb);
+    }
+    return out;
 }
 
 /** 사설 확장 · 다른 확장이 같은 규칙을 쓰는 길 (CONTRACT: blue-lemonade-audit/block-fallback-20261013/CONTRACT.md) */

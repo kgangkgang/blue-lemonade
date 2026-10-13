@@ -6,7 +6,7 @@ import { oai_settings } from '../../../../../../openai.js';
 import { SOURCES } from '../models/sources.js';
 import * as LM from '../../live-models.js';
 import { CORE_KEYS, findNodes, settingsRefs, ownerOf, makeTarget, crawl, skipRegistered, autoSpots } from './discover.js';
-import { fallbackTarget } from './fallback.js';   // 6.2.9 검열되면 다른 모델로
+import { fallbackTarget, pairFallbacks } from './fallback.js';   // 6.2.9 검열되면 다른 모델로 · 6.3.0 「(검열되면)」 줄은 본 대상 바로 다음
 
 const $ = globalThis.jQuery;
 const isObj = value => !!value && typeof value === 'object' && !Array.isArray(value);
@@ -286,7 +286,7 @@ function detected() {
 /** 지금 바꿀 수 있는 대상 전부 (설치돼 켜져 있는 아는 확장 → 스스로 등록한 확장 → 자동으로 찾은 확장) */
 export function listTargets() {
     const known = KNOWN.filter(target => (installed(target.folder) || target.builtin?.()) && isObj(target.settings()));
-    return [...known, ...registered.values(), ...detected()];
+    return pairFallbacks([...known, ...registered.values(), ...detected()]);   // 6.3.0 「<본 id>-fallback」 은 본 대상 바로 다음 줄
 }
 
 export function supports(target, source) { return !target.sources || target.sources.includes(source); }

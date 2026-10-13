@@ -53,6 +53,23 @@ await test('withFallback: 429 · 401 · 5xx · 네트워크 · 시간 초과 · 
     }
 });
 
+await test('6.3.0 withFallback: Custom 다시 보낼 곳이 본 요청과 같은 중계 · 같은 모델이면(주소는 그 확장 것) 원래 오류 그대로', async () => {
+    const error = blockError();
+    const relay = { provider: 'custom', model: 'relay-model', url: 'http://relay.example/v1' };
+    await assert.rejects(F.withFallback(async () => { throw error; }, { target: { provider: 'custom', model: 'relay-model' }, failed: relay, send: async () => 'fb' }), e => e === error, '같은 중계 · 같은 모델');
+    assert.equal(await F.withFallback(async () => { throw error; }, { target: { provider: 'custom', model: 'other-model' }, failed: relay, send: async () => 'fb' }), 'fb', '같은 중계 · 다른 모델은 보냄');
+    assert.equal(await F.withFallback(async () => { throw error; }, { target: { provider: 'openai', model: 'relay-model' }, failed: relay, send: async () => 'fb' }), 'fb', '다른 공급자는 보냄');
+});
+
+await test('6.3.0 pairFallbacks: 「<본 id>-fallback」 은 본 대상 바로 다음 줄 — 스스로 등록한 확장 · 자동 대상도, 본 대상이 없으면 제자리', () => {
+    const t = id => ({ id });
+    const list = [t('translator'), t('translator-fallback'), t('memory'), t('ext:tts-analysis'), t('ext:voice-a'), t('ext:voice-b'), t('ext:other'), t('ext:other-fallback'), t('ext:tts-analysis-fallback'), t('auto:x'), t('ext:lonely-fallback')];
+    assert.deepEqual(F.pairFallbacks(list).map(x => x.id), ['translator', 'translator-fallback', 'memory', 'ext:tts-analysis', 'ext:tts-analysis-fallback', 'ext:voice-a', 'ext:voice-b', 'ext:other', 'ext:other-fallback', 'auto:x', 'ext:lonely-fallback']);
+    assert.deepEqual(F.pairFallbacks([t('a-fallback'), t('a')]).map(x => x.id), ['a', 'a-fallback'], '먼저 등록된 fallback 도 본 대상 뒤로');
+    assert.deepEqual(F.pairFallbacks([]), []);
+    assert.match(read('src/addons/modelswitch/targets.js'), /return pairFallbacks\(\[\.\.\.known, \.\.\.registered\.values\(\), \.\.\.detected\(\)\]\);/, 'listTargets 가 정렬한다');
+});
+
 await test('withFallback: 고른 곳이 없거나 본 모델과 같으면 원래 오류 그대로', async () => {
     const error = blockError();
     await assert.rejects(F.withFallback(async () => { throw error; }, { target: null, send: async () => 'fb' }), e => e === error);
@@ -108,7 +125,7 @@ await test('전역 API: 사설 확장이 같은 규칙을 쓴다', () => {
 
 await test('모델 전환: 본 대상 바로 아래 「(검열되면)」 넷 · 처음엔 꺼 둠', () => {
     const src = read('src/addons/modelswitch/targets.js');
-    assert.match(src, /import \{ fallbackTarget \} from '\.\/fallback\.js';/);
+    assert.match(src, /import \{ fallbackTarget, pairFallbacks \} from '\.\/fallback\.js';/);   // 6.3.0 pairFallbacks
     assert.match(src, /const KNOWN = \[translator, translatorFallback, prompt, promptFallback, memory, rewrite, rewriteFallback, assets, assetsFallback\];/);
     for (const [name, url] of [['translator', 'custom_url'], ['prompt', 'customUrl'], ['rewrite', 'customUrl'], ['assets', 'customUrl']])
         assert.match(src, new RegExp(`const ${name}Fallback = fallbackFor\\(${name}, s => s\\.${url}\\);`));

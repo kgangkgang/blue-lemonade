@@ -12,7 +12,7 @@ import { listTargets, supports, registry, discoverTargets, modelOptions, hasMode
 import { setLocks, withoutLock } from './lock.js';
 import { MAX_STATES, entryOf, captureState, changedSince, planRestore, isCurrent, runRestore, limited, summary, keepStates } from './state.js';
 
-const VERSION = '1.1.2';
+const VERSION = '1.1.3';
 const MAX_PRESETS = 8;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const label = source => SOURCES.find(s => s.id === source)?.label || source;
