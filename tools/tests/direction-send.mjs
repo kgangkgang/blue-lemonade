@@ -37,7 +37,9 @@ assert.match(js,/sendWatch\?\.disconnect\(\);\s*sendWatch = null;/,'stops watchi
 assert.match(js,/function sendNow\(doc = document\) \{\s*const target = sendButton\(doc\);\s*if \(!target\) return false;\s*closePopup\(\);\s*target\.click\(\);/,'close first, then the ST send button');
 const css=await read('src/addons/direction/style.css');
 assert.match(css,/#jj-popup \.jj-popup-head \.jj-icon-btn\.jj-send\[hidden\] \{ display: none; \}/,'[hidden] beats display: grid');
-assert.match(css,/#jj-popup \.jj-popup-head \.jj-icon-btn\.jj-send \{[^}]*background: var\(--jj-on\)/,'filled with the on colour');
+const sendRule=css.match(/#jj-popup \.jj-popup-head \.jj-icon-btn\.jj-send \{([^}]*)\}/)?.[1]??'';
+assert.match(sendRule,/color: var\(--bl-jj-fg, var\(--jj-on\)\)/,'send icon uses the on colour');
+assert.ok(!/background|width|height|border|padding|font-size/.test(sendRule),'send keeps the sibling icon size and empty background (1.2.4: a filled circle looked bigger and the gaps uneven)');
 assert.match(await read('.github/workflows/release-check.yml'),/node tools\/tests\/direction-send\.mjs \./,'registered in CI');
 
 // ── #3 항상 지시 스위치: 끄면 글은 그대로, 보내지 않는다 — 다시 켜면 그 글 그대로 ──

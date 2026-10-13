@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.3.2/blue-lemonade-6.3.2.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.3.3/blue-lemonade-6.3.3.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.3.2 · 최신 업데이트</summary>
+<summary>6.3.3 · 최신 업데이트</summary>
+
+- 전개 지시: 깃털 창의 보내기 단추를 옆 아이콘들과 같은 크기 · 같은 모양으로 맞췄어요. 채운 동그라미 대신 켜짐 색 아이콘이라 단추 사이 간격이 고르게 보여요.
+- 애드온 버전: 전개 지시 1.2.4
+
+</details>
+
+<details>
+<summary>6.3.2 · 전개 지시 보내기 단추</summary>
 
 - 전개 지시: 깃털 창 안에 보내기 단추가 생겼어요. 지시를 적고 바로 누르면 창을 닫고 보내요 — 실리태번 보내기 단추와 같은 길이라 생성 중엔 숨어요. 항상 지시는 창 위 스위치로 글을 지우지 않고 끌 수 있어요.
 - 애드온 버전: 전개 지시 1.2.3
