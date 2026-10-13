@@ -7,7 +7,7 @@ export const MODULE = 'model_register';
 export const FOLDER = 'model-register';
 /** 이전 확장(Custom-Vertex-Model)이 쓰던 설정 키. 처음 켤 때 한 번만 가져온다. */
 export const OLD_MODULE = 'vertexCustomModels';
-export const VERSION = '1.1.5';
+export const VERSION = '1.1.6';
 export const TITLE = '모델 등록';
 
 const DEFAULTS = Object.freeze({
@@ -15,6 +15,8 @@ const DEFAULTS = Object.freeze({
     sources: {},
     /** { [공급자]: 사용자가 고른 우리 모델 } — 실리태번이 목록을 새로 채우며 선택을 지워도 되살리기 위해 따로 둔다. */
     picks: {},
+    /** 1.1.6 { [공급자]: 「새 모델을 추가할까요?」로 한 번 물어본 이름 } — 다시 묻지 않으려고 둔다 (offer.js) */
+    offered: {},
 });
 
 export function settings() {
@@ -58,6 +60,7 @@ export function initSettings() {
     const store = settings();
     if (!store.sources || typeof store.sources !== 'object' || Array.isArray(store.sources)) store.sources = {};
     if (!store.picks || typeof store.picks !== 'object' || Array.isArray(store.picks)) store.picks = {};
+    if (!store.offered || typeof store.offered !== 'object' || Array.isArray(store.offered)) store.offered = {};
     for (const [source, list] of Object.entries(store.sources)) {
         const clean = cleanList(list);
         if (clean.length) store.sources[source] = clean;

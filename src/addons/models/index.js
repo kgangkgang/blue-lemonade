@@ -6,6 +6,7 @@ import { extension_settings } from '../../../../../../extensions.js';
 import { OLD_MODULE, TITLE, VERSION, initSettings, saveSettings, settings } from './state.js';
 import { applyAll, scheduleAll, watchPicks } from './inject.js';
 import { buildPanel, render } from './panel.js';
+import { offerNewModels } from './offer.js';
 
 initSettings();
 
@@ -41,6 +42,21 @@ function checkFilesMatch() {
     verifyAddonCss({ folder: 'models', name: '--mr-css-version', version: VERSION, title: TITLE, selector: '.mr-settings' });
 }
 
+/** 1.1.6 업데이트로 테마가 새 모델을 알게 되면 한 번 묻는다 (offer.js) — 실리태번 로딩이 끝나고 조금 뒤, 못 들으면 1분 뒤 */
+function offerWhenReady() {
+    let started = false;
+    const ask = () => {
+        if (started) return;
+        started = true;
+        setTimeout(() => {
+            offerNewModels().then(added => { if (added.length) render(); }).catch(error => console.warn('[모델 등록] 새 모델 묻기', error));
+        }, 2500);
+    };
+    if (!document.getElementById('loader') || !event_types.APP_READY) { ask(); return; }
+    eventSource.once(event_types.APP_READY, ask);
+    setTimeout(ask, 60000);
+}
+
 jQuery(async () => {
     buildPanel();
     applyAll();
@@ -59,4 +75,5 @@ jQuery(async () => {
         checkFilesMatch();
         checkOldExtension();
     }, 3000);
+    offerWhenReady();
 });

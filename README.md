@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.3.6/blue-lemonade-6.3.6.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.3.7/blue-lemonade-6.3.7.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.3.6 · 최신 업데이트</summary>
+<summary>6.3.7 · 최신 업데이트</summary>
+
+- 모델 등록: 업데이트 뒤 테마가 아는 새 모델 가운데 실리태번 목록에 아직 없는 것을 「새 모델을 추가할까요?」 창으로 한 번 보여 줘요. 체크한 채 「추가」를 누르면 그 공급자 모델 목록 맨 위에 바로 나와요 — 이번에는 Gemini 4 Argon · Claude Sonnet 5.5 · Haiku 5.5 · GPT-6.1 Sol · GLM-5.3 들이에요. 이미 등록해 둔 이름은 묻지 않고, 한 번 물어본 이름은 다시 묻지 않아요.
+- 애드온 버전: 모델 등록 1.1.6
+
+</details>
+
+<details>
+<summary>6.3.6 · TTS 낱말 · 이름 목소리 · Argon</summary>
 
 - TTS: 재생 막대 요술봉에 「낱말」이 생겼어요. 듣던 대사와 그 앞뒤 지문의 낱말을 골라 내 효과음에 바로 붙여요 — 방금 붙인 건 한 번 되돌릴 수 있어요.
 - TTS: 답의 이름을 꾹 누르면 그 답에 나온 인물들의 목소리를 그 자리에서 고를 수 있어요.
