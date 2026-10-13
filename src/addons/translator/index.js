@@ -1198,6 +1198,8 @@ const CHUNK_TARGET = 1800; // 한 덩이 글자 수 목표. 너무 작으면 문
 const KANA_FIX_NOTE = '[The numbered lines below are from a Korean translation but still contain Japanese. Translate each fully into Korean, keep the numbering and everything else unchanged, one line per number.]\n';
 // 6.4.2 용어집이 한자로 둔 번역 표기 — 남은 한자로 다시 보내지 않는다. v3: 용어집을 꺼 둬도 뺀다 (사용자가 한자로 두기로 한 표기 — 끈 동안 그 표기를 한글로 바꾸려고 다시 사지 않게)
 const glossaryHanKeep = () => { try { return activeGlossaryEntries().map(entry => String(entry.dst ?? '')).filter(dst => /\p{Script=Han}/u.test(dst)); } catch { return []; } };
+// 6.4.3 남은 영어 낱말로 보지 않을 이름 — 용어집 표기(원문 · 번역, 「A, B」 는 하나씩) · 내 캐릭터 · 지금 캐릭터
+const glossaryNameKeep = () => { try { const c = getContext(); return [...activeGlossaryEntries().flatMap(entry => [entry.src, entry.dst]).flatMap(form => String(form ?? '').split(/[,，、/]/)), c?.name1, c?.name2].map(name => String(name ?? '').trim()).filter(Boolean); } catch { return []; } };
 
 /** 빈 줄로 나눈 문단을 CHUNK_TARGET 근처로 묶는다. 자리표시자만 있는 줄은 앞 덩이에 붙인다. */
 function splitForChunks(text) {
@@ -1877,7 +1879,7 @@ async function translate(text, options = {}) {
                 cacheable: (body, out) => {
                     const marks = value => JSON.stringify(value.match(/\[\[__VAR_\d+__\]\]/g) || []);
                     // 5.3.4: 묶음 중 한 문단만 거절문으로 온 경우도 30일 캐시에 넣지 않는다
-                    return marks(body) === marks(out) && !linesToFix(out, body, glossaryHanKeep()).length && !looksLikeRefusal(body, out) && !noCache.has(body);   // 6.4.2 원문 한자가 남은 문단도 캐시에 안 넣는다
+                    return marks(body) === marks(out) && !linesToFix(out, body, glossaryHanKeep(), [], { english: false }).length && !looksLikeRefusal(body, out) && !noCache.has(body);   // 6.4.2 원문 한자가 남은 문단도 캐시에 안 넣는다 · 6.4.3 다시 보낸 뒤 영어 낱말만 남은 문단은 넣는다 (다시 번역할 때마다 또 사지 않게)
                 },
                 request: async bodies => {
                     const translated = [];
@@ -1969,7 +1971,7 @@ async function translate(text, options = {}) {
                         if (globalThis.toastr) toastr.warning(`${failed.refused ? '모델이 거절해서' : failed.format ? '답 형식이 맞지 않아' : '요청 오류로'} 문단 ${count}개를 원문으로 남겼어요 — ${String(failed.message).slice(0, 120)}`, 'LLM 번역', { timeOut: 9000 });
                     }
                     // Any remaining Japanese is repaired in one additional request for the whole batch.
-                    const joined = translated.map(text => text ?? '').join('\n\n'), lines = linesToFix(joined, bodies.join('\n\n'), glossaryHanKeep());   // 6.4.2 원문 한자 덩이가 남은 줄도
+                    const joined = translated.map(text => text ?? '').join('\n\n'), lines = linesToFix(joined, bodies.join('\n\n'), glossaryHanKeep(), glossaryNameKeep());   // 6.4.2 원문 한자 덩이가 남은 줄도
                     if (lines.length) {
                         try {
                             const fixed = await request(buildFullPrompt(0, fixNoteFor(lines, KANA_FIX_NOTE) + lines.map(([, line], i) => `${i + 1}. ${line}`).join('\n')));
@@ -2002,7 +2004,7 @@ async function translate(text, options = {}) {
         translatedText = tidyKana(translatedText);
         // 6.4.0 용어집 이름 지키기 · 줄 끝에 홀로 남은 여는 「 (모델이 프롬프트를 어겨도) — 정방향만
         if (!isInputTranslation) translatedText = tidyGlossaryOutput(isRetranslation ? compareText : text, translatedText);
-        const kanaLines = paragraphParts ? [] : linesToFix(translatedText, isInputTranslation ? '' : (isRetranslation ? compareText : text), glossaryHanKeep());   // 6.4.2 원문 한자 덩이도 (입력 번역은 예전처럼 가나만)
+        const kanaLines = paragraphParts ? [] : linesToFix(translatedText, isInputTranslation ? '' : (isRetranslation ? compareText : text), glossaryHanKeep(), glossaryNameKeep());   // 6.4.2 원문 한자 덩이도 (입력 번역은 예전처럼 가나만)
         if (kanaLines.length) {
             progress({ stage: 'kana' });
             try {
@@ -3887,7 +3889,7 @@ function glossaryEntries() {
 
 /**
  * 지금 캐릭터에서 쓰이는 항목 (이 캐릭터 + 전체). 표기가 하나라도 겹치면 캐릭터 것이 이긴다.
- * [1.8.12] 예전에는 `src.toLowerCase()` 로만 견줘서 "Low-world" 와 "Low world" 가 서로 다른 것으로 남아
+ * [1.8.12] 예전에는 `src.toLowerCase()` 로만 견줘서 "River-side" 와 "River side" 가 서로 다른 것으로 남아
  * 두 줄이 함께 프롬프트에 들어갔다. 이제 찾기와 같은 정규화(glossaryFold)로 표기마다 견준다.
  */
 /** 6.3.5 이름 다리 — 번역과 같은 범위(지금 캐릭터 + 전체)의 용어집 이름 짝을 내놓는다. 용어집을 끄면(glossary_enabled false) 빈 다리 */
@@ -3929,7 +3931,7 @@ function buildGlossaryBlock(text, { reverse = false } = {}) {
     return `[Glossary]\n${rule}\n` + lines.join('\n');
 }
 
-/** [2.2.9] 문단 캐시 서명: 표기 흔들림으로 찾은 이름이 있는 문단만 키가 바뀐다 (예전 번역 — 아델슈타인 — 을 캐시에서 다시 꺼내지 않게). 없으면 예전 키 그대로 */
+/** [2.2.9] 문단 캐시 서명: 표기 흔들림으로 찾은 이름이 있는 문단만 키가 바뀐다 (예전 번역 — 클라인슈타인 — 을 캐시에서 다시 꺼내지 않게). 없으면 예전 키 그대로 */
 function glossarySegmentSignature(setupDigest) {
     if (extensionSettings.glossary_enabled === false) return () => setupDigest;
     const entries = activeGlossaryEntries();
@@ -3945,7 +3947,7 @@ function glossaryNewId() {
 
 /**
  * [2.1.1] 같은 범위에서 겹치는 항목을 하나로 합친다 — 번역이 똑같거나(대전쟁 · 행정전 · 천국군처럼 원문 표기만 다른 것),
- * 원문 표기를 하나라도 나눠 쓰면(공유 캐릭터 두 줄이 H.A.L.O 를 같이 가진 것). 예전에는 원문 문자열이 글자까지 같아야만 같은 항목으로 봐서
+ * 원문 표기를 하나라도 나눠 쓰면(공유 캐릭터 두 줄이 S.T.A.R 을 같이 가진 것). 예전에는 원문 문자열이 글자까지 같아야만 같은 항목으로 봐서
  * "A, B" 와 "B, A" · "天国軍" 과 "天国軍, Heavenly Army" 가 따로 쌓였고, 뒤의 것은 activeGlossaryEntries 가 조용히 버렸다.
  * 합칠 때 원문 · 번역 표기는 나온 순서대로 합집합(정규화해서 중복 제거), id 는 앞 항목 것. 순수 함수 — 목록을 고쳐 쓰고 합친 수를 돌려준다.
  */
@@ -4241,7 +4243,7 @@ async function extractGlossaryWithLLM() {
         'From the character card and the ORIGINAL texts with their existing KOREAN translations below, list proper nouns and recurring terms: character names, nicknames, forms of address, place names, organizations, titles, special terms.',
         'For each term give the Korean rendering actually used in the translations; if the translations are inconsistent, choose the most frequent; if a name only appears in the character card, propose a natural Korean transliteration.',
         'Skip common words. 5 to 40 items.',
-        'Output ONLY a JSON array like [{"src":"Nagi","dst":"나기"}] with no commentary.',
+        'Output ONLY a JSON array like [{"src":"Mina","dst":"미나"}] with no commentary.',
         '',
         ...parts,
     ].join('\n');
@@ -4261,7 +4263,7 @@ async function extractGlossaryFromWorldInfo() {
     // 항목마다 둘 중 하나로 묻는다.
     //  keys    — 키워드에 한국어와 다른 언어가 함께 있으면, 언어를 우리가 갈라서 주고 모델은 짝만 맞춘다 (빠르고 사용자의 표기 그대로).
     //  content — 키워드가 없거나 한 언어뿐이면 본문을 읽고 고유명사를 뽑아 한국어 표기를 제안한다
-    //            ([1.8.10] 설정 항목은 키워드 없이 본문만 있는 경우가 많다: "天地合同庁 H.A.L.O (Heaven And Low-world Office)" → 공유 캐릭터).
+    //            ([1.8.10] 설정 항목은 키워드 없이 본문만 있는 경우가 많다: "天空管理庁 S.T.A.R (Sky Tower And River-side Office)" → 공유 캐릭터).
     const jobs = [];
     for (const entry of (await getSortedEntries()).filter(entry => !entry.disable)) {
         const title = String(entry.comment || '').slice(0, 60);
@@ -4384,13 +4386,13 @@ function parseGlossaryItems(raw) {
 
 /** [1.8.12] 그 범위(캐릭터+전체)에 이미 있는 원문 표기들 — "있음" 표시에 쓴다 */
 function glossaryExistingForms(scopeKey) {
-    // [2.2.9] 가타카나 이름은 표기 흔들림 열쇠도 넣는다 — 「번역문에서 뽑기」가 アデルシュタイン → 아델슈타인(예전 잘못 옮긴 번역)을
+    // [2.2.9] 가타카나 이름은 표기 흔들림 열쇠도 넣는다 — 「번역문에서 뽑기」가 クラインシュタイン → 클라인슈타인(예전 잘못 옮긴 번역)을
     //         새 항목으로 켜 둔 채 내놓아, 넣으면 그 표기가 새 항목 것이 되어 고친 것이 도로 풀렸다 (5.7.3 검토). 이제 이미 있는 항목으로 꺼져 나온다
     return new Set(activeGlossaryEntries(scopeKey).flatMap(entry => glossaryAlternatives(entry.src).flatMap(form => [glossaryFold(form), kanaDuplicateKey(form)]).filter(Boolean)));
 }
 
 /**
- * [1.8.10] 여러 항목에서 같은 용어가 표기 순서만 다르게 나오므로 (예: "H.A.L.O, 天地合同庁" 과 "天地合同庁, H.A.L.O"),
+ * [1.8.10] 여러 항목에서 같은 용어가 표기 순서만 다르게 나오므로 (예: "S.T.A.R, 天空管理庁" 과 "天空管理庁, S.T.A.R"),
  * 표기가 하나라도 겹치면 한 줄로 합친다. 합칠 때 표기는 합집합, 종류는 고유명사가 이긴다.
  */
 function buildGlossaryProposals(items, existing) {

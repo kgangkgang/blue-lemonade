@@ -64,15 +64,15 @@ await test('parseSpeechBatch: 번호가 한 칸 밀렸을 수 있으면 아무 �
     assert.equal(SP.cutEchoLine('はい → いいえ', 'Yes'), 'はい → いいえ', '원문이 아닌 앞머리는 건드리지 않음');
 });
 const E = (src, dst, id = src) => ({ id, scope: 'global', src, dst });
-const GL = [E('Adelstein, アデルスタイン', '아델스타인'), E('天地合同庁, H.A.L.O', '천지합동청'), E('Guild', '길드'), E('ロビン', '로빈')];
+const GL = [E('Kleinstein, クラインスタイン', '클라인스타인'), E('天空管理庁, S.T.A.R', '하늘관리청'), E('Guild', '길드'), E('ロビン', '로빈')];
 await test('glossaryLinesFor: ko = 채팅 번역 줄 그대로 · 다른 언어 = 원문 칸의 그 언어 표기 · 한국어 글은 번역 칸으로 찾음 · 그 언어 표기가 없으면 뺌', () => {
-    assert.deepEqual(GM.glossaryLinesFor(GL, 'Adelstein met the Guild.', 'ko'), GM.glossaryLines(GL, 'Adelstein met the Guild.'));
-    assert.deepEqual(GM.glossaryLinesFor(GL, 'Adelstein met the Guild.', 'ja').lines, ['Adelstein → アデルスタイン']);
-    assert.deepEqual(GM.glossaryLinesFor(GL, 'アデルスタインさんとロビン', 'en').lines, ['アデルスタイン → Adelstein']);
-    assert.deepEqual(GM.glossaryLinesFor(GL, '아델스타인이 천지합동청에 갔다.', 'ja').lines, ['아델스타인 → アデルスタイン', '천지합동청 → 天地合同庁']);
-    assert.deepEqual(GM.glossaryLinesFor(GL, 'H.A.L.O office', 'zh').lines, ['H.A.L.O → 天地合同庁'], '한자 표기는 중국어 · 일본어 둘 다');
+    assert.deepEqual(GM.glossaryLinesFor(GL, 'Kleinstein met the Guild.', 'ko'), GM.glossaryLines(GL, 'Kleinstein met the Guild.'));
+    assert.deepEqual(GM.glossaryLinesFor(GL, 'Kleinstein met the Guild.', 'ja').lines, ['Kleinstein → クラインスタイン']);
+    assert.deepEqual(GM.glossaryLinesFor(GL, 'クラインスタインさんとロビン', 'en').lines, ['クラインスタイン → Kleinstein']);
+    assert.deepEqual(GM.glossaryLinesFor(GL, '클라인스타인이 하늘관리청에 갔다.', 'ja').lines, ['클라인스타인 → クラインスタイン', '하늘관리청 → 天空管理庁']);
+    assert.deepEqual(GM.glossaryLinesFor(GL, 'S.T.A.R office', 'zh').lines, ['S.T.A.R → 天空管理庁'], '한자 표기는 중국어 · 일본어 둘 다');
     assert.deepEqual(GM.glossaryLinesFor(GL, 'Nothing here.', 'ja').lines, []);
-    assert.equal(GM.formScript('アデル'), 'ja');
+    assert.equal(GM.formScript('クライン'), 'ja');
     assert.equal(GM.formScript('天地'), 'han');
     assert.equal(GM.formScript('길드'), 'ko');
     assert.equal(GM.formScript('Guild'), 'en');
@@ -291,14 +291,14 @@ await test('용어집: 원문에 나온 항목의 그 언어 표기만 프롬프
     reset();
     H.settings.glossary_entries = GL;
     H.script.push(echoBatch());
-    await M.translateForSpeech(['Adelstein waved.', 'The Guild hall.'], 'ja');
-    assert.match(H.calls[0].prompt, /\[Glossary\]\nUse these forms[^\n]*\nAdelstein → アデルスタイン(\n|$)/);
-    assert.doesNotMatch(H.calls[0].prompt, /Guild →|아델스타인/);
+    await M.translateForSpeech(['Kleinstein waved.', 'The Guild hall.'], 'ja');
+    assert.match(H.calls[0].prompt, /\[Glossary\]\nUse these forms[^\n]*\nKleinstein → クラインスタイン(\n|$)/);
+    assert.doesNotMatch(H.calls[0].prompt, /Guild →|클라인스타인/);
     reset();
     H.settings.glossary_entries = GL;
     H.settings.glossary_enabled = false;
     H.script.push(echoBatch());
-    await M.translateForSpeech(['Adelstein waved.', 'Hi.'], 'ja');
+    await M.translateForSpeech(['Kleinstein waved.', 'Hi.'], 'ja');
     assert.doesNotMatch(H.calls[0].prompt, /Glossary/);
 });
 

@@ -19,14 +19,14 @@ const E = (src, dst, scope = 'x.png') => ({ id: src, scope, src, dst });
 
 await test('이름꼴: 12자 이하 · 글자와 사이 공백만 · 라틴은 첫 글자 대문자', () => {
     for (const ok of ['Corvin', 'Ann Marie', '코르빈', 'コルヴィン', 'Mc Gee', '하늘정원']) assert.equal(B.isNameLike(ok), true, ok);
-    for (const no of ['corvin', 'office', 'Heaven And Low-world Office', "O'Neil", 'Jean-Luc', 'Room 101', '…', '', '  ', 'A1', '코르빈 사무실 입구 안내문']) assert.equal(B.isNameLike(no), false, no);
+    for (const no of ['corvin', 'office', 'Sky Tower And River-side Office', "O'Neil", 'Jean-Luc', 'Room 101', '…', '', '  ', 'A1', '코르빈 사무실 입구 안내문']) assert.equal(B.isNameLike(no), false, no);
     assert.deepEqual(B.nameForms(' Corvin, コルヴィン ,corvin,,'), ['Corvin', 'コルヴィン']);
 });
 
 await test('용어집 → 이름 짝: 양쪽 다 이름꼴인 표기끼리, 보통 말 · 긴 말은 빠짐, 같은 짝은 한 번', () => {
     const pairs = B.namePairs([
         E('Corvin, コルヴィン', '코르빈', 'global'), E('Cor, コル', '코르'), E('office', '사무실'), E('Guild', '길드, 조합'),
-        E('Heaven And Low-world Office', '천상하계청'), E('Corvin', '코르빈'), { src: 'Mina', dst: '미나' }, null, { src: 5, dst: '다섯' },
+        E('Sky Tower And River-side Office', '하늘관리청'), E('Corvin', '코르빈'), { src: 'Mina', dst: '미나' }, null, { src: 5, dst: '다섯' },
     ]);
     assert.deepEqual(pairs, [
         { src: 'Corvin', dst: '코르빈', scope: 'global' }, { src: 'コルヴィン', dst: '코르빈', scope: 'global' },
@@ -201,6 +201,33 @@ await test('TTS: 두 인물이 나눠 쓰는 표기(Rina · Lina → リナ)는 
             assert.equal(SP.canon('Rina'), 'Rina');
         }
     } finally { s.voices.splice(before); delete globalThis[KEY]; }
+});
+
+await test('TTS: 한 사람이 대표 이름 둘(연결표의 두 열쇠 · 목소리 이름과 연결표 열쇠)로 알려져도 같은 목소리면 한글 표기는 그 목소리 — 서로 다른 목소리 · 없는 목소리는 그대로 모호 · 짝 순서와 상관없이', async () => {
+    const V = await import(pathToFileURL(path.join(root, 'voices.js')).href);
+    const before = s.voices.length, map0 = { ...s.char_map };
+    s.voices.push(toVoice({ voiceId: 'v_one', name: 'One voice' }), toVoice({ voiceId: 'v_tove', name: 'Tove' }), toVoice({ voiceId: 'v_other', name: 'Other voice' }));
+    const [one, tove, other] = s.voices.slice(before).map(v => v.uid);
+    const pairs = [{ src: 'Rina', dst: '리나' }, { src: 'リナ', dst: '리나' }];
+    try {
+        s.char_map = { ...map0, Rina: one, 'リナ': one };   // 연결표의 두 열쇠가 같은 목소리
+        for (const list of [pairs, pairs.slice().reverse()]) {
+            bridge(list);
+            assert.equal(V.voiceFor('리나')?.uid, one, 'same voice → that voice');
+            assert.equal(V.hasOwnVoice('리나'), true);
+            assert.equal(SP.canon('리나'), 'Rina', 'the name that comes first in the settings, whatever the pair order');
+        }
+        s.char_map = { ...map0, 'トーヴェ': tove };   // 목소리 이름과 연결표 열쇠가 같은 목소리
+        for (const list of [[{ src: 'トーヴェ', dst: '토베' }, { src: 'Tove', dst: '토베' }], [{ src: 'Tove', dst: '토베' }, { src: 'トーヴェ', dst: '토베' }]]) {
+            bridge(list);
+            assert.equal(V.voiceFor('토베')?.uid, tove);
+            assert.equal(SP.canon('토베'), 'トーヴェ', 'map keys come before voice names');
+        }
+        s.char_map = { ...map0, Rina: one, 'リナ': other };   // 서로 다른 목소리 → 그대로 모호
+        for (const list of [pairs, pairs.slice().reverse()]) { bridge(list); assert.equal(SP.canon('리나'), '리나', 'two voices → nobody'); }
+        s.char_map = { ...map0, Rina: 'minimax:gone', 'リナ': 'minimax:gone' };   // 없는 목소리 = 목소리 없는 서로 다른 이름 → 그대로 모호
+        for (const list of [pairs, pairs.slice().reverse()]) { bridge(list); assert.equal(SP.canon('리나'), '리나', 'no voice → names stay apart'); }
+    } finally { s.voices.splice(before); s.char_map = map0; delete globalThis[KEY]; }
 });
 
 await test('TTS: 깨진 다리(version 다름 · pairs 아님 · 빈 글)는 무시', () => {

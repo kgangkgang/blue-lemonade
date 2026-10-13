@@ -300,7 +300,7 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.cu
   body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track-recovery:not(.bl-dem-shown) > .custom-dem-track-recovery__item:last-child {
     flex: none !important;
   }
-  /* 한 줄에는 시간 · 장소 · 온도 (날짜와 날씨 글은 펼치면 보임) — 장소가 날짜에 밀려 "H.A.L.O. 중앙 …" 만 남던 것 */
+  /* 한 줄에는 시간 · 장소 · 온도 (날짜와 날씨 글은 펼치면 보임) — 장소가 날짜에 밀려 "S.T.A.R. 중앙 …" 만 남던 것 */
   body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) > .custom-dem-track__item--location {
     flex: 1 1 0 !important;
     order: 2 !important;

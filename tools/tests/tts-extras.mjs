@@ -10,7 +10,7 @@ import { pathToFileURL } from 'node:url';
 
 const root = path.resolve(process.argv[2] || '.', 'src/addons/tts/src');
 const js = (src) => `data:text/javascript,${encodeURIComponent(src)}`;
-const T = globalThis.__ttsExtrasTest = { ext: {}, ctx: { chat: [], chatMetadata: {}, name1: 'Hero', name2: '천지합동청' } };
+const T = globalThis.__ttsExtrasTest = { ext: {}, ctx: { chat: [], chatMetadata: {}, name1: 'Hero', name2: '하늘관리청' } };
 let fetches = 0;
 globalThis.fetch = async () => { fetches++; throw new Error('시험 중 네트워크 요청'); };
 const store = new Map();
@@ -68,18 +68,18 @@ const MM_STOCK = [
     { voiceId: 'Japanese_GentleButler', name: 'Gentle Butler', lang: 'ja' },
     { voiceId: 'Japanese_LoyalKnight', name: 'Loyal Knight', lang: 'ja' },
     { voiceId: 'Japanese_IntellectualSenior', name: 'Intellectual Senior', lang: 'ja' },   // 성별 모름 → 뺌
-    { voiceId: 'cj_seraph01', name: 'cj_seraph01', own: true },                             // 내 목소리 → 뺌
+    { voiceId: 'cj_selene01', name: 'cj_selene01', own: true },                             // 내 목소리 → 뺌
 ];
 function reset({ prefer = '', extras = 'auto', defaultLang = 'ja' } = {}) {
     const s = settings();
     s.voices = [
-        v('minimax', 'cj_seraph01', '세라프'),
-        v('minimax', 'cj_lil01', '릴', { lang: defaultLang }),
-        v('elevenlabs', 'el_seraph', '세라프'),
-        v('elevenlabs', 'el_lil', '릴'),
+        v('minimax', 'cj_selene01', '셀레네'),
+        v('minimax', 'cj_pip01', '핍', { lang: defaultLang }),
+        v('elevenlabs', 'el_selene', '셀레네'),
+        v('elevenlabs', 'el_pip', '핍'),
     ];
-    s.char_map = { Seraph: 'minimax:cj_seraph01', Lil: 'minimax:cj_lil01' };
-    s.default_voice = 'minimax:cj_lil01';
+    s.char_map = { Selene: 'minimax:cj_selene01', Pip: 'minimax:cj_pip01' };
+    s.default_voice = 'minimax:cj_pip01';
     s.user_voice = '';
     s.narrator_voice = '';
     s.prefer_provider = prefer;
@@ -106,7 +106,7 @@ await test('storeStock: 내 목소리 · 섞은 목소리 · 성별 모름은 �
     reset();
     const rows = V.storeStock('minimax', MM_STOCK);
     assert.equal(rows.length, 7);
-    assert.ok(!rows.some(r => r.voiceId === 'cj_seraph01' || r.voiceId === 'Japanese_IntellectualSenior'));
+    assert.ok(!rows.some(r => r.voiceId === 'cj_selene01' || r.voiceId === 'Japanese_IntellectualSenior'));
     assert.deepEqual(V.stockOf('minimax').map(r => r.voiceId), rows.map(r => r.voiceId));
     assert.ok(!JSON.stringify(settings()).includes('Korean_SweetGirl'), '설정에는 없음');
 });
@@ -131,17 +131,17 @@ await test('noteExtras → extraFor: 성별 · 언어(기본 목소리의 원어
 await test('목소리를 정한 이름 · 성별 모름 · 엑스트라 끔 · 맞는 목소리 없음 → 1.3.6 처럼 기본 목소리', async () => {
     reset();
     V.storeStock('minimax', MM_STOCK);
-    await V.noteExtras({ Seraph: { g: 'f' }, '행인': { g: '' }, '점원': { g: 'f' } });
-    assert.ok(!('Seraph' in settings().extra_map), '목소리를 정한 이름은 안 적음');
+    await V.noteExtras({ Selene: { g: 'f' }, '행인': { g: '' }, '점원': { g: 'f' } });
+    assert.ok(!('Selene' in settings().extra_map), '목소리를 정한 이름은 안 적음');
     assert.ok(!('행인' in settings().extra_map), '성별 모름');
-    assert.equal(uid(V.voiceFor('Seraph')), 'minimax:cj_seraph01');
-    assert.equal(uid(V.voiceFor('모르는 사람')), 'minimax:cj_lil01');
+    assert.equal(uid(V.voiceFor('Selene')), 'minimax:cj_selene01');
+    assert.equal(uid(V.voiceFor('모르는 사람')), 'minimax:cj_pip01');
     settings().extras = 'off';
-    assert.equal(uid(V.voiceFor('점원')), 'minimax:cj_lil01', '끄면 기본 목소리');
+    assert.equal(uid(V.voiceFor('점원')), 'minimax:cj_pip01', '끄면 기본 목소리');
     settings().extras = 'auto';
     store.clear();
     settings().extra_map['점원'].v = {};
-    assert.equal(uid(V.voiceFor('점원')), 'minimax:cj_lil01', '기본 목소리 목록이 아직 없으면 이번 줄은 기본 목소리');
+    assert.equal(uid(V.voiceFor('점원')), 'minimax:cj_pip01', '기본 목소리 목록이 아직 없으면 이번 줄은 기본 목소리');
     await new Promise(r => setTimeout(r, 20));
     assert.ok(fetches >= 1, '목록을 받으러 감 (실패하면 조용히)');
 });
@@ -150,8 +150,8 @@ await test('「엑스트라로도 쓰기」를 켠 목소리가 있으면 그것
     reset();
     V.storeStock('minimax', MM_STOCK);
     const s = settings();
-    s.voices.push(v('minimax', 'my_extra_f', '내 엑스트라 여자', { extra: 'f' }), v('minimax', 'cj_seraph01b', '세라프 2', { extra: 'f' }));
-    s.char_map.Seraph2 = 'minimax:cj_seraph01b';
+    s.voices.push(v('minimax', 'my_extra_f', '내 엑스트라 여자', { extra: 'f' }), v('minimax', 'cj_selene01b', '셀레네 2', { extra: 'f' }));
+    s.char_map.Selene2 = 'minimax:cj_selene01b';
     await V.noteExtras({ '점원': { g: 'f' } });
     assert.equal(uid(V.voiceFor('점원')), 'minimax:my_extra_f');
     assert.equal(V.voiceFor('점원'), s.voices.find(x => x.voiceId === 'my_extra_f'), '목록의 목소리 그대로');
@@ -202,7 +202,7 @@ await test('한국어 이름: 모델 id (아직 안 나온 것도 낱말 규칙)
     assert.equal(KV('Charming Elder Sister'), '매력적인 언니');
     assert.equal(KV('kind-hearted Girl'), '마음씨 착한 소녀');
     assert.equal(KV('Rachel'), 'Rachel', '사람 이름은 그대로');
-    assert.equal(KV('세라프'), '세라프');
+    assert.equal(KV('셀레네'), '셀레네');
 });
 
 let P = null, PR = null;
@@ -216,15 +216,15 @@ if (P && PR) {
         const s = settings();
         const el = PR.getProvider('elevenlabs'), mm = PR.getProvider('minimax');
         s.providers.elevenlabs = { ...s.providers.elevenlabs, model: 'eleven_v4' };
-        const plain = toVoice({ voiceId: 'el_seraph', name: '세라프' }, 'elevenlabs');
-        const v2 = toVoice({ voiceId: 'el_seraph', name: '세라프', use_model: 'eleven_multilingual_v2' }, 'elevenlabs');
+        const plain = toVoice({ voiceId: 'el_selene', name: '셀레네' }, 'elevenlabs');
+        const v2 = toVoice({ voiceId: 'el_selene', name: '셀레네', use_model: 'eleven_multilingual_v2' }, 'elevenlabs');
         const cfg = P.voiceCfg(el, plain);
         assert.equal(cfg, s.providers.elevenlabs, '정하지 않은 목소리는 엔진 설정 객체 그대로');
         assert.equal(P.voiceCfg(el, v2).model, 'eleven_multilingual_v2');
         assert.equal(s.providers.elevenlabs.model, 'eleven_v4', '엔진 설정은 안 바뀜');
         const job = (voice, provider) => ({ provider, voice, params: {}, lang: 'ja', emotion: '', text: 'こんにちは' });
         assert.notEqual(P.keyOf(job(plain, el)), P.keyOf(job(v2, el)), '다른 모델 → 다른 소리 (캐시 키)');
-        assert.equal(P.keyOf(job(plain, el)), P.keyOf(job(toVoice({ voiceId: 'el_seraph', name: '세라프' }, 'elevenlabs'), el)));
+        assert.equal(P.keyOf(job(plain, el)), P.keyOf(job(toVoice({ voiceId: 'el_selene', name: '셀레네' }, 'elevenlabs'), el)));
         s.providers.minimax = { ...s.providers.minimax, model: 'speech-2.8-turbo', model_from: 'voice' };
         const made = toVoice({ voiceId: 'cj_x', model: 'speech-2.8-hd' }, 'minimax');
         assert.equal(mm.modelFor(made, P.voiceCfg(mm, made)), 'speech-2.8-hd', '1.3.6 그대로: 만든 모델');
@@ -238,8 +238,8 @@ if (P && PR) {
 
 if (A) {
     const base = {
-        lines: [{ i: 0, h: 'a', text: 'いらっしゃいませ。', speaker: '천지합동청', ask: false }, { i: 1, h: 'b', text: 'コーヒーを。', speaker: '카페 사장', ask: false }],
-        needs: {}, context: 'narration', display: '', emotion: true, charName: '천지합동청', userName: 'Hero', speakers: [],
+        lines: [{ i: 0, h: 'a', text: 'いらっしゃいませ。', speaker: '하늘관리청', ask: false }, { i: 1, h: 'b', text: 'コーヒーを。', speaker: '카페 사장', ask: false }],
+        needs: {}, context: 'narration', display: '', emotion: true, charName: '하늘관리청', userName: 'Hero', speakers: [],
     };
     await test('composePrompt: 엑스트라를 켜도 (?) 줄 · 목소리 없는 화자가 없으면 1.3.6 과 글자까지 같다 (저장된 분석이 그대로)', () => {
         const off = A.composePrompt({ ...base });
@@ -252,10 +252,10 @@ if (A) {
         assert.match(on.user, /Speakers without a voice yet: 카페 사장/);
         assert.match(on.user, /"people"/);
         assert.match(on.user, /"people":\{"카페 사장":"f adult"\}/);
-        const ask = A.composePrompt({ ...base, lines: [{ ...base.lines[1], speaker: '', ask: true }], speakers: ['Seraph'], extras: true, unvoiced: [] });
+        const ask = A.composePrompt({ ...base, lines: [{ ...base.lines[1], speaker: '', ask: true }], speakers: ['Selene'], extras: true, unvoiced: [] });
         assert.match(ask.user, /minor character/);
         assert.match(ask.user, /"people"/);
-        const ask136 = A.composePrompt({ ...base, lines: [{ ...base.lines[1], speaker: '', ask: true }], speakers: ['Seraph'] });
+        const ask136 = A.composePrompt({ ...base, lines: [{ ...base.lines[1], speaker: '', ask: true }], speakers: ['Selene'] });
         assert.match(ask136.user, /exactly one name from the known speakers/);
         assert.doesNotMatch(ask136.user, /people|minor/);
     });
@@ -269,7 +269,7 @@ if (A) {
         const s = settings();
         s.analysis = { ...s.analysis, enabled: true, engine: 'compat', base: 'http://analysis.test/v1', key: 'k-test', model: 'm-test', emotion: true, translate: false, speaker: true, when: 'auto' };
         T.ctx.chat.length = 0;
-        T.ctx.chat.push({ name: '천지합동청', is_user: false, mes: '카페 사장이 컵을 내려놓았다. "어서 오세요. 늘 드시던 걸로?"', extra: {} });
+        T.ctx.chat.push({ name: '하늘관리청', is_user: false, mes: '카페 사장이 컵을 내려놓았다. "어서 오세요. 늘 드시던 걸로?"', extra: {} });
         let sent = null;
         const realFetch = globalThis.fetch;
         globalThis.fetch = async (url, init) => {
@@ -622,7 +622,7 @@ if (A && typeof V.userAuto === 'function') {
         const s = settings();
         s.analysis = { ...s.analysis, enabled: true, engine: 'compat', base: 'http://analysis.test/v1', key: 'k-test', model: 'm-test', emotion: true, translate: false, speaker: true, when: 'auto' };
         T.ctx.chat.length = 0;
-        T.ctx.chat.push({ name: '천지합동청', is_user: false, mes: 'Hero: "좋아."', extra: {} });
+        T.ctx.chat.push({ name: '하늘관리청', is_user: false, mes: 'Hero: "좋아."', extra: {} });
         const mes = T.ctx.chat[0];
         const opts = { langs: [], emotion: true, translate: false, speaker: true, extras: true };
         const before = A.buildPrompt(mes, opts);
@@ -655,8 +655,8 @@ try { CP = await import(pathToFileURL(path.join(root, 'clickplay.js')).href); } 
 if (CP && TX) {
     await test('같은 대사를 두 사람이: 누른 번째의 조각 (탭 sameIndex) · 미리 만들기도 같은 번째 · 하나뿐이면 예전 그대로', async () => {
         goldenReset('normal');
-        const text = '사탄은 고개를 들었다.\n\n<font color="#d03030">「다릅니다.」</font>\n\n<font color="#9370db">「다릅니다.」</font>\n\n<font color="#3a8a9a">「그게 그거잖아.」</font>';
-        const mes = { name: '천지합동청', is_user: false, mes: text, extra: {}, swipe_id: 0 };
+        const text = '로건은 고개를 들었다.\n\n<font color="#d03030">「다릅니다.」</font>\n\n<font color="#9370db">「다릅니다.」</font>\n\n<font color="#3a8a9a">「그게 그거잖아.」</font>';
+        const mes = { name: '하늘관리청', is_user: false, mes: text, extra: {}, swipe_id: 0 };
         T.ctx.chat.length = 0; T.ctx.chat.push(mes);
         const segs = CP.tapSegments(mes);
         const dl = segs.filter(x => x.kind === 'dialogue');

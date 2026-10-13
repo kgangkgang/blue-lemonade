@@ -94,7 +94,7 @@ const src='The right shoe still clings to her other foot, glossy and guilty.\n\n
 assert.equal(dropStrayWords('오른쪽 구두만 다른 쪽 발에 매달려 있었다.\n\nValladolid\n층수 표시등에 7, 6, 그리고 5가 차례로 켜졌다.',src),'오른쪽 구두만 다른 쪽 발에 매달려 있었다.\n\n층수 표시등에 7, 6, 그리고 5가 차례로 켜졌다.');
 assert.equal(dropStrayWords('가나다.\n\nValladolid\n\n라마바.','A.\n\nB.'),'가나다.\n\n라마바.','빈 줄 사이에 혼자 있으면 빈 줄 하나도 같이 — 문단 수 그대로');
 assert.equal(dropStrayWords('가나다.\nValladolid','A.'),'가나다.');
-for(const [t,s] of [['가나다.\n\nEXIT\n\n라마바.','A sign: exit.'],['가나다.\n\nEXIT\n\n라마바.','看板「ＥＸＩＴ」'],['가나다.\n\nZadkiel\n\n라마바.','ザドキエル (Zadkiel)']])assert.equal(dropStrayWords(t,s),t,'원문에 있는 낱말은 그대로');
+for(const [t,s] of [['가나다.\n\nEXIT\n\n라마바.','A sign: exit.'],['가나다.\n\nEXIT\n\n라마바.','看板「ＥＸＩＴ」'],['가나다.\n\nLionel\n\n라마바.','ライオネル (Lionel)']])assert.equal(dropStrayWords(t,s),t,'원문에 있는 낱말은 그대로');
 assert.equal(dropStrayWords('He waits.\n\nSilence\n\nThen 그.','彼は待つ。'),'He waits.\n\nSilence\n\nThen 그.','영어로 옮긴 글은 손대지 않는다');
 for(const t of ['가나다.\n\nHello.\n라마바','가나다.\n\nNew York\n라마바','가나다\n「Valladolid」\n라마바','가나다\n**Valladolid**\n라마바','가나다\nA\n라마바','가나다\n[[__VAR_0__]]\n라마바'])assert.equal(dropStrayWords(t,'x'),t,t);
 assert.equal(dropStrayWords('Valladolid','x'),'Valladolid');assert.equal(dropStrayWords('',''),'');assert.equal(dropStrayWords(null,null),'');

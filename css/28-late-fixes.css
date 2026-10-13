@@ -420,7 +420,7 @@ body.salty :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes_text :is(.cu
 
 /* ---------- 데우스 카드 안은 본문 조판을 따르지 않음 (2.9.3, 폰 점검에서 찾음) ----------
    양쪽 정렬 · 한글 글자 사이 끊기(justify-break) · 첫 줄 들여쓰기는 긴 본문 문단을 위한 설정인데, 카드 안의 짧은 칸까지 물려받았다.
-   그래서 트래커 장소가 "H.A.L.O.   Headquarters   →   7F" 처럼 낱말 사이가 벌어지고, 씬 플랜 · 심리 상태 줄에서
+   그래서 트래커 장소가 "S.T.A.R.   Headquarters   →   7F" 처럼 낱말 사이가 벌어지고, 씬 플랜 · 심리 상태 줄에서
    "드/림주" · "저/녁" 처럼 낱말이 갈리고, 갈등 카드 문단이 한 칸 들여 써졌다 (테마를 끄면 없음).
    카드 · 트래커 안은 왼쪽 정렬 + 낱말 단위 줄바꿈 + 들여쓰기 없음. 본문 문단은 그대로 */
 :is(body.salty #chat .mes .mes_text, .salty-sample) :is(details[class*="custom-dem-card"], .custom-dem-track, .custom-dem-track-recovery) {

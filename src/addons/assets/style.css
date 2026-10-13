@@ -4,7 +4,7 @@
    ============================================================ */
 
 /* state.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
-:root { --eh-css-version: "1.6.5"; }
+:root { --eh-css-version: "1.6.6"; }
 
 .eh-root {
     --eh-text: var(--SmartThemeBodyColor, #ccc);
@@ -1027,7 +1027,7 @@ body.reduced-motion .eh-viewer-nav { transition: none; }
 #char_assets_settings :is(.eh-card--prompt, .eh-card--assets) > .eh-card-title { margin-bottom: 10px; }
 
 /* ── 2026-10-12 찐빠 2차 (세션 1): 폰 412 · PC 좁은 서랍 열 237px ── */
-/* 그림 이름: 낱말 가운데(「Adelstein_angr|y」)가 아니라 _ 뒤(panel.js 가 <wbr>) · 띄어쓰기에서 꺾는다.
+/* 그림 이름: 낱말 가운데(「Kleinstein_angr|y」)가 아니라 _ 뒤(panel.js 가 <wbr>) · 띄어쓰기에서 꺾는다.
    16-typescale 의 anywhere 를 이 창에서만 break-word 로 — 칸보다 긴 한 낱말만 어쩔 수 없이 쪼갠다 */
 body.salty #char_assets_settings .eh-tile-name { overflow-wrap: break-word !important; word-break: keep-all; }
 /* 머리 줄: 좁은 열(320px 미만)에서 단추 셋이 글 자리를 먹어 「그림 / 32장 / · AI …」가 한 낱말씩 꺾였다 → 그림 · 단추가 한 줄, 이름 · 장 수는 그 아래 한 줄 다 */

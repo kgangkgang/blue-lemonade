@@ -27,13 +27,13 @@ export function voiceByName(name) {
     if (!k) return null;
     const vs = settings().voices.filter(v => !v.gone);   // 5.7.2 계정에 없는 목소리는 이름으로 고르지 않음
     return vs.find(v => fold(v.name) === k) || vs.find(v => (v.aliases || []).some(a => fold(a) === k))
-        // 5.7.2 괄호 앞 이름 · 괄호 안 영문 이름 ('루시퍼 (Lucifer)' ← 캐릭터 Lucifer) — 정확히 같은 이름 · 다른 이름이 없을 때만
+        // 5.7.2 괄호 앞 이름 · 괄호 안 영문 이름 ('코르빈 (Corvin)' ← 캐릭터 Corvin) — 정확히 같은 이름 · 다른 이름이 없을 때만
         || vs.find(v => !(v.mix || []).length && nameKeys(v.name).slice(1).includes(k)) || null;
 }
 
 // ---------- 1.3.7 엔진 자동 맞춤 (prefer_provider)
-// 같은 사람인지: 목소리 이름 · 괄호 앞 이름 · 괄호 안 영문 이름("루시퍼 (Lucifer)") · 다른 이름 · 캐릭터 이름이 하나라도 같으면.
-// 괄호 안이 한글 설명("세라프 (새 참조)" · "다크초코 쿠키 (최원형)")이면 이름으로 쓰지 않는다 — 다른 목소리끼리 '새 참조' 로 맞지 않게.
+// 같은 사람인지: 목소리 이름 · 괄호 앞 이름 · 괄호 안 영문 이름("코르빈 (Corvin)") · 다른 이름 · 캐릭터 이름이 하나라도 같으면.
+// 괄호 안이 한글 설명("미나 (새 참조)" · "다크초코 쿠키 (최원형)")이면 이름으로 쓰지 않는다 — 다른 목소리끼리 '새 참조' 로 맞지 않게.
 const LATIN_NAME = /^[A-Za-z][A-Za-z .'\-]{0,39}$/;
 function nameKeys(name) {
     const raw = String(name || '').trim();
@@ -47,7 +47,7 @@ function nameKeys(name) {
 /**
  * 이 목소리 · 캐릭터 이름과 같은 사람인 그 엔진의 목소리 (없으면 null). 점수: 목소리 이름(또는 다른 이름)이 정확히 같음 3 · 괄호 앞 이름 2 ·
  * 다른 이름 · 캐릭터 이름 1 — 같은 점수면 먼저 등록한 것.
- * 1.3.8: 정확히 같은 이름이 괄호 붙은 이름(「세라프 (긴 참조)」)보다 늘 앞 · 캐릭터 이름(1점)으로는 엔진의 기본 목소리(stock — 「Alice」)를 짝으로 안 고름
+ * 1.3.8: 정확히 같은 이름이 괄호 붙은 이름(「미나 (긴 참조)」)보다 늘 앞 · 캐릭터 이름(1점)으로는 엔진의 기본 목소리(stock — 「Alice」)를 짝으로 안 고름
  */
 export function twinOf(v, provider, charName = '') {
     if (!v || !provider) return null;
@@ -71,7 +71,7 @@ function builtIn(x) {
 }
 /**
  * 1.3.8 「엔진」을 따르지 않고 연결표 목소리 그대로 읽는 캐릭터인가 (settings.prefer_keep — 캐릭터별 목소리 · 대화 색에서 다른 엔진 목소리를 고름).
- * 이름은 연결표 이름 그대로 · 띄어쓰기 · 대소문자 무시 · 분석이 준 다른 글자 이름(루시퍼 → Lucifer)도
+ * 이름은 연결표 이름 그대로 · 띄어쓰기 · 대소문자 무시 · 분석이 준 다른 글자 이름(코르빈 → Corvin)도
  */
 export function isPinned(name, { raw = false } = {}) {
     const s = settings();
@@ -109,7 +109,7 @@ export function previewPrefer(provider, names) {
 }
 /**
  * 1.3.8 화자 이름 → 연결표의 이름 (없으면 ''). 그대로 · 띄어쓰기 · 대소문자 무시, 그다음 목소리 이름 · 다른 이름을 거쳐:
- * 분석이 한글로 준 '루시퍼' → 목소리 '루시퍼 (Lucifer)' 의 괄호 안 이름 → 연결표 'Lucifer' (엑스트라 · 다른 목소리로 새지 않게)
+ * 분석이 한글로 준 '코르빈' → 목소리 '코르빈 (Corvin)' 의 괄호 안 이름 → 연결표 'Corvin' (엑스트라 · 다른 목소리로 새지 않게)
  */
 export function charKeyOf(name) {
     const s = settings();
@@ -121,8 +121,8 @@ export function charKeyOf(name) {
     const same = keys.find(x => fold(x) === k);
     if (same) return same;
     // 1.3.8 리뷰 p04: voiceByName 과 같은 차례 — 이름이 정확히 같은 목소리 → 다른 이름 → 괄호 앞 · 괄호 안 영문 이름. 맞는 목소리가 있는 첫 단계에서만 찾는다
-    //   (다른 목소리에 남은 옛 다른 이름 '세라프' 의 'Lil' 이 이름이 정확히 'Lil' 인 목소리를 이기지 않게). 연결표 이름은 그 목소리의 이름 · 다른 이름이어야
-    //   (빌린 목소리 '진우 쿠키' 는 그것을 쓰는 Lucifer 가 아님)
+    //   (다른 목소리에 남은 옛 다른 이름 '미나' 의 'Rex' 가 이름이 정확히 'Rex' 인 목소리를 이기지 않게). 연결표 이름은 그 목소리의 이름 · 다른 이름이어야
+    //   (빌린 목소리 '진우 쿠키' 는 그것을 쓰는 Corvin 이 아님)
     const vs = s.voices.filter(v => !v.gone && !(v.mix || []).length);
     const tiers = [
         vs.filter(v => fold(v.name) === k),
@@ -278,7 +278,7 @@ export function syncAccount(providerId, list) {
         }
     }
     // 1.4.0 계정에서 이름을 바꾼 내 목소리는 목록 이름도 따라감 (이름을 계정에서 관리하는 엔진만 — ElevenLabs).
-    //   예: 「세라프」를 「세라프 (예전)」로, 새로 만든 「세라프 (차분)」을 「세라프」로 바꾸면 「엔진」 짝(twinOf — 같은 이름이 3점)이 새 목소리로 넘어간다.
+    //   예: 「미나」를 「미나 (예전)」로, 새로 만든 「미나 (차분)」을 「미나」로 바꾸면 「엔진」 짝(twinOf — 같은 이름이 3점)이 새 목소리로 넘어간다.
     //   이 목록에서 직접 바꾼 이름(name_custom)은 그대로
     let renamed = 0;
     let named = false;
@@ -297,7 +297,7 @@ export function syncAccount(providerId, list) {
     const fresh = rows.filter(x => x.own && !have.has(String(x.voiceId)) && !removed.has(String(x.voiceId)));
     const r = fresh.length ? upsertVoices(fresh, providerId) : { added: 0 };
     // 5.7.2 새로 들어온 내 목소리가 다른 엔진에 있는 같은 사람(이름 · 괄호 안 영문 이름)이면 그 목소리의 원어 · 묶음 · 다른 이름을 이어받는다
-    //   (MiniMax 에서 일본어로 읽던 캐릭터를 ElevenLabs 로 옮겨도 일본어로 · '복제' 대신 '천지합동청' 묶음에)
+    //   (MiniMax 에서 일본어로 읽던 캐릭터를 ElevenLabs 로 옮겨도 일본어로 · '복제' 대신 '하늘관리청' 묶음에)
     for (const x of fresh) inheritTwin(s.voices.find(v => v.provider === providerId && v.voiceId === String(x.voiceId)));
     if (gone || back || marked || renamed || fresh.length) save();
     return { added: r.added || 0, gone, back, renamed, hidden: s.voices.filter(v => v.provider === providerId && v.gone).length };
@@ -312,7 +312,7 @@ export function inheritNew(providerId, voiceIds) {
 }
 /**
  * 5.7.2 새 목소리 v 의 다른 엔진 쌍둥이(연결된 것 먼저)에서 원어 · 묶음 · 다른 이름을 채운다.
- * 1.3.8 짝은 목소리 이름으로, 또는 그 목소리를 쓰는 캐릭터 이름으로 (previewPrefer · voiceFor 와 같은 판단 — '진우 쿠키' 를 쓰는 Lucifer ↔ '루시퍼 (Lucifer)').
+ * 1.3.8 짝은 목소리 이름으로, 또는 그 목소리를 쓰는 캐릭터 이름으로 (previewPrefer · voiceFor 와 같은 판단 — '진우 쿠키' 를 쓰는 Corvin ↔ '코르빈 (Corvin)').
  *   캐릭터 이름으로 이어진 짝은 원어 · 묶음만 — 빌려 쓰던 목소리 이름(진우 쿠키)을 다른 이름으로 넣으면 그 목소리를 쓰는 다른 캐릭터까지 이 목소리로 바뀐다
  */
 const AUTO_GROUPS = new Set(['복제', '생성', '전문', '기타', '내 목소리', '']);
@@ -508,7 +508,7 @@ export function hasOwnVoice(name) {
     if (s.char_map[n]) return true;
     const k = fold(n);
     if (Object.keys(s.char_map).some(x => fold(x) === k)) return true;
-    if (voiceByName(n) || charKeyOf(n)) return true;   // 1.3.8 분석이 다른 글자로 준 이름 ('루시퍼' → 연결표 Lucifer)
+    if (voiceByName(n) || charKeyOf(n)) return true;   // 1.3.8 분석이 다른 글자로 준 이름 ('코르빈' → 연결표 Corvin)
     const a = aliasOf(n);   // 6.3.x 별명표로 한 번 더 ('ローワン' → 연결표 Rowan) — 「목소리를 안 정한 화자」로 성별을 묻고 엑스트라를 만들지 않게
     return !!a && (!!s.char_map[a] || Object.keys(s.char_map).some(x => fold(x) === fold(a)) || !!voiceByName(a) || !!charKeyOf(a));
 }

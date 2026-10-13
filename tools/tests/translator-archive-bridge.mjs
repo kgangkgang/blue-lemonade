@@ -25,7 +25,7 @@ assert.equal(matchingTranslation(source,'Hello.\n\n잘 가.','"Hello."'),'');
 console.log('PASS paragraph branch: Korean reused, leftover kana / no Hangul rejected');
 
 // 두 갈래가 같은 번역을 똑같이 받거나 버린다
-const samples=['안녕.','  안녕.  ','안녕. ねえ','안녕, カナ.','아델・슈타인','으아ー','Hello.','こんにちは','漢字 한글','한글 ｶﾅ'];
+const samples=['안녕.','  안녕.  ','안녕. ねえ','안녕, カナ.','클라인・슈타인','으아ー','Hello.','こんにちは','漢字 한글','한글 ｶﾅ'];
 for(const text of samples) {
     const whole=matchingTranslation('Line A.',text,'Line A.');
     const paragraph=matchingTranslation('Line A.\n\nLine B.',`${text}\n\n다음.`,'Line A.');

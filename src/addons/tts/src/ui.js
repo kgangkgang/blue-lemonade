@@ -640,7 +640,7 @@ function afterEdit(path, el) {
 }
 /**
  * 1.3.8 캐릭터 목소리 고르기 (캐릭터별 목소리 · 대화 색 · 엑스트라 줄이 같이 씀). 「엔진」을 골라 둔 채:
- *   다른 엔진 목소리를 고름 → 그 캐릭터는 그 목소리로 고정 (prefer_keep — 사용자: "벨포드는 미니맥스로 듣기")
+ *   다른 엔진 목소리를 고름 → 그 캐릭터는 그 목소리로 고정 (prefer_keep — 사용자: "렉스는 미니맥스로 듣기")
  *   「엔진」 엔진의 짝을 다시 고름 → 고정만 풂 (연결표는 원래 목소리 — 「엔진」을 되돌리면 그 목소리)
  * 「엔진」이 없거나 쓸 수 없으면 1.3.7 처럼 연결표만 (고정 표시는 지움)
  */
@@ -1189,7 +1189,7 @@ async function akeyClear() {
 // ---------- 목소리 탭
 /**
  * 목소리 고르기 <option> 들 — 한글 이름만 (엔진·id 는 편집 팝업에서).
- * 1.3.8 auto = 「나」 줄의 '자동' (페르소나도 엑스트라 목소리로) · twins = 이 캐릭터의 같은 사람 목소리를 엔진마다 ('벨포드 · MiniMax') —
+ * 1.3.8 auto = 「나」 줄의 '자동' (페르소나도 엑스트라 목소리로) · twins = 이 캐릭터의 같은 사람 목소리를 엔진마다 ('렉스 · MiniMax') —
  *   「엔진」으로 고른 엔진 밖의 목소리도 고를 수 있게 (고르면 그 캐릭터만 그 엔진으로 고정)
  */
 function voiceOptions(sel, { auto = false, twins = [] } = {}) {
@@ -1354,7 +1354,7 @@ function flushPendingOffer() {
     })();
     return flushing;
 }
-/** 5.7.2+ 알약 · 목록에 보일 이름: 엔진 자동 맞춤이면 실제로 읽는 목소리 (Lucifer → 루시퍼 (Lucifer), 진우 쿠키 아님) */
+/** 5.7.2+ 알약 · 목록에 보일 이름: 엔진 자동 맞춤이면 실제로 읽는 목소리 (Corvin → 코르빈 (Corvin), 진우 쿠키 아님) */
 const effName = (uid, n) => { const v = voices.findVoice(uid); return (v ? voices.preferVoice(v, n) : null)?.name || uid; };
 function mapCardHtml() {
     const s = settings();
@@ -1402,7 +1402,7 @@ function colorRowHtml(r, s, alts = []) {
 }
 // ---------- 1.4.0 이 채팅의 캐릭터 (대화 색이 없어도): 사용자 — "대화 색 프롬프트를 안 쓰는 사람도 캐릭터를 구별해 바로바로 목소리를 줄 수 있게"
 // 최근 메시지에서 모은다: 대사 분석이 고른 화자(화자 찾기 · 단역 people) · 「이름: 「…」」 이름표 · 아는 이름(연결표 · 내 목소리 이름 · 다른 이름)이 글에 나옴.
-// 같은 목소리로 이어지는 이름(Seraph · 세라프)은 한 줄 · 대화 색 줄 · 캐릭터별 목소리 줄에 이미 있는 사람과 나(페르소나)는 뺀다
+// 같은 목소리로 이어지는 이름(Mina · 미나)은 한 줄 · 대화 색 줄 · 캐릭터별 목소리 줄에 이미 있는 사람과 나(페르소나)는 뺀다
 const SPEAKER_SCAN = 60, SPEAKER_ROWS = 12;
 const PREFIX_RE = /(?:^|\n)[ \t]*([^\s:：「『"“\[\]()<>*#|]{1,20})[ \t]*[:：][ \t]*[「『"“]/g;
 const foldName = (t) => String(t || '').normalize('NFC').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -1418,7 +1418,7 @@ function chatSpeakers(s, taken) {
         if (v.gone || v.stock || (v.mix || []).length) continue;
         for (const n of [String(v.name || '').split(/[(（]/)[0].trim(), ...(v.aliases || [])]) { const k = foldName(n); if (k && k.replace(/\s/g, '').length >= 3 && !known.has(k)) known.set(k, n); }
     }
-    // 낱말의 시작에서만 (앞 글자가 한글 · 영문 · 숫자가 아니어야): 「미카엘」은 「대천사미카엘」 속에서 세지 않는다 · 일본어는 띄어쓰기가 없어 가나 · 한자 뒤여도 셈
+    // 낱말의 시작에서만 (앞 글자가 한글 · 영문 · 숫자가 아니어야): 「렉스」는 「티렉스」 속에서 세지 않는다 · 일본어는 띄어쓰기가 없어 가나 · 한자 뒤여도 셈
     const LETTER = /[\p{Script=Hangul}A-Za-z0-9]/u;
     const startsWord = (ft, k) => { for (let i = ft.indexOf(k); i >= 0; i = ft.indexOf(k, i + 1)) if (i === 0 || !LETTER.test(ft[i - 1])) return true; return false; };
     for (const m of chat.slice(-SPEAKER_SCAN)) {

@@ -121,10 +121,10 @@ const EN = '"Hello there." She smiled. "See you tomorrow."';
 // ---------- 1. 글자 갈래 · 설정
 await test('inTarget: 한글 · 가나 · 한자 · 라틴을 세어 이미 그 언어인지 (6.1.8 짧은 한자만 줄도 일본어 · 글자가 없으면 그대로)', () => {
     assert.equal(L.inTarget('안녕하세요.', 'ko'), true);
-    assert.equal(L.inTarget('아델이 Adelstein라고 했다.', 'ko'), true, '한국어 속 영어 이름');
+    assert.equal(L.inTarget('클라인이 Kleinstein라고 했다.', 'ko'), true, '한국어 속 영어 이름');
     assert.equal(L.inTarget('Hello there.', 'ko'), false);
     assert.equal(L.inTarget('ありがとう。', 'ja'), true);
-    assert.equal(L.inTarget('アデルシュタインさん、おはよう。', 'ja'), true);
+    assert.equal(L.inTarget('クラインシュタインさん、おはよう。', 'ja'), true);
     assert.equal(L.inTarget('大丈夫。', 'ja'), true, '6.1.8 짧은 한자만 → 일본어로 봄 (일본어 원문의 「羽」를 또 옮기려다 멈췄다)');
     assert.equal(L.inTarget('「羽」', 'ja'), true);
     assert.equal(L.inTarget('날개 羽', 'ja'), false, '한글이 섞이면 아님');
@@ -553,7 +553,7 @@ await test('6.4.2 원문 칩: 같은 말(따옴표 · 줄임표 · 문장부호 
         ['行こう！', '[happy] 行こう。'],
         ['えっ、本当？', 'え、本当？'],
         ['すごーーい！', 'すごーい。'],
-        ['H.A.L.O 本部に行く。', 'HALO 本部に行く。'],
+        ['S.T.A.R 本部に行く。', 'STAR 本部に行く。'],
         ['"Good morning," she said.', 'Good morning, she said'],
     ]) assert.equal(D.playbackOriginal(job(original, spoken)), '', `${original} ↔ ${spoken}`);
     assert.equal(D.playbackOriginal(job('좋은 아침.', 'おはよう。')), '좋은 아침.', '듣는 언어로 옮긴 글이면 원문 칩');

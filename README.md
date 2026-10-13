@@ -1,13 +1,24 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.4.2/blue-lemonade-6.4.2.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.4.3/blue-lemonade-6.4.3.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.4.2 · 최신 업데이트</summary>
+<summary>6.4.3 · 최신 업데이트</summary>
+
+- 번역: 링크 · 태그 바로 뒤에 붙어 남은 한자도 다시 보내고, 루비 읽기는 그대로 둬요.
+- 번역: 원문이 영어일 때 문장 첫머리에 옮기지 않은 흔한 영어 낱말(Now, Well 같은 말)이 그대로 남으면 그 줄만 한 번 더 번역해요. 남은 가나 · 한자와 같은 요청 한 번이에요. 이름 · 약어 · 따옴표 속 영어는 그대로 둬요.
+- TTS: 같은 목소리를 두 이름(예: 영문 · 가나)으로 연결해 둔 인물도 번역 이름(한글)으로 그 목소리를 찾아요.
+- TTS: 미리 받다 실패한 줄로 ⏮ 돌아가면 다시 받아 와요.
+- 애드온 버전: 캐릭터 에셋 1.6.6 · 다시 쓰기 2.1.1 · LLM 번역 2.4.5 · TTS 1.8.6
+
+</details>
+
+<details>
+<summary>6.4.2 · TTS 효과음 겹침 · 줄마다 합성 · Google 끝 이유 · 번역 한자 남김</summary>
 
 - TTS 효과음: 「겹침」으로 두면 이제 대사 소리가 준비된 순간에 같이 시작해요 — 대사를 만드는 동안 효과음만 먼저 나거나, 이어 듣기에서 다음 줄이 효과음이 끝날 때까지 기다리던 문제를 고쳤어요. 속마음 줄 밑에는 효과음을 깔지 않아요.
 - TTS: 자동 읽기도 줄마다 따로 만들어서, 다시 듣거나 고친 뒤에도 같은 소리를 다시 사지 않아요 (같은 사람의 이어지는 대사를 한 호흡으로 읽던 것은 없어져요). 속마음도 옆 대사와 섞지 않아요. 엔진이 요청을 잠시 막으면(ElevenLabs · Gemini 포함) 줄마다 다시 시도하지 않고 조금 쉬었다가 읽고, 그동안 이미 받아 둔 줄은 그대로 들려요. 미리 받기를 꺼 둬도 같은 사람의 이어진 대사 사이가 길어지지 않아요. 미리 받다 실패한 줄을 다시 사지 않고, 쉬는 동안 내려받기도 까닭을 알려요. 요청 한도 알림에 업체가 준 까닭도 붙여요.

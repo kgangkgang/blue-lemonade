@@ -183,7 +183,7 @@ function candidateNames(ctx, s, charName, userName) {
     }
     return out;
 }
-/** LLM 이 준 화자 → 후보 가운데 하나 (정확히 같은 이름, 아니면 한쪽이 다른 쪽을 품는 이름 — 'Lil (maid)' → Lil). 없으면 '' */
+/** LLM 이 준 화자 → 후보 가운데 하나 (정확히 같은 이름, 아니면 한쪽이 다른 쪽을 품는 이름 — 'Pip (maid)' → Pip). 없으면 '' */
 function matchSpeaker(raw, cands) {
     const v = cleanName(raw);
     if (!v || v === '?' || !Array.isArray(cands) || !cands.length) return '';

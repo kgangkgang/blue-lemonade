@@ -1,7 +1,7 @@
 // 번역기 용어집 찾기 (번역기 2.2.9 · 테마 5.7.3) — 원문에 나온 항목만 프롬프트 줄로, 가타카나 표기 흔들림까지
 //   node tools/tests/translator-glossary.mjs <테마 루트>   (공개 저장소는 '.', 개발본은 'salty-ext')
-// 2026-10-08 사용자 제보: 용어집 「Adelstein, アデルスタイン → 아델스타인」 이 있는데 원문이 アデルシュタイン 이라 그 줄이 빠지고
-// 「アデル → 아델」 만 들어가 「아델슈타인」 으로 옮겨졌다. 합성 항목만 씀 (사용자 자료 없음).
+// 2026-10-08 사용자 제보: 용어집 「Kleinstein, クラインスタイン → 클라인스타인」 이 있는데 원문이 クラインシュタイン 이라 그 줄이 빠지고
+// 「クライン → 클라인」 만 들어가 「클라인슈타인」 으로 옮겨졌다. 합성 항목만 씀 (사용자 자료 없음).
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -15,43 +15,43 @@ if (!fs.existsSync(file)) {
 const { glossaryLines, glossaryHits, glossaryVariantTag, kanaVariantKey, kanaDuplicateKey, glossaryFold } = await import(pathToFileURL(file).href);
 
 const E = (src, dst, id = src) => ({ id, scope: 'x.png', src, dst });
-const ADEL = [E('Adelstein, アデルスタイン', '아델스타인', 'adelstein'), E('アデル, Adel', '아델', 'adel')];
+const KLEIN = [E('Kleinstein, クラインスタイン', '클라인스타인', 'kleinstein'), E('クライン, Klein', '클라인', 'klein')];
 const lines = (entries, text, opts) => glossaryLines(entries, text, opts).lines;
 let n = 0;
 const t = (name, fn) => { fn(); n++; console.log(`  PASS  ${name}`); };
 
-t('제보 그대로: アデルシュタイン 은 아델스타인 줄로, 그 안의 アデル 줄은 빠짐', () => {
-    assert.deepEqual(lines(ADEL, '「アデルシュタインさんがそうおっしゃったと？」'), ['アデルシュタイン → 아델스타인']);
+t('제보 그대로: クラインシュタイン 은 클라인스타인 줄로, 그 안의 クライン 줄은 빠짐', () => {
+    assert.deepEqual(lines(KLEIN, '「クラインシュタインさんがそうおっしゃったと？」'), ['クラインシュタイン → 클라인스타인']);
 });
-t('적어 둔 표기(アデルスタイン)는 예전과 같은 줄', () => {
-    assert.deepEqual(lines(ADEL, 'アデルスタインさんの印鑑'), ['アデルスタイン → 아델스타인']);
+t('적어 둔 표기(クラインスタイン)는 예전과 같은 줄', () => {
+    assert.deepEqual(lines(KLEIN, 'クラインスタインさんの印鑑'), ['クラインスタイン → 클라인스타인']);
 });
 t('짧은 이름이 따로도 나오면 두 줄 다', () => {
-    assert.deepEqual(lines(ADEL, 'アデルにも見せた。アデルシュタインさんは'), ['アデルシュタイン → 아델스타인', 'アデル → 아델']);
+    assert.deepEqual(lines(KLEIN, 'クラインにも見せた。クラインシュタインさんは'), ['クラインシュタイン → 클라인스타인', 'クライン → 클라인']);
 });
 t('두 표기가 함께 나오면 한 줄에 둘 다', () => {
-    assert.deepEqual(lines(ADEL, 'アデルスタイン、いやアデルシュタイン'), ['アデルスタイン / アデルシュタイン → 아델스타인']);
+    assert.deepEqual(lines(KLEIN, 'クラインスタイン、いやクラインシュタイン'), ['クラインスタイン / クラインシュタイン → 클라인스타인']);
 });
-t('라틴 표기는 예전처럼 낱말 경계 (Adel 은 Adelstein 에 안 걸림)', () => {
-    assert.deepEqual(lines(ADEL, 'Adelstein said so.'), ['Adelstein → 아델스타인']);
-    assert.deepEqual(lines(ADEL, 'Adel said so.'), ['Adel → 아델']);
+t('라틴 표기는 예전처럼 낱말 경계 (Klein 은 Kleinstein 에 안 걸림)', () => {
+    assert.deepEqual(lines(KLEIN, 'Kleinstein said so.'), ['Kleinstein → 클라인스타인']);
+    assert.deepEqual(lines(KLEIN, 'Klein said so.'), ['Klein → 클라인']);
 });
 t('장음 · ヴ행 · 작은 모음 · 가운뎃점', () => {
-    const G = [E('ルシファー', '루시퍼'), E('ヴァレンティン', '발렌틴'), E('ウィリアムズ', '윌리엄스'), E('ルシファー・モーニングスター', '루시퍼 모닝스타')];
-    assert.deepEqual(lines(G, 'ルシファが来た'), ['ルシファ → 루시퍼']);
+    const G = [E('ルーファス', '루퍼스'), E('ヴァレンティン', '발렌틴'), E('ウィリアムズ', '윌리엄스'), E('ルーファス・スターリング', '루퍼스 스털링')];
+    assert.deepEqual(lines(G, 'ルファスが来た'), ['ルファス → 루퍼스']);
     assert.deepEqual(lines(G, 'バレンティンが来た'), ['バレンティン → 발렌틴']);
     assert.deepEqual(lines(G, 'ウイリアムズが来た'), ['ウイリアムズ → 윌리엄스']);
-    assert.deepEqual(lines(G, 'ルシファーモーニングスターが来た'), ['ルシファーモーニングスター → 루시퍼 모닝스타']);
-    assert.deepEqual(lines(G, 'ルシファー・モーニングスターが来た'), ['ルシファー・モーニングスター → 루시퍼 모닝스타']);
+    assert.deepEqual(lines(G, 'ルーファススターリングが来た'), ['ルーファススターリング → 루퍼스 스털링']);
+    assert.deepEqual(lines(G, 'ルーファス・スターリングが来た'), ['ルーファス・スターリング → 루퍼스 스털링']);
 });
-t('다른 이름은 하나로 보지 않음 (ガブリエル ≠ ガブリエラ)', () => {
-    assert.deepEqual(lines([E('ガブリエル', '가브리엘')], 'ガブリエラが来た'), []);
+t('다른 이름은 하나로 보지 않음 (ダニエル ≠ ダニエラ)', () => {
+    assert.deepEqual(lines([E('ダニエル', '다니엘')], 'ダニエラが来た'), []);
 });
-t('덩어리 일부는 보지 않음 (アデルシュタインズ 는 아델스타인 줄이 아님)', () => {
-    assert.deepEqual(lines([E('アデルスタイン', '아델스타인')], 'アデルシュタインズの店'), []);
+t('덩어리 일부는 보지 않음 (クラインシュタインズ 는 클라인스타인 줄이 아님)', () => {
+    assert.deepEqual(lines([E('クラインスタイン', '클라인스타인')], 'クラインシュタインズの店'), []);
 });
-t('짧은 말(열쇠 4글자 미만)은 표기 흔들림으로 안 찾음 (リル ≠ リール)', () => {
-    assert.deepEqual(lines([E('リル', '릴')], 'リールを巻いた'), []);
+t('짧은 말(열쇠 4글자 미만)은 표기 흔들림으로 안 찾음 (ピップ ≠ リール)', () => {
+    assert.deepEqual(lines([E('ピップ', '핍')], 'リールを巻いた'), []);
 });
 t('원문 표기가 다른 항목에 그대로 적혀 있으면 그 항목 것', () => {
     const G = [E('シュナイダー', '슈나이더'), E('スナイダー', '스나이더')];
@@ -66,7 +66,7 @@ t('두 항목이 같은 덩어리를 원하면 어느 쪽에도 안 넣음', () 
     assert.equal(kanaVariantKey('ステイナー'), 'ステイナ');
     // 5.7.3 검토: 접은 열쇠가 4글자(スタイナ)라 シュ 접기를 안 한다 — 짧은 말은 흔한 낱말 · 다른 이름과 겹친다
     assert.deepEqual(lines(H, 'シュタイナーが来た'), []);
-    assert.deepEqual(lines([E('アデルスタイナー', '아델스타이너')], 'アデルシュタイナーが来た'), ['アデルシュタイナー → 아델스타이너']);
+    assert.deepEqual(lines([E('クラインスタイナー', '클라인스타이너')], 'クラインシュタイナーが来た'), ['クラインシュタイナー → 클라인스타이너']);
     const K = [E('スタイナー', '스타이너', 'a'), E('ズタイナー', '즈타이너', 'b'), E('スタイナ', '스타이나', 'c')];
     assert.deepEqual(lines(K, 'シュタイナーが来た'), []);
 });
@@ -80,36 +80,36 @@ t('5.7.3 검토: 짧은 흔한 낱말은 이름으로 안 봄 (ウエスト · �
     assert.deepEqual(lines([E('シュミット', '슈미트')], 'スミット博士は首を振った。'), []);
 });
 t('5.7.3 검토: 줄바꿈 · 목록은 잇지 않음, 한 낱말 이름은 두 낱말로 쪼개진 원문에 안 걸림', () => {
-    assert.deepEqual(lines(ADEL, 'そこにいたのはアデル\nシュタインは遅れて来た。'), ['アデル → 아델']);
-    assert.deepEqual(lines(ADEL, '同行者：\n・アデル\n・シュタイン'), ['アデル → 아델']);
-    assert.deepEqual(lines(ADEL, 'アデル・シュタインの二人'), ['アデル → 아델']);
-    for (const line of lines(ADEL, 'アデル\nアデルシュタイン\n・スタイン')) assert.ok(!line.includes('\n'), line);
+    assert.deepEqual(lines(KLEIN, 'そこにいたのはクライン\nシュタインは遅れて来た。'), ['クライン → 클라인']);
+    assert.deepEqual(lines(KLEIN, '同行者：\n・クライン\n・シュタイン'), ['クライン → 클라인']);
+    assert.deepEqual(lines(KLEIN, 'クライン・シュタインの二人'), ['クライン → 클라인']);
+    for (const line of lines(KLEIN, 'クライン\nクラインシュタイン\n・スタイン')) assert.ok(!line.includes('\n'), line);
 });
 t('5.7.3 검토: 「번역문에서 뽑기」 이미 있는 항목 견주기 — 표기 흔들림도 같은 항목', () => {
-    assert.ok(kanaDuplicateKey('アデルシュタイン'));
-    assert.equal(kanaDuplicateKey('アデルシュタイン'), kanaDuplicateKey('アデルスタイン'));
+    assert.ok(kanaDuplicateKey('クラインシュタイン'));
+    assert.equal(kanaDuplicateKey('クラインシュタイン'), kanaDuplicateKey('クラインスタイン'));
     assert.notEqual(kanaDuplicateKey('ウエスト'), kanaDuplicateKey('ウェスト'));
-    assert.equal(kanaDuplicateKey('Adelstein'), '');
-    assert.equal(kanaDuplicateKey('リル'), '');
-    assert.notEqual(kanaDuplicateKey('アデルスタイン'), glossaryFold('アデルスタイン'));
+    assert.equal(kanaDuplicateKey('Kleinstein'), '');
+    assert.equal(kanaDuplicateKey('ピップ'), '');
+    assert.notEqual(kanaDuplicateKey('クラインスタイン'), glossaryFold('クラインスタイン'));
 });
 t('보내기 번역(한국어 → 외국어)은 예전 그대로 (dst 로 찾음)', () => {
-    assert.deepEqual(lines(ADEL, '아델스타인 씨에게', { reverse: true }), ['아델스타인 → Adelstein / アデルスタイン']);
+    assert.deepEqual(lines(KLEIN, '클라인스타인 씨에게', { reverse: true }), ['클라인스타인 → Kleinstein / クラインスタイン']);
 });
 t('문단 캐시 서명 표시: 표기 흔들림이 있을 때만', () => {
-    assert.equal(glossaryVariantTag(ADEL, 'アデルスタインさん'), '');
-    assert.equal(glossaryVariantTag(ADEL, 'Adelstein'), '');
-    assert.equal(glossaryVariantTag(ADEL, 'アデルシュタインさん'), 'アデルシュタイン>adelstein');
+    assert.equal(glossaryVariantTag(KLEIN, 'クラインスタインさん'), '');
+    assert.equal(glossaryVariantTag(KLEIN, 'Kleinstein'), '');
+    assert.equal(glossaryVariantTag(KLEIN, 'クラインシュタインさん'), 'クラインシュタイン>kleinstein');
 });
 t('반각 가타카나 · 줄 수 한도', () => {
-    assert.deepEqual(lines(ADEL, 'ｱﾃﾞﾙｼｭﾀｲﾝさん'), ['ｱﾃﾞﾙｼｭﾀｲﾝ → 아델스타인']);
+    assert.deepEqual(lines(KLEIN, 'ｸﾗｲﾝｼｭﾀｲﾝさん'), ['ｸﾗｲﾝｼｭﾀｲﾝ → 클라인스타인']);
     const many = Array.from({ length: 80 }, (_, i) => E(`語${i}号`, `어${i}`));
     assert.equal(lines(many, many.map(e => e.src).join('、'), { maxLines: 60 }).length, 60);
 });
 t('빈 항목 · 빈 원문', () => {
-    assert.deepEqual(lines([{ src: '', dst: '' }, E('アデル', '아델')], ''), []);
-    assert.deepEqual(glossaryHits([], 'アデル'), []);
-    assert.equal(glossaryFold(' Low-world  Office '), 'low world office');
+    assert.deepEqual(lines([{ src: '', dst: '' }, E('クライン', '클라인')], ''), []);
+    assert.deepEqual(glossaryHits([], 'クライン'), []);
+    assert.equal(glossaryFold(' River-side  Office '), 'river side office');
 });
 // ── 6.4.0 번역문 마무리 (내 캐릭터 · 지금 캐릭터 이름 지키기 · 홀로 남은 여는 꺽쇠 · 태그 속성은 용어집에 안 걸림) — 이름은 합성 (Mina 미나 · Corvin 코르빈)
 {

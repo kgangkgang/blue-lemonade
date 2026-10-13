@@ -27,7 +27,7 @@ test('가리기: 낱말 글자 수만큼 ■ (최대 4) · 원문은 orig 에 ·
         { text: '■■■■', masked: true, orig: 'Lemon' }, { text: '!', masked: false },
     ]);
     assert.equal(join(plan), '세라피나가 웃었다. Lemon!');
-    assert.equal(shown(M.maskPlan('나기', ['나기'])), '■■');
+    assert.equal(shown(M.maskPlan('하루', ['하루'])), '■■');
     assert.equal(shown(M.maskPlan('가나다라마바사', ['가나다라마바사'])), '■■■■');
     assert.equal(shown(M.maskPlan('A', ['a'])), '■');
 });
@@ -65,8 +65,8 @@ test('설정: 기본 maskWords 는 빈 글 · 스위치는 설정에 없음 · 2
     assert.equal(getSettings().wordTools.maskWords.length, 2000);
     ctx.extensionSettings.salty = { wordTools: { maskWords: 42 } };
     assert.equal(getSettings().wordTools.maskWords, '');
-    ctx.extensionSettings.salty = { wordTools: { maskWords: '세라\n나기' } };
-    assert.equal(getSettings().wordTools.maskWords, '세라\n나기');
+    ctx.extensionSettings.salty = { wordTools: { maskWords: '세라\n하루' } };
+    assert.equal(getSettings().wordTools.maskWords, '세라\n하루');
     ctx.extensionSettings.salty = {};
     assert.equal(getSettings().wordTools.maskWords, '');
 });

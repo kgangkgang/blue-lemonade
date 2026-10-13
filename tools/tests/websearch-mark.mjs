@@ -159,7 +159,7 @@ await test('stemKorean / searchKeys: one trailing particle, never below two char
     assert.equal(stemKorean('천사의'), '천사');
     assert.equal(stemKorean('계급을'), '계급');
     assert.equal(stemKorean('서울에서는'), '서울');
-    assert.equal(stemKorean('미카엘이'), '미카엘');
+    assert.equal(stemKorean('사무엘이'), '사무엘');
     assert.equal(stemKorean('하나'), '하나', 'stem would be one character');
     assert.equal(stemKorean('은'), '은');
     assert.equal(stemKorean('Valladolid'), 'Valladolid');

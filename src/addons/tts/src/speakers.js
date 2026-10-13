@@ -147,7 +147,7 @@ function aliasTable(st) {
         if (!e.name) continue;
         put(e.name, e.name);
         const al = (e.aliases || []).filter(a => fold(a) !== fold(e.name));
-        // 한 팔레트 줄에 속마음 라벨이 둘 이상 들어 있으면 가장 많이 나온 라벨만 접고 나머지는 딴 사람 (Beelzebub 함정)
+        // 한 팔레트 줄에 속마음 라벨이 둘 이상 들어 있으면 가장 많이 나온 라벨만 접고 나머지는 딴 사람 (긴 성 이름 함정)
         const labelled = [e.name, ...al].filter(x => lab(x) > 0);
         const keep = labelled.length >= 2 ? labelled.reduce((b, x) => (lab(x) > lab(b) ? x : b)) : null;
         for (const a of al) {
@@ -184,10 +184,28 @@ function bridgePairs() {
     }
     return list;
 }
+/** 6.4.3 이름 다리의 「같은 사람」 — 대표 이름 → 목소리 (인물 연결표 값 · 이름이나 별명이 맞는 목소리), 없으면 접은 이름.
+ *  한 사람이 대표 이름 둘로 알려진 경우(연결표의 두 열쇠가 같은 목소리 · 목소리 이름과 연결표 열쇠가 같은 목소리)를 한 사람으로 본다 —
+ *  6.4.2 는 대표 이름 글자로만 가려 그 표기를 아무에게도 안 붙였다(엑스트라 목소리). rank = 설정 순서(연결표 → 목소리): 붙일 대표 이름을 짝 순서와 상관없이 고른다.
+ *  색인은 처음 물을 때 한 번 (대표 이름이 하나뿐인 표기는 묻지 않는다) */
+function bridgeOwners() {
+    let index = null;
+    const build = () => {
+        const s = settings(), have = new Set(s.voices.map(v => v.uid)), out = new Map();
+        let n = 0;
+        for (const [k, uid] of Object.entries(s.char_map || {})) if (uid && have.has(uid) && fold(k) && !out.has(fold(k))) out.set(fold(k), { key: `voice:${uid}`, rank: n++ });
+        for (const v of s.voices) for (const a of [v.name, ...(v.aliases || [])]) if (fold(a) && !out.has(fold(a))) out.set(fold(a), { key: `voice:${v.uid}`, rank: n++ });
+        return out;
+    };
+    return (name) => {
+        if (!index) index = build();
+        return index.get(fold(name)) || { key: `name:${fold(name)}`, rank: Infinity };
+    };
+}
 /** has(접은 열쇠) · canonOf(접은 열쇠) → 대표 이름 · put(표면 이름, 대표 이름)
  *  6.4.2 한 차례씩: 아는 이름과 짝인 모르는 표기를 모두 모은 뒤 붙인다 — 서로 다른 두 사람에게 닿는 표기(Ren · Len → レン)는 누구에게도 붙이지 않는다
  *  (예전: 먼저 나온 짝의 사람이 가져가서 남의 목소리 · 색). 붙인 표기로 다음 차례에 사슬을 잇는다. 짝 순서와 상관없다 */
-function bridgeInto(has, canonOf, put) {
+function bridgeInto(has, canonOf, put, ownerOf = bridgeOwners()) {
     const pairs = bridgePairs();
     if (!pairs.length) return;
     for (let round = 0; round < 8; round++) {
@@ -203,7 +221,14 @@ function bridgeInto(has, canonOf, put) {
             else if (b && !a) offer(ks, src, canonOf(kd));
         }
         let added = 0;
-        for (const { surface, owners } of offers.values()) if (owners.size === 1) { put(surface, owners.values().next().value); added++; }
+        for (const { surface, owners } of offers.values()) {
+            let owner = owners.size === 1 ? owners.values().next().value : null;
+            if (!owner) {   // 6.4.3 대표 이름이 둘 이상이어도 같은 목소리면 한 사람 — 설정 순서가 앞선 대표 이름으로 (서로 다른 목소리 · 목소리 없는 서로 다른 이름만 모호)
+                const who = [...owners.values()].map(c => ({ c, ...ownerOf(c) }));
+                if (new Set(who.map(x => x.key)).size === 1) owner = who.sort((x, y) => x.rank - y.rank || (x.c < y.c ? -1 : x.c > y.c ? 1 : 0))[0].c;
+            }
+            if (owner) { put(surface, owner); added++; }
+        }
         if (!added) return;
     }
 }

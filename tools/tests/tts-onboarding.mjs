@@ -15,7 +15,7 @@ const js = (src) => `data:text/javascript,${encodeURIComponent(src)}`;
 // ---------- 공유 상태
 const T = globalThis.__ttsOnboard = {
     ext: {},
-    ctx: { chat: [], chatMetadata: {}, name1: 'User', name2: 'Seraph', characters: [{ name: 'Seraph', avatar: 'seraph.png' }], characterId: 0, groups: [] },
+    ctx: { chat: [], chatMetadata: {}, name1: 'User', name2: 'Selene', characters: [{ name: 'Selene', avatar: 'selene.png' }], characterId: 0, groups: [] },
     toasts: [], popups: [], calls: [], scen: {}, answer: null, pending: 0, hidden: false,
 };
 const G = 'const T = globalThis.__ttsOnboard;\n';
@@ -141,7 +141,7 @@ const AUDIO = () => new Response(new Uint8Array([0xff, 0xf3, 0x44, 0xc4, 1, 2, 3
 const WAV_B64 = 'UklGRiQAAABXQVZFZm10IBAAAAABAAEAgD4AAAB9AAACABAAZGF0YQAAAAA=';
 const netErr = () => { throw new TypeError('Failed to fetch'); };
 const later = (ms, fn) => new Promise((res, rej) => setTimeout(() => { try { res(fn()); } catch (e) { rej(e); } }, ms));
-const EL_CLONED = ['세라프', '릴', '가브리엘', '벨포드', '루시퍼 (Lucifer)'];
+const EL_CLONED = ['셀레네', '핍', '다니엘', '할로', '루퍼스 (Rufus)'];
 const EL_PREMADE = [['Rachel', 'female', 'young'], ['Drew', 'male', 'middle aged'], ['Sarah', 'female', 'young'], ['George', 'male', 'middle aged'], ['Alice', 'female', 'young']];
 function elVoices(own, names = EL_CLONED) {
     const v = EL_PREMADE.map(([name, gender, age], i) => ({ voice_id: `el_pre_${i}`, name, category: 'premade', labels: { gender, age }, verified_languages: [] }));
@@ -158,12 +158,12 @@ function azVoices() {
 }
 function tcVoices(own) {
     const v = Array.from({ length: 40 }, (_, i) => ({ voice_id: `tc_${i}`, voice_name: { kor: `성우${i}`, eng: `Actor${i}` }, gender: i % 2 ? 'male' : 'female', age: 'young_adult', voice_type: 'premium', models: [{ version: 'ssfm-v30' }] }));
-    if (own) v.push({ voice_id: 'tc_custom_1', voice_name: '세라프', gender: 'female', age: 'young_adult', voice_type: 'custom', models: [{ version: 'ssfm-v30' }] });
+    if (own) v.push({ voice_id: 'tc_custom_1', voice_name: '셀레네', gender: 'female', age: 'young_adult', voice_type: 'custom', models: [{ version: 'ssfm-v30' }] });
     return v;
 }
 function caVoices(own) {
     const d = Array.from({ length: 50 }, (_, i) => ({ id: `ca_${i}`, name: `Public ${i}`, language: ['en', 'ko', 'ja'][i % 3], is_owner: false, gender: i % 2 ? 'masculine' : 'feminine' }));
-    if (own) d.push({ id: 'ca_own_1', name: '세라프', language: 'ja', is_owner: true, gender: 'feminine' });
+    if (own) d.push({ id: 'ca_own_1', name: '셀레네', language: 'ja', is_owner: true, gender: 'feminine' });
     return { data: d, has_more: false };
 }
 const GATEWAY = 'http://192.0.2.10:8880';   // 문서용 주소 (집 PC 게이트웨이 자리)
@@ -200,7 +200,7 @@ function route(c, scen) {
         }
         if (u.endsWith('/get_voice')) {
             const b = JSON.parse(c.body || '{}');
-            const clones = scen.own ? [{ voice_id: 'my_clone_seraph' }, { voice_id: 'my_clone_lil' }] : [];
+            const clones = scen.own ? [{ voice_id: 'my_clone_selene' }, { voice_id: 'my_clone_pip' }] : [];
             if (b.voice_type === 'voice_cloning') return J({ voice_cloning: clones, base_resp: { status_code: 0 } });
             return J({ voice_cloning: clones, voice_generation: [], system_voice: MM_SYSTEM, base_resp: { status_code: 0 } });
         }
@@ -338,19 +338,19 @@ async function read(mes) {
 const host = (u) => (u || '').replace(/^(https?:\/\/[^/]+|speechSynthesis).*$/, '$1');
 
 // ---------- 휴대폰 설정을 닮은 가짜 사용자 (진짜 이름 · 키 · 주소 없음): MiniMax 직접 입력 서버 · 캐릭터 6명 · ElevenLabs 키 없음
-const mv = (id, name, lang = 'ja', group = '천지합동청') => ({ uid: `minimax:${id}`, provider: 'minimax', voiceId: id, name, lang, group, aliases: [], params: {}, mix: [], gainDb: 0, autoGainDb: null, model: '', instructions: '', prefer_source: 'auto' });
+const mv = (id, name, lang = 'ja', group = '하늘관리청') => ({ uid: `minimax:${id}`, provider: 'minimax', voiceId: id, name, lang, group, aliases: [], params: {}, mix: [], gainDb: 0, autoGainDb: null, model: '', instructions: '', prefer_source: 'auto' });
 const USER = {
     version: 8, enabled: true, auto_play: false, pregen: 'off', read_preset: 'dialogue',
     routes: { dialogue: 'character', narration: 'skip', action: 'skip', thought: 'skip', user_dialogue: 'user' },
-    voices: [mv('cj_seraph01', '세라프'), mv('cj_lil01', '릴'), mv('cj_gabriel01', '가브리엘'), mv('cj_belford01', '벨포드'), mv('crk_jinu01', '진우 쿠키', 'ko', '쿠키런: 킹덤'), mv('gi_ayato01', '카미사토 아야토', 'ja', '원신'),
+    voices: [mv('cj_selene01', '셀레네'), mv('cj_pip01', '핍'), mv('cj_daniel01', '다니엘'), mv('cj_harlow01', '할로'), mv('crk_jinu01', '진우 쿠키', 'ko', '쿠키런: 킹덤'), mv('gi_ayato01', '카미사토 아야토', 'ja', '원신'),
         mv('limbus_a01', '뤼엔', 'ko', '림버스'), mv('limbus_b01', '루치오', 'ko', '림버스')],
-    char_map: { Seraph: 'minimax:cj_seraph01', Lil: 'minimax:cj_lil01', Gabriel: 'minimax:cj_gabriel01', Belford: 'minimax:cj_belford01', Lucifer: 'minimax:crk_jinu01', Noel: 'minimax:gi_ayato01' },
+    char_map: { Selene: 'minimax:cj_selene01', Pip: 'minimax:cj_pip01', Daniel: 'minimax:cj_daniel01', Harlow: 'minimax:cj_harlow01', Rufus: 'minimax:crk_jinu01', Noel: 'minimax:gi_ayato01' },
     default_voice: '', user_voice: '', narrator_voice: '', prefer_provider: '',
     providers: { minimax: { key: 'fake-gateway-token', host: 'custom', host_custom: GATEWAY, model: 'speech-2.8-hd' } },
     ui: { tab: 'voices', provider_tab: 'minimax' },
     analysis: { enabled: false },
 };
-const GATEWAY_IDS = ['cj_seraph01', 'cj_lil01', 'cj_gabriel01', 'cj_belford01', 'crk_jinu01', 'gi_ayato01'];
+const GATEWAY_IDS = ['cj_selene01', 'cj_pip01', 'cj_daniel01', 'cj_harlow01', 'crk_jinu01', 'gi_ayato01'];
 
 let pass = 0, fail = 0;
 async function test(name, fn) {
@@ -366,14 +366,14 @@ for (const [id, h] of [['elevenlabs', 'https://api.elevenlabs.io'], ['minimax', 
         await saveKey(id, { own: false });
         assert.ok(voicesOf(id).length > 0, `${id} 목소리 없음`);
         assert.ok(S.settings().default_voice, '기본 목소리');
-        const r = await read({ name: 'Seraph', mes: '"안녕, 잘 부탁해."' });
+        const r = await read({ name: 'Selene', mes: '"안녕, 잘 부탁해."' });
         assert.equal(host(r.synth[0]), h, JSON.stringify(r.toasts));
     });
 }
-await test('처음 설치 · ElevenLabs 복제 목소리: 캐릭터 Lucifer 가 연결 없이도 「루시퍼 (Lucifer)」 · 엔진 기본 목소리는 stock 표시', async () => {
+await test('처음 설치 · ElevenLabs 복제 목소리: 캐릭터 Rufus 가 연결 없이도 「루퍼스 (Rufus)」 · 엔진 기본 목소리는 stock 표시', async () => {
     reset();
     await saveKey('elevenlabs', { own: true });
-    assert.equal(V.voiceFor('Lucifer')?.name, '루시퍼 (Lucifer)');
+    assert.equal(V.voiceFor('Rufus')?.name, '루퍼스 (Rufus)');
 });
 await test('Azure 불러오기: 묶음 고르기의 처음 켜짐은 쓰는 언어(한국어)만 — 수백 개를 한꺼번에 넣지 않음', async () => {
     reset();
@@ -401,10 +401,10 @@ await test('「엔진」=ElevenLabs 인데 그 짝이 계정에서 지워짐: �
     reset(USER);
     T.answer = () => 1;
     await saveKey('elevenlabs', { own: true, mmHost: 'down' });
-    const el = voicesOf('elevenlabs').find(v => v.name === '세라프');
+    const el = voicesOf('elevenlabs').find(v => v.name === '셀레네');
     V.syncAccount('elevenlabs', voicesOf('elevenlabs').filter(v => v !== el).map(v => ({ voiceId: v.voiceId, own: true })));
     assert.ok(el.gone);
-    assert.notEqual(V.voiceFor('Seraph')?.uid, el.uid);
+    assert.notEqual(V.voiceFor('Selene')?.uid, el.uid);
 });
 await test('「엔진」 엔진의 키를 지움: 캐릭터는 자기 목소리로 (모두 키 오류로 멈추지 않음)', async () => {
     reset(USER);
@@ -412,7 +412,7 @@ await test('「엔진」 엔진의 키를 지움: 캐릭터는 자기 목소리�
     await saveKey('elevenlabs', { own: true, mmHost: 'down' });
     assert.equal(S.settings().prefer_provider, 'elevenlabs');
     S.providerConfig('elevenlabs', {}).key = '';
-    assert.equal(V.voiceFor('Seraph')?.provider, 'minimax');
+    assert.equal(V.voiceFor('Selene')?.provider, 'minimax');
 });
 await test('OpenAI 호환 (휴대폰에서 127.0.0.1 닿지 않음): 불러오기가 연결 실패를 말함', async () => {
     reset();
@@ -434,11 +434,11 @@ await test('키 없이 「계정에서 불러오기」: 키가 필요한 엔진�
     await click('pull');
     assert.match(picker, /^[\s\S]*?<option value="minimax">MiniMax · 키 없음/);
 });
-await test('사용자 상황: ElevenLabs 키 저장 → 바꿀까요 → 네 → Seraph 는 ElevenLabs · 짝이 없는 Noel 은 MiniMax', async () => {
+await test('사용자 상황: ElevenLabs 키 저장 → 바꿀까요 → 네 → Selene 는 ElevenLabs · 짝이 없는 Noel 은 MiniMax', async () => {
     reset(USER);
     T.answer = () => 1;
     await saveKey('elevenlabs', { own: true, mmHost: 'down' });
-    assert.equal(V.voiceFor('Seraph')?.provider, 'elevenlabs');
+    assert.equal(V.voiceFor('Selene')?.provider, 'elevenlabs');
     assert.equal(V.voiceFor('Noel')?.provider, 'minimax');
     assert.equal(T.popups.filter(t => /바꿀까요/.test(t)).length, 1);
 });
@@ -453,7 +453,7 @@ async function userOnEl(scen = {}) {
 await test('한 엔진의 키 · 연결 실패가 메시지 전체를 멈추지 않음: MiniMax(게이트웨이 1004) 줄만 건너뛰고 ElevenLabs 줄은 읽음', async () => {
     await userOnEl();
     T.scen.mmHost = 'auth';
-    const r = await read({ name: 'Narrator', mes: 'Noel: 「추워.」\nSeraph: 「그래.」\nNoel: 「응.」\nLil: 「네.」' });
+    const r = await read({ name: 'Narrator', mes: 'Noel: 「추워.」\nSelene: 「그래.」\nNoel: 「응.」\nPip: 「네.」' });
     const mm = r.synth.filter(u => u.startsWith(GATEWAY));
     const el = r.synth.filter(u => u.startsWith('https://api.elevenlabs.io'));
     if (mm.length) {   // Noel 줄이 먼저 나오면 한 번 실패하고 그 엔진만 멈춤 (실패 전에 '다음 줄 준비'로 먼저 보낸 것 하나까지)
@@ -511,14 +511,14 @@ await test('「바꿀까요」에 아니요: 같은 이름들이면 다시 안 �
     await saveKey('elevenlabs', { own: true, mmHost: 'down' });
     assert.equal(T.popups.length, 1);
     assert.equal(S.settings().prefer_provider, '');
-    assert.ok(S.settings().prefer_declined.elevenlabs.includes('Seraph'));
+    assert.ok(S.settings().prefer_declined.elevenlabs.includes('Selene'));
     T.popups.length = 0;
     await F.offerPrefer(PR.getProvider('elevenlabs'), { auto: true });
     assert.equal(T.popups.length, 0, '아니요 한 이름뿐');
-    S.settings().char_map.Uzziel = 'minimax:limbus_b01';
-    S.settings().voices.push({ ...mv('el_uz', '우지엘 (Uzziel)'), uid: 'elevenlabs:el_uz', provider: 'elevenlabs', voiceId: 'el_uz' });
+    S.settings().char_map.Abiel = 'minimax:limbus_b01';
+    S.settings().voices.push({ ...mv('el_uz', '아비엘 (Abiel)'), uid: 'elevenlabs:el_uz', provider: 'elevenlabs', voiceId: 'el_uz' });
     await F.offerPrefer(PR.getProvider('elevenlabs'), { auto: true });
-    assert.equal(T.popups.length, 1, '새 이름(Uzziel)이 있으면 다시');
+    assert.equal(T.popups.length, 1, '새 이름(Abiel)이 있으면 다시');
     T.hidden = true;
     const n0 = T.calls.length;
     advance(7 * 3600e3);
@@ -528,11 +528,11 @@ await test('「바꿀까요」에 아니요: 같은 이름들이면 다시 안 �
 });
 await test('목록에서 지운 ElevenLabs 목소리는 다음 계정 맞춤에서 다시 안 들어옴', async () => {
     await userOnEl();
-    const lil = voicesOf('elevenlabs').find(v => v.name === '릴');
-    V.removeVoice(lil.uid);
+    const pip = voicesOf('elevenlabs').find(v => v.name === '핍');
+    V.removeVoice(pip.uid);
     T.popups.length = 0; T.toasts.length = 0;
     await F.autoSyncAccounts({ force: true, only: 'elevenlabs' });
-    assert.ok(!voicesOf('elevenlabs').some(v => v.name === '릴'));
+    assert.ok(!voicesOf('elevenlabs').some(v => v.name === '핍'));
     assert.equal(T.popups.length, 0);
 });
 await test('「목소리 불러오기」로 들어온 내 목소리도 다른 엔진의 같은 사람에게서 원어 · 묶음을 이어받음 (계정 맞춤 전에 눌러도)', async () => {
@@ -541,9 +541,9 @@ await test('「목소리 불러오기」로 들어온 내 목소리도 다른 �
     T.scen = { own: true, mmHost: 'down' };
     T.answer = () => 0;
     await F.pullVoices(PR.getProvider('elevenlabs'));
-    const ser = voicesOf('elevenlabs').find(v => v.name === '세라프');
+    const ser = voicesOf('elevenlabs').find(v => v.name === '셀레네');
     assert.equal(ser.lang, 'ja');
-    assert.equal(ser.group, '천지합동청');
+    assert.equal(ser.group, '하늘관리청');
     assert.ok(voicesOf('elevenlabs').filter(v => v.stock).length >= 1, '기본 목소리는 stock');
 });
 await test('계정 맞춤은 엔진마다 따로: 느린 MiniMax(공식) 맞춤 중에 ElevenLabs 연결 확인 → ElevenLabs 목록을 기다리지 않고 받음', async () => {
@@ -696,64 +696,64 @@ await test('말투 칩 (목소리 편집 · 목록 줄): 기본값을 끄면 이
 });
 await test('「나」 자동: 나 줄에 「자동」 · 고르면 @auto 로 저장 · 페르소나는 엑스트라(없으면 기본) 목소리로 읽힘', async () => {
     const s = reset(USER);
-    s.default_voice = 'minimax:cj_lil01';
+    s.default_voice = 'minimax:cj_pip01';
     ui.renderVoices();
     assert.match(DOM.cards.map || '', /data-lv-path="user_voice"><option value="">\(없음\)<\/option><option value="@auto">자동<\/option>/);
     await change({ dataset: { lvPath: 'user_voice' }, value: '@auto' });
     assert.equal(s.user_voice, '@auto');
     ui.renderVoices();
     assert.match(DOM.cards.map || '', /<option value="@auto" selected>자동<\/option>/);
-    assert.equal(V.voiceFor('User', { isUser: true })?.uid, 'minimax:cj_lil01', '엑스트라가 아직 없으면 기본 목소리');
+    assert.equal(V.voiceFor('User', { isUser: true })?.uid, 'minimax:cj_pip01', '엑스트라가 아직 없으면 기본 목소리');
     s.extra_map = { User: { g: 'f', a: 'a', l: 'ja', t: 1, v: { minimax: 'limbus_a01' } } };
     assert.equal(V.voiceFor('User', { isUser: true })?.uid, 'minimax:limbus_a01');
     await change({ dataset: { lvPath: 'user_voice' }, value: '' });
     assert.equal(V.voiceFor('User', { isUser: true }), null, '(없음) = 1.3.7 처럼 읽지 않음');
 });
-await test('엔진 고정: 「엔진」=ElevenLabs 에서도 캐릭터 고르기에 「엔진별」(세라프 · MiniMax / 세라프 · ElevenLabs) · MiniMax 를 고르면 그 캐릭터만 고정 + 칩 · 칩을 누르면 풂', async () => {
+await test('엔진 고정: 「엔진」=ElevenLabs 에서도 캐릭터 고르기에 「엔진별」(셀레네 · MiniMax / 셀레네 · ElevenLabs) · MiniMax 를 고르면 그 캐릭터만 고정 + 칩 · 칩을 누르면 풂', async () => {
     await userOnEl();
     const s = S.settings();
     ui.renderVoices();
     const map = DOM.cards.map || '';
-    assert.match(map, /<optgroup label="엔진별"><option value="minimax:cj_seraph01">세라프 · MiniMax<\/option><option value="elevenlabs:el_clone_0" selected>세라프 · ElevenLabs<\/option><\/optgroup>/);
-    await change({ dataset: { lvMap: 'Seraph' }, value: 'minimax:cj_seraph01' });
-    assert.equal(s.prefer_keep.Seraph, true);
-    assert.equal(s.char_map.Seraph, 'minimax:cj_seraph01');
-    assert.equal(V.voiceFor('Seraph')?.provider, 'minimax');
-    assert.equal(V.voiceFor('Lil')?.provider, 'elevenlabs', '다른 캐릭터는 「엔진」대로');
+    assert.match(map, /<optgroup label="엔진별"><option value="minimax:cj_selene01">셀레네 · MiniMax<\/option><option value="elevenlabs:el_clone_0" selected>셀레네 · ElevenLabs<\/option><\/optgroup>/);
+    await change({ dataset: { lvMap: 'Selene' }, value: 'minimax:cj_selene01' });
+    assert.equal(s.prefer_keep.Selene, true);
+    assert.equal(s.char_map.Selene, 'minimax:cj_selene01');
+    assert.equal(V.voiceFor('Selene')?.provider, 'minimax');
+    assert.equal(V.voiceFor('Pip')?.provider, 'elevenlabs', '다른 캐릭터는 「엔진」대로');
     ui.renderVoices();
-    assert.match(DOM.cards.map || '', /<button type="button" class="lv-pin-chip" data-lv-act="unpin" data-name="Seraph" aria-label="고정 풀기">MiniMax 고정<\/button>/);
-    assert.match(DOM.cards.map || '', /<option value="minimax:cj_seraph01" selected>세라프 · MiniMax/);
-    await click('unpin', { name: 'Seraph' });
-    assert.ok(!s.prefer_keep.Seraph);
-    assert.equal(V.voiceFor('Seraph')?.provider, 'elevenlabs');
+    assert.match(DOM.cards.map || '', /<button type="button" class="lv-pin-chip" data-lv-act="unpin" data-name="Selene" aria-label="고정 풀기">MiniMax 고정<\/button>/);
+    assert.match(DOM.cards.map || '', /<option value="minimax:cj_selene01" selected>셀레네 · MiniMax/);
+    await click('unpin', { name: 'Selene' });
+    assert.ok(!s.prefer_keep.Selene);
+    assert.equal(V.voiceFor('Selene')?.provider, 'elevenlabs');
 });
 await test('엔진 고정: 「엔진」 엔진의 짝을 다시 고르면 풀리고 연결표는 원래 목소리 · 대화 색 줄도 같이 · 「바꿀까요」 셈에서 빠짐', async () => {
     await userOnEl();
     const s = S.settings();
-    s.prefer_keep = { Belford: true };
-    const elBel = voicesOf('elevenlabs').find(v => v.name === '벨포드');
-    F.setCharVoice('Belford', elBel.uid);
-    assert.ok(!s.prefer_keep.Belford);
-    assert.equal(s.char_map.Belford, 'minimax:cj_belford01', '연결표는 원래 (MiniMax) 목소리 — 「엔진」을 되돌리면 그것');
-    F.setCharVoice('Belford', 'minimax:cj_belford01');
-    assert.equal(s.prefer_keep.Belford, true);
+    s.prefer_keep = { Harlow: true };
+    const elBel = voicesOf('elevenlabs').find(v => v.name === '할로');
+    F.setCharVoice('Harlow', elBel.uid);
+    assert.ok(!s.prefer_keep.Harlow);
+    assert.equal(s.char_map.Harlow, 'minimax:cj_harlow01', '연결표는 원래 (MiniMax) 목소리 — 「엔진」을 되돌리면 그것');
+    F.setCharVoice('Harlow', 'minimax:cj_harlow01');
+    assert.equal(s.prefer_keep.Harlow, true);
     const { moved } = V.previewPrefer('elevenlabs', Object.keys(s.char_map));
-    assert.ok(!moved.includes('Belford'));
+    assert.ok(!moved.includes('Harlow'));
     s.prefer_provider = '';
-    F.setCharVoice('Belford', 'minimax:cj_lil01');
-    assert.ok(!s.prefer_keep.Belford, '「엔진」이 없으면 고정 표시 없이 연결표만');
-    assert.equal(s.char_map.Belford, 'minimax:cj_lil01');
+    F.setCharVoice('Harlow', 'minimax:cj_pip01');
+    assert.ok(!s.prefer_keep.Harlow, '「엔진」이 없으면 고정 표시 없이 연결표만');
+    assert.equal(s.char_map.Harlow, 'minimax:cj_pip01');
 });
 await test('엔진 고정 + 그 엔진이 안 됨: 고정한 캐릭터 줄만 건너뛰고 세션에 한 번 이름을 말함 · 다른 캐릭터 줄은 읽음', async () => {
     await userOnEl();
     const s = S.settings();
-    s.prefer_keep = { Seraph: true };
+    s.prefer_keep = { Selene: true };
     T.scen.mmHost = 'down';
-    const r = await read({ name: 'Narrator', mes: 'Seraph: 「하나.」\nLil: 「둘.」\nSeraph: 「셋.」\nGabriel: 「넷.」' });
+    const r = await read({ name: 'Narrator', mes: 'Selene: 「하나.」\nPip: 「둘.」\nSelene: 「셋.」\nDaniel: 「넷.」' });
     assert.ok(r.synth.filter(u => u.startsWith(GATEWAY)).length <= 2, `MiniMax 는 실패한 줄 + 미리 보낸 줄까지만 (${r.synth.join(', ')})`);
     assert.equal(r.toasts.filter(t => t.startsWith('error')).length, 1, r.toasts.join(' | '));
     assert.ok(r.synth.filter(u => u.startsWith('https://api.elevenlabs.io')).length >= 2, r.synth.join(', '));
-    assert.ok(r.toasts.some(t => /Seraph: MiniMax로 고정돼 있어 건너뛰어요/.test(t)), r.toasts.join(' | '));
+    assert.ok(r.toasts.some(t => /Selene: MiniMax로 고정돼 있어 건너뛰어요/.test(t)), r.toasts.join(' | '));
 });
 await test('죽은 엔진 안내: 꺼진 직접 입력 서버 줄에 같은 사람이 다른 엔진에 있으면 「엔진」에서 바꿀 수 있다고 한 마디', async () => {
     reset(USER);
@@ -761,7 +761,7 @@ await test('죽은 엔진 안내: 꺼진 직접 입력 서버 줄에 같은 사�
     T.scen = { own: true, mmHost: 'down' };
     T.answer = () => 0;
     await F.pullVoices(PR.getProvider('elevenlabs'));
-    const r = await read({ name: 'Seraph', mes: '"안녕."' });
+    const r = await read({ name: 'Selene', mes: '"안녕."' });
     assert.match(r.toasts.join(' | '), /「엔진」에서 ElevenLabs로 바꿀 수 있어요/);
 });
 
@@ -792,7 +792,7 @@ async function streamRead(chunks, { mesName = 'Narrator' } = {}) {
 await test('스트리밍 읽기: 첫 조각의 MiniMax 줄이 키 오류(게이트웨이 1004)여도 뒤 조각의 ElevenLabs 줄은 읽음 (리뷰 p01)', async () => {
     await userOnEl();
     T.scen.mmHost = 'auth';
-    const r = await streamRead(['Noel: 「추워.」\n', 'Seraph: 「그래.」\nLil: 「네.」\n']);
+    const r = await streamRead(['Noel: 「추워.」\n', 'Selene: 「그래.」\nPip: 「네.」\n']);
     assert.equal(r.mm, 1, r.toasts.join(' | '));
     assert.equal(r.el, 2, `ElevenLabs 두 줄 · ${r.toasts.join(' | ')}`);
     assert.match(r.toasts.join(' | '), /직접 입력 서버가 막았어요/);
@@ -800,11 +800,11 @@ await test('스트리밍 읽기: 첫 조각의 MiniMax 줄이 키 오류(게이�
 await test('스트리밍 읽기: 꺼진 직접 입력 서버는 이 답장 동안 다시 묻지 않음 (조각마다 기다리지 않음) · 끝나면 표를 비움 · 손로 다시 읽으면 다시 시도 (리뷰 p12)', async () => {
     await userOnEl();
     T.scen.mmHost = 'down';
-    const r = await streamRead(['Noel: 「하나.」\n', 'Seraph: 「둘.」\n', 'Noel: 「셋.」\n', 'Lil: 「넷.」\n', 'Noel: 「다섯.」\n', 'Gabriel: 「여섯.」\n']);
+    const r = await streamRead(['Noel: 「하나.」\n', 'Selene: 「둘.」\n', 'Noel: 「셋.」\n', 'Pip: 「넷.」\n', 'Noel: 「다섯.」\n', 'Daniel: 「여섯.」\n']);
     assert.equal(r.mm, 1, `Noel 세 줄 중 처음 한 번만 (${r.mm})`);
     assert.equal(r.el, 3);
     assert.equal(player._forTest.streamDead(), null, '스트리밍이 끝나고 큐가 다 끝나면 비움');
-    const again = await read({ name: 'Narrator', mes: 'Noel: 「하나.」\nSeraph: 「둘.」' });
+    const again = await read({ name: 'Narrator', mes: 'Noel: 「하나.」\nSelene: 「둘.」' });
     assert.equal(again.synth.filter(u => u.startsWith(GATEWAY)).length, 1, '새로 읽으면 그 엔진도 한 번 다시 시도');
 });
 await test('지운 목소리: 연결 확인을 다시 해도 저절로 다시 들어오지 않고 지운 표시도 그대로 · 직접 「불러오기」는 넣음 (리뷰 p02)', async () => {
@@ -847,44 +847,44 @@ await test('「엔진별」: 키 없는 엔진 · 계정에 없는 목소리는 
     const s = S.settings();
     delete s.providers.minimax.key;
     ui.renderVoices();
-    assert.doesNotMatch(DOM.cards.map || '', /세라프 · MiniMax/, '키 없는 MiniMax 는 엔진별에 없음');
-    F.setCharVoice('Seraph', 'minimax:cj_seraph01');
-    assert.ok(!s.prefer_keep?.Seraph, '키 없는 엔진로 고정 안 함');
-    assert.equal(V.voiceFor('Seraph')?.provider, 'elevenlabs');
+    assert.doesNotMatch(DOM.cards.map || '', /셀레네 · MiniMax/, '키 없는 MiniMax 는 엔진별에 없음');
+    F.setCharVoice('Selene', 'minimax:cj_selene01');
+    assert.ok(!s.prefer_keep?.Selene, '키 없는 엔진로 고정 안 함');
+    assert.equal(V.voiceFor('Selene')?.provider, 'elevenlabs');
     s.providers.minimax.key = 'fake-gateway-token';
-    s.char_map.Seraph = 'minimax:cj_seraph01';
-    V.findVoice('minimax:cj_lil01').gone = true;
+    s.char_map.Selene = 'minimax:cj_selene01';
+    V.findVoice('minimax:cj_pip01').gone = true;
     ui.renderVoices();
-    assert.match(DOM.cards.map || '', /세라프 · MiniMax/, '키를 다시 넣으면 엔진별에 다시');
-    assert.doesNotMatch(DOM.cards.map || '', /릴 · MiniMax/, '계정에 없는(gone) 목소리는 엔진별에 없음');
+    assert.match(DOM.cards.map || '', /셀레네 · MiniMax/, '키를 다시 넣으면 엔진별에 다시');
+    assert.doesNotMatch(DOM.cards.map || '', /핍 · MiniMax/, '계정에 없는(gone) 목소리는 엔진별에 없음');
 });
 await test('고정 칩이 있는 캐릭터 줄은 <div> (이름을 눌러도 칩이 눌리지 않음) · select 에 이름표 · 칩 없는 줄은 1.3.7 그대로 <label> (리뷰 rig)', async () => {
     await userOnEl();
-    await change({ dataset: { lvMap: 'Seraph' }, value: 'minimax:cj_seraph01' });
+    await change({ dataset: { lvMap: 'Selene' }, value: 'minimax:cj_selene01' });
     ui.renderVoices();
     const map = DOM.cards.map || '';
     // 1.4.0 목소리 칸은 감정 세기 · 설정 단추와 함께 lv-color-voicebox 안 (줄은 그대로 <div> · select 이름표)
-    assert.match(map, /<div class="lv-row"><span class="lv-row-label">Seraph<button type="button" class="lv-pin-chip"[^>]*>MiniMax 고정<\/button><\/span>(?:<span class="lv-color-voicebox">)?<select class="text_pole" data-lv-map="Seraph" aria-label="Seraph 목소리">/);
+    assert.match(map, /<div class="lv-row"><span class="lv-row-label">Selene<button type="button" class="lv-pin-chip"[^>]*>MiniMax 고정<\/button><\/span>(?:<span class="lv-color-voicebox">)?<select class="text_pole" data-lv-map="Selene" aria-label="Selene 목소리">/);
     if (map.includes('data-lv-strength')) assert.ok(/class="lv-help-note lv-card-help" hidden>[^<]*캐릭터 이름마다/.test(map) && map.includes('· 보통: 대사 분석이 찾은 감정'), '1.4.0 카드 제목 옆 ? 설명 (감정 세기 칸 뜻)');
-    if (map.includes('data-lv-strength')) assert.match(map, /data-lv-map="Seraph"[\s\S]*?<\/select><select class="text_pole lv-strength" data-lv-strength="minimax:cj_seraph01"[\s\S]*?data-lv-act="edit" data-uid="minimax:cj_seraph01"/, '고정한 캐릭터는 고정 엔진 목소리에 감정 세기 · 설정');
+    if (map.includes('data-lv-strength')) assert.match(map, /data-lv-map="Selene"[\s\S]*?<\/select><select class="text_pole lv-strength" data-lv-strength="minimax:cj_selene01"[\s\S]*?data-lv-act="edit" data-uid="minimax:cj_selene01"/, '고정한 캐릭터는 고정 엔진 목소리에 감정 세기 · 설정');
     for (const m of map.matchAll(/<label class="lv-row">([\s\S]*?)<\/label>/g)) assert.doesNotMatch(m[1], /lv-pin-chip/, '칩은 label 안에 없음');
     assert.match(map, /<label class="lv-row"><span class="lv-row-label">기본<\/span><select class="text_pole" data-lv-path="default_voice">/);
 });
 await test('「엔진」을 「지정한 그대로」로: 고정은 쉬고 (고정 안내 대신 「엔진」 안내) 다시 켜면 고정이 살아남 (리뷰 p03)', async () => {
     await userOnEl();
     const s = S.settings();
-    F.setCharVoice('Seraph', 'minimax:cj_seraph01');
-    assert.equal(V.isPinned('Seraph'), true);
+    F.setCharVoice('Selene', 'minimax:cj_selene01');
+    assert.equal(V.isPinned('Selene'), true);
     await change({ id: 'lv_prefer_provider', value: '' });
     assert.equal(s.prefer_provider, '');
-    assert.equal(V.isPinned('Seraph'), false);
+    assert.equal(V.isPinned('Selene'), false);
     T.scen.mmHost = 'down';
-    const r = await read({ name: 'Seraph', mes: '"안녕."' });
+    const r = await read({ name: 'Selene', mes: '"안녕."' });
     assert.ok(!r.toasts.some(t => /고정돼 있어/.test(t)), r.toasts.join(' | '));
     assert.match(r.toasts.join(' | '), /「엔진」에서 ElevenLabs로 바꿀 수 있어요/);
     await change({ id: 'lv_prefer_provider', value: 'elevenlabs' });
-    assert.equal(V.isPinned('Seraph'), true, '「엔진」을 다시 켜면 고정도');
-    assert.equal(V.voiceFor('Seraph')?.provider, 'minimax');
+    assert.equal(V.isPinned('Selene'), true, '「엔진」을 다시 켜면 고정도');
+    assert.equal(V.voiceFor('Selene')?.provider, 'minimax');
 });
 await test('미뤄 둔 「바꿀까요」는 엔진마다: ElevenLabs · Typecast 둘 다 물음 · 옛 글 하나(개발판) 설정도 받음 (리뷰 p11)', async () => {
     reset(USER);
@@ -934,8 +934,8 @@ await test('목소리 편집: 지금 모델이 숨긴 말투 칸의 값은 저�
     const realCreate = globalThis.document.createElement;
     globalThis.document.createElement = (t) => (t === 'div' ? shim() : realCreate(t));
     try {
-        const ev = { uid: 'elevenlabs:el_bel', provider: 'elevenlabs', voiceId: 'el_bel', name: '벨포드', lang: 'ko', group: '복제', aliases: [], params: { voice_tags: ['tired'], seed: 7 }, mix: [], gainDb: 0, autoGainDb: null, model: '', instructions: '', prefer_source: 'auto' };
-        const s = reset({ version: 8, enabled: true, voices: [ev], char_map: { Belford: ev.uid }, providers: { elevenlabs: { key: 'fake-el-key', model: 'eleven_v4' } }, analysis: { enabled: false } });
+        const ev = { uid: 'elevenlabs:el_bel', provider: 'elevenlabs', voiceId: 'el_bel', name: '할로', lang: 'ko', group: '복제', aliases: [], params: { voice_tags: ['tired'], seed: 7 }, mix: [], gainDb: 0, autoGainDb: null, model: '', instructions: '', prefer_source: 'auto' };
+        const s = reset({ version: 8, enabled: true, voices: [ev], char_map: { Harlow: ev.uid }, providers: { elevenlabs: { key: 'fake-el-key', model: 'eleven_v4' } }, analysis: { enabled: false } });
         T.answer = () => 1;
         await ui.openVoiceEditor(ev.uid);
         assert.deepEqual(V.findVoice(ev.uid).params.voice_tags, ['tired']);
@@ -977,7 +977,7 @@ await test('「나」 자동 + 「내 대사」 읽지 않음(직접 설정): �
     assert.equal(s.routes.user_dialogue, 'user');
     assert.ok(T.toasts.some(t => t.msg === '「내 대사」도 읽게 바꿨어요'), JSON.stringify(T.toasts));
     T.toasts.length = 0;
-    await change({ dataset: { lvPath: 'user_voice' }, value: 'minimax:cj_seraph01' });
+    await change({ dataset: { lvPath: 'user_voice' }, value: 'minimax:cj_selene01' });
     assert.equal(T.toasts.length, 0, '다른 목소리를 고를 땐 알림 없음');
 });
 await test('ElevenLabs v3: 원음 유사도 · 화자 강화 칸은 숨음 (v3 에는 없음) · 요청 본문은 1.3.7 그대로 · v4 는 보임 (리뷰 rig)', async () => {
@@ -1007,7 +1007,7 @@ await test('재생 실패(브라우저 NotSupportedError)는 한국어로 · 영
     T.playErr = e;
     LOG.clearLog();
     try {
-        const r = await read({ name: 'Seraph', mes: '"안녕."' });
+        const r = await read({ name: 'Selene', mes: '"안녕."' });
         assert.ok(r.toasts.some(t => /소리를 재생할 수 없어요/.test(t)), r.toasts.join(' | '));
         assert.ok(!r.toasts.some(t => /Failed to load/.test(t)), r.toasts.join(' | '));
         assert.ok(LOG.entries().some(x => /Failed to load/.test(x.msg)), '원문은 기록에');
@@ -1033,25 +1033,25 @@ await test('모델 목록: 틀린 키를 저장하고 바로 맞는 키로 바�
     assert.match(DOM.text['#lv_test_result'] || '', /^연결됨/);
 });
 
-await test('1.4.0 이 채팅의 캐릭터 (대화 색 없이): 이름표 · 화자 찾기 · 단역이 줄로 · 카드 캐릭터와 같은 목소리(세라프 = Seraph)는 빼고 · 고르면 연결표에', async () => {
+await test('1.4.0 이 채팅의 캐릭터 (대화 색 없이): 이름표 · 화자 찾기 · 단역이 줄로 · 카드 캐릭터와 같은 목소리(셀레네 = Selene)는 빼고 · 고르면 연결표에', async () => {
     await userOnEl();
     const s = S.settings();
     const keep = T.ctx.chat.slice();
     T.ctx.chatMetadata.lemon_voice = { colors: {} };
     T.ctx.chat.length = 0;
-    T.ctx.chat.push({ name: 'Seraph', is_user: false, is_system: false, swipe_id: 0, extra: {}, mes: '세라프: 「안녕.」\n벨포드: 「네, 서류는 여기.」' });
-    T.ctx.chat.push({ name: 'Seraph', is_user: false, is_system: false, swipe_id: 0, mes: '「어서 오세요.」', extra: { lemon_voice: { analysis: { segs: [{ i: 0, speaker: '카페 사장' }], people: { '카페 사장': { g: 'm', a: 'a' } } } } } });
+    T.ctx.chat.push({ name: 'Selene', is_user: false, is_system: false, swipe_id: 0, extra: {}, mes: '셀레네: 「안녕.」\n할로: 「네, 서류는 여기.」' });
+    T.ctx.chat.push({ name: 'Selene', is_user: false, is_system: false, swipe_id: 0, mes: '「어서 오세요.」', extra: { lemon_voice: { analysis: { segs: [{ i: 0, speaker: '카페 사장' }], people: { '카페 사장': { g: 'm', a: 'a' } } } } } });
     T.ctx.chat.push({ name: 'User', is_user: true, is_system: false, swipe_id: 0, extra: {}, mes: '나: 「응.」' });
     ui.renderVoices();
     const col = DOM.cards.colors || '';
     assert.match(col, /이 채팅의 캐릭터/);
-    assert.match(col, /data-lv-map="벨포드"/, '이름표로 찾은 캐릭터');
+    assert.match(col, /data-lv-map="할로"/, '이름표로 찾은 캐릭터');
     assert.match(col, /data-lv-map="카페 사장"/, '화자 찾기 · 단역');
-    assert.doesNotMatch(col, /data-lv-map="세라프"/, '카드 캐릭터(Seraph)와 같은 목소리는 캐릭터별 목소리에 이미 있음');
+    assert.doesNotMatch(col, /data-lv-map="셀레네"/, '카드 캐릭터(Selene)와 같은 목소리는 캐릭터별 목소리에 이미 있음');
     assert.doesNotMatch(col, /data-lv-map="나"/, '내 메시지는 보지 않음');
     assert.doesNotMatch(col, /아직 배운 색이 없어요/, '줄이 있으면 빈 안내 대신');
-    await change({ dataset: { lvMap: '카페 사장' }, value: 'minimax:cj_seraph01' });
-    assert.equal(s.char_map['카페 사장'], 'minimax:cj_seraph01', '고르면 연결표에');
+    await change({ dataset: { lvMap: '카페 사장' }, value: 'minimax:cj_selene01' });
+    assert.equal(s.char_map['카페 사장'], 'minimax:cj_selene01', '고르면 연결표에');
     delete s.char_map['카페 사장'];
     T.ctx.chat.length = 0; T.ctx.chat.push(...keep);
     delete T.ctx.chatMetadata.lemon_voice;
@@ -1063,13 +1063,13 @@ await test('1.4.1 대화 색: 같은 사람의 다른 색(추천 이름이 이�
     T.ctx.chat.length = 0;
     const E = (o) => ({ locked: false, auto: false, votes: {}, tvotes: {}, count: 0, aliases: [], ...o });
     T.ctx.chatMetadata.lemon_voice = { colors: {
-        '#7ed957': E({ name: 'Uriel', locked: true, count: 7 }),
-        '#9bd6a5': E({ name: null, count: 1, votes: { Uriel: 1 } }),          // 우리엘의 다른 색 (실제 10-08 채팅)
-        '#e8a33d': E({ name: null, count: 2, votes: { Seraph: 1 } }),         // 이미 있는 사람(Seraph)의 다른 색
-        '#1a6b3c': E({ name: 'Seraph', locked: true, count: 3 }),
+        '#7ed957': E({ name: 'Ariel', locked: true, count: 7 }),
+        '#9bd6a5': E({ name: null, count: 1, votes: { Ariel: 1 } }),          // 아리엘의 다른 색 (실제 10-08 채팅)
+        '#e8a33d': E({ name: null, count: 2, votes: { Selene: 1 } }),         // 이미 있는 사람(Selene)의 다른 색
+        '#1a6b3c': E({ name: 'Selene', locked: true, count: 3 }),
         '#123456': E({ name: null, count: 1 }),                                // 후보 없음 · 한 번
         '#abcdef': E({ name: null, count: 2, votes: { Noel: 2 } }),           // 새 사람 후보
-        '#d4a017': E({ name: 'Uriel', locked: true, count: 2 }),              // 직접 같은 이름 = 동명이인 두 줄
+        '#d4a017': E({ name: 'Ariel', locked: true, count: 2 }),              // 직접 같은 이름 = 동명이인 두 줄
     } };
     ui.renderVoices();
     const col = DOM.cards.colors || '';
@@ -1079,7 +1079,7 @@ await test('1.4.1 대화 색: 같은 사람의 다른 색(추천 이름이 이�
     assert.ok(!rows.includes('#123456'), '후보 없이 한 번 본 색은 숨김');
     assert.ok(rows.includes('#abcdef'), '새 사람 후보는 줄');
     assert.ok(rows.includes('#7ed957') && rows.includes('#d4a017'), '직접 같은 이름을 적은 두 색 = 두 줄 (동명이인)');
-    assert.match(col, /data-color="#7ed957">\s*<span class="lv-swatch" style="background:#7ed957"><span class="lv-swatch-alt" style="background:#9bd6a5"><\/span><\/span>/, '우리엘 점은 원래 색 그대로 + 다른 색 작은 점');
+    assert.match(col, /data-color="#7ed957">\s*<span class="lv-swatch" style="background:#7ed957"><span class="lv-swatch-alt" style="background:#9bd6a5"><\/span><\/span>/, '아리엘 점은 원래 색 그대로 + 다른 색 작은 점');
     assert.match(col, /data-lv-act="color-accept" data-color="#abcdef" data-name="Noel"/, '새 색 ✓ 추천 이름');
     await click('color-accept', { color: '#abcdef', name: 'Noel' });
     assert.equal(T.ctx.chatMetadata.lemon_voice.colors['#abcdef'].name, 'Noel', '✓ 를 누르면 그 이름 (잠금)');

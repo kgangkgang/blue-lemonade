@@ -879,7 +879,7 @@ function fitShout(j) {
  *   (속삭임 속마음 · 2.6 모델 · 태그 없는 감정은 요청이 '보통'과 같으니 키도 같게 — 이미 만든 소리를 다시 사지 않게)
  */
 function fitStrength(j, s) {
-    // 1.4.0 목소리마다 감정 세기 (목소리 편집 → 감정 세기) — 없으면 전체 설정 (사용자: 다른 애들은 차분하게, 미카엘 · 우지엘 · 자드키엘은 감정 표현 확실하게)
+    // 1.4.0 목소리마다 감정 세기 (목소리 편집 → 감정 세기) — 없으면 전체 설정 (사용자: 다른 애들은 차분하게, 몇 사람은 감정 표현 확실하게)
     const own = j.voice && j.voice.strength;
     const k = own === 'weak' || own === 'normal' || own === 'strong' ? own : s.emotion_strength;
     if (k === 'weak' && j.emotion !== 'whisper') j.emotion = '';
@@ -1426,7 +1426,8 @@ function lookAhead(from, s) {
     if ((Number(s.prefetch) || 0) > 0) return;   // 미리 받기가 켜져 있으면 prefetch 가 이미
     const cur = queue[from - 1], j = queue[from];
     if (!cur || !j || cur.sceneKind || j.sceneKind || j.audio || deadFor(j) || coolingFor(j) || !canMerge(cur, j)) return;
-    ensureAudio(j).catch((e) => { if (!isAbort(e)) j.aheadErr = e; });   // 6.4.2 v3.1 실패는 그 줄에 남긴다 — 재생 루프가 다시 보내지 않고 이 오류로 fail (쉬는 시간 · 키 오류 판정 그대로)
+    ensureAudio(j).catch((e) => { if (!isAbort(e) && current !== j) j.aheadErr = e; });   // 6.4.2 v3.1 실패는 그 줄에 남긴다 — 재생 루프가 다시 보내지 않고 이 오류로 fail (쉬는 시간 · 키 오류 판정 그대로)
+    // 6.4.3 v3.2 재생이 이미 그 줄에 닿았으면(같은 요청에 붙어 run 이 그 오류로 fail) 남기지 않는다 — 남기면 ⏮ 로 돌아왔을 때 다시 요청하지 않고 옛 오류를 던졌다 (503 · 끊김도 다시 시도할 기회를 잃음)
 }
 
 // ---------- 재생 상태

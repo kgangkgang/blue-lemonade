@@ -10,7 +10,7 @@ import { pathToFileURL } from 'node:url';
 
 const root = path.resolve(process.argv[2] || '.', 'src/addons/tts/src');
 const js = (src) => `data:text/javascript,${encodeURIComponent(src)}`;
-const T = globalThis.__ttsBlockTest = { ext: {}, ctx: { chat: [], chatMetadata: {}, name1: 'User', name2: '천지합동청', chatId: 'chat-1', characterId: 0, characters: [{ avatar: '천지합동청.png' }], mainApi: 'openai', chatCompletionSettings: { chat_completion_source: 'custom', custom_url: 'https://relay.example/v1' } } };
+const T = globalThis.__ttsBlockTest = { ext: {}, ctx: { chat: [], chatMetadata: {}, name1: 'User', name2: '하늘관리청', chatId: 'chat-1', characterId: 0, characters: [{ avatar: '하늘관리청.png' }], mainApi: 'openai', chatCompletionSettings: { chat_completion_source: 'custom', custom_url: 'https://relay.example/v1' } } };
 const store = new Map();
 globalThis.localStorage = { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: (k) => store.delete(k) };
 const G = 'const T = globalThis.__ttsBlockTest;\n';
@@ -136,10 +136,10 @@ const gv = (provider, voiceId, name, extra = {}) => ({ uid: `${provider}:${voice
 const TEXT = '<span style="color:#3ccfbf">「よう、来たか」</span>\n\nShe notices and grins.\n\n「天使くんじゃん。観光？それとも失恋？」';
 function reset({ fallback = { enabled: true, provider: 'deepseek', model: 'deepseek-chat' }, extras = 'auto' } = {}) {
     const s = settings();
-    s.voices = [gv('elevenlabs', 'el_zad', 'Zadkiel')];
-    s.char_map = { Zadkiel: 'elevenlabs:el_zad' };
-    s.card_colors = { '천지합동청.png': { '#3ccfbf': 'Zadkiel' } };
-    T.ctx.chatMetadata = { lemon_voice: { colors: { '#3ccfbf': { name: 'Zadkiel', locked: true, auto: false, votes: {}, tvotes: {}, count: 1, aliases: [] } }, userColor: null, palette_at: 0, names: {}, learned: {}, seeded: true } };
+    s.voices = [gv('elevenlabs', 'el_lio', 'Lionel')];
+    s.char_map = { Lionel: 'elevenlabs:el_lio' };
+    s.card_colors = { '하늘관리청.png': { '#3ccfbf': 'Lionel' } };
+    T.ctx.chatMetadata = { lemon_voice: { colors: { '#3ccfbf': { name: 'Lionel', locked: true, auto: false, votes: {}, tvotes: {}, count: 1, aliases: [] } }, userColor: null, palette_at: 0, names: {}, learned: {}, seeded: true } };
     s.default_voice = ''; s.user_voice = ''; s.narrator_voice = ''; s.prefer_provider = 'elevenlabs';
     s.extras = extras; s.extra_map = {};
     s.text_source = 'original'; s.wait_translation = 'off'; s.listen_lang = 'auto'; s.pregen = 'off'; s.mini_player = false;
@@ -153,12 +153,12 @@ function reset({ fallback = { enabled: true, provider: 'deepseek', model: 'deeps
         'deepseek-chat': (body) => {
             const user = JSON.stringify(body.messages);
             const n = (user.match(/\[(\d+)\]/g) || []).length;
-            return { json: { choices: [{ finish_reason: 'stop', message: { content: JSON.stringify({ segs: [{ i: 0, emotion: 'calm', speaker: 'Zadkiel', ko: '어이, 왔냐' }, { i: 1, emotion: 'happy', speaker: 'Camilla', ko: '천사 군이네' }].slice(0, Math.max(2, n)), people: { Camilla: { g: 'f', a: 'a', l: 'ja' } } }) } }] } };
+            return { json: { choices: [{ finish_reason: 'stop', message: { content: JSON.stringify({ segs: [{ i: 0, emotion: 'calm', speaker: 'Lionel', ko: '어이, 왔냐' }, { i: 1, emotion: 'happy', speaker: 'Camilla', ko: '천사 군이네' }].slice(0, Math.max(2, n)), people: { Camilla: { g: 'f', a: 'a', l: 'ja' } } }) } }] } };
         },
     };
 }
 function message(text = TEXT) {
-    const mes = { name: '천지합동청', is_user: false, mes: text, extra: {}, swipe_id: 0, swipes: [text] };
+    const mes = { name: '하늘관리청', is_user: false, mes: text, extra: {}, swipe_id: 0, swipes: [text] };
     T.ctx.chat.length = 0; T.ctx.chat.push(mes);
     return mes;
 }
@@ -300,9 +300,9 @@ await test('no analysis in the end → the uncoloured line reads with one unknow
     assert.ok(['stk_a', 'stk_b'].includes(extra.voice.voiceId), 'a stock voice of the extras engine');
     const again = P.lineJobs(0, mes, segsOf(mes)).jobs.find(j => /天使くん/.test(j.text));
     assert.equal(again.voice.voiceId, extra.voice.voiceId, 'the same voice every time');
-    assert.equal(V.unknownVoice('천지합동청.png|chat-1').voiceId, V.unknownVoice('천지합동청.png|chat-1').voiceId);
-    const zad = r.jobs.find(j => /よう/.test(j.text));
-    assert.equal(zad.voice.voiceId, 'el_zad', 'coloured lines keep their own voice');
+    assert.equal(V.unknownVoice('하늘관리청.png|chat-1').voiceId, V.unknownVoice('하늘관리청.png|chat-1').voiceId);
+    const lio = r.jobs.find(j => /よう/.test(j.text));
+    assert.equal(lio.voice.voiceId, 'el_lio', 'coloured lines keep their own voice');
 });
 await test('extras off → no unknown-speaker voice (as before); analysis still pending → not guessed early', async () => {
     reset({ extras: 'off', fallback: { enabled: true, provider: '', model: '' } });

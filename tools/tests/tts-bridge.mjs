@@ -66,7 +66,7 @@ const gv = (provider, voiceId, name, extra = {}) => ({ uid: `${provider}:${voice
 function reset() {
     const s = settings();
     s.enabled = true;
-    s.voices = [gv('minimax', 'mm_a', 'Mina', { group: '천지' }), gv('elevenlabs', 'el_a', 'Ella')];
+    s.voices = [gv('minimax', 'mm_a', 'Mina', { group: '하늘' }), gv('elevenlabs', 'el_a', 'Ella')];
     s.char_map = { Mina: 'minimax:mm_a', Ella: 'elevenlabs:el_a' };
     s.default_voice = ''; s.user_voice = ''; s.narrator_voice = ''; s.prefer_provider = ''; s.extras = 'off';
     s.pron_dict = 'Mina=미나'; s.mute_words = ''; s.normalize = false;
@@ -85,7 +85,7 @@ await test('voices: the usable voice list for pickers', () => {
     reset();
     const list = P.voiceListPublic();
     assert.deepEqual(list.map(v => v.uid).sort(), ['elevenlabs:el_a', 'minimax:mm_a']);
-    assert.equal(list.find(v => v.uid === 'minimax:mm_a').group, '천지');
+    assert.equal(list.find(v => v.uid === 'minimax:mm_a').group, '하늘');
 });
 await test('synth: sound only (ArrayBuffer), pronunciation dictionary applied, nothing played, the second call is served from the cache', async () => {
     reset();

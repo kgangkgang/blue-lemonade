@@ -930,6 +930,24 @@ await test('6.4.2 v3.1 a failed read-ahead is not sent again by the play loop, a
         globalThis.fetch=realFetch;Registry.PROVIDERS.minimax.synth=mmSynth;P._forTest.playCool.clear();T.ctx.chat.length=1;
     }
 });
+await test('6.4.3 v3.2 a read-ahead that fails after the play loop already joined it leaves no stale error: going back (prev) to that line sends it again',async()=>{
+    await reset();{const s=S.settings();s.pregen='off';s.prefetch=0;s.gap_ms=0;}
+    T.ctx.chat[0].mes='"하나." "둘." "셋."';
+    const sent=[];
+    const restore=wrapVoice(async(orig,o)=>{sent.push(o.text);
+        const audio=ms=>({blob:blob({kind:'voice',text:o.text,voiceUid:o.voice.uid,emotion:o.emotion,lang:o.lang,seconds:ms/1000,ms}),usage:{chars:o.text.length}});
+        if(o.text==='하나.')return audio(300);
+        if(o.text==='둘.'){await sleep(1000);throw Object.assign(new Error('mock 500'),{status:500,code:500});}   // fails after the loop has reached and joined it
+        return audio(2500);});
+    try{
+        assert.ok(P.speakMessage(0,{force:true}));await sleep(50);
+        await until(()=>T.plays.some(x=>x.kind==='voice'&&x.text==='셋.'),8000);await sleep(200);
+        const at=sent.length;
+        P.prev();await sleep(100);await until(()=>!P.isPlaying(),15000);
+        assert.ok(sent.slice(at).includes('둘.'),'prev to the failed line asks the engine again (no stale read-ahead error): '+JSON.stringify(sent));
+        assert.equal(sent.filter(t=>t==='둘.').length,2);
+    } finally { restore(); }
+});
 await test('6.4.2 a line dropped by the cache limit and bought again: one TTS log line on the third, once per session, settings untouched',async()=>{
     await reset();const s=S.settings();s.pregen='off';s.cache_limit=150;s.cache_mb=200;
     T.ctx.chat[0].mes='"하나." 그녀가 웃었다. "둘." "셋."';
