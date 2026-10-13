@@ -393,6 +393,8 @@ await test('chain 멈춤: 합성 실패(played false) · 다른 줄의 큐 · �
     id = await start();
     for (const fn of T.handlers.generation_started) fn('normal', {}, true);
     assert.deepEqual(pregen.state().chain, { id, text: '「하나」' }, 'dry run 은 그대로');
+    for (const fn of T.handlers.generation_started) fn('quiet', {}, false);
+    assert.deepEqual(pregen.state().chain, { id, text: '「하나」' }, '6.3.0 조용한 생성(요약 · 그림 프롬프트 · 표정)은 그대로 잇는다');
     for (const fn of T.handlers.generation_started) fn('normal', {}, false);
     assert.equal(pregen.state().chain, null, '생성이 시작되면 지금 줄까지');
     ended(id, LINES[0]);
@@ -486,6 +488,24 @@ await test('nextLine: thoughts 옵션 — 기본은 예전 그대로, thoughts �
     assert.equal(pregen.nextLine(list, { kind: 'thought', text: '다른 생각', line: 2 }, { thoughts: true }).text, '「둘」', '못 찾은 속마음은 그 줄 뒤의 첫 대사');
     assert.equal(pregen.nextLine(list, D('「둘」', 1, 3), { thoughts: true }), null);
     assert.equal(pregen.nextLine([{ kind: 'thought', text: '생각', line: 2 }], D('「하나」', 0, 1), { thoughts: true }), null, '대사가 없으면 null');
+});
+
+await test('6.3.0 nextLine: 같은 줄의 속마음+대사는 글 순서(order)대로 — 앞의 속마음으로 되돌아가지 않고, 속마음을 누르면 같은 줄 뒤의 대사부터', () => {
+    const o = (seg, order) => ({ ...seg, order });
+    // tapSegments 처럼 대사 먼저 · 속마음 뒤, order 는 글 순서: *가나* 「하나」 / *다라* 「둘」 / 「셋」 *마바*
+    const list = [o(D('「하나」', 0, 0), 1), o(D('「둘」', 1, 1), 3), o(D('「셋」', 2, 2), 4), o({ kind: 'thought', text: '가나', line: 0 }, 0), o({ kind: 'thought', text: '다라', line: 1 }, 2), o({ kind: 'thought', text: '마바', line: 2 }, 5)];
+    const seq = (from) => { const out = []; let cur = from; while ((cur = pregen.nextLine(list, cur, { thoughts: true }))) out.push(cur.text); return out; };
+    assert.deepEqual(seq(D('「하나」', 0, 0)), ['다라', '「둘」', '「셋」', '마바']);
+    assert.deepEqual(seq({ kind: 'thought', text: '가나', line: 0 }), ['「하나」', '다라', '「둘」', '「셋」', '마바']);
+    assert.deepEqual(seq({ kind: 'thought', text: '다라', line: 1 }), ['「둘」', '「셋」', '마바']);
+    assert.equal(pregen.nextLine(list, { kind: 'thought', text: '마바', line: 2 }, { thoughts: true }), null);
+    assert.equal(pregen.nextLine(list, D('「하나」', 0, 0)).text, '「둘」', 'thoughts 없이는 대사만 (예전 그대로)');
+    // order 가 없는 옛 조각(시험 스텁 · 즉석 조각)은 예전처럼 목록 순서
+    const old = [D('「하나」', 0, 0), { kind: 'thought', text: '가나', line: 0 }];
+    assert.equal(pregen.nextLine(old, D('「하나」', 0, 0), { thoughts: true }).text, '가나');
+    // clickplay.tapSegments 가 조각마다 글 순서를 적는다
+    const cp = fs.readFileSync(path.join(root, 'clickplay.js'), 'utf8');
+    assert.match(cp, /seg\.order = out\.length \+ later\.length;/);
 });
 
 // ---------- 5) 설정 창

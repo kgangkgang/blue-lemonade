@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.3.0/blue-lemonade-6.3.0.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.3.1/blue-lemonade-6.3.1.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.3.0 · 최신 업데이트</summary>
+<summary>6.3.1 · 최신 업데이트</summary>
+
+- TTS 「다음 한 줄 · 이어 듣기」: 요약 · 그림 지시 같은 조용한 생성이 도는 동안에도 이어 듣기가 끊기지 않고, 같은 줄에 있는 속마음과 대사를 글 순서대로 이어 읽어요.
+- 애드온 버전: TTS 1.7.9
+
+</details>
+
+<details>
+<summary>6.3.0 · 검열되면 줄 정렬 · 같은 중계 중복 방지</summary>
 
 - 모델 전환: 「(검열되면)」 줄이 늘 그 확장 바로 아래에 와요(스스로 등록하는 확장도). Custom 중계의 같은 모델을 다시 보낼 곳으로 고르면 헛되이 두 번 보내지 않아요.
 - 애드온 버전: 모델 전환 1.1.3

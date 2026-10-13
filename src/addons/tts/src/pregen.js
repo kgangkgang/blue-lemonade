@@ -391,7 +391,9 @@ const foldText = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
  */
 export function nextLine(list, tapped, { thoughts = false } = {}) {
     let lines = (Array.isArray(list) ? list : []).filter(x => x && x.text && (x.kind === 'dialogue' || (thoughts && x.kind === 'thought')));
-    if (thoughts) lines = lines.map((x, i) => ({ x, i })).sort((a, b) => ((Number(a.x.line) || 0) - (Number(b.x.line) || 0)) || (a.i - b.i)).map(o => o.x);
+    // 6.3.0 같은 줄 안에서는 글 순서(order — clickplay.tapSegments 가 적음)로: *생각* 「대사」 줄에서 대사 뒤에 앞의 생각을 읽거나 생각 뒤의 대사를 건너뛰지 않게. order 가 없는 조각은 예전처럼 목록 순서
+    const inLine = (a, b) => (Number.isFinite(a.x.order) && Number.isFinite(b.x.order) ? a.x.order - b.x.order : a.i - b.i);
+    if (thoughts) lines = lines.map((x, i) => ({ x, i })).sort((a, b) => ((Number(a.x.line) || 0) - (Number(b.x.line) || 0)) || inLine(a, b)).map(o => o.x);
     if (!tapped || !tapped.text || !lines.length) return null;
     const near = (a, b) => Math.abs((Number(a.line) || 0) - (Number(tapped.line) || 0)) - Math.abs((Number(b.line) || 0) - (Number(tapped.line) || 0));
     if (tapped.kind === 'thought') {
@@ -528,7 +530,7 @@ export function init() {
     on(event_types.MESSAGE_SWIPED, (id) => pregenCancel(r => r.id === Number(id)));
     on(event_types.MESSAGE_DELETED, () => pregenCancel(r => chat[r.id] !== r.mes));
     on(event_types.GENERATION_STARTED, (type, _params, dryRun) => {
-        if (!dryRun) chainAt = null;   // 6.2.8 생성이 시작되면 이어 듣기는 지금 줄까지
+        if (!dryRun && type !== 'quiet') chainAt = null;   // 6.2.8 생성이 시작되면 이어 듣기는 지금 줄까지 (6.3.0: 조용한 생성 — 요약 · 그림 프롬프트 · 표정 — 은 새 답장이 아니라 그대로 잇는다)
         if (dryRun || (type !== 'swipe' && type !== 'regenerate')) return;
         const id = chat.length - 1;
         pregenCancel(r => r.id === id);

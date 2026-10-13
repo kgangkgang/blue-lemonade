@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "6.3.0";
+export const BUILD_VERSION = "6.3.1";
 export const FILE_HASHES = {
   "index.js": "17384:4de637be:6c351536",
-  "manifest.json": "365:81c11b78:7143493f",
+  "manifest.json": "365:31fefa07:1d0a8525",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -268,7 +268,7 @@ export const FILE_HASHES = {
   "src/addons/tts/src/balance.js": "4406:309bd610:27dd3fa3",
   "src/addons/tts/src/block-fallback.js": "10832:319e307e:b357a6a3",
   "src/addons/tts/src/cache.js": "10882:d76925dd:194388c0",
-  "src/addons/tts/src/clickplay.js": "36193:5e416aba:da3299bc",
+  "src/addons/tts/src/clickplay.js": "36384:720c1d18:6ffedf32",
   "src/addons/tts/src/highlight-colors.js": "20689:8fd622c7:b461ba0a",
   "src/addons/tts/src/known-voices.js": "229:cfc5a672:873e5898",
   "src/addons/tts/src/listen.js": "20455:02e652b8:ab3ef4e6",
@@ -282,7 +282,7 @@ export const FILE_HASHES = {
   "src/addons/tts/src/paint.js": "14598:fcd2ed0c:2660b7ae",
   "src/addons/tts/src/playback-details.js": "1813:dc8c7973:7157b950",
   "src/addons/tts/src/player.js": "206109:d060a3d2:814b65d9",
-  "src/addons/tts/src/pregen.js": "38439:05bc13c9:bd17a9eb",
+  "src/addons/tts/src/pregen.js": "38975:c1d9bc7a:a578a31f",
   "src/addons/tts/src/providers/_http.js": "8363:666dcabd:c8bf7f25",
   "src/addons/tts/src/providers/_models.js": "8477:f2142bd7:888f22da",
   "src/addons/tts/src/providers/azure.js": "11476:c4207d75:e47fad37",
@@ -313,8 +313,8 @@ export const FILE_HASHES = {
   "src/addons/tts/src/ui.js": "184414:2d5b208c:4e68a69e",
   "src/addons/tts/src/voice-names.js": "7708:05c816f7:b76ae520",
   "src/addons/tts/src/voices.js": "41597:1aa3a7ec:f4bed20c",
-  "src/addons/tts/style.css": "45458:659df52c:8e8726f8",
-  "src/addons/tts/version.js": "36:fde912be:5e6012cd",
+  "src/addons/tts/style.css": "45458:3518d27f:981bd3ed",
+  "src/addons/tts/version.js": "36:61e74903:c430960c",
   "src/addons/zipinstall/index.js": "22353:284b553d:8a3638e7",
   "src/addons/zipinstall/style.css": "5225:67044f0e:7aa42564",
   "src/appearance-archive.js": "1287:215093f5:1c7f1dc7",
@@ -404,7 +404,7 @@ export const FILE_HASHES = {
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "202706:1d89b886:8abdf33c",
+  "src/notice-data.js": "203023:a11cf0a5:41d71e3f",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -479,5 +479,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "34543:a22afe71:9a33c04b",
   "src/wordmask.js": "7487:cc508640:dd5ee3e8",
-  "style.css": "1415918:7efe5745:3b1a8b9e"
+  "style.css": "1415918:66f1900f:af90499a"
 };

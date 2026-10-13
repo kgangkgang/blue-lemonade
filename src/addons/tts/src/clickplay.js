@@ -528,6 +528,7 @@ export function tapSegments(mes, { thoughts = false } = {}) {
             else if (thoughts && x.kind === 'thought') seg = segmentForHit(mes, { kind: 'thought', strong: true, match: 'any', text: x.text, raw: x.raw, nameHint: x.speakerHint || null, color: x.color || null, line: x.line || 0 });
         } catch (e) { log('err', `미리 만들기 조각 실패: ${String(e?.message || e).slice(0, 40)}`); seg = null; }
         if (!seg) continue;
+        seg.order = out.length + later.length;   // 6.3.0 글 순서 — 속마음을 뒤에 모아 두므로 이어 듣기(pregen.js nextLine)가 줄 안의 자리를 이걸로 되세운다
         (seg.kind === 'thought' ? later : out).push(seg);
     }
     return [...out, ...later];
