@@ -710,6 +710,7 @@ export function applyAll() {
         if (s.chat.qrFind === false) want.add('salty-qr-find-off');
         if (s.chat.personaTall) want.add('salty-persona-tall');
         if (s.chat.helpMarks === false) want.add('salty-help-off'); // 6.1.5 설명 ? 단추 숨기기
+        if (s.chat.webSearchMarks === false) want.add('salty-websearch-off'); // 6.2.6 웹 검색 · 출처 표시 끄기 (지구 아이콘 숨김 · 칩은 JS 가 안 띄움)
         want.add(`salty-profile-mode-${s.profile.mode}`);
         if (['small', 'banner'].includes(s.userProfile.mode)) want.add('salty-user-profile-custom');
         want.add(`salty-user-profile-mode-${s.userProfile.mode}`);

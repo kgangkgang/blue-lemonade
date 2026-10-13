@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.2.6/blue-lemonade-6.2.6.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.2.7/blue-lemonade-6.2.7.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.2.6 · 최신 업데이트</summary>
+<summary>6.2.7 · 최신 업데이트</summary>
+
+- 웹 검색을 쓴 답에 작은 지구 표시가 붙어요. 답의 낱말을 꾹 누르면 그 말이 프롬프트 어디서 왔는지(카드 · 로어북 · 기억 · 지시 · 프리셋 · 기록) 한 줄로 보여 주고, 어디에도 없으면 「지어냄」(검색한 답이면 「검색/지어냄」, 번역문을 보고 있으면 「번역문 · 못 찾음」)이라고 알려 줘요. 폰에서는 브라우저의 낱말 고르기와 함께 떠요. 채팅 › 화면 「웹 검색 · 출처 표시」로 끌 수 있어요.
+- 애드온 버전: 성능 보조 2.2.1
+
+</details>
+
+<details>
+<summary>6.2.6 · 모델 전환 상태 칩 · ↶ 직전</summary>
 
 - 모델 전환: 확장마다 다른 공급자 · 모델(예: 번역만 중계, 나머지는 공식)을 💾 로 칩 하나에 통째로 저장하고, 칩을 누르면 모든 확장을 그 상태로 되돌려요. 「바꾸기」나 칩을 누르기 직전 상태는 「↶ 직전」에 저절로 남아 한 번 더 누르면 제자리예요. 자동으로 찾은 확장은 공급자 · 모델만 돌아와요(반쪽 원 표시).
 - 애드온 버전: 모델 전환 1.1.1 · TTS 1.7.7

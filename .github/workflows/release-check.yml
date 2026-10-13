@@ -67,6 +67,7 @@ jobs:
           node tools/tests/bookmark-excerpts.mjs .
           node tools/tests/bookmark-images.mjs .
           node tools/tests/wi-help-data.mjs .
+          node tools/tests/websearch-mark.mjs .
           node tools/tests/wi-link.mjs .
           node tools/tests/cutout-edge.mjs .
           node tools/tests/numcomma-fit.mjs .

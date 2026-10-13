@@ -10,6 +10,8 @@ import { getTokenCountAsync } from '../../../../../../tokenizers.js';
 import { settings, priceFor } from './state.js';
 import { connectionFor, mergeTokenUsage, quoteRequest, manualPriceForConnection } from './pricing.js';
 import { addEntry, bumpDaily, trimEntries } from './store.js';
+import { webSearchEvidence } from '../../websearch-core.js';
+import { noteWebSearchEvidence } from '../../websearch.js';
 
 // Known paid-work endpoints only; auth, status and ordinary local requests stay unlogged.
 
@@ -300,6 +302,13 @@ export function absorbChunk(json, acc) {
     }
 }
 
+/** 6.2.6 응답 조각에 웹 검색 흔적(server_tool_use web_search 등)이 있으면 적어 둔다 — 답 메시지의 지구 표시(src/websearch.js) */
+function noteWebSearch(json, acc) {
+    if (acc.webSearch) return;
+    const kind = webSearchEvidence(json);
+    if (kind) acc.webSearch = kind;
+}
+
 /** SSE 본문을 한 줄씩 읽는다. `data: {...}` 줄만 JSON으로 본다. */
 async function readStream(body, acc, marks) {
     const reader = body.getReader();
@@ -312,7 +321,9 @@ async function readStream(body, acc, marks) {
         const data = trimmed.slice(5).trim();
         if (!data || data === '[DONE]') return;
         try {
-            absorbChunk(JSON.parse(data), acc);
+            const json = JSON.parse(data);
+            absorbChunk(json, acc);
+            noteWebSearch(json, acc);
         } catch {
             // JSON이 아닌 줄(keep-alive 등)은 넘긴다
         }
@@ -539,6 +550,7 @@ async function watch(nativeFetch, input, init, body, caller=callerFromStack()) {
                     const data=JSON.parse(text);
                     if(!context.model&&typeof data.model==='string')context.model=data.model;
                     absorbChunk(data, acc);
+                    noteWebSearch(data, acc);
                 } catch {
                     acc.text = kind==='text'?text:'';
                 }
@@ -549,6 +561,10 @@ async function watch(nativeFetch, input, init, body, caller=callerFromStack()) {
         }
         // [1.2.3] 끊김 감시 1.1.1 은 멈춘 스트림을 오류가 아니라 "끝"으로 닫고(실리태번이 받은 글을 다 남기게), 끊었다는 표시를
         // 응답 객체의 streamWatchdog 에 남긴다. 복사본은 정상으로 끝나 보이니 그 표시로 끊김을 적는다.
+        // 6.2.6 채팅 생성 응답에 웹 검색 흔적이 있었으면 답 메시지에 지구 표시 (복사본 읽기가 끝난 지금 — 답이 먼저 와 있어도 websearch.js 가 맞춰 붙인다)
+        if (acc.webSearch && context.caller === 'chat') {
+            try { noteWebSearchEvidence(acc.webSearch, { type: context.type }); } catch (error) { console.warn('[요청 로그] 웹 검색 표시', error); }
+        }
         const stall = response?.streamWatchdog;
         if (!failure && stall?.stalled) failure = stall.error ?? new Error('Stream stalled');
         // 스트림이 오류로 끝나는 경우, 이미 받은 글이 있으면 중단으로 본다.
