@@ -289,6 +289,8 @@ html body.salty .ms-actions .menu_button { flex:0 1 auto; height:auto; white-spa
 html body.salty #model-switch-settings .ms-actions .ms-apply { flex:0 1 auto; min-height:36px; padding:7px 12px!important; line-height:1.45; font-weight:inherit; }
 html body.salty :is(.ms-chip b,.ms-target b,.ms-lock b) { font-weight:inherit; }
 html body.salty :is(.ms-chip b,.ms-chip small,.ms-target small) { white-space:normal; overflow-wrap:anywhere; }
+/* 6.3.3 상태 칩 이름은 한 줄 말줄임 — 20자 이름이 위 줄바꿈 규칙으로 3줄이 되어 칩(같은 줄의 칩까지)이 두 배 가까이 컸다 (412 측정 54→97px); 조합 칩처럼 이름 · 요약 두 줄 높이. 특이도(0,4,3)로 위 규칙을 이긴다 (!important 없이) */
+html body.salty .ms-chip.ms-state .ms-state-go > b { max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; overflow-wrap:normal; }
 @container bl-model-switch (width < 24em) {
   html body.salty :is(.ms-row,.ms-form label) { grid-template-columns:minmax(0,1fr); }
 }

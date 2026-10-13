@@ -2,10 +2,11 @@
 // 설정 키(panel_order)와 폴더 이름은 바꾸지 않는다. 고정해 둔 확장과 직접 잡은 순서가 여기 들어 있다.
 import { extension_settings } from '../../../../../../extensions.js';
 import { saveSettingsDebounced } from '../../../../../../../script.js';
+import { normalizeMenuPrefs } from './menu-plan.js';   // 6.3.3 요술봉 숨김 · 고정
 
 export const MODULE = 'panel_order';
 export const FOLDER = 'blue-lemonade';
-export const VERSION = '1.1.7';
+export const VERSION = '1.1.8';
 export const TITLE = '확장 순서';
 
 /**
@@ -25,6 +26,9 @@ const DEFAULTS = Object.freeze({
     pinned: [...DEFAULT_PINNED],
     /** 자동 정렬을 껐을 때 쓰는 사용자 순서 */
     order: [],
+    /** 6.3.3 요술봉(extensionsMenu) 항목 숨김 · 위로 고정 — 키는 menus.js 의 poMenuKey (menuOrders 와 같은 키) */
+    menuHidden: { wand: [] },
+    menuPinned: { wand: [] },
 });
 
 export function settings() {
@@ -66,8 +70,9 @@ export function initSettings() {
     store.order = Array.isArray(store.order) ? cleanKeys(store.order) : [];
     // 고정한 확장은 사용자 순서 목록에 겹쳐 있으면 안 된다 (둘 다 있으면 두 번 세어진다).
     store.order = store.order.filter(key => !store.pinned.includes(key));
+    const prefsChanged = normalizeMenuPrefs(store);   // 6.3.3
     // 고쳐 놓은 것을 적어 둔다. 안 그러면 켤 때마다 같은 수선을 되풀이한다.
-    if (JSON.stringify([store.auto, store.divider, store.twoColumns, store.pinned, store.order]) !== before) saveSettings();
+    if (prefsChanged || JSON.stringify([store.auto, store.divider, store.twoColumns, store.pinned, store.order]) !== before) saveSettings();
     return store;
 }
 

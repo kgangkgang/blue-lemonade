@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "6.3.3";
+export const BUILD_VERSION = "6.3.4";
 export const FILE_HASHES = {
   "index.js": "17384:4de637be:6c351536",
-  "manifest.json": "365:8b92dc4d:ec8432db",
+  "manifest.json": "365:f48af2e4:c3359600",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -71,11 +71,12 @@ export const FILE_HASHES = {
   "src/addons/notes/index.js": "144746:096df406:11e6d734",
   "src/addons/notes/style.css": "81346:37cf955f:07584417",
   "src/addons/notes/version.js": "163:595c82fd:2108a733",
-  "src/addons/order/menus.js": "6736:a39a4310:88e85102",
+  "src/addons/order/menu-plan.js": "3295:9335958e:0ae32376",
+  "src/addons/order/menus.js": "8829:69009ba6:80caf10f",
   "src/addons/order/order.js": "14719:3743ed4b:1ec47a5f",
   "src/addons/order/panel.js": "10064:19d7d118:1246a46b",
-  "src/addons/order/state.js": "3501:a2d4c394:1fea3dfc",
-  "src/addons/order/style.css": "5594:b79c5544:d92f2558",
+  "src/addons/order/state.js": "3867:b1eec918:6f9ad381",
+  "src/addons/order/style.css": "5955:7f206b31:bf2f11ce",
   "src/addons/perf/attribution.js": "4334:19ca4286:c019beee",
   "src/addons/perf/budget.js": "25334:d085c009:8f5edf14",
   "src/addons/perf/capture.js": "31911:610549a9:1eeecf78",
@@ -404,7 +405,7 @@ export const FILE_HASHES = {
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "203725:8c131ee0:f32d4408",
+  "src/notice-data.js": "204108:8467624f:0fc4ddd2",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -479,5 +480,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "34543:a22afe71:9a33c04b",
   "src/wordmask.js": "7487:cc508640:dd5ee3e8",
-  "style.css": "1415918:5870090a:f4a28d68"
+  "style.css": "1416072:a84544d9:7f554261"
 };

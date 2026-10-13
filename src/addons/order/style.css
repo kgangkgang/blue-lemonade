@@ -2,7 +2,7 @@
    index.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이다.
    설정 서랍이 없어서 기댈 우리 요소가 화면에 없으므로 :root 에 둔다. */
 :root {
-    --po-css-version: "1.1.7";
+    --po-css-version: "1.1.8";
 }
 
 /* 확장 서랍 맨 위 버튼 줄의 아이콘 버튼. 옆의 두 버튼과 높이를 맞추고 글자 없이 정사각형에 가깝게. */
@@ -171,3 +171,7 @@
 .po-dialog [data-order-page]>.po-hint{margin:0 0 8px}
 
 @media(max-width:768px){.po-item button{min-width:32px;min-height:32px;width:auto;height:auto}}
+/* 6.3.3 요술봉 항목 숨김 · 고정 — menus.js: 숨김은 class 하나(확장이 inline display 로 켜도 숨김이 이긴다 · 숨기는 쪽의 !important 는 안전), 창에서는 숨긴 줄을 흐리게 */
+#extensionsMenu .po-menu-hidden{display:none!important}
+.po-menu-list .po-item.is-hidden .po-label{opacity:.45}
+.po-hide.is-off{opacity:.45}
