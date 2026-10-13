@@ -511,5 +511,37 @@ await test('6.1.8 a slow translator: the late answer is kept and the next tap re
     assert.equal(L.inTarget('天使', 'ja'), true);
 });
 
+// ---------- 6.3.8 누른 화면 글의 줄임표 (실리태번 마크다운이 '...' 를 '…' 로 그림)
+await test('6.3.8 탭: 화면에 「…」로 그려진 줄도 저장된 화면 글(「...」)과 원문을 찾아 원문으로 읽음 — 원문이 이미 듣는 언어면 옮기지 않음', async () => {
+    reset('ja');
+    settings().text_source = 'original';
+    const mes = message('「おはよう。」 「えっ、いいの？じゃあ……少しだけ。」', { display: '「좋은 아침.」 「어, 괜찮아? 그럼... 조금만.」' });
+    const C = await mod('clickplay.js');
+    const shown = '어, 괜찮아? 그럼… 조금만.';                          // 화면(DOM)에 그려진 글
+    const seg = C.segmentForHit(mes, { kind: 'dialogue', text: shown, raw: shown, quoted: shown, line: 0 });
+    assert.equal(seg.dialogueIndex, 1, '누른 줄 = 화면 글의 둘째 대사');
+    assert.deepEqual(P.lineJobs(0, mes, [seg]).jobs.map(j => j.text), ['えっ、いいの？じゃあ……少しだけ。']);
+    const raw = { kind: 'dialogue', text: shown, raw: shown, color: null, tags: [], speakerHint: null, line: 0 };   // 즉석 조각이어도 재생기가 짝을 찾음
+    const job = P.lineJobs(0, mes, [raw]).jobs[0];
+    assert.equal(job.text, 'えっ、いいの？じゃあ……少しだけ。');
+    assert.equal(job.parts[0].original?.fromDisplay, undefined, '원문 짝이 있으면 표시 없음');
+    assert.equal(API.calls.length, 0, '번역 요청 없음');
+});
+await test('6.3.8 원문 짝이 정말 없는 줄(화면 글에만 있음): 조각에 fromDisplay — 막대 칸 제목은 「화면 글에서 옮겨 읽음」, 짝이 있으면 「지금 읽는 대사의 원문」', async () => {
+    reset('ja');
+    settings().text_source = 'original';
+    const D = await mod('playback-details.js');
+    const mes = message('"Good morning."', { display: '"좋은 아침이에요."  "응."' });   // 화면에만 있는 짧은 한 줄 (번역기가 덧붙임)
+    const only = { kind: 'dialogue', text: '응.', raw: '응.', color: null, tags: [], speakerHint: null, line: 0 };
+    const job = P.lineJobs(0, mes, [only]).jobs[0];
+    assert.equal((job.parts[0].original || job.parts[0].seg).fromDisplay, true);
+    assert.equal(D.playbackOriginalTitle(job), '화면 글에서 옮겨 읽음');
+    const paired = { kind: 'dialogue', text: '좋은 아침이에요.', raw: '좋은 아침이에요.', color: null, tags: [], speakerHint: null, line: 0 };
+    const job2 = P.lineJobs(0, mes, [paired]).jobs[0];
+    assert.equal(D.playbackOriginalTitle(job2), '지금 읽는 대사의 원문');
+    assert.equal((job2.parts[0].original || job2.parts[0].seg).text, 'Good morning.');
+    assert.equal(D.playbackOriginalTitle(null), '지금 읽는 대사의 원문');
+});
+
 console.log(`\ntts-listen: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

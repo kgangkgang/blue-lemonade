@@ -444,8 +444,9 @@ await test('sourceOf · canList · STATUS_SOURCES · KNOWN (새것 먼저 · 중
     assert.ok(LM.KNOWN.claude.includes('claude-opus-5-5'));
     assert.deepEqual(LM.KNOWN.zai.slice(0, 4), ['glm-5.3-prime', 'glm-5.3-flashx', 'glm-5.3-flash', 'glm-5.3']);
     assert.ok(LM.KNOWN.openrouter.includes('mistralai/mistral-large-4-0') && LM.KNOWN.openrouter.includes('x-ai/grok-4.7') && LM.KNOWN.openrouter.includes('cohere/command-a-plus'));
-    assert.equal(LM.KNOWN.makersuite[0], 'gemini-4-argon');   // 2026-10-13 출시
-    assert.equal(LM.KNOWN.vertexai[0], 'gemini-4-argon');
+    // 2026-10-13 Argon 출시 — 목록에는 있되 맨 앞(저장된 모델이 없을 때의 기본)은 예전 그대로
+    assert.deepEqual(LM.KNOWN.makersuite.slice(0, 2), ['gemini-3.8-flash', 'gemini-4-argon']);
+    assert.deepEqual(LM.KNOWN.vertexai.slice(0, 2), ['gemini-3.8-flash', 'gemini-4-argon']);
     // 2026-10-08: 끝났거나 곧 끝나는 이름은 KNOWN 에 없음 (공급자 deprecations 문서)
     const RETIRED = {
         openai: ['o4-mini', 'gpt-4.1-nano', 'o3', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-5.1', 'gpt-5.4-nano', 'gpt-5.3-chat-latest'],
@@ -457,7 +458,7 @@ await test('sourceOf · canList · STATUS_SOURCES · KNOWN (새것 먼저 · 중
     assert.deepEqual(LM.KNOWN.groq, ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'qwen/qwen3.8-27b']);
     assert.deepEqual(LM.KNOWN.xai, ['grok-4.7', 'grok-4.6', 'grok-4.5', 'grok-4.3']);
     assert.equal(LM.KNOWN.mistralai[0], 'mistral-large-4-0');
-    assert.equal(LM.KNOWN.openrouter[0], 'google/gemini-4-argon');   // 2026-10-13 출시 (그 전엔 anthropic/claude-haiku-5.5)
+    assert.deepEqual(LM.KNOWN.openrouter.slice(0, 2), ['anthropic/claude-haiku-5.5', 'google/gemini-4-argon']);   // 기본은 haiku 그대로, Argon 은 바로 다음
     assert.equal(LM.KNOWN.minimax, undefined, 'MiniMax 는 실리태번 화면 목록만 (부풀리지 않음)');
 });
 await test('modelEntries: 채팅 모델만 · 끝난 모델 뺌 · created 큰 것 먼저 · 없으면 이름 속 버전 큰 것 먼저', () => {

@@ -1,1 +1,1 @@
-export const TTS_VERSION = '1.8.0';
+export const TTS_VERSION = '1.8.1';

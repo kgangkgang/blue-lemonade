@@ -59,7 +59,7 @@ import * as listen from './listen.js';   // 1.4.4 듣는 언어
 import { resolveScript, normalizeRows, scriptFingerprint } from './script-store.js';
 import { getSfx, sfxBlob, isSfxEnabled, sfxPreferenceRevision, onSfxPreferenceChange, sfxAttribution, sfxLevelOn, listSfx, isSfxFavorite, resolveSfxId, updateSfx, SFX_LIMITS } from './sfx-library.js';
 import { chipWords, addWord, removeWord, wordFold } from './word-chips.js';   // 6.3.6 효과음 낱말 붙이기 (요술봉 › 낱말)
-import { playbackOriginal, wavWithCredits } from './playback-details.js';
+import { playbackOriginal, playbackOriginalTitle, wavWithCredits } from './playback-details.js';
 import { createSfxController } from './sfx-audio.js';
 import { mixScene } from './scene-mix.js';
 import { paintColorHighlights, clearColorHighlights, piecesOf, speakerColor, colorKey } from './highlight-colors.js';
@@ -393,7 +393,8 @@ function cachedAnalysis(mesId) {
     if (!Number.isInteger(mesId) || !msg(mesId)) return null;
     try { const a = analysis.getAnalysis(mesId); return a && Array.isArray(a.segs) ? a : null; } catch { return null; }
 }
-const normText = (t) => String(t || '').replace(/[\s"“”「」『』«»‘’＂]+/g, '').toLowerCase();
+// 6.3.8 '...' 와 '…'(실리태번 마크다운이 화면에 바꿔 그림) · 줄임표 여럿을 같게 — 누른 화면 글이 원문 짝을 찾게
+const normText = (t) => String(t || '').replace(/\.\.\./g, '…').replace(/[…⋯]+/g, '…').replace(/[\s"“”「」『』«»‘’＂]+/g, '').toLowerCase();
 /**
  * 조각 → 분석 결과 한 줄. 분석의 i 는 원문 대화문 순번.
  * 원문 조각은 (순번, 원문 글)로 analysis.findSeg 에 묻는다 (대사 해시 → 순번; findSeg 가 없으면 개수가 같을 때 순번, 아니면 글 일치).
@@ -2256,9 +2257,10 @@ function clickedPair(src, seg, { lt = '' } = {}) {
         return { pair: { orig: [co], disp: [cd] }, real };
     }
     const miss = !o && !!src.disp;                                        // 번역문이 있는데 원문을 못 찾음 → 화면 글로 읽음 (기록만)
-    if (thought && (o || d)) return { pair: { orig: [named(keep(o || d))], disp: null }, real, miss };
-    if (o || d) { const c = keep(o || d); if (asIs) c.listenAsIs = true; return { pair: { orig: [c], disp: null }, real, miss }; }
-    return { pair: { orig: [seg], disp: null }, real, miss };             // 화면에만 있는 글 (즉석 조각)
+    // 6.3.8 원문 짝을 못 찾아 화면 글로 읽는 조각에 표시 — 막대의 칸 제목이 「원문」이라고 하지 않게 (playbackOriginalTitle)
+    if (thought && (o || d)) { const c = named(keep(o || d)); if (miss) c.fromDisplay = true; return { pair: { orig: [c], disp: null }, real, miss }; }
+    if (o || d) { const c = keep(o || d); if (asIs) c.listenAsIs = true; if (miss) c.fromDisplay = true; return { pair: { orig: [c], disp: null }, real, miss }; }
+    return { pair: { orig: [miss ? { ...seg, fromDisplay: true } : seg], disp: null }, real, miss };             // 화면에만 있는 글 (즉석 조각)
 }
 /**
  * 누른 조각들 → 작업 (엔진 붙이기 전, 조각마다 목록 하나). 탭과 미리 만들기가 같은 길을 쓴다 (캐시 키가 같게).
@@ -2831,6 +2833,7 @@ function buildBar() {
     barEl.details = bar.querySelector('.lv-bar-details');
     barEl.original = bar.querySelector('.lv-bar-original');
     barEl.originalText = barEl.original.querySelector('div');
+    barEl.originalTitle = barEl.original.querySelector('strong');
     barEl.effects = bar.querySelector('.lv-bar-effects');
     barEl.effectList = bar.querySelector('.lv-bar-sfx-list');
     barEl.detailsButton.addEventListener('click', () => { if (barEl.details.hidden) openDetails(); else closeDetails(); });
@@ -2915,6 +2918,7 @@ function syncDetails(job = current) {
     const original = playbackOriginal(job);
     barEl.original.hidden = !original;
     barEl.originalText.textContent = original;
+    if (barEl.originalTitle) barEl.originalTitle.textContent = playbackOriginalTitle(job);   // 6.3.8 원문 짝이 없으면 사실대로
     barEl.effects.hidden = !ids.length;
     barEl.effectList.replaceChildren();
     for (const id of ids) {

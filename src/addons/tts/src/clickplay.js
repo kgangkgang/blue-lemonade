@@ -62,7 +62,8 @@ const LABEL_HEAD = /^.*?\btrue\s+thoughts?\s*[:：]\s*/i;                  // "C
 
 // ---------- 작은 도구
 function sub(text) { try { return substituteParams(String(text || '')); } catch { return String(text || ''); } }
-const fold = (s) => String(s || '').normalize('NFC').replace(/[*_~`\u200b-\u200f\ufeff]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+// 6.3.8 화면은 실리태번 마크다운(showdown ellipsis)이 '...' 를 '…' 로 그린다 — 누른 글(화면)과 저장된 글의 조각을 같게 (줄임표 여럿도 하나로)
+const fold = (s) => String(s || '').normalize('NFC').replace(/\.\.\./g, '…').replace(/[…⋯]+/g, '…').replace(/[*_~`\u200b-\u200f\ufeff]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
 const letters = (s) => (String(s || '').match(/[\p{L}\p{N}]/gu) || []).length;
 function inside(node, root) { for (let n = node; n; n = n.parentNode) if (n === root) return true; return false; }
 function isHidden(el) {

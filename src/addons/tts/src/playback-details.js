@@ -8,6 +8,11 @@ export function playbackOriginal(job) {
     const changed = parts.some(p => comparable(p.original?.text || p.seg?.text || '') !== comparable(p.text ?? job.text));
     return original && changed ? original : '';
 }
+/** 6.3.8 칸 제목: 원문 짝을 못 찾아 화면 글(번역문)을 옮겨 읽는 줄이면 「원문」이라고 하지 않는다 */
+export function playbackOriginalTitle(job) {
+    const fromDisplay = (job?.parts || []).some(p => (p?.original || p?.seg)?.fromDisplay === true);
+    return fromDisplay ? '화면 글에서 옮겨 읽음' : '지금 읽는 대사의 원문';
+}
 /** RIFF INFO comment preserves attribution inside a WAV, including after renaming. */
 export async function wavWithCredits(blob, credits) {
     if (!credits) return blob;

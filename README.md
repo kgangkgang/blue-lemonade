@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.3.7/blue-lemonade-6.3.7.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.3.8/blue-lemonade-6.3.8.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.3.7 · 최신 업데이트</summary>
+<summary>6.3.8 · 최신 업데이트</summary>
+
+- TTS: 대사를 눌러 들을 때 화면의 「…」(점 셋이 바뀐 것) 때문에 원문을 못 찾아 화면 글을 다시 옮겨 읽던 문제를 고쳤어요. 원문을 정말 못 찾은 줄은 「화면 글에서 옮겨 읽음」으로 보여요.
+- 모델을 따로 고르지 않은 번역 · 다시 쓰기 · 한글화 연결의 기본이 6.3.6 부터 Gemini 4 Argon 으로 바뀌던 것을 예전 기본(OpenRouter Claude Haiku 5.5 · Google Gemini 3.8 Flash)으로 되돌렸어요. Argon 은 목록 바로 다음 자리에 그대로 있어요.
+- 애드온 버전: TTS 1.8.1
+
+</details>
+
+<details>
+<summary>6.3.7 · 새 모델 추가 팝업</summary>
 
 - 모델 등록: 업데이트 뒤 테마가 아는 새 모델 가운데 실리태번 목록에 아직 없는 것을 「새 모델을 추가할까요?」 창으로 한 번 보여 줘요. 체크한 채 「추가」를 누르면 그 공급자 모델 목록 맨 위에 바로 나와요 — 이번에는 Gemini 4 Argon · Claude Sonnet 5.5 · Haiku 5.5 · GPT-6.1 Sol · GLM-5.3 들이에요. 이미 등록해 둔 이름은 묻지 않고, 한 번 물어본 이름은 다시 묻지 않아요.
 - 애드온 버전: 모델 등록 1.1.6
