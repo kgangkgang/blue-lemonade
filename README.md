@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.2.5/blue-lemonade-6.2.5.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.2.6/blue-lemonade-6.2.6.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.2.5 · 최신 업데이트</summary>
+<summary>6.2.6 · 최신 업데이트</summary>
+
+- 모델 전환: 확장마다 다른 공급자 · 모델(예: 번역만 중계, 나머지는 공식)을 💾 로 칩 하나에 통째로 저장하고, 칩을 누르면 모든 확장을 그 상태로 되돌려요. 「바꾸기」나 칩을 누르기 직전 상태는 「↶ 직전」에 저절로 남아 한 번 더 누르면 제자리예요. 자동으로 찾은 확장은 공급자 · 모델만 돌아와요(반쪽 원 표시).
+- 애드온 버전: 모델 전환 1.1.1 · TTS 1.7.7
+
+</details>
+
+<details>
+<summary>6.2.5 · 전개 지시 매크로 · 로어북 점 · 에셋 자리 · TTS 다음 한 줄</summary>
 
 - 전개 지시: 항상 지시 · 전개 지시에 쓴 이름 매크로({{char}} 등)가 글자 그대로 AI 에게 가던 것을 고쳤어요. 보내기 직전에 진짜 이름으로 바뀌어요.
 - 로어북: 캐릭터 카드에 연결한 로어북이 빠져 있으면 위쪽 책 아이콘에 빨간 점 하나가 떠요. 글자 · 팝업 없이, 다시 연결하면 사라져요.

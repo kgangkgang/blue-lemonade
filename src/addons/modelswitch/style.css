@@ -1,4 +1,4 @@
-#model-switch-settings{--ms-version:"1.1.0"}
+#model-switch-settings{--ms-version:"1.1.1"}
 #model-switch-settings .inline-drawer-content{display:flex;flex-direction:column;gap:12px;text-align:left}
 .ms-presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
 .ms-presets:empty{display:none}
@@ -94,3 +94,15 @@ dialog.popup :not(.bl-addon-inline-content) > #model-switch-settings .ms-presets
 .bl-addon-inline:has(> .bl-addon-inline-content > #model-switch-settings > .inline-drawer-content > .ms-presets > .ms-chip-add:only-child) { position:relative; }
 .bl-addon-inline:has(> .bl-addon-inline-content > #model-switch-settings > .inline-drawer-content > .ms-presets > .ms-chip-add:only-child) > .bl-inline-title { display:flex; align-items:center; min-height:var(--bl-h-ctl,36px); }
 .bl-addon-inline > .bl-addon-inline-content > #model-switch-settings .ms-presets:has(> .ms-chip-add:only-child) { position:absolute; top:0; right:4px; z-index:1; }
+
+/* ── 1.1.1 상태 칩: 「↶ 직전」 · 저장한 상태 (조합 칩과 같은 결 · 한 줄 요약은 말줄임). 저장한 상태는 칩 안 오른쪽에 × ── */
+#model-switch-settings .ms-states{display:flex;flex-wrap:wrap;gap:8px}
+#model-switch-settings .ms-states:empty{display:none}
+#model-switch-settings .ms-chip.ms-state{flex-direction:row;align-items:stretch;gap:0;padding:0}
+.ms-state-go{display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex:1 1 auto;min-width:0;padding:6px 2px 6px 10px;border:0;border-radius:inherit;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.ms-state-x{flex:none;width:var(--bl-h-icon,34px);padding:0;border:0;border-radius:inherit;background:none;color:inherit;opacity:.6;cursor:pointer}
+#model-switch-settings .ms-states small{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ms-states :is(.fa-layer-group,.fa-rotate-left){opacity:.75}
+.ms-part{margin-left:6px;font-size:.85em;opacity:.75}
+.ms-states :is(.ms-state-go,.ms-state-x,.ms-last):disabled{cursor:default;opacity:.5}
+.ms-actions .ms-snap[hidden]{display:none}

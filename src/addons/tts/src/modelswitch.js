@@ -4,7 +4,7 @@
 // settingsKey · path 를 주면 모델 전환의 자동 찾기가 같은 자리(lemon_voice.analysis)를 두 번 보이지 않는다.
 // 모델 전환이 늦게 뜨면(테마가 뒤에 불러짐 · 나중에 켬): APP_READY · 등록 알림(bl:model-switch-targets) · 몇 번의 시간차 시도.
 //
-// 밖으로: init() · register() · unregister() · target() · read() · apply({ source, model, url })
+// 밖으로: init() · register() · unregister() · target() · read() · apply({ source, model, url }) · stateRead() · stateApply({ source, model, url, mode })
 //
 // 1.2.5 읽을 모델(MiniMax '목소리를 만든 모델')과의 관계: 여기 등록하는 건 대사 분석 LLM 하나뿐이고, TTS 합성 모델(providers.minimax.model =
 // '고른 모델')은 모델 전환의 대상이 아니다 — 모델 전환의 자동 찾기도 음성 모델(speech-… · 경로의 tts/voice)은 채팅 모델이 아니라며 뺀다
@@ -60,6 +60,25 @@ export function apply({ source, model, url } = {}) {
     return true;
 }
 
+/** 모델 전환 1.1.1 상태 칩: 엔진(지금 연결 'st' · 호환 주소 'compat' · API 중 선택 'provider')과 상관없이 API 칸의 공급자 · 모델 + 엔진 값 */
+export function stateRead() {
+    const a = cfg();
+    const source = String(a.provider || '');
+    let model = '';
+    try { model = stapi.modelOf(a, source); } catch { model = isObj(a.provider_models) ? String(a.provider_models[source] || '') : ''; }
+    return { source, model: String(model || ''), url: source === 'custom' ? String(a.custom_url || '') : '', mode: typeof a.engine === 'string' ? a.engine : '' };
+}
+/** 상태 칩으로 되돌리기: 공급자 · 모델은 apply 그대로(엔진은 API 중 선택이 됨), 그다음 엔진만 원래 값으로 (지금 연결 · 호환 주소였으면) */
+export function stateApply({ source, model, url, mode } = {}) {
+    if (source && model) apply({ source, model, url });
+    const a = cfg();
+    if (typeof mode !== 'string' || mode === 'provider' || a.engine === mode) return true;
+    if (mode) a.engine = mode; else delete a.engine;
+    save();
+    try { document.dispatchEvent(new CustomEvent('tts:analysis', { detail: { source: String(a.provider || '') } })); } catch { /* 화면이 없음 (테스트) */ }
+    return true;
+}
+
 /** 6.1.8 「검열되면 다른 모델로」의 지금 모델 — 안 골랐으면 { follow: '안 씀' } */
 export function readFallback() {
     const fb = isObj(cfg().fallback) ? cfg().fallback : {};
@@ -95,6 +114,8 @@ export function target() {
         path: 'analysis',
         read,
         apply,
+        stateRead,
+        stateApply,
     };
 }
 

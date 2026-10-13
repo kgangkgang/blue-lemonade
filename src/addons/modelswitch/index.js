@@ -10,8 +10,9 @@ import { SOURCES } from '../models/sources.js';
 import * as LM from '../../live-models.js';
 import { listTargets, supports, registry, discoverTargets, modelOptions, hasModelList, listUrlOf, fetchBlock, refreshModels, autoModels } from './targets.js';
 import { setLocks, withoutLock } from './lock.js';
+import { MAX_STATES, entryOf, captureState, changedSince, planRestore, isCurrent, runRestore, limited, summary, keepStates } from './state.js';
 
-const VERSION = '1.1.0';
+const VERSION = '1.1.1';
 const MAX_PRESETS = 8;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const label = source => SOURCES.find(s => s.id === source)?.label || source;
@@ -29,11 +30,14 @@ function store() {
     // 예전에 받아 둔 Custom 주소별 목록 — 이제 읽기만 한다 (새 목록은 이 브라우저의 localStorage, live-models.js)
     if (!s.lists || typeof s.lists !== 'object' || Array.isArray(s.lists)) s.lists = {};
     s.lock = s.lock === true;
-    return s;
+    // 1.1.1 상태 칩 (states ≤8 · 「↶ 직전」 last) — state.js
+    return keepStates(s);
 }
 
 // 아는 확장은 처음부터 켜 두고, 자동으로 찾은 확장(1.0.5: 켜진 모든 확장의 소스로 찾음)은 직접 켤 때까지 건드리지 않는다
 const isOn = target => store().targets[target.id] ?? !(target.auto || target.defaultOff);   // 6.1.8 defaultOff: 스스로 등록한 대상이 처음엔 꺼 두길 원함 (TTS 「검열되면 다른 모델로」)
+// 1.1.1 상태 칩에 담는 대상: 체크와 상관없이 전부 (번역만 따로 두는 식의 섞인 상태가 이 칩의 뜻) — 다만 자동으로 찾은 확장 · 처음엔 꺼 두는 확장은 직접 켰을 때만
+const inState = target => !(target.auto || target.defaultOff) || store().targets[target.id] === true;
 
 // 잠금: 체크한 확장 중 우리가 화면까지 아는 것(번역 · 장기 기억 · 다시 쓰기)만 그 확장 화면에서 못 바꾸게 한다
 function syncLocks() {
@@ -84,6 +88,7 @@ function render() {
     root.querySelector('.ms-presets').innerHTML = s.presets.map((p, i) => `<button type="button" class="ms-chip ${i === active ? 'on' : ''}" data-preset="${i}"><b>${esc(p.name)}</b><small>${esc(p.model)}</small></button>`).join('')
         + (s.presets.length < MAX_PRESETS ? '<button type="button" class="ms-chip ms-chip-add" data-act="save" aria-label="지금 조합 저장"><i class="fa-solid fa-plus"></i></button>' : '');
     root.querySelector('[data-act="remove"]').hidden = active < 0;
+    renderStates(s, targets);
     const select = root.querySelector('[data-field="source"]');
     if (!select.options.length) select.innerHTML = SOURCES.map(x => `<option value="${esc(x.id)}">${esc(x.label)}</option>`).join('');
     select.value = d.source;
@@ -113,6 +118,22 @@ function render() {
     root.querySelector('[role=status]').textContent = note;
 }
 
+// 1.1.1 상태 칩: 「↶ 직전」(바꾸기 · 칩을 누르기 직전 상태, 저절로) + 저장한 상태. 누르면 바로 모든 대상을 그 상태로 (state.js).
+// 반쪽 원 = 공급자 · 모델만 되돌리는 대상이 있음 (자동으로 찾은 확장 · 연결 방식을 모르는 확장이 따름이던 줄)
+function renderStates(s, targets) {
+    const part = items => limited(items) ? '<i class="fa-solid fa-circle-half-stroke ms-part" role="img" aria-label="공급자 · 모델만"></i>' : '';
+    const off = busy ? ' disabled' : '';
+    const last = s.last ? `<button type="button" class="ms-chip ms-last" data-state="last"${off}><b><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> 직전${part(s.last.items)}</b><small>${esc(summary(s.last.items))}</small></button>` : '';
+    root.querySelector('.ms-states').innerHTML = last + s.states.map((state, i) => `<div class="ms-chip ms-state ${isCurrent(state.items, targets) ? 'on' : ''}"><button type="button" class="ms-state-go" data-state="${i}"${off}><b><i class="fa-solid fa-layer-group" aria-hidden="true"></i> ${esc(state.name)}${part(state.items)}</b><small>${esc(summary(state.items))}</small></button><button type="button" class="ms-state-x" data-state-del="${i}" aria-label="${esc(state.name)} 지우기"${off}><i class="fa-solid fa-xmark"></i></button></div>`).join('');
+    const snap = root.querySelector('[data-act="snap"]');
+    snap.hidden = s.states.length >= MAX_STATES; snap.disabled = busy;
+}
+
+/** 「↶ 직전」에 남긴다 — 실제로 바뀐 대상만, 바꾸기 전 상태로 (바뀐 게 없으면 예전 「직전」 그대로) */
+function remember(items) {
+    if (Object.keys(items).length) store().last = { at: Date.now(), items };
+}
+
 async function applyNow() {
     if (busy) return;
     const s = store(), d = { source: s.draft.source, model: s.draft.model.trim(), url: (s.draft.url || '').trim().replace(/\/+$/, '') };
@@ -120,10 +141,11 @@ async function applyNow() {
     busy = true; note = '바꾸는 중…'; render();
     // 자동 찾기가 느린 서버에서 멈춰도 아는 확장은 바꾼다 (3초까지만 기다림)
     await Promise.race([discoverTargets().catch(() => {}), new Promise(resolve => setTimeout(resolve, 3000))]);
-    const done = [], partial = [], skipped = [], touched = [];
+    const done = [], partial = [], skipped = [], touched = [], before = [];
     for (const target of listTargets()) {
         if (!isOn(target)) continue;
         if (!supports(target, d.source)) { skipped.push(target.name); continue; }
+        before.push([target, entryOf(target)]);   // 1.1.1 「↶ 직전」
         try {
             await withoutLock(() => target.apply(d));
             if (target.auto) touched.push(target);
@@ -136,6 +158,7 @@ async function applyNow() {
             else done.push(target.name);
         } catch (error) { console.error('[Blue Lemonade] 모델 전환', target.id, error); skipped.push(target.name); }
     }
+    remember(changedSince(before));
     saveSettingsDebounced();
     // 자동으로 찾은 확장은 화면을 다시 그리라고 알릴 길이 이 이벤트뿐 (registry 주석 참고)
     for (const target of touched) window.dispatchEvent(new CustomEvent('st:model-switch-applied', { detail: { settingsKey: target.settingsKey, path: target.path } }));
@@ -156,12 +179,67 @@ async function savePreset() {
     saveSettingsDebounced(); note = ''; render();
 }
 
+// 1.1.1 지금 상태 저장: 대상마다 지금 공급자 · 모델(아는 확장은 연결 방식까지)을 누른 순간 그대로 — 이름만 묻는다 (같은 이름이면 덮어씀).
+// 찾기를 기다리는 동안 · 이름 창이 열린 동안은 busy — 두 번 눌러도 창은 하나, 그 사이에 바꾸기 · 칩 누름이 끼지 않는다 (바꾸기 · 상태 칩과 같은 규칙)
+async function saveState() {
+    if (busy || store().states.length >= MAX_STATES) return;
+    busy = true; render();
+    try {
+        await Promise.race([discoverTargets().catch(() => {}), new Promise(resolve => setTimeout(resolve, 3000))]);
+        const items = captureState(listTargets(), inState);
+        if (!Object.keys(items).length) { note = '저장할 확장이 없어요'; return; }
+        const used = new Set(store().states.map(state => state.name));
+        let n = used.size + 1; while (used.has(`상태 ${n}`)) n++;
+        const name = await callGenericPopup('이 상태의 이름', POPUP_TYPE.INPUT, used.has('평소') ? `상태 ${n}` : '평소');
+        if (typeof name !== 'string' || !name.trim()) return;
+        const state = { name: name.trim().slice(0, 20), items };
+        const list = store().states, same = list.findIndex(x => x.name === state.name);
+        if (same >= 0) list[same] = state; else if (list.length < MAX_STATES) list.push(state); else return;
+        saveSettingsDebounced(); note = `「${state.name}」 저장 · ${Object.keys(items).length}개`;
+    } finally { busy = false; render(); }
+}
+
+// 1.1.1 상태 칩 누름: 바로 모든 대상을 그 상태로 (지금과 같은 대상은 안 씀 · 쓰는 순서는 각 대상의 apply 그대로).
+// 누르기 직전 상태는 「↶ 직전」으로 — 「직전」을 누르면 그 전으로 돌아가고, 한 번 더 누르면 제자리
+async function applyState(which) {
+    if (busy) return;
+    const s = store(), state = which === 'last' ? s.last : s.states[Number(which)];
+    if (!state?.items) return;
+    const title = which === 'last' ? '직전' : state.name;
+    busy = true; note = '되돌리는 중…'; render();
+    await Promise.race([discoverTargets().catch(() => {}), new Promise(resolve => setTimeout(resolve, 3000))]);
+    let result = { done: [], partial: [], failed: [], before: {}, touched: [] };
+    try { result = await runRestore(planRestore(state.items, listTargets()), job => withoutLock(job), (target, error) => console.error('[Blue Lemonade] 모델 전환', target.id, error)); }
+    catch (error) { console.error('[Blue Lemonade] 모델 전환', error); }
+    remember(result.before);
+    saveSettingsDebounced();
+    for (const target of result.touched) if (target.auto) window.dispatchEvent(new CustomEvent('st:model-switch-applied', { detail: { settingsKey: target.settingsKey, path: target.path } }));
+    busy = false;
+    const { done, partial, failed, same } = result;
+    // 바뀐 것 없이 같은 칩을 다시 누름 = 돌아올 수 있는 대상은 모두 그 상태 (못 돌리는 대상만 남았을 수 있다)
+    const retap = !done.length && !partial.length && same > 0;
+    note = [retap ? `이미 「${title}」 상태예요` : '', done.length ? `${done.join(' · ')} → 「${title}」` : '', partial.length ? `공급자 · 모델만: ${partial.join(' · ')}` : '', failed.length ? `못 바꿈: ${failed.join(' · ')}` : ''].filter(Boolean).join(' / ');
+    // 된 것은 칩 불빛 · 대상 줄 · 상태 줄로 보인다 — 알림은 못 바꾼 대상이 있을 때만 (상태 줄이 화면 밖일 수 있어서).
+    // 다시 누름이면 상태 줄만: 못 돌리는 대상(연결 방식을 모르는 확장이 따름이던 줄 · 없어진 확장)은 누를 때마다 같아서 경고를 되풀이하지 않는다
+    if (failed.length && !retap) globalThis.toastr?.warning(note, '모델 전환');
+    render();
+}
+
+async function deleteState(index) {
+    const state = store().states[index];
+    if (!state || busy || !await callGenericPopup(`「${esc(state.name)}」 지울까요?`, POPUP_TYPE.CONFIRM)) return;
+    const list = store().states, at = list.indexOf(state);
+    if (at >= 0) list.splice(at, 1);
+    saveSettingsDebounced(); note = ''; render();
+}
+
 function mount() {
     if (root) return;
     root = document.createElement('div'); root.id = 'model-switch-settings'; root.className = 'inline-drawer';
     root.innerHTML = `<div class="inline-drawer-toggle inline-drawer-header"><b><i class="fa-solid fa-shuffle" aria-hidden="true"></i> 모델 전환 <span class="ext-version">v${VERSION}</span></b><div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div></div>
 <div class="inline-drawer-content">
   <div class="ms-presets"></div>
+  <div class="ms-states"></div>
   <div class="ms-form">
     <label><span>공급자</span><select class="text_pole" data-field="source"></select></label>
     <div class="ms-row"><span>모델</span><span class="ms-model"><input class="text_pole" data-field="model" autocomplete="off" spellcheck="false" aria-label="모델"><button type="button" class="ms-icon" data-act="fetch" aria-label="모델 목록 불러오기" hidden><i class="fa-solid fa-rotate"></i></button><button type="button" class="ms-icon" data-act="pick" aria-label="모델 고르기" aria-expanded="false"><i class="fa-solid fa-chevron-down"></i></button></span></div>
@@ -170,7 +248,7 @@ function mount() {
   </div>
   <div class="ms-targets"></div>
   <label class="ms-lock"><input type="checkbox" data-lock><span><b><i class="fa-solid fa-lock" aria-hidden="true"></i> 잠금</b><small>각 확장 화면에서는 못 바꾸게 · 자동은 제외</small></span></label>
-  <div class="ms-actions"><button type="button" class="menu_button ms-apply" data-act="apply"><i class="fa-solid fa-shuffle"></i> 바꾸기</button><button type="button" class="menu_button ms-invert" data-act="invert" aria-label="체크 반전"><i class="fa-solid fa-right-left"></i></button><button type="button" class="menu_button ms-remove" data-act="remove" aria-label="이 조합 지우기" hidden><i class="fa-solid fa-trash-can"></i></button></div>
+  <div class="ms-actions"><button type="button" class="menu_button ms-apply" data-act="apply"><i class="fa-solid fa-shuffle"></i> 바꾸기</button><button type="button" class="menu_button ms-invert" data-act="invert" aria-label="체크 반전"><i class="fa-solid fa-right-left"></i></button><button type="button" class="menu_button ms-snap" data-act="snap" aria-label="지금 상태 저장"><i class="fa-solid fa-floppy-disk"></i></button><button type="button" class="menu_button ms-remove" data-act="remove" aria-label="이 조합 지우기" hidden><i class="fa-solid fa-trash-can"></i></button></div>
   <p class="ms-status" role="status"></p>
 </div>`;
     holder.append(root);
@@ -193,6 +271,9 @@ function mount() {
     });
     root.addEventListener('click', event => {
         const chip = event.target.closest('[data-preset]'), pull = event.target.closest('[data-pull]'), act = event.target.closest('[data-act]')?.dataset.act;
+        const stateDel = event.target.closest('[data-state-del]'), stateGo = event.target.closest('[data-state]');
+        if (stateDel) { deleteState(Number(stateDel.dataset.stateDel)); return; }
+        if (stateGo) { applyState(stateGo.dataset.state); return; }
         if (pull) {
             event.preventDefault();
             const now = listTargets().find(target => target.id === pull.dataset.pull)?.read();
@@ -214,6 +295,7 @@ function mount() {
         // 체크 반전 (사용자 10-12 「선택된 상태로 반전 선택 가능하게 — 누르면 안 선택한 애들 선택되고 선택한 애 안 선택되게」): 지금 보이는 확장만 뒤집는다
         else if (act === 'invert') { const s = store(); for (const target of listTargets()) s.targets[target.id] = !isOn(target); note = ''; saveSettingsDebounced(); syncLocks(); render(); }
         else if (act === 'save') savePreset();
+        else if (act === 'snap') saveState();
         else if (act === 'remove') {
             const s = store(), d = s.draft;
             s.presets = s.presets.filter(p => !(p.source === d.source && p.model === d.model && (p.url || '') === (d.url || '')));

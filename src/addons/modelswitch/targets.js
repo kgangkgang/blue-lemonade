@@ -21,6 +21,25 @@ function ownObject(parent, key, fallback) {
     return parent[key];
 }
 
+// 직접 연결 칸의 공급자 · 모델 · 주소 (연결 방식과 상관없이) — read 와 상태 칩(stateRead)이 같이 쓴다
+function translatorFields(s) {
+    const provider = String(s.llm_provider || '');
+    const model = s.llm_model === 'custom' ? String(s.custom_models?.[provider] || '') : String(s.llm_model || '');
+    return { source: fromGoogle(provider), model, url: provider === 'custom' ? String(s.custom_url || '') : '' };
+}
+// 다시 쓰기 · 캐릭터 에셋(같은 칸: provider · models · customModels · customUrl)
+function rewriteFields(s) {
+    const provider = String(s.provider || '');
+    const picked = String(s.models?.[provider] || '');
+    return { source: fromGoogle(provider), model: picked === 'custom' ? String(s.customModels?.[provider] || '') : picked, url: provider === 'custom' ? String(s.customUrl || '') : '' };
+}
+function memoryFields(s) {
+    const d = isObj(s.direct) ? s.direct : {}, source = String(d.source || '');
+    const picked = String(d.models?.[source] || '');
+    return { source, model: picked === 'custom' ? String(d.customModels?.[source] || '') : picked, url: source === 'custom' ? String(d.customUrl || '') : '' };
+}
+const promptFields = s => ({ source: fromGoogle(s.provider), model: s.model === '__custom__' ? s.customModelName || '' : s.model || '', url: s.provider === 'custom' ? s.customUrl || '' : '' });
+
 const translator = {
     id: 'translator', name: '번역', folder: 'llm-translator-custom', sources: NARROW,
     builtin: () => !!extension_settings.salty?.addons?.translator,
@@ -29,9 +48,7 @@ const translator = {
         const s = this.settings();
         if (!isObj(s)) return null;
         if (s.connection_mode !== 'direct') return { follow: '지금 연결' };
-        const provider = String(s.llm_provider || '');
-        const model = s.llm_model === 'custom' ? String(s.custom_models?.[provider] || '') : String(s.llm_model || '');
-        return { source: fromGoogle(provider), model, url: provider === 'custom' ? String(s.custom_url || '') : '' };
+        return translatorFields(s);
     },
     apply({ source, model, url }) {
         const s = this.settings(), provider = toGoogle(source);
@@ -57,9 +74,7 @@ const rewrite = {
         const s = this.settings();
         if (!isObj(s)) return null;
         if (s.connection !== 'direct') return { follow: s.connection === 'profile' ? '연결 프로필' : '지금 연결' };
-        const provider = String(s.provider || '');
-        const picked = String(s.models?.[provider] || '');
-        return { source: fromGoogle(provider), model: picked === 'custom' ? String(s.customModels?.[provider] || '') : picked, url: provider === 'custom' ? String(s.customUrl || '') : '' };
+        return rewriteFields(s);
     },
     apply({ source, model, url }) {
         const s = this.settings(), provider = toGoogle(source);
@@ -81,9 +96,7 @@ const memory = {
         const s = this.settings();
         if (!isObj(s)) return null;
         if (s.apiMode !== 'direct') return { follow: s.apiMode === 'custom' ? '주소 직접' : '연결 프로필' };
-        const d = isObj(s.direct) ? s.direct : {}, source = String(d.source || '');
-        const picked = String(d.models?.[source] || '');
-        return { source, model: picked === 'custom' ? String(d.customModels?.[source] || '') : picked, url: source === 'custom' ? String(d.customUrl || '') : '' };
+        return memoryFields(s);
     },
     async apply({ source, model, url }) {
         const s = this.settings();
@@ -108,7 +121,7 @@ const prompt = {
     read() {
         const s = this.settings();
         if (s.connectionMode !== 'direct') return { follow: s.connectionMode === 'profile' ? '연결 프로필' : '지금 연결' };
-        return { source: fromGoogle(s.provider), model: s.model === '__custom__' ? s.customModelName || '' : s.model || '', url: s.provider === 'custom' ? s.customUrl || '' : '' };
+        return promptFields(s);
     },
     apply({ source, model, url }) {
         const s = this.settings();
@@ -127,9 +140,7 @@ const assets = {
         if (!isObj(s)) return null;
         if (!s.enabled) return { follow: '꺼짐 (본문 모델이 씀)' };
         if (s.connection !== 'direct') return { follow: s.connection === 'profile' ? '연결 프로필' : '지금 연결' };
-        const provider = String(s.provider || '');
-        const picked = String(s.models?.[provider] || '');
-        return { source: fromGoogle(provider), model: picked === 'custom' ? String(s.customModels?.[provider] || '') : picked, url: provider === 'custom' ? String(s.customUrl || '') : '' };
+        return rewriteFields(s);
     },
     apply({ source, model, url }) {
         const s = this.settings(), provider = toGoogle(source);
@@ -140,6 +151,35 @@ const assets = {
         window.dispatchEvent(new Event('bl:assets-pick-changed'));
     },
 };
+
+// 1.1.1 상태 칩 (state.js): 아는 확장은 연결 방식 칸까지 저장하고 되돌린다 — 따름(지금 연결 · 프로필 …)이던 확장도 그대로 돌아온다.
+// stateRead = 연결 방식과 상관없이 직접 연결 칸의 공급자 · 모델 · 주소 + 연결 방식 값(mode).
+// stateApply = 공급자 · 모델은 apply 그대로(모델 먼저 → 공급자 change 나중), 그다음 연결 방식만 원래 값으로 (직접이면 apply 가 이미 넣음)
+function withState(target, key, fields, redraw) {
+    target.stateRead = function () {
+        const s = this.settings();
+        return isObj(s) ? { ...fields(s), mode: typeof s[key] === 'string' ? s[key] : '' } : null;
+    };
+    target.stateApply = async function ({ source, model, url, mode }) {
+        if (source && model) await this.apply({ source, model, url });
+        const s = this.settings();
+        if (!isObj(s) || typeof mode !== 'string' || mode === 'direct' || s[key] === mode) return;
+        if (mode) s[key] = mode; else delete s[key];   // '' = 원래 비어 있던 칸 (확장이 제 기본값을 씀)
+        await redraw(mode);
+    };
+}
+const segValue = mode => /^[\w-]{1,32}$/.test(mode) ? mode : '';
+// 번역 화면은 직접 / 지금 연결 둘뿐 — change 가 설정을 그 값으로 맞춘다
+withState(translator, 'connection_mode', translatorFields, mode => { if (hasDom('#llm_connection_mode')) $('#llm_connection_mode').val(mode === 'direct' ? 'direct' : 'current').trigger('change'); });
+withState(rewrite, 'connection', rewriteFields, mode => { const v = segValue(mode); if (v && hasDom('#bwr_connection')) $(`#bwr_connection .bwr_seg[data-value="${v}"]`).trigger('click'); });
+// 연결 방식만 바꾼 뒤에도 그 확장 창을 다시 그린다 — memory.apply 끝과 같은 길 (폴더는 memory.folder)
+withState(memory, 'apiMode', memoryFields, async () => {
+    const at = file => new URL(`../../../../${memory.folder}/${file}`, import.meta.url).href;
+    try { (await import(at('panel-loader.js')).catch(() => import(at('panel.js')))).refreshPanel?.(); } catch { /* 다음에 열 때 반영 */ }
+});
+withState(prompt, 'connectionMode', promptFields, () => window.dispatchEvent(new Event('bl:prompt-connection-changed')));
+withState(assets, 'connection', rewriteFields, () => window.dispatchEvent(new Event('bl:assets-pick-changed')));
+
 const KNOWN = [translator, prompt, memory, rewrite, assets];
 const KNOWN_KEYS = new Set(['llm-translator-custom', 'prompt-panel', 'memoria', 'ban_word_rewrite', 'esetham', 'model_switch', 'model_register', 'salty']);
 const registered = new Map();
@@ -147,7 +187,9 @@ const registered = new Map();
 /** 다른 확장이 스스로 등록하는 길: globalThis[Symbol.for('st.model-switch.v1')].register({ id, name, read, apply, sources?, settingsKey?, path? })
  *  settingsKey(+path)를 주면 그 설정 자리는 자동 찾기에서 뺀다 (같은 연결이 두 번 나오지 않게). path 는 'a.b' 또는 ['a','b'].
  *  자동으로 찾은 자리를 바꾼 뒤에는 window 에 'st:model-switch-applied' (detail { settingsKey, path }) 를 보낸다 —
- *  설정 화면이 열려 있는 확장은 이걸 받아 다시 그리면 된다 (폼 전체를 저장하는 확장이 예전 값으로 되돌리지 않게). */
+ *  설정 화면이 열려 있는 확장은 이걸 받아 다시 그리면 된다 (폼 전체를 저장하는 확장이 예전 값으로 되돌리지 않게).
+ *  1.1.1 상태 칩: stateRead() → { source, model, url, mode } · stateApply({ source, model, url, mode }) 를 함께 주면 연결 방식까지 되돌린다
+ *  (없으면 공급자 · 모델만 — 따름이던 상태는 그대로 못 돌린다). */
 export const registry = {
     register(target) {
         if (!target || typeof target.id !== 'string' || typeof target.read !== 'function' || typeof target.apply !== 'function') return false;

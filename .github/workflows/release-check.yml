@@ -77,6 +77,7 @@ jobs:
           node tools/tests/rewrite-models.mjs .
           node tools/tests/prompt-models.mjs .
           node tools/tests/modelswitch-models.mjs .
+          node tools/tests/modelswitch-state.mjs .
           node tools/tests/update-check.mjs .
           node tools/tests/translation-cache-loading.mjs .
           node tools/tests/translation-segments.mjs .
