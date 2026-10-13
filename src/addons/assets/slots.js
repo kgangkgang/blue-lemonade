@@ -157,13 +157,17 @@ export function markedReply(text, ids) {
  * 고르는 모델에게 보내는 글. rules = 사용자의 그림 규칙(본문 모델용이던 글 — 목록 매크로 자리는 아래 목록을 가리키게), list = 켜진 그림 이름들.
  * @returns {{ role: string, content: string }[]}
  */
-export function pickPrompt({ rules = '', list = '', reply = '', count = 1, previous = '', character = '' }) {
+export function pickPrompt({ rules = '', list = '', reply = '', count = 1, previous = '', character = '', names = '', persona = '' }) {
     const n = Math.max(1, Number(count) || 1);
     const markers = n === 1 ? 'one marker, [ASSET 1],' : `${n} markers, [ASSET 1] to [ASSET ${n}],`;
     const system = [
         'You pick character images for a finished roleplay reply. You do NOT write, continue or change the story.',
         `The reply contains ${markers} each placed right before a paragraph (usually a line of dialogue).`,
-        'For each marker, choose the one image from <available_images> that best fits the paragraph right after it: who speaks or acts there, their expression and the mood. If no image clearly fits, answer none.',
+        'For each marker, choose the one image from <available_images> that best fits the paragraph right after it: the character from <available_images> who speaks, acts or reacts there, with the expression and mood of that moment.',
+        // 6.4.1 자리를 채운다 (사용자: 최대 4장인데 1장) — 같은 인물이 이어 말해도 다른 표정으로 · 말하는 사람 그림이 없으면 그 장면의 듣는 · 반응하는 인물
+        'Give every marker an image while a character from <available_images> is in the scene. The same character may appear at several markers with different expressions. If the speaker has images, pick the speaker. If the speaker has no images, pick the character from <available_images> they talk to or who reacts. Answer none only when no character from <available_images> is in that moment.',
+        // 6.4.1 내 캐릭터(페르소나 — 실행 때 이름): 그 사람 그림이 목록에 있으면 그것, 없으면 듣는 · 반응하는 인물 (사용자 10-13 결정)
+        ...(String(persona || '').trim() ? [`The user's own character is ${String(persona).trim().replace(/[\r\n]+/g, ' ')}. When they speak, pick one of their images if <available_images> has any; otherwise pick the character from <available_images> who listens or reacts in that moment.`] : []),
         'Use only exact file names from <available_images>, including the extension. Do not invent, shorten or modify names. Do not pick the same image twice in this reply.',
         'The rules in <image_rules> were written for the story writer. Follow what they say about which images suit which moments; ignore anything about where to put tags, how to write them or how many to use.',
         '',
@@ -175,8 +179,12 @@ export function pickPrompt({ rules = '', list = '', reply = '', count = 1, previ
         String(list || '').trim(),
         '</available_images>',
         '',
+        // 6.3.x 그림 주인의 다른 표기 (영 · 한 · 일) — 글이 일본어 · 한국어 이름을 써도 같은 주인의 그림을 고르게. 표기가 없으면 예전과 같은 글
+        ...(String(names || '').trim() ? ['The reply may write a name in English, Korean or Japanese. <name_spellings> lists the spellings of each image owner.', '<name_spellings>', String(names).trim(), '</name_spellings>', ''] : []),
         `Answer with exactly ${n} line${n === 1 ? '' : 's'}, one per marker in order, and nothing else:`,
-        ...Array.from({ length: n }, (_, i) => `${i + 1}: ${i === 0 ? 'filename.ext' : 'none'}`),
+        ...Array.from({ length: n }, (_, i) => `${i + 1}: filename.ext`),
+        // 6.4.1 예시의 2번~ 'none' 이 비우라고 부추겼다 — 예시는 모두 파일 이름, none 은 그 아래 한 줄로만
+        'Write none in place of a file name only when no character from <available_images> is in that moment.',
     ].join('\n');
     const prev = stripSlots(previous).trim();
     const user = [

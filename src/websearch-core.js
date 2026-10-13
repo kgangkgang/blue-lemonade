@@ -224,12 +224,33 @@ export function stemKorean(word) {
 }
 
 /** 찾을 열쇠: 낱말 그대로 + 조사를 뗀 것 (소문자, 2자 이상, 중복 없이) */
-export function searchKeys(word) {
+// 6.3.x 일본어: 띄어쓰기가 없어 꾹 누른 「낱말」이 경칭 · 조사 · 문장까지 붙는다 — 끝의 경칭 · 조사를 뗀 말, 가타카나 덩이(이름)도 열쇠로
+// 경칭 · 조사는 한자 · 가타카나 뒤에서만 뗀다 — 히라가나 낱말(かえで · きっと)의 끝 글자를 조사로 떼지 않게
+const JA_TAIL = /(?<=[\p{Script=Han}ァ-ヺー])(?:様|さま|さん|くん|君|ちゃん|殿|先輩|先生|は|が|の|を|に|へ|と|も|や|で|から|まで|より)+$/u;
+const KATAKANA_RUN = /[ァ-ヺー]{2,}/gu;
+/** 찾을 열쇠 (소문자). aliasesOf: 이름의 다른 표기(영 · 한 · 일 — 이름 다리)를 주는 함수 — 없으면 예전 열쇠만.
+ *  at: 낱말 안에서 누른 자리 — 주면 그 자리의 가타카나 덩이만 열쇠로 (일본어 「낱말」은 문장 한 토막이라 다른 데 있는 외래어 · 이름으로 찾지 않게) */
+export function searchKeys(word, { aliasesOf, at } = {}) {
     const w = str(word).trim();
-    const out = [];
-    for (const k of [w, stemKorean(w)]) {
-        const low = k.toLowerCase();
-        if (low.length >= MIN_WORD && !out.includes(low)) out.push(low);
+    const out = [], forms = [];
+    const add = k => {
+        const form = str(k).trim(), low = form.toLowerCase();
+        if (low.length >= MIN_WORD && !out.includes(low)) { out.push(low); forms.push(form); }
+    };
+    for (const k of [w, stemKorean(w)]) add(k);
+    add(w.replace(JA_TAIL, ''));
+    for (const m of w.matchAll(KATAKANA_RUN)) {
+        if (!/[ァ-ヺ]/u.test(m[0])) continue;                                                  // 'ーー' 처럼 늘임표만인 덩이는 낱말이 아니다
+        if (Number.isFinite(at) && (at < m.index || at > m.index + m[0].length)) continue;   // 누른 덩이만
+        add(m[0]);
+    }
+    if (typeof aliasesOf === 'function') {
+        for (const k of [...forms]) {
+            if (/^\p{Ll}/u.test(k)) continue;   // 소문자로 시작하는 라틴 낱말(it · scale)은 이름이 아니다 — 다리의 이름꼴 규칙
+            let more = [];
+            try { more = aliasesOf(k) || []; } catch { more = []; }
+            for (const a of Array.isArray(more) ? more : []) add(a);
+        }
     }
     return out;
 }
@@ -239,8 +260,8 @@ export function blockLabel(block) {
 }
 
 /** 낱말이 든 블록의 이름표 (종류 순서, 같은 이름표는 한 번, 최대 max) */
-export function findOrigins(blocks, word, max = MAX_LABELS) {
-    const keys = searchKeys(word);
+export function findOrigins(blocks, word, max = MAX_LABELS, options = {}) {
+    const keys = searchKeys(word, options);
     const labels = [];
     if (!keys.length || !Array.isArray(blocks)) return labels;
     for (const block of blocks) {

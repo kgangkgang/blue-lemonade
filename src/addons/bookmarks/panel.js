@@ -12,6 +12,7 @@ import { confirmSheet, openSheet } from './ui-kit.js';
 import { openNoteEditor, openMessageEditor, openContextViewer, confirmDeleteBookmark, enterPreview, isPreviewing, openTranslationEditor, confirmClearTranslation } from './viewers.js';
 import { hasTranslator, hasTranslation, isShowingOriginal, translateMessage, restoreTranslation } from './translate.js';
 import { renderSettingsPage, disposeSettingsPage } from './settings-view.js';
+import { nameAliases } from '../../name-aliases.js';   // 6.3.x 찾는 말이 이름이면 다른 표기(영 · 한 · 일)로도
 
 const view = {
     root: null,
@@ -369,16 +370,18 @@ function visibleBookmarks(record) {
     // 116자가 남는다(로마 숫자 Ⅰ Ⅱ Ⅲ 는 Nl, 원문자 Ⓐ 는 So, ǅ 는 Lt — 한자 키로 실제로 쳐진다).
     // 아래 식은 구멍 0자이면서 건너뛰는 글자 수는 /[a-z]/i 와 똑같다(1,109,027자) — 이득은 그대로다.
     const cased = view.query !== view.query.toLowerCase() || view.query !== view.query.toUpperCase();
-    const fold = cased ? (text => text.toLowerCase()) : (text => text);
+    const alts = nameAliases(view.query).map(a => a.toLowerCase()).filter(a => a && a !== query);   // 6.3.x 이름이면 다른 표기로도
+    const fold = cased || alts.some(a => a !== a.toUpperCase()) ? (text => text.toLowerCase()) : (text => text);
+    const has = text => text.includes(query) || alts.some(a => text.includes(a));
     return items.filter(({ fav, index }) => {
         // 발췌(채팅에서 골라 북마크한 글)는 메모처럼 읽는다 — '메모만'에서도 찾는다
         const excerpts = excerptsText(fav);
         const note = fold(excerpts ? `${noteToPlainText(fav.note)}\n${excerpts}` : noteToPlainText(fav.note));
-        if (view.noteOnly) return note.includes(query);
-        if (note.includes(query)) return true;
+        if (view.noteOnly) return has(note);
+        if (has(note)) return true;
         const message = bookmarkMessage(record, fav);
         const rest = `${messageText(message)}\n${message?.mes ?? ''}\n${message?.name ?? fav.sender ?? ''}`;
-        return fold(rest).includes(query);
+        return has(fold(rest));
     });
 }
 
@@ -394,7 +397,9 @@ let allMessageMatches = new WeakMap();
 function searchAllMessages(record, direction) {
     if (!view.query) return [];
     const query = view.query.toLowerCase();
-    const cased = view.query !== query || view.query !== view.query.toUpperCase();
+    const alts = nameAliases(view.query).map(a => a.toLowerCase()).filter(a => a && a !== query);   // 6.3.x 이름이면 다른 표기로도
+    const cased = view.query !== query || view.query !== view.query.toUpperCase() || alts.some(a => a !== a.toUpperCase());
+    const key = [query, ...alts].join('\u0001');
     const messages = record.messages ?? [];
     const items = [];
     for (let index = 0; index < messages.length; index++) {
@@ -402,9 +407,9 @@ function searchAllMessages(record, direction) {
         if (!message) continue;
         const display = messageText(message), original = message.mes ?? '', name = message.name ?? '';
         let match = allMessageMatches.get(message);
-        if (!match || match.query !== query || match.cased !== cased || match.display !== display || match.original !== original || match.name !== name) {
-            const text = `${display}\n${original}\n${name}`;
-            match = { query, cased, display, original, name, found: (cased ? text.toLowerCase() : text).includes(query) };
+        if (!match || match.query !== key || match.cased !== cased || match.display !== display || match.original !== original || match.name !== name) {
+            const text = `${display}\n${original}\n${name}`, folded = cased ? text.toLowerCase() : text;
+            match = { query: key, cased, display, original, name, found: folded.includes(query) || alts.some(a => folded.includes(a)) };
             allMessageMatches.set(message, match);
         }
         if (!match.found) continue;
@@ -769,11 +774,13 @@ function watchCard(card) {
     view.bodyObserver.observe(mes);
     // ResizeObserver의 첫 알림에서 한꺼번에 측정한다 (카드별 DOM쓰기→강제 layout 방지).
     if (view.query) {
-        highlightMatches(mes, view.query);
+        const qs = [view.query, ...nameAliases(view.query)];   // 다른 표기로 찾은 카드도 그 표기를 칠한다 (왜 나왔는지 보이게)
+        const paint = el => { for (const q of qs) highlightMatches(el, q); };
+        paint(mes);
         const note = card.querySelector('.cg-note-text');
-        if (note) highlightMatches(note, view.query);
+        if (note) paint(note);
         const excerpts = card.querySelector('.cg-excerpts');
-        if (excerpts) highlightMatches(excerpts, view.query);
+        if (excerpts) paint(excerpts);
     }
 }
 

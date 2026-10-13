@@ -1,5 +1,6 @@
 import { normalizeMaskStyle } from './capture-style.js';
 import { replaceText } from './word-tools-core.js';
+import { withNameAliases } from './name-aliases.js';   // 6.3.x 적은 이름의 다른 표기(영 · 한 · 일)도 가린다
 
 function textMap(root) {
     const entries=[];let text='';
@@ -36,12 +37,13 @@ function hideNames(root,names) {
 }
 export function preparePrivacy(root,options={}) {
     let hidden=0,replaced=0;
-    if(options.redact)hidden+=hideNames(root,options.names||[]);
+    const names=options.redact?withNameAliases(options.names||[]):[];
+    if(options.redact)hidden+=hideNames(root,names);
     if(options.replace)for(const {node} of textMap(root).entries) {
         const result=replaceText(node.data,options.words?.rules||[],options.words||{});
         node.data=result.text;replaced+=result.count;
     }
-    if(options.redact)hidden+=hideNames(root,options.names||[]);
+    if(options.redact)hidden+=hideNames(root,names);
     return {hidden,replaced};
 }
 export function maskRects(root) {

@@ -20,7 +20,7 @@ const TX = await import(url('src/addons/tts/src/text.js'));
 const T = globalThis.__assetsPickTest = { ext: { salty: { addons: { assets: true }, usageMode: 'both' }, esetham: {} }, secrets: {}, oai: { custom_url: '' }, profiles: [] };
 const G = 'const T=globalThis.__assetsPickTest;';
 const stubs = {
-    'script.js': data('export const getRequestHeaders=()=>({}); export const substituteParams=t=>String(t??""); export function saveSettingsDebounced(){}'),
+    'script.js': data('export const getRequestHeaders=()=>({}); export const substituteParams=t=>String(t??""); export function saveSettingsDebounced(){} export function extractMessageFromData(d){return d?.content?.filter?.(p=>p.type==="text")?.map(p=>p.text)?.join("\\n\\n")??d?.choices?.[0]?.message?.content??"";}'),
     'extensions.js': data(G + 'export const extension_settings=T.ext; export const getContext=()=>({});'),
     'custom-request.js': data('export const ChatCompletionService={async processRequest(){throw Error("Unexpected request")}};'),
     'openai.js': data(G + 'export const oai_settings=T.oai;'),
@@ -100,7 +100,14 @@ await test('pickPrompt: rules, list, marker count and answer format; no slot mar
     assert.match(system.content, /2 markers, \[ASSET 1\] to \[ASSET 2\]/);
     assert.match(system.content, /<available_images>\nMina_smile\.png, Mina_angry\.png\n<\/available_images>/);
     assert.match(system.content, /Use \(see <available_images>\) for Mina\./, 'the list is not sent twice');
-    assert.match(system.content, /1: filename\.ext\n2: none$/);
+    assert.match(system.content, /1: filename\.ext\n2: filename\.ext\nWrite none in place of a file name only when no character from <available_images> is in that moment\.$/, '6.4.1 every example is a file name; none only below');
+    assert.match(system.content, /Give every marker an image while a character from <available_images> is in the scene\./, '6.4.1 fill the markers');
+    assert.match(system.content, /If the speaker has no images, pick the character from <available_images> they talk to or who reacts\./);
+    assert.doesNotMatch(system.content, /If no image clearly fits, answer none\./, 'the old easy way out is gone');
+    assert.doesNotMatch(system.content, /The user's own character/, 'no persona line without a persona name');
+    const withPersona = S.pickPrompt({ list: 'Mina_smile.png', reply: 'x', persona: ' Rowan\n' })[0].content;
+    assert.match(withPersona, /The user's own character is Rowan\. When they speak, pick one of their images if <available_images> has any; otherwise pick the character from <available_images> who listens or reacts in that moment\./);
+    assert.match(read('src/addons/assets/after-reply.js'), /persona: context\.name1 \|\| '',/);
     assert.ok(!JSON.stringify([system, user]).includes('autopic') && !JSON.stringify([system, user]).includes('data-asset-slot'));
     assert.match(user.content, /<previous_message>\nGo\.\n<\/previous_message>/);
     assert.match(user.content, /<finished_reply speaker="Mina">/);
@@ -216,7 +223,7 @@ await test('model switch lists the picker connection; version stamps agree; empt
     assert.match(targets, /'esetham'/);
     const v = read('src/addons/assets/state.js').match(/VERSION = '([\d.]+)'/)[1];
     assert.ok(read('src/addons/assets/style.css').includes(`--eh-css-version: "${v}";`));
-    assert.equal(v, '1.6.4');
+    assert.equal(v, '1.6.5');
     const css = read('src/addons/assets/style.css');
     assert.ok(css.includes('#chat .mes_text p[data-eh-slot-only]:not(:has(> [data-asset-slot]:not(:empty))) { display: none; }'), 'only a paragraph that holds nothing but slots is hidden');
     assert.ok(!css.includes(':not(:has(> :not([data-asset-slot])))'), 'a paragraph with text is never hidden');

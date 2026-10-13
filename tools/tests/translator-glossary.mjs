@@ -168,5 +168,33 @@ t('빈 항목 · 빈 원문', () => {
         assert.deepEqual(lines(CORV, '<img alt="コルヴィン">'), [], '속성 속 이름');
         assert.deepEqual(lines(CORV, 'HP < 30 after the fight. Corvin kneels.\nRex -> runs'), ['Corvin → 코르빈'], '태그가 아닌 < … > 는 지우지 않음');
     });
+    t('6.4.1 조사 · \'s 가 붙은 이름은 앞이 영어여도 · 작은따옴표로 감싼 이름 · 받침 뒤 단독 「야」 는 부르는 말이면 「아」', () => {
+        const src = 'OK, Mina and Corvin smiled. Rex waved.';
+        const swap = (out, want, note) => assert.equal(M.enforceGlossaryNames(NAMES, src, out, WHO), want, note);
+        swap('OK, Mina가 창가에서 조용히 웃었다.', 'OK, 미나가 창가에서 조용히 웃었다.', '앞이 영어 + 조사');
+        swap('Mina, Corvin이 창가에 나란히 서서 조용히 웃었다.', '미나, 코르빈이 창가에 나란히 서서 조용히 웃었다.', '둘째 이름 (긴 이름 먼저 처리)');
+        swap('Corvin, Mina가 창가에 나란히 서서 조용히 웃었다.', '코르빈, 미나가 창가에 나란히 서서 조용히 웃었다.');
+        swap('Okay, Mina\'s 얼굴이 천천히 붉게 물들었다.', 'Okay, 미나의 얼굴이 천천히 붉게 물들었다.', '앞이 영어 + \'s');
+        swap('OK, Rex가 창가에서 조용히 웃었다.', 'OK, Rex가 창가에서 조용히 웃었다.', '이름 목록 밖 항목은 그대로');
+        swap('"Welcome aboard, Mina!" 하고 그가 크게 외치며 웃었다.', '"Welcome aboard, Mina!" 하고 그가 크게 외치며 웃었다.', '조사 없는 영어 외침은 그대로');
+        swap('그는 ‘Mina’라고 조용히 불렀다.', '그는 ‘미나’라고 조용히 불렀다.');
+        swap('그는 \'Mina\'라고 조용히 불렀다.', '그는 \'미나\'라고 조용히 불렀다.');
+        swap('그는 ‘Corvin’을 오래도록 바라보았다.', '그는 ‘코르빈’을 오래도록 바라보았다.');
+        swap('그는 \'Mina\'와 \'Corvin\'을 번갈아 바라보며 웃었다.', '그는 \'미나\'와 \'코르빈\'을 번갈아 바라보며 웃었다.');
+        swap('‘보고 싶다, Mina’ 그녀는 작게 중얼거렸다.', '‘보고 싶다, 미나’ 그녀는 작게 중얼거렸다.');
+        swap('책상 위의 ‘Mina’s Notebook’이라는 공책을 그가 조용히 펼쳐 보았다.', '책상 위의 ‘Mina’s Notebook’이라는 공책을 그가 조용히 펼쳐 보았다.', '\'s 뒤 영어 낱말은 계속 그대로');
+        swap('책상 위에는 「Mina\'s Notebook」이라고 적힌 공책이 놓여 있었다.', '책상 위에는 「Mina\'s Notebook」이라고 적힌 공책이 놓여 있었다.');
+        swap('‘Mina’ is here, 라고 적힌 쪽지가 문에 붙어 있었다.', '‘Mina’ is here, 라고 적힌 쪽지가 문에 붙어 있었다.', '닫는 따옴표 뒤 영어 낱말 — 영어로 둔 말');
+        swap('표지에는 ‘Mina’ Diaries라고 적혀 있어 그는 웃고 말았다.', '표지에는 ‘Mina’ Diaries라고 적혀 있어 그는 웃고 말았다.');
+        swap('Corvin야, 이리 와서 같이 앉자.', '코르빈아, 이리 와서 같이 앉자.', '받침 뒤 부르는 야 → 아');
+        swap('Corvin야! 이리 와서 같이 앉자.', '코르빈아! 이리 와서 같이 앉자.');
+        swap('그건 Corvin야. 내가 잘 아는 사람이야.', '그건 코르빈이야. 내가 잘 아는 사람이야.', '받침 뒤 서술 야 → 이야');
+        swap('Mina야, 이리 와서 같이 앉자.', '미나야, 이리 와서 같이 앉자.', '받침 없는 이름은 그대로');
+        assert.equal(M.particleFor('코르빈', '야'), '이야');
+        assert.equal(M.particleFor('하늘', '야'), '이야');
+        assert.equal(M.particleFor('코르빈', '이야'), '이야');
+        assert.equal(M.particleFor('미나', '이야'), '야');
+        assert.equal(M.particleFor('미나', '야'), '야');
+    });
 }
 console.log(`translator-glossary: ${n} 통과`);

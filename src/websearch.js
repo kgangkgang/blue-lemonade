@@ -15,6 +15,7 @@
 import { WEBSEARCH_KEY, marksEnabled, buildOrigin, makeChatIndex, wordAt, findOrigins, chipText, labelExtensionPrompt, enabledPromptIds, textOf, originSize, trimOrigins, searchKeys, normalizeText } from './websearch-core.js';
 import { getSettings } from './settings.js';
 import { themeEnabled } from './usage-mode.js';
+import { nameAliases } from './name-aliases.js';   // 6.3.x 이름의 다른 표기(영 · 한 · 일)로도 출처를 찾는다
 
 const HOLD_MS = 500;            // 캐릭터 에셋 · 실리태번 기본 길게 누르기와 같은 길이
 const SLOP = 8;                 // 이만큼(px) 움직이면 스크롤 · 글 고르기로 본다
@@ -266,7 +267,8 @@ function wordAtPoint(x, y, within) {
     if (!caret) return null;
     const pos = toTextNode(caret.node, caret.offset);
     if (!pos || !within.contains(pos.node)) return null;
-    return wordAt(pos.node.nodeValue, pos.offset)?.word ?? null;
+    const hit = wordAt(pos.node.nodeValue, pos.offset);
+    return hit ? { word: hit.word, at: pos.offset - hit.start } : null;   // at = 낱말 안에서 누른 자리 (일본어: 누른 가타카나 덩이만 열쇠로)
 }
 
 /** 칩에 적을 한 줄 (낱말이 없으면 null) */
@@ -274,10 +276,10 @@ function lookup(id, x, y, text) {
     const c = ctx();
     const mes = c?.chat?.[id];
     if (!mes) return null;
-    const word = wordAtPoint(x, y, text);
+    const hit = wordAtPoint(x, y, text), word = hit?.word;
     if (!word || !searchKeys(word).length) return null;   // 1자 낱말 · 숫자 한 자리: 찾을 열쇠가 없다 → 칩 없음 (「지어냄」이라 하면 거짓)
     const blocks = originBlocks(c, id);
-    const labels = blocks ? findOrigins(blocks, word) : [];
+    const labels = blocks ? findOrigins(blocks, word, undefined, { aliasesOf: nameAliases, at: hit.at }) : [];
     // F3. 번역문(LLM 번역 display_text)이 보이는 답: 한국어 번역 낱말은 원문 프롬프트와 말이 달라 못 찾을 수 있다 → 「지어냄」 대신 「번역문 · 못 찾음」
     return chipText(labels, { searched: mes.extra?.[WEBSEARCH_KEY] === true, hasRecord: !!blocks, translated: showingTranslation(mes, text) });
 }

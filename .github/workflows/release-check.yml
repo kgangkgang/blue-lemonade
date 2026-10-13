@@ -66,6 +66,7 @@ jobs:
           node tools/tests/word-replace-marks.mjs .
           node tools/tests/translator-glossary.mjs .
           node tools/tests/names-bridge.mjs .
+          node tools/tests/names-jp.mjs .
           node tools/tests/translator-speech.mjs .
           node tools/tests/bookmark-excerpts.mjs .
           node tools/tests/bookmark-images.mjs .
@@ -95,6 +96,7 @@ jobs:
           node tools/tests/character-assets-prompt.mjs .
           node tools/tests/assets-after-reply.mjs .
           node tools/tests/assets-slot-pick.mjs .
+          node tools/tests/assets-pick-think.mjs .
           node tools/tests/story-direction.mjs .
           node tools/tests/direction-send.mjs .
           node tools/tests/mix-selection.mjs .

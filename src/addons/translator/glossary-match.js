@@ -300,8 +300,9 @@ export function enforceGlossaryNames(entries, source, output, { names = [] } = {
         .sort((a, b) => b.length - a.length);
     const patterns = live.map(({ form, dst }) => ({
         dst,
-        // 's 뒤에 영어 낱말이 이어지면(Mina's Notebook) 소유격이 아니라 영어로 둔 말 — 이름만 잡는 쪽으로 되돌아가도 뒤의 ' 에서 막힌다
-        pattern: new RegExp(`(?<![A-Za-z0-9_./\\\\-])${escapePattern(form).replace(/[ -]+/g, '[ \\t\\-]+')}(?:(['’]s(?![ \\t]+[A-Za-z]))|([\\uac00-\\ud7a3]+))?(?![A-Za-z0-9_/\\\\-]|\\.[A-Za-z0-9]|[ \\t]+[A-Za-z]|['’])`, 'gi'),
+        // 's 뒤에 영어 낱말이 이어지면(Mina's Notebook) 소유격이 아니라 영어로 둔 말 — 이름만 잡는 쪽으로 되돌아가도 뒤의 ' + 라틴 글자에서 막힌다
+        // 6.4.1 뒤의 ' 는 라틴 글자나 「공백 + 영어 낱말」이 이어질 때만 막는다 — 작은따옴표로 감싼 이름(‘Mina’라고)은 바꾸고, ‘Mina’ Diaries 는 그대로
+        pattern: new RegExp(`(?<![A-Za-z0-9_./\\\\-])${escapePattern(form).replace(/[ -]+/g, '[ \\t\\-]+')}(?:(['’]s(?![ \\t]+[A-Za-z]))|([\\uac00-\\ud7a3]+))?(?![A-Za-z0-9_/\\\\-]|\\.[A-Za-z0-9]|[ \\t]+[A-Za-z]|['’](?=[A-Za-z]|[ \\t]+[A-Za-z]))`, 'gi'),
     }));
     const guards = longer.map(form => new RegExp(escapePattern(form).replace(/[ -]+/g, '[ \\t\\-]+'), 'gi'));
     return out.split('\n').map((line) => {
@@ -319,9 +320,12 @@ export function enforceGlossaryNames(entries, source, output, { names = [] } = {
                     const after = all.slice(offset + whole.length, offset + whole.length + dst.length + 3);
                     // 괄호 병기 (미나(Mina) · 미나 (Mina) · 미나（Mina） · Mina(미나)) · 앞이 영어 낱말이면 영어로 둔 말 ("Welcome aboard, Mina!")
                     if (new RegExp(`${escapePattern(dst)}[ \\t]*[(（]$`).test(before) || new RegExp(`^[ \\t]*[(（]${escapePattern(dst)}`).test(after)) return whole;
-                    if (/[A-Za-z][,.!?]?[ \t]+$/.test(all.slice(Math.max(0, offset - 3), offset))) return whole;
+                    // 6.4.1 이름에 한글 조사나 's 가 붙었으면 한국어 문장 속 이름 — 앞이 영어여도 바꾼다 (OK, Mina가 · Mina, Corvin이)
+                    if (!tail && !possessive && /[A-Za-z][,.!?]?[ \t]+$/.test(all.slice(Math.max(0, offset - 3), offset))) return whole;
                     if (possessive) return `${dst}의`;
-                    return dst + (tail ? particleFor(dst, tail) : '');
+                    // 6.4.1 받침 있는 이름 + 단독 「야」: 뒤가 , ! ~ 면 부르는 말 → 「아」(Corvin야, → 코르빈아,) · 아니면 서술 → 「이야」(particleFor)
+                    const calling = tail === '야' && particleFor(dst, '가') === '이' && /^[ \t]*[,!~]/.test(after);
+                    return dst + (tail ? (calling ? '아' : particleFor(dst, tail)) : '');
                 });
             }
             return text.replace(/\u0000(\d+)\u0000/g, (whole, at) => kept[Number(at)]);

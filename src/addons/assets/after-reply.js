@@ -9,6 +9,7 @@ import { runtime, ensureLoaded } from './store.js';
 import { pickActive, pickSettings, generatePick } from './pick.js';
 import { slotSpots, insertSlots, slotIds, markedReply, pickPrompt, parsePicks, rulesForPicker, hasAssetTag, skipReplyType, PROTECT_RE, RECORD_KEY, swipeOf, textOf, writeRecords, recordsFromPicks, stripSlotsForPrompt, dropUnknownSlots, retryTargets, manualRecord, freezeOthers } from './slots.js';
 import { assetInfo, refreshSlots, slotRunning, slotHooks, shownSlotFiles } from './render.js';
+import { ownerSpellings } from './spellings.js';   // 6.3.x 그림 주인의 영 · 한 · 일 표기 줄 (이름 다리)
 
 const isObj = value => !!value && typeof value === 'object' && !Array.isArray(value);
 
@@ -79,6 +80,8 @@ async function fill(messageId, message, ids, swipe) {
             count: ids.length,
             previous: previousText(messageId),
             character: message.name || context.name2 || '',
+            names: ownerSpellings(runtime.keywords),
+            persona: context.name1 || '',   // 6.4.1 내 캐릭터 — 그림이 없으면 듣는 사람 그림으로
         });
         const raw = await generatePick(messages, controller.signal);
         records = recordsFromPicks(ids, parsePicks(raw, ids.length), assetInfo);

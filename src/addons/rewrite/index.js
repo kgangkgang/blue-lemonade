@@ -40,6 +40,7 @@ import {
 import { DEFAULT_SETTINGS } from './defaults.js';
 import { badgeTextHit } from '../../badge-hit.js';
 import { markRewrite } from '../../edit-origin.js';
+import { withNameAliases } from '../../name-aliases.js';   // 6.3.x 예외 캐릭터를 다른 표기(영 · 한 · 일)로도 찾는다
 import { PERSONAL } from './defaults-personal.js';
 import { isEditingMessage } from './guards.js';
 import { createSpanFinder } from './spans.js';
@@ -49,7 +50,7 @@ import { capturedMessages, capturedRequest, holdGeneration, regenerateReply, rep
 import { applyUpgrades } from './upgrades.js';
 import { startQuickBan, setQuickBanEnabled } from './quick-ban.js';
 
-const VERSION = '2.0.8';
+const VERSION = '2.0.9';
 const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];
@@ -131,6 +132,13 @@ function recompile() {
 // "이 캐릭터에게만" names, with {{user}} / {{char}} expanded to the current persona and character.
 function resolveNames(names) {
     return splitNames(names ? substituteParams(names) : '');
+}
+
+/** 6.3.x 최근 글에 나온 예외 캐릭터 — 적어 둔 이름 + 이름 다리의 다른 표기로 찾고, 돌려주는 것은 적어 둔 예외 그대로 (프롬프트 글은 예전과 같음) */
+function activeExceptions(text) {
+    const list = Array.isArray(settings.exceptions) ? settings.exceptions : [];
+    const hit = new Set(findActiveExceptions(text, list.map((exception, at) => ({ ...exception, at, names: withNameAliases(splitNames(exception.names)).join(', ') }))).map(exception => exception.at));
+    return list.filter((_, at) => hit.has(at));
 }
 
 /** Rules in play for this text: limited rules only while one of their characters is in the recent messages. */
@@ -672,7 +680,7 @@ async function cleanMessage(messageId, manual, signal) {
         return;
     }
 
-    const exceptions = findActiveExceptions(recent, settings.exceptions);
+    const exceptions = activeExceptions(recent);
     prepareSpans(spans, exceptions);
     if (settings.skipExemptOnly && spans.every(span => span.fullyExempt)) {
         busy.delete(key);
@@ -1549,7 +1557,7 @@ async function detectTestText() {
         const repeats = findRepeats(text, previous, repeatOptions());
         if (repeats.length > 0) spans = mergeSpans(text, spans, repeats);
     }
-    const exceptions = findActiveExceptions(text, settings.exceptions);
+    const exceptions = activeExceptions(text);
     prepareSpans(spans, exceptions);
     return { text, spans, exceptions, active, skipped, snapshot };
 }

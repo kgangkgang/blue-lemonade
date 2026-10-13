@@ -1,5 +1,6 @@
 // 캐릭터 에셋 — 이름 풀이. 실리태번을 부르지 않아서 Node에서도 시험할 수 있다.
 // 예를 들어 한 폴더에 여러 캐릭터가 있으면 'Name_smirk'의 앞머리 'Name'이 캐릭터, 뒤 'smirk'가 표정이다.
+import { nameAliases } from '../../name-aliases.js';   // 6.3.x 앞머리를 가나 · 한글로 쓴 이름 → 폴더의 앞머리
 
 /**
  * 'Name_light_smile' → { owner: 'Name', tag: 'light_smile' }
@@ -113,13 +114,23 @@ export function findSimilar(base, groups) {
 export function findSimilarList(base, groups) {
     const want = splitName(base, { strict: false });
     if (!want) return [];
-    const owner = want.owner.toLowerCase();
-    const candidates = [];
-    for (const [key, members] of groups) {
-        if (!members?.length) continue;
-        const parts = splitName(members[0].groupLabel, { strict: false });
-        if (!parts || parts.owner.toLowerCase() !== owner) continue;
-        candidates.push({ key, tag: parts.tag.toLowerCase(), members });
+    const collect = owners => {
+        const found = [];
+        for (const [key, members] of groups) {
+            if (!members?.length) continue;
+            const parts = splitName(members[0].groupLabel, { strict: false });
+            if (!parts || !owners.has(parts.owner.toLowerCase())) continue;
+            found.push({ key, tag: parts.tag.toLowerCase(), members });
+        }
+        return found;
+    };
+    let candidates = collect(new Set([want.owner.toLowerCase()]));
+    // 6.3.x 앞머리가 폴더에 없으면(가나 · 한글로 쓴 이름 'ローワン_smirk') 이름 다리의 다른 표기 가운데 폴더에 있는 앞머리로
+    if (!candidates.length) {
+        const alts = nameAliases(want.owner).map(a => a.toLowerCase());
+        candidates = alts.length ? collect(new Set(alts)) : [];
+        // 다른 표기가 폴더의 주인 둘 이상에 닿으면(한 가나를 두 사람이 나눠 씀 — Rina · Lina → リナ) 누구 그림인지 모른다 → 예전처럼 못 찾음
+        if (new Set(candidates.map(c => splitName(c.members[0].groupLabel, { strict: false }).owner.toLowerCase())).size > 1) candidates = [];
     }
     if (!candidates.length) return [];
 

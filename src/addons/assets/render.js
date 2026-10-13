@@ -971,12 +971,22 @@ function renderOutside(root) {
     }
 }
 
+/** 이름 다리가 바뀜(용어집 고침 · 끔 · 채팅 바뀜) — 다른 표기로 풀었던(못 풀었던) 이름 기억을 비우고 다시 그린다. 그림 목록은 그대로 */
+function onNamesChanged() {
+    if (!index) return;
+    similar = new Map();
+    resolvable = new Map();
+    generation++;
+    schedulePass();
+}
+
 let outsideListening = false;
 
 export function setupRenderer() {
     if (!outsideListening) {
         outsideListening = true;
         document.addEventListener('char-assets:render', event => renderOutside(event.detail?.root));
+        document.addEventListener('bl:names-changed', onNamesChanged);
         for (const type of ['click', 'pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend']) document.addEventListener(type, onRetryClick, true);
     }
     const chat = document.getElementById('chat');

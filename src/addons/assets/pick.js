@@ -1,13 +1,22 @@
 // 캐릭터 에셋 1.6.0 — 「다른 모델이 고르기」 연결: 설정 · 쓸 수 있나 · 요청 보내기.
 // 연결 방식은 다시 쓰기와 같다 (직접 선택 = 공급자 + 모델 · 공용 모델 목록 / 연결 프로필). 「지금 연결」은 예전처럼 본문 모델이 태그를 쓴다.
-import { getRequestHeaders, substituteParams } from '../../../../../../../script.js';
+import { getRequestHeaders, substituteParams, extractMessageFromData } from '../../../../../../../script.js';
 import { extension_settings } from '../../../../../../extensions.js';
 import { ChatCompletionService } from '../../../../../../custom-request.js';
 import { oai_settings } from '../../../../../../openai.js';
 import { SECRET_KEYS, secret_state } from '../../../../../../secrets.js';
 import { ConnectionManagerRequestService } from '../../../../../shared.js';
 import { addonsEnabled } from '../../usage-mode.js';
-import { applyModelRequestRules } from '../../live-models.js';
+import { applyModelRequestRules, lowEffort, THINK_MIN_TOKENS, thoughtOnly } from '../../live-models.js';
+
+/** 6.4.1 정말 생각하는 모델인가 — 출력 한도 바닥은 이때만. Claude · Google 은 lowEffort 가 이미 고른 모델(Claude 5 · Fable · Gemini 3 이후)이고,
+ *  OpenAI 는 실리태번 서버의 추론 모델 목록과 같은 판정(o 시리즈 · gpt-5 이후, gpt-5-chat-latest 빼고) — gpt-4o-mini 같은 모델은 출력 상한 4096 이라 8192 면 400 */
+export function pickThinks(source, model, effort = lowEffort(source, model)) {
+    if (!effort) return false;
+    if (source !== 'openai') return true;
+    const m = String(model || '');
+    return /^o\d/.test(m) || (/^gpt-[5-9]/.test(m) && !/^gpt-5-chat-latest/.test(m));
+}
 import { PROVIDERS, normalizeUrl, resolveModel, isHttpUrl, providerKeyOf } from '../rewrite/providers.js';
 import { fallbackOf, withFallback } from '../modelswitch/fallback.js';   // 6.2.9 검열되면 다른 모델로
 import { settings, normalizePick, PICK_DEFAULTS } from './state.js';
@@ -88,6 +97,10 @@ async function generatePickOnce(messages, signal, via = null) {
     const model = via ? String(via.model || '') : resolveModel(pick, endpoint);
     if (!provider || !model) throw new Error('모델이 정해지지 않았어요.');
     const request = { messages, model, chat_completion_source: provider.source, temperature: 0.4, max_tokens: pick.maxTokens, stream: false };
+    // 6.4.1 생각하는 모델은 생각도 출력 한도를 쓴다 — 번역(6.3.5)과 같은 규칙: 생각은 짧게(low) · 출력 한도는 최소 8192 (정말 생각하는 모델만)
+    const effort = lowEffort(provider.source, model);
+    if (effort) request.reasoning_effort = effort;
+    if (pickThinks(provider.source, model, effort) && request.max_tokens > 0 && request.max_tokens < THINK_MIN_TOKENS) request.max_tokens = THINK_MIN_TOKENS;
     if (key === 'custom') {
         if (!endpoint.url) throw new Error('Custom 주소가 없어요.');
         request.custom_url = endpoint.url;
@@ -103,8 +116,11 @@ async function generatePickOnce(messages, signal, via = null) {
         request.vertexai_express_project_id = oai_settings?.vertexai_express_project_id || '';
     }
     applyModelRequestRules(key, model, request);
-    const result = await ChatCompletionService.processRequest(request, {}, true, signal);
-    return result?.content ?? '';
+    // 6.4.1 원본 응답으로 받는다 — 「생각만 오고 글이 없음」(출력 한도를 생각에 다 씀)을 번역처럼 알아보려고. 글은 실리태번과 같은 방법으로 뽑는다
+    const data = await ChatCompletionService.processRequest(request, {}, false, signal);
+    const content = String(extractMessageFromData(data, 'openai') ?? '');
+    if (!content.trim() && thoughtOnly(data)) throw new Error('모델이 생각하느라 출력 한도를 다 써서 고른 답이 오지 않았어요');
+    return content;
 }
 
 /** 목록 받기 요청 모양 (다시 쓰기 providers.js 와 같다) */

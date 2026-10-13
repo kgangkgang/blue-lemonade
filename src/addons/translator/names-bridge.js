@@ -14,11 +14,11 @@ const MAX_LEN = 12;
 const NAME_RE = /^\p{L}[\p{L}\p{M}]*(?: [\p{L}\p{M}]+)*$/u;
 
 export function nameFold(text) {
-    return String(text ?? '').normalize('NFC').trim().toLowerCase().replace(/[\s\-‐‑–—_·・]+/g, ' ');
+    return String(text ?? '').normalize('NFKC').trim().toLowerCase().replace(/[\s\-‐‑–—_·・]+/g, ' ');   // 6.3.x NFKC: 반각 가나 = 전각
 }
 
 export function isNameLike(text) {
-    const t = String(text ?? '').normalize('NFC').trim().replace(/\s+/g, ' ');
+    const t = String(text ?? '').normalize('NFKC').trim().replace(/[・·]/g, ' ').replace(/\s+/g, ' ');   // 6.3.x 가운뎃점 이름(ローワン・ベルク)도 이름꼴
     if (!t || t.length > MAX_LEN || !NAME_RE.test(t)) return false;
     return !/^\p{Script=Latin}/u.test(t) || /^\p{Lu}/u.test(t);
 }
@@ -27,7 +27,7 @@ export function isNameLike(text) {
 export function nameForms(text) {
     const seen = new Set(), out = [];
     for (const part of String(text ?? '').split(/[,，]/)) {
-        const t = part.normalize('NFC').trim().replace(/\s+/g, ' ');
+        const t = part.normalize('NFC').trim().replace(/\s+/g, ' ');   // 표시 표기는 적힌 그대로 — 표준 표기(NFKC) 짝은 buildNames 가 더한다
         const k = nameFold(t);
         if (!t || !k || seen.has(k)) continue;
         seen.add(k); out.push(t);
@@ -55,12 +55,15 @@ export function namePairs(entries) {
 /** 짝을 묶음으로 (같은 표기를 거쳐 이어지면 한 인물) → 다리 객체 */
 export function buildNames(pairs, { doc = () => globalThis.document } = {}) {
     const list = (Array.isArray(pairs) ? pairs : []).map(p => ({ src: String(p.src), dst: String(p.dst), scope: typeof p.scope === 'string' ? p.scope : '' }));
+    // 6.3.x 반각 가나 · 전각 라틴으로 적힌 짝은 표준 표기(NFKC) 짝도 — 원문이 어느 폭으로 적혀도 찾게 (그런 짝이 없으면 목록은 그대로)
+    const std = s => s.normalize('NFKC').replace(/\s+/g, ' ').trim();
+    for (const p of list.slice()) { const s2 = std(p.src), d2 = std(p.dst); if ((s2 !== p.src || d2 !== p.dst) && s2 && d2) list.push({ src: s2, dst: d2, scope: p.scope }); }
     const parent = new Map(), display = new Map();
     const find = k => { let r = k; while (parent.get(r) !== r) r = parent.get(r); let c = k; while (parent.get(c) !== r) { const n = parent.get(c); parent.set(c, r); c = n; } return r; };
-    const add = name => { const k = nameFold(name); if (!parent.has(k)) { parent.set(k, k); display.set(k, name); } return k; };
+    const add = name => { const k = nameFold(name); if (!parent.has(k)) { parent.set(k, k); display.set(k, [name]); } else if (!display.get(k).includes(name)) display.get(k).push(name); return k; };
     for (const { src, dst } of list) { const a = add(src), b = add(dst); const ra = find(a), rb = find(b); if (ra !== rb) parent.set(rb, ra); }
     const members = new Map();
-    for (const k of parent.keys()) { const r = find(k); if (!members.has(r)) members.set(r, []); members.get(r).push(display.get(k)); }
+    for (const k of parent.keys()) { const r = find(k); if (!members.has(r)) members.set(r, []); members.get(r).push(...display.get(k)); }
     const api = {
         version: 1,
         pairs: Object.freeze(list.map(p => Object.freeze({ ...p }))),

@@ -2,12 +2,18 @@
 import { settings, save, toVoice, fillKnown, fillKnownFacts, hasDb, providerConfig, USER_AUTO } from './settings.js';
 import { getProvider } from './providers/index.js';
 import { koVoiceName } from './voice-names.js';
+import { canon } from './speakers.js';   // 6.3.x 별명표 (사용자 별명 · 연결표 · 색 표 · 이름 다리) — 바로 못 찾은 이름만
 
 const fold = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, '');
 const LANGS = ['ko', 'ja', 'en', 'zh'];
 
 /** 목록 전체 (설정 배열 그대로) */
 export function allVoices() { return settings().voices; }
+
+/** 6.3.x 별명표의 대표 이름 — 다른 표기로 온 이름('ローワン' · 'Rowe')이면 그 대표, 같거나 모르면 '' */
+function aliasOf(name) {
+    try { const c = String(canon(name) || '').trim(); return c && fold(c) !== fold(name) ? c : ''; } catch { return ''; }
+}
 
 /** uid 로 찾기 */
 export function findVoice(uid) {
@@ -152,6 +158,13 @@ export function voiceFor(name, { isUser = false, kind = '' } = {}) {
         const key = charKeyOf(n);
         const v = findVoice(key ? s.char_map[key] : '') || voiceByName(n);
         if (v) return preferVoice(v, key || n);
+        // 6.3.x 바로 못 찾으면 별명표의 대표 이름으로 한 번 더 (가나 · 다른 이름) — 엑스트라보다 먼저
+        const a = aliasOf(n);
+        if (a) {
+            const key2 = charKeyOf(a);
+            const v2 = findVoice(key2 ? s.char_map[key2] : '') || voiceByName(a);
+            if (v2) return preferVoice(v2, key2 || a);
+        }
         const x = extraFor(n);                    // 1.3.7 목소리를 안 정한 화자 → 엑스트라 목소리 (없으면 기본)
         if (x) return x;
     }
@@ -495,7 +508,9 @@ export function hasOwnVoice(name) {
     if (s.char_map[n]) return true;
     const k = fold(n);
     if (Object.keys(s.char_map).some(x => fold(x) === k)) return true;
-    return !!voiceByName(n) || !!charKeyOf(n);   // 1.3.8 분석이 다른 글자로 준 이름 ('루시퍼' → 연결표 Lucifer)
+    if (voiceByName(n) || charKeyOf(n)) return true;   // 1.3.8 분석이 다른 글자로 준 이름 ('루시퍼' → 연결표 Lucifer)
+    const a = aliasOf(n);   // 6.3.x 별명표로 한 번 더 ('ローワン' → 연결표 Rowan) — 「목소리를 안 정한 화자」로 성별을 묻고 엑스트라를 만들지 않게
+    return !!a && (!!s.char_map[a] || Object.keys(s.char_map).some(x => fold(x) === fold(a)) || !!voiceByName(a) || !!charKeyOf(a));
 }
 /** 엑스트라 표의 같은 사람 (이름이 같음 → 띄어쓰기 · 대소문자만 다름 → 한쪽이 다른 쪽을 품음: '카페 사장님' ⊃ '카페 사장') */
 export function extraKey(name) {

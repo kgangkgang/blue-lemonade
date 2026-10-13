@@ -17,6 +17,7 @@ import { typesetRoot } from '../../typography.js';
 import { classifyAll } from '../../assets.js';
 import { PALETTES, PALETTE_FAMILIES } from '../../palettes.js';
 import { NOTES_VERSION } from './version.js';
+import { nameAliases } from '../../name-aliases.js';   // 6.3.x 찾는 말이 이름이면 다른 표기(영 · 한 · 일)로도
 
 export const VERSION = NOTES_VERSION;
 const MODULE = 'bl-notes';
@@ -917,7 +918,8 @@ function applyFind(root) {
     const raw = (root.querySelector('.bl-notes-find input')?.value || '').trim(), q = raw.toLowerCase();
     const tag = /^#[^\s#]+$/.test(raw) ? tagName(raw.slice(1)) : ''; // 5.3.5: 색 값(#fff)은 태그가 아니라 글로 찾음 — tagsOf 와 같은 규칙
     const all = notes();
-    const hitNote = note => !!note && (!q || (tag ? tagHit(tagsOf(note.body), tag) : `${note.title}\n${note.body}`.toLowerCase().includes(q)));
+    const qs = q ? [q, ...nameAliases(raw).map(a => a.toLowerCase())] : [];
+    const hitNote = note => !!note && (!q || (tag ? tagHit(tagsOf(note.body), tag) : (text => qs.some(x => text.includes(x)))(`${note.title}\n${note.body}`.toLowerCase())));
     let shown = 0;
     root.querySelectorAll('.bl-notes-list > .bl-note').forEach(el => {
         let hit;

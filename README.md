@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.4.0/blue-lemonade-6.4.0.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.4.1/blue-lemonade-6.4.1.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.4.0 · 최신 업데이트</summary>
+<summary>6.4.1 · 최신 업데이트</summary>
+
+- 번역: 용어집 이름 지키기가 더 많은 자리에서 맞게 바뀌어요 — 영어 문장 뒤에 조사가 붙은 이름, 작은따옴표로 감싼 이름도 용어집 표기로 바꾸고, 받침 있는 이름을 부르는 말(…야!)은 「아」로 맞춰요.
+- 이름: 번역 용어집에 같은 사람으로 적어 둔 영어 · 한국어 · 일본어 표기를 이제 여러 곳에서 같은 사람으로 알아봐요 — TTS 목소리 고르기, 캐릭터 에셋 그림 이름, 웹 검색 출처 칩, 북마크 · 메모 찾기, 캡처 이름 숨기기 · 잠시 가리기, 다시 쓰기 예외 캐릭터. 용어집을 끄면 예전과 같아요.
+- 캐릭터 에셋: 「답장 뒤 다른 모델이 고르기」가 자리를 더 채워요. 같은 인물이 이어 말해도 다른 표정으로 고르고, 그림이 없는 내 캐릭터가 말할 때는 듣는 사람의 그림을 골라요. 생각하는 모델(Claude 5 등)은 생각을 짧게 하고 답할 자리를 넉넉히 줘서 뒤쪽 그림이 잘리지 않아요.
+- 애드온 버전: 캐릭터 에셋 1.6.5 · 북마크 1.5.5 · 메모 1.3.3 · 다시 쓰기 2.0.9 · LLM 번역 2.4.3 · TTS 1.8.4
+
+</details>
+
+<details>
+<summary>6.4.0 · 번역 이름 지키기 · 막대 이름 색</summary>
 
 - 번역: 모델이 용어집을 어기고 내 캐릭터 · 지금 캐릭터 이름을 원문 표기(영문) 그대로 남기면 용어집의 한글 표기로 바꿔요 — 조사도 받침에 맞춰요. 이미 저장된 번역도 채팅을 열 때 고쳐져요(다시 번역하지 않아요). 영어로 두는 줄(상태 · 트래커)과 괄호 병기는 그대로예요.
 - 번역: 원문에 없는 여는 꺽쇠 「가 줄 끝에 홀로 붙은 것을 지워요. 용어집이 태그 속성 글자(꾸밈 태그의 따옴표 등)에 걸려 엉뚱한 줄이 들어가던 것도 고쳤어요.

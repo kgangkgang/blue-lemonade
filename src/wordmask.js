@@ -3,6 +3,7 @@
 // 채팅 데이터(chat[i].mes)는 손대지 않는다. 화면의 글자 노드만 <span class="bl-wmask" data-orig="…">■■</span> 로 감싸고, 끄면 글자 노드로 되돌린다.
 // 스위치는 세션 안에서만 켜진다(설정에 저장 안 함 → 새로고침하면 꺼짐). 낱말 목록만 설정 wordTools.maskWords 에 남는다.
 // 메시지가 다시 그려지면(스트리밍 · 편집 · 스와이프 · 번역) #chat MutationObserver 가 바뀐 .mes 만 150ms 뒤 다시 가린다.
+import { withNameAliases } from './name-aliases.js';   // 6.3.x 이름이면 다른 표기(영 · 한 · 일)도 가린다
 const BLOCK = '■';
 const SKIP = new Set(['SCRIPT', 'STYLE', 'TEXTAREA', 'INPUT', 'SELECT', 'NOSCRIPT']);
 const MAX_WORDS = 200, MAX_TEXT = 2000, MAX_BLOCKS = 4, DEBOUNCE = 150;
@@ -45,6 +46,7 @@ export function maskPlan(text, words) {
 }
 
 let words = [], active = false, observer = null, timer = null;
+let typed = null, namesOff = null;   // 적은 목록 · 이름 다리 알림 끊기 — 켜 있는 동안 다리가 바뀌면(채팅 바뀜 · 용어집 고침) 다른 표기를 새로 붙여 다시 가린다
 const pending = new Set();
 const doc = () => (typeof document === 'undefined' ? null : document);
 const chatRoot = () => doc()?.getElementById('chat') ?? null;
@@ -105,11 +107,12 @@ function flush() {
 
 /** 가리기 시작(또는 새 목록으로 다시). 돌려주는 값 = 지금 가린 조각 수. 목록이 비면 끄고 0. */
 export function startMask(list) {
-    const next = parseMaskWords(Array.isArray(list) ? list.join('\n') : list);
+    const next = withNameAliases(parseMaskWords(Array.isArray(list) ? list.join('\n') : list)).sort((a, b) => b.length - a.length);
     const chat = chatRoot();
     if (!next.length || !chat) { stopMask(); return 0; }
     if (active) unmaskIn(chat);                                        // 목록이 바뀌었을 수 있으니 먼저 되돌리고
-    words = next; active = true;
+    words = next; active = true; typed = list;
+    if (!namesOff) { const d = doc(), on = () => { if (active) startMask(typed); }; d?.addEventListener('bl:names-changed', on); namesOff = () => d?.removeEventListener('bl:names-changed', on); }
     let n = 0;
     for (const mes of chat.querySelectorAll('.mes')) n += maskMessage(mes);
     observer ??= new MutationObserver(onMutations);
@@ -121,6 +124,7 @@ export function startMask(list) {
 /** 가리기 끝: 관찰을 멈추고 가린 조각을 모두 글자 노드로 되돌린다. 돌려주는 값 = 되돌린 조각 수. */
 export function stopMask() {
     active = false; words = []; pending.clear();
+    namesOff?.(); namesOff = null; typed = null;
     clearTimeout(timer); timer = null;
     observer?.disconnect(); observer = null;
     doc()?.body?.classList.remove('bl-wmask-on');
