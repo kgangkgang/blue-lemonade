@@ -3,6 +3,7 @@
 //  1. 스트리밍 중 바뀐 곳만 다시 그리기 (morph.js)
 //  2. 닫힌 프롬프트 목록은 열 때 그리기 (promptlist.js)
 //  3. 큰 저장은 뒤에서 보내기 (savesend.js + save-worker.js)
+//  4. 메시지 속 같은 <style> 은 하나만 쓰기 (styledup.js · 6.4.4)
 // 각 기능은 실리태번 쪽 모양(내보내기 · 이벤트 · 메서드)이 없으면 켜지지 않고 원래대로 둔다.
 import { verifyAddonCss } from '../../addon-files-check.js';
 import { pane } from './hub.js';
@@ -14,13 +15,14 @@ import { morphdom } from '../../../../../../../lib.js';
 import { createStreamMorph, SELF_TEST_STEPS } from './morph.js';
 import { createPromptListDefer } from './promptlist.js';
 import { createSaveSender } from './savesend.js';
+import { createStyleDedupe } from './styledup.js';
 
 const MODULE = 'perf_assist';
 const FOLDER = 'blue-lemonade';
 const VERSION = '1.0.2';
 const TITLE = '성능 보조';
 
-const DEFAULTS = Object.freeze({ morphStream: true, deferPromptList: true, saveInWorker: true });
+const DEFAULTS = Object.freeze({ morphStream: true, deferPromptList: true, saveInWorker: true, dedupeStyles: true });
 
 function settings() {
     return extensions.extension_settings[MODULE];
@@ -39,7 +41,7 @@ const events = () => script.eventSource ?? context().eventSource;
 const eventTypes = () => script.event_types ?? context().eventTypes;
 
 /** 기능마다 못 쓰게 된 까닭 ('' = 쓸 수 있음) */
-const unavailable = { morphStream: '', deferPromptList: '', saveInWorker: '' };
+const unavailable = { morphStream: '', deferPromptList: '', saveInWorker: '', dedupeStyles: '' };
 
 // ── 1. 스트리밍 중 바뀐 곳만 다시 그리기 ─────────────────────
 
@@ -171,12 +173,41 @@ function installSaver() {
     if (settings().saveInWorker) saver.start();
 }
 
+// ── 4. 메시지 속 같은 <style> 은 하나만 (6.4.4) ───────────────
+// 프리셋 정규식이 메시지마다 같은 <style> 을 넣으면 메뉴 · 서랍을 열 때의 넓은 스타일 계산이 그만큼 무거워진다 — 마지막 한 벌만 켜 둔다 (styledup.js)
+
+let generating = false;
+const styleDedupe = createStyleDedupe({
+    query: () => [...document.querySelectorAll('#chat .mes style')],
+    holdersOf: node => [node.parentNode, node.closest('.mes_text') || node.closest('.mes')],
+    streaming: () => generating,
+    enabled: () => settings().dedupeStyles !== false && !unavailable.dedupeStyles,
+});
+
+function installStyleDedupe() {
+    const es = events(), ev = eventTypes();
+    const chat = document.getElementById('chat');
+    if (!es || !ev?.CHAT_CHANGED || typeof MutationObserver !== 'function' || !chat) {
+        unavailable.dedupeStyles = '이벤트 없음';
+        return;
+    }
+    const run = () => styleDedupe.schedule();
+    for (const name of ['CHARACTER_MESSAGE_RENDERED', 'USER_MESSAGE_RENDERED', 'MESSAGE_UPDATED', 'MESSAGE_SWIPED', 'MESSAGE_EDITED', 'MESSAGE_DELETED', 'CHAT_CHANGED', 'MORE_MESSAGES_LOADED']) if (ev[name]) es.on(ev[name], run);
+    // 채팅에 답이 흘러드는 생성 중에는 새 사본을 끄지 않는다 (걸음마다 스타일 계산을 부르지 않게) — 끝나면 정리. 조용한 생성 · 대신 쓰기는 채팅에 안 그린다
+    if (ev.GENERATION_STARTED) es.on(ev.GENERATION_STARTED, (type, _options, dryRun) => { if (!dryRun && type !== 'quiet' && type !== 'impersonate') generating = true; });
+    for (const name of ['GENERATION_ENDED', 'GENERATION_STOPPED', 'MESSAGE_RECEIVED', 'CHAT_CHANGED']) if (ev[name]) es.on(ev[name], () => { generating = false; run(); });
+    // 이벤트 없이 메시지를 통째로 지우거나 더하는 경우 대비 — #chat 의 바로 아래 자식 목록만 (메시지 글이 바뀌는 것은 안 본다)
+    new MutationObserver(run).observe(chat, { childList: true });
+    run();
+}
+
 // ── 설정 서랍 ───────────────────────────────────────────────
 
 const ROWS = [
     ['morphStream', '스트리밍 중 바뀐 곳만 다시 그리기'],
     ['deferPromptList', '닫힌 프롬프트 목록은 열 때 그리기'],
     ['saveInWorker', '큰 저장은 뒤에서 보내기'],
+    ['dedupeStyles', '메시지 속 같은 style 은 하나만 쓰기'],
 ];
 
 let drawer = null;
@@ -218,6 +249,7 @@ function buildDrawer() {
             if (key === 'morphStream' && !input.checked) morph.release();
             if (key === 'deferPromptList' && !input.checked) promptList.flush(true);
             if (key === 'saveInWorker' && input.checked) saver.start();
+            if (key === 'dedupeStyles') styleDedupe.schedule();   // 끄면 모두 되돌린다 (run 이 enabled 를 본다)
             script.saveSettingsDebounced?.();
         });
     }
@@ -230,7 +262,7 @@ function checkFilesMatch() {
 }
 
 initSettings();
-for (const [name, install] of [['saveInWorker', installSaver], ['morphStream', installMorph], ['deferPromptList', installPromptList]]) {
+for (const [name, install] of [['saveInWorker', installSaver], ['morphStream', installMorph], ['deferPromptList', installPromptList], ['dedupeStyles', installStyleDedupe]]) {
     try {
         install();
     } catch (error) {

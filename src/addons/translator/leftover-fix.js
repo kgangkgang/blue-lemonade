@@ -3,6 +3,9 @@
 // 6.4.2 v3 — 원래 줄에 가나가 있었으면 다시 온 줄은 6.4.1 처럼 가나만 본다 · 태그 안 · 인라인 코드 · 맨 URL · 루비(<rt>) · 《》 읽기는 고르지 않는다.
 // 6.4.3 한자 v4 — 지킴 자리를 좁힌다: 맨 URL 은 빈칸 · 괄호 · 따옴표와 「문장부호 + 비ASCII」 앞에서 끝, 태그는 이름 + 속성 꼴만(<System: …> 은 글),
 //   HTML 주석은 둔다 · 루비 <rb>…</rb> · 대문자 <RT> 도 읽기 · 《한글》 읽기는 바로 붙은 것만 (띄어 쓴 《책 이름》은 읽기가 아니다).
+// 6.4.4 한자 v5 — 맨 URL 의 「:」는 뒤가 빈칸 · 닫는 괄호 · 따옴표 · 꺾쇠 · 낫표 · 전각 문장부호일 때만 끝으로 본다 (v4 회귀:
+//   위키 이름공간 https://ja.wikipedia.org/wiki/特別:検索 · Category:室長 의 「:」에서 URL 이 끊겨 경로 속 한자를 남김으로 골랐다).
+// 6.4.4 영어 v5 — 글 전체가 한국어 번역문(한글 > 가나 + 한자)일 때만 영어 남김을 본다 · 원문은 한 번만 쪼개 말마다 한 번만 판정한다.
 // 6.4.3 + 원문 영어 서술에서 온 흔한 영어 낱말(Now · Well · Then …)이나 여는 말(And then · Of course …)이 한글 줄의 문장 첫머리에 그대로 남은 것 (예: 「Now, 미나는 창가에 섰다」).
 //   원문에서 그 말이 든 줄이 모두 영어가 주된 글일 때만 — 일본어 · 한국어 원문 줄에 일부러 쓴 영어(「Yes, マイロード」)는 그대로 둔다.
 // 6.4.3 영어 v4 — 한자 v4 위 · 「한글이 주된 줄」 셈에서 맨 URL · 인라인 코드 글자를 뺀다 (「자료는 https://… 에 있다. Then 미나는」 의 Then 을 놓치던 것).
@@ -26,7 +29,7 @@ const WRAPS = [/[(（]([^()（）\n]*)[)）]/g, /「([^「」\n]*)」/g, /『([^
 // v4 좁힘: 태그는 이름 + 속성 꼴만 (<System: 室長…> · <Chapter 3: …> · x<y … y>z 는 글) · HTML 주석 · 맨 URL 은 빈칸 · 괄호 · 꺾쇠 · 따옴표 · 낫표에서,
 //   그리고 문장부호 바로 뒤가 ASCII 가 아니면 거기서 끝 (https://example.com,室長님 · …/a.室長 · …/a」室長 의 室長 는 글). 경로 안 한자(/資料室/a.png)는 그대로 둔다
 const RAW = [/<!--.*?-->/g, /<\/?[A-Za-z][\w-]*(?:\s+[\w:.-]+(?:=(?:"[^"\n]*"|'[^'\n]*'|[^\s"'<>]+))?)*\s*\/?>/g, /`[^`\n]*`/g,
-    /https?:\/\/(?:[^\s<>"'`「」『』()（）\[\].,;:!?。、，．！？]|[.,;:!?](?=[\x21-\x7E]))+/g];
+    /https?:\/\/(?:[^\s<>"'`「」『』()（）\[\].,;:!?。、，．！？]|[.,;!?](?=[\x21-\x7E])|:(?=[^\s<>"'`「」『』()（）\[\]。、，．！？]))+/g];   // v5 「:」 뒤가 글이면 URL 안 (위키 이름공간)
 function keptSpans(line) {
     const spans = [];
     for (const re of WRAPS) for (const m of line.matchAll(re)) if (!HANGUL.test(m[1])) spans.push([m.index, m.index + m[0].length]);
@@ -83,10 +86,18 @@ const englishLine = b => count(b, LATIN) > count(b, KANA) + count(b, HAN) + coun
  * 원문에서 그 말이 든 줄이 영어가 주된 줄(라틴 글자 > 가나 + 한자 + 한글)뿐인가 — 영어 원문에서 온 낱말만.
  * v3: 그 말이 영어 위주가 아닌 원문 줄(일본어 「」 대사 · 한국어 줄)에도 있으면 보내지 않는다 — 영어 서술 + 일본어 대사 원문에서 대사 속에 일부러 쓴 영어(「Yes, マイロード」)
  */
+// 6.4.4 영어 v5 같은 원문은 한 번만 쪼개(줄마다 bare · 영어 위주 판정) 말마다 한 번만 본다 — v4 는 남은 말마다 원문 전체를 다시 쪼개고 훑어
+//   긴 답에서 줄 수 × 원문 크기로 늘었다 (300줄 × 300줄 181 ms). 마지막 원문 하나만 들고 있는다 (지난 답의 원문을 쌓아 두지 않게)
+let feSource = null, feLines = [], feMemo = new Map();
 const fromEnglish = (phrase, source) => {
+    const src = String(source ?? '');
+    if (src !== feSource) { feSource = src; feLines = src.split('\n').map(bare).map(b => [b, englishLine(b)]); feMemo = new Map(); }
+    if (feMemo.has(phrase)) return feMemo.get(phrase);
     const re = wordRe(phrase);
-    const lines = String(source ?? '').split('\n').map(bare).filter(b => re.test(b));
-    return lines.some(englishLine) && lines.every(englishLine);
+    const lines = feLines.filter(([b]) => re.test(b));
+    const yes = lines.some(([, en]) => en) && lines.every(([, en]) => en);
+    feMemo.set(phrase, yes);
+    return yes;
 };
 
 /**
@@ -113,7 +124,7 @@ export function leftoverEnglish(line, source, names = []) {
         }
     }
     // 한글이 주된 줄인가 — 찾은 남김 말을 뺀 나머지로 센다 (짧은 줄의 「Just then, 문이 열렸다」 는 잡고, 영어 위주 줄 · 트래커는 그대로 뺀다)
-    let rest = s.replace(/`[^`\n]*`/g, '').replace(/https?:\/\/(?:[^\s<>"'`「」『』()（）\[\].,;:!?。、，．！？]|[.,;:!?](?=[\x21-\x7E]))+/g, '');   // v4 맨 URL · 인라인 코드 글자는 세지 않는다 (지킴 자리와 같은 꼴 · 태그는 bare 가 이미 뺐다)
+    let rest = s.replace(/`[^`\n]*`/g, '').replace(/https?:\/\/(?:[^\s<>"'`「」『』()（）\[\].,;:!?。、，．！？]|[.,;!?](?=[\x21-\x7E])|:(?=[^\s<>"'`「」『』()（）\[\]。、，．！？]))+/g, '');   // v4 맨 URL · 인라인 코드 글자는 세지 않는다 (지킴 자리와 같은 꼴 · 태그는 bare 가 이미 뺐다)
     for (const w of words) rest = rest.replace(wordRe(w, 'gi'), '');
     return count(rest, HANGUL) > count(rest, LATIN) ? words : [];
 }
@@ -130,7 +141,7 @@ export function linesToFix(text, source = '', keep = [], names = [], { english =
     const hangul = count(s, HANGUL), kana = count(s, KANA), han = count(s, HAN), latin = count(bare(s), LATIN);
     const kanaOn = kana > 0 && hangul > kana;
     const hanOn = Boolean(source) && han > 0 && hangul > han + kana;
-    const enOn = english && Boolean(source) && latin > 0 && hangul > 0;   // 한글이 주된 줄인지는 줄마다 (남김 말을 뺀 나머지로) — 짧은 번역문도
+    const enOn = english && Boolean(source) && latin > 0 && hangul > kana + han;   // 6.4.4 영어 v5 글 전체가 한국어 번역문일 때만 (가나 · 한자가 더 많은 글은 6.4.1 · 6.4.2 처럼 손대지 않는다)   // 한글이 주된 줄인지는 줄마다 (남김 말을 뺀 나머지로) — 짧은 번역문도
     if (!kanaOn && !hanOn && !enOn) return [];
     const rows = [];
     s.split('\n').forEach((line, index) => {

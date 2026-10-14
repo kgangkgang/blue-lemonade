@@ -1201,6 +1201,7 @@ function startEntry(job, pre, prep = true) {
         if (b instanceof Blob && b.size) {
             const lufs = Number.isFinite(rec?.lufs) ? rec.lufs : null;
             const align = rec?.align || null;   // 1.6.3 캐시에 둔 글자 시간표
+            e.hit = true;   // 6.4.4 v1.3 캐시 적중을 데우는 중 — 대본 「다시 생성」은 받는 중으로 보지 않는다 (speakScript busy)
             if (e.pre && !e.stale) await keepWarm(job, b, lufs, e.prep, align);
             return { raw: b, lufs, hit: true, made: false, align };
         }
@@ -1232,7 +1233,11 @@ function startEntry(job, pre, prep = true) {
     })();
     e.promise.then(async (r) => {
         if (r?.raw && !r.hit && !e.stale && !e.moved) await Promise.resolve(cache.put(job.key, r.raw, { mime: r.raw.type || 'audio/mpeg', lufs: r.lufs, ...(r.align ? { align: r.align } : {}) })).catch(() => { /* 캐시 실패는 무시 */ });
-    }, () => { /* 부른 쪽이 받음 */ }).finally(() => { if (inflight.get(job.key) === e) inflight.delete(job.key); });
+        if (!e.stale && !e.moved && (r?.raw || r?.speak)) wantNew.delete(job.key);   // 6.4.5 새 소리를 받음
+    }, () => {   // 부른 쪽이 받음
+        // 6.4.5 ↻ 로 새로 사다가 못 받으면(오류 · 쉬는 중 · 보내기 전에 멈춤) 옮겨 둔 소리를 그 줄로 되돌린다 — 다음에 들을 때 다시 사지 않게
+        if (!e.stale && wantNew.delete(job.key) && typeof cache.restoreTake === 'function') Promise.resolve(cache.restoreTake(job.key)).catch(() => { /* 무시 */ });
+    }).finally(() => { if (inflight.get(job.key) === e) inflight.delete(job.key); });
     return e;
 }
 /**
@@ -1737,6 +1742,7 @@ async function run() {
                 if (sceneTails.size) await Promise.allSettled([...sceneTails]);
                 if (my !== gen) break;
                 sceneAudio.stopAll(); sceneTails.clear();
+                if (nav !== null) { idx = nav; nav = null; continue; }   // 6.4.4 v1.3 앞 메시지 꼬리를 기다리는 동안 ⟲ · ↻ · ⏮: 그 줄로 돌아가 다시 읽는다 (같은 메시지라 다음 반복은 기다리지 않음)
             }
             if (job.sceneKind === 'sfx' && (!isSfxEnabled(job.sfxId) || (!job.sceneManual && settings().sfx?.enabled !== true))) { idx++; continue; }
             if (deadFor(job)) {   // 1.3.8 이번 읽기(스트리밍이면 이 답장)에서 안 되는 엔진
@@ -1921,13 +1927,49 @@ export function regenerateCurrent() {
     const j = current;
     if (!j) return;
     if (j.sceneKind) { nav = idx; cancelCurrent(); return; }
-    Promise.resolve(cache.remove(j.key)).catch(() => { /* 무시 */ });
+    if (inflight.has(j.key)) return;   // 6.4.5 v1.1 이 줄을 받는 중 — 또 누르면 이미 산 소리를 버리게 되므로 (⟲ 와 같음)
+    Promise.resolve(retireKey(j.key)).catch(() => { /* 무시 */ });   // 6.4.5 지우지 않고 테이크로 (⟲ 로 되돌림)
     forgetClip(j.key);                                            // 진행 중 · warm · prepared 사본도 (옛 소리가 어디에도 남지 않게)
     if (j.ctrl && !j.ctrl.signal.aborted) j.ctrl.abort();
     j.audio = null;
     j.ctrl = null;
-    nav = idx;
+    nav = lineAt(j);   // 6.4.5 v1.1 줄 사이 쉼에서도 그 줄로 (run 은 이미 idx++ 를 했다)
+    if (idx >= queue.length) idx = nav;   // 6.4.5 v1.2 마지막 줄 뒤 효과음 꼬리를 기다리는 중: 루프가 끝나 nav 를 안 읽는다 → run 의 finally 가 그 줄부터 다시
     cancelCurrent();
+}
+/** 6.4.5 ↻ 로 테이크에 옮기고 새 소리를 사는 중인 줄 (받으면 빠지고, 못 받으면 startEntry 가 옮긴 소리를 되돌린다) */
+const wantNew = new Set();
+/** 6.4.5 ↻ 의 옛 소리는 테이크로. 옮긴 것이 없으면(줄 소리 없음 · 테이크를 못 다루는 저장소) 예전처럼 지우기 */
+async function retireKey(key) {
+    const moved = typeof cache.retire === 'function' ? await cache.retire(key) : false;
+    if (moved) wantNew.add(key);
+    else await cache.remove(key);
+    return moved;
+}
+/**
+ * 6.4.5 ⟲ 이전 소리: 이 줄의 테이크와 지금 소리를 맞바꾸고 그 줄을 다시 읽는다 (합성 없음 — 캐시에 있던 소리 그대로).
+ * 바꾼 소리는 그 줄의 열쇠에 들어가므로 다시 듣기 · 이어 듣기 · 내려받기가 모두 그 소리를 쓴다.
+ * 이 줄을 만드는 중(↻ 뒤 받는 중)이면 하지 않는다 — 산 소리를 버리지 않게
+ */
+export async function revertCurrent() {
+    if (!runtimeEnabled()) return false;
+    const j = current;
+    if (!j || j.sceneKind || !j.key || inflight.has(j.key) || typeof cache.restoreTake !== 'function') return false;
+    const ok = await Promise.resolve(cache.restoreTake(j.key)).catch(() => false);
+    if (!ok || current !== j) return !!ok;
+    forgetClip(j.key);
+    if (j.ctrl && !j.ctrl.signal.aborted) j.ctrl.abort();
+    j.audio = null;
+    j.ctrl = null;
+    nav = lineAt(j);   // 6.4.5 v1.1 줄 사이 쉼에 눌러도 그 줄을 다시 (idx 는 이미 다음 줄)
+    if (idx >= queue.length) idx = nav;   // 6.4.5 v1.2 마지막 줄 뒤 꼬리 기다림에서도 (↻ 와 같음)
+    cancelCurrent();
+    return true;
+}
+/** 6.4.5 v1.1 그 작업의 큐 자리 (없으면 지금 자리) — prev() 와 같은 셈 */
+function lineAt(j) {
+    const at = queue.indexOf(j);
+    return at >= 0 ? at : idx;
 }
 
 // ---------- 공개: 읽기
@@ -2167,8 +2209,17 @@ export async function speakScript(mesId, rows = null, { rowId = null, regenerate
     const my = gen;
     const selected = (rows || scriptRows(mesId)).filter(row => !rowId || row.id === rowId).map(row => rowId ? { ...row, enabled: true } : row);
     const jobs = sceneJobs(mesId, selected, { preview: !!rowId, manual: true });
-    if (regenerate) for (const j of jobs) if (!j.sceneKind) { forgetClip(j.key); await cache.remove(j.key); }
-    if (my !== gen || msg(mesId) !== mes) return false;
+    const moved = [];
+    // 6.4.5 v1.2 받는 중인 줄(보낸 요청 — 위 stop 뒤에도 끝까지 받는다)은 옮기지도 사본을 버리지도 않는다: 버리면 산 소리를 버리고 또 산다.
+    //   위 stop 으로 그만둔 요청(아직 안 보냄)은 받는 중이 아니다 — 예전처럼 새로 (그 요청이 실패로 끝나며 옮긴 소리를 되돌리지 않게 사본을 버린다)
+    //   6.4.4 v1.3 미리 만들기가 캐시 적중을 데우는 중(e.hit)도 받는 중이 아니다 — 예전처럼 테이크로 옮기고 새로 산다 (조용히 무시하지 않게)
+    const busy = (key) => { const e = inflight.get(key); return !!e && !e.stale && !e.hit && !e.ctrl.signal.aborted; };
+    if (regenerate) for (const j of jobs) if (!j.sceneKind && !busy(j.key)) { forgetClip(j.key); if (await retireKey(j.key)) moved.push(j.key); }   // 6.4.5 테이크로
+    if (my !== gen || msg(mesId) !== mes) {
+        // 6.4.5 v1.1 옮기는 사이 멈춤 · 창 닫기 · 메시지가 바뀜: 시작한 작업이 없으니 옮긴 소리를 그 줄로 되돌린다 (줄이 비어 다시 사지 않게)
+        for (const k of moved) if (wantNew.delete(k) && typeof cache.restoreTake === 'function') await Promise.resolve(cache.restoreTake(k)).catch(() => { /* 무시 */ });
+        return false;
+    }
     if (!jobs.length) { toast('재생할 줄이 없어요'); return false; }
     enqueue(jobs);
     return true;
@@ -2960,6 +3011,7 @@ function buildBar() {
         btn('lv-bar-toggle', '일시정지', 'fa-pause') +
         btn('lv-bar-next', '다음', 'fa-forward-step') +
         btn('lv-bar-regen', '다시 만들기', 'fa-rotate') +
+        btn('lv-bar-takes', '이전 소리', 'fa-clock-rotate-left') +   // 6.4.5 테이크가 있을 때만 (syncTakesBtn)
         btn('lv-bar-analyze', '다시 분석', 'fa-wand-magic-sparkles') +
         btn('lv-bar-down', '내려받기', 'fa-download') +
         btn('lv-bar-stop', '정지', 'fa-stop') +
@@ -3000,6 +3052,9 @@ function buildBar() {
     barEl.toggle.addEventListener('click', guard(() => (paused ? resume() : pause())));
     bar.querySelector('.lv-bar-next').addEventListener('click', guard(skip));
     bar.querySelector('.lv-bar-regen').addEventListener('click', guard(regenerateCurrent));
+    barEl.takes = bar.querySelector('.lv-bar-takes');   // 6.4.5
+    barEl.takes.style.display = 'none';
+    barEl.takes.addEventListener('click', guard(() => { revertCurrent().catch(() => { /* 무시 */ }); }));
     // 1.6.3 요술봉: 바로 다시 분석하지 않고 「재생성 · 효과음」 고르기 (사용자: 내려받기처럼)
     barEl.wandmenu = bar.querySelector('.lv-bar-wandmenu');
     barEl.sfxpick = bar.querySelector('.lv-bar-sfxpick');
@@ -3094,7 +3149,7 @@ function syncDetails(job = current) {
     if (!barEl.detailsButton.hidden) { barEl.voice.setAttribute('role', 'button'); barEl.voice.setAttribute('tabindex', '0'); }
     else { barEl.voice.removeAttribute('role'); barEl.voice.removeAttribute('tabindex'); closeDetails(); }
 }
-const WAIT_BLOCKED = ['.lv-bar-prev', '.lv-bar-toggle', '.lv-bar-next', '.lv-bar-regen', '.lv-bar-down', '.lv-bar-analyze'];
+const WAIT_BLOCKED = ['.lv-bar-prev', '.lv-bar-toggle', '.lv-bar-next', '.lv-bar-regen', '.lv-bar-takes', '.lv-bar-down', '.lv-bar-analyze'];   // 6.4.5 .lv-bar-takes
 // ---------- 1.4.3 내려받기 고르기 (전체 · 이 문장) — 막대 안의 작은 알약, 내려받기 단추 위에
 let dlPick = null;
 function openDownloadMenu(pick) {
@@ -3295,6 +3350,33 @@ function syncAnalyzeBtn() {
     const on = !!analysisCfg(settings())?.enabled;
     barEl.analyze.style.display = on ? '' : 'none';
 }
+/**
+ * 6.4.5 ⟲ 는 이 줄에 테이크가 있고 소리가 준비됐을 때만 (인라인 display — syncAnalyzeBtn 과 같음). 같은 줄이면 묻는 동안 그대로 둔다.
+ * v1.1 같은 줄을 다시 읽는 동안(⟲ · ↻ 뒤 busy)은 숨기지 않고 흐리게만 (aria-disabled) — 숨기면 키보드 포커스가 빠져 두 번째 Enter 가 안 먹었다.
+ *      누르면 revertCurrent 가 받는 중(inflight)이라 아무것도 하지 않는다
+ */
+let takesFor = null, takesAsk = 0;
+function syncTakesBtn(job, busy = false) {
+    if (!barEl.takes) return;
+    const my = ++takesAsk;
+    const same = !!job && job === takesFor;
+    if (!same) barEl.takes.style.display = 'none';
+    const dim = same && !!busy;
+    if (dim) barEl.takes.setAttribute('aria-disabled', 'true'); else barEl.takes.removeAttribute('aria-disabled');
+    barEl.takes.style.opacity = dim ? '.45' : '';
+    takesFor = job;
+    if (!job || job.sceneKind || !job.key || typeof cache.takeCount !== 'function') { barEl.takes.style.display = 'none'; return; }
+    if (busy) return;
+    Promise.resolve(cache.takeCount(job.key)).then((n) => { if (my === takesAsk && current === job) barEl.takes.style.display = n > 0 ? '' : 'none'; }, () => { /* 무시 */ });
+}
+/** 6.4.5 v1.1 캐시 비우기: 테이크도 지워졌으니 ⟲ 를 숨기고 되돌릴 표시도 버린다 */
+function clearTakes() {
+    forgetClips();
+    wantNew.clear();
+    takesFor = null;
+    takesAsk++;
+    if (barEl.takes) { barEl.takes.style.display = 'none'; barEl.takes.removeAttribute('aria-disabled'); barEl.takes.style.opacity = ''; }
+}
 function showBar(job, busy) {
     if (!bar) return;
     // 6.3.6 뒤 고침: 다른 메시지를 읽기 시작하면 앞 메시지에서 연 요술봉 · 효과음 · 낱말 창은 닫는다 (안 그러면 앞 답의 칩 · 대사로 다시 떴다).
@@ -3310,6 +3392,7 @@ function showBar(job, busy) {
     setBlocked(false);
     bar.classList.toggle('lv-bar-busy', !!busy);
     syncAnalyzeBtn();
+    syncTakesBtn(job, busy);   // 6.4.5
     updateBar();
     placeBar();
     observeBar(true);
@@ -3330,6 +3413,7 @@ function waitBar(mes, text) {
     bar.classList.add('lv-bar-on', 'lv-bar-busy', 'lv-bar-wait');
     setBlocked(true);
     syncAnalyzeBtn();
+    syncTakesBtn(null);   // 6.4.5
     updateBar();
     placeBar();
     observeBar(true);
@@ -3425,7 +3509,7 @@ export function init() {
         if (r && Number.isInteger(e?.swipeId) && r.swipe >= e.swipeId) readState.delete(id);
     });
     onSfxPreferenceChange(() => { applyPlayback(); syncDetails(); });
-    if (typeof cache.onClear === 'function') cache.onClear(forgetClips);   // 캐시 비우기 → 메모리 사본도
+    if (typeof cache.onClear === 'function') cache.onClear(clearTakes);   // 캐시 비우기 → 메모리 사본도 (6.4.5 v1.1 ⟲ · 되돌릴 표시도)
     // 그려진 시각: ▶ 버튼이 "번역이 아직 오는 중"인지 볼 때 (스와이프도 다시 그려지며 번역기가 새로 번역함)
     eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, (id) => noteRendered(id));
     eventSource.on(event_types.MESSAGE_SWIPED, (id) => noteRendered(id));

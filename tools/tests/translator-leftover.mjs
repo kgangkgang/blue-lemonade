@@ -4,6 +4,7 @@
 // 6.4.3 한자 v4 + 지킴 자리 좁힘(URL 끝 · 태그 꼴 · 주석) · <rb> · 대문자 루비 · 붙은 《》 읽기만.
 // 6.4.3 + 문장 첫머리에 남은 흔한 영어 낱말 · 여는 말 (원문에서 그 말이 든 줄이 모두 영어가 주된 줄일 때만).
 // 6.4.3 영어 v4 + 「한글이 주된 줄」 셈에서 맨 URL · 인라인 코드 글자는 뺀다.
+// 6.4.4 한자 v5 · 영어 v5 + 위키 이름공간 주소는 URL 안 · 한국어 번역문(한글 > 가나 + 한자)일 때만 영어 · 원문은 한 번만 쪼갬.
 //   node tools/tests/translator-leftover.mjs <테마 루트>
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -230,6 +231,26 @@ await test('6.4.3 영어 v4 한국어 줄의 맨 URL · 인라인 코드 글자�
     assert.deepEqual(pick('자료는 https://example.com/a 에 있다. Then 미나는 웃었다.', src), [[0, ['Then']]], 'bare URL');
     assert.deepEqual(pick('`npm run build` 를 돌렸다. Then 렉스는 떠났다.', src), [[0, ['Then']]], 'inline code');
     assert.deepEqual(pick('Then, she smiled and left the room at https://example.com/a 웃음.', src), [], 'an English-dominant line still stays out');
+});
+await test('6.4.4 한자 v5 위키 이름공간 주소의 「:」 뒤 한자는 URL 안이라 고르지 않는다 (v4 회귀) — 「:」 뒤가 빈칸이면 그대로 끝', () => {
+    const src = 'ミナは https://ja.wikipedia.org/wiki/特別:検索 を開いた。\nカテゴリは https://ja.wikipedia.org/wiki/Category:室長 だ。\n資料は https://ex.com/a: 室長が書いた。';
+    assert.deepEqual(pick('미나는 https://ja.wikipedia.org/wiki/特別:検索 을 열고 한참 들여다보았다.', src), [], 'special page');
+    assert.deepEqual(pick('분류는 https://ja.wikipedia.org/wiki/Category:室長 이라고 미나가 말했다.', src), [], 'category');
+    assert.deepEqual(pick('자료는 https://ex.com/a: 室長님이 쓴 것이라고 미나가 말했다.', src), [[0, ['室長']]], 'a colon followed by a space still ends the URL');
+    assert.equal(L.stillLeftover('분류는 https://ja.wikipedia.org/wiki/Category:室長 이다.', ['室長'], '분류는 https://ja.wikipedia.org/wiki/Category:室長 이다.'), false, 'a fix that keeps the link is accepted');
+});
+await test('6.4.4 영어 v5 가나 · 한자가 한글보다 많은 글(한국어 번역문이 아님)은 영어 여는 말 때문에 다시 보내지 않는다 — 6.4.1 · 6.4.2 처럼', () => {
+    const src = 'Now, Mina stood by the window.\nThen she smiled at Rex.';
+    const out = 'Now, 미나는 ミナと窓辺に立ったのでした。\nThen ミナはレックスに笑いかけた。';
+    assert.deepEqual(pick(out, src), [], 'a mostly Japanese answer is left alone');
+    assert.deepEqual(pick('Now, 미나는 창가에 섰다.\nThen 그녀는 렉스에게 웃었다.', src), [[0, ['Now']], [1, ['Then']]], 'a Korean answer still gets its English openers fixed');
+});
+await test('6.4.4 영어 v5 긴 답 — 원문을 말마다 다시 쪼개지 않는다 (답 3000줄 · 원문 3000줄 — v4 는 5 초 넘게 · v5 는 수십 ms)', () => {
+    const src = Array.from({ length: 3000 }, (_, i) => `Then, Mina looked at window number ${i} for a while.`).join('\n');
+    const out = Array.from({ length: 3000 }, (_, i) => `Then, 미나는 ${i}번 창문을 한참 바라보았다.`).join('\n');
+    const t0 = performance.now(); const rows = pick(out, src); const ms = performance.now() - t0;
+    assert.equal(rows.length, 20, 'twenty lines at most');
+    assert.ok(ms < 1500, `took ${Math.round(ms)} ms`);
 });
 await test('index.js 연결: 통째 · 문단 묶음 · 문단 캐시 모두 같은 규칙, 한 요청, 실패하면 그대로 · 이름 목록 · CI 등록', () => {
     const js = read('src/addons/translator/index.js');

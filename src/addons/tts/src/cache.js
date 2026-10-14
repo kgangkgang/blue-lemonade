@@ -3,6 +3,8 @@
 // 1.0.0 (v1: 저장소 audio + 색인 t) 에서 올라오면 저장소를 그대로 두고 빠진 색인만 만든다
 // 1.2.2: has(key) (읽기만) · setProtected(keys) — 미리 만든 최근 답장의 소리는 정리(prune)에서 빼 둔다 · pickEvictions (순수 함수, 시험용)
 //        onClear(fn) — 비우기 뒤 재생기가 메모리에 든 사본(진행 중 · warm · prepared)도 버리게
+// 6.4.5 테이크: ↻ 다시 만들기 전 소리를 줄마다 TAKE_KEEP 개까지 보관(retire) · ⟲ 로 그 줄의 소리와 맞바꿈(restoreTake).
+//        같은 저장소에 'take' 열쇠로 둔다. 한도 정리 · 개수 · 용량은 보통 줄만 센다 — 테이크는 따로 작은 칸(takeLimits)이라 테이크 때문에 지워져 다시 사는 줄이 없다
 import { settings } from './settings.js';
 import { log } from './log.js';
 
@@ -139,6 +141,132 @@ export function takeEvicted(key) {
     return true;
 }
 
+// ---------- 6.4.5 테이크 (↻ 전 소리 보관)
+
+const TAKE = 'take';     // 줄 열쇠(해시 — base36)와 겹치지 않는 머리
+const TAKE_KEEP = 2;            // 줄마다 보관하는 지난 소리 (지금 소리까지 3개)
+const TAKE_SHARE = 0.05;        // 테이크 칸 = 한도의 5% (개수 · 용량 따로)
+const TAKE_MIN = 3, TAKE_MAX = 30, TAKE_MB = 20;   // 개수 칸의 바닥 · 천장, 용량 한도가 없을 때의 MB
+let takeSeq = 0, takeT = 0;
+let lastTakeKey = null;   // 6.4.5 v1.2 방금 만든 테이크 (retire · restoreTake) — prune 의 칸 정리도 남긴다
+const takeStamp = () => (takeT = Math.max(Date.now(), takeT + 1));   // v1.1 지금 소리에서 물러난 시각 (같은 ms 에도 차례가 서게)
+/** 테이크 열쇠인가 */
+export const isTakeKey = (key) => typeof key === 'string' && key.startsWith(TAKE);
+/** 테이크 칸 (보통 줄 한도의 5% — 개수는 3~30, 용량 한도가 없으면 20 MB) */
+export function takeLimits(lim = limits()) {
+    return {
+        count: Number.isFinite(lim.count) ? Math.min(TAKE_MAX, Math.max(TAKE_MIN, Math.floor(lim.count * TAKE_SHARE))) : TAKE_MAX,
+        bytes: Number.isFinite(lim.bytes) ? Math.floor(lim.bytes * TAKE_SHARE) : TAKE_MB * 1048576,
+    };
+}
+const lineRange = (key) => IDBKeyRange.bound(`${TAKE}${key}`, `${TAKE}${key}￿`);
+const takeRecord = (line, rec, ord) => ({
+    key: `${TAKE}${line}${Date.now().toString(36)}.${(takeSeq++).toString(36)}`, line, take: true, ord,
+    blob: rec.blob, mime: rec.mime || rec.blob?.type || 'audio/mpeg', lufs: Number.isFinite(rec.lufs) ? rec.lufs : null, t: takeStamp(), size: sizeOf(rec),
+    ...(validAlign(rec.align) ? { align: rec.align } : {}),
+});
+/**
+ * 줄마다 최근 keep 개만 (새 소리가 들어올 때 — put. ↻ 가 실패해 되돌릴 때 보관한 것을 잃지 않게 retire 에서는 줄이지 않음).
+ * v1.1 남길 것은 「지금 소리에서 물러난 시각(t)」이 최근인 것 — ⟲ 순환 차례(ord)로 고르면 ⟲ 뒤 ↻ 에서 방금까지 듣던 소리가 먼저 지워졌다
+ */
+function trimLine(st, key, keep = TAKE_KEEP) {
+    if (typeof IDBKeyRange === 'undefined') return;
+    const takes = [];
+    const cur = st.openCursor(lineRange(key));
+    cur.onsuccess = () => {
+        const c = cur.result;
+        if (c) { if (isTakeKey(c.value?.key) && c.value.line === key) takes.push({ key: c.value.key, t: Number(c.value.t) || 0 }); c.continue(); return; }
+        takes.sort((a, b) => b.t - a.t);
+        for (const x of takes.slice(keep)) st.delete(x.key);
+    };
+}
+/** 테이크 칸이 넘치면 오래 보관한 것부터 지운다 (keepKey = 방금 넣은 것은 남김) */
+function trimTakes(st, lim, keepKey) {
+    if (typeof IDBKeyRange === 'undefined') return;
+    const rows = [];
+    const cur = st.openCursor(IDBKeyRange.bound(TAKE, `${TAKE}￿`));
+    cur.onsuccess = () => {
+        const c = cur.result;
+        if (c) { rows.push({ key: c.value.key, t: Number(c.value.t) || 0, size: sizeOf(c.value) }); c.continue(); return; }
+        rows.sort((a, b) => a.t - b.t);
+        let n = rows.length, b = rows.reduce((sum, r) => sum + r.size, 0);
+        for (const r of rows) {
+            if (n <= lim.count && b <= lim.bytes) break;
+            if (r.key === keepKey) continue;
+            st.delete(r.key);
+            n--; b -= r.size;
+        }
+    };
+}
+/**
+ * ↻ 다시 만들기: 그 줄의 소리를 지우는 대신 테이크로 옮긴다 (없으면 지우기만). 테이크 칸 한도 (줄마다 TAKE_KEEP 개는 새 소리가 들어올 때 put 이 줄인다).
+ * 한도 정리가 지운 것이 아니라 noteEvicted 에 넣지 않는다 (6.4.2 다시 사기 안내는 그대로). 옮겼으면 true
+ */
+export async function retire(key) {
+    if (!key || isTakeKey(key)) return false;
+    let moved = false;
+    const lim = takeLimits();
+    await tx('readwrite', (st) => {
+        const takes = [];
+        const cur = st.openCursor(lineRange(key));
+        cur.onsuccess = () => {
+            const c = cur.result;
+            if (c) { takes.push({ key: c.value.key, ord: Number(c.value.ord) || 0 }); c.continue(); return; }
+            const g = st.get(key);
+            g.onsuccess = () => {
+                const rec = g.result;
+                let made = null;
+                if (rec?.blob) {
+                    made = takeRecord(key, rec, takes.reduce((m, x) => Math.max(m, x.ord), 0) + 1);
+                    st.put(made);
+                    lastTakeKey = made.key;
+                    takes.push({ key: made.key, ord: made.ord });
+                    moved = true;
+                }
+                st.delete(key);
+                if (made) trimTakes(st, lim, made.key);
+            };
+        };
+    });
+    est = null;
+    return moved;
+}
+/** 이 줄에 보관한 테이크 수 (지금 소리는 빼고) */
+export async function takeCount(key) {
+    if (!key || isTakeKey(key)) return 0;
+    let n = 0;
+    const ok = await tx('readonly', (st) => { const c = st.count(lineRange(key)); c.onsuccess = () => { n = c.result || 0; }; });
+    return ok ? n : 0;
+}
+/**
+ * ⟲ 이전 소리: 가장 최근 테이크를 그 줄의 소리로 (다시 듣기 · 이어 듣기 · 내려받기가 모두 그 줄의 열쇠를 읽는다).
+ * 지금 소리는 테이크 맨 뒤로 → 누를 때마다 지금 → 바로 전 → 그 전 → 지금 … 으로 돈다. 바꿨으면 true
+ */
+export async function restoreTake(key) {
+    if (!key || isTakeKey(key)) return false;
+    let done = false;
+    await tx('readwrite', (st) => {
+        const takes = [];
+        const cur = st.openCursor(lineRange(key));
+        cur.onsuccess = () => {
+            const c = cur.result;
+            if (c) { takes.push(c.value); c.continue(); return; }
+            const pick = takes.filter(x => x?.blob).sort((a, b) => (Number(b.ord) || 0) - (Number(a.ord) || 0))[0];
+            if (!pick) return;
+            const g = st.get(key);
+            g.onsuccess = () => {
+                const rec = g.result;
+                st.delete(pick.key);
+                st.put({ key, blob: pick.blob, mime: pick.mime || pick.blob.type || 'audio/mpeg', lufs: Number.isFinite(pick.lufs) ? pick.lufs : null, t: Date.now(), size: sizeOf(pick), ...(validAlign(pick.align) ? { align: pick.align } : {}) });
+                if (rec?.blob) { const back = takeRecord(key, rec, Math.min(...takes.map(x => Number(x.ord) || 0)) - 1); st.put(back); lastTakeKey = back.key; }
+                done = true;
+            };
+        };
+    });
+    est = null;
+    return done;
+}
+
 /** 정리에서 뺄 키 (미리 만들기가 최근 답장 몇 개의 키를 준다). 전부 바꿔 끼움 */
 export function setProtected(keys) {
     protectedKeys = new Set([...(keys || [])].filter(Boolean));
@@ -180,11 +308,12 @@ export function prune() {
         const cur = st.index('t').openCursor();   // t 오름차순 = 오래된 것 먼저
         cur.onsuccess = () => {
             const c = cur.result;
-            if (c) { rows.push({ key: c.value.key, size: sizeOf(c.value) }); c.continue(); return; }
+            if (c) { if (!isTakeKey(c.value.key)) rows.push({ key: c.value.key, size: sizeOf(c.value) }); c.continue(); return; }   // 6.4.5 테이크는 따로 (trimTakes)
             const pick = pickEvictions(rows, lim);
             for (const k of pick.keys) st.delete(k);
             noteEvicted(pick.keys);   // 6.4.2
             est = { count: pick.count, bytes: pick.bytes };
+            trimTakes(st, takeLimits(lim), lastTakeKey);   // 6.4.5 v1.1 한도를 낮추고 정리하면 테이크 칸도 새 한도로 · v1.2 방금 만든 것은 남김 (retire 와 같음)
         };
     }).finally(() => { pruning = null; });
     return pruning;
@@ -247,6 +376,7 @@ export async function put(key, blob, meta = {}) {
         const c = st.count(key);
         c.onsuccess = () => { existed = c.result > 0; };
         st.put(rec);
+        trimLine(st, key);   // 6.4.5 새 소리가 들어오면 그 줄의 지난 소리는 최근 TAKE_KEEP 개만
     });
     if (!ok) return false;
     if (est && !existed) { est.count++; est.bytes += rec.size; }
@@ -275,19 +405,21 @@ export function onClear(fn) {
     return () => clearSubs.delete(fn);
 }
 
-/** 개수 · 바이트 */
+/** 개수 · 바이트 (6.4.5 보통 줄만 — 한도와 견주는 값. 테이크는 takes 에 따로) */
 export async function stats() {
     let count = 0, bytes = 0;
+    const takes = { count: 0, bytes: 0 };
     const ok = await tx('readonly', (st) => {
         const cur = st.openCursor();
         cur.onsuccess = () => {
             const c = cur.result;
             if (!c) return;
-            count++;
-            bytes += sizeOf(c.value);
+            const into = isTakeKey(c.value.key) ? takes : null;
+            if (into) { into.count++; into.bytes += sizeOf(c.value); }
+            else { count++; bytes += sizeOf(c.value); }
             c.continue();
         };
     });
     if (ok) est = { count, bytes };
-    return { count, bytes };
+    return { count, bytes, takes };
 }

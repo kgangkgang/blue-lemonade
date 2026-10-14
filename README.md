@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.4.3/blue-lemonade-6.4.3.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.4.4/blue-lemonade-6.4.4.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.4.3 · 최신 업데이트</summary>
+<summary>6.4.4 · 최신 업데이트</summary>
+
+- 번역: 위키 주소(特別: · Category: 같은 이름공간) 속 한자를 남은 글자로 보지 않아요. 일본어가 더 많은 번역문은 영어 여는 말 때문에 다시 보내지 않고, 긴 답에서 남김 검사가 빨라졌어요.
+- TTS: ↻ 로 새로 만든 소리가 별로면 ⟲ 로 전 소리로 돌아가요 (줄마다 두 개 보관).
+- 성능: 메시지마다 똑같이 들어간 style 은 하나만 써서 메뉴 · 서랍 · 스크롤이 빨라져요 (성능 보조에서 끄고 켬).
+- 애드온 버전: 성능 보조 2.2.3 · LLM 번역 2.4.6 · TTS 1.8.7
+
+</details>
+
+<details>
+<summary>6.4.3 · 번역 영어 남김 · 한자 남김 다듬기 · TTS 두 이름 목소리</summary>
 
 - 번역: 링크 · 태그 바로 뒤에 붙어 남은 한자도 다시 보내고, 루비 읽기는 그대로 둬요.
 - 번역: 원문이 영어일 때 문장 첫머리에 옮기지 않은 흔한 영어 낱말(Now, Well 같은 말)이 그대로 남으면 그 줄만 한 번 더 번역해요. 남은 가나 · 한자와 같은 요청 한 번이에요. 이름 · 약어 · 따옴표 속 영어는 그대로 둬요.

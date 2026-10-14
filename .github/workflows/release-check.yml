@@ -37,6 +37,7 @@ jobs:
           node tools/tests/usage-mode.mjs .
           node tools/tests/stream-follow.mjs .
           node tools/tests/stream-watchdog.mjs .
+          node tools/tests/style-dedupe.mjs .
           node tools/tests/tts-integration.mjs .
           node tools/tests/tts-dethump.mjs .
           node tools/tests/tts-pregen-paid.mjs .
@@ -61,6 +62,7 @@ jobs:
           node tools/tests/rewrite-tts-slots.mjs .
           node tools/tests/tts-wand.mjs .
           node tools/tests/tts-word-voice.mjs .
+          node tools/tests/tts-takes.mjs .
           node tools/tests/chat-like-alias.mjs .
           node tools/tests/zipinstall-remove.mjs .
           node tools/tests/word-replace-marks.mjs .
