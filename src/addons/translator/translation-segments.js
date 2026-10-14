@@ -671,6 +671,96 @@ export function dropStrayWords(text, source) {
     if (cjk <= latin) return value;
     return dropLines(lines, stray);
 }
+// 6.4.5 줄 전체를 감싼 「」 — 꺾쇠 없이 쓴 원문 줄(속마음 · 서술)을 모델이 대사로 보고 번역문 줄만 통째로 「…」 로 감쌌다 (태그 안쪽까지).
+//       번역 프롬프트의 「대사(「」 · 따옴표 안)」 안내가 꺾쇠 없는 일본어 줄에도 걸린 것. 원문 · 번역문 줄을 함께 보기(접기)와 같은 방식으로 맞춘다:
+//       빈 줄 · 코드 블록 · 구조 줄(가로줄 · 표)을 뺀 줄 수가 같을 때만 같은 번째 줄끼리. 줄 수가 다르면(짝이 불확실) 아무것도 안 한다.
+//       벗기는 것은 바깥 「」 하나뿐이고, 셋 다 맞을 때만:
+//        · 번역문 줄의 앞뒤 껍데기(태그 · 자리표시자 · 공백 · * _)를 뺀 글이 「 로 시작해 그 짝 」 로 끝난다 (「가」 … 「나」 처럼 두 덩이면 아님)
+//        · 원문 줄의 껍데기를 뺀 글 머리 · 끝에 따옴표(「『"“'‘ 와 닫는 짝)가 없다 — "…" 가 용어집으로 「」 가 된 대사는 그대로
+//        · 번역문 줄의 따옴표 짝이 원문 줄보다 딱 하나 많다 — 원문 속 「」 · "…" 를 옮긴 것은 남는다
+const WRAP_QUOTE_EDGE = /[「」『』"“”'‘’«»]/;
+const WRAP_SHELL_HEAD = /^(?:[\t \r *_]|<[A-Za-z][^<>]*>|\[\[__VAR_\d+__\]\])*/;
+const WRAP_CLOSE_TAG = /^<\/[A-Za-z][\w:-]*\s*>$/;
+const WRAP_CLOSE_VAR = /\[\[\/__VAR_\d+__\]\]$/;
+/** 줄 → [껍데기 뒤 시작, 껍데기 앞 끝] (뒤쪽은 정규식 $ 대신 끝에서부터 걷는다 — 긴 줄에서 되짚기가 없게) */
+function wrapCoreRange(line) {
+    const start = WRAP_SHELL_HEAD.exec(line)[0].length;
+    let end = line.length;
+    while (end > start) {
+        const ch = line[end - 1];
+        if (/[\t \r *_]/.test(ch)) { end--; continue; }
+        if (ch === '>') {
+            const open = line.lastIndexOf('<', end - 1);
+            if (open >= start && WRAP_CLOSE_TAG.test(line.slice(open, end))) { end = open; continue; }
+        }
+        if (ch === ']') {
+            const hit = WRAP_CLOSE_VAR.exec(line.slice(Math.max(start, end - 24), end));
+            if (hit) { end -= hit[0].length; continue; }
+        }
+        break;
+    }
+    return [start, end];
+}
+/** 따옴표 짝 수 (「 · 『 · “ 는 여는 것, " 는 둘에 하나 · 태그 속성의 " 는 빼고) — 원문 · 번역문에 같은 셈 */
+const quotePairs = line => {
+    const text = line.replace(/<[^<>]*>/g, '');
+    return (text.match(/[「『“]/g)?.length ?? 0) + Math.floor((text.match(/"/g)?.length ?? 0) / 2);
+};
+/** 빈 줄 · 코드 블록 · 구조 줄을 뺀 줄 번호 (함께 보기 줄 맞춤과 같은 판정) */
+function wrapLineQueue(lines) {
+    const structure = structureLines(lines);
+    const queue = [];
+    let fence = null, rawTag = null;
+    lines.forEach((line, i) => {
+        // HTML literal blocks and nested/different fence markers are content,
+        // so never repair their quotation marks.
+        if (!rawTag) {
+            const marker = /^[\t ]*(`{3,}|~{3,})(.*)$/.exec(line);
+            if (fence) {
+                if (marker && marker[1][0] === fence[0] && marker[1].length >= fence.length && !marker[2].trim()) fence = null;
+                return;
+            }
+            if (marker) { fence = marker[1]; return; }
+        }
+        let literal = !!rawTag;
+        for (const tag of line.matchAll(/<(\/?)(pre|code|script|style|textarea)\b[^<>]*>/gi)) {
+            literal = true;
+            const name = tag[2].toLowerCase();
+            if (!tag[1] && !rawTag) rawTag = name;
+            else if (tag[1] && rawTag === name) rawTag = null;
+        }
+        if (literal || !line.trim() || structure.has(i)) return;
+        queue.push(i);
+    });
+    return queue;
+}
+export function dropWrapQuotes(text, source) {
+    const value = String(text ?? '');
+    if (!value.includes('「') || !value.includes('」')) return value;
+    const lines = value.split('\n');
+    const srcLines = String(source ?? '').split('\n');
+    const outQueue = wrapLineQueue(lines), srcQueue = wrapLineQueue(srcLines);
+    if (outQueue.length !== srcQueue.length) return value;
+    let changed = false;
+    outQueue.forEach((at, k) => {
+        const line = lines[at];
+        const [s, e] = wrapCoreRange(line);
+        if (e - s < 3 || line[s] !== '「' || line[e - 1] !== '」') return;
+        let depth = 0;
+        for (let i = s; i < e - 1; i++) {
+            if (line[i] === '「') depth++;
+            else if (line[i] === '」' && --depth === 0) return;   // 「가」 … 「나」 — 처음 짝이 줄 끝 전에 닫힌다
+        }
+        if (depth !== 1 || !line.slice(s + 1, e - 1).trim()) return;
+        const src = srcLines[srcQueue[k]];
+        const [ss, se] = wrapCoreRange(src);
+        if (se <= ss || WRAP_QUOTE_EDGE.test(src[ss]) || WRAP_QUOTE_EDGE.test(src[se - 1])) return;
+        if (quotePairs(line) !== quotePairs(src) + 1) return;
+        lines[at] = line.slice(0, s) + line.slice(s + 1, e - 1) + line.slice(e);
+        changed = true;
+    });
+    return changed ? lines.join('\n') : value;
+}
 /** 저장된 번역문에 풀리지 못하고 남은 자리표시자를 걷는다 (원문에 그런 글이 없을 때만) — 보여 줄 때 고치기용 */
 export function dropLeftoverPlaceholders(text, source) {
     const value = String(text ?? '');

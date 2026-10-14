@@ -12,7 +12,7 @@ import { badgeTextHit } from '../../badge-hit.js';
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
-const VERSION = '1.2.5';
+const VERSION = '1.2.6';
 // 1.1.5: 깃털 창에 두 쪽 — 전개 지시(이번 전개) · 항상 지시(적은 글 그대로 매번, 예: <OOC: …>). 옆으로 넘기거나 제목을 눌러 바꾼다
 const KINDS = ['direction', 'always'];
 const KIND_LABEL = { direction: '전개 지시', always: '항상 지시' };
@@ -266,10 +266,13 @@ const colorSignature = style => [settings().onColor, style.getPropertyValue('--S
  */
 let onColorSignature = '';
 let onColorSource = null;
+// 6.4.5 메시지 속 <style> 은 테마 색을 못 바꾼다(실리태번이 .mes_text 범위로 묶는다) — document.styleSheets.length 를 세면 메시지가 그려질 때마다
+//   서명이 바뀌어 렌더 중에 문서 전체 스타일 계산을 강제했다 (답 24개 열기 8.3초). <head> 의 시트만 센다 (감시도 <head> 만 본다)
+const headSheets = () => document.head.querySelectorAll('style, link[rel~="stylesheet"]').length;
 function syncOnColor() {
     // 1.1.2: 계산된 스타일을 읽기 전에 색이 바뀔 수 있는 곳만 값싸게 견준다 — <html style> · 블루 레몬에이드의 색 변수 칸 · 밝음/어두움 클래스 ·
     // 스타일 시트 수. 답이 스트리밍되는 동안 실리태번이 body 클래스를 붙였다 떼는 것만으로 매번 문서 전체 스타일 계산을 돌렸다 (폰 흉내 한 턴 0.1초).
-    const source = [settings().onColor, document.documentElement.getAttribute('style'), document.getElementById('salty-vars')?.textContent, document.body.classList.contains('salty'), document.body.classList.contains('salty-dark'), document.styleSheets.length].join('|');
+    const source = [settings().onColor, document.documentElement.getAttribute('style'), document.getElementById('salty-vars')?.textContent, document.body.classList.contains('salty'), document.body.classList.contains('salty-dark'), headSheets()].join('|');
     if (source === onColorSource) return;
     onColorSource = source;
     if (colorSignature(getComputedStyle(document.documentElement)) === onColorSignature) return;

@@ -1,7 +1,7 @@
 <div class="translation_settings llmt-settings">
     <div class="inline-drawer">
         <div class="inline-drawer-toggle inline-drawer-header">
-            <b><i class="fa-solid fa-language"></i> 번역 <span class="llmt-version ext-version">v2.4.6</span></b>
+            <b><i class="fa-solid fa-language"></i> 번역 <span class="llmt-version ext-version">v2.4.7</span></b>
             <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
         </div>
 
@@ -94,6 +94,8 @@
                         <small class="llmt-desc">긴 답변은 문단별로 번역해요. 중단되면 같은 설정으로 다시 눌러 이어갈 수 있어요. 진행분은 이 브라우저에 하루 동안 보관돼요.</small>
                         <label class="checkbox_label llmt-check"><input type="checkbox" id="llm_selection_retranslate"><span>선택 부분 재번역</span></label>
                         <small class="llmt-desc">한글 번역문을 선택하고 언어 버튼을 누르면 대응 원문으로 해당 문단을 다시 번역해요. 확인 후 교체·되돌릴 수 있어요.</small>
+                        <label class="checkbox_label llmt-check"><input type="checkbox" id="llm_selection_delete"><span>고른 글 지우기</span></label>
+                        <small class="llmt-desc">채팅에서 글을 고르면 북마크 옆에 삭제 단추가 떠요. 번역문 · 본문 · 둘 다에서 지울 수 있어요. 반대쪽 글은 같은 줄에 하나뿐일 때만 자리를 보여 주고 지워요.</small>
                         <label class="checkbox_label llmt-check"><input type="checkbox" id="llm_show_chat_translate_menu"><span>요술봉에 LLM으로 전체 번역 표시</span></label>
                         <label class="checkbox_label llmt-check"><input type="checkbox" id="llm_show_input_translate_menu"><span>요술봉에 LLM으로 입력 번역 표시</span></label>
                         <label class="checkbox_label llmt-check" for="llm_translation_button_toggle">
@@ -201,6 +203,7 @@
                                 <small class="llmt-desc">0이면 현재 연결의 응답 길이 설정을 따라가요.</small>
                             </div>
                         </div>
+                        <div id="llm_fallback_field" class="llmt-fallback"></div>
                     </div>
                 </section>
                 <div id="llm_direct_settings">
@@ -563,6 +566,7 @@
                             <input type="text" class="text_pole" id="llm_glossary_dst" placeholder="번역" autocomplete="off">
                             <button type="button" class="llmt-gl-icon llmt-gl-addbtn" id="llm_glossary_add" aria-label="넣기"><i class="fa-solid fa-plus"></i><i class="fa-solid fa-check"></i></button>
                         </div>
+                        <div class="llmt-gl-suggest" hidden></div>
                         <div class="llmt-gl-actions">
                             <button type="button" class="menu_button llmt-gl-extract" id="llm_glossary_extract"><i class="fa-solid fa-wand-magic-sparkles"></i><span>번역문에서 뽑기</span></button>
                             <button type="button" class="menu_button llmt-gl-extract" id="llm_glossary_from_wi"><i class="fa-solid fa-book-atlas"></i><span>월드인포에서 뽑기</span></button>

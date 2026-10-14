@@ -46,7 +46,7 @@ function assertAlive(job) {
 export function selectionSnapshot() {
     if (document.body.classList.contains('cg-previewing')) return null;
     const selected = window.getSelection();
-    if (!selected?.rangeCount || selected.isCollapsed) return null;
+    if (!selected?.rangeCount || selected.getRangeAt(0).collapsed) return null;   // 6.4.5 isCollapsed 는 selectionchange 마다 배치를 강제로 계산한다 — 범위 하나의 collapsed 로 같은 답
     const range = selected.getRangeAt(0);
     const element = node => node?.nodeType === 1 ? node : node?.parentElement;
     const start = element(range.startContainer)?.closest('#chat > .mes'), end = element(range.endContainer)?.closest('#chat > .mes');

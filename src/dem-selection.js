@@ -9,7 +9,7 @@ const typingOutside = (el) => !!el && (el.tagName === 'TEXTAREA' || (el.tagName 
 function selectedInScope() {
     if (typingOutside(document.activeElement)) return false;
     const selection = document.getSelection();
-    return !!(selection && !selection.isCollapsed &&
+    return !!(selection && selection.rangeCount > 0 && !selection.getRangeAt(0).collapsed &&   // 6.4.5 isCollapsed 대신 — 배치 계산 강제 없이 같은 답
         (inside(selection.anchorNode) || inside(selection.focusNode)));
 }
 // 5.8.4: 데우스 감정 효과 글(.custom-dem-expressive)이 하나도 없으면 멈춤 표시를 켜지 않는다.
@@ -64,15 +64,28 @@ function update() {
     const on = (pressing || !typingOutside(document.activeElement)) && fx.length > 0 && (pressing || selectedInScope());
     pauseRoots(on);
 }
+// 6.4.5 누르자마자 멈추면 스크롤 · 짧은 탭마다 채팅 전체 스타일 계산이 두 번 돌았다 (답 24개 · 폰 4× 스크롤 17초 멈춤).
+//   길게 누를 때만 멈춘다 — 안드로이드 길게 누르기 선택(~500 ms)보다 앞선 350 ms. 그 전에 떼거나 스크롤이 시작되면(pointercancel) 멈추지 않는다.
+//   마우스로 끌어 고르면 첫 selectionchange 에서 멈춘다 (선택 중 멈춤은 예전과 같다). 이미 멈춘 채 다시 누르면 그대로 이어 간다.
+//   누른 손가락이 10 px 넘게 움직여도 기다리던 멈춤을 거둔다 — 안드로이드 길게 누르기도 움직이면 취소된다 (pointercancel 이 늦게 오는 느린 끌기 대비).
+const HOLD_MS = 350, HOLD_SLOP = 10;
+let holdTimer = 0, holdAt = null;
 function down(event) {
     if (document.body.classList.contains('cg-previewing')) return;
     if (event.button !== 0 || !inside(event.target)) return;
     clearTimeout(releaseTimer);
-    pressing = true;
-    update();
+    if (pressing) return;
+    clearTimeout(holdTimer);
+    holdAt = { id: event.pointerId, x: event.clientX, y: event.clientY };
+    holdTimer = setTimeout(() => { holdTimer = 0; pressing = true; update(); }, HOLD_MS);
+}
+function move(event) {
+    if (!holdTimer || !holdAt || event.pointerId !== holdAt.id) return;
+    if (Math.hypot(event.clientX - holdAt.x, event.clientY - holdAt.y) > HOLD_SLOP) { clearTimeout(holdTimer); holdTimer = 0; }
 }
 function up() {
     clearTimeout(releaseTimer);
+    if (holdTimer) { clearTimeout(holdTimer); holdTimer = 0; if (!pressing) return; }   // 6.4.5 길게 누르기 전에 뗌 · 스크롤 시작 — 멈춘 적 없다
     // Android can emit pointercancel just before establishing its long-press selection.
     releaseTimer = setTimeout(() => { pressing = false; update(); }, 250);
 }
@@ -82,12 +95,14 @@ export function syncDemSelection(on) {
     const method = bound ? 'addEventListener' : 'removeEventListener';
     document[method]('selectionchange', update);
     document[method]('pointerdown', down, true);
+    document[method]('pointermove', move, true);   // 6.4.5 길게 누르기를 기다리는 동안 움직이면 거둔다 (기다리는 중이 아니면 바로 돌아간다)
     document[method]('pointerup', up, true);
     document[method]('pointercancel', up, true);
     window[method]('blur', up);
     if (bound) update();
     else {
         clearTimeout(releaseTimer);
+        clearTimeout(holdTimer); holdTimer = 0;
         pressing = false;
         pauseRoots(false);
     }

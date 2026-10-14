@@ -70,6 +70,41 @@ await test('6.3.0 pairFallbacks: 「<본 id>-fallback」 은 본 대상 바로 �
     assert.match(read('src/addons/modelswitch/targets.js'), /return pairFallbacks\(\[\.\.\.known, \.\.\.registered\.values\(\), \.\.\.detected\(\)\]\);/, 'listTargets 가 정렬한다');
 });
 
+await test('6.4.5 pairFallbacks: 아는 대상의 folder 도 별칭 — 확장이 「<폴더>-fallback」 으로 등록해도 본 대상 바로 다음 줄, id 는 그대로', () => {
+    const known = (id, folder) => ({ id, folder });
+    const ext = id => ({ id: `ext:${id}`, external: true });
+    const list = [known('translator', 'translator-folder'), { id: 'translator-fallback', folder: 'translator-folder' }, known('notes', 'note-keeper'), known('assets', ''),
+        ext('voice-a'), ext('picture-prompt'), ext('note-keeper-fallback'), ext('helper'), ext('helper-fallback')];
+    const ids = F.pairFallbacks(list).map(x => x.id);
+    assert.deepEqual(ids, ['translator', 'translator-fallback', 'notes', 'ext:note-keeper-fallback', 'assets', 'ext:voice-a', 'ext:picture-prompt', 'ext:helper', 'ext:helper-fallback']);
+    assert.deepEqual(F.pairFallbacks([known('notes', 'note-keeper'), { id: 'note-keeper-fallback' }]).map(x => x.id), ['notes', 'note-keeper-fallback'], '접두 없는 id 도');
+    assert.deepEqual(F.pairFallbacks([ext('note-keeper-fallback'), known('notes', 'note-keeper')]).map(x => x.id), ['notes', 'ext:note-keeper-fallback'], '먼저 등록돼도 본 대상 뒤로');
+    const fb = ext('note-keeper-fallback');
+    assert.equal(F.pairFallbacks([known('notes', 'note-keeper'), fb])[1], fb, '같은 대상 그대로 (id · 켜 둔 값 안 바뀜)');
+    assert.equal(fb.id, 'ext:note-keeper-fallback');
+});
+
+await test('6.4.5 pairFallbacks: 별칭이 다른 대상의 id 와 겹치면 id 가 먼저 · 별칭은 아는 대상만', () => {
+    const list = [{ id: 'alpha', folder: 'beta' }, { id: 'ext:beta', external: true }, { id: 'ext:beta-fallback', external: true }];
+    assert.deepEqual(F.pairFallbacks(list).map(x => x.id), ['alpha', 'ext:beta', 'ext:beta-fallback'], '등록한 대상 id 가 먼저');
+    const plain = [{ id: 'alpha', folder: 'beta' }, { id: 'gamma' }, { id: 'beta' }, { id: 'ext:beta-fallback', external: true }];
+    assert.deepEqual(F.pairFallbacks(plain).map(x => x.id), ['alpha', 'gamma', 'beta', 'ext:beta-fallback'], '접두 없는 id 도 별칭보다 먼저');
+    const fromExt = [{ id: 'ext:one', folder: 'shared', external: true }, { id: 'auto:two', folder: 'shared', auto: true }, { id: 'ext:mid', external: true }, { id: 'ext:shared-fallback', external: true }];
+    assert.deepEqual(F.pairFallbacks(fromExt).map(x => x.id), ['ext:one', 'auto:two', 'ext:mid', 'ext:shared-fallback'], '스스로 등록한 · 자동 대상의 folder 는 별칭이 아니다');
+    const fbFolder = [{ id: 'main', folder: 'kit' }, { id: 'main-fallback', folder: 'kit' }, { id: 'ext:x', external: true }, { id: 'ext:kit-fallback', external: true }];
+    assert.deepEqual(F.pairFallbacks(fbFolder).map(x => x.id), ['main', 'main-fallback', 'ext:x', 'ext:kit-fallback'], '본 대상에 이미 짝이 있으면 둘째는 제자리');
+    const deep = [{ id: 'a' }, { id: 'a-fallback-fallback' }, { id: 'a-fallback' }];
+    assert.deepEqual(F.pairFallbacks(deep).map(x => x.id), ['a', 'a-fallback', 'a-fallback-fallback'], '빠지는 대상 없음');
+});
+
+await test('6.4.5 listTargets: 아는 대상 memory 의 folder 로 스스로 등록한 「(검열되면)」 은 memory 바로 다음 줄', () => {
+    const src = read('src/addons/modelswitch/targets.js');
+    const folder = src.match(/const memory = \{\n    id: 'memory', name: '[^']+', folder: '([^']+)'/)?.[1];
+    assert.ok(folder, 'memory 대상의 folder');
+    const list = [{ id: 'translator', folder: 'x' }, { id: 'memory', folder }, { id: 'rewrite', folder: 'y' }, { id: 'ext:picture-prompt', external: true }, { id: `ext:${folder}-fallback`, external: true }];
+    assert.deepEqual(F.pairFallbacks(list).map(x => x.id), ['translator', 'memory', `ext:${folder}-fallback`, 'rewrite', 'ext:picture-prompt']);
+});
+
 await test('withFallback: 고른 곳이 없거나 본 모델과 같으면 원래 오류 그대로', async () => {
     const error = blockError();
     await assert.rejects(F.withFallback(async () => { throw error; }, { target: null, send: async () => 'fb' }), e => e === error);
@@ -117,7 +152,7 @@ await test('fallbackTarget: 처음엔 꺼 둠 · 「안 씀」 · 고르면 저�
 
 await test('전역 API: 사설 확장이 같은 규칙을 쓴다', () => {
     const api = globalThis[Symbol.for('blue-lemonade.model-switch-fallback')];
-    assert.equal(api?.version, 1);
+    assert.equal(api?.version, 2);
     for (const name of ['isBlock', 'withFallback', 'fallbackOf', 'fallbackTarget', 'sameTarget']) assert.equal(typeof api[name], 'function', name);
     assert.equal(api.isBlock(blockError()), true);
     assert.equal(api.isBlock(blockError('x', { status: 429 })), false);

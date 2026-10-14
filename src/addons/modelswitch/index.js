@@ -8,11 +8,13 @@ import { extension_settings } from '../../../../../../extensions.js';
 import { saveSettingsDebounced, eventSource, event_types } from '../../../../../../../script.js';
 import { SOURCES } from '../models/sources.js';
 import * as LM from '../../live-models.js';
-import { listTargets, supports, registry, discoverTargets, modelOptions, hasModelList, listUrlOf, fetchBlock, refreshModels, autoModels } from './targets.js';
+import { listTargets, shownTargets, linkable, supports, registry, discoverTargets, modelOptions, hasModelList, listUrlOf, fetchBlock, refreshModels, autoModels } from './targets.js';
 import { setLocks, withoutLock } from './lock.js';
 import { MAX_STATES, entryOf, captureState, changedSince, planRestore, isCurrent, runRestore, limited, summary, keepStates } from './state.js';
 
-const VERSION = '1.1.5';
+import { toggleGroup, groupOn } from './rows.js';
+
+const VERSION = '1.1.6';
 const MAX_PRESETS = 8;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const label = source => SOURCES.find(s => s.id === source)?.label || source;
@@ -83,12 +85,12 @@ function describe(now) {
 function render() {
     if (!root) return;
     discoverTargets();
-    const s = store(), d = s.draft, targets = listTargets();
+    const s = store(), d = s.draft, targets = shownTargets();
     const active = s.presets.findIndex(p => p.source === d.source && p.model === d.model && (p.url || '') === (d.url || ''));
     root.querySelector('.ms-presets').innerHTML = s.presets.map((p, i) => `<button type="button" class="ms-chip ${i === active ? 'on' : ''}" data-preset="${i}"><b>${esc(p.name)}</b><small>${esc(p.model)}</small></button>`).join('')
         + (s.presets.length < MAX_PRESETS ? '<button type="button" class="ms-chip ms-chip-add" data-act="save" aria-label="지금 조합 저장"><i class="fa-solid fa-plus"></i></button>' : '');
     root.querySelector('[data-act="remove"]').hidden = active < 0;
-    renderStates(s, targets);
+    renderStates(s, listTargets());
     const select = root.querySelector('[data-field="source"]');
     if (!select.options.length) select.innerHTML = SOURCES.map(x => `<option value="${esc(x.id)}">${esc(x.label)}</option>`).join('');
     select.value = d.source;
@@ -110,8 +112,12 @@ function render() {
     root.querySelector('.ms-targets').innerHTML = targets.length ? targets.map(target => {
         let now = null; try { now = target.read(); } catch { /* 읽지 못함 */ }
         const ok = supports(target, d.source);
-        return `<label class="ms-target ${ok ? '' : 'is-off'}"><input type="checkbox" data-target="${esc(target.id)}" ${isOn(target) ? 'checked' : ''}><span><b>${esc(target.name)}${target.auto ? ' <em>자동</em>' : ''}</b><small>${esc(ok ? describe(now) : `${label(d.source)} 못 씀`)}</small></span><button type="button" class="ms-pull" data-pull="${esc(target.id)}" aria-label="${esc(target.name)} 값 가져오기" ${now && !now.follow ? '' : 'disabled'}><i class="fa-solid fa-arrow-up"></i></button></label>`;
+        return `<label class="ms-target ${ok ? '' : 'is-off'}"><input type="checkbox" data-target="${esc(target.id)}" ${isOn(target) ? 'checked' : ''}><span>${linkable(target) ? `<button type="button" class="ms-name" data-open="${esc(target.id)}">${esc(target.name)}</button>` : `<b>${esc(target.name)}</b>`}${target.auto ? ' <em>자동</em>' : ''}<small>${esc(ok ? describe(now) : `${label(d.source)} 못 씀`)}</small></span><button type="button" class="ms-pull" data-pull="${esc(target.id)}" aria-label="${esc(target.name)} 값 가져오기" ${now && !now.follow ? '' : 'disabled'}><i class="fa-solid fa-arrow-up"></i></button></label>`;
     }).join('') : '<p class="ms-empty">바꿀 확장이 없어요</p>';
+    for (const button of root.querySelectorAll('[data-group]')) {
+        button.setAttribute('aria-pressed', String(groupOn(targets, button.dataset.group, isOn)));
+        button.disabled = busy || !targets.some(target => (button.dataset.group === 'fallback') === target.id.endsWith('-fallback'));
+    }
     const apply = root.querySelector('[data-act="apply"]');
     apply.disabled = busy || !d.model.trim() || !targets.some(target => isOn(target) && supports(target, d.source));
     root.querySelector('[data-lock]').checked = s.lock;
@@ -142,13 +148,13 @@ async function applyNow() {
     // 자동 찾기가 느린 서버에서 멈춰도 아는 확장은 바꾼다 (3초까지만 기다림)
     await Promise.race([discoverTargets().catch(() => {}), new Promise(resolve => setTimeout(resolve, 3000))]);
     const done = [], partial = [], skipped = [], touched = [], before = [];
-    for (const target of listTargets()) {
+    for (const target of shownTargets()) {
         if (!isOn(target)) continue;
         if (!supports(target, d.source)) { skipped.push(target.name); continue; }
         before.push([target, entryOf(target)]);   // 1.1.1 「↶ 직전」
         try {
             await withoutLock(() => target.apply(d));
-            if (target.auto) touched.push(target);
+            touched.push(target);
             const now = target.read();
             if (!now || (now.follow && !now.stays) || now.source !== d.source || now.model !== d.model) skipped.push(target.name);
             // 연결 방식을 몰라 공급자 · 모델만 바꾼 확장은 여전히 지금 연결(또는 자체 주소)을 쓴다 — 바뀐 것으로 세지 않는다
@@ -213,7 +219,7 @@ async function applyState(which) {
     catch (error) { console.error('[Blue Lemonade] 모델 전환', error); }
     remember(result.before);
     saveSettingsDebounced();
-    for (const target of result.touched) if (target.auto) window.dispatchEvent(new CustomEvent('st:model-switch-applied', { detail: { settingsKey: target.settingsKey, path: target.path } }));
+    for (const target of result.touched) window.dispatchEvent(new CustomEvent('st:model-switch-applied', { detail: { settingsKey: target.settingsKey, path: target.path } }));
     busy = false;
     const { done, partial, failed, same } = result;
     // 바뀐 것 없이 같은 칩을 다시 누름 = 돌아올 수 있는 대상은 모두 그 상태 (못 돌리는 대상만 남았을 수 있다)
@@ -233,6 +239,16 @@ async function deleteState(index) {
     saveSettingsDebounced(); note = ''; render();
 }
 
+async function openTarget(id) {
+    const target = listTargets().find(item => item.id === id);
+    if (!linkable(target)) return;
+    const dialog = root?.closest('dialog[open]');
+    (dialog?.querySelector('.popup-button-ok') || dialog?.querySelector('.popup-button-close'))?.click();
+    // Let openPanel's finally restore its DOM before opening another popup.
+    if (dialog) await new Promise(resolve => setTimeout(resolve, 100));
+    try { await target.open(); } catch (error) { console.warn('[Blue Lemonade] 설정 열기', error); }
+}
+
 function mount() {
     if (root) return;
     root = document.createElement('div'); root.id = 'model-switch-settings'; root.className = 'inline-drawer';
@@ -246,6 +262,7 @@ function mount() {
     <div class="ms-options" hidden></div>
     <label class="ms-url"><span>주소</span><input class="text_pole" data-field="url" placeholder="비우면 각 확장의 주소 그대로" autocomplete="off" spellcheck="false"></label>
   </div>
+  <div class="ms-groups"><button type="button" class="menu_button" data-group="main" aria-pressed="false"><i class="fa-solid fa-check-double" aria-hidden="true"></i> 전체</button><button type="button" class="menu_button" data-group="fallback" aria-pressed="false"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> 검열되면</button></div>
   <div class="ms-targets"></div>
   <label class="ms-lock"><input type="checkbox" data-lock><span><b><i class="fa-solid fa-lock" aria-hidden="true"></i> 잠금</b><small>각 확장 화면에서는 못 바꾸게 · 자동은 제외</small></span></label>
   <div class="ms-actions"><button type="button" class="menu_button ms-apply" data-act="apply"><i class="fa-solid fa-shuffle"></i> 바꾸기</button><button type="button" class="menu_button ms-invert" data-act="invert" aria-label="체크 반전"><i class="fa-solid fa-right-left"></i></button><button type="button" class="menu_button ms-snap" data-act="snap" aria-label="지금 상태 저장"><i class="fa-solid fa-floppy-disk"></i></button><button type="button" class="menu_button ms-remove" data-act="remove" aria-label="이 조합 지우기" hidden><i class="fa-solid fa-trash-can"></i></button></div>
@@ -270,6 +287,9 @@ function mount() {
         else if ('lock' in (el.dataset || {})) { store().lock = el.checked; saveSettingsDebounced(); syncLocks(); }
     });
     root.addEventListener('click', event => {
+        const link = event.target.closest('[data-open]'), group = event.target.closest('[data-group]');
+        if (link) { event.preventDefault(); if (!busy) openTarget(link.dataset.open); return; }
+        if (group) { event.preventDefault(); if (!busy) { Object.assign(store().targets, toggleGroup(shownTargets(), group.dataset.group, isOn)); saveSettingsDebounced(); syncLocks(); render(); } return; }
         const chip = event.target.closest('[data-preset]'), pull = event.target.closest('[data-pull]'), act = event.target.closest('[data-act]')?.dataset.act;
         const stateDel = event.target.closest('[data-state-del]'), stateGo = event.target.closest('[data-state]');
         if (stateDel) { deleteState(Number(stateDel.dataset.stateDel)); return; }
@@ -293,7 +313,7 @@ function mount() {
         if (act === 'fetch') { fetchModels(); return; }
         if (act === 'apply') applyNow();
         // 체크 반전 (사용자 10-12 「선택된 상태로 반전 선택 가능하게 — 누르면 안 선택한 애들 선택되고 선택한 애 안 선택되게」): 지금 보이는 확장만 뒤집는다
-        else if (act === 'invert') { const s = store(); for (const target of listTargets()) s.targets[target.id] = !isOn(target); note = ''; saveSettingsDebounced(); syncLocks(); render(); }
+        else if (act === 'invert') { const s = store(); for (const target of shownTargets()) s.targets[target.id] = !isOn(target); note = ''; saveSettingsDebounced(); syncLocks(); render(); }
         else if (act === 'save') savePreset();
         else if (act === 'snap') saveState();
         else if (act === 'remove') {

@@ -2,15 +2,18 @@
 import { isPreset, validSettings, validImport, validPromptList, validPresetList, exportPresets, restoreTranslationRows } from './preset-data.js';
 import { createGuards, watchGuard } from './translation-guard.js';
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
-import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, fixPlaceholderVariants, dropLeftoverPlaceholders, repairTagPairs, dropStrayWords } from './translation-segments.js';
+import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, fixPlaceholderVariants, dropLeftoverPlaceholders, repairTagPairs, dropStrayWords, dropWrapQuotes } from './translation-segments.js';
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
 import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey, glossaryLinesFor, enforceGlossaryNames, dropDanglingOpenQuote } from './glossary-match.js';
 import { linesToFix, fixNoteFor, stillLeftover } from './leftover-fix.js';   // 6.4.2 다시 보낼 줄 = 남은 가나 + 원문에 있던 한자 덩이
+import { fixPairs, leftoverNameWords, markPairs, textKey, mergeSuggestions, shownSuggestions, skipSuggestion, dropSuggestion, trimScopes, GLOBAL as SUGGEST_GLOBAL } from './glossary-suggest.js';   // 6.4.5 새 이름 용어집 제안
+import { nameFold as suggestFold } from './names-bridge.js';
 import { publishNames } from './names-bridge.js';   // 6.3.5 이름 다리 — 용어집의 이름 짝을 TTS · 다른 확장이 쓰게 전역으로 // [2.2.9] 용어집 찾기 (+ 가타카나 표기 흔들림) · [2.3.0] TTS 듣는 언어용 줄
 import { SPEECH_LANGS, speechPrompt, speechPayload, speechLine, parseSpeechBatch, unwrapQuotes, cutEchoLine } from './speech-translate.js'; // [2.3.0] TTS 듣는 언어
 import { requestCurrentConnection } from './current-connection.js';
 import { fallbackOf, sameTarget } from '../modelswitch/fallback.js';   // 6.2.9 검열되면 다른 모델로
+import { mountFallbackField } from '../modelswitch/fallback-field.js';   // 6.4.5 「검열당했을 때」 칸 (모델 탭)
 import { createGenerationParameters, getChatCompletionModel } from '../../../../../../openai.js';
 import { createTextGenGenerationData, getTextGenModel } from '../../../../../../textgen-settings.js';
 import { matchingTranslation, translationFromDisplay } from './archive-bridge.js';
@@ -106,6 +109,7 @@ const outgoingTypes = [autoModeOptions.ALL, autoModeOptions.USER]; // 유저 메
 // [수정] defaultSettings 상수 (auto_translate_new_messages 제거, auto_mode 추가)
 const defaultSettings = {
     selection_retranslate: false,
+    selection_delete: true,   // 6.4.4 고른 글 지우기 (북마크 옆 「삭제」 단추 · selection/delete.js)
     show_chat_translate_menu: true,
     show_input_translate_menu: true,
     translation_display_mode: 'disabled',
@@ -133,6 +137,7 @@ const defaultSettings = {
     glossary_apply_send: true,   // 보내기·입력 번역(한→외국어)에는 방향을 뒤집어서 넣는다
     glossary_sort: 'dst',        // [1.8.2] 목록 정렬: 'dst' 번역 가나다 / 'src' 원문 ABC
     glossary_entries: [],        // [{ id, scope, src, dst }]
+    glossary_suggest: {},        // 6.4.5 새 이름 용어집 제안 { [범위 키 · 'global']: { items: [{ src, dst, n, at, strong, keys, votes }], skip, seen } } — 용어집과 따로 (캐시 서명 밖)
     throttle_delay: '0',
     show_input_translate_button: false,
     auto_mode: autoModeOptions.NONE, // [변경] 기본값: 사용 안 함
@@ -290,10 +295,28 @@ function updateConnectionVisibility() {
     $('#llm_profile_max_tokens').val(extensionSettings.profile_max_tokens || 0);
 }
 
+// 6.4.5 「검열당했을 때」 칸 — 모델 탭 › 연결 방식 카드 맨 아래 (어느 연결 방식에서도). 저장 = extensionSettings.fallback,
+//   모델 전환 「번역 (검열되면)」 줄과 같은 자리라 거기서 고른 값이 그대로 보이고, 모델 전환에서 바꾸면 다시 그린다.
+//   본 요청이 내용 차단으로 막혔을 때만 그 모델로 한 번 더 (아래 fallbackOf · 「안 함」이면 보내지 않음)
+const FALLBACK_SOURCES = ['openai', 'custom', 'claude', 'cohere', 'makersuite', 'vertexai', 'openrouter', 'deepseek'];   // 이 확장이 직접 부를 수 있는 공급자 (모델 전환 번역 줄과 같음)
+function translatorMainTarget() {
+    if (extensionSettings.connection_mode !== 'direct') return null;
+    const provider = extensionSettings.llm_provider;
+    return { source: provider === 'google' ? 'makersuite' : provider, model: extensionSettings.llm_model === 'custom' ? getCustomModelName(provider) : extensionSettings.llm_model };
+}
+function mountTranslatorFallback() {
+    const host = document.getElementById('llm_fallback_field');
+    if (!host) return;
+    mountFallbackField(host, { id: 'translator', settings: () => extensionSettings, sources: FALLBACK_SOURCES, save: saveSettingsDebounced, main: translatorMainTarget,
+        row: (label, control) => `<div class="llmt-field"><span class="llmt-label">${label}</span>${control}</div>` });
+}
+window.addEventListener('st:model-switch-applied', () => document.getElementById('llm_fallback_field')?.blFallbackRender?.());
+
 function loadSettings() {
     $('#llm_glossary_enabled').prop('checked', extensionSettings.glossary_enabled !== false);
     $('#llm_glossary_apply_send').prop('checked', extensionSettings.glossary_apply_send !== false);
     if (typeof extensionSettings.selection_retranslate !== 'boolean') extensionSettings.selection_retranslate = extension_settings.salty?.addons?.retranslate === true;
+    if (typeof extensionSettings.selection_delete !== 'boolean') extensionSettings.selection_delete = true;   // 6.4.4
     // [2.1.1] 예전 버전이 따로 쌓아 둔 겹치는 용어집 항목을 한 번 정리한다
     if (Array.isArray(extensionSettings.glossary_entries)) {
         const merged = mergeGlossaryDuplicates(extensionSettings.glossary_entries);
@@ -425,6 +448,7 @@ function loadSettings() {
     for (const key of SEND_CTX_KEYS) $(`#llm_${key}`).prop('checked', !!extensionSettings[key]);
 
     updateConnectionVisibility();
+    mountTranslatorFallback();   // 6.4.5
 
     // 현재 공급자의 파라미터 불러오기
     updateParameterVisibility(currentProvider);
@@ -442,6 +466,7 @@ function loadSettings() {
     // 체크박스 상태 설정 및 버튼 업데이트
     syncTranslatorMenus(extensionSettings);
     $('#llm_selection_retranslate').prop('checked', extensionSettings.selection_retranslate);
+    $('#llm_selection_delete').prop('checked', extensionSettings.selection_delete !== false);   // 6.4.4
     syncSelection();
     $('#llm_translation_button_toggle').prop('checked', extensionSettings.show_input_translate_button);
     updateInputTranslateButton();
@@ -1692,6 +1717,7 @@ async function translate(text, options = {}) {
             isInputTranslation = false,
             isRetranslation = false
         } = options;
+        const suggestPairs = [];   // 6.4.5 남김 다시 보내기로 고쳐 온 이름 짝 (새 이름 용어집 제안 — 유료 호출 없음)
 
         // 커스텀 프롬프트 적용 (실시간 텍스트필드 값 사용)
         let finalPrompt = prompt;
@@ -1976,6 +2002,7 @@ async function translate(text, options = {}) {
                         try {
                             const fixed = await request(buildFullPrompt(0, fixNoteFor(lines, KANA_FIX_NOTE) + lines.map(([, line], i) => `${i + 1}. ${line}`).join('\n')));
                             const corrected = applyKanaFix(joined, lines, fixed).split('\n');
+                            noteFixPairs(lines, joined.split('\n'), corrected, suggestPairs);   // 6.4.5
                             let offset = 0;
                             for (let i = 0; i < translated.length; i++) {
                                 const length = (translated[i] ?? '').split('\n').length;
@@ -2009,12 +2036,15 @@ async function translate(text, options = {}) {
             progress({ stage: 'kana' });
             try {
                 const fixed = await request(buildFullPrompt(0, fixNoteFor(kanaLines, KANA_FIX_NOTE) + kanaLines.map(([, line], i) => `${i + 1}. ${line}`).join('\n')));
+                const beforeFix = translatedText;   // 6.4.5
                 translatedText = applyKanaFix(translatedText, kanaLines, fixed);
+                noteFixPairs(kanaLines, beforeFix.split('\n'), translatedText.split('\n'), suggestPairs);   // 6.4.5
             } catch (kanaError) {
                 if (kanaError?.cancelled) throw kanaError;
                 console.warn('[LLM Translator] 남은 일본어 다시 번역 실패 — 그대로 둬요:', kanaError?.message);
             }
         }
+        if (options.collectNames === true && !isInputTranslation) noteGlossarySuggestions(isRetranslation ? compareText : text, translatedText, suggestPairs, options.checkSource ?? text);   // 6.4.5 새 이름 용어집 제안 (메시지 번역 · 다시 번역만 · 유료 호출 없음)
 
         // [디버그: 마스킹 추적] 1. 순수 번역문(Raw) 상태에서의 마스킹 개수 확인
         let rawMaskCount = 0;
@@ -2334,7 +2364,7 @@ async function retranslateMessage(messageId, promptType, forceRetranslate = fals
         const badge = progressBadge(messageId, message, sourceMes, chatId);
         let retranslation;
         try {
-            retranslation = await translate(textToRetranslate, { ...options, checkSource: originalText, assertValid: () => runToken.guard.assert(), onProgress: badge.update, report });
+            retranslation = await translate(textToRetranslate, { ...options, checkSource: originalText, collectNames: true, assertValid: () => runToken.guard.assert(), onProgress: badge.update, report });
         } finally {
             badge.remove();
         }
@@ -2434,7 +2464,7 @@ function publishArchiveReady(message, sourceText, chatId, type) {
  */
 function tidyGlossaryOutput(source, output) {
     if (typeof output !== 'string' || output.includes('class="original_text')) return output;
-    const cleaned = dropDanglingOpenQuote(output, source);
+    const cleaned = dropDanglingOpenQuote(dropWrapQuotes(output, source), source);   // 6.4.5 원문 줄엔 꺾쇠가 없는데 번역문 줄만 통째로 감싼 「」
     if (extensionSettings.glossary_enabled === false) return cleaned;
     const { entries, names } = tidyContext ?? glossaryTidyContext();
     return enforceGlossaryNames(entries, source, cleaned, { names });
@@ -2584,7 +2614,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                 // 화살표 다시 번역이라도 차단 표시가 남은 글이면 문단 캐시를 쓴다 — 이미 된 문단은 다시 보내지 않고 차단된 문단만 다시 시도
                 const segmentCache = source !== 'handleTranslateButtonClick_retranslate' || String(message.extra.display_text || '').includes(MARK_TAIL);
                 try {
-                    translation = await translate(originalText, { segmentCache, assertValid: () => runToken.guard.assert(), onProgress: badge.update, report });
+                    translation = await translate(originalText, { segmentCache, collectNames: true, assertValid: () => runToken.guard.assert(), onProgress: badge.update, report });
                 } finally {
                     badge.remove();
                 }
@@ -3294,13 +3324,27 @@ function updateInputTranslateButton() {
 
 let selectionModule = null;
 function syncSelection() {
-    if (!selectionModule && extensionSettings.selection_retranslate !== true) return;
+    if (!selectionModule && extensionSettings.selection_retranslate !== true && extensionSettings.selection_delete === false) return;   // 6.4.4 고른 글 지우기도 이 모듈
     selectionModule ??= import('./selection/index.js');
     selectionModule.then(module => module.syncSelectionRetranslate({
         settings: extensionSettings, translate, render: processTranslationText,
         // 6.2.5 이어 붙인 번역을 보여 주기 전에 걷는다 (저장된 번역을 보여 줄 때와 같게) — 손으로 고친 번역은 그대로
         clean: (text, source, message) => message?.extra?.translation_edited === originalHashOf(source) ? text : tidyGlossaryOutput(source, dropStrayWords(text, source)),
         capture: message => guards.capture(message),
+        // 6.4.4 고른 글 지우기: 번역문은 수정 창처럼(번역 기록의 원본 · 기록 쓰기 · 표시 만들기), 다시 그리기 · 스와이프 맞추기 · 알림
+        deleteHooks: {
+            rawTranslation: (message, source) => localOrDisplayedTranslation(message, source),
+            saveTranslation: (source, text) => addTranslationToDB(source, text),
+            layout: (source, text) => processTranslationText(source, text, { inspect: true }),
+            cachedTranslation: source => getTranslationFromDB(source),             // 되돌리기용 원래 기록 줄 (없으면 null — 읽기 실패는 던진다: 기록을 건드리지 않게)
+            dropTranslation: source => deleteTranslationByOriginalText(source),
+            hashOf: text => originalHashOf(text),
+            render: (source, text) => processTranslationText(source, text),
+            refresh: (id, message) => refreshMessageBlock(id, message),
+            syncSwipe: id => syncMesToSwipe(id),
+            uiUpdate: (id, type) => emitTranslationUIUpdate(id, type),
+            busy: id => isTranslationInProgress(id),
+        },
         refresh: (id, message) => refreshMessageBlock(id, message),
         complete: (id, message, source) => {
             emitTranslationUIUpdate(id, 'retranslation');
@@ -3561,6 +3605,11 @@ jQuery(async () => {
         bindTranslatorMenus(extensionSettings, saveSettingsDebounced);
         $('#llm_selection_retranslate').off('change').on('change', function () {
             extensionSettings.selection_retranslate = this.checked;
+            saveSettingsDebounced();
+            syncSelection();
+        });
+        $('#llm_selection_delete').off('change').on('change', function () {   // 6.4.4
+            extensionSettings.selection_delete = this.checked;
             saveSettingsDebounced();
             syncSelection();
         });
@@ -4063,13 +4112,121 @@ function glossaryCard() {
 function resetGlossaryEditor() {
     glossaryEditingId = null;
     glossaryEditingKey = null;
+    glossaryPendingSuggest = null;
     const card = glossaryCard();
     if (!card) return;
     card.querySelector('#llm_glossary_add')?.classList.remove('is-editing');
     for (const input of card.querySelectorAll('#llm_glossary_src, #llm_glossary_dst')) input.value = '';
 }
 
+/** 6.4.5 고치던 항목 · 제안 입력의 캐릭터가 바뀌었는지. 같은 캐릭터의 다른 채팅 · 공통 페르소나 제안은 그대로 둔다. */
+function glossaryEditorScopeChanged() {
+    const key = glossaryScopeKey();
+    return Boolean((glossaryEditingId && glossaryScopeView === 'char' && key !== glossaryEditingKey)
+        || (glossaryPendingSuggest && glossaryPendingSuggest.home !== SUGGEST_GLOBAL && key !== glossaryPendingSuggest.home));
+}
+
 /** 설정 화면의 용어집 카드를 다시 그린다 (범위 탭·목록·입력 가능 여부) */
+// 6.4.5 새 이름 용어집 제안 (glossary-suggest.js) — 모은 것은 extensionSettings.glossary_suggest[범위 키] 에 따로 (용어집 · 캐시 서명 밖).
+//   메시지 번역 · 다시 번역에서만 모은다 (translate 옵션 collectNames). 페르소나 이름은 공통 칸(SUGGEST_GLOBAL) — 두 탭 모두에 보이고 × 도 모두에 먹는다.
+//   칩의 + 는 지금 보는 범위(이 캐릭터 · 전체)에, 페르소나 이름은 전체에 넣는다 (한글을 몰라 입력칸만 채울 때는 탭을 전체로). 용어집이 바뀌면 모든 캐릭터의 문단 캐시가 새로 된다
+//   (setupDigest 가 용어집을 통째로 넣는다 — 예전 그대로, 키 구조는 그대로 둔다).
+function suggestStore() {
+    const all = extensionSettings.glossary_suggest;
+    if (!all || typeof all !== 'object' || Array.isArray(all)) extensionSettings.glossary_suggest = {};
+    return extensionSettings.glossary_suggest;
+}
+/** 남김 다시 보내기로 고쳐 온 줄에서 이름 짝을 모은다 — rows = [index, 보낸 줄, …], before · after = 다시 보내기 앞뒤의 줄들 */
+function noteFixPairs(rows, before, after, into) {
+    try {
+        for (const [index, line] of rows) {
+            const now = after[index];
+            if (typeof now === 'string' && before[index] === line && now !== line) into.push(...fixPairs(line, now));
+        }
+    } catch (error) { console.warn('[LLM Translator] 이름 짝 모으기 실패', error); }
+}
+/** 그 표기의 한글 — 다른 범위의 용어집 · 이름 다리에서 (유료 호출 없음) */
+function knownHangulOf(src) {
+    const k = glossaryFold(src);
+    if (!k) return '';
+    const hangul = form => /^[가-힣]+(?: [가-힣]+)*$/.test(String(form ?? '').trim());
+    for (const entry of glossaryEntries()) {
+        if (!entry?.src || !entry?.dst || !glossaryAlternatives(entry.src).some(form => glossaryFold(form) === k)) continue;
+        const dst = glossaryAlternatives(entry.dst).find(hangul);
+        if (dst) return dst.trim();
+    }
+    try { return (globalThis[Symbol.for('blue-lemonade.names')]?.aliasesOf?.(src) ?? []).find(hangul) ?? ''; } catch { return ''; }
+}
+/** 지금 범위(이 캐릭터 + 전체) 용어집에 이미 있는 원문 · 번역 표기 */
+function glossaryHaveSet(scopeKey) {
+    return new Set(activeGlossaryEntries(scopeKey).flatMap(entry => [...glossaryAlternatives(entry.src), ...glossaryAlternatives(entry.dst)]).map(suggestFold).filter(Boolean));
+}
+/** 번역이 끝난 뒤 — 고쳐 온 이름 짝 + 한글 줄에 영어로 남은 이름을 모은다. 칩에 보일 것이 달라질 때만 저장 · 다시 그리기 (센 수만 오르면 다음 설정 저장 때 함께)
+ *  keySource: 센 수 열쇠를 만들 원문 — 번역 · 다시 번역 모두 보호 블록을 가리기 전 원문 (같은 메시지를 다시 번역해도 한 번만 센다) */
+function noteGlossarySuggestions(source, out, pairs, keySource = source) {
+    try {
+        if (extensionSettings.glossary_enabled === false) return;
+        const key = glossaryScopeKey();
+        if (!key) return;
+        const c = getContext();
+        const names = { persona: String(c?.name1 ?? ''), character: String(c?.name2 ?? '') };
+        const have = glossaryHaveSet(key);
+        const found = [...markPairs(pairs, source, names), ...leftoverNameWords(out, source, names)].filter(f => !have.has(suggestFold(f.src)));
+        if (!found.length) return;
+        const all = suggestStore(), msg = textKey(keySource);
+        const before = chipShape(suggestionChips(key));
+        for (const [scope, list] of [[SUGGEST_GLOBAL, found.filter(f => f.persona)], [key, found.filter(f => !f.persona)]]) {
+            if (!list.length) continue;
+            all[scope] = mergeSuggestions(all[scope], list.map(f => ({ ...f, dst: f.dst || knownHangulOf(f.src) })), { have, key: msg }).box;
+        }
+        extensionSettings.glossary_suggest = trimScopes(all);
+        const changed = chipShape(suggestionChips(key)) !== before;   // 그려질 칩(공통 칸 + 이 캐릭터 · 8개)이 바뀔 때만 — 모은 것은 메모리에 두고 다음 설정 저장 때 함께
+        if (!changed) return;
+        saveSettingsDebounced();
+        renderGlossarySuggestions();
+    } catch (error) { console.warn('[LLM Translator] 새 이름 모으기 실패', error); }
+}
+/** 칩의 ＋ 로 입력칸을 채운 이름 { home, src } — 「추가」로 넣으면 그 칸(공통 칸 · 이 캐릭터)의 제안을 지운다 */
+let glossaryPendingSuggest = null;
+function dropPendingSuggestion(src) {
+    const pending = glossaryPendingSuggest;
+    glossaryPendingSuggest = null;
+    if (!pending || suggestFold(src) !== suggestFold(pending.src)) return;
+    const all = suggestStore();
+    all[pending.home] = dropSuggestion(all[pending.home], pending.src);
+    saveSettingsDebounced();
+}
+/** 그려질 칩 — 공통 칸(페르소나) 먼저, 이 캐릭터 칸, 모두 8개까지. 용어집을 끄면 없음 (그리기와 저장 판단이 같은 목록을 본다) */
+function suggestionChips(key) {
+    const shown = [];
+    if (!key || extensionSettings.glossary_enabled === false) return shown;
+    const all = suggestStore(), have = glossaryHaveSet(key), seen = new Set();
+    for (const scope of [SUGGEST_GLOBAL, key]) {
+        for (const item of shownSuggestions(all[scope], { have, dstOf: knownHangulOf })) {
+            const k = suggestFold(item.src);
+            if (seen.has(k) || shown.length >= 8) continue;
+            seen.add(k);
+            shown.push({ ...item, persona: scope === SUGGEST_GLOBAL });
+        }
+    }
+    return shown;
+}
+/** 칩 모양 — 칸 · 표기 · 한글 표기 (차례는 보지 않는다: 같은 이름이 다시 나와 앞으로 와도 저장하지 않게) */
+function chipShape(chips) {
+    return chips.map(item => `${item.persona ? 'g' : 'c'}\u0001${suggestFold(item.src)}\u0001${item.dst}`).sort().join('\u0002');
+}
+/** 칩 — 원문(→ 한글) + 넣기 · 빼기 아이콘. 글은 짧게 · 툴팁 없음. 용어집을 끄면 숨김 */
+function renderGlossarySuggestions() {
+    const box = glossaryCard()?.querySelector('.llmt-gl-suggest');
+    if (!box) return;
+    const shown = suggestionChips(glossaryScopeKey());
+    box.hidden = !shown.length;
+    box.innerHTML = shown.length ? '<small class="llmt-desc">새 이름 · 넣으면 모든 캐릭터의 문단 캐시가 새로 돼요</small><div class="llmt-gl-chips">'
+        + shown.map(item => `<span class="llmt-gl-chip" data-scope="${item.persona ? 'global' : 'char'}" data-src="${escapeHtmlText(item.src)}" data-dst="${escapeHtmlText(item.dst)}"><span class="llmt-gl-chip-text">${escapeHtmlText(item.src)}${item.dst ? ` → ${escapeHtmlText(item.dst)}` : ''}</span>`
+            + '<button type="button" class="llmt-gl-icon" data-act="sg-add" aria-label="용어집에 넣기"><i class="fa-solid fa-plus"></i></button>'
+            + '<button type="button" class="llmt-gl-icon" data-act="sg-skip" aria-label="빼기"><i class="fa-solid fa-xmark"></i></button></span>').join('') + '</div>' : '';
+}
+
 function renderGlossary() {
     publishGlossaryNames();   // 6.3.5 항목이 바뀌면(더하기 · 고치기 · 지우기 · 가져오기) · 채팅을 바꾸면 여기를 거친다 — 이름 다리도 갱신 (같으면 아무 일 없음)
     const card = glossaryCard();
@@ -4110,6 +4267,7 @@ function renderGlossary() {
     card.querySelector('#llm_glossary_extract').disabled = !key;
     const wiButton = card.querySelector('#llm_glossary_from_wi');
     if (wiButton) wiButton.disabled = !key;
+    renderGlossarySuggestions();   // 6.4.5
 }
 
 function initGlossaryUI() {
@@ -4119,6 +4277,7 @@ function initGlossaryUI() {
     $('#llm_glossary_enabled').prop('checked', s.glossary_enabled !== false).on('change', function () {
         s.glossary_enabled = $(this).is(':checked');
         saveSettingsDebounced();
+        renderGlossarySuggestions();   // 6.4.5 용어집을 끄면 새 이름 칩도 숨긴다
     });
     $('#llm_glossary_apply_send').prop('checked', s.glossary_apply_send !== false).on('change', function () {
         s.glossary_apply_send = $(this).is(':checked');
@@ -4129,14 +4288,14 @@ function initGlossaryUI() {
     const dstInput = card.querySelector('#llm_glossary_dst');
     const addButton = card.querySelector('#llm_glossary_add');
     const submit = () => {
+        // 6.4.5 채팅 변경 알림 · 다시 그리기보다 먼저 눌러도 다른 캐릭터에 넣지 않는다.
+        if (glossaryEditorScopeChanged()) { resetGlossaryEditor(); renderGlossary(); return; }
         const scope = glossaryScopeView === 'global' ? 'global' : glossaryScopeKey();
         if (!scope) return toastr.warning('캐릭터를 먼저 열어 주세요.', '용어집');
         if (!srcInput.value.trim() || !dstInput.value.trim()) return toastr.warning('원문과 번역을 둘 다 적어 주세요.', '용어집');
         upsertGlossaryEntry(scope, srcInput.value, dstInput.value, glossaryEditingId);
-        glossaryEditingId = null;
-        addButton.classList.remove('is-editing');
-        srcInput.value = '';
-        dstInput.value = '';
+        dropPendingSuggestion(srcInput.value);   // 6.4.5 칩의 ＋ 로 채운 이름이면 그 칸의 제안을 지운다
+        resetGlossaryEditor();
         renderGlossary();
         srcInput.focus();
     };
@@ -4187,9 +4346,10 @@ function initGlossaryUI() {
         if (!entry) return;
         if (button.dataset.act === 'delete') {
             removeGlossaryEntry(id);
-            if (glossaryEditingId === id) { glossaryEditingId = null; addButton.classList.remove('is-editing'); }
+            if (glossaryEditingId === id) resetGlossaryEditor();
             renderGlossary();
         } else if (button.dataset.act === 'edit') {
+            resetGlossaryEditor();
             glossaryEditingId = id;
             glossaryEditingKey = glossaryScopeKey();
             addButton.classList.add('is-editing');
@@ -4197,6 +4357,36 @@ function initGlossaryUI() {
             dstInput.value = entry.dst;
             dstInput.focus();
         }
+    });
+    // 6.4.5 새 이름 용어집 제안 — + 는 지금 보는 범위(이 캐릭터 · 전체)에, 페르소나 이름은 전체에 넣는다. 한글 표기를 모르면 입력칸에 원문만 채운다 (페르소나 이름이면 탭을 전체로) ·
+    //   × 는 다시 제안하지 않는다 (페르소나 이름은 모든 캐릭터에서) · 용어집을 꺼 두면 아무것도 하지 않는다
+    card.querySelector('.llmt-gl-suggest')?.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-act]');
+        const chip = button?.closest('.llmt-gl-chip');
+        const key = glossaryScopeKey();
+        if (!chip || !key || extensionSettings.glossary_enabled === false) return;
+        const src = chip.dataset.src ?? '', dst = chip.dataset.dst ?? '';
+        const home = chip.dataset.scope === 'global' ? SUGGEST_GLOBAL : key;
+        const all = suggestStore();
+        if (button.dataset.act === 'sg-skip') {
+            if (glossaryPendingSuggest?.home === home && suggestFold(glossaryPendingSuggest.src) === suggestFold(src)) resetGlossaryEditor();
+            all[home] = skipSuggestion(all[home], src);
+        } else if (button.dataset.act === 'sg-add') {
+            resetGlossaryEditor();
+            if (!dst) {
+                if (home === SUGGEST_GLOBAL && glossaryScopeView !== 'global') { glossaryScopeView = 'global'; renderGlossary(); }   // 6.4.5 페르소나 이름은 전체 범위에
+                glossaryPendingSuggest = { home, src };
+                srcInput.value = src;
+                dstInput.value = '';
+                dstInput.focus();
+                return;
+            }
+            const scope = home === SUGGEST_GLOBAL || glossaryScopeView === 'global' ? 'global' : key;
+            if (!upsertGlossaryEntry(scope, src, dst)) return;
+            all[home] = dropSuggestion(all[home], src);
+        } else return;
+        saveSettingsDebounced();
+        renderGlossary();
     });
     card.querySelector('#llm_glossary_extract').addEventListener('click', () => {
         extractGlossaryWithLLM().catch((error) => {
@@ -4948,14 +5138,16 @@ function initializeEventHandlers() {
 
     eventSource.on(event_types.CHAT_CHANGED, function () {
         publishGlossaryNames();   // 6.3.5 채팅을 바꾸면 바로 — 첫 인사말 렌더 · TTS 팔레트보다 먼저 (100ms 뒤 renderGlossary 는 같으면 아무 일 없음)
+        if (glossaryEditorScopeChanged()) resetGlossaryEditor();
+        renderGlossarySuggestions();   // 6.4.5 100ms 뒤 다시 그리기 전에도 이전 캐릭터의 칩이 남지 않게
         migrateOriginalCopies(getContext().chat); // [1.7.1] 원문 사본 → 해시 (파일 크기)
         setTimeout(() => {
             repairShownTranslations(); // 6.2.1 저장된 번역문의 빠진 닫는 태그 · 못 풀린 자리표시자 (그려진 것만 다시 그린다)
             addButtonsToExistingMessages();
             updateButtonVisibility(); // 설정에 따라 버튼 가시성 업데이트
             loadRulePrompt(); // 채팅이 바뀔 때마다 해당 채팅의 규칙 프롬프트 로드
-            // [2.1.3] 캐릭터가 바뀌었으면 고치던 항목을 놓는다 (같은 캐릭터의 다른 채팅이면 그대로)
-            if (glossaryEditingId && glossaryScopeView === 'char' && glossaryScopeKey() !== glossaryEditingKey) resetGlossaryEditor();
+            // 6.4.5 지연 중 캐릭터가 한 번 더 바뀌어도 고치던 항목 · 제안 입력을 견준다.
+            if (glossaryEditorScopeChanged()) resetGlossaryEditor();
             renderGlossary(); // [1.8.0] 캐릭터가 바뀌면 그 캐릭터의 용어집으로
         }, 100);
     });
@@ -6665,11 +6857,12 @@ function emitTranslationUIUpdate(messageId, type) {
  * [1.8.13] 북마크 확장이 패널에서 번역한 글도 채팅과 같은 모양(원문 병기)으로 적도록 내보낸다.
  *          북마크는 실리태번이 이미 불러온 이 모듈을 같은 주소로 import 하므로 모듈이 다시 실행되지 않는다.
  */
-export function processTranslationText(originalText, translatedText) {
+export function processTranslationText(originalText, translatedText, options = {}) {
     const displayMode = extensionSettings.translation_display_mode || 'disabled';
 
     // 0. 기본 모드 체크 (빠른 반환)
     if (displayMode === 'disabled') {
+        if (options.inspect) return null;   // 고른 글 지우기: 병기하지 않으면 문단 짝 검사가 필요 없다
         return correctBackticks(translatedText || ''); // ✅ 수정 3: correctBackticks 추가
     }
 
@@ -6697,6 +6890,7 @@ export function processTranslationText(originalText, translatedText) {
         // 동시에 '순수 텍스트(Queue)'를 추출합니다.
         const { skeleton, textQueue: transQueue } = analyzeStructure(transData.maskedText);
         const origQueue = extractPureText(origData.maskedText);
+        if (options.inspect) return { original: origQueue.length, translation: transQueue.length };
 
         // 3. 매칭 및 렌더링 (Phase 3 & 4: Matching & Rendering)
         // 설정과 큐의 상태에 따라 '통짜 모드' 또는 '인터리브 모드'로 HTML을 생성합니다.
@@ -6717,6 +6911,7 @@ export function processTranslationText(originalText, translatedText) {
         return correctBackticks(finalHtml);
 
     } catch (error) {
+        if (options.inspect) throw error;
         console.error('[LLM Translator] Error in processTranslationText:', error);
         // ✅ 수정 4: toastr.error 추가
         if (window.toastr) {
@@ -8001,8 +8196,10 @@ class PresetManager {
 		if (settingsSnapshot.custom_model_lists) delete settingsSnapshot.custom_model_lists;
 		delete settingsSnapshot.show_chat_translate_menu;
         delete settingsSnapshot.show_input_translate_menu;
+        delete settingsSnapshot.selection_delete;   // 6.4.4 고른 글 지우기 켜짐은 프리셋에 담지 않는다 (기기 상태)
         if ('send_translate' in settingsSnapshot) delete settingsSnapshot.send_translate; // [1.6.0] 켜고 끄는 상태는 프리셋에 안 담음
 		if ('glossary_entries' in settingsSnapshot) delete settingsSnapshot.glossary_entries; // [1.8.0] 용어집은 캐릭터별 데이터라 프리셋에 안 담음
+		if ('glossary_suggest' in settingsSnapshot) delete settingsSnapshot.glossary_suggest; // 6.4.5 새 이름 제안도 캐릭터별 데이터라 프리셋에 안 담음
 
 		const newPreset = {
 			id: `preset_${Date.now()}`,
@@ -8044,8 +8241,9 @@ class PresetManager {
         // [1.9.2] 프리셋에 안 담는 용어집(1.8.0) · 보내기 번역 켜짐(1.6.0)도 지키기. 예전에는 아래에서 설정을 싹 지운 뒤 되살리지 않아
         //         프리셋을 고르기만 해도 용어집 항목이 전부 사라지고 보내기 번역이 꺼졌다.
         const myGlossary = Array.isArray(extensionSettings.glossary_entries) ? extensionSettings.glossary_entries : [];
+        const mySuggest = extensionSettings.glossary_suggest;   // 6.4.5 새 이름 제안도 프리셋과 무관하게 지킨다
         const mySendTranslate = !!extensionSettings.send_translate;
-        const deviceState = Object.fromEntries(['show_chat_translate_menu', 'show_input_translate_menu', 'current_connection_v1']
+        const deviceState = Object.fromEntries(['show_chat_translate_menu', 'show_input_translate_menu', 'current_connection_v1', 'selection_delete']   // 6.4.4 고른 글 지우기 켜짐도 기기 상태
             .filter(key => Object.hasOwn(extensionSettings, key)).map(key => [key, extensionSettings[key]]));
         const myProxyPassword = extensionSettings.reverse_proxy_password;
 
@@ -8062,6 +8260,7 @@ class PresetManager {
         extensionSettings.customPrompts = loadedCustomPrompts;
         extensionSettings.custom_model_lists = myModelLists;
         extensionSettings.glossary_entries = myGlossary;       // [1.9.2]
+        if (mySuggest) extensionSettings.glossary_suggest = mySuggest;   // 6.4.5
         extensionSettings.send_translate = mySendTranslate;    // [1.9.2]
         Object.assign(extensionSettings, deviceState);
         if (!Object.hasOwn(loadedSettings, 'reverse_proxy_password')) extensionSettings.reverse_proxy_password = myProxyPassword;
@@ -8175,8 +8374,10 @@ class PresetManager {
 		if (settingsSnapshot.custom_model_lists) delete settingsSnapshot.custom_model_lists;
 		delete settingsSnapshot.show_chat_translate_menu;
         delete settingsSnapshot.show_input_translate_menu;
+        delete settingsSnapshot.selection_delete;   // 6.4.4 고른 글 지우기 켜짐은 프리셋에 담지 않는다 (기기 상태)
         if ('send_translate' in settingsSnapshot) delete settingsSnapshot.send_translate; // [1.6.0] 켜고 끄는 상태는 프리셋에 안 담음
 		if ('glossary_entries' in settingsSnapshot) delete settingsSnapshot.glossary_entries; // [1.8.0] 용어집은 캐릭터별 데이터라 프리셋에 안 담음
+		if ('glossary_suggest' in settingsSnapshot) delete settingsSnapshot.glossary_suggest; // 6.4.5 새 이름 제안도 캐릭터별 데이터라 프리셋에 안 담음
 
 		// 미리 찍어둔 스냅샷 사용
 		preset.version = 2;

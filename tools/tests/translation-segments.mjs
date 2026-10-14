@@ -157,3 +157,54 @@ assert.ok(/clean: \(text, source, message\) => message\?\.extra\?\.translation_e
 assert.ok(/clean: options\.clean,/.test(read('src/addons/translator/selection/state.js')));
 console.log('PASS 6.2.5 bookmarks panel and selection retranslate show stored translations the same way as the chat screen');
 }
+{
+// 6.4.5 줄 전체를 감싼 「」 — 원문 줄은 꺾쇠 없이 (속마음 태그 · 서술) 쓰였는데 번역문 줄만 통째로 「…」 로 나왔다
+const {dropWrapQuotes:w}=await import(new URL('src/addons/translator/translation-segments.js',root));
+const th=s=>`<true_thoughts character="Rex">${s}</true_thoughts>`;
+assert.equal(w(th('「또 왔나, 끈질긴 놈들. 아직 남은 놈이 있는 건가.」'),th('また来たのか、しつこい奴らめ。まだ残っている奴がいるのか。')),th('또 왔나, 끈질긴 놈들. 아직 남은 놈이 있는 건가.'),'태그 안쪽 감싸기');
+// 여러 문단: 감싸인 속마음 줄만 벗기고, 원문 「」 · "…"(용어집으로 「」) 대사는 그대로
+const src='Mina stepped into the lab.\n\n'+th('ここまで来るとはな。')+'\n\n「誰かいるの？」\n\n"Rex, wait."';
+const out='미나가 연구실로 들어섰다.\n\n'+th('「여기까지 오다니.」')+'\n\n「누구 있어?」\n\n「레크스, 기다려.」';
+assert.equal(w(out,src),'미나가 연구실로 들어섰다.\n\n'+th('여기까지 오다니.')+'\n\n「누구 있어?」\n\n「레크스, 기다려.」','대사 줄은 그대로');
+// 껍데기(자리표시자 · 강조 · 공백) 안쪽도
+assert.equal(w('[[__VAR_0__]]「레크스는 웃었다.」[[/__VAR_0__]]','[[__VAR_0__]]Rex smiled.[[/__VAR_0__]]'),'[[__VAR_0__]]레크스는 웃었다.[[/__VAR_0__]]','자리표시자 안');
+assert.equal(w('*「믿을 수 없어.」* ','*I cannot believe this.*'),'*믿을 수 없어.* ','기울임 안');
+// 원문 속 따옴표를 옮긴 것은 남고 바깥 하나만
+assert.equal(w('「설마 「그것」이 여기 있을 줄은…」','まさか「あれ」がここにあるとは…'),'설마 「그것」이 여기 있을 줄은…','안쪽 「」 는 남는다');
+assert.equal(w('「그는 "집"이라는 말을 오래 생각했다.」','He thought about the word "home" for a while.'),'그는 "집"이라는 말을 오래 생각했다.','원문 "…" 하나 + 바깥 「」 하나');
+// 그대로 두는 것
+for(const [o,s,note] of [
+    ['「오지 마」','彼は「来るな」と言った。','짝 수가 원문과 같다 (원문 속 대사를 옮긴 줄)'],
+    ['「안녕」','「おはよう」','원문 머리에 「'],
+    ['「가자.」','"Let us go."','원문 머리에 " (용어집 " → 「」)'],
+    ['「가자.」','‘Let us go,’ she whispered.','원문 머리에 ‘'],
+    ['「가자.」','Let us go, she said with a nod: "now"','원문 끝에 "'],
+    ['「가」 그리고 「나」','A and B','두 덩이'],
+    ['「여기까지 오다니.」\n「누구 있어?」','ここまで来るとはな。','줄 수가 다르면 (짝 불확실)'],
+    ['「」','x','빈 감싸기'],
+    ['```\n「코드 속」\n```','```\nin code\n```','코드 블록'],
+    ['「끝이 열린 줄','x','닫힘 없음'],
+]) assert.equal(w(o,s),o,note);
+// Literal HTML and inner fence markers must never turn code into prose.
+for (const tag of ['code', 'pre', 'script', 'style', 'textarea']) {
+    const o = `<${tag}>「literal」</${tag}>\n「서술」`;
+    const s = `<${tag}>literal</${tag}>\nNarration`;
+    assert.equal(w(o, s), `<${tag}>「literal」</${tag}>\n서술`, tag);
+    assert.equal(w(`<${tag}>\n「literal」\n</${tag}>`, `<${tag}>\nliteral\n</${tag}>`), `<${tag}>\n「literal」\n</${tag}>`, tag + ' multiline');
+}
+for (const inner of ['~~~', '```']) {
+    const o = '````\n' + inner + '\n「literal」\n````\n「서술」';
+    const s = '````\n' + inner + '\nliteral\n````\nNarration';
+    assert.equal(w(o, s), '````\n' + inner + '\n「literal」\n````\n서술', 'outer fence remains open');
+}
+// 긴 줄 · 닫히지 않은 < 가 많은 줄도 바로 (되짚기 없음)
+const t0=performance.now();
+w('「<a'+'x'.repeat(200000)+'」','<a'+'x'.repeat(200000));
+w('「'+'<b'.repeat(50000)+'」','<b'.repeat(50000));
+assert.ok(performance.now()-t0<1000,'긴 줄');
+// 연결: 새 번역 · 캐시 · 저장된 번역 다시 보여 주기 · 북마크 창이 모두 지나는 tidyGlossaryOutput 에서
+const idx645=(await import('node:fs')).readFileSync(new URL('src/addons/translator/index.js',root),'utf8');
+assert.ok(/const cleaned = dropDanglingOpenQuote\(dropWrapQuotes\(output, source\), source\);/.test(idx645),'tidyGlossaryOutput');
+assert.ok(/repairTagPairs, dropStrayWords, dropWrapQuotes \} from '\.\/translation-segments\.js';/.test(idx645),'import');
+console.log('PASS 6.4.5 a translated line wrapped whole in 「」 loses the wrap only when its source line has no quotes');
+}

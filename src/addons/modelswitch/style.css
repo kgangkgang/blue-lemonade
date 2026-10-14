@@ -1,4 +1,4 @@
-#model-switch-settings{--ms-version:"1.1.5"}
+#model-switch-settings{--ms-version:"1.1.6"}
 #model-switch-settings .inline-drawer-content{display:flex;flex-direction:column;gap:12px;text-align:left}
 .ms-presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
 .ms-presets:empty{display:none}
@@ -106,3 +106,13 @@ dialog.popup :not(.bl-addon-inline-content) > #model-switch-settings .ms-presets
 .ms-part{margin-left:6px;font-size:.85em;opacity:.75}
 .ms-states :is(.ms-state-go,.ms-state-x,.ms-last):disabled{cursor:default;opacity:.5}
 .ms-actions .ms-snap[hidden]{display:none}
+
+/* Model settings links and the two selection groups share one compact row. */
+#model-switch-settings .ms-groups{display:flex;gap:8px;flex-wrap:nowrap}
+#model-switch-settings .ms-groups button{flex:1 1 0;min-width:0;margin:0;white-space:nowrap}
+#model-switch-settings .ms-groups [aria-pressed="true"]{color:var(--salty-accent,var(--SmartThemeQuoteColor));border-color:currentColor}
+#model-switch-settings .ms-name{display:inline;padding:0;border:0;background:none;color:inherit;font:inherit;font-weight:600;text-align:left;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+#model-switch-settings .ms-name:focus-visible{outline:2px solid var(--salty-accent,var(--SmartThemeQuoteColor));outline-offset:3px}
+.ms-flash{animation:ms-settings-flash 1.8s ease-out}
+@keyframes ms-settings-flash{0%,40%{outline:2px solid var(--salty-accent,var(--SmartThemeQuoteColor));outline-offset:3px}100%{outline:2px solid transparent;outline-offset:6px}}
+@media(prefers-reduced-motion:reduce){.ms-flash{animation:none;outline:2px solid var(--salty-accent,var(--SmartThemeQuoteColor));outline-offset:3px}}

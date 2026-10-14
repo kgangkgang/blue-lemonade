@@ -4,7 +4,7 @@
    ============================================================ */
 
 /* state.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
-:root { --eh-css-version: "1.6.6"; }
+:root { --eh-css-version: "1.6.7"; }
 
 .eh-root {
     --eh-text: var(--SmartThemeBodyColor, #ccc);
@@ -968,6 +968,9 @@ body.reduced-motion .eh-viewer-nav { transition: none; }
 /* 연결 고르기: S/M/L 용 30px 칸이 아니라 한 줄 전체를 셋으로 나눈다 (글자가 한 자씩 꺾이지 않게) */
 .eh-root .eh-pick .eh-segmented { display: flex; width: 100%; margin-left: 0; box-sizing: border-box; }
 .eh-root .eh-pick .eh-segmented button { flex: 1 1 0; width: auto; height: auto; min-width: 0; min-height: 32px; padding: 4px 8px; white-space: nowrap; font-size: .9em; }
+/* 6.4.5 「검열당했을 때」 칸 (modelswitch/fallback-field.js): 줄은 위 연결 줄과 같은 칸 · 간격(묶음 상자 없이), 알림 한 줄은 안내 줄 글씨 */
+.eh-root .eh-pick-fallback { display: contents; }
+.eh-root .eh-pick-fallback .bl-fb-note { display: block; margin: 0; font-size: .85em; line-height: 1.5; color: var(--eh-muted); opacity: 1; }
 
 /* ── 6.2 촘촘하게 (번역 창 결) ───────────────────────────────
    카드 = 테 1 + 몸 10 · 반경 12, 카드 제목 · 사용법 머리는 띠 38, 단계 본문은 번호 원 옆으로 들여 쓰지 않음(글이 카드 왼쪽 끝부터),

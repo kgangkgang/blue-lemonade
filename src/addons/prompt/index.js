@@ -24,6 +24,7 @@ import { installLocalizationPage } from './localization-ui.js';
 import { forEachLimited } from './cache-loading.js';
 import { isTransientFailure, responseError } from './request-errors.js';
 import { fallbackOf, withFallback } from '../modelswitch/fallback.js';   // 6.2.9 검열되면 다른 모델로
+import { mountFallbackField } from '../modelswitch/fallback-field.js';   // 6.4.5 「검열당했을 때」 칸 (설정 › 연결)
 // Modified 2026-09-24: Blue Lemonade personal preview 1.1.0; based on supplied 개인개조+++ ZIP.
 import { installRegexPage } from './regex-ui.js';
 import { installGuide } from './guide.js';
@@ -4452,6 +4453,26 @@ function buildPanel() {
     }
 }
 
+// 6.4.5 「검열당했을 때」 칸 — 설정 › 연결 › 연결 방식 카드 (현재 연결 · 직접 · 프로필 어느 방식에서도). 저장 = cfg().fallback,
+//   모델 전환 「한글화 패널 (검열되면)」 줄과 같은 자리라 거기서 고른 값이 그대로 보인다.
+//   본 요청이 내용 차단으로 막혔을 때만 그 모델로 한 번 더 (runCompletion · 「안 함」이면 보내지 않음)
+const promptMainTarget = () => { const c = cfg(); return c.connectionMode === 'direct' ? { source: PROVIDER_TO_SOURCE[c.provider] || c.provider, model: c.model === '__custom__' ? (c.customModelName || '') : (c.model || '') } : null; };
+function mountPromptFallback() {
+    const host = PDOC.getElementById('pt-fallback-field');
+    if (!host) return;
+    // 공급자 = 이 패널이 직접 부를 수 있는 것 (모델 전환 한글화 패널 줄과 같음) · 칸 모양 = 이 패널의 pt-field (클래스 없는 select · input)
+    mountFallbackField(host, { id: 'prompt', settings: cfg, sources: PROVIDER_LIST.map(p => p.source), save: saveSettingsDebounced, main: promptMainTarget, selectClass: '', inputClass: '',
+        row: (label, control) => `<div class="pt-field"><label>${label}</label>${control}</div>` });
+}
+// 다른 곳(모델 전환 · 본 모델)에서 바뀐 값을 칸에 — 칸 안을 만지는 중이면 그대로 둔다.
+//   모델 전환의 아는 확장 줄은 'st:model-switch-applied' 를 보내지 않아서 설정 저장(SETTINGS_UPDATED) 뒤에도 다시 그린다
+function syncPromptFallback() {
+    const host = PDOC.getElementById('pt-fallback-field');
+    if (!host?.blFallbackRender || host.contains(host.ownerDocument.activeElement)) return;
+    host.blFallbackRender();
+}
+window.addEventListener('st:model-switch-applied', syncPromptFallback);
+
 // ── Settings HTML ──────────────────────────────────────────────────────
 function buildSettingsHTML() {
  const c=cfg();
@@ -4682,6 +4703,8 @@ export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
     installGuide({doc:PDOC, cfg, save:saveSettingsDebounced, openPanel, closePanel});
     bindConnection({doc:PDOC,cfg,save:saveSettingsDebounced,host:oai_settings,extensions:extension_settings,refresh:()=>{updateModelDropdown();buildParamsUI();applyProviderModeUI();updateStatusModel();}});
     updateModelDropdown();buildParamsUI();applyProviderModeUI();
+    mountPromptFallback();   // 6.4.5
+    try { eventSource?.on?.(event_types?.SETTINGS_UPDATED, syncPromptFallback); } catch(e){}
     // 새 목록이 오면 (받은 뒤 · 실리태번이 연결하며 받은 목록) 이 공급자 것일 때만 다시 그린다 — 고르는 중이면 다 고른 뒤
     watchModelLists(({key})=>{
         const sel=PDOC.getElementById('pt-model-select'),c=cfg();

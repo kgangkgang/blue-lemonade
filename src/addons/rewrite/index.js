@@ -19,6 +19,7 @@ import { POPUP_TYPE, callGenericPopup } from '../../../../../../popup.js';
 import { SECRET_KEYS, secret_state } from '../../../../../../secrets.js';
 import { ConnectionManagerRequestService } from '../../../../../shared.js';
 import { fallbackOf, withFallback } from '../modelswitch/fallback.js';   // 6.2.9 검열되면 다른 모델로
+import { fieldState, mountFallbackField } from '../modelswitch/fallback-field.js';   // 6.4.5 「검열당했을 때」 칸 (연결 탭)
 import {
     activateRules,
     checkReplyStart,
@@ -50,7 +51,7 @@ import { capturedMessages, capturedRequest, holdGeneration, regenerateReply, rep
 import { applyUpgrades } from './upgrades.js';
 import { startQuickBan, setQuickBanEnabled } from './quick-ban.js';
 
-const VERSION = '2.1.1';
+const VERSION = '2.1.2';
 const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];
@@ -1077,6 +1078,31 @@ function renderModels() {
     if (isCustom) lastRenderedCustomUrl = endpoint.url;
 }
 
+// 6.4.5 「검열당했을 때」 칸 — 연결 탭 맨 아래 (현재 연결 · 직접 선택 · 프로필 어느 쪽에서도). 저장 = settings.fallback,
+//   모델 전환 「다시 쓰기 (검열되면)」 줄과 같은 자리라 거기서 고른 값이 그대로 보이고, 거기서 바꾸면 다시 그린다.
+//   본 요청이 내용 차단으로 막혔을 때만 그 모델로 한 번 더 (generate 의 fallbackOf · 「안 함」이면 보내지 않음)
+const FALLBACK_SOURCES = Object.values(PROVIDERS).map(provider => provider.source);   // 직접 선택 공급자 그대로 (generateDirect 가 부를 수 있는 곳 = 모델 전환 다시 쓰기 줄)
+const fallbackHost = () => document.getElementById('bwr_fallback_field');
+function mountRewriteFallback() {
+    const host = fallbackHost();
+    if (!host) return;
+    mountFallbackField(host, { id: 'rewrite', settings: () => settings, sources: FALLBACK_SOURCES, save: saveSettingsDebounced,
+        main: () => { const now = mainModel(); return now && { source: now.provider, model: now.model }; },
+        row: (label, control) => `<label class="bwr_field"><span>${label}</span>${control}</label>` });
+}
+// 다시 그림 — 칸 안에 초점이 있으면(고르는 중 · 치는 중) 건너뛴다. stale: 저장된 값과 보이는 값이 다를 때만 (설정 저장마다 불린다)
+function refreshRewriteFallback(stale = false) {
+    const host = fallbackHost();
+    if (!host?.blFallbackRender || host.contains(document.activeElement)) return;
+    if (stale) {
+        const { provider, model } = fieldState(settings);
+        const shown = host.querySelector('[data-bl-fb="provider"]'), typed = host.querySelector('[data-bl-fb="model"]');
+        if (shown && shown.value === provider && (provider ? typed?.value.trim() === model : !typed)) return;
+    }
+    host.blFallbackRender();
+}
+window.addEventListener('st:model-switch-applied', () => refreshRewriteFallback());
+
 function syncConnection() {
     $('#bwr_connection .bwr_seg').each(function () {
         $(this).toggleClass('active', this.dataset.value === settings.connection).attr('aria-pressed', String(this.dataset.value === settings.connection));
@@ -1095,6 +1121,7 @@ function syncConnection() {
     renderProfiles();
     renderProviders();
     renderModels();
+    mountRewriteFallback();   // 6.4.5 (연결 방식이 바뀌면 「본 모델과 같아서」 알림도 다시)
 }
 
 function importTranslatorSettings() {
@@ -1192,6 +1219,8 @@ function bindConnection() {
         saveSettingsDebounced();
     });
     $('#bwr_import_translator').on('click', importTranslatorSettings);
+    // 6.4.5 본 공급자 · 모델이 바뀌면 「검열당했을 때」 칸의 알림(본 모델과 같음)도 다시
+    $('#bwr_provider, #bwr_model, #bwr_custom_model, #bwr_custom_url').on('change', () => refreshRewriteFallback());
 }
 
 // ── Rules UI: chips + one editor ──────────────────────
@@ -1837,6 +1866,8 @@ function ensureUi() {
             }),
             // A list fetched anywhere in the theme (or by SillyTavern's own connect) shows up here too.
             '목록 따라가기': () => onModelListChange(onModelListArrived),
+            // 6.4.5 모델 전환에서 「다시 쓰기 (검열되면)」을 바꾸면 저장된 뒤 「검열당했을 때」 칸을 다시 그린다 (아는 확장 줄은 알림 이벤트가 없다)
+            '검열당했을 때': () => eventSource.on(event_types.SETTINGS_UPDATED, () => refreshRewriteFallback(true)),
             // Inside the theme this runs when the settings are first opened; on its own the drawer is built at
             // start-up, so there it waits for the drawer to be opened (no request while the page loads).
             '모델 목록': () => (EMBEDDED ? autoFetchModels() : $('.bwr_settings .inline-drawer-toggle').on('click', () => autoFetchModels())),

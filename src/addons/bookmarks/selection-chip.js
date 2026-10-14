@@ -3,6 +3,7 @@
 // 폰에서 단추를 누르면 그 순간 선택이 풀릴 수 있다 → 고를 때(selectionchange) 범위를 잡아 두고, 누르는 순간(pointerdown) 그 범위로 모양까지 떠 둔다.
 // 다시 쓰기의 빠른 금지 칩(250ms) · LLM 번역의 고른 글 도구와 같이 뜰 수 있어 겹치면 옆으로 비킨다.
 import { captureExcerpt } from './excerpt-capture.js';
+import { trimToRoot } from '../../selection-range.js';   // 6.4.4 세 번 클릭이 늘린 끝을 겹친 글자 · 메시지 글 안으로 줄인다 (고른 글 지우기와 같은 도우미)
 
 const DELAY = 300;
 const CHIP_ID = 'cg-select-chip';
@@ -34,8 +35,8 @@ function typingInField() {
 function currentSelection() {
     if (typingInField()) return null;
     const selection = document.getSelection();
-    if (!selection || selection.rangeCount !== 1 || selection.isCollapsed) return null;
-    const range = selection.getRangeAt(0);
+    if (!selection || selection.rangeCount !== 1 || selection.getRangeAt(0).collapsed) return null;   // 6.4.5 isCollapsed 대신 (배치 계산 강제 없이 같은 답)
+    const range = trimToRoot(selection.getRangeAt(0), textRoot) ?? selection.getRangeAt(0);   // 6.4.4 마지막 문단을 세 번 클릭해 끝이 다음 메시지 앞까지 가도 이 메시지 글 안으로
     const root = textRoot(range.startContainer);
     if (!root || root !== textRoot(range.endContainer)) return null;
     const mes = root.closest('.mes');

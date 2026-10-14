@@ -9,6 +9,9 @@ import { CORE_KEYS, findNodes, settingsRefs, ownerOf, makeTarget, crawl, skipReg
 import { folderBase, installedFolder } from '../../extension-folder.js';   // 6.4.2 판 번호가 붙은 설치 폴더('xxx-1.2.3')도 같은 확장으로
 import { fallbackTarget, pairFallbacks } from './fallback.js';   // 6.2.9 검열되면 다른 모델로 · 6.3.0 「(검열되면)」 줄은 본 대상 바로 다음
 
+import { visibleRows, fallbackOn, isFallbackRow } from './rows.js';
+import { openRoute, hasRoute } from './jump.js';
+
 const $ = globalThis.jQuery;
 const isObj = value => !!value && typeof value === 'object' && !Array.isArray(value);
 const enabled = folder => extensionNames.includes(`third-party/${folder}`) && !extension_settings.disabledExtensions?.includes(`third-party/${folder}`);   // 실제 폴더 이름
@@ -187,8 +190,10 @@ withState(assets, 'connection', rewriteFields, () => window.dispatchEvent(new Ev
 // 6.2.9 검열되면 다른 모델로 — 번역 · 한글화 패널 · 다시 쓰기 · 캐릭터 에셋도 TTS 대사 분석(6.1.8)처럼 본 대상 바로 아래 「<이름> (검열되면)」.
 // 처음엔 꺼 둠(defaultOff): 켜고 공급자 · 모델을 고른 대상만, 본 요청이 내용 차단으로 막힐 때 그 모델로 한 번 더 (fallback.js withFallback).
 // 저장 = 그 확장 설정의 fallback { enabled, provider, model } · Custom 주소는 그 확장의 Custom 주소를 함께 쓴다 · 본 모델과 같은 모델로는 안 바꾼다
+for (const target of [translator, prompt, rewrite, assets]) target.open = () => openRoute(target.id);
+
 const fallbackFor = (base, customUrl) => ({
-    ...fallbackTarget({ id: `${base.id}-fallback`, name: base.name, sources: base.sources, holder: () => base.settings(), main: () => base.read(), customUrl }),
+    ...fallbackTarget({ id: `${base.id}-fallback`, name: base.name, sources: base.sources, holder: () => base.settings(), main: () => base.read(), customUrl, open: () => openRoute(base.id, 'fallback') }),
     folder: base.folder, builtin: base.builtin, settings: () => base.settings(),
 });
 const translatorFallback = fallbackFor(translator, s => s.custom_url);
@@ -206,10 +211,31 @@ const registered = new Map();
  *  설정 화면이 열려 있는 확장은 이걸 받아 다시 그리면 된다 (폼 전체를 저장하는 확장이 예전 값으로 되돌리지 않게).
  *  1.1.1 상태 칩: stateRead() → { source, model, url, mode } · stateApply({ source, model, url, mode }) 를 함께 주면 연결 방식까지 되돌린다
  *  (없으면 공급자 · 모델만 — 따름이던 상태는 그대로 못 돌린다). */
+// Optional callbacks remain owned by the registering extension. Legacy registrations
+// can use the known route and their declared settings path without copying settings.
+function registeredExtras(target) {
+    const extra = {}, fallback = isFallbackRow(target);
+    const id = fallback ? target.id.slice(0, -'-fallback'.length) : target.id;
+    const base = KNOWN.find(t => t.id === id || t.folder === id);
+    const routeId = base?.id || id;
+    if (hasRoute(routeId, fallback ? 'fallback' : 'main')) extra.open = () => openRoute(routeId, fallback ? 'fallback' : 'main');
+    if (fallback) extra.active = () => {
+        const parts = Array.isArray(target.path) ? target.path : String(target.path || '').split('.').filter(Boolean);
+        let holder = extension_settings[target.settingsKey];
+        for (const part of parts) holder = holder?.[part];
+        if (holder?.enabled === false) return false;
+        let now = null; try { now = target.read(); } catch { return false; }
+        return !!now && !now.follow && fallbackOn({ provider: now.source, model: now.model });
+    };
+    return extra;
+}
+export const shownTargets = () => visibleRows(listTargets());
+export const linkable = target => typeof target?.open === 'function';
+
 export const registry = {
     register(target) {
         if (!target || typeof target.id !== 'string' || typeof target.read !== 'function' || typeof target.apply !== 'function') return false;
-        registered.set(target.id, { sources: null, ...target, id: `ext:${target.id}`, name: String(target.name || target.id), external: true });
+        registered.set(target.id, { sources: null, ...registeredExtras(target), ...target, id: `ext:${target.id}`, name: String(target.name || target.id), external: true });
         window.dispatchEvent(new Event('bl:model-switch-targets'));
         return true;
     },

@@ -1,13 +1,25 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.4.4/blue-lemonade-6.4.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.4.5/blue-lemonade-6.4.5.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.4.4 · 최신 업데이트</summary>
+<summary>6.4.5 · 최신 업데이트</summary>
+
+- 글을 고르면 북마크 옆에 삭제 단추가 떠요. 본문·번역문 중 지울 곳을 고르고, 지운 직후 ↶로 되돌릴 수 있어요.
+- 번역에 남은 새 이름을 용어집 아래에서 제안해요. +로 넣고 ×로 접을 수 있어요.
+- 원문에 없던 「」가 번역의 속마음·서술 한 줄을 통째로 감싸면 벗겨요. 저장된 번역에도 적용돼요.
+- 모델 전환에서 설정 이동을 지원하는 확장 이름을 누르면 해당 설정이 열려요. 전체·검열 대상 선택과 「검열되면」 설정도 함께 정리했어요.
+- 스크롤하거나 짧게 누를 때 불필요하게 효과를 멈추지 않아 화면 계산을 줄였어요. 길게 누르거나 글을 고를 때는 계속 멈춰요.
+- 애드온 버전: 캐릭터 에셋 1.6.7 · 북마크 1.5.6 · 전개 지시 1.2.6 · 모델 전환 1.1.6 · 한글화 패널 1.2.3 · 다시 쓰기 2.1.2 · LLM 번역 2.4.7
+
+</details>
+
+<details>
+<summary>6.4.4 · 같은 style 하나만 쓰기 · TTS 테이크 되돌리기 · 번역 남김 검사 다듬기</summary>
 
 - 번역: 위키 주소(特別: · Category: 같은 이름공간) 속 한자를 남은 글자로 보지 않아요. 일본어가 더 많은 번역문은 영어 여는 말 때문에 다시 보내지 않고, 긴 답에서 남김 검사가 빨라졌어요.
 - TTS: ↻ 로 새로 만든 소리가 별로면 ⟲ 로 전 소리로 돌아가요 (줄마다 두 개 보관).

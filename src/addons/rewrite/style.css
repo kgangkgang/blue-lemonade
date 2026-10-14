@@ -10,7 +10,7 @@
     --bwr-accent-ink: var(--salty-accent-ink, var(--bwr-accent)); /* 옅은 포인트 면 위 글자 — 블루 레몬에이드 밝은 테마면 진한 잉크 */
     --bwr-danger: #e5484d;
     /* Compared with index.js after load: a mismatch may be a packaging, cache, or installation issue. */
-    --bwr-css-version: "2.1.1";
+    --bwr-css-version: "2.1.2";
 }
 
 /* 서랍 안쪽 — .inline-drawer-content 는 실리태번이 열고 닫으므로 display 를 주지 않고 안에 한 겹 더 둔다 */
@@ -749,3 +749,7 @@ body.salty .bwr_settings :is(.bwr_tab, .bwr_seg):is(.active, .is-active) { backg
 @container (max-width: 56em) {
   .bwr_settings .bwr_panel[data-panel="reroll"] .bwr_grid > .bwr_field:is([for="bwr_scene_start"], [for="bwr_scene_marker"]) { grid-column: 1 / -1; }
 }
+
+/* ── 6.4.5 「검열당했을 때」 칸 (modelswitch/fallback-field.js): 연결 탭 맨 아래, 공급자 · 모델 칸과 같은 격자 · 짧은 알림만 한 줄 전체 (설명 글 모양) ── */
+.bwr_settings #bwr_fallback_field .bl-fb-note { grid-column: 1 / -1; display: block; font-size: 0.82em; line-height: 1.5; opacity: 0.7; }
+body.salty .bwr_settings #bwr_fallback_field .bl-fb-note { color: var(--salty-muted); font-size: var(--bl-ts-meta, 12.5px); opacity: 1; }

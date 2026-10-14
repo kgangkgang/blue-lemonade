@@ -489,6 +489,21 @@ body.expandMessageActions .mes .mes_buttons .extraMesButtons:has(> .mes_llm_tran
 .llmt-gl-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .llmt-gl-actions .menu_button { width: auto; white-space: nowrap; flex: none; }
 .llmt-gl-actions .menu_button:disabled, .llmt-gl-actions .menu_button.disabled { opacity: .5; pointer-events: none; }
+/* 6.4.5 새 이름 용어집 제안 — 칩 + 넣기 · 빼기 아이콘 (글은 짧게, 툴팁 없음). 숨김([hidden])을 이기지 않게 :not([hidden]) 에만 display */
+.llmt-gl-suggest:not([hidden]) { display: flex; flex-direction: column; gap: 4px; }
+.llmt-gl-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.llmt-gl-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    max-width: 100%;
+    padding: 0 2px 0 10px;
+    border: 1px solid var(--llmt-border);
+    border-radius: 999px;
+    font-size: .88em;
+}
+.llmt-gl-chip-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.llmt-gl-chip .llmt-gl-icon { width: 24px; height: 24px; flex: none; }
 .llmt-gl-pick { display: flex; flex-direction: column; gap: 4px; text-align: left; }
 .llmt-gl-pick-head {
     position: sticky;

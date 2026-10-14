@@ -13,8 +13,9 @@ import { redrawNow } from './render.js';
 import { canShrink, estimateFolders, shrinkFolders, skipSummary } from './shrink.js';
 import { ConnectionManagerRequestService } from '../../../../../shared.js';
 import { fillSelect, onChange as onModelListChange } from '../../live-models.js';
-import { PROVIDERS, canFetch, fetchModelList, autoFetchModelList, listKey, missingNote, modelChoices, pickModel, isHttpUrl } from '../rewrite/providers.js';
+import { PROVIDERS, canFetch, fetchModelList, autoFetchModelList, listKey, missingNote, modelChoices, pickModel, isHttpUrl, resolveModel } from '../rewrite/providers.js';
 import { pickSettings, customEndpoint, connectionProblem, connectionLabel, listRequest } from './pick.js';
+import { mountFallbackField } from '../modelswitch/fallback-field.js';   // 6.4.5 「검열당했을 때」 칸 (다른 모델이 고르기)
 
 const SIZE_LABELS = { s: '작게', m: '보통', l: '크게' };
 
@@ -181,6 +182,7 @@ function template() {
                             <p class="eh-pick-models-status"></p>
                         </div>
                         <label class="eh-pick-row eh-pick-profile" hidden><span>연결 프로필</span><select data-pick-field="profileId" aria-label="고르는 모델 연결 프로필"></select></label>
+                        <div class="eh-pick-fallback" hidden></div>
                         <label class="eh-pick-row"><span>한 답에 최대</span><select data-pick-field="count" aria-label="한 답에 고를 그림 수"><option value="1">1장</option><option value="2">2장</option><option value="3">3장</option><option value="4">4장</option></select></label>
                         <p class="eh-pick-problem" role="status"></p>
                     </div>
@@ -428,8 +430,27 @@ function renderPick() {
     pickEl('[data-pick-field="count"]').value = String(pick.count);
     if (pick.connection === 'direct') renderPickModels(pick);
     if (pick.connection === 'profile') renderPickProfiles(pick);
+    renderPickFallback(pick);   // 6.4.5
     const problem = pick.enabled ? connectionProblem(pick) : '';
     pickEl('.eh-pick-problem').textContent = problem === 'current' ? '' : problem;
+}
+
+// 6.4.5 「검열당했을 때」 칸 — 연결(직접 선택 · 연결 프로필) 바로 아래. 저장 = settings().pick.fallback,
+//   모델 전환 「캐릭터 에셋 (검열되면)」 줄과 같은 자리라 거기서 고른 값이 그대로 보이고, 모델 전환에서 바꾸면 다시 그린다.
+//   고르는 요청이 내용 차단으로 막혔을 때만 그 모델로 한 번 더 (pick.js generatePick · 「안 함」이면 보내지 않음).
+//   「지금 연결」은 고르는 요청이 없어(본문 모델이 태그를 씀) 숨긴다 — 모델 전환 줄도 그때는 없다 (targets.js assets.settings)
+const FALLBACK_SOURCES = Object.values(PROVIDERS).map(provider => provider.source);   // 고르는 요청이 부를 수 있는 공급자 (모델 전환 캐릭터 에셋 줄과 같음)
+function pickMainTarget() {
+    const pick = pickSettings();
+    return pick.connection === 'direct' ? { source: PROVIDERS[pick.provider]?.source || pick.provider, model: resolveModel(pick, pickEndpoint(pick)) } : null;
+}
+function renderPickFallback(pick = pickSettings()) {
+    const host = pickEl('.eh-pick-fallback');
+    if (!host) return;
+    host.hidden = pick.connection === 'current';
+    if (host.hidden || host.contains(document.activeElement)) return;   // 모델 이름을 치는 중에는 다시 그리지 않는다 (초점)
+    mountFallbackField(host, { id: 'assets', settings: pickSettings, sources: FALLBACK_SOURCES, save: saveSettings, main: pickMainTarget, selectClass: '', inputClass: '',
+        row: (label, control) => `<label class="eh-pick-row"><span>${label}</span>${control}</label>` });
 }
 
 function renderPickProfiles(pick) {
@@ -533,8 +554,9 @@ function bindPick() {
         else if (field === 'customUrl') { pick.customUrl = String(event.target.value ?? '').trim(); saveSettings(); }
     });
     // 다른 곳(모델 전환 · 공용 목록 받기)에서 바뀌면 다시 그린다
-    onModelListChange(() => { if (pickSettings().connection === 'direct') renderPick(); });
+    onModelListChange(() => { if (pickSettings().connection === 'direct') renderPick(); else renderPickFallback(); });
     window.addEventListener('bl:assets-pick-changed', () => { syncPrompt(); renderPromptState(); });
+    window.addEventListener('st:model-switch-applied', () => renderPickFallback());   // 6.4.5 모델 전환에서 바꾼 「(검열되면)」 값
 }
 
 function renderPresets() {

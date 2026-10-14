@@ -190,7 +190,8 @@ function start() {
     block.addEventListener('change', onChange, true);
     block.addEventListener('click', onChange, true);
     // 체크박스를 코드로 바꾸면 알림이 없다 — 확장 칸이 보이는 동안 2초마다 맞춘다
-    ticker = setInterval(() => { const b = document.getElementById('rm_extensions_block'); if (b && b.offsetParent !== null) sync(); }, 2000);
+    // 6.4.5 서랍이 닫혀 있으면 offsetParent 를 읽지 않는다 — 읽을 때마다 렌더 중 문서 전체 스타일 계산을 강제했다 (닫힌 서랍은 원래도 null)
+    ticker = setInterval(() => { const b = document.getElementById('rm_extensions_block'); if (!b || b.closest('.drawer-content')?.classList.contains('openDrawer') === false) return; if (b.offsetParent !== null) sync(); }, 2000);
 }
 function stop() {
     observer?.disconnect(); observer = null;

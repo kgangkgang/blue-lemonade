@@ -44,3 +44,23 @@
 #llmt-selection-selection { display:flex; position:fixed; right:16px; left:auto; bottom:auto; margin:0; padding:4px; border:0; border-radius:16px; overflow:visible; z-index:30000; background:var(--salty-fill-raised,var(--salty-raised,var(--bl-opaque-tint,var(--SmartThemeBlurTintColor,#24282e)))); box-shadow:var(--bl-e4,0 8px 28px #0004); }
 #llmt-selection-selection button { display:grid; place-items:center; width:48px; height:48px; border:0; border-radius:12px; background:var(--salty-accent,var(--SmartThemeQuoteColor,#93c9ff)); color:var(--salty-on-accent,#162535); font-size:20px; cursor:pointer; }
 #llmt-selection-selection button:focus-visible { outline:2px solid currentColor; outline-offset:2px; }
+
+/* 6.4.4 고른 글 지우기 (delete.js) — 북마크 단추(.cg-select-chip)와 같은 크기 · 외곽선형(바탕 = 팔레트 면 색 + 삭제색 테두리 · 글자 — 붉은 팔레트에서도 북마크와 구분) · 고르는 창 */
+#llmt-select-delete { position:fixed; top:0; left:0; z-index:4100; display:inline-flex; align-items:center; gap:6px; box-sizing:border-box; min-height:36px; margin:0; padding:0 14px 0 12px; border:1.5px solid var(--bl-danger,var(--salty-danger,#d9534f)); border-radius:999px; background:var(--salty-panel-surface,var(--salty-surface,var(--bl-opaque-tint,var(--SmartThemeBlurTintColor,#24282e)))); color:var(--bl-danger,var(--salty-danger,#d9534f)); font:inherit; font-family:var(--salty-font-ui,inherit); font-size:13px; font-weight:600; line-height:1; letter-spacing:0; white-space:nowrap; text-shadow:none; box-shadow:0 6px 18px rgba(0,0,0,.28); cursor:pointer; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent; touch-action:manipulation; animation:llmt-delete-in .16s ease-out; }
+#llmt-select-delete[hidden] { display:none; }
+#llmt-select-delete > i { font-size:12px; color:inherit; }
+body.salty #llmt-select-delete > i { color:inherit !important; }   /* 테마는 휴지통 아이콘을 늘 삭제색으로 칠한다(17-semantic.css) — 글자와 같은 색 */
+#llmt-select-delete:focus-visible { outline:2px solid var(--salty-text,currentColor); outline-offset:2px; }
+@keyframes llmt-delete-in { from { opacity:0; transform:translateY(-4px) scale(.96); } to { opacity:1; transform:none; } }
+@media (prefers-reduced-motion: reduce) { #llmt-select-delete { animation:none; } }
+.llmt-selection.llmt-delete { width:min(420px,calc(100vw - 24px)); }
+.llmt-delete .llmt-selection-title>i { color:var(--bl-danger,var(--salty-danger,#d9534f)); background:color-mix(in srgb,var(--bl-danger,var(--salty-danger,#d9534f)) 12%,transparent); }
+.llmt-delete .llmt-selection-body>p.llmt-delete-quote { margin:0 0 12px; padding:10px 12px; border-radius:12px; background:var(--ba-card); color:var(--ba-fg); display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; white-space:pre-wrap; }
+.llmt-delete .llmt-delete-actions { display:flex; flex-direction:column; gap:8px; }
+.llmt-delete .llmt-delete-actions>button { width:100%; }
+.llmt-delete .llmt-delete-actions>button[data-danger]:not(:disabled) { color:var(--bl-danger,var(--salty-danger,#d9534f)); }
+.llmt-delete .llmt-delete-actions>details { margin:0 0 4px; }
+.llmt-delete .llmt-delete-context { margin:4px 0; font-size:.9em; line-height:1.6; overflow-wrap:anywhere; white-space:pre-wrap; }
+.llmt-delete .llmt-delete-context mark { padding:0 2px; border-radius:4px; background:color-mix(in srgb,var(--bl-danger,var(--salty-danger,#d9534f)) 22%,transparent); color:inherit; }
+.llmt-delete .llmt-delete-note { margin:6px 0 2px; font-size:.85em; line-height:1.5; opacity:.85; }
+#toast-container .llmt-undo-delete { display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; min-width:32px; min-height:28px; margin:0 0 0 8px; padding:0 9px; vertical-align:middle; font-size:13px; line-height:1; }   /* 6.4.5 「지웠어요」 알림의 되돌리기 (아이콘 하나) */

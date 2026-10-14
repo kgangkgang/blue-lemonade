@@ -37,6 +37,7 @@ jobs:
           node tools/tests/usage-mode.mjs .
           node tools/tests/stream-follow.mjs .
           node tools/tests/stream-watchdog.mjs .
+          node tools/tests/perf-bundle-645.mjs .
           node tools/tests/style-dedupe.mjs .
           node tools/tests/tts-integration.mjs .
           node tools/tests/tts-dethump.mjs .
@@ -51,6 +52,7 @@ jobs:
           node tools/tests/tts-listen.mjs .
           node tools/tests/tts-block-fallback.mjs .
           node tools/tests/modelswitch-fallback.mjs .
+          node tools/tests/modelswitch-links.mjs .
           node tools/tests/tts-bridge.mjs .
           node tools/tests/tts-scene.mjs .
           node tools/tests/tts-sfx-timing.mjs .
@@ -68,6 +70,8 @@ jobs:
           node tools/tests/word-replace-marks.mjs .
           node tools/tests/translator-glossary.mjs .
           node tools/tests/translator-leftover.mjs .
+          node tools/tests/glossary-suggest.mjs .
+          node tools/tests/selection-delete.mjs .
           node tools/tests/names-bridge.mjs .
           node tools/tests/names-jp.mjs .
           node tools/tests/translator-speech.mjs .

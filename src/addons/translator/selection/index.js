@@ -1,5 +1,6 @@
 import { IDS, LABELS } from './core.js';
-import { context, enabled, configure } from './state.js';
+import { context, enabled, configure, deleteEnabled } from './state.js';
+import { syncSelectionDelete } from './delete.js';   // 6.4.4 고른 글 지우기
 import { selectionSnapshot } from './translation.js';
 import { openTool, setSelection, clearSelection, closeTools } from './ui.js';
 let listening = false, style = null, selectionTimer = 0;
@@ -35,7 +36,7 @@ function chatChanged() { clearSelection(); document.getElementById('llmt-selecti
 export function syncSelectionRetranslate(options) {
     if (options) configure(options);
     const any = IDS.some(enabled);
-    if (any && !style) { style = document.createElement('link'); style.rel = 'stylesheet'; style.href = new URL('./style.css', import.meta.url).href; document.head.append(style); }
+    if ((any || deleteEnabled()) && !style) { style = document.createElement('link'); style.rel = 'stylesheet'; style.href = new URL('./style.css', import.meta.url).href; document.head.append(style); }
     if (any && !listening) {
         document.addEventListener('selectionchange', selectionChanged);
         window.addEventListener('resize', positionToolbar);
@@ -50,5 +51,6 @@ export function syncSelectionRetranslate(options) {
         context().eventSource.removeListener(context().eventTypes.CHAT_CHANGED, chatChanged);
         clearTimeout(selectionTimer); document.getElementById('llmt-selection-selection')?.remove(); closeTools(); listening = false;
     }
+    syncSelectionDelete();   // 6.4.4 고른 글 지우기 (같은 설정 묶음 · 따로 켜고 끈다)
 }
 export { openTool };
