@@ -1362,3 +1362,13 @@ body.salty-dark .salty-shapes button.on {
    → 안쪽 좌우 6 · 칸 최소 104 (폰 3칸 그대로, PC 3칸 × 2줄 = 기본 6개가 딱 맞음) */
 .salty-panel .bl-frame-library { grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); }
 .salty-panel .bl-frame-library > button { padding-inline: 6px; }
+
+/* Preset tools share the existing script settings; long labels stay inside the panel. */
+.salty-panel .bl-prompt-tools{min-width:0}
+.salty-panel .bl-prompt-tools .bl-prompt-tool-row{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;row-gap:4px}
+.salty-panel .bl-prompt-tools .salty-row>span{min-width:0;overflow-wrap:anywhere}
+.salty-panel .bl-prompt-tools .salty-row>small{grid-column:1/-1;display:block;margin:0;color:var(--salty-muted);font-size:var(--fs-small);line-height:1.5;overflow-wrap:anywhere;word-break:normal}
+.salty-panel .bl-prompt-tools .salty-switch{flex-shrink:0}
+.salty-panel .bl-prompt-tools-actions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.salty-panel .bl-prompt-tools-actions button{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.salty-panel .bl-prompt-source{overflow-wrap:anywhere;word-break:normal}

@@ -138,6 +138,9 @@ jobs:
           node tools/tests/regexlink-engine.mjs .
           node tools/tests/mermaid-addon.mjs .
           node tools/tests/fruit-localization.mjs
+          node tools/tests/prompt-tools.mjs
+          node tools/tests/settings-dialog.mjs
+          node tools/tests/deus-qr.mjs
           node tools/build-integrity.mjs . --check
       - name: Check that generated files match their sources
         # Regenerate in the throwaway checkout, then fail if anything changed:

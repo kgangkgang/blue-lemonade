@@ -1,4 +1,5 @@
 import { themeEnabled } from './src/usage-mode.js';
+import { bindSettingsDialog } from './src/settings-dialog.js';
 // 5.3.2: 애플 웹킷 표시 — 여러 줄 인라인 마스크를 끝 줄 조각에만 그리는 버그 피하기용 (css/37-prompt-ink.css)
 try {
     const ua = navigator.userAgent || '';
@@ -120,15 +121,16 @@ async function openPopup(fullscreen = false, extension = null) {
     const wrap = document.createElement('div');
     wrap.style.textAlign = 'left';
     const panel = mountPanel(wrap, { popup: true });
+    const dialog = bindSettingsDialog(panel);
 
     setTimeout(retoneAll, 400); // 정규식 카드 미리보기의 색 글자도 톤 맞춤 (tone.js)
     try {
         await ctx.callGenericPopup(wrap, ctx.POPUP_TYPE.TEXT, '', { wide: true, allowVerticalScrolling: true, okButton: false, onOpen: popup => {
+            dialog.opened(popup);
     if(['words','capture'].includes(extension))panel.querySelector(`[data-act="editor-route"][data-tab="extensions"][data-sub="${extension}"]`)?.click();
-            panel._onClose = () => popup.completeAffirmative();
             setPanelFullscreen(panel, fullscreen);
         } });
-    } finally { unmountPanel(panel); refreshPanels(); }
+    } finally { dialog.closed(); unmountPanel(panel); refreshPanels(); }
 }
 
 function addMenuItem() {

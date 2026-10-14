@@ -1,4 +1,5 @@
 import { addonsEnabled, themeEnabled, usageMode } from './usage-mode.js';
+import {promptToolsMarkup,fruitPromptMarkup,bindPromptTools} from './prompt-tools.js';
 import { saveAddonsNow } from './addon-save.js';
 import { readabilityReport, fixReadability } from './readability.js';
 import { appearanceArchive, rememberAppearance, restoreAppearance } from './appearance-archive.js';
@@ -61,7 +62,7 @@ const SUBS = {
     text: [['text', '본문'], ['dialogue', '대사'], ['ui', '메뉴'], ['em', '속마음'], ['strike', '취소선'], ['strong', '강조'], ['code', '코드'], ['para', '문단'], ['markdown', '마크다운'], ['shadow', '그림자 · 외곽선']],
     chat: [['message', '메시지'], ['profile', '캐릭터 프로필'], ['user-profile', '내 프로필'], ['name', '캐릭터 이름·시간'], ['user-name', '내 이름·시간'], ['screen', '화면'], ['etc', '기타']],
     image: [['layout', '배치'], ['shape', '모양'], ['frame', '테두리'], ['size', '크기'], ['fade', '흐림'], ['cutedge', '투명 그림']],
-    prompt: [['deus', '데우스 엑스 마키나']],
+    prompt: [['deus', '데우스 엑스 마키나'], ['fruit', '과일']],
     extensions: [['tts', 'TTS'], ['assets', '캐릭터 에셋'], ['words', '단어 치환'], ['capture', '채팅 캡처'], ['order', '확장 순서'], ['perf', '성능 보조'], ['models', '모델 관리'], ['bookmarks', '북마크'], ['notes', '메모'], ['zipinstall', 'ZIP 설치'], ['translator', 'LLM 번역'], ['prompt','한글화 패널'], ['customstyle','커스텀 CSS 조절'], ['mermaid','Mermaid 도표'], ['rewrite', '다시 쓰기'], ['direction', '전개 지시'], ],
 };
 
@@ -1567,13 +1568,14 @@ function weatherSeg(s) {
 // 프리셋마다 한 칸. 지금은 데우스 엑스 마키나 — 호환을 켜야 카드 표본 · 카드 설정 · 트래커 설정이 보이고 적용된다
 function tabExtensions(s, sub) { if(!addonsEnabled(s))return '<p class="salty-note">현재 사용 모드에서는 내장 확장을 실행하지 않아요. 테마 → 기타 설정 → 사용 모드에서 테마 + 확장 또는 확장만을 고르면 저장한 설정으로 다시 사용할 수 있어요.</p>';  return addonMarkup(s,sub) + (['words','capture'].includes(sub) && s.addons[sub] ? wordToolsMarkup(s,sub) : ''); }
 
-function tabPrompt(s) {
+function tabPrompt(s,sub) {
+    if(sub==='fruit')return fruitPromptMarkup();
     const on = !!s.deus?.on;
     const ink = s.deus?.ink || {};
     const dio = ink.outline || { on: false, color: '#000000', width: 0.6, alpha: 100 };  // 데우스 대사 가독성: 외곽선
     const dis = ink.shadow || { on: false, color: '#000000', alpha: 60, angle: 135, distance: 1.5, blur: 2 }; // 그림자
     const fx = s.deus?.fx || { on: true, motion: 'normal', glow: true, flow: false, flowMode: 'text', force: false }; // 4.1.2 감정 대사 효과
-    const head = `${cap('데우스 엑스 마키나')}<p class="bl-prompt-source">호환 대상 프롬프트 · <a href="https://www.reddit.com/r/SillyTavernAI/s/ldSEyIl3Gx" target="_blank" rel="noopener noreferrer">데우스 원문 보기 ↗</a></p><div class="salty-group">
+    const head = `${cap('데우스 엑스 마키나')}<p class="bl-prompt-source">호환 대상 프롬프트 · <a href="https://www.reddit.com/r/SillyTavernAI/s/ldSEyIl3Gx" target="_blank" rel="noopener noreferrer">데우스 원문 보기 ↗</a></p>${promptToolsMarkup('deus')}<div class="salty-group">
             ${row('프롬프트 호환', toggle('deus.on', on), '이 프리셋의 트래커 · 장면 계획 · 상태 카드를 테마에 맞춰요')}
         </div>`;
     if (!on) return `${head}<p class="salty-note">데우스 엑스 마키나 프리셋을 쓸 때만 켜 주세요. 끄면 아래 설정이 모두 쉬어요 (고른 값은 남아요).</p>`;
@@ -1889,6 +1891,7 @@ function render(root) {
     for(const stage of Object.values(root._pv || {}))if(!stage.isConnected)stage._blWeather?.destroy();
     typesetRoot(root);
     bindAddons(root, refreshPanels);
+    root._scriptsCleanup=bindPromptTools(root);
     bindThemeUpdate(root);
     bindHealth(root,applyAll);
     bindWordTools(root, refreshPanels);

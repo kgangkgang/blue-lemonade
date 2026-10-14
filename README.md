@@ -1,13 +1,25 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.4.8/blue-lemonade-6.4.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.4.9/blue-lemonade-6.4.9.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.4.8 · 최신 업데이트</summary>
+<summary>6.4.9 · 최신 업데이트</summary>
+
+- 프롬프트 메뉴에서 데우스 엑스 마키나와 과일을 나란히 찾을 수 있어요. 각 페이지에서 이름 한글화와 빠른 설정·꾸미기를 켜고, 과일 원문과 코드 출처도 열 수 있어요.
+- 과일의 마음 꾸미기를 켜면 블루레몬에이드의 글꼴과 색을 따르고, LLM 번역기와 같은 카드·탭·버튼 간격으로 보여요. 제목과 설명·설정칸을 위아래로 정리해 좁은 화면에서도 읽기 편하고, 끄면 원래 디자인으로 돌아가요.
+- 데우스 2.5 빠른 설정을 켜면 입력창 위의 작은 창에서 프리셋 옵션을 고를 수 있어요. LLM 번역기 스타일에 이름과 조작칸을 위아래로 배치하고, 다른 프리셋이나 저장하지 않은 프롬프트 변경은 덮지 않아요.
+- 새 꾸미기와 빠른 설정은 기본으로 꺼져 있어요. 필요한 기능만 켜서 쓸 수 있고, 기존 한글화 선택은 그대로 유지돼요.
+- 설정창이 열리는 중 바로가기를 눌러도, 창이 정상적으로 닫힌 뒤 과일·데우스 화면이 열리도록 고쳤어요.
+- 애드온 버전: 한글화 패널 1.2.5
+
+</details>
+
+<details>
+<summary>6.4.8 · 과일 스크립트 이름 한글화</summary>
 
 - 과일의 마음 스크립트 목록과 폴더 이름도 한글로 볼 수 있게 고쳤어요. 화면에 보이는 이름만 바꾸고 원래 이름과 저장 데이터는 보존합니다.
 - 스크립트 목록이 다시 그려져도 한글 이름이 유지되고, 한글화를 끄면 원래 이름으로 돌아가요.
