@@ -7,9 +7,9 @@ import { SOURCES } from '../models/sources.js';
 import * as LM from '../../live-models.js';
 import { CORE_KEYS, findNodes, settingsRefs, ownerOf, makeTarget, crawl, skipRegistered, autoSpots } from './discover.js';
 import { folderBase, installedFolder } from '../../extension-folder.js';   // 6.4.2 판 번호가 붙은 설치 폴더('xxx-1.2.3')도 같은 확장으로
-import { fallbackTarget, pairFallbacks } from './fallback.js';   // 6.2.9 검열되면 다른 모델로 · 6.3.0 「(검열되면)」 줄은 본 대상 바로 다음
+import { fallbackTarget, pairFallbacks, enableFallbackPath } from './fallback.js';   // 6.2.9 검열되면 다른 모델로 · 6.3.0 「(검열되면)」 줄은 본 대상 바로 다음
 
-import { visibleRows, fallbackOn, isFallbackRow } from './rows.js';
+import { orderedRows, fallbackOn, isFallbackRow } from './rows.js';
 import { openRoute, hasRoute } from './jump.js';
 
 const $ = globalThis.jQuery;
@@ -227,9 +227,15 @@ function registeredExtras(target) {
         let now = null; try { now = target.read(); } catch { return false; }
         return !!now && !now.follow && fallbackOn({ provider: now.source, model: now.model });
     };
+    // 표준 fallback 자리를 선언한 기존 등록도 명시적 켜기를 지원한다. 자체 enable()은 이 기본값보다 우선한다.
+    if (fallback && target.settingsKey && target.path) extra.enable = config => {
+        let now = null; try { now = (base || registered.get(id))?.read(); } catch { /* 본 모델을 읽지 못함 */ }
+        if (!enableFallbackPath(extension_settings[target.settingsKey], target.path, config, now)) return false;
+        return true;
+    };
     return extra;
 }
-export const shownTargets = () => visibleRows(listTargets());
+export const shownTargets = () => orderedRows(listTargets());
 export const linkable = target => typeof target?.open === 'function';
 
 export const registry = {

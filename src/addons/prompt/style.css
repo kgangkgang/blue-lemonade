@@ -461,7 +461,20 @@ body.salty #pt-panel #pt-panel-refresh { flex:0 1 auto; max-width:calc(100% - 54
    전에는 묶음 폭이 단추 자신에 묶여 단추가 53px 로 줄고 '목록 새로고침' 이 두 줄로 튀어나왔다 */
 body.salty #pt-panel.pt-in-drawer #pt-panel-header > div { flex:1 1 auto; justify-content:flex-end; }
 body.salty #pt-panel.pt-in-drawer #pt-panel-refresh { max-width:100%; }
-body.salty #pt-panel #pt-status-text { white-space:nowrap; }
+body.salty #pt-panel #pt-status-text { white-space:normal; min-width:0; overflow-wrap:anywhere; }
+#pt-panel .pt-status-content { display:grid; grid-template-columns:7px minmax(0,1fr); align-items:center; gap:2px 6px; min-width:0; width:100%; }
+#pt-panel #pt-status-text { white-space:normal; min-width:0; overflow-wrap:anywhere; }
+#pt-panel .pt-status-content .pt-status-model { grid-column:2; }
+#pt-panel .pt-status-content .pt-status-model:empty { display:none; }
+#pt-panel .pt-progress-label, #pt-panel [data-regex-status] { white-space:normal; overflow-wrap:anywhere; }
+#pt-panel .pt-run-result { margin-top:6px; min-width:0; font-size:.85em; }
+#pt-panel .pt-run-result summary { cursor:pointer; color:var(--pt-warn); }
+#pt-panel .pt-run-result ul { max-height:8em; overflow:auto; padding-inline-start:1.5em; margin:6px 0; overflow-wrap:anywhere; }
+#pt-panel .pt-run-result button { margin-top:6px; max-width:100%; white-space:normal; }
+#pt-panel .pt-translated-section[hidden] { display:none!important; }
+#pt-panel .pt-translated-section .pt-translated-label { margin-top:0; }
+#pt-panel .pt-translated-section:not([hidden]) + .pt-original-section { margin-top:10px; }
+#pt-panel .pt-original-label { display:flex; align-items:center; gap:6px; }
 
 /* Top-layer choice dialogs inherit theme tokens copied from the prompt panel. */
 body.salty dialog.pt-choice-backdrop { border-radius:0!important; font-family:var(--salty-font-ui,inherit); font-size:var(--salty-ui-size,14px); }

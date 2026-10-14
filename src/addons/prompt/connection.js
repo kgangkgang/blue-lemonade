@@ -1,6 +1,7 @@
 // Connection flow adapted from LLM Translator 2.1.6 (AGPL-3.0), 2026-09-24.
 // 2026-10-07: 모델 목록은 공용 live-models.js (공급자가 지금 주는 목록 · 하루 캐시 · 새것 먼저) · 공급자별로 고른 모델 기억 · 모델별 요청 규칙
 import { requestCurrentConnection } from './current-connection.js';
+import { completionText } from './response-text.js';
 import * as LM from '../../live-models.js';
 const cleanUrl=value=>String(value||'').trim().replace(/\/+$/,'');
 const ST_PROFILE='__st_profile__',CUSTOM='__custom__';
@@ -115,7 +116,7 @@ export async function requestActive({cfg,context,messages,inFlight,hostModules})
    // 2026-10-06: 텍스트 완성 출력 한도가 실리태번 응답 길이(amount_gen)를 따른다 (2048 아래로는 안 줄임) — 전엔 늘 2048이라 긴 번역이 잘렸다
    buildText:(settings,input,limit)=>text.createTextGenGenerationData(settings,text.getTextGenModel(settings),script.createRawPrompt(input,'textgenerationwebui',false,false,'',''),limit||settings.max_new_tokens||Math.max(Number(script.amount_gen)||0,2048),false,false,null,'quiet'),
   });
-  return typeof result==='string'?result.trim():String(result?.content||result?.choices?.[0]?.message?.content||result?.results?.[0]?.text||'').trim();
+  return completionText(result);
  } finally {inFlight.delete(controller);}
 }
 export function bindConnection({doc,cfg,save,host,extensions,refresh}) {

@@ -12,14 +12,17 @@ import { listTargets, shownTargets, linkable, supports, registry, discoverTarget
 import { setLocks, withoutLock } from './lock.js';
 import { MAX_STATES, entryOf, captureState, changedSince, planRestore, isCurrent, runRestore, limited, summary, keepStates } from './state.js';
 
-import { toggleGroup, groupOn } from './rows.js';
+import { toggleGroup, groupOn, rowActive, isFallbackRow, displayGroups } from './rows.js';
+import { mountFallbackField } from './fallback-field.js';
 
-const VERSION = '1.1.6';
+const VERSION = '1.1.7';
 const MAX_PRESETS = 8;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const label = source => SOURCES.find(s => s.id === source)?.label || source;
 const holder = document.createElement('div'); holder.hidden = true; document.body.append(holder);
 let root, inlineHost = null, opening = false, busy = false, note = '', picking = false, fetching = false;
+let configuring = null;
+const expandedGroups = new Set();
 
 globalThis[Symbol.for('st.model-switch.v1')] = registry;
 
@@ -37,7 +40,7 @@ function store() {
 }
 
 // 아는 확장은 처음부터 켜 두고, 자동으로 찾은 확장(1.0.5: 켜진 모든 확장의 소스로 찾음)은 직접 켤 때까지 건드리지 않는다
-const isOn = target => store().targets[target.id] ?? !(target.auto || target.defaultOff);   // 6.1.8 defaultOff: 스스로 등록한 대상이 처음엔 꺼 두길 원함 (TTS 「검열되면 다른 모델로」)
+const isOn = target => rowActive(target) && (store().targets[target.id] ?? !(target.auto || target.defaultOff));   // 꺼진 대체 모델은 확인·설정하기 전에는 선택하지 않는다.
 // 1.1.1 상태 칩에 담는 대상: 체크와 상관없이 전부 (번역만 따로 두는 식의 섞인 상태가 이 칩의 뜻) — 다만 자동으로 찾은 확장 · 처음엔 꺼 두는 확장은 직접 켰을 때만
 const inState = target => !(target.auto || target.defaultOff) || store().targets[target.id] === true;
 
@@ -82,6 +85,47 @@ function describe(now) {
     return `${label(now.source)} · ${now.model || '모델 없음'}`;
 }
 
+async function configureFallback(id) {
+    if (busy) return;
+    const target = listTargets().find(item => item.id === id);
+    if (!target || !isFallbackRow(target)) return;
+    if (typeof target.enable !== 'function') { if (linkable(target)) return openTarget(id); return; }
+    busy = true;
+    try {
+        if (!await callGenericPopup('검열되면 대체할 모델을 켜시겠습니까?', POPUP_TYPE.CONFIRM)) return;
+        let now = null; try { now = target.read(); } catch { /* 빈칸으로 시작 */ }
+        configuring = { id, settings: { fallback: { enabled: true, provider: now?.source || '', model: now?.model || '' } } };
+        note = '';
+    } finally { busy = false; render(); }
+    root.querySelector('.ms-fallback-editor')?.scrollIntoView({ block: 'nearest' });
+}
+
+async function commitFallback() {
+    if (busy || !configuring) return;
+    const edit = configuring, target = listTargets().find(item => item.id === edit.id), fb = edit.settings.fallback;
+    if (!target || typeof target.enable !== 'function' || !fb.enabled || !fb.provider || !fb.model?.trim() || !supports(target, fb.provider)) return;
+    busy = true;
+    try {
+        const done = await withoutLock(() => target.enable({ source: fb.provider, model: fb.model.trim() }));
+        if (done === false || !rowActive(target)) { note = '이 모델로 켜지 못했어요. 본 모델과 다른 모델을 골라 주세요.'; return; }
+        store().targets[target.id] = true; configuring = null; note = `${target.name} 켰어요`;
+        saveSettingsDebounced();
+        window.dispatchEvent(new CustomEvent('st:model-switch-applied', { detail: { settingsKey: target.settingsKey, path: target.path } }));
+    } catch (error) { note = `켜지 못했어요: ${String(error?.message || error)}`; }
+    finally { busy = false; render(); }
+}
+
+function targetHtml(target, name = target.name, group = null) {
+    let now = null; try { now = target.read(); } catch { /* 읽지 못함 */ }
+    const active = rowActive(target), ok = supports(target, store().draft.source);
+    const canEnable = !active && typeof target.enable === 'function';
+    const expand = group ? `<button type="button" class="ms-expand" data-expand="${esc(group.id)}" aria-expanded="${expandedGroups.has(group.id)}" aria-label="${esc(group.name)} 세부 연결"><i class="fa-solid fa-chevron-${expandedGroups.has(group.id) ? 'up' : 'down'}" aria-hidden="true"></i></button>` : '';
+    const title = linkable(target) || canEnable ? `<button type="button" class="ms-name" data-open="${esc(target.id)}">${esc(name)}</button>` : `<b>${esc(name)}</b>`;
+    const status = !active ? '꺼짐 · 눌러서 설정' : ok ? describe(now) : `${label(store().draft.source)} 못 씀`;
+    const editor = configuring?.id === target.id ? `<div class="ms-fallback-editor"><div data-fallback-editor></div><div class="ms-fallback-actions"><button type="button" class="menu_button" data-act="fallback-save">켜기</button><button type="button" class="menu_button" data-act="fallback-cancel">취소</button></div></div>` : '';
+    return `<label class="ms-target ${active && !ok ? 'is-off' : ''} ${active ? '' : 'is-inactive'}"><input type="checkbox" data-target="${esc(target.id)}" ${isOn(target) ? 'checked' : ''} ${!active && !canEnable && !linkable(target) ? 'disabled' : ''}><span>${title}${expand}${target.auto ? ' <em>자동</em>' : ''}<small>${esc(status)}</small></span><button type="button" class="ms-pull" data-pull="${esc(target.id)}" aria-label="${esc(target.name)} 값 가져오기" ${now && !now.follow ? '' : 'disabled'}><i class="fa-solid fa-arrow-up"></i></button></label>${editor}`;
+}
+
 function render() {
     if (!root) return;
     discoverTargets();
@@ -109,14 +153,20 @@ function render() {
         box.innerHTML = list.length ? list.map(name => `<button type="button" class="ms-option ${name === d.model ? 'on' : ''}" data-model="${esc(name)}">${esc(name)}</button>`).join('')
             : `<p class="ms-empty">${d.source === 'custom' ? '이 주소의 목록이 없어요. ↻ 로 불러오거나 직접 적어 주세요.' : LM.canList(d.source) ? '목록이 없어요. ↻ 로 불러오거나 직접 적어 주세요.' : '목록이 없어요. 직접 적어 주세요.'}</p>`;
     }
-    root.querySelector('.ms-targets').innerHTML = targets.length ? targets.map(target => {
-        let now = null; try { now = target.read(); } catch { /* 읽지 못함 */ }
-        const ok = supports(target, d.source);
-        return `<label class="ms-target ${ok ? '' : 'is-off'}"><input type="checkbox" data-target="${esc(target.id)}" ${isOn(target) ? 'checked' : ''}><span>${linkable(target) ? `<button type="button" class="ms-name" data-open="${esc(target.id)}">${esc(target.name)}</button>` : `<b>${esc(target.name)}</b>`}${target.auto ? ' <em>자동</em>' : ''}<small>${esc(ok ? describe(now) : `${label(d.source)} 못 씀`)}</small></span><button type="button" class="ms-pull" data-pull="${esc(target.id)}" aria-label="${esc(target.name)} 값 가져오기" ${now && !now.follow ? '' : 'disabled'}><i class="fa-solid fa-arrow-up"></i></button></label>`;
+    root.querySelector('.ms-targets').innerHTML = targets.length ? displayGroups(targets).map(group => {
+        if (!group.children.length) return group.main.map((target, index) => targetHtml(target, index === 0 ? group.name : target.name)).join('');
+        const members = [...group.main.slice(1), ...group.children];
+        return `<div class="ms-target-group">${targetHtml(group.main[0], group.name, group)}<div class="ms-group-children" ${expandedGroups.has(group.id) ? '' : 'hidden'}>${members.map(target => targetHtml(target)).join('')}</div></div>`;
     }).join('') : '<p class="ms-empty">바꿀 확장이 없어요</p>';
+    if (configuring) {
+        const target = targets.find(item => item.id === configuring.id), host = root.querySelector('[data-fallback-editor]');
+        const ready = () => { const fb = configuring?.settings.fallback, button = root.querySelector('[data-act="fallback-save"]'); if (button) button.disabled = busy || !fb?.enabled || !fb?.provider || !fb?.model?.trim() || !target || !supports(target, fb.provider); };
+        if (host && target) mountFallbackField(host, { id: 'switch-editor', settings: () => configuring.settings, sources: target.sources, save: ready, notify: false });
+        ready();
+    }
     for (const button of root.querySelectorAll('[data-group]')) {
         button.setAttribute('aria-pressed', String(groupOn(targets, button.dataset.group, isOn)));
-        button.disabled = busy || !targets.some(target => (button.dataset.group === 'fallback') === target.id.endsWith('-fallback'));
+        button.disabled = busy || !targets.some(target => rowActive(target) && (button.dataset.group === 'fallback') === isFallbackRow(target));
     }
     const apply = root.querySelector('[data-act="apply"]');
     apply.disabled = busy || !d.model.trim() || !targets.some(target => isOn(target) && supports(target, d.source));
@@ -283,12 +333,18 @@ function mount() {
             const preset = s.presets.find(p => p.source === el.value); s.draft.model = preset?.model || ''; s.draft.url = preset?.url || '';
             note = ''; saveSettingsDebounced(); render(); autoList();
         } else if (el.dataset?.field) { render(); }
-        else if (el.dataset?.target) { store().targets[el.dataset.target] = el.checked; saveSettingsDebounced(); syncLocks(); render(); }
+        else if (el.dataset?.target) {
+            const target = listTargets().find(item => item.id === el.dataset.target);
+            if (target && !rowActive(target)) { el.checked = false; configureFallback(target.id); return; }
+            store().targets[el.dataset.target] = el.checked; saveSettingsDebounced(); syncLocks(); render();
+        }
         else if ('lock' in (el.dataset || {})) { store().lock = el.checked; saveSettingsDebounced(); syncLocks(); }
     });
     root.addEventListener('click', event => {
+        const expand = event.target.closest('[data-expand]');
+        if (expand) { event.preventDefault(); if (expandedGroups.has(expand.dataset.expand)) expandedGroups.delete(expand.dataset.expand); else expandedGroups.add(expand.dataset.expand); render(); return; }
         const link = event.target.closest('[data-open]'), group = event.target.closest('[data-group]');
-        if (link) { event.preventDefault(); if (!busy) openTarget(link.dataset.open); return; }
+        if (link) { event.preventDefault(); const target = listTargets().find(item => item.id === link.dataset.open); if (!busy) { if (target && !rowActive(target)) configureFallback(target.id); else openTarget(link.dataset.open); } return; }
         if (group) { event.preventDefault(); if (!busy) { Object.assign(store().targets, toggleGroup(shownTargets(), group.dataset.group, isOn)); saveSettingsDebounced(); syncLocks(); render(); } return; }
         const chip = event.target.closest('[data-preset]'), pull = event.target.closest('[data-pull]'), act = event.target.closest('[data-act]')?.dataset.act;
         const stateDel = event.target.closest('[data-state-del]'), stateGo = event.target.closest('[data-state]');
@@ -311,9 +367,11 @@ function mount() {
             render(); return;
         }
         if (act === 'fetch') { fetchModels(); return; }
+        if (act === 'fallback-save') { commitFallback(); return; }
+        if (act === 'fallback-cancel') { configuring = null; render(); return; }
         if (act === 'apply') applyNow();
         // 체크 반전 (사용자 10-12 「선택된 상태로 반전 선택 가능하게 — 누르면 안 선택한 애들 선택되고 선택한 애 안 선택되게」): 지금 보이는 확장만 뒤집는다
-        else if (act === 'invert') { const s = store(); for (const target of shownTargets()) s.targets[target.id] = !isOn(target); note = ''; saveSettingsDebounced(); syncLocks(); render(); }
+        else if (act === 'invert') { const s = store(); for (const target of shownTargets()) if (rowActive(target)) s.targets[target.id] = !isOn(target); note = ''; saveSettingsDebounced(); syncLocks(); render(); }
         else if (act === 'save') savePreset();
         else if (act === 'snap') saveState();
         else if (act === 'remove') {

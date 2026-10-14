@@ -90,6 +90,8 @@ jobs:
           node tools/tests/rewrite-models.mjs .
           node tools/tests/rewrite-owner.mjs .
           node tools/tests/prompt-models.mjs .
+          node tools/tests/prompt-progress.mjs .
+          node tools/tests/prompt-response-text.mjs .
           node tools/tests/modelswitch-models.mjs .
           node tools/tests/modelswitch-state.mjs .
           node tools/tests/update-check.mjs .

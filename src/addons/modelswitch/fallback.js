@@ -16,6 +16,26 @@ export function fallbackOf(settings) {
     return pickTarget(isObj(settings) ? settings.fallback : null);
 }
 
+/** 사용자가 켜기를 확인하고 공급자·모델을 고른 경우에만 부른다. 취소·빈 모델은 저장하지 않는다. */
+export function enableFallback(settings, { source, model } = {}, main = null) {
+    const provider = String(source || '').trim(), name = String(model || '').trim();
+    if (!isObj(settings) || !provider || !name) return false;
+    if (main && !main.follow && main.source === provider && String(main.model || '') === name) return false;
+    settings.fallback = { ...(isObj(settings.fallback) ? settings.fallback : {}), enabled: true, provider, model: name };
+    return true;
+}
+
+/** 스스로 등록한 표준 fallback 저장 자리. id나 확장 이름 대신 등록자가 선언한 경로만 쓴다. */
+export function enableFallbackPath(settings, path, config, main = null) {
+    const parts = Array.isArray(path) ? path : String(path || '').split('.').filter(Boolean);
+    if (!isObj(settings) || !parts.length || parts.some(p => ['__proto__', 'prototype', 'constructor'].includes(String(p)))) return false;
+    let parent = settings;
+    for (const part of parts.slice(0, -1)) { parent = parent?.[part]; if (!isObj(parent)) return false; }
+    const slot = parts.at(-1), holder = { fallback: parent[slot] };
+    if (!enableFallback(holder, config, main)) return false;
+    parent[slot] = holder.fallback; return true;
+}
+
 /**
  * 본 요청을 돌리고, 내용 차단으로 막히면(throw) 다시 보낼 곳으로 딱 한 번 더.
  *  call(): 본 요청 · send(target): 다른 모델로 같은 요청 · target: fallbackOf(설정) · failed: 본 모델 { provider, model, url } (같으면 다시 보내지 않는다)
@@ -51,6 +71,12 @@ export function fallbackTarget({ id, name, sources = null, settingsKey, path = '
         id: `${id}`, name: `${name} (검열되면)`, sources, settingsKey, path, defaultOff: true,
         ...(typeof open === 'function' ? { open } : {}),
         active() { return !!fallbackOf(holder()); },
+        enable(config) {
+            let now = null; try { now = main(); } catch { /* 본 모델을 읽지 못함 */ }
+            if (!enableFallback(holder(), config, now)) return false;
+            try { save(); } catch { /* 저장은 부르는 쪽 */ }
+            return true;
+        },
         read() {
             const s = holder();
             if (!isObj(s)) return null;

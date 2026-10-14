@@ -1,13 +1,26 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.4.5/blue-lemonade-6.4.5.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.4.6/blue-lemonade-6.4.6.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.4.5 · 최신 업데이트</summary>
+<summary>6.4.6 · 최신 업데이트</summary>
+
+- 「검열당했을 때」 모델을 검색 목록에서 고르거나 직접 적을 수 있어요. 모델 전환의 설정 이동도 함께 확인했어요.
+- 꺼진 대체 모델도 모델 전환에서 확인한 뒤 바로 설정하고 켤 수 있어요. 취소하면 기존 설정을 유지해요.
+- 모델 전환을 표시된 이름의 가나다순으로 정리했어요. 여러 연결을 묶어 등록한 도구는 한 줄로 보이고, 꺾쇠를 누르면 세부 연결을 열 수 있어요.
+- 한글화 패널에서 지금 번역하는 항목과 완료·실패·남은 개수를 보여줘요. 일부 항목이 실패했을 때 전체 성공으로 알리지 않아요.
+- 생각 블록 뒤의 번역문과 여러 문단을 제대로 읽고, 출력 한도·차단으로 끊긴 응답은 완료로 저장하지 않아요.
+- 번역문이 있으면 원문보다 먼저 보여줘요. 실패한 항목만 골라 다시 번역할 수 있어요.
+- 애드온 버전: 모델 전환 1.1.7 · 한글화 패널 1.2.4
+
+</details>
+
+<details>
+<summary>6.4.5 · 고른 글 지우기·되돌리기 · 새 이름 용어집 · 모델 설정 바로 열기</summary>
 
 - 글을 고르면 북마크 옆에 삭제 단추가 떠요. 본문·번역문 중 지울 곳을 고르고, 지운 직후 ↶로 되돌릴 수 있어요.
 - 번역에 남은 새 이름을 용어집 아래에서 제안해요. +로 넣고 ×로 접을 수 있어요.

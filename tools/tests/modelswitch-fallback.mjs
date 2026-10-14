@@ -160,13 +160,13 @@ await test('전역 API: 사설 확장이 같은 규칙을 쓴다', () => {
 
 await test('모델 전환: 본 대상 바로 아래 「(검열되면)」 넷 · 처음엔 꺼 둠', () => {
     const src = read('src/addons/modelswitch/targets.js');
-    assert.match(src, /import \{ fallbackTarget, pairFallbacks \} from '\.\/fallback\.js';/);   // 6.3.0 pairFallbacks
+    assert.match(src, /import \{ fallbackTarget, pairFallbacks, enableFallbackPath \} from '\.\/fallback\.js';/);   // 6.3.0 pairFallbacks
     assert.match(src, /const KNOWN = \[translator, translatorFallback, prompt, promptFallback, memory, rewrite, rewriteFallback, assets, assetsFallback\];/);
     for (const [name, url] of [['translator', 'custom_url'], ['prompt', 'customUrl'], ['rewrite', 'customUrl'], ['assets', 'customUrl']])
         assert.match(src, new RegExp(`const ${name}Fallback = fallbackFor\\(${name}, s => s\\.${url}\\);`));
     assert.match(src, /holder: \(\) => base\.settings\(\), main: \(\) => base\.read\(\)/);
     const idx = read('src/addons/modelswitch/index.js');
-    assert.match(idx, /const isOn = target => store\(\)\.targets\[target\.id\] \?\? !\(target\.auto \|\| target\.defaultOff\);/, 'defaultOff 는 켤 때까지 꺼짐');
+    assert.match(idx, /const isOn = target => rowActive\(target\) && \(store\(\)\.targets\[target\.id\] \?\? !\(target\.auto \|\| target\.defaultOff\)\);/, 'defaultOff 는 켤 때까지 꺼짐');
     assert.match(idx, /const inState = target => !\(target\.auto \|\| target\.defaultOff\) \|\| store\(\)\.targets\[target\.id\] === true;/, '상태 칩에는 켰을 때만');
 });
 

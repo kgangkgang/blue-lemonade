@@ -71,13 +71,13 @@ const field = await import(pathToFileURL(path.join(srcDir, 'addons/modelswitch/f
 const fallback = await import(pathToFileURL(path.join(srcDir, 'addons/modelswitch/fallback.js')).href);
 let passed=0;
 const test=(name,fn)=>{fn();passed++;console.log('ok',name);};
-test('inactive rows hide without losing target identity',()=>{
+test('inactive rows remain visible but are not active',()=>{
  const holder={fallback:{enabled:false,provider:'openai',model:'saved'}};
  const t=fallback.fallbackTarget({id:'notes-fallback',name:'Notes',holder:()=>holder});
- assert.equal(rows.rowShown(t),false);holder.fallback.enabled=true;assert.equal(rows.rowShown(t),true);
- holder.fallback.model='  ';assert.equal(rows.rowShown(t),false);
+ assert.equal(rows.rowActive(t),false);holder.fallback.enabled=true;assert.equal(rows.rowActive(t),true);
+ holder.fallback.model='  ';assert.equal(rows.rowActive(t),false);
  assert.equal(rows.rowShown({id:'main',read(){throw Error();}}),true);
- assert.equal(rows.rowShown({id:'bad-fallback',active(){throw Error();}}),false);
+ assert.equal(rows.rowActive({id:'bad-fallback',active(){throw Error();}}),false);
 });
 test('provider Off preserves choices; reenable restores and provider change clears model',()=>{
  const h={fallback:Object.freeze({enabled:true,provider:'openai',model:'old'})};
@@ -94,24 +94,54 @@ test('group buttons only change their visible group, empty group does nothing',(
 test('registered declared settings path respects disabled legacy fallback',()=>{
  T.ext.helper={connection:{enabled:false,provider:'openai',model:'x'}};
  MS.registry.register({id:'helper-fallback',name:'Helper',settingsKey:'helper',path:'connection',read:()=>({source:'openai',model:'x'}),apply(){}});
- assert.equal(MS.shownTargets().some(t=>t.id==='ext:helper-fallback'),false);
+ assert.equal(MS.shownTargets().some(t=>t.id==='ext:helper-fallback'),true);assert.equal(rows.rowActive(MS.shownTargets().find(t=>t.id==='ext:helper-fallback')),false);
  T.ext.helper.connection.enabled=true;assert.equal(MS.shownTargets().some(t=>t.id==='ext:helper-fallback'),true);
  MS.registry.unregister('helper-fallback');
 });
 test('external callbacks take precedence over inferred active and route',()=>{
  let opened=0;
  MS.registry.register({id:'tts-analysis-fallback',name:'Reader',active:()=>false,open:()=>++opened,read:()=>({source:'openai',model:'x'}),apply(){}});
- const t=MS.listTargets().find(t=>t.id==='ext:tts-analysis-fallback');assert.equal(rows.rowShown(t),false);t.open();assert.equal(opened,1);MS.registry.unregister('tts-analysis-fallback');
+ const t=MS.listTargets().find(t=>t.id==='ext:tts-analysis-fallback');assert.equal(rows.rowActive(t),false);t.open();assert.equal(opened,1);MS.registry.unregister('tts-analysis-fallback');
 });
 test('fallback target carries optional settings opener and guarded active state',()=>{
  const opener=()=>42,t=fallback.fallbackTarget({id:'x-fallback',name:'X',holder:()=>({fallback:{provider:'openai',model:'m'}}),open:opener});assert.equal(t.open,opener);assert.equal(t.active(),true);
 });
 test('saved provider outside choices remains visible and escaped',()=>{
- const host={dataset:{},addEventListener(){},innerHTML:''};
+ const host={ownerDocument:{querySelectorAll:()=>[],createElement:()=>({}),head:{append(){}}},dataset:{},addEventListener(){},innerHTML:''};
  const h={fallback:{provider:'legacy-<provider>',model:'saved'}};
  field.mountFallbackField(host,{id:'test',settings:()=>h,sources:['openai']});
  assert.ok(host.innerHTML.includes('value="legacy-&lt;provider&gt;" selected'));
  assert.ok(host.innerHTML.includes('legacy-&lt;provider&gt; (저장된 제공처)'));
  assert.equal(h.fallback.provider,'legacy-<provider>');
 });
+
+test('explicit activation validates first and preserves disabled values until committed',()=>{
+ const h={fallback:{enabled:false,provider:'openai',model:'old',extra:1}},before=JSON.stringify(h);
+ const t=fallback.fallbackTarget({id:'sample-fallback',name:'Sample',holder:()=>h,main:()=>({source:'claude',model:'main'})});
+ assert.equal(t.enable({source:'claude',model:''}),false);assert.equal(t.enable({source:'claude',model:'main'}),false);assert.equal(JSON.stringify(h),before);
+ assert.equal(t.enable({source:'claude',model:'other'}),true);assert.deepEqual(h.fallback,{enabled:true,provider:'claude',model:'other',extra:1});
+ const x={feature:{fallback:Object.freeze({enabled:false,provider:'openai',model:'old'})}};
+ assert.equal(fallback.enableFallbackPath(x,'feature.fallback',{source:'claude',model:'new'}),true);assert.equal(x.feature.fallback.enabled,true);
+ assert.equal(fallback.enableFallbackPath(x,'__proto__.fallback',{source:'claude',model:'new'}),false);
+});
+test('custom registry enable callback wins and declared standard paths enable explicitly',()=>{
+ T.ext.sample={fallback:{enabled:false,provider:'openai',model:'old'}};
+ MS.registry.register({id:'sample-fallback',name:'Sample',settingsKey:'sample',path:'fallback',read:()=>({source:T.ext.sample.fallback.provider,model:T.ext.sample.fallback.model}),apply(){}});
+ const t=MS.listTargets().find(t=>t.id==='ext:sample-fallback');assert.equal(t.enable({source:'claude',model:'new'}),true);assert.equal(rows.rowActive(t),true);
+ let called=0;MS.registry.register({id:'sample-fallback',name:'Sample',settingsKey:'sample',path:'fallback',enable:()=>++called,read:()=>({}),apply(){}});
+ MS.listTargets().find(t=>t.id==='ext:sample-fallback').enable({});assert.equal(called,1);MS.registry.unregister('sample-fallback');
+});
+test('model search is case-insensitive, keeps custom input, and opens the saved model with all options',()=>{
+ const ids=['claude-opus','claude-sonnet','gemini-flash','claude-opus'];
+ assert.deepEqual(field.matchingModels(ids,'OPU','old'),['claude-opus']);assert.deepEqual(field.matchingModels(ids,'private-custom-id','old'),[]);
+ assert.deepEqual(field.matchingModels(ids,'claude-opus','claude-opus'),ids.slice(0,3));
+});
+test('display names sort in Korean and grouped children retain identity, primary and fallback pairing',()=>{
+ const g={id:'reader',name:'읽기'};
+ const list=[{id:'last',name:'하늘'},{id:'sub2',name:'세부 10',group:{...g,order:2}},{id:'first',name:'가나다'},{id:'main',name:'기본 연결',group:{...g,primary:true,order:0}},{id:'main-fallback',name:'기본 연결 (검열되면)'},{id:'sub1',name:'세부 2',group:{...g,order:1}}];
+ const before=JSON.stringify(list),groups=rows.displayGroups(list);assert.deepEqual(groups.map(g=>g.name),['가나다','읽기','하늘']);
+ assert.deepEqual(groups[1].main.map(t=>t.id),['main','main-fallback']);assert.deepEqual(groups[1].children.map(t=>t.id),['sub1','sub2']);assert.equal(groups[1].main[0],list[3]);assert.equal(JSON.stringify(list),before);
+ assert.deepEqual(rows.orderedRows(list).map(t=>t.id),['first','main','main-fallback','sub1','sub2','last']);
+});
+
 console.log(`${passed}/${passed} modelswitch links groups passed`);

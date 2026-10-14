@@ -22,7 +22,9 @@ function controlsHelp(kind) {
 }
 import { installLocalizationPage } from './localization-ui.js';
 import { forEachLimited } from './cache-loading.js';
+import { createTranslationProgress, translationSummary, renderTranslationResult } from './translation-progress.js';
 import { isTransientFailure, responseError } from './request-errors.js';
+import { completionText } from './response-text.js';
 import { fallbackOf, withFallback } from '../modelswitch/fallback.js';   // 6.2.9 검열되면 다른 모델로
 import { mountFallbackField } from '../modelswitch/fallback-field.js';   // 6.4.5 「검열당했을 때」 칸 (설정 › 연결)
 // Modified 2026-09-24: Blue Lemonade personal preview 1.1.0; based on supplied 개인개조+++ ZIP.
@@ -582,6 +584,7 @@ function estimateTokens(text) {
 }
 
 let isBusy=false, stopReq=false, statusResetTimer=null;
+let activeTranslationProgress = null;
 
 // 진행 중인 요청과 "요청 간 대기" 타이머를 모아 둔다. 중단 버튼은 예전에 플래그만
 // 세웠기 때문에 이미 날아간 요청의 응답과 대기 시간이 끝나야 멈췄다. 이제 둘 다
@@ -605,6 +608,7 @@ function sleepCancellable(ms) {
 
 function requestStop() {
     stopReq = true;
+    activeTranslationProgress?.stopping();
     for (const ac of [...inFlight])     { try { ac.abort(); } catch (e) {} }
     for (const w  of [...sleepWaiters]) { try { w.done();   } catch (e) {} }
 }
@@ -687,18 +691,32 @@ async function runCompletionOnce(messages, tweak, via = null) {
         let timedOut = false;
         const timer = setTimeout(() => { timedOut = true; ac.abort(); }, requestTimeoutMs());
         try {
+            // Chat extraction drops finish/refusal metadata before we can tell
+            // a partial answer from a complete translation. Text-completion
+            // extraction also removes instruct stop strings, so retain it.
+            let extractData = true;
+            try {
+                if (typeof svc.getProfile === 'function' && typeof svc.validateProfile === 'function') {
+                    extractData = svc.validateProfile(svc.getProfile(profileId))?.selected !== 'openai';
+                }
+            } catch { /* Older/unknown services keep their existing extraction. */ }
             const data = await svc.sendRequest(profileId, payload, budgetFor(messages), {
-                stream: false, extractData: true, includePreset: true, includeInstruct: true,
+                stream: false, extractData, includePreset: true, includeInstruct: true,
                 signal: ac.signal,
             });
-            const out = typeof data === 'string' ? data : (data?.content || '');
-            return (out || '').trim();
+            return completionText(data);
         } catch (error) {
             if (stopReq) throw stopError();
             if (timedOut) throw Object.assign(new Error('연결 프로필 요청 시간 초과'), { timeout: true });
             if (error?.name === 'AbortError') throw error;
             const reason = error?.cause?.message || error?.message || String(error);
-            throw Object.assign(new Error(reason), { transient: isTransientFailure(error, reason) });
+            const wrapped = new Error(reason, { cause: error });
+            for (const key of ['status', 'blocked', 'refused', 'timeout', 'retryAfterMs', 'transient']) {
+                const value = error?.[key] ?? error?.cause?.[key];
+                if (value !== undefined) wrapped[key] = value;
+            }
+            if (typeof wrapped.transient !== 'boolean') wrapped.transient = isTransientFailure(error?.cause || error, reason);
+            throw wrapped;
         } finally { clearTimeout(timer); inFlight.delete(ac); }
     }
 
@@ -738,9 +756,7 @@ async function runCompletionOnce(messages, tweak, via = null) {
         }
         const d = await res.json();
         if (d?.error) throw responseError(d);
-        return (d.choices?.[0]?.message?.content?.trim()
-            || d.content?.[0]?.text?.trim()
-            || d.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '').trim();
+        return completionText(d);
     } catch (e) {
         // 타임아웃으로 끊은 것은 재시도 대상, 사용자가 중단한 것은 그대로 올린다.
         if (e?.name === 'AbortError' && timedOut) {
@@ -1412,6 +1428,34 @@ function highlightText(html, keyword) {
     return tpl.innerHTML;
 }
 
+// Reading order is display-only. The cache/export/edit format stays body + note.
+function translationForReading(value, original) {
+    if (!value) return value;
+    const direct = splitBodyAndNote(value);
+    if (direct.note && direct.body === String(original || '').trim()) return wrapNote(direct.note);
+    const split = splitTitleAndBody(value);
+    const parts = splitBodyAndNote(split.body);
+    // A note-only translation stores the source alongside its note. The source
+    // already has its own pane below, so show the translated note here first.
+    if (parts.note && parts.body === String(original || '').trim()) {
+        return (split.title ? `### ${split.title}\n\n` : '') + wrapNote(parts.note);
+    }
+    return value;
+}
+
+function syncBlockReadingOrder(item) {
+    const section = item.querySelector('.pt-translated-section');
+    const text = item.querySelector('.pt-translated-text');
+    const originalLabel = item.querySelector('.pt-original-label');
+    if (!section || !text) return;
+    // Keep errors, active requests and an open manual editor visible as well.
+    const empty = !!text.querySelector('.pt-no-trans') || !text.textContent.trim();
+    section.hidden = !!originalLabel && empty && !item.querySelector('.pt-edit-form');
+    const edit = item.querySelector('.pt-edit-btn');
+    const label = section.hidden ? originalLabel : item.querySelector('.pt-translated-label');
+    if (edit && label && edit.parentElement !== label) label.append(edit);
+}
+
 function makeBlockItem(block, ns, selectable, onEdited) {
     const el = PDOC.createElement('div');
     el.className = 'pt-block-item';
@@ -1474,10 +1518,14 @@ function makeBlockItem(block, ns, selectable, onEdited) {
         </div>
         <div class="pt-block-body">
             ${metaHtml}
-            ${block.titleOnly ? '' : `<div class="pt-original-label">원문</div>
-            <div class="pt-original-text">${esc(block.content||'')}</div>`}
-            <div class="pt-translated-label">${block.titleOnly ? '번역된 제목' : '번역'} <button type="button" class="pt-edit-btn" title="번역 직접 수정"><i class="fa-solid fa-pen"></i></button></div>
-            <div class="pt-translated-text">${cached?esc(cached):'<span class="pt-no-trans">번역 전</span>'}</div>
+            <div class="pt-translated-section">
+                <div class="pt-translated-label">${block.titleOnly ? '번역된 제목' : '번역'} <button type="button" class="pt-edit-btn" title="번역 직접 수정"><i class="fa-solid fa-pen"></i></button></div>
+                <div class="pt-translated-text">${cached?esc(translationForReading(cached, block.content)):'<span class="pt-no-trans">번역 전</span>'}</div>
+            </div>
+            ${block.titleOnly ? '' : `<div class="pt-original-section">
+                <div class="pt-original-label">원문</div>
+                <div class="pt-original-text">${esc(block.content||'')}</div>
+            </div>`}
         </div>`;
 
     el.querySelector('.pt-block-header').addEventListener('click', e => {
@@ -1497,10 +1545,12 @@ function makeBlockItem(block, ns, selectable, onEdited) {
     // reader of the cache (JSON export, TM export,  title mode, etc.)
     // treats a manual edit identically to a model translation.
     const trTextEl = el.querySelector('.pt-translated-text');
+    syncBlockReadingOrder(el);
     const closeEditForm = () => {
         const form = el.querySelector('.pt-edit-form');
         if (form) form.remove();
         trTextEl.style.display = '';
+        syncBlockReadingOrder(el);
     };
     el.querySelector('.pt-edit-btn')?.addEventListener('click', e => {
         e.stopPropagation();
@@ -1529,6 +1579,7 @@ function makeBlockItem(block, ns, selectable, onEdited) {
             </div>`;
         trTextEl.insertAdjacentElement('afterend', form);
         trTextEl.style.display = 'none';
+        syncBlockReadingOrder(el);
         form.addEventListener('click', ev => ev.stopPropagation());
 
         form.querySelector('.pt-edit-cancel').addEventListener('click', () => closeEditForm());
@@ -1557,12 +1608,12 @@ function makeBlockItem(block, ns, selectable, onEdited) {
                 setCacheTitle(ns, id, newTitle);
                 // 2026-10-06: 표시는 다시 그릴 때(makeBlockItem)와 같게 — 파일의 주석이 있으면 원문+주석.
                 const shown = block.injectedNote ? joinBodyAndNote(block.content || '', block.injectedNote) : null;
-                trTextEl.innerHTML = shown ? esc(shown) : '<span class="pt-no-trans">번역 전</span>';
+                trTextEl.innerHTML = shown ? esc(translationForReading(shown, block.content)) : '<span class="pt-no-trans">번역 전</span>';
             } else {
                 const combined = `### ${newTitle || block.name || block.id}\n\n${newBody}`;
                 setCache(ns, id, combined);
                 clearCachedTitle(ns, id); // full translation now wins over any stale title-only entry
-                trTextEl.innerHTML = esc(combined);
+                trTextEl.innerHTML = esc(translationForReading(combined, block.content));
             }
             delete trTextEl.dataset.origHtml;
             closeEditForm();
@@ -1612,6 +1663,7 @@ function setBlockHTML(list, id, htmlContent) {
     if (!item) return;
     const ta = item.querySelector('.pt-translated-text');
     if (ta) { delete ta.dataset.origHtml; ta.innerHTML = htmlContent; }
+    syncBlockReadingOrder(item);
     if (typeof htmlContent === 'string') {
         // Always use the original name for search indexing.
         // When the  toggle is ON, the displayed name may be the translated title,
@@ -1628,13 +1680,13 @@ function setBlockHTML(list, id, htmlContent) {
 // {{// ... }} 주석 instead. A run only ever produces one of the two; whichever
 // half already exists is carried over untouched, so running both modes in turn
 // merges into the canonical "본문\n{{// 주석}}" shape.
-async function runTranslation({ items, list, ns, pBar, pLabel, pWrap, btnStop, forceRetranslate, mode }) {
+async function runTranslation({ items, list, ns, pBar, pLabel, pWrap, btnStop, forceRetranslate, mode, targetIds, onRetry }) {
     if (isBusy) { if (typeof toastr !== 'undefined') toastr.info('다른 번역이 진행 중이에요. 완료 후 다시 시도해 주세요.'); return; }
     clearTimeout(statusResetTimer);
     const runMode = mode === 'note' ? 'note' : 'body';
 
     const selected=[...list.querySelectorAll('.pt-block-item.selected')].map(el=>el.dataset.id);
-    const scoped=selected.length?items.filter(b=>selected.includes(b.id)):items;
+    const scoped=targetIds ? items.filter(b=>targetIds.includes(b.id)) : selected.length?items.filter(b=>selected.includes(b.id)):items;
     // titleOnly items (preset regex scripts) carry a regex pattern as their
     // body — translating it would break the script, so they are never part of
     // a full-body run. Their names are handled by  제목 instead.
@@ -1653,14 +1705,22 @@ async function runTranslation({ items, list, ns, pBar, pLabel, pWrap, btnStop, f
     const dot=PDOC.getElementById('pt-status-dot'), stTxt=PDOC.getElementById('pt-status-text');
     dot?.classList.add('busy');
     const modeLabel = runMode === 'note' ? '주석' : '번역';
-    if (stTxt) stTxt.textContent = forceRetranslate?`${modeLabel} 재번역 중...`:`${modeLabel} 중...`;
+    pWrap.querySelector('.pt-run-result')?.remove();
     pWrap.classList.add('visible');
     if (btnStop) btnStop.disabled=false;
 
-    const total=targets.length; let done=0;
+    const progress = createTranslationProgress({ targets, ns, part: runMode === 'note' ? '주석' : '본문', isStopped: () => stopReq,
+        write: (text, result) => {
+            if (stTxt) stTxt.textContent = text;
+            const done = result.success + result.cached + result.failed + result.skipped;
+            pBar.style.width = Math.round(done / result.total * 100) + '%';
+            pLabel.textContent = translationSummary(result);
+        },
+    });
+    activeTranslationProgress = progress;
 
-    // 항목 하나를 처리한다. 내용은 예전 순차 루프와 한 줄도 다르지 않고, 여러
-    // 개를 동시에 돌릴 수 있도록 함수로 떼어냈을 뿐이다 (항목끼리 공유 상태 없음).
+    // 성공은 검증한 결과를 캐시에 저장한 뒤에만 센다. 재사용·실패·중단을
+    // 따로 남겨 요청이 끝난 100%를 번역 성공 100%로 오인하지 않게 한다.
     const runOne = async (b) => {
         if (stopReq) return;
         // Read the existing entry first: the half this run is NOT producing has
@@ -1690,13 +1750,18 @@ async function runTranslation({ items, list, ns, pBar, pLabel, pWrap, btnStop, f
         const havePart = runMode === 'note' ? !!prevNote : haveBody;
 
         if (!forceRetranslate && havePart) {
-            setBlockHTML(list,b.id,shownPrev?esc(shownPrev):'<span class="pt-no-trans">번역 전</span>');
+            setBlockHTML(list,b.id,shownPrev?esc(translationForReading(shownPrev, b.content)):'<span class="pt-no-trans">번역 전</span>');
+            progress.settle(b, 'cached');
+        } else if (!sentTitle && !origBody) {
+            progress.settle(b, 'skipped');
         } else {
             setBlockHTML(list,b.id,`<span class="pt-translating">⟳ ${modeLabel} 중...</span>`);
+            const active = progress.start([b]);
             try {
                 const nonce=forceRetranslate?Math.random().toString(36).slice(2,10):null;
                 const res=await translateText(b.name,b.content,nonce,{ mode:runMode, includeTitle });
-                if (res) {
+                if (stopReq) throw stopError();
+                if (res && res.trim()) {
                     let newTitle = existingTitle || '';
                     let part = res;
                     if (sentTitle) {
@@ -1718,22 +1783,26 @@ async function runTranslation({ items, list, ns, pBar, pLabel, pWrap, btnStop, f
                         ? joinBodyAndNote(haveBody ? prevParts.body : origBody, noteText)
                         : joinBodyAndNote(part, prevNote);
                     const combined = newTitle ? `### ${newTitle}\n\n${bodyPart}` : bodyPart;
-                    setBlockHTML(list,b.id,esc(combined));
+                    setBlockHTML(list,b.id,esc(translationForReading(combined, b.content)));
                     setCache(ns,b.id,combined);
                     // A freshly translated title becomes the authoritative one;
                     // an existing 제목 번역 is left exactly as it was.
                     if (sentTitle && newTitle) setCacheTitle(ns,b.id,newTitle);
+                    progress.settle(b, 'success');
                 } else {
-                    // Both name and content were empty — nothing to translate
-                    setBlockHTML(list,b.id,'<span class="pt-no-trans">번역 전</span>');
+                    throw new Error('빈 응답 (번역 내용 없음)');
                 }
             } catch(err) {
-                if (err?.__stopped) {
+                if (stopReq || err?.__stopped) {
+                    progress.settle(b, 'stopped');
                     // 사용자가 멈춘 것은 실패가 아니다 — 원래 보이던 것을 되돌린다.
-                    setBlockHTML(list,b.id,shownPrev?esc(shownPrev):'<span class="pt-no-trans">번역 전</span>');
+                    setBlockHTML(list,b.id,shownPrev?esc(translationForReading(shownPrev, b.content)):'<span class="pt-no-trans">번역 전</span>');
                 } else {
                     setBlockHTML(list,b.id,`<span class="pt-translation-error"> ${esc(err.message)}</span>`);
+                    progress.settle(b, 'failed', err);
                 }
+            } finally {
+                progress.end(active);
             }
         }
     };
@@ -1748,11 +1817,7 @@ async function runTranslation({ items, list, ns, pBar, pLabel, pWrap, btnStop, f
             // runOne은 번역 실패를 스스로 처리한다. 그 밖의 예외로 한 레인이
             // 죽어도 나머지 레인과 마무리 처리(isBusy 해제 등)는 그대로 돌게 둔다.
             try { await runOne(targets[idx]); }
-            catch (e) { console.error(`[${EXT}] 항목 처리 실패`, e); }
-            done++;
-            const pct=Math.round(done/total*100);
-            pBar.style.width=pct+'%';
-            pLabel.textContent=`${done} / ${total}  (${pct}%)`;
+            catch (e) { console.error(`[${EXT}] 항목 처리 실패`, e); progress.settle(targets[idx], stopReq ? 'stopped' : 'failed', e); }
             // 남은 항목이 있을 때만 쉰다 — 예전에는 마지막 항목 뒤에도 한 번 더 쉬었다.
             if (!stopReq && qi < targets.length) await sleepCancellable(requestDelayMs());
         }
@@ -1763,13 +1828,14 @@ async function runTranslation({ items, list, ns, pBar, pLabel, pWrap, btnStop, f
     try { updateCacheStatsUI(); } catch(e) {}
     isBusy=false;
     dot?.classList.remove('busy');
-    if (stTxt) stTxt.textContent=stopReq?'중단됨':(forceRetranslate?`${modeLabel} 재번역 완료 `:`${modeLabel} 완료 `);
-    pWrap.classList.remove('visible');
+    const result = progress.finish();
+    activeTranslationProgress = null;
+    renderTranslationResult(PDOC, pWrap, result, onRetry && (ids => onRetry(ids, runMode, forceRetranslate)));
     if (btnStop) btnStop.disabled=true;
-    statusResetTimer=setTimeout(()=>{const t=PDOC.getElementById('pt-status-text');if(t&&!isBusy)t.textContent='대기 중';},3000);
     if (skipped && typeof toastr!=='undefined') {
         toastr.info(`제목 전용 항목 ${skipped}개는 본문 번역에서 제외됨 ( 제목으로 이름만 번역 가능)`);
     }
+    return result;
 }
 
 // ── Export Module (Plus) ────────────────────────────────────
@@ -3356,10 +3422,22 @@ async function runTitleTranslation({ items, list, ns, pBar, pLabel, pWrap, btnSt
     isBusy = true; stopReq = false;
     const dot = PDOC.getElementById('pt-status-dot'), stTxt = PDOC.getElementById('pt-status-text');
     dot?.classList.add('busy');
-    if (stTxt) stTxt.textContent = '제목 번역 중...';
+    pWrap.querySelector('.pt-run-result')?.remove();
     pWrap.classList.add('visible');
     if (btnStop) btnStop.disabled = false;
 
+    const reused = targets === already ? [] : already;
+    const progress = createTranslationProgress({ targets: [...targets, ...reused], ns, part: '제목', isStopped: () => stopReq,
+        write: (text, result) => {
+            if (stTxt) stTxt.textContent = text;
+            const done = result.success + result.cached + result.failed + result.skipped;
+            pBar.style.width = Math.round(done / result.total * 100) + '%';
+            pLabel.textContent = translationSummary(result);
+        },
+    });
+    activeTranslationProgress = progress;
+    for (const row of reused) progress.settle(row, 'cached');
+    const reasons = new Map();
     const batches = [];
     const bs = titleBatchSize();
     for (let i = 0; i < targets.length; i += bs) {
@@ -3377,16 +3455,22 @@ async function runTitleTranslation({ items, list, ns, pBar, pLabel, pWrap, btnSt
         for (let attempt = 0; attempt < tries; attempt++) {
             if (stopReq || budget.left <= 0) return null;
             budget.left--;
+            const active = progress.start(batch);
             try {
                 const t = await translateTitleBatch(batch.map(b => b.name));
+                if (stopReq) return null;
                 if (t) return t;
+                for (const row of batch) reasons.set(row, '응답의 제목 수·번호가 요청과 달라요.');
                 console.warn(`[${EXT}] title batch reply did not match ${batch.length} items`);
             } catch (err) {
                 if (stopReq || err?.__stopped) return null;
                 console.warn(`[${EXT}] title batch failed`, err);
+                for (const row of batch) reasons.set(row, err?.__empty ? '빈 응답 (번역된 제목 없음)' : err);
                 if (err?.__empty) return null;
                 // 키 오류 같은 확정적 실패는 쪼개 봐야 똑같이 실패한다.
                 if (!isRetryableError(err)) return null;
+            } finally {
+                progress.end(active);
             }
         }
         if (stopReq || batch.length === 1 || budget.left <= 0) return null;
@@ -3408,12 +3492,19 @@ async function runTitleTranslation({ items, list, ns, pBar, pLabel, pWrap, btnSt
         let batchOk = 0;
         batch.forEach((b, i) => {
             const v = translated?.[i];
-            if (!v) { failCount++; return; }
-            setCacheTitle(ns, b.id, v);
-            // Title-only blocks show the translated name in their
-            // 번역 box (they have no body), so refresh it in place.
-            if (b.titleOnly) setBlockHTML(list, b.id, esc(v));
-            okCount++; batchOk++;
+            if (!v) {
+                if (!stopReq) failCount++;
+                progress.settle(b, stopReq ? 'stopped' : 'failed', reasons.get(b) || '제목 번역 재시도 한도에 도달했어요.');
+                return;
+            }
+            try {
+                setCacheTitle(ns, b.id, v);
+                if (b.titleOnly) setBlockHTML(list, b.id, esc(v));
+                okCount++; batchOk++;
+                progress.settle(b, 'success');
+            } catch (error) {
+                failCount++; progress.settle(b, 'failed', error);
+            }
         });
         done += batch.length;
         // 세 배치 연속으로 하나도 못 받으면 연결·모델 문제다 — 나머지를 돌려 봐야 요청만 쌓인다.
@@ -3423,25 +3514,24 @@ async function runTitleTranslation({ items, list, ns, pBar, pLabel, pWrap, btnSt
             stopReq = true;
             break;
         }
-        const pct = Math.round(done / targets.length * 100);
-        pBar.style.width = pct + '%';
-        pLabel.textContent = `${done} / ${targets.length}  (${pct}%)`;
         if (!stopReq && done < targets.length) await sleepCancellable(requestDelayMs());
     }
 
     try { updateCacheStatsUI(); } catch (e) {}
     isBusy = false;
     dot?.classList.remove('busy');
-    pWrap.classList.remove('visible');
+    const result = progress.finish();
+    activeTranslationProgress = null;
+    renderTranslationResult(PDOC, pWrap, result);
     if (btnStop) btnStop.disabled = true;
-    if (stTxt) stTxt.textContent = stopReq ? '중단됨' : '제목 번역 완료 ';
-    statusResetTimer=setTimeout(() => { const t = PDOC.getElementById('pt-status-text'); if (t && !isBusy) t.textContent = '대기 중'; }, 3000);
 
     if (typeof toastr !== 'undefined') {
         if (failCount) toastr.warning(`제목 ${okCount}개 번역 완료, ${failCount}개 실패`);
+        else if (result.stopped) toastr.info(`제목 ${okCount}개 성공 · ${result.stopped}개 중단`);
         else toastr.success(`제목 ${okCount}개 번역 완료`);
     }
     if (typeof onDone === 'function') onDone();
+    return result;
 }
 
 // ── Page factory ──────────────────────────────────────────────────────
@@ -3771,6 +3861,8 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
             return;
         }
         const mine=++loadSeq;
+        pWrap.querySelector('.pt-run-result')?.remove();
+        pWrap.classList.remove('visible');
         const nextNs=kind==='preset' ? presetNs(val) : `${idPfx}::${val||'__cur__'}`;
         showEmpty('로딩 중...');
         let loaded;
@@ -3854,7 +3946,8 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
         updateSelectedCount(page);
     });
 
-    const mkArgs=(force,mode)=>({items,list,ns,pBar,pLabel,pWrap,btnStop,forceRetranslate:!!force,mode});
+    const retryTranslation = (ids, mode, force) => runHere(() => runTranslation({ ...mkArgs(force, mode), targetIds: ids }));
+    const mkArgs=(force,mode)=>({items,list,ns,pBar,pLabel,pWrap,btnStop,forceRetranslate:!!force,mode,onRetry:retryTranslation});
     // 본문을 "번역"으로 쓸지 "주석"으로 붙일지는 매 실행마다 고른다. 한 번의
     // 요청이 번역과 주석을 동시에 만들지 않게 하려는 것 — 나눠 돌린 결과는
     // "본문 번역\n{{// 주석 번역}}" 형태로 자동 병합된다.
@@ -4391,7 +4484,7 @@ function buildPanel() {
             <div class="pt-page"        id="pt-page-char"></div>
         </div>
         <div id="pt-statusbar">
-            <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+            <div class="pt-status-content">
                 <div class="pt-status-dot" id="pt-status-dot"></div>
                 <span id="pt-status-text">대기 중</span>
                 <span class="pt-status-model" id="pt-status-model"></span>

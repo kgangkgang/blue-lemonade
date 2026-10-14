@@ -1,4 +1,4 @@
-#model-switch-settings{--ms-version:"1.1.6"}
+#model-switch-settings{--ms-version:"1.1.7"}
 #model-switch-settings .inline-drawer-content{display:flex;flex-direction:column;gap:12px;text-align:left}
 .ms-presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
 .ms-presets:empty{display:none}
@@ -116,3 +116,12 @@ dialog.popup :not(.bl-addon-inline-content) > #model-switch-settings .ms-presets
 .ms-flash{animation:ms-settings-flash 1.8s ease-out}
 @keyframes ms-settings-flash{0%,40%{outline:2px solid var(--salty-accent,var(--SmartThemeQuoteColor));outline-offset:3px}100%{outline:2px solid transparent;outline-offset:6px}}
 @media(prefers-reduced-motion:reduce){.ms-flash{animation:none;outline:2px solid var(--salty-accent,var(--SmartThemeQuoteColor));outline-offset:3px}}
+
+#model-switch-settings .ms-expand{border:0;background:transparent;color:inherit;min-width:32px;height:32px;padding:4px;cursor:pointer}
+#model-switch-settings .ms-group-children:not([hidden]){display:block;padding-left:16px;border-left:2px solid var(--salty-line,var(--SmartThemeBorderColor,#777));margin-left:6px}
+#model-switch-settings .ms-group-children[hidden]{display:none!important}
+#model-switch-settings .ms-target-group+.ms-target-group,#model-switch-settings .ms-target-group+.ms-target,#model-switch-settings .ms-target+.ms-target-group{border-top:1px solid var(--salty-line,var(--SmartThemeBorderColor,#777))}
+#model-switch-settings .ms-fallback-editor{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--salty-line,var(--SmartThemeBorderColor,#777));border-radius:8px;margin:4px 0 10px}
+#model-switch-settings [data-fallback-editor]{display:flex;flex-direction:column;gap:8px}
+#model-switch-settings [data-fallback-editor]>label{display:flex;flex-direction:column;gap:6px;min-width:0}
+#model-switch-settings .ms-fallback-actions{display:flex;justify-content:flex-end;gap:8px}
