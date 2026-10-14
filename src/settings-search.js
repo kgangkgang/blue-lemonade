@@ -9,6 +9,7 @@ const rows = [
  ['extensions','zipinstall','ZIP 설치','압축 파일 설치 업데이트 덮어쓰기 백업 복원 도우미'],
  ['extensions','notes','메모','노트 북마크 채팅 기록 메모장 요술봉 입력창 메모 줄'],
  ['text','strike','취소선','가운데 줄 지우기 선 두께 색 기울임 흐림 취소선'],
+ ['extensions','mermaid','Mermaid 도표','머메이드 다이어그램 순서도 관계도 그래프 flowchart sequence diagram'],
  ['extensions','customstyle','커스텀 CSS 조절','IceFog 색 변수 슬라이더 입력 커스텀 스타일'],
  ['theme','backup','최근 꾸미기 복구함','이전 모습 기록 복구 새로고침 스타일 프리셋 보관'],
  ['theme','colors','가독성 확인 · 색 보정','글자 배경 형광펜 대비 안보임 흐림 보정'],
@@ -101,7 +102,7 @@ for (const { key, label, options } of MARKDOWN_CONTROLS) rows.push(['text','mark
 for (const {key,label,group} of MARKDOWN_TUNING) rows.push(['text','markdown',`마크다운 · ${MARKDOWN_CONTROLS.find(c=>c.key===group).label} · ${label}`,`마크다운 꾸미기 ${markdownAliases[group]} ${label}`,'',`markdown.${key}`]);
 rows.push(['text','markdown','마크다운 · 장식 색 직접 고르기','마크다운 꾸미기 색 색상 포인트 직접 선택','','markdown.accentOwn'],['text','markdown','마크다운 · 장식 색','마크다운 꾸미기 색 색상 포인트','','markdown.accentColor']);
 const tabs={extensions:'확장',theme:'테마',text:'글자',chat:'채팅',image:'이미지',prompt:'프롬프트'};
-const subs={cutedge:'투명 그림',zipinstall:'ZIP 설치',tts:'TTS',notes:'메모',strike:'취소선',direction:'전개 지시',assets:'캐릭터 에셋',prompt:'한글화 패널',customstyle:'커스텀 CSS 조절',translator:'LLM 번역',conflicts:'확장 충돌 진단',words:'단어 치환',capture:'채팅 캡처',order:'확장 순서',perf:'성능 보조',models:'모델 관리',modelswitch:'모델 전환',regexlink:'프롬프트 연동 정규식',rewrite:'다시 쓰기',bookmarks:'북마크',scripts:'스크립트',update:'업데이트',changes:'변경한 설정',palette:'색',colors:'색 고치기',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
+const subs={mermaid:'Mermaid 도표',cutedge:'투명 그림',zipinstall:'ZIP 설치',tts:'TTS',notes:'메모',strike:'취소선',direction:'전개 지시',assets:'캐릭터 에셋',prompt:'한글화 패널',customstyle:'커스텀 CSS 조절',translator:'LLM 번역',conflicts:'확장 충돌 진단',words:'단어 치환',capture:'채팅 캡처',order:'확장 순서',perf:'성능 보조',models:'모델 관리',modelswitch:'모델 전환',regexlink:'프롬프트 연동 정규식',rewrite:'다시 쓰기',bookmarks:'북마크',scripts:'스크립트',update:'업데이트',changes:'변경한 설정',palette:'색',colors:'색 고치기',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
 subs.markdown = '마크다운';
 const normalize = value => String(value).normalize('NFKC').toLowerCase().replace(/^\s*(?:\*\s*){3,}$/,'구분선').replace(/퀵\s*리플라이|quick\s*repl(?:y|ies)|큐알|\bqr\b/g,'퀵리플라이').replace(/프사|아바타/g,'프로필').replace(/글씨|글자\s*간격/g,m=>m==='글씨'?'글자':'자간').replace(/확대\s*축소/g,'확대 축소').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 // 한글을 초성 · 자모로 풀어 둔다: 'ㅂㄱ' → 배경, '배겨'(치다 만 글자) → 배경, 한 글자 틀린 말도 찾는다.

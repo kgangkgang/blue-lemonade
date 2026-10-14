@@ -55,3 +55,13 @@ Character Assets는 원작자의 개인 수정본 공유 허락에 따라 포함
 - **freesound 18개**: SundayRecords(핥기 2개) · noahpardo(키스) · renrenrenrenren(키스 연속) · SoundDesignForYou(찔꺽) · tiddles451(찔꺽 연속) · cabusta9(침대 삐걱) · bmusic92(침대 삐걱 연속) · magnuswaker(꿀꺽) · aobowser(꿀꺽 연속) · Andy Jack / 업로드 JonasTisell(심장박동) · khenshom(펜으로 쓰기) · SamuelGremaud(성냥 켜기) · jmehlferber(벽난로 장작 타기) · XxBirdoxX(배에서 꼬르륵) · dr19(코르크 마개 따기) · SpliceSound(발소리) · MrFossy(질척이는 리듬). 각 소리 페이지가 Creative Commons 0을 표시합니다. 원본은 freesound가 공개한 고음질 미리듣기 MP3입니다. [동봉 CC0 전문](src/addons/tts/sfx-extra/LICENSE-CC0.txt).
 
 Blue Lemonade는 새 생활 음원에서 한 동작 또는 짧은 연속 구간을 골라 음량·시작과 끝 페이드·MP3 인코딩을 조정했습니다. [파일별 원본 URL·저작자·라이선스·가공 내역·원본 및 배포 SHA-256](src/addons/tts/sfx-extra/SOURCES.json)을 보존합니다. 공유마당 음원이 들어간 WAV·영상 등을 공유할 때 제작자·원본 출처·CC BY 4.0 링크와 변경 여부를 함께 표시하고 기존 고지를 유지해야 합니다. CC BY 음원에 AGPL만 적용하거나 추가 이용 제한을 붙이지 않습니다. 원작자의 후원·보증을 의미하지 않으며, 파일은 무보증으로 제공합니다.
+
+## Mermaid 도표
+
+Cohee1207 · [SillyTavern/Extension-Mermaid](https://github.com/SillyTavern/Extension-Mermaid), AGPL-3.0.
+고정 커밋 62265d550ca3dc46737c09bddf0bf328fd1f3469.
+Mermaid 11.12.3: Copyright (c) 2014–2022 Knut Sveidqvist, MIT.
+2026-10-14 Blue Lemonade 수정: 지연 로딩, webpack 분리, 원문 보존 및 재시도, strict 렌더링.
+[전체 저작권·의존 라이선스 전문](src/addons/mermaid/NOTICE.md),
+[AGPL 전문](src/addons/mermaid/LICENSE),
+[배포에 동봉한 대응 소스·빌드 안내](src/addons/mermaid/source/README.md).

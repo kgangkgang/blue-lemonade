@@ -1,0 +1,9 @@
+.bl-mermaid-status{display:flex;align-items:center;gap:12px;min-width:0}.bl-mermaid-status p{flex:1;min-width:0;overflow-wrap:anywhere}.bl-mermaid-again{flex:none}
+.bl-mermaid-dialog{width:min(480px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:18px;border-radius:16px;background:var(--SmartThemeBlurTintColor,#26282e);color:var(--SmartThemeBodyColor,#eee);border:1px solid var(--SmartThemeBorderColor,#555)}
+.bl-mermaid-dialog header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.bl-mermaid-dialog header button{font:inherit;background:none;color:inherit;border:0;padding:6px 10px}
+#chat pre.bl-mermaid-block{white-space:normal;overflow:auto;max-width:100%;min-width:0}
+#chat pre.bl-mermaid-block>code.bl-mermaid-source[hidden],#chat pre.bl-mermaid-block>.code-copy{display:none!important}
+#chat .bl-mermaid-output{width:100%;max-width:100%;overflow-x:auto;line-height:normal}
+#chat .bl-mermaid-output>svg{display:block;max-width:100%;height:auto;margin:auto;background:var(--black30a,rgba(0,0,0,.3));border-radius:5px}
+#chat .bl-mermaid-error{white-space:normal;display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px;line-height:1.5;font-family:inherit;font-size:.9em}
+.bl-mermaid-stage{position:fixed;left:-100000px;top:0;visibility:hidden;pointer-events:none;width:1000px}

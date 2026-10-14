@@ -4,7 +4,7 @@ export const SETTING_VALUES = {"captureTools.filterPreset:none":"없음","captur
 
 Object.assign(SETTING_LABELS, {'addons.conflicts':'확장: 충돌 진단',
     // 5.3.7 변경한 설정에 키 이름 그대로 보이던 항목 (DEFAULTS 전체 대조 · audit537/panel/labels-check.mjs)
-    'addons.direction':'확장: 전개 지시','addons.assets':'확장: 캐릭터 에셋','addons.notes':'확장: 메모','addons.translator':'확장: LLM 번역','addons.prompt':'확장: 한글화 패널','addons.customstyle':'확장: 커스텀 CSS 조절',
+    'addons.direction':'확장: 전개 지시','addons.assets':'확장: 캐릭터 에셋','addons.notes':'확장: 메모','addons.translator':'확장: LLM 번역','addons.prompt':'확장: 한글화 패널','addons.customstyle':'확장: 커스텀 CSS 조절','addons.mermaid':'확장: Mermaid 도표',
     'addonUI.translatorDrawer':'실리태번 확장 탭에 번역 설정 표시','addonUI.modelswitchMenu':'요술봉에 모델 전환 표시','addonUI.zipinstallMenu':'요술봉에 ZIP 설치 표시','addonUI.notesMenu':'요술봉에 메모 표시','addonUI.notesBarMenu':'입력창 위에 메모 줄 표시',
     'usageMode':'사용 모드','userProfile.metaSide':'번호 · 시간 줄 위치',
     'profile.nameRowAlign':'정보 정렬 (작은 프로필 · 없음)','userProfile.nameRowAlign':'정보 정렬 (작은 프로필 · 없음)', // 5.8.3

@@ -8,6 +8,7 @@ import { pathToFileURL, fileURLToPath } from 'node:url';
 const root = path.resolve(process.argv[2] || fileURLToPath(new URL('../..', import.meta.url)));
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
 const edge = await import(pathToFileURL(path.join(root, 'src/cutedge.js')));
+const { SEARCH_ENTRIES } = await import(pathToFileURL(path.join(root, 'src/settings-search.js')));
 const { CUT_EDGE_DEFAULTS, CUT_EDGE_RANGES, normalizeCutEdge, tidyCutEdge, cutEdgeDefaults, cutEdgeVars, cutEdgeClasses, dropShadow, imageFrameOn,
     shadowOffset, rgba, ringFilterMarkup, edgeColorFromGrid, quantizeColor, pickFilterId, RING_ID } = edge;
 
@@ -160,7 +161,7 @@ await test('wiring: assets marks .salty-alpha regardless of the cut-out switch, 
     assert.match(apply, /for \(const name of cutEdgeClasses\(s\.image\.cutEdge, \{ frame: imageFrameOn\(s\.image\) \}\)\) want\.add\(name\);/);
     assert.match(apply, /syncCutEdge\(s\.image\.cutEdge, !!s\.enabled && !imageFrameOn\(s\.image\)\);/);
     assert.ok(panel0().includes("이미지 › 테두리를 쓰는 동안은 테두리가 먼저라 외곽선 · 그림자가 쉬어요."), 'panel says why it pauses');
-    assert.ok(read('src/settings-search.js').includes("const subs={cutedge:'투명 그림',"), 'search breadcrumb');
+    assert.equal(SEARCH_ENTRIES.find(e => e.tab === 'image' && e.sub === 'cutedge')?.breadcrumb, '이미지 › 투명 그림', 'search breadcrumb');
     const panel = read('src/panel.js');
     assert.match(panel, /\['cutedge', '투명 그림'\]/);
     for (const key of ['outline.width', 'outline.alpha', 'outline.blur', 'shadow.alpha', 'shadow.angle', 'shadow.distance', 'shadow.blur']) assert.ok(panel.includes(`slider('image.cutEdge.${key}'`), key);

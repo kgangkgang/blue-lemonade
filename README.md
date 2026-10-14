@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.4.6/blue-lemonade-6.4.6.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.4.7/blue-lemonade-6.4.7.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.4.6 · 최신 업데이트</summary>
+<summary>6.4.7 · 최신 업데이트</summary>
+
+- Mermaid 도표를 내장했어요. 채팅에 mermaid 코드가 있을 때 도구를 불러오며, 별도 Mermaid 확장이 켜져 있으면 중복 실행을 피합니다.
+- 도표를 그리지 못해도 원문을 보존하고 다시 시도할 수 있어요. 출처·라이선스와 대응 소스 안내도 함께 제공합니다.
+- 과일 프롬프트·정규식 제목과 과일의 마음 화면의 한글화를 선택할 수 있어요. 원래 이름·프리셋 내용을 보존하는 화면 표시 번역입니다.
+- 애드온 버전: Mermaid 도표 1.0.0
+
+</details>
+
+<details>
+<summary>6.4.6 · 모델 검색·묶음 설정 · 한글화 진행·응답 읽기</summary>
 
 - 「검열당했을 때」 모델을 검색 목록에서 고르거나 직접 적을 수 있어요. 모델 전환의 설정 이동도 함께 확인했어요.
 - 꺼진 대체 모델도 모델 전환에서 확인한 뒤 바로 설정하고 켤 수 있어요. 취소하면 기존 설정을 유지해요.

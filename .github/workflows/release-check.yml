@@ -136,6 +136,8 @@ jobs:
           node tools/tests/appearance-comfort.mjs .
           node tools/tests/gradients-core.mjs .
           node tools/tests/regexlink-engine.mjs .
+          node tools/tests/mermaid-addon.mjs .
+          node tools/tests/fruit-localization.mjs
           node tools/build-integrity.mjs . --check
       - name: Check that generated files match their sources
         # Regenerate in the throwaway checkout, then fail if anything changed:

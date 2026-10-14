@@ -371,6 +371,12 @@ def inventory(root, kind):
             if bundle.is_dir():
                 require((bundle / 'LICENSE').is_file(), f'Missing bundled license: {folder}')
                 names += [p.relative_to(root).as_posix() for p in bundle.rglob('*') if p.is_file() and (p.suffix in {'.html','.json','.md'} or p.name == 'LICENSE')]
+        # Only public pinned Mermaid licenses and corresponding source/build inputs.
+        if (root / 'src/addons/mermaid').is_dir():
+            for name in ('LICENSE', 'NOTICE.md', 'source/README.md', 'source/rebuild.py', 'source/upstream-sha256.json', 'source/vendor-sha256.json', 'source/package.json', 'source/package-lock.json', 'source/upstream/package.json', 'source/upstream/package-lock.json'):
+                item = root / 'src/addons/mermaid' / name
+                require(item.is_file(), f'Missing Mermaid source/license: {name}')
+                names.append(item.relative_to(root).as_posix())
         if (root / 'src/addons/direction').is_dir():
             require((root / 'src/addons/direction/NOTICE.md').is_file(), 'Missing Direction Manager permission notice')
             names.append('src/addons/direction/NOTICE.md')

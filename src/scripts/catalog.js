@@ -4,6 +4,8 @@ export const SCRIPT_CATALOG = [
   {id:'helper',name:'실리태번 헬퍼 한글화',version:'1.3.9',icon:'fa-puzzle-piece',description:'헬퍼 메뉴·도움말·공지와 스크립트 관리 화면을 한글로 보여요.',match:['__tavernHelperKoreanUI_v1'],file:'helper'},
   {id:'deus',name:'데우스 프롬프트 번역',version:'2.5',icon:'fa-book-open',description:'데우스 2.5 프롬프트·정규식 제목과 편집 힌트를 번역해요. 저장되는 이름과 본문은 바꾸지 않아요.',match:['Prompt Name Translator','데우스'],file:'deus'},
   {id:'shajin',name:'샤진 프롬프트 번역',version:'3.9',icon:'fa-book',description:'거문고자리·물고기자리 프롬프트와 정규식 제목, 편집 힌트를 번역해요.',match:['Prompt Name Translator','거문고자리'],file:'shajin'},
+  {id:'fruit',name:'과일 프롬프트 번역',version:'1.0.0',icon:'fa-leaf',description:'과일 V6.4 계열의 프롬프트·정규식 제목을 한글로 보여요. 저장된 제목과 본문은 그대로예요.',match:['BlueLemonade.translate','果实之心控制配置'],file:'fruit'},
+  {id:'fruit-heart',name:'과일의 마음 한글화',version:'1.0.0',icon:'fa-heart',description:'과일의 마음 홈·QR·항목·설정 안내를 한글로 보여요. QR 명령과 입력값, 켜짐 상태는 그대로예요.',match:['__blueLemonadeFruitHeartKorean_v1'],file:'fruit-heart'},
 ];
 export const scriptDefinition = id => SCRIPT_CATALOG.find(item=>item.id===id);
 const cache=new Map();
