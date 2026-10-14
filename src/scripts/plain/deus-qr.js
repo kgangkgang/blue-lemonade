@@ -32,7 +32,7 @@ function deusGroupIssue(group, order) {
   return '';
 }
 function createDeusQuickController(adapter) {
-  let busy = false, stopped = false, lastDirty = true, lastOrder = '', lastRefs = [];
+  let busy = false, stopped = false, lastDirty = true, lastOrder = '', lastRefs = [], pendingTarget = null;
   function read(checkDirty = true) {
     const state = adapter.read();
     if (!state || state.api !== 'openai' || !state.name || !state.saved || !state.live || state.name !== state.live.preset_settings_openai) throw Error('채팅 완성에서 데우스 2.5 프리셋을 선택해 주세요.');
@@ -67,7 +67,7 @@ function createDeusQuickController(adapter) {
     const savedSignature = deusStable(before.saved), liveSignature = deusStable({ prompts: before.live.prompts, prompt_order: before.live.prompt_order });
     const payload = structuredClone(before.saved);
     for (const row of deusOrder(payload)) if (changes.has(row.identifier)) row.enabled = changes.get(row.identifier);
-    busy = true;
+    busy = true; pendingTarget = { name:before.name, live:before.live, api:before.api };
     try {
       // Allow pending preset/input events to settle, then take the last snapshot immediately before writing.
       await Promise.resolve();
@@ -85,9 +85,9 @@ function createDeusQuickController(adapter) {
       for (const row of deusOrder(after.live)) if (changes.has(row.identifier)) row.enabled = changes.get(row.identifier);
       adapter.publish();
       return { state: 'saved' };
-    } finally { busy = false; }
+    } finally { busy = false; pendingTarget = null; }
   }
-  return { read, change, isAvailable() { return deusQuickAvailable(adapter.read()); }, get busy() { return busy; }, stop() { stopped = true; } };
+  return { read, change, isAvailable() { return deusQuickAvailable(adapter.read()); }, isPendingTarget() { let s;try{s=adapter.read();}catch{return false;}return !!(busy && pendingTarget && s?.api===pendingTarget.api && s.name===pendingTarget.name && s.live===pendingTarget.live && s.live?.preset_settings_openai===pendingTarget.name); }, get busy() { return busy; }, stop() { stopped = true; } };
 }
 
 // INSTALL
@@ -97,10 +97,10 @@ function createDeusQuickController(adapter) {
   try { while (host.parent && host.parent !== host && host.parent.document) host = host.parent; } catch {}
   const doc = host.document, instanceKey = '__blueLemonadeDeusQuick_v1';
   host[instanceKey]?.stop?.();
-  let stopped = false, panel = null, controller = null, loading = null, tab = '진행', tick = 0, frame = 0, signature = '', status = '', eventCleanup = [], tabObserver = null, entryAvailable = false, helpOpen = false;
+  let stopped = false, panel = null, controller = null, loading = null, tab = '진행', tick = 0, frame = 0, signature = '', status = '', eventCleanup = [], tabObserver = null, entryAvailable = false, helpOpen = false, pendingFocus = null;
   const button = doc.createElement('button');
   button.type = 'button'; button.id = 'bl-deus-quick'; button.className = 'interactable';
-  button.title = '데우스 빠른 설정'; button.setAttribute('aria-label', '데우스 빠른 설정'); button.setAttribute('aria-expanded', 'false'); button.setAttribute('aria-haspopup', 'dialog'); button.setAttribute('aria-controls', 'bl-deus-popover');
+  button.title = '데우스 엑스 마키나 빠른 설정'; button.setAttribute('aria-label', '데우스 엑스 마키나 빠른 설정'); button.setAttribute('aria-expanded', 'false'); button.setAttribute('aria-haspopup', 'dialog'); button.setAttribute('aria-controls', 'bl-deus-popover');
   button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.8 6.6L22 12l-7.2 3.4L12 22l-2.8-6.6L2 12l7.2-3.4Z"/><path d="m8 12 4-4 4 4-4 4Z"/></svg>';
   const style = doc.createElement('style'); style.dataset.blDeusQuick = '1';
   style.textContent = `
@@ -109,8 +109,8 @@ function createDeusQuickController(adapter) {
   #bl-deus-popover{position:fixed;inset:auto;margin:0;left:var(--dq-left);top:var(--dq-top);transform:translateY(-100%);width:var(--dq-width);max-width:calc(100vw - 16px);max-height:min(58dvh,500px,var(--dq-height));display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden;z-index:31020;padding:0;border:1px solid var(--SmartThemeBorderColor,#59606b);border-radius:14px;background:var(--SmartThemeBlurTintColor,#25272d);color:var(--SmartThemeBodyColor,#eee);box-shadow:0 8px 30px #0005;font:inherit;backdrop-filter:none;text-align:start}
   #bl-deus-popover{container:bl-deus-quick/inline-size}
   #bl-deus-popover *{box-sizing:border-box;min-width:0}#bl-deus-popover button,#bl-deus-popover select{font:inherit;color:inherit;max-width:100%}#bl-deus-popover button{cursor:pointer}
-  #bl-deus-popover .dq-head{display:flex;align-items:center;gap:8px;padding:10px 12px;flex:none}#bl-deus-popover .dq-head strong{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#bl-deus-popover .dq-version{font-size:.8em;background:#ffffff0a;border-radius:8px;padding:2px 7px}#bl-deus-popover .dq-close{border:0;background:transparent;min-width:36px;min-height:36px;border-radius:8px;font-size:1.2em;line-height:1;padding:4px}
-  #bl-deus-popover .dq-help-button{display:inline-flex;align-items:center;justify-content:center;flex:none;width:1.8em;height:1.8em;min-width:32px;min-height:32px;max-width:40px;max-height:40px;padding:0;border:1px solid currentColor;border-radius:50%;background:transparent;color:var(--salty-accent-ink,var(--SmartThemeQuoteColor,#8dcfff));font-size:.85em;line-height:1}
+  #bl-deus-popover .dq-head{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:10px 12px;flex:none}#bl-deus-popover .dq-head strong{white-space:normal;word-break:keep-all;overflow-wrap:anywhere;line-height:1.35}#bl-deus-popover .dq-version{display:inline-block;vertical-align:middle;margin-inline-start:6px;font-size:.75em;font-weight:normal;background:#ffffff0a;border-radius:6px;padding:1px 5px}#bl-deus-popover .dq-close{border:0;background:transparent;min-width:36px;min-height:36px;border-radius:8px;font-size:1.2em;line-height:1;padding:4px}
+  #bl-deus-popover .dq-help-button{display:inline-flex;align-items:center;justify-content:center;width:max(28px,1em);height:max(28px,1em);padding:0;border:0;background:transparent;color:var(--salty-accent-ink,var(--SmartThemeQuoteColor,#8dcfff));font-size:inherit;line-height:1}#bl-deus-popover .dq-help-glyph{display:inline-flex;align-items:center;justify-content:center;width:1em;height:1em;border:1px solid currentColor;border-radius:50%;font:inherit;line-height:1}
   #bl-deus-popover .dq-help{padding:10px;line-height:1.6;overflow-wrap:anywhere}#bl-deus-popover .dq-help h3{font:inherit;font-weight:600;line-height:1.5;margin:0 0 6px}#bl-deus-popover .dq-help p{font:inherit;line-height:inherit;margin:0 0 8px}#bl-deus-popover .dq-help small{display:block;font-size:.85em;line-height:1.5;opacity:.8;margin:0 0 8px}#bl-deus-popover .dq-help summary{display:flex;gap:8px;align-items:center;min-height:36px;padding:6px 0;line-height:1.5}#bl-deus-popover .dq-help details{border-top:1px solid var(--SmartThemeBorderColor,#59606b);padding-top:4px}#bl-deus-popover .dq-help-links{display:flex;flex-wrap:wrap;gap:8px 12px;font-size:.85em;line-height:1.5}#bl-deus-popover .dq-help a{color:var(--salty-accent-ink,var(--SmartThemeQuoteColor,#8dcfff));text-decoration:underline;text-underline-offset:2px}
   #bl-deus-popover .dq-tabs{display:flex;flex-wrap:nowrap;gap:6px;padding:0 10px 8px;flex:none;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scroll-padding-inline:10px;scrollbar-width:thin}
   #bl-deus-popover .dq-tabs button{display:flex;flex:1 0 auto;flex-direction:row;align-items:center;justify-content:center;gap:6px;border:0;border-radius:8px;background:#ffffff0a;padding:6px 8px;white-space:nowrap;word-break:keep-all;line-height:1.45;min-height:36px;margin:0}
@@ -119,10 +119,10 @@ function createDeusQuickController(adapter) {
   #bl-deus-popover .dq-card{margin:0 0 12px;border:0;border-radius:12px;background:#ffffff06;overflow:hidden}
   #bl-deus-popover .dq-card-head{display:flex;align-items:center;gap:8px;padding:10px;background:#ffffff09;font-weight:inherit;line-height:1.45;margin:0}
   #bl-deus-popover .dq-card-head>i{flex:0 0 1.2em;text-align:center;color:var(--SmartThemeQuoteColor,#8dcfff)}
-  #bl-deus-popover .dq-card-body{display:flex;flex-direction:column;gap:10px;padding:10px}
+  #bl-deus-popover .dq-card-body{display:flex;flex-direction:column;gap:10px;padding:10px}#bl-deus-popover .dq-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}#bl-deus-popover .dq-fields>.dq-note{grid-column:1/-1}@container bl-deus-quick (max-width:16em){#bl-deus-popover .dq-fields{grid-template-columns:1fr}}
   #bl-deus-popover .dq-row{display:flex;flex-direction:column;gap:8px;margin:0;line-height:1.45}#bl-deus-popover .dq-row select{width:100%;padding:8px 10px;border-radius:8px;border:0;background:var(--SmartThemeChatTintColor,#30333a);height:auto;min-height:36px;line-height:1.45;box-shadow:none;margin:0}
-  #bl-deus-popover .dq-toggle{display:flex;flex-direction:column;align-items:stretch;gap:4px;min-height:36px;padding:4px 0;cursor:pointer;line-height:1.45}#bl-deus-popover .dq-toggle input{flex:none;width:18px;height:18px;accent-color:var(--SmartThemeQuoteColor,#8dcfff);margin:0}#bl-deus-popover .dq-toggle-label{overflow-wrap:anywhere}#bl-deus-popover .dq-toggle-control{display:flex;align-items:center;gap:8px;min-height:32px}#bl-deus-popover .dq-toggle-state{font-size:.85em;opacity:.8}
-  #bl-deus-popover .dq-checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,12em),1fr));gap:8px 10px}
+  #bl-deus-popover .dq-toggle{display:flex;flex-direction:column;align-items:stretch;justify-content:space-between;gap:6px;min-height:36px;padding:8px;border:1px solid transparent;border-radius:8px;background:var(--salty-shade,#ffffff09);cursor:pointer;line-height:1.45}#bl-deus-popover .dq-toggle:has(input:checked){background:var(--salty-accent-13,#8dcfff18);border-color:var(--salty-accent-45,#8dcfff66)}#bl-deus-popover .dq-toggle input{flex:none;width:18px;height:18px;accent-color:var(--SmartThemeQuoteColor,#8dcfff);margin:0}#bl-deus-popover .dq-toggle-label{overflow-wrap:anywhere}#bl-deus-popover .dq-toggle-control{display:flex;align-items:center;gap:8px;min-height:24px}#bl-deus-popover .dq-toggle-state{font-size:.85em;opacity:.8}#bl-deus-popover .dq-toggle-compact{flex-direction:row;align-items:center;justify-content:flex-start;gap:8px;min-height:36px;padding:6px 8px}#bl-deus-popover .dq-toggle-compact .dq-toggle-label{min-width:0}
+  #bl-deus-popover .dq-checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   #bl-deus-popover summary{cursor:pointer;list-style:none}#bl-deus-popover summary::-webkit-details-marker{display:none}#bl-deus-popover summary::after{content:'⌄';margin-left:auto;flex:none}#bl-deus-popover details[open]>summary::after{content:'⌃'}
   #bl-deus-popover .dq-note{font-size:.85em;opacity:.8;line-height:1.5;overflow-wrap:anywhere;margin:0 0 10px}
   #bl-deus-popover .dq-status{padding:8px 12px;border:0;font-size:.85em;line-height:1.5;flex:none;overflow-wrap:anywhere}#bl-deus-popover [disabled]{opacity:.55;cursor:default}#bl-deus-popover button:focus-visible,#bl-deus-quick:focus-visible{outline:2px solid var(--SmartThemeQuoteColor,#8dcfff);outline-offset:-2px}
@@ -141,7 +141,7 @@ function createDeusQuickController(adapter) {
   function syncEntry() {
     if (stopped) return;
     const wasAvailable = entryAvailable;
-    try { entryAvailable = controller?.isAvailable() === true; } catch { entryAvailable = false; }
+    try { entryAvailable = controller?.isAvailable() === true || (wasAvailable && controller?.isPendingTarget() === true); } catch { entryAvailable = false; }
     if (entryAvailable) mount();
     else { button.remove(); if (wasAvailable) close(); }
   }
@@ -159,7 +159,7 @@ function createDeusQuickController(adapter) {
     panel.style.setProperty('--dq-top', `${bottom}px`); panel.style.setProperty('--dq-width', `${w}px`); panel.style.setProperty('--dq-height', `${Math.max(80, bottom - top - 8)}px`);
     if (event) revealTab();
   }
-  function close() { tabObserver?.disconnect(); tabObserver = null; if (!panel) return; panel.remove(); panel = null; signature = ''; helpOpen = false; host.clearInterval(tick); tick = 0; button.setAttribute('aria-expanded','false'); }
+  function close() { tabObserver?.disconnect(); tabObserver = null; if (!panel) return; panel.remove(); panel = null; signature = ''; helpOpen = false; pendingFocus = null; host.clearInterval(tick); tick = 0; button.setAttribute('aria-expanded','false'); }
   function node(tag, text, className) { const element = doc.createElement(tag); if (text != null) element.textContent = text; if (className) element.className = className; return element; }
   const tabIcons = {'진행':'route','문체':'pen-nib','시점':'eye','표현':'palette','추가':'sliders'};
   function icon(name) { const element=node('i',null,`fa-solid fa-${name}`);element.setAttribute('aria-hidden','true');return element; }
@@ -199,11 +199,17 @@ function createDeusQuickController(adapter) {
   }
   function render(force = false) {
     if (!panel || stopped) return;
+    // Keep native pickers and focused controls attached until our save finishes.
+    if (controller?.busy && controller.isPendingTarget()) {
+      panel.querySelectorAll('.dq-body select,.dq-body input').forEach(control => { control.disabled = true; });
+      panel.querySelector('.dq-status').textContent = '저장 중…';
+      return;
+    }
     let current, error = '';
     try { current = controller?.read(force); } catch (e) { error = e.message; }
     const next = JSON.stringify([tab, helpOpen, current?.name, current?.dirty, current && [...current.states], current && [...current.available], current && [...current.groupIssues], controller?.busy, status, error]);
     if (!force && next === signature) return; signature = next;
-    const body = panel.querySelector('.dq-body'), scroll = body.scrollTop, focused = doc.activeElement?.dataset?.dqFocus;
+    const body = panel.querySelector('.dq-body'), scroll = body.scrollTop, focused = pendingFocus || doc.activeElement?.dataset?.dqFocus;
     const expanded = new Set([...body.querySelectorAll('details[open]')].map(x => x.dataset.section));
     body.replaceChildren();
     panel.querySelector('.dq-help-button').setAttribute('aria-expanded',String(helpOpen));
@@ -212,7 +218,7 @@ function createDeusQuickController(adapter) {
     const disabled = !!(controller?.busy || current?.dirty);
     if (error || !current) body.append(node('p',error || '현재 프리셋을 확인하고 있어요.','dq-note'));
     else {
-      const card=node('section',null,'dq-card'),cardHead=node('header',null,'dq-card-head'),cardBody=node('div',null,'dq-card-body');
+      const card=node('section',null,'dq-card'),cardHead=node('header',null,'dq-card-head'),cardBody=node('div',null,'dq-card-body dq-fields');
       cardHead.append(icon(tabIcons[tab]),node('span',`${tab} 설정`));card.append(cardHead,cardBody);
       for (const group of DEUS_QUICK_GROUPS.filter(x => x.tab === tab && current.available.has(x.header))) {
         const options = group.options.filter(x => current.available.has(x.id)); if (!options.length) continue;
@@ -230,11 +236,15 @@ function createDeusQuickController(adapter) {
       if (toggles.length) {
         const details = node('details',null,'dq-card'); details.dataset.section = tab; details.open = expanded.has(tab) || (tab === '진행');
         const summary=node('summary',null,'dq-card-head'),checks=node('div',null,'dq-card-body dq-checks');
-        summary.append(icon(tab === '문체' ? 'masks-theater' : 'toggle-on'),node('span',tab === '문체' ? '분위기 · 여러 개 선택' : '개별 설정'));details.append(summary,checks);
+        if (tab === '문체') summary.setAttribute('aria-label','분위기 · 여러 개 선택');
+        summary.append(icon(tab === '문체' ? 'masks-theater' : 'toggle-on'),node('span',tab === '문체' ? '분위기' : '개별 설정'));details.append(summary,checks);
         for (const item of toggles) {
           const label = node('label',null,'dq-toggle'), input = node('input'); input.type = 'checkbox'; input.checked = current.states.get(item.id) === true; input.disabled = disabled; input.dataset.dqFocus = item.id;
-          const control=node('span',null,'dq-toggle-control'),state=node('span',input.checked?'켜짐':'꺼짐','dq-toggle-state');state.setAttribute('aria-hidden','true');
-          input.addEventListener('change',() => void change(item.id,input.checked));control.append(input,state);label.append(node('span',item.label,'dq-toggle-label'),control);checks.append(label);
+          const caption=node('span',tab === '문체' && item.label === '카드 기본 (분위기)' ? '카드 기본' : item.label,'dq-toggle-label');
+          input.addEventListener('change',() => void change(item.id,input.checked));
+          if(tab === '문체'){label.classList.add('dq-toggle-compact');label.append(input,caption);}
+          else{const control=node('span',null,'dq-toggle-control'),state=node('span',input.checked?'켜짐':'꺼짐','dq-toggle-state');state.setAttribute('aria-hidden','true');control.append(input,state);label.append(caption,control);}
+          checks.append(label);
         }
         body.append(details);
       }
@@ -248,13 +258,14 @@ function createDeusQuickController(adapter) {
     position();
   }
   async function change(key, value) {
-    status = '';
+    if (controller?.busy) return;
+    status = ''; pendingFocus = doc.activeElement?.dataset?.dqFocus || key;
     try {
       const promise = controller.change(key,value); render();
       const result = await promise;
       status = {saved:'프리셋에 저장했어요.',unchanged:'이미 같은 설정이에요.',switched:'원래 프리셋에 저장했어요. 새로 선택한 프리셋은 바꾸지 않았어요.',conflict:'저장 중 다른 변경이 감지됐어요. 현재 설정을 덮지 않았으니 본체에서 확인해 주세요.'}[result.state];
     } catch (e) { status = e.message || '저장하지 못했어요. 다시 눌러 주세요.'; }
-    render();
+    syncEntry(); render(); pendingFocus = null;
   }
   async function load() {
     if (controller || stopped) return;
@@ -282,8 +293,8 @@ function createDeusQuickController(adapter) {
   async function open() {
     if (stopped) return false;
     if (panel) { render(); revealTab(); return true; }
-    panel = node('section'); panel.id = 'bl-deus-popover'; panel.setAttribute('role','dialog'); panel.setAttribute('aria-modal','false'); panel.setAttribute('aria-label','데우스 빠른 설정');
-    const head = node('div',null,'dq-head'), x = node('button','×','dq-close'); x.type = 'button'; x.setAttribute('aria-label','닫기'); x.addEventListener('click',close); const help = node('button','?','dq-help-button'); help.type = 'button'; help.setAttribute('aria-label','데우스 도움말'); help.setAttribute('aria-expanded','false'); help.setAttribute('aria-controls','bl-deus-help'); help.addEventListener('click',toggleHelp); head.append(node('strong','데우스'),node('span','2.5','dq-version'),help,x);
+    panel = node('section'); panel.id = 'bl-deus-popover'; panel.setAttribute('role','dialog'); panel.setAttribute('aria-modal','false'); panel.setAttribute('aria-label','데우스 엑스 마키나 빠른 설정');
+    const head = node('div',null,'dq-head'), x = node('button','×','dq-close'); x.type = 'button'; x.setAttribute('aria-label','닫기'); x.addEventListener('click',close); const help = node('button',null,'dq-help-button'); help.append(node('span','?','dq-help-glyph'));  help.type = 'button'; help.setAttribute('aria-label','데우스 엑스 마키나 도움말'); help.setAttribute('aria-expanded','false'); help.setAttribute('aria-controls','bl-deus-help'); help.addEventListener('click',toggleHelp); const title = node('strong','데우스 엑스 마키나'); title.append(node('span','2.5','dq-version')); head.append(title,help,x);
     const tabs = node('nav',null,'dq-tabs'); tabs.setAttribute('aria-label','설정 분류');
     tabs.addEventListener('focusin', event => revealTab(event.target));
     for (const name of ['진행','문체','시점','표현','추가']) { const b = node('button'); b.append(icon(tabIcons[name]),node('span',name)); b.type = 'button'; b.dataset.tab = name; b.setAttribute('aria-pressed',String(name === tab)); b.addEventListener('click',() => { tab = name; status = ''; render(true); revealTab(); }); tabs.append(b); }
@@ -299,7 +310,7 @@ function createDeusQuickController(adapter) {
     render(true); revealTab(); if (panel?.contains(x) && !stopped) x.focus({preventScroll:true}); return !!panel;
   }
   button.addEventListener('click',() => panel ? close() : void open());
-  const outside = event => { if (panel && !panel.contains(event.target) && !button.contains(event.target) && !event.target.closest?.('dialog')) close(); };
+  const outside = event => { if (panel && !controller?.busy && !panel.contains(event.target) && !event.composedPath?.().includes(panel) && !button.contains(event.target) && !event.target.closest?.('dialog')) close(); };
   const keydown = event => { if (panel && event.key === 'Escape' && !event.defaultPrevented) { event.preventDefault(); if (helpOpen) toggleHelp(); else { close(); button.focus({preventScroll:true}); } } };
   doc.addEventListener('pointerdown',outside,true); doc.addEventListener('keydown',keydown);
   host.addEventListener('resize',position); host.visualViewport?.addEventListener('resize',position); host.visualViewport?.addEventListener('scroll',position);

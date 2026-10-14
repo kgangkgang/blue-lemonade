@@ -5,11 +5,12 @@ import {pathToFileURL} from 'node:url';
 const root=path.resolve(process.argv[2]||'.'), dir=path.join(root,'src/addons/translator');
 const source=fs.readFileSync(process.argv[3]?path.resolve(process.argv[3]):path.join(dir,'index.js'),'utf8');
 const card=await import(pathToFileURL(path.join(dir,'display-cards.js')));
+const auto=await import(pathToFileURL(path.join(dir,'context-auto.js')));
 const seg=await import(pathToFileURL(path.join(dir,'translation-segments.js')));
 const resume=await import(pathToFileURL(path.join(dir,'translation-resume.js')));
 function cut(name){const re=new RegExp('\\n(?:export )?(?:async )?function '+name+'\\('),start=source.search(re);assert(start>=0,name);const chunk=source.slice(start+1,source.indexOf('\n}',start+1)+2);return chunk.replace(/^export /,'');}
 const events=[],ctx={chatMetadata:{}}, S={llm_prompt_chat:'Translate visible text.',glossary_enabled:false,user_defined_regexes:[],user_no_fold_regexes:[],translation_display_mode:'folded'};
-const env={...card,...seg,...resume,extensionSettings:S,getContext:()=>ctx, guards:{capture:()=>({assert(){}})},connectionSignature:()=>'',watchGuard:()=>({check(){},close(){},signal:null}), document:{getElementById:()=>null},
+const env={...card,...seg,...resume,...auto,extensionSettings:S,getContext:()=>ctx, guards:{capture:()=>({assert(){}})},connectionSignature:()=>'',watchGuard:()=>({check(){},close(){},signal:null}), document:{getElementById:()=>null},
     BLOCKED_CHUNK_MARK:'failed',MASK_PATTERN:'[[__VAR_{index}__]]',DEBUG_MODE:false,RULE_PROMPT_KEY:'rules',substituteCustomPlaceholders:x=>x,substituteParams:x=>x,buildGlossaryBlock:()=>'',checkpointKey:async x=>x,glossarySegmentSignature:x=>()=>x,textOutputLimit:()=>0,isTransientError:()=>false,failMarkOf:()=>"failed",splitForChunks:()=>[],CHUNK_TARGET:100000,
     looksLikeInputBlock:()=>false,looksLikeRefusal:()=>false,fallbackOf:()=>null,sameTarget:()=>false,getCustomModelName:()=>'',
     tidyKana:x=>x,tidyGlossaryOutput:(_s,x)=>x,linesToFix:()=>[],glossaryHanKeep:()=>[],glossaryNameKeep:()=>[],dropDanglingOpenQuote:x=>x,
@@ -89,5 +90,22 @@ await test('correction rejects different protected values even if their token po
  const good=reply;S.user_defined_regexes=['/(?:Quiet|Other) library/g'];const before=events.length;
  await assert.rejects(env.translate('[Original Text]:\n'+original+'\n\n[Translated Text]:\n'+translated,{isRetranslation:true,checkSource:original}),e=>e.structuredCard===true);
  assert.equal(events.length,before,'different protected data rejected before a request');S.user_defined_regexes=[];reply=good;
+});
+
+await test('actual translate preserves auto placeholders until complete-request selection and versions its context cache signature',async()=>{
+ const beforeSettings={...S},beforeCall=env.callLLMAPI,beforeKey=env.checkpointKey,beforeSub=env.substituteCustomPlaceholders;
+ S.context_message_auto=true;S.context_exclude_last=true;S.context_include_user=false;S.llm_prompt_chat='Translate visible text.\nHistory {{llmContext}}\nEnd history.';
+ Object.assign(ctx,{chatId:'auto-synthetic',mainApi:'openai',name1:'Reader',name2:'Character',chat:[{mes:'Earlier complete answer.',name:'Character',is_user:false},{mes:'Current body.',name:'Character',is_user:false}]});
+ env.autoRequestSignature=()=> 'stable-model';install('substituteCustomPlaceholders');const keys=[],sent=[];
+ env.checkpointKey=async value=>{keys.push(value);return value};
+ env.callLLMAPI=async prompt=>{
+   assert(auto.hasAutoContext(prompt));
+   const payload=await auto.prepareTranslatorAutoContext({payload:{messages:[{role:'user',content:prompt}],max_tokens:100},getContext:()=>ctx,getSettings:()=>S,getConnection:env.autoRequestSignature,getMaxPromptTokens:()=>900,getMaxContextTokens:()=>1000,countTokensOpenAIAsync:async messages=>messages.reduce((n,m)=>n+4+m.content.split(/\s+/).length,0)});
+   sent.push(payload);return '한국어 본문.';
+ };
+ assert.equal(await env.translate('English prose.'),'한국어 본문.');assert.equal(sent.length,1);
+ assert(sent[0].messages[0].content.includes('Earlier complete answer.'));assert(!auto.hasAutoContext(sent[0].messages[0].content));
+ assert(keys.some(value=>value.includes('auto-context-v1')&&value.includes('Earlier complete answer.')));
+ Object.keys(S).forEach(key=>delete S[key]);Object.assign(S,beforeSettings);env.callLLMAPI=beforeCall;env.checkpointKey=beforeKey;env.substituteCustomPlaceholders=beforeSub;
 });
 console.log(`${checks} translator card integration checks passed`);

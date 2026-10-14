@@ -1,5 +1,6 @@
 import { addonsEnabled, themeEnabled, usageMode } from './usage-mode.js';
 import {promptToolsMarkup,fruitPromptMarkup,bindPromptTools} from './prompt-tools.js';
+import { mountFruitPreview } from './fruit-preview.js';
 import { saveAddonsNow } from './addon-save.js';
 import { readabilityReport, fixReadability } from './readability.js';
 import { appearanceArchive, rememberAppearance, restoreAppearance } from './appearance-archive.js';
@@ -322,6 +323,7 @@ export function unmountPanel(root) {
     root._healthCleanup?.();
     root._updateCleanup?.(); root._updateCleanup=null;
     root._previewCleanup?.();
+    root._fruitPreview?.dispose(); root._fruitPreview = null;
     for (const key of ['_fontIO', '_rowsRO']) { root[key]?.disconnect(); root[key] = null; }
     root.remove(); panels.delete(root); root._pv = {}; root._previewViews?.clear();
     const settings = getSettings(); syncDecor(settings); syncProfileClip(settings);
@@ -356,6 +358,7 @@ export function refreshPanels(changes) {
                 }
                 syncWeatherPreview(root, path);
             }
+            root._fruitPreview?.update();
         }
         if (changes.some(c => c.path === 'nightTint' || c.path === 'lightTint')) syncPaletteTints();
         syncHistoryButtons(); syncSettingResets();
@@ -1576,11 +1579,13 @@ function tabPrompt(s,sub) {
             ${row('카드 꾸미기', toggle('fruit.cards.on', cards.on), '상태창 · 머리말 · 제목 카드의 모양을 테마에 맞춰요. 끄면 원래 디자인으로 돌아가요.')}
             ${cards.on ? row('글꼴 맞추기', toggle('fruit.cards.font', cards.font), '테마 본문 글꼴을 사용해요.') : ''}
             ${cards.on ? row('색 맞추기', toggle('fruit.cards.colors', cards.colors), '글자 · 배경 · 테두리를 현재 테마 색으로 맞춰요.') : ''}
+            ${cards.on ? row('카드 모양', seg('fruit.cards.layout', [['compact','간결형'],['card','카드형'],['title','제목 중심형']], 'compact'), '같은 내용과 글꼴로 배치와 강조만 바꿔요.') : ''}
+            ${cards.on ? row('장면 정보 접기', toggle('fruit.cards.metadataFold', cards.metadataFold), '날짜 · 시간 · 장소 · 날씨만 눌러 펼쳐요. 제목과 머리말은 그대로 보여요.') : ''}
             ${cards.on ? row('고정 안내 한글로', toggle('fruit.cards.labels', cards.labels), '날짜·시간 같은 고정 제목만 한글로 보여요. 상태 내용 번역과는 별개예요.') : ''}
             ${cards.on ? slider('fruit.cards.size', '카드 글자 크기', 12, 30, 1, 16) : ''}
             ${cards.on ? slider('fruit.cards.gap', '카드 여백', 4, 24, 1, 12) : ''}
             ${cards.on ? slider('fruit.cards.radius', '카드 모서리', 0, 24, 1, 12) : ''}
-        </div><p class="salty-note">지원하는 과일 카드에 적용돼요. 프리셋과 채팅 원문은 그대로예요.</p>`;
+        </div><div data-fruit-preview></div><p class="salty-note">지원하는 과일 카드에 적용돼요. 프리셋과 채팅 원문은 그대로예요.</p>`;
     }
     const on = !!s.deus?.on;
     const ink = s.deus?.ink || {};
@@ -1836,6 +1841,7 @@ function restoreFocus(root, snap) {
 
 function render(root) {
     const focusSnap = focusSnapshot(root);
+    root._fruitPreview?.dispose(); root._fruitPreview = null;
     root._mdFolds ??= new Map();
     for (const item of root.querySelectorAll('details[data-md-fold]')) root._mdFolds.set(item.dataset.mdFold,item.open);
     root._stopComparison?.();
@@ -1904,6 +1910,7 @@ function render(root) {
     typesetRoot(root);
     bindAddons(root, refreshPanels);
     root._scriptsCleanup=bindPromptTools(root);
+    root._fruitPreview = mountFruitPreview(root.querySelector('[data-fruit-preview]'), () => comparisonView(getSettings()));
     bindThemeUpdate(root);
     bindHealth(root,applyAll);
     bindWordTools(root, refreshPanels);

@@ -115,3 +115,20 @@ html body .salty-panel.bl-editor .bl-backup-actions > .salty-row { align-self:st
 @container bl-controls (width < 24em) {
   html body .salty-panel.bl-editor .salty-sec .salty-group:has(> .salty-slider + .salty-slider) { display:block; }
 }
+
+/* 6.5.1: 나란한 슬라이더는 같은 줄에서 이름·숫자·막대 높이를 맞춘다.
+   한쪽 이름만 길어도 헤더가 각각 다른 방식으로 줄바꿈되지 않게 한다. */
+html body .salty-panel.bl-editor .salty-sec .salty-group:has(> .salty-slider + .salty-slider) > .salty-slider {
+  display:flex; flex-direction:column; align-self:stretch; min-width:0;
+}
+html body .salty-panel.bl-editor .salty-sec .salty-group:has(> .salty-slider + .salty-slider) > .salty-slider > header {
+  display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; flex:1; gap:6px 10px;
+}
+html body .salty-panel.bl-editor .salty-sec .salty-group:has(> .salty-slider + .salty-slider) > .salty-slider > header > .salty-num {
+  align-self:end; justify-self:end;
+}
+@container bl-controls (24em <= width < 44em) {
+  html body .salty-panel.bl-editor .salty-sec .salty-group:has(> .salty-slider + .salty-slider) > .salty-slider > header {
+    grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(min-content,1fr) auto;
+  }
+}

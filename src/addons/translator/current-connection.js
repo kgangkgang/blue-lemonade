@@ -9,7 +9,7 @@ const TRANSIENT_MESSAGE=new RegExp(String.raw`${CODE}(?:429|50[0-3]|529)\b(?![.,
 const CLOUDFLARE_524=new RegExp(String.raw`${CODE}524\b(?![.,]\d)`);
 const PARSE_FAILURE=/unexpected token|not valid json|unexpected end of json|<!doctype|<html/i;
 const isTransient=(error,reason)=>!CLOUDFLARE_524.test(reason)&&(error?.name==='SyntaxError'||PARSE_FAILURE.test(reason)?TRANSIENT_CODE.test(reason):TRANSIENT_MESSAGE.test(reason));
-export async function requestCurrentConnection({context,messages,overrides={},maxTokens=0,buildChat,buildText,log}) {
+export async function requestCurrentConnection({context,messages,overrides={},maxTokens=0,buildChat,buildText,log,preparePayload}) {
     const ctx=context(), controller=new AbortController();
     const timeout=overrides.timeoutMs>0?overrides.timeoutMs:90000;
     const abort=()=>controller.abort(overrides.signal?.reason);
@@ -21,22 +21,25 @@ export async function requestCurrentConnection({context,messages,overrides={},ma
     try{
         if(overrides.signal?.aborted)throw overrides.signal.reason;
         if(ctx.mainApi==='openai'){
-            const payload=await buildChat(structuredClone(ctx.chatCompletionSettings),structuredClone(messages));
+            let payload=await buildChat(structuredClone(ctx.chatCompletionSettings),structuredClone(messages));
             payload.stream=false;if(limit)payload.max_tokens=limit;
             if(Number.isFinite(overrides.temperature))payload.temperature=overrides.temperature;
+            if(preparePayload)payload=await preparePayload(payload);
             controller.signal.throwIfAborted();
             return await ctx.ChatCompletionService.processRequest(payload,{},false,controller.signal);
         }
         if(ctx.mainApi==='textgenerationwebui'){
-            const payload=await buildText(structuredClone(ctx.textCompletionSettings),structuredClone(messages),limit);
+            let payload=await buildText(structuredClone(ctx.textCompletionSettings),structuredClone(messages),limit);
             payload.stream=false;payload.streaming=false;
             if(limit)payload.max_tokens=payload.max_new_tokens=limit;
             if(Number.isFinite(overrides.temperature))payload.temperature=overrides.temperature;
+            if(preparePayload)payload=await preparePayload(payload);
             controller.signal.throwIfAborted();
             return await ctx.TextCompletionService.processRequest(payload,{},false,controller.signal);
         }
         throw new Error('현재 연결의 API 방식은 아직 지원하지 않아요. 채팅 완성 또는 텍스트 완성 연결을 사용하거나 API 중 선택으로 전환해 주세요.');
     }catch(error){
+        if(error?.name==='ContextSelectionError')throw error;
         if(overrides.signal?.aborted)throw overrides.signal.reason;
         if(controller.signal.aborted)throw Object.assign(new Error(`${Math.round(timeout/1000)}초 안에 번역 답이 오지 않았어요.`),{timeout:true});
         if(/^bad request$/i.test(String(error?.message||'').trim())){

@@ -102,6 +102,8 @@ jobs:
           node tools/tests/translator-auto-render.mjs .
           node tools/tests/translation-cards.mjs .
           node tools/tests/translator-cards-integration.mjs .
+          node tools/tests/recent-context.mjs .
+          node tools/tests/translator-context-auto.mjs .
           node tools/tests/conversation-assist.mjs .
           node tools/tests/addon-menu-routing.mjs .
           node tools/tests/order-menus.mjs .

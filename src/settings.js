@@ -81,7 +81,7 @@ export const DEFAULTS = {
     // 색에 따라 배경에 묻혀 안 읽히는 경우를 위해 — 둘 다 켜도 되고 하나만 켜도 된다. 파라미터는 전체 외곽선 · 글자 그림자와 같은 것들.
     // 3.7.2 다른 CSS: 사용자 설정 › 커스텀 CSS 를 테마가 켜진 동안 꺼 둘지 (내용은 그대로 — 끄면 바로 돌아온다)
     compat: { muteCustomCss: false, preserveExtensionColors: false, extensionColorsOff: [] },
-    fruit: { cards: { on: false, font: true, colors: true, labels: true, size: 16, gap: 12, radius: 12 } },
+    fruit: { cards: { on: false, font: true, colors: true, labels: true, size: 16, gap: 12, radius: 12, layout: 'compact', metadataFold: false } },
     deus: {
         on: false,
         ink: {
@@ -376,7 +376,8 @@ function tidyFlags(s) {
     s.deus.on = flag(s.deus.on, false);
     if (!isObj(s.fruit)) s.fruit = structuredClone(DEFAULTS.fruit);
     if (!isObj(s.fruit.cards)) s.fruit.cards = structuredClone(DEFAULTS.fruit.cards);
-    for (const key of ['on', 'font', 'colors', 'labels']) s.fruit.cards[key] = flag(s.fruit.cards[key], DEFAULTS.fruit.cards[key]);
+    for (const key of ['on', 'font', 'colors', 'labels', 'metadataFold']) s.fruit.cards[key] = flag(s.fruit.cards[key], DEFAULTS.fruit.cards[key]);
+    if (!['compact', 'card', 'title'].includes(s.fruit.cards.layout)) s.fruit.cards.layout = DEFAULTS.fruit.cards.layout;
     for (const [key, min, max] of [['size', 12, 30], ['gap', 4, 24], ['radius', 0, 24]]) {
         const value = Number(s.fruit.cards[key]);
         s.fruit.cards[key] = Number.isFinite(value) ? clampTo(value, [min, max]) : DEFAULTS.fruit.cards[key];

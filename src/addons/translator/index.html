@@ -1,7 +1,7 @@
 <div class="translation_settings llmt-settings">
     <div class="inline-drawer">
         <div class="inline-drawer-toggle inline-drawer-header">
-            <b><i class="fa-solid fa-language"></i> 번역 <span class="llmt-version ext-version">v2.4.8</span></b>
+            <b><i class="fa-solid fa-language"></i> 번역 <span class="llmt-version ext-version">v2.4.9</span></b>
             <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
         </div>
 
@@ -588,10 +588,15 @@
                         <div class="llmt-divider"></div>
 
                         <!-- llmContext 설정 -->
-                        <label class="llmt-label" for="llm_context_message_count_value">{{llmContext}} 메시지 수</label>
-                        <div class="range-block">
-                            <input type="range" id="llm_context_message_count" class="neo-range-slider" min="1" max="20" value="5">
-                            <input type="number" id="llm_context_message_count_value" class="neo-range-input" min="1" max="20"
+                        <label class="llmt-label" for="llm_context_message_mode">참고할 최근 대화</label>
+                        <select id="llm_context_message_mode" class="neo-select">
+                            <option value="manual">개수 지정</option>
+                            <option value="auto">자동 · 현재 컨텍스트</option>
+                        </select>
+                        <small id="llm_context_auto_summary" class="llmt-desc" style="display:none">본채팅의 현재 컨텍스트에 맞춰 요청마다 계산해요.</small>
+                        <div id="llm_context_manual_range" class="range-block">
+                            <input type="range" id="llm_context_message_count" aria-label="참고할 최근 대화 개수" class="neo-range-slider" min="1" max="20" value="5">
+                            <input type="number" id="llm_context_message_count_value" aria-label="참고할 최근 대화 개수" class="neo-range-input" min="1" max="20"
                                 value="5">
                         </div>
                         <label class="checkbox_label llmt-check" for="llm_context_include_user">
@@ -601,7 +606,7 @@
                             <input type="checkbox" id="llm_context_exclude_last" checked><span>{{llmContext}}에서 마지막 메시지 제외 (채팅 번역용)</span>
                         </label>
                         <small class="llmt-desc">
-                            💡 프롬프트에 <code>{{llmContext}}</code>를 입력하면 최근 메시지들이 자동으로 삽입됩니다.<br>
+                            프롬프트의 <code>{{llmContext}}</code>와 보내기 번역의 최근 대화 참고에 함께 적용돼요. 자동은 기본 지시와 응답 길이를 빼고 대화 전체 단위로 골라요.<br>
                             ⚙️ "마지막 메시지 제외"는 채팅 번역에만 적용됩니다 (번역 대상과 중복 방지).
                         </small>
                     </div>

@@ -2,6 +2,7 @@
 import { isPreset, validSettings, validImport, validPromptList, validPresetList, exportPresets, restoreTranslationRows } from './preset-data.js';
 import { createGuards, watchGuard } from './translation-guard.js';
 import { observeEventCompletion } from './render-completion.js';
+import { AUTO_CONTEXT, hasAutoContext, markAutoContext, captureAutoContextGuard, prepareTranslatorAutoContext } from './context-auto.js';
 import { prepareDisplayCards, withDisplayCardsProtected, withoutDisplayCards, displayCardBlocks, matchesDisplayCardStructure } from './display-cards.js';
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
 import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, fixPlaceholderVariants, dropLeftoverPlaceholders as dropProseLeftoverPlaceholders, repairTagPairs as repairProseTagPairs, dropStrayWords as dropProseStrayWords, dropWrapQuotes } from './translation-segments.js';
@@ -31,11 +32,14 @@ import {
     syncMesToSwipe,
     callPopup,
     createRawPrompt,
+    getMaxPromptTokens,
+    getMaxContextTokens,
     amount_gen, // 2026-10-06: 텍스트 완성 응답 길이 (현재 연결 번역 출력 한도)
 } from '../../../../../../../script.js';
 
 import { extension_settings, getContext, saveMetadataDebounced } from '../../../../../../extensions.js';
 import { getStringHash } from '../../../../../../utils.js';               // [1.7.1] 원문 해시 (원문 사본 대신)
+import { countTokensOpenAIAsync, getTokenizerModel } from '../../../../../../tokenizers.js';
 import { power_user } from '../../../../../../power-user.js';           // [1.6.0] 보내기 번역 참고: 페르소나 설명
 import { getWorldInfoPrompt, getSortedEntries } from '../../../../../../world-info.js';   // [1.6.0] 보내기 번역 참고: 월드인포 (건조 실행) · [1.8.4] 용어집: 키워드 뽑기
 import { SECRET_KEYS, secret_state } from '../../../../../../secrets.js';
@@ -223,6 +227,7 @@ const defaultSettings = {
     selected_translation_prompt_id: null,
     selected_translation_prompt: null,
     context_message_count: 5,
+    context_message_auto: false,
     context_include_user: false,
     context_exclude_last: true,
     customPrompts: [],
@@ -479,8 +484,7 @@ function loadSettings() {
     $('#force_sequential_matching').prop('checked', extensionSettings.force_sequential_matching);
 
     // llmContext 설정 로드
-    $('#llm_context_message_count').val(extensionSettings.context_message_count || 5);
-    $('#llm_context_message_count_value').val(extensionSettings.context_message_count || 5);
+    syncContextRangeUI();
     $('#llm_context_include_user').prop('checked', extensionSettings.context_include_user);
     $('#llm_context_exclude_last').prop('checked', extensionSettings.context_exclude_last !== false);
 
@@ -1106,6 +1110,7 @@ function substituteCustomPlaceholders(prompt, isInputTranslation = false) {
         return prompt;
     }
 
+    if (extensionSettings.context_message_auto === true) return markAutoContext(prompt, isInputTranslation);
     const count = extensionSettings.context_message_count || 5;
     const includeUser = extensionSettings.context_include_user || false;
     const excludeLast = extensionSettings.context_exclude_last && !isInputTranslation;
@@ -1135,6 +1140,24 @@ function substituteCustomPlaceholders(prompt, isInputTranslation = false) {
     return prompt.replace(/\{\{llmContext\}\}/g, () => messages);
 }
 
+
+function syncContextRangeUI() {
+    const auto = extensionSettings.context_message_auto === true;
+    $('#llm_context_message_mode').val(auto ? 'auto' : 'manual');
+    $('#llm_context_manual_range').toggle(!auto);
+    $('#llm_context_message_count, #llm_context_message_count_value').val(extensionSettings.context_message_count || 5).prop('disabled', auto);
+    $('#llm_context_auto_summary').toggle(auto).text('본채팅의 현재 컨텍스트에 맞춰 요청마다 계산해요.');
+}
+function autoRequestSignature() {
+    return JSON.stringify([connectionSignature(), activeConnectionFields(getContext()), getTokenizerModel(), getMaxPromptTokens(), getMaxContextTokens(), fallbackOf(extensionSettings)]);
+}
+async function prepareAutoTranslationPayload(payload, overrides = {}, targetContextTokens = null) {
+    return prepareTranslatorAutoContext({ payload, getContext, getSettings: () => extensionSettings,
+        getConnection: autoRequestSignature, getMaxPromptTokens, getMaxContextTokens, countTokensOpenAIAsync,
+        signal: overrides.signal, targetContextTokens,
+        onSelected: result => $('#llm_context_auto_summary').text(`자동 · 최근 ${result.count}개 · 본채팅 입력 예산 ${result.inputBudgetTokens.toLocaleString()}토큰`),
+    });
+}
 
 // [2.2.8] 모델별 요청 규칙은 공용 모듈(src/live-models.js applyModelRequestRules)로 옮겼다 — 번역 · 다시 쓰기 · TTS 가 한 벌을 쓴다.
 // 2026-10 까지의 이름은 예전 규칙과 결과가 같다 (tools/tests/translator-models.mjs).
@@ -1332,6 +1355,7 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
             // 2026-10-06: 텍스트 완성 설정엔 max_new_tokens 가 없어 늘 2048 이었다 — 실리태번 응답 길이(amount_gen)를 따르되 2048 아래로는 안 줄인다
             buildText: (settings, input, limit) => createTextGenGenerationData(settings, getTextGenModel(settings), createRawPrompt(input, 'textgenerationwebui', false, false, '', ''), limit || settings.max_new_tokens || textOutputLimit(), false, false, null, 'quiet'),
             log: globalThis[Symbol.for('st.request-log.v1')],
+            preparePayload: payload => prepareAutoTranslationPayload(payload, overrides, Number(getContext().chatCompletionSettings?.openai_max_context) || null),
         });
         return extractTranslationResult(data, 'profile');
     }
@@ -1448,6 +1472,8 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
         parameters.proxy_password = extensionSettings.reverse_proxy_password;
     }
 
+    const preparedParameters = await prepareAutoTranslationPayload(parameters, overrides);
+    overrides.signal?.throwIfAborted?.();
     let response;
     // [1.8.7] 호출별 제한 시간 (중계 서버 앞의 Cloudflare 는 100초에 524로 끊는다)
     const controller = new AbortController();
@@ -1462,7 +1488,7 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
             method: 'POST',
             headers: { ...getRequestHeaders(), 'Content-Type': 'application/json' },
             requestLog:{caller:'llm-translator-custom',purpose:overrides.requestPurpose||'translation.chat'},
-            body: JSON.stringify(parameters),
+            body: JSON.stringify(preparedParameters),
             signal: controller?.signal,
         });
         responseBody = await response.text();
@@ -1666,14 +1692,16 @@ function activeConnectionFields(c) {
 async function translate(text, options = {}) {
     const chatGuard = guards.capture();
     const connection = connectionSignature();
+    let autoContextGuard = null;
     const watcher = watchGuard(() => {
         chatGuard.assert(); options.assertValid?.();
         if (connectionSignature() !== connection) throw Object.assign(new Error('번역 연결이나 모델 설정이 바뀌어 멈췄어요. 같은 설정으로 다시 번역하면 저장한 문단부터 이어가요.'), { cancelled: true });
     }, 500); // 5.3.4: 100ms → 500ms (매번 연결 설정을 문자열화한다. 단계마다 check() 도 따로 부른다)
     const request = async (prompt, extra = {}) => {
         watcher.check();
+        autoContextGuard?.assert();
         const result = await callLLMAPI(prompt, { signal: watcher.signal, ...extra });
-        watcher.check(); return result;
+        watcher.check(); autoContextGuard?.assert(); return result;
     };
     try {
         if (!text || text.trim() === '') {
@@ -1769,6 +1797,7 @@ async function translate(text, options = {}) {
         
         // 커스텀 플레이스홀더 치환 ({{llmContext}} 등)
         finalPrompt = substituteCustomPlaceholders(finalPrompt, isInputTranslation);
+        if (hasAutoContext(finalPrompt)) autoContextGuard = captureAutoContextGuard(getContext, () => extensionSettings, autoRequestSignature);
 
         // 규칙 프롬프트 로드 (채팅별 메타데이터)
         let rulePrompt = '';
@@ -1779,6 +1808,9 @@ async function translate(text, options = {}) {
             }
         }
 
+        if (!autoContextGuard && extensionSettings.context_message_auto === true && /\{\{llmContext\}\}/.test(rulePrompt + additionalGuidance)) {
+            autoContextGuard = captureAutoContextGuard(getContext, () => extensionSettings, autoRequestSignature);
+        }
         // [1.8.0] 용어집: 원문에 실제로 나오는 항목만 골라 프롬프트 앞에 붙인다 (보내기·입력 번역은 방향을 뒤집어서)
         const glossaryBlock = buildGlossaryBlock(maskedText, { reverse: isInputTranslation });
         const paragraphParts = options.segmentCache && !isInputTranslation && !isRetranslation && !options.noChunks ? segmentParagraphs(maskedText) : null;
@@ -1819,7 +1851,7 @@ async function translate(text, options = {}) {
         // 문단 캐시 · 이어하기 키의 서명: 준비된 프롬프트 전체 대신 연결 · 프롬프트 · 지침 · 용어집(범위 + 항목) 요약 하나 (paragraph-v2)
         const chatCtx = getContext();
         const setupDigest = await checkpointKey(JSON.stringify([connection, finalPrompt, rulePrompt, additionalGuidance, extensionSettings.glossary_enabled === false ? null
-            : [chatCtx?.groupId ?? null, chatCtx?.characters?.[chatCtx?.characterId]?.avatar ?? null, extensionSettings.glossary_entries ?? null], ...(displayCards.count ? ['display-cards-v1'] : [])]));
+            : [chatCtx?.groupId ?? null, chatCtx?.characters?.[chatCtx?.characterId]?.avatar ?? null, extensionSettings.glossary_entries ?? null], ...(displayCards.count ? ['display-cards-v1'] : []), ...(autoContextGuard ? ['auto-context-v1', autoContextGuard.stamp] : [])]));
         const key = chunks.length > 1 ? await checkpointKey(JSON.stringify([setupDigest, text])) : '';
         watcher.check();
         // 5.4.2: 번역문 삭제 — 이 글의 문단 캐시 · 이어하기 줄만 지우고 요청은 하지 않는다 (키는 번역할 때와 같은 재료로)
@@ -2139,9 +2171,9 @@ async function translate(text, options = {}) {
             translatedText = tagFixed;
         }
 
-        watcher.check();
+        watcher.check(); autoContextGuard?.assert();
         if (checkpointComplete) await clearCheckpoints(key);
-        watcher.check();
+        watcher.check(); autoContextGuard?.assert();
         return translatedText;
 
     } catch (error) {
@@ -3474,6 +3506,7 @@ function bindSendButton(btn) {
 async function buildSendReference(text) {
     const s = extensionSettings;
     const ctx = getContext();
+    const referenceGuard = s.context_message_auto === true ? captureAutoContextGuard(getContext, () => extensionSettings, autoRequestSignature) : null;
     const parts = [];
     const clip = (value, max = 1500) => { const t = String(value || '').trim(); return t.length > max ? `${t.slice(0, max)}…` : t; };
     if (s.send_ctx_persona) {
@@ -3496,7 +3529,8 @@ async function buildSendReference(text) {
         if (note.trim()) parts.push(`<authors_note>\n${clip(note)}\n</authors_note>`);
     }
     const count = Math.max(1, Number(s.context_message_count) || 5);
-    const recent = (ctx.chat || []).slice(-count - 1, -1).filter(m => m && !m.is_system); // 방금 보낸 것은 뺌
+    const recentSource = (s.context_message_auto === true ? (ctx.chat || []).slice(0, -1) : (ctx.chat || []).slice(-count - 1, -1)).filter(m => m && !m.is_system); // 방금 보낸 것은 뺌
+    const recent = s.context_message_auto === true ? recentSource.map(m => ({ name: m.name, mes: m.mes })) : recentSource;
     if (s.send_ctx_wi) {
         try {
             // 실리태번이 프롬프트를 만들 때와 같은 식으로 최근 글(새 글 포함)을 훑어 걸리는 월드인포만 (건조 실행: 부작용 없음)
@@ -3507,7 +3541,10 @@ async function buildSendReference(text) {
             console.warn('[LLM Translator] 월드인포 참고 정보를 못 만들었어요:', error);
         }
     }
-    if (s.send_ctx_history && recent.length) {
+    referenceGuard?.assert();
+    if (s.send_ctx_history && s.context_message_auto === true) {
+        parts.push(`<recent_chat>\n${AUTO_CONTEXT.send}\n</recent_chat>`);
+    } else if (s.send_ctx_history && recent.length) {
         parts.push(`<recent_chat>\n${recent.map(m => `${m.name}: ${clip(m.mes, 600)}`).join('\n\n')}\n</recent_chat>`);
     }
     if (!parts.length) return '';
@@ -4946,6 +4983,12 @@ function initializeEventHandlers() {
         autoRefreshModels();
     });
 
+    // Keep the saved manual count when switching to automatic selection.
+    $('#llm_context_message_mode').on('change', function () {
+        extensionSettings.context_message_auto = $(this).val() === 'auto';
+        syncContextRangeUI();
+        saveSettingsDebounced();
+    });
     // llmContext 슬라이더/체크박스 이벤트 핸들러
     $('#llm_context_message_count').on('input', function () {
         const value = $(this).val();

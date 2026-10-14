@@ -59,6 +59,17 @@ await test('same-preset external cache change during save is preserved and repor
 await test('same-preset live edit during save is never overwritten',async()=>{const f=fixture();f.setSave(()=>{f.live.prompts[3].content='external edit';});assert.equal((await f.controller.change(toggle.id,true)).state,'conflict');assert.equal(f.live.prompts[3].content,'external edit');assert.equal(order(f.live).find(x=>x.identifier===toggle.id).enabled,false);assert.equal(f.publishCount,0);});
 await test('stop before write cancels request, stop during write does not apply live',async()=>{let f=fixture();let p=f.controller.change(toggle.id,true);f.controller.stop();await assert.rejects(p);assert.equal(f.writes.length,0);f=fixture();f.setSave(()=>f.controller.stop());assert.equal((await f.controller.change(toggle.id,true)).state,'switched');assert.equal(f.publishCount,0);});
 await test('idle polling never reads large prompt content after initial validation',()=>{const f=fixture();let reads=0;for(const p of [f.saved,f.live])Object.defineProperty(p.prompts[1],'content',{enumerable:true,get(){reads++;return 'x'.repeat(100000);}});f.controller.read();const initial=reads;assert.ok(initial>0);for(let i=0;i<20;i++)f.controller.read(false);assert.equal(reads,initial);f.controller.read(true);assert.ok(reads>initial);});
+
+await test('own pending save keeps target identity through a temporary prompt refresh',async()=>{
+ const f=fixture(),prompts=f.live.prompts;f.setSave(async()=>{f.live.prompts=[];assert.equal(f.controller.isAvailable(),false);assert.equal(f.controller.isPendingTarget(),true);await Promise.resolve();f.live.prompts=prompts;});
+ assert.equal((await f.controller.change(toggle.id,true)).state,'saved');assert.equal(f.controller.isPendingTarget(),false);assert.equal(f.controller.isAvailable(),true);
+});
+await test('external preset switches are never treated as the pending saved target',async()=>{
+ const f=fixture();f.setSave(()=>{assert.equal(f.controller.isPendingTarget(),true);f.switch();assert.equal(f.controller.isPendingTarget(),false);});assert.equal((await f.controller.change(toggle.id,true)).state,'switched');
+});
+await test('failed saves clear pending identity before retry',async()=>{
+ const f=fixture();f.setSave(()=>{assert.equal(f.controller.isPendingTarget(),true);throw Error('offline');});await assert.rejects(f.controller.change(toggle.id,true));assert.equal(f.controller.isPendingTarget(),false);f.setSave(null);assert.equal((await f.controller.change(toggle.id,true)).state,'saved');
+});
 await test('UI entry, cleanup, explicit save and no model/network generation contracts',()=>{
  assert.ok(bundled.includes('__blueLemonadeDeusQuick_v1'));assert.ok(bundled.includes('BlueLemonade.onCleanup(stop)'));assert.ok(bundled.includes('skipUpdate:true'));assert.ok(bundled.includes("setAttribute('aria-modal','false')"));assert.ok(!/generateRaw|generateQuietPrompt|fetch\(|executeSlashCommands|replacePreset\(/.test(bundled));
 });

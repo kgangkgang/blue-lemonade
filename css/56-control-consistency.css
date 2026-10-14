@@ -1,6 +1,36 @@
 /* ===== css/56-control-consistency.css =====
    설정 조작의 크기와 상태를 통일한다. 채팅 본문과 사용자 선택 밀도는 유지한다.
    ===== */
+/* Small help glyphs follow their label; the transparent target remains easy to tap.
+   Exact help selectors only: ordinary action buttons and dialog illustrations keep their sizes. */
+html body.salty :is(.bl-word-help,.bl-wi-help,.blzi .blzi-help,.bwr_settings .bwr_help,.lv-help-btn,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button) {
+  align-items:center!important; justify-content:center!important;
+  position:relative; flex:0 0 auto!important; box-sizing:border-box!important;
+  width:max(24px,1em)!important; min-width:max(24px,1em)!important; max-width:none!important;
+  height:max(24px,1em)!important; min-height:max(24px,1em)!important; max-height:none!important;
+  margin:0 0 0 4px!important; padding:0!important; border:0!important; border-radius:6px!important;
+  background:transparent!important; box-shadow:none!important; font:inherit!important; line-height:1!important;
+  vertical-align:middle!important; text-indent:0!important;
+}
+html body.salty :is(.bl-word-help,.blzi .blzi-help,.bwr_settings .bwr_help,.lv-help-btn,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button) { display:inline-flex!important; }
+html body.salty :is(.bl-word-help,.bl-wi-help,.blzi .blzi-help,.bwr_settings .bwr_help,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button) {
+  color:transparent!important;
+}
+html body.salty :is(.bl-word-help,.bl-wi-help,.blzi .blzi-help,.bwr_settings .bwr_help,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)::after {
+  content:''; display:block; position:absolute; width:1em; height:1em;
+  background:var(--salty-accent,currentColor); mask:var(--salty-mi-help) center/contain no-repeat;
+  pointer-events:none;
+}
+html body.salty .bl-wi-help::before { content:none; }
+html body.salty :is(.bl-word-help,.bl-wi-help,.blzi .blzi-help,.bwr_settings .bwr_help,.lv-help-btn,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)[hidden],
+html body.salty.salty-help-off .bl-wi-help { display:none!important; }
+html body.salty :is(.lv-help-btn) > i { width:1em!important; height:1em!important; font-size:1em!important; line-height:1!important; }
+html body.salty :is(.bl-word-help,.bl-wi-help,.blzi-help,.bwr_help,.lv-help-btn,.lvs-help-button):focus-visible { outline:2px solid var(--salty-accent)!important; outline-offset:2px!important; }
+html body.salty #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark {
+  position:relative; width:1em; height:1em; min-width:1em; flex:none; border:0;
+  background:var(--salty-accent,currentColor); mask:var(--salty-mi-help) center/contain no-repeat;
+  font:inherit; color:transparent;
+}
 .salty-panel {
   --bl-settings-control: 34px;
   --bl-settings-chip: 32px;
