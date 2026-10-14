@@ -1,13 +1,25 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.4.9/blue-lemonade-6.4.9.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.5.0/blue-lemonade-6.5.0.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.4.9 · 최신 업데이트</summary>
+<summary>6.5.0 · 최신 업데이트</summary>
+
+- 테마 설정창의 과일·데우스 항목을 기존 설정창 모습에 맞추고, 과일 빠른 설정의 여백·줄바꿈·아이콘 정렬을 다듬었어요.
+- 과일과 데우스의 ? 도움말에서 현재 탭의 사용법을 볼 수 있어요. 데우스 탭은 낮은 한 줄로 줄이고, 연결된 프리셋에서만 입력창 옆에 표시해요.
+- 프롬프트 → 과일에서 상태 카드의 글꼴·색·크기·여백을 꾸밀 수 있어요. 처음에는 꺼져 있고, 끄면 원래 모습으로 돌아가요.
+- 자동 번역이 답변의 화면 후처리보다 먼저 시작해 중단되던 경우를 고쳤어요. 저장된 다른 답변으로 넘길 때도 완료 시점을 기다려요.
+- 과일·데우스의 알려진 상태 카드에서는 보이는 글을 번역하고, 표시 구조와 코드·필드 이름은 보존해요. 항목이 빠진 응답은 완료로 저장하지 않아요.
+- 애드온 버전: LLM 번역 2.4.8
+
+</details>
+
+<details>
+<summary>6.4.9 · 과일 꾸미기 · 데우스 빠른 설정</summary>
 
 - 프롬프트 메뉴에서 데우스 엑스 마키나와 과일을 나란히 찾을 수 있어요. 각 페이지에서 이름 한글화와 빠른 설정·꾸미기를 켜고, 과일 원문과 코드 출처도 열 수 있어요.
 - 과일의 마음 꾸미기를 켜면 블루레몬에이드의 글꼴과 색을 따르고, LLM 번역기와 같은 카드·탭·버튼 간격으로 보여요. 제목과 설명·설정칸을 위아래로 정리해 좁은 화면에서도 읽기 편하고, 끄면 원래 디자인으로 돌아가요.

@@ -5,6 +5,7 @@ import { MARKDOWN_CONTROLS, MARKDOWN_TUNING } from './markdown.js';
 const rows = [
  ['prompt','deus','데우스 빠른 설정','데우스 2.5 QR 퀵리플라이 옵션 프리셋 토글 선택 한글화'],
  ['prompt','fruit','과일','과일의 마음 QR 퀵리플라이 꾸미기 스크립트 글꼴 줄바꿈 버튼 한글화 출처'],
+ ['prompt','fruit','과일 상태 카드 디자인','과일 상태창 머리말 제목 카드 글꼴 크기 색 여백 모서리 날짜 시간 고정 안내 한글','상태 카드 디자인'],
  ['extensions','tts','TTS','음성 읽기 목소리 API 감정 대사 재생 색깔 밑줄 확장 탭 설정 표시 요술봉 MiniMax OpenAI ElevenLabs Gemini Azure'],
  ['extensions','prompt','한글화 패널','실리태번 헬퍼 데우스 샤진 거문고 한글화 프리셋 월드인포 봇카드 정규식 번역 제목 검색 사용방법'],
  ['chat','etc','펼친 카드 아래에 접기 버튼','삼각형 접기 카드 아래 접기','', 'chat.triangleFold'],

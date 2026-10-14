@@ -205,6 +205,6 @@ assert.ok(performance.now()-t0<1000,'긴 줄');
 // 연결: 새 번역 · 캐시 · 저장된 번역 다시 보여 주기 · 북마크 창이 모두 지나는 tidyGlossaryOutput 에서
 const idx645=(await import('node:fs')).readFileSync(new URL('src/addons/translator/index.js',root),'utf8');
 assert.ok(/const cleaned = dropDanglingOpenQuote\(dropWrapQuotes\(output, source\), source\);/.test(idx645),'tidyGlossaryOutput');
-assert.ok(/repairTagPairs, dropStrayWords, dropWrapQuotes \} from '\.\/translation-segments\.js';/.test(idx645),'import');
+assert.ok(/repairTagPairs as repairProseTagPairs, dropStrayWords as dropProseStrayWords, dropWrapQuotes \} from '\.\/translation-segments\.js';/.test(idx645),'import');
 console.log('PASS 6.4.5 a translated line wrapped whole in 「」 loses the wrap only when its source line has no quotes');
 }

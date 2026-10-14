@@ -88,6 +88,8 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     // 4.7.1: 고정한 버튼이 없어도 길게 눌러 꺼내는 손짓은 있어야 하므로 테마가 켜져 있으면 늘 부른다
     if (on || modules.mespins) load('mespins', './mes-pins.js').then(m => m?.syncMesPins(pins, s.chat.mesPins, on));
     // 데우스 감정 대사: 프리셋 정규식이 못 받는 「…」 대사를 화면에서 감싼다 (dem-expressive.js)
+    const fruitCards = on && !!s.fruit?.cards?.on;
+    if (fruitCards || modules.fruitcards) load('fruitcards', './fruit-cards.js').then(m => m?.syncFruitCards(fruitCards, s.fruit?.cards));
     const demfx = on && !!s.deus?.on && !!s.deus?.fx?.on;
     if (demfx || modules.demfx) load('demfx', './dem-expressive.js').then(m => m?.syncDemExpressive(demfx));
     const dem = on && !!s.deus?.on && !!s.chat?.demSkin;

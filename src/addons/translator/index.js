@@ -1,8 +1,10 @@
 // Modified 2026-09-24: Blue Lemonade bundled adapter; original settings and translation DB retained.
 import { isPreset, validSettings, validImport, validPromptList, validPresetList, exportPresets, restoreTranslationRows } from './preset-data.js';
 import { createGuards, watchGuard } from './translation-guard.js';
+import { observeEventCompletion } from './render-completion.js';
+import { prepareDisplayCards, withDisplayCardsProtected, withoutDisplayCards, displayCardBlocks, matchesDisplayCardStructure } from './display-cards.js';
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
-import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, fixPlaceholderVariants, dropLeftoverPlaceholders, repairTagPairs, dropStrayWords, dropWrapQuotes } from './translation-segments.js';
+import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, fixPlaceholderVariants, dropLeftoverPlaceholders as dropProseLeftoverPlaceholders, repairTagPairs as repairProseTagPairs, dropStrayWords as dropProseStrayWords, dropWrapQuotes } from './translation-segments.js';
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
 import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey, glossaryLinesFor, enforceGlossaryNames, dropDanglingOpenQuote } from './glossary-match.js';
@@ -1699,10 +1701,19 @@ async function translate(text, options = {}) {
             });
         });
 
+        // Keep card keys/markup local and send only their visible values after explicit user protection.
+        const displayCards = prepareDisplayCards(maskedText, {
+            isRetranslation: options.isRetranslation === true,
+            protectionValue(token) { const match = token.match(/^\[\[__VAR_(\d+)__\]\]$/); return match ? protectedBlocks[Number(match[1])] : undefined; },
+            reserve(block) { const token = createPlaceholder(protectedBlocks.length); protectedBlocks.push(block); return token; },
+        });
+        maskedText = displayCards.text;
+
         let compareText = options.checkSource ?? maskedText;
         if (options.checkSource !== undefined) {
             let index = 0;
             for (const regex of regexes) compareText = compareText.replace(regex, () => createPlaceholder(index++));
+            compareText = displayCards.compare(compareText);
         }
 
         // [디버그: 마스킹 추적] 원문에서 기대하는 마스킹 개수 저장
@@ -1769,7 +1780,7 @@ async function translate(text, options = {}) {
         }
 
         // [1.8.0] 용어집: 원문에 실제로 나오는 항목만 골라 프롬프트 앞에 붙인다 (보내기·입력 번역은 방향을 뒤집어서)
-        const glossaryBlock = buildGlossaryBlock(text, { reverse: isInputTranslation });
+        const glossaryBlock = buildGlossaryBlock(maskedText, { reverse: isInputTranslation });
         const paragraphParts = options.segmentCache && !isInputTranslation && !isRetranslation && !options.noChunks ? segmentParagraphs(maskedText) : null;
 
         // [2.0.4] 배치 0 = 예전 그대로. 1 · 2 는 입력 필터에 막혔을 때만 쓰는 다시 보내기용 (내용은 같고 순서 · 머리말만 다르다)
@@ -1808,7 +1819,7 @@ async function translate(text, options = {}) {
         // 문단 캐시 · 이어하기 키의 서명: 준비된 프롬프트 전체 대신 연결 · 프롬프트 · 지침 · 용어집(범위 + 항목) 요약 하나 (paragraph-v2)
         const chatCtx = getContext();
         const setupDigest = await checkpointKey(JSON.stringify([connection, finalPrompt, rulePrompt, additionalGuidance, extensionSettings.glossary_enabled === false ? null
-            : [chatCtx?.groupId ?? null, chatCtx?.characters?.[chatCtx?.characterId]?.avatar ?? null, extensionSettings.glossary_entries ?? null]]));
+            : [chatCtx?.groupId ?? null, chatCtx?.characters?.[chatCtx?.characterId]?.avatar ?? null, extensionSettings.glossary_entries ?? null], ...(displayCards.count ? ['display-cards-v1'] : [])]));
         const key = chunks.length > 1 ? await checkpointKey(JSON.stringify([setupDigest, text])) : '';
         watcher.check();
         // 5.4.2: 번역문 삭제 — 이 글의 문단 캐시 · 이어하기 줄만 지우고 요청은 하지 않는다 (키는 번역할 때와 같은 재료로)
@@ -1885,7 +1896,11 @@ async function translate(text, options = {}) {
         let checkpointComplete = false;
         const runChunks = async () => {
             const result = await translateChunks({ key, chunks, check: watcher.check, progress,
-                request: async body => restoreParagraphBreaks(body, await callWithLayouts(body, PROMPT_LAYOUTS.slice(0, 2))), blockedMarker: BLOCKED_CHUNK_MARK });
+                request: async body => {
+                    const out = restoreParagraphBreaks(body, await callWithLayouts(body, PROMPT_LAYOUTS.slice(0, 2)));
+                    if (!displayCards.cacheable(body, out)) throw Object.assign(new Error('상태 카드의 번역 항목이 빠지거나 구조가 달라 원문을 유지했어요. 다시 번역해 주세요.'), { format: true, structuredCard: true });
+                    return out;
+                }, blockedMarker: BLOCKED_CHUNK_MARK });
             if (report) { report.partial = result.blocked > 0; report.blockedChunks = result.blocked; report.chunks = result.total; }
             checkpointComplete = result.blocked === 0;
             return result.text;
@@ -1905,6 +1920,7 @@ async function translate(text, options = {}) {
                 cacheable: (body, out) => {
                     const marks = value => JSON.stringify(value.match(/\[\[__VAR_\d+__\]\]/g) || []);
                     // 5.3.4: 묶음 중 한 문단만 거절문으로 온 경우도 30일 캐시에 넣지 않는다
+                    if (!displayCards.cacheable(body, out)) return false;
                     return marks(body) === marks(out) && !linesToFix(out, body, glossaryHanKeep(), [], { english: false }).length && !looksLikeRefusal(body, out) && !noCache.has(body);   // 6.4.2 원문 한자가 남은 문단도 캐시에 안 넣는다 · 6.4.3 다시 보낸 뒤 영어 낱말만 남은 문단은 넣는다 (다시 번역할 때마다 또 사지 않게)
                 },
                 request: async bodies => {
@@ -2095,6 +2111,10 @@ async function translate(text, options = {}) {
                 console.warn(`[LLM Translator] 모델이 빠뜨린 보호 블록 ${dropped.length}개를 제자리에 되돌렸어요 (이 번역은 캐시하지 않아요)`);
             }
         }
+
+        // Validate every display field before restoring exact original card structure.
+        // A malformed card reply fails before anything is persisted or shown.
+        translatedText = displayCards.restore(translatedText);
 
         // [신규 기능 유지] 2차 수리: 번역 후 보호된 텍스트 복구 (Unmasking)
         // [1.9.2] 뒤 번호부터 되돌린다: 나중 정규식이 앞서 가린 자리표시자를 품은 블록을 가리면(예: 사용자 <status>…</status> 안의 <think>)
@@ -2464,10 +2484,22 @@ function publishArchiveReady(message, sourceText, chatId, type) {
  */
 function tidyGlossaryOutput(source, output) {
     if (typeof output !== 'string' || output.includes('class="original_text')) return output;
-    const cleaned = dropDanglingOpenQuote(dropWrapQuotes(output, source), source);   // 6.4.5 원문 줄엔 꺾쇠가 없는데 번역문 줄만 통째로 감싼 「」
-    if (extensionSettings.glossary_enabled === false) return cleaned;
-    const { entries, names } = tidyContext ?? glossaryTidyContext();
-    return enforceGlossaryNames(entries, source, cleaned, { names });
+    return withDisplayCardsProtected(output, output => {
+        const cleaned = dropDanglingOpenQuote(dropWrapQuotes(output, source), source);   // 6.4.5 원문 줄엔 꺾쇠가 없는데 번역문 줄만 통째로 감싼 「」
+        if (extensionSettings.glossary_enabled === false) return cleaned;
+        const { entries, names } = tidyContext ?? glossaryTidyContext();
+        return enforceGlossaryNames(entries, source, cleaned, { names });
+    });
+}
+// Once restored, card keys, code and values must not enter later prose cleanup or cache repair.
+function dropStrayWords(output, source) {
+    return withDisplayCardsProtected(output, value => dropProseStrayWords(value, withoutDisplayCards(source)));
+}
+function dropLeftoverPlaceholders(output, source) {
+    return withDisplayCardsProtected(output, value => dropProseLeftoverPlaceholders(value, withoutDisplayCards(source)));
+}
+function repairTagPairs(source, output) {
+    return withDisplayCardsProtected(output, value => repairProseTagPairs(withoutDisplayCards(source), value));
 }
 /** 용어집 항목 · 내 캐릭터 · 지금 캐릭터 이름 — 채팅을 열 때 메시지마다 다시 만들지 않게 repairShownTranslations 가 한 번 만들어 둔다 */
 let tidyContext = null;
@@ -2590,7 +2622,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
             //         해시가 있는데 다르면 옛 글의 번역이니 캐시에 있어도 새로 붙인다. 해시가 없는 예전 메시지만 예전처럼 DB 로 본다.
             const hash = message.extra.original_text_hash;
             if (hash) {
-                shouldTranslate = hash !== originalHashOf(originalText) || looksLikeRefusal(originalText, message.extra.display_text);
+                shouldTranslate = hash !== originalHashOf(originalText) || looksLikeRefusal(originalText, message.extra.display_text) || (message.extra.translation_edited !== hash && !matchesDisplayCardStructure(originalText, message.extra.display_text));
             } else {
                 // DB에서 현재 원문에 대한 번역이 있는지 확인
                 const cachedForCurrentText = await readCachedTranslation(originalText);
@@ -3736,8 +3768,12 @@ function createEventHandler(translateFunction, shouldTranslateFunction) {
                     console.debug('[LLM Translator] 대기 중에 채팅이 바뀌어 번역을 건너뜀', task.args);
                     return;
                 }
-                if (started++ && gap) await new Promise(resolve => setTimeout(resolve, gap));
-                await task.func(id);
+                if (started && gap) await new Promise(resolve => setTimeout(resolve, gap));
+                // The chat, swipe or index may change during the throttle wait as well.
+                const currentId = resolveQueuedTarget(task.args, task.ref);
+                if (currentId === null) return;
+                started++;
+                await task.func(currentId);
             };
 
             if (currentBatch.length === 0) return;
@@ -3859,6 +3895,54 @@ function translateOutgoingMessage(messageId) {
     });
 }
 
+// A rendered event awaits extension postprocessors. A timer started by its first listener
+// can expire before those handlers finish. Capture the final text only after the dispatch settles.
+const autoRenderSwipes = new WeakMap();
+let stopAutoRenderCompletion = null;
+function installAutoRenderCompletion() {
+    stopAutoRenderCompletion?.();
+    const pending = new WeakMap();
+    stopAutoRenderCompletion = observeEventCompletion(eventSource, (type, messageId) => {
+        const swipe = type === event_types.MESSAGE_SWIPED;
+        const incoming = type === event_types.CHARACTER_MESSAGE_RENDERED || swipe;
+        const outgoing = type === event_types.USER_MESSAGE_RENDERED;
+        if (!incoming && !outgoing) return;
+        const context = getContext(), message = context.chat?.[messageId];
+        if (!message) return;
+        // Advance before listeners run so renders nested in a swipe share its completion group.
+        if (swipe) autoRenderSwipes.set(message, (autoRenderSwipes.get(message) || 0) + 1);
+        if (!shouldTranslate(incoming ? incomingTypes : outgoingTypes)) return;
+        let job = pending.get(message);
+        if (!job || !job.chatGuard.valid() || job.swipe !== message.swipe_id ||
+            job.swipeRevision !== autoRenderSwipes.get(message)) {
+            job = { chatGuard: guards.capture(), swipe: message.swipe_id,
+                swipeRevision: autoRenderSwipes.get(message), depth: 0, failed: false, onlySwipe: swipe,
+                handler: incoming ? handleIncomingMessage : handleOutgoingMessage };
+            pending.set(message, job);
+        }
+        job.onlySwipe &&= swipe;
+        job.depth++;
+        return success => {
+            job.failed ||= !success;
+            if (--job.depth || pending.get(message) !== job) return;
+            pending.delete(message);
+            const chat = getContext().chat, id = chat?.indexOf(message) ?? -1;
+            if (job.failed || !job.chatGuard.valid() || id < 0 || message.swipe_id !== job.swipe ||
+                autoRenderSwipes.get(message) !== job.swipeRevision) return;
+            if (job.onlySwipe && hasCurrentSwipeTranslation(message)) return;
+            // This begins the existing strict queue/edit/display guard on the completed text.
+            job.handler(id);
+        };
+    }, error => console.warn('[LLM Translator] Render completion observer failed', error));
+}
+
+function hasCurrentSwipeTranslation(message) {
+    if (!message?.extra?.display_text) return false;
+    const context = getContext();
+    const current = substituteParams(message.mes, context.name1, message.name);
+    return message.extra.original_text_hash === originalHashOf(current) && !looksLikeRefusal(current, message.extra.display_text) && (message.extra.translation_edited === message.extra.original_text_hash || matchesDisplayCardStructure(current, message.extra.display_text));
+}
+
 // [변경] 이벤트 핸들러들 - 모드에 따라 incoming/outgoing 그룹 적용
 const handleIncomingMessage = createEventHandler(translateIncomingMessage, () => shouldTranslate(incomingTypes));
 const handleOutgoingMessage = createEventHandler(translateOutgoingMessage, () => shouldTranslate(outgoingTypes));
@@ -3882,7 +3966,7 @@ async function localOrDisplayedTranslation(message, originalText) {
     if (message?.extra?.original_text_hash !== originalHashOf(originalText)) return null;
     const displayed = message.extra.original_translation_backup || message.extra.display_text;
     // 6.1.8 그림 자리 같은 보호 블록은 HTML 로 치지 않는다 — '사용 안 함' 보기의 번역문에 그림 자리가 있다고 교정 재번역 · 다른 기기에서 다시(유료) 번역하지 않게
-    if (typeof displayed !== 'string' || !displayed.trim() || displayed === originalText || FOLD_MARKUP.test(displayed) || /<[a-z][\s\S]*>/i.test(withoutProtectedBlocks(displayed))) return null;
+    if (typeof displayed !== 'string' || !displayed.trim() || displayed === originalText || !matchesDisplayCardStructure(originalText, displayed) || FOLD_MARKUP.test(displayed) || /<[a-z][\s\S]*>/i.test(withoutProtectedBlocks(displayed))) return null;
     return displayed;
 }
 function migrateOriginalCopies(chat) {
@@ -5028,8 +5112,7 @@ function initializeEventHandlers() {
     // ===== SillyTavern 기본 번역 로직 채택 =====
 
     // 이벤트 핸들러 등록 (SillyTavern 스타일)
-    eventSource.makeFirst(event_types.CHARACTER_MESSAGE_RENDERED, handleIncomingMessage);
-    eventSource.makeFirst(event_types.USER_MESSAGE_RENDERED, handleOutgoingMessage);
+    installAutoRenderCompletion();
     eventSource.on(event_types.MESSAGE_SWIPED, (messageId) => {
         // 스와이프시 이전 번역 진행 상태 정리
         if (translationInProgress[messageId]) {
@@ -5042,8 +5125,7 @@ function initializeEventHandlers() {
         if (message?.extra?.display_text) {
             // [1.9.2] 이미 번역한 스와이프로 돌아오면 실리태번이 그 스와이프의 번역문(과 해시)을 되살린다. 지금 글의 것이면 그대로 둔다.
             //         예전에는 지워서 자동 번역을 끈 채팅에선 번역이 사라지고(화면엔 남아 저장본과 달랐다), 켠 채팅에선 이 기기 DB 에 없으면 API 를 다시 불렀다.
-            const current = substituteParams(message.mes, context.name1, message.name);
-            if (message.extra.original_text_hash === originalHashOf(current) && !looksLikeRefusal(current, message.extra.display_text)) {
+            if (hasCurrentSwipeTranslation(message)) {
                 $(`#chat .mes[mesid="${messageId}"] .mes_text`).removeData('showing-original'); // 원문 보기 여부는 그 스와이프의 백업으로 판단
                 setTimeout(() => { if (getContext().chat?.[messageId] === message) repairShownTranslation(Number(messageId), message); }, 0); // 6.2.1 그 스와이프의 번역문 태그 짝
                 return;
@@ -5056,7 +5138,7 @@ function initializeEventHandlers() {
             textBlock.removeData('showing-original');
         }
 
-        handleIncomingMessage(messageId);
+        // Automatic translation is queued by installAutoRenderCompletion after every swipe listener finishes.
     });
     eventSource.on(event_types.MESSAGE_UPDATED, handleMessageEdit);
 
@@ -5664,7 +5746,7 @@ async function getTranslationFromDB(originalText) {
             //         뒤에 넣은 좋은 번역이 있어도 '없음' 이었다
             const records = event.target.result || [];
             // 5.4.1: 원문 되풀이가 섞인 번역(원문+화살표+번역 · ⟦n] 표시)도 없는 셈 친다 — 다시 번역하면 새로 받는다
-            const record = records.reverse().find(item => !looksLikeRefusal(originalText, item.translation) && !hasSourceEcho(originalText, item.translation));
+            const record = records.reverse().find(item => !looksLikeRefusal(originalText, item.translation) && !hasSourceEcho(originalText, item.translation) && matchesDisplayCardStructure(originalText, item.translation));
             resolve(record ? record.translation : null);
         };
         request.onerror = (e) => {
@@ -6761,7 +6843,7 @@ function isProtectedBlock(text, regexes = protectedBlockRegexes()) {
 }
 /** 보호 블록을 뺀 글 — 'HTML 이면 거절' 검사가 그림 자리 때문에 번역을 버리지 않게 */
 function withoutProtectedBlocks(text, regexes = protectedBlockRegexes()) {
-    let value = String(text ?? '');
+    let value = withoutDisplayCards(String(text ?? ''));
     for (const regex of regexes) value = value.replace(regex, '');
     return value;
 }
@@ -6874,15 +6956,19 @@ export function processTranslationText(originalText, translatedText, options = {
         originalText = String(originalText ?? '').replace(/\r\n?/g, '\n');
         translatedText = String(translatedText ?? '').replace(/\r\n?/g, '\n');
         // 2026-10-06: 줄을 넘는 *기울임* · **굵게** 는 줄마다 닫고 다시 연다 — 줄마다 따로 감싸면 짝이 감싸개 사이에서 끊겨 강조가 사라졌다 (줄 수는 그대로)
-        originalText = splitCrossLineEmphasis(originalText);
-        translatedText = splitCrossLineEmphasis(translatedText);
+        originalText = withDisplayCardsProtected(originalText, splitCrossLineEmphasis);
+        translatedText = withDisplayCardsProtected(translatedText, splitCrossLineEmphasis);
         const origData = applyIsolation(originalText, 'ORIG');
         const transData = applyIsolation(translatedText, 'TRANS');
         // 6.1.8 보호 블록(그림 자리 같은 것)은 번역문 쪽에만 — 번역문에도 있는 블록은 원문 쪽 사본에서 지운다.
         //       줄 가운데의 블록이 접힌 원문 칸에 한 번 더, 문단 수가 달라 통째로 보일 때(renderAllInOne)는 원문 전체에 한 번 더 그려졌다.
         //       (원문 쪽 줄 수는 그대로: 블록만 있던 줄은 원래도 원문 줄 목록에서 빠진다)
         const keepRules = protectedBlockRegexes(), transBlocks = new Set(Object.values(transData.map));
-        const origOnce = Object.keys(origData.map).filter(token => transBlocks.has(origData.map[token]) && isProtectedBlock(origData.map[token], keepRules));
+        const origCards = Object.keys(origData.map).filter(token => token.startsWith('__MASK_CARD_'));
+        const transCards = Object.keys(transData.map).filter(token => token.startsWith('__MASK_CARD_'));
+        const cardKind = value => value.match(/^<([^\s/>]+)/)?.[1]?.toLowerCase() || 'legacy';
+        const sameCards = origCards.length === transCards.length && origCards.every((token, i) => cardKind(origData.map[token]) === cardKind(transData.map[transCards[i]]));
+        const origOnce = Object.keys(origData.map).filter(token => (sameCards && origCards.includes(token)) || (transBlocks.has(origData.map[token]) && isProtectedBlock(origData.map[token], keepRules)));
         if (origOnce.length) origData.maskedText = dropTokens(origData.maskedText, origOnce);
 
         // 2. 구조 분석 (Phase 2: Structure Analysis)
@@ -6942,6 +7028,13 @@ function applyIsolation(text, source) {
         maskCounter++;
         return token;
     });
+
+    // Card templates render once on the translated side; never wrap their field lines in fold spans.
+    for (const block of displayCardBlocks(currentText)) {
+        const token = `__MASK_CARD_${source}_${maskCounter++}__`;
+        map[token] = block;
+        currentText = currentText.replace(block, () => token);
+    }
 
     // 1. Combined(번역보호) -> 2. NoFold(접기보호) 순서로 처리
     const regexGroups = [

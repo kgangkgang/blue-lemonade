@@ -99,6 +99,9 @@ jobs:
           node tools/tests/translation-segments.mjs .
           node tools/tests/translation-display.mjs .
           node tools/tests/translator-protect.mjs .
+          node tools/tests/translator-auto-render.mjs .
+          node tools/tests/translation-cards.mjs .
+          node tools/tests/translator-cards-integration.mjs .
           node tools/tests/conversation-assist.mjs .
           node tools/tests/addon-menu-routing.mjs .
           node tools/tests/order-menus.mjs .

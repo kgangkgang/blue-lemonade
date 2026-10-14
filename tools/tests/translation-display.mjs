@@ -23,7 +23,8 @@ function cut(name) {
 }
 const names = ['processTranslationText', 'applyIsolation', 'analyzeStructure', 'extractPureText', 'renderTranslation', 'renderAllInOne', 'renderInterleaved', 'createDetailsTag', 'restoreContent', 'runtimeRegexes', 'protectedBlockRegexes', 'isProtectedBlock'];
 const segments = pathToFileURL(path.join(dev, 'src/addons/translator/translation-segments.js')).href;
-const module = `import { splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, dropTokens } from ${JSON.stringify(segments)};
+const module = `import { withDisplayCardsProtected, displayCardBlocks } from ${JSON.stringify(pathToFileURL(path.join(dev, 'src/addons/translator/display-cards.js')).href)};
+import { splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, dropTokens } from ${JSON.stringify(segments)};
 const extensionSettings = { translation_display_mode: 'folded', force_sequential_matching: false };
 const window = {}, toastr = { error() {}, warning() {} };
 const correctBackticks = input => input, getCombinedRegexes = () => [], getNoFoldRegexes = () => [];
