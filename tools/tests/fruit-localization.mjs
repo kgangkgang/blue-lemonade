@@ -14,6 +14,8 @@ class Element {
   append(node){node.parentElement=this;Object.defineProperty(node,'isConnected',{configurable:true,get:()=>this.isConnected});this.children.push(node)}
   remove(){if(this.parentElement)this.parentElement.children=this.parentElement.children.filter(x=>x!==this);this.parentElement=null}
   matches(selector){return selector.split(',').some(part=>{
+    part=part.trim();const child=part.split(/\s*>\s*/);if(child.length>1){const last=child.pop();return this.matches(last)&&!!this.parentElement?.matches(child.join(' > '))}
+    if(part.includes(':first-child')){if(this.parentElement?.children.find(x=>x.nodeType===1)!==this)return false;part=part.replace(':first-child','')}
     part=part.trim();const ancestry=part.split(/\s+(?![^\[]*\])/);if(ancestry.length>1){const last=ancestry.pop();return this.matches(last)&&!!this.parentElement?.closest(ancestry.join(' '))}
     const no=part.match(/:not\((.*?)\)/);if(no){if(this.matches(no[1]))return false;part=part.replace(no[0],'')}
     for(const a of part.matchAll(/\[([^=\]]+)(?:="([^"]*)")?\]/g))if(!this.attrs.has(a[1])||a[2]!==undefined&&this.getAttribute(a[1])!==a[2])return false;
@@ -68,4 +70,31 @@ check('turning on twice replaces its own instance without duplicate work',()=>{e
 check('a later external wrapper stays installed and cannot revive a stopped translation',()=>{e.run();e.click(home);const previous=e.host.prompt;const external=(...args)=>previous(...args);e.host.prompt=external;e.cleanups.at(-1)();e.host.prompt('方案名称','首页');assert.equal(e.host.prompt,external);assert.equal(e.calls.at(-1)[1],'方案名称');assert.equal(e.calls.at(-1)[2],'首页')});
 const unowned=environment(),otherSelect=add(unowned.body,'select',{id:'reasoning_select'}),otherOption=add(otherSelect,'option',{value:'果实之心'},'果实之心');unowned.run();
 check('an unrelated reasoning menu remains unchanged without the owned panel',()=>assert.equal(otherOption.text,'果实之心'));unowned.cleanups.at(-1)();
+const h=environment(),helper=add(h.body,'div',{id:'tavern_helper'}),container=add(helper,'div',{'data-container-type':'preset'});
+const textOf=node=>{const w=h.doc.createTreeWalker(node,4);let s='';while(w.nextNode())s+=w.currentNode.nodeValue;return s};
+const model={folder:{id:'qa-folder',name:'果实之心'},scripts:[{id:'qa-ecot',name:'果实之心-ECoT自动注入与解析 @Author'},{id:'qa-git',name:'果实之心丨Git正式版'},{id:'qa-local',name:'果实之心丨本地版'}]};
+const modelBefore=JSON.stringify(model),folder=add(container,'div',{'data-type':'folder','data-folder':'','data-folder-id':model.folder.id}),header=add(folder,'div',{}),apple=add(header,'i',{class:'fa-solid fa-apple-whole'}),folderLabel=add(header,'span',{class:'grow overflow-hidden'},model.folder.name);
+const scriptRows=model.scripts.map(item=>{const row=add(folder,'div',{'data-type':'script','data-script-id':item.id});return{row,label:add(row,'div',{class:'grow overflow-hidden'},item.name)}});
+const rawInput=add(helper,'input',{});rawInput.value=model.scripts[0].name;const rawCode=add(helper,'textarea',{},'果实之心');
+const outsider=add(h.body,'div',{'data-container-type':'preset'}),outsideRow=add(outsider,'div',{'data-type':'script','data-script-id':'outside'}),outsideLabel=add(outsideRow,'div',{class:'grow overflow-hidden'},'果实之心');
+const unrelated=add(container,'div',{'data-type':'script','data-script-id':'qa-other'}),unrelatedLabel=add(unrelated,'div',{class:'grow overflow-hidden'},'我的果实之心备份');
+h.run();
+check('Helper folder and the three known script names translate without touching the icon or author',()=>{assert.equal(textOf(folderLabel),'과일의 마음');assert.deepEqual(scriptRows.map(x=>textOf(x.label)),['과일의 마음-ECoT 자동 삽입·해석 @Author','과일의 마음丨Git 정식판','과일의 마음丨로컬판']);assert.equal(apple.className,'fa-solid fa-apple-whole')});
+check('Helper model names, ids, edit values and code stay original; matching is scoped and complete',()=>{assert.equal(JSON.stringify(model),modelBefore);assert.equal(rawInput.value,model.scripts[0].name);assert.equal(rawCode.text,'果实之心');assert.equal(outsideLabel.text,'果实之心');assert.equal(unrelatedLabel.text,'我的果实之心备份');assert.equal(folder.getAttribute('data-folder-id'),'qa-folder')});
+folderLabel.children=[];add(folderLabel,'span',{},'果');const marked=add(folderLabel,'mark',{class:'TH-Highlighter--mark'},'实之');add(folderLabel,'span',{},'心');const markText=marked.children[0];h.mutate();
+check('Helper search highlights keep their elements/text nodes while the whole label translates',()=>{assert.equal(textOf(folderLabel),'과일의 마음');assert.equal(marked.children[0],markText);assert.equal(marked.className,'TH-Highlighter--mark');assert.ok(marked.text.length);assert.equal(new RegExp('实之').test(model.folder.name),true)});
+folderLabel.children=[];folderLabel.append({nodeType:3,nodeValue:model.folder.name});h.mutate();
+check('Vue name rerenders and cleared search highlights are translated again',()=>assert.equal(textOf(folderLabel),'과일의 마음'));
+const groupGlobal=add(helper,'div',{'data-container-type':'global'}),rowGlobal=add(groupGlobal,'div',{'data-type':'script','data-script-id':'qa-global'}),labelGlobal=add(rowGlobal,'div',{class:'grow overflow-hidden'},' 🍏 果实之心 @Author ');h.mutate();
+check('Late Helper containers translate and preserve a literal apple and surrounding whitespace',()=>assert.equal(textOf(labelGlobal),' 🍏 과일의 마음 @Author '));
+const oldNode=scriptRows[1].label.children[0];model.scripts[1].name='果实之心丨本地版';oldNode.nodeValue=model.scripts[1].name;h.mutate();
+check('A reused name node tracks its new original name before cleanup',()=>assert.equal(textOf(scriptRows[1].label),'과일의 마음丨로컬판'));
+scriptRows[2].label.children[0].nodeValue='사용자가 바꾼 표시';h.cleanups.at(-1)();
+check('Helper OFF restores the latest originals and preserves an externally changed display',()=>{assert.equal(textOf(folderLabel),'果实之心');assert.equal(textOf(scriptRows[0].label),model.scripts[0].name);assert.equal(textOf(scriptRows[1].label),model.scripts[1].name);assert.equal(textOf(scriptRows[2].label),'사용자가 바꾼 표시');assert.equal(textOf(labelGlobal),' 🍏 果实之心 @Author ');assert.ok(h.observers.every(x=>x.targets.length===0));assert.equal(h.intervals.size,0)});
+const u=environment(),uHelper=add(u.body,'div',{id:'tavern_helper'}),uContainer=add(uHelper,'div',{'data-container-type':'preset'}),uRow=add(uContainer,'div',{'data-type':'script','data-script-id':'qa-rename'}),uLabel=add(uRow,'div',{class:'grow overflow-hidden'});
+const uMark=add(uLabel,'mark',{class:'TH-Highlighter--mark'},'果实'),uSuffix=add(uLabel,'span',{},'之心丨Git正式版');u.run();
+uSuffix.children[0].nodeValue='之心丨사용자 이름';u.mutate();
+check('Unknown renamed Helper names restore unchanged owned search fragments immediately',()=>{assert.equal(uMark.text,'果实');assert.equal(uSuffix.text,'之心丨사용자 이름');assert.equal(uLabel.children[0],uMark)});
+uMark.children[0].nodeValue='외부 표시';u.cleanups.at(-1)();
+check('Cleanup releases an out-of-scope name and preserves later external edits',()=>{assert.equal(uMark.text,'외부 표시');assert.equal(uSuffix.text,'之心丨사용자 이름')});
 console.log(`fruit-localization: ${passed} passed`);

@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "6.4.7";
+export const BUILD_VERSION = "6.4.8";
 export const FILE_HASHES = {
   "index.js": "17384:4de637be:6c351536",
-  "manifest.json": "365:197005d4:93d06e05",
+  "manifest.json": "365:3ffb2945:6ca22152",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -476,7 +476,7 @@ export const FILE_HASHES = {
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "217187:57883d44:af90af08",
+  "src/notice-data.js": "217566:15e31f1c:4fc19d31",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -496,15 +496,15 @@ export const FILE_HASHES = {
   "src/reply-notify.js": "7572:d1cb7157:c653d4d6",
   "src/scripts/bundled/deus.js": "71720:ddbe5bc4:16add9c2",
   "src/scripts/bundled/fold.js": "14773:cf844e0a:169fb52a",
-  "src/scripts/bundled/fruit-heart.js": "186653:905e779a:b47d368e",
+  "src/scripts/bundled/fruit-heart.js": "189595:f56bb708:4075dae3",
   "src/scripts/bundled/fruit.js": "46008:de94fe1b:cec2bbd8",
   "src/scripts/bundled/helper.js": "104117:425b163a:31736cc4",
   "src/scripts/bundled/korean.js": "688642:8cb541a3:36439a45",
   "src/scripts/bundled/shajin.js": "22111:d00fa2db:4b6a0901",
-  "src/scripts/catalog.js": "8224:62bb84f7:bd3c4c19",
+  "src/scripts/catalog.js": "8285:89aed574:26c34a62",
   "src/scripts/plain/deus.js": "66897:632b8c3e:8adc7e2f",
   "src/scripts/plain/fold.js": "13815:b56ce78f:e3189530",
-  "src/scripts/plain/fruit-heart.js": "173548:38bc41f8:05f18a79",
+  "src/scripts/plain/fruit-heart.js": "176429:d7de2cc4:48840c80",
   "src/scripts/plain/fruit.js": "42166:03605a28:1d7895a0",
   "src/scripts/plain/helper.js": "97691:f11398d4:3144a19b",
   "src/scripts/plain/korean.js": "657404:110d8b27:610f14d4",
@@ -556,5 +556,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "34543:a22afe71:9a33c04b",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1416461:d24c8bb7:b79edeb3"
+  "style.css": "1416461:8b4be5d1:17ce0bf9"
 };

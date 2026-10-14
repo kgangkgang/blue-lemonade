@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.4.7/blue-lemonade-6.4.7.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.4.8/blue-lemonade-6.4.8.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.4.7 · 최신 업데이트</summary>
+<summary>6.4.8 · 최신 업데이트</summary>
+
+- 과일의 마음 스크립트 목록과 폴더 이름도 한글로 볼 수 있게 고쳤어요. 화면에 보이는 이름만 바꾸고 원래 이름과 저장 데이터는 보존합니다.
+- 스크립트 목록이 다시 그려져도 한글 이름이 유지되고, 한글화를 끄면 원래 이름으로 돌아가요.
+
+</details>
+
+<details>
+<summary>6.4.7 · Mermaid 도표 내장 · 과일 화면 한글화</summary>
 
 - Mermaid 도표를 내장했어요. 채팅에 mermaid 코드가 있을 때 도구를 불러오며, 별도 Mermaid 확장이 켜져 있으면 중복 실행을 피합니다.
 - 도표를 그리지 못해도 원문을 보존하고 다시 시도할 수 있어요. 출처·라이선스와 대응 소스 안내도 함께 제공합니다.

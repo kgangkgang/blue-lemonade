@@ -10,6 +10,15 @@ function installFruitHeartKorean(BlueLemonade, data) {
   host[key]?.stop?.();
   const rootsSelector = '#fruit-heart-v6,#fruit-heart-v6-dock,#fruit-heart-v6-wand-entry,[data-fh-cat="1"]';
   const watchSelector = '#qr--bar,#qr--popout,#quickReplies,#extensionsMenu,#reasoning_select,#toast-container';
+  // Helper 4.11 list containers only: names are display text, while search/edit/export use its model.
+  const helperRootsSelector = '#tavern_helper [data-container-type="global"],#tavern_helper [data-container-type="character"],#tavern_helper [data-container-type="preset"]';
+  const helperLabelsSelector = '[data-type="script"][data-script-id] > div.grow.overflow-hidden,[data-type="folder"][data-folder][data-folder-id] > div:first-child > span.grow.overflow-hidden';
+  const helperNames = new Map([
+    ['果实之心', '과일의 마음'],
+    ['果实之心丨Git正式版', '과일의 마음丨Git 정식판'],
+    ['果实之心丨本地版', '과일의 마음丨로컬판'],
+    ['果实之心-ECoT自动注入与解析', '과일의 마음-ECoT 자동 삽입·해석'],
+  ]);
   const skip = 'script,style,svg,code,textarea,[contenteditable]:not([contenteditable="false"]),[data-nsfw-drop],[data-profile],.fh-exp-preview,.fh-exp-rule';
   const attributes = ['title', 'aria-label', 'placeholder'];
   const texts = new Map(), attrs = new Map(), observed = new Set(), popupRoots = new Set();
@@ -84,6 +93,40 @@ function installFruitHeartKorean(BlueLemonade, data) {
     for (const element of root.querySelectorAll('[title],[aria-label],[placeholder]')) paintElement(element);
     const walker = doc.createTreeWalker(root, 4); while (walker.nextNode()) paintText(walker.currentNode);
   }
+  function paintHelperName(label) {
+    if (!eligible(label)) return;
+    const nodes = [], originals = [], walker = doc.createTreeWalker(label, 4);
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (!eligible(node.parentElement)) return;
+      const saved = texts.get(node);
+      nodes.push(node); originals.push(saved?.shown === node.nodeValue ? saved.original : node.nodeValue);
+    }
+    const original = originals.join('');
+    // Match complete known names. Keep the optional apple and author attribution verbatim.
+    const match = /^(\s*(?:[🍏🍎]\uFE0F?\s*)?)(果实之心(?:丨Git正式版|丨本地版|-ECoT自动注入与解析)?)(\s*(?:@[^\s@]+\s*)*)$/u.exec(original);
+    const translated = match && helperNames.get(match[2]);
+    if (!translated) {
+      // Vue may reuse an unchanged search mark while patching only the rest of a renamed label.
+      for (const node of nodes) {
+        const saved = texts.get(node);
+        if (saved && node.nodeValue === saved.shown) node.nodeValue = saved.original;
+        texts.delete(node);
+      }
+      return;
+    }
+    const start = match[1].length, end = start + match[2].length;
+    const rendered = match[1] + translated + match[3];
+    // Retain Vue/Highlighter's nodes and mark elements, including split search highlights.
+    const boundary = at => at <= start ? at : at >= end ? at + translated.length - match[2].length : start + Math.round((at - start) * translated.length / match[2].length);
+    let offset = 0;
+    nodes.forEach((node, index) => {
+      const source = originals[index], shown = rendered.slice(boundary(offset), boundary(offset + source.length));
+      offset += source.length;
+      if (shown === source) texts.delete(node); else texts.set(node, { original: source, shown });
+      if (node.nodeValue !== shown) node.nodeValue = shown;
+    });
+  }
   function ownsPopup(root) {
     // Only popups opened from this panel, with a known original prompt or QR label.
     if (!popupRoots.has(root) && Date.now() - recent > 15000) return false;
@@ -103,6 +146,8 @@ function installFruitHeartKorean(BlueLemonade, data) {
     for (const node of popupRoots) if (!node.isConnected) popupRoots.delete(node);
     const roots = [...doc.querySelectorAll(rootsSelector)];
     for (const root of roots) paint(root);
+    const helperRoots = [...doc.querySelectorAll(helperRootsSelector)];
+    for (const root of helperRoots) for (const label of root.querySelectorAll(helperLabelsSelector)) paintHelperName(label);
     if (doc.getElementById('fruit-heart-v6')) for (const option of doc.querySelectorAll('#reasoning_select option[value="果实之心"]')) paint(option);
     for (const root of doc.querySelectorAll('dialog.popup[open],.popup:not(dialog)')) if (ownsPopup(root)) paint(root);
     if (Date.now() - recent < 15000) for (const root of doc.querySelectorAll('#toast-container .toast-message')) {
@@ -115,7 +160,7 @@ function installFruitHeartKorean(BlueLemonade, data) {
     }
     observed.clear();
     const watch = root => { if (!root || observed.has(root)) return; observed.add(root); observer.observe(root, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: attributes.concat('open','class') }); };
-    roots.forEach(watch); doc.querySelectorAll(watchSelector).forEach(watch); popupRoots.forEach(watch);
+    roots.forEach(watch); helperRoots.forEach(watch); doc.querySelectorAll(watchSelector).forEach(watch); popupRoots.forEach(watch);
   }
   function schedule() { if (!stopped && !frame) frame = host.requestAnimationFrame(flush); }
   const observer = new host.MutationObserver(schedule);
