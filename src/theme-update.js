@@ -1,7 +1,8 @@
 import {currentVersion} from './notice.js';
+import {getSettings} from './settings.js';
 const DOWNLOAD='https://kgangkgang.github.io/blue-lemonade/';
 const state={busy:false,stage:'idle',message:'버튼을 누르면 블루레몬에이드만 확인해요.'},views=new Set();
-export function updateMarkup(){return `<div class="bl-theme-update"><h3><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> 테마 업데이트</h3><p>현재 실행 버전 <b>${currentVersion()||'확인 중'}</b></p><p class="salty-note">전체 확장 목록을 열지 않고 이 테마만 확인해요. ZIP 으로 깔았으면 업데이트할 때 GitHub 링크 설치로 바꿔요 (설정 · 대화는 그대로).</p><div class="bl-script-actions"><button type="button" class="salty-btn" data-theme-check>업데이트 확인</button><button type="button" class="salty-btn" data-theme-update hidden>업데이트</button><button type="button" class="salty-btn" data-theme-reload hidden>새로고침해서 적용</button></div><p data-theme-update-status role="status" aria-live="polite"></p><a href="${DOWNLOAD}" target="_blank" rel="noopener noreferrer">소개 페이지 · ZIP 다운로드</a></div>`;}
+export function updateMarkup(){return `<div class="bl-theme-update"><h3><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> 테마 업데이트</h3><p>현재 실행 버전 <b>${currentVersion()||'확인 중'}</b></p><dl class="bl-health-versions bl-installed-versions" data-installed-versions aria-label="설치된 판"></dl><p class="salty-note bl-installed-note">흐린 칸은 꺼 둔 애드온이에요.</p><p class="salty-note">전체 확장 목록을 열지 않고 이 테마만 확인해요. ZIP 으로 깔았으면 업데이트할 때 GitHub 링크 설치로 바꿔요 (설정 · 대화는 그대로).</p><div class="bl-script-actions"><button type="button" class="salty-btn" data-theme-check>업데이트 확인</button><button type="button" class="salty-btn" data-theme-update hidden>업데이트</button><button type="button" class="salty-btn" data-theme-reload hidden>새로고침해서 적용</button></div><p data-theme-update-status role="status" aria-live="polite"></p><a href="${DOWNLOAD}" target="_blank" rel="noopener noreferrer">소개 페이지 · ZIP 다운로드</a></div>`;}
 export function installationFrom(url,types){
     const parts=new URL(url).pathname.split('/').map(decodeURIComponent),index=parts.indexOf('third-party');
     const name=index>=0?parts[index+1]:null;
@@ -36,4 +37,13 @@ async function run(action){
     }catch(error){state.stage='error';state.message=error.name==='TimeoutError'?'서버 응답을 기다리다 시간이 초과됐어요. 업데이트 중이었다면 서버 작업이 계속될 수 있으니 잠시 뒤 다시 확인해 주세요.':error.message;}
     finally{state.busy=false;paint();}
 }
-export function bindThemeUpdate(root){const box=root.querySelector('.bl-theme-update');if(!box)return;views.add(box);root._updateCleanup=()=>views.delete(box);box.querySelector('[data-theme-check]').onclick=()=>run('version');box.querySelector('[data-theme-update]').onclick=()=>state.stage==='zipupdate'?import('./update-check.js').then(m=>m.openUpdate()):run('update');box.querySelector('[data-theme-reload]').onclick=()=>location.reload();paint();}
+// 6.6.9 설치된 판 한눈에: 테마 + 내장 애드온 (켠 것 먼저, 끈 것은 흐리게). 애드온 판은 이 탭을 처음 열 때 한 번 읽는다 (addon-versions.js)
+function paintInstalled(box){
+    const list=box.querySelector('[data-installed-versions]');if(!list)return;
+    import('./addon-versions.js').then(m=>m.addonVersions(getSettings().addons||{})).then(items=>{
+        if(!list.isConnected)return;
+        const cells=[{label:'Blue Lemonade',version:currentVersion(),on:true},...items.filter(a=>a.on),...items.filter(a=>!a.on)];
+        list.replaceChildren(...cells.map(({label,version,on})=>{const cell=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');cell.className=on?'':'is-off';dt.textContent=label;dd.textContent=version?`v${version}`:'확인 못 함';if(!on)dd.setAttribute('aria-label',`${dd.textContent} 꺼짐`);cell.append(dt,dd);return cell;}));
+    }).catch(()=>{});
+}
+export function bindThemeUpdate(root){import('./update-check.js').then(m=>m.paintUpdateLine(root)).catch(()=>{});const box=root.querySelector('.bl-theme-update');if(!box)return;paintInstalled(box);views.add(box);root._updateCleanup=()=>views.delete(box);box.querySelector('[data-theme-check]').onclick=()=>run('version');box.querySelector('[data-theme-update]').onclick=()=>state.stage==='zipupdate'?import('./update-check.js').then(m=>m.openUpdate()):run('update');box.querySelector('[data-theme-reload]').onclick=()=>location.reload();paint();}

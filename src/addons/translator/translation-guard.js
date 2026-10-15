@@ -4,9 +4,27 @@
 //   - 채팅 배열이 새 객체로 바뀌어 원래 메시지 객체가 없으면, 같은 번호 자리에 같은 글 · 같은 스와이프 · 같은 번역 표시의 메시지가 있을 때 그것을 같은 대상으로 본다(relocate).
 //   - 다시 불러오는 사이(배열이 비어 있는 짧은 순간)는 「바뀜」이 아니라 「아직 모름」 — settled() 가 false 면 부르는 쪽이 잠시 기다렸다 다시 본다.
 //   글(mes)이 정말 달라졌거나 · 스와이프가 바뀌었거나 · 편집(MESSAGE_EDITED/SWIPED → revision) 이 있었거나 · 다른 채팅이면 전처럼 멈춘다.
+// 2.5.4 멈춘 이유: 무엇이 바뀌었나(채팅 · 메시지 자리 · 편집 이벤트 · 글 · 스와이프 · 번역 표시)와 편집 이벤트를 보낸 곳(확장 폴더 이름) — 글 내용 · id 는 남기지 않는다.
+const KEY_PARTS = ['group', 'character', 'chat'];
+const keyDiff = (before, after) => {
+    try { const a = JSON.parse(before), b = JSON.parse(after); return KEY_PARTS.filter((_, i) => a[i] !== b[i]).map(part => `${part}${b[KEY_PARTS.indexOf(part)] == null ? '(없음)' : ''}`); }
+    catch { return ['?']; }
+};
+/** 이벤트를 보낸 쪽: 호출 스택의 확장 폴더 · 실리태번 스크립트 파일 이름 (번역기 자신은 뺀다) */
+export function callerOf(stack = new Error().stack) {
+    const seen = [];
+    for (const line of String(stack || '').split('\n').slice(1)) {
+        if (/translation-guard\.js|addons\/translator\//.test(line)) continue;
+        const found = /extensions\/third-party\/([^/?#:]+)\/|\/scripts\/(?:extensions\/)?([\w.-]+\.js)/.exec(line);
+        const name = found && (found[1] ? decodeURIComponent(found[1]) : found[2]);
+        if (name && !seen.includes(name)) seen.push(name);
+        if (seen.length >= 4) break;
+    }
+    return seen;
+}
 export function createGuards(getContext) {
-    let epoch = 0, lastKey = null;
-    const revisions = new WeakMap();
+    let epoch = 0, lastKey = null, lastSwitch = null;
+    const revisions = new WeakMap(), edits = new WeakMap();
     const key = () => {
         const c = getContext();
         return JSON.stringify([c.groupId ?? null, c.characterId ?? null, c.getCurrentChatId?.() ?? c.chatId ?? null]);
@@ -47,7 +65,23 @@ export function createGuards(getContext) {
                 if (list.includes(target)) return true;
                 return list.length > index;
             },
-            assert() { if (!this.valid()) throw cancelled(); },
+            assert() { if (!this.valid()) throw Object.assign(cancelled(), { reason: this.why() }); },
+            /** 2.5.4 valid() 가 거짓인 까닭 (진단용, 글 내용 없이 길이만) */
+            why() {
+                if (stamp !== epoch) return { what: 'chat', changed: lastSwitch };
+                if (chat !== key()) return { what: 'chat', changed: keyDiff(chat, key()) };
+                if (!message) return null;
+                if (!relocate()) { const list = getContext().chat; return { what: 'gone', index, length: Array.isArray(list) ? list.length : -1 }; }
+                if (revisions.get(target) !== revision) return { what: 'edited', ...(edits.get(target) || {}) };
+                if (target.mes !== source) {
+                    const now = String(target.mes ?? ''), was = String(source ?? '');
+                    let same = 0; while (same < was.length && same < now.length && was[same] === now[same]) same++;
+                    return { what: 'text', before: was.length, after: now.length, samePrefix: same };
+                }
+                if (target.swipe_id !== swipe) return { what: 'swipe', before: swipe ?? null, after: target.swipe_id ?? null };
+                if (target.extra?.display_text !== display) return { what: 'display', before: display == null ? null : String(display).length, after: target.extra?.display_text == null ? null : String(target.extra.display_text).length };
+                return null;
+            },
             index() { return this.valid() ? getContext().chat.indexOf(target) : -1; },
             /** 지금 가리키는 메시지 객체 (다시 불러온 뒤엔 새 객체) */
             target() { return target; },
@@ -74,11 +108,16 @@ export function createGuards(getContext) {
         chatChanged() {
             const now = key();
             if (lastKey !== null && now === lastKey) return;   // 6.5.2 같은 채팅을 제자리에서 다시 불러온 것 — 번역 대상은 그대로
+            if (lastKey !== null) lastSwitch = keyDiff(lastKey, now);
             lastKey = now; epoch++;
         },
-        messageChanged(id) {
+        messageChanged(id, type = 'edited') {
             const message = getContext().chat?.[Number(id)];
-            if (message) revisions.set(message, (revisions.get(message) || 0) + 1);
+            if (!message) return;
+            revisions.set(message, (revisions.get(message) || 0) + 1);
+            let by = [];
+            try { by = callerOf(); } catch { /* 스택을 못 읽는 브라우저 */ }
+            edits.set(message, { event: type, by, mesLength: String(message.mes ?? '').length });
         } };
 }
 

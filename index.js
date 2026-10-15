@@ -1,3 +1,5 @@
+import { startErrorLog } from './src/diag-errors.js';
+startErrorLog(); // 6.6.9 진단 파일용: 블루레몬에이드 오류만 최근 20줄 (주소 · 키는 가림)
 import { themeEnabled } from './src/usage-mode.js';
 import { bindSettingsDialog } from './src/settings-dialog.js';
 // 5.3.2: 애플 웹킷 표시 — 여러 줄 인라인 마스크를 끝 줄 조각에만 그리는 버그 피하기용 (css/37-prompt-ink.css)

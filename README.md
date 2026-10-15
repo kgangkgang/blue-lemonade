@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.6.9/blue-lemonade-6.6.9.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.7.0/blue-lemonade-6.7.0.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.6.9 · 최신 업데이트</summary>
+<summary>6.7.0 · 최신 업데이트</summary>
+
+- 설정 › 채팅 › 기타 › 진단에 「진단 파일 만들기」가 생겼어요. 판 번호 · 켠 기능 · 최근 블루레몬에이드 오류를 JSON 파일 하나로 내려받아 제보할 때 보내면 돼요. API 키 · 서버 주소는 가려지고, 메시지 글은 스위치로 넣을지 골라요.
+- 번역이 「채팅이나 글이 바뀌어 번역을 멈췄어요」로 멈추면 무엇이 바뀌었는지(글 · 스와이프 · 편집 이벤트와 보낸 확장 이름 등, 글 내용은 빼고)를 남겨 진단 파일에 담아요 (번역 2.5.4).
+- 다른 기기(Syncthing 등)에서 같은 채팅이 바뀌면 채팅 위에 알려 주고, 옛 내용으로 덮어쓰기 전에 「새로 불러오기 / 그래도 저장」을 물어요. 채팅 › 기타에서 끌 수 있어요.
+- 새 판이 나오면 설정 창 맨 위에 무엇이 고쳐졌는지 한 줄로 보여 주고, 「업데이트」로 바로 받을 수 있어요. 업데이트 탭에 설치된 테마 · 애드온 판도 보여요.
+
+</details>
+
+<details>
+<summary>6.6.9 · 상태창 날씨 따라가기 · 번역 혼잣말 거르기 · 대사 대비 · 통화 효과</summary>
 
 - 날씨 효과가 데우스 트래커뿐 아니라 어떤 상태창이든 날씨 칸(天气 · Weather · 날씨 · 간결 상태창)을 따라가요. 중국어 · 일본어 날씨 말(小雨 · 大雪 · 浓雾 · 晴 …)도 알아봐요.
 - 번역 모델이 옮기다 만 반쪽 문단에 「translate.」 같은 혼잣말을 붙여 원문에 없는 문단이 끼던 것을 걸러요. 이미 저장된 번역도 화면에서 바로 걸러 보여요 (번역 2.5.3).

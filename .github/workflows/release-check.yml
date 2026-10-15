@@ -48,6 +48,7 @@ jobs:
           node tools/tests/tts-open-comment.mjs .
           node tools/tests/weather-status.mjs .
           node tools/tests/translator-stub.mjs .
+          node tools/tests/translator-cancel-reason.mjs .
           node tools/tests/tts-integration.mjs .
           node tools/tests/tts-dethump.mjs .
           node tools/tests/tts-call-fx.mjs .
@@ -109,6 +110,9 @@ jobs:
           node tools/tests/modelswitch-models.mjs .
           node tools/tests/modelswitch-state.mjs .
           node tools/tests/update-check.mjs .
+          node tools/tests/update-summary.mjs .
+          node tools/tests/chat-sync.mjs .
+          node tools/tests/diag-file.mjs .
           node tools/tests/translation-cache-loading.mjs .
           node tools/tests/translation-segments.mjs .
           node tools/tests/translation-display.mjs .

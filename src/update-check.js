@@ -54,6 +54,7 @@ export function paintBadges() {
 function setLatest(v) {
     latest = VER.test(String(v || '')) ? String(v) : '';
     paintBadges();
+    for (const root of document.querySelectorAll('.salty-panel')) paintUpdateLine(root);
 }
 
 /** GitHub 의 최신 버전 (manifest → 막히면 Pages 공지 맨 위). 못 받으면 던진다 */
@@ -119,6 +120,61 @@ export function notesHtml(list) {
         </div>`).join('');
 }
 
+// 6.6.9 「무엇이 고쳐졌는지」 한두 줄 (사용자: 폰이 옛 판에 머물러 고친 것을 못 받았다 — 새 판이 있으면 고친 것을 같이 보여 주고 한 번에 업데이트로).
+// 새 상주 타이머 없이: 설정 창을 그릴 때 새 판이 있으면 맨 위에 한 줄. 공지(release-notes.json)는 새 판마다 한 번만 받고 이 브라우저에 기억한다.
+const SUMMARY_STORE = 'bl_update_notes';
+const clip = (text, n = 90) => { const t = String(text ?? '').replace(/\s+/g, ' ').trim(); return t.length > n ? `${t.slice(0, n - 1)}…` : t; };
+/** 공지 목록(새것 먼저) → 판마다 첫 항목 max 줄 + 남은 판 수 */
+export function summarizeNotes(list, max = 2) {
+    const rows = Array.isArray(list) ? list.filter(n => n?.items?.length) : [];
+    return { lines: rows.slice(0, max).map(n => ({ version: String(n.version), text: clip(n.items[0]) })), more: Math.max(0, rows.length - max) };
+}
+let summaryLoading = null;
+function readSummary(key) {
+    try { const v = JSON.parse(localStorage.getItem(SUMMARY_STORE) || 'null'); return v?.key === key && Array.isArray(v.lines) ? v : null; } catch { return null; }
+}
+/** 지금 → 새 판 사이 공지 요약 (없거나 못 받으면 null) */
+export function updateSummary(fetcher = fetch) {
+    if (!hasUpdate()) return Promise.resolve(null);
+    const now = currentVersion(), next = latest, key = `${now}>${next}`;
+    const saved = readSummary(key);
+    if (saved) return Promise.resolve(saved);
+    summaryLoading ??= (async () => {
+        const r = await fetcher(`${NOTES}?t=${Math.floor(Date.now() / EVERY)}`, { cache: 'no-store', signal: AbortSignal.timeout(20000) });
+        if (!r.ok) throw new Error(String(r.status));
+        const value = { key, ...summarizeNotes(notesBetween(await r.json(), now, next)) };
+        if (value.lines.length) writeSummary(value);
+        return value.lines.length ? value : null;
+    })().catch(() => null).finally(() => { summaryLoading = null; });
+    return summaryLoading;
+}
+function writeSummary(value) { try { localStorage.setItem(SUMMARY_STORE, JSON.stringify(value)); } catch { /* 막힌 저장소 */ } }
+
+/** 한 줄 속 (요약을 아직 모르면 판만) */
+export function updateLineHtml(now, next, summary) {
+    const first = summary?.lines?.[0], second = summary?.lines?.[1];
+    const text = first ? `${first.text}${second ? ` · ${second.text}` : ''}${summary.more ? ` 외 ${summary.more}개 판` : ''}` : '';
+    return `<div class="bl-update-line-text"><b>새 판 v${esc(next)} 이 나왔어요<small>지금 v${esc(now)}</small></b>${text ? `<span>${esc(text)}</span>` : ''}</div>`
+        + '<button type="button" class="salty-btn primary" data-update-now>업데이트</button>';
+}
+/** 설정 창 맨 위 한 줄 — 새 판이 있을 때만. panel 을 다시 그릴 때마다 theme-update.bindThemeUpdate 가 부른다 */
+export function paintUpdateLine(root) {
+    const sec = root?.querySelector?.('.salty-sec');
+    let line = root?.querySelector?.('.bl-update-line');
+    if (!sec || !hasUpdate()) { line?.remove(); return; }
+    const now = currentVersion(), next = latest;
+    if (!line) {
+        line = document.createElement('div');
+        line.className = 'bl-update-line';
+        line.setAttribute('role', 'status');
+        line.addEventListener('click', (event) => { if (event.target.closest('[data-update-now]')) void openUpdate({ start: true }); });
+        sec.prepend(line);
+    }
+    const saved = readSummary(`${now}>${next}`);
+    line.innerHTML = updateLineHtml(now, next, saved);
+    if (!saved) void updateSummary().then((summary) => { if (summary && line.isConnected && hasUpdate()) line.innerHTML = updateLineHtml(now, next, summary); });
+}
+
 /**
  * 업데이트 한 번 (창 밖에서도 부를 수 있게 — 검사용으로 fetcher 를 바꿔 끼운다).
  * inst = { extensionName, global } (theme-update.installationFrom) · headers = 실리태번 요청 머리 (CSRF)
@@ -166,7 +222,7 @@ export async function runUpdate({ inst, headers = {}, fetcher = fetch, repo = RE
 }
 
 /** 버전 알약을 눌렀을 때 (새 버전이 있을 때만): '새 버전이 나왔어요 · 업데이트할까요?' + 바뀐 내역 */
-export async function openUpdate() {
+export async function openUpdate({ start = false } = {}) {   // 6.6.9 start: 설정 창 한 줄의 업데이트 단추 — 창을 열자마자 업데이트를 시작
     await loadVersion();
     if (!hasUpdate()) return false;
     const ctx = SillyTavern.getContext();
@@ -231,7 +287,7 @@ export async function openUpdate() {
     };
     await ctx.callGenericPopup(wrap, ctx.POPUP_TYPE.CONFIRM, '', {
         okButton: '업데이트', cancelButton: '나중에', allowVerticalScrolling: true,
-        onOpen: (p) => { popup = p; p?.dlg?.classList.add('bl-roomy-dialog'); buttons(); },
+        onOpen: (p) => { popup = p; p?.dlg?.classList.add('bl-roomy-dialog'); buttons(); if (start) void go(); },
         onClosing: (p) => {
             if (stage === 'busy') return false;                       // 업데이트 중에는 닫지 않는다
             if (p.result !== ctx.POPUP_RESULT.AFFIRMATIVE) return true;

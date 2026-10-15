@@ -2891,6 +2891,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
         runToken.error = error;
         runToken.preview?.revert();   // 2.5.1 멈춤 · 실패: 미리 보기를 지우고 지금 데이터대로 (원문 · 예전 번역)
         if (runToken.chatGuard.valid()) await hideStaleTranslation(message);
+        if (error?.cancelled) console.warn(`[Blue Lemonade · LLM 번역] 번역 중단 이유 #${messageId} ${source}`, JSON.stringify(error.reason ?? null));   // 2.5.4 진단 파일 「최근 오류」에 남는다
         if (source === 'batch') throw error;
         if (error?.cancelled) {
             // 6.5.2 자동 번역이고 같은 채팅이면 토스트 대신 한 번 더: 글 · 스와이프가 바뀌었거나(전처럼) · 같은 채팅을 제자리에서 다시 불러와 대상이 새 객체가 된 것
@@ -5072,7 +5073,7 @@ async function handleMessageEdit(messageId) {
 function initializeEventHandlers() {
     eventSource.makeFirst(event_types.CHAT_CHANGED, () => guards.chatChanged());
     for (const type of [event_types.MESSAGE_SWIPED, event_types.MESSAGE_EDITED].filter(Boolean)) {
-        eventSource.makeFirst(type, id => guards.messageChanged(id));
+        eventSource.makeFirst(type, id => guards.messageChanged(id, type === event_types.MESSAGE_SWIPED ? 'swiped' : 'edited'));
     }
 
 

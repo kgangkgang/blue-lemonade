@@ -1,0 +1,68 @@
+/* ===== css/70-sync-update-diag.css ===== */
+/* 6.7.0 다른 기기에서 바뀜 띠 (src/chat-sync.js) · 업데이트 한 줄 (src/update-check.js) · 진단 파일 창 (src/diag-file.js).
+   테마를 꺼도(확장만) 띠는 보이게 body.salty 없이 쓰고, 테마 토큰이 없으면 실리태번 색으로 물러난다. 버튼은 얇은 8px 네모 · 32~36px. */
+
+/* 채팅 위 얇은 띠 — #sheld 안 #chat 바로 앞 (채팅을 덮지 않고 그만큼 밀어 냄) */
+#bl-sync-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px var(--bl-fh-pad, 10px);
+  padding: 6px 6px 6px 12px;
+  border: 1px solid color-mix(in srgb, var(--bl-update-glow, #ffd84a) 55%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bl-update-glow, #ffd84a) 14%, var(--salty-surface, var(--SmartThemeBlurTintColor, #222)));
+  color: var(--salty-text, var(--SmartThemeBodyColor, inherit));
+  font-size: calc(var(--mainFontSize, 15px) * 0.9);
+  line-height: 1.4;
+}
+#bl-sync-strip > span { flex: 1 1 auto; min-width: 0; word-break: keep-all; overflow-wrap: anywhere; }
+#bl-sync-strip > button {
+  flex: 0 0 auto;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--salty-fill-accent, var(--salty-accent, var(--SmartThemeQuoteColor, #4a90d9)));
+  color: var(--salty-on-accent, #fff);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+#bl-sync-strip > button:disabled { opacity: 0.6; cursor: default; }
+
+/* 설정 창 맨 위 업데이트 한 줄 (새 판이 있을 때만) */
+.salty-panel .bl-update-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 9px var(--bl-fh-pad, 12px);
+  border: 1px solid color-mix(in srgb, var(--bl-update-glow) 55%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bl-update-glow) 10%, transparent);
+}
+.salty-panel .bl-update-line-text { flex: 1 1 auto; min-width: 0; display: grid; gap: 2px; line-height: 1.45; }
+.salty-panel .bl-update-line-text b { color: var(--bl-update-ink); font-weight: 700; }
+.salty-panel .bl-update-line-text b small { margin-left: 6px; color: var(--salty-muted); font-weight: 400; font-size: 0.86em; font-variant-numeric: tabular-nums; }
+.salty-panel .bl-update-line-text span { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; color: var(--salty-text); font-size: 0.92em; }
+.salty-panel .bl-update-line > .salty-btn { flex: 0 0 auto; min-height: 34px; padding: 0 14px; }
+
+/* 업데이트 탭: 설치된 판 — 설치 점검의 판 칸(.bl-health-versions)을 한 줄짜리로 줄여 18칸이 폰 한 화면에 들게 */
+.salty-panel .bl-installed-versions { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.salty-panel .bl-installed-versions > div { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 7px 10px; }
+.salty-panel .bl-installed-versions dt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--salty-text); font-size: calc(13 * var(--sp)); }
+.salty-panel .bl-installed-versions dd { flex: 0 0 auto; color: var(--salty-muted); font-size: calc(12.5 * var(--sp)); }
+.salty-panel .bl-installed-versions > div.is-off { opacity: 0.6; }
+
+/* 진단 파일 창 (실리태번 팝업은 가운데 정렬 — 목록 · 행은 왼쪽으로) */
+.bl-diag-file { text-align: left; }
+.bl-diag-file h3 { margin: 0 0 6px; text-align: center; }
+.bl-diag-file .bl-diag-items { margin: 8px 0 10px; padding-left: 1.2em; line-height: 1.6; }
+.bl-diag-file .salty-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--salty-line, var(--SmartThemeBorderColor)); text-align: left; }
+.bl-diag-file .salty-row > span { display: grid; gap: 2px; min-width: 0; }
+.bl-diag-file .salty-row small { color: var(--salty-muted, inherit); opacity: 0.9; }
+.bl-diag-file input[type="number"] { width: 6em; flex: 0 0 auto; margin: 0; }
+/* 포커스해도 자기 칸 색 그대로 (테마 공통 :focus 는 팝업 칸을 표면색으로 바꾼다 — 고리만 남김) */
+body.salty .popup .bl-diag-file input[data-diag-index]:focus { background-color: var(--bl-well) !important; }
+.bl-sync-ask h3 { margin: 0 0 6px; }
