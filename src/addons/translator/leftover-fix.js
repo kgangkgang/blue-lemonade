@@ -78,6 +78,10 @@ const EN_START = String.raw`(?:^|[.!?…。」』”"')\]]\s+|[「『“"'(\[]\s
 const EN_ONE = new RegExp(EN_START + String.raw`([A-Z][a-z]+)(?=[*_~]*(?:\s*,|\s*[.!?]+\s+[*_~]*[가-힣]|\s*(?:…+|\.{2,})\s*[*_~]*[가-힣]|\s+[*_~]*[가-힣]))`, 'g');
 // 여는 말 (두 · 세 낱말, 뒤 낱말은 소문자 · v3 첫 낱말은 A 처럼 한 글자도): 뒤에 쉼표
 const EN_MANY = new RegExp(EN_START + String.raw`([A-Z][a-z]*(?:\s+[a-z]+){1,2})(?=[*_~]*\s*,)`, 'g');
+// 2.6.3 문장 가운데 남은 소문자 영어 (사용자 10-16 「홈 row 위에서」 ← 원문 「over the home row」): 앞이 한글(띄어쓰기 하나까지), 뒤가 한글(조사 · 다음 낱말) —
+//       한두 낱말 · 두 글자 이상 · 단위 · 흔한 약어는 뺀다. 원문의 영어 위주 줄에 있는 말일 때만 (fromEnglish 와 같은 규칙).
+const EN_MID = /(?<=[가-힣][*_~]*\s?)([a-z]{2,}(?:\s+[a-z]{2,})?)(?=[*_~]*\s?[가-힣])/g;
+const EN_MID_SKIP = new Set('km cm mm kg mg ml px pt vs etc am pm kb mb gb tb fps bpm rpm cc mph kph'.split(' '));
 const bare = line => String(line ?? '').replace(/<[^>]*>/g, '').replace(/\[\[\/?__VAR_\d+__\]\]/g, '');   // 태그 · 자리표시자 글자는 세지 않는다
 const fold = s => String(s ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
 const wordRe = (phrase, flags = 'i') => new RegExp(`\\b${String(phrase).trim().split(/\s+/).join('\\s+')}\\b`, flags);
@@ -122,6 +126,15 @@ export function leftoverEnglish(line, source, names = []) {
             if (!fromEnglish(phrase, src)) continue;
             words.push(phrase);
         }
+    }
+    for (const m of s.matchAll(EN_MID)) {   // 2.6.3 문장 가운데
+        const phrase = m[1], from = m.index, to = from + phrase.length;
+        if (EN_MID_SKIP.has(phrase) || skip.has(fold(phrase))) continue;
+        if (!wordRe(phrase).test(String(line))) continue;   // 태그를 걷어 낸 자리에서 붙어 생긴 말(x<y … y>z → xz)은 아니다
+        if (spans.some(([a, b]) => a <= from && to <= b)) continue;
+        if (words.some(w => w === phrase || w.includes(phrase))) continue;
+        if (!fromEnglish(phrase, src)) continue;
+        words.push(phrase);
     }
     // 한글이 주된 줄인가 — 찾은 남김 말을 뺀 나머지로 센다 (짧은 줄의 「Just then, 문이 열렸다」 는 잡고, 영어 위주 줄 · 트래커는 그대로 뺀다)
     let rest = s.replace(/`[^`\n]*`/g, '').replace(/https?:\/\/(?:[^\s<>"'`「」『』()（）\[\].,;:!?。、，．！？]|[.,;!?](?=[\x21-\x7E])|:(?=[^\s<>"'`「」『』()（）\[\]。、，．！？]))+/g, '');   // v4 맨 URL · 인라인 코드 글자는 세지 않는다 (지킴 자리와 같은 꼴 · 태그는 bare 가 이미 뺐다)

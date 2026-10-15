@@ -3,6 +3,8 @@
 // 켜고 끄는 것은 메모리의 정규식 목록(프리셋 · 전역)에 disabled 를 쓰는 것뿐 — 프리셋 파일은 사용자가 저장할 때와 기능을 끌 때(되돌린 값)만 바뀐다.
 // 캐릭터 카드의 정규식은 손대지 않는다: 실리태번 정규식 편집기가 메모리의 disabled 를 카드에 그대로 써 넣는데 stop() 은 프리셋 파일만 되돌릴 수 있다.
 // 원래 상태는 origin 에 적어 두고, 기능을 끄면 되돌린다 (그새 저장돼 파일에 들어간 우리 값도). 계산은 engine.js (테스트 가능).
+// 과일의 마음 패널이 프롬프트를 켜고 끄면(Tavern Helper updatePresetWith('in_use')) 프롬프트 · 정규식 목록이 새 배열로 바뀌고 saveSettingsDebounced
+// → SETTINGS_UPDATED 로 여기 sync 가 돈다 — 새 목록은 「새로 읽힌 목록」이라 origin 으로 다시 맞춘다.
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
 import { extension_settings } from '../../../../../../extensions.js';
 import { getPresetManager } from '../../../../../../preset-manager.js';
@@ -11,7 +13,7 @@ import { oai_settings, promptManager } from '../../../../../../openai.js';
 import { verifyAddonCss } from '../../addon-files-check.js';
 import { plan, textHasModuleLow } from './engine.js';
 
-const VERSION = '1.0.7';
+const VERSION = '1.0.8';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const holder = document.createElement('div'); holder.hidden = true; document.body.append(holder);
 let root, inlineHost = null, opening = false, timer = 0, lastRows = [], lastNote = '', applied = new Map(), stopped = false;
@@ -61,12 +63,17 @@ function recentHasFactory() {
 }
 
 /** 1.0.5 프롬프트 귀속(테마 promptbind.js)이 직접 붙인 정규식 id — 그 정규식은 귀속이 켜고 끄므로 여기서는 손대지 않는다
- *  (같은 정규식을 둘이 서로 다르게 바라면 저장 → SETTINGS_UPDATED → 되맞춤이 끝없이 오가고, 6.0.6 부터 귀속이 바뀔 때 채팅을 다시 그려 폭풍이 된다) */
-function boundByPrompt() {
+ *  (같은 정규식을 둘이 서로 다르게 바라면 저장 → SETTINGS_UPDATED → 되맞춤이 끝없이 오가고, 6.0.6 부터 귀속이 바뀔 때 채팅을 다시 그려 폭풍이 된다)
+ *  1.0.8 캐릭터 이름 연동(promptLink)이 켜져 있으면 이름이 든 정규식도 그쪽이 맡는다 — promptbind.js 와 같은 견줌 (NFKC · 공백 하나 · 소문자) */
+function boundByPrompt(lists) {
     const out = new Set();
     try {
         const binds = extension_settings.salty?.promptBinds;
         if (binds && typeof binds === 'object') for (const b of Object.values(binds)) for (const id of (Array.isArray(b?.regex) ? b.regex : [])) if (typeof id === 'string' && id) out.add(id);
+        const link = extension_settings.salty?.promptLink;
+        const fold = s => String(s ?? '').normalize('NFKC').replace(/\s+/g, ' ').trim().toLowerCase();
+        const name = link?.on === true ? fold(link.name) : '';
+        if (name) for (const script of lists.flat()) if (script?.id && fold(script.scriptName).includes(name)) out.add(script.id);
     } catch { /* 설정 없음 */ }
     return out;
 }
@@ -77,7 +84,7 @@ export function sync({ restore = false, keep = null } = {}) {
     const s = store();
     const enabled = enabledPrompts();
     const lists = scriptLists();
-    const bound = boundByPrompt();
+    const bound = boundByPrompt(lists);
     for (const id of bound) { delete s.origin[id]; applied.delete(id); }   // 귀속이 맡은 정규식은 우리 기록을 지우고 그대로 둔다
     const scripts = lists.flat().filter(x => x && x.id && !bound.has(x.id));
     if (!scripts.length) { lastRows = []; lastNote = bound.size ? '지금 쓰는 정규식은 모두 프롬프트 귀속이 맡고 있어요.' : '지금 쓰는 정규식이 없어요.'; render(); return; }
@@ -124,8 +131,9 @@ function schedule() { clearTimeout(timer); timer = setTimeout(() => sync(), 300)
 // ── 화면 ────────────────────────────────────────────────
 function summary() {
     const rows = lastRows;
-    const on = rows.filter(r => r.want === true).length, off = rows.filter(r => r.want === false).length, skip = rows.filter(r => r.want === null).length;
-    return { on, off, skip, total: rows.length };
+    const on = rows.filter(r => r.want === true).length, off = rows.filter(r => r.want === false).length;
+    const keep = rows.filter(r => r.reason === '늘 필요').length, skip = rows.filter(r => r.want === null).length - keep;
+    return { on, off, keep, skip, total: rows.length };
 }
 
 function moduleTable() {
@@ -150,9 +158,9 @@ function moduleTable() {
 
 function render() {
     if (!root) return;
-    const s = store(), { on, off, skip, total } = summary();
+    const s = store(), { on, off, keep, skip, total } = summary();
     root.querySelector('.rl-summary').innerHTML = total
-        ? `정규식 ${total}개 중 <b>${on}개 켜짐</b> · <b>${off}개 꺼짐</b>${skip ? ` · ${skip}개는 태그가 없어 그대로` : ''}`
+        ? `정규식 ${total}개 중 <b>${on}개 켜짐</b> · <b>${off}개 꺼짐</b>${keep ? ` · ${keep}개는 늘 필요해 그대로` : ''}${skip ? ` · ${skip}개는 태그가 없어 그대로` : ''}`
         : '연동 중인 정규식 없음';
     root.querySelector('[data-keep]').checked = s.keepRecent;
     root.querySelector('[data-recent]').value = s.recent;

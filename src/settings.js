@@ -116,7 +116,7 @@ export const DEFAULTS = {
     fruitEntryDisplay: 'both',
     fruitEntryIcon: 'fa-apple-whole',
     fruitTypography: {on:false,kind:'status',types:{}},
-    promptLink: { on: false, name: '' },   // 6.5.2 캐릭터 이름 연동 — 이름이 든 프롬프트·정규식을 그 캐릭터 채팅에서만 켜고 「기본」 짝은 반대로 (prompt-link.js · promptbind.js)
+    promptLink: { on: false, rows: [] },   // 6.5.2 캐릭터 이름 연동 — 이름이 든 프롬프트·정규식을 그 캐릭터 채팅에서만 켜고 「기본」 짝은 반대로 · 6.7.5 여러 줄 rows [{ word, cards: [아바타] }] (prompt-link.js · promptbind.js)
     headSwitches: {},   // 6.0.4 확장 위 스위치 { <창 열쇠 id:…|cls:…>: true } — 창 안 「확장 탭에 보이기」로 고른 확장 창 (headswitch.js)
     activeStyle: null,
     baseStyle: null,
@@ -342,6 +342,12 @@ function tidyClassValues(s) {
 }
 const isObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
 const flag = (v, def) => (v === true || v === 'true' ? true : v === false || v === 'false' ? false : def);
+// 6.7.5 캐릭터 이름 연동 줄: 말은 다듬은 80자, 카드는 아바타 파일 이름 50장까지 중복 없이, 20줄까지 · 예전 한 줄 { name } 은 첫 줄로 옮긴다 (말 · 카드는 설정에만 있다)
+const linkText = v => typeof v === 'string' ? Array.from(v.trim()).slice(0, 80).join('') : '';
+function tidyLinkRows(link) {
+    const rows = Array.isArray(link.rows) && link.rows.length ? link.rows : linkText(link.name) ? [{ word: link.name, cards: [] }] : [];   // 기본값이 먼저 채운 빈 rows 에도 옮긴다
+    return rows.filter(isObj).slice(0, 20).map(r => ({ word: linkText(r.word), cards: [...new Set((Array.isArray(r.cards) ? r.cards : []).filter(c => typeof c === 'string' && c && c.length <= 255))].slice(0, 50) }));
+}
 
 /** 3.1.0 스타일 목록 · 캐릭터 연결: 깨진 항목만 걸러 낸다 (멀쩡하면 배열을 새로 만들지 않음 — getSettings 는 자주 불림) */
 function tidyStyles(s) {
@@ -363,13 +369,14 @@ function tidyStyles(s) {
         bind.keys = [...new Set((Array.isArray(bind.keys) ? bind.keys : []).filter(k => typeof k === 'string' && /^[cg]:./.test(k)))].slice(0, 200); bind.regex = [...new Set((Array.isArray(bind.regex) ? bind.regex : []).filter(r => typeof r === 'string' && r))].slice(0, 64);
         if (!bind.keys.length && !bind.regex.length) delete s.promptBinds[id];
     }
-    // 6.5.2 캐릭터 이름 연동: 켜짐은 불리언, 이름은 다듬은 글자 80자까지 (이름은 설정에만 있다)
+    // 6.5.2 캐릭터 이름 연동: 켜짐은 불리언 · 6.7.5 줄은 tidyLinkRows (예전 이름은 첫 줄로)
     if (!isObj(s.promptLink)) s.promptLink = structuredClone(DEFAULTS.promptLink);
     s.fruitTypography = tidyFruitType(s.fruitTypography);
     if(!['wand','qr','cat'].includes(s.fruitEntryMode))s.fruitEntryMode='wand';
     s.fruitEntryDisplay=entryDisplay(s.fruitEntryDisplay);s.fruitEntryIcon=entryIcon(s.fruitEntryIcon);
     s.promptLink.on = flag(s.promptLink.on, false);
-    s.promptLink.name = typeof s.promptLink.name === 'string' ? Array.from(s.promptLink.name.trim()).slice(0, 80).join('') : '';
+    s.promptLink.rows = tidyLinkRows(s.promptLink);
+    delete s.promptLink.name;
     // 6.0.4 확장 위 스위치: true 인 글자 열쇠만, 100개까지
     if (!isObj(s.headSwitches)) s.headSwitches = {};
     for (const [k, v] of Object.entries(s.headSwitches)) if (!k || v !== true) delete s.headSwitches[k];

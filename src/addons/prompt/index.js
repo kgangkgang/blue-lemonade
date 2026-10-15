@@ -1228,14 +1228,19 @@ function applyPresetRegexTitles(presetObj, ns) {
 }
 
 // ── World Info ────────────────────────────────────────────────────────
+// 숨긴 월드인포 (사용자 10-16 — 다른 확장이 쓰는 내부 자료 같은 것은 이 목록에서 안 보이게). 이름은 설정에만 둔다.
+const hiddenWorlds = () => { const c = cfg(); if (!Array.isArray(c.hiddenWorlds)) c.hiddenWorlds = []; return c.hiddenWorlds; };
 function listAllWorldInfos() {
     const items=[];
     try {
-        if (Array.isArray(world_names)&&world_names.length) { world_names.forEach(n=>{if(n)items.push({id:n,name:n});}); return items; }
-        const sel=document.querySelector('#world_editor_select');
-        if (sel) Array.from(sel.options).forEach(o=>{const v=(o.value||o.textContent||'').trim();if(v)items.push({id:v,name:v});});
+        if (Array.isArray(world_names)&&world_names.length) world_names.forEach(n=>{if(n)items.push({id:n,name:n});});
+        else {
+            const sel=document.querySelector('#world_editor_select');
+            if (sel) Array.from(sel.options).forEach(o=>{const v=(o.value||o.textContent||'').trim();if(v)items.push({id:v,name:v});});
+        }
     } catch(e){}
-    return items;
+    const hidden = new Set(hiddenWorlds());
+    return hidden.size ? items.filter(item => !hidden.has(item.id)) : items;
 }
 // Marker used to carry world-info keywords through the translation round-trip.
 const KEYS_MARKER = '**Keys:**';
@@ -3557,6 +3562,8 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
                     <button class="pt-btn-icon" id="${idPfx}-json" title="JSON 내보내기"><i class="fa-solid fa-file-code" aria-hidden="true"></i><span>JSON</span></button>
                     ${kind === 'char' ? '' : `<button class="pt-btn-icon" id="${idPfx}-tm" title="번역 메모리"><i class="fa-solid fa-box-archive" aria-hidden="true"></i><span>번역 기록</span></button>
                     <input type="file" id="${idPfx}-tmfile" accept="application/json,.json" style="display:none;">`}
+                    ${kind === 'wi' ? `<button class="pt-btn-icon" id="${idPfx}-hide" title="고른 월드인포를 이 목록에서 숨겨요"><i class="fa-solid fa-eye-slash" aria-hidden="true"></i><span>목록에서 숨기기</span></button>
+                    <button class="pt-btn-icon" id="${idPfx}-unhide" title="숨긴 월드인포를 다시 보여요" hidden><i class="fa-solid fa-eye" aria-hidden="true"></i><span>숨긴 것 다시 보기</span></button>` : ''}
                     </div></details>
                 </div>
             </div>
@@ -3841,6 +3848,26 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
     };
     // The ↻ refresh lives outside buildPage; let it reuse this refill.
     sel._ptRefill = refillSelect;
+    if (kind === 'wi') {   // 숨기기 · 다시 보기 (더보기 메뉴)
+        const hideBtn = page.querySelector(`#${idPfx}-hide`), unhideBtn = page.querySelector(`#${idPfx}-unhide`);
+        const syncHide = () => { const n = hiddenWorlds().length; if (unhideBtn) { unhideBtn.hidden = !n; unhideBtn.querySelector('span').textContent = `숨긴 것 다시 보기 (${n})`; } };
+        hideBtn?.addEventListener('click', async () => {
+            const name = sel.value;
+            if (!name) { toastr.info('숨길 월드인포를 먼저 골라 주세요.'); return; }
+            const list = hiddenWorlds();
+            if (!list.includes(name)) list.push(name);
+            saveSettingsDebounced?.(); sel.value = ''; await refillSelect(); syncHide();
+            toastr.info(`「${name}」을 이 목록에서 숨겼어요. 더보기 › 숨긴 것 다시 보기로 되돌릴 수 있어요.`);
+        });
+        unhideBtn?.addEventListener('click', async () => {
+            const list = hiddenWorlds();
+            if (!list.length) return;
+            const names = list.join(' · ');
+            list.length = 0; saveSettingsDebounced?.(); await refillSelect(); syncHide();
+            toastr.info(`다시 보여요: ${names}`);
+        });
+        syncHide();
+    }
     refillSelect();
     if (idPfx==='pt-char') {
         try { eventSource?.on?.(event_types?.APP_READY, refillSelect); } catch(e){}

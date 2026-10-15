@@ -137,7 +137,7 @@ await test('6.4.3 영어 낱말은 빼는 것 — 이름 · 약어 · 한글 없
     assert.deepEqual(pick('Now, listen to me, she said quietly. 웃었다.', src), [], 'English-dominant line');
     assert.deepEqual(pick('Now, 미나는 웃었다.', '今、ミナは笑った。'), [], 'not in the source');
     assert.deepEqual(pick('Rowan, 기다려.', src), [], 'not a common word');
-    assert.deepEqual(pick('미나는 then 떠났다.', src), [], 'mid-sentence lowercase');
+    assert.deepEqual(pick('미나는 then 떠났다.', src), [[0, ['then']]], '2.6.3 mid-sentence lowercase left from an English source line is a leftover');
     assert.deepEqual(pick('Now, 미나는 웃었다.', src, [], ['now']), [], 'names compare case-insensitively');
     assert.deepEqual(pick('Now, 미나는 웃었다.', ''), [], 'no source → no English check');
 });

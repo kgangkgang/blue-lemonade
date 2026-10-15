@@ -146,58 +146,91 @@ export function renameKeys(oldAvatar, newAvatar) {
         if (!Array.isArray(bind.keys)) continue;
         bind.keys = bind.keys.map(k => { if (k === from) { n++; return to; } if (k.startsWith(from + '/')) { n++; return to + k.slice(from.length); } return k; });
     }
+    const rows = getSettings().promptLink?.rows;   // 6.7.5 캐릭터 이름 연동 줄의 카드도 옮긴다
+    for (const row of Array.isArray(rows) ? rows : []) if (Array.isArray(row?.cards) && row.cards.includes(oldAvatar)) { row.cards = [...new Set(row.cards.map(c => (c === oldAvatar ? newAvatar : c)))]; n++; }
     if (n) saveSettings();
     return n;
 }
 
-// ───────── 캐릭터 이름 연동 (6.5.2 · prompt-link.js) ─────────
-// 설정 promptLink { on, name }: 이름이 든 프롬프트는 그 캐릭터(카드 이름 · 아바타 파일 이름 · 그룹이면 구성원 중 하나)의 채팅에서만 켜지고,
-// 이름 자리가 「기본」이거나 이름(과 옆의 · — 괄호)만 빠진 같은 이름의 프롬프트는 짝으로 반대로 켜진다 — 「대사 색상 (A · 이름)」 ↔ 「대사 색상 (A · 기본)」,
-// 「| Dialogue Color (이름) |」 ↔ 「| Dialogue Color |」. 정규식은 이름이 든 것만 (전역 · 카드 · 프리셋 · 짝 없음). 직접 묶은 프롬프트(promptBinds)는 묶음이 우선이다.
-// 이름은 설정에만 있다. 켜짐 뒤집기 · 저장 · 다시 그리기는 아래 syncPromptBinds 의 묶음과 같은 길이라 되돌이표 규칙도 같다.
+// ───────── 캐릭터 이름 연동 (6.5.2 · 6.7.5 여러 줄 · prompt-link.js) ─────────
+// 설정 promptLink { on, rows: [{ word, cards }] }: 줄마다 말(word)이 든 프롬프트는 그 줄의 캐릭터 채팅에서만 켜진다 — 고른 카드(cards: 아바타 파일) 중 하나,
+// 카드를 안 골랐으면 말과 이름이 같은 카드(카드 이름 · 아바타 파일 이름), 그룹이면 구성원 중 하나. 말은 띄어쓰기 · 대소문자 · 전각을 무시하고 찾는다.
+// 이름 자리가 「기본」이거나 말(과 옆의 · — 괄호)만 빠진 같은 이름의 프롬프트는 짝으로 반대로 켜진다 — 「대사 색상 (A · 이름)」 ↔ 「대사 색상 (A · 기본)」,
+// 「| Dialogue Color (이름) |」 ↔ 「| Dialogue Color |」. 여러 줄이 같은 짝을 함께 쓰면 짝은 그 줄들 어디에도 안 맞을 때만 켜진다.
+// 정규식은 말이 든 것만 (전역 · 카드 · 프리셋 · 짝 없음). 직접 묶은 프롬프트(promptBinds)는 묶음이 우선이다.
+// 말 · 카드는 설정에만 있다. 켜짐 뒤집기 · 저장 · 다시 그리기는 아래 syncPromptBinds 의 묶음과 같은 길이라 되돌이표 규칙도 같다.
 const fold = s => String(s ?? '').normalize('NFKC').replace(/\s+/g, ' ').trim().toLowerCase();
+const squash = s => fold(s).replace(/\s/g, '');   // 띄어쓰기까지 무시 (「Re x」 = 「Rex」)
 const escapeRe = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-/** 설정의 연동 이름 ('' = 꺼짐 또는 비어 있음) */
-export function linkName() { try { const s = getSettings().promptLink; return s?.on === true && typeof s.name === 'string' ? s.name.trim() : ''; } catch { return ''; } }
-/** 지금 열린 채팅이 그 캐릭터인가 — 카드 이름 · 아바타 파일 이름(확장자 뺀) · 그룹이면 구성원 중 하나 (대소문자 · 전각 무시) */
-export function linkMatches(name, ctx = SillyTavern.getContext()) {
-    const n = fold(name);
-    if (!n) return false;
-    const is = c => !!c && (fold(c.name) === n || fold(String(c.avatar || '').replace(/\.[a-z0-9]+$/i, '')) === n);
-    const characters = Array.isArray(ctx.characters) ? ctx.characters : [];
-    if (ctx.groupId) { const g = (ctx.groups || []).find(x => String(x.id) === String(ctx.groupId)); return !!(g?.members || []).some(a => is(characters.find(c => c.avatar === a))); }
-    const id = Number(ctx.characterId);
-    return Number.isInteger(id) && is(characters[id]);
+const wordRe = word => Array.from(squash(word)).map(escapeRe).join('\\s*');
+const asRow = row => typeof row === 'string' ? { word: row, cards: [] } : { word: String(row?.word ?? ''), cards: Array.isArray(row?.cards) ? row.cards.filter(c => typeof c === 'string' && c) : [] };
+/** 설정의 연동 줄 — 켜져 있고 말이 있는 줄만 ([] = 꺼짐 또는 비어 있음) */
+export function linkRows() {
+    try {
+        const s = getSettings().promptLink;
+        return s?.on === true && Array.isArray(s.rows) ? s.rows.map(asRow).filter(r => squash(r.word)).map(r => ({ ...r, word: r.word.trim() })) : [];
+    } catch { return []; }
 }
-/** 이름이 든 항목 이름 → 짝 이름 후보(fold 한 것): 이름 자리에 「기본」 · (이름) 괄호째 뺀 것 · 옆의 ·—/| 와 함께 뺀 것 · 이름만 뺀 것 */
+/** 이름에 든 줄 번호 — 말이 다른 줄 말의 일부일 뿐이면(Rex ⊂ Rexa) 긴 쪽만 */
+function rowsIn(name, keys) {
+    const text = squash(name);
+    const hit = keys.flatMap((k, i) => (k && text.includes(k) ? [i] : []));
+    return hit.filter(i => !hit.some(j => keys[j] !== keys[i] && keys[j].includes(keys[i])));
+}
+/** 지금 열린 채팅이 그 줄의 캐릭터인가 — 고른 카드(아바타 파일) 중 하나 · 카드를 안 골랐으면 말과 같은 카드 이름 · 아바타 파일 이름(확장자 뺀) · 그룹이면 구성원 중 하나 */
+export function linkMatches(row, ctx = SillyTavern.getContext()) {
+    const { word, cards } = asRow(row);
+    const n = squash(word), picked = new Set(cards);
+    if (!n && !picked.size) return false;
+    const characters = Array.isArray(ctx.characters) ? ctx.characters : [];
+    const is = avatar => {
+        if (picked.size) return picked.has(avatar);
+        const c = characters.find(x => x?.avatar === avatar);
+        return !!c && (squash(c.name) === n || squash(String(c.avatar || '').replace(/\.[a-z0-9]+$/i, '')) === n);
+    };
+    if (ctx.groupId) { const g = (ctx.groups || []).find(x => String(x.id) === String(ctx.groupId)); return !!(g?.members || []).some(is); }
+    const id = Number(ctx.characterId);
+    return Number.isInteger(id) && !!characters[id] && is(characters[id].avatar);
+}
+/** 말이 든 항목 이름 → 짝 이름 후보(fold 한 것): 말 자리에 「기본」 · (말) 괄호째 뺀 것 · 옆의 ·—/| 와 함께 뺀 것 · 말만 뺀 것 */
 export function linkTwinNames(label, name) {
-    const raw = String(label || ''), n = String(name || '').trim();
-    if (!n || !fold(raw).includes(fold(n))) return [];
-    const e = escapeRe(n);
+    const raw = String(label || '').normalize('NFKC'), key = squash(name);
+    if (!key || !squash(raw).includes(key)) return [];
+    const e = wordRe(name);
     const out = [raw.replace(new RegExp(e, 'gi'), '기본'), raw.replace(new RegExp(`\\s*[(（]\\s*${e}\\s*[)）]`, 'gi'), ''),
         raw.replace(new RegExp(`\\s*[·•—–\\-/|]\\s*${e}|${e}\\s*[·•—–\\-/|]\\s*`, 'gi'), ''), raw.replace(new RegExp(e, 'gi'), '')];
-    return [...new Set(out.map(fold).filter(x => x && x !== fold(raw) && !x.includes(fold(n))))];
+    return [...new Set(out.map(fold).filter(x => x && x !== fold(raw) && !squash(x).includes(key)))];
 }
-/** 지금 프리셋의 이름 규칙: 이름이 든 프롬프트(linked) · 그 짝(twins) · 바라는 켜짐(want: match 면 이름 든 것 켜고 짝은 끔) */
-function linkRule(m, name, match = false) {
+/** 지금 프리셋의 이름 규칙: 말이 든 프롬프트(linked) · 그 짝(twins) · 바라는 켜짐(want) · 줄마다 개수(counts).
+ *  말이 든 것은 그 말의 줄 중 하나라도 맞으면 켜고, 짝은 그 짝을 쓰는 줄 어디에도 안 맞을 때만 켠다 */
+function linkRule(m, rows, matches = []) {
     let order = [];
     try { order = m?.getPromptOrderForCharacter?.(m.activeCharacter) || []; } catch { order = []; }
-    const named = id => { try { return String(m.getPromptById?.(id)?.name || ''); } catch { return ''; } };
-    const key = fold(name), linked = new Set(), twins = new Set();
-    for (const e of order) if (e?.identifier && fold(named(e.identifier)).includes(key)) linked.add(e.identifier);
-    for (const id of linked) { const names = linkTwinNames(named(id), name); for (const t of order) if (t?.identifier && !linked.has(t.identifier) && names.includes(fold(named(t.identifier)))) twins.add(t.identifier); }
+    const label = new Map();
+    for (const e of order) if (e?.identifier && !label.has(e.identifier)) { let name = ''; try { name = String(m.getPromptById?.(e.identifier)?.name || ''); } catch { name = ''; } label.set(e.identifier, name); }
+    const keys = rows.map(r => squash(r.word)), owners = new Map(), twinOf = new Map();
+    for (const [id, name] of label) { const hit = rowsIn(name, keys); if (hit.length) owners.set(id, hit); }
+    const plain = [...label].filter(([id]) => !owners.has(id)).map(([id, name]) => [id, squash(name)]);
+    for (const [id, hit] of owners) for (const i of hit) {
+        const names = new Set(linkTwinNames(label.get(id), rows[i].word).map(squash));
+        for (const [t, name] of plain) if (names.has(name)) { if (!twinOf.has(t)) twinOf.set(t, new Set()); twinOf.get(t).add(i); }
+    }
     const want = new Map();
-    for (const id of linked) want.set(id, !!match);
-    for (const id of twins) want.set(id, !match);
-    return { order, linked, twins, want };
+    for (const [id, hit] of owners) want.set(id, hit.some(i => !!matches[i]));
+    for (const [id, set] of twinOf) want.set(id, ![...set].some(i => !!matches[i]));
+    const counts = rows.map((_, i) => ({ prompts: [...owners.values()].filter(h => h.includes(i)).length, twins: [...twinOf.values()].filter(t => t.has(i)).length }));
+    return { order, linked: new Set(owners.keys()), twins: new Set(twinOf.keys()), want, counts };
 }
-/** 설정 창 안내용: 지금 프리셋에서 이름 규칙이 잡는 개수 { prompts, twins, regex } */
-export async function linkReport(name = linkName()) {
+/** 설정 창 안내용: 지금 프리셋에서 이름 규칙이 잡는 개수 { prompts, twins, regex, rows: 줄마다 { prompts, twins, regex } } — 줄은 받은 차례 그대로(말이 빈 줄은 0) */
+export async function linkReport(rows = linkRows()) {
+    const list = (Array.isArray(rows) ? rows : [rows]).map(asRow);
+    const none = { prompts: 0, twins: 0, regex: 0, rows: list.map(() => ({ prompts: 0, twins: 0, regex: 0 })) };
     const m = await manager();
-    const key = fold(name);
-    if (!key || !m?.activeCharacter) return { prompts: 0, twins: 0, regex: 0 };
-    const rule = linkRule(m, name);
-    return { prompts: rule.linked.size, twins: rule.twins.size, regex: allRegexScripts().filter(s => fold(s.scriptName).includes(key)).length };
+    if (!list.some(r => squash(r.word)) || !m?.activeCharacter) return none;
+    const rule = linkRule(m, list);
+    const keys = list.map(r => squash(r.word)), hits = allRegexScripts().map(s => rowsIn(s.scriptName, keys));
+    return { prompts: rule.linked.size, twins: rule.twins.size, regex: hits.filter(h => h.length).length,
+        rows: list.map((_, i) => ({ ...rule.counts[i], regex: hits.filter(h => h.includes(i)).length })) };
 }
 
 // ───────── 맞추기 ─────────
@@ -222,8 +255,8 @@ export async function syncPromptBinds(reason = 'ui') {
     syncing = (async () => {
         const all = binds();
         const ids = Object.keys(all);
-        const link = linkName();   // 6.5.2 캐릭터 이름 연동
-        if (!ids.length && !link) return 0;
+        const link = linkRows();   // 6.5.2 캐릭터 이름 연동 (6.7.5 여러 줄)
+        if (!ids.length && !link.length) return 0;
         const m = await manager();
         if (!m?.activeCharacter || typeof m.getPromptOrderEntry !== 'function') return 0;
         const keys = currentKeys();
@@ -244,16 +277,19 @@ export async function syncPromptBinds(reason = 'ui') {
             if (entry && (entry.enabled !== false) !== want) { entry.enabled = want; changed++; }
             for (const sid of (Array.isArray(all[id].regex) ? all[id].regex : [])) wantRegex.set(sid, (wantRegex.get(sid) || false) || want);
         }
-        if (link) {   // 6.5.2 이름 규칙: 이름이 든 프롬프트는 match 로, 짝은 반대로 · 직접 묶은 프롬프트는 건너뜀 · 정규식은 묶음과 같이 켜기가 이긴다
-            const match = linkMatches(link);
-            const rule = linkRule(m, link, match);
+        if (link.length) {   // 6.5.2 이름 규칙: 말이 든 프롬프트는 그 줄이 맞으면 켜고 짝은 반대로 · 직접 묶은 프롬프트는 건너뜀 · 정규식은 묶음과 같이 켜기가 이긴다
+            const matches = link.map(row => linkMatches(row));
+            const rule = linkRule(m, link, matches);
             for (const [id, want] of rule.want) {
                 if (all[id] && wanted(all[id], keys) !== null) continue;
                 const entry = rule.order.find(e => e.identifier === id);
                 if (entry && (entry.enabled !== false) !== want) { entry.enabled = want; changed++; }
             }
-            const key = fold(link);
-            for (const list of [scripts, scoped, preset]) for (const sc of list) if (sc?.id && fold(sc.scriptName).includes(key)) wantRegex.set(sc.id, (wantRegex.get(sc.id) || false) || match);
+            const words = link.map(row => squash(row.word));
+            for (const list of [scripts, scoped, preset]) for (const sc of list) {
+                const hit = sc?.id ? rowsIn(sc.scriptName, words) : [];
+                if (hit.length) wantRegex.set(sc.id, (wantRegex.get(sc.id) || false) || hit.some(i => matches[i]));
+            }
         }
         for (const [sid, want] of wantRegex) {
             const sc = scripts.find(s => s && s.id === sid);

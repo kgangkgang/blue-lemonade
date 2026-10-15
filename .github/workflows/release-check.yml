@@ -55,6 +55,8 @@ jobs:
           node tools/tests/chat-sync-local.mjs .
           node tools/tests/translator-preview-frames.mjs .
           node tools/tests/translator-stream.mjs .
+          node tools/tests/prompt-hide-worlds.mjs .
+          node tools/tests/translator-midword.mjs .
           node tools/tests/modelswitch-fallback-pick.mjs .
           node tools/tests/tts-integration.mjs .
           node tools/tests/tts-dethump.mjs .
@@ -170,6 +172,7 @@ jobs:
           node tools/tests/appearance-comfort.mjs .
           node tools/tests/gradients-core.mjs .
           node tools/tests/regexlink-engine.mjs .
+          node tools/tests/regexlink-fruit.mjs .
           node tools/tests/mermaid-addon.mjs .
           node tools/tests/fruit-localization.mjs
           node tools/tests/fruit-status.mjs .
@@ -177,6 +180,7 @@ jobs:
           node tools/tests/fruit-typography.mjs .
           node tools/tests/prompt-tools.mjs
           node tools/tests/prompt-link.mjs
+          node tools/tests/prompt-card-picker.mjs
           node tools/tests/fruit-cards-removed.mjs .
           node tools/tests/settings-dialog.mjs
           node tools/tests/deus-qr.mjs
