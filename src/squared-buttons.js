@@ -46,28 +46,41 @@ export function watchSquaredButtons(doc, host) {
     style.dataset.blSquaredStyle = '';
     style.textContent = `[${ATTR}]{border-radius:var(--bl-r-btn,8px)!important}`;
     (doc.head || doc.documentElement).append(style);
-    const roots = new Set();
+    const roots = new Set(), waiting = new Set();
     let timer = 0, stopped = false;
-    function scan(root) {
+    // Measure every candidate first, then mark: marking between reads re-dirtied style and forced one recalc per button.
+    function scan(root, found) {
         if (!root?.isConnected) return;
         const list = root.matches?.(CANDIDATES) ? [root, ...root.querySelectorAll(CANDIDATES)] : root.querySelectorAll(CANDIDATES);
-        for (const el of list) if (el.offsetParent !== null && isRoundTextButton(el, host)) el.setAttribute(ATTR, '');
+        for (const el of list) if (el.offsetParent !== null && isRoundTextButton(el, host)) found.push(el);
     }
     function flush() {
         timer = 0; if (stopped) return;
         const list = roots.has(doc.body) ? [doc.body] : [...roots];
         roots.clear();
-        for (const root of list) scan(root);
+        const found = [];
+        for (const root of list) scan(root, found);
+        for (const el of found) el.setAttribute(ATTR, '');
     }
     const queue = node => {
         const el = node?.nodeType === 1 ? node : node?.parentElement;
-        if (!el || el.closest?.('style,script')) return;
+        if (!el || !el.isConnected || el.closest?.('style,script')) return;
+        // While a reply streams, the chat changes many times a second (text, reasoning header, timers, class toggles on every message):
+        // check those messages once when generation ends.
+        if (doc.body.dataset.generating && el.closest?.('#chat')) { waiting.add(el.closest('.mes') || el); return; }
+        // A closed drawer shows nothing; opening it changes its class, which re-checks the whole drawer.
+        if (el.closest?.('.drawer-content.closedDrawer')) return;
         roots.add(el);
         if (!timer) timer = host.setTimeout(flush, 300);
     };
     // Drawers and popups open by class/style changes, so attribute changes re-check that subtree.
-    const observer = new host.MutationObserver(records => { for (const r of records) { if (r.type === 'childList') r.addedNodes.forEach(queue); else queue(r.target); } });
-    observer.observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'hidden', 'open'] });
+    const observer = new host.MutationObserver(records => {
+        for (const r of records) {
+            if (r.attributeName === 'data-generating') { if (!doc.body.dataset.generating) { const held = [...waiting]; waiting.clear(); held.forEach(queue); } continue; }
+            if (r.type === 'childList') r.addedNodes.forEach(queue); else queue(r.target);
+        }
+    });
+    observer.observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'hidden', 'open', 'data-generating'] });
     const resize = () => queue(doc.body);
     host.addEventListener('resize', resize);
     queue(doc.body);

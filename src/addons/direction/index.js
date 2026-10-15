@@ -1079,7 +1079,9 @@ export const ready = new Promise((resolve, reject) => jQuery(() => {
     for (const name of ['GENERATION_ENDED', 'GENERATION_STOPPED']) if (event_types[name]) eventSource.on(event_types[name], () => { generationType = null; });
     eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, injectDirection);
     // 테마를 바꾸면 테마 색을 쓰는 경우의 글자색(켜짐 배지)도 다시 계산한다.
-    eventSource.on(event_types.SETTINGS_UPDATED, syncOnColor); // 5.1.3: 저장마다 계산 스타일을 읽지 않고 값싼 서명이 바뀔 때만
+    // 5.1.3: 저장마다 계산 스타일을 읽지 않고 값싼 서명이 바뀔 때만
+    // 경량화(10-15): 부팅 중 저장(확장들이 수십 번)도 아래 감시처럼 앱 준비 뒤 한 번으로 — 시트 · <html style> 이 늘 바뀌어 서명이 매번 달라져 계산 스타일을 강제로 읽었다 (폰 리그 4배 부팅 수 초)
+    eventSource.on(event_types.SETTINGS_UPDATED, () => { if (!bootQuiet) syncOnColor(); });
     // 설정 저장을 기다리지 않고 테마 색이 바뀌는 그 자리에서 따라간다.
     // 실리태번 테마는 <html style>, 블루 레몬에이드는 <head>의 <style id="salty-vars"> · body 클래스를 바꾼다.
     // 1.1.0: 60ms 뒤에 바로 계산 스타일을 읽으면, 답이 스트리밍되는 도중(실리태번이 body 클래스를 붙였다 뗌)에는 채팅이 막 바뀐

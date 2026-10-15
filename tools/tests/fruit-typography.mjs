@@ -49,5 +49,11 @@ const editorCss=read('css/79-fruit-type.css'),editorJs=read('src/fruit-type-ui.j
 assert(!/grid-template-columns\s*:\s*repeat\(\s*2/.test(editorCss),'No two-column parameter grid');assert(!/border-radius\s*:\s*(9999|99)px/.test(editorCss),'No pill buttons');
 assert.equal((editorJs.match(/type="checkbox"/g)||[]).length,1,'Switches come from one theme switch helper');assert(editorJs.includes('class="salty-switch"'));
 assert(!/<label class="bl-ft-param"><span>[^<]*<\/span><(?:input|select)[^>]*>[^<]*<(?:input|select)/.test(editorJs),'One control per parameter');
+// 과일 창 바로가기 대화상자(.bl-ft-dialog)는 설정 창(.salty-panel) 밖 — 미리보기 도구 단추가 테마 모양을 따로 받아야 한다 (없으면 브라우저 기본 흰 네모, 나이트 대비 1.14)
+assert(editorJs.includes("dialog.className='bl-ft-dialog'")&&!editorJs.includes('salty-panel'),'Shortcut dialog lives outside .salty-panel');
+assert(/\.bl-ft-dialog \.bl-view-tools button\{[^}]*border-radius:8px[^}]*background:var\(--salty-fill-shade/.test(editorCss),'Dialog zoom tool buttons use the theme shade, 8px');
+assert(/\.bl-ft-dialog \.bl-view-resize>button\{[^}]*border-radius:8px[^}]*background:transparent[^}]*color:var\(--salty-muted/.test(editorCss),'Dialog magnifier and reset buttons are transparent theme buttons');
+assert.equal((read('css/56-control-consistency.css').match(/:is\(\.salty-panel, \.bl-ft-dialog\) \.bl-view-resize > button:not\(\.bl-view-toggle\)/g)||[]).length,4,'Reset glyph (line icon) also in the dialog');
+assert(/\.bl-ft-dialog small\{opacity:1\}/.test(editorCss),'Dialog small text is not dimmed by SillyTavern small{opacity:.7} (light contrast 2.9)');
 assert(read('src/prompt-tools.js').includes('export function fruitTypographyGroup'));assert.equal((read('src/panel.js').match(/fruitTypographyGroup\('deus'\)/g)||[]).length,2,'Deus page places the editor group in both states');
 console.log('Fruit typography: five known names, independent regions, limits, OFF/reset, synthetic previews; Deus 73 effects/group descriptions passed');

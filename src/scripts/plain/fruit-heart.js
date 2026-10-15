@@ -222,7 +222,16 @@ function installFruitHeartKorean(BlueLemonade, data) {
   }
   host[key] = { stop };
   BlueLemonade.onCleanup(stop);
-  discovery = host.setInterval(schedule, 1500);
+  // Discovery tick: repaint only when a root appeared or left, the user just used the panel, or a popup is open.
+  // Observed roots already repaint on their own changes; a full repaint every 1.5 s cost ~36 ms on a 4x-throttled phone.
+  const fruitOption = '#reasoning_select option[value="果实之心"]';
+  const discover = () => {
+    if (Date.now() - recent < 15000 || popupRoots.size || doc.querySelector('dialog.popup[open],.popup:not(dialog)')) return schedule();
+    for (const node of observed) if (!node.isConnected) return schedule();
+    for (const selector of [rootsSelector, helperRootsSelector, watchSelector]) for (const root of doc.querySelectorAll(selector)) if (!observed.has(root)) return schedule();
+    if (doc.getElementById('fruit-heart-v6')) for (const option of doc.querySelectorAll(fruitOption)) if (!texts.has(option.firstChild) && /[\u4e00-\u9fff]/.test(option.textContent)) return schedule();
+  };
+  discovery = host.setInterval(discover, 1500);
   flush();
 }
 

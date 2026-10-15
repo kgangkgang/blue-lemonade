@@ -41,6 +41,15 @@ html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100
 .bl-ft-dialog::backdrop{background:#0008}
 .bl-ft-dialog-head{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;margin:0 -16px 4px;padding:8px 16px;background:inherit;border-bottom:1px solid var(--salty-line,#8884)}
 .bl-ft-dialog .salty-prevbox{top:52px}
+/* 대화상자는 설정 창(.salty-panel) 밖이라 미리보기 도구 단추(돋보기 · ↺ · 확대 · 축소)가 브라우저 기본 흰 네모였다(나이트 대비 1.14) — 설정 창(45-preview-view)과 같은 모양.
+   ↺ 선 그림은 56-control-consistency 의 같은 규칙이 :is(.salty-panel, .bl-ft-dialog) 로 받는다 */
+.bl-ft-dialog .bl-view-tools button{min-width:36px;min-height:32px;margin:0;padding:4px 9px;border:0;border-radius:8px;background:var(--salty-fill-shade,var(--salty-shade,#8882));color:var(--salty-text,inherit);font:inherit;font-size:13px;cursor:pointer}
+.bl-ft-dialog .bl-view-tools button:disabled{opacity:.4;cursor:default}
+.bl-ft-dialog .bl-view-resize>button{width:32px;height:28px;min-height:0;margin:0;padding:0;border:0;border-radius:8px;background:transparent;color:var(--salty-muted,inherit);font:13px/1 sans-serif;cursor:pointer}
+.bl-ft-dialog .bl-view-resize>.bl-view-toggle{grid-column:1;grid-row:1}
+.bl-ft-dialog .bl-view-toggle[aria-expanded="true"]{color:var(--salty-accent,currentColor)}
+/* 실리태번 small{opacity:.7} 이 옅은 글자색과 겹쳐 라이트에서 대비 2.9 였다 — 설정 창(19-extwindows 5.3.7)처럼 대화상자에서도 1 (미리보기는 iframe 이라 안 닿음) */
+.bl-ft-dialog small{opacity:1}
 /* 과일 창 · 데우스 빠른 설정 안 바로가기 단추: 8px 얇은 네모 */
 .bl-ft-shortcut{font:inherit!important;font-size:.8em!important;min-height:32px!important;padding:4px 10px!important;border-radius:8px!important;white-space:normal!important;overflow-wrap:anywhere!important;max-width:100%!important}
 @media(max-width:360px){.bl-ft-dialog{padding:0 12px 12px}.bl-ft-dialog-head{margin:0 -12px 4px;padding:8px 12px}}

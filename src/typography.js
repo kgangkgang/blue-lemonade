@@ -54,6 +54,34 @@ export function markAssetBreaks(root){
 // 글 속 감싸개를 지나 실제 강제 개행만 찾는다. 화면 폭 때문에 접힌 줄은 새 대사가 아니다.
 // 블록 · 독립 inline-block 경계는 넘지 않는다 (자체 text-indent 와 중복되지 않게).
 const INLINE_HOST=/^(SPAN|FONT|MARK|EM|STRONG|B|I|U|S|DEL|INS|A|SMALL|BIG|SUB|SUP|ABBR|CITE|BDI|BDO)$/;
+// 6.7.5 줄 맨 앞 <style> 바로 뒤의 <br> (.bl-style-br — css/07-images 가 숨김). 프리셋 정규식이 대사 앞에 「<style>…</style>⏎」 을 끼우면
+// 그 줄바꿈이 문단 맨 앞 빈 줄이 되어 감정 대사 위가 두 줄쯤 벌어졌다 (과일 프리셋 「감정 표현 스타일」). <style> 은 그려지지 않으니 줄 머리의
+// 그 <br> 은 빈 줄만 만든다. 줄 가운데(앞에 글이 있는) <style> 뒤의 <br> 은 글쓴이의 줄바꿈일 수 있어 둔다. 숨긴 <br> 은 대사 줄 머리 판정도 건너뛴다
+const STYLE_BR='bl-style-br';
+function atLineStart(node){
+    for(let host=node;host;){
+        for(let prev=host.previousSibling;prev;prev=prev.previousSibling){
+            if(blank(prev)||prev.nodeName==='STYLE')continue;
+            return prev.nodeName==='BR';
+        }
+        const parent=host.parentElement;
+        if(!parent||!INLINE_HOST.test(parent.nodeName))return true;   // 문단 · 블록 첫머리
+        host=parent;
+    }
+    return true;
+}
+export function markStyleBreaks(root){
+    if(!root?.querySelectorAll)return;
+    const want=new Set();
+    for(const style of root.getElementsByTagName?.('style') || root.querySelectorAll('style')){
+        if(!style.closest('.mes_text'))continue;
+        let next=style.nextSibling;
+        while(next&&(blank(next)||next.nodeName==='STYLE'))next=next.nextSibling;
+        if(next?.nodeName==='BR'&&atLineStart(style))want.add(next);
+    }
+    for(const br of [...(root.getElementsByClassName?.(STYLE_BR) || root.querySelectorAll(`br.${STYLE_BR}`))])if(!want.has(br))br.classList.remove(STYLE_BR);
+    for(const br of want)if(!br.classList.contains(STYLE_BR))br.classList.add(STYLE_BR);
+}
 // 5.6.2 번역 접기 · 원문 먼저 보기(내장 · 외부 LLM 번역기): 줄마다 <details> 블록이고 그 안의 번역문 · 원문 칸이 글줄 하나다.
 const LLMT_BLOCK='details.custom-llm-translator-details, details.llm-translator-details';
 const LLMT_LANE='.custom-translated_text, .translated_text, .custom-original_text, .original_text';
@@ -147,6 +175,7 @@ function prepareRoot(root){
     // 5.3.6: 그림 옆 <br> · 그림 뒤 들여쓰기 칸은 조판하는 모든 곳에서 (북마크 카드 · 설정 미리보기도 — 채팅에서만 달아서 북마크는 그림 아래가 벌어졌다).
     // 대사 줄 표시(bl-line-dialogue)가 이 칸을 보고 정해지므로 먼저
     markAssetBreaks(root);
+    markStyleBreaks(root);   // 6.7.5 줄 머리 <style> 뒤 빈 줄 — 대사 줄 판정(읽기)보다 먼저
     // The same Markdown separators appear in chat and bookmark renderings.
     // Reuse the targeted cleanup; preserve line breaks inside actual prose.
     normalizeTrackerSpacing(root);
@@ -212,6 +241,7 @@ export function syncTypography(on) {
         originals.clear();document.querySelectorAll('.bl-line-dialogue').forEach(node=>node.classList.remove('bl-line-dialogue'));
         document.querySelectorAll(`.${LINE_INDENT}`).forEach(node=>node.remove());
         document.querySelectorAll(`br.${IMG_BR}`).forEach(node=>node.classList.remove(IMG_BR));
+        document.querySelectorAll(`br.${STYLE_BR}`).forEach(node=>node.classList.remove(STYLE_BR));
         document.querySelectorAll(`.${IMG_INDENT}`).forEach(node=>node.remove());return;
     }
     typesetRoot(document); // 그림 옆 표시(markAssetBreaks)도 이 안에서 먼저
@@ -239,7 +269,7 @@ export function syncTypography(on) {
         if(now.size){for(const mes of now)if(mes.isConnected)normalizeTrackerSpacing(mes);observer.takeRecords();}
         // 5.3.4: 그림 옆 <br> 표시도 그리기 전에 — 늦게 달면 빈 줄이 한 번 보였다 사라진다 (클래스만 바꾸므로 감시 기록이 생기지 않는다)
         // 들여쓰기 칸을 넣고 뺀 기록도 버린다 (우리가 만든 것뿐 — 이 메시지는 이미 dirty 에 있다)
-        let padded=false;for(const root of touched)if(root.isConnected&&markAssetBreaks(root))padded=true;
+        let padded=false;for(const root of touched)if(root.isConnected){if(markAssetBreaks(root))padded=true;markStyleBreaks(root);}   // 6.7.5 <style> 뒤 빈 줄도 그리기 전에 (클래스만)
         if(padded)observer.takeRecords();
         // 6.6.9 다시 그려진 메시지의 색 글자는 그리기 전에 (실리태번은 답이 오는 동안 조각마다 본문을 통째로 다시 그린다 — 늦으면 원래 색이 깜빡인다)
         typesetHook?.([...touched].filter(root=>root.isConnected));

@@ -51,15 +51,16 @@ body[data-bl-fruit-entry] #send_form :is(#qr--bar,#nonQRFormItems)>[data-bl-frui
         const native=doc.getElementById('fruit-heart-v6-wand-entry'),panel=doc.getElementById('fruit-heart-v6');
         const available=!!native||!!panel||typeof host.__FRUIT_HEART_MAIN__?.open==='function';
         if(!available){proxy?.remove();proxy=null;doc.body.removeAttribute('data-bl-fruit-entry');return;}
-        const mode=entryMode(getSettings().fruitEntryMode);doc.body.setAttribute('data-bl-fruit-entry',mode);
+        const mode=entryMode(getSettings().fruitEntryMode);if(doc.body.getAttribute('data-bl-fruit-entry')!==mode)doc.body.setAttribute('data-bl-fruit-entry',mode);
         collectEntries();
         if(!proxy||proxy.dataset.blFruitEntryProxy!==mode){proxy?.remove();proxy=doc.createElement('button');proxy.type='button';proxy.dataset.blFruitEntryProxy=mode;proxy.className=mode==='qr'?'qr--button interactable':'interactable';proxy.setAttribute('aria-label','과일의 마음 열기');proxy.title='과일의 마음 열기';proxy.innerHTML=mode==='cat'?'<i class="fa-solid fa-cat" aria-hidden="true"></i>':'<i class="fa-solid fa-apple-whole" aria-hidden="true"></i><span>과일의 마음</span>';proxy.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();open();});}
         const savedName=host.SillyTavern?.getContext?.()?.extensionSettings?.blue_lemonade_scripts?.names?.fruit;const label=mode==='qr'&&typeof savedName==='string'&&savedName.trim()?Array.from(savedName.trim()).slice(0,40).join(''):'과일의 마음';const caption=proxy.querySelector('span');if(caption&&caption.textContent!==label)caption.textContent=label;
         const display=entryDisplay(getSettings().fruitEntryDisplay),icon=entryIcon(getSettings().fruitEntryIcon),glyph=proxy.querySelector('i');
-        proxy.dataset.blFruitEntryDisplay=display;
-        if(caption)caption.hidden=mode==='qr'&&display==='icon';
-        if(glyph){glyph.hidden=mode==='qr'&&display==='text';const classes=`fa-solid ${mode==='cat'?'fa-cat':mode==='qr'?icon:'fa-apple-whole'}`;if(glyph.className!==classes)glyph.className=classes;}
-        const qrBar=doc.getElementById('qr--bar');const target=mode==='wand'?doc.getElementById('extensionsMenu'):mode==='qr'?(qrBar&&host.getComputedStyle(qrBar).display!=='none'?qrBar:(doc.getElementById('nonQRFormItems')||doc.getElementById('send_form'))):doc.body;
+        if(proxy.dataset.blFruitEntryDisplay!==display)proxy.dataset.blFruitEntryDisplay=display;
+        if(caption&&caption.hidden!==(mode==='qr'&&display==='icon'))caption.hidden=mode==='qr'&&display==='icon';
+        if(glyph){if(glyph.hidden!==(mode==='qr'&&display==='text'))glyph.hidden=mode==='qr'&&display==='text';const classes=`fa-solid ${mode==='cat'?'fa-cat':mode==='qr'?icon:'fa-apple-whole'}`;if(glyph.className!==classes)glyph.className=classes;}
+        // Under the startup loader nothing is visible yet: skip the computed-style read (a full style recalc per flush while the page is built) and place it precisely on APP_READY.
+        const qrBar=doc.getElementById('qr--bar');const target=mode==='wand'?doc.getElementById('extensionsMenu'):mode==='qr'?(qrBar&&(doc.getElementById('loader')||host.getComputedStyle(qrBar).display!=='none')?qrBar:(doc.getElementById('nonQRFormItems')||doc.getElementById('send_form'))):doc.body;
         // Icon-only sits beside the send-form icons, outside the QR bar's own padding and gap.
         if(target===qrBar&&display==='icon'&&qrBar.parentElement?.id==='nonQRFormItems'){if(proxy.nextElementSibling!==qrBar)qrBar.before(proxy);}
         else if(target&&proxy.parentElement!==target)target.append(proxy);
@@ -74,8 +75,11 @@ body[data-bl-fruit-entry] #send_form :is(#qr--bar,#nonQRFormItems)>[data-bl-frui
         }
         for(const button of panel?.querySelectorAll('[data-entry-toggle="bar"],[data-entry-toggle="ball"]')||[]){const row=button.closest('.fh-toggle')||button.parentElement;if(row&&!hiddenRows.has(row)){hiddenRows.set(row,row.style.display);row.style.display='none';}}
         for(const input of chooser?.querySelectorAll('input')||[])input.checked=input.value===mode;
-        const appearance=chooser?.querySelector('.bl-fruit-qr-display');if(appearance){appearance.hidden=mode!=='qr';appearance.querySelector('select').value=display;appearance.querySelector('i').className=`fa-solid ${icon}`;}
+        const appearance=chooser?.querySelector('.bl-fruit-qr-display');if(appearance){if(appearance.hidden!==(mode!=='qr'))appearance.hidden=mode!=='qr';appearance.querySelector('select').value=display;const i=appearance.querySelector('i');if(i.className!==`fa-solid ${icon}`)i.className=`fa-solid ${icon}`;}
     }
-    const observer=new host.MutationObserver(schedule);observer.observe(doc.body,{childList:true,subtree:true});const timer=host.setInterval(schedule,1500);flush();
+    // Entries live in #send_form, the wand menu and body itself, never in the chat, a settings drawer or a <select>: skip message rendering,
+    // streaming and drawer UI filling in after startup (each flush reads the QR bar's computed style). The 1.5 s timer stays as the safety net.
+    const observer=new host.MutationObserver(records=>{for(const r of records){const t=r.target.nodeType===1?r.target:r.target.parentElement;if(!t?.closest?.('#chat,.drawer-content,select')){schedule();return;}}});observer.observe(doc.body,{childList:true,subtree:true});const timer=host.setInterval(schedule,1500);flush();
+    if(doc.getElementById('loader'))try{const ctx=host.SillyTavern?.getContext?.();ctx?.eventSource?.once?.(ctx.event_types?.APP_READY,schedule);}catch{/* the 1.5 s timer corrects the place */}
     return()=>{if(stopped)return;stopped=true;picker?.close();observer.disconnect();host.clearInterval(timer);host.cancelAnimationFrame(queued);proxy?.remove();chooser?.remove();doc.body.removeAttribute('data-bl-fruit-entry');for(const [node,before]of nativeEntries){if(before===null)node.removeAttribute('data-bl-fruit-native-entry');else node.setAttribute('data-bl-fruit-native-entry',before);}nativeEntries.clear();for(const [row,before]of hiddenRows)if(row.style.display==='none')row.style.display=before;hiddenRows.clear();for(const [node,change]of hints)if(node.textContent===change.shown)node.textContent=change.original;hints.clear();style.remove();};
 }

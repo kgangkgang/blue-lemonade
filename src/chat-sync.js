@@ -87,6 +87,15 @@ export function sameAsLocal(now, chat) {
     if (now.mes !== textKey(last.mes || '[The message is empty]')) return false;
     return last.send_date == null || now.last === String(last.send_date);
 }
+/** 6.7.5 서버 채팅(맨 앞 머리 줄 포함 가능)이 이 화면의 채팅과 메시지마다 같은가 — 원문 · 번역문 · 고른 스와이프 지문. 못 읽으면 null.
+ *  sameAsLocal 은 메시지 수 · 마지막 메시지만 보니 가운데 메시지 번역을 다른 기기에서 고친 것도 「같음」이 된다 — 서버가 움직였을 때 이것으로 가린다 */
+export function sameMessages(server, chat) {
+    if (!Array.isArray(server) || !Array.isArray(chat)) return null;
+    const list = server.length && server[0] && typeof server[0] === 'object' && !('mes' in server[0]) ? server.slice(1) : server;
+    if (list.length !== chat.length) return false;
+    const key = m => `${textKey(m?.mes ?? '')}|${textKey(m?.extra?.display_text ?? '')}|${m?.swipe_id ?? ''}`;
+    return list.every((m, i) => key(m) === key(chat[i]));
+}
 /** 우리가 본 것(base)과 서버(now)가 다른가 — 정확한 값(②)은 둘 다 있을 때만 */
 export function chatChanged(base, now) {
     if (!base || !now) return false;
@@ -110,6 +119,17 @@ export function createChatSync(env) {
         if (st.on && !st.unsupported && !env.hidden()) st.timer = env.setTimer(() => { void check('period').finally(schedule); }, PERIOD);
     };
     const setStale = (value) => { if (st.stale === value) return; st.stale = value; env.strip(value); };
+    /** 6.7.5 서버 채팅 글이 이 화면과 같은가 (true · false · 못 읽으면 null) — 서버가 움직였는데 메시지 수 · 마지막 메시지가 같을 때만 부른다 */
+    async function serverMatches(target) {
+        try {
+            const c = ctx();
+            const [url, body] = target.group
+                ? ['/api/chats/group/get', { id: target.file_name.replace(/\.jsonl$/, '') }]
+                : ['/api/chats/get', { ch_name: c.characters?.[c.characterId]?.name ?? '', file_name: target.file_name.replace(/\.jsonl$/, ''), avatar_url: target.avatar }];
+            const r = await env.fetcher(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers() }, body: JSON.stringify(body), cache: 'no-cache', signal: AbortSignal.timeout(20000) });
+            return r.ok ? sameMessages(await r.json(), ctx().chat) : null;
+        } catch { return null; }
+    }
 
     /** 서버를 한 번 본다. 처음 · 우리 저장 뒤면 기준을 새로 잡고, 아니면 바뀌었나 본다 */
     function check(reason = '') {
@@ -127,9 +147,18 @@ export function createChatSync(env) {
                 st.lastCheck = env.now();
                 if (st.target?.key !== target.key || st.saving || gen !== st.gen) return null;   // 그 사이 채팅이 바뀌었거나 우리 저장이 끼었다
                 if (!st.base || st.rebase) { st.base = now; st.rebase = false; return now; }
+                const changed = chatChanged(st.base, now);
                 // 6.7.1 화면과 같으면 이 기기 저장 — 기준만 다시 (띠가 떠 있었으면 걷는다)
-                if (sameAsLocal(now, ctx().chat)) { st.base = now; st.passKey = ''; setStale(false); return now; }
-                if (chatChanged(st.base, now)) setStale(true);
+                // 6.7.5 메시지 수 · 마지막 메시지만 같고 서버는 움직였으면(가운데 메시지 · 번역문을 다른 기기가 고침) 서버 채팅을 한 번 받아 메시지마다 견준다.
+                //       같거나 못 읽으면 전처럼 이 기기 저장으로 본다 (드문 길 — 감싸개 · 저장 신호가 이 기기 저장을 이미 기준으로 잡는다)
+                if (sameAsLocal(now, ctx().chat)) {
+                    const same = changed ? await serverMatches(target) : true;
+                    if (st.target?.key !== target.key || st.saving || gen !== st.gen) return null;
+                    if (same !== false) { st.base = now; st.passKey = ''; setStale(false); return now; }
+                    setStale(true);
+                    return now;
+                }
+                if (changed) setStale(true);
                 else if (st.base.charMtime === undefined && now.charMtime !== undefined) st.base = { ...st.base, charMtime: now.charMtime, charSize: now.charSize };
                 return now;
             } catch (error) {
@@ -243,6 +272,17 @@ export function createChatSync(env) {
         isWrite: (input, init) => String(init?.method ?? input?.method ?? 'GET').toUpperCase() === 'POST' && WRITE_PATHS.includes(pathOf(input)), afterWrite };
 }
 
+/** 6.7.5 저장 관문 — 이 감싸개와 성능 보조(src/addons/perf/perfassist.js)가 같이 부른다. 감싸개와 관문이 겹쳐도 한 저장 요청(init)은 한 번만 묻는다 */
+export const SAVE_GUARD = Symbol.for('blue-lemonade.chat-save-guard');
+export function makeSaveGuard(sync) {
+    const guarded = new WeakSet();
+    return (input, init, send) => {
+        if (!sync.state.on || !sync.isSave(input, init) || (init && guarded.has(init))) return send();
+        if (init && typeof init === 'object') guarded.add(init);
+        return sync.onSave(input, init, send);
+    };
+}
+
 // ── 화면 (실제 실리태번에서만) ────────────────────────────────
 
 let sync = null;
@@ -287,9 +327,13 @@ function install() {
         now: () => Date.now(), setTimer: (fn, ms) => setTimeout(fn, ms), clearTimer: id => clearTimeout(id),
         hidden: () => document.visibilityState === 'hidden', ask: askOverwrite, strip: stripEl, busy: generating,
     });
+    // 6.7.5 저장 관문: 성능 보조(워커 저장)처럼 이 감싸개보다 바깥에 놓여 채팅 저장을 직접 보내는 감싸개는 보내기 전에 이것을 부른다
+    //       (전엔 띠가 떠 있어도 묻지 않고 다른 기기 내용을 덮어썼다)
+    const guardSave = makeSaveGuard(sync);
+    globalThis[SAVE_GUARD] = guardSave;
     // 바깥 감싸개 하나 — 끄면 그냥 통과. 다른 확장의 감싸개(성능 보조의 저장 정리 등)는 안쪽에 그대로 남는다
     window.fetch = function chatSyncFetch(input, init) {
-        if (sync.state.on && sync.isSave(input, init)) return sync.onSave(input, init, () => native.call(this, input, init));
+        if (sync.state.on && sync.isSave(input, init)) return guardSave(input, init, () => native.call(this, input, init));
         if (sync.state.on && sync.isWrite(input, init)) return sync.afterWrite(native.call(this, input, init));
         return native.call(this, input, init);
     };

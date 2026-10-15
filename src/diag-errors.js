@@ -3,7 +3,8 @@
 // 주소 · 키처럼 보이는 것은 남길 때 지운다 (진단 파일에 API 키 · 서버 주소가 들어가지 않게).
 const LIMIT = 20, KEY = Symbol.for('blue-lemonade.diag-errors');
 const base = new URL('../', import.meta.url).pathname;
-const MINE = /Blue Lemonade|blue-lemonade|블루\s?레몬에이드/i;
+// 6.7.5 내장 애드온은 제 이름표로 남긴다 ([LLM Translator] · [TTS] …) — 오류 객체 없이 글만 남기면 경로로도 못 알아봐 빠졌다
+const MINE = /Blue Lemonade|blue-lemonade|블루\s?레몬에이드|^\[(?:LLM Translator|TTS|캐릭터 에셋|북마크|메모|모델 등록|모델 전환|전개 지시|성능 보조|다시 쓰기)\]/i;
 
 /** 주소는 같은 서버의 경로만 남기고(물음표 뒤는 버림) 나머지는 <주소>, 키 · 토큰처럼 긴 글자는 <가림> */
 export function scrub(text) {
@@ -12,7 +13,13 @@ export function scrub(text) {
             try { const u = new URL(url); return u.origin === location.origin ? u.pathname : '<주소>'; } catch { return '<주소>'; }
         })
         .replace(/\b(?:sk|pk|rk|AIza|ghp|gho|xox[abp])[-_A-Za-z0-9]{12,}/g, '<가림>')
-        .replace(/\b(Bearer|Basic|key|token|api[_-]?key|password)\s*[:=]?\s*["']?[^\s"',;]{6,}/gi, '$1 <가림>')
+        // 6.7.5 진단 글은 공개 댓글에 붙는다: 메일 주소 · 기기 사용자 이름이 든 경로 · JSON 꼴 키 값도 가린다
+        .replace(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, '<메일>')
+        .replace(/\b([A-Za-z]:[\\/]+(?:Users|Documents and Settings)[\\/]+)[^\\/\s"'`<>]+/gi, '$1<이름>')
+        .replace(/(^|[\s"'(=])(\/(?:home|Users)\/)[^/\s"'`<>]+/g, '$1$2<이름>')
+        .replace(/("(?:api[_-]?key|key|token|secret|password|authorization)"\s*:\s*")[^"]{4,}"/gi, '$1<가림>"')
+        .replace(/\b(Bearer|Basic)\s+[^\s"',;]{6,}/gi, '$1 <가림>')
+        .replace(/\b(key|token|api[_-]?key|password|secret)\s*[:=]\s*["']?[^\s"',;]{6,}/gi, '$1 <가림>')   // 「key = 값」 꼴만 (「Missing key translation_settings」 같은 글은 그대로)
         .replace(/\b(?=[A-Za-z+_-]*\d)(?=[\d+_-]*[A-Za-z])[A-Za-z0-9+_-]{32,}={0,2}/g, '<가림>')   // 글자 · 숫자가 섞인 32자 넘는 덩어리 (경로 · 낱말은 그대로)
         .slice(0, 400);
 }

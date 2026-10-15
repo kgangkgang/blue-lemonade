@@ -39,4 +39,11 @@ check('normal translations untouched', () => {
     const t = '그는 번역(translate)이라는 단어를 적었다.\n\n' + good[1] + '\n\n' + good[2];
     assert.equal(stripDraftLeaks(t, src), t);
 });
+// 6.7.5 (회귀검사 6.7.4): 반쪽 문단 버리기가 맨 translate 꼬리가 아닌 줄(Note: · Hmm · let me)까지 통째로 지웠다 — 모델이 한 문단을 둘로 나눠 문단 수가 많을 때
+check('other model tails on an extra paragraph: only the tail goes, the sentence stays', () => {
+    const s1 = 'She nodded. "Fine," he laughed.';
+    assert.equal(stripDraftLeaks('그녀가 고개를 끄덕였다. (Note: she → 그녀)\n\n"좋아." 그가 웃었다.', s1), '그녀가 고개를 끄덕였다.\n\n"좋아." 그가 웃었다.');
+    assert.equal(stripDraftLeaks([good[0], good[1] + ' Hmm.', '좁은 공간의 공기가', '복도로 흘러넘쳤다.'].join('\n\n'), src), [good[0], good[1], '좁은 공간의 공기가', '복도로 흘러넘쳤다.'].join('\n\n'));
+    assert.equal(stripDraftLeaks([good[0], '그는 서류를 내밀었다. — let me check.', good[1], good[2]].join('\n\n'), src), [good[0], '그는 서류를 내밀었다.', good[1], good[2]].join('\n\n'));
+});
 console.log(`translator-stub: ${passed} passed, 0 failed`);

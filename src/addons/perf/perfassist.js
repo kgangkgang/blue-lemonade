@@ -168,6 +168,10 @@ function announceChatSave(input, init, request) {
     return request;
 }
 
+// 6.7.5 다른 기기 바뀜 감시(chat-sync.js)의 저장 관문 — 워커로 보내기 전에 부른다. 이 감싸개가 그 감싸개 바깥이라
+//       전엔 띠가 떠 있어도 덮어쓰기 전에 묻지 못하고 다른 기기에서 더한 메시지를 지웠다. 관문이 없으면(감시 끔 · 옛 판) 그대로 보낸다
+const SAVE_GUARD = Symbol.for('blue-lemonade.chat-save-guard');
+
 function installSaver() {
     if (typeof Worker !== 'function' || typeof nativeFetch !== 'function') {
         unavailable.saveInWorker = '워커 없음';
@@ -176,7 +180,9 @@ function installSaver() {
     // 다른 확장(끊김 감시 · 저장 정리 · 요청 로그)의 fetch 감싸기보다 안쪽에 있어야 한다 → loading_order 2
     window.fetch = function perfAssistFetch(input, init) {
         try {
-            return announceChatSave(input, init, saver.send(input, init));
+            const send = () => announceChatSave(input, init, saver.send(input, init));
+            const guard = globalThis[SAVE_GUARD];
+            return typeof guard === 'function' ? guard(input, init, send) : send();
         } catch (error) {
             console.warn(`[${TITLE}] 요청을 살피지 못했어요`, error);
             return nativeFetch.call(window, input, init);

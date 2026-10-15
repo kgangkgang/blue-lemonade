@@ -258,39 +258,60 @@ export function deferPanelHasRules(tries = 25) {
     // 꼬리만 받는다 — 빌드가 src/lazy-panel.gen.css 로 따로 써 둔다(1.8KB).
     // 예전에는 style.css(842KB) 를 통째로 받아 문자열로 풀고 뒤만 잘라 썼다. 옛 배포본에는 그 파일이
     // 없을 수 있어 404 면 예전처럼 style.css 에서 잘라 쓴다.
+    // 경량화(10-16): 받은 글과 올라온 시트를 규칙의 뼈대(종류 · 선택자 · @media 조건 · 안쪽 규칙)로만 견준다. 예전에는 cssText 를 글자 그대로 견줘서
+    // 브라우저가 규칙을 다르게 적으면(안드로이드 WebView — 한글이 든 content 값 · 캐시에 남은 옛 style.css) 매번 「끝이 다름」으로 분리를 못 하고
+    // 경고를 남겼다. 옮기는 글은 받은 원문 그대로라 선언을 어떻게 적는지는 상관없다. 꼬리 파일이 안 맞으면(옛 style.css 가 캐시에 남음)
+    // 올라온 시트와 같은 주소의 style.css 를 표시 규칙에서 잘라 한 번 더 견준다. 그래도 다르면 style.css 안에 켜 둔다 — 화면은 같고
+    // 가벼워지는 것만 빠지므로 오류가 아니라 알림(info)으로만 남긴다 (진단 「최근 오류」에 쌓이지 않게).
     const tailUrl = new URL('./lazy-panel.gen.css', import.meta.url);
-    const grab = fetch(tailUrl)
-        .then(res => (res.ok ? res.text() : Promise.reject(new Error(`HTTP ${res.status}`))))
-        .catch(() => fetch(sheet.href)
-            .then(res => (res.ok ? res.text() : Promise.reject(new Error(`HTTP ${res.status}`))))
-            .then((text) => {
-                const mark = `${LAZY_SENTINEL} {}`;
-                const at = text.lastIndexOf(mark);
-                if (at < 0) throw new Error('받아 온 style.css 에 게으른 칸 표시가 없음');
-                return text.slice(at + mark.length);
-            }));
-    grab.then((tail) => {
-        const probe = new CSSStyleSheet();
-        probe.replaceSync(tail);
-        const from = lazyStart(sheet);
-        const live = from < 0 ? [] : [...sheet.cssRules].slice(from + 1);
-        if (from < 0 || live.length !== probe.cssRules.length || live.some((rule, i) => rule.cssText !== probe.cssRules[i].cssText)) {
-            throw new Error('받아 온 style.css 끝이 올라온 시트와 다름');
+    const read = async (url, cut) => {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        if (!cut) return text;
+        const mark = `${LAZY_SENTINEL} {}`;
+        const at = text.lastIndexOf(mark);
+        if (at < 0) throw new Error('받아 온 style.css 에 게으른 칸 표시가 없음');
+        return text.slice(at + mark.length);
+    };
+    (async () => {
+        const reasons = [];
+        for (const [url, cut] of [[tailUrl, false], [sheet.href, true]]) {
+            let tail;
+            try { tail = await read(url, cut); } catch (err) { reasons.push(err.message); continue; }
+            const probe = new CSSStyleSheet();
+            probe.replaceSync(tail);
+            const from = lazyStart(sheet);
+            const live = from < 0 ? [] : [...sheet.cssRules].slice(from + 1);
+            if (from < 0 || !sameShape(live, probe.cssRules)) { reasons.push(`${cut ? 'style.css' : 'lazy-panel.gen.css'} 규칙 ${probe.cssRules.length}개 ↔ 시트 ${live.length}개`); continue; }
+            const style = document.createElement('style');
+            style.id = 'salty-panel-css';
+            style.media = 'not all';
+            style.textContent = tail;
+            sheet.ownerNode.after(style); // 먼저 새 시트를 붙이고(꺼진 채) 원래 규칙을 지운다 — 같은 태스크라 그 사이 그리기가 없다
+            for (let i = sheet.cssRules.length - 1; i > from; i--) sheet.deleteRule(i);
+            panelCount = live.length;
+            panelStyle = style;
+            panelOn = false;
+            syncPanelCss();
+            watchPanelOpen();
+            return;
         }
-        const style = document.createElement('style');
-        style.id = 'salty-panel-css';
-        style.media = 'not all';
-        style.textContent = tail;
-        sheet.ownerNode.after(style); // 먼저 새 시트를 붙이고(꺼진 채) 원래 규칙을 지운다 — 같은 태스크라 그 사이 그리기가 없다
-        for (let i = sheet.cssRules.length - 1; i > from; i--) sheet.deleteRule(i);
-        panelCount = live.length;
-        panelStyle = style;
-        panelOn = false;
-        syncPanelCss();
-        watchPanelOpen();
-    }).catch((err) => {
-        console.warn('[Blue Lemonade] 서랍 전용 규칙 분리 실패 — style.css 안에 켜 둠', err);
+        console.info('[Blue Lemonade] 서랍 전용 규칙은 style.css 안에 켜 둠 (화면은 같음):', reasons.join(' / '));
+    })().catch((err) => {
+        console.info('[Blue Lemonade] 서랍 전용 규칙은 style.css 안에 켜 둠 (화면은 같음):', err?.message || err);
     });
+}
+/** 두 규칙 목록이 같은 뼈대인가 — 종류 · 선택자 · 조건(@media · @supports · @container) · 이름 · 안쪽 규칙을 차례로. 선언 글(cssText)은 보지 않는다 */
+function sameShape(a, b) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+        const x = a[i], y = b[i];
+        if (x.type !== y.type || x.constructor !== y.constructor || x.selectorText !== y.selectorText) return false;
+        if ((x.conditionText ?? x.media?.mediaText ?? x.name ?? '') !== (y.conditionText ?? y.media?.mediaText ?? y.name ?? '')) return false;
+        if ((x.cssRules || y.cssRules) && !(x.cssRules && y.cssRules && sameShape(x.cssRules, y.cssRules))) return false;
+    }
+    return true;
 }
 function watchPanelOpen() {
     // 2.9.2: 채팅 밖 변화마다 uiOpen() 을 불렀는데, 옛 팝업 검사의 getClientRects() 가 그때마다 문서 전체 강제 레이아웃이었다.
@@ -378,12 +399,15 @@ export function startMenuOpenMark() {
         body.classList.toggle('bl-forced-expand', forced);
         if (forced) body.classList.add('expandMessageActions');
     };
-    for (const ms of [1500, 5000]) setTimeout(detectForced, ms);
+    // 경량화(10-15): 잴 때는 다음 프레임 맨 앞에서 — 채팅을 막 그리는 중(채팅 바꾼 1.2초 뒤)에 계산된 스타일을 읽으면 그 자리에서 문서 전체를 다시 계산했다
+    // (폰 리그 4배 30개 열기 1.4~2.4초). 프레임이 어차피 할 계산과 하나로 묶인다. 숨은 탭은 화면이 돌아올 때 잰다
+    const measureSoon = ms => setTimeout(() => requestAnimationFrame(detectForced), ms);
+    for (const ms of [1500, 5000]) measureSoon(ms);
     // 5.5.6: 접속 중에 테마를 켜고 끄면(설정 창의 스위치 — 새로고침 없음) 다시 잰다. body.salty 가 바뀐 때만 — detectForced 도 body 클래스를 바꾸므로 되먹임을 막는다
     let themed = document.body.classList.contains('salty');
-    new MutationObserver(() => { const now = document.body.classList.contains('salty'); if (now !== themed) { themed = now; setTimeout(detectForced, 0); } }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    new MutationObserver(() => { const now = document.body.classList.contains('salty'); if (now !== themed) { themed = now; measureSoon(0); } }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
     // 메뉴 안 '가지 만들기'처럼 메뉴가 열린 채 채팅이 바뀌면 떨어져 나간 메뉴의 클래스 변화는 안 잡혀 #chat 앵커가 남았다 — 채팅이 바뀔 때 다시 잰다
-    try { const { eventSource, event_types } = SillyTavern.getContext(); eventSource.on(event_types.CHAT_CHANGED, () => { syncChat(); setTimeout(detectForced, 1200); }); } catch { /* 이벤트를 못 걸면 시작할 때 잰 값만 쓴다 */ }
+    try { const { eventSource, event_types } = SillyTavern.getContext(); eventSource.on(event_types.CHAT_CHANGED, () => { syncChat(); measureSoon(1200); }); } catch { /* 이벤트를 못 걸면 시작할 때 잰 값만 쓴다 */ }
     // 4.2.8 바깥을 눌러도 메뉴가 안 닫히는 환경(예전 실리태번은 ··· 를 누르면 버튼 칸을 열어 두기만 하고 닫지 않는다 · 닫는 애니메이션이 끝나지 않는 폰)에서는
     // 테마가 이 칸을 떠 있는 메뉴로 그리기 때문에 메뉴가 채팅을 가린 채 남았다. 실리태번에게 먼저 맡기고, 0.45초 뒤에도 열려 있으면 테마가 닫는다.
     document.addEventListener('click', (event) => {

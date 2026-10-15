@@ -222,13 +222,13 @@ html body.salty toolcool-color-picker {
 /* 5.6.4 ↺ · × · ‹ › 글자 단추를 선 그림으로: 이 글자들은 기기의 대체 글꼴(윈도 Cambria Math · Noto, 폰은 또 다른 글꼴)에서 와서
    상자 안에서 1.8~3px 아래로 처졌다(기본 글꼴의 ‹ › 도 1.75px). 글자는 그대로 두고(읽기 프로그램 · 상자 크기 그대로) 채움만 투명하게,
    같은 색(currentColor) 마스크 그림을 칸 한가운데에 놓는다 — 그림의 잉크 상자가 viewBox 가운데라 글꼴과 상관없이 가운데 */
-:is(html body .bl-editor .bl-setting-reset, .salty-panel .bl-view-resize > button:not(.bl-view-toggle), .salty-panel .bl-settings-close,
+:is(html body .bl-editor .bl-setting-reset, :is(.salty-panel, .bl-ft-dialog) .bl-view-resize > button:not(.bl-view-toggle), .salty-panel .bl-settings-close,
   .salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"], .salty-panel .bl-search-field > [data-settings-clear],
   .bl-credits-dialog > header > button, .pt-help-dialog > header > button, body.salty .salty-panel .bl-preview-samples > button) {
   position:relative;
   -webkit-text-fill-color:transparent;
 }
-:is(html body .bl-editor .bl-setting-reset, .salty-panel .bl-view-resize > button:not(.bl-view-toggle), .salty-panel .bl-settings-close,
+:is(html body .bl-editor .bl-setting-reset, :is(.salty-panel, .bl-ft-dialog) .bl-view-resize > button:not(.bl-view-toggle), .salty-panel .bl-settings-close,
   .salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"], .salty-panel .bl-search-field > [data-settings-clear],
   .bl-credits-dialog > header > button, .pt-help-dialog > header > button, body.salty .salty-panel .bl-preview-samples > button)::before {
   content:'';
@@ -243,10 +243,10 @@ html body.salty toolcool-color-picker {
   pointer-events:none;
 }
 /* ↺ 기본값으로 · 미리보기 기본 높이 */
-:is(html body .bl-editor .bl-setting-reset, .salty-panel .bl-view-resize > button:not(.bl-view-toggle)) {
+:is(html body .bl-editor .bl-setting-reset, :is(.salty-panel, .bl-ft-dialog) .bl-view-resize > button:not(.bl-view-toggle)) {
   --bl-glyph:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8.4 5H10A6.2 6.2 0 1 1 5.62 6.82M10.9 2.5 8.4 5l2.5 2.5'/%3E%3C/svg%3E");
 }
-.salty-panel .bl-view-resize > button:not(.bl-view-toggle) { --bl-glyph-size:14px; }
+:is(.salty-panel, .bl-ft-dialog) .bl-view-resize > button:not(.bl-view-toggle) { --bl-glyph-size:14px; }
 /* × 닫기 · 지우기 (예전 글자 잉크 크기에 맞춤: 머리 · 목록 16px, 검색 14.5px, 출처 창 11px) */
 :is(.salty-panel .bl-settings-close, .salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"], .salty-panel .bl-search-field > [data-settings-clear], .bl-credits-dialog > header > button, .pt-help-dialog > header > button) {
   --bl-glyph:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M3 3l14 14M17 3 3 17'/%3E%3C/svg%3E");

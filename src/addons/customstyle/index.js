@@ -603,8 +603,15 @@ class CustomThemeSettingsManager {
                 this.updateCSSVariables(this.settings.entries || {});
             }
         };
+        // 경량화(10-15): 로딩 화면 동안의 저장(확장들이 수십 번)은 앱 준비 뒤 한 번으로 — 저장마다 :root 계산 스타일을 읽어 부팅 중 문서 전체를 다시 계산했다 (폰 리그 4배 수 초)
+        let bootQuiet = !!document.getElementById('loader'), bootMissed = false;
+        if (bootQuiet) eventSource.once(event_types.APP_READY, () => { bootQuiet = false; if (bootMissed) later(); });
         eventSource.on(event_types.SETTINGS_UPDATED, () => {
             if (!this.isAppReady) return;
+            if (bootQuiet) { bootMissed = true; return; }
+            later();
+        });
+        const later = () => {
             clearTimeout(settingsTimer);
             settingsTimer = setTimeout(() => {
                 // 5.6.4 (점검 RP-7): 저장마다 :root 계산 스타일을 그 자리에서 읽어 스타일 계산을 강제했다 (채팅 열 때 2~3번, 폰 리그 4배 71~123 ms).
@@ -613,7 +620,7 @@ class CustomThemeSettingsManager {
                 settingsLate = setTimeout(checkConfig, 1000);
                 settingsFrame = requestAnimationFrame(() => { settingsFrame = 0; clearTimeout(settingsLate); settingsLate = setTimeout(checkConfig, 0); });
             }, 300);
-        });
+        };
     }
 }
 

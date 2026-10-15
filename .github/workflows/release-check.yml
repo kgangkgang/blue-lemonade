@@ -105,6 +105,7 @@ jobs:
           node tools/tests/cutout-edge.mjs .
           node tools/tests/numcomma-fit.mjs .
           node tools/tests/ink-contrast.mjs .
+          node tools/tests/style-break.mjs .
           node tools/tests/main-chat-rules.mjs .
           node tools/tests/main-chat-finish.mjs .
           node tools/tests/generation-state.mjs .

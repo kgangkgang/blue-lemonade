@@ -165,13 +165,15 @@ const hexOf = new Map();
 const seenColor = (el, shown, want) => { const mark = markOf(el); return mark && sameRgb(shown, colorOf(mark.hex)) ? want : shown; };
 // 글자를 color 로 그리나 (-webkit-text-fill-color 가 currentColor) — 아니면 그 색은 띠 칠 · 그라데이션에만 쓰인다
 const drawnBy = (cs, color) => sameRgb(parseColor(cs.webkitTextFillColor) || color, color);
+// 우리 표시는 bl-ink-<번호> 뿐 — 설정 미리보기 표본의 bl-ink-sample(css/37-prompt-ink.css) 같은 다른 bl-ink- 클래스는 건드리지 않는다
+const isMarkClass = c => /^bl-ink-\d+$/.test(c);
 function markOf(el) {
     if (!el.classList.contains(MARK)) return null;
-    const cls = [...el.classList].find(c => c.startsWith(MARK + '-'));
+    const cls = [...el.classList].find(isMarkClass);
     return cls && hexOf.has(cls) ? { cls, hex: hexOf.get(cls) } : null;
 }
 function setMark(el, cls) {
-    const old = [...el.classList].find(c => c.startsWith(MARK + '-'));
+    const old = [...el.classList].find(isMarkClass);
     if (old === cls || (!old && !cls)) return;
     if (old) el.classList.remove(old);
     if (cls) el.classList.add(MARK, cls);
@@ -180,7 +182,7 @@ function setMark(el, cls) {
 function clearMarks() {
     for (const el of [...document.getElementsByClassName(MARK)]) {
         el.classList.remove(MARK);
-        for (const c of [...el.classList]) if (c.startsWith(MARK + '-')) el.classList.remove(c);
+        for (const c of [...el.classList]) if (isMarkClass(c)) el.classList.remove(c);
     }
 }
 

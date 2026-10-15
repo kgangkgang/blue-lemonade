@@ -10,6 +10,14 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 // 4.8.3: 시작 직후의 getComputedStyle 은 밀린 스타일 계산을 그 자리에서 돌린다 — 도구 여섯이 저마다 하면 부팅 0.3s@4x.
 // 브라우저가 한가할 때(그 프레임의 계산이 끝난 뒤) 읽으면 공짜에 가깝고, 여섯이 같은 한가한 틈에 몰려 한 번만 계산된다.
 const idle = () => new Promise(resolve => (typeof requestIdleCallback === 'function' ? requestIdleCallback(() => resolve(), { timeout: 4000 }) : setTimeout(resolve, 1000)));
+// 경량화(10-16): 로딩 화면 동안에는 읽지 않는다 — 부팅 중엔 한가한 틈이 안 와서(4초 시간 초과) 도구 열세 개가 저마다 문서 전체 스타일 계산을 강제했다
+// (폰 리그 4배 부팅 2.6초). 앱이 준비된 뒤부터 예전처럼 한가한 틈에 잰다 (확인은 진단용이라 몇 초 늦어도 같다)
+let ready = null;
+const appReady = () => ready ||= new Promise(resolve => {
+    if (typeof document?.getElementById !== 'function' || !document.getElementById('loader')) return resolve();   // 문서가 없거나(검사 · 다른 환경) 로딩 화면이 없으면 바로
+    try { const { eventSource, event_types } = SillyTavern.getContext(); eventSource.once(event_types.APP_READY, () => resolve()); } catch { return resolve(); }
+    setTimeout(resolve, 60000); // 준비 신호를 놓쳐도 1분 뒤에는 잰다
+});
 
 function read(name, selector) {
     const element = selector ? document.querySelector(selector) : document.documentElement;
@@ -44,6 +52,7 @@ function reloadStyle(folder) {
  */
 export async function verifyAddonCss({ folder, name, version, title, selector }) {
     const ok = () => { const value = read(name, selector); return value === null || value === version; };
+    await appReady();
     for (let i = 0; i < 4; i++) { await idle(); if (ok()) return true; await wait(3000); }
     const reloaded = await reloadStyle(folder);
     for (let i = 0; i < 3; i++) { await wait(i ? 3000 : 300); await idle(); if (ok()) return true; }

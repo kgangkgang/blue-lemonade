@@ -24,6 +24,8 @@ const RAIN = /(?:^|[\s,·/(~→-])(?:비(?![밀행슷교록용])|이슬비|가�
 const NOT_RAIN = /rainbows?|snow\s*(?:storms?|showers?)|meteor\s*showers?|(?:sand|dust)\s*storms?/gi;
 // 바람: window · August 의 wind · gust 는 빼고 (crosswind · whirlwind 처럼 붙여 쓴 바람은 그대로)
 const BREEZE = /바람|산들|breez|wind(?!ow)|\bgust|微风|大风|狂风|风[和起吹]|[东西南北和清凉微]风|風/i;
+// 바람이 없다는 말 — 바람을 보기 전에 지운다 (상태창 「dry and windless」 · 「바람 한 점 없이 메마른」이 바람 효과로 잡혔다)
+const NOT_BREEZE = /windless|\bno\s+(?:wind|breeze)s?\b|\bwithout\s+(?:a\s+|any\s+)?(?:wind|breeze)s?\b|바람\s*(?:한\s*점\s*)?(?:[이은도]\s*)?(?:없|안\s*부|불지\s*않|잠잠|멎)|무풍|无风|無風|没有风|沒有風|风平浪静|風平浪靜|風(?:は|が|も)?(?:なく|ない|無い|止[んみ])|凪/gi;
 
 const FOG = /안개|연무|박무|물안개|fog|mist|haze|雾|霧|靄/i; // '안개비'는 위의 비에서 먼저 걸린다
 
@@ -47,7 +49,7 @@ export function detectWeatherAll(text) {
     const dusk = DUSK.test(value);
     if (outdoors && !NIGHT.test(value) && !GLOOM.test(value) && (dusk || SUN.test(value) || /여우비|sun\s*shower/i.test(value))) found.push('sun');
     if (outdoors && NIGHT.test(value) && !GLOOM.test(value)) found.push('star'); // 맑은 밤 · 밤 → 별
-    if (BREEZE.test(value)) found.push('breeze');
+    if (BREEZE.test(value.replace(NOT_BREEZE, ' '))) found.push('breeze');
     // all: 트래커 '제외할 날씨'는 자르기 전에 걸러야 셋째 효과가 빈자리를 채운다 (plan)
     return { modes: found.slice(0, 2), all: found, warm: dusk };
 }
@@ -253,14 +255,21 @@ let trackerTimer = 0;
 
 // 6.6.9 어떤 상태창이든: 마지막 AI 답에 날씨 항목이 있으면 따라간다 (과일 「天气：」 · 간결 상태창 「<present>…」 · 「Weather:」 · 「날씨:」).
 //   번역문이 있으면 번역문을, 없으면 원문을 본다. 그 답에 데우스 트래커 칸이 있으면 그것이 먼저.
-const STATUS_WEATHER = /(?:^|[\n>|｜\[【])[ \t]*(?:\*\*)?[ \t]*(?:天气|天氣|天候|날씨|weather|wthr)[ \t]*(?:\*\*)?[ \t]*[:：|｜][ \t]*([^\n<|｜】\]]{1,120})/i;
+// 6.7.5 줄 앞 목록 기호 · 이모지(「- 날씨: 비」 · 「🌧️ 날씨: 비」) · 일본어 天気도 받는다
+const STATUS_WEATHER = /(?:^|[\n>|｜\[【])[ \t]*(?:(?:[-*•·▪◦]|\p{Extended_Pictographic}️?)[ \t]*)*(?:\*\*)?[ \t]*(?:天气|天氣|天気|天候|날씨|weather|wthr)[ \t]*(?:\*\*)?[ \t]*[:：|｜][ \t]*([^\n<|｜】\]]{1,120})/iu;
 const COMPACT_WEATHER = /<(?:olden|present|scifi)>[ \t]*([^｜|◹\n<]{1,120})/i;
+// 6.7.5 같은 줄에 이어 붙은 다른 칸(「天气：晴 时间：夜晚」의 시간 · 장소)은 날씨가 아니다 — 그 칸 이름 앞에서 자른다 (밤이 별로 잡혔다)
+const NEXT_FIELD = /[ \t,，、·;；]+(?:时间|時間|日期|日付|地点|地點|场所|場所|位置|시간|날짜|장소|위치|time|date|location|place)[ \t]*[:：]/i;
+// 생각 블록 안의 날씨 줄은 상태창이 아니다 (diag-file.js 와 같은 블록 이름)
+const THINK_BLOCK = /<(think|thinking|ECoT|reasoning)\b[^>]*>[\s\S]*?<\/\1\s*>/gi;
 const NO_WEATHER = { modes: [], all: [], warm: false };
 /** 글 속 상태창의 날씨 항목 글 (없으면 '') */
 export function statusWeatherText(text) {
-    const value = String(text || '');
+    const value = String(text || '').replace(THINK_BLOCK, '');
     const found = STATUS_WEATHER.exec(value) || COMPACT_WEATHER.exec(value);
-    return found ? found[1].trim() : '';
+    if (!found) return '';
+    const cut = NEXT_FIELD.exec(found[1]);
+    return (cut ? found[1].slice(0, cut.index) : found[1]).trim();
 }
 function deusWeather(scope) {
     const values = scope.querySelectorAll(`:is(${WEATHER_VALUE})`);

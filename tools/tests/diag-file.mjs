@@ -35,8 +35,19 @@ await test('scrub: 다른 서버 주소 · 키 · 토큰은 가리고, 같은 �
     assert.equal(E.scrub('scripts/extensions/third-party/blue-lemonade/src/addons/translator/index'), 'scripts/extensions/third-party/blue-lemonade/src/addons/translator/index');
 });
 
+// 6.7.5 (회귀검사 6.7.4): 진단 복사 글은 공개 댓글에 붙는다 — 메일 · 사용자 이름 경로 · JSON 꼴 키가 남았고, 「Missing key …」 같은 평범한 글은 가려졌다
+await test('scrub: 메일 · 사용자 이름이 든 경로 · JSON 키 값은 가리고, 평범한 낱말은 그대로', () => {
+    const out = E.scrub('a.b+c@example.com 계정 · C:\\Users\\Someone\\Downloads\\x.log · /home/someone/st/x · /Users/someone/x · {"apiKey":"abc12345","url":"x"} · key: hunter2secret');
+    assert.ok(!/example\.com|Someone|someone|abc12345|hunter2secret/.test(out), out);
+    assert.ok(out.includes('<메일>') && out.includes('C:\\Users\\<이름>\\Downloads') && out.includes('/home/<이름>/st') && out.includes('"apiKey":"<가림>"'), out);
+    assert.equal(E.scrub('Missing key translation_settings in config'), 'Missing key translation_settings in config');
+    assert.equal(E.scrub('token count 12345 over limit'), 'token count 12345 over limit');
+});
+
 await test('isMine: 블루레몬에이드 표시 · 이 설치 경로가 든 것만 남긴다', () => {
     assert.ok(E.isMine(['[Blue Lemonade] 설정 창을 불러오지 못했어요']));
+    assert.ok(E.isMine(['[LLM Translator] 번역 점검을 불러오지 못했어요:', '[object]']) && E.isMine(['[TTS] 재생 실패']), '내장 애드온 이름표 (6.7.5)');
+    assert.ok(!E.isMine(['문장 속 [LLM Translator] 언급']), '이름표는 맨 앞만');
     assert.ok(E.isMine(['TypeError: x', `at f (${new URL('../src/panel.js', mod('src/diag-errors.js')).pathname}:1:2)`]));
     assert.ok(!E.isMine(['[다른 확장] 실패', 'at g (/scripts/extensions/third-party/other/index.js:1:1)']));
 });
@@ -112,6 +123,16 @@ await test('애드온 판: 모든 내장 애드온 폴더가 표에 있고, 파�
     assert.ok(list.every(a => /^\d+\.\d+\.\d+$/.test(a.version)), JSON.stringify(list.filter(a => !a.version)));
     assert.ok(list.find(a => a.id === 'tts').on && !list.find(a => a.id === 'translator').on);
     assert.ok(asked.every(r => r === 'bytes=0-4095'), '앞부분만 요청');
+});
+
+// 6.7.5 (회귀검사 6.7.4 화면): 진단 창 메시지 번호는 세로 2줄 파라미터 · 설치된 판의 꺼진 칸은 글자를 흐리게 하지 않는다(대비 나이트 3.5 · 라이트 2.5 였다)
+await test('화면 규칙: 메시지 번호 세로 2줄 · 꺼진 애드온 칸은 점선 테두리', () => {
+    const css = fs.readFileSync(path.join(root, 'css/70-sync-update-diag.css'), 'utf8');
+    assert.match(css, /\.bl-diag-file \.bl-diag-pick \{ flex-direction: column; align-items: stretch;/);
+    assert.match(css, /\.bl-diag-file input\[type="number"\] \{ width: 100%;/);
+    assert.ok(!/div\.is-off \{[^}]*opacity/.test(css), '꺼진 칸에 opacity 없음');
+    assert.match(css, /div\.is-off \{[^}]*border: 1px dashed/);
+    assert.ok(fs.readFileSync(path.join(root, 'src/theme-update.js'), 'utf8').includes('점선 칸은 꺼 둔 애드온이에요.'));
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

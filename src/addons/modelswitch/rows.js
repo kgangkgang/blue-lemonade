@@ -71,3 +71,11 @@ export function groupOn(rows, group, isOn) {
     const pick = (Array.isArray(rows) ? rows : []).filter(target => rowActive(target) && (group === 'fallback') === isFallbackRow(target));
     return pick.length > 0 && pick.every(target => isOn(target));
 }
+
+/** 6.7.5 「검열되면」 단추가 눌린 상태 = 고를 수 있는 검열되면 줄이 모두 골라졌고 켜진 일반 줄은 없음.
+ *  (전엔 검열되면 줄만 보고 판정해 일반 줄과 같이 켜진 기본 상태에서 누르면 검열되면 줄이 꺼지고 일반 줄만 남았다 — 사용자 요청은 「검열되면 쓸 애들만 전체선택」) */
+export function fallbackOnly(rows, isOn, pickable = rowActive) {
+    const list = Array.isArray(rows) ? rows : [];
+    const picks = list.filter(target => isFallbackRow(target) && pickable(target));
+    return picks.length > 0 && picks.every(target => isOn(target)) && !list.some(target => !isFallbackRow(target) && rowActive(target) && isOn(target));
+}

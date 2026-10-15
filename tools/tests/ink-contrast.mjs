@@ -333,6 +333,22 @@ await test('끄면 원복: 표시 클래스 · 색 시트가 모두 사라지고
     R.syncInkContrast(false);
 });
 
+// 6.7.5 (회귀검사 6.7.4): 설정 창 미리보기 표본(<font class="bl-ink-sample">, css/37-prompt-ink.css)의 클래스를 우리 표시(bl-ink-<n>)로 알고 떼었다
+await test('미리보기 표본 bl-ink-sample 은 우리 표시가 아님: 맞추고 · 떼고 · 꺼도 그대로', async () => {
+    const sample = new Node('font', { color: '#424C59', class: 'bl-ink-sample', style: '--bl-ink:#424C59' }).append('「표본 대사」');
+    message(sample);
+    usePalette('night');
+    R.syncInkContrast(true); await wait(260); R.inkContrastRun([doc]);
+    assert.ok(sample.classList.contains('bl-ink-sample'), '나이트에서 맞춰도 표본 클래스 유지');
+    assert.ok(sample.classList.contains('bl-ink') && shownOn(sample) >= 4.5, '표본 글자도 대비는 맞춤');
+    usePalette('light'); R.syncInkContrast(true); await wait(260); R.inkContrastRun([doc]);
+    assert.ok(sample.classList.contains('bl-ink-sample') && !sample.classList.contains('bl-ink'), '라이트: 우리 표시만 떼고 표본 클래스는 둠');
+    usePalette('night'); R.syncInkContrast(true); await wait(260);
+    R.syncInkContrast(false);
+    assert.ok(sample.classList.contains('bl-ink-sample') && !sample.classList.contains('bl-ink'), '끄면 우리 표시만 사라짐');
+    sample.parentElement.parentElement.parentElement.remove();
+});
+
 // ── 연결 ──
 await test('연결: features(기본 켬 · 확장만 모드 제외) · 채팅 › 화면 스위치 · 조판 훅 · 설정 검색 · CI', () => {
     const features = read('src/features.js');

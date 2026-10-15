@@ -519,6 +519,8 @@ export function stripReplyWrapping(text, source) {
 const WRAP_NAMES = ['output', 'outputs', 'translation', 'translated', 'translated_text', 'translation_result', 'result', 'answer', 'final', 'final_answer', 'final_output', 'final_translation', 'response', 'korean', 'ko', 'kr', 'target', 'target_text'];
 const WRAP_FENCE = /^[ \t]*`{3,}[\w-]*[ \t]*$/;
 const META_PHRASE = String.raw`(?:let me\b|let'?s (?:try|redo|re-?write|fix|write|translate|start|do (?:it|this|that))\b|wait[,.!…]|wait\s*$|actually[,.]|hmm+\b|oops\b|scratch that|on second thought|no,? (?:that'?s|wait)\b|i(?:'ll| will| should| need to| must| meant| think i)\s+(?:re-?write|re-?do|re-?try|fix|translate|write|use|keep|go with|output|revise|correct|rephrase|make)\b|(?:re-?write|re-?do|re-?try|re-?translat\w*|revis(?:e|ed|ion)|correct(?:ed|ion)|draft|final(?: version| answer| output| translation)?|better(?: version| translation)?|proper(?: version| translation)?|cleaner(?: version)?|polished(?: version)?)\s*[:：]|here(?:'s| is| are)\s+(?:the |my |a )?(?:[\w-]+\s+){0,2}(?:translation|version|output|rendering|rewrite)\b|(?:translator'?s?\s+|tl\s+)?note\s*[:：]|(?:translate|translation)\s*[.:：!]?\s*$)`;
+// 2.5.3 반쪽 문단 끝에 붙는 맨 「translate.」 · 「Translation:」 꼬리 — 이 꼬리일 때만 그 한 줄을 통째로 버린다 (stripDraftLeaks ③ 앞)
+const BARE_TRANSLATE_TAIL = /^\(?[ \t]*(?:translate|translation)[ \t]*[.:：!]?[ \t]*$/i;
 const META_LINE = new RegExp(String.raw`^[\s>*_\-—–(\[]*${META_PHRASE}`, 'i');
 const META_TAIL = new RegExp(String.raw`(?:[ \t]*(?:[—–]+|-{1,2}|…+|\.{3})[ \t]*|(?<=[.!?。！？」』"”)\]>~*])[ \t]+)(\(?[ \t]*${META_PHRASE}[^\n]*)$`, 'i');
 const NON_LATIN_LETTER = /[\p{Script=Hangul}\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Cyrillic}\p{Script=Thai}\p{Script=Arabic}]/u;
@@ -608,7 +610,7 @@ export function stripDraftLeaks(text, source) {
             const tail = META_TAIL.exec(line);
             if (tail && NON_LATIN_LETTER.test(line.slice(0, tail.index)) && latinMeta(tail[1], srcKey)) {
                 kept.push(line.slice(0, tail.index).replace(/[ \t]+$/, ''));
-                block.draft = kept.length - 1; changed = true; continue;
+                block.draft = kept.length - 1; block.tail = tail[1]; changed = true; continue;
             }
             kept.push(line);
         }
@@ -624,8 +626,9 @@ export function stripDraftLeaks(text, source) {
     };
     // 2.5.3 원문에 없는 반쪽 문단 — 「서류 처리용 영혼 판정 파일 더미... translate.」 처럼 옮기다 만 한 줄 + 혼잣말 꼬리.
     //       문단 수가 원문보다 많을 때만, 지켜야 할 태그 · 자리표시를 품지 않았을 때만 버린다.
+    //       6.7.5 꼬리가 맨 translate · translation 일 때만 — 전엔 Note: · Hmm · let me 꼬리가 붙은 정상 문장도 (모델이 문단을 둘로 나눠 문단 수가 많으면) 줄째 지웠다
     for (const block of content()) {
-        if (block.draft === 0 && !block.body.includes('\n') && content().length > srcCount && safeDrop(block.body)) { block.body = ''; changed = true; }
+        if (block.draft === 0 && BARE_TRANSLATE_TAIL.test(block.tail ?? '') && !block.body.includes('\n') && content().length > srcCount && safeDrop(block.body)) { block.body = ''; changed = true; }
     }
     const live = content();
     for (let n = 0; n < live.length - 1; n++) {

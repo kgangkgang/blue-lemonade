@@ -1,4 +1,4 @@
-#model-switch-settings{--ms-version:"1.1.8"}
+#model-switch-settings{--ms-version:"1.1.9"}
 #model-switch-settings .inline-drawer-content{display:flex;flex-direction:column;gap:12px;text-align:left}
 .ms-presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
 .ms-presets:empty{display:none}
@@ -117,7 +117,7 @@ dialog.popup :not(.bl-addon-inline-content) > #model-switch-settings .ms-presets
 @keyframes ms-settings-flash{0%,40%{outline:2px solid var(--salty-accent,var(--SmartThemeQuoteColor));outline-offset:3px}100%{outline:2px solid transparent;outline-offset:6px}}
 @media(prefers-reduced-motion:reduce){.ms-flash{animation:none;outline:2px solid var(--salty-accent,var(--SmartThemeQuoteColor));outline-offset:3px}}
 
-#model-switch-settings .ms-expand{display:inline-flex;align-items:center;gap:4px;margin-left:8px;height:26px;padding:0 8px;border:1px solid var(--SmartThemeBorderColor);border-radius:8px;background:transparent;color:inherit;font-size:.8em;opacity:.8;cursor:pointer;vertical-align:middle}
+#model-switch-settings .ms-expand{display:inline-flex;align-items:center;gap:4px;margin-left:8px;height:32px;padding:0 10px;border:1px solid var(--SmartThemeBorderColor);border-radius:8px;background:transparent;color:inherit;font-size:.8em;opacity:.8;cursor:pointer;vertical-align:middle}
 #model-switch-settings .ms-expand i{font-size:.85em}
 #model-switch-settings .ms-group-children:not([hidden]){display:block;padding-left:16px;border-left:2px solid var(--salty-line,var(--SmartThemeBorderColor,#777));margin-left:6px}
 #model-switch-settings .ms-group-children[hidden]{display:none!important}

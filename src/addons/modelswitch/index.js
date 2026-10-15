@@ -12,10 +12,10 @@ import { listTargets, shownTargets, linkable, supports, registry, discoverTarget
 import { setLocks, withoutLock } from './lock.js';
 import { MAX_STATES, entryOf, captureState, changedSince, planRestore, isCurrent, runRestore, limited, summary, keepStates } from './state.js';
 
-import { toggleGroup, groupOn, rowActive, isFallbackRow, displayGroups } from './rows.js';
+import { toggleGroup, groupOn, fallbackOnly, rowActive, isFallbackRow, displayGroups } from './rows.js';
 import { mountFallbackField } from './fallback-field.js';
 
-const VERSION = '1.1.8';
+const VERSION = '1.1.9';
 const MAX_PRESETS = 8;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const label = source => SOURCES.find(s => s.id === source)?.label || source;
@@ -44,13 +44,14 @@ function store() {
 const armed = new Set();
 const canArm = target => isFallbackRow(target) && !rowActive(target) && typeof target.enable === 'function';
 const isOn = target => rowActive(target) ? (store().targets[target.id] ?? !(target.auto || target.defaultOff)) : armed.has(target.id) && canArm(target);
-const fallbackPickable = targets => targets.filter(target => isFallbackRow(target) && (rowActive(target) || canArm(target)));
+const canPick = target => rowActive(target) || canArm(target);
+const fallbackPickable = targets => targets.filter(target => isFallbackRow(target) && canPick(target));
 
 /** 6.7.2 「검열되면」 단추 (사용자 10-15 「검열되면 버튼 누르면 검열되면 쓸 애들만 전체선택」): 검열되면 줄만 모두 고르고 일반 줄은 뺀다. 이미 모두 골랐으면 모두 끈다 */
 async function pickFallbacks() {
     const rows = fallbackPickable(shownTargets()), s = store();
     if (!rows.length) return;
-    if (rows.every(isOn)) {
+    if (fallbackOnly(shownTargets(), isOn, canPick)) {   // 6.7.5 이미 「검열되면 줄만」일 때만 끈다 (일반 줄과 같이 켜져 있으면 검열되면 줄만 남긴다)
         for (const target of rows) { if (rowActive(target)) s.targets[target.id] = false; else armed.delete(target.id); }
     } else {
         const off = rows.filter(target => !rowActive(target) && !armed.has(target.id));
@@ -185,7 +186,7 @@ function render() {
     }
     for (const button of root.querySelectorAll('[data-group]')) {
         const fallback = button.dataset.group === 'fallback', picks = fallbackPickable(targets);
-        button.setAttribute('aria-pressed', String(fallback ? picks.length > 0 && picks.every(isOn) : groupOn(targets, 'main', isOn)));
+        button.setAttribute('aria-pressed', String(fallback ? fallbackOnly(targets, isOn, canPick) : groupOn(targets, 'main', isOn)));
         button.disabled = busy || (fallback ? !picks.length : !targets.some(target => rowActive(target) && !isFallbackRow(target)));
     }
     const apply = root.querySelector('[data-act="apply"]');
@@ -445,12 +446,12 @@ export async function openPanel() {
     if (opening) return; opening = true; mount(); note = ''; render(); autoList();
     root.querySelector('.inline-drawer-content').style.display = 'flex';
     try { await callGenericPopup(root, POPUP_TYPE.TEXT, '', { okButton: '닫기', wide: true, allowVerticalScrolling: true, onOpen: popup => popup?.dlg?.classList.add('bl-roomy-dialog') }); }
-    finally { (inlineHost?.isConnected ? inlineHost : holder).replaceChildren(root); opening = false; }
+    finally { armed.clear(); (inlineHost?.isConnected ? inlineHost : holder).replaceChildren(root); opening = false; }   // 6.7.5 「검열되면」으로 고른 꺼진 줄은 창을 닫으면 잊는다 (주석대로 — 전엔 다시 열어도 골라진 채였다)
 }
 
 export function mountInline(host) {
     mount(); note = ''; render(); autoList();
     inlineHost = host; if (opening) host.textContent = '열린 설정창을 닫으면 여기에 표시돼요.'; else host.replaceChildren(root); root.classList.add('bl-embedded-settings');
     const content = root.querySelector('.inline-drawer-content'); if (content) content.style.display = 'flex';
-    return () => { if (inlineHost !== host) return; inlineHost = null; root.classList.remove('bl-embedded-settings'); if (!opening) holder.append(root); };
+    return () => { if (inlineHost !== host) return; inlineHost = null; armed.clear(); root.classList.remove('bl-embedded-settings'); if (!opening) holder.append(root); };
 }

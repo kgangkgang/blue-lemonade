@@ -53,7 +53,9 @@
 .salty-panel .bl-installed-versions > div { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 7px 10px; }
 .salty-panel .bl-installed-versions dt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--salty-text); font-size: calc(13 * var(--sp)); }
 .salty-panel .bl-installed-versions dd { flex: 0 0 auto; color: var(--salty-muted); font-size: calc(12.5 * var(--sp)); }
-.salty-panel .bl-installed-versions > div.is-off { opacity: 0.6; }
+/* 꺼 둔 애드온: 칸 바탕을 비우고 점선 테두리 — 글자를 흐리게(opacity .6) 하면 대비가 나이트 3.5 · 라이트 2.5 였다 (6.7.5) */
+.salty-panel .bl-installed-versions > div.is-off { padding: 6px 9px; border: 1px dashed var(--salty-line, var(--SmartThemeBorderColor)); background: transparent; }
+.salty-panel .bl-installed-versions > div.is-off dt { color: var(--salty-muted); }
 
 /* 진단 파일 창 (실리태번 팝업은 가운데 정렬 — 목록 · 행은 왼쪽으로) */
 .bl-diag-file { text-align: left; }
@@ -62,7 +64,9 @@
 .bl-diag-file .salty-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--salty-line, var(--SmartThemeBorderColor)); text-align: left; }
 .bl-diag-file .salty-row > span { display: grid; gap: 2px; min-width: 0; }
 .bl-diag-file .salty-row small { color: var(--salty-muted, inherit); opacity: 0.9; }
-.bl-diag-file input[type="number"] { width: 6em; flex: 0 0 auto; margin: 0; }
+/* 메시지 번호는 파라미터 — 세로 2줄: 윗줄 이름 · 아랫줄 칸 가로 꽉 (6.7.5, 전엔 이름 옆 6em 칸) */
+.bl-diag-file .bl-diag-pick { flex-direction: column; align-items: stretch; gap: 6px; }
+.bl-diag-file input[type="number"] { width: 100%; min-height: 36px; margin: 0; }
 /* 포커스해도 자기 칸 색 그대로 (테마 공통 :focus 는 팝업 칸을 표면색으로 바꾼다 — 고리만 남김) */
 body.salty .popup .bl-diag-file input[data-diag-index]:focus { background-color: var(--bl-well) !important; }
 .bl-sync-ask h3 { margin: 0 0 6px; }
