@@ -1,5 +1,6 @@
 import { syncDeviceLayout, saveDeviceLayout } from './device-layouts.js';
 import { tidyFruitType } from './fruit-type-schema.js';
+import { entryDisplay, entryIcon } from './scripts/fruit-entry-icons.js';
 import { MASK_STYLES, normalizeMaskStyle, FILTER_RANGES, FILTER_PRESET_IDS, FILTER_PRESETS } from './capture-style.js';
 import { MARKDOWN_DEFAULTS, tidyMarkdown } from './markdown.js';
 import { MIX_DEFAULT, tidyGradients } from './gradients.js';
@@ -112,6 +113,8 @@ export const DEFAULTS = {
     charStyles: {},
     promptBinds: {},   // 6.0.4 프롬프트 귀속 { <프롬프트 identifier>: { keys: ['c:아바타' | 'g:그룹' | 'c:아바타/채팅' | 'g:그룹/채팅'], regex: [정규식 id] } } (promptbind.js)
     fruitEntryMode: 'wand',
+    fruitEntryDisplay: 'both',
+    fruitEntryIcon: 'fa-apple-whole',
     fruitTypography: {on:false,kind:'status',types:{}},
     promptLink: { on: false, name: '' },   // 6.5.2 캐릭터 이름 연동 — 이름이 든 프롬프트·정규식을 그 캐릭터 채팅에서만 켜고 「기본」 짝은 반대로 (prompt-link.js · promptbind.js)
     headSwitches: {},   // 6.0.4 확장 위 스위치 { <창 열쇠 id:…|cls:…>: true } — 창 안 「확장 탭에 보이기」로 고른 확장 창 (headswitch.js)
@@ -364,6 +367,7 @@ function tidyStyles(s) {
     if (!isObj(s.promptLink)) s.promptLink = structuredClone(DEFAULTS.promptLink);
     s.fruitTypography = tidyFruitType(s.fruitTypography);
     if(!['wand','qr','cat'].includes(s.fruitEntryMode))s.fruitEntryMode='wand';
+    s.fruitEntryDisplay=entryDisplay(s.fruitEntryDisplay);s.fruitEntryIcon=entryIcon(s.fruitEntryIcon);
     s.promptLink.on = flag(s.promptLink.on, false);
     s.promptLink.name = typeof s.promptLink.name === 'string' ? Array.from(s.promptLink.name.trim()).slice(0, 80).join('') : '';
     // 6.0.4 확장 위 스위치: true 인 글자 열쇠만, 100개까지

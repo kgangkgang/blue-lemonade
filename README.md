@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.5.9/blue-lemonade-6.5.9.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.6.0/blue-lemonade-6.6.0.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.5.9 · 최신 업데이트</summary>
+<summary>6.6.0 · 최신 업데이트</summary>
+
+- 과일 QR 버튼을 아이콘만·글자만·아이콘+글자 중에서 골라요. 기본은 아이콘+글자이며, 저장한 이름은 유지해요. 과일 패널의 「아이콘 바꾸기」에서 설치된 아이콘을 검색해 고를 수 있어요.
+- 과일 상태창 5종은 과일 페이지에, 데우스 상태창 7종은 데우스 페이지에 나눴어요. 사용 여부와 마지막 선택도 따로 기억하고, 기존 영역별 글자 설정은 유지해요. QR 바로가기도 해당 페이지의 종류만 보여요.
+- 정보 배치는 원작과 같은 결과였던 선택지를 합쳐 실제로 달라지는 두 가지 배치만 보여요. 큰 상태창은 원작 가로/세로, 간결 상태창은 원작 세로/가로 두 칸으로 골라요.
+- 미리보기에 상태창별 원작 글꼴 목록과 글꼴 파일을 연결했어요. 실제 상태창에 이미 로드된 글꼴도 재사용하고, 웹 글꼴을 못 불러오면 대체 글꼴임을 알려요. 간결 상태창의 현대·고전·SF 예시를 선택할 수 있고, 원작 글꼴로 되돌릴 때 구역 안의 원래 글꼴도 유지해요.
+
+</details>
+
+<details>
+<summary>6.5.9 · 상태창 글자 설정 · 데우스 도움말 · 패널 입구와 카드 선택</summary>
 
 - 프롬프트 → 과일에서 알려진 과일 5종·데우스 7종의 상태창 글자를 영역별로 조절해요. 글꼴·크기·굵기·기울임·자간·줄간격·정렬·줄바꿈, 정보 가로/세로와 하단 문구 숨기기를 지원해요. 가상 미리보기로 확인하며 끄거나 원복하면 원작 표시로 돌아가요.
 - 지원하는 과일 QR 항목과 데우스 상태창·빠른 설정 옆의 「블루레몬에이드」 버튼으로 해당 글자 설정을 바로 열어요. 선택 토글이나 대화 내용은 바꾸지 않아요. 구조가 다른 커스텀 상태창은 미지원으로 표시해요.

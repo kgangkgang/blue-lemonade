@@ -1,10 +1,10 @@
-import {FRUIT_TYPES,tidyFruitType,fruitTypeCss} from './fruit-type-schema.js';
+import {FRUIT_TYPES,tidyFruitType,fruitTypeCss,anyTypeEnabled} from './fruit-type-schema.js';
 import {findFont,fontStack,loadFont} from './fonts.js';
 let stop=null, latest={on:false};
 function family(id){const f=id==='original'?null:findFont(id);if(!f||f.unusable)return '';loadFont(f);return fontStack(f);}
 export function syncFruitTypography(value, enabled=true){
-    latest=tidyFruitType(value);latest.on &&= enabled;
-    if(!latest.on){stop?.();stop=null;return;}
+    latest=tidyFruitType(value);
+    if(!enabled||!anyTypeEnabled(latest)){stop?.();stop=null;return;}
     if(!stop)stop=watchFruitTypography(document,window,()=>latest,family);
     stop.refresh();
 }
