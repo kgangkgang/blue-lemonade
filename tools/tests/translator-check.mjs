@@ -345,7 +345,7 @@ await test('wiring: hooks at start-up, endTranslation re-checks, version 2.6.0, 
     assert(!/^import .*from '\.\/(?:translation-check|check-view)\.js'/m.test(source), 'no static import of the check modules');
     assert(/import\('\.\/check-view\.js'\)/.test(source) && /import\('\.\/translation-check\.js'\)/.test(source));
     const version = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8')).version;
-    assert.equal(version, '2.6.0');
+    assert(version.localeCompare('2.6.0', undefined, { numeric: true }) >= 0, version);   // 올라가도 깨지지 않게
     assert(fs.readFileSync(path.join(dir, 'index.html'), 'utf8').includes(`>v${version}<`));
     assert(fs.readFileSync(path.join(dir, 'index.html'), 'utf8').includes('id="llm_translation_check"'));
     assert(fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8').includes('node tools/tests/translator-check.mjs .'));

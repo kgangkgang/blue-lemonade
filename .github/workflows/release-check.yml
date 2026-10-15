@@ -50,6 +50,7 @@ jobs:
           node tools/tests/weather-status.mjs .
           node tools/tests/translator-stub.mjs .
           node tools/tests/translator-cancel-reason.mjs .
+          node tools/tests/translator-group-guard.mjs .
           node tools/tests/diag-copy.mjs .
           node tools/tests/chat-sync-local.mjs .
           node tools/tests/translator-preview-frames.mjs .

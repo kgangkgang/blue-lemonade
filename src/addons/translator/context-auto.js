@@ -12,8 +12,10 @@ function historyState(context) {
         swipe: message?.swipe_id ?? null }));
 }
 export function autoContextFingerprint(context, settings, connection = '') {
-    return JSON.stringify([context.chatId ?? context.getCurrentChatId?.() ?? null, context.characterId ?? null,
-        context.groupId ?? null, context.mainApi, context.name1, context.name2, connection, settings.context_message_auto === true,
+    // 2.6.1 그룹 채팅의 characterId · name2 는 답을 만드는 동안만 말하는 캐릭터였다가 끝나면 비워진다 → 그룹이면 견주지 않는다 (번역 감시 열쇠와 같은 까닭)
+    const group = context.groupId ?? null;
+    return JSON.stringify([context.chatId ?? context.getCurrentChatId?.() ?? null, group === null ? context.characterId ?? null : null,
+        group, context.mainApi, context.name1, group === null ? context.name2 : null, connection, settings.context_message_auto === true,
         settings.context_include_user === true, settings.context_exclude_last !== false,
         settings.send_ctx_history === true, settings.send_ctx_persona === true, settings.send_ctx_char === true,
         settings.send_ctx_note === true, settings.send_ctx_wi === true, historyState(context)]);

@@ -27,7 +27,10 @@ export function createGuards(getContext) {
     const revisions = new WeakMap(), edits = new WeakMap();
     const key = () => {
         const c = getContext();
-        return JSON.stringify([c.groupId ?? null, c.characterId ?? null, c.getCurrentChatId?.() ?? c.chatId ?? null]);
+        // 2.6.1 그룹 채팅은 실리태번이 답을 만드는 동안만 characterId 를 말하는 캐릭터로 두고 끝나면 비운다(여럿이면 차례로 바뀐다) —
+        //       그 값까지 견주면 같은 채팅인데 「채팅이 바뀌어 번역을 멈췄어요」가 났다 (제보 진단: {"what":"chat","changed":["character(없음)"]}). 그룹은 그룹 · 채팅만 본다.
+        const group = c.groupId ?? null;
+        return JSON.stringify([group, group === null ? c.characterId ?? null : null, c.getCurrentChatId?.() ?? c.chatId ?? null]);
     };
     const cancelled = () => Object.assign(new Error('채팅이나 글이 바뀌어 번역을 멈췄어요. 현재 글은 그대로 유지했어요.'), { cancelled: true });
     function capture(message = null) {
