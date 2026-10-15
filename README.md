@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.7.4/blue-lemonade-6.7.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.7.5/blue-lemonade-6.7.5.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.7.4 · 최신 업데이트</summary>
+<summary>6.7.5 · 최신 업데이트</summary>
+
+- 묶음 번역을 흘려받아 「수정 문단 1/71 · 2/71 …」처럼 문단 하나가 끝날 때마다 숫자가 오르고, 바로 보기도 그만큼 번역문으로 채워져요. 흘려받기를 못 하는 연결이면 예전처럼 묶음이 끝날 때 한꺼번에 와요 (번역 2.6.2).
+- 「진단 복사」 글의 시각을 그 기기의 현지 시간(UTC 차이 함께)으로 적어요.
+
+</details>
+
+<details>
+<summary>6.7.4 · 그룹 채팅 자동 번역 멈춤 고침</summary>
 
 - 그룹 채팅에서 자동 번역이 「채팅이나 글이 바뀌어 번역을 멈췄어요」로 자꾸 멈추던 것을 고쳤어요. 실리태번이 답을 만드는 동안만 말하는 캐릭터를 잠깐 바꿔 두는 것을 채팅이 바뀐 것으로 잘못 봤어요. 진단을 보내 준 분 고마워요! (번역 2.6.1)
 

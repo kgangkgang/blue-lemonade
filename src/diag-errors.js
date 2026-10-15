@@ -30,10 +30,18 @@ export function recentErrors() {
     return [...(globalThis[KEY] || [])];
 }
 
+const pad = n => String(n).padStart(2, '0');
+/** 6.7.5 현지 시각 「2026-10-16 00:04」 (seconds 면 초까지) — UTC 로 적으면 다른 나라 시각처럼 보였다 */
+export function localStamp(date = new Date(), seconds = false) {
+    const d = date instanceof Date ? date : new Date(date);
+    if (Number.isNaN(d.getTime())) return '';
+    const day = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    return seconds ? `${day} ${time}:${pad(d.getSeconds())}` : `${day} ${time}`;
+}
 /** 6.7.1 진단 복사(글)용: 최근 것부터 max 개, 한 줄씩 짧게 — 번역 중단 이유는 앞머리를 줄인다 */
 export function compactErrors(list = recentErrors(), max = 6) {
     return list.slice(-max).map(({ at, level, text }) => {
-        const time = String(at || '').slice(11, 19);
+        const time = localStamp(at, true).slice(11);   // 6.7.5 현지 시각
         const body = String(text || '').replace(/\[Blue Lemonade · LLM 번역\] 번역 중단 이유/, '번역 중단').replace(/\s+/g, ' ').trim();
         return `- ${time} ${level} ${body.length > 220 ? body.slice(0, 219) + '…' : body}`;
     });

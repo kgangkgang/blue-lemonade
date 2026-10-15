@@ -2,7 +2,7 @@
 // 2026-09-23 "세로 폰에서 연필 버튼이 화면 밖" 제보는 사용자 커스텀 CSS 가 원인이었는데 그걸 아는 데 반나절이 걸렸다.
 import { getSettings } from './settings.js';
 import { currentVersion } from './notice.js';
-import { compactErrors } from './diag-errors.js';
+import { compactErrors, localStamp } from './diag-errors.js';
 
 // 메시지 칸을 그리는 선택자 — 여기 걸리는 커스텀 CSS 는 테마 모양을 깨뜨릴 수 있다
 const CHAT = /#chat\b|#sheld\b|#form_sheld\b|#send_form\b|\.mes\b|\.mes_|\.mesAvatarWrapper|\.ch_name|\.name_text|\.timestamp\b|\.swipe|\.extraMesButtons|\.avatar\b|\.last_mes/;
@@ -46,7 +46,7 @@ export async function buildDiagnosis() {
     const addons = Object.entries(s.addons || {}).filter(([, on]) => on).map(([id]) => versionOf(id) ? `${id} ${versionOf(id)}` : id).join(', ') || '없음';
     const scripts = Object.entries(ctx.extensionSettings?.blue_lemonade_scripts?.enabled || {}).filter(([, on]) => on).map(([id]) => id + (ctx.extensionSettings?.blue_lemonade_scripts?.overrides?.[id] ? '*' : '')).join(', ') || '없음';
     const lines = [
-        `블루 레몬에이드 ${currentVersion() || '?'} · 실리태번 ${stVersion} · ${short(navigator.userAgent)} · ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`,
+        `블루 레몬에이드 ${currentVersion() || '?'} · 실리태번 ${stVersion} · ${short(navigator.userAgent)} · ${localStamp()} (UTC${-new Date().getTimezoneOffset() >= 0 ? '+' : '-'}${Math.abs(new Date().getTimezoneOffset() / 60)})`,
         `화면 ${window.innerWidth}×${window.innerHeight} @${devicePixelRatio} ${window.innerWidth < window.innerHeight ? '세로' : '가로'} · 실리태번 표시: ${flags.join(' ') || '기본'} · 언어 ${ctx.powerUserSettings?.ui_language || navigator.language}`,
         `테마: 팔레트 ${s.palette}${s.customName ? `(${s.customName})` : ''} · 내 메시지 ${s.chat?.user} · 이름 줄 ${s.chat?.header} · 아이콘 ${s.chat?.icons} · 프로필 ${s.profile?.mode}/${s.profile?.headerLayout}/${s.profile?.nameAlign}/${s.profile?.nameRowAlign} · 내 프로필 ${s.userProfile?.mode}/${s.userProfile?.nameAlign}/${s.userProfile?.nameRowAlign} · 고정 버튼 ${(s.chat?.mesPins || []).length}개 · 좌우 여백 ${s.type?.gutter} · 날씨 ${s.chat?.weather}`,
         `커스텀 CSS ${css.lines}줄 ${css.rules}규칙${css.chat.length ? ` · 메시지 칸을 건드림 ${css.chat.length}개: ${css.chat.slice(0, 6).join(' | ')}${css.chat.length > 6 ? ' …' : ''}` : ' · 메시지 칸 무관'}${s.compat?.muteCustomCss ? ' · 테마가 끄는 중' : ''}`,

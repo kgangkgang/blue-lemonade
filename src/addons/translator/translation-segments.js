@@ -784,6 +784,75 @@ export function parseBatchResult(raw, count, meta = {}, sources) {
         return body;
     });
 }
+/** 2.6.2 흘려받는 중인 묶음 답에서 닫힌 문단(다음 ⟦n⟧ 이 온 문단)만 — parseBatchResult 와 같은 표시 · 같은 걷어 내기. 바로 보기 · 진행 숫자에만 쓴다.
+ *  번호는 0(또는 1부터 다시 매긴 답이면 1)부터 차례대로일 때까지만 센다. 걷어 내고 빈 문단 · 원문을 베낀 문단은 null (닫힘으로는 센다).
+ *  from: 이미 본 문단 수 — 그 앞 문단은 걷어 내지 않고 undefined (조각마다 앞 문단을 다시 걷지 않게) */
+export function streamedPassages(raw, count, sources, from = 0) {
+    let text = String(raw ?? '').replace(/\r\n?/g, '\n').replace(/<think>[\s\S]*?<\/think>/gi, '');
+    if (/<think>/i.test(text) || !text.includes('⟦')) return [];   // 아직 생각 중 · 표시 전
+    text = text.replace(/^\s*```[a-z]*[ \t]*\n/, '');
+    const squareInSource = n => Boolean(sources?.some(s => new RegExp(String.raw`^[ \t]*\[[ \t]*${n}[ \t]*\]`, 'm').test(String(s ?? ''))));
+    const bodies = [];
+    let id = null, buffer = [];
+    for (const line of text.split('\n')) {
+        let hit = LOOSE_MARK.exec(line);
+        if (!hit && id !== null) {
+            const square = SQUARE_MARK.exec(line);
+            if (square && Number(square[1]) === id + 1 && !squareInSource(square[1])) hit = square;
+        }
+        if (!hit) { if (id !== null) buffer.push(line); continue; }
+        const n = Number(hit[1]);
+        if (id === null ? n > 1 : n !== id + 1) break;   // 1 부터 매긴 답도 차례는 같다 (parseBatchResult 가 한 칸 내려 받는다)
+        if (id !== null) bodies.push(buffer.join('\n'));
+        id = n; buffer = [line.slice(hit[0].length)];
+    }
+    return bodies.slice(0, count).map((found, i) => {
+        if (i < from) return undefined;
+        const source = sources?.[i];
+        let body = stripTrailingNote(stripPlanningNotes(found, source), source).replace(/^\n+|\s+$/g, '');
+        if (body && source != null) body = cleanParagraphEcho(body, source);
+        return body || null;
+    });
+}
+/** 2.6.2 묶음 요청을 흘려받는 동안 문단이 닫힐 때만 알리고, 알림(바로 보기 · 진행 숫자)은 한 프레임에 한 번으로 묶는다 (글자마다 그리지 않는다).
+ *  done(view, count): translateSegments 의 request 알림 — view = 끝난 묶음 + 흘려받는 묶음에서 닫힌 문단, count = 끝난 문단 수.
+ *  settled() = 끝난 묶음의 번역 배열. follow(sources, offset) → 흘려받은 글을 받는 함수. keep = 끝난 작은 묶음(반 나누기) ·
+ *  settle = 묶음이 끝남(밀린 알림은 버린다 — 묶음 끝 알림이 대신) · close = 요청이 끝남(그 뒤엔 아무것도 알리지 않는다) */
+export function streamWatch({ done, settled, shape = text => text, frame = globalThis.requestAnimationFrame ? fn => globalThis.requestAnimationFrame(fn) : fn => setTimeout(fn, 16),
+    cancel = globalThis.cancelAnimationFrame ? id => globalThis.cancelAnimationFrame(id) : id => clearTimeout(id) }) {
+    const live = [];
+    let pending = false, queued = null, closed = false;
+    const flush = () => {
+        pending = false; queued = null;
+        if (closed) return;
+        const base = settled(), view = [...base];
+        let count = base.length;
+        for (let i = base.length; i < live.length; i++) if (i in live) { view[i] = live[i]; count++; }
+        done(view, count);
+    };
+    const queue = () => { if (closed || pending) return; pending = true; queued = frame(flush); };
+    const settle = () => { if (pending) cancel(queued); pending = false; queued = null; };
+    return {
+        follow(sources, offset) {
+            let mark = -1, seen = 0;
+            return raw => {
+                if (closed) return;
+                // 새 ⟦n 표시가 다 왔을 때만 본다 (⟦1 까지만 온 ⟦12⟧ 는 다음 조각에서)
+                const at = raw.lastIndexOf('⟦');
+                if (at <= mark || !/^⟦[ \t]*\d+\D/.test(raw.slice(at, at + 16))) return;
+                mark = at;
+                const passages = streamedPassages(raw, sources.length, sources, seen);
+                if (passages.length <= seen) return;
+                for (let k = seen; k < passages.length; k++) live[offset + k] = passages[k] === null ? null : shape(passages[k]);
+                seen = passages.length;
+                queue();
+            };
+        },
+        keep(offset, list) { if (closed) return; list.forEach((text, k) => { live[offset + k] = text; }); queue(); },
+        settle,
+        close() { settle(); closed = true; },
+    };
+}
 // 2.5.1 partial(text): 캐시에서 온 문단 · 끝난 묶음의 문단은 번역문, 나머지는 원문인 글 (끝난 문단부터 번역문으로 보여 주기용)
 export async function translateSegments({ parts, signature, request, check = () => {}, progress = () => {}, cacheable = () => true, blockedMarker, partial = null }) {
     const stamp = epoch, output = [...parts], total = Math.ceil(parts.length / 2), missing = new Map();
@@ -820,8 +889,9 @@ export async function translateSegments({ parts, signature, request, check = () 
     if (pending.length) {
         let results;
         try {
-            results = await request(pending.map(row => row.body), done => {
-                const finished = Math.min(done?.length ?? 0, pending.length);
+            // 2.6.2 count: 흘려받는 묶음은 닫힌 문단까지 센다 (문단마다 — 「수정 문단 1/71」). 묶음 끝 알림은 예전처럼 배열 길이
+            results = await request(pending.map(row => row.body), (done, count = done?.length ?? 0) => {
+                const finished = Math.min(count, pending.length);
                 progress({ stage: 'segments', done: reused + finished, total, reused, translated, pending: pending.length, batch: pending.length, finished });
                 if (finished < pending.length) tell(done);
             });

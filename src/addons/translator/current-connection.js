@@ -9,7 +9,7 @@ const TRANSIENT_MESSAGE=new RegExp(String.raw`${CODE}(?:429|50[0-3]|529)\b(?![.,
 const CLOUDFLARE_524=new RegExp(String.raw`${CODE}524\b(?![.,]\d)`);
 const PARSE_FAILURE=/unexpected token|not valid json|unexpected end of json|<!doctype|<html/i;
 const isTransient=(error,reason)=>!CLOUDFLARE_524.test(reason)&&(error?.name==='SyntaxError'||PARSE_FAILURE.test(reason)?TRANSIENT_CODE.test(reason):TRANSIENT_MESSAGE.test(reason));
-export async function requestCurrentConnection({context,messages,overrides={},maxTokens=0,buildChat,buildText,log,preparePayload}) {
+export async function requestCurrentConnection({context,messages,overrides={},maxTokens=0,buildChat,buildText,log,preparePayload,stream}) {
     const ctx=context(), controller=new AbortController();
     const timeout=overrides.timeoutMs>0?overrides.timeoutMs:90000;
     const abort=()=>controller.abort(overrides.signal?.reason);
@@ -26,6 +26,9 @@ export async function requestCurrentConnection({context,messages,overrides={},ma
             if(Number.isFinite(overrides.temperature))payload.temperature=overrides.temperature;
             if(preparePayload)payload=await preparePayload(payload);
             controller.signal.throwIfAborted();
+            // 2.6.2 묶음 번역 흘려받기 (stream 을 넘겼을 때): null 이면 못 씀 · 실패 · 중간에 끊김 → 아래 예전 요청 그대로. 오류는 아래 catch 가 예전처럼 읽는다
+            const streamed=stream?await stream(ctx,payload,controller.signal):null;
+            if(streamed)return streamed;
             return await ctx.ChatCompletionService.processRequest(payload,{},false,controller.signal);
         }
         if(ctx.mainApi==='textgenerationwebui'){

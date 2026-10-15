@@ -54,6 +54,7 @@ jobs:
           node tools/tests/diag-copy.mjs .
           node tools/tests/chat-sync-local.mjs .
           node tools/tests/translator-preview-frames.mjs .
+          node tools/tests/translator-stream.mjs .
           node tools/tests/modelswitch-fallback-pick.mjs .
           node tools/tests/tts-integration.mjs .
           node tools/tests/tts-dethump.mjs .

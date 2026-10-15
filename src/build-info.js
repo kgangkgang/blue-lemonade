@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "6.7.4";
+export const BUILD_VERSION = "6.7.5";
 export const FILE_HASHES = {
   "index.js": "17649:c8f7b83a:aec48bc0",
-  "manifest.json": "365:50e78458:4d03b81b",
+  "manifest.json": "365:28d17a67:1b09b1c7",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -211,12 +211,12 @@ export const FILE_HASHES = {
   "src/addons/translator/card-values.js": "11278:075fc5e4:9a93bd42",
   "src/addons/translator/check-view.js": "14552:03f43532:352959e6",
   "src/addons/translator/context-auto.js": "7274:fe89b1af:10e9e116",
-  "src/addons/translator/current-connection.js": "5926:ac96f8aa:2d9aef2d",
+  "src/addons/translator/current-connection.js": "6270:ab5ff64e:45889904",
   "src/addons/translator/display-cards.js": "24759:16fdfb4e:96092d9f",
   "src/addons/translator/glossary-match.js": "23969:4716318b:3af6c9df",
   "src/addons/translator/glossary-suggest.js": "37892:84fb105c:16cf3cc9",
-  "src/addons/translator/index.html": "54889:52b85bef:1074ec19",
-  "src/addons/translator/index.js": "491485:e557fb59:15a9ad3b",
+  "src/addons/translator/index.html": "54889:156bec9a:d33f875e",
+  "src/addons/translator/index.js": "498390:32de7433:66e84f88",
   "src/addons/translator/leftover-fix.js": "18292:6b70940a:709ed16d",
   "src/addons/translator/menu-visibility.js": "1137:ae729d76:8ea71da6",
   "src/addons/translator/names-bridge.js": "7072:f29785f7:da57aeea",
@@ -239,7 +239,8 @@ export const FILE_HASHES = {
   "src/addons/translator/translation-check.js": "21503:8e3ecd3e:8cfbc5ff",
   "src/addons/translator/translation-guard.js": "9950:b887474b:cc2358d4",
   "src/addons/translator/translation-resume.js": "5631:82b618c9:3a0c92e5",
-  "src/addons/translator/translation-segments.js": "89420:79ca0ce0:f56578d3",
+  "src/addons/translator/translation-segments.js": "94202:ed64ae5f:cedc9343",
+  "src/addons/translator/translation-stream.js": "9000:290adf3b:70902b1a",
   "src/addons/tts/LICENSE-MultiCast.txt": "1064:03c78d80:d84a0f1d",
   "src/addons/tts/NOTICE.md": "12016:0b66e6d6:33dec5cb",
   "src/addons/tts/credits.js": "4747:846de4ff:6bca95c2",
@@ -447,9 +448,9 @@ export const FILE_HASHES = {
   "src/dem-selection.js": "6543:92f23ad3:78853776",
   "src/demskin.js": "2167:c0308caa:b58b2d08",
   "src/device-layouts.js": "2740:8a16332c:d2d0fb29",
-  "src/diag-errors.js": "3486:8f1f8f1e:5fc724f7",
+  "src/diag-errors.js": "4080:efbf9db9:9c07020c",
   "src/diag-file.js": "10132:bda77560:58b8f57f",
-  "src/diagnose.js": "5454:ead2f602:4f409b1b",
+  "src/diagnose.js": "5528:9dd9fc4f:53cb5970",
   "src/dialogue-lines.js": "5974:88feb08a:c0150028",
   "src/dialogue-only.js": "3645:295b9fce:fa2e1fb8",
   "src/dialogue-span.js": "19816:f5bae8d9:e78d725a",
@@ -503,7 +504,7 @@ export const FILE_HASHES = {
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "238597:86150ed9:375757f5",
+  "src/notice-data.js": "239054:19ada83c:5a2f86b4",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -601,5 +602,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "34821:fcebb709:d610b9d5",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1439797:cbb821c7:734648a4"
+  "style.css": "1439797:a11f547f:83459df1"
 };

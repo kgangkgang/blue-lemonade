@@ -10,6 +10,7 @@ import { cardValues } from './card-values.js';   // 6.5.4 상태 카드 고정 �
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
 import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, stripDraftLeaks, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, fixPlaceholderVariants, dropLeftoverPlaceholders as dropProseLeftoverPlaceholders, repairTagPairs as repairProseTagPairs, dropStrayWords as dropProseStrayWords, dropWrapQuotes } from './translation-segments.js';
 import { hideOpenComments, looksCutShort, restoreDialogueBrackets } from './translation-segments.js';   // 2.5.1 숨긴 주석 표시 보정 · 끊긴 답 · 2.5.2 빠진 대사 괄호
+import { streamWatch } from './translation-segments.js';   // 2.6.2 묶음 흘려받기 — 문단이 닫힐 때마다 진행 숫자 · 바로 보기 (흘려받기 자체는 translation-stream.js, 처음 쓸 때 불러옴)
 import { createReasoningView } from './reasoning-view.js';   // 2.6.0 생각 블록(추론) 카드 · 번역해서 보기
 import { updateReasoningUI } from '../../../../../../reasoning.js';   // 2.6.0 생각 칸 다시 그리기
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
@@ -1345,6 +1346,46 @@ function blockedReasonOf(data) {
     return '';
 }
 
+// 2.6.2 묶음 번역 흘려받기 (overrides.onStream — 문단 ⟦n⟧ 이 닫힐 때마다 진행 숫자 · 바로 보기). 모듈은 처음 흘려받을 때 불러온다.
+let streamParts = null;
+const noStream = new Set();   // 흘려받기를 못 하는 듯한 연결 (이 세션 동안 예전 요청으로)
+/**
+ * 돌려줌: { data } = 실리태번이 stream:false 로 줬을 꼴 · { replay } = 예전 요청의 답처럼 읽을 응답(429 · 5xx 오류, 흘려받기 대신 통째로 온 본문) ·
+ * null = 못 씀 (흘려받지 않는 공급자 · 실패 · 중간에 끊김 → 부르는 쪽이 예전 요청 그대로). 흘려받은 글은 onText 로만 보내고 저장하지 않는다.
+ * 멈춤(signal) · 제한 시간은 예전과 같은 오류로 던진다. Request 객체로 보낸다 — 끊김 감시(perf/watchdog)는 본채팅 답용이라
+ * 번역 요청을 끊으면 본채팅 답의 「끊김」 표시를 지우거나 잘못 남긴다 (번역은 제한 시간 · 예전 요청으로 되돌아가기가 따로 있다).
+ */
+async function streamedReply({ body, source, onText, signal = null, timeoutMs = 0, timedOut = null, purpose = null }) {
+    if (typeof onText !== 'function') return null;
+    try { streamParts ??= await import('./translation-stream.js'); } catch { return null; }
+    const family = streamParts.streamFamily(source), key = JSON.stringify([source, body?.custom_url ?? null, body?.reverse_proxy ?? null]);
+    if (!family || noStream.has(key)) return null;
+    const controller = new AbortController(), abort = () => controller.abort(signal?.reason);
+    signal?.addEventListener('abort', abort, { once: true });
+    if (signal?.aborted) abort();
+    const timer = timeoutMs > 0 ? setTimeout(() => controller.abort(), timeoutMs) : 0;
+    try {
+        const response = await fetch(new Request('/api/backends/chat-completions/generate', { method: 'POST', headers: { ...getRequestHeaders(), 'Content-Type': 'application/json' },
+            cache: 'no-cache', body: JSON.stringify({ ...body, stream: true }), signal: controller.signal }), purpose ? { requestLog: { caller: 'llm-translator-custom', purpose } } : undefined);
+        if (!response.ok) {
+            const text = await response.text();
+            // 429 · 5xx 는 예전 요청의 오류처럼 읽는다 (다시 보내기는 늘 하던 대로 — 곧장 또 보내지 않는다). 나머지(400 등)는 예전 요청으로
+            if (response.status === 429 || response.status >= 500) return { replay: { ok: false, status: response.status, statusText: response.statusText, text: async () => text } };
+            if ([404, 405, 415, 501].includes(response.status)) noStream.add(key);
+            return null;
+        }
+        const read = await streamParts.readStream(response, { family, source, onText });
+        if ('raw' in read) { noStream.add(key); return { replay: { ok: true, status: response.status, statusText: response.statusText, text: async () => read.raw } }; }
+        return read;
+    } catch (error) {
+        if (signal?.aborted) throw signal.reason;
+        if (controller.signal.aborted) throw timedOut?.() ?? error;
+        if (error?.unsupported) noStream.add(key);
+        console.warn('[LLM Translator] 묶음 번역을 흘려받지 못해 예전처럼 한꺼번에 받아요:', error?.message);
+        return null;
+    } finally { clearTimeout(timer); signal?.removeEventListener('abort', abort); }
+}
+
 async function callLLMAPI(fullPrompt, overrides = {}) {
     // 6.2.9 검열되면 다른 모델로: overrides.via = { provider(실리태번 source), model } — 그 공급자 · 모델로 직접 연결 (연결 방식 · 리버스 프록시와 상관없이)
     const via = overrides.via && overrides.via.provider && overrides.via.model ? overrides.via : null;
@@ -1375,6 +1416,15 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
             buildText: (settings, input, limit) => createTextGenGenerationData(settings, getTextGenModel(settings), createRawPrompt(input, 'textgenerationwebui', false, false, '', ''), limit || settings.max_new_tokens || textOutputLimit(), false, false, null, 'quiet'),
             log: globalThis[Symbol.for('st.request-log.v1')],
             preparePayload: payload => prepareAutoTranslationPayload(payload, overrides, Number(getContext().chatCompletionSettings?.openai_max_context) || null),
+            // 2.6.2 묶음 번역 흘려받기 — 실리태번 ChatCompletionService 와 같은 본문 · 같은 오류 (null = 예전 요청 그대로)
+            stream: typeof overrides.onStream === 'function' ? async (live, payload, signal) => {
+                const body = typeof live.ChatCompletionService?.createRequestData === 'function' ? live.ChatCompletionService.createRequestData(payload) : payload;
+                const reply = await streamedReply({ body, source: body.chat_completion_source, onText: overrides.onStream, signal });
+                if (!reply) return null;
+                const json = reply.data ?? JSON.parse(await reply.replay.text());
+                if (reply.replay?.ok === false || json?.error) throw new Error(String(json?.error?.message || 'Response not OK'));
+                return json;
+            } : undefined,
         });
         return extractTranslationResult(data, 'profile');
     }
@@ -1493,17 +1543,22 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
 
     const preparedParameters = await prepareAutoTranslationPayload(parameters, overrides);
     overrides.signal?.throwIfAborted?.();
-    let response;
     // [1.8.7] 호출별 제한 시간 (중계 서버 앞의 Cloudflare 는 100초에 524로 끊는다)
-    const controller = new AbortController();
     const timeoutMs = overrides.timeoutMs > 0 ? overrides.timeoutMs : 90000;
+    const timedOut = () => Object.assign(new Error(`${Math.round(timeoutMs / 1000)}초 안에 답이 없어 끊었어요. 요청을 더 작게 나누거나 잠시 뒤 다시 해 주세요.`), { timeout: true });
+    // 2.6.2 묶음 번역은 되면 흘려받는다 — 못 쓰는 공급자 · 실패 · 중간에 끊김이면 아래 예전 요청 그대로 (묶음 끝에 한꺼번에)
+    const streamed = typeof overrides.onStream === 'function' ? await streamedReply({ body: preparedParameters, source: chatCompletionSource, onText: overrides.onStream,
+        signal: overrides.signal, timeoutMs, timedOut, purpose: overrides.requestPurpose || 'translation.chat' }) : null;
+    if (streamed?.data) return extractTranslationResult(streamed.data, provider);
+    let response;
+    const controller = new AbortController();
     const abort = () => controller.abort(overrides.signal?.reason);
     overrides.signal?.addEventListener('abort', abort, { once: true });
     if (overrides.signal?.aborted) abort();
     const timeoutHandle = setTimeout(() => controller.abort(), timeoutMs);
     let responseBody;
     try {
-        response = await fetch('/api/backends/chat-completions/generate', {
+        response = streamed?.replay ?? await fetch('/api/backends/chat-completions/generate', {   // 2.6.2 흘려받기 요청이 받은 오류 · 통째 본문은 다시 보내지 않고 여기서 읽는다
             method: 'POST',
             headers: { ...getRequestHeaders(), 'Content-Type': 'application/json' },
             requestLog:{caller:'llm-translator-custom',purpose:overrides.requestPurpose||'translation.chat'},
@@ -1514,7 +1569,7 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
     } catch (fetchError) {
         if (overrides.signal?.aborted) throw overrides.signal.reason;
         if (fetchError?.name === 'AbortError') { // 5.3.4: 시간 초과는 다시 보내지 않는다 (timeout — isTransientError)
-            throw Object.assign(new Error(`${Math.round(timeoutMs / 1000)}초 안에 답이 없어 끊었어요. 요청을 더 작게 나누거나 잠시 뒤 다시 해 주세요.`), { timeout: true });
+            throw timedOut();
         }
         // 네트워크 에러 처리
         if (fetchError.name === 'TypeError' && fetchError.message.includes('Failed to fetch')) {
@@ -1905,6 +1960,8 @@ async function translate(text, options = {}) {
         // API 호출 — 차단이면 배치를 바꿔 가며, 그래도 막히면 문단을 나눠서
         const { onProgress = null, report = null } = options;
         const progress = (info) => { try { onProgress?.(info); } catch { /* 표시용 */ } };
+        // 2.6.2 지금 보내는 묶음(⟦n⟧) 요청의 흘려받기 받는 함수를 만드는 것 — 묶음 요청을 보내는 동안만 (통짜 · 덩이 · 남은 가나 요청은 예전처럼). 요청마다 새로
+        let batchStream = null;
         /** 한 덩어리를 배치 순서대로 보낸다. 끝까지 막히면 refused 오류를 던진다. */
         const callWithLayoutsMain = async (body, layouts) => {
             let out = '';
@@ -1916,7 +1973,7 @@ async function translate(text, options = {}) {
                 // [2.0.6] 중계가 400 prompt_blocked / PROHIBITED_CONTENT 로 끊어도(refused 오류) 같은 이유로 배치를 바꿔 본다 —
                 //         2.0.4 는 200 으로 오는 차단 문구만 다시 보냈고, 400 은 곧장 오류로 냈다. 실제로 같은 글이 배치 1 로는 통과했다.
                 try {
-                    out = await request(promptOf(layout));
+                    out = await request(promptOf(layout), batchStream ? { onStream: batchStream() } : undefined);
                 } catch (error) {
                     if (!error?.refused || last) throw error;
                     console.warn(`[LLM Translator] 요청이 차단됨 (배치 ${layout}) — 배치를 바꿔 다시 보내요:`, error.message);
@@ -2018,6 +2075,9 @@ async function translate(text, options = {}) {
                     const translated = [];
                     let failed = null, succeeded = 0, splits = 0;
                     failReasons.clear(); noCache.clear();
+                    // 2.6.2 진행 표시 · 바로 보기가 있으면 묶음 답을 흘려받아 ⟦n⟧ 문단이 닫힐 때마다 알린다 (한 프레임에 한 번). 흘려받은 글은 보여 주기만 —
+                    //       번역문 · 캐시는 묶음이 끝난 뒤 아래 그대로 (흘려받기를 못 쓰면 callLLMAPI 가 예전처럼 한꺼번에 받는다)
+                    const watch = done && (onProgress || showPreview) ? streamWatch({ done, settled: () => translated, shape: tidyKana }) : null;
                     // 5.1.5: 묶음이 거절되면 그 자리에서 반으로 나눠 다시 보낸다 — 사용자가 화살표로 다시 번역하면
                     // 통과하던 것과 같은 작은 요청이다. 문단 하나까지 막히면 그 문단만 null(차단 표시). 나누기는 메시지당 SPLIT_CAP 번까지.
                     const SPLIT_CAP = 6;
@@ -2031,11 +2091,14 @@ async function translate(text, options = {}) {
                     ];
                     const paragraphRefused = (source, out) => looksLikeRefusal(source, out)
                         && (looksLikeInputBlock(out) || MODEL_VOICE.some(([said, cause]) => said.test(out) && !cause.test(source)));
-                    const translateGroup = async (group, layouts = PROMPT_LAYOUTS, retried = false) => {
+                    const translateGroup = async (group, layouts = PROMPT_LAYOUTS, retried = false, at = translated.length) => {   // 2.6.2 at = bodies 안 자리 (흘려받기 알림용)
                         watcher.check();
                         try {
                             const meta = {};
-                            const out = parseBatchResult(await callWithLayouts(batchPayload(group), layouts), group.length, meta, group).map(tidyKana); // 5.3.7: 원문 문단과 견줘 꼬리 메모를 걷는다
+                            let answer;
+                            batchStream = watch ? () => watch.follow(group, at) : null;   // 2.6.2
+                            try { answer = await callWithLayouts(batchPayload(group), layouts); } finally { batchStream = null; }
+                            const out = parseBatchResult(answer, group.length, meta, group).map(tidyKana); // 5.3.7: 원문 문단과 견줘 꼬리 메모를 걷는다
                             // 2026-10-06: 묶음 중 한 문단만 거절문으로 와도 거절로 — 통짜 재시도 · 반 나누기를 거쳐 끝내 막히면 차단 표시.
                             //             전엔 거절문이 그 문단 번역으로 붙고 메시지 캐시에 들어가 다시 번역해도 거절문이 돌아왔다 (문단 캐시만 막았다)
                             const refusedAt = out.findIndex((body, i) => paragraphRefused(group[i], body));
@@ -2043,6 +2106,7 @@ async function translate(text, options = {}) {
                             if (out.some((body, i) => looksCutShort(group[i], body))) throw cutError();   // 2.5.1 끝 문단이 문장 중간에서 끊긴 답 — 통짜 · 반 나누기로 다시
                             if (meta.renumbered) for (const body of group) noCache.add(body);
                             succeeded++;
+                            watch?.keep(at, out);   // 2.6.2 반으로 나눈 조각이 끝나면 그 문단도 끝난 셈
                             return out;
                         } catch (caught) {
                             let error = caught;
@@ -2051,7 +2115,7 @@ async function translate(text, options = {}) {
                             if (!retried && isTransientError(error)) {
                                 console.warn('[LLM Translator] 묶음 요청 오류 — 잠시 뒤 한 번 더 보내요:', error.message);
                                 await new Promise(resolve => setTimeout(resolve, 1500)); watcher.check();
-                                return translateGroup(group, layouts, true);
+                                return translateGroup(group, layouts, true, at);
                             }
                             // 5.2.6: 답 형식이 안 맞으면(번호 표시를 빼먹음 · 문단을 합침) 거절이 아니다 — 번호 없이 통짜로 한 번 더 보낸다 (화살표 재번역과 같은 요청).
                             //        문단 수가 같으면 자리별로 붙이고 캐시에 넣는다. 전엔 '차단된 문단' 으로 남아 SFW 글이 검열된 것처럼 보였다.
@@ -2081,7 +2145,7 @@ async function translate(text, options = {}) {
                                 const mid = Math.ceil(group.length / 2);
                                 // 나눈 조각은 배치 하나로만 — 조각마다 배치 3개를 돌리면 요청이 최대 39회까지 불어난다 (배치 1개면 15회)
                                 const half = PROMPT_LAYOUTS.slice(0, 1);
-                                return [...await translateGroup(group.slice(0, mid), half), ...await translateGroup(group.slice(mid), half)];
+                                return [...await translateGroup(group.slice(0, mid), half, false, at), ...await translateGroup(group.slice(mid), half, false, at + mid)];
                             }
                             // 2026-10-06: 번호 묶음 답에서 문단 몇 개만 거절이었고 더 못 나누면 — 거절 문단만 null, 나머지는 그 답의 번역을 붙인다 (전처럼)
                             if (caught?.partial && group.length > 1) {
@@ -2097,7 +2161,9 @@ async function translate(text, options = {}) {
                             return group.map(() => null);
                         }
                     };
-                    for (const group of batchGroups(bodies, groupLimit)) { translated.push(...await translateGroup(group)); done?.(translated); }   // 2.5.1 묶음마다 미리 보기
+                    try {
+                        for (const group of batchGroups(bodies, groupLimit)) { const out = await translateGroup(group); watch?.settle(); translated.push(...out); done?.(translated); }   // 2.5.1 묶음마다 미리 보기
+                    } finally { watch?.close(); }   // 2.6.2 끝 · 멈춤 · 실패 뒤에는 밀린 알림을 버린다 (진행 표시가 다시 붙지 않게)
                     if (failed && !succeeded) throw failed;
                     if (failed) {
                         const count = translated.filter(text => text === null).length;
@@ -2351,6 +2417,7 @@ function translationPreview(messageId, message, sourceMes, chatId, originalText)
     const stop = () => { stopped = true; clearInterval(timer); timer = null; };
     return {
         show(text) {
+            if (stopped) return;   // 2.6.2 멈춘 뒤 늦게 온 알림이 1초 다시 그리기를 새로 띄우지 않게
             latest = String(text ?? '');
             paint();
             timer ??= setInterval(() => { const index = target(), host = index < 0 ? null : hostOf(index); if (host && !host.dataset.llmtPreview) paint(); }, 1000);
