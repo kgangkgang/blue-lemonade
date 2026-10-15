@@ -2,7 +2,7 @@
 export function bindTouchSliders(root) {
     let gesture = null;
     root.addEventListener('pointerdown', event => {
-        const input = event.target.closest('input[type="range"][data-range]');
+        const input = event.target.closest('input[type="range"]:is([data-range],[data-touch-range])');
         if (event.pointerType !== 'touch' || !input || input.disabled || !event.isPrimary) return;
         event.preventDefault();
         gesture = { input, id: event.pointerId, x: event.clientX, y: event.clientY, value: input.value, horizontal: false, vertical: false };

@@ -52,7 +52,10 @@ export function fruitTypeCss(value, fontFamily = ()=>'') {
             const targets=selector.split(',').map(x=>`${type.root} ${x}`).join(','),family=fontFamily(r.font);
             const declarations=[`font-size:${r.size}px!important`,`font-weight:${r.weight}!important`,`font-style:${r.italic?'italic':'normal'}!important`,`letter-spacing:${r.spacing}px!important`,`line-height:${r.line}!important`];
             if(family)declarations.push(`font-family:${family}!important`);
-            if(r.align!=='original')declarations.push(`text-align:${r.align}!important`);
+            // Renderers center through flex/grid boxes as well as text-align, so move those boxes with the text.
+            const flex={left:'flex-start',center:'center',right:'flex-end',justify:'flex-start'}[r.align],cell={left:'start',center:'center',right:'end',justify:'stretch'}[r.align];
+            if(r.align!=='original'){declarations.push(`text-align:${r.align}!important`,`justify-content:${flex}!important`,`justify-items:${cell}!important`);rules.push(`${selector.split(',').map(x=>`${type.root} ${x} *`).join(',')}{text-align:inherit!important}`);}
+            if(r.align!=='original'&&key==='info'&&type.id==='status')rules.push(`${type.root} .fate-grid-item{align-items:${r.align==='justify'?'stretch':flex}!important;text-align:inherit!important}`);
             if(r.wrap!=='original')declarations.push(`white-space:${r.wrap==='nowrap'?'nowrap':'normal'}!important`,`word-break:${r.wrap==='word'?'keep-all':'normal'}!important`,`overflow-wrap:${r.wrap==='nowrap'?'normal':'anywhere'}!important`);
             declarations.push('min-width:0!important','max-width:100%!important');
             if(r.wrap==='nowrap')declarations.push('overflow-x:auto!important');

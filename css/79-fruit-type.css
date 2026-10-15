@@ -1,6 +1,10 @@
 /* ===== css/79-fruit-type.css ===== */
 /* Known Fruit renderer typography settings, scoped to the settings UI. */
-.bl-fruit-type-editor{display:grid;gap:12px;min-width:0;margin-top:18px}
+.bl-fruit-type-editor{display:flex;flex-direction:column;gap:12px;min-width:0;margin-top:18px}
+/* 6.6.2 theme preview box: sticks under the tabs, folds and resizes like the other previews */
+.bl-ft-prevbox{background:var(--salty-fill-surface,var(--salty-surface,var(--SmartThemeBlurTintColor,#222)))}
+.bl-ft-prevbox .bl-ft-preview{display:block}
+.bl-ft-fields>.bl-ft-slider{grid-column:1/-1;min-width:0}
 .bl-fruit-type-editor *{box-sizing:border-box}
 .bl-ft-field{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:inherit}
 .bl-ft-field>span{font-size:.9em;font-weight:600;overflow-wrap:anywhere}

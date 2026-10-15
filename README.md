@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.6.1/blue-lemonade-6.6.1.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.6.2/blue-lemonade-6.6.2.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.6.1 · 최신 업데이트</summary>
+<summary>6.6.2 · 최신 업데이트</summary>
+
+- 상태창 글자 설정의 크기·굵기·자간·줄간격을 다른 테마 설정과 같은 슬라이더로 바꿨어요. 값을 바꾸면 그 영역과 글자 설정이 자동으로 켜져요.
+- 정렬(왼쪽·가운데·오른쪽·양쪽)이 날짜·장소 칸과 인용문까지 실제로 움직여요. 상태창 미리보기는 화면을 내려도 위에 붙어 따라오고, 꺾쇠로 접고 펴며, 손잡이로 크게·작게 보고 돋보기로 확대해요.
+- 과일 패널의 「패널을 여는 방법」 칸 여백과 정렬을 다른 줄과 맞추고, 아이콘 앞 흰 네모를 고쳤어요. 아이콘만 표시한 사과 QR은 입력창 옆 아이콘과 같은 크기예요. 나이트 상태창의 ☀ 버튼 윗부분이 잘리지 않아요.
+
+</details>
+
+<details>
+<summary>6.6.1 · 확장 순서에서 채팅 메뉴와 설정 블록 숨기기</summary>
 
 - 확장 순서 → 채팅 메뉴에서 항목 옆 눈 버튼으로 CFG 스케일 같은 메뉴를 숨기거나 다시 보여요. 기능과 저장된 설정값은 유지하고, 메뉴가 다시 생기거나 순서를 바꿔도 숨김 선택을 기억해요.
 - 확장 설정 탭의 블록도 「표시」 체크로 숨기고 같은 목록에서 복구해요. 요술봉 안쪽에 묶인 항목도 목록에 표시하며, 유일한 열기 버튼으로 지정된 항목은 확장 자체의 열기 위치 설정에서 옮겨요.

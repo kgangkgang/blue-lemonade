@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "6.6.1";
+export const BUILD_VERSION = "6.6.2";
 export const FILE_HASHES = {
   "index.js": "17480:1badcfa4:040bdacc",
-  "manifest.json": "365:e8dc7c78:dc50aac2",
+  "manifest.json": "365:f2ae3d4d:9a5f51d8",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -460,9 +460,9 @@ export const FILE_HASHES = {
   "src/fruit-type-original.js": "2554:2a40e2e5:78808f11",
   "src/fruit-type-preview.js": "4602:21268fbc:6d4b716a",
   "src/fruit-type-runtime.js": "3445:e2422bb5:5d2bb5d4",
-  "src/fruit-type-schema.js": "10019:014c26c6:1e5cbc43",
+  "src/fruit-type-schema.js": "10698:ab41c297:50691fb0",
   "src/fruit-type-shortcuts.js": "4598:91332d60:9002ba10",
-  "src/fruit-type-ui.js": "11468:8e1a57da:752b632c",
+  "src/fruit-type-ui.js": "14064:29fba4fd:b400455e",
   "src/generation-state.js": "6956:ff69362b:15d46250",
   "src/gradient-ui.js": "5326:12fabd1e:586f428a",
   "src/gradients.js": "10746:1b5ebec2:b7fb0a19",
@@ -489,7 +489,7 @@ export const FILE_HASHES = {
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "229521:2c3af43a:05c0c27f",
+  "src/notice-data.js": "230343:fd94b3ee:fb52760a",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -498,7 +498,7 @@ export const FILE_HASHES = {
   "src/palettes.js": "33894:d739cf1f:f0700eaa",
   "src/panel.js": "233978:23c55e53:e9dacdd0",
   "src/preset-sharing.js": "10609:0e2cdbdc:4e3bc6e5",
-  "src/preview-view.js": "12377:1b6c4956:85b171b8",
+  "src/preview-view.js": "12392:782acb4e:9b716808",
   "src/profile-clip.js": "4837:9b817c36:29f305b7",
   "src/profile.js": "6026:34f89f44:fc6757bf",
   "src/prompt-card-picker.js": "5311:677addf2:f359191e",
@@ -525,10 +525,10 @@ export const FILE_HASHES = {
   "src/scripts/deus-option-effects.js": "22048:e1ddb6cf:ee700bc4",
   "src/scripts/deus-option-help.js": "1944:103be572:ec8b5be5",
   "src/scripts/fruit-entry-icons.js": "5245:127887e9:f74d2464",
-  "src/scripts/fruit-entry.js": "10729:1e7a27cf:51a00b0b",
+  "src/scripts/fruit-entry.js": "12200:c51aec4f:be9ec2d0",
   "src/scripts/fruit-option-effects.js": "115362:8d790430:ae33e023",
   "src/scripts/fruit-option-help.js": "12241:11cd7da9:5c349f4b",
-  "src/scripts/fruit-status.js": "12435:5573ff4b:32ad9283",
+  "src/scripts/fruit-status.js": "13259:2467145e:6c4f2126",
   "src/scripts/plain/deus-qr.js": "48006:fa3c36af:3b087681",
   "src/scripts/plain/deus.js": "66897:632b8c3e:8adc7e2f",
   "src/scripts/plain/fold.js": "13815:b56ce78f:e3189530",
@@ -562,7 +562,7 @@ export const FILE_HASHES = {
   "src/styles.js": "16877:cc666b28:16310d41",
   "src/theme-update.js": "5574:0d17c87b:d6593178",
   "src/tone.js": "6415:7ed9f3f6:a7e0d13d",
-  "src/touch-sliders.js": "1802:90ccf7ef:7832805d",
+  "src/touch-sliders.js": "1826:c0645cac:6b4521ba",
   "src/typography.js": "18405:7af91644:2f15fc48",
   "src/update-check.js": "15660:a1ffeb18:608036e5",
   "src/usage-mode.js": "274:97f75b3d:dfa5bb08",
@@ -586,5 +586,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "34821:fcebb709:d610b9d5",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1433557:daae851b:a1e34360"
+  "style.css": "1433792:7336c564:e002a245"
 };

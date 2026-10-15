@@ -6,7 +6,7 @@ export function bindPreviewViews(root, section) {
     const cleanups = [];
     root._previewCleanup = () => cleanups.splice(0).forEach(fn => fn());
     for (const box of root.querySelectorAll('.salty-prevbox,.bl-inline-preview')) {
-        const targets = [...box.children].filter(e => e.matches('.salty-preview,.salty-sample,.salty-uisample,.salty-phonemock,.bl-qr-sample-wrap'));
+        const targets = [...box.children].filter(e => e.matches('.salty-preview,.salty-sample,.salty-uisample,.salty-phonemock,.bl-qr-sample-wrap,.bl-ft-preview'));
         if (!targets.length) continue;
         const key = box.dataset.pv || section;
         const state = root._previewViews.get(key) || { scale: 1, x: 0, y: 0 };
