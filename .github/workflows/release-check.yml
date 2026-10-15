@@ -150,6 +150,7 @@ jobs:
           node tools/tests/regexlink-engine.mjs .
           node tools/tests/mermaid-addon.mjs .
           node tools/tests/fruit-localization.mjs
+          node tools/tests/fruit-status.mjs .
           node tools/tests/prompt-tools.mjs
           node tools/tests/prompt-link.mjs
           node tools/tests/fruit-cards-removed.mjs .

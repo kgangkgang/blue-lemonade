@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.5.4/blue-lemonade-6.5.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.5.5/blue-lemonade-6.5.5.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.5.4 · 최신 업데이트</summary>
+<summary>6.5.5 · 최신 업데이트</summary>
+
+- 한글화 패널의 「과일의 마음 한글화」를 켜면 상태창의 날짜·시간·장소·날씨 제목, 하단 문구와 낮·밤 버튼 설명도 한글로 보여요. API 요금 없이 바로 적용돼요.
+- 프리셋을 다시 가져올 필요가 없어요. 현재 프롬프트·토글·대화는 그대로 두고 화면 글자만 바꾸며, 한글화를 끄면 원문으로 돌아와요.
+
+</details>
+
+<details>
+<summary>6.5.4 · TTS 이름 색 · 생각 블록 번역 제외 · 상태창 고정 값 미리 번역</summary>
 
 - TTS 막대의 이름이 말하는 인물 자신의 색으로 나와요. 예전엔 옆 인물의 색으로 칠해진 줄에서 그 색(예: 빨강)을 따라갔어요. 어두운 색은 막대에서 읽히게 밝혀 보여 줘요.
 - 번역이 과일 프롬프트의 생각(ECoT)과 데우스의 장면 계획(Scene Plan)은 보내지 않고 원문 그대로 둬요. 본문 · 속마음 · 상태창은 지금처럼 번역해요.

@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "6.5.4";
+export const BUILD_VERSION = "6.5.5";
 export const FILE_HASHES = {
   "index.js": "17480:1badcfa4:040bdacc",
-  "manifest.json": "365:a81fd3be:5732cec8",
+  "manifest.json": "365:7135d7dd:c6fdf4d5",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -482,7 +482,7 @@ export const FILE_HASHES = {
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "223587:df525112:ff6bc2f5",
+  "src/notice-data.js": "224048:7a9107ef:7dbb870a",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -507,24 +507,25 @@ export const FILE_HASHES = {
   "src/scripts/bundled/deus-qr.js": "46840:502ceb9f:857eec0e",
   "src/scripts/bundled/deus.js": "71720:ddbe5bc4:16add9c2",
   "src/scripts/bundled/fold.js": "14773:cf844e0a:169fb52a",
-  "src/scripts/bundled/fruit-heart.js": "190693:e5f28900:1b9c6229",
+  "src/scripts/bundled/fruit-heart.js": "190774:1f1f3842:43e87cdb",
   "src/scripts/bundled/fruit-style.js": "80820:e793a8dd:ce06417f",
   "src/scripts/bundled/fruit.js": "46008:de94fe1b:cec2bbd8",
   "src/scripts/bundled/helper.js": "104117:425b163a:31736cc4",
   "src/scripts/bundled/korean.js": "688642:8cb541a3:36439a45",
   "src/scripts/bundled/shajin.js": "22111:d00fa2db:4b6a0901",
-  "src/scripts/catalog.js": "8945:3c21aabb:061e25f9",
+  "src/scripts/catalog.js": "8911:c6ae9243:404655b8",
+  "src/scripts/fruit-status.js": "7629:ae055b99:7fa02f97",
   "src/scripts/plain/deus-qr.js": "45642:1f583081:9b78d3fe",
   "src/scripts/plain/deus.js": "66897:632b8c3e:8adc7e2f",
   "src/scripts/plain/fold.js": "13815:b56ce78f:e3189530",
-  "src/scripts/plain/fruit-heart.js": "177505:86e859f2:2e237a36",
+  "src/scripts/plain/fruit-heart.js": "177584:9b2265a4:14df6001",
   "src/scripts/plain/fruit-style.js": "79535:6f32ffba:5bd9130d",
   "src/scripts/plain/fruit.js": "42166:03605a28:1d7895a0",
   "src/scripts/plain/helper.js": "97691:f11398d4:3144a19b",
   "src/scripts/plain/korean.js": "657404:110d8b27:610f14d4",
   "src/scripts/plain/shajin.js": "20099:8ad24629:14320e51",
   "src/scripts/prompt-engine.js": "10617:b2d5e420:c3b73ccd",
-  "src/scripts/runtime.js": "9053:1faab9b3:17f2e07c",
+  "src/scripts/runtime.js": "9179:c79b995f:15964a06",
   "src/scripts/scan.js": "5805:194df255:f44ce803",
   "src/scripts/store.js": "3185:3839ac09:076c5de3",
   "src/scripts/ui.js": "10407:3e295921:7dd4e356",
@@ -570,5 +571,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "34821:fcebb709:d610b9d5",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1427757:a3ff0572:38ce3988"
+  "style.css": "1427757:7553ed31:9b0e384a"
 };

@@ -8,6 +8,7 @@ function installFruitHeartKorean(BlueLemonade, data) {
   const doc = host.document;
   const key = '__blueLemonadeFruitHeartKorean_v1';
   host[key]?.stop?.();
+  const stopStatus = BlueLemonade.localizeFruitStatus?.();
   const rootsSelector = '#fruit-heart-v6,#fruit-heart-v6-dock,#fruit-heart-v6-wand-entry,[data-fh-cat="1"]';
   const watchSelector = '#qr--bar,#qr--popout,#quickReplies,#extensionsMenu,#reasoning_select,#toast-container';
   // Helper 4.11 list containers only: names are display text, while search/edit/export use its model.
@@ -210,6 +211,7 @@ function installFruitHeartKorean(BlueLemonade, data) {
   doc.head.append(style);
   function stop() {
     if (stopped) return; stopped = true;
+    stopStatus?.();
     observer.disconnect(); insertionObserver.disconnect(); host.clearInterval(discovery); host.cancelAnimationFrame(frame);
     doc.removeEventListener('click', interaction, true); doc.removeEventListener('keydown', interaction, true);
     for (const [node, value] of texts) if (node.nodeValue === value.shown) node.nodeValue = value.original;
