@@ -16,6 +16,7 @@ const cardValueModule = await import(pathToFileURL(path.join(dir, 'card-values.j
 const seg = await import(pathToFileURL(path.join(dir, 'translation-segments.js')));
 const resume = await import(pathToFileURL(path.join(dir, 'translation-resume.js')));
 const notify = await import(pathToFileURL(path.join(root, 'src/rerender-notify.js')));
+const frames = await import(pathToFileURL(path.join(dir, 'preview-frames.js')));   // 2.5.5
 
 let passed = 0, failed = 0;
 async function check(name, fn) {
@@ -82,7 +83,7 @@ const S = { llm_prompt_chat: 'Translate visible text.', glossary_enabled: false,
 const T = { chat: [], chatId: 'chat-A', formatted: [], refreshed: [], dom: new Map() };
 const ctx = () => ({ chatMetadata: {}, chat: T.chat, chatId: T.chatId, streamingProcessor: T.processor, messageFormatting: (text, ...rest) => { T.formatted.push([text, ...rest]); return `<p>${text}</p>`; } });
 const PREFIX = 'Translate visible text.\n\n';
-const env = { ...card, ...seg, ...resume, ...auto, ...notify, cardValues: cardValueModule.cardValues, getStringHash: t => [...String(t)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0), extensionSettings: S, getContext: ctx,
+const env = { ...card, ...seg, ...resume, ...auto, ...notify, ...frames, cardValues: cardValueModule.cardValues, getStringHash: t => [...String(t)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0), extensionSettings: S, getContext: ctx,
     guards: { capture: () => ({ assert() {} }) }, connectionSignature: () => '', watchGuard: () => ({ check() {}, close() {}, signal: null }),
     document: { getElementById: () => null, querySelector: selector => T.dom.get(selector) ?? null },
     BLOCKED_CHUNK_MARK: '[차단된 문단 — 원문 그대로]', MARK_TAIL: ' — 원문 그대로]', MASK_PATTERN: '[[__VAR_{index}__]]', DEBUG_MODE: false, RULE_PROMPT_KEY: 'rules', substituteCustomPlaceholders: x => x, substituteParams: x => x,
@@ -135,7 +136,8 @@ await check('no previews for corrections, input translation or the single-reques
 // ── ③ 화면에만 그리기 ──
 function fakeMessageDom(id) {
     const badge = { className: 'llmt-progress' };
-    const host = { innerHTML: '<p>original</p>', dataset: {}, prepended: [], querySelector: s => (s === ':scope > .llmt-progress' ? host.badge : null), prepend(node) { host.prepended.push(node); host.badge = node; }, badge };
+    const host = { innerHTML: '<p>original</p>', dataset: {}, prepended: [], frames: [], querySelector: s => (s === ':scope > .llmt-progress' ? host.badge : null), querySelectorAll: s => (s === '.TH-render' ? host.frames : []),
+        ownerDocument: { createElement: () => ({ innerHTML: '', querySelectorAll: () => [] }) }, prepend(node) { host.prepended.push(node); host.badge = node; }, badge };
     const element = { editing: false, querySelector: s => (s === '.mes_text' ? host : s === '.edit_textarea' && element.editing ? {} : null) };
     T.dom.set(`#chat .mes[mesid="${id}"]`, element);
     T.dom.set(`#chat .mes[mesid="${id}"] .mes_text`, host);
@@ -173,9 +175,14 @@ await check('does not paint (or revert) when the target moved, is being edited, 
     preview = env.translationPreview(0, message, message.mes, 'chat-A', message.mes);
     preview.show('번역'); assert.equal(host.innerHTML, '<p>original</p>'); preview.stop();
     T.processor = null;
-    // 헬퍼가 iframe 으로 그리는 코드
-    preview = env.translationPreview(0, message, message.mes, 'chat-A', '```html\n<html><body>card</body></html>\n```');
+    // 2.5.5 헬퍼가 그려 둔 틀을 지킬 수 없으면(새 글에 짝이 될 코드 블록이 없음) 지금 화면 그대로 — 지킬 수 있을 때는 translator-preview-frames.mjs
+    host.frames = [{ parentNode: host }];
+    preview = env.translationPreview(0, message, message.mes, 'chat-A', message.mes);
     preview.show('번역'); assert.equal(host.innerHTML, '<p>original</p>'); preview.stop();
+    host.frames = [];
+    // 틀이 아직 없으면(헬퍼가 안 그렸거나 없음) 코드가 든 답도 그린다 — 화면에 이미 날 코드였다
+    preview = env.translationPreview(0, message, message.mes, 'chat-A', '```html\n<html><body>card</body></html>\n```');
+    preview.show('번역 코드'); assert.equal(host.innerHTML, '<p>번역 코드</p>'); preview.stop(); host.innerHTML = '<p>original</p>'; delete host.dataset.llmtPreview;
     // 글이 바뀜 · 채팅이 바뀜 · 스와이프
     preview = env.translationPreview(0, message, 'Older body.', 'chat-A', message.mes);
     preview.show('번역'); assert.equal(host.innerHTML, '<p>original</p>'); preview.stop();

@@ -2,6 +2,7 @@
 // 2026-09-23 "세로 폰에서 연필 버튼이 화면 밖" 제보는 사용자 커스텀 CSS 가 원인이었는데 그걸 아는 데 반나절이 걸렸다.
 import { getSettings } from './settings.js';
 import { currentVersion } from './notice.js';
+import { compactErrors } from './diag-errors.js';
 
 // 메시지 칸을 그리는 선택자 — 여기 걸리는 커스텀 CSS 는 테마 모양을 깨뜨릴 수 있다
 const CHAT = /#chat\b|#sheld\b|#form_sheld\b|#send_form\b|\.mes\b|\.mes_|\.mesAvatarWrapper|\.ch_name|\.name_text|\.timestamp\b|\.swipe|\.extraMesButtons|\.avatar\b|\.last_mes/;
@@ -39,7 +40,10 @@ export async function buildDiagnosis() {
         const disabled = new Set(ctx.extensionSettings?.disabledExtensions || []);
         extensions = (ext.extensionNames || []).filter(n => !disabled.has(n)).map(n => n.replace(/^third-party\//, '')).join(', ') || '없음';
     } catch { /* 실리태번 구조가 다르면 목록 없이 */ }
-    const addons = Object.entries(s.addons || {}).filter(([, on]) => on).map(([id]) => id).join(', ') || '없음';
+    // 6.7.1 켠 애드온은 판도 (업데이트 탭과 같은 앞 4KB 읽기, 한 번 읽으면 기억)
+    const versions = await import('./addon-versions.js').then(m => m.addonVersions(s.addons || {})).catch(() => []);
+    const versionOf = id => versions.find(item => item.id === id)?.version;
+    const addons = Object.entries(s.addons || {}).filter(([, on]) => on).map(([id]) => versionOf(id) ? `${id} ${versionOf(id)}` : id).join(', ') || '없음';
     const scripts = Object.entries(ctx.extensionSettings?.blue_lemonade_scripts?.enabled || {}).filter(([, on]) => on).map(([id]) => id + (ctx.extensionSettings?.blue_lemonade_scripts?.overrides?.[id] ? '*' : '')).join(', ') || '없음';
     const lines = [
         `블루 레몬에이드 ${currentVersion() || '?'} · 실리태번 ${stVersion} · ${short(navigator.userAgent)} · ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`,
@@ -49,5 +53,8 @@ export async function buildDiagnosis() {
         `애드온 ${addons} · 스크립트 ${scripts}`,
         `확장 ${extensions}`,
     ];
+    // 6.7.1 최근 블루레몬에이드 오류 · 번역 중단 이유 (주소 · 키는 가림) — 새로고침하면 비워진다
+    const errors = compactErrors();
+    lines.push(errors.length ? `최근 오류 ${errors.length}개:\n${errors.join('\n')}` : '최근 오류 없음');
     return lines.join('\n');
 }

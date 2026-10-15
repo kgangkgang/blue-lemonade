@@ -3,7 +3,7 @@ import { isPreset, validSettings, validImport, validPromptList, validPresetList,
 import { createGuards, watchGuard } from './translation-guard.js';
 import { observeEventCompletion } from './render-completion.js';
 import { notifyRerender, isRerenderNotify } from '../../rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe) · 그 알림의 MESSAGE_UPDATED 는 건너뛴다
-import { isFrontendCode } from '../../rerender-notify.js';   // 2.5.1 헬퍼가 iframe 으로 그리는 답은 번역 중 미리 보기를 그리지 않는다
+import { paintKeepingFrames } from './preview-frames.js';   // 2.5.5 번역 중 미리 보기가 헬퍼가 그린 상태창(iframe)을 지우지 않게
 import { AUTO_CONTEXT, hasAutoContext, markAutoContext, captureAutoContextGuard, prepareTranslatorAutoContext } from './context-auto.js';
 import { prepareDisplayCards, withDisplayCardsProtected, withoutDisplayCards, displayCardBlocks, matchesDisplayCardStructure } from './display-cards.js';
 import { cardValues } from './card-values.js';   // 6.5.4 상태 카드 고정 값은 보내지 않고 바로 채움
@@ -2274,7 +2274,7 @@ function progressLabel(stage, started) {
     const sec = Math.round((Date.now() - started) / 1000);
     if (!stage || typeof stage !== 'object') return `번역 중 · ${sec}초`;
     if (stage.stage === 'chunks') return `${stage.resumed ? '이어 번역' : '번역 중'} · 문단 ${stage.done + 1}/${stage.total} · ${sec}초`;
-    if (stage.stage === 'segments') return `캐시 ${stage.reused}개 · ${stage.pending ? `수정 문단 ${stage.pending}개 묶음 번역 중` : `새 번역 ${stage.translated}개`} · ${sec}초`;
+    if (stage.stage === 'segments') return `캐시 ${stage.reused}개 · ${stage.pending ? `수정 문단 ${stage.finished ?? 0}/${stage.batch ?? stage.pending} 묶음 번역 중` : `새 번역 ${stage.translated}개`} · ${sec}초`;   // 2.5.5 n/전체
     if (stage.stage === 'kana') return `번역 중 · 마무리 · ${sec}초`;
     return `번역 중 · ${sec}초`;
 }
@@ -2306,10 +2306,11 @@ function progressBadge(messageId, message = null, sourceMes = message?.mes, chat
  * 「끝난 곳은 번역문 · 남은 곳은 원문」을 그 메시지 화면(.mes_text)에만 그린다. 저장된 글(mes · display_text)은 건드리지 않는다 —
  * 끝나면 최종본이 늘 하던 대로 다시 그려지고(refreshMessageBlock), 멈추거나 실패하면 revert() 가 지금 데이터대로(원문 · 예전 번역) 다시 그린다.
  * 진행 표시(.llmt-progress)는 그대로 둔다. 실리태번이 그 사이 다시 그려 미리 보기가 지워지면 1초 안에 다시 그린다.
- * 그리지 않는 때: 대상이 바뀜(채팅 · 스와이프 · 글 수정) · 스트리밍 중 · 편집 창이 열림 · 헬퍼가 iframe 으로 그리는 코드가 든 답(다시 그리면 코드로 돌아간다).
+ * 그리지 않는 때: 대상이 바뀜(채팅 · 스와이프 · 글 수정) · 스트리밍 중 · 편집 창이 열림.
+ * 2.5.5 헬퍼(Tavern Helper)가 iframe 으로 그린 코드 블록(상태창)은 다시 그리지 않고 제자리에 둔다 (preview-frames.js) — 전엔 날 코드로 보였다.
  */
 function translationPreview(messageId, message, sourceMes, chatId, originalText) {
-    const swipeId = message?.swipe_id ?? 0, frontend = isFrontendCode(originalText);
+    const swipeId = message?.swipe_id ?? 0;
     let latest = null, shown = false, stopped = false, timer = null;
     const target = () => {
         const index = resolveTranslationTarget(message, messageId, sourceMes, chatId);
@@ -2323,14 +2324,14 @@ function translationPreview(messageId, message, sourceMes, chatId, originalText)
         return element.querySelector('.mes_text');
     };
     const paint = () => {
-        if (stopped || frontend || latest === null) return;
+        if (stopped || latest === null) return;
         const index = target(), host = index < 0 ? null : hostOf(index);
         if (!host) return;
         let html;
         try { html = getContext().messageFormatting(processTranslationText(originalText, latest), message.name, message.is_system, message.is_user, index); }
         catch { return; }
         const badge = host.querySelector(':scope > .llmt-progress');
-        host.innerHTML = html;
+        if (!paintKeepingFrames(host, html)) return;   // 2.5.5 헬퍼가 그린 상태창 틀(iframe)은 제자리에 두고 글만 — 못 지키면 지금 화면 그대로
         if (badge) host.prepend(badge);
         host.dataset.llmtPreview = '1';
         shown = true;

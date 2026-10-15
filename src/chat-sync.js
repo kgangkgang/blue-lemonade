@@ -2,7 +2,7 @@
 //
 // 실리태번의 integrity 검사는 채팅마다 한 번 정해지는 값이라(chat_metadata.integrity) 같은 채팅을 두 기기가 열면 서로 덮어써도 막지 않는다.
 // 그래서 서버의 채팅 파일 정보만 가끔 보고, 우리가 마지막으로 본 것과 다르면
-//   - 채팅 위에 얇은 띠 「다른 기기에서 이 채팅이 바뀌었어요 · 새로 불러오기」
+//   - 채팅 위에 얇은 띠 「다른 기기나 탭에서 이 채팅이 바뀌었어요 · 새로 불러오기」
 //   - 그 상태에서 저장하려 하면 덮어쓰기 전에 한 번 묻는다 (새로 불러오기 · 그래도 저장 · 닫으면 이번 저장만 미룸)
 // 서버 파일의 integrity 가 지금 채팅과 다르면 실리태번이 스스로 막고 묻는다 — 그때는 묻지 않고 실리태번 흐름에 맡긴다.
 //
@@ -77,6 +77,16 @@ export function pickStat(list, target) {
     if (!hit) return { missing: true };
     return { last: String(hit.last_mes ?? ''), size: String(hit.file_size ?? ''), items: Number(hit.chat_items) || 0, mes: textKey(hit.mes), integrity: hit.chat_metadata?.integrity };
 }
+/** 6.7.1 서버 파일이 이 화면의 채팅과 같은가 (메시지 수 · 마지막 메시지 지문 · 마지막 메시지 시각).
+ *  이 기기의 저장이 감싸개를 안 거쳐도(성능 보조의 워커 저장 · 감싸개 순서) 자기 저장을 남의 것으로 보지 않게 — 같으면 바뀐 게 없다. */
+export function sameAsLocal(now, chat) {
+    if (!now || now.missing || !Array.isArray(chat)) return false;
+    const last = chat[chat.length - 1];
+    if (now.items !== chat.length) return false;
+    if (!last) return now.items === 0;
+    if (now.mes !== textKey(last.mes || '[The message is empty]')) return false;
+    return last.send_date == null || now.last === String(last.send_date);
+}
 /** 우리가 본 것(base)과 서버(now)가 다른가 — 정확한 값(②)은 둘 다 있을 때만 */
 export function chatChanged(base, now) {
     if (!base || !now) return false;
@@ -117,6 +127,8 @@ export function createChatSync(env) {
                 st.lastCheck = env.now();
                 if (st.target?.key !== target.key || st.saving || gen !== st.gen) return null;   // 그 사이 채팅이 바뀌었거나 우리 저장이 끼었다
                 if (!st.base || st.rebase) { st.base = now; st.rebase = false; return now; }
+                // 6.7.1 화면과 같으면 이 기기 저장 — 기준만 다시 (띠가 떠 있었으면 걷는다)
+                if (sameAsLocal(now, ctx().chat)) { st.base = now; st.passKey = ''; setStale(false); return now; }
                 if (chatChanged(st.base, now)) setStale(true);
                 else if (st.base.charMtime === undefined && now.charMtime !== undefined) st.base = { ...st.base, charMtime: now.charMtime, charSize: now.charSize };
                 return now;
@@ -207,6 +219,17 @@ export function createChatSync(env) {
         } finally { st.saving--; }
     }
 
+    /** 6.7.1 감싸개를 거치지 않은 이 기기의 저장 (성능 보조의 워커 저장 신호). 우리 감싸개 안에서 이미 처리 중이면 그냥 둔다 */
+    function onExternalSave(path, body) {
+        if (!st.on || st.saving) return;
+        st.gen++;
+        const target = chatTarget(ctx()), key = saveBodyKey(path, body);
+        if (key !== null && key !== target?.key) { if (st.base) { st.rebase = true; env.clearTimer(st.rebaseTimer); st.rebaseTimer = env.setTimer(() => { void check('rebase'); }, REBASE); } return; }
+        if (!target || st.target?.key !== target.key) return;
+        setStale(false); st.passKey = ''; st.rebase = true;
+        env.clearTimer(st.rebaseTimer); st.rebaseTimer = env.setTimer(() => { void check('rebase'); }, REBASE);
+    }
+
     function setOn(value) {
         value = !!value;
         if (st.on === value) return;
@@ -216,7 +239,7 @@ export function createChatSync(env) {
     }
     function onVisible() { if (!st.on) return; if (env.hidden()) { env.clearTimer(st.timer); st.timer = 0; return; } void check('visible'); schedule(); }
 
-    return { state: st, check, reset, beforeSave, onSave, setOn, onVisible, reloadNow, isSave: (input, init) => String(init?.method ?? input?.method ?? 'GET').toUpperCase() === 'POST' && SAVE_PATHS.includes(pathOf(input)),
+    return { state: st, check, reset, beforeSave, onSave, onExternalSave, setOn, onVisible, reloadNow, isSave: (input, init) => String(init?.method ?? input?.method ?? 'GET').toUpperCase() === 'POST' && SAVE_PATHS.includes(pathOf(input)),
         isWrite: (input, init) => String(init?.method ?? input?.method ?? 'GET').toUpperCase() === 'POST' && WRITE_PATHS.includes(pathOf(input)), afterWrite };
 }
 
@@ -233,7 +256,7 @@ function stripEl(show) {
     el = document.createElement('div');
     el.id = 'bl-sync-strip';
     el.setAttribute('role', 'status');
-    el.innerHTML = '<span>다른 기기에서 이 채팅이 바뀌었어요</span><button type="button" class="bl-sync-reload">새로 불러오기</button>';
+    el.innerHTML = '<span>다른 기기나 탭에서 이 채팅이 바뀌었어요</span><button type="button" class="bl-sync-reload">새로 불러오기</button>';
     el.querySelector('button').addEventListener('click', async (event) => {
         const button = event.currentTarget;
         button.disabled = true;
@@ -246,7 +269,7 @@ async function askOverwrite() {
     const ctx = SillyTavern.getContext();
     const box = document.createElement('div');
     box.className = 'bl-sync-ask';
-    box.innerHTML = '<h3>다른 기기에서 이 채팅이 바뀌었어요</h3><p>지금 저장하면 다른 기기에서 바꾼 내용을 이 화면의 옛 내용으로 덮어써요.</p><p class="salty-note">새로 불러오면 이 기기에서 방금 바꾼 것(새 메시지 포함)은 저장되지 않아요.</p>';
+    box.innerHTML = '<h3>다른 기기나 탭에서 이 채팅이 바뀌었어요</h3><p>지금 저장하면 그쪽에서 바꾼 내용을 이 화면의 옛 내용으로 덮어써요.</p><p class="salty-note">새로 불러오면 이 기기에서 방금 바꾼 것(새 메시지 포함)은 저장되지 않아요.</p>';
     const result = await ctx.callGenericPopup(box, ctx.POPUP_TYPE.CONFIRM, '', { okButton: '새로 불러오기', cancelButton: '그래도 저장' });
     if (result === ctx.POPUP_RESULT.AFFIRMATIVE) return 'reload';
     if (result === ctx.POPUP_RESULT.NEGATIVE) return 'save';
@@ -272,6 +295,7 @@ function install() {
     };
     ctx.eventSource.on(ctx.event_types.CHAT_CHANGED, () => sync.reset());
     document.addEventListener('visibilitychange', () => sync.onVisible());
+    window.addEventListener('bl:chat-saved', event => sync.onExternalSave(event.detail?.path, event.detail?.body));
 }
 
 /** features.js 가 부른다 (켤 때 처음 불러온다) */

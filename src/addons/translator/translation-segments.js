@@ -806,7 +806,8 @@ export async function translateSegments({ parts, signature, request, check = () 
         missing.get(key).indices.push(i);
     }
     const pending = [...missing.values()];
-    progress({ stage: 'segments', done: reused, total, reused, translated, pending: pending.length });
+    // 2.5.5 묶음 번역 진행: batch = 이번에 보낼 문단 수, finished = 그중 끝난 수 (묶음이 끝날 때마다 — 「수정 문단 17/74」)
+    progress({ stage: 'segments', done: reused, total, reused, translated, pending: pending.length, batch: pending.length, finished: 0 });
     const tell = list => {
         if (!partial) return;
         const view = [...output];
@@ -818,7 +819,13 @@ export async function translateSegments({ parts, signature, request, check = () 
     const markOf = (body, error) => typeof blockedMarker === 'function' ? blockedMarker(body, error) : blockedMarker;
     if (pending.length) {
         let results;
-        try { results = await request(pending.map(row => row.body), done => { if (done?.length < pending.length) tell(done); }); }
+        try {
+            results = await request(pending.map(row => row.body), done => {
+                const finished = Math.min(done?.length ?? 0, pending.length);
+                progress({ stage: 'segments', done: reused + finished, total, reused, translated, pending: pending.length, batch: pending.length, finished });
+                if (finished < pending.length) tell(done);
+            });
+        }
         catch (error) {
             if (!error?.refused || !blockedMarker) throw error;
             check();

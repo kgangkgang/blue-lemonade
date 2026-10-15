@@ -1401,7 +1401,7 @@ function tabChat(s, sub) {
             ${row('다른 기기 변경 알림', toggle('syncWatch', s.syncWatch !== false), '이 채팅이 다른 기기에서 바뀌면 위에 띠를 띄우고, 덮어쓰기 전에 물어요')}
         </div>
         ${cap('진단', '제보할 때 붙여 넣는 한 덩어리')}<div class="salty-group">
-            ${row('진단 복사', '<button class="salty-btn" data-act="diag-copy" aria-label="진단 복사"><i class="fa-solid fa-copy" aria-hidden="true"></i></button>', '테마 · 실리태번 버전, 화면 폭, 표시 옵션, 커스텀 CSS, 켜진 확장')}
+            ${row('진단 복사', '<button class="salty-btn" data-act="diag-copy" aria-label="진단 복사"><i class="fa-solid fa-copy" aria-hidden="true"></i></button>', '버전 · 화면 · 표시 옵션 · 커스텀 CSS · 확장 · 최근 오류(번역 중단 이유)를 글로 복사해요. 댓글에 붙여 넣으면 돼요')}
             ${row('진단 파일 만들기', '<button class="salty-btn" data-act="diag-file" aria-label="진단 파일 만들기"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i></button>', '판 · 켜진 기능 · 최근 오류 · 메시지 하나의 번역 검사를 JSON 파일 하나로')}
         </div>`;
         return `${customCss}`;

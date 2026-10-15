@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.7.0/blue-lemonade-6.7.0.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.7.1/blue-lemonade-6.7.1.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.7.0 · 최신 업데이트</summary>
+<summary>6.7.1 · 최신 업데이트</summary>
+
+- 번역 중 바로 보기가 이미 그려진 상태창(코드 블록 · 헬퍼 화면)을 그대로 두고 그 앞뒤 글만 바꿔요. 번역이 끝날 때까지 상태창이 날 코드로 보이던 것이 고쳐졌어요 (번역 2.5.5).
+- 묶음 번역도 「수정 문단 17/74 묶음 번역 중」처럼 끝난 문단 수를 보여 줘요. 묶음 하나가 끝날 때마다 올라가요.
+- 6.7.0 의 「다른 기기에서 이 채팅이 바뀌었어요」 띠가 이 기기 자신의 저장(성능 보조가 큰 저장을 뒤에서 보낼 때)을 다른 기기로 착각해 뜨던 것을 고쳤어요. 서버 채팅이 지금 화면과 같으면 띠를 띄우지 않고, 떠 있던 띠도 걷어요 (성능 보조 2.2.4).
+- 설정 › 채팅 › 기타 › 진단의 「진단 복사」가 켠 애드온 판과 최근 블루레몬에이드 오류 6개(번역 중단 이유 포함)도 글로 복사해요. 파일을 붙일 수 없는 댓글에도 그대로 붙여 넣으면 돼요. 주소 · 키는 가려져요.
+
+</details>
+
+<details>
+<summary>6.7.0 · 진단 파일 · 다른 기기 바뀜 알림 · 업데이트 안내 · 번역 중단 이유</summary>
 
 - 설정 › 채팅 › 기타 › 진단에 「진단 파일 만들기」가 생겼어요. 판 번호 · 켠 기능 · 최근 블루레몬에이드 오류를 JSON 파일 하나로 내려받아 제보할 때 보내면 돼요. API 키 · 서버 주소는 가려지고, 메시지 글은 스위치로 넣을지 골라요.
 - 번역이 「채팅이나 글이 바뀌어 번역을 멈췄어요」로 멈추면 무엇이 바뀌었는지(글 · 스와이프 · 편집 이벤트와 보낸 확장 이름 등, 글 내용은 빼고)를 남겨 진단 파일에 담아요 (번역 2.5.4).

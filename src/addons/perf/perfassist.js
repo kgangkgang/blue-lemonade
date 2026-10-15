@@ -156,6 +156,18 @@ const saver = createSaveSender({
     },
 });
 
+// 6.7.1 채팅 저장이 끝나면 알린다 — 이 감싸개가 다른 확장의 감싸개(다른 기기 바뀜 감시 등)보다 바깥에 놓여 워커로 보내면 그쪽은 저장을 못 본다
+const CHAT_SAVES = ['/api/chats/save', '/api/chats/group/save'];
+function announceChatSave(input, init, request) {
+    try {
+        if (String(init?.method ?? input?.method ?? 'GET').toUpperCase() !== 'POST') return request;
+        const path = new URL(typeof input === 'string' ? input : input?.url ?? String(input), location.href).pathname;
+        if (!CHAT_SAVES.includes(path)) return request;
+        Promise.resolve(request).then(response => { if (response?.ok) window.dispatchEvent(new CustomEvent('bl:chat-saved', { detail: { path, body: init?.body } })); }, () => {});
+    } catch { /* 알리기는 덤 */ }
+    return request;
+}
+
 function installSaver() {
     if (typeof Worker !== 'function' || typeof nativeFetch !== 'function') {
         unavailable.saveInWorker = '워커 없음';
@@ -164,7 +176,7 @@ function installSaver() {
     // 다른 확장(끊김 감시 · 저장 정리 · 요청 로그)의 fetch 감싸기보다 안쪽에 있어야 한다 → loading_order 2
     window.fetch = function perfAssistFetch(input, init) {
         try {
-            return saver.send(input, init);
+            return announceChatSave(input, init, saver.send(input, init));
         } catch (error) {
             console.warn(`[${TITLE}] 요청을 살피지 못했어요`, error);
             return nativeFetch.call(window, input, init);

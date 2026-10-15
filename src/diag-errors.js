@@ -30,6 +30,15 @@ export function recentErrors() {
     return [...(globalThis[KEY] || [])];
 }
 
+/** 6.7.1 진단 복사(글)용: 최근 것부터 max 개, 한 줄씩 짧게 — 번역 중단 이유는 앞머리를 줄인다 */
+export function compactErrors(list = recentErrors(), max = 6) {
+    return list.slice(-max).map(({ at, level, text }) => {
+        const time = String(at || '').slice(11, 19);
+        const body = String(text || '').replace(/\[Blue Lemonade · LLM 번역\] 번역 중단 이유/, '번역 중단').replace(/\s+/g, ' ').trim();
+        return `- ${time} ${level} ${body.length > 220 ? body.slice(0, 219) + '…' : body}`;
+    });
+}
+
 export function startErrorLog() {
     if (globalThis[KEY]) return;
     const list = globalThis[KEY] = [];
