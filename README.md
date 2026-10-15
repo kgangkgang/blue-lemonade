@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.5.6/blue-lemonade-6.5.6.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.5.7/blue-lemonade-6.5.7.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.5.6 · 최신 업데이트</summary>
+<summary>6.5.7 · 최신 업데이트</summary>
+
+- QR 돋보기는 실리태번의 「QR 사용하기」가 켜져 있을 때만 보여요. 과일·데우스 빠른 설정 버튼만 있을 때는 나오지 않아요. 기존 「QR 검색 버튼」 끄기도 그대로 적용돼요.
+- 과일의 마음 꾸미기를 켠 상태에서 항목·홈 선택지·선택 목록을 길게 누르면 옵션 효과를 한국어로 확인할 수 있어요. 짧은 탭은 원래대로 선택하고, 길게 누를 때는 선택이나 실행을 하지 않아요. 키보드는 Alt+Enter 또는 Shift+F10을 사용할 수 있어요.
+- 원문과 대조한 158개 옵션 설명을 준비했어요. 직접 수정했거나 설명을 아직 확인하지 않은 항목은 구분해서 알리고 현재 원문을 펼쳐 볼 수 있어요. 설명을 읽을 때 API를 호출하거나 프리셋 설정을 바꾸지 않아요.
+
+</details>
+
+<details>
+<summary>6.5.6 · 고정 문구 한글화 보강 · 대사 색 태그 복구</summary>
 
 - 실리태번 한글화에 월드인포 탐색·상태, 모델 묶기, 이미지 설명·생성 스타일, 벡터 모델과 표정 업로드 안내를 더했어요. 모델 이름과 입력값은 그대로예요.
 - 과일의 마음 한글화가 소설 제목의 관계·장소, 선택지 제목과 서문·소설·선택지의 낮밤 버튼 설명도 한글로 보여요. 프리셋을 다시 가져올 필요 없이 기존 스위치로 적용돼요.

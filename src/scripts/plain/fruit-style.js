@@ -13,6 +13,7 @@ function installFruitStyle(BlueLemonade, css) {
   style.textContent = css;
   (doc.head || doc.documentElement).append(style);
   const stopHelp = installFruitHelp(doc, host, FRUIT_HELP_GUIDE);
+  const stopOptionHelp = BlueLemonade.fruitOptionHelp?.();
   const stopReading = installFruitReading(doc, host);
   const stopSkin = installFruitSkin(doc, host);
   const stopHomeOrder = installFruitHomeOrder(doc, host);
@@ -22,6 +23,7 @@ function installFruitStyle(BlueLemonade, css) {
     if (stopped) return;
     stopped = true;
     stopHelp();
+    stopOptionHelp?.();
     stopReading();
     stopSkin();
     stopHomeOrder();
@@ -70,7 +72,7 @@ function installFruitHelp(doc, host, guide) {
     back.type = 'button';
     back.addEventListener('click', event => {event.stopPropagation(); hide();});
     head.append(title, back);
-    panel.append(head, make('p', guide.intro, 'bl-fruit-help-intro'));
+    panel.append(head, make('p', guide.intro + ' 옵션을 길게 누르면 켰을 때의 효과를 확인해요. 키보드에서는 Alt+Enter 또는 Shift+F10을 누르세요.', 'bl-fruit-help-intro'));
     for (const group of guide.sections) {
       const details = make('details');
       details.dataset.helpView = group.id;

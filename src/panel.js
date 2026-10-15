@@ -1429,8 +1429,8 @@ function tabChat(s, sub) {
             ${mesPinPicker(s)}
         </div>
         ${cap('퀵 리플라이')}<div class="salty-group bl-control-grid bl-qr-controls">
-            <div class="bl-inline-preview" data-pv="qr">${qrSample(s.chat.qrFind !== false)}</div>
-            ${row('QR 검색 버튼', toggle('chat.qrFind', s.chat.qrFind !== false), '돋보기만 숨겨요. 빠른 답장 버튼은 그대로 사용할 수 있어요')}
+            <div class="bl-inline-preview" data-pv="qr">${qrSample(s.chat.qrFind !== false && globalThis.quickReplyApi?.settings?.isEnabled === true)}</div>
+            ${row('QR 검색 버튼', toggle('chat.qrFind', s.chat.qrFind !== false), '실리태번의 QR 사용하기를 켰을 때만 보여요. 과일·데우스 빠른 설정은 이 조건에 포함하지 않아요')}
             ${stack('자리', seg('chat.qrPlace', [['bottom', '입력창 아래'], ['top', '입력창 위']], 'bottom'), '입력창 옆에 아이콘이 많으면 위가 넓어요')}
             ${stack('넘기기', seg('chat.qrScroll', [['x', '가로 스크롤'], ['y', '세로 스크롤']]))}
             ${s.chat.qrScroll === 'y' ? slider('chat.qrRows', '보이는 줄', 1, 4, 1, 2) : ''}

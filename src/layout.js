@@ -110,7 +110,7 @@ export function startCompactLayout() {
     function placeQuickReplies() {
         const bar = sendForm?.querySelector('#qr--bar');
         const row = sendForm?.querySelector('#nonQRFormItems');
-        if (!bar || !row) return;
+        if (!bar || !row) { qrFinderModule?.closeQrFind(); return; }
         const enabled = document.body.classList.contains('salty');
         // 폰(1000px 이하)은 입력 줄의 남는 폭(아이콘 줄)에 끼워 넣는다. 단 '입력창 위'(3.7.1, body.salty-qr-top)를 골랐으면
         // 끼워 넣지 않고 #send_form 에 두어 입력판 위 한 줄을 통째로 쓴다 — 아이콘을 많이 빼 둔 사람은 아이콘 줄이 좁아서 고른 설정이다
@@ -160,7 +160,8 @@ export function startCompactLayout() {
     function syncQrFind(bar, enabled) {
         let find = bar.querySelector(':scope > #bl-qr-find');
         const hasButtons = !!bar.querySelector('.qr--button');
-        if (!enabled || !hasButtons || document.body.classList.contains('salty-qr-find-off')) {
+        const qrEnabled = globalThis.quickReplyApi?.settings?.isEnabled === true;
+        if (!enabled || !qrEnabled || !hasButtons || document.body.classList.contains('salty-qr-find-off')) {
             find?.remove();
             qrFinderModule?.closeQrFind();
             return;
@@ -176,7 +177,7 @@ export function startCompactLayout() {
                 event.stopPropagation();
                 import('./qrfind.js').then(m => {
                     qrFinderModule = m;
-                    if (find.isConnected && !document.body.classList.contains('salty-qr-find-off')) m.openQrFind(find);
+                    if (find.isConnected && globalThis.quickReplyApi?.settings?.isEnabled === true && !document.body.classList.contains('salty-qr-find-off')) m.openQrFind(find);
                 }).catch(error => console.warn('[Blue Lemonade] 퀵 리플라이 찾기', error));
             });
         }
@@ -272,6 +273,7 @@ export function startCompactLayout() {
         wasEnabled = enabled; wasQrTop = qrTop; wasQrVertical = qrVertical; wasFindOff = findOff;
     }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
     mobile.addEventListener('change', placeQuickReplies);
+    document.addEventListener('change', event => { if (event.target?.id === 'qr--isEnabled') placeQuickReplies(); });
     // 5.4.4 ≡ · ✦ 메뉴 높이: PC 는 실리태번 Popper 가 메뉴 아래 끝을 버튼 윗변에 붙이고 위로 키운다. 최대 높이가 '화면 - 위 막대'뿐이라
     // 항목이 많으면(확장을 여럿 켜 20줄) 버튼 아래 입력판 높이만큼 위 막대 위 · 화면 밖으로 밀려 첫 항목을 못 눌렀다 (1440×900 에서 top -51px).
     // 여는 클릭 때(실리태번 핸들러보다 먼저, capture) 버튼 윗변 ~ 화면 아래를 재어 메뉴에 --bl-menu-foot 로 넣는다 → css/04-send-form.css 가 뺀다.
