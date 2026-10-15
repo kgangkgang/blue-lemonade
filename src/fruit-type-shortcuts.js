@@ -1,0 +1,35 @@
+import {FRUIT_TYPES} from './fruit-type-schema.js';
+import {optionFamily} from './scripts/fruit-option-help.js';
+import {openFruitTypography} from './fruit-type-ui.js';
+const leases=new WeakMap();
+export function installFruitTypeShortcuts(doc=document,host=window){
+    let lease=leases.get(doc);if(!lease){lease={count:0,stop:startShortcuts(doc,host)};leases.set(doc,lease);}lease.count++;let released=false;return()=>{if(released)return;released=true;if(--lease.count===0){lease.stop();leases.delete(doc);}};
+}
+function startShortcuts(doc,host){
+    const buttons=new Map(),types=new Map(FRUIT_TYPES.map(t=>[t.prompt,t]));let stopped=false,frame=0,pickerGroup='';
+    const schedule=()=>{if(!stopped&&!frame)frame=host.requestAnimationFrame(flush);};
+    function flush(){
+        frame=0;if(stopped)return;const live=new Set();
+        for(const target of doc.querySelectorAll('#fruit-heart-v6 [data-chip],#fruit-heart-v6 input[data-prompt-id],#fruit-heart-v6 [data-pick-index]')){
+            let id=target.dataset.chip||target.dataset.promptId;
+            if(target.hasAttribute('data-pick-index')&&pickerGroup){
+                try{const owner=typeof host.getPreset==='function'?host:host.TavernHelper,preset=owner?.getPreset?.('in_use'),prompts=preset?.prompts||[];const key=p=>String(p.id??p.identifier??'');const config=JSON.parse(prompts.find(p=>key(p)==='fruit-heart-control-config-v2')?.content||'{}');id=key(prompts.filter(p=>key(p)!=='fruit-heart-control-config-v2'&&optionFamily(p,config.controlGroups||{})===pickerGroup)[Number(target.dataset.pickIndex)-1]);}catch{}
+            }
+            const type=types.get(id);if(!type)continue;
+            const anchor=target.closest('.fh-item')||target;if(!anchor.parentElement)continue;live.add(anchor);
+            if(!buttons.has(anchor)){
+                const button=doc.createElement('button');button.type='button';button.className='bl-ft-shortcut';button.textContent='블루레몬에이드';button.setAttribute('aria-label',`${type.name} 글자 설정`);
+                button.addEventListener('pointerdown',e=>e.stopPropagation());button.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();void openFruitTypography(type.id);});
+                anchor.after(button);buttons.set(anchor,button);
+            }
+        }
+        const attach=(anchor,type)=>{if(!anchor?.parentElement)return;live.add(anchor);let button=buttons.get(anchor);if(!button){button=anchor.ownerDocument.createElement('button');button.type='button';button.className='bl-ft-shortcut';button.textContent='블루레몬에이드';button.style.cssText='font:inherit;font-size:.8em;min-height:30px;padding:4px 8px;border:1px solid #8885;border-radius:6px;background:var(--bl-fill-control,#8882);color:inherit;max-width:100%;';button.addEventListener('pointerdown',e=>e.stopPropagation());button.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();void openFruitTypography(button.dataset.blType);});anchor.after(button);buttons.set(anchor,button);}button.dataset.blType=type.id;button.setAttribute('aria-label',type.name+' 글자 설정');};
+        for(const row of doc.querySelectorAll('#bl-deus-popover .dq-row,#bl-deus-popover .dq-toggle')){const key=row.querySelector('[data-dq-focus]')?.dataset.dqFocus,type=FRUIT_TYPES.find(t=>t.owner==='deus'&&t.prompt===key);if(type)attach(row,type);}
+        const seen=new Set();const scan=(d,scope)=>{if(!scope||seen.has(d))return;seen.add(d);for(const type of FRUIT_TYPES.filter(t=>t.owner==='deus'))for(const card of scope.querySelectorAll(type.root))attach(card,type);for(const f of scope.querySelectorAll('iframe'))try{if(f.contentDocument?.body)scan(f.contentDocument,f.contentDocument.body);}catch{}};scan(doc,doc.querySelector('#chat'));
+        for(const [target,button]of buttons)if(!live.has(target)||!target.isConnected){button.remove();buttons.delete(target);}
+    }
+    const click=e=>{const group=e.target.closest?.('#fruit-heart-v6 [data-pick-group]');if(group){pickerGroup=group.dataset.pickGroup;schedule();}else if(e.target.closest?.('#fruit-heart-v6 [data-pick-font],#fruit-heart-v6 [data-pick-model]'))pickerGroup='';};
+    doc.addEventListener('click',click,true);
+    const observer=new host.MutationObserver(schedule);observer.observe(doc.body,{childList:true,subtree:true});const timer=host.setInterval(schedule,1500);flush();
+    return()=>{stopped=true;host.clearInterval(timer);doc.removeEventListener('click',click,true);observer.disconnect();host.cancelAnimationFrame(frame);for(const b of buttons.values())b.remove();buttons.clear();};
+}

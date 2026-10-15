@@ -1,13 +1,24 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.5.8/blue-lemonade-6.5.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.5.9/blue-lemonade-6.5.9.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.5.8 · 최신 업데이트</summary>
+<summary>6.5.9 · 최신 업데이트</summary>
+
+- 프롬프트 → 과일에서 알려진 과일 5종·데우스 7종의 상태창 글자를 영역별로 조절해요. 글꼴·크기·굵기·기울임·자간·줄간격·정렬·줄바꿈, 정보 가로/세로와 하단 문구 숨기기를 지원해요. 가상 미리보기로 확인하며 끄거나 원복하면 원작 표시로 돌아가요.
+- 지원하는 과일 QR 항목과 데우스 상태창·빠른 설정 옆의 「블루레몬에이드」 버튼으로 해당 글자 설정을 바로 열어요. 선택 토글이나 대화 내용은 바꾸지 않아요. 구조가 다른 커스텀 상태창은 미지원으로 표시해요.
+- 데우스 빠른 설정에서도 항목 이름을 길게 누르면 효과 설명을 읽어요. 선택 묶음은 각 선택지의 효과를 함께 보여 주고, 수정된 항목은 기본 설명임을 알려요. 짧은 탭은 원래대로 동작해요.
+- 과일 패널 여는 방법은 요술봉·QR·고양이 중 하나만 선택해요. 빨간 상태 점은 숨기되 성인 설정값은 그대로예요. 데우스 버튼에는 배경을 넣고, QR 안의 「빠른 설정 버튼」에서 이름과 「이름만 / 아이콘+이름」을 고를 수 있어요.
+- 캐릭터 이름 연동은 이름을 직접 적는 대신 검색 가능한 캐릭터 카드 선택 창으로 골라요. 기존 이름 기준 연결과 설정은 유지돼요.
+
+</details>
+
+<details>
+<summary>6.5.8 · 과일 도움말 누락 수정 · 소극장과 상태창 고정 문구 한글화</summary>
 
 - 휴대폰의 HTTP 접속에서도 과일 옵션 설명이 나와요. 표준 옵션 316개 설명을 준비하고, 확인한 원문과 다르더라도 알려진 항목은 기본 효과와 수정 안내를 함께 보여요.
 - 순수 텍스트 소극장의 제목·작성자 안내·맨 위로 버튼, 생각 과정 말풍선 설정과 1인 상태창의 고정 제목·버튼·이미지 안내를 한글로 보여요. 본문과 입력값, 작성자 이름은 유지해요.

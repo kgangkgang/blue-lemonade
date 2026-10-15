@@ -54,6 +54,7 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     const on = !!s.enabled;
     if (['conflicts'].some(id=>s.addons?.[id]) || modules.assist) load('assist','./assist/index.js').then(m=>m?.syncAssist());
     syncTypography(on);
+    if(s.fruitTypography?.on||modules.fruittype)load('fruittype','./fruit-type-runtime.js').then(m=>m?.syncFruitTypography(s.fruitTypography,on && s.usageMode!=='extensions'));
     // 6.0.4 단어 치환 › 잠시 가리기: 테마를 끄면 가린 글을 모두 되돌린다 — 모듈을 이미 불러온 뒤에만 (안 썼으면 파일도 안 받는다)
     if (modules.wordmask) load('wordmask', './wordmask.js').then(m => m?.syncWordMask(on));
     const fold=on&&!!(s.chat?.triangleFold??SillyTavern.getContext().extensionSettings?.blue_lemonade_scripts?.enabled?.fold);

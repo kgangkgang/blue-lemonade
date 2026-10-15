@@ -3,6 +3,7 @@ import {addonsEnabled,themeEnabled} from './usage-mode.js';
 import {getSettings} from './settings.js';
 import {leaveSettingsDialog} from './settings-dialog.js';
 import {promptLinkMarkup} from './prompt-link.js';
+import {fruitTypographyMarkup,bindFruitTypography} from './fruit-type-ui.js';
 
 const GROUPS={
     deus:[['deus-qr','빠른 설정','입력창에서 데우스 2.5 옵션을 바로 골라요.'],['deus','프롬프트 이름 한글화','프롬프트와 정규식의 이름을 한글로 보여요.']],
@@ -14,7 +15,7 @@ const repaint=()=>{for(const fn of listeners)fn();};
 // 입력창 옆 단추에 보일 이름. 비우면 아이콘만 보인다.
 const NAMES={deus:['deus-qr','빠른 설정 이름','비우면 아이콘만 보여요']};
 const escapeAttr=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const nameMarkup=(id,state)=>{const entry=Object.entries(NAMES).find(([,item])=>item[0]===id);if(!entry)return '';const [key,[,title,note]]=entry;return `<label class="salty-row bl-prompt-name-row" data-prompt-name-row="${key}"${state.enabled[id]?'':' hidden'}><span>${title}</span><input type="text" class="text_pole" data-prompt-name="${key}" value="${escapeAttr(cleanName(state.names?.[key]))}" maxlength="40" placeholder="${note}" aria-label="${title}" autocomplete="off"></label>`;};
+const nameMarkup=(id,state)=>{const entry=Object.entries(NAMES).find(([,item])=>item[0]===id);if(!entry)return '';const [key,[,title,note]]=entry;return `<label class="salty-row bl-prompt-name-row" data-prompt-name-row="${key}"${state.enabled[id]?'':' hidden'}><span>${title}</span><input type="text" class="text_pole" data-prompt-name="${key}" value="${escapeAttr(cleanName(state.names?.[key]))}" maxlength="40" placeholder="${note}" aria-label="${title}" autocomplete="off"></label><label class="salty-row bl-prompt-name-row" data-prompt-name-row="${key}"${state.enabled[id]?'':' hidden'}><span>이름 표시</span><select data-prompt-deus-icon><option value="yes" ${state.deusIconWithName!==false?'selected':''}>아이콘 + 이름</option><option value="no" ${state.deusIconWithName===false?'selected':''}>이름만</option></select></label>`;};
 
 export function promptToolsMarkup(kind){
     const items=GROUPS[kind];if(!items)return '';
@@ -23,11 +24,12 @@ export function promptToolsMarkup(kind){
 }
 
 export function fruitPromptMarkup(){
-    return `<div class="salty-label" data-search-anchor="과일">과일</div><p class="bl-prompt-source">호환 대상 프롬프트 · <a href="https://discord.com/channels/1384945301780955246/1395707630302789653/1554887154583212064" target="_blank" rel="noopener noreferrer">과일 원문 보기 ↗</a> · <a href="https://github.com/kongkongmie/guoshizhixin" target="_blank" rel="noopener noreferrer">코드 ↗</a></p>${promptToolsMarkup('fruit')}${promptLinkMarkup()}<p class="salty-note">과일의 마음 스크립트가 실행 중일 때 적용돼요. 꾸미기를 끄면 과일의 원래 디자인으로 돌아가요.</p><p class="bl-prompt-source">과일의 마음 원작 표기 · KKM · AQING · ACHE</p>`;
+    return `<div class="salty-label" data-search-anchor="과일">과일</div><p class="bl-prompt-source">호환 대상 프롬프트 · <a href="https://discord.com/channels/1384945301780955246/1395707630302789653/1554887154583212064" target="_blank" rel="noopener noreferrer">과일 원문 보기 ↗</a> · <a href="https://github.com/kongkongmie/guoshizhixin" target="_blank" rel="noopener noreferrer">코드 ↗</a></p>${promptToolsMarkup('fruit')}${promptLinkMarkup()}${fruitTypographyMarkup()}<p class="salty-note">과일의 마음 스크립트가 실행 중일 때 적용돼요. 꾸미기를 끄면 과일의 원래 디자인으로 돌아가요.</p><p class="bl-prompt-source">과일의 마음 원작 표기 · KKM · AQING · ACHE</p>`;
 }
 
 export function bindPromptTools(root){
     const box=root.querySelector('[data-prompt-tools]');if(!box)return()=>{};
+    const stopTypography=bindFruitTypography(root);
     let alive=true,runtime=null,unsubscribe=()=>{};
     const status=box.querySelector('[data-prompt-tools-status]');
     const say=text=>{if(alive&&box.isConnected)status.textContent=text;};
@@ -53,6 +55,7 @@ export function bindPromptTools(root){
         finally{busy=false;repaint();globalThis.__blueLemonadeDeusQuick_v1?.refreshName?.();}
     }
     async function change(event){
+        if(event.target?.hasAttribute?.('data-prompt-deus-icon')){const state=scriptSettings(),before=state.deusIconWithName;state.deusIconWithName=event.target.value!=='no';try{await persistScripts();globalThis.__blueLemonadeDeusQuick_v1?.refreshName?.();say('버튼 표시를 저장했어요.');}catch(error){state.deusIconWithName=before;say(error.message);}return;}
         const input=event.target;
         if(input?.dataset?.promptName!==undefined){await rename(input);return;}
         const id=input?.dataset?.promptScript;
@@ -75,5 +78,5 @@ export function bindPromptTools(root){
         }
     }
     box.addEventListener('change',change);box.addEventListener('click',open);
-    return()=>{alive=false;unsubscribe();listeners.delete(paint);box.removeEventListener('change',change);box.removeEventListener('click',open);};
+    return()=>{stopTypography();alive=false;unsubscribe();listeners.delete(paint);box.removeEventListener('change',change);box.removeEventListener('click',open);};
 }

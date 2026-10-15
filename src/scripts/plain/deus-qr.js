@@ -99,6 +99,7 @@ function createDeusQuickController(adapter) {
   const doc = host.document, instanceKey = '__blueLemonadeDeusQuick_v1';
   host[instanceKey]?.stop?.();
   let stopped = false, panel = null, controller = null, loading = null, tab = '진행', tick = 0, frame = 0, signature = '', status = '', eventCleanup = [], tabObserver = null, entryAvailable = false, helpOpen = false, pendingFocus = null;
+  const stopOptionHelp = BlueLemonade.deusOptionHelp?.(() => controller?.read?.()?.live);
   const button = doc.createElement('button');
   button.type = 'button'; button.id = 'bl-deus-quick'; button.className = 'interactable';
   button.title = '데우스 엑스 마키나 빠른 설정'; button.setAttribute('aria-label', '데우스 엑스 마키나 빠른 설정'); button.setAttribute('aria-expanded', 'false'); button.setAttribute('aria-haspopup', 'dialog'); button.setAttribute('aria-controls', 'bl-deus-popover');
@@ -110,13 +111,15 @@ function createDeusQuickController(adapter) {
     if (name) { if (entryLabel.textContent !== name) entryLabel.textContent = name; if (!entryLabel.isConnected) button.append(entryLabel); }
     else entryLabel.remove();
     button.classList.toggle('dq-has-name', !!name);
+    button.classList.toggle('dq-name-only', !!name && host.SillyTavern?.getContext?.()?.extensionSettings?.blue_lemonade_scripts?.deusIconWithName === false);
     const title = name ? `${name} · 데우스 엑스 마키나 빠른 설정` : '데우스 엑스 마키나 빠른 설정';
     if (button.title !== title) { button.title = title; button.setAttribute('aria-label', title); }
   }
   syncName();
   const style = doc.createElement('style'); style.dataset.blDeusQuick = '1';
   style.textContent = `
-  #bl-deus-quick{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:var(--jj-icon-size,32px);height:var(--jj-icon-size,32px);padding:4px;border:0;background:transparent;color:var(--SmartThemeBodyColor,#ddd);cursor:pointer}
+  #bl-deus-quick{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:var(--jj-icon-size,32px);height:var(--jj-icon-size,32px);padding:4px;border:1px solid var(--SmartThemeBorderColor,#8884);border-radius:8px;background:var(--bl-fill-control,var(--salty-fill-field,#8882));color:var(--SmartThemeBodyColor,#ddd);cursor:pointer}
+  #bl-deus-quick.dq-name-only svg{display:none}
   #bl-deus-quick svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round}#bl-deus-quick[aria-expanded=true]{color:var(--SmartThemeQuoteColor,#8dcfff)}
   #bl-deus-quick .dq-entry-label{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--salty-ui-size,var(--mainFontSize,16px));line-height:1.3}
   body #bl-deus-quick.dq-has-name{width:auto;max-width:min(12em,45vw);flex:0 1 auto;gap:5px;padding:4px 8px;border-radius:8px}#bl-deus-quick.dq-has-name svg{flex:0 0 1.1em;width:1.1em;height:1.1em}
@@ -134,7 +137,7 @@ function createDeusQuickController(adapter) {
   #bl-deus-popover .dq-card-head{display:flex;align-items:center;gap:8px;padding:10px;background:#ffffff09;font-weight:inherit;line-height:1.45;margin:0}
   #bl-deus-popover .dq-card-head>i{flex:0 0 1.2em;text-align:center;color:var(--SmartThemeQuoteColor,#8dcfff)}
   #bl-deus-popover .dq-card-body{display:flex;flex-direction:column;gap:10px;padding:10px}#bl-deus-popover .dq-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}#bl-deus-popover .dq-fields>.dq-note{grid-column:1/-1}@container bl-deus-quick (max-width:16em){#bl-deus-popover .dq-fields{grid-template-columns:1fr}}
-  #bl-deus-popover .dq-row{display:flex;flex-direction:column;gap:8px;margin:0;line-height:1.45}#bl-deus-popover .dq-row select{width:100%;padding:8px 10px;border-radius:8px;border:0;background:var(--SmartThemeChatTintColor,#30333a);height:auto;min-height:36px;line-height:1.45;box-shadow:none;margin:0}
+  #bl-deus-popover .dq-row{display:flex;flex-direction:column;gap:8px;margin:0;line-height:1.45}#bl-deus-popover .dq-row input,#bl-deus-popover .dq-row select{width:100%;padding:8px 10px;border-radius:8px;border:0;background:var(--SmartThemeChatTintColor,#30333a);height:auto;min-height:36px;line-height:1.45;box-shadow:none;margin:0}
   #bl-deus-popover .dq-toggle{display:flex;flex-direction:column;align-items:stretch;justify-content:space-between;gap:6px;min-height:36px;padding:8px;border:1px solid transparent;border-radius:8px;background:var(--salty-shade,#ffffff09);cursor:pointer;line-height:1.45}#bl-deus-popover .dq-toggle:has(input:checked){background:var(--salty-accent-13,#8dcfff18);border-color:var(--salty-accent-45,#8dcfff66)}#bl-deus-popover .dq-toggle input{flex:none;width:18px;height:18px;accent-color:var(--SmartThemeQuoteColor,#8dcfff);margin:0}#bl-deus-popover .dq-toggle-label{overflow-wrap:anywhere}#bl-deus-popover .dq-toggle-control{display:flex;align-items:center;gap:8px;min-height:24px}#bl-deus-popover .dq-toggle-state{font-size:.85em;opacity:.8}#bl-deus-popover .dq-toggle-compact{flex-direction:row;align-items:center;justify-content:flex-start;gap:8px;min-height:36px;padding:6px 8px}#bl-deus-popover .dq-toggle-compact .dq-toggle-label{min-width:0}
   #bl-deus-popover .dq-checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   #bl-deus-popover summary{cursor:pointer;list-style:none}#bl-deus-popover summary::-webkit-details-marker{display:none}#bl-deus-popover summary::after{content:'⌄';margin-left:auto;flex:none}#bl-deus-popover details[open]>summary::after{content:'⌃'}
@@ -146,7 +149,7 @@ function createDeusQuickController(adapter) {
   body.salty #bl-deus-popover .dq-tabs [aria-pressed=true]{background:var(--salty-accent-13,var(--salty-shade));color:var(--salty-accent-ink,var(--salty-accent))}
   body.salty #bl-deus-popover .dq-card{background:var(--salty-fill-surface,var(--salty-surface));border-radius:var(--bl-r-md,12px)}
   body.salty #bl-deus-popover .dq-card-head{background:var(--salty-shade)}body.salty #bl-deus-popover .dq-card-head>i{color:var(--salty-accent-ink,var(--salty-accent))}
-  body.salty #bl-deus-popover .dq-row select{background:var(--salty-fill-field,var(--salty-field));border:0;border-radius:var(--bl-r-sm,8px)}
+  body.salty #bl-deus-popover .dq-row input,#bl-deus-popover .dq-row select{background:var(--salty-fill-field,var(--salty-field));border:0;border-radius:var(--bl-r-sm,8px)}
   body.salty #bl-deus-popover .dq-status{color:var(--salty-muted)}body.salty #bl-deus-popover .dq-note{color:var(--salty-muted);opacity:1}
   body.salty #bl-deus-popover .dq-toggle input{accent-color:var(--salty-accent)}body.salty #bl-deus-quick[aria-expanded=true]{color:var(--salty-accent-ink,var(--salty-accent))}
   `;
@@ -243,7 +246,7 @@ function createDeusQuickController(adapter) {
         if (active.length > 1) { const mixed = node('option','여러 개 켜짐 · 선택'); mixed.value = '__mixed__'; mixed.disabled = true; select.append(mixed); }
         for (const option of options) { const el = node('option',option.label); el.value = option.id; select.append(el); }
         select.value = active.length === 1 ? active[0].id : active.length > 1 ? '__mixed__' : '';
-        select.addEventListener('change',() => void change(group.key,select.value)); row.append(label,select); cardBody.append(row);
+        select.addEventListener('change',() => void change(group.key,select.value)); row.tabIndex=0;row.title='길게 누르거나 Alt+Enter로 선택지 효과 보기';row.append(label,select); cardBody.append(row);
         if (current.groupIssues.get(group.key)) cardBody.append(node('p',current.groupIssues.get(group.key),'dq-note'));
       }
       if(cardBody.childElementCount)body.append(card);
@@ -255,6 +258,7 @@ function createDeusQuickController(adapter) {
         summary.append(icon(tab === '문체' ? 'masks-theater' : 'toggle-on'),node('span',tab === '문체' ? '분위기' : '개별 설정'));details.append(summary,checks);
         for (const item of toggles) {
           const label = node('label',null,'dq-toggle'), input = node('input'); input.type = 'checkbox'; input.checked = current.states.get(item.id) === true; input.disabled = disabled; input.dataset.dqFocus = item.id;
+          label.tabIndex=0;label.title='길게 누르거나 Alt+Enter로 옵션 효과 보기';
           const caption=node('span',tab === '문체' && item.label === '카드 기본 (분위기)' ? '카드 기본' : item.label,'dq-toggle-label');
           input.addEventListener('change',() => void change(item.id,input.checked));
           if(tab === '문체'){label.classList.add('dq-toggle-compact');label.append(input,caption);}
@@ -267,7 +271,13 @@ function createDeusQuickController(adapter) {
       if (tab === '시점') body.append(node('p','내 1인칭 시점은 선택지 목록 또는 연출가 모드와 함께 사용해요.','dq-note'));
       if (current.dirty) body.append(node('p','미저장 프롬프트가 있어요. 본체에서 프리셋을 저장하면 여기서 바꿀 수 있어요.','dq-note'));
     }
-    panel.querySelector('.dq-status').textContent = controller?.busy ? '저장 중…' : status || '선택하면 저장돼요.';
+    const entrySettings=node('details',null,'dq-card');entrySettings.dataset.section='entry-settings';entrySettings.open=expanded.has('entry-settings');entrySettings.append(node('summary','빠른 설정 버튼','dq-card-head'));
+    const entryBody=node('div',null,'dq-card-body'),entryState=host.SillyTavern?.getContext?.()?.extensionSettings?.blue_lemonade_scripts||{},nameRow=node('label',null,'dq-row'),nameInput=node('input');nameInput.type='text';nameInput.maxLength=40;nameInput.value=deusQuickName(entryState.names?.deus);nameInput.placeholder='비우면 아이콘만';nameInput.dataset.dqFocus='entry-name';nameRow.append(node('span','버튼 이름'),nameInput);
+    const iconRow=node('label',null,'dq-row'),iconSelect=node('select');iconSelect.dataset.dqFocus='entry-icon';for(const [value,label] of [['yes','아이콘 + 이름'],['no','이름만']]){const o=node('option',label);o.value=value;iconSelect.append(o);}iconSelect.value=entryState.deusIconWithName===false?'no':'yes';iconRow.append(node('span','이름 표시'),iconSelect);
+    const saveEntry=()=>{const ctx=host.SillyTavern?.getContext?.();if(!ctx?.extensionSettings)return;const data=ctx.extensionSettings.blue_lemonade_scripts??={version:1,enabled:{},overrides:{}};data.names??={};data.names.deus=deusQuickName(nameInput.value);data.deusIconWithName=iconSelect.value==='yes';ctx.saveSettingsDebounced();syncName();status='버튼 표시를 저장했어요.';render(true);};
+    nameInput.addEventListener('change',saveEntry);iconSelect.addEventListener('change',saveEntry);entryBody.append(nameRow,iconRow);entrySettings.append(entryBody);body.append(entrySettings);
+
+    panel.querySelector('.dq-status').textContent = controller?.busy ? '저장 중…' : status || '선택하면 저장돼요. 항목 이름을 길게 누르면 효과를 확인해요.';
     body.scrollTop = scroll;
     if (focused) [...body.querySelectorAll('[data-dq-focus]')].find(x => x.dataset.dqFocus === focused)?.focus({preventScroll:true});
     position();
@@ -331,7 +341,7 @@ function createDeusQuickController(adapter) {
   host.addEventListener('resize',position); host.visualViewport?.addEventListener('resize',position); host.visualViewport?.addEventListener('scroll',position);
   const observer = new host.MutationObserver(mount); if (doc.getElementById('send_form')) observer.observe(doc.getElementById('send_form'),{childList:true,subtree:true});
   function stop() {
-    if (stopped) return; stopped = true; controller?.stop(); close(); observer.disconnect(); host.cancelAnimationFrame(frame); eventCleanup.forEach(fn => fn()); button.remove(); style.remove();
+    if (stopped) return; stopped = true; stopOptionHelp?.(); controller?.stop(); close(); observer.disconnect(); host.cancelAnimationFrame(frame); eventCleanup.forEach(fn => fn()); button.remove(); style.remove();
     doc.removeEventListener('pointerdown',outside,true); doc.removeEventListener('keydown',keydown); host.removeEventListener('resize',position); host.visualViewport?.removeEventListener('resize',position); host.visualViewport?.removeEventListener('scroll',position);
     if (host[instanceKey]?.stop === stop) delete host[instanceKey];
   }

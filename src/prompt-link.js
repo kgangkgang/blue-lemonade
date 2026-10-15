@@ -18,8 +18,8 @@ export function promptLinkMarkup() {
     const s = link();
     return `<div class="bl-prompt-tools bl-prompt-link" data-prompt-link><div class="salty-group">`
         + `<div class="salty-row bl-prompt-tool-row" data-search-anchor="캐릭터 이름 연동"><span>캐릭터 이름 연동</span><label class="salty-switch"><input type="checkbox" data-prompt-link-on aria-label="캐릭터 이름 연동" ${s.on ? 'checked' : ''}><span></span></label>`
-        + `<small>적어 둔 이름이 든 프롬프트·정규식은 그 캐릭터 채팅을 열 때 켜지고 다른 채팅에서는 꺼져요. 이름 자리가 「기본」이거나 이름만 빠진 같은 이름의 프롬프트는 반대로 켜져요. 지금 고른 채팅 완성 프리셋에 적용돼요.</small></div>`
-        + `<div class="salty-row bl-prompt-tool-row"><span>캐릭터 이름</span><input type="text" data-prompt-link-name aria-label="연동할 캐릭터 이름" maxlength="80" placeholder="캐릭터 카드의 이름" value="${esc(s.name)}" style="width:12em;max-width:55%;min-width:0"></div>`
+        + `<small>고른 카드 이름이 든 프롬프트·정규식은 그 캐릭터 채팅을 열 때 켜지고 다른 채팅에서는 꺼져요. 이름 자리가 「기본」이거나 이름만 빠진 같은 이름의 프롬프트는 반대로 켜져요. 지금 고른 채팅 완성 프리셋에 적용돼요.</small></div>`
+        + `<div class="salty-row bl-prompt-tool-row"><span>캐릭터 이름</span><input type="hidden" data-prompt-link-name value="${esc(s.name)}"><button type="button" class="bl-prompt-card-trigger" data-prompt-link-pick aria-label="연동할 캐릭터 카드 선택" aria-haspopup="dialog"><span data-prompt-link-label>${esc(s.name || '카드 선택')}</span><i class="fa-solid fa-address-card" aria-hidden="true"></i></button></div>`
         + `</div><p class="salty-note" data-prompt-link-status role="status" aria-live="polite"></p></div>`;
 }
 
@@ -43,7 +43,7 @@ async function onChange(event) {
     } else return;
     saveSettings();
     if (!s.on) { say('껐어요. 프롬프트와 정규식은 지금 상태 그대로예요.'); return; }
-    if (!s.name) { say('캐릭터 카드의 이름을 적어 주세요.'); return; }
+    if (!s.name) { say('연동할 캐릭터 카드를 골라 주세요.'); return; }
     say('지금 채팅에 맞추는 중…');
     const result = await resync();
     if (!result) { say('프롬프트 관리자를 읽지 못했어요. 채팅 완성 프리셋을 고른 뒤 다시 켜 주세요.'); return; }
@@ -51,10 +51,34 @@ async function onChange(event) {
     if (!found.prompts && !found.regex) { say('지금 프리셋에 그 이름이 든 프롬프트·정규식이 없어요. 채팅을 열 때마다 다시 확인해요.'); return; }
     say(`이름이 든 프롬프트 ${found.prompts}개 · 짝 ${found.twins}개 · 정규식 ${found.regex}개를 찾았어요. ${changed ? `${changed}개를 지금 채팅에 맞췄어요.` : '이미 지금 채팅에 맞아요.'}`);
 }
+async function onPickClick(event) {
+    const button = event.target?.closest?.('[data-prompt-link-pick]');
+    if (!button || button.disabled) return;
+    const box = button.closest('[data-prompt-link]');
+    if (!box) return;
+    button.disabled = true;
+    try {
+        const { openPromptCardPicker } = await import('./prompt-card-picker.js');
+        if (!button.isConnected) return;
+        openPromptCardPicker({ current: link().name, opener: button, onPick: name => {
+            const value = clean(name);
+            const field = box.querySelector('[data-prompt-link-name]');
+            if (!field || !box.isConnected) return;
+            field.value = value;
+            const label = box.querySelector('[data-prompt-link-label]');
+            if (label) label.textContent = value || '카드 선택';
+            field.dispatchEvent(new Event('change', { bubbles: true }));
+        }});
+    } catch {
+        const status = box.querySelector('[data-prompt-link-status]');
+        if (status?.isConnected) status.textContent = '카드 목록을 열지 못했어요. 다시 눌러 주세요.';
+    } finally { button.disabled = false; }
+}
 let installed = false;
 export function installPromptLink(doc = typeof document === 'undefined' ? null : document) {
     if (installed || !doc?.addEventListener) return;
     installed = true;
     doc.addEventListener('change', onChange);
+    doc.addEventListener('click', onPickClick);
 }
 installPromptLink();

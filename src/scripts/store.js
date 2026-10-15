@@ -12,6 +12,7 @@ export function scriptSettings(){
   // 빠른 설정·빠른 답장 줄에 보일 이름. 비우면 원래 아이콘·이름.
   if(!state.names||typeof state.names!=='object'||Array.isArray(state.names))state.names={};
   for(const key of NAME_KEYS)state.names[key]=cleanName(state.names[key]);
+  state.deusIconWithName=state.deusIconWithName!==false;
   for(const id of ids){
     state.enabled[id]=state.enabled[id]===true;
     if(state.overrides[id]&&(typeof state.overrides[id].code!=='string'||state.overrides[id].code.length>1000000))delete state.overrides[id];

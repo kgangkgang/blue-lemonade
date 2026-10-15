@@ -26,7 +26,8 @@ export async function optionEffect(content, crypto = globalThis.crypto, identifi
 }
 
 /** Hold to inspect; normal taps retain their original behavior. No writes or requests. */
-export function installFruitOptionHelp(doc = document, host = window) {
+export function installFruitOptionHelp(doc = document, host = window, config = {}) {
+    const scope = config.scope || SCOPE;
     let gesture = null, suppress = null, modal = null, sequence = 0, stopped = false, pickerGroup = '';
     const resolve = name => {
         for (const source of [host, host.TavernHelper]) if (typeof source?.[name] === 'function') return source[name].bind(source);
@@ -35,8 +36,9 @@ export function installFruitOptionHelp(doc = document, host = window) {
     const getPreset = () => resolve('getPreset')?.('in_use');
     const getName = () => resolve('getLoadedPresetName')?.() || '';
     const targetOf = node => {
+        if (config.targetOf) return config.targetOf(node);
         const el = node?.closest?.(TARGET);
-        if (!el?.closest(SCOPE) || node.closest?.('textarea,[contenteditable="true"],.fh-input:not(.fh-hidden-check)')) return null;
+        if (!el?.closest(scope) || node.closest?.('textarea,[contenteditable="true"],.fh-input:not(.fh-hidden-check)')) return null;
         if (el.matches('[data-pick-index]') && !pickerGroup) return null; // font/model pickers are not prompt options
         return el;
     };
@@ -57,7 +59,7 @@ export function installFruitOptionHelp(doc = document, host = window) {
     function show(target, title, text, original, verified, baseline = false) {
         if (stopped || !target.isConnected) return;
         close();
-        const dialog = doc.createElement('dialog');dialog.className='bl-fruit-option-help';dialog.setAttribute('aria-label','과일 옵션 설명');
+        const dialog = doc.createElement('dialog');dialog.className='bl-fruit-option-help';dialog.setAttribute('aria-label',config.label || '과일 옵션 설명');
         const head=doc.createElement('header'),heading=doc.createElement('h3'),button=doc.createElement('button');
         heading.textContent=title || '옵션 설명';button.type='button';button.textContent='닫기';button.setAttribute('aria-label','옵션 설명 닫기');
         button.addEventListener('click',close);head.append(heading,button);
@@ -75,6 +77,11 @@ export function installFruitOptionHelp(doc = document, host = window) {
     async function explain(target) {
         const ticket=++sequence, presetName=getName();
         try {
+            if (config.describe) {
+                const detail = await config.describe(target);
+                if (stopped || ticket !== sequence || !target.isConnected || !detail) return;
+                show(target,detail.title,detail.text,detail.original,detail.verified,detail.baseline);return;
+            }
             const preset=getPreset(), prompt=findPrompt(target,preset);
             const title=target.querySelector('span')?.textContent?.trim() || target.getAttribute('aria-label') || target.textContent.trim();
             if (prompt) {
@@ -114,7 +121,7 @@ export function installFruitOptionHelp(doc = document, host = window) {
     function up(e) {if(!gesture||e.pointerId!==gesture.id)return;if(gesture.fired)block(e);cancel();}
     function click(e) {
         if(suppress&&Date.now()<suppress.until&&(suppress.target===e.target||suppress.target.contains(e.target))){block(e);suppress=null;return;}
-        if(!e.target.closest?.(SCOPE))return;
+        if(!e.target.closest?.(scope))return;
         const group=e.target.closest('[data-pick-group]');
         if(group)pickerGroup=group.dataset.pickGroup;
         else if(e.target.closest('[data-pick-font],[data-pick-model],[data-sheet-close],[data-qr]'))pickerGroup='';

@@ -31,6 +31,8 @@ await check('markup shows the switch, the name field with escaping and a search 
   const html=e.context.api.promptLinkMarkup();
   assert.ok(html.includes('data-prompt-link-on') && html.includes('checked'));assert.ok(html.includes('value="하루 &quot;A&quot; &lt;b&gt;"'));assert.ok(html.includes('data-search-anchor="캐릭터 이름 연동"'));assert.ok(!html.includes('<b>'));
   assert.ok(html.includes('data-prompt-link-status'),'status line');
+  assert.ok(html.includes('data-prompt-link-pick')&&html.includes('aria-haspopup="dialog"'),'card picker button');
+  assert.ok(!html.includes('type="text"'),'no manual name field');
 });
 await check('a missing settings block is created without crashing',async()=>{
   const e=environment();delete e.settings.promptLink;const html=e.context.api.promptLinkMarkup();assert.ok(html.includes('value=""'));assert.equal(JSON.stringify(e.settings.promptLink),'{"on":false,"name":""}');
@@ -51,7 +53,7 @@ await check('turning it off saves without resyncing and leaves prompts alone',as
 await check('the name is trimmed to 80 characters, saved on change, and an empty name asks for one',async()=>{
   const e=environment();e.settings.promptLink.on=true;
   const input=await e.name('  '+'가'.repeat(90)+'  ');assert.equal(e.settings.promptLink.name,'가'.repeat(80));assert.equal(input.value,'가'.repeat(80));assert.deepEqual(e.calls,['save','sync:ui']);
-  await e.name('   ');assert.equal(e.settings.promptLink.name,'');assert.match(e.status.textContent,/이름을 적어 주세요/);assert.deepEqual(e.calls,['save','sync:ui','save']);
+  await e.name('   ');assert.equal(e.settings.promptLink.name,'');assert.match(e.status.textContent,/카드를 골라 주세요/);assert.deepEqual(e.calls,['save','sync:ui','save']);
 });
 await check('an unchanged name while the switch is off does nothing',async()=>{
   const e=environment();e.settings.promptLink={on:false,name:'하루'};await e.name('하루');assert.deepEqual(e.calls,[]);
