@@ -1008,6 +1008,81 @@ export function dropWrapQuotes(text, source) {
     });
     return changed ? lines.join('\n') : value;
 }
+// 2.5.2 빠진 대사 괄호 되살리기 (사용자 10-15): 원문 색 대사 <span style="color:…">「…」</span> 29개 중 10개를 모델이 괄호를 빼고 옮겨(프롬프트에
+//   「」 를 지키라고 적혀 있어도) 테마가 대사로 못 알아봐 형광펜 · 밝은 글자색이 빠지고 원래 인라인 색(어두운 배경에서 안 보임)이 그대로 나왔다.
+//   원문과 같은 자리 줄 · 색 span 끼리 맞춰, 원문 쪽이 「…」 / 『…』 한 쌍으로 통째 감싸였는데 번역문 쪽 머리 · 끝에 그 괄호가 없으면 같은 괄호를 다시 붙인다.
+//   dropWrapQuotes(원문에 없는 감싼 괄호를 벗김)의 거울 — 원문에 없는 괄호는 만들지 않는다. 맞추는 법(둘 중 되는 것):
+//    ① 줄: 빈 줄로 나눈 문단 수가 같고 문단마다 줄 수가 같고, 줄 머리 태그(<span style=…> 같은 껍데기)가 같은 줄끼리
+//    ② 색 span: 문단이 어긋나도 글 안의 <span …>…</span> 여는 태그 차례가 원문과 똑같으면 span 끼리
+//   붙이지 않는 때: 원문 괄호가 줄 안에서 닫힘(「가」 … 「나」) · 줄을 넘는 대사 · 번역문이 다른 따옴표(" “ 『 …)로 바꿔 씀 · 그 괄호가 번역문에 이미 원문만큼 있음 · 코드 블록이 있는 글.
+const BRACKET_CLOSE = { '「': '」', '『': '』' };
+/** 글이 한 괄호로 통째 감싸였나 → 여는 괄호 (아니면 '') — 「가」 … 「나」 처럼 처음 짝이 끝 전에 닫히면 아님 */
+function wrappingBracket(core) {
+    const open = core[0], close = BRACKET_CLOSE[open];
+    if (!close || core.length < 3 || core[core.length - 1] !== close) return '';
+    let depth = 0;
+    for (let i = 0; i < core.length - 1; i++) {
+        if (core[i] === open) depth++;
+        else if (core[i] === close && --depth === 0) return '';
+    }
+    return depth === 1 ? open : '';
+}
+/** 번역문 core 에 원문 core 의 감싼 괄호 중 빠진 쪽을 붙인 글 (고칠 게 없으면 null) */
+function fillBracketEdges(srcCore, outCore) {
+    const open = wrappingBracket(srcCore);
+    if (!open || !outCore.trim()) return null;
+    const close = BRACKET_CLOSE[open], count = (text, mark) => text.split(mark).length - 1;
+    const needOpen = outCore[0] !== open, needClose = outCore[outCore.length - 1] !== close;
+    if (!needOpen && !needClose) return null;
+    // 모델이 다른 따옴표 · 괄호로 바꿔 쓴 대사는 두 번 감싸지 않는다
+    if ((needOpen && /^["“”'‘’«»「」『』(（\[]/.test(outCore)) || (needClose && /["“”'‘’«»「」『』)）\]]$/.test(outCore))) return null;
+    // 원문보다 그 괄호가 많아지지 않게 (번역문이 괄호를 안쪽으로 옮겨 쓴 것은 그대로)
+    if ((needOpen && count(outCore, open) >= count(srcCore, open)) || (needClose && count(outCore, close) >= count(srcCore, close))) return null;
+    return (needOpen ? open : '') + outCore + (needClose ? close : '');
+}
+const SHELL_TAGS = line => (/^(?:[\t \r]|<[A-Za-z][^<>]*>)*/.exec(line)[0].match(/<[A-Za-z][^<>]*>/g) || []).join('').toLowerCase().replace(/\s+/g, ' ');
+const COLOR_SPAN = /<span\b[^<>]*>([^<>]*)<\/span>/gi;
+export function restoreDialogueBrackets(source, output) {
+    const src = String(source ?? '').replace(/\r\n?/g, '\n'), value = String(output ?? '');
+    if (!/[「『]/.test(src) || !value.trim() || /```|~~~/.test(src) || /```|~~~/.test(value)) return value;
+    const out = value.replace(/\r\n?/g, '\n');
+    // ① 줄끼리
+    const sParas = src.split(PARA_SPLIT), oParts = out.split(PARA_SPLIT);
+    if (sParas.length === oParts.length) {
+        const fixed = [...oParts];
+        let aligned = true, changed = false;
+        for (let p = 0; p < sParas.length && aligned; p += 2) {
+            const sLines = sParas[p].split('\n'), oLines = fixed[p].split('\n');
+            if (sLines.length !== oLines.length) { aligned = false; break; }
+            sLines.forEach((line, k) => {
+                const [ss, se] = wrapCoreRange(line), target = oLines[k], [os, oe] = wrapCoreRange(target);
+                if (se - ss < 3 || oe <= os || SHELL_TAGS(line) !== SHELL_TAGS(target)) return;
+                const filled = fillBracketEdges(line.slice(ss, se), target.slice(os, oe));
+                if (filled === null) return;
+                oLines[k] = target.slice(0, os) + filled + target.slice(oe);
+                changed = true;
+            });
+            fixed[p] = oLines.join('\n');
+        }
+        if (aligned) return changed ? fixed.join('') : value;
+    }
+    // ② 색 span 끼리 (여는 태그 차례가 원문과 똑같을 때만)
+    const sSpans = [...src.matchAll(COLOR_SPAN)], oSpans = [...out.matchAll(COLOR_SPAN)];
+    const opener = m => m[0].slice(0, m[0].indexOf('>') + 1).toLowerCase().replace(/\s+/g, ' ');
+    if (!sSpans.length || sSpans.length !== oSpans.length || sSpans.some((m, i) => opener(m) !== opener(oSpans[i]))) return value;
+    let result = '', last = 0, changed = false;
+    oSpans.forEach((m, i) => {
+        const inner = m[1], lead = /^\s*/.exec(inner)[0], trail = /\s*$/.exec(inner)[0];
+        const filled = fillBracketEdges(sSpans[i][1].trim(), inner.trim());
+        if (filled === null) return;
+        const at = m.index + m[0].indexOf('>') + 1;
+        result += out.slice(last, at) + lead + filled + trail;
+        last = at + inner.length;
+        changed = true;
+    });
+    return changed ? result + out.slice(last) : value;
+}
+
 /** 저장된 번역문에 풀리지 못하고 남은 자리표시자를 걷는다 (원문에 그런 글이 없을 때만) — 보여 줄 때 고치기용 */
 export function dropLeftoverPlaceholders(text, source) {
     const value = String(text ?? '');

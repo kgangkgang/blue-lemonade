@@ -112,12 +112,16 @@ await test('notification preview and background window use the visible reply', a
     assert.ok(preview.startsWith('日期') && !/RE:|语言检定/.test(preview));
 });
 
-await test('version stamps: assets 1.6.8, TTS 1.8.8', async () => {
-    assert.match(read('src/addons/assets/state.js'), /VERSION = '1\.6\.8'/);
-    assert.ok(read('src/addons/assets/style.css').includes('--eh-css-version: "1.6.8";'));
-    assert.match(read('src/addons/tts/version.js'), /TTS_VERSION = '1\.8\.8'/);
-    assert.ok(read('src/addons/tts/style.css').includes('--lv-css-version: "1.8.8";'));
-    assert.match(read('src/addons/tts/manifest.json'), /"version": "1\.8\.8"/);
+// Version stamps must agree with each other (assets ≥ 1.6.8 and TTS ≥ 1.8.8 carry the fix); later bumps keep this test valid.
+const atLeast = (v, min) => { const a = v.split('.').map(Number), b = min.split('.').map(Number); for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return a[i] > b[i]; return true; };
+await test('version stamps agree: assets ≥ 1.6.8, TTS ≥ 1.8.8', async () => {
+    const assets = /VERSION = '(\d+\.\d+\.\d+)'/.exec(read('src/addons/assets/state.js'))[1];
+    assert.ok(atLeast(assets, '1.6.8'));
+    assert.ok(read('src/addons/assets/style.css').includes(`--eh-css-version: "${assets}";`));
+    const tts = /TTS_VERSION = '(\d+\.\d+\.\d+)'/.exec(read('src/addons/tts/version.js'))[1];
+    assert.ok(atLeast(tts, '1.8.8'));
+    assert.ok(read('src/addons/tts/style.css').includes(`--lv-css-version: "${tts}";`));
+    assert.ok(read('src/addons/tts/manifest.json').includes(`"version": "${tts}"`));
 });
 
 console.log(`fruit-ecot-race: ${passed} passed, 0 failed`);

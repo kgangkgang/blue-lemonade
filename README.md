@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.6.7/blue-lemonade-6.6.7.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.6.8/blue-lemonade-6.6.8.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.6.7 · 최신 업데이트</summary>
+<summary>6.6.8 · 최신 업데이트</summary>
+
+- 번역 모델이 대사 괄호 「」『』 를 빼먹으면 원문과 맞춰 다시 붙여요. 괄호가 빠져 같은 인물 대사가 줄마다 어둡게 · 밝게 왔다갔다하던 것이 고쳐지고, 이미 저장된 번역도 화면에서 바로 고쳐 보여요 (번역 2.5.2).
+- TTS가 닫히지 않은 <!-- 주석을 만나도 그 문단만 건너뛰고 뒤 글은 계속 읽어요 (TTS 1.8.9).
+
+</details>
+
+<details>
+<summary>6.6.7 · 번역 숨김 주석 · 끊긴 번역 · 번역 중 미리 보기</summary>
 
 - 답에 숨겨진 <!-- … --> 메모(과일의 마음 자기점검 등)는 번역하지 않고 그대로 둬요. 이미 깨져 저장된 번역도 「<!-- …」 조각이 화면에 보이지 않게 숨겨요 (번역 2.5.1).
 - 번역 답이 문장 중간에 끊기면 알아채고 그 덩이를 다시 번역해요. 끝내 안 되면 그 문단은 원문 그대로 두고 표시해요. 번역 중에는 끝난 문단부터 바로 번역문으로 보여 줘요.

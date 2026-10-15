@@ -152,9 +152,41 @@ export function blankThinkingHead(text, final = true) {
     return end < 0 ? s : s.slice(0, end).replace(/[^\n]/g, ' ') + s.slice(end);
 }
 
+// 1.8.9 HTML 주석 (과일의 마음 프리셋의 숨김 자기점검 「<!-- … -->」 — 안에 빈 줄도 있다). 닫힌 주석은 통째 빈칸. 닫히지 않은 <!-- 는 예전엔 글 끝까지
+//   걷어서, 번역기 2.5.0 까지가 남긴 깨진 번역문(닫는 --> 를 잃은 「<!-- 점검: …」)에선 주석 뒤 본문을 하나도 읽지 않았다.
+//   이제 번역기 2.5.1 표시 보정(translation-segments.js hideOpenComments)과 같은 규칙: 닫히지 않은 <!-- 는 그 문단 끝(빈 줄)까지만,
+//   여는 짝을 잃고 문단 끝에 홀로 남은 --> 는 그 문단째. 다음 <!-- 보다 --> 가 먼저 안 나오면 닫히지 않은 것 (openCommentAt 과 같다).
+//   스트리밍 글(final=false)의 마지막 <!-- 는 아직 쓰는 중일 수 있어 예전처럼 끝까지. 같은 길이 빈칸이라 줄 번호 · 대사 차례는 그대로.
+export function blankComments(text, final = true) {
+    const src = String(text ?? '');
+    if (!src.includes('<!--') && !src.includes('-->')) return src;
+    let s = src;
+    const blankRange = (a, b) => { s = s.slice(0, a) + s.slice(a, b).replace(/[^\n]/g, ' ') + s.slice(b); };
+    for (let at = s.indexOf('<!--'); at >= 0; at = s.indexOf('<!--', at)) {
+        const close = s.indexOf('-->', at + 4), next = s.indexOf('<!--', at + 4);
+        let end;
+        if (close >= 0 && (next < 0 || close < next)) end = close + 3;
+        else if (!final && next < 0) end = s.length;
+        else { const m = /\n[\t ]*\n/.exec(s.slice(at)); end = m ? at + m.index : s.length; }
+        blankRange(at, end);
+        at = end;
+    }
+    // 홀로 남은 닫는 짝: 문단이 --> 로 끝나고 그 문단에 <!-- 가 없을 때만 (글 속 화살표 「A --> B」는 문단 끝이 아니다).
+    //   문단은 원글로 가른다 (빈칸이 된 주석 줄을 빈 줄로 보지 않게)
+    const gap = /\n[\t ]*\n/g;
+    for (let from = 0; from <= src.length;) {
+        const m = gap.exec(src), to = m ? m.index : src.length;
+        if (/-->[\t ]*$/.test(s.slice(from, to)) && !src.slice(from, to).includes('<!--')) blankRange(from, to);
+        if (!m) break;
+        from = to + m[0].length;
+        gap.lastIndex = from;
+    }
+    return s;
+}
+
 /** 자유 글 → 읽을 글 (태그·엔티티·마크다운 정리, 공백 모음) */
 export function stripForSpeech(text) {
-    const s = blankSlots(String(text ?? '').replace(/\r\n?/g, '\n')).replace(/<br\s*\/?>/gi, '\n').replace(/<!--[\s\S]*?(?:-->|$)/g, ' ');
+    const s = blankComments(blankSlots(String(text ?? '').replace(/\r\n?/g, '\n')).replace(/<br\s*\/?>/gi, '\n'));
     return stripMarkup(decodeEntities(s.replace(TAG_RE, ' '))).replace(/\s+/g, ' ').trim();
 }
 
@@ -385,7 +417,7 @@ export function segmentMessage(rawText, opts = {}) {
     work = blankThinkingHead(work, final);   // 1.8.8 과일 ECoT 생각 블록 (잘리기 전 · 스트리밍)
     work = blankSlots(work);   // 6.1.8 그림 자리는 읽지도 · 맥락으로 보내지도 않는다 (위 SLOT_RE)
     if (skipCode) work = blankFences(work);
-    work = work.replace(/<!--[\s\S]*?(?:-->|$)/g, m => m.replace(/[^\n]/g, ' '));
+    work = blankComments(work, final);   // 1.8.9 닫히지 않은 주석은 그 문단 끝까지만 (위 blankComments)
     work = work.replace(/<br\s*\/?>/gi, '\n');
     // 3. 건너뛸 태그
     work = blankSkipTags(work, skip);

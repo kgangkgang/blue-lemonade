@@ -77,6 +77,7 @@ function cut(name) {
     assert(start >= 0, name);
     return source.slice(start + 1, source.indexOf('\n}', start + 1) + 2).replace(/^export /, '');
 }
+const BRACKET_NOTE = /\nconst BRACKET_NOTE = '([^']*)'/.exec(source)?.[1] ?? '';   // 2.5.2 대사 괄호 안내 한 줄 (모델에 가는 글에서 떼고 본다)
 const S = { llm_prompt_chat: 'Translate visible text.', glossary_enabled: false, user_defined_regexes: [], user_no_fold_regexes: [], translation_display_mode: 'disabled' };
 const T = { chat: [], chatId: 'chat-A', formatted: [], refreshed: [], dom: new Map() };
 const ctx = () => ({ chatMetadata: {}, chat: T.chat, chatId: T.chatId, streamingProcessor: T.processor, messageFormatting: (text, ...rest) => { T.formatted.push([text, ...rest]); return `<p>${text}</p>`; } });
@@ -89,14 +90,14 @@ const env = { ...card, ...seg, ...resume, ...auto, ...notify, cardValues: cardVa
     looksLikeInputBlock: () => false, looksLikeRefusal: () => false, fallbackOf: () => null, sameTarget: () => false, getCustomModelName: () => '',
     tidyKana: x => x, tidyGlossaryOutput: (_s, x) => x, linesToFix: () => [], glossaryHanKeep: () => [], glossaryNameKeep: () => [],
     runtimeProtections: new Map(), console: { debug() {}, info() {}, warn() {}, error() {} }, dropProseStrayWords: seg.dropStrayWords, repairProseTagPairs: seg.repairTagPairs, dropProseLeftoverPlaceholders: seg.dropLeftoverPlaceholders,
-    correctBackticks: x => x, window: {}, toastr: { warning() {} }, processTranslationText: (_o, t) => t, refreshMessageBlock: (id, message) => T.refreshed.push([id, message]),
+    correctBackticks: x => x, window: {}, toastr: { warning() {} }, BRACKET_NOTE, processTranslationText: (_o, t) => t, refreshMessageBlock: (id, message) => T.refreshed.push([id, message]),
 };
 function install(name) { env[name] = new Function('env', `with(env){return (${cut(name)});}`)(env); return env[name]; }
 for (const name of ['compileUserPattern', 'runtimeRegexes', 'getCombinedRegexes', 'getNoFoldRegexes', 'protectedBlockRegexes', 'isProtectedBlock', 'withoutProtectedBlocks', 'fixMalformedPlaceholders',
     'dropStrayWords', 'dropLeftoverPlaceholders', 'repairTagPairs', 'failMarkOf', 'cutError', 'refusalError', 'splitForChunks', 'translate', 'resolveTranslationTarget', 'translationPreview']) install(name);
 env.tidyGlossaryOutput = (_s, x) => x;
 const sent = [];
-env.callLLMAPI = async prompt => { const body = prompt.slice(PREFIX.length); sent.push(body); return ko(body.startsWith(seg.BATCH_HEADER) ? body.slice(seg.BATCH_HEADER.length) : body); };
+env.callLLMAPI = async prompt => { const body = prompt.slice(PREFIX.length).replace(BRACKET_NOTE + '\n\n', ''); sent.push(body); return ko(body.startsWith(seg.BATCH_HEADER) ? body.slice(seg.BATCH_HEADER.length) : body); };
 const MESSAGE = [STATUS, ...[1, 2, 3].map(LINE), COMMENT, ...[4, 5, 6].map(LINE)].join('\n\n');
 
 await check('chunk path previews: finished chunks translated, the rest original, card and comment in their original shape', async () => {

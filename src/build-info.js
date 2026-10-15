@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "6.6.7";
+export const BUILD_VERSION = "6.6.8";
 export const FILE_HASHES = {
   "index.js": "17480:1badcfa4:040bdacc",
-  "manifest.json": "365:9a24327a:89dda605",
+  "manifest.json": "365:97cbbbcf:e6310485",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -213,8 +213,8 @@ export const FILE_HASHES = {
   "src/addons/translator/display-cards.js": "24759:16fdfb4e:96092d9f",
   "src/addons/translator/glossary-match.js": "23969:4716318b:3af6c9df",
   "src/addons/translator/glossary-suggest.js": "37892:84fb105c:16cf3cc9",
-  "src/addons/translator/index.html": "53728:8eac9faf:f7bf48ac",
-  "src/addons/translator/index.js": "476457:4578023b:43a82ef2",
+  "src/addons/translator/index.html": "53728:65bc9328:9ea3a137",
+  "src/addons/translator/index.js": "478154:ce765a5a:5cc5b3dd",
   "src/addons/translator/leftover-fix.js": "18292:6b70940a:709ed16d",
   "src/addons/translator/menu-visibility.js": "1137:ae729d76:8ea71da6",
   "src/addons/translator/names-bridge.js": "7072:f29785f7:da57aeea",
@@ -234,7 +234,7 @@ export const FILE_HASHES = {
   "src/addons/translator/style.css": "25414:190cf177:89cd9a68",
   "src/addons/translator/translation-guard.js": "6496:683c1bee:29337c90",
   "src/addons/translator/translation-resume.js": "5631:82b618c9:3a0c92e5",
-  "src/addons/translator/translation-segments.js": "82901:73959870:1d2951b2",
+  "src/addons/translator/translation-segments.js": "88413:b4294aff:736cf903",
   "src/addons/tts/LICENSE-MultiCast.txt": "1064:03c78d80:d84a0f1d",
   "src/addons/tts/NOTICE.md": "12016:0b66e6d6:33dec5cb",
   "src/addons/tts/credits.js": "4747:846de4ff:6bca95c2",
@@ -381,14 +381,14 @@ export const FILE_HASHES = {
   "src/addons/tts/src/sfx-library.js": "33672:107770e3:b2e690d8",
   "src/addons/tts/src/speakers.js": "34564:6aa8aef3:e33d1b0d",
   "src/addons/tts/src/stapi.js": "23506:6863f689:815bbb68",
-  "src/addons/tts/src/text.js": "30245:f3dde7f0:421c9981",
+  "src/addons/tts/src/text.js": "32493:921d9db3:c64805a6",
   "src/addons/tts/src/translation.js": "18460:b607ad86:ea0d91c0",
   "src/addons/tts/src/ui.js": "186688:bc12c58e:fdf5384c",
   "src/addons/tts/src/voice-names.js": "7708:05c816f7:b76ae520",
   "src/addons/tts/src/voices.js": "42711:1ef4ff6e:c8e14e9a",
   "src/addons/tts/src/word-chips.js": "4504:4ccfb4ca:7e5c7f15",
-  "src/addons/tts/style.css": "47378:ace67594:543f0f52",
-  "src/addons/tts/version.js": "36:0713b155:b7651f4e",
+  "src/addons/tts/style.css": "47378:dbcb4d8d:4f020eec",
+  "src/addons/tts/version.js": "36:90231d88:e358aaa8",
   "src/addons/zipinstall/index.js": "22353:284b553d:8a3638e7",
   "src/addons/zipinstall/style.css": "5225:67044f0e:7aa42564",
   "src/appearance-archive.js": "1287:215093f5:1c7f1dc7",
@@ -489,7 +489,7 @@ export const FILE_HASHES = {
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "233424:147ecc8a:55452bc8",
+  "src/notice-data.js": "233889:5c5f0fda:b6f8e1d1",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -587,5 +587,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "34821:fcebb709:d610b9d5",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1434822:9929e137:d0d3d738"
+  "style.css": "1434822:dd099a20:f4f179fc"
 };

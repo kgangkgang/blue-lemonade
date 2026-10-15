@@ -9,7 +9,7 @@ import { prepareDisplayCards, withDisplayCardsProtected, withoutDisplayCards, di
 import { cardValues } from './card-values.js';   // 6.5.4 상태 카드 고정 값은 보내지 않고 바로 채움
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
 import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, stripDraftLeaks, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, fixPlaceholderVariants, dropLeftoverPlaceholders as dropProseLeftoverPlaceholders, repairTagPairs as repairProseTagPairs, dropStrayWords as dropProseStrayWords, dropWrapQuotes } from './translation-segments.js';
-import { hideOpenComments, looksCutShort } from './translation-segments.js';   // 2.5.1 숨긴 주석 표시 보정 · 끊긴 답
+import { hideOpenComments, looksCutShort, restoreDialogueBrackets } from './translation-segments.js';   // 2.5.1 숨긴 주석 표시 보정 · 끊긴 답 · 2.5.2 빠진 대사 괄호
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
 import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey, glossaryLinesFor, enforceGlossaryNames, dropDanglingOpenQuote } from './glossary-match.js';
@@ -1250,6 +1250,7 @@ function failMarkOf(error) {
 // 5.3.4: 429 · 5xx · 네트워크 오류만 (요청 쪽에서 transient 를 단다). 시간 초과 · 401/403 · 잘못된 키는 다시 보내지 않는다 —
 //        시간 초과는 서버가 이미 처리 중이라 두 번 청구될 수 있고, 키 오류는 다시 보내도 같다.
 const isTransientError = error => Boolean(error?.transient) && !error?.refused && !error?.format && !error?.cancelled && !error?.timeout;
+const BRACKET_NOTE = '[Keep every 「」 and 『』 dialogue bracket of the source exactly where it is in your translation.]';   // 2.5.2
 const CHUNK_TARGET = 1800; // 한 덩이 글자 수 목표. 너무 작으면 문맥 · 말투가 흔들리고 요청이 많아진다.
 const KANA_FIX_NOTE = '[The numbered lines below are from a Korean translation but still contain Japanese. Translate each fully into Korean, keep the numbering and everything else unchanged, one line per number.]\n';
 // 6.4.2 용어집이 한자로 둔 번역 표기 — 남은 한자로 다시 보내지 않는다. v3: 용어집을 꺼 둬도 뺀다 (사용자가 한자로 두기로 한 표기 — 끈 동안 그 표기를 한글로 바꾸려고 다시 사지 않게)
@@ -1856,6 +1857,9 @@ async function translate(text, options = {}) {
                 built += `\n\n[Additional Guidance]:\n${additionalGuidance}`;
             }
 
+            // 2.5.2 대사 괄호: 원문에 「」『』 가 있는데 프롬프트 · 규칙 · 지침 어디에도 「」 이야기가 없으면 한 줄 붙인다 (사용자 프롬프트는 그대로)
+            if (/[「『]/.test(body) && !/「」|『』/.test(`${finalPrompt}\n${rulePrompt}\n${additionalGuidance}`)) built += `\n\n${BRACKET_NOTE}`;
+
             // 마스킹된 텍스트를 AI에게 전달
             built += `\n\n${body}`;
 
@@ -1952,7 +1956,7 @@ async function translate(text, options = {}) {
             try {
                 let value = displayCards.restore(fixMalformedPlaceholders(masked), { quiet: true });
                 for (let index = protectedBlocks.length - 1; index >= 0; index--) value = value.split(createPlaceholder(index)).join(protectedBlocks[index]);
-                options.onPreview(value);
+                options.onPreview(restoreDialogueBrackets(text, value));   // 2.5.2 빠진 대사 괄호도
             } catch { /* 미리 보기는 번역을 막지 않는다 */ }
         } : null;
         let checkpointComplete = false;
@@ -2227,6 +2231,14 @@ async function translate(text, options = {}) {
         if (leakFree !== translatedText) {
             console.warn('[LLM Translator] 번역문에 섞인 초안 · 모델 메모 · 감싸개 태그를 걷었어요');
             translatedText = leakFree;
+        }
+        // 2.5.2 원문이 「…」 · 『…』 로 통째 감싼 줄 · 색 span 인데 번역문 같은 자리에서 괄호가 빠졌으면 같은 괄호를 다시 붙인다 (원문에 없는 괄호는 안 만든다)
+        if (!isInputTranslation) {
+            const bracketed = restoreDialogueBrackets(tagSource, translatedText);
+            if (bracketed !== translatedText) {
+                console.warn('[LLM Translator] 번역문에서 빠진 대사 괄호(「」『』)를 원문대로 다시 붙였어요');
+                translatedText = bracketed;
+            }
         }
 
         watcher.check(); autoContextGuard?.assert();
@@ -2684,6 +2696,7 @@ function repairShownTranslations() {
 /**
  * 2.5.1 표시 보정: 번역문의 닫히지 않은 숨김 주석(「<!-- 쾌적 성애 점검: …」 — 2.5.0 까지 주석을 번역에 보내다 닫는 --> 를 잃은 것)은
  * 그릴 때만 그 문단 끝까지 숨긴다 (hideOpenComments). 저장된 글은 건드리지 않으니 다른 기기가 옛 글로 덮어써도 늘 숨는다.
+ * 2.5.2 같은 자리에서 빠진 대사 괄호(「」『』)도 원문대로 채워 그린다 (restoreDialogueBrackets) — 괄호가 있어야 테마가 대사로 알아봐 형광펜 · 글자색을 입힌다.
  * 실리태번 메시지 서식 훅(MessageFormatter, 정규식 · 마크다운보다 먼저) — 훅이 없는 옛 실리태번에서는 아무것도 안 한다.
  */
 let commentHookAdded = false;
@@ -2692,10 +2705,11 @@ function hideBrokenCommentsOnRender() {
     if (commentHookAdded || typeof formatter?.addHook !== 'function') return;
     commentHookAdded = true;
     formatter.addHook((mes, info) => {
-        if (info.isReasoning || !(info.messageId >= 0) || (!mes.includes('<!--') && !mes.includes('-->'))) return mes;
+        if (info.isReasoning || !(info.messageId >= 0)) return mes;
         const message = getContext().chat?.[info.messageId];
         if (typeof message?.extra?.display_text !== 'string' || mes === message.mes) return mes;   // 번역문을 보여 줄 때만 (원문 · 원문 보기는 그대로)
-        return hideOpenComments(mes);
+        const shown = mes.includes('<!--') || mes.includes('-->') ? hideOpenComments(mes) : mes;
+        return message.is_user ? shown : restoreDialogueBrackets(message.mes, shown);
     }, { stage: formatter.stage.BEFORE_REGEX, order: formatter.order.EARLIEST });
 }
 
@@ -2830,6 +2844,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
             // 6.2.4 캐시에서 온 6.2.4 전 번역도 걷는다 — 손으로 고친 번역(translation_edited = 그 원문 해시)은 그대로 · 모델이 새로 옮긴 글이면 표시를 지운다
             const editedByHand = !!cachedTranslation && target.extra?.translation_edited === originalHashOf(originalText);
             if (cachedTranslation && !editedByHand) translation = tidyGlossaryOutput(originalText, dropStrayWords(translation, originalText));   // 6.4.0 용어집 이름 · 홀로 남은 「 도
+            if (cachedTranslation && !editedByHand) translation = restoreDialogueBrackets(originalText, translation);   // 2.5.2 캐시에서 온 옛 번역의 빠진 대사 괄호
             if (!cachedTranslation) delete target.extra.translation_edited;
             target.extra.display_text = processTranslationText(originalText, translation);
             runToken.guard.acceptDisplay();

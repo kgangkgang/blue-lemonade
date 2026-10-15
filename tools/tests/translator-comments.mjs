@@ -103,6 +103,7 @@ function cut(name) {
     assert(start >= 0, name);
     return source.slice(start + 1, source.indexOf('\n}', start + 1) + 2).replace(/^export /, '');
 }
+const BRACKET_NOTE = /\nconst BRACKET_NOTE = '([^']*)'/.exec(source)?.[1] ?? '';   // 2.5.2 대사 괄호 안내 한 줄 (모델에 가는 글에서 떼고 본다)
 const ctx = { chatMetadata: {}, chat: [] }, S = { llm_prompt_chat: 'Translate visible text.', glossary_enabled: false, user_defined_regexes: [], user_no_fold_regexes: [], translation_display_mode: 'disabled' };
 const PREFIX = 'Translate visible text.\n\n';
 const env = { ...card, ...seg, ...resume, ...auto, cardValues: cardValueModule.cardValues, getStringHash: t => [...String(t)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0), extensionSettings: S, getContext: () => ctx,
@@ -112,7 +113,7 @@ const env = { ...card, ...seg, ...resume, ...auto, cardValues: cardValueModule.c
     looksLikeInputBlock: () => false, looksLikeRefusal: () => false, fallbackOf: () => null, sameTarget: () => false, getCustomModelName: () => '',
     tidyKana: x => x, tidyGlossaryOutput: (_s, x) => x, linesToFix: () => [], glossaryHanKeep: () => [], glossaryNameKeep: () => [], dropDanglingOpenQuote: x => x,
     runtimeProtections: new Map(), console: { debug() {}, info() {}, warn() {}, error() {} }, dropProseStrayWords: seg.dropStrayWords, repairProseTagPairs: seg.repairTagPairs, dropProseLeftoverPlaceholders: seg.dropLeftoverPlaceholders,
-    correctBackticks: x => x, window: {}, toastr: { warning() {} }, globalThis: { toastr: { warning() {} } },
+    correctBackticks: x => x, window: {}, toastr: { warning() {} }, globalThis: { toastr: { warning() {} } }, BRACKET_NOTE,
 };
 function install(name) { env[name] = new Function('env', `with(env){return (${cut(name)});}`)(env); return env[name]; }
 for (const name of ['compileUserPattern', 'runtimeRegexes', 'getCombinedRegexes', 'getNoFoldRegexes', 'protectedBlockRegexes', 'isProtectedBlock', 'withoutProtectedBlocks', 'fixMalformedPlaceholders',
@@ -122,7 +123,7 @@ const sent = [];
 let model = body => ko(body);
 env.callLLMAPI = async prompt => {
     assert(prompt.startsWith(PREFIX));
-    const body = prompt.slice(PREFIX.length);
+    const body = prompt.slice(PREFIX.length).replace(BRACKET_NOTE + '\n\n', '');
     sent.push(body);
     if (body.startsWith(BATCH_HEADER)) return model(body.slice(BATCH_HEADER.length), true);
     return model(body, false);
@@ -221,8 +222,9 @@ await check('2.5.1 wiring: comment rule after the 6.5.4 rules, hook registered a
     const rules = env.getCombinedRegexes().map(r => r.source);
     assert(rules.indexOf('<!--[\\s\\S]*?-->') > rules.findIndex(r => r.includes('scene_plan')));
     assert(/\n {4}hideBrokenCommentsOnRender\(\);/.test(source));
-    assert.equal(JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8')).version, '2.5.1');
-    assert(fs.readFileSync(path.join(dir, 'index.html'), 'utf8').includes('>v2.5.1<'));
+    const version = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8')).version;
+    assert(/^2\.5\.[1-9]\d*$/.test(version), version);
+    assert(fs.readFileSync(path.join(dir, 'index.html'), 'utf8').includes(`>v${version}<`));
 });
 
 console.log(`translator-comments: ${passed} passed, ${failed} failed`);
