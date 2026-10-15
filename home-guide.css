@@ -113,6 +113,7 @@ html.device-mobile .home-guide .showcase-screen video{aspect-ratio:9/19.5}
 .home-guide .install .text-link{display:inline-flex;align-items:center;min-height:44px;color:var(--blue-strong);margin-top:20px}
 .home-guide #features,.home-guide #gallery,.home-guide #updates{padding-block:0}
 .home-guide #updates{display:block}.home-guide #updates>.more-section{width:100%;min-width:0}
+.home-guide #updates .notice-guide{position:static;top:auto;margin-bottom:28px}
 .home-guide #features{padding-top:44px}.home-guide #updates{padding-bottom:60px}
 .more-section{border-bottom:1px solid var(--line-strong)}
 .more-section>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:24px 0;cursor:pointer}
