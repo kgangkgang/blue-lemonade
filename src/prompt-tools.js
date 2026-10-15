@@ -2,6 +2,7 @@ import {scriptSettings,persistScripts,legacyConflicts} from './scripts/store.js'
 import {addonsEnabled,themeEnabled} from './usage-mode.js';
 import {getSettings} from './settings.js';
 import {leaveSettingsDialog} from './settings-dialog.js';
+import {promptLinkMarkup} from './prompt-link.js';
 
 const GROUPS={
     deus:[['deus-qr','빠른 설정','입력창에서 데우스 2.5 옵션을 바로 골라요.'],['deus','프롬프트 이름 한글화','프롬프트와 정규식의 이름을 한글로 보여요.']],
@@ -18,7 +19,7 @@ export function promptToolsMarkup(kind){
 }
 
 export function fruitPromptMarkup(){
-    return `<div class="salty-label" data-search-anchor="과일">과일</div><p class="bl-prompt-source">호환 대상 프롬프트 · <a href="https://discord.com/channels/1384945301780955246/1395707630302789653/1554887154583212064" target="_blank" rel="noopener noreferrer">과일 원문 보기 ↗</a> · <a href="https://github.com/kongkongmie/guoshizhixin" target="_blank" rel="noopener noreferrer">코드 ↗</a></p>${promptToolsMarkup('fruit')}<p class="salty-note">과일의 마음 스크립트가 실행 중일 때 적용돼요. 꾸미기를 끄면 과일의 원래 디자인으로 돌아가요.</p><p class="bl-prompt-source">과일의 마음 원작 표기 · KKM · AQING · ACHE</p>`;
+    return `<div class="salty-label" data-search-anchor="과일">과일</div><p class="bl-prompt-source">호환 대상 프롬프트 · <a href="https://discord.com/channels/1384945301780955246/1395707630302789653/1554887154583212064" target="_blank" rel="noopener noreferrer">과일 원문 보기 ↗</a> · <a href="https://github.com/kongkongmie/guoshizhixin" target="_blank" rel="noopener noreferrer">코드 ↗</a></p>${promptToolsMarkup('fruit')}${promptLinkMarkup()}<p class="salty-note">과일의 마음 스크립트가 실행 중일 때 적용돼요. 꾸미기를 끄면 과일의 원래 디자인으로 돌아가요.</p><p class="bl-prompt-source">과일의 마음 원작 표기 · KKM · AQING · ACHE</p>`;
 }
 
 export function bindPromptTools(root){

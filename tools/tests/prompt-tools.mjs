@@ -19,7 +19,7 @@ function environment({kind='fruit',pendingRuntime=false}={}){
   const box={dataset:{promptTools:kind},isConnected:true,querySelector:s=>s==='[data-prompt-open]'?button:status,querySelectorAll:()=>inputs,addEventListener:(type,fn)=>events.set(type,fn),removeEventListener:(type,fn)=>{if(events.get(type)===fn)events.delete(type)}};
   const nodes=new Map();
   const runtime={subscribeScripts:fn=>{subscribers.add(fn);return()=>subscribers.delete(fn)},syncScripts:async()=>{calls.push('sync')},scriptStatus:()=> '사용 중'};
-  const context={scriptSettings:()=>state,persistScripts:()=>{calls.push('save');return save()},legacyConflicts:()=>conflict?[{}]:[],addonsEnabled:s=>s.addons,themeEnabled:s=>s.theme,getSettings:()=>settings,leaveSettingsDialog:()=>calls.push('leave'),document:{getElementById:id=>nodes.get(id)},runtimeReady:pendingRuntime?runtimeGate.promise:Promise.resolve(runtime)};
+  const context={scriptSettings:()=>state,persistScripts:()=>{calls.push('save');return save()},legacyConflicts:()=>conflict?[{}]:[],addonsEnabled:s=>s.addons,themeEnabled:s=>s.theme,getSettings:()=>settings,leaveSettingsDialog:()=>calls.push('leave'),promptLinkMarkup:()=>'',document:{getElementById:id=>nodes.get(id)},runtimeReady:pendingRuntime?runtimeGate.promise:Promise.resolve(runtime)};
   vm.runInNewContext(source+'\nglobalThis.api={bindPromptTools,promptToolsMarkup,fruitPromptMarkup};',context);
   const cleanup=context.api.bindPromptTools({querySelector:()=>box});
   return{state,settings,calls,inputs,button,status,box,events,nodes,context,runtime,subscribers,cleanup,saveGate,runtimeGate,

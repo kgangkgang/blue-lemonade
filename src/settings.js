@@ -81,7 +81,6 @@ export const DEFAULTS = {
     // 색에 따라 배경에 묻혀 안 읽히는 경우를 위해 — 둘 다 켜도 되고 하나만 켜도 된다. 파라미터는 전체 외곽선 · 글자 그림자와 같은 것들.
     // 3.7.2 다른 CSS: 사용자 설정 › 커스텀 CSS 를 테마가 켜진 동안 꺼 둘지 (내용은 그대로 — 끄면 바로 돌아온다)
     compat: { muteCustomCss: false, preserveExtensionColors: false, extensionColorsOff: [] },
-    fruit: { cards: { on: false, font: true, colors: true, labels: true, size: 16, gap: 12, radius: 12, layout: 'compact', metadataFold: false } },
     deus: {
         on: false,
         ink: {
@@ -111,6 +110,7 @@ export const DEFAULTS = {
     styles: [],
     charStyles: {},
     promptBinds: {},   // 6.0.4 프롬프트 귀속 { <프롬프트 identifier>: { keys: ['c:아바타' | 'g:그룹' | 'c:아바타/채팅' | 'g:그룹/채팅'], regex: [정규식 id] } } (promptbind.js)
+    promptLink: { on: false, name: '' },   // 6.5.2 캐릭터 이름 연동 — 이름이 든 프롬프트·정규식을 그 캐릭터 채팅에서만 켜고 「기본」 짝은 반대로 (prompt-link.js · promptbind.js)
     headSwitches: {},   // 6.0.4 확장 위 스위치 { <창 열쇠 id:…|cls:…>: true } — 창 안 「확장 탭에 보이기」로 고른 확장 창 (headswitch.js)
     activeStyle: null,
     baseStyle: null,
@@ -357,6 +357,10 @@ function tidyStyles(s) {
         bind.keys = [...new Set((Array.isArray(bind.keys) ? bind.keys : []).filter(k => typeof k === 'string' && /^[cg]:./.test(k)))].slice(0, 200); bind.regex = [...new Set((Array.isArray(bind.regex) ? bind.regex : []).filter(r => typeof r === 'string' && r))].slice(0, 64);
         if (!bind.keys.length && !bind.regex.length) delete s.promptBinds[id];
     }
+    // 6.5.2 캐릭터 이름 연동: 켜짐은 불리언, 이름은 다듬은 글자 80자까지 (이름은 설정에만 있다)
+    if (!isObj(s.promptLink)) s.promptLink = structuredClone(DEFAULTS.promptLink);
+    s.promptLink.on = flag(s.promptLink.on, false);
+    s.promptLink.name = typeof s.promptLink.name === 'string' ? Array.from(s.promptLink.name.trim()).slice(0, 80).join('') : '';
     // 6.0.4 확장 위 스위치: true 인 글자 열쇠만, 100개까지
     if (!isObj(s.headSwitches)) s.headSwitches = {};
     for (const [k, v] of Object.entries(s.headSwitches)) if (!k || v !== true) delete s.headSwitches[k];
@@ -374,14 +378,9 @@ function tidyFlags(s) {
     s.reader.autoHide = flag(s.reader.autoHide, false);
     if (!isObj(s.deus)) s.deus = structuredClone(DEFAULTS.deus);
     s.deus.on = flag(s.deus.on, false);
-    if (!isObj(s.fruit)) s.fruit = structuredClone(DEFAULTS.fruit);
-    if (!isObj(s.fruit.cards)) s.fruit.cards = structuredClone(DEFAULTS.fruit.cards);
-    for (const key of ['on', 'font', 'colors', 'labels', 'metadataFold']) s.fruit.cards[key] = flag(s.fruit.cards[key], DEFAULTS.fruit.cards[key]);
-    if (!['compact', 'card', 'title'].includes(s.fruit.cards.layout)) s.fruit.cards.layout = DEFAULTS.fruit.cards.layout;
-    for (const [key, min, max] of [['size', 12, 30], ['gap', 4, 24], ['radius', 0, 24]]) {
-        const value = Number(s.fruit.cards[key]);
-        s.fruit.cards[key] = Number.isFinite(value) ? clampTo(value, [min, max]) : DEFAULTS.fruit.cards[key];
-    }
+    // 6.5.2: 과일 상태 카드 꾸미기(6.5.0~6.5.1 의 fruit.cards)를 뺐다 — 켜 둔 채 올려도 저장값만 조용히 버린다
+    if (isObj(s.fruit)) delete s.fruit.cards;
+    if (!isObj(s.fruit) || !Object.keys(s.fruit).length) delete s.fruit;
     if (!isObj(s.auto)) s.auto = structuredClone(DEFAULTS.auto);
     s.auto.on = flag(s.auto.on, false);
     if (!['system', 'time'].includes(s.auto.by)) s.auto.by = 'system';
@@ -711,7 +710,7 @@ export function saveSettings() {
 // 내 글꼴 · 본 공지 · 내 스타일 · 캐릭터 연결은 늘 남긴다 (입혀 둔 캐릭터 스타일 상태는 비움)
 const RESET_GROUPS = { addons: ['addons', 'addonUI'], tools: ['wordTools', 'captureTools'], library: ['frameLibrary', 'customPalettes', 'weatherImages'] };
 // 테마 모습이 아닌 쓰는 방식(켬 · 사용 모드 · 잠금 · 자동 화이트/나이트 · 한 손 · 몰입 읽기 · 백그라운드 창 · 알림 · 다른 CSS)은 '테마 모습' 초기화에 남긴다
-const RESET_KEEP = ['appearanceHistory', 'customFonts', 'noticeSeen', 'updateCheck', 'styles', 'charStyles', 'promptBinds', 'headSwitches', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify'];
+const RESET_KEEP = ['appearanceHistory', 'customFonts', 'noticeSeen', 'updateCheck', 'styles', 'charStyles', 'promptBinds', 'promptLink', 'headSwitches', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify'];
 export function resetSettings(groups = { look: true }) {
     const ext = SillyTavern.getContext().extensionSettings;
     const old = ext[KEY] || {};

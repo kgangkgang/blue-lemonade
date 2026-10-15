@@ -208,4 +208,52 @@ await test('6.0.6 찾기: 한글화 스크립트가 정규식 목록 줄에 바�
     } finally { delete globalThis.document; delete ctx.getPresetManager; }
     assert.equal(B._forTest.promptName('abc-123'), '이름:abc-123', 'DOM 이 없으면 프롬프트 관리자');
 });
+await test('6.5.2 캐릭터 이름 연동: 이름이 든 프롬프트·정규식은 그 캐릭터에서만, 「기본」·이름 뺀 짝은 반대로 · 직접 묶은 것은 묶음이 우선', async () => {
+    ctx.characterId = 0; ctx.chatId = 'chat-a'; ctx.groupId = null;
+    const names = { color_base: '🎨 대사 색상 (데우스 · 기본)｜색상 택1', color_haru: '🎨 대사 색상 (데우스 · 하루)｜색상 택1', dc_plain: '| Dialogue Color |', dc_haru: '| Dialogue Color (하루) |', dc_other: '| Dialogue Color (블루록) |', main: '메인', bound: '묶은 것 (하루)' };
+    const order2 = [{ identifier: 'color_base', enabled: true }, { identifier: 'color_haru', enabled: false }, { identifier: 'dc_plain', enabled: true }, { identifier: 'dc_haru', enabled: false }, { identifier: 'dc_other', enabled: true }, { identifier: 'main', enabled: true }, { identifier: 'bound', enabled: false }];
+    const pm2 = { activeCharacter: { id: 100001 }, saved: 0, rendered: 0, getPromptOrderForCharacter: () => order2, getPromptOrderEntry: (_c, id) => order2.find(e => e.identifier === id) ?? null,
+        getPromptById: id => ({ identifier: id, name: names[id] || id }), saveServiceSettings: async () => { pm2.saved++; }, render: () => { pm2.rendered++; } };
+    B.setPromptManager(pm2);
+    const on2 = id => order2.find(e => e.identifier === id).enabled !== false;
+    ctx.extensionSettings.regex = [{ id: 'rx-haru', scriptName: '속마음 색 — 하루 (데우스)', disabled: true }, { id: 'rx-show', scriptName: '속마음 표시 (데우스)', disabled: false }];
+    ctx.extensionSettings.salty.promptBinds = {}; ctx.extensionSettings.salty.promptLink = { on: true, name: ' 하루 ' }; invalidateSettings();
+    assert.equal(getSettings().promptLink.name, '하루', '이름은 다듬어 저장'); assert.equal(B.linkName(), '하루');
+    const fold = s => s.normalize('NFKC').replace(/\s+/g, ' ').trim().toLowerCase();   // 짝 이름은 fold 한 꼴로 돌아온다 (전각 ｜ → | 도 NFKC 로 같아진다)
+    assert.ok(B.linkTwinNames(names.color_haru, '하루').includes(fold(names.color_base)), '이름 자리에 「기본」');
+    assert.ok(B.linkTwinNames(names.dc_haru, '하루').includes('| dialogue color |'), '(이름) 괄호째 뺀 것 (fold: 소문자)');
+    assert.ok(!B.linkTwinNames(names.color_haru, '하루').some(x => x.includes('하루')), '짝 후보에 이름이 남지 않는다');
+    assert.deepEqual(B.linkTwinNames('메인', '하루'), [], '이름이 안 든 것은 짝 후보가 없다');
+    assert.equal(B.linkMatches('하루', ctx), true, '카드 이름'); assert.equal(B.linkMatches('HARU', ctx), true, '아바타 파일 이름 (확장자 뺀 · 대소문자 무시)'); assert.equal(B.linkMatches('', ctx), false);
+    ctx.characterId = 1; assert.equal(B.linkMatches('하루', ctx), false, '다른 캐릭터');
+    ctx.groupId = 'g1'; ctx.groups[0].members = ['haru.png']; assert.equal(B.linkMatches('하루', ctx), true, '그룹 구성원'); ctx.groups[0].members = ['selene.png']; assert.equal(B.linkMatches('하루', ctx), false); delete ctx.groups[0].members; ctx.groupId = null;
+    ctx.characterId = 0;
+    assert.deepEqual(await B.linkReport(), { prompts: 3, twins: 2, regex: 1 }, '안내: 이름 든 프롬프트 3 (color_haru · dc_haru · bound) · 짝 2 · 정규식 1');
+    assert.equal(await B.syncPromptBinds(), 6, '하루: 이름 든 셋(color_haru · dc_haru · bound) 켜고 짝 둘 끄고 정규식 하나 켠다');
+    assert.equal(on2('color_haru'), true); assert.equal(on2('color_base'), false); assert.equal(on2('dc_haru'), true); assert.equal(on2('dc_plain'), false);
+    assert.equal(on2('dc_other'), true, '다른 이름의 변형은 그대로'); assert.equal(on2('main'), true); assert.equal(on2('bound'), true, '묶음이 없으니 이름 규칙으로 켜진다');
+    assert.equal(ctx.extensionSettings.regex[0].disabled, false, '이름 든 정규식 켜짐'); assert.equal(ctx.extensionSettings.regex[1].disabled, false, '이름 없는 정규식은 그대로');
+    assert.equal(pm2.saved, 1); assert.equal(await B.syncPromptBinds(), 0, '이미 맞으면 저장하지 않는다'); assert.equal(pm2.saved, 1);
+    ctx.characterId = 1;
+    assert.equal(await B.syncPromptBinds(), 6, '셀레네: 반대로');
+    assert.equal(on2('color_haru'), false); assert.equal(on2('color_base'), true); assert.equal(on2('dc_haru'), false); assert.equal(on2('dc_plain'), true); assert.equal(on2('bound'), false); assert.equal(ctx.extensionSettings.regex[0].disabled, true);
+    // 직접 묶은 프롬프트는 묶음이 우선: bound 를 셀레네에 묶으면 이름 규칙(끔)과 반대로 켜진다
+    ctx.extensionSettings.salty.promptBinds = { bound: { keys: ['c:selene.png'], regex: [] } }; invalidateSettings();
+    assert.equal(await B.syncPromptBinds(), 1); assert.equal(on2('bound'), true, '묶음이 이긴다'); assert.equal(await B.syncPromptBinds(), 0, '되돌이표 없음');
+    ctx.extensionSettings.salty.promptBinds = {}; invalidateSettings();
+    // 끄면 아무것도 안 바꾼다
+    ctx.extensionSettings.salty.promptLink = { on: false, name: '하루' }; invalidateSettings();
+    order2[1].enabled = true; assert.equal(await B.syncPromptBinds(), 0); assert.equal(on2('color_haru'), true, '꺼져 있으면 손대지 않는다'); assert.equal(B.linkName(), '');
+    assert.deepEqual(await B.linkReport('하루'), { prompts: 3, twins: 2, regex: 1 }, '안내는 이름을 직접 받아도 된다');
+    B.setPromptManager({ activeCharacter: null }); assert.deepEqual(await B.linkReport('하루'), { prompts: 0, twins: 0, regex: 0 });
+    B.setPromptManager(pm); ctx.extensionSettings.salty.promptLink = { on: false, name: '' }; ctx.extensionSettings.regex = []; invalidateSettings(); ctx.characterId = 0;
+});
+await test('6.5.2 설정 정리: promptLink 는 켜짐 불리언 · 이름은 다듬은 80자 글자 · 테마 모습 초기화에도 남는다', () => {
+    ctx.extensionSettings.salty.promptLink = { on: 'true', name: 7 }; invalidateSettings(); assert.deepEqual(getSettings().promptLink, { on: true, name: '' });
+    ctx.extensionSettings.salty.promptLink = { on: 1, name: ' ' + '가'.repeat(100) + ' ' }; invalidateSettings(); assert.deepEqual(getSettings().promptLink, { on: false, name: '가'.repeat(80) });
+    ctx.extensionSettings.salty.promptLink = 'junk'; invalidateSettings(); assert.deepEqual(getSettings().promptLink, { on: false, name: '' });
+    ctx.extensionSettings.salty.promptLink = { on: true, name: '하루' }; invalidateSettings(); resetSettings({ look: true });
+    assert.deepEqual(getSettings().promptLink, { on: true, name: '하루' }, '테마 모습 초기화는 연동을 지우지 않는다');
+    ctx.extensionSettings.salty.promptLink = { on: false, name: '' }; invalidateSettings();
+});
 console.log(`\npromptbind: ${passed} passed, 0 failed`);

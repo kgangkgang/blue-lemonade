@@ -1,6 +1,5 @@
 import { addonsEnabled, themeEnabled, usageMode } from './usage-mode.js';
 import {promptToolsMarkup,fruitPromptMarkup,bindPromptTools} from './prompt-tools.js';
-import { mountFruitPreview } from './fruit-preview.js';
 import { saveAddonsNow } from './addon-save.js';
 import { readabilityReport, fixReadability } from './readability.js';
 import { appearanceArchive, rememberAppearance, restoreAppearance } from './appearance-archive.js';
@@ -323,7 +322,6 @@ export function unmountPanel(root) {
     root._healthCleanup?.();
     root._updateCleanup?.(); root._updateCleanup=null;
     root._previewCleanup?.();
-    root._fruitPreview?.dispose(); root._fruitPreview = null;
     for (const key of ['_fontIO', '_rowsRO']) { root[key]?.disconnect(); root[key] = null; }
     root.remove(); panels.delete(root); root._pv = {}; root._previewViews?.clear();
     const settings = getSettings(); syncDecor(settings); syncProfileClip(settings);
@@ -358,7 +356,6 @@ export function refreshPanels(changes) {
                 }
                 syncWeatherPreview(root, path);
             }
-            root._fruitPreview?.update();
         }
         if (changes.some(c => c.path === 'nightTint' || c.path === 'lightTint')) syncPaletteTints();
         syncHistoryButtons(); syncSettingResets();
@@ -564,7 +561,6 @@ function snap(value, min, max, step) {
 
 // 슬라이드바 + 숫자 입력칸: 슬라이드는 한 칸(step)씩, 입력칸은 소수점까지 (범위 밖이면 끝값으로)
 const NUM = {
-    'fruit.cards.size': { unit: 'px' }, 'fruit.cards.gap': { unit: 'px' }, 'fruit.cards.radius': { unit: 'px' },
     'nightTint': { unit: '%' },
     'lightTint': { unit: '%' },
     'type.size': { unit: 'px' },
@@ -1573,20 +1569,7 @@ function weatherSeg(s) {
 function tabExtensions(s, sub) { if(!addonsEnabled(s))return '<p class="salty-note">현재 사용 모드에서는 내장 확장을 실행하지 않아요. 테마 → 기타 설정 → 사용 모드에서 테마 + 확장 또는 확장만을 고르면 저장한 설정으로 다시 사용할 수 있어요.</p>';  return addonMarkup(s,sub) + (['words','capture'].includes(sub) && s.addons[sub] ? wordToolsMarkup(s,sub) : ''); }
 
 function tabPrompt(s,sub) {
-    if (sub === 'fruit') {
-        const cards = s.fruit.cards;
-        return `${fruitPromptMarkup()}${cap('상태 카드 디자인')}<div class="salty-group">
-            ${row('카드 꾸미기', toggle('fruit.cards.on', cards.on), '상태창 · 머리말 · 제목 카드의 모양을 테마에 맞춰요. 끄면 원래 디자인으로 돌아가요.')}
-            ${cards.on ? row('글꼴 맞추기', toggle('fruit.cards.font', cards.font), '테마 본문 글꼴을 사용해요.') : ''}
-            ${cards.on ? row('색 맞추기', toggle('fruit.cards.colors', cards.colors), '글자 · 배경 · 테두리를 현재 테마 색으로 맞춰요.') : ''}
-            ${cards.on ? row('카드 모양', seg('fruit.cards.layout', [['compact','간결형'],['card','카드형'],['title','제목 중심형']], 'compact'), '같은 내용과 글꼴로 배치와 강조만 바꿔요.') : ''}
-            ${cards.on ? row('장면 정보 접기', toggle('fruit.cards.metadataFold', cards.metadataFold), '날짜 · 시간 · 장소 · 날씨만 눌러 펼쳐요. 제목과 머리말은 그대로 보여요.') : ''}
-            ${cards.on ? row('고정 안내 한글로', toggle('fruit.cards.labels', cards.labels), '날짜·시간 같은 고정 제목만 한글로 보여요. 상태 내용 번역과는 별개예요.') : ''}
-            ${cards.on ? slider('fruit.cards.size', '카드 글자 크기', 12, 30, 1, 16) : ''}
-            ${cards.on ? slider('fruit.cards.gap', '카드 여백', 4, 24, 1, 12) : ''}
-            ${cards.on ? slider('fruit.cards.radius', '카드 모서리', 0, 24, 1, 12) : ''}
-        </div><div data-fruit-preview></div><p class="salty-note">지원하는 과일 카드에 적용돼요. 프리셋과 채팅 원문은 그대로예요.</p>`;
-    }
+    if(sub==='fruit')return fruitPromptMarkup();
     const on = !!s.deus?.on;
     const ink = s.deus?.ink || {};
     const dio = ink.outline || { on: false, color: '#000000', width: 0.6, alpha: 100 };  // 데우스 대사 가독성: 외곽선
@@ -1841,7 +1824,6 @@ function restoreFocus(root, snap) {
 
 function render(root) {
     const focusSnap = focusSnapshot(root);
-    root._fruitPreview?.dispose(); root._fruitPreview = null;
     root._mdFolds ??= new Map();
     for (const item of root.querySelectorAll('details[data-md-fold]')) root._mdFolds.set(item.dataset.mdFold,item.open);
     root._stopComparison?.();
@@ -1910,7 +1892,6 @@ function render(root) {
     typesetRoot(root);
     bindAddons(root, refreshPanels);
     root._scriptsCleanup=bindPromptTools(root);
-    root._fruitPreview = mountFruitPreview(root.querySelector('[data-fruit-preview]'), () => comparisonView(getSettings()));
     bindThemeUpdate(root);
     bindHealth(root,applyAll);
     bindWordTools(root, refreshPanels);
@@ -2823,7 +2804,7 @@ function bind(root) {
             // 2.9.2: 본문 색 지정 → '글자색 톤 맞추기' 줄, 톤 맞추기 → 톤 값 슬라이더 넷, 투명 그림도 똑같이 → 설명 문구가 스위치에 따라
             // 보였다 안 보였다 하는데 다시 그리지 않아, 끈 뒤에도 슬라이더가 남아 있었다
             // 감정 대사 효과(움직임 · 빛 · 색 흐름) · 백그라운드 버티는 방식 줄도 스위치를 따라 보였다 안 보였다 한다
-            update(st => setPath(st, path, target.checked), ['strike.line', 'strike.own', 'strike.italic', 'deviceLayouts.on', 'chat.weatherReadability', 'chat.weatherIllustrated', 'enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'image.cutEdge.outline.on', 'image.cutEdge.shadow.on', 'image.cutEdge.overflow', 'chat.streamFade', 'chat.hiddenFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'fruit.cards.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on', 'deus.fx.on', 'deus.fx.flow', 'deus.fx.force', 'bgWindow.on', 'compat.preserveExtensionColors'].includes(path));
+            update(st => setPath(st, path, target.checked), ['strike.line', 'strike.own', 'strike.italic', 'deviceLayouts.on', 'chat.weatherReadability', 'chat.weatherIllustrated', 'enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'image.cutEdge.outline.on', 'image.cutEdge.shadow.on', 'image.cutEdge.overflow', 'chat.streamFade', 'chat.hiddenFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on', 'deus.fx.on', 'deus.fx.flow', 'deus.fx.force', 'bgWindow.on', 'compat.preserveExtensionColors'].includes(path));
             await syncChangedAddons([path]);
             if (path === 'updateCheck') { if (target.checked) void checkForUpdate({ force: true }); else clearUpdate(); }   // 5.7.0
             // 5.5.6: 테마를 끄는 순간에도 '맞추기' 값이 남아 있으면 되돌릴지 묻는다

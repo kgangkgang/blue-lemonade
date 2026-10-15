@@ -20,6 +20,12 @@ body.salty #chat .mes .mes_text :is(details.custom-llm-translator-details, detai
 body.salty #chat .mes .mes_text p:empty {
   display: none;
 }
+/* 6.5.2: 본문을 <content>…</content> 로 감싸는 프리셋(과일 계열)은 여는 태그 바로 뒤 줄바꿈을 마크다운이 <br><br> 로 바꿔
+   첫 문단 앞에 빈 두 줄이 생겼다 (상태 카드가 없거나 그림 다음에 본문이 올 때 드러남). 앞머리 <br> 둘만 숨긴다 — 글은 그대로 */
+body.salty #chat .mes .mes_text content > br:first-child,
+body.salty #chat .mes .mes_text content > br:first-child + br {
+  display: none;
+}
 body.salty #chat .mes .mes_text pre {
   overflow-x: auto;
 }

@@ -90,6 +90,7 @@ export function settingRoute(path) {
     if (scope === 'image') return {tab:'image',sub:key.startsWith('edge') || key === 'decor' ? 'frame' : /^(fit|maxh|height)$/.test(key) ? 'size' : /^(fade|blendWhite)/.test(key) ? 'fade' : key === 'layout' ? 'layout' : 'shape'};
     // 카드 · 색 통일 · 톤 값은 데우스 화면에 있다 (채팅 › 기타에는 커스텀 CSS 끄기만)
     if (scope === 'fruit') return {tab:'prompt',sub:'fruit'};
+    if (scope === 'promptLink') return {tab:'prompt',sub:'fruit'};   // 6.5.2 캐릭터 이름 연동 (프롬프트 › 과일)
     if (scope === 'deus' || scope === 'chat' && /^(dem|unify|tone|markerTone|regexIcons)/.test(key)) return {tab:'prompt',sub:'deus'};
     if (scope === 'deviceLayouts') return {tab:'text',sub:'para'};
     if (scope === 'settingLocks') return {tab:'theme',sub:'backup'};

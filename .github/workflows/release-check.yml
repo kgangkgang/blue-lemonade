@@ -31,6 +31,7 @@ jobs:
           python -m unittest discover -s tools/tests -p 'test_release_gate.py'
           node tools/pricing/test-client.mjs
           node tools/tests/settings-upgrade.mjs .
+          node tools/tests/fruit-content-gap.mjs .
           node tools/tests/wordmask.mjs .
           node tools/tests/promptbind.mjs .
           node tools/tests/headswitch.mjs .
@@ -144,6 +145,8 @@ jobs:
           node tools/tests/mermaid-addon.mjs .
           node tools/tests/fruit-localization.mjs
           node tools/tests/prompt-tools.mjs
+          node tools/tests/prompt-link.mjs
+          node tools/tests/fruit-cards-removed.mjs .
           node tools/tests/settings-dialog.mjs
           node tools/tests/deus-qr.mjs
           node tools/build-integrity.mjs . --check
