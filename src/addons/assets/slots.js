@@ -1,10 +1,11 @@
 // 캐릭터 에셋 1.6.0 — 답장 뒤 다른 모델이 고르기: 그림 자리(빈 span) · 자리 고르기 · 고르는 모델에게 줄 글 · 대답 읽기.
-// 실리태번을 import 하지 않는다 (tools/tests/assets-after-reply.mjs 가 node 로 시험한다).
+// 실리태번을 import 하지 않는다 (tools/tests/assets-after-reply.mjs 가 node 로 시험한다). message-work.js 도 순수 함수.
 //
 // 왜: 이미지 프롬프트를 켜면 규칙과 그림 목록(캐릭터에 따라 수백 장)이 매 답변 본문 모델에게 간다 — 비싼 모델이면 그만큼 비싸다.
 // 켜 두면 본문 모델에게는 아무것도 보내지 않고, 답을 받는 순간 대사 문단 앞 빈 줄에 빈 자리를 넣은 뒤(글은 그 뒤로 안 바뀐다)
 // 연결한 (싼) 모델이 자리마다 그림 이름을 골라 extra 에만 적는다. 번역기 · TTS · 다시 쓰기는 자리를 글로 보지 않는다.
 import { splitName } from './names.js';
+import { thinkingHeadEnd } from '../../message-work.js';   // 1.6.8 순수 함수 (실리태번 없음)
 
 export const SLOT_CLASS = 'bl-asset-slot';
 /** 저장되는 자리 모양 — 이 모양 그대로만 자리로 본다 (번역기 보호 규칙 · 다시 쓰기 · TTS 도 같은 모양) */
@@ -16,6 +17,14 @@ const slotRe = () => new RegExp(SLOT_SOURCE, 'g');
 // 그림 확장의 그림 자리 (번호 있든 없든) — 고르는 모델에게 보내는 글에서는 뺀다
 const AUTOPIC_SLOT = /<span class="autopic-image-slot"(?: data-autopic-slot="[\w-]+")?>[^<]*<\/span>/g;
 const TAG = /\{\{img::/i;
+
+// 1.6.8 답 머리의 생각 블록 (과일의 마음 ECoT: "[RE:]⏎<ECoT>…</ECoT>⏎본문" — message-work.js thinkingHeadEnd). 과일 ECoT 스크립트가 우리 다음 차례에
+//   추론으로 옮기기 전에 읽으면 생각 글이 고르는 모델에게 통째로 갔고(돈 · 오판), 생각 속 「<content>」 언급에 자리가 생각 블록 안으로 들어가 추론으로 쓸려 갔다.
+/** 답을 머리의 생각 블록(head)과 본문(body)으로 — 생각 블록이 없으면 head 는 '' */
+export function splitThinking(text) {
+    const s = String(text ?? ''), end = thinkingHeadEnd(s);
+    return end < 0 ? { head: '', body: s } : { head: s.slice(0, end), body: s.slice(end) };
+}
 
 export const slotIds = text => [...String(text ?? '').matchAll(slotRe())].map(match => match[1]);
 export const hasAssetTag = text => TAG.test(String(text ?? ''));

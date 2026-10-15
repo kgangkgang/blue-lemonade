@@ -5,6 +5,8 @@
 // 보내기 · 스와이프 · 다시 생성을 누르는 그 순간(사용자 동작이 있어야 PIP 를 열 수 있다) 진행 상황을 그린 작은 영상을 PIP 로 띄운다.
 // 작은 창에는 '생성 중 · 글자 수 · 끝남'이 보이고, 실리태번으로 돌아오면 저절로 닫힌다. 켜 두었을 때만 불러온다 (features.js).
 const TRIGGERS = '#send_but, #option_regenerate, #option_continue, #mes_continue, .swipe_right, .swipe_left, #bl-onehand .bl-onehand-btn, #mes_impersonate, #option_impersonate, .qr--button, .bl-qrf-layer button[data-i], .ctx-blocker .ctx-item';
+import { dropThinkingHead } from './message-work.js';   // 6.6.5 답 머리의 생각 블록 (과일 ECoT)
+
 let mode = 'audio';
 // 소리 방식: 창 없이 버틴다. 브라우저는 '소리를 내고 있는 탭'을 얼리지 않는다 — 귀에 안 들리는 아주 낮고 작은 소리(30Hz · 0.1% 크기)를 WebAudio 로 낸다.
 // <audio> 재생과 달리 WebAudio 는 다른 앱의 재생을 멈추게 하지 않는 편이지만(유튜브가 계속 나옴), 폰 · 브라우저마다 다를 수 있어 실험 기능이다
@@ -123,7 +125,8 @@ export function syncBackgroundWindow(enabled, how = 'audio') {
         // 프롬프트 관리자의 토큰 세기(dryRun)는 생성이 아니다 — 끝 이벤트가 없어 'working' 이 남았다
         listen('GENERATION_STARTED', (_type, _params, dryRun) => { if (dryRun) return; lastSign = Date.now(); if (state.phase !== 'working') Object.assign(state, { phase: 'working', chars: 0, since: Date.now(), preview: '' }); });
         listen('STREAM_TOKEN_RECEIVED', (text) => { lastSign = Date.now(); if (typeof text === 'string') { state.chars = text.length; state.preview = text; } });
-        const finish = () => { if (state.phase !== 'working') return; const last = SillyTavern.getContext().chat?.at?.(-1)?.mes; if (typeof last === 'string' && last.length > state.chars) { state.chars = last.length; state.preview = last; } state.phase = 'done'; state.doneAt = Date.now(); if (!document.hidden) setTimeout(onVisible, 1500); };
+        // 6.6.5 끝 글자 수 · 미리보기는 머리의 생각 블록(과일 ECoT — 이 이벤트 뒤에 추론으로 옮겨진다)을 뺀 본문으로
+        const finish = () => { if (state.phase !== 'working') return; const last = SillyTavern.getContext().chat?.at?.(-1)?.mes; if (typeof last === 'string' && last.length > state.chars) { state.chars = last.length; state.preview = last; } const shown = dropThinkingHead(state.preview); if (shown !== state.preview) { state.chars = shown.length; state.preview = shown; } state.phase = 'done'; state.doneAt = Date.now(); if (!document.hidden) setTimeout(onVisible, 1500); };
         listen('GENERATION_ENDED', finish); listen('GENERATION_STOPPED', finish);
     } catch { /* 이벤트를 못 걸면 창은 열리되 글자 수는 안 나온다 */ }
 }

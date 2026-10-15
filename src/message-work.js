@@ -11,6 +11,25 @@ export const BRIDGE = Symbol.for('blue-lemonade.message-work');
 export const VERSION = 1;
 /** 머리(또는 꼬리)의 생각 블록 — 과일의 마음 ECoT(<ECoT>…</ECoT>) · 실리태번 추론 접두사 꼴 */
 export const THINKING_BLOCK = /<(ECoT|think|thinking|reasoning|thought)\b[^>]*>[\s\S]*?<\/\1>/gi;
+// 6.6.5 답 머리의 생각 블록 범위 — 과일의 마음 ECoT 스크립트(果实之心 ECoT 模块 v20261003.1 splitReasoning)가 추론으로 옮기는 범위와 같게:
+//   글 맨 앞(머리 한 줄 "[RE:]" 같은 "[…]" 뒤)이 생각 블록으로 시작할 때, 다섯 끝 태그 가운데 마지막 것 뒤까지. 실리태번 자동 추론 분리는 "[RE:]" 탓에 못 떼고,
+//   스크립트는 MESSAGE_RECEIVED 다음 차례 · GENERATION_ENDED(실리태번이 MESSAGE_RECEIVED 보다 먼저 보낸다) 300ms 뒤에 뗀다 — 그 전에 답을 읽는 기능이 쓴다.
+export const THINKING_ENDS = ['</ecot>', '</thinking>', '</think>', '<!-- end of the ecot -->', '<!-- end the ecot -->'];
+const THINKING_LEAD = /^\s*(?:\[[^\]\n]{0,20}\][ \t]*\r?\n?\s*)?(?:<ecot\b|<think(?:ing)?\b|<!--)/i;
+/** 머리 생각 블록이 끝나는 자리(그 뒤가 본문). 머리가 생각 블록이 아니면 -1. open: 끝 태그가 아직 없으면(스트리밍 중) 글 끝까지 생각 */
+export function thinkingHeadEnd(text, { open = false } = {}) {
+    const s = String(text ?? '');
+    if (!THINKING_LEAD.test(s)) return -1;
+    const lower = s.toLowerCase();
+    let end = -1;
+    for (const tag of THINKING_ENDS) { const at = lower.lastIndexOf(tag); if (at >= 0) end = Math.max(end, at + tag.length); }
+    return end < 0 && open ? s.length : end;
+}
+/** 머리 생각 블록을 뗀 글 (없으면 그대로) */
+export function dropThinkingHead(text) {
+    const s = String(text ?? ''), end = thinkingHeadEnd(s);
+    return end < 0 ? s : s.slice(end);
+}
 /** 테마의 그림 자리(캐릭터 에셋) — slots.js SLOT_SOURCE 와 같은 꼴 */
 export const ASSET_SLOT = /<span class="bl-asset-slot" data-asset-slot="[\w-]+"><\/span>/g;
 

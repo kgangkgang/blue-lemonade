@@ -4,6 +4,8 @@
 // 테마 폴더의 notify-sw.js 를 이 폴더 범위로 등록해 registration.showNotification 으로 띄운다 — 페이지를 가로채지 않는 범위라
 // 실리태번 요청에는 손대지 않는다. 알림을 누르면 워커가 실리태번 창을 앞으로 가져온다 (notify-sw.js).
 // 화면을 보고 있으면(visible) 알리지 않는다. 답이 끝난 뒤 번역 등 뒷일은 기다리지 않는다 — 글이 도착한 순간이 알림의 뜻이다.
+import { dropThinkingHead } from './message-work.js';   // 6.6.5 답 머리의 생각 블록 (과일 ECoT)
+
 let on = false, bound = false, registration = null, registering = null, offs = [];
 let lastShown = 0;
 
@@ -45,7 +47,8 @@ function replyPreview() {
         const chat = SillyTavern.getContext().chat;
         const last = chat?.at?.(-1);
         if (!last || last.is_user) return { title: '답이 도착했어요', body: '' };
-        const text = String(last.mes || '').replace(/\{\{[^{}]*\}\}/g, ' ').replace(/<[^>]+>/g, ' ').replace(/[*_`#>]/g, '').replace(/\s+/g, ' ').trim();
+        // 6.6.5 GENERATION_ENDED 는 MESSAGE_RECEIVED 보다 먼저 온다 — 과일 ECoT 스크립트가 머리의 생각 블록을 추론으로 옮기기 전이라 알림에 "[RE:] 让我…" 가 떴다
+        const text = dropThinkingHead(String(last.mes || '')).replace(/\{\{[^{}]*\}\}/g, ' ').replace(/<[^>]+>/g, ' ').replace(/[*_`#>]/g, '').replace(/\s+/g, ' ').trim();
         return { title: `${last.name || '답'} · 답이 도착했어요`, body: text.slice(0, 120) };
     } catch { return { title: '답이 도착했어요', body: '' }; }
 }

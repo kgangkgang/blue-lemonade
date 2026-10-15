@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.6.5/blue-lemonade-6.6.5.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.6.6/blue-lemonade-6.6.6.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.6.5 · 최신 업데이트</summary>
+<summary>6.6.6 · 최신 업데이트</summary>
+
+- 과일의 마음 프리셋에서 답 앞의 생각 블록 때문에 캐릭터 에셋 그림 자리가 생각 블록 안에 들어가 사라지던 것을 고쳤어요. 그림 고르기 요청에도 생각 글은 보내지 않아요 (캐릭터 에셋 1.6.8).
+- TTS가 스트리밍 중 생각 블록 속 따옴표를 대사로 읽거나, 생각 블록이 잘린 뒤 본문 앞줄을 건너뛰던 것을 고쳤어요 (TTS 1.8.8). 답장 알림 미리보기와 백그라운드 창 글자 수에도 생각 블록이 섞이지 않아요.
+- 설정 창 미리보기에 6.6.5 의 기울임 대사 띠 보정이 빠져 있던 것을 맞췄어요.
+
+</details>
+
+<details>
+<summary>6.6.5 · 과일에서 자동 다시쓰기 · 네모 버튼 · 흰 스위치 · 번역 누출 정리</summary>
 
 - 과일의 마음 프리셋에서 자동 다시 쓰기가 「고치는 동안 메시지가 바뀌어서」 하고 버려지던 문제를 고쳤어요. 프리셋이 생각 블록을 떼어 내도 고친 글이 그대로 적용돼요 (다시 쓰기 2.1.3).
 - 번역 결과에 번역 모델의 초안 · 혼잣말(let me … 등) · <output> 같은 태그가 섞여 들어가던 것을 걸러요. 그 태그 때문에 문단 여백이 사라지던 것도 함께 고쳐져요 (번역 2.5.0).

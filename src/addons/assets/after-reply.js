@@ -8,7 +8,7 @@ import { notifyRerender } from '../../rerender-notify.js';   // 6.5.2 다시 그
 import { TITLE, currentFolder, settings } from './state.js';
 import { runtime, ensureLoaded } from './store.js';
 import { pickActive, pickSettings, generatePick } from './pick.js';
-import { slotSpots, insertSlots, slotIds, markedReply, pickPrompt, parsePicks, rulesForPicker, hasAssetTag, skipReplyType, PROTECT_RE, RECORD_KEY, swipeOf, textOf, writeRecords, recordsFromPicks, stripSlotsForPrompt, dropUnknownSlots, retryTargets, manualRecord, freezeOthers } from './slots.js';
+import { slotSpots, insertSlots, slotIds, markedReply, pickPrompt, parsePicks, rulesForPicker, hasAssetTag, skipReplyType, PROTECT_RE, RECORD_KEY, swipeOf, textOf, writeRecords, recordsFromPicks, stripSlotsForPrompt, dropUnknownSlots, retryTargets, manualRecord, freezeOthers, splitThinking } from './slots.js';
 import { assetInfo, refreshSlots, slotRunning, slotHooks, shownSlotFiles } from './render.js';
 import { messageWork } from '../../message-work.js';   // 6.5.3 메시지 작업 순서 — 자리 넣기 · 지우기를 적어 둔다 (다시 쓰기 · 번역기가 알아보게)
 import { ownerSpellings } from './spellings.js';   // 6.3.x 그림 주인의 영 · 한 · 일 표기 줄 (이름 다리)
@@ -35,11 +35,13 @@ export function onMessageReceived(messageId, type) {
         if (!message || message.is_user || message.is_system || typeof message.mes !== 'string') return;
         const copied = dropUnknownSlots(message.mes, isObj(message.extra) ? message.extra[RECORD_KEY] : null);   // 모델이 앞 답에서 따라 쓴 자리 (기록 없음)
         if (copied.unknown.length) { messageWork().noteWrite(message, { by: 'assets', before: message.mes, after: copied.text }); message.mes = copied.text; if (Array.isArray(message.swipes)) message.swipes[swipeOf(message)] = copied.text; }
-        if (slotIds(message.mes).length || hasAssetTag(message.mes)) return;   // 이미 자리나 태그가 있다
-        const spots = slotSpots(message.mes, pickSettings().count);
+        // 1.6.8 머리의 생각 블록(과일 ECoT — 이 다음 차례에 추론으로 옮겨진다)은 빼고 본문에서만 본다
+        const { head, body } = splitThinking(message.mes);
+        if (slotIds(message.mes).length || hasAssetTag(body)) return;   // 이미 자리나 태그가 있다
+        const spots = slotSpots(body, pickSettings().count);
         if (!spots.length) return;
         const swipe = swipeOf(message);
-        const { text, ids } = insertSlots(message.mes, spots);
+        const inserted = insertSlots(body, spots), text = head + inserted.text, ids = inserted.ids;
         messageWork().noteWrite(message, { by: 'assets', before: message.mes, after: text });   // 6.5.3
         message.mes = text;
         if (Array.isArray(message.swipes)) message.swipes[swipe] = text;
@@ -74,7 +76,7 @@ async function fill(messageId, message, ids, swipe, avoid = []) {
         const ready = await ensureLoaded();
         if (!ready || !runtime.keywords) throw new Error('그림 목록을 읽지 못했어요');
         if (!stillHere(messageId, message)) return;
-        const reply = markedReply(textOf(message, swipe), ids);
+        const reply = markedReply(splitThinking(textOf(message, swipe)).body, ids);   // 1.6.8 생각 블록은 고르는 모델에게 보내지 않는다
         const context = getContext();
         const messages = pickPrompt({
             rules: rulesForPicker(settings().prompt, runtime.folder),
@@ -170,13 +172,14 @@ export function rerollMessage(messageId) {
     const avoid = ids.map(slot => map[slot]?.name).filter(Boolean);
     let textChanged = false;
     if (!ids.length) {
-        if (hasAssetTag(message.mes)) { say('이 답은 본문 모델이 그림 태그를 직접 넣었어요.'); return false; }
-        const spots = slotSpots(message.mes, pickSettings().count);
+        const { head, body } = splitThinking(message.mes);   // 1.6.8 머리의 생각 블록은 빼고
+        if (hasAssetTag(body)) { say('이 답은 본문 모델이 그림 태그를 직접 넣었어요.'); return false; }
+        const spots = slotSpots(body, pickSettings().count);
         if (!spots.length) { say('그림을 넣을 문단 사이가 없어요.'); return false; }
-        const inserted = insertSlots(message.mes, spots);
-        messageWork().noteWrite(message, { by: 'assets', before: message.mes, after: inserted.text });
-        message.mes = inserted.text;
-        if (Array.isArray(message.swipes)) message.swipes[swipe] = inserted.text;
+        const inserted = insertSlots(body, spots), text = head + inserted.text;
+        messageWork().noteWrite(message, { by: 'assets', before: message.mes, after: text });
+        message.mes = text;
+        if (Array.isArray(message.swipes)) message.swipes[swipe] = text;
         ids = inserted.ids;
         textChanged = true;
     }

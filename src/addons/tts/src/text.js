@@ -21,6 +21,8 @@
 //
 // parseRegexLines(text) → RegExp[]: 설정의 "지울 글(정규식)" 줄들. index.js · player.js · speakers.js 가 같은 규칙을 쓴다.
 
+import { thinkingHeadEnd } from '../../../message-work.js';   // 1.8.8 답 머리의 생각 블록 범위 (순수 함수)
+
 export const EXPRESSIVE_TAGS = new Set(['shout', 'quiet', 'angry', 'excited', 'dizzy', 'crying', 'anxious', 'hurt', 'intoxicated', 'whispering', 'whisper', 'trembling', 'deadpan']);
 // 닫는 태그가 없으면 글 끝까지 지우는 건너뛸 태그 (블록)
 const BLOCK_SKIP = new Set(['details', 'tracker', 'scene_plan', 'think', 'thinking', 'reasoning']);
@@ -140,6 +142,14 @@ export function parseRegexLines(text) {
 export const SLOT_RE = /<span\b[^>]*\b(?:data-(?:autopic|asset)-slot="[^"]*"|class="[^"]*\b(?:autopic-image-slot|bl-asset-slot)\b[^"]*")[^>]*>[^<]*<\/span>/g;
 export function blankSlots(text) {
     return String(text ?? '').replace(SLOT_RE, m => m.replace(/[^\n]/g, ' '));
+}
+
+// 1.8.8 답 머리의 생각 블록 (과일의 마음 ECoT: "[RE:]⏎<ECoT>…</ECoT>⏎본문" — message-work.js thinkingHeadEnd). 과일 ECoT 스크립트가 떼기 전
+//   (스트리밍 · 생성 끝 · 멈춘 답)에 읽으면 생각 글의 “…” 를 대사로 읽었고, 잘린 뒤엔 대사 번호가 밀려(스트리밍으로 센 수 > 남은 수) 본문 앞줄을 건너뛰었다.
+//   빈칸으로 바꿔 자리 수는 그대로 둔다. 끝 태그가 아직 안 온 스트리밍 글(final=false)은 그 뒤 전부가 생각이다.
+export function blankThinkingHead(text, final = true) {
+    const s = String(text ?? ''), end = thinkingHeadEnd(s, { open: !final });
+    return end < 0 ? s : s.slice(0, end).replace(/[^\n]/g, ' ') + s.slice(end);
 }
 
 /** 자유 글 → 읽을 글 (태그·엔티티·마크다운 정리, 공백 모음) */
@@ -372,6 +382,7 @@ export function segmentMessage(rawText, opts = {}) {
     let work = String(rawText ?? '').replace(/\r\n?/g, '\n');
     if (!work.trim()) return [];
     work = applyStrip(work, opts.stripRegex);
+    work = blankThinkingHead(work, final);   // 1.8.8 과일 ECoT 생각 블록 (잘리기 전 · 스트리밍)
     work = blankSlots(work);   // 6.1.8 그림 자리는 읽지도 · 맥락으로 보내지도 않는다 (위 SLOT_RE)
     if (skipCode) work = blankFences(work);
     work = work.replace(/<!--[\s\S]*?(?:-->|$)/g, m => m.replace(/[^\n]/g, ' '));
