@@ -52,11 +52,14 @@ export const skipReplyType = type => SKIP_TYPES.has(String(type || ''));
 const VOID = new Set(['br', 'img', 'hr', 'input', 'meta', 'link', 'wbr', 'source', 'area', 'col', 'embed', 'param', 'track']);
 const TOKEN = /<!--[\s\S]*?-->|```|~~~|<\/?([a-zA-Z][\w:-]*)\b[^>]*>|\r?\n[ \t\r]*\n/g;
 
-/** 이야기 칸: <prose>…</prose> 가 있으면 그 안만, 없으면 글 전체 */
+/** 이야기 칸: <prose>…</prose>(데우스) · <content>…</content>(과일) 가 있으면 그 안만, 없으면 글 전체
+ *  6.5.3 과일 답은 본문이 <content> 안이라 예전엔 안쪽 경계를 모두 「다른 태그 안」으로 건너뛰어 상태창 아래 한 자리만 생겼다 (설정 4장 → 1장, 사용자 10-15) */
+const STORY_TAGS = ['prose', 'content'];
 function storyRegion(text) {
-    const open = /<prose\b[^>]*>/i.exec(text);
-    if (open) {
-        const close = text.toLowerCase().indexOf('</prose>', open.index + open[0].length);
+    for (const tag of STORY_TAGS) {
+        const open = new RegExp(`<${tag}\\b[^>]*>`, 'i').exec(text);
+        if (!open) continue;
+        const close = text.toLowerCase().indexOf(`</${tag}>`, open.index + open[0].length);
         if (close > 0) return [open.index + open[0].length, close];
     }
     return [0, text.length];
@@ -89,7 +92,7 @@ export function paragraphBoundaries(text) {
         if (stack.length || !stripSlots(before).trim()) continue;
         const after = region.slice(last);
         const next = after.split(/\r?\n[ \t\r]*\n/)[0];
-        if (!stripSlots(next).trim() || /^\s*<\/(?:prose)\b/i.test(after)) continue;
+        if (!stripSlots(next).trim() || /^\s*<\/(?:prose|content)\b/i.test(after)) continue;
         out.push({ at: start + m.index, next });
     }
     return out;
@@ -157,7 +160,7 @@ export function markedReply(text, ids) {
  * 고르는 모델에게 보내는 글. rules = 사용자의 그림 규칙(본문 모델용이던 글 — 목록 매크로 자리는 아래 목록을 가리키게), list = 켜진 그림 이름들.
  * @returns {{ role: string, content: string }[]}
  */
-export function pickPrompt({ rules = '', list = '', reply = '', count = 1, previous = '', character = '', names = '', persona = '' }) {
+export function pickPrompt({ rules = '', list = '', reply = '', count = 1, previous = '', character = '', names = '', persona = '', avoid = [] }) {
     const n = Math.max(1, Number(count) || 1);
     const markers = n === 1 ? 'one marker, [ASSET 1],' : `${n} markers, [ASSET 1] to [ASSET ${n}],`;
     const system = [
@@ -181,6 +184,8 @@ export function pickPrompt({ rules = '', list = '', reply = '', count = 1, previ
         '',
         // 6.3.x 그림 주인의 다른 표기 (영 · 한 · 일) — 글이 일본어 · 한국어 이름을 써도 같은 주인의 그림을 고르게. 표기가 없으면 예전과 같은 글
         ...(String(names || '').trim() ? ['The reply may write a name in English, Korean or Japanese. <name_spellings> lists the spellings of each image owner.', '<name_spellings>', String(names).trim(), '</name_spellings>', ''] : []),
+        // 6.5.3 메시지 ··· 메뉴의 다시 고르기: 지금 보이던 그림은 피하게 (맞는 다른 그림이 없으면 같은 것도 된다)
+        ...((Array.isArray(avoid) ? avoid : []).filter(Boolean).length ? [`The user asked to pick again. These images were shown last time: ${avoid.filter(Boolean).join(', ')}. Prefer different images when another one fits the moment.`, ''] : []),
         `Answer with exactly ${n} line${n === 1 ? '' : 's'}, one per marker in order, and nothing else:`,
         ...Array.from({ length: n }, (_, i) => `${i + 1}: filename.ext`),
         // 6.4.1 예시의 2번~ 'none' 이 비우라고 부추겼다 — 예시는 모두 파일 이름, none 은 그 아래 한 줄로만

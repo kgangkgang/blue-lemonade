@@ -8,6 +8,7 @@ const root=path.resolve(process.argv[2]||path.join(path.dirname(fileURLToPath(im
 const source=fs.readFileSync(path.join(root,'src/prompt-tools.js'),'utf8')
   .replace(/^import .*;\r?\n/gm,'').replaceAll('export function ','function ')
   .replace("import('./scripts/runtime.js')",'runtimeReady');
+const cleanName=value=>typeof value==='string'?Array.from(value.replace(/\s+/g,' ').trim()).slice(0,40).join('').trim():'';
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b});return{promise,resolve,reject}};
 function environment({kind='fruit',pendingRuntime=false}={}){
   const state={enabled:{'fruit-style':false,'fruit':true,'deus-qr':true},overrides:{fruit:{code:'custom code'}}};
@@ -19,7 +20,7 @@ function environment({kind='fruit',pendingRuntime=false}={}){
   const box={dataset:{promptTools:kind},isConnected:true,querySelector:s=>s==='[data-prompt-open]'?button:status,querySelectorAll:()=>inputs,addEventListener:(type,fn)=>events.set(type,fn),removeEventListener:(type,fn)=>{if(events.get(type)===fn)events.delete(type)}};
   const nodes=new Map();
   const runtime={subscribeScripts:fn=>{subscribers.add(fn);return()=>subscribers.delete(fn)},syncScripts:async()=>{calls.push('sync')},scriptStatus:()=> '사용 중'};
-  const context={scriptSettings:()=>state,persistScripts:()=>{calls.push('save');return save()},legacyConflicts:()=>conflict?[{}]:[],addonsEnabled:s=>s.addons,themeEnabled:s=>s.theme,getSettings:()=>settings,leaveSettingsDialog:()=>calls.push('leave'),promptLinkMarkup:()=>'',document:{getElementById:id=>nodes.get(id)},runtimeReady:pendingRuntime?runtimeGate.promise:Promise.resolve(runtime)};
+  const context={scriptSettings:()=>state,persistScripts:()=>{calls.push('save');return save()},legacyConflicts:()=>conflict?[{}]:[],addonsEnabled:s=>s.addons,themeEnabled:s=>s.theme,getSettings:()=>settings,leaveSettingsDialog:()=>calls.push('leave'),promptLinkMarkup:()=>'',document:{getElementById:id=>nodes.get(id)},runtimeReady:pendingRuntime?runtimeGate.promise:Promise.resolve(runtime),cleanName};
   vm.runInNewContext(source+'\nglobalThis.api={bindPromptTools,promptToolsMarkup,fruitPromptMarkup};',context);
   const cleanup=context.api.bindPromptTools({querySelector:()=>box});
   return{state,settings,calls,inputs,button,status,box,events,nodes,context,runtime,subscribers,cleanup,saveGate,runtimeGate,
@@ -75,5 +76,18 @@ await check('a failure after verified saving preserves the saved switch',async()
 });
 await check('source display distinguishes the distribution link and code without asserting different authors',async()=>{
   const e=environment();const html=e.context.api.fruitPromptMarkup();assert.ok(html.includes('https://discord.com/channels/1384945301780955246/1395707630302789653/1554887154583212064'));assert.ok(html.includes('https://github.com/kongkongmie/guoshizhixin'));assert.ok(html.includes('과일 원문 보기'));assert.ok(html.includes('>코드 ↗'));e.cleanup();
+});
+await check('the Deus entry name row renders beside its switch and hides while the quick settings are off',async()=>{
+  const e=environment({kind:'deus'});let html=e.context.api.promptToolsMarkup('deus');assert.ok(html.includes('data-prompt-name="deus"'));assert.ok(!html.includes('data-prompt-name-row="deus" hidden'));
+  e.state.enabled['deus-qr']=false;html=e.context.api.promptToolsMarkup('deus');assert.ok(html.includes('data-prompt-name-row="deus" hidden'));e.state.names={deus:'<b>&"x"'};html=e.context.api.promptToolsMarkup('deus');assert.ok(html.includes('value="&lt;b&gt;&amp;&quot;x&quot;"'));e.cleanup();
+});
+await check('a committed name is cleaned, saved through the verified script store and pushed to the running entry',async()=>{
+  const e=environment({kind:'deus'});e.context.__blueLemonadeDeusQuick_v1={refreshName:()=>e.calls.push('name')};const input={dataset:{promptName:'deus'},value:'  나의   데우스 '};
+  await e.events.get('change')({target:input});assert.equal(e.state.names.deus,'나의 데우스');assert.equal(input.value,'나의 데우스');assert.deepEqual(e.calls,['save','name']);assert.match(e.status.textContent,/저장/);
+  await e.events.get('change')({target:{dataset:{promptName:'deus'},value:'나의 데우스'}});assert.deepEqual(e.calls,['save','name']);
+  await e.events.get('change')({target:{dataset:{promptName:'unknown'},value:'x'}});assert.deepEqual(e.calls,['save','name']);assert.equal(e.state.names.unknown,undefined);e.cleanup();
+});
+await check('a failed name save rolls back to the previous name',async()=>{
+  const e=environment({kind:'deus'});e.state.names={deus:'이전'};e.failSave();await e.events.get('change')({target:{dataset:{promptName:'deus'},value:'새 이름'}});assert.equal(e.state.names.deus,'이전');assert.equal(e.status.textContent,'save failed');e.cleanup();
 });
 console.log(`prompt-tools: ${passed} passed`);

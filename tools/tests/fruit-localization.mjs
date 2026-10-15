@@ -45,6 +45,8 @@ const e=environment(),panel=add(e.html,'div',{id:'fruit-heart-v6',class:'open'})
 const prompt=add(panel,'input',{placeholder:'搜索全部条目…'});prompt.value='首页';prompt.checked=true;
 const area=add(panel,'textarea',{},'首页'),code=add(panel,'code',{},'{{输入}}'),chat=add(e.body,'div',{id:'chat'},'首页');
 const profile=add(panel,'button',{'data-profile':'首页'},'首页'),word=add(panel,'button',{'data-nsfw-drop':'start:0',title:'点一下删掉「首页」'},'首页'),preview=add(panel,'pre',{class:'fh-exp-preview'},'首页');
+const builtInProfile=add(panel,'button',{'data-profile':'果实默认'},' 果实默认 ');
+const userLabel=add(panel,'button',{'data-bl-fruit-user-label':'1',title:'首页','aria-label':'首页'},'首页');
 const edit=add(panel,'div',{contenteditable:'true'},'首页'),svg=add(panel,'svg',{},'首页'),author=add(panel,'span',{},'@喵喵电波MoM');
 const version=add(panel,'small',{},'脚本 v20261003.1 · 本地测试 · 果实 V6+');
 const reasoning=add(e.body,'select',{id:'reasoning_select'}),option=add(reasoning,'option',{value:'果实之心'},'果实之心'),foreign=add(reasoning,'option',{value:'custom'},'首页');
@@ -53,6 +55,8 @@ e.run();
 check('home text and close hint use their correct contexts',()=>{assert.equal(home.text,'홈');assert.equal(close.getAttribute('title'),'닫기')});
 check('inputs keep original values and toggle state',()=>{assert.equal(prompt.value,'首页');assert.equal(prompt.checked,true);assert.equal(prompt.getAttribute('placeholder'),'전체 항목 검색…');assert.equal(area.text,'首页')});
 check('chat, code, editable content, keywords, profiles and preview stay original',()=>{for(const node of [chat,profile,word,preview,edit,svg])assert.equal(node.text,'首页');assert.equal(code.text,'{{输入}}');assert.equal(author.text,'@喵喵电波MoM')});
+check('the built-in combination name translates only its display, preserving its selection key',()=>{assert.equal(builtInProfile.text,' 과일 기본 ');assert.equal(builtInProfile.getAttribute('data-profile'),'果实默认')});
+check('user-chosen quick-reply names and font labels keep their exact text and accessible labels',()=>{assert.equal(userLabel.text,'首页');assert.equal(userLabel.getAttribute('title'),'首页');assert.equal(userLabel.getAttribute('aria-label'),'首页')});
 check('a keyword tooltip keeps the actual stored keyword',()=>{assert.ok(word.getAttribute('title').includes('首页'));assert.ok(!word.getAttribute('title').includes('홈'))});
 check('adjacent version captures preserve the version and translate the suffix',()=>{assert.ok(version.text.includes('20261003.1'));assert.ok(version.text.includes('로컬 테스트'));assert.ok(!version.text.includes('本地测试'))});
 check('reasoning display changes only the owned option; its value stays original',()=>{assert.equal(option.text,'과일의 마음');assert.equal(option.getAttribute('value'),'果实之心');assert.equal(foreign.text,'首页')});
@@ -65,6 +69,8 @@ check('native dialogs translate only known prompts and preserve names/defaults/r
 home.children[0].nodeValue='사용자가 바꾼 표시';close.setAttribute('title','사용자가 바꾼 설명');
 e.cleanups.at(-1)();
 check('turning off restores only text and attributes still owned by the adapter',()=>{assert.equal(home.text,'사용자가 바꾼 표시');assert.equal(close.getAttribute('title'),'사용자가 바꾼 설명');assert.equal(save.text,'保存');assert.equal(option.text,'果实之心');assert.equal(prompt.getAttribute('placeholder'),'搜索全部条目…')});
+check('the combination display restores on OFF and a changed selection key releases the owned label',()=>{assert.equal(builtInProfile.text,' 果实默认 ');e.run();assert.equal(builtInProfile.text,' 과일 기본 ');builtInProfile.setAttribute('data-profile','Custom name');e.mutate();assert.equal(builtInProfile.text,' 果实默认 ');builtInProfile.children[0].nodeValue='用户自己的名称';e.mutate();assert.equal(builtInProfile.text,'用户自己的名称');e.cleanups.at(-1)()});
+check('settings action labels fit a half-width button on one line',()=>{const data=JSON.parse('{'+codeOf('fruit-heart').split('installFruitHeartKorean(BlueLemonade,{')[1].trim().replace(/\);\s*$/,''));const ko=zh=>data.entries.find(x=>x.zh===zh&&x.kind==='text')?.ko;assert.equal(ko('重新配置酒馆解析'),'분석 설정 다시 적용');assert.equal(ko('保存当前为方案'),'현재 조합 저장');assert.equal(ko('删除当前方案'),'이 조합 삭제')});
 check('cleanup removes timers, observers, styles and handlers',()=>{assert.equal(e.intervals.size,0);assert.equal(e.listeners.size,0);assert.ok(e.observers.every(x=>x.targets.length===0));assert.equal(e.head.children.length,0);assert.equal(e.host.__blueLemonadeFruitHeartKorean_v1,undefined)});
 check('turning on twice replaces its own instance without duplicate work',()=>{e.run();e.run();assert.equal(e.intervals.size,1);assert.equal(e.head.children.length,1);e.cleanups.at(-1)();assert.equal(e.intervals.size,0)});
 check('a later external wrapper stays installed and cannot revive a stopped translation',()=>{e.run();e.click(home);const previous=e.host.prompt;const external=(...args)=>previous(...args);e.host.prompt=external;e.cleanups.at(-1)();e.host.prompt('方案名称','首页');assert.equal(e.host.prompt,external);assert.equal(e.calls.at(-1)[1],'方案名称');assert.equal(e.calls.at(-1)[2],'首页')});

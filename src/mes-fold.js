@@ -8,6 +8,8 @@
 // 내장 번역기도 원문 비교를 다시 한다. 다시 그리기는 updateMessageBlock, 저장은 hideChatMessageRange 가 한 번 한다.
 
 // 감싸는 틀: 빈 줄을 두어야 첫 문단부터 <p> 로 그려진다 (한 줄 틀은 첫 문단이 <br> 붙은 맨 글자로 남았다)
+import { notifyRerender } from './rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe) — 이벤트는 여전히 쏘지 않고 알림기가 판단한다
+
 const HEAD = '<details><summary></summary>\n\n', TAIL = '\n\n</details>';
 const OPEN = /^\s*<details\s*>\s*<summary\s*>\s*<\/summary\s*>/i;
 const CLOSE = /<\/details\s*>\s*$/i;
@@ -68,7 +70,7 @@ export function repairUnhiddenFolds() {
         rewriteFold(message, false); delete message.extra.bl_fold_was_hidden;
         if (message.swipes && Number.isInteger(message.swipe_id)) message.swipes[message.swipe_id] = message.mes;
         if (message.swipe_info?.[message.swipe_id]) message.swipe_info[message.swipe_id].extra = structuredClone(message.extra);
-        ctx.updateMessageBlock(id, message); changed.push(id);
+        ctx.updateMessageBlock(id, message); changed.push(id); void notifyRerender(id);   // 6.5.2
     }
     if (changed.length) Promise.resolve(ctx.saveChat()).catch(error => console.warn('[Blue Lemonade] 펼친 메시지 저장', error));
     return changed;
@@ -116,6 +118,7 @@ async function applyFold(target, fold) {
         // 스와이프 사본도 같이 — 안 하면 옆 스와이프에 갔다 오면 감싸기 전 글이 돌아온다
         try { core?.syncMesToSwipe?.(id); } catch (error) { console.warn('[Blue Lemonade] 접기: 스와이프 사본', error); }
         ctx.updateMessageBlock(id, message);
+        await notifyRerender(id);   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (접은 카드도 iframe 으로)
         if (keepHidden) {
             await ctx.saveChat(); // 숨김은 그대로 · 글만 풀었으니 저장만
         } else if (typeof chats?.hideChatMessageRange === 'function') {

@@ -1,12 +1,17 @@
 import { SCRIPT_CATALOG } from './catalog.js';
 export const STORE_KEY='blue_lemonade_scripts';
 const ids=new Set(SCRIPT_CATALOG.map(item=>item.id));
+export const NAME_KEYS=['deus','fruit'];
+export const cleanName=value=>typeof value==='string'?Array.from(value.replace(/\s+/g,' ').trim()).slice(0,40).join('').trim():'';
 export function scriptSettings(){
   const ext=SillyTavern.getContext().extensionSettings;
   if(!ext[STORE_KEY]||typeof ext[STORE_KEY]!=='object'||Array.isArray(ext[STORE_KEY]))ext[STORE_KEY]={version:1,enabled:{},overrides:{}};
   const state=ext[STORE_KEY];
   if(!state.enabled||typeof state.enabled!=='object'||Array.isArray(state.enabled))state.enabled={};
   if(!state.overrides||typeof state.overrides!=='object'||Array.isArray(state.overrides))state.overrides={};
+  // 빠른 설정·빠른 답장 줄에 보일 이름. 비우면 원래 아이콘·이름.
+  if(!state.names||typeof state.names!=='object'||Array.isArray(state.names))state.names={};
+  for(const key of NAME_KEYS)state.names[key]=cleanName(state.names[key]);
   for(const id of ids){
     state.enabled[id]=state.enabled[id]===true;
     if(state.overrides[id]&&(typeof state.overrides[id].code!=='string'||state.overrides[id].code.length>1000000))delete state.overrides[id];

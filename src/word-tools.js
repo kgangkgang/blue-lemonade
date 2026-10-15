@@ -4,6 +4,7 @@ import { getSettings, saveSettings } from './settings.js';
 import { replaceText, importRuleSets } from './word-tools-core.js';
 import { captureOptionsMarkup, bindCaptureOptions, openCapturePreview } from './capture-options.js';
 import { wordMaskModule } from './features.js';
+import { notifyRerender } from './rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe)
 let wordMask=null; // 6.0.4 잠시 가리기 모듈 — 스위치를 켤 때 처음 불러온다 (wordmask.js). 안 켜면 파일도 안 받는다
 const loadMask=async()=>wordMask??=await wordMaskModule();
 const esc = v => String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -128,7 +129,7 @@ async function applyTransaction(transaction, reverse=false) {
     for(const row of transaction.rows){
         // The text is already saved. A different extension's event handler must
         // not turn a successful edit into a failure and discard its undo record.
-        try { ctx.updateMessageBlock(row.id,row.message);if((reverse?row.before:row.after).display===undefined)await ctx.eventSource.emit(ctx.eventTypes.MESSAGE_UPDATED,row.id); }
+        try { ctx.updateMessageBlock(row.id,row.message);if((reverse?row.before:row.after).display===undefined)await ctx.eventSource.emit(ctx.eventTypes.MESSAGE_UPDATED,row.id);else await notifyRerender(row.id); }   // 6.5.2 번역문까지 바꾼 줄도 헬퍼에 알린다 (번역기는 이 알림을 건너뛴다)
         catch(error) { console.warn('[Blue Lemonade] 저장 후 화면 갱신',error); }
     }
 }

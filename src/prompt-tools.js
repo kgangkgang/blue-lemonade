@@ -1,4 +1,4 @@
-import {scriptSettings,persistScripts,legacyConflicts} from './scripts/store.js';
+import {scriptSettings,persistScripts,legacyConflicts,cleanName} from './scripts/store.js';
 import {addonsEnabled,themeEnabled} from './usage-mode.js';
 import {getSettings} from './settings.js';
 import {leaveSettingsDialog} from './settings-dialog.js';
@@ -11,11 +11,15 @@ const GROUPS={
 const allowed=new Set(Object.values(GROUPS).flat().map(item=>item[0]));
 const listeners=new Set();let busy=false;
 const repaint=()=>{for(const fn of listeners)fn();};
+// 입력창 옆 단추에 보일 이름. 비우면 아이콘만 보인다.
+const NAMES={deus:['deus-qr','빠른 설정 이름','비우면 아이콘만 보여요']};
+const escapeAttr=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nameMarkup=(id,state)=>{const entry=Object.entries(NAMES).find(([,item])=>item[0]===id);if(!entry)return '';const [key,[,title,note]]=entry;return `<label class="salty-row bl-prompt-name-row" data-prompt-name-row="${key}"${state.enabled[id]?'':' hidden'}><span>${title}</span><input type="text" class="text_pole" data-prompt-name="${key}" value="${escapeAttr(cleanName(state.names?.[key]))}" maxlength="40" placeholder="${note}" aria-label="${title}" autocomplete="off"></label>`;};
 
 export function promptToolsMarkup(kind){
     const items=GROUPS[kind];if(!items)return '';
     const state=scriptSettings();
-    return `<div class="bl-prompt-tools" data-prompt-tools="${kind}"><div class="salty-group">${items.map(([id,title,note])=>`<div class="salty-row bl-prompt-tool-row"><span>${title}</span><label class="salty-switch"><input type="checkbox" data-prompt-script="${id}" aria-label="${title}" ${state.enabled[id]?'checked':''}><span></span></label><small>${note}</small></div>`).join('')}</div><div class="bl-prompt-tools-actions"><button type="button" class="salty-btn" data-prompt-open="${kind}">${kind==='deus'?'빠른 설정 열기':'과일의 마음 열기'}</button></div><p class="salty-note" data-prompt-tools-status role="status" aria-live="polite"></p></div>`;
+    return `<div class="bl-prompt-tools" data-prompt-tools="${kind}"><div class="salty-group">${items.map(([id,title,note])=>`<div class="salty-row bl-prompt-tool-row"><span>${title}</span><label class="salty-switch"><input type="checkbox" data-prompt-script="${id}" aria-label="${title}" ${state.enabled[id]?'checked':''}><span></span></label><small>${note}</small></div>${nameMarkup(id,state)}`).join('')}</div><div class="bl-prompt-tools-actions"><button type="button" class="salty-btn" data-prompt-open="${kind}">${kind==='deus'?'빠른 설정 열기':'과일의 마음 열기'}</button></div><p class="salty-note" data-prompt-tools-status role="status" aria-live="polite"></p></div>`;
 }
 
 export function fruitPromptMarkup(){
@@ -31,6 +35,7 @@ export function bindPromptTools(root){
         if(!alive||!box.isConnected)return;
         const state=scriptSettings(),settings=getSettings(),available=addonsEnabled(settings);
         for(const input of box.querySelectorAll('[data-prompt-script]')){input.checked=state.enabled[input.dataset.promptScript]===true;input.disabled=busy||!available;}
+        for(const row of box.querySelectorAll('[data-prompt-name-row]')){const key=row.dataset?.promptNameRow;if(!NAMES[key])continue;row.hidden=state.enabled[NAMES[key][0]]!==true;const input=row.querySelector('input');if(!input)continue;input.disabled=busy||!available;if(document.activeElement!==input)input.value=cleanName(state.names?.[key]);}
         const button=box.querySelector('[data-prompt-open]');button.disabled=busy||!available||(button.dataset.promptOpen==='deus'&&!state.enabled['deus-qr']);
         if(!available)say('테마 → 기타 설정 → 사용 모드에서 내장 확장을 함께 사용하면 켤 수 있어요.');
         else if(state.enabled['fruit-style']&&box.dataset.promptTools==='fruit'&&!themeEnabled(settings))say('꾸미기는 블루레몬에이드 테마를 켜면 적용돼요.');
@@ -38,8 +43,19 @@ export function bindPromptTools(root){
     listeners.add(paint);paint();
     const ready=import('./scripts/runtime.js').then(mod=>{runtime=mod;if(alive){unsubscribe=mod.subscribeScripts(paint);paint();}return mod;});
     ready.catch(error=>say(error.message||'설정을 불러오지 못했어요.'));
+    async function rename(input){
+        const key=input.dataset.promptName;if(!NAMES[key]||busy||!addonsEnabled(getSettings())){paint();return;}
+        const state=scriptSettings(),before=cleanName(state.names?.[key]),next=cleanName(input.value);
+        if(next===before){input.value=before;return;}
+        busy=true;repaint();say('저장하고 있어요…');
+        try{(state.names??={})[key]=next;await persistScripts();if(!alive||!box.isConnected)return;input.value=next;say(next?'이름을 저장했어요.':'이름을 비웠어요. 아이콘만 보여요.');}
+        catch(error){(state.names??={})[key]=before;say(error.message||'이름을 저장하지 못했어요.');}
+        finally{busy=false;repaint();globalThis.__blueLemonadeDeusQuick_v1?.refreshName?.();}
+    }
     async function change(event){
-        const input=event.target,id=input?.dataset?.promptScript;
+        const input=event.target;
+        if(input?.dataset?.promptName!==undefined){await rename(input);return;}
+        const id=input?.dataset?.promptScript;
         if(!allowed.has(id)||busy||!addonsEnabled(getSettings())){paint();return;}
         const before=scriptSettings().enabled[id],next=input.checked;
         if(next&&legacyConflicts(id).length){paint();say('헬퍼에서 같은 스크립트를 끈 뒤 켜 주세요.');return;}

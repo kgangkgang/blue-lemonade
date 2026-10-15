@@ -8,7 +8,7 @@ const bundled = (await import(pathToFileURL(path.join(root,'src/scripts/bundled/
 const plain = fs.readFileSync(path.join(root,'src/scripts/plain/deus-qr.js'),'utf8');
 assert.equal(plain.split('/*BL-SCRIPT-START*/\n')[1].split('\n/*BL-SCRIPT-END*/')[0],bundled);
 new Function('BlueLemonade',bundled);
-const { groups, toggles, marker, create, matches } = new Function(bundled.split('// INSTALL')[0]+'\nreturn { groups:DEUS_QUICK_GROUPS,toggles:DEUS_QUICK_TOGGLES,marker:DEUS_QUICK_MARKER,create:createDeusQuickController,matches:deusMatches };')();
+const { groups, toggles, marker, create, matches, quickName } = new Function(bundled.split('// INSTALL')[0]+'\nreturn { groups:DEUS_QUICK_GROUPS,toggles:DEUS_QUICK_TOGGLES,marker:DEUS_QUICK_MARKER,create:createDeusQuickController,matches:deusMatches,quickName:deusQuickName };')();
 let passed=0;
 async function test(name, fn) { await fn(); console.log('PASS',name); passed++; }
 function fixture() {
@@ -74,4 +74,6 @@ await test('UI entry, cleanup, explicit save and no model/network generation con
  assert.ok(bundled.includes('__blueLemonadeDeusQuick_v1'));assert.ok(bundled.includes('BlueLemonade.onCleanup(stop)'));assert.ok(bundled.includes('skipUpdate:true'));assert.ok(bundled.includes("setAttribute('aria-modal','false')"));assert.ok(!/generateRaw|generateQuietPrompt|fetch\(|executeSlashCommands|replacePreset\(/.test(bundled));
 });
 await test('native modules import through the parent realm and native document base',()=>{assert.ok(bundled.includes("host.Function('url','return import(url)')"));assert.ok(bundled.includes("importHost(new URL('scripts/openai.js',doc.baseURI).href)"));assert.ok(!bundled.includes("import(new URL("));});
+await test('the entry name is display only: trimmed, single-spaced, capped at 40 characters, never a non-string',()=>{assert.equal(quickName('  데우스   설정 '),'데우스 설정');assert.equal(quickName('가'.repeat(60)).length,40);assert.equal(quickName(''),'');assert.equal(quickName(undefined),'');assert.equal(quickName(['x']),'');});
+await test('the entry label follows the script settings and is refreshed on settings events and from the theme panel',()=>{assert.ok(bundled.includes("extensionSettings?.blue_lemonade_scripts?.names?.deus"));assert.ok(bundled.includes('refreshName: syncName'));assert.ok(bundled.includes("    if (stopped) return;\n    syncName();"));assert.ok(bundled.includes('.dq-entry-label'));assert.ok(!bundled.includes('names.deus ='));});
 console.log(`Deus quick settings: ${passed} passed`);

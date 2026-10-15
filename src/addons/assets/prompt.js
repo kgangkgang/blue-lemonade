@@ -1,6 +1,8 @@
 // 캐릭터 에셋 규칙을 생성 전에 준비한다. 자동/수동은 한 자리만 사용하고, 끄면 둘 다 비운다.
 import { eventSource, event_types, setExtensionPrompt, extension_prompt_types, extension_prompt_roles, isGenerating, setSendButtonState } from '../../../../../../../script.js';
 import { getContext } from '../../../../../../extensions.js';
+// 6.5.3 생성 상태 (본채팅 생성만 · 테마의 붙잡음 등록) — import 줄 끝에 주석을 달지 않는다 (character-assets-prompt 시험이 import 줄을 통째로 뗀다)
+import { isMainChatGenerating, holdGenerationState } from '../../main-chat-rules.js';
 import { addonsEnabled } from '../../usage-mode.js';
 import { settings, currentFolder } from './state.js';
 import { runtime, reload, ensureLoaded, expandedPrompt, onStoreChange } from './store.js';
@@ -26,8 +28,10 @@ function holdSendState() {
     if (!sendLock) sendLock = { wasGenerating: isGenerating(), holders: 0 };
     const lock = sendLock;
     ++lock.holders;
+    const releaseState = holdGenerationState('assets');   // 6.5.3 테마의 붙잡음 (생성 중은 아니다 — 번역 · 다시 쓰기 단추가 끝나길 기다리게)
     if (!lock.wasGenerating) setSendButtonState(true);
     return () => {
+        releaseState();
         if (--lock.holders) return;
         if (sendLock === lock) sendLock = null;
         if (!lock.wasGenerating && isGenerating()) setSendButtonState(false);
@@ -134,7 +138,10 @@ export function setupPrompt() {
         return reload();
     });
     for (const event of [event_types.GENERATION_ENDED, event_types.GENERATION_STOPPED]) {
-        if (event) eventSource.on(event, () => {
+        if (event) eventSource.on(event, (arg) => {
+            // 6.5.3 이 생성의 끝만: 실리태번 헬퍼가 제 generate 를 멈출 때 내는 GENERATION_STOPPED(생성 id) · 조용한 생성이 끝나며 본채팅 도중에 내는 GENERATION_ENDED 는 아니다
+            //   (그때 준비를 취소하면 이 답의 그림 규칙이 빠진다 — main-chat-rules isMainChatGenerating 은 살아 있는 스트림을 본다)
+            if ((typeof arg === 'string' && arg) || isMainChatGenerating()) return;
             cancelPreparation();
             ++generationEpoch;
             generationType = null;

@@ -33,6 +33,7 @@ import {
     parseEntries,
     prepareSpans,
     promptHasMarker,
+    reanchorRewrite,
     rebaseSlotLines,
     rerollUntil,
     rewriteText,
@@ -41,6 +42,7 @@ import {
 import { DEFAULT_SETTINGS } from './defaults.js';
 import { badgeTextHit } from '../../badge-hit.js';
 import { markRewrite } from '../../edit-origin.js';
+import { notifyRerender } from '../../rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe)
 import { withNameAliases } from '../../name-aliases.js';   // 6.3.x 예외 캐릭터를 다른 표기(영 · 한 · 일)로도 찾는다
 import { PERSONAL } from './defaults-personal.js';
 import { isEditingMessage } from './guards.js';
@@ -48,6 +50,8 @@ import { createSpanFinder } from './spans.js';
 import { PROVIDERS, autoFetchModelList, canFetch, fetchModelList, isHttpUrl, listKey, missingNote, modelChoices, normalizeUrl, pickModel, resolveModel, providerKeyOf } from './providers.js';
 import { applyModelRequestRules, cached as cachedModels, fillSelect, onChange as onModelListChange } from '../../live-models.js';
 import { capturedMessages, capturedRequest, holdGeneration, regenerateReply, replaceReply, visibleText, watchRequests, withTimeout } from './reroll.js';
+import { isMainChatGenerating, whenMainChatIdle } from '../../main-chat-rules.js';   // 6.5.3 「생성 중」 = 본채팅 생성만 (조용한 생성 · 헬퍼 generate · 이 애드온의 붙잡음은 아님)
+import { messageWork } from '../../message-work.js';   // 6.5.3 메시지 작업 순서 — 글을 바꾸면 적어 둔다 (번역기 · 그림 확장이 알아보게)
 import { applyUpgrades } from './upgrades.js';
 import { startQuickBan, setQuickBanEnabled } from './quick-ban.js';
 
@@ -756,7 +760,11 @@ async function cleanMessage(messageId, manual, signal) {
             if (current !== message || current.mes !== original) {
                 // 6.1.8 그 사이 그림 자리 줄만 더해지거나 빠졌으면 고친 글을 버리지 않고 같은 줄 자리에 다시 끼워 적용한다.
                 //   (다시 쓰기는 줄 수를 바꾸지 않으므로 줄마다 짝이 맞다.) 다른 글이 바뀌었으면 예전처럼 적용하지 않는다.
-                const rebased = current === message ? rebaseSlotLines(original, current.mes, replacement) : null;
+                // 6.5.3 프리셋의 헬퍼 스크립트(과일의 마음 ECoT)가 그 사이 머리의 생각 블록을 떼어 내도 보이는 글이 같으면 지금 글에 다시 끼운다 (reanchorRewrite) —
+                //   예전엔 그때마다 「메시지가 바뀌어서」 버려져 과일 프리셋에서 다시 쓰기가 안 먹혔다 (리그 재현 10-15)
+                const rebased = current === message
+                    ? (rebaseSlotLines(original, current.mes, replacement) ?? reanchorRewrite(current.mes, visibleText(current), visible, result.text))
+                    : null;
                 if (rebased === null) {
                     toastr.warning('고치는 동안 메시지가 바뀌어서 적용하지 않았어요.', TITLE);
                     return;
@@ -765,6 +773,7 @@ async function cleanMessage(messageId, manual, signal) {
                 replacement = rebased;
                 tokenCount = undefined;   // 자리 줄이 더해진 글의 토큰 수는 다시 세야 한다 — 기다리는 사이 또 바뀔 수 있어 여기서는 적지 않는다
             }
+            messageWork().noteWrite(message, { by: 'rewrite', before: message.mes, after: replacement });   // 6.5.3 메시지 작업 순서 — 번역기 · 그림 확장이 이 변화를 알아보게
             message.mes = replacement;
             // 6.1.7 다시 쓰기가 고쳤다고 적는다 (알리기 전에) — TTS 가 이 표시를 보고 대사 분석을 버리지 않고 새 글로 옮긴다.
             //   사람이 직접 고친 글에는 표시가 없어 지금처럼 다시 분석한다. 리롤(장면 계획 다시 뽑기)은 글을 새로 쓰는 것이라 적지 않는다.
@@ -804,11 +813,21 @@ async function cleanMessage(messageId, manual, signal) {
     }
 }
 
+// 6.5.3 답이 오는 중에 단추를 누르면 끝나길 기다렸다가 이어서 검사한다 — 이만큼 넘기면 안내하고 그만
+const WAIT_REPLY_MAX_MS = 10 * 60 * 1000;
+let waitingForReply = false;
+
 async function checkLastMessage() {
     // 1.8.8 답이 오는 중에 누르면 반쯤 온 글을 붙잡아, 끝난 답의 자동 검사가 말없이 건너뛰어진다
-    if (document.body.dataset.generating === 'true') {
-        toastr.info('답이 끝난 뒤에 눌러 주세요.', TITLE);
-        return;
+    // 6.5.3 「생성 중」은 본채팅 생성만 본다 (main-chat-rules isMainChatGenerating) — 다른 확장 · 실리태번 헬퍼의 조용한 생성이 body[data-generating] 을 켜 둬도,
+    //   이 애드온이 자동 검사로 답을 붙잡고 있어도(그때는 cleanMessage 의 「지금 고치는 중」) 물러서지 않는다. 생성 중이면 취소하지 않고 끝난 뒤 이어서 검사한다.
+    if (isMainChatGenerating()) {
+        if (waitingForReply) { toastr.info('답이 끝나면 검사할게요. (이미 기다리는 중)', TITLE); return; }
+        waitingForReply = true;
+        toastr.info('답이 끝나면 검사할게요.', TITLE);
+        let idle = false;
+        try { idle = await whenMainChatIdle({ quietMs: 500, maxMs: WAIT_REPLY_MAX_MS }); } finally { waitingForReply = false; }
+        if (!idle) { toastr.info('답이 10분 넘게 끝나지 않아 검사하지 않았어요. 끝난 뒤 다시 눌러 주세요.', TITLE); return; }
     }
     const { chat } = getContext();
     for (let id = chat.length - 1; id >= Math.max(0, chat.length - 6); id--) {
@@ -910,6 +929,7 @@ async function ensureScenePlan(messageId, end, stopSignal) {
             delete globalThis[Symbol.for('st.stream-watchdog.cut')];
             if ($(`#chat .mes[mesid="${messageId}"]`).length > 0 && !isEditingMessage(document, messageId)) { // 1.7.5: 편집 중이면 다시 그리지 않는다
                 updateMessageBlock(messageId, message);
+                await notifyRerender(messageId);   // 6.5.2 새 답을 그린 뒤 실리태번 헬퍼에 알림 (여기는 CHARACTER_MESSAGE_RENDERED 가 안 온다)
             }
             if (settings.notify) {
                 const times = outcome.attempts > 1 ? `${outcome.attempts}번 만에 ` : '';

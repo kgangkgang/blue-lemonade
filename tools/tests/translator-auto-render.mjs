@@ -171,7 +171,7 @@ for (const kind of ['chat-away-back', 'swipe-away-back', 'deleted', 'replaced', 
     await test(`pending render is discarded after ${kind}`, async () => {
         const f = fixture(), late = deferred(); f.emitter.on('incoming', () => late.promise);
         const emitted = f.emitter.emit('incoming', 0); await flush();
-        if (kind === 'chat-away-back') { f.guards.chatChanged(); f.guards.chatChanged(); }
+        if (kind === 'chat-away-back') { f.context.chatId = 'chat-b'; f.guards.chatChanged(); f.context.chatId = 'chat-a'; f.guards.chatChanged(); }   // 6.5.2 같은 열쇠의 CHAT_CHANGED(제자리 다시 불러오기)는 버리지 않는다 — 다른 채팅에 갔다 와야 버린다
         if (kind === 'swipe-away-back') { f.swipe(0); f.swipe(0); }
         if (kind === 'deleted') f.context.chat = [];
         if (kind === 'replaced') f.context.chat = [{ ...f.messages[0] }];

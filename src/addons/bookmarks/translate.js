@@ -6,6 +6,7 @@
 import { extension_settings, getContext } from '../../../../../../extensions.js';
 import { eventSource, updateMessageBlock } from '../../../../../../../script.js';
 import { isEditingMessage } from './edit-guard.js';
+import { notifyRerender } from '../../rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe)
 import { getStringHash } from '../../../../../../utils.js';
 import { SlashCommandParser } from '../../../../../../slash-commands/SlashCommandParser.js';
 import { currentChatKey } from './state.js';
@@ -232,7 +233,7 @@ function refreshChatMessage(record, index, message, showingOriginal = undefined)
     if (!element) return;
     // 1.2.10: 채팅에서 이 메시지를 고치는 중이면 다시 그리지 않는다 (편집 창이 지워져 ✓ 에 번역문이 원문으로 저장됐다).
     //         편집을 끝내거나 취소하면 실리태번이 다시 그리고, 번역기가 MESSAGE_UPDATED 로 번역문을 보여 준다.
-    if (!isEditingMessage(document, index)) updateMessageBlock(index, message);
+    if (!isEditingMessage(document, index)) { updateMessageBlock(index, message); void notifyRerender(index); }   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe)
     const jq = globalThis.jQuery;
     if (showingOriginal === undefined || !jq) return;
     const text = jq(element).find('.mes_text');

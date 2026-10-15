@@ -3,6 +3,7 @@ import {addonsEnabled} from '../usage-mode.js';
 import {SCRIPT_CATALOG,loadBundledScript,loadFailure} from './catalog.js';
 import {scriptSettings,legacyConflicts} from './store.js';
 import {createPromptEngine} from './prompt-engine.js';
+import {allFonts,findFont,fontStack,loadFont} from '../fonts.js';
 const running=new Map(), states=new Map(), listeners=new Set();
 const translations=createPromptEngine();
 export const registerRegexNames=data=>translations.register('panel-regex',data);
@@ -62,7 +63,13 @@ async function startOne(item,state,current){
         const frame=document.createElement('iframe');frame.hidden=true;frame.tabIndex=-1;frame.setAttribute('aria-hidden','true');frame.dataset.blScript=id;document.body.append(frame);
         const cleanups=[],win=frame.contentWindow;running.set(id,{frame,code,cleanups,win,custom:!!state.overrides[id]?.code});
         win.addEventListener('pagehide',()=>setTimeout(()=>died(id,frame,'틀이 닫힘'),0));
-        const api=Object.freeze({onCleanup(fn){if(typeof fn==='function')cleanups.push(fn);},translate(data){cleanups.push(translations.register(id,data));}});
+        // 글꼴 목록은 읽기 전용 사본; 글꼴 파일은 테마가 이미 쓰는 로더로 받는다.
+        const fonts=Object.freeze({
+            list:()=>allFonts().map(({id,label,group,lang,unusable})=>({id,label,group,lang,unusable:!!unusable})),
+            stack:id=>{const font=findFont(id);return font&&!font.unusable?fontStack(font,font.lang||'ko'):null;},
+            load:id=>{const font=findFont(id);if(font&&!font.unusable)loadFont(font);},
+        });
+        const api=Object.freeze({fonts,onCleanup(fn){if(typeof fn==='function')cleanups.push(fn);},translate(data){cleanups.push(translations.register(id,data));}});
         // Each script owns its window/timers. Built-ins remove parent-document changes on pagehide.
         frame.contentWindow.addEventListener('error',(event)=>{stop(id);status(id,`실행 오류: ${event?.message||'코드를 확인해 주세요'}`);});
         frame.contentWindow.Function('BlueLemonade',code)(api);

@@ -59,6 +59,19 @@ await test('boundaries: only blank lines inside <prose>, outside other tags, bet
     assert.equal(S.paragraphBoundaries('A\n\n```\nx\n\ny\n```\n\nB').length, 2, 'not inside a code fence');
     assert.equal(S.paragraphBoundaries(`A\n\n${AUTOPIC}\n\nB`).length, 0, 'a paragraph that is only a picture slot is neither before nor after');
 });
+// 6.5.3 과일 답: 상태창 + <content>…</content> — 예전엔 안쪽 경계가 모두 「태그 안」이라 상태창 뒤 한 자리만 (설정 4장 → 1장)
+await test('Fruit replies: boundaries inside <content>, not the status bar; four slots before dialogue', () => {
+    const fruit = ['<status_bar>', '日期：10月14日', '', '时间：07:55', '</status_bar>', '', '<content>',
+        'The fork paused.', '', '<excited><span style="color:#424C59">「私、」</span></excited>', '', 'He nodded.', '',
+        '<span style="color:#e63946">「ええ」</span>', '', 'She laughed.', '', '<span style="color:#424C59">「へへ」</span>', '',
+        'He sipped.', '', '<span style="color:#e63946">「です」</span>', '', 'Morning.', '</content>'].join('\n');
+    const b = S.paragraphBoundaries(fruit);
+    assert.equal(b.length, 8);
+    assert.ok(b.every(x => x.at > fruit.indexOf('<content>') && x.at < fruit.indexOf('</content>')), 'only inside <content>');
+    const spots = S.slotSpots(fruit, 4);
+    assert.equal(spots.length, 4);
+    assert.ok(spots.every(at => S.isDialogueStart(b.find(x => x.at === at).next)), 'every slot is before a line of dialogue');
+});
 await test('dialogue starts: brackets, quotes, colour spans (also inside <quiet>), font colour, name: 「, Deus #hex; not thoughts or narration', () => {
     for (const yes of ['「hi」', '『hi』', '“Fine,” she said.', '"Hey."', '<span style="color:#3ccfbf">「……」</span>', '<quiet><span style="color:#e6a">「静かに」</span></quiet>',
         '<font color="#f00">"x"</font>', '*<span style="color: red">「x」</span>*', '미나: 「안녕」', '미나「안녕」', '#e63946 "Look."', '<shout>“Run!”</shout>']) assert.ok(S.isDialogueStart(yes), yes);

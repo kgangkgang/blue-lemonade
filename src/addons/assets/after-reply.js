@@ -4,11 +4,13 @@
 // 사용자: 「캐릭터 에셋도 다른 모델이 하게끔 … 비싸서 이렇게라도 돈 아낄 수 있으면」.
 import { eventSource, event_types, saveChatConditional, updateMessageBlock } from '../../../../../../../script.js';
 import { getContext } from '../../../../../../extensions.js';
+import { notifyRerender } from '../../rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe)
 import { TITLE, currentFolder, settings } from './state.js';
 import { runtime, ensureLoaded } from './store.js';
 import { pickActive, pickSettings, generatePick } from './pick.js';
 import { slotSpots, insertSlots, slotIds, markedReply, pickPrompt, parsePicks, rulesForPicker, hasAssetTag, skipReplyType, PROTECT_RE, RECORD_KEY, swipeOf, textOf, writeRecords, recordsFromPicks, stripSlotsForPrompt, dropUnknownSlots, retryTargets, manualRecord, freezeOthers } from './slots.js';
 import { assetInfo, refreshSlots, slotRunning, slotHooks, shownSlotFiles } from './render.js';
+import { messageWork } from '../../message-work.js';   // 6.5.3 메시지 작업 순서 — 자리 넣기 · 지우기를 적어 둔다 (다시 쓰기 · 번역기가 알아보게)
 import { ownerSpellings } from './spellings.js';   // 6.3.x 그림 주인의 영 · 한 · 일 표기 줄 (이름 다리)
 
 const isObj = value => !!value && typeof value === 'object' && !Array.isArray(value);
@@ -32,12 +34,13 @@ export function onMessageReceived(messageId, type) {
         const message = context.chat?.[id];
         if (!message || message.is_user || message.is_system || typeof message.mes !== 'string') return;
         const copied = dropUnknownSlots(message.mes, isObj(message.extra) ? message.extra[RECORD_KEY] : null);   // 모델이 앞 답에서 따라 쓴 자리 (기록 없음)
-        if (copied.unknown.length) { message.mes = copied.text; if (Array.isArray(message.swipes)) message.swipes[swipeOf(message)] = copied.text; }
+        if (copied.unknown.length) { messageWork().noteWrite(message, { by: 'assets', before: message.mes, after: copied.text }); message.mes = copied.text; if (Array.isArray(message.swipes)) message.swipes[swipeOf(message)] = copied.text; }
         if (slotIds(message.mes).length || hasAssetTag(message.mes)) return;   // 이미 자리나 태그가 있다
         const spots = slotSpots(message.mes, pickSettings().count);
         if (!spots.length) return;
         const swipe = swipeOf(message);
         const { text, ids } = insertSlots(message.mes, spots);
+        messageWork().noteWrite(message, { by: 'assets', before: message.mes, after: text });   // 6.5.3
         message.mes = text;
         if (Array.isArray(message.swipes)) message.swipes[swipe] = text;
         writeRecords(message, swipe, Object.fromEntries(ids.map(slot => [slot, { name: '', pending: true }])));
@@ -60,7 +63,7 @@ function previousText(messageId) {
 }
 
 let busy = 0;
-async function fill(messageId, message, ids, swipe) {
+async function fill(messageId, message, ids, swipe, avoid = []) {
     const controller = new AbortController();
     const pick = pickSettings();
     const timer = setTimeout(() => controller.abort(), pick.timeoutSec * 1000);
@@ -82,6 +85,7 @@ async function fill(messageId, message, ids, swipe) {
             character: message.name || context.name2 || '',
             names: ownerSpellings(runtime.keywords),
             persona: context.name1 || '',   // 6.4.1 내 캐릭터 — 그림이 없으면 듣는 사람 그림으로
+            avoid,   // 6.5.3 ··· 메뉴 다시 고르기 — 지금 보이던 그림은 피하게
         });
         const raw = await generatePick(messages, controller.signal);
         records = recordsFromPicks(ids, parsePicks(raw, ids.length), assetInfo);
@@ -109,6 +113,7 @@ function redraw(messageId, message, swipe) {
     if (!mes || mes.querySelector('#curEditTextarea')) return;   // 화면에 없거나 고치는 중 (편집 창을 지우지 않게)
     try { updateMessageBlock(messageId, message); } catch (error) { console.debug(`[${TITLE}] 다시 그리기 실패`, error); }
     refreshSlots(messageId);
+    void notifyRerender(messageId);   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe)
 }
 
 /** 다시 고르기 단추 — 그 메시지의 비었거나 실패한 자리 전부를 한 번에 */
@@ -129,6 +134,99 @@ function retry(messageId, slotId) {
 }
 
 export const pickBusy = () => busy > 0;
+
+// ── 6.5.3 메시지 ··· 메뉴 「캐릭터 에셋 다시 고르기」 (그림 확장의 그리기 단추처럼 — 사용자 10-15) ──
+
+/** 번역문(display_text)도 글과 같은 자리로 — 자리 없이(또는 옛 번호로) 번역된 답은 새 자리가 번역 화면에 안 보이니까. 넣을 경계가 모자라면 앞 자리만 */
+function addSlotsToTranslation(message, ids) {
+    const shown = message.extra?.display_text;
+    if (typeof shown !== 'string' || !shown) return false;
+    const have = slotIds(shown);
+    if (have.length && have.every(slot => ids.includes(slot))) return false;   // 이미 같은 자리
+    const bare = stripSlotsForPrompt(shown);   // 지금 글에 없는 옛 자리는 뗀다
+    const spots = slotSpots(bare, ids.length);
+    const queue = ids.slice(0, spots.length);   // insertSlots 는 뒤 자리부터 번호를 받는다
+    message.extra.display_text = spots.length ? insertSlots(bare, spots, () => queue.pop()).text : bare;
+    return true;
+}
+
+/**
+ * 이 답의 그림을 다시 고른다. 자리가 있으면 모두(꾹 눌러 정한 자리도) 새로 · 자리가 없으면(빠진 답 · 예전 답) 자리를 넣고 고른다.
+ * 답 받을 때와 같은 고르기(fill)라 다른 모델 연결 · 시간 제한 · 실패 표시가 같다.
+ */
+export function rerollMessage(messageId) {
+    const id = Number(messageId);
+    const context = getContext();
+    const message = context.chat?.[id];
+    if (!message || message.is_user || message.is_system || typeof message.mes !== 'string') return false;
+    const say = text => globalThis.toastr?.info?.(text, TITLE);
+    if (!pickActive()) { say('「다른 모델이 고르기」가 꺼져 있거나 연결이 정해지지 않았어요.'); return false; }
+    if (context.groupId) { say('그룹 채팅에서는 그림을 고르지 않아요.'); return false; }
+    if (!currentFolder()) { say('이 캐릭터에 켜진 그림 폴더가 없어요.'); return false; }
+    const swipe = swipeOf(message);
+    let ids = slotIds(message.mes);
+    if (ids.some(slot => slotRunning.has(slot))) { say('지금 그림을 고르는 중이에요.'); return false; }
+    const map = isObj(message.extra?.[RECORD_KEY]) ? message.extra[RECORD_KEY] : {};
+    const avoid = ids.map(slot => map[slot]?.name).filter(Boolean);
+    let textChanged = false;
+    if (!ids.length) {
+        if (hasAssetTag(message.mes)) { say('이 답은 본문 모델이 그림 태그를 직접 넣었어요.'); return false; }
+        const spots = slotSpots(message.mes, pickSettings().count);
+        if (!spots.length) { say('그림을 넣을 문단 사이가 없어요.'); return false; }
+        const inserted = insertSlots(message.mes, spots);
+        messageWork().noteWrite(message, { by: 'assets', before: message.mes, after: inserted.text });
+        message.mes = inserted.text;
+        if (Array.isArray(message.swipes)) message.swipes[swipe] = inserted.text;
+        ids = inserted.ids;
+        textChanged = true;
+    }
+    if (addSlotsToTranslation(message, ids)) textChanged = true;
+    writeRecords(message, swipe, Object.fromEntries(ids.map(slot => [slot, { name: '', pending: true }])));
+    for (const slot of ids) slotRunning.add(slot);
+    // 고르는 중 표시 — 글 · 번역문에 자리를 새로 넣었으면 화면의 옛 자리(번호가 다름)를 버리고 메시지를 다시 그린다
+    if (textChanged && !document.querySelector(`#chat .mes[mesid="${id}"] #curEditTextarea`)) {
+        try { updateMessageBlock(id, message); } catch (error) { console.debug(`[${TITLE}] 다시 그리기 실패`, error); }
+        refreshSlots(id);
+        void notifyRerender(id);   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe)
+    } else redraw(id, message, swipe);
+    void fill(id, message, ids, swipe, avoid);
+    return true;
+}
+
+const REROLL_CLASS = 'bl-asset-reroll';
+/** 캐릭터 답의 ··· 메뉴에 단추를 단다 (켜져 있지 않으면 뗀다) — 실리태번이 메시지를 새로 그릴 때마다 부른다 */
+function syncRerollButtons() {
+    const chatEl = document.getElementById('chat');
+    if (!chatEl) return;
+    const on = pickActive() && !getContext().groupId && !!currentFolder();
+    const chat = getContext().chat ?? [];
+    for (const mes of chatEl.querySelectorAll('.mes[mesid]')) {
+        const message = chat[Number(mes.getAttribute('mesid'))];
+        const has = mes.querySelector(`.${REROLL_CLASS}`);
+        const want = on && message && !message.is_user && !message.is_system;
+        if (!want) { has?.remove(); continue; }
+        if (has) continue;
+        const box = mes.querySelector('.extraMesButtons');
+        if (!box) continue;
+        const button = document.createElement('div');
+        button.className = `mes_button ${REROLL_CLASS} fa-solid fa-images interactable`;
+        button.tabIndex = 0;
+        button.setAttribute('role', 'button');
+        button.title = '캐릭터 에셋 다시 고르기';
+        button.setAttribute('aria-label', '캐릭터 에셋 다시 고르기');
+        box.append(button);
+    }
+}
+function onRerollClick(event) {
+    const button = event.target?.closest?.(`.${REROLL_CLASS}`);
+    if (!button || (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ')) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const mes = button.closest('.mes[mesid]');
+    if (mes) rerollMessage(Number(mes.getAttribute('mesid')));
+}
+let syncTimer = 0;
+const scheduleSync = () => { clearTimeout(syncTimer); syncTimer = setTimeout(syncRerollButtons, 50); };
 
 // ── 꾹 눌러 「이 자리만」 (hold.js · viewer.js) ──
 
@@ -194,4 +292,12 @@ export function setupAfterReply() {
     protectInTranslator();
     // 번역기 애드온이 이 애드온보다 늦게 켜질 수 있다 — 테마 애드온 상태가 바뀌면 다시 등록
     for (const name of ['bl:addons-state', 'bl:settings-replaced']) globalThis.window?.addEventListener(name, protectInTranslator);
+    // 6.5.3 ··· 메뉴 다시 고르기 단추
+    for (const type of ['CHARACTER_MESSAGE_RENDERED', 'CHAT_CHANGED', 'MESSAGE_UPDATED', 'MESSAGE_SWIPED', 'MESSAGE_DELETED', 'MORE_MESSAGES_LOADED', 'SETTINGS_UPDATED']) {
+        if (event_types[type]) eventSource.on(event_types[type], scheduleSync);
+    }
+    for (const name of ['bl:addons-state', 'bl:settings-replaced']) globalThis.window?.addEventListener(name, scheduleSync);
+    document.addEventListener('click', onRerollClick, true);
+    document.addEventListener('keydown', onRerollClick, true);
+    scheduleSync();
 }

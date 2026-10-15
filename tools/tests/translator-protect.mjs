@@ -33,7 +33,7 @@ const module = `import { withDisplayCardsProtected, withoutDisplayCards, display
 import { splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, dropTokens } from ${url('translation-segments.js')};
 import { createGuards } from ${url('translation-guard.js')};
 export const extensionSettings = { translation_display_mode: 'disabled', force_sequential_matching: false, user_defined_regexes: [], user_no_fold_regexes: [] };
-export const T = { chat: [], chatId: 'chat-A', groupId: null, characterId: 1, rendered: [], events: [], editing: false, cached: null };
+export const T = { chat: [], chatId: 'chat-A', groupId: null, characterId: 1, rendered: [], events: [], editing: false, cached: null, notified: [] };
 const getContext = () => ({ chat: T.chat, chatId: T.chatId, groupId: T.groupId, characterId: T.characterId, getCurrentChatId: () => T.chatId });
 export const guards = createGuards(getContext);
 const window = {}, toastr = { error() {}, warning() {} };
@@ -43,6 +43,7 @@ const readCachedTranslation = async () => T.cached;
 const updateMessageBlock = (id) => { T.rendered.push(Number(id)); };
 const document = { querySelector: () => ({ querySelector: () => (T.editing ? {} : null) }), dispatchEvent: event => { T.events.push(event); return true; } };
 class CustomEvent { constructor(type, init) { this.type = type; this.detail = init?.detail; } }
+const notifyRerender = async (id) => { T.notified.push(Number(id)); return false; };   // 6.5.2 src/rerender-notify.js 흉내 (index.js 의 import 는 여기 없다)
 ${constLine('runtimeProtections')}
 ${constLine('FOLD_MARKUP')}
 ${names.map(cut).join('\n')}
@@ -185,7 +186,8 @@ test('a queued auto translation survives a text-only change and still drops chat
     r = ref(); message.swipe_id = 1; assert.equal(M.resolveQueuedTarget(1, r), null, 'swipe change'); message.swipe_id = 0;
     r = ref(); M.guards.messageChanged(1); assert.equal(M.resolveQueuedTarget(1, r), null, 'revision change (MESSAGE_EDITED)');
     r = ref(); message.extra.display_text = 'done'; assert.equal(M.resolveQueuedTarget(1, r), null, 'someone else wrote the translation'); delete message.extra.display_text;
-    r = ref(); M.guards.chatChanged(); assert.equal(M.resolveQueuedTarget(1, r), null, 'chat changed (epoch)');
+    r = ref(); M.guards.chatChanged(); assert.equal(M.resolveQueuedTarget(1, r), 1, '6.5.2 same chat reloaded in place keeps the target');
+    r = ref(); T.chatId = 'chat-B'; M.guards.chatChanged(); T.chatId = 'chat-A'; M.guards.chatChanged(); assert.equal(M.resolveQueuedTarget(1, r), null, 'chat changed (away and back)');
     r = ref(); T.chatId = 'chat-B'; message.mes += '!'; assert.equal(M.resolveQueuedTarget(1, r), null, 'other chat'); T.chatId = 'chat-A';
     r = ref(); T.chat.splice(1, 1); message.mes += '?'; assert.equal(M.resolveQueuedTarget(1, r), null, 'message deleted');
     assert.equal(M.resolveQueuedTarget(3, null), 3, 'no ref: plain number');
@@ -194,12 +196,14 @@ test('a queued auto translation survives a text-only change and still drops chat
 
 // ── 5. 다시 그린 뒤 알림 ──
 test('refreshMessageBlock announces llm-translator:rendered after redrawing, not while the edit box is open', () => {
-    T.rendered.length = 0; T.events.length = 0; T.editing = false;
+    T.rendered.length = 0; T.events.length = 0; T.editing = false; T.notified.length = 0;
     M.refreshMessageBlock('4', {});
     assert.deepEqual(T.rendered, [4]);
+    assert.deepEqual(T.notified, [4], '6.5.2 다시 그린 뒤 헬퍼 알림 (문서 이벤트 다음)');
     assert.equal(T.events.length, 1); assert.equal(T.events[0].type, 'llm-translator:rendered'); assert.deepEqual(T.events[0].detail, { messageId: 4 });
     T.editing = true; M.refreshMessageBlock(5, {}); T.editing = false;
     assert.deepEqual(T.rendered, [4]); assert.equal(T.events.length, 1);
+    assert.deepEqual(T.notified, [4], '편집 창이 열려 있으면 알리지 않는다');
 });
 
 // ── 6. 'HTML 이면 거절' 검사에서 보호 블록 빼기 ──

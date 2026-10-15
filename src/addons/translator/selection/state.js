@@ -1,3 +1,4 @@
+import { isMainChatGenerating } from '../../../main-chat-rules.js';   // 6.5.3 「생성 중」 = 본채팅 생성만
 let options = null;
 export function configure(next) { options = next; }
 export const adapter = () => {
@@ -14,12 +15,10 @@ let busy = false;
 export async function exclusive(task) {
     if (document.body.classList.contains('cg-previewing')) throw Error('북마크 미리보기를 닫은 뒤 현재 채팅에서 선택해 주세요.');
     if (busy) throw Error('다른 분석이나 재번역이 끝난 뒤 다시 눌러 주세요.');
-    const processor = context().streamingProcessor;
-    if (processor && !processor.isFinished && !processor.isStopped) throw Error('답변 생성이 끝난 뒤 사용해 주세요.');
+    // 6.5.3 본채팅 생성 중(살아 있는 스트림 · 본채팅 Generate)에만 막는다 — 다른 확장 · 실리태번 헬퍼의 조용한 생성이 is_send_press 를 켠 때는 그대로 간다
+    if (isMainChatGenerating()) throw Error('답변 생성이 끝난 뒤 사용해 주세요.');
     busy = true;
     try {
-        const core = await import('/script.js');
-        if (core.isGenerating?.()) throw Error('답변 생성이 끝난 뒤 사용해 주세요.');
         return await task();
     } finally { busy = false; }
 }

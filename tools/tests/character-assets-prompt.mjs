@@ -51,6 +51,7 @@ async function fixture(initial = {}) {
         ...state, ...store, addonsEnabled, getContext: () => context, eventSource, event_types, pickActive: () => picking,
         extension_prompt_types: { IN_CHAT: 1 }, extension_prompt_roles: { SYSTEM: 0 },
         isGenerating: () => busy, setSendButtonState: value => { busy = value; },
+        isMainChatGenerating: () => false, holdGenerationState: () => () => {},   // 6.5.3 생성 상태 (main-chat-rules.js)
         setTimeout: (fn, delay) => { const id = ++timerId; timers.set(id, { fn, delay }); return id; }, clearTimeout: id => timers.delete(id),
         setExtensionPrompt(key, value, position, depth, scan, role) { const entry = { key, value, position, depth, scan, role }; slots.set(key, entry); history.push(entry); },
     });

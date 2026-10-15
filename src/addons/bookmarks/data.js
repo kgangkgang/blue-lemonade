@@ -7,6 +7,7 @@
 import { getContext, saveMetadataDebounced } from '../../../../../../extensions.js';
 import { getRequestHeaders, getThumbnailUrl, saveChatConditional, updateMessageBlock, eventSource, event_types } from '../../../../../../../script.js';
 import { isEditingMessage, EDITING_IN_CHAT } from './edit-guard.js';
+import { notifyRerender } from '../../rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe)
 import { uuidv4, getStringHash } from '../../../../../../utils.js';
 import { chatKey, currentChatKey, hooks } from './state.js';
 import { chatLabel } from './render.js';
@@ -561,7 +562,7 @@ export async function editMessageText(record, index, text, expected = null) {
         if (text !== previous.mes && message.extra?.display_text && message.extra.display_text === previous.extra?.display_text) {
             delete message.extra.display_text;
             delete message.extra.original_translation_backup;
-            if (rendered) updateMessageBlock(index, message);
+            if (rendered) { updateMessageBlock(index, message); await notifyRerender(index); }   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (앞의 MESSAGE_UPDATED 는 지나갔다)
         }
         await saveRecord(record, { messagesChanged: true });
     } catch (error) {

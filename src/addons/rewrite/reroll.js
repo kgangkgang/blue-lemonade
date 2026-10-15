@@ -17,6 +17,7 @@ import { power_user } from '../../../../../../power-user.js';
 import * as reasoningModule from '../../../../../../reasoning.js';
 import { getTokenCountAsync } from '../../../../../../tokenizers.js';
 import { chatSwitchTarget } from './guards.js';
+import { holdGenerationState } from '../../main-chat-rules.js';   // 6.5.3 생성 상태에 「다시 쓰기가 붙잡는 중」 등록 (번역 · 단추가 끝나길 기다리게)
 
 const { extractReasoningFromData, parseReasoningFromString } = reasoningModule;
 // Added to SillyTavern in December 2025 (Gemini thought signatures); a namespace import keeps older builds loading.
@@ -196,6 +197,7 @@ export async function replaceReply(messageId, message, { text, reasoning, signat
  */
 export function holdGeneration(controller) {
     const wasLocked = document.body.dataset.generating === 'true';
+    const releaseState = holdGenerationState('rewrite');   // 6.5.3
     if (!wasLocked) {
         setSendButtonState(true);
         // showStopButton()/hideStopButton() are not exported; this is what they do.
@@ -203,7 +205,8 @@ export function holdGeneration(controller) {
         hideSwipeButtons();
         document.body.dataset.generating = 'true';
     }
-    const onStop = () => controller.abort();
+    // 6.5.3 실리태번 헬퍼는 제 generate 를 멈출 때 같은 GENERATION_STOPPED 를 생성 id(문자열)와 함께 낸다 — 이 답의 멈춤이 아니다 (멈춤 단추 · stopGeneration 은 인수 없음)
+    const onStop = (id) => { if (typeof id === 'string' && id) return; controller.abort(); };
     eventSource.on(event_types.GENERATION_STOPPED, onStop);
     // 1.7.5: 붙잡고 있는 동안 지난 채팅 · 체크포인트 · 분기로 채팅을 바꾸지 못하게 한다 (실리태번이 이 답을 저장하기 전이라 답이 사라진다).
     // 잠금이 원래 걸려 있던 경우(스트리밍 끔)도 같다. 멈춤을 누르면 곧 풀린다.
@@ -217,6 +220,7 @@ export function holdGeneration(controller) {
     return () => {
         window.removeEventListener('click', onClick, true);
         eventSource.removeListener(event_types.GENERATION_STOPPED, onStop);
+        releaseState();
         if (!wasLocked) {
             setSendButtonState(false);
             $('#mes_stop').css({ display: 'none' });

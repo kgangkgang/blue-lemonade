@@ -2,6 +2,7 @@
 import { isPreset, validSettings, validImport, validPromptList, validPresetList, exportPresets, restoreTranslationRows } from './preset-data.js';
 import { createGuards, watchGuard } from './translation-guard.js';
 import { observeEventCompletion } from './render-completion.js';
+import { notifyRerender, isRerenderNotify } from '../../rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe) · 그 알림의 MESSAGE_UPDATED 는 건너뛴다
 import { AUTO_CONTEXT, hasAutoContext, markAutoContext, captureAutoContextGuard, prepareTranslatorAutoContext } from './context-auto.js';
 import { prepareDisplayCards, withDisplayCardsProtected, withoutDisplayCards, displayCardBlocks, matchesDisplayCardStructure } from './display-cards.js';
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
@@ -21,6 +22,7 @@ import { createGenerationParameters, getChatCompletionModel } from '../../../../
 import { createTextGenGenerationData, getTextGenModel } from '../../../../../../textgen-settings.js';
 import { matchingTranslation, translationFromDisplay } from './archive-bridge.js';
 import * as LiveModels from '../../live-models.js'; // [2.2.8] 공용 모델 목록 · 모델별 요청 규칙
+import { whenMainChatIdle } from '../../main-chat-rules.js';   // 6.5.3 「생성 중」 = 본채팅 생성 · 테마의 붙잡음만 (조용한 생성 · 헬퍼 generate 는 기다리지 않음)
 import {
     eventSource,
     event_types,
@@ -2231,12 +2233,18 @@ function progressBadge(messageId, message = null, sourceMes = message?.mes, chat
     };
 }
 
+/** 6.5.2 같은 채팅을 제자리에서 다시 불러오는 중이면(배열이 비어 있음) 최대 maxMs 기다린다 — 그 뒤 guard.valid() 가 같은 자리의 새 객체로 옮겨 탄다 */
+async function settleGuard(guard, maxMs = 8000) {
+    const started = Date.now();
+    while (typeof guard?.settled === 'function' && !guard.settled() && Date.now() - started < maxMs) await new Promise(resolve => setTimeout(resolve, 100));
+}
+const autoRetries = new WeakMap();   // 6.5.2 끊긴 자동 번역을 메시지마다 몇 번 다시 걸었나 (2번까지)
 function beginTranslation(messageId, message) {
     const token = { guard: guards.capture(message), chatGuard: guards.capture(), source: message.mes, swipe: message.swipe_id };
     let done;
     Object.defineProperties(token,{finished:{value:new Promise(r=>done=r)},resolve:{value:error=>done(error)}});
     // [1.9.5] 표에 메시지를 달아 둔다 (디버그 출력에 메시지 전체가 찍히지 않게 열거되지 않는 속성으로)
-    Object.defineProperty(token, 'message', { value: message });
+    Object.defineProperty(token, 'message', { get: () => token.guard.target?.() ?? message });   // 6.5.2 같은 채팅을 다시 불러오면 새 객체를 가리킨다
     translationInProgress[messageId] = token;
     return token;
 }
@@ -2270,23 +2278,13 @@ function resolveTranslationTarget(message, messageId, sourceMes, chatId) {
 }
 
 /**
- * [1.9.4] 생성 잠금(body[data-generating])이 풀리고 quietMs 동안 그대로 풀려 있을 때 callback 을 한 번 부른다.
+ * [1.9.4] 생성이 끝나고 quietMs 동안 그대로일 때 callback 을 한 번 부른다.
  * 스트리밍이 끝나면 실리태번이 잠금을 풀었다가 MESSAGE_RECEIVED 에서 다시 쓰기가 곧바로 다시 잠그므로, 풀린 순간에 부르면 고치기 전 글을 번역하게 된다.
+ * 6.5.3 body[data-generating] 대신 테마의 생성 상태(main-chat-rules whenMainChatIdle)를 본다 — 본채팅 생성과 다시 쓰기 · 에셋의 붙잡음은 기다리고,
+ *   다른 확장 · 실리태번 헬퍼의 조용한 생성(Generate quiet · generateRaw)이 켜 둔 잠금은 기다리지 않는다 (과일 프리셋 호환). 10분 넘게 끝나지 않으면 그대로 부른다.
  */
 function afterGeneration(callback, quietMs = 300) {
-    let timer = null;
-    const observer = new MutationObserver(() => check());
-    function check() {
-        clearTimeout(timer);
-        if (document.body.dataset.generating) return;
-        timer = setTimeout(() => {
-            if (document.body.dataset.generating) return;
-            observer.disconnect();
-            callback();
-        }, quietMs);
-    }
-    observer.observe(document.body, { attributes: true, attributeFilter: ['data-generating'] });
-    check();
+    whenMainChatIdle({ quietMs }).then(() => callback(), () => callback());
 }
 
 // [1.9.2] 화면에 없는 메시지(오래돼서 안 그려진 메시지 · 다른 채팅)에 updateMessageBlock 을 부르면 실리태번이 getAttribute 오류를 던진다.
@@ -2301,7 +2299,11 @@ function refreshMessageBlock(messageId, message) {
     // 6.1.8 다시 그린 뒤 알림 — 다른 확장이 본문 안의 자기 블록(그림 자리 등)을 다시 그릴 수 있게. 원문 표시 · 지운 번역 · 실패한 재번역 뒤에도 온다.
     //       (EXTENSION_LLM_TRANSLATE_UI_UPDATED 는 '새 번역' 뜻으로 TTS 가 듣기 때문에 따로 둔다)
     try { document.dispatchEvent(new CustomEvent('llm-translator:rendered', { detail: { messageId: Number(messageId) } })); } catch { /* 알림은 그리기를 막지 않는다 */ }
-    return result;
+    // 6.5.2 실리태번 헬퍼(JS-Slash-Runner)가 코드 블록(상태 카드)을 iframe 으로 다시 그리게 MESSAGE_UPDATED 를 보낸다 (src/rerender-notify.js — 헬퍼가 없거나
+    //       그릴 코드가 없으면 아무것도 안 한다). 실리태번의 updateMessageBlock 은 이벤트를 내지 않아 헬퍼가 「이미 그린 메시지」로 알고 건너뛰었다 → 번역이
+    //       끝나면 카드가 원시 코드로 남았다. 이 알림으로 온 MESSAGE_UPDATED 는 handleMessageEdit 이 건너뛴다 (다시 그리기 ↔ 알림이 돌지 않게).
+    //       기다리는 쪽(await)은 청취자들이 끝난 뒤 이어 가고, 안 기다리는 쪽은 전과 같다.
+    return notifyRerender(messageId, { element }).then(() => result);
 }
 
 // 재번역 함수 (교정 또는 문단 맞추기)
@@ -2678,7 +2680,8 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                 // 화살표 다시 번역이라도 차단 표시가 남은 글이면 문단 캐시를 쓴다 — 이미 된 문단은 다시 보내지 않고 차단된 문단만 다시 시도
                 const segmentCache = source !== 'handleTranslateButtonClick_retranslate' || String(message.extra.display_text || '').includes(MARK_TAIL);
                 try {
-                    translation = await translate(originalText, { segmentCache, collectNames: true, assertValid: () => runToken.guard.assert(), onProgress: badge.update, report });
+                    // 6.5.2 같은 채팅을 다시 불러오는 사이(배열이 빈 순간)는 「바뀜」이 아니다 — 가라앉은 뒤에 판단한다
+                    translation = await translate(originalText, { segmentCache, collectNames: true, assertValid: () => { if (runToken.guard.settled()) runToken.guard.assert(); }, onProgress: badge.update, report });
                 } finally {
                     badge.remove();
                 }
@@ -2690,6 +2693,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
             }
 
             // [1.9.2] 번역하는 동안 채팅을 바꾸거나 · 스와이프 · 수정 · 앞 메시지 삭제로 그 자리 글이 바뀌었으면 붙이지 않는다 (캐시에는 남음)
+            await settleGuard(runToken.guard);   // 6.5.2 제자리 다시 불러오기가 끝날 때까지 (끝나면 같은 자리의 새 객체로 옮겨 탄다)
             runToken.guard.assert();
             const targetIndex = runToken.guard.index();
             const targetId = targetIndex === Number(messageId) ? messageId : targetIndex; // 앞 메시지가 지워져 번호가 옮겼으면 새 번호
@@ -2745,12 +2749,17 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
         if (runToken.chatGuard.valid()) await hideStaleTranslation(message);
         if (source === 'batch') throw error;
         if (error?.cancelled) {
-            if (source === 'auto' && runToken.chatGuard.valid() &&
-                (message.mes !== runToken.source || message.swipe_id !== runToken.swipe)) {
-                afterGeneration(() => {
-                    const id = getContext().chat.indexOf(message);
-                    if (runToken.chatGuard.valid() && id >= 0 && !skipCutAutoTranslate(message, id))
-                        translateMessage(id, false, 'auto').catch(() => {});
+            // 6.5.2 자동 번역이고 같은 채팅이면 토스트 대신 한 번 더: 글 · 스와이프가 바뀌었거나(전처럼) · 같은 채팅을 제자리에서 다시 불러와 대상이 새 객체가 된 것
+            //       (실리태번 정규식 창 · 프롬프트 귀속 · 헬퍼 스크립트의 정규식 교체 …). 끝난 번역은 캐시에서 바로 온다. 같은 메시지에 두 번까지 — 그 뒤엔 전처럼 알린다.
+            const again = source === 'auto' && runToken.chatGuard.valid() && (autoRetries.get(runToken.guard.target()) || 0) < 2;
+            if (again) {
+                afterGeneration(async () => {
+                    await settleGuard(runToken.guard);
+                    const target = runToken.guard.sameTarget() ? runToken.guard.target() : null;
+                    const id = target ? getContext().chat.indexOf(target) : -1;
+                    if (!runToken.chatGuard.valid() || id < 0 || skipCutAutoTranslate(target, id)) return;
+                    autoRetries.set(target, (autoRetries.get(target) || 0) + 1);
+                    translateMessage(id, false, 'auto').catch(() => {});
                 });
             } else toastr.info(error.message, '번역 중단', { timeOut: 4000 });
             return;
@@ -3574,7 +3583,7 @@ async function onMessageSentTranslate(messageId) {
     const toast = toastr.info(`${sendLangLabel()}로 번역해서 보내는 중…`, '보내기 번역', { timeOut: 0, extendedTimeOut: 0, tapToDismiss: false });
     setSendButtonBusy(true);
     let stopped = false;
-    const onStop = () => { stopped = true; };
+    const onStop = (id) => { if (typeof id === 'string' && id) return; stopped = true; };   // 6.5.3 실리태번 헬퍼의 GENERATION_STOPPED(생성 id) 는 이 멈춤이 아니다
     const assertSend = () => { if (stopped) throw Object.assign(new Error('보내기 번역을 멈췄어요. 입력한 원문은 그대로예요.'), { cancelled: true }); sendGuard.assert(); };
     if (event_types.GENERATION_STOPPED) eventSource.on(event_types.GENERATION_STOPPED, onStop);
     try {
@@ -3764,7 +3773,7 @@ function resolveQueuedTarget(messageId, ref) {
     // 6.1.8 같은 채팅 · 같은 스와이프 · 같은 revision 인데 글(mes)만 바뀌었으면(대기 0.3초 사이 다른 확장이 그림 자리를 넣는 등) 버리지 않고 지금 글로 번역한다.
     //       전엔 조용히 건너뛰어 그 답이 끝내 자동 번역되지 않았다 (MESSAGE_UPDATED 는 번역문이 이미 있을 때만 다시 번역한다)
     if (ref.guard?.sameTarget?.()) {
-        const id = getContext().chat.indexOf(ref.message);
+        const id = getContext().chat.indexOf(ref.guard.target?.() ?? ref.message);   // 6.5.2 다시 불러온 채팅이면 옮겨 탄 객체
         return id < 0 ? null : id;
     }
     return null;
@@ -4831,6 +4840,9 @@ async function pickAndAddGlossaryProposals(proposals, scope, { note = '이미 �
 
 // [수정] 메시지 수정 시 번역문 정리 및 재번역 로직
 async function handleMessageEdit(messageId) {
+    // 6.5.2 테마가 본문을 다시 그린 뒤 헬퍼에 알리는 MESSAGE_UPDATED (src/rerender-notify.js) — 글은 그대로고 표시만 다시 그렸으니 번역 데이터를 손대지 않는다.
+    //       (안 막으면 아래 '해시 같음' 가지가 또 그리고 → 또 알리고 … 돈다)
+    if (isRerenderNotify(messageId)) return;
     const context = getContext();
     const message = context.chat[messageId];
 

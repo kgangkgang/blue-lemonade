@@ -325,6 +325,21 @@ export function rebaseSlotLines(original, current, replacement) {
 }
 
 /**
+ * 6.5.3 다시 쓰는 사이에 다른 주체(프리셋의 헬퍼 스크립트가 머리의 생각 블록을 떼어 냄 · 그림 자리 넣기)가 글을 바꿨어도, 지금 글의 보이는 부분(visibleNow)이
+ * 고치기 시작할 때의 보이는 글(visible)과 같거나 자리 줄만 다르면 고친 글(fixed)을 지금 글에 다시 끼운다. 그 밖에는 null (예전처럼 버린다).
+ * currentMes = 지금 글(mes) · visibleNow = 지금 글에서 생각 블록을 뺀 것 (reroll.js visibleText) · visible · fixed = rewriteText 에 준 글과 받은 글.
+ * @returns {string|null}
+ */
+export function reanchorRewrite(currentMes, visibleNow, visible, fixed) {
+    if ([currentMes, visibleNow, visible, fixed].some(value => typeof value !== 'string') || !visibleNow) return null;
+    const at = currentMes.lastIndexOf(visibleNow);
+    if (at < 0) return null;
+    const fixedNow = visibleNow === visible ? fixed : rebaseSlotLines(visible, visibleNow, fixed);
+    if (fixedNow === null) return null;
+    return currentMes.slice(0, at) + fixedNow + currentMes.slice(at + visibleNow.length);
+}
+
+/**
  * Returns the sentences containing banned words, without surrounding whitespace or * / _ marks
  * so a rewrite can never unbalance italics. A rule with `nearNames` only counts matches that are theirs (ownedByNear).
  * Matching runs on the masked text (maskProtected); the returned spans slice the original.

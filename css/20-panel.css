@@ -1371,4 +1371,8 @@ body.salty-dark .salty-shapes button.on {
 .salty-panel .bl-prompt-tools .salty-switch{flex-shrink:0}
 .salty-panel .bl-prompt-tools-actions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
 .salty-panel .bl-prompt-tools-actions button{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+/* 6.5.2: 빠른 설정 이름 — 이름과 입력칸을 한 줄에, 스위치 줄과 같은 안쪽 여백 */
+.salty-panel .bl-prompt-tools .bl-prompt-name-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(8em,12em);align-items:center;column-gap:10px;padding-left:16px}
+.salty-panel .bl-prompt-tools .bl-prompt-name-row[hidden]{display:none}
+.salty-panel .bl-prompt-tools .bl-prompt-name-row>input{width:100%;min-width:0;margin:0;min-height:var(--bl-settings-control);font:inherit}
 .salty-panel .bl-prompt-source{overflow-wrap:anywhere;word-break:normal}

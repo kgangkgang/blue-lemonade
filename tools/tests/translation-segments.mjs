@@ -208,3 +208,18 @@ assert.ok(/const cleaned = dropDanglingOpenQuote\(dropWrapQuotes\(output, source
 assert.ok(/repairTagPairs as repairProseTagPairs, dropStrayWords as dropProseStrayWords, dropWrapQuotes \} from '\.\/translation-segments\.js';/.test(idx645),'import');
 console.log('PASS 6.4.5 a translated line wrapped whole in 「」 loses the wrap only when its source line has no quotes');
 }
+{
+// 6.5.3 번역 모델의 작업 메모 (사용자 10-15 실제 답 두 개) — 문단 · 줄 모두 걷고, 원문 · 보통 글은 둔다
+const S653=await import(new URL('src/addons/translator/translation-segments.js',root));
+const noteA='她 → 그녀. Kaito uses っす speech → Korean casual-polite with "~습다/~거든요" style; I\'ll use 해요체 with slight slang. The inner thoughts (VAR_0..3) are Kaito\'s, likely monologue, no brackets in source — keep as is.';
+const noteB='Mina→미나. Kaito speaks ~っす (casual polite junior style) → "~잖아요/~거든요" with a 체육계 tone, like "~습다". Rin is playful 반말. Mina is polite 해요체.';
+assert.equal(S653.stripPlanningNotes(`${noteA}\n\n그녀는 테이블 너머로 몸을 숙였다.`),'그녀는 테이블 너머로 몸을 숙였다.','note paragraph before the translation');
+assert.equal(S653.stripPlanningNotes(`「콜록, 쿨럭……!」\n\n${noteB}\n\n미나는 고개를 끄덕였다.`),'「콜록, 쿨럭……!」\n\n미나는 고개를 끄덕였다.','note paragraph in the middle');
+assert.equal(S653.stripPlanningNotes(`${noteB}\n미나는 고개를 끄덕였다.`),'미나는 고개를 끄덕였다.','note line glued to the translation');
+assert.equal(S653.stripReplyWrapping(`${noteA}\n\n번역 문단`,'Source paragraph.'),'번역 문단','plain answers');
+assert.deepEqual(parseBatchResult(`⟦0⟧ ${noteA}\n\n첫 번역\n⟦1⟧ 둘째 번역`,2,{},['First.','Second.']),['첫 번역','둘째 번역'],'batch bodies');
+for (const keep of ['He pointed → the door, then left.','그는 「A → B」라고 적었다.','Exit → 2층 계단','미나는 해요체로 말했다 → 그래서 웃었다.']) assert.equal(S653.stripPlanningNotes(keep),keep,keep);
+assert.equal(S653.stripPlanningNotes(noteA),noteA,'nothing left → keep the answer as it is');
+assert.equal(S653.stripPlanningNotes(`${noteB}\n\n번역`, noteB+'\n\nsource'),`${noteB}\n\n번역`,'a source with the same kind of paragraph keeps it');
+console.log('PASS 6.5.3 translator planning notes are stripped from answers');
+}

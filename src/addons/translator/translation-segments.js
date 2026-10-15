@@ -372,10 +372,47 @@ export function stripTrailingNote(text, source) {
     }
     return stripped ? blocks.join('').replace(/\s+$/, '') : blocks.join('');
 }
+// 6.5.3 번역 모델의 작업 메모 (사용자 10-15): 답 가운데에 「她 → 그녀. Kaito uses っす speech → Korean casual-polite … I'll use 해요체 …
+//   The inner thoughts (VAR_0..3) … keep as is.」 같은 계획 문단 · 줄이 섞여 번역문에 그대로 보였다. 화살표가 있고, 라틴 글자가 반 넘고,
+//   말투 · 번역 이야기 낱말이 둘 이상(또는 하나 + 한국어 말투 이름)인 덩이 · 줄만 걷는다 — 원문에 같은 꼴(화살표 + 그런 낱말)이 있으면 두지 않는다.
+const PLAN_ARROW = /→|⇒|->|=>/;
+const PLAN_WORDS = /\b(?:speech|speaks?|style|tone|polite|casual|honorifics?|formal|register|slang|keep (?:it |them )?as[- ]is|I'll|I will|translat(?:e|ed|es|ion|ing)|render(?:ed|ing)?|inner thoughts?|monologue|placeholders?|VAR_\d|in source|the source)\b/gi;
+const KO_REGISTER = /해요체|하십시오체|합쇼체|반말|존댓말|존대|높임말/;
+const planHits = text => (String(text).match(PLAN_WORDS) || []).length;
+const planLike = text => PLAN_ARROW.test(text) && (planHits(text) >= 2 || (planHits(text) >= 1 && KO_REGISTER.test(text)));
+function planningNote(block, sourcePlan) {
+    const t = String(block ?? '').trim();
+    if (!t || t.length > 800 || sourcePlan || !planLike(t)) return false;
+    const letters = (t.match(/\p{L}/gu) || []).length, latin = (t.match(/\p{Script=Latin}/gu) || []).length;
+    return letters > 0 && latin >= letters * 0.5;
+}
+/** 답에서 번역 모델의 작업 메모(계획 덩이 · 줄)를 걷는다. 걷을 게 없거나 걷으면 아무것도 안 남으면 같은 글 */
+export function stripPlanningNotes(text, source) {
+    const out = String(text ?? '');
+    if (!PLAN_ARROW.test(out)) return out;
+    const sourcePlan = source != null && planLike(String(source));
+    const blocks = out.split(/(\n[\t ]*\n(?:[\t ]*\n)*)/);
+    let changed = false;
+    for (let i = 0; i < blocks.length; i += 2) {
+        const lines = blocks[i].split('\n');
+        // 줄마다 본다 — 덩이 통째로 보면 메모 밑에 붙은 번역 줄까지 메모 덩이로 세어진다. 한 줄 덩이도 같은 규칙
+        const kept = lines.filter(line => !planningNote(line, sourcePlan));
+        if (kept.length === lines.length) continue;
+        blocks[i] = kept.some(line => line.trim()) ? kept.join('\n') : '';
+        changed = true;
+    }
+    if (!changed) return out;
+    let joined = '';
+    for (let i = 0; i < blocks.length; i += 2) {
+        if (!blocks[i].trim()) continue;
+        joined += (joined ? (blocks[i - 1] || '\n\n') : '') + (joined ? blocks[i] : blocks[i].replace(/^\n+/, ''));
+    }
+    return joined.trim() ? joined : out;
+}
 /** 평문 답: 앞의 "Here is the translation:" 같은 한 줄 머리말과 꼬리 메모를 걷는다 (머리말이 문단 하나로 세어져 자리가 밀리지 않게).
  *  5.3.6: source(보낸 원문)를 주면 견준다 — 원문 첫 문단이 같은 꼴이면 머리말로 보지 않고, 꼬리 메모는 stripTrailingNote 규칙대로. */
 export function stripReplyWrapping(text, source) {
-    let out = String(text ?? '').replace(/\r\n?/g, '\n').replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+    let out = stripPlanningNotes(String(text ?? '').replace(/\r\n?/g, '\n').replace(/<think>[\s\S]*?<\/think>/gi, ''), source).trim();   // 6.5.3 작업 메모
     const first = /^([^\n]*)\n[\t ]*\n/.exec(out);
     const srcFirst = source == null ? '' : paragraphsOf(source)[0] ?? '';
     if (first && PREAMBLE_BLOCK.test(first[1].trim()) && !PREAMBLE_BLOCK.test(srcFirst)) out = out.slice(first[0].length).replace(/^\s*\n/, '');
@@ -533,7 +570,7 @@ export function parseBatchResult(raw, count, meta = {}, sources) {
     }
     for (const key of found.keys()) if (!Number.isInteger(key) || key < 0 || key >= count) fail();
     return Array.from({length: count}, (_, i) => {
-        let body = stripTrailingNote(found.get(i), sources?.[i]).replace(/^\n+|\s+$/g, ''); // 빈 줄만 걷고 첫 줄 들여쓰기(코드 · 목록)는 둔다
+        let body = stripTrailingNote(stripPlanningNotes(found.get(i), sources?.[i]), sources?.[i]).replace(/^\n+|\s+$/g, '');   // 6.5.3 작업 메모도 // 빈 줄만 걷고 첫 줄 들여쓰기(코드 · 목록)는 둔다
         if (!body) fail();
         // 5.4.1: 원문+화살표+번역이면 번역만, 그래도 원문을 길게 베껴 품었으면 형식 오류 (통짜로 한 번 다시)
         if (sources?.[i] != null) body = cleanParagraphEcho(body, sources[i]) ?? fail();

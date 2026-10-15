@@ -85,6 +85,9 @@ jobs:
           node tools/tests/numcomma-fit.mjs .
           node tools/tests/main-chat-rules.mjs .
           node tools/tests/main-chat-finish.mjs .
+          node tools/tests/generation-state.mjs .
+          node tools/tests/message-work.mjs .
+          node tools/tests/fruit-compat-generating.mjs .
           node tools/tests/natural-slash.mjs .
           node tools/tests/live-models.mjs .
           node tools/tests/translator-models.mjs .
@@ -101,6 +104,8 @@ jobs:
           node tools/tests/translation-display.mjs .
           node tools/tests/translator-protect.mjs .
           node tools/tests/translator-auto-render.mjs .
+          node tools/tests/translation-guard-reload.mjs .
+          node tools/tests/rerender-notify.mjs .
           node tools/tests/translation-cards.mjs .
           node tools/tests/translator-cards-integration.mjs .
           node tools/tests/recent-context.mjs .
@@ -149,6 +154,7 @@ jobs:
           node tools/tests/fruit-cards-removed.mjs .
           node tools/tests/settings-dialog.mjs
           node tools/tests/deus-qr.mjs
+          node tools/tests/fruit-style.mjs
           node tools/build-integrity.mjs . --check
       - name: Check that generated files match their sources
         # Regenerate in the throwaway checkout, then fail if anything changed:

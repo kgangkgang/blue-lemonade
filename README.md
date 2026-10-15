@@ -1,13 +1,24 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.5.2/blue-lemonade-6.5.2.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.5.3/blue-lemonade-6.5.3.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.5.2 · 최신 업데이트</summary>
+<summary>6.5.3 · 최신 업데이트</summary>
+
+- 과일 프롬프트에서 캐릭터 에셋이 설정한 장수만큼 대사 앞에 들어가요. 예전엔 본문(<content>) 안을 건너뛰어 맨 위에 한 장만 들어갔어요.
+- 캐릭터 답의 ··· 메뉴에 「캐릭터 에셋 다시 고르기」가 생겼어요. 그림이 빠졌거나 마음에 안 들면 눌러서 다시 골라요.
+- 과일의 마음(ECoT)이 답을 손질해도 다시 쓰기가 버려지지 않고, 답이 오는 중에 누른 다시 쓰기는 끝난 뒤 이어서 해요. 다른 확장의 조용한 생성이 다시 쓰기를 멈추지 않아요.
+- 자동 번역이 중간에 멈추던 경우와, 다시 그린 카드가 코드로 보이던 경우를 고쳤어요. 번역 모델이 답 가운데 적은 작업 메모(말투 계획 같은 영어 문단)는 걷어 내요.
+- 과일의 마음 창을 한 줄 정렬로 다듬었어요 — 얇은 스위치, 블루레몬에이드 스킨·글꼴, 빠른 답장 이름 바꾸기. 데우스 빠른 설정도 이름을 붙일 수 있어요. 홈 항목은 ⠿ 손잡이로만 순서가 바뀌어요.
+
+</details>
+
+<details>
+<summary>6.5.2 · 과일 카드 꾸미기 제거 · 본문 첫 줄 여백 · 캐릭터 이름 연동</summary>
 
 - 과일 상태 카드 꾸미기를 뺐어요 — 과일 상태창 · 머리말 · 제목 카드는 프리셋 원래 디자인 그대로 보이고, 과일의 마음 QR 꾸미기 · 한글화만 남아요. 켜 두었던 카드 설정은 조용히 지워져요.
 - 본문을 <content> 로 감싸는 프리셋(과일 계열)에서 첫 문단 앞에 생기던 빈 두 줄을 없앴어요 — 상태 카드가 없거나 그림 다음에 본문이 올 때 보이던 큰 여백이에요.
