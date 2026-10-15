@@ -7,7 +7,7 @@
 //  · 테마가 보일지 정하는 항목(WAND_OWNERS)은 여기서 숨기지 않는다 — 창의 눈이 그 테마 설정을 읽고 쓴다(ownerOf · ownerShown · setOwner)
 
 export const HIDDEN_CLASS = 'po-menu-hidden';
-export const MENU_KINDS = Object.freeze(['wand']);
+export const MENU_KINDS = Object.freeze(['wand','chat']);
 
 /** 키 목록 정리 — 빈 것 · 중복 제거, 차례 유지. 키는 menus.js 가 만든 그대로 둔다(앞 공백도 키의 일부) */
 export function cleanList(list) {

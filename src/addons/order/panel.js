@@ -1,3 +1,4 @@
+import { panelVisible, setPanelVisible } from './panel-hidden.js';
 import {mountMenuOrdering} from './menus.js';
 // 확장 순서 — 위쪽 버튼 줄의 아이콘과, 눌렀을 때 뜨는 순서 창
 //
@@ -48,7 +49,7 @@ function buildContent() {
     root.className = 'po-dialog';
     root.innerHTML = `
         <h3 class="po-title"><i class="fa-solid fa-arrow-down-short-wide"></i> ${TITLE} <span class="po-version ext-version">v${VERSION}</span></h3>
-        <p class="po-hint">확장 설정 창이 보이는 차례를 정해요. 압정을 누른 확장은 줄 위에 붙어 있어요.</p>
+        <p class="po-hint">표시 체크를 끄면 설정 탭의 블록만 숨깁니다. 확장 기능은 유지되고, 이 목록에서 다시 켤 수 있어요. 압정은 위쪽 고정입니다.</p>
 
         <label class="checkbox_label po-opt" for="po_auto">
             <input type="checkbox" id="po_auto">
@@ -111,6 +112,7 @@ function buildContent() {
         act(item.dataset.key, item.dataset.group, button.dataset.act);
     });
 
+    root.querySelector('.po-list').addEventListener('change',event=>{const checkbox=event.target.closest('input[data-panel-visible]');if(!checkbox)return;setPanelVisible(settings(),checkbox.dataset.panelVisible,checkbox.checked);saveSettings();applyNow();renderList();});
     mountMenuOrdering(root);
     return root;
 }
@@ -202,11 +204,12 @@ function rowHtml(panel, group, index, total, movable) {
     const locked = movable ? '' : ' disabled';
     const up = locked || (index === 0 ? ' disabled' : '');
     const down = locked || (index === total - 1 ? ' disabled' : '');
-    return `<div class="po-item" data-key="${esc(panel.key)}" data-group="${group}">
+    return `<div class="po-item${panelVisible(settings(),panel.key)?'':' is-hidden'}" data-key="${esc(panel.key)}" data-group="${group}">
         <button type="button" class="po-pin${pinned ? ' is-on' : ''}" data-act="pin" aria-label="${pinned ? '고정 풀기' : '위에 고정하기'}"><i class="fa-solid fa-thumbtack"></i></button>
         <span class="po-label">${esc(panel.label)}</span>
         <button type="button" class="po-move" data-act="up" aria-label="위로"${up}><i class="fa-solid fa-chevron-up"></i></button>
         <button type="button" class="po-move" data-act="down" aria-label="아래로"${down}><i class="fa-solid fa-chevron-down"></i></button>
+        <label class="po-visible-toggle"><input type="checkbox" data-panel-visible="${esc(panel.key)}" aria-label="${esc(panel.label)} 설정 탭에 표시" ${panelVisible(settings(),panel.key)?'checked':''}><span>표시</span></label>
     </div>`;
 }
 
@@ -227,7 +230,9 @@ function renderRoot(root) {
     rest.forEach((panel, i) => rows.push(rowHtml(panel, 'rest', i, rest.length, !store.auto)));
 
     const list = root.querySelector('.po-list');
+    const previousScroll=list.scrollTop;
     list.innerHTML = rows.length ? rows.join('') : '<div class="po-empty">보이는 확장이 없어요</div>';
+    list.scrollTop=previousScroll;
     root.querySelector('.po-count').textContent = `${pinned.length + rest.length}개`;
 }
 

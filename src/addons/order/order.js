@@ -1,3 +1,4 @@
+import { panelVisible } from './panel-hidden.js';
 import {startMenuOrdering} from './menus.js';
 // 확장 순서 — 설정 창들을 찾아서 원하는 차례로 옮기는 부분
 //
@@ -213,12 +214,13 @@ export function apply() {
     if (!panels.length) return;
 
     const store = settings();
+    for(const panel of panels)panel.el.classList.toggle('po-panel-hidden',!panelVisible(store,panel.key));
     const { pinned, rest } = desired(panels);
     const other = document.getElementById(COLUMNS[1]);
     // 두 칸: 넓은 화면 · 설정 켬 · 고정한 창과 나머지가 둘 다 있을 때만 (한쪽이 비면 빈 칸이 가로 절반을 먹으니 한 줄로)
-    const split = store.twoColumns !== false && !!other && pinned.length > 0 && rest.length > 0 && matchMedia(WIDE).matches;
+    const split = store.twoColumns !== false && !!other && pinned.some(p=>panelVisible(store,p.key)) && rest.some(p=>panelVisible(store,p.key)) && matchMedia(WIDE).matches;
     const ordered = split ? pinned : [...pinned, ...rest];
-    const dividerAt = !split && store.divider && pinned.length && rest.length ? pinned.length : -1;
+    const dividerAt = !split && store.divider && pinned.some(p=>panelVisible(store,p.key)) && rest.some(p=>panelVisible(store,p.key)) ? pinned.length : -1;
 
     let divider = document.getElementById(DIVIDER_ID);
     if (dividerAt < 0) { divider?.remove(); divider = null; }

@@ -2,7 +2,7 @@
    index.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이다.
    설정 서랍이 없어서 기댈 우리 요소가 화면에 없으므로 :root 에 둔다. */
 :root {
-    --po-css-version: "1.1.9";
+    --po-css-version: "1.2.1";
 }
 
 /* 확장 서랍 맨 위 버튼 줄의 아이콘 버튼. 옆의 두 버튼과 높이를 맞추고 글자 없이 정사각형에 가깝게. */
@@ -175,3 +175,7 @@
 #extensionsMenu .po-menu-hidden{display:none!important}
 .po-menu-list .po-item.is-hidden .po-label{opacity:.45}
 .po-hide.is-off{opacity:.45}
+
+.po-visible-toggle{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;min-width:62px;font:inherit;cursor:pointer;}.po-visible-toggle input[type=checkbox]{width:20px!important;height:20px!important;flex:0 0 20px;margin:0!important;}.po-menu-list .po-item{display:flex;flex-wrap:wrap;align-items:center;gap:4px;}.po-menu-list .po-label{flex:1 1 8em;min-width:0;word-break:keep-all;overflow-wrap:break-word;}.po-menu-list .po-item button{min-width:40px;min-height:40px;}.po-visible-toggle span{font-size:inherit;}
+
+#extensions_settings .po-panel-hidden,#extensions_settings2 .po-panel-hidden,#options .po-menu-hidden{display:none!important}.po-list .po-item{display:flex;flex-wrap:wrap;align-items:center;gap:4px;}.po-list .po-item .po-label{flex:1 1 8em;min-width:0;white-space:normal;word-break:keep-all;overflow-wrap:break-word;}.po-list .po-item.is-hidden .po-label{opacity:.5;}

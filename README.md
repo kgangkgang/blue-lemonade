@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.6.0/blue-lemonade-6.6.0.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.6.1/blue-lemonade-6.6.1.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.6.0 · 최신 업데이트</summary>
+<summary>6.6.1 · 최신 업데이트</summary>
+
+- 확장 순서 → 채팅 메뉴에서 항목 옆 눈 버튼으로 CFG 스케일 같은 메뉴를 숨기거나 다시 보여요. 기능과 저장된 설정값은 유지하고, 메뉴가 다시 생기거나 순서를 바꿔도 숨김 선택을 기억해요.
+- 확장 설정 탭의 블록도 「표시」 체크로 숨기고 같은 목록에서 복구해요. 요술봉 안쪽에 묶인 항목도 목록에 표시하며, 유일한 열기 버튼으로 지정된 항목은 확장 자체의 열기 위치 설정에서 옮겨요.
+- 과일 QR 아이콘 선택과 표시 방식, 과일·데우스 상태창 설정 분리, 원작 글꼴 미리보기 등 6.6.0 변경은 그대로 포함돼요. 확장 순서 1.2.1.
+
+</details>
+
+<details>
+<summary>6.6.0 · 과일 QR 표시와 아이콘 선택 · 상태창 설정 분리와 원작 글꼴</summary>
 
 - 과일 QR 버튼을 아이콘만·글자만·아이콘+글자 중에서 골라요. 기본은 아이콘+글자이며, 저장한 이름은 유지해요. 과일 패널의 「아이콘 바꾸기」에서 설치된 아이콘을 검색해 고를 수 있어요.
 - 과일 상태창 5종은 과일 페이지에, 데우스 상태창 7종은 데우스 페이지에 나눴어요. 사용 여부와 마지막 선택도 따로 기억하고, 기존 영역별 글자 설정은 유지해요. QR 바로가기도 해당 페이지의 종류만 보여요.

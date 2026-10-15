@@ -6,7 +6,7 @@ import { normalizeMenuPrefs } from './menu-plan.js';   // 6.3.3 요술봉 숨김
 
 export const MODULE = 'panel_order';
 export const FOLDER = 'blue-lemonade';
-export const VERSION = '1.1.9';
+export const VERSION = '1.2.1';
 export const TITLE = '확장 순서';
 
 /**
@@ -27,10 +27,11 @@ const DEFAULTS = Object.freeze({
     /** 자동 정렬을 껐을 때 쓰는 사용자 순서 */
     order: [],
     /** 6.3.3 요술봉(extensionsMenu) 항목 숨김 · 위로 고정 — 키는 menus.js 의 poMenuKey (menuOrders 와 같은 키) */
-    menuHidden: { wand: [] },
-    menuPinned: { wand: [] },
+    menuHidden: { wand: [], chat: [] },
+    menuPinned: { wand: [], chat: [] },
     /** 테마가 보일지 정하는 요술봉 항목의 이름 (설정으로 꺼서 메뉴에서 빠져도 창에 줄을 남겨 다시 켤 수 있게) */
-    menuSeen: { wand: {} },
+    menuSeen: { wand: {}, chat: {} },
+    panelHidden: [],
 });
 
 export function settings() {
@@ -69,6 +70,7 @@ export function initSettings() {
     // 목록이 아예 없거나 배열이 아니면 처음 값으로 되돌린다.
     // 빈 배열은 사용자가 고정을 모두 푼 것이라 그대로 둔다.
     store.pinned = Array.isArray(store.pinned) ? cleanKeys(store.pinned) : [...DEFAULT_PINNED];
+    store.panelHidden = cleanKeys(store.panelHidden);
     store.order = Array.isArray(store.order) ? cleanKeys(store.order) : [];
     // 고정한 확장은 사용자 순서 목록에 겹쳐 있으면 안 된다 (둘 다 있으면 두 번 세어진다).
     store.order = store.order.filter(key => !store.pinned.includes(key));

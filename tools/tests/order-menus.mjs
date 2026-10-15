@@ -101,17 +101,17 @@ await test('planWand never hides a theme-owned item itself (its theme setting de
     const p = planWand(keys, { hidden: [keys[1], keys[2], keys[0]] });
     assert.deepEqual([...p.hidden], [keys[0]]);
 });
-await test('normalizeMenuPrefs: builds { wand: … } shapes, cleans lists, keeps seen names of owned items only, reports changes', () => {
+await test('normalizeMenuPrefs: builds independent wand/chat shapes, cleans lists, keeps seen names of owned items only, reports changes', () => {
     const s = {};
     assert.equal(normalizeMenuPrefs(s), true);
-    assert.deepEqual(s, { menuHidden: { wand: [] }, menuPinned: { wand: [] }, menuSeen: { wand: {} } });
+    assert.deepEqual(s, { menuHidden: { wand: [], chat: [] }, menuPinned: { wand: [], chat: [] }, menuSeen: { wand: {}, chat: {} } });
     assert.equal(normalizeMenuPrefs(s), false, 'already clean → no change');
     const t = { menuHidden: ['x'], menuPinned: { wand: ['a', 'a', ''], chat: ['z'] }, menuSeen: { wand: { 'id:rl-wand-button:0': '요청 로그', 'id:cg-wand-button:0': 'x', 'id:bl-notes-wand:0': '' } } };
     assert.equal(normalizeMenuPrefs(t), true);
-    assert.deepEqual(t.menuHidden, { wand: [] });
-    assert.deepEqual(t.menuPinned, { wand: ['a'] }, 'only the wand kind is kept (MENU_KINDS)');
-    assert.deepEqual(t.menuSeen, { wand: { 'id:rl-wand-button:0': '요청 로그' } });
-    assert.deepEqual([...MENU_KINDS], ['wand']);
+    assert.deepEqual(t.menuHidden, { wand: [], chat: [] });
+    assert.deepEqual(t.menuPinned, { wand: ['a'], chat: ['z'] }, 'both menu kinds survive normalization');
+    assert.deepEqual(t.menuSeen, { wand: { 'id:rl-wand-button:0': '요청 로그' }, chat: {} });
+    assert.deepEqual([...MENU_KINDS], ['wand','chat']);
     assert.equal(normalizeMenuPrefs(null), false);
 });
 await test('wiring: menus.js plans with planWand, toggles the hidden class, swaps in the latent order, owned eyes write the theme setting and resync', () => {
@@ -130,9 +130,9 @@ await test('wiring: menus.js plans with planWand, toggles the hidden class, swap
     assert.match(menus, /setAttribute\('aria-label',row\.label\+' 숨기기'\);eye\.setAttribute\('aria-pressed'/);
     assert.ok(!/고정 풀기|' 보이기'/.test(menus), 'no flipping action labels');
     const state = read('src/addons/order/state.js');
-    assert.match(state, /menuHidden: \{ wand: \[\] \}/);
-    assert.match(state, /menuPinned: \{ wand: \[\] \}/);
-    assert.match(state, /menuSeen: \{ wand: \{\} \}/);
+    assert.match(state, /menuHidden: \{ wand: \[\], chat: \[\] \}/);
+    assert.match(state, /menuPinned: \{ wand: \[\], chat: \[\] \}/);
+    assert.match(state, /menuSeen: \{ wand: \{\}, chat: \{\} \}/);
     assert.match(state, /normalizeMenuPrefs\(store\)/);
     const css = read('src/addons/order/style.css');
     assert.match(css, new RegExp(`#extensionsMenu \\.${HIDDEN_CLASS}\\{display:none!important\\}`));
@@ -150,6 +150,20 @@ await test('model switch state chip: only the name is cut — the leading icon a
     const ms = read('src/addons/modelswitch/index.js');
     assert.ok(ms.includes('<b><i class="fa-solid fa-layer-group" aria-hidden="true"></i> <span class="ms-state-name">${esc(state.name)}</span>${part(state.items)}</b>'), 'name wrapped in its own span, the half-circle after it');
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/order-menus\.mjs \./);
+});
+
+
+await test('chat visibility is preserved on reload without changing wand prefs or chat settings',()=>{
+ const settings={menuHidden:{wand:['wand-key'],chat:['chat-key','chat-key']},menuPinned:{wand:['pin']},cfgScale:1.3};
+ normalizeMenuPrefs(settings);assert.deepEqual(settings.menuHidden,{wand:['wand-key'],chat:['chat-key']});
+ settings.menuHidden.chat=toggleIn(settings.menuHidden.chat,'chat-key');normalizeMenuPrefs(settings);
+ assert.deepEqual(settings.menuHidden,{wand:['wand-key'],chat:[]});assert.equal(settings.cfgScale,1.3);assert.deepEqual(settings.menuPinned.wand,['pin']);
+});
+await test('drawer visibility changes only its own saved preference',async()=>{
+ const {panelVisible,setPanelVisible}=await import(pathToFileURL(path.join(root,'src/addons/order/panel-hidden.js')));
+ const s={order:['a','b'],pinned:['a'],panelHidden:[],menuHidden:{chat:['c']}};
+ setPanelVisible(s,'a',false);setPanelVisible(s,'a',false);assert.deepEqual(s.panelHidden,['a']);assert(!panelVisible(s,'a'));assert(panelVisible(s,'b'));
+ setPanelVisible(s,'a',true);assert(panelVisible(s,'a'));assert.deepEqual(s.order,['a','b']);assert.deepEqual(s.pinned,['a']);assert.deepEqual(s.menuHidden.chat,['c']);
 });
 
 const failed = results.filter(r => !r.pass);

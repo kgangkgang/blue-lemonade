@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "6.6.0";
+export const BUILD_VERSION = "6.6.1";
 export const FILE_HASHES = {
   "index.js": "17480:1badcfa4:040bdacc",
-  "manifest.json": "365:991a5b07:09f83704",
+  "manifest.json": "365:e8dc7c78:dc50aac2",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -128,12 +128,13 @@ export const FILE_HASHES = {
   "src/addons/notes/index.js": "144982:08879fb6:eeb9f3e8",
   "src/addons/notes/style.css": "81346:d30dce62:65c6fa9e",
   "src/addons/notes/version.js": "163:c26bbcd0:4c855af9",
-  "src/addons/order/menu-plan.js": "7675:31525e16:f597d03e",
-  "src/addons/order/menus.js": "12146:ceb25f7c:aae1fb28",
-  "src/addons/order/order.js": "14719:3743ed4b:1ec47a5f",
-  "src/addons/order/panel.js": "10064:19d7d118:1246a46b",
-  "src/addons/order/state.js": "4051:14e00095:d9aeed04",
-  "src/addons/order/style.css": "5955:d4633b1a:004b594d",
+  "src/addons/order/menu-plan.js": "7682:efd58bf6:ac05679a",
+  "src/addons/order/menus.js": "13384:e916f8dc:ef9dbb68",
+  "src/addons/order/order.js": "14980:ca195503:0aa83a39",
+  "src/addons/order/panel-hidden.js": "375:2f323a2f:5064030a",
+  "src/addons/order/panel.js": "10830:e09a1e14:38a58866",
+  "src/addons/order/state.js": "4156:7bd34940:655de457",
+  "src/addons/order/style.css": "6864:ca694d21:ef6d813f",
   "src/addons/perf/attribution.js": "4334:19ca4286:c019beee",
   "src/addons/perf/budget.js": "25334:d085c009:8f5edf14",
   "src/addons/perf/capture.js": "31911:610549a9:1eeecf78",
@@ -488,7 +489,7 @@ export const FILE_HASHES = {
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "228757:b749deda:58f98bce",
+  "src/notice-data.js": "229521:2c3af43a:05c0c27f",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -585,5 +586,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "34821:fcebb709:d610b9d5",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1433557:c52691b7:90d69912"
+  "style.css": "1433557:daae851b:a1e34360"
 };
