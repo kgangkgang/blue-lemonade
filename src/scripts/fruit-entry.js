@@ -60,7 +60,9 @@ body[data-bl-fruit-entry] #send_form :is(#qr--bar,#nonQRFormItems)>[data-bl-frui
         if(caption)caption.hidden=mode==='qr'&&display==='icon';
         if(glyph){glyph.hidden=mode==='qr'&&display==='text';const classes=`fa-solid ${mode==='cat'?'fa-cat':mode==='qr'?icon:'fa-apple-whole'}`;if(glyph.className!==classes)glyph.className=classes;}
         const qrBar=doc.getElementById('qr--bar');const target=mode==='wand'?doc.getElementById('extensionsMenu'):mode==='qr'?(qrBar&&host.getComputedStyle(qrBar).display!=='none'?qrBar:(doc.getElementById('nonQRFormItems')||doc.getElementById('send_form'))):doc.body;
-        if(target&&proxy.parentElement!==target)target.append(proxy);
+        // Icon-only sits beside the send-form icons, outside the QR bar's own padding and gap.
+        if(target===qrBar&&display==='icon'&&qrBar.parentElement?.id==='nonQRFormItems'){if(proxy.nextElementSibling!==qrBar)qrBar.before(proxy);}
+        else if(target&&proxy.parentElement!==target)target.append(proxy);
         const header=panel?.querySelector('[data-entry-toggle="bar"]')?.closest('.fh-card')?.querySelector('.fh-card-head p');
         if(header&&!hints.has(header)){hints.set(header,{original:header.textContent,shown:'요술봉·QR·고양이 중 하나만 선택해요. 다른 방법을 고르면 이전 입구는 숨겨져요.'});header.textContent=hints.get(header).shown;}
         const bar=panel?.querySelector('[data-entry-toggle="bar"]');const anchor=bar?.closest('.fh-toggle')||bar?.parentElement;

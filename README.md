@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.6.2/blue-lemonade-6.6.2.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.6.3/blue-lemonade-6.6.3.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.6.2 · 최신 업데이트</summary>
+<summary>6.6.3 · 최신 업데이트</summary>
+
+- 과일 QR을 아이콘만 표시하면 사과가 입력창 옆 다른 아이콘들과 같은 간격으로 붙어요. QR 바의 여백 때문에 혼자 더 벌어지던 문제를 고쳤어요.
+- 아이콘+글자·글자만 표시는 예전처럼 QR 바 안에 있어요. 6.6.2의 상태창 글자 슬라이더·정렬·따라오는 미리보기는 그대로 포함돼요.
+
+</details>
+
+<details>
+<summary>6.6.2 · 상태창 글자 슬라이더 · 정렬 · 따라오는 미리보기와 과일 QR 정리</summary>
 
 - 상태창 글자 설정의 크기·굵기·자간·줄간격을 다른 테마 설정과 같은 슬라이더로 바꿨어요. 값을 바꾸면 그 영역과 글자 설정이 자동으로 켜져요.
 - 정렬(왼쪽·가운데·오른쪽·양쪽)이 날짜·장소 칸과 인용문까지 실제로 움직여요. 상태창 미리보기는 화면을 내려도 위에 붙어 따라오고, 꺾쇠로 접고 펴며, 손잡이로 크게·작게 보고 돋보기로 확대해요.
