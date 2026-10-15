@@ -203,6 +203,13 @@ body.salty.salty-shadow-text:not(.salty-shadow-code) :is(#chat, .cg-root, #salty
 body.salty .salty-sample.salty-shadow-text:not(.salty-shadow-code) :is(code, pre, code *, pre *):not(#salty-none) {
   text-shadow: none !important;
 }
+/* 6.6.5 설정 표본의 code 도 채팅(06)과 같은 칩 — 실리태번 전역 code(글자 --white70a · 바탕 --black70a)가 남아 밝은 팔레트에서 글자가 1.8 : 1, 어두운 팔레트에선 채팅과 다른 검은 칩이었다 */
+body.salty .salty-sample :is(code, pre) {
+  background: var(--salty-fill-shade, var(--shade)) !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  color: var(--salty-text) !important;
+}
 /* 설정 창의 그림자 색 칸: 네이티브 color 입력을 스와치처럼 */
 .salty-panel input[type="color"][data-color-path] {
   width: 46px;

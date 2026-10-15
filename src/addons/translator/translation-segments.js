@@ -172,7 +172,8 @@ export function dropTokens(text, tokens) {
  *  문단 묶음 경로는 구분자를 원문에서 가져오므로 해당 없음. 줄 수가 다르면(문단 안 줄바꿈 · 합쳐진 문단) 손대지 않는다. */
 export function restoreParagraphBreaks(source, output) {
     // 5.4.1: 통짜 · 덩이 · 평문 재시도 답도 먼저 원문 되풀이(원문+화살표+번역 · ⟦n …] 표시)를 걷는다 — 세 경로가 모두 이 함수를 지난다
-    const src = String(source ?? ''), out = removeSourceEcho(src, String(output ?? ''));
+    // 6.6.5: 초안 · 모델 혼잣말 · 지어낸 감싸개(<output> …)도 — 초안 줄이 문단 하나로 세어지지 않게 먼저
+    const src = String(source ?? ''), out = stripDraftLeaks(removeSourceEcho(src, String(output ?? '')), src);
     const blank = /\n[\t ]*\n/;
     if (!blank.test(src) || blank.test(out)) return out;
     const paragraphs = src.split(/\n[\t ]*\n(?:[\t ]*\n)*/).filter(p => p.trim()).length;
@@ -417,7 +418,117 @@ export function stripReplyWrapping(text, source) {
     const srcFirst = source == null ? '' : paragraphsOf(source)[0] ?? '';
     if (first && PREAMBLE_BLOCK.test(first[1].trim()) && !PREAMBLE_BLOCK.test(srcFirst)) out = out.slice(first[0].length).replace(/^\s*\n/, '');
     out = stripTrailingNote(out, source).trim();
-    return source == null ? out : removeSourceEcho(source, out).trim(); // 5.4.1
+    return source == null ? out : stripDraftLeaks(removeSourceEcho(source, out).trim(), source).trim(); // 5.4.1 · 6.6.5 초안 · 감싸개
+}
+
+// 6.6.5 번역 모델의 초안 · 혼잣말 · 감싸개 (사용자 제보 10-15): 답 가운데에
+//   「쳐다보는 그녀의 정수리가 카운터 너머로 들썩이는 걸」 — let me write properly.⏎⏎<output>⏎<진짜 번역></output>
+//   처럼 초안 줄 + 영어 혼잣말 꼬리를 남기고, 다시 쓴 문단을 지어낸 <output> 태그로 감싸 보냈다. 그대로 붙어 초안 · 영어가 보였고
+//   <output> 요소가 문단을 깨뜨려 다음 대사 앞 간격 · 들여쓰기가 사라졌다. 원문과 견줘 걷는다 —
+//   ① 원문에 없는 감싸개 태그(<output> · <translation> · <result> · <answer> · <korean> …)와 코드 펜스는 벗긴다 (내용은 둔다)
+//   ② 번역문이 라틴 글자가 아닐 때(한국어 · 일본어 …) 라틴 글자뿐인 모델 메모 줄 · 줄 끝 꼬리(— let me … · Wait, … · (Note: …))를 걷는다. 원문에 같은 글이 있으면 둔다
+//   ③ 꼬리를 걷은 초안 줄 바로 뒤에 감싼(또는 거의 같은) 문단이 오면 초안은 버리고 그 문단만 둔다. 꼬리 없는 초안 덩이는 답 덩이가 원문 문단보다 많을 때만
+//   자리표시자 · 그림 자리(bl-asset-slot) · 태그는 원문에 있는 수만큼 남는 경우에만 버린다. 걷을 게 없으면 같은 글을 돌려준다.
+const WRAP_NAMES = ['output', 'outputs', 'translation', 'translated', 'translated_text', 'translation_result', 'result', 'answer', 'final', 'final_answer', 'final_output', 'final_translation', 'response', 'korean', 'ko', 'kr', 'target', 'target_text'];
+const WRAP_FENCE = /^[ \t]*`{3,}[\w-]*[ \t]*$/;
+const META_PHRASE = String.raw`(?:let me\b|let'?s (?:try|redo|re-?write|fix|write|translate|start|do (?:it|this|that))\b|wait[,.!…]|wait\s*$|actually[,.]|hmm+\b|oops\b|scratch that|on second thought|no,? (?:that'?s|wait)\b|i(?:'ll| will| should| need to| must| meant| think i)\s+(?:re-?write|re-?do|re-?try|fix|translate|write|use|keep|go with|output|revise|correct|rephrase|make)\b|(?:re-?write|re-?do|re-?try|re-?translat\w*|revis(?:e|ed|ion)|correct(?:ed|ion)|draft|final(?: version| answer| output| translation)?|better(?: version| translation)?|proper(?: version| translation)?|cleaner(?: version)?|polished(?: version)?)\s*[:：]|here(?:'s| is| are)\s+(?:the |my |a )?(?:[\w-]+\s+){0,2}(?:translation|version|output|rendering|rewrite)\b|(?:translator'?s?\s+|tl\s+)?note\s*[:：])`;
+const META_LINE = new RegExp(String.raw`^[\s>*_\-—–(\[]*${META_PHRASE}`, 'i');
+const META_TAIL = new RegExp(String.raw`(?:[ \t]*(?:[—–]+|-{1,2}|…+|\.{3})[ \t]*|(?<=[.!?。！？」』"”)\]>~*])[ \t]+)(\(?[ \t]*${META_PHRASE}[^\n]*)$`, 'i');
+const NON_LATIN_LETTER = /[\p{Script=Hangul}\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Cyrillic}\p{Script=Thai}\p{Script=Arabic}]/u;
+const KEEP_TOKEN = /\[\[__VAR_\d+__\]\]|__MASK_[A-Z]+_\d+__|<span class="bl-asset-slot"[^>]*><\/span>|<[a-z][\w-]*/gi;
+const tokenCounts = text => {
+    const counts = new Map();
+    for (const token of String(text).match(KEEP_TOKEN) || []) { const key = token.toLowerCase(); counts.set(key, (counts.get(key) || 0) + 1); }
+    return counts;
+};
+const bigrams = key => { const set = new Set(); for (let i = 0; i < key.length - 1; i++) set.add(key.slice(i, i + 2)); return set; };
+/** a 의 글자 짝(두 글자)이 b 에 얼마나 들어 있나 (0~1) — 초안과 다시 쓴 문단 견주기 */
+const containment = (a, b) => {
+    const left = bigrams(echoKey(a)), right = bigrams(echoKey(b));
+    if (!left.size) return 0;
+    let hit = 0;
+    for (const pair of left) if (right.has(pair)) hit++;
+    return hit / left.size;
+};
+/** 라틴 글자가 대부분인 메모인가 ("(Note: 他 → 그)" 처럼 원문 글자를 몇 자 품을 수 있다) — 원문에 같은 글이 있으면 아니다 */
+const latinMeta = (text, srcKey) => {
+    const plain = String(text).replace(/<[^>]*>/g, '');
+    const latin = (plain.match(/\p{Script=Latin}/gu) || []).length, letters = (plain.match(/\p{L}/gu) || []).length;
+    if (latin < 3 || latin < letters * 0.6) return false;
+    const key = echoKey(plain);
+    return key.length > 0 && !srcKey.includes(key);
+};
+export function stripDraftLeaks(text, source) {
+    const out = String(text ?? '');
+    if (source == null || !out.trim()) return out;
+    const src = String(source), srcKey = echoKey(src);
+    const names = WRAP_NAMES.filter(name => !new RegExp(String.raw`<\/?${name}(?![\w-])`, 'i').test(src));
+    const wrapTag = names.length ? new RegExp(String.raw`<(\/?)(?:${names.join('|')})(?:\s[^<>\n]*)?>`, 'gi') : null;
+    const fences = !/`{3,}/.test(src);
+    const parts = out.split(/(\n[\t ]*\n(?:[\t ]*\n)*)/);
+    const blocks = [];
+    let carry = false, changed = false;
+    // ① 감싸개 벗기기 — 여는 태그가 있던 덩이(태그만 있던 덩이면 다음 덩이)를 '감싼 덩이' 로 적어 둔다
+    for (let i = 0; i < parts.length; i += 2) {
+        let body = parts[i], wrapped = carry;
+        if (wrapTag && wrapTag.test(body)) {
+            wrapTag.lastIndex = 0;
+            if (/<(?!\/)/.test(body.match(wrapTag).join(''))) wrapped = true;
+            body = body.replace(wrapTag, '');
+        }
+        if (fences && body.split('\n').some(line => WRAP_FENCE.test(line))) {
+            if (WRAP_FENCE.test(body.split('\n').find(line => line.trim()) ?? '')) wrapped = true;
+            body = body.split('\n').filter(line => !WRAP_FENCE.test(line)).join('\n');
+        }
+        if (body !== parts[i]) { changed = true; body = body.replace(/^[\t ]*\n+/, '').replace(/\n[\t ]*$/, ''); }
+        carry = !body.trim() && wrapped;
+        blocks.push({ body, sep: parts[i - 1] ?? '', wrapped: wrapped && !!body.trim(), draft: false });
+    }
+    // ② 모델 메모 줄 · 꼬리 (번역문이 라틴 글자가 아닐 때만)
+    const nonLatin = scriptOf(echoKey(out.replace(/<[^>]*>/g, ''))) !== 'latin';
+    if (nonLatin) for (const block of blocks) {
+        if (!block.body.trim()) continue;
+        const lines = block.body.split('\n'), kept = [];
+        for (const line of lines) {
+            const bare = line.replace(/<[^>]*>/g, '').trim();
+            if (bare.length <= 400 && META_LINE.test(bare) && latinMeta(bare, srcKey)) { changed = true; continue; }
+            const tail = META_TAIL.exec(line);
+            if (tail && NON_LATIN_LETTER.test(line.slice(0, tail.index)) && latinMeta(tail[1], srcKey)) {
+                kept.push(line.slice(0, tail.index).replace(/[ \t]+$/, ''));
+                block.draft = kept.length - 1; changed = true; continue;
+            }
+            kept.push(line);
+        }
+        block.body = kept.join('\n');
+    }
+    // ③ 초안 + 다시 쓴 문단 → 다시 쓴 문단만
+    const content = () => blocks.filter(b => b.body.trim());
+    const srcCount = paragraphsOf(src).length, need = tokenCounts(src);
+    const safeDrop = removed => {
+        const rest = tokenCounts(content().map(b => b.body).join('\n\n').replace(removed, ''));
+        for (const [token] of tokenCounts(removed)) if ((rest.get(token) || 0) < (need.get(token) || 0)) return false;
+        return true;
+    };
+    const live = content();
+    for (let n = 0; n < live.length - 1; n++) {
+        const block = live[n], next = live[n + 1];
+        if (block.draft !== false) {
+            const lines = block.body.split('\n'), draft = lines[block.draft];
+            if (block.draft !== lines.length - 1 || !draft.trim()) continue;
+            if ((next.wrapped || containment(draft, next.body) >= 0.5) && containment(draft, next.body) >= 0.3 && safeDrop(draft)) {
+                lines.splice(block.draft, 1); block.body = lines.join('\n').replace(/\n+$/, ''); changed = true;
+            }
+        } else if (next.wrapped && !block.wrapped && content().length > srcCount && containment(block.body, next.body) >= 0.6 && safeDrop(block.body)) {
+            block.body = ''; changed = true;
+        }
+    }
+    if (!changed) return out;
+    let joined = '';
+    for (const block of blocks) {
+        if (!block.body.trim()) continue;
+        joined += joined ? (block.sep || '\n\n') + block.body : block.body.replace(/^\n+/, '');
+    }
+    return joined.trim() ? joined : out;
 }
 
 // 5.4.1: 원문 되풀이(에코). 모델이 "⟦1 Vere] <원문 문단 그대로>\n->\n\n<번역>" 처럼 원문을 베껴 쓰고 화살표 · 빈 줄 뒤에 번역을 붙인 답을
@@ -520,7 +631,7 @@ export function echoesSource(answer, source) {
 }
 /** 5.4.1: 한 문단 답을 원문과 견줘 고친다 — 표시 · 원문+화살표를 걷은 번역, 그래도 원문을 베껴 품었으면 null (형식 오류) */
 export function cleanParagraphEcho(answer, source) {
-    const cleaned = removeSourceEcho(source, answer).replace(/^\n+|\s+$/g, '');
+    const cleaned = stripDraftLeaks(removeSourceEcho(source, answer), source).replace(/^\n+|\s+$/g, '');   // 6.6.5 초안 · 감싸개도
     return !cleaned.trim() || echoesSource(cleaned, source) ? null : cleaned;
 }
 const FAIL_BLOCK = /^\[[^\n\]]*원문 그대로\]/;
@@ -529,6 +640,7 @@ export function hasSourceEcho(source, output) {
     const out = String(output ?? '');
     if (!out.trim() || !String(source ?? '').trim()) return false;
     if (removeSourceEcho(source, out) !== out) return true;
+    if (stripDraftLeaks(out, source) !== out) return true;   // 6.6.5 초안 · 모델 혼잣말 · 지어낸 감싸개가 남은 옛 캐시는 다시 쓰지 않는다
     const paras = paragraphsOf(source).filter(p => echoKey(p).length >= 40);
     if (!paras.length) return false;
     return paragraphsOf(out).some(block => !FAIL_BLOCK.test(block) && paras.some(p => echoesSource(block, p)));

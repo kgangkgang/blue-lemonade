@@ -7,7 +7,7 @@ import { AUTO_CONTEXT, hasAutoContext, markAutoContext, captureAutoContextGuard,
 import { prepareDisplayCards, withDisplayCardsProtected, withoutDisplayCards, displayCardBlocks, matchesDisplayCardStructure } from './display-cards.js';
 import { cardValues } from './card-values.js';   // 6.5.4 상태 카드 고정 값은 보내지 않고 바로 채움
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
-import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, fixPlaceholderVariants, dropLeftoverPlaceholders as dropProseLeftoverPlaceholders, repairTagPairs as repairProseTagPairs, dropStrayWords as dropProseStrayWords, dropWrapQuotes } from './translation-segments.js';
+import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, stripDraftLeaks, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, fixPlaceholderVariants, dropLeftoverPlaceholders as dropProseLeftoverPlaceholders, repairTagPairs as repairProseTagPairs, dropStrayWords as dropProseStrayWords, dropWrapQuotes } from './translation-segments.js';
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
 import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey, glossaryLinesFor, enforceGlossaryNames, dropDanglingOpenQuote } from './glossary-match.js';
@@ -2181,6 +2181,12 @@ async function translate(text, options = {}) {
             console.warn('[LLM Translator] 번역문의 태그 짝을 원문대로 맞췄어요 (빠진 닫는 태그 · 남는 태그)');
             if (report) report.repairedTags = true;
             translatedText = tagFixed;
+        }
+        // 6.6.5 마지막 그물: 어느 경로(통짜 · 덩이 · 문단 묶음 · 문단 캐시)로 왔든 초안 줄 · 모델 혼잣말 · 원문에 없는 감싸개(<output> …)를 걷는다 (보호 블록을 되돌린 뒤 원문과 견준다)
+        const leakFree = stripDraftLeaks(translatedText, tagSource);
+        if (leakFree !== translatedText) {
+            console.warn('[LLM Translator] 번역문에 섞인 초안 · 모델 메모 · 감싸개 태그를 걷었어요');
+            translatedText = leakFree;
         }
 
         watcher.check(); autoContextGuard?.assert();

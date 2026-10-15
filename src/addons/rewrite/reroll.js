@@ -137,8 +137,25 @@ async function repeatRequest(request, signal) {
 /** Reply text as SillyTavern will show it: with the thinking block removed when auto-parse would strip it. */
 export function visibleText(message) {
     const text = String(message?.mes ?? '');
-    if (message?.extra?.reasoning || !power_user.reasoning?.auto_parse) return text;
-    return parseReasoningFromString(text)?.content ?? text;
+    // 2.1.3 과일 ECoT 헬퍼가 있으면 헬퍼가 남길 글과 똑같이 자른다 (끝 표시가 </ECoT> 말고 </thinking> · <!-- End of The ECoT --> 인
+    //   「无 COT」 출력도). 이미 잘린 글이면 헬퍼가 null 을 돌려줘 아래 규칙으로 간다.
+    const fruit = globalThis.FruitHeartECoT;
+    try {
+        if (fruit?.getEnabled?.() && fruit.getAutoParse?.()) {
+            const split = fruit.splitReasoning?.(text);
+            if (typeof split?.visible === 'string') return split.visible.trim();
+        }
+    } catch {
+        // 헬퍼 판이 달라도 아래 규칙으로
+    }
+    // 2.1.3 과일의 마음 답은 <ECoT> 앞에 [RE:] 같은 머리가 붙어 엄격한 파싱이 생각 블록을 못 떼고, 프리셋 헬퍼가
+    //   GENERATION_ENDED 300ms 뒤 마지막 끝 태그까지를 잘라 낸다. 그 뒤 남을 글과 같은 글로 판단해야 고친 답이 버려지지 않는다.
+    const suffix = power_user.reasoning?.auto_parse ? String(power_user.reasoning?.suffix || '') : '';
+    const cut = suffix ? text.toLowerCase().lastIndexOf(suffix.toLowerCase()) : -1;
+    if (cut >= 0) return text.slice(cut + suffix.length).trim();
+    // 앞뒤 빈 줄은 헬퍼가 지우기도 남기기도 해서 비교에서 뺀다 (위치는 lastIndexOf 로 원문에서 다시 찾는다)
+    if (message?.extra?.reasoning || !power_user.reasoning?.auto_parse) return text.trim();
+    return (parseReasoningFromString(text)?.content ?? text).trim();
 }
 
 /**

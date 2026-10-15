@@ -138,6 +138,13 @@ body.salty.salty-indent #chat .mes :is(details.custom-llm-translator-details, de
   border-radius: 5px;
   padding: 0.04em 0; /* 좌우 padding 없음 — 형광펜과 같은 이유 (줄 끝 빈 조각) */
 }
+/* 6.6.5 기울임 안의 대사(*"…"* → <em><q>): 이탤릭 면이 없는 글꼴(리디바탕 등)은 기울임을 합성해 닫는 따옴표의 오른쪽 획이
+   q 상자(= 띠) 밖으로 약 0.15em 밀려나 ' 처럼 보였다. 띠만 그만큼 늘린다 — padding 과 음수 margin 이 상쇄돼 글자 배치는 그대로 */
+:is(body.salty.salty-dlg-marker #chat .mes .mes_text, .salty-sample.salty-dlg-marker,
+  body.salty.salty-dlg-full #chat .mes .mes_text, .salty-sample.salty-dlg-full) :is(em, i) q:not(q q) {
+  padding-inline-end: 0.15em;
+  margin-inline-end: -0.15em;
+}
 :is(body.salty.salty-dlg-bold #chat .mes .mes_text, .salty-sample.salty-dlg-bold) q {
   font-weight: 650;
 }

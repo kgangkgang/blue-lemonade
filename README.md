@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.6.4/blue-lemonade-6.6.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.6.5/blue-lemonade-6.6.5.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.6.4 · 최신 업데이트</summary>
+<summary>6.6.5 · 최신 업데이트</summary>
+
+- 과일의 마음 프리셋에서 자동 다시 쓰기가 「고치는 동안 메시지가 바뀌어서」 하고 버려지던 문제를 고쳤어요. 프리셋이 생각 블록을 떼어 내도 고친 글이 그대로 적용돼요 (다시 쓰기 2.1.3).
+- 번역 결과에 번역 모델의 초안 · 혼잣말(let me … 등) · <output> 같은 태그가 섞여 들어가던 것을 걸러요. 그 태그 때문에 문단 여백이 사라지던 것도 함께 고쳐져요 (번역 2.5.0).
+- 다른 확장 · 실리태번의 두꺼운 알약 · 동그라미 글자 버튼을 얇은 둥근 네모로 맞추고, 과일 창 · 다시 쓰기 설정의 검은 스위치 동그라미를 흰색으로 바꿨어요. 기울임 대사의 닫는 따옴표가 한쪽만 보이던 것과 몇몇 입력칸 · 미리보기 색도 정리했어요.
+
+</details>
+
+<details>
+<summary>6.6.4 · 나이트 상태창 ☀ 버튼 잘림 수정</summary>
 
 - 과일 상태창을 나이트 모드로 볼 때 오른쪽 위 ☀ 버튼 윗부분이 잘리던 문제를 고쳤어요. 휴대폰에서 버튼을 누른 뒤에도 위로 밀려 올라가지 않아요.
 - 6.6.3의 사과 QR 간격과 6.6.2의 상태창 글자 슬라이더·정렬·따라오는 미리보기는 그대로 포함돼요.

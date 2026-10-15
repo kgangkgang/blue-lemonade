@@ -55,7 +55,7 @@ import { messageWork } from '../../message-work.js';   // 6.5.3 메시지 작업
 import { applyUpgrades } from './upgrades.js';
 import { startQuickBan, setQuickBanEnabled } from './quick-ban.js';
 
-const VERSION = '2.1.2';
+const VERSION = '2.1.3';
 const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];
@@ -695,7 +695,8 @@ async function cleanMessage(messageId, manual, signal) {
         throw error;
     }
     // 기다리는 사이 답이 바뀌었으면(스와이프 · 편집) 이 검사는 버린다 — 바뀐 답은 제 이벤트로 다시 검사된다
-    if (getContext().chat[messageId] !== message || message.mes !== original) {
+    // 2.1.3 생각 블록만 떼어진 경우(과일 ECoT 헬퍼)는 보이는 글이 같으므로 계속한다 — 적용할 때 지금 글에 다시 끼운다
+    if (getContext().chat[messageId] !== message || (message.mes !== original && visibleText(message) !== visible)) {
         busy.delete(key);
         return;
     }
