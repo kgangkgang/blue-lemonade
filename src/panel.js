@@ -1409,6 +1409,7 @@ function tabChat(s, sub) {
             ${row('배경 이미지 비치기', toggle('chat.bgImage', s.chat.bgImage), '끄면 깨끗한 종이색 바탕')}
             ${s.chat.bgImage ? slider('chat.bgAlpha', '채팅 바탕 농도', 0, 100, 1, 82) : ''}
             ${s.chat.bgImage ? '<p class="salty-note">100이면 채팅 영역과 입력창 둘레를 테마 바탕색으로 완전히 덮어요. 내 메시지 면도 같은 농도를 따라가요.</p>' : ''}
+            ${row('글자색 대비 맞추기', toggle('chat.inkContrast', s.chat.inkContrast !== false), '메시지에 적힌 글자색이 바탕에 묻히면 색은 두고 밝기만 바꿔 잘 보이게 해요 · 저장된 글은 그대로예요')}
             ${row('고르기 목록 팝업', toggle('chat.selectPop', s.chat.selectPop !== false), '모델 · 프리셋 같은 목록을 테마가 그린 팝업으로 (끄면 폰 기본 목록)')}
             ${row('색 고르기 팝업', toggle('chat.colorPop', s.chat.colorPop !== false), '실리태번 색 칸도 테마 색 고르기로')}
             ${row('큰 숫자는 쉼표로', toggle('chat.numComma', s.chat.numComma !== false), '숫자 칸의 30000 을 30,000 으로 보여 줘요 · 누르면 원래대로, 값은 그대로')}

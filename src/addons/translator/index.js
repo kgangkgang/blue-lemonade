@@ -2697,6 +2697,7 @@ function repairShownTranslations() {
  * 2.5.1 표시 보정: 번역문의 닫히지 않은 숨김 주석(「<!-- 쾌적 성애 점검: …」 — 2.5.0 까지 주석을 번역에 보내다 닫는 --> 를 잃은 것)은
  * 그릴 때만 그 문단 끝까지 숨긴다 (hideOpenComments). 저장된 글은 건드리지 않으니 다른 기기가 옛 글로 덮어써도 늘 숨는다.
  * 2.5.2 같은 자리에서 빠진 대사 괄호(「」『』)도 원문대로 채워 그린다 (restoreDialogueBrackets) — 괄호가 있어야 테마가 대사로 알아봐 형광펜 · 글자색을 입힌다.
+ * 2.5.3 저장된 번역에 남은 모델 혼잣말 · 원문에 없는 반쪽 문단도 그릴 때 걸러 낸다 (stripDraftLeaks).
  * 실리태번 메시지 서식 훅(MessageFormatter, 정규식 · 마크다운보다 먼저) — 훅이 없는 옛 실리태번에서는 아무것도 안 한다.
  */
 let commentHookAdded = false;
@@ -2709,7 +2710,7 @@ function hideBrokenCommentsOnRender() {
         const message = getContext().chat?.[info.messageId];
         if (typeof message?.extra?.display_text !== 'string' || mes === message.mes) return mes;   // 번역문을 보여 줄 때만 (원문 · 원문 보기는 그대로)
         const shown = mes.includes('<!--') || mes.includes('-->') ? hideOpenComments(mes) : mes;
-        return message.is_user ? shown : restoreDialogueBrackets(message.mes, shown);
+        return message.is_user ? shown : restoreDialogueBrackets(message.mes, stripDraftLeaks(shown, message.mes));   // 2.5.3 남은 혼잣말 · 반쪽 문단
     }, { stage: formatter.stage.BEFORE_REGEX, order: formatter.order.EARLIEST });
 }
 

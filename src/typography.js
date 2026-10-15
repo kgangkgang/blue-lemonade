@@ -3,6 +3,9 @@ import { normalizeTrackerSpacing } from './addons/bookmarks/tracker-spacing.js';
 import { restoreDialogueTildes, resetDialogueTildes } from './dialogue-tildes.js';
 import { wrapSpanningQuotes, resetSpanningQuotes } from './dialogue-span.js';
 let active=false, observer=null, timer=0;
+// 6.6.9 조판이 메시지를 다시 볼 때 같이 할 일 (글자색 대비 맞추기 ink-contrast.js 가 건다 — 감시자를 따로 두지 않게)
+let typesetHook=null;
+export function setTypesetHook(fn){typesetHook=typeof fn==='function'?fn:null;}
 const originals=new Map(), dirty=new Set();
 const LINE_INDENT='bl-dialogue-indent';
 const mounting=new WeakSet();
@@ -120,6 +123,7 @@ export function typesetRoots(list){
     roots.forEach(prepareRoot);
     const jobs=roots.map(readRoot); // 읽기는 한 번에 — 첫 읽기에서만 스타일 계산이 돈다
     jobs.forEach(writeRoot);
+    typesetHook?.(roots);
 }
 // 메모 카드/팝업은 먼저 조판하고 같은 호출 스택에서 붙인다. 분리된 DOM에서는 계산 스타일이 비어 있으므로
 // 연결된 뒤 한 번만 실제 개행을 다시 판정한다 — 같은 마이크로태스크에 모아서 (메모 카드 여러 장도 스타일 계산 한 번)
@@ -237,6 +241,8 @@ export function syncTypography(on) {
         // 들여쓰기 칸을 넣고 뺀 기록도 버린다 (우리가 만든 것뿐 — 이 메시지는 이미 dirty 에 있다)
         let padded=false;for(const root of touched)if(root.isConnected&&markAssetBreaks(root))padded=true;
         if(padded)observer.takeRecords();
+        // 6.6.9 다시 그려진 메시지의 색 글자는 그리기 전에 (실리태번은 답이 오는 동안 조각마다 본문을 통째로 다시 그린다 — 늦으면 원래 색이 깜빡인다)
+        typesetHook?.([...touched].filter(root=>root.isConnected));
         later(120);
     });
     observer.observe(chat,{childList:true,subtree:true,characterData:true});

@@ -18,22 +18,22 @@ const WEATHER_VALUE = '.custom-dem-track__item--weather .custom-dem-track__value
 
 // 날씨 글자 → 비 · 눈. 한국어는 낱말 앞(띄어쓰기 · 쉼표 뒤)에서만 — "준비", "비밀", "눈부신" 같은 말에 걸리지 않게
 // 띄어 쓴 "눈이 부신 햇살"도 눈이 아니다 ("눈이 부슬부슬"은 눈). 구형 Safari 가 lookbehind 를 못 읽으니 앞쪽 조건은 쓰지 않는다
-const SNOW = /(?:^|[\s,·/(~→-])(?:눈(?!부|\s*이?\s*부[시신실셔셨심])|함박눈|진눈깨비|싸락눈|눈보라|폭설|첫눈|눈발)|snow|sleet|blizzard|flurr/i;
-const RAIN = /(?:^|[\s,·/(~→-])(?:비(?![밀행슷교록용])|이슬비|가랑비|보슬비|안개비|장대비|여우비|소나기|폭우|호우|장마|빗|폭풍우|뇌우)|rain|drizzl|shower|storm|thunder|downpour|monsoon|sun\s*shower/i;
+const SNOW = /(?:^|[\s,·/(~→-])(?:눈(?!부|\s*이?\s*부[시신실셔셨심])|함박눈|진눈깨비|싸락눈|눈보라|폭설|첫눈|눈발)|snow|sleet|blizzard|flurr|雪|吹雪|霙/i;
+const RAIN = /(?:^|[\s,·/(~→-])(?:비(?![밀행슷교록용])|이슬비|가랑비|보슬비|안개비|장대비|여우비|소[나]기|폭우|호우|장마|빗|폭풍우|뇌우)|rain|drizzl|shower|storm|thunder|downpour|monsoon|sun\s*shower|雨(?!刷|伞|傘|衣|靴)|雷|梅雨|夕立/i;
 // 영어의 rain · shower · storm 이 들어 있지만 비가 아닌 말 — 비를 보기 전에 지운다 (Rainbow · Snowstorm · snow showers · meteor shower · sandstorm)
 const NOT_RAIN = /rainbows?|snow\s*(?:storms?|showers?)|meteor\s*showers?|(?:sand|dust)\s*storms?/gi;
 // 바람: window · August 의 wind · gust 는 빼고 (crosswind · whirlwind 처럼 붙여 쓴 바람은 그대로)
-const BREEZE = /바람|산들|breez|wind(?!ow)|\bgust/i;
+const BREEZE = /바람|산들|breez|wind(?!ow)|\bgust|微风|大风|狂风|风[和起吹]|[东西南北和清凉微]风|風/i;
 
-const FOG = /안개|연무|박무|물안개|fog|mist|haze/i; // '안개비'는 위의 비에서 먼저 걸린다
+const FOG = /안개|연무|박무|물안개|fog|mist|haze|雾|霧|靄/i; // '안개비'는 위의 비에서 먼저 걸린다
 
 // 햇살: 맑음 · 햇빛 · 노을. 실내 · 밤이면 끈다 ("warm interior", "clear night"). 해 질 녘은 따뜻한 색으로
-const SUN = /맑[음은고]|쾌청|화창|햇[살빛볕]|볕|양지|clear|sunn?y|sunlight|sunshine|sunlit|bright|fair/i;
-const DUSK = /노을|석양|일몰|황혼|해\s*질|땅거미|일출|새벽|여명|sunset|sunrise|dusk|dawn|twilight|golden/i;
-const NIGHT = /(?:^|[\s,·/(~→-])밤|야간|한밤|자정|심야|night|midnight|moon|starry/i;
-const INDOOR = /실내|내부|지하|indoor|interior|inside|underground/i;
-const HAZE = /스모그|황사|미세\s*먼지|smog|dust/i;
-const GLOOM = /흐[림린]|구름\s*많|overcast|gloomy/i;
+const SUN = /맑[음은고]|쾌청|화창|햇[살빛볕]|볕|양지|clear|sunn?y|sunlight|sunshine|sunlit|bright|fair|晴|阳光|日光|陽光/i;
+const DUSK = /노을|석양|일몰|황혼|해\s*질|땅거미|일출|새벽|여명|sunset|sunrise|dusk|dawn|twilight|golden|黄昏|夕阳|夕陽|日落|日出|黎明|拂晓|傍晚|夕暮|夕焼/i;
+const NIGHT = /(?:^|[\s,·/(~→-])밤|야간|한밤|자정|심야|night|midnight|moon|starry|夜|深夜|午夜|月光|星空/i;
+const INDOOR = /실내|내부|지하|indoor|interior|inside|underground|室内|屋内|地下/i;
+const HAZE = /스모그|황사|미세\s*먼지|smog|dust|霾|沙尘|黄沙|黄砂/i;
+const GLOOM = /흐[림린]|구름\s*많|overcast|gloomy|阴|多云|曇/i;
 
 /** 트래커 날씨 글 → 겹칠 효과들 (앞이 주 효과). 예: "안개비" → 비 + 안개, "여우비" → 비 + 햇살, "눈안개" → 눈 + 안개 */
 export function detectWeatherAll(text) {
@@ -251,10 +251,35 @@ let wanted = { on: false, mode: 'off', level: 2 };
 let listening = false;
 let trackerTimer = 0;
 
-function trackerWeather() {
-    const values = document.querySelectorAll(`#chat .mes:not([is_user="true"]) :is(${WEATHER_VALUE})`);
+// 6.6.9 어떤 상태창이든: 마지막 AI 답에 날씨 항목이 있으면 따라간다 (과일 「天气：」 · 간결 상태창 「<present>…」 · 「Weather:」 · 「날씨:」).
+//   번역문이 있으면 번역문을, 없으면 원문을 본다. 그 답에 데우스 트래커 칸이 있으면 그것이 먼저.
+const STATUS_WEATHER = /(?:^|[\n>|｜\[【])[ \t]*(?:\*\*)?[ \t]*(?:天气|天氣|天候|날씨|weather|wthr)[ \t]*(?:\*\*)?[ \t]*[:：|｜][ \t]*([^\n<|｜】\]]{1,120})/i;
+const COMPACT_WEATHER = /<(?:olden|present|scifi)>[ \t]*([^｜|◹\n<]{1,120})/i;
+const NO_WEATHER = { modes: [], all: [], warm: false };
+/** 글 속 상태창의 날씨 항목 글 (없으면 '') */
+export function statusWeatherText(text) {
+    const value = String(text || '');
+    const found = STATUS_WEATHER.exec(value) || COMPACT_WEATHER.exec(value);
+    return found ? found[1].trim() : '';
+}
+function deusWeather(scope) {
+    const values = scope.querySelectorAll(`:is(${WEATHER_VALUE})`);
     const last = values[values.length - 1];
-    return last ? detectWeatherAll(last.matches('.custom-dem-track-recovery__value') ? recoveryWeatherText(last.textContent) : last.textContent) : { modes: [], all: [], warm: false };
+    return last ? detectWeatherAll(last.matches('.custom-dem-track-recovery__value') ? recoveryWeatherText(last.textContent) : last.textContent) : null;
+}
+function trackerWeather() {
+    const chat = SillyTavern.getContext().chat || [];
+    for (let id = chat.length - 1; id >= 0; id--) {
+        const message = chat[id];
+        if (!message || message.is_user || message.is_system) continue;
+        const element = document.querySelector(`#chat .mes[mesid="${id}"]`);
+        const deus = element && deusWeather(element);
+        if (deus) return deus;
+        const text = statusWeatherText(message.extra?.display_text) || statusWeatherText(message.mes);
+        if (text) return detectWeatherAll(text);
+        break;   // 마지막 AI 답에 상태창 날씨가 없으면 예전처럼 화면에 남은 데우스 트래커를 본다
+    }
+    return deusWeather(document.querySelector('#chat') || document) || NO_WEATHER;
 }
 function recoveryWeatherText(value) {
     const raw = String(value || '');

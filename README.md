@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.6.8/blue-lemonade-6.6.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.6.9/blue-lemonade-6.6.9.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.6.8 · 최신 업데이트</summary>
+<summary>6.6.9 · 최신 업데이트</summary>
+
+- 날씨 효과가 데우스 트래커뿐 아니라 어떤 상태창이든 날씨 칸(天气 · Weather · 날씨 · 간결 상태창)을 따라가요. 중국어 · 일본어 날씨 말(小雨 · 大雪 · 浓雾 · 晴 …)도 알아봐요.
+- 번역 모델이 옮기다 만 반쪽 문단에 「translate.」 같은 혼잣말을 붙여 원문에 없는 문단이 끼던 것을 걸러요. 이미 저장된 번역도 화면에서 바로 걸러 보여요 (번역 2.5.3).
+- 대사 글자색이 배경과 너무 비슷하면 읽히게 밝기를 자동으로 맞춰요 (테마 설정에서 끌 수 있어요).
+- TTS에 통화 목소리 필터와 생활 소음(지하철 · 버스 · 거리 등)을 더했어요. 필요할 때만 불러와요 (TTS 1.9.0).
+
+</details>
+
+<details>
+<summary>6.6.8 · 번역 대사 괄호 되살리기 · TTS 주석 읽기</summary>
 
 - 번역 모델이 대사 괄호 「」『』 를 빼먹으면 원문과 맞춰 다시 붙여요. 괄호가 빠져 같은 인물 대사가 줄마다 어둡게 · 밝게 왔다갔다하던 것이 고쳐지고, 이미 저장된 번역도 화면에서 바로 고쳐 보여요 (번역 2.5.2).
 - TTS가 닫히지 않은 <!-- 주석을 만나도 그 문단만 건너뛰고 뒤 글은 계속 읽어요 (TTS 1.8.9).

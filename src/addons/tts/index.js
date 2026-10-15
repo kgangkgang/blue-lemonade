@@ -503,6 +503,8 @@ export const ready = new Promise((resolve, reject) => jQuery(() => { (async () =
         voiceOf: (opts) => player.voiceOfName(opts && typeof opts === 'object' ? opts : { name: opts }),
         synth: (opts) => player.synthForExternal(opts && typeof opts === 'object' ? opts : { text: opts }),
         voices: () => player.voiceListPublic(),
+        // 1.9.0 다른 확장용 통화 소리 효과 (목소리 필터 · 생활 소음, WebAudio 노드) — 부를 때만 불러온다. src/fx-call.js
+        callFx: () => import('./src/fx-call.js'),
     });
     setTimeout(() => verifyAddonCss({ folder: 'tts', name: '--lv-css-version', version: VERSION, title: 'TTS', selector: '.lv-settings' }), 3000);
 })().then(resolve, reject); }));

@@ -518,7 +518,7 @@ export function stripReplyWrapping(text, source) {
 //   자리표시자 · 그림 자리(bl-asset-slot) · 태그는 원문에 있는 수만큼 남는 경우에만 버린다. 걷을 게 없으면 같은 글을 돌려준다.
 const WRAP_NAMES = ['output', 'outputs', 'translation', 'translated', 'translated_text', 'translation_result', 'result', 'answer', 'final', 'final_answer', 'final_output', 'final_translation', 'response', 'korean', 'ko', 'kr', 'target', 'target_text'];
 const WRAP_FENCE = /^[ \t]*`{3,}[\w-]*[ \t]*$/;
-const META_PHRASE = String.raw`(?:let me\b|let'?s (?:try|redo|re-?write|fix|write|translate|start|do (?:it|this|that))\b|wait[,.!…]|wait\s*$|actually[,.]|hmm+\b|oops\b|scratch that|on second thought|no,? (?:that'?s|wait)\b|i(?:'ll| will| should| need to| must| meant| think i)\s+(?:re-?write|re-?do|re-?try|fix|translate|write|use|keep|go with|output|revise|correct|rephrase|make)\b|(?:re-?write|re-?do|re-?try|re-?translat\w*|revis(?:e|ed|ion)|correct(?:ed|ion)|draft|final(?: version| answer| output| translation)?|better(?: version| translation)?|proper(?: version| translation)?|cleaner(?: version)?|polished(?: version)?)\s*[:：]|here(?:'s| is| are)\s+(?:the |my |a )?(?:[\w-]+\s+){0,2}(?:translation|version|output|rendering|rewrite)\b|(?:translator'?s?\s+|tl\s+)?note\s*[:：])`;
+const META_PHRASE = String.raw`(?:let me\b|let'?s (?:try|redo|re-?write|fix|write|translate|start|do (?:it|this|that))\b|wait[,.!…]|wait\s*$|actually[,.]|hmm+\b|oops\b|scratch that|on second thought|no,? (?:that'?s|wait)\b|i(?:'ll| will| should| need to| must| meant| think i)\s+(?:re-?write|re-?do|re-?try|fix|translate|write|use|keep|go with|output|revise|correct|rephrase|make)\b|(?:re-?write|re-?do|re-?try|re-?translat\w*|revis(?:e|ed|ion)|correct(?:ed|ion)|draft|final(?: version| answer| output| translation)?|better(?: version| translation)?|proper(?: version| translation)?|cleaner(?: version)?|polished(?: version)?)\s*[:：]|here(?:'s| is| are)\s+(?:the |my |a )?(?:[\w-]+\s+){0,2}(?:translation|version|output|rendering|rewrite)\b|(?:translator'?s?\s+|tl\s+)?note\s*[:：]|(?:translate|translation)\s*[.:：!]?\s*$)`;
 const META_LINE = new RegExp(String.raw`^[\s>*_\-—–(\[]*${META_PHRASE}`, 'i');
 const META_TAIL = new RegExp(String.raw`(?:[ \t]*(?:[—–]+|-{1,2}|…+|\.{3})[ \t]*|(?<=[.!?。！？」』"”)\]>~*])[ \t]+)(\(?[ \t]*${META_PHRASE}[^\n]*)$`, 'i');
 const NON_LATIN_LETTER = /[\p{Script=Hangul}\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Cyrillic}\p{Script=Thai}\p{Script=Arabic}]/u;
@@ -596,6 +596,11 @@ export function stripDraftLeaks(text, source) {
         for (const [token] of tokenCounts(removed)) if ((rest.get(token) || 0) < (need.get(token) || 0)) return false;
         return true;
     };
+    // 2.5.3 원문에 없는 반쪽 문단 — 「서류 처리용 영혼 판정 파일 더미... translate.」 처럼 옮기다 만 한 줄 + 혼잣말 꼬리.
+    //       문단 수가 원문보다 많을 때만, 지켜야 할 태그 · 자리표시를 품지 않았을 때만 버린다.
+    for (const block of content()) {
+        if (block.draft === 0 && !block.body.includes('\n') && content().length > srcCount && safeDrop(block.body)) { block.body = ''; changed = true; }
+    }
     const live = content();
     for (let n = 0; n < live.length - 1; n++) {
         const block = live[n], next = live[n + 1];

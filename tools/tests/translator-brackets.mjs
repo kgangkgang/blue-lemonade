@@ -190,8 +190,8 @@ await check('wiring: final pass, cached translations and the version', () => {
     assert(/if \(cachedTranslation && !editedByHand\) translation = restoreDialogueBrackets\(originalText, translation\);/.test(source));
     assert(/options\.onPreview\(restoreDialogueBrackets\(text, value\)\)/.test(source));
     const version = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8')).version;
-    assert.equal(version, '2.5.2');
-    assert(fs.readFileSync(path.join(dir, 'index.html'), 'utf8').includes('>v2.5.2<'));
+    assert(version.localeCompare('2.5.2', undefined, { numeric: true }) >= 0, version);   // 올라가도 깨지지 않게 — 화면 표시와 맞는지만
+    assert(fs.readFileSync(path.join(dir, 'index.html'), 'utf8').includes(`>v${version}<`));
 });
 
 console.log(`translator-brackets: ${passed} passed, ${failed} failed`);

@@ -46,8 +46,11 @@ jobs:
           node tools/tests/fruit-ecot-race.mjs .
           node tools/tests/translator-brackets.mjs .
           node tools/tests/tts-open-comment.mjs .
+          node tools/tests/weather-status.mjs .
+          node tools/tests/translator-stub.mjs .
           node tools/tests/tts-integration.mjs .
           node tools/tests/tts-dethump.mjs .
+          node tools/tests/tts-call-fx.mjs .
           node tools/tests/tts-pregen-paid.mjs .
           node tools/tests/tts-pregen-next.mjs .
           node tools/tests/tts-balance.mjs .
@@ -89,6 +92,7 @@ jobs:
           node tools/tests/wi-link.mjs .
           node tools/tests/cutout-edge.mjs .
           node tools/tests/numcomma-fit.mjs .
+          node tools/tests/ink-contrast.mjs .
           node tools/tests/main-chat-rules.mjs .
           node tools/tests/main-chat-finish.mjs .
           node tools/tests/generation-state.mjs .
