@@ -40,6 +40,10 @@ jobs:
           node tools/tests/stream-watchdog.mjs .
           node tools/tests/perf-bundle-645.mjs .
           node tools/tests/style-dedupe.mjs .
+          node tools/tests/translator-leak.mjs .
+          node tools/tests/translator-comments.mjs .
+          node tools/tests/translator-preview.mjs .
+          node tools/tests/fruit-ecot-race.mjs .
           node tools/tests/tts-integration.mjs .
           node tools/tests/tts-dethump.mjs .
           node tools/tests/tts-pregen-paid.mjs .

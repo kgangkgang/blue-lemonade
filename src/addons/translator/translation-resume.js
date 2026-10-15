@@ -68,13 +68,16 @@ export async function clearCheckpoints(key) {
         });
     } catch { /* memory-only browsers */ } finally { db?.close(); }
 }
-export async function translateChunks({ key, chunks, request, check = () => {}, progress = () => {}, blockedMarker }) {
+// 2.5.1 partial(parts): 덩이가 끝날 때마다(이어 쓴 덩이는 처음에) 지금까지 받은 덩이 — 끝난 문단부터 번역문으로 보여 주기용 (null = 아직 · 차단)
+export async function translateChunks({ key, chunks, request, check = () => {}, progress = () => {}, blockedMarker, partial = () => {} }) {
     // Bound storage; exceptionally large jobs still translate without checkpoints.
     const persist = chunks.join('').length <= 200000;
     const saved = persist ? await read(key) : null;
     const parts = saved?.parts?.length === chunks.length ? [...saved.parts] : chunks.map(() => null);
     const output = [], resumed = parts.filter(part => typeof part === 'string').length;
     let blocked = 0;
+    const tell = () => { try { partial([...parts]); } catch { /* 보여 주기는 번역을 막지 않는다 */ } };
+    if (resumed) tell();
     for (let i = 0; i < chunks.length; i++) {
         check();
         progress({ stage: 'chunks', done: i, total: chunks.length, resumed });
@@ -85,6 +88,7 @@ export async function translateChunks({ key, chunks, request, check = () => {}, 
             parts[i] = result;
             if (persist) await write({ key, parts, time: Date.now() });
             output.push(result);
+            if (i < chunks.length - 1) tell();
         } catch (error) {
             if (error?.refused && blockedMarker) { blocked++; output.push(`${blockedMarker}\n${chunks[i]}`); continue; }
             const completed = parts.filter(part => typeof part === 'string').length;

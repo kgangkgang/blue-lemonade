@@ -32,10 +32,13 @@ assert(a>=0&&b>a);
 let existing=null,closed=0,buttons=true;
 const context={globalThis:{quickReplyApi:{settings:{isEnabled:false}}},qrFinderModule:{closeQrFind(){closed++;}},
  document:{body:{classList:{contains:()=>false}},createElement(){return {setAttribute(){},addEventListener(){},remove(){existing=null;}};}}};
-const bar={querySelector:s=>s.includes('bl-qr-find')?existing:s==='.qr--button'&&buttons?{}:null,prepend(el){existing=el;},querySelectorAll(){return[];}};
+// 6.6.7 hidden native Fruit buttons ([data-bl-fruit-native-entry]) do not count as QR buttons.
+let hiddenFruitOnly=false;
+const bar={querySelector:s=>s.includes('bl-qr-find')?existing:s==='.qr--button:not([data-bl-fruit-native-entry])'&&buttons&&!hiddenFruitOnly?{}:null,prepend(el){existing=el;},querySelectorAll(){return[];}};
 vm.createContext(context);vm.runInContext(layout.slice(a,b)+';this.sync=syncQrFind;',context);
 context.sync(bar,true);assert.equal(existing,null,'helper buttons do not enable search when native QR is OFF');
 context.globalThis.quickReplyApi.settings.isEnabled=true;context.sync(bar,true);assert(existing,'native QR ON permits search');
+hiddenFruitOnly=true;context.sync(bar,true);assert.equal(existing,null,'only the hidden native Fruit button does not show search');hiddenFruitOnly=false;context.sync(bar,true);assert(existing,'visible QR buttons show search again');
 context.globalThis.quickReplyApi.settings.isEnabled=false;context.sync(bar,true);assert.equal(existing,null);assert(closed>=2);
 context.globalThis.quickReplyApi.settings.isEnabled=true;context.document.body.classList.contains=()=>true;context.sync(bar,true);assert.equal(existing,null,'theme search OFF remains respected');
 context.document.body.classList.contains=()=>false;buttons=false;context.sync(bar,true);assert.equal(existing,null);

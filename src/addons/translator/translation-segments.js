@@ -168,6 +168,93 @@ export function dropTokens(text, tokens) {
     return value;
 }
 
+// ── 2.5.1 숨긴 HTML 주석 (<!-- … -->) ──
+// 과일의 마음 프리셋은 답마다 빈 줄을 품은 자기 점검 주석(「<!--  …점검：⏎…⏎⏎…⏎（…输出结果) -->」)을 넣는다. 원문에선 안 보이는데 번역에 보내면
+//   ① 주석 속 빈 줄에서 문단 · 덩이가 갈라져 앞 조각과 뒤 조각이 따로 번역되고 ② 모델이 원문 그대로 둔 뒤 조각은 끝의 「 -->」 때문에
+//   원문+화살표(되풀이)로 보여 문단째 지워졌고 ③ 모델이 주석 속 지시를 따르다 답을 끊기도 했다. 그러면 닫는 --> 를 잃은
+//   「<!-- 쾌적 성애 점검: …」이 화면에 그대로 보였다. 이제 주석은 번역에 보내지 않고(index.js 보호 규칙) 제자리에 원문 그대로 되돌린다.
+export const HTML_COMMENT = /<!--[\s\S]*?-->/g;
+/** 닫히지 않은 <!-- 의 자리 (from 부터) — 다음 <!-- 보다 먼저 --> 가 나오지 않으면 닫히지 않은 것. 없으면 -1 */
+export function openCommentAt(text, from = 0) {
+    const value = String(text ?? '');
+    for (let at = value.indexOf('<!--', from); at >= 0; at = value.indexOf('<!--', at + 4)) {
+        const close = value.indexOf('-->', at + 4), next = value.indexOf('<!--', at + 4);
+        if (close < 0 || (next >= 0 && next < close)) return at;
+    }
+    return -1;
+}
+/** 번역문의 주석이 깨졌나 — 닫히지 않은 <!-- 가 있거나 닫힌 주석이 원문보다 적으면 참 (그런 번역은 캐시에 넣지도 꺼내 쓰지도 않는다).
+ *  2.5.0 까지 주석 속까지 번역해 닫아 둔 옛 번역은 깨진 게 아니다 (화면에 안 보인다) */
+export function brokenComments(source, output) {
+    const src = String(source ?? ''), out = String(output ?? '');
+    if (openCommentAt(out) >= 0 && openCommentAt(src) < 0) return true;   // 원문부터 안 닫힌 주석(끊긴 답)이면 번역문도 그렇다
+    const count = text => (text.match(HTML_COMMENT) || []).length;
+    return count(out) < count(src);
+}
+/**
+ * 표시 보정 (저장된 글은 그대로 — 그릴 때만): 닫히지 않은 <!-- 부터 그 문단 끝(빈 줄)까지 숨기고,
+ * 여는 짝을 잃고 문단 끝에 홀로 남은 --> 는 그 문단 머리부터 걷는다 (옛 번역의 주석 뒤 조각). 고칠 게 없으면 같은 글.
+ */
+export function hideOpenComments(text) {
+    let value = String(text ?? '');
+    if (!value.includes('<!--') && !value.includes('-->')) return value;
+    const paragraphEnd = at => { const m = /\n[\t ]*\n/.exec(value.slice(at)); return m ? at + m.index : value.length; };
+    for (let at = openCommentAt(value); at >= 0; at = openCommentAt(value, at)) {
+        const head = value.slice(0, at), tail = value.slice(paragraphEnd(at));
+        // 문단 머리의 주석이면 문단째(뒤 빈 줄까지), 문단 가운데면 그 줄 앞까지만 (「<content>⏎<!-- …」 의 <content> 는 둔다)
+        if (!head.trim() || /\n[\t ]*\n[\t ]*$/.test(head)) { value = head + tail.replace(/^\n[\t ]*\n(?:[\t ]*\n)*/, ''); at = head.length; }
+        else { const kept = head.replace(/[ \t]*\n?[ \t]*$/, ''); value = kept + tail; at = kept.length; }
+    }
+    // 홀로 남은 닫는 짝: 문단이 --> 로 끝나고 그 문단에 여는 <!-- 가 없을 때만 (글 속 화살표 「A --> B」는 문단 끝이 아니다)
+    const parts = value.split(/(\n[\t ]*\n(?:[\t ]*\n)*)/);
+    let changed = false;
+    for (let i = 0; i < parts.length; i += 2) {
+        if (!/-->[\t ]*$/.test(parts[i]) || parts[i].includes('<!--')) continue;
+        const before = value.slice(0, parts.slice(0, i).join('').length);
+        if (openCommentAt(before) >= 0 || before.lastIndexOf('<!--') > before.lastIndexOf('-->')) continue;
+        parts[i] = ''; changed = true;
+    }
+    if (!changed) return value;
+    let joined = '';
+    for (let i = 0; i < parts.length; i += 2) if (parts[i].trim()) joined += (joined ? (parts[i - 1] || '\n\n') : '') + parts[i];
+    return joined;
+}
+// 2.5.1 끊긴 답: 실리태번은 Gemini(구글 · vertexai) 답을 OpenAI 꼴로 감쌀 때 finishReason 을 버린다 — 안전 필터 · 출력 한도로 답이 문장 중간에서
+//   멈춰도(「『남자」) 번역기는 다 온 답으로 받아 그 덩이의 나머지 문단이 사라졌다. 끝난 까닭을 모르니 글로 본다:
+//   글자 무게(한글 · 한자 · 가나 = 1, 로마자 = 0.4 — 말이 달라도 번역 전후가 비슷하다: 저장된 번역 1,374문단에서 0.70~1.49)가 원문의 50% 아래이거나,
+//   80% 아래이면서 ① 끝 문단이 태그 · 꺾쇠를 연 채 글자로 끝났는데(문장부호 없이) 원문 끝 문단은 닫혀 있거나 ② 문단 수가 원문의 절반 이하이면
+//   끊긴 답으로 본다. ①은 무게 30 이상(대사 한 줄도), 나머지는 120 이상인 원문만 본다.
+const textWeight = text => {
+    const plain = String(text ?? '').replace(HTML_COMMENT, '').replace(/<[^>]*>|\[\[__VAR_\d+__\]\]|⟦\d+⟧/g, '');
+    const latin = (plain.match(/\p{Script=Latin}/gu) || []).length, all = (plain.match(/[\p{L}\p{N}]/gu) || []).length;
+    return all - latin + latin * 0.4;
+};
+const INLINE_OPEN = new Set(['span', 'font', 'q', 'b', 'i', 'strong', 'em', 'u', 's', 'del', 'small', 'mark', 'a']);
+/** 문단 끝이 열린 채인가 — 글 속 꾸밈 태그가 안 닫혔거나 「 『 “ 가 닫는 짝보다 많은데, 문장부호 · 닫는 괄호 없이 글자로 끝났다 (닫는 태그만 빠뜨린 온전한 번역은 아니다) */
+const openEnd = text => {
+    const lastPara = String(text ?? '').trim().split(/\n[\t ]*\n/).at(-1) ?? '';
+    const stack = [];
+    for (const m of lastPara.matchAll(/<(\/?)([a-z][\w-]*)\b[^>]*>/gi)) {
+        const tag = m[2].toLowerCase();
+        if (!INLINE_OPEN.has(tag) || /\/\s*>$/.test(m[0])) continue;
+        if (m[1]) { const k = stack.lastIndexOf(tag); if (k >= 0) stack.splice(k); } else stack.push(tag);
+    }
+    const more = (a, b) => (lastPara.split(a).length - 1) > (lastPara.split(b).length - 1);
+    const midWord = /[\p{L}\p{N}]$/u.test(lastPara.replace(/<[^>]*>|\[\[__VAR_\d+__\]\]/g, '').trimEnd());
+    return midWord && (stack.length > 0 || more('「', '」') || more('『', '』') || more('“', '”'));
+};
+export function looksCutShort(source, output) {
+    const src = textWeight(source);
+    if (src < 30) return false;
+    const ratio = textWeight(output) / src;
+    if (ratio >= 0.8) return false;
+    if (openEnd(output) && !openEnd(source)) return true;   // 대사 한 줄도 (문장 중간 · 태그 · 꺾쇠가 열린 채)
+    if (src < 120) return false;
+    if (ratio < 0.5) return true;
+    const paragraphs = text => paragraphsOf(String(text ?? '').replace(HTML_COMMENT, '')).length;
+    return paragraphs(output) * 2 <= paragraphs(source);
+}
+
 /** 5.2.4: 통짜/덩이 번역에서 모델이 문단 사이 빈 줄을 빠뜨리면(한 문단 = 한 줄로 돌려줌) 원문 문단 수와 줄 수가 같을 때만 빈 줄을 되살린다.
  *  문단 묶음 경로는 구분자를 원문에서 가져오므로 해당 없음. 줄 수가 다르면(문단 안 줄바꿈 · 합쳐진 문단) 손대지 않는다. */
 export function restoreParagraphBreaks(source, output) {
@@ -565,13 +652,15 @@ const scriptOf = key => {
 const skeletonOf = text => (String(text ?? '').match(/<\/?[a-z][\w-]*|\[\[__VAR_\d+__\]\]/gi) || []).join(' ').toLowerCase();
 /** 덩이 앞머리가 원문 문단 하나를 통째로 베낀 것이면(뒤에 화살표, 또는 줄바꿈 뒤 다른 글자의 번역) 번역만 돌려준다.
  *  원문+화살표뿐이면 '' (그 덩이를 뺀다), 해당 없으면 null. keys: 원문 문단 키 모음 */
-function cutEcho(block, keys, longest) {
+function cutEcho(block, keys, longest, sources) {
     for (const cut of block.matchAll(ECHO_CUT)) {
         const head = echoKey(block.slice(0, cut.index));
         if (head.length > longest) break;
         if (head.length < 12 || !keys.has(head)) continue;
         const tail = block.slice(cut.index), arrow = ECHO_ARROW_HEAD.test(tail);
         const rest = tail.replace(ECHO_HEAD, ''), restKey = echoKey(rest);
+        // 2.5.1 원문 문단이 원래 화살표로 끝났다면(주석 뒤 조각 「…结果) -->」) 번역하지 않고 둔 그 문단이지 원문+화살표가 아니다
+        if (!restKey && arrow && sources?.has(block.trim())) return null;
         if (!restKey) return arrow && !rest.trim() ? '' : null; // 원문+화살표뿐인 덩이만 뺀다 (화살표 뒤 태그만 남는 "A → B → `<prose>`" 는 원문 그대로)
         if (arrow || (head.length >= 20 && !keys.has(restKey) && scriptOf(restKey) !== scriptOf(head) && skeletonOf(block.slice(0, cut.index)) === skeletonOf(rest))) return rest;
         return null;
@@ -583,14 +672,14 @@ function cutEcho(block, keys, longest) {
 export function removeSourceEcho(source, output) {
     const src = String(source ?? ''), out = String(output ?? '');
     if (!src.trim() || !out.trim()) return out;
-    const paras = paragraphsOf(src), keys = new Set(paras.map(echoKey).filter(k => k.length >= 12));
+    const paras = paragraphsOf(src), keys = new Set(paras.map(echoKey).filter(k => k.length >= 12)), sources = new Set(paras);
     const longest = Math.max(0, ...[...keys].map(k => k.length));
     const blocks = out.split(/(\n[\t ]*\n(?:[\t ]*\n)*)/);
     let changed = false;
     for (let i = 0; i < blocks.length; i += 2) {
         let block = blocks[i];
         if (!src.includes('⟦')) block = block.replace(LOOSE_MARK_LINES, '$1');
-        const cut = keys.size ? cutEcho(block, keys, longest) : null;
+        const cut = keys.size ? cutEcho(block, keys, longest, sources) : null;
         if (cut !== null) block = cut;
         if (block !== blocks[i]) { blocks[i] = block; changed = true; }
     }
@@ -641,6 +730,7 @@ export function hasSourceEcho(source, output) {
     if (!out.trim() || !String(source ?? '').trim()) return false;
     if (removeSourceEcho(source, out) !== out) return true;
     if (stripDraftLeaks(out, source) !== out) return true;   // 6.6.5 초안 · 모델 혼잣말 · 지어낸 감싸개가 남은 옛 캐시는 다시 쓰지 않는다
+    if (brokenComments(source, out)) return true;   // 2.5.1 숨긴 주석을 잃거나 닫는 --> 를 잃은 옛 번역 (화면에 「<!-- …」 가 보였다)
     const paras = paragraphsOf(source).filter(p => echoKey(p).length >= 40);
     if (!paras.length) return false;
     return paragraphsOf(out).some(block => !FAIL_BLOCK.test(block) && paras.some(p => echoesSource(block, p)));
@@ -689,7 +779,8 @@ export function parseBatchResult(raw, count, meta = {}, sources) {
         return body;
     });
 }
-export async function translateSegments({ parts, signature, request, check = () => {}, progress = () => {}, cacheable = () => true, blockedMarker }) {
+// 2.5.1 partial(text): 캐시에서 온 문단 · 끝난 묶음의 문단은 번역문, 나머지는 원문인 글 (끝난 문단부터 번역문으로 보여 주기용)
+export async function translateSegments({ parts, signature, request, check = () => {}, progress = () => {}, cacheable = () => true, blockedMarker, partial = null }) {
     const stamp = epoch, output = [...parts], total = Math.ceil(parts.length / 2), missing = new Map();
     let reused = 0, translated = 0, blocked = 0;
     // paragraph-v2: 서명이 준비된 프롬프트 전체가 아니라 짧은 요약(연결 · 프롬프트 · 용어집)이 됐다
@@ -711,11 +802,18 @@ export async function translateSegments({ parts, signature, request, check = () 
     }
     const pending = [...missing.values()];
     progress({ stage: 'segments', done: reused, total, reused, translated, pending: pending.length });
+    const tell = list => {
+        if (!partial) return;
+        const view = [...output];
+        (list || []).forEach((text, n) => { const row = pending[n], clean = typeof text === 'string' && row ? cleanParagraphEcho(text, row.body) : null; if (clean) for (const i of row.indices) view[i] = clean; });
+        try { partial(view.join('')); } catch { /* 보여 주기는 번역을 막지 않는다 */ }
+    };
+    if (reused && pending.length) tell([]);
     // 5.2.9: blockedMarker 는 문구 또는 (body, error?) => 문구
     const markOf = (body, error) => typeof blockedMarker === 'function' ? blockedMarker(body, error) : blockedMarker;
     if (pending.length) {
         let results;
-        try { results = await request(pending.map(row => row.body)); }
+        try { results = await request(pending.map(row => row.body), done => { if (done?.length < pending.length) tell(done); }); }
         catch (error) {
             if (!error?.refused || !blockedMarker) throw error;
             check();

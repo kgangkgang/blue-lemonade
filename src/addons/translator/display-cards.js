@@ -260,7 +260,8 @@ export function prepareDisplayCards(text,{reserve,isRetranslation=false,protecti
             }
             return true;
         },
-        restore(value) {
+        // 2.5.1 quiet: 번역 중 미리 보기 — 값 기억(learn)에 넣지 않는다 (아직 번역 안 된 값이 섞여 있다)
+        restore(value, { quiet = false } = {}) {
             let output = String(value ?? ''), replacements = [], heard = [];
             for (const record of records) {
                 const positions = record.tokens.map(token => { const at = output.indexOf(token); if (at < 0 || output.indexOf(token,at+token.length)>=0) throw fail(); return at; });
@@ -282,7 +283,7 @@ export function prepareDisplayCards(text,{reserve,isRetranslation=false,protecti
             // the original card order as well as the order of the values inside each card.
             if (replacements.some((r,i)=>i>0 && r.start < replacements[i-1].end)) throw fail();
             for (let i=replacements.length-1;i>=0;i--) { const r=replacements[i]; output=output.slice(0,r.start)+r.text+output.slice(r.end); }
-            if (typeof learn === 'function') for (const [source,heardValue] of heard) learn(source,heardValue);
+            if (typeof learn === 'function' && !quiet) for (const [source,heardValue] of heard) learn(source,heardValue);
             return output;
         }
     };

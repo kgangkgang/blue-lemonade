@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.6.6/blue-lemonade-6.6.6.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.6.7/blue-lemonade-6.6.7.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.6.6 · 최신 업데이트</summary>
+<summary>6.6.7 · 최신 업데이트</summary>
+
+- 답에 숨겨진 <!-- … --> 메모(과일의 마음 자기점검 등)는 번역하지 않고 그대로 둬요. 이미 깨져 저장된 번역도 「<!-- …」 조각이 화면에 보이지 않게 숨겨요 (번역 2.5.1).
+- 번역 답이 문장 중간에 끊기면 알아채고 그 덩이를 다시 번역해요. 끝내 안 되면 그 문단은 원문 그대로 두고 표시해요. 번역 중에는 끝난 문단부터 바로 번역문으로 보여 줘요.
+- 고양이 입구 버튼이 화면 밖으로 밀려 안 보이던 것과, 숨긴 과일 버튼만 있어도 QR 돋보기가 뜨던 것을 고쳤어요.
+
+</details>
+
+<details>
+<summary>6.6.6 · 과일 프리셋과 에셋 · TTS · 알림 충돌 정리</summary>
 
 - 과일의 마음 프리셋에서 답 앞의 생각 블록 때문에 캐릭터 에셋 그림 자리가 생각 블록 안에 들어가 사라지던 것을 고쳤어요. 그림 고르기 요청에도 생각 글은 보내지 않아요 (캐릭터 에셋 1.6.8).
 - TTS가 스트리밍 중 생각 블록 속 따옴표를 대사로 읽거나, 생각 블록이 잘린 뒤 본문 앞줄을 건너뛰던 것을 고쳤어요 (TTS 1.8.8). 답장 알림 미리보기와 백그라운드 창 글자 수에도 생각 블록이 섞이지 않아요.

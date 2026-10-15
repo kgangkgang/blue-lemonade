@@ -159,7 +159,8 @@ export function startCompactLayout() {
     let qrFinderModule = null;
     function syncQrFind(bar, enabled) {
         let find = bar.querySelector(':scope > #bl-qr-find');
-        const hasButtons = !!bar.querySelector('.qr--button');
+        // 6.6.7 과일 입구가 숨긴 원래 과일 버튼은 세지 않는다 (그것만 있으면 돋보기를 띄우지 않음)
+        const hasButtons = !!bar.querySelector('.qr--button:not([data-bl-fruit-native-entry])');
         const qrEnabled = globalThis.quickReplyApi?.settings?.isEnabled === true;
         if (!enabled || !qrEnabled || !hasButtons || document.body.classList.contains('salty-qr-find-off')) {
             find?.remove();

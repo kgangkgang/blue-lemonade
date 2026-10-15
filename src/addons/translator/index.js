@@ -3,11 +3,13 @@ import { isPreset, validSettings, validImport, validPromptList, validPresetList,
 import { createGuards, watchGuard } from './translation-guard.js';
 import { observeEventCompletion } from './render-completion.js';
 import { notifyRerender, isRerenderNotify } from '../../rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe) · 그 알림의 MESSAGE_UPDATED 는 건너뛴다
+import { isFrontendCode } from '../../rerender-notify.js';   // 2.5.1 헬퍼가 iframe 으로 그리는 답은 번역 중 미리 보기를 그리지 않는다
 import { AUTO_CONTEXT, hasAutoContext, markAutoContext, captureAutoContextGuard, prepareTranslatorAutoContext } from './context-auto.js';
 import { prepareDisplayCards, withDisplayCardsProtected, withoutDisplayCards, displayCardBlocks, matchesDisplayCardStructure } from './display-cards.js';
 import { cardValues } from './card-values.js';   // 6.5.4 상태 카드 고정 값은 보내지 않고 바로 채움
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
 import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, stripDraftLeaks, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, fixPlaceholderVariants, dropLeftoverPlaceholders as dropProseLeftoverPlaceholders, repairTagPairs as repairProseTagPairs, dropStrayWords as dropProseStrayWords, dropWrapQuotes } from './translation-segments.js';
+import { hideOpenComments, looksCutShort } from './translation-segments.js';   // 2.5.1 숨긴 주석 표시 보정 · 끊긴 답
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
 import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey, glossaryLinesFor, enforceGlossaryNames, dropDanglingOpenQuote } from './glossary-match.js';
@@ -1239,6 +1241,7 @@ const MARK_TAIL = ' — 원문 그대로]'; // 5.2.9: 모든 실패 표시의 �
 /** 5.2.9: 실패 원인별 표시 — 예전엔 중계 오류 · 빈 답 · 형식 오류도 전부 '차단된 문단' 이라 검열로 오해했다 */
 function failMarkOf(error) {
     if (!error) return BLOCKED_CHUNK_MARK;
+    if (error.cut) return '[번역 답이 중간에 끊김' + MARK_TAIL;   // 2.5.1
     if (error.refused) return BLOCKED_CHUNK_MARK;
     if (error.format) return '[번역 답 형식 오류' + MARK_TAIL;
     const why = String(error.message ?? error).replace(/\s+/g, ' ').trim().slice(0, 50);
@@ -1305,6 +1308,12 @@ function applyKanaFix(text, kanaLines, fixed) {
         lines[index] = line.match(/^\s*/)[0] + candidate.trim();
     });
     return lines.join('\n');
+}
+
+/** 2.5.1 모델 답이 문장 중간에서 끊겼다 (실리태번이 Gemini 의 끝난 까닭을 버려 잘림 · 안전 필터 멈춤을 모른다 — looksCutShort).
+ *  거절처럼 다룬다: 묶음은 통짜 · 반 나누기로 다시, 끝내 끊기면 그 자리는 원문 + 표시 (조용히 문단을 잃지 않게). 캐시에는 넣지 않는다 */
+function cutError() {
+    return Object.assign(new Error('모델 답이 중간에 끊겨서(안전 필터나 출력 한도로 보여요) 그 부분은 원문으로 남겼어요. 다시 번역하면 다시 시도해요.'), { refused: true, cut: true });
 }
 
 function refusalError(output) {
@@ -1864,7 +1873,7 @@ async function translate(text, options = {}) {
         const chatCtx = getContext();
         const setupDigest = await checkpointKey(JSON.stringify([connection, finalPrompt, rulePrompt, additionalGuidance, extensionSettings.glossary_enabled === false ? null
             : [chatCtx?.groupId ?? null, chatCtx?.characters?.[chatCtx?.characterId]?.avatar ?? null, extensionSettings.glossary_entries ?? null], ...(displayCards.count ? ['display-cards-v1'] : []), ...(autoContextGuard ? ['auto-context-v1', autoContextGuard.stamp] : [])]));
-        const key = chunks.length > 1 ? await checkpointKey(JSON.stringify([setupDigest, text])) : '';
+        const key = chunks.length > 1 ? await checkpointKey(JSON.stringify([setupDigest, text, ...(/<!--[\s\S]*?-->/.test(text) ? ['comments-v1'] : [])])) : '';   // 2.5.1 주석을 보호하기 전 덩이로 이어 쓰지 않게
         watcher.check();
         // 5.4.2: 번역문 삭제 — 이 글의 문단 캐시 · 이어하기 줄만 지우고 요청은 하지 않는다 (키는 번역할 때와 같은 재료로)
         if (options.forget) {
@@ -1937,14 +1946,35 @@ async function translate(text, options = {}) {
             }
         };
 
+        // 2.5.1 끝난 문단부터 번역문으로 보여 주기 (options.onPreview — translateMessage 가 화면에만 그린다): 끝난 곳은 번역문 · 남은 곳은 원문인
+        //       가린 글을 지금 아는 만큼 되돌려(상태 카드 · 보호 블록) 넘긴다. 카드 값 기억에는 넣지 않고, 못 되돌리면 그 차례는 건너뛴다
+        const showPreview = typeof options.onPreview === 'function' && !isRetranslation && !isInputTranslation ? masked => {
+            try {
+                let value = displayCards.restore(fixMalformedPlaceholders(masked), { quiet: true });
+                for (let index = protectedBlocks.length - 1; index >= 0; index--) value = value.split(createPlaceholder(index)).join(protectedBlocks[index]);
+                options.onPreview(value);
+            } catch { /* 미리 보기는 번역을 막지 않는다 */ }
+        } : null;
         let checkpointComplete = false;
+        // 2.5.1 끊긴 덩이 답(looksCutShort)은 문단을 반으로 나눠 두 번까지 다시 — 끝내 끊기면 cutError (그 덩이는 원문 + 표시)
+        const chunkRequest = async (body, depth = 0) => {
+            const out = restoreParagraphBreaks(body, await callWithLayouts(body, PROMPT_LAYOUTS.slice(0, 2)));
+            if (!looksCutShort(body, out)) return out;
+            const paras = body.split(/\n{2,}/);
+            if (depth >= 2 || paras.length < 2) throw cutError();
+            console.warn('[LLM Translator] 덩이 답이 중간에 끊겨 반으로 나눠 다시 보내요');
+            const mid = Math.ceil(paras.length / 2), half = list => list.join('\n\n');
+            const piece = text => /^(?:\s*\[\[__VAR_\d+__\]\]\s*)+$/.test(text) ? text : chunkRequest(text, depth + 1);   // 보호 블록만 있는 반쪽은 보내지 않는다
+            return `${await piece(half(paras.slice(0, mid)))}\n\n${await piece(half(paras.slice(mid)))}`;
+        };
         const runChunks = async () => {
             const result = await translateChunks({ key, chunks, check: watcher.check, progress,
                 request: async body => {
-                    const out = restoreParagraphBreaks(body, await callWithLayouts(body, PROMPT_LAYOUTS.slice(0, 2)));
+                    const out = await chunkRequest(body);
                     if (!displayCards.cacheable(body, out)) throw Object.assign(new Error('상태 카드의 번역 항목이 빠지거나 구조가 달라 원문을 유지했어요. 다시 번역해 주세요.'), { format: true, structuredCard: true });
                     return out;
-                }, blockedMarker: BLOCKED_CHUNK_MARK });
+                }, blockedMarker: BLOCKED_CHUNK_MARK,
+                partial: showPreview ? parts => { if (parts.some(part => typeof part === 'string')) showPreview(parts.map((part, i) => part ?? chunks[i]).join('\n\n')); } : undefined });
             if (report) { report.partial = result.blocked > 0; report.blockedChunks = result.blocked; report.chunks = result.total; }
             checkpointComplete = result.blocked === 0;
             return result.text;
@@ -1961,13 +1991,14 @@ async function translate(text, options = {}) {
             const noCache = new Set(); // 5.3.4: 붙이긴 하되 캐시에 넣지 않을 문단 (1부터 다시 매긴 답 — 한 칸 밀린 답과 구별이 안 된다)
             const result = await translateSegments({ parts: paragraphParts,
                 signature: glossarySegmentSignature(setupDigest), check: watcher.check, progress, blockedMarker: (body, error) => failMarkOf(failReasons.get(body) ?? error), // 5.4.1: 원문 되풀이 = 형식 오류
+                partial: showPreview,   // 2.5.1
                 cacheable: (body, out) => {
                     const marks = value => JSON.stringify(value.match(/\[\[__VAR_\d+__\]\]/g) || []);
                     // 5.3.4: 묶음 중 한 문단만 거절문으로 온 경우도 30일 캐시에 넣지 않는다
                     if (!displayCards.cacheable(body, out)) return false;
                     return marks(body) === marks(out) && !linesToFix(out, body, glossaryHanKeep(), [], { english: false }).length && !looksLikeRefusal(body, out) && !noCache.has(body);   // 6.4.2 원문 한자가 남은 문단도 캐시에 안 넣는다 · 6.4.3 다시 보낸 뒤 영어 낱말만 남은 문단은 넣는다 (다시 번역할 때마다 또 사지 않게)
                 },
-                request: async bodies => {
+                request: async (bodies, done) => {
                     const translated = [];
                     let failed = null, succeeded = 0, splits = 0;
                     failReasons.clear(); noCache.clear();
@@ -1993,6 +2024,7 @@ async function translate(text, options = {}) {
                             //             전엔 거절문이 그 문단 번역으로 붙고 메시지 캐시에 들어가 다시 번역해도 거절문이 돌아왔다 (문단 캐시만 막았다)
                             const refusedAt = out.findIndex((body, i) => paragraphRefused(group[i], body));
                             if (refusedAt >= 0) throw Object.assign(refusalError(out[refusedAt]), { partial: out, renumbered: meta.renumbered }); // 나누기 상한이면 나머지 문단은 이 답으로 붙인다
+                            if (out.some((body, i) => looksCutShort(group[i], body))) throw cutError();   // 2.5.1 끝 문단이 문장 중간에서 끊긴 답 — 통짜 · 반 나누기로 다시
                             if (meta.renumbered) for (const body of group) noCache.add(body);
                             succeeded++;
                             return out;
@@ -2020,6 +2052,7 @@ async function translate(text, options = {}) {
                                     const plainRefusal = paras.length === group.length ? paras.findIndex((body, i) => paragraphRefused(group[i], body))
                                         : group.length === 1 && paragraphRefused(group[0], plain.trim()) ? 0 : -1;
                                     if (plainRefusal >= 0) throw refusalError(paras.length === group.length ? paras[plainRefusal] : plain);
+                                    if (paras.length === group.length ? paras.some((body, i) => looksCutShort(group[i], body)) : looksCutShort(joinedGroup, plain)) throw cutError();   // 2.5.1
                                     if (paras.length === group.length) { succeeded++; return paras.map(tidyKana); }
                                     if (group.length === 1 && plain.trim()) { succeeded++; return [tidyKana(plain.trim())]; }
                                     console.warn(`[LLM Translator] 통짜 답의 문단 수(${paras.length})가 원문(${group.length})과 달라 ${group.length > 1 ? '나눠서 보내요' : '원문으로 남겨요'}`);
@@ -2048,13 +2081,13 @@ async function translate(text, options = {}) {
                             return group.map(() => null);
                         }
                     };
-                    for (const group of batchGroups(bodies, groupLimit)) translated.push(...await translateGroup(group));
+                    for (const group of batchGroups(bodies, groupLimit)) { translated.push(...await translateGroup(group)); done?.(translated); }   // 2.5.1 묶음마다 미리 보기
                     if (failed && !succeeded) throw failed;
                     if (failed) {
                         const count = translated.filter(text => text === null).length;
                         console.warn('[LLM Translator] 일부 묶음 실패 — 그 문단만 원문으로 남겨요:', failed.message);
                         // 5.2.9: 폰에서는 콘솔을 못 보니 원인을 알림으로 (거절 · 형식 · 오류 구분)
-                        if (globalThis.toastr) toastr.warning(`${failed.refused ? '모델이 거절해서' : failed.format ? '답 형식이 맞지 않아' : '요청 오류로'} 문단 ${count}개를 원문으로 남겼어요 — ${String(failed.message).slice(0, 120)}`, 'LLM 번역', { timeOut: 9000 });
+                        if (globalThis.toastr) toastr.warning(`${failed.cut ? '답이 중간에 끊겨서' : failed.refused ? '모델이 거절해서' : failed.format ? '답 형식이 맞지 않아' : '요청 오류로'} 문단 ${count}개를 원문으로 남겼어요 — ${String(failed.message).slice(0, 120)}`, 'LLM 번역', { timeOut: 9000 });
                     }
                     // Any remaining Japanese is repaired in one additional request for the whole batch.
                     const joined = translated.map(text => text ?? '').join('\n\n'), lines = linesToFix(joined, bodies.join('\n\n'), glossaryHanKeep(), glossaryNameKeep());   // 6.4.2 원문 한자 덩이가 남은 줄도
@@ -2080,11 +2113,18 @@ async function translate(text, options = {}) {
             translatedText = await runChunks();
         } else {
             progress({ stage: 'whole' });
-            try { translatedText = restoreParagraphBreaks(isRetranslation ? compareText : maskedText, await callWithLayouts(maskedText, PROMPT_LAYOUTS)); } // 5.2.4 빠진 문단 빈 줄 되살리기
+            let whole = null;
+            try { whole = restoreParagraphBreaks(isRetranslation ? compareText : maskedText, await callWithLayouts(maskedText, PROMPT_LAYOUTS)); } // 5.2.4 빠진 문단 빈 줄 되살리기
             catch (error) {
                 if (!error?.refused || chunks.length < 2) throw error;
-                translatedText = await runChunks();
             }
+            // 2.5.1 통짜 답이 중간에 끊겼으면 덩이로 나눠 다시 (덩이가 하나뿐이면 붙이지 않고 오류 — 남은 문단을 조용히 잃지 않게)
+            if (whole !== null && !isRetranslation && looksCutShort(maskedText, whole)) {
+                if (chunks.length < 2) throw cutError();
+                console.warn('[LLM Translator] 통짜 답이 중간에 끊겨 덩이로 나눠 다시 보내요');
+                whole = null;
+            }
+            translatedText = whole ?? await runChunks();
         }
 
         // [2.1.0] 한국어 번역문에 남은 가나 정리: っ · ー 는 지우고, 일본어가 통째로 남은 줄만 한 번 더 보낸다 (프롬프트로는 100% 안 막힌다)
@@ -2148,7 +2188,7 @@ async function translate(text, options = {}) {
             const marker = '\n\n[Translated Text]:\n';
             const layoutSource = isRetranslation && maskedText.startsWith('[Original Text]:\n') && maskedText.includes(marker)
                 ? maskedText.slice('[Original Text]:\n'.length, maskedText.indexOf(marker)) : maskedText;
-            const dropped = droppedPlaceholders(protectedBlocks, layoutSource, translatedText, block => isProtectedBlock(block, keepRules));
+            const dropped = droppedPlaceholders(protectedBlocks, layoutSource, translatedText, block => isProtectedBlock(block, keepRules) || /^<!--[\s\S]*-->$/.test(block));   // 2.5.1 숨긴 주석도 잃지 않는다
             if (dropped.length) {
                 translatedText = restoreDroppedPlaceholders(layoutSource, translatedText, dropped);
                 if (report) report.restoredBlocks = dropped.length;
@@ -2246,6 +2286,58 @@ function progressBadge(messageId, message = null, sourceMes = message?.mes, chat
     return {
         update(info) { if (info && typeof info === 'object') stage = info; paint(); },
         remove() { clearInterval(timer); el?.remove(); el = null; },
+    };
+}
+
+/**
+ * 2.5.1 번역하는 동안 끝난 문단부터 번역문으로 (사용자 요청 10-15 — 「문단 4/10」을 기다리는 동안): 덩이 · 문단 묶음이 끝날 때마다
+ * 「끝난 곳은 번역문 · 남은 곳은 원문」을 그 메시지 화면(.mes_text)에만 그린다. 저장된 글(mes · display_text)은 건드리지 않는다 —
+ * 끝나면 최종본이 늘 하던 대로 다시 그려지고(refreshMessageBlock), 멈추거나 실패하면 revert() 가 지금 데이터대로(원문 · 예전 번역) 다시 그린다.
+ * 진행 표시(.llmt-progress)는 그대로 둔다. 실리태번이 그 사이 다시 그려 미리 보기가 지워지면 1초 안에 다시 그린다.
+ * 그리지 않는 때: 대상이 바뀜(채팅 · 스와이프 · 글 수정) · 스트리밍 중 · 편집 창이 열림 · 헬퍼가 iframe 으로 그리는 코드가 든 답(다시 그리면 코드로 돌아간다).
+ */
+function translationPreview(messageId, message, sourceMes, chatId, originalText) {
+    const swipeId = message?.swipe_id ?? 0, frontend = isFrontendCode(originalText);
+    let latest = null, shown = false, stopped = false, timer = null;
+    const target = () => {
+        const index = resolveTranslationTarget(message, messageId, sourceMes, chatId);
+        return index !== -1 && (getContext().chat?.[index]?.swipe_id ?? 0) === swipeId ? index : -1;
+    };
+    const hostOf = index => {
+        const element = document.querySelector(`#chat .mes[mesid="${index}"]`);
+        if (!element || element.querySelector('.edit_textarea')) return null;
+        const processor = getContext().streamingProcessor;
+        if (processor && Number(processor.messageId) === index && !processor.isFinished && !processor.isStopped) return null;
+        return element.querySelector('.mes_text');
+    };
+    const paint = () => {
+        if (stopped || frontend || latest === null) return;
+        const index = target(), host = index < 0 ? null : hostOf(index);
+        if (!host) return;
+        let html;
+        try { html = getContext().messageFormatting(processTranslationText(originalText, latest), message.name, message.is_system, message.is_user, index); }
+        catch { return; }
+        const badge = host.querySelector(':scope > .llmt-progress');
+        host.innerHTML = html;
+        if (badge) host.prepend(badge);
+        host.dataset.llmtPreview = '1';
+        shown = true;
+    };
+    const stop = () => { stopped = true; clearInterval(timer); timer = null; };
+    return {
+        show(text) {
+            latest = String(text ?? '');
+            paint();
+            timer ??= setInterval(() => { const index = target(), host = index < 0 ? null : hostOf(index); if (host && !host.dataset.llmtPreview) paint(); }, 1000);
+        },
+        stop,
+        revert() {
+            stop();
+            if (!shown) return;
+            const index = target();
+            const host = index < 0 ? null : document.querySelector(`#chat .mes[mesid="${index}"] .mes_text`);
+            if (host?.dataset.llmtPreview) refreshMessageBlock(index, getContext().chat[index]);
+        },
     };
 }
 
@@ -2589,6 +2681,24 @@ function repairShownTranslations() {
     return count;
 }
 
+/**
+ * 2.5.1 표시 보정: 번역문의 닫히지 않은 숨김 주석(「<!-- 쾌적 성애 점검: …」 — 2.5.0 까지 주석을 번역에 보내다 닫는 --> 를 잃은 것)은
+ * 그릴 때만 그 문단 끝까지 숨긴다 (hideOpenComments). 저장된 글은 건드리지 않으니 다른 기기가 옛 글로 덮어써도 늘 숨는다.
+ * 실리태번 메시지 서식 훅(MessageFormatter, 정규식 · 마크다운보다 먼저) — 훅이 없는 옛 실리태번에서는 아무것도 안 한다.
+ */
+let commentHookAdded = false;
+function hideBrokenCommentsOnRender() {
+    const formatter = getContext()?.messageFormatter;
+    if (commentHookAdded || typeof formatter?.addHook !== 'function') return;
+    commentHookAdded = true;
+    formatter.addHook((mes, info) => {
+        if (info.isReasoning || !(info.messageId >= 0) || (!mes.includes('<!--') && !mes.includes('-->'))) return mes;
+        const message = getContext().chat?.[info.messageId];
+        if (typeof message?.extra?.display_text !== 'string' || mes === message.mes) return mes;   // 번역문을 보여 줄 때만 (원문 · 원문 보기는 그대로)
+        return hideOpenComments(mes);
+    }, { stage: formatter.stage.BEFORE_REGEX, order: formatter.order.EARLIEST });
+}
+
 // 이어쓰기 등으로 원문이 바뀌었는데 번역이 실패하면, 옛 번역이 새 원문을 가리지 않게 한다.
 // 우리 해시가 있는 표시만 치운다. 기존 원문용 IndexedDB 캐시는 보존한다.
 async function hideStaleTranslation(message, onHide = null) {
@@ -2693,13 +2803,14 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                 // [2.1.0] 메시지 위에 진행 표시 · 문단을 나눠 일부가 차단되면 캐시에 넣지 않는다 (다시 번역하면 다시 시도)
                 const report = {};
                 const badge = progressBadge(messageId, message, sourceMes, chatId);
+                const preview = runToken.preview = translationPreview(messageId, message, sourceMes, chatId, originalText);   // 2.5.1 끝난 문단부터 번역문으로 (화면에만)
                 // 화살표 다시 번역이라도 차단 표시가 남은 글이면 문단 캐시를 쓴다 — 이미 된 문단은 다시 보내지 않고 차단된 문단만 다시 시도
                 const segmentCache = source !== 'handleTranslateButtonClick_retranslate' || String(message.extra.display_text || '').includes(MARK_TAIL);
                 try {
                     // 6.5.2 같은 채팅을 다시 불러오는 사이(배열이 빈 순간)는 「바뀜」이 아니다 — 가라앉은 뒤에 판단한다
-                    translation = await translate(originalText, { segmentCache, collectNames: true, assertValid: () => { if (runToken.guard.settled()) runToken.guard.assert(); }, onProgress: badge.update, report });
+                    translation = await translate(originalText, { segmentCache, collectNames: true, assertValid: () => { if (runToken.guard.settled()) runToken.guard.assert(); }, onProgress: badge.update, onPreview: preview.show, report });
                 } finally {
-                    badge.remove();
+                    preview.stop(); badge.remove();
                 }
                 translation = dropStrayWords(translation, originalText); // 6.2.4 원문에 없는 낱말 한 줄 — 캐시에도 걷은 글을
                 if (report.partial) toastr.warning(`문단 ${report.blockedChunks}/${report.chunks}덩이는 차단돼 원문으로 남겼어요. 다시 번역하면 다시 시도해요.`, '번역', { timeOut: 8000 });
@@ -2762,6 +2873,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
         if (message.extra?.original_text_hash === originalHashOf(originalText)) publishArchiveReady(message, sourceMes, chatId, 'translation');
     } catch (error) {
         runToken.error = error;
+        runToken.preview?.revert();   // 2.5.1 멈춤 · 실패: 미리 보기를 지우고 지금 데이터대로 (원문 · 예전 번역)
         if (runToken.chatGuard.valid()) await hideStaleTranslation(message);
         if (source === 'batch') throw error;
         if (error?.cancelled) {
@@ -5289,6 +5401,7 @@ function initializeEventHandlers() {
         if (modelPickerShown()) autoRefreshModels(); // [2.2.8] 닫혀 있으면 열 때 받는다
     });
 
+    hideBrokenCommentsOnRender();   // 2.5.1
     eventSource.on(event_types.CHAT_CHANGED, function () {
         publishGlossaryNames();   // 6.3.5 채팅을 바꾸면 바로 — 첫 인사말 렌더 · TTS 팔레트보다 먼저 (100ms 뒤 renderGlossary 는 같으면 아무 일 없음)
         if (glossaryEditorScopeChanged()) resetGlossaryEditor();
@@ -6869,7 +6982,11 @@ function getCombinedRegexes() {
         //   기존 규칙 뒤에 두어 이 블록이 없는 답의 [[__VAR_n__]] 번호 · 문단 캐시 키는 그대로다.
         /<ECoT\b[^>]*>[\s\S]*?<\/ECoT\s*>/gi,
         /^(?:(?!<\/?(?:ECoT|thinking|content|prose)\b)[\s\S])*?<\/(?:ECoT|thinking)\s*>/i,
-        /<(scene_plan|scene_reasoning)\b[^>]*>[\s\S]*?<\/\1\s*>/gi
+        /<(scene_plan|scene_reasoning)\b[^>]*>[\s\S]*?<\/\1\s*>/gi,
+        // 2.5.1 숨긴 HTML 주석(과일의 마음 자기 점검 「<!--  …⏎⏎…（…输出结果) -->」)은 번역에 보내지 않고 제자리에 원문 그대로 —
+        //   보내면 주석 속 빈 줄에서 문단 · 덩이가 갈라져 닫는 --> 를 잃었고(화면에 「<!-- 쾌적 성애 점검: …」), 모델이 주석 속 지시를 따르다 답을 끊었다.
+        //   위 규칙들 뒤라 주석이 없는 답의 [[__VAR_n__]] 번호 · 문단 캐시 키는 그대로다
+        /<!--[\s\S]*?-->/g
     ];
 
 
