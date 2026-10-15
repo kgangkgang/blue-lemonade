@@ -545,10 +545,36 @@ const latinMeta = (text, srcKey) => {
     const key = echoKey(plain);
     return key.length > 0 && !srcKey.includes(key);
 };
+// 2.6.4 생각 블록 · 메모 태그 (사용자 10-16 「<think>Rex uses casual-polite → Korean 해요체 …</think>렉스는 …」 처럼 말투 메모가 문단 앞에 붙어 보였다).
+//       원문에 그 태그가 없을 때만. 낯선 태그(원문에 없고 HTML · 감정 태그가 아닌 이름)는 안이 원문에 없는 영어 메모일 때만 걷는다.
+const THINK_NAMES = ['think', 'thinking', 'thought', 'reasoning', 'analysis', 'scratchpad', 'reflection', 'plan', 'planning', 'notes', 'note', 'translator_note', 'translation_note', 'tl_note', 'comment', 'meta'];
+const HTML_NAMES = new Set('a abbr b bdi bdo blockquote br caption cite code col colgroup dd del details dfn div dl dt em figcaption figure font h1 h2 h3 h4 h5 h6 hr i img ins kbd li mark ol p pre q rp rt ruby s samp section small span strong style sub summary sup table tbody td tfoot th thead time tr u ul var wbr center big tt strike'.split(' '));
+function stripThinkBlocks(out, src) {
+    const lowSrc = src.toLowerCase();
+    let text = out;
+    for (const name of THINK_NAMES) {
+        if (lowSrc.includes(`<${name}`)) continue;
+        const pair = new RegExp(String.raw`[ \t]*<${name}\b[^>]*>[\s\S]*?<\/${name}\s*>[ \t]*\n?`, 'gi');
+        text = text.replace(pair, '');
+        const open = new RegExp(String.raw`^\s*<${name}\b[^>]*>[\s\S]*?(?=\n[ \t]*\n|$)`, 'i');   // 닫히지 않은 첫머리 생각 블록은 그 문단까지
+        if (open.test(text) && !new RegExp(String.raw`<\/${name}\s*>`, 'i').test(text)) text = text.replace(open, '');
+    }
+    const srcKey = echoKey(src);
+    text = text.replace(/[ \t]*<([a-z][\w-]*)\b[^>]*>([^<]{12,600})<\/\1\s*>[ \t]*\n?/gi, (whole, name, inner) => {
+        const n = name.toLowerCase();
+        if (HTML_NAMES.has(n) || lowSrc.includes(`<${n}`)) return whole;
+        const latin = (inner.match(/\p{Script=Latin}/gu) || []).length, letters = (inner.match(/\p{L}/gu) || []).length;
+        if (latin < 12 || latin < letters * 0.6) return whole;
+        const key = echoKey(inner);
+        return key && !srcKey.includes(key) ? '' : whole;
+    });
+    return text;
+}
 export function stripDraftLeaks(text, source) {
-    const out = String(text ?? '');
+    let out = String(text ?? '');
     if (source == null || !out.trim()) return out;
     const src = String(source), srcKey = echoKey(src);
+    { const cleaned = stripThinkBlocks(out, src); if (cleaned !== out && cleaned.trim()) out = cleaned.replace(/\n{3,}/g, '\n\n').replace(/^[ \t]*\n+/, ''); }
     const names = WRAP_NAMES.filter(name => !new RegExp(String.raw`<\/?${name}(?![\w-])`, 'i').test(src));
     const wrapTag = names.length ? new RegExp(String.raw`<(\/?)(?:${names.join('|')})(?:\s[^<>\n]*)?>`, 'gi') : null;
     const fences = !/`{3,}/.test(src);

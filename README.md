@@ -1,13 +1,20 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.7.6/blue-lemonade-6.7.6.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.7.7/blue-lemonade-6.7.7.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.7.6 · 최신 업데이트</summary>
+<summary>6.7.7 · 최신 업데이트</summary>
+
+- 번역 모델이 생각한 내용(<think> · <thinking> · <reasoning> 같은 블록)이나 낯선 태그로 감싼 영어 메모를 번역문에 끼워 보내면 걷어 내요. 원문에 그 태그가 있으면 그대로 둬요. 이미 저장된 번역도 화면에서 바로 걸러 보여요 (번역 2.6.4).
+
+</details>
+
+<details>
+<summary>6.7.6 · 캐릭터 연동 여러 줄 · 과일 정규식 연동 · 월드인포 숨기기 · 번역 남은 영어</summary>
 
 - 「캐릭터 이름 연동」을 여러 줄로 만들 수 있어요. 줄마다 「프롬프트 · 정규식 이름에 든 말」과 카드 여러 장을 골라 두면, 그 카드 채팅에서만 그 항목이 켜지고 「기본」 짝은 어느 줄에도 안 맞을 때만 켜져요. 예전 한 줄 설정은 첫 줄로 옮겨져요.
 - 프롬프트 연동 정규식이 과일 프리셋도 알아봐요. 정규식이 다루는 태그(<status_bar> · ◸ 등)를 쓰는 프롬프트가 꺼져 있으면 그 정규식도 꺼요. 프롬프트로 보낼 글을 다듬는 정규식은 늘 켜 둬요 (1.0.8).
