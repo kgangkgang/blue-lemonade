@@ -159,7 +159,7 @@ assert.deepEqual(frozen.fz_ext.direct,{provider:'claude',models:{openai:'a',clau
 const nodes=D.findNodes(mem.memo_like,STS);
 assert.equal(D.skipRegistered(nodes,'memo_like',[{settingsKey:'memo_like'}]).length,0);
 assert.equal(D.skipRegistered(nodes,'memo_like',[{settingsKey:'memo_like',path:'direct'}]).length,0);
-assert.equal(D.skipRegistered(nodes,'memo_like',[{settingsKey:'memo_like',path:'other'}]).length,1);
+assert.equal(D.skipRegistered(nodes,'memo_like',[{settingsKey:'memo_like',path:'other'}]).length,0);   // 6.7.2 등록한 확장의 칸은 통째로 뺀다
 assert.equal(D.skipRegistered(nodes,'memo_like',[{settingsKey:'x'}]).length,1);
 console.log('PASS frozen defaults copied before writing; registry settingsKey/path dedupe');
 

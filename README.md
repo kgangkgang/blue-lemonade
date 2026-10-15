@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.7.1/blue-lemonade-6.7.1.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.7.2/blue-lemonade-6.7.2.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.7.1 · 최신 업데이트</summary>
+<summary>6.7.2 · 최신 업데이트</summary>
+
+- 모델 전환의 「검열되면」 단추가 검열되면 줄만 한 번에 골라요(일반 줄은 빠져요). 꺼져 있던 줄도 한 번 확인받고 고르며, 「바꾸기」를 누르면 위에서 고른 모델로 켜져요 (모델 전환 1.1.8).
+- 스스로 모델 전환에 등록한 확장은 자동 찾기 줄이 하나 더(확장 원래 이름으로) 생기지 않아요. 세부 연결 펼치기는 「세부 ⌄」 글자 단추로 바꿔 체크 표시와 헷갈리지 않아요.
+
+</details>
+
+<details>
+<summary>6.7.1 · 번역 중 상태창 유지 · 묶음 번역 진행 숫자 · 다른 기기 헛경보 고침</summary>
 
 - 번역 중 바로 보기가 이미 그려진 상태창(코드 블록 · 헬퍼 화면)을 그대로 두고 그 앞뒤 글만 바꿔요. 번역이 끝날 때까지 상태창이 날 코드로 보이던 것이 고쳐졌어요 (번역 2.5.5).
 - 묶음 번역도 「수정 문단 17/74 묶음 번역 중」처럼 끝난 문단 수를 보여 줘요. 묶음 하나가 끝날 때마다 올라가요.

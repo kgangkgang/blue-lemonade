@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "6.7.1";
+export const BUILD_VERSION = "6.7.2";
 export const FILE_HASHES = {
   "index.js": "17649:c8f7b83a:aec48bc0",
-  "manifest.json": "365:f2d0df43:0a5514fc",
+  "manifest.json": "365:f49c265a:2f7b7da1",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -112,17 +112,17 @@ export const FILE_HASHES = {
   "src/addons/models/sources.js": "5251:0e71e325:8b5932b3",
   "src/addons/models/state.js": "5376:4ec328c0:1933adee",
   "src/addons/models/style.css": "4698:b4070bc4:131e1771",
-  "src/addons/modelswitch/discover.js": "26550:e71a7cdb:5ef3d317",
+  "src/addons/modelswitch/discover.js": "26591:c872021b:6ffcc803",
   "src/addons/modelswitch/fallback-field.css": "1425:c6854036:608bca6a",
   "src/addons/modelswitch/fallback-field.js": "9086:23c4e7a6:2f385891",
   "src/addons/modelswitch/fallback.js": "10265:b41c479e:2784deb7",
-  "src/addons/modelswitch/index.js": "33891:1917f4a5:ec9a2f5b",
+  "src/addons/modelswitch/index.js": "36671:8d9d9dbb:63b50abc",
   "src/addons/modelswitch/jump.js": "3993:2e189859:5dde0462",
   "src/addons/modelswitch/lock.js": "4564:5b4b3227:e596adc5",
   "src/addons/modelswitch/menu.js": "794:644422e0:cedd047b",
   "src/addons/modelswitch/rows.js": "4623:d53cab26:b7c26dcb",
   "src/addons/modelswitch/state.js": "8832:c2b74546:fa22e4a5",
-  "src/addons/modelswitch/style.css": "12835:a2fc5c22:1adfa565",
+  "src/addons/modelswitch/style.css": "13041:c80b7721:1c6fd14f",
   "src/addons/modelswitch/targets.js": "27029:8beaef84:4bbf29bd",
   "src/addons/notes/graph.js": "12020:1cdfe68f:2b39d83a",
   "src/addons/notes/guide.js": "13946:68b0c805:a82fe18e",
@@ -497,7 +497,7 @@ export const FILE_HASHES = {
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "236854:dd7fdbee:a96be7a7",
+  "src/notice-data.js": "237407:657f5cf3:5e709335",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -595,5 +595,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "34821:fcebb709:d610b9d5",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1438215:2406c237:b018ad28"
+  "style.css": "1438215:ca2e9766:43be0a1a"
 };

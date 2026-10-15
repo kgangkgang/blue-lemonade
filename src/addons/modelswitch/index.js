@@ -15,7 +15,7 @@ import { MAX_STATES, entryOf, captureState, changedSince, planRestore, isCurrent
 import { toggleGroup, groupOn, rowActive, isFallbackRow, displayGroups } from './rows.js';
 import { mountFallbackField } from './fallback-field.js';
 
-const VERSION = '1.1.7';
+const VERSION = '1.1.8';
 const MAX_PRESETS = 8;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const label = source => SOURCES.find(s => s.id === source)?.label || source;
@@ -40,7 +40,26 @@ function store() {
 }
 
 // 아는 확장은 처음부터 켜 두고, 자동으로 찾은 확장(1.0.5: 켜진 모든 확장의 소스로 찾음)은 직접 켤 때까지 건드리지 않는다
-const isOn = target => rowActive(target) && (store().targets[target.id] ?? !(target.auto || target.defaultOff));   // 꺼진 대체 모델은 확인·설정하기 전에는 선택하지 않는다.
+// 꺼진 대체 모델은 확인·설정하기 전에는 선택하지 않는다. 6.7.2 「검열되면」 단추로 확인받고 고른 꺼진 줄(armed)은 「바꾸기」 때 고른 모델로 켠다 — 창을 닫으면 잊는다.
+const armed = new Set();
+const canArm = target => isFallbackRow(target) && !rowActive(target) && typeof target.enable === 'function';
+const isOn = target => rowActive(target) ? (store().targets[target.id] ?? !(target.auto || target.defaultOff)) : armed.has(target.id) && canArm(target);
+const fallbackPickable = targets => targets.filter(target => isFallbackRow(target) && (rowActive(target) || canArm(target)));
+
+/** 6.7.2 「검열되면」 단추 (사용자 10-15 「검열되면 버튼 누르면 검열되면 쓸 애들만 전체선택」): 검열되면 줄만 모두 고르고 일반 줄은 뺀다. 이미 모두 골랐으면 모두 끈다 */
+async function pickFallbacks() {
+    const rows = fallbackPickable(shownTargets()), s = store();
+    if (!rows.length) return;
+    if (rows.every(isOn)) {
+        for (const target of rows) { if (rowActive(target)) s.targets[target.id] = false; else armed.delete(target.id); }
+    } else {
+        const off = rows.filter(target => !rowActive(target) && !armed.has(target.id));
+        if (off.length && !await callGenericPopup(`꺼져 있는 「검열되면」 ${off.length}개도 고를까요? 「바꾸기」를 누르면 위에서 고른 모델로 켜져요.`, POPUP_TYPE.CONFIRM)) return;
+        for (const target of shownTargets()) if (!isFallbackRow(target) && rowActive(target)) s.targets[target.id] = false;
+        for (const target of rows) { if (rowActive(target)) s.targets[target.id] = true; else armed.add(target.id); }
+    }
+    note = ''; saveSettingsDebounced(); syncLocks(); render();
+}
 // 1.1.1 상태 칩에 담는 대상: 체크와 상관없이 전부 (번역만 따로 두는 식의 섞인 상태가 이 칩의 뜻) — 다만 자동으로 찾은 확장 · 처음엔 꺼 두는 확장은 직접 켰을 때만
 const inState = target => !(target.auto || target.defaultOff) || store().targets[target.id] === true;
 
@@ -119,7 +138,7 @@ function targetHtml(target, name = target.name, group = null) {
     let now = null; try { now = target.read(); } catch { /* 읽지 못함 */ }
     const active = rowActive(target), ok = supports(target, store().draft.source);
     const canEnable = !active && typeof target.enable === 'function';
-    const expand = group ? `<button type="button" class="ms-expand" data-expand="${esc(group.id)}" aria-expanded="${expandedGroups.has(group.id)}" aria-label="${esc(group.name)} 세부 연결"><i class="fa-solid fa-chevron-${expandedGroups.has(group.id) ? 'up' : 'down'}" aria-hidden="true"></i></button>` : '';
+    const expand = group ? `<button type="button" class="ms-expand" data-expand="${esc(group.id)}" aria-expanded="${expandedGroups.has(group.id)}" aria-label="${esc(group.name)} 세부 연결">세부 <i class="fa-solid fa-chevron-${expandedGroups.has(group.id) ? 'up' : 'down'}" aria-hidden="true"></i></button>` : '';   // 6.7.2 꺾쇠만 있으면 체크 표시로 보였다
     const title = linkable(target) || canEnable ? `<button type="button" class="ms-name" data-open="${esc(target.id)}">${esc(name)}</button>` : `<b>${esc(name)}</b>`;
     const status = !active ? '꺼짐 · 눌러서 설정' : ok ? describe(now) : `${label(store().draft.source)} 못 씀`;
     const editor = configuring?.id === target.id ? `<div class="ms-fallback-editor"><div data-fallback-editor></div><div class="ms-fallback-actions"><button type="button" class="menu_button" data-act="fallback-save">켜기</button><button type="button" class="menu_button" data-act="fallback-cancel">취소</button></div></div>` : '';
@@ -165,8 +184,9 @@ function render() {
         ready();
     }
     for (const button of root.querySelectorAll('[data-group]')) {
-        button.setAttribute('aria-pressed', String(groupOn(targets, button.dataset.group, isOn)));
-        button.disabled = busy || !targets.some(target => rowActive(target) && (button.dataset.group === 'fallback') === isFallbackRow(target));
+        const fallback = button.dataset.group === 'fallback', picks = fallbackPickable(targets);
+        button.setAttribute('aria-pressed', String(fallback ? picks.length > 0 && picks.every(isOn) : groupOn(targets, 'main', isOn)));
+        button.disabled = busy || (fallback ? !picks.length : !targets.some(target => rowActive(target) && !isFallbackRow(target)));
     }
     const apply = root.querySelector('[data-act="apply"]');
     apply.disabled = busy || !d.model.trim() || !targets.some(target => isOn(target) && supports(target, d.source));
@@ -201,6 +221,14 @@ async function applyNow() {
     for (const target of shownTargets()) {
         if (!isOn(target)) continue;
         if (!supports(target, d.source)) { skipped.push(target.name); continue; }
+        if (!rowActive(target)) {   // 6.7.2 「검열되면」 단추로 고른 꺼진 줄: 이 모델로 켠다 (본 모델과 같으면 못 켬)
+            try {
+                const ok = await withoutLock(() => target.enable({ source: d.source, model: d.model }));
+                if (ok === false || !rowActive(target)) { skipped.push(target.name); continue; }
+                armed.delete(target.id); store().targets[target.id] = true; touched.push(target); done.push(target.name);
+            } catch (error) { console.error('[Blue Lemonade] 모델 전환 · 검열되면 켜기', target.id, error); skipped.push(target.name); }
+            continue;
+        }
         before.push([target, entryOf(target)]);   // 1.1.1 「↶ 직전」
         try {
             await withoutLock(() => target.apply(d));
@@ -335,7 +363,10 @@ function mount() {
         } else if (el.dataset?.field) { render(); }
         else if (el.dataset?.target) {
             const target = listTargets().find(item => item.id === el.dataset.target);
-            if (target && !rowActive(target)) { el.checked = false; configureFallback(target.id); return; }
+            if (target && !rowActive(target)) {
+                if (armed.has(target.id)) { armed.delete(target.id); render(); return; }   // 6.7.2 「검열되면」 단추로 고른 꺼진 줄은 체크로 뺄 수 있다
+                el.checked = false; configureFallback(target.id); return;
+            }
             store().targets[el.dataset.target] = el.checked; saveSettingsDebounced(); syncLocks(); render();
         }
         else if ('lock' in (el.dataset || {})) { store().lock = el.checked; saveSettingsDebounced(); syncLocks(); }
@@ -345,7 +376,12 @@ function mount() {
         if (expand) { event.preventDefault(); if (expandedGroups.has(expand.dataset.expand)) expandedGroups.delete(expand.dataset.expand); else expandedGroups.add(expand.dataset.expand); render(); return; }
         const link = event.target.closest('[data-open]'), group = event.target.closest('[data-group]');
         if (link) { event.preventDefault(); const target = listTargets().find(item => item.id === link.dataset.open); if (!busy) { if (target && !rowActive(target)) configureFallback(target.id); else openTarget(link.dataset.open); } return; }
-        if (group) { event.preventDefault(); if (!busy) { Object.assign(store().targets, toggleGroup(shownTargets(), group.dataset.group, isOn)); saveSettingsDebounced(); syncLocks(); render(); } return; }
+        if (group) {
+            event.preventDefault();
+            if (busy) return;
+            if (group.dataset.group === 'fallback') { pickFallbacks(); return; }
+            Object.assign(store().targets, toggleGroup(shownTargets(), group.dataset.group, isOn)); saveSettingsDebounced(); syncLocks(); render(); return;
+        }
         const chip = event.target.closest('[data-preset]'), pull = event.target.closest('[data-pull]'), act = event.target.closest('[data-act]')?.dataset.act;
         const stateDel = event.target.closest('[data-state-del]'), stateGo = event.target.closest('[data-state]');
         if (stateDel) { deleteState(Number(stateDel.dataset.stateDel)); return; }

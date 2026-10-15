@@ -166,7 +166,7 @@ await test('모델 전환: 본 대상 바로 아래 「(검열되면)」 넷 · 
         assert.match(src, new RegExp(`const ${name}Fallback = fallbackFor\\(${name}, s => s\\.${url}\\);`));
     assert.match(src, /holder: \(\) => base\.settings\(\), main: \(\) => base\.read\(\)/);
     const idx = read('src/addons/modelswitch/index.js');
-    assert.match(idx, /const isOn = target => rowActive\(target\) && \(store\(\)\.targets\[target\.id\] \?\? !\(target\.auto \|\| target\.defaultOff\)\);/, 'defaultOff 는 켤 때까지 꺼짐');
+    assert.match(idx, /const isOn = target => rowActive\(target\) \? \(store\(\)\.targets\[target\.id\] \?\? !\(target\.auto \|\| target\.defaultOff\)\) : armed\.has\(target\.id\) && canArm\(target\);/, 'defaultOff 는 켤 때까지 꺼짐 · 6.7.2 꺼진 줄은 「검열되면」 단추로 고른 것만');
     assert.match(idx, /const inState = target => !\(target\.auto \|\| target\.defaultOff\) \|\| store\(\)\.targets\[target\.id\] === true;/, '상태 칩에는 켰을 때만');
 });
 

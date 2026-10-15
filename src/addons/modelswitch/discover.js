@@ -113,11 +113,9 @@ export function findNodes(settings, sources) {
 const pathText = path => Array.isArray(path) ? path.join('.') : String(path);
 /** 스스로 등록한 확장이 settingsKey(+path)로 알린 자리는 뺀다 (path 는 'a.b' 또는 ['a','b']) */
 export function skipRegistered(nodes, key, registered) {
-    const mine = registered.filter(target => target && target.settingsKey === key);
-    return nodes.filter(node => {
-        const path = node.path.join('.');
-        return !mine.some(target => { if (!target.path) return true; const p = pathText(target.path); return path === p || path.startsWith(`${p}.`); });
-    });
+    // 6.7.2 스스로 등록한 확장은 자기 설정 칸을 스스로 책임진다 — 등록한 자리 밖의 칸도 자동 줄로 만들지 않는다
+    //       (작업마다 따로 둔 연결 칸이 「<확장 원래 이름>」 자동 줄로 하나 더 보였다)
+    return registered.some(target => target && target.settingsKey === key) ? [] : nodes;
 }
 
 // ---------- 소스 읽기
