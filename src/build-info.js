@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "6.5.7";
+export const BUILD_VERSION = "6.5.8";
 export const FILE_HASHES = {
   "index.js": "17480:1badcfa4:040bdacc",
-  "manifest.json": "365:b590a217:9eb10d54",
+  "manifest.json": "365:cb3c8492:9876c2e5",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -482,7 +482,7 @@ export const FILE_HASHES = {
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "225606:568d077e:058b6fb0",
+  "src/notice-data.js": "226135:95c179c2:cf010913",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -513,10 +513,10 @@ export const FILE_HASHES = {
   "src/scripts/bundled/helper.js": "104117:425b163a:31736cc4",
   "src/scripts/bundled/korean.js": "690652:98e0f94a:52dd5d68",
   "src/scripts/bundled/shajin.js": "22111:d00fa2db:4b6a0901",
-  "src/scripts/catalog.js": "8911:3af675b0:2b12de8e",
-  "src/scripts/fruit-option-effects.js": "32650:be6e510d:2416cbd0",
-  "src/scripts/fruit-option-help.js": "11259:2f3d1c3e:d4594eac",
-  "src/scripts/fruit-status.js": "8393:37945107:11777814",
+  "src/scripts/catalog.js": "8911:8433babc:c3ab271b",
+  "src/scripts/fruit-option-effects.js": "115362:8d790430:ae33e023",
+  "src/scripts/fruit-option-help.js": "11797:68cb0d55:160fe203",
+  "src/scripts/fruit-status.js": "12435:5573ff4b:32ad9283",
   "src/scripts/plain/deus-qr.js": "45642:1f583081:9b78d3fe",
   "src/scripts/plain/deus.js": "66897:632b8c3e:8adc7e2f",
   "src/scripts/plain/fold.js": "13815:b56ce78f:e3189530",
@@ -527,6 +527,7 @@ export const FILE_HASHES = {
   "src/scripts/plain/korean.js": "659306:da04bb76:beabfa54",
   "src/scripts/plain/shajin.js": "20099:8ad24629:14320e51",
   "src/scripts/prompt-engine.js": "10617:b2d5e420:c3b73ccd",
+  "src/scripts/prompt-fingerprint.js": "2450:d75ba97b:20a85c7a",
   "src/scripts/runtime.js": "9302:8840a6d3:d8d51249",
   "src/scripts/scan.js": "5805:194df255:f44ce803",
   "src/scripts/store.js": "3185:3839ac09:076c5de3",
@@ -573,5 +574,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "34821:fcebb709:d610b9d5",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1427757:c780f306:cb9ebefe"
+  "style.css": "1427757:492ef2d8:860d3d36"
 };

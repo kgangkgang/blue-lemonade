@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.5.7/blue-lemonade-6.5.7.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.5.8/blue-lemonade-6.5.8.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.5.7 · 최신 업데이트</summary>
+<summary>6.5.8 · 최신 업데이트</summary>
+
+- 휴대폰의 HTTP 접속에서도 과일 옵션 설명이 나와요. 표준 옵션 316개 설명을 준비하고, 확인한 원문과 다르더라도 알려진 항목은 기본 효과와 수정 안내를 함께 보여요.
+- 순수 텍스트 소극장의 제목·작성자 안내·맨 위로 버튼, 생각 과정 말풍선 설정과 1인 상태창의 고정 제목·버튼·이미지 안내를 한글로 보여요. 본문과 입력값, 작성자 이름은 유지해요.
+
+</details>
+
+<details>
+<summary>6.5.7 · QR 돋보기 조건 분리 · 과일 옵션 길게 누르기 도움말</summary>
 
 - QR 돋보기는 실리태번의 「QR 사용하기」가 켜져 있을 때만 보여요. 과일·데우스 빠른 설정 버튼만 있을 때는 나오지 않아요. 기존 「QR 검색 버튼」 끄기도 그대로 적용돼요.
 - 과일의 마음 꾸미기를 켠 상태에서 항목·홈 선택지·선택 목록을 길게 누르면 옵션 효과를 한국어로 확인할 수 있어요. 짧은 탭은 원래대로 선택하고, 길게 누를 때는 선택이나 실행을 하지 않아요. 키보드는 Alt+Enter 또는 Shift+F10을 사용할 수 있어요.

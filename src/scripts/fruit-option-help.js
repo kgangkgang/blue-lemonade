@@ -1,4 +1,5 @@
-import { FRUIT_OPTION_EFFECTS } from './fruit-option-effects.js';
+import { localPromptHash } from './prompt-fingerprint.js';
+import { FRUIT_OPTION_EFFECTS, FRUIT_OPTION_BASELINES } from './fruit-option-effects.js';
 
 const SCOPE = '#fruit-heart-v6';
 const TARGET = '.fh-item,[data-chip],[data-pick-group],[data-pick-index],[data-master],[data-qr]';
@@ -12,12 +13,16 @@ export function optionFamily(prompt, groups = {}) {
     }
     return name.startsWith('⌨') ? '文风' : groups[promptId(prompt)] || '';
 }
-export async function optionEffect(content, crypto = globalThis.crypto) {
-    if (!normalize(content)) return {text:'내용이 없는 구분 항목이에요. 이 항목만 켜도 새 지시가 추가되지는 않아요.', verified:true};
-    if (!crypto?.subtle) return {text:'이 환경에서는 원문과 설명의 일치 여부를 확인할 수 없어요.', verified:false};
-    const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(normalize(content))))].map(b=>b.toString(16).padStart(2,'0')).join('');
+export async function optionEffect(content, crypto = globalThis.crypto, identifier = '') {
+    const body = normalize(content), baseline = FRUIT_OPTION_BASELINES[String(identifier)];
+    if (!body) return {text:baseline || '내용이 없는 구분 항목이에요. 이 항목만 켜도 새 지시가 추가되지는 않아요.', verified:true};
+    let hash;
+    try { if (crypto?.subtle) hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(body)))].map(b=>b.toString(16).padStart(2,'0')).join(''); } catch { /* HTTP or browser restrictions: use the local implementation. */ }
+    hash ||= localPromptHash(body);
     const text = FRUIT_OPTION_EFFECTS[hash];
-    return {text:text || '직접 수정했거나 아직 설명을 확인하지 않은 항목이에요. 효과를 추측하지 않도록 아래에서 현재 원문을 확인해 주세요.', verified:!!text};
+    if (text) return {text,verified:true};
+    if (baseline) return {text:baseline,verified:false,baseline:true};
+    return {text:'직접 만든 항목이거나 알려진 표준 항목과 연결되지 않았어요. 이름만으로 효과를 추측하지 않도록 현재 원문을 함께 확인해 주세요.',verified:false};
 }
 
 /** Hold to inspect; normal taps retain their original behavior. No writes or requests. */
@@ -49,7 +54,7 @@ export function installFruitOptionHelp(doc = document, host = window) {
         return null;
     }
     function close() { const old=modal;modal=null;if(old){old.close?.();old.remove();} }
-    function show(target, title, text, original, verified) {
+    function show(target, title, text, original, verified, baseline = false) {
         if (stopped || !target.isConnected) return;
         close();
         const dialog = doc.createElement('dialog');dialog.className='bl-fruit-option-help';dialog.setAttribute('aria-label','과일 옵션 설명');
@@ -57,7 +62,7 @@ export function installFruitOptionHelp(doc = document, host = window) {
         heading.textContent=title || '옵션 설명';button.type='button';button.textContent='닫기';button.setAttribute('aria-label','옵션 설명 닫기');
         button.addEventListener('click',close);head.append(heading,button);
         const description=doc.createElement('p');description.textContent=text;
-        const note=doc.createElement('p');note.className='bl-fruit-option-note';note.textContent=verified?'이 옵션이 더하는 지시의 뜻이에요. 끈다고 반대 행동을 강제하지는 않으며, 다른 옵션과 모델에 따라 실제 응답은 달라질 수 있어요.':'원문은 이 기기에서만 읽어요. 자동 번역 API를 호출하지 않아요.';
+        const note=doc.createElement('p');note.className='bl-fruit-option-note';note.textContent=baseline?'기본 옵션의 효과 설명이에요. 현재 내용이 확인한 기본판과 달라 실제 효과가 다를 수 있어요. 아래에서 수정된 원문을 확인할 수 있어요.':verified?'이 옵션이 더하는 지시의 뜻이에요. 끈다고 반대 행동을 강제하지는 않으며, 다른 옵션과 모델에 따라 실제 응답은 달라질 수 있어요.':'원문은 이 기기에서만 읽어요. 자동 번역 API를 호출하지 않아요.';
         dialog.append(head,description,note);
         if (original !== undefined) {
             const details=doc.createElement('details'),summary=doc.createElement('summary'),pre=doc.createElement('pre');
@@ -73,11 +78,11 @@ export function installFruitOptionHelp(doc = document, host = window) {
             const preset=getPreset(), prompt=findPrompt(target,preset);
             const title=target.querySelector('span')?.textContent?.trim() || target.getAttribute('aria-label') || target.textContent.trim();
             if (prompt) {
-                const content=String(prompt.content || ''), id=promptId(prompt), effect=await optionEffect(content,host.crypto);
+                const content=String(prompt.content || ''), id=promptId(prompt), effect=await optionEffect(content,host.crypto,id);
                 if(stopped||ticket!==sequence||!target.isConnected||getName()!==presetName)return;
                 const current=getPreset()?.prompts?.find(p=>promptId(p)===id);
                 if(!current||String(current.content||'')!==content)return;
-                show(target,title||prompt.name,effect.text,content,effect.verified);return;
+                show(target,title||prompt.name,effect.text,content,effect.verified,effect.baseline);return;
             }
             if(target.matches('[data-pick-index]')&&target.dataset.pickIndex==='0') {
                 show(target,'이 묶음 모두 끄기','이 선택 묶음의 옵션들을 모두 꺼요. 다른 묶음이나 기본 프롬프트는 그대로예요.',undefined,true);return;

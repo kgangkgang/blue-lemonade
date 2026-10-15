@@ -5,8 +5,8 @@ export const SCRIPT_CATALOG = [
   {id:'deus',name:'데우스 프롬프트 번역',version:'2.5',icon:'fa-book-open',description:'데우스 2.5 프롬프트·정규식 제목과 편집 힌트를 번역해요. 저장되는 이름과 본문은 바꾸지 않아요.',match:['Prompt Name Translator','데우스'],file:'deus'},
   {id:'shajin',name:'샤진 프롬프트 번역',version:'3.9',icon:'fa-book',description:'거문고자리·물고기자리 프롬프트와 정규식 제목, 편집 힌트를 번역해요.',match:['Prompt Name Translator','거문고자리'],file:'shajin'},
   {id:'fruit',name:'과일 프롬프트 번역',version:'1.0.0',icon:'fa-leaf',description:'과일 V6.4 계열의 프롬프트·정규식 제목을 한글로 보여요. 저장된 제목과 본문은 그대로예요.',match:['BlueLemonade.translate','果实之心控制配置'],file:'fruit'},
-  {id:'fruit-heart',name:'과일의 마음 한글화',version:'1.0.4',icon:'fa-heart',description:'과일의 마음 메뉴와 상태창의 고정 문구·버튼 설명을 한글로 보여요. 프리셋·대화·입력값·켜짐 상태는 그대로예요.',match:['__blueLemonadeFruitHeartKorean_v1'],file:'fruit-heart'},
-  {id:'fruit-style',name:'과일의 마음 꾸미기',version:'1.0.4',kind:'tool',icon:'fa-palette',description:'과일 창의 색·글꼴·버튼을 블루레몬에이드에 맞추고, 빠른 답장 이름 바꾸기와 ? 도움말을 더해요. 프롬프트 → 과일에서 켤 수 있어요.',match:['__blueLemonadeFruitStyle_v1'],file:'fruit-style'},
+  {id:'fruit-heart',name:'과일의 마음 한글화',version:'1.0.5',icon:'fa-heart',description:'과일의 마음 메뉴와 상태창의 고정 문구·버튼 설명을 한글로 보여요. 프리셋·대화·입력값·켜짐 상태는 그대로예요.',match:['__blueLemonadeFruitHeartKorean_v1'],file:'fruit-heart'},
+  {id:'fruit-style',name:'과일의 마음 꾸미기',version:'1.0.5',kind:'tool',icon:'fa-palette',description:'과일 창의 색·글꼴·버튼을 블루레몬에이드에 맞추고, 빠른 답장 이름 바꾸기와 ? 도움말을 더해요. 프롬프트 → 과일에서 켤 수 있어요.',match:['__blueLemonadeFruitStyle_v1'],file:'fruit-style'},
   {id:'deus-qr',name:'데우스 빠른 설정',version:'1.0.3',kind:'tool',icon:'fa-sliders',description:'데우스 2.5 프리셋의 옵션을 입력창 옆에서 바로 골라요. 프롬프트 → 데우스 엑스 마키나에서 켤 수 있어요.',match:['__blueLemonadeDeusQuick_v1'],file:'deus-qr'},
 ];
 export const scriptDefinition = id => SCRIPT_CATALOG.find(item=>item.id===id);
