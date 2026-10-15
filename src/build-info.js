@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "6.6.3";
+export const BUILD_VERSION = "6.6.4";
 export const FILE_HASHES = {
   "index.js": "17480:1badcfa4:040bdacc",
-  "manifest.json": "365:b947fb2e:b23f8f99",
+  "manifest.json": "365:b35387e3:581d1791",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -489,7 +489,7 @@ export const FILE_HASHES = {
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "230773:9c000722:6ce6c89e",
+  "src/notice-data.js": "231165:bfe1520b:0ab9c687",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -528,7 +528,7 @@ export const FILE_HASHES = {
   "src/scripts/fruit-entry.js": "12448:fa359fb5:eb704065",
   "src/scripts/fruit-option-effects.js": "115362:8d790430:ae33e023",
   "src/scripts/fruit-option-help.js": "12241:11cd7da9:5c349f4b",
-  "src/scripts/fruit-status.js": "13259:2467145e:6c4f2126",
+  "src/scripts/fruit-status.js": "13478:27b00538:6c69fe42",
   "src/scripts/plain/deus-qr.js": "48006:fa3c36af:3b087681",
   "src/scripts/plain/deus.js": "66897:632b8c3e:8adc7e2f",
   "src/scripts/plain/fold.js": "13815:b56ce78f:e3189530",
@@ -586,5 +586,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "34821:fcebb709:d610b9d5",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1433792:559d8e5a:3b9d03fd"
+  "style.css": "1433792:c244f85b:5565939c"
 };

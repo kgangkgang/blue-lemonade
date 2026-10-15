@@ -14,8 +14,9 @@ const PHONE = new Map(Object.entries({"显示设置": "표시 설정", "手机�
 const ISLAND = new Map(Object.entries({"LOCATION / TIME": "위치 / 시간", "OUTFIT / POSE": "옷차림 / 자세", "CURRENT MOOD": "현재 기분", "PRIVATE SEARCH": "검색 기록", "AUDIO LOG": "음악", "SYSTEM SETTINGS": "화면 설정", "Coordinates": "위치", "Local Time": "현지 시간", "Upper": "상의", "Lower": "하의", "Pose": "자세", "QUERY": "검색어", "TIMESTAMP": "시각", "暂无搜索记录": "검색 기록이 없어요", "Display Name": "표시 이름", "Background Image": "배경 이미지", "Upload (GIF/PNG/JPG)": "이미지 올리기 (GIF/PNG/JPG)", "ACTIVE TRACKING": "현재 상태", "Image is too large. Only available this session.": "이미지가 커서 이번 접속 동안만 적용돼요.", "Image is saved locally in browser.": "이미지가 이 브라우저에 저장돼요."}));
 const DIALOGS = new Map([['确定要恢复所有默认设置吗？','모든 설정을 기본값으로 복원할까요?'],['图片较大，无法永久保存。背景将在本次会话中生效，刷新页面后会恢复默认。','이미지가 커서 저장하지 못했어요. 이번 접속 동안만 배경이 적용되고, 새로고침하면 기본 배경으로 돌아가요.'],['读取文件失败，请重试。','파일을 읽지 못했어요. 다시 시도해 주세요.']]);
 const SKIP = 'script,style,textarea,input,pre,code,[contenteditable="true"],.fate-raw,[data-f]';
-// The renderer lifts its night toggle 4px above the card, so the frame edge clips it. Day mode already sits inside.
-const FIXES = '.fate-status-wrapper.night-mode>.fate-theme-toggle{top:0!important}';
+// The renderer lifts its night toggle 4px above the card, and its hover lift (sticky after a tap on phones) moves it
+// 1px further, so the frame edge clips it. Keep a small margin and no lift on touch screens. Day mode already sits inside.
+const FIXES = '.fate-status-wrapper.night-mode>.fate-theme-toggle{top:3px!important}@media (hover:none){.fate-status-wrapper>.fate-theme-toggle:hover{transform:none!important}}';
 
 export function installFruitStatusKorean(doc = document, host = window) {
     const texts = new Map(), attributes = new Map(), cards = new Map(), documents = new Map(), frames = new Map(), dialogChanges = new Map(), fixes = new Map();

@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.6.3/blue-lemonade-6.6.3.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.6.4/blue-lemonade-6.6.4.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.6.3 · 최신 업데이트</summary>
+<summary>6.6.4 · 최신 업데이트</summary>
+
+- 과일 상태창을 나이트 모드로 볼 때 오른쪽 위 ☀ 버튼 윗부분이 잘리던 문제를 고쳤어요. 휴대폰에서 버튼을 누른 뒤에도 위로 밀려 올라가지 않아요.
+- 6.6.3의 사과 QR 간격과 6.6.2의 상태창 글자 슬라이더·정렬·따라오는 미리보기는 그대로 포함돼요.
+
+</details>
+
+<details>
+<summary>6.6.3 · 사과 QR 아이콘 간격을 옆 아이콘과 맞춤</summary>
 
 - 과일 QR을 아이콘만 표시하면 사과가 입력창 옆 다른 아이콘들과 같은 간격으로 붙어요. QR 바의 여백 때문에 혼자 더 벌어지던 문제를 고쳤어요.
 - 아이콘+글자·글자만 표시는 예전처럼 QR 바 안에 있어요. 6.6.2의 상태창 글자 슬라이더·정렬·따라오는 미리보기는 그대로 포함돼요.
