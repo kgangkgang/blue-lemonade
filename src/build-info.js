@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "6.7.8";
+export const BUILD_VERSION = "6.7.9";
 export const FILE_HASHES = {
   "index.js": "17649:c8f7b83a:aec48bc0",
-  "manifest.json": "365:2d76fecc:815d0b86",
+  "manifest.json": "365:bd6ce8eb:0759ced3",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -209,14 +209,14 @@ export const FILE_HASHES = {
   "src/addons/translator/bridge.js": "2618:8b1d9f54:4181d3f6",
   "src/addons/translator/buttons.html": "417:3bc7c8b0:1b53077b",
   "src/addons/translator/card-values.js": "11278:075fc5e4:9a93bd42",
-  "src/addons/translator/check-view.js": "14552:03f43532:352959e6",
+  "src/addons/translator/check-view.js": "16509:25895733:86115131",
   "src/addons/translator/context-auto.js": "7274:fe89b1af:10e9e116",
   "src/addons/translator/current-connection.js": "6270:ab5ff64e:45889904",
   "src/addons/translator/display-cards.js": "24759:16fdfb4e:96092d9f",
   "src/addons/translator/glossary-match.js": "23969:4716318b:3af6c9df",
   "src/addons/translator/glossary-suggest.js": "37892:84fb105c:16cf3cc9",
-  "src/addons/translator/index.html": "54889:0b883663:560a1289",
-  "src/addons/translator/index.js": "498390:32de7433:66e84f88",
+  "src/addons/translator/index.html": "54988:49c03c82:5edb5ea5",
+  "src/addons/translator/index.js": "498744:cf3cd339:02c0cdae",
   "src/addons/translator/leftover-fix.js": "19469:fbe00d00:bc47066c",
   "src/addons/translator/menu-visibility.js": "1137:ae729d76:8ea71da6",
   "src/addons/translator/names-bridge.js": "7072:f29785f7:da57aeea",
@@ -504,7 +504,7 @@ export const FILE_HASHES = {
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "241441:5734c07e:7879767c",
+  "src/notice-data.js": "241838:ff833f8f:039a1ecf",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -602,5 +602,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "34821:fcebb709:d610b9d5",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1442658:eebd992c:4a558bb4"
+  "style.css": "1442658:41c95dd9:ad8438d0"
 };

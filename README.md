@@ -1,13 +1,20 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.7.8/blue-lemonade-6.7.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.7.9/blue-lemonade-6.7.9.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.7.8 · 최신 업데이트</summary>
+<summary>6.7.9 · 최신 업데이트</summary>
+
+- 번역 점검에 걸린 문단은 이제 자동으로 고쳐요 — 초안 · 혼잣말은 걷어 내고, 빠진 문단은 채우고, 이상한 문단은 그 문단만 다시 번역해요(메시지마다 3번까지). 고치지 못한 것만 표시가 남고, 이상이 없으면 번역 단추에 아무것도 안 보여요 (번역 2.6.6).
+
+</details>
+
+<details>
+<summary>6.7.8 · 회귀검사 고침 13건 · 가볍게</summary>
 
 - 다른 기기 바뀜 알림이 가운데 메시지(번역)만 바뀐 것도 잡고, 성능 보조가 큰 저장을 뒤에서 보낼 때도 덮어쓰기 전에 꼭 물어요. 다른 기기에서 쓴 메시지가 지워질 수 있던 것을 고쳤어요.
 - 과일 프리셋 감정 대사 줄 위에 생기던 큰 빈 줄을 없앴어요. 번역 반쪽 문단 거르기가 정상 문장까지 지우던 것도 고쳤어요 (번역 2.6.5).

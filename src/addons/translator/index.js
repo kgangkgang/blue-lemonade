@@ -2866,23 +2866,24 @@ async function saveCheckedTranslation(id, message, state, next, { cache = true }
  * 문단 번역은 메시지 번역과 같은 translate() (프롬프트 · 용어집 · 보호 규칙 · 끊김 · 누출 검사 · 문단 캐시) — 그 문단의 옛 캐시 줄은 먼저 잊는다.
  * 그 사이 번역문이 바뀌었으면(다른 기기 · 편집 · 다시 번역) 붙이지 않는다. 실패하면 던져서 창의 단추를 되살린다.
  */
-async function runCheckAction(kind, id, index, row) {
+async function runCheckAction(kind, id, index, row, { auto = false } = {}) {   // 2.6.6 auto: 점검이 스스로 부른 것 — 안내 토스트는 줄인다
     const context = getContext(), message = context.chat?.[id];
+    const info = auto ? () => {} : (text, title) => toastr.info(text, title);
     if (kind === 'whole') { await translateMessage(id, true, 'handleTranslateButtonClick_retranslate'); return; }
     const state = checkStateOf(id);
-    if (!message || !state) { toastr.info('번역문이 바뀌었어요. 표시가 다시 붙으면 그때 눌러 주세요.', '번역 점검'); return; }
+    if (!message || !state) { info('번역문이 바뀌었어요. 표시가 다시 붙으면 그때 눌러 주세요.', '번역 점검'); return; }
     const { paragraphRange, replaceParagraph, insertAfterParagraph, cleanLeaks, standaloneParagraphs } = await loadCheckLib();
     if (kind === 'clean') {
         const cleaned = cleanLeaks(state.source, state.translation);
-        if (cleaned === state.translation) { toastr.info('걷어 낼 것이 없어요.', '번역 점검'); return; }
+        if (cleaned === state.translation) { info('걷어 낼 것이 없어요.', '번역 점검'); return; }
         await saveCheckedTranslation(id, message, state, cleaned);
-        toastr.success('초안 · 혼잣말을 걷어 냈어요.', '번역 점검');
+        toastr.success(auto ? '번역에 섞인 초안 · 혼잣말을 자동으로 걷어 냈어요.' : '초안 · 혼잣말을 걷어 냈어요.', '번역 점검');
         return;
     }
     const [from, to] = kind === 'fill' ? (row?.missing ?? [-1, -1]) : [row?.source ?? -1, row?.source ?? -1];
     const srcText = from >= 0 ? paragraphRange(state.source, from, to, state.protect) : null;
-    if (!srcText || !standaloneParagraphs(srcText) || (kind === 'retry' && !row?.sure)) { toastr.info('이 문단은 따로 번역할 수 없어요. 메시지 전체를 다시 번역해 주세요.', '번역 점검'); return; }
-    if (isTranslationInProgress(id)) { toastr.info('번역이 이미 진행 중입니다.'); return; }
+    if (!srcText || !standaloneParagraphs(srcText) || (kind === 'retry' && !row?.sure)) { info('이 문단은 따로 번역할 수 없어요. 메시지 전체를 다시 번역해 주세요.', '번역 점검'); return; }
+    if (isTranslationInProgress(id)) { info('번역이 이미 진행 중입니다.'); return; }
     const runToken = beginTranslation(id, message);
     const badge = progressBadge(id, message, message.mes, context.chatId);
     try {
@@ -2899,7 +2900,7 @@ async function runCheckAction(kind, id, index, row) {
         const next = kind === 'fill' ? insertAfterParagraph(state.translation, index, out, state.protect) : replaceParagraph(state.translation, index, out, state.protect);
         if (!next) throw new Error('번역 답이 비어 있어요.');
         await saveCheckedTranslation(id, message, state, next, { cache: !report.restoredBlocks });
-        toastr.success(kind === 'fill' ? '빠진 문단을 번역해 넣었어요.' : '이 문단을 다시 번역했어요.', '번역 점검');
+        toastr.success(kind === 'fill' ? `빠진 문단을 ${auto ? '자동으로 ' : ''}번역해 넣었어요.` : auto ? `이상한 ${index + 1}번째 문단을 자동으로 다시 번역했어요.` : '이 문단을 다시 번역했어요.', '번역 점검');
     } catch (error) {
         runToken.error = error;
         if (error?.cancelled) { toastr.info(error.message, '번역 점검'); return; }

@@ -35,7 +35,7 @@ export function createCheckView({ stateOf, rerender, act }) {
         const buttons = [...document.querySelectorAll(`#chat .mes[mesid="${id}"] :is(.mes_legacy_translate, .mes_llm_translate)`)];
         const target = buttons.find(button => button.style.display !== 'none') ?? null;
         for (const button of buttons) {
-            if (!result || button !== target) { delete button.dataset.llmtCheck; delete button.dataset.llmtCheckCount; button.removeAttribute('aria-description'); continue; }
+            if (!result || !result.warn || button !== target) { delete button.dataset.llmtCheck; delete button.dataset.llmtCheckCount; button.removeAttribute('aria-description'); continue; }   // 2.6.6 이상 없으면 아무것도 안 그린다
             button.dataset.llmtCheck = result.warn ? 'warn' : 'ok';
             if (result.warn && result.flagged) button.dataset.llmtCheckCount = String(result.flagged); else delete button.dataset.llmtCheckCount;
             button.setAttribute('aria-description', result.warn ? `번역 점검: 의심 ${result.flagged ? `문단 ${result.flagged}개` : '있음'}` : '번역 점검: 이상 없음');
@@ -67,9 +67,32 @@ export function createCheckView({ stateOf, rerender, act }) {
             const fresh = !results.has(state.key), result = resultOf(state);
             done++;
             paintBadge(id, result);
-            if (fresh && result?.flagged) rerender(id);
+            if (fresh && result?.flagged) { rerender(id); autoFix(id, state, result); }
         }
         if (pending.size && !waiting) { waiting = true; idle(drain); }
+    }
+
+    // ── 2.6.6 자동으로 고치기: 의심 문단 하나씩(고친 뒤 다시 점검 → 남으면 다음 것) · 같은 메시지 같은 원문에 3번까지 · 고칠 수 없는 꼴은 표시만 ──
+    const AUTO_MAX = 3, autoTries = new Map();
+    function autoFix(id, state, result) {
+        const key = `${id}\u0001${state.source}`, tries = autoTries.get(key) || 0;
+        if (tries >= AUTO_MAX) return;
+        const pick = result.paragraphs.map(row => ({ row, plan: actionFor(state, row) })).find(x => x.plan);
+        if (!pick) return;
+        autoTries.delete(key); autoTries.set(key, tries + 1);
+        while (autoTries.size > 200) autoTries.delete(autoTries.keys().next().value);
+        Promise.resolve(act(pick.plan[0], id, pick.row.index, pick.row, { auto: true })).catch(error => console.warn('[Blue Lemonade · LLM 번역] 자동 다시 번역 실패', error));
+    }
+    /** 이 의심 문단에 할 일 ['clean' | 'fill' | 'retry', 단추 글] 또는 null — 작은 창의 주 단추와 같은 규칙 */
+    function actionFor(state, row) {
+        const lostOnly = row.reasons.length === 1 && row.reasons[0] === 'lost';
+        if (lostOnly) return null;
+        const srcText = row.missing ? paragraphRange(state.source, row.missing[0], row.missing[1], state.protect)
+            : row.source >= 0 ? paragraphAt(state.source, row.source, state.protect) : null;
+        if (row.reasons.some(code => code === 'leak' || code === 'echo') && cleanLeaks(state.source, state.translation) !== state.translation) return ['clean', '걷어 내기'];
+        if (row.missing) return srcText && standaloneParagraphs(srcText) ? ['fill', '빠진 문단 번역해 넣기'] : null;
+        if (row.source < 0 || !row.sure || !standaloneParagraphs(srcText)) return null;
+        return ['retry', '이 문단만 다시 번역'];
     }
 
     // ── 서식 훅 ──

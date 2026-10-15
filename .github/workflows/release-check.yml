@@ -58,6 +58,7 @@ jobs:
           node tools/tests/prompt-hide-worlds.mjs .
           node tools/tests/translator-midword.mjs .
           node tools/tests/translator-think-leak.mjs .
+          node tools/tests/translator-autofix.mjs .
           node tools/tests/modelswitch-fallback-pick.mjs .
           node tools/tests/tts-integration.mjs .
           node tools/tests/tts-dethump.mjs .
