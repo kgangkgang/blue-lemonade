@@ -566,5 +566,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "34543:a22afe71:9a33c04b",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1427176:5b3db15b:d181dda9"
+  "style.css": "1427375:1c0cef77:496458a4"
 };

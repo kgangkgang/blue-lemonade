@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 70개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 51aebddc8ee7) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 70개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 45ea556a4c83) */
 /* css/00-base.css */
 :root{--bl-release:"6.5.2";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -14529,6 +14529,10 @@ body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text :is(details.custom-
   display: none;
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text p:empty {
+  display: none;
+}
+body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text content > br:first-child,
+body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text content > br:first-child + br {
   display: none;
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text pre {
