@@ -7,7 +7,7 @@ import { pathToFileURL, fileURLToPath } from 'node:url';
 
 const root = path.resolve(process.argv[2] || fileURLToPath(new URL('../..', import.meta.url)));
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
-const { HIGHLIGHT_BASE, COLOR_LIMIT, NEAR_PLAIN, colorKey, nearColor, highlightName, followsTextColor, groupByColor, highlightRule, pieceKey, groupId, splitGroup, alphaOf, paintKey, bandFrom, markerMask, speakerColor, ownSpeakerColor } = await import(pathToFileURL(path.join(root, 'src/addons/tts/src/highlight-colors.js')));
+const { HIGHLIGHT_BASE, COLOR_LIMIT, NEAR_PLAIN, colorKey, nearColor, highlightName, followsTextColor, groupByColor, highlightRule, pieceKey, groupId, splitGroup, alphaOf, paintKey, bandFrom, markerMask, speakerColor, ownSpeakerColor, readableOn, contrastRatio, luminance, barNameChoice } = await import(pathToFileURL(path.join(root, 'src/addons/tts/src/highlight-colors.js')));
 
 const results = [];
 function test(name, fn) { try { fn(); results.push({ name, pass: true }); } catch (e) { results.push({ name, pass: false, error: e.stack || e.message }); } }
@@ -247,7 +247,7 @@ test('1.7.1 bar name colour: the dialogue colour that covers most of the read li
 });
 test('1.7.1 bar: name tinted per line from the read range (same ranges as the highlight), reset while waiting; source colours when off screen', () => {
     const player = read('src/addons/tts/src/player.js');
-    assert.match(player, /import \{ paintColorHighlights, clearColorHighlights, piecesOf, speakerColor, colorKey, ownSpeakerColor \} from '\.\/highlight-colors\.js';/);
+    assert.match(player, /import \{ paintColorHighlights, clearColorHighlights, piecesOf, speakerColor, colorKey, barNameChoice, alphaOf, luminance \} from '\.\/highlight-colors\.js';/);
     assert.match(player, /tintBarName\(job\);   \/\/ 1\.7\.1/);
     assert.match(player, /if \(job\.barTint\) barEl\.voice\.style\.setProperty\('--lv-name', job\.barTint\); else barEl\.voice\.style\.removeProperty\('--lv-name'\);/);
     assert.match(player, /barEl\.voice\.textContent = String\(mes\?\.name \|\| ''\);\s*try \{ barEl\.voice\.style\.removeProperty\('--lv-name'\); \}/);
@@ -257,9 +257,9 @@ test('1.7.1 bar: name tinted per line from the read range (same ranges as the hi
     const css = read('src/addons/tts/style.css');
     assert.ok(css.includes('font-weight: 600; color: var(--lv-name, var(--lv-accent)); }'));
     assert.ok(css.includes('.lv-bar-paused .lv-bar-voice { color: var(--lv-dim); }') && css.includes('.lv-bar-wait .lv-bar-voice { color: var(--lv-dim); }'), 'paused / waiting still dim the name');
-    assert.match(player, /if \(ranges\.length\) \{ const pieces = piecesOf\(ranges, root\); return ownSpeakerColor\(pieces, own\) \|\| speakerColor\(pieces, \[getComputedStyle\(root\)\.color, \.\.\.themeInks\(\)\]\); \}/);
+    assert.match(player, /if \(ranges\.length\) line = speakerColor\(piecesOf\(ranges, root\), \[getComputedStyle\(root\)\.color, \.\.\.themeInks\(\)\]\);/, '6.5.4: the screen colour is only a fallback for speakers without a colour of their own');
     assert.match(player, /const THEME_INKS = \['--salty-dialogue', '--salty-marker-ink', '--salty-em', '--salty-strong', '--SmartThemeEmColor', '--SmartThemeQuoteColor', '--SmartThemeBodyColor'\];/);
-    assert.match(player, /const parts = \(job\.parts \|\| \[\]\)\.map\(p => \(\{ color: p\.seg\?\.color \|\| p\.alt\?\.color \|\| '', text: p\.seg\?\.text \|\| p\.alt\?\.text \|\| '' \}\)\);\n    return ownSpeakerColor\(parts, own\) \|\| speakerColor\(parts, off\);/, 'off-screen source colours also skip theme colours');
+    assert.match(player, /const parts = \(job\.parts \|\| \[\]\)\.map\(p => \(\{ color: p\.seg\?\.color \|\| p\.alt\?\.color \|\| '', text: p\.seg\?\.text \|\| p\.alt\?\.text \|\| '' \}\)\);\n        line = speakerColor\(parts, off\);/, 'off-screen source colours also skip theme colours');
     assert.match(player, /const ranges = rangesFor\(job, root\);\n/, 'the highlight uses the same range finder');
 });
 
@@ -281,7 +281,38 @@ test('6.3.9 bar name colour: the speaker palette colour wins when it is on the l
     assert.equal(ownSpeakerColor([{ color: '#e63946', text: '…' }], '#e63946'), '#e63946', 'source markup colours (off screen) too');
     const player = read('src/addons/tts/src/player.js');
     assert.match(player, /function speakerPalette\(job\) \{[\s\S]*?return colorOfName\(job\.speaker \|\| '', \{ userName \}\) \|\| '';/);
-    assert.match(player, /import \{ resolveSpeaker, canon, knownNames as learnedNames, colorOfName \} from '\.\/speakers\.js';/);
+    assert.match(player, /import \{ resolveSpeaker, canon, knownNames as learnedNames, colorOfName, ownerOfColor \} from '\.\/speakers\.js';/);
+});
+
+// ---------- 6.5.4 막대 이름 색: 화자 자신의 색이 먼저 · 막대 배경에서 읽히게 밝기만 조절 · 남의 색은 절대 안 집음 — 사용자 제보: 어두운 슬레이트(#424c59) 인물의 줄이 옆 인물의 빨강으로 칠해져 막대 이름도 빨강
+test('6.5.4 bar name colour: own colour wins and is lightened on a dark bar; no own colour → line colour unless it belongs to another known speaker', () => {
+    const DARK = '#1c1c20', LIGHT = '#f3f3f5';
+    assert.ok(Math.abs(luminance('#ffffff') - 1) < 1e-6 && luminance('#000000') === 0 && luminance('nope') === null);
+    assert.ok(contrastRatio('#ffffff', '#000000') > 20.9 && contrastRatio('#e63946', DARK) >= 3, 'red reads on the dark bar');
+    assert.ok(contrastRatio('#424c59', DARK) < 3, 'the dark slate does not read on the dark bar');
+    const slate = readableOn('#424c59', DARK);
+    assert.match(slate, /^#[0-9a-f]{6}$/); assert.ok(contrastRatio(slate, DARK) >= 3, 'lightened until it reads'); assert.notEqual(slate, '#424c59');
+    const hue = hex => { const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255); const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min; if (!d) return 0; return (max === r ? ((g - b) / d + (g < b ? 6 : 0)) : max === g ? (b - r) / d + 2 : (r - g) / d + 4) * 60; };
+    assert.ok(Math.abs(hue(slate) - hue('#424c59')) < 3, 'same hue — only lightness moved');
+    assert.equal(readableOn('#e63946', DARK), '#e63946', 'a readable colour is untouched');
+    assert.equal(readableOn('rgb(230, 57, 70)', DARK), '#e63946', 'computed colours are folded');
+    const yellowOnWhite = readableOn('#f0d878', LIGHT); assert.ok(contrastRatio(yellowOnWhite, LIGHT) >= 3 && luminance(yellowOnWhite) < luminance('#f0d878'), 'darkened on a light bar');
+    assert.equal(readableOn('#424c59', ''), '#424c59', 'unknown background → as is'); assert.equal(readableOn('', DARK), ''); assert.equal(readableOn('rgba(0,0,0,0)', DARK), '');
+    // 고르기
+    assert.equal(barNameChoice({ own: '#424c59', line: '#e63946', background: DARK }), slate, 'own colour wins over the red the line shows (and is lightened)');
+    assert.equal(barNameChoice({ own: '#e63946', line: '', background: DARK }), '#e63946', 'own colour even when the line shows nothing');
+    assert.equal(barNameChoice({ own: '', line: '#e63946', otherOwner: true, background: DARK }), '', 'no own colour: another speaker\'s colour is never taken → theme colour');
+    assert.equal(barNameChoice({ own: '', line: '#3ccfbf', otherOwner: false, background: DARK }), '#3ccfbf', 'no own colour: an unowned line colour still tints the name (1.7.1)');
+    assert.equal(barNameChoice({ line: '#424c59', background: DARK }), slate, 'an unowned dark line colour is lightened too');
+    assert.equal(barNameChoice({}), ''); assert.equal(barNameChoice({ own: 'rgba(1,2,3,0.3)', line: 'none' }), '');
+    // player.js 연결: 제 색이 화면 · 원문 색보다 먼저, 줄의 색은 임자가 다른 인물이면 버림, 배경은 막대에서
+    const player = read('src/addons/tts/src/player.js');
+    assert.match(player, /const own = speakerPalette\(job\);\n    const background = barBackground\(\);\n    if \(own\) return barNameChoice\(\{ own, background \}\);/, 'own colour first, before any screen or source colour');
+    assert.match(player, /return barNameChoice\(\{ line, otherOwner: isOtherSpeaker\(line, job\), background \}\);/);
+    assert.match(player, /function isOtherSpeaker\(color, job\) \{[\s\S]*?const owner = ownerOfColor\(color\);/);
+    assert.match(player, /function barBackground\(\) \{[\s\S]*?alphaOf\(bg\) >= 0\.8 && colorKey\(bg\)\) return colorKey\(bg\);\n        const ink = colorKey\(getComputedStyle\(bar \|\| document\.body\)\.color\);/, 'the 92 % bar background counts; the fallback reads the bar text, never the tinted name');
+    const speakers = read('src/addons/tts/src/speakers.js');
+    assert.match(speakers, /export function ownerOfColor\(color\) \{/);
 });
 
 const failed = results.filter(r => !r.pass);

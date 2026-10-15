@@ -223,6 +223,28 @@ test('refreshMessageBlock announces llm-translator:rendered after redrawing, not
     assert.equal(M.withoutProtectedBlocks(`a${SLOT('z')}b`), 'ab');
     passed++; console.log('PASS a plain-view translation that only carries protected blocks is reused; fold markup / other HTML / stale hash are still refused');
 }
+// ── 7. 6.5.4 과일 · 데우스 생각 블록은 번역하지 않음 (본문 · 속마음 · 상태 카드는 그대로 번역) ──
+test('6.5.4 Fruit ECoT, a headless reply-start thought and Deus Scene Plan are protected; story, true thoughts and cards are not', () => {
+    S.user_defined_regexes = []; M.unprotectBlock('picture');
+    const fruit = '<ECoT>\n思考 plan\n</ECoT>\n<content>\n"Hello."\n<true_thoughts character="A">quiet</true_thoughts>\n</content>\n<status_bar>Time: noon</status_bar>';
+    const f = mask(fruit);
+    assert.deepEqual(f.blocks, ['<ECoT>\n思考 plan\n</ECoT>']);
+    assert.ok(f.masked.startsWith('[[__VAR_0__]]\n<content>') && f.masked.includes('<true_thoughts character="A">quiet</true_thoughts>') && f.masked.includes('<status_bar>Time: noon</status_bar>'));
+    for (const close of ['</ECoT>', '</thinking>']) {
+        const headless = mask(`planning first\nmore notes\n${close}\n<content>\nStory.\n</content>`);
+        assert.deepEqual(headless.blocks, [`planning first\nmore notes\n${close}`], 'a reply that starts inside the thought block');
+    }
+    const late = mask('<content>\nStory.\n</content>\nstray </ECoT>');
+    assert.deepEqual(late.blocks, [], 'a closing tag after the story never swallows the story');
+    const deus = mask('<scene_plan>\n<summary>Scene Plan</summary>\n<details>- Prose Plan: x</details>\n</scene_plan>\n<prose>\nStory <span style="color:#e63946">"Hi."</span>\n</prose>\n<tracker>Day 1</tracker>');
+    assert.equal(deus.blocks.length, 1);
+    assert.ok(deus.blocks[0].startsWith('<scene_plan>') && deus.blocks[0].endsWith('</scene_plan>'));
+    assert.ok(deus.masked.includes('<prose>\nStory') && deus.masked.includes('<tracker>Day 1</tracker>'));
+    assert.deepEqual(mask('<scene_reasoning id="r">why</scene_reasoning>B').blocks, ['<scene_reasoning id="r">why</scene_reasoning>']);
+    const plain = mask('<think>x</think>\n\nA <note>n</note>');
+    assert.deepEqual(plain.blocks, ['<think>x</think>'], 'replies without these blocks keep their placeholder numbers');
+    assert.ok(M.protectBlock('picture', SLOT_RULE, { noFold: true }));
+});
 M.unprotectBlock('picture');
 assert.equal(M.getCombinedRegexes().some(r => r.source === SLOT_RULE.source), false);
 console.log(`translator-protect: ${passed} groups passed`);

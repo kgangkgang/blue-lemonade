@@ -6,11 +6,12 @@ const root=path.resolve(process.argv[2]||'.'), dir=path.join(root,'src/addons/tr
 const source=fs.readFileSync(process.argv[3]?path.resolve(process.argv[3]):path.join(dir,'index.js'),'utf8');
 const card=await import(pathToFileURL(path.join(dir,'display-cards.js')));
 const auto=await import(pathToFileURL(path.join(dir,'context-auto.js')));
+const cardValueModule=await import(pathToFileURL(path.join(dir,'card-values.js')));
 const seg=await import(pathToFileURL(path.join(dir,'translation-segments.js')));
 const resume=await import(pathToFileURL(path.join(dir,'translation-resume.js')));
 function cut(name){const re=new RegExp('\\n(?:export )?(?:async )?function '+name+'\\('),start=source.search(re);assert(start>=0,name);const chunk=source.slice(start+1,source.indexOf('\n}',start+1)+2);return chunk.replace(/^export /,'');}
 const events=[],ctx={chatMetadata:{}}, S={llm_prompt_chat:'Translate visible text.',glossary_enabled:false,user_defined_regexes:[],user_no_fold_regexes:[],translation_display_mode:'folded'};
-const env={...card,...seg,...resume,...auto,extensionSettings:S,getContext:()=>ctx, guards:{capture:()=>({assert(){}})},connectionSignature:()=>'',watchGuard:()=>({check(){},close(){},signal:null}), document:{getElementById:()=>null},
+const env={...card,...seg,...resume,...auto,cardValues:cardValueModule.cardValues,getStringHash:t=>[...String(t)].reduce((h,c)=>(h*31+c.charCodeAt(0))|0,0),extensionSettings:S,getContext:()=>ctx, guards:{capture:()=>({assert(){}})},connectionSignature:()=>'',watchGuard:()=>({check(){},close(){},signal:null}), document:{getElementById:()=>null},
     BLOCKED_CHUNK_MARK:'failed',MASK_PATTERN:'[[__VAR_{index}__]]',DEBUG_MODE:false,RULE_PROMPT_KEY:'rules',substituteCustomPlaceholders:x=>x,substituteParams:x=>x,buildGlossaryBlock:()=>'',checkpointKey:async x=>x,glossarySegmentSignature:x=>()=>x,textOutputLimit:()=>0,isTransientError:()=>false,failMarkOf:()=>"failed",splitForChunks:()=>[],CHUNK_TARGET:100000,
     looksLikeInputBlock:()=>false,looksLikeRefusal:()=>false,fallbackOf:()=>null,sameTarget:()=>false,getCustomModelName:()=>'',
     tidyKana:x=>x,tidyGlossaryOutput:(_s,x)=>x,linesToFix:()=>[],glossaryHanKeep:()=>[],glossaryNameKeep:()=>[],dropDanglingOpenQuote:x=>x,
@@ -107,5 +108,22 @@ await test('actual translate preserves auto placeholders until complete-request 
  assert(sent[0].messages[0].content.includes('Earlier complete answer.'));assert(!auto.hasAutoContext(sent[0].messages[0].content));
  assert(keys.some(value=>value.includes('auto-context-v1')&&value.includes('Earlier complete answer.')));
  Object.keys(S).forEach(key=>delete S[key]);Object.assign(S,beforeSettings);env.callLLMAPI=beforeCall;env.checkpointKey=beforeKey;env.substituteCustomPlaceholders=beforeSub;
+});
+await test('6.5.4 Korean target: fixed status values and remembered values are filled locally and never sent',async()=>{
+ const beforeSettings={...S},beforeCall=env.callLLMAPI,box=new Map();
+ globalThis.localStorage={getItem:k=>box.get(k)??null,setItem:(k,v)=>box.set(k,String(v))};cardValueModule.forgetCardValueMemory();await seg.clearSegmentCache();
+ S.llm_prompt_chat='Translate visible text into Korean.';const sent=[];
+ env.callLLMAPI=async prompt=>{sent.push(prompt);return reply(prompt.replace(/^Translate visible text into Korean\.\n\n/,'').replace(seg.BATCH_HEADER,''))};
+ const korean=quote=>`English prose.\n\n<status_bar>\n日期：2026年10月15日 星期四\n时间：上午 07:15\n天气：晴 微风 19℃\n地点：Quiet library\n题记：${quote}\n之间：Visible sentence\n</status_bar>\n\nEnglish prose.`;
+ const first=await env.translate(korean('Visible sentence'));
+ assert(!sent.some(x=>/2026年|上午|晴 微风/.test(x)),'rule values never reach the model');assert(sent.some(x=>x.includes('Quiet library')));
+ assert(first.includes('日期：2026년 10월 15일 목요일')&&first.includes('时间：오전 07:15')&&first.includes('天气：맑음 산들바람 19℃')&&first.includes('地点：조용한 도서관'));
+ sent.length=0;const second=await env.translate(korean('English prose.'));
+ assert(!sent.some(x=>x.includes('Quiet library')||x.includes('Visible sentence')),'values translated before stay local');assert(second.includes('地点：조용한 도서관')&&second.includes('之间：보이는 문장')&&second.includes('题记：한국어 본문.'));
+ sent.length=0;await env.translate(korean('English prose.'),{isInputTranslation:true,prompt:'Translate visible text into Korean.'});
+ assert(sent.some(x=>x.includes('2026年10月15日')),'input translation never uses the local values');
+ sent.length=0;S.llm_prompt_chat='Translate visible text.';env.callLLMAPI=async prompt=>{sent.push(prompt);return reply(prompt.replace(/^Translate visible text\.\n\n/,'').replace(seg.BATCH_HEADER,''))};
+ await env.translate(korean('English prose.'));assert(sent.some(x=>x.includes('上午 07:15')),'another target language sends everything');
+ Object.keys(S).forEach(key=>delete S[key]);Object.assign(S,beforeSettings);env.callLLMAPI=beforeCall;delete globalThis.localStorage;cardValueModule.forgetCardValueMemory();
 });
 console.log(`${checks} translator card integration checks passed`);

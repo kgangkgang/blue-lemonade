@@ -5,6 +5,7 @@ import { observeEventCompletion } from './render-completion.js';
 import { notifyRerender, isRerenderNotify } from '../../rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe) · 그 알림의 MESSAGE_UPDATED 는 건너뛴다
 import { AUTO_CONTEXT, hasAutoContext, markAutoContext, captureAutoContextGuard, prepareTranslatorAutoContext } from './context-auto.js';
 import { prepareDisplayCards, withDisplayCardsProtected, withoutDisplayCards, displayCardBlocks, matchesDisplayCardStructure } from './display-cards.js';
+import { cardValues } from './card-values.js';   // 6.5.4 상태 카드 고정 값은 보내지 않고 바로 채움
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
 import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, fixPlaceholderVariants, dropLeftoverPlaceholders as dropProseLeftoverPlaceholders, repairTagPairs as repairProseTagPairs, dropStrayWords as dropProseStrayWords, dropWrapQuotes } from './translation-segments.js';
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
@@ -1731,9 +1732,18 @@ async function translate(text, options = {}) {
             });
         });
 
+        // 6.5.4 한국어로 옮길 때 상태 카드의 고정 값(날짜 · 시각 · 날씨 낱말 · 전에 번역한 같은 값)은 보내지 않고 바로 채운다.
+        //       기억 범위 = 채팅 번역 프롬프트 · 용어집(문단 캐시 서명과 같은 재료). 재번역은 기억을 읽지 않고 새 결과로 고친다.
+        const cardChat = getContext(), chatPrompt = String(extensionSettings.llm_prompt_chat ?? '');
+        const cardLocal = !options.isInputTranslation && /korean|한국어|한국말/i.test(String(options.prompt ?? chatPrompt)) ? cardValues({
+            scope: String(getStringHash(JSON.stringify([chatPrompt, extensionSettings.glossary_enabled === false ? null
+                : [cardChat?.groupId ?? null, cardChat?.characters?.[cardChat?.characterId]?.avatar ?? null, extensionSettings.glossary_entries ?? null]]))),
+            remember: options.isRetranslation !== true,
+        }) : null;
         // Keep card keys/markup local and send only their visible values after explicit user protection.
         const displayCards = prepareDisplayCards(maskedText, {
             isRetranslation: options.isRetranslation === true,
+            localValue: cardLocal?.local, learn: cardLocal?.learn,
             protectionValue(token) { const match = token.match(/^\[\[__VAR_(\d+)__\]\]$/); return match ? protectedBlocks[Number(match[1])] : undefined; },
             reserve(block) { const token = createPlaceholder(protectedBlocks.length); protectedBlocks.push(block); return token; },
         });
@@ -6847,7 +6857,13 @@ function getCombinedRegexes() {
         ///<details[^>]*>[\s\S]*?<\/details>/gi,
         ///`{3,}[^`]*[\s\S]*?`{3,}/g,
 		/<UpdateVariable>[\s\S]*?<\/UpdateVariable>/gi,
-        /<StatusPlaceHolderImpl\s*\/?>/gi
+        /<StatusPlaceHolderImpl\s*\/?>/gi,
+        // 6.5.4 과일 · 데우스 프리셋의 생각 블록은 번역하지 않고 원문 그대로 둔다 (보내지도 않음). 본문 · 속마음 · 상태 카드는 지금처럼 번역.
+        //   과일 마음 ECoT · 여는 태그 없이 답 머리에서 시작해 </ECoT> · </thinking> 로 끝나는 생각(과일 정규식 ^.+</ECoT> 와 같은 꼴, 본문 <content> · <prose> 앞에서만) · 데우스 Scene Plan.
+        //   기존 규칙 뒤에 두어 이 블록이 없는 답의 [[__VAR_n__]] 번호 · 문단 캐시 키는 그대로다.
+        /<ECoT\b[^>]*>[\s\S]*?<\/ECoT\s*>/gi,
+        /^(?:(?!<\/?(?:ECoT|thinking|content|prose)\b)[\s\S])*?<\/(?:ECoT|thinking)\s*>/i,
+        /<(scene_plan|scene_reasoning)\b[^>]*>[\s\S]*?<\/\1\s*>/gi
     ];
 
 

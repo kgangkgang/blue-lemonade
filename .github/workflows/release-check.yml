@@ -108,6 +108,7 @@ jobs:
           node tools/tests/rerender-notify.mjs .
           node tools/tests/translation-cards.mjs .
           node tools/tests/translator-cards-integration.mjs .
+          node tools/tests/translator-card-values.mjs .
           node tools/tests/recent-context.mjs .
           node tools/tests/translator-context-auto.mjs .
           node tools/tests/conversation-assist.mjs .

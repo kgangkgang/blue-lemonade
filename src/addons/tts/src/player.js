@@ -44,7 +44,7 @@ import { chat, substituteParams, eventSource, event_types } from '../../../../..
 import { getContext } from '../../../../../../../extensions.js';
 import { settings, providerConfig, addUsage, addPreUsed, USER_AUTO } from './settings.js';
 import { segmentMessage, pairSegments, colorsClash, detectLang, parseRegexLines, speechDisplay } from './text.js';
-import { resolveSpeaker, canon, knownNames as learnedNames, colorOfName } from './speakers.js';
+import { resolveSpeaker, canon, knownNames as learnedNames, colorOfName, ownerOfColor } from './speakers.js';
 import { voiceFor, findVoice, allVoices, twinOf, engineUsable, isPinned, setPersonaAuto, personaKnown, ensureStock, extraEngine, hasOwnVoice, unknownVoice, shownVoices } from './voices.js';
 import { usesTags } from './providers/elevenlabs.js';   // 6.1.8 다른 확장용 synth — 글 속 오디오 태그를 받는 모델인가
 import { POPUP_TYPE, POPUP_RESULT, callGenericPopup } from '../../../../../../../popup.js';
@@ -62,7 +62,7 @@ import { chipWords, addWord, removeWord, wordFold } from './word-chips.js';   //
 import { playbackOriginal, playbackOriginalTitle, wavWithCredits } from './playback-details.js';
 import { createSfxController } from './sfx-audio.js';
 import { mixScene } from './scene-mix.js';
-import { paintColorHighlights, clearColorHighlights, piecesOf, speakerColor, colorKey, ownSpeakerColor } from './highlight-colors.js';
+import { paintColorHighlights, clearColorHighlights, piecesOf, speakerColor, colorKey, barNameChoice, alphaOf, luminance } from './highlight-colors.js';
 
 const TITLE = 'TTS';
 const MAX_CONC = 2;                 // 동시 합성 요청
@@ -2932,17 +2932,48 @@ function speakerPalette(job) {
     } catch { return ''; }
 }
 function barNameColor(job) {
-    // 6.3.9 화자의 팔레트 색이 그 줄에 보이면 그 색이 먼저 (테마 굵게 #ffe873 근처의 노랑 · 인용 #93c9ff 근처의 하늘색이 「색 없음」으로 빠지던 것 — 사용자 제보)
+    // 6.5.4 화자 자신의 색이 먼저 — 화면에 보이든 말든 · 테마 잉크와 가깝든 말든 (사용자 제보: 어두운 슬레이트 #424c59 인물의 줄이 옆 인물의 빨강으로 칠해져 막대 이름도 빨강).
+    //   막대 배경에서 안 읽히는 색은 밝기만 조절한 변형(highlight-colors.readableOn). 자신의 색이 없는 화자는 줄의 색을 쓰되, 그 색이 다른 알려진 인물의 것이면 테마 색 (barNameChoice).
+    //   6.3.9 「팔레트 색이 그 줄에 보이면 그 색」은 이 규칙에 들어 있다 — 제 색은 보이지 않아도 쓴다.
     const own = speakerPalette(job);
+    const background = barBackground();
+    if (own) return barNameChoice({ own, background });
+    let line = '';
     try {
         const root = job.mesId >= 0 ? document.querySelector(`#chat .mes[mesid="${job.mesId}"] .mes_text`) : null;
         const ranges = root ? rangesFor(job, root) : [];
-        if (ranges.length) { const pieces = piecesOf(ranges, root); return ownSpeakerColor(pieces, own) || speakerColor(pieces, [getComputedStyle(root).color, ...themeInks()]); }
-    } catch { /* 화면 없음 → 원문 표시 */ }
-    let off = [];
-    try { off = [getComputedStyle(document.body).color, ...themeInks()]; } catch { off = []; }
-    const parts = (job.parts || []).map(p => ({ color: p.seg?.color || p.alt?.color || '', text: p.seg?.text || p.alt?.text || '' }));
-    return ownSpeakerColor(parts, own) || speakerColor(parts, off);
+        if (ranges.length) line = speakerColor(piecesOf(ranges, root), [getComputedStyle(root).color, ...themeInks()]);
+    } catch { line = ''; }   // 화면 없음 → 원문 표시
+    if (!line) {
+        let off = [];
+        try { off = [getComputedStyle(document.body).color, ...themeInks()]; } catch { off = []; }
+        const parts = (job.parts || []).map(p => ({ color: p.seg?.color || p.alt?.color || '', text: p.seg?.text || p.alt?.text || '' }));
+        line = speakerColor(parts, off);
+    }
+    return barNameChoice({ line, otherOwner: isOtherSpeaker(line, job), background });
+}
+/** 6.5.4 줄의 색이 다른 알려진 인물(팔레트 · 배운 색 · 내 색)의 것인가 — 그 화자 자신의 것이면 false (이름은 별명 · 이름 다리를 거쳐 견준다) */
+function isOtherSpeaker(color, job) {
+    if (!color) return false;
+    try {
+        const owner = ownerOfColor(color);
+        if (!owner) return false;
+        const mes = job.mesId >= 0 ? msg(job.mesId) : null;
+        const userName = mes ? chatCtx(mes).userName : '';
+        const me = /^\{\{user\}\}$/i.test(String(job.speaker || '')) ? userName : String(job.speaker || '');
+        const same = (a, b) => String(canon(a) || a).trim().toLowerCase() === String(canon(b) || b).trim().toLowerCase();
+        return !!me && !same(owner, me);
+    } catch { return false; }
+}
+/** 6.5.4 막대 이름이 놓이는 배경색 ('#rrggbb'): 막대의 계산 배경이 거의 불투명하면(92% 막대 포함) 그것, 아니면 막대 본문 글자색의 밝기로 어두운 · 밝은 배경을 짐작.
+ *   이름 칸(barEl.voice)의 글자색은 읽지 않는다 — 앞 줄의 이름 색(--lv-name)이라 어두운 이름 뒤에는 「밝은 배경」으로 잘못 짐작했다 (리그 실측) */
+function barBackground() {
+    try {
+        const bg = bar ? getComputedStyle(bar).backgroundColor : '';
+        if (bg && alphaOf(bg) >= 0.8 && colorKey(bg)) return colorKey(bg);
+        const ink = colorKey(getComputedStyle(bar || document.body).color);
+        return ink && luminance(ink) < 0.4 ? '#f3f3f5' : '#1c1c20';
+    } catch { return '#1c1c20'; }
 }
 /** 막대 이름에 그 줄의 대사 색을 입힌다 (줄마다 한 번 · fresh = 다시 잰다) */
 function tintBarName(job, fresh = false) {

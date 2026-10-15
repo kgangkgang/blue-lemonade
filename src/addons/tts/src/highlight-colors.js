@@ -159,6 +159,63 @@ export function speakerColor(pieces, exclude = []) {
     for (const [key, n] of weight) if (n > most) { best = key; most = n; }
     return best;
 }
+// ---------- 6.5.4 막대 이름 색 고르기 (순수) — 사용자 제보: 어두운 슬레이트(#424c59) 인물의 줄이 옆 인물의 빨강으로 칠해져 막대 이름도 빨강이었다.
+//   화자 자신의 색(팔레트 · 배운 색)이 있으면 화면에 보이든 말든 그 색 — 막대 배경에서 안 읽히면 밝기만 조절. 자신의 색이 없으면 줄의 색을 쓰되 다른 인물의 것이면 테마 색.
+const hexRgb = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+const hexOf = (r, g, b) => '#' + [r, g, b].map(v => Math.round(Math.min(255, Math.max(0, v))).toString(16).padStart(2, '0')).join('');
+/** 상대 밝기 (WCAG 2, 0 ~ 1) — 못 읽는 색(투명 · 반투명 · 이름 없는 값)은 null */
+export function luminance(color) {
+    const key = colorKey(color);
+    if (!key) return null;
+    const [r, g, b] = hexRgb(key).map(v => { const u = v / 255; return u <= 0.03928 ? u / 12.92 : ((u + 0.055) / 1.055) ** 2.4; });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+/** 대비 (1 ~ 21) — 둘 중 하나라도 못 읽으면 0 */
+export function contrastRatio(a, b) {
+    const la = luminance(a), lb = luminance(b);
+    if (la === null || lb === null) return 0;
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+function rgbToHsl(key) {
+    const [r, g, b] = hexRgb(key).map(v => v / 255);
+    const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2;
+    if (max === min) return { h: 0, s: 0, l };
+    const d = max - min, s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    const h = max === r ? ((g - b) / d + (g < b ? 6 : 0)) / 6 : max === g ? ((b - r) / d + 2) / 6 : ((r - g) / d + 4) / 6;
+    return { h, s, l };
+}
+function hslToHex(h, s, l) {
+    if (s === 0) return hexOf(l * 255, l * 255, l * 255);
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q;
+    const f = t => { t = (t + 1) % 1; if (t < 1 / 6) return p + (q - p) * 6 * t; if (t < 1 / 2) return q; if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6; return p; };
+    return hexOf(f(h + 1 / 3) * 255, f(h) * 255, f(h - 1 / 3) * 255);
+}
+/** 색을 배경에서 읽히게 밝기만 조절 ('#rrggbb'): 색상 · 채도는 그대로, 어두운 배경이면 밝게 · 밝은 배경이면 어둡게 — 대비가 minContrast 에 닿을 때까지. 배경을 모르면 그대로, 못 읽는 색은 '' */
+export function readableOn(color, background, minContrast = 3) {
+    const key = colorKey(color);
+    if (!key) return '';
+    const bg = colorKey(background);
+    if (!bg || contrastRatio(key, bg) >= minContrast) return key;
+    const brighten = luminance(bg) < 0.5;
+    let { h, s, l } = rgbToHsl(key), out = key;
+    for (let i = 0; i < 34; i++) {
+        l = brighten ? Math.min(1, l + 0.03) : Math.max(0, l - 0.03);
+        out = hslToHex(h, s, l);
+        if (contrastRatio(out, bg) >= minContrast || l === 0 || l === 1) break;
+    }
+    return out;
+}
+/**
+ * 막대 이름 색 고르기: 화자 자신의 색(own)이 있으면 그 색 — 화면에 보이든 말든 · 테마 잉크와 가깝든 말든, 배경에서 안 읽히면 밝기만 조절.
+ * 자신의 색이 없으면 줄의 색(line) — 단 그 색이 다른 알려진 인물의 것(otherOwner)이면 테마 색(''). 둘 다 없으면 ''.
+ */
+export function barNameChoice({ own, line, otherOwner = false, background = '', minContrast = 3 } = {}) {
+    const mine = colorKey(own);
+    if (mine) return readableOn(mine, background, minContrast);
+    const seen = colorKey(line);
+    if (!seen || otherOwner) return '';
+    return readableOn(seen, background, minContrast);
+}
 /** 묶음 이름 ↔ { key, pin } — 'key' 또는 'key|pin' ('' = 테마 색 · 고정 없음) */
 export const groupId = (key, pin) => (pin ? `${key}|${pin}` : key);
 export function splitGroup(id) { const [key = '', pin = ''] = String(id ?? '').split('|'); return { key, pin }; }

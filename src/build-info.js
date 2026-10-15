@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "6.5.3";
+export const BUILD_VERSION = "6.5.4";
 export const FILE_HASHES = {
   "index.js": "17480:1badcfa4:040bdacc",
-  "manifest.json": "365:2ee7c833:5cbd135f",
+  "manifest.json": "365:a81fd3be:5732cec8",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -206,13 +206,14 @@ export const FILE_HASHES = {
   "src/addons/translator/archive-bridge.js": "1842:85820c61:8fc7ab69",
   "src/addons/translator/bridge.js": "2618:8b1d9f54:4181d3f6",
   "src/addons/translator/buttons.html": "417:3bc7c8b0:1b53077b",
+  "src/addons/translator/card-values.js": "11278:075fc5e4:9a93bd42",
   "src/addons/translator/context-auto.js": "6990:a0de1aca:5231ed10",
   "src/addons/translator/current-connection.js": "5926:ac96f8aa:2d9aef2d",
-  "src/addons/translator/display-cards.js": "23441:92e498d0:25858df5",
+  "src/addons/translator/display-cards.js": "24589:d2e565fa:d32d7b1f",
   "src/addons/translator/glossary-match.js": "23969:4716318b:3af6c9df",
   "src/addons/translator/glossary-suggest.js": "37892:84fb105c:16cf3cc9",
   "src/addons/translator/index.html": "53728:64728266:e7cad34e",
-  "src/addons/translator/index.js": "464387:bc821e6c:79a2fd52",
+  "src/addons/translator/index.js": "466284:553e31d5:7b921397",
   "src/addons/translator/leftover-fix.js": "18292:6b70940a:709ed16d",
   "src/addons/translator/menu-visibility.js": "1137:ae729d76:8ea71da6",
   "src/addons/translator/names-bridge.js": "7072:f29785f7:da57aeea",
@@ -338,7 +339,7 @@ export const FILE_HASHES = {
   "src/addons/tts/src/block-fallback.js": "10832:319e307e:b357a6a3",
   "src/addons/tts/src/cache.js": "19858:42f14d6b:8cb21695",
   "src/addons/tts/src/clickplay.js": "36628:4e6e96be:744d3f54",
-  "src/addons/tts/src/highlight-colors.js": "21376:a829e527:507fd390",
+  "src/addons/tts/src/highlight-colors.js": "25013:a0338131:6ed32489",
   "src/addons/tts/src/known-voices.js": "229:cfc5a672:873e5898",
   "src/addons/tts/src/listen.js": "20455:02e652b8:ab3ef4e6",
   "src/addons/tts/src/log.js": "2025:19ff6989:94ecb8b8",
@@ -352,7 +353,7 @@ export const FILE_HASHES = {
   "src/addons/tts/src/paint-core.js": "3071:0b2a3bf3:65e061dd",
   "src/addons/tts/src/paint.js": "14598:fcd2ed0c:2660b7ae",
   "src/addons/tts/src/playback-details.js": "2865:763df989:b93ca320",
-  "src/addons/tts/src/player.js": "236474:ef7d9d8b:b264cc07",
+  "src/addons/tts/src/player.js": "238625:080f8720:c7b56a56",
   "src/addons/tts/src/pregen.js": "39223:ee6dc771:362892c7",
   "src/addons/tts/src/providers/_http.js": "8363:666dcabd:c8bf7f25",
   "src/addons/tts/src/providers/_models.js": "8477:f2142bd7:888f22da",
@@ -377,7 +378,7 @@ export const FILE_HASHES = {
   "src/addons/tts/src/sfx-credits.js": "6587:1a7aad53:1c14435d",
   "src/addons/tts/src/sfx-daily.js": "27496:7a4dad35:2e13e06a",
   "src/addons/tts/src/sfx-library.js": "33672:107770e3:b2e690d8",
-  "src/addons/tts/src/speakers.js": "33674:e8c2d3cd:d61cd681",
+  "src/addons/tts/src/speakers.js": "34564:6aa8aef3:e33d1b0d",
   "src/addons/tts/src/stapi.js": "23506:6863f689:815bbb68",
   "src/addons/tts/src/text.js": "29245:aac8de3d:3f0d7305",
   "src/addons/tts/src/translation.js": "18460:b607ad86:ea0d91c0",
@@ -481,7 +482,7 @@ export const FILE_HASHES = {
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "222843:1ba7d2cd:98abae14",
+  "src/notice-data.js": "223587:df525112:ff6bc2f5",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -569,5 +570,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "34821:fcebb709:d610b9d5",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1427757:3e511a45:01ca085a"
+  "style.css": "1427757:a3ff0572:38ce3988"
 };

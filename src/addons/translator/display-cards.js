@@ -198,14 +198,25 @@ function correctionMaskNumbers(source,translation,protectionValue) {
 /** reserve(value) must return a unique existing translation mask token. Call after user protection.
  * restore() runs after mask spelling repair and before ordinary unmasking. It rejects missing,
  * duplicated or reordered card fields; the caller keeps the original message on format errors.
+ * 6.5.4 localValue(text, cardName) may return a finished translation for a field (fixed dates,
+ * times, weather words, values translated before). Such fields are never sent; learn(text, value)
+ * hears every field value the model returned.
  */
-export function prepareDisplayCards(text,{reserve,isRetranslation=false,protectionValue}={}) {
+export function prepareDisplayCards(text,{reserve,isRetranslation=false,protectionValue,localValue,learn}={}) {
     const source = String(text ?? ''), split = isRetranslation && source.startsWith('[Original Text]:\n') ? source.indexOf(REPLY_DIVIDER) : -1;
     const primaryText = split >= 0 ? source.slice(0,split) : source, primary = describe(primaryText);
     if (!primary.length) return {text:source,count:0,compare:value=>value,restore:value=>value,cacheable:()=>true};
     if (typeof reserve !== 'function') throw new TypeError('Card masks require a reserve callback');
-    const records = primary.map(card => ({...card,tokens:Array.from({length:card.fields.length+2},()=>reserve(''))}));
-    const encode = (card,record) => record.tokens[0]+'\n'+card.fields.map((f,i)=>record.tokens[i+1]+f.text).join('\n')+'\n'+record.tokens.at(-1);
+    const localOf = (field,card) => {
+        const value = typeof localValue === 'function' ? localValue(field.text,card.name) : null;
+        return typeof value === 'string' && value.trim() && value.trim() !== field.text && !/[\r\n<>]|\[\[__/.test(value) ? value.trim() : null;
+    };
+    // Locally known fields get no token: the model sees only the remaining values of the card.
+    const records = primary.map(card => {
+        const local = card.fields.map(field => localOf(field,card));
+        return {...card,local,tokens:Array.from({length:local.filter(v => v === null).length+2},()=>reserve(''))};
+    });
+    const encode = (card,record) => { let n = 0; return record.tokens[0]+'\n'+card.fields.flatMap((f,i)=>record.local[i] !== null ? [] : [record.tokens[++n]+f.text]).join('\n')+'\n'+record.tokens.at(-1); };
     const transform = (part,cards=describe(part)) => {
         if (cards.length !== records.length || cards.some((c,i)=>c.name!==records[i].name || c.fields.length!==records[i].fields.length)) throw fail();
         let output = part; for (let i=cards.length-1;i>=0;i--) output = output.slice(0,cards[i].start)+encode(cards[i],records[i])+output.slice(cards[i].end); return output;
@@ -242,7 +253,7 @@ export function prepareDisplayCards(text,{reserve,isRetranslation=false,protecti
             for (const r of relevant) {
                 const at=r.tokens.map(t=>output.indexOf(t));
                 if (output.slice(at[0]+r.tokens[0].length,at[1]).trim()) return false;
-                for (let i=0;i<r.fields.length;i++) {
+                for (let i=0;i<r.tokens.length-2;i++) {
                     const value=output.slice(at[i+1]+r.tokens[i+1].length,at[i+2]).trim();
                     if (!value || /\[\[__VAR_\d+__\]\]/.test(value)) return false;
                 }
@@ -250,15 +261,19 @@ export function prepareDisplayCards(text,{reserve,isRetranslation=false,protecti
             return true;
         },
         restore(value) {
-            let output = String(value ?? ''), replacements = [];
+            let output = String(value ?? ''), replacements = [], heard = [];
             for (const record of records) {
                 const positions = record.tokens.map(token => { const at = output.indexOf(token); if (at < 0 || output.indexOf(token,at+token.length)>=0) throw fail(); return at; });
                 if (positions.some((at,i)=>i>0 && at <= positions[i-1])) throw fail();
                 if (output.slice(positions[0]+record.tokens[0].length,positions[1]).trim()) throw fail();
+                let n = 0;
                 const values = record.fields.map((field,i)=> {
-                    const raw = output.slice(positions[i+1]+record.tokens[i+1].length,positions[i+2]).trim();
+                    if (record.local[i] !== null) return escapeDisplay(record.local[i],field.context);
+                    n++;
+                    const raw = output.slice(positions[n]+record.tokens[n].length,positions[n+1]).trim();
                     if (!raw || /\[\[__VAR_\d+__\]\]/.test(raw)) throw fail();
                     const clean = raw.replace(/[\r\n]+/g,' ');
+                    heard.push([field.text,clean]);
                     return clean === field.text ? field.text : escapeDisplay(clean,field.context);
                 });
                 replacements.push({start:positions[0],end:positions.at(-1)+record.tokens.at(-1).length,text:patch(record.raw,record.fields,values)});
@@ -267,6 +282,7 @@ export function prepareDisplayCards(text,{reserve,isRetranslation=false,protecti
             // the original card order as well as the order of the values inside each card.
             if (replacements.some((r,i)=>i>0 && r.start < replacements[i-1].end)) throw fail();
             for (let i=replacements.length-1;i>=0;i--) { const r=replacements[i]; output=output.slice(0,r.start)+r.text+output.slice(r.end); }
+            if (typeof learn === 'function') for (const [source,heardValue] of heard) learn(source,heardValue);
             return output;
         }
     };

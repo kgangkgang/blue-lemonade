@@ -613,3 +613,20 @@ export function resetLearning(keepLocked = true) {
     seedFromCard(st);
     resolveAll(st); persist();
 }
+
+/** 6.5.4 그 색의 임자 — 이름 있는 칸의 이름, 내 색이면 내 이름 ('' = 아는 인물 없음). 꼭 같은 색이 먼저, 없으면 채널마다 ±6 안의 색 (화면 계산값 · 팔레트 표기 차) */
+export function ownerOfColor(color) {
+    const c = normColor(color);
+    if (!c) return '';
+    const st = state();
+    const nameOf = (k, e) => String(e?.name || (k === st.userColor ? personaName() : '') || '').trim();
+    const exact = st.colors?.[c] ? nameOf(c, st.colors[c]) : '';
+    if (exact) return exact;
+    const near = (a, b) => [1, 3, 5].every(i => Math.abs(parseInt(a.slice(i, i + 2), 16) - parseInt(b.slice(i, i + 2), 16)) <= 6);
+    for (const [k, e] of Object.entries(st.colors || {})) {
+        if (k === c || !/^#[0-9a-f]{6}$/.test(k) || !near(k, c)) continue;
+        const nm = nameOf(k, e);
+        if (nm) return nm;
+    }
+    return '';
+}

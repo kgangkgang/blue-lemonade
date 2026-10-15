@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.5.3/blue-lemonade-6.5.3.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.5.4/blue-lemonade-6.5.4.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.5.3 · 최신 업데이트</summary>
+<summary>6.5.4 · 최신 업데이트</summary>
+
+- TTS 막대의 이름이 말하는 인물 자신의 색으로 나와요. 예전엔 옆 인물의 색으로 칠해진 줄에서 그 색(예: 빨강)을 따라갔어요. 어두운 색은 막대에서 읽히게 밝혀 보여 줘요.
+- 번역이 과일 프롬프트의 생각(ECoT)과 데우스의 장면 계획(Scene Plan)은 보내지 않고 원문 그대로 둬요. 본문 · 속마음 · 상태창은 지금처럼 번역해요.
+- 상태창의 날짜 · 시각 · 날씨 같은 고정 값은 번역 모델에 보내지 않고 바로 한국어로 채워요. 한 번 번역한 장소 같은 값도 다시 보내지 않아 번역 요청이 줄어요. 다시 번역하면 새로 받아요.
+
+</details>
+
+<details>
+<summary>6.5.3 · 과일 호환 · 에셋 다시 고르기 · 번역 중단 수정 · 과일의 마음 창</summary>
 
 - 과일 프롬프트에서 캐릭터 에셋이 설정한 장수만큼 대사 앞에 들어가요. 예전엔 본문(<content>) 안을 건너뛰어 맨 위에 한 장만 들어갔어요.
 - 캐릭터 답의 ··· 메뉴에 「캐릭터 에셋 다시 고르기」가 생겼어요. 그림이 빠졌거나 마음에 안 들면 눌러서 다시 골라요.
