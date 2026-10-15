@@ -2,9 +2,11 @@
 const LABELS = new Map([['DATE','날짜'],['TIME','시간'],['LOC.','장소'],['WTHR','날씨']]);
 const FOOTER = new Map([['My heart found you,before my mind understood.','머리로 알기 전에, 마음이 먼저 너를 알아봤어.']]);
 const DECOR = new Map([['SCENE','장면'],['MOMENT','순간'],['SILENT','고요'],['FLOWING','흐름'],['WHISPER','속삭임'],['ECHO','메아리']]);
-const HINTS = new Map([['切换夜间模式','어두운 모드로 전환'],['切换日间模式','밝은 모드로 전환']]);
+const HINTS = new Map([['切换夜间模式','어두운 모드로 전환'],['切换日间模式','밝은 모드로 전환'],['切换主题','테마 전환'],['切换日夜','밝은/어두운 모드 전환'],['切换日/夜模式','밝은/어두운 모드 전환'],['切换日夜模式','밝은/어두운 모드 전환'],['切换为深色模式','어두운 모드로 전환'],['切换为浅色模式','밝은 모드로 전환'],['切换为日间','밝은 모드로 전환'],['切换为夜间','어두운 모드로 전환']]);
 const FALLBACK = new Map([['沉默不语，时光流淌','말없이 시간이 흘러간다.']]);
-const ROOT = '.fate-status-wrapper';
+const ROOT = '.fate-status-wrapper,.vintage-prologue,.novel-header-container,#meowFM-OptionCard,#post-it-card.post-it-container';
+const NOVEL = new Map([['CP','관계'],['AT','장소']]);
+const CHOICE = new Map([['Choose · Sth.','선택하기']]);
 const SKIP = 'script,style,textarea,input,pre,code,[contenteditable="true"],.fate-raw,[data-f]';
 
 export function installFruitStatusKorean(doc = document, host = window) {
@@ -48,11 +50,11 @@ export function installFruitStatusKorean(doc = document, host = window) {
         const used = new Set(), attrUsed = new Map();
         for (const card of cards.keys()) {
             if (!card.isConnected) continue;
-            for (const [selector, words] of [['.fate-grid-label',LABELS],['.fate-bottom-en',FOOTER],['.movie-deco-eng',DECOR]]) {
+            for (const [selector, words] of [['.fate-grid-label',LABELS],['.fate-bottom-en',FOOTER],['.movie-deco-eng',DECOR],['.novel-meta-label,.novel-cp-row-label',NOVEL],['.corner-info.corner-text',CHOICE]]) {
                 for (const el of card.querySelectorAll(selector)) translate(el, words, used);
             }
             for (const el of card.querySelectorAll('.movie-line-content')) translate(el, FALLBACK, used, '.movie-deco-eng');
-            for (const el of card.querySelectorAll('.fate-theme-toggle')) {
+            for (const el of card.querySelectorAll('.fate-theme-toggle,.mom-theme-toggle,.theme-toggle-btn,#prologue-theme-btn,.theme-toggle')) {
                 if (el.closest(SKIP)) continue;
                 const names = new Set(); attrUsed.set(el, names);
                 for (const name of ['title','aria-label']) {

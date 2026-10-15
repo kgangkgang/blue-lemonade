@@ -884,12 +884,33 @@ function repairBody(body, stack, src, spanning) {
  * 문단 수가 다르면: 원문에서 한 문단 안에서만 열고 닫는 태그(<true_thoughts> · <span> …)는 열린 그 문단 끝에서 닫고, 남는 닫는 태그만 뺀다.
  * 코드 블록 · HTML 주석이 있는 글은 건드리지 않는다.
  */
+// A truncated inline colour opener can swallow the following dialogue as an
+// attribute. Recover only a prefix of a real source tag immediately before an
+// opening dialogue quote. Older repairs may already have inserted that opener.
+function repairTruncatedColourTags(sourceTags, output) {
+    const openers = new Map();
+    for (const tag of sourceTags) {
+        if (tag.close || tag.name !== 'span') continue;
+        const match = /^(<span\s+style=["']color:\s*#[\da-f]{3,8})(["']>)$/i.exec(tag.raw);
+        if (match) openers.set(match[1].toLowerCase(), tag.raw);
+    }
+    return output.replace(/<span\s+style=["']color:\s*#[\da-f]{3,8}(?=[「『])/gi, (prefix, at, text) => {
+        const opener = openers.get(prefix.toLowerCase());
+        if (!opener) return prefix;
+        // Do not leave two opens around a single translated dialogue.
+        return text.slice(0, at).endsWith(opener) ? '' : opener;
+    });
+}
 export function repairTagPairs(source, output) {
     const original = String(output ?? '');
-    const src = String(source ?? '').replace(/\r\n?/g, '\n'), out = original.replace(/\r\n?/g, '\n');
+    const src = String(source ?? '').replace(/\r\n?/g, '\n');
+    let out = original.replace(/\r\n?/g, '\n');
     if (!/<[a-zA-Z]/.test(src) || !/[<\]]/.test(out) || /```|~~~|<!--/.test(src) || /```|~~~|<!--/.test(out)) return original;
     const srcTags = tagTokens(src);
     if (!srcTags.length || !wellFormed(srcTags)) return original;
+    const repairedOpeners = repairTruncatedColourTags(srcTags, out);
+    const openerChanged = repairedOpeners !== out;
+    out = repairedOpeners;
     const sParts = src.split(PARA_SPLIT), oParts = out.split(PARA_SPLIT), aligned = sParts.length === oParts.length;
     const spanning = new Set(), opened = [], sources = [];
     for (let i = 0; i < sParts.length; i += 2) {
@@ -899,7 +920,7 @@ export function repairTagPairs(source, output) {
         sources.push({ text: sParts[i], tags, open: [...opened] });
     }
     const stack = [];
-    let changed = false;
+    let changed = openerChanged;
     for (let i = 0; i < oParts.length; i += 2) {
         const fixed = repairBody(oParts[i], stack, aligned ? sources[i / 2] : null, spanning);
         if (fixed !== oParts[i]) { oParts[i] = fixed; changed = true; }

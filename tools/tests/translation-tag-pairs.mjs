@@ -108,3 +108,15 @@ assert.ok(/function repairShownTranslation\(/.test(index) && /repairShownTransla
 assert.ok(/repairShownTranslation\(Number\(messageId\), message\)/.test(index), 'a swipe that brings back its translation is repaired');
 assert.ok(/shown\.includes\('llm-translator-details'\)/.test(index) && /isTranslationInProgress\(id\)/.test(index), 'folded views and messages in flight are left alone');
 console.log('PASS wiring: variants before unmask, repair after unmask, repair on chat open and on swipe return');
+
+// Truncated colour attributes and a duplicate opener left by older repairs.
+const colourSource = '<span style="color:#789abc">「Hello.」</span>\n\nNarration.\n\n<span style="color:#345678">「Reply.」</span>';
+const colourOutput = '<span style="color:#789abc「안녕.」</span>\n\n서술.\n\n<span style="color:#345678">「답.」</span>';
+const colourExpected = '<span style="color:#789abc">「안녕.」</span>\n\n서술.\n\n<span style="color:#345678">「답.」</span>';
+assert.equal(repairTagPairs(colourSource, colourOutput), colourExpected);
+assert.equal(repairTagPairs(colourSource, '<span style="color:#789abc">'+colourOutput), colourExpected);
+assert.equal(repairTagPairs(colourSource, colourExpected), colourExpected);
+assert.equal(repairTagPairs(colourSource, colourOutput.replace('#789abc', '#abcdef')).includes('color:#abcdef「'), true, 'do not infer a colour absent from the source');
+assert.equal(repairTagPairs('```'+colourSource+'```', colourOutput), colourOutput, 'code fences remain untouched');
+assert.equal(repairTagPairs(colourSource, repairTagPairs(colourSource, colourOutput)), colourExpected, 'idempotent');
+console.log('PASS truncated colour openers: source match, older duplicate, narration boundary, unknown colour, code fence, idempotence');

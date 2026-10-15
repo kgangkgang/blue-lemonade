@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "6.5.5";
+export const BUILD_VERSION = "6.5.6";
 export const FILE_HASHES = {
   "index.js": "17480:1badcfa4:040bdacc",
-  "manifest.json": "365:7135d7dd:c6fdf4d5",
+  "manifest.json": "365:80230748:82701e3a",
   "src/addon-files-check.js": "3778:806c4ddb:1b01c7bf",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -233,7 +233,7 @@ export const FILE_HASHES = {
   "src/addons/translator/style.css": "25414:190cf177:89cd9a68",
   "src/addons/translator/translation-guard.js": "6496:683c1bee:29337c90",
   "src/addons/translator/translation-resume.js": "5228:aa325f12:5e031f03",
-  "src/addons/translator/translation-segments.js": "65121:ddda3e43:9eb77d3b",
+  "src/addons/translator/translation-segments.js": "66211:e7b35ba0:1c64fa88",
   "src/addons/tts/LICENSE-MultiCast.txt": "1064:03c78d80:d84a0f1d",
   "src/addons/tts/NOTICE.md": "12016:0b66e6d6:33dec5cb",
   "src/addons/tts/credits.js": "4747:846de4ff:6bca95c2",
@@ -482,7 +482,7 @@ export const FILE_HASHES = {
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "224048:7a9107ef:7dbb870a",
+  "src/notice-data.js": "224700:79faf73b:43f83023",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -511,10 +511,10 @@ export const FILE_HASHES = {
   "src/scripts/bundled/fruit-style.js": "80820:e793a8dd:ce06417f",
   "src/scripts/bundled/fruit.js": "46008:de94fe1b:cec2bbd8",
   "src/scripts/bundled/helper.js": "104117:425b163a:31736cc4",
-  "src/scripts/bundled/korean.js": "688642:8cb541a3:36439a45",
+  "src/scripts/bundled/korean.js": "690652:98e0f94a:52dd5d68",
   "src/scripts/bundled/shajin.js": "22111:d00fa2db:4b6a0901",
-  "src/scripts/catalog.js": "8911:c6ae9243:404655b8",
-  "src/scripts/fruit-status.js": "7629:ae055b99:7fa02f97",
+  "src/scripts/catalog.js": "8911:9de21c89:4f0b8621",
+  "src/scripts/fruit-status.js": "8393:37945107:11777814",
   "src/scripts/plain/deus-qr.js": "45642:1f583081:9b78d3fe",
   "src/scripts/plain/deus.js": "66897:632b8c3e:8adc7e2f",
   "src/scripts/plain/fold.js": "13815:b56ce78f:e3189530",
@@ -522,7 +522,7 @@ export const FILE_HASHES = {
   "src/scripts/plain/fruit-style.js": "79535:6f32ffba:5bd9130d",
   "src/scripts/plain/fruit.js": "42166:03605a28:1d7895a0",
   "src/scripts/plain/helper.js": "97691:f11398d4:3144a19b",
-  "src/scripts/plain/korean.js": "657404:110d8b27:610f14d4",
+  "src/scripts/plain/korean.js": "659306:da04bb76:beabfa54",
   "src/scripts/plain/shajin.js": "20099:8ad24629:14320e51",
   "src/scripts/prompt-engine.js": "10617:b2d5e420:c3b73ccd",
   "src/scripts/runtime.js": "9179:c79b995f:15964a06",
@@ -571,5 +571,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "34821:fcebb709:d610b9d5",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1427757:7553ed31:9b0e384a"
+  "style.css": "1427757:7aeafca2:30c135a8"
 };

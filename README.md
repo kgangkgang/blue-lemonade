@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.5.5/blue-lemonade-6.5.5.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.5.6/blue-lemonade-6.5.6.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.5.5 · 최신 업데이트</summary>
+<summary>6.5.6 · 최신 업데이트</summary>
+
+- 실리태번 한글화에 월드인포 탐색·상태, 모델 묶기, 이미지 설명·생성 스타일, 벡터 모델과 표정 업로드 안내를 더했어요. 모델 이름과 입력값은 그대로예요.
+- 과일의 마음 한글화가 소설 제목의 관계·장소, 선택지 제목과 서문·소설·선택지의 낮밤 버튼 설명도 한글로 보여요. 프리셋을 다시 가져올 필요 없이 기존 스위치로 적용돼요.
+- 번역 중 잘린 대사 색 태그를 원문과 맞춰 복구해요. 예전 복구가 같은 태그를 겹쳐 붙인 경우도 정리해요.
+
+</details>
+
+<details>
+<summary>6.5.5 · 과일 상태창 고정 문구 한글화</summary>
 
 - 한글화 패널의 「과일의 마음 한글화」를 켜면 상태창의 날짜·시간·장소·날씨 제목, 하단 문구와 낮·밤 버튼 설명도 한글로 보여요. API 요금 없이 바로 적용돼요.
 - 프리셋을 다시 가져올 필요가 없어요. 현재 프롬프트·토글·대화는 그대로 두고 화면 글자만 바꾸며, 한글화를 끄면 원문으로 돌아와요.
