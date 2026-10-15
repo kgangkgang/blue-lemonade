@@ -1,22 +1,46 @@
 /* ===== css/79-fruit-type.css ===== */
-/* Known Fruit renderer typography settings, scoped to the settings UI. */
-.bl-fruit-type-editor{display:flex;flex-direction:column;gap:12px;min-width:0;margin-top:18px}
-/* 6.6.2 theme preview box: sticks under the tabs, folds and resizes like the other previews */
-.bl-ft-prevbox{background:var(--salty-fill-surface,var(--salty-surface,var(--SmartThemeBlurTintColor,#222)))}
-.bl-ft-prevbox .bl-ft-preview{display:block}
-.bl-ft-fields>.bl-ft-slider{grid-column:1/-1;min-width:0}
+/* 상태창 글자 설정 (프롬프트 › 과일 · 데우스 › 상태창 글자, 과일 창 바로가기 대화상자).
+   새 모양을 만들지 않고 테마 부품을 그대로 쓴다: 줄(.salty-row) · 스위치 · 슬라이더 · 미리보기 칸 · 접기 줄.
+   파라미터는 모두 세로 2줄 — 윗줄 이름(·현재 값), 아랫줄 조절칸 가로 꽉, 한 줄에 하나. */
+.bl-fruit-type-editor{display:flex;flex-direction:column;min-width:0}
 .bl-fruit-type-editor *{box-sizing:border-box}
-.bl-ft-field{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:inherit}
-.bl-ft-field>span{font-size:.9em;font-weight:600;overflow-wrap:anywhere}
-.bl-ft-field input,.bl-ft-field select{width:100%;min-width:0;max-width:100%;min-height:36px;font:inherit;padding:6px 8px;color:inherit;background:var(--bl-fill-control,#8882);border:1px solid var(--SmartThemeBorderColor,#8885);border-radius:8px}
-.bl-ft-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.bl-ft-region{min-width:0;padding:12px;border:1px solid var(--SmartThemeBorderColor,#8885);border-radius:10px}
-.bl-ft-region>summary{cursor:pointer;font-weight:600;overflow-wrap:anywhere;min-height:36px}
-.bl-ft-region-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 12px;flex-wrap:wrap}
-.bl-ft-toggle{display:flex;align-items:center;gap:8px;min-height:36px;word-break:keep-all;overflow-wrap:anywhere}
-.bl-ft-toggle input{width:18px!important;height:18px!important;min-height:0!important;flex:none;margin:0}
-.bl-ft-preview{width:100%;max-width:100%;min-width:0;border:1px solid var(--SmartThemeBorderColor,#8885);border-radius:12px;background:var(--salty-bg,#fff)}
-.bl-ft-dialog{box-sizing:border-box;width:min(720px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;padding:16px;border:1px solid var(--SmartThemeBorderColor,#8885);border-radius:12px;background:var(--salty-bg,var(--SmartThemeBlurTintColor,#222));color:var(--salty-text,var(--SmartThemeBodyColor,#ddd));font:inherit;text-align:left}
-.bl-ft-dialog::backdrop{background:#0008}.bl-ft-dialog>button{min-height:36px;float:right}
-.bl-ft-shortcut{font:inherit!important;font-size:.8em!important;min-height:30px!important;padding:4px 7px!important;border-radius:6px!important;white-space:normal!important;overflow-wrap:anywhere!important;max-width:100%!important}
-@media(max-width:360px){.bl-ft-fields{gap:10px}.bl-ft-region{padding:10px}.bl-ft-dialog{padding:12px}}
+/* 세로 2줄 파라미터 (고르기 칸) — 슬라이더(.salty-slider)와 같은 위아래 여백 */
+.bl-ft-param{display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:0;padding:8px 0 6px}
+.bl-ft-param>span{min-width:0;overflow-wrap:anywhere}
+.bl-ft-param>select{display:block;width:100%;min-width:0;max-width:100%;min-height:36px;margin:0;border-radius:8px;font:inherit}
+.bl-ft-slider{min-width:0}
+.bl-ft-slider>input[type=range]{width:100%}
+/* 이름 · [원복] · 스위치 한 줄 */
+.bl-fruit-type-editor .bl-ft-row{flex-wrap:nowrap}
+.bl-fruit-type-editor .bl-ft-row>span:first-child{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+.bl-ft-row-ctl{display:flex;align-items:center;gap:10px;flex:none}
+.bl-fruit-type-editor .salty-btn,.bl-ft-dialog-head .salty-btn{min-height:32px;height:auto;padding:5px 12px;border-radius:8px;line-height:1.4;white-space:nowrap}
+/* 미리보기: 테마 미리보기 칸 그대로(따라옴 · 접기 · 높이 · 확대). 보이는 높이는 data-pv-max 로 작게 */
+.bl-ft-prevbox{margin-top:4px;background:var(--salty-fill-surface,var(--salty-surface,var(--SmartThemeBlurTintColor,#222)))}
+.bl-ft-prevbox .bl-ft-preview{display:block;width:100%;max-width:100%;min-width:0;border:1px solid var(--salty-line,var(--SmartThemeBorderColor,#8885));border-radius:8px;background:var(--salty-bg,#fff)}
+.bl-fruit-type-editor .bl-ft-font-note{margin:2px 0 4px;display:block;-webkit-line-clamp:none;line-clamp:none;cursor:default}
+/* 영역별 설정: 테마 설정 묶음과 같은 접기 줄 (위 구분선 · 이름 · 지금 상태 · +/−) */
+.bl-ft-groups{margin-top:6px}
+.bl-ft-group{border-top:1px solid var(--bl-editor-line,var(--salty-line,#8884))}
+.bl-ft-group:last-child{border-bottom:1px solid var(--bl-editor-line,var(--salty-line,#8884))}
+html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100%;min-height:42px;margin:0;padding:9px 0;border:0;border-radius:0;background:transparent;color:var(--salty-text,inherit);font:inherit;font-weight:600;text-align:left;cursor:pointer;box-shadow:none}
+.bl-ft-group-toggle>span{flex:0 1 auto;min-width:0;overflow-wrap:anywhere}
+.bl-ft-group-summary{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;font-size:.85em;font-weight:500;color:var(--salty-muted,inherit)}
+.bl-ft-group-toggle::after{content:'+';flex:none;width:14px;text-align:center;color:var(--salty-muted,inherit);font-size:1.25em;font-weight:400;line-height:1}
+.bl-ft-group-toggle[aria-expanded="true"]::after{content:'−'}
+.bl-ft-group-toggle[aria-expanded="true"]>.bl-ft-group-summary{visibility:hidden}
+.bl-ft-group-toggle:focus-visible{outline:2px solid var(--salty-accent,currentColor);outline-offset:-2px}
+.bl-ft-group-body{padding:0 0 10px}
+.bl-ft-group-body[hidden]{display:none!important}
+.bl-ft-support{margin:4px 0 0;padding-left:1.2em;font-size:.9em;color:var(--salty-muted,inherit)}
+.bl-ft-support li{overflow-wrap:anywhere}
+/* 데우스 페이지: 상태창 글자 묶음을 펼친 동안 위 카드 미리보기는 쉰다 — 폰에서 미리보기 두 개가 화면을 덮지 않게 (나란히 놓는 넓은 화면은 그대로) */
+@container bl-editor (max-width:799px){.bl-editor-workspace:has(> .salty-sec .bl-editor-group-body:not([hidden]) > .bl-fruit-type-editor) > .bl-editor-stage{display:none}}
+/* 과일 창 바로가기 → 대화상자 */
+.bl-ft-dialog{box-sizing:border-box;width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;padding:0 16px 16px;border:1px solid var(--salty-line,var(--SmartThemeBorderColor,#8885));border-radius:12px;background:var(--salty-bg,var(--SmartThemeBlurTintColor,#222));color:var(--salty-text,var(--SmartThemeBodyColor,#ddd));font:inherit;text-align:left}
+.bl-ft-dialog::backdrop{background:#0008}
+.bl-ft-dialog-head{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;margin:0 -16px 4px;padding:8px 16px;background:inherit;border-bottom:1px solid var(--salty-line,#8884)}
+.bl-ft-dialog .salty-prevbox{top:52px}
+/* 과일 창 · 데우스 빠른 설정 안 바로가기 단추: 8px 얇은 네모 */
+.bl-ft-shortcut{font:inherit!important;font-size:.8em!important;min-height:32px!important;padding:4px 10px!important;border-radius:8px!important;white-space:normal!important;overflow-wrap:anywhere!important;max-width:100%!important}
+@media(max-width:360px){.bl-ft-dialog{padding:0 12px 12px}.bl-ft-dialog-head{margin:0 -12px 4px;padding:8px 12px}}

@@ -740,3 +740,72 @@ body.salty .bl-translator-dialog .bl-hs-row .bl-hs-switch:focus-visible { outlin
 /* 6.2.5 고르기 창 줄은 맨 앞이 체크칸이라 따로 — 위 규칙에 같이 묶였더니 폰에서 체크칸 자리가 1.4fr 로 제일 넓어지고 원문 · 번역 칸이 오른쪽으로 밀려 잘렸다 (사용자 10-13 「용어집 UI UX 깨짐」) */
 @media (min-width: 601px) { .llmt-gl-pick-row { grid-template-columns: auto minmax(0, 1.4fr) auto minmax(0, 1fr) auto; } }
 @media (max-width: 600px) { .llmt-gl-pick-row { grid-template-columns: auto auto minmax(0, 1fr); } }
+
+/* ── 2.6.0 번역 점검 (check-view.js) ── */
+/* 의심 문단 끝의 작은 표시: 글자보다 작은 경고 그림 하나 · 조용히(흐리게) · 누르는 칸은 글줄 높이 그대로(줄 간격을 밀지 않게 위아래 음수 여백) */
+.mes_text :is(.custom-llmt-flag, .llmt-flag) {
+  display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;
+  width: 1.6em; height: 1.6em; margin: -0.35em 0 -0.35em 0.1em; vertical-align: middle;
+  border-radius: var(--bl-r-xs, 6px); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+  color: var(--bl-pop-ink, var(--salty-accent, #c9932c)); opacity: 0.62; text-indent: 0;
+  transition: opacity .15s ease, background-color .15s ease;
+}
+.mes_text :is(.custom-llmt-flag, .llmt-flag)::before {
+  content: "\f071"; font-family: "Font Awesome 6 Free"; font-weight: 900; font-style: normal; font-size: 0.68em; line-height: 1;
+}
+@media (hover: hover) {
+  .mes_text :is(.custom-llmt-flag, .llmt-flag):hover { opacity: 1; background: var(--bl-hover, color-mix(in srgb, currentColor 12%, transparent)); }
+}
+.mes_text :is(.custom-llmt-flag, .llmt-flag):focus-visible { outline: none; opacity: 1; box-shadow: var(--bl-ring, 0 0 0 2px currentColor); }
+/* 번역 단추(뇌 · ⇄ 중 보이는 것)의 메시지 상태: 정상 = 흐린 작은 네모 점 · 의심 = 주의색 칩(의심 문단 수) — 단추 모서리 안쪽에, 누름은 단추 그대로 */
+#chat .mes :is(.mes_legacy_translate, .mes_llm_translate)[data-llmt-check] { position: relative; }
+#chat .mes :is(.mes_legacy_translate, .mes_llm_translate)[data-llmt-check]::after {
+  content: ""; position: absolute; top: 4px; right: 4px; box-sizing: border-box; width: 6px; height: 6px; border-radius: 2px;
+  background: var(--salty-faint, color-mix(in srgb, var(--SmartThemeBodyColor, #888) 45%, transparent)); pointer-events: none;
+}
+#chat .mes :is(.mes_legacy_translate, .mes_llm_translate)[data-llmt-check="warn"]::after { background: var(--bl-warn, var(--salty-accent, #e0a93a)); }
+#chat .mes :is(.mes_legacy_translate, .mes_llm_translate)[data-llmt-check-count]::after {
+  content: attr(data-llmt-check-count); top: 1px; right: 0; width: auto; min-width: 14px; height: 14px; padding: 0 3px; border-radius: 4px;
+  color: var(--bl-on-pop, #10202e); font: 700 9.5px/14px var(--salty-font-ui, system-ui, sans-serif); text-align: center; letter-spacing: 0;
+}
+/* 누르면 뜨는 작은 창: 메뉴와 같은 겹(overlay · e4) · 글은 테두리에서 띄우고 단추는 한 줄(모자라면 다음 줄) */
+.llmt-check-pop {
+  position: fixed; z-index: 10050; box-sizing: border-box; max-width: calc(100vw - 24px); padding: 10px 14px 14px;
+  color: var(--salty-text, var(--SmartThemeBodyColor, #e8e8e8)); background: var(--bl-overlay, var(--SmartThemeBlurTintColor, #20242c));
+  border-radius: var(--bl-r-md, 12px); box-shadow: var(--bl-e4, 0 12px 32px rgba(0, 0, 0, .35));
+  font-family: var(--salty-font-ui, inherit); font-size: var(--bl-fs-sub, 13px); line-height: 1.55; text-align: left;
+}
+.llmt-check-head { display: flex; align-items: center; gap: 8px; min-height: 32px; margin: 0 -6px 4px 0; }
+.llmt-check-title { font-weight: 600; font-size: var(--bl-fs-ctl, 14px); }
+.llmt-check-where { color: var(--salty-muted, color-mix(in srgb, currentColor 65%, transparent)); font-size: var(--bl-fs-cap, 12.5px); }
+.llmt-check-x {
+  display: inline-flex; align-items: center; justify-content: center; flex: none; width: 32px; height: 32px; margin: 0 0 0 auto; padding: 0;
+  border: 0; border-radius: var(--bl-r-sm, 8px); background: transparent; color: var(--salty-muted, inherit); font-size: 15px; cursor: pointer;
+}
+@media (hover: hover) { .llmt-check-x:hover { background: var(--bl-hover, color-mix(in srgb, currentColor 10%, transparent)); color: var(--salty-text, inherit); } }
+.llmt-check-x:focus-visible { outline: none; box-shadow: var(--bl-ring, 0 0 0 2px currentColor); }
+.llmt-check-why { margin: 0 0 4px; }
+.llmt-check-note { margin: 0 0 4px; color: var(--salty-muted, color-mix(in srgb, currentColor 65%, transparent)); font-size: var(--bl-fs-cap, 12.5px); }
+.llmt-check-src {
+  max-height: 38vh; margin: 8px 0 0; padding: 10px 12px; overflow: auto; overscroll-behavior: contain; white-space: pre-wrap; overflow-wrap: anywhere;
+  border-radius: var(--bl-r-sm, 8px); background: var(--bl-well, color-mix(in srgb, currentColor 8%, transparent)); box-shadow: var(--bl-well-in, none);
+  font-family: var(--salty-font-text, inherit); font-size: var(--bl-fs-sub, 13px); line-height: 1.6;
+}
+.llmt-check-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+.llmt-check-pop .llmt-check-btn { flex: 0 0 auto; width: auto; min-height: 34px; margin: 0; padding: 0 12px; border-radius: var(--bl-r-sm, 8px); font-size: var(--bl-fs-ctl, 14px); white-space: nowrap; }
+body.salty .llmt-check-pop .menu_button.llmt-check-btn { min-height: 34px; }
+body.salty .llmt-check-pop .menu_button.llmt-check-btn.is-primary { background: var(--salty-accent) !important; color: var(--salty-on-accent) !important; box-shadow: var(--bl-accent-lift, none) !important; }
+body.salty .llmt-check-pop .menu_button.llmt-check-btn:disabled { opacity: .6 !important; cursor: default; }
+
+/* ── 2.6.0 생각 블록(추론) 카드 (reasoning-view.js) ── */
+/* 머리: 실리태번 제목 옆에 「3,789자 · 중국어」 — 작은 흐린 글 · 제목과 같은 줄 가운데 */
+.mes_reasoning_header .llmt-rsn-meta {
+  min-width: 0; margin-left: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--salty-faint, color-mix(in srgb, currentColor 60%, transparent)); font-size: var(--bl-fs-micro, 11.5px); font-weight: 500;
+}
+/* 펼친 카드 맨 위 단추 줄: 본문과 같은 좌우 여백(16px) · 단추 32px · 옆 안내 글은 단추와 세로 가운데 */
+.mes_reasoning_details > .llmt-rsn-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 2px 16px 10px; }
+.llmt-rsn-bar .llmt-rsn-btn { flex: 0 0 auto; width: auto; min-height: 32px; margin: 0; padding: 0 12px; border-radius: var(--bl-r-sm, 8px); font-size: var(--bl-fs-sub, 13px); white-space: nowrap; }
+body.salty .llmt-rsn-bar .menu_button.llmt-rsn-btn { min-height: 32px; }
+body.salty .llmt-rsn-bar .menu_button.llmt-rsn-btn:disabled { opacity: .6 !important; cursor: default; }
+.llmt-rsn-note { min-width: 0; color: var(--salty-faint, color-mix(in srgb, currentColor 60%, transparent)); font-size: var(--bl-fs-micro, 11.5px); line-height: 1.4; }

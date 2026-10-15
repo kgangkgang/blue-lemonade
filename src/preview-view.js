@@ -140,7 +140,7 @@ export function bindPreviewViews(root, section) {
             width = scene.offsetWidth; height = scene.offsetHeight;
             const limit = heightLimit();
             // A stacked preview leaves room for settings; an explicitly resized view keeps its height.
-            viewHeight = Number.isFinite(state.height) ? Math.max(48, Math.min(state.height, limit)) : Math.min(height, limit, sideBySide() && grip ? limit : Math.min(window.innerHeight * .22, 180));
+            viewHeight = Number.isFinite(state.height) ? Math.max(48, Math.min(state.height, limit)) : Math.min(height, limit, sideBySide() && grip ? limit : Math.min(window.innerHeight * .22, Number(box.dataset.pvMax) || 180)); // data-pv-max: 설정 사이에 끼는 작은 미리보기(상태창 글자)
             const px = `${viewHeight}px`;
             if (viewport.style.height !== px) viewport.style.height = px;
             schedule();

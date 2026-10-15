@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.7.2/blue-lemonade-6.7.2.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.7.3/blue-lemonade-6.7.3.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.7.2 · 최신 업데이트</summary>
+<summary>6.7.3 · 최신 업데이트</summary>
+
+- 상태창 글자 설정 화면(과일 · 데우스)을 새로 정리했어요. 조절칸은 전부 이름 아래 가로 꽉 찬 세로 2줄, 체크칸은 테마 스위치, 버튼은 얇은 네모로 맞췄어요.
+- 번역 점검 표시(번역 설정에서 켜기): 초안이 섞이거나 끊기거나 주석 · 대사 괄호가 깨진 문단 끝에 작은 표시가 붙고, 누르면 이유 · 「이 문단만 다시 번역」 · 「원문 보기」가 나와요. 생각(추론) 카드도 번역해서 볼 수 있어요 (번역 2.6.0).
+- 메시지 ··· 메뉴에 「대사만 보기」가 생겼어요. 대사만 차례로 모아 보고, 누르면 본문의 그 대사로 옮겨 가요. TTS 를 켰으면 「대사만 듣기」도 돼요.
+
+</details>
+
+<details>
+<summary>6.7.2 · 모델 전환 「검열되면」 한 번에 고르기 · 겹친 자동 줄 정리</summary>
 
 - 모델 전환의 「검열되면」 단추가 검열되면 줄만 한 번에 골라요(일반 줄은 빠져요). 꺼져 있던 줄도 한 번 확인받고 고르며, 「바꾸기」를 누르면 위에서 고른 모델로 켜져요 (모델 전환 1.1.8).
 - 스스로 모델 전환에 등록한 확장은 자동 찾기 줄이 하나 더(확장 원래 이름으로) 생기지 않아요. 세부 연결 펼치기는 「세부 ⌄」 글자 단추로 바꿔 체크 표시와 헷갈리지 않아요.

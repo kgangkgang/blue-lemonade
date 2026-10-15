@@ -148,8 +148,9 @@ await check('real translate(): several batch groups → the count climbs and fin
 await check('wiring: the preview paints through paintKeepingFrames and keeps the badge; version 2.5.5', () => {
     assert(/if \(!paintKeepingFrames\(host, html\)\) return;/.test(source));
     assert(!/host\.innerHTML = html;/.test(source.slice(source.indexOf('function translationPreview('), source.indexOf('function settleGuard('))), 'no wholesale repaint left');
-    assert.equal(JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8')).version, '2.5.5');
-    assert(fs.readFileSync(path.join(dir, 'index.html'), 'utf8').includes('>v2.5.5<'));
+    const version = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8')).version;   // 올라가도 깨지지 않게 — 2.5.5 이상 · 화면 표시와 같음
+    assert(version.localeCompare('2.5.5', undefined, { numeric: true }) >= 0, version);
+    assert(fs.readFileSync(path.join(dir, 'index.html'), 'utf8').includes(`>v${version}<`));
 });
 
 console.log(`translator-preview-frames: ${passed} passed, ${failed} failed`);

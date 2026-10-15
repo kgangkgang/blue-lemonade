@@ -10,6 +10,8 @@ import { cardValues } from './card-values.js';   // 6.5.4 상태 카드 고정 �
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
 import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, stripDraftLeaks, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, fixPlaceholderVariants, dropLeftoverPlaceholders as dropProseLeftoverPlaceholders, repairTagPairs as repairProseTagPairs, dropStrayWords as dropProseStrayWords, dropWrapQuotes } from './translation-segments.js';
 import { hideOpenComments, looksCutShort, restoreDialogueBrackets } from './translation-segments.js';   // 2.5.1 숨긴 주석 표시 보정 · 끊긴 답 · 2.5.2 빠진 대사 괄호
+import { createReasoningView } from './reasoning-view.js';   // 2.6.0 생각 블록(추론) 카드 · 번역해서 보기
+import { updateReasoningUI } from '../../../../../../reasoning.js';   // 2.6.0 생각 칸 다시 그리기
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
 import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey, glossaryLinesFor, enforceGlossaryNames, dropDanglingOpenQuote } from './glossary-match.js';
@@ -158,6 +160,8 @@ const defaultSettings = {
     hide_new_translate_button: true,
     hide_paragraph_button: true,
     hide_edit_button: false,
+    translation_check: true,     // 2.6.0 번역 점검 표시 (의심 문단 · 번역 단추의 메시지 상태)
+    reasoning_translate: true,   // 2.6.0 생각 블록 카드의 「번역해서 보기」
     hide_delete_button: true,
     use_reverse_proxy: false,
     reverse_proxy_url: '',
@@ -487,6 +491,8 @@ function loadSettings() {
     $('#llm_auto_mode').val(extensionSettings.auto_mode);
     
     $('#force_sequential_matching').prop('checked', extensionSettings.force_sequential_matching);
+    $('#llm_translation_check').prop('checked', extensionSettings.translation_check !== false);   // 2.6.0
+    $('#llm_reasoning_translate').prop('checked', extensionSettings.reasoning_translate !== false);   // 2.6.0
 
     // llmContext 설정 로드
     syncContextRangeUI();
@@ -1881,8 +1887,14 @@ async function translate(text, options = {}) {
         watcher.check();
         // 5.4.2: 번역문 삭제 — 이 글의 문단 캐시 · 이어하기 줄만 지우고 요청은 하지 않는다 (키는 번역할 때와 같은 재료로)
         if (options.forget) {
-            if (paragraphParts) await forgetSegments(paragraphParts, glossarySegmentSignature(setupDigest));
-            if (key) await clearCheckpoints(key);
+            // 2.6.0 forget 이 문단 번호 배열이면 그 문단들의 캐시 줄만 (번역 점검의 「이 문단만 다시 번역」 — 다른 문단 캐시 · 이어하기는 둔다)
+            let parts = paragraphParts;
+            if (parts && Array.isArray(options.forget)) {
+                const bodies = parts.filter((part, i) => i % 2 === 0 && part.trim());
+                parts = options.forget.map(n => bodies[n]).filter(body => body !== undefined).flatMap(body => [body, '']);
+            }
+            if (parts?.length) await forgetSegments(parts, glossarySegmentSignature(setupDigest));
+            if (key && !Array.isArray(options.forget)) await clearCheckpoints(key);
             return '';
         }
 
@@ -2372,6 +2384,7 @@ function beginTranslation(messageId, message) {
 function endTranslation(messageId, token) {
     token?.resolve?.(token.error);
     if (translationInProgress[messageId] === token) translationInProgress[messageId] = false;
+    if (typeof checkView !== 'undefined') checkView.schedule(messageId);   // 2.6.0 번역 중엔 점검하지 않으니 끝나면 한가할 때 점검
 }
 /**
  * [1.9.5] 그 번호의 '지금' 메시지를 번역하는 중인지. 번호만 보면 재생성(마지막 답을 지우고 같은 번호에 새 답) · 앞 메시지 삭제 ·
@@ -2710,10 +2723,138 @@ function hideBrokenCommentsOnRender() {
         if (info.isReasoning || !(info.messageId >= 0)) return mes;
         const message = getContext().chat?.[info.messageId];
         if (typeof message?.extra?.display_text !== 'string' || mes === message.mes) return mes;   // 번역문을 보여 줄 때만 (원문 · 원문 보기는 그대로)
-        const shown = mes.includes('<!--') || mes.includes('-->') ? hideOpenComments(mes) : mes;
+        // 2.6.0 의심 문단 끝 자리 표시 (저장된 글 기준이라 가리기 · 괄호보다 먼저 — 괄호 되살리기는 줄 끝 닫는 태그 꼴인 표시를 껍데기로 건너뛴다)
+        const marked = message.is_user || typeof checkView === 'undefined' ? mes : checkView.mark(Number(info.messageId), mes);
+        const shown = marked.includes('<!--') || marked.includes('-->') ? hideOpenComments(marked) : marked;
         return message.is_user ? shown : restoreDialogueBrackets(message.mes, stripDraftLeaks(shown, message.mes));   // 2.5.3 남은 혼잣말 · 반쪽 문단
     }, { stage: formatter.stage.BEFORE_REGEX, order: formatter.order.EARLIEST });
 }
+/** 2.6.0 서식 훅 둘: 마크다운 뒤 — 자리 표시를 누를 수 있는 작은 표시로 · 생각 블록(정규식 전) — 번역해서 보기를 켠 것만 번역문으로 */
+let checkHooksAdded = false;
+function installCheckHooks() {
+    const formatter = getContext()?.messageFormatter;
+    if (checkHooksAdded || typeof formatter?.addHook !== 'function') return;
+    checkHooksAdded = true;
+    formatter.addHook((mes, info) => (info.isReasoning || !(info.messageId >= 0) ? mes : checkView.finish(mes, Number(info.messageId))),
+        { stage: formatter.stage.AFTER_MARKDOWN, order: formatter.order.LATEST });
+    formatter.addHook((mes, info) => (info.isReasoning ? reasoningView.render(mes, info) : mes), { stage: formatter.stage.BEFORE_REGEX, order: formatter.order.EARLIEST });
+}
+
+// ── 2.6.0 번역 점검 (translation-check.js 판정 · check-view.js 화면) ──
+/**
+ * 점검할 수 있는 메시지면 { source, translation, protect, key } — 번역문 그대로 보기(함께 보기 「사용 안 함」)일 때만 ·
+ * 지금 원문의 번역(해시) · 번역 중 · 원문 보기 중이 아닐 때. mes 를 주면 그 글이 저장된 번역문일 때만 (번역 중 미리 보기 · 다른 글은 아님)
+ */
+function checkStateOf(id, mes) {
+    if (extensionSettings.translation_check === false || (extensionSettings.translation_display_mode || 'disabled') !== 'disabled') return null;
+    const context = getContext(), message = context.chat?.[id], extra = message?.extra, shown = extra?.display_text;
+    if (!message || message.is_user || typeof shown !== 'string' || !shown.trim() || extra.original_translation_backup) return null;
+    if ((mes !== undefined && mes !== shown) || isTranslationInProgress(id)) return null;
+    const source = substituteParams(message.mes, context.name1, message.name);
+    if (shown === source || !extra.original_text_hash || extra.original_text_hash !== originalHashOf(source)) return null;
+    return { source, translation: shown, protect: getCombinedRegexes(), key: `${extra.original_text_hash}:${getStringHash(shown)}:${shown.length}` };
+}
+// 판정 · 화면 모듈(translation-check.js 21KB + check-view.js 15KB)은 필요할 때만 불러온다 — 점검할 번역문이 처음 그려질 때.
+//   그 전까지 checkView 는 껍데기: 그리기 훅은 글을 그대로 두고 불러오기만 걸어 두며, 불러오면 그 메시지를 한가할 때 점검한다
+//   (표시는 원래도 한가할 때 판정한 뒤 다시 그려서 단다 — 불러오는 시간이 그 앞에 붙을 뿐)
+const loadCheckLib = () => import('./translation-check.js');
+let checkViewReal = null, checkViewLoading = null;
+function loadCheckView() {
+    checkViewLoading ??= import('./check-view.js').then(({ createCheckView }) => (checkViewReal = createCheckView({
+        stateOf: checkStateOf,
+        rerender: id => { const message = getContext().chat?.[id]; if (message) refreshMessageBlock(id, message); },
+        act: runCheckAction,
+    }))).catch(error => { console.warn('[LLM Translator] 번역 점검을 불러오지 못했어요:', error); checkViewLoading = null; return null; });
+    return checkViewLoading;
+}
+const checkView = {
+    mark(id, mes) {
+        if (checkViewReal) return checkViewReal.mark(id, mes);
+        if (checkStateOf(id, mes)) loadCheckView().then(view => view?.schedule(id));
+        return mes;
+    },
+    finish: (html, id) => (checkViewReal ? checkViewReal.finish(html, id) : html),
+    schedule(id) {
+        if (checkViewReal) checkViewReal.schedule(id);
+        else if (checkStateOf(id)) loadCheckView().then(view => view?.schedule(id));
+    },
+    paintFromCache: id => checkViewReal?.paintFromCache(id),
+    close: () => checkViewReal?.close(),
+};
+/** 점검으로 고친 번역문을 붙이고 저장한다 (다시 번역 · 걷어 내기와 같은 뒷일: 캐시 · 다시 그리기 · 알림 · 스와이프 · 저장) */
+async function saveCheckedTranslation(id, message, state, next, { cache = true } = {}) {
+    const context = getContext();
+    message.extra.display_text = processTranslationText(state.source, next);
+    markTranslatedOriginal(message, state.source);
+    if (cache) await storeTranslationQuietly(state.source, next);   // 원문 되풀이 · 깨진 주석이 남은 글은 storeTranslationQuietly 가 거른다
+    refreshMessageBlock(id, message);
+    eventSource.emit('EXTENSION_LLM_TRANSLATE_DONE', { messageId: id, message, sourceText: message.mes, chatId: context.chatId, originalText: state.source, translatedText: message.extra.display_text, type: 'retranslation' });
+    emitTranslationUIUpdate(id, 'retranslation');
+    syncMesToSwipe(id);
+    await context.saveChat();
+    publishArchiveReady(message, message.mes, context.chatId, 'retranslation');
+}
+/**
+ * 작은 창의 할 일: 'clean' 초안 · 혼잣말 걷어 내기(요청 없음) · 'retry' 이 문단만 다시 번역 · 'fill' 빠진 문단 번역해 넣기 · 'whole' 메시지 다시 번역.
+ * 문단 번역은 메시지 번역과 같은 translate() (프롬프트 · 용어집 · 보호 규칙 · 끊김 · 누출 검사 · 문단 캐시) — 그 문단의 옛 캐시 줄은 먼저 잊는다.
+ * 그 사이 번역문이 바뀌었으면(다른 기기 · 편집 · 다시 번역) 붙이지 않는다. 실패하면 던져서 창의 단추를 되살린다.
+ */
+async function runCheckAction(kind, id, index, row) {
+    const context = getContext(), message = context.chat?.[id];
+    if (kind === 'whole') { await translateMessage(id, true, 'handleTranslateButtonClick_retranslate'); return; }
+    const state = checkStateOf(id);
+    if (!message || !state) { toastr.info('번역문이 바뀌었어요. 표시가 다시 붙으면 그때 눌러 주세요.', '번역 점검'); return; }
+    const { paragraphRange, replaceParagraph, insertAfterParagraph, cleanLeaks, standaloneParagraphs } = await loadCheckLib();
+    if (kind === 'clean') {
+        const cleaned = cleanLeaks(state.source, state.translation);
+        if (cleaned === state.translation) { toastr.info('걷어 낼 것이 없어요.', '번역 점검'); return; }
+        await saveCheckedTranslation(id, message, state, cleaned);
+        toastr.success('초안 · 혼잣말을 걷어 냈어요.', '번역 점검');
+        return;
+    }
+    const [from, to] = kind === 'fill' ? (row?.missing ?? [-1, -1]) : [row?.source ?? -1, row?.source ?? -1];
+    const srcText = from >= 0 ? paragraphRange(state.source, from, to, state.protect) : null;
+    if (!srcText || !standaloneParagraphs(srcText) || (kind === 'retry' && !row?.sure)) { toastr.info('이 문단은 따로 번역할 수 없어요. 메시지 전체를 다시 번역해 주세요.', '번역 점검'); return; }
+    if (isTranslationInProgress(id)) { toastr.info('번역이 이미 진행 중입니다.'); return; }
+    const runToken = beginTranslation(id, message);
+    const badge = progressBadge(id, message, message.mes, context.chatId);
+    try {
+        // 옛 (의심) 번역이 캐시에서 그대로 나오지 않게 — 메시지 전체로 나눈 문단 키 · 이 문단만 보낸 키 둘 다
+        const numbers = Array.from({ length: to - from + 1 }, (_, n) => from + n);
+        await translate(state.source, { segmentCache: true, forget: numbers });
+        await translate(srcText, { segmentCache: true, forget: true });
+        const report = {};
+        let out = await translate(srcText, { segmentCache: true, assertValid: () => runToken.guard.assert(), onProgress: badge.update, report });
+        out = dropStrayWords(out, srcText);
+        runToken.guard.assert();
+        if (report.partial) { toastr.warning('이번에도 번역이 막혀서 바꾸지 않았어요.', '번역 점검', { timeOut: 8000 }); return; }
+        if (message.extra?.display_text !== state.translation) { toastr.warning('그 사이 번역문이 바뀌어서 붙이지 않았어요.', '번역 점검'); return; }
+        const next = kind === 'fill' ? insertAfterParagraph(state.translation, index, out, state.protect) : replaceParagraph(state.translation, index, out, state.protect);
+        if (!next) throw new Error('번역 답이 비어 있어요.');
+        await saveCheckedTranslation(id, message, state, next, { cache: !report.restoredBlocks });
+        toastr.success(kind === 'fill' ? '빠진 문단을 번역해 넣었어요.' : '이 문단을 다시 번역했어요.', '번역 점검');
+    } catch (error) {
+        runToken.error = error;
+        if (error?.cancelled) { toastr.info(error.message, '번역 점검'); return; }
+        console.error('[LLM Translator] 문단 다시 번역 실패:', error);
+        toastr.error(String(error?.message || error).slice(0, 200), '문단 다시 번역 실패', { timeOut: 10000 });
+        throw error;
+    } finally {
+        badge.remove();
+        endTranslation(id, runToken);
+    }
+}
+
+// ── 2.6.0 생각 블록(추론) 카드 · 번역해서 보기 (reasoning-view.js) ──
+const reasoningView = createReasoningView({
+    getContext,
+    hashOf: text => String(getStringHash(String(text ?? ''))),
+    translate: (text, options) => translateText(text, options),   // 채팅 번역과 같은 연결 · 프롬프트 · 용어집 · 문단 캐시 · 보호 규칙 (메시지 캐시에는 안 넣음)
+    progressText: (info, started) => progressLabel(info, started),
+    save: async id => { syncMesToSwipe(id); await getContext().saveChat(); },
+    redraw: id => { try { updateReasoningUI(Number(id)); } catch (error) { console.warn('[LLM Translator] 생각 칸 다시 그리기 실패:', error); } },
+    enabled: () => extensionSettings.reasoning_translate !== false,
+});
 
 // 이어쓰기 등으로 원문이 바뀌었는데 번역이 실패하면, 옛 번역이 새 원문을 가리지 않게 한다.
 // 우리 해시가 있는 표시만 치운다. 기존 원문용 IndexedDB 캐시는 보존한다.
@@ -3365,6 +3506,7 @@ const createTranslateButtons = (mesBlock) => {
     extraMesButtons.prepend(toggleButton);
     extraMesButtons.prepend(newTranslateButton);
     extraMesButtons.prepend(legacyTranslateButton);
+    if (typeof checkView !== 'undefined') checkView.paintFromCache(messageId);   // 2.6.0 번역 단추의 메시지 상태 (이미 점검한 것만)
 };
 
 // 기존 메시지에 아이콘 추가
@@ -5292,6 +5434,18 @@ function initializeEventHandlers() {
         saveSettingsDebounced();
     });
 
+    // 2.6.0 번역 점검 표시 · 생각 블록 번역 단추 — 바꾸면 그려진 메시지를 다시 그린다 (표시 · 단추를 달거나 뗀다)
+    $('#llm_translation_check, #llm_reasoning_translate').on('change', function () {
+        extensionSettings[this.id === 'llm_translation_check' ? 'translation_check' : 'reasoning_translate'] = $(this).is(':checked');
+        saveSettingsDebounced();
+        checkView.close();
+        const chat = getContext().chat || [];
+        for (const element of document.querySelectorAll('#chat .mes[mesid]')) {
+            const id = Number(element.getAttribute('mesid'));
+            if (this.id === 'llm_reasoning_translate') { if (chat[id]?.extra?.reasoning) { try { updateReasoningUI(id); } catch { /* 생각 칸이 없는 메시지 */ } } reasoningView.decorate(id); }
+            else if (chat[id]?.extra?.display_text) refreshMessageBlock(id, chat[id]);
+        }
+    });
     $('#force_sequential_matching').on('change', function () {
         extensionSettings.force_sequential_matching = $(this).is(':checked');
         saveSettingsDebounced();
@@ -5420,8 +5574,10 @@ function initializeEventHandlers() {
     });
 
     hideBrokenCommentsOnRender();   // 2.5.1
+    installCheckHooks();   // 2.6.0 번역 점검 표시 · 생각 블록 번역
     eventSource.on(event_types.CHAT_CHANGED, function () {
         publishGlossaryNames();   // 6.3.5 채팅을 바꾸면 바로 — 첫 인사말 렌더 · TTS 팔레트보다 먼저 (100ms 뒤 renderGlossary 는 같으면 아무 일 없음)
+        if (typeof checkView !== 'undefined') checkView.close();   // 2.6.0 번역 점검 작은 창
         if (glossaryEditorScopeChanged()) resetGlossaryEditor();
         renderGlossarySuggestions();   // 6.4.5 100ms 뒤 다시 그리기 전에도 이전 캐릭터의 칩이 남지 않게
         migrateOriginalCopies(getContext().chat); // [1.7.1] 원문 사본 → 해시 (파일 크기)

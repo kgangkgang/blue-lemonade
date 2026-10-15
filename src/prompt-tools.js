@@ -20,11 +20,16 @@ const nameMarkup=(id,state)=>{const entry=Object.entries(NAMES).find(([,item])=>
 export function promptToolsMarkup(kind){
     const items=GROUPS[kind];if(!items)return '';
     const state=scriptSettings();
-    return `<div class="bl-prompt-tools" data-prompt-tools="${kind}"><div class="salty-group">${items.map(([id,title,note])=>`<div class="salty-row bl-prompt-tool-row"><span>${title}</span><label class="salty-switch"><input type="checkbox" data-prompt-script="${id}" aria-label="${title}" ${state.enabled[id]?'checked':''}><span></span></label><small>${note}</small></div>${nameMarkup(id,state)}`).join('')}</div><div class="bl-prompt-tools-actions"><button type="button" class="salty-btn" data-prompt-open="${kind}">${kind==='deus'?'빠른 설정 열기':'과일의 마음 열기'}</button></div><p class="salty-note" data-prompt-tools-status role="status" aria-live="polite"></p></div>${fruitTypographyMarkup(kind)}`;
+    return `<div class="bl-prompt-tools" data-prompt-tools="${kind}"><div class="salty-group">${items.map(([id,title,note])=>`<div class="salty-row bl-prompt-tool-row"><span>${title}</span><label class="salty-switch"><input type="checkbox" data-prompt-script="${id}" aria-label="${title}" ${state.enabled[id]?'checked':''}><span></span></label><small>${note}</small></div>${nameMarkup(id,state)}`).join('')}</div><div class="bl-prompt-tools-actions"><button type="button" class="salty-btn" data-prompt-open="${kind}">${kind==='deus'?'빠른 설정 열기':'과일의 마음 열기'}</button></div><p class="salty-note" data-prompt-tools-status role="status" aria-live="polite"></p></div>`;
+}
+
+// 상태창 글자 설정은 페이지 끝의 자기 접기 묶음 — 다른 설정 묶음과 같은 모양, 과일 · 데우스 같은 자리
+export function fruitTypographyGroup(kind){
+    return `<div class="salty-label" data-search-anchor="상태창 글자">상태창 글자</div>${fruitTypographyMarkup(kind)}`;
 }
 
 export function fruitPromptMarkup(){
-    return `<div class="salty-label" data-search-anchor="과일">과일</div><p class="bl-prompt-source">호환 대상 프롬프트 · <a href="https://discord.com/channels/1384945301780955246/1395707630302789653/1554887154583212064" target="_blank" rel="noopener noreferrer">과일 원문 보기 ↗</a> · <a href="https://github.com/kongkongmie/guoshizhixin" target="_blank" rel="noopener noreferrer">코드 ↗</a></p>${promptToolsMarkup('fruit')}${promptLinkMarkup()}<p class="salty-note">과일의 마음 스크립트가 실행 중일 때 적용돼요. 꾸미기를 끄면 과일의 원래 디자인으로 돌아가요.</p><p class="bl-prompt-source">과일의 마음 원작 표기 · KKM · AQING · ACHE</p>`;
+    return `<div class="salty-label" data-search-anchor="과일">과일</div><p class="bl-prompt-source">호환 대상 프롬프트 · <a href="https://discord.com/channels/1384945301780955246/1395707630302789653/1554887154583212064" target="_blank" rel="noopener noreferrer">과일 원문 보기 ↗</a> · <a href="https://github.com/kongkongmie/guoshizhixin" target="_blank" rel="noopener noreferrer">코드 ↗</a></p>${promptToolsMarkup('fruit')}${promptLinkMarkup()}<p class="salty-note">과일의 마음 스크립트가 실행 중일 때 적용돼요. 꾸미기를 끄면 과일의 원래 디자인으로 돌아가요.</p><p class="bl-prompt-source">과일의 마음 원작 표기 · KKM · AQING · ACHE</p>${fruitTypographyGroup('fruit')}`;
 }
 
 export function bindPromptTools(root){

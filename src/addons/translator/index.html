@@ -1,7 +1,7 @@
 <div class="translation_settings llmt-settings">
     <div class="inline-drawer">
         <div class="inline-drawer-toggle inline-drawer-header">
-            <b><i class="fa-solid fa-language"></i> 번역 <span class="llmt-version ext-version">v2.5.5</span></b>
+            <b><i class="fa-solid fa-language"></i> 번역 <span class="llmt-version ext-version">v2.6.0</span></b>
             <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
         </div>
 
@@ -104,6 +104,14 @@
                         <label class="checkbox_label llmt-check" for="force_sequential_matching">
                             <input type="checkbox" id="force_sequential_matching"><span>문단 순차 매칭 사용</span>
                         </label>
+                        <label class="checkbox_label llmt-check" for="llm_translation_check">
+                            <input type="checkbox" id="llm_translation_check"><span>번역 점검 표시</span>
+                        </label>
+                        <small class="llmt-desc">번역문을 원문과 문단마다 견줘, 초안이 섞이거나 끊기거나 주석 · 대사 괄호가 깨진 문단 끝에 작은 표시를 달아요. 누르면 이유와 「이 문단만 다시 번역」 「원문 보기」가 나와요. 번역 단추(뇌 · ⇄)에는 메시지 상태가 작게 보여요. 함께 보기가 「사용 안 함」일 때만 해요.</small>
+                        <label class="checkbox_label llmt-check" for="llm_reasoning_translate">
+                            <input type="checkbox" id="llm_reasoning_translate"><span>생각 블록 번역해서 보기</span>
+                        </label>
+                        <small class="llmt-desc">생각(추론) 카드에 길이와 말이 작게 보이고, 펼치면 「번역해서 보기」 단추가 있어요. 번역은 따로 저장하고 원문 생각은 그대로 둬요.</small>
                     </div>
                 </section>
 

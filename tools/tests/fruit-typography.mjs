@@ -44,4 +44,10 @@ const {originalPreview}=await import(pathToFileURL(path.join(root,'src/fruit-typ
 assert(originalPreview('status').css.includes('LXGW WenKai'));assert(originalPreview('status').css.includes('SiyinSong'));
 assert.notEqual(originalPreview('compact','present').css,originalPreview('compact','olden').css);
 assert(!fruitTypeCss({on:true,types:{status:{regions:{info:{on:true,font:'original'}}}}}).includes('font-family:'),'Original region fonts are not flattened');
+// 상태창 글자 화면 모양: 파라미터 세로 2줄(2열 격자 없음) · 테마 스위치만 · 알약 없음 · 과일/데우스 같은 묶음 자리
+const editorCss=read('css/79-fruit-type.css'),editorJs=read('src/fruit-type-ui.js');
+assert(!/grid-template-columns\s*:\s*repeat\(\s*2/.test(editorCss),'No two-column parameter grid');assert(!/border-radius\s*:\s*(9999|99)px/.test(editorCss),'No pill buttons');
+assert.equal((editorJs.match(/type="checkbox"/g)||[]).length,1,'Switches come from one theme switch helper');assert(editorJs.includes('class="salty-switch"'));
+assert(!/<label class="bl-ft-param"><span>[^<]*<\/span><(?:input|select)[^>]*>[^<]*<(?:input|select)/.test(editorJs),'One control per parameter');
+assert(read('src/prompt-tools.js').includes('export function fruitTypographyGroup'));assert.equal((read('src/panel.js').match(/fruitTypographyGroup\('deus'\)/g)||[]).length,2,'Deus page places the editor group in both states');
 console.log('Fruit typography: five known names, independent regions, limits, OFF/reset, synthetic previews; Deus 73 effects/group descriptions passed');

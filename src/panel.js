@@ -1,5 +1,5 @@
 import { addonsEnabled, themeEnabled, usageMode } from './usage-mode.js';
-import {promptToolsMarkup,fruitPromptMarkup,bindPromptTools} from './prompt-tools.js';
+import {promptToolsMarkup,fruitPromptMarkup,fruitTypographyGroup,bindPromptTools} from './prompt-tools.js';
 import { saveAddonsNow } from './addon-save.js';
 import { readabilityReport, fixReadability } from './readability.js';
 import { appearanceArchive, rememberAppearance, restoreAppearance } from './appearance-archive.js';
@@ -1583,7 +1583,7 @@ function tabPrompt(s,sub) {
     const head = `${cap('데우스 엑스 마키나')}<p class="bl-prompt-source">호환 대상 프롬프트 · <a href="https://www.reddit.com/r/SillyTavernAI/s/ldSEyIl3Gx" target="_blank" rel="noopener noreferrer">데우스 원문 보기 ↗</a></p>${promptToolsMarkup('deus')}<div class="salty-group">
             ${row('프롬프트 호환', toggle('deus.on', on), '이 프리셋의 트래커 · 장면 계획 · 상태 카드를 테마에 맞춰요')}
         </div>`;
-    if (!on) return `${head}<p class="salty-note">데우스 엑스 마키나 프리셋을 쓸 때만 켜 주세요. 끄면 아래 설정이 모두 쉬어요 (고른 값은 남아요).</p>`;
+    if (!on) return `${head}<p class="salty-note">데우스 엑스 마키나 프리셋을 쓸 때만 켜 주세요. 끄면 아래 설정이 모두 쉬어요 (고른 값은 남아요).</p>${fruitTypographyGroup('deus')}`;
     return `${regexPreview()}${head}
         ${cap('카드')}<div class="salty-group">
             ${row('카드 스킨', toggle('chat.demSkin', !!s.chat.demSkin), '트래커 · 장면 계획 같은 카드를 테마 모양으로')}
@@ -1635,7 +1635,7 @@ function tabPrompt(s,sub) {
         ${fx.on && !fx.force && globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? '<p class="salty-note">지금 이 기기는 애니메이션 줄이기 상태라 효과가 멈춰 있어요. 보려면 기기 설정 무시를 켜 주세요.</p>' : ''}
         ${cap('트래커')}<div class="salty-group">
             ${row('트래커 날씨로 날씨 효과', toggle('deus.weather', s.chat.weather === 'tracker'), '트래커 날씨가 비 · 눈이면 채팅 뒤에 내려요 · 세기 · 크기는 채팅 › 화면 › 날씨')}
-        </div>`;
+        </div>${fruitTypographyGroup('deus')}`;
 }
 
 /** 날씨 효과 내 그림 (3.3.1): 저장한 그림 목록 + 고르기 · 저장 · 바꾸기 · 삭제 — 이미지 탭 커스텀 도형과 같은 모양 */
