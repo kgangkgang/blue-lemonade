@@ -202,7 +202,7 @@ await check('whole path: a short message whose answer is cut is not attached (er
 await check('render hook hides unclosed comments only while a translation is shown, registered once', () => {
     const hooks = [];
     ctx.messageFormatter = { stage: { BEFORE_REGEX: 'beforeRegex' }, order: { EARLIEST: 0 }, addHook: (fn, options) => hooks.push({ fn, options }) };
-    env.commentHookAdded = false; install('hideBrokenCommentsOnRender');
+    env.commentHookAdded = false; install('tidyNamesShown'); install('hideBrokenCommentsOnRender');
     env.hideBrokenCommentsOnRender(); env.hideBrokenCommentsOnRender();
     assert.equal(hooks.length, 1);
     assert.deepEqual(hooks[0].options, { stage: 'beforeRegex', order: 0 });

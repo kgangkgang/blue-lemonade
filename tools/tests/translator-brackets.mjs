@@ -175,7 +175,7 @@ await check('send-side (input) translation is left as the model wrote it', async
 await check('render hook fills brackets on stored translations without touching data; user messages and original view untouched', () => {
     const hooks = [];
     ctx.messageFormatter = { stage: { BEFORE_REGEX: 'beforeRegex' }, order: { EARLIEST: 0 }, addHook: fn => hooks.push(fn) };
-    env.commentHookAdded = false; install('hideBrokenCommentsOnRender'); env.hideBrokenCommentsOnRender();
+    env.commentHookAdded = false; install('tidyNamesShown'); install('hideBrokenCommentsOnRender'); env.hideBrokenCommentsOnRender();
     const stored = { mes: SRC, extra: { display_text: KO_LOST } }, mine = { mes: SRC, is_user: true, extra: { display_text: KO_LOST } };
     ctx.chat = [stored, mine];
     assert.equal(hooks[0](KO_LOST, { messageId: 0 }), KO_FULL);

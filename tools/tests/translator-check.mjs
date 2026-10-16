@@ -279,7 +279,7 @@ await test('render hooks: markers on the stored translation only, brackets still
     const hooks = [];
     env.getContext = () => ({ chatMetadata: {}, chat: T.chat, chatId: T.chatId, name1: 'You', saveChat: async () => {}, messageFormatter: { stage: { BEFORE_REGEX: 'b', AFTER_MARKDOWN: 'a' }, order: { EARLIEST: 0, LATEST: 100 }, addHook: (fn, options) => hooks.push({ fn, options }) } });
     env.commentHookAdded = false; env.checkHooksAdded = false;
-    install('hideBrokenCommentsOnRender'); install('installCheckHooks');
+    install('tidyNamesShown'); install('hideBrokenCommentsOnRender'); install('installCheckHooks');
     env.hideBrokenCommentsOnRender(); env.installCheckHooks(); env.installCheckHooks();
     assert.equal(hooks.length, 3, 'one comment hook (2.5.1) + two 2.6.0 hooks, once');
     // 괄호를 잃은 대사 줄(되살린다) + 끊긴 문단(표시) + 깨진 주석

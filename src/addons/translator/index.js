@@ -2229,6 +2229,8 @@ async function translate(text, options = {}) {
                 console.warn('[LLM Translator] 남은 일본어 다시 번역 실패 — 그대로 둬요:', kanaError?.message);
             }
         }
+        // 2.7.0 남은 글자 다시 번역이 바꾼 줄에도 이름 지키기 (위 6.4.0 은 그 앞에서만 돌아, 다시 번역된 줄의 영어 이름이 남았다 — 사용자 10-16)
+        if (kanaLines.length && !isInputTranslation) translatedText = tidyGlossaryOutput(isRetranslation ? compareText : text, translatedText);
         if (options.collectNames === true && !isInputTranslation) noteGlossarySuggestions(isRetranslation ? compareText : text, translatedText, suggestPairs, options.checkSource ?? text);   // 6.4.5 새 이름 용어집 제안 (메시지 번역 · 다시 번역만 · 유료 호출 없음)
 
         // [디버그: 마스킹 추적] 1. 순수 번역문(Raw) 상태에서의 마스킹 개수 확인
@@ -2785,6 +2787,14 @@ function repairShownTranslations() {
  * 2.5.3 저장된 번역에 남은 모델 혼잣말 · 원문에 없는 반쪽 문단도 그릴 때 걸러 낸다 (stripDraftLeaks).
  * 실리태번 메시지 서식 훅(MessageFormatter, 정규식 · 마크다운보다 먼저) — 훅이 없는 옛 실리태번에서는 아무것도 안 한다.
  */
+/** 2.7.0 그릴 때도 용어집 이름 지키기 — 저장 뒤 다시 번역된 줄 · 옛 판 번역에 남은 라틴 이름 (저장된 글은 그대로, 상태 카드 · 펼침 방식은 건너뜀) */
+function tidyNamesShown(source, shown) {
+    if (extensionSettings.glossary_enabled === false || typeof shown !== 'string' || shown.includes('class="original_text')) return shown;
+    try {
+        const { entries, names } = tidyContext ?? glossaryTidyContext();
+        return withDisplayCardsProtected(shown, value => enforceGlossaryNames(entries, source, value, { names }));
+    } catch { return shown; }
+}
 let commentHookAdded = false;
 function hideBrokenCommentsOnRender() {
     const formatter = getContext()?.messageFormatter;
@@ -2797,7 +2807,7 @@ function hideBrokenCommentsOnRender() {
         // 2.6.0 의심 문단 끝 자리 표시 (저장된 글 기준이라 가리기 · 괄호보다 먼저 — 괄호 되살리기는 줄 끝 닫는 태그 꼴인 표시를 껍데기로 건너뛴다)
         const marked = message.is_user || typeof checkView === 'undefined' ? mes : checkView.mark(Number(info.messageId), mes);
         const shown = marked.includes('<!--') || marked.includes('-->') ? hideOpenComments(marked) : marked;
-        return message.is_user ? shown : restoreDialogueBrackets(message.mes, stripDraftLeaks(shown, message.mes));   // 2.5.3 남은 혼잣말 · 반쪽 문단
+        return message.is_user ? shown : restoreDialogueBrackets(message.mes, tidyNamesShown(message.mes, stripDraftLeaks(shown, message.mes)));   // 2.5.3 남은 혼잣말 · 반쪽 문단 · 2.7.0 이름
     }, { stage: formatter.stage.BEFORE_REGEX, order: formatter.order.EARLIEST });
 }
 /** 2.6.0 서식 훅 둘: 마크다운 뒤 — 자리 표시를 누를 수 있는 작은 표시로 · 생각 블록(정규식 전) — 번역해서 보기를 켠 것만 번역문으로 */
@@ -2855,6 +2865,7 @@ const checkView = {
 /** 점검으로 고친 번역문을 붙이고 저장한다 (다시 번역 · 걷어 내기와 같은 뒷일: 캐시 · 다시 그리기 · 알림 · 스와이프 · 저장) */
 async function saveCheckedTranslation(id, message, state, next, { cache = true } = {}) {
     const context = getContext();
+    next = tidyGlossaryOutput(state.source, next);   // 2.7.0 문단 다시 번역 · 빠진 문단 채우기도 이름 지키기
     message.extra.display_text = processTranslationText(state.source, next);
     markTranslatedOriginal(message, state.source);
     if (cache) await storeTranslationQuietly(state.source, next);   // 원문 되풀이 · 깨진 주석이 남은 글은 storeTranslationQuietly 가 거른다
