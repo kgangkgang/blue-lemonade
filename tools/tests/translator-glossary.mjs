@@ -138,7 +138,7 @@ t('빈 항목 · 빈 원문', () => {
         const src = 'The Security officers stood by. "Hell no!" Mina shouted at Mina Tower.';
         const out = '보안팀(Security) 직원들이 서 있었다. "Hell no!" 미나(Mina)가 외쳤다. Mina Tower 앞에서 Mina is coming 이라고 했다.';
         assert.equal(M.enforceGlossaryNames(NAMES, src, out, WHO), out, '일반 낱말(Security · Hell)은 대상 아님 · 괄호 병기 · 뒤에 영어 낱말 · 더 긴 용어집 표기');
-        assert.equal(M.enforceGlossaryNames(NAMES, 'Mina smiled.', 'Mina가 웃었다.'), 'Mina가 웃었다.', '이름 목록이 없으면 아무것도 안 함');
+        assert.equal(M.enforceGlossaryNames([E('Mina', '미나', 'plain')], 'Mina smiled.', 'Mina가 웃었다.'), 'Mina가 웃었다.', '이름 목록이 없고 가타카나 표기도 없는 항목이면 아무것도 안 함');
         for (const kept of ['미나 (Mina)가 창가에서 조용히 웃었다.', '미나（Mina）가 창가에서 조용히 웃었다.', 'Mina(미나)가 창가에서 조용히 웃었다.',
             '책상 위에는 「Mina\'s Notebook」이라고 적힌 공책이 놓여 있었다.', '"Welcome aboard, Mina!" 하고 그가 크게 외치며 웃었다.'])
             assert.equal(M.enforceGlossaryNames(NAMES, 'Mina smiled. Mina\'s Notebook. "Welcome aboard, Mina!"', kept, WHO), kept, kept);
@@ -150,6 +150,21 @@ t('빈 항목 · 빈 원문', () => {
         assert.equal(M.enforceGlossaryNames(NAMES, 'Mina smiled. <tracker>Mina\'s Room</tracker>', '<tracker>\n📍 Mina\'s Room | Clear\n</tracker>\nMina가 창가에서 조용히 웃었다.', WHO),
             '<tracker>\n📍 Mina\'s Room | Clear\n</tracker>\n미나가 창가에서 조용히 웃었다.', '영어로 두는 줄(트래커 · 상태)은 그대로, 한글 줄만');
         assert.equal(M.enforceGlossaryNames([{ id: 'x', scope: 'global', src: 'Mina', dst: '미나, 민아' }], 'Mina smiled.', 'Mina가 웃었다.', WHO), 'Mina가 웃었다.', '번역 칸이 여럿이면 고르지 않음');
+    });
+    t('2.6.7 가타카나 표기가 같이 적힌 음역 이름 항목은 이름 목록 밖이어도 (여러 인물 카드 · 메신저 이름표 · 이름만 든 인라인 코드)', () => {
+        const src = 'The typing dots under `Corvin` blinked.\n**Corvin:** `Wait!! Hold on!!`\n**Mina [B2]:** `No.`';
+        const out = '`Corvin` 아래 입력 중 표시가 미친 듯이 깜빡였다.\n**Corvin:** `잠깐!! 잠깐만요 형님!! 손가락 멈춰요!!`\n**미나 [B2]:** `안 됩니다.`';
+        assert.equal(M.enforceGlossaryNames(NAMES, src, out), '`코르빈` 아래 입력 중 표시가 미친 듯이 깜빡였다.\n**코르빈:** `잠깐!! 잠깐만요 형님!! 손가락 멈춰요!!`\n**미나 [B2]:** `안 됩니다.`');
+        assert.equal(M.enforceGlossaryNames(NAMES, src, out, { names: [] }), M.enforceGlossaryNames(NAMES, src, out), '빈 이름 목록도 같다');
+        assert.equal(M.transliteratedName(['Corvin', 'コルヴィン']), true);
+        assert.equal(M.transliteratedName(['Hell', '地獄']), false, '한자 표기는 음역 이름이 아님');
+        assert.equal(M.transliteratedName(['ベル']), false, '라틴 표기가 없으면');
+        const words = [E('Hell, 地獄', '지옥', 'hell2'), E('Nectar', '넥타르', 'nectar')];
+        const plain = 'Hell가 열렸다. Nectar를 마셨다.';
+        assert.equal(M.enforceGlossaryNames(words, 'Hell opened. Nectar.', plain), plain, '일반 낱말 항목은 그대로');
+        const kept = '"Welcome aboard, Corvin!" 하고 그가 외쳤다. 코르빈(Corvin)이 웃었다.';
+        assert.equal(M.enforceGlossaryNames(NAMES, 'Corvin smiled. "Welcome aboard, Corvin!"', kept), kept, '영어 외침 · 괄호 병기는 그대로');
+        assert.equal(M.enforceGlossaryNames(NAMES, 'Corvin smiled.', 'Corvin smiled at the window.'), 'Corvin smiled at the window.', '영어 줄은 그대로');
     });
     t('6.4.0 줄 끝에 홀로 남은 여는 「 (원문 짝 맞음 · 원문엔 줄 끝 「 없음) 만 지운다', () => {
         const src = '<true_thoughts>ふむ、いつものざまだ！</true_thoughts>\n「おはよう」';

@@ -233,12 +233,18 @@ export function glossaryLinesFor(entries, text, target, { maxLines = 60 } = {}) 
 // 사용자 10-14 제보: Claude Haiku 5.5 가 용어집 줄(영문 이름 → 한글 이름)을 받고도 문단 묶음 하나에서 영문 이름 그대로 남겼고,
 // 속마음 줄 끝에 원문에 없는 여는 꺽쇠 「 하나를 붙였다. 프롬프트로는 100% 안 막혀 저장 전에 · 저장된 번역을 보여 줄 때 정리한다.
 // 이름 지키기는 「내 캐릭터 · 지금 캐릭터」 이름 항목만 — 일반 낱말 항목은 영어로 둔 외침 · 괄호 병기를 망가뜨려서 (독립 검증) 손대지 않는다.
+// 2.6.7 원문 칸에 라틴 이름꼴과 가타카나 표기가 같이 있는 항목(Corvin, コルヴィン → 코르빈)도 이름 — 음역이라 일반 낱말이 아니다.
+//   여러 인물이 든 카드(카드 이름 ≠ 인물 이름) · 메신저 이름표(**Corvin:** `…`)에서 영어로 남던 것 (사용자 10-16). Hell · Nectar 같은 항목은 그대로 대상 아님.
 const HANGUL_ALL = /[가-힣]/g;
 const LATIN_ALL = /[A-Za-z]/g;
 /** 라틴 이름꼴: 대문자로 시작하는 낱말(들) — Mina · Mina Park */
 const LATIN_NAME = /^[A-Z][A-Za-z'’]*(?:[ -][A-Za-z][A-Za-z'’]*)*$/;
 /** 태그 · 자리표시자는 건드리지 않는다 (나눈 조각의 홀수 칸) */
 const PROTECTED_PARTS = /(<[^<>]*>|\[\[\/?__VAR_\d+__\]\])/;
+/** 2.6.7 가타카나 표기 (가운뎃점 · 빈칸으로 이은 것, 반각 포함) */
+const KATAKANA_FORM = /^[\u30A0-\u30FF\uFF65-\uFF9F]+(?:[ ・·][\u30A0-\u30FF\uFF65-\uFF9F]+)*$/;
+/** 2.6.7 원문 칸에 라틴 이름꼴 + 가타카나 표기가 같이 있으면 음역 이름 */
+export const transliteratedName = sources => sources.some(form => KATAKANA_FORM.test(String(form).trim())) && sources.some(form => LATIN_NAME.test(String(form).trim()));
 const escapePattern = text => String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // 받침 있음 / 없음 짝 (긴 것부터) · 그 뒤에 붙어도 되는 말 — 꼬리 앞부분만 떼어 맞추고, 나머지가 이 목록에 없으면(과장님 · 나리 · 라인) 조사가 아니라 그대로 둔다
 const PARTICLE_PAIRS = [
@@ -268,14 +274,15 @@ const fold = text => String(text ?? '').toLowerCase().replace(/\s+/g, ' ').trim(
 
 /**
  * 정방향 한국어 번역에서, 원문에 나온 「내 캐릭터 · 지금 캐릭터」 이름 항목의 라틴 표기를 모델이 그대로 남겼으면 번역 칸 한글로 바꾼다.
- * names = 그 이름들(페르소나 이름 · 캐릭터 이름). 항목의 번역 칸이나 원문 칸이 이 이름이면 대상 — 없으면 아무것도 안 한다.
+ * names = 그 이름들(페르소나 이름 · 캐릭터 이름). 항목의 번역 칸이나 원문 칸이 이 이름이면 대상.
+ * 2.6.7 원문 칸에 가타카나 표기가 같이 적힌 음역 이름 항목(transliteratedName)은 names 밖이어도 대상. 둘 다 아니면 아무것도 안 한다.
  * 한글이 주된 줄만 · 태그와 자리표시자 밖 · 파일 이름 · 주소 속은 빼고 · 「번역(원문)」 괄호 병기와 뒤에 영어 낱말이 이어지는 자리(영어로 둔 말)도 뺀다.
  * 그 표기를 품은 더 긴 용어집 표기 자리는 건드리지 않는다. 바로 붙은 조사는 받침에 맞추고, 's 는 「의」로.
  */
 export function enforceGlossaryNames(entries, source, output, { names = [] } = {}) {
     const out = String(output ?? '');
     const wanted = new Set((names || []).map(fold).filter(Boolean));
-    if (!out || !wanted.size) return out;
+    if (!out) return out;
     const lower = out.toLowerCase();
     const swaps = [];
     for (const entry of entries || []) {
@@ -283,7 +290,7 @@ export function enforceGlossaryNames(entries, source, output, { names = [] } = {
         const targets = glossaryAlternatives(entry.dst);
         const sources = glossaryAlternatives(entry.src);
         if (targets.length !== 1 || !/[가-힣]/.test(targets[0]) || /[A-Za-z]/.test(targets[0])) continue;
-        if (!wanted.has(fold(targets[0])) && !sources.some(form => wanted.has(fold(form)))) continue;
+        if (!wanted.has(fold(targets[0])) && !sources.some(form => wanted.has(fold(form))) && !transliteratedName(sources)) continue;
         for (const form of sources) {
             const spelled = String(form).trim();
             if (LATIN_NAME.test(spelled) && lower.includes(spelled.toLowerCase())) swaps.push({ form: spelled, dst: targets[0] });

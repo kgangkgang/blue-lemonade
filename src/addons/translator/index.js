@@ -2715,6 +2715,7 @@ function publishArchiveReady(message, sourceText, chatId, type) {
 //       (접기 · 원문 먼저 보기는 줄마다 감싼 글이라 다시 번역하면 고쳐진다). 고친 글은 메모리에만 — 실리태번이 다음에 저장할 때 같이 저장된다.
 /**
  * 6.4.0 번역문 마무리: 원문에 없는 줄 끝 여는 「 하나 · 내 캐릭터 · 지금 캐릭터 이름을 라틴 글자로 남긴 것 (glossary-match.js).
+ * 2.6.7 용어집에 가타카나 표기가 같이 적힌 음역 이름(여러 인물 카드의 다른 인물 · 메신저 이름표)도. 저장된 번역은 보여 줄 때 고친다(repairShownTranslation).
  * 펼침 방식 표시(번역과 원문 span 이 한 줄)는 원문 span 까지 바뀌어서 건너뛴다.
  */
 function tidyGlossaryOutput(source, output) {

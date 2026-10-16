@@ -1,13 +1,20 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.8.0/blue-lemonade-6.8.0.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.8.1/blue-lemonade-6.8.1.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.8.0 · 최신 업데이트</summary>
+<summary>6.8.1 · 최신 업데이트</summary>
+
+- 번역문에 영어 그대로 남던 인물 이름을 용어집의 한글 표기로 고쳐요. 지금 캐릭터 · 내 캐릭터가 아닌 다른 인물(여러 인물이 든 카드 · 메신저 이름표 「이름:」)도, 용어집 원문 칸에 영어와 가타카나 표기가 같이 적힌 이름이면 바꿔요. 이미 번역된 메시지도 보여 줄 때 고쳐져요 (번역 2.6.7).
+
+</details>
+
+<details>
+<summary>6.8.0 · 파라미터 세로 2줄 통일 · 속삭임 대사 인물 색</summary>
 
 - 테마 설정의 조절칸(슬라이더 · 선택칸 · 숫자칸)을 전부 이름 위 · 칸 아래의 세로 2줄로 맞췄어요. 폰 · PC 233개 화면에서 나란히 놓인 칸 · 좁은 칸이 0개가 됐어요.
 - 속삭임 · 조용함 같은 감정 대사가 인물 색 대신 회색 칸 · 밑줄로 보이던 것을 고쳤어요. 효과는 흐림 · 움직임만 주고 대사 색과 형광펜 띠는 인물 색 그대로예요.
