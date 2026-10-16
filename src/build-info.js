@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "6.7.9";
+export const BUILD_VERSION = "6.8.0";
 export const FILE_HASHES = {
   "index.js": "17649:c8f7b83a:aec48bc0",
-  "manifest.json": "365:bd6ce8eb:0759ced3",
+  "manifest.json": "365:3e457ad9:7c608853",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -444,7 +444,7 @@ export const FILE_HASHES = {
   "src/danger.js": "2587:1af54289:192195f8",
   "src/decor-view.js": "7200:ed7b75d4:64e82ae5",
   "src/decor.js": "5307:06c9c2d8:a2df29ca",
-  "src/dem-expressive.js": "14374:c03fd7b7:10e37ac4",
+  "src/dem-expressive.js": "15114:2820ad84:8d3474bd",
   "src/dem-selection.js": "6543:92f23ad3:78853776",
   "src/demskin.js": "2167:c0308caa:b58b2d08",
   "src/device-layouts.js": "2740:8a16332c:d2d0fb29",
@@ -489,7 +489,7 @@ export const FILE_HASHES = {
   "src/ink-contrast.js": "13252:b8857f6e:8fbc54dd",
   "src/install-health.js": "8239:80c9bc6b:217b0429",
   "src/layout.js": "25910:dfd4a27b:b4e12e42",
-  "src/lazy-panel.gen.css": "29728:ab948e08:1f328d08",
+  "src/lazy-panel.gen.css": "32881:1cd76380:012574ac",
   "src/lite.js": "35387:005151a6:fbdd3923",
   "src/live-models.js": "43660:cb651626:b3a10465",
   "src/main-chat-finish.js": "14829:d34f07a5:c8c0a173",
@@ -504,7 +504,7 @@ export const FILE_HASHES = {
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "241838:ff833f8f:039a1ecf",
+  "src/notice-data.js": "242339:279ae9f9:995ac528",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -602,5 +602,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "34821:fcebb709:d610b9d5",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1442658:41c95dd9:ad8438d0"
+  "style.css": "1471318:82eaddba:bf880421"
 };

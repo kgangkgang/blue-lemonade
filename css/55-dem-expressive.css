@@ -133,6 +133,12 @@ body.salty.salty-demfx-go.salty-demfx-glow :is(#chat, .cg-root, .salty-preview) 
 body.salty.salty-demfx-go:not(.salty-demfx-flow) :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) {
   color: var(--salty-marker-ink, var(--salty-dialogue)) !important;
 }
+/* 6.7.9 감정 칸이 인물 색 칸(span style · font color) 안쪽에 들어가도 인물 색 그대로 — 위 줄의 대사 잉크 색을 대사(q)가 물려받아
+   형광펜 띠 · 글자가 회색이 됐다 (겹 낫표 「… 「여」 …」 속삭임 대사). 보통 모양(감정 칸 > 색 칸 > q)은 안쪽 색 칸이 이미 이긴다.
+   속삭임 · 흐림 같은 효과는 투명도 · 밝기 · 움직임만 바꾼다. 애플 웹킷 대체 규칙(위)보다도 이긴다 */
+body.salty:not(.salty-demfx-flow) :is(#chat, .cg-root, .salty-preview) :is(font[color], span[style*="color" i]) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none):not(#salty-none) {
+  color: inherit !important;
+}
 
 /* 색 흐름: 그 대사만 글자 색 · 형광펜을 비워 span 의 흐르는 색이 글자 모양으로 비치게 */
 body.salty.salty-demfx-flow :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) :is(q, font, em, strong, i, b, span:not(.custom-dem-expressive)) {

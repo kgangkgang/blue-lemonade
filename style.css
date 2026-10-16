@@ -1,6 +1,6 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 73개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build d909eeafdeb0) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 74개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 628e608fdb08) */
 /* css/00-base.css */
-:root{--bl-release:"6.7.9";}
+:root{--bl-release:"6.8.0";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -21064,6 +21064,9 @@ body.salty.salty-demfx-go.salty-demfx-glow :is(:is(#chat,.bl-chat-like), .cg-roo
 body.salty.salty-demfx-go:not(.salty-demfx-flow) :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) {
   color: var(--salty-marker-ink, var(--salty-dialogue)) !important;
 }
+body.salty:not(.salty-demfx-flow) :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) :is(font[color], span[style*="color" i]) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none):not(#salty-none) {
+  color: inherit !important;
+}
 body.salty.salty-demfx-flow :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) q:is(.bl-s, *),
 body.salty.salty-demfx-flow :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) font:is(.bl-s, *),
 body.salty.salty-demfx-flow :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) em:is(.bl-s, *),
@@ -24156,8 +24159,392 @@ html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100
 .bl-ft-dialog small{opacity:1}
 .bl-ft-shortcut{font:inherit!important;font-size:.8em!important;min-height:32px!important;padding:4px 10px!important;border-radius:8px!important;white-space:normal!important;overflow-wrap:anywhere!important;max-width:100%!important}
 @media(max-width:360px){.bl-ft-dialog{padding:0 12px 12px}.bl-ft-dialog-head{margin:0 -12px 4px;padding:8px 12px}}
+/* css/96-param-stack.css */
+.salty-panel .salty-group:has(> .salty-slider + .salty-slider),
+.salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)),
+html body .salty-panel.bl-editor .salty-sec .salty-group:is(.bl-control-grid, .salty-sizes),
+.salty-panel .bl-md-groups,
+.salty-panel .bl-prompt-tools .bl-prompt-name-row {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+.salty-panel .bl-capture-filter:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
+.salty-panel .bl-tool-grid:has(select, textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="button"]), .salty-slider),
+.salty-panel .bl-extension-page .bl-addon-layout {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+body.salty #left-nav-panel #range_block_openai,
+body.salty #user-settings-block [name="AvatarAndChatDisplay"],
+body.salty #user-settings-block [name="FontBlurChatWidthBlock"],
+body.salty #user-settings-block [name="themeToggles"],
+body.salty #user-settings-block [name="CharacterHandlingToggles"],
+body.salty #user-settings-block [name="MiscellaneousToggles"],
+body.salty #user-settings-block [name="ChatMessageHandlingToggles"],
+body.salty #WorldInfo #wiSliders,
+body.salty #WorldInfo #wiCheckboxes,
+body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"],
+body.salty #rm_api_block #openai_api form:has(> h4):not(.flex-container),
+body.salty #rm_api_block #openai_api div:has(> h4):not(.flex-container),
+body.salty #rm_api_block :is(#vertexai_form > div),
+body.salty #rm_api_block #prompt_post_processing_form:is(bl-s, *),
+body.salty #rm_api_block #openai_api form:has(> h4) {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="FontBlurChatWidthBlock"], [name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > *,
+body.salty #WorldInfo :is(#wiSliders, #wiCheckboxes, .world_entry_edit [name="perEntryOverridesBlock"]) > * {
+  grid-column: 1 / -1 !important;
+}
+.bl-editor .bl-etc-grid,
+.salty-panel .salty-group.bl-setting-locks,
+.bl-tool-body .bl-word-presets,
+body.salty .regex_editor > .flexFlowColumn {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+body.salty #AdvancedFormatting > .spaceEvenly {
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+body.salty #AdvancedFormatting > .spaceEvenly > * {
+  width: 100% !important;
+  max-width: none !important;
+}
+.salty-panel .salty-row:has(> .salty-seg:not(.salty-mini), > select, > input:not([type="checkbox"]):not([type="radio"]):not([type="button"])):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+.salty-panel .salty-stack:has(> .salty-seg):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+.bl-editor .bl-control-grid > .salty-stack:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  gap: var(--bl-s2) !important;
+}
+.salty-panel :is(.salty-row, .salty-stack) > .salty-seg:not(.salty-mini):is(.bl-s, *):is(bl-s, *),
+.salty-panel :is(.salty-row, .salty-stack) > select:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *),
+.salty-panel :is(.salty-row, .salty-stack) > input:not([type="checkbox"]):not([type="radio"]):not([type="button"]) {
+  width: 100% !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+}
+.salty-panel .salty-stack:has(> .salty-seg) {
+  grid-template-columns: minmax(0, 1fr) !important;
+  justify-items: stretch !important;
+  justify-content: stretch !important;
+}
+.salty-panel .salty-row:has(> .salty-sizeopt-ctl):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: var(--bl-s2) var(--bl-s2) !important;
+}
+.salty-panel .salty-sizeopt > .salty-row > span:first-child { grid-column: 1; grid-row: 1; min-width: 0; }
+.salty-panel .salty-row > .salty-sizeopt-ctl:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) { display: contents !important; }
+.salty-panel .salty-sizeopt-ctl > .salty-num { grid-column: 2; grid-row: 1; }
+.salty-panel .salty-sizeopt-ctl > .salty-seg { grid-column: 1 / -1; grid-row: 2; width: 100% !important; }
+.salty-panel .salty-sec .salty-seg:not(.salty-shapes):not(.salty-mini):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+  width: 100% !important;
+  max-width: none !important;
+  box-sizing: border-box;
+}
+.salty-panel .salty-sec .salty-seg:not(.salty-shapes):not(.salty-mini) > button,
+.salty-panel .salty-sizeopt-ctl > .salty-seg > button {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+}
+.salty-panel :is(.salty-row, .salty-stack) > .salty-seg.salty-mini:not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+body.salty .eh-segmented:not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+body.salty .cg-segmented:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+  width: 100% !important;
+  max-width: none !important;
+}
+.salty-panel :is(.salty-row, .salty-stack) > .salty-seg.salty-mini > button,
+body.salty :is(.eh-segmented, .cg-segmented) > button {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+}
+body.salty #user-settings-block#user-settings-block #UI-language-block:not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+body.salty #user-settings-block#user-settings-block :where(.alignItemsFlexEnd > label:has(select)):is(#bl-s, *):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+body.salty #user-settings-block#user-settings-block :where([name="CharacterHandlingToggles"] > .alignitemscenter):is(#bl-s, *):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+body.salty #user-settings-block#user-settings-block :where([name="ChatMessageHandlingToggles"] > .alignitemscenter):is(#bl-s, *):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+body.salty #user-settings-block#user-settings-block :where([name="AvatarAndChatDisplay"] > .flex-container):is(#bl-s, *):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+body.salty #AdvancedFormatting #context_story_string_position_block#context_story_string_position_block:is(#bl-s, *):is(bl-s, *):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+body.salty #AdvancedFormatting :is(#instructSettingsBlock#instructSettingsBlock div:has(> #instruct_names_behavior)):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+body.salty #left-nav-panel .oneline-dropdown:has(> label + select):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+  display: flex !important;
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  gap: var(--bl-s1) !important;
+}
+body.salty #user-settings-block :is(#UI-language-block, .alignItemsFlexEnd > label, [name="CharacterHandlingToggles"] > .alignitemscenter, [name="ChatMessageHandlingToggles"] > .alignitemscenter, [name="AvatarAndChatDisplay"] > .flex-container) select:is(.bl-s, *),
+body.salty #user-settings-block :is(#UI-language-block, .alignItemsFlexEnd > label, [name="CharacterHandlingToggles"] > .alignitemscenter, [name="ChatMessageHandlingToggles"] > .alignitemscenter, [name="AvatarAndChatDisplay"] > .flex-container) .flex-container:has(> select),
+body.salty #AdvancedFormatting #context_story_string_position,
+body.salty #AdvancedFormatting #instruct_names_behavior,
+body.salty #left-nav-panel .oneline-dropdown > select,
+body.salty #left-nav-panel #openai_reasoning_effort {
+  width: 100% !important;
+  max-width: none !important;
+  flex: 1 1 auto !important;
+}
+body.salty #AdvancedFormatting .flex-container:has(> .flex1 #context_example_separator, > .flex1 #context_chat_start) {
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+}
+body.salty #AdvancedFormatting#AdvancedFormatting #InstructSequencesColumn details > .flex-container {
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+}
+body.salty #AdvancedFormatting#AdvancedFormatting #InstructSequencesColumn details > .flex-container > * { width: 100% !important; max-width: none !important; flex: 0 0 auto !important; }
+body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > div:has(> label + select) {
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+}
+body.salty #user-settings-block#user-settings-block #UI-language-block { flex: 1 1 100% !important; width: 100% !important; }
+body.salty #rm_api_block#rm_api_block #openai_api:not([style*="display: none"]):not([style*="display:none"]),
+body.salty #rm_api_block#rm_api_block #openai_api form:has(> h4):not(.flex-container) {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+body.salty #rm_api_block#rm_api_block #openai_api > * { grid-column: 1 / -1 !important; }
+body.salty #WorldInfo #wiSliders#wiSliders > .flex-container:has(> #world_info_character_strategy) {
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+}
+body.salty #WorldInfo #wiSliders#wiSliders #world_info_character_strategy { width: 100% !important; max-width: none !important; }
+body.salty .regex_editor .flex-container:has(> .flex1 > input[name="min_depth"], > .flex1 > input[name="max_depth"]) {
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+}
+body.salty .regex_editor label.checkbox:has(> select[name="substitute_regex"]) { flex-direction: column !important; align-items: stretch !important; width: 100% !important; align-self: stretch !important; }
+body.salty .regex_editor .flex-container:has(> .wi-enter-footer-text + .wi-enter-footer-text) {
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+}
+body.salty .regex_editor .flex-container:has(> .wi-enter-footer-text + .wi-enter-footer-text) > .wi-enter-footer-text { width: 100% !important; max-width: none !important; flex: 0 0 auto !important; }
+body.salty .regex_editor select[name="substitute_regex"] { width: 100% !important; max-width: none !important; }
+body.salty #WorldInfo#WorldInfo .world_entry:has(.inline-drawer-icon.up) .WIEnteryHeaderControls:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: var(--bl-s2) !important;
+  width: 100% !important;
+}
+body.salty #WorldInfo#WorldInfo .world_entry:has(.inline-drawer-icon.up) .WIEnteryHeaderControls > .world_entry_form_control {
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: var(--bl-s1) var(--bl-s2) !important;
+  width: 100% !important;
+}
+body.salty #WorldInfo#WorldInfo .world_entry_edit > .flexGap10 {
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+}
+body.salty #WorldInfo#WorldInfo .world_entry_edit > .flexGap10 > * { width: 100% !important; max-width: none !important; flex: 0 0 auto !important; }
+body.salty #WorldInfo#WorldInfo .world_entry_form_control:has(> select[name="entryLogicType"]):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  align-content: start !important;
+  align-self: flex-start !important;
+  height: auto !important;
+  gap: var(--bl-s1) !important;
+  width: 100% !important;
+}
+body.salty #WorldInfo#WorldInfo .world_entry_form_control > select[name="entryLogicType"] { width: 100% !important; max-width: none !important; text-align: left !important; }
+body.salty #Backgrounds #bg-header-fixed {
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+}
+body.salty #Backgrounds #bg-header-fixed #background_fitting,
+body.salty #Backgrounds #bg-header-fixed #bg-sort {
+  width: 100% !important;
+  max-width: none !important;
+}
+body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  column-gap: var(--bl-s2) !important;
+}
+body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-range-and-counter:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) { display: contents !important; }
+body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-title { grid-column: 1 !important; grid-row: 1 !important; min-width: 0; }
+body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter,
+body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) :is(.range-block-counter > *) { grid-column: 2 !important; grid-row: 1 !important; }
+body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-range,
+body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) :is(.range-block-range > *) { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
+body.salty #left-nav-panel #range_block_openai > * { grid-column: 1 / -1 !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-title { grid-column: 1 !important; grid-row: 1 !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter,
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) :is(.range-block-counter > *) { grid-column: 2 !important; grid-row: 1 !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-range,
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) :is(.range-block-range > *) { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .range-block-title { grid-column: 1 !important; grid-row: 1 !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p { grid-column: 2 !important; grid-row: 1 !important; width: auto !important; min-width: 60px; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child):not(:has(> #bl-response-range)) > .wide100p { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> #bl-response-range) > .wide100p { grid-column: 2 !important; grid-row: 1 !important; width: 60px !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> #bl-response-range) > #bl-response-range { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
+body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  column-gap: var(--bl-s2) !important;
+}
+body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child) > .range-block-title { grid-column: 1 !important; grid-row: 1 !important; min-width: 0; }
+body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child) > .wide100p { grid-column: 2 !important; grid-row: 1 !important; width: auto !important; }
+body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child) > input[type="range"],
+body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child) > .toggle-description:is(bl-s, *) { grid-column: 1 / -1 !important; }
+body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child) > input[type="range"] { grid-row: 2 !important; width: 100% !important; }
+body.salty .flex-container:has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+body.salty .parameterbox:has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  column-gap: var(--bl-s2) !important;
+}
+body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .neo-range-input { grid-area: 1 / 2 !important; }
+body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .neo-range-slider { grid-area: 2 / 1 / 3 / -1 !important; }
+body.salty .claude_params .parameter-row {
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+body.salty .claude_params .parameter-row > .parameterbox {
+  width: 100% !important;
+  max-width: none !important;
+}
+body.salty #lv_settings .lv-grid:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+body.salty #lv_settings .lv-grid > * {
+  grid-column: 1 / -1 !important;
+  width: auto !important;
+  max-width: none !important;
+}
+body.salty #lv_settings .lv-row:not(.lv-extra) {
+  grid-template-columns: minmax(0, 1fr) !important;
+  row-gap: var(--bl-s1) !important;
+}
+body.salty #lv_settings .lv-tools { grid-template-columns: minmax(0, 1fr) !important; }
+body.salty #lv_settings .lv-row.lv-extra {
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  row-gap: var(--bl-s1) !important;
+}
+body.salty #lv_settings .lv-row.lv-extra > .lv-row-label { grid-column: 1 / -1 !important; }
+body.salty #lv_settings .lv-row > select,
+body.salty #lv_settings .lv-row > input { width: 100% !important; }
+body.salty #lv_settings .lv-color {
+  grid-template-columns: 18px minmax(0, 1fr) auto auto !important;
+}
+body.salty #lv_settings .lv-row > .lv-color-voicebox:not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+body.salty #lv_settings .lv-color > .lv-color-voicebox:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+  grid-column: 1 / -1 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: var(--bl-s1) var(--bl-s2) !important;
+}
+body.salty #lv_settings .lv-color-voicebox > .lv-color-voice:is(bl-s, *),
+body.salty #lv_settings .lv-color-voicebox > select:first-child { grid-column: 1 / -1 !important; width: 100% !important; }
+body.salty #lv_settings .lv-color-voicebox > .lv-strength { grid-column: 1 !important; width: 100% !important; }
+body.salty .rl-settings .rl-numbers:not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+body.salty .rl-settings .rl-budget-nums:not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+body.salty .rl-settings .rl-price-add:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+  display: flex !important;
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  gap: var(--bl-s2) !important;
+}
+body.salty .rl-settings :is(.rl-numbers > label):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+body.salty .rl-settings :is(.rl-budget-nums > label):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+body.salty .rl-settings :is(.rl-budget-fields > label):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+body.salty .rl-settings :is(.rl-budget-adv > label):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+body.salty .rl-settings .rl-unit:is(bl-s, *):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: var(--bl-s1) var(--bl-s2) !important;
+  width: 100% !important;
+}
+body.salty .rl-settings :is(.rl-numbers > label, .rl-budget-nums > label, .rl-budget-fields > label, .rl-budget-adv > label, .rl-unit) > span:first-child { grid-column: 1 / -1 !important; }
+body.salty .rl-settings :is(.rl-numbers > label, .rl-budget-nums > label, .rl-budget-fields > label, .rl-budget-adv > label, .rl-unit) > input { grid-column: 1 !important; width: 100% !important; max-width: none !important; }
+body.salty .rl-settings :is(.rl-numbers > label, .rl-budget-nums > label, .rl-budget-fields > label, .rl-budget-adv > label, .rl-unit) > input:last-child { grid-column: 1 / -1 !important; }
+body.salty .rl-settings .rl-price-add > input,
+body.salty .rl-settings .rl-price-add > select { width: 100% !important; max-width: none !important; }
+body.salty .rl-settings .rl-price-head { flex-wrap: wrap !important; }
+body.salty .rl-settings .rl-price-head > .rl-unit { flex: 1 1 100% !important; }
+body.salty .sw-settings .sw-row:has(> .sw-num):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: var(--bl-s1) !important;
+}
+body.salty .sw-settings .sw-row > .sw-num { width: 100% !important; }
+body.salty .sw-settings .sw-row > .sw-num > input { flex: 1 1 auto !important; width: auto !important; }
+body.salty .rl-modules { grid-template-columns: minmax(0, 1fr) !important; }
+body.salty .llmt-settings .llmt-checks--grid,
+body.salty .lvs-dialog .lvs-fields,
+body.salty #lv_pane_read:not([hidden]),
+body.salty #lv_pane_voices:not([hidden]),
+body.salty #lv_pane_data:not([hidden]),
+body.salty #pt-panel #pt-params-wrap,
+body.salty .bl-notes-look .bl-look-grid {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+body.salty .bwr_settings .bwr_grid { grid-template-columns: minmax(0, 1fr) !important; }
+body.salty .cg-setting:has(.cg-stepper, .cg-segmented, select, input[type="number"]) {
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: var(--bl-s2) !important;
+}
+body.salty .cg-setting > .cg-stepper,
+body.salty .cg-setting > .cg-segmented { width: 100% !important; max-width: none !important; align-self: stretch !important; }
+body.salty .cg-setting .cg-stepper > input[type="number"] { flex: 1 1 auto !important; width: auto !important; }
+body.salty .jj-card .jj-row:has(> .jj-stepper, > .jj-color-row) {
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: var(--bl-s2) !important;
+}
+body.salty .jj-card .jj-row > .jj-stepper:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) { display: flex !important; width: 100% !important; }
+body.salty .jj-card .jj-row > .jj-stepper > input { flex: 1 1 auto !important; width: auto !important; }
+body.salty .jj-card .jj-row > .jj-color-row { width: 100% !important; }
+body.salty .jj-card .jj-row > .jj-color-row > input { flex: 1 1 auto !important; width: auto !important; min-width: 0 !important; }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6 :where(.bl-fruit-qr-display > label:has(select)):is(.bl-s, *):is(.bl-s, *):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6 .fh-row.bl-fruit-qr-name:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 4px !important;
+}
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6 :where(.bl-fruit-qr-display > label > select):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6 :is(.fh-row.bl-fruit-qr-name > input):is(.bl-s, *),
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6 :is(.fh-row.bl-fruit-qr-name > .fh-v):is(bl-s, *),
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6 :is(.fh-row.bl-fruit-qr-name > .fh-v > input) {
+  margin-left: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+}
 /* css/99-lazy-panel.css */
 #salty-lazy-panel-start {}
+body.salty #AdvancedFormatting .flex-container:has(> .flex1 #context_example_separator, > .flex1 #context_chat_start) > div {
+  width: 100% !important;
+  max-width: none !important;
+}
+body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > div:has(> label + select) > select { width: 100% !important; max-width: none !important; }
+body.salty #rm_api_block#rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > * { grid-column: 1 / -1 !important; }
+body.salty #WorldInfo#WorldInfo .world_entry:has(.inline-drawer-icon.up) .WIEnteryHeaderControls > .world_entry_form_control > label { flex: 1 1 auto !important; order: 0; }
+body.salty #WorldInfo#WorldInfo .world_entry:has(.inline-drawer-icon.up) .WIEnteryHeaderControls > .world_entry_form_control > .bl-wi-help { flex: none !important; order: 1; }
+body.salty #WorldInfo#WorldInfo .world_entry:has(.inline-drawer-icon.up) .WIEnteryHeaderControls > .world_entry_form_control > select,
+body.salty #WorldInfo#WorldInfo .world_entry:has(.inline-drawer-icon.up) .WIEnteryHeaderControls > .world_entry_form_control > input { flex: 1 0 100% !important; order: 2; width: 100% !important; max-width: none !important; }
+body.salty #WorldInfo#WorldInfo .world_entry_form_control:has(> select[name="entryLogicType"]) > small { justify-content: flex-start !important; text-align: left !important; height: auto !important; }
+body.salty :is(.flex-container, .parameterbox):has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input) > small:first-child,
+body.salty :is(.flex-container, .parameterbox):has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input) > label:first-child { grid-column: 1 !important; grid-row: 1 !important; min-width: 0; }
+body.salty :is(.flex-container, .parameterbox):has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input) > .neo-range-input { grid-column: 2 !important; grid-row: 1 !important; }
+body.salty :is(.flex-container, .parameterbox):has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input) > .neo-range-slider { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
+body.salty :is(.flex-container, .parameterbox):has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input) > :not(:is(small, label):first-child, .neo-range-slider, .neo-range-input) { grid-column: 1 / -1 !important; }
+body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .flex-container:has(> .neo-range-slider) > small { grid-column: 1 !important; grid-row: 1 !important; width: auto !important; }
+body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child { grid-column: 1 !important; grid-row: 1 !important; }
+body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input { grid-area: 1 / 2 !important; }
+body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-slider { grid-area: 2 / 1 / 3 / -1 !important; }
 body.salty #WorldInfo > .flex-container:has(> #WI_panel_pin_div) > h3 {
   flex: 1 1 0;
   min-width: 0;

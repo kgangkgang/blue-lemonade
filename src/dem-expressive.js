@@ -10,7 +10,11 @@ import { syncDemSelection } from './dem-selection.js';
 const TAGS = 'shout|quiet|angry|excited|dizzy|crying|anxious|hurt|intoxicated|whispering|trembling|deadpan|allcaps|uppercase|nocaps|lowercase|titlecase|tiny|small|large|huge|spaced|wide|tight|bold|italic|mono|gradient|rainbow|red|orange|yellow|green|cyan|blue|purple|pink|white|gray|bright|dim|faded|glow|warm|cool';
 // 4.7.0: 괄호 짝을 맞춘다 — 「『…』, …」 처럼 안에 『』가 든 대사를 첫 』에서 끊으면 대사 일부만 q 안쪽에 감싸게 되고,
 // 형광펜 색 모드의 q 글자 마스크가 안쪽 inline-block 글자를 띠 투명도로 흐리고, 움직이면 q 상자 밖을 잘랐다 (2026-09-23 실측)
-const FIND = new RegExp(`((?:<(?:${TAGS})\\b[^>\\r\\n]{0,240}>[ \\t]*){1,4})(?:<(?:span|font)\\b[^>\\r\\n]{0,240}>[ \\t]*)?(「[^」\\r\\n]{1,600}」|『[^』\\r\\n]{1,600}』)`, 'gi');
+// 6.7.9 같은 괄호가 한 겹 든 대사(「… 「여」 자도 …」)도 짝을 맞춘다 — 첫 」 에서 끊으면 화면의 색 칸(span style · font)과 글이 안 맞아
+//       감정 칸을 색 칸 안쪽(q 바로 바깥)에 감쌌고, 색 흐름을 끈 감정 칸의 대사 잉크 색이 인물 색을 덮어 형광펜 띠가 회색이 됐다 (사용자 폰 · 속삭임 대사)
+const FIND = new RegExp(`((?:<(?:${TAGS})\\b[^>\\r\\n]{0,240}>[ \\t]*){1,4})(?:<(?:span|font)\\b[^>\\r\\n]{0,240}>[ \\t]*)?(「(?:[^「」\\r\\n]|「[^「」\\r\\n]{0,600}」){1,600}」|『(?:[^『』\\r\\n]|『[^『』\\r\\n]{0,600}』){1,600}』)`, 'gi');
+// 6.7.9 화면 글은 마크다운이 「...」 를 「…」 로 바꾼다 — 원문 대사와 견줄 때 같은 꼴로 (전엔 ... 든 감정 대사는 칸을 못 찾아 효과가 빠졌다)
+const shown = text => String(text ?? '').replace(/\.\.\./g, '…');
 const TAG_NAME = new RegExp(`<(${TAGS})\\b`, 'gi');
 const MADE = 'bl-fx-made';
 const LONG_CHARS = 14; // 5.3.1: 이보다 긴 감정 대사는 inline-block 이 아니라 inline 으로 (폰 한 줄 ≈ 22자)
@@ -22,7 +26,7 @@ export function findExpressive(source) {
     const hits = [];
     for (const m of String(source || '').matchAll(FIND)) {
         const tags = [...m[1].matchAll(TAG_NAME)].map(t => t[1].toLowerCase());
-        if (tags.length) hits.push({ tags, text: m[2] });
+        if (tags.length) hits.push({ tags, text: shown(m[2]) });
     }
     return hits;
 }
