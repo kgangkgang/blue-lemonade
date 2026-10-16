@@ -485,10 +485,25 @@ const foreignOut = text => {
     const other = (plain.match(/[\p{Script=Hangul}\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Cyrillic}\p{Script=Thai}\p{Script=Arabic}]/gu) || []).length;
     return other >= 8 && other >= letters * 0.2;
 };
-/** 2.6.8 ①②③ — line 은 태그를 뺀 줄, ctx = { srcKey, sourceKoPlan } */
+// 2.6.9 자리표시 · 서식 지키기 메모 (사용자 10-16 — 대사 뒤에 「부분 앞뒤 placeholder 유지.」 가 붙어 보였다: 모델이 감싸개 자리표시를 빠뜨리고 메모를 붙임).
+//       번역 작업 낱말(placeholder · 자리표시자 · VAR · span · 마크업 …) + 지키기 낱말(유지 · 그대로 · keep …) · 대사 괄호 없음 — 줄(120자 안)은 통째로, 닫는 괄호 · 문장 끝 뒤 꼬리(80자 안)는 꼬리만
+const FORMAT_WORD = /placeholders?|플레이스\s?홀더|자리\s?표시자|\bVAR(?:_\d+)?\b|\bspans?\b|마크업|\bmarkup\b|\bhtml\b/i;
+const KEEP_WORD = /유지|보존|그대로|\bkeep\b|\bpreserve\b|\bretain\b|\bintact\b|\bas[- ]is\b|\bunchanged\b/i;
+const formatNote = text => FORMAT_WORD.test(text) && KEEP_WORD.test(text) && !/[「」『』“”"]/.test(text);
+const NOTE_TAIL = /(?<=[」』"”.!?。！？)\]~…])[ \t]+([^\n「」『』“”"]{2,80})$/;
+/** 2.6.9 줄 끝 꼬리 메모를 뗀 줄 (없으면 그대로) */
+function cutFormatTail(line, { srcKey }) {
+    const m = NOTE_TAIL.exec(line);
+    if (!m || !formatNote(m[1])) return line;
+    const key = echoKey(m[1]), head = line.slice(0, m.index);
+    if (!key || srcKey.includes(key) || !NON_LATIN_LETTER.test(head.replace(/<[^>]*>/g, ''))) return line;
+    return head.replace(/[ \t]+$/, '');
+}
+/** 2.6.8 ①②③ (+ 2.6.9 서식 메모 줄) — line 은 태그를 뺀 줄, ctx = { srcKey, sourceKoPlan } */
 function metaLine(line, { srcKey, sourceKoPlan }) {
     const key = echoKey(line);
     if (!key || srcKey.includes(key)) return false;
+    if (line.length <= 120 && formatNote(line)) return true;
     const stub = STUB_TAIL.exec(line);
     if (stub && latinMostly(stub[1])) { const head = echoKey(stub[1]); if (head.length >= 8 && srcKey.includes(head)) return true; }
     if (line.length <= 200 && latinMostly(line) && INSTRUCTION_ECHO.test(line)) return true;
@@ -503,7 +518,7 @@ function planningNote(block, sourcePlan) {
 /** 답에서 번역 모델의 작업 메모(계획 덩이 · 줄)를 걷는다. 걷을 게 없거나 걷으면 아무것도 안 남으면 같은 글 */
 export function stripPlanningNotes(text, source) {
     const out = String(text ?? '');
-    if (!PLAN_ARROW.test(out) && !/translat|keep|preserve|maintain|retain|leave|don'?t|do not/i.test(out)) return out;
+    if (!PLAN_ARROW.test(out) && !/translat|keep|preserve|maintain|retain|leave|don'?t|do not|placeholder|플레이스|자리\s?표시자|VAR|span|마크업|markup|html/i.test(out)) return out;
     const sourcePlan = source != null && planLike(String(source));
     // 2.6.8 ①②③ 은 원문과 견준다 — 원문이 없거나 번역문이 라틴 글자(영어로 옮김)면 예전 규칙만
     const extra = source != null && foreignOut(out)
@@ -513,8 +528,9 @@ export function stripPlanningNotes(text, source) {
     for (let i = 0; i < blocks.length; i += 2) {
         const lines = blocks[i].split('\n');
         // 줄마다 본다 — 덩이 통째로 보면 메모 밑에 붙은 번역 줄까지 메모 덩이로 세어진다. 한 줄 덩이도 같은 규칙
-        const kept = lines.filter(line => !planningNote(line, sourcePlan) && !(extra && metaLine(line.replace(/<[^>]*>/g, '').trim(), extra)));
-        if (kept.length === lines.length) continue;
+        let kept = lines.filter(line => !planningNote(line, sourcePlan) && !(extra && metaLine(line.replace(/<[^>]*>/g, '').trim(), extra)));
+        if (extra) kept = kept.map(line => cutFormatTail(line, extra));   // 2.6.9 줄 끝 서식 메모 꼬리
+        if (kept.length === lines.length && kept.every((line, n) => line === lines[n])) continue;
         blocks[i] = kept.some(line => line.trim()) ? kept.join('\n') : '';
         changed = true;
     }

@@ -1,13 +1,20 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.8.3/blue-lemonade-6.8.3.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.8.4/blue-lemonade-6.8.4.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.8.3 · 최신 업데이트</summary>
+<summary>6.8.4 · 최신 업데이트</summary>
+
+- 대사 뒤에 「부분 앞뒤 placeholder 유지.」처럼 붙던 번역 모델의 서식 메모(placeholder · 자리표시자 · VAR · span + 유지 · 그대로 · keep)를 줄 끝 꼬리든 따로 된 줄이든 걸러 내요. 이미 저장된 번역도 보여 줄 때 걸러져요 (번역 2.6.9).
+
+</details>
+
+<details>
+<summary>6.8.3 · TTS 한 문단 이어 읽기 · 속마음 읽기</summary>
 
 - TTS가 한 문단 안의 대사 · 말로 한 기울임을 서술은 빼고 자연스럽게 이어서 읽어요 — 자동으로 읽을 때도, 대사를 눌렀을 때도. 설정 › 읽기 › 읽을 부분의 「한 문단 이어 읽기」로 끌 수 있어요.
 - 대사 분석이 기울임 글을 「소리 내 말함 · 속마음 · 서술」로 가르고 주인을 찾아, 속마음 기울임도 그 사람 목소리로 읽어요 (같은 분석 요청 안에서).

@@ -56,6 +56,20 @@ check('kept: story text with arrows or speech words, dialogue, English copied fr
     const t5 = '첫 문단이다.\n\nThe wind howled... translate.';
     assert.equal(stripPlanningNotes(t5, s5), t5, 'stub head not in the source');
 });
+check('2.6.9 format-keeping notes: Korean tail after a line, standalone note lines', () => {
+    const tail = '\u300c……응. 맞아.\u300d 부분 앞뒤 placeholder 유지.';
+    assert.equal(stripDraftLeaks(leaked(tail), src), leaked('\u300c……응. 맞아.\u300d'));
+    assert.equal(stripPlanningNotes(leaked('\u300c알겠어.\u300d (keep placeholders as-is)'), src), leaked('\u300c알겠어.\u300d'));
+    for (const note of ['VAR 자리표시자는 그대로 둠.', '앞뒤 span 태그 유지', 'placeholder 위치 그대로 유지할 것.'])
+        assert.equal(stripDraftLeaks(leaked(note), src), good.join('\n\n'), note);
+});
+check('2.6.9 kept: story text with keep words but no format words, dialogue mentioning them, notes copied from the source', () => {
+    for (const line of ['그는 옷에 붙은 태그를 그대로 둔 채 걸어 나갔다.', '\u300c그 span은 그대로 유지해 줘.\u300d 미나가 말했다.', '그녀는 웃었다. 표정은 그대로였다.'])
+        assert.equal(stripDraftLeaks(leaked(line), src), leaked(line), line);
+    const s2 = 'The note said: keep the placeholder intact.\n\nMina laughed.';
+    const t2 = '쪽지에는 이렇게 적혀 있었다.\n\nkeep the placeholder intact.\n\n미나가 웃었다.';
+    assert.equal(stripDraftLeaks(t2, s2), t2);
+});
 check('wiring: draft-leak filter runs before the leftover re-translation on the whole / chunk paths, and calls the planning filter', () => {
     const index = fs.readFileSync(path.join(dir, 'src/addons/translator/index.js'), 'utf8');
     const early = index.indexOf('const early = stripDraftLeaks(translatedText, maskedText)'), kana = index.indexOf('const kanaLines = paragraphParts ? [] : linesToFix(');
