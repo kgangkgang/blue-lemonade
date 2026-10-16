@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.8.8/blue-lemonade-6.8.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.8.9/blue-lemonade-6.8.9.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.8.8 · 최신 업데이트</summary>
+<summary>6.8.9 · 최신 업데이트</summary>
+
+- 테마를 끈 채 블루 레몬에이드 서랍만 쓸 때, 다른 CSS 가 제목 칸을 좁히면 ⓒ 가 다음 줄로 넘어가 접기 화살표가 글자보다 아래로 내려가던 것을 고쳤어요. ⓒ 는 버전 바로 옆, 화살표는 글자 높이에 맞고, 제목 위아래에 틈도 생겼어요.
+- 숨긴 메시지(유령 아이콘)도 이름 · 유령 · 날짜 · 모델 아이콘이 한 줄에 들어가요 — 간격을 조금 좁히고, 자리가 모자라면 날짜 끝만 줄여요.
+
+</details>
+
+<details>
+<summary>6.8.8 · 확장 탭 줄 숨기기 · 메뉴 여백</summary>
 
 - 설정 › 「확장 탭」에서 확장 창 맨 위의 「확장 탭에 보이기」 줄을 끌 수 있어요. 끄면 줄만 사라지고, 이미 제목 줄에 꺼내 둔 스위치는 그대로예요. 줄도 끄고 꺼낸 스위치도 없으면 이 기능이 아예 쉬어서 조금 더 가벼워져요.
 - ✦ 확장 메뉴 항목의 오른쪽 여백을 넓혔어요 — 긴 이름(Blue Lemonade 등)이 메뉴 끝에 붙어 보이던 것을 고쳤어요.

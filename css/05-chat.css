@@ -197,6 +197,21 @@ body.salty #chat .mes .ch_name .timestamp {
   max-width: 100%;
   padding: 0 !important;
 }
+/* 6.8.9 숨긴 메시지(유령 아이콘 — 실리태번은 is_system="true" 일 때만 보임)도 이름 · 유령 · 날짜 · 모델 아이콘을 한 줄에 (사용자 10-16: 유령 때문에 모델 아이콘이 아랫줄로).
+   그 줄만 간격을 조금 좁히고, 줄바꿈 대신 날짜가 모자라면 끝을 말줄임 */
+body.salty #chat .mes[is_system="true"] .ch_name .alignItemsBaseline {
+  flex-wrap: nowrap;
+  column-gap: 5px;
+}
+body.salty #chat .mes[is_system="true"] :is(.name_text, .mes_ghost) {
+  flex: none;
+}
+body.salty #chat .mes[is_system="true"] .mes_ghost {
+  font-size: 11px;
+}
+body.salty #chat .mes[is_system="true"] .ch_name .timestamp {
+  flex: 0 1 auto;
+}
 body.salty #chat .mes .ch_name .timestamp-icon :is(path, circle, rect, polygon, ellipse) {
   fill: currentColor !important;
   stroke: none !important;

@@ -84,4 +84,14 @@ await test('6.8.8 줄 끄기: headSwitchRows 기본 켬 · 끄면 그대로 · �
     assert.match(read('src/panel.js'), /toggle\('headSwitchRows', s\.headSwitchRows !== false\)/);
     assert.match(read('css/03-menus.css'), /#extensionsMenu#extensionsMenu > div:not\(\.extension_container\) \{\s*padding-right: 18px !important;/);
 });
+await test('6.8.9 테마를 끈 서랍 제목 줄: 한 줄(ⓒ 는 버전 옆) · 위아래 틈 — 테마를 켠 화면은 그대로', async () => {
+    const fs = await import('node:fs');
+    const css = fs.readFileSync(path.join(root, 'css/19-extwindows.css'), 'utf8');
+    assert.match(css, /body:not\(\.salty\) #rm_extensions_block #salty-drawer > \.inline-drawer-header > b\{display:inline-flex!important;[^}]*flex-wrap:nowrap!important;[^}]*white-space:nowrap!important/);
+    assert.match(css, /body:not\(\.salty\) #rm_extensions_block #salty-drawer > \.inline-drawer-header\{align-items:center!important;padding-top:8px!important;padding-bottom:8px!important\}/);
+    assert.ok(!/body\.salty[^{]*#salty-drawer > \.inline-drawer-header\{[^}]*padding-top:8px/.test(css), '테마를 켠 화면 규칙은 건드리지 않는다');
+    const chat = fs.readFileSync(path.join(root, 'css/05-chat.css'), 'utf8');
+    assert.match(chat, /body\.salty #chat \.mes\[is_system="true"\] \.ch_name \.alignItemsBaseline \{\s*flex-wrap: nowrap;/, '숨긴 메시지 머리줄은 한 줄');
+    assert.match(chat, /body\.salty #chat \.mes\[is_system="true"\] \.ch_name \.timestamp \{\s*flex: 0 1 auto;/, '날짜가 모자라면 줄어듦');
+});
 console.log(`${passed} tests passed`);

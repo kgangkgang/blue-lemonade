@@ -173,6 +173,12 @@ html body.salty #model-switch-settings .ms-actions .ms-apply { border-radius:var
    위아래 padding 합(4px)은 그대로라 버튼 크기 · 누르는 곳 · 초점 테두리는 안 바뀐다 (실측 5.5.3: 1440 · 412 모두 알약 가운데와 1px 차이 → 0) */
 .salty-panel .salty-title .bl-copyright{padding-top:1px;padding-bottom:3px}
 .bl-copyright:focus-visible{outline:2px solid var(--salty-accent,#3975b8)}
+/* 6.8.9 테마를 끈 채 서랍만 쓸 때 (커뮤니티 제보): 다른 CSS 가 제목 글자 칸을 좁히면 ⓒ 가 다음 줄로 넘어가 제목 줄이 두 줄이 되고 접기 화살표가 글자보다 아래로 내려갔다 ·
+   서랍을 카드로 그리는 테마에서 제목 위 틈이 없었다 → 글자 칸은 한 줄(ⓒ 는 버전 옆), 제목 줄 위아래 8px. 테마를 켠 화면은 그대로 */
+body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header{align-items:center!important;padding-top:8px!important;padding-bottom:8px!important}
+body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header > b{display:inline-flex!important;align-items:center;flex-wrap:nowrap!important;gap:6px;white-space:nowrap!important;max-width:none!important;min-width:0}
+body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header > b > :is(i,.bl-version,.bl-copyright){flex:none;margin-block:0}
+body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header > b > .bl-version[hidden]{display:none}
 .bl-credits-dialog{margin:auto;width:min(620px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:0;border:1px solid var(--salty-line,#cdd9e8);border-radius:18px;background:var(--salty-surface,#fff);color:var(--salty-text,#24354c);overflow:hidden}
 .bl-credits-dialog[open]{display:flex;flex-direction:column}.bl-credits-dialog::backdrop{background:#07152999}
 .bl-credits-dialog>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;flex:none;border-bottom:1px solid var(--salty-line,#cdd9e8)}
