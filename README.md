@@ -1,13 +1,20 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.9.3/blue-lemonade-6.9.3.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.9.4/blue-lemonade-6.9.4.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.9.3 · 최신 업데이트</summary>
+<summary>6.9.4 · 최신 업데이트</summary>
+
+- TTS 재생 막대의 「원문」 단추와 칸은 이제 TTS가 직접 번역해서 읽는 줄(듣는 언어 · 목소리 원어로 옮겨 읽기)에서만 나와요. 원문이나 화면 글을 그대로 읽을 때는 띄우지 않아요 (TTS 1.9.4).
+
+</details>
+
+<details>
+<summary>6.9.3 · TTS 원문 칸 바로잡기</summary>
 
 - TTS 재생 막대의 「원문」 칸이 화면 번역문(한국어)을 원문이라고 보이던 것을 고쳤어요. 이제 칸은 메시지 원문과 직접 견줘 정해요 — 읽는 글이 이미 원문이면 그 글 전체를(막대에서 잘리는 긴 줄), 원문에 없는 글이면 「원문을 못 찾았어요」라고 사실대로 보여 줘요 (TTS 1.9.3).
 

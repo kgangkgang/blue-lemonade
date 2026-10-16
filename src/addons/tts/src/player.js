@@ -466,7 +466,7 @@ function applyAnalysis(job, aseg, an, s, listening = false) {
     if (an.translate && lang && detectLang(job.text) !== lang) {
         const tr = aseg.text && typeof aseg.text === 'object' ? aseg.text[lang] : null;
         const t = typeof tr === 'string' ? applyPron(tr, s).trim() : '';
-        if (t) { job.text = t; job.parts[0].text = t; job.lang = detectLang(t) || ''; }
+        if (t) { job.text = t; job.parts[0].text = t; job.lang = detectLang(t) || ''; job.translated = true; }   // 1.9.4 TTS 가 옮겨 읽음 (원문 칸은 이런 줄만)
     }
 }
 const coversLangs = (have, need) => [...need].every(l => (Array.isArray(have) ? have : []).includes(l));
@@ -2262,6 +2262,7 @@ function sceneJobs(mesId, rows, { effects = true, preview = false, manual = fals
         const j = { mesId, seg, segIndex: row.sourceIndex, parts, text: row.text, speaker: row.speaker || voice.name, voice, emotion: row.emotion || '', lang: sceneLang(row, original, s), loud: false, params: null, provider: null, key: '', audio: null, ctrl: null, scriptRowId: row.id, sceneVolume: row.volume, sceneGap: row.gapMs };
         // 1.9.1 고치지 않은 줄은 듣는 언어 표시를 그대로 (옮긴 글끼리만 잇고 · 아직 못 옮긴 줄 앞까지 먼저 읽게 — speakNow head)
         if (original?.listen && row.text === original.text) { j.listen = original.listen; if (original.listenPending) j.listenPending = true; }
+        if (original?.translated && row.text === original.text) j.translated = true;   // 1.9.4 원어로 옮긴 줄 표시도 그대로 (원문 칸)
         if (original?.join && row.text === original.text && voice === original.voice && (row.emotion || '') === (original.emotion || '')) j.join = original.join;
         run.push(j);
         if (!j.join) flush();
