@@ -91,6 +91,7 @@ jobs:
           node tools/tests/tts-word-voice.mjs .
           node tools/tests/tts-takes.mjs .
           node tools/tests/dialogue-only.mjs .
+          node tools/tests/ko-ui.mjs .
           node tools/tests/chat-like-alias.mjs .
           node tools/tests/zipinstall-remove.mjs .
           node tools/tests/word-replace-marks.mjs .

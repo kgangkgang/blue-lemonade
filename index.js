@@ -156,6 +156,10 @@ matchMedia(DEVICE_QUERY).addEventListener('change', () => { window.dispatchEvent
 setFeatureHooks({ applyAll, refreshPanels }); // 켤 때만 불러오는 기능이 설정 적용 · 창 다시 그리기를 부를 수 있게 (3.1.0)
 const settings = getSettings();
 if (dropStaleOverrides(settings)) saveSettings();
+// 6.9.0 실리태번 한국어 화면 다듬기 (ko-ui.js) — 언어가 ko-kr 일 때만 표를 받는다. 끄기: 설정 koUi=false
+try {
+    if (settings.koUi !== false && SillyTavern.getContext().getCurrentLocale?.() === 'ko-kr') import('./src/ko-ui.js').then(m => m.startKoreanUi()).catch(error => console.warn('[Blue Lemonade] 한국어 화면', error));
+} catch { /* 언어를 못 읽으면 그대로 */ }
 // 5.3.4: 적용이 죽어도 아래 서랍 · 메뉴는 붙게 — 예전에는 값 하나가 깨지면 설정 창까지 안 떠 고칠 길이 없었다
 try { applyAll(); } catch (error) { console.error('[Blue Lemonade] 시작할 때 설정 적용', error); }
 loadVersion().then(() => refreshPanels()); // 공지사항 버전 표시

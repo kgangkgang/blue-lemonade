@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "6.8.9";
+export const BUILD_VERSION = "6.9.0";
 export const FILE_HASHES = {
-  "index.js": "17649:c8f7b83a:aec48bc0",
-  "manifest.json": "365:a5519252:78855f7f",
+  "index.js": "18063:21422b6b:b75c29fe",
+  "manifest.json": "365:a47afab6:4190f009",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -488,6 +488,8 @@ export const FILE_HASHES = {
   "src/ink-contrast-core.js": "7980:f3fffe2d:150030b9",
   "src/ink-contrast.js": "13252:b8857f6e:8fbc54dd",
   "src/install-health.js": "8239:80c9bc6b:217b0429",
+  "src/ko-ui-data.js": "245575:645a1576:efc9be05",
+  "src/ko-ui.js": "10407:39cca7db:93bfd5e0",
   "src/layout.js": "25910:dfd4a27b:b4e12e42",
   "src/lazy-panel.gen.css": "32881:1cd76380:012574ac",
   "src/lite.js": "35387:005151a6:fbdd3923",
@@ -504,14 +506,14 @@ export const FILE_HASHES = {
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "247278:885354e8:df8f2a2c",
+  "src/notice-data.js": "248047:7470d127:641612f0",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
   "src/numcomma.js": "29447:948716a0:f48aa0f1",
   "src/onehand.js": "3884:55946dd4:4f42d7a8",
   "src/palettes.js": "33894:d739cf1f:f0700eaa",
-  "src/panel.js": "235641:2e46f4d3:d50da4af",
+  "src/panel.js": "236006:ba4879fc:afd46c67",
   "src/preset-sharing.js": "10609:0e2cdbdc:4e3bc6e5",
   "src/preview-view.js": "12499:6e55c76c:e70ea767",
   "src/profile-clip.js": "4837:9b817c36:29f305b7",
@@ -567,9 +569,9 @@ export const FILE_HASHES = {
   "src/settings-editor.js": "8589:6aa54ddc:6690b32a",
   "src/settings-favorites.js": "3202:43eff96b:1a42f5d8",
   "src/settings-history.js": "3491:c0f06c71:b7a64e71",
-  "src/settings-labels.js": "36376:8b7b34cb:ee755fb8",
+  "src/settings-labels.js": "36418:2d0894ec:b4a2bc12",
   "src/settings-search.js": "30056:b14798ed:fbcd5768",
-  "src/settings.js": "68793:239d0c8c:c5be15ce",
+  "src/settings.js": "68972:835d67ce:783a0acb",
   "src/splash.js": "19344:c97fc557:9dcea6a3",
   "src/squared-buttons.js": "5435:fd834990:4d0705a3",
   "src/stream-follow.js": "5049:55e57322:4b17c247",
@@ -602,5 +604,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "34821:fcebb709:d610b9d5",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1473326:71e410f8:718f7738"
+  "style.css": "1473326:4d7f16f6:f132919a"
 };

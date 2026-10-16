@@ -1400,6 +1400,9 @@ function tabChat(s, sub) {
         ${cap('확장 탭')}<div class="salty-group">
             ${row('「확장 탭에 보이기」 줄', toggle('headSwitchRows', s.headSwitchRows !== false), '확장 창 맨 위에 생기는 줄이에요 · 끄면 줄만 사라지고, 이미 제목 줄에 꺼내 둔 스위치는 그대로예요')}
         </div>
+        ${cap('실리태번 한국어')}<div class="salty-group">
+            ${row('한국어 화면 다듬기', toggle('koUi', s.koUi !== false), '실리태번 화면에 영어로 남은 글과 어색한 번역을 자연스러운 한국어로 바꿔요 · 실리태번 언어가 한국어일 때만 · 바꾸면 새로고침 뒤에 적용돼요')}
+        </div>
         ${cap('다른 기기')}<div class="salty-group">
             ${row('다른 기기 변경 알림', toggle('syncWatch', s.syncWatch !== false), '이 채팅이 다른 기기에서 바뀌면 위에 띠를 띄우고, 덮어쓰기 전에 물어요')}
         </div>
