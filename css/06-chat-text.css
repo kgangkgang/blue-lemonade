@@ -653,28 +653,24 @@ body.salty.salty-user-bubble .salty-preview[data-prev="chat"] .mes[is_user="true
 /* 내 메시지 문단에 고른 크기 배율도 첫 줄과 똑같이 따른다. */
 body.salty.salty-indent #chat .mes[is_user="true"] .mes_text :is(p, details.custom-llm-translator-details, details.llm-translator-details) .bl-dialogue-indent { width: calc(var(--salty-size) * var(--salty-user-scale, 1)); }
 
-/* ---------- 6.9.8 번역 진행 표시 자리 ---------- */
-/* 번역 애드온은 「번역 중 · 7초…」(.llmt-progress, 한 줄 ≈22.5px)를 .mes_text 맨 앞에 끼워 번역 시작 · 끝에 글 전체가 한 줄씩 밀렸다 당겨졌다 했다.
-   흐름 밖(absolute)으로 빼서 글 상자 오른쪽 아래 작은 알약으로 — 글 자리는 그대로, 마지막 줄 끝의 빈 자리에 떠 있다가 번역이 끝나면 사라진다.
-   번역 중인 메시지의 .mes_text 만 자리 기준(position: relative)으로 — 다른 메시지는 그대로. 애드온 CSS(style.css 708행 margin · opacity)는 body.salty 무게로 덮는다 */
-body.salty #chat .mes .mes_text:has(> .llmt-progress) { position: relative; }
+/* ---------- 6.9.9 번역 진행 표시 자리 ---------- */
+/* 6.9.8 은 진행 표시(.llmt-progress)를 글 상자 오른쪽 아래 알약(absolute)으로 옮겼는데, 마지막 줄 글자를 가렸다 (사용자: 위에 뜰 때가 좋았다).
+   다시 글 맨 위 흐름 안으로 — 글을 가리지 않는다. 6.9.7 보다 작은 알약(한 줄 · micro 글자)이라 밀림도 작다. 다른 메시지는 그대로 */
 body.salty #chat .mes .mes_text > .llmt-progress {
-  position: absolute;
-  right: var(--bl-s2);
-  bottom: var(--bl-s1);
-  z-index: 2;
-  max-width: calc(100% - 2 * var(--bl-s2));
-  margin: 0;
-  padding: 2px var(--bl-s2);
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 var(--bl-s1);
+  padding: 1px var(--bl-s2);
   border-radius: var(--bl-r-pill);
   background: var(--bl-fill-card, var(--bl-card));
-  box-shadow: var(--bl-e2);
   color: var(--salty-muted);
   font-size: var(--bl-fs-micro);
   line-height: 1.4;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  vertical-align: top;
   opacity: 1;
   pointer-events: none;
 }

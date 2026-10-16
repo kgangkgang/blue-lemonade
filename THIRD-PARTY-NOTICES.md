@@ -14,6 +14,7 @@ Blue Lemonade는 GNU Affero General Public License v3.0 조건으로 배포합�
 | LLM Translator | [1234anon](https://github.com/1234anon/llm-translator) / 수정판 [NamelessKkang](https://github.com/NamelessKkang/llm-translator-custom) | [AGPL-3.0](src/addons/translator/LICENSE) |
 | Prompt Panel | [anon4961](https://github.com/anon4961/prompt-panel) / [개인개조+++ 게시글 작성자 「깡」](https://kkangtong.xyz/posts/138394) | [AGPL-3.0](src/addons/prompt/LICENSE) |
 | CustomThemeStyleInputs | Copyright (c) 2025 [IceFog72](https://github.com/IceFog72/SillyTavern-CustomThemeStyleInputs) | [MIT 전문](src/addons/customstyle/LICENSE) |
+| Prompt Template (ST-Prompt-Template) · 설치형, 원본 무수정 | [zonde306](https://github.com/zonde306/ST-Prompt-Template) | [AGPL-3.0 전문](src/addons/prompt-template/LICENSE) · [별도 고지](src/addons/prompt-template/NOTICE.md) |
 
 Prompt Panel은 사용자 제공 개인개조+++ 공유본을 기반으로 수정했습니다. [원작 소개글](https://kkangtong.xyz/posts/87408). 추가 수정자의 이름은 공유 게시글에 표시된 이름을 따릅니다.
 
@@ -41,6 +42,7 @@ Character Assets는 원작자의 개인 수정본 공유 허락에 따라 포함
 - [anon4961/prompt-panel · 80f43cef9cdd](https://github.com/anon4961/prompt-panel/blob/80f43cef9cdd5ee9b93540cc84a9fe8b14cdec93/LICENSE)
 - [NamelessKkang/llm-translator-custom · e5ea9e35c4b4](https://github.com/NamelessKkang/llm-translator-custom/blob/e5ea9e35c4b4e7b9798ae48849606ba85787d872/LICENSE)
 - [IceFog72/SillyTavern-CustomThemeStyleInputs · a001f9ebfcf2](https://github.com/IceFog72/SillyTavern-CustomThemeStyleInputs/blob/a001f9ebfcf2e41de1904e631d5884032b8b319b/LICENSE)
+- [zonde306/ST-Prompt-Template · d6f520d149ab](https://github.com/zonde306/ST-Prompt-Template/blob/d6f520d149aba146305b0b781ddd691d449c28d2/LICENSE)
 
 ## MultiCast-TTS 효과음과 대본 편집
 
@@ -65,3 +67,10 @@ Mermaid 11.12.3: Copyright (c) 2014–2022 Knut Sveidqvist, MIT.
 [전체 저작권·의존 라이선스 전문](src/addons/mermaid/NOTICE.md),
 [AGPL 전문](src/addons/mermaid/LICENSE),
 [배포에 동봉한 대응 소스·빌드 안내](src/addons/mermaid/source/README.md).
+
+## 프롬프트 템플릿 (ST-Prompt-Template)
+
+zonde306 · [ST-Prompt-Template](https://github.com/zonde306/ST-Prompt-Template), AGPL-3.0.
+고정 커밋 d6f520d149aba146305b0b781ddd691d449c28d2 (2026-09-06, manifest 1.17.9).
+2026-10-17 Blue Lemonade: 원본을 수정 없이 ZIP([src/addons/prompt-template/ST-Prompt-Template.zip](src/addons/prompt-template/ST-Prompt-Template.zip), 그 커밋의 git 추적 파일 245개 중 소스맵 96개만 뺀 149개 · 바이트 동일)으로 담고, 실리태번 `extensions/third-party/ST-Prompt-Template` 에 설치 · 업데이트 · 삭제하는 테마 쪽 도구와 설정 화면 한국어 표를 더했습니다. 원본은 테마 안에서 실행하지 않습니다. ZIP 안에는 원본의 TypeScript 소스 · 빌드 설정과, 원본이 묶어 배포하는 라이브러리(monaco-editor · EJS · @faker-js/faker 등, 각자의 라이선스)가 원본 그대로 들어 있습니다.
+[파일별 SHA-256](src/addons/prompt-template/SOURCE.json) · [반영 범위와 변경 고지](src/addons/prompt-template/NOTICE.md) · [AGPL 전문](src/addons/prompt-template/LICENSE). ZIP 다시 만들기: `node tools/prompt-template-bundle.mjs <원본 체크아웃>`, 확인: `--check`.

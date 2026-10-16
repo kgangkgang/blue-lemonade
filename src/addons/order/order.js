@@ -204,6 +204,19 @@ function reconcile(col, wantedPanels, wantedNodes) {
 
 let applying = false;
 
+// 1.2.2: 목록 창은 열 때 한 번만 그렸다 — 늦게 붙는 확장(큰 번들을 읽은 뒤 설정 블록을 붙이는 프롬프트 템플릿 등)은
+// 시작 때 이미 그려진 목록(테마 설정 서랍이 마지막 소분류를 기억해 바로 그린다)에 끝내 안 나왔다. 칸에 붙은 창의 구성이 바뀌면 알린다.
+const panelListeners = new Set();
+let lastPanels = '';
+/** 창 구성(이름표 · 제목)이 바뀔 때마다 부를 함수. 해제 함수를 돌려준다 */
+export function onPanelsChange(fn) { panelListeners.add(fn); return () => panelListeners.delete(fn); }
+function notifyPanels(panels) {
+    const now = panels.map(panel => panel.key + '\u0000' + panel.label).join('\u0001');
+    if (now === lastPanels) return;
+    lastPanels = now;
+    for (const fn of panelListeners) { try { fn(); } catch (error) { console.warn('[Blue Lemonade] 확장 순서', error); } }
+}
+
 /** 설정대로 창을 옮긴다. */
 export function apply() {
     if (applying) return;
@@ -212,6 +225,7 @@ export function apply() {
 
     const panels = scan();
     if (!panels.length) return;
+    notifyPanels(panels);
 
     const store = settings();
     for(const panel of panels)panel.el.classList.toggle('po-panel-hidden',!panelVisible(store,panel.key));

@@ -13,6 +13,7 @@ const rows = [
  ['extensions','notes','메모','노트 북마크 채팅 기록 메모장 요술봉 입력창 메모 줄'],
  ['text','strike','취소선','가운데 줄 지우기 선 두께 색 기울임 흐림 취소선 선 긋기 선 색 따로 정하기 기울이기'],
  ['extensions','mermaid','Mermaid 도표','머메이드 다이어그램 순서도 관계도 그래프 flowchart sequence diagram'],
+ ['extensions','prompt-template','프롬프트 템플릿','EJS 템플릿 프롬프트 카드 월드 인포 변수 조건 반복 시뮬 설치 업데이트 삭제 ST-Prompt-Template zonde306'],
  ['extensions','customstyle','커스텀 CSS 조절','IceFog 색 변수 슬라이더 입력 커스텀 스타일'],
  ['theme','backup','최근 꾸미기 복구함','이전 모습 기록 복구 새로고침 스타일 프리셋 보관'],
  ['theme','colors','가독성 확인 · 색 보정','글자 배경 형광펜 대비 안보임 흐림 보정'],

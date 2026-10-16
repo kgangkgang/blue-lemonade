@@ -17,3 +17,4 @@
 /src/addons/tts/sfx/*.mp3 binary
 /src/addons/tts/sfx-extra/*.mp3 binary
 /src/addons/tts/sfx-extra/LICENSE-CC-BY.txt whitespace=-blank-at-eof
+/src/addons/prompt-template/*.zip binary

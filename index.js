@@ -161,6 +161,8 @@ if (dropStaleOverrides(settings)) saveSettings();
 try {
     if (settings.koUi !== false && SillyTavern.getContext().getCurrentLocale?.() === 'ko-kr') import('./src/ko-ui.js').then(m => m.startKoreanUi()).catch(error => console.warn('[Blue Lemonade] 한국어 화면', error));
 } catch { /* 언어를 못 읽으면 그대로 */ }
+// 6.9.9 프롬프트 템플릿(ST-Prompt-Template) 설정 블록: 한국어 표(ko-kr · koUi) · 머리글 판 알약 — 블록이 없으면 몇 번 찾고 끝 (src/addons/prompt-template/host.js)
+import('./src/addons/prompt-template/host.js').then(m => m.startPromptTemplateHost({ koUi: settings.koUi })).catch(error => console.warn('[Blue Lemonade] 프롬프트 템플릿', error));
 // 5.3.4: 적용이 죽어도 아래 서랍 · 메뉴는 붙게 — 예전에는 값 하나가 깨지면 설정 창까지 안 떠 고칠 길이 없었다
 try { applyAll(); } catch (error) { console.error('[Blue Lemonade] 시작할 때 설정 적용', error); }
 loadVersion().then(() => refreshPanels()); // 공지사항 버전 표시

@@ -1,0 +1,18 @@
+/* 프롬프트 템플릿 1.0.0 — 상태 한 줄 + 아이콘 단추 셋 (36px · 8px 둥글기 · 글 없음 · 툴팁 없음 · aria-label 만). 테마 토큰(--salty-*, --bl-r-sm) 위주, 없으면 실리태번 색 */
+.blpt { --blpt-css-version:'1.0.0'; display:flex; flex-direction:column; gap:10px; min-width:0; color:var(--salty-text, var(--SmartThemeBodyColor)); font-size:var(--bl-ts-ui, 14px); line-height:1.5; text-align:left; }
+.blpt-status { margin:0; font-size:var(--fs-small, 13px); color:var(--salty-muted, var(--SmartThemeQuoteColor)); overflow-wrap:anywhere; }
+.blpt-actions { display:flex; flex-wrap:wrap; gap:8px; }
+html body .blpt .blpt-btn { display:inline-flex; align-items:center; justify-content:center; flex:none; width:36px; height:36px; min-width:36px; min-height:36px; margin:0; padding:0; border:1px solid var(--salty-line, var(--SmartThemeBorderColor)); border-radius:var(--bl-r-sm, 8px); background:var(--salty-surface, var(--SmartThemeBlurTintColor)); color:var(--salty-text, var(--SmartThemeBodyColor)); font:inherit; font-size:14px; line-height:1; cursor:pointer; box-shadow:none; transition:background-color .15s ease, color .15s ease; }
+html body .blpt .blpt-btn.blpt-primary { border-color:color-mix(in srgb, var(--salty-accent, var(--SmartThemeQuoteColor)) 50%, transparent); background:color-mix(in srgb, var(--salty-accent, var(--SmartThemeQuoteColor)) 14%, var(--salty-surface, transparent)); }
+html body .blpt .blpt-btn:disabled { opacity:.45; cursor:default; }
+html body .blpt .blpt-btn:active:not(:disabled) { background:var(--salty-raised, var(--SmartThemeBlurTintColor)); }
+@media (hover:hover) { html body .blpt .blpt-btn:hover:not(:disabled) { background:var(--salty-raised, var(--SmartThemeBlurTintColor)); } }
+html body .blpt .blpt-btn:focus-visible { outline:2px solid var(--salty-accent-ink, currentColor); outline-offset:2px; }
+/* 폰(세부 설정 단추)에서 여는 창 — ZIP 설치 창과 같은 모양 */
+.blpt-dialog { width:min(480px, calc(100vw - 24px)); max-width:none; max-height:calc(100dvh - 24px); padding:0; border:1px solid var(--salty-line, var(--SmartThemeBorderColor)); border-radius:20px; background:var(--salty-bg, var(--SmartThemeBlurTintColor)); color:var(--salty-text, var(--SmartThemeBodyColor)); box-shadow:0 18px 60px color-mix(in srgb, var(--salty-text, black) 18%, transparent); }
+.blpt-dialog::backdrop { background:color-mix(in srgb, var(--salty-bg, black) 65%, transparent); backdrop-filter:blur(5px); }
+.blpt-dialog > header { display:flex; align-items:center; gap:8px; padding:8px 8px 8px 12px; border-bottom:1px solid var(--salty-line, var(--SmartThemeBorderColor)); }
+.blpt-dialog > header strong { flex:1; text-align:left; font-size:var(--bl-ts-ui, 14px); font-weight:600; }
+.blpt-dialog > header button { display:inline-grid; place-items:center; flex:none; width:var(--bl-h-icon, 34px); height:var(--bl-h-icon, 34px); min-height:0; padding:0; border:0; border-radius:var(--bl-r-sm, 8px); background:transparent; color:var(--salty-text, var(--SmartThemeBodyColor)); font:inherit; font-size:16px; line-height:1; cursor:pointer; box-shadow:none; }
+.blpt-dialog > header button:hover,.blpt-dialog > header button:focus-visible { background:var(--salty-raised, var(--SmartThemeBlurTintColor)); outline:none; }
+.blpt-dialog > [data-content] { padding:12px; }

@@ -6,7 +6,7 @@ import {mountMenuOrdering} from './menus.js';
 // 정작 줄 세우려던 목록을 스스로 어지럽힌다. (사용자: "밑에있으니까 얘도 확장프로그램같아서 별로네")
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
 import { settings, saveSettings, resetSettings, VERSION, TITLE } from './state.js';
-import { scan, desired, applyNow } from './order.js';
+import { scan, desired, applyNow, onPanelsChange } from './order.js';
 
 const BUTTON_ID = 'po-open';
 
@@ -216,6 +216,8 @@ function rowHtml(panel, group, index, total, movable) {
 export function renderList() {
     for(const root of [dialogRoot,...inlineRoots].filter(Boolean)) renderRoot(root);
 }
+// 1.2.2: 열린 목록도 늦게 붙은 확장을 따라간다 (order.js 가 창 구성이 바뀔 때만 부른다)
+onPanelsChange(renderList);
 function renderRoot(root) {
     const store = settings();
     const { pinned, rest } = desired(scan());

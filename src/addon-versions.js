@@ -17,6 +17,7 @@ export const ADDON_VERSION_FILES = Object.freeze({
     regexlink: ['프롬프트 연동 정규식', 'regexlink/index.js'],
     customstyle: ['커스텀 CSS 조절', 'customstyle/manifest.json'],
     mermaid: ['Mermaid 도표', 'mermaid/index.js'],
+    'prompt-template': ['프롬프트 템플릿', 'prompt-template/index.js'],
     zipinstall: ['ZIP 설치', 'zipinstall/index.js'],
 });
 const HEAD = 4096;

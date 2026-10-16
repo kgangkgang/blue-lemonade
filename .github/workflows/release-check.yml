@@ -249,6 +249,7 @@ jobs:
           node tools/tests/settings-dialog.mjs
           node tools/tests/deus-qr.mjs
           node tools/tests/fruit-style.mjs
+          node tools/tests/prompt-template.mjs .
           node tools/build-integrity.mjs . --check
       - name: Check that generated files match their sources
         # Regenerate in the throwaway checkout, then fail if anything changed:

@@ -1,6 +1,6 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 76개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 32e46d8f74be) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 77개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build be2e4a71e161) */
 /* css/00-base.css */
-:root{--bl-release:"6.9.8";}
+:root{--bl-release:"6.9.9";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -3195,24 +3195,21 @@ body.salty.salty-user-bubble .salty-preview[data-prev="chat"] .mes[is_user="true
 .bl-dialogue-indent { display: none; }
 :is(body.salty.salty-indent :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample.salty-indent) .bl-dialogue-indent { display: inline-block; width: var(--salty-size, 1em); height: 0; }
 body.salty.salty-indent :is(#chat,.bl-chat-like) .mes[is_user="true"] .mes_text :is(p, details.custom-llm-translator-details, details.llm-translator-details) .bl-dialogue-indent { width: calc(var(--salty-size) * var(--salty-user-scale, 1)); }
-body.salty :is(#chat,.bl-chat-like) .mes .mes_text:has(> .llmt-progress) { position: relative; }
 body.salty :is(#chat,.bl-chat-like) .mes .mes_text > .llmt-progress {
-  position: absolute;
-  right: var(--bl-s2);
-  bottom: var(--bl-s1);
-  z-index: 2;
-  max-width: calc(100% - 2 * var(--bl-s2));
-  margin: 0;
-  padding: 2px var(--bl-s2);
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 var(--bl-s1);
+  padding: 1px var(--bl-s2);
   border-radius: var(--bl-r-pill);
   background: var(--bl-fill-card, var(--bl-card));
-  box-shadow: var(--bl-e2);
   color: var(--salty-muted);
   font-size: var(--bl-fs-micro);
   line-height: 1.4;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  vertical-align: top;
   opacity: 1;
   pointer-events: none;
 }
@@ -24481,6 +24478,40 @@ html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100
 .salty-panel .bl-ss-btn:focus-visible {
   outline: 2px solid var(--salty-accent);
   outline-offset: 2px;
+}
+/* css/82-prompt-template.css */
+body.salty #rm_extensions_block #prompt_template_settings > .inline-drawer > .inline-drawer-header > b::before {
+  content: "\f121";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 1.2em;
+  width: 1.2em;
+  height: 1.2em;
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  font-size: 1em;
+  line-height: 1;
+  order: 0;
+}
+body.salty #rm_extensions_block #prompt_template_settings > .inline-drawer > .inline-drawer-header > b > span {
+  order: 1;
+}
+body.salty #rm_extensions_block #prompt_template_settings > .inline-drawer > .inline-drawer-header > b[data-bl-version]::after {
+  content: attr(data-bl-version);
+  order: 2;
+  display: inline-block;
+  padding: 2px 8px 0;
+  border: 1px solid color-mix(in srgb, var(--salty-text) 16%, transparent);
+  border-radius: var(--bl-r-pill);
+  background: var(--bl-fill-hover, var(--bl-hover));
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-micro);
+  font-weight: 400;
+  line-height: 1.5;
+}
+body.salty #rm_extensions_block #prompt_template_settings > .inline-drawer > .inline-drawer-header > b > #pt_reset {
+  order: 3;
 }
 /* css/96-param-stack.css */
 body.salty #left-nav-panel #range_block_openai:not([style*="display: none"]):not([style*="display:none"]) {

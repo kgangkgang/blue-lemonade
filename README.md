@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.9.8/blue-lemonade-6.9.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.9.9/blue-lemonade-6.9.9.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
+설치형 내장 확장: [zonde306 / ST-Prompt-Template](https://github.com/zonde306/ST-Prompt-Template) (AGPL-3.0, 1.17.9 · 커밋 d6f520d) — 「프롬프트 템플릿」 애드온이 원본 그대로 실리태번 확장 폴더에 설치해요 · [고지](src/addons/prompt-template/NOTICE.md).
 
 <details open>
-<summary>6.9.8 · 최신 업데이트</summary>
+<summary>6.9.9 · 최신 업데이트</summary>
+
+- 프롬프트 템플릿 내장: 시뮬 카드가 쓰는 프롬프트 템플릿(EJS · 변수 · 조건) 확장을 테마 애드온에서 바로 설치 · 업데이트할 수 있어요. 원본(zonde306/ST-Prompt-Template 1.17.9, AGPL-3.0)을 고치지 않고 그대로 넣었고, 설정 화면은 한국어로 보여요. 이미 직접 설치한 사본이 있으면 그대로 써요.
+- 번역 중 표시가 다시 글 맨 위에 떠요 — 6.9.8 에서 오른쪽 아래로 옮겼더니 마지막 줄 글자를 가렸어요. 확장 순서 목록에 직접 설치한 확장도 보여요 (확장 순서 1.2.2).
+
+</details>
+
+<details>
+<summary>6.9.8 · 장면 소리 · 조절칸 치수 통일 · 자동 번역 건너뛰기 · TTS 카드</summary>
 
 - 장면 소리: 날씨 효과(비 · 눈 · 바람 · 물)에 맞춘 배경 소리가 TTS 를 켜지 않아도 이어져요. 배경 소리가 도는 동안 TTS 효과음은 같은 소리를 겹쳐 내지 않아요. 설정 › 날씨에서 켜요(기본 꺼짐).
 - 조절칸 치수 통일: 숫자칸 폭 · 칸 간격 · 이름 글자 · 슬라이더 손잡이 · 칸 높이를 모든 화면에서 같게 맞췄고, 한쪽 이름만 두 줄이어도 옆 칸과 어긋나지 않아요. 확인 창 바닥이 1px 잘리던 것과 월드 인포 핀 상자가 서랍 밖으로 나가던 것도 고쳤어요 (한글화 패널 1.2.7 은 폰에서도 2열).

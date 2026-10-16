@@ -377,6 +377,13 @@ def inventory(root, kind):
                 item = root / 'src/addons/mermaid' / name
                 require(item.is_file(), f'Missing Mermaid source/license: {name}')
                 names.append(item.relative_to(root).as_posix())
+        # 6.9.9 Prompt Template: the unmodified upstream ZIP, its file list, license and notice, plus the rebuild tool.
+        if (root / 'src/addons/prompt-template').is_dir():
+            for name in ('ST-Prompt-Template.zip', 'SOURCE.json', 'LICENSE', 'NOTICE.md'):
+                item = root / 'src/addons/prompt-template' / name
+                require(item.is_file(), f'Missing Prompt Template bundle: {name}')
+                names.append(item.relative_to(root).as_posix())
+            if (root / 'tools/prompt-template-bundle.mjs').is_file(): names.append('tools/prompt-template-bundle.mjs')
         if (root / 'src/addons/direction').is_dir():
             require((root / 'src/addons/direction/NOTICE.md').is_file(), 'Missing Direction Manager permission notice')
             names.append('src/addons/direction/NOTICE.md')
