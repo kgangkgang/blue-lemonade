@@ -46,7 +46,16 @@
     transform: translateY(calc(100% + 16px));
     pointer-events: none;
   }
+  /* 6.9.1 TTS 재생 막대(.lv-bar)도 입력창을 따라 — 바를 숨기면 화면 아래 10px 로 내려온다 (사용자 10-16: 입력창이 숨었는데 막대만 그 자리에 붕 떠 있었다).
+     막대 자리는 TTS 가 입력창 크기가 바뀔 때만 재서, transform 으로 내린 입력창은 따라가지 않았다. 막대는 top(100dvh − 아래 거리) + translateY(-100%) 로 앉는다 */
+  body.salty.bl-reader .lv-bar {
+    transition: top 0.24s ease;
+  }
+  body.salty.bl-reader.bl-bars-hidden .lv-bar {
+    top: calc(100dvh - 10px - env(safe-area-inset-bottom, 0px)) !important;
+  }
   @media (prefers-reduced-motion: reduce) {
+    body.salty.bl-reader .lv-bar,
     body.salty.bl-reader #form_sheld,
     body.salty.bl-reader :is(#top-bar, #top-settings-holder) {
       transition: none;

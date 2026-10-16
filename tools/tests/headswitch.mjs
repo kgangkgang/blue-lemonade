@@ -94,4 +94,10 @@ await test('6.8.9 테마를 끈 서랍 제목 줄: 한 줄(ⓒ 는 버전 옆) �
     assert.match(chat, /body\.salty #chat \.mes\[is_system="true"\] \.ch_name \.alignItemsBaseline \{\s*flex-wrap: nowrap;/, '숨긴 메시지 머리줄은 한 줄');
     assert.match(chat, /body\.salty #chat \.mes\[is_system="true"\] \.ch_name \.timestamp \{\s*flex: 0 1 auto;/, '날짜가 모자라면 줄어듦');
 });
+await test('6.9.1 몰입 읽기로 바를 숨기면 TTS 재생 막대도 화면 아래로 (CSS 만)', async () => {
+    const fs = await import('node:fs');
+    const css = fs.readFileSync(path.join(root, 'css/29-reader-onehand.css'), 'utf8');
+    assert.match(css, /body\.salty\.bl-reader\.bl-bars-hidden \.lv-bar \{\s*top: calc\(100dvh - 10px - env\(safe-area-inset-bottom, 0px\)\) !important;/);
+    assert.match(css, /body\.salty\.bl-reader \.lv-bar \{\s*transition: top 0\.24s ease;/);
+});
 console.log(`${passed} tests passed`);
