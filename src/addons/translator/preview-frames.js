@@ -39,12 +39,18 @@ export function previewShown(host, { keep = () => false } = {}) {
     return [...host.childNodes].some(node => !keep(node) && painted.has(node));
 }
 
+/** 틀(.TH-render) 안 · 새 글의 그릴 코드 — 빈칸 차이는 같은 코드로 본다 */
+const codeOf = node => String(node?.textContent ?? '').replace(/\s+/g, '');
+
 /**
  * host(.mes_text)를 html 로 다시 그리되 바뀐 맨 위 노드만 바꾼다. keep(node) 이 참인 노드(진행 표시)는 건드리지 않고 그 자리에 둔다.
  * helper 틀(.TH-render)이 있으면 그 노드는 그대로 두고 틀 사이 구간마다 따로 견준다.
+ * final(끝 그림 — 번역이 끝남 · 되돌림): 그릴 코드가 바뀐 틀만 새 코드 블록으로 바꾼다 (6.9.7). 미리 보기 동안은 원문 코드로 그린 틀을 그대로 두는데,
+ *   6.9.6 끝 그림도 틀을 그대로 둬서 번역이 끝나도 상태창이 원문으로 남았다 — 틀 밖 코드 블록이 없으니 다시 그리기 알림(rerender-notify)도 안 갔다.
+ *   바뀐 코드 블록을 그 자리에 두면 알림이 가고 helper 가 번역된 코드로 다시 그린다. 코드가 같으면 틀(iframe)은 그대로.
  * 반환: 그렸으면 true, 틀을 지킬 수 없어 손대지 않았으면 false.
  */
-export function paintPreview(host, html, { keep = () => false } = {}) {
+export function paintPreview(host, html, { keep = () => false, final = false } = {}) {
     const doc = host.ownerDocument;
     const template = doc.createElement('template');
     template.innerHTML = html;
@@ -82,5 +88,10 @@ export function paintPreview(host, html, { keep = () => false } = {}) {
         }
         for (; i < end; i++) host.removeChild(a[i]);
     }
+    if (final) frames.forEach((frame, p) => {
+        if (codeOf(frame.querySelector('pre')) === codeOf(codes[p])) return;
+        painted.set(codes[p], rawOf(codes[p]));
+        host.replaceChild(codes[p], frame);
+    });
     return true;
 }

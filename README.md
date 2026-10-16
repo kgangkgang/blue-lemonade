@@ -1,13 +1,22 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.9.6/blue-lemonade-6.9.6.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.9.7/blue-lemonade-6.9.7.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.9.6 · 최신 업데이트</summary>
+<summary>6.9.7 · 최신 업데이트</summary>
+
+- LLM 번역: 번역이 끝나도 상태창(날짜 · 시간 · 장소 · 날씨 같은 코드 카드)이 원문으로 남아 「번역」을 다시 눌러야 하던 6.9.6 문제를 고쳤어요. 끝 그림에서 코드가 바뀐 카드만 새로 그려서 다른 문단은 흔들리지 않아요 (번역 2.7.3).
+- 스와이프 고르기 창에 번역문이 보여요. 스와이프마다 번역(접기 · 원문 먼저 · 펼침 포함)을 미리 보기로 보여 주고, 닫기 × 는 원 가운데에, 폰에서는 날짜 줄과 「(글자 수, 토큰)」 줄이 잘리지 않아요.
+- 모델 전환: 「검열당했을 때」 켜기 · 취소 단추가 한 글자씩 꺾이던 것을 고쳤어요 (모델 전환 1.1.10).
+
+</details>
+
+<details>
+<summary>6.9.6 · 번역 미리보기 · 실패 문단 다시 번역 · 2열 다듬기</summary>
 
 - LLM 번역: 번역 중 미리 보기에서 이미 보인 글자가 흔들리지 않아요. 미리 보기 중에 대사를 눌러도 TTS 가 원문을 읽어요 (TTS 1.9.6).
 - LLM 번역: 일부 문단이 실패(시간 초과 등)한 번역을 다시 「번역」하면 이제 실패한 문단만 다시 보내요 — 실패 표시가 기록에 남아 그대로 다시 붙던 것을 고쳤어요. 이미 남은 기록도 저절로 나아요.

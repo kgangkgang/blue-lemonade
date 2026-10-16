@@ -34,6 +34,7 @@ import { startNaturalSlash } from './src/natural-slash.js';
 import { startWorldInfoHelp } from './src/wi-help.js';
 import { startWebSearchMarks } from './src/websearch.js';
 import { startWorldInfoLinkMark } from './src/wi-link.js';
+import { startSwipePickerTranslation } from './src/swipe-picker-translation.js';
 // 4.1.2: 설정 창(panel.js 와 거기에만 딸린 모듈 24개 · 310KB)은 설정 창을 처음 열 때 불러온다 — 시작할 때 읽는 모듈 64 → 40개.
 let panelApi = null, panelLoading = null;
 // 못 불러오면 기억을 지워 다음에 누를 때 다시 부른다 (실패한 약속을 붙들고 있으면 새로고침 전까지 서랍이 빈 채였다)
@@ -199,6 +200,7 @@ jQuery(() => {
     startWebSearchMarks(); // 6.2.6 웹 검색을 쓴 답에 지구 표시 · 낱말 꾹 눌러 출처 (websearch.js — 흔적은 성능 보조 요청 로그가 알린다)
     startWorldInfoLinkMark().catch(error => console.warn('[Blue Lemonade] 로어북 연결 점검', error)); // 캐릭터 로어북 연결이 빠지면 책 아이콘에 빨간 점
     startCardInk(); // 메시지 안 HTML 카드가 제 배경만 칠했을 때 글자색을 읽히게
+    startSwipePickerTranslation(); // 6.9.7 스와이프 고르기 창 미리보기에 그 스와이프의 번역문 (창을 여는 단추를 누를 때만 잠깐 찾음)
     startSelectPop();   // select 를 테마가 그린 목록 팝업으로 (2.5.0)
     startColorPop();    // 색 칸을 테마 색 고르기로 (3.5.0)
     startChatGraph();   // 채팅 파일 관리: 목록 / 분기 지도

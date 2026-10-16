@@ -181,6 +181,13 @@ body.salty .popup .popup-button-close {
   font-size: 15px !important;
   filter: none !important;
 }
+/* 6.9.7 닫기 × 가 원 위쪽에 붙던 것: 실리태번이 보일 때 인라인 display:block 을 박아 위 align-items · justify-content 가 안 먹고
+   × 는 15px 줄 상자째 원 꼭대기에 앉았다(잉크 중심이 원 중심보다 8.6px 위). display 는 그대로 두고(숨기는 창 규칙과 다투지 않게)
+   줄 높이 = 단추 높이 · 가운데 맞춤으로 글리프를 원 가운데에 */
+body.salty .popup .popup-button-close {
+  line-height: 30px !important;
+  text-align: center !important;
+}
 body.salty .popup :focus:not(:focus-visible) {
   outline: none !important;
 }

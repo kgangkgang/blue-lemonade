@@ -159,7 +159,7 @@ const format = text => { T.formatted++; return P(...String(text ?? '').split('\n
 const env = {
     ...frames, extensionSettings: {}, getContext: () => ({ chat: T.chat, chatId: 'chat-A', messageFormatting: format }), processTranslationText: (_o, t) => t,
     document: { querySelector: s => T.dom.get(s) ?? null, dispatchEvent() {} }, CustomEvent: class { constructor(type, init) { this.type = type; this.detail = init?.detail; } },
-    resolveTranslationTarget: message => T.chat.indexOf(message), notifyRerender: () => Promise.resolve(),
+    resolveTranslationTarget: message => T.chat.indexOf(message), notifyRerender: () => Promise.resolve(), canNotifyRerender: () => true,
     updateMessageBlock: (id, message, options) => { T.updates.push(options ?? null); if (!options || options.rerenderMessage !== false) T.dom.get(`#chat .mes[mesid="${id}"] .mes_text`).innerHTML = format(message.extra?.display_text ?? message.mes); },
     typesetRoot: () => { T.typeset++; }, dressBody: (body, message) => T.dressed.push(message.extra?.display_text ?? ''),
     PREVIEW_GAP_MS: Number(/\nconst PREVIEW_GAP_MS = (\d+);/.exec(source)?.[1]), livePreviews: new Set(), isProgressBadge: isBadge, refreshMessageBlock: null,

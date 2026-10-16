@@ -92,7 +92,17 @@ export function createRerenderNotifier({ getContext, document: doc, helperPresen
         catch (error) { report(error); return false; }
         finally { active.delete(id); }
     }
-    return { notify, isNotifying: id => active.has(Number(id)), active };
+    /** 6.9.7 이 메시지에 알림을 보내면 helper 가 다시 그릴 환경인가 (helper iframe 렌더 · 기본 번역 확장이 안 끼어듦) — 본문 조건(그릴 코드 · 편집 창)은 빼고.
+     *  번역기 끝 그림이 상태창 틀을 새 코드 블록으로 바꿀지 정할 때 (바꿨는데 알림이 못 가면 틀 대신 날 코드가 남는다) */
+    function ready(messageId) {
+        let ctx;
+        try { ctx = typeof getContext === 'function' ? getContext() : null; } catch { ctx = null; }
+        if (typeof ctx?.eventSource?.emit !== 'function' || !(ctx?.eventTypes ?? ctx?.event_types)?.MESSAGE_UPDATED) return false;
+        let present = false;
+        try { present = !!helperPresent?.(); } catch { present = false; }
+        return helperRenderMode({ settings: ctx.extensionSettings, present }) === 'iframe' && !builtinTranslateInterferes(ctx.extensionSettings, ctx.chat?.[Number(messageId)]);
+    }
+    return { notify, ready, isNotifying: id => active.has(Number(id)), active };
 }
 
 let shared = null;
@@ -106,5 +116,7 @@ function instance() {
 
 /** 테마가 메시지 본문을 다시 그린 뒤 부른다. element = 그 .mes 요소(이미 찾았으면) */
 export const notifyRerender = (messageId, options) => instance().notify(messageId, options);
+/** 6.9.7 알림을 보내면 helper 가 이 메시지를 다시 그릴 환경인가 (번역기 끝 그림이 상태창 틀을 바꿀지) */
+export const canNotifyRerender = messageId => instance().ready(messageId);
 /** 지금 도는 MESSAGE_UPDATED 가 이 알림기가 보낸 것인가 (번역기 handleMessageEdit 이 건너뛰는 근거) */
 export const isRerenderNotify = messageId => instance().isNotifying(messageId);

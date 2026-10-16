@@ -2,7 +2,7 @@
 import { isPreset, validSettings, validImport, validPromptList, validPresetList, exportPresets, restoreTranslationRows } from './preset-data.js';
 import { createGuards, watchGuard } from './translation-guard.js';
 import { observeEventCompletion } from './render-completion.js';
-import { notifyRerender, isRerenderNotify } from '../../rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe) · 그 알림의 MESSAGE_UPDATED 는 건너뛴다
+import { notifyRerender, isRerenderNotify, canNotifyRerender } from '../../rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe) · 그 알림의 MESSAGE_UPDATED 는 건너뛴다 · 6.9.7 알림이 갈 환경인가
 import { paintPreview, previewShown, adoptPainted } from './preview-frames.js';   // 2.5.5 번역 중 미리 보기가 헬퍼가 그린 상태창(iframe)을 지우지 않게 · 6.9.6 바뀐 문단만 갈아 끼우기
 import { typesetRoot } from '../../typography.js';   // 6.9.6 미리 보기가 넣은 문단을 그 자리에서 조판
 import { dressBody } from '../../dem-expressive.js';   // 6.9.6 · 감정 대사 칸
@@ -2559,7 +2559,7 @@ function refreshMessageBlock(messageId, message, { gently = false } = {}) {
     const host = gently ? element.querySelector('.mes_text') : null;
     let kept = false;
     if (host && previewShown(host, { keep: isProgressBadge })) {
-        try { kept = paintPreview(host, getContext().messageFormatting(message?.extra?.display_text ?? message.mes, message.name, message.is_system, message.is_user, messageId), { keep: isProgressBadge }); }
+        try { kept = paintPreview(host, getContext().messageFormatting(message?.extra?.display_text ?? message.mes, message.name, message.is_system, message.is_user, messageId), { keep: isProgressBadge, final: canNotifyRerender(messageId) }); }   // 6.9.7 코드가 바뀐 상태창 틀은 새 코드 블록으로 → 아래 알림으로 helper 가 번역된 글로 다시 그림 (알림이 못 가는 환경이면 틀 그대로)
         catch { kept = false; }
         if (kept) dressPainted(host, message);
     }

@@ -243,7 +243,7 @@ await test('메시지마다 따로 센다: 다른 번호의 알림은 동시에 
 // ── 5. 연결 ──
 await test('번역기: import · refreshMessageBlock 이 다시 그린 뒤 알림을 돌려주고 · handleMessageEdit 은 알림이면 맨 먼저 건너뛴다', () => {
     const js = read('src/addons/translator/index.js');
-    assert.match(js, /import \{ notifyRerender, isRerenderNotify \} from '\.\.\/\.\.\/rerender-notify\.js';/);
+    assert.match(js, /import \{ notifyRerender, isRerenderNotify, canNotifyRerender \} from '\.\.\/\.\.\/rerender-notify\.js';/);
     const refresh = js.slice(js.indexOf('\nfunction refreshMessageBlock('), js.indexOf('\n}\n', js.indexOf('\nfunction refreshMessageBlock(')) + 3);
     assert.match(refresh, /const result = updateMessageBlock\(messageId, message, kept \? \{ rerenderMessage: false \} : undefined\);/, '6.9.6 미리 보기를 그렸으면 바뀐 문단만 (translator-preview-steady.mjs) — 그래도 다시 그린 뒤 알림');
     assert.match(refresh, /llm-translator:rendered/, '6.1.8 문서 이벤트는 그대로');
