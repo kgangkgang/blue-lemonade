@@ -468,6 +468,32 @@ const PLAN_WORDS = /\b(?:speech|speaks?|style|tone|polite|casual|honorifics?|for
 const KO_REGISTER = /해요체|하십시오체|합쇼체|반말|존댓말|존대|높임말/;
 const planHits = text => (String(text).match(PLAN_WORDS) || []).length;
 const planLike = text => PLAN_ARROW.test(text) && (planHits(text) >= 2 || (planHits(text) >= 1 && KO_REGISTER.test(text)));
+// 2.6.8 작업 메모 줄 셋 더 (사용자 10-16 — 문단 사이에 「…sounded… translate.」 · 「… → 해요체 / 합쇼체 mix.」 · 「Keep spans and placeholders.」 가 보였고,
+//       영어 남은 줄 다시 번역이 말투 메모를 「… → 해요체 / 합쇼체 혼용. … → 반말 속마음.」 한국어 메모로 바꿔 놓았다). 번역문이 라틴 글자가 아니고 원문에 같은 글이 없을 때만:
+//   ① 반쪽 원문 + 「… translate.」 꼬리 — 꼬리 앞이 원문 글 그대로(라틴)인 줄
+//   ② 지시문 되풀이 — 「Keep spans and placeholders.」 · 「Preserve the tags as-is.」 처럼 keep · preserve · don't translate … + 태그 · 자리표시 · 서식 낱말인 라틴 줄
+//   ③ 한국어로 옮겨진 말투 메모 — 화살표 + 말투 이름(해요체 · 반말 …) + 번역 이야기 낱말(속마음 · 독백 · 어미 · 일인칭 · 혼용 · VAR …). 원문에 같은 꼴이 있으면 두지 않는다
+const STUB_TAIL = /^(.{6,}?)[ \t]*(?:…+|\.{3,}|[—–]+)[ \t]*\(?[ \t]*(?:translate|translation|translating)[ \t]*[.:：!)]?[ \t]*$/i;
+const INSTRUCTION_ECHO = /^[\s>*_(\[-]*(?:please\s+)?(?:keep|preserve|maintain|retain|leave|don'?t\s+(?:translate|change|touch|alter)|do\s+not\s+(?:translate|change|touch|alter))\b[^\n]{0,120}?\b(?:spans?|tags?|placeholders?|markup|format(?:ting)?|html|brackets?|VAR(?:_\d+)?|line\s*breaks?|structure|as[- ]is|unchanged|intact)\b[^\n]{0,60}$/i;
+const KO_PLAN_WORDS = /속마음|독백|어미|일인칭|1인칭|이인칭|2인칭|말투|어조|혼용|평서형|경어|VAR|자리\s?표시|번역/g;
+const latinMostly = text => { const letters = (String(text).match(/\p{L}/gu) || []).length, latin = (String(text).match(/\p{Script=Latin}/gu) || []).length; return latin >= 3 && latin >= letters * 0.6; };
+/** ③ 화살표 + 말투 이름 + 번역 이야기 낱말 두 가지 이상 · 대사 괄호(「」 · 『』 · “” · "") 밖 — 이야기 속 「존댓말 → 반말로 말투 바꿔도 돼?」 는 두다 */
+const koPlanLike = text => PLAN_ARROW.test(text) && KO_REGISTER.test(text) && new Set(String(text).match(KO_PLAN_WORDS) || []).size >= 2 && !/[「『“"]/.test(text);
+/** 번역문이 한국어 · 일본어 같은 비라틴 글인가 — 글 전체의 갈래로 보면 짧은 문단 + 긴 영어 메모(문단 묶음 한 칸)가 라틴으로 세어진다. 비라틴 글자가 8자 이상 · 글자의 1/5 이상이면 */
+const foreignOut = text => {
+    const plain = String(text).replace(/<[^>]*>/g, ''), letters = (plain.match(/\p{L}/gu) || []).length;
+    const other = (plain.match(/[\p{Script=Hangul}\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Cyrillic}\p{Script=Thai}\p{Script=Arabic}]/gu) || []).length;
+    return other >= 8 && other >= letters * 0.2;
+};
+/** 2.6.8 ①②③ — line 은 태그를 뺀 줄, ctx = { srcKey, sourceKoPlan } */
+function metaLine(line, { srcKey, sourceKoPlan }) {
+    const key = echoKey(line);
+    if (!key || srcKey.includes(key)) return false;
+    const stub = STUB_TAIL.exec(line);
+    if (stub && latinMostly(stub[1])) { const head = echoKey(stub[1]); if (head.length >= 8 && srcKey.includes(head)) return true; }
+    if (line.length <= 200 && latinMostly(line) && INSTRUCTION_ECHO.test(line)) return true;
+    return !sourceKoPlan && line.length <= 800 && koPlanLike(line);
+}
 function planningNote(block, sourcePlan) {
     const t = String(block ?? '').trim();
     if (!t || t.length > 800 || sourcePlan || !planLike(t)) return false;
@@ -477,14 +503,17 @@ function planningNote(block, sourcePlan) {
 /** 답에서 번역 모델의 작업 메모(계획 덩이 · 줄)를 걷는다. 걷을 게 없거나 걷으면 아무것도 안 남으면 같은 글 */
 export function stripPlanningNotes(text, source) {
     const out = String(text ?? '');
-    if (!PLAN_ARROW.test(out)) return out;
+    if (!PLAN_ARROW.test(out) && !/translat|keep|preserve|maintain|retain|leave|don'?t|do not/i.test(out)) return out;
     const sourcePlan = source != null && planLike(String(source));
+    // 2.6.8 ①②③ 은 원문과 견준다 — 원문이 없거나 번역문이 라틴 글자(영어로 옮김)면 예전 규칙만
+    const extra = source != null && foreignOut(out)
+        ? { srcKey: echoKey(String(source)), sourceKoPlan: koPlanLike(String(source)) } : null;
     const blocks = out.split(/(\n[\t ]*\n(?:[\t ]*\n)*)/);
     let changed = false;
     for (let i = 0; i < blocks.length; i += 2) {
         const lines = blocks[i].split('\n');
         // 줄마다 본다 — 덩이 통째로 보면 메모 밑에 붙은 번역 줄까지 메모 덩이로 세어진다. 한 줄 덩이도 같은 규칙
-        const kept = lines.filter(line => !planningNote(line, sourcePlan));
+        const kept = lines.filter(line => !planningNote(line, sourcePlan) && !(extra && metaLine(line.replace(/<[^>]*>/g, '').trim(), extra)));
         if (kept.length === lines.length) continue;
         blocks[i] = kept.some(line => line.trim()) ? kept.join('\n') : '';
         changed = true;
@@ -577,6 +606,7 @@ export function stripDraftLeaks(text, source) {
     if (source == null || !out.trim()) return out;
     const src = String(source), srcKey = echoKey(src);
     { const cleaned = stripThinkBlocks(out, src); if (cleaned !== out && cleaned.trim()) out = cleaned.replace(/\n{3,}/g, '\n\n').replace(/^[ \t]*\n+/, ''); }
+    { const cleaned = stripPlanningNotes(out, src); if (cleaned !== out && cleaned.trim()) out = cleaned; }   // 2.6.8 작업 메모 줄도 (모든 길 · 저장된 번역 그리기)
     const names = WRAP_NAMES.filter(name => !new RegExp(String.raw`<\/?${name}(?![\w-])`, 'i').test(src));
     const wrapTag = names.length ? new RegExp(String.raw`<(\/?)(?:${names.join('|')})(?:\s[^<>\n]*)?>`, 'gi') : null;
     const fences = !/`{3,}/.test(src);

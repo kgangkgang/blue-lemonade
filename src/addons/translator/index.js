@@ -2209,6 +2209,9 @@ async function translate(text, options = {}) {
             translatedText = whole ?? await runChunks();
         }
 
+        // 2.6.8 통짜 · 덩이 길: 작업 메모 · 초안 줄을 남은 가나 · 영어 줄 다시 번역보다 먼저 걷는다 — 전엔 마지막 그물에서만 걸러,
+        //       메모 줄이 「영어가 남은 줄」로 다시 번역돼 한국어 메모(「… → 해요체 / 합쇼체 혼용」)가 되어 남았다 (문단 묶음 길은 parseBatchResult 가 걷는다)
+        if (!paragraphParts && !isInputTranslation && !isRetranslation) { const early = stripDraftLeaks(translatedText, maskedText); if (early.trim()) translatedText = early; }
         // [2.1.0] 한국어 번역문에 남은 가나 정리: っ · ー 는 지우고, 일본어가 통째로 남은 줄만 한 번 더 보낸다 (프롬프트로는 100% 안 막힌다)
         translatedText = tidyKana(translatedText);
         // 6.4.0 용어집 이름 지키기 · 줄 끝에 홀로 남은 여는 「 (모델이 프롬프트를 어겨도) — 정방향만
