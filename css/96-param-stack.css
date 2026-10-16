@@ -18,10 +18,10 @@
 body.salty #left-nav-panel #range_block_openai:not([style*="display: none"]):not([style*="display:none"]) {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, max(8.5em, 40%)), 1fr));
 }
-/* 사용자 설정 묶음(26-rounds, 폰 · 좁은 화면 2열)도 같은 까닭으로 20em 아래에서만 한 열.
+/* 사용자 설정 묶음(26-rounds, 폰 · 좁은 화면 2열)도 같은 까닭으로 14em 아래(폰 + 32px 안팎)에서만 한 열 — 24px 은 6.7.9 처럼 두 칸.
    월드 인포 활성화(26-rounds bl-wi-global 18em) · BL 설정 창(33-panel-columns bl-controls 24em)은 원래 모듈에 이미 있다 */
 body.salty #user-settings-block #user-settings-block-content { container: bl-user-settings / inline-size; }
-@container bl-user-settings (width < 20em) {
+@container bl-user-settings (width < 14em) {
   body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="FontBlurChatWidthBlock"], [name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) { grid-template-columns: minmax(0, 1fr) !important; }
   body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="FontBlurChatWidthBlock"], [name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > * { grid-column: 1 / -1 !important; }
 }
@@ -109,6 +109,8 @@ body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingTo
 /* ↳ 아래 규칙은 css/99-lazy-panel.css 로 옮김 (서랍 전용 · :has() 오른쪽 끝이 태그) */
 /* 언어 칸은 계정 단추 옆 좁은 자리(63px)에 끼어 있었음 → 한 줄 전체 */
 body.salty #user-settings-block#user-settings-block #UI-language-block { flex: 1 1 100% !important; width: 100% !important; }
+/* API 연결(27-compact 이름 40% | 칸 60%): 이름은 한국어 낱말째 줄바꿈 — 큰 글씨에서 「Google Vertex AI 설정」이 낱말 가운데서 꺾였다 */
+body.salty #rm_api_block #openai_api h4 { word-break: keep-all; overflow-wrap: break-word; }
 /* 월드 인포 활성화의 삽입 전략 줄은 12-worldinfo 그대로 한 줄(이름 왼쪽 · 값 오른쪽) — 6.8.0 처럼 세로로 쌓으면
    가로 줄용 flex-basis(12em · 10em)가 높이로 읽혀 이름과 값 사이가 300px 넘게 비었다 */
 /* 정규식 편집기: 매크로 치환 선택칸 (최소 · 최대 깊이 두 칸 · 「적용 대상」 · 「그 밖의 옵션」 두 칸은 원래대로 나란히) */
@@ -142,8 +144,9 @@ body.salty .range-block:has(> .range-block-title + .range-block-range-and-counte
 /* 생성 설정(#range_block_openai)은 26-rounds 가 두 열 격자에 놓고, 칸 안은 아이디 둘 + !important 로
    숫자칸을 슬라이더 옆(2행 2열)에 두므로 같은 무게로 덮음 → 칸마다 윗줄 이름 | 숫자칸, 아랫줄 슬라이더 칸 너비 꽉.
    칸 자리(왼쪽 · 오른쪽 · 순서)는 26-rounds 그대로 — 여기서 grid-column 을 칸 전체로 펴지 않는다.
-   나란한 두 칸은 이름 글자 기준선을 맞춤 (윗줄에 숫자칸이 있는 칸 · 숫자칸이 아랫줄인 시드 칸이 짝이어도 이름이 같은 높이) */
-body.salty #left-nav-panel #range_block_openai:not([style*="display: none"]):not([style*="display:none"]) { align-items: baseline; }
+   나란한 두 칸은 이름 글자 기준선을 맞춤 (윗줄에 숫자칸이 있는 칸 · 숫자칸이 아랫줄인 시드 칸이 짝이어도 이름이 같은 높이).
+   이름 줄이 있는 칸(슬라이더 · 숫자)만 — 스위치 칸은 26-rounds 대로 줄 높이를 채우고(min-height: 100%) 가운데 */
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title) { align-self: baseline; }
 /* 반 칸 이름은 한국어 낱말째 줄바꿈 (왼쪽 패널은 keep-all 밖이라 「(토큰)」이 「(토 / 큰)」으로 꺾였다) — 낱말 하나가 칸보다 길 때만 59 의 anywhere */
 body.salty #left-nav-panel #range_block_openai :is(.range-block-title, label.checkbox_label > span) { word-break: keep-all; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-title { grid-column: 1 !important; grid-row: 1 !important; }

@@ -92,10 +92,13 @@ const env = { ...card, ...seg, ...resume, ...auto, ...notify, ...frames, cardVal
     tidyKana: x => x, tidyGlossaryOutput: (_s, x) => x, linesToFix: () => [], glossaryHanKeep: () => [], glossaryNameKeep: () => [],
     runtimeProtections: new Map(), console: { debug() {}, info() {}, warn() {}, error() {} }, dropProseStrayWords: seg.dropStrayWords, repairProseTagPairs: seg.repairTagPairs, dropProseLeftoverPlaceholders: seg.dropLeftoverPlaceholders,
     correctBackticks: x => x, window: {}, toastr: { warning() {} }, BRACKET_NOTE, processTranslationText: (_o, t) => t, refreshMessageBlock: (id, message) => T.refreshed.push([id, message]),
+    // 6.9.6 바뀐 문단만 · 넣은 문단 조판 (자세한 것은 translator-preview-steady.mjs)
+    PREVIEW_GAP_MS: Number(/\nconst PREVIEW_GAP_MS = (\d+);/.exec(source)?.[1] ?? 250), livePreviews: new Set(), typesetRoot: () => {}, dressBody: () => {},
+    isProgressBadge: node => node.nodeType === 1 && node.classList.contains('llmt-progress'),
 };
 function install(name) { env[name] = new Function('env', `with(env){return (${cut(name)});}`)(env); return env[name]; }
 for (const name of ['compileUserPattern', 'runtimeRegexes', 'getCombinedRegexes', 'getNoFoldRegexes', 'protectedBlockRegexes', 'isProtectedBlock', 'withoutProtectedBlocks', 'fixMalformedPlaceholders',
-    'dropStrayWords', 'dropLeftoverPlaceholders', 'repairTagPairs', 'failMarkOf', 'cutError', 'refusalError', 'splitForChunks', 'translate', 'resolveTranslationTarget', 'translationPreview']) install(name);
+    'dropStrayWords', 'dropLeftoverPlaceholders', 'repairTagPairs', 'failMarkOf', 'cutError', 'refusalError', 'splitForChunks', 'translate', 'resolveTranslationTarget', 'dressPainted', 'previewText', 'translationPreview']) install(name);
 env.tidyGlossaryOutput = (_s, x) => x;
 const sent = [];
 env.callLLMAPI = async prompt => { const body = prompt.slice(PREFIX.length).replace(BRACKET_NOTE + '\n\n', ''); sent.push(body); return ko(body.startsWith(seg.BATCH_HEADER) ? body.slice(seg.BATCH_HEADER.length) : body); };
@@ -134,10 +137,40 @@ await check('no previews for corrections, input translation or the single-reques
 });
 
 // ── ③ 화면에만 그리기 ──
+// 6.9.6 미리 보기는 바뀐 문단만 갈아 끼우므로 노드가 있는 작은 DOM 흉내 (translator-preview-frames.mjs 와 같은 꼴)
+class TextNode { constructor(data) { this.data = data; this.parentNode = null; this.nodeType = 3; this.nodeName = '#text'; } get textContent() { return this.data; } get outerHTML() { return this.data; } }
+class El {
+    constructor(tag, attrs = '', doc) { this.tagName = this.nodeName = tag.toUpperCase(); this.nodeType = 1; this.attrs = attrs; this.childNodes = []; this.parentNode = null; this.ownerDocument = doc; this.dataset = {}; }
+    get className() { return /class="([^"]*)"/.exec(this.attrs)?.[1] ?? ''; }
+    get classList() { return { contains: name => this.className.split(/\s+/).includes(name) }; }
+    get textContent() { return this.childNodes.map(n => n.textContent).join(''); }
+    get outerHTML() { return `<${this.tagName.toLowerCase()}${this.attrs}>${this.innerHTML}</${this.tagName.toLowerCase()}>`; }
+    get innerHTML() { return this.childNodes.map(n => n.outerHTML).join(''); }
+    set innerHTML(html) { for (const n of [...this.childNodes]) this.removeChild(n); for (const n of parseHtml(html, this.ownerDocument)) this.appendChild(n); }
+    removeChild(node) { this.childNodes.splice(this.childNodes.indexOf(node), 1); node.parentNode = null; return node; }
+    appendChild(node) { node.parentNode?.removeChild(node); node.parentNode = this; this.childNodes.push(node); return node; }
+    insertBefore(node, ref) { node.parentNode?.removeChild(node); node.parentNode = this; this.childNodes.splice(this.childNodes.indexOf(ref), 0, node); return node; }
+    prepend(node) { return this.childNodes.length ? this.insertBefore(node, this.childNodes[0]) : this.appendChild(node); }
+    get children() { return this.childNodes.filter(n => n instanceof El); }
+    matches(sel) { return sel.startsWith('.') ? this.classList.contains(sel.slice(1)) : this.tagName === sel.toUpperCase(); }
+    querySelectorAll(sel) { const out = []; const walk = el => { for (const c of el.children) { if (c.matches(sel)) out.push(c); walk(c); } }; walk(this); return out; }
+    querySelector(sel) { return this.querySelectorAll(sel)[0] ?? null; }
+}
+const fakeDoc = { createElement: tag => new El(tag, '', fakeDoc) };
+function parseHtml(html, owner) {
+    const root = new El('root', '', owner), stack = [root];
+    for (const m of String(html).matchAll(/<(\/?)([a-z]+)([^>]*)>|([^<]+)/gi)) {
+        if (m[4] !== undefined) { stack.at(-1).appendChild(new TextNode(m[4])); continue; }
+        if (m[1]) { stack.pop(); continue; }
+        const el = new El(m[2], m[3], owner); stack.at(-1).appendChild(el); stack.push(el);
+    }
+    return [...root.childNodes].map(n => root.removeChild(n));
+}
+const textOf = host => host.childNodes.filter(n => !(n.nodeType === 1 && n.classList.contains('llmt-progress'))).map(n => n.outerHTML).join('');   // 진행 표시를 뺀 본문
 function fakeMessageDom(id) {
-    const badge = { className: 'llmt-progress' };
-    const host = { innerHTML: '<p>original</p>', dataset: {}, prepended: [], frames: [], querySelector: s => (s === ':scope > .llmt-progress' ? host.badge : null), querySelectorAll: s => (s === '.TH-render' ? host.frames : []),
-        ownerDocument: { createElement: () => ({ innerHTML: '', querySelectorAll: () => [] }) }, prepend(node) { host.prepended.push(node); host.badge = node; }, badge };
+    const host = new El('div', ' class="mes_text"', fakeDoc);
+    host.innerHTML = '<p>original</p>';
+    const badge = new El('div', ' class="llmt-progress"', fakeDoc);
     const element = { editing: false, querySelector: s => (s === '.mes_text' ? host : s === '.edit_textarea' && element.editing ? {} : null) };
     T.dom.set(`#chat .mes[mesid="${id}"]`, element);
     T.dom.set(`#chat .mes[mesid="${id}"] .mes_text`, host);
@@ -147,17 +180,18 @@ await check('paints only the message text, keeps the progress badge, never touch
     const message = { mes: 'Original body.', name: 'Narrator', is_user: false, is_system: false, swipe_id: 0, extra: {} };
     T.chat = [{ mes: 'x', extra: {} }, message]; T.formatted.length = 0; T.refreshed.length = 0;
     const { host, badge } = fakeMessageDom(1);
+    host.prepend(badge);
     const preview = env.translationPreview(1, message, message.mes, 'chat-A', message.mes);
     preview.show('번역된 앞부분\n\nOriginal tail.');
-    assert.equal(host.innerHTML, '<p>번역된 앞부분\n\nOriginal tail.</p>');
+    assert.equal(textOf(host), '<p>번역된 앞부분\n\nOriginal tail.</p>');
     assert.deepEqual(T.formatted.at(-1).slice(1), ['Narrator', false, false, 1]);
-    assert.equal(host.badge, badge, 'progress badge kept');
+    assert.equal(host.childNodes[0], badge, 'progress badge kept in place');
     assert.equal(host.dataset.llmtPreview, '1');
     assert.deepEqual(message.extra, {}, 'nothing saved');
     assert.equal(message.mes, 'Original body.');
     preview.stop();
     preview.show('늦게 온 미리 보기');
-    assert.equal(host.innerHTML, '<p>번역된 앞부분\n\nOriginal tail.</p>', 'nothing after stop');
+    assert.equal(textOf(host), '<p>번역된 앞부분\n\nOriginal tail.</p>', 'nothing after stop');
     preview.revert();
     assert.deepEqual(T.refreshed.map(([id]) => id), [1], 'revert re-renders from the saved data');
 });
@@ -176,10 +210,10 @@ await check('does not paint (or revert) when the target moved, is being edited, 
     preview.show('번역'); assert.equal(host.innerHTML, '<p>original</p>'); preview.stop();
     T.processor = null;
     // 2.5.5 헬퍼가 그려 둔 틀을 지킬 수 없으면(새 글에 짝이 될 코드 블록이 없음) 지금 화면 그대로 — 지킬 수 있을 때는 translator-preview-frames.mjs
-    host.frames = [{ parentNode: host }];
+    const frame = host.appendChild(new El('div', ' class="TH-render"', fakeDoc));
     preview = env.translationPreview(0, message, message.mes, 'chat-A', message.mes);
-    preview.show('번역'); assert.equal(host.innerHTML, '<p>original</p>'); preview.stop();
-    host.frames = [];
+    preview.show('번역'); assert.equal(textOf(host), '<p>original</p><div class="TH-render"></div>'); preview.stop();
+    host.removeChild(frame);
     // 틀이 아직 없으면(헬퍼가 안 그렸거나 없음) 코드가 든 답도 그린다 — 화면에 이미 날 코드였다
     preview = env.translationPreview(0, message, message.mes, 'chat-A', '```html\n<html><body>card</body></html>\n```');
     preview.show('번역 코드'); assert.equal(host.innerHTML, '<p>번역 코드</p>'); preview.stop(); host.innerHTML = '<p>original</p>'; delete host.dataset.llmtPreview;

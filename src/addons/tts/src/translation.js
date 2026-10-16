@@ -28,6 +28,7 @@
 //   waitForTranslation(mesId, timeoutMs) → Promise<'done'|'timeout'|'none'>
 //                                                  'none' = 기다릴 이유가 없음 (번역기 없음 · 글이 이미 한국어라 번역기가 건너뜀 · 글이 바뀜 · 취소)
 //   displayReady(mes) → boolean                  지금 글의 번역문이 붙어 있나 (재생기도 같은 판단을 쓴다)
+//   shownDisplay(mes, { preview }) → { text, preview }   6.9.6 원문 짝을 찾을 화면 번역문 (누르기 길은 번역 중 미리 보기 글이 먼저)
 //   cancelWait(mesId | undefined)                기다림 취소 → 'none' 으로 끝남 (id 없으면 전부)
 //   translatorInfo() → { name, key, incoming, outgoing, label }   설정 화면용
 //   isWaiting(mesId) → boolean
@@ -152,6 +153,22 @@ export function displayReady(mes) {
     if (h === undefined || h === null || h === '') return true;
     const now = originalHash(mes);
     return !now || String(h) === now;
+}
+
+/**
+ * 6.9.6 원문 짝을 찾을 화면 번역문 → { text, preview }. preview 를 주면(누르기 길) 번역 중 미리 보기가 그 메시지에 그려져 있을 때 그 글
+ * (LLM 번역 애드온 previewText — 저장되지 않은 화면 글)이 먼저, 아니면 저장된 display_text. 미리 보기 중엔 display_text 가 아직 없어 누른 줄의 원문 짝을
+ * 못 찾고 화면 글(번역문)을 듣는 언어로 다시 옮겼다 (요청 한 번 더 · 말투가 원문과 다름).
+ * 「번역이 왔나」(displayReady) 는 그대로 저장된 글만 본다 — 미리 보기를 다 온 번역으로 치지 않는다
+ */
+export function shownDisplay(mes, { preview = false } = {}) {
+    if (preview) {
+        try {
+            const text = globalThis[Symbol.for('blue-lemonade.translator')]?.previewText?.(mes);
+            if (typeof text === 'string' && text.trim()) return { text, preview: true };
+        } catch { /* 옛 번역기 · 단독 확장 */ }
+    }
+    return { text: displayOf(mes), preview: false };
 }
 
 // ---------- 기다리기

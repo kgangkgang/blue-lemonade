@@ -64,7 +64,8 @@ export function openFirstRunWhenFree() {
     let tries = 0;
     const attempt = () => {
         if (open || !themeEnabled(getSettings())) return;
-        if (modalOpen() && ++tries < 400) { setTimeout(attempt, 1500); return; }
+        // 6.9.6 10분이 지나도 다른 창이 열려 있으면 이번엔 띄우지 않는다 (그 창 위에 겹치지 않게 — 설정 창 › 기타 설정에서 열 수 있다)
+        if (modalOpen()) { if (++tries < 400) setTimeout(attempt, 1500); return; }
         openFirstRun({ auto: true }).catch(error => console.warn('[Blue Lemonade] 처음 설정 안내', error));
     };
     attempt();
@@ -76,7 +77,7 @@ export async function openFirstRun({ auto = false } = {}) {
     if (open?.isConnected) return;
     if (auto) saveSettings();   // 첫 실행 표시는 테마 설정 칸이 생기는 것 — 저장해 두면 다음 새로고침엔 안 뜬다 (건너뛰어도)
     let step = 0, remembered = false;
-    const back = document.activeElement;
+    const back = document.activeElement, fromPanel = back?.dataset?.act === 'first-run';
     const change = mutate => {
         const run = st => { if (!remembered) { remembered = true; rememberAppearance(st, '처음 설정 전'); } mutate(st); };
         if (panel?.updateSettings) return panel.updateSettings(run);
@@ -146,9 +147,14 @@ export async function openFirstRun({ auto = false } = {}) {
         next.querySelector('i').className = `fa-solid ${last ? 'fa-check' : 'fa-arrow-right'}`;
         dialog.querySelector('[data-fr="back"]').hidden = step === 0;
         const keep = body.scrollTop;
+        // 6.9.6 다시 그려도 키보드 초점은 같은 카드에 (글꼴을 다 받아 읽기 방식 화면을 다시 그릴 때 초점이 사라졌다)
+        const had = !focus && body.contains(document.activeElement) ? [...document.activeElement.attributes].find(a => a.name.startsWith('data-fr-')) : null;
         body.innerHTML = id === 'palette' ? paletteStep(st) : id === 'font' ? fontStep(st) : readingStep(st);
         if (focus) { body.scrollTop = 0; (body.querySelector('[aria-pressed="true"]') || next).focus({ preventScroll: true }); }
-        else body.scrollTop = keep;
+        else {
+            body.scrollTop = keep;
+            if (had) body.querySelector(`[${had.name}="${CSS.escape(had.value)}"]`)?.focus({ preventScroll: true });
+        }
     };
     const pick = (mutate, selector) => {
         change(mutate);
@@ -168,6 +174,9 @@ export async function openFirstRun({ auto = false } = {}) {
         if (frFont) return pick(st => chooseFont(st, frFont), `[data-fr-font="${CSS.escape(frFont)}"]`);
         if (frReading) return pick(st => chooseReading(st, frReading), `[data-fr-reading="${CSS.escape(frReading)}"]`);
     });
+    // 6.9.6 누름 · 키도 문서로 올려 보내지 않는다 — 실리태번은 html 의 touchstart · mousedown 으로 열린 서랍을 닫고(mes-fold.js 와 같은 막기),
+    //   문서 keydown 으로 ← → 넘기기 · 새 답 만들기 · Esc 서랍 닫기를 한다(이 창은 실리태번 Popup 이 아니라 못 알아본다). Esc 로 이 창 닫기는 브라우저 기본 동작이라 그대로
+    for (const type of ['touchstart', 'touchend', 'mousedown', 'mouseup', 'pointerdown', 'pointerup', 'keydown', 'keyup']) dialog.addEventListener(type, event => event.stopPropagation());
     // 표본 글자는 글꼴을 다 받은 뒤에 바꾼다 (받는 동안 비어 보이지 않게 — 설정 창 글꼴 목록과 같은 방식)
     const fontReady = event => {
         for (const sample of body.querySelectorAll('[data-fr-font] .bl-fr-sample')) {
@@ -180,7 +189,9 @@ export async function openFirstRun({ auto = false } = {}) {
         document.removeEventListener('salty:font-ready', fontReady);
         dialog.remove();
         if (open === dialog) open = null;
-        if (back?.isConnected) back.focus?.({ preventScroll: true });
+        // 6.9.6 설정 창에서 열었으면 고르는 동안 설정 창이 다시 그려져 그 단추가 새로 생긴다 — 새 단추로 돌아간다
+        const to = back?.isConnected ? back : fromPanel ? document.querySelector('[data-act="first-run"]') : null;
+        to?.focus?.({ preventScroll: true });
     }, { once: true });
     document.body.append(dialog);
     open = dialog;

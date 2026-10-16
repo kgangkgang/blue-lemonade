@@ -26,7 +26,7 @@
 // findClickedThought(root, x, y) → { kind: 'thought', strong, match, text, raw, nameHint, color, line, lines, ordinal, frames } | null  (1.2.4: 강한 틀 순번·개수)
 //   match: 'any' (속마음 전체 · 한 문단과 같음) | 'part' (문단 틀: 같은 것만) | 'equal' (문단 일부인 기울임: 속마음 전체와 같을 때만)
 //   강한 틀은 속마음이 누른 글을 품어도 맞음 (여러 문단 속마음의 첫 문단). 같은 글이 여럿이면 class 이름과 주인이 같은 것 → 누른 줄에 가까운 것
-// segmentForHit(mes, hit) → Segment (text.js 모양 + dialogueIndex: 원문 대화문 목록에서의 번호, 못 찾으면 -1
+// segmentForHit(mes, hit, { preview }) → Segment (text.js 모양 + dialogueIndex: 원문 대화문 목록에서의 번호, 못 찾으면 -1
 //   · 속마음이면 thoughtIndex: 그 목록의 속마음 번호, 즉석이면 -1 · 말 기울임이면 actionIndex) | null (약한 속마음 틀이 어느 속마음과도 안 맞음)
 // 1.9.1 한 문단 이어 읽기: 속마음 · 대화문이 아닌 기울임(em · i)을 누르면 findClickedItalic → 말 기울임 조각(text.js speech — 서술이 사이에 낀 소설체 문단의
 //   *…*)이면 그것을 읽는다. 재생기(tapJobs)가 같은 문단의 묶음(대사 · 말 기울임, 같은 목소리)을 차례대로 이어 한 번에 읽는다 — 「」 대사를 눌러도 같다.
@@ -40,6 +40,7 @@ import { resolveSpeaker, canon, knownNames as learnedNames } from './speakers.js
 import { findVoice, voiceByName } from './voices.js';
 import { speakSegments } from './player.js';
 import { applyMessageItalics } from './analysis.js';   // 1.9.1 대사 분석이 가른 기울임 (재생기 sourcesOf 와 같은 판단)
+import { shownDisplay } from './translation.js';   // 6.9.6 번역 중 미리 보기 글로도 원문 짝
 import { log } from './log.js';
 
 // 대화문 여닫이 글자 (text.js 와 같은 짝 + „“). ASCII ' 는 안 씀
@@ -468,14 +469,15 @@ function thoughtSegment(found, list, orig, disp, hit) {
  * 속마음 틀(hit.kind 'thought'): 속마음 조각 → 강한 틀이면 즉석 속마음 조각, 약한 틀이면 null
  *   (약한 틀의 글이 대화문·서술·행동 조각과 같으면 먼저 null — onClick 이 대화문으로 넘어감).
  * 대화문: 조각이 없고 그 대화문(여닫이 포함)을 품은 속마음 조각이 있으면 그 속마음
+ * 6.9.6 preview: 번역 중 미리 보기가 그려져 있으면 그 글을 번역문으로 (대사를 누른 길 · 이어 듣기 — 화면에 보이는 그 글이라 짝이 맞는다)
  */
-export function segmentForHit(mes, hit) {
+export function segmentForHit(mes, hit, { preview = false } = {}) {
     const s = settings();
     const ctx = getContext() || {};
     const opts = segOpts(mes, s, ctx, { readThoughts: true });
     const orig = safeSegment(sub(mes.mes), opts);
     let disp = null;
-    const d = mes.extra?.display_text;
+    const d = shownDisplay(mes, { preview }).text;
     if (typeof d === 'string' && d.trim() && d !== mes.mes) { try { disp = pairSegments(orig, safeSegment(sub(speechDisplay(d)), opts)); } catch { disp = null; } }
     if (s.join_paragraph !== false) { try { applyMessageItalics(mes, orig, disp); } catch { /* 분석 없음 */ } }   // 1.9.1 대사 분석이 가른 기울임
     let seg = null, index = -1;
@@ -539,15 +541,16 @@ export function segmentForHit(mes, hit) {
 /**
  * 1.2.2 미리 만들기: 화면에 보이는 목록(번역문이 있으면 번역문, 없으면 원문)의 대화문마다, 그 줄을 눌렀을 때 segmentForHit 이 낼 조각
  * (thoughts 면 속마음도 강한 틀을 누른 것처럼 — 대화문 뒤에). 재생기의 lineJobs 가 이것으로 탭과 같은 캐시 키를 만든다
+ * 6.9.6 preview: 이어 듣기(누른 것처럼 다음 줄)만 — 미리 만들기는 저장된 번역문으로 (덜 온 미리 보기 글로 소리를 사지 않게)
  */
-export function tapSegments(mes, { thoughts = false } = {}) {
+export function tapSegments(mes, { thoughts = false, preview = false } = {}) {
     if (!mes || mes.is_system) return [];
     const s = settings();
     const ctx = getContext() || {};
     const opts = segOpts(mes, s, ctx, { readThoughts: true });
     const orig = safeSegment(sub(mes.mes), opts);
     let disp = null;
-    const d = mes.extra?.display_text;
+    const d = shownDisplay(mes, { preview }).text;
     if (typeof d === 'string' && d.trim() && d !== mes.mes) { try { disp = pairSegments(orig, safeSegment(sub(speechDisplay(d)), opts)); } catch { disp = null; } }
     if (s.join_paragraph !== false) { try { applyMessageItalics(mes, orig, disp); } catch { /* 분석 없음 */ } }   // 1.9.1 대사 분석이 가른 기울임
     const shown = disp || orig;
@@ -563,10 +566,10 @@ export function tapSegments(mes, { thoughts = false } = {}) {
             if (x.kind === 'dialogue') {
                 const k = fold(x.text), n = seen.get(k) || 0;
                 seen.set(k, n + 1);
-                seg = segmentForHit(mes, { kind: 'dialogue', text: x.text, raw: x.raw, quoted: x.text, color: x.color || null, speakerHint: x.speakerHint || null, line: x.line || 0, sameIndex: n, sameCount: count.get(k) || 0 });
+                seg = segmentForHit(mes, { kind: 'dialogue', text: x.text, raw: x.raw, quoted: x.text, color: x.color || null, speakerHint: x.speakerHint || null, line: x.line || 0, sameIndex: n, sameCount: count.get(k) || 0 }, { preview });
             }
-            else if (x.kind === 'action' && x.speech) seg = segmentForHit(mes, { kind: 'action', text: x.text, raw: x.raw, line: x.line || 0 });   // 1.9.1 말 기울임도 누를 줄
-            else if (thoughts && x.kind === 'thought') seg = segmentForHit(mes, { kind: 'thought', strong: true, match: 'any', text: x.text, raw: x.raw, nameHint: x.speakerHint || null, color: x.color || null, line: x.line || 0 });
+            else if (x.kind === 'action' && x.speech) seg = segmentForHit(mes, { kind: 'action', text: x.text, raw: x.raw, line: x.line || 0 }, { preview });   // 1.9.1 말 기울임도 누를 줄
+            else if (thoughts && x.kind === 'thought') seg = segmentForHit(mes, { kind: 'thought', strong: true, match: 'any', text: x.text, raw: x.raw, nameHint: x.speakerHint || null, color: x.color || null, line: x.line || 0 }, { preview });
         } catch (e) { log('err', `미리 만들기 조각 실패: ${String(e?.message || e).slice(0, 40)}`); seg = null; }
         if (!seg) continue;
         seg.order = out.length + later.length;   // 6.3.0 글 순서 — 속마음을 뒤에 모아 두므로 이어 듣기(pregen.js nextLine)가 줄 안의 자리를 이걸로 되세운다
@@ -596,13 +599,13 @@ function onClick(e) {
         if (!mes || mes.is_system) return;
         // 속마음 먼저 (속마음 안의 「」 를 눌러도 속마음 통째로), 아니면 대화문
         const thought = findClickedThought(mesText, e.clientX, e.clientY);
-        let seg = thought ? segmentForHit(mes, thought) : null;
+        let seg = thought ? segmentForHit(mes, thought, { preview: true }) : null;   // 6.9.6 번역 중 미리 보기를 누른 것이면 그 글로 원문 짝
         if (!seg) {
             const ctx = getContext() || {};
             const hit = findClickedDialogue(mesText, e.clientX, e.clientY, { knownNames: knownNames(ctx, s) })
                 || findClickedItalic(mesText, e.clientX, e.clientY);   // 1.9.1 대화문이 아니면 말 기울임
             if (!hit) return;
-            seg = segmentForHit(mes, hit);
+            seg = segmentForHit(mes, hit, { preview: true });
         }
         if (seg) speakSegments(mesId, [seg]);
     } catch (err) {

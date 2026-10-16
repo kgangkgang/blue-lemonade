@@ -501,7 +501,7 @@ export function chainNext(mesId, segs, { played = false } = {}) {
     if (id !== at.id || !last || foldText(last.text) !== at.text) return null;                    // 다른 줄의 큐 (새로 누른 뒤 옛 큐가 끝난 경우 등)
     if (chat[id] !== at.mes || textHash(at.mes) !== at.hash) { chainAt = null; return null; }     // 메시지 · 글이 바뀜
     const thoughts = chainThoughts(s);
-    const seg = nextLine(tapSegments(at.mes, { thoughts }), last, { thoughts });
+    const seg = nextLine(tapSegments(at.mes, { thoughts, preview: true }), last, { thoughts });   // 6.9.6 누른 줄이 번역 중 미리 보기 글이면 다음 줄도 그 글에서
     chainAt = null;
     if (!seg) return null;                                                                       // 답장의 마지막 줄 — 조용히 끝
     return player.speakSegments(id, [seg]) ? seg : null;

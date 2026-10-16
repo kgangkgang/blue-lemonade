@@ -18,10 +18,15 @@ export function playbackOriginal(job) {
  *  1.9.1 더 솔직하게 (사용자: 「아니 원문도 일본어인데」 — 칸에 번역문이 「지금 읽는 대사의 원문」으로 떴다) */
 export const ORIGINAL_MISSING = '원문을 못 찾았어요 — 화면 글(번역문)';
 export const ORIGINAL_MISSING_LISTEN = '원문을 못 찾았어요 — 화면 글을 옮겨 읽는 중';   // 1.9.2 듣는 언어로 번역문을 옮겨 읽음 (칸 = 실제로 읽는 글)
+// 6.9.6 번역 중 미리 보기에서 누른 줄인데 그 문단 번역이 아직 덜 와서 원문 짝이 없음 — 까닭까지
+export const ORIGINAL_PREVIEW = '번역이 아직 덜 와서 원문을 못 찾았어요 — 화면 글(번역문)';
+export const ORIGINAL_PREVIEW_LISTEN = '번역이 아직 덜 와서 원문을 못 찾았어요 — 화면 글을 옮겨 읽는 중';
 const fromDisplayOf = (job) => (job?.parts || []).some(p => (p?.original || p?.seg)?.fromDisplay === true);
+const fromPreviewOf = (job) => (job?.parts || []).some(p => (p?.original || p?.seg)?.fromPreview === true);
+const missingTitle = (job) => (fromPreviewOf(job) ? (job?.listen ? ORIGINAL_PREVIEW_LISTEN : ORIGINAL_PREVIEW) : job?.listen ? ORIGINAL_MISSING_LISTEN : ORIGINAL_MISSING);
 export function playbackOriginalTitle(job) {
     if (!fromDisplayOf(job)) return '지금 읽는 대사의 원문';
-    return job?.listen ? ORIGINAL_MISSING_LISTEN : ORIGINAL_MISSING;
+    return missingTitle(job);
 }
 /** 1.9.3 원문 칸 (막대): 메시지 원문(source)과 직접 견줘 { text, title } — 사용자 10-16 「원문 일본어라고~~~!!!」
  *  (막대는 일본어 원문을 읽는데 칸에 화면 한국어 번역문이 「지금 읽는 대사의 원문」으로 떴다 — 효과음 대본 · 누르기 길의 조각은 원문 짝 자리에 화면 글이 있었다)
@@ -38,7 +43,7 @@ export function playbackOriginalIn(job, source) {
         return { text: '', title: '지금 읽는 대사의 원문' };
     }
     const text = playbackOriginal(job);
-    if (text && !src.includes(folded(text))) return { text, title: job.listen ? ORIGINAL_MISSING_LISTEN : ORIGINAL_MISSING };
+    if (text && !src.includes(folded(text))) return { text, title: missingTitle(job) };
     return { text, title: playbackOriginalTitle(job) };
 }
 /** RIFF INFO comment preserves attribution inside a WAV, including after renaming. */

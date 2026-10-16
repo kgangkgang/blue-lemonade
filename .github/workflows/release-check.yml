@@ -54,6 +54,7 @@ jobs:
           node tools/tests/diag-copy.mjs .
           node tools/tests/chat-sync-local.mjs .
           node tools/tests/translator-preview-frames.mjs .
+          node tools/tests/translator-preview-steady.mjs .
           node tools/tests/translator-stream.mjs .
           node tools/tests/prompt-hide-worlds.mjs .
           node tools/tests/translator-midword.mjs .
@@ -62,7 +63,10 @@ jobs:
           node tools/tests/translator-name-wiring.mjs .
           node tools/tests/cjk-wrap.mjs .
           node tools/tests/tts-original-panel.mjs .
+          node tools/tests/tts-preview-source.mjs .
           node tools/tests/translator-autofix.mjs .
+          node tools/tests/translator-check-fold.mjs .
+          node tools/tests/translator-fail-cache.mjs .
           node tools/tests/modelswitch-fallback-pick.mjs .
           node tools/tests/tts-integration.mjs .
           node tools/tests/tts-dethump.mjs .
@@ -139,6 +143,7 @@ jobs:
           node tools/tests/translation-segments.mjs .
           node tools/tests/translation-display.mjs .
           node tools/tests/translation-source.mjs .
+          node tools/tests/translation-source-trim.mjs .
           node tools/tests/translator-protect.mjs .
           node tools/tests/translator-auto-render.mjs .
           node tools/tests/translation-guard-reload.mjs .

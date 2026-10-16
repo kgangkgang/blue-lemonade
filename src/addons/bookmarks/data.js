@@ -529,6 +529,7 @@ export async function editMessageText(record, index, text, expected = null) {
             if (target.extra?.display_text && text !== target.mes) {
                 delete target.extra.display_text;
                 delete target.extra.original_translation_backup;
+                delete target.extra.translation_source;   // 6.9.6 번역기의 기기 간 공유 기록도 (표시와 함께)
             }
             target.mes = text;
             if (target.swipe_id !== undefined && Array.isArray(target.swipes)) target.swipes[target.swipe_id] = text;
@@ -562,6 +563,7 @@ export async function editMessageText(record, index, text, expected = null) {
         if (text !== previous.mes && message.extra?.display_text && message.extra.display_text === previous.extra?.display_text) {
             delete message.extra.display_text;
             delete message.extra.original_translation_backup;
+            delete message.extra.translation_source;   // 6.9.6
             if (rendered) { updateMessageBlock(index, message); await notifyRerender(index); }   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (앞의 MESSAGE_UPDATED 는 지나갔다)
         }
         await saveRecord(record, { messagesChanged: true });

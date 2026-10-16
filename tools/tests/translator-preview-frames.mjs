@@ -1,5 +1,5 @@
 // 번역기 2.5.5 — 묶음 번역 진행 숫자(「수정 문단 n/전체」)와 번역 중 미리 보기가 헬퍼(Tavern Helper)가 그린 상태창 틀을 지우지 않기.
-//   ① paintKeepingFrames: div.TH-render(코드 블록 + iframe)는 같은 노드 그대로 제자리, 사이 글만 새로 · 짝이 안 맞으면 손대지 않음
+//   ① paintPreview (6.9.6 전 paintKeepingFrames): div.TH-render(코드 블록 + iframe)는 같은 노드 그대로 제자리, 사이 글만 새로 · 짝이 안 맞으면 손대지 않음
 //   ② translateSegments · progressLabel: 묶음이 끝날 때마다 끝난 문단 수가 늘고, 끝난 문단은 미리 보기에 번역문으로
 // 가상 문장만 쓴다 (브라우저 없이 작은 DOM 흉내). node tools/tests/translator-preview-frames.mjs [테마 뿌리, 기본 .]
 import assert from 'node:assert/strict';
@@ -9,7 +9,8 @@ import { pathToFileURL } from 'node:url';
 
 const root = path.resolve(process.argv[2] || '.'), dir = path.join(root, 'src/addons/translator');
 const source = fs.readFileSync(path.join(dir, 'index.js'), 'utf8');
-const { paintKeepingFrames } = await import(pathToFileURL(path.join(dir, 'preview-frames.js')));
+const { paintPreview } = await import(pathToFileURL(path.join(dir, 'preview-frames.js')));   // 6.9.6 바뀐 문단만 (그 밖은 translator-preview-steady.mjs)
+const paintKeepingFrames = (host, html) => paintPreview(host, html);
 const card = await import(pathToFileURL(path.join(dir, 'display-cards.js')));
 const auto = await import(pathToFileURL(path.join(dir, 'context-auto.js')));
 const cardValueModule = await import(pathToFileURL(path.join(dir, 'card-values.js')));
@@ -145,8 +146,8 @@ await check('real translate(): several batch groups → the count climbs and fin
     assert(previews.length >= 1 && previews.every(view => view.split('\n\n').length === 12));
     assert(previews[0].startsWith('1번째 줄') && previews[0].endsWith(LINE(12)), 'finished first, the rest still original');
 });
-await check('wiring: the preview paints through paintKeepingFrames and keeps the badge; version 2.5.5', () => {
-    assert(/if \(!paintKeepingFrames\(host, html\)\) return;/.test(source));
+await check('wiring: the preview paints through paintPreview (frames kept) and keeps the badge; version 2.5.5', () => {
+    assert(/if \(!paintPreview\(host, html, \{ keep: isProgressBadge \}\)\) return;/.test(source));
     assert(!/host\.innerHTML = html;/.test(source.slice(source.indexOf('function translationPreview('), source.indexOf('function settleGuard('))), 'no wholesale repaint left');
     const version = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8')).version;   // 올라가도 깨지지 않게 — 2.5.5 이상 · 화면 표시와 같음
     assert(version.localeCompare('2.5.5', undefined, { numeric: true }) >= 0, version);

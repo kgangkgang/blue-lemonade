@@ -245,7 +245,7 @@ await test('번역기: import · refreshMessageBlock 이 다시 그린 뒤 알�
     const js = read('src/addons/translator/index.js');
     assert.match(js, /import \{ notifyRerender, isRerenderNotify \} from '\.\.\/\.\.\/rerender-notify\.js';/);
     const refresh = js.slice(js.indexOf('\nfunction refreshMessageBlock('), js.indexOf('\n}\n', js.indexOf('\nfunction refreshMessageBlock(')) + 3);
-    assert.match(refresh, /const result = updateMessageBlock\(messageId, message\);/);
+    assert.match(refresh, /const result = updateMessageBlock\(messageId, message, kept \? \{ rerenderMessage: false \} : undefined\);/, '6.9.6 미리 보기를 그렸으면 바뀐 문단만 (translator-preview-steady.mjs) — 그래도 다시 그린 뒤 알림');
     assert.match(refresh, /llm-translator:rendered/, '6.1.8 문서 이벤트는 그대로');
     assert.match(refresh, /return notifyRerender\(messageId, \{ element \}\)\.then\(\(\) => result\);/, '찾아 둔 요소를 넘기고, 기다리는 쪽은 청취자 뒤에 이어 간다');
     assert.ok(refresh.indexOf('llm-translator:rendered') < refresh.indexOf('notifyRerender('), '문서 이벤트 다음에 알림');

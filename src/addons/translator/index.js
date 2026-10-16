@@ -3,14 +3,16 @@ import { isPreset, validSettings, validImport, validPromptList, validPresetList,
 import { createGuards, watchGuard } from './translation-guard.js';
 import { observeEventCompletion } from './render-completion.js';
 import { notifyRerender, isRerenderNotify } from '../../rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe) · 그 알림의 MESSAGE_UPDATED 는 건너뛴다
-import { paintKeepingFrames } from './preview-frames.js';   // 2.5.5 번역 중 미리 보기가 헬퍼가 그린 상태창(iframe)을 지우지 않게
+import { paintPreview, previewShown, adoptPainted } from './preview-frames.js';   // 2.5.5 번역 중 미리 보기가 헬퍼가 그린 상태창(iframe)을 지우지 않게 · 6.9.6 바뀐 문단만 갈아 끼우기
+import { typesetRoot } from '../../typography.js';   // 6.9.6 미리 보기가 넣은 문단을 그 자리에서 조판
+import { dressBody } from '../../dem-expressive.js';   // 6.9.6 · 감정 대사 칸
 import { AUTO_CONTEXT, hasAutoContext, markAutoContext, captureAutoContextGuard, prepareTranslatorAutoContext } from './context-auto.js';
 import { prepareDisplayCards, withDisplayCardsProtected, withoutDisplayCards, displayCardBlocks, matchesDisplayCardStructure } from './display-cards.js';
 import { cardValues } from './card-values.js';   // 6.5.4 상태 카드 고정 값은 보내지 않고 바로 채움
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
 import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, stripDraftLeaks, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, fixPlaceholderVariants, dropLeftoverPlaceholders as dropProseLeftoverPlaceholders, repairTagPairs as repairProseTagPairs, dropStrayWords as dropProseStrayWords, dropWrapQuotes } from './translation-segments.js';
 import { hideOpenComments, looksCutShort, restoreDialogueBrackets } from './translation-segments.js';   // 2.5.1 숨긴 주석 표시 보정 · 끊긴 답 · 2.5.2 빠진 대사 괄호
-import { streamWatch } from './translation-segments.js';   // 2.6.2 묶음 흘려받기 — 문단이 닫힐 때마다 진행 숫자 · 바로 보기 (흘려받기 자체는 translation-stream.js, 처음 쓸 때 불러옴)
+import { streamWatch, hasFailMark } from './translation-segments.js';   // 2.6.2 묶음 흘려받기 — 문단이 닫힐 때마다 진행 숫자 · 바로 보기 (흘려받기 자체는 translation-stream.js, 처음 쓸 때 불러옴)
 import { createReasoningView } from './reasoning-view.js';   // 2.6.0 생각 블록(추론) 카드 · 번역해서 보기
 import { updateReasoningUI } from '../../../../../../reasoning.js';   // 2.6.0 생각 칸 다시 그리기
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
@@ -27,7 +29,7 @@ import { mountFallbackField } from '../modelswitch/fallback-field.js';   // 6.4.
 import { createGenerationParameters, getChatCompletionModel } from '../../../../../../openai.js';
 import { createTextGenGenerationData, getTextGenModel } from '../../../../../../textgen-settings.js';
 import { matchingTranslation, translationFromDisplay } from './archive-bridge.js';
-import { rememberSource, recordedSource, forgetSource } from './translation-source.js';   // 6.9.5 번역 기기 간 공유 — 고칠 때 필요한 번역 글을 채팅 파일에도
+import { rememberSource, recordedSource, forgetSource, pruneSource } from './translation-source.js';   // 6.9.5 번역 기기 간 공유 — 고칠 때 필요한 번역 글을 채팅 파일에도
 import * as LiveModels from '../../live-models.js'; // [2.2.8] 공용 모델 목록 · 모델별 요청 규칙
 import { whenMainChatIdle } from '../../main-chat-rules.js';   // 6.5.3 「생성 중」 = 본채팅 생성 · 테마의 붙잡음만 (조용한 생성 · 헬퍼 generate 는 기다리지 않음)
 import {
@@ -1246,6 +1248,10 @@ function inputBlockError() {
 // [2.1.0] 문단 나눠 보내기 · 남은 가나 정리 (순수 함수 — 테스트: backups/… /tests/chunks.test.mjs)
 const BLOCKED_CHUNK_MARK = '[차단된 문단 — 원문 그대로]';
 const MARK_TAIL = ' — 원문 그대로]'; // 5.2.9: 모든 실패 표시의 공통 꼬리 (재번역 판단은 이걸로)
+// 6.9.6 실패 표시 줄(「[번역 실패: … — 원문 그대로]」 · 「[차단된 문단 — 원문 그대로]」)이 든 번역은 캐시(메시지 · 문단)에 넣지도 · 캐시에서 쓰지도 않는다.
+//       번역 점검 자동 고치기가 실패 문단 하나만 다시 번역해 저장하면서 남은 실패 표시까지 메시지 캐시에 넣었고, 다음 「번역」은 그 캐시를
+//       그대로 붙여(「IndexedDB에서 번역문을 가져왔습니다」) 실패 문단을 다시 보내지 않았다 — 기록을 지워야 나았다. 읽을 때도 걸러 이미 들어간 줄은 저절로 낫는다
+//       (판정 hasFailMark 는 translation-segments.js)
 /** 5.2.9: 실패 원인별 표시 — 예전엔 중계 오류 · 빈 답 · 형식 오류도 전부 '차단된 문단' 이라 검열로 오해했다 */
 function failMarkOf(error) {
     if (!error) return BLOCKED_CHUNK_MARK;
@@ -2069,7 +2075,7 @@ async function translate(text, options = {}) {
                 cacheable: (body, out) => {
                     const marks = value => JSON.stringify(value.match(/\[\[__VAR_\d+__\]\]/g) || []);
                     // 5.3.4: 묶음 중 한 문단만 거절문으로 온 경우도 30일 캐시에 넣지 않는다
-                    if (!displayCards.cacheable(body, out)) return false;
+                    if (!displayCards.cacheable(body, out) || hasFailMark(out)) return false;   // 6.9.6 실패 표시 줄이 든 문단은 문단 캐시에도 (읽을 때도 이 검사를 지나 다시 요청)
                     return marks(body) === marks(out) && !linesToFix(out, body, glossaryHanKeep(), [], { english: false }).length && !looksLikeRefusal(body, out) && !noCache.has(body);   // 6.4.2 원문 한자가 남은 문단도 캐시에 안 넣는다 · 6.4.3 다시 보낸 뒤 영어 낱말만 남은 문단은 넣는다 (다시 번역할 때마다 또 사지 않게)
                 },
                 request: async (bodies, done) => {
@@ -2392,10 +2398,31 @@ function progressBadge(messageId, message = null, sourceMes = message?.mes, chat
  * 진행 표시(.llmt-progress)는 그대로 둔다. 실리태번이 그 사이 다시 그려 미리 보기가 지워지면 1초 안에 다시 그린다.
  * 그리지 않는 때: 대상이 바뀜(채팅 · 스와이프 · 글 수정) · 스트리밍 중 · 편집 창이 열림.
  * 2.5.5 헬퍼(Tavern Helper)가 iframe 으로 그린 코드 블록(상태창)은 다시 그리지 않고 제자리에 둔다 (preview-frames.js) — 전엔 날 코드로 보였다.
+ * 6.9.6 바뀐 문단만 갈아 끼운다 (paintPreview — 앞 · 뒤 문단 노드는 그대로) · 넣은 문단은 그 자리에서 조판 · 감정 대사 칸까지 (dressPainted) ·
+ *       다시 그리기는 PREVIEW_GAP_MS 에 한 번까지. 번역이 오는 동안 글자가 계속 꿈틀거렸다 — 통째로 다시 쓰면 이미 보인 문단까지 새 노드가 돼
+ *       감정 대사 애니메이션이 문단이 올 때마다 처음부터 다시 돌고, 테마가 단 칸 · 표시(문단 맨 앞 감정 칸 등)가 빠져 줄이 옆으로 밀렸다.
+ *       그려 둔 글은 TTS 가 원문 짝을 찾게 previewText 로 내준다 (저장하지 않음 — 미리 보기 중엔 display_text 가 아직 없다).
  */
+const PREVIEW_GAP_MS = 250;
+const livePreviews = new Set();   // 6.9.6 그려 둔 미리 보기 (previewText) — 끝나면(done) · 되돌리면(revert) 뺀다
+const isProgressBadge = node => node.nodeType === 1 && node.classList.contains('llmt-progress');
+/** 6.9.6 미리 보기 · 끝 그림이 넣은 문단을 그 자리에서 조판하고 감정 대사 칸을 입힌다 — 테마가 0.12 · 0.4초 뒤에 하면 넣은 문단이 한 번 더 움직였다 (이미 한 문단은 건너뛴다) */
+function dressPainted(host, message) {
+    try { dressBody(host, message); } catch { /* 감정 대사 효과가 꺼져 있으면 아무것도 안 한다 */ }
+    try { typesetRoot(host.closest('.mes') ?? host); } catch { /* 조판이 꺼져 있으면 아무것도 안 한다 */ }
+}
+/** 6.9.6 번역 중 미리 보기가 그 메시지에 지금 그려져 있으면 그 글 (display_text 와 같은 꼴, 저장하지 않은 화면 글) · 아니면 null — TTS 가 누른 줄의 원문 짝을 찾을 때 */
+function previewText(message) {
+    if (!message) return null;
+    for (const preview of livePreviews) {
+        const text = preview.textFor(message);
+        if (text !== null) return text;
+    }
+    return null;
+}
 function translationPreview(messageId, message, sourceMes, chatId, originalText) {
     const swipeId = message?.swipe_id ?? 0;
-    let latest = null, shown = false, stopped = false, timer = null;
+    let latest = null, shown = false, stopped = false, timer = null, wait = 0, lastPaint = 0, display = null, adopted = false;
     const target = () => {
         const index = resolveTranslationTarget(message, messageId, sourceMes, chatId);
         return index !== -1 && (getContext().chat?.[index]?.swipe_id ?? 0) === swipeId ? index : -1;
@@ -2407,34 +2434,59 @@ function translationPreview(messageId, message, sourceMes, chatId, originalText)
         if (processor && Number(processor.messageId) === index && !processor.isFinished && !processor.isStopped) return null;
         return element.querySelector('.mes_text');
     };
+    const record = {
+        textFor(mes) {
+            const index = display === null ? -1 : target();
+            if (index < 0 || getContext().chat?.[index] !== mes) return null;
+            const host = document.querySelector(`#chat .mes[mesid="${index}"] .mes_text`);
+            return host && previewShown(host, { keep: isProgressBadge }) ? display : null;   // 실리태번이 다시 그렸으면 화면은 이미 저장된 글
+        },
+    };
     const paint = () => {
+        clearTimeout(wait); wait = 0;
         if (stopped || latest === null) return;
         const index = target(), host = index < 0 ? null : hostOf(index);
         if (!host) return;
-        let html;
-        try { html = getContext().messageFormatting(processTranslationText(originalText, latest), message.name, message.is_system, message.is_user, index); }
+        let html, text;
+        try { text = processTranslationText(originalText, latest); html = getContext().messageFormatting(text, message.name, message.is_system, message.is_user, index); }
         catch { return; }
-        const badge = host.querySelector(':scope > .llmt-progress');
-        if (!paintKeepingFrames(host, html)) return;   // 2.5.5 헬퍼가 그린 상태창 틀(iframe)은 제자리에 두고 글만 — 못 지키면 지금 화면 그대로
-        if (badge) host.prepend(badge);
+        if (!adopted) {   // 처음 한 번: 실리태번이 그려 둔 문단 중 그대로인 것은 그대로 둔다 (그때 그린 글 = display_text ?? mes, updateMessageBlock 과 같게)
+            adopted = true;
+            const now = getContext().chat[index];
+            try { adoptPainted(host, getContext().messageFormatting(now?.extra?.display_text ?? now?.mes, message.name, message.is_system, message.is_user, index), { keep: isProgressBadge }); } catch { /* 못 맞추면 전부 새로 */ }
+        }
+        if (!paintPreview(host, html, { keep: isProgressBadge })) return;   // 2.5.5 헬퍼가 그린 상태창 틀(iframe)은 제자리에 두고 글만 — 못 지키면 지금 화면 그대로 · 6.9.6 진행 표시도 제자리
+        lastPaint = Date.now();
+        dressPainted(host, { ...message, extra: { ...message.extra, display_text: text } });   // 감정 대사는 이 글(미리 보기)에서 찾는다
         host.dataset.llmtPreview = '1';
+        display = text;
         shown = true;
+        livePreviews.add(record);
     };
-    const stop = () => { stopped = true; clearInterval(timer); timer = null; };
+    const schedule = () => {
+        if (wait) return;
+        const left = PREVIEW_GAP_MS - (Date.now() - lastPaint);
+        if (left <= 0) paint(); else wait = setTimeout(paint, left);
+    };
+    const stop = () => { stopped = true; clearInterval(timer); timer = null; clearTimeout(wait); wait = 0; };
     return {
         show(text) {
             if (stopped) return;   // 2.6.2 멈춘 뒤 늦게 온 알림이 1초 다시 그리기를 새로 띄우지 않게
             latest = String(text ?? '');
-            paint();
-            timer ??= setInterval(() => { const index = target(), host = index < 0 ? null : hostOf(index); if (host && !host.dataset.llmtPreview) paint(); }, 1000);
+            schedule();
+            // 실리태번이 그 사이 다시 그려 미리 보기가 지워졌으면 다시 (6.9.6 그린 노드가 하나도 안 남았을 때 — 전엔 표시가 남아 다시 그리지 못했다)
+            timer ??= setInterval(() => { const index = target(), host = index < 0 ? null : hostOf(index); if (host && display !== null && !previewShown(host, { keep: isProgressBadge })) paint(); }, 1000);
         },
         stop,
+        /** 6.9.6 최종본을 그렸다 — TTS 는 이제 저장된 번역문으로 */
+        done() { stop(); livePreviews.delete(record); },
         revert() {
             stop();
+            livePreviews.delete(record);
             if (!shown) return;
             const index = target();
             const host = index < 0 ? null : document.querySelector(`#chat .mes[mesid="${index}"] .mes_text`);
-            if (host?.dataset.llmtPreview) refreshMessageBlock(index, getContext().chat[index]);
+            if (host && previewShown(host, { keep: isProgressBadge })) refreshMessageBlock(index, getContext().chat[index], { gently: true });
         },
     };
 }
@@ -2499,10 +2551,19 @@ function afterGeneration(callback, quietMs = 300) {
 // [1.9.5] 편집 창이 열린 메시지도 다시 그리지 않는다. 다시 그리면 편집 창(textarea)이 지워지고, 그 뒤 ✓ 를 누르면 실리태번이
 //         화면 글자(번역문, 서식 · 그림 태그가 빠진 것)를 원문으로 저장했다 — 번역이 늦게 오는 폰에서 답을 고치려고 편집을 열면 원문이 날아갔다.
 //         데이터(display_text)는 그대로 붙고, 편집을 끝내거나 취소하면 실리태번의 MESSAGE_UPDATED 로 handleMessageEdit 이 다시 그린다.
-function refreshMessageBlock(messageId, message) {
+function refreshMessageBlock(messageId, message, { gently = false } = {}) {
     const element = document.querySelector(`#chat .mes[mesid="${messageId}"]`);
     if (!element || element.querySelector('.edit_textarea')) return;
-    const result = updateMessageBlock(messageId, message);
+    // 6.9.6 gently: 번역 중 미리 보기가 그려 둔 메시지면 실리태번과 같은 글(display_text ?? mes)을 바뀐 문단만 갈아 끼우고 나머지 뒷일(생각 칸 · 코드 복사 단추 · 그림)은
+    //       실리태번에 맡긴다 — 끝날 때 통째로 다시 그려 이미 보인 문단까지 한 번 더 움직였다. 미리 보기가 지워졌거나 못 하면 예전처럼 통째로
+    const host = gently ? element.querySelector('.mes_text') : null;
+    let kept = false;
+    if (host && previewShown(host, { keep: isProgressBadge })) {
+        try { kept = paintPreview(host, getContext().messageFormatting(message?.extra?.display_text ?? message.mes, message.name, message.is_system, message.is_user, messageId), { keep: isProgressBadge }); }
+        catch { kept = false; }
+        if (kept) dressPainted(host, message);
+    }
+    const result = updateMessageBlock(messageId, message, kept ? { rerenderMessage: false } : undefined);
     // 6.1.8 다시 그린 뒤 알림 — 다른 확장이 본문 안의 자기 블록(그림 자리 등)을 다시 그릴 수 있게. 원문 표시 · 지운 번역 · 실패한 재번역 뒤에도 온다.
     //       (EXTENSION_LLM_TRANSLATE_UI_UPDATED 는 '새 번역' 뜻으로 TTS 가 듣기 때문에 따로 둔다)
     try { document.dispatchEvent(new CustomEvent('llm-translator:rendered', { detail: { messageId: Number(messageId) } })); } catch { /* 알림은 그리기를 막지 않는다 */ }
@@ -2827,11 +2888,13 @@ function installCheckHooks() {
 /**
  * 점검할 수 있는 메시지면 { source, translation, protect, key } — 번역문 그대로 보기(함께 보기 「사용 안 함」)일 때만 ·
  * 지금 원문의 번역(해시) · 번역 중 · 원문 보기 중이 아닐 때. mes 를 주면 그 글이 저장된 번역문일 때만 (번역 중 미리 보기 · 다른 글은 아님)
+ * 6.9.6 저장된 번역문이 함께 보기 HTML(접기 · 원문 먼저 · 펼침)이면 점검하지 않는다 — 다른 기기가 그 보기로 번역해 둔 메시지를 이 기기(「사용 안 함」)가
+ *       원문이 섞인 이상한 번역으로 보고 그 문단을 자동으로 다시 번역(유료 요청)해 표시를 섞어 놓았다 (6.9.4 부터). 점검 자체는 그대로
  */
 function checkStateOf(id, mes) {
     if (extensionSettings.translation_check === false || (extensionSettings.translation_display_mode || 'disabled') !== 'disabled') return null;
     const context = getContext(), message = context.chat?.[id], extra = message?.extra, shown = extra?.display_text;
-    if (!message || message.is_user || typeof shown !== 'string' || !shown.trim() || extra.original_translation_backup) return null;
+    if (!message || message.is_user || typeof shown !== 'string' || !shown.trim() || extra.original_translation_backup || FOLD_MARKUP.test(shown)) return null;
     if ((mes !== undefined && mes !== shown) || isTranslationInProgress(id)) return null;
     const source = substituteParams(message.mes, context.name1, message.name);
     if (shown === source || !extra.original_text_hash || extra.original_text_hash !== originalHashOf(source)) return null;
@@ -2950,6 +3013,7 @@ async function hideStaleTranslation(message, onHide = null) {
     const original = substituteParams(message.mes, context.name1, message.name);
     if (extra.original_text_hash === originalHashOf(original)) return false;
     delete extra.display_text; delete extra.original_translation_backup;
+    forgetSource(extra);   // 6.9.6 표시를 지우면 기기 간 공유 기록도 (남으면 스와이프 기록에 복사돼 쌓였다)
     onHide?.();
     refreshMessageBlock(id, message); syncMesToSwipe(id);
     try { await context.saveChat(); } catch (error) { console.warn('[LLM Translator] 원문 표시 저장 실패:', error); }
@@ -3088,7 +3152,8 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
             delete target.extra.original_translation_backup;
             rememberTranslation(target, originalText, translation); // 6.9.5
 
-            refreshMessageBlock(targetId, target);
+            refreshMessageBlock(targetId, target, { gently: !!runToken.preview });   // 6.9.6 미리 보기를 그렸으면 바뀐 문단만
+            runToken.preview?.done();
 
             // 번역 완료 이벤트 발생
             eventSource.emit('EXTENSION_LLM_TRANSLATE_DONE', {
@@ -4406,6 +4471,16 @@ async function localOrDisplayedTranslation(message, originalText) {
     if (typeof displayed !== 'string' || !displayed.trim() || displayed === originalText || !matchesDisplayCardStructure(originalText, displayed) || FOLD_MARKUP.test(displayed) || /<[a-z][\s\S]*>/i.test(withoutProtectedBlocks(displayed))) return null;
     return displayed;
 }
+/** 6.9.6 쓸 일이 없어진 기기 간 공유 기록을 뗀다 (translation-source.js pruneSource) — 6.9.5 가 남긴 것: 표시를 지운 길 · 넘겨 새로 만든 스와이프로 복사된 옛 기록 */
+function pruneSources(chat) {
+    let n = 0;
+    for (const message of chat || []) {
+        if (pruneSource(message?.extra)) n++;
+        for (const info of Array.isArray(message?.swipe_info) ? message.swipe_info : []) if (pruneSource(info?.extra)) n++;
+    }
+    if (n) logDebug(`[6.9.6] ${n} stale translation_source records dropped (saved with the next chat save)`);
+    return n;
+}
 function migrateOriginalCopies(chat) {
     let n = 0;
     for (const message of chat || []) {
@@ -5265,6 +5340,7 @@ async function handleMessageEdit(messageId) {
 
             // display_text 삭제 (실제로 수정된 경우에만)
             delete message.extra.display_text;
+            forgetSource(message.extra);   // 6.9.6
             // 2026-10-06: 원문 보기 중에 고쳤으면 치워 둔 옛 번역(백업)도 지운다 — 남으면 아래에서 새 원문 해시가 찍혀 교정 재번역 ·
             //             /llmGetTranslation 이 고치기 전 번역을 지금 번역으로 썼다 (휴지통 · 수정창 비우기와 같게)
             delete message.extra.original_translation_backup;
@@ -5298,6 +5374,7 @@ async function handleMessageEdit(messageId) {
             // 기존 동작 유지
             delete message.extra.display_text;
             delete message.extra.original_translation_backup; // 2026-10-06: 백업도 함께 (위와 같게)
+            forgetSource(message.extra);   // 6.9.6
             refreshMessageBlock(messageId, message);
 
             // [변경] 자동 번역 모드 확인 (위와 동일 로직)
@@ -5589,12 +5666,15 @@ function initializeEventHandlers() {
                 return;
             }
             delete message.extra.display_text;
+            forgetSource(message.extra);   // 6.9.6
 
             // UI에서도 showing-original 플래그 초기화
             const messageBlock = $(`#chat .mes[mesid="${messageId}"]`);
             const textBlock = messageBlock.find('.mes_text');
             textBlock.removeData('showing-original');
         }
+        // 6.9.6 넘겨 새로 만들 때 실리태번은 display_text 만 지운다(clearMessageData) — 남은 옛 기록이 새 스와이프 기록(swipe_info)으로 복사되기 전에 뗀다
+        if (message?.extra) pruneSource(message.extra, { original: substituteParams(message.mes, context.name1, message.name), hash: getStringHash });
 
         // Automatic translation is queued by installAutoRenderCompletion after every swipe listener finishes.
     });
@@ -5684,6 +5764,7 @@ function initializeEventHandlers() {
         if (glossaryEditorScopeChanged()) resetGlossaryEditor();
         renderGlossarySuggestions();   // 6.4.5 100ms 뒤 다시 그리기 전에도 이전 캐릭터의 칩이 남지 않게
         migrateOriginalCopies(getContext().chat); // [1.7.1] 원문 사본 → 해시 (파일 크기)
+        pruneSources(getContext().chat);   // 6.9.6 표시가 없어진 기기 간 공유 기록 (메시지 · 스와이프 기록) — 다음 저장 때 같이 빠진다
         setTimeout(() => {
             repairShownTranslations(); // 6.2.1 저장된 번역문의 빠진 닫는 태그 · 못 풀린 자리표시자 (그려진 것만 다시 그린다)
             addButtonsToExistingMessages();
@@ -5834,6 +5915,7 @@ function openDB() {
 
 // 데이터 추가 함수 수정
 async function addTranslationToDB(originalText, translation) {
+    if (hasFailMark(translation)) return 'skipped';   // 6.9.6 실패 표시가 든 글은 어느 길(수정 저장 · 고른 글 지우기 · 가져오기 …)로도 캐시에 넣지 않는다
     const db = await openDB();
     const provider = extensionSettings.llm_provider;
     const model = extensionSettings.llm_model;
@@ -6050,6 +6132,8 @@ function publishTranslatorAPI() {
         //       (사용자 규칙 뒤에 붙음 · 메모리에만 · 같은 id 는 바꿔 씀). unprotect(id) 로 뗀다. 성공하면 true
         protect: (id, regex, options) => protectBlock(id, regex, options),
         unprotect: id => unprotectBlock(id),
+        // 6.9.6 previewText(message) → 번역 중 미리 보기가 그 메시지에 지금 그려져 있으면 그 글(display_text 와 같은 꼴, 저장 안 함) · 아니면 null (TTS 원문 짝 찾기)
+        previewText: message => previewText(message),
     };
 }
 
@@ -6187,6 +6271,7 @@ async function deleteCachedTranslation(originalText) {
     return deleteTranslationByOriginalText(originalText);
 }
 async function storeTranslationQuietly(originalText, translation) {
+    if (hasFailMark(translation)) { console.warn('[LLM Translator] 번역 실패 표시가 남은 글이라 캐시에 넣지 않았어요 (다시 번역하면 그 문단만 다시 보내요)'); return; }   // 6.9.6
     // 5.4.1: 원문을 베껴 품은 번역(원문+화살표+번역 · ⟦n] 표시)은 캐시에 넣지 않는다 — 다시 번역해도 캐시에서 같은 글이 나왔다
     if (hasSourceEcho(originalText, translation)) { console.warn('[LLM Translator] 번역문에 원문이 섞여 있어 캐시에 넣지 않았어요'); return; }
     try { await addTranslationToDB(originalText, translation); }
@@ -6207,7 +6292,8 @@ async function getTranslationFromDB(originalText) {
             //         뒤에 넣은 좋은 번역이 있어도 '없음' 이었다
             const records = event.target.result || [];
             // 5.4.1: 원문 되풀이가 섞인 번역(원문+화살표+번역 · ⟦n] 표시)도 없는 셈 친다 — 다시 번역하면 새로 받는다
-            const record = records.reverse().find(item => !looksLikeRefusal(originalText, item.translation) && !hasSourceEcho(originalText, item.translation) && matchesDisplayCardStructure(originalText, item.translation));
+            // 6.9.6 실패 표시가 든 줄(6.9.5 까지 점검 자동 고치기 등이 넣은 것)도 없는 셈 친다 — 다시 번역하면 그 문단만 다시 보낸다
+            const record = records.reverse().find(item => !looksLikeRefusal(originalText, item.translation) && !hasSourceEcho(originalText, item.translation) && matchesDisplayCardStructure(originalText, item.translation) && !hasFailMark(item.translation));
             resolve(record ? record.translation : null);
         };
         request.onerror = (e) => {

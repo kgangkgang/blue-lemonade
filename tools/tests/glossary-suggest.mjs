@@ -299,7 +299,7 @@ function harness({ enabled = true, persona = 'Mina', character = 'Corvin', entri
         const event_types = { CHAT_CHANGED: 'chat' };
         const eventSource = { on: (type, fn) => { listeners[type] = fn; } };
         const setTimeout = fn => { timers.push(fn); };
-        const publishGlossaryNames = () => {}, migrateOriginalCopies = () => {}, repairShownTranslations = () => {};
+        const publishGlossaryNames = () => {}, migrateOriginalCopies = () => {}, pruneSources = () => {}, repairShownTranslations = () => {};   // 6.9.6 pruneSources (translation-source-trim.mjs)
         const addButtonsToExistingMessages = () => {}, updateButtonVisibility = () => {}, loadRulePrompt = () => {};
         ${resetCode}
         ${scopeCode}

@@ -107,6 +107,10 @@ assert.ok(cell('> .range-block-title',{'grid-column':'1 !important','grid-row':'
 assert.ok(cell('.range-block-counter',{'grid-column':'2 !important','grid-row':'1 !important'}),'숫자칸은 윗줄 오른쪽');
 assert.ok(cell('.range-block-range',{'grid-column':'1 / -1 !important','grid-row':'2 !important','width':'100% !important'}),'슬라이더는 아랫줄 칸 너비 꽉');
 
+// 두 칸 이름 기준선 맞춤은 이름 줄이 있는 칸만 — 격자 전체에 걸면 스위치 칸(줄 높이 채움 · 가운데)이 어긋난다
+assert.ok(!items.some(({sel,r})=>sel==='body.salty #left-nav-panel #range_block_openai'&&/baseline/.test(decl(r.decls,'align-items')||'')),'생성 설정 격자 전체에 align-items: baseline 금지');
+assert.ok(items.some(({sel,r})=>sel==='body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title)'&&decl(r.decls,'align-self')==='baseline'),'이름 줄이 있는 칸은 기준선 맞춤');
+
 // 큰 글씨 한 열 내림은 em 기준으로만: 생성 설정의 마지막(이기는) 열 규칙은 칸 최소 em · 열 최소 40%(최대 두 칸) 자동 맞춤
 const gen=items.filter(({sel,r})=>!narrow(r)&&!narrowMedia(r)&&sel==='body.salty #left-nav-panel #range_block_openai'&&decl(r.decls,'grid-template-columns'));
 const last=decl(gen[gen.length-1].r.decls,'grid-template-columns').replace(/\s+/g,' ');

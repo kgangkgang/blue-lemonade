@@ -271,16 +271,19 @@ function segOpts(mes, s, final, readThoughts = false) {
         routes: readThoughts && (!routes.thought || routes.thought === 'skip') ? { ...routes, thought: 'character' } : routes,
     };
 }
-/** 메시지의 글 두 벌: 원문 세그먼트 + 번역문 세그먼트(있으면, 원문과 짝 맞춤). 스트리밍 중엔 원문만 */
-function sourcesOf(mes, s, { final = true, text = null, readThoughts = false } = {}) {
+/** 메시지의 글 두 벌: 원문 세그먼트 + 번역문 세그먼트(있으면, 원문과 짝 맞춤). 스트리밍 중엔 원문만.
+ *  6.9.6 preview (대사 누르기 · 이어 듣기만): 번역 중 미리 보기가 그려져 있으면 그 글을 번역문으로 (translation.shownDisplay) → 돌려주는 preview: true */
+function sourcesOf(mes, s, { final = true, text = null, readThoughts = false, preview = false } = {}) {
     const original = sub(text != null ? text : mes.mes);
     const opts = segOpts(mes, s, final, readThoughts);
     const orig = safeSegment(original, opts);
-    let disp = null;
+    let disp = null, shownPreview = false;
     if (final && text == null) {
-        const d = mes.extra?.display_text;
+        const shown = typeof translation.shownDisplay === 'function' ? translation.shownDisplay(mes, { preview }) : { text: mes.extra?.display_text, preview: false };
+        const d = shown.text;
         if (typeof d === 'string' && d.trim() && d !== mes.mes) {
             try { disp = pairSegments(orig, safeSegment(sub(speechDisplay(d)), opts)); } catch { disp = null; }
+            shownPreview = !!disp && shown.preview;
         }
     }
     // 1.9.1 같은 문단에서 서술로만 끊긴 대사 · 말 기울임 묶음 (finishJobs join 이 같은 목소리일 때 잇는다). 원문 · 번역문 표시가 섞이지 않게 앞글자를 달리
@@ -289,7 +292,7 @@ function sourcesOf(mes, s, { final = true, text = null, readThoughts = false } =
         markJoins(orig, s.routes || {}, 'o');
         if (disp) markJoins(disp, s.routes || {}, 'd');
     }
-    return { orig, disp };
+    return { orig, disp, preview: shownPreview };
 }
 function safeSegment(text, opts) {
     try { return segmentMessage(text, opts) || []; } catch (e) { log('err', `세그먼트 실패: ${String(e?.message || e).slice(0, 40)}`); return []; }
@@ -2567,9 +2570,11 @@ function clickedPair(src, seg, { lt = '' } = {}) {
     }
     const miss = !o && !!src.disp;                                        // 번역문이 있는데 원문을 못 찾음 → 화면 글로 읽음 (기록만)
     // 6.3.8 원문 짝을 못 찾아 화면 글로 읽는 조각에 표시 — 막대의 칸 제목이 「원문」이라고 하지 않게 (playbackOriginalTitle)
-    if (thought && (o || d)) { const c = named(keep(o || d)); if (miss) c.fromDisplay = true; return { pair: { orig: [c], disp: null }, real, miss }; }
-    if (o || d) { const c = keep(o || d); if (asIs) c.listenAsIs = true; if (miss) c.fromDisplay = true; return { pair: { orig: [c], disp: null }, real, miss }; }
-    return { pair: { orig: [miss ? { ...seg, fromDisplay: true } : seg], disp: null }, real, miss };             // 화면에만 있는 글 (즉석 조각)
+    // 6.9.6 번역 중 미리 보기 글로 찾다 못 찾은 줄(아직 덜 온 문단)은 fromPreview 도 — 칸 제목 · 알림이 그 까닭을 말한다
+    const mark = (c) => { if (miss) { c.fromDisplay = true; if (src.preview) c.fromPreview = true; } return c; };
+    if (thought && (o || d)) { const c = mark(named(keep(o || d))); return { pair: { orig: [c], disp: null }, real, miss }; }
+    if (o || d) { const c = keep(o || d); if (asIs) c.listenAsIs = true; mark(c); return { pair: { orig: [c], disp: null }, real, miss }; }
+    return { pair: { orig: [miss ? mark({ ...seg }) : seg], disp: null }, real, miss };             // 화면에만 있는 글 (즉석 조각)
 }
 /**
  * 누른 조각들 → 작업 (엔진 붙이기 전, 조각마다 목록 하나). 탭과 미리 만들기가 같은 길을 쓴다 (캐시 키가 같게).
@@ -2590,12 +2595,12 @@ function noteMiss(mesId, seg) {
  * 글 차례대로 한 줄에 넣는다 → finishJobs(join) 가 같은 목소리 · 화자끼리 잇고, keep 이 누른 조각이 든 작업만 남긴다 (같은 문단의 다른 사람 대사는 빠짐).
  * 자동 읽기와 같은 묶음 · 같은 글이라 같은 캐시 열쇠. played(jobs) = 실제로 넣은 조각들 (누른 모양 — 미리 만들기 「다음 한 줄」 · 이어 듣기가 묶음 뒤로 넘어가게)
  */
-function tapJobs(mesId, mes, segs, { readThoughts = null, awaitDisplay = false, expand = true } = {}) {
+function tapJobs(mesId, mes, segs, { readThoughts = null, awaitDisplay = false, expand = true, preview = false } = {}) {
     const s = settings();
     const srcs = new Map();
     const srcFor = (rt) => {
         if (!srcs.has(rt)) {
-            const src = sourcesOf(mes, s, { final: true, readThoughts: rt });
+            const src = sourcesOf(mes, s, { final: true, readThoughts: rt, preview });   // 6.9.6 누르기 · 이어 듣기는 미리 보기 글로도
             const { origOf } = alignLists(src.orig, src.disp);
             srcs.set(rt, { src, full: analysisLookup(cachedAnalysis(mesId), src.orig, src.disp, origOf) });
         }
@@ -2607,6 +2612,8 @@ function tapJobs(mesId, mes, segs, { readThoughts = null, awaitDisplay = false, 
     const build = (src, full, seg, cp = clickedPair(src, seg, { lt })) => {
         const { pair, real, miss } = cp;
         if (miss) noteMiss(mesId, seg);
+        // 6.9.6 미리 보기 글이 덜 와서(그 문단이 아직 원문이거나 화면과 다름) 원문 짝이 없는 줄 — 지금처럼 화면 글로 읽되 까닭을 알린다
+        if (miss && src.preview) toastOnce(lt ? '번역이 아직 덜 온 줄이라 원문을 못 찾았어요 — 화면 글을 옮겨 읽어요' : '번역이 아직 덜 온 줄이라 원문을 못 찾았어요 — 화면 글로 읽어요', 'info');
         const lookup = (x) => full(real.get(x) || x) || (real.has(x) ? full(x) : null);
         const built = buildJobs(mesId, mes, pair, { startSeg: 0, final: true, lookup, tapped: true, awaitDisplay });
         missing = missing || built.missing;
@@ -2700,11 +2707,11 @@ export function lineJobs(mesId, mes, segs, { awaitDisplay = false } = {}) {
  * 1.5.4 누른 대사 바로 앞 지문(서술 · 행동)에서 찾은 효과음 (설정 sfx.tap) → { before, after }. 1.5.6 마지막 대사 뒤 지문의 소리는 after 로. 지문을 읽지 않는 설정에서는 메시지 읽기가 아니라 대사 누르기만 쓰므로
  * 효과음이 한 번도 안 났다 — 저장된 분석의 신호(after = 앞 대화문 수)를 누른 대사의 차례와 맞춰, 그 대사 앞에 넣는다. 분석이 없으면 speakSegments 가 먼저 분석한다.
  */
-function tapSfxJobs(mesId, mes, segs, s) {
+function tapSfxJobs(mesId, mes, segs, s, { preview = false } = {}) {
     if (!(s.sfx?.enabled === true && s.sfx?.auto !== false && s.sfx?.tap !== false)) return { before: [], after: [] };
     const cues = sfxCues(mesId);
     if (!cues.length) return { before: [], after: [] };
-    let src; try { src = sourcesOf(mes, s, { final: true }); } catch { return { before: [], after: [] }; }
+    let src; try { src = sourcesOf(mes, s, { final: true, preview }); } catch { return { before: [], after: [] }; }
     const { origOf } = alignLists(src.orig, src.disp);
     const dial = (src.orig || []).filter(x => x?.kind === 'dialogue' && x.text);
     const dispDial = (src.disp || []).filter(x => x?.kind === 'dialogue' && x.text);
@@ -2754,7 +2761,7 @@ export function speakSegments(mesId, segs, { expand = true } = {}) {
     const thoughtsOnly = segs.every(x => !x?.text || x.kind === 'thought');
     const run = (tried = false) => {
         const s = settings();
-        const t = tapJobs(mesId, mes, segs, { readThoughts: thoughts, expand });
+        const t = tapJobs(mesId, mes, segs, { readThoughts: thoughts, expand, preview: true });   // 6.9.6 누른 줄은 번역 중 미리 보기 글로도 원문 짝
         const flat = t.lines.flat();
         // 1.4.4 듣는 언어: 누른 줄이 아직 안 옮겨졌으면 이 메시지(자동 읽기 줄 + 누른 줄)를 한 요청으로 옮긴 뒤 다시 (한 번만 — 못 옮기면 원문)
         if (!tried && listenPendingOf(flat).length) { runPrepared(mesId, mes, { extra: flat, run: () => run(true) }); return true; }
@@ -2765,7 +2772,7 @@ export function speakSegments(mesId, segs, { expand = true } = {}) {
             return false;
         }
         jobs[0].tapT0 = t0;
-        const cues = tapSfxJobs(mesId, mes, segs, s);
+        const cues = tapSfxJobs(mesId, mes, segs, s, { preview: true });
         enqueue([...cues.before, ...jobs, ...cues.after], { append: false });   // 1.5.4 누른 대사 앞 지문의 효과음을 먼저 · 1.5.6 마지막 대사 뒤 지문은 이어서
         // 1.9.1 묶음을 이어 읽었으면 그 조각들 — 「다음 한 줄」 · 이어 듣기가 묶음의 마지막 조각 다음으로 넘어가게 (묶음이 아니면 누른 조각 그대로)
         const heard = segs.length === 1 ? t.played(jobs) : [];
@@ -2777,7 +2784,7 @@ export function speakSegments(mesId, segs, { expand = true } = {}) {
     };
     // 1.4.4 누른 줄도 이 메시지의 듣는 언어 묶음에 넣는다 (번역 기다리기 · 분석 뒤 한 요청). 그 단계를 거친 뒤엔 다시 옮기지 않고 읽는다 (run(true)) —
     //   전엔 누른 줄이 자동 읽기 줄이 아니면 요청이 둘이었고, 못 옮긴 줄은 같은 줄로 한 번 더 보냈다. 이미 옮기는 중(listen)이면 그 요청에 없는 줄일 수 있어 끝난 뒤 한 번 더 본다
-    const tapFlat = () => tapJobs(mesId, mes, segs, { readThoughts: thoughts, expand }).lines.flat();
+    const tapFlat = () => tapJobs(mesId, mes, segs, { readThoughts: thoughts, expand, preview: true }).lines.flat();
     if (joinWaiting(mesId, mes, waiting && waiting.phase !== 'listen' ? () => run(true) : run, tapFlat)) return true;
     if (thoughtsOnly || !analysisWanted(mesId, mes, settings())) return run();
     runPrepared(mesId, mes, { analyse: true, extra: tapFlat, run: () => run(true) });
@@ -2817,7 +2824,8 @@ function externalTapSegments(mes, { text = '', index = null }) {
 export const _forTest = { finishJobs, paramsFor, listenNeeds, listenPendingOf, listenFill, sceneJobs, setListenTimeout: (ms) => { LISTEN_TIMEOUT_MS = ms; }, deadEngines: () => [...deadEngines], playCool, streamDead: () => (streamDead ? { mesId: streamDead.mesId, set: [...streamDead.set] } : null),
     // 1.9.1 tools/tests/tts-join.mjs: 메시지 읽기(speakNow · 내려받기)와 같은 작업 — 소리 대본 · 효과음이 없는 답장
     autoJobs: (mesId, from = 0) => { const mes = msg(mesId); const s = settings(); return finishJobs(buildJobs(mesId, mes, sourcesOf(mes, s, { final: true }), { startSeg: from, final: true }).jobs, s, { merge: false, join: true }); },
-    listenHead, listenText, waitingText: () => (waiting ? waiting.text : null), PREP_TEXT };   // 1.9.1 듣는 언어 (tts-listen · tts-scene)
+    listenHead, listenText, waitingText: () => (waiting ? waiting.text : null), PREP_TEXT,   // 1.9.1 듣는 언어 (tts-listen · tts-scene)
+    tapJobs };   // 6.9.6 누르기 작업 (tts-preview-source.mjs — 번역 중 미리 보기 글로 원문 짝)
 /** 이 답장을 스트리밍하며 실제로 읽어 줬나 (미리 만들기가 건너뜀 — 분석 전 키라 다시 만들면 두 번 값을 치름) */
 export function wasStreamRead(mesId) {
     const mes = msg(mesId);

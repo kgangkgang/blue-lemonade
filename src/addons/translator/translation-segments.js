@@ -323,6 +323,10 @@ export function structureLines(lines) {
 /** 통째 접기(문단 수가 달라 줄마다 못 맞출 때)의 요약 · 본문: 빈 줄로 나뉜 문단마다 <p> 하나. 문단 안 줄바꿈은 <br>.
  *  예전엔 <br><br> 로 이어서 첫 줄 들여쓰기가 첫 문단에만 걸렸다. <p> 면 본문 문단과 같은 규칙(간격 · 들여쓰기 · 대사 조판)이 그대로 걸리고,
  *  번역 기능이나 테마를 꺼도 문단이 붙지 않는다. 줄 중간에 있으므로 마크다운의 블록 처리에 걸리지 않고, 실리태번 정화 뒤에도 summary > p 로 남는다 (격리 서버 확인) */
+/** 6.9.6 번역 실패 표시 줄(index.js failMarkOf · BLOCKED_CHUNK_MARK — 「[… — 원문 그대로]」)이 든 글인가. 그런 글은 메시지 · 문단 캐시에 넣지도 쓰지도 않는다 */
+const FAIL_LINE = /^\[[^\n]* — 원문 그대로\][ \t]*$/m;
+export const hasFailMark = text => typeof text === 'string' && FAIL_LINE.test(text);
+
 export function paragraphBlocks(text) {
     return String(text ?? '').split(/\n[\t ]*\n(?:[\t ]*\n)*/).filter(part => part.trim())
         .map(part => `<p>${part.replace(/^\n+|\n+$/g, '').replace(/\n/g, '<br>')}</p>`).join('');

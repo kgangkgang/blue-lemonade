@@ -1,13 +1,23 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.9.5/blue-lemonade-6.9.5.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.9.6/blue-lemonade-6.9.6.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.9.5 · 최신 업데이트</summary>
+<summary>6.9.6 · 최신 업데이트</summary>
+
+- LLM 번역: 번역 중 미리 보기에서 이미 보인 글자가 흔들리지 않아요. 미리 보기 중에 대사를 눌러도 TTS 가 원문을 읽어요 (TTS 1.9.6).
+- LLM 번역: 일부 문단이 실패(시간 초과 등)한 번역을 다시 「번역」하면 이제 실패한 문단만 다시 보내요 — 실패 표시가 기록에 남아 그대로 다시 붙던 것을 고쳤어요. 이미 남은 기록도 저절로 나아요.
+- LLM 번역: 다른 기기의 원문 함께 보기 번역을 번역 점검이 이상한 번역으로 보고 다시 번역하던 것을 고쳤어요. 기기 간 고치기 기록도 짧아졌고, 번역을 지우면 함께 지워요 (번역 2.7.2 · 북마크 1.5.8).
+- 조절칸 2열 다듬기: 스위치 짝은 가운데로 맞추고, 사용자 설정은 큰 글씨(24px)에서도 2열이에요. 처음 설정 안내가 떠 있는 동안 키 · 누름이 뒤 채팅으로 새지 않고, 설정 검색이 흔한 말에 엉뚱한 항목을 먼저 보이던 것을 다듬었어요.
+
+</details>
+
+<details>
+<summary>6.9.5 · 파라미터 2열 되돌리기 · 처음 설정 안내 · 설정 검색</summary>
 
 - 실리태번 생성 설정(프리셋) · 사용자 설정 · 월드 인포 · API · 서식 · 정규식 화면과 테마 설정 창의 조절칸이 폰 · PC 모두 다시 두 칸씩 나란히 보여요. 칸 안은 이름 · 값이 위, 슬라이더가 아래예요. 6.8.0 에서 한 줄에 하나로 바뀐 것을 되돌렸어요 (아주 큰 글씨에서만 한 줄).
 - 테마 설정 검색이 한글을 치는 동안에도 첫 글자부터 결과를 보여 줘요 — 띄어쓰기를 안 해도 돼요. 「확장 탭에 보이기」 줄처럼 검색에서 빠져 있던 설정 11개도 이제 찾을 수 있어요.

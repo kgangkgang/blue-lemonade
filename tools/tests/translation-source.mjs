@@ -56,7 +56,7 @@ await test('믿지 않는 때: 원문이 바뀜 · 원문 해시가 다름 · �
     assert.equal(S.recordedSource({ ...extra, original_text_hash: '1' }, { original: ORIGINAL, hash }), null);
     assert.equal(S.recordedSource({ ...extra, display_text: RAW + '<img data-slot="1">' }, { original: ORIGINAL, hash }), null);   // 옛 판 · 다른 확장이 고친 표시
     assert.equal(S.recordedSource({ ...extra, display_text: '' }, { original: ORIGINAL, hash }), null);
-    assert.equal(S.recordedSource({ ...extra, [S.SOURCE_KEY]: { ...extra[S.SOURCE_KEY], v: 2 } }, { original: ORIGINAL, hash }), null);
+    assert.equal(S.recordedSource({ ...extra, [S.SOURCE_KEY]: { ...extra[S.SOURCE_KEY], v: 3 } }, { original: ORIGINAL, hash }), null);   // 6.9.6 v: 2 는 표시에서 떼어 내는 짧은 기록 (translation-source-trim.mjs)
     assert.equal(S.recordedSource({}, { original: ORIGINAL, hash }), null);
     assert.equal(S.rememberSource({}, { original: ORIGINAL, raw: '   ', display: '   ', hash }), false);
     const noHash = attach(RAW); delete noHash.original_text_hash;   // 해시 전 옛 메시지 모양도 원문 해시 기록으로 판단
@@ -112,7 +112,7 @@ await test('수정 창: 이 기기 IndexedDB 에 옛 번역이 남아 있어도 
 
 await test('기록을 적는 자리: 새 번역 · 다시 번역 · 점검 저장 · 수정 저장 · 고른 글 지우기 · 고른 글 다시 번역 · 북마크 · 지울 때 함께 지움', () => {
     assert.equal((source.match(/rememberTranslation\((?:target|message), (?:originalText|state\.source|originalTextForDbKey), (?:retranslation|next|translation|newText)\)/g) || []).length, 4);
-    assert.equal((source.match(/forgetSource\(/g) || []).length, 4);
+    assert.equal((source.match(/forgetSource\(/g) || []).length, 8);   // 6.9.6 표시를 지우는 길 넷 더 (translation-source-trim.mjs)
     assert.match(source, /remember: \(extra, source, raw, display\) => rememberSource\(extra, \{ original: source, raw, display, hash: getStringHash \}\)/);
     assert.match(read('src/addons/translator/selection/delete.js'), /hooks\.remember\?\.\(extra, key, newTrans, display\)/);
     assert.match(read('src/addons/translator/selection/translation.js'), /job\.remember\?\.\(extra, job\.source, shown, display\)/);
