@@ -505,12 +505,13 @@ await test('가볍게: 바뀐 파일에 새 상주 관찰자 · 타이머 없음
         assert.ok(body.length > 50 && !/MutationObserver|setInterval|setTimeout|requestAnimationFrame|addEventListener/.test(body), body.slice(0, 40));
     }
 });
-await test('버전 1.9.2: version.js · manifest · style.css · README 첫 줄', () => {
+await test('버전 1.9.2 이상: version.js · manifest · style.css · README 첫 줄이 같은 판', () => {   // 1.9.3 판이 올라가도 깨지지 않게
     const read = (f) => fs.readFileSync(path.join(theme, 'src/addons/tts', f), 'utf8');
-    assert.match(read('version.js'), /TTS_VERSION = '1\.9\.2'/);
-    assert.equal(JSON.parse(read('manifest.json')).version, '1.9.2');
-    assert.match(read('style.css'), /--lv-css-version: "1\.9\.2";/);
-    assert.equal(read('README.md').split('\n')[0], '# TTS 1.9.2');
+    const version = read('version.js').match(/TTS_VERSION = '([\d.]+)'/)[1];
+    assert.ok(version.localeCompare('1.9.2', undefined, { numeric: true }) >= 0, version);
+    assert.equal(JSON.parse(read('manifest.json')).version, version);
+    assert.ok(read('style.css').includes(`--lv-css-version: "${version}";`));
+    assert.equal(read('README.md').split('\n')[0], `# TTS ${version}`);
     assert.match(read('README.md'), /## 1\.9\.2 문단 전체가 기울임인 속마음/);
     assert.match(read('README.md'), /## 1\.9\.1 한 문단 이어 읽기/);
 });

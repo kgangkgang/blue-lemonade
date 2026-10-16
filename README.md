@@ -1,13 +1,20 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.9.2/blue-lemonade-6.9.2.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.9.3/blue-lemonade-6.9.3.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.9.2 · 최신 업데이트</summary>
+<summary>6.9.3 · 최신 업데이트</summary>
+
+- TTS 재생 막대의 「원문」 칸이 화면 번역문(한국어)을 원문이라고 보이던 것을 고쳤어요. 이제 칸은 메시지 원문과 직접 견줘 정해요 — 읽는 글이 이미 원문이면 그 글 전체를(막대에서 잘리는 긴 줄), 원문에 없는 글이면 「원문을 못 찾았어요」라고 사실대로 보여 줘요 (TTS 1.9.3).
+
+</details>
+
+<details>
+<summary>6.9.2 · RP 용어 되돌리기 · 중국어 줄바꿈</summary>
 
 - 실리태번 한국어 다듬기에서 RP 하는 사람들이 쓰는 말은 원래대로 두었어요 — 「사칭」(대신 쓰기 → 사칭), 「대체 인사말」(다른 첫 메시지 → 대체 인사말).
 - 본문 속 중국어 · 일본어 덩어리가 글자 사이에서 자연스럽게 줄바꿈돼요. 한국어는 지금처럼 낱말 단위로 끊고, 띄어쓰기 없는 중국어 문장이 통째로 다음 줄로 넘어가 윗줄이 벌어지던 것을 고쳤어요 (「중국어 (한국어 번역)」 같은 줄).

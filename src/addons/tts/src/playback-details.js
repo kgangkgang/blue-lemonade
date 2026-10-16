@@ -23,6 +23,23 @@ export function playbackOriginalTitle(job) {
     if (!fromDisplayOf(job)) return '지금 읽는 대사의 원문';
     return job?.listen ? ORIGINAL_MISSING_LISTEN : ORIGINAL_MISSING;
 }
+/** 1.9.3 원문 칸 (막대): 메시지 원문(source)과 직접 견줘 { text, title } — 사용자 10-16 「원문 일본어라고~~~!!!」
+ *  (막대는 일본어 원문을 읽는데 칸에 화면 한국어 번역문이 「지금 읽는 대사의 원문」으로 떴다 — 효과음 대본 · 누르기 길의 조각은 원문 짝 자리에 화면 글이 있었다)
+ *  · 읽는 글이 조각마다 원문에 그대로 있으면 칸 = 읽는 글 전체 (20자 넘을 때만 — 짧으면 막대에 다 보임)
+ *  · 원문 짝이라고 둔 글이 원문에 없으면 화면 글 — 「원문」이라 하지 않는다 · 원문이 없는 메시지는 예전 규칙 */
+export function playbackOriginalIn(job, source) {
+    if (!job || job.sceneKind) return { text: '', title: playbackOriginalTitle(job) };
+    const src = folded(source || '');
+    if (!src) return { text: playbackOriginal(job), title: playbackOriginalTitle(job) };
+    const spoken = String(job.text || '').trim();
+    const pieces = (job.parts?.length ? job.parts.map(p => p.text ?? job.text) : [job.text]).map(folded).filter(Boolean);
+    if (spoken && pieces.length && pieces.every(piece => src.includes(piece))) {
+        return { text: [...spoken].length > 20 ? spoken : '', title: '지금 읽는 대사의 원문' };
+    }
+    const text = playbackOriginal(job);
+    if (text && !src.includes(folded(text))) return { text, title: job.listen ? ORIGINAL_MISSING_LISTEN : ORIGINAL_MISSING };
+    return { text, title: playbackOriginalTitle(job) };
+}
 /** RIFF INFO comment preserves attribution inside a WAV, including after renaming. */
 export async function wavWithCredits(blob, credits) {
     if (!credits) return blob;

@@ -59,7 +59,7 @@ import * as listen from './listen.js';   // 1.4.4 듣는 언어
 import { resolveScript, normalizeRows, scriptFingerprint } from './script-store.js';
 import { getSfx, sfxBlob, isSfxEnabled, sfxPreferenceRevision, onSfxPreferenceChange, sfxAttribution, sfxLevelOn, listSfx, isSfxFavorite, resolveSfxId, updateSfx, SFX_LIMITS } from './sfx-library.js';
 import { chipWords, addWord, removeWord, wordFold } from './word-chips.js';   // 6.3.6 효과음 낱말 붙이기 (요술봉 › 낱말)
-import { playbackOriginal, playbackOriginalTitle, wavWithCredits } from './playback-details.js';
+import { playbackOriginalIn, wavWithCredits } from './playback-details.js';
 import { createSfxController } from './sfx-audio.js';
 import { mixScene } from './scene-mix.js';
 import { paintColorHighlights, clearColorHighlights, piecesOf, speakerColor, colorKey, barNameChoice, alphaOf, luminance } from './highlight-colors.js';
@@ -3351,10 +3351,11 @@ function syncDetails(job = current) {
     if (!barEl.detailsButton) return;
     if (detailsMesId !== job?.mesId) { closeDetails(); detailsMesId = job?.mesId; }
     const ids = [...(usedEffects.get(job?.mesId) || [])];
-    const original = playbackOriginal(job);
+    const panel = playbackOriginalIn(job, msg(job?.mesId)?.mes);   // 1.9.3 메시지 원문과 직접 견줘 (화면 번역문을 「원문」이라 하지 않게)
+    const original = panel.text;
     barEl.original.hidden = !original;
     barEl.originalText.textContent = original;
-    if (barEl.originalTitle) barEl.originalTitle.textContent = playbackOriginalTitle(job);   // 6.3.8 원문 짝이 없으면 사실대로
+    if (barEl.originalTitle) barEl.originalTitle.textContent = panel.title;   // 6.3.8 원문 짝이 없으면 사실대로
     barEl.effects.hidden = !ids.length;
     barEl.effectList.replaceChildren();
     for (const id of ids) {
