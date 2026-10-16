@@ -30,7 +30,7 @@
 //   · 속마음이면 thoughtIndex: 그 목록의 속마음 번호, 즉석이면 -1 · 말 기울임이면 actionIndex) | null (약한 속마음 틀이 어느 속마음과도 안 맞음)
 // 1.9.1 한 문단 이어 읽기: 속마음 · 대화문이 아닌 기울임(em · i)을 누르면 findClickedItalic → 말 기울임 조각(text.js speech — 서술이 사이에 낀 소설체 문단의
 //   *…*)이면 그것을 읽는다. 재생기(tapJobs)가 같은 문단의 묶음(대사 · 말 기울임, 같은 목소리)을 차례대로 이어 한 번에 읽는다 — 「」 대사를 눌러도 같다.
-//   그냥 *행동* 은 지금처럼 읽지 않는다
+//   1.9.2 분석이 「서술」이라 한 기울임 · 그냥 *행동* 도 누르면 읽는다 (속마음의 길 · 그 장면 시점 인물의 목소리 — 누른 건 듣고 싶은 것)
 
 import { chat, substituteParams } from '../../../../../../../../script.js';
 import { getContext } from '../../../../../../../extensions.js';
@@ -487,13 +487,16 @@ export function segmentForHit(mes, hit) {
         else if (hit.strong) seg = { kind: 'thought', text: hit.text, raw: hit.raw, color: colorFor(hit.nameHint, hit.color), tags: [], speakerHint: hit.nameHint || null, line: hit.line || 0, dialogueIndex: -1, thoughtIndex: -1 };
         else return null;
     } else if (hit.kind === 'action') {
-        // 1.9.1 말 기울임만 (번역문 → 원문, 같은 글이 여럿이면 누른 줄에 가까운 것). 그냥 *행동* · 조각이 없는 기울임은 읽지 않는다
+        // 1.9.1 말 기울임 (번역문 → 원문, 같은 글이 여럿이면 누른 줄에 가까운 것). 1.9.2 말 기울임이 아니어도(분석이 「서술」이라 했거나 *행동*) 누르면 읽는다 —
+        //   누른 건 사용자가 듣고 싶은 것 (사용자: 「눌러도 반응 없수」). 재생기가 속마음의 길 · 그 장면 시점 인물의 목소리로 읽는다 (buildJobs tapped)
         const want = fold(hit.text);
-        const find = (list) => { const all = (list || []).filter(x => x.kind === 'action' && x.speech && x.text && fold(x.text) === want); return all.length ? nearest(all, hit.line || 0) : null; };
-        const fromDisp = find(disp);
-        const found = fromDisp || find(orig);
+        const find = (list, any = false) => { const all = (list || []).filter(x => x.kind === 'action' && (any || x.speech) && x.text && fold(x.text) === want); return all.length ? nearest(all, hit.line || 0) : null; };
+        let list = disp, found = find(disp);
+        if (!found) { list = orig; found = find(orig); }
+        if (!found) { list = disp; found = find(disp, true); }
+        if (!found) { list = orig; found = find(orig, true); }
         if (!found) return null;
-        seg = { ...found, tags: (found.tags || []).slice(), actionIndex: (fromDisp ? disp : orig).filter(x => x.kind === 'action' && x.text).indexOf(found) };
+        seg = { ...found, tags: (found.tags || []).slice(), actionIndex: list.filter(x => x.kind === 'action' && x.text).indexOf(found) };
     } else {
         const want = fold(hit.text);
         const find = (list) => {

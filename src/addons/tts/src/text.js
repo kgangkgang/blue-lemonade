@@ -586,25 +586,46 @@ export function firstNameIn(text, names) {
     }
     return best;
 }
-/** 문단마다 speech · paraName 을 붙인다 (조각을 고쳐 씀) */
+// 1.9.2 속마음처럼 보이는 글: 1인칭(I · me · my … · 私 · 僕 · 俺 … · 나 · 내 · 저 · 제 …) · 자기에게 묻는 말 · 감탄 (끝이 ? · ! 이거나 ?! 가 겹침)
+const INNER_RE = /(?:^|[^\p{L}'’])(?:i|i['’](?:m|ve|ll|d)|me|my|mine|myself)(?![\p{L}])|私|僕|俺|あたし|わたし|(?:^|[^가-힣])(?:나|내|난|날|저|제)(?:는|가|를|의|도|한테|에게)?(?![가-힣])|[?!？！]["”」』)]*\s*$|[?!？！]{2}/iu;
+export const innerLike = (text) => INNER_RE.test(String(text || '').trim());
+/**
+ * 문단마다 speech · paraName 을 붙인다 (조각을 고쳐 씀).
+ * 1.9.2 산문체 메시지(기울이지 않은 서술이 어딘가 있음)에서 문단 전체가 기울임인 조각이 속마음처럼 보이면(innerLike) 속마음 — speech · inner,
+ *   주인 후보(paraName)는 앞 서술 문단에 처음 나오는 아는 이름 (없으면 재생기가 보낸 쪽 = 내 캐릭터). 사용자: 「속마음 안 읽는디?」 — 서술 문단 사이 한 줄 기울임이 가장 흔한 꼴
+ *   povName = 모든 기울임의 시점 인물 후보 (그 문단 · 앞 서술 문단의 이름) — 눌러서 읽을 때만 쓴다 (player buildJobs tapped)
+ */
 function markParagraphs(segs, names) {
     const byPara = new Map();
     for (const g of segs) { if (!byPara.has(g.para)) byPara.set(g.para, []); byPara.get(g.para).push(g); }
-    for (const list of byPara.values()) {
+    const prose = segs.some(g => g.kind === 'narration' && g.text);
+    let lastName = null;
+    for (const list of [...byPara.entries()].sort((a, b) => a[0] - b[0]).map(e => e[1])) {
         const narration = list.filter(g => g.kind === 'narration' && g.text);
-        if (narration.length && !list.some(g => g.kind === 'dialogue' && g.text)) for (const g of list) if (g.kind === 'action' && g.text) g.speech = true;
-        const name = narration.length ? firstNameIn(narration.map(g => g.raw || g.text).join('\n'), names) : null;
-        if (name) for (const g of list) if (g.text && (g.kind === 'dialogue' || g.speech)) g.paraName = name;
+        const hasDialogue = list.some(g => g.kind === 'dialogue' && g.text);
+        if (narration.length && !hasDialogue) {
+            for (const g of list) if (g.kind === 'action' && g.text) g.speech = true;
+        } else if (prose && !narration.length && !hasDialogue) {
+            for (const g of list) if (g.kind === 'action' && g.text && innerLike(g.text)) { g.speech = true; g.inner = true; }
+        }
+        const own = narration.length ? firstNameIn(narration.map(g => g.raw || g.text).join('\n'), names) : null;
+        if (own) for (const g of list) if (g.text && (g.kind === 'dialogue' || g.speech)) g.paraName = own;
+        if (!narration.length && lastName) for (const g of list) if (g.inner) g.paraName = lastName;   // 문단 전체 기울임 속마음 — 앞 서술 문단의 이름
+        const pov = own || lastName;
+        if (pov) for (const g of list) if (g.kind === 'action' && g.text) g.povName = pov;
+        if (own) lastName = own;
     }
     return segs;
 }
 /**
- * 대사 분석에 물을 기울임 조각 (paragraphs 로 나눈 조각): 기울이지 않은 서술이 있는 문단의 *…* — 말 · 속마음 · 서술을 AI 가 가른다
- * (analysis.js buildPrompt · italicsOf). 서술이 모두 기울임인 RP 체 문단은 묻지 않는다 (값을 아끼고, 그건 행동)
+ * 대사 분석에 물을 기울임 조각 (paragraphs 로 나눈 조각) — 말 · 속마음 · 서술을 AI 가 가른다 (analysis.js buildPrompt · italicsOf).
+ * 1.9.2 산문체 메시지(기울이지 않은 서술이 어딘가 있음)면 모든 기울임 — 문단 전체가 기울임인 속마음도 (1.9.1 은 서술이 같은 문단에 있어야 해서 그 꼴을 안 물었다).
+ * 서술이 모두 기울임인 RP 체 메시지는 묻지 않는다 (값을 아끼고, 그건 행동)
  */
 export function italicCandidates(segs) {
-    const narrated = new Set((segs || []).filter(g => g && g.kind === 'narration' && g.text && Number.isInteger(g.para)).map(g => g.para));
-    return (segs || []).filter(g => g && g.kind === 'action' && g.text && narrated.has(g.para));
+    const list = (segs || []).filter(Boolean);
+    if (!list.some(g => g.kind === 'narration' && g.text && Number.isInteger(g.para))) return [];
+    return list.filter(g => g.kind === 'action' && g.text && Number.isInteger(g.para));
 }
 /**
  * 이어 읽을 묶음 (조각을 고쳐 씀): 같은 문단에서 대사 · 말 기울임(speech) 조각이 읽지 않는 것(길이 '건너뛰기'인 서술 · 행동, 속마음 이름표)만

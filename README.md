@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.8.4/blue-lemonade-6.8.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.8.5/blue-lemonade-6.8.5.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.8.4 · 최신 업데이트</summary>
+<summary>6.8.5 · 최신 업데이트</summary>
+
+- TTS가 서술 사이에 한 줄로 따로 쓴 기울임 속마음도 그 사람 목소리로 읽어요 — 자동으로도, 눌러도. 1인칭 · 자문 · 감탄은 속마음으로 가르고, 이미 분석한 메시지는 빠진 기울임만 작은 요청으로 한 번 더 물어요.
+- 원문과 번역문의 대사 수가 어긋나도 같은 색 대사끼리 차례로 원문 짝을 찾아요 — 듣는 언어로 읽을 때 번역문을 다시 옮겨 읽던 것을 줄이고, 「원문」 칸에 실제 원문을 보여 줘요 (TTS 1.9.2).
+
+</details>
+
+<details>
+<summary>6.8.4 · 번역에 붙은 자리표시 메모 걸러 내기</summary>
 
 - 대사 뒤에 「부분 앞뒤 placeholder 유지.」처럼 붙던 번역 모델의 서식 메모(placeholder · 자리표시자 · VAR · span + 유지 · 그대로 · keep)를 줄 끝 꼬리든 따로 된 줄이든 걸러 내요. 이미 저장된 번역도 보여 줄 때 걸러져요 (번역 2.6.9).
 

@@ -6,6 +6,8 @@ const folded = value => String(value || '').normalize('NFKC').replace(/<#[\d.]+#
     .replace(/ー{2,}/g, 'ー').replace(/っ(?=[\p{P}\p{S}\s]|$)/gu, '').replace(/[\p{P}\p{S}\s]+/gu, '').toLowerCase();
 export function playbackOriginal(job) {
     if (!job || job.sceneKind) return '';
+    // 1.9.2 원문을 못 찾아 화면 글(번역문)을 듣는 언어로 옮겨 읽는 줄: 칸에는 번역문을 「원문」처럼 두지 않고 실제로 읽는 글 (제목이 사정을 말함)
+    if (job.listen && fromDisplayOf(job)) return String(job.text || '').trim();
     const parts = job.parts || [];
     const original = parts.map(p => p.original?.text || p.seg?.text || '').filter((s, i, all) => s && (i === 0 || s !== all[i - 1])).join('\n').trim();
     // Compare before engine chunking; splitting a long unchanged line is not an edit.
@@ -15,9 +17,11 @@ export function playbackOriginal(job) {
 /** 6.3.8 칸 제목: 원문 짝을 못 찾아 화면 글(번역문)을 옮겨 읽는 줄이면 「원문」이라고 하지 않는다.
  *  1.9.1 더 솔직하게 (사용자: 「아니 원문도 일본어인데」 — 칸에 번역문이 「지금 읽는 대사의 원문」으로 떴다) */
 export const ORIGINAL_MISSING = '원문을 못 찾았어요 — 화면 글(번역문)';
+export const ORIGINAL_MISSING_LISTEN = '원문을 못 찾았어요 — 화면 글을 옮겨 읽는 중';   // 1.9.2 듣는 언어로 번역문을 옮겨 읽음 (칸 = 실제로 읽는 글)
+const fromDisplayOf = (job) => (job?.parts || []).some(p => (p?.original || p?.seg)?.fromDisplay === true);
 export function playbackOriginalTitle(job) {
-    const fromDisplay = (job?.parts || []).some(p => (p?.original || p?.seg)?.fromDisplay === true);
-    return fromDisplay ? ORIGINAL_MISSING : '지금 읽는 대사의 원문';
+    if (!fromDisplayOf(job)) return '지금 읽는 대사의 원문';
+    return job?.listen ? ORIGINAL_MISSING_LISTEN : ORIGINAL_MISSING;
 }
 /** RIFF INFO comment preserves attribution inside a WAV, including after renaming. */
 export async function wavWithCredits(blob, credits) {

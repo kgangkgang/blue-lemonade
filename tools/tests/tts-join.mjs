@@ -219,7 +219,10 @@ await test('누르기: 말 기울임을 누르면 그 문단의 말 기울임을
     assert.equal(tap[0].key, autoJobs[0].key, '자동 읽기와 같은 캐시 열쇠');
     const last = C.segmentForHit(mes, { kind: 'action', text: '내일 아침 일곱 시라고!', raw: '내일 아침 일곱 시라고!', line: 0 });
     assert.equal(P.lineJobs(0, mes, [last]).jobs[0].key, autoJobs[0].key, '마지막 조각을 눌러도 같은 묶음');
-    assert.equal(C.segmentForHit(mes, { kind: 'action', text: '그녀가 고개를 끄덕인다.', raw: '그녀가 고개를 끄덕인다.', line: 6 }), null, '그냥 *행동* 은 누르지 않음');
+    // 1.9.2 그냥 *행동* 도 누르면 읽는다 (누른 건 듣고 싶은 것 — 속마음의 길로, 자동 읽기에는 안 낌)
+    const act = C.segmentForHit(mes, { kind: 'action', text: '그녀가 고개를 끄덕인다.', raw: '그녀가 고개를 끄덕인다.', line: 6 });
+    assert.ok(act && !act.speech && P.lineJobs(0, mes, [act]).jobs.length === 1, '그냥 *행동* 도 누르면 읽음 (1.9.2)');
+    assert.ok(!auto().some(j => j.text.includes('끄덕')), '자동 읽기에는 그대로 안 낌');
 });
 await test('누르기: 「」 · "…" 대사를 눌러도 같은 문단 같은 사람의 대사를 이어서 · 다른 사람 대사는 빼고 누른 사람 것만', () => {
     reset();
@@ -332,15 +335,16 @@ await test('분석 프롬프트: 서술이 있는 문단의 기울임만 짧게 
     reset({ analysis: { ...settings().analysis, ...ANALYSIS } });
     const mes = message(STORY);
     const built = A.buildPrompt(mes, { italics: true, speaker: true, emotion: true, translate: false });
-    assert.deepEqual(built.italics.map(x => [x.j, x.text]), [[0, '잠깐만,'], [1, '지금 뭐라고 했어?'], [2, '내일 아침 일곱 시라고!'], [3, '글쎄,'], [4, '그냥 산책이니까 편한 옷이면 되겠지.'], [6, '정말 괜찮을까.']], 'j = 원문 기울임 순번 (5 = RP 체 문단의 *행동* 은 안 물음)');
+    assert.deepEqual(built.italics.map(x => [x.j, x.text]), [[0, '잠깐만,'], [1, '지금 뭐라고 했어?'], [2, '내일 아침 일곱 시라고!'], [3, '글쎄,'], [4, '그냥 산책이니까 편한 옷이면 되겠지.'], [5, '그녀가 고개를 끄덕인다.'], [6, '정말 괜찮을까.']], 'j = 원문 기울임 순번 (1.9.2 산문체 메시지면 서술 없는 문단의 기울임도 물음)');
     assert.match(built.user, /\[\*0\] "잠깐만,"/);
     assert.match(built.user, /¶ 은하는 수화기 너머로 손을 들었다\./, '문단 서술 발췌');
     assert.match(built.user, /Known speakers: .*하람/, '나도 후보');
     assert.match(built.user, /"italics":\[\{"j":0,"kind":"speech"/);
     const at = built.user.indexOf('Italic fragments');
     const section = built.user.slice(at, built.user.indexOf('\n\n', at));
-    assert.ok(section.length < 400, `기울임 칸 ${section.length}자`);
-    assert.equal(section.split('\n').length, 1 + 6 + 3, '조각 6 + 문단 발췌 3');
+    assert.ok(section.length < 500, `기울임 칸 ${section.length}자`);
+    assert.equal(section.split('\n').length, 1 + 7 + 4, '조각 7 + 문단 발췌 4 (서술 없는 문단은 앞 서술 문단 — 1.9.2)');
+    assert.match(section, /¶ \(before\) 도윤이 웃었다\.\n\[\*5\]/);
     const off = A.buildPrompt(mes, { italics: false, speaker: true, emotion: true, translate: false });
     assert.ok(!/Italic|italics/.test(off.user) && off.italics.length === 0);
     const plain = A.composePrompt({ lines: off.lines, needs: off.needs, emotion: true, charName: '은하', userName: '하람' });
@@ -362,7 +366,7 @@ await test('분석이 가른 대로 읽기: 말 · 속마음은 그 주인의 �
         const a = await A.analyzeMessage(0);
         assert.equal(requests.length, 1, '분석 요청 한 번 (기울임은 같은 요청에)');
         assert.match(promptOf(requests[0]), /\[\*6\] "정말 괜찮을까\."/);
-        assert.deepEqual(a.italics.map(x => [x.j, x.kind, x.speaker || '']), [[0, 'speech', '은하'], [1, 'speech', '은하'], [2, 'speech', '도윤'], [3, 'thought', '하람'], [4, 'narration', ''], [6, 'thought', '도윤']]);
+        assert.deepEqual(a.italics.map(x => [x.j, x.kind, x.speaker || '']), [[0, 'speech', '은하'], [1, 'speech', '은하'], [2, 'speech', '도윤'], [3, 'thought', '하람'], [4, 'narration', ''], [5, '', ''], [6, 'thought', '도윤']]);   // 1.9.2 j 5 도 물음 (답이 없으면 '' — 다시 안 물음: italicsTried)
         assert.equal(P.analysisWanted(0, mes, settings(), { quiet: true }), false, '받은 뒤엔 다시 안 물음');
     });
     const jobs = auto();
@@ -378,7 +382,8 @@ await test('분석이 가른 대로 읽기: 말 · 속마음은 그 주인의 �
     assert.deepEqual(tap('지금 뭐라고 했어?'), [jobs[0].key]);
     assert.deepEqual(tap('내일 아침 일곱 시라고!'), [jobs[1].key]);
     assert.deepEqual(tap('정말 괜찮을까.'), [jobs[5].key], '따옴표 대사가 있는 문단이어도 분석이 말 · 속마음이라 하면 누를 수 있음');
-    assert.equal(C.segmentForHit(mes, { kind: 'action', text: '그냥 산책이니까 편한 옷이면 되겠지.', raw: '…', line: 2 }), null, '서술로 가른 기울임은 누르지 않음');
+    const narr = C.segmentForHit(mes, { kind: 'action', text: '그냥 산책이니까 편한 옷이면 되겠지.', raw: '…', line: 2 });
+    assert.deepEqual(view(P.lineJobs(0, mes, [narr]).jobs), [['v_haram', '그냥 산책이니까 편한 옷이면 되겠지.']], '1.9.2 서술로 가른 기울임도 누르면 읽음 — 그 문단 시점 인물(하람)의 목소리');
 });
 await test('분석 없음 · 옛 분석(기울임 칸 없음) · 글이 바뀐 답은 이름 규칙으로 (다시 묻지 않음) · 번역문은 기울임 수가 같으면 같은 차례로', async () => {
     reset({ analysis: { ...settings().analysis, ...ANALYSIS } });
@@ -393,6 +398,72 @@ await test('분석 없음 · 옛 분석(기울임 칸 없음) · 글이 바뀐 �
     mes.extra.lemon_voice = { analysis: { hash: A.hash(mes.mes), swipe: 0, langs: [], speaker: true, segs: [], sfx: [],
         italics: [{ j: 0, h: A.hash(A.normText('잠깐만,')), kind: 'narration' }, { j: 1, h: A.hash(A.normText('지금 뭐라고 했어?')), kind: 'speech', speaker: '도윤' }] } };
     assert.deepEqual(view(auto()), [['v_doyun', 'What did you say?']], '번역문(화면 글)에도 같은 차례로');
+});
+
+// ---------- 1.9.2 문단 전체가 기울임인 속마음 (서술 문단 사이 한 줄 기울임 — 1.9.1 은 묻지도 읽지도 않았다)
+const MIND = [
+    '은하는 창문을 열었다. 도윤이 마당에 서 있었다.',
+    '*Why is he standing out there?!*',
+    '도윤이 손을 흔들었다.',
+    '*The wind howled through the trees.*',
+    '*I should go down and ask.*',
+].join('\n\n');
+await test('1.9.2 이름 규칙: 산문체 메시지의 문단 전체 기울임 — 1인칭 · 자문 · 감탄은 속마음으로 자동 읽기 (주인 = 앞 서술 문단의 첫 아는 이름), 3인칭 장면 묘사는 안 읽음 · RP 체 메시지는 그대로', () => {
+    reset();
+    message(MIND);
+    assert.deepEqual(view(auto()), [['v_eunha', 'Why is he standing out there?!'], ['v_doyun', 'I should go down and ask.']]);
+    const segs = X.segmentMessage(MIND, { paragraphs: true, knownNames: ['은하', '도윤'] }).filter(g => g.kind === 'action');
+    assert.deepEqual(segs.map(g => [!!g.inner, g.paraName || '', g.povName || '']), [[true, '은하', '은하'], [false, '', '도윤'], [true, '도윤', '도윤']]);
+    assert.equal(X.italicCandidates(X.segmentMessage(MIND, { paragraphs: true })).length, 3, '산문체 — 모든 기울임이 분석 후보');
+    const RP = '*She smiles at him.*\n\n"Hello." *She waves.*\n\n*Why is it so cold?!*';
+    message(RP);
+    assert.deepEqual(auto().map(j => j.text), ['Hello.'], 'RP 체 (기울이지 않은 서술이 없음): 기울임은 예전처럼 행동');
+    assert.equal(X.italicCandidates(X.segmentMessage(RP, { paragraphs: true })).length, 0, 'RP 체는 분석에도 안 물음');
+    assert.ok(['Are you kidding me?!', 'I knew it.', '私の負けね。', '내가 왜 여기 있지', '저 사람 누구야?'].every(X.innerLike));
+    assert.ok(!['The rain kept falling.', 'She smiled softly.', '제발 그만'].some(X.innerLike));
+});
+await test('1.9.2 누르기: 속마음 기울임은 물론, 장면 묘사 기울임 · 분석이 「서술」이라 한 기울임도 누르면 읽음 (그 장면 시점 인물의 목소리 · 속마음의 길)', () => {
+    reset();
+    const mes = message(MIND);
+    const tap = (text) => P.lineJobs(0, mes, [C.segmentForHit(mes, { kind: 'action', text, raw: text, line: 0 })]).jobs;
+    assert.deepEqual(view(tap('Why is he standing out there?!')), [['v_eunha', 'Why is he standing out there?!']]);
+    assert.equal(tap('Why is he standing out there?!')[0].key, auto()[0].key, '자동 읽기와 같은 소리');
+    assert.deepEqual(view(tap('The wind howled through the trees.')), [['v_doyun', 'The wind howled through the trees.']], '앞 서술 문단의 이름');
+    mes.extra.lemon_voice = { analysis: { hash: A.hash(mes.mes), swipe: 0, langs: [], speaker: true, segs: [], sfx: [], italicsTried: ['0:x', '1:x', '2:x'],
+        italics: [0, 1, 2].map(j => ({ j, h: A.hash(A.normText(['Why is he standing out there?!', 'The wind howled through the trees.', 'I should go down and ask.'][j])), kind: 'narration' })) } };
+    reset({ analysis: { ...settings().analysis, enabled: false } });
+    assert.ok(!auto().some(j => /Why is he/.test(j.text)), '분석이 서술이라 하면 자동 읽기에선 빠짐');
+    assert.deepEqual(view(tap('Why is he standing out there?!')), [['v_eunha', 'Why is he standing out there?!']], '그래도 누르면 읽음');
+});
+await test('1.9.2 보충 요청: 1.9.1 분석에 답이 없는 후보(문단 전체 기울임)와 속마음처럼 보이는데 「서술」이라 한 조각만 기울임만 묻는 작은 요청 한 번 — 다시 안 보냄 · 프롬프트에 속마음 기준과 앞 서술 문단', async () => {
+    reset({ analysis: { ...settings().analysis, ...ANALYSIS } });
+    const mes = message('은하는 창문을 열었다. *Hm,* 도윤이 마당에 서 있었다.\n\n*Why is he standing out there?!*\n\n*The wind howled through the trees.*\n\n*Are you kidding me?!*');
+    const h = (t) => A.hash(A.normText(t));
+    // 1.9.1 이 남긴 분석: 서술 있는 문단의 j 0 만 물었고(속마음), 1.9.2 후보 j 1 · 2 · 3 은 답이 없다
+    mes.extra.lemon_voice = { analysis: { hash: A.hash(mes.mes), swipe: 0, langs: [], speaker: true, segs: [], sfx: [], italics: [{ j: 0, h: h('Hm,'), kind: 'speech', speaker: '은하' }] } };
+    assert.deepEqual(A.italicsToFill(mes, A.getAnalysis(0)), [1, 2, 3]);
+    assert.equal(P.analysisWanted(0, mes, settings(), { quiet: true }), true, '보충이 남았으면 분석을 부름');
+    const reply = () => ({ segs: [], italics: [{ j: 1, kind: 'thought', speaker: '은하' }, { j: 2, kind: 'narration' }, { j: 3, kind: 'narration' }] });
+    await withEngine(reply, async (requests) => {
+        await A.analyzeMessage(0);
+        assert.equal(requests.length, 1, '보충 요청 한 번');
+        const prompt = promptOf(requests[0]);
+        assert.ok(!prompt.includes('[*0]') && /\[\*1\] "Why is he standing out there\?!"/.test(prompt), '답이 없는 조각만');
+        assert.ok(!prompt.includes('Dialogue lines:') && !prompt.includes('Korean translation'), '작게 (대사 칸 · 번역문 없이)');
+        assert.match(prompt, /first person/);
+        assert.match(prompt, /¶ \(before\) 은하는 창문을 열었다\. 도윤이 마당에 서 있었다\./, '앞 서술 문단');
+        const a = A.getAnalysis(0);
+        assert.deepEqual(a.italics.map(x => [x.j, x.kind]), [[0, 'speech'], [1, 'thought'], [2, 'narration'], [3, 'narration']]);
+        assert.deepEqual(A.italicsToFill(mes, a), [], '물어본 조각은 다시 안 물음 (j 3 이 속마음처럼 보여도 한 번만)');
+        assert.equal(P.analysisWanted(0, mes, settings(), { quiet: true }), false);
+        await A.analyzeMessage(0);
+        assert.equal(requests.length, 1, '다시 안 보냄');
+    });
+    assert.deepEqual(auto().map(j => j.text), ['Hm,', 'Why is he standing out there?!'], '분석 답대로 (j 3 은 분석이 서술이라 해 자동으로는 안 읽음 — 누르면 읽음)');
+    // 「서술」이라 한 1.9.1 답인데 이름 규칙은 속마음 → 한 번 다시 묻는다
+    const m2 = message('은하는 창문을 열었다.\n\n*Are you kidding me?!*');
+    m2.extra.lemon_voice = { analysis: { hash: A.hash(m2.mes), swipe: 0, langs: [], speaker: true, segs: [], sfx: [], italics: [{ j: 0, h: h('Are you kidding me?!'), kind: 'narration' }] } };
+    assert.deepEqual(A.italicsToFill(m2, A.getAnalysis(0)), [0]);
 });
 
 // ---------- 읽는 대사 강조가 따옴표부터 따옴표까지 (여는 따옴표가 한 획으로 잘려 보이던 것)
@@ -434,12 +505,13 @@ await test('가볍게: 바뀐 파일에 새 상주 관찰자 · 타이머 없음
         assert.ok(body.length > 50 && !/MutationObserver|setInterval|setTimeout|requestAnimationFrame|addEventListener/.test(body), body.slice(0, 40));
     }
 });
-await test('버전 1.9.1: version.js · manifest · style.css · README 첫 줄', () => {
+await test('버전 1.9.2: version.js · manifest · style.css · README 첫 줄', () => {
     const read = (f) => fs.readFileSync(path.join(theme, 'src/addons/tts', f), 'utf8');
-    assert.match(read('version.js'), /TTS_VERSION = '1\.9\.1'/);
-    assert.equal(JSON.parse(read('manifest.json')).version, '1.9.1');
-    assert.match(read('style.css'), /--lv-css-version: "1\.9\.1";/);
-    assert.equal(read('README.md').split('\n')[0], '# TTS 1.9.1');
+    assert.match(read('version.js'), /TTS_VERSION = '1\.9\.2'/);
+    assert.equal(JSON.parse(read('manifest.json')).version, '1.9.2');
+    assert.match(read('style.css'), /--lv-css-version: "1\.9\.2";/);
+    assert.equal(read('README.md').split('\n')[0], '# TTS 1.9.2');
+    assert.match(read('README.md'), /## 1\.9\.2 문단 전체가 기울임인 속마음/);
     assert.match(read('README.md'), /## 1\.9\.1 한 문단 이어 읽기/);
 });
 

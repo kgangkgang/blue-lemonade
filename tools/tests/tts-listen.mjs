@@ -588,7 +588,7 @@ await test('6.3.8 원문 짝이 정말 없는 줄(화면 글에만 있음): 조�
     const only = { kind: 'dialogue', text: '응.', raw: '응.', color: null, tags: [], speakerHint: null, line: 0 };
     const job = P.lineJobs(0, mes, [only]).jobs[0];
     assert.equal((job.parts[0].original || job.parts[0].seg).fromDisplay, true);
-    assert.equal(D.playbackOriginalTitle(job), D.ORIGINAL_MISSING);
+    assert.equal(D.playbackOriginalTitle(job), job.listen ? D.ORIGINAL_MISSING_LISTEN : D.ORIGINAL_MISSING);   // 1.9.2 듣는 언어로 옮겨 읽으면 그 사정까지
     assert.equal(D.ORIGINAL_MISSING, '원문을 못 찾았어요 — 화면 글(번역문)');
     const paired = { kind: 'dialogue', text: '좋은 아침이에요.', raw: '좋은 아침이에요.', color: null, tags: [], speakerHint: null, line: 0 };
     const job2 = P.lineJobs(0, mes, [paired]).jobs[0];
@@ -646,6 +646,73 @@ await test('1.9.1 번역문을 기준으로 읽는데 원문 짝이 없는 줄: 
     assert.deepEqual(jobs.map(j => j.text), ['좋은 아침.', '응.', '또 봐.']);
     assert.deepEqual(jobs.map(j => D.playbackOriginalTitle(j)), ['지금 읽는 대사의 원문', D.ORIGINAL_MISSING, '지금 읽는 대사의 원문']);
     assert.deepEqual(jobs.map(j => D.playbackOriginal(j)), ['おはよう。', '', 'またね。'], '짝이 있으면 모델이 쓴 원문 · 없으면 읽는 글과 같아 칩 없음 (보이면 제목이 사실대로)');
+});
+
+// ---------- 1.9.2 원문 짝: 대사 수 · 차례가 어긋나도 같은 색 · 같은 번째로 (못 찾으면 번역문을 듣는 언어로 다시 옮겨 읽었다 — 일 → 한 → 일)
+const A1 = '#aa88ee', B1 = '#55bb77';
+const span = (c, t) => `<span style="color:${c}">${t}</span>`;
+await test('1.9.2 번역기가 줄 차례를 바꿔도(차례 맞춤이 한쪽만 짝지음) 같은 색 · 같은 번째 원문을 읽음 — 번역 요청 없음 · 원문 칸은 원문', async () => {
+    reset('ja');
+    settings().text_source = 'original';
+    const D = await mod('playback-details.js');
+    const C = await mod('clickplay.js');
+    const mes = message(`${span(A1, '「立ち話もなんですから、まずは座ってください。」')} She gestured to the chair.\n\n${span(B1, '「ありがとうございます。」')}`,
+        { display: `${span(B1, '「고맙습니다.」')}\n\n${span(A1, '「서서 할 이야기는 아니니, 우선 앉으세요.」')} 그녀가 의자를 가리켰다.` });
+    for (const [shown, color, want] of [['고맙습니다.', B1, 'ありがとうございます。'], ['서서 할 이야기는 아니니, 우선 앉으세요.', A1, '立ち話もなんですから、まずは座ってください。']]) {
+        const seg = C.segmentForHit(mes, { kind: 'dialogue', text: shown, raw: shown, quoted: shown, color, line: 0 });
+        const job = P.lineJobs(0, mes, [seg]).jobs[0];
+        assert.equal(job.text, want, shown);
+        assert.equal(D.playbackOriginalTitle(job), '지금 읽는 대사의 원문');
+    }
+    assert.equal(API.calls.length, 0, '번역문을 다시 옮기지 않음');
+    settings().text_source = 'display';   // 읽을 글이 번역문이어도 (자동 읽기 길) 듣는 언어 줄은 원문 짝으로
+    assert.deepEqual(P._forTest.autoJobs(0).map(j => j.text), ['ありがとうございます。', '立ち話もなんですから、まずは座ってください。']);
+    assert.equal(API.calls.length, 0);
+});
+await test('1.9.2 원문에만 숨김 칸 · 기울임 영어 인용이 있어 대사 수가 어긋나도 같은 색 대사는 원문 짝 — 못 찾은 줄만 옮겨 읽고, 원문 칸은 「원문을 못 찾았어요 — 화면 글을 옮겨 읽는 중」 + 실제로 읽는 글', async () => {
+    reset('ja');
+    settings().text_source = 'original';
+    const D = await mod('playback-details.js');
+    const C = await mod('clickplay.js');
+    const mes = message([
+        `She studied them. *"Are you two related?"* she wondered.`,
+        `<true_thoughts character="Mina">"Wait, what is going on?"</true_thoughts>`,
+        `${span(A1, '「……ここで続ける話ではありませんね。」')} He pulled out a chair.`,
+        `${span(B1, '「はい、そうします。」')}`,
+        `${span(A1, '「では、始めましょう。」')}`,
+    ].join('\n\n'), { display: [
+        '그녀는 둘을 살폈다. 둘이 친척인가, 하고 그녀는 생각했다.',
+        `${span(A1, '「……여기서 이어 갈 이야기는 아니군요.」')} 그가 의자를 빼냈다.`,
+        `${span(B1, '「네, 그럴게요.」')}`,
+        '"음."',
+        `${span(A1, '「그럼, 시작하죠.」')}`,
+    ].join('\n\n') });
+    const tap = (shown, color) => P.lineJobs(0, mes, [C.segmentForHit(mes, { kind: 'dialogue', text: shown, raw: shown, quoted: shown, color, line: 0 })]).jobs[0];
+    assert.equal(tap('……여기서 이어 갈 이야기는 아니군요.', A1).text, '……ここで続ける話ではありませんね。');
+    assert.equal(tap('네, 그럴게요.', B1).text, 'はい、そうします。');
+    assert.equal(tap('그럼, 시작하죠.', A1).text, 'では、始めましょう。');
+    assert.equal(API.calls.length, 0, '원문 짝이 있는 줄은 옮기지 않음');
+    const lone = tap('음.', null);   // 화면에만 있는 줄: 원문 대사가 이미 일본어인 메시지라 옮기지 않고 그대로 (6.1.8) · 칸 제목은 사실대로
+    assert.ok(!lone.listenPending && lone.text === '음.' && (lone.parts[0].original || lone.parts[0].seg).fromDisplay);
+    assert.equal(D.playbackOriginalTitle(lone), D.ORIGINAL_MISSING);
+    assert.equal(API.calls.length, 0);
+    // 원문이 다른 언어(영어)인 메시지: 원문 짝이 있는 줄은 원문을 옮기고, 화면에만 있는 줄만 번역문을 옮겨 읽음 — 원문 칸 = 실제로 읽는 글 + 사정
+    const en = message(`${span(A1, '"We should not discuss this standing up."')}\n\n${span(B1, '"Alright."')}`,
+        { display: `${span(A1, '"서서 할 이야기는 아니군요."')}\n\n"음."\n\n${span(B1, '"알겠어요."')}` });
+    const tapEn = (shown, color) => P.lineJobs(0, en, [C.segmentForHit(en, { kind: 'dialogue', text: shown, raw: shown, quoted: shown, color, line: 0 })]).jobs[0];
+    API.reply = (lines) => lines.map(x => `にほんご ${x}`);   // 일본어 글자가 있는 답 (「[ja]」 머리는 오디오 태그로 걸러져 원문 칸 비교가 안 됨)
+    const jobs = [tapEn('서서 할 이야기는 아니군요.', A1), tapEn('음.', null), tapEn('알겠어요.', B1)];
+    await L.fill(P._forTest.listenNeeds(0, en, jobs), 'ja');
+    assert.deepEqual(API.calls.map(c => c.lines.slice().sort()), [['Alright.', 'We should not discuss this standing up.', '음.'].sort()], '한 묶음 — 원문 짝이 있으면 원문을, 없는 줄만 번역문을');
+    const read = tapEn('음.', null);
+    assert.equal(read.text, 'にほんご 음.');
+    assert.equal(D.playbackOriginalTitle(read), D.ORIGINAL_MISSING_LISTEN);
+    assert.equal(D.ORIGINAL_MISSING_LISTEN, '원문을 못 찾았어요 — 화면 글을 옮겨 읽는 중');
+    assert.equal(D.playbackOriginal(read), 'にほんご 음.', '칸 = 실제로 읽는 글 (번역문을 「원문」처럼 두지 않음)');
+    const paired = tapEn('서서 할 이야기는 아니군요.', A1);
+    assert.equal(paired.text, 'にほんご We should not discuss this standing up.', '원문을 옮김 (번역문을 다시 옮기지 않음)');
+    assert.equal(D.playbackOriginalTitle(paired), '지금 읽는 대사의 원문');
+    assert.equal(D.playbackOriginal(paired), 'We should not discuss this standing up.');
 });
 
 console.log(`\ntts-listen: ${pass} passed, ${fail} failed`);

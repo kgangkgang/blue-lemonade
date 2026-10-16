@@ -482,7 +482,9 @@ export function analysisWanted(mesId, mes, s = settings(), { quiet = false, awai
     if (!need.langs.size && !need.emotion && !need.sfx && !need.speaker && !need.italics) return false;   // 6.1.8 색 없는 대사만 있어도 화자 찾기 · 1.9.1 기울임만 있어도
     const cached = cachedAnalysis(mesId);
     // 1.7.0 다시 쓰기로 바뀐 줄의 번역이 남았으면(analysis.redo) 아직 — 그 줄만 묻는 작은 보충 요청이 나간다
-    if (cached && (typeof analysis.analysisCovers === 'function' ? analysis.analysisCovers(cached, need.langs) : coversLangs(cached.langs, need.langs))) return false;
+    // 1.9.2 받은 분석에 답이 없는 기울임 후보(문단 전체가 기울임인 속마음 등)가 남았으면 기울임만 묻는 작은 보충 한 번 (analysis.italicsToFill — 물으면 적어 둠)
+    const fill = need.italics && typeof analysis.italicsToFill === 'function' ? analysis.italicsToFill(mes, cached) : [];
+    if (cached && (typeof analysis.analysisCovers === 'function' ? analysis.analysisCovers(cached, need.langs) : coversLangs(cached.langs, need.langs)) && !fill.length) return false;
     if (analysis.hasResponseFailure?.(mesId)) return false;   // 잘못된 전체 응답은 대사를 누를 때마다 다시 보내지 않음. 요술봉 재생성으로 재시도.
     if (!analysisReady(s)) { if (!quiet) toastSession('analysis-setup', '대사 분석 엔진을 설정하면 감정·원어 읽기가 돼요'); return false; }
     return true;
@@ -763,7 +765,7 @@ function buildJobs(mesId, mes, { orig, disp }, { startSeg = 0, final = true, exc
         const oi = origIdxOf(seg);
         if (exclude && oi !== undefined && exclude.has(oi)) continue;   // 스트리밍 때 이미 읽음
         if (seg.term && !tapped) continue;   // 1.9.1 서술 속 낱말 인용 (「"Old-friend"라고」 — text.js quotedTerm)은 대사가 아니다 (누르면 읽음)
-        const kind = seg.kind === 'action' && seg.speech ? 'dialogue' : seg.kind;   // 1.9.1 말 기울임(소설체 문단의 *…* — text.js markParagraphs)은 대사의 길 · 목소리로
+        const kind = seg.kind === 'action' && seg.speech ? 'dialogue' : seg.kind === 'action' && tapped ? 'thought' : seg.kind;   // 1.9.1 말 기울임(소설체 문단의 *…* — text.js markParagraphs)은 대사의 길 · 목소리로 · 1.9.2 서술이라 가른 기울임도 누르면 속마음으로 (누른 건 듣고 싶은 것)
         let name = userName, source = 'user', flag = null, g = undefined;
         if (!mes.is_user) {
             const r = safeResolve(seg, speakerCtx); name = r.name; source = r.source; if (typeof r.isUser === 'boolean') flag = r.isUser;
@@ -787,8 +789,9 @@ function buildJobs(mesId, mes, { orig, disp }, { startSeg = 0, final = true, exc
         if (senderLine && !hasOwnVoice(name)) missingSpeaker = true;   // 6.1.8 화자 찾기가 쓰일 줄 (analysisNeeds)
         // 1.9.1 색 · 이름표 · 대사 분석이 화자를 못 줘 보낸 쪽으로 떨어진 대사 · 말 기울임: 그 문단 서술에 처음 나온 아는 이름 (내 이름이면 내 목소리 —
         //   text.js paraName). 그 이름으로 읽을 목소리가 없으면 예전처럼 보낸 쪽. 분석을 부를지(missingSpeaker · 위)는 예전 판단 그대로 — 분석이 화자를 주면 분석이 먼저
-        if (source === 'sender' && seg.paraName && !mes.is_user) {
-            const p = safeResolve({ speakerHint: seg.paraName }, speakerCtx);
+        const paraName = seg.paraName || (tapped && seg.kind === 'action' ? seg.povName : '');   // 1.9.2 누른 기울임은 그 장면의 시점 인물 (그 문단 · 앞 서술 문단의 이름 — text.js povName)
+        if (source === 'sender' && paraName && !mes.is_user) {
+            const p = safeResolve({ speakerHint: paraName }, speakerCtx);
             const who = p.source === 'hint' ? String(p.name || '') : '';
             const u = typeof p.isUser === 'boolean' ? p.isUser : who.toLowerCase() === userName.toLowerCase();
             const r = who ? routeFor(kind, u, false, routes) : 'skip';
@@ -806,6 +809,7 @@ function buildJobs(mesId, mes, { orig, disp }, { startSeg = 0, final = true, exc
         // 1.4.4 듣는 언어: 번역문이 오기 전(미리 만들기 1차)엔 그 언어가 아닌 줄은 미룬다 — 번역문이 그 언어일 수 있고, 번역을 기다리는 동안엔 옮기지 않는다
         if (awaitDisplay && !disp && (lt ? !listen.inTarget(seg.text, lt) : needsDisplay(seg, voice, want, an))) { held++; continue; }
         let use = seg;
+        const origPair = primaryIsDisplay ? origOf.get(seg) || byColorOrder(seg, disp, orig) : null;   // 1.9.2 차례 맞춤에 없으면 같은 색 · 같은 번째 원문
         if (want === 'display' && !primaryIsDisplay && dispOf.get(seg)) use = dispOf.get(seg);
         else if (want === 'original' && primaryIsDisplay && origOf.get(seg)) use = origOf.get(seg);
         let listenSrc = '';
@@ -813,18 +817,18 @@ function buildJobs(mesId, mes, { orig, disp }, { startSeg = 0, final = true, exc
             // 1.4.4 듣는 언어 (원어 읽기 대신): 고른 글이나 그 짝(원문 ↔ 번역문)이 이미 그 언어면 그 글, 아니면 원문을 번역기로 옮긴 글
             //   (번역문을 다시 옮기지 않는다 — 뜻이 두 번 흐려짐). 옮긴 글은 listenFill 이 미리 캐시에 넣어 둔다 — 없으면 원문 그대로 (listenPending)
             if (!listen.inTarget(use.text, lt) && !seg.listenAsIs) {   // 6.1.8 listenAsIs = 원문이 그 언어인 메시지의 짝 없는 번역문 줄 (그대로)
-                const pair = use === seg ? (primaryIsDisplay ? origOf.get(seg) : dispOf.get(seg)) : seg;
-                const origSeg = primaryIsDisplay ? (origOf.get(seg) || null) : seg;
+                const pair = use === seg ? (primaryIsDisplay ? origPair : dispOf.get(seg)) : seg;
+                const origSeg = primaryIsDisplay ? (origPair || null) : seg;
                 if (pair?.text && listen.inTarget(pair.text, lt)) use = pair;
                 else listenSrc = listen.normSource((origSeg?.text ? origSeg : use).text);
             }
         } else if (an?.enabled && an.translate && voice.lang) {
             // 목소리 원어 (원어로 번역해서 읽기): 고른 글이 목소리 언어가 아닌데 짝(원문↔번역문)이 그 언어면 짝을 읽는다 —
             // 일본어 원문 + 화면 한국어 → 일본어 목소리는 원문 그대로, 영어 원문 + 화면 한국어 → 한국어 목소리는 화면 글 (LLM 번역 없이)
-            const pair = use === seg ? (primaryIsDisplay ? origOf.get(seg) : dispOf.get(seg)) : seg;
+            const pair = use === seg ? (primaryIsDisplay ? origPair : dispOf.get(seg)) : seg;
             if (pair?.text && detectLang(use.text) !== voice.lang && detectLang(pair.text) === voice.lang) use = pair;
         }
-        const alt = use === seg ? (primaryIsDisplay ? origOf.get(seg) : dispOf.get(seg)) || null : seg;   // 강조 검색용 짝 (화면이 다른 글일 때)
+        const alt = use === seg ? (primaryIsDisplay ? origPair : dispOf.get(seg)) || null : seg;   // 강조 검색용 짝 (화면이 다른 글일 때)
         let text = applyPron(String(use.text || ''), s).trim();
         let lang = '';
         let pending = false;
@@ -836,7 +840,7 @@ function buildJobs(mesId, mes, { orig, disp }, { startSeg = 0, final = true, exc
         if (!text) continue;
         const emo = emotionFor(tagsFromOrig ? (origOf.get(seg) || seg) : seg, s);
         // 1.9.1 번역문을 기준으로 읽는데 원문 짝이 없으면 원문 칸에 그 번역문을 「원문」이라 하지 않게 표시 (playbackOriginalTitle — 누르기 길은 clickedPair 가 이미 표시)
-        const original = primaryIsDisplay ? origOf.get(seg) || { ...seg, fromDisplay: true } : seg;
+        const original = primaryIsDisplay ? origPair || { ...seg, fromDisplay: true } : seg;
         const job = { mesId, seg: use, segIndex: oi ?? i, parts: [{ seg: use, alt, original, text }], voice, speaker: name, emotion: emo, text, lang: lang || detectLang(text) || '', loud: false, params: null, provider: null, key: '', audio: null, ctrl: null };
         if (seg.join) job.join = seg.join;   // 1.9.1 한 문단 이어 읽기 묶음 (text.js markJoins — finishJobs join)
         if (listenSrc) { job.listen = { src: listenSrc, target: lt }; if (pending) job.listenPending = true; }
@@ -2489,6 +2493,19 @@ export function speakText(text, voiceUid) {
  * 속마음은 원문의 character= 이름을 번역문 쪽에도 (화면 "캐릭터" · 원문 "Character"), 이름이 있으면 색은 clickplay 가 정한 것
  * (그 이름에 목소리가 있으면 없음, 모르는 이름이면 틀의 색 — 화자 찾기에서 색이 이름보다 앞서서)
  */
+/**
+ * 1.9.2 차례 맞춤(alignLists)에 짝이 없는 줄 → 같은 색 같은 갈래 가운데 같은 번째 (그 색의 줄 수가 양쪽에서 같고 글 길이가 1/4~4 배 안일 때만).
+ * 원문에만 있는 서술 속 영어 인용 · 숨김 칸 · 번역기가 바꾼 줄 차례 때문에 수가 어긋나도 색별 순번은 그대로라 — 원문 짝을 못 찾으면 번역문을 듣는 언어로
+ * 다시 옮겨 읽었다 (일 → 한 → 일, 사용자: 「아직도 원문 한국어로 떠 일본어인데」)
+ */
+function byColorOrder(x, from, to) {
+    if (!x?.color) return null;
+    const same = (list) => (list || []).filter(y => y?.kind === x.kind && y.text && y.color === x.color);
+    const a = same(from), b = same(to), k = a.indexOf(x);
+    if (k < 0 || a.length !== b.length || !lenOf(b[k])) return null;
+    const r = lenOf(x) / lenOf(b[k]);
+    return r >= 0.25 && r <= 4 ? b[k] : null;
+}
 /** 1.2.4: 짝이 없는 번역문 조각 → 아직 짝이 없는 원문 가운데 같은 색(대화문) · 같은 주인(속마음)이고 자리(줄 ÷ 전체 줄)가 가장 가까운 것 */
 function nearestOriginal(d, orig, disp, dispOf, thought) {
     const kind = thought ? 'thought' : 'dialogue';
@@ -2522,7 +2539,7 @@ function clickedPair(src, seg, { lt = '' } = {}) {
     let d = find(src.disp);
     let o = d ? origOf.get(d) || null : null;
     if (!d) { o = find(src.orig); d = o ? dispOf.get(o) || null : null; }
-    if (d && !o && !action) o = nearestOriginal(d, src.orig, src.disp, dispOf, thought);   // 1.2.4: 차례 맞춤에도 없으면 같은 색·주인의 가까운 원문
+    if (d && !o && !action) o = byColorOrder(d, src.disp, src.orig) || nearestOriginal(d, src.orig, src.disp, dispOf, thought);   // 1.9.2 같은 색 · 같은 번째 → 1.2.4: 같은 색·주인의 가까운 원문
     // 6.1.8 듣는 언어: 원문이 이미 그 언어인 메시지에서 누른 번역문 줄의 원문을 못 찾으면 같은 차례의 원문 줄 — 번역문을 그 언어로 또 옮기지 않게.
     //   그 차례의 원문도 없으면 옮기지 않고 누른 글 그대로 (asIs)
     let asIs = false;
