@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "6.9.1";
+export const BUILD_VERSION = "6.9.2";
 export const FILE_HASHES = {
   "index.js": "18063:21422b6b:b75c29fe",
-  "manifest.json": "365:624024b5:9034fa34",
+  "manifest.json": "365:cb6d6200:8e3b9a5a",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -488,7 +488,7 @@ export const FILE_HASHES = {
   "src/ink-contrast-core.js": "7980:f3fffe2d:150030b9",
   "src/ink-contrast.js": "13252:b8857f6e:8fbc54dd",
   "src/install-health.js": "8239:80c9bc6b:217b0429",
-  "src/ko-ui-data.js": "245575:645a1576:efc9be05",
+  "src/ko-ui-data.js": "245512:8898c42e:5e28e301",
   "src/ko-ui.js": "10407:39cca7db:93bfd5e0",
   "src/layout.js": "25910:dfd4a27b:b4e12e42",
   "src/lazy-panel.gen.css": "32881:1cd76380:012574ac",
@@ -506,7 +506,7 @@ export const FILE_HASHES = {
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "248384:6aedcdbf:3caaf8c5",
+  "src/notice-data.js": "248975:f0d0a8dd:aab4bccb",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -581,7 +581,7 @@ export const FILE_HASHES = {
   "src/theme-update.js": "6862:284efe11:6d65e75a",
   "src/tone.js": "6415:7ed9f3f6:a7e0d13d",
   "src/touch-sliders.js": "1826:c0645cac:6b4521ba",
-  "src/typography.js": "20992:55fd8b43:0a43ef49",
+  "src/typography.js": "23512:bef0bfc7:89dc59bb",
   "src/update-check.js": "19645:57f061b4:de1bc415",
   "src/usage-mode.js": "274:97f75b3d:dfa5bb08",
   "src/vendor/gif-writer.js": "15523:55aa4c9a:308694e8",
@@ -604,5 +604,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "34821:fcebb709:d610b9d5",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1473553:32dd0115:8aad019b"
+  "style.css": "1473773:65fd2a8f:5e07133e"
 };

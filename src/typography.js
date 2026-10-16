@@ -8,6 +8,38 @@ let typesetHook=null;
 export function setTypesetHook(fn){typesetHook=typeof fn==='function'?fn:null;}
 const originals=new Map(), dirty=new Set();
 const LINE_INDENT='bl-dialogue-indent';
+// 6.9.2 중국어 · 일본어 덩어리는 글자 사이에서 줄바꿈 — 본문은 한국어를 낱말 단위(keep-all)로 끊는데, 띄어쓰기 없는 중국어 문장은 통째로 한 낱말이 돼
+//       줄 끝에 자리가 남아도 다음 줄로 넘어가 큰 빈칸이 생겼다 (커뮤니티 제보 「중국어 (한국어 번역)」 줄). 여섯 자 넘는 덩어리만 감싸고 CSS 가 그 안만 word-break: normal
+export const CJK_WRAP='bl-cjk';
+const CJK_CHAR=/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u;
+const CJK_RUN=/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}ー々〆〇][\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}ー々〆〇，。、．！？；：…・〜～]*/gu;
+/** 글 → 조각 [{text, cjk}] — 여섯 자 이상인 중국어 · 일본어 덩어리만 cjk (순수 함수 · 시험 tools/tests/cjk-wrap.mjs) */
+export function cjkPieces(text,min=6){
+    const s=String(text??''),out=[];let last=0;
+    if(!CJK_CHAR.test(s))return [{text:s,cjk:false}];
+    for(const m of s.matchAll(CJK_RUN)){
+        if([...m[0]].length<min)continue;
+        if(m.index>last)out.push({text:s.slice(last,m.index),cjk:false});
+        out.push({text:m[0],cjk:true});last=m.index+m[0].length;
+    }
+    if(!out.length)return [{text:s,cjk:false}];
+    if(last<s.length)out.push({text:s.slice(last),cjk:false});
+    return out;
+}
+const CJK_SKIP=`pre,code,script,style,textarea,.${CJK_WRAP}`;
+function wrapCjkRuns(root){
+    const hosts=root.matches?.('.mes_text, .salty-sample')?[root]:[...(root.querySelectorAll?.('.mes_text, .salty-sample')||[])];
+    for(const host of hosts){
+        if(!CJK_CHAR.test(host.textContent))continue;   // 한국어 · 영어만 있는 메시지는 여기서 끝
+        const walker=document.createTreeWalker(host,NodeFilter.SHOW_TEXT),nodes=[];
+        for(let n=walker.nextNode();n;n=walker.nextNode())if(CJK_CHAR.test(n.data)&&!n.parentElement?.closest(CJK_SKIP))nodes.push(n);
+        for(const node of nodes){
+            const pieces=cjkPieces(node.data);
+            if(!pieces.some(p=>p.cjk))continue;
+            node.replaceWith(...pieces.map(p=>{if(!p.cjk)return document.createTextNode(p.text);const span=document.createElement('span');span.className=CJK_WRAP;span.textContent=p.text;return span;}));
+        }
+    }
+}
 const mounting=new WeakSet();
 // 5.3.4: 에셋 그림에 곧장 붙은 <br> (사이에 빈칸 · 주석만) — 뒤로 셋, 앞으로 둘까지 .bl-img-br (css/07-images 가 숨김).
 // 예전 CSS 형제 선택자(img + br + br)는 사이의 글자를 건너뛰어 "줄A<br>줄B" 의 줄바꿈까지 숨겼다
@@ -151,6 +183,7 @@ export function typesetRoots(list){
     roots.forEach(prepareRoot);
     const jobs=roots.map(readRoot); // 읽기는 한 번에 — 첫 읽기에서만 스타일 계산이 돈다
     jobs.forEach(writeRoot);
+    roots.forEach(wrapCjkRuns);   // 6.9.2 대사 머리(bl-quote-lead)를 정한 뒤에
     typesetHook?.(roots);
 }
 // 메모 카드/팝업은 먼저 조판하고 같은 호출 스택에서 붙인다. 분리된 DOM에서는 계산 스타일이 비어 있으므로
@@ -242,7 +275,8 @@ export function syncTypography(on) {
         document.querySelectorAll(`.${LINE_INDENT}`).forEach(node=>node.remove());
         document.querySelectorAll(`br.${IMG_BR}`).forEach(node=>node.classList.remove(IMG_BR));
         document.querySelectorAll(`br.${STYLE_BR}`).forEach(node=>node.classList.remove(STYLE_BR));
-        document.querySelectorAll(`.${IMG_INDENT}`).forEach(node=>node.remove());return;
+        document.querySelectorAll(`.${IMG_INDENT}`).forEach(node=>node.remove());
+        document.querySelectorAll(`.${CJK_WRAP}`).forEach(node=>node.replaceWith(...node.childNodes));return;   // 6.9.2
     }
     typesetRoot(document); // 그림 옆 표시(markAssetBreaks)도 이 안에서 먼저
 

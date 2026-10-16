@@ -63,11 +63,11 @@ test('표: 깨진 글 없음 — HTML 엔티티 · 기계 번역 흔적 · 빈 �
     const values = [...Object.values(ADD), ...Object.values(FIX)];
     for (const value of values) assert.ok(!/&#\d+;|&nbsp;/.test(value), value);
     // 기존 번역에서 고친 대표 오역이 다시 들어오지 않게
-    for (const bad of ['가장 좋아하는', '사칭', '와이프 모드', '신속한 후처리', '채팅 완성 근원', '세대당', '대표적 페널티', '비스듬한', '고용 단계', '미치광이', '분류기 무료', '오픈데이터뱅크', '스포일러 무료', '닫다']) {
+    for (const bad of ['가장 좋아하는', '와이프 모드', '신속한 후처리', '채팅 완성 근원', '세대당', '대표적 페널티', '비스듬한', '고용 단계', '미치광이', '분류기 무료', '오픈데이터뱅크', '스포일러 무료', '닫다']) {
         assert.ok(!values.some(v => v.includes(bad)), `오역이 남음: ${bad}`);
     }
     assert.equal(FIX['Favorite'], '즐겨찾기');
-    assert.equal(FIX['Impersonate'], '대신 쓰기');
+    assert.equal(FIX['Impersonate'], '사칭');   // 6.9.2 RP 용어는 그대로
     assert.equal(FIX['User Prefix'], '사용자 메시지 접두사'); // 원래 접두사 · 접미사가 뒤바뀌어 있었다
     assert.equal(ADD['Show more messages'], '이전 메시지 더 보기');
     const empty = [...Object.entries(ADD), ...Object.entries(FIX)].filter(([, v]) => v === '').map(([k]) => k);
@@ -180,7 +180,7 @@ test('시작: 공식 addLocaleData 로 더하고, 있는 키는 표에서 고치
     const result = ui.startKoreanUi(ctx);
     assert.ok(result && result.add === Object.keys(ADD).length && result.fix === Object.keys(FIX).length);
     assert.equal(localeData['Rename current preset'], ADD['Rename current preset'], '없던 키는 addLocaleData 로');
-    assert.equal(translate('Impersonate'), '대신 쓰기', '있던 키는 표에서 덮어씀');
+    assert.equal(translate('Favorite'), '즐겨찾기', '있던 키는 표에서 덮어씀');
     assert.equal(showMore.textContent, '이전 메시지 더 보기');
     showMore.textContent = 'Show more messages';
     handlers.chat_id_changed();

@@ -43,6 +43,10 @@ body.salty .mes_text .bl-quote-lead,
   margin: 0;
   padding: 0;
 }
+/* 6.9.2 중국어 · 일본어 덩어리(typography.js wrapCjkRuns)는 글자 사이에서 줄바꿈 — 한국어 낱말 단위(keep-all)는 그대로 */
+:is(body.salty #chat .mes .mes_text, .salty-sample) .bl-cjk {
+  word-break: normal;
+}
 :is(body.salty #chat .mes .mes_text, .salty-sample) {
   font-family: var(--salty-font-text) !important;
   font-size: var(--salty-size) !important;

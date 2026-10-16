@@ -1,13 +1,21 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.9.1/blue-lemonade-6.9.1.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.9.2/blue-lemonade-6.9.2.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.9.1 · 최신 업데이트</summary>
+<summary>6.9.2 · 최신 업데이트</summary>
+
+- 실리태번 한국어 다듬기에서 RP 하는 사람들이 쓰는 말은 원래대로 두었어요 — 「사칭」(대신 쓰기 → 사칭), 「대체 인사말」(다른 첫 메시지 → 대체 인사말).
+- 본문 속 중국어 · 일본어 덩어리가 글자 사이에서 자연스럽게 줄바꿈돼요. 한국어는 지금처럼 낱말 단위로 끊고, 띄어쓰기 없는 중국어 문장이 통째로 다음 줄로 넘어가 윗줄이 벌어지던 것을 고쳤어요 (「중국어 (한국어 번역)」 같은 줄).
+
+</details>
+
+<details>
+<summary>6.9.1 · 몰입 읽기에서 TTS 막대도 아래로</summary>
 
 - 스크롤하면 바 숨기기(몰입 읽기)로 입력창이 내려가면 TTS 재생 막대도 화면 아래로 같이 내려와요 — 입력창이 사라진 자리에 막대만 떠서 글을 가리던 것을 고쳤어요. 다시 나오면 입력창 바로 위로 돌아가요.
 

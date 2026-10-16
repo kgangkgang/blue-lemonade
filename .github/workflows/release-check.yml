@@ -60,6 +60,7 @@ jobs:
           node tools/tests/translator-think-leak.mjs .
           node tools/tests/translator-meta-lines.mjs .
           node tools/tests/translator-name-wiring.mjs .
+          node tools/tests/cjk-wrap.mjs .
           node tools/tests/translator-autofix.mjs .
           node tools/tests/modelswitch-fallback-pick.mjs .
           node tools/tests/tts-integration.mjs .
