@@ -1,13 +1,20 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.8.6/blue-lemonade-6.8.6.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.8.7/blue-lemonade-6.8.7.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.8.6 · 최신 업데이트</summary>
+<summary>6.8.7 · 최신 업데이트</summary>
+
+- 상태창 날씨가 「…비스듬히 들어오는 햇살」처럼 맑은데 배경에 비가 내리던 것을 고쳤어요. 「비」는 뒤에 조사 · 빈칸 · 날씨 말(내리 · 오 · 바람 · 구름 …)이 올 때만 비로 보고, 비스듬히 · 비치는 · 비추는 · 비로소 같은 말은 비로 보지 않아요.
+
+</details>
+
+<details>
+<summary>6.8.6 · 번역 이름 고치기를 끝까지</summary>
 
 - 용어집 이름 고치기(영어로 남은 인물 이름 → 한글 표기)가 남은 글자 다시 번역 뒤 · 번역 점검 자동 고치기로 저장할 때 · 화면에 그릴 때에도 돌아요. 다시 번역된 줄에 인물 이름이 영어로 남던 것을 고쳤고, 이미 저장된 번역도 볼 때 고쳐져요 (번역 2.7.0).
 

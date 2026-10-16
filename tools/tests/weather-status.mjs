@@ -54,4 +54,13 @@ check('no wind is not a breeze', () => {
     assert.deepEqual(modes('天气：晴朗，微风'), ['sun', 'breeze']);
     assert.ok(modes('날씨: 바람이 거세게 분다').includes('breeze'));
 });
+// 6.8.7 「비」로 시작하는 다른 말은 비가 아니다 (금지 목록 대신 뒤에 오는 말로)
+check('words that only start with 비 are not rain', () => {
+    assert.deepEqual(modes('날씨: 온실 유리 지붕 사이로 비스듬히 들어오는 맑은 햇살, 18℃'), ['sun']);
+    for (const text of ['날씨: 창으로 비치는 햇살', '날씨: 구름 사이로 햇빛이 비추는 오후', '날씨: 비로소 갠 하늘, 맑음', '날씨: 비탈길 위 맑은 하늘', '날씨: 비싼 우산이 필요 없는 맑음'])
+        assert.ok(!modes(text).includes('rain'), text);
+    for (const text of ['날씨: 비', '날씨: 비가 내림', '날씨: 비 오는 오후', '날씨: 가는 비, 쌀쌀함', '날씨: 비바람', '날씨: 소낙비', '날씨: 장대비가 쏟아짐',
+        '날씨: 비구름이 낀 하늘', '날씨: 비에 젖은 거리', '날씨: 비가내리는 밤', '날씨: 비, 14℃', '날씨: 흐리고 비', '날씨: 비와 안개', '날씨: 빗방울', '날씨: 비오는 날'])
+        assert.ok(modes(text).includes('rain'), text);
+});
 console.log(`weather-status: ${passed} passed, 0 failed`);

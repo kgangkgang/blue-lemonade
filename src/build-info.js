@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "6.8.6";
+export const BUILD_VERSION = "6.8.7";
 export const FILE_HASHES = {
   "index.js": "17649:c8f7b83a:aec48bc0",
-  "manifest.json": "365:50b46ed7:7c38d5f7",
+  "manifest.json": "365:5bcb6d08:006d3bb9",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -504,7 +504,7 @@ export const FILE_HASHES = {
   "src/modal.js": "671:b74e0164:71228d7c",
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "245801:cde19e37:58297fcc",
+  "src/notice-data.js": "246195:dd84489a:768b5b69",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -593,7 +593,7 @@ export const FILE_HASHES = {
   "src/weather-rest.js": "1885:72edcdd7:6cfbb747",
   "src/weather-scenes.js": "14501:514d19d0:3ddb51b3",
   "src/weather-worker.js": "1953:1834075b:9831021d",
-  "src/weather.js": "36304:e6ee0b26:c4c61fda",
+  "src/weather.js": "37142:6ca9d318:3e5af26b",
   "src/websearch-core.js": "17125:d18d37ff:114569c1",
   "src/websearch.js": "23413:6753586f:be03a4b1",
   "src/wi-help-data.js": "23093:a4cbce3e:822b4fbb",
@@ -602,5 +602,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "34821:fcebb709:d610b9d5",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1471318:77e0baf6:2fff0d5c"
+  "style.css": "1471318:dbcb9cd0:e9bbb853"
 };

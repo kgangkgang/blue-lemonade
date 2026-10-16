@@ -19,7 +19,10 @@ const WEATHER_VALUE = '.custom-dem-track__item--weather .custom-dem-track__value
 // 날씨 글자 → 비 · 눈. 한국어는 낱말 앞(띄어쓰기 · 쉼표 뒤)에서만 — "준비", "비밀", "눈부신" 같은 말에 걸리지 않게
 // 띄어 쓴 "눈이 부신 햇살"도 눈이 아니다 ("눈이 부슬부슬"은 눈). 구형 Safari 가 lookbehind 를 못 읽으니 앞쪽 조건은 쓰지 않는다
 const SNOW = /(?:^|[\s,·/(~→-])(?:눈(?!부|\s*이?\s*부[시신실셔셨심])|함박눈|진눈깨비|싸락눈|눈보라|폭설|첫눈|눈발)|snow|sleet|blizzard|flurr|雪|吹雪|霙/i;
-const RAIN = /(?:^|[\s,·/(~→-])(?:비(?![밀행슷교록용])|이슬비|가랑비|보슬비|안개비|장대비|여우비|소[나]기|폭우|호우|장마|빗|폭풍우|뇌우)|rain|drizzl|shower|storm|thunder|downpour|monsoon|sun\s*shower|雨(?!刷|伞|傘|衣|靴)|雷|梅雨|夕立/i;
+// 6.8.7 「비」는 뒤가 끝 · 빈칸 · 문장부호 · 조사(가 · 는 · 를 · 와 · 에 · 로 · 마저 …) · 날씨 말(내리 · 오 · 바람 · 구름 · 방울 …)일 때만 비 —
+//       금지 목록(비밀 · 비행 …)으로는 「비스듬히 쏟아지는 햇살」 · 「창으로 비치는」 · 「비추는」 · 「비로소」 같은 말이 끝없이 비로 걸렸다 (사용자 10-16: 맑은 날 배경에 비)
+const KO_END = String.raw`(?:$|[\s,.;:·/)~!?\]」』…，。、])`;
+const RAIN = new RegExp(String.raw`(?:^|[\s,·/(~→-])(?:비(?=${KO_END}|(?:[가는도를와의에로만]|마저|까지|조차|처럼|보다|라도|랑|하고|뿐)(?:${KO_END}|내|오|와|쏟|퍼|그|올|온|흩|뿌|섞|젖|맞)|바람|구름|안개|냄새|소리|방울|줄기|내리|내린|내려|내림|오는|온다|옴|왔|와서|그치|그친|그침|그쳤|맞)|이슬비|가랑비|보슬비|안개비|장대비|여우비|소낙비|소[나]기|폭우|호우|장마|빗|폭풍우|뇌우)|rain|drizzl|shower|storm|thunder|downpour|monsoon|sun\s*shower|雨(?!刷|伞|傘|衣|靴)|雷|梅雨|夕立`, 'i');
 // 영어의 rain · shower · storm 이 들어 있지만 비가 아닌 말 — 비를 보기 전에 지운다 (Rainbow · Snowstorm · snow showers · meteor shower · sandstorm)
 const NOT_RAIN = /rainbows?|snow\s*(?:storms?|showers?)|meteor\s*showers?|(?:sand|dust)\s*storms?/gi;
 // 바람: window · August 의 wind · gust 는 빼고 (crosswind · whirlwind 처럼 붙여 쓴 바람은 그대로)
