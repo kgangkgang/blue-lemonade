@@ -76,6 +76,11 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     if (reader || modules.reader) load('reader', './reader.js').then(m => m?.syncReader(reader));
     const bgWindow = on && !!s.bgWindow?.on;
     if (bgWindow || modules.bgwindow) load('bgwindow', './background-window.js').then(m => m?.syncBackgroundWindow(bgWindow, s.bgWindow?.mode));
+    // 6.9.8 「이전 메시지 더 보기」 저절로 (show-more-auto.js, 기본 켬) · 새 답 첫 줄로 가는 ↑ (reply-top.js, 켤 때만)
+    const showMore = on && s.chat?.showMoreAuto !== false;
+    if (showMore || modules.showmore) load('showmore', './show-more-auto.js').then(m => m?.syncShowMoreAuto(showMore));
+    const replyTop = on && !!s.chat?.replyTop;
+    if (replyTop || modules.replytop) load('replytop', './reply-top.js').then(m => m?.syncReplyTop(replyTop));
     const replyNotify = on && !!s.replyNotify?.on;
     if (replyNotify || modules.replynotify) load('replynotify', './reply-notify.js').then(m => m?.syncReplyNotify(replyNotify));
     const onehand = on && !!s.onehand?.on;
@@ -87,6 +92,9 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     const weatherChat = s.chat?.weather === 'tracker' && !s.deus?.on ? { ...s.chat, weather: 'off' } : s.chat;
     const weather = on && !!weatherChat?.weather && weatherChat.weather !== 'off';
     if (weather || modules.weather) load('weather', './weather.js').then(m => m?.syncWeather(weather, weatherChat));
+    // 6.9.8 장면 소리: 날씨 효과에 맞춘 배경 소리 (scene-sound.js — 켤 때만 불러온다 · 다리 Symbol.for('blue-lemonade.ambient') 로 TTS 효과음과 겹치지 않게)
+    const sceneSound = on && !!s.sceneSound?.on;
+    if (sceneSound || modules.scenesound) load('scenesound', './scene-sound.js').then(m => m?.syncSceneSound(sceneSound, s.sceneSound, weatherChat, weather));
     // 5.3.7 큰 숫자는 쉼표로: 숫자 칸의 30000 을 포커스 밖에서만 30,000 으로 (numcomma.js — 끄면 듣기 · 덧씌운 값까지 전부 뗀다)
     const numComma = on && s.chat?.numComma !== false;
     if (numComma || modules.numcomma) load('numcomma', './numcomma.js').then(m => m?.syncNumComma(numComma));

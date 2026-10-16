@@ -173,8 +173,8 @@ body.salty select[multiple]:where(:not(.salty-panel *)) option:checked {
 }
 /* 숫자칸(슬라이더 옆): 작고 가운데, 자리 맞춘 숫자 */
 body.salty :is(.range-block-counter input, input.neo-range-input) {
-  height: var(--bl-h-num) !important;
-  min-height: 0 !important;
+  height: auto !important; /* 6.9.8: 숫자칸 높이는 입력칸 토큰(--bl-h-ctl)으로 — 화면마다 30 · 34 · 36 · 38 이던 것을 하나로. 큰 글씨는 글자 높이(1.45em + 8px)를 따라 모두 같이 자란다 */
+  min-height: max(var(--bl-h-ctl), calc(1.45em + 8px)) !important;
   padding: 0 6px !important;
   border-radius: 8px !important;
   font-size: var(--bl-fs-ctl) !important;
@@ -305,7 +305,7 @@ body.salty :where(#user-settings-block, #left-nav-panel, #rm_api_block, #Advance
 
 /* 슬라이더: 오목한 가는 막대 + 떠 있는 흰 손잡이 */
 body.salty input[type="range"]:where(:not(.salty-panel *)) {
-  height: 5px !important;
+  height: var(--bl-track-h) !important;
   margin: 10px 0 !important;
   border: 0 !important;
   border-radius: var(--bl-r-pill) !important;
@@ -315,16 +315,16 @@ body.salty input[type="range"]:where(:not(.salty-panel *)) {
   opacity: 1 !important;
 }
 body.salty input[type="range"]:where(:not(.salty-panel *))::-webkit-slider-thumb {
-  width: 22px !important;
-  height: 22px !important;
+  width: var(--bl-knob-size) !important;
+  height: var(--bl-knob-size) !important;
   border: 0 !important;
   border-radius: 50% !important;
   background: #fff !important;
   box-shadow: var(--bl-knob) !important;
 }
 body.salty input[type="range"]:where(:not(.salty-panel *))::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
+  width: var(--bl-knob-size);
+  height: var(--bl-knob-size);
   border: 0;
   border-radius: 50%;
   background: #fff;
@@ -349,9 +349,9 @@ body.salty .range-block:has(> .range-block-title + .range-block-range-and-counte
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  column-gap: var(--bl-s3);
-  row-gap: 0;
-  padding: var(--bl-s2) 0 !important;
+  column-gap: var(--bl-param-col-gap);
+  row-gap: var(--bl-param-row-gap);
+  padding: var(--bl-param-pad) !important;
 }
 /* 3.0.0: 여기 있던 규칙 'body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > *' 은 css/99-lazy-panel.css 로 옮김 (서랍 · 팝업이 열렸을 때만 켜짐) */
 body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-title {
@@ -374,7 +374,7 @@ body.salty .range-block:has(> .range-block-title + .range-block-range-and-counte
   margin: 0 !important;
 }
 body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter input {
-  width: 84px !important;
+  width: var(--bl-num-w) !important;
   margin: 0 !important;
 }
 body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-range {
@@ -389,9 +389,9 @@ body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-ra
   grid-template-columns: minmax(0, 1fr) auto;
   align-content: start;
   align-items: center;
-  column-gap: var(--bl-s2);
-  row-gap: 0;
-  padding: 6px 0 2px;
+  column-gap: var(--bl-param-col-gap);
+  row-gap: var(--bl-param-row-gap);
+  padding: var(--bl-param-pad);
 }
 body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child {
   grid-column: 1;
@@ -405,7 +405,7 @@ body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-ra
 body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
   grid-column: 2;
   grid-row: 1;
-  width: 60px !important;
+  width: var(--bl-num-w) !important;
   margin: 0 !important;
 }
 body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-slider {

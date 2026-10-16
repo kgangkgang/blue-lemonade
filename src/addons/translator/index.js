@@ -1848,38 +1848,9 @@ async function translate(text, options = {}) {
         } = options;
         const suggestPairs = [];   // 6.4.5 남김 다시 보내기로 고쳐 온 이름 짝 (새 이름 용어집 제안 — 유료 호출 없음)
 
-        // 커스텀 프롬프트 적용 (실시간 텍스트필드 값 사용)
+        // 커스텀 프롬프트 적용 (실시간 텍스트필드 값 사용) — [2.7.4] liveChatPrompt 로 떼어 냄: 자동 번역 건너뛰기(chatPromptTargetsKorean)가 같은 글을 본다
         let finalPrompt = prompt;
-
-        // 채팅 번역 프롬프트인 경우, 텍스트필드의 현재 값을 실시간 반영
-        if (prompt === extensionSettings.llm_prompt_chat) {
-            const editorElement = document.getElementById('llm_prompt_editor');
-            const selectElement = document.getElementById('prompt_select');
-
-            // 텍스트필드의 현재 값을 사용 (저장하지 않아도 번역에 반영됨)
-            if (editorElement && selectElement) {
-                const selectedValue = selectElement.value;
-                const currentEditorValue = editorElement.value;
-
-                // 1. 채팅 번역 프롬프트가 선택되어 있는 경우
-                if (selectedValue === 'llm_prompt_chat') {
-                    if (currentEditorValue && currentEditorValue.trim() !== '') {
-                        finalPrompt = currentEditorValue;
-                    }
-                }
-                // 2. 커스텀 프롬프트가 선택되어 있는 경우
-                else if (extensionSettings.selected_translation_prompt_id === selectedValue) {
-                    if (currentEditorValue && currentEditorValue.trim() !== '') {
-                        finalPrompt = currentEditorValue;
-                    }
-                }
-                // 3. 2026-10-06: ⚙️ 보조 프롬프트를 열어 보는 중이어도 골라 둔 커스텀 프롬프트로 — 전엔 열어 보기만 해도 재부팅 전까지 기본 프롬프트로 번역했다
-                else if (extensionSettings.selected_translation_prompt_id) {
-                    const selectedPrompt = promptManager?.getSelectedPrompt?.();
-                    if (selectedPrompt?.content?.trim()) finalPrompt = selectedPrompt.content;
-                }
-            }
-        }
+        if (prompt === extensionSettings.llm_prompt_chat) finalPrompt = liveChatPrompt();
 
         // ==================================================================================
         // [기존 로직 복구] 3. 플레이스홀더 치환 및 프롬프트 조립
@@ -2497,6 +2468,7 @@ async function settleGuard(guard, maxMs = 8000) {
     while (typeof guard?.settled === 'function' && !guard.settled() && Date.now() - started < maxMs) await new Promise(resolve => setTimeout(resolve, 100));
 }
 const autoRetries = new WeakMap();   // 6.5.2 끊긴 자동 번역을 메시지마다 몇 번 다시 걸었나 (2번까지)
+const afterWorkEnds = new WeakMap();   // 2.7.4 번역 표 → 뒷일 다리의 끝 함수 (번역 · 재번역(교정) · 문단 다시 번역 모두 여기를 지난다)
 function beginTranslation(messageId, message) {
     const token = { guard: guards.capture(message), chatGuard: guards.capture(), source: message.mes, swipe: message.swipe_id };
     let done;
@@ -2504,10 +2476,14 @@ function beginTranslation(messageId, message) {
     // [1.9.5] 표에 메시지를 달아 둔다 (디버그 출력에 메시지 전체가 찍히지 않게 열거되지 않는 속성으로)
     Object.defineProperty(token, 'message', { get: () => token.guard.target?.() ?? message });   // 6.5.2 같은 채팅을 다시 불러오면 새 객체를 가리킨다
     translationInProgress[messageId] = token;
+    // 6.9.8 뒷일 다리 — 소리 없이 버티기가 번역이 끝날 때까지 버틴다 (다리가 없으면 undefined)
+    let endAfterWork; try { endAfterWork = globalThis[Symbol.for('blue-lemonade.after-work')]?.begin?.('translate'); } catch {}
+    if (typeof endAfterWork === 'function') afterWorkEnds.set(token, endAfterWork);
     return token;
 }
 function endTranslation(messageId, token) {
     token?.resolve?.(token.error);
+    if (token && afterWorkEnds.has(token)) { const endAfterWork = afterWorkEnds.get(token); afterWorkEnds.delete(token); try { endAfterWork(); } catch {} }   // 6.9.8 성공 · 실패 · 취소 모두 finally 의 여기로 — 뒷일 끝 (한 번만)
     if (translationInProgress[messageId] === token) translationInProgress[messageId] = false;
     if (typeof checkView !== 'undefined') checkView.schedule(messageId);   // 2.6.0 번역 중엔 점검하지 않으니 끝나면 한가할 때 점검
 }
@@ -3044,7 +3020,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
         return;
     }
 
-    const runToken = beginTranslation(messageId, message); // [1.9.2] · [1.9.5] 메시지를 단다
+    const runToken = beginTranslation(messageId, message); // [1.9.2] · [1.9.5] 메시지를 단다 · 6.9.8 뒷일 다리 begin 도 여기서
 
     try {
         const sourceMes = message.mes;          // [1.9.2] 끝났을 때 같은 글인지 보려고
@@ -4340,6 +4316,51 @@ function skipCutAutoTranslate(message, index) {
     if (Number.isFinite(message?.extra?.stream_cut) && message.extra.stream_cut === String(message.mes || '').length) return true;
     return !message?.is_user && !message?.is_system && index === getContext().chat.length - 1 && pendingWatchdogCut();
 }
+/**
+ * [2.7.4] 자동 번역을 건너뛸 답인가 — 'system' | 'korean' | null. 번역 단추로 직접 번역하는 것은 막지 않는다.
+ *   'system': 눈 끈(is_system) 메시지 (/hide · /comment) — 프롬프트에서 빠진 글을 번역하지 않는다 (기록 다리 wait 는 전부터 걸렀다)
+ *   'korean': 채팅 번역 프롬프트가 한국어로 옮기는데 원문이 이미 거의 한글(글자의 80% 이상) — 한국어 답을 한 번 더 보내 요금 · 진행 배지 · 「번역을 시작합니다」 가 나가지 않게.
+ *             TTS 도 다리(autoSkipReason)로 같은 판단을 받아 대사 분석을 같이 쉰다.
+ */
+// 목표어가 한국어인 프롬프트 꼴 — 「to/into Korean」 · 「한국어로」 · 「한글로」 (낱말 korean 만으로는 「from Korean」 도 걸린다)
+const KOREAN_TARGET = /(?:to|into)\s+korean|한국어로|한글로/i;
+const KOREAN_SKIP_SHARE = 0.8;
+/** [2.7.4] 채팅 번역에 실제로 쓰는 프롬프트 — 편집칸의 지금 값(채팅 프롬프트 · 골라 둔 커스텀 프롬프트가 열려 있을 때) · 골라 둔 커스텀 프롬프트 · 기본 칸. translate() 와 자동 건너뛰기 판정이 같은 글을 본다 */
+function liveChatPrompt() {
+    const base = extensionSettings.llm_prompt_chat;
+    const editorElement = typeof document !== 'undefined' ? document.getElementById('llm_prompt_editor') : null;
+    const selectElement = typeof document !== 'undefined' ? document.getElementById('prompt_select') : null;
+    if (!editorElement || !selectElement) return base;
+    const selectedValue = selectElement.value;
+    const currentEditorValue = editorElement.value;
+    // 1. 채팅 번역 프롬프트가 선택되어 있는 경우 · 2. 커스텀 프롬프트가 선택되어 있는 경우: 텍스트필드의 현재 값 (저장하지 않아도 번역에 반영됨)
+    if (selectedValue === 'llm_prompt_chat' || extensionSettings.selected_translation_prompt_id === selectedValue) {
+        return currentEditorValue && currentEditorValue.trim() !== '' ? currentEditorValue : base;
+    }
+    // 3. 2026-10-06: ⚙️ 보조 프롬프트를 열어 보는 중이어도 골라 둔 커스텀 프롬프트로 — 전엔 열어 보기만 해도 재부팅 전까지 기본 프롬프트로 번역했다
+    if (extensionSettings.selected_translation_prompt_id) {
+        const selectedPrompt = promptManager?.getSelectedPrompt?.();
+        if (selectedPrompt?.content?.trim()) return selectedPrompt.content;
+    }
+    return base;
+}
+function chatPromptTargetsKorean() { return KOREAN_TARGET.test(String(liveChatPrompt() || '')); }
+/** 글자만 세어 한글 비율 — 한글(Script=Hangul) 대 나머지 글자(\p{L}: 라틴 · 키릴 · 그리스 · 태국 · 아랍 · 힌디 · 가나 · 한자 …). 태그 · 주소는 뺀다. 글자가 없으면 0 */
+function koreanShare(text) {
+    const body = String(text ?? '').replace(/<[^<>]*>/g, ' ').replace(/https?:\/\/\S+/g, ' ');
+    const count = re => (body.match(re) || []).length;
+    const hangul = count(/\p{Script=Hangul}/gu);
+    const others = Math.max(0, count(/\p{L}/gu) - hangul);
+    return hangul + others ? hangul / (hangul + others) : 0;
+}
+/** 코드 블록(```)이 든 답 — 상태창 · helper 카드가 영어로 남을 수 있어 자동 번역을 건너뛰지 않는다 (6.9.7 처럼 번역) */
+const hasCodeBlock = text => /```/.test(String(text ?? ''));
+function autoSkipReason(message) {
+    if (!message) return null;
+    if (message.is_system === true) return 'system';
+    if (!hasCodeBlock(message.mes) && chatPromptTargetsKorean() && koreanShare(message.mes) >= KOREAN_SKIP_SHARE) return 'korean';
+    return null;
+}
 function translateIncomingMessage(messageId) {
     const context = getContext();
     const message = context.chat[messageId];
@@ -4358,6 +4379,13 @@ function translateIncomingMessage(messageId) {
     if (cutByWatchdog(message)) {
         console.info('[LLM Translator] 끊긴 답이라 자동 번역을 건너뜀', messageId);
         if (typeof toastr !== 'undefined') toastr.info('끊긴 답이라 자동 번역을 건너뛰었어요. 번역하려면 메시지의 번역 버튼을 누르세요.', 'LLM 번역', { timeOut: 4000 });
+        return hideStaleTranslation(message);
+    }
+
+    // [2.7.4] 눈 끈 메시지 · 이미 한국어인 답은 조용히 건너뛴다 (알림 없음 · 옛 번역 표시만 정리)
+    const skip = autoSkipReason(message);
+    if (skip) {
+        console.info(`[LLM Translator] 자동 번역 건너뜀 (${skip === 'system' ? '눈 끈 메시지' : '이미 한국어'})`, messageId);
         return hideStaleTranslation(message);
     }
 
@@ -4542,22 +4570,44 @@ function publishGlossaryNames() {
     publishNames(extensionSettings.glossary_enabled === false ? [] : activeGlossaryEntries());
 }
 
-function activeGlossaryEntries(scopeKey = glossaryScopeKey()) {
+/**
+ * [2.7.4] 번역에 쓰는 용어집 범위들 — 이기는 차례. 캐릭터 채팅은 [그 캐릭터], 그룹 채팅은 [그룹, 멤버 캐릭터…(group.members 차례)].
+ * 전체(global)는 늘 맨 뒤 (activeGlossaryEntries 가 붙인다). 멤버 것도 쓰니 그룹에서 TTS 화자 이름 · 한자 보존(이름 다리)도 같이 맞는다.
+ */
+function glossaryScopeKeys() {
+    const own = glossaryScopeKey();
+    if (!own) return [];
+    const ctx = getContext();
+    if (!ctx?.groupId) return [own];
+    const group = (ctx.groups || []).find(item => item && item.id === ctx.groupId);
+    const members = (Array.isArray(group?.members) ? group.members : []).map(String).filter(member => member && member !== 'global');
+    return [own, ...members.filter((member, index) => members.indexOf(member) === index)];
+}
+
+/** 범위 차례대로(문자열 하나도 됨) 항목을 고른다 — 표기가 하나라도 겹치면 먼저 온 범위가 이기고, 전체 범위는 맨 뒤 */
+function activeGlossaryEntries(scopes = glossaryScopeKeys()) {
+    const keys = Array.isArray(scopes) ? scopes : scopes ? [scopes] : [];
+    const entries = glossaryEntries();
     const chosen = [];
     const claimed = new Set();
-    for (const pass of ['char', 'global']) {
-        for (const entry of glossaryEntries()) {
-            if (!entry?.src || !entry?.dst) continue;
-            const isGlobal = entry.scope === 'global';
-            if (pass === 'char' ? isGlobal : !isGlobal) continue;
-            if (!isGlobal && entry.scope !== scopeKey) continue;
-            const forms = glossaryAlternatives(entry.src).map(glossaryFold).filter(Boolean);
-            if (!forms.length || forms.some(form => claimed.has(form))) continue;
-            for (const form of forms) claimed.add(form);
-            chosen.push(entry);
-        }
-    }
+    const take = entry => {
+        if (!entry?.src || !entry?.dst) return;
+        const forms = glossaryAlternatives(entry.src).map(glossaryFold).filter(Boolean);
+        if (!forms.length || forms.some(form => claimed.has(form))) return;
+        for (const form of forms) claimed.add(form);
+        chosen.push(entry);
+    };
+    for (const key of keys) { if (key === 'global') continue; for (const entry of entries) if (entry?.scope === key) take(entry); }
+    for (const entry of entries) if (entry?.scope === 'global') take(entry);
     return chosen;
+}
+
+/** [2.7.4] 그룹 채팅에서 지금 쓰이는 멤버 캐릭터 용어집 항목 수 (그룹 것과 겹쳐 밀린 것은 빼고) — 용어집 창의 「멤버 것 N개도 쓰는 중」 */
+function glossaryMemberCount() {
+    const keys = glossaryScopeKeys();
+    if (keys.length < 2) return 0;
+    const members = new Set(keys.slice(1));
+    return activeGlossaryEntries(keys).filter(entry => members.has(entry.scope)).length;
 }
 
 /**
@@ -4855,6 +4905,9 @@ function renderGlossary() {
                 <button type="button" class="llmt-gl-icon" data-act="delete" aria-label="지우기"><i class="fa-solid fa-xmark"></i></button>
             </div>`).join('');
     }
+    // [2.7.4] 그룹 채팅: 멤버 캐릭터 용어집도 번역에 쓰인다 — 목록은 그룹 것만 보이니 한 줄로 알린다
+    const memberCount = glossaryScopeView === 'char' && key ? glossaryMemberCount() : 0;
+    if (memberCount) list.insertAdjacentHTML('beforeend', `<small class="llmt-desc llmt-gl-members">멤버 것 ${memberCount}개도 쓰는 중</small>`);
     const count = card.querySelector('.llmt-gl-count');
     const total = glossaryEntries().length;
     count.textContent = total ? `${entries.length} / ${total}` : '';
@@ -6132,6 +6185,8 @@ function publishTranslatorAPI() {
         //       (사용자 규칙 뒤에 붙음 · 메모리에만 · 같은 id 는 바꿔 씀). unprotect(id) 로 뗀다. 성공하면 true
         protect: (id, regex, options) => protectBlock(id, regex, options),
         unprotect: id => unprotectBlock(id),
+        // [2.7.4] autoSkipReason(message) → 자동 번역이 이 답을 건너뛰나: 'system' | 'korean' | null (답장 자동 번역이 꺼져 있으면 늘 null) — TTS 가 대사 분석을 같이 쉰다
+        autoSkipReason: message => (shouldTranslate(incomingTypes) ? autoSkipReason(message) : null),
         // 6.9.6 previewText(message) → 번역 중 미리 보기가 그 메시지에 지금 그려져 있으면 그 글(display_text 와 같은 꼴, 저장 안 함) · 아니면 null (TTS 원문 짝 찾기)
         previewText: message => previewText(message),
     };
@@ -9154,7 +9209,7 @@ if (!duplicate) globalThis[Symbol.for('st.llm-translator.archive.v1')] = {
     async wait(message,isAlive) {
         if(!shouldTranslate(incomingTypes)||!isAlive())return;
         const id=getContext().chat.indexOf(message);
-        if(id<0||message.is_user||message.is_system)return;
+        if(id<0||message.is_user||autoSkipReason(message))return;   // [2.7.4] 눈 끈 · 이미 한국어도 자동 번역처럼 건너뜀
         // [2.1.3] 끊긴 답은 번역을 시작하지 않고 원문으로 기록하게 둔다 (직접 누른 번역이 돌고 있으면 그것만 기다린다)
         if(skipCutAutoTranslate(message,id)&&!isTranslationInProgress(id))return;
         let cancel;

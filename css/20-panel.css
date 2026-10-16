@@ -686,7 +686,7 @@ body.salty-dark .salty-shapes button.on {
   cursor: pointer;
 }
 .salty-slider input[type="range"]::-webkit-slider-runnable-track {
-  height: 5px !important;
+  height: var(--bl-track-h, 5px) !important;
   border: 0 !important;
   border-radius: 99px !important;
   background: linear-gradient(to right, var(--salty-accent) var(--fill, 50%), var(--shade-2) var(--fill, 50%)) !important;
@@ -694,27 +694,27 @@ body.salty-dark .salty-shapes button.on {
 }
 .salty-slider input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none !important;
-  width: 22px !important;
-  height: 22px !important;
-  margin-top: -8.5px !important;
+  width: var(--bl-knob-size, 22px) !important;
+  height: var(--bl-knob-size, 22px) !important;
+  margin-top: calc((var(--bl-track-h, 5px) - var(--bl-knob-size, 22px)) / 2) !important;
   border: 0 !important;
   border-radius: 50% !important;
   background: #fff !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14), 0 3px 10px rgba(0, 0, 0, 0.18) !important;
 }
 .salty-slider input[type="range"]::-moz-range-track {
-  height: 5px;
+  height: var(--bl-track-h, 5px);
   border-radius: 99px;
   background: var(--shade-2);
 }
 .salty-slider input[type="range"]::-moz-range-progress {
-  height: 5px;
+  height: var(--bl-track-h, 5px);
   border-radius: 99px;
   background: var(--salty-fill-accent, var(--salty-accent));
 }
 .salty-slider input[type="range"]::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
+  width: var(--bl-knob-size, 22px);
+  height: var(--bl-knob-size, 22px);
   border: 0;
   border-radius: 50%;
   background: #fff;

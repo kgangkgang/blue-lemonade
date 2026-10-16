@@ -117,7 +117,7 @@ const env = { ...card, ...seg, ...resume, ...auto, cardValues: cardValueModule.c
 };
 function install(name) { env[name] = new Function('env', `with(env){return (${cut(name)});}`)(env); return env[name]; }
 for (const name of ['compileUserPattern', 'runtimeRegexes', 'getCombinedRegexes', 'getNoFoldRegexes', 'protectedBlockRegexes', 'isProtectedBlock', 'withoutProtectedBlocks', 'fixMalformedPlaceholders',
-    'dropStrayWords', 'dropLeftoverPlaceholders', 'repairTagPairs', 'tidyGlossaryOutput', 'failMarkOf', 'cutError', 'refusalError', 'splitForChunks', 'translate', 'hideBrokenCommentsOnRender']) install(name);
+    'dropStrayWords', 'dropLeftoverPlaceholders', 'repairTagPairs', 'tidyGlossaryOutput', 'failMarkOf', 'cutError', 'refusalError', 'splitForChunks', 'liveChatPrompt', 'translate', 'hideBrokenCommentsOnRender']) install(name);
 env.tidyGlossaryOutput = (_s, x) => x;
 const sent = [];
 let model = body => ko(body);

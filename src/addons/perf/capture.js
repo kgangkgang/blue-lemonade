@@ -410,6 +410,7 @@ async function finishEntry(context, response, acc, marks, failure) {
         at,
         caller: context.caller,
         purpose: context.purpose,
+        label: context.label || '',   // 6.9.8 다른 확장이 begin 에 붙인 용도 글 (없으면 빈칸)
         attribution: context.attribution,
         kind: context.kind,
         endpoint: context.endpoint,

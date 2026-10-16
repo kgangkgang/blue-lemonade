@@ -78,8 +78,8 @@ body.salty #right-nav-panel #right-nav-panel-tabs:has(> #result_info[style*="non
 /* 원래 css/14-prompt.css */
 body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p > input {
   width: 100% !important;
-  height: var(--bl-h-num) !important;
-  min-height: 0 !important;
+  height: auto !important; /* 6.9.8: 숫자칸 높이 공통(--bl-h-ctl) */
+  min-height: var(--bl-h-ctl) !important;
   margin: 0 !important;
   padding: 0 6px !important;
   border-radius: 8px !important;
@@ -275,9 +275,9 @@ text-align-last:left;
 }
 /* 원래 css/26-rounds-1.7.css */
 body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child { grid-column: 1 / -1; grid-row: 1; /* 3.0.0: min-height → css/12-worldinfo.css (원래 규칙으로 합침) */ }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter input { width: 60px !important; font-size: 11px !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p > input { font-size: 11px !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label > span { font-size: var(--bl-fs-sub) !important; line-height: 1.3; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter input { width: var(--bl-num-w) !important; font-size: var(--bl-fs-ctl) !important; } /* 6.9.8: 60px · 11px → 공통 숫자칸 */
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p > input { font-size: var(--bl-fs-ctl) !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label > span { font-size: var(--bl-fs-body) !important; font-weight: 500; line-height: 1.3; }
 /* 원래 css/27-compact.css */
 body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > h4 {
   grid-column: 1;
@@ -319,16 +319,16 @@ body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small
   overflow-wrap:anywhere;
 }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter input {
-  width:calc(5.5ch + 18px + 6 * max(0px,var(--bl-settings-tracking,0px)))!important;
+  width:var(--bl-num-w)!important;
   max-width:100%;
   height:auto!important;
-  min-height:max(var(--bl-prompt-control-height),calc(1.45em + 8px))!important;
+  min-height:max(var(--bl-h-ctl),calc(1.45em + 8px))!important;
   font-size:var(--bl-fs-ctl)!important;
   line-height:1.45;
 }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p > input {
   height:auto!important;
-  min-height:max(var(--bl-prompt-control-height),calc(1.45em + 8px))!important;
+  min-height:max(var(--bl-h-ctl),calc(1.45em + 8px))!important;
   font-size:var(--bl-fs-ctl)!important;
   line-height:1.45;
 }

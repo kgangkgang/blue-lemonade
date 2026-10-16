@@ -259,6 +259,9 @@ export function startCompactLayout() {
     if (sendForm) new MutationObserver(placeQuickReplies).observe(sendForm, { childList: true, subtree: true });
     sendForm?.addEventListener('wheel', event => qrWheel(event, event.target.closest?.('#qr--bar')), { passive: false });
     sendForm?.addEventListener('pointerdown', event => qrPointerDown(event, event.target.closest?.('#qr--bar')));
+    // 6.9.8 퀵 리플라이 줄을 좌우로 밀면 실리태번 손짓(swiped-events, document 의 touch*)이 스와이프 · 새 답 만들기로 읽었다 → 줄 안의 터치는 문서까지 올리지 않는다 (스크롤 · 누르기는 그대로)
+    const qrSwipeGuard = event => { if (event.target.closest?.('#qr--bar')) event.stopPropagation(); };
+    for (const type of ['touchstart', 'touchmove', 'touchend']) sendForm?.addEventListener(type, qrSwipeGuard, { passive: true });
     let wasEnabled = document.body.classList.contains('salty');
     let wasQrTop = document.body.classList.contains('salty-qr-top');
     let wasQrVertical = document.body.classList.contains('salty-qr-y');

@@ -102,7 +102,7 @@ function statusOf(entry) {
 
 function titleOf(entry) {
     const type = entry.caller === 'chat' ? typeLabel(entry.type) : '';
-    return `${callerLabel(entry.caller)} · ${purposeLabel(entry.purpose)}${type ? ` · ${type}` : ''}`;
+    return `${callerLabel(entry.caller)} · ${entry.label || purposeLabel(entry.purpose)}${type ? ` · ${type}` : ''}`;   // 6.9.8 확장이 붙인 용도 글이 있으면 그것
 }
 
 // ── 설정 서랍 ───────────────────────────────────────────────
@@ -848,7 +848,7 @@ function renderDetail(entry) {
         chip('보내기', entry.stream ? '스트림' : '한 번에'),
         chip('메시지', entry.messageCount ? `${number(entry.messageCount)}개 · ${number(entry.promptChars)}자` : ''),
         chip('캐릭터', entry.character ? esc(entry.character) : ''),
-        chip('용도',esc(purposeLabel(entry.purpose))),
+        chip('용도',esc(entry.label || purposeLabel(entry.purpose))),
         chip('사용량',entry.usageKnown?'API 응답':entry.estimated?'토큰 추정':'확인 불가'),
         chip('연결처', esc(entry.connection?.label || '예전 기록 · 미확인')),
         entry.cacheWriteTokens ? chip('캐시 저장', number(entry.cacheWriteTokens)) : '',
@@ -991,8 +991,10 @@ async function renderStats(state) {
             <div class="rl-tile"><small>출력 토큰</small><b>${number(total.completionTokens)}</b>${total.reasoningTokens ? `<span class="rl-dim">생각 ${number(total.reasoningTokens)}</span>` : ''}</div>
             <div class="rl-tile"><small>비용</small><b>${costCell(total)}</b><span class="rl-dim">${number(totalTokens)} 토큰</span></div>
         </div>`;
-    const byPurpose=groupRows(inRange,row=>row.purpose||'unknown',row=>purposeLabel(row.purpose));
-    const byPurposeModel=groupRows(inRange,row=>(row.purpose||'unknown')+'|'+row.model,row=>purposeLabel(row.purpose)+' · '+row.model);
+    const purposeKey=row=>(row.purpose||'unknown')+(row.label?'#'+row.label:'');   // 6.9.8 label 이 있으면 용도 안에서 따로 한 줄
+    const purposeText=row=>row.label||purposeLabel(row.purpose);
+    const byPurpose=groupRows(inRange,purposeKey,purposeText);
+    const byPurposeModel=groupRows(inRange,row=>purposeKey(row)+'|'+row.model,row=>purposeText(row)+' · '+row.model);
     const byModel = groupRows(inRange, row => row.model + '|' + (row.providerLabel || ''), row => row.model + ' · ' + (row.providerLabel || '예전 기록'));
     const byCaller = groupRows(inRange, row => row.caller, row => callerLabel(row.caller));
     const byDay = groupRows(inRange, row => row.day, row => row.day.replace(/-/g, '.'));

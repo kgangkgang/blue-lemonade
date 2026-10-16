@@ -41,6 +41,7 @@ import { runtimeEnabled, assertRuntime } from './runtime.js';
 //   듣는 언어가 원어 읽기(목소리 언어 · 분석의 번역문)를 대신하고, 스트리밍 읽기는 쉰다 (streamBlocked).
 
 import { chat, substituteParams, eventSource, event_types } from '../../../../../../../../script.js';
+import * as stScript from '../../../../../../../../script.js';   // 1.9.7 getThumbnailUrl (없는 판 · 시험 스텁이면 직접 만든 주소)
 import { getContext } from '../../../../../../../extensions.js';
 import { settings, providerConfig, addUsage, addPreUsed, USER_AUTO } from './settings.js';
 import { segmentMessage, pairSegments, colorsClash, detectLang, parseRegexLines, speechDisplay, markJoins, joinSpeech, italicCandidates } from './text.js';
@@ -57,6 +58,7 @@ import * as analysis from './analysis.js';
 import * as translation from './translation.js';
 import * as listen from './listen.js';   // 1.4.4 듣는 언어
 import { resolveScript, normalizeRows, scriptFingerprint } from './script-store.js';
+import { mediaCard } from './media-card.js';   // 1.9.7 잠금화면 · 알림 카드 값 (얼굴 · 대사 · 화자)
 import { getSfx, sfxBlob, isSfxEnabled, sfxPreferenceRevision, onSfxPreferenceChange, sfxAttribution, sfxLevelOn, listSfx, isSfxFavorite, resolveSfxId, updateSfx, SFX_LIMITS } from './sfx-library.js';
 import { chipWords, addWord, removeWord, wordFold } from './word-chips.js';   // 6.3.6 효과음 낱말 붙이기 (요술봉 › 낱말)
 import { playbackOriginalIn, wavWithCredits } from './playback-details.js';
@@ -66,6 +68,7 @@ import { paintColorHighlights, clearColorHighlights, piecesOf, speakerColor, col
 import { widenToQuotes } from './highlight-colors.js';   // 1.9.1 읽는 대사 강조를 따옴표부터 따옴표까지 (findRange)
 
 const TITLE = 'TTS';
+const ambientCovers = sfxId => { try { return globalThis[Symbol.for('blue-lemonade.ambient')]?.covers?.(sfxId) === true; } catch { return false; } };   // 6.9.8 테마 장면 소리 다리 (scene-sound.js) — 빗소리 · 바람 · 물결 · 천둥이 돌고 있으면 같은 종류의 효과음은 내지 않는다
 const MAX_CONC = 2;                 // 동시 합성 요청
 const RETRY_MS = [1500, 4000];      // e.retry 재시도 간격
 const MERGE_SOFT = 600;             // 합친 글 한 덩이 최대 글자 (첫 소리가 빨리 나오도록)
@@ -239,6 +242,14 @@ function skipTagSet(src) {
 }
 
 // ---------- 채팅 맥락
+/** 1.9.7 /sys 해설의 보낸 쪽 이름이 기본값인가 — 실리태번 기본 'System' · 이 채팅의 내레이터 이름(chat_metadata.narrator_name) · 빈 이름 · 'Narrator' · '내레이터' */
+function isNarratorName(name) {
+    const n = String(name || '').trim().toLowerCase();
+    if (!n) return true;
+    let meta = '';
+    try { meta = String(getContext()?.chatMetadata?.narrator_name || '').trim().toLowerCase(); } catch { meta = ''; }
+    return n === 'system' || n === 'narrator' || n === '내레이터' || (!!meta && n === meta);
+}
 function chatCtx(mes) {
     const ctx = getContext();
     const userName = ctx.name1 || 'User';
@@ -743,6 +754,7 @@ function buildJobs(mesId, mes, { orig, disp }, { startSeg = 0, final = true, exc
     const origIndex = new Map(orig.map((o, i) => [o, i]));
     const origIdxOf = (seg) => (primaryIsDisplay ? origIndex.get(origOf.get(seg)) : origIndex.get(seg));
     const speakerCtx = { mes, charName, userName };
+    const narratorMes = !mes.is_user && mes.extra?.type === 'narrator' && isNarratorName(mes.name);   // 1.9.7 /sys 해설 — 이름이 기본값(System · 이 채팅의 내레이터 이름)일 때만. /sys name=캐릭터 는 그 캐릭터 목소리
     const routes = { ...s.routes };
     if (tapped && (!routes.thought || routes.thought === 'skip')) routes.thought = 'character';
     // 대화문이 하나도 없는 답장: 서술을 캐릭터 목소리로
@@ -787,6 +799,8 @@ function buildJobs(mesId, mes, { orig, disp }, { startSeg = 0, final = true, exc
         const voiceOf = (who, u, r) => (r === 'skip' ? null : r === 'user' ? voiceFor(userName, { isUser: true, kind })
             : r === 'narrator' ? voiceFor(who, { isUser: false, kind: 'narrator' }) : voiceFor(who, { isUser: u, kind }));
         let route = routeFor(kind, isUser, !!mes.is_user, routes);
+        // 1.9.7 /sys 해설(extra.type narrator): 보낸 쪽 이름(System)은 캐릭터가 아니라 내레이터 — 색 · 이름표 · 분석이 화자를 준 줄은 그대로
+        if (narratorMes && source === 'sender' && route === 'character') route = 'narrator';
         let voice = voiceOf(name, isUser, route);
         const senderLine = source === 'sender' && seg.kind === 'dialogue' && !mes.is_user && route === 'character';
         if (senderLine && !hasOwnVoice(name)) missingSpeaker = true;   // 6.1.8 화자 찾기가 쓰일 줄 (analysisNeeds)
@@ -1805,7 +1819,7 @@ async function run() {
                 sceneAudio.stopAll(); sceneTails.clear();
                 if (nav !== null) { idx = nav; nav = null; continue; }   // 6.4.4 v1.3 앞 메시지 꼬리를 기다리는 동안 ⟲ · ↻ · ⏮: 그 줄로 돌아가 다시 읽는다 (같은 메시지라 다음 반복은 기다리지 않음)
             }
-            if (job.sceneKind === 'sfx' && (!isSfxEnabled(job.sfxId) || (!job.sceneManual && settings().sfx?.enabled !== true))) { idx++; continue; }
+            if (job.sceneKind === 'sfx' && (!isSfxEnabled(job.sfxId) || (!job.sceneManual && settings().sfx?.enabled !== true) || ambientCovers(job.sfxId))) { idx++; continue; }   // 6.9.8 테마 장면 소리가 같은 소리를 내는 동안은 건너뛴다
             if (deadFor(job)) {   // 1.3.8 이번 읽기(스트리밍이면 이 답장)에서 안 되는 엔진
                 skipDead(job);
                 // 6.3.9 v2.2 그 대사에 미룬 효과음은 버리지 않고 제자리에서 (6.4.0 처럼 · 합성 실패 줄과 같게)
@@ -2289,6 +2303,7 @@ async function waitScene(ms, ir) {
 async function playSceneJob(job, ir) {
     if (job.sceneKind === 'pause') return waitScene(job.sceneGap, ir);
     if (!isSfxEnabled(job.sfxId) || (!job.sceneManual && settings().sfx?.enabled !== true)) return false;
+    if (ambientCovers(job.sfxId)) return false;   // 6.9.8 테마 장면 소리(빗소리 · 바람 · 물결 · 천둥)가 돌고 있으면 같은 종류의 효과음은 내지 않는다 (미룬 효과음 startFx 길도 여기를 지난다)
     applyPlayback();
     const pending = sceneAudio.play(job.sfxId, { volume: job.sceneVolume ?? 1, loop: job.sceneMode === 'loop', repeats: job.sceneRepeats, durationMs: job.sceneDurationMs, rate: Number(settings().playback_rate) || 1, stopBeforeSeg: job.sceneStopBefore });
     pending.then(handle => { if (ir.fired) handle?.stop(); }, () => {});
@@ -3707,14 +3722,24 @@ function observeBar(on) {
 }
 
 // ---------- MediaSession
+let personas = null;   // 1.9.7 페르소나 얼굴(personas.js user_avatar) — 없는 판 · 시험 스텁이면 null (그때는 내 줄에 그림 없음)
+import('../../../../../../../personas.js').then(m => { personas = m; }).catch(() => { personas = null; });
+/** 1.9.7 카드에 넣을 재료 — 지금 채팅의 캐릭터(그룹은 멤버) · 내 이름 · 페르소나 · 채팅 이름 · 썸네일 주소 */
+function cardEnv() {
+    let c = {};
+    try { c = getContext() || {}; } catch { c = {}; }
+    const group = c.groupId ? (c.groups || []).find(x => x && x.id === c.groupId) : null;
+    const members = new Set(group?.members || []);
+    const chars = Array.isArray(c.characters) ? c.characters : [];
+    const characters = group ? chars.filter(ch => ch && members.has(ch.avatar)) : (chars[c.characterId] ? [chars[c.characterId]] : []);
+    const thumbnail = (type, file) => { try { return String(new URL(typeof stScript.getThumbnailUrl === 'function' ? stScript.getThumbnailUrl(type, file) : `/thumbnail?type=${type}&file=${encodeURIComponent(file)}`, globalThis.location?.href || 'http://localhost/')); } catch { return ''; } };
+    return { appTitle: TITLE, userName: String(c.name1 || ''), characters, personaAvatar: String(personas?.user_avatar || ''), chatName: group ? String(group.name || '') : String(characters[0]?.name || c.name2 || ''), thumbnail, sameName: (a, b) => canon(a) === canon(b) };
+}
 function setSession(state, job) {
     const ms = navigator.mediaSession;
     if (!ms) return;
     try {
-        if (job) {
-            const who = job.speaker && job.speaker !== job.voice.name ? `${job.speaker} · ${job.voice.name}` : job.voice.name;
-            ms.metadata = new MediaMetadata({ title: who || TITLE, artist: TITLE });
-        }
+        if (job) ms.metadata = new MediaMetadata(mediaCard(job, cardEnv()));   // 1.9.7 얼굴(artwork) · 읽는 대사(title) · 화자(artist) · 채팅(album) — 목소리 id 는 안 넣는다
         ms.playbackState = state;
     } catch { /* 지원 안 함 */ }
 }

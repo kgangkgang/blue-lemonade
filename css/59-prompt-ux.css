@@ -22,8 +22,8 @@ body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small
   min-width:0;
   max-width:100%;
   grid-template-columns:minmax(0,1fr) auto;
-  gap:8px 10px;
-  padding:4px 0;
+  gap:var(--bl-param-row-gap) var(--bl-param-col-gap);
+  padding:var(--bl-param-pad);
 }
 /* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #left-nav-panel #advanced-ai-config-block .flex-container:has(> small:first-child + .neo-range-slider + .neo-r … */
 body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child :is(.fa-circle-info,.fa-circle-question) {
@@ -39,10 +39,10 @@ body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small
 body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
   grid-column:2;
   grid-row:2;
-  width:calc(5.5ch + 18px + 6 * max(0px,var(--bl-settings-tracking,0px)))!important;
+  width:var(--bl-num-w)!important;
   max-width:100%;
   height:auto!important;
-  min-height:max(var(--bl-prompt-control-height),calc(1.45em + 8px))!important;
+  min-height:max(var(--bl-h-ctl),calc(1.45em + 8px))!important;
   font-size:var(--bl-fs-ctl)!important;
   line-height:1.45;
 }
@@ -87,7 +87,7 @@ body.salty #left-nav-panel #pro-settings-block > :is(#amount_gen_block,#max_cont
 /* Chat Completion도 2열을 강제하지 않고 큰 글씨일 때 한 칸으로 내려온다. */
 body.salty #left-nav-panel #range_block_openai:not([style*="display: none"]):not([style*="display:none"]) {
   grid-template-columns:repeat(auto-fit,minmax(min(100%,11em),1fr));
-  gap:8px 10px;
+  gap:var(--bl-param-gap);
 }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(#oai_max_context_unlocked,#stream_toggle,#openai_max_context,#openai_max_tokens,#n_openai) {
   grid-column:auto;
@@ -99,7 +99,7 @@ body.salty #left-nav-panel .range-block-title {
 }
 /* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter)  … */
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> #bl-response-range) > .wide100p {
-  width:calc(6ch + 18px + 6 * max(0px,var(--bl-settings-tracking,0px)))!important;
+  width:var(--bl-num-w)!important;
   max-width:100%;
 }
 /* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"] … */

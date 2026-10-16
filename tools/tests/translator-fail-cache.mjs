@@ -81,7 +81,7 @@ const env = { ...card, ...seg, ...resume, ...auto, ...notify, ...check, cardValu
     runtimeProtections: new Map(), console: { debug() {}, info() {}, warn: (...a) => T.warnings.push(a.join(' ')), error() {} }, dropProseStrayWords: seg.dropStrayWords, repairProseTagPairs: seg.repairTagPairs, dropProseLeftoverPlaceholders: seg.dropLeftoverPlaceholders,
     correctBackticks: x => x, window: {}, toastr: { info() {}, warning() {}, success() {}, error() {} }, globalThis: { toastr: { warning() {} } }, BRACKET_NOTE, processTranslationText: (_o, t) => t,
     refreshMessageBlock: () => {}, originalHashOf: hash, markTranslatedOriginal: (message, text) => { message.extra.original_text_hash = hash(text); }, rememberTranslation: () => {},
-    eventSource: { emit() {} }, emitTranslationUIUpdate: () => {}, syncMesToSwipe: () => {}, publishArchiveReady: () => {}, translationInProgress: {}, progressBadge: () => ({ update() {}, remove() {} }),
+    eventSource: { emit() {} }, emitTranslationUIUpdate: () => {}, syncMesToSwipe: () => {}, publishArchiveReady: () => {}, translationInProgress: {}, afterWorkEnds: new WeakMap() /* 2.7.4 번역 표 → 뒷일 다리 끝 함수 (index.js 모듈 상수) */, progressBadge: () => ({ update() {}, remove() {} }),
     translateMessage: async () => {}, loadCheckLib: async () => check, checkView: { schedule() {}, close() {}, mark: (_id, mes) => mes, finish: x => x },
     FOLD_MARKUP: /llm-translator-details|class="(?:translated|original)_text|llmt-para-gap/, hasSourceEcho: seg.hasSourceEcho, matchesDisplayCardStructure: card.matchesDisplayCardStructure,
     openDB: async () => fakeDb(), STORE_NAME: 'translations',
@@ -89,7 +89,7 @@ const env = { ...card, ...seg, ...resume, ...auto, ...notify, ...check, cardValu
 for (const name of ['BLOCKED_CHUNK_MARK', 'MARK_TAIL']) env[name] = new Function(`${constLine(name)}; return ${name};`)();   // hasFailMark 는 ...seg (translation-segments.js)
 function install(name) { env[name] = new Function('env', `with(env){return (${cut(name)});}`)(env); return env[name]; }
 for (const name of ['compileUserPattern', 'runtimeRegexes', 'getCombinedRegexes', 'getNoFoldRegexes', 'protectedBlockRegexes', 'isProtectedBlock', 'withoutProtectedBlocks', 'fixMalformedPlaceholders',
-    'dropStrayWords', 'dropLeftoverPlaceholders', 'repairTagPairs', 'failMarkOf', 'cutError', 'refusalError', 'splitForChunks', 'translate',
+    'dropStrayWords', 'dropLeftoverPlaceholders', 'repairTagPairs', 'failMarkOf', 'cutError', 'refusalError', 'splitForChunks', 'liveChatPrompt', 'translate',
     'beginTranslation', 'endTranslation', 'isTranslationInProgress', 'checkStateOf', 'saveCheckedTranslation', 'runCheckAction',
     'addTranslationToDB', 'getTranslationFromDB', 'readCachedTranslation', 'storeTranslationQuietly']) install(name);
 env.forgetSegments = seg.forgetSegments;

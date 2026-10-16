@@ -16,7 +16,8 @@ import { recordedSource } from './addons/translator/translation-source.js';
 
 const OPENERS = '.swipes-counter.swipe-picker-enabled, .mes_swipe_picker';
 const WATCH_MS = 15000;
-const MARK = 'blSwipeTranslated';   // data-bl-swipe-translated = 바꿔 넣은 번역문 (다시 그려지면 사라져서 다시 바꾼다)
+const MARK = 'blSwipeTranslated';   // data-bl-swipe-translated="1" = 번역문으로 바꿔 넣은 칸 (다시 그려지면 사라져서 다시 바꾼다). 글은 painted(WeakMap)에 — 6.9.8: 속성에 글 전체를 복사하지 않는다
+const painted = new WeakMap();       // 칸 → 넣은 번역문
 const FOLD_MARKUP = /llm-translator-details|class="(?:translated|original)_text|llmt-para-gap/;
 const BLOCK_TAGS = 'p|div|li|ul|ol|details|summary|h[1-6]|blockquote|tr|table|section|article|header|footer|pre|hr';
 const VOID = /^(br|hr|img|input|meta|link|area|base|col|embed|source|track|wbr)$/;
@@ -29,8 +30,17 @@ function* tags(html) {
     for (let m; (m = re.exec(html));) yield { start: m.index, end: re.lastIndex, close: !!m[1], name: m[2].toLowerCase(), attrs: m[3], self: /\/\s*$/.test(m[3]) };
 }
 const hasClass = (t, name) => new RegExp(`\\bclass\\s*=\\s*["'][^"']*\\b${name}\\b`).test(t.attrs);
-const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', '#39': "'" };
-const decode = text => text.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+\d*);/gi, (all, name) => {
+const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', '#39': "'", hellip: '…', mdash: '—', ndash: '–', lsquo: '‘', rsquo: '’', ldquo: '“', rdquo: '”', laquo: '«', raquo: '»', middot: '·', bull: '•', copy: '©', reg: '®', trade: '™', times: '×', divide: '÷', deg: '°', ensp: ' ', emsp: ' ', thinsp: ' ', zwj: '\u200d', zwnj: '\u200c', shy: '' };
+// 6.9.8: 브라우저에서는 이름 참조를 전부 아는 textarea 로 푼다(태그는 이미 걷은 글이라 RCDATA 로 안전), 시험(node)은 위 표
+let decoder = null;
+const decode = text => {
+    if (!text.includes('&')) return text;
+    if (typeof document !== 'undefined' && typeof document.createElement === 'function') {
+        try { decoder ??= document.createElement('textarea'); if (decoder && 'value' in decoder) { decoder.innerHTML = text; const out = decoder.value; decoder.innerHTML = ''; return out; } } catch { /* 표로 */ }
+    }
+    return decodeTable(text);
+};
+const decodeTable = text => text.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+\d*);/gi, (all, name) => {
     if (name[0] === '#') { const code = name[1] === 'x' || name[1] === 'X' ? parseInt(name.slice(2), 16) : parseInt(name.slice(1), 10); return Number.isFinite(code) && code > 0 && code < 0x110000 ? String.fromCodePoint(code) : all; }
     return ENTITIES[name.toLowerCase()] ?? all;
 });
@@ -148,8 +158,15 @@ export function swipeTranslation(message, index, { substitute = text => text, ha
 }
 
 // ---------- 창 ----------
-let hashFn = null;
-const loadHash = () => import('../../../../utils.js').then(m => { hashFn = typeof m.getStringHash === 'function' ? m.getStringHash : null; }).catch(() => { hashFn = null; });
+let hashFn = null, hashLoading = null;
+// 해시 모듈(실리태번 utils.js)은 여는 단추를 누를 때 비로소 불러온다 — 첫 창은 그보다 먼저 그려질 수 있어 실리면 열린 창을 한 번 다시 번역한다(캐시 도장에 !!hashFn 이 들어 있어 다시 계산). 6.9.8
+const loadHash = () => (hashLoading ??= import('../../../../utils.js').then(m => { hashFn = typeof m.getStringHash === 'function' ? m.getStringHash : null; }).catch(() => { hashFn = null; }).then(() => { if (hashFn) retranslateOpen(); }));
+function retranslateOpen() {
+    if (typeof document === 'undefined') return 0;
+    let n = 0;
+    for (const dialog of document.querySelectorAll('body > dialog.popup.swipe_picker_popup')) if (watched.has(dialog)) n += translateDialog(dialog);
+    return n;
+}
 
 /** 창의 메시지 번호: 실리태번이 만든 번호 칸 id(swipe_picker_id_<번호>) · 펼치기 칸 id(swipe_picker_expand_<번호>_<스와이프>) */
 function messageIdOf(dialog) {
@@ -165,7 +182,7 @@ function cachedTranslation(message, index, substitute) {
     const current = Number(message.swipe_id ?? 0) === index;
     const extra = current ? message.extra : message.swipe_info?.[index]?.extra;
     const key = extra && typeof extra === 'object' ? extra : null;
-    const stamp = `${index === Number(message.swipe_id ?? 0)}\u0000${message.swipes?.[index]}\u0000${extra?.display_text}\u0000${extra?.original_translation_backup}\u0000${!!hashFn}`;
+    const stamp = `${index === Number(message.swipe_id ?? 0)}\u0000${message.swipes?.[index]}\u0000${extra?.display_text}\u0000${extra?.original_translation_backup}\u0000${extra?.original_text_hash}\u0000${!!hashFn}`;
     const hit = key && cache.get(key);
     if (hit && hit.stamp === stamp) return hit.text;
     const text = swipeTranslation(message, index, { substitute, hash: hashFn });
@@ -185,9 +202,10 @@ function translateDialog(dialog) {
         if (!box) continue;
         let text = null;
         try { text = cachedTranslation(message, Number(block.getAttribute('data-swipe-id')), substitute); } catch (error) { console.warn('[Blue Lemonade] 스와이프 고르기 번역문', error); }
-        if (!text || box.dataset[MARK] === text) continue;
+        if (!text || painted.get(box) === text) continue;
         box.textContent = text;
-        box.dataset[MARK] = text;
+        painted.set(box, text);
+        box.dataset[MARK] = '1';
         changed++;
     }
     return changed;
@@ -227,6 +245,9 @@ function lookForPicker() {
     clearTimeout(stopTimer);
     stopTimer = setTimeout(stopLooking, WATCH_MS);
 }
+
+/** 시험용 — 창 흉내로 translateDialog · watchDialog · 해시 늦게 실림 */
+export const _forTest = { translateDialog, watchDialog, retranslateOpen, setHash(fn) { hashFn = typeof fn === 'function' ? fn : null; }, painted, MARK };
 
 let started = false;
 export function startSwipePickerTranslation() {

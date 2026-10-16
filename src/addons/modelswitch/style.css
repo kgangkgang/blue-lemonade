@@ -1,4 +1,4 @@
-#model-switch-settings{--ms-version:"1.1.10"}
+#model-switch-settings{--ms-version:"1.2.0"}
 #model-switch-settings .inline-drawer-content{display:flex;flex-direction:column;gap:12px;text-align:left}
 .ms-presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
 .ms-presets:empty{display:none}
@@ -126,7 +126,7 @@ dialog.popup :not(.bl-addon-inline-content) > #model-switch-settings .ms-presets
 #model-switch-settings [data-fallback-editor]{display:flex;flex-direction:column;gap:8px}
 #model-switch-settings [data-fallback-editor]>label{display:flex;flex-direction:column;gap:6px;min-width:0}
 #model-switch-settings .ms-fallback-actions{display:flex;justify-content:flex-end;gap:8px}
-/* 1.1.10 「검열당했을 때」 켜기 · 취소: 실리태번 .menu_button 의 width:min-content 가 이겨 한글이 한 글자씩 꺾였다(켜/기 · 취/소, 폭 31.7px) →
+/* 1.1.10 고침 · 1.2.0 판 번호 바로잡음 — 「검열당했을 때」 켜기 · 취소: 실리태번 .menu_button 의 width:min-content 가 이겨 한글이 한 글자씩 꺾였다(켜/기 · 취/소, 폭 31.7px) →
    글자 폭만큼(줄어들지 않음) · 8px 둥글기 · 최소 높이 36(테마 컨트롤 높이가 더 크면 그 값). 칸이 모자라면 단추째 다음 줄로 */
 #model-switch-settings .ms-fallback-actions{flex-wrap:wrap}
 #model-switch-settings .ms-fallback-actions .menu_button{flex:0 0 auto;width:auto;min-width:0;max-width:100%;min-height:max(36px,var(--bl-h-ctl,36px));margin:0;align-items:center;justify-content:center;border-radius:var(--bl-r-sm,8px)!important;white-space:nowrap;word-break:keep-all}

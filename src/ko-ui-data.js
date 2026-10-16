@@ -421,6 +421,7 @@ export const ADD = {
     "Source:": "출처:",
     "Toggle media display style": "미디어 보기 방식 바꾸기",
     "Jump to swipe history": "스와이프 기록으로 이동",
+    "[Current]": "[현재]", // 6.9.8 스와이프 고르기 창 「#1 [Current]」 (swipe-picker.js t`[Current]`)
     "Add a reasoning block": "추론 블록 추가",
     "Thought for some time": "잠시 생각함",
     "Confirm Edit": "확인",

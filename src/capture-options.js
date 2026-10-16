@@ -1,4 +1,5 @@
 import { showThemeModal } from './modal.js';
+import {canShareFile,shareOrSave,fileOf} from './capture-share.js'; // 6.9.8 공유 아이콘
 import { CAPTURE_INFO_KEYS } from './capture-layout.js';
 import { createCaptureResources } from './capture-resources.js';
 import { toolSection, bindAddonLayout } from './addon-layout.js';
@@ -151,7 +152,7 @@ export async function openCapturePreview(ids, mount = null, selectedIds = () => 
     const dialog=mount||document.createElement('dialog');
     if(!mount)dialog.className='bl-capture-dialog';
     const preview=`<section class="bl-capture-preview"><p data-capture-progress role="status"></p><label class="bl-tool-field" data-capture-parts hidden>파일 미리보기<select data-capture-part></select></label><img alt="저장할 채팅 캡처 미리보기" hidden><canvas data-capture-live role="img" aria-label="저장할 채팅 캡처 미리보기" hidden></canvas><video controls playsinline muted hidden aria-label="저장할 채팅 영상 미리보기"></video></section>`;
-    const footer=`<footer class="bl-capture-stage-actions"><button type="button" class="salty-btn" data-capture-edit>캡처용 글 편집</button><button type="button" class="salty-btn" data-capture-quick>빠른 미리보기</button><button type="button" class="salty-btn" data-capture-render>파일 만들기</button><button type="button" class="salty-btn" data-capture-clear hidden>지우기</button><a class="salty-btn bl-tool-primary" data-capture-save download hidden>이 파일 저장</a><a class="salty-btn bl-tool-primary" data-capture-zip download="blue-lemonade-chat.zip" hidden>전체 파일 ZIP 저장</a></footer>`;
+    const footer=`<footer class="bl-capture-stage-actions"><button type="button" class="salty-btn" data-capture-edit>캡처용 글 편집</button><button type="button" class="salty-btn" data-capture-quick>빠른 미리보기</button><button type="button" class="salty-btn" data-capture-render>파일 만들기</button><button type="button" class="salty-btn" data-capture-clear hidden>지우기</button><a class="salty-btn bl-tool-primary" data-capture-save download hidden>이 파일 저장</a><button type="button" class="salty-btn bl-tool-primary bl-capture-share" data-capture-share hidden aria-label="이 파일 공유"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i></button><a class="salty-btn bl-tool-primary" data-capture-zip download="blue-lemonade-chat.zip" hidden>전체 파일 ZIP 저장</a></footer>`;
     dialog.innerHTML=mount?preview+footer:`<header><h3>채팅 캡처 미리보기</h3><button type="button" data-capture-close aria-label="미리보기 닫기">×</button></header><div class="bl-capture-layout"><section>${captureOptionsMarkup()}</section>${preview}</div>${footer}`;
     if(!mount){document.body.append(dialog);showThemeModal(dialog);}
     const alive=()=>mount?dialog.isConnected:dialog.open;
@@ -161,14 +162,14 @@ export async function openCapturePreview(ids, mount = null, selectedIds = () => 
     let revision=0,busy=false,edits=memory.edits,controller=null,outputs=[],zipURL='',stale=false,base=null,baseInfo=null,liveFrame=0,liveDraft=false,liveTimer=0,filterApi=null;
     let bake=null,bakeTimer=0,bakePresent=true,bakeAfterFiles=false,bakeFailed=-1,bands=null,bandCanvas=null,thumbDirty=false,liveError=false;
     const canLive=typeof createImageBitmap==='function';
-    const video=dialog.querySelector('video'),img=dialog.querySelector('img'),save=dialog.querySelector('[data-capture-save]'),zip=dialog.querySelector('[data-capture-zip]'),status=dialog.querySelector('[data-capture-progress]'),render=dialog.querySelector('[data-capture-render]'),part=dialog.querySelector('[data-capture-part]');
+    const video=dialog.querySelector('video'),img=dialog.querySelector('img'),save=dialog.querySelector('[data-capture-save]'),share=dialog.querySelector('[data-capture-share]'),zip=dialog.querySelector('[data-capture-zip]'),status=dialog.querySelector('[data-capture-progress]'),render=dialog.querySelector('[data-capture-render]'),part=dialog.querySelector('[data-capture-part]');
     const release=()=>{video.pause();video.removeAttribute('src');video.load();img.src='';for(const item of outputs)URL.revokeObjectURL(item.url);outputs=[];if(zipURL)URL.revokeObjectURL(zipURL);zipURL='';};
     const clearButton=dialog.querySelector('[data-capture-clear]'),quick=dialog.querySelector('[data-capture-quick]');
     const live=dialog.querySelector('[data-capture-live]');
     const freeBig=()=>{live.width=live.height=0;bands=null;};
     // data-files: 큰 미리보기가 만든 파일을 보여 주는 중 — 두 열 화면(PC · 가로 폰)에서도 필터 칸의 작은 미리보기를 켠다 (큰 미리보기로는 필터가 안 보이니까)
     const filesShown=on=>{const box=thumbBox();if(!box||box.hasAttribute('data-files')===on)return;box.toggleAttribute('data-files',on);if(on&&base){thumbDirty=true;scheduleLive();}}; // 두 열 화면에서 새로 보이게 됐으면 칠한다 (칸 너비는 그대로라 ResizeObserver 가 안 알려 준다)
-    const wipe=()=>{release();filesShown(false);video.hidden=img.hidden=live.hidden=save.hidden=zip.hidden=true;freeBig();save.removeAttribute('href');zip.removeAttribute('href');dialog.querySelector('[data-capture-parts]').hidden=true;};
+    const wipe=()=>{release();filesShown(false);video.hidden=img.hidden=live.hidden=save.hidden=zip.hidden=true;if(share)share.hidden=true;freeBig();save.removeAttribute('href');zip.removeAttribute('href');dialog.querySelector('[data-capture-parts]').hidden=true;};
     const stopBake=()=>{clearTimeout(bakeTimer);bake?.abort();bake=null;};
     const settingsRoot=mount?.closest('.salty-sec');
     // 필터 칸 맨 위의 작은 미리보기 (한 열 화면 — 큰 미리보기가 슬라이더보다 한참 위일 때). 설정 창이 다시 그려질 수 있어 매번 찾고, 새 칸이면 다시 지켜본다
@@ -323,7 +324,7 @@ export async function openCapturePreview(ids, mount = null, selectedIds = () => 
     const show=()=>{
         const item=outputs[Number(part.value)||0];if(!item)return;video.pause();video.hidden=img.hidden=live.hidden=true;filesShown(!item.quick);
         if(item.quick&&base){img.src=item.url;img.hidden=false;bands=null;thumbDirty=true;if(liveFrame){cancelAnimationFrame(liveFrame);liveFrame=0;}liveDraft=false;paintLive();} // 빠른 미리보기: 필터가 있으면 바탕 그림 + 지금 필터 (캔버스)
-        else{freeBig();const media=item.result.format==='video'?video:img;media.src=item.url;media.hidden=false;}save.href=item.url;save.download=item.name;save.textContent=`${(item.result.extension||'png').toUpperCase()} ${outputs.length>1?'이 파일 ':''}저장`;save.hidden=!!item.quick;
+        else{freeBig();const media=item.result.format==='video'?video:img;media.src=item.url;media.hidden=false;}save.href=item.url;save.download=item.name;save.textContent=`${(item.result.extension||'png').toUpperCase()} ${outputs.length>1?'이 파일 ':''}저장`;save.hidden=!!item.quick;syncShare(item);
         clearButton.hidden=!(memory.files?.length||memory.edits);
         const r=item.result,mb=n=>n>=1048576?`${(n/1048576).toFixed(n>=10485760?1:2)}MB`:`${Math.max(1,Math.round(n/1024))}KB`,total=outputs.reduce((sum,o)=>sum+o.blob.size,0),limit=['apng','webp'].includes(r.format)?(Number(getSettings().captureTools.maxMB)||0)*1048576:0;
         const fit=r.fitted?(r.fitted.overLimit?' · 한도를 못 맞췄어요 — 재생 시간이나 문단 수를 줄여 주세요':r.fitted.step?` · 용량에 맞춰 ${r.fitted.scale<1?'크기 '+Math.round(r.fitted.scale*100)+'% · ':''}${r.fitted.quality<1?'화질 '+Math.round(r.fitted.quality*100)+' · ':''}초당 ${r.fitted.fps}장`:''):'';
@@ -331,6 +332,10 @@ export async function openCapturePreview(ids, mount = null, selectedIds = () => 
         if(item.quick&&item.firstOnly)status.textContent+=item.firstOnly;
     };
     part.onchange=show;
+    // 6.9.8 공유 아이콘: 폰(터치 · 보안 컨텍스트)에서 브라우저가 이 파일을 공유할 수 있을 때만 보인다 — 누르면 공유 시트, 거부되면 저장으로, 취소하면 아무것도 (capture-share.js)
+    let shareFile=null;
+    function syncShare(item){if(!share)return;shareFile=item&&!item.quick?fileOf(item.blob,item.name,item.blob?.type):null;share.hidden=!canShareFile(shareFile);}
+    if(share)share.onclick=()=>{void shareOrSave(shareFile,{fallback:()=>save.click()});};
     // 빠른 미리보기 한 장을 큰 미리보기에 (바탕 그림에서 · 빠른 미리보기에서)
     function presentQuick(result,motion){
         wipe();stale=false;

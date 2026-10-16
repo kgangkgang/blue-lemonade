@@ -68,7 +68,46 @@ jobs:
           node tools/tests/translator-check-fold.mjs .
           node tools/tests/translator-fail-cache.mjs .
           node tools/tests/translator-status-card.mjs .
+          node tools/tests/qr-swipe-guard.mjs .
           node tools/tests/swipe-picker-translation.mjs .
+          node tools/tests/scene-sound.mjs .
+          node tools/tests/assets-file-flows.mjs .
+          node tools/tests/assets-settings-records.mjs .
+          node tools/tests/assets-shrink.mjs .
+          node tools/tests/customstyle-css-save.mjs .
+          node tools/tests/customstyle-values.mjs .
+          node tools/tests/direction-migrate.mjs .
+          node tools/tests/direction-saved-list.mjs .
+          node tools/tests/model-register-panel.mjs .
+          node tools/tests/model-register-picks.mjs .
+          node tools/tests/model-register-state.mjs .
+          node tools/tests/modelswitch-commit.mjs .
+          node tools/tests/modelswitch-store.mjs .
+          node tools/tests/notes-data.mjs .
+          node tools/tests/notes-owners.mjs .
+          node tools/tests/notes-task-fence.mjs .
+          node tools/tests/order-apply.mjs .
+          node tools/tests/perf-save-dedupe.mjs .
+          node tools/tests/perf-save-recovery.mjs .
+          node tools/tests/perf-save-worker.mjs .
+          node tools/tests/prompt-apply-live.mjs .
+          node tools/tests/prompt-translation-cache.mjs .
+          node tools/tests/regexlink-restore.mjs .
+          node tools/tests/rewrite-apply-message.mjs .
+          node tools/tests/rewrite-settings-migrate.mjs .
+          node tools/tests/zipinstall-archive.mjs .
+          node tools/tests/zipinstall-client.mjs .
+          node tools/tests/zipinstall-install.mjs .
+          node tools/tests/translation-tag-pairs.mjs .
+          node tools/tests/translator-auto-skip.mjs .
+          node tools/tests/translator-group-glossary.mjs .
+          node tools/tests/tts-media-card.mjs .
+          node tools/tests/tts-settings-migrate.mjs .
+          node tools/tests/bookmarks-data.mjs .
+          node tools/tests/translator-after-work.mjs .
+          node tools/tests/perf-request-label.mjs .
+          node tools/tests/tts-ambient-skip.mjs .
+          node tools/tests/tts-color-rename.mjs .
           node tools/tests/modelswitch-fallback-pick.mjs .
           node tools/tests/tts-integration.mjs .
           node tools/tests/tts-dethump.mjs .
@@ -121,6 +160,9 @@ jobs:
           node tools/tests/ink-contrast.mjs .
           node tools/tests/style-break.mjs .
           node tools/tests/param-two-columns.mjs .
+          node tools/tests/param-dimensions.mjs .
+          node tools/tests/after-work.mjs .
+          node tools/tests/show-more-auto.mjs .
           node tools/tests/dem-expressive-nest.mjs .
           node tools/tests/main-chat-rules.mjs .
           node tools/tests/main-chat-finish.mjs .

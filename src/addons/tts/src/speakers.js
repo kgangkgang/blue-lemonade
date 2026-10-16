@@ -618,6 +618,10 @@ export function setColor(color, name, locked = true) {
     const st = state();
     const e = entry(st, c);
     const n = String(name || '').trim();
+    // 1.9.7 다른 사람 이름으로 바꾸거나 이름을 지우면 전 이름의 다른 표기(aliases — 팔레트의 「미나/Mina」)를 떼어 낸다. 남으면 옛 별명이 새 이름의 표기로 남아
+    //   화자 찾기 · 이름표가 어긋났다. 같은 사람의 다른 표기(aliases 안의 이름)로 바꾸는 건 그대로 둔다
+    const samePerson = n && (fold(e.name || '') === fold(n) || (e.aliases || []).some(a => fold(a) === fold(n)));
+    if (!samePerson) e.aliases = [];
     if (!n) { e.name = null; e.locked = false; e.auto = false; rememberOnCard(c, null); }
     else { e.name = n; e.locked = !!locked; e.auto = false; rememberOnCard(c, e.locked ? n : null); }
     resolveAll(st); persist();

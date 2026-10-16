@@ -114,7 +114,7 @@ await check('미리 보기 동안(final 없음)은 틀 · iframe 그대로 · �
     assert.equal(R.needsHelperRender(mes), true, 'helper 가 그릴 코드가 틀 밖에 있다 → 다시 그리기 알림이 간다');
     assert.equal(previewShown(host, { keep: isBadge }), true, '새 코드 블록도 그린 노드로 기억');
 });
-await check('끝 그림: 코드가 같은 틀은 그대로(iframe 다시 안 불러옴) · 틀이 둘이면 바뀐 것만 · 틀과 코드 수가 다르면 손대지 않음(예전처럼 통째로)', () => {
+await check('끝 그림: 코드가 같은 틀은 테마가 손대지 않음(바뀐 카드가 없으면 알림도 없어 iframe 그대로 · 알림이 가면 helper 가 전부 새로 그림) · 틀이 둘이면 바뀐 것만 · 틀과 코드 수가 다르면 손대지 않음(예전처럼 통째로)', () => {
     const { mes, host } = previewed(`${P(JA[0])}${code(SIDE)}${P(JA[1])}${code(CARD_EN)}`, `${P(KO[0])}${code(SIDE)}${P(JA[1])}${code(CARD_KO)}`);
     const [side, card] = host.querySelectorAll('.TH-render');
     moved.length = 0;

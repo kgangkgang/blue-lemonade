@@ -759,3 +759,41 @@ body.salty:not(.expandMessageActions) #chat .mes .extraMesButtons.bl-positioned-
   max-width: min(286px, calc(100dvw - 16px)) !important;
   overflow: auto !important; overscroll-behavior: contain; border: 0;
 }
+
+/* ---------- 6.9.8 「이전 메시지 더 보기」 단추 · 새 답 첫 줄로 ↑ ---------- */
+/* 실리태번 #show_more_messages (글 단추): 테마 토큰으로 — 카드 면 · 8px 둥글기 · 설명 크기. 저절로 불러오기(show-more-auto.js)가 눌러 주어도 손으로도 누른다 */
+body.salty #chat #show_more_messages {
+  margin: var(--bl-s2) auto;
+  padding: var(--bl-s2) var(--bl-s4);
+  border-radius: var(--bl-r-sm);
+  background: var(--bl-fill-card, var(--bl-card));
+  box-shadow: var(--bl-e1);
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-sub);
+  font-weight: 500;
+  line-height: 1.4;
+}
+/* 새 답 첫 줄로 (reply-top.js): 채팅 오른쪽 아래, 입력창 위에 뜨는 아이콘 단추 하나 — 아이콘 단추 치수(--bl-h-ctl) · 8px · 뜬 그림자. 툴팁 없음 */
+body.salty #sheld > .bl-reply-top {
+  position: absolute;
+  right: calc(var(--bl-gutter) + 2px);
+  bottom: calc(var(--bottomFormBlockSize, 64px) + var(--bl-s3));
+  z-index: 25;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--bl-h-ctl);
+  height: var(--bl-h-ctl);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--bl-r-sm);
+  background: var(--bl-fill-card, var(--bl-card));
+  box-shadow: var(--bl-e3);
+  color: var(--salty-text);
+  font-size: var(--bl-fs-body);
+  cursor: pointer;
+}
+body.salty #sheld > .bl-reply-top[hidden] { display: none; }
+body.salty #sheld > .bl-reply-top:focus-visible { outline: none; box-shadow: var(--bl-ring), var(--bl-e3); }
+body.salty #sheld > .bl-reply-top:active { box-shadow: var(--bl-press); }

@@ -132,7 +132,7 @@ await check('real translate(): several batch groups → the count climbs and fin
         runtimeProtections: new Map(), console: { debug() {}, info() {}, warn() {}, error() {} }, dropProseStrayWords: seg.dropStrayWords, repairProseTagPairs: seg.repairTagPairs, dropProseLeftoverPlaceholders: seg.dropLeftoverPlaceholders,
         correctBackticks: x => x, window: {}, toastr: { warning() {} }, globalThis: { toastr: { warning() {} } }, BRACKET_NOTE };
     for (const name of ['compileUserPattern', 'runtimeRegexes', 'getCombinedRegexes', 'getNoFoldRegexes', 'protectedBlockRegexes', 'isProtectedBlock', 'withoutProtectedBlocks', 'fixMalformedPlaceholders',
-        'dropStrayWords', 'dropLeftoverPlaceholders', 'repairTagPairs', 'failMarkOf', 'cutError', 'refusalError', 'splitForChunks', 'translate']) env[name] = new Function('env', `with(env){return (${cut(name)});}`)(env);
+        'dropStrayWords', 'dropLeftoverPlaceholders', 'repairTagPairs', 'failMarkOf', 'cutError', 'refusalError', 'splitForChunks', 'liveChatPrompt', 'translate']) env[name] = new Function('env', `with(env){return (${cut(name)});}`)(env);
     env.tidyGlossaryOutput = (_s, x) => x;
     const LINE = n => `Line ${n}: The lantern by the window flickered while the kettle hummed softly over the stove.`;
     const ko = text => String(text).replace(/Line (\d+): The lantern by the window flickered while the kettle hummed softly over the stove\./g, (_, n) => `${n}번째 줄: 창가의 등불이 깜박이는 동안 주전자가 나지막이 노래했다.`);

@@ -49,6 +49,7 @@ import { bindPreviewViews } from './preview-view.js';
 import { PRESET_GROUPS, capturePreset, readPreset, applyPreset } from './preset-sharing.js';
 import { MARKDOWN_CONTROLS, MARKDOWN_TUNING } from './markdown.js';
 import { markdownControls } from './markdown-ui.js';
+import { sceneSoundMarkup, bindSceneSound } from './scene-sound-ui.js';   // 6.9.8 장면 소리 (채팅 › 화면 › 날씨)
 
 // 브랜드 레몬 — ✦ 메뉴 · 확장 서랍 · 스플래시와 같은 속찬 레몬(폰트어썸 fa-lemon U+F094) 윤곽 그대로
 export const MARK = '<svg viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path transform="translate(0 448) scale(1 -1)" d="M448 352Q447 379 429 397Q411 415 384 416Q374 416 365 413Q348 407 330 404Q311 400 294 404Q237 418 180 399Q124 379 80 336Q37 292 17 236Q-2 179 12 122Q16 105 12 86Q9 68 3 51Q0 42 0 32Q1 5 19 -13Q37 -31 64 -32Q74 -32 83 -29Q100 -23 118 -20Q137 -16 154 -20Q211 -34 268 -15Q324 5 368 48Q411 92 431 148Q450 205 436 262Q432 279 436 298Q439 316 445 333Q448 342 448 352ZM213 321Q171 308 139 277Q108 245 95 203Q90 190 76 193Q62 198 65 212Q80 262 117 299Q154 336 204 351Q218 354 223 340Q226 326 213 321Z"/></svg>';
@@ -1428,6 +1429,8 @@ function tabChat(s, sub) {
             ${row('색 고르기 팝업', toggle('chat.colorPop', s.chat.colorPop !== false), '실리태번 색 칸도 테마 색 고르기로')}
             ${row('큰 숫자는 쉼표로', toggle('chat.numComma', s.chat.numComma !== false), '숫자 칸의 30000 을 30,000 으로 보여 줘요 · 누르면 원래대로, 값은 그대로')}
             ${row('설명 ? 단추', toggle('chat.helpMarks', s.chat.helpMarks !== false), '월드인포 설정 · 한글화 패널 칸 옆의 ? 를 보여요 · 끄면 숨겨요')}
+            ${row('이전 메시지 저절로 불러오기', toggle('chat.showMoreAuto', s.chat.showMoreAuto !== false), '채팅 맨 위 「이전 메시지 더 보기」가 화면에 다 들어오면 누르지 않아도 이어서 불러와요')}
+            ${row('새 답 첫 줄로 가는 단추', toggle('chat.replyTop', !!s.chat.replyTop), '긴 답이 끝나 첫 줄이 위로 지나가 있으면 ↑ 아이콘이 떠요 · 첫 줄이 보이면 사라져요')}
             ${row('웹 검색 · 출처 표시', toggle('chat.webSearchMarks', s.chat.webSearchMarks !== false), '웹 검색을 쓴 답에 지구 표시 · 답의 낱말을 꾹 누르면 어디서 왔는지 한 줄')}
             ${row('페르소나 입력창 높이 2배', toggle('chat.personaTall', !!s.chat.personaTall), '페르소나 본문 칸을 세로로 늘려요 · 끄면 기존 높이')}
             ${splashRow()}
@@ -1453,6 +1456,7 @@ function tabChat(s, sub) {
         ${cap('날씨')}<div class="salty-group">
             ${row('생성·편집 중 날씨 쉬기', toggle('chat.weatherAutoRest', s.chat.weatherAutoRest), '답을 받거나 글을 쓰는 동안 멈추고, 끝나면 이어져요.')}
             ${row('글 읽기 우선', toggle('chat.weatherReadability', s.chat.weatherReadability), '날씨를 조금 옅게 하고, 그림자를 따로 쓰지 않을 때 글자 그림자를 자동으로 보완해요.')}
+            ${sceneSoundMarkup(s, { row, stack, slider, toggle })}
 
             ${stack('채팅 뒤 효과', weatherSeg(s), weatherMode(s) === 'tracker' ? '트래커 날씨를 읽어 비 · 눈 · 안개 · 햇살 · 밤의 별을 보여요. 안개비 · 여우비처럼 둘이면 겹쳐요' : '')}
             ${weatherMode(s) === 'custom' ? weatherImageControls(s) : ''}
@@ -1910,6 +1914,7 @@ function render(root) {
     bindThemeUpdate(root);
     bindHealth(root,applyAll);
     bindWordTools(root, refreshPanels);
+    bindSceneSound(root, update, refreshPanels);   // 6.9.8 장면 소리: 들어 보기 · 내 파일 올리기 · 스위치를 켜면 아래 줄 그리기
     bindAddonLayout(root);
     bindPreviewViews(root, `${ui.tab}/${sub}`);
     syncSamples(s); // 미리보기 문단 클래스 맞추기

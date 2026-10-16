@@ -18,10 +18,11 @@
 body.salty #left-nav-panel #range_block_openai:not([style*="display: none"]):not([style*="display:none"]) {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, max(8.5em, 40%)), 1fr));
 }
-/* 사용자 설정 묶음(26-rounds, 폰 · 좁은 화면 2열)도 같은 까닭으로 14em 아래(폰 + 32px 안팎)에서만 한 열 — 24px 은 6.7.9 처럼 두 칸.
+/* 사용자 설정 묶음(26-rounds, 폰 · 좁은 화면 2열)도 같은 까닭으로 16em 아래에서만 한 열 — 기본 · 20px 은 두 칸, 24px(폰 360 · 390)부터 한 열.
+   6.9.8: 14em → 16em. 숫자칸을 공통 폭(--bl-num-w)으로 맞추자 24px 에서 「채팅창 / 폭」이 한 글자씩 꺾였다(6.9.7 도 같은 모양 + 줄 어긋남 26px) → 한 열.
    월드 인포 활성화(26-rounds bl-wi-global 18em) · BL 설정 창(33-panel-columns bl-controls 24em)은 원래 모듈에 이미 있다 */
 body.salty #user-settings-block #user-settings-block-content { container: bl-user-settings / inline-size; }
-@container bl-user-settings (width < 14em) {
+@container bl-user-settings (width < 16em) {
   body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="FontBlurChatWidthBlock"], [name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) { grid-template-columns: minmax(0, 1fr) !important; }
   body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="FontBlurChatWidthBlock"], [name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > * { grid-column: 1 / -1 !important; }
 }
@@ -134,7 +135,8 @@ body.salty #WorldInfo#WorldInfo .world_entry_form_control > select[name="entryLo
 body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
   grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
-  column-gap: var(--bl-s2) !important;
+  column-gap: var(--bl-param-col-gap) !important;
+  row-gap: var(--bl-param-row-gap) !important;
 }
 body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-range-and-counter:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) { display: contents !important; }
 body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-title { grid-column: 1 !important; grid-row: 1 !important; min-width: 0; }
@@ -144,24 +146,42 @@ body.salty .range-block:has(> .range-block-title + .range-block-range-and-counte
 /* 생성 설정(#range_block_openai)은 26-rounds 가 두 열 격자에 놓고, 칸 안은 아이디 둘 + !important 로
    숫자칸을 슬라이더 옆(2행 2열)에 두므로 같은 무게로 덮음 → 칸마다 윗줄 이름 | 숫자칸, 아랫줄 슬라이더 칸 너비 꽉.
    칸 자리(왼쪽 · 오른쪽 · 순서)는 26-rounds 그대로 — 여기서 grid-column 을 칸 전체로 펴지 않는다.
-   나란한 두 칸은 이름 글자 기준선을 맞춤 (윗줄에 숫자칸이 있는 칸 · 숫자칸이 아랫줄인 시드 칸이 짝이어도 이름이 같은 높이).
+   나란한 두 칸은 줄을 공유한다 (6.9.8, 치수 맞추기 ⑩ · ④): 이름 줄이 있는 칸은 격자 두 줄(이름 줄 · 조절 줄)에 걸치고 안쪽 줄을 부모 격자에서 받아(subgrid)
+   한쪽 이름만 두 줄이어도 숫자칸 · 슬라이더가 옆 칸과 같은 높이 — 6.9.5 의 기준선 맞춤(align-self: baseline)은 이름 첫 줄만 맞춰 숫자칸 · 슬라이더가
+   약 18px 어긋났다. 시드 칸(숫자칸이 아랫줄 전체)도 옆 슬라이더 줄과 같은 줄을 받아 가운데가 맞는다. subgrid 가 없는 옛 브라우저만 기준선 맞춤.
    이름 줄이 있는 칸(슬라이더 · 숫자)만 — 스위치 칸은 26-rounds 대로 줄 높이를 채우고(min-height: 100%) 가운데 */
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title) { align-self: baseline; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title) {
+  grid-row: span 2;
+  grid-template-rows: subgrid;
+  row-gap: var(--bl-param-row-gap);
+  align-items: center;
+}
+@supports not (grid-template-rows: subgrid) {
+  body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title) { grid-row: auto; align-self: baseline; }
+}
+/* 월드 인포 활성화 · 사용자 설정(글꼴 · 흐림 · 채팅 폭)의 두 칸 격자도 같은 줄 공유 — ? · ⓘ 아이콘이 다음 줄로 흘러 한쪽 이름만 두 줄일 때 슬라이더가 4~9px 어긋났다 */
+body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input),
+body.salty #user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
+  grid-row: span 2;
+  grid-template-rows: subgrid;
+  row-gap: var(--bl-param-row-gap);
+}
 /* 반 칸 이름은 한국어 낱말째 줄바꿈 (왼쪽 패널은 keep-all 밖이라 「(토큰)」이 「(토 / 큰)」으로 꺾였다) — 낱말 하나가 칸보다 길 때만 59 의 anywhere */
 body.salty #left-nav-panel #range_block_openai :is(.range-block-title, label.checkbox_label > span) { word-break: keep-all; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-title { grid-column: 1 !important; grid-row: 1 !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) :is(.range-block-counter, .range-block-counter > *) { grid-column: 2 !important; grid-row: 1 !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) :is(.range-block-range, .range-block-range > *) { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .range-block-title { grid-column: 1 !important; grid-row: 1 !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p { grid-column: 2 !important; grid-row: 1 !important; width: auto !important; min-width: 60px; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p { grid-column: 2 !important; grid-row: 1 !important; width: auto !important; min-width: var(--bl-num-w); }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child):not(:has(> #bl-response-range)) > .wide100p { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> #bl-response-range) > .wide100p { grid-column: 2 !important; grid-row: 1 !important; width: 60px !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:has(> #bl-response-range) > .wide100p { grid-column: 2 !important; grid-row: 1 !important; width: var(--bl-num-w) !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> #bl-response-range) > #bl-response-range { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
 /* 숫자칸만 있던 칸(BL 이 슬라이더를 붙임): 이름 | 숫자 / 슬라이더 */
 body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
   grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
-  column-gap: var(--bl-s2) !important;
+  column-gap: var(--bl-param-col-gap) !important;
+  row-gap: var(--bl-param-row-gap) !important;
 }
 body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child) > .range-block-title { grid-column: 1 !important; grid-row: 1 !important; min-width: 0; }
 body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child) > .wide100p { grid-column: 2 !important; grid-row: 1 !important; width: auto !important; }
@@ -172,21 +192,25 @@ body.salty .flex-container:has(> :is(small, label):first-child + .neo-range-slid
 body.salty .parameterbox:has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
   grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
-  column-gap: var(--bl-s2) !important;
+  column-gap: var(--bl-param-col-gap) !important;
+  row-gap: var(--bl-param-row-gap) !important;
 }
 /* ↳ 아래 규칙은 css/99-lazy-panel.css 로 옮김 (서랍 전용 · :has() 오른쪽 끝이 태그) */
 /* 아이디로 숫자칸을 슬라이더 옆(2행 2열)에 박아 둔 곳 — 같은 무게로 덮음: 글자 · 흐림 · 채팅 폭 (21-witidy), 월드 인포 활성화 (26-rounds · 12-worldinfo) */
 /* ↳ 아래 규칙은 css/99-lazy-panel.css 로 옮김 (서랍 전용 · :has() 오른쪽 끝이 태그) */
 body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .neo-range-input { grid-area: 1 / 2 !important; }
 body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .neo-range-slider { grid-area: 2 / 1 / 3 / -1 !important; }
-/* 두 칸 격자 안에서 윗줄 이름 옆 숫자칸은 값 글자 수만큼 — 고정 72px(사용자 설정) · 6ch(월드 인포)는 반 칸에서 이름 자리를
-   두 글자씩 꺾이게 했다 (이름에 ? · ⓘ 아이콘과 「테마가 끔」 표시가 붙음). 값은 길어야 1.00 · 65536 */
+/* 두 칸 격자 안에서 윗줄 이름 옆 숫자칸은 공통 숫자칸 폭(--bl-num-w, 10-foundation) — 6.9.5 는 화면마다 4.6ch · 5ch · 5.5ch · 60px 로 달랐다 (치수 맞추기 ①).
+   값은 길어야 1.00 · 65536, 높이 · 글자도 토큰 하나(--bl-h-ctl · --bl-fs-ctl) */
 body.salty #user-settings-block #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
-  width: calc(4.6ch + 4 * max(0px, var(--bl-settings-tracking, 0px)) + 16px) !important;
+  width: var(--bl-num-w) !important;
   min-width: 0 !important;
+  height: auto !important;
+  min-height: max(var(--bl-h-ctl), calc(1.45em + 8px)) !important;
+  font-size: var(--bl-fs-ctl) !important;
 }
 body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
-  width: calc(5ch + 5 * max(0px, var(--bl-settings-tracking, 0px)) + 16px) !important;
+  width: var(--bl-num-w) !important;
 }
 /* ↳ 아래 규칙은 css/99-lazy-panel.css 로 옮김 (서랍 전용 · :has() 오른쪽 끝이 태그) */
 

@@ -13,7 +13,7 @@ import { oai_settings, promptManager } from '../../../../../../openai.js';
 import { verifyAddonCss } from '../../addon-files-check.js';
 import { plan, textHasModuleLow } from './engine.js';
 
-const VERSION = '1.0.8';
+const VERSION = '1.0.9';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const holder = document.createElement('div'); holder.hidden = true; document.body.append(holder);
 let root, inlineHost = null, opening = false, timer = 0, lastRows = [], lastNote = '', applied = new Map(), stopped = false;
@@ -36,6 +36,14 @@ function scriptLists() {
     const api = ctx.mainApi;
     const presetName = oai_settings?.preset_settings_openai;
     if (api === 'openai' && extension_settings.preset_allowed_regex?.openai?.includes(presetName) && Array.isArray(oai_settings.extensions?.regex_scripts)) lists.push(oai_settings.extensions.regex_scripts);
+    return lists;
+}
+
+/** 되돌릴 때 보는 목록들 — 지금 API 가 쓰지 않아도 메모리에 남은 프리셋 목록까지 (채팅 완성에서 끈 뒤 API 를 바꾸면 scriptLists 에서 빠져 우리 값이 남았다). origin 에 적힌 정규식만 건드린다 */
+function restoreLists() {
+    const lists = scriptLists();
+    const preset = oai_settings?.extensions?.regex_scripts;
+    if (Array.isArray(preset) && !lists.includes(preset)) lists.push(preset);
     return lists;
 }
 
@@ -83,7 +91,7 @@ export function sync({ restore = false, keep = null } = {}) {
     if (stopped && !restore) { render(); return; } // 끈 뒤에는 다시 켜지 않는다 (다시 켜려면 새로고침)
     const s = store();
     const enabled = enabledPrompts();
-    const lists = scriptLists();
+    const lists = restore ? restoreLists() : scriptLists();
     const bound = boundByPrompt(lists);
     for (const id of bound) { delete s.origin[id]; applied.delete(id); }   // 귀속이 맡은 정규식은 우리 기록을 지우고 그대로 둔다
     const scripts = lists.flat().filter(x => x && x.id && !bound.has(x.id));
@@ -201,7 +209,7 @@ export async function stop() {
     listened.length = 0; clearTimeout(timer);
     // 정규식 화면 · 프리셋 저장으로 우리가 쓴 값이 프리셋 파일에 들어갔으면 되돌린 목록으로 파일도 고친다 (origin 은 저장한 뒤 지운다)
     const s = store(), list = oai_settings.extensions?.regex_scripts, name = oai_settings.preset_settings_openai;
-    const mine = scriptLists().includes(list) ? list.filter(x => x?.id && x.id in s.origin) : [];
+    const mine = restoreLists().includes(list) ? list.filter(x => x?.id && x.id in s.origin) : [];
     const pm = mine.length ? getPresetManager('openai') : null;
     const storedList = pm?.getCompletionPresetByName(name)?.extensions?.regex_scripts;
     // 정규식 화면 저장 뒤엔 저장본이 지금 목록(또는 우리가 손댄 옛 목록)과 같은 배열이라 파일 값을 알 수 없다 — 그땐 그냥 쓴다

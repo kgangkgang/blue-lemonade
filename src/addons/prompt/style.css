@@ -401,6 +401,8 @@ body.salty #pt-panel #pt-tabs .pt-tab { gap:10px; font-size:.9em; --bl-pt-nudge:
 body.salty #pt-panel :is(#pt-params-wrap,.pt-regex-toolbar,.pt-more-actions-body,.pt-localization-list) {
  grid-template-columns:repeat(auto-fit,minmax(min(100%,max(10em,calc((100% - 10px)/2))),1fr)); gap:8px 10px;
 }
+/* 1.2.7 생성 파라미터는 폰 · PC 무조건 2열(큰 글씨만 한 열): 칸 폭 공식을 실제 gap(아래 12px)에 맞추고 칸 최소는 프리셋 격자와 같은 8.5em — 전엔 10px 기준이라 폰에서 0.1px 모자라 한 열로 내려갔다 */
+body.salty #pt-panel #pt-settings-form #pt-params-wrap { grid-template-columns:repeat(auto-fit,minmax(min(100%,max(8.5em,calc((100% - 12px)/2))),1fr)); }
 body.salty #pt-panel .pt-info-chip,body.salty #pt-panel .pt-selected-chip { white-space:normal; }
 body.salty #pt-panel[data-pt-theme="lemonade"] :is(.pt-selected-chip,.pt-status-on) {
  background:var(--salty-accent-13,var(--salty-shade)); border-color:var(--salty-accent-28); color:var(--pt-ok);
@@ -670,10 +672,11 @@ body.salty #pt-panel #pt-settings-form #pt-fetch-models { flex:0 0 var(--bl-h-ic
 /* 생성 파라미터: 카드 안 카드 대신 「이름 · 숫자」 한 줄 + 슬라이더 */
 body.salty #pt-panel #pt-settings-form #pt-params-wrap { gap:4px 12px; }
 body.salty #pt-panel #pt-settings-form #pt-params-wrap .pt-param-row {
- grid-template-columns:minmax(0,1fr) minmax(4.5em,5.5em); gap:0 8px; align-items:center; padding:0; border:0; border-radius:0; background:none;
+ grid-template-columns:minmax(0,1fr) auto; gap:0 8px; align-items:center; padding:0; border:0; border-radius:0; background:none;
 }
 body.salty #pt-panel #pt-settings-form #pt-params-wrap .pt-param-label { grid-column:1; grid-row:1; font-size:inherit; font-weight:inherit; line-height:1.45; }
-body.salty #pt-panel #pt-settings-form #pt-params-wrap .pt-param-num { grid-column:2; grid-row:1; padding-inline:8px; }
+/* 1.2.7 숫자칸 폭 · 높이는 코어 토큰(생성 설정 · 월드 인포와 같게) — 전엔 minmax(4.5em,5.5em) 이라 PC 32px 글자에서 176px 가 되어 「확률 범위」 이름이 두 줄 */
+body.salty #pt-panel #pt-settings-form #pt-params-wrap .pt-param-num { grid-column:2; grid-row:1; padding-inline:8px; width:var(--bl-num-w,5.5em); max-width:100%; min-height:max(var(--bl-h-ctl,38px),calc(1.45em + 8px)); }
 body.salty #pt-panel #pt-settings-form #pt-params-wrap .pt-param-slider { grid-column:1 / -1; grid-row:2; }
 body.salty #pt-panel #pt-settings-form #pt-params-reset { grid-column:1 / -1; justify-self:start; }
 

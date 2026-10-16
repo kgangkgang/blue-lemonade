@@ -238,6 +238,13 @@ await test('메시지마다 따로 센다: 다른 번호의 알림은 동시에 
     assert.equal(await N.notify(4), true);
     assert.equal(during, true, '4 를 알리는 동안 7 은 보낼 수 있다');
     assert.deepEqual(bus.log.map(([, id]) => id), [4, 7]);
+    // 6.9.8 ready(): 같은 번호의 알림이 도는 동안은 거짓(끝 그림이 틀을 날 코드로 바꾸지 않게), 다른 번호 · 끝난 뒤는 참
+    const mes9 = new El('div', { classes: ['mes'], attrs: { mesid: '9' } }); const t9 = new El('div', { classes: ['mes_text'] }); const pre9 = new El('pre'); pre9.append(new El('code', { text: CARD })); t9.append(pre9); mes9.append(t9); chat.append(mes9);
+    let ready = null;
+    bus.on(TYPES.MESSAGE_UPDATED, id => { if (id === 9) ready = { same: N.ready(9), other: N.ready(8), str: N.ready('9') }; });
+    assert.equal(await N.notify(9), true);
+    assert.deepEqual(ready, { same: false, other: true, str: false });
+    assert.equal(N.ready(9), true, '끝난 뒤는 다시 참');
 });
 
 // ── 5. 연결 ──

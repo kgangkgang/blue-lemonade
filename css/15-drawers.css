@@ -144,15 +144,16 @@ body.salty #user-settings-block-content .flex-container:has(> label + .neo-range
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  column-gap: var(--bl-s2);
-  padding: 6px 0 4px;
+  column-gap: var(--bl-param-col-gap);
+  row-gap: var(--bl-param-row-gap);
+  padding: var(--bl-param-pad);
 }
 /* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > label */
 /* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > label small … */
 body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > .neo-range-input {
   grid-column: 2;
   grid-row: 1;
-  width: 72px !important;
+  width: var(--bl-num-w) !important;
   margin: 0 !important;
 }
 body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > .neo-range-slider {
@@ -308,13 +309,13 @@ body.salty #user-settings-block [name="FontBlurChatWidthBlock"] {
 }
 body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
   flex: 1 1 100% !important;
-  padding: 6px 0 4px !important;
+  padding: var(--bl-param-pad) !important;
 }
 /* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > … */
 /* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > … */
 /* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > … */
 body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
-  width: 72px !important;
+  width: var(--bl-num-w) !important;
 }
 /* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > … */
 /* 사용자 테마 입력(다른 확장이 슬라이더 칸에 끼워 넣음): 한 줄 차지 */
@@ -693,9 +694,9 @@ body.salty #AdvancedFormatting [name="tokenPaddingBlock"] small {
 }
 body.salty #AdvancedFormatting :is([name="tokenPaddingBlock"] > input, #reasoning_max_additions) {
   flex: 0 0 auto !important;
-  width: 84px !important;
-  height: var(--bl-h-num) !important;
-  min-height: var(--bl-h-num) !important;
+  width: var(--bl-num-w) !important;
+  height: auto !important;
+  min-height: var(--bl-h-ctl) !important;
   margin: 0 !important;
   text-align: center;
   font-variant-numeric: tabular-nums;

@@ -1,0 +1,98 @@
+/* ===== css/81-scene-sound.css =====
+   6.9.8 장면 소리 설정 조각 (src/scene-sound-ui.js) — 채팅 › 화면 › 날씨 묶음 안.
+   스위치 · 슬라이더 · 줄은 설정 창 공통 조각(20-panel.css 의 .salty-row · .salty-switch · .salty-slider)을 그대로 쓰고,
+   여기엔 「내 소리 파일」 접힘 묶음과 아이콘 단추(36px · --r-sm 8px · 글 없음 · 툴팁 없음, aria-label 만)만.
+   ===== */
+.salty-panel .bl-ss-files {
+  margin: 2px 0 6px;
+}
+.salty-panel .bl-ss-files > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  min-height: 40px;
+  padding: 6px 0;
+  cursor: pointer;
+  list-style: none;
+  color: var(--salty-text);
+  font-weight: 600;
+  line-height: 1.4;
+}
+.salty-panel .bl-ss-files > summary::-webkit-details-marker {
+  display: none;
+}
+.salty-panel .bl-ss-files > summary small {
+  font-size: var(--fs-small);
+  font-weight: 500;
+  color: var(--salty-muted);
+}
+/* 접힘 화살표: 마크다운 묶음(67-markdown-controls.css)과 같은 모양 */
+.salty-panel .bl-ss-files > summary::after {
+  content: "";
+  width: 0.4em;
+  height: 0.4em;
+  flex: none;
+  margin: 0 0.2em 0.2em 0.1em;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+}
+.salty-panel .bl-ss-files[open] > summary::after {
+  transform: rotate(225deg);
+  margin-block: 0.2em 0;
+}
+/* 종류 한 줄: 이름 · 파일 이름(길면 줄임) · 아이콘 단추들 — 폰 폭에서도 한 줄 */
+.salty-panel .bl-ss-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--row-h);
+  padding: 3px 0;
+}
+.salty-panel .bl-ss-kind {
+  flex: none;
+  min-width: 4.5em;
+}
+.salty-panel .bl-ss-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-small);
+  color: var(--salty-muted);
+}
+.salty-panel .bl-ss-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: var(--salty-fill-shade, var(--shade));
+  color: var(--salty-text);
+  font-size: 14px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.salty-panel .bl-ss-btn:active {
+  background: var(--shade-2);
+}
+@media (hover: hover) {
+  .salty-panel .bl-ss-btn:hover {
+    background: var(--shade-2);
+  }
+}
+/* 들어 보는 동안 */
+.salty-panel .bl-ss-btn[aria-pressed="true"] {
+  background: var(--salty-fill-accent, var(--salty-accent));
+  color: var(--salty-on-accent, #fff);
+}
+.salty-panel .bl-ss-btn:focus-visible {
+  outline: 2px solid var(--salty-accent);
+  outline-offset: 2px;
+}

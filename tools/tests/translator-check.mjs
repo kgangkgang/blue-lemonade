@@ -190,12 +190,12 @@ const env = { ...card, ...seg, ...resume, ...auto, ...notify, ...check, cardValu
     correctBackticks: x => x, window: {}, toastr: { info() {}, warning() {}, success() {}, error() {} }, BRACKET_NOTE, processTranslationText: (_o, t) => t,
     refreshMessageBlock: id => T.refreshed.push(id), originalHashOf: hash, markTranslatedOriginal: (message, text) => { message.extra.original_text_hash = hash(text); }, rememberTranslation: () => {}, // 6.9.5 기기 간 공유 기록 (translation-source.mjs 가 본다)
     storeTranslationQuietly: async (src, out) => T.stored.push([src, out]), eventSource: { emit: (...args) => T.events.push(args) }, emitTranslationUIUpdate: () => {}, syncMesToSwipe: () => {},
-    publishArchiveReady: () => {}, translationInProgress: {}, progressBadge: () => ({ update() {}, remove() {} }), translateMessage: async () => {}, loadCheckLib: async () => check,
+    publishArchiveReady: () => {}, translationInProgress: {}, afterWorkEnds: new WeakMap() /* 2.7.4 번역 표 → 뒷일 다리 끝 함수 (index.js 모듈 상수) */, progressBadge: () => ({ update() {}, remove() {} }), translateMessage: async () => {}, loadCheckLib: async () => check,
     FOLD_MARKUP: new Function(`return ${source.match(/^const FOLD_MARKUP = (\/.+\/);$/m)[1]}`)(),   // 6.9.6 함께 보기 HTML 은 점검하지 않는다 (translator-check-fold.mjs)
 };
 function install(name) { env[name] = new Function('env', `with(env){return (${cut(name)});}`)(env); return env[name]; }
 for (const name of ['compileUserPattern', 'runtimeRegexes', 'getCombinedRegexes', 'getNoFoldRegexes', 'protectedBlockRegexes', 'isProtectedBlock', 'withoutProtectedBlocks', 'fixMalformedPlaceholders',
-    'dropStrayWords', 'dropLeftoverPlaceholders', 'repairTagPairs', 'failMarkOf', 'cutError', 'refusalError', 'splitForChunks', 'translate',
+    'dropStrayWords', 'dropLeftoverPlaceholders', 'repairTagPairs', 'failMarkOf', 'cutError', 'refusalError', 'splitForChunks', 'liveChatPrompt', 'translate',
     'beginTranslation', 'endTranslation', 'isTranslationInProgress', 'checkStateOf', 'saveCheckedTranslation', 'runCheckAction', 'hideBrokenCommentsOnRender', 'installCheckHooks']) install(name);
 env.forgetSegments = async (parts, signature) => { T.forgot.push(parts.filter((_, i) => i % 2 === 0)); return seg.forgetSegments(parts, signature); };
 const sent = [];

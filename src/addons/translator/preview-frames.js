@@ -47,7 +47,8 @@ const codeOf = node => String(node?.textContent ?? '').replace(/\s+/g, '');
  * helper 틀(.TH-render)이 있으면 그 노드는 그대로 두고 틀 사이 구간마다 따로 견준다.
  * final(끝 그림 — 번역이 끝남 · 되돌림): 그릴 코드가 바뀐 틀만 새 코드 블록으로 바꾼다 (6.9.7). 미리 보기 동안은 원문 코드로 그린 틀을 그대로 두는데,
  *   6.9.6 끝 그림도 틀을 그대로 둬서 번역이 끝나도 상태창이 원문으로 남았다 — 틀 밖 코드 블록이 없으니 다시 그리기 알림(rerender-notify)도 안 갔다.
- *   바뀐 코드 블록을 그 자리에 두면 알림이 가고 helper 가 번역된 코드로 다시 그린다. 코드가 같으면 틀(iframe)은 그대로.
+ *   바뀐 코드 블록을 그 자리에 두면 알림이 가고 helper 가 번역된 코드로 다시 그린다. 코드가 같은 틀은 테마가 손대지 않는다 — 바뀐 카드가 하나도 없으면
+ *   알림도 없어 iframe 이 그대로이고, 바뀐 카드가 있어 알림이 가면 helper 4.11.3 은 그 메시지의 iframe 을 전부 새로 만든다(message.ts · Render.vue key).
  * 반환: 그렸으면 true, 틀을 지킬 수 없어 손대지 않았으면 false.
  */
 export function paintPreview(host, html, { keep = () => false, final = false } = {}) {

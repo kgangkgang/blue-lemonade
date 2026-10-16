@@ -889,14 +889,18 @@ body.salty #rm_api_block .flex-container:has(> #connection_profiles) > .menu_but
 body.salty #rm_api_block .flex-container:has(> #connection_profiles) > .menu_button:last-child {
   margin-right: -8px !important;
 }
-/* API 키 줄(입력칸 + 열쇠): 열쇠 글자 끝을 입력칸 끝과 같은 기준선에 */
+/* API 키 줄(입력칸 + 열쇠): 열쇠 글자 끝을 입력칸 끝과 같은 기준선에.
+   6.9.8: 전엔 단추 상자를 오른쪽으로 8px 내밀어(margin -8px) 맞췄는데 그만큼 #openai_api 밖으로 넘쳤다(치수 맞추기 ⑥, 6.7.9 부터) →
+   상자는 줄 안에 두고 글자만 상자 오른쪽 끝에 붙인다 (상자 34px 그대로 · 누르는 자리 안 줄어듦) */
 body.salty #rm_api_block .flex-container:has(> .text_pole + .manage-api-keys:last-child) {
   align-items: center;
   flex-wrap: nowrap;
   gap: var(--bl-s1) !important;
 }
 body.salty #rm_api_block .flex-container > .text_pole + .manage-api-keys:last-child {
-  margin: 0 -8px 0 0 !important;
+  margin: 0 !important;
+  justify-content: flex-end !important;
+  padding-right: 0 !important;
 }
 /* 도움말 속 코드: 옅은 알약 */
 body.salty #rm_api_block small code {

@@ -46,6 +46,16 @@ body.salty {
   --bl-h-lg: 44px;    /* 팝업 버튼 · 팝업 입력칸 */
   --bl-h-menu: 44px;  /* 메뉴 항목 (폰은 한 단 낮게) */
   --bl-h-row: 46px;   /* 설정 줄 · 여닫는 줄 (설정 창 .salty-row 와 같음) */
+  /* 파라미터 칸 (6.9.8 치수 맞추기): 2열 격자의 칸 하나 = 윗줄 이름 | 숫자칸 · 아랫줄 슬라이더.
+     실리태번 생성 설정 · 사용자 설정 · 월드 인포 · 서식 서랍 · 캡처 필터가 같은 치수를 쓴다 — 화면별 모듈은 이 토큰만 부른다.
+     숫자칸 높이는 --bl-h-ctl(입력칸) · 글자는 --bl-fs-ctl, 이름은 --bl-fs-body 500 */
+  --bl-num-w: calc(5.5ch + 18px + 6 * max(0px, var(--bl-settings-tracking, 0px))); /* 숫자칸 폭: 65536 · 1.00 · 자간 포함 */
+  --bl-param-gap: var(--bl-s2) var(--bl-s3);  /* 칸 사이: 줄 8 · 열 12 */
+  --bl-param-pad: 6px 0 4px;                  /* 칸 안 위아래 */
+  --bl-param-row-gap: 4px;                    /* 칸 안: 이름 줄 ↔ 슬라이더 줄 */
+  --bl-param-col-gap: var(--bl-s2);           /* 칸 안: 이름 ↔ 숫자칸 */
+  --bl-knob-size: 22px;                       /* 슬라이더 손잡이 지름 */
+  --bl-track-h: 5px;                          /* 슬라이더 막대 두께 */
   /* 아이콘 */
   --bl-ic: 16px;
   --bl-ic-box: 20px;

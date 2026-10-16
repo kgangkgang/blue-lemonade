@@ -210,7 +210,8 @@ export function updateNote(id, patch) {
 let previewRulesOn = false;
 // 인용(>) 안 목록도 체크 줄 · 코드 칸(``` · ~~~) 안은 글자 그대로 — 그린 보기(drawTasks)와 같은 규칙으로 센다
 const TASK_RE = /^(\s*(?:>\s*)*(?:[-*+]|\d+\.)\s+)\[([ xX])\](?=\s|$)/;
-const FENCE_RE = /^\s*(?:>\s*)*(`{3,}|~{3,})/;
+// 코드 칸 여닫이: 그린 보기(showdown)처럼 펜스 뒤에는 언어 이름만(띄어쓰기 · ` · ~ 없음) 올 수 있다 — 한 줄 안에서 닫히는 ```글``` · ~~~글~~~ 은 코드 칸이 아니다
+const FENCE_RE = /^\s*(?:>\s*)*(`{3,}|~{3,}) *[^\s`~]*\s*$/;
 /** k 번째 체크 목록 줄의 [ ] ↔ [x] */
 function toggleTask(text, k) {
     let n = -1, fence = '';

@@ -255,8 +255,10 @@ function hashNS(str) {
     return (h >>> 0).toString(16).padStart(8, '0');
 }
 const shardFileForNS = (ns) => `${CACHE_PREFIX}${hashNS(String(ns).replace(/@title$/, ''))}.json`;
-// Keys are `${ns}::${id}::${lang}`; used only where the ns is not at hand (migration).
-const nsFromKey = (key) => key.split('::').slice(0, -2).join('::');
+// Keys are `${ns}::${id}::${lang}` and every ns is `${kind}::${name}` (pt-preset · pt-wi · pt-char); used only where
+// the ns is not at hand (migration). Counting from the front matters: world-info ids are `${book}::${uid}`, so
+// counting from the end once filed those under a `pt-wi::Book::Book` shard that later saves never touched.
+const nsFromKey = (key) => key.split('::').slice(0, 2).join('::');
 
 function utf8ToBase64(str) {
     const bytes = new TextEncoder().encode(str);
@@ -298,6 +300,9 @@ function memPut(file, key, t) {
 }
 function cachePut(ns, key, t) {
     const file = shardFileForNS(ns);
+    // A key filed under another shard (an older migration) would win again at the next load — drop it there.
+    const previous = keyShard.get(key);
+    if (previous && previous !== file) { shardKeys.get(previous)?.delete(key); pendingEntry(previous, key, null); markDirty(previous); }
     memPut(file, key, t);
     pendingEntry(file, key, t);
     markDirty(file);

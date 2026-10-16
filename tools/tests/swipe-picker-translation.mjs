@@ -130,4 +130,39 @@ t('swipe header wraps instead of clipping; bottom row is not clipped',()=>{
   assert.ok(pad&&+pad[1]>=4&&+pad[2]>=4,'controls padding leaves room for a 3px ring');
   assert.match(rule('body.salty .popup.swipe_picker_popup .popup-controls input'),/height:\s*var\(--bl-h-lg\)/,'number box uses the same height token as the button row');
 });
-console.log(`PASS swipe picker translation: ${n} checks (fold · original-first · unfolded · whole fold · masked whole · plain · record · hash · backup · close glyph · header · bottom row)`);
+// 6.9.8 (6.9.7 독립 검토 메모): 창 흉내 — translateDialog 는 칸에 글을 넣고 표식은 "1" 만(글 전체를 속성에 복사하지 않음) · 다시 그려진 칸만 다시 넣음 ·
+// 해시 모듈이 늦게 실리면 열린 창을 다시 번역 · 이름 참조(&hellip; …)는 표로 풀림(브라우저는 textarea)
+{
+  const mod=await import(pathToFileURL(path.join(root,'src/swipe-picker-translation.js')));
+  const {_forTest:T}=mod;
+  const chat=[{name:'A',mes:'Rex ran.',swipes:['Rex ran.','Mina smiled&hellip; "Hi" &mdash; now'],swipe_id:0,extra:{display_text:'렉스가 달렸다.'},swipe_info:[{extra:{display_text:'렉스가 달렸다.'}},{extra:{display_text:'미나가 웃었다&hellip; &quot;안녕&quot; &mdash; 지금'}}]}];
+  globalThis.SillyTavern={getContext:()=>({chat,extensionSettings:{},saveSettingsDebounced(){},substituteParams:t=>t})};
+  const box=()=>({textContent:'원문',dataset:{},getAttribute(k){return this.dataset[k.replace(/^data-/,'').replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]}});
+  const mk=()=>{const boxes=[box(),box()];const blocks=boxes.map((b,i)=>({getAttribute:()=>String(i),querySelector:sel=>sel==='.select_chat_block_mes'?b:null}));
+    const list={};const handlers={};
+    const dialog={boxes,blocks,list,querySelector:sel=>sel==='.swipe_picker_div'?list:sel==='input[id^="swipe_picker_id_"]'?{id:'swipe_picker_id_0'}:null,querySelectorAll:sel=>sel==='.swipe_picker_block[data-swipe-id]'?blocks:[],addEventListener(k,fn){handlers[k]=fn},handlers};return dialog;};
+  t('translateDialog fills the boxes, marks with "1" and keeps the text in the WeakMap; a repaint of the same text is skipped',()=>{
+    const d=mk();T.setHash(null);
+    assert.equal(T.translateDialog(d),2);
+    assert.equal(d.boxes[0].textContent,'렉스가 달렸다.');assert.equal(d.boxes[1].textContent,'미나가 웃었다… "안녕" — 지금','named references decode');
+    assert.equal(d.boxes[0].dataset[T.MARK],'1');assert.equal(T.painted.get(d.boxes[1]),'미나가 웃었다… "안녕" — 지금');
+    assert.equal(T.translateDialog(d),0,'nothing changed → nothing repainted');
+    d.boxes[1].textContent='원문';T.painted.delete(d.boxes[1]);assert.equal(T.translateDialog(d),1,'a redrawn box is filled again');
+  });
+  t('late hash: translateDialog before the hash module → no hash check; after setHash the open dialog is re-run and a wrong-hash swipe is cleared',()=>{
+    const d=mk();chat[0].swipe_info[1].extra.original_text_hash='999';T.setHash(null);
+    T.translateDialog(d);assert.equal(d.boxes[1].textContent,'미나가 웃었다… "안녕" — 지금','without a hash function the hash is not compared');
+    const observed=[];const RealMO=globalThis.MutationObserver;globalThis.MutationObserver=class{constructor(cb){this.cb=cb}observe(el,o){observed.push([el,o])}disconnect(){this.off=true}};
+    globalThis.document={querySelectorAll:()=>[d]};
+    try{
+      assert.equal(T.watchDialog(d),true);assert.equal(observed[0][0],d.list,'watches the list for redraws');
+      T.setHash(()=>'123');   // 다른 글의 해시 → 둘째 스와이프 번역은 다른 원문의 것
+      T.retranslateOpen();
+      assert.equal(d.boxes[1].textContent,'미나가 웃었다… "안녕" — 지금','a null result leaves the box as it is (no original to restore here)');
+      chat[0].swipe_info[1].extra.original_text_hash='123';d.boxes[1].textContent='원문';T.painted.delete(d.boxes[1]);
+      assert.equal(T.retranslateOpen(),1,'matching hash → filled again');
+      d.handlers.close?.();
+    }finally{globalThis.MutationObserver=RealMO;delete globalThis.document;delete chat[0].swipe_info[1].extra.original_text_hash;T.setHash(null);}
+  });
+}
+console.log(`PASS swipe picker translation: ${n} checks (fold · original-first · unfolded · whole fold · masked whole · plain · record · hash · backup · close glyph · header · bottom row · dialog · late hash)`);

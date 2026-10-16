@@ -133,7 +133,7 @@ const env = { ...card, ...seg, ...resume, ...auto, cardValues: cardValueModule.c
 };
 function install(name) { env[name] = new Function('env', `with(env){return (${cut(name)});}`)(env); return env[name]; }
 for (const name of ['compileUserPattern', 'runtimeRegexes', 'getCombinedRegexes', 'getNoFoldRegexes', 'protectedBlockRegexes', 'isProtectedBlock', 'withoutProtectedBlocks', 'fixMalformedPlaceholders',
-    'dropStrayWords', 'dropLeftoverPlaceholders', 'repairTagPairs', 'failMarkOf', 'cutError', 'refusalError', 'splitForChunks', 'translate']) install(name);
+    'dropStrayWords', 'dropLeftoverPlaceholders', 'repairTagPairs', 'failMarkOf', 'cutError', 'refusalError', 'splitForChunks', 'liveChatPrompt', 'translate']) install(name);
 env.tidyGlossaryOutput = (_s, x) => x;
 const PAIRS = SRC.split('\n\n').map((line, i) => [line, KO_LOST.split('\n\n')[i]]);
 const lossy = body => { let out = String(body); for (const [a, b] of PAIRS) out = out.split(a).join(b); return out; };   // 괄호를 빼먹는 가짜 모델

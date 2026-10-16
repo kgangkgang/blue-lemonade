@@ -1,6 +1,8 @@
 export const LOG_BRIDGE=Symbol.for('st.request-log.v1');
 const clean=s=>String(s??'').replace(/\s+/g,' ').trim();
 const safe=s=>String(s??'').replace(/[^a-zA-Z0-9_.-]/g,'').slice(0,90);
+// 6.9.8 begin 의 label: 다른 확장이 요청을 용도별로 나눠 보이게 붙이는 짧은 글(40자) — 요청 로그 · 용도별 표에서 purposeLabel 대신 보인다. 공개 코드엔 일반 이름만
+const label=s=>clean(s).slice(0,40);
 export const PURPOSES={
  'chat.generate':'채팅 응답','chat.swipe':'채팅 스와이프','chat.regenerate':'채팅 재생성','chat.continue':'채팅 이어쓰기','chat.impersonate':'유저 대신 쓰기','chat.quiet':'채팅 보조 생성',
  'translation.chat':'채팅 번역','translation.glossary':'번역 용어집','translation.bookmark':'북마크 번역','translation.tts':'TTS 번역',
@@ -19,20 +21,20 @@ export function requestKind(path) {
 }
 export function createAttribution() {
  const active=new Set();
- function begin({caller,purpose,system,user}) {
+ function begin({caller,purpose,system,user,label:tag}) {
   if(active.size>=64)return ()=>{};
-  const row={caller:safe(caller),purpose:safe(purpose),system:clean(system),user:clean(user)};
+  const row={caller:safe(caller),purpose:safe(purpose),system:clean(system),user:clean(user),label:label(tag)};
   active.add(row);return ()=>active.delete(row);
  }
  function resolve({explicit,caller,type,kind,body}) {
-  if(explicit?.purpose&&PURPOSES[explicit.purpose])return {caller:safe(explicit.caller)||caller,purpose:explicit.purpose,attribution:'explicit'};
+  if(explicit?.purpose&&PURPOSES[explicit.purpose]){const tag=label(explicit.label);return {caller:safe(explicit.caller)||caller,purpose:explicit.purpose,attribution:'explicit',...(tag?{label:tag}:{})};}
   // 맞춰 볼 줄이 없으면 프롬프트 전체 정리(수백 KB)를 건너뛴다
   const rows=[...active].filter(r=>r.user);
   if(rows.length){
    const content=[...(Array.isArray(body.messages)?body.messages:[]).map(m=>typeof m.content==='string'?m.content:JSON.stringify(m.content)),body.prompt,...(body.contents||[]).flatMap(c=>(c.parts||[]).map(p=>p.text)),...(body.systemInstruction?.parts||[]).map(p=>p.text)].filter(Boolean).map(clean).join(' ');
    const matches=rows.filter(r=>content.includes(r.user)&&(!r.system||content.includes(r.system)));
    const keys=new Set(matches.map(r=>r.caller+'|'+r.purpose));
-   if(keys.size===1)return {caller:matches[0].caller,purpose:matches[0].purpose,attribution:'matched'};
+   if(keys.size===1)return {caller:matches[0].caller,purpose:matches[0].purpose,attribution:'matched',...(matches[0].label?{label:matches[0].label}:{})};
    if(keys.size>1)return {caller,purpose:'unknown',attribution:'ambiguous'};
   }
   if(kind!=='text')return {caller,purpose:kind||'other',attribution:'endpoint'};

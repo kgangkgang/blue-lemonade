@@ -98,7 +98,7 @@ const env = { ...card, ...seg, ...resume, ...auto, ...notify, ...frames, cardVal
 };
 function install(name) { env[name] = new Function('env', `with(env){return (${cut(name)});}`)(env); return env[name]; }
 for (const name of ['compileUserPattern', 'runtimeRegexes', 'getCombinedRegexes', 'getNoFoldRegexes', 'protectedBlockRegexes', 'isProtectedBlock', 'withoutProtectedBlocks', 'fixMalformedPlaceholders',
-    'dropStrayWords', 'dropLeftoverPlaceholders', 'repairTagPairs', 'failMarkOf', 'cutError', 'refusalError', 'splitForChunks', 'translate', 'resolveTranslationTarget', 'dressPainted', 'previewText', 'translationPreview']) install(name);
+    'dropStrayWords', 'dropLeftoverPlaceholders', 'repairTagPairs', 'failMarkOf', 'cutError', 'refusalError', 'splitForChunks', 'liveChatPrompt', 'translate', 'resolveTranslationTarget', 'dressPainted', 'previewText', 'translationPreview']) install(name);
 env.tidyGlossaryOutput = (_s, x) => x;
 const sent = [];
 env.callLLMAPI = async prompt => { const body = prompt.slice(PREFIX.length).replace(BRACKET_NOTE + '\n\n', ''); sent.push(body); return ko(body.startsWith(seg.BATCH_HEADER) ? body.slice(seg.BATCH_HEADER.length) : body); };

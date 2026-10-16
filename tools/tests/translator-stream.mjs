@@ -343,7 +343,7 @@ function translateEnv() {
         correctBackticks: x => x, window: {}, toastr: { warning() {} }, BRACKET_NOTE, processTranslationText: (_o, t) => t, setTimeout: (fn, ms) => setTimeout(fn, Math.min(ms, 5)),
     };
     for (const name of ['compileUserPattern', 'runtimeRegexes', 'getCombinedRegexes', 'getNoFoldRegexes', 'protectedBlockRegexes', 'isProtectedBlock', 'withoutProtectedBlocks', 'fixMalformedPlaceholders',
-        'dropStrayWords', 'dropLeftoverPlaceholders', 'repairTagPairs', 'failMarkOf', 'cutError', 'refusalError', 'splitForChunks', 'translate']) env[name] = new Function('env', `with(env){return (${cut(name)});}`)(env);
+        'dropStrayWords', 'dropLeftoverPlaceholders', 'repairTagPairs', 'failMarkOf', 'cutError', 'refusalError', 'splitForChunks', 'liveChatPrompt', 'translate']) env[name] = new Function('env', `with(env){return (${cut(name)});}`)(env);
     env.tidyGlossaryOutput = (_s, x) => x;
     // 가짜 모델: onStream 이 오면(흘려받기) 답을 문단 표시마다 조각내 흘려보내고, 조각 사이에 프레임을 돌린다 — 돌려주는 답은 같다
     env.callLLMAPI = async (prompt, overrides = {}) => {

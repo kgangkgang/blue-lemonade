@@ -133,12 +133,13 @@ body.salty #WorldInfo > .flex-container:has(> #WI_panel_pin_div) {
 /* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #WorldInfo > .flex-container:has(> #WI_panel_pin_div) > h3 > span */
 body.salty #WorldInfo #WI_panel_pin_div {
   flex: none;
-  margin-left: -9px;
+  margin-left: -4px; /* 6.9.8: -9px 는 상자가 서랍 왼쪽 밖으로 5px 나갔다(전 화면 QA 넘침 1건) — 상자는 안에, 글자는 왼쪽으로 붙여 자리 그대로 */
 }
 body.salty #WorldInfo #WI_panel_pin_div label {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  padding-left: 4px;
   width: var(--bl-h-icon);
   height: var(--bl-h-icon);
   border-radius: var(--bl-r-sm);
@@ -300,8 +301,8 @@ body.salty #WorldInfo #wiSliders {
 }
 /* 3.0.0: 여기 있던 규칙 'body.salty #WorldInfo #wiSliders > .flex-container' 은 지움 — flex · min-width → css/26-rounds-1.7.css (같은 선택자 규칙이 덮음) */
 body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
-  gap: 8px 10px;
-  padding: 6px 0 2px;
+  gap: var(--bl-param-row-gap) var(--bl-param-col-gap);
+  padding: var(--bl-param-pad);
 }
 /* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > smal … */
 body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child .fa-solid {
@@ -311,10 +312,10 @@ body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .ne
   opacity: 1 !important;
 }
 body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
-  width: calc(6ch + 6 * max(0px, var(--bl-settings-tracking, 0px)) + 22px) !important;
+  width: var(--bl-num-w) !important; /* 6.9.8: 6ch+22px → 공통 숫자칸 폭 */
   max-width: 100% !important;
   height: auto !important;
-  min-height: max(var(--bl-h-ctl), calc(1.4em + 10px)) !important;
+  min-height: max(var(--bl-h-ctl), calc(1.45em + 8px)) !important; /* 6.9.8: 생성 설정과 같은 식 (1.4em+10px 은 큰 글씨에서 0.5px 달랐다) */
   padding-block: 5px !important;
   line-height: 1.4;
 }

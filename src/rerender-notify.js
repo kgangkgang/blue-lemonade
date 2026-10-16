@@ -100,7 +100,8 @@ export function createRerenderNotifier({ getContext, document: doc, helperPresen
         if (typeof ctx?.eventSource?.emit !== 'function' || !(ctx?.eventTypes ?? ctx?.event_types)?.MESSAGE_UPDATED) return false;
         let present = false;
         try { present = !!helperPresent?.(); } catch { present = false; }
-        return helperRenderMode({ settings: ctx.extensionSettings, present }) === 'iframe' && !builtinTranslateInterferes(ctx.extensionSettings, ctx.chat?.[Number(messageId)]);
+        // 6.9.8 같은 메시지의 알림이 아직 도는 동안(active)은 거짓 — 그때 끝 그림이 틀을 날 코드로 바꾸면 notify 가 중첩이라 false 로 끝나 날 코드가 남는다 (review697)
+        return helperRenderMode({ settings: ctx.extensionSettings, present }) === 'iframe' && !builtinTranslateInterferes(ctx.extensionSettings, ctx.chat?.[Number(messageId)]) && !active.has(Number(messageId));
     }
     return { notify, ready, isNotifying: id => active.has(Number(id)), active };
 }

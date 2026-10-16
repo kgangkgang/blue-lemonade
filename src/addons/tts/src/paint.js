@@ -167,6 +167,11 @@ function needsAnalysis(mesId) {
     return needsSpeakers(list, speakers);
 }
 
+/** 1.9.7 LLM 번역 애드온이 이 답의 자동 번역을 건너뛰는 까닭 — 'system'(눈 끈) | 'korean' | null (애드온이 없거나 자동 번역이 꺼져 있으면 null) */
+function translatorSkipReason(mes) {
+    try { return globalThis[Symbol.for('blue-lemonade.translator')]?.autoSkipReason?.(mes) ?? null; } catch { return null; }
+}
+
 /** 새 답장 · 채팅을 연 뒤 마지막 답장: 화자를 모르는 색 없는 대사가 있으면 대사 분석 한 번 (메시지 글마다 한 번) → 다시 칠함 */
 async function maybeAnalyze(mesId) {
     if (!enabled() || !Number.isInteger(mesId)) return;
@@ -174,6 +179,8 @@ async function maybeAnalyze(mesId) {
     if (!mes || mes.is_user || mes.is_system) return;
     const key = `${mes.swipe_id ?? 0}|${mes.mes}`;
     if (tried.get(mes) === key || !needsAnalysis(mesId)) return;
+    // 눈 끈 답만 쉰다 — 한국어 답도 화자 색 분석은 필요하다(6.9.7 처럼). 쉰 답은 tried 에 적지 않는다(눈을 다시 뜨면 분석)
+    if (translatorSkipReason(mes) === 'system') { log('info', '화자 색: 번역 애드온이 눈 끈 답으로 건너뛰어 대사 분석도 쉼'); return; }
     tried.set(mes, key);
     let a = null;
     try { a = await player.analyzeForPaint(mesId); } catch (e) { log('err', `화자 색: 분석 실패 ${String(e?.message || e).slice(0, 40)}`); a = null; }

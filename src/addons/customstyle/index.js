@@ -213,7 +213,7 @@ class CustomThemeSettingsManager {
                 } else if (entry.type === 'checkbox') {
                     entries[entry.varId] = entry.checked || false;
                 } else {
-                    entries[entry.varId] = entry.default || '';
+                    entries[entry.varId] = entry.default ?? '';   // 기본값 0 도 값이다 (|| 는 0 을 빈칸으로 만들었다)
                 }
             }
         });

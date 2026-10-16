@@ -192,7 +192,7 @@ export async function bumpDaily(entry) {
     // Keep request-time costs; a later connection/price change must not rewrite history.
     const priceMeta = entry.pricing ? { pricingVersion: 1, currency: entry.pricing.currency, providerLabel: entry.pricing.label } : {};
     const basis = entry.pricing ? JSON.stringify([entry.pricing.provider, entry.pricing.origin, entry.pricing.currency, entry.pricing.kind, entry.pricing.checked, entry.pricing.rates, entry.pricing.tier]) : '';
-    const key = `${day}|${entry.model || '?'}|${entry.caller || 'unknown'}|${entry.purpose || 'unknown'}|${basis}`;
+    const key = `${day}|${entry.model || '?'}|${entry.caller || 'unknown'}|${entry.purpose || 'unknown'}|${entry.label || ''}|${basis}`;   // 6.9.8 label 도 따로 센다 (옛 키는 label 칸이 없어 그대로 남는다)
     const add = {
         requests: 1,
         errors: entry.ok ? 0 : 1,
@@ -207,7 +207,7 @@ export async function bumpDaily(entry) {
     };
     const db = await openDb();
     if (!db) {
-        const row = memory.daily.get(key) ?? { key, day, model: entry.model || '?', caller: entry.caller || 'unknown', purpose: entry.purpose || 'unknown', kind: entry.kind || 'text', ...priceMeta, ...zeroSums() };
+        const row = memory.daily.get(key) ?? { key, day, model: entry.model || '?', caller: entry.caller || 'unknown', purpose: entry.purpose || 'unknown', label: entry.label || '', kind: entry.kind || 'text', ...priceMeta, ...zeroSums() };
         memory.daily.set(key, sum(row, add));
         return;
     }
@@ -216,7 +216,7 @@ export async function bumpDaily(entry) {
         const store = transaction.objectStore(DAILY);
         const getRequest = store.get(key);
         getRequest.onsuccess = () => {
-            const row = getRequest.result ?? { key, day, model: entry.model || '?', caller: entry.caller || 'unknown', purpose: entry.purpose || 'unknown', kind: entry.kind || 'text', ...priceMeta, ...zeroSums() };
+            const row = getRequest.result ?? { key, day, model: entry.model || '?', caller: entry.caller || 'unknown', purpose: entry.purpose || 'unknown', label: entry.label || '', kind: entry.kind || 'text', ...priceMeta, ...zeroSums() };
             store.put(sum(row, add));
         };
         transaction.oncomplete = resolve;

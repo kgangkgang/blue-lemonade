@@ -5,7 +5,15 @@
 // 보내기 · 스와이프 · 다시 생성을 누르는 그 순간(사용자 동작이 있어야 PIP 를 열 수 있다) 진행 상황을 그린 작은 영상을 PIP 로 띄운다.
 // 작은 창에는 '생성 중 · 글자 수 · 끝남'이 보이고, 실리태번으로 돌아오면 저절로 닫힌다. 켜 두었을 때만 불러온다 (features.js).
 const TRIGGERS = '#send_but, #option_regenerate, #option_continue, #mes_continue, .swipe_right, .swipe_left, #bl-onehand .bl-onehand-btn, #mes_impersonate, #option_impersonate, .qr--button, .bl-qrf-layer button[data-i], .ctx-blocker .ctx-item';
+// 6.9.8: 메시지의 번역 단추(기본 번역 · LLM 번역)는 바로 켜지 않는다 — 이미 번역된 답의 원문↔번역 토글도 같은 단추라서. 누른 때를 적어 두고,
+// 5초 안에 번역 애드온이 뒷일 다리(after-work.js)로 「돌고 있음」을 알리면 그때 켠다(일시 활성화 안이라 소리판 resume · PIP 가능). 끝을 알리면 끈다
+const TRANSLATE_BUTTONS = '.mes_legacy_translate, .mes_llm_translate';
+const TAP_WINDOW_MS = 5000;
 import { dropThinkingHead } from './message-work.js';   // 6.6.5 답 머리의 생각 블록 (과일 ECoT)
+import { afterWork } from './after-work.js';            // 6.9.8 뒷일 다리: 번역 · 그림 · 요약이 돌고 있다고 알리면 90초 대신 끝날 때까지 (상한 5분)
+const DONE_HOLD_MS = 90000, WORK_GRACE_MS = 2500, MIN_DONE_MS = 20000;   // 끝난 뒤 최소 20초는 둔다 — 번역 뒤 이어지는 TTS 합성 요청이 얼지 않게 (6.9.7 은 90초)
+const work = afterWork();
+let translateTapAt = 0;
 
 let mode = 'audio';
 // 소리 방식: 창 없이 버틴다. 브라우저는 '소리를 내고 있는 탭'을 얼리지 않는다 — 귀에 안 들리는 아주 낮고 작은 소리(30Hz · 0.1% 크기)를 WebAudio 로 낸다.
@@ -32,10 +40,30 @@ let lastSign = 0;
 function dropStale() {
     if (state.phase !== 'working') return false;
     if (document.body?.dataset?.generating === 'true') { lastSign = Date.now(); return false; }
+    if (work.busy) { lastSign = Date.now(); return false; }   // 6.9.8 뒷일(번역 단추로 켠 것 등)이 도는 동안은 살아 있음 — 끝 신호가 안 오면 다리의 상한(5분)이 내려놓는다
     if (Date.now() - lastSign <= 90000) return false;
     state.phase = 'idle';
     return true;
 }
+/** 창 · 소리를 내려놓을 때인가: 멈춘 생성, 또는 답이 끝나고 90초가 지났고 뒷일도 없음 (뒷일이 돌면 끝날 때까지 — 다리의 상한 5분이 지나면 없는 셈) */
+function shouldClose() {
+    if (dropStale()) return true;
+    return state.phase === 'done' && Date.now() - state.doneAt > DONE_HOLD_MS && !work.sweep();
+}
+// 뒷일이 끝나면 끈다 — 잠깐 쉬었다(2.5초), 다만 답이 끝난 뒤 20초는 채운다(번역 뒤 이어지는 TTS 합성 등). 답 없이 번역 단추로만 켠 것은 이때 끝난 것으로 본다
+let graceTimer = 0;
+function closeDelayAfterWork(now = Date.now()) { return Math.max(WORK_GRACE_MS, (state.doneAt || 0) + MIN_DONE_MS - now); }
+work.onChange(({ busy }) => {
+    if (busy) {
+        lastSign = Date.now(); clearTimeout(graceTimer); graceTimer = 0;
+        // 번역 단추를 막 눌렀고(5초 안) 아직 안 켜져 있으면 지금 켠다 — 토글만 누른 것은 begin 이 안 와서 켜지지 않는다
+        if (on && state.phase !== 'working' && Date.now() - translateTapAt <= TAP_WINDOW_MS) { translateTapAt = 0; arm(); }
+        return;
+    }
+    if (state.phase === 'working' && document.body?.dataset?.generating !== 'true') { state.phase = 'done'; state.doneAt = Date.now(); }
+    clearTimeout(graceTimer);
+    graceTimer = setTimeout(() => { graceTimer = 0; if (!work.busy && state.phase !== 'working') closeWindow(); }, closeDelayAfterWork());
+});
 
 function draw() {
     if (!ctx) return;
@@ -64,16 +92,17 @@ function ensureVideo() {
 }
 
 async function openWindow() {
-    if (on && mode === 'audio') { startHum(); clearInterval(humTimer); humTimer = setInterval(() => { if (dropStale() || (state.phase === 'done' && Date.now() - state.doneAt > 90000)) closeWindow(); }, 5000); return; }
+    if (on && mode === 'audio') { startHum(); clearInterval(humTimer); humTimer = setInterval(() => { if (shouldClose()) closeWindow(); }, 5000); return; }
     if (!on || !document.pictureInPictureEnabled || document.pictureInPictureElement) return;
     try {
         ensureVideo(); draw();
         await video.play();
         await video.requestPictureInPicture();
-        clearInterval(timer); timer = setInterval(() => { draw(); if (dropStale() || (state.phase === 'done' && Date.now() - state.doneAt > 90000)) closeWindow(); }, 250); // 끝난 뒤 1분 반은 번역 등을 위해 열어 둔다
+        clearInterval(timer); timer = setInterval(() => { draw(); if (shouldClose()) closeWindow(); }, 250); // 끝난 뒤 1분 반(뒷일이 알리면 끝날 때까지)은 번역 등을 위해 열어 둔다
     } catch (error) { console.info('[Blue Lemonade] 백그라운드 창을 열지 못했어요', error?.message || error); }
 }
 function closeWindow() {
+    clearTimeout(graceTimer); graceTimer = 0;
     clearInterval(humTimer); humTimer = 0; stopHum();
     clearInterval(timer); timer = 0;
     if (document.pictureInPictureElement === video) document.exitPictureInPicture().catch(() => {});
@@ -89,7 +118,9 @@ function editOpen() {
 function arm() { Object.assign(state, { phase: 'working', chars: 0, since: Date.now(), preview: '' }); lastSign = Date.now(); openWindow(); }
 function onTap(event) {
     if (event.target?.closest?.('.qr--button-expander,.ctx-expander') || document.body.classList.contains('salty') && event.target?.closest?.('.qr--hasCtx')) return;
-    if (on && event.target?.closest?.(TRIGGERS)) arm();
+    if (!on) return;
+    if (event.target?.closest?.(TRANSLATE_BUTTONS)) { translateTapAt = Date.now(); return; }   // 번역이 실제로 시작되면(다리 begin) 그때 켠다
+    if (event.target?.closest?.(TRIGGERS)) arm();
 }
 // Enter 는 실리태번이 실제로 생성할 때만 (RossAscends-mods.js processHotkeys 와 같은 조건 — 폰은 기본값이 줄바꿈).
 // Alt+Enter(이어쓰기) · Ctrl+Enter(다시 생성)는 <a> 를 jQuery 로 눌러 클릭 이벤트가 안 오므로 여기서 켠다. 생성이 안 되면 위 걸러내기가 내려놓는다
@@ -133,3 +164,5 @@ export function syncBackgroundWindow(enabled, how = 'audio') {
 
 /** 설정 창: 이 브라우저에서 되는지 */
 export const backgroundWindowSupported = () => !!document.pictureInPictureEnabled;
+/** 시험용 */
+export const _forTest = { state, shouldClose, work, setLastSign: t => { lastSign = t; }, closeDelayAfterWork, onTap, translateTapAt: () => translateTapAt };
