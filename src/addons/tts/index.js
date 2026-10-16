@@ -23,6 +23,7 @@ import * as paint from './src/paint.js';   // 6.2.3 색 없는 대사에 화자 
 import * as pregen from './src/pregen.js';
 import * as modelswitch from './src/modelswitch.js';
 import { log } from './src/log.js';
+import { registerPeopleSource, peopleChanged } from '../../people.js';   // 6.9.5 인물표 — 대사 색 · 목소리를 이름 다리의 people 로
 
 export { VERSION };
 export let duplicate = false;
@@ -74,6 +75,7 @@ export function syncEnabled() {
         pregen.pregenCancel(); analysis.stopForAddon(); player.stopForAddon(); clickplay.destroy(); namevoice.destroy(); paint.destroy(); modelswitch.unregister();
         removeWand(); document.querySelectorAll('#chat .lv_play, #chat .lv_script').forEach(el => el.remove());
     } else { clickplay.init(); namevoice.init(); paint.init(); modelswitch.register(); syncWand(); addButtons(); }
+    peopleChanged();
     return on;
 }
 export async function openPanel() {
@@ -292,7 +294,23 @@ function onChatChanged() {
     catch (e) { log('err', `설정 화면 새로 고침 실패: ${e.message}`); }
     try { paint.onChatChanged(); }   // 6.2.3 다 그려진 뒤 칠하고 마지막 답장을 본다
     catch (e) { log('err', `화자 색 실패: ${e.message}`); }
+    peopleChanged();   // 6.9.5 인물표는 채팅마다 (색 표가 채팅에 산다)
 }
+/** 6.9.5 인물표 공급자: 이 채팅의 대사 색(색 표) · 그 이름에 연결된 목소리 · TTS 별명표의 표기. TTS 가 꺼져 있으면 아무것도 주지 않는다 */
+const peopleSource = {
+    person(names) {
+        if (!runtimeEnabled()) return null;
+        let color = null, voice = null;
+        const isUser = names.some(n => speakers.isPersonaName(n));
+        for (const n of names) {
+            color ??= speakers.colorOfName(n);
+            voice ??= voices.linkedVoice(n, { isUser });
+            if (color && voice) break;
+        }
+        return { names: speakers.namesOf(names[0]), color, voice: voice ? { uid: voice.uid, name: voice.name, provider: voice.provider, lang: voice.lang || '' } : null };
+    },
+    names() { return runtimeEnabled() ? speakers.peopleNames() : []; },
+};
 // 글이 바뀐 메시지(편집·스와이프·다시 그림): 저장된 대사 분석은 글 해시로 묶여 있어 analysis 쪽이 낡은 것을 걸러 낸다
 function onMessageChanged(id) {
     if (!runtimeEnabled()) return;
@@ -462,6 +480,7 @@ export const ready = new Promise((resolve, reject) => jQuery(() => { (async () =
     catch (e) { console.error('[tts] 모델 전환 등록 실패', e); log('err', `모델 전환 등록 실패: ${e.message}`); }
 
     initialized = true; syncEnabled();
+    registerPeopleSource('tts', peopleSource);   // 6.9.5 인물표
     document.addEventListener('tts:wand', syncWand);
     if (event_types.APP_READY) eventSource.on(event_types.APP_READY, () => { syncWand(); syncVisibility(); });   // 메뉴·확장 탭이 늦게 생긴 경우
 

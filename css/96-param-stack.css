@@ -1,57 +1,29 @@
 /* ===== css/96-param-stack.css =====
-   파라미터는 세로 2줄 (사용자 규칙, DESIGN-TASTE 3-1)
-   · 설정값(슬라이더 · 선택칸 · 숫자칸 · 글자칸 · 세그먼트)은 한 줄에 하나:
-     윗줄 = 이름 (현재 값 숫자칸은 윗줄 오른쪽), 아랫줄 = 조절칸 가로 꽉
-   · 두 개 이상 나란히(2열 격자 · 한 줄 두 칸) 두지 않음 — 폰 · 넓은 PC 화면 모두
-   · 설정값이 아닌 격자(버튼 묶음 · 견본 · 탭 · 목록 줄 · 보기 거르기)는 그대로 — 판단 표는 ui-unify-20261015/param-stack.md
+   파라미터 칸 = 2열 격자, 칸 안은 세로 2줄 (사용자 규칙, DESIGN-TASTE 3-1)
+   · 설정값(슬라이더 · 선택칸 · 숫자칸 · 세그먼트)은 폰 · PC 모두 두 칸씩 나란히 — 2열 격자는 원래 모듈
+     (26-rounds · 33-panel-columns · 52-tool-editor · 12-worldinfo · 27-compact · 애드온 CSS) 그대로 쓴다.
+   · 각 칸 안: 윗줄 = 이름 (현재 값 숫자칸은 윗줄 오른쪽), 아랫줄 = 슬라이더 · 선택칸 · 세그먼트를 칸 너비 꽉
+   · 칸이 너무 좁아 이름이 한두 글자씩 눌릴 때(큰 글씨)만 한 열 — 컨테이너 쿼리 · em 기준 (1절)
    · 켜기·끄기 스위치 줄(이름 왼쪽 · 스위치 오른쪽)은 한 줄 그대로
+   · 6.8.0 은 이 규칙을 한 줄에 하나(2열 금지)로 거꾸로 적어 2열을 전부 한 열로 내렸다 — 6.9.5 에서 그 규칙만 걷어 냄.
+     2열을 한 열로 내리는 규칙을 다시 넣으면 tools/tests/param-two-columns.mjs 가 멈춘다
    · 상태창 글자 편집기(79-fruit-type)는 다른 세션 담당이라 건드리지 않음
    · 애드온 CSS 는 style.css 뒤에 붙으므로 애드온 부품은 body.salty + !important
    ===== */
 
-/* ---------- 1. 2열 격자 → 한 열 ---------- */
-/* BL 설정 창: 슬라이더 두 개 · 줄 두 개를 나란히 (33-panel-columns) · 마크다운 묶음 (67) */
-.salty-panel .salty-group:has(> .salty-slider + .salty-slider),
-.salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)),
-html body .salty-panel.bl-editor .salty-sec .salty-group:is(.bl-control-grid, .salty-sizes),
-.salty-panel .bl-md-groups,
-.salty-panel .bl-prompt-tools .bl-prompt-name-row {
-  grid-template-columns: minmax(0, 1fr) !important;
+/* ---------- 1. 큰 글씨로 칸이 좁을 때만 한 열 ---------- */
+/* 실리태번 생성 설정(26-rounds 2열): 59-prompt-ux 의 자동 맞춤은 칸 최소 11em 이라 PC 왼쪽 패널(약 330px)에서 한 열이 됐다.
+   칸 하나는 윗줄 이름 + 숫자칸(60px) · 아랫줄 슬라이더 — 칸 8.5em 이면 이름 자리가 낱말 하나(4~5자) 이상 남는다.
+   열 최소 40% 라 넓어도 세 칸이 되지 않음(컨텍스트 크기 · 최대 응답 길이 짝 유지), 두 칸이 안 들어가면(큰 글씨) 한 열 */
+body.salty #left-nav-panel #range_block_openai:not([style*="display: none"]):not([style*="display:none"]) {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, max(8.5em, 40%)), 1fr));
 }
-/* 단어 치환 · 채팅 캡처 도구: 거르기 슬라이더 · 가리기 숫자 · 선택칸 격자 (52-tool-editor) */
-.salty-panel :is(.bl-capture-filter, .bl-tool-grid:has(select, textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="button"]), .salty-slider)),
-.salty-panel .bl-extension-page .bl-addon-layout {
-  grid-template-columns: minmax(0, 1fr) !important;
-}
-/* 실리태번 생성 설정 슬라이더 2열 (26-rounds) · 사용자 설정 묶음 2열 */
-body.salty #left-nav-panel #range_block_openai,
-body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="FontBlurChatWidthBlock"], [name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]),
-body.salty #WorldInfo :is(#wiSliders, #wiCheckboxes),
-body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"],
-body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container),
-body.salty #rm_api_block :is(#vertexai_form > div, #prompt_post_processing_form),
-body.salty #rm_api_block #openai_api form:has(> h4) {
-  grid-template-columns: minmax(0, 1fr) !important;
-}
-body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="FontBlurChatWidthBlock"], [name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > *,
-body.salty #WorldInfo :is(#wiSliders, #wiCheckboxes, .world_entry_edit [name="perEntryOverridesBlock"]) > * {
-  grid-column: 1 / -1 !important;
-}
-/* 테마 › 기타 설정(PC 두 칸) · 설정 잠금 스위치 두 칸 · 정규식 편집기(넓으면 두 칸) · 단어 치환 프리셋(넓으면 두 칸) */
-.bl-editor .bl-etc-grid,
-.salty-panel .salty-group.bl-setting-locks,
-.bl-tool-body .bl-word-presets,
-body.salty .regex_editor > .flexFlowColumn {
-  grid-template-columns: minmax(0, 1fr) !important;
-}
-/* 서식 서랍: 넓은 화면에서 컨텍스트 · 지시 · 시스템 프롬프트 세 칸이 나란히 */
-body.salty #AdvancedFormatting > .spaceEvenly {
-  flex-direction: column !important;
-  align-items: stretch !important;
-}
-body.salty #AdvancedFormatting > .spaceEvenly > * {
-  width: 100% !important;
-  max-width: none !important;
+/* 사용자 설정 묶음(26-rounds, 폰 · 좁은 화면 2열)도 같은 까닭으로 20em 아래에서만 한 열.
+   월드 인포 활성화(26-rounds bl-wi-global 18em) · BL 설정 창(33-panel-columns bl-controls 24em)은 원래 모듈에 이미 있다 */
+body.salty #user-settings-block #user-settings-block-content { container: bl-user-settings / inline-size; }
+@container bl-user-settings (width < 20em) {
+  body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="FontBlurChatWidthBlock"], [name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) { grid-template-columns: minmax(0, 1fr) !important; }
+  body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="FontBlurChatWidthBlock"], [name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > * { grid-column: 1 / -1 !important; }
 }
 
 /* ---------- 2. 이름 | 칸 한 줄 → 이름 위 · 칸 아래 ---------- */
@@ -128,20 +100,6 @@ body.salty #left-nav-panel #openai_reasoning_effort {
   max-width: none !important;
   flex: 1 1 auto !important;
 }
-/* 서식 서랍: 예시 구분자 · 채팅 시작 두 칸 나란히 */
-body.salty #AdvancedFormatting .flex-container:has(> .flex1 #context_example_separator, > .flex1 #context_chat_start) {
-  flex-direction: column !important;
-  flex-wrap: nowrap !important;
-  align-items: stretch !important;
-}
-/* ↳ 아래 규칙은 css/99-lazy-panel.css 로 옮김 (서랍 전용 · :has() 오른쪽 끝이 태그) */
-/* 지시 템플릿 시퀀스: 넓은 화면에서 앞 · 뒤 시퀀스 두 칸이 나란히 */
-body.salty #AdvancedFormatting#AdvancedFormatting #InstructSequencesColumn details > .flex-container {
-  flex-direction: column !important;
-  flex-wrap: nowrap !important;
-  align-items: stretch !important;
-}
-body.salty #AdvancedFormatting#AdvancedFormatting #InstructSequencesColumn details > .flex-container > * { width: 100% !important; max-width: none !important; flex: 0 0 auto !important; }
 /* 사용자 설정: 넓은 화면에서 이름 | 선택칸 한 줄 (예시 메시지 처리 · 이미지 스와이프) */
 body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > div:has(> label + select) {
   flex-direction: column !important;
@@ -151,59 +109,12 @@ body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingTo
 /* ↳ 아래 규칙은 css/99-lazy-panel.css 로 옮김 (서랍 전용 · :has() 오른쪽 끝이 태그) */
 /* 언어 칸은 계정 단추 옆 좁은 자리(63px)에 끼어 있었음 → 한 줄 전체 */
 body.salty #user-settings-block#user-settings-block #UI-language-block { flex: 1 1 100% !important; width: 100% !important; }
-/* API 연결: 이름 40% | 칸 60% 격자 (27-compact) */
-body.salty #rm_api_block#rm_api_block #openai_api:not([style*="display: none"]):not([style*="display:none"]),
-body.salty #rm_api_block#rm_api_block #openai_api form:has(> h4):not(.flex-container) {
-  grid-template-columns: minmax(0, 1fr) !important;
-}
-body.salty #rm_api_block#rm_api_block #openai_api > * { grid-column: 1 / -1 !important; }
-/* ↳ 아래 규칙은 css/99-lazy-panel.css 로 옮김 (서랍 전용 · :has() 오른쪽 끝이 태그) */
-/* 월드 인포 활성화: 삽입 전략 줄 (12-worldinfo 가 row !important) */
-body.salty #WorldInfo #wiSliders#wiSliders > .flex-container:has(> #world_info_character_strategy) {
-  flex-direction: column !important;
-  flex-wrap: nowrap !important;
-  align-items: stretch !important;
-}
-body.salty #WorldInfo #wiSliders#wiSliders #world_info_character_strategy { width: 100% !important; max-width: none !important; }
-/* 정규식 편집기: 최소 · 최대 깊이 두 칸 나란히 · 매크로 치환 선택칸 */
-body.salty .regex_editor .flex-container:has(> .flex1 > input[name="min_depth"], > .flex1 > input[name="max_depth"]) {
-  flex-direction: column !important;
-  flex-wrap: nowrap !important;
-  align-items: stretch !important;
-}
+/* 월드 인포 활성화의 삽입 전략 줄은 12-worldinfo 그대로 한 줄(이름 왼쪽 · 값 오른쪽) — 6.8.0 처럼 세로로 쌓으면
+   가로 줄용 flex-basis(12em · 10em)가 높이로 읽혀 이름과 값 사이가 300px 넘게 비었다 */
+/* 정규식 편집기: 매크로 치환 선택칸 (최소 · 최대 깊이 두 칸 · 「적용 대상」 · 「그 밖의 옵션」 두 칸은 원래대로 나란히) */
 body.salty .regex_editor label.checkbox:has(> select[name="substitute_regex"]) { flex-direction: column !important; align-items: stretch !important; width: 100% !important; align-self: stretch !important; }
-/* 정규식 편집기: 넓은 화면에서 「적용 대상」 · 「그 밖의 옵션」 두 칸이 나란히 */
-body.salty .regex_editor .flex-container:has(> .wi-enter-footer-text + .wi-enter-footer-text) {
-  flex-direction: column !important;
-  flex-wrap: nowrap !important;
-  align-items: stretch !important;
-}
-body.salty .regex_editor .flex-container:has(> .wi-enter-footer-text + .wi-enter-footer-text) > .wi-enter-footer-text { width: 100% !important; max-width: none !important; flex: 0 0 auto !important; }
 body.salty .regex_editor select[name="substitute_regex"] { width: 100% !important; max-width: none !important; }
-/* 월드 인포 항목 편집기: 펼친 항목에서만 머리줄의 위치 · 순서 · 확률을 세로로 (접힌 목록 머리줄은 항목 요약이라 그대로 — 판단 표 참고),
-   그룹 · 그룹 점수 · 지속 · 쿨다운 · 지연 숫자칸 줄과 논리 구조 줄은 이름 위 · 칸 아래 */
-body.salty #WorldInfo#WorldInfo .world_entry:has(.inline-drawer-icon.up) .WIEnteryHeaderControls:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) !important;
-  gap: var(--bl-s2) !important;
-  width: 100% !important;
-}
-body.salty #WorldInfo#WorldInfo .world_entry:has(.inline-drawer-icon.up) .WIEnteryHeaderControls > .world_entry_form_control {
-  /* display 는 그대로(테마가 숨긴 깊이 칸을 살리지 않게) — 줄바꿈으로 [이름 … ?] / [칸 가로 꽉] */
-  flex-direction: row !important;
-  flex-wrap: wrap !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: var(--bl-s1) var(--bl-s2) !important;
-  width: 100% !important;
-}
-/* ↳ 아래 규칙은 css/99-lazy-panel.css 로 옮김 (서랍 전용 · :has() 오른쪽 끝이 태그) */
-body.salty #WorldInfo#WorldInfo .world_entry_edit > .flexGap10 {
-  flex-direction: column !important;
-  flex-wrap: nowrap !important;
-  align-items: stretch !important;
-}
-body.salty #WorldInfo#WorldInfo .world_entry_edit > .flexGap10 > * { width: 100% !important; max-width: none !important; flex: 0 0 auto !important; }
+/* 월드 인포 항목 편집기: 논리 구조 줄은 이름 위 · 칸 아래 (머리줄의 위치 · 순서 · 확률과 숫자칸 줄은 원래대로 나란히) */
 body.salty #WorldInfo#WorldInfo .world_entry_form_control:has(> select[name="entryLogicType"]):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) !important;
@@ -215,16 +126,6 @@ body.salty #WorldInfo#WorldInfo .world_entry_form_control:has(> select[name="ent
 }
 /* ↳ 아래 규칙은 css/99-lazy-panel.css 로 옮김 (서랍 전용 · :has() 오른쪽 끝이 태그) */
 body.salty #WorldInfo#WorldInfo .world_entry_form_control > select[name="entryLogicType"] { width: 100% !important; max-width: none !important; text-align: left !important; }
-/* 배경 서랍: 맞춤 · 정렬 선택칸 두 개 나란히 */
-body.salty #Backgrounds #bg-header-fixed {
-  flex-direction: column !important;
-  flex-wrap: nowrap !important;
-  align-items: stretch !important;
-}
-body.salty #Backgrounds #bg-header-fixed :is(#background_fitting, #bg-sort) {
-  width: 100% !important;
-  max-width: none !important;
-}
 
 /* ---------- 3. 슬라이더 + 숫자칸: 이름 | 숫자(현재 값) / 슬라이더 가로 꽉 ---------- */
 /* 실리태번 생성 설정 (range-block: 이름 · 슬라이더 · 숫자칸, 02-controls · 26-rounds) */
@@ -238,9 +139,13 @@ body.salty .range-block:has(> .range-block-title + .range-block-range-and-counte
 /* 테마가 슬라이더 · 숫자칸 상자를 display: contents 로 풀어 두기도 해서, 상자와 그 안 입력칸 둘 다에 자리를 줌 (격자 칸이 된 쪽만 적용됨) */
 body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) :is(.range-block-counter, .range-block-counter > *) { grid-column: 2 !important; grid-row: 1 !important; }
 body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) :is(.range-block-range, .range-block-range > *) { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
-/* 생성 설정(#range_block_openai)은 26-rounds 가 아이디 둘 + !important 로 숫자칸을 슬라이더 옆(2행 2열)에 두므로 같은 무게로 덮음.
-   (26-rounds 169줄: 예전 요청 "세로 2줄로"를 두 열로 읽었던 자리 — 지금 규칙은 이름 위 · 칸 아래) */
-body.salty #left-nav-panel #range_block_openai > * { grid-column: 1 / -1 !important; }
+/* 생성 설정(#range_block_openai)은 26-rounds 가 두 열 격자에 놓고, 칸 안은 아이디 둘 + !important 로
+   숫자칸을 슬라이더 옆(2행 2열)에 두므로 같은 무게로 덮음 → 칸마다 윗줄 이름 | 숫자칸, 아랫줄 슬라이더 칸 너비 꽉.
+   칸 자리(왼쪽 · 오른쪽 · 순서)는 26-rounds 그대로 — 여기서 grid-column 을 칸 전체로 펴지 않는다.
+   나란한 두 칸은 이름 글자 기준선을 맞춤 (윗줄에 숫자칸이 있는 칸 · 숫자칸이 아랫줄인 시드 칸이 짝이어도 이름이 같은 높이) */
+body.salty #left-nav-panel #range_block_openai:not([style*="display: none"]):not([style*="display:none"]) { align-items: baseline; }
+/* 반 칸 이름은 한국어 낱말째 줄바꿈 (왼쪽 패널은 keep-all 밖이라 「(토큰)」이 「(토 / 큰)」으로 꺾였다) — 낱말 하나가 칸보다 길 때만 59 의 anywhere */
+body.salty #left-nav-panel #range_block_openai :is(.range-block-title, label.checkbox_label > span) { word-break: keep-all; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-title { grid-column: 1 !important; grid-row: 1 !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) :is(.range-block-counter, .range-block-counter > *) { grid-column: 2 !important; grid-row: 1 !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) :is(.range-block-range, .range-block-range > *) { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
@@ -271,33 +176,23 @@ body.salty .parameterbox:has(> :is(small, label):first-child + .neo-range-slider
 /* ↳ 아래 규칙은 css/99-lazy-panel.css 로 옮김 (서랍 전용 · :has() 오른쪽 끝이 태그) */
 body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .neo-range-input { grid-area: 1 / 2 !important; }
 body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .neo-range-slider { grid-area: 2 / 1 / 3 / -1 !important; }
+/* 두 칸 격자 안에서 윗줄 이름 옆 숫자칸은 값 글자 수만큼 — 고정 72px(사용자 설정) · 6ch(월드 인포)는 반 칸에서 이름 자리를
+   두 글자씩 꺾이게 했다 (이름에 ? · ⓘ 아이콘과 「테마가 끔」 표시가 붙음). 값은 길어야 1.00 · 65536 */
+body.salty #user-settings-block #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
+  width: calc(4.6ch + 4 * max(0px, var(--bl-settings-tracking, 0px)) + 16px) !important;
+  min-width: 0 !important;
+}
+body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
+  width: calc(5ch + 5 * max(0px, var(--bl-settings-tracking, 0px)) + 16px) !important;
+}
 /* ↳ 아래 규칙은 css/99-lazy-panel.css 로 옮김 (서랍 전용 · :has() 오른쪽 끝이 태그) */
-body.salty .claude_params .parameter-row {
-  flex-direction: column !important;
-  align-items: stretch !important;
-}
-body.salty .claude_params .parameter-row > .parameterbox {
-  width: 100% !important;
-  max-width: none !important;
-}
 
 /* ---------- 4. 내장 애드온 ---------- */
-/* TTS: 두 칸씩 놓던 칸 묶음 · 이름 왼쪽 줄 · 목소리 줄 */
-body.salty #lv_settings .lv-grid:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) !important;
-}
-body.salty #lv_settings .lv-grid > * {
-  grid-column: 1 / -1 !important;
-  width: auto !important;
-  max-width: none !important;
-}
+/* TTS: 칸 묶음(.lv-grid)은 원래대로 두 칸씩 — 칸 안의 이름 왼쪽 줄 · 목소리 줄만 이름 위 · 칸 아래 */
 body.salty #lv_settings .lv-row:not(.lv-extra) {
   grid-template-columns: minmax(0, 1fr) !important;
   row-gap: var(--bl-s1) !important;
 }
-/* 목소리 목록 도구: 검색 · 들어 볼 문장 두 칸(넓은 화면) → 한 줄에 하나 */
-body.salty #lv_settings .lv-tools { grid-template-columns: minmax(0, 1fr) !important; }
 body.salty #lv_settings .lv-row.lv-extra {
   grid-template-columns: minmax(0, 1fr) auto !important;
   row-gap: var(--bl-s1) !important;
@@ -317,13 +212,13 @@ body.salty #lv_settings .lv-color > .lv-color-voicebox:not([hidden]):not([style*
 }
 body.salty #lv_settings .lv-color-voicebox > :is(.lv-color-voice, select:first-child) { grid-column: 1 / -1 !important; width: 100% !important; }
 body.salty #lv_settings .lv-color-voicebox > .lv-strength { grid-column: 1 !important; width: 100% !important; }
-/* 성능 보조 · 요청 로그 설정: 이름 왼쪽 숫자 · 글자칸, 한 줄 두 칸 */
-body.salty .rl-settings :is(.rl-numbers, .rl-budget-nums, .rl-price-add):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
-  display: flex !important;
-  flex-direction: column !important;
-  flex-wrap: nowrap !important;
-  align-items: stretch !important;
-  gap: var(--bl-s2) !important;
+/* 성능 보조 · 요청 로그 설정: 숫자칸 묶음은 두 칸씩 나란히(칸이 8em 보다 좁아지면 한 칸 — 열은 40% 이상이라 셋이 되지 않음),
+   칸 안은 이름 위 · 숫자칸 + 단위 아래. 가격 추가 줄(모델 · 입력 · 출력 · 추가)은 원래대로 한 줄 */
+body.salty .rl-settings :is(.rl-numbers, .rl-budget-nums):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, max(8em, 40%)), 1fr)) !important;
+  align-items: end !important;
+  gap: var(--bl-s2) var(--bl-s3) !important;
 }
 body.salty .rl-settings :is(.rl-numbers > label, .rl-budget-nums > label, .rl-budget-fields > label, .rl-budget-adv > label, .rl-unit):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
   display: grid !important;
@@ -335,7 +230,6 @@ body.salty .rl-settings :is(.rl-numbers > label, .rl-budget-nums > label, .rl-bu
 body.salty .rl-settings :is(.rl-numbers > label, .rl-budget-nums > label, .rl-budget-fields > label, .rl-budget-adv > label, .rl-unit) > span:first-child { grid-column: 1 / -1 !important; }
 body.salty .rl-settings :is(.rl-numbers > label, .rl-budget-nums > label, .rl-budget-fields > label, .rl-budget-adv > label, .rl-unit) > input { grid-column: 1 !important; width: 100% !important; max-width: none !important; }
 body.salty .rl-settings :is(.rl-numbers > label, .rl-budget-nums > label, .rl-budget-fields > label, .rl-budget-adv > label, .rl-unit) > input:last-child { grid-column: 1 / -1 !important; }
-body.salty .rl-settings .rl-price-add > :is(input, select) { width: 100% !important; max-width: none !important; }
 /* 가격표 머리줄: 넓은 화면에서 제목 · 설명 · 단위 칸이 한 줄이라 설명이 9px 로 눌렸음 → 단위 칸은 다음 줄 전체 */
 body.salty .rl-settings .rl-price-head { flex-wrap: wrap !important; }
 body.salty .rl-settings .rl-price-head > .rl-unit { flex: 1 1 100% !important; }
@@ -346,17 +240,11 @@ body.salty .sw-settings .sw-row:has(> .sw-num):not([hidden]):not([style*="displa
 }
 body.salty .sw-settings .sw-row > .sw-num { width: 100% !important; }
 body.salty .sw-settings .sw-row > .sw-num > input { flex: 1 1 auto !important; width: auto !important; }
-body.salty .rl-modules { grid-template-columns: minmax(0, 1fr) !important; }
-/* 번역 체크 격자 · TTS 대본 편집기 칸(넓으면 두 칸) · TTS 넓은 화면 두 칸 카드 · 한글화 패널 값 · 메모 모양 설정 */
-body.salty .llmt-settings .llmt-checks--grid,
-body.salty .lvs-dialog .lvs-fields,
-body.salty :is(#lv_pane_read, #lv_pane_voices, #lv_pane_data):not([hidden]),
-body.salty #pt-panel #pt-params-wrap,
-body.salty .bl-notes-look .bl-look-grid {
-  grid-template-columns: minmax(0, 1fr) !important;
-}
-/* 다시 쓰기: 연결 · 리롤 · 고급 값 격자 (넓은 화면 3열) */
-body.salty .bwr_settings .bwr_grid { grid-template-columns: minmax(0, 1fr) !important; }
+/* 기능 목록(.rl-modules) · 번역 체크 격자 · TTS 대본 편집기 칸 · TTS 넓은 화면 두 칸 카드 · 한글화 패널 값 · 메모 모양 설정 ·
+   다시 쓰기 값 격자는 원래 모듈의 두 칸(넓으면 그 이상) 그대로 */
+/* 한글화 패널 값 · 메모 모양 설정은 두 칸 고정이라 큰 글씨로 칸이 좁아지면(이름이 낱말 가운데서 꺾임) 한 칸 */
+body.salty #pt-panel #pt-params-wrap { grid-template-columns: repeat(auto-fit, minmax(min(100%, max(9em, 40%)), 1fr)); }
+body.salty .bl-notes-look .bl-look-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, max(8em, 40%)), 1fr)); }
 /* 북마크 설정: 이름 왼쪽 + 숫자 단추 · 세그먼트 */
 body.salty .cg-setting:has(.cg-stepper, .cg-segmented, select, input[type="number"]) {
   flex-direction: column !important;

@@ -79,7 +79,7 @@ export async function prepareTranslation(selection, isClosed) {
         const result = String(await api.command.callback({ assertValid: alive }, original)).trim();
         alive();
         if (!result || /^LLM 번역 중 오류|^번역할 텍스트를/.test(result) || result.includes('[차단된 문단') || result === original || !/[가-힣]/.test(result)) throw Error('새 한국어 번역을 받지 못했어요. 기존 번역은 유지돼요.');
-        return { ...job, source, translated, span, original, result, render: api.render, clean: api.clean, refresh: api.refresh, complete: api.complete };
+        return { ...job, source, translated, span, original, result, render: api.render, clean: api.clean, remember: api.remember, refresh: api.refresh, complete: api.complete };
     });
 }
 export async function applyTranslation(job) {
@@ -90,6 +90,7 @@ export async function applyTranslation(job) {
         assertAlive(job);
         // 6.2.5 캐시 줄은 그대로 두고(비교-교환이 원문 그대로를 기대한다) 보여 줄 글만 걷는다
         const display = job.render(job.source, typeof job.clean === 'function' ? job.clean(translation, job.source, job.message) : translation);
+        const shown = typeof job.clean === 'function' ? job.clean(translation, job.source, job.message) : translation;   // 6.9.5 기록할 번역 글 (위 줄과 같은 글)
         if (!display) throw Error('번역 표시를 만들지 못했어요.');
         // Cache compare-and-swap prevents overwriting a concurrent translation.
         await updateCache(job.source, job.translated, translation);
@@ -100,10 +101,12 @@ export async function applyTranslation(job) {
         extra.display_text = display;
         job.guard?.acceptDisplay();
         if ('original_translation_backup' in extra) extra.original_translation_backup = display;
+        job.remember?.(extra, job.source, shown, display);   // 6.9.5 번역 기기 간 공유 — 다시 번역한 글도 채팅 파일에
         try {
             core.syncMesToSwipe?.(job.id);
             await ctx.saveChat();
         } catch (error) {
+            for (const name of Object.keys(extra)) if (!(name in before)) delete extra[name];
             Object.assign(extra, before);
             job.guard?.acceptDisplay();
             core.syncMesToSwipe?.(job.id);

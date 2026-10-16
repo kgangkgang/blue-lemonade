@@ -15,6 +15,11 @@ import { PALETTES, PALETTE_ALIASES } from './palettes.js';
 
 export const KEY = 'salty';
 export const VERSION = 4; // 설정 구조 버전 (1.0.0 = 1 · 1.4 = 2 · 4.3.4 = 4)
+// 6.9.5 처음 설정 안내(first-run.js): 이 모듈을 읽는 순간 테마 설정 칸이 없었나 — getSettings() 가 칸을 만들기 전에 잰다 (기존 사용자는 늘 false)
+export const FRESH_SETTINGS = (() => {
+    try { const saved = SillyTavern.getContext().extensionSettings?.[KEY]; return !(saved && typeof saved === 'object' && !Array.isArray(saved)); }
+    catch { return false; }
+})();
 
 // 언어별 글꼴 묶음. en/ja/zh 가 'auto' 면 한국어 글꼴이 그 글자도 맡음.
 export const FONT_SET = { ko: 'pretendard', en: 'auto', ja: 'auto', zh: 'auto' };

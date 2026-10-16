@@ -1,13 +1,24 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.9.4/blue-lemonade-6.9.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.9.5/blue-lemonade-6.9.5.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.9.4 · 최신 업데이트</summary>
+<summary>6.9.5 · 최신 업데이트</summary>
+
+- 실리태번 생성 설정(프리셋) · 사용자 설정 · 월드 인포 · API · 서식 · 정규식 화면과 테마 설정 창의 조절칸이 폰 · PC 모두 다시 두 칸씩 나란히 보여요. 칸 안은 이름 · 값이 위, 슬라이더가 아래예요. 6.8.0 에서 한 줄에 하나로 바뀐 것을 되돌렸어요 (아주 큰 글씨에서만 한 줄).
+- 테마 설정 검색이 한글을 치는 동안에도 첫 글자부터 결과를 보여 줘요 — 띄어쓰기를 안 해도 돼요. 「확장 탭에 보이기」 줄처럼 검색에서 빠져 있던 설정 11개도 이제 찾을 수 있어요.
+- 테마를 처음 켜면 색 → 글꼴 → 읽기 방식을 고르는 짧은 안내가 나와요. 이미 쓰던 분에게는 뜨지 않고, 테마 › 기타 설정에서 다시 볼 수 있어요.
+- LLM 번역: 다른 기기에서 만든 번역도 이 기기에서 고칠 수 있어요 — 번역할 때 채팅 파일에 짧은 기록을 함께 남겨요 (번역 2.7.1 · 북마크 1.5.7).
+- 다른 확장이 인물 이름 · 대사 색 · TTS 목소리를 한 번에 물어볼 수 있는 인물 정보 창구를 더했어요 (TTS 1.9.5).
+
+</details>
+
+<details>
+<summary>6.9.4 · TTS 원문 칸은 번역할 때만</summary>
 
 - TTS 재생 막대의 「원문」 단추와 칸은 이제 TTS가 직접 번역해서 읽는 줄(듣는 언어 · 목소리 원어로 옮겨 읽기)에서만 나와요. 원문이나 화면 글을 그대로 읽을 때는 띄우지 않아요 (TTS 1.9.4).
 

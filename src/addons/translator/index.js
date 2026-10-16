@@ -27,6 +27,7 @@ import { mountFallbackField } from '../modelswitch/fallback-field.js';   // 6.4.
 import { createGenerationParameters, getChatCompletionModel } from '../../../../../../openai.js';
 import { createTextGenGenerationData, getTextGenModel } from '../../../../../../textgen-settings.js';
 import { matchingTranslation, translationFromDisplay } from './archive-bridge.js';
+import { rememberSource, recordedSource, forgetSource } from './translation-source.js';   // 6.9.5 번역 기기 간 공유 — 고칠 때 필요한 번역 글을 채팅 파일에도
 import * as LiveModels from '../../live-models.js'; // [2.2.8] 공용 모델 목록 · 모델별 요청 규칙
 import { whenMainChatIdle } from '../../main-chat-rules.js';   // 6.5.3 「생성 중」 = 본채팅 생성 · 테마의 붙잡음만 (조용한 생성 · 헬퍼 generate 는 기다리지 않음)
 import {
@@ -2656,6 +2657,7 @@ async function retranslateMessage(messageId, promptType, forceRetranslate = fals
 
         // 원문 표시 백업 초기화 (재번역했으므로)
         delete target.extra.original_translation_backup;
+        rememberTranslation(target, originalText, retranslation); // 6.9.5
 
         refreshMessageBlock(targetId, target);
 
@@ -2868,6 +2870,7 @@ async function saveCheckedTranslation(id, message, state, next, { cache = true }
     next = tidyGlossaryOutput(state.source, next);   // 2.7.0 문단 다시 번역 · 빠진 문단 채우기도 이름 지키기
     message.extra.display_text = processTranslationText(state.source, next);
     markTranslatedOriginal(message, state.source);
+    rememberTranslation(message, state.source, next); // 6.9.5
     if (cache) await storeTranslationQuietly(state.source, next);   // 원문 되풀이 · 깨진 주석이 남은 글은 storeTranslationQuietly 가 거른다
     refreshMessageBlock(id, message);
     eventSource.emit('EXTENSION_LLM_TRANSLATE_DONE', { messageId: id, message, sourceText: message.mes, chatId: context.chatId, originalText: state.source, translatedText: message.extra.display_text, type: 'retranslation' });
@@ -3083,6 +3086,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
 
             // 원문 표시 백업 초기화 (새로 번역했으므로)
             delete target.extra.original_translation_backup;
+            rememberTranslation(target, originalText, translation); // 6.9.5
 
             refreshMessageBlock(targetId, target);
 
@@ -3485,11 +3489,13 @@ async function onTranslationsClearClick() {
         if (mes.extra) {
             delete mes.extra.display_text;
             delete mes.extra.original_translation_backup;
+            forgetSource(mes.extra); // 6.9.5
         }
         for (const info of Array.isArray(mes.swipe_info) ? mes.swipe_info : []) {
             if (!info?.extra || typeof info.extra !== 'object') continue;
             delete info.extra.display_text;
             delete info.extra.original_translation_backup;
+            forgetSource(info.extra);
         }
     }
 
@@ -3696,6 +3702,7 @@ async function editTranslation(messageId) {
                 delete message.extra.display_text; // 명시적 삭제
                 delete message.extra.original_translation_backup; // [1.9.2] 치워 둔 번역문도 함께
                 delete message.extra.translation_edited; // 6.2.4
+                forgetSource(message.extra); // 6.9.5
                 await refreshMessageBlock(messageId, message);
                 await context.saveChat();
                 toastr.success('번역문이 삭제되었습니다.');
@@ -3716,6 +3723,7 @@ async function editTranslation(messageId) {
                 message.extra.display_text = processedNewText;
                 // [1.9.2] 원문 보기 중에 고쳤으면 치워 둔 옛 번역문(백업)을 버린다 — 남아 있으면 돋보기로 돌아갈 때 고치기 전 번역이 다시 붙었다
                 delete message.extra.original_translation_backup;
+                rememberTranslation(message, originalTextForDbKey, newText); // 6.9.5 고친 글도 다른 기기에서 다시 고칠 수 있게
 
                 await refreshMessageBlock(messageId, message);
                 await context.saveChat();
@@ -3774,10 +3782,12 @@ function syncSelection() {
         settings: extensionSettings, translate, render: processTranslationText,
         // 6.2.5 이어 붙인 번역을 보여 주기 전에 걷는다 (저장된 번역을 보여 줄 때와 같게) — 손으로 고친 번역은 그대로
         clean: (text, source, message) => message?.extra?.translation_edited === originalHashOf(source) ? text : tidyGlossaryOutput(source, dropStrayWords(text, source)),
+        remember: (extra, source, raw, display) => rememberSource(extra, { original: source, raw, display, hash: getStringHash }), // 6.9.5 고른 글 다시 번역한 결과도 채팅 파일에
         capture: message => guards.capture(message),
         // 6.4.4 고른 글 지우기: 번역문은 수정 창처럼(번역 기록의 원본 · 기록 쓰기 · 표시 만들기), 다시 그리기 · 스와이프 맞추기 · 알림
         deleteHooks: {
             rawTranslation: (message, source) => localOrDisplayedTranslation(message, source),
+            remember: (extra, source, raw, display) => rememberSource(extra, { original: source, raw, display, hash: getStringHash }), // 6.9.5
             saveTranslation: (source, text) => addTranslationToDB(source, text),
             layout: (source, text) => processTranslationText(source, text, { inspect: true }),
             cachedTranslation: source => getTranslationFromDB(source),             // 되돌리기용 원래 기록 줄 (없으면 null — 읽기 실패는 던진다: 기록을 건드리지 않게)
@@ -4374,8 +4384,18 @@ function markTranslatedOriginal(message, originalText) {
     message.extra.original_text_hash = originalHashOf(originalText);
     delete message.extra.original_text_for_translation;
 }
+// 6.9.5 번역 기기 간 공유 (translation-source.js): 표시를 번역 글에서 새로 만든 자리마다 채팅 파일에도 그 번역 글을 남긴다 —
+//   보이는 글이 번역 글 그대로면(번역 그대로 보기) 해시만. 다른 기기 · 다른 브라우저에서 이 번역을 고칠 때 IndexedDB 대신 이것을 쓴다
+function rememberTranslation(message, originalText, raw) {
+    const extra = message?.extra;
+    if (extra) rememberSource(extra, { original: originalText, raw, display: extra.original_translation_backup || extra.display_text, hash: getStringHash });
+}
+const sharedTranslation = (message, originalText) => recordedSource(message?.extra, { original: originalText, hash: getStringHash });
 
 async function localOrDisplayedTranslation(message, originalText) {
+    // 6.9.5 채팅 파일의 기록이 지금 원문 · 지금 보이는 번역과 맞으면 그 번역 글 — 다른 기기에서 만들거나 고친 번역도, 이 기기 IndexedDB 에 옛 번역이 남아 있어도
+    const shared = sharedTranslation(message, originalText);
+    if (shared !== null) return shared;
     const cached = await readCachedTranslation(originalText);
     if (cached !== null) return message?.extra?.translation_edited === originalHashOf(originalText) ? cached : tidyGlossaryOutput(originalText, dropStrayWords(cached, originalText)); // 6.2.4 옛 캐시 줄의 낱말 한 줄
     // Other-device chats carry the source hash and raw display text but no local IndexedDB row.
@@ -6913,6 +6933,7 @@ async function deleteTranslationById(messageIdStr, swipeNumberStr) {
             logDebug(`Removing display_text from message ${messageId} extra data.`);
             delete message.extra.display_text; // 또는 null로 설정: message.extra.display_text = null;
             delete message.extra.original_translation_backup;
+            forgetSource(message.extra); // 6.9.5
             if (hadDisplay) await refreshMessageBlock(messageId, message); // UI 업데이트
             await context.saveChat(); // 변경된 메시지 저장
             logDebug('UI display_text removed and chat saved.');

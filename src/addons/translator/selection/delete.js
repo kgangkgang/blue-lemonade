@@ -366,6 +366,7 @@ async function applyNow(snap, plan, mode) {
             if (!display) throw Error('번역 표시를 만들지 못했어요.');
             if (snap.viewingOriginal) { extra.display_text = key; extra.original_translation_backup = display; }
             else { extra.display_text = display; delete extra.original_translation_backup; }
+            hooks.remember?.(extra, key, newTrans, display);   // 6.9.5 번역 기기 간 공유 — 지운 뒤의 번역 글도 채팅 파일에 (되돌리기는 extra 를 통째로 되돌린다)
         }
         if (original) {
             message.mes = newMes;

@@ -171,6 +171,21 @@ export function voiceFor(name, { isUser = false, kind = '' } = {}) {
     return preferVoice(findVoice(s.default_voice));
 }
 
+/** 6.9.5 인물표(src/people.js): 그 이름에 연결된 목소리만 — 연결표 · 목소리 이름 · 다른 이름 · 별명표의 대표 이름 (voiceFor 와 같은 차례 · 엔진 자동 맞춤까지).
+ *  기본 · 엑스트라 목소리는 「연결된」 것이 아니라 null. 나(isUser)는 내 목소리 칸이 정해져 있을 때만 */
+export function linkedVoice(name, { isUser = false } = {}) {
+    const s = settings();
+    if (isUser && s.user_voice && s.user_voice !== USER_AUTO) return preferVoice(findVoice(s.user_voice), name);
+    const n = String(name || '').trim();
+    if (!n) return null;
+    for (const who of [n, aliasOf(n)].filter(Boolean)) {
+        const key = charKeyOf(who);
+        const v = findVoice(key ? s.char_map[key] : '') || voiceByName(who);
+        if (v && !v.gone) return preferVoice(v, key || who);
+    }
+    return null;
+}
+
 /**
  * 목록 한 줄의 목록 음량 보정 → autoGainDb 값 | null (없음).
  * 새 목록(목록 1.2.5 복사)은 autoGainDb — 0 도 값. 옛 목록(1.2.4 까지)의 gainDb 도 목록 값이지만 0 은 '모름'으로 버린다

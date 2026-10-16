@@ -46,7 +46,7 @@ await test('old cache rows with changed card keys are skipped without deleting s
  records[0].translation=sourceText;assert.equal(await env.getTranslationFromDB(sourceText),sourceText,'structurally valid untranslated cards remain eligible');
 });
 await test('another-device and saved-swipe reuse require source card structure',async()=>{
- env.readCachedTranslation=async()=>null;env.originalHashOf=x=>x;env.substituteParams=x=>x;install('localOrDisplayedTranslation');install('hasCurrentSwipeTranslation');
+ env.readCachedTranslation=async()=>null;env.sharedTranslation=()=>null;env.originalHashOf=x=>x;env.substituteParams=x=>x;install('localOrDisplayedTranslation');install('hasCurrentSwipeTranslation');
  const good=sourceText.replace(/Sunny weather/g,'맑은 날씨'),message={mes:sourceText,name:'Synthetic',extra:{original_text_hash:sourceText,display_text:good}};
  assert.equal(await env.localOrDisplayedTranslation(message,sourceText),good);assert.equal(env.hasCurrentSwipeTranslation(message),true);
  message.extra.display_text=good.replace('天气：','날씨：');assert.equal(await env.localOrDisplayedTranslation(message,sourceText),null);assert.equal(env.hasCurrentSwipeTranslation(message),false);

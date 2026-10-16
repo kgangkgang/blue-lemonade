@@ -6,6 +6,7 @@ import { KNOWN_VOICES, KNOWN_SIG } from './known-voices.js';
 import { TTS_VERSION } from '../version.js';
 import { normalizeSfxCredit } from './sfx-credits.js';
 import { FALLBACK_DEFAULTS, normFallback } from './block-fallback.js';   // 6.1.8 검열되면 다른 모델로
+import { peopleChanged } from '../../../people.js';   // 6.9.5 인물표
 
 export const VERSION = TTS_VERSION;
 export const KEY = 'lemon_voice';          // 설정 키 (데이터 호환 — 폴더 이름과 다르다)
@@ -416,7 +417,7 @@ export function settings() {
     return s;
 }
 
-export const save = () => saveSettingsDebounced();
+export const save = () => { saveSettingsDebounced(); peopleChanged(); };   // 6.9.5 목소리 · 연결표가 바뀌면 인물표도
 
 // 5.6.4 사용량 숫자는 설정 객체(메모리)에 바로 더하고, 디스크에는 30초에 한 번만 쓴다.
 // 줄마다 saveSettingsDebounced(1초)를 부르면 미리 만들기가 줄을 하나씩 만드는 동안 거의 묶이지 않아 설정 전체(2 MB)를 줄마다 저장했다.

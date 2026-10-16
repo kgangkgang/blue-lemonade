@@ -429,6 +429,9 @@ function update(mutator, rerender = true, group = '') {
     syncSettingResets();
 }
 
+/** 6.9.5 처음 설정 안내(first-run.js)가 고른 값 — 설정 창의 손잡이와 같은 길(되돌리기 기록 · 적용 · 저장 · 다시 그리기). 적용하지 못해 되돌렸으면 false */
+export function updateSettings(mutator) { return update(mutator) !== false; }
+
 function syncPaletteTints() {
     const s = getSettings(), mode = PALETTES[s.palette]?.mode;
     for (const panel of panels) for (const card of panel.querySelectorAll('.salty-pal[data-family]')) {
@@ -990,7 +993,8 @@ function fontBlock(s, slot) {
 // ───────── 테마 ─────────
 function tabTheme(s, sub) {
     if(sub==='etc')return `<div class="bl-etc-grid"><details class="bl-usage-mode"><summary>사용 모드: <strong>${({both:'테마 + 확장',theme:'테마만',extensions:'확장만'})[usageMode(s)]}</strong></summary><div class="bl-usage-mode-body"><label>사용 모드<select data-usage-mode aria-label="사용 모드">${[['both','테마 + 확장'],['theme','테마만'],['extensions','확장만']].map(([v,label])=>`<option value="${v}" ${usageMode(s)===v?'selected':''}>${label}</option>`).join('')}</select></label><p>선택한 모드만 실행해요. 기존 설정은 보관해요.</p><button type="button" class="salty-btn" data-usage-apply>저장하고 새로고침</button><span role="status" data-usage-status></span></div></details>
-        <div class="salty-group bl-ext-colors">${row('다른 확장 색 유지', toggle('compat.preserveExtensionColors', !!s.compat?.preserveExtensionColors), '확장 설정창과 지원되는 팝업이 원래 색을 써요')}${s.compat?.preserveExtensionColors ? extColorList(s) : ''}</div></div>`;
+        <div class="salty-group bl-ext-colors">${row('다른 확장 색 유지', toggle('compat.preserveExtensionColors', !!s.compat?.preserveExtensionColors), '확장 설정창과 지원되는 팝업이 원래 색을 써요')}${s.compat?.preserveExtensionColors ? extColorList(s) : ''}</div>
+        <div class="salty-group bl-first-run-row" data-search-anchor="처음 설정 다시 보기">${row('처음 설정 다시 보기', '<button type="button" class="salty-btn" data-act="first-run" aria-label="처음 설정 다시 보기"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i></button>', '팔레트 · 글꼴 · 읽기 방식')}</div></div>`;
     if(sub==='update')return `<div class="salty-group">${row('새 버전 자동 확인', toggle('updateCheck', s.updateCheck !== false), '6시간에 한 번 · 새 버전이면 버전 표시가 노랗게 빛나요')}</div>`+updateMarkup()+healthMarkup();
     if (sub === 'changes') return settingsChanges(s);
     if (sub === 'custom') return customBuilder(s);
@@ -2565,6 +2569,10 @@ function bind(root) {
                     const text = await buildDiagnosis();
                     if (await copyText(text)) toastr.success('진단을 복사했어요. 제보 글에 붙여 넣으면 돼요', 'Blue Lemonade');
                     else toastr.info(esc(text).replace(/\n/g, '<br>'), '진단 (직접 복사)', { escapeHtml: false, timeOut: 20000, extendedTimeOut: 20000 });
+                    break;
+                }
+                case 'first-run': { // 6.9.5 처음 설정 안내 다시 보기 (누를 때만 불러온다)
+                    try { await (await import('./first-run.js')).openFirstRun(); } catch (error) { console.error('[Blue Lemonade] 처음 설정 안내', error); toastr.error('처음 설정 안내를 열지 못했어요', 'Blue Lemonade'); }
                     break;
                 }
                 case 'diag-file': { // 6.6.9 진단 파일 (누를 때만 불러온다)

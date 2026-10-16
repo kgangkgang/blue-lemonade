@@ -102,6 +102,7 @@ jobs:
           node tools/tests/glossary-suggest.mjs .
           node tools/tests/selection-delete.mjs .
           node tools/tests/names-bridge.mjs .
+          node tools/tests/people.mjs .
           node tools/tests/names-jp.mjs .
           node tools/tests/translator-speech.mjs .
           node tools/tests/bookmark-excerpts.mjs .
@@ -113,6 +114,7 @@ jobs:
           node tools/tests/numcomma-fit.mjs .
           node tools/tests/ink-contrast.mjs .
           node tools/tests/style-break.mjs .
+          node tools/tests/param-two-columns.mjs .
           node tools/tests/dem-expressive-nest.mjs .
           node tools/tests/main-chat-rules.mjs .
           node tools/tests/main-chat-finish.mjs .
@@ -136,6 +138,7 @@ jobs:
           node tools/tests/translation-cache-loading.mjs .
           node tools/tests/translation-segments.mjs .
           node tools/tests/translation-display.mjs .
+          node tools/tests/translation-source.mjs .
           node tools/tests/translator-protect.mjs .
           node tools/tests/translator-auto-render.mjs .
           node tools/tests/translation-guard-reload.mjs .
@@ -173,6 +176,8 @@ jobs:
           node tools/tests/model-register-move.mjs .
           node tools/tests/model-register-offer.mjs .
           node tools/tests/preset-sharing.mjs .
+          node tools/tests/first-run.mjs .
+          node tools/tests/settings-search.mjs .
           node tools/tests/appearance-workflow.mjs .
           node tools/tests/markdown-settings.mjs .
           node tools/tests/chat-graph.mjs .

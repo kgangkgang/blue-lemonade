@@ -11,6 +11,7 @@ import { getStringHash } from '../../../../../../utils.js';
 import { SlashCommandParser } from '../../../../../../slash-commands/SlashCommandParser.js';
 import { currentChatKey } from './state.js';
 import { loadRecord, saveRecord, saveOtherMessageExtra, sameMessage } from './data.js';
+import { rememberSource, recordedSource } from '../translator/translation-source.js';   // 6.9.5 번역 기기 간 공유 (번역기와 같은 칸)
 
 const TRANSLATOR_MODULE = 'llm-translator-custom';
 const TRANSLATE_COMMAND = 'llmTranslate';
@@ -307,11 +308,13 @@ export async function translateMessage(record, index, { fresh = false } = {}) {
     //       모델이 새로 옮긴 글이면 손으로 고친 표시를 지운다
     const editedByHand = fromCache && isHandEdited(message.extra, original);
     const display = await displayTextOf(original, editedByHand ? translation : cleanTranslation(translation, original));
+    const shown = editedByHand ? translation : cleanTranslation(translation, original);   // 6.9.5 기록할 번역 글 (위 줄과 같은 글)
     await writeExtra(record, index, (extra) => {
         extra.display_text = display;
         markTranslatedOriginal(extra, original);
         if (!editedByHand) delete extra.translation_edited;
         delete extra.original_translation_backup;
+        rememberSource(extra, { original, raw: shown, display, hash: getStringHash });   // 6.9.5
     }, expected, false);
     emitTranslated(record, index, original, display);
     return { fromCache };
@@ -355,6 +358,9 @@ export async function editableTranslation(record, index) {
     const message = record.messages[index];
     if (!hasTranslation(message)) return '';
     const original = originalTextOf(message);
+    // 6.9.5 채팅 파일에 남은 번역 글이 지금 보이는 번역과 맞으면 그것 (번역기 수정 창과 같은 차례 — 다른 기기에서 만든 번역도)
+    const shared = recordedSource(message.extra, { original, hash: getStringHash });
+    if (shared !== null) return shared;
     const cached = await quietly(() => dbGet(original), '조회');
     if (cached) return cached;
     // 2026-10-06: 다른 기기에서 번역해 DB 줄이 없을 때, 가공된 HTML(원문 병기)·원문이 바뀐 옛 번역문·원문 보기 글을
@@ -385,6 +391,7 @@ export async function setTranslation(record, index, text, expected = null) {
         markTranslatedOriginal(extra, original);
         extra.translation_edited = extra.original_text_hash;   // 6.2.5 손으로 고친 번역은 번역기가 보여 줄 때 걷지 않는다 (수정 창과 같은 표시)
         delete extra.original_translation_backup;
+        rememberSource(extra, { original, raw: text, display, hash: getStringHash });   // 6.9.5
     }, expected, false);
     await quietly(() => dbPut(original, text), '기록');
     if (record.isCurrent) eventSource.emit('EXTENSION_LLM_TRANSLATE_UI_UPDATED', { messageId: String(index), type: 'edit_save' });
@@ -404,6 +411,7 @@ export async function clearTranslation(record, index, expected = null) {
         delete extra.display_text;
         delete extra.original_translation_backup;
         delete extra.translation_edited;   // 6.2.5 번역기의 삭제와 같게
+        delete extra.translation_source;   // 6.9.5
     }, expected, null);
     await quietly(() => dbDelete(expected.original), '삭제');
     return true;

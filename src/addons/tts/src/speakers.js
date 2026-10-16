@@ -6,6 +6,7 @@
 import { getContext, saveMetadataDebounced } from '../../../../../../../extensions.js';
 import { settings, save } from './settings.js';
 import { segmentMessage, parseRegexLines } from './text.js';
+import { peopleChanged } from '../../../people.js';   // 6.9.5 인물표 — 색 표가 바뀌면 알린다
 
 // 투표 가중치 (연구 deus.md 와 같게)
 const W = { label: 5, thought: 3, sameLine: 2, prevNarr: 1 };
@@ -24,6 +25,7 @@ const ctx = () => (testCtx ? testCtx() : getContext()) || {};
 function persist() {
     try { (testSave || saveMetadataDebounced)(); }
     catch (e) { console.error('[TTS] 채팅 메타 저장 실패', e); }
+    peopleChanged();
 }
 
 // ---- 작은 도구
@@ -234,6 +236,27 @@ function bridgeInto(has, canonOf, put, ownerOf = bridgeOwners()) {
 }
 /** 별명 → 대표 이름 (모르면 그대로) */
 export function canon(name) { return canonWith(aliasTable(state()).map, name); }
+/** 6.9.5 인물표: 그 사람의 표기들 — 별명표에서 같은 대표 이름으로 접히는 것 (대표 이름 먼저) */
+export function namesOf(name) {
+    const { pairs, map } = aliasTable(state());
+    const c = canonWith(map, name), k = fold(c);
+    if (!k) return [];
+    return [c, ...pairs.filter(([s, cn]) => fold(cn) === k && fold(s) !== k).map(([s]) => s)];
+}
+/** 6.9.5 인물표 목록의 후보: 이 채팅 색 표의 이름(정해 둔 것 → 많이 나온 것) · 지금 카드(그룹이면 멤버) · 나 */
+export function peopleNames() {
+    const out = colorTable().map(row => row.name).filter(Boolean);
+    for (const card of currentCards()) if (card?.name) out.push(String(card.name));
+    const u = personaName(); if (u) out.push(u);
+    return out;
+}
+/** 나(페르소나) 이름인가 — 별명표를 거쳐 */
+export function isPersonaName(name) {
+    const u = personaName();
+    if (!u) return false;
+    const { map } = aliasTable(state());
+    return fold(canonWith(map, name)) === fold(canonWith(map, u));
+}
 /** 알려진 이름 전부 (text.js knownNames 용) */
 export function knownNames() { return aliasTable(state()).pairs.map(p => p[0]); }
 

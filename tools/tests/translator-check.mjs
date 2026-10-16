@@ -188,7 +188,7 @@ const env = { ...card, ...seg, ...resume, ...auto, ...notify, ...check, cardValu
     tidyKana: x => x, tidyGlossaryOutput: (_s, x) => x, linesToFix: () => [], glossaryHanKeep: () => [], glossaryNameKeep: () => [],
     runtimeProtections: new Map(), console: { debug() {}, info() {}, warn() {}, error() {} }, dropProseStrayWords: seg.dropStrayWords, repairProseTagPairs: seg.repairTagPairs, dropProseLeftoverPlaceholders: seg.dropLeftoverPlaceholders,
     correctBackticks: x => x, window: {}, toastr: { info() {}, warning() {}, success() {}, error() {} }, BRACKET_NOTE, processTranslationText: (_o, t) => t,
-    refreshMessageBlock: id => T.refreshed.push(id), originalHashOf: hash, markTranslatedOriginal: (message, text) => { message.extra.original_text_hash = hash(text); },
+    refreshMessageBlock: id => T.refreshed.push(id), originalHashOf: hash, markTranslatedOriginal: (message, text) => { message.extra.original_text_hash = hash(text); }, rememberTranslation: () => {}, // 6.9.5 기기 간 공유 기록 (translation-source.mjs 가 본다)
     storeTranslationQuietly: async (src, out) => T.stored.push([src, out]), eventSource: { emit: (...args) => T.events.push(args) }, emitTranslationUIUpdate: () => {}, syncMesToSwipe: () => {},
     publishArchiveReady: () => {}, translationInProgress: {}, progressBadge: () => ({ update() {}, remove() {} }), translateMessage: async () => {}, loadCheckLib: async () => check,
 };

@@ -11,7 +11,7 @@ try {
 import { startAddons, syncAddonIcons } from './src/addons.js';
 import { installCredits, COPYRIGHT_ICON } from './src/credits.js';
 // Blue Lemonade · 블루 레몬에이드 — 실리태번 테마 확장 (폴더·설정 키는 예전 이름 salty 그대로)
-import { getSettings, saveSettings } from './src/settings.js';
+import { getSettings, saveSettings, FRESH_SETTINGS } from './src/settings.js';
 import { applyAll, dropStaleOverrides, syncReasoningOff } from './src/apply.js';
 import { startAssetWatcher, classifyAll } from './src/assets.js';
 import { startPromptList } from './src/promptlist.js';
@@ -214,6 +214,14 @@ jQuery(() => {
     };
     startThemeRuntime();
     new MutationObserver(startThemeRuntime).observe(document.body, {attributes:true,attributeFilter:['class']});
+    // 6.9.5 처음 설정 안내: 테마 설정 칸이 없던 첫 실행에만 (기존 사용자 · 시험대처럼 설정이 있으면 안 뜬다). 실리태번이 다 뜬 뒤, 창을 열 때만 모듈을 받는다
+    if (FRESH_SETTINGS) {
+        const firstRun = () => setTimeout(() => import('./src/first-run.js').then(m => m.openFirstRunWhenFree()).catch(error => console.warn('[Blue Lemonade] 처음 설정 안내', error)), 900);
+        try {
+            const { eventSource, event_types } = SillyTavern.getContext();
+            if (document.getElementById('loader')) eventSource.once(event_types.APP_READY, firstRun); else firstRun();
+        } catch { firstRun(); }
+    }
     // 5.5.6: 테마가 빠져 있는데(확장만 · 테마 끔) '실리태번 설정 맞추기' 값이 실리태번에 남아 있으면 한 번 알린다 — 누르면 되돌리기 (sttheme.js)
     if (!themeEnabled(getSettings())) {
         const notice = () => setTimeout(() => import('./src/sttheme.js').then(m => m.noticeRestoreIfNeeded()).catch(error => console.warn('[Blue Lemonade] 실리태번 설정 되돌리기 알림', error)), 2500);

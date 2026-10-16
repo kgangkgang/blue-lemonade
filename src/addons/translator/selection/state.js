@@ -3,7 +3,7 @@ let options = null;
 export function configure(next) { options = next; }
 export const adapter = () => {
     if (!options) throw Error('번역 기능을 초기화하지 못했어요. 새로고침해 주세요.');
-    return { command: { callback: (args, text) => options.translate(text, { prompt: args.prompt || undefined, assertValid: args.assertValid, noChunks: true }) }, render: options.render, clean: options.clean, refresh: options.refresh, complete: options.complete };
+    return { command: { callback: (args, text) => options.translate(text, { prompt: args.prompt || undefined, assertValid: args.assertValid, noChunks: true }) }, render: options.render, clean: options.clean, remember: options.remember, refresh: options.refresh, complete: options.complete };
 };
 export const context = () => SillyTavern.getContext();
 export const enabled = () => options?.settings?.selection_retranslate === true;

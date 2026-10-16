@@ -161,7 +161,9 @@ body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .ne
 body.salty #WorldInfo #wiSliders > .flex-container:has(> #world_info_character_strategy) { grid-column: 1 / -1; }
 body.salty #WorldInfo #wiCheckboxes { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px !important; }
 body.salty #WorldInfo #wiCheckboxes label.checkbox_label { min-width: 0; }
-@container bl-wi-global (max-width: 22em) {
+/* 6.9.5: 22em → 18em — PC 의 월드 인포 패널(약 330px)도 폰처럼 두 열. 칸 안 윗줄은 이름 + 아이콘 + 값 글자 수만큼의 숫자칸이라
+   18em 까지는 이름이 낱말 가운데서 꺾이지 않는다 (96-param-stack) */
+@container bl-wi-global (max-width: 18em) {
   body.salty #WorldInfo :is(#wiSliders, #wiCheckboxes) { grid-template-columns: minmax(0, 1fr); }
 }
 

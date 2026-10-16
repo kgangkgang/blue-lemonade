@@ -5,9 +5,11 @@
 //       aliasesOf(name) → string[],         // 그 이름과 같은 인물로 묶인 다른 표기들 (대소문자 · 앞뒤 공백 무시, 사이 공백 · 하이픈 · 가운뎃점은 한 칸으로 보고 견줌, 자기 자신 제외, 모르면 [])
 //       groups() → string[][],              // 묶음 전부
 //       onChange(fn) → unsubscribe,         // 바뀔 때 (document 의 'bl:names-changed' CustomEvent, detail = 새 객체)
+//       people: { version: 1, get(name), list(), onChange(fn) },   // 6.9.5 인물표 — 표기 · 대사 색 · TTS 목소리를 한 번에 (src/people.js, 다리가 바뀌어도 같은 객체)
 //   })
 // 이름꼴만 고른다: 1~12자 · 글자(어느 문자든)와 사이 공백만(문장 부호 · 숫자 없음) · 라틴 글자로 시작하면 첫 글자 대문자. 용어집의 "A, B" 표기는 따로 센다.
 // 쓰는 쪽 규칙: 사용자가 직접 넣은 별명 · 연결이 늘 먼저, 다리는 비어 있는 자리만 채운다. 순수 함수 (시험: tools/tests/names-bridge.mjs)
+import { people } from '../../people.js';
 export const NAMES_KEY = Symbol.for('blue-lemonade.names');
 export const NAMES_EVENT = 'bl:names-changed';
 const MAX_LEN = 12;
@@ -73,6 +75,7 @@ export function buildNames(pairs, { doc = () => globalThis.document } = {}) {
             return members.get(find(k)).filter(n => nameFold(n) !== k);
         },
         groups() { return [...members.values()].map(g => g.slice()); },
+        people,   // 6.9.5 인물표 (version 이 1 인 다리는 그대로 — 이 칸을 모르는 쪽은 지나친다)
         onChange(fn) {
             const d = doc();
             if (!d || typeof d.addEventListener !== 'function' || typeof fn !== 'function') return () => {};

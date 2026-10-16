@@ -11,7 +11,7 @@ const rows = [
  ['chat','etc','펼친 카드 아래에 접기 버튼','삼각형 접기 카드 아래 접기','', 'chat.triangleFold'],
  ['extensions','zipinstall','ZIP 설치','압축 파일 설치 업데이트 덮어쓰기 백업 복원 도우미'],
  ['extensions','notes','메모','노트 북마크 채팅 기록 메모장 요술봉 입력창 메모 줄'],
- ['text','strike','취소선','가운데 줄 지우기 선 두께 색 기울임 흐림 취소선'],
+ ['text','strike','취소선','가운데 줄 지우기 선 두께 색 기울임 흐림 취소선 선 긋기 선 색 따로 정하기 기울이기'],
  ['extensions','mermaid','Mermaid 도표','머메이드 다이어그램 순서도 관계도 그래프 flowchart sequence diagram'],
  ['extensions','customstyle','커스텀 CSS 조절','IceFog 색 변수 슬라이더 입력 커스텀 스타일'],
  ['theme','backup','최근 꾸미기 복구함','이전 모습 기록 복구 새로고침 스타일 프리셋 보관'],
@@ -24,25 +24,26 @@ const rows = [
  ['theme','palette','에이드 혼합하기 · 그라데이션','그라데이션 그라디언트 혼합 섞기 2색 3색 두색 세색 방향 각도 360 반전 비중 비율 색상 조합 번짐 경계 블러 흐리기 부드럽게 선명 섞임'],
  ['theme','colors','글자·형광펜 그라데이션','본문 대사 속마음 강조 글자 형광펜 그라데이션 단색 색 비중 방향 각도'],
  ['theme','changes','변경한 설정·항목별 복원','변경 내역 기본값 다른 바꾼 설정 목록 초기화 원래대로 항목 하나만 되돌리기 복원 실수'],
- ['theme','palette','테마 색과 밝기','배경 진하기 테마색 농도 차콜 색감 퍼센트 0.5% 1% 20% 팔레트 화이트 나이트 밝은 어두운 다크모드 라이트모드 블루 레몬 피치 복숭아 자몽 라벤더 딸기 민트 오렌지 우드 갈색 수박 초록 빨강 커스텀 테마 선택'],
+ ['theme','palette','테마 색과 밝기','배경 진하기 테마색 농도 차콜 색감 퍼센트 0.5% 1% 20% 팔레트 화이트 나이트 밝은 어두운 다크모드 라이트모드 블루 레몬 피치 복숭아 자몽 라벤더 딸기 민트 오렌지 우드 갈색 수박 초록 빨강 커스텀 테마 선택 자동 기준 기기 다크 모드 나이트 시작 화이트 시작'],
  ['theme','colors','테마 세부 색','바탕 배경 종이 카드 포인트 강조 형광펜 글자색 색깔 변경 색상 투명 색 고치기'],
  ['theme','custom','직접 테마 만들기','커스텀 테마 만들기 새 팔레트 내 색 이름 저장 자동 색 조합'],
  ['theme','styles','스타일 저장·공유','프리셋 스타일 저장 불러오기 삭제 이름 변경 공유 코드 내보내기 가져오기 캐릭터별 연결 자동 적용 소설책 메신저 되돌리기'],
  ['theme','backup','설정 백업·복원','백업 복원 파일 json 내보내기 가져오기 초기화 리셋 설정 전체 저장'],
  ['theme','palette','설정창 전체 화면·닫기·되돌리기','되돌리기 취소 앞으로가기 다시실행 실행취소 undo redo 전체화면 전체 화면 크게 넓게 설정창 팝업 작은창 작은 창 닫기 종료 나가기 엑스 x'],
- ['text','text','본문 글꼴과 크기','글자 글씨 폰트 글꼴 크기 굵기 자간 줄 높이 행간 언어 한글 영어 일본어 중국어 한자 구글 폰트 업로드 CSS 링크'],
- ['text','dialogue','대사·형광펜','대사 따옴표 형광펜 직사각형 알약 둥근 끝 동그란 네모 반듯 일자 펜 자국 모양 밑줄 기울기 대각선 위치 굵기 진하기 색 글자 폰트 자간 크기 전체 칠'],
- ['text','ui','메뉴 글자','메뉴 설정창 버튼 글자 글씨 크기 굵기 자간 폰트 글꼴'],
- ['text','em','속마음 글자','속마음 기울임 이탤릭 별표 보라색 글자 색 크기 굵기 자간 폰트'],
- ['text','strong','강조 글자','강조 굵은 글씨 볼드 별표 두개 글자 색 크기 굵기 자간 폰트'],
- ['text','code','코드 글자','코드 백틱 도트 글꼴 네오둥근모 글씨 색 크기 굵기 자간 폰트'],
- ['text','para','문단·줄·글자 간격','문단 간격 들여쓰기 첫줄 정렬 왼쪽 가운데 오른쪽 양쪽 줄바꿈 자간 행간 글 폭 가독성 읽기 폭'],
- ['image','cutedge','투명 그림 외곽선 · 그림자','투명 배경 캐릭터 컷 에셋 생성 그림 이미지 외곽선 테두리 둘레 실루엣 윤곽 그림자 붕 떠 보임 떠있는 두께 진하기 퍼짐 블러 흐림 각도 거리 투명도 색 가장자리 색 맞추기 칸 밖 잘림'],
+ ['text','text','본문 글꼴과 크기','글자 글씨 폰트 글꼴 크기 굵기 자간 줄 높이 행간 언어 한글 영어 일본어 중국어 한자 구글 폰트 업로드 CSS 링크 한자 漢字'],
+ ['text','dialogue','대사·형광펜','대사 따옴표 형광펜 직사각형 알약 둥근 끝 동그란 네모 반듯 일자 펜 자국 모양 밑줄 기울기 대각선 위치 굵기 진하기 색 글자 폰트 자간 크기 전체 칠 본문 글꼴과 같게'],
+ ['text','ui','메뉴 글자','메뉴 설정창 버튼 글자 글씨 크기 굵기 자간 폰트 글꼴 본문 글꼴과 같게'],
+ ['text','em','속마음 글자','속마음 기울임 이탤릭 별표 보라색 글자 색 크기 굵기 자간 폰트 기울여 쓰기 본문 글꼴과 같게'],
+ ['text','strong','강조 글자','강조 굵은 글씨 볼드 별표 두개 글자 색 크기 굵기 자간 폰트 본문 글꼴과 같게'],
+ ['text','code','코드 글자','코드 백틱 도트 글꼴 네오둥근모 글씨 색 크기 굵기 자간 폰트 본문 글꼴과 같게'],
+ ['text','para','문단·줄·글자 간격','문단 간격 들여쓰기 첫줄 정렬 왼쪽 가운데 오른쪽 양쪽 줄바꿈 자간 행간 글 폭 가독성 읽기 폭 PC 본문 최대 폭'],
+ ['image','cutedge','투명 그림 외곽선 · 그림자','투명 배경 캐릭터 컷 에셋 생성 그림 이미지 외곽선 테두리 둘레 실루엣 윤곽 그림자 붕 떠 보임 떠있는 두께 진하기 퍼짐 블러 흐림 각도 거리 투명도 색 가장자리 색 맞추기 칸 밖 잘림 그림 칸 밖으로도 그리기'],
  ['text','shadow','글자 그림자·외곽선','글자 글씨 본문 그림자 외곽선 테두리 가독성 색 진하기 투명도 각도 거리 번짐 퍼짐 두께 대상 대사 속마음 강조'],
  ['chat','message','내 메시지 모양','말풍선 카드 테이블 글자만 사용자 내 메시지 채팅 모양 이름 줄 시간 숨김 작은 아바타 숨기기 글자 크기 진하기'],
  ['chat','message','캐릭터 메시지 말풍선','캐릭터 상대 봇 AI 답 메시지 말풍선 버블 카톡 카카오톡 메신저 글자만','','chat.char'],
  ['chat','message','말풍선 나누기','말풍선 나누기 통으로 하나로 엔터 두 번 빈 줄 문단마다 따로 카톡 카카오톡 메신저 내 메시지 캐릭터 메시지 버블','','chat.bubbleSplit'],
- ['chat','screen','퀵 리플라이 · QR','qr 큐알 퀵리플라이 퀵 리플라이 quick reply 빠른답장 빠른 답장 단축답장 편집 검색 돋보기 숨기기 끄기 켜기 토글 자리 위치 입력창 위 아래 가로 세로 스크롤 줄','퀵 리플라이'],
+ ['chat','screen','퀵 리플라이 · QR','qr 큐알 퀵리플라이 퀵 리플라이 quick reply 빠른답장 빠른 답장 단축답장 편집 검색 돋보기 숨기기 끄기 켜기 토글 자리 위치 입력창 위 아래 가로 세로 스크롤 줄 검색 버튼 보이는 줄 넘기기','퀵 리플라이'],
+ ['chat','screen','QR 검색 버튼','퀵리플라이 검색 버튼 돋보기 찾기','','chat.qrFind'],
  ['chat','screen','채팅 화면·아이콘','아이콘 선 기본 배경 이미지 비치기 채팅 바탕 농도 불투명 투명 메시지 버튼 고정 꺼내기 번역 버튼 점 세 개 메뉴 고르기 목록 팝업 색 고르기 팝업 모델 프리셋 선택창'],
  ['chat','screen','새로고침 화면','새로고침 시작 로딩 레몬 로고 뇌 splash', '새로고침 화면'],
  ['chat','screen','탭 아이콘','탭 아이콘 파비콘 favicon 레몬 로고 ST 브라우저 홈 화면 바로가기 앱 아이콘', '탭 아이콘'],
@@ -52,34 +53,42 @@ const rows = [
  ['chat','screen','웹 검색 · 출처 표시','웹 검색 인터넷 검색 지구 아이콘 출처 꾹 누르기 길게 누르기 낱말 단어 카드 로어북 기억 지시 프리셋 지어냄 검색 표시 어디서 왔는지', '', 'chat.webSearchMarks'],
  ['chat','screen','큰 숫자는 쉼표로','숫자 쉼표 천 단위 자릿수 구분 콤마 30,000 컨텍스트 최대 토큰 숫자 칸 입력칸', '', 'chat.numComma'],
  ['chat','screen','글자색 대비 맞추기','글자색 대비 가독성 안 보임 묻힘 어두운 색 밝은 색 인라인 색 font color 퍼스널 컬러 나이트 라이트', '', 'chat.inkContrast'],
- ['chat','screen','가벼운 페이드 인','스트리밍 새 글자 페이드인 스며들기 빨라지기 속도 버벅임 애니메이션', '', 'chat.streamFade'],
+ ['chat','screen','가벼운 페이드 인','스트리밍 새 글자 페이드인 스며들기 빨라지기 속도 버벅임 애니메이션 실리태번 페이드 인', '', 'chat.streamFade'],
+ ['chat','screen','숨긴 메시지 흐리게','숨긴 메시지 컨텍스트에서 뺀 메시지 눈 감은 아이콘 옅게 흐리게 진하기 흑백 회색 마우스 올리면 진하게','','chat.hiddenFade'],
  ['chat','screen','추론 요청을 끄면 지난 추론도 숨기기','추론 생각 사고 thinking reasoning 모델 추론 요청 생각 칸 숨기기 가리기 지난 이전 예전 메시지', '', 'chat.reasoningFollow'],
- ['chat','screen','날씨 효과','날씨 비 눈 꽃잎 하트 별 배경 효과 세기 투명도 크기 속도 각도 이미지 내 그림 트래커','날씨'],
- ['chat','screen','모바일 바·한 손 버튼','폰 모바일 스크롤 바 숨기기 자동 숨김 몰입 읽기 한손 한 손 버튼 스와이프 사칭 이어쓰기 다시생성','폰'],
+ ['chat','screen','날씨 효과','날씨 비 눈 꽃잎 하트 별 배경 효과 세기 투명도 크기 속도 각도 이미지 내 그림 트래커 그림 효과 사용 그림 스타일 그림체 안개 모양 안개 위치 가장자리 선명하게 부풀기 깊이감 그림자 모양 유성우 곡률 원 크기 도는 방향 둘째 날씨 세기 내 메시지 농도 비침 날씨 색 색상','날씨'],
+ ['chat','screen','날씨 그림 효과','날씨 그림 효과 사용 그림 스타일 그림체 일러스트 외곽선','','chat.weatherIllustrated'],
+ ['chat','screen','날씨 · 내 메시지 비침','날씨 내 메시지 농도 비침 비치기 말풍선 위 날씨','','chat.weatherBubble'],
+ ['chat','screen','모바일 바·한 손 버튼','폰 모바일 스크롤 바 숨기기 자동 숨김 몰입 읽기 한손 한 손 버튼 스와이프 사칭 이어쓰기 다시생성 스크롤하면 바 숨기기','폰'],
  ['prompt','deus','글자색 통일·톤 보정','본문 글자 색 지정 색 통일 퍼스널 컬러 색상 채도 밝기 화이트 나이트 원문 색 정규식 보라색 톤 형광펜 톤 띠 색 맞추기','색 통일'],
  ['chat','etc','다른 CSS와 충돌','커스텀 css 끄기 충돌 다른 테마 사용자 스타일 모양 이상 겹침','다른 CSS'],
+ ['chat','etc','「확장 탭에 보이기」 줄','확장 탭 보이기 줄 확장 창 맨 위 제목 줄 스위치 꺼내기 확장 위 스위치 숨기기 끄기 켜기','','headSwitchRows'],
+ ['chat','etc','한국어 화면 다듬기','실리태번 한국어 한글 한글화 번역 영어로 남은 글 어색한 번역 화면 글 다듬기','','koUi'],
+ ['chat','etc','다른 기기 변경 알림','다른 기기 폰 PC 컴퓨터 동기화 싱크 바뀜 덮어쓰기 띠 알림 묻기','','syncWatch'],
  ['image','layout','에셋 사진 배치','에셋 이미지 사진 가로 꽉 영화관 좌우 여백 채우기 본문 폭 작게 배치'],
- ['image','shape','에셋 모양·모서리','에셋 이미지 네모 도형 마스크 투명 png 커스텀 모양 저장 불러오기 둥근 모서리 라운드 누끼 캐릭터 컷'],
- ['image','frame','에셋 장식 액자','에셋 이미지 사진 액자 프리셋 수채화 맥 브라우저 스크랩 다이어리 리본 겹친 메모지 팝스타 낙서 노트 레몬 스티커 보관함 업로드 저장 여러개 가로 세로 비율 색 확대 위치','장식 액자'],
+ ['image','shape','에셋 모양·모서리','에셋 이미지 네모 도형 마스크 투명 png 커스텀 모양 저장 불러오기 둥근 모서리 라운드 누끼 캐릭터 컷 투명 그림도 똑같이 맞추는 법'],
+ ['image','frame','에셋 장식 액자','에셋 이미지 사진 액자 프리셋 수채화 맥 브라우저 스크랩 다이어리 리본 겹친 메모지 팝스타 낙서 노트 레몬 스티커 보관함 업로드 저장 여러개 가로 세로 비율 색 확대 위치 진하기 안쪽 사진 모서리','장식 액자'],
  ['image','frame','에셋 테두리·그림자','에셋 이미지 사진 그림자 테두리 외곽선 얇은 선 이중선 실선 점선 파선 빛 두께 색 진하기 면 여백 번짐 확장 거리','그림자'],
  ['image','size','에셋 이미지 크기','에셋 사진 이미지 크기 높이 최대 세로 화면 비율 높이 맞춤 자르기'],
  ['image','fade','에셋 가장자리 흐림','에셋 이미지 사진 흐림 번짐 가장자리 페이드 위아래 옆 투명 흰 배경 지우기'],
- ['prompt','deus','데우스 프롬프트 호환','데우스 dem deus 엑스 마키나 프롬프트 호환 켜기 끄기 트래커 장면 계획 상태 카드 접기 폰 색 통일 이모티콘'],
+ ['prompt','deus','데우스 프롬프트 호환','데우스 dem deus 엑스 마키나 프롬프트 호환 켜기 끄기 트래커 장면 계획 상태 카드 접기 폰 색 통일 이모티콘 카드 스킨 폰에서 접어 두기'],
+ ['prompt','deus','데우스 카드 스킨','카드 스킨 트래커 장면 계획 상태 카드 테마 모양 폰에서 접어 두기 접기','','chat.demSkin'],
+ ['prompt','deus','데우스 프롬프트 색 그대로','프롬프트 색 그대로 데우스 글자색 형광펜 색을 어디에 글자 띠','','chat.demInk'],
  ['prompt','deus','데우스 대사 색·가독성','데우스 프롬프트 대사 색 형광펜 가독성 향상 그림자 외곽선 글자 배경 묻힘 두께 진하기 거리 번짐','대사 색상 가독성 향상'],
- ['prompt','deus','데우스 감정 대사 효과','데우스 expressive dialogue 감정 대사 효과 애니메이션 움직임 외침 떨림 빛 색 흐름 무지개 애니메이션 줄이기 절전 기기설정 무시','감정 대사 효과'],
- ['prompt','deus','트래커 날씨 연결','데우스 트래커 날씨 비 눈 채팅 뒤 효과 자동 연결','트래커'],
+ ['prompt','deus','데우스 감정 대사 효과','데우스 expressive dialogue 감정 대사 효과 애니메이션 움직임 외침 떨림 빛 색 흐름 무지개 애니메이션 줄이기 절전 기기설정 무시 효과 살리기 색 흐름을 어디에','감정 대사 효과'],
+ ['prompt','deus','트래커 날씨 연결','데우스 트래커 날씨 비 눈 채팅 뒤 효과 자동 연결 트래커 날씨로 날씨 효과','트래커'],
 ];
 for (const [sub, name, alias] of [['profile','캐릭터','캐릭터 봇 상대'],['user-profile','내','내 나 유저 사용자 페르소나 깡캐']]) {
  const owner = sub === 'profile' ? 'profile' : 'userProfile';
  rows.push([ 'chat',sub,`${name} 프로필 표시·배치`,`${alias} 프로필 프사 아바타 사진 이미지 없음 숨김 작은 상단 큰 왼쪽 오른쪽 위치 정렬`, '', `${owner}.mode` ],
- ['chat',sub,`${name} 프로필 크기·자르기`,`${alias} 프로필 사진 크기 너비 높이 세로 남길 부분 자르기 픽셀 화면 비율 원본 화질 전체 보이기 가득 채우기 영화관 여백 모서리 둥글기 간격`, '사진 크기 · 위치'],
+ ['chat',sub,`${name} 프로필 크기·자르기`,`${alias} 프로필 사진 크기 너비 높이 세로 남길 부분 자르기 픽셀 화면 비율 원본 화질 전체 보이기 가득 채우기 사진 맞추기 영화관 여백 모서리 둥글기 간격`, '사진 크기 · 위치'],
  ['chat',sub,`${name} 프로필 흐림`,`${alias} 프로필 사진 흐림 투명도 진하기 가장자리 위아래 좌우 블러 페이드`, '흐림 · 투명도'],
- ['chat',sub,`${name} 프로필 액자`,`${alias} 프로필 사진 장식 액자 프리셋 수채화 리본 맥 브라우저 스크랩 메모지 노트 보관함 저장 그림 불러오기 안쪽 배경 제거 색 가로 세로 비율`, '장식 액자'],
+ ['chat',sub,`${name} 프로필 액자`,`${alias} 프로필 사진 장식 액자 프리셋 수채화 리본 맥 브라우저 스크랩 메모지 노트 보관함 저장 그림 불러오기 안쪽 배경 제거 색 가로 세로 비율 진하기 안쪽 사진 모서리`, '장식 액자'],
  ['chat',sub,`${name} 프로필 테두리·그림자`,`${alias} 프로필 사진 테두리 그림자 색 진하기 두께 종류 이중선 점선 파선 빛 번짐 확장 거리 여백`, '그림자']);
  const namesub = sub === 'profile' ? 'name' : 'user-name';
  rows.push(['chat',namesub,`${name} 정보 정렬`,`${alias} 이름 시간 날짜 번호 토큰 정렬 왼쪽 가운데 중앙 오른쪽 메신저 말풍선 작은 프로필 없음`, '', `${owner}.nameRowAlign`]); // 5.8.3 큰 프로필이 아닐 때
  rows.push(['chat',namesub,`${name} 이름 글꼴·꾸미기`,`${alias} 이름 폰트 글꼴 언어 크기 굵기 자간 색 정렬 왼쪽 중앙 가운데 오른쪽 기울임 밑줄 외곽선 그림자`, '이름 글자'],
- ['chat',namesub,`${name} 시간·버튼 배치`,`${alias} 이름 시간 날짜 버튼 점세개 메뉴 편집 연필 모델 아이콘 통계 토큰 번호 한줄 두줄 옆 아래 간격 진하기 정렬`, '']);
+ ['chat',namesub,`${name} 시간·버튼 배치`,`${alias} 이름 시간 날짜 버튼 점세개 메뉴 편집 연필 모델 아이콘 통계 토큰 번호 한줄 두줄 옆 아래 간격 진하기 정렬 줄 위치`, '']);
 }
 rows.push(['extensions','words','단어 치환','단어 바꾸기 조사 규칙 되돌리기'],['extensions','capture','채팅 캡처','이미지 사진 저장 메시지 다중 선택'],['extensions','capture','캡처 필터 · 색감','캡처 필터 필름 그레인 노이즈 자글자글 지글지글 입자 흑백 모노 무채색 빈티지 세피아 옛날 사진 색감 색 보정 밝기 대비 채도 색온도 따뜻하게 차갑게 비네트 가장자리 어둡게 프리셋 초기화','','captureTools.filterPreset'],['extensions','order','확장 순서','패널 고정 순서 정렬'],['extensions','perf','성능 보조','끊김 감시 요청 로그 로딩 저장 정리'],['chat','screen','날씨 움직임','레몬 꽃잎 유성 낙하 회전 흔들림 커스텀'],['theme','palette','내 에이드 보관함','커스텀 여러개 저장 불러오기'],
  ['extensions','models','모델 등록','모델 이름 직접 추가 등록 공급자 목록에 없는 새 모델 커스텀 모델'],
@@ -92,9 +101,11 @@ rows.push(['extensions','words','단어 치환','단어 바꾸기 조사 규칙 
  ['extensions','rewrite','다시 쓰기','금지 묘사 금지어 밴 단어 문장 고치기 다시 쓰기 안경 수염 외모 묘사 씬 플랜 리롤 장면 계획 예외 캐릭터 AI 프롬프트 규칙 사용법'],
  ['extensions','perf','확장 충돌 진단','충돌 오류 중복 확장 점검 보고서'],
  ['theme','etc','사용 모드','테마만 확장만 테마 확장 함께 실행 기타 설정'],
+ ['theme','etc','처음 설정 다시 보기','처음 설정 첫 실행 시작 안내 온보딩 튜토리얼 따라하기 단계 팔레트 글꼴 폰트 읽기 방식 다시 고르기','처음 설정 다시 보기'],
  ['theme','etc','다른 확장 색 유지','외부 확장 원래 색 글자 배경 CSS 색상 보존 덮어쓰기 해제 확장 팝업 설정창 확장별 선택 일부만 빼기','','compat.preserveExtensionColors'],
  ['theme','update','테마 업데이트','업데이트 새 버전 확인 최신 버전 받기 공지사항 달라진 점'],
- ['chat','screen','백그라운드에서도 계속','백그라운드 다른 앱 앱 전환 탭 잠 멈춤 소리 없이 무음 작은 창 pip 버티기 번역 계속','', 'bgWindow.on'],
+ ['theme','update','새 버전 자동 확인','업데이트 새 버전 자동 확인 알림 버전 표시 노랗게 6시간','','updateCheck'],
+ ['chat','screen','백그라운드에서도 계속','백그라운드 다른 앱 앱 전환 탭 잠 멈춤 소리 없이 무음 작은 창 pip 버티기 번역 계속 버티는 방식','', 'bgWindow.on'],
  ['chat','screen','답이 오면 알려 주기','알림 진동 푸시 답 도착 완료 알려 주기 다른 앱 폰 백그라운드','', 'replyNotify.on']);
 const markdownAliases = {
  size:'h1 h2 h3 h4 h5 h6 헤딩 큰글씨 작은글씨', space:'여백 간격 문단 촘촘히 넉넉히', heading:'h1 h2 h3 h4 h5 h6 헤더 헤딩 밑선',
@@ -114,6 +125,9 @@ const CHO='ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ', JUNG='ㅏ
 const syllable=c=>{const k=c.charCodeAt(0)-0xAC00;return k>=0&&k<11172?k:-1;};
 export const chosung=text=>[...String(text)].map(c=>{const k=syllable(c);return k<0?c:CHO[Math.floor(k/588)];}).join('');
 export const jamo=text=>[...String(text)].map(c=>{const k=syllable(c);return k<0?c:CHO[Math.floor(k/588)]+JUNG[Math.floor(k%588/28)]+JONG[k%28];}).join('');
+// 6.9.5 자판 순서: 겹모음 · 겹받침을 누른 차례대로 편다 (ㅘ → ㅗㅏ, ㄺ → ㄹㄱ). 치는 중의 글자('호' · '확ㅈ' · '갑' · '닭')가 다 친 낱말('확장' · '가방' · '달걀')의 앞부분이 된다
+const SPLIT={'ㅘ':'ㅗㅏ','ㅙ':'ㅗㅐ','ㅚ':'ㅗㅣ','ㅝ':'ㅜㅓ','ㅞ':'ㅜㅔ','ㅟ':'ㅜㅣ','ㅢ':'ㅡㅣ','ㄳ':'ㄱㅅ','ㄵ':'ㄴㅈ','ㄶ':'ㄴㅎ','ㄺ':'ㄹㄱ','ㄻ':'ㄹㅁ','ㄼ':'ㄹㅂ','ㄽ':'ㄹㅅ','ㄾ':'ㄹㅌ','ㄿ':'ㄹㅍ','ㅀ':'ㄹㅎ','ㅄ':'ㅂㅅ'};
+export const keystrokes=text=>[...jamo(text)].map(c=>SPLIT[c]||c).join('');
 // 말하듯 쓴 문장 → 설정에서 쓰는 말. 왼쪽이 보이면 오른쪽 낱말을 검색어에 보탠다.
 const INTENTS=[
  [/작아|작게|작은|크게|큰|키우|키워|줄이|줄여|커졌|작아졌/,'크기'],
@@ -154,14 +168,23 @@ export const SEARCH_ENTRIES = rows.map(([tab,sub,title,aliases,anchor='',path=''
  const words=[...new Set(normalize(title+' '+aliases).split(' '))];
  const titleWords=normalize(title).split(' ');
  return {id,tab,sub,title,anchor,path,breadcrumb:tabs[tab]+' › '+subs[sub],words,compact:words.join(''),
-  titleCho:chosung(titleWords.join('')),cho:words.map(chosung),jamoWords:words.map(jamo),titleJamo:titleWords.map(jamo)};
+  titleCho:chosung(titleWords.join('')),cho:words.map(chosung),jamoWords:words.map(jamo),titleJamo:titleWords.map(jamo),titleKeys:titleWords.map(keystrokes),wordKeys:words.map(keystrokes),titleTyped:keystrokes(titleWords.join(''))};
 });
+export const searchNormalize = value => normalize(value);
 export function searchSettings(query) {
- // NFKC 가 ㅂ(호환 자모)을 첫소리 자모(U+1100~)로 바꿔 놓으므로 되돌린다
- const raw=normalize(String(query).slice(0,160)).replace(/[ᄀ-ᄒ]/g,c=>CHO[c.charCodeAt(0)-0x1100]);
+ // NFKC 가 ㅂ(호환 자모)을 첫소리 자모(U+1100~)로 바꿔 놓으므로 되돌린다 — 6.9.5 치는 중에 홀로 남은 모음(U+1161~) · 받침(U+11A8~)도
+ const raw=normalize(String(query).slice(0,160)).replace(/[ᄀ-ᄒ]/g,c=>CHO[c.charCodeAt(0)-0x1100]).replace(/[ᅡ-ᅵ]/g,c=>JUNG[c.charCodeAt(0)-0x1161]).replace(/[ᆨ-ᇂ]/g,c=>JONG[c.charCodeAt(0)-0x11A7]);
  if(!raw.replaceAll(' ',''))return [];
+ // 6.9.5 치고 있는 마지막 낱말은 앞부분으로 (띄어쓰기 전 · 한 글자만 쳐도): 자판 순서로 펴서 낱말 앞머리와 견준다. 다 친 같은 낱말은 아래에서 이미 센다
+ const lastWord=raw.split(' ').at(-1), lastKeys=keystrokes(lastWord), rawCompact=raw.replaceAll(' ','');
+ const typing=lastKeys.length>=2&&!STOP.has(lastWord)&&!/^[ㄱ-ㅎ]+$/.test(lastWord);
+ // 제목을 앞에서부터 치는 중(마지막 낱말이 덜 쳐졌거나 낱말 둘 이상)이면 그 제목이 먼저 — 그때는 말하듯 쓴 문장의 보탬 낱말을 붙이지 않는다.
+ // 낱말 하나를 다 친 검색(「날씨」 「캡처」)은 예전 순위 그대로
+ const typedTitle=keystrokes(rawCompact), titleTyping=typedTitle.length>=4&&!/^[ㄱ-ㅎ]+$/.test(rawCompact), multi=raw.includes(' ');
+ const titleHit=e=>titleTyping&&e.titleTyped.startsWith(typedTitle)&&(multi||!e.words.includes(lastWord));
+ const partialTitle=SEARCH_ENTRIES.some(titleHit);
  // 말하듯 쓴 문장이면 뜻에 맞는 낱말을 보탠다
- const extra=INTENTS.filter(([re])=>re.test(raw)).map(([,add])=>add).join(' ');
+ const extra=partialTitle?'':INTENTS.filter(([re])=>re.test(raw)).map(([,add])=>add).join(' ');
  const q=extra?normalize(raw+' '+extra):raw, compact=q.replaceAll(' ','');
  const tokens=q.split(' '), tokenSet=new Set(tokens);
  const stems=[...new Set(tokens.map(stem))];
@@ -189,8 +212,14 @@ export function searchSettings(query) {
    else if(entry.jamoWords.some(t=>t.startsWith(j))){score+=9;matches++;}
    else if(j.length>=5&&entry.jamoWords.some(t=>near(j,t.slice(0,j.length))||near(j,t))){score+=6;matches++;}
   }
+  if(typing&&!(lastWord.length>1&&entry.words.includes(lastWord))){
+   if(entry.titleKeys.some(t=>t.startsWith(lastKeys))){score+=entry.titleKeys[0].startsWith(lastKeys)?20:16;matches++;}
+   else if(entry.wordKeys.some(t=>t.startsWith(lastKeys))){score+=7;matches++;}
+  }
+  if(titleHit(entry)){score+=40;matches++;}
   if(!matches)return {entry,score:0};
-  if(mine)score+=entry.sub.startsWith('user-')?30:entry.tab==='chat'&&['profile','name'].includes(entry.sub)?-25:0;
+  // 「내」 가점은 다른 말도 맞은 내 프로필 항목에만 — 「내 메시지」가 내 프로필 다섯 줄만 띄우던 것 (6.9.5)
+  if(mine)score+=entry.sub.startsWith('user-')?(matches>1?30:0):entry.tab==='chat'&&['profile','name'].includes(entry.sub)?-25:0;
   if(bot&&!mine)score+=['profile','name'].includes(entry.sub)?20:entry.sub.startsWith('user-')?-20:0;
   if(/에셋/.test(q))score+=entry.tab==='image'?25:-15;
   if(frame)score+=entry.title.includes('액자')?30:-10;
@@ -208,8 +237,14 @@ export function paintSettingsSearch(root) {
  list.innerHTML=`<p role="status">${items.length?'관련 설정 '+items.length+'개':'찾는 설정이 없어요. 다른 말이나 초성(ㅂㄱ)으로도 찾아보세요.'}</p>`+items.map(e=>`<div class="bl-search-result-row"><button type="button" data-settings-result="${e.id}"><strong>${esc(e.title)}</strong><small>${esc(e.breadcrumb)}</small></button>${favoriteButton(e)}</div>`).join('');
 }
 export function bindSettingsSearch(root,navigate) {
- const update=input=>{root._settingsQuery=input.value;paintSettingsSearch(root);};
- root.addEventListener('input',e=>{if(e.target.matches('[data-settings-search]')&&!e.isComposing)update(e.target);});
+ let typingTimer=0;
+ const update=input=>{clearTimeout(typingTimer);typingTimer=0;root._settingsQuery=input.value;paintSettingsSearch(root);};
+ // 6.9.5 한글은 마지막 글자가 띄어쓰기 · 다음 글자 전까지 조합 중이다 — 조합 중에도 잠깐(100ms) 뒤 결과를 그린다 (입력칸은 그대로라 조합이 끊기지 않음)
+ root.addEventListener('input',e=>{
+  if(!e.target.matches('[data-settings-search]'))return;
+  if(!e.isComposing)return update(e.target);
+  const input=e.target;clearTimeout(typingTimer);typingTimer=setTimeout(()=>{typingTimer=0;if(input.isConnected)update(input);},100);
+ });
  root.addEventListener('compositionend',e=>{if(e.target.matches('[data-settings-search]'))update(e.target);});
  root.addEventListener('click',e=>{
   const result=e.target.closest('[data-settings-result]'),clear=e.target.closest('[data-settings-clear]');if(!result&&!clear)return;

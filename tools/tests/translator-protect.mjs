@@ -40,6 +40,7 @@ const window = {}, toastr = { error() {}, warning() {} };
 const correctBackticks = input => input;
 const getStringHash = text => { let h = 0; for (const ch of String(text)) h = (h * 31 + ch.charCodeAt(0)) | 0; return h; };
 const readCachedTranslation = async () => T.cached;
+const sharedTranslation = () => null;   // 6.9.5 기기 간 공유 기록이 없는 메시지 (기록이 있는 쪽은 translation-source.mjs)
 const updateMessageBlock = (id) => { T.rendered.push(Number(id)); };
 const document = { querySelector: () => ({ querySelector: () => (T.editing ? {} : null) }), dispatchEvent: event => { T.events.push(event); return true; } };
 class CustomEvent { constructor(type, init) { this.type = type; this.detail = init?.detail; } }
