@@ -117,6 +117,7 @@ export const DEFAULTS = {
     fruitEntryIcon: 'fa-apple-whole',
     fruitTypography: {on:false,kind:'status',types:{}},
     promptLink: { on: false, rows: [] },   // 6.5.2 캐릭터 이름 연동 — 이름이 든 프롬프트·정규식을 그 캐릭터 채팅에서만 켜고 「기본」 짝은 반대로 · 6.7.5 여러 줄 rows [{ word, cards: [아바타] }] (prompt-link.js · promptbind.js)
+    headSwitchRows: true,   // 6.8.8 확장 창 안 「확장 탭에 보이기」 줄 보이기 (끄면 줄만 사라짐 — headswitch.js)
     headSwitches: {},   // 6.0.4 확장 위 스위치 { <창 열쇠 id:…|cls:…>: true } — 창 안 「확장 탭에 보이기」로 고른 확장 창 (headswitch.js)
     activeStyle: null,
     baseStyle: null,
@@ -381,6 +382,7 @@ function tidyStyles(s) {
     if (!isObj(s.headSwitches)) s.headSwitches = {};
     for (const [k, v] of Object.entries(s.headSwitches)) if (!k || v !== true) delete s.headSwitches[k];
     for (const k of Object.keys(s.headSwitches).slice(100)) delete s.headSwitches[k];
+    s.headSwitchRows = s.headSwitchRows !== false;   // 6.8.8
     if (s.baseStyle !== null && !isObj(s.baseStyle)) s.baseStyle = null;
     // 3.3.1 날씨 그림 목록
     const okImage = x => isObj(x) && typeof x.id === 'string' && /^[\w-]{1,40}$/.test(x.id) && validOwnedImage(x, x.data); // id 는 data-id 속성에, 그림은 style 속성에 들어간다

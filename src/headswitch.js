@@ -137,6 +137,7 @@ function makeHead(drawer) {
 export function refresh() {
     if (!running) return;
     const used = new Set();
+    const rowsOn = getSettings().headSwitchRows !== false;   // 6.8.8 설정에서 줄을 끌 수 있다 (꺼내 둔 제목 줄 스위치는 그대로)
     for (const drawer of drawers()) {
         let key = drawer.dataset.blHsKey;
         if (!key || used.has(key)) {
@@ -151,9 +152,12 @@ export function refresh() {
         const m = masterFor(drawer);
         if (!m) { row?.remove(); sw?.remove(); continue; }
         const want = isShown(key);
-        if (!row) { row = makeRow(drawer); content.prepend(row); }
-        setText(row.firstElementChild, ROW_LABEL);
-        setAttr(row.lastElementChild, 'aria-checked', want ? 'true' : 'false');
+        if (!rowsOn) row?.remove();
+        else {
+            if (!row) { row = makeRow(drawer); content.prepend(row); }
+            setText(row.firstElementChild, ROW_LABEL);
+            setAttr(row.lastElementChild, 'aria-checked', want ? 'true' : 'false');
+        }
         if (!want) { sw?.remove(); continue; }
         if (!sw) {
             sw = makeHead(drawer);

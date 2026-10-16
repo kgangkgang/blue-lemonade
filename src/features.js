@@ -119,7 +119,9 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     // 6.0.4 프롬프트 귀속: 프롬프트 편집 창에 「자동 켜기」 줄을 붙이고 채팅이 바뀌면 묶인 항목을 켜고 끈다 (테마가 켜져 있으면 늘)
     if (on || modules.promptbind) load('promptbind', './promptbind.js').then(m => m?.startPromptBinds());
     // 6.0.4 확장 위 스위치: 확장 창 안의 켜기·끄기를 제목 줄에도 (창 안 「확장 탭에 보이기」로 고른 창만 · 테마를 끄면 뗀다)
-    if (on || modules.headswitch) load('headswitch', './headswitch.js').then(m => m?.syncHeadSwitch(on));
+    // 6.8.8 「확장 탭에 보이기」 줄을 끄고(설정) 꺼내 둔 스위치도 없으면 모듈을 아예 쉬게 한다 (확장 칸 관찰 · 2초 맞추기 없음)
+    const headSwitchWanted = on && (s.headSwitchRows !== false || Object.keys(s.headSwitches || {}).length > 0);
+    if (headSwitchWanted || modules.headswitch) load('headswitch', './headswitch.js').then(m => m?.syncHeadSwitch(headSwitchWanted));
 }
 
 /** 설정 창이 캐릭터 연결을 바꾼 뒤: 모듈을 불러와 지금 채팅에 맞춤 */

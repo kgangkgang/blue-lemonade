@@ -67,4 +67,21 @@ await test('6.2.0 (ui-density-620d) 켜기 스위치가 없는 창: data-bl-mast
     const fs = await import('node:fs');
     assert.ok(fs.readFileSync(path.join(root, 'src/addons/prompt/settings-ui.js'), 'utf8').includes('<span hidden data-bl-master="none"></span>'), '한글화 패널은 켜기 스위치 없음을 밝힌다');
 });
+await test('6.8.8 줄 끄기: headSwitchRows 기본 켬 · 끄면 그대로 · 줄도 스위치도 없으면 모듈이 쉰다 · ✦ 메뉴 오른쪽 여백', async () => {
+    ctx.extensionSettings.salty = {};
+    invalidateSettings();
+    assert.equal(getSettings().headSwitchRows, true, '기본 켬 (지금 그대로)');
+    ctx.extensionSettings.salty = { headSwitchRows: false };
+    invalidateSettings();
+    assert.equal(getSettings().headSwitchRows, false);
+    ctx.extensionSettings.salty = { headSwitchRows: 'junk' };
+    invalidateSettings();
+    assert.equal(getSettings().headSwitchRows, true, '이상한 값은 기본으로');
+    const fs = await import('node:fs');
+    const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
+    assert.match(read('src/headswitch.js'), /if \(!rowsOn\) row\?\.remove\(\);/);
+    assert.match(read('src/features.js'), /const headSwitchWanted = on && \(s\.headSwitchRows !== false \|\| Object\.keys\(s\.headSwitches \|\| \{\}\)\.length > 0\);/);
+    assert.match(read('src/panel.js'), /toggle\('headSwitchRows', s\.headSwitchRows !== false\)/);
+    assert.match(read('css/03-menus.css'), /#extensionsMenu#extensionsMenu > div:not\(\.extension_container\) \{\s*padding-right: 18px !important;/);
+});
 console.log(`${passed} tests passed`);

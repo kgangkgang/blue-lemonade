@@ -43,6 +43,12 @@ body.salty :is(#options .options-content a, #extensionsMenu .list-group-item, #e
 body.salty :is(#options .options-content a, #extensionsMenu .list-group-item, #extensionsMenu > .extension_container > div, #extensionsMenu > div:not(.extension_container), .list-group > .list-group-item):active {
   background: var(--bl-fill-press-bg, var(--bl-press-bg)) !important;
 }
+/* 6.8.8 ✦ 확장 메뉴: 왼쪽(아이콘 + 간격)에 비해 오른쪽 여백이 10px 라 가장 긴 항목(Blue Lemonade 등)이 끝에 붙어 보였다 (커뮤니티 제보) */
+html body.salty #extensionsMenu#extensionsMenu .list-group-item,
+html body.salty #extensionsMenu#extensionsMenu > .extension_container > div,
+html body.salty #extensionsMenu#extensionsMenu > div:not(.extension_container) {
+  padding-right: 18px !important;
+}
 body.salty :is(#options .options-content a, #extensionsMenu .list-group-item, #extensionsMenu > .extension_container > div, #extensionsMenu > div:not(.extension_container)) :is(i, .fa-solid, .extensionsMenuExtensionButton) {
   width: var(--bl-ic-box) !important;
   min-width: var(--bl-ic-box);

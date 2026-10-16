@@ -1397,6 +1397,9 @@ function tabChat(s, sub) {
             ${row('펼친 카드 아래에 접기 버튼',toggle('chat.triangleFold',s.chat.triangleFold??SillyTavern.getContext().extensionSettings?.blue_lemonade_scripts?.enabled?.fold??false),'채팅 카드 맨 아래에서 바로 접어요.')}
             ${row('커스텀 CSS 끄기', toggle('compat.muteCustomCss', !!s.compat?.muteCustomCss), '사용자 설정의 커스텀 CSS 를 테마가 켜진 동안 꺼요 · 지우지는 않아요')}
         </div>
+        ${cap('확장 탭')}<div class="salty-group">
+            ${row('「확장 탭에 보이기」 줄', toggle('headSwitchRows', s.headSwitchRows !== false), '확장 창 맨 위에 생기는 줄이에요 · 끄면 줄만 사라지고, 이미 제목 줄에 꺼내 둔 스위치는 그대로예요')}
+        </div>
         ${cap('다른 기기')}<div class="salty-group">
             ${row('다른 기기 변경 알림', toggle('syncWatch', s.syncWatch !== false), '이 채팅이 다른 기기에서 바뀌면 위에 띠를 띄우고, 덮어쓰기 전에 물어요')}
         </div>
