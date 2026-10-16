@@ -1,13 +1,24 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.8.2/blue-lemonade-6.8.2.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v6.8.3/blue-lemonade-6.8.3.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 
 <details open>
-<summary>6.8.2 · 최신 업데이트</summary>
+<summary>6.8.3 · 최신 업데이트</summary>
+
+- TTS가 한 문단 안의 대사 · 말로 한 기울임을 서술은 빼고 자연스럽게 이어서 읽어요 — 자동으로 읽을 때도, 대사를 눌렀을 때도. 설정 › 읽기 › 읽을 부분의 「한 문단 이어 읽기」로 끌 수 있어요.
+- 대사 분석이 기울임 글을 「소리 내 말함 · 속마음 · 서술」로 가르고 주인을 찾아, 속마음 기울임도 그 사람 목소리로 읽어요 (같은 분석 요청 안에서).
+- 읽는 대사의 띠 · 밑줄이 따옴표부터 따옴표까지 칠해져요 — 기울인 여는 따옴표가 한 획만 보이던 것을 고쳤어요.
+- 듣는 언어를 고른 경우: 이미 그 언어인 줄은 기다리지 않고 바로 읽고, 옮길 줄이 있을 때만 「영어 N줄 일본어로 번역 중…」을 띄워요. 서술 속 낱말 인용("…"라는 말)은 자동으로 읽지 않아요.
+- 재생 막대의 「원문」이 문장부호가 조금 달라도 원문 짝을 찾아 보여 주고, 못 찾으면 「원문을 못 찾았어요」라고 알려요 (TTS 1.9.1).
+
+</details>
+
+<details>
+<summary>6.8.2 · 번역에 섞인 작업 메모 걸러 내기</summary>
 
 - 번역 모델이 문단 사이에 남긴 작업 메모(「… translate.」 같은 반쪽 원문 줄 · 「Keep spans and placeholders.」 같은 지시문 · 「→ 해요체 / 반말」 같은 말투 메모)를 모든 번역 길에서 걸러 내요. 전엔 긴 메시지에서 메모가 남고, 영어 남은 줄 다시 번역이 그 메모를 한국어로 옮겨 놓기도 했어요. 이미 저장된 번역도 보여 줄 때 걸러져요 (번역 2.6.8).
 

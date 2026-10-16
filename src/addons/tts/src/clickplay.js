@@ -27,7 +27,10 @@
 //   match: 'any' (속마음 전체 · 한 문단과 같음) | 'part' (문단 틀: 같은 것만) | 'equal' (문단 일부인 기울임: 속마음 전체와 같을 때만)
 //   강한 틀은 속마음이 누른 글을 품어도 맞음 (여러 문단 속마음의 첫 문단). 같은 글이 여럿이면 class 이름과 주인이 같은 것 → 누른 줄에 가까운 것
 // segmentForHit(mes, hit) → Segment (text.js 모양 + dialogueIndex: 원문 대화문 목록에서의 번호, 못 찾으면 -1
-//   · 속마음이면 thoughtIndex: 그 목록의 속마음 번호, 즉석이면 -1) | null (약한 속마음 틀이 어느 속마음과도 안 맞음)
+//   · 속마음이면 thoughtIndex: 그 목록의 속마음 번호, 즉석이면 -1 · 말 기울임이면 actionIndex) | null (약한 속마음 틀이 어느 속마음과도 안 맞음)
+// 1.9.1 한 문단 이어 읽기: 속마음 · 대화문이 아닌 기울임(em · i)을 누르면 findClickedItalic → 말 기울임 조각(text.js speech — 서술이 사이에 낀 소설체 문단의
+//   *…*)이면 그것을 읽는다. 재생기(tapJobs)가 같은 문단의 묶음(대사 · 말 기울임, 같은 목소리)을 차례대로 이어 한 번에 읽는다 — 「」 대사를 눌러도 같다.
+//   그냥 *행동* 은 지금처럼 읽지 않는다
 
 import { chat, substituteParams } from '../../../../../../../../script.js';
 import { getContext } from '../../../../../../../extensions.js';
@@ -36,6 +39,7 @@ import { segmentMessage, pairSegments, parseRegexLines, normColor, speechDisplay
 import { resolveSpeaker, canon, knownNames as learnedNames } from './speakers.js';
 import { findVoice, voiceByName } from './voices.js';
 import { speakSegments } from './player.js';
+import { applyMessageItalics } from './analysis.js';   // 1.9.1 대사 분석이 가른 기울임 (재생기 sourcesOf 와 같은 판단)
 import { log } from './log.js';
 
 // 대화문 여닫이 글자 (text.js 와 같은 짝 + „“). ASCII ' 는 안 씀
@@ -63,7 +67,9 @@ const LABEL_HEAD = /^.*?\btrue\s+thoughts?\s*[:：]\s*/i;                  // "C
 // ---------- 작은 도구
 function sub(text) { try { return substituteParams(String(text || '')); } catch { return String(text || ''); } }
 // 6.3.8 화면은 실리태번 마크다운(showdown ellipsis)이 '...' 를 '…' 로 그린다 — 누른 글(화면)과 저장된 글의 조각을 같게 (줄임표 여럿도 하나로)
-const fold = (s) => String(s || '').normalize('NFC').replace(/\.\.\./g, '…').replace(/[…⋯]+/g, '…').replace(/[*_~`\u200b-\u200f\ufeff]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+const fold = (s) => String(s || '').normalize('NFC').replace(/\.\.\./g, '…').replace(/[…⋯]+/g, '…').replace(/[*_~〜～`\u200b-\u200f\ufeff]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+/** 1.9.1 느슨한 비교 (문장부호 · 기호 · 빈칸을 모두 뺌) — 누른 화면 글이 저장된 글과 문장부호만 다를 때도 그 줄을 찾게 (못 찾으면 번역문을 「원문」으로 다시 옮겨 읽었다) */
+const loose = (s) => fold(s).replace(/[\p{P}\p{S}\s]/gu, '');
 const letters = (s) => (String(s || '').match(/[\p{L}\p{N}]/gu) || []).length;
 function inside(node, root) { for (let n = node; n; n = n.parentNode) if (n === root) return true; return false; }
 function isHidden(el) {
@@ -322,6 +328,24 @@ export function findClickedDialogue(root, x, y, opts = {}) {
     return { text, raw, quoted, color: colorFromDom(at.node, root) || colorFromBareHex(flat, d.start), speakerHint: prefixHint(flat, d, known), line: lineOf(flat, d.start), start: d.start, end: d.end, sameIndex: same.indexOf(d), sameCount: same.length };
 }
 
+/**
+ * 1.9.1 화면의 (x, y) 를 누른 자리를 감싼 기울임(em · i)의 글 → { kind: 'action', text, raw, line } | null.
+ * 말 기울임 조각인지는 segmentForHit 이 본다 (그냥 *행동* 이면 null)
+ */
+export function findClickedItalic(root, x, y) {
+    const tap = tapAt(root, x, y);
+    if (!tap) return null;
+    const { at, nodes, flat } = tap;
+    let em = null;
+    for (let el = at.node.parentNode; el && el !== root; el = el.parentNode) if (el.nodeType === 1 && (el.tagName === 'EM' || el.tagName === 'I')) { em = el; break; }
+    const got = em ? spanOf(em, nodes, flat) : null;
+    if (!got) return null;
+    const raw = got.raw.trim();
+    const text = raw.replace(/\s+/g, ' ').trim();
+    if (!LETTER.test(text)) return null;
+    return { kind: 'action', text, raw, line: lineOf(flat, got.start + (got.raw.length - got.raw.trimStart().length)) };
+}
+
 // ---------- 누른 대화문 → 조각 (text.js 결과에서 찾고, 없으면 즉석)
 function knownNames(ctx, s) {
     const set = new Set();
@@ -343,7 +367,7 @@ function segOpts(mes, s, ctx, { readThoughts = false } = {}) {
         skipTags: new Set(String(s.skip_tags || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean)),
         skipCode: !!s.skip_codeblocks, stripRegex: parseRegexLines(s.strip_regex),
         userName: ctx.name1 || '', charName: (mes && !mes.is_user && mes.name) || ctx.name2 || '',
-        knownNames: knownNames(ctx, s), final: true,
+        knownNames: knownNames(ctx, s), final: true, paragraphs: s.join_paragraph !== false,   // 1.9.1 말 기울임 · 문단 (재생기와 같은 조각 정보)
         routes: readThoughts && (!routes.thought || routes.thought === 'skip') ? { ...routes, thought: 'character' } : routes,
     };
 }
@@ -453,6 +477,7 @@ export function segmentForHit(mes, hit) {
     let disp = null;
     const d = mes.extra?.display_text;
     if (typeof d === 'string' && d.trim() && d !== mes.mes) { try { disp = pairSegments(orig, safeSegment(sub(speechDisplay(d)), opts)); } catch { disp = null; } }
+    if (s.join_paragraph !== false) { try { applyMessageItalics(mes, orig, disp); } catch { /* 분석 없음 */ } }   // 1.9.1 대사 분석이 가른 기울임
     let seg = null, index = -1;
     if (hit.kind === 'thought') {
         if (!hit.strong && (sameAsOther(disp, hit) || sameAsOther(orig, hit))) return null;
@@ -461,10 +486,19 @@ export function segmentForHit(mes, hit) {
         if (found) seg = thoughtSegment(found, fromDisp ? disp : orig, orig, disp, hit);
         else if (hit.strong) seg = { kind: 'thought', text: hit.text, raw: hit.raw, color: colorFor(hit.nameHint, hit.color), tags: [], speakerHint: hit.nameHint || null, line: hit.line || 0, dialogueIndex: -1, thoughtIndex: -1 };
         else return null;
+    } else if (hit.kind === 'action') {
+        // 1.9.1 말 기울임만 (번역문 → 원문, 같은 글이 여럿이면 누른 줄에 가까운 것). 그냥 *행동* · 조각이 없는 기울임은 읽지 않는다
+        const want = fold(hit.text);
+        const find = (list) => { const all = (list || []).filter(x => x.kind === 'action' && x.speech && x.text && fold(x.text) === want); return all.length ? nearest(all, hit.line || 0) : null; };
+        const fromDisp = find(disp);
+        const found = fromDisp || find(orig);
+        if (!found) return null;
+        seg = { ...found, tags: (found.tags || []).slice(), actionIndex: (fromDisp ? disp : orig).filter(x => x.kind === 'action' && x.text).indexOf(found) };
     } else {
         const want = fold(hit.text);
         const find = (list) => {
-            const all = (list || []).filter(x => x.kind === 'dialogue' && x.text && fold(x.text) === want);
+            let all = (list || []).filter(x => x.kind === 'dialogue' && x.text && fold(x.text) === want);
+            if (!all.length) { const l = loose(hit.text); if (l.length >= 2) all = (list || []).filter(x => x.kind === 'dialogue' && x.text && loose(x.text) === l); }   // 1.9.1
             if (all.length < 2) return all[0] || null;
             // 1.4.0 같은 대사가 여럿 (사용자 제보: 두 사람이 「다릅니다.」 — 아래를 눌러도 위 캐릭터로 읽음): 누른 줄의 색 → 이름 → 번째(양쪽 개수가 같을 때만) → 가까운 줄
             const hc = normColor(hit.color);
@@ -512,6 +546,7 @@ export function tapSegments(mes, { thoughts = false } = {}) {
     let disp = null;
     const d = mes.extra?.display_text;
     if (typeof d === 'string' && d.trim() && d !== mes.mes) { try { disp = pairSegments(orig, safeSegment(sub(speechDisplay(d)), opts)); } catch { disp = null; } }
+    if (s.join_paragraph !== false) { try { applyMessageItalics(mes, orig, disp); } catch { /* 분석 없음 */ } }   // 1.9.1 대사 분석이 가른 기울임
     const shown = disp || orig;
     const out = [], later = [];
     const seen = new Map();   // 1.4.0 같은 글 대사의 번째 · 개수 (탭의 sameIndex · sameCount 와 같게)
@@ -521,11 +556,13 @@ export function tapSegments(mes, { thoughts = false } = {}) {
         if (!x || !x.text) continue;
         let seg = null;
         try {
+            if (x.kind === 'dialogue' && x.term) continue;   // 1.9.1 서술 속 낱말 인용은 누를 줄(미리 만들기 · 다음 한 줄)이 아니다
             if (x.kind === 'dialogue') {
                 const k = fold(x.text), n = seen.get(k) || 0;
                 seen.set(k, n + 1);
                 seg = segmentForHit(mes, { kind: 'dialogue', text: x.text, raw: x.raw, quoted: x.text, color: x.color || null, speakerHint: x.speakerHint || null, line: x.line || 0, sameIndex: n, sameCount: count.get(k) || 0 });
             }
+            else if (x.kind === 'action' && x.speech) seg = segmentForHit(mes, { kind: 'action', text: x.text, raw: x.raw, line: x.line || 0 });   // 1.9.1 말 기울임도 누를 줄
             else if (thoughts && x.kind === 'thought') seg = segmentForHit(mes, { kind: 'thought', strong: true, match: 'any', text: x.text, raw: x.raw, nameHint: x.speakerHint || null, color: x.color || null, line: x.line || 0 });
         } catch (e) { log('err', `미리 만들기 조각 실패: ${String(e?.message || e).slice(0, 40)}`); seg = null; }
         if (!seg) continue;
@@ -559,7 +596,8 @@ function onClick(e) {
         let seg = thought ? segmentForHit(mes, thought) : null;
         if (!seg) {
             const ctx = getContext() || {};
-            const hit = findClickedDialogue(mesText, e.clientX, e.clientY, { knownNames: knownNames(ctx, s) });
+            const hit = findClickedDialogue(mesText, e.clientX, e.clientY, { knownNames: knownNames(ctx, s) })
+                || findClickedItalic(mesText, e.clientX, e.clientY);   // 1.9.1 대화문이 아니면 말 기울임
             if (!hit) return;
             seg = segmentForHit(mes, hit);
         }

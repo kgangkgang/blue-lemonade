@@ -19,6 +19,17 @@
 //   ③ 읽는 동안 메시지가 다시 그려지면(번역이 붙음 · 다시 쓰기 · 편집 · 스트림 뒤 정리) 범위가 무너져 그 줄의 밑줄이 사라졌다 → player.js 가 지켜보다 다시 칠함.
 // 위 절반(순수 함수)은 node 로 시험한다 (tools/tests/tts-highlight-colors.mjs).
 
+// 1.9.1 읽는 대사의 여는 따옴표가 한 획만 보였다 (사용자: 「앞에 따옴표 왜 tts누르면 한개로 사라짐? 번역본은 두개던데」). 범위가 따옴표 뒤 글자부터라,
+//   크롬이 강조 안 · 밖 글자를 따로 잘라 그리면서 기울인 "(*"…"* → em)의 오른쪽 획이 강조 칸으로 넘어간 부분을 잘랐다 (닫는 쪽은 뒤에 강조가 없어 멀쩡).
+//   → 대사 · 속마음 · 말 기울임의 범위는 바로 앞 여는 따옴표 · 바로 뒤 닫는 따옴표까지 (사이 빈칸 하나까지). 글자(DOM)는 그대로, 범위만 (player.js findRange)
+const QUOTE_OPEN = '"“「『«‘＂', QUOTE_CLOSE = '"”」』»’＂';
+/** 접은 글(flat)의 [a, b] (b 포함) → 앞뒤에 붙은 따옴표까지 넓힌 { a, b }. 따옴표가 없으면 그대로 */
+export function widenToQuotes(flat, a, b) {
+    const s = String(flat ?? '');
+    const o = s[a - 1] === ' ' ? a - 2 : a - 1, c = s[b + 1] === ' ' ? b + 2 : b + 1;
+    return { a: o >= 0 && QUOTE_OPEN.includes(s[o]) ? o : a, b: c < s.length && QUOTE_CLOSE.includes(s[c]) ? c : b };
+}
+
 export const HIGHLIGHT_BASE = Object.freeze({ both: 'lv-now', color: 'lv-now-color', underline: 'lv-now-underline' });
 export const COLOR_LIMIT = 24;   // 한 줄에 색이 이보다 많을 일은 없다 — 넘친 색은 테마 색으로
 export const NEAR_PLAIN = 24;    // 채널마다 이만큼 안쪽이면 본문 글자색과 같은 색으로 본다 (테마 대사 #f5f5f7 ↔ 본문 #e1e1e5 같은 것)

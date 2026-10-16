@@ -113,7 +113,8 @@ async function reset() {
     T.sfxGate = T.renderGate = null;
     T.analysisGate=null;T.analysisReply=null;T.analysisRequests=[];
     P.stop(); await sleep(10); P.forgetClips(); P.forgetFrom(0);T.cache.clear();T.removed.length=T.requests.length=T.plays.length=T.ends.length=T.downloads.length=T.warnings.length=T.renders.length=0;
-    const s=S.settings();Object.assign(s,{enabled:true,voices:[voice('mina','Mina'),voice('nora','Nora')],char_map:{Mina:'minimax:mina',Nora:'minimax:nora'},default_voice:'minimax:mina',narrator_voice:'',user_voice:'',prefer_provider:'',normalize:false,dethump:false,emotion_strength:'normal',pregen:'off',prefetch:0,text_source:'original',pron_dict:'',wait_translation:'off',extras:'off',listen_lang:'auto',mini_player:false,highlight:false,master_volume:1,playback_rate:1,gap_ms:0,max_chars:0,
+    // 1.9.1 한 문단 이어 읽기는 끈다 — 이 파일은 줄마다 읽기(6.4.2) · 효과음 자리를 본다 (이어 읽기는 tts-join.mjs)
+    const s=S.settings();Object.assign(s,{join_paragraph:false,enabled:true,voices:[voice('mina','Mina'),voice('nora','Nora')],char_map:{Mina:'minimax:mina',Nora:'minimax:nora'},default_voice:'minimax:mina',narrator_voice:'',user_voice:'',prefer_provider:'',normalize:false,dethump:false,emotion_strength:'normal',pregen:'off',prefetch:0,text_source:'original',pron_dict:'',wait_translation:'off',extras:'off',listen_lang:'auto',mini_player:false,highlight:false,master_volume:1,playback_rate:1,gap_ms:0,max_chars:0,
         providers:{minimax:{key:'mock-key',model:'speech-2.8-hd'},elevenlabs:{key:'mock-key',model:'eleven_v3'}},sfx:{enabled:false,auto:false,volume:.5,mode:'overlay',custom:[]},analysis:{...s.analysis,enabled:false},routes:{dialogue:'character',narration:'skip',action:'skip',thought:'skip',user_dialogue:'skip'}});
     T.ctx.chat.length=0;T.ctx.chat.push({mes:'"Hello one." She waits. "Hello two."',name:'Mina',is_user:false,is_system:false,swipe_id:0,extra:{}});T.ctx.name2='Mina';document.body.dataset.generating='false';
     assert.equal(V.allVoices().length,2);
@@ -789,6 +790,50 @@ await test('6.4.1 effect-cue reading (script rows) keeps the listening language 
     assert.ok(P.speakSegments(0,[fxTap('大丈夫。',0)]));await until(()=>T.plays.filter(x=>x.kind==='voice').length>=3,2000);await idle();
     assert.equal(T.requests.length,before,'tap = same key as the script row');
     S.settings().listen_lang='auto';
+});
+await test('1.9.1 listening language: lines already in that language play while the rest is translated; the bar says how many lines only when some are; playback waits only at the first untranslated line',async()=>{
+    await reset();const s=S.settings();s.listen_lang='ja';
+    const L=await mod('listen.js');L._forTest.reset();
+    const gate={};gate.promise=new Promise(r=>{gate.open=r;});const calls=[];
+    globalThis[Symbol.for('blue-lemonade.translator')]={async translateForSpeech(lines){calls.push([...lines]);await gate.promise;return lines.map(x=>`[ja] ${x}`);},speechReady:()=>({ok:true}),speechModelTag:()=>'direct|custom|mock'};
+    T.ext.salty={addons:{translator:true}};
+    try{
+        T.ctx.chat[0].mes='「おはよう。」\n\n彼は笑った。\n\n「今日は晴れだね。」\n\n"See you tomorrow."\n\n「またね。」';
+        assert.equal(P._forTest.listenNeeds(0,T.ctx.chat[0]).length,1);
+        assert.ok(P.speakMessage(0,{force:true}));
+        await until(()=>T.plays.filter(x=>x.kind==='voice').length>=2,2000);
+        assert.deepEqual(T.requests.map(r=>r.text),['おはよう。','今日は晴れだね。'],'Japanese lines are read before the translation comes');
+        assert.equal(calls.length,1,'one translation request for the message');
+        await until(()=>T.ends.filter(x=>x.kind==='voice').length>=2,2000);await sleep(20);
+        assert.equal(P._forTest.waitingText(),'영어 1줄 일본어로 번역 중…','the bar waits at the untranslated line and says how many');
+        assert.ok(P.isPlaying(),'still reading this message');
+        gate.open();
+        await until(()=>T.plays.filter(x=>x.kind==='voice').length>=4,2000);await idle();
+        assert.deepEqual(T.requests.map(r=>r.text),['おはよう。','今日は晴れだね。','[ja] See you tomorrow.','またね。'],'then the rest from that line, in order, nothing twice');
+        // 이미 일본어뿐인 답장: 기다림 · 번역 막대 없이 바로
+        T.requests.length=T.plays.length=T.ends.length=0;
+        T.ctx.chat[0].mes='「おはよう。」\n\n「またね。」';
+        assert.ok(P.speakMessage(0,{force:true}));
+        assert.equal(P._forTest.waitingText(),null,'no waiting at all');
+        await until(()=>T.plays.filter(x=>x.kind==='voice').length>=2,2000);await idle();
+        assert.equal(calls.length,1,'no translation request');
+        // 효과음 자동 찾기로 소리 대본 줄을 읽는 답장도 같은 길 — 일본어 줄과 그 뒤 서술의 효과음 먼저, 옮길 줄은 옮긴 뒤 (앞 부분과 다른 줄: 캐시된 소리는 요청이 없다)
+        const gate2={};gate2.promise=new Promise(r=>{gate2.open=r;});gate.promise=gate2.promise;
+        await fxSeed('「こんばんは。」\n\n扉が開いた。\n\n"Good night."\n\n「おやすみ。」',[{after:1,id:'door_open',repeats:1,durationMs:0,strength:1}]);
+        S.settings().listen_lang='ja';T.ext.salty={addons:{translator:true}};
+        assert.ok(P.speakMessage(0,{force:true}));
+        await until(()=>T.plays.filter(x=>x.kind==='voice').length>=1,2000);await sleep(30);
+        assert.deepEqual(T.requests.map(r=>r.text),['こんばんは。'],'script path: the Japanese row first');
+        await until(()=>T.ends.some(x=>x.kind==='voice'),2000);await sleep(30);
+        assert.equal(P._forTest.waitingText(),'영어 1줄 일본어로 번역 중…');
+        assert.equal(T.requests.length,1,'the untranslated line is not synthesised before its translation');
+        gate2.open();
+        await until(()=>T.plays.filter(x=>x.kind==='voice').length>=3,2000);await idle();
+        assert.deepEqual(T.requests.map(r=>r.text),['こんばんは。','[ja] Good night.','おやすみ。']);
+        const order=T.plays.map(x=>x.kind==='sfx'?x.sfxId:x.kind);
+        assert.deepEqual(order.filter(x=>x==='door_open').length,1,'the cue plays once');
+        assert.ok(order.indexOf('door_open')<order.lastIndexOf('voice'),'the cue of the narration between the lines plays before the translated line');
+    }finally{gate.open();delete globalThis[Symbol.for('blue-lemonade.translator')];delete T.ext.salty;s.listen_lang='auto';L._forTest.reset();}
 });
 await test('6.4.2 auto reading without effect cues reads line by line (pregen off · next · chain), so a tap or a WAV save never buys a line again',async()=>{
     for (const pregen of ['off','next','chain']) {

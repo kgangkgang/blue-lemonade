@@ -14,7 +14,8 @@
 // segmentMessage(rawText, opts)
 //   opts = { skipTags:Set, skipCode:true, stripRegex:[RegExp], userName, charName, knownNames:[],
 //            final:true,            // false = 답장이 아직 오는 중 → 끝의 덜 끝난 조각은 내지 않음
-//            routes:{ thought } }   // thought 가 'skip' 이 아니면 true_thoughts 내용을 속마음 조각으로 냄
+//            routes:{ thought },    // thought 가 'skip' 이 아니면 true_thoughts 내용을 속마음 조각으로 냄
+//            paragraphs:false }     // 1.9.1 true 면 조각에 문단 정보를 더 붙임 (조각 · 갈래 · 수는 그대로): para · speech · paraName (아래 markParagraphs)
 //
 // 설계(§5.5)와 다른 점: 서술은 빈 줄 문단이 아니라 줄마다 나눈다 — 화자 배우기(speakers.js)가 줄 단위로 판정하고,
 // 재생기가 같은 목소리의 이웃 조각을 다시 합치므로 읽기 결과는 같다.
@@ -282,9 +283,9 @@ function snapshot(stack) {
     return ctx;
 }
 
-/** 태그 없는 글(flat)과, 글 구간마다의 문맥(runs) */
+/** 태그 없는 글(flat)과, 글 구간마다의 문맥(runs) · 블록 태그 자리(blocks — 1.9.1 <p> 문단 경계) */
 function flatten(work) {
-    const runs = [], stack = [];
+    const runs = [], stack = [], blocks = [];
     let flat = '', ctx = null, seq = 0, last = 0, m;
     const emit = (chunk) => {
         if (!chunk) return;
@@ -303,6 +304,7 @@ function flatten(work) {
         if (nl) emit(nl.join('')); // 태그 안 줄바꿈은 줄 번호 유지용으로 남김
         const name = m[2].toLowerCase(), attrs = m[3] || '';
         if (BLOCK_TAGS.has(name) && flat && !flat.endsWith('\n')) emit('\n');
+        if (BLOCK_TAGS.has(name)) blocks.push(flat.length);
         if (m[1]) { // 닫는 태그: 같은 이름 중 가장 안쪽까지 닫는다
             let i = stack.length - 1;
             while (i >= 0 && stack[i].name !== name) i--;
@@ -320,7 +322,7 @@ function flatten(work) {
         ctx = null;
     }
     emit(work.slice(last));
-    return { flat, runs };
+    return { flat, runs, blocks };
 }
 
 function ctxFinder(runs) {
@@ -424,7 +426,7 @@ export function segmentMessage(rawText, opts = {}) {
     // 데우스 맨 색 표기  #e63946 "…"  → <font>
     work = work.replace(/(^|\s)#([0-9a-fA-F]{6})[ \t]*("[^"\n]*"|“[^”\n]*”|「[^」\n]*」|『[^』\n]*』)/g, '$1<font color="#$2">$3</font>');
     // 4. 태그 벗기기
-    const { flat, runs } = flatten(work);
+    const { flat, runs, blocks } = flatten(work);
     const ctxAt = ctxFinder(runs);
     const lineAt = lineFinder(flat);
     const pieces = []; // { kind, pos, end, slice, ctx, hint, complete }
@@ -462,7 +464,7 @@ export function segmentMessage(rawText, opts = {}) {
             if (name) covered.push([ls, d.start]); // 이름 표시는 읽지 않음
         }
         const ctx = ctxAt(d.start);
-        pieces.push({ kind: 'dialogue', pos: d.start, end: d.end, slice: body.slice(d.is, d.ie), ctx, hint: lineHint.get(line) || ctx.hint, complete: d.complete });
+        pieces.push({ kind: 'dialogue', pos: d.start, end: d.end, slice: body.slice(d.is, d.ie), ctx, hint: lineHint.get(line) || ctx.hint, complete: d.complete, term: !!opts.paragraphs && quotedTerm(body, d) });
         covered.push([d.start, d.end]);
     }
 
@@ -511,16 +513,124 @@ export function segmentMessage(rawText, opts = {}) {
 
     // 8. 다듬어서 순서대로
     pieces.sort((x, y) => x.pos - y.pos);
+    const paraAt = opts.paragraphs ? paraFinder(flat, blocks) : null;
     const out = [];
     for (const p of pieces) {
         if (!p.complete) continue;
-        if (p.marker) { out.push({ kind: 'thought', text: '', raw: '', color: p.ctx.color, tags: p.ctx.tags.slice(), speakerHint: p.hint || null, line: lineAt(p.pos) }); continue; }
-        const raw = stripMarkup(p.slice).trim();
-        const text = raw.replace(/\s+/g, ' ').trim();
-        if (!LETTER.test(text)) continue;
-        out.push({ kind: p.kind, text, raw, color: p.ctx.color, tags: p.ctx.tags.slice(), speakerHint: p.hint || null, line: lineAt(p.pos) });
+        let seg;
+        if (p.marker) seg = { kind: 'thought', text: '', raw: '', color: p.ctx.color, tags: p.ctx.tags.slice(), speakerHint: p.hint || null, line: lineAt(p.pos) };
+        else {
+            const raw = stripMarkup(p.slice).trim();
+            const text = raw.replace(/\s+/g, ' ').trim();
+            if (!LETTER.test(text)) continue;
+            seg = { kind: p.kind, text, raw, color: p.ctx.color, tags: p.ctx.tags.slice(), speakerHint: p.hint || null, line: lineAt(p.pos) };
+            if (p.term) seg.term = true;
+        }
+        if (paraAt) seg.para = paraAt(p.pos);
+        out.push(seg);
     }
+    if (paraAt) markParagraphs(out, [...(opts.knownNames || []), opts.userName, opts.charName]);
     return out;
+}
+
+// ---------- 1.9.1 한 문단 이어 읽기 (paragraphs: true 일 때만 — 조각 · 갈래 · 수는 그대로라 원문 ↔ 번역문 짝 · 대사 분석 번호 · 이어쓰기 자리는 같다)
+// 「*아, 제발,* 친구는 전화 너머로 애원했다. *너 몇 달째 …*」처럼 기울임이 그 문단 인물의 말 · 속마음이고 서술이 사이에 낀 문단 (소설체 번역문).
+//   para     문단 번호 (빈 줄 · <p> 같은 블록 태그로 나눈 문단 — 같은 메시지 안에서만 견줌)
+//   speech   기울임(*…* = action)이 말 · 속마음인가: 그 문단에 대사(따옴표 · 색 대사)가 없고 기울이지 않은 서술이 있을 때.
+//            RP 체의 *행동* 문단(서술이 모두 기울임이거나 「」 · "…" 대사가 함께 있는 문단)은 그대로 행동. 재생기는 speech 조각을 대사처럼 읽는다 (읽을 부분 › 대사)
+//   term     서술 속 낱말 인용 (「그는 "Old-friend"라고 불렀다」 — 닫는 따옴표 바로 뒤에 글자(조사)가 붙고, 세 낱말 · 30자 안이고, 문장부호가 없는 따옴표 글).
+//            대사가 아니라 재생기는 자동 읽기 · 미리 만들기 · 이어 읽기에서 뺀다 (직접 누르면 읽음). 조각 수는 그대로 (대사 분석 번호 · 짝 그대로)
+//   paraName 그 문단 서술에 처음 나오는 아는 이름 (캐릭터 · 사용자 · 화자 목록) — 대사 · 말 기울임 조각에만.
+//            색 · 이름표 · 대사 분석이 화자를 못 줄 때만 쓴다 (player.buildJobs)
+/** 1.9.1 서술 속 낱말 인용인가 (대화문 구간 d — scanDialogue): 닫힌 따옴표 바로 뒤(*_~ 표시는 건너뜀)에 다른 문자의 글자(영어 낱말 뒤 한글 · 일본어 조사)가 붙고,
+ *  안의 글이 짧고 문장부호가 없다. 같은 문자면(「"가자"라고 말했다」) 짧은 대사라 그대로 */
+const scriptOf = (c) => (/[A-Za-zÀ-ɏ]/.test(c) ? 'latin' : /[가-힣ᄀ-ᇿ㄰-㆏]/.test(c) ? 'hangul' : /[぀-ヿ㐀-䶿一-鿿]/.test(c) ? 'cjk' : 'other');
+function quotedTerm(body, d) {
+    if (d.end <= d.ie) return false;   // 닫는 따옴표가 없는 대사
+    let k = d.end;
+    while (k < body.length && '*_~'.includes(body[k])) k++;
+    if (!LETTER.test(body[k] || '')) return false;
+    const inner = stripMarkup(body.slice(d.is, d.ie)).replace(/\s+/g, ' ').trim();
+    const first = (inner.match(/[\p{L}]/u) || [''])[0];
+    if (!first || scriptOf(first) === scriptOf(body[k])) return false;
+    return inner.length <= 30 && inner.split(' ').length <= 3 && !/[.!?。！？…~,，、]/.test(inner);
+}
+/** 글 자리 → 문단 번호: 빈 줄(\n 빈칸 \n)과 블록 태그 자리를 앞에서부터 센다 */
+function paraFinder(flat, blocks) {
+    const cuts = [...blocks];
+    for (const m of flat.matchAll(/\n[ \t]*\n/g)) cuts.push(m.index + 1);
+    cuts.sort((a, b) => a - b);
+    return (pos) => {
+        let lo = 0, hi = cuts.length;
+        while (lo < hi) { const mid = (lo + hi) >> 1; if (cuts[mid] <= pos) lo = mid + 1; else hi = mid; }
+        return lo;
+    };
+}
+/** 글에 처음 나오는 이름 (낱말 머리에서 — 「하은하」 속의 「은하」는 아님, 한글 이름 뒤 조사는 붙어도 됨) · 같은 자리면 긴 이름. 없으면 null */
+export function firstNameIn(text, names) {
+    const hay = String(text || '').toLowerCase();
+    if (!hay) return null;
+    let best = null, at = Infinity;
+    const seen = new Set();
+    for (const n of names || []) {
+        const name = String(n || '').trim();
+        const key = name.toLowerCase();
+        if ((key.match(/[\p{L}\p{N}]/gu) || []).length < 2 || seen.has(key)) continue;
+        seen.add(key);
+        for (let i = hay.indexOf(key); i >= 0 && i <= at; i = hay.indexOf(key, i + 1)) {
+            if (LETTER.test(hay[i - 1] || '')) continue;
+            if (/[a-z0-9]$/.test(key) && /[a-z0-9]/.test(hay[i + key.length] || '')) continue;   // 로마자 이름은 낱말 끝까지 (Mika ≠ Mikael)
+            if (i < at || name.length > best.length) { best = name; at = i; }
+            break;
+        }
+    }
+    return best;
+}
+/** 문단마다 speech · paraName 을 붙인다 (조각을 고쳐 씀) */
+function markParagraphs(segs, names) {
+    const byPara = new Map();
+    for (const g of segs) { if (!byPara.has(g.para)) byPara.set(g.para, []); byPara.get(g.para).push(g); }
+    for (const list of byPara.values()) {
+        const narration = list.filter(g => g.kind === 'narration' && g.text);
+        if (narration.length && !list.some(g => g.kind === 'dialogue' && g.text)) for (const g of list) if (g.kind === 'action' && g.text) g.speech = true;
+        const name = narration.length ? firstNameIn(narration.map(g => g.raw || g.text).join('\n'), names) : null;
+        if (name) for (const g of list) if (g.text && (g.kind === 'dialogue' || g.speech)) g.paraName = name;
+    }
+    return segs;
+}
+/**
+ * 대사 분석에 물을 기울임 조각 (paragraphs 로 나눈 조각): 기울이지 않은 서술이 있는 문단의 *…* — 말 · 속마음 · 서술을 AI 가 가른다
+ * (analysis.js buildPrompt · italicsOf). 서술이 모두 기울임인 RP 체 문단은 묻지 않는다 (값을 아끼고, 그건 행동)
+ */
+export function italicCandidates(segs) {
+    const narrated = new Set((segs || []).filter(g => g && g.kind === 'narration' && g.text && Number.isInteger(g.para)).map(g => g.para));
+    return (segs || []).filter(g => g && g.kind === 'action' && g.text && narrated.has(g.para));
+}
+/**
+ * 이어 읽을 묶음 (조각을 고쳐 씀): 같은 문단에서 대사 · 말 기울임(speech) 조각이 읽지 않는 것(길이 '건너뛰기'인 서술 · 행동, 속마음 이름표)만
+ * 사이에 두고 이어지면 같은 join (tag + 번호). 읽는 서술 · 행동 · 속마음 글이 끼면 거기서 끊긴다 — 서술을 읽으면 지금 순서 그대로.
+ * 재생기가 같은 join 의 이웃 작업을 같은 목소리 · 화자일 때만 한 요청으로 잇는다 (player finishJobs join). 자동 읽기 · 누르기 · 미리 만들기가
+ * 같은 표시를 쓰니 캐시 열쇠도 같다
+ */
+export function markJoins(segs, routes = {}, tag = '') {
+    const quiet = (g) => !g.text || g.term || (g.kind === 'narration' && (routes.narration || 'skip') === 'skip') || (g.kind === 'action' && !g.speech && (routes.action || 'skip') === 'skip');
+    let n = 0, cur = 0, para;
+    for (const g of segs || []) {
+        if (!g) continue;
+        delete g.join;
+        if (g.text && Number.isInteger(g.para) && ((g.kind === 'dialogue' && !g.term) || (g.kind === 'action' && g.speech))) {
+            if (!cur || g.para !== para) { cur = ++n; para = g.para; }
+            g.join = `${tag}${cur}`;
+        } else if (!quiet(g) || g.para !== para) cur = 0;
+    }
+    return segs;
+}
+/** 이어 읽을 때 조각 사이: 쉼표 · 문장부호 · 닫는 따옴표로 끝나면 띄어쓰기 하나, 글자로 끝나면 쉼표 + 띄어쓰기 (서술이 빠진 자리에서 숨 쉬게) */
+export function joinSpeech(a, b) {
+    const x = String(a || '').trimEnd(), y = String(b || '').trimStart();
+    if (!x) return y;
+    if (!y) return x;
+    return `${x}${/[\p{L}\p{N}]$/u.test(x) ? ',' : ''} ${y}`;
 }
 
 /** 차례대로 짝지으면 색이 부딪치나 (둘 다 색이 있는데 다름) — 수만 같고 한 줄씩 밀린 것 (원문에만 있는 영어 "…" + 번역문에만 있는 ‘…’) */

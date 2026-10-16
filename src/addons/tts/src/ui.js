@@ -137,6 +137,8 @@ const READ_CARDS = {
         { key: 'routes.thought', label: '속마음', type: 'select', options: ROUTE_OPTS, show: isCustom },
         { key: 'routes.user_dialogue', label: '내 대사', type: 'select', options: [{ value: 'user', label: '내 목소리' }, { value: 'skip', label: '읽지 않음' }], show: isCustom },
         { key: 'no_dialogue_fallback', label: '대화문이 없는 답장', type: 'select', options: [{ value: 'narration', label: '서술 읽기' }, { value: 'skip', label: '읽지 않음' }] },
+        { key: 'join_paragraph', label: '한 문단 이어 읽기', type: 'toggle', desc: '같은 문단의 대사 · 말 기울임을 서술 빼고 이어서 읽어요',   // 1.9.1
+            help: '같은 문단에서 같은 사람의 대사와 기울임(*…*)이 서술로만 끊겨 있으면 한 번에 자연스럽게 이어 읽어요. 대사 분석(화자 찾기)을 켜 두면 기울임을 말 · 속마음 · 서술로 가르고 주인을 정해요 — 서술은 안 읽어요. 분석이 없으면 따옴표 대사 없이 서술 사이에 낀 기울임을 그 문단 인물의 말로 보고, 그 문단 서술에 처음 나오는 아는 이름의 목소리로 읽어요. 서술을 읽는 설정이면 지금 순서 그대로예요.' },
     ]],
     text: ['fa-font', '본문과 제외할 내용', [
         { key: 'text_source', label: '읽을 글', type: 'select', options: [{ value: 'display', label: '번역문 (있으면)' }, { value: 'original', label: '원문' }] },

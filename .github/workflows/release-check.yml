@@ -73,6 +73,7 @@ jobs:
           node tools/tests/tts-onboarding.mjs .
           node tools/tests/tts-paint.mjs .
           node tools/tests/tts-listen.mjs .
+          node tools/tests/tts-join.mjs .
           node tools/tests/tts-block-fallback.mjs .
           node tools/tests/modelswitch-fallback.mjs .
           node tools/tests/modelswitch-links.mjs .

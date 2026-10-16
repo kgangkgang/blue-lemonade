@@ -12,6 +12,9 @@ import { runtimeEnabled, assertRuntime, waitForRuntime } from './runtime.js';
 //   sfx?: [{ after, id, repeats, durationMs }]   서술에서 고른 효과음. after = 앞의 원문 대화문 수; 반복 1~4, 지속 0~8000ms.
 //   lib?: 2          1.6.8 효과음 보관함 판(sfx-library.SFX_LIB). 없으면 1.6.8 전 분석 — 그때의 'footsteps' 는 「발소리」였으니 재생 때 daily_footsteps 로 (resolveSfxId)
 //   baseProfile?: string  효과음을 끄면 기존 감정·번역은 재요청 없이 사용한다.
+//   italics?: [{ j, h, kind, speaker? }]   1.9.1 한 문단 이어 읽기: 서술이 있는 문단의 기울임 조각(*…*)을 AI 가 가른 것. j = 원문 기울임(action) 순번 ·
+//          h = 정규화한 글 해시 · kind = 'speech'(소리 내 말함 — 전화 너머 포함) | 'thought'(속마음) | 'narration'(안 읽음) | ''(답 없음 → 재생기의 이름 규칙)
+//          speaker = 말 · 속마음의 주인 (후보 이름 · 나 · 엑스트라면 단역). 1.9.1 전 분석에는 없다 — 다시 받지 않고 재생기의 이름 규칙으로 (italicsOf)
 // }
 // 저장은 getContext().saveChat() 을 바로 (생성 중이면 끝난 뒤; 지우기는 1초 디바운스) · 스와이프 정보에도 복사 (syncMesToSwipe) 해 되돌아와도 다시 안 묻는다.
 // 비용: 메시지(글 해시 + 언어)마다 요청 한 번. 같은 메시지를 또 부르면 진행 중인 요청에 붙고, 부른 쪽이 모두 그만둬도
@@ -47,7 +50,7 @@ import * as ST from '../../../../../../../../script.js';
 import { chat, substituteParams, getRequestHeaders } from '../../../../../../../../script.js';
 import { getContext } from '../../../../../../../extensions.js';
 import { settings, addAnalysisUsage, USER_AUTO, sceneCharsOf } from './settings.js';
-import { segmentMessage, detectLang, parseRegexLines, speechDisplay } from './text.js';
+import { segmentMessage, detectLang, parseRegexLines, speechDisplay, italicCandidates } from './text.js';
 import { resolveSpeaker, knownNames as learnedNames } from './speakers.js';
 import { allVoices, hasOwnVoice, noteExtras } from './voices.js';
 import { fetchJson } from './providers/_http.js';
@@ -87,6 +90,7 @@ const SCHEMA = Object.freeze({
                 },
             },
             people: { type: 'object' },   // 1.3.7 엑스트라 목소리 (있을 때만)
+            italics: { type: 'array', items: { type: 'object', properties: { j: { type: 'integer' }, kind: { type: 'string' }, speaker: { type: 'string' } }, required: ['j'] } },   // 1.9.1 (있을 때만)
             sfx: { type: 'array', maxItems: 64, items: { type: 'object', properties: { after: { type: 'integer', minimum: 0 }, id: { type: 'string' }, repeats: { type: 'integer', minimum: 1, maximum: 4 }, durationMs: { type: 'integer', minimum: 0, maximum: 8000 }, strength: { type: 'integer', minimum: 1, maximum: 3 }, ongoing: { type: 'boolean' }, stopAfter: { type: 'integer', minimum: 0 } }, required: ['after', 'id'] } },
         },
         required: ['segs'],
@@ -158,11 +162,11 @@ function knownNames(ctx, s) {
     try { for (const n of learnedNames() || []) set.add(n); } catch { /* 채팅 메타 없음 */ }
     return [...set].filter(Boolean);
 }
-function segOpts(mes, s, ctx, userName, charName) {
+function segOpts(mes, s, ctx, userName, charName, paragraphs = false) {
     return {
         skipTags: new Set(String(s.skip_tags || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean)),
         skipCode: !!s.skip_codeblocks, stripRegex: parseRegexLines(s.strip_regex),
-        userName, charName, knownNames: knownNames(ctx, s), routes: s.routes, final: true,
+        userName, charName, knownNames: knownNames(ctx, s), routes: s.routes, final: true, paragraphs,   // 1.9.1 paragraphs = 기울임을 물을 때만 (조각은 같고 문단 칸만 더함)
     };
 }
 /** 1.3.6 화자를 색 · 이름표 · 내 색으로 못 정한 줄인가 (resolveSpeaker 가 보낸 쪽 이름으로 떨어짐) → 화자 찾기가 켜져 있으면 LLM 에게 묻는다 */
@@ -308,19 +312,21 @@ export function analysisCovers(a, langs) {
  *   done (1.7.0): 보충할 때의 옛 분석 { segs, langs, redo } — 옛 분석이 그 언어를 마친 줄(다시 옮길 줄 redo 는 빼고)과 번역이 이미 있는 줄은
  *     needs 에서 뺀다 → 다시 쓰기 뒤 보충은 바뀐 줄만 묻는다. 새 언어를 처음 보충할 때는 모든 줄이 비어 있어 예전과 같다
  *   speaker (1.3.6): 색 · 이름표로 못 정한 대사(ask)는 LLM 에게 화자를 묻는다 — 후보(speakers)를 함께 보내고 답은 후보 가운데 하나만 받는다
+ *   italics (1.9.1): 서술이 있는 문단의 기울임 조각(text.js italicCandidates)을 말 · 속마음 · 서술로 가르고 주인을 묻는다 — 40개 · 조각 120자 · 문단 발췌 100자까지
  *   extras (1.3.7): 엑스트라 목소리 — (?) 줄에 단역 이름도 받고, 목소리를 안 정한 화자(unvoiced)와 함께 성별 · 나이(people)를 묻는다.
  *     unvoiced 는 사용자가 정한 목소리(연결표 · 목록)만 보고 엑스트라 표는 보지 않는다 — 엑스트라를 적어도 프롬프트(=저장된 분석의 profile)가 그대로
- * → { system, user, lines: [{ i, h, text, speaker, ask }], needs: { i: ['ja'] }, speakers, unvoiced, extras, userName, asked: n, empty }
+ * → { system, user, lines: [{ i, h, text, speaker, ask }], needs: { i: ['ja'] }, speakers, unvoiced, extras, userName, asked: n, italics: [{ j, h, text, para, scene? }], empty }
  */
 export function buildPrompt(mes, opts = {}) {
     const s = settings();
     const { ctx, userName, charName } = chatCtx(mes);
     const emotion = opts.emotion !== false;
     const askSpeaker = opts.speaker === true && !mes?.is_user;
+    const askItalics = opts.italics === true && !mes?.is_user;
     const langs = opts.translate === false ? [] : normLangs(opts.langs);
     const max = Number.isFinite(Number(opts.context_chars)) ? Number(opts.context_chars) : 1200;
     let segs = [];
-    try { segs = segmentMessage(sub(mes?.mes), segOpts(mes, s, ctx, userName, charName)) || []; }
+    try { segs = segmentMessage(sub(mes?.mes), segOpts(mes, s, ctx, userName, charName, askItalics)) || []; }
     catch (e) { log('err', `대사 분석 나누기 실패: ${snip(e?.message, 30)}`); segs = []; }
     const lines = [];
     const needs = {};
@@ -342,6 +348,7 @@ export function buildPrompt(mes, opts = {}) {
         if (want.length) needs[i] = want;
     }
     const context = clip(other.join('\n'), max);
+    const italics = askItalics ? italicsToAsk(segs) : [];
     // 화면 번역문도 원문과 같은 거름(건너뛸 태그 · 코드 블록 · 지울 정규식)을 거쳐 보낸다 — <tracker>·<think> 같은 블록이 새지 않게
     const d = opts.display === false ? '' : mes?.extra?.display_text;   // 1.6.0 display:false = 캐시 키용 (번역문 없이)
     let display = '';
@@ -351,7 +358,7 @@ export function buildPrompt(mes, opts = {}) {
         catch { dsegs = []; }
         display = clip(joinByLine(dsegs), max);
     }
-    const speakers = lines.some(l => l.ask) ? candidateNames(ctx, s, charName, userName) : [];
+    const speakers = lines.some(l => l.ask) || italics.length ? candidateNames(ctx, s, charName, userName) : [];
     const extras = opts.extras === true && !mes?.is_user;
     const unvoiced = [];
     if (extras) {
@@ -373,8 +380,26 @@ export function buildPrompt(mes, opts = {}) {
     const sfx = sfxLibrary.length > 0;
     const sceneParts = sfx ? sceneExcerpt(scene, max) : { text: '', afters: [] };
     const sceneText = sceneParts.text;
-    const { system, user, asked } = composePrompt({ lines, needs, context, display, emotion, charName, userName, speakers, extras, unvoiced, sfxLibrary, sceneText });
-    return { system, user, lines, needs, speakers, unvoiced, extras, userName, asked, sfx, sfxIds: sfxLibrary.map(x => x.id), sfxAfters: sceneParts.afters, sfxScene: sceneParts.scene || [], empty: asked === 0 && !sfx };
+    const { system, user, asked } = composePrompt({ lines, needs, context, display, emotion, charName, userName, speakers, extras, unvoiced, sfxLibrary, sceneText, italics });
+    return { system, user, lines, needs, speakers, unvoiced, extras, userName, asked, italics, sfx, sfxIds: sfxLibrary.map(x => x.id), sfxAfters: sceneParts.afters, sfxScene: sceneParts.scene || [], empty: asked === 0 && !sfx && !italics.length };
+}
+/** 1.9.1 물을 기울임 조각 [{ j, h, text, para, scene? }] — j 는 원문 기울임(action) 순번 (italicsOf 와 같은 셈), scene = 그 문단의 서술 발췌 (문단의 첫 조각에만) */
+const ITALIC_MAX = 40, ITALIC_CHARS = 120, ITALIC_SCENE = 100;
+function italicsToAsk(segs) {
+    const acts = segs.filter(g => g && g.kind === 'action' && g.text);
+    const out = [];
+    let lastPara = null;
+    for (const g of italicCandidates(segs)) {
+        if (out.length >= ITALIC_MAX) break;
+        const text = String(g.text).trim();
+        const item = { j: acts.indexOf(g), h: hash(normText(text)), text: clip(text, ITALIC_CHARS), para: g.para };
+        if (g.para !== lastPara) {
+            lastPara = g.para;
+            item.scene = clip(segs.filter(x => x && x.para === g.para && x.kind === 'narration' && x.text).map(x => String(x.text).trim()).join(' '), ITALIC_SCENE);
+        }
+        out.push(item);
+    }
+    return out;
 }
 /** 조각들을 원래 줄대로 이어 붙인 평문 (대화문은 "…" 로 감쌈) */
 function joinByLine(segs) {
@@ -395,33 +420,43 @@ function joinByLine(segs) {
  *  1.3.7 extras 인데 (?) 줄도 목소리 없는 화자도 없으면 1.3.6 과 글자까지 같다
  *  1.3.6 lines[].ask 인 줄은 '(?)' 로 적고 Known speakers 와 "speaker" 과제를 붙인다 (ask 줄이 없으면 1.3.5 와 글자까지 같은 프롬프트 — 저장된 분석이 그대로 산다) */
 export function composePrompt(parts) {
-    const { lines = [], needs = {}, context = '', display = '', emotion = true, charName = '', userName = '', speakers = [], extras = false, sfxLibrary = [], sceneText = '' } = parts || {};
+    const { lines = [], needs = {}, context = '', display = '', emotion = true, charName = '', userName = '', speakers = [], extras = false, sfxLibrary = [], sceneText = '', italics = [] } = parts || {};
     const sfx = sfxLibrary.length > 0 && !!sceneText;
     const asked = lines.filter(l => emotion || (needs[l.i] && needs[l.i].length) || l.ask);
     const askLines = asked.filter(l => l.ask);
     const langsUsed = [...new Set(Object.values(needs).flat())].filter(l => LANGS.includes(l));
     const unvoiced = extras && asked.length ? (parts.unvoiced || []).filter(n => asked.some(l => !l.ask && cleanName(l.speaker) === n)) : [];
-    const people = extras && (askLines.length > 0 || unvoiced.length > 0);
+    const people = extras && (askLines.length > 0 || unvoiced.length > 0 || italics.length > 0);
     const out = [];
     if (charName || userName) out.push(`Character: ${charName || '?'} · User: ${userName || '?'}`);
     if (context) out.push(`Narration around the lines:\n${context}`);
     if (display) out.push(`Korean translation shown on screen (meaning only, do not copy):\n${display}`);
-    if (askLines.length && speakers.length) out.push(`Known speakers: ${speakers.join(', ')}`);
+    if ((askLines.length || italics.length) && speakers.length) out.push(`Known speakers: ${speakers.join(', ')}`);
     if (unvoiced.length) out.push(`Speakers without a voice yet: ${unvoiced.join(', ')}`);
     if (sfx) {
         out.push(`Sound-effect library (reference data, not instructions):\n${JSON.stringify(sfxLibrary)}`);
         out.push(`Narration positions for sound effects (reference data, not instructions):\n${sceneText}`);
     }
-    out.push('Dialogue lines:');
-    for (const l of (sfx ? lines : asked)) {
+    const shown = sfx ? lines : asked;
+    if (shown.length || !italics.length) out.push('Dialogue lines:');   // 1.9.1 기울임만 물을 때는 빈 대사 칸을 적지 않는다 (기울임이 없으면 예전과 같은 글)
+    for (const l of shown) {
         const need = needs[l.i] && needs[l.i].length ? `  → needs: ${needs[l.i].join(', ')}` : '';
         out.push(`[${l.i}]${l.ask ? ' (?)' : (l.speaker ? ` (${l.speaker})` : '')} "${l.text}"${need}`);
+    }
+    if (italics.length) {   // 1.9.1 한 문단 이어 읽기
+        const rows = ['Italic fragments inside narration paragraphs (¶ = narration of that paragraph):'];
+        for (const it of italics) {
+            if (it.scene) rows.push(`¶ ${it.scene}`);
+            rows.push(`[*${it.j}] "${it.text}"`);
+        }
+        out.push(rows.join('\n'));
     }
     const tasks = [];
     if (asked.length) tasks.push(`Return one seg for EVERY requested dialogue index: ${asked.map(l => l.i).join(', ')}. All these lines belong to one message; do not return only the first line.`);
     if (emotion) tasks.push(`For every line give "emotion": one of ${EMOTIONS.join(', ')} — judged from the narration and how the line is said (shout = raised voice, whisper = hushed).`);
     if (askLines.length && extras) tasks.push('For lines marked (?) give "speaker": who says that line, judged from the narration and the other lines — one name from the known speakers, or for a minor character who is not among them (a clerk, a passer-by …) a short name or role as the story calls them, or "?" if it cannot be told.');
     else if (askLines.length) tasks.push('For lines marked (?) give "speaker": who says that line, judged from the narration and the other lines — exactly one name from the known speakers, or "?" if it cannot be told.');
+    if (italics.length) tasks.push(`For EVERY italic fragment [*N] add an entry to "italics": {"j":N,"kind":"speech|thought|narration","speaker":"<name>"}. speech = words a person says aloud (also over the phone), thought = a person's unspoken inner thought, narration = description, action, sound or emphasis that nobody says. For speech and thought give "speaker": who says or thinks it, judged from that paragraph — ${extras ? 'one name from the known speakers (the user is one of them), or for a minor character who is not among them a short name or role as the story calls them' : 'exactly one name from the known speakers (the user is one of them)'}, or "?" if it cannot be told.`);
     if (people) tasks.push('Add "people": {"<name>": "<m|f> <young|adult|old>"} for every speaker without a voice yet and every speaker you give for a (?) line — m = male, f = female.');
     if (langsUsed.length) {
         tasks.push('For lines marked "needs", add one key per listed language with the line as ' + langsUsed.map(l => `"${l}" = ${LANG_HINT[l]}`).join('; ') + '. Translate the meaning as spoken dialogue, no quotation marks, no notes.');
@@ -429,8 +464,8 @@ export function composePrompt(parts) {
     // Scene SFX alongside dialogue analysis: inspired by JINSIN2/MultiCast-TTS (MIT).
     // https://github.com/JINSIN2/MultiCast-TTS · attribution and full license: ../NOTICE.md
     if (sfx) tasks.push(`Add "sfx": an array of {"after":0,"id":"<library id>","repeats":1,"durationMs":0,"strength":2} entries, one per sound that occurs, in narration order. There is no fixed count: a short narration may have none and a long one may have dozens — never stop early to keep the list short. Choose concrete sounds occurring in the numbered narration positions above and ONLY exact IDs in the library. Entries marked "preferred":true are the user's favourites: when more than one library sound fits the same moment, choose the preferred one. The reader filters by strength, so include weaker ones too and grade each one honestly: strength 1 = an unmistakable sound the narration states (a slap lands, a door slams, a phone buzzes); 2 = a clear physical action that makes a sound (sits down, picks up a cup, walks, kisses); 3 = uncertain or merely similar — a plausible sound the text does not state, which the reader may treat as over-interpretation (cloth rustles, a hand on skin, small movements). Intimate or sexual scenes count the same as any other: skin slapping, spanking, kissing, licking, wet squelching, a creaking bed and swallowing are sounds. Use the matching [after=N] position: N is the number of original dialogue lines before that narration, from 0 (before the first line) to ${lines.length} (after the last line). Never infer sounds from dialogue mentions, thoughts, negation, silence, wishes, possibilities, plans, comparisons or metaphors. Do not invent a sound or use a URL. Prefer one fitting effect per occurrence; no duplicate id at the same position. repeats is 1 by default: a single drop, coin, cup, meow or other action plays once. Increase it only for an explicit count of THAT sound in the same narration ("dropped it twice" / "물건을 두 번 떨어뜨렸다" means 2), capped at 4; unrelated numbers, emphasis and dialogue do not count. durationMs is 0 (natural clip length) by default. Only library entries with sustain:true may have a positive duration: use an explicit duration or a conservative 2000~6000 ms for a clearly ongoing action such as "typed for a while" / "한동안 타이핑했다"; never exceed 8000 ms. A sustained cue uses repeats:1. Do not stretch a single impact into a background loop. When a sustain:true action keeps going while the characters talk (sex, spanking, kissing, rain, typing in the background), add "ongoing":true and "stopAfter":M where M is the [after=M] position whose narration ends it (omit stopAfter if it continues to the end of the message); an ongoing cue loops under every dialogue line from its position until M. If nothing clearly fits, return "sfx": []. Dialogue shown only for position/context needs no seg entry unless an emotion, translation or speaker was requested.`);
-    const segExample = asked.length || !sfx ? '[{"i":0' + (emotion ? ',"emotion":"happy"' : '') + (askLines.length ? `,"speaker":"${speakers[0] || 'Name'}"` : '') + (langsUsed.length ? `,"${langsUsed[0]}":"…"` : '') + '}]' : '[]';
-    tasks.push('Reply with JSON only, no markdown, no extra keys: {"segs":' + segExample + (people ? `,"people":{"${unvoiced[0] || 'Name'}":"f adult"}` : '') + (sfx ? ',"sfx":[]' : '') + '}');
+    const segExample = asked.length || (!sfx && !italics.length) ? '[{"i":0' + (emotion ? ',"emotion":"happy"' : '') + (askLines.length ? `,"speaker":"${speakers[0] || 'Name'}"` : '') + (langsUsed.length ? `,"${langsUsed[0]}":"…"` : '') + '}]' : '[]';
+    tasks.push('Reply with JSON only, no markdown, no extra keys: {"segs":' + segExample + (people ? `,"people":{"${unvoiced[0] || 'Name'}":"f adult"}` : '') + (sfx ? ',"sfx":[]' : '') + (italics.length ? `,"italics":[{"j":${italics[0].j},"kind":"speech","speaker":"${speakers[0] || 'Name'}"}]` : '') + '}');
     out.push(tasks.join('\n'));
     return { system: SYSTEM, user: out.join('\n\n'), asked: asked.length };
 }
@@ -491,6 +526,65 @@ function normalizeSegs(parsed, built, emotionOn) {
         }
         return out;
     });
+}
+
+// ---------- 1.9.1 기울임 조각 (한 문단 이어 읽기)
+const ITALIC_KINDS = new Set(['speech', 'thought', 'narration']);
+/** 응답의 italics → 물은 조각마다 { j, h, kind, speaker? } (빠진 답은 kind '' — 재생기의 이름 규칙으로. 빠졌다고 다시 묻지 않는다). 물은 게 없으면 null */
+function normalizeItalics(raw, built) {
+    if (!built?.italics?.length) return null;
+    const byJ = new Map();
+    for (const r of Array.isArray(raw) ? raw : []) { const j = Number(r?.j); if (isObj(r) && Number.isInteger(j) && !byJ.has(j)) byJ.set(j, r); }
+    return built.italics.map(it => {
+        const r = byJ.get(it.j) || {};
+        const k = String(r.kind || '').trim().toLowerCase();
+        const out = { j: it.j, h: it.h, kind: ITALIC_KINDS.has(k) ? k : '' };
+        if (out.kind === 'speech' || out.kind === 'thought') {
+            const sp = matchSpeaker(r.speaker, built.speakers) || (built.extras ? minorName(r.speaker, built) : '');
+            if (sp) out.speaker = sp;
+        }
+        return out;
+    });
+}
+/** 저장된 분석의 기울임 답 (같은 글 · 같은 스와이프일 때만, 통신 없음). 1.9.1 전 분석 · 기울임을 안 물은 분석이면 null */
+export function italicsOf(mes) {
+    const a = slot(mes, false)?.analysis;
+    if (!isObj(a) || !Array.isArray(a.italics) || a.hash !== textHash(mes) || (Number.isInteger(a.swipe) && a.swipe !== swipeOf(mes))) return null;
+    return a.italics;
+}
+/**
+ * 기울임 답을 조각에 얹는다 (조각을 고쳐 씀 — paragraphs 로 나눈 원문 조각 목록). 순번(j)의 기울임 글 해시가 같을 때만:
+ * speech · thought → speech = true (대사처럼 읽음) · italicKind · italicSpeaker, narration → speech = false (안 읽음). 답이 없는 조각은 이름 규칙 그대로.
+ * → 얹은 기울임 [{ seg, kind }] (번역문 쪽에 같은 차례로 옮길 때 씀)
+ */
+export function applyItalics(segs, italics) {
+    const acts = (segs || []).filter(g => g && g.kind === 'action' && g.text);
+    const out = [];
+    for (const it of Array.isArray(italics) ? italics : []) {
+        const g = isObj(it) && Number.isInteger(it.j) ? acts[it.j] : null;
+        if (!g || !ITALIC_KINDS.has(it.kind) || hash(normText(String(g.text).trim())) !== it.h) continue;
+        markItalic(g, it.kind, it.speaker);
+        out.push({ seg: g, kind: it.kind, speaker: it.speaker || '' });
+    }
+    return out;
+}
+/**
+ * 저장된 기울임 답을 이 메시지의 원문 조각(orig)에, 기울임 수가 같으면 번역문 조각(disp)에도 같은 차례로 얹는다 (alignLists 의 행동 짝과 같은 규칙).
+ * 재생기(sourcesOf) · 누르기(clickplay)가 같은 판단을 쓰게. 답이 없으면 아무것도 안 함
+ */
+export function applyMessageItalics(mes, orig, disp) {
+    const its = italicsOf(mes);
+    if (!its) return;
+    const got = applyItalics(orig, its);
+    if (!disp || !got.length) return;
+    const oa = (orig || []).filter(g => g && g.kind === 'action' && g.text), da = disp.filter(g => g && g.kind === 'action' && g.text);
+    if (oa.length !== da.length) return;
+    for (const { seg, kind, speaker } of got) { const d = da[oa.indexOf(seg)]; if (d) markItalic(d, kind, speaker); }
+}
+export function markItalic(g, kind, speaker) {
+    g.speech = kind !== 'narration';
+    g.italicKind = kind;
+    if (speaker && kind !== 'narration') g.italicSpeaker = speaker; else delete g.italicSpeaker;
 }
 
 const SFX_TIMING_HINTS = {
@@ -1313,7 +1407,8 @@ async function doAnalyze(entry) {
     const requestLangs = previous ? wantedLangs.filter(l => !(previous.langs || []).includes(l) || redoOf(previous, l).length) : wantedLangs;   // 1.7.0 다시 옮길 줄이 남은 언어도
     const langs = normLangs([...(previous?.langs || []), ...wantedLangs]);
     // 이미 끝난 메시지는 새로 필요한 번역만 보충한다. 감정·화자·효과음과 이전 언어의 완료 기록은 그대로 유지한다.
-    const promptOpts = { langs: requestLangs, emotion: !previous && !!cfg.emotion, translate: !!cfg.translate, context_chars: cfg.context_chars, speaker: !previous && cfg.speaker !== false, extras: !previous && extrasOn(), sfx: !previous, done: previous ? { segs: previous.segs, langs: previous.langs || [], redo: previous.redo || null } : null };
+    const promptOpts = { langs: requestLangs, emotion: !previous && !!cfg.emotion, translate: !!cfg.translate, context_chars: cfg.context_chars, speaker: !previous && cfg.speaker !== false, extras: !previous && extrasOn(), sfx: !previous, done: previous ? { segs: previous.segs, langs: previous.langs || [], redo: previous.redo || null } : null,
+        italics: !previous && cfg.speaker !== false && settings().join_paragraph !== false };   // 1.9.1 기울임 조각도 (보충 요청은 묻지 않음)
     const built = buildPrompt(mes, promptOpts);
     entry.lines = built.lines.length;   // 1.7.0 받는 사이 다시 쓰기가 끼면 대화문 수가 같을 때만 끝까지 받는다 (onMessageChanged)
     const failedKey = failureKey(mes);
@@ -1392,8 +1487,10 @@ async function doAnalyze(entry) {
     if (built.lines.some(l => { const speaker = replyByIndex.get(l.i)?.speaker; return l.ask && (typeof speaker !== 'string' || !speaker.trim()); })) throw rejectResponse('대사 분석 응답에 빠진 화자가 있어요');
     if (previous) segs = segs.map(g => { const old = previous.segs.find(p => p.i === g.i && p.h === g.h); return old ? { ...old, text: { ...old.text, ...g.text } } : g; });
     if (!force) segs = carryOver(segs, previousOf(mes));          // 번역만 재사용, 새 문맥의 감정은 유지
-    const people = parsePeople(parsed.people, built, segs);
+    const italics = normalizeItalics(parsed.italics, built);   // 1.9.1 빠진 답은 이름 규칙으로 (다시 묻지 않음)
+    const people = parsePeople(parsed.people, built, [...segs, ...(italics || [])]);
     const analysis = people ? { ...base, segs, people } : { ...base, segs };
+    if (italics) analysis.italics = italics;
     if (built.sfx) analysis.sfx = normalizeSfx(parsed.sfx, built);
     // 1.6.4 받는 동안 설정이 바뀌어도 버리지 않는다 (값을 치른 답) — 글이 바뀌었을 때만
     if (msgOf(id) !== mes || swipeOf(mes) !== swipe || (textHash(mes) !== h && !rewriteLinked(mes, h, textHash(mes)))) { log('info', `대사 분석 버림 #${id} (글·스와이프가 바뀜)`); return null; }

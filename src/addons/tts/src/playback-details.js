@@ -12,10 +12,12 @@ export function playbackOriginal(job) {
     const changed = parts.some(p => folded(p.original?.text || p.seg?.text || '') !== folded(p.text ?? job.text));
     return original && changed ? original : '';
 }
-/** 6.3.8 칸 제목: 원문 짝을 못 찾아 화면 글(번역문)을 옮겨 읽는 줄이면 「원문」이라고 하지 않는다 */
+/** 6.3.8 칸 제목: 원문 짝을 못 찾아 화면 글(번역문)을 옮겨 읽는 줄이면 「원문」이라고 하지 않는다.
+ *  1.9.1 더 솔직하게 (사용자: 「아니 원문도 일본어인데」 — 칸에 번역문이 「지금 읽는 대사의 원문」으로 떴다) */
+export const ORIGINAL_MISSING = '원문을 못 찾았어요 — 화면 글(번역문)';
 export function playbackOriginalTitle(job) {
     const fromDisplay = (job?.parts || []).some(p => (p?.original || p?.seg)?.fromDisplay === true);
-    return fromDisplay ? '화면 글에서 옮겨 읽음' : '지금 읽는 대사의 원문';
+    return fromDisplay ? ORIGINAL_MISSING : '지금 읽는 대사의 원문';
 }
 /** RIFF INFO comment preserves attribution inside a WAV, including after renaming. */
 export async function wavWithCredits(blob, credits) {

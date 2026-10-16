@@ -392,7 +392,7 @@ const foldText = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
  * 6.2.8 thoughts: 속마음도 순서에 낀다 (tapSegments 는 속마음을 뒤에 모아 두므로 줄 번호로 다시 세운다) — 누른 속마음은 같은 글(가까운 줄)로 찾아 그다음 조각
  */
 export function nextLine(list, tapped, { thoughts = false } = {}) {
-    let lines = (Array.isArray(list) ? list : []).filter(x => x && x.text && (x.kind === 'dialogue' || (thoughts && x.kind === 'thought')));
+    let lines = (Array.isArray(list) ? list : []).filter(x => x && x.text && (x.kind === 'dialogue' || (x.kind === 'action' && x.speech) || (thoughts && x.kind === 'thought')));   // 1.9.1 말 기울임도 한 줄
     // 6.3.0 같은 줄 안에서는 글 순서(order — clickplay.tapSegments 가 적음)로: *생각* 「대사」 줄에서 대사 뒤에 앞의 생각을 읽거나 생각 뒤의 대사를 건너뛰지 않게. order 가 없는 조각은 예전처럼 목록 순서
     const inLine = (a, b) => (Number.isFinite(a.x.order) && Number.isFinite(b.x.order) ? a.x.order - b.x.order : a.i - b.i);
     if (thoughts) lines = lines.map((x, i) => ({ x, i })).sort((a, b) => ((Number(a.x.line) || 0) - (Number(b.x.line) || 0)) || inLine(a, b)).map(o => o.x);
@@ -407,13 +407,15 @@ export function nextLine(list, tapped, { thoughts = false } = {}) {
             const same = lines.filter(x => x.kind === 'thought' && foldText(x.text) === want);
             if (same.length) return lines[lines.indexOf(same.length === 1 ? same[0] : [...same].sort(near)[0]) + 1] || null;
         }
-        return lines.find(x => x.kind === 'dialogue' && Number(x.line) >= at) || null;
+        return lines.find(x => x.kind !== 'thought' && Number(x.line) >= at) || null;
     }
     const want = foldText(tapped.text);
-    const same = lines.filter(x => x.kind === 'dialogue' && foldText(x.text) === want);
+    const kind = tapped.kind === 'action' ? 'action' : 'dialogue';   // 1.9.1 누른(이어 읽은) 말 기울임
+    const same = lines.filter(x => x.kind === kind && foldText(x.text) === want);
     if (!same.length) return null;
-    const idx = Number.isInteger(tapped.dialogueIndex) && tapped.dialogueIndex >= 0 ? tapped.dialogueIndex : -1;
-    const hit = (idx >= 0 && same.find(x => x.dialogueIndex === idx)) || (same.length === 1 ? same[0] : [...same].sort(near)[0]);
+    const own = (x) => (kind === 'action' ? x.actionIndex : x.dialogueIndex);
+    const idx = Number.isInteger(own(tapped)) && own(tapped) >= 0 ? own(tapped) : -1;
+    const hit = (idx >= 0 && same.find(x => own(x) === idx)) || (same.length === 1 ? same[0] : [...same].sort(near)[0]);
     return lines[lines.indexOf(hit) + 1] || null;
 }
 /** 다음 한 줄의 작업을 차례로 만든다 (보통 하나 — 엔진 한도보다 긴 줄은 나뉜다) */

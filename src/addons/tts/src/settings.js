@@ -49,6 +49,7 @@ export const DEFAULTS = Object.freeze({
     read_preset: 'dialogue',
     speaker_paint: true,          // 6.2.3 색 없는 대사에 화자 색 — 찾은 화자의 이 채팅 색으로 화면에서만 칠함 (paint.js)
     no_dialogue_fallback: 'narration',
+    join_paragraph: true,         // 1.9.1 한 문단 이어 읽기 — 같은 문단에서 서술로만 끊긴 같은 화자의 대사 · 말 기울임(*…*)을 한 번에 (text.js markParagraphs · markJoins). false = 1.9.0 그대로
     text_source: 'display',
     listen_lang: 'auto',          // 1.4.4 듣는 언어: 'auto' (지금처럼) | 'ko' | 'ja' | 'en' | 'zh' — 그 언어가 아닌 줄은 LLM 번역 애드온으로 옮겨 읽음 (listen.js)
     skip_codeblocks: true,

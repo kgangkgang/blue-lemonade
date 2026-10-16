@@ -540,13 +540,14 @@ await test('player.js: 누른 줄을 재생 줄에 넣은 뒤 듣는 쪽을 부�
     const src = fs.readFileSync(path.join(root, 'player.js'), 'utf8');
     const body = src.slice(src.indexOf('export function speakSegments'), src.indexOf('export function speakExternal'));
     const enq = body.indexOf('enqueue([...cues.before, ...jobs, ...cues.after], { append: false });');
-    const call = body.indexOf('if (mesId >= 0) for (const fn of tapListeners) { try { fn(mesId, segs); } catch');
+    const call = body.indexOf('if (mesId >= 0) for (const fn of tapListeners) { try { fn(mesId, told); } catch');   // 1.9.1 told = 이어 읽은 묶음의 조각들 (묶음이 아니면 segs)
     assert.ok(enq > 0 && call > enq, '재생 줄에 넣은 뒤');
-    assert.match(body, /finishJobs\(flat, s, \{ merge: false \}\)/);
+    assert.match(body, /finishJobs\(flat, s, \{ merge: false, join: true \}\)\.filter\(t\.keep\)/);   // 1.9.1 줄마다 + 같은 문단 묶음만 이어서 (자동 읽기 · 미리 만들기와 같은 열쇠)
+    assert.match(body, /const told = heard\.length > 1 \? heard : segs;/);
     assert.ok(!/merge: !(pregenOn|tapByLine)\(s\)/.test(src) && !/const tapByLine/.test(src), '6.4.2 설정에 따라 합치는 읽기 없음');
     assert.match(src, /export function onEnded\(fn\)/, '6.2.8 누른 큐의 끝 알림');
     assert.ok(/const ended = tapRun && tapRun\.gen === my \? tapRun : null;\s*tapRun = null;\s*if \(handoff && ended\) await handOffTails\(ended, my\);[^\n]*\n\s*else \{\s*finishAll\(\);\s*if \(ended\) notifyEnded\(ended\);/.test(src), '큐를 정리한 뒤에 알린다 (6.3.9 이어 듣기로 넘길 때는 handOffTails 가 먼저 알리고 정리)');
-    assert.ok(/tapRun = mesId >= 0 \? \{ gen, mesId, segs, played: false \} : null;/.test(body), '누른 줄의 큐만');
+    assert.ok(/tapRun = mesId >= 0 \? \{ gen, mesId, segs: told, played: false \} : null;/.test(body), '누른 줄의 큐만');
     assert.match(src, /const pregenOn = \(s\) => s\?\.pregen === 'dialogue' \|\| s\?\.pregen === 'all';/, '자동 읽기 · 감정 태그 규칙은 예전 그대로');
     assert.match(src, /export function onTapped\(fn\)/);
     const pg = fs.readFileSync(path.join(root, 'pregen.js'), 'utf8');
