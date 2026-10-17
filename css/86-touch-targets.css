@@ -34,7 +34,6 @@
     .salty-panel .salty-seg > button,
     .salty-panel .salty-btn,
     .salty-panel .bl-view-toggle,
-    .salty-panel label.salty-switch,
     .salty-panel .bl-word-help,
     .salty-panel .bl-addon-ver,
     .salty-panel .bl-addon-credit-all,
@@ -64,6 +63,22 @@
     width: max(100%, 44px);
     height: max(100%, 44px);
     transform: translate(-50%, -50%);
+    background: none;
+    border: 0;
+    box-shadow: none;
+  }
+
+  /* 7.0.6 스위치(36×36)는 줄 오른쪽 끝에 붙어 있다 — 상자를 스위치 오른쪽 끝에 맞춰 왼쪽으로만 넓힌다 (44×44 그대로).
+     7.0.5 는 가운데 맞춤이라 오른쪽으로 4px 삐져나가 「설정 선택」 목록(overflow:auto)에 가로 스크롤 줄이 생겼다 */
+  html body.salty .salty-panel label.salty-switch::before {
+    content: '';
+    position: absolute;
+    left: auto;
+    right: 0;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translateY(-50%);
     background: none;
     border: 0;
     box-shadow: none;

@@ -50,7 +50,7 @@ function fire() {
 function onDown(event) {
     lastType = event.pointerType;
     if (held && (held.up || event.isPrimary)) held = null;
-    if (box && !box.contains(event.target)) close();
+    if (box && !box.contains(event.target) && !event.target.closest?.('.salty-pick-layer, [data-bl-popup]')) close();   // 2.0.1 테마 고르기 목록 · 테마 팝업 안을 누른 것은 바깥이 아님
     if (press) { cancel(); return; }   // 둘째 손가락 — 확대 · 두 손가락 스크롤
     if (!event.isPrimary || (event.pointerType === 'mouse' && event.button !== 0)) return;
     if (!runtimeEnabled()) return;

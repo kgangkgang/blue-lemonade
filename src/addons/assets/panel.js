@@ -1,6 +1,6 @@
 // 캐릭터 에셋 — 확장 설정 서랍 안의 화면: 캐릭터 상태, 사용법, 그림 격자(올리기·찾기·선택), 설정
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
-import { getThumbnailUrl } from '../../../../../../../script.js';
+import { getThumbnailUrl, saveChatConditional, updateMessageBlock } from '../../../../../../../script.js';
 import { getContext } from '../../../../../../extensions.js';
 import { settings, saveSettings, VERSION, TITLE, THUMB_SIZES, DEFAULT_PROMPT, isGroupChat, disabledSet, setDisabled, folderOf, forgetOptimized, copyOptimized } from './state.js';
 import { runtime, hooks, reload, recompute, groupsOf, sourceByKey, expandedPrompt } from './store.js';
@@ -15,9 +15,65 @@ import { ConnectionManagerRequestService } from '../../../../../shared.js';
 import { fillSelect, onChange as onModelListChange } from '../../live-models.js';
 import { PROVIDERS, canFetch, fetchModelList, autoFetchModelList, listKey, missingNote, modelChoices, pickModel, isHttpUrl, resolveModel } from '../rewrite/providers.js';
 import { pickSettings, customEndpoint, connectionProblem, connectionLabel, listRequest } from './pick.js';
+import { countStrip, stripChat, undoStrip } from './strip-chat.js';   // 1.7.3 이 채팅의 에셋 그림 떼기
+import { ask, attachUndo } from '../../ask.js';   // 1.7.3 테마 확인 창 · 알림의 ↶
+import { messageWork } from '../../message-work.js';
+import { notifyRerender } from '../../rerender-notify.js';
 import { mountFallbackField } from '../modelswitch/fallback-field.js';   // 6.4.5 「검열당했을 때」 칸 (다른 모델이 고르기)
 
 const SIZE_LABELS = { s: '작게', m: '보통', l: '크게' };
+
+/** 1.7.3 바꾼 메시지를 다시 그린다 (화면에 있고 고치는 중이 아닐 때) */
+function redrawMessages(chat, indexes) {
+    for (const id of indexes) {
+        const mes = document.querySelector(`#chat .mes[mesid="${id}"]`);
+        if (!mes || mes.querySelector('#curEditTextarea')) continue;
+        try { updateMessageBlock(id, chat[id]); } catch (error) { console.debug(`[${TITLE}] 다시 그리기 실패`, error); }
+        void notifyRerender(id);
+    }
+}
+
+/**
+ * 1.7.3 「이 채팅의 에셋 그림 떼기」 — 지금 채팅의 메시지에서 에셋 그림(고른 자리 · {{img::}})을 떼고 위치 표시만 남긴다 (strip-chat.js).
+ * 그림 파일은 그대로. 몇 장 · 몇 메시지인지 묻고, 한 번 저장하고, 알림의 ↶ 로 바이트 그대로 되돌린다 (같은 채팅 · 그 사이 안 바뀐 메시지만)
+ */
+async function stripThisChat() {
+    const ctx = getContext();
+    const chat = ctx.chat;
+    const chatId = ctx.getCurrentChatId?.() ?? '';
+    if (!Array.isArray(chat) || !chat.length || !chatId) { toast('info', '지금 열린 채팅이 없어요.'); return; }
+    const { pictures, messages } = countStrip(chat);
+    if (!messages) { toast('info', '이 채팅에는 뗄 에셋 그림이 없어요.'); return; }
+    const ok = await ask(`이 채팅의 메시지 ${messages}개에서 에셋 그림 ${pictures}개를 떼요.\n그림 파일은 지우지 않아요. 그림이 있던 자리에는 보이지 않는 표시만 남아서, 그림 확장이 그 자리에 그림을 넣을 수 있어요.`,
+        { ok: '떼기', cancel: '취소', title: '이 채팅의 에셋 그림 떼기' });
+    if (!ok) return;
+    const live = getContext();
+    if ((live.getCurrentChatId?.() ?? '') !== chatId || live.chat !== chat) { toast('info', '채팅을 바꿔서 떼지 않았어요.'); return; }
+    const before = new Map(chat.map((message, i) => [i, message?.mes]));
+    const record = stripChat(chat);
+    for (const { index } of record.items) {
+        const message = chat[index];
+        if (before.get(index) !== message.mes) messageWork().noteWrite(message, { by: 'assets', before: before.get(index), after: message.mes });
+    }
+    redrawMessages(chat, record.items.map(item => item.index));
+    try { await saveChatConditional(); } catch (error) { console.warn(`[${TITLE}] 저장 실패`, error); }
+    const done = toast('success', `에셋 그림 ${record.pictures}개를 뗐어요 (메시지 ${record.messages}개).`, { timeOut: 9000, extendedTimeOut: 4000 });
+    attachUndo(done, async () => {
+        const now = getContext();
+        if ((now.getCurrentChatId?.() ?? '') !== chatId) { toast('info', '채팅을 바꿔서 되돌리지 않았어요.'); return; }
+        const current = new Map(now.chat.map((message, i) => [i, message?.mes]));
+        const result = undoStrip(now.chat, record);
+        for (const index of result.indexes) {
+            const message = now.chat[index];
+            if (current.get(index) !== message.mes) messageWork().noteWrite(message, { by: 'assets', before: current.get(index), after: message.mes });
+        }
+        redrawMessages(now.chat, result.indexes);
+        try { await saveChatConditional(); } catch (error) { console.warn(`[${TITLE}] 저장 실패`, error); }
+        toast(result.skipped ? 'warning' : 'success', result.skipped
+            ? `${result.restored}개 메시지는 되돌렸고, 그 사이 바뀐 ${result.skipped}개는 그대로 뒀어요.`
+            : `에셋 그림을 되돌렸어요 (메시지 ${result.restored}개).`);
+    });
+}
 
 const mbText = bytes => (bytes >= 1048576 ? `${(bytes / 1048576).toFixed(1)}MB` : `${Math.round(bytes / 1024)}KB`);
 
@@ -141,6 +197,7 @@ function template() {
                 <button type="button" class="eh-icon-btn" data-act="shrink" title="그림 가볍게 만들기" aria-label="그림 가볍게 만들기"><i class="fa-solid fa-compress"></i></button>
                 <button type="button" class="eh-icon-btn" data-act="refresh" title="다시 불러오기" aria-label="다시 불러오기"><i class="fa-solid fa-arrows-rotate"></i></button>
                 <button type="button" class="eh-icon-btn" data-act="redraw" title="채팅 다시 그리기" aria-label="채팅 다시 그리기"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+                <button type="button" class="eh-icon-btn" data-act="strip-chat" title="이 채팅의 에셋 그림 떼기" aria-label="이 채팅의 에셋 그림 떼기"><i class="fa-solid fa-eraser"></i></button>
             </div>
 
             <section class="eh-card eh-card--prompt">
@@ -1465,6 +1522,9 @@ async function onClick(event) {
             break;
         case 'shrink':
             await runShrink();
+            break;
+        case 'strip-chat':
+            await stripThisChat();
             break;
         case 'redraw': {
             // 그림이 안 나올 때 어디서 막혔는지 한 번에 보여 준다.

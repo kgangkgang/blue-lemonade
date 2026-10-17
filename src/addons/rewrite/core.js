@@ -270,7 +270,8 @@ function ownedByNear(sentence, index, length, nearNames, otherNames = [], memo =
 //   AI 가 번호나 글자를 바꾸면 그림 확장이 그 자리를 못 찾아 그림을 잃었다. 첫 글자를 줄바꿈으로 가려 문단 경계처럼 — 어떤 범위도 자리를 건너지 않는다.
 //   TTS 의 text.js SLOT_RE 와 같은 식 (tools/tests/rewrite-tts-slots.mjs 가 맞춰 본다). 번호 없는 껍데기(그림 확장이 지우는 것)도 같이 가린다.
 //   6.1.9 캐릭터 에셋의 빈 자리(<span class="bl-asset-slot" data-asset-slot="…"></span>, 답장 뒤 다른 모델이 고르기)도 같은 그림 자리다.
-export const SLOT_RE = /<span\b[^>]*\b(?:data-(?:autopic|asset)-slot="[^"]*"|class="[^"]*\b(?:autopic-image-slot|bl-asset-slot)\b[^"]*")[^>]*>[^<]*<\/span>/g;
+//   2.1.7 「이 채팅의 에셋 그림 떼기」가 남기는 위치 표시(<span class="bl-asset-gone" data-asset-was="…"></span>)도 — 고쳐 쓴 뒤에도 그 자리에 남게.
+export const SLOT_RE = /<span\b[^>]*\b(?:data-(?:autopic|asset)-slot="[^"]*"|data-asset-was="[^"]*"|class="[^"]*\b(?:autopic-image-slot|bl-asset-slot|bl-asset-gone)\b[^"]*")[^>]*>[^<]*<\/span>/g;
 const blankAll = part => part.replace(/[^\n]/g, ' ');
 const blankAsBreak = part => '\n' + blankAll(part.slice(1));
 const PROTECTED = [

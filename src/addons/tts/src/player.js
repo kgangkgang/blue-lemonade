@@ -3297,6 +3297,7 @@ function buildBar() {
     if (bar) return;
     bar = document.createElement('div');
     bar.className = 'lv-bar';
+    bar.dataset.blPopup = 'bar';   // 2.0.1 떠 있는 재생 막대 — 다른 창의 「바깥 누르면 닫기」가 이 막대를 바깥으로 보지 않게 (selects.js 의 공용 표시)
     const btn = (cls, label, icon) => `<button type="button" class="lv-bar-btn ${cls}" aria-label="${label}"><i class="fa-solid ${icon}"></i></button>`;
     bar.innerHTML =
         '<div class="lv-bar-info"><span class="lv-bar-voice"></span><span class="lv-bar-text"></span></div>' +

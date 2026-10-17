@@ -11,8 +11,13 @@ export const SLOT_CLASS = 'bl-asset-slot';
 /** 저장되는 자리 모양 — 이 모양 그대로만 자리로 본다 (번역기 보호 규칙 · 다시 쓰기 · TTS 도 같은 모양) */
 export const slotMarkup = id => `<span class="${SLOT_CLASS}" data-asset-slot="${id}"></span>`;
 const SLOT_SOURCE = '<span class="bl-asset-slot" data-asset-slot="([\\w-]+)"></span>';
-/** 번역기에 등록할 보호 규칙 (번역하지 않고 제자리에 한 번만) */
-export const PROTECT_RE = /<span class="bl-asset-slot" data-asset-slot="[\w-]+"><\/span>/g;
+/** 1.7.3 「이 채팅의 에셋 그림 떼기」가 그림 자리 · {{img::}} 대신 남기는 표시 — 아무것도 그리지 않고 위치만 남는다
+ *  (그림 확장이 같은 자리에 제 그림을 넣을 수 있게). 자리와 같은 꼴이라 번역기 · 다시 쓰기 · TTS 가 자리처럼 지킨다 */
+export const GONE_CLASS = 'bl-asset-gone';
+export const goneMarkup = id => `<span class="${GONE_CLASS}" data-asset-was="${id}"></span>`;
+export const GONE_RE = /<span class="bl-asset-gone" data-asset-was="[\w-]+"><\/span>/g;
+/** 번역기에 등록할 보호 규칙 (번역하지 않고 제자리에 한 번만) — 자리와 뗀 표시 둘 다 */
+export const PROTECT_RE = /<span class="bl-asset-(?:slot" data-asset-slot|gone" data-asset-was)="[\w-]+"><\/span>/g;
 const slotRe = () => new RegExp(SLOT_SOURCE, 'g');
 // 그림 확장의 그림 자리 (번호 있든 없든) — 고르는 모델에게 보내는 글에서는 뺀다
 const AUTOPIC_SLOT = /<span class="autopic-image-slot"(?: data-autopic-slot="[\w-]+")?>[^<]*<\/span>/g;
@@ -37,8 +42,8 @@ export function stripSlots(text) {
 /** 본문 모델에 보내는 글에서 에셋 자리를 뺀다 — 넣은 모양(앞 빈 줄 + 자리)은 통째로, 다른 데 남은 자리도. 자리가 없으면 글 그대로 */
 export function stripSlotsForPrompt(text) {
     const s = String(text ?? '');
-    if (!s.includes('data-asset-slot')) return s;
-    return s.replace(/\r?\n\r?\n<span class="bl-asset-slot" data-asset-slot="[\w-]+"><\/span>(?=\r?\n|$)/g, '').replace(PROTECT_RE, '');
+    if (!s.includes('data-asset-slot') && !s.includes('data-asset-was')) return s;
+    return s.replace(/\r?\n\r?\n<span class="bl-asset-(?:slot" data-asset-slot|gone" data-asset-was)="[\w-]+"><\/span>(?=\r?\n|$)/g, '').replace(PROTECT_RE, '');
 }
 /** 기록(extra)이 없는 자리 = 모델이 따라 쓴 것 — 빼고 그 번호들 */
 export function dropUnknownSlots(text, records) {

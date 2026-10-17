@@ -4,7 +4,7 @@
    ============================================================ */
 
 /* state.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
-:root { --eh-css-version: "1.7.2"; }
+:root { --eh-css-version: "1.7.3"; }
 
 .eh-root {
     --eh-text: var(--SmartThemeBodyColor, #ccc);
@@ -939,6 +939,7 @@ body.reduced-motion .eh-viewer-nav { transition: none; }
    실리태번이 메시지 안 class 에 custom- 을 붙이므로 data 속성으로만 고른다. 빈 자리(고르는 중 · 없음)는 보이지 않고, 자리만 든 문단도 틈 없이 숨긴다. */
 #chat .mes_text [data-asset-slot] { display: block; }
 #chat .mes_text [data-asset-slot]:empty { display: none; }
+#chat .mes_text [data-asset-was] { display: none; }   /* 1.7.3 「에셋 그림 떼기」가 남긴 위치 표시 — 그리지 않음 (그림 확장이 이 자리에 그림을 넣을 수 있다) */
 #chat .mes_text p[data-eh-slot-only]:not(:has(> [data-asset-slot]:not(:empty))) { display: none; }   /* 자리만 든 문단(render.js 가 표시) — 글이 같이 든 문단은 숨기지 않는다 */
 #chat .mes_text [data-asset-slot] > img.eh-img { margin-block: .6em; }
 /* 색 섞기 계산 없이 글자색 + 투명도로 (폰에서 번지지 않게) */

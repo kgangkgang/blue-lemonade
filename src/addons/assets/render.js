@@ -581,6 +581,7 @@ function processMessage(mes, key) {
     const text = mes.querySelector('.mes_text');
     if (!text) return;
     const before = domEdits;
+    markGoneOnly(text);
     fillSlots(text, mes);
     replaceInText(text);
     const imgs = [...text.getElementsByTagName('img')];
@@ -650,6 +651,16 @@ function retryButton(id, reason) {
     why.textContent = reason;
     button.append(icon, label, why);
     return button;
+}
+
+/** 1.7.3 「이 채팅의 에셋 그림 떼기」가 남긴 위치 표시(span[data-asset-was])만 든 문단은 자리만 든 문단처럼 숨긴다 (style.css p[data-eh-slot-only]) */
+function markGoneOnly(text) {
+    for (const span of text.querySelectorAll('span[data-asset-was]')) {
+        const host = span.parentElement;
+        if (!host || host === text || host.tagName !== 'P') continue;
+        const alone = [...host.childNodes].every(n => (n.nodeType === 3 && !n.textContent.trim()) || (n.nodeType === 1 && (n.tagName === 'BR' || n.matches?.('span[data-asset-was]') || n.matches?.(SLOT_SELECTOR))));
+        if (host.hasAttribute('data-eh-slot-only') !== alone) { domEdits++; host.toggleAttribute('data-eh-slot-only', alone); }
+    }
 }
 
 /** 이 메시지의 자리들을 기록대로 채운다. 같은 상태면 건드리지 않는다 (감시 → 다시 처리가 저절로 멎게) */

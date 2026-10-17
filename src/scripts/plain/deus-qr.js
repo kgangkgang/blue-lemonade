@@ -335,7 +335,7 @@ function createDeusQuickController(adapter) {
     render(true); revealTab(); if (panel?.contains(x) && !stopped) x.focus({preventScroll:true}); return !!panel;
   }
   button.addEventListener('click',() => panel ? close() : void open());
-  const outside = event => { if (panel && !controller?.busy && !panel.contains(event.target) && !event.composedPath?.().includes(panel) && !button.contains(event.target) && !event.target.closest?.('dialog')) close(); };
+  const outside = event => { if (panel && !controller?.busy && !panel.contains(event.target) && !event.composedPath?.().includes(panel) && !button.contains(event.target) && !event.target.closest?.('dialog, .salty-pick-layer, [data-bl-popup]')) close(); };   // 1.0.5 테마 고르기 목록 · 테마 팝업 안을 누른 것은 바깥이 아님
   const keydown = event => { if (panel && event.key === 'Escape' && !event.defaultPrevented) { event.preventDefault(); if (helpOpen) toggleHelp(); else { close(); button.focus({preventScroll:true}); } } };
   doc.addEventListener('pointerdown',outside,true); doc.addEventListener('keydown',keydown);
   host.addEventListener('resize',position); host.visualViewport?.addEventListener('resize',position); host.visualViewport?.addEventListener('scroll',position);

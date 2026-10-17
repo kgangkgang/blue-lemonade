@@ -91,12 +91,15 @@ function place(box, sel) {
 
 let closedAt = 0;       // 닫은 시각 — 바깥을 눌러 닫은 직후의 click 을 삼킴
 
+let closeWatch = null;  // 7.0.6 목록이 열린 동안의 CloseWatcher (뒤로 가기 = 목록만 닫기)
+
 const ownerWatch = new MutationObserver(() => { if (owner && !owner.isConnected) close(); });
 
 function close() {
     ownerWatch.disconnect();
     unwatchHost?.();
     unwatchHost = null;
+    const watch = closeWatch; closeWatch = null; watch?.destroy();   // 7.0.6 목록이 닫히면 뒤로 가기는 다시 창 몫
     if (!layer) return;
     const back = refocus && owner?.isConnected && layer.contains(document.activeElement) ? owner : null;
     layer.remove();
@@ -199,6 +202,18 @@ function open(sel, anchor = null) {
         host.addEventListener('close', onClose);
         host.addEventListener('toggle', onToggle);
         unwatchHost = () => { host.removeEventListener('close', onClose); host.removeEventListener('toggle', onToggle); };
+    }
+    // 7.0.6 폰 뒤로 가기(닫기 요청)는 목록만 닫는다 — 전엔 목록 아래 창(dialog)이 함께 닫혔다. 닫기 요청은 가장 나중에 만든
+    //       CloseWatcher 가 먼저 받는다(목록은 누를 때 열리니 창과 다른 묶음). CloseWatcher 가 없거나 창이 먼저 받으면 창의 cancel 을 가로챈다
+    if (typeof CloseWatcher === 'function') {
+        try { closeWatch = new CloseWatcher(); closeWatch.onclose = () => { closeWatch = null; close(); }; } catch { closeWatch = null; }
+    }
+    if (host instanceof HTMLDialogElement) {
+        // 문서 캡처라 창 자신의 cancel 처리기(실리태번 팝업 · 테마 창)보다 먼저 받는다 (cancel 은 거품이 없어도 캡처는 지난다)
+        const onCancel = (e) => { if (!layer || e.target !== host) return; e.preventDefault(); e.stopImmediatePropagation(); close(); };
+        document.addEventListener('cancel', onCancel, true);
+        const prev = unwatchHost;
+        unwatchHost = () => { prev?.(); document.removeEventListener('cancel', onCancel, true); };
     }
     ownerWatch.observe(document.body, { childList: true, subtree: true });
     place(box, anchorEl || sel);

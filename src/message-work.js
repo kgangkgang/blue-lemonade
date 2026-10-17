@@ -30,8 +30,8 @@ export function dropThinkingHead(text) {
     const s = String(text ?? ''), end = thinkingHeadEnd(s);
     return end < 0 ? s : s.slice(end);
 }
-/** 테마의 그림 자리(캐릭터 에셋) — slots.js SLOT_SOURCE 와 같은 꼴 */
-export const ASSET_SLOT = /<span class="bl-asset-slot" data-asset-slot="[\w-]+"><\/span>/g;
+/** 테마의 그림 자리(캐릭터 에셋) — slots.js PROTECT_RE 와 같은 꼴 (7.0.6 「에셋 그림 떼기」가 남긴 bl-asset-gone 표시도) */
+export const ASSET_SLOT = /<span class="bl-asset-(?:slot" data-asset-slot|gone" data-asset-was)="[\w-]+"><\/span>/g;
 
 export function createMessageWork({ now = () => Date.now(), limit = 32 } = {}) {
     const queues = new WeakMap();   // message → 마지막 일의 Promise

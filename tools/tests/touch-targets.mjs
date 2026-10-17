@@ -22,7 +22,6 @@ const listBefore = (pseudo) => {
 const relativeList = (() => { const m = /html body\.salty :is\(([\s\S]*?)\n\s*\) \{\n\s*position: relative;/.exec(body); return m ? m[1].split(/,\s*\n/).map(s => s.trim()) : []; })();
 // 다른 모듈에서 이미 position 이 있는 칸 (그 선언을 실제로 확인한다)
 const ALREADY_POSITIONED = {
-    '.salty-panel label.salty-switch': /\.salty-switch \{[^}]*position: relative/,
     '.salty-panel .bl-word-help': /\.bl-word-help[^{]*\{[^}]*position:\s*relative/,
     // 56-control-consistency.css 의 선 그림 단추 묶음(↺ · 미리보기 기본 높이 · 예시 단추)
     '.salty-panel .bl-setting-reset': /bl-setting-reset[^{]*\{\s*position:relative/,
@@ -115,6 +114,21 @@ t('확장 서랍 머리 스위치는 기존 ::before(위아래 7px)를 44×44 �
     const built = read('style.css');
     assert.ok(built.includes('/* css/86-touch-targets.css */'), 'style.css 에 모듈');
     assert.ok(/width:\s*max\(100%,\s*44px\)/.test(built), 'style.css 에 상자');
+});
+
+t('7.0.6 가로 넘침 없음: 줄 오른쪽 끝의 스위치는 상자를 오른쪽 끝에 맞춰 왼쪽으로만 넓힌다 · 굴리는 목록은 overflow-x 를 숨기지 않는다', () => {
+    // 7.0.5 는 가운데 맞춤 상자(36 → 44)가 오른쪽으로 4px 삐져나가 「설정 선택」 목록(overflow:auto)에 가로 스크롤 줄이 생겼다 (폰 제보)
+    const rule = /html body\.salty \.salty-panel label\.salty-switch::before \{([^}]*)\}/.exec(body)?.[1];
+    assert.ok(rule, '스위치 전용 규칙');
+    assert.match(rule, /right: 0;/); assert.match(rule, /left: auto;/);
+    assert.match(rule, /transform: translateY\(-50%\);/, '가로로는 옮기지 않음');
+    assert.match(rule, /width: max\(100%, 44px\);\s*height: max\(100%, 44px\);/, '44×44 그대로');
+    // 오른쪽 끝 = 스위치 오른쪽 끝 → 상자가 스위치보다 오른쪽으로 나가지 않는다 (36 · 40 · 46 폭 모두)
+    for (const w of [36, 40, 46]) { const boxW = Math.max(w, 44), boxRight = w, boxLeft = w - boxW; assert.ok(boxRight <= w && boxLeft <= 0 && boxW >= 44, `${w}`); }
+    assert.ok(!listBefore('before').concat(listBefore('after')).some(sel => /salty-switch(?!\))/.test(sel)), '가운데 맞춤 목록에 스위치가 없음');
+    // 증상만 숨기지 않았는지 — 설정 선택 목록 · 설정 창 본문은 그대로 overflow:auto (가로 줄을 감추는 overflow-x 없음)
+    assert.match(otherCss, /\.bl-editor-directory-list \{ min-height:0; overflow:auto;/);
+    assert.ok(!/bl-editor-directory-list[^{]*\{[^}]*overflow-x\s*:\s*(hidden|clip)/.test(otherCss + body), 'overflow-x 숨김 없음');
 });
 
 console.log(`touch-targets: ${n} passed, 0 failed`);
