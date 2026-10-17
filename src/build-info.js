@@ -527,7 +527,7 @@ export const FILE_HASHES = {
   "src/modal.js": "1449:da5093fd:8b8c4b3c",
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "260212:b4c26bce:9625b39c",
+  "src/notice-data.js": "260215:adcb9e68:b58413aa",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
