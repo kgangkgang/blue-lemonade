@@ -46,6 +46,7 @@ jobs:
           node tools/tests/translator-check.mjs .
           node tools/tests/fruit-ecot-race.mjs .
           node tools/tests/translator-brackets.mjs .
+          node tools/tests/translator-number-note.mjs .
           node tools/tests/tts-open-comment.mjs .
           node tools/tests/weather-status.mjs .
           node tools/tests/translator-stub.mjs .
@@ -119,6 +120,9 @@ jobs:
           node tools/tests/fa-free-icons.mjs .
           node tools/tests/reader-sync-strip.mjs .
           node tools/tests/prompt-history-label.mjs .
+          node tools/tests/prompt-injected-source.mjs .
+          node tools/tests/prompt-translated-name.mjs .
+          node tools/tests/fruit-dictionary-han.mjs .
           node tools/tests/sent-tokens.mjs .
           node tools/tests/tts-background.mjs .
           node tools/tests/modelswitch-fallback-pick.mjs .
@@ -257,6 +261,7 @@ jobs:
           node tools/tests/mermaid-addon.mjs .
           node tools/tests/fruit-localization.mjs
           node tools/tests/fruit-status.mjs .
+          node tools/tests/long-chat-perf.mjs .
           node tools/tests/fruit-option-help.mjs .
           node tools/tests/fruit-typography.mjs .
           node tools/tests/prompt-tools.mjs

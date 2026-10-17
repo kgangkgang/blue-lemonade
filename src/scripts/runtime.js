@@ -12,6 +12,8 @@ import {allFonts,findFont,fontStack,loadFont} from '../fonts.js';
 const running=new Map(), states=new Map(), listeners=new Set();
 const translations=createPromptEngine();
 export const registerRegexNames=data=>translations.register('panel-regex',data);
+// 7.0.4 프롬프트 관리자 목록에 보이는 번역 이름(켜진 번역 스크립트 사전) — 읽기만. 없으면 null
+export const translatedPromptName=(id,name)=>translations.title('prompts',id,name);
 let revision=0;
 // 돌던 스크립트가 밖에서 닫히는 일이 있다(틀이 다시 읽히거나 떼어짐 · 다른 곳에서 정리 함수를 부름). 내장 스크립트는 닫힐 때 번역을 원래 글로 되돌리므로
 // 상태는 '사용 중'인데 메뉴는 중국어 · 영어로 남았다. 닫힌 것을 알아채 다시 시작하고, 진단에 보이게 적어 둔다.

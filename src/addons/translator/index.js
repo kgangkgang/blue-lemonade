@@ -1908,6 +1908,10 @@ async function translate(text, options = {}) {
 
             // 2.5.2 대사 괄호: 원문에 「」『』 가 있는데 프롬프트 · 규칙 · 지침 어디에도 「」 이야기가 없으면 한 줄 붙인다 (사용자 프롬프트는 그대로)
             if (/[「『]/.test(body) && !/「」|『』/.test(`${finalPrompt}\n${rulePrompt}\n${additionalGuidance}`)) built += `\n\n${BRACKET_NOTE}`;
+            // 2.7.8 글자로 붙여 쓴 숫자: "two hundred-and-ninety-centimeter demons" 는 190센티미터인 둘 (290 이 아님). 이런 꼴이 원문에 있을 때만 한 줄 붙인다
+            if (/\b[a-z]+\s+hundred-(?:and-)?[a-z]+(?:-[a-z]+)*-(?:centimet|millimet|met(?:er|re)|kilo|gram|pound|foot|feet|inch|mile|year|ton)/i.test(body)) {
+                built += '\n\n[Numbers: copy every number from the source exactly. A spelled-out number joined by hyphens to a unit is one compound adjective, and a word right before it is a separate count. "two hundred-and-ninety-centimeter demons" means two demons who are 190 cm tall, not 290 cm. If a height, age or similar number would be implausible for the character, re-read the hyphenation before translating.]';
+            }
 
             // 마스킹된 텍스트를 AI에게 전달
             built += `\n\n${body}`;

@@ -1,5 +1,5 @@
 import { groupedNumber } from './numbers.js';
-import { alignHistory, chatCandidates, labelOf } from './prompt-history-label.js';
+import { alignHistory, chatCandidates, labelOf, collectSources, findSources, insertedLabel } from './prompt-history-label.js';
 // 검사 창 "프롬프트 목록" 줄 다시 짜기
 //
 // 실리태번은 이름 · 역할 · 토큰을 스팬 하나에 문장으로 넣는다 (PromptManager.js:1441):
@@ -70,6 +70,42 @@ function regexEngine() {
     engine ??= import(new URL('../../../../extensions/regex/engine.js', import.meta.url).href).catch(() => null);
     return engine;
 }
+// 7.0.4 끼운 글 출처: 실행 중의 extension_prompts · 프리셋 프롬프트 · 설치된 확장 이름 · 마지막으로 켜진 월드 인포 항목
+let wiEntries = [], extList = null;
+function rememberWorldInfo(entries) {
+    // 제목 · 글만 (마지막 생성의 것, 많아도 200개)
+    wiEntries = (Array.isArray(entries) ? entries : []).slice(0, 200).map(e => ({ comment: e?.comment, key: e?.key, content: e?.content }));
+}
+async function installedExtensions() {
+    if (extList) return extList;
+    try {
+        const host = await import('../../../../extensions.js');
+        extList = (host.extensionNames || []).map(folder => ({ folder, name: host.getExtensionManifest?.(folder)?.display_name || '' }));
+    } catch { extList = []; }
+    return extList;
+}
+// 7.0.4 프리셋 프롬프트 이름: 프롬프트 관리자 목록에 칠하는 번역 스크립트 사전(scripts/runtime.js) → 한글화 패널(켜져 있을 때) 캐시 → 원래 이름
+async function presetNamer(ctx) {
+    const finders = [];
+    try { const rt = await import('./scripts/runtime.js'); if (typeof rt.translatedPromptName === 'function') finders.push(p => rt.translatedPromptName(String(p.identifier), String(p.name || ''))); } catch { /* 사전 없이 */ }
+    if (ctx?.extensionSettings?.salty?.addons?.prompt) {
+        try { const pa = await import('./addons/prompt/index.js'); if (typeof pa.translatedPromptTitle === 'function') finders.push(p => pa.translatedPromptTitle(String(p.identifier))); } catch { /* 캐시 없이 */ }
+    }
+    return prompt => { for (const find of finders) { try { const name = find(prompt); if (name && String(name).trim()) return String(name).trim(); } catch { /* 다음 */ } } return null; };
+}
+async function insertedSources(ctx) {
+    let presetPrompts = [];
+    try { presetPrompts = (await import('../../../../openai.js')).promptManager?.serviceSettings?.prompts || []; } catch { /* 프리셋 없이 */ }
+    return collectSources({
+        presetPrompts,
+        extensionPrompts: ctx?.extensionPrompts || {},
+        extensions: await installedExtensions(),
+        wiEntries,
+        substitute: typeof ctx?.substituteParams === 'function' ? text => ctx.substituteParams(text) : null,
+        presetName: await presetNamer(ctx),
+    });
+}
+
 async function labelHistory(list) {
     const rows = [...(list?.querySelectorAll?.('.bl-prow-name[data-bl-hist]') || [])];
     if (!rows.length || rows.every(row => row.dataset.blHistDone)) return;
@@ -91,9 +127,14 @@ async function labelHistory(list) {
         });
         labels = alignHistory(items, chat);
     } catch (error) { console.warn('[Blue Lemonade] 채팅 기록 번호', error); }
+    let sources = [];
+    if (labels.some(result => result?.kind === 'inserted')) {
+        try { sources = await insertedSources(globalThis.SillyTavern?.getContext?.()); } catch (error) { console.warn('[Blue Lemonade] 끼운 글 출처', error); }
+        if (token !== labeling) return;
+    }
     rows.forEach((name, i) => {
         name.dataset.blHistDone = '1';
-        const text = labelOf(labels[i]);
+        const text = labels[i]?.kind === 'inserted' ? insertedLabel(findSources(items[i].content, sources)) : labelOf(labels[i]);
         if (text && name.isConnected) name.textContent = text;
     });
 }
@@ -101,6 +142,11 @@ async function labelHistory(list) {
 let watcher = null;
 export function startPromptList() {
     if (watcher) return;
+    // 7.0.4 끼운 글의 월드 인포 항목 제목용 — 생성마다 켜진 항목 목록을 받아 둔다(제목 · 글만)
+    try {
+        const { eventSource, event_types } = globalThis.SillyTavern?.getContext?.() || {};
+        if (event_types?.WORLD_INFO_ACTIVATED) eventSource?.on?.(event_types.WORLD_INFO_ACTIVATED, rememberWorldInfo);
+    } catch { /* 제목 없이 「월드 인포」만 */ }
     const id = 'completion_prompt_manager_popup_entry_form_inspect_list';
     let scope = null, discovery = null;
     watcher = new MutationObserver(() => { sweep(scope); watcher.takeRecords(); });

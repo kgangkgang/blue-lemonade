@@ -5,7 +5,7 @@
    ===== */
 /* ===== 미리보기 자동 생성 (surfaces:preview) =====
    tools/gen-preview-css.js 가 #chat 규칙을 여기 복사한다 — 손으로 고치지 말 것.
-   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 462개 (164.8KB).
+   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 463개 (164.9KB).
    style.css 의 채팅 · 에셋 규칙을 고치면 `node tools/gen-preview-css.js` 를 다시 돌린다.
    이 칸을 다른 자리로 옮기지 말 것: 사본이 손으로 쓴 채팅 규칙보다 뒤에 있어야 같은 무게에서 이기고,
    바로 뒤의 보정 칸이 사본을 눌러 줄 수 있다. 앞으로 옮기면 아바타 모서리처럼 순서로만 갈리는 것이 뒤집힌다 */
@@ -108,11 +108,17 @@ body.salty:not(.no-timer) :is(#salty-nochat, .salty-preview) .mes .mes_timer:not
   content: "·";
   margin: 0 6px;
 }
-body.salty :is(#salty-nochat, .salty-preview) .mes .tokenCounterDisplay[data-bl-sent]:not(:empty)::after {
-  content: "\00a0\00a0·\00a0\00a0보냄\00a0" attr(data-bl-sent);
-}
-body.salty :is(#salty-nochat, .salty-preview) .mes .tokenCounterDisplay[data-bl-sent]:not(:empty) {
+body.salty.bl-sent-tokens :is(#salty-nochat, .salty-preview) .mes .tokenCounterDisplay:not(:empty) {
   cursor: pointer;
+}
+@media (hover: hover) {
+  body.salty.bl-sent-tokens :is(#salty-nochat, .salty-preview) .mes .tokenCounterDisplay:not(:empty):hover {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+}
+body.salty.bl-sent-tokens :is(#salty-nochat, .salty-preview) .mes[is_system="true"] .tokenCounterDisplay:not(:empty)::after {
+  content: "\00a0\00a0·\00a0\00a0숨김";
 }
 body.salty:not(.salty-dark) :is(#salty-nochat, .salty-preview) .mes :is(.mesIDDisplay, .mes_timer, .tokenCounterDisplay, .timestamp),
 body.salty:is(.salty-user-card, .salty-user-bubble, .salty-user-table) :is(#salty-nochat, .salty-preview) .mes[is_user="true"] :is(.mesIDDisplay, .mes_timer, .tokenCounterDisplay, .timestamp) {

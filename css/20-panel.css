@@ -1345,7 +1345,7 @@ body.salty-dark .salty-shapes button.on {
 .salty-panel .bl-addon-inline-content .bl-hs-switch[aria-checked="true"] { background: var(--salty-accent); box-shadow: none; }
 .salty-panel .bl-addon-inline-content .bl-hs-switch[aria-checked="true"] > span { transform: translateX(14px); }
 
-/* 2026-10-12 쓸데없는 줄바꿈 (찐빠 전수조사) — 옆이 비었는데 꺾이는 글을 없앤다. 칸 높이 · 글자 크기는 그대로, 폭만
+/* 2026-10-12 쓸데없는 줄바꿈 (화면 전수조사) — 옆이 비었는데 꺾이는 글을 없앤다. 칸 높이 · 글자 크기는 그대로, 폭만
    · 폰 슬라이더 두 열: 슬라이더가 3 · 5개면 마지막 하나가 반 칸에 혼자 남아 이름과 숫자칸이 두 줄('PC에서 본문 최대 폭')
      → 혼자 남은 끝 칸은 전체 폭 (앞뒤에 짝이 없는 칸은 99-lazy-panel 이 이미 전체 폭)
    · PC 팝업인데 설정 칸이 좁을 때(화면 1100~1280 → 칸 ≈ 500px) 스위치 · 고르기 줄 두 열(칸 217)에서 설명 · 버튼이 두 줄씩

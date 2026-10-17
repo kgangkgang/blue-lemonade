@@ -12,7 +12,7 @@
 
 /* ---------- 공통 변수: 설정 창 · 편집 팝업 · 재생 막대 (ST 테마 색을 따르고, 블루 레몬에이드 변수는 있으면 씀) */
 .lv-settings, .lv-editor, .lv-bar, .lv-namevoice {
-  --lv-css-version: "1.9.9";
+  --lv-css-version: "2.0.0";
   --lv-accent: var(--salty-accent, var(--SmartThemeQuoteColor, #51a0de));
   --lv-text: var(--SmartThemeBodyColor, #dcdcd2);
   --lv-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, .15));
@@ -671,7 +671,7 @@ body.salty dialog #lv_settings .bl-hs-row .bl-hs-switch[aria-checked="true"] > s
 body.salty dialog #lv_settings .bl-hs-row .bl-hs-switch::before { content:''; position:absolute; inset:-7px 0; }
 body.salty dialog #lv_settings .bl-hs-row .bl-hs-switch:focus-visible { outline:2px solid var(--salty-accent, #3975b8); outline-offset:3px; }
 
-/* ── 2026-10-12 찐빠 2차 (세션 1) ── */
+/* ── 2026-10-12 화면 다듬기 2차 (세션 1) ── */
 /* 이름 옆 ? (손가락 화면에서 누르는 곳 32px, 좌우 -5px): 오른쪽 -5px 이 이름 칸 밖으로 나갔다(「안정감」 70>65) → 오른쪽만 0 (? 자리는 그대로) */
 @media (pointer: coarse) { #lv_settings .lv-name > .lv-help-btn { margin-right: 0; } }
 /* 카드 머리: 좁은 카드에서 제목과 모델 이름이 한 줄을 다투어 모델 이름이 말줄임(「gpt-4o-mini」 71>43) · 제목이 두 줄 → 한 줄에 안 들어가면 모델 이름은 다음 줄 오른쪽, 제목은 낱말 사이에서 꺾임 */

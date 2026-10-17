@@ -54,7 +54,8 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     const on = !!s.enabled;
     if (['conflicts'].some(id=>s.addons?.[id]) || modules.assist) load('assist','./assist/index.js').then(m=>m?.syncAssist());
     syncTypography(on);
-    if(s.fruitTypography?.on||Object.values(s.fruitTypography?.ownerOn||{}).some(Boolean)||modules.fruittype)load('fruittype','./fruit-type-runtime.js').then(m=>m?.syncFruitTypography(s.fruitTypography,on && s.usageMode!=='extensions'));
+    // 7.0.4 글꼴 설정과 상관없이 테마가 켜져 있으면 — 채팅 iframe 과일 상태창의 낱말 꺾임 막기 (fruit-type-runtime wrapCss)
+    if((on&&s.usageMode!=='extensions')||modules.fruittype)load('fruittype','./fruit-type-runtime.js').then(m=>m?.syncFruitTypography(s.fruitTypography,on && s.usageMode!=='extensions'));
     // 6.6.5 다른 확장 · 실리태번의 두꺼운 알약 · 동그라미 글자 버튼을 얇은 둥근 네모로 (사용자: "큰 알약 싫어")
     const squared=on&&s.usageMode!=='extensions'&&s.squareButtons!==false;
     if(squared||modules.squared)load('squared','./squared-buttons.js').then(m=>m?.syncSquaredButtons(squared));
@@ -81,7 +82,7 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     if (showMore || modules.showmore) load('showmore', './show-more-auto.js').then(m => m?.syncShowMoreAuto(showMore));
     const replyTop = on && !!s.chat?.replyTop;
     if (replyTop || modules.replytop) load('replytop', './reply-top.js').then(m => m?.syncReplyTop(replyTop));
-    // 7.0.3 메시지 토큰 옆 「보냄」 (sent-tokens.js, 기본 켬)
+    // 7.0.3 메시지 토큰 — 7.0.4 부터 토큰 수를 누르면 내역 (sent-tokens.js, 기본 켬)
     const sentTokens = on && s.chat?.sentTokens !== false;
     if (sentTokens || modules.senttokens) load('senttokens', './sent-tokens.js').then(m => m?.syncSentTokens(sentTokens));
     const replyNotify = on && !!s.replyNotify?.on;

@@ -1,14 +1,15 @@
-// 7.0.3 메시지 머리 토큰 두 숫자: 실리태번 숫자(만든 양 = 생각 + 본문, token_count)는 그대로 두고, 옆에 「· 보냄 3,994t」 —
-// 다음 답 프롬프트에 그 메시지가 다시 들어가는 양의 추정(프롬프트 전용 정규식 · 매크로를 거친 본문, 생각은 빠짐). 숨긴(is_system) 메시지는 「보냄 0t · 숨김」.
-// 그리기: 실리태번 .tokenCounterDisplay 에 data-bl-sent 만 달고 글은 CSS(css/05-chat.css) ::after 가 붙인다 — 실리태번이 .text() 로 숫자를 바꿔도 남는다.
-// 계산: 화면에 보이는 메시지만(앞뒤 조금), 쉬는 시간(requestIdleCallback)에. 결과는 (사용자 · 깊이 · 글 해시 · 정규식 목록 표) 열쇠로 기억해
-// 긴 채팅을 넘겨 보거나 같은 화면으로 돌아와도 다시 세지 않는다. 깊이 = 숨기지 않은 메시지 중 뒤에서 센 자리(실리태번 Generate 와 같음).
-// 누르면(폰은 톡) 한 줄 설명. 설정: 채팅 › 화면 「메시지 토큰에 보낸 양도」 (chat.sentTokens, 기본 켬)
+// 메시지 머리 토큰 수 누르면 내역 (7.0.3 「· 보냄 N」 → 7.0.4 누를 때만): 머리에는 실리태번 숫자(token_count = 생각 + 본문)만 둔다.
+// 숫자를 누르면(폰은 톡) 그 메시지 몫을 한 줄씩:
+//   생각 A + 본문 B = 총 C t   (생각이 없으면 「본문 B t」) — A · B 는 같은 토크나이저(getTokenCountAsync)로, C 는 실리태번 숫자 그대로
+//   다음 프롬에 들어가는 양 D t (본문보다 적으면 「(프롬용 정규식이 본문에서 B−D t 뺌)」) — D = 프롬프트용 정규식(깊이) → 매크로 뒤 본문, 생각 빠짐
+//   숨긴(is_system) 메시지는 「숨긴 메시지라 프롬에 0t」. 머리의 작은 「· 숨김」은 CSS(.mes[is_system="true"]) 만.
+// 7.0.3 은 보이는 메시지마다 쉬는 시간에 D 를 세어 머리에 붙였으나, 이제 누를 때만 센다(같은 글 · 깊이 · 정규식 목록이면 기억해 둔 값).
+// 깊이 = 숨기지 않은 메시지 중 뒤에서 센 자리(실리태번 Generate 와 같음).
+// 설정: 채팅 › 화면 「토큰 수 누르면 내역」 (chat.sentTokens — 열쇠 이름은 7.0.3 그대로, 기본 켬). 켜면 body.bl-sent-tokens.
 import { groupedNumber } from './numbers.js';
 
-const MARGIN = 400;       // 화면 위아래로 이만큼 더 (넘기자마자 비어 보이지 않게)
 const CACHE_MAX = 600;
-const EXPLAIN = '앞 숫자 = 만든 양(생각 + 본문) · 보냄 = 다음 답 프롬프트에 다시 보내는 양 추정(프롬프트용 정규식 · 매크로 뒤 본문, 생각 빠짐) · 숨긴 메시지는 0';
+const BODY_CLASS = 'bl-sent-tokens';
 
 /** 글 해시 (FNV-1a) — 열쇠용 */
 export function textHash(text) {
@@ -43,26 +44,18 @@ export function sentText(message, depth, { regex = null, substitute = null } = {
     return String(text ?? '');
 }
 
-/** 표시 글 — data-bl-sent 값 */
-export function sentLabel(tokens, hidden = false) {
-    return hidden ? '0t · 숨김' : `${groupedNumber(Math.max(0, Math.round(Number(tokens) || 0)))}t`;
+const num = value => groupedNumber(Math.max(0, Math.round(Number(value) || 0)));
+
+/** 내역 줄 — reasoning = A, body = B, total = C(실리태번 숫자), sent = D */
+export function tokenLines({ reasoning = 0, body = 0, total = 0, sent = 0, hidden = false } = {}) {
+    const first = reasoning > 0 ? `생각 ${num(reasoning)} + 본문 ${num(body)} = 총 ${num(total)}t` : `본문 ${num(body)}t`;
+    if (hidden) return [first, '숨긴 메시지라 프롬에 0t'];
+    const cut = Math.round(body) - Math.round(sent);
+    return [first, `다음 프롬에 들어가는 양 ${num(sent)}t${cut > 0 ? ` (프롬용 정규식이 본문에서 ${num(cut)}t 뺌)` : ''}`];
 }
 
-/** 보이는 .mes (위아래 margin 포함) — 메시지는 위에서 아래로 놓여 있어 첫 칸을 반으로 나눠 찾는다(긴 채팅에서도 위치 읽기 몇 번) */
-export function visibleMessages(chatEl, margin = MARGIN) {
-    const list = chatEl?.querySelectorAll?.('.mes') || [];
-    if (!list.length) return [];
-    const box = chatEl.getBoundingClientRect(), top = box.top - margin, bottom = box.bottom + margin;
-    let lo = 0, hi = list.length - 1;
-    while (lo < hi) { const mid = (lo + hi) >> 1; if (list[mid].getBoundingClientRect().bottom <= top) lo = mid + 1; else hi = mid; }
-    const out = [];
-    for (let i = lo; i < list.length; i++) { if (list[i].getBoundingClientRect().top >= bottom) break; out.push(list[i]); }
-    return out;
-}
-
-let on = false, bound = false, timer = 0, idle = 0, scrollTimer = 0, regexMod = null, observer = null, running = false, again = false;
+let on = false, regexMod = null;
 const cache = new Map();
-const offs = [];
 const context = () => globalThis.SillyTavern?.getContext?.();
 function loadRegex() {
     regexMod ??= import(new URL('../../../../extensions/regex/engine.js', import.meta.url).href).catch(() => null);
@@ -75,94 +68,53 @@ function regexStamp(regex) {
         return textHash(list.map(x => `${x.id}:${x.disabled ? 0 : 1}:${x.promptOnly ? 1 : 0}:${x.minDepth ?? ''}-${x.maxDepth ?? ''}:${String(x.findRegex ?? '').length}:${String(x.replaceString ?? '').length}`).join(','));
     } catch { return ''; }
 }
-
-function schedule(delay = 120) {
-    if (!on) return;
-    clearTimeout(timer); timer = setTimeout(() => {
-        // 쉬는 시간에 (숨은 탭에서도 timeout 으로 돈다)
-        if (typeof requestIdleCallback === 'function') { globalThis.cancelIdleCallback?.(idle); idle = requestIdleCallback(() => void run(), { timeout: 1500 }); }
-        else void run();
-    }, delay);
+function remember(key, value) {
+    cache.set(key, value);
+    if (cache.size > CACHE_MAX) cache.delete(cache.keys().next().value);
+    return value;
+}
+async function count(ctx, text, key = `t|${textHash(text)}`) {
+    if (!text) return 0;
+    if (cache.has(key)) return cache.get(key);
+    return remember(key, Number(await ctx.getTokenCountAsync(text, 0)) || 0);
 }
 
-async function run() {
-    if (!on) return;
-    if (running) { again = true; return; }
-    running = true;
-    try {
-        const ctx = context(), chatEl = document.getElementById('chat');
-        if (!ctx?.chat || !chatEl) return;
-        const regex = await loadRegex();
-        const stamp = regexStamp(regex), depths = promptDepths(ctx.chat);
-        const substitute = typeof ctx.substituteParams === 'function' ? text => ctx.substituteParams(text) : null;
-        for (const el of visibleMessages(chatEl)) {
-            if (!on) return;
-            const counter = el.querySelector('.tokenCounterDisplay');
-            const id = Number(el.getAttribute('mesid')), message = ctx.chat[id];
-            if (!counter || !message || !Number.isFinite(id)) continue;
-            if (message.is_system) { setLabel(counter, sentLabel(0, true)); continue; }
-            const depth = depths.get(id) ?? 0, key = cacheKey(message, depth, stamp);
-            let tokens = cache.get(key);
-            if (tokens === undefined) {
-                try { tokens = await ctx.getTokenCountAsync(sentText(message, depth, { regex, substitute }), 0); }
-                catch { continue; }
-                cache.set(key, tokens);
-                if (cache.size > CACHE_MAX) cache.delete(cache.keys().next().value);
-            }
-            setLabel(counter, sentLabel(tokens));
-        }
-    } finally {
-        running = false;
-        if (again) { again = false; schedule(); }
-    }
+/** 메시지 하나의 내역 줄 (누를 때 부른다) — 못 세면 null */
+export async function breakdown(id, shown = '') {
+    const ctx = context(), message = ctx?.chat?.[id];
+    if (!message || typeof ctx.getTokenCountAsync !== 'function') return null;
+    const reasoning = await count(ctx, String(message.extra?.reasoning ?? ''));
+    const body = await count(ctx, String(message.mes ?? ''));
+    const total = Number(message.extra?.token_count) || Number(String(shown).replace(/[^\d]/g, '')) || reasoning + body;
+    if (message.is_system) return tokenLines({ reasoning, body, total, hidden: true });
+    const regex = await loadRegex();
+    const depth = promptDepths(ctx.chat).get(id) ?? 0;
+    const substitute = typeof ctx.substituteParams === 'function' ? text => ctx.substituteParams(text) : null;
+    const sent = await count(ctx, sentText(message, depth, { regex, substitute }), `s|${cacheKey(message, depth, regexStamp(regex))}`);
+    return tokenLines({ reasoning, body, total, sent });
 }
 
-function setLabel(counter, text) {
-    if (counter.dataset.blSent !== text) counter.dataset.blSent = text;
-}
+const escapeHtml = text => String(text).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 
-function onClick(event) {
-    const counter = event.target.closest?.('#chat .mes .tokenCounterDisplay[data-bl-sent]');
-    if (!counter) return;
-    globalThis.toastr?.info?.(EXPLAIN, '토큰', { timeOut: 5000, preventDuplicates: true });
+async function onClick(event) {
+    const counter = event.target.closest?.('#chat .mes .tokenCounterDisplay');
+    if (!on || !counter || !counter.textContent.trim()) return;
+    const id = Number(counter.closest('.mes')?.getAttribute('mesid'));
+    if (!Number.isFinite(id)) return;
+    let lines = null;
+    try { lines = await breakdown(id, counter.textContent); } catch (error) { console.warn('[Blue Lemonade] 토큰 내역', error); }
+    if (!lines) return;
+    // 실리태번 toastr 는 글을 이스케이프한다 — 줄바꿈만 쓰려고 직접 이스케이프한 줄을 <br> 로
+    globalThis.toastr?.info?.(lines.map(escapeHtml).join('<br>'), `#${id} 토큰`, { escapeHtml: false, timeOut: 8000, preventDuplicates: true });
 }
-
-function onScroll() { clearTimeout(scrollTimer); scrollTimer = setTimeout(() => schedule(0), 200); }
 
 export function syncSentTokens(enabled) {
     on = !!enabled;
-    if (!on) {
-        clearTimeout(timer); clearTimeout(scrollTimer);
-        for (const off of offs.splice(0)) off();
-        observer?.forEach(o => o.disconnect()); observer = null; bound = false;
-        document.querySelectorAll('#chat .tokenCounterDisplay[data-bl-sent]').forEach(el => { delete el.dataset.blSent; });
-        return;
-    }
-    if (!bound) {
-        bound = true;
-        try {
-            const { eventSource, event_types: types } = context();
-            const listen = (name, fn) => { if (types?.[name]) { eventSource.on(types[name], fn); offs.push(() => eventSource.removeListener?.(types[name], fn)); } };
-            const later = () => schedule();
-            for (const name of ['CHAT_CHANGED', 'MESSAGE_RECEIVED', 'MESSAGE_SENT', 'MESSAGE_UPDATED', 'MESSAGE_EDITED', 'MESSAGE_DELETED', 'MESSAGE_SWIPED', 'GENERATION_ENDED', 'CHARACTER_MESSAGE_RENDERED', 'USER_MESSAGE_RENDERED', 'MORE_MESSAGES_LOADED']) listen(name, later);
-            // 정규식 · 프리셋이 바뀌면 열쇠의 정규식 표가 달라져 저절로 다시 센다 — 그래도 보이는 칸은 바로 다시
-            for (const name of ['SETTINGS_UPDATED', 'OAI_PRESET_CHANGED_AFTER', 'PRESET_CHANGED']) listen(name, later);
-        } catch { /* 이벤트를 못 걸면 넘길 때만 */ }
-        const chatEl = document.getElementById('chat');
-        chatEl?.addEventListener('scroll', onScroll, { passive: true });
-        chatEl?.addEventListener('click', onClick);
-        offs.push(() => { chatEl?.removeEventListener('scroll', onScroll); chatEl?.removeEventListener('click', onClick); });
-        // 숨기기 · 숨김 풀기(/hide)는 이벤트 없이 .mes 의 is_system 속성만 바뀌고, 채팅을 다시 그리는 길 중엔 이벤트 없이 .mes 만 붙는 것도 있다
-        // (#chat 바로 아래 자식만 봄 — 스트리밍 중 글자 바뀜은 안 걸린다)
-        if (chatEl && typeof MutationObserver === 'function') {
-            // 같은 관찰자로 같은 칸을 두 번 observe 하면 앞 설정이 바뀌어 버려 둘로 나눈다
-            observer = [new MutationObserver(() => schedule()), new MutationObserver(() => schedule())];
-            observer[0].observe(chatEl, { childList: true });
-            observer[1].observe(chatEl, { subtree: true, attributes: true, attributeFilter: ['is_system'] });
-        }
-    }
-    schedule(0);
+    document.body?.classList.toggle(BODY_CLASS, on);
+    const chatEl = document.getElementById('chat');
+    chatEl?.removeEventListener('click', onClick);
+    if (on) chatEl?.addEventListener('click', onClick);
 }
 
 /** 시험용 */
-export const _forTest = { run, cache, explain: EXPLAIN };
+export const _forTest = { cache, onClick };

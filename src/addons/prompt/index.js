@@ -4569,6 +4569,12 @@ function syncDrawerPages() {
     if (visible) wakePages();
     else sleepPages();
 }
+// 7.0.4 읽기만: 지금(또는 고른) 프리셋의 프롬프트 제목 번역 — 캐시(제목만 / 전체 번역의 제목). 없으면 null.
+// 테마의 프롬프트 목록 「끼운 글 · 프리셋: …」 이름표가 쓴다 (프리셋 파일의 이름은 그대로)
+export function translatedPromptTitle(identifier, presetName = '') {
+    try { return getTranslatedTitle(presetNs(presetName), String(identifier)) || null; } catch { return null; }
+}
+
 export function openPanel() {
     const panel = PDOC.getElementById('pt-panel');
     if (!panel) return;

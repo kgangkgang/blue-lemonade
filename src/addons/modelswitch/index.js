@@ -15,7 +15,7 @@ import { MAX_STATES, entryOf, captureState, changedSince, planRestore, isCurrent
 import { toggleGroup, groupOn, fallbackOnly, rowActive, isFallbackRow, displayGroups } from './rows.js';
 import { mountFallbackField } from './fallback-field.js';
 
-const VERSION = '1.2.0';
+const VERSION = '1.2.1';
 const MAX_PRESETS = 8;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const label = source => SOURCES.find(s => s.id === source)?.label || source;

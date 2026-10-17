@@ -145,7 +145,9 @@ export function createPromptEngine(doc = document) {
         for(const [el,state] of titles)if(el.getAttribute('title')===state.after)el.setAttribute('title',state.before);titles.clear();
         changed.clear(); for(const el of hints.values())el.remove();hints.clear();
     }
-    return {register(id,data){
+    // 7.0.4 읽기만: 목록에 칠하는 것과 같은 글 (없으면 null) — 프롬프트 목록 「끼운 글 · 프리셋: …」 이름표가 쓴다
+    const title = (kind, id, name) => lookup(kind, id, name)?.title ?? null;
+    return {title,register(id,data){
         if(!sources.size)start(); sources.set(id,compile(data));order();render();
         return ()=>{sources.delete(id);order();if(sources.size)render();else stop();};
     },stop};

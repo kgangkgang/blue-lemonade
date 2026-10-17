@@ -64,7 +64,7 @@ t('맞추는 규칙 · 역할 · 긴 채팅은 뒤쪽만 정규식', () => {
 
 t('배선: promptlist 가 chatHistory 줄에 표시를 달고 열릴 때 이름만 바꿈(내용 · 토큰 · 순서 안 건드림) · 모르면 「대화 N」 · CI', () => {
     const src = read('src/promptlist.js');
-    assert.match(src, /import \{ alignHistory, chatCandidates, labelOf \} from '\.\/prompt-history-label\.js';/);
+    assert.match(src, /import \{ alignHistory, chatCandidates, labelOf(?:, [\w, ]+)? \} from '\.\/prompt-history-label\.js';/);   // 7.0.4 출처 함수가 더해짐
     assert.match(src, /name\.textContent = history \? `대화 \$\{history\[1\]\}` : parts\.name;/, '먼저 옛 이름');
     assert.match(src, /if \(history\) name\.dataset\.blHist = history\[1\];/);
     assert.match(src, /void labelHistory\(root\);/);

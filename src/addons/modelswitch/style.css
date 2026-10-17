@@ -1,4 +1,4 @@
-#model-switch-settings{--ms-version:"1.2.0"}
+#model-switch-settings{--ms-version:"1.2.1"}
 #model-switch-settings .inline-drawer-content{display:flex;flex-direction:column;gap:12px;text-align:left}
 .ms-presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
 .ms-presets:empty{display:none}
@@ -85,7 +85,7 @@ dialog.popup #model-switch-settings>.inline-drawer-header .inline-drawer-icon{di
 /* ── 6.2.0 (ui-density-620b): 공급자 · 모델 · 주소도 번역처럼 위 라벨 (라벨 → 칸 8). 테마 공용 규칙(라벨 열 4em)보다 위 ── */
 html body.salty #model-switch-settings .ms-form > :is(label, .ms-row) { grid-template-columns: minmax(0, 1fr); gap: 8px; }
 
-/* ── 2026-10-12 쓸데없는 줄바꿈 · 찐빠 정리 ──
+/* ── 2026-10-12 쓸데없는 줄바꿈 · 화면 다듬기 ──
    ③ 외톨이 줄: 저장한 조합이 없으면 「+」(지금 조합 저장) 하나가 한 줄(36 + 칸 사이 12)을 썼다 → 제목 줄 오른쪽 끝으로 올린다.
       팝업 = 「모델 전환 v…」 머리 줄(단추 높이로 맞춤), PC 설정 창에 끼웠을 때 = 「세부 설정」 제목 줄. 조합이 하나라도 있으면 그대로 칩 줄. */
 dialog.popup :not(.bl-addon-inline-content) > #model-switch-settings:has(> .inline-drawer-content > .ms-presets > .ms-chip-add:only-child) { position:relative; }

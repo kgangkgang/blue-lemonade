@@ -27,6 +27,8 @@ const frames=new Map(), timers=new Map(), observers=[];let next=1;
 const host={requestAnimationFrame(fn){const id=next++;frames.set(id,fn);return id;},cancelAnimationFrame:id=>frames.delete(id),setInterval(fn){const id=next++;timers.set(id,fn);return id;},clearInterval:id=>timers.delete(id),MutationObserver:class{constructor(fn){this.fn=fn;observers.push(this);}observe(node){this.node=node;}disconnect(){this.node=null;}}};
 const settle=()=>{for(let i=0;frames.size&&i<8;i++){const batch=[...frames.values()];frames.clear();batch.forEach(fn=>fn());}assert.equal(frames.size,0);};
 const refresh=()=>{[...timers.values()].forEach(fn=>fn());settle();};
+// 7.0.3: 바뀐 것은 감시자가 알린다(브라우저처럼) — 1.5초 타이머는 채팅 뿌리 · iframe 문서가 바뀐 때만 다시 훑는다
+const mutate=()=>{for(const o of observers)if(o.node)o.fn([{addedNodes:[{nodeType:1}],removedNodes:[]}]);settle();};
 const add=(parent,tag,attrs,text)=>parent.append(new Element(parent.ownerDocument,tag,attrs,text));
 function card(parent){
     const wrapper=add(parent,'div',{class:'fate-status-wrapper'});
@@ -54,11 +56,12 @@ assert.equal(outer.label.text,'DATE');assert.equal(direct.label.text,'날짜');a
 for(const c of [direct,inner]){assert.equal(c.value.text,'SCENE');assert.equal(c.raw.text,'日期：DATE');assert.equal(c.ignored.text,'TIME');assert.equal(c.chars.map(x=>x.text).join(''),'말없이 시간이 흘러간다.');assert.equal(c.deco.text,'메아리');}
 const savedNodes=direct.chars.map(x=>x.children[0]);
 refresh();assert.deepEqual(direct.chars.map(x=>x.children[0]),savedNodes);
-inner.button.setAttribute('title','切换日间模式');inner.button.setAttribute('aria-label','切换日间模式');refresh();assert.equal(inner.button.getAttribute('title'),'밝은 모드로 전환');
-direct.label.children[0].nodeValue='사용자 제목';direct.footer.children[0].nodeValue='사용자 문구';refresh();assert.equal(direct.label.text,'사용자 제목');
+[...timers.values()].forEach(fn=>fn());assert.equal(frames.size,0,'idle timer tick must not rescan an unchanged chat');
+inner.button.setAttribute('title','切换日间模式');inner.button.setAttribute('aria-label','切换日间模式');mutate();assert.equal(inner.button.getAttribute('title'),'밝은 모드로 전환');
+direct.label.children[0].nodeValue='사용자 제목';direct.footer.children[0].nodeValue='사용자 문구';mutate();assert.equal(direct.label.text,'사용자 제목');
 const newDoc=documentFixture(), replaced=card(newDoc.body);iframe.contentDocument=newDoc;iframe.listeners.get('load')();settle();assert.equal(replaced.label.text,'날짜');assert.equal(inner.label.text,'DATE');assert.equal(cp.text,'CP');assert.equal(choice.text,'Choose · Sth.');
-const late=card(newDoc.body);refresh();assert.equal(late.label.text,'날짜');late.wrapper.remove();refresh();assert.equal(late.label.text,'DATE');
-const reused=direct.label;reused.remove();doc.body.append(reused);refresh();assert.equal(reused.text,'사용자 제목');
+const late=card(newDoc.body);mutate();assert.equal(late.label.text,'날짜');late.wrapper.remove();mutate();assert.equal(late.label.text,'DATE');
+const reused=direct.label;reused.remove();doc.body.append(reused);mutate();assert.equal(reused.text,'사용자 제목');
 stop();stop();assert.equal(timers.size,0);assert.equal(frames.size,0);assert(observers.every(o=>!o.node));assert.equal(iframe.listeners.size,0);assert.equal(foreign.listeners.size,0);
 assert.equal(replaced.label.text,'DATE');assert.equal(direct.footer.text,'사용자 문구');assert.equal(direct.chars.map(x=>x.text).join(''),'沉默不语，时光流淌');
 const stopAgain=installFruitStatusKorean(doc,host);assert.equal(replaced.label.text,'날짜');stopAgain();assert.equal(replaced.label.text,'DATE');

@@ -10,7 +10,7 @@
     --bwr-accent-ink: var(--salty-accent-ink, var(--bwr-accent)); /* 옅은 포인트 면 위 글자 — 블루 레몬에이드 밝은 테마면 진한 잉크 */
     --bwr-danger: #e5484d;
     /* Compared with index.js after load: a mismatch may be a packaging, cache, or installation issue. */
-    --bwr-css-version: "2.1.5";
+    --bwr-css-version: "2.1.6";
 }
 
 /* 서랍 안쪽 — .inline-drawer-content 는 실리태번이 열고 닫으므로 display 를 주지 않고 안에 한 겹 더 둔다 */
@@ -717,7 +717,7 @@ body.salty .bwr_settings .bwr_tab i { font-size: 1.1em; }
 body.salty .bwr_settings .bwr_tab > span:not(.bwr_badge) { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 body.salty .bwr_settings .bwr_tab .bwr_badge { position: absolute; top: 3px; right: 3px; min-width: 15px; padding: 0 4px; font-size: .8em; line-height: 1.5; }
 body.salty .bwr_settings .bwr_seg { min-height: var(--bl-h-ctl, 36px); padding: 4px 6px; font-size: var(--bl-ts-meta, 12.5px); line-height: 1.35; }
-/* 2026-10-12 찐빠 정리: 40em(테마 설정 창 601px)에서 가로 탭이 되면 「금지 묘사 + 개수」가 칸 97 에 안 들어가 「금지 …」로 잘렸다 → 가로 탭은 50em 부터 */
+/* 2026-10-12 화면 다듬기: 40em(테마 설정 창 601px)에서 가로 탭이 되면 「금지 묘사 + 개수」가 칸 97 에 안 들어가 「금지 …」로 잘렸다 → 가로 탭은 50em 부터 */
 @container (min-width: 50em) {
     body.salty .bwr_settings .bwr_tab { flex-direction: row; gap: 8px; min-height: var(--bl-h-ctl, 36px); padding-block: 4px; }
     body.salty .bwr_settings .bwr_tab .bwr_badge { position: static; }
@@ -745,7 +745,7 @@ body.salty .bwr_settings :is(.bwr_tab, .bwr_seg):is(.active, .is-active) { backg
 .bwr_settings .bwr_card_title { display: flex; align-items: center; gap: 8px; min-height: 37px; margin: 0 -10px; padding: 8px 12px; border-bottom: 1px solid var(--salty-line, rgba(127, 127, 127, .25)); border-radius: calc(var(--bl-r-md, 12px) - 1px) calc(var(--bl-r-md, 12px) - 1px) 0 0; background: var(--salty-shade, rgba(127, 127, 127, .12)); color: var(--salty-text, inherit); font-size: var(--bl-ts-ui, 14px); font-weight: 600; line-height: 20px; }
 .bwr_settings .bwr_card_title > i { width: 1.2em; text-align: center; color: var(--salty-accent, currentColor); }
 
-/* ── 2026-10-12 쓸데없는 줄바꿈 · 찐빠 정리 ──
+/* ── 2026-10-12 쓸데없는 줄바꿈 · 화면 다듬기 ──
    ① 좁은 2열: 리롤 탭의 글자 칸 둘(답변 시작 글자 · 프롬프트에 이 글자가 있을 때만)이 폰 2열 반 칸(≈183)에 들어가
       긴 이름이 두 줄로 꺾였다(메뉴 글씨 15.5) → 글자 칸 둘은 한 줄 전체, 숫자 칸 둘(횟수 · 제한 시간)만 나란히. 칸 높이 · 글자 크기는 그대로.
       넓은 서랍(56em 이상 — PC 1100 은 891px 에 네 칸 215)은 네 칸이 한 줄에 다 들어가 꺾이지 않으므로 원래 한 줄 그대로 */

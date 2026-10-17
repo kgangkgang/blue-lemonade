@@ -113,7 +113,7 @@ html body .bl-editor .bl-setting-reset[hidden] { display:none !important; }
   html body .bl-editor .bl-settings-toprow [data-compare]::before { content:''; position:absolute; inset:0; margin:auto; width:16px; height:16px; background:currentColor; -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='14' height='12' rx='2'/%3E%3Cpath d='M10 2v16'/%3E%3C/svg%3E") center / contain no-repeat; mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='14' height='12' rx='2'/%3E%3Cpath d='M10 2v16'/%3E%3C/svg%3E") center / contain no-repeat; }
 }
 
-/* ── 2026-10-12 찐빠 2차 (세션 1): 좁은 서랍(PC 채팅 폭 50% → 확장 서랍 237px) ── */
+/* ── 2026-10-12 화면 다듬기 2차 (세션 1): 좁은 서랍(PC 채팅 폭 50% → 확장 서랍 237px) ── */
 /* 윗줄: 아이콘 다섯(168px)이 줄을 차지해 고르기 단추 「화면」이 27>3 으로 잘렸다 → 편집기 폭 300px 아래면 고르기 단추가 한 줄, 아이콘은 다음 줄 오른쪽 */
 @container bl-editor (max-width: 300px) {
   .bl-editor .bl-settings-toprow { flex-wrap: wrap; row-gap: 4px; }

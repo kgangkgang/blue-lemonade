@@ -20,7 +20,10 @@ const FIXES = '.fate-status-wrapper.night-mode>.fate-theme-toggle{top:3px!import
 
 export function installFruitStatusKorean(doc = document, host = window) {
     const texts = new Map(), attributes = new Map(), cards = new Map(), documents = new Map(), frames = new Map(), dialogChanges = new Map(), fixes = new Map();
-    let stopped = false, scheduled = 0;
+    let stopped = false, scheduled = 0, lastSig = '';
+    // 7.0.3 long chats: the 1.5 s timer only rescans when the chat root or an iframe document changed (observers and iframe load report the rest)
+    const ids=new WeakMap();let nextId=1;const idOf=o=>{if(!o)return 0;let i=ids.get(o);if(!i)ids.set(o,i=nextId++);return i;};
+    const frameSig=(withCounts=false)=>{const out=[];const walk=(scope,depth)=>{out.push(idOf(scope));if(!scope||depth>3)return;for(const f of scope.querySelectorAll('iframe')){let d=null;try{d=f.contentDocument;}catch{}out.push(idOf(d));if(withCounts)out.push(d?.querySelectorAll?.('*').length||0);if(d?.body)walk(d.body,depth+1);}};walk(doc.querySelector('#chat'),0);return out.join(',');};
     const schedule = () => { if (!stopped && !scheduled) scheduled = host.requestAnimationFrame(flush); };
     function restoreText(node) {
         const old = texts.get(node);
@@ -136,7 +139,7 @@ export function installFruitStatusKorean(doc = document, host = window) {
                 try { const inner = frame.contentDocument; if (inner?.body) visit(inner, inner.body); } catch { /* foreign origin */ }
             }
         }
-        visit(doc, doc.querySelector('#chat'));
+        visit(doc, doc.querySelector('#chat')); lastSig = frameSig();
         for (const [current, entry] of documents) if (!liveDocs.has(current)) { entry.observer.disconnect(); documents.delete(current); }
         for (const [card, observer] of cards) if (!liveCards.has(card)) { observer.disconnect(); cards.delete(card); }
         for (const [frame, listener] of frames) if (!liveFrames.has(frame)) { frame.removeEventListener('load', listener); frames.delete(frame); }
@@ -144,7 +147,7 @@ export function installFruitStatusKorean(doc = document, host = window) {
         for (const [current, style] of fixes) if (![...liveCards].some(card=>card.ownerDocument===current&&card.matches('.fate-status-wrapper'))) { style.remove(); fixes.delete(current); }
         paint();
     }
-    const timer = host.setInterval(schedule, 1500); // discovers a replaced chat root without observing the whole page
+    const timer = host.setInterval(() => { if (frameSig() !== lastSig) schedule(); }, 1500); // discovers a replaced chat root without observing the whole page
     flush();
     return () => {
         if (stopped) return;

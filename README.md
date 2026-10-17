@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.0.3/blue-lemonade-7.0.3.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.0.4/blue-lemonade-7.0.4.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
@@ -20,7 +20,18 @@ AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·�
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.0.3 · 최신 업데이트</summary>
+<summary>7.0.4 · 최신 업데이트</summary>
+
+- 끼운 글 출처: 프롬프트 관리자 「채팅 기록」 목록의 「끼운 글」 줄이 어디서 왔는지 보여요 — 작가의 노트 · 월드 인포(깊이) · 프리셋 프롬프트 이름 · 확장 이름. 프리셋 프롬프트는 목록에 보이는 한글 이름 그대로 나와요.
+- 토큰 내역: 메시지 머리에는 실리태번 토큰 숫자만 보이고, 누르면 「생각 + 본문 = 총」과 다음 답 프롬프트에 실제로 들어가는 양을 보여 줘요. 숨긴 메시지는 0.
+- 긴 채팅 속도: 과일 상태 감시가 1.5초마다 채팅 전체를 훑지 않고 바뀐 게 있을 때만 봐요.
+- 과일 상태창 줄바꿈: 상태창 글이 낱말 중간에서 끊기지 않고 낱말 단위로 줄을 바꿔요. 글꼴 · 자간은 그대로예요.
+- 번역: 「two hundred-and-ninety-centimeter」처럼 글자로 붙여 쓴 숫자를 290 으로 잘못 읽지 않게 번역 요청에 한 줄을 더해요 (LLM 번역 2.7.8). 모델 태그 알림(已切换模型标签)도 한글로 보여요.
+
+</details>
+
+<details>
+<summary>7.0.3 · 확장 창 통일 · 화면 다듬기 · ZIP 여러 개 설치 · 보낸 토큰</summary>
 
 - 확장 창 통일: 테마 애드온 창들이 같은 머리(아이콘 · 제목 · 판 알약 · 오른쪽 위 ×)와 같은 한 줄 탭 · 고른 칸 표시 · 카드 모서리를 써요. 아래쪽 「닫기」 줄은 없어지고, 뒤로 가기 · Esc · 바깥 누르기로 닫는 건 그대로예요.
 - 화면 다듬기: 이름 아래 빈 공간 · 찌그러진 스위치 · 화면 폭만 한 색 칸 · 작은 폰에서 한 열로 내려가던 슬라이더 · 화이트에서 흐린 글자 · 한 글자만 다음 줄로 넘어가던 글 · 과일의 마음 설정의 빈 줄 등을 고쳤어요.

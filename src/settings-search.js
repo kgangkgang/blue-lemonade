@@ -111,7 +111,7 @@ rows.push(['extensions','words','단어 치환','단어 바꾸기 조사 규칙 
  ['chat','screen','백그라운드에서도 계속','백그라운드 다른 앱 앱 전환 탭 잠 멈춤 소리 없이 무음 작은 창 pip 버티기 번역 계속 버티는 방식','', 'bgWindow.on'],
  ['chat','screen','이전 메시지 저절로 불러오기','이전 메시지 더 보기 더보기 자동 저절로 불러오기 위로 스크롤 옛 메시지 지난 대화 무한 스크롤 show more messages','', 'chat.showMoreAuto'],
  ['chat','screen','새 답 첫 줄로 가는 단추','새 답 첫 줄 맨 위로 처음으로 화살표 위 아이콘 긴 답 답변 시작 위치 점프 이동 단추','', 'chat.replyTop'],
- ['chat','screen','메시지 토큰에 보낸 양도','토큰 수 보냄 보낸 양 프롬프트 다시 보내는 양 정규식 숨긴 메시지 두 숫자','', 'chat.sentTokens'],
+ ['chat','screen','토큰 수 누르면 내역','토큰 수 내역 생각 본문 총 프롬 프롬프트 다음 답 들어가는 양 정규식 숨긴 메시지','', 'chat.sentTokens'],
  ['chat','screen','답이 오면 알려 주기','알림 진동 푸시 답 도착 완료 알려 주기 다른 앱 폰 백그라운드','', 'replyNotify.on']);
 const markdownAliases = {
  size:'h1 h2 h3 h4 h5 h6 헤딩 큰글씨 작은글씨', space:'여백 간격 문단 촘촘히 넉넉히', heading:'h1 h2 h3 h4 h5 h6 헤더 헤딩 밑선',

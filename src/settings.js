@@ -426,7 +426,7 @@ function tidyFlags(s) {
         s.chat.webSearchMarks = flag(s.chat.webSearchMarks, true); // 6.2.6 웹 검색 · 출처 표시 (websearch.js) — 예전 설정에는 없으니 켬
         s.chat.showMoreAuto = flag(s.chat.showMoreAuto, true); // 6.9.8 「이전 메시지 더 보기」 저절로 (show-more-auto.js) — 예전 설정에는 없으니 켬
         s.chat.replyTop = flag(s.chat.replyTop, false); // 6.9.8 새 답 첫 줄로 가는 ↑ (reply-top.js) — 켤 때만
-        s.chat.sentTokens = flag(s.chat.sentTokens, true); // 7.0.3 메시지 토큰 옆 「보냄」 (sent-tokens.js) — 예전 설정에는 없으니 켬
+        s.chat.sentTokens = flag(s.chat.sentTokens, true); // 7.0.3 메시지 토큰 (sent-tokens.js, 7.0.4 부터 누르면 내역) — 예전 설정에는 없으니 켬
         // 3.3.0 날씨 효과: off | rain | snow | tracker(데우스 트래커 날씨 따라) · 세기 1~3
         if (!['off', 'rain', 'snow', 'fog', 'sun', 'star', 'firefly', 'rainbow', 'shadow', 'breeze', 'glass', 'water', 'lemon', 'petal', 'feather', 'butterfly', 'meteor', 'custom', 'tracker'].includes(s.chat.weather)) s.chat.weather = 'off';
         if (!['off', 'rain', 'snow', 'fog', 'sun', 'star', 'firefly', 'rainbow', 'shadow', 'breeze', 'glass', 'water', 'lemon', 'petal', 'feather', 'butterfly', 'meteor'].includes(s.chat.weather2)) s.chat.weather2 = 'off';
