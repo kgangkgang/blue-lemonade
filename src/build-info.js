@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.1.0";
+export const BUILD_VERSION = "7.1.1";
 export const FILE_HASHES = {
   "index.js": "19832:e9ecf3ab:d2bfb1ac",
-  "manifest.json": "365:791be645:0d837cca",
+  "manifest.json": "365:d07cc486:dea0b2de",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -227,8 +227,8 @@ export const FILE_HASHES = {
   "src/addons/translator/glossary-match.js": "24972:28841d7f:d4d75f0e",
   "src/addons/translator/glossary-suggest.js": "37892:84fb105c:16cf3cc9",
   "src/addons/translator/glossary-sync.js": "4410:86799b24:8d1eafff",
-  "src/addons/translator/index.html": "56603:b310f84f:c68255b7",
-  "src/addons/translator/index.js": "527784:28dffd61:a72f6937",
+  "src/addons/translator/index.html": "56603:be6c4a6c:1e53ea7c",
+  "src/addons/translator/index.js": "531812:ca24f25e:caa699c1",
   "src/addons/translator/korean-keep.js": "3875:e48e9ac8:e1078d76",
   "src/addons/translator/leftover-fix.js": "19469:fbe00d00:bc47066c",
   "src/addons/translator/menu-visibility.js": "1137:ae729d76:8ea71da6",
@@ -251,7 +251,7 @@ export const FILE_HASHES = {
   "src/addons/translator/style.css": "31996:f8434d63:fdfc9420",
   "src/addons/translator/translation-check.js": "21503:8e3ecd3e:8cfbc5ff",
   "src/addons/translator/translation-guard.js": "9950:b887474b:cc2358d4",
-  "src/addons/translator/translation-resume.js": "5631:82b618c9:3a0c92e5",
+  "src/addons/translator/translation-resume.js": "5921:1d9d6c8d:6c8c5b59",
   "src/addons/translator/translation-segments.js": "105670:626f775f:daae648c",
   "src/addons/translator/translation-source.js": "7836:bf170ab0:93e8eb3d",
   "src/addons/translator/translation-stream.js": "9000:290adf3b:70902b1a",
@@ -529,7 +529,7 @@ export const FILE_HASHES = {
   "src/modal.js": "1449:da5093fd:8b8c4b3c",
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "265797:fc433617:d16fb7cf",
+  "src/notice-data.js": "266330:7845f517:573cc0e9",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -651,5 +651,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "37252:989206a6:6181d71d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1514319:a9e3d723:9a4aca71"
+  "style.css": "1514319:50ee6fa9:5b80a5d7"
 };

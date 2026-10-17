@@ -9,7 +9,7 @@ import { dressBody } from '../../dem-expressive.js';   // 6.9.6 · 감정 대사
 import { AUTO_CONTEXT, hasAutoContext, markAutoContext, captureAutoContextGuard, prepareTranslatorAutoContext } from './context-auto.js';
 import { prepareDisplayCards, withDisplayCardsProtected, withoutDisplayCards, displayCardBlocks, matchesDisplayCardStructure } from './display-cards.js';
 import { cardValues } from './card-values.js';   // 6.5.4 상태 카드 고정 값은 보내지 않고 바로 채움
-import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
+import { checkpointKey, translateChunks, clearCheckpoints, readCheckpoint, writeCheckpoint } from './translation-resume.js';
 import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, stripDraftLeaks, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, fixPlaceholderVariants, dropLeftoverPlaceholders as dropProseLeftoverPlaceholders, repairTagPairs as repairProseTagPairs, dropStrayWords as dropProseStrayWords, dropWrapQuotes } from './translation-segments.js';
 import { hideOpenComments, looksCutShort, restoreDialogueBrackets } from './translation-segments.js';   // 2.5.1 숨긴 주석 표시 보정 · 끊긴 답 · 2.5.2 빠진 대사 괄호
 import { keepKorean } from './korean-keep.js';   // 2.7.9 이미 한국어인 문단 · 대사는 번역 요청에 보내지 않기
@@ -2232,10 +2232,57 @@ async function translate(text, options = {}) {
         } else {
             progress({ stage: 'whole' });
             let whole = null;
-            try { whole = restoreParagraphBreaks(isRetranslation ? compareText : maskedText, await callWithLayouts(maskedText, PROMPT_LAYOUTS)); } // 5.2.4 빠진 문단 빈 줄 되살리기
-            catch (error) {
-                if (!error?.refused || chunks.length < 2) throw error;
+            // 2.9.1 통짜 길도 흘려받는다 — 2.8.3 에서 통짜로 보낼 크기가 응답 길이를 따라 커져(예: 28800자) 다시 번역 단추처럼 문단 캐시를 안 쓰는 길이
+            //   거의 다 여기로 와 「번역 중 · 15초」만 뜨고 끝난 문단부터 보이지 않았다. 요청은 그대로 한 번, 빈 줄로 닫힌 문단까지 미리 보기 · 「문단 n/전체」.
+            //   끊기면(연결 · 중지 · 시간 초과) 원문 문단과 짝이 맞는 앞 문단만 하루 동안 남기고, 다시 누르면 남은 문단만 보낸다
+            const wholeParas = maskedText.split(/\n[ \t]*\n/);
+            const wholeKey = !isRetranslation && !isInputTranslation && wholeParas.length > 1 ? await checkpointKey(JSON.stringify(['whole-v1', setupDigest, maskedText])) : '';
+            const wholeSaved = wholeKey ? await readCheckpoint(wholeKey) : null;
+            const head = Array.isArray(wholeSaved?.parts) && wholeSaved.total === wholeParas.length && wholeSaved.parts.length < wholeParas.length ? wholeSaved.parts : [];
+            const wholeBody = head.length ? wholeParas.slice(head.length).join('\n\n') : maskedText;
+            let closed = [];
+            const paintWhole = list => {
+                progress({ stage: 'chunks', done: Math.min(head.length + list.length, wholeParas.length - 1), total: wholeParas.length, resumed: head.length });
+                if (showPreview && head.length + list.length) showPreview([...head, ...list, ...wholeParas.slice(head.length + list.length)].join('\n\n'));
+            };
+            if (head.length) paintWhole([]);
+            const wholeStream = raw => {
+                let text = String(raw ?? '').replace(/\r\n?/g, '\n').replace(/<think>[\s\S]*?<\/think>/gi, '');
+                if (/<think>/i.test(text)) return;
+                text = text.replace(/^\s*```[a-z]*[ \t]*\n/, '').replace(/^\n+/, '');
+                const parts = text.split(/\n[ \t]*\n/);
+                const done = parts.slice(0, -1).map(part => part.replace(/\s+$/, '')).filter(part => part.trim());
+                if (done.length <= closed.length) return;
+                closed = done.slice(0, Math.max(0, wholeParas.length - head.length - 1));
+                paintWhole(closed);
+            };
+            // 원문 문단과 짝이 맞는 앞 문단만 (자리표시자 · 대사 따옴표 · 길이가 맞고 거절 · 실패 표시가 아님 — 문단을 합쳐 쓴 답이면 거기서 멈춘다)
+            const alignedHead = list => {
+                const marks = value => JSON.stringify(String(value).match(/\[\[__VAR_\d+__\]\]/g) || []);
+                const quoted = value => /^[\s*_]*["“「『‘']/.test(value);
+                const kept = [];
+                for (let j = 0; j < list.length; j++) {
+                    const src = wholeParas[head.length + j], out = list[j];
+                    if (src == null || marks(src) !== marks(out) || quoted(src) !== quoted(out) || hasFailMark(out) || looksLikeRefusal(src, out)
+                        || out.length < src.trim().length * 0.2 || out.length > src.trim().length * 3 + 40) break;
+                    kept.push(out);
+                }
+                return kept;
+            };
+            const wantStream = (showPreview || onProgress) && wholeParas.length > 1;
+            if (wantStream) batchStream = () => { closed = []; return wholeStream; };
+            try {
+                const out = await callWithLayouts(wholeBody, PROMPT_LAYOUTS);
+                whole = restoreParagraphBreaks(isRetranslation ? compareText : maskedText, head.length ? [...head, out].join('\n\n') : out); // 5.2.4 빠진 문단 빈 줄 되살리기
+                if (wholeKey && wholeSaved) await clearCheckpoints(wholeKey);
             }
+            catch (error) {
+                if (wholeKey && !error?.refused) {
+                    const kept = alignedHead(closed);
+                    if (kept.length) try { await writeCheckpoint({ key: wholeKey, parts: [...head, ...kept], total: wholeParas.length }); } catch { /* 남기기 실패는 원래 오류를 바꾸지 않는다 */ }
+                }
+                if (!error?.refused || chunks.length < 2) throw error;
+            } finally { if (wantStream) batchStream = null; }
             // 2.5.1 통짜 답이 중간에 끊겼으면 덩이로 나눠 다시 (덩이가 하나뿐이면 붙이지 않고 오류 — 남은 문단을 조용히 잃지 않게)
             if (whole !== null && !isRetranslation && looksCutShort(maskedText, whole)) {
                 if (chunks.length < 2) throw cutError();

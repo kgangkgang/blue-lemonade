@@ -56,6 +56,9 @@ export async function checkpointKey(value) {
     const digest = await subtle.digest('SHA-256', bytes);
     return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
 }
+/** 2.9.1 통짜 길 이어 하기용 — 같은 저장소 · 같은 하루 · 같은 개수 상한 */
+export async function readCheckpoint(key) { return key ? read(key) : null; }
+export async function writeCheckpoint(value) { if (value?.key) await write({ ...value, time: Date.now() }); }
 export async function clearCheckpoints(key) {
     if (key) memory.delete(key); else memory.clear();
     let db;

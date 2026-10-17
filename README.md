@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.1.0/blue-lemonade-7.1.0.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.1.1/blue-lemonade-7.1.1.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
@@ -20,7 +20,15 @@ AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·�
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.1.0 · 최신 업데이트</summary>
+<summary>7.1.1 · 최신 업데이트</summary>
+
+- LLM 번역: 7.0.9 부터 다시 번역 단추처럼 긴 글을 한 번에 보내는 번역에서 「번역 중 · 15초」만 뜨고 끝난 문단이 바로 안 보이던 것을 고쳤어요. 요청은 그대로 한 번이고, 문단이 끝나는 대로 번역문이 보이고 진행 표시에 「문단 n/전체」도 나와요.
+- LLM 번역: 그 번역이 중간에 끊겨도 받은 문단은 남겨 두고, 다시 누르면 남은 문단만 보내요 (LLM 번역 2.9.1).
+
+</details>
+
+<details>
+<summary>7.1.0 · 번역 진행 표시 · 끊긴 묶음 이어 하기</summary>
 
 - LLM 번역: 번역하는 동안 채팅이 다시 그려지면 메시지 위의 「번역 중」 표시가 사라지고 「번역이 이미 진행 중입니다」만 뜨던 것을 고쳤어요. 이제 표시가 계속 보이고, 알림에도 몇 번 메시지가 몇 초째 번역 중인지 나와요.
 - LLM 번역: 긴 메시지를 한 번에 보내다 끊겨도, 이미 받은 문단은 남겨 두고 다시 누르면 나머지만 보내요 (LLM 번역 2.9.0).
