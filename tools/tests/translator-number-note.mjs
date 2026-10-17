@@ -1,4 +1,4 @@
-// 번역기 2.7.8 숫자 한 줄: 글자로 붙여 쓴 숫자 + 단위("two hundred-and-ninety-centimeter demons" = 190센티미터인 둘)가 원문에 있을 때만
+// 번역기 2.7.8 숫자 한 줄: 글자로 붙여 쓴 숫자 + 단위("two hundred-and-ninety-centimeter guards" = 190센티미터인 둘)가 원문에 있을 때만
 // 번역 요청에 [Numbers: …] 한 줄을 붙인다. 없으면 프롬프트는 예전 그대로.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

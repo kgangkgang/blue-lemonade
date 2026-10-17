@@ -11,6 +11,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { KOREAN_KEEP_ENV } from './korean-keep-env.mjs';   // 2.7.9 이미 한국어인 부분 판정 (korean-keep.js · KOREAN_TARGET)
 
 const root = path.resolve(process.argv[2] || '.'), dir = path.join(root, 'src/addons/translator');
 const source = fs.readFileSync(path.join(dir, 'index.js'), 'utf8');
@@ -70,7 +71,7 @@ const S = { llm_prompt_chat: 'Translate visible text.', glossary_enabled: false,
 const T = { chat: [], saved: 0, warnings: [] };
 const PREFIX = 'Translate visible text.\n\n';
 const hash = t => String([...String(t)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0));
-const env = { ...card, ...seg, ...resume, ...auto, ...notify, ...check, cardValues: cardValueModule.cardValues, getStringHash: hash, extensionSettings: S,
+const env = { ...KOREAN_KEEP_ENV, ...card, ...seg, ...resume, ...auto, ...notify, ...check, cardValues: cardValueModule.cardValues, getStringHash: hash, extensionSettings: S,
     getContext: () => ({ chatMetadata: {}, chat: T.chat, chatId: 'chat-A', name1: 'You', saveChat: async () => { T.saved++; } }),
     guards: { capture: () => ({ assert() {}, valid: () => true, settled: () => true }) }, connectionSignature: () => '', watchGuard: () => ({ check() {}, close() {}, signal: null }),
     document: { getElementById: () => null, querySelector: () => null, querySelectorAll: () => [] },

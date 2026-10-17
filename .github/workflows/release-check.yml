@@ -47,6 +47,8 @@ jobs:
           node tools/tests/fruit-ecot-race.mjs .
           node tools/tests/translator-brackets.mjs .
           node tools/tests/translator-number-note.mjs .
+          node tools/tests/translator-keep-korean.mjs .
+          node tools/tests/relay-log-key-header.mjs .
           node tools/tests/tts-open-comment.mjs .
           node tools/tests/weather-status.mjs .
           node tools/tests/translator-stub.mjs .
@@ -178,7 +180,9 @@ jobs:
           node tools/tests/style-break.mjs .
           node tools/tests/param-two-columns.mjs .
           node tools/tests/addon-unify.mjs .
+          node tools/tests/addon-head-once.mjs .
           node tools/tests/param-dimensions.mjs .
+          node tools/tests/touch-targets.mjs .
           node tools/tests/after-work.mjs .
           node tools/tests/show-more-auto.mjs .
           node tools/tests/bughunt2-core.mjs .
@@ -273,6 +277,7 @@ jobs:
           node tools/tests/fruit-style.mjs
           node tools/tests/fruit-entry-rows.mjs .
           node tools/tests/prompt-template.mjs .
+          node tools/tests/prompt-template-card.mjs .
           node tools/build-integrity.mjs . --check
       - name: Check that generated files match their sources
         # Regenerate in the throwaway checkout, then fail if anything changed:

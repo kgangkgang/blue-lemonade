@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { KOREAN_KEEP_ENV } from './korean-keep-env.mjs';   // 2.7.9 이미 한국어인 부분 판정 (korean-keep.js · KOREAN_TARGET)
 
 const root = path.resolve(process.argv[2] || '.'), dir = path.join(root, 'src/addons/translator');
 const source = fs.readFileSync(path.join(dir, 'index.js'), 'utf8');
@@ -331,7 +332,7 @@ const koBody = body => body.replace(/Line (\d+): The lantern by the window flick
 const modelAnswer = body => koBody(body).replace(/⟦(\d+)⟧ 3번째 줄/, '⟦$1⟧ 「등불 이야기」 — let me write properly.\n\n<output>\n3번째 줄').replace(/(3번째 줄: [^\n]*)/, '$1</output>');
 function translateEnv() {
     const T = { sent: [], progress: [], previews: [], streamMode: true, flushEach: true, onSend: null };
-    const env = { ...card, ...seg, ...resume, ...auto, cardValues: cardValueModule.cardValues, getStringHash: t => [...String(t)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0), extensionSettings: S,
+    const env = { ...KOREAN_KEEP_ENV, ...card, ...seg, ...resume, ...auto, cardValues: cardValueModule.cardValues, getStringHash: t => [...String(t)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0), extensionSettings: S,
         getContext: () => ({ chatMetadata: {}, chat: [], chatId: 'chat-A' }), guards: { capture: () => ({ assert() { if (T.moved) throw Object.assign(new Error('채팅이 바뀌어 멈췄어요'), { cancelled: true }); } }) },
         connectionSignature: () => '', watchGuard: guardModule.watchGuard,
         document: { getElementById: () => null, querySelector: () => null },

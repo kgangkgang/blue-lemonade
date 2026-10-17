@@ -64,6 +64,10 @@ html body.salty :is(
   color: var(--salty-text) !important; font-size: var(--bl-ts-ui, 14.5px) !important; font-weight: 600 !important; line-height: 1.55 !important;
   text-align: left !important;
 }
+/* 7.0.5 확장 서랍 안에 들어온 한글화 패널(.pt-in-drawer)은 패널 머리 제목 · 판을 숨긴다 — 서랍 머리가 이미 아이콘 · 제목 · 판을 보이고, 패널 머리는 ↻ 하나만
+   그 줄 오른쪽에 둔다(src/addons/prompt/style.css 의 .pt-in-drawer … h3 {display:none}). 위 !important 가 그것을 덮어 「한글화 패널 v… 한글화 패널 v…」 두 번 보였다.
+   위 규칙 목록은 손대지 않는다(목록 특이도를 맞추는 빌드가 다른 창 제목 줄까지 바꾸므로) — 따로 한 줄, 더 무겁게 */
+html body.salty #pt-panel.pt-in-drawer > #pt-panel-header > h3 { display: none !important; }
 /* 아이콘 없던 한글화 패널 — 테마 설정 창과 같은 아이콘 */
 html body.salty #pt-panel > #pt-panel-header > h3::before { content: "\f022"; font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 1em; line-height: 1; }
 

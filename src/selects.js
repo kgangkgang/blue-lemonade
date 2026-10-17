@@ -141,6 +141,8 @@ function open(sel, anchor = null) {
     const host = sel.closest(hostSelector) || document.body;
     layer = document.createElement('div');
     layer.className = 'salty-pick-layer';
+    // 7.0.5: 다른 확장의 「창 밖 누르면 닫기」가 이 층(body 에 붙음)을 창 밖으로 보지 않게 하는 공용 표시 — 떠 있는 목록 · 팝업은 [data-bl-popup]
+    layer.dataset.blPopup = 'pick';
     // 2.9.2: 실리태번은 html 에 transform(translateZ) 을 걸어 두어 fixed 요소의 기준이 화면이 아니라 높이 0 인 html 이 된다.
     // 그래서 CSS 의 inset: 0 만으로는 층 높이가 0 — 목록 밖을 눌러도 닫히지 않고 그 뒤의 단추(API '연결' 등)가 눌렸다.
     // 크기를 화면 단위로 직접 준다 (lvh 를 모르는 브라우저는 뒤 선언을 버리고 100vh)

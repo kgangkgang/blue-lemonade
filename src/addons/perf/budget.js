@@ -2,7 +2,8 @@
 //
 // new-api 계열 중계 서버는 API 키만으로 두 가지를 준다.
 //   GET /api/usage/token/        그 키의 누적 사용량 (quota 단위, 500000 = 1달러)
-//   GET /api/log/token?key=…     그 키의 최근 요청 1,000건 — 모델·토큰·실제 과금(quota)
+//   GET /api/log/token           그 키의 최근 요청 1,000건 — 모델·토큰·실제 과금(quota). [2.2.9] 키는 Authorization 머리글로만 보낸다
+//                                (주소 ?key= 는 서버 · 프록시 기록에 키가 남는다). 머리글을 못 읽는 옛 서버에서만 한 번 ?key= 로 다시 묻는다
 // 콘솔에서 만든 시스템 액세스 토큰이 있으면 GET /api/user/self 로 계정의 실제 잔액도 가져온다.
 // 잔액은 세 가지 중 되는 것으로 정한다: 계정 잔액 > 키에 걸린 한도 > (충전 금액 − 기준 시점 이후 사용액).
 import { oai_settings } from '../../../../../../openai.js';
@@ -147,7 +148,7 @@ async function relayGet(path, headers) {
             error.retryAfterMs = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : null;
             throw error;
         }
-        if (json && json.success === false) throw new Error(json.message || '서버가 실패라고 답했어요');
+        if (json && json.success === false) throw Object.assign(new Error(json.message || '서버가 실패라고 답했어요'), { refusedBody: true });
         if (!json) throw new Error('JSON이 아닌 응답이에요');
         return json;
     } catch (error) {
@@ -165,6 +166,27 @@ function keyHeaders() {
 function accountHeaders() {
     const { accessToken, userId } = config();
     return { Authorization: `Bearer ${accessToken}`, 'New-Api-User': String(userId) };
+}
+
+/** [2.2.9] 서버 주소마다 「머리글로 되는가」를 기억한다 (이 화면 동안). 'header' | 'query' */
+const logKeyMode = new Map();
+/** 최근 로그: 먼저 머리글로만. 머리글을 못 알아듣는 옛 서버(400 · 401 · 403 또는 success:false)일 때만 ?key= 로 한 번 더, 되면 그 주소는 그 길로 */
+async function fetchKeyLogs() {
+    const base = baseUrl();
+    const page = `p=1&page_size=${RELAY_LOG_LIMIT}`;
+    const viaQuery = () => relayGet(`/api/log/token?key=${encodeURIComponent(config().key)}&${page}`, keyHeaders());
+    if (logKeyMode.get(base) === 'query') return viaQuery();
+    try {
+        const json = await relayGet(`/api/log/token?${page}`, keyHeaders());
+        logKeyMode.set(base, 'header');
+        return json;
+    } catch (error) {
+        const refused = error?.status === 400 || error?.status === 401 || error?.status === 403 || error?.refusedBody === true;   // 연결 실패 · 시간 초과 · 429 · 5xx 는 다시 묻지 않는다
+        if (logKeyMode.get(base) === 'header' || !refused) throw error;
+        const json = await viaQuery();
+        logKeyMode.set(base, 'query');
+        return json;
+    }
 }
 
 /** 로그 응답은 판에 따라 data가 배열이거나 { items } 다 */
@@ -302,7 +324,7 @@ async function fetchKeyData() {
     const pricingOrigin = originOf(baseUrl());
     const [usage, logs] = await Promise.allSettled([
         relayGet('/api/usage/token/', keyHeaders()),
-        relayGet(`/api/log/token?key=${encodeURIComponent(config().key)}&p=1&page_size=${RELAY_LOG_LIMIT}`, keyHeaders()),
+        fetchKeyLogs(),
     ]);
     const limited = [usage, logs].find(result => result.status === 'rejected' && result.reason?.status === 429);
     if (limited) {

@@ -79,10 +79,10 @@ t('배선: 기록에 label 칸 · 하루 합계 키 · 행에 label · 화면 �
     assert.match(panel, /chip\('용도',esc\(entry\.label \|\| purposeLabel\(entry\.purpose\)\)\)/);
     assert.match(panel, /const purposeKey=row=>\(row\.purpose\|\|'unknown'\)\+\(row\.label\?'#'\+row\.label:''\);/);
     assert.match(panel, /const byPurpose=groupRows\(inRange,purposeKey,purposeText\);/);
-    assert.match(read('src/addons/perf/hub.js'), /SUITE_VERSION = '2\.2\.8'/);
-    assert.match(read('src/addons/perf/state.js'), /export const VERSION = '1\.5\.1';/);
+    assert.match(read('src/addons/perf/hub.js'), /SUITE_VERSION = '2\.2\.9'/);   // 7.0.5
+    assert.match(read('src/addons/perf/state.js'), /export const VERSION = '1\.5\.2';/);   // 7.0.5
     const css = read('src/addons/perf/style.css');
-    assert.match(css, /--rl-css-version: "1\.5\.1";/); assert.match(css, /--pa-hub-css-version: "2\.2\.8";/);
+    assert.match(css, /--rl-css-version: "1\.5\.2";/); assert.match(css, /--pa-hub-css-version: "2\.2\.9";/);   // 7.0.5
     assert.match(read('src/addons/perf/capture.js'), /attribution\.resolve\(\{explicit:init\?\.requestLog,/, 'fetch 의 requestLog 가 명시 길');
     assert.match(read('src/addons/perf/README.md'), /requestLog: \{ label: '요약' \}/);
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/perf-request-label\.mjs \./);

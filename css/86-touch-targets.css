@@ -1,0 +1,93 @@
+/* ===== css/86-touch-targets.css =====
+   7.0.5 손가락 화면(pointer: coarse)에서만 작은 칸의 「눌리는 넓이」를 44×44 까지 — 보이는 크기 · 배치 · 글자는 그대로.
+   칸마다 투명한 상자(가운데 맞춤, 너비 · 높이 = max(칸 크기, 44px))를 그 칸이 모양에 쓰지 않는 ::before 나 ::after 로 덧댄다
+   (66-ui-rhythm.css 의 머리 스위치와 같은 방식). 상자는 칸의 일부라 누르면 그 칸이 눌린다. 이웃이 44px 보다 가까우면
+   겹치는 곳은 뒤 칸이 받는다. 측정 · 사진: ../blue-lemonade-audit/touch-targets-20261017 (시험 tools/tests/touch-targets.mjs).
+   ===== */
+@media (pointer: coarse) {
+  /* 기준점: 원래 static 인 칸만 relative (이미 relative 인 스위치 · ↺ 는 그대로)
+     「예시 접기」(높이 20)는 뺀다: 위는 미리보기 높이 손잡이(.bl-view-grip)라 덮으면 끌기 자리를 뺏고, 아래는 .bl-editor-stage 의 overflow:hidden 에 잘린다 */
+  html body.salty :is(
+    .salty-panel .salty-seg > button,
+    .salty-panel .salty-btn,
+    .salty-panel .bl-view-toggle,
+    .salty-panel .bl-addon-ver,
+    .salty-panel .bl-addon-credit-all,
+    .salty-panel .bl-rule-swap,
+    .salty-panel [data-rule-delete],
+    .salty-panel .salty-mode-switch button,
+    .salty-panel .bl-tool-heading,
+    .salty-panel .bl-editor-group-toggle,
+    .salty-panel .bl-settings-toprow button,
+    .salty-panel label:has(> input[type="checkbox"]):not(.salty-switch),
+    #chat .mes .mes_media_enlarge,
+    #chat .mes .mes_media_container .right_menu_button,
+    #chat .mes .mes_buttons .mes_button,
+    #left-nav-panel label.checkbox_label,
+    :is(#left-nav-panel, #rm_extensions_block) .menu_button
+  ) {
+    position: relative;
+  }
+
+  /* ::before 가 비어 있는 칸 */
+  html body.salty :is(
+    .salty-panel .salty-seg > button,
+    .salty-panel .salty-btn,
+    .salty-panel .bl-view-toggle,
+    .salty-panel label.salty-switch,
+    .salty-panel .bl-word-help,
+    .salty-panel .bl-addon-ver,
+    .salty-panel .bl-addon-credit-all,
+    .salty-panel .bl-rule-swap,
+    .salty-panel [data-rule-delete],
+    .salty-panel .salty-mode-switch button,
+    .salty-panel .bl-tool-heading,
+    .salty-panel .bl-editor-group-toggle,
+    .salty-panel label:has(> input[type="checkbox"]):not(.salty-switch),
+    #left-nav-panel label.checkbox_label
+  )::before,
+  /* ::before 로 아이콘을 그리는 칸 (설정 창 머리 아이콘 · ↺ · Font Awesome 아이콘 단추) */
+  html body.salty :is(
+    .salty-panel .bl-settings-toprow button,
+    .salty-panel .bl-setting-reset,
+    .salty-panel .bl-preview-samples > button,
+    .salty-panel .bl-view-resize > button:not(.bl-view-toggle),
+    #chat .mes .mes_media_enlarge,
+    #chat .mes .mes_media_container .right_menu_button,
+    #chat .mes .mes_buttons .mes_button,
+    :is(#left-nav-panel, #rm_extensions_block) .menu_button
+  )::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+    background: none;
+    border: 0;
+    box-shadow: none;
+  }
+
+  /* 왼쪽 서랍: 체크 줄의 상자가 위아래 이웃 줄의 링크 · 고르기 · 아이콘 단추를 덮지 않게 그것들을 한 층 위로 */
+  html body.salty #left-nav-panel :is(a, select, .menu_button):not(label *) {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* 확장 서랍 머리 스위치: 66-ui-rhythm.css 의 위아래 7px 를 44×44 상자로 */
+  html body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch::before {
+    inset: auto;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+
+  /* 슬라이더: 위아래로 늘리고 같은 만큼 바깥 여백을 빼서 자리 · 트랙 위치는 그대로 (바탕이 투명한 range 만) */
+  html body.salty .salty-panel .salty-slider > input[type="range"] {
+    height: 44px !important;
+    margin-block: calc((44px - 24px) / -2) !important;
+  }
+}

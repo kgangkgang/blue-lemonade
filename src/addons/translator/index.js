@@ -12,6 +12,7 @@ import { cardValues } from './card-values.js';   // 6.5.4 상태 카드 고정 �
 import { checkpointKey, translateChunks, clearCheckpoints } from './translation-resume.js';
 import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, stripDraftLeaks, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, fixPlaceholderVariants, dropLeftoverPlaceholders as dropProseLeftoverPlaceholders, repairTagPairs as repairProseTagPairs, dropStrayWords as dropProseStrayWords, dropWrapQuotes } from './translation-segments.js';
 import { hideOpenComments, looksCutShort, restoreDialogueBrackets } from './translation-segments.js';   // 2.5.1 숨긴 주석 표시 보정 · 끊긴 답 · 2.5.2 빠진 대사 괄호
+import { keepKorean } from './korean-keep.js';   // 2.7.9 이미 한국어인 문단 · 대사는 번역 요청에 보내지 않기
 import { streamWatch, hasFailMark } from './translation-segments.js';   // 2.6.2 묶음 흘려받기 — 문단이 닫힐 때마다 진행 숫자 · 바로 보기 (흘려받기 자체는 translation-stream.js, 처음 쓸 때 불러옴)
 import { createReasoningView } from './reasoning-view.js';   // 2.6.0 생각 블록(추론) 카드 · 번역해서 보기
 import { updateReasoningUI } from '../../../../../../reasoning.js';   // 2.6.0 생각 칸 다시 그리기
@@ -169,6 +170,7 @@ const defaultSettings = {
     hide_edit_button: false,
     translation_check: true,     // 2.6.0 번역 점검 표시 (의심 문단 · 번역 단추의 메시지 상태)
     reasoning_translate: true,   // 2.6.0 생각 블록 카드의 「번역해서 보기」
+    keep_korean_source: true,    // 2.7.9 한국어로 옮길 때 이미 한국어인 문단 · 대사는 보내지 않고 그대로 (korean-keep.js)
     hide_delete_button: true,
     use_reverse_proxy: false,
     reverse_proxy_url: '',
@@ -507,6 +509,7 @@ function loadSettings() {
     $('#force_sequential_matching').prop('checked', extensionSettings.force_sequential_matching);
     $('#llm_translation_check').prop('checked', extensionSettings.translation_check !== false);   // 2.6.0
     $('#llm_reasoning_translate').prop('checked', extensionSettings.reasoning_translate !== false);   // 2.6.0
+    $('#llm_keep_korean').prop('checked', extensionSettings.keep_korean_source !== false);   // 2.7.9
 
     // llmContext 설정 로드
     syncContextRangeUI();
@@ -1820,6 +1823,15 @@ async function translate(text, options = {}) {
             });
         });
 
+        // 2.7.9 이미 한국어인 문단 · 대사는 보내지 않고 글자 그대로 되돌린다 (korean-keep.js). 한국어로 옮기는 메시지 번역만 —
+        //       다시 번역(기존 번역문을 함께 보낸다) · 입력 번역 · 점검 원문 견주기는 예전처럼. 보호 블록 뒤 번호라 앞 번호는 그대로이고,
+        //       모델이 자리표시자를 빠뜨려도 아래 6.1.8 길로 제자리에 되돌린다
+        const koreanTarget = options.prompt === undefined || options.prompt === extensionSettings.llm_prompt_chat ? liveChatPrompt() : options.prompt;
+        const koreanKept = extensionSettings.keep_korean_source !== false && !options.isInputTranslation && !options.isRetranslation && options.checkSource === undefined
+            && KOREAN_TARGET.test(String(koreanTarget ?? '')) ? keepKorean(maskedText, block => { const token = createPlaceholder(protectedBlocks.length); protectedBlocks.push(block); return token; }) : null;
+        if (koreanKept) maskedText = koreanKept.text;
+        const keptKorean = new Set(koreanKept?.blocks ?? []);
+
         // 6.5.4 한국어로 옮길 때 상태 카드의 고정 값(날짜 · 시각 · 날씨 낱말 · 전에 번역한 같은 값)은 보내지 않고 바로 채운다.
         //       기억 범위 = 채팅 번역 프롬프트 · 용어집(문단 캐시 서명과 같은 재료). 재번역은 기억을 읽지 않고 새 결과로 고친다.
         const cardChat = getContext(), chatPrompt = String(extensionSettings.llm_prompt_chat ?? '');
@@ -1908,9 +1920,9 @@ async function translate(text, options = {}) {
 
             // 2.5.2 대사 괄호: 원문에 「」『』 가 있는데 프롬프트 · 규칙 · 지침 어디에도 「」 이야기가 없으면 한 줄 붙인다 (사용자 프롬프트는 그대로)
             if (/[「『]/.test(body) && !/「」|『』/.test(`${finalPrompt}\n${rulePrompt}\n${additionalGuidance}`)) built += `\n\n${BRACKET_NOTE}`;
-            // 2.7.8 글자로 붙여 쓴 숫자: "two hundred-and-ninety-centimeter demons" 는 190센티미터인 둘 (290 이 아님). 이런 꼴이 원문에 있을 때만 한 줄 붙인다
+            // 2.7.8 글자로 붙여 쓴 숫자: "two hundred-and-ninety-centimeter towers" 는 190센티미터인 둘 (290 이 아님). 이런 꼴이 원문에 있을 때만 한 줄 붙인다
             if (/\b[a-z]+\s+hundred-(?:and-)?[a-z]+(?:-[a-z]+)*-(?:centimet|millimet|met(?:er|re)|kilo|gram|pound|foot|feet|inch|mile|year|ton)/i.test(body)) {
-                built += '\n\n[Numbers: copy every number from the source exactly. A spelled-out number joined by hyphens to a unit is one compound adjective, and a word right before it is a separate count. "two hundred-and-ninety-centimeter demons" means two demons who are 190 cm tall, not 290 cm. If a height, age or similar number would be implausible for the character, re-read the hyphenation before translating.]';
+                built += '\n\n[Numbers: copy every number from the source exactly. A spelled-out number joined by hyphens to a unit is one compound adjective, and a word right before it is a separate count. "two hundred-and-ninety-centimeter guards" means two guards who are 190 cm tall, not 290 cm. If a height, age or similar number would be implausible for the character, re-read the hyphenation before translating.]';
             }
 
             // 마스킹된 텍스트를 AI에게 전달
@@ -1929,7 +1941,7 @@ async function translate(text, options = {}) {
         // 문단 캐시 · 이어하기 키의 서명: 준비된 프롬프트 전체 대신 연결 · 프롬프트 · 지침 · 용어집(범위 + 항목) 요약 하나 (paragraph-v2)
         const chatCtx = getContext();
         const setupDigest = await checkpointKey(JSON.stringify([connection, finalPrompt, rulePrompt, additionalGuidance, extensionSettings.glossary_enabled === false ? null
-            : [chatCtx?.groupId ?? null, chatCtx?.characters?.[chatCtx?.characterId]?.avatar ?? null, glossarySignature(extensionSettings.glossary_entries)], ...(displayCards.count ? ['display-cards-v1'] : []), ...(autoContextGuard ? ['auto-context-v1', autoContextGuard.stamp] : [])]));
+            : [chatCtx?.groupId ?? null, chatCtx?.characters?.[chatCtx?.characterId]?.avatar ?? null, glossarySignature(extensionSettings.glossary_entries)], ...(displayCards.count ? ['display-cards-v1'] : []), ...(autoContextGuard ? ['auto-context-v1', autoContextGuard.stamp] : []), ...(keptKorean.size ? ['korean-keep-v1'] : [])]));
         const key = chunks.length > 1 ? await checkpointKey(JSON.stringify([setupDigest, text, ...(/<!--[\s\S]*?-->/.test(text) ? ['comments-v1'] : [])])) : '';   // 2.5.1 주석을 보호하기 전 덩이로 이어 쓰지 않게
         watcher.check();
         // 5.4.2: 번역문 삭제 — 이 글의 문단 캐시 · 이어하기 줄만 지우고 요청은 하지 않는다 (키는 번역할 때와 같은 재료로)
@@ -2045,7 +2057,11 @@ async function translate(text, options = {}) {
             return result.text;
         };
         let translatedText = '';
-        if (paragraphParts) {
+        // 2.7.9 가리고 나니 자리표시자뿐(문단이 모두 한국어)이면 요청하지 않는다
+        if (koreanKept?.paragraphs && /^(?:\s*\[\[__VAR_\d+__\]\]\s*)*$/.test(maskedText)) {
+            translatedText = maskedText;
+            if (report) { report.keptKorean = koreanKept.paragraphs + koreanKept.quotes; report.chunks = 0; }
+        } else if (paragraphParts) {
             // 묶음의 원문 글자 수는 출력 한도도 따른다 — 직접 연결 기본 max_length 1000 토큰에 3600자를 보내면 JSON 답이 잘렸다.
             // 답 글자 수 ≈ 원문 글자 수, 토큰당 ≈1.2자로 잡아 한도의 1.2배까지만 묶는다 (max_tokens 를 키우면 모델 한도 400 이 날 수 있어 묶음을 줄이는 쪽).
             const s = extensionSettings, live = getContext();
@@ -2267,7 +2283,7 @@ async function translate(text, options = {}) {
             const marker = '\n\n[Translated Text]:\n';
             const layoutSource = isRetranslation && maskedText.startsWith('[Original Text]:\n') && maskedText.includes(marker)
                 ? maskedText.slice('[Original Text]:\n'.length, maskedText.indexOf(marker)) : maskedText;
-            const dropped = droppedPlaceholders(protectedBlocks, layoutSource, translatedText, block => isProtectedBlock(block, keepRules) || /^<!--[\s\S]*-->$/.test(block));   // 2.5.1 숨긴 주석도 잃지 않는다
+            const dropped = droppedPlaceholders(protectedBlocks, layoutSource, translatedText, block => keptKorean.has(block) || isProtectedBlock(block, keepRules) || /^<!--[\s\S]*-->$/.test(block));   // 2.5.1 숨긴 주석도 · 2.7.9 가려 둔 한국어도 잃지 않는다
             if (dropped.length) {
                 translatedText = restoreDroppedPlaceholders(layoutSource, translatedText, dropped);
                 if (report) report.restoredBlocks = dropped.length;
@@ -5695,6 +5711,11 @@ function initializeEventHandlers() {
             if (this.id === 'llm_reasoning_translate') { if (chat[id]?.extra?.reasoning) { try { updateReasoningUI(id); } catch { /* 생각 칸이 없는 메시지 */ } } reasoningView.decorate(id); }
             else if (chat[id]?.extra?.display_text) refreshMessageBlock(id, chat[id]);
         }
+    });
+    // 2.7.9 이미 한국어인 부분은 보내지 않기 — 다음 번역부터 (그려진 번역문은 그대로)
+    $('#llm_keep_korean').on('change', function () {
+        extensionSettings.keep_korean_source = $(this).is(':checked');
+        saveSettingsDebounced();
     });
     $('#force_sequential_matching').on('change', function () {
         extensionSettings.force_sequential_matching = $(this).is(':checked');

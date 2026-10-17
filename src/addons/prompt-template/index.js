@@ -10,7 +10,7 @@ import { verifyAddonCss } from '../../addon-files-check.js';
 import { leaveSettingsDialog } from '../../settings-dialog.js';
 import { sha256Hex } from './sha256.js';
 
-export const VERSION = '1.0.2';
+export const VERSION = '1.0.3';
 export const FOLDER = 'ST-Prompt-Template';
 export const BUNDLED = '1.17.9';   // 담긴 원본 판 (SOURCE.json 의 version — 시험이 같은지 본다)
 export const COMMIT = 'd6f520d149aba146305b0b781ddd691d449c28d2';   // 담긴 원본 커밋 (SOURCE.json 의 commit)
@@ -76,6 +76,24 @@ export function statusText(s = state) {
     if (cmp < 0) return `${v} 설치됨 → ${BUNDLED} 업데이트 가능${helper}${where}`;
     if (cmp > 0) return `${v} 설치됨 · 담긴 판(${BUNDLED})보다 새 판${where}`;
     return `${v} 설치됨 · 담긴 판과 같음${where}`;
+}
+
+/** 7.0.5 테마 확장 화면의 이 애드온 카드 머리 (순수 — 시험용): { title, hint, install, on }
+ *  애드온을 켜 두기만 하고 확장을 설치하지 않았는데 「사용 중」으로 보여, 카드의 <% %> 가 글자로 나오는 까닭을 세부 설정 안에서만 알 수 있었다 */
+export function cardStatus(s = state) {
+    const RAW = '카드의 <% %> 코드가 글자로 보이면';
+    if (s.done === 'installed') return { title: '설치했어요 · 새로고침하면 켜져요', hint: '', install: false, on: false };
+    if (s.done === 'removed') return { title: '지웠어요 · 새로고침하면 사라져요', hint: '', install: false, on: false };
+    if (s.installed === null) return { title: s.error ? '설치 상태를 확인하지 못했어요' : '설치 상태 확인 중…', hint: s.error || '', install: false, on: false };
+    if (!s.installed) {
+        if (s.helper === 'denied') return { title: '아직 설치 안 됨', hint: `${RAW} 설치가 필요해요. 설치는 서버 관리자 계정에서만 돼요.`, install: false, on: false };
+        if (s.helper === false) return { title: '아직 설치 안 됨', hint: `${RAW} 설치가 필요해요. 설치에는 ZIP 설치 도우미가 필요해요.`, install: true, on: false };
+        return { title: '아직 설치 안 됨', hint: `${RAW} 설치가 필요해요.`, install: true, on: false };
+    }
+    const blocked = blockedReason(s);
+    const title = s.disabled ? '설치됨 · 확장 관리에서 꺼짐' : s.active ? '사용 중' : '설치됨 · 새로고침하면 켜져요';
+    const hint = blocked === 'git' || blocked === 'git-unknown' || blocked === 'others' ? statusText(s) : s.disabled ? `${RAW} 실리태번 확장 관리에서 켜 주세요.` : '';
+    return { title, hint, install: false, on: !s.disabled && s.active };
 }
 
 /** 단추 셋 (순수 — 시험용): [{ act, icon, label, disabled, primary }] */
@@ -271,7 +289,25 @@ function render(root) {
     root.innerHTML = markup(); root.setAttribute('aria-busy', String(state.busy));
     for (const button of root.querySelectorAll('[data-pt-act]')) button.addEventListener('click', () => act(button.dataset.ptAct, button));
 }
-function renderAll() { for (const root of views) { if (!root.isConnected) { views.delete(root); continue; } render(root); } }
+// 7.0.5 테마 확장 화면의 카드(addons.js 가 머리 바로 뒤에 [data-pt-card] 칸을 둔다): 머리 상태 글 · 한 줄 안내 · 「설치」 단추(안쪽 아이콘 단추와 같은 install 길)
+const cards = new Set();
+function renderCard(host) {
+    const c = cardStatus();
+    host.innerHTML = (c.hint ? `<p class="salty-note blpt-card-hint">${esc(c.hint)}</p>` : '')
+        + (c.install ? `<div class="bl-addon-actions"><button type="button" class="salty-btn bl-tool-primary" data-pt-card-install ${state.busy ? 'disabled' : ''}>${state.helper === false ? 'ZIP 설치 도우미 준비' : '설치'}</button></div>` : '');
+    host.querySelector('[data-pt-card-install]')?.addEventListener('click', () => act('install'));
+    const status = host.previousElementSibling?.matches?.('.bl-addon-header') ? host.previousElementSibling.querySelector('.bl-addon-status') : null;
+    if (status) { status.textContent = state.busy ? (state.message || '확인 중…') : c.title; status.classList.toggle('is-on', c.on); }
+}
+function renderAll() {
+    for (const root of views) { if (!root.isConnected) { views.delete(root); continue; } render(root); }
+    for (const host of cards) { if (!host.isConnected) { cards.delete(host); continue; } renderCard(host); }
+}
+export function mountCard(host) {
+    if (!host || cards.has(host)) return;
+    cards.add(host); renderCard(host);
+    if (!state.busy && state.installed === null) refresh().catch(() => {});
+}
 async function act(name, button) {
     if (state.busy) return;
     if (name === 'install') await install();
@@ -295,6 +331,28 @@ export function openPanel() {
     dialog.showModal();
 }
 
+// 7.0.5 애드온을 켰는데 확장이 없거나 꺼져 있어 채팅에 <% … %> 가 글자로 나오면 한 번만 알린다(누르면 이 창).
+// 새로 그려진 메시지 하나(채팅을 열면 마지막 메시지)의 글만 보고, 걸렸을 때만 설치 상태를 한 번 읽는다
+export const RAW_TEMPLATE = /<%[\s\S]{0,2000}?%>/;
+let rawNoticed = false;
+export async function noticeRawTemplate(text, { toast = globalThis.toastr } = {}) {
+    if (rawNoticed || !RAW_TEMPLATE.test(String(text || ''))) return false;
+    if (getSettings()?.addons?.['prompt-template'] !== true) return false;
+    rawNoticed = true;
+    if (!state.busy) await refresh({ probeGit: false }).catch(() => {});
+    if (state.installed && !state.disabled) return false;   // 설치 · 켜짐이면 새로고침 대기이거나 다른 까닭 — 알리지 않는다
+    const text2 = state.installed ? '카드의 <% %> 코드가 글자로 보여요. 실리태번 확장 관리에서 프롬프트 템플릿을 켜 주세요.' : '카드의 <% %> 코드가 글자로 보여요. 눌러서 프롬프트 템플릿을 설치해 주세요.';
+    toast?.info?.(text2, '프롬프트 템플릿', { timeOut: 12000, onclick: () => openPanel() });
+    return true;
+}
+function watchRawTemplate() {
+    const ctx = context(); if (!ctx?.eventSource || !ctx.eventTypes) return;
+    const check = id => { const el = document.querySelector(`#chat .mes[mesid="${Number(id)}"] .mes_text`); if (el) noticeRawTemplate(el.textContent).catch(() => {}); };
+    ctx.eventSource.on(ctx.eventTypes.CHARACTER_MESSAGE_RENDERED, check);
+    ctx.eventSource.on(ctx.eventTypes.CHAT_CHANGED, () => setTimeout(() => { const last = [...document.querySelectorAll('#chat .mes[mesid] .mes_text')].at(-1); if (last) noticeRawTemplate(last.textContent).catch(() => {}); }, 1500));
+}
+
 if (hasDocument()) {
     verifyAddonCss({ folder: 'prompt-template', name: '--blpt-css-version', version: VERSION, title: '프롬프트 템플릿', selector: '.blpt' });
+    try { watchRawTemplate(); } catch (e) { console.warn('[Blue Lemonade] 프롬프트 템플릿', e); }
 }

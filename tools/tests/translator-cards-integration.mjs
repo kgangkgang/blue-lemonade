@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
+import { KOREAN_KEEP_ENV } from './korean-keep-env.mjs';   // 2.7.9 이미 한국어인 부분 판정 (korean-keep.js · KOREAN_TARGET)
 const root=path.resolve(process.argv[2]||'.'), dir=path.join(root,'src/addons/translator');
 const source=fs.readFileSync(process.argv[3]?path.resolve(process.argv[3]):path.join(dir,'index.js'),'utf8');
 const card=await import(pathToFileURL(path.join(dir,'display-cards.js')));
@@ -11,7 +12,7 @@ const seg=await import(pathToFileURL(path.join(dir,'translation-segments.js')));
 const resume=await import(pathToFileURL(path.join(dir,'translation-resume.js')));
 function cut(name){const re=new RegExp('\\n(?:export )?(?:async )?function '+name+'\\('),start=source.search(re);assert(start>=0,name);const chunk=source.slice(start+1,source.indexOf('\n}',start+1)+2);return chunk.replace(/^export /,'');}
 const events=[],ctx={chatMetadata:{}}, S={llm_prompt_chat:'Translate visible text.',glossary_enabled:false,user_defined_regexes:[],user_no_fold_regexes:[],translation_display_mode:'folded'};
-const env={...card,...seg,...resume,...auto,cardValues:cardValueModule.cardValues,getStringHash:t=>[...String(t)].reduce((h,c)=>(h*31+c.charCodeAt(0))|0,0),extensionSettings:S,getContext:()=>ctx, guards:{capture:()=>({assert(){}})},connectionSignature:()=>'',watchGuard:()=>({check(){},close(){},signal:null}), document:{getElementById:()=>null},
+const env={...KOREAN_KEEP_ENV, ...card,...seg,...resume,...auto,cardValues:cardValueModule.cardValues,getStringHash:t=>[...String(t)].reduce((h,c)=>(h*31+c.charCodeAt(0))|0,0),extensionSettings:S,getContext:()=>ctx, guards:{capture:()=>({assert(){}})},connectionSignature:()=>'',watchGuard:()=>({check(){},close(){},signal:null}), document:{getElementById:()=>null},
     BLOCKED_CHUNK_MARK:'failed',MASK_PATTERN:'[[__VAR_{index}__]]',DEBUG_MODE:false,RULE_PROMPT_KEY:'rules',substituteCustomPlaceholders:x=>x,substituteParams:x=>x,buildGlossaryBlock:()=>'',checkpointKey:async x=>x,glossarySegmentSignature:x=>()=>x,textOutputLimit:()=>0,isTransientError:()=>false,failMarkOf:()=>"failed",splitForChunks:()=>[],CHUNK_TARGET:100000,
     looksLikeInputBlock:()=>false,looksLikeRefusal:()=>false,fallbackOf:()=>null,sameTarget:()=>false,getCustomModelName:()=>'',
     tidyKana:x=>x,tidyGlossaryOutput:(_s,x)=>x,linesToFix:()=>[],glossaryHanKeep:()=>[],glossaryNameKeep:()=>[],dropDanglingOpenQuote:x=>x,

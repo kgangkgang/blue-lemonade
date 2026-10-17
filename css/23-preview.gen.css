@@ -5,7 +5,7 @@
    ===== */
 /* ===== 미리보기 자동 생성 (surfaces:preview) =====
    tools/gen-preview-css.js 가 #chat 규칙을 여기 복사한다 — 손으로 고치지 말 것.
-   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 463개 (164.9KB).
+   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 465개 (166.4KB).
    style.css 의 채팅 · 에셋 규칙을 고치면 `node tools/gen-preview-css.js` 를 다시 돌린다.
    이 칸을 다른 자리로 옮기지 말 것: 사본이 손으로 쓴 채팅 규칙보다 뒤에 있어야 같은 무게에서 이기고,
    바로 뒤의 보정 칸이 사본을 눌러 줄 수 있다. 앞으로 옮기면 아바타 모서리처럼 순서로만 갈리는 것이 뒤집힌다 */
@@ -2255,5 +2255,22 @@ body.salty.salty-md-custom-accent :is(:is(#salty-nochat, .salty-preview) .mes .m
 }
 body.salty.salty-md-custom-accent :is(:is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview) u:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, [class*="custom-dem-card"], [class*="custom-dem-card"] *)) {
   text-decoration-color:var(--bl-md-accent,var(--salty-accent-ink,var(--salty-accent,currentColor)));
+}
+@media (pointer: coarse) {
+  html body.salty :is( .salty-panel .salty-seg > button, .salty-panel .salty-btn, .salty-panel .bl-view-toggle, .salty-panel .bl-addon-ver, .salty-panel .bl-addon-credit-all, .salty-panel .bl-rule-swap, .salty-panel [data-rule-delete], .salty-panel .salty-mode-switch button, .salty-panel .bl-tool-heading, .salty-panel .bl-editor-group-toggle, .salty-panel .bl-settings-toprow button, .salty-panel label:has(> input[type="checkbox"]):not(.salty-switch), :is(#salty-nochat, .salty-preview) .mes .mes_media_enlarge, :is(#salty-nochat, .salty-preview) .mes .mes_media_container .right_menu_button, :is(#salty-nochat, .salty-preview) .mes .mes_buttons .mes_button, #left-nav-panel label.checkbox_label, :is(#left-nav-panel, #rm_extensions_block) .menu_button ) {
+    position: relative;
+  }
+  html body.salty :is( .salty-panel .bl-settings-toprow button, .salty-panel .bl-setting-reset, .salty-panel .bl-preview-samples > button, .salty-panel .bl-view-resize > button:not(.bl-view-toggle), :is(#salty-nochat, .salty-preview) .mes .mes_media_enlarge, :is(#salty-nochat, .salty-preview) .mes .mes_media_container .right_menu_button, :is(#salty-nochat, .salty-preview) .mes .mes_buttons .mes_button, :is(#left-nav-panel, #rm_extensions_block) .menu_button )::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+    background: none;
+    border: 0;
+    box-shadow: none;
+  }
 }
 /* ===== /surfaces:preview ===== */

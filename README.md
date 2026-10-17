@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.0.4/blue-lemonade-7.0.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.0.5/blue-lemonade-7.0.5.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
@@ -20,7 +20,17 @@ AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·�
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.0.4 · 최신 업데이트</summary>
+<summary>7.0.5 · 최신 업데이트</summary>
+
+- 번역: 한국어로 옮길 때 이미 한국어인 문단과 「」 안의 한국어 대사는 번역 요청에 보내지 않고 글자 그대로 둬요. 영어 서술 + 한국어 대사라면 보내는 양이 40% 안팎 줄어요. 설정 「이미 한국어인 부분은 보내지 않기」(기본 켬) · LLM 번역 2.7.9.
+- 폰 터치 칸: 초기화 · 도움말 · 슬라이더 · 그림 「펼쳐서 확대」 · 서랍 단추처럼 작은 단추의 누르는 범위를, 보이는 크기는 그대로 두고 44px 까지 넓혔어요.
+- 프롬프트 템플릿: 확장이 아직 깔리지 않았으면 「사용 중」 대신 「아직 설치 안 됨」과 설치 단추를 보여 줘요. 채팅에 <% %> 코드가 글자로 보이면 한 번 알려 줘요.
+- 작은 고침: 확장 목록의 한글화 패널 머리에 제목 · 판이 두 번 나오던 것, 요청 로그 예산이 중계 서버에 키를 주소 대신 머리글로 보내도록, 테마 선택 목록을 다른 확장 창이 「바깥」으로 보던 것.
+
+</details>
+
+<details>
+<summary>7.0.4 · 끼운 글 출처 · 토큰 내역 · 긴 채팅 빨라짐</summary>
 
 - 끼운 글 출처: 프롬프트 관리자 「채팅 기록」 목록의 「끼운 글」 줄이 어디서 왔는지 보여요 — 작가의 노트 · 월드 인포(깊이) · 프리셋 프롬프트 이름 · 확장 이름. 프리셋 프롬프트는 목록에 보이는 한글 이름 그대로 나와요.
 - 토큰 내역: 메시지 머리에는 실리태번 토큰 숫자만 보이고, 누르면 「생각 + 본문 = 총」과 다음 답 프롬프트에 실제로 들어가는 양을 보여 줘요. 숨긴 메시지는 0.

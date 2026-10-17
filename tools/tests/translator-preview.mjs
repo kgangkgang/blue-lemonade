@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { KOREAN_KEEP_ENV } from './korean-keep-env.mjs';   // 2.7.9 이미 한국어인 부분 판정 (korean-keep.js · KOREAN_TARGET)
 
 const root = path.resolve(process.argv[2] || '.'), dir = path.join(root, 'src/addons/translator');
 const source = fs.readFileSync(path.join(dir, 'index.js'), 'utf8');
@@ -83,7 +84,7 @@ const S = { llm_prompt_chat: 'Translate visible text.', glossary_enabled: false,
 const T = { chat: [], chatId: 'chat-A', formatted: [], refreshed: [], dom: new Map() };
 const ctx = () => ({ chatMetadata: {}, chat: T.chat, chatId: T.chatId, streamingProcessor: T.processor, messageFormatting: (text, ...rest) => { T.formatted.push([text, ...rest]); return `<p>${text}</p>`; } });
 const PREFIX = 'Translate visible text.\n\n';
-const env = { ...card, ...seg, ...resume, ...auto, ...notify, ...frames, cardValues: cardValueModule.cardValues, getStringHash: t => [...String(t)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0), extensionSettings: S, getContext: ctx,
+const env = { ...KOREAN_KEEP_ENV, ...card, ...seg, ...resume, ...auto, ...notify, ...frames, cardValues: cardValueModule.cardValues, getStringHash: t => [...String(t)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0), extensionSettings: S, getContext: ctx,
     guards: { capture: () => ({ assert() {} }) }, connectionSignature: () => '', watchGuard: () => ({ check() {}, close() {}, signal: null }),
     document: { getElementById: () => null, querySelector: selector => T.dom.get(selector) ?? null },
     BLOCKED_CHUNK_MARK: '[차단된 문단 — 원문 그대로]', MARK_TAIL: ' — 원문 그대로]', MASK_PATTERN: '[[__VAR_{index}__]]', DEBUG_MODE: false, RULE_PROMPT_KEY: 'rules', substituteCustomPlaceholders: x => x, substituteParams: x => x,
