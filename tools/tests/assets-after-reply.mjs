@@ -236,7 +236,7 @@ await test('model switch lists the picker connection; version stamps agree; empt
     assert.match(targets, /'esetham'/);
     const v = read('src/addons/assets/state.js').match(/VERSION = '([\d.]+)'/)[1];
     assert.ok(read('src/addons/assets/style.css').includes(`--eh-css-version: "${v}";`));
-    assert.equal(v, '1.6.9');
+    assert.ok(v.split('.').map(Number).reduce((a, n) => a * 1000 + n, 0) >= 1006009, 'assets ' + v);   // 7.0.2 판 고정 대신 「1.6.9 이상」
     const css = read('src/addons/assets/style.css');
     assert.ok(css.includes('#chat .mes_text p[data-eh-slot-only]:not(:has(> [data-asset-slot]:not(:empty))) { display: none; }'), 'only a paragraph that holds nothing but slots is hidden');
     assert.ok(!css.includes(':not(:has(> :not([data-asset-slot])))'), 'a paragraph with text is never hidden');

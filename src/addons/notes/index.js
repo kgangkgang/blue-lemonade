@@ -120,13 +120,15 @@ const plainLine = body => {
 };
 // 폴더: 메모마다 folder(폴더 id) · 폴더 목록 { id, name }. 목록에서는 폴더의 첫 메모 자리에 폴더 칸 하나로 보인다
 export const folders = () => store().folders;
+// 7.0.2 귀속(owner) · 폴더를 바꾼 시각 — 기기 간 합치기가 이 변경도 늦은 쪽으로 받게 (내용을 고친 시각 updated · 「고친 시각」 정렬은 그대로)
+const touchMeta = n => { if (n) n.metaUpdated = Date.now(); };
 const folderById = id => (id ? folders().find(f => f.id === id) || null : null);
 const folderName = f => (f?.name || '').trim() || '폴더';
 /** 메모가 둘 미만인 폴더는 풀고, 없는 폴더를 가리키는 메모는 뗀다 */
 function tidyFolders() {
     const s = store(), gone = [];
-    for (const n of s.notes) if (n.folder && !s.folders.some(f => f.id === n.folder)) delete n.folder;
-    s.folders = s.folders.filter(f => { const members = s.notes.filter(n => n.folder === f.id); if (members.length >= 2) return true; members.forEach(n => { delete n.folder; }); gone.push(f.id); return false; });
+    for (const n of s.notes) if (n.folder && !s.folders.some(f => f.id === n.folder)) { delete n.folder; touchMeta(n); }
+    s.folders = s.folders.filter(f => { const members = s.notes.filter(n => n.folder === f.id); if (members.length >= 2) return true; members.forEach(n => { delete n.folder; touchMeta(n); }); gone.push(f.id); return false; });
     for (const fid of gone) closeSticky('f:' + fid);
 }
 /** target = { id } (메모) 또는 { folder } 쪽으로 ids 메모를 모은다 → 폴더 id. 모은 메모는 폴더의 마지막 메모 뒤로 */
@@ -135,12 +137,12 @@ function joinFolder(target, ids) {
     if (!fid) {
         const t = s.notes.find(n => n.id === target.id); if (!t) return null;
         fid = t.folder;
-        if (!fid || !s.folders.some(f => f.id === fid)) { fid = 'f' + uid(); s.folders.push({ id: fid, name: '' }); t.folder = fid; }
+        if (!fid || !s.folders.some(f => f.id === fid)) { fid = 'f' + uid(); s.folders.push({ id: fid, name: '', updated: Date.now() }); t.folder = fid; touchMeta(t); }
     }
     if (!s.folders.some(f => f.id === fid)) return null;
     const moving = s.notes.filter(n => ids.includes(n.id) && n.folder !== fid);
     const rest = s.notes.filter(n => !moving.includes(n));
-    moving.forEach(n => { n.folder = fid; });
+    moving.forEach(n => { n.folder = fid; touchMeta(n); });
     let at = -1; rest.forEach((n, i) => { if (n.folder === fid) at = i; });
     rest.splice(at + 1, 0, ...moving);
     s.notes = rest; tidyFolders(); save();
@@ -149,11 +151,11 @@ function joinFolder(target, ids) {
 function leaveFolder(id) {
     const s = store(), i = s.notes.findIndex(n => n.id === id); if (i < 0) return;
     const n = s.notes[i], fid = n.folder; if (!fid) return;
-    s.notes.splice(i, 1); delete n.folder;
+    s.notes.splice(i, 1); delete n.folder; touchMeta(n);
     let at = -1; s.notes.forEach((m, k) => { if (m.folder === fid) at = k; });
     s.notes.splice(at + 1, 0, n); tidyFolders(); save();
 }
-function breakFolder(fid) { const s = store(); s.notes.forEach(n => { if (n.folder === fid) delete n.folder; }); tidyFolders(); save(); }
+function breakFolder(fid) { const s = store(); s.notes.forEach(n => { if (n.folder === fid) { delete n.folder; touchMeta(n); } }); tidyFolders(); save(); }
 /** 목록에 그릴 칸: 폴더 안이면 그 폴더 메모만, 밖이면 폴더는 첫 메모 자리에 한 칸 */
 function displayItems(fid) {
     const list = orderedNotes();
@@ -779,7 +781,7 @@ async function onChatRenamed(data) {
     for (const n of notes()) {
         const o = n.owner; if (!o || o.chat !== from) continue;
         if (data.groupId ? o.group !== data.groupId : o.avatar !== data.avatarId) continue;
-        n.owner = { ...o, chat: to, key: o.group ? `g:${o.group}/${to}` : `${o.avatar}/${to}` }; changed = true;
+        n.owner = { ...o, chat: to, key: o.group ? `g:${o.group}/${to}` : `${o.avatar}/${to}` }; touchMeta(n); changed = true;
     }
     if (changed) { save(); rerenderAll(); }
 }
@@ -787,13 +789,13 @@ async function onChatRenamed(data) {
 function onCharacterRenamed(oldAvatar, newAvatar) {
     if (!oldAvatar || !newAvatar || oldAvatar === newAvatar) return;
     let changed = false;
-    for (const n of notes()) { const o = n.owner; if (!o || o.group || o.avatar !== oldAvatar) continue; n.owner = { ...o, avatar: newAvatar, key: o.whole ? `c:${newAvatar}` : `${newAvatar}/${o.chat}` }; changed = true; }
+    for (const n of notes()) { const o = n.owner; if (!o || o.group || o.avatar !== oldAvatar) continue; n.owner = { ...o, avatar: newAvatar, key: o.whole ? `c:${newAvatar}` : `${newAvatar}/${o.chat}` }; touchMeta(n); changed = true; }
     if (changed) { save(); rerenderAll(); }
 }
 /** 지운 채팅의 메모는 전체 메모로 — 안 보이는 채 남지 않게 */
 function releaseNotes(match) {
     let count = 0;
-    for (const n of notes()) if (n.owner && match(n.owner)) { delete n.owner; count++; }
+    for (const n of notes()) if (n.owner && match(n.owner)) { delete n.owner; touchMeta(n); count++; }
     if (!count) return;
     save(); rerenderAll();
     globalThis.toastr?.info(`지운 채팅의 메모 ${count}개를 전체 메모로 옮겼어요.`, TITLE, { timeOut: 3500 });
@@ -891,7 +893,7 @@ function syncFolderBar(root, fid) {
     if (!bar) {
         bar = document.createElement('div'); bar.className = 'bl-folder-bar';
         bar.innerHTML = `<button type="button" class="bl-note-btn" data-act="folder-back" title="폴더 밖으로" aria-label="폴더 밖으로"><i class="fa-solid fa-chevron-left"></i></button><i class="fa-solid fa-folder-open" aria-hidden="true"></i><input class="bl-folder-name" type="text" maxlength="40" placeholder="폴더" spellcheck="false" aria-label="폴더 이름"><button type="button" class="bl-note-btn bl-note-pop" data-act="folder-pop" title="폴더째 화면에 꺼내 두기 (PC)" aria-label="폴더째 화면에 꺼내 두기"><i class="fa-solid fa-arrow-up-right-from-square"></i></button><button type="button" class="bl-note-btn" data-act="folder-break" title="폴더 풀기 (메모는 그대로)" aria-label="폴더 풀기"><i class="fa-solid fa-folder-minus"></i></button>`;
-        bar.querySelector('input').addEventListener('input', event => { const f = folderById(root.dataset.folder); if (!f) return; f.name = event.target.value; save(); syncFolderNames(f.id); });
+        bar.querySelector('input').addEventListener('input', event => { const f = folderById(root.dataset.folder); if (!f) return; f.name = event.target.value; f.updated = Date.now(); save(); syncFolderNames(f.id); });
         host.before(bar);
     }
     bar.hidden = !fid;
@@ -1483,7 +1485,7 @@ function openFolderSticky(fid) {
     el.className = 'bl-sticky bl-sticky-folder'; el.dataset.id = key; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', '메모 폴더');
     el.innerHTML = `<header class="bl-sticky-head"><i class="fa-solid fa-folder bl-sticky-foldericon" aria-hidden="true"></i><input class="bl-sticky-title" type="text" maxlength="40" placeholder="폴더" spellcheck="false" aria-label="폴더 이름"><button type="button" class="bl-note-btn" data-sticky="list" title="메모 목록" aria-label="메모 목록"><i class="fa-solid fa-bars"></i></button><button type="button" class="bl-note-btn" data-sticky="close" title="닫기" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button></header><div class="bl-sticky-scroll"><div class="bl-folder-rows"></div></div>`;
     const name = el.querySelector('.bl-sticky-title'), rows = el.querySelector('.bl-folder-rows');
-    name.addEventListener('input', () => { const f = folderById(fid); if (!f) return; f.name = name.value; save(); document.querySelectorAll(`.bl-note-folder[data-folder="${fid}"]`).forEach(c => c._sync?.()); document.querySelectorAll('.bl-folder-bar input').forEach(i => { if (i.closest('.bl-notes-mini, .bl-notes-dialog')?.dataset.folder === fid && document.activeElement !== i) i.value = f.name; }); });
+    name.addEventListener('input', () => { const f = folderById(fid); if (!f) return; f.name = name.value; f.updated = Date.now(); save(); document.querySelectorAll(`.bl-note-folder[data-folder="${fid}"]`).forEach(c => c._sync?.()); document.querySelectorAll('.bl-folder-bar input').forEach(i => { if (i.closest('.bl-notes-mini, .bl-notes-dialog')?.dataset.folder === fid && document.activeElement !== i) i.value = f.name; }); });
     el._sync = () => {
         const f = folderById(fid); if (!f) { closeSticky(key); return; }
         const list = orderedNotes().filter(n => n.folder === fid);
@@ -1594,6 +1596,9 @@ export function syncBar() {
     if (old) { renderBar(); return; }
     const form = document.getElementById('send_form'); if (!form) return;
     const bar = document.createElement('div'); bar.id = BAR_ID;
+    // 7.0.2 칩 줄 · 미니 목록 · 꺼내 보기를 옆으로 밀어도 실리태번이 마지막 답 스와이프(새 답 생성)로 받지 않게 — 터치를 문서로 올리지 않는다 (전개 지시 창과 같은 방식)
+    bar.dataset.swipeThreshold = '100000';
+    for (const type of ['touchstart', 'touchmove', 'touchend', 'touchcancel']) bar.addEventListener(type, event => event.stopPropagation(), { passive: true });
     bar.innerHTML = '<div class="bl-notes-row" role="toolbar" aria-label="메모"></div><div class="bl-notes-mini" hidden></div><div class="bl-notes-peek" hidden></div>';
     // ☰ 길게 누르기 = 큰 창 (짧게 누른 click 은 미니 목록)
     let pressTimer = 0, longFired = false;

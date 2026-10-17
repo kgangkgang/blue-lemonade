@@ -35,7 +35,7 @@ import { canPickFor, openPickFor } from '../../selects.js';
 import { settingsHTML } from './settings-ui.js';
 import { requestActive, bindConnection, directParameters, renderModelSelect, modelListKey, canListModels, watchModelLists, autoListModels, syncModelMemory, restoreModel } from './connection.js';
 import { ask, attachUndo } from '../../ask.js';
-import { backupFileName, backupRecord, validBackup, characterBackup, backupWhen } from './backup.js';   // 7.0.1 원본 적용 전 자동 백업   // 7.0.1 테마 확인 창 (기본 confirm 대신)
+import { backupFileName, backupRecord, validBackup, characterBackup, backupWhen, withFirstOriginal, pickBackup, hasTwoBackups } from './backup.js';   // 7.0.1 원본 적용 전 자동 백업   // 7.0.1 테마 확인 창 (기본 confirm 대신)
 /**
   * Prompt Panel
  */
@@ -3265,9 +3265,12 @@ async function saveOriginalBackup(kind, srcVal, selectedIds, label) {
         data = applied ? characterBackup(char, update) : null;
     }
     if (!data) throw new Error('원본을 읽지 못했어요');
-    const record = backupRecord(kind, name, label, data);
+    // 7.0.2 처음 원본은 지킨다 — 있던 기록을 읽어 first 를 이어 받는다 (못 읽으면 이번 것이 처음). 알림 ↶ 은 이번 적용 전(data)
+    let prev = null;
+    try { prev = await fileGetJSON(backupFileName(kind, name)); } catch { prev = null; }
+    const record = withFirstOriginal(prev, backupRecord(kind, name, label, data));
     await filePutJSON(backupFileName(kind, name), record);
-    return record;
+    return pickBackup(record, 'last');
 }
 /** 백업 → 실리태번 자료 (적용과 같은 쓰기 길) */
 async function restoreOriginal(record) {
@@ -4505,7 +4508,18 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
         let record = null;
         try { record = await fileGetJSON(backupFileName(kind, name)); } catch (err) { console.warn(`[${EXT}] backup read failed`, err); }
         if (!validBackup(record, kind, name)) { if (typeof toastr!=='undefined') toastr.info('이 자료의 원본 백업이 없어요. 「⚡ 원본 적용」을 할 때 만들어져요.'); return; }
-        await restoreOriginal(record);
+        // 7.0.2 처음 원본(기본) · 마지막 적용 전 — 둘이 다르면 고르게
+        let which = 'first';
+        if (hasTwoBackups(record)) {
+            which = await askChoice('어느 때로 되돌릴까요?', [
+                { v: 'first', label: `처음 적용 전 원본 (${backupWhen(record.first.at)})` },
+                { v: 'last', label: `마지막 적용 전 (${backupWhen(record.at)})` },
+            ]);
+            if (!which) return;
+        }
+        const done = await restoreOriginal(pickBackup(record, which));
+        // 처음 원본으로 돌아갔으면 백업을 지워 다음 적용이 새 원본을 잡게
+        if (done && which === 'first') { try { await fileDelete(backupFileName(kind, name)); } catch (err) { console.warn(`[${EXT}] backup delete failed`, err); } }
     });
 }
 

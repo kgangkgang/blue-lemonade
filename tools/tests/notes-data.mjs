@@ -199,7 +199,7 @@ await test('폴더: 놓은 메모와 새 폴더 · 모은 메모는 폴더 끝 �
     reset([note('A'), note('B'), note('C'), note('D')]);
     const fid = N.__joinFolder({ id: 'B' }, ['A']);
     assert.ok(fid);
-    assert.deepEqual(N.folders(), [{ id: fid, name: '' }]);
+    assert.deepEqual(N.folders().map(({ id, name }) => ({ id, name })), [{ id: fid, name: '' }]);   // 7.0.2 새 폴더에는 updated (기기 간 합치기)
     assert.deepEqual(ids(), ['B', 'A', 'C', 'D']);
     assert.equal(byId('A').folder, fid); assert.equal(byId('B').folder, fid);
     assert.equal(N.__joinFolder({ folder: fid }, ['D']), fid);
@@ -221,7 +221,7 @@ await test('폴더: 다른 폴더로 옮기면 남은 폴더가 하나뿐일 때
     const made = N.__joinFolder({ id: 'p' }, ['q']);
     assert.ok(made && made !== 'ghost', '없는 폴더를 가리키던 메모에 놓으면 새 폴더');
     assert.equal(byId('p').folder, made); assert.equal(byId('q').folder, made);
-    assert.deepEqual(N.folders(), [{ id: made, name: '' }]);
+    assert.deepEqual(N.folders().map(({ id, name }) => ({ id, name })), [{ id: made, name: '' }]);
 
     reset([note('a1', { folder: 'F1' }), note('a2', { folder: 'F1' }), note('b1', { folder: 'F2' }), note('b2', { folder: 'F2' }), note('x', { folder: 'ghost' })],
         { folders: [{ id: 'F1', name: '하나' }, { id: 'F2', name: '둘' }], stickies: { 'f:F2': { x: 0, y: 0, w: 230, h: 0 } } });

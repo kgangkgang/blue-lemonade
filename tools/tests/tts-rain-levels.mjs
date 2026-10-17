@@ -116,8 +116,9 @@ await t('③ 장면 소리: 날씨 양 → 세기(55 가볍게 · 100 보통 · 
     assert.match(scene, /amount: weatherAmount\(weatherChat\.weatherAmount, weatherChat\.weatherLevel\)/);
 });
 
-await t('판 1.9.8 · README 절 · CI 등록', () => {
-    assert.match(read('src/addons/tts/version.js'), /TTS_VERSION = '1\.9\.8'/);
+await t('판 1.9.8 이상 · README 절 · CI 등록', () => {
+    const v = (read('src/addons/tts/version.js').match(/TTS_VERSION = '(\d+)\.(\d+)\.(\d+)'/) || []).slice(1).map(Number);
+    assert.ok(v.length === 3 && (v[0] * 1e6 + v[1] * 1e3 + v[2]) >= 1009008, 'TTS 판 ' + v.join('.'));
     assert.match(read('src/addons/tts/README.md'), /^## 1\.9\.8 비 세 단계/m);
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/tts-rain-levels\.mjs \./);
 });

@@ -313,6 +313,52 @@ class GateTests(unittest.TestCase):
             for entry in ['../secrets','long-memory/../../secrets','wrong/index.js','long-memory/../secrets']:
                 with zipfile.ZipFile(p,'w') as z:z.writestr(entry,b'x')
                 with self.assertRaises(gate.GateError):gate.read_zip(p,'long-memory')
+    def scene_music_fixture(self):
+        files=self.fixture('theme');prefix='src/scene-music/'
+        files[gate.SCENE_MUSIC_MODULE]=b'// Synthetic scene music module'
+        for name in gate.SCENE_MUSIC_RESOURCES:files[prefix+name]=b'Synthetic license resource'
+        rows=[];pins={}
+        for ident,(mood,slug,author,_,_) in gate.SCENE_MUSIC.items():
+            data=b'ID3 loop\r\n'+ident.encode();files[prefix+f'{ident}.mp3']=data;page=f'https://opengameart.org/content/{slug}'
+            rows.append({'id':ident,'mood':mood,'path':f'scene-music/{ident}.mp3','source':page,'licenseEvidence':page,'author':author,
+                         'license':'CC0-1.0','licenseUrl':'https://creativecommons.org/publicdomain/zero/1.0/',
+                         'downloadUrl':'https://opengameart.org/sites/default/files/x.ogg','retrieved':'2026-10-17',
+                         'sourceSha256':'b'*64,'sourceBytes':100,'sourceDuration':90,'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest(),
+                         'modifications':{'excerptStart':1,'excerptSeconds':60,'loopCrossfadeSeconds':.6,'gainDb':-3,'encoding':'MP3 80 kbps mono'}})
+            pins[ident]=(mood,slug,author,hashlib.sha256(data).hexdigest(),'b'*64)
+        files[prefix+'SOURCES.json']=json.dumps({'version':1,'collection':'Blue Lemonade scene music','files':rows}).encode()
+        pinned=patch.dict(gate.SCENE_MUSIC,pins);pinned.start();self.addCleanup(pinned.stop)
+        return files
+    def test_scene_music_inventory_adds_only_reviewed_loops_and_license(self):
+        files=self.scene_music_fixture()
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);self.write_fixture(root,files)
+            for name in ('my-song.mp3','bl-music-daily-1.ogg','notes.txt'):(root/'src/scene-music'/name).write_bytes(b'private fixture')
+            found=gate.inventory(root,'theme')
+            self.assertEqual(set(found),set(files));self.assertEqual(gate.validate(found,'theme'),'1.3.1')
+            self.assertEqual(sum(n.startswith('src/scene-music/') and n.endswith('.mp3') for n in found),8)
+    def test_scene_music_inventory_requires_every_loop(self):
+        files=self.scene_music_fixture()
+        for name in (*gate.SCENE_MUSIC_RESOURCES,*(f'{ident}.mp3' for ident in gate.SCENE_MUSIC)):
+            with self.subTest(resource=name),tempfile.TemporaryDirectory() as d:
+                root=Path(d);self.write_fixture(root,{n:b for n,b in files.items() if n!='src/scene-music/'+name})
+                with self.assertRaisesRegex(gate.GateError,'Missing scene music'):gate.inventory(root,'theme')
+    def test_scene_music_zip_extra_changed_or_relicensed_blocks(self):
+        files=self.scene_music_fixture();key='src/scene-music/SOURCES.json'
+        extra=dict(files);extra['src/scene-music/extra.mp3']=b'x'
+        with self.assertRaisesRegex(gate.GateError,'file list'):gate.validate(extra,'theme')
+        changed=dict(files);changed['src/scene-music/sad_hope.mp3']+=b'!'
+        with self.assertRaisesRegex(gate.GateError,'byte count|SHA256'):gate.validate(changed,'theme')
+        for field,value in (('license','CC-BY-4.0'),('author','someone'),('source','https://example.com/x'),('path','../x.mp3'),('sourceSha256','c'*64)):
+            with self.subTest(field=field):
+                catalog=json.loads(files[key]);catalog['files'][0][field]=value;bad=dict(files);bad[key]=json.dumps(catalog).encode()
+                with self.assertRaises(gate.GateError):gate.validate(bad,'theme')
+        catalog=json.loads(files[key]);catalog['files'].pop();short=dict(files);short[key]=json.dumps(catalog).encode()
+        with self.assertRaisesRegex(gate.GateError,'complete'):gate.validate(short,'theme')
+    def test_older_theme_without_scene_music_remains_supported(self):
+        self.assertEqual(gate.validate(self.fixture('theme'),'theme'),'1.3.1')
+        files=self.fixture('theme');files[gate.SCENE_MUSIC_MODULE]=b'// newer runtime'
+        with self.assertRaisesRegex(gate.GateError,'Missing scene music'):gate.validate(files,'theme')
     def test_version_carry(self):
         f=self.fixture();m=json.loads(f['manifest.json']);m['version']='1.3.10';f['manifest.json']=json.dumps(m).encode()
         with self.assertRaisesRegex(gate.GateError,'carry'):gate.validate(f,'memory')

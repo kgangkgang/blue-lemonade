@@ -85,6 +85,38 @@ TTS_EXTRA_IDS = tuple(TTS_EXTRA_BIGSOUNDBANK) + tuple(TTS_EXTRA_GONGU) + tuple(T
 TTS_EXTRA_RESOURCES = ('sfx-extra/SOURCES.json', 'sfx-extra/LICENSE-CC0.txt', 'sfx-extra/LICENSE-CC-BY.txt')
 TTS_EXTRA_MODULE = 'src/addons/tts/src/sfx-daily.js'
 
+# 7.0.1 Scene music: only these reviewed OpenGameArt CC0 loops may enter a public release.
+# id: (mood, OpenGameArt page slug, author, packaged MP3 SHA256, original download SHA256)
+SCENE_MUSIC_MODULE = 'src/scene-music.js'
+SCENE_MUSIC_RESOURCES = ('SOURCES.json', 'LICENSE-CC0.txt')
+SCENE_MUSIC = {
+    'daily_town': ('daily', 'town-theme-rpg', 'cynicmusic',
+        '997e7a09f65f87ea6ae3ef46277244df9d9dd27978e93ebf68454c0d9f68472c',
+        '2657861d5107d4a3c01ef81cb6a4d61ddd5e7a054b6da57e658373d79d0c3466'),
+    'daily_lofi': ('daily', 'chill-lofi-inspired', 'omfgdude',
+        '1d3dd246367687a561efbbc8ca434121918aedbf9486de224dcbef0aa46b5ddf',
+        '7ea7fd1b7c95ed1ca5f6ebb796626570137bcb75c7f2ea87b6c61212c7a86694'),
+    'tense_pressure': ('tense', 'pressure', 'yd',
+        '638c7061cc277e160ac88855cb85ea0495641148d23b7fdbab41c308a38afadb',
+        'b7bc42d944a60f7d3a0b1f7ad3d94eff784739e4ae833d6d398ce381ceb71bc8'),
+    'battle_pursuit': ('battle', 'determined-pursuit-epic-orchestra-loop', 'Emma_MA',
+        '4d8781eb9f04c9d02180a956a39e92da14c5a885ed1ced186b00b663c4a34ac5',
+        'e4f3be098b50213b56a60aefe60fffae79cd9f7c9008088f93c187ef1bbc856b'),
+    'romance_next': ('romance', 'next-to-you', 'Joth',
+        'd8edb0ed4f182b35fbed81e0159ab23b4af01ab5866a4ca638fc07aac7cb3bda',
+        '95d620e1ad7bd7c73366979e384f172be21ebc5fe68bdc1af3908faf8a7c7b44'),
+    'sad_hope': ('sad', 'at-the-end-of-hope', 'Emma_MA',
+        '77b025e230d5dbc0eede3d45526907ecc9317030b2bce283a80604a8622b047d',
+        '561d33dcf69e2071a0fdfdfa361d94a1b5d9cbc7ad28c2388e638fcd8d6aa240'),
+    'mystic_shrine': ('mystic', 'shrine', 'yd',
+        'c0cd2c0ade302540b6adfac1bfdb0fda30f759f933ed65aca2c74712b9744411',
+        '35a3051a7b6d4fddda564624cff960b77722fd8bcf4a3e07ceceb060b6c0f080'),
+    'festive_feast': ('festive', 'medieval-kings-feast', 'RandomMind',
+        '47371f8a9d504e42c42f583de45362cc839068b6f2c2d1532dfe603527160f02',
+        '2a37227a3d454b92168a3a633b8af8dd07af135bffb9094a05d4df1fb203a8e5'),
+}
+
+
 # Reviewed 2026-10-10 originals and selected single-action/short-ambience exports (16 in TTS 1.5.1, 6 more in 1.5.3, 2 in 1.5.7, 10 in 1.6.0, 6 in 1.6.7, 1 in 1.6.8, 1 in 1.7.1).
 TTS_EXTRA_SHA256 = {
     'daily_cat_purr': '6d983eda87f313e9f952a69d596748e56da40862d56ef6824f2e411792e95fda',
@@ -359,6 +391,54 @@ def validate_tts_extra_sfx(files):
     require(seen == set(TTS_EXTRA_IDS), 'TTS everyday sound catalog is incomplete')
 
 
+def validate_scene_music(files):
+    prefix = 'src/scene-music/'
+    actual = {name[len(prefix):] for name in files if name.startswith(prefix)}
+    if not actual and SCENE_MUSIC_MODULE not in files:
+        return  # 7.0.0 and earlier have no scene music.
+    expected = {f'{ident}.mp3' for ident in SCENE_MUSIC} | set(SCENE_MUSIC_RESOURCES)
+    for name in SCENE_MUSIC_RESOURCES:
+        require(bool(files.get(prefix + name)), f'Missing scene music resource: {name}')
+    require(actual == expected, 'Scene music file list differs from the reviewed pack')
+    try:
+        catalog = json.loads(files[prefix + 'SOURCES.json'].decode('utf-8'))
+    except (ValueError, UnicodeError) as error:
+        raise GateError('Invalid scene music catalog JSON') from error
+    require(isinstance(catalog, dict) and type(catalog.get('version')) is int and catalog['version'] == 1
+            and catalog.get('collection') == 'Blue Lemonade scene music', 'Invalid scene music catalog')
+    rows = catalog.get('files')
+    require(isinstance(rows, list) and len(rows) == len(SCENE_MUSIC), 'Scene music catalog must list the complete reviewed pack')
+    finite = lambda value: type(value) in (int, float) and math.isfinite(value)
+    seen = set()
+    for row in rows:
+        require(isinstance(row, dict), 'Invalid scene music catalog entry')
+        ident = row.get('id')
+        require(isinstance(ident, str) and ident in SCENE_MUSIC and ident not in seen, 'Unknown or duplicate scene music ID')
+        seen.add(ident)
+        mood, slug, author, digest, source_digest = SCENE_MUSIC[ident]
+        page = f'https://opengameart.org/content/{slug}'
+        require(row.get('path') == f'scene-music/{ident}.mp3', 'Unsafe or mismatched scene music catalog path')
+        for key, value in (('mood', mood), ('source', page), ('licenseEvidence', page), ('author', author), ('license', 'CC0-1.0'),
+                           ('licenseUrl', 'https://creativecommons.org/publicdomain/zero/1.0/')):
+            require(row.get(key) == value, f'Scene music {key} differs from the reviewed origin: {ident}')
+        require(isinstance(row.get('downloadUrl'), str) and row['downloadUrl'].startswith('https://opengameart.org/sites/default/files/'),
+                f'Scene music download URL differs from the reviewed origin: {ident}')
+        content = files[prefix + f'{ident}.mp3']
+        require(type(row.get('bytes')) is int and row['bytes'] == len(content) > 0, f'Scene music byte count differs: {ident}')
+        require(row.get('sha256') == hashlib.sha256(content).hexdigest() == digest, f'Scene music differs from reviewed audio SHA256: {ident}')
+        require(row.get('sourceSha256') == source_digest and type(row.get('sourceBytes')) is int and row['sourceBytes'] > 0
+                and finite(row.get('sourceDuration')) and row['sourceDuration'] > 0, f'Invalid scene music original-file metadata: {ident}')
+        require(isinstance(row.get('retrieved'), str) and re.fullmatch(r'\d{4}-\d{2}-\d{2}', row['retrieved']) is not None,
+                f'Missing scene music retrieval date: {ident}')
+        mods = row.get('modifications')
+        require(isinstance(mods, dict) and all(finite(mods.get(key)) for key in ('excerptStart', 'excerptSeconds', 'loopCrossfadeSeconds', 'gainDb'))
+                and mods['excerptStart'] >= 0 and mods['excerptSeconds'] > 0
+                and mods['excerptStart'] + mods['excerptSeconds'] <= row['sourceDuration'] + 0.1
+                and isinstance(mods.get('encoding'), str) and bool(mods['encoding'].strip()),
+                f'Invalid scene music modification notice: {ident}')
+    require(seen == set(SCENE_MUSIC), 'Scene music catalog is incomplete')
+
+
 def inventory(root, kind):
     root = Path(root).resolve()
     names = ['manifest.json', 'index.js', 'style.css', 'README.md']
@@ -412,6 +492,12 @@ def inventory(root, kind):
                     item = root / 'src/addons/tts' / name
                     require(item.is_file(), f'Missing TTS everyday sound resource: {name}')
                     names.append(item.relative_to(root).as_posix())
+        # 7.0.1 Scene music: the reviewed CC0 loops, their catalog and license only.
+        if (root / 'src/scene-music').exists() or (root / SCENE_MUSIC_MODULE).is_file():
+            for name in (*SCENE_MUSIC_RESOURCES, *(f'{ident}.mp3' for ident in SCENE_MUSIC)):
+                item = root / 'src/scene-music' / name
+                require(item.is_file(), f'Missing scene music resource: {name}')
+                names.append(item.relative_to(root).as_posix())
         if (root / 'src/addons/perf/README.md').is_file(): names.append('src/addons/perf/README.md')
         if (root / 'src/vendor/README.md').is_file(): names.append('src/vendor/README.md')
         # Only these curated weather atlases are runtime images. Do not sweep
@@ -445,6 +531,7 @@ def validate(files, kind):
         validate_embedded_versions(files)
         validate_tts_sfx(files)
         validate_tts_extra_sfx(files)
+        validate_scene_music(files)
         if b'./preview-art/' in files.get('src/panel.js', b''):
             for name in PREVIEW_ARTWORK:
                 data = files.get('src/preview-art/' + name, b'')

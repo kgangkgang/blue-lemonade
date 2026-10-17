@@ -96,3 +96,19 @@
   outline: 2px solid var(--salty-accent);
   outline-offset: 2px;
 }
+
+/* 7.0.1 분위기 음악: 분위기 고르기(자동 + 7)는 4칸 × 2줄 — 폰 폭에서 버튼이 제각각 늘어나지 않게 */
+.salty-panel .salty-stack .salty-seg.bl-sm-moods {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: 100%;
+}
+.salty-panel .salty-stack .salty-seg.bl-sm-moods > button {
+  min-width: 0;
+  white-space: nowrap;
+}
+/* 지금 분위기 (작게) */
+.salty-panel .bl-sm-now {
+  font-weight: 600;
+  color: var(--salty-accent);
+}

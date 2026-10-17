@@ -18,7 +18,7 @@ import { updateReasoningUI } from '../../../../../../reasoning.js';   // 2.6.0 �
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
 import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey, glossaryLinesFor, enforceGlossaryNames, dropDanglingOpenQuote } from './glossary-match.js';
-import { glossarySignature, glossaryGone, mergeGlossary, glossaryMessage, GONE_KEY as GLOSSARY_GONE } from './glossary-sync.js';   // 2.7.5 다른 기기의 옛 설정 저장에 덮이지 않게 (updated · 지운 기록 · 합치기)
+import { glossarySignature, glossaryGone, mergeGlossary, glossaryMessage, renameGlossaryScope, GONE_KEY as GLOSSARY_GONE } from './glossary-sync.js';   // 2.7.5 다른 기기의 옛 설정 저장에 덮이지 않게 (updated · 지운 기록 · 합치기)
 import { registerSettingsMerge, startSettingsMerge } from '../../settings-merge.js';
 import { linesToFix, fixNoteFor, stillLeftover } from './leftover-fix.js';   // 6.4.2 다시 보낼 줄 = 남은 가나 + 원문에 있던 한자 덩이
 import { fixPairs, leftoverNameWords, markPairs, textKey, mergeSuggestions, shownSuggestions, skipSuggestion, dropSuggestion, trimScopes, GLOBAL as SUGGEST_GLOBAL } from './glossary-suggest.js';   // 6.4.5 새 이름 용어집 제안
@@ -5824,6 +5824,13 @@ function initializeEventHandlers() {
 
     hideBrokenCommentsOnRender();   // 2.5.1
     installCheckHooks();   // 2.6.0 번역 점검 표시 · 생각 블록 번역
+    // 7.0.2 캐릭터 이름을 바꾸면 그 캐릭터 용어집 범위(아바타 파일 이름)도 새 파일로 (glossary-sync renameGlossaryScope)
+    if (event_types.CHARACTER_RENAMED) eventSource.on(event_types.CHARACTER_RENAMED, (oldAvatar, newAvatar) => {
+        try {
+            const out = renameGlossaryScope(extensionSettings, String(oldAvatar || ''), String(newAvatar || ''));
+            if (out.moved || out.suggest) { saveSettingsDebounced(); setTimeout(() => { try { renderGlossary(); } catch { /* 다음 채팅 바꾸기에서 */ } }, 0); }   // renderGlossary 가 이름 다리도 다시 낸다
+        } catch (error) { console.warn('[번역] 캐릭터 이름 바꾸기 — 용어집 범위 옮기기 실패', error); }
+    });
     eventSource.on(event_types.CHAT_CHANGED, function () {
         publishGlossaryNames();   // 6.3.5 채팅을 바꾸면 바로 — 첫 인사말 렌더 · TTS 팔레트보다 먼저 (100ms 뒤 renderGlossary 는 같으면 아무 일 없음)
         if (typeof checkView !== 'undefined') checkView.close();   // 2.6.0 번역 점검 작은 창

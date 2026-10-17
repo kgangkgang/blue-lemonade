@@ -559,7 +559,7 @@ function normalizeItalics(raw, built) {
 /** 저장된 분석의 기울임 답 (같은 글 · 같은 스와이프일 때만, 통신 없음). 1.9.1 전 분석 · 기울임을 안 물은 분석이면 null */
 export function italicsOf(mes) {
     const a = slot(mes, false)?.analysis;
-    if (!isObj(a) || !Array.isArray(a.italics) || a.hash !== textHash(mes) || (Number.isInteger(a.swipe) && a.swipe !== swipeOf(mes))) return null;
+    if (!isObj(a) || !Array.isArray(a.italics) || a.hash !== textHash(mes)) return null;   // 7.0.2 글이 같으면 스와이프 번호는 보지 않음 (스와이프 지우기로 번호가 당겨져도 — sameSwipe)
     return a.italics;
 }
 /**
@@ -1123,6 +1123,9 @@ function profileOf(mes, cfg, langs, built, extras = extrasOn(), sfx = true) {
 }
 const dropped = new WeakMap();   // mes → { swipe, analysis }  이어쓰기·편집 뒤 같은 줄의 번역을 재사용
 const swipeOf = (mes) => Number(mes?.swipe_id) || 0;
+/** 7.0.2 저장된 분석이 지금 스와이프 것인가: 번호가 같거나, 글(해시)이 같으면 — 실리태번 스와이프 지우기(MESSAGE_SWIPE_DELETED)는 뒤 스와이프 번호를 하나씩 당겨
+ *  같은 글의 분석을 「다른 스와이프 것」으로 버리고 다시 유료 분석을 물었다. 번호가 다르고 글도 다르면 다른 스와이프 것 (새 스와이프가 옛 extra 를 물려받은 경우) */
+const sameSwipe = (a, mes) => !Number.isInteger(a?.swipe) || a.swipe === swipeOf(mes) || a.hash === textHash(mes);
 // 잘못된 응답은 성공 분석으로 저장하지 않는다. 같은 대사를 누를 때마다 같은 전체 요청을 다시 보내지 않게 세션 안에서만 기억한다.
 const responseFailures = new WeakMap();
 // 6.1.8 내용 차단으로 막힌 메시지 (같은 글 · 스와이프) — 다른 모델을 골라 두면 다음엔 원래 모델을 건너뛰고 그 모델로 바로
@@ -1356,7 +1359,7 @@ export function getAnalysis(mesId) {
         a = slot(mes, false)?.analysis;
         if (!isObj(a) || !Array.isArray(a.segs) || a.hash !== textHash(mes)) return null;
     }
-    if (Number.isInteger(a.swipe) && a.swipe !== swipeOf(mes)) return null;
+    if (!sameSwipe(a, mes)) return null;
     const cfg = settings().analysis || {};
     if (cfg.emotion && a.segs.some(g => !EMOTION_SET.has(g?.emotion))) return null;
     // 효과음 끄기는 소리만 숨긴다 (감정·번역을 다시 묻지 않고, 다시 켜면 기존 효과음을 그대로). 효과음 없이 받은 분석은 효과음을 켠 뒤 지문이 있는 글이면 한 번 다시 받는다

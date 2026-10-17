@@ -11,7 +11,7 @@ function hash(text) {
     for (const ch of String(text)) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; }
     return h.toString(16).padStart(8, '0');
 }
-/** 자료마다 파일 하나 (최근 것으로 덮어씀) */
+/** 자료마다 파일 하나 (이번 적용 전 + 처음 원본 — withFirstOriginal) */
 export function backupFileName(kind, name) {
     if (!KINDS.has(kind)) throw new Error(`모르는 자료 종류: ${kind}`);
     return `${PREFIX}${kind}-${hash(String(name ?? ''))}.json`;
@@ -52,6 +52,51 @@ export function characterBackup(char, update) {
     if (!Object.keys(out.data).length) delete out.data;
     return out;
 }
+/**
+ * 7.0.2 처음 원본 지키기: 같은 자료에 두 번째 「원본 적용」을 하면 그때의 지금 값(이미 반쯤 번역된 값)으로 백업을 덮어 진짜 원본을 잃었다
+ * (봇카드는 앞서 적용한 필드가 백업에서 통째로 빠짐). 기록에 칸 둘:
+ *   data · at        이번 적용 전 (알림 ↶ — 방금 적용만 되돌리기)
+ *   first.data · at  처음 적용 전 (더보기 「원본으로 되돌리기」 기본). 되돌리기에 성공하거나 사용자가 지울 때까지 유지.
+ *                    봇카드는 필드 단위로 — 처음 본 필드 값은 그대로, 이번에 처음 바뀌는 필드만 더한다
+ * prev = 파일에 있던 기록(없거나 못 읽으면 null). 7.0.1 기록(first 없음)은 그 data 를 처음 원본으로 본다
+ */
+export function withFirstOriginal(prev, next) {
+    if (!next || typeof next !== 'object') return next;
+    const ok = validBackup(prev, next.kind, next.name);
+    const base = ok ? (prev.first && typeof prev.first === 'object' && prev.first.data && typeof prev.first.data === 'object' ? prev.first : { at: prev.at, data: prev.data }) : null;
+    if (!base) return { ...next, first: { at: next.at, data: clone(next.data) } };
+    if (next.kind !== 'char') return { ...next, first: { at: base.at, data: clone(base.data) } };
+    return { ...next, first: { at: base.at, data: mergeCharacterBackup(base.data, next.data) } };
+}
+/** 봇카드 처음 원본에 이번에 처음 바뀌는 필드만 더한다 (있는 필드는 그대로) */
+export function mergeCharacterBackup(first, next) {
+    const out = clone(first) || {};
+    for (const key of Object.keys(next || {})) {
+        if (key === 'data' || key === 'avatar') continue;
+        if (!(key in out)) out[key] = clone(next[key]);
+    }
+    if (next?.data && typeof next.data === 'object') {
+        if (!out.data || typeof out.data !== 'object') out.data = {};
+        for (const key of Object.keys(next.data)) {
+            if (key === 'extensions') {
+                const dp = next.data.extensions?.depth_prompt;
+                if (dp && !out.data.extensions?.depth_prompt) out.data.extensions = { ...(out.data.extensions || {}), depth_prompt: clone(dp) };
+                continue;
+            }
+            if (!(key in out.data)) out.data[key] = clone(next.data[key]);
+        }
+    }
+    if (!out.avatar && next?.avatar) out.avatar = next.avatar;
+    return out;
+}
+/** 되돌릴 칸: 'first' 면 처음 원본, 아니면 이번 적용 전. 처음 원본이 없으면 data 그대로 */
+export function pickBackup(record, which = 'first') {
+    if (which === 'first' && record?.first?.data && typeof record.first.data === 'object') return { ...record, data: record.first.data, at: record.first.at, picked: 'first' };
+    return { ...record, picked: 'last' };
+}
+/** 처음 원본과 이번 적용 전이 다른 시각인가 (확인 창에서 고르게) */
+export const hasTwoBackups = record => !!(record?.first?.data && Number(record.first.at) && Number(record.first.at) !== Number(record.at));
+
 /** 백업 시각 → 「10월 17일 오후 3:05」 꼴 (알림 · 확인 창) */
 export function backupWhen(at) {
     const d = new Date(Number(at) || 0);

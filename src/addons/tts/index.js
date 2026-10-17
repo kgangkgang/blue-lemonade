@@ -1,6 +1,6 @@
 // TTS (Lemon TTS) — 시작점: 설정 화면 붙이기 · 이벤트 · 메시지 버튼 · 지팡이 메뉴 · 슬래시 명령
 // 블루 레몬에이드 내장판: 기존 lemon_voice 설정·캐시·명령을 이어 쓴다.
-import { eventSource, event_types, chat, substituteParams } from '../../../../../../../script.js';
+import { eventSource, event_types, chat, substituteParams, saveSettingsDebounced } from '../../../../../../../script.js';
 import { getContext, extensionNames, extension_settings } from '../../../../../../extensions.js';
 import { POPUP_TYPE, callGenericPopup } from '../../../../../../popup.js';
 import { getSettings as themeSettings } from '../../settings.js';
@@ -10,7 +10,8 @@ import { runtimeEnabled, setRuntimeEnabled } from './src/runtime.js';
 import { SlashCommandParser } from '../../../../../../slash-commands/SlashCommandParser.js';
 import { SlashCommand } from '../../../../../../slash-commands/SlashCommand.js';
 import { ARGUMENT_TYPE, SlashCommandArgument, SlashCommandNamedArgument } from '../../../../../../slash-commands/SlashCommandArgument.js';
-import { settings, VERSION, PATH } from './src/settings.js';
+import { settings, save, VERSION, PATH, SYNC_TEXT_FIELDS } from './src/settings.js';
+import { registerAddonMerge } from '../list-sync.js';   // 7.0.2
 import { segmentMessage, parseRegexLines } from './src/text.js';
 import * as speakers from './src/speakers.js';
 import * as voices from './src/voices.js';
@@ -283,7 +284,32 @@ function onDeleted() {
     try { speakers.syncChat(); }
     catch (e) { log('err', `말한 사람 기록 정리 실패: ${e.message}`); }
 }
+// 7.0.2 캐릭터 이름 바꾸기: 이벤트 때는 실리태번이 아직 캐릭터 목록을 다시 읽기 전이라 옛 이름을 잡아 두고, 목록을 다시 읽은 뒤(다음 CHAT_CHANGED · 늦어도 몇 초)
+//   새 아바타 카드의 이름으로 목소리 연결을 복사한다 (speakers.renameCharacterKeys — 색 기억은 바로 새 아바타로)
+let pendingRename = null;
+function onCharacterRenamed(oldAvatar, newAvatar) {
+    try {
+        const ctx = getContext();
+        const oldName = (ctx.characters || []).find(c => c?.avatar === oldAvatar)?.name || '';
+        const s = settings();
+        if (speakers.renameCharacterKeys(s, { oldAvatar, newAvatar }).colors) save();
+        pendingRename = { oldName, newAvatar, at: Date.now() };
+        setTimeout(finishRename, 4000);
+    } catch (e) { log('err', `이름 바꾸기 따라가기 실패: ${String(e?.message || e).slice(0, 40)}`); }
+}
+function finishRename() {
+    const p = pendingRename;
+    if (!p || Date.now() - p.at > 60000) { pendingRename = null; return; }
+    const ctx = getContext();
+    const card = (ctx.characters || []).find(c => c?.avatar === p.newAvatar);
+    if (!card?.name) return;   // 아직 목록을 다시 안 읽음 — 다음 CHAT_CHANGED 에서
+    pendingRename = null;
+    const taken = [ctx.name1, ...(ctx.characters || []).filter(c => c?.avatar !== p.newAvatar).map(c => c?.name)].filter(Boolean);
+    const out = speakers.renameCharacterKeys(settings(), { oldName: p.oldName, newName: card.name, taken });
+    if (out.voices) { save(); globalThis.toastr?.info(`「${p.oldName}」의 목소리 연결을 새 이름 「${card.name}」에도 이어 두었어요.`, 'TTS', { timeOut: 4000 }); }
+}
 function onChatChanged() {
+    if (pendingRename) { try { finishRename(); } catch { /* 다음에 */ } }
     if (!runtimeEnabled()) return;
     player.stop();
     spoken = null; stream = null;
@@ -504,6 +530,7 @@ export const ready = new Promise((resolve, reject) => jQuery(() => { (async () =
     eventSource.on(event_types.MESSAGE_SWIPED, (id) => onSwiped(Number(id)));
     eventSource.on(event_types.MESSAGE_DELETED, onDeleted);
     eventSource.on(event_types.CHAT_CHANGED, onChatChanged);
+    if (event_types.CHARACTER_RENAMED) eventSource.on(event_types.CHARACTER_RENAMED, onCharacterRenamed);   // 7.0.2
     // 대사 분석 캐시 정리 (CHAT_CHANGED 는 필요 없음: 분석은 채팅 extra 에 산다)
     eventSource.on(event_types.MESSAGE_EDITED, onMessageChanged);
     eventSource.on(event_types.MESSAGE_SWIPED, onMessageChanged);
@@ -526,4 +553,7 @@ export const ready = new Promise((resolve, reject) => jQuery(() => { (async () =
         callFx: () => import('./src/fx-call.js'),
     });
     setTimeout(() => verifyAddonCss({ folder: 'tts', name: '--lv-css-version', version: VERSION, title: 'TTS', selector: '.lv-settings' }), 3000);
+    // 7.0.2 발음 사전 · 음소거 낱말을 다른 기기의 옛 설정 저장에 잃지 않게 — 칸마다 고친 시각(field_stamps)이 늦은 쪽 (../list-sync.js)
+    try { registerAddonMerge('tts', { module: 'lemon_voice', store: () => extension_settings.lemon_voice, text: SYNC_TEXT_FIELDS, stampKey: 'field_stamps', save: saveSettingsDebounced, onChange: () => { try { ui.refreshChat?.(); } catch { /* 설정 화면 없음 */ } } }); }
+    catch (e) { log('err', `기기 간 합치기 실패: ${String(e?.message || e).slice(0, 40)}`); }
 })().then(resolve, reject); }));

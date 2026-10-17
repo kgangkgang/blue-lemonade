@@ -81,6 +81,12 @@ for (const type of [
 
 if (event_types.SETTINGS_UPDATED) eventSource.on(event_types.SETTINGS_UPDATED, () => refreshThemeVars());
 
+// 1.7.0 캐릭터 이름 바꾸기: 그림 폴더(카드 파일 이름)와 설정 열쇠를 새 이름으로 (rename.js — 그림이 있으면 옮길지 묻는다)
+if (event_types.CHARACTER_RENAMED) eventSource.on(event_types.CHARACTER_RENAMED, (oldAvatar, newAvatar) => {
+    import('./rename.js').then(m => m.followCharacterRename(oldAvatar, newAvatar, { settings, saveSettings, reload, toast }))
+        .catch(error => console.warn('[캐릭터 에셋] 이름 바꾸기 따라가기 실패', error));
+});
+
 // 1.4.1: 설정 칸(panel.js 66KB + 그것만 쓰는 viewer · shrink · image-format)은 확장 서랍이
 // 처음 화면에 보일 때 읽는다. 접힌 목록에 보이는 건 머리줄뿐이라 그것만 먼저 만들어 둔다.
 // 덤: hooks.onChanged(= renderAll)도 그때 걸려서, 창을 안 열면 채팅을 바꿔도 안 보이는 칸을 다시 그리지 않는다.

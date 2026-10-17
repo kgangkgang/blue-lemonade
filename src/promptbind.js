@@ -152,6 +152,28 @@ export function renameKeys(oldAvatar, newAvatar) {
     return n;
 }
 
+/**
+ * 7.0.2 채팅 이름 바꾸기: 「+ 지금 채팅」 열쇠('c:아바타/채팅' · 'g:그룹/채팅')를 새 이름으로 옮긴다 — 안 옮기면 실리태번이 이름 바꾼 뒤 내는 CHAT_CHANGED 맞추기가
+ * 묶음(옛 이름)과 안 맞아 그 프롬프트를 끄고 저장했다. 실리태번은 CHAT_RENAMED 를 CHAT_CHANGED 뒤에 내므로 옮긴 다음 다시 맞춘다(startPromptBinds).
+ * 새 이름은 초안(draft.js renamedChatKey)과 같은 규칙으로 정리 — 지금 열린 채팅이면 실리태번의 실제 채팅 id 를 쓴다(서버가 다르게 정리했을 수 있다)
+ */
+export function renameChatKeys({ avatarId, groupId, oldFileName, newFileName } = {}, currentChatId = null) {
+    const owner = groupId ? `g:${groupId}` : avatarId ? `c:${avatarId}` : '';
+    const from = String(oldFileName || '').replace(/\.jsonl$/i, '');
+    const clean = String(newFileName || '').replace(/[<>:"/\\|?*\x00-\x1f\x80-\x9f]/g, '').replace(/[ .]+$/, '').replace(/\.jsonl$/i, '');
+    const to = currentChatId && String(currentChatId) !== from ? String(currentChatId) : clean;
+    if (!owner || !from || !to || from === to) return 0;
+    const oldKey = `${owner}/${from}`, newKey = `${owner}/${to}`;
+    let n = 0;
+    for (const bind of Object.values(binds())) {
+        if (!Array.isArray(bind.keys) || !bind.keys.includes(oldKey)) continue;
+        bind.keys = [...new Set(bind.keys.map(k => (k === oldKey ? newKey : k)))];
+        n++;
+    }
+    if (n) saveSettings();
+    return n;
+}
+
 // ───────── 캐릭터 이름 연동 (6.5.2 · 6.7.5 여러 줄 · prompt-link.js) ─────────
 // 설정 promptLink { on, rows: [{ word, cards }] }: 줄마다 말(word)이 든 프롬프트는 그 줄의 캐릭터 채팅에서만 켜진다 — 고른 카드(cards: 아바타 파일) 중 하나,
 // 카드를 안 골랐으면 말과 이름이 같은 카드(카드 이름 · 아바타 파일 이름), 그룹이면 구성원 중 하나. 말은 띄어쓰기 · 대소문자 · 전각을 무시하고 찾는다.
@@ -486,6 +508,12 @@ export function startPromptBinds() {
     // 설정이 저장될 때마다(프리셋 · 다른 확장이 순서를 다시 쓴 뒤에도) 잠시 뒤 한 번 더 맞춘다 — 맞으면 저장하지 않으니 되돌이표는 없다 (여기서 바뀐 정규식은 다시 그리지 않는다)
     if (event_types.SETTINGS_UPDATED) eventSource.on(event_types.SETTINGS_UPDATED, () => { clearTimeout(settleTimer); settleTimer = setTimeout(() => { syncPromptBinds('settle'); }, 400); });
     if (event_types.CHARACTER_RENAMED) eventSource.on(event_types.CHARACTER_RENAMED, (oldAvatar, newAvatar) => { renameKeys(oldAvatar, newAvatar); });
+    // 7.0.2 채팅 이름 바꾸기 — 열쇠를 옮기고 다시 맞춘다 (CHAT_CHANGED 맞추기가 이미 꺼 둔 프롬프트를 다시 켜게)
+    if (event_types.CHAT_RENAMED) eventSource.on(event_types.CHAT_RENAMED, data => {
+        const ctx = SillyTavern.getContext();
+        const here = data?.groupId ? String(ctx.groupId ?? '') === String(data.groupId) : !ctx.groupId && ctx.characters?.[ctx.characterId]?.avatar === data?.avatarId;
+        if (renameChatKeys(data, here ? (ctx.chatId ?? ctx.getCurrentChatId?.()) : null)) syncPromptBinds('chat');
+    });
     if (typeof document !== 'undefined') {
         watchPopup();
         if (!observer) {   // 프롬프트 관리자 창이 아직 없으면 생길 때 붙는다

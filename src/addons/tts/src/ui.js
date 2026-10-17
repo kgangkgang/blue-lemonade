@@ -1,7 +1,7 @@
 // TTS 설정 창: 탭 · 카드 · 스키마 기반 입력칸(data-lv-path) · 목소리 편집 팝업
 import { getContext } from '../../../../../../../extensions.js';
 import { POPUP_TYPE, POPUP_RESULT, callGenericPopup } from '../../../../../../../popup.js';
-import { settings, save, VERSION, DEFAULTS, ANALYSIS_DEFAULTS, READ_PRESETS, maskKey, exportable, applyReadPreset, applyBodyFilters, providerConfig, toVoice, PREGEN_MODES, fillKnownVoices, migrateVoicesV8, fillKnownFacts, hasDb, USER_AUTO, LISTEN_LANGS } from './settings.js';
+import { settings, save, VERSION, DEFAULTS, ANALYSIS_DEFAULTS, READ_PRESETS, maskKey, exportable, applyReadPreset, applyBodyFilters, providerConfig, toVoice, PREGEN_MODES, fillKnownVoices, migrateVoicesV8, fillKnownFacts, hasDb, USER_AUTO, LISTEN_LANGS, SYNC_TEXT_FIELDS } from './settings.js';
 import * as player from './player.js';
 import * as voices from './voices.js';
 import * as speakers from './speakers.js';
@@ -578,6 +578,7 @@ function onEdit(e, live) {
 /** 값이 바뀐 뒤 따라 바뀌어야 하는 부분만 다시 그린다 (보이는 항목이 달라질 때만 카드를 새로 그린다) */
 function afterEdit(path, el) {
     const s = settings();
+    if (SYNC_TEXT_FIELDS.includes(path)) { if (!s.field_stamps || typeof s.field_stamps !== 'object' || Array.isArray(s.field_stamps)) s.field_stamps = {}; s.field_stamps[path] = Date.now(); save(); }   // 7.0.2 기기 간 합치기
     // 1.3.8 「나」 자동을 골랐는데 「내 대사」가 읽지 않음이면 (직접 설정) AI 답장 속 내 대사가 안 읽혀 자동이 아무 일도 안 한다 → 읽게 바꾸고 한 줄 알림
     if (path === 'user_voice' && s.user_voice === USER_AUTO) {
         // 5.7.3 성별을 아직 모르면 바로 물어 정한다 (분석을 기다리지 않게) · 「내 대사」가 읽지 않음이면 읽게

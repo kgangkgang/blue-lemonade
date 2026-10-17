@@ -57,6 +57,7 @@ export const DEFAULTS = Object.freeze({
     skip_tags: DEFAULT_SKIP_TAGS,
     strip_regex: '',
     pron_dict: '',
+    field_stamps: {},              // 7.0.2 { 칸: 고친 시각 } — 발음 사전 · 음소거 낱말 기기 간 합치기 (SYNC_TEXT_FIELDS · ../list-sync.js)
     mute_words: '',               // 1.6.3 단어 음소거 — 이 말은 소리 내지 않는다 (한 줄에 하나 · 2,000자 · mute.js)
     mute_mode: 'audio',           // 1.6.3 'audio' 소리에서 지우기(요금 없음 · 시간표 없으면 어림) | 'text' 글에서 빼고 다시 만들기(요금)
     max_chars: 3000,
@@ -119,7 +120,9 @@ export const LISTEN_LANGS = Object.freeze(['auto', 'ko', 'ja', 'en', 'zh']);
 /** 1.3.8 「나」 자동: 내 목소리 칸의 표시값 (목소리 uid 가 아님) — 페르소나도 목소리를 안 정한 화자처럼 엑스트라 목소리로 (voices.voiceFor) */
 export const USER_AUTO = '@auto';
 // 기본값과 합치지 않는 표 (사용자 이름 · 엔진 id 가 키 — 기본값이 비어 있어도 모양만 지킴)
-const NO_MERGE = new Set(['providers', 'char_map', 'card_colors', 'extra_map', 'prefer_keep', 'prefer_declined', 'account_removed']);
+const NO_MERGE = new Set(['providers', 'char_map', 'card_colors', 'extra_map', 'prefer_keep', 'prefer_declined', 'account_removed', 'field_stamps']);
+/** 7.0.2 기기 간 합치기를 하는 글 칸 — 고칠 때 field_stamps[칸] 에 시각 (ui.js afterEdit) */
+export const SYNC_TEXT_FIELDS = Object.freeze(['pron_dict', 'mute_words']);
 const clone = (v) => (v && typeof v === 'object' ? JSON.parse(JSON.stringify(v)) : v);
 const isObj = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
 const clampDb = (n) => Math.max(-12, Math.min(18, n));

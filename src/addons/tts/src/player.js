@@ -57,18 +57,21 @@ import { getProvider } from './providers/index.js';
 import * as analysis from './analysis.js';
 import * as translation from './translation.js';
 import * as listen from './listen.js';   // 1.4.4 듣는 언어
-import { resolveScript, normalizeRows, scriptFingerprint } from './script-store.js';
+import { resolveScript, normalizeRows, scriptFingerprint, shiftScriptsAfterSwipeDelete } from './script-store.js';
 import { mediaCard } from './media-card.js';   // 1.9.7 잠금화면 · 알림 카드 값 (얼굴 · 대사 · 화자)
 import { getSfx, sfxBlob, isSfxEnabled, sfxPreferenceRevision, onSfxPreferenceChange, sfxAttribution, sfxLevelOn, listSfx, isSfxFavorite, resolveSfxId, updateSfx, SFX_LIMITS } from './sfx-library.js';
 import { chipWords, addWord, removeWord, wordFold } from './word-chips.js';   // 6.3.6 효과음 낱말 붙이기 (요술봉 › 낱말)
 import { playbackOriginalIn, wavWithCredits } from './playback-details.js';
 import { createSfxController } from './sfx-audio.js';
 import { mixScene } from './scene-mix.js';
+import { createKeepAlive } from './keep-alive.js';   // 1.9.9 (7.0.2) 숨었을 때 줄 사이 무음으로 이어 잡기 · 뒷일 다리
 import { paintColorHighlights, clearColorHighlights, piecesOf, speakerColor, colorKey, barNameChoice, alphaOf, luminance } from './highlight-colors.js';
 import { widenToQuotes } from './highlight-colors.js';   // 1.9.1 읽는 대사 강조를 따옴표부터 따옴표까지 (findRange)
 
 const TITLE = 'TTS';
-const ambientCovers = sfxId => { try { return globalThis[Symbol.for('blue-lemonade.ambient')]?.covers?.(sfxId) === true; } catch { return false; } };   // 6.9.8 테마 장면 소리 다리 (scene-sound.js) — 빗소리 · 바람 · 물결 · 천둥이 돌고 있으면 같은 종류의 효과음은 내지 않는다
+// 7.0.2 비 세 단계(1.9.8)의 가랑비 · 장대비(daily_rain_light · daily_rain_heavy)도 다리에는 빗소리(daily_rain)로 한 번 더 묻는다 — 테마 쪽 표가 새 id 를 몰라도 겹치지 않게
+export const ambientIdOf = sfxId => (/^daily_rain_/.test(String(sfxId || '')) ? 'daily_rain' : sfxId);
+const ambientCovers = sfxId => { try { const bridge = globalThis[Symbol.for('blue-lemonade.ambient')]; if (bridge?.covers?.(sfxId) === true) return true; const base = ambientIdOf(sfxId); return base !== sfxId && bridge?.covers?.(base) === true; } catch { return false; } };   // 6.9.8 테마 장면 소리 다리 (scene-sound.js) — 빗소리 · 바람 · 물결 · 천둥이 돌고 있으면 같은 종류의 효과음은 내지 않는다
 const MAX_CONC = 2;                 // 동시 합성 요청
 const RETRY_MS = [1500, 4000];      // e.retry 재시도 간격
 const MERGE_SOFT = 600;             // 합친 글 한 덩이 최대 글자 (첫 소리가 빨리 나오도록)
@@ -1512,6 +1515,7 @@ function lookAhead(from, s) {
 
 // ---------- 재생 상태
 let audio = null;
+const keepAlive = createKeepAlive({ audio: () => audio });   // 1.9.9 (7.0.2) 백그라운드 재생 (keep-alive.js)
 const sceneAudio = createSfxController();
 const sceneTails = new Set();
 let fxCarry = null;              // 6.3.9 { mesId } 이어 듣기로 넘긴 겹침 효과음 꼬리 — 다음 enqueue 가 같은 메시지의 줄이면 끊지 않는다 (꼬리는 sceneTails 에 남는다)
@@ -1655,6 +1659,7 @@ async function playAudio(a, job, ir) {
     });
     audioActive = true;
     try {
+        keepAlive.prepare();   // 1.9.9 무음 반복을 끄고 진짜 대사로
         audio.src = url;
         applyPlayback();
         await startPlay(ir);
@@ -1672,9 +1677,12 @@ async function playAudio(a, job, ir) {
         audioActive = false;
         audio.removeEventListener('ended', onEnd);
         audio.removeEventListener('error', onErr);
-        if (!audio.paused) audio.pause();
-        audio.removeAttribute('src');
-        audio.load();
+        // 1.9.9 (7.0.2) 숨었으면 요소를 비우지 않고 무음을 이어 튼다 — 다음 줄을 받는 동안에도 미디어가 「재생 중」이라 폰이 페이지를 잠재우지 않는다
+        if (ir.fired || !keepAlive.hold()) {
+            if (!audio.paused) audio.pause();
+            audio.removeAttribute('src');
+            audio.load();
+        }
         URL.revokeObjectURL(url);
     }
 }
@@ -1828,6 +1836,7 @@ async function run() {
             }
             if (deferFx(job) && voiceAfter(queue, idx + 1, job)) { fx.push(job); warmFx(job); idx++; continue; }   // 6.3.9 다음 대사 소리가 준비되면 같이
             current = job;
+            keepAlive.begin();   // 1.9.9 (7.0.2) 뒷일 다리 'tts' — 소리 없이 버티기(백그라운드 창)가 같이 붙잡는다 (읽는 동안 하나 · 4분마다 새로)
             sceneManual = job.sceneManual === true;
             nav = null;
             const s = settings();
@@ -1908,6 +1917,8 @@ function finishAll({ keepDead = false, keepFx = false } = {}) {
     // 1.3.8 스트리밍 중인 답장의 '안 되는 엔진'은 큐가 비어도 남긴다 (다음 조각이 append 로 새 큐를 만든다)
     if (!keepDead && streamDead && !(stream && stream.mesId === streamDead.mesId && !stream.muted)) streamDead = null;
     currentIr = null;
+    if (!keepAlive.linger(3000)) keepAlive.release();   // 1.9.9 무음: 숨었으면 3초 더 (이어 듣기가 다음 줄을 넣을 틈) 뒤 끔
+    keepAlive.end();   // 뒷일 다리 내려놓기
     unmark();
     setSession('none');
     // 다른 메시지의 번역·분석을 기다리는 중이면 그 표시로 돌아감
@@ -1960,12 +1971,13 @@ export function stop({ keepStream = false, keepFx = false } = {}) {
     if (!keepStream && stream) stream.muted = true;               // 사용자가 멈춤: 이 답장의 스트리밍 읽기도 끝
     if (!keepStream) streamDead = null;                           // 1.3.8 다시 읽으면 그 엔진도 다시 시도
     finishAll({ keepDead: keepStream, keepFx });                          // enqueue 가 새 큐를 넣기 전(keepStream)엔 스트리밍 답장의 표를 남김
+    if (!keepStream) keepAlive.release();                         // 1.9.9 사용자가 멈춤: 무음도 바로 끔. 새 읽기(enqueue — keepStream)는 잠깐 남겨 숨은 채 첫 줄을 이어 틀 수 있게
 }
 export function pause() {
     if (!current || paused) return;
     paused = true;
     sceneAudio.pause();
-    if (audioActive && !audio.paused) audio.pause();
+    if ((audioActive || keepAlive.holding) && !audio.paused) audio.pause();   // 1.9.9 숨어서 무음으로 잡고 있던 것도
     if (speaking) try { window.speechSynthesis?.pause(); } catch { /* 무시 */ }
     setSession('paused');
     updateBar();
@@ -1976,7 +1988,7 @@ export function resume() {
     if (!paused) return;
     paused = false;
     sceneAudio.resume();
-    if (audioActive) audio.play().catch(() => { /* 다음 제스처에서 */ });
+    if (audioActive || keepAlive.holding) audio.play().catch(() => { /* 다음 제스처에서 */ });
     if (speaking) try { window.speechSynthesis?.resume(); } catch { /* 무시 */ }
     const w = resumeWaiters; resumeWaiters = [];
     for (const r of w) r();
@@ -2294,6 +2306,8 @@ async function waitScene(ms, ir) {
     while (left > 0 && !ir.fired) {
         await waitIfPaused(ir);
         if (ir.fired) break;
+        // 1.9.9 (7.0.2) 숨었으면 타이머(숨은 탭은 1초 · 5분 뒤 1분으로 묶임) 대신 남은 길이의 무음이 끝나는 'ended' 로
+        if (keepAlive.hidden()) { const r = keepAlive.wait(left, ir); if (r) return await r; }
         const step = Math.min(40, left), at = nowMs();
         await Promise.race([sleep(step), ir.promise]);
         if (!paused) left -= Math.max(1, nowMs() - at);
@@ -2537,6 +2551,34 @@ function nearestOriginal(d, orig, disp, dispOf, thought) {
     for (const x of cands) { const g = Math.abs((x.line || 0) / so - at); if (g < gap) { gap = g; best = x; } }
     return best;
 }
+/**
+ * 1.9.9 같은 문단에서 원문 짝 찾기 — 메시지 전체 차례 짝(alignLists)이 다른 문단의 기울임 수 차이로 어긋났을 때.
+ *   문단(para — 빈 줄로 나눈 차례) 수가 원문 · 번역문에서 같으면 누른 조각의 문단을 원문에서 찾고, 그 문단 안의 같은 종류 조각(서술은 건너뜀)끼리 순서대로:
+ *   수가 같으면 같은 번째 · 원문이 더 많으면(번역이 합침) 그만큼 이어 붙인 조각 · 원문이 적으면(번역이 나눔) 가장 가까운 번째.
+ *   문단 정보가 없거나 문단 수가 다르거나 그 문단 원문에 같은 종류가 없으면 null (화면 글을 옮겨 읽는 건 그다음 마지막 수단).
+ */
+function paragraphPartner(d, disp, orig, kind) {
+    if (!d || !Array.isArray(disp) || !Array.isArray(orig) || !Number.isInteger(d.para)) return null;
+    const paras = (list) => [...new Set(list.filter(x => x?.text && Number.isInteger(x.para)).map(x => x.para))].sort((a, b) => a - b);
+    const pd = paras(disp), po = paras(orig);
+    if (!pd.length || pd.length !== po.length) return null;
+    const at = pd.indexOf(d.para);
+    if (at < 0) return null;
+    const same = (list, para) => list.filter(x => x?.kind === kind && x.text && x.para === para);
+    const D = same(disp, d.para), O = same(orig, po[at]);
+    const k = D.indexOf(d);
+    if (k < 0 || !O.length) return null;
+    if (O.length === D.length) return O[k];
+    // 수가 다르면 글 길이 비율로: 문단 안 같은 종류 글을 0~1 구간에 펴 놓고, 누른 조각 구간에 가운데가 드는 원문 조각들을 이어 붙인다
+    //   (번역이 원문 둘을 하나로 합침). 하나도 안 들면 누른 조각 가운데를 품은 원문 조각 (번역이 원문 하나를 둘로 나눔)
+    const spans = (list) => { const len = list.map(x => Math.max(1, String(x.text).trim().length)), all = len.reduce((a, b) => a + b, 0); let at = 0; return len.map(l => { const r = [at / all, (at + l) / all]; at += l; return r; }); };
+    const ds = spans(D)[k], os = spans(O);
+    const part = O.filter((_, i) => { const mid = (os[i][0] + os[i][1]) / 2; return mid >= ds[0] && mid < ds[1]; });
+    if (!part.length) { const mid = (ds[0] + ds[1]) / 2; return O[Math.max(0, os.findIndex(r => mid >= r[0] && mid < r[1]))] || O[O.length - 1]; }
+    if (part.length === 1) return part[0];
+    const text = part.map(x => String(x.text).trim()).join(' ');
+    return { ...part[0], text, raw: text, tags: [...new Set(part.flatMap(x => x.tags || []))], joinedFrom: part.length };
+}
 function clickedPair(src, seg, { lt = '' } = {}) {
     const real = new Map();
     const n = normText(seg.text);
@@ -2558,7 +2600,9 @@ function clickedPair(src, seg, { lt = '' } = {}) {
     let d = find(src.disp);
     let o = d ? origOf.get(d) || null : null;
     if (!d) { o = find(src.orig); d = o ? dispOf.get(o) || null : null; }
+    if (d && !o && action) o = paragraphPartner(d, src.disp, src.orig, 'action');   // 1.9.9 말 기울임: 같은 문단 안 기울임끼리 (전엔 여기서 포기하고 화면 글을 옮겨 읽음)
     if (d && !o && !action) o = byColorOrder(d, src.disp, src.orig) || nearestOriginal(d, src.orig, src.disp, dispOf, thought);   // 1.9.2 같은 색 · 같은 번째 → 1.2.4: 같은 색·주인의 가까운 원문
+    if (d && !o && thought) o = paragraphPartner(d, src.disp, src.orig, 'thought');   // 1.9.9 속마음도 마지막으로 같은 문단에서
     // 6.1.8 듣는 언어: 원문이 이미 그 언어인 메시지에서 누른 번역문 줄의 원문을 못 찾으면 같은 차례의 원문 줄 — 번역문을 그 언어로 또 옮기지 않게.
     //   그 차례의 원문도 없으면 옮기지 않고 누른 글 그대로 (asIs)
     let asIs = false;
@@ -2836,7 +2880,7 @@ function externalTapSegments(mes, { text = '', index = null }) {
     return hit.map(x => ({ kind: 'dialogue', text: x.text, raw: x.raw ?? x.text, color: x.color || null, tags: (x.tags || []).slice(), speakerHint: x.speakerHint || null, line: x.line || 0, dialogueIndex: dial.indexOf(x) }));
 }
 /** 1.3.8 시험용 (tools/tests/tts-extras.mjs · tts-onboarding.mjs): 작업 마무리(엔진 값 · 세기 · 캐시 키) · 이번 읽기에서 안 되는 엔진 */
-export const _forTest = { finishJobs, paramsFor, listenNeeds, listenPendingOf, listenFill, sceneJobs, setListenTimeout: (ms) => { LISTEN_TIMEOUT_MS = ms; }, deadEngines: () => [...deadEngines], playCool, streamDead: () => (streamDead ? { mesId: streamDead.mesId, set: [...streamDead.set] } : null),
+export const _forTest = { keepAlive, onHidden, paragraphPartner, finishJobs, paramsFor, listenNeeds, listenPendingOf, listenFill, sceneJobs, setListenTimeout: (ms) => { LISTEN_TIMEOUT_MS = ms; }, deadEngines: () => [...deadEngines], playCool, streamDead: () => (streamDead ? { mesId: streamDead.mesId, set: [...streamDead.set] } : null),
     // 1.9.1 tools/tests/tts-join.mjs: 메시지 읽기(speakNow · 내려받기)와 같은 작업 — 소리 대본 · 효과음이 없는 답장
     autoJobs: (mesId, from = 0) => { const mes = msg(mesId); const s = settings(); return finishJobs(buildJobs(mesId, mes, sourcesOf(mes, s, { final: true }), { startSeg: from, final: true }).jobs, s, { merge: false, join: true }); },
     listenHead, listenText, waitingText: () => (waiting ? waiting.text : null), PREP_TEXT,   // 1.9.1 듣는 언어 (tts-listen · tts-scene)
@@ -3743,6 +3787,20 @@ function setSession(state, job) {
         ms.playbackState = state;
     } catch { /* 지원 안 함 */ }
 }
+/**
+ * 1.9.9 (7.0.2) 화면이 숨을 때 읽는 중이면: 다음 두 줄을 미리 받아 두고(숨은 동안 합성 기다림을 줄임), 줄 사이(소리가 없는 때)면 바로 무음으로 잡는다
+ * (그대로 두면 다음 줄 play() 를 폰이 막거나 페이지를 잠재운다). 보이게 되면 따로 할 일 없음 — 다음 줄이 무음을 갈아 끼운다
+ */
+function onHidden() {
+    if (!globalThis.document?.hidden || !current) return;
+    try {
+        for (let i = idx + 1; i < Math.min(queue.length, idx + 3); i++) {
+            const j = queue[i];
+            if (j && !j.sceneKind && !j.audio && !deadFor(j) && !coolingFor(j)) ensureAudio(j).catch(() => { /* 재생 때 다시 */ });
+        }
+    } catch { /* 큐가 바뀜 */ }
+    if (!audioActive && !speaking && !paused) keepAlive.hold();
+}
 function initSession() {
     const ms = navigator.mediaSession;
     if (!ms) return;
@@ -3762,6 +3820,7 @@ export function init() {
     buildBar();
     initSession();
     document.addEventListener('pointerdown', onGesture, { capture: true, passive: true });
+    document.addEventListener('visibilitychange', onHidden);   // 1.9.9 (7.0.2) 백그라운드 재생
     document.addEventListener('keydown', onGesture, { capture: true, passive: true });
     eventSource.on(event_types.CHAT_CHANGED, () => { stop(); readState.clear(); stream = null; renderedAt.clear(); });
     // 지운 메시지·스와이프의 읽은 자리를 잊음: 같은 번호로 다시 만든 답장을 옛 미룸 자리부터 읽지 않게 (2026-10-06)
@@ -3770,6 +3829,7 @@ export function init() {
     if (event_types.MESSAGE_SWIPE_DELETED) eventSource.on(event_types.MESSAGE_SWIPE_DELETED, (e) => {
         const id = Number(e?.messageId), r = readState.get(id);
         if (r && Number.isInteger(e?.swipeId) && r.swipe >= e.swipeId) readState.delete(id);
+        try { if (shiftScriptsAfterSwipeDelete(chat[id], Number(e?.swipeId))) log('info', `소리 대본 기록 번호를 지운 스와이프 뒤로 맞춤 #${id}`); } catch { /* 기록 없음 */ }   // 7.0.2
     });
     onSfxPreferenceChange(() => { applyPlayback(); syncDetails(); });
     if (typeof cache.onClear === 'function') cache.onClear(clearTakes);   // 캐시 비우기 → 메모리 사본도 (6.4.5 v1.1 ⟲ · 되돌릴 표시도)

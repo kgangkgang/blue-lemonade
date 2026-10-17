@@ -1,14 +1,25 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.0.1/blue-lemonade-7.0.1.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.0.2/blue-lemonade-7.0.2.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 설치형 내장 확장: [zonde306 / ST-Prompt-Template](https://github.com/zonde306/ST-Prompt-Template) (AGPL-3.0, 1.17.9 · 커밋 d6f520d) — 「프롬프트 템플릿」 애드온이 원본 그대로 실리태번 확장 폴더에 설치해요 · [고지](src/addons/prompt-template/NOTICE.md).
 
 <details open>
-<summary>7.0.1 · 최신 업데이트</summary>
+<summary>7.0.2 · 최신 업데이트</summary>
+
+- TTS 화면 꺼도 계속 읽기: 폰에서 다른 앱으로 가거나 화면을 꺼도 읽기가 멈추지 않아요. 번역문을 읽을 때 원문 문단과 짝을 맞춰 화자를 찾고, 기울임 안의 따옴표 대사도 대사로 읽어요 (TTS 1.9.9).
+- 분위기 음악: 장면 소리 안에 일상 · 긴장 · 전투 · 로맨스 · 슬픔 · 신비 · 축제 일곱 가지 분위기 음악을 더했어요. 최근 답의 분위기를 보고 곡을 고르고, TTS 가 말할 때는 소리를 낮춰요. 기본은 꺼져 있고 곡은 모두 CC0 예요.
+- 기기 간 설정 합치기: 폰과 PC 를 오갈 때 다른 탭의 저장이 내 스타일 · 액자 · 글꼴 · 날씨 그림 · 치환 · 캡처 프리셋 · 프롬프트 귀속과 다시 쓰기 금지 묘사 · 예외, 전개 지시 목록, TTS 발음 사전을 덮지 않게 합쳐요.
+- 캐릭터 이름을 바꾸면 캐릭터 에셋이 그림 폴더와 설정을 새 이름으로 옮길지 한 번 물어요 (캐릭터 에셋 1.7.0).
+- 작은 고침: 되돌리기 단추를 작게 · 과일의 마음 설정은 여는 방법(요술봉 · QR · 고양이)에 맞는 줄만 보여요 · 북마크 · 메모 · 한글화 패널 · 다시 쓰기 · 전개 지시 · 장면 소리 버그 고침.
+
+</details>
+
+<details>
+<summary>7.0.1 · 되돌리기 · 테마 확인 창 · 기기 간 메모 합치기 · 그룹 채팅 에셋</summary>
 
 - 되돌리기: 다시 쓰기가 답을 고친 뒤 알림의 ↶ 로 고치기 전으로 돌아가요. 메모를 지우면 「지웠어요 ↶」로 바로 되살릴 수 있어요. 한글화 패널은 「원본 적용」 전에 원본을 자동으로 하나 보관하고 「원본으로 되돌리기」를 둬요.
 - 테마 확인 창: 브라우저 기본 확인 · 알림 창을 쓰던 곳을 모두 테마 확인 창(「지우기」 · 「취소」 같은 단추)으로 바꿨어요.

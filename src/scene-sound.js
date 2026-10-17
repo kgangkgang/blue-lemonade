@@ -9,12 +9,14 @@
 //   ambient?.kinds            → Set — 들리는 종류들 ('rain' 에 천둥을 켰으면 'thunder' 도)
 //   ambient?.covers(sfxId)    → 그 효과음(daily_rain · thunder · wind · daily_stream)을 배경 소리가 대신하고 있나 — TTS 는 참이면 그 효과음을 건너뛴다
 //   ambient?.onChange(fn)     → 구독 해제 함수. 들리는 종류가 바뀔 때 fn({ kind, kinds })
+//   ambient?.music?.()        → 7.0.1 분위기 음악: { mood, label, since, track, ducked, fixed } | null (scene-music.js — 음악을 켰을 때만 불러온다)
 //
 // 폰: 소리판(AudioContext)은 첫 터치 · 키 입력에서 깨운다. 탭이 숨으면 설정(background, 기본 켬)대로 계속 두거나 쉬게 한다.
 //   계속 둘 때도 천둥 타이머는 멈춘다(숨은 탭의 타이머는 느리다 · 처리 줄이기). 백그라운드 창(background-window.js)의 무음과는 별개 소리판이라 서로 건드리지 않는다.
 import { tidySceneSound, effectiveModes, soundFor, ambientKinds, coversSfx, crossfadePlan, masterGain, thunderGap, FADE, KINDS, rainLevel } from './scene-sound-rules.js';
 import { weatherAmount } from './weather-options.js';   // 6.9.9 날씨 양 → 빗소리 세기
 import { buildVoice, strikeThunder } from './scene-sound-synth.js';
+import { capMix, musicGain } from './scene-music-rules.js';   // 7.0.1 분위기 음악 — 날씨 소리와 합 음량 상한
 
 export const AMBIENT = Symbol.for('blue-lemonade.ambient');
 export const VERSION = 1;
@@ -32,6 +34,7 @@ let host = {
     clearTimeout: id => clearTimeout(id),
     weather: () => import('./weather.js'),   // 트래커 따라일 때만 — 날씨 모듈이 실제로 그리는 효과를 읽는다
     context: () => globalThis.SillyTavern?.getContext?.(),
+    music: () => import('./scene-music.js'),   // 7.0.1 분위기 음악 (켰을 때만)
 };
 
 let ctx = null, master = null, unsupported = false;
@@ -46,15 +49,22 @@ let bound = false, trackerBound = false, trackerTimer = 0, gestureBound = false;
 const buffers = new Map();         // url → Promise<AudioBuffer>
 const listeners = new Set();
 let lastSignal = '';
+let musicApi = null, musicLoading = null;   // 7.0.1 분위기 음악 모듈 (불러온 뒤)
 
 // ───────── 다리 ─────────
-function kindsNow() { return new Set(active && !resting ? ambientKinds(active.kind, cfg) : []); }
+// 7.0.1 숨은 탭에서는 천둥 타이머가 쉬므로 천둥을 「들리는 종류」에서 뺀다 — TTS 가 천둥 효과음을 건너뛰지 않게
+function kindsNow() {
+    if (!active || resting) return new Set();
+    const kinds = ambientKinds(active.kind, cfg);
+    return new Set(host.doc()?.hidden ? kinds.filter(kind => kind !== 'thunder') : kinds);
+}
 const bridge = Object.freeze({
     version: VERSION,
     playing: () => active && !resting ? { kind: active.kind, since: active.since } : null,
     get kinds() { return kindsNow(); },
     covers: sfxId => coversSfx(kindsNow(), sfxId),
     onChange(fn) { if (typeof fn === 'function') listeners.add(fn); return () => listeners.delete(fn); },
+    music: () => musicApi?.musicNow?.() ?? null,
 });
 export function installAmbientBridge(globalObject = globalThis) {
     const found = globalObject[AMBIENT];
@@ -79,7 +89,7 @@ function ensureContext() {
     try {
         ctx = new Ctor({ latencyHint: 'playback' });   // 배경 소리라 지연은 상관없다 — 큰 버퍼로 덜 깨운다 (전력)
         master = ctx.createGain();
-        master.gain.value = masterGain(cfg.volume);
+        master.gain.value = levels().ambient;
         master.connect(ctx.destination);
     } catch (error) { unsupported = true; ctx = master = null; console.info('[Blue Lemonade] 장면 소리를 켜지 못했어요', error?.message || error); return null; }
     return ctx;
@@ -99,7 +109,7 @@ function resumeContext() {
 }
 /** 아무 소리도 안 남았으면 소리판을 재운다 (전력) — 나가는 소리가 다 걷힌 뒤에 부른다 */
 function maybeSuspend() {
-    if (active || outgoing.size || !ctx || ctx.state !== 'running') return;
+    if (active || outgoing.size || musicApi?.musicBusy?.() || !ctx || ctx.state !== 'running') return;
     try { ctx.suspend?.()?.catch?.(() => {}); } catch { /* 그대로 */ }
 }
 /** 페이드아웃이 끝난 뒤 멈추고 걷는다 — 걷힌 뒤 소리판을 재울지 본다 */
@@ -158,6 +168,14 @@ function loadBuffer(url) {
     return buffers.get(url);
 }
 
+/** 7.0.1 내 파일을 못 읽으면(지운 뒤 ↶ 로 경로만 되살린 경우 등) 파일마다 한 번 알린다 */
+const missingTold = new Set();
+export function missingFile(url, text) {
+    if (!url || missingTold.has(url)) return;
+    missingTold.add(url);
+    try { globalThis.toastr?.warning?.(text, 'Blue Lemonade'); } catch { /* 알림 없이 */ }
+}
+
 // ───────── 고르기 · 틀기 ─────────
 async function play(kind, level = '') {
     const url = kind ? cfg.files[kind] || '' : '';
@@ -172,7 +190,7 @@ async function play(kind, level = '') {
     const token = ++loading;
     let buffer = null;
     if (url) {
-        try { buffer = await loadBuffer(url); } catch (error) { console.info('[Blue Lemonade] 장면 소리 파일을 못 읽어 합성 소리로 대신해요', url, error?.message || error); }
+        try { buffer = await loadBuffer(url); } catch (error) { console.info('[Blue Lemonade] 장면 소리 파일을 못 읽어 합성 소리로 대신해요', url, error?.message || error); missingFile(url, '내 소리 파일을 찾지 못해 합성 소리로 들려요'); }
         if (token !== loading) return;   // 그 사이 다른 소리로 바뀜
     }
     let voice;
@@ -217,11 +235,14 @@ function onVisibility() {
     const hidden = !!host.doc()?.hidden;
     if (hidden) {
         if (!cfg.background && active) { resting = true; fadeOut(active, FADE.hide); active = null; signal(); }
+        if (!cfg.background && musicApi?.musicBusy?.()) { resting = true; musicApi.restMusic(true); }   // 7.0.1 분위기 음악도 같이 쉰다
         stopThunder();   // 계속 둘 때도 천둥 타이머는 쉰다 — 숨은 탭의 처리 줄이기
+        signal();        // 천둥이 「들리는 종류」에서 빠졌다고 알린다
         return;
     }
-    if (resting) { resting = false; if (ctx) resumeContext(); }
+    if (resting) { resting = false; if (ctx) resumeContext(); musicApi?.restMusic(false); }
     if (active) scheduleThunder(false); else decide();
+    signal();
 }
 function bindDocument() {
     const doc = host.doc();
@@ -246,14 +267,38 @@ export function syncSceneSound(on, raw, weatherChat = null, weatherOn = false) {
     const volumeChanged = next.volume !== cfg.volume, thunderChanged = next.thunder !== cfg.thunder;
     cfg = next;
     wanted = { on: !!on, weatherOn: !!weatherOn, weatherChat: weatherChat ? { weather: weatherChat.weather, weather2: weatherChat.weather2, amount: weatherAmount(weatherChat.weatherAmount, weatherChat.weatherLevel) } : null };
-    if (master && volumeChanged) ramp(master.gain, master.gain.value, masterGain(cfg.volume), ctx.currentTime, ctx.currentTime + 0.12);
+    const level = levels();
+    if (master && (volumeChanged || master.gain.value !== level.ambient)) ramp(master.gain, master.gain.value, level.ambient, ctx.currentTime, ctx.currentTime + 0.12);
+    syncMusicPart();
     if (!wanted.on) { resting = false; stopThunder(); return play(null); }
     bindDocument();
     if (wanted.weatherChat?.weather === 'tracker') bindTracker();
     if (resting && !cfg.background) return;   // 숨은 탭에서 쉬는 중 — 돌아오면 이어진다
-    if (resting && cfg.background) { resting = false; resumeContext(); }
+    if (resting && cfg.background) { resting = false; resumeContext(); musicApi?.restMusic(false); }
     if (thunderChanged && active) scheduleThunder(false);
     return decide();
+}
+
+// ───────── 7.0.1 분위기 음악 ─────────
+/** 날씨 소리 · 음악 버스 게인: 음악을 켰을 때만 둘의 합을 상한(1)으로 묶는다 — 음악이 꺼져 있으면 날씨 소리는 예전 크기 그대로 */
+function levels() {
+    const ambient = masterGain(cfg.volume);
+    const musicOn = wanted.on && cfg.music?.on;
+    return musicOn ? capMix(ambient, musicGain(cfg.music.volume)) : { ambient, music: 0, scale: 1 };
+}
+const musicEnv = {
+    ensureContext, ctx: () => ctx, host: () => host, resume: resumeContext, maybeSuspend, level: () => levels().music,
+};
+/** 음악을 켰으면 모듈을 불러 잇고, 껐으면(불러온 적 있을 때만) 끈다. 숨은 탭에서 쉬는 중이면 쉬게 둔다 */
+function syncMusicPart() {
+    const on = wanted.on && !!cfg.music?.on;
+    if (!on && !musicApi && !musicLoading) return;
+    const run = m => { m.setMusicLevel(levels().music); return m.syncMusic(cfg.music, { on, rest: resting && !cfg.background }); };
+    if (musicApi) return run(musicApi);
+    musicLoading ??= Promise.resolve(host.music()).then(m => { m.attachMusic(musicEnv); musicApi = m; return m; })
+        .catch(error => { console.info('[Blue Lemonade] 분위기 음악을 불러오지 못했어요', error?.message || error); return null; })
+        .finally(() => { musicLoading = null; });
+    return musicLoading.then(m => m && run(m));
 }
 
 /** 설정 창 「들어 보기」: 그 종류(내 파일이 있으면 그 파일)를 ms 동안 — 누르는 순간이라 소리판을 깨울 수 있다 */
@@ -281,7 +326,8 @@ export function sceneSoundState() {
         supported: !unsupported, context: ctx?.state ?? null, currentTime: ctx?.currentTime ?? null, master: master?.gain.value ?? null,
         kind: active?.kind ?? null, file: active?.url || '', since: active?.since ?? 0, nodes: active?.voice.nodes ?? 0, gain: active?.voice.gain.gain.value ?? null,
         outgoing: [...outgoing].map(e => ({ kind: e.kind, gain: e.voice.gain.gain.value })),
-        resting, thunderDue, thunderCount, wanted: { ...wanted }, cfg: { ...cfg, files: { ...cfg.files } },
+        resting, thunderDue, thunderCount, wanted: { ...wanted }, cfg: { ...cfg, files: { ...cfg.files }, music: { ...cfg.music, files: { ...cfg.music.files } } },
+        music: musicApi?.musicState?.() ?? null,
         bridge: { playing: bridge.playing(), kinds: [...bridge.kinds] },
     };
 }
@@ -290,7 +336,10 @@ export const _forTest = {
     setHost(partial) { host = { ...host, ...partial }; },
     masterNode: () => master,
     context: () => ctx,
+    musicApi: () => musicApi,
     reset() {
+        try { musicApi?._forTest?.reset(); } catch { /* */ }
+        musicApi = null; musicLoading = null;
         stopThunder(); host.clearTimeout(trackerTimer); trackerTimer = 0;
         for (const e of outgoing) { try { e.voice.stop(); } catch { /* */ } }
         outgoing = new Set(); if (active) { try { active.voice.stop(); } catch { /* */ } } active = null;

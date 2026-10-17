@@ -127,6 +127,33 @@ function rememberOnCard(c, name) {
     save();
 }
 
+/**
+ * 7.0.2 캐릭터 이름 바꾸기(CHARACTER_RENAMED): 실리태번이 카드 파일(avatar)을 바꿔 그 카드의 색 기억(card_colors[아바타])이 고아가 되고,
+ * 새 이름에는 목소리 연결(char_map) · 고정(prefer_keep)이 없어 기본 목소리로 읽었다.
+ * card_colors 는 새 아바타로 옮긴다. 이름 열쇠(char_map · prefer_keep)는 **복사**만 한다 — 옛 채팅의 메시지는 옛 이름이 그대로일 수 있고(실리태번이 묻는다),
+ * 같은 이름의 다른 화자(페르소나 · 다른 카드)와 섞이지 않게 새 이름에 이미 연결이 있거나 newName 이 다른 사람 이름이면 그대로 둔다.
+ * 순수: s(TTS 설정)를 고쳐 { colors, voices } 를 돌려준다
+ */
+export function renameCharacterKeys(s, { oldAvatar = '', newAvatar = '', oldName = '', newName = '', taken = [] } = {}) {
+    const out = { colors: false, voices: 0 };
+    if (!s || typeof s !== 'object') return out;
+    if (oldAvatar && newAvatar && oldAvatar !== newAvatar && s.card_colors?.[oldAvatar] && !s.card_colors[newAvatar]) {
+        s.card_colors[newAvatar] = s.card_colors[oldAvatar]; delete s.card_colors[oldAvatar]; out.colors = true;
+    }
+    const key = n => String(n || '').trim().toLowerCase().replace(/\s+/g, '');
+    const from = key(oldName), to = key(newName);
+    if (!from || !to || from === to || (taken || []).some(n => key(n) === to)) return out;
+    for (const field of ['char_map', 'prefer_keep']) {
+        const map = s[field];
+        if (!map || typeof map !== 'object') continue;
+        const oldKey = Object.keys(map).find(k => key(k) === from);
+        if (oldKey === undefined || Object.keys(map).some(k => key(k) === to)) continue;
+        map[String(newName).trim()] = map[oldKey];
+        out.voices++;
+    }
+    return out;
+}
+
 // ---- 이름 · 별명
 const personaName = () => String(ctx().name1 || '').trim();
 const charName = () => String(ctx().name2 || '').trim();

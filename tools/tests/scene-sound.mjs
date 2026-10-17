@@ -12,10 +12,10 @@ const { tidySceneSound, effectiveModes, soundFor, ambientKinds, coversSfx, cross
 
 // ───────── 규칙 ─────────
 await t('tidySceneSound: 기본 꺼짐 · 깨진 값 · 모르는 열쇠 · 파일 경로 거르기', () => {
-    assert.deepEqual(tidySceneSound(undefined), { on: false, volume: 40, thunder: true, background: true, files: {} });
-    assert.deepEqual(tidySceneSound({ on: 'yes', volume: '250', thunder: 0, background: false, files: 'x', junk: 1 }), { on: false, volume: 100, thunder: true, background: false, files: {} });
+    assert.deepEqual(tidySceneSound(undefined), { on: false, volume: 40, thunder: true, background: true, files: {}, music: { on: false, volume: 30, mood: 'auto', files: {} } });
+    assert.deepEqual(tidySceneSound({ on: 'yes', volume: '250', thunder: 0, background: false, files: 'x', junk: 1 }), { on: false, volume: 100, thunder: true, background: false, files: {}, music: { on: false, volume: 30, mood: 'auto', files: {} } });
     const clean = tidySceneSound({ on: true, volume: 12.6, files: { rain: 'user/files/bl-scene-rain-1.mp3', wind: '/user/files/w.ogg', hush: 'https://evil/x.mp3', water: '/user/files/../x.wav', snow: '/user/files/a.mp3' } });
-    assert.deepEqual(clean, { on: true, volume: 13, thunder: true, background: true, files: { rain: '/user/files/bl-scene-rain-1.mp3', wind: '/user/files/w.ogg' } });
+    assert.deepEqual(clean, { on: true, volume: 13, thunder: true, background: true, files: { rain: '/user/files/bl-scene-rain-1.mp3', wind: '/user/files/w.ogg' }, music: { on: false, volume: 30, mood: 'auto', files: {} } });
     assert.ok(!('snow' in clean.files), 'moden 열쇠만');
 });
 await t('effectiveModes: 고른 날씨 · 둘째 날씨 · 트래커는 날씨 모듈이 그리는 것', () => {
@@ -41,7 +41,9 @@ await t('ambientKinds · coversSfx: 비 + 천둥, 낮은 바람도 바람 효과
     assert.equal(coversSfx(['rain'], 'thunder'), false); assert.equal(coversSfx(new Set(['hush']), 'wind'), true);
     assert.equal(coversSfx(['water'], 'daily_stream'), true); assert.equal(coversSfx(['water'], 'splash'), false);
     assert.equal(coversSfx([], 'wind'), false); assert.equal(coversSfx(['wind'], undefined), false);
-    assert.deepEqual(Object.keys(SFX_COVERED).sort(), ['daily_rain', 'daily_stream', 'thunder', 'wind']);
+    assert.deepEqual(Object.keys(SFX_COVERED).sort(), ['daily_rain', 'daily_rain_heavy', 'daily_rain_light', 'daily_stream', 'thunder', 'wind']);
+    for (const id of ['daily_rain_light', 'daily_rain_heavy', 'daily_rain_storm']) assert.equal(coversSfx(['rain'], id), true, `7.0.1 비 단계 ${id}`);
+    assert.equal(coversSfx(['wind'], 'daily_rain_light'), false); assert.equal(coversSfx(['rain'], 'daily_rainbow'), false);
 });
 await t('crossfadePlan: 같은 순간에 겹쳐 시작, 나가는 소리는 페이드 뒤에 멈춤', () => {
     const plan = crossfadePlan({ now: 10, outFrom: 0.9, inTo: 1 });
@@ -293,7 +295,7 @@ await t('sceneSoundMarkup: 꺼져 있으면 스위치 한 줄, 켜면 크기 · 
     const on = ui.sceneSoundMarkup({ sceneSound: { on: true, files: { rain: '/user/files/bl-scene-rain-1700000000000.mp3' } } }, h);
     assert.ok(on.includes('data-toggle="sceneSound.on" checked'));
     assert.deepEqual(calls.filter(c => c[0] === 'slider'), [['slider', 'sceneSound.volume']]);
-    assert.deepEqual(calls.filter(c => c[0] === 'row').map(c => c[1]), ['장면 소리', '장면 소리', '천둥', '화면 밖에서도']);
+    assert.deepEqual(calls.filter(c => c[0] === 'row').map(c => c[1]), ['장면 소리', '장면 소리', '천둥', '화면 밖에서도', '분위기 음악'], '7.0.1 분위기 음악 스위치 한 줄(꺼짐)');
     assert.ok(on.includes('data-toggle="sceneSound.thunder" checked') && on.includes('data-toggle="sceneSound.background" checked'));
     assert.equal((on.match(/data-ss-act="preview"/g) || []).length, 4); assert.equal((on.match(/data-ss-act="pick"/g) || []).length, 4);
     assert.equal((on.match(/data-ss-act="clear"/g) || []).length, 1, '파일이 있는 종류만 빼기');

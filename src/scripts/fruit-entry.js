@@ -74,6 +74,7 @@ body[data-bl-fruit-entry] #send_form :is(#qr--bar,#nonQRFormItems)>[data-bl-frui
             chooser.addEventListener('click',async e=>{if(!e.target.closest('[data-fruit-entry-icon]')||picker)return;e.preventDefault();e.stopPropagation();picker=chooseFruitIcon(entryIcon(getSettings().fruitEntryIcon),{doc,host});const chosen=await picker.promise;picker=null;if(stopped||!chosen)return;getSettings().fruitEntryIcon=entryIcon(chosen);saveSettings();flush();});anchor.before(chooser);chooserAnchor=anchor;
         }
         for(const button of panel?.querySelectorAll('[data-entry-toggle="bar"],[data-entry-toggle="ball"]')||[]){const row=button.closest('.fh-toggle')||button.parentElement;if(row&&!hiddenRows.has(row)){hiddenRows.set(row,row.style.display);row.style.display='none';}}
+        for(const el of panel?.querySelectorAll('[data-ball-size],[data-entry-toggle="jump"]')||[]){const row=el.closest('.fh-row,.fh-toggle');if(!row)continue;if(!hiddenRows.has(row))hiddenRows.set(row,row.style.display);const want=mode==='cat'?hiddenRows.get(row):'none';if(row.style.display!==want)row.style.display=want;} // 고양이 크기 · 꼬리와 발 층 이동은 고양이로 열 때만
         for(const input of chooser?.querySelectorAll('input')||[])input.checked=input.value===mode;
         const appearance=chooser?.querySelector('.bl-fruit-qr-display');if(appearance){if(appearance.hidden!==(mode!=='qr'))appearance.hidden=mode!=='qr';appearance.querySelector('select').value=display;const i=appearance.querySelector('i');if(i.className!==`fa-solid ${icon}`)i.className=`fa-solid ${icon}`;}
     }

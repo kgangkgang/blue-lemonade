@@ -17,6 +17,9 @@ export function cleanNote(n) {
     return out;
 }
 
+/** 7.0.2 합치기 시각: 내용(updated) · 귀속 · 폴더(metaUpdated) 가운데 늦은 것 — 채팅 이름 바꾸기 · 폴더 묶기도 다른 기기에 전해지게 */
+export const noteStamp = n => Math.max(Number(n?.updated) || 0, Number(n?.metaUpdated) || 0);
+
 /** 지운 메모 기록 (removeNote 가 부른다) */
 export function noteGone(store, id, now = Date.now()) {
     if (!store || id == null) return;
@@ -32,6 +35,7 @@ export function mergeNotes(store, server, now = Date.now()) {
         local: store.notes, remote: remote.notes, localGone: store.gone, remoteGone: remote.gone, now,
         accept: n => !!n && typeof n === 'object' && n.id != null && String(n.id) !== '',
         clone: cleanNote,
+        stamp: noteStamp,
     });
     store.gone = out.gone;
     // 합친 메모가 가리키는 폴더가 이 탭에 없으면 서버에서 (이름째)
@@ -39,7 +43,14 @@ export function mergeNotes(store, server, now = Date.now()) {
     const have = new Set(store.folders.map(f => String(f?.id)));
     const used = new Set(store.notes.map(n => n.folder).filter(Boolean));
     for (const f of Array.isArray(remote.folders) ? remote.folders : []) {
-        if (!f?.id || have.has(String(f.id)) || !used.has(String(f.id))) continue;
+        if (!f?.id) continue;
+        const mine = have.has(String(f.id)) ? store.folders.find(x => String(x?.id) === String(f.id)) : null;
+        if (mine) {   // 7.0.2 같은 폴더면 이름을 늦게 고친 쪽
+            if ((Number(f.updated) || 0) > (Number(mine.updated) || 0)) { mine.name = String(f.name ?? ''); mine.updated = Number(f.updated); out.pulled++; out.changed = true; }
+            else if ((Number(mine.updated) || 0) > (Number(f.updated) || 0)) out.needSave = true;
+            continue;
+        }
+        if (!used.has(String(f.id))) continue;
         store.folders.push({ ...f, id: String(f.id), name: String(f.name ?? '') });
         have.add(String(f.id));
     }

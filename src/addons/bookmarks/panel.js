@@ -175,6 +175,7 @@ export async function openPanel({ keepState = false } = {}) {
     view.root.classList.add('is-open');
     if (!reuse) view.root.classList.add('cg-chat-intro');
     view.open = true;
+    watchBack();   // 7.0.2 안드로이드 뒤로 가기
     applyColors(colorsFor(view.selectedKey ?? currentChatKey()));
     renderAll();
     if (!view.root.contains(document.activeElement)) $('[data-act="close"]').focus({ preventScroll: true });
@@ -185,9 +186,35 @@ export async function openPanel({ keepState = false } = {}) {
     }
 }
 
+/**
+ * 7.0.2 안드로이드 뒤로 가기(제스처 · 버튼): 북마크 창은 <dialog> 가 아닌 겹창이라 뒤로 가기가 창을 닫지 않고 실리태번 페이지를 떠났다.
+ * 크롬의 CloseWatcher 하나를 두고, 닫기 요청이 오면 Esc 와 같은 차례(설정 → 서랍 → 창)로 한 단계 닫은 뒤 남은 단계가 있으면 새로 건다.
+ * (사용자 활성화 없이 여러 개를 만들면 묶여 한 번에 닫힐 수 있어 늘 하나만.) CloseWatcher 가 없는 브라우저는 그대로
+ */
+function watchBack() {
+    if (typeof globalThis.CloseWatcher !== 'function' || view.closeWatcher) return;
+    try {
+        const watcher = new globalThis.CloseWatcher();
+        view.closeWatcher = watcher;
+        watcher.onclose = () => {
+            if (view.closeWatcher === watcher) view.closeWatcher = null;
+            if (!view.open) return;
+            if (isSettingsOpen()) closeSettings();
+            else if (isDrawerOpen()) closeDrawer();
+            else { closePanel(); return; }
+            if (view.open) watchBack();
+        };
+    } catch { view.closeWatcher = null; }
+}
+function unwatchBack() {
+    const watcher = view.closeWatcher;
+    view.closeWatcher = null;
+    try { watcher?.destroy(); } catch { /* 이미 닫힘 */ }
+}
 export function closePanel({ keepColors = false } = {}) {
     if (!view.open) return;
     view.open = false;
+    unwatchBack();
     if (!keepColors) {
         // 닫은 뒤 늦게 도착한 다른 채팅 목록도 버린다. 미리보기에서 돌아올 때만 재사용한다.
         view.session++;

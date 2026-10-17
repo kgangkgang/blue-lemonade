@@ -2,6 +2,8 @@ import { showThemeModal } from './modal.js';
 
 const PAGE = 48;
 const fold = text => String(text || '').normalize('NFKC').toLocaleLowerCase();
+/** 마우스 · 키보드 기기인가 (손가락 기기면 자동 초점 안 줌) */
+export function mouseDevice() { try { return matchMedia('(hover: hover) and (pointer: fine)').matches && !(navigator.maxTouchPoints > 0); } catch { return false; } }
 export function cardChoices(context) {
     return (Array.isArray(context?.characters) ? context.characters : [])
         .filter(c => c && typeof c.name === 'string' && c.name.trim() && typeof c.avatar === 'string' && c.avatar)
@@ -18,7 +20,7 @@ export function filterCards(cards, query) {
 export function openPromptCardPicker({ current = '', selected = null, context = globalThis.SillyTavern?.getContext?.(), onPick, opener } = {}) {
     const doc = opener?.ownerDocument || document;
     const previous = doc.querySelector('.bl-prompt-card-picker');
-    if (previous?.open) { previous.querySelector('input')?.focus(); return previous; }
+    if (previous?.open) { if (mouseDevice()) previous.querySelector('input')?.focus(); return previous; }
     const multi = Array.isArray(selected), chosen = new Set(multi ? selected : []);
     const cards = cardChoices(context), duplicates = new Map();
     if (multi) cards.sort((a, b) => chosen.has(b.avatar) - chosen.has(a.avatar));
@@ -76,5 +78,5 @@ export function openPromptCardPicker({ current = '', selected = null, context = 
     dialog.addEventListener('pointerdown',e=>{backdrop=outside(e);});
     dialog.addEventListener('click',e=>{if(backdrop&&outside(e))dialog.close();backdrop=false;});
     dialog.addEventListener('close', () => { dialog.remove(); if(opener?.isConnected)opener.focus({preventScroll:true}); }, { once:true });
-    render();doc.body.append(dialog);showThemeModal(dialog);search.focus();return dialog;
+    render();doc.body.append(dialog);showThemeModal(dialog);if(mouseDevice())search.focus();return dialog;   // 7.0.2 폰(손가락)은 찾기칸에 초점을 주지 않는다 — 자판이 올라와 목록을 가렸다 (selects.js 와 같은 판정)
 }

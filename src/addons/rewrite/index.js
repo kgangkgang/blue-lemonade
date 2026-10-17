@@ -51,13 +51,14 @@ import { PROVIDERS, autoFetchModelList, canFetch, fetchModelList, isHttpUrl, lis
 import { applyModelRequestRules, cached as cachedModels, fillSelect, onChange as onModelListChange } from '../../live-models.js';
 import { capturedMessages, capturedRequest, holdGeneration, regenerateReply, replaceReply, visibleText, watchRequests, withTimeout } from './reroll.js';
 import { isMainChatGenerating, whenMainChatIdle } from '../../main-chat-rules.js';   // 6.5.3 「생성 중」 = 본채팅 생성만 (조용한 생성 · 헬퍼 generate · 이 애드온의 붙잡음은 아님)
-import { messageWork } from '../../message-work.js';   // 6.5.3 메시지 작업 순서 — 글을 바꾸면 적어 둔다 (번역기 · 그림 확장이 알아보게)
+import { messageWork, dropThinkingHead } from '../../message-work.js';   // 6.5.3 메시지 작업 순서 — 글을 바꾸면 적어 둔다 (번역기 · 그림 확장이 알아보게)
 import { applyUpgrades } from './upgrades.js';
 import { createRewriteUndo } from './undo.js';   // 7.0.1 ↶ 되돌리기 (채팅마다 마지막 하나, 메모리)
-import { attachUndo } from '../../ask.js';   // 7.0.1 알림 끝 ↶ 단추
+import { attachUndo } from '../../ask.js';
+import { touch, listGone, registerAddonMerge } from '../list-sync.js';   // 7.0.2 기기 간 합치기   // 7.0.1 알림 끝 ↶ 단추
 import { startQuickBan, setQuickBanEnabled } from './quick-ban.js';
 
-const VERSION = '2.1.4';
+const VERSION = '2.1.5';
 const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];
@@ -613,13 +614,29 @@ function report(result, total, manual, undo = null) {
     afterPaint().then(() => showReport(result, total, manual, undo));
 }
 
+/** 7.0.2 금지 묘사 · 예외를 고친 시각을 적고 저장 (기기 간 합치기가 늦은 쪽을 받게) */
+function touched(item) { touch(item); saveSettingsDebounced(); }
+/**
+ * 7.0.2 고친 뒤 보이는 글은 그대로인 변화(그림 자리 줄 넣기 · 머리 생각 블록 떼기)가 있었으면 「고치기 전 글」도 지금 글 모양으로 —
+ * 그림 자리 줄은 같은 자리에 살리고(그림 자리 기록 bl_asset_slots 와 맞게), 떼어진 생각 블록은 고치기 전 글에서도 뗀다. 그 밖의 변화면 null
+ */
+function rebaseUndo(after, now, before) {
+    if (now === after) return before;
+    const slots = rebaseSlotLines(after, now, before);
+    if (typeof slots === 'string') return slots;
+    const a = dropThinkingHead(after), b = dropThinkingHead(before);
+    if (a === after) return null;   // 생각 블록 차이도 아님
+    if (a.trim() === now.trim()) return b.replace(/^\s+/, '');
+    const both = rebaseSlotLines(a.replace(/^\s+/, ''), now, b.replace(/^\s+/, ''));
+    return typeof both === 'string' ? both : null;
+}
 // 7.0.1 ↶ 되돌리기: 고치기 전 글 · 스와이프를 채팅마다 마지막 하나 (메모리)
 const rewriteUndo = createRewriteUndo();
 const UNDO_REFUSED = { gone: '더 최근에 고친 답이 있어서 이건 되돌릴 수 없어요.', chat: '채팅을 바꿔서 되돌리지 않았어요.', changed: '그 사이 메시지가 바뀌어서 되돌리지 않았어요.' };
 /** 고치기 전으로 — 고칠 때와 같은 차례: 작업 기록(noteWrite) → 다시 쓰기 표시 → 글 · 스와이프 → 그리기 → MESSAGE_UPDATED(번역 · TTS 가 따라감) → 저장 */
 async function undoRewrite(rec) {
     const ctx = getContext();
-    const why = rewriteUndo.check(rec, { chatId: ctx.getCurrentChatId?.() ?? '', chat: ctx.chat });
+    const why = rewriteUndo.check(rec, { chatId: ctx.getCurrentChatId?.() ?? '', chat: ctx.chat, rebase: rebaseUndo });
     if (why !== 'ok') { toastr.info(UNDO_REFUSED[why], TITLE); return false; }
     const { message, messageId } = rec;
     messageWork().noteWrite(message, { by: 'rewrite', before: message.mes, after: rec.before });
@@ -1333,51 +1350,54 @@ function renderRuleEditor() {
         rule.name = this.value;
         refresh();
         renderExceptionEditor();
-        saveSettingsDebounced();
+        touched(rule);
     });
     editor.find('.bwr_enabled').prop('checked', rule.enabled !== false).on('change', function () {
         rule.enabled = this.checked;
         recompile();
         refresh();
         updateBadges();
-        saveSettingsDebounced();
+        touched(rule);
     });
     editor.find('.bwr_words').val(rule.words).on('input', function () {
         rule.words = this.value;
         recompile();
         refresh();
-        saveSettingsDebounced();
+        touched(rule);
     });
     editor.find('.bwr_desc').val(rule.description ?? '').on('input', function () {
         rule.description = this.value;
-        saveSettingsDebounced();
+        touched(rule);
     });
     editor.find('.bwr_only').val(rule.onlyFor ?? '').on('input', function () {
         rule.onlyFor = this.value;
         refresh();
-        saveSettingsDebounced();
+        touched(rule);
     });
     editor.find('.bwr_near').val(rule.near ?? '').on('input', function () {
         rule.near = this.value;
-        saveSettingsDebounced();
+        touched(rule);
     });
     editor.find('.bwr_delete').on('click', async () => {
         const confirmed = await callGenericPopup(textNode(`'${rule.name || '이름 없음'}' 금지 묘사를 삭제할까요?`), POPUP_TYPE.CONFIRM);
         if (!confirmed) return;
         settings.rules.splice(settings.rules.indexOf(rule), 1);
+        listGone(settings, 'rulesGone', rule.id);   // 7.0.2 다른 기기의 옛 목록이 되살리지 않게
         for (const exception of settings.exceptions) {
-            exception.allow = (exception.allow ?? []).filter(id => id !== rule.id);
+            const allow = (exception.allow ?? []).filter(id => id !== rule.id);
+            if (allow.length !== (exception.allow ?? []).length) touch(exception);
+            exception.allow = allow;
         }
         recompile();
         renderRules();
         renderExceptions();
-        saveSettingsDebounced();
+        touched(rule);
     });
     editor.find('.bwr_error').text(compileRule(rule).errors.join('\n'));
 }
 
 function addRule() {
-    const rule = { id: newId('rule'), name: '', enabled: true, words: '', description: '', onlyFor: '', near: '' };
+    const rule = { id: newId('rule'), name: '', enabled: true, words: '', description: '', onlyFor: '', near: '', updated: Date.now() };
     settings.rules.push(rule);
     selectedRuleId = rule.id;
     recompile();
@@ -1434,7 +1454,7 @@ async function openAiHelper() {
             result.text([parsed.error, ...parsed.notes].join('\n'));
             return;
         }
-        for (const rule of parsed.rules) settings.rules.push({ id: newId('rule'), ...rule });
+        for (const rule of parsed.rules) settings.rules.push({ id: newId('rule'), ...rule, updated: Date.now() });
         selectedRuleId = settings.rules[settings.rules.length - parsed.rules.length].id;
         recompile();
         renderRules();
@@ -1541,19 +1561,20 @@ function renderExceptionEditor() {
         exception.enabled = this.checked;
         refresh();
         updateBadges();
-        saveSettingsDebounced();
+        touched(exception);
     });
     editor.find('.bwr_names').val(exception.names).on('input', function () {
         exception.names = this.value;
         refresh();
-        saveSettingsDebounced();
+        touched(exception);
     });
     editor.find('.bwr_delete').on('click', async () => {
         const confirmed = await callGenericPopup(textNode(`'${exceptionTitle(exception)}' 예외를 삭제할까요?`), POPUP_TYPE.CONFIRM);
         if (!confirmed) return;
         settings.exceptions.splice(settings.exceptions.indexOf(exception), 1);
+        listGone(settings, 'exceptionsGone', exception.id);   // 7.0.2
         renderExceptions();
-        saveSettingsDebounced();
+        touched(exception);
     });
 
     const allow = editor.find('.bwr_allow');
@@ -1567,7 +1588,7 @@ function renderExceptionEditor() {
                 else ids.add(rule.id);
                 exception.allow = [...ids];
                 renderExceptionEditor();
-                saveSettingsDebounced();
+                touched(exception);
             });
         allow.append(toggle);
     }
@@ -1575,7 +1596,7 @@ function renderExceptionEditor() {
 }
 
 function addException() {
-    const exception = { id: newId('exception'), enabled: true, names: '', allow: [] };
+    const exception = { id: newId('exception'), enabled: true, names: '', allow: [], updated: Date.now() };
     settings.exceptions.push(exception);
     selectedExceptionId = exception.id;
     renderExceptions();
@@ -1822,8 +1843,14 @@ function bindSettings() {
     $('#bwr_reset').on('click', async () => {
         const confirmed = await callGenericPopup(textNode('금지 묘사, 예외 캐릭터, 리롤, 연결 설정을 모두 기본값으로 되돌릴까요?'), POPUP_TYPE.CONFIRM);
         if (!confirmed) return;
+        const goneRules = { ...(settings.rulesGone || {}) }, goneExceptions = { ...(settings.exceptionsGone || {}) };   // 7.0.2 지운 것이 다른 기기에서 되살아나지 않게
+        const keep = (list, defaults) => (list || []).filter(item => !defaults.some(d => d.id === item.id)).map(item => item.id);
+        const oldRules = keep(settings.rules, DEFAULT_SETTINGS.rules), oldExceptions = keep(settings.exceptions, DEFAULT_SETTINGS.exceptions);
         extension_settings[MODULE] = structuredClone(DEFAULT_SETTINGS);
         settings = extension_settings[MODULE];
+        settings.rulesGone = goneRules; settings.exceptionsGone = goneExceptions;
+        for (const id of oldRules) listGone(settings, 'rulesGone', id);
+        for (const id of oldExceptions) listGone(settings, 'exceptionsGone', id);
         recompile();
         syncInputs();
         saveSettingsDebounced();
@@ -1934,6 +1961,10 @@ function start() {
             if ($('.bwr_settings .bwr_panel[data-panel="reroll"]').hasClass('active')) renderSceneStatus();
         }),
         '답변 검사': () => eventSource.makeFirst(event_types.MESSAGE_RECEIVED, onMessageReceived),
+        // 7.0.2 금지 묘사 · 예외를 다른 기기의 옛 설정 저장에 잃지 않게 (../list-sync.js)
+        '기기 간 합치기': () => registerAddonMerge('rewrite', { module: MODULE, store: () => extension_settings[MODULE],
+            lists: [{ field: 'rules', gone: 'rulesGone' }, { field: 'exceptions', gone: 'exceptionsGone' }], save: saveSettingsDebounced,
+            onChange: () => { recompile(); updateBadges(); if (document.getElementById('bwr_rule_chips')) { renderRules(); renderExceptions(); } } }),
         // 1.9.0 채팅에서 고른 낱말 옆의 금지 칩 (quick-ban.js)
         '빠른 금지': () => { setQuickBanEnabled(settings.quickBan); startQuickBan(addQuickRule, (container, text) => {
             const id = Number(container.closest('.mes')?.getAttribute('mesid'));
@@ -1966,7 +1997,7 @@ export function addQuickRule(text) {
         toastr.info(`"${same.name || word}" 규칙에 이미 있어요`, TITLE);
         return false;
     }
-    const rule = { id: newId('rule'), name: word, enabled: true, words, description: `the exact wording "${word}"`, onlyFor: '', near: '' };
+    const rule = { id: newId('rule'), name: word, enabled: true, words, description: `the exact wording "${word}"`, onlyFor: '', near: '', updated: Date.now() };
     settings.rules.push(rule);
     selectedRuleId = rule.id;
     recompile();

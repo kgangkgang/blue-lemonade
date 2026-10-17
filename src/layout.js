@@ -1,4 +1,21 @@
 // 원래 클릭 대상은 유지하고, 즐겨찾기 이름과 항목 도구 묶음만 보탠다.
+/**
+ * 7.0.2 이 터치가 메시지 글 안의 「실제로 가로로 넘치는 스크롤 칸」(넓은 표 · pre · 상태창 한 줄 스크롤) 안에서 시작했나 — 그 칸 (없으면 null).
+ * 메시지 글(.mes_text) 밖이나 넘치지 않는 칸이면 null — 그 손짓은 예전처럼 스와이프.
+ */
+export function wideScroller(target, root = null) {
+    let el = target?.nodeType === 1 ? target : target?.parentElement;
+    if (!el?.closest?.('.mes_text')) return null;
+    for (; el && el !== root; el = el.parentElement) {
+        if (el.scrollWidth > el.clientWidth + 1) {
+            const overflow = getComputedStyle(el).overflowX;
+            if (overflow === 'auto' || overflow === 'scroll') return el;
+        }
+        if (el.classList?.contains('mes_text')) break;
+    }
+    return null;
+}
+
 export function startCompactLayout() {
 
     // Chat Completion의 숫자 전용 응답 길이에 원래 입력값을 사용하는 슬라이더를 붙인다.
@@ -262,6 +279,13 @@ export function startCompactLayout() {
     // 6.9.8 퀵 리플라이 줄을 좌우로 밀면 실리태번 손짓(swiped-events, document 의 touch*)이 스와이프 · 새 답 만들기로 읽었다 → 줄 안의 터치는 문서까지 올리지 않는다 (스크롤 · 누르기는 그대로)
     const qrSwipeGuard = event => { if (event.target.closest?.('#qr--bar')) event.stopPropagation(); };
     for (const type of ['touchstart', 'touchmove', 'touchend']) sendForm?.addEventListener(type, qrSwipeGuard, { passive: true });
+    // 7.0.2 채팅 속 넓은 표 · 코드 · 상태창(칸 안 가로 스크롤)을 손가락으로 가로로 밀어도 같은 손짓이 걸려 마지막 답이 넘어가거나 새 답이 생성됐다.
+    // 누르기 시작한 곳이 실제로 넘치는 가로 스크롤 칸 안이면 그 손짓의 touchmove · touchend 만 문서까지 올리지 않는다 —
+    // touchstart 는 그대로 올려 실리태번의 바깥 누르면 서랍 닫기가 돈다(touchend 가 안 가면 swiped-events 가 손짓을 끝내지 못하고 다음 touchstart 가 새로 잡는다)
+    const chatEl = document.getElementById('chat');
+    let wideGesture = false;
+    chatEl?.addEventListener('touchstart', event => { wideGesture = !!wideScroller(event.target, chatEl); }, { passive: true });
+    for (const type of ['touchmove', 'touchend', 'touchcancel']) chatEl?.addEventListener(type, event => { if (wideGesture) event.stopPropagation(); if (type !== 'touchmove') wideGesture = false; }, { passive: true });
     let wasEnabled = document.body.classList.contains('salty');
     let wasQrTop = document.body.classList.contains('salty-qr-top');
     let wasQrVertical = document.body.classList.contains('salty-qr-y');

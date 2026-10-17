@@ -45,6 +45,22 @@ export function mergeGlossary(settings, server, now = Date.now()) {
     return out;
 }
 
+/**
+ * 7.0.2 캐릭터 이름 바꾸기(CHARACTER_RENAMED): 용어집 범위 열쇠가 카드 파일 이름(아바타)이라, 실리태번이 파일 이름을 바꾸면 그 캐릭터 용어집이
+ * 통째로 안 보이고 번역에도 안 쓰였다 → 옛 아바타 범위를 새 아바타로 옮기고 updated 를 올린다(다른 기기의 옛 범위가 합치기에서 이기지 않게).
+ * 새 이름 제안(glossary_suggest[범위])도 옮긴다(새 범위에 이미 있으면 그대로). 순수: { moved, suggest }
+ */
+export function renameGlossaryScope(settings, oldKey, newKey, now = Date.now()) {
+    const out = { moved: 0, suggest: false };
+    if (!settings || !oldKey || !newKey || oldKey === newKey) return out;
+    for (const e of Array.isArray(settings.glossary_entries) ? settings.glossary_entries : []) {
+        if (e && e.scope === oldKey) { e.scope = newKey; e.updated = now; out.moved++; }
+    }
+    const sug = settings.glossary_suggest;
+    if (sug && typeof sug === 'object' && !Array.isArray(sug) && sug[oldKey] && !sug[newKey]) { sug[newKey] = sug[oldKey]; delete sug[oldKey]; out.suggest = true; }
+    return out;
+}
+
 export function glossaryMessage({ pulled = 0, removed = 0 } = {}) {
     if (pulled && removed) return `다른 기기의 용어집 ${pulled}개를 가져오고 ${removed}개를 뺐어요.`;
     if (pulled) return `다른 기기의 용어집 ${pulled}개를 가져왔어요.`;

@@ -10,6 +10,7 @@ import { pathToFileURL } from 'node:url';
 
 const root = path.resolve(process.argv[2] || '.');
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
+const atLeast = (v, min) => { const n = s => s.split('.').map(Number).reduce((a, x) => a * 1000 + x, 0); return n(v) >= n(min); };   // 7.0.2
 const imp = rel => import(pathToFileURL(path.join(root, rel)).href);
 let n = 0;
 const t = async (name, fn) => { await fn(); n++; console.log(`  PASS  ${name}`); };
@@ -98,7 +99,7 @@ await t('② 배선: 고칠 때 기록 → 알림에 ↶ · 되돌리기 차례(
     const body = src.slice(src.indexOf('async function undoRewrite(rec) {'), src.indexOf('\nfunction showReport('));
     const order = ['rewriteUndo.check(', 'messageWork().noteWrite(', 'markRewrite(message, rec.after, rec.before);', 'rewriteUndo.restore(rec);', 'updateMessageBlock(messageId, message)', 'await notifyTextChanged(messageId);', 'await saveChatConditional();'].map(x => body.indexOf(x));
     assert.ok(order.every((v, i) => v > 0 && (i === 0 || v > order[i - 1])), order.join(','));
-    assert.match(src, /const VERSION = '2\.1\.4';/); assert.match(read('src/addons/rewrite/style.css'), /--bwr-css-version: "2\.1\.4";/);
+    { const v = src.match(/const VERSION = '([\d.]+)';/)[1]; assert.ok(atLeast(v, '2.1.4'), v); assert.ok(read('src/addons/rewrite/style.css').includes(`--bwr-css-version: "${v}";`)); }   // 7.0.2 판 고정 대신 「이상」
 });
 
 // ── ③ 메모 「지웠어요 ↶」
@@ -136,7 +137,7 @@ await t('③ 배선: 지우기는 묻지 않고 지운 뒤 「지웠어요 ↶�
     assert.match(del, /const rec = note && \(note\.title \|\| note\.body\) \? rememberRemoved\(note, index\) : null;/);
     assert.ok(del.indexOf('removeNote(id)') < del.indexOf('attachUndo(toast'), '지운 뒤에 알림');
     assert.match(del, /지웠어요\./);
-    assert.match(read('src/addons/notes/version.js'), /NOTES_VERSION = '1\.3\.5'/);
+    assert.ok(atLeast(read('src/addons/notes/version.js').match(/NOTES_VERSION = '([\d.]+)'/)[1], '1.3.5'));
     assert.match(read('src/modal.js'), /fixToastrForDialogs\(\)/, '메모 창(모달)이 열려 있어도 알림이 창 안에 떠서 ↶ 를 누를 수 있다');
 });
 
@@ -196,12 +197,12 @@ await t('⑤ 배선: 확인 → 백업(실패하면 적용 안 함) → 적용 �
     for (const call of ['await writePresetBody(record.name,', 'await writeWorldInfo(record.name,', 'await writeCharacterUpdate(idx, characters[idx],']) assert.ok(restore.includes(call), call);
     assert.match(restore, /await ask\(`「\$\{label\}」을\(를\) 원본 적용 전으로 되돌릴까요\?/);
     assert.doesNotMatch(src, /되돌리는 단추가 없으니/); assert.doesNotMatch(read('src/addons/prompt/guide.js'), /별도로 내보내 백업하세요/);
-    assert.match(read('src/addons/prompt/manifest.json'), /"version": "1\.2\.8"/);
+    assert.ok(atLeast(read('src/addons/prompt/manifest.json').match(/"version": "([\d.]+)"/)[1], '1.2.8'));
 });
 
 await t('판 · CI: 커스텀 CSS 0.1.1 · 번역 2.7.5 · 이 시험 등록', () => {
     assert.match(read('src/addons/customstyle/manifest.json'), /"version": "0\.1\.1"/);
-    assert.match(read('src/addons/translator/manifest.json'), /"version": "2\.7\.5"/);
+    assert.ok(atLeast(read('src/addons/translator/manifest.json').match(/"version": "([\d.]+)"/)[1], '2.7.5'));
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/undo-701\.mjs \./);
 });
 

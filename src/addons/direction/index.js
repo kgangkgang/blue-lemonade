@@ -12,7 +12,7 @@ import { badgeTextHit } from '../../badge-hit.js';
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
-const VERSION = '1.2.6';
+const VERSION = '1.2.7';
 // 1.1.5: 깃털 창에 두 쪽 — 전개 지시(이번 전개) · 항상 지시(적은 글 그대로 매번, 예: <OOC: …>). 옆으로 넘기거나 제목을 눌러 바꾼다
 const KINDS = ['direction', 'always'];
 const KIND_LABEL = { direction: '전개 지시', always: '항상 지시' };
@@ -710,7 +710,7 @@ async function onListClick(event) {
             const confirmed = await callGenericPopup('저장한 지시를 지울까요?', POPUP_TYPE.CONFIRM);
             if (!confirmed) return;
             const index = store.presets.indexOf(entry);
-            if (index >= 0) store.presets.splice(index, 1);
+            if (index >= 0) { store.presets.splice(index, 1); if (!store.presetsGone || typeof store.presetsGone !== 'object' || Array.isArray(store.presetsGone)) store.presetsGone = {}; store.presetsGone[entry.id] = Date.now(); }   // 7.0.2 지운 기록 (기기 간 합치기 — 오래된 것은 합칠 때 걷는다)
         } else {
             const list = store.history[page];
             const index = list.indexOf(entry);
@@ -1108,6 +1108,9 @@ export const ready = new Promise((resolve, reject) => jQuery(() => {
     watchTheme.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
     verifyAddonCss({ folder: 'direction', name: '--jj-css-version', version: VERSION, title: '전개 지시' });
+    // 7.0.2 저장한 지시 목록 기기 간 합치기 — 지시는 고치지 않고 더하거나 지우기만 해서 저장 시각(at)이 곧 고친 시각
+    import('../list-sync.js').then(({ registerAddonMerge }) => registerAddonMerge('direction', { module: MODULE, store: () => extension_settings[MODULE], lists: [{ field: 'presets', gone: 'presetsGone', stamp: item => item?.updated || item?.at }], save: saveSettingsDebounced, onChange: () => { if (listView) renderList(); } }))
+        .catch(error => console.warn('[전개 지시] 기기 간 합치기', error));
 
     resolve();
     } catch(error) { reject(error); }

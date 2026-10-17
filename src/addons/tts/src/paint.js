@@ -15,7 +15,7 @@ import { chat } from '../../../../../../../../script.js';
 import { getContext } from '../../../../../../../extensions.js';
 import { settings } from './settings.js';
 import { runtimeEnabled } from './runtime.js';
-import { textIndex, scanDialogue, colorFromBareHex } from './clickplay.js';
+import { textIndex, scanDialogue, colorFromBareHex, previewing } from './clickplay.js';   // 7.0.2 previewing
 import { colorOfName, normColor } from './speakers.js';
 import * as player from './player.js';
 import { log } from './log.js';
@@ -124,6 +124,7 @@ function wrapQuote(root, nodes, flat, d, color, name) {
  * 생성 중인 마지막 메시지 · 편집 중 · 내 메시지 · 시스템 메시지는 건너뜀 (꺼져 있으면 푼 채로 끝)
  */
 export function paintMessage(mesId, el = null) {
+    if (previewing()) return 0;
     const box = el || mesEl(mesId);
     const root = box?.querySelector('.mes_text');
     if (!root) return 0;
@@ -207,7 +208,7 @@ function flush() {
     observer.takeRecords();   // 우리가 바꾼 것은 다시 부르지 않게
 }
 function onMutations(records) {
-    if (!enabled()) return;
+    if (!enabled() || previewing()) return;
     for (const r of records) {
         const t = r.target.nodeType === 1 ? r.target : r.target.parentElement;
         const box = t?.closest?.('.mes');
@@ -228,6 +229,7 @@ export function refresh() {
     const chatEl = document.getElementById('chat');
     if (!chatEl) return;
     if (!enabled()) { unwrap(chatEl); return; }
+    if (previewing()) return;
     for (const m of chatEl.querySelectorAll('.mes[mesid]')) { const id = mesIdOf(m); if (id !== null) dirty.add(id); }
     clearTimeout(timer);
     timer = setTimeout(flush, 0);

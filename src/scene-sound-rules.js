@@ -3,13 +3,14 @@
 //
 // 소리 종류(kind): rain 빗소리 · wind 바람 · hush 아주 낮은 바람(눈 · 안개) · water 물결. 천둥(thunder)은 rain 안의 선택(가끔 한 번).
 // 날씨 하나가 여러 소리를 부르지 않는다 — 겹친 날씨("안개비" = 비 + 안개)는 우선순위가 높은 소리 하나만 (rain > water > wind > hush).
+import { tidyMusic, MUSIC_DEFAULTS } from './scene-music-rules.js';   // 7.0.1 분위기 음악 (sceneSound.music)
 export const KINDS = Object.freeze(['rain', 'wind', 'hush', 'water']);
 export const KIND_LABELS = Object.freeze({ rain: '비', wind: '바람', hush: '눈 · 안개', water: '물결' });
 /** 날씨 효과(src/weather-profiles.js WEATHER_MODES) → 소리 종류. 없는 날씨는 소리 없음 */
 export const WEATHER_SOUND = Object.freeze({ rain: 'rain', breeze: 'wind', snow: 'hush', fog: 'hush', water: 'water' });
 const PRIORITY = Object.freeze({ rain: 0, water: 1, wind: 2, hush: 3 });
-/** 설정 기본값 (settings.js DEFAULTS 의 sceneSound 와 같아야 한다). volume 은 % (0~100) */
-export const SCENE_SOUND_DEFAULTS = Object.freeze({ on: false, volume: 40, thunder: true, background: true, files: Object.freeze({}) });
+/** 설정 기본값 (settings.js DEFAULTS 의 sceneSound 와 같아야 한다). volume 은 % (0~100). music = 7.0.1 분위기 음악 (기본 꺼짐) */
+export const SCENE_SOUND_DEFAULTS = Object.freeze({ on: false, volume: 40, thunder: true, background: true, files: Object.freeze({}), music: MUSIC_DEFAULTS });
 /** 내 파일: 실리태번 사용자 파일 영역의 소리 파일만 (/api/files/upload 가 돌려준 경로) */
 export const FILE_URL = /^\/?user\/files\/[A-Za-z0-9_.-]+\.(mp3|ogg|oga|wav|m4a|aac|webm|flac|opus)$/i;
 export const FILE_EXT = /\.(mp3|ogg|oga|wav|m4a|aac|webm|flac|opus)$/i;
@@ -45,6 +46,7 @@ export function tidySceneSound(raw) {
         thunder: flag(src.thunder, true),
         background: flag(src.background, true),
         files,
+        music: tidyMusic(src.music),
     };
 }
 
@@ -76,11 +78,13 @@ export function ambientKinds(kind, cfg) {
     return kind === 'rain' && cfg?.thunder !== false ? ['rain', 'thunder'] : [kind];
 }
 
-/** TTS 효과음 id → 배경 소리가 대신하는 종류. 이어지는(loop) 소리만 — 첨벙(splash) 같은 한 번 소리는 물결이 대신하지 못한다 */
-export const SFX_COVERED = Object.freeze({ daily_rain: 'rain', thunder: 'thunder', wind: 'wind', daily_stream: 'water' });
+/** TTS 효과음 id → 배경 소리가 대신하는 종류. 이어지는(loop) 소리만 — 첨벙(splash) 같은 한 번 소리는 물결이 대신하지 못한다.
+ *  7.0.1: TTS 1.9.8 의 비 세 단계(daily_rain_light · daily_rain · daily_rain_heavy)도 — 다음에 비 id 가 늘어도 daily_rain_* 는 빗소리가 대신한다 */
+export const SFX_COVERED = Object.freeze({ daily_rain: 'rain', daily_rain_light: 'rain', daily_rain_heavy: 'rain', thunder: 'thunder', wind: 'wind', daily_stream: 'water' });
+const coveredKind = id => SFX_COVERED[id] || (/^daily_rain(?:_[a-z0-9]+)?$/.test(id) ? 'rain' : '');
 /** 배경 소리가 이 효과음을 대신하고 있나 — kinds 는 지금 나는 종류들(ambientKinds). hush(낮은 바람)도 바람 효과음을 대신한다 */
 export function coversSfx(kinds, sfxId) {
-    const want = SFX_COVERED[String(sfxId || '')];
+    const want = coveredKind(String(sfxId || ''));
     if (!want) return false;
     const set = kinds instanceof Set ? kinds : new Set(kinds || []);
     return set.has(want) || (want === 'wind' && set.has('hush'));

@@ -220,7 +220,9 @@ export async function saveRecord(record, { messagesChanged = false } = {}) {
         if (owner.isGroup) {
             await postJson('/api/chats/group/save', { id: record.key, chat });
         } else {
-            await postJson('/api/chats/save', { ch_name: owner.character.name, file_name: record.key, avatar_url: owner.character.avatar, chat, force: false });
+            // 7.0.2 본문 열쇠 차례를 실리태번 saveChat 과 같게 (ch_name → file_name → chat → avatar_url → force) — 테마 「다른 기기에서 바뀜」 감시(chat-sync saveBodyKey)가
+            //       이 저장을 「다른 채팅 파일」로 알아보게. 차례가 다르면 지금 채팅 저장으로 착각해 엉뚱한 덮어쓰기 질문 · 북마크 변경 버림 · 경고 띠 지움이 났다
+            await postJson('/api/chats/save', { ch_name: owner.character.name, file_name: record.key, chat, avatar_url: owner.character.avatar, force: false });
         }
     } catch (error) {
         if (error.payload?.error === 'integrity') {

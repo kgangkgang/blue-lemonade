@@ -71,6 +71,7 @@ jobs:
           node tools/tests/qr-swipe-guard.mjs .
           node tools/tests/swipe-picker-translation.mjs .
           node tools/tests/scene-sound.mjs .
+          node tools/tests/scene-music.mjs .
           node tools/tests/settings-merge.mjs .
           node tools/tests/assets-file-flows.mjs .
           node tools/tests/assets-settings-records.mjs .
@@ -111,6 +112,10 @@ jobs:
           node tools/tests/tts-color-rename.mjs .
           node tools/tests/tts-rain-levels.mjs .
           node tools/tests/undo-701.mjs .
+          node tools/tests/tts-paragraph-pair.mjs .
+          node tools/tests/tts-italic-quote.mjs .
+          node tools/tests/bughunt2-addons.mjs .
+          node tools/tests/tts-background.mjs .
           node tools/tests/modelswitch-fallback-pick.mjs .
           node tools/tests/tts-integration.mjs .
           node tools/tests/tts-dethump.mjs .
@@ -166,6 +171,7 @@ jobs:
           node tools/tests/param-dimensions.mjs .
           node tools/tests/after-work.mjs .
           node tools/tests/show-more-auto.mjs .
+          node tools/tests/bughunt2-core.mjs .
           node tools/tests/dem-expressive-nest.mjs .
           node tools/tests/main-chat-rules.mjs .
           node tools/tests/main-chat-finish.mjs .
@@ -253,6 +259,7 @@ jobs:
           node tools/tests/settings-dialog.mjs
           node tools/tests/deus-qr.mjs
           node tools/tests/fruit-style.mjs
+          node tools/tests/fruit-entry-rows.mjs .
           node tools/tests/prompt-template.mjs .
           node tools/build-integrity.mjs . --check
       - name: Check that generated files match their sources

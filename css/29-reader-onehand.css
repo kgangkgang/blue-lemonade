@@ -54,8 +54,22 @@
   body.salty.bl-reader.bl-bars-hidden .lv-bar {
     top: calc(100dvh - 10px - env(safe-area-inset-bottom, 0px)) !important;
   }
+  /* 7.0.2 다른 기기에서 바뀜 띠(chat-sync.js, #chat 바로 앞): 몰입 읽기는 #sheld 를 화면 꼭대기부터 펴서 띠가 위 바(z 3005) 밑에 깔렸다.
+     흐름에서 빼 위 바 바로 아래에 띄우고(채팅을 밀어 바닥 줄이 잘리지 않게), 바를 숨기면 꼭대기로 따라 올라간다 */
+  body.salty.bl-reader #bl-sync-strip {
+    position: absolute;
+    top: calc(var(--topBarBlockSize) + 4px);
+    left: 0;
+    right: 0;
+    z-index: 31;
+    transition: top 0.24s ease;
+  }
+  body.salty.bl-reader.bl-bars-hidden #bl-sync-strip {
+    top: 4px;
+  }
   @media (prefers-reduced-motion: reduce) {
     body.salty.bl-reader .lv-bar,
+    body.salty.bl-reader #bl-sync-strip,
     body.salty.bl-reader #form_sheld,
     body.salty.bl-reader :is(#top-bar, #top-settings-holder) {
       transition: none;

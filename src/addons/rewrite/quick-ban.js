@@ -19,15 +19,29 @@ function selectedText() {
     const text = selection.toString().replace(/\s+/g, ' ').trim().replace(EDGE, '');
     if (!text || text.length > MAX || /\n/.test(selection.toString().trim())) return null;
     if (!canSelect(container, text)) return null;
-    return { text, rect: range.getBoundingClientRect() };
+    const lines = [...range.getClientRects()].filter(r => r.width || r.height);
+    return { text, rect: range.getBoundingClientRect(), lines };
 }
+
+/**
+ * 7.0.2 폰의 선택 손잡이(물방울)는 고른 글의 끝 글자(한 줄이면 시작 글자도) 아래에 x±18 × 줄 아래 ~30px 로 매달린다.
+ * 칩이 그 자리와 겹치면 손잡이에 가려 칩 대신 손잡이가 잡혔다 → 겹치면 손잡이 아래로 (북마크 칩 · 고른 글 지우기 칩과 같은 규칙). 순수
+ */
+export function chipGap({ coarse = false, lines = [], left = 0, width = 0 } = {}) {
+    if (!coarse || !lines.length) return 8;
+    const last = lines[lines.length - 1], first = lines[0];
+    const handles = [last.right];
+    if (Math.abs(first.top - last.top) <= 2) handles.push(Math.min(...lines.map(r => r.left)));
+    return handles.some(x => left < x + 18 && left + width > x - 18) ? 30 : 8;
+}
+const coarse = () => !!globalThis.matchMedia?.('(pointer: coarse)')?.matches;
 
 function hide() {
     if (chip) chip.hidden = true;
     current = '';
 }
 
-function show({ text, rect }) {
+function show({ text, rect, lines = [] }) {
     if (!chip) {
         chip = document.createElement('button');
         chip.type = 'button';
@@ -48,12 +62,15 @@ function show({ text, rect }) {
     current = text;
     chip.querySelector('span').textContent = text.length > 18 ? text.slice(0, 17) + '…' : text;
     chip.hidden = false;
-    // 선택 바로 아래, 화면 안에 — 폭은 그린 뒤에 재야 한다
-    const top = Math.min(rect.bottom + 8, window.innerHeight - 48);
-    chip.style.top = `${top}px`;
+    // 선택 바로 아래, 화면 안에 — 폭은 그린 뒤에 재야 한다. 7.0.2 폰은 선택 손잡이 자리를 피한다 (chipGap)
+    chip.style.top = `${Math.min(rect.bottom + 8, window.innerHeight - 48)}px`;
     chip.style.left = '0px';
     const width = chip.offsetWidth;
-    chip.style.left = `${Math.max(8, Math.min(rect.left + rect.width / 2 - width / 2, window.innerWidth - width - 8))}px`;
+    const left = Math.max(8, Math.min(rect.left + rect.width / 2 - width / 2, window.innerWidth - width - 8));
+    const bottom = lines.length ? lines[lines.length - 1].bottom : rect.bottom;
+    const gap = chipGap({ coarse: coarse(), lines, left, width });
+    chip.style.top = `${Math.min(bottom + gap, window.innerHeight - Math.max(48, chip.offsetHeight + 8))}px`;
+    chip.style.left = `${left}px`;
 }
 
 function check() {

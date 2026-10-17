@@ -31,7 +31,27 @@ if(fs.existsSync(extraDir)||fs.existsSync(path.join(root,'src/addons/tts/src/sfx
     if(bytes.length!==row.bytes||createHash('sha256').update(bytes).digest('hex')!==row.sha256)throw Error('Everyday sound content differs: '+row.id);
   }
 }
-const files=[...new Set(['manifest.json','index.js','style.css',...ttsAssets,...ttsExtraAssets,...walk(path.join(root,'src')).filter(p=>/\.(js|css|html)$/.test(p)).map(p=>path.relative(root,p).replaceAll('\\','/'))])].filter(p=>p!=='src/build-info.js').sort();
+// 7.0.1 Scene music: fixed list, matching release_gate.py SCENE_MUSIC.
+const musicIds='daily_town daily_lofi tense_pressure battle_pursuit romance_next sad_hope mystic_shrine festive_feast'.split(' ');
+const musicDir=path.join(root,'src/scene-music');
+const musicAssets=[];
+if(fs.existsSync(musicDir)||fs.existsSync(path.join(root,'src/scene-music.js'))){
+  for(const name of ['SOURCES.json','LICENSE-CC0.txt',...musicIds.map(id=>id+'.mp3')]){
+    const file=path.join(musicDir,name);
+    if(!fs.existsSync(file)||!fs.lstatSync(file).isFile()||!fs.realpathSync(file).startsWith(root+path.sep))throw Error('Missing or unsafe scene music resource: '+name);
+    musicAssets.push('src/scene-music/'+name);
+  }
+  const catalog=JSON.parse(fs.readFileSync(path.join(musicDir,'SOURCES.json'),'utf8'));
+  if(catalog.version!==1||catalog.collection!=='Blue Lemonade scene music'||!Array.isArray(catalog.files)||catalog.files.length!==musicIds.length)throw Error('Invalid scene music catalog');
+  const seen=new Set();
+  for(const row of catalog.files){
+    if(!row||!musicIds.includes(row.id)||seen.has(row.id)||row.path!==`scene-music/${row.id}.mp3`)throw Error('Unsafe or duplicate scene music path');
+    seen.add(row.id);
+    const bytes=fs.readFileSync(path.join(musicDir,row.id+'.mp3'));
+    if(bytes.length!==row.bytes||createHash('sha256').update(bytes).digest('hex')!==row.sha256)throw Error('Scene music content differs: '+row.id);
+  }
+}
+const files=[...new Set(['manifest.json','index.js','style.css',...ttsAssets,...ttsExtraAssets,...musicAssets,...walk(path.join(root,'src')).filter(p=>/\.(js|css|html)$/.test(p)).map(p=>path.relative(root,p).replaceAll('\\','/'))])].filter(p=>p!=='src/build-info.js').sort();
 const hashes=Object.fromEntries(files.map(file=>[file,fileFingerprint(fs.readFileSync(path.join(root,file)))]));
 const version=JSON.parse(fs.readFileSync(path.join(root,'manifest.json'),'utf8')).version;
 const data=`// Generated: installed runtime integrity, excluding this manifest itself.\nexport const BUILD_VERSION = ${JSON.stringify(version)};\nexport const FILE_HASHES = ${JSON.stringify(hashes,null,2)};\n`;

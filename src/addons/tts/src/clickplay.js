@@ -43,6 +43,9 @@ import { applyMessageItalics } from './analysis.js';   // 1.9.1 대사 분석이
 import { shownDisplay } from './translation.js';   // 6.9.6 번역 중 미리 보기 글로도 원문 짝
 import { log } from './log.js';
 
+// 7.0.2 북마크 「채팅에서 미리보기」: 화면에는 다른 채팅이 그려져 있지만 chat[] 은 지금 채팅이라 mesid → chat[mesid] 가 엉뚱한 메시지 — 그동안은 손대지 않는다
+export const previewing = () => !!globalThis.document?.body?.classList?.contains('cg-previewing');
+
 // 대화문 여닫이 글자 (text.js 와 같은 짝 + „“). ASCII ' 는 안 씀
 const CLOSER = { '“': '”', '"': '"', '「': '」', '『': '』', '«': '»', '＂': '＂', '‘': '’', '„': '“' };
 const ONE_LINE = new Set(['"', '＂']); // 좌우 같은 모양 → 한 줄 안에서만 짝을 찾음
@@ -523,8 +526,12 @@ export function segmentForHit(mes, hit, { preview = false } = {}) {
             const inThought = (list) => { const f = thoughtsOf(list).filter(x => fold(x.text).includes(q)); return f.length ? nearest(f, hit.line || 0) : null; };
             const tDisp = q ? inThought(disp) : null;
             const tFound = tDisp || (q ? inThought(orig) : null);
+            // 1.9.9 기울임 안의 따옴표 낱말(「*왜 "낱말" 같은 말을…*」 — text.js inlineQuote 가 기울임의 일부로 둔 것)을 누르면 그 기울임 통째로
+            const inItalic = (list) => { const f = (list || []).filter(x => x.kind === 'action' && x.text && fold(x.text).includes(q)); return f.length ? { found: nearest(f, hit.line || 0), list } : null; };
+            const aHit = !tFound && q && hit.quoted && hit.quoted !== hit.text ? (inItalic(disp) || inItalic(orig)) : null;
             if (tFound) seg = thoughtSegment(tFound, tDisp ? disp : orig, orig, disp, { nameHint: null, color: null });   // 대화문의 색은 그 대사 화자의 것이라 쓰지 않음
-            else seg = { kind: 'dialogue', text: hit.text, raw: hit.raw, color: hit.color || null, tags: [], speakerHint: hit.speakerHint || null, line: hit.line || 0 };
+            else if (aHit) seg = { ...aHit.found, tags: (aHit.found.tags || []).slice(), actionIndex: aHit.list.filter(x => x.kind === 'action' && x.text).indexOf(aHit.found) };
+            else seg ={ kind: 'dialogue', text: hit.text, raw: hit.raw, color: hit.color || null, tags: [], speakerHint: hit.speakerHint || null, line: hit.line || 0 };
         }
         if (seg.kind === 'dialogue') seg.dialogueIndex = index;
     }
@@ -581,6 +588,7 @@ export function tapSegments(mes, { thoughts = false, preview = false } = {}) {
 // ---------- 클릭
 function onClick(e) {
     try {
+        if (previewing()) return;   // 7.0.2 북마크 미리보기
         if (e.defaultPrevented || e.button !== 0 || e.detail !== 1 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
         const s = settings();
         if (!s.enabled || s.click_play === false) return;

@@ -15,6 +15,7 @@ Blue Lemonade는 GNU Affero General Public License v3.0 조건으로 배포합�
 | Prompt Panel | [anon4961](https://github.com/anon4961/prompt-panel) / [개인개조+++ 게시글 작성자 「깡」](https://kkangtong.xyz/posts/138394) | [AGPL-3.0](src/addons/prompt/LICENSE) |
 | CustomThemeStyleInputs | Copyright (c) 2025 [IceFog72](https://github.com/IceFog72/SillyTavern-CustomThemeStyleInputs) | [MIT 전문](src/addons/customstyle/LICENSE) |
 | Prompt Template (ST-Prompt-Template) · 설치형, 원본 무수정 | [zonde306](https://github.com/zonde306/ST-Prompt-Template) | [AGPL-3.0 전문](src/addons/prompt-template/LICENSE) · [별도 고지](src/addons/prompt-template/NOTICE.md) |
+| 장면 소리 · 분위기 음악 곡 8개 | OpenGameArt — cynicmusic · omfgdude · yd · Emma_MA · Joth · RandomMind | 음원 CC0 · [곡별 출처](src/scene-music/SOURCES.json) · [CC0 전문](src/scene-music/LICENSE-CC0.txt) |
 
 Prompt Panel은 사용자 제공 개인개조+++ 공유본을 기반으로 수정했습니다. [원작 소개글](https://kkangtong.xyz/posts/87408). 추가 수정자의 이름은 공유 게시글에 표시된 이름을 따릅니다.
 
@@ -57,6 +58,19 @@ Character Assets는 원작자의 개인 수정본 공유 허락에 따라 포함
 - **freesound 18개**: SundayRecords(핥기 2개) · noahpardo(키스) · renrenrenrenren(키스 연속) · SoundDesignForYou(찔꺽) · tiddles451(찔꺽 연속) · cabusta9(침대 삐걱) · bmusic92(침대 삐걱 연속) · magnuswaker(꿀꺽) · aobowser(꿀꺽 연속) · Andy Jack / 업로드 JonasTisell(심장박동) · khenshom(펜으로 쓰기) · SamuelGremaud(성냥 켜기) · jmehlferber(벽난로 장작 타기) · XxBirdoxX(배에서 꼬르륵) · dr19(코르크 마개 따기) · SpliceSound(발소리) · MrFossy(질척이는 리듬). 각 소리 페이지가 Creative Commons 0을 표시합니다. 원본은 freesound가 공개한 고음질 미리듣기 MP3입니다. [동봉 CC0 전문](src/addons/tts/sfx-extra/LICENSE-CC0.txt).
 
 Blue Lemonade는 새 생활 음원에서 한 동작 또는 짧은 연속 구간을 골라 음량·시작과 끝 페이드·MP3 인코딩을 조정했습니다. [파일별 원본 URL·저작자·라이선스·가공 내역·원본 및 배포 SHA-256](src/addons/tts/sfx-extra/SOURCES.json)을 보존합니다. 공유마당 음원이 들어간 WAV·영상 등을 공유할 때 제작자·원본 출처·CC BY 4.0 링크와 변경 여부를 함께 표시하고 기존 고지를 유지해야 합니다. CC BY 음원에 AGPL만 적용하거나 추가 이용 제한을 붙이지 않습니다. 원작자의 후원·보증을 의미하지 않으며, 파일은 무보증으로 제공합니다.
+
+## 장면 소리 · 분위기 음악 곡 8개
+
+2026-10-17 장면 소리의 분위기 음악(일상 · 긴장 · 전투 · 로맨스 · 슬픔 · 신비 · 축제)에 OpenGameArt 의 CC0 곡 8개를 담았습니다. 각 원본 페이지가 License(s): CC0 을 표시합니다.
+
+- cynicmusic — [Town Theme RPG](https://opengameart.org/content/town-theme-rpg) (일상)
+- omfgdude — [Chill lofi inspired](https://opengameart.org/content/chill-lofi-inspired) (일상)
+- yd — [Pressure](https://opengameart.org/content/pressure) (긴장) · [Shrine](https://opengameart.org/content/shrine) (신비)
+- Emma_MA — [Determined Pursuit (epic orchestra loop)](https://opengameart.org/content/determined-pursuit-epic-orchestra-loop) (전투) · [At the end of hope](https://opengameart.org/content/at-the-end-of-hope) (슬픔)
+- Joth — [Next to You](https://opengameart.org/content/next-to-you) (로맨스)
+- RandomMind — [Medieval: King's Feast](https://opengameart.org/content/medieval-kings-feast) (축제)
+
+Blue Lemonade는 모노로 바꾸고, 반복용이 아닌 곡은 반복 구간을 골라 끝 0.6초를 겹쳐 이음새 없이 반복되게 했으며, 평균 크기를 맞추고 봉우리를 눌러 MP3 80 kbps 로 다시 담았습니다. [파일별 원본 URL·저작자·라이선스·가공 내역·원본 및 배포 SHA-256](src/scene-music/SOURCES.json) · [동봉 CC0 전문](src/scene-music/LICENSE-CC0.txt).
 
 ## Mermaid 도표
 

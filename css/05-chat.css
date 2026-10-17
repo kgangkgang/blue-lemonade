@@ -773,18 +773,22 @@ body.salty #chat #show_more_messages {
   font-weight: 500;
   line-height: 1.4;
 }
-/* 새 답 첫 줄로 (reply-top.js): 채팅 오른쪽 아래, 입력창 위에 뜨는 아이콘 단추 하나 — 아이콘 단추 치수(--bl-h-ctl) · 8px · 뜬 그림자. 툴팁 없음 */
+/* 새 답 첫 줄로 (reply-top.js): 입력창 위 가운데에 뜨는 아이콘 단추 하나 — 아이콘 단추 치수(--bl-h-ctl) · 8px · 뜬 그림자. 툴팁 없음
+   7.0.2: 높이는 reply-top.js 가 잰 #sheld 바닥 ~ #form_sheld 위끝(--bl-reply-foot) — 폰 두 줄 입력판 · 한 손 줄 · 퀵 리플라이 줄도 따라감.
+   예전 상수(--bottomFormBlockSize)는 한 줄 단추 크기라 폰에선 입력판 속에 놓였고 z 25 < #form_sheld 30 이라 깔렸다.
+   가로는 가운데: 오른쪽 끝은 마지막 답 스와이프 줄의 › 를 가리고, 그 위로 올리면 마지막 줄 글을 가린다 — 스와이프 줄 가운데는 늘 비어 있다 */
 body.salty #sheld > .bl-reply-top {
   position: absolute;
-  right: calc(var(--bl-gutter) + 2px);
-  bottom: calc(var(--bottomFormBlockSize, 64px) + var(--bl-s3));
-  z-index: 25;
+  right: 0;
+  left: 0;
+  bottom: calc(var(--bl-reply-foot, var(--bottomFormBlockSize, 64px)) + var(--bl-s3));
+  z-index: 31;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: var(--bl-h-ctl);
   height: var(--bl-h-ctl);
-  margin: 0;
+  margin: 0 auto;
   padding: 0;
   border: 0;
   border-radius: var(--bl-r-sm);

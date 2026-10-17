@@ -44,7 +44,9 @@ export function unionGone(a, b, now = Date.now()) {
  * accept(item) 이 거짓인 remote 항목은 무시한다(모양이 깨진 것). clone(item) 은 remote 항목을 local 에 넣을 모양으로.
  * 돌려줌: { pulled: 더하거나 새로 받은 수, removed: 뺀 수, needSave, gone: 합친 지운 기록, changed }
  */
-export function mergeById({ local, remote, localGone = {}, remoteGone = {}, now = Date.now(), accept = item => isObj(item) && item.id != null, clone = item => ({ ...item }) }) {
+// 7.0.2 stamp(item) — 「어느 쪽이 늦은가」를 볼 시각 (기본 updated). 메모는 귀속 · 폴더를 바꾼 시각(metaUpdated)도 함께 본다
+export function mergeById({ local, remote, localGone = {}, remoteGone = {}, now = Date.now(), accept = item => isObj(item) && item.id != null, clone = item => ({ ...item }), stamp = null }) {
+    const stampOf = item => { const n = Number(typeof stamp === 'function' ? stamp(item) : item?.updated); return Number.isFinite(n) && n > 0 ? n : 0; };
     if (!Array.isArray(local)) throw new TypeError('local 은 배열');
     const gone = unionGone(localGone, remoteGone, now);
     const remoteList = (Array.isArray(remote) ? remote : []).filter(accept);

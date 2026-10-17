@@ -53,8 +53,33 @@ export function normalizeRows(rows) {
 
 /** No content or credentials are logged; both raw and rendered translations invalidate old edits. */
 export function scriptFingerprint(mes) {
-    const input = JSON.stringify([VERSION, mes?.swipe_id ?? 0, String(mes?.mes ?? ''),
-        String(mes?.extra?.display_text ?? ''), String(mes?.extra?.original_text_hash ?? '')]);
+    return fingerprintAt(mes?.mes, mes?.extra, mes?.swipe_id ?? 0);
+}
+function fingerprintAt(text, extra, swipe) {
+    return fingerprintOf(JSON.stringify([VERSION, swipe, String(text ?? ''), String(extra?.display_text ?? ''), String(extra?.original_text_hash ?? '')]));
+}
+/**
+ * 7.0.2 스와이프 지우기(MESSAGE_SWIPE_DELETED { swipeId }): 실리태번이 뒤 스와이프 번호를 하나씩 당겨, 그 스와이프들에 손으로 고쳐 둔 소리 대본의
+ * 지문(번호가 듦)이 안 맞아 말없이 버려졌다 → 지운 자리 뒤 스와이프의 기록 가운데 「옛 번호(k+1)」 지문과 맞는 것만 새 번호(k)로 다시 적는다.
+ * 같은 글이라도 스와이프마다 따로 고친 대본은 그대로 따로 (번호를 지문에서 빼지 않는다). 고친 기록 수를 돌려준다
+ */
+export function shiftScriptsAfterSwipeDelete(mes, swipeId) {
+    if (!object(mes) || !Number.isInteger(swipeId) || swipeId < 0) return 0;
+    const swipes = Array.isArray(mes.swipes) ? mes.swipes : [], info = Array.isArray(mes.swipe_info) ? mes.swipe_info : [];
+    const seen = new Set();
+    let moved = 0;
+    const shift = (extra, k, text) => {
+        const record = extra?.[KEY];
+        if (!object(record) || seen.has(record) || typeof text !== 'string') return;
+        seen.add(record);
+        if (record.fingerprint === fingerprintAt(text, extra, k + 1)) { record.fingerprint = fingerprintAt(text, extra, k); moved++; }
+    };
+    const current = Number(mes.swipe_id) || 0;
+    if (current >= swipeId) shift(mes.extra, current, mes.mes);
+    for (let k = swipeId; k < info.length; k++) shift(info[k]?.extra, k, swipes[k]);
+    return moved;
+}
+function fingerprintOf(input) {
     let a = 2166136261, b = 0x9747b28c;
     for (let i = 0; i < input.length; i++) { const c = input.charCodeAt(i); a = Math.imul(a ^ c, 16777619); b = Math.imul(b ^ c, 2246822519); }
     return `${input.length}:${(a >>> 0).toString(36)}:${(b >>> 0).toString(36)}`;

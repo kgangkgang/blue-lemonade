@@ -21,9 +21,25 @@ function ensureButton() {
     (document.getElementById('sheld') || document.body).append(btn);
     return btn;
 }
-function hide() { clearTimeout(timer); timer = 0; if (btn) btn.hidden = true; io?.disconnect(); io = null; target = null; }
+// 7.0.2 자리: 입력판(#form_sheld) 실제 위끝 위로. 예전엔 한 줄 단추 크기 상수(--bottomFormBlockSize)라 폰의 두 줄 입력판 · 한 손 줄 · 퀵 리플라이 · 메모 줄 속에
+//       놓였고 z 25 가 입력판 30 아래라 가려졌다(보이지도 눌리지도 않음). 떠 있는 동안만 입력판 크기를 지켜본다(ResizeObserver 하나)
+let resize = null;
+export function footOffset(sheldRect, formRect) {
+    if (!sheldRect || !formRect || !(formRect.height > 0)) return null;
+    return Math.max(0, Math.round(sheldRect.bottom - formRect.top));
+}
+function place() {
+    if (!btn || btn.hidden) return;
+    const sheld = btn.parentElement, form = document.getElementById('form_sheld');
+    const foot = footOffset(sheld?.getBoundingClientRect?.(), form?.getBoundingClientRect?.());
+    btn.style?.setProperty?.('--bl-reply-foot', foot === null ? '' : `${foot}px`);
+}
+function hide() { clearTimeout(timer); timer = 0; if (btn) btn.hidden = true; io?.disconnect(); io = null; target = null; resize?.disconnect(); resize = null; }
 function show(mes) {
     const b = ensureButton(); target = mes; b.hidden = false;
+    place();
+    const form = document.getElementById('form_sheld');
+    if (form && typeof ResizeObserver === 'function' && !resize) { resize = new ResizeObserver(place); resize.observe(form); }
     io?.disconnect();
     io = new IntersectionObserver(entries => { if (entries.some(e => e.isIntersecting)) hide(); }, { root: chat(), threshold: 0.5 });
     io.observe(headOf(mes));

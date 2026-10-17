@@ -387,6 +387,24 @@ function scanDialogue(body, final) {
     return out;
 }
 
+// 1.9.9 기울임(*…*) 안의 따옴표 낱말: 「*왜 "낱말" 같은 말을 한 거야?!*」 — 따옴표를 대화문으로 떼면 기울임이 「*왜」 · 「같은 말을…*」로 갈라져
+//   둘 다 서술이 되고(읽지 않음) 속마음 전체가 빠졌다. 기울임이 따옴표 밖에도 글자를 품고, 따옴표 글이 짧고(30자 · 네 낱말 안) 문장 끝 부호가 없으면
+//   문장 안 인용 · 강조로 보고 기울임의 일부로 둔다. 「*그녀가 "가자!"라고 했다*」처럼 문장 끝 부호가 있는 따옴표 · 기울임 밖 따옴표는 그대로 대화문
+function italicSpans(body) {
+    const out = [];
+    ACTION_RE.lastIndex = 0;
+    for (let m; (m = ACTION_RE.exec(body));) out.push([m.index, m.index + m[0].length]);
+    return out;
+}
+function inlineQuote(body, d, italics) {
+    if (!d.complete || d.end <= d.ie) return false;
+    const it = italics.find(([s, e]) => d.start > s && d.end < e);
+    if (!it) return false;
+    const inner = stripMarkup(body.slice(d.is, d.ie)).replace(/\s+/g, ' ').trim();
+    if (!LETTER.test(inner) || inner.length > 30 || inner.split(' ').length > 4 || /[.!?。！？…]/.test(inner)) return false;
+    return LETTER.test(body.slice(it[0], d.start) + body.slice(d.end, it[1]));
+}
+
 // ---------- 본체
 
 // 1.2.4: 사용자의 "지울 글" 줄이 <true_thoughts> 태그까지 지우면 (데우스 정리 줄 `</?(…|true_thoughts)[^>]*>`) 속마음 조각이 하나도 안 생겨
@@ -444,8 +462,9 @@ export function segmentMessage(rawText, opts = {}) {
         else if (el.hint) pieces.push({ kind: 'thought', pos: start, end, slice: '', ctx: runs[i].ctx, hint: el.hint, complete: true, marker: true });
     }
 
-    // 5. 대화문
-    const dialogs = scanDialogue(body, final);
+    // 5. 대화문 (1.9.9 기울임 안의 짧은 인용 · 강조 낱말은 대화문으로 떼지 않고 그 기울임의 일부 — inlineQuote)
+    const italics = italicSpans(body);
+    const dialogs = scanDialogue(body, final).filter(d => !inlineQuote(body, d, italics));
     const colorWithQuote = new Set();
     for (const d of dialogs) { const c = ctxAt(d.start).colorEl; if (c) colorWithQuote.add(c); }
 

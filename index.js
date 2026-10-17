@@ -49,6 +49,7 @@ function noticeSeenChanged() {
 import { loadVersion, hasUnseenNotice, openNotice } from './src/notice.js';
 import { badgeTextHit } from './src/badge-hit.js';
 import { setFeatureHooks } from './src/features.js';
+import { startThemeSettingsSync } from './src/settings-sync.js';
 import { deferPreviewRules, restorePreviewRules, deferredPreviewRuleCount, startMenuOpenMark, startAnchorGate, widenSelectorCache, deferPanelHasRules, panelHasRuleCount, panelCssEnabled } from './src/lite.js';
 
 function mountDrawer() {
@@ -155,6 +156,8 @@ matchMedia(DEVICE_QUERY).addEventListener('change', () => { window.dispatchEvent
 
 // 테마는 가능한 한 빨리 (깜빡임 줄이기)
 setFeatureHooks({ applyAll, refreshPanels }); // 켤 때만 불러오는 기능이 설정 적용 · 창 다시 그리기를 부를 수 있게 (3.1.0)
+// 7.0.2 테마 설정(salty) 기기 간 합치기 — 탭이 오래 숨었다 돌아올 때 서버 값과 세 갈래로 합친다 (보관함이 다른 기기의 옛 탭 저장에 사라지지 않게)
+startThemeSettingsSync({ getSalty: () => SillyTavern.getContext().extensionSettings?.salty, save: saveSettings, after: () => { applyAll(); refreshPanels(); } });
 const settings = getSettings();
 if (dropStaleOverrides(settings)) saveSettings();
 // 6.9.0 실리태번 한국어 화면 다듬기 (ko-ui.js) — 언어가 ko-kr 일 때만 표를 받는다. 끄기: 설정 koUi=false

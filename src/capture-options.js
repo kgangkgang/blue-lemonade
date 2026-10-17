@@ -1,4 +1,5 @@
 import { showThemeModal } from './modal.js';
+import { ask, attachUndo } from './ask.js';
 import {canShareFile,shareOrSave,fileOf} from './capture-share.js'; // 6.9.8 공유 아이콘
 import { CAPTURE_INFO_KEYS } from './capture-layout.js';
 import { createCaptureResources } from './capture-resources.js';
@@ -127,7 +128,11 @@ function bindCapturePresets(root,cfg,apply){
         const id=`p${Date.now().toString(36)}`;list().push({id,name,values:Object.fromEntries(PRESET_KEYS.filter(k=>cfg[k]!==undefined).map(k=>[k,cfg[k]]))});
         saveSettings();redraw();select.value=id;
     };
-    root.querySelector('[data-capture-preset-delete]').onclick=()=>{const i=list().findIndex(p=>p.id===select.value);if(i<0){globalThis.toastr?.info('내 프리셋을 먼저 골라 주세요. 기본 프리셋은 지울 수 없어요.','Blue Lemonade');return;}list().splice(i,1);saveSettings();redraw();select.value='';};
+    // 7.0.2 내 프리셋 지우기는 묻고(붉은 단추) ↶ 로 되돌릴 수 있게 (ask.js)
+    root.querySelector('[data-capture-preset-delete]').onclick=async()=>{const i=list().findIndex(p=>p.id===select.value);if(i<0){globalThis.toastr?.info('내 프리셋을 먼저 골라 주세요. 기본 프리셋은 지울 수 없어요.','Blue Lemonade');return;}
+        const gone=list()[i];if(!await ask(`캡처 프리셋 「${gone.name}」을 지울까요?`,{ok:'지우기',danger:true}))return;
+        const at=list().indexOf(gone);if(at<0)return;list().splice(at,1);saveSettings();redraw();select.value='';
+        attachUndo(globalThis.toastr?.info?.(`「${gone.name}」을 지웠어요.`,'Blue Lemonade'),()=>{if(!list().some(p=>p.id===gone.id))list().splice(Math.min(at,list().length),0,gone);saveSettings();redraw();select.value=gone.id;});};
 }
 export function captureOptionsSnapshot() {
     const s=getSettings(),cfg=s.captureTools;

@@ -1,7 +1,7 @@
 // 화이트 · 나이트 자동 (3.2.0) — 기기의 다크 모드를 따라가거나, 정한 시간에 팔레트 밝기를 바꾼다.
 // 고른 팔레트 묶음(블루 레몬에이드 · 멜론 …)은 그대로 두고 그 묶음의 화이트 ↔ 나이트만 갈아 끼운다.
 // 켜 두었을 때만 불러온다 (features.js). 해/달 단추를 직접 누르면 자동은 꺼진다 (panel.js).
-import { getSettings, saveSettings } from './settings.js';
+import { getSettings } from './settings.js';
 import { PALETTES, paletteFamily, paletteVariant } from './palettes.js';
 
 const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
@@ -25,15 +25,18 @@ export function wantMode(auto, now = new Date(), dark = systemDark.matches) {
     return night > day ? (t >= night || t < day ? 'dark' : 'light') : (t >= night && t < day ? 'dark' : 'light');
 }
 
-function check() {
+// 7.0.2 자동 전환은 저장하지 않는다 — 시각 · 기기 다크 모드에서 언제든 다시 계산되는 값인데, 숨은/잠든 탭의 타이머 · 다시 보이기에서
+// 실리태번 설정 전체를 저장하면 그 탭의 옛 설정이 다른 기기(폰 · PC, Syncthing)의 변경을 덮었다. 메모리 팔레트만 바꾸고, 다음 사용자 저장 때 함께 간다.
+// 해/달 단추처럼 사용자가 직접 바꾸는 길(panel.js)은 그대로 저장한다
+export function check() {
     const s = getSettings();
-    if (!s.enabled || !s.auto?.on) return;
+    if (!s.enabled || !s.auto?.on) return false;
     const want = wantMode(s.auto);
-    if ((PALETTES[s.palette]?.mode || 'light') === want) return;
+    if ((PALETTES[s.palette]?.mode || 'light') === want) return false;
     s.palette = paletteVariant(paletteFamily(s.palette), want);
-    saveSettings();
     hooks.applyAll?.();
     hooks.refreshPanels?.();
+    return true;
 }
 
 function schedule() {

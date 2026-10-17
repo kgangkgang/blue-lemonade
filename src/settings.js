@@ -114,7 +114,7 @@ export const DEFAULTS = {
     onehand: { on: false, swipe: true, imp: true, cont: true, regen: true },
     replyNotify: { on: false }, // 4.8.7 답 완료 알림: 다른 앱을 보고 있을 때 답이 끝나면 폰 알림 · 진동 (reply-notify.js)
     bgWindow: { on: false, mode: 'audio' }, // 4.3.2 백그라운드 창 (실험): 답을 기다리는 동안 PIP 작은 창을 띄워 다른 앱을 봐도 생성 · 번역이 이어지게
-    sceneSound: { on: false, volume: 40, thunder: true, background: true, files: {} }, // 6.9.8 장면 소리: 날씨 효과에 맞춘 배경 소리 (scene-sound.js) — volume %, thunder 비에 천둥, background 숨은 탭에서도, files { rain | wind | hush | water: '/user/files/…' }
+    sceneSound: { on: false, volume: 40, thunder: true, background: true, files: {}, music: { on: false, volume: 30, mood: 'auto', files: {} } }, // 6.9.8 장면 소리: 날씨 효과에 맞춘 배경 소리 (scene-sound.js) — volume %, thunder 비에 천둥, background 숨은 탭에서도, files { rain | wind | hush | water: '/user/files/…' }
     // 3.1.0 스타일: 내 스타일 목록 [{ id, name, data }] · 캐릭터 연결 { 'c:아바타' | 'g:그룹': 스타일 id } · 지금 입힌 캐릭터 스타일 { id, key } · 그 전 원래 모습 (styles.js · charstyle.js)
     styles: [],
     charStyles: {},
@@ -740,7 +740,7 @@ export function saveSettings() {
 // 내 글꼴 · 본 공지 · 내 스타일 · 캐릭터 연결은 늘 남긴다 (입혀 둔 캐릭터 스타일 상태는 비움)
 const RESET_GROUPS = { addons: ['addons', 'addonUI'], tools: ['wordTools', 'captureTools'], library: ['frameLibrary', 'customPalettes', 'weatherImages'] };
 // 테마 모습이 아닌 쓰는 방식(켬 · 사용 모드 · 잠금 · 자동 화이트/나이트 · 한 손 · 몰입 읽기 · 백그라운드 창 · 알림 · 다른 CSS)은 '테마 모습' 초기화에 남긴다
-const RESET_KEEP = ['appearanceHistory', 'customFonts', 'noticeSeen', 'updateCheck', 'styles', 'charStyles', 'promptBinds', 'promptLink', 'headSwitches', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify'];
+const RESET_KEEP = ['appearanceHistory', 'customFonts', 'noticeSeen', 'updateCheck', 'styles', 'charStyles', 'promptBinds', 'promptLink', 'headSwitches', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify', 'sceneSound'];
 export function resetSettings(groups = { look: true }) {
     const ext = SillyTavern.getContext().extensionSettings;
     const old = ext[KEY] || {};

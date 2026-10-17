@@ -4,6 +4,7 @@ import { getSettings, saveSettings } from './settings.js';
 import { replaceText, importRuleSets } from './word-tools-core.js';
 import { captureOptionsMarkup, bindCaptureOptions, openCapturePreview } from './capture-options.js';
 import { wordMaskModule } from './features.js';
+import { ask, attachUndo } from './ask.js';
 import { notifyRerender } from './rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe)
 let wordMask=null; // 6.0.4 잠시 가리기 모듈 — 스위치를 켤 때 처음 불러온다 (wordmask.js). 안 켜면 파일도 안 받는다
 const loadMask=async()=>wordMask??=await wordMaskModule();
@@ -131,6 +132,10 @@ async function applyTransaction(transaction, reverse=false) {
         // not turn a successful edit into a failure and discard its undo record.
         try { ctx.updateMessageBlock(row.id,row.message);if((reverse?row.before:row.after).display===undefined)await ctx.eventSource.emit(ctx.eventTypes.MESSAGE_UPDATED,row.id);else await notifyRerender(row.id); }   // 6.5.2 번역문까지 바꾼 줄도 헬퍼에 알린다 (번역기는 이 알림을 건너뛴다)
         catch(error) { console.warn('[Blue Lemonade] 저장 후 화면 갱신',error); }
+        // 7.0.2 원문(mes)이 바뀐 줄은 번역 유무와 상관없이 일반 다리 이벤트로도 알린다 — 번역된 줄은 위에서 MESSAGE_UPDATED 를 못 보내므로
+        //       (실리태번 기본 번역 확장이 그 이벤트에 번역문을 지운다) 글 바뀜을 듣는 확장(기억 · 요약 등)이 이것을 들으면 된다. 번역문만 바뀐 줄은 안 보낸다
+        const was=(reverse?row.after:row.before).mes,now=(reverse?row.before:row.after).mes;
+        if(was!==now)try{document.dispatchEvent(new CustomEvent('blue-lemonade:message-text-changed',{detail:{messageId:row.id,before:was,after:now,by:'word-tools'}}));}catch{/* 알림은 적용을 막지 않는다 */}
     }
 }
 export function bindWordTools(root, refresh) {
@@ -190,9 +195,23 @@ export function bindWordTools(root, refresh) {
             if(['load-preset','delete-preset'].includes(action)) {
                 const id=section.querySelector('[data-word-preset]').value,preset=cfg.presets.find(p=>p.id===id);
                 if(!preset)throw userError('프리셋을 먼저 선택해 주세요.');
-                if(action==='delete-preset'){cfg.presets=cfg.presets.filter(p=>p.id!==id);if(getSettings().captureTools.preset===id)getSettings().captureTools.preset='';}
-                else{for(const key of ['rules','caseSensitive','wholeWords','particles'])cfg[key]=structuredClone(preset[key]);invalidate();}
+                // 7.0.2 지우기는 묻고(붉은 단추) · 불러오기는 저장 안 한 지금 규칙을 덮기 전에 묻고 ↶ 로 되돌릴 수 있게 (ask.js)
+                const keys=['rules','caseSensitive','wholeWords','particles'];
+                if(action==='delete-preset'){
+                    if(!await ask(`치환 프리셋 「${preset.name}」을 지울까요?`,{ok:'지우기',danger:true}))return;
+                    const at=cfg.presets.indexOf(preset),capture=getSettings().captureTools,wasCapture=capture.preset===id;
+                    cfg.presets=cfg.presets.filter(p=>p.id!==id);if(wasCapture)capture.preset='';
+                    saveSettings();refresh();
+                    attachUndo(globalThis.toastr?.info?.(`「${preset.name}」을 지웠어요.`,'Blue Lemonade'),()=>{const list=getSettings().wordTools.presets;if(!list.some(p=>p.id===id))list.splice(Math.min(at,list.length),0,preset);if(wasCapture&&!getSettings().captureTools.preset)getSettings().captureTools.preset=id;saveSettings();refresh();});
+                    return;
+                }
+                const before=Object.fromEntries(keys.map(key=>[key,structuredClone(cfg[key])]));
+                const unsaved=(cfg.rules??[]).some(rule=>String(rule?.from??'').trim())&&!cfg.presets.some(p=>JSON.stringify(keys.map(key=>p[key]))===JSON.stringify(keys.map(key=>cfg[key])));
+                if(unsaved&&!await ask(`지금 규칙을 프리셋 「${preset.name}」 규칙으로 바꿀까요?
+지금 규칙은 프리셋으로 저장돼 있지 않아요.`,{ok:'바꾸기'}))return;
+                for(const key of keys)cfg[key]=structuredClone(preset[key]);invalidate();
                 saveSettings();
+                if(unsaved){refresh();attachUndo(globalThis.toastr?.info?.(`「${preset.name}」 규칙을 불러왔어요.`,'Blue Lemonade'),()=>{const now=getSettings().wordTools;for(const key of keys)now[key]=structuredClone(before[key]);invalidate();saveSettings();refresh();});return;}
             }
             if(action==='add'){cfg.rules.push({from:'',to:'',enabled:true});saveSettings();}
             if(action==='none')selected.clear();
