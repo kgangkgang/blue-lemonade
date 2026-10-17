@@ -1,4 +1,5 @@
 // Curated everyday effects. Sources, licenses and changes: ../sfx-extra/SOURCES.json.
+// 1.9.8 levelDb: 효과음 크기 맞추기(sfx.normalize)의 목표보다 이만큼 작게 — 비 세 단계(가볍게 −10 · 보통 −6 · 쏟아짐 −2)가 맞춘 뒤에도 구분되게
 const rows = [
   {
     "id": "daily_cat_purr",
@@ -113,8 +114,37 @@ const rows = [
     }
   },
   {
+    "id": "daily_rain_light",
+    "name": "가볍게 내리는 비",
+    "category": "자연·날씨",
+    "words": [
+      "가랑비",
+      "이슬비",
+      "보슬비",
+      "부슬비",
+      "비가 살짝",
+      "비가 조금",
+      "비가 잦아들",
+      "비가 약해",
+      "빗줄기가 가늘어",
+      "drizzle",
+      "drizzling",
+      "light rain"
+    ],
+    "assetPath": "../sfx-extra/daily_rain_light.mp3",
+    "custom": false,
+    "loop": false,
+    "levelDb": -10,
+    "credit": {
+      "author": "Joseph SARDIN",
+      "source": "https://bigsoundbank.com/rain-and-thunder-in-a-tent-s0820.html",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  {
     "id": "daily_rain",
-    "name": "물웅덩이에 내리는 비",
+    "name": "비 내리는 소리",
     "category": "자연·날씨",
     "words": [
       "빗소리",
@@ -128,9 +158,41 @@ const rows = [
     "assetPath": "../sfx-extra/daily_rain.mp3",
     "custom": false,
     "loop": false,
+    "levelDb": -6,
+    "credit": {
+      "author": "Pierre SIBANARCO",
+      "source": "https://bigsoundbank.com/rain-under-an-umbrella-s2679.html",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  {
+    "id": "daily_rain_heavy",
+    "name": "쏟아지는 비",
+    "category": "자연·날씨",
+    "words": [
+      "장대비",
+      "폭우",
+      "소나기",
+      "억수같이",
+      "억수 같은 비",
+      "비가 쏟아",
+      "비가 퍼붓",
+      "퍼붓는 비",
+      "비가 거세",
+      "비가 세차",
+      "빗줄기가 굵어",
+      "downpour",
+      "heavy rain",
+      "pouring rain"
+    ],
+    "assetPath": "../sfx-extra/daily_rain_heavy.mp3",
+    "custom": false,
+    "loop": false,
+    "levelDb": -2,
     "credit": {
       "author": "Joseph SARDIN",
-      "source": "https://bigsoundbank.com/rain-on-puddle-s1290.html",
+      "source": "https://bigsoundbank.com/sound-s1294.html",
       "license": "CC0-1.0",
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
     }

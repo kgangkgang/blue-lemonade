@@ -14,6 +14,16 @@ export const SCENE_SOUND_DEFAULTS = Object.freeze({ on: false, volume: 40, thund
 export const FILE_URL = /^\/?user\/files\/[A-Za-z0-9_.-]+\.(mp3|ogg|oga|wav|m4a|aac|webm|flac|opus)$/i;
 export const FILE_EXT = /\.(mp3|ogg|oga|wav|m4a|aac|webm|flac|opus)$/i;
 export const FILE_MAX_BYTES = 12 * 1024 * 1024;
+/** 6.9.9 빗소리 세기: 날씨 효과의 양(weatherAmount 0~200, 옛 세 단계 55 · 100 · 170)으로 가볍게 · 보통 · 쏟아짐.
+ *  TTS 효과음 비 세 단계(가볍게 내리는 비 · 비 내리는 소리 · 쏟아지는 비)와 같은 이름 */
+export const RAIN_LEVELS = Object.freeze(['light', 'medium', 'heavy']);
+export function rainLevel(amount) {
+    const n = Number(amount);
+    if (!Number.isFinite(n)) return 'medium';
+    return n < 70 ? 'light' : n > 135 ? 'heavy' : 'medium';
+}
+/** 내 빗소리 파일은 소리를 바꿀 수 없으니 크기만 세기에 맞춘다 (배율) */
+export const RAIN_FILE_GAIN = Object.freeze({ light: 0.55, medium: 1, heavy: 1.3 });
 /** 페이드 길이(초): 켤 때 · 종류가 바뀔 때 1.5초 크로스페이드, 끌 때 1.2초 페이드아웃, 숨은 탭에서 쉬게 할 때 0.6초 */
 export const FADE = Object.freeze({ in: 1.5, swap: 1.5, out: 1.2, hide: 0.6 });
 

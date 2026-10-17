@@ -126,12 +126,12 @@ await test('HTML in attribution stays text and only sanitized links enter the DO
     const all = node => [node,...(node.childNodes || []).flatMap(all)], nodes = all(node);
     assert.ok(nodes.some(x => x.textContent === '<svg onload=alert(2)> · <script>x</script>')); assert.equal(nodes.filter(x => x.tagName === 'a').length, 1); assert.equal(nodes.find(x => x.tagName === 'a').href, valid.licenseUrl); assert.equal(nodes.filter(x => ['script','img','svg'].includes(x.tagName)).length, 0);
 });
-await test('all 42 reviewed everyday files agree with the runtime catalog and actual audio bytes', async () => {
+await test('all 44 reviewed everyday files agree with the runtime catalog and actual audio bytes', async () => {
     const folder=path.join(root,'../sfx-extra');
     const source=JSON.parse(fs.readFileSync(path.join(folder,'SOURCES.json'),'utf8'));
     const {DAILY_SFX}=await mod('sfx-daily.js');
-    assert.equal(source.files.length,42);assert.equal(DAILY_SFX.length,42);
-    assert.equal(L.listSfx().filter(x=>!x.custom).length,88);   // 6.2.5 군화 발소리(footsteps)를 뺐다 — 파일 · 출처 기록은 그대로
+    assert.equal(source.files.length,44);assert.equal(DAILY_SFX.length,44);   // 1.9.8 비 세 단계(+2)
+    assert.equal(L.listSfx().filter(x=>!x.custom).length,90);   // 6.2.5 군화 발소리(footsteps)를 뺐다 — 파일 · 출처 기록은 그대로
     assert.ok(!L.listSfx().some(x=>x.id==='footsteps') && !L.isSfxEnabled('footsteps') && L.getSfx('footsteps'));
     assert.deepEqual(new Set(source.files.map(x=>x.id)),new Set(DAILY_SFX.map(x=>x.id)));
     for(const row of source.files) {
@@ -156,8 +156,8 @@ await test('all 42 reviewed everyday files agree with the runtime catalog and ac
 await test('visible attribution gives current totals and includes all six new recorders', async () => {
     const {ttsCreditsHtml,ttsCreditsSummaryHtml}=await import(pathToFileURL(path.join(root,'../credits.js')).href);
     const full=ttsCreditsHtml(),summary=ttsCreditsSummaryHtml();
-    assert.match(full,/총 89개/);assert.match(full,/추가 효과음 42개/);assert.match(full,/freesound 효과음 18개/);assert.match(summary,/효과음 89개/);assert.match(summary,/freesound 18/);
+    assert.match(full,/총 91개/);assert.match(full,/추가 효과음 44개/);assert.match(full,/freesound 효과음 18개/);assert.match(summary,/효과음 91개/);assert.match(summary,/freesound 18/);
     for(const author of ['Andy Jack','JonasTisell','khenshom','SamuelGremaud','jmehlferber','XxBirdoxX','dr19','renrenrenrenren','aobowser','SpliceSound','MrFossy']) assert.ok(full.includes(author),author);
-    assert.doesNotMatch(full,/총 81개|총 87개|총 88개|추가 효과음 34개|추가 효과음 40개|추가 효과음 41개|freesound 효과음 16개|freesound 효과음 17개|DeVern\(꿀꺽/);
+    assert.doesNotMatch(full,/총 81개|총 87개|총 88개|총 89개|추가 효과음 42개|추가 효과음 34개|추가 효과음 40개|추가 효과음 41개|freesound 효과음 16개|freesound 효과음 17개|DeVern\(꿀꺽/);
 });
 console.log(`${passed} attribution groups passed`);

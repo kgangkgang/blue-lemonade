@@ -12,7 +12,8 @@
 //
 // 폰: 소리판(AudioContext)은 첫 터치 · 키 입력에서 깨운다. 탭이 숨으면 설정(background, 기본 켬)대로 계속 두거나 쉬게 한다.
 //   계속 둘 때도 천둥 타이머는 멈춘다(숨은 탭의 타이머는 느리다 · 처리 줄이기). 백그라운드 창(background-window.js)의 무음과는 별개 소리판이라 서로 건드리지 않는다.
-import { tidySceneSound, effectiveModes, soundFor, ambientKinds, coversSfx, crossfadePlan, masterGain, thunderGap, FADE, KINDS } from './scene-sound-rules.js';
+import { tidySceneSound, effectiveModes, soundFor, ambientKinds, coversSfx, crossfadePlan, masterGain, thunderGap, FADE, KINDS, rainLevel } from './scene-sound-rules.js';
+import { weatherAmount } from './weather-options.js';   // 6.9.9 날씨 양 → 빗소리 세기
 import { buildVoice, strikeThunder } from './scene-sound-synth.js';
 
 export const AMBIENT = Symbol.for('blue-lemonade.ambient');
@@ -158,9 +159,10 @@ function loadBuffer(url) {
 }
 
 // ───────── 고르기 · 틀기 ─────────
-async function play(kind) {
+async function play(kind, level = '') {
     const url = kind ? cfg.files[kind] || '' : '';
-    if (active && active.kind === kind && active.url === url) { resumeContext(); return; }
+    level = kind === 'rain' ? level || 'medium' : '';   // 6.9.9 빗소리 세기 (가볍게 · 보통 · 쏟아짐) — 바뀌면 크로스페이드로 갈아 낀다
+    if (active && active.kind === kind && active.url === url && (active.level || '') === level) { resumeContext(); return; }
     if (!kind) {
         const token = ++loading;
         if (active) { fadeOut(active, FADE.out); active = null; stopThunder(); signal(); }
@@ -174,9 +176,9 @@ async function play(kind) {
         if (token !== loading) return;   // 그 사이 다른 소리로 바뀜
     }
     let voice;
-    try { voice = buildVoice(ctx, kind, { buffer }); } catch (error) { console.warn('[Blue Lemonade] 장면 소리', error); return; }
+    try { voice = buildVoice(ctx, kind, { buffer, level: level || undefined }); } catch (error) { console.warn('[Blue Lemonade] 장면 소리', error); return; }
     voice.gain.connect(master);
-    const entry = { voice, kind, url: buffer ? url : '', since: host.now() };
+    const entry = { voice, kind, level, url: buffer ? url : '', since: host.now() };
     const swap = !!active;
     if (active) fadeOut(active, FADE.swap);
     active = entry;
@@ -204,7 +206,8 @@ function decide() {
         if (!wanted.on || !wanted.weatherOn || resting) return play(null);
         const now = wanted.weatherChat;
         if (now?.weather !== chat?.weather || now?.weather2 !== chat?.weather2) return decide();   // 트래커를 읽는 사이 날씨 설정이 바뀜 — 새 값으로 다시 (옛 날씨로 끄거나 틀지 않게)
-        return play(soundFor(effectiveModes(chat, current)));
+        const kind = soundFor(effectiveModes(chat, current));
+        return play(kind, kind === 'rain' ? rainLevel(now?.amount) : '');
     })();
     return deciding;
 }
@@ -242,7 +245,7 @@ export function syncSceneSound(on, raw, weatherChat = null, weatherOn = false) {
     const next = tidySceneSound(raw);
     const volumeChanged = next.volume !== cfg.volume, thunderChanged = next.thunder !== cfg.thunder;
     cfg = next;
-    wanted = { on: !!on, weatherOn: !!weatherOn, weatherChat: weatherChat ? { weather: weatherChat.weather, weather2: weatherChat.weather2 } : null };
+    wanted = { on: !!on, weatherOn: !!weatherOn, weatherChat: weatherChat ? { weather: weatherChat.weather, weather2: weatherChat.weather2, amount: weatherAmount(weatherChat.weatherAmount, weatherChat.weatherLevel) } : null };
     if (master && volumeChanged) ramp(master.gain, master.gain.value, masterGain(cfg.volume), ctx.currentTime, ctx.currentTime + 0.12);
     if (!wanted.on) { resting = false; stopThunder(); return play(null); }
     bindDocument();

@@ -2,6 +2,8 @@
 // 모든 소리의 재료는 4초짜리 흰 잡음 버퍼 하나(소리판마다 한 번 만들어 둔다). 필터 · 느린 LFO 로 결을 낸다.
 // 타이머에 기대지 않는다(숨은 탭에서 타이머가 느려져도 소리가 끊기지 않게) — 천둥만 호출하는 쪽(scene-sound.js)이 때를 정한다.
 // 순수하게 소리판(AudioContext 모양)만 받는다 → 시험은 가짜 소리판으로 (tools/tests/scene-sound.mjs).
+import { RAIN_FILE_GAIN } from './scene-sound-rules.js';   // 6.9.9 내 빗소리 파일의 세기별 크기
+
 const buffers = new WeakMap();   // ctx → 잡음 버퍼
 const SECONDS = 4;
 
@@ -46,7 +48,14 @@ export const TRIM = Object.freeze({ rain: 1, wind: 0.9, hush: 0.5, water: 0.9, f
 
 /** 목소리 하나: { kind, gain(출구 GainNode — 호출하는 쪽이 마스터에 잇는다), start(at), stop(at), nodes, file }
  *  buffer 를 주면 합성 대신 그 소리(내 파일)를 끊김 없이 반복한다 */
-export function buildVoice(ctx, kind, { buffer = null } = {}) {
+/** 6.9.9 빗소리 세기별 합성 값 — 몸통(쏴아) 크기 · 차단 · 빗방울 띠 크기 · 흔들림 · 전체 크기(trim 배율). 가볍게는 작고 부드럽게(높은 결을 줄임), 쏟아짐은 크고 빽빽하게 */
+export const RAIN_SYNTH = Object.freeze({
+    light: Object.freeze({ body: 0.55, low: 800, patter: 0.16, band: 2200, wobble: 0.6, trim: 0.55 }),
+    medium: Object.freeze({ body: 0.85, low: 1000, patter: 0.36, band: 2600, wobble: 1, trim: 1 }),
+    heavy: Object.freeze({ body: 1.1, low: 1400, patter: 0.55, band: 3000, wobble: 1.3, trim: 1.35 }),
+});
+export function buildVoice(ctx, kind, { buffer = null, level = 'medium' } = {}) {
+    const rain = RAIN_SYNTH[level] || RAIN_SYNTH.medium;
     const out = gain(ctx, 0);   // 페이드는 scene-sound.js 가 이 게인에 건다 (0 에서 시작)
     const nodes = [out], sources = [], oscs = [];
     const chain = (...list) => { for (let i = 0; i < list.length - 1; i++) list[i].connect(list[i + 1]); nodes.push(...list.filter(n => !nodes.includes(n))); };
@@ -57,11 +66,11 @@ export function buildVoice(ctx, kind, { buffer = null } = {}) {
         const noise = noiseBuffer(ctx);
         if (kind === 'rain') {
             // 몸통: 낮게 깔리는 쏴아 + 결: 높은 띠를 느린 LFO 두 개로 흔들어 빗방울이 고르지 않게
-            const body = source(ctx, noise), low = filter(ctx, 'lowpass', 1000, 0.4), bodyGain = gain(ctx, 0.85);
+            const body = source(ctx, noise), low = filter(ctx, 'lowpass', rain.low, 0.4), bodyGain = gain(ctx, rain.body);
             chain(body, low, bodyGain, out);
-            const patter = source(ctx, noise, 1.17, 1.3), band = filter(ctx, 'bandpass', 2600, 0.9), patterGain = gain(ctx, 0.36);
+            const patter = source(ctx, noise, 1.17, 1.3), band = filter(ctx, 'bandpass', rain.band, 0.9), patterGain = gain(ctx, rain.patter);
             chain(patter, band, patterGain, out);
-            const [o1, a1] = lfo(ctx, 0.37, 0.11, patterGain.gain), [o2, a2] = lfo(ctx, 2.3, 0.06, patterGain.gain);
+            const [o1, a1] = lfo(ctx, 0.37, 0.11 * rain.wobble, patterGain.gain), [o2, a2] = lfo(ctx, 2.3, 0.06 * rain.wobble, patterGain.gain);
             sources.push(body, patter); oscs.push(o1, o2); nodes.push(o1, a1, o2, a2);
         } else if (kind === 'wind' || kind === 'hush') {
             // 바람: 띠 필터의 중심을 천천히 옮기고(쉬이— 쉬이—) 크기도 다른 박자로 흔들어 돌풍처럼. 낮은 바람(눈 · 안개)은 더 낮고 작고 느리게
@@ -83,7 +92,8 @@ export function buildVoice(ctx, kind, { buffer = null } = {}) {
     }
     let started = false, stopped = false;
     return {
-        kind, gain: out, file: !!buffer, trim: buffer ? TRIM.file : TRIM[kind], nodes: nodes.length,
+        kind, level: kind === 'rain' ? (RAIN_SYNTH[level] ? level : 'medium') : '', gain: out, file: !!buffer,
+        trim: kind === 'rain' ? (buffer ? TRIM.file * (RAIN_FILE_GAIN[level] ?? 1) : TRIM.rain * rain.trim) : buffer ? TRIM.file : TRIM[kind], nodes: nodes.length,
         start(at = ctx.currentTime) {
             if (started) return; started = true;
             for (const src of sources) src.start(at, src._offset || 0);

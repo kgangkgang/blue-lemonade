@@ -170,10 +170,12 @@ await test('배선: setSession 은 mediaCard(job, cardEnv()) 로 · 목소리 �
     assert.match(player, /const narratorMes = !mes\.is_user && mes\.extra\?\.type === 'narrator' && isNarratorName\(mes\.name\);/);
     assert.match(player, /function isNarratorName\(name\) \{[\s\S]*?narrator_name[\s\S]*?\n\}/);
     assert.match(player, /if \(narratorMes && source === 'sender' && route === 'character'\) route = 'narrator';/);
-    assert.match(read('src/addons/tts/manifest.json'), /"version": "1\.9\.7"/);
-    assert.match(read('src/addons/tts/version.js'), /TTS_VERSION = '1\.9\.7'/);
-    assert.match(read('src/addons/tts/style.css'), /--lv-css-version: "1\.9\.7"/);
-    assert.match(read('src/addons/tts/README.md'), /^# TTS 1\.9\.7/);
+    // 판: 1.9.7 이상 (이 기능이 들어간 판 — 뒤 판에서 깨지지 않게 1.9.7 절이 README 에 남아 있는지로 본다)
+    const v = /TTS_VERSION = '(\d+)\.(\d+)\.(\d+)'/.exec(read('src/addons/tts/version.js')).slice(1).map(Number);
+    assert.ok(v[0] > 1 || (v[0] === 1 && (v[1] > 9 || (v[1] === 9 && v[2] >= 7))), v.join('.'));
+    assert.match(read('src/addons/tts/manifest.json'), new RegExp(`"version": "${v.join('\.')}"`));
+    assert.match(read('src/addons/tts/style.css'), new RegExp(`--lv-css-version: "${v.join('\.')}"`));
+    assert.match(read('src/addons/tts/README.md'), /^## 1\.9\.7 잠금화면 카드/m);
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/tts-media-card\.mjs \./);
 });
 

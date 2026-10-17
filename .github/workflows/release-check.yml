@@ -108,6 +108,7 @@ jobs:
           node tools/tests/perf-request-label.mjs .
           node tools/tests/tts-ambient-skip.mjs .
           node tools/tests/tts-color-rename.mjs .
+          node tools/tests/tts-rain-levels.mjs .
           node tools/tests/modelswitch-fallback-pick.mjs .
           node tools/tests/tts-integration.mjs .
           node tools/tests/tts-dethump.mjs .

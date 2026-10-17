@@ -5,7 +5,7 @@
    ===== */
 /* ===== 미리보기 자동 생성 (surfaces:preview) =====
    tools/gen-preview-css.js 가 #chat 규칙을 여기 복사한다 — 손으로 고치지 말 것.
-   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 458개 (163.6KB).
+   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 460개 (164.5KB).
    style.css 의 채팅 · 에셋 규칙을 고치면 `node tools/gen-preview-css.js` 를 다시 돌린다.
    이 칸을 다른 자리로 옮기지 말 것: 사본이 손으로 쓴 채팅 규칙보다 뒤에 있어야 같은 무게에서 이기고,
    바로 뒤의 보정 칸이 사본을 눌러 줄 수 있다. 앞으로 옮기면 아바타 모서리처럼 순서로만 갈리는 것이 뒤집힌다 */
@@ -367,6 +367,17 @@ body.salty :is(#salty-nochat, .salty-preview) .mes_text details[class*="custom-d
 body.salty :is(#salty-nochat, .salty-preview) .mes_text details[class*="custom-dem-card"] * {
   border-color: transparent !important;
 }
+body.salty :is(#salty-nochat, .salty-preview) #show_more_messages {
+  margin: var(--bl-s2) auto;
+  padding: var(--bl-s2) var(--bl-s4);
+  border-radius: var(--bl-r-sm);
+  background: var(--bl-fill-card, var(--bl-card));
+  box-shadow: var(--bl-e1);
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-sub);
+  font-weight: 500;
+  line-height: 1.4;
+}
 body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text {
   margin: 0 !important;
   padding: 0 !important;
@@ -675,6 +686,24 @@ body.salty.salty-user-table :is(#salty-nochat, .salty-preview) .mes[is_user="tru
 }
 body.salty.salty-indent :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .mes_text :is(p, details.custom-llm-translator-details, details.llm-translator-details) .bl-dialogue-indent {
   width: calc(var(--salty-size) * var(--salty-user-scale, 1));
+}
+body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text > .llmt-progress {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 var(--bl-s1);
+  padding: 1px var(--bl-s2);
+  border-radius: var(--bl-r-pill);
+  background: var(--bl-fill-card, var(--bl-card));
+  color: var(--salty-muted);
+  font-size: var(--bl-fs-micro);
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: top;
+  opacity: 1;
+  pointer-events: none;
 }
 body.salty :is(#salty-nochat, .salty-preview) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :is(.custom-cac-wrap, [class*="custom-imageWrapper"], .autopic-tag-img-wrapper, .autopic-media-owner .mes_img_container) {
   display: block;

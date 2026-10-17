@@ -6,6 +6,10 @@
 //       생활 소음 — 음원 없이 합성 (걸러 낸 잡음 + 낮은 웅웅거림 + 가끔 짧은 사건음). 말소리보다 늘 작고, 말하는 동안 더 줄어든다.
 //       화면이 숨으면 멈췄다가 돌아오면 다시 깔린다. stop() 하면 바로 조용해지고 노드 · 타이머가 모두 풀린다.
 //   suggestScene(text) → 'subway' | 'bus' | … | ''   글 속 낱말로 배경 추천 (마지막에 나온 장소)
+//   1.9.8 ambience(ctx, { scene: 'rain', rain: 'light' | 'medium' | 'heavy' }) — 비 오는 날의 세기 (가볍게: 작고 천둥 없음 · 쏟아짐: 크고 빗방울 많음)
+//   rainLevelOf(text) → 'light' | 'medium' | 'heavy' | ''   글 속 비 낱말로 세기 (마지막에 나온 것 · 비 낱말이 없으면 '') — 낱말은 TTS 효과음 비 세 단계와 같은 표
+
+import { DAILY_SFX } from './sfx-daily.js';   // 1.9.8 비 세기 낱말 (가볍게 내리는 비 · 쏟아지는 비 효과음과 같은 표)
 
 export const FILTERS = Object.freeze([
     { id: 'phone', label: '휴대폰' },
@@ -193,6 +197,13 @@ const BED_TRIM = {
     rain: { '': 20.3, phone: 23.6, radio: 25, speaker: 21.9 },
     room: { '': 23.5, phone: 34, radio: 34, speaker: 30 },
 };
+/** 1.9.8 비 오는 날의 세기: 크기(dB) · 쏴아(hiss) · 웅웅(body) · 빗방울(drops) 배율 · 위쪽 차단 · 천둥 여부 */
+export const RAIN_BED = Object.freeze({
+    light: Object.freeze({ db: -6, hiss: 0.55, body: 0.6, drops: 0.45, top: 5200, thunder: false }),
+    medium: Object.freeze({ db: 0, hiss: 1, body: 1, drops: 1, top: 7000, thunder: true }),
+    heavy: Object.freeze({ db: 3, hiss: 1.5, body: 1.35, drops: 1.7, top: 9000, thunder: true }),
+});
+export const RAIN_LEVELS = Object.freeze(Object.keys(RAIN_BED));
 const SCENE_DEF = {
     subway: {
         bed(b, out) {
@@ -241,10 +252,10 @@ const SCENE_DEF = {
         event: (ctx, out, t, r) => (r() < 0.8 ? clink(ctx, out, t, 1 + (r() - 0.5) * 0.1) : hissBurst(ctx, out, t, 2000, 1.4, 0.012)),
     },
     rain: {
-        bed(b, out) {
-            b.loop('white', 1).connect(b.filter('highpass', 900)).connect(b.filter('lowpass', 7000)).connect(b.gain(0.11)).connect(out);
-            b.loop('brown', 1).connect(b.filter('lowpass', 400)).connect(b.gain(0.4)).connect(out);
-            b.loop('drops', 1).connect(b.filter('bandpass', 3000, 0.9)).connect(b.gain(0.18)).connect(out);
+        bed(b, out, rain = RAIN_BED.medium) {
+            b.loop('white', 1).connect(b.filter('highpass', 900)).connect(b.filter('lowpass', rain.top)).connect(b.gain(0.11 * rain.hiss)).connect(out);
+            b.loop('brown', 1).connect(b.filter('lowpass', 400)).connect(b.gain(0.4 * rain.body)).connect(out);
+            b.loop('drops', 1).connect(b.filter('bandpass', 3000, 0.9)).connect(b.gain(0.18 * rain.drops)).connect(out);
         },
         every: [40, 90],
         event: (ctx, out, t) => thunder(ctx, out, t),
@@ -336,7 +347,7 @@ function thunder(ctx, out, t) {
  * band: 목소리 필터 id 를 주면 배경도 같은 전화선 대역을 지난다 (상대 쪽 소리가 전화로 들리듯).
  * timers: 시험용 { set, clear } (기본 setTimeout). hidden: 화면 숨김 여부 함수 (기본 document.hidden).
  */
-export function ambience(ctx, { scene = 'room', level = 0.4, band = '', amount = 0.7, destination = null, seed = 1, timers = null, hidden = null, watchVisibility = true } = {}) {
+export function ambience(ctx, { scene = 'room', level = 0.4, band = '', amount = 0.7, destination = null, seed = 1, timers = null, hidden = null, watchVisibility = true, rain = 'medium' } = {}) {
     const def = SCENE_DEF[scene];
     if (!def) throw new Error(`모르는 배경이에요: ${scene}`);
     const T = timers || { set: (f, ms) => setTimeout(f, ms), clear: id => clearTimeout(id) };
@@ -346,7 +357,8 @@ export function ambience(ctx, { scene = 'room', level = 0.4, band = '', amount =
     const master = outer.gain(0);
     const trims = BED_TRIM[scene];
     const bandId = BANDS[band] ? band : '';
-    const bus = outer.gain(dbToGain(trims[''] + (bandId ? (trims[bandId] - trims['']) * ease(clamp01(amount)) : 0) + (def.quiet || 0)));
+    const rainBed = scene === 'rain' ? RAIN_BED[rain] || RAIN_BED.medium : null;   // 1.9.8 비 세기
+    const bus = outer.gain(dbToGain(trims[''] + (bandId ? (trims[bandId] - trims['']) * ease(clamp01(amount)) : 0) + (def.quiet || 0) + (rainBed?.db || 0)));
     let tail = master;
     const wire = bandNodes(outer, ctx, band, amount);
     if (wire) { master.connect(wire.input); tail = wire.output; }
@@ -356,7 +368,7 @@ export function ambience(ctx, { scene = 'room', level = 0.4, band = '', amount =
     const target = () => (lvl <= 0 ? 0 : dbToGain(LEVEL_DB[0] + (LEVEL_DB[1] - LEVEL_DB[0]) * lvl + (ducked ? DUCK_DB : 0)));
     const glide = (v, tc = 0.12) => { const now = ctx.currentTime; master.gain.cancelScheduledValues(now); master.gain.setTargetAtTime(v, now, tc); };
     const schedule = () => {
-        if (!def.every || stopped || !layers) return;
+        if (!def.every || stopped || !layers || (rainBed && !rainBed.thunder)) return;   // 가볍게 내리는 비엔 천둥 없음
         const [a, z] = def.every;
         timer = T.set(() => {
             timer = null;
@@ -368,7 +380,7 @@ export function ambience(ctx, { scene = 'room', level = 0.4, band = '', amount =
     const up = () => {
         if (layers || stopped) return;
         layers = bag(ctx);
-        def.bed(layers, bus);
+        def.bed(layers, bus, rainBed || undefined);
         layers.start(ctx.currentTime);
         glide(target(), 0.6);   // 서서히 깔린다
         schedule();
@@ -409,10 +421,31 @@ const HINTS = [
     ['subway', /지하철|전철|지하철역|승강장|스크린도어|환승|\bsubway\b|\bmetro\b|\bplatform\b|\bunderground\b/gi],
     ['bus', /버스|정류장|\bbus\b|\bbus stop\b/gi],
     ['cafe', /카페|커피숍|커피 ?전문점|\bcaf[eé]\b|\bcoffee ?shop\b/gi],
-    ['rain', /(?<![가-힣])비가 (?:와|오|내리|쏟)|(?<![가-힣])비 오는|빗소리|빗줄기|빗방울|소[나]기|장맛비|우산을|\braining\b|\brain\b|\bdownpour\b/gi],
+    ['rain', /(?<![가-힣])비가 (?:와|오|내리|쏟)|(?<![가-힣])비 오는|빗소리|빗줄기|빗방울|소[나]기|장맛비|장대비|폭우|억수\s?같(?:이|은 비)|가랑비|이슬비|보슬비|부슬비|우산을|\braining\b|\brain\b|\bdownpour\b|\bdrizzl/gi],   // 1.9.8 비 세 단계 낱말도
     ['street', /길거리|거리를 (?:걷|걸)|거리에서|길가|횡단보도|사거리|교차로|\bstreet\b|\bcrosswalk\b|\bsidewalk\b/gi],
     ['room', /방 ?안|침대|이불|자취방|기숙사|\bbedroom\b|\bin bed\b/gi],
 ];
+// 1.9.8 비 세기 낱말: 효과음 「가볍게 내리는 비」 · 「쏟아지는 비」 의 낱말 (낱말 맨 앞부터 맞는 것 — 띄어 쓴 낱말은 이어서)
+const rainWords = id => (DAILY_SFX.find(row => row.id === id)?.words || []).map(w => String(w).toLowerCase());
+// 보통 비는 받침이 바뀐 꼴(내린 · 내렸 · 온 · 왔)도 — 효과음 찾기(sfx-library EXTRA_WORDS)와 같은 낱말
+const RAIN_WORDS = Object.freeze({ light: rainWords('daily_rain_light'), heavy: rainWords('daily_rain_heavy'), medium: [...rainWords('daily_rain'), '비가 내린', '비가 내렸', '비 내린', '비 내렸', '비가 온', '비가 왔'] });
+/** 글 속 비 낱말 → 'light' | 'medium' | 'heavy' (마지막에 나온 것), 비 낱말이 없으면 '' */
+export function rainLevelOf(text) {
+    const words = String(text || '').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(Boolean);
+    let best = '', end = -1, len = 0;
+    for (const [level, list] of Object.entries(RAIN_WORDS)) for (const raw of list) {
+        const phrase = raw.split(/\s+/).filter(Boolean);
+        for (let i = 0; i + phrase.length <= words.length; i++) {
+            if (!phrase.every((part, j) => words[i + j].startsWith(part))) continue;
+            // 뒤에서 끝나는 것 · 같은 자리에서 끝나면 긴 낱말(「heavy rain」 이 「rain」 보다)
+            const stop = i + phrase.length;
+            if (stop > end || (stop === end && phrase.length > len)) { best = level; end = stop; len = phrase.length; }
+        }
+    }
+    if (best) return best;
+    HINTS.find(([id]) => id === 'rain')[1].lastIndex = 0;
+    return HINTS.find(([id]) => id === 'rain')[1].test(String(text || '')) ? 'medium' : '';
+}
 export function suggestScene(text) {
     const s = String(text || '');
     let best = '', at = -1;

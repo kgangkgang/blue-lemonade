@@ -299,7 +299,9 @@ export function sfxLevelTarget() {
 const levelKey = (id, meta, target) => `${id}|${meta?.sha256 || meta?.bytes || ''}|${target}`;
 async function levelledSfxBlob(id, meta, blob) {
     if (!(blob instanceof Blob) || !blob.size || blob.size > LEVEL_MAX_BYTES) return blob;
-    const target = sfxLevelTarget();
+    // 1.9.8 소리별 낮춤(levelDb, 내장 비 세 단계) — 다 같은 목표로 맞추면 가랑비와 장대비가 같은 크기가 된다
+    const lower = Number(meta?.levelDb);
+    const target = Math.max(-40, sfxLevelTarget() + (Number.isFinite(lower) ? Math.max(-24, Math.min(0, lower)) : 0));
     const key = levelKey(id, meta, target);
     const hit = levelCache.get(key);
     if (hit) { hit.at = Date.now(); return hit.blob; }

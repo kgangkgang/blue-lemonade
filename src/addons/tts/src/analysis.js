@@ -245,7 +245,7 @@ function speakerOf(seg, mes, charName, userName) {
 
 const autoSfxEnabled = () => settings().sfx?.enabled === true && settings().sfx?.auto !== false;
 const sceneKind = (seg) => seg?.kind === 'narration' || seg?.kind === 'action';
-const SUSTAINED_SFX = new Set(['daily_keyboard', 'daily_cat_purr', 'daily_faucet', 'daily_stream', 'daily_rain', 'daily_clock', 'daily_water_pour', 'daily_coffee_stir', 'daily_electric_kettle', 'daily_toothbrush', 'daily_spanking', 'daily_licking', 'daily_kissing', 'daily_squelching', 'daily_squelch_pulse', 'daily_bed_creaking', 'daily_gulping', 'daily_heartbeat', 'daily_pen_write', 'daily_fireplace', 'daily_footsteps', 'wind', 'footsteps', 'footsteps_wood', 'footsteps_wet', 'running']);
+const SUSTAINED_SFX = new Set(['daily_keyboard', 'daily_cat_purr', 'daily_faucet', 'daily_stream', 'daily_rain', 'daily_rain_light', 'daily_rain_heavy', 'daily_clock', 'daily_water_pour', 'daily_coffee_stir', 'daily_electric_kettle', 'daily_toothbrush', 'daily_spanking', 'daily_licking', 'daily_kissing', 'daily_squelching', 'daily_squelch_pulse', 'daily_bed_creaking', 'daily_gulping', 'daily_heartbeat', 'daily_pen_write', 'daily_fireplace', 'daily_footsteps', 'wind', 'footsteps', 'footsteps_wood', 'footsteps_wet', 'running']);
 export const canSustainSfx = sound => !!sound && (SUSTAINED_SFX.has(sound.id) || sound.custom === true && sound.loop === true);
 function sfxCatalog() {
     try {
@@ -638,6 +638,8 @@ const SFX_TIMING_HINTS = {
     daily_faucet: ['수도', '손을 씻', '손 씻', 'faucet', 'wash'],
     daily_stream: ['물줄기', '시냇물', '시냇가', 'stream'],
     daily_rain: ['비가', '빗소리', '빗방울', 'rain'],
+    daily_rain_light: ['가랑비', '이슬비', '보슬비', '부슬비', '비가', 'drizzl', 'rain'],
+    daily_rain_heavy: ['장대비', '폭우', '소나기', '억수같이', '비가 쏟아', '비가 퍼붓', '비가', 'downpour', 'pouring rain', 'rain'],
     daily_phone_vibration: ['진동', '휴대폰이', '핸드폰이', '스마트폰이', '휴대전화가', '떨렸', '떨린', 'vibrat', 'buzz'],
     daily_chair_slide: ['의자', 'chair'],
     daily_pen_cap: ['뚜껑', 'pen cap'],
