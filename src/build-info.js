@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.0.6";
+export const BUILD_VERSION = "7.0.7";
 export const FILE_HASHES = {
   "index.js": "19832:e9ecf3ab:d2bfb1ac",
-  "manifest.json": "365:1a84fe30:68b0f44f",
+  "manifest.json": "365:d7d4485f:f55b6df8",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -14,7 +14,7 @@ export const FILE_HASHES = {
   "src/addons/assets/image-format.js": "2669:0698443f:584b41bf",
   "src/addons/assets/index.js": "12539:459e09b3:cb2d5cde",
   "src/addons/assets/names.js": "9929:3ea4496b:669c61d8",
-  "src/addons/assets/panel.js": "93418:0d287910:f13493c2",
+  "src/addons/assets/panel.js": "93529:9a0b49d0:98e06542",
   "src/addons/assets/pick.js": "8862:c6c06646:f2db14b2",
   "src/addons/assets/presets.js": "11896:8a7784a0:89bddb08",
   "src/addons/assets/prompt.js": "8495:90a86c64:11a31aae",
@@ -23,10 +23,10 @@ export const FILE_HASHES = {
   "src/addons/assets/shrink.js": "6234:7afc634a:1c48dca1",
   "src/addons/assets/slots.js": "24529:44d2a119:a5d8cf03",
   "src/addons/assets/spellings.js": "1680:b5844b48:6a297d94",
-  "src/addons/assets/state.js": "17764:b366bb59:74427c90",
+  "src/addons/assets/state.js": "17764:4adbc658:db3026d7",
   "src/addons/assets/store.js": "11646:726203b8:dce33544",
   "src/addons/assets/strip-chat.js": "7097:271fe134:7b8af7af",
-  "src/addons/assets/style.css": "42850:f8ab253c:c8c9cc56",
+  "src/addons/assets/style.css": "43731:368b96e5:2e89c9f8",
   "src/addons/assets/ui.js": "7725:b09405eb:655b68d6",
   "src/addons/assets/viewer.js": "36268:ea103028:f2b22fe6",
   "src/addons/bookmarks/alt-palette.js": "2573:aedaf8a8:640a84d8",
@@ -227,8 +227,8 @@ export const FILE_HASHES = {
   "src/addons/translator/glossary-match.js": "24972:28841d7f:d4d75f0e",
   "src/addons/translator/glossary-suggest.js": "37892:84fb105c:16cf3cc9",
   "src/addons/translator/glossary-sync.js": "4410:86799b24:8d1eafff",
-  "src/addons/translator/index.html": "55508:acfa08f4:80c00732",
-  "src/addons/translator/index.js": "523600:c6241da5:b6e771b2",
+  "src/addons/translator/index.html": "56448:15763074:0cd4eec7",
+  "src/addons/translator/index.js": "525958:1a2f4fb6:142f932b",
   "src/addons/translator/korean-keep.js": "3875:e48e9ac8:e1078d76",
   "src/addons/translator/leftover-fix.js": "19469:fbe00d00:bc47066c",
   "src/addons/translator/menu-visibility.js": "1137:ae729d76:8ea71da6",
@@ -529,7 +529,7 @@ export const FILE_HASHES = {
   "src/modal.js": "1449:da5093fd:8b8c4b3c",
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "263286:a419bb60:e037f1b2",
+  "src/notice-data.js": "264314:67d4588a:e5c48aa3",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -546,7 +546,7 @@ export const FILE_HASHES = {
   "src/prompt-history-label.js": "12929:cfd8025a:2a844a88",
   "src/prompt-link.js": "10963:3a265882:ccf06d8a",
   "src/prompt-tools.js": "9742:e80b5635:728c9d85",
-  "src/promptbind.js": "39694:8d17a913:29731f64",
+  "src/promptbind.js": "41248:8b0060d9:6f7bce90",
   "src/promptlist.js": "9042:9a46e84f:5803940a",
   "src/qrfind.js": "13470:e1b028e2:75206d84",
   "src/readability.js": "4402:c34b7d47:0d00993d",
@@ -651,5 +651,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "37252:989206a6:6181d71d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1514319:53c973de:81945f85"
+  "style.css": "1514319:ce27dd8f:2c10902c"
 };

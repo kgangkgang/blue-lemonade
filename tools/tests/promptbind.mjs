@@ -310,4 +310,37 @@ await test('6.7.5 연동 여러 줄: 줄마다 말 + 카드 여러 장 · 같은
     B.setPromptManager(pm); ctx.extensionSettings.salty.promptLink = { on: false, rows: [] }; ctx.extensionSettings.regex = []; invalidateSettings();
     ctx.characters.splice(2); ctx.characterId = 0;
 });
+await test('7.0.7 다시 그리기를 잃지 않는다: 프리셋 저장 중에 미룬 정규식을 again 이 뒤집으면 한 번 다시 그린다 · 빚은 한 번만 · 맞추는 중 들어온 채팅 열기는 그 계기로', async () => {
+    // 연동된 캐릭터의 채팅을 열 때 프리셋 정규식이 글을 그린 뒤 again 맞추기에서 켜지면, 이미 그린 글이 정규식이 꺼진 모양으로 남았다
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const until = async (cond, ms = 3200) => { for (let t = 0; t < ms && !cond(); t += 50) await sleep(50); };
+    await sleep(1600);   // 앞 시험의 다시 그리기 간격(1.5초) · 미뤄 둔 되맞춤 타이머 밖으로 — 묶음을 만들기 전에
+    ctx.characterId = 0; ctx.chatId = 'chat-a'; ctx.extensionSettings.regex = [];
+    const presetList = [{ id: 'r-tt', scriptName: 'thought colours', disabled: true }];
+    const pmgr = { stored: presetList, getSelectedPresetName: () => 'P', getCompletionPresetByName: n => (n === 'P' ? { extensions: { regex_scripts: pmgr.stored } } : null),
+        readPresetExtensionField: ({ path }) => (path === 'regex_scripts' ? presetList : null), writePresetExtensionField: async () => {} };
+    ctx.getPresetManager = () => pmgr; ctx.reloads = 0;
+    ctx.reloadCurrentChat = async () => { ctx.reloads++; }; ctx.saveChat = async () => {};
+    ctx.extensionSettings.salty.promptBinds = { bluelock_colors: { keys: ['c:haru.png'], regex: ['r-tt'] } }; invalidateSettings();
+    order[2].enabled = true;   // 프롬프트는 이미 맞음 — 정규식만 본다
+    // ① 프리셋 저장 중(저장본 ≠ 지금): 채팅 열기 맞추기는 프리셋 정규식을 미룬다
+    pmgr.stored = [{ id: 'r-tt', disabled: false }];
+    assert.equal(await B.syncPromptBinds('chat'), 0); assert.equal(presetList[0].disabled, true); assert.equal(ctx.reloads, 0);
+    // ② 저장이 끝난 뒤 again 이 뒤집으면 한 번 다시 그린다 (7.0.6 까지는 안 그려 옛 모양으로 남았다)
+    pmgr.stored = presetList;
+    assert.equal(await B.syncPromptBinds('again'), 1); assert.equal(presetList[0].disabled, false);
+    await until(() => ctx.reloads >= 1); assert.equal(ctx.reloads, 1, '빚을 갚아 다시 그린다');
+    // ③ 빚은 한 번만 — 다른 확장이 되돌린 것을 again 이 또 뒤집어도 다시 그리지 않는다 (되돌이표 폭풍 없음)
+    presetList[0].disabled = true;
+    assert.equal(await B.syncPromptBinds('again'), 1); await sleep(1800); assert.equal(ctx.reloads, 1, 'again 은 빚이 없으면 다시 그리지 않는다');
+    // ④ 맞추는 중에 들어온 채팅 열기 → 끝난 뒤 again 이 아니라 chat 으로 다시 맞춘다 (뒤집으면 다시 그림)
+    ctx.characterId = 1; presetList[0].disabled = false; let switched = false;
+    pmgr.writePresetExtensionField = async () => { if (!switched) { switched = true; ctx.characterId = 0; void B.syncPromptBinds('chat'); } };
+    assert.ok(await B.syncPromptBinds('again') >= 1, 'again 이 끈다 (프롬프트 · 정규식, 다시 그리지 않음)');
+    await until(() => ctx.reloads >= 2);
+    assert.equal(presetList[0].disabled, false, '들어온 채팅 열기 맞추기가 다시 켠다'); assert.equal(ctx.reloads, 2, '그 계기(chat)로 다시 그린다');
+    await sleep(800);
+    B.clearBinds('bluelock_colors'); delete ctx.getPresetManager; delete ctx.reloadCurrentChat; delete ctx.saveChat; delete ctx.reloads;
+});
+
 console.log(`\npromptbind: ${passed} passed, 0 failed`);

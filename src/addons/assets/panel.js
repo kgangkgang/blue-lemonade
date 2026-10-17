@@ -197,7 +197,7 @@ function template() {
                 <button type="button" class="eh-icon-btn" data-act="shrink" title="그림 가볍게 만들기" aria-label="그림 가볍게 만들기"><i class="fa-solid fa-compress"></i></button>
                 <button type="button" class="eh-icon-btn" data-act="refresh" title="다시 불러오기" aria-label="다시 불러오기"><i class="fa-solid fa-arrows-rotate"></i></button>
                 <button type="button" class="eh-icon-btn" data-act="redraw" title="채팅 다시 그리기" aria-label="채팅 다시 그리기"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
-                <button type="button" class="eh-icon-btn" data-act="strip-chat" title="이 채팅의 에셋 그림 떼기" aria-label="이 채팅의 에셋 그림 떼기"><i class="fa-solid fa-eraser"></i></button>
+                <button type="button" class="eh-icon-btn eh-icon-btn--labeled" data-act="strip-chat" title="이 채팅의 에셋 그림 떼기" aria-label="이 채팅의 에셋 그림 떼기"><i class="fa-solid fa-eraser" aria-hidden="true"></i><span class="eh-icon-btn-label" aria-hidden="true">에셋 떼기</span></button>
             </div>
 
             <section class="eh-card eh-card--prompt">

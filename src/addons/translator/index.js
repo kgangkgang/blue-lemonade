@@ -275,13 +275,13 @@ const defaultSettings = {
             top_p: 0.99
         },
         google: {
-            max_length: 1000,
+            max_length: 4000,   // 7.0.7: 1000 이면 긴 메시지를 1200자씩 잘라 보내 요청마다 문맥을 다시 샀다
             temperature: 0.7,
             top_k: 0,
             top_p: 0.99
         },
         vertexai: {
-            max_length: 1000,
+            max_length: 4000,   // 7.0.7: 1000 이면 긴 메시지를 1200자씩 잘라 보내 요청마다 문맥을 다시 샀다
             temperature: 0.7,
             top_k: 0,
             top_p: 0.99
@@ -422,6 +422,27 @@ function loadSettings() {
     // 3. OpenRouter 파라미터가 없으면 기본값에서 복사
     if (!extensionSettings.parameters.openrouter) {
         extensionSettings.parameters.openrouter = defaultSettings.parameters.openrouter;
+    }
+
+    // 7.0.7: 공급자 칸 값 되살리기 — 예전엔 위처럼 openrouter · deepseek · custom 만 채워서, google · vertexai 칸이 없던 설정은 설정창이 빈 칸으로 열렸고,
+    //        그 상태에서 다른 값을 바꾸면 빈 칸이 NaN(저장하면 null)으로 굳어 Max Response Length 가 계속 비어 보였다. 없거나 숫자가 아닌 값만 기본값으로
+    for (const [provider, defaults] of Object.entries(defaultSettings.parameters)) {
+        const params = extensionSettings.parameters[provider];
+        if (!params || typeof params !== 'object') { extensionSettings.parameters[provider] = { ...defaults }; continue; }
+        for (const [key, value] of Object.entries(defaults)) {
+            if (typeof value === 'number' && !isParamNumber(params[key])) params[key] = value;
+        }
+    }
+
+    // 7.0.7: Google · Vertex 직접 연결의 옛 기본 응답 길이(1000)를 한 번만 4000 으로 — 1000 이면 묶음이 1200자라 긴 메시지가 요청 열 몇 개로 나뉘고 요청마다 프롬프트 · 문맥이 다시 들어갔다.
+    //        사용자가 일부러 1000 이 아닌 값을 둔 경우는 건드리지 않는다
+    if (!extensionSettings.gemini_length_707) {
+        for (const provider of ['google', 'vertexai']) {
+            const params = extensionSettings.parameters[provider];
+            if (params && Number(params.max_length) === 1000) params.max_length = 4000;
+        }
+        extensionSettings.gemini_length_707 = true;
+        saveSettingsDebounced();
     }
 
     if (!extensionSettings.parameters.deepseek) {
@@ -999,6 +1020,9 @@ function loadParameterValues(provider) {
 
 }
 
+/** 7.0.7 저장된 파라미터 값이 쓸 수 있는 숫자인가 (null · 빈 글 · NaN 은 아님) */
+function isParamNumber(value) { return value !== null && value !== undefined && String(value).trim() !== '' && Number.isFinite(Number(value)); }
+
 // 선택된 공급자의 파라미터 값을 저장
 function saveParameterValues(provider) {
     // 1. [데이터 타겟] 저장할 대상 객체 복사 (OpenRouter 등)
@@ -1018,7 +1042,9 @@ function saveParameterValues(provider) {
         const paramName = $(this).attr('data-param') || $(this).attr('id').replace(`_${targetUiSuffix}`, ''); // [1.9.5] data-param 먼저
         
         // 값 읽기 및 저장
-        params[paramName] = parseFloat($(this).val());
+        // 7.0.7 빈 칸은 NaN(저장하면 null)이 되어 그 뒤로 칸이 계속 비었다 — 숫자가 아니면 지금 값 · 기본값을 둔다
+        const value = parseFloat($(this).val());
+        params[paramName] = Number.isFinite(value) ? value : isParamNumber(params[paramName]) ? Number(params[paramName]) : defaultSettings.parameters[provider]?.[paramName] ?? params[paramName];
     });
 
     // 최종적으로 해당 공급자의 설정에 저장

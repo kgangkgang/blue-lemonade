@@ -24,6 +24,11 @@ let listening = false, observer = null, syncing = null, rerun = false, settleTim
 // 6.0.6 어떤 계기의 맞추기가 정규식을 바꿨을 때 채팅을 다시 그리나: 채팅 열기 · 프리셋 바꿈 · 편집 창 조작 · 시작. 설정 저장 뒤의 되맞춤(settle · again)은 아니다 —
 //   다른 확장(정규식 연결 애드온 · 정규식 창의 손 조작)이 되돌린 것을 우리가 또 되돌리는 자리라, 거기서 다시 그리면 서로 뒤집을 때마다 다시 그리는 폭풍이 된다
 const RELOAD_REASONS = new Set(['chat', 'preset', 'ui', 'start']);
+// 7.0.7 다시 그리기를 잃지 않게 (연동된 캐릭터의 채팅을 열 때 프리셋 정규식이 글을 그린 뒤에 켜지면, 이미 그린 글이 정규식이 꺼진 모양으로 남았다).
+//   · 맞추는 중에 들어온 다시 그리기 계기(채팅 열기 등)는 끝난 뒤 한 번 더 맞출 때 그 계기로 — 전엔 늘 again 이라 정규식을 뒤집어도 다시 그리지 않았다
+//   · 다시 그리기 계기의 맞추기가 프리셋 정규식을 미뤘으면(프리셋 저장이 아직 안 끝난 틈) 다시 그리기를 「빚」으로 남기고 잠시 뒤 다시 맞춘다(여섯 번까지) —
+//     그 뒤 맞추기가 정규식을 뒤집으면 계기가 again 이어도 한 번 다시 그린다. 빚은 한 번 갚으면 끝이라 위의 되돌이표 폭풍은 생기지 않는다
+let pendingReason = '', owedReload = false, owedTries = 0;
 
 /** 검사 · 다른 모듈용: 프롬프트 관리자 주입 */
 export function setPromptManager(manager) { pm = manager || null; }
@@ -273,7 +278,7 @@ function presetSettled(pmgr, name, live) {
 }
 /** 묶인 프롬프트(와 붙인 정규식)를 지금 채팅에 맞춰 켜고 끈다 → 바꾼 개수 (프롬프트 관리자가 없거나 묶음이 없으면 0). reason 은 RELOAD_REASONS 참고 */
 export async function syncPromptBinds(reason = 'ui') {
-    if (syncing) { rerun = true; return syncing; }   // 맞추는 중에 또 부르면(채팅이 바로 또 바뀜) 끝난 뒤 한 번 더
+    if (syncing) { rerun = true; if (RELOAD_REASONS.has(reason)) pendingReason = reason; return syncing; }   // 맞추는 중에 또 부르면(채팅이 바로 또 바뀜) 끝난 뒤 한 번 더 (7.0.7 그 계기로)
     syncing = (async () => {
         const all = binds();
         const ids = Object.keys(all);
@@ -286,7 +291,12 @@ export async function syncPromptBinds(reason = 'ui') {
         let pmgr = null, presetName = '';
         try { pmgr = SillyTavern.getContext().getPresetManager?.() || null; presetName = String(pmgr?.getSelectedPresetName?.() || ''); } catch { pmgr = null; }
         let preset = presetRegexScripts();
-        if (preset.length && !presetSettled(pmgr, presetName, preset)) preset = [];   // 프리셋이 바뀌는 중 — 이번엔 프리셋 정규식을 건드리지 않는다 (다음 맞추기에서)
+        const presetDeferred = preset.length > 0 && !presetSettled(pmgr, presetName, preset);
+        if (presetDeferred) {   // 프리셋이 바뀌는 중 — 이번엔 프리셋 정규식을 건드리지 않는다 (다음 맞추기에서)
+            preset = [];
+            if (RELOAD_REASONS.has(reason)) { owedReload = true; owedTries = 0; }   // 7.0.7 다시 그리기를 빚으로
+            if (owedReload && owedTries++ < 6) setTimeout(() => { syncPromptBinds('again'); }, 700);
+        }
         let changed = 0, regexChanged = 0, scopedChanged = 0, presetChanged = 0;
         // 정규식은 묶음마다 바로 바꾸지 않고 바라는 상태를 먼저 모은다 — 두 묶음이 같은 정규식을 서로 다르게 바라면 켜기가 이긴다
         // (묶음마다 뒤집으면 맞출 때마다 두 번 바뀌어 '바뀜'이 끝나지 않고, 6.0.6 다시 그리기와 맞물려 되돌이표가 된다)
@@ -340,9 +350,11 @@ export async function syncPromptBinds(reason = 'ui') {
                 }
             } catch { /* 저장 없음 */ }
         }
-        if ((regexChanged || scopedChanged || presetChanged) && RELOAD_REASONS.has(reason)) reloadChat();
+        const regexFlipped = regexChanged || scopedChanged || presetChanged;
+        if (regexFlipped && (RELOAD_REASONS.has(reason) || owedReload)) { owedReload = false; reloadChat(); }
+        else if (owedReload && !presetDeferred) owedReload = false;   // 7.0.7 미뤘던 프리셋 정규식이 이미 맞았다 — 갚을 것 없음
         return changed + regexChanged + scopedChanged + presetChanged;
-    })().finally(() => { syncing = null; if (rerun) { rerun = false; syncPromptBinds('again'); } });
+    })().finally(() => { syncing = null; if (rerun) { rerun = false; const next = pendingReason || 'again'; pendingReason = ''; syncPromptBinds(next); } });
     return syncing;
 }
 /** 6.0.6 정규식이 켜지거나 꺼졌으면 채팅을 다시 그린다 — 표시 전용 정규식은 이미 그려진 글에 안 먹는다 (실리태번 정규식 창에서 켜고 끌 때와 같은 reloadCurrentChat).

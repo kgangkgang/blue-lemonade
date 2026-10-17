@@ -47,6 +47,7 @@ jobs:
           node tools/tests/fruit-ecot-race.mjs .
           node tools/tests/translator-brackets.mjs .
           node tools/tests/translator-number-note.mjs .
+          node tools/tests/translator-gemini-length.mjs .
           node tools/tests/translator-keep-korean.mjs .
           node tools/tests/relay-log-key-header.mjs .
           node tools/tests/tts-open-comment.mjs .

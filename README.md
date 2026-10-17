@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.0.6/blue-lemonade-7.0.6.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.0.7/blue-lemonade-7.0.7.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
@@ -20,7 +20,16 @@ AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·�
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.0.6 · 최신 업데이트</summary>
+<summary>7.0.7 · 최신 업데이트</summary>
+
+- 캐릭터 에셋: 확장 창 머리의 지우개 단추 옆에 「에셋 떼기」 글자를 붙여, 아이콘만 보고 무엇인지 헷갈리지 않게 했어요. 단추 높이는 그대로예요 (캐릭터 에셋 1.7.4).
+- 캐릭터 이름 연동: 연동된 캐릭터의 채팅을 열 때 프리셋 정규식이 글을 그린 뒤에 켜지면, 이미 보이는 메시지가 정규식이 꺼진 모양으로 남던 것을 고쳤어요. 이제 정규식이 켜진 뒤 채팅을 한 번 다시 그려요.
+- LLM 번역: Google · Vertex AI 직접 연결의 기본 Max Response Length 를 1000 에서 4000 으로 올렸어요. 1000 이면 긴 메시지가 여러 요청으로 나뉘어 요청마다 프롬프트 · 문맥이 다시 들어갔어요. 저장된 값이 옛 기본값 1000 이면 한 번만 4000 으로 바꾸고, 직접 고른 다른 값은 그대로 둬요. 설정창의 응답 길이 칸이 빈 칸으로 열리던 것도 고쳤어요 (LLM 번역 2.8.1).
+
+</details>
+
+<details>
+<summary>7.0.6 · 에셋 그림 떼기 · 목록 뒤로 가기 · 가로 스크롤 고침</summary>
 
 - 캐릭터 에셋 「이 채팅의 에셋 그림 떼기」: 확장 창 머리의 지우개 단추로 지금 채팅 메시지에 붙은 에셋 그림을 한 번에 떼요. 번역문 · 다른 답(스와이프)까지 같이 떼고, 에셋 원본 파일은 그대로예요. 알림의 ↶ 로 되돌릴 수 있어요 (캐릭터 에셋 1.7.3).
 - 목록 · 팝업: 데우스 빠른 설정 · TTS 목소리 상자에서 목록을 고르면 창이 닫히던 것, 목록이 열려 있을 때 뒤로 가기가 아래 창까지 닫던 것을 고쳤어요. 이제 목록만 닫혀요 (TTS 2.0.1).
