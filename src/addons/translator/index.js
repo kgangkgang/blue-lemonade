@@ -2397,7 +2397,10 @@ function progressLabel(stage, started) {
     if (stage.stage === 'kana') return `번역 중 · 마무리 · ${sec}초`;
     return `번역 중 · ${sec}초`;
 }
-function progressBadge(messageId, message = null, sourceMes = message?.mes, chatId = getContext().chatId) {
+// 2.9.0 guard(번역 표의 것)를 주면 그것으로 대상을 찾는다 — 같은 채팅을 제자리에서 다시 불러오면(정규식 켜고 끔 · 캐릭터 이름 연동의 다시 그리기 …)
+//   메시지가 새 객체가 되어 chat.indexOf(옛 객체) 가 -1 → 표시를 떼고 다시 붙이지 않았다. 번역은 guard 로 새 객체에 옮겨 타 계속 돌아
+//   「번역이 이미 진행 중입니다」만 뜨고 메시지 위에는 아무것도 없었다
+function progressBadge(messageId, message = null, sourceMes = message?.mes, chatId = getContext().chatId, guard = null) {
     const started = Date.now();
     const swipeId = message?.swipe_id ?? 0;
     let stage = { stage: 'whole' }, el = null;
@@ -2405,7 +2408,7 @@ function progressBadge(messageId, message = null, sourceMes = message?.mes, chat
     const paint = () => {
         // [2.1.3] 번호가 아니라 그 메시지 · 그 스와이프 · 그 글에 붙인다. 번호로만 찾아 스와이프 뒤 새 '...' 에 다시 붙었고,
         //         그러면 isGeneratingSwipe 가 생성 중인 줄 몰라 옛 글을 한 번 더 번역했다. 대상이 바뀌면 떼고, 돌아오면 다시 붙인다.
-        const index = message ? resolveTranslationTarget(message, messageId, sourceMes, chatId) : messageId;
+        const index = guard ? guard.index() : message ? resolveTranslationTarget(message, messageId, sourceMes, chatId) : messageId;
         if (index === -1 || (message && (getContext().chat?.[index]?.swipe_id ?? 0) !== swipeId)) { el?.remove(); el = null; return; }
         const host = document.querySelector(`#chat .mes[mesid="${index}"] .mes_text`);
         if (!host) return;
@@ -2449,11 +2452,11 @@ function previewText(message) {
     }
     return null;
 }
-function translationPreview(messageId, message, sourceMes, chatId, originalText) {
+function translationPreview(messageId, message, sourceMes, chatId, originalText, guard = null) {   // 2.9.0 guard: 진행 표시와 같은 까닭
     const swipeId = message?.swipe_id ?? 0;
     let latest = null, shown = false, stopped = false, timer = null, wait = 0, lastPaint = 0, display = null, adopted = false;
     const target = () => {
-        const index = resolveTranslationTarget(message, messageId, sourceMes, chatId);
+        const index = guard ? guard.index() : resolveTranslationTarget(message, messageId, sourceMes, chatId);
         return index !== -1 && (getContext().chat?.[index]?.swipe_id ?? 0) === swipeId ? index : -1;
     };
     const hostOf = index => {
@@ -2528,7 +2531,7 @@ async function settleGuard(guard, maxMs = 8000) {
 const autoRetries = new WeakMap();   // 6.5.2 끊긴 자동 번역을 메시지마다 몇 번 다시 걸었나 (2번까지)
 const afterWorkEnds = new WeakMap();   // 2.7.4 번역 표 → 뒷일 다리의 끝 함수 (번역 · 재번역(교정) · 문단 다시 번역 모두 여기를 지난다)
 function beginTranslation(messageId, message) {
-    const token = { guard: guards.capture(message), chatGuard: guards.capture(), source: message.mes, swipe: message.swipe_id };
+    const token = { guard: guards.capture(message), chatGuard: guards.capture(), source: message.mes, swipe: message.swipe_id, started: Date.now() };   // 2.9.0 started: 「몇 초째」
     let done;
     Object.defineProperties(token,{finished:{value:new Promise(r=>done=r)},resolve:{value:error=>done(error)}});
     // [1.9.5] 표에 메시지를 달아 둔다 (디버그 출력에 메시지 전체가 찍히지 않게 열거되지 않는 속성으로)
@@ -2550,6 +2553,14 @@ function endTranslation(messageId, token) {
  * 채팅 전환 뒤 같은 번호에 온 다른 메시지가 옛 번역이 끝날 때까지 '이미 번역 중'으로 막혀, 새 답의 자동 번역이 끝내 안 됐다
  * (옛 번역은 대상이 사라져 버려지고, 새 답은 다시 부르는 곳이 없다).
  */
+/** 2.9.0 「번역이 이미 진행 중」 알림 글 — 그 메시지의 번역 표가 있으면 지금 번호와 몇 초째인지 (진행 표시가 안 보일 때도 무엇이 도는지 알게) */
+function inProgressNotice(messageId) {
+    const message = getContext().chat?.[messageId];
+    const token = message ? Object.values(translationInProgress).find(t => t && t.message === message && t.guard.valid()) : null;
+    if (!token) return '번역이 이미 진행 중입니다.';
+    const index = token.guard.index(), sec = Math.max(0, Math.round((Date.now() - (token.started || Date.now())) / 1000));
+    return `번역이 이미 진행 중입니다 · #${index >= 0 ? index : messageId} 메시지 ${sec}초째`;
+}
 function isTranslationInProgress(messageId) {
     const message = getContext().chat?.[messageId];
     if (!message) return false;
@@ -2621,7 +2632,7 @@ async function retranslateMessage(messageId, promptType, forceRetranslate = fals
 
     // 이미 번역 중인 경우
     if (isTranslationInProgress(messageId)) { // [1.9.5] 번호가 아니라 그 메시지
-        toastr.info('번역이 이미 진행 중입니다.');
+        toastr.info(inProgressNotice(messageId));
         return;
     }
 
@@ -2717,7 +2728,7 @@ async function retranslateMessage(messageId, promptType, forceRetranslate = fals
         };
 
         const report = {};
-        const badge = progressBadge(messageId, message, sourceMes, chatId);
+        const badge = progressBadge(messageId, message, sourceMes, chatId, runToken.guard);
         let retranslation;
         try {
             retranslation = await translate(textToRetranslate, { ...options, checkSource: originalText, collectNames: true, assertValid: () => runToken.guard.assert(), onProgress: badge.update, report });
@@ -2998,9 +3009,9 @@ async function runCheckAction(kind, id, index, row, { auto = false } = {}) {   /
     const [from, to] = kind === 'fill' ? (row?.missing ?? [-1, -1]) : [row?.source ?? -1, row?.source ?? -1];
     const srcText = from >= 0 ? paragraphRange(state.source, from, to, state.protect) : null;
     if (!srcText || !standaloneParagraphs(srcText) || (kind === 'retry' && !row?.sure)) { info('이 문단은 따로 번역할 수 없어요. 메시지 전체를 다시 번역해 주세요.', '번역 점검'); return; }
-    if (isTranslationInProgress(id)) { info('번역이 이미 진행 중입니다.'); return; }
+    if (isTranslationInProgress(id)) { info(inProgressNotice(id)); return; }
     const runToken = beginTranslation(id, message);
-    const badge = progressBadge(id, message, message.mes, context.chatId);
+    const badge = progressBadge(id, message, message.mes, context.chatId, runToken.guard);
     try {
         // 옛 (의심) 번역이 캐시에서 그대로 나오지 않게 — 메시지 전체로 나눈 문단 키 · 이 문단만 보낸 키 둘 다
         const numbers = Array.from({ length: to - from + 1 }, (_, n) => from + n);
@@ -3070,7 +3081,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
     // 번역 진행 중 확인
     if (isTranslationInProgress(messageId)) { // [1.9.5] 번호가 아니라 그 메시지
         if (source === 'manual') {
-            toastr.info('번역이 이미 진행 중입니다.');
+            toastr.info(inProgressNotice(messageId));
         }
         const pending = Object.values(translationInProgress).find(token=>token&&token.message===message&&token.guard.valid());
         const error = await pending?.finished;
@@ -3143,8 +3154,8 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                 // 새로 번역
                 // [2.1.0] 메시지 위에 진행 표시 · 문단을 나눠 일부가 차단되면 캐시에 넣지 않는다 (다시 번역하면 다시 시도)
                 const report = {};
-                const badge = progressBadge(messageId, message, sourceMes, chatId);
-                const preview = runToken.preview = translationPreview(messageId, message, sourceMes, chatId, originalText);   // 2.5.1 끝난 문단부터 번역문으로 (화면에만)
+                const badge = progressBadge(messageId, message, sourceMes, chatId, runToken.guard);
+                const preview = runToken.preview = translationPreview(messageId, message, sourceMes, chatId, originalText, runToken.guard);   // 2.5.1 끝난 문단부터 번역문으로 (화면에만)
                 // 화살표 다시 번역이라도 차단 표시가 남은 글이면 문단 캐시를 쓴다 — 이미 된 문단은 다시 보내지 않고 차단된 문단만 다시 시도
                 const segmentCache = source !== 'handleTranslateButtonClick_retranslate' || String(message.extra.display_text || '').includes(MARK_TAIL);
                 try {
@@ -3411,7 +3422,7 @@ async function handleTranslateButtonClick(messageId) {
 
     // 번역 진행 중 확인
     if (isTranslationInProgress(messageId)) { // [1.9.5] 번호가 아니라 그 메시지
-        toastr.info('번역이 이미 진행 중입니다.');
+        toastr.info(inProgressNotice(messageId));
         return;
     }
 
@@ -8780,7 +8791,7 @@ registerCommand(SlashCommand.fromProps({
 
         // 번역 진행 중 확인
         if (isTranslationInProgress(messageId)) { // [1.9.5] 번호가 아니라 그 메시지
-            toastr.info('번역이 이미 진행 중입니다.');
+            toastr.info(inProgressNotice(messageId));
             return `메시지 ID ${messageId}는 이미 번역이 진행 중입니다.`;
         }
 

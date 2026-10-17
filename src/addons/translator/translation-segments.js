@@ -1,6 +1,9 @@
 import { checkpointKey } from './translation-resume.js';
 
 const memory = new Map(), LIMIT = 400, TTL = 30 * 86400000;
+// 2.9.0 이어 하기: 묶음이 끊기거나 실패하면(연결 끊김 · 중지 · 시간 초과 · 429 …) 그때까지 닫힌 문단을 같은 저장소에 'resume:' 열쇠로 하루만 둔다.
+//   30일 문단 캐시에는 넣지 않는다 — 끝나지 않은 답은 묶음 전체 검사(문단 수 · 1부터 다시 매긴 답)를 못 거쳤다. 검사는 캐시와 같은 cacheable
+const RESUME = 'resume:', RESUME_TTL = 86400000;
 let writes = 0, epoch = 0;
 async function db() {
     return new Promise((resolve, reject) => {
@@ -11,7 +14,7 @@ async function db() {
     });
 }
 // 메모리에 없는 키만 한 연결 · 한 읽기 트랜잭션으로 한꺼번에 읽는다 (예전엔 키마다 DB 를 열었다). 결과: key → text (TTL 지난 것은 뺌)
-async function readMany(keys) {
+async function readMany(keys, ttl = TTL) {
     const found = new Map(), missing = [];
     for (const key of keys) { const value = memory.get(key); if (value) found.set(key, value); else missing.push(key); }
     let handle;
@@ -25,7 +28,7 @@ async function readMany(keys) {
         })));
     } catch { /* Storage unavailable: translate normally. */ } finally { handle?.close(); }
     const fresh = new Map();
-    for (const [key, value] of found) if (value?.time > Date.now() - TTL) fresh.set(key, value.text);
+    for (const [key, value] of found) if (value?.time > Date.now() - ttl) fresh.set(key, value.text);
     return fresh;
 }
 // 5.3.4: 한 번역에서 새로 받은 문단을 한 연결 · 한 쓰기 트랜잭션으로 저장한다 (예전엔 문단마다 DB 를 열고 트랜잭션을 따로 만들었다). rows: [key, text]
@@ -899,7 +902,7 @@ export function streamedPassages(raw, count, sources, from = 0) {
  *  settle = 묶음이 끝남(밀린 알림은 버린다 — 묶음 끝 알림이 대신) · close = 요청이 끝남(그 뒤엔 아무것도 알리지 않는다) */
 export function streamWatch({ done, settled, shape = text => text, frame = globalThis.requestAnimationFrame ? fn => globalThis.requestAnimationFrame(fn) : fn => setTimeout(fn, 16),
     cancel = globalThis.cancelAnimationFrame ? id => globalThis.cancelAnimationFrame(id) : id => clearTimeout(id) }) {
-    const live = [];
+    const live = [], sure = [];   // 2.9.0 sure[i]: ⟦0⟧ 부터 매긴 답에서 닫힌 문단 (1부터 매긴 답은 한 칸 밀린 답과 구별이 안 돼 이어 하기에 남기지 않는다)
     let pending = false, queued = null, closed = false;
     const flush = () => {
         pending = false; queued = null;
@@ -907,13 +910,15 @@ export function streamWatch({ done, settled, shape = text => text, frame = globa
         const base = settled(), view = [...base];
         let count = base.length;
         for (let i = base.length; i < live.length; i++) if (i in live) { view[i] = live[i]; count++; }
-        done(view, count);
+        let safe = base.length;
+        while (safe < live.length && safe in live && sure[safe]) safe++;
+        done(view, count, safe);
     };
     const queue = () => { if (closed || pending) return; pending = true; queued = frame(flush); };
     const settle = () => { if (pending) cancel(queued); pending = false; queued = null; };
     return {
         follow(sources, offset) {
-            let mark = -1, seen = 0;
+            let mark = -1, seen = 0, zero = null;
             return raw => {
                 if (closed) return;
                 // 새 ⟦n 표시가 다 왔을 때만 본다 (⟦1 까지만 온 ⟦12⟧ 는 다음 조각에서)
@@ -922,12 +927,13 @@ export function streamWatch({ done, settled, shape = text => text, frame = globa
                 mark = at;
                 const passages = streamedPassages(raw, sources.length, sources, seen);
                 if (passages.length <= seen) return;
-                for (let k = seen; k < passages.length; k++) live[offset + k] = passages[k] === null ? null : shape(passages[k]);
+                if (zero === null) { const first = /⟦[ \t]*(\d+)/.exec(String(raw).replace(/<think>[\s\S]*?<\/think>/gi, '')); if (first) zero = Number(first[1]) === 0; }
+                for (let k = seen; k < passages.length; k++) { live[offset + k] = passages[k] === null ? null : shape(passages[k]); sure[offset + k] = zero === true; }
                 seen = passages.length;
                 queue();
             };
         },
-        keep(offset, list) { if (closed) return; list.forEach((text, k) => { live[offset + k] = text; }); queue(); },
+        keep(offset, list) { if (closed) return; list.forEach((text, k) => { live[offset + k] = text; sure[offset + k] = true; }); queue(); },
         settle,
         close() { settle(); closed = true; },
     };
@@ -945,11 +951,14 @@ export async function translateSegments({ parts, signature, request, check = () 
         keyed.push([i, body, await paragraphKey(signature(body), body)]);
     }
     const saved = await readMany([...new Set(keyed.map(row => row[2]))]);
+    const resumed = await readMany([...new Set(keyed.map(row => RESUME + row[2]))], RESUME_TTL);   // 2.9.0 끊긴 묶음에서 남긴 문단
     check();
     for (const [i, body, key] of keyed) {
         // 5.4.1: 예전에 캐시에 들어간 원문 되풀이 답(원문+화살표+번역 · 망가진 ⟦n] 표시)은 없는 셈 치고 다시 요청한다
         // 6.4.2 v2 지금 규칙으로 캐시에 넣지 않을 문단(예: 6.4.1 이하가 넣은 원문 한자 남은 문단)은 다시 쓰지 않고 번역한다 — 서명은 그대로라 다른 문단 캐시는 산다
         if (saved.has(key) && cleanParagraphEcho(saved.get(key), body) === saved.get(key).replace(/^\n+|\s+$/g, '') && cacheable(body, saved.get(key))) { output[i] = saved.get(key); reused++; continue; }
+        const kept = resumed.get(RESUME + key);
+        if (kept && cleanParagraphEcho(kept, body) === kept.replace(/^\n+|\s+$/g, '') && cacheable(body, kept)) { output[i] = kept; reused++; continue; }   // 2.9.0 이어 하기
         if (!missing.has(key)) missing.set(key, { key, body, indices: [] });
         missing.get(key).indices.push(i);
     }
@@ -965,17 +974,33 @@ export async function translateSegments({ parts, signature, request, check = () 
     if (reused && pending.length) tell([]);
     // 5.2.9: blockedMarker 는 문구 또는 (body, error?) => 문구
     const markOf = (body, error) => typeof blockedMarker === 'function' ? blockedMarker(body, error) : blockedMarker;
+    // 2.9.0 끊기면 남길 문단: 알림이 준 앞쪽의 이어 붙여도 되는 문단(safe)까지만. 검사는 캐시와 같게, 실패해도 원래 오류를 가리지 않는다
+    let closedRows = [];
+    const keepClosed = async () => {
+        try {
+            const rows = [];
+            closedRows.forEach((text, n) => {
+                const row = pending[n];
+                if (!row || typeof text !== 'string' || !text.trim()) return;
+                const cleaned = cleanParagraphEcho(text, row.body);
+                if (cleaned !== null && epoch === stamp && cacheable(row.body, cleaned)) rows.push([RESUME + row.key, cleaned]);
+            });
+            if (rows.length) await writeMany(rows, stamp);
+        } catch { /* 남기기 실패는 원래 오류를 바꾸지 않는다 */ }
+    };
     if (pending.length) {
         let results;
         try {
             // 2.6.2 count: 흘려받는 묶음은 닫힌 문단까지 센다 (문단마다 — 「수정 문단 1/71」). 묶음 끝 알림은 예전처럼 배열 길이
-            results = await request(pending.map(row => row.body), (done, count = done?.length ?? 0) => {
+            results = await request(pending.map(row => row.body), (done, count = done?.length ?? 0, safe = count) => {
                 const finished = Math.min(count, pending.length);
+                if (Array.isArray(done)) closedRows = done.slice(0, Math.min(safe, finished));   // 2.9.0
                 progress({ stage: 'segments', done: reused + finished, total, reused, translated, pending: pending.length, batch: pending.length, finished });
                 if (finished < pending.length) tell(done);
             });
         }
         catch (error) {
+            await keepClosed();   // 2.9.0 이어 하기 — 이미 받은 문단은 하루 동안 남긴다
             if (!error?.refused || !blockedMarker) throw error;
             check();
             for (const row of pending) for (const i of row.indices) { output[i] = `${markOf(row.body, error)}\n${row.body}`; blocked++; }
@@ -1005,6 +1030,7 @@ export async function translateSegments({ parts, signature, request, check = () 
                     for (const i of row.indices) { output[i] = result; translated++; }
                 }
             } finally { if (rows.length) await writeMany(rows, stamp); }
+            if (results.some(text => text === null)) await keepClosed();   // 2.9.0 일부 묶음만 실패 — 결과는 그대로(그 문단은 차단 표시), 받은 문단만 이어 하기로
         } else if (!blocked) throw Error('빈 번역 응답은 저장하지 않았어요.');
     }
     check();

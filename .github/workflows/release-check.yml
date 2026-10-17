@@ -224,6 +224,7 @@ jobs:
           node tools/tests/recent-context.mjs .
           node tools/tests/translator-context-auto.mjs .
           node tools/tests/translator-auto-reply-reserve.mjs .
+          node tools/tests/translator-resume-stream.mjs .
           node tools/tests/conversation-assist.mjs .
           node tools/tests/addon-menu-routing.mjs .
           node tools/tests/order-menus.mjs .

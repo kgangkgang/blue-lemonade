@@ -231,7 +231,7 @@ await check('does not paint (or revert) when the target moved, is being edited, 
 
 // ── 연결 ──
 await check('translateMessage wiring: preview made with the badge, stopped before the final render, reverted on failure', () => {
-    assert(/const preview = runToken\.preview = translationPreview\(messageId, message, sourceMes, chatId, originalText\);/.test(source));
+    assert(/const preview = runToken\.preview = translationPreview\(messageId, message, sourceMes, chatId, originalText, runToken\.guard\);/.test(source));   // 2.9.0 guard 로 대상
     assert(/onProgress: badge\.update, onPreview: preview\.show, report \}\);\n[^\n]*\} finally \{\n[^\n]*preview\.stop\(\); badge\.remove\(\);/.test(source));
     assert(/runToken\.error = error;\n[^\n]*runToken\.preview\?\.revert\(\);/.test(source));
 });
