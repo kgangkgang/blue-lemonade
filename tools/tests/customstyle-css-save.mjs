@@ -172,9 +172,11 @@ await test('예제 CSS 추가: 취소하면 그대로 · 확인하면 예제를 
     const { manager, area } = await boot({ css: mine, config: [] });
     T.confirms.push(false);
     click(manager, 'insert-default-css');
+    for (let i = 0; i < 6; i++) await Promise.resolve();   // 7.0.1 확인 창(ask)은 비동기 — 이 시험은 타이머가 가짜라 마이크로태스크로 기다린다
     assert.equal(area.value, mine); assert.equal(area.inputs, 0); assert.equal(T.asked.length, 1);
     T.confirms.push(true);
     click(manager, 'insert-default-css');
+    for (let i = 0; i < 6; i++) await Promise.resolve();   // 7.0.1 확인 창(ask)은 비동기 — 이 시험은 타이머가 가짜라 마이크로태스크로 기다린다
     assert.ok(area.value.endsWith('\n' + mine), '기존 CSS 는 뒤에 그대로');
     const example = area.value.slice(0, -(mine.length + 1));
     assert.match(example, /--custom-theme-style-inputs: \[/);

@@ -6,10 +6,10 @@ import { getContext } from '../../../../../../extensions.js';
 import { MacrosParser } from '../../../../../../macros.js';
 import { power_user } from '../../../../../../power-user.js';
 import { initSettings, settings, saveSettings, VERSION, TITLE, currentFolder } from './state.js';
-import { runtime, reload } from './store.js';
+import { reload, activeEntry, loadMember } from './store.js';
 import { manualPrompt, setupPrompt } from './prompt.js';
 import { setupAfterReply } from './after-reply.js';
-import { setupRenderer, schedulePass } from './render.js';
+import { setupRenderer, schedulePass, setMemberLoader } from './render.js';
 import { setupHold } from './hold.js';
 import { toast, watchThemeVars, refreshThemeVars } from './ui.js';
 import { badgeTextHit } from '../../badge-hit.js';
@@ -36,11 +36,13 @@ async function registerMacros() {
             console.error(`[${TITLE}] 매크로 등록 실패: ${key}`, error);
         }
     };
+    // 1.6.9 그룹 채팅은 지금 차례인 멤버의 목록 · 폴더 (activeEntry — 생성 밖이면 빈 글)
+    const keywords = () => activeEntry(getContext())?.keywords ?? '';
     register('img_inprompt', () => manualPrompt(), '캐릭터 에셋: 수동 배치일 때 AI 규칙 + 지금 캐릭터의 그림 목록');
-    register('img_keywords_autogen', () => runtime.keywords, '캐릭터 에셋: 지금 캐릭터의 그림 이름 목록');
-    register('img_keywords_grouped', () => runtime.keywords, '캐릭터 에셋: img_keywords_autogen과 같아요');
-    register('img_keywords', () => runtime.keywords, '캐릭터 에셋: img_keywords_autogen과 같아요');
-    register('charkey', () => currentFolder(), '캐릭터 에셋: 지금 캐릭터의 그림 폴더 이름');
+    register('img_keywords_autogen', keywords, '캐릭터 에셋: 지금 캐릭터의 그림 이름 목록');
+    register('img_keywords_grouped', keywords, '캐릭터 에셋: img_keywords_autogen과 같아요');
+    register('img_keywords', keywords, '캐릭터 에셋: img_keywords_autogen과 같아요');
+    register('charkey', () => (getContext().groupId ? activeEntry(getContext())?.folder ?? '' : currentFolder()), '캐릭터 에셋: 지금 캐릭터의 그림 폴더 이름');
 }
 registerMacros();
 
@@ -52,7 +54,8 @@ setupAfterReply();
 // 이미 보이던 그림이 바뀌었다. 첫 시각을 extra.eh_seed 에 한 번만 남기고 render.js messageSeed 가 먼저 쓴다.
 if (event_types.GENERATION_STARTED) eventSource.on(event_types.GENERATION_STARTED, (type, _options, dryRun) => {
     if (dryRun || !['continue', 'append', 'appendFinal'].includes(type)) return;
-    if (!runtime.folder || !runtime.assets.length) return; // 그림이 없는 캐릭터의 채팅에는 씨앗을 남기지 않는다
+    const entry = activeEntry(getContext());   // 1.6.9 그룹은 이어 쓰는 멤버의 목록
+    if (!entry?.folder || !entry.assets?.length) return; // 그림이 없는 캐릭터의 채팅에는 씨앗을 남기지 않는다
     const chat = getContext().chat;
     const last = chat?.[chat.length - 1];
     if (!last?.extra || typeof last.extra !== 'object' || last.extra.eh_seed !== undefined) return;
@@ -133,6 +136,7 @@ export const ready = new Promise((resolve, reject) => jQuery(() => boot().then(r
 async function boot() {
     lazyPanel();
     watchThemeVars();
+    setMemberLoader(folder => { void loadMember(folder); });   // 1.6.9 그룹 채팅: 멤버 메시지가 처음 보이면 그 멤버 목록을 읽는다
     setupRenderer();
     // 채팅 · 북마크 카드 · 메모에 나온 그림을 꾹 누르면(PC 는 오른쪽 클릭) 그 그림의 크게 보기 창을 연다
     setupHold();

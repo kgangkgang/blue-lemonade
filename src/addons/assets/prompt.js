@@ -1,11 +1,13 @@
 // 캐릭터 에셋 규칙을 생성 전에 준비한다. 자동/수동은 한 자리만 사용하고, 끄면 둘 다 비운다.
+// 1.6.9 그룹 채팅: 실리태번이 멤버 차례마다 this_chid 를 그 멤버로 바꾼 뒤 Generate 를 부르므로(GENERATION_AFTER_COMMANDS 가 차례마다),
+// 그 차례에 말하는 멤버의 목록 · 규칙만 넣는다. 멤버 전부를 넣지 않는다. 생성 밖(this_chid 없음)이면 비운다.
 import { eventSource, event_types, setExtensionPrompt, extension_prompt_types, extension_prompt_roles, isGenerating, setSendButtonState } from '../../../../../../../script.js';
 import { getContext } from '../../../../../../extensions.js';
 // 6.5.3 생성 상태 (본채팅 생성만 · 테마의 붙잡음 등록) — import 줄 끝에 주석을 달지 않는다 (character-assets-prompt 시험이 import 줄을 통째로 뗀다)
 import { isMainChatGenerating, holdGenerationState } from '../../main-chat-rules.js';
 import { addonsEnabled } from '../../usage-mode.js';
-import { settings, currentFolder } from './state.js';
-import { runtime, reload, ensureLoaded, expandedPrompt, onStoreChange } from './store.js';
+import { settings, currentFolder, speakerFolder } from './state.js';
+import { runtime, reload, ensureLoaded, expandedPrompt, onStoreChange, loadMember, memberEntry, clearMembers } from './store.js';
 import { pickActive } from './pick.js';
 
 const PROMPT_KEY = 'blue_lemonade_character_assets';
@@ -49,15 +51,18 @@ export function promptStatus() {
     const store = settings();
     const enabled = store?.promptEnabled !== false && addonActive();
     const placement = store?.promptPlacement === 'manual' ? 'manual' : 'auto';
-    const folder = currentFolder();
-    const loading = !!folder && (runtime.folder !== folder || runtime.loading);
-    const hasImages = !!folder && !loading && !!runtime.keywords;
-    const available = hasImages && !!expandedPrompt().trim();
+    const group = !!context.groupId;
+    // 1.6.9 그룹은 지금 말하는 멤버(생성 중에만 있다)의 목록 — 1:1 은 지금 캐릭터
+    const folder = group ? speakerFolder(context) : currentFolder();
+    const entry = group ? memberEntry(folder) : runtime;
+    const loading = !!folder && (group ? !entry : runtime.folder !== folder || runtime.loading);
+    const hasImages = !!folder && !loading && !!entry?.keywords;
+    const available = hasImages && !!expandedPrompt(entry).trim();
     // 1.6.0 다른 모델이 고르기가 돌면 본문 모델에는 규칙 · 목록을 보내지 않는다 (답을 받은 뒤 연결한 모델이 고른다)
     const pick = enabled && pickActive(store);
-    const reason = !enabled ? 'off' : context.groupId ? 'group' : !folder ? 'no-character'
+    const reason = !enabled ? 'off' : group && !folder ? 'group' : !folder ? 'no-character'
         : loading ? 'loading' : !hasImages ? 'empty' : !available ? 'empty-rules' : pick ? 'pick' : placement === 'manual' ? 'manual' : 'ready';
-    return { enabled, placement, loading, available, reason, pick };
+    return { enabled, placement, loading, available, reason, pick, group, folder, entry };
 }
 
 function excludedGeneration() {
@@ -67,21 +72,21 @@ function excludedGeneration() {
 /** 오래된 프리셋에 매크로가 남아 있어도 자동 주입과 중복되지 않는다. */
 export function manualPrompt() {
     const status = promptStatus();
-    return status.enabled && !status.pick && status.placement === 'manual' && status.available && !excludedGeneration() ? expandedPrompt() : '';
+    return status.enabled && !status.pick && status.placement === 'manual' && status.available && !excludedGeneration() ? expandedPrompt(status.entry) : '';
 }
 
 /** 설정을 바꿀 때 즉시 호출한다. 여기서는 네트워크 요청을 시작하지 않는다. */
 export function syncPrompt() {
     const status = promptStatus();
-    if (!status.enabled || !currentFolder()) cancelPreparation();
-    const text = status.enabled && !status.pick && status.placement === 'auto' && status.available && !excludedGeneration() ? expandedPrompt() : '';
+    if (!status.enabled || !status.folder) cancelPreparation();
+    const text = status.enabled && !status.pick && status.placement === 'auto' && status.available && !excludedGeneration() ? expandedPrompt(status.entry) : '';
     setExtensionPrompt(PROMPT_KEY, text, extension_prompt_types.IN_CHAT, 1, false, extension_prompt_roles.SYSTEM);
     return status;
 }
 
 function identity() {
     const context = getContext();
-    return { folder: currentFolder(), group: context.groupId, chat: context.chat, chatId: context.chatId };
+    return { folder: context.groupId ? speakerFolder(context) : currentFolder(), group: context.groupId, chat: context.chat, chatId: context.chatId };
 }
 
 function sameIdentity(before) {
@@ -112,7 +117,7 @@ export async function preparePrompt(type, _options, dryRun) {
     const timeout = setTimeout(waiting.cancel, PREPARE_TIMEOUT);
     let ready = false;
     try {
-        ready = await Promise.race([ensureLoaded(), cancelled]);
+        ready = await Promise.race([before.group ? loadMember(before.folder).then(Boolean) : ensureLoaded(), cancelled]);
     } finally {
         clearTimeout(timeout);
         release();
@@ -134,6 +139,7 @@ export function setupPrompt() {
         cancelPreparation(true);
         ++generationEpoch;
         generationType = null;
+        clearMembers();   // 1.6.9 그룹 멤버 목록은 채팅마다 새로 (그 멤버 메시지가 보일 때 · 차례가 올 때 읽는다)
         syncPrompt();
         return reload();
     });

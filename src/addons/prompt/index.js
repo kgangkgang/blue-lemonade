@@ -13,7 +13,7 @@ function controlsHelp(kind) {
             ['중단', '진행 중인 번역을 멈춰요. 이미 끝난 항목의 결과는 남아요.'],
             ['비우기', '이 자료의 번역 캐시를 지워요(체크한 항목이 있으면 그 항목만). 원본은 그대로예요.'],
             ['번역본 · 원문 (눈)', '목록에 보이는 항목 제목을 번역 제목 ↔ 원문 제목으로 바꿔 보여 줘요. 화면 표시만 바뀌고 캐시 · 원본은 그대로예요.'],
-            ['⚡ 원본 적용', '번역 결과를 실제 ' + what + ' 파일에 덮어써요. 되돌리는 단추가 없으니, 누르기 전에 실리태번의 ' + what + ' 내보내기로 원본을 따로 저장해 두세요. 더보기의 JSON 내보내기는 번역본이라 백업이 되지 않아요.'],
+            ['⚡ 원본 적용', '번역 결과를 실제 ' + what + ' 파일에 덮어써요. 덮어쓰기 직전 원본을 자동으로 하나 백업해 두니, 알림의 ↶ 이나 더보기 「원본으로 되돌리기」로 돌아갈 수 있어요.'],
             ['더보기', '복사 · TXT · JSON 내보내기, 번역 기록(번역 메모리) 저장 · 가져오기.'],
             ['체크 · 숫자 칩', '맨 앞 체크는 보이는 항목 모두 선택이에요. 칩은 항목 수와 토큰 추정치예요.'],
         ].concat(kind === 'wi' ? [['ON · OFF', '월드인포 항목이 켜져 있는지예요(실리태번 월드인포의 항목 스위치와 같아요). 옆 숫자는 그 항목의 토큰 추정치.']] : []),
@@ -34,6 +34,8 @@ import { leaveSettingsDialog } from '../../settings-dialog.js';
 import { canPickFor, openPickFor } from '../../selects.js';
 import { settingsHTML } from './settings-ui.js';
 import { requestActive, bindConnection, directParameters, renderModelSelect, modelListKey, canListModels, watchModelLists, autoListModels, syncModelMemory, restoreModel } from './connection.js';
+import { ask, attachUndo } from '../../ask.js';
+import { backupFileName, backupRecord, validBackup, characterBackup, backupWhen } from './backup.js';   // 7.0.1 원본 적용 전 자동 백업   // 7.0.1 테마 확인 창 (기본 confirm 대신)
 /**
   * Prompt Panel
  */
@@ -2785,6 +2787,44 @@ function exportPresetJSON(presetName) {
 // as the original. That keeps the preset's source text intact, so the panel (and
 // a TM file) can still match it later by original content — a full apply
 // replaces the content and makes the item unmatchable from then on.
+// 7.0.1 프리셋 저장 길 (applyPresetLive · 원본으로 되돌리기가 같이 쓴다)
+// Save through ST's own PresetManager rather than POSTing to /api/presets/save
+// ourselves. Both write the same file, but savePreset() also calls
+// updateList(), which refreshes ST's in-memory preset array (openai_settings).
+// Skipping that left the file and ST's memory disagreeing, and other
+// extensions read that array: 酒馆助手(JS-Slash-Runner) rebuilds the whole
+// preset from `preset_list.presets[idx]` on its own debounced save, so a
+// stale entry there would silently write our applied names back out.
+//
+// For a preset that is NOT the loaded one, updateList() would also select
+// it (val().trigger('change')), switching the user over and discarding
+// unsaved edits of the loaded preset — so skip the update there and sync
+// the in-memory entry ourselves. For the loaded one, updateList() re-selects
+// it, which reloads oai_settings from the saved body.
+async function writePresetBody(targetName, presetBody, isCurrent) {
+    const presetManager = SillyTavern?.getContext?.()?.getPresetManager?.('openai');
+    const syncStoredCopy = () => {
+        try {
+            const idx = openai_setting_names?.[targetName];
+            if (idx !== undefined && Array.isArray(openai_settings)) openai_settings[idx] = presetBody;
+        } catch (e) { console.warn(`[${EXT}] preset list sync failed`, e); }
+    };
+    if (presetManager?.savePreset) {
+        await presetManager.savePreset(targetName, presetBody, { skipUpdate: !isCurrent });
+        if (!isCurrent) syncStoredCopy();
+    } else {
+        // Older ST without an exposed PresetManager — fall back to the raw call.
+        const res = await fetch('/api/presets/save', {
+            method: 'POST',
+            headers: { ...getRequestHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ apiId: 'openai', name: targetName, preset: presetBody }),
+        });
+        if (!res.ok) throw new Error(`저장 실패 (HTTP ${res.status})`);
+        // Keep ST's in-memory copy in step with what we just wrote.
+        syncStoredCopy();
+    }
+}
+
 async function applyPresetLive(presetName, titlesOnly) {
     const targetName = presetName === '__cur__' || !presetName
         ? (oai_settings?.preset_settings_openai || '')
@@ -2854,39 +2894,7 @@ async function applyPresetLive(presetName, titlesOnly) {
     // 프리셋은 이미 파일 형식이라 통과시키면 temperature·top_p 등이 빠졌다.
     const presetBody = isCurrent ? getChatCompletionPreset(presetObj) : presetObj;
 
-    // Save through ST's own PresetManager rather than POSTing to /api/presets/save
-    // ourselves. Both write the same file, but savePreset() also calls
-    // updateList(), which refreshes ST's in-memory preset array (openai_settings).
-    // Skipping that left the file and ST's memory disagreeing, and other
-    // extensions read that array: 酒馆助手(JS-Slash-Runner) rebuilds the whole
-    // preset from `preset_list.presets[idx]` on its own debounced save, so a
-    // stale entry there would silently write our applied names back out.
-    //
-    // For a preset that is NOT the loaded one, updateList() would also select
-    // it (val().trigger('change')), switching the user over and discarding
-    // unsaved edits of the loaded preset — so skip the update there and sync
-    // the in-memory entry ourselves.
-    const presetManager = SillyTavern?.getContext?.()?.getPresetManager?.('openai');
-    const syncStoredCopy = () => {
-        try {
-            const idx = openai_setting_names?.[targetName];
-            if (idx !== undefined && Array.isArray(openai_settings)) openai_settings[idx] = presetBody;
-        } catch (e) { console.warn(`[${EXT}] preset list sync failed`, e); }
-    };
-    if (presetManager?.savePreset) {
-        await presetManager.savePreset(targetName, presetBody, { skipUpdate: !isCurrent });
-        if (!isCurrent) syncStoredCopy();
-    } else {
-        // Older ST without an exposed PresetManager — fall back to the raw call.
-        const res = await fetch('/api/presets/save', {
-            method: 'POST',
-            headers: { ...getRequestHeaders(), 'Content-Type': 'application/json' },
-            body: JSON.stringify({ apiId: 'openai', name: targetName, preset: presetBody }),
-        });
-        if (!res.ok) throw new Error(`저장 실패 (HTTP ${res.status})`);
-        // Keep ST's in-memory copy in step with what we just wrote.
-        syncStoredCopy();
-    }
+    await writePresetBody(targetName, presetBody, isCurrent);   // 7.0.1 저장 길을 떼어 냄 — 원본으로 되돌리기도 같은 길
 
     // Make ST-BaiBai-Tools drop its cached group state so it re-reads the names
     // we just saved. OAI_PRESET_IMPORT_READY is the one public event whose
@@ -3097,12 +3105,15 @@ async function applyWorldInfoLive(worldName, selectedIds, titlesOnly) {
         ? '적용할 제목 번역이 없습니다. 먼저  제목 번역을 실행하세요.'
         : '적용할 번역이 없습니다. 먼저 번역을 실행하세요.');
 
+    await writeWorldInfo(worldName, wi);   // 7.0.1 원본으로 되돌리기도 같은 길
+    return { targetName: worldName, applied, entries: touched };
+}
+async function writeWorldInfo(worldName, wi) {
+    const ctx = SillyTavern?.getContext?.() || getContext?.();
     // immediately = true: don't leave the write sitting in ST's debounce queue.
     await ctx.saveWorldInfo(worldName, wi, true);
     // Refresh the WI editor only when this book is the one open in it.
     try { ctx.reloadWorldInfoEditor?.(worldName); } catch (e) { console.warn(`[${EXT}] WI editor reload failed`, e); }
-
-    return { targetName: worldName, applied, entries: touched };
 }
 
 // ── JSON Export: Character Card ───────────────────────────────────────
@@ -3226,7 +3237,69 @@ async function exportCharacterJSON(charIdRaw, opts, selectedIds) {
 // Respects the checkbox selection: with fields selected, only those are
 // written; every other field keeps its current value (unlike the partial JSON
 // *export*, which blanks the unselected ones).
-async function applyCharacterLive(charIdRaw, selectedIds) {
+// ── 7.0.1 「원본 적용」 전 자동 백업 · 원본으로 되돌리기 ─────────────────
+// 원본을 사용자 파일 영역(번역 캐시와 같은 /api/files/upload)에 자료마다 최근 1개 — 프리셋 · 월드인포 목록에 사본이 생기지 않는다.
+/** 지금 패널이 가리키는 자료의 진짜 이름 (프리셋 이름 · 월드인포 이름 · 봇카드 아바타 파일) */
+function backupTargetName(kind, srcVal) {
+    if (kind === 'preset') return srcVal === '__cur__' || !srcVal ? (oai_settings?.preset_settings_openai || '') : srcVal;
+    if (kind === 'wi') return srcVal || '';
+    const ctx = SillyTavern?.getContext?.() || getContext?.();
+    const idx = srcVal === '__cur__' || srcVal === undefined || srcVal === null || srcVal === '' ? (ctx?.characterId !== undefined ? Number(ctx.characterId) : -1) : findCharIndex(srcVal);
+    return characters?.[idx]?.avatar || '';
+}
+/** 적용 직전: 바뀌는 자료의 원본을 파일로 (봇카드는 이번에 바뀌는 필드만). 실패하면 던진다 — 부르는 쪽이 적용을 멈춘다 */
+async function saveOriginalBackup(kind, srcVal, selectedIds, label) {
+    const name = backupTargetName(kind, srcVal);
+    if (!name) throw new Error('자료를 찾을 수 없어요');
+    let data;
+    if (kind === 'preset') {
+        const isCurrent = name === getCurrentPresetName();
+        const idx = openai_setting_names?.[name];
+        data = isCurrent ? deepClone(getChatCompletionPreset(oai_settings)) : (idx !== undefined && openai_settings?.[idx] ? deepClone(openai_settings[idx]) : null);
+    } else if (kind === 'wi') {
+        const ctx = SillyTavern?.getContext?.() || getContext?.();
+        const wi = await ctx?.loadWorldInfo?.(name);
+        data = wi?.entries ? deepClone(wi) : null;
+    } else {
+        const { char, update, applied } = await characterUpdate(srcVal, selectedIds);
+        data = applied ? characterBackup(char, update) : null;
+    }
+    if (!data) throw new Error('원본을 읽지 못했어요');
+    const record = backupRecord(kind, name, label, data);
+    await filePutJSON(backupFileName(kind, name), record);
+    return record;
+}
+/** 백업 → 실리태번 자료 (적용과 같은 쓰기 길) */
+async function restoreOriginal(record) {
+    const label = record.label || record.name;
+    const when = backupWhen(record.at);
+    if (!await ask(`「${label}」을(를) 원본 적용 전으로 되돌릴까요?${when ? `\n\n백업 시각: ${when}` : ''}\n\n그 뒤에 직접 고친 내용도 이 백업의 값으로 돌아가요.`, { ok: '되돌리기', cancel: '취소', danger: true })) return false;
+    try {
+        if (record.kind === 'preset') {
+            const isCurrent = record.name === getCurrentPresetName();
+            await writePresetBody(record.name, deepClone(record.data), isCurrent);
+            if (isCurrent) {
+                try { if (eventSource?.emit && event_types?.OAI_PRESET_IMPORT_READY) await eventSource.emit(event_types.OAI_PRESET_IMPORT_READY, { presetName: record.name }); } catch (e) { console.warn(`[${EXT}] group cache reload failed`, e); }
+                try { promptManager?.render?.(false); } catch (e) { console.warn(`[${EXT}] promptManager render failed`, e); }
+            }
+        } else if (record.kind === 'wi') {
+            await writeWorldInfo(record.name, deepClone(record.data));
+        } else {
+            const idx = findCharIndex(record.name);
+            if (idx < 0 || !characters?.[idx]) throw new Error('캐릭터를 찾을 수 없어요');
+            await writeCharacterUpdate(idx, characters[idx], deepClone(record.data));
+        }
+        if (typeof toastr !== 'undefined') toastr.success(`「${label}」을(를) 원본으로 되돌렸어요.`);
+        return true;
+    } catch (err) {
+        console.error(`[${EXT}] restore original failed`, err);
+        if (typeof toastr !== 'undefined') toastr.error('원본으로 되돌리지 못했어요: ' + (err?.message || err));
+        return false;
+    }
+}
+
+/** 7.0.1 봇카드에 쓸 필드 (번역이 있는 것만) → { idx, char, update, applied } — 적용과 원본 백업(바뀌는 필드만)이 같은 계산을 쓴다 */
+async function characterUpdate(charIdRaw, selectedIds) {
     let idx = -1;
     const ctx = SillyTavern?.getContext?.() || getContext?.();
     if (charIdRaw === '__cur__' || charIdRaw === undefined || charIdRaw === null || charIdRaw === '') {
@@ -3298,8 +3371,20 @@ async function applyCharacterLive(charIdRaw, selectedIds) {
         }
     }
 
-    if (!applied) throw new Error('적용할 번역이 없습니다. 먼저 번역을 실행하세요.');
     if (!Object.keys(update.data).length) delete update.data;
+    return { idx, char, update, applied };
+}
+
+async function applyCharacterLive(charIdRaw, selectedIds) {
+    const { idx, char, update, applied } = await characterUpdate(charIdRaw, selectedIds);
+    if (!applied) throw new Error('적용할 번역이 없습니다. 먼저 번역을 실행하세요.');
+    const isCurrent = await writeCharacterUpdate(idx, char, update);
+    return { targetName: char.name || `#${idx}`, applied, isCurrent };
+}
+
+/** 7.0.1 봇카드 쓰기 길 (적용 · 원본으로 되돌리기) — 서버가 보낸 키만 깊게 합친다 → 실리태번 목록 · 편집창 다시 읽기 */
+async function writeCharacterUpdate(idx, char, update) {
+    const ctx = SillyTavern?.getContext?.() || getContext?.();
 
     const res = await fetch('/api/characters/merge-attributes', {
         method: 'POST',
@@ -3327,7 +3412,7 @@ async function applyCharacterLive(charIdRaw, selectedIds) {
         const raw = PDOC.getElementById('character_json_data');
         if (raw && characters[idx]?.json_data) raw.value = characters[idx].json_data;
     }
-    return { targetName: char.name || `#${idx}`, applied, isCurrent };
+    return isCurrent;
 }
 
 // ── Title-only translation (batched) ─────────────────────────────────
@@ -3417,9 +3502,7 @@ async function runTitleTranslation({ items, list, ns, pBar, pLabel, pWrap, btnSt
             return;
         }
         // Everything already has a title — offer a redo rather than refusing.
-        const redo = confirm(
-            `제목 ${already.length}개가 이미 번역되어 있습니다.\n\n다시 번역할까요?\n\n[확인] = 재번역 (기존 제목 번역을 덮어씀)\n[취소] = 아무것도 하지 않음\n\n※ 본문 번역 데이터는 영향을 받지 않습니다.`
-        );
+        const redo = await ask(`제목 ${already.length}개가 이미 번역되어 있습니다. 다시 번역할까요? 기존 제목 번역을 덮어써요.\n\n※ 본문 번역 데이터는 영향을 받지 않습니다.`, { ok: '다시 번역', cancel: '취소' });
         if (!redo) return;
         targets = already;
     }
@@ -3565,6 +3648,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
                     <button class="pt-btn-icon" id="${idPfx}-copy" title="복사"><i class="fa-solid fa-copy" aria-hidden="true"></i><span>복사</span></button>
                     <button class="pt-btn-icon" id="${idPfx}-txt" title="TXT 내보내기"><i class="fa-solid fa-file-lines" aria-hidden="true"></i><span>TXT</span></button>
                     <button class="pt-btn-icon" id="${idPfx}-json" title="JSON 내보내기"><i class="fa-solid fa-file-code" aria-hidden="true"></i><span>JSON</span></button>
+                    <button class="pt-btn-icon" id="${idPfx}-restore" title="원본으로 되돌리기"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i><span>원본으로 되돌리기</span></button>
                     ${kind === 'char' ? '' : `<button class="pt-btn-icon" id="${idPfx}-tm" title="번역 메모리"><i class="fa-solid fa-box-archive" aria-hidden="true"></i><span>번역 기록</span></button>
                     <input type="file" id="${idPfx}-tmfile" accept="application/json,.json" style="display:none;">`}
                     ${kind === 'wi' ? `<button class="pt-btn-icon" id="${idPfx}-hide" title="고른 월드인포를 이 목록에서 숨겨요"><i class="fa-solid fa-eye-slash" aria-hidden="true"></i><span>목록에서 숨기기</span></button>
@@ -3993,7 +4077,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
     });
     page.querySelector(`#${idPfx}-retr`).addEventListener('click',async()=>{
         const mode=await askTransMode(); if(!mode) return;
-        if(!confirm(mode==='note'?'주석을 다시 번역할까요? (본문 번역은 유지됩니다)':'본문을 재번역할까요? (주석은 유지됩니다)')) return;
+        if(!await ask(mode==='note'?'주석을 다시 번역할까요? (본문 번역은 유지됩니다)':'본문을 재번역할까요? (주석은 유지됩니다)', { ok: '다시 번역', cancel: '취소' })) return;
         await runHere(()=>runTranslation(mkArgs(true,mode)));
     });
     page.querySelector(`#${idPfx}-titles`)?.addEventListener('click',async()=>{
@@ -4007,12 +4091,12 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
         }));
     });
     btnStop?.addEventListener('click',()=>{requestStop();});
-    page.querySelector(`#${idPfx}-clr`).addEventListener('click',()=>{
+    page.querySelector(`#${idPfx}-clr`).addEventListener('click',async()=>{
         // Respect selection: if items selected, clear only those; otherwise clear all loaded
         const selectedIds = [...list.querySelectorAll('.pt-block-item.selected')].map(el=>el.dataset.id).filter(Boolean);
         const targetIds = selectedIds.length ? selectedIds : items.map(i=>i.id);
         const scope = selectedIds.length ? `선택한 ${selectedIds.length}개 항목` : `로드된 전체 ${items.length}개 항목`;
-        if(!confirm(`${scope}의 번역 캐시를 비울까요?`)) return;
+        if(!await ask(`${scope}의 번역 캐시를 비울까요?`, { ok: '비우기', cancel: '취소', danger: true })) return;
         clearNS(ns, targetIds);
         applyEyeMode();
         updateCacheStatsUI();
@@ -4102,7 +4186,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
                 result = await exportWorldInfoJSON(srcVal, checkedIds);
             } else if (kind === 'char') {
                 // Character: partial field selection supported
-                const includeCB = confirm('캐릭터 카드에 임베디드 월드북(character_book)이 포함되어 있는 경우, JSON에 함께 포함할까요?\n\n[확인] = 포함 (원문 그대로)\n[취소] = 제외\n\n※ 임베디드 월드북의 내용은 번역되지 않고 원문 그대로 저장됩니다.');
+                const includeCB = await ask('캐릭터 카드에 임베디드 월드북(character_book)이 있으면 JSON 에 함께 넣을까요? (원문 그대로) \n\n※ 임베디드 월드북의 내용은 번역되지 않고 원문 그대로 저장됩니다.', { ok: '포함', cancel: '제외' });
                 result = await exportCharacterJSON(srcVal, { includeCharacterBook: includeCB }, checkedIds);
             }
             if (!result) return;
@@ -4347,13 +4431,25 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
         const whatLine = kind === 'char'
             ? '본문'
             : (titlesOnly ? '제목만 (본문 원문 유지)' : '제목 + 본문');
-        const ok = confirm(
+        const ok = await ask(
             `"${label}" ${kindLabel}에 번역을 적용합니다.\n\n` +
             `적용 대상: ${whatLine}\n` +
             `범위: ${scopeLine}\n\n` +
-            `파일을 덮어쓰며 되돌릴 수 없습니다.`
+            `파일을 덮어쓰기 전에 지금 원본을 백업해 둬요. 알림의 ↶ 이나 더보기 「원본으로 되돌리기」로 돌아갈 수 있어요.`,
+            { ok: '적용', cancel: '취소', danger: true }
         );
         if (!ok) return;
+
+        // 7.0.1 덮어쓰기 직전 원본 백업 — 못 만들면 적용하지 않는다
+        let backup = null;
+        try { backup = await saveOriginalBackup(kind, srcVal, checkedIds, label); }
+        catch (err) {
+            console.error(`[${EXT}] original backup failed (${kind})`, err);
+            if (typeof toastr!=='undefined') toastr.error('원본 백업을 만들지 못해 적용하지 않았어요: ' + (err?.message || err));
+            return;
+        }
+        const LONG = { timeOut: 10000, extendedTimeOut: 5000 };
+        let doneToast = null;
 
         try {
             if (kind === 'preset') {
@@ -4366,7 +4462,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
                         r.runnerRenamed ? `JS러너 ${r.runnerRenamed}개` : '',
                     ].filter(Boolean).join(' · ');
                     const rx = extras ? ` · ${extras}` : '';
-                    toastr.success(`"${r.targetName}"에 적용됨 (${r.applied}개 필드${rx})${note}`);
+                    doneToast = toastr.success(`"${r.targetName}"에 적용됨 (${r.applied}개 필드${rx})${note}`, '', LONG);
                     if (r.regexRenamed) {
                         toastr.info('정규식 이름은 확장 > 정규식 창을 다시 열면 새 이름으로 보입니다');
                     }
@@ -4386,19 +4482,30 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
             } else if (kind === 'wi') {
                 const r = await applyWorldInfoLive(srcVal, checkedIds, titlesOnly);
                 if (typeof toastr!=='undefined') {
-                    toastr.success(`"${r.targetName}"에 적용됨 (엔트리 ${r.entries}개 · ${r.applied}개 필드)`);
+                    doneToast = toastr.success(`"${r.targetName}"에 적용됨 (엔트리 ${r.entries}개 · ${r.applied}개 필드)`, '', LONG);
                 }
             } else if (kind === 'char') {
                 const r = await applyCharacterLive(srcVal, checkedIds);
                 if (typeof toastr!=='undefined') {
                     const note = r.isCurrent ? ' — 편집창에 바로 안 보이면 캐릭터를 다시 선택하세요' : '';
-                    toastr.success(`"${r.targetName}"에 적용됨 (${r.applied}개 필드)${note}`);
+                    doneToast = toastr.success(`"${r.targetName}"에 적용됨 (${r.applied}개 필드)${note}`, '', LONG);
                 }
             }
+            if (doneToast && backup) attachUndo(doneToast, () => restoreOriginal(backup), { label: '원본으로 되돌리기' });   // 7.0.1
         } catch (err) {
             console.error(`[${EXT}] live apply failed (${kind})`, err);
             if (typeof toastr!=='undefined') toastr.error('즉시 적용 실패: ' + (err?.message || err));
         }
+    });
+
+    // 7.0.1 더보기 「원본으로 되돌리기」: 지금 불러온 자료의 마지막 백업
+    page.querySelector(`#${idPfx}-restore`)?.addEventListener('click', async () => {
+        const name = backupTargetName(kind, loadedVal);
+        if (!name) { if (typeof toastr!=='undefined') toastr.warning('먼저 자료를 불러오세요'); return; }
+        let record = null;
+        try { record = await fileGetJSON(backupFileName(kind, name)); } catch (err) { console.warn(`[${EXT}] backup read failed`, err); }
+        if (!validBackup(record, kind, name)) { if (typeof toastr!=='undefined') toastr.info('이 자료의 원본 백업이 없어요. 「⚡ 원본 적용」을 할 때 만들어져요.'); return; }
+        await restoreOriginal(record);
     });
 }
 
@@ -4810,8 +4917,8 @@ export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
             if (typeof toastr !== 'undefined') toastr.info('삭제할 번역 캐시가 없습니다');
             return;
         }
-        const msg = ` 번역 데이터가 전부 삭제됩니다.\n\n현재 저장된 번역: ${count}개 (${sizeStr})\n\n이 작업은 되돌릴 수 없습니다.\n정말 삭제할까요?`;
-        if (!confirm(msg)) return;
+        const msg = `번역 데이터가 전부 삭제됩니다.\n\n현재 저장된 번역: ${count}개 (${sizeStr})\n\n이 작업은 되돌릴 수 없습니다. 정말 삭제할까요?`;
+        if (!await ask(msg, { ok: '전부 지우기', cancel: '취소', danger: true })) return;
         await clearTranslationCache();
         if (typeof toastr !== 'undefined') toastr.success(`번역 캐시 ${count}개가 삭제되었습니다`);
         updateCacheStatsUI();

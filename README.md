@@ -1,14 +1,25 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.0.0/blue-lemonade-7.0.0.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.0.1/blue-lemonade-7.0.1.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
 설치형 내장 확장: [zonde306 / ST-Prompt-Template](https://github.com/zonde306/ST-Prompt-Template) (AGPL-3.0, 1.17.9 · 커밋 d6f520d) — 「프롬프트 템플릿」 애드온이 원본 그대로 실리태번 확장 폴더에 설치해요 · [고지](src/addons/prompt-template/NOTICE.md).
 
 <details open>
-<summary>7.0.0 · 최신 업데이트</summary>
+<summary>7.0.1 · 최신 업데이트</summary>
+
+- 되돌리기: 다시 쓰기가 답을 고친 뒤 알림의 ↶ 로 고치기 전으로 돌아가요. 메모를 지우면 「지웠어요 ↶」로 바로 되살릴 수 있어요. 한글화 패널은 「원본 적용」 전에 원본을 자동으로 하나 보관하고 「원본으로 되돌리기」를 둬요.
+- 테마 확인 창: 브라우저 기본 확인 · 알림 창을 쓰던 곳을 모두 테마 확인 창(「지우기」 · 「취소」 같은 단추)으로 바꿨어요.
+- 기기 간 메모 · 용어집 합치기: 폰과 PC 를 오갈 때, 오래 열어 둔 다른 탭의 저장이 새로 쓴 메모 · 용어집을 덮지 않게 합쳐요. 가져오면 한 줄로 알려요.
+- 그룹 채팅에서도 캐릭터 에셋 그림이 나와요. 메시지마다 그 멤버의 그림을 쓰고, 차례마다 그 멤버의 목록만 프롬프트에 넣어요 (캐릭터 에셋 1.6.9).
+- 작은 고침: 프롬프트 템플릿이 오프라인일 때 git 사본을 덮어쓰지 않고 옛 판으로 내릴 때는 확인을 받아요 · 확장 순서 목록을 다시 그려도 키보드 포커스가 남아요 · 성능 보조 판 표기.
+
+</details>
+
+<details>
+<summary>7.0.0 · 빗소리 세 단계 · 과일의 마음 요술봉 항목</summary>
 
 - TTS 빗소리 세 단계: 「가볍게 내리는 비 · 비 내리는 소리 · 쏟아지는 비」로 나눴어요. 가랑비 · 보슬비는 조용하게, 장대비 · 폭우만 세게 들려요. 「차를 따르다」 · 「억수로」 같은 말에는 걸리지 않아요 (TTS 1.9.8).
 - 장면 소리도 날씨 양에 따라 가벼운 비 · 보통 비 · 쏟아지는 비를 골라요.

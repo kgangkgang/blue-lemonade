@@ -213,6 +213,23 @@ function rowHtml(panel, group, index, total, movable) {
     </div>`;
 }
 
+/** 목록 안에서 초점이 있는 조작 칸 → { key, act } (없으면 null) */
+export function focusedControl(list, active = globalThis.document?.activeElement) {
+    if(!active||!list?.contains?.(active))return null;
+    const row=active.closest?.('.po-item');
+    if(!row)return null;
+    return { key: row.dataset.key, act: active.dataset?.act || (active.matches?.('input[data-panel-visible]') ? 'visible' : '') };
+}
+/** 다시 그린 목록에서 같은 줄 · 같은 동작 칸에 초점 (그 칸이 꺼졌으면 같은 줄의 첫 켜진 칸) */
+export function restoreFocus(list, focus) {
+    if(!focus)return false;
+    const row=[...list.querySelectorAll('.po-item')].find(item=>item.dataset.key===focus.key);
+    if(!row)return false;
+    const want=focus.act==='visible'?row.querySelector('input[data-panel-visible]'):focus.act?row.querySelector(`[data-act="${focus.act}"]`):null;
+    const target=want&&!want.disabled?want:[...row.querySelectorAll('button,input')].find(el=>!el.disabled);
+    target?.focus?.({preventScroll:true});
+    return !!target;
+}
 export function renderList() {
     for(const root of [dialogRoot,...inlineRoots].filter(Boolean)) renderRoot(root);
 }
@@ -233,8 +250,11 @@ function renderRoot(root) {
 
     const list = root.querySelector('.po-list');
     const previousScroll=list.scrollTop;
+    // 1.2.3: 다시 그리면 누르던 단추 · 체크가 사라져 키보드 · 화면 읽기 초점이 문서 처음으로 튀었다 — 그 줄(key) · 그 동작을 기억했다가 되돌린다
+    const focus=focusedControl(list);
     list.innerHTML = rows.length ? rows.join('') : '<div class="po-empty">보이는 확장이 없어요</div>';
     list.scrollTop=previousScroll;
+    restoreFocus(list,focus);
     root.querySelector('.po-count').textContent = `${pinned.length + rest.length}개`;
 }
 

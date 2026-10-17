@@ -93,9 +93,9 @@ t('채팅이 안 열려 있으면 전체만 · 그룹 기록이 없으면(member
 t('배선: 용어집 창 한 줄(그룹 · 캐릭터 범위에서만) · 이름 다리 · 문단 캐시 서명(용어집 항목 전체 — 멤버 것이 바뀌면 그룹 캐시도 새로) · 판 · CI', () => {
     assert.match(src, /const memberCount = glossaryScopeView === 'char' && key \? glossaryMemberCount\(\) : 0;\s*if \(memberCount\) list\.insertAdjacentHTML\('beforeend', `<small class="llmt-desc llmt-gl-members">멤버 것 \$\{memberCount\}개도 쓰는 중<\/small>`\);/);
     assert.match(src, /function publishGlossaryNames\(\) \{\s*publishNames\(extensionSettings\.glossary_enabled === false \? \[\] : activeGlossaryEntries\(\)\);\s*\}/);
-    assert.match(src, /\[chatCtx\?\.groupId \?\? null, chatCtx\?\.characters\?\.\[chatCtx\?\.characterId\]\?\.avatar \?\? null, extensionSettings\.glossary_entries \?\? null\]/);
+    assert.match(src, /\[chatCtx\?\.groupId \?\? null, chatCtx\?\.characters\?\.\[chatCtx\?\.characterId\]\?\.avatar \?\? null, glossarySignature\(extensionSettings\.glossary_entries\)\]/);   // 2.7.5 서명 재료는 updated 를 뺀 항목 (glossary-sync.js — 옛 서명과 같은 JSON)
     assert.match(src, /const \{ lines, hasChoice \} = glossaryLines\(activeGlossaryEntries\(\), text, \{ reverse, maxLines: GLOSSARY_MAX_LINES \}\);/, '프롬프트 블록도 같은 목록');
-    assert.match(read('src/addons/translator/manifest.json'), /"version": "2\.7\.4"/);
+    assert.match(read('src/addons/translator/manifest.json'), /"version": "2\.(?:7\.(?:[4-9]|\d{2})|(?:[89]|\d{2})\.\d+)"/, '2.7.4 이상');
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/translator-group-glossary\.mjs \./);
 });
 

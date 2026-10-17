@@ -4,6 +4,7 @@ import { showThemeModal } from '../../modal.js';
 // Import statements
 import { eventSource, event_types, saveSettingsDebounced } from '../../../../../../../script.js';
 import { extension_settings } from '../../../../../../extensions.js';
+import { ask } from '../../ask.js';   // 7.0.1 테마 확인 창 (기본 confirm 대신)
 
 // Constants and Types
 const CSS_THEME_STYLE_VAR = '--custom-theme-style-inputs';
@@ -466,8 +467,8 @@ class CustomThemeSettingsManager {
         return `:root {\n  --custom-theme-style-inputs: ${this.generateSettingsJSON()}\n}`;
     }
 
-    insertDefaultCSS() {
-        if(!confirm('현재 커스텀 CSS 앞에 예제를 추가할까요? 적용하면 화면 모양이 바뀔 수 있어요.'))return;
+    async insertDefaultCSS() {
+        if (!await ask('현재 커스텀 CSS 앞에 예제를 추가할까요? 적용하면 화면 모양이 바뀔 수 있어요.', { ok: '추가', cancel: '취소' })) return;
         const customCSSArea = document.getElementById('customCSS');
         if (customCSSArea) {
             customCSSArea.value = `${DEFAULT_CSS_TEMPLATE}\n${customCSSArea.value}`;
@@ -476,8 +477,8 @@ class CustomThemeSettingsManager {
         }
     }
 
-    resetDefaults() {
-        if (!confirm('현재 CSS 설정 항목을 기본값으로 되돌릴까요?')) return;
+    async resetDefaults() {
+        if (!await ask('현재 CSS 설정 항목을 기본값으로 되돌릴까요?', { ok: '되돌리기', cancel: '취소' })) return;
 
         for(const entry of this._parseCSSConfig(CSS_THEME_STYLE_VAR))delete this.settings.entries[entry.varId];
         this.updateCSSVariables({});

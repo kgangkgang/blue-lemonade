@@ -13,10 +13,12 @@
 // - 바뀐 것이 없던 메시지는 .mes_text 안이 다시 바뀔 때까지 건너뛴다 (clean). 추론 시간·타이머 글자만 바뀐 감시 콜백,
 //   60ms 모아 보기, 답이 끝난 뒤의 400/1200/3000ms 다시 보기가 여기서 거의 공짜가 된다.
 // - 지금 캐릭터 폴더는 getContext() 대신 실리태번이 내보내는 변수를 바로 읽는다 (getContext 는 부를 때마다 큰 객체를 만든다).
+// 1.6.9 그룹 채팅: 「지금 캐릭터」가 없으니 메시지마다 주인(original_avatar)의 폴더 목록으로 그린다 — 멤버 목록은 그 멤버의 메시지가
+// 처음 보일 때 store.js 가 읽어 setMemberIndex 로 준다. 처리하는 동안만 그 멤버의 찾아보기표로 바꿔 끼운다(withMember). 1:1 은 예전 그대로.
 import { getContext } from '../../../../../../extensions.js';
 import * as stScript from '../../../../../../../script.js';
 import * as stGroups from '../../../../../../group-chats.js';
-import { settings, currentFolder, folderOf } from './state.js';
+import { settings, currentFolder, folderOf, messageFolder } from './state.js';
 import { groupKeyOf, baseOf } from './assets.js';
 import { findSimilar, findSimilarList } from './names.js';
 import { slotView, isManual } from './slots.js';
@@ -73,6 +75,66 @@ export function clearIndex() {
 
 // 실리태번이 내보내는 변수 (살아 있는 바인딩). 이름이 없는 옛/새 버전이면 getContext() 로 돌아간다.
 const liveBindings = 'this_chid' in stScript && 'characters' in stScript && 'chat' in stScript && 'selected_group' in stGroups;
+
+// ── 1.6.9 그룹 채팅: 멤버 폴더마다의 찾아보기표 ─────────────────────
+/** 폴더 → { index, similar, resolvable } (비슷한 이름 기억도 멤버마다 따로) */
+const members = new Map();
+/** 이미 읽어 달라고 한 폴더 (같은 폴더를 메시지마다 다시 부르지 않게) */
+const asked = new Set();
+let memberLoader = null;
+
+/** store.js 가 건다: 멤버 폴더를 읽어 setMemberIndex 로 돌려준다 */
+export function setMemberLoader(fn) { memberLoader = typeof fn === 'function' ? fn : null; }
+
+export function setMemberIndex(folder, next) {
+    if (!folder || !next) return;
+    members.set(folder, { index: next, similar: new Map(), resolvable: new Map() });
+    generation++;
+    schedulePass();
+    document.dispatchEvent(new CustomEvent('char-assets:index'));
+}
+
+export function clearMemberIndexes() {
+    members.clear();
+    asked.clear();
+    generation++;
+}
+
+function groupMode() {
+    return liveBindings ? !!stGroups.selected_group : !!getContext().groupId;
+}
+
+function groupContext() {
+    return liveBindings ? { characters: stScript.characters, groups: stGroups.groups, groupId: stGroups.selected_group } : getContext();
+}
+
+/** 이 메시지 주인의 찾아보기표 — 아직 안 읽었으면 읽어 달라고 하고 null (읽히면 setMemberIndex 가 다시 그린다) */
+function memberFor(mes) {
+    const id = Number(mes?.getAttribute?.('mesid'));
+    const chat = liveBindings ? stScript.chat : getContext().chat;
+    const message = Number.isInteger(id) ? chat?.[id] : null;
+    const folder = message ? messageFolder(message, groupContext()) : '';
+    if (!folder) return null;
+    const entry = members.get(folder);
+    if (entry) return entry;
+    if (memberLoader && !asked.has(folder)) { asked.add(folder); memberLoader(folder); }
+    return null;
+}
+
+/** fn 을 그 멤버의 찾아보기표로 돌린다 (끝나면 원래대로) */
+function withMember(entry, fn) {
+    const saved = [index, similar, resolvable];
+    index = entry.index; similar = entry.similar; resolvable = entry.resolvable;
+    try { return fn(); } finally { [index, similar, resolvable] = saved; }
+}
+
+/** 메시지 하나에 맞는 찾아보기표로 fn — 1:1 은 지금 목록 그대로, 그룹은 주인 멤버의 목록 (없거나 그림이 없으면 건너뜀) */
+function forMessage(mes, group, fn) {
+    if (!group) return fn();
+    const entry = memberFor(mes);
+    if (!entry || nothingToRender(entry.index)) return undefined;
+    return withMember(entry, fn);
+}
 
 let lastAvatar = Symbol('none');
 let lastFolder = '';
@@ -178,16 +240,16 @@ function runPass() {
     const targets = full ? null : [...pendingMessages];
     pendingFull = false;
     pendingMessages.clear();
-    const live = liveIndex();
-    if (!live || nothingToRender(live)) return;
+    const group = groupMode();
+    const live = group ? null : liveIndex();
+    if (!group && (!live || nothingToRender(live))) return;
     const chat = document.getElementById('chat');
     if (!chat) return;
     const messages = full ? chat.querySelectorAll('.mes') : targets.filter(mes => mes.isConnected);
     const key = cleanKey();
     for (const mes of messages) {
-        if (isClean(mes, key)) continue;
         try {
-            processMessage(mes, key);
+            forMessage(mes, group, () => { if (!isClean(mes, key)) processMessage(mes, key); });
         } catch (error) {
             console.debug('[캐릭터 에셋] 메시지 처리 실패', error);
         }
@@ -542,14 +604,14 @@ function processMessage(mes, key) {
  * 고르기는 메시지 시각·순서로 정해지므로 같은 자리에 같은 그림이 나오고, src 만 바꿔서 감시에 다시 걸리지 않는다.
  */
 function replaceNow(messages) {
-    const live = liveIndex();
-    if (!live || nothingToRender(live)) return;
+    const group = groupMode();
+    const live = group ? null : liveIndex();
+    if (!group && (!live || nothingToRender(live))) return;
     const key = cleanKey();
     for (const mes of messages) {
         if (!mes.isConnected) continue;
-        if (isClean(mes, key)) continue;
         try {
-            processMessage(mes, key);
+            forMessage(mes, group, () => { if (!isClean(mes, key)) processMessage(mes, key); });
         } catch (error) {
             console.debug('[캐릭터 에셋] 즉시 바꾸기 실패', error);
         }
@@ -626,6 +688,17 @@ export function assetInfo(name) {
     if (!liveIndex()) return null;
     const asset = findAsset(name) ?? index.groups.get(groupKeyOf(cleanName(name)))?.[0] ?? null;
     return asset ? { file: asset.file, group: asset.group, variants: hasVariants(asset) } : null;
+}
+
+/** 1.6.9 그룹: 그 멤버 폴더의 목록으로 assetInfo (1:1 이거나 폴더가 없으면 assetInfo 그대로) */
+export function assetInfoFor(folder, name) {
+    if (!folder || !groupMode()) return assetInfo(name);
+    const entry = members.get(folder);
+    if (!entry) return null;
+    return withMember(entry, () => {
+        const asset = findAsset(name) ?? index.groups.get(groupKeyOf(cleanName(name)))?.[0] ?? null;
+        return asset ? { file: asset.file, group: asset.group, variants: hasVariants(asset) } : null;
+    });
 }
 
 /** 화면의 그 메시지에서 자리마다 지금 보이는 그림 파일 — { 자리 id: 파일 } (그림 없는 자리는 빠진다). 꾹 눌러 한 자리를 정할 때 다른 자리를 고정하는 데 쓴다 */
@@ -886,10 +959,14 @@ function fixImages(text, mes, imgs, { random = settings().randomGroups } = {}) {
  * 이 단추는 '깨끗함'을 믿지 않고 모든 메시지를 다시 처리한다.
  */
 export function redrawNow() {
+    const group = groupMode();
+    const memberList = [...members.values()];
     const report = {
-        hasIndex: !!liveIndex(), // 캐릭터를 막 바꿔 이전 캐릭터 목록만 남았으면 '아직 못 읽음'으로 (1.3.2)
-        assets: index ? index.byName.size : 0,
-        folder: index?.folder ?? '',
+        hasIndex: group ? memberList.length > 0 : !!liveIndex(), // 캐릭터를 막 바꿔 이전 캐릭터 목록만 남았으면 '아직 못 읽음'으로 (1.3.2)
+        assets: group ? memberList.reduce((sum, entry) => sum + entry.index.byName.size, 0) : index ? index.byName.size : 0,
+        folder: group ? memberList.map(entry => entry.index.folder).join(', ') : index?.folder ?? '',
+        group,   // 1.6.9 그룹 채팅이면 멤버마다
+
         renderEnabled: !!settings().renderEnabled,
         watching: !!observer,
         messages: 0,
@@ -902,6 +979,7 @@ export function redrawNow() {
         repeated: [], // 같은 그림이라 태그만 지운 이름 (최근 메시지부터 3개)
     };
     const chat = document.getElementById('chat');
+    if (group && chat) for (const mes of chat.querySelectorAll('.mes')) memberFor(mes);   // 아직 안 읽은 멤버는 지금 읽어 달라고 한다
     if (!chat || !report.hasIndex) return report;
 
     const all = [...chat.querySelectorAll('.mes')];
@@ -915,7 +993,7 @@ export function redrawNow() {
     const key = cleanKey();
     for (const mes of all) {
         try {
-            processMessage(mes, key);
+            forMessage(mes, group, () => processMessage(mes, key));
         } catch (error) {
             console.debug('[캐릭터 에셋] 다시 그리기 실패', error);
         }
@@ -924,16 +1002,18 @@ export function redrawNow() {
     report.images = chat.querySelectorAll('img.eh-img').length;
 
     // 남은 태그를 두 갈래로 나눠 몇 개만 보여 준다: 목록에 없는 이름과, 목록에 있는데도 안 바뀐 이름.
-    if (index) {
+    if (index || group) {
         for (const mes of all) {
             const text = mes.querySelector('.mes_text');
             if (!text) continue;
-            for (const match of (text.textContent ?? '').matchAll(TAG_PATTERN)) {
-                const name = match[1].trim();
-                // 목록에 있는데도 남아 있으면 바꾸기가 막힌 것이고, 목록에 없으면 이름 문제다.
-                const list = findAsset(name) ? report.stuck : report.unresolved;
-                if (list.length < 3 && !list.includes(name)) list.push(name);
-            }
+            forMessage(mes, group, () => {
+                for (const match of (text.textContent ?? '').matchAll(TAG_PATTERN)) {
+                    const name = match[1].trim();
+                    // 목록에 있는데도 남아 있으면 바꾸기가 막힌 것이고, 목록에 없으면 이름 문제다.
+                    const list = findAsset(name) ? report.stuck : report.unresolved;
+                    if (list.length < 3 && !list.includes(name)) list.push(name);
+                }
+            });
         }
     }
     for (const mes of [...all].reverse()) {

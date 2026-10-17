@@ -5,7 +5,7 @@ import { saveSettingsDebounced } from '../../../../../../../script.js';
 
 export const MODULE = 'esetham';
 export const OLD_MODULE = 'character-assets';
-export const VERSION = '1.6.8';
+export const VERSION = '1.6.9';
 export const TITLE = '캐릭터 에셋';
 
 // AI에게 보내는 글이라 영어로 둔다. {{img_keywords_autogen}} 자리에 지금 캐릭터의 그림 이름 목록이 들어간다.
@@ -181,6 +181,51 @@ export function folderOf(character) {
 
 export function currentFolder() {
     return folderOf(currentCharacter());
+}
+
+// ── 1.6.9 그룹 채팅: 메시지 주인 · 지금 말하는 멤버 ─────────────────
+
+/** 그룹의 멤버 아바타 목록 (그룹이 아니면 빈 배열) */
+function memberAvatars(context) {
+    const group = (context.groups ?? []).find(item => String(item?.id) === String(context.groupId));
+    return Array.isArray(group?.members) ? group.members : [];
+}
+
+/**
+ * 메시지를 쓴 캐릭터 (사용자 · 시스템 메시지면 null). 그룹 메시지는 실리태번이 original_avatar(카드 파일 이름)를 남긴다 —
+ * 없으면(옛 채팅 · 다른 확장이 넣은 메시지) 그룹 멤버 가운데 같은 이름. 1:1 채팅은 지금 캐릭터.
+ * @param {object} message 실리태번 채팅 메시지
+ * @param {{ characters?: object[], groups?: object[], groupId?: any, characterId?: any }} [context]
+ */
+export function messageOwner(message, context = getContext()) {
+    if (!message || message.is_user || (message.is_system && !message.original_avatar)) return null;
+    if (!context.groupId) return currentCharacter();
+    const characters = context.characters ?? [];
+    if (message.original_avatar) return characters.find(item => item?.avatar === message.original_avatar) ?? { avatar: message.original_avatar, name: message.name };
+    const members = memberAvatars(context);
+    return characters.find(item => item && members.includes(item.avatar) && item.name === message.name) ?? null;
+}
+
+/** 메시지 주인의 그림 폴더 ('' = 없음) */
+export function messageFolder(message, context = getContext()) {
+    return folderOf(messageOwner(message, context));
+}
+
+/**
+ * 지금 답을 쓸 캐릭터: 1:1 은 지금 캐릭터, 그룹은 실리태번이 차례마다 this_chid 를 그 멤버로 바꿔 둔 동안만(생성 중) 그 멤버.
+ * 그룹에서 생성 밖이면 null — 멤버 전부의 목록을 한 번에 넣지 않는다.
+ */
+export function speakerCharacter(context = getContext()) {
+    if (!context.groupId) return currentCharacter();
+    const id = context.characterId;
+    if (id === undefined || id === null || id === '') return null;
+    const character = context.characters?.[id] ?? null;
+    const members = memberAvatars(context);
+    return character && (!members.length || members.includes(character.avatar)) ? character : null;
+}
+
+export function speakerFolder(context = getContext()) {
+    return folderOf(speakerCharacter(context));
 }
 
 // ── 꺼 둔 그림 ───────────────────────────────────────────────

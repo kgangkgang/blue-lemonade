@@ -53,9 +53,11 @@ import { capturedMessages, capturedRequest, holdGeneration, regenerateReply, rep
 import { isMainChatGenerating, whenMainChatIdle } from '../../main-chat-rules.js';   // 6.5.3 「생성 중」 = 본채팅 생성만 (조용한 생성 · 헬퍼 generate · 이 애드온의 붙잡음은 아님)
 import { messageWork } from '../../message-work.js';   // 6.5.3 메시지 작업 순서 — 글을 바꾸면 적어 둔다 (번역기 · 그림 확장이 알아보게)
 import { applyUpgrades } from './upgrades.js';
+import { createRewriteUndo } from './undo.js';   // 7.0.1 ↶ 되돌리기 (채팅마다 마지막 하나, 메모리)
+import { attachUndo } from '../../ask.js';   // 7.0.1 알림 끝 ↶ 단추
 import { startQuickBan, setQuickBanEnabled } from './quick-ban.js';
 
-const VERSION = '2.1.3';
+const VERSION = '2.1.4';
 const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];
@@ -607,18 +609,38 @@ function friendlyError(error) {
     return text;
 }
 
-function report(result, total, manual) {
-    afterPaint().then(() => showReport(result, total, manual));
+function report(result, total, manual, undo = null) {
+    afterPaint().then(() => showReport(result, total, manual, undo));
 }
 
-function showReport({ fixed, failed, error }, total, manual) {
+// 7.0.1 ↶ 되돌리기: 고치기 전 글 · 스와이프를 채팅마다 마지막 하나 (메모리)
+const rewriteUndo = createRewriteUndo();
+const UNDO_REFUSED = { gone: '더 최근에 고친 답이 있어서 이건 되돌릴 수 없어요.', chat: '채팅을 바꿔서 되돌리지 않았어요.', changed: '그 사이 메시지가 바뀌어서 되돌리지 않았어요.' };
+/** 고치기 전으로 — 고칠 때와 같은 차례: 작업 기록(noteWrite) → 다시 쓰기 표시 → 글 · 스와이프 → 그리기 → MESSAGE_UPDATED(번역 · TTS 가 따라감) → 저장 */
+async function undoRewrite(rec) {
+    const ctx = getContext();
+    const why = rewriteUndo.check(rec, { chatId: ctx.getCurrentChatId?.() ?? '', chat: ctx.chat });
+    if (why !== 'ok') { toastr.info(UNDO_REFUSED[why], TITLE); return false; }
+    const { message, messageId } = rec;
+    messageWork().noteWrite(message, { by: 'rewrite', before: message.mes, after: rec.before });
+    markRewrite(message, rec.after, rec.before);
+    rewriteUndo.restore(rec);
+    if ($(`#chat .mes[mesid="${messageId}"]`).length > 0 && !isEditingMessage(document, messageId)) updateMessageBlock(messageId, message);
+    await notifyTextChanged(messageId);
+    await saveChatConditional();
+    toastr.success('고치기 전으로 되돌렸어요.', TITLE);
+    return true;
+}
+
+function showReport({ fixed, failed, error }, total, manual, undo = null) {
     const kept = total - fixed - failed;
     if (failed > 0) {
         const done = fixed > 0 ? ` (${fixed}곳은 고침)` : '';
         if (error) console.warn(`[${TITLE}] 고쳐 쓰기 실패:`, error);
         const friendly = friendlyError(error);
         const reason = friendly ? ` ${friendly}` : '';
-        toastr.warning(`${failed}곳은 못 고쳐서 원문 그대로 뒀어요${done}.${reason}`, TITLE);
+        const toast = toastr.warning(`${failed}곳은 못 고쳐서 원문 그대로 뒀어요${done}.${reason}`, TITLE, undo && fixed > 0 ? { timeOut: 9000, extendedTimeOut: 4000 } : undefined);
+        if (undo && fixed > 0) attachUndo(toast, () => undoRewrite(undo));
         return;
     }
     // Nothing changed (coincidental match or an exception's own trait): stay quiet unless asked.
@@ -627,7 +649,8 @@ function showReport({ fixed, failed, error }, total, manual) {
         const parts = [];
         if (fixed > 0) parts.push(`${fixed}곳 고쳤어요`);
         if (kept > 0) parts.push(`${kept}곳은 다른 캐릭터의 특징이거나 외모 묘사가 아니라서 그대로 뒀어요`);
-        toastr.success(`${parts.join(', ')}.`, TITLE);
+        const toast = toastr.success(`${parts.join(', ')}.`, TITLE, undo && fixed > 0 ? { timeOut: 9000, extendedTimeOut: 4000 } : undefined);
+        if (undo && fixed > 0) attachUndo(toast, () => undoRewrite(undo));   // 7.0.1 ↶
     }
 }
 
@@ -745,6 +768,7 @@ async function cleanMessage(messageId, manual, signal) {
             return;
         }
         if (result.error) console.warn(`[${TITLE}] 요청 실패:`, result.error);
+        let undo = null;   // 7.0.1 ↶
 
         if (result.text !== visible) {
             let replacement = original.slice(0, visibleOffset) + result.text + original.slice(visibleOffset + visible.length);
@@ -774,6 +798,8 @@ async function cleanMessage(messageId, manual, signal) {
                 replacement = rebased;
                 tokenCount = undefined;   // 자리 줄이 더해진 글의 토큰 수는 다시 세야 한다 — 기다리는 사이 또 바뀔 수 있어 여기서는 적지 않는다
             }
+            undo = rewriteUndo.remember({ chatId: getContext().getCurrentChatId?.() ?? '', messageId, message, before: message.mes, after: replacement,
+                beforeSwipe: Array.isArray(message.swipes) ? message.swipes[message.swipe_id ?? 0] : undefined, swipeId: message.swipe_id ?? 0, tokenBefore: message.extra?.token_count });
             messageWork().noteWrite(message, { by: 'rewrite', before: message.mes, after: replacement });   // 6.5.3 메시지 작업 순서 — 번역기 · 그림 확장이 이 변화를 알아보게
             message.mes = replacement;
             // 6.1.7 다시 쓰기가 고쳤다고 적는다 (알리기 전에) — TTS 가 이 표시를 보고 대사 분석을 버리지 않고 새 글로 옮긴다.
@@ -802,7 +828,7 @@ async function cleanMessage(messageId, manual, signal) {
                 await saveChatConditional();
             }
         }
-        report(result, spans.length, manual);
+        report(result, spans.length, manual, undo);
     } catch (error) {
         console.error(`[${TITLE}]`, error);
         toastr.error(`고쳐 쓰는 중 오류: ${friendlyError(error)}`, TITLE);

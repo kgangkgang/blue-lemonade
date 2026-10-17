@@ -7,7 +7,8 @@
 //   4) 설치: 도우미에 /inspect(ZIP 그대로) → /preview(폴더 ST-Prompt-Template) → /install(표) · 같은 확장이 다른 폴더에 있으면 멈춤 · git 설치본은 덮지 않음
 //   5) 삭제: /remove-preview → 확인 → /remove · 확인 취소면 보내지 않음
 //   6) 배선: 애드온 목록 · 시작 · 세부 설정 · 판 표 · 설정 기본값 · 검색 · 출처 창 · 고지 · README · CI · 공개 ZIP 목록 · 코어 index.js 한 줄 · CSS 판
-//   7) 확장 순서 1.2.2: 창 구성이 바뀌면 열린 목록을 다시 그린다 (늦게 붙는 확장)
+//   7) 확장 순서 1.2.2: 창 구성이 바뀌면 열린 목록을 다시 그린다 (늦게 붙는 확장) · 1.2.3: 다시 그린 뒤 초점 되돌리기
+//   8) 7.0.1: git 확인 실패(500)는 막음 · 전역 설치본은 안내만 · 다른 폴더 사본은 두 벌 경고 · http(subtle 없음)도 크기 · 순수 JS SHA-256 · 새 판 · 같은 판은 확인 뒤에만 · perf 판 한 쌍
 // 지어낸 이름만 쓴다.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -115,7 +116,7 @@ await test('host.js: data-i18n 규칙("[title]키;키")대로 적고 · 표에 �
 });
 
 const S = mod.state;
-const reset = (over = {}) => Object.assign(S, { helper: true, installed: false, git: false, active: false, disabled: false, busy: false, message: '', done: '', error: '' }, over);
+const reset = (over = {}) => Object.assign(S, { helper: true, installed: false, scope: 'local', others: [], git: false, active: false, disabled: false, busy: false, message: '', done: '', error: '' }, over);
 await test('상태 한 줄 · 단추 셋 규칙', () => {
     assert.equal(mod.compareVersions('1.17.9', '1.17.10'), -1); assert.equal(mod.compareVersions('1.18', '1.17.9'), 1); assert.equal(mod.compareVersions('1.17.9', '1.17.9'), 0);
     const acts = () => mod.actions().map(b => `${b.act}:${b.disabled ? 0 : 1}`).join(' ');
@@ -135,7 +136,8 @@ await test('상태 한 줄 · 단추 셋 규칙', () => {
 
 // 가짜 fetch: 담긴 ZIP(file:) · 실리태번 manifest · /api/extensions/version · 도우미 길
 const calls = [];
-let installedManifest = null, gitHash = '', otherFolder = null;
+let installedManifest = null, gitHash = '', otherFolder = null, versionStatus = 200, ourType = 'local', extraEntries = [], extraManifests = {};
+const versionAsked = [];
 globalThis.SillyTavern = { getContext: () => ({ getRequestHeaders: () => ({ 'X-CSRF-Token': 't' }), extensionSettings: { disabledExtensions: [] } }) };
 globalThis.fetch = async (url, init = {}) => {
     const u = String(url);
@@ -143,7 +145,9 @@ globalThis.fetch = async (url, init = {}) => {
     calls.push({ u, method: init.method || 'GET', headers: init.headers || {}, body: init.body });
     const json = (code, obj) => new Response(JSON.stringify(obj), { status: code, headers: { 'Content-Type': 'application/json' } });
     if (u.endsWith('/ST-Prompt-Template/manifest.json')) return installedManifest ? json(200, installedManifest) : new Response('', { status: 404 });
-    if (u === '/api/extensions/version') return json(200, { currentCommitHash: gitHash });
+    if (u === '/api/extensions/version') { versionAsked.push(JSON.parse(init.body)); return versionStatus === 200 ? json(200, { currentCommitHash: gitHash }) : new Response('Internal Server Error', { status: versionStatus }); }
+    if (u === '/api/extensions/discover') return json(200, [{ type: 'system', name: 'regex' }, { type: 'local', name: 'third-party/blue-lemonade' }, ...(installedManifest ? [{ type: ourType, name: 'third-party/ST-Prompt-Template' }] : []), ...extraEntries]);
+    for (const [name, m] of Object.entries(extraManifests)) if (u === `/scripts/extensions/${name}/manifest.json`) return json(200, m);
     if (u.endsWith('/status')) return json(200, { version: '1.1.0' });
     if (u.includes('/inspect?')) return json(200, { token: 'tok-1', manifest: { display_name: source.display_name, version: source.version, homePage: source.upstream }, installed: otherFolder ? [{ folder: otherFolder, display_name: source.display_name, homePage: source.upstream }] : [] });
     if (u.endsWith('/preview')) return json(200, { folder: 'ST-Prompt-Template' });
@@ -231,8 +235,86 @@ await test('확장 순서 1.2.2: 창 구성이 바뀌면(늦게 붙는 확장) �
     assert.match(order, /export function onPanelsChange\(fn\)/);
     assert.match(order, /const panels = scan\(\);\n\s+if \(!panels\.length\) return;\n\s+notifyPanels\(panels\);/);
     assert.match(panel, /\nonPanelsChange\(renderList\);\n/);
-    assert.match(read('src/addons/order/state.js'), /export const VERSION = '1\.2\.2';/);
-    assert.match(read('src/addons/order/style.css'), /--po-css-version: "1\.2\.2";/);
+    assert.match(read('src/addons/order/state.js'), /export const VERSION = '1\.2\.3';/);
+    assert.match(read('src/addons/order/style.css'), /--po-css-version: "1\.2\.3";/);
+});
+
+await test('7.0.1 git 확인 실패: /version 이 500(오프라인 git fetch)이면 「모름」 → 설치 · 삭제 막고 한 줄 안내 · 도우미에 아무것도 안 보냄', async () => {
+    reset({ helper: null, installed: null }); installedManifest = { version: '1.16.2', display_name: source.display_name }; versionStatus = 500; versionAsked.length = 0;
+    await mod.refresh();
+    assert.equal(S.git, 'unknown'); assert.equal(S.scope, 'local');
+    assert.match(mod.statusText(), /git 설치본인지 확인하지 못했어요/);
+    assert.deepEqual(mod.actions().map(b => b.disabled), [true, true, true].map((v, i) => i === 1 ? !S.active : v));
+    calls.length = 0;
+    assert.equal(await mod.install({ confirm: async () => true }), false); assert.equal(await mod.remove({ confirm: async () => true }), false);
+    assert.ok(!calls.some(c => c.u.includes('blue-lemonade-zip')), JSON.stringify(calls.map(c => c.u)));
+    versionStatus = 404; assert.equal(await mod.isGit(false), false, '그 자리에 폴더 없음 = git 아님');
+    versionStatus = 200; gitHash = ''; assert.equal(await mod.isGit(false), false); gitHash = 'abc'; assert.equal(await mod.isGit(false), true); gitHash = '';
+});
+await test('7.0.1 전역 설치본: discover 가 global 이면 「전역 설치본 — 서버 관리자에게」 · git 확인도 global:true · 단추 막음', async () => {
+    reset({ helper: null, installed: null }); installedManifest = { version: '1.17.9', display_name: source.display_name }; ourType = 'global'; versionAsked.length = 0;
+    await mod.refresh();
+    assert.equal(S.scope, 'global'); assert.deepEqual(versionAsked.at(-1), { extensionName: 'ST-Prompt-Template', global: true });
+    assert.match(mod.statusText(), /1\.17\.9 전역 설치본 — 업데이트 · 삭제는 서버 관리자에게/);
+    assert.equal(mod.actions()[0].disabled, true); assert.equal(mod.actions()[2].disabled, true);
+    calls.length = 0; assert.equal(await mod.install({ confirm: async () => true }), false); assert.ok(!calls.some(c => c.u.includes('blue-lemonade-zip')));
+    ourType = 'local';
+});
+await test('7.0.1 다른 이름 폴더에 같은 확장(전역 · 내 계정): 두 벌 실림 경고 · 설치 막음 (설치 안 됐어도)', async () => {
+    reset({ helper: null, installed: null }); installedManifest = null;
+    extraEntries = [{ type: 'global', name: 'third-party/st-prompt-template-main' }, { type: 'local', name: 'third-party/word-tool' }];
+    extraManifests = { 'third-party/st-prompt-template-main': { display_name: 'Prompt Template/提示词模板', version: '1.17.0', homePage: 'https://github.com/zonde306/ST-Prompt-Template' }, 'third-party/word-tool': { display_name: 'Word Tool', version: '1.0.0', homePage: 'https://github.com/someone/word-tool' } };
+    await mod.refresh();
+    assert.deepEqual(S.others, [{ name: 'third-party/st-prompt-template-main', type: 'global' }]);
+    assert.match(mod.statusText(), /다른 폴더에도 있어요\(st-prompt-template-main · 전역\) — 두 벌 실려요/);
+    assert.equal(mod.actions()[0].disabled, true);
+    calls.length = 0; assert.equal(await mod.install(), false); assert.ok(!calls.some(c => c.u.includes('blue-lemonade-zip')));
+    extraEntries = []; extraManifests = {};
+    await mod.refresh(); assert.deepEqual(S.others, []); assert.equal(mod.actions()[0].disabled, false);
+});
+await test('7.0.1 http(crypto.subtle 없음): 순수 JS SHA-256 이 node 와 같고 · 담긴 ZIP 크기 · 해시를 본다 · 한 바이트 다르면 거절', async () => {
+    const { sha256Hex } = await import(pathToFileURL(path.join(dir, 'sha256.js')));
+    for (const n of [0, 1, 55, 56, 63, 64, 65, 119, 1000, (1 << 20) + 37]) {
+        const bytes = new Uint8Array(n).map((_, i) => (i * 131 + n) & 255);
+        assert.equal(await sha256Hex(bytes), sha(bytes), 'n=' + n);
+    }
+    assert.equal(await sha256Hex(new TextEncoder().encode('abc')), 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
+    const zip = fs.readFileSync(path.join(dir, source.zip));
+    assert.equal(mod.ZIP_BYTES, source.zipBytes);
+    // http 흉내: 원형의 subtle 을 자기 속성 undefined 로 가린다 (끝나면 걷어 낸다)
+    Object.defineProperty(globalThis.crypto, 'subtle', { configurable: true, value: undefined });
+    assert.equal(globalThis.crypto.subtle, undefined);
+    try {
+        assert.equal(await mod.verifyZip(new Blob([zip])), true);
+        const bad = Buffer.from(zip); bad[1000] ^= 1;
+        assert.equal(await mod.verifyZip(new Blob([bad])), false);
+        assert.equal(await mod.verifyZip(new Blob([zip.subarray(0, zip.length - 1)])), false, '덜 받힌 파일');
+        // 설치 흐름도 subtle 없이 끝까지
+        reset({ installed: false, scope: null }); installedManifest = null; calls.length = 0;
+        assert.ok(await mod.install(), S.error);
+        assert.deepEqual(calls.map(c => c.u.split('/').at(-1).split('?')[0]), ['inspect', 'preview', 'install']);
+    } finally { delete globalThis.crypto.subtle; assert.ok(globalThis.crypto.subtle); }
+});
+await test('7.0.1 새 판 · 같은 판 재설치는 확인 창 뒤에만 · 옛 판 업데이트는 바로 · 취소면 아무것도 안 보냄', async () => {
+    const asked = [];
+    const run = async (version, answer) => { reset({ installed: { version }, active: true, done: '' }); calls.length = 0; asked.length = 0; const r = await mod.install({ confirm: async i => { asked.push(i.version); return answer; } }); return { r, sent: calls.filter(c => c.u.includes('blue-lemonade-zip')).length }; };
+    let x = await run('1.18.0', false); assert.deepEqual(asked, ['1.18.0']); assert.equal(x.r, false); assert.equal(x.sent, 0);
+    x = await run('1.18.0', true); assert.deepEqual(asked, ['1.18.0']); assert.ok(x.r); assert.equal(x.sent, 3);
+    x = await run('1.17.9', false); assert.deepEqual(asked, ['1.17.9']); assert.equal(x.sent, 0);
+    x = await run('1.16.2', false); assert.deepEqual(asked, [], '업데이트는 묻지 않음'); assert.ok(x.r); assert.equal(x.sent, 3);
+    const code = read('src/addons/prompt-template/index.js');
+    assert.match(code, /async function confirmReplace\(installed\)[\s\S]*?ZIP 설치 창의 백업 목록[\s\S]*?callGenericPopup\(/);
+});
+await test('7.0.1 판: 애드온 1.0.1(JS = CSS) · perf 2.2.7(hub.js SUITE_VERSION = --pa-hub-css-version)', () => {
+    assert.equal(mod.VERSION, '1.0.1');
+    assert.match(read('src/addons/perf/hub.js'), /export const SUITE_VERSION = '2\.2\.7';/);
+    assert.deepEqual([...read('src/addons/perf/style.css').matchAll(/--pa-hub-css-version:\s*"([^"]+)"/g)].map(m => m[1]), ['2.2.7']);
+});
+await test('확장 순서 1.2.3: 다시 그리기 전 초점(줄 key · 동작) 기억 → 그린 뒤 같은 칸 · 꺼졌으면 같은 줄 첫 칸', () => {
+    const panel = read('src/addons/order/panel.js');
+    assert.match(panel, /const focus=focusedControl\(list\);\n\s+list\.innerHTML = [^\n]+\n\s+list\.scrollTop=previousScroll;\n\s+restoreFocus\(list,focus\);/);
+    assert.match(panel, /export function focusedControl\(list, active = globalThis\.document\?\.activeElement\)/);
+    assert.match(panel, /const target=want&&!want\.disabled\?want:\[\.\.\.row\.querySelectorAll\('button,input'\)\]\.find\(el=>!el\.disabled\);/);
 });
 
 console.log(`\n${passed} PASS · ${failed} FAIL`);

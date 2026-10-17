@@ -18,6 +18,8 @@ import { updateReasoningUI } from '../../../../../../reasoning.js';   // 2.6.0 �
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
 import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey, glossaryLinesFor, enforceGlossaryNames, dropDanglingOpenQuote } from './glossary-match.js';
+import { glossarySignature, glossaryGone, mergeGlossary, glossaryMessage, GONE_KEY as GLOSSARY_GONE } from './glossary-sync.js';   // 2.7.5 다른 기기의 옛 설정 저장에 덮이지 않게 (updated · 지운 기록 · 합치기)
+import { registerSettingsMerge, startSettingsMerge } from '../../settings-merge.js';
 import { linesToFix, fixNoteFor, stillLeftover } from './leftover-fix.js';   // 6.4.2 다시 보낼 줄 = 남은 가나 + 원문에 있던 한자 덩이
 import { fixPairs, leftoverNameWords, markPairs, textKey, mergeSuggestions, shownSuggestions, skipSuggestion, dropSuggestion, trimScopes, GLOBAL as SUGGEST_GLOBAL } from './glossary-suggest.js';   // 6.4.5 새 이름 용어집 제안
 import { nameFold as suggestFold } from './names-bridge.js';
@@ -59,6 +61,7 @@ import { POPUP_TYPE, callGenericPopup } from '../../../../../../popup.js';
 import { SlashCommandParser } from '../../../../../../slash-commands/SlashCommandParser.js';
 import { SlashCommand } from '../../../../../../slash-commands/SlashCommand.js';
 import { ARGUMENT_TYPE, SlashCommandArgument, SlashCommandNamedArgument } from '../../../../../../slash-commands/SlashCommandArgument.js';
+import { ask } from '../../ask.js';   // 7.0.1 테마 확인 창 (기본 confirm 대신)
 
 const DB_NAME = 'LLMtranslatorDB';
 const STORE_NAME = 'translations';
@@ -343,6 +346,13 @@ function loadSettings() {
         if (merged) { saveSettingsDebounced(); setTimeout(() => toastr.info(`겹치는 용어집 항목 ${merged}개를 하나로 합쳤어요.`, '용어집', { timeOut: 6000 }), 1500); }
     }
     publishGlossaryNames();   // 6.3.5 이름 다리 (처음 한 번)
+    // 2.7.5 탭이 오래 숨었다 돌아오면 서버의 용어집(그룹 · 멤버 · 전체 범위 모두)을 한 번 읽어 합친다 — glossary-sync.js · ../../settings-merge.js
+    registerSettingsMerge('glossary', ext => {   // 합친 뒤 renderGlossary() 가 이름 다리(publishGlossaryNames)까지 다시 낸다
+        const out = mergeGlossary(extensionSettings, ext?.[extensionName]);
+        if (out?.changed) { renderGlossary(); const text = glossaryMessage(out); if (text) toastr.info(text, '용어집', { timeOut: 4000 }); }
+        return out;
+    });
+    startSettingsMerge({ save: saveSettingsDebounced });
     if (!extensionSettings.current_connection_v1) {
         extensionSettings.connection_mode = 'current';
         extensionSettings.current_connection_v1 = true;
@@ -1815,7 +1825,7 @@ async function translate(text, options = {}) {
         const cardChat = getContext(), chatPrompt = String(extensionSettings.llm_prompt_chat ?? '');
         const cardLocal = !options.isInputTranslation && /korean|한국어|한국말/i.test(String(options.prompt ?? chatPrompt)) ? cardValues({
             scope: String(getStringHash(JSON.stringify([chatPrompt, extensionSettings.glossary_enabled === false ? null
-                : [cardChat?.groupId ?? null, cardChat?.characters?.[cardChat?.characterId]?.avatar ?? null, extensionSettings.glossary_entries ?? null]]))),
+                : [cardChat?.groupId ?? null, cardChat?.characters?.[cardChat?.characterId]?.avatar ?? null, glossarySignature(extensionSettings.glossary_entries)]]))),   // 2.7.5 updated 는 서명에서 뺀다
             remember: options.isRetranslation !== true,
         }) : null;
         // Keep card keys/markup local and send only their visible values after explicit user protection.
@@ -1915,7 +1925,7 @@ async function translate(text, options = {}) {
         // 문단 캐시 · 이어하기 키의 서명: 준비된 프롬프트 전체 대신 연결 · 프롬프트 · 지침 · 용어집(범위 + 항목) 요약 하나 (paragraph-v2)
         const chatCtx = getContext();
         const setupDigest = await checkpointKey(JSON.stringify([connection, finalPrompt, rulePrompt, additionalGuidance, extensionSettings.glossary_enabled === false ? null
-            : [chatCtx?.groupId ?? null, chatCtx?.characters?.[chatCtx?.characterId]?.avatar ?? null, extensionSettings.glossary_entries ?? null], ...(displayCards.count ? ['display-cards-v1'] : []), ...(autoContextGuard ? ['auto-context-v1', autoContextGuard.stamp] : [])]));
+            : [chatCtx?.groupId ?? null, chatCtx?.characters?.[chatCtx?.characterId]?.avatar ?? null, glossarySignature(extensionSettings.glossary_entries)], ...(displayCards.count ? ['display-cards-v1'] : []), ...(autoContextGuard ? ['auto-context-v1', autoContextGuard.stamp] : [])]));
         const key = chunks.length > 1 ? await checkpointKey(JSON.stringify([setupDigest, text, ...(/<!--[\s\S]*?-->/.test(text) ? ['comments-v1'] : [])])) : '';   // 2.5.1 주석을 보호하기 전 덩이로 이어 쓰지 않게
         watcher.check();
         // 5.4.2: 번역문 삭제 — 이 글의 문단 캐시 · 이어하기 줄만 지우고 요청은 하지 않는다 (키는 번역할 때와 같은 재료로)
@@ -4686,6 +4696,8 @@ function mergeGlossaryDuplicates(entries) {
             if (!sameDst && !shareSrc) continue;
             base.src = union(base.src, other.src);
             base.dst = union(base.dst, other.dst);
+            base.updated = Date.now();                                  // 2.7.5 합쳐진 쪽이 새 값 · 사라진 쪽은 지운 기록 (다른 기기가 되살리지 않게)
+            if (entries === extensionSettings.glossary_entries) glossaryGone(extensionSettings, other.id);
             entries.splice(j, 1);
             j--; merged++;
         }
@@ -4706,11 +4718,12 @@ function upsertGlossaryEntry(scope, src, dst, id = null, quiet = false) {
         ? entries.find(entry => entry.id === id)
         : entries.find(entry => entry.scope === scope && entry.src.toLowerCase() === src.toLowerCase());
     if (existing) {
+        if (existing.src !== src || existing.dst !== dst || existing.scope !== scope) existing.updated = Date.now();   // 2.7.5 실제로 바뀔 때만 (기기 합치기의 늦은 쪽 판정)
         existing.src = src;
         existing.dst = dst;
         existing.scope = scope;
     } else {
-        entries.push({ id: glossaryNewId(), scope, src, dst });
+        entries.push({ id: glossaryNewId(), scope, src, dst, updated: Date.now() });
     }
     const merged = quiet ? 0 : mergeGlossaryDuplicates(entries);
     if (merged) toastr.info(`겹치는 항목 ${merged}개를 하나로 합쳤어요.`, '용어집');
@@ -4721,7 +4734,7 @@ function upsertGlossaryEntry(scope, src, dst, id = null, quiet = false) {
 function removeGlossaryEntry(id) {
     const entries = glossaryEntries();
     const index = entries.findIndex(entry => entry.id === id);
-    if (index >= 0) entries.splice(index, 1);
+    if (index >= 0) { entries.splice(index, 1); glossaryGone(extensionSettings, id); }   // 2.7.5 지운 기록
     saveSettingsDebounced();
 }
 
@@ -8599,16 +8612,16 @@ class PromptManager {
 
 
 
-    deleteSelectedPrompt() {
+    async deleteSelectedPrompt() {
         const promptSelect = document.getElementById('prompt_select');
         const selectedPrompt = this.customPrompts.find(p => p.id === promptSelect.value);
 
         if (!selectedPrompt || !selectedPrompt.isCustom) {
-            alert('삭제할 수 없는 프롬프트입니다.');
+            toastr.warning('기본 프롬프트는 지울 수 없어요.');   // 7.0.1 기본 alert 대신 알림
             return;
         }
 
-        if (confirm('선택한 프롬프트를 삭제하시겠습니까?')) {
+        if (await ask(`「${selectedPrompt.name || '이 프롬프트'}」를 지울까요?`, { ok: '지우기', cancel: '취소', danger: true })) {
             const deletedPromptId = selectedPrompt.id;
             this.customPrompts = this.customPrompts.filter(p => p.id !== deletedPromptId);
             this.saveToSettings();
@@ -8906,6 +8919,7 @@ class PresetManager {
         if ('send_translate' in settingsSnapshot) delete settingsSnapshot.send_translate; // [1.6.0] 켜고 끄는 상태는 프리셋에 안 담음
 		if ('glossary_entries' in settingsSnapshot) delete settingsSnapshot.glossary_entries; // [1.8.0] 용어집은 캐릭터별 데이터라 프리셋에 안 담음
 		if ('glossary_suggest' in settingsSnapshot) delete settingsSnapshot.glossary_suggest; // 6.4.5 새 이름 제안도 캐릭터별 데이터라 프리셋에 안 담음
+		if (GLOSSARY_GONE in settingsSnapshot) delete settingsSnapshot[GLOSSARY_GONE]; // 2.7.5 용어집 지운 기록도 프리셋에 안 담음
 
 		const newPreset = {
 			id: `preset_${Date.now()}`,
@@ -8948,6 +8962,7 @@ class PresetManager {
         //         프리셋을 고르기만 해도 용어집 항목이 전부 사라지고 보내기 번역이 꺼졌다.
         const myGlossary = Array.isArray(extensionSettings.glossary_entries) ? extensionSettings.glossary_entries : [];
         const mySuggest = extensionSettings.glossary_suggest;   // 6.4.5 새 이름 제안도 프리셋과 무관하게 지킨다
+        const myGlossaryGone = extensionSettings[GLOSSARY_GONE];   // 2.7.5
         const mySendTranslate = !!extensionSettings.send_translate;
         const deviceState = Object.fromEntries(['show_chat_translate_menu', 'show_input_translate_menu', 'current_connection_v1', 'selection_delete']   // 6.4.4 고른 글 지우기 켜짐도 기기 상태
             .filter(key => Object.hasOwn(extensionSettings, key)).map(key => [key, extensionSettings[key]]));
@@ -8966,6 +8981,7 @@ class PresetManager {
         extensionSettings.customPrompts = loadedCustomPrompts;
         extensionSettings.custom_model_lists = myModelLists;
         extensionSettings.glossary_entries = myGlossary;       // [1.9.2]
+        if (myGlossaryGone) extensionSettings[GLOSSARY_GONE] = myGlossaryGone;   // 2.7.5 지운 기록도 프리셋과 무관
         if (mySuggest) extensionSettings.glossary_suggest = mySuggest;   // 6.4.5
         extensionSettings.send_translate = mySendTranslate;    // [1.9.2]
         Object.assign(extensionSettings, deviceState);
@@ -9084,6 +9100,7 @@ class PresetManager {
         if ('send_translate' in settingsSnapshot) delete settingsSnapshot.send_translate; // [1.6.0] 켜고 끄는 상태는 프리셋에 안 담음
 		if ('glossary_entries' in settingsSnapshot) delete settingsSnapshot.glossary_entries; // [1.8.0] 용어집은 캐릭터별 데이터라 프리셋에 안 담음
 		if ('glossary_suggest' in settingsSnapshot) delete settingsSnapshot.glossary_suggest; // 6.4.5 새 이름 제안도 캐릭터별 데이터라 프리셋에 안 담음
+		if (GLOSSARY_GONE in settingsSnapshot) delete settingsSnapshot[GLOSSARY_GONE]; // 2.7.5 용어집 지운 기록도 프리셋에 안 담음
 
 		// 미리 찍어둔 스냅샷 사용
 		preset.version = 2;

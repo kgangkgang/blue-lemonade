@@ -2,9 +2,9 @@
 //
 // 1.2.0: 캐릭터 하나에 폴더(프리셋)가 여럿이다 — 원본(캐릭터 폴더) + 하위 폴더들 + 다른 캐릭터에서 불러온 폴더.
 // 폴더마다 따로 읽어 runtime.sources 에 두고, 켜진 폴더를 우선순위대로 합친 것이 runtime.assets (AI 목록 · 채팅 표시용).
-import { settings, currentCharacter, folderOf, disabledSet, pruneDisabled, pruneOptimized } from './state.js';
+import { settings, currentCharacter, folderOf, disabledSet, pruneDisabled, pruneOptimized, speakerFolder } from './state.js';
 import { fetchAssets, keywordText, buildIndex, buildGroups } from './assets.js';
-import { setIndex, clearIndex } from './render.js';
+import { setIndex, clearIndex, setMemberIndex, clearMemberIndexes } from './render.js';
 import { sourcesFor, mergeAssets, presetLabel } from './presets.js';
 
 /**
@@ -149,17 +149,80 @@ export function recompute() {
     runtime.keywords = keywordText(runtime.assets, disabled, grouped);
     if (runtime.folder) setIndex(buildIndex(runtime.folder, runtime.assets, disabled, runtime.sources.map(source => source.owner)));
     else clearIndex();
+    recomputeMembers();
     changed();
 }
 
 /** 합친 목록 기준의 꺼짐 파일 이름들 (폴더마다 다른 꺼짐 목록을 한 집합으로) */
-function mergedDisabled() {
+function mergedDisabled(assets = runtime.assets) {
     const out = new Set();
-    for (const asset of runtime.assets) {
+    for (const asset of assets) {
         if (disabledSet(asset.folder).has(asset.file)) out.add(asset.file);
     }
     return out;
 }
+
+// ── 1.6.9 그룹 채팅: 멤버마다 따로 읽은 목록 ─────────────────────
+// 그룹 채팅에는 「지금 캐릭터」가 없어(runtime 은 비어 있다) 메시지마다 주인(original_avatar)의 폴더로 그린다.
+// 멤버 목록은 그 멤버의 메시지가 처음 보일 때(render.js) · 그 멤버 차례의 생성 직전(prompt.js) · 그 멤버 답의 고르기(after-reply.js)에 한 번 읽는다.
+// 채팅을 바꾸면 비운다. 1:1 채팅은 이 표를 쓰지 않는다.
+
+/** @type {Map<string, { folder: string, loaded: boolean, sources: Source[], assets: import('./assets.js').Asset[], keywords: string, promise: Promise<object|null> }>} */
+const members = new Map();
+
+function buildMember(entry) {
+    entry.assets = mergeAssets(entry.sources);
+    const disabled = mergedDisabled(entry.assets);
+    entry.keywords = keywordText(entry.assets, disabled, settings().randomGroups);
+    entry.index = buildIndex(entry.folder, entry.assets, disabled, entry.sources.map(source => source.owner));
+}
+
+/** 이미 읽은 멤버 목록 (없거나 읽는 중이면 null) */
+export function memberEntry(folder) {
+    const entry = folder ? members.get(folder) : null;
+    return entry?.loaded ? entry : null;
+}
+
+/** 멤버 폴더 하나를 읽는다 — 이미 읽었거나 읽는 중이면 그것. 읽은 뒤 render.js 에 그 폴더의 찾아보기표를 준다 */
+export function loadMember(folder) {
+    if (!folder) return Promise.resolve(null);
+    const known = members.get(folder);
+    if (known) return known.promise;
+    const entry = { folder, loaded: false, sources: [], assets: [], keywords: '', index: null, promise: null };
+    entry.promise = (async () => {
+        const plan = sourcesFor(settings(), folder);
+        const sources = await Promise.all(plan.map(async (item) => {
+            const source = { ...item, label: presetLabel(item.preset), assets: [], error: '', loaded: false };
+            try { source.assets = await fetchAssets(item.key); source.loaded = true; }
+            catch (error) { console.warn('[캐릭터 에셋] 멤버 목록 읽기 실패', item.key, error); source.error = error?.message || '목록을 읽지 못했어요.'; }
+            return source;
+        }));
+        if (members.get(folder) !== entry) return null;   // 그 사이 채팅이 바뀌어 비웠다
+        entry.sources = sources;
+        buildMember(entry);
+        entry.loaded = true;
+        setMemberIndex(folder, entry.index);
+        return entry;
+    })();
+    members.set(folder, entry);
+    return entry.promise;
+}
+
+/** 채팅이 바뀌면 비운다 (다음 그룹 채팅에서 다시 읽는다) */
+export function clearMembers() {
+    members.clear();
+    clearMemberIndexes();
+}
+
+/** 꺼짐 · 번호 묶음 스위치가 바뀌었을 때 읽어 둔 멤버 목록의 키워드 · 찾아보기표를 다시 만든다 */
+function recomputeMembers() {
+    for (const entry of members.values()) {
+        if (!entry.loaded) continue;
+        buildMember(entry);
+        setMemberIndex(entry.folder, entry.index);
+    }
+}
+
 
 export function sourceByKey(key) {
     return runtime.sources.find(source => source.key === key) ?? null;
@@ -176,9 +239,18 @@ export function groupsOf(key) {
  * {{img_inprompt}}: 규칙 글 안의 목록·폴더 매크로까지 채운 완성본.
  * 켜진 그림이 하나도 없으면(캐릭터 없음, 그룹 채팅, 빈 폴더, 모두 꺼짐) 규칙도 보내지 않는다.
  */
-export function expandedPrompt() {
-    if (!runtime.keywords) return '';
+export function expandedPrompt(entry = runtime) {
+    if (!entry?.keywords) return '';
     return String(settings().prompt ?? '')
-        .replace(/\{\{\s*(img_keywords_autogen|img_keywords_grouped|img_keywords)\s*\}\}/gi, () => runtime.keywords)
-        .replace(/\{\{\s*charkey\s*\}\}/gi, () => runtime.folder);
+        .replace(/\{\{\s*(img_keywords_autogen|img_keywords_grouped|img_keywords)\s*\}\}/gi, () => entry.keywords)
+        .replace(/\{\{\s*charkey\s*\}\}/gi, () => entry.folder);
+}
+
+/**
+ * 1.6.9 지금 쓸 목록: 1:1 은 runtime, 그룹은 지금 말하는 멤버(생성 중)의 목록 — 아직 안 읽었거나 생성 밖이면 null.
+ * 매크로(img_keywords · charkey)와 프롬프트가 같은 것을 본다.
+ */
+export function activeEntry(context) {
+    if (!context?.groupId) return runtime;
+    return memberEntry(speakerFolder(context));
 }

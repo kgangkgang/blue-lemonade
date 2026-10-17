@@ -49,7 +49,7 @@ t('두 줄이 같이 맞으면(용도 다름) 전처럼 ambiguous — label 없�
     assert.equal(r.attribution, 'ambiguous'); assert.equal(r.label, undefined);
 });
 
-t('배선: 기록에 label 칸 · 하루 합계 키 · 행에 label · 화면 제목 · 용도 칩 · 용도별 표는 label 이 있으면 그 글 · 판 2.2.6 · CI', () => {
+t('배선: 기록에 label 칸 · 하루 합계 키 · 행에 label · 화면 제목 · 용도 칩 · 용도별 표는 label 이 있으면 그 글 · 판 2.2.7 · CI', () => {
     assert.match(read('src/addons/perf/capture.js'), /purpose: context\.purpose,\s*label: context\.label \|\| '',/);
     const store = read('src/addons/perf/store.js');
     assert.match(store, /\$\{entry\.purpose \|\| 'unknown'\}\|\$\{entry\.label \|\| ''\}\|\$\{basis\}/);
@@ -59,7 +59,7 @@ t('배선: 기록에 label 칸 · 하루 합계 키 · 행에 label · 화면 �
     assert.match(panel, /chip\('용도',esc\(entry\.label \|\| purposeLabel\(entry\.purpose\)\)\)/);
     assert.match(panel, /const purposeKey=row=>\(row\.purpose\|\|'unknown'\)\+\(row\.label\?'#'\+row\.label:''\);/);
     assert.match(panel, /const byPurpose=groupRows\(inRange,purposeKey,purposeText\);/);
-    assert.match(read('src/addons/perf/hub.js'), /SUITE_VERSION = '2\.2\.6'/);
+    assert.match(read('src/addons/perf/hub.js'), /SUITE_VERSION = '2\.2\.7'/);
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/perf-request-label\.mjs \./);
 });
 

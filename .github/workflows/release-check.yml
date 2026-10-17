@@ -71,6 +71,7 @@ jobs:
           node tools/tests/qr-swipe-guard.mjs .
           node tools/tests/swipe-picker-translation.mjs .
           node tools/tests/scene-sound.mjs .
+          node tools/tests/settings-merge.mjs .
           node tools/tests/assets-file-flows.mjs .
           node tools/tests/assets-settings-records.mjs .
           node tools/tests/assets-shrink.mjs .
@@ -109,6 +110,7 @@ jobs:
           node tools/tests/tts-ambient-skip.mjs .
           node tools/tests/tts-color-rename.mjs .
           node tools/tests/tts-rain-levels.mjs .
+          node tools/tests/undo-701.mjs .
           node tools/tests/modelswitch-fallback-pick.mjs .
           node tools/tests/tts-integration.mjs .
           node tools/tests/tts-dethump.mjs .
@@ -204,6 +206,7 @@ jobs:
           node tools/tests/name-row-align.mjs .
           node tools/tests/character-assets.mjs .
           node tools/tests/character-assets-prompt.mjs .
+          node tools/tests/assets-group-chat.mjs .
           node tools/tests/assets-after-reply.mjs .
           node tools/tests/assets-slot-pick.mjs .
           node tools/tests/assets-pick-think.mjs .

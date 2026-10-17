@@ -5,15 +5,28 @@
 import { eventSource, event_types, saveChatConditional, updateMessageBlock } from '../../../../../../../script.js';
 import { getContext } from '../../../../../../extensions.js';
 import { notifyRerender } from '../../rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe)
-import { TITLE, currentFolder, settings } from './state.js';
-import { runtime, ensureLoaded } from './store.js';
+import { TITLE, currentFolder, settings, messageFolder } from './state.js';
+import { runtime, ensureLoaded, loadMember, memberEntry } from './store.js';
 import { pickActive, pickSettings, generatePick } from './pick.js';
 import { slotSpots, insertSlots, slotIds, markedReply, pickPrompt, parsePicks, rulesForPicker, hasAssetTag, skipReplyType, PROTECT_RE, RECORD_KEY, swipeOf, textOf, writeRecords, recordsFromPicks, stripSlotsForPrompt, dropUnknownSlots, retryTargets, manualRecord, freezeOthers, splitThinking } from './slots.js';
-import { assetInfo, refreshSlots, slotRunning, slotHooks, shownSlotFiles } from './render.js';
+import { assetInfoFor, refreshSlots, slotRunning, slotHooks, shownSlotFiles } from './render.js';
 import { messageWork } from '../../message-work.js';   // 6.5.3 메시지 작업 순서 — 자리 넣기 · 지우기를 적어 둔다 (다시 쓰기 · 번역기가 알아보게)
 import { ownerSpellings } from './spellings.js';   // 6.3.x 그림 주인의 영 · 한 · 일 표기 줄 (이름 다리)
 
 const isObj = value => !!value && typeof value === 'object' && !Array.isArray(value);
+
+/** 1.6.9 이 답의 주인 폴더 — 1:1 은 지금 캐릭터, 그룹은 그 메시지를 쓴 멤버 (original_avatar) */
+function ownerFolder(message, context = getContext()) {
+    return context.groupId ? messageFolder(message, context) : currentFolder();
+}
+
+/** 고를 목록 { folder, keywords } — 1:1 은 runtime(ensureLoaded), 그룹은 그 멤버 목록(loadMember). 못 읽으면 null */
+async function listFor(folder, group) {
+    if (!folder) return null;
+    if (group) { const entry = memberEntry(folder) ?? await loadMember(folder); return entry?.keywords ? entry : null; }
+    const ready = await ensureLoaded();
+    return ready && runtime.folder === folder && runtime.keywords ? runtime : null;
+}
 
 /** 번역기에 자리 모양을 「번역하지 않고 제자리에 한 번만」으로 등록 (6.1.8 번역기의 protect · 없으면 아무 일도 없음). 여러 번 불러도 된다 */
 export function protectInTranslator() {
@@ -26,13 +39,13 @@ export function onMessageReceived(messageId, type) {
     try {
         if (skipReplyType(type) || !pickActive()) return;
         const context = getContext();
-        if (context.groupId) return;
-        const folder = currentFolder();
-        if (!folder) return;
-        if (runtime.folder === folder && !runtime.loading && !runtime.keywords) return;   // 이 캐릭터에 켜진 그림이 없다
         const id = Number(messageId);
         const message = context.chat?.[id];
         if (!message || message.is_user || message.is_system || typeof message.mes !== 'string') return;
+        const folder = ownerFolder(message, context);   // 1.6.9 그룹은 이 답을 쓴 멤버
+        if (!folder) return;
+        if (context.groupId) { const entry = memberEntry(folder); if (entry && !entry.keywords) return; }   // 그 멤버에 켜진 그림이 없다
+        else if (runtime.folder === folder && !runtime.loading && !runtime.keywords) return;   // 이 캐릭터에 켜진 그림이 없다
         const copied = dropUnknownSlots(message.mes, isObj(message.extra) ? message.extra[RECORD_KEY] : null);   // 모델이 앞 답에서 따라 쓴 자리 (기록 없음)
         if (copied.unknown.length) { messageWork().noteWrite(message, { by: 'assets', before: message.mes, after: copied.text }); message.mes = copied.text; if (Array.isArray(message.swipes)) message.swipes[swipeOf(message)] = copied.text; }
         // 1.6.8 머리의 생각 블록(과일 ECoT — 이 다음 차례에 추론으로 옮겨진다)은 빼고 본문에서만 본다
@@ -73,24 +86,26 @@ async function fill(messageId, message, ids, swipe, avoid = []) {
     let records;
     try {
         protectInTranslator();
-        const ready = await ensureLoaded();
-        if (!ready || !runtime.keywords) throw new Error('그림 목록을 읽지 못했어요');
+        const group = !!getContext().groupId;
+        const folder = ownerFolder(message);
+        const list = await listFor(folder, group);   // 1.6.9 그룹은 그 답 주인의 목록
+        if (!list) throw new Error('그림 목록을 읽지 못했어요');
         if (!stillHere(messageId, message)) return;
         const reply = markedReply(splitThinking(textOf(message, swipe)).body, ids);   // 1.6.8 생각 블록은 고르는 모델에게 보내지 않는다
         const context = getContext();
         const messages = pickPrompt({
-            rules: rulesForPicker(settings().prompt, runtime.folder),
-            list: runtime.keywords,
+            rules: rulesForPicker(settings().prompt, list.folder),
+            list: list.keywords,
             reply,
             count: ids.length,
             previous: previousText(messageId),
             character: message.name || context.name2 || '',
-            names: ownerSpellings(runtime.keywords),
+            names: ownerSpellings(list.keywords),
             persona: context.name1 || '',   // 6.4.1 내 캐릭터 — 그림이 없으면 듣는 사람 그림으로
             avoid,   // 6.5.3 ··· 메뉴 다시 고르기 — 지금 보이던 그림은 피하게
         });
         const raw = await generatePick(messages, controller.signal);
-        records = recordsFromPicks(ids, parsePicks(raw, ids.length), assetInfo);
+        records = recordsFromPicks(ids, parsePicks(raw, ids.length), name => assetInfoFor(group ? folder : '', name));
     } catch (error) {
         const reason = controller.signal.aborted ? '시간 안에 답이 없어요' : String(error?.message || error || '알 수 없는 오류').slice(0, 60);
         console.warn(`[${TITLE}] 그림 고르기 실패`, error);
@@ -163,8 +178,7 @@ export function rerollMessage(messageId) {
     if (!message || message.is_user || message.is_system || typeof message.mes !== 'string') return false;
     const say = text => globalThis.toastr?.info?.(text, TITLE);
     if (!pickActive()) { say('「다른 모델이 고르기」가 꺼져 있거나 연결이 정해지지 않았어요.'); return false; }
-    if (context.groupId) { say('그룹 채팅에서는 그림을 고르지 않아요.'); return false; }
-    if (!currentFolder()) { say('이 캐릭터에 켜진 그림 폴더가 없어요.'); return false; }
+    if (!ownerFolder(message, context)) { say('이 캐릭터에 켜진 그림 폴더가 없어요.'); return false; }
     const swipe = swipeOf(message);
     let ids = slotIds(message.mes);
     if (ids.some(slot => slotRunning.has(slot))) { say('지금 그림을 고르는 중이에요.'); return false; }
@@ -201,12 +215,13 @@ const REROLL_CLASS = 'bl-asset-reroll';
 function syncRerollButtons() {
     const chatEl = document.getElementById('chat');
     if (!chatEl) return;
-    const on = pickActive() && !getContext().groupId && !!currentFolder();
-    const chat = getContext().chat ?? [];
+    const context = getContext();
+    const on = pickActive() && (!!context.groupId || !!currentFolder());
+    const chat = context.chat ?? [];
     for (const mes of chatEl.querySelectorAll('.mes[mesid]')) {
         const message = chat[Number(mes.getAttribute('mesid'))];
         const has = mes.querySelector(`.${REROLL_CLASS}`);
-        const want = on && message && !message.is_user && !message.is_system;
+        const want = on && message && !message.is_user && !message.is_system && (!context.groupId || !!ownerFolder(message, context));   // 1.6.9 그룹은 그 답 주인에 폴더가 있을 때
         if (!want) { has?.remove(); continue; }
         if (has) continue;
         const box = mes.querySelector('.extraMesButtons');

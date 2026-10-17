@@ -18,6 +18,9 @@ import { classifyAll } from '../../assets.js';
 import { PALETTES, PALETTE_FAMILIES } from '../../palettes.js';
 import { NOTES_VERSION } from './version.js';
 import { nameAliases } from '../../name-aliases.js';   // 6.3.x 찾는 말이 이름이면 다른 표기(영 · 한 · 일)로도
+import { noteGone, registerNotesMerge } from './sync.js';   // 1.3.5 다른 기기의 옛 설정 저장에 덮이지 않게 (지운 기록 · 합치기)
+import { startSettingsMerge } from '../../settings-merge.js';
+import { attachUndo } from '../../ask.js';   // 7.0.1 「지웠어요 ↶」
 
 export const VERSION = NOTES_VERSION;
 const MODULE = 'bl-notes';
@@ -186,7 +189,24 @@ export function addNote(title = '', body = '', at = 0) {
     list.splice(Math.max(0, Math.min(at, list.length)), 0, note);
     save(); if (String(title).trim()) syncLinkViews(); return note;
 }
-export function removeNote(id) { const list = notes(), i = list.findIndex(n => n.id === id); if (i < 0) return false; list.splice(i, 1); save(); syncLinkViews(); return true; }
+// 7.0.1 지운 메모 되살리기 — 마지막 하나만 메모리에 (지운 자리 · 폴더째). 다른 기기 합치기의 지운 기록(gone)에서도 뺀다
+let lastRemoved = null;
+export function rememberRemoved(note, index) { lastRemoved = { note: structuredClone(note), index }; return lastRemoved; }
+export function restoreRemoved(rec) {
+    if (!rec || rec !== lastRemoved) return 'gone';
+    const list = notes();
+    if (list.some(n => n.id === rec.note.id)) { lastRemoved = null; return 'gone'; }
+    if (list.length >= MAX_NOTES) return 'full';
+    const note = { ...rec.note, updated: Date.now() };
+    if (note.folder && !folderById(note.folder)) delete note.folder;   // 그 사이 폴더가 비어 없어졌으면 폴더 밖으로
+    list.splice(Math.max(0, Math.min(rec.index, list.length)), 0, note);
+    const st = store();
+    if (st.gone && typeof st.gone === 'object') delete st.gone[note.id];
+    lastRemoved = null;
+    save(); syncLinkViews();
+    return 'ok';
+}
+export function removeNote(id) { const list = notes(), i = list.findIndex(n => n.id === id); if (i < 0) return false; list.splice(i, 1); noteGone(store(), id); save(); syncLinkViews(); return true; }
 // 전체 메모를 복제하면 복사본도 전체 메모 (addNote 가 지금 채팅을 붙이므로 뗀다)
 export function duplicateNote(id) { const list = notes(), i = list.findIndex(n => n.id === id); if (i < 0) return null; const made = addNote(list[i].title, list[i].body, i + 1); if (made) { made.color = list[i].color || ''; made.ink = list[i].ink || ''; if (list[i].owner) made.owner = { ...list[i].owner }; else delete made.owner; if (list[i].folder) made.folder = list[i].folder; save(); } return made; }
 export function moveNote(id, delta) {
@@ -1064,9 +1084,19 @@ function handleAct(act, id, root, rerender, button = null) {
     else if (act === 'copy') { const made = duplicateNote(id); rerender(); if (made) root.querySelector(`.bl-note[data-id="${made.id}"] .bl-note-title`)?.focus(); }
     else if (act === 'pop') { if (root === dialog) dialog.close(); else { miniOpen = false; renderBar(); } openSticky(id); }
     else if (act === 'del') {
-        const note = notes().find(n => n.id === id);
-        if (note && (note.title || note.body) && !confirm(`"${note.title || note.body.slice(0, 20) || '메모'}" 를 지울까요?`)) return;
+        // 7.0.1 묻지 않고 지운 뒤 「지웠어요 ↶」 — 마지막 하나를 되살린다 (빈 메모는 알림 없이)
+        const index = notes().findIndex(n => n.id === id), note = notes()[index];
+        const rec = note && (note.title || note.body) ? rememberRemoved(note, index) : null;
         closeSticky(id); removeNote(id); tidyFolders(); if (!folderById(root.dataset.folder)) delete root.dataset.folder; rerenderAll();
+        if (rec) {
+            const label = String(rec.note.title || rec.note.body || '메모').replace(/\s+/g, ' ').trim().slice(0, 20);
+            const toast = globalThis.toastr?.info(`「${label}」 지웠어요.`, TITLE, { timeOut: 8000, extendedTimeOut: 4000 });
+            attachUndo(toast, () => {
+                const r = restoreRemoved(rec);
+                if (r === 'ok') { rerenderAll(); globalThis.toastr?.success('메모를 되살렸어요.', TITLE); }
+                else globalThis.toastr?.info(r === 'full' ? `메모는 ${MAX_NOTES}개까지라 되살리지 못했어요.` : '더 최근에 지운 메모가 있어서 이건 되살릴 수 없어요.', TITLE);
+            });
+        }
     }
 }
 /** 목록 머리 버튼 누름 → handleAct 에 넘길 값 (정렬 방식 · 태그 · 폴더 줄의 메모 · 카드의 메모) */
@@ -1616,6 +1646,12 @@ export function syncMenu() {
 
 store();
 applyLook();
+// 1.3.5 탭이 오래 숨었다 돌아오면 서버의 메모를 한 번 읽어 합친다 (다른 기기에서 더한 · 고친 · 지운 메모) — sync.js · ../../settings-merge.js
+try {
+    registerNotesMerge({ store, notify: text => globalThis.toastr?.info(text, TITLE, { timeOut: 4000 }),
+        refresh: () => { tidyFolders(); stickies.forEach((_, key) => { if (!key.startsWith('f:') && !notes().some(n => n.id === key)) closeSticky(key); }); rerenderAll(); syncLinkViews(); } });
+    startSettingsMerge({ save: saveSettingsDebounced });
+} catch (error) { console.warn('[메모] 기기 합치기:', error); }
 try {
     eventSource.on(event_types.CHAT_CHANGED, onChatChanged); eventSource.on(event_types.CHAT_RENAMED, onChatRenamed);
     eventSource.on(event_types.CHARACTER_RENAMED, onCharacterRenamed); eventSource.on(event_types.CHAT_DELETED, onChatDeleted); eventSource.on(event_types.GROUP_CHAT_DELETED, onGroupChatDeleted);

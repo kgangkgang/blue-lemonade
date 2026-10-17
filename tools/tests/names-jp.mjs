@@ -66,7 +66,7 @@ await test('에셋 고르기: 주인 표기 줄 (다리가 아는 주인만) · 
     assert.match(withNames, /<name_spellings>\nRowan = 로완 = ローワン\n<\/name_spellings>/);
     assert.equal(S.pickPrompt({ list, reply: 'x', names: '' })[0].content, S.pickPrompt({ list, reply: 'x' })[0].content);
     assert.doesNotMatch(S.pickPrompt({ list, reply: 'x' })[0].content, /name_spellings/);
-    assert.match(read('src/addons/assets/after-reply.js'), /names: ownerSpellings\(runtime\.keywords\),/);
+    assert.match(read('src/addons/assets/after-reply.js'), /names: ownerSpellings\((?:runtime|list)\.keywords\),/);
 });
 
 // ── 웹 검색 · 출처 ──

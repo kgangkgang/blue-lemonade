@@ -326,7 +326,9 @@ await test('the rewrite add-on marks its own edits before notifying; the scene-p
     const mark = src.indexOf('markRewrite(message, original, replacement);');
     const notify = src.indexOf('await notifyTextChanged(messageId);', at);
     assert.ok(at > 0 && mark > at && notify > mark, 'mark right after the text changes, before MESSAGE_UPDATED');
-    assert.equal(src.split('markRewrite(').length - 1, 1, 'only cleanMessage marks');
+    // 7.0.1 ↶ 되돌리기도 반대 방향(after → before)으로 표시한다 — 그 밖에는 cleanMessage 하나
+    assert.equal(src.split('markRewrite(').length - 1, 2, 'cleanMessage + undoRewrite');
+    assert.ok(src.includes('markRewrite(message, rec.after, rec.before);'), 'undo marks the reverse edit');
     assert.ok(!read('src/addons/rewrite/reroll.js').includes('markRewrite'), 'a rerolled reply is new text');
     assert.match(read('src/addons/tts/src/analysis.js'), /import \{ rewriteLinked \} from '\.\.\/\.\.\/\.\.\/edit-origin\.js';/);
 });

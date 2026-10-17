@@ -383,7 +383,7 @@ function renderPromptState() {
     const messages = {
         off: '꺼짐 · 다음 답변에 이미지 규칙을 보내지 않아요.',
         manual: '직접 배치 · {{img_inprompt}}를 넣은 위치에 적용해요.',
-        group: '그룹 채팅은 아직 지원하지 않아요.',
+        group: '그룹 채팅: 멤버 차례마다 그 멤버의 그림 목록 · 규칙을 넣고, 메시지마다 쓴 멤버의 그림으로 보여요.',
         'no-character': '캐릭터 채팅을 열면 그림 목록을 준비해요.',
         loading: '그림 목록을 준비하고 있어요.',
         empty: '사용할 그림이 없어요. 그림을 올리거나 켜 주세요.',

@@ -1,5 +1,5 @@
-/* 프롬프트 템플릿 1.0.0 — 상태 한 줄 + 아이콘 단추 셋 (36px · 8px 둥글기 · 글 없음 · 툴팁 없음 · aria-label 만). 테마 토큰(--salty-*, --bl-r-sm) 위주, 없으면 실리태번 색 */
-.blpt { --blpt-css-version:'1.0.0'; display:flex; flex-direction:column; gap:10px; min-width:0; color:var(--salty-text, var(--SmartThemeBodyColor)); font-size:var(--bl-ts-ui, 14px); line-height:1.5; text-align:left; }
+/* 프롬프트 템플릿 1.0.1 — 상태 한 줄 + 아이콘 단추 셋 (36px · 8px 둥글기 · 글 없음 · 툴팁 없음 · aria-label 만). 테마 토큰(--salty-*, --bl-r-sm) 위주, 없으면 실리태번 색 */
+.blpt { --blpt-css-version:'1.0.1'; display:flex; flex-direction:column; gap:10px; min-width:0; color:var(--salty-text, var(--SmartThemeBodyColor)); font-size:var(--bl-ts-ui, 14px); line-height:1.5; text-align:left; }
 .blpt-status { margin:0; font-size:var(--fs-small, 13px); color:var(--salty-muted, var(--SmartThemeQuoteColor)); overflow-wrap:anywhere; }
 .blpt-actions { display:flex; flex-wrap:wrap; gap:8px; }
 html body .blpt .blpt-btn { display:inline-flex; align-items:center; justify-content:center; flex:none; width:36px; height:36px; min-width:36px; min-height:36px; margin:0; padding:0; border:1px solid var(--salty-line, var(--SmartThemeBorderColor)); border-radius:var(--bl-r-sm, 8px); background:var(--salty-surface, var(--SmartThemeBlurTintColor)); color:var(--salty-text, var(--SmartThemeBodyColor)); font:inherit; font-size:14px; line-height:1; cursor:pointer; box-shadow:none; transition:background-color .15s ease, color .15s ease; }

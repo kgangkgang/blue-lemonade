@@ -143,7 +143,7 @@ await test('the rewrite add-on rebases instead of discarding, and still writes a
     assert.ok(check > 0 && rebase > check && warn > rebase && write > warn && mark > write, 'rebase → (else warn) → write → mark');
     assert.ok(src.slice(check, write).includes('original = current.mes;'), 'the mark links the text with slots to the rewrite');
     assert.ok(src.slice(check, write).includes('tokenCount = undefined;'), 'no stale token count written');
-    assert.equal(src.split('markRewrite(').length - 1, 1, 'still one mark call');
+    assert.equal(src.split('markRewrite(').length - 1, 2, 'cleanMessage + 7.0.1 undoRewrite');
     assert.ok(!/\bawait\b/.test(src.slice(check, write)), 'no wait between the check and the write');
 });
 

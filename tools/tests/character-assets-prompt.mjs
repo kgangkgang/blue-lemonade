@@ -38,7 +38,7 @@ async function fixture(initial = {}) {
         return { ok: true, json: async () => files.map(file => ({ path: `/characters/${key}/${file}` })) };
     };
     const assets = await load('assets.js', { fetch, getRequestHeaders: () => ({}), formatKeywordList: names.formatKeywordList });
-    const store = await load('store.js', { ...state, ...assets, ...presets, setIndex: () => {}, clearIndex: () => {} });
+    const store = await load('store.js', { ...state, ...assets, ...presets, setIndex: () => {}, clearIndex: () => {}, setMemberIndex: () => {}, clearMemberIndexes: () => {} });
     const listeners = new Map();
     const event_types = Object.fromEntries(['GENERATION_AFTER_COMMANDS', 'CHAT_CHANGED', 'GENERATION_ENDED', 'GENERATION_STOPPED', 'SETTINGS_UPDATED'].map(key => [key, key]));
     const eventSource = {
@@ -159,11 +159,38 @@ async function fixture(initial = {}) {
 }
 {
     const f = await fixture(); await f.store.reload();
-    f.context.groupId = 'synthetic-group'; await f.eventSource.emit('CHAT_CHANGED'); await f.prompt.preparePrompt('normal', {}, false);
+    // 그룹 채팅에서 생성 밖(실리태번이 this_chid 를 비워 둠)이면 아무 목록도 안 넣는다
+    f.context.groupId = 'synthetic-group'; f.context.characterId = undefined; await f.eventSource.emit('CHAT_CHANGED'); await f.prompt.preparePrompt('normal', {}, false);
     assert.equal(f.slot().value, ''); assert.equal(f.prompt.promptStatus().reason, 'group'); assert.equal(f.store.runtime.folder, '');
     f.context.groupId = null; f.context.characterId = undefined; await f.eventSource.emit('CHAT_CHANGED');
     assert.equal(f.prompt.promptStatus().reason, 'no-character'); assert.equal(f.slot().value, ''); assert.equal(f.requests.length, 1);
     pass('groups and absent characters clear the slot and never reuse the last solo character');
+}
+{
+    // 1.6.9 그룹 생성: 차례마다 실리태번이 this_chid 를 그 멤버로 바꾼 뒤 GENERATION_AFTER_COMMANDS — 그 멤버의 목록 · 규칙만
+    const f = await fixture();
+    f.context.groups = [{ id: 'g1', members: ['A.png', 'B.png'] }];
+    f.context.groupId = 'g1'; f.context.characterId = undefined; await f.eventSource.emit('CHAT_CHANGED');
+    assert.equal(f.slot().value, ''); assert.deepEqual(f.requests, [], 'no member list is read outside a turn');
+    f.context.characterId = 0; await f.prompt.preparePrompt('normal', {}, false);   // A 차례
+    assert.match(f.slot().value, /smile\.png/); assert.doesNotMatch(f.slot().value, /moon\.png/, 'only the speaking member');
+    assert.deepEqual(f.requests, ['A']);
+    f.context.characterId = 1; await f.prompt.preparePrompt('normal', {}, false);   // B 차례
+    assert.match(f.slot().value, /moon\.png/); assert.doesNotMatch(f.slot().value, /smile\.png/);
+    f.context.characterId = 0; await f.prompt.preparePrompt('normal', {}, false);   // A 다시 — 읽어 둔 목록
+    assert.match(f.slot().value, /smile\.png/); assert.deepEqual(f.requests, ['A', 'B'], 'each member read once');
+    f.context.characterId = undefined; await f.eventSource.emit('GENERATION_ENDED');
+    assert.equal(f.slot().value, '', 'cleared after the group turns');
+    f.context.characterId = 1; f.state.settings().promptPlacement = 'manual'; f.prompt.syncPrompt();
+    assert.match(f.prompt.manualPrompt(), /moon\.png/, 'manual placement uses the speaker too'); assert.equal(f.slot().value, '');
+    f.state.settings().promptPlacement = 'auto';
+    // 멤버가 아닌 캐릭터가 this_chid 에 있으면(옛 값) 넣지 않는다
+    f.context.characterId = 0; f.context.groups = [{ id: 'g1', members: ['B.png'] }]; f.prompt.syncPrompt();
+    assert.equal(f.slot().value, ''); assert.equal(f.prompt.promptStatus().reason, 'group');
+    await f.eventSource.emit('CHAT_CHANGED');
+    f.context.groups = [{ id: 'g1', members: ['A.png', 'B.png'] }]; f.context.characterId = 0; await f.prompt.preparePrompt('normal', {}, false);
+    assert.deepEqual(f.requests, ['A', 'B', 'A'], 'chat change forgets member lists');
+    pass('group generation sends only the speaking member list per turn, reads each member once, clears outside turns');
 }
 {
     const f = await fixture(); await f.store.reload();

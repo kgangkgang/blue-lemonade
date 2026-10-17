@@ -50,6 +50,7 @@ import { PRESET_GROUPS, capturePreset, readPreset, applyPreset } from './preset-
 import { MARKDOWN_CONTROLS, MARKDOWN_TUNING } from './markdown.js';
 import { markdownControls } from './markdown-ui.js';
 import { sceneSoundMarkup, bindSceneSound } from './scene-sound-ui.js';   // 6.9.8 장면 소리 (채팅 › 화면 › 날씨)
+import { ask as askConfirm } from './ask.js';   // 7.0.1 테마 확인 창 (이 파일의 ask 는 입력 창)
 
 // 브랜드 레몬 — ✦ 메뉴 · 확장 서랍 · 스플래시와 같은 속찬 레몬(폰트어썸 fa-lemon U+F094) 윤곽 그대로
 export const MARK = '<svg viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path transform="translate(0 448) scale(1 -1)" d="M448 352Q447 379 429 397Q411 415 384 416Q374 416 365 413Q348 407 330 404Q311 400 294 404Q237 418 180 399Q124 379 80 336Q37 292 17 236Q-2 179 12 122Q16 105 12 86Q9 68 3 51Q0 42 0 32Q1 5 19 -13Q37 -31 64 -32Q74 -32 83 -29Q100 -23 118 -20Q137 -16 154 -20Q211 -34 268 -15Q324 5 368 48Q411 92 431 148Q450 205 436 262Q432 279 436 298Q439 316 445 333Q448 342 448 352ZM213 321Q171 308 139 277Q108 245 95 203Q90 190 76 193Q62 198 65 212Q80 262 117 299Q154 336 204 351Q218 354 223 340Q226 326 213 321Z"/></svg>';
@@ -2381,7 +2382,7 @@ function bind(root) {
                     break;
                 }
                 case 'rmfont':
-                    if (!confirm('이 글꼴을 목록에서 지울까요?')) return;
+                    if (!await askConfirm('이 글꼴을 목록에서 지울까요?', { ok: '지우기', cancel: '취소', danger: true })) return;
                     await removeCustomFont(el.dataset.id);
                     applyAll();
                     refreshPanels();
@@ -2436,7 +2437,7 @@ function bind(root) {
                     break;
                 case 'mask-delete': {
                     const item = getSettings().image.masks.find(x => x.id === el.dataset.id);
-                    if (!item || !confirm(`${item.name}을(를) 지울까요?`)) return;
+                    if (!item || !await askConfirm(`${item.name}을(를) 지울까요?`, { ok: '지우기', cancel: '취소', danger: true })) return;
                     update(st => {
                         st.image.masks = st.image.masks.filter(x => x.id !== item.id);
                         if (st.image.maskId === item.id) { st.image.maskId = ''; st.image.mask = ''; }
@@ -2520,7 +2521,7 @@ function bind(root) {
                     break;
                 case 'wimg-delete': {
                     const item = getSettings().weatherImages.find(x => x.id === el.dataset.id);
-                    if (!item || !confirm(`${item.name}을(를) 지울까요?`)) return;
+                    if (!item || !await askConfirm(`${item.name}을(를) 지울까요?`, { ok: '지우기', cancel: '취소', danger: true })) return;
                     update((st) => {
                         st.weatherImages = st.weatherImages.filter(x => x.id !== item.id);
                         if (st.chat.weatherImageId === item.id) { st.chat.weatherImageId = ''; st.chat.weatherImage = ''; }
@@ -2623,7 +2624,7 @@ function bind(root) {
                 }
                 case 'style-delete': {
                     const style = getSettings().styles.find(x => x.id === el.dataset.id);
-                    if (!style || !confirm(`${style.name} 스타일을 지울까요?`)) return;
+                    if (!style || !await askConfirm(`${style.name} 스타일을 지울까요?`, { ok: '지우기', cancel: '취소', danger: true })) return;
                     const linkedOrActive = Object.values(getSettings().charStyles).includes(style.id) || getSettings().activeStyle?.id === style.id;
                     if (linkedOrActive) (await charStyleModule())?.styleRemoved(style.id);
                     update((st) => { st.styles = st.styles.filter(x => x.id !== style.id); });

@@ -335,7 +335,7 @@ await test('이어서 쓰기(1.4.2): 마지막 메시지 extra.eh_seed 에 첫 �
     const handlerText = src.slice(start + marker.length, end + 2);
     const runtime = { folder: 'Nova', assets: [{ file: 'smile.png' }] };
     let chat = [];
-    const handler = new Function('runtime', 'getContext', `return (${handlerText});`)(runtime, () => ({ chat }));
+    const handler = new Function('runtime', 'getContext', 'activeEntry', `return (${handlerText});`)(runtime, () => ({ chat }), context => (context?.groupId ? null : runtime));   // 1.6.9 activeEntry: 1:1 은 runtime
 
     chat = [{ mes: 'Hi', extra: {} }, { mes: 'Once upon', send_date: 'first-time', extra: { api: 'x' } }];
     handler('continue', {}, false);

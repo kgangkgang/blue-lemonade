@@ -8,17 +8,20 @@
 import { getSettings } from '../../settings.js';
 import { verifyAddonCss } from '../../addon-files-check.js';
 import { leaveSettingsDialog } from '../../settings-dialog.js';
+import { sha256Hex } from './sha256.js';
 
-export const VERSION = '1.0.0';
+export const VERSION = '1.0.1';
 export const FOLDER = 'ST-Prompt-Template';
 export const BUNDLED = '1.17.9';   // 담긴 원본 판 (SOURCE.json 의 version — 시험이 같은지 본다)
 export const COMMIT = 'd6f520d149aba146305b0b781ddd691d449c28d2';   // 담긴 원본 커밋 (SOURCE.json 의 commit)
 export const UPSTREAM = 'https://github.com/zonde306/ST-Prompt-Template';
+export const ZIP_BYTES = 4491472;   // 담긴 ZIP 크기 (SOURCE.json 의 zipBytes) — 해시를 못 재는 곳에서도 이것만은 본다
 export const ZIP_SHA256 = '0414ba3e1a12e100ab8d51d5d07af2b663fac2745ebd1ffa8fc9cd9c80216f56';   // 담긴 ZIP (SOURCE.json 의 zipSha256) — 폰에서 덜 받힌 파일을 서버로 보내지 않게 확인
 const KEY = `third-party/${FOLDER}`;
 const HELPER = '/api/plugins/blue-lemonade-zip';
 const ZIP = new URL(`./${FOLDER}.zip`, import.meta.url);
 const MANIFEST = `/scripts/extensions/${KEY}/manifest.json`;
+const UPSTREAM_REPO = '/zonde306/st-prompt-template';
 const PANEL = 'prompt_template_settings';   // 원본 settings.html 의 맨 위 id
 
 const esc = text => String(text ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -28,8 +31,21 @@ const headers = () => { try { return context()?.getRequestHeaders?.() ?? {}; } c
 const hasDocument = () => typeof document !== 'undefined' && typeof document.getElementById === 'function';
 
 /** 화면이 읽는 상태 — helper: null 모름 · true · false(도우미 없음) · 'denied'(관리자 아님) / installed: null 모름 · false 없음 · { version, display_name }
- *  git: 실리태번 확장 관리(git)로 깐 폴더 / active: 지금 이 페이지에 실려 있음 / disabled: 확장 관리에서 끔 / done: '' | 'installed' | 'removed' (새로고침 대기) */
-export const state = { helper: null, installed: null, git: false, active: false, disabled: false, busy: false, message: '', done: '', error: '' };
+ *  scope: 'local'(내 계정 폴더) · 'global'(전역 public 폴더) · 'unknown'(못 읽음) · null / others: 다른 이름 폴더에 있는 같은 확장 [{ name, type }]
+ *  git: true(실리태번 확장 관리 · git 설치본) · false · 'unknown'(확인 실패 — 오프라인 git fetch 500 등) / active: 지금 이 페이지에 실려 있음
+ *  disabled: 확장 관리에서 끔 / done: '' | 'installed' | 'removed' (새로고침 대기) */
+export const state = { helper: null, installed: null, scope: null, others: [], git: false, active: false, disabled: false, busy: false, message: '', done: '', error: '' };
+
+/** 7.0.1: 덮어쓰거나 지우면 안 되는 까닭 (없으면 '') — git 설치본이거나 확인 실패, 전역 설치본, 다른 폴더에 같은 확장 */
+export function blockedReason(s = state) {
+    if (s.others?.length) return 'others';
+    if (!s.installed) return '';
+    if (s.scope === 'global') return 'global';
+    if (s.scope !== 'local') return 'scope';
+    if (s.git === true) return 'git';
+    if (s.git !== false) return 'git-unknown';
+    return '';
+}
 
 /** 'a.b.c' 숫자 비교 → -1 · 0 · 1 (빈 자리는 0) */
 export function compareVersions(a, b) {
@@ -46,10 +62,15 @@ export function statusText(s = state) {
     if (s.done === 'installed') return `${BUNDLED} 설치했어요 · 새로고침하면 켜져요`;
     if (s.done === 'removed') return '지웠어요 · 새로고침하면 사라져요 · 백업은 ZIP 설치 창에';
     if (s.installed === null) return '설치 상태를 확인하는 중…';
+    const blocked = blockedReason(s);
+    if (blocked === 'others') return `다른 폴더에도 있어요(${s.others.map(o => o.name.replace(/^third-party\//, '') + (o.type === 'global' ? ' · 전역' : '')).join(', ')}) — 두 벌 실려요 · 하나를 지워 주세요`;
     const helper = s.helper === false ? ' · 서버 도우미 필요' : s.helper === 'denied' ? ' · 서버 관리자 계정에서만' : '';
     if (!s.installed) return `설치 안 됨 · 담긴 판 ${BUNDLED}${helper}`;
     const v = s.installed.version;
-    if (s.git) return `${v} 설치됨 · git 설치본 — 업데이트 · 삭제는 실리태번 확장 관리에서`;
+    if (blocked === 'global') return `${v} 전역 설치본 — 업데이트 · 삭제는 서버 관리자에게`;
+    if (blocked === 'scope') return `${v} 설치됨 · 설치 위치를 확인하지 못했어요 — 다시 열어 주세요`;
+    if (blocked === 'git') return `${v} 설치됨 · git 설치본 — 업데이트 · 삭제는 실리태번 확장 관리에서`;
+    if (blocked === 'git-unknown') return `${v} 설치됨 · git 설치본인지 확인하지 못했어요 — 연결된 뒤 다시 열어 주세요`;
     const where = s.disabled ? ' · 확장 관리에서 꺼짐' : s.active ? '' : ' · 새로고침 대기';
     const cmp = compareVersions(v, BUNDLED);
     if (cmp < 0) return `${v} 설치됨 → ${BUNDLED} 업데이트 가능${helper}${where}`;
@@ -62,11 +83,11 @@ export function actions(s = state) {
     const cmp = s.installed ? compareVersions(s.installed.version, BUNDLED) : -1;
     const first = s.done ? { act: 'reload', icon: 'fa-rotate-right', label: '새로고침해서 적용', disabled: s.busy, primary: true }
         : s.helper === false ? { act: 'install', icon: 'fa-download', label: '서버 도우미 준비 (ZIP 설치 창)', disabled: s.busy, primary: false }
-        : { act: 'install', icon: 'fa-download', label: !s.installed ? '설치' : cmp < 0 ? '업데이트' : cmp > 0 ? '담긴 판으로 바꾸기' : '다시 설치', disabled: s.busy || s.installed === null || s.git || s.helper !== true, primary: !s.installed || cmp < 0 };
+        : { act: 'install', icon: 'fa-download', label: !s.installed ? '설치' : cmp < 0 ? '업데이트' : cmp > 0 ? '담긴 판으로 바꾸기' : '다시 설치', disabled: s.busy || s.installed === null || !!blockedReason(s) || s.helper !== true, primary: !s.installed || cmp < 0 };
     return [
         first,
         { act: 'open', icon: 'fa-gear', label: '실리태번 확장 설정 열기', disabled: s.busy || !s.installed || !s.active, primary: false },
-        { act: 'remove', icon: 'fa-trash', label: '삭제 (백업 남김)', disabled: s.busy || !s.installed || s.git || !!s.done || s.helper !== true, primary: false },
+        { act: 'remove', icon: 'fa-trash', label: '삭제 (백업 남김)', disabled: s.busy || !s.installed || !!blockedReason(s) || !!s.done || s.helper !== true, primary: false },
     ];
 }
 
@@ -88,28 +109,51 @@ export async function checkHelper() {
     return state.helper;
 }
 
-/** 실리태번 확장 관리(git)로 깐 폴더인지 — 실리태번 자체 /version 길 (git 저장소가 아니면 currentCommitHash 가 빈 값으로 바로 온다) */
-async function isGit() {
+/** 실리태번 확장 관리(git)로 깐 폴더인지 — 실리태번 자체 /version 길 (git 저장소가 아니면 currentCommitHash 가 빈 값으로 바로 온다).
+ *  7.0.1: git 저장소면 서버가 git fetch 까지 해서 오프라인이면 500 — 그때를 「git 아님」으로 보면 git 트리 위에 ZIP 을 덮었다.
+ *  200 만 판단하고, 404(그 자리에 폴더 없음)는 false, 나머지 실패는 'unknown' (단추를 막는다) */
+export async function isGit(global = false) {
     try {
-        const r = await fetch('/api/extensions/version', { method: 'POST', headers: headers(), body: JSON.stringify({ extensionName: FOLDER, global: false }) });
-        if (!r.ok) return false;
+        const r = await fetch('/api/extensions/version', { method: 'POST', headers: headers(), body: JSON.stringify({ extensionName: FOLDER, global }) });
+        if (r.status === 404) return false;
+        if (!r.ok) return 'unknown';
         const data = await r.json();
-        return !!data?.currentCommitHash;
-    } catch { return false; }
+        return typeof data?.currentCommitHash === 'string' ? !!data.currentCommitHash : 'unknown';
+    } catch { return 'unknown'; }
 }
 
-/** 설치 상태 다시 읽기: manifest.json 이 있나 · 판 · git 설치본인가 · 지금 실려 있나 */
+const repoOf = m => { try { const u = new URL(m?.homePage || ''); return u.hostname.toLowerCase() === 'github.com' ? u.pathname.replace(/\.git$|\/$/g, '').toLowerCase() : ''; } catch { return ''; } };
+const isSame = m => !!m && (repoOf(m) === UPSTREAM_REPO || /^Prompt Template\b/i.test(String(m.display_name || '')));
+
+/** 7.0.1: 실리태번 /api/extensions/discover 로 우리 폴더가 내 계정(local)인지 전역(global)인지, 다른 이름 폴더에 같은 확장이 있는지 */
+export async function locate() {
+    let list;
+    try { const r = await fetch('/api/extensions/discover', { headers: headers(), cache: 'no-store' }); if (!r.ok) throw Error(String(r.status)); list = await r.json(); }
+    catch { return { scope: 'unknown', others: [] }; }
+    if (!Array.isArray(list)) return { scope: 'unknown', others: [] };
+    const ours = list.find(e => e?.name === KEY);
+    const others = [];
+    for (const entry of list.filter(e => typeof e?.name === 'string' && e.name.startsWith('third-party/') && e.name !== KEY && !/^third-party\/blue-lemonade$/i.test(e.name)).slice(0, 80)) {
+        try { const r = await fetch(`/scripts/extensions/${entry.name}/manifest.json`, { cache: 'no-store' }); if (r.ok && isSame(await r.json())) others.push({ name: entry.name, type: entry.type }); } catch { /* 못 읽은 확장은 건너뛴다 */ }
+    }
+    return { scope: ours ? (ours.type === 'global' ? 'global' : 'local') : null, others };
+}
+
+/** 설치 상태 다시 읽기: manifest.json 이 있나 · 판 · 어디에 깔렸나 · git 설치본인가 · 지금 실려 있나 */
 export async function refresh({ probeGit = true } = {}) {
     state.error = '';
     try {
         const r = await fetch(MANIFEST, { cache: 'no-store' });
-        if (r.status === 404) { state.installed = false; state.git = false; }
+        if (r.status === 404) { state.installed = false; }
         else if (r.ok) { const m = await r.json(); state.installed = { version: String(m?.version || '?'), display_name: String(m?.display_name || '') }; }
         else throw Error(`설치 상태를 읽지 못했어요 (${r.status}).`);
     } catch (e) { state.installed = null; state.error = e.message; }
     state.active = hasDocument() && !!document.getElementById(PANEL);
     state.disabled = !!context()?.extensionSettings?.disabledExtensions?.includes?.(KEY);
-    if (state.installed && probeGit) state.git = await isGit();
+    const where = await locate();
+    state.others = where.others;
+    state.scope = state.installed ? (where.scope ?? 'unknown') : null;
+    state.git = state.installed && probeGit ? await isGit(state.scope === 'global') : false;
     if (state.helper === null) await checkHelper();
     renderAll();
     return state;
@@ -121,20 +165,39 @@ async function work(task) {
     catch (e) { state.error = e.message || String(e); return false; }
     finally { state.busy = false; state.message = ''; renderAll(); }
 }
-const repoOf = m => { try { const u = new URL(m?.homePage || ''); return u.hostname.toLowerCase() === 'github.com' ? u.pathname.replace(/\.git$|\/$/g, '').toLowerCase() : ''; } catch { return ''; } };
+/** 7.0.1: 설치된 판이 담긴 판보다 새 것이거나 같은 판이면 확인 창 뒤에만 (판 · 백업 위치) */
+async function confirmReplace(installed) {
+    const ctx = context();
+    const newer = compareVersions(installed.version, BUNDLED) > 0;
+    const text = `지금 ${installed.version} → 담긴 ${BUNDLED}${newer ? ' (더 옛 판으로 바꿔요)' : ' (같은 판 다시 설치)'}. 지금 폴더는 백업해 두고, ZIP 설치 창의 백업 목록에서 되살릴 수 있어요.`;
+    if (!ctx?.callGenericPopup) return hasDocument() && typeof confirm === 'function' ? confirm(text) : false;
+    const result = await ctx.callGenericPopup(`<h3>${esc(FOLDER)} ${newer ? '바꾸기' : '다시 설치'}</h3><p style="text-align:left;line-height:1.8">${esc(text)}</p>`, ctx.POPUP_TYPE?.CONFIRM ?? 2, '', { okButton: newer ? '백업하고 바꾸기' : '백업하고 다시 설치', cancelButton: '취소' });
+    return result === (ctx.POPUP_RESULT?.AFFIRMATIVE ?? 1);
+}
+
+/** 담긴 ZIP 이 온전한지: 크기는 늘, 해시는 crypto.subtle 이 있으면 그것으로 · 없으면(http) 순수 JS 로 */
+export async function verifyZip(blob) {
+    if (blob.size !== ZIP_BYTES) return false;
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    const digest = globalThis.crypto?.subtle?.digest
+        ? [...new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256', bytes))].map(b => b.toString(16).padStart(2, '0')).join('')
+        : await sha256Hex(bytes);
+    return digest === ZIP_SHA256;
+}
 
 /** 담긴 ZIP 을 도우미로 보내 ST-Prompt-Template 폴더에 설치 · 업데이트 (ZIP 설치 창과 같은 /inspect → /preview → /install) */
-export async function install() {
+export async function install({ confirm = confirmReplace } = {}) {
     if (state.busy) return false;
     if (state.helper !== true) { await openZipPanel(); return false; }
-    if (state.git) return false;
+    if (state.installed === null || blockedReason()) return false;
+    if (state.installed && compareVersions(state.installed.version, BUNDLED) >= 0 && !await confirm(state.installed)) return false;
     return work(async () => {
         state.message = '담긴 ZIP 을 읽는 중…'; renderAll();
         const r = await fetch(ZIP, { cache: 'no-store' });
         if (!r.ok) throw Error(`담긴 ZIP 을 읽지 못했어요 (${r.status}).`);
         const zip = await r.blob();
-        const digest = globalThis.crypto?.subtle ? [...new Uint8Array(await crypto.subtle.digest('SHA-256', await zip.arrayBuffer()))].map(b => b.toString(16).padStart(2, '0')).join('') : ZIP_SHA256;
-        if (digest !== ZIP_SHA256) throw Error('담긴 ZIP 이 손상됐어요. 테마를 다시 설치해 주세요.');
+        state.message = '담긴 ZIP 을 확인하는 중…'; renderAll();
+        if (!await verifyZip(zip)) throw Error('담긴 ZIP 이 손상됐어요. 테마를 다시 설치해 주세요.');
         state.message = '서버에 보내는 중…'; renderAll();
         const plan = await request(`/inspect?name=${encodeURIComponent(FOLDER + '.zip')}`, null, zip);
         const other = (plan.installed || []).find(m => m.folder !== FOLDER && ((repoOf(m) && repoOf(m) === repoOf(plan.manifest)) || m.display_name === plan.manifest?.display_name));
@@ -157,7 +220,7 @@ async function confirmRemove(plan) {
 
 /** 설치본 삭제 (ZIP 설치 창과 같은 /remove-preview → 확인 → /remove · 폴더 전체를 백업에 옮긴다) */
 export async function remove({ confirm = confirmRemove } = {}) {
-    if (state.busy || !state.installed || state.git || state.helper !== true || state.done) return false;
+    if (state.busy || !state.installed || blockedReason() || state.helper !== true || state.done) return false;
     return work(async () => {
         state.message = '삭제할 내용을 확인하는 중…'; renderAll();
         const plan = await request('/remove-preview', { folder: FOLDER });

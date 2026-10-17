@@ -116,7 +116,7 @@ async function harness() {
     const state = await load('state.js', { extension_settings: ext, getContext: () => context, saveSettingsDebounced: () => { saves++; } });
     state.initSettings();
     const assets = await load('assets.js', { getRequestHeaders: () => ({}), formatKeywordList: names.formatKeywordList });
-    const store = await load('store.js', { ...state, ...assets, ...presets, setIndex: () => {}, clearIndex: () => {} });
+    const store = await load('store.js', { ...state, ...assets, ...presets, setIndex: () => {}, clearIndex: () => {}, setMemberIndex: () => {}, clearMemberIndexes: () => {} });
     const answer = (list, label) => async (...args) => {
         if (!list.length) throw new Error(`${label} 에 줄 대답이 없어요: ${args[0]}`);
         const next = list.shift();

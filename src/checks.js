@@ -1,6 +1,7 @@
 // 소금과 부딪히는 설정 찾기 → 설정 창 맨 위에 버튼과 함께 표시
 import { getSettings } from './settings.js';
 import { themeEnabled } from './usage-mode.js';
+import { ask } from './ask.js';   // 7.0.1 테마 확인 창
 
 function runSlash(command) {
     const ctx = SillyTavern.getContext();
@@ -43,8 +44,8 @@ export function getIssues() {
         issues.push({
             text: '사용자 설정의 커스텀 CSS에 예전 테마가 남아 있어요.',
             fix: '비우기',
-            run: () => {
-                if (confirm('사용자 설정 → 커스텀 CSS 칸을 비울까요?\n(예전 Moonlit / Moonlit Slate 테마 CSS가 들어 있어요)\n\n지우지 않고 꺼 두기만 하려면: 채팅 › 기타 › 커스텀 CSS 끄기')) {
+            run: async () => {
+                if (await ask('사용자 설정 → 커스텀 CSS 칸을 비울까요?\n(예전 Moonlit / Moonlit Slate 테마 CSS가 들어 있어요)\n\n지우지 않고 꺼 두기만 하려면: 채팅 › 기타 › 커스텀 CSS 끄기', { ok: '비우기', cancel: '취소', danger: true })) {
                     $('#customCSS').val('').trigger('input');
                 }
             },

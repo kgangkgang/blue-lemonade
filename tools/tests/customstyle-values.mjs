@@ -189,9 +189,11 @@ await test('기본값 복원: 취소하면 그대로 · 확인하면 지금 CSS 
     const entries = T.ext.CTSI.entries;
     T.confirms.push(false);
     manager.handleDelegatedClick({ target: { closest: () => ({ id: 'ctsi-reset-defaults' }) } });
+    for (let i = 0; i < 6; i++) await Promise.resolve();   // 7.0.1 확인 창(ask)은 비동기 — 이 시험은 타이머가 가짜라 마이크로태스크로 기다린다
     assert.equal(entries['bl-size'], '30'); assert.equal(T.saves, 0); assert.equal(T.asked.length, 1);
     T.confirms.push(true);
     manager.handleDelegatedClick({ target: { closest: () => ({ id: 'ctsi-reset-defaults' }) } });
+    for (let i = 0; i < 6; i++) await Promise.resolve();   // 7.0.1 확인 창(ask)은 비동기 — 이 시험은 타이머가 가짜라 마이크로태스크로 기다린다
     assert.deepEqual(entries, { ...DEFAULTS, 'bl-retired': 'keep-me' });
     assert.equal(T.ext.CTSI.entries, entries);
     assert.equal(css.get('--bl-size'), '5'); assert.equal(css.get('--bl-vis'), 'hidden');
