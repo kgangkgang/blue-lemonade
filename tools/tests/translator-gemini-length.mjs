@@ -13,14 +13,18 @@ function check(name, fn) {
 }
 
 const defaultLength = provider => Number(new RegExp(`\\n        ${provider}: \\{\\n            max_length: (\\d+)`).exec(source)?.[1]);
-const groupLimit = tokens => tokens > 0 ? Math.min(3600, Math.max(400, Math.round(tokens * 1.2))) : 3600;   // index.js groupLimit 와 같은 셈
+const groupLimit = tokens => tokens > 0 ? Math.max(400, Math.round(tokens * 1.2)) : 3600;   // index.js groupLimit 와 같은 셈 (2.8.3 3600자 고정 상한 없음)
 
-check('Google and Vertex default to 4000, which fills a whole 3600-character bundle', () => {
+check('Google and Vertex default to 4000 -> 4800-character bundles; the bundle follows the response length (24000 -> 28800, unknown -> 3600)', () => {
     for (const provider of ['google', 'vertexai']) {
         assert.equal(defaultLength(provider), 4000, provider);
-        assert.equal(groupLimit(defaultLength(provider)), 3600, provider);
+        assert.equal(groupLimit(defaultLength(provider)), 4800, provider);
     }
-    assert.match(source, /const groupLimit = outputTokens > 0 \? Math\.min\(CHUNK_TARGET \* 2, Math\.max\(400, Math\.round\(outputTokens \* 1\.2\)\)\) : CHUNK_TARGET \* 2;/);
+    assert.equal(groupLimit(24000), 28800); assert.equal(groupLimit(100), 400); assert.equal(groupLimit(0), 3600);
+    assert.match(source, /const groupLimit = outputTokens > 0 \? Math\.max\(400, Math\.round\(outputTokens \* 1\.2\)\) : CHUNK_TARGET \* 2;/);
+    assert.match(source, /\} else if \(maskedText\.length > groupLimit && chunks\.length > 1\) \{/, 'whole-or-chunks uses the same limit');
+    assert.ok(!source.includes('Math.min(CHUNK_TARGET * 2, Math.max(400'), 'no 3600 ceiling left');
+    assert.equal((html.match(/응답 길이 × 1\.2자까지 한 번에 묶여요 \(예: 24000 이면 약 28800자\)\./g) || []).length, 5, 'five tooltips');
 });
 
 const start = source.indexOf('if (!extensionSettings.gemini_length_707) {');

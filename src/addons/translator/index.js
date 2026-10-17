@@ -2083,17 +2083,19 @@ async function translate(text, options = {}) {
             return result.text;
         };
         let translatedText = '';
+        // 묶음의 원문 글자 수는 출력 한도를 따른다 — 답 글자 수 ≈ 원문 글자 수, 토큰당 ≈1.2자로 잡아 한도의 1.2배까지 묶는다.
+        // 2.8.3 3600자 고정 상한을 뺐다: 응답 길이가 곧 한 번에 보내는 원문 상한 (예: 24000 이면 28800자). 크게 두면 긴 메시지의 요청 수 ·
+        //   요청마다 다시 들어가는 프롬프트 · 문맥이 줄고, 한 번 실패하면 그만큼 다시 보낸다. 한도를 모르면(0) 예전처럼 3600자
+        const limitSettings = extensionSettings, limitLive = getContext();
+        const outputTokens = limitSettings.connection_mode === 'direct' ? Number(limitSettings.parameters?.[limitSettings.llm_provider]?.max_length) || 0
+            : Number(limitSettings.profile_max_tokens) || (limitLive?.mainApi === 'openai' ? Number(limitLive.chatCompletionSettings?.openai_max_tokens) : textOutputLimit()) || 0; // 2026-10-06: 텍스트 완성은 없는 max_length 대신 실제 한도
+        const groupLimit = outputTokens > 0 ? Math.max(400, Math.round(outputTokens * 1.2)) : CHUNK_TARGET * 2;
         // 2.7.9 가리고 나니 자리표시자뿐(문단이 모두 한국어)이면 요청하지 않는다
         if (koreanKept?.paragraphs && /^(?:\s*\[\[__VAR_\d+__\]\]\s*)*$/.test(maskedText)) {
             translatedText = maskedText;
             if (report) { report.keptKorean = koreanKept.paragraphs + koreanKept.quotes; report.chunks = 0; }
         } else if (paragraphParts) {
-            // 묶음의 원문 글자 수는 출력 한도도 따른다 — 직접 연결 기본 max_length 1000 토큰에 3600자를 보내면 JSON 답이 잘렸다.
-            // 답 글자 수 ≈ 원문 글자 수, 토큰당 ≈1.2자로 잡아 한도의 1.2배까지만 묶는다 (max_tokens 를 키우면 모델 한도 400 이 날 수 있어 묶음을 줄이는 쪽).
-            const s = extensionSettings, live = getContext();
-            const outputTokens = s.connection_mode === 'direct' ? Number(s.parameters?.[s.llm_provider]?.max_length) || 0
-                : Number(s.profile_max_tokens) || (live?.mainApi === 'openai' ? Number(live.chatCompletionSettings?.openai_max_tokens) : textOutputLimit()) || 0; // 2026-10-06: 텍스트 완성은 없는 max_length 대신 실제 한도
-            const groupLimit = outputTokens > 0 ? Math.min(CHUNK_TARGET * 2, Math.max(400, Math.round(outputTokens * 1.2))) : CHUNK_TARGET * 2;
+            // 묶음 상한 groupLimit 은 위에서 (직접 연결 기본 max_length 1000 토큰에 3600자를 보내면 JSON 답이 잘렸다 — 그래서 한도를 따른다)
             const failReasons = new Map(); // 5.2.9: 문단 본문 → 실패 원인
             const noCache = new Set(); // 5.3.4: 붙이긴 하되 캐시에 넣지 않을 문단 (1부터 다시 매긴 답 — 한 칸 밀린 답과 구별이 안 된다)
             const result = await translateSegments({ parts: paragraphParts,
@@ -2225,7 +2227,7 @@ async function translate(text, options = {}) {
             });
             translatedText = result.text;
             if (report) { report.reusedParagraphs = result.reused; report.translatedParagraphs = result.translated; report.partial = result.blocked > 0; report.blockedChunks = result.blocked; report.chunks = result.total; }
-        } else if (maskedText.length > CHUNK_TARGET * 2 && chunks.length > 1) {
+        } else if (maskedText.length > groupLimit && chunks.length > 1) {   // 2.8.3 통째로 보낼 크기도 같은 묶음 상한 (전엔 3600자 고정)
             translatedText = await runChunks();
         } else {
             progress({ stage: 'whole' });
@@ -6385,12 +6387,12 @@ async function translateForSpeech(lines, target, { signal } = {}) {
     }
     return out;
 }
-/** 묶음 크기(원문 글자 수) — 채팅 번역 묶음과 같은 셈: 출력 한도(토큰) × 1.2, 400 ~ 3600자 (한도를 모르면 3600) */
+/** 묶음 크기(원문 글자 수) — 채팅 번역 묶음과 같은 셈: 출력 한도(토큰) × 1.2, 최소 400자 (2.8.3 상한 없음 · 한도를 모르면 3600) */
 function speechGroupLimit() {
     const s = extensionSettings, live = getContext();
     const outputTokens = s.connection_mode === 'direct' ? Number(s.parameters?.[s.llm_provider]?.max_length) || 0
         : Number(s.profile_max_tokens) || (live?.mainApi === 'openai' ? Number(live.chatCompletionSettings?.openai_max_tokens) : textOutputLimit()) || 0;
-    return outputTokens > 0 ? Math.min(CHUNK_TARGET * 2, Math.max(400, Math.round(outputTokens * 1.2))) : CHUNK_TARGET * 2;
+    return outputTokens > 0 ? Math.max(400, Math.round(outputTokens * 1.2)) : CHUNK_TARGET * 2;
 }
 async function deleteCachedTranslation(originalText) {
     await forgetParagraphCache(originalText);

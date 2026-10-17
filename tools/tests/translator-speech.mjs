@@ -275,6 +275,18 @@ await test('긴 답장: 출력 한도를 넘는 줄 묶음은 채팅 번역처�
     H.script.push(echoBatch());
     await M.translateForSpeech(['A.', 'B.'], 'ja');
     assert.equal(H.calls.length, 1, '한도를 모르면(0) 3600자 묶음 = 보통 메시지 하나에 요청 하나');
+    // 2.8.3 큰 묶음: 응답 길이 60000 → 72000자 묶음, 200자 × 200줄 = 40000자가 한 번에 · 잘리면 반씩 (안전장치 그대로)
+    const big = Array.from({ length: 200 }, (_, i) => `Line ${String(i).padStart(3, '0')} ` + 'calm sea '.repeat(21).trim() + '.');
+    assert.ok(big.join('').length >= 39000);
+    reset(); H.settings.parameters = { openai: { max_length: 60000 } };
+    H.script.push(echoBatch());
+    out = await M.translateForSpeech(big, 'ja');
+    assert.equal(H.calls.length, 1, '40000자 = 요청 하나'); assert.ok(out.every(Boolean));
+    reset(); H.settings.parameters = { openai: { max_length: 60000 } };
+    H.script.push(() => { throw Object.assign(new Error('잘림'), { truncated: true }); }, echoBatch(), echoBatch());
+    out = await M.translateForSpeech(big, 'ja');
+    assert.equal(H.calls.length, 3, '잘린 40000자 묶음은 반씩 (100 + 100)'); assert.ok(out.every(Boolean));
+    assert.match(H.calls[1].prompt, /⟦0⟧ Line 000/); assert.doesNotMatch(H.calls[1].prompt, /⟦100⟧/); assert.match(H.calls[2].prompt, /⟦100⟧ Line 100|⟦0⟧ Line 100/);
     reset();
     H.script.push(() => 'Hello there.\n->\n\nこんにちは。');
     assert.deepEqual(await M.translateForSpeech(['Hello there.'], 'ja'), ['こんにちは。'], '한 줄 답의 원문 되풀이도 걷음');

@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.0.8/blue-lemonade-7.0.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.0.9/blue-lemonade-7.0.9.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
@@ -20,7 +20,14 @@ AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·�
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.0.8 · 최신 업데이트</summary>
+<summary>7.0.9 · 최신 업데이트</summary>
+
+- LLM 번역: 번역 묶음 크기를 응답 길이에 맞췄어요. 응답 길이가 곧 한 번에 보내는 원문 상한이에요. 예: 24000 이면 약 28800자까지 한 번에 보내요. 크게 두면 긴 메시지의 요청 수와 반복 프롬프트가 줄고, 대신 한 번 실패하면 그만큼 다시 보내요. 「자동 · 현재 컨텍스트」의 응답 몫도 보내는 글 길이에 맞춰 잡아요 (LLM 번역 2.8.3).
+
+</details>
+
+<details>
+<summary>7.0.8 · 자동 컨텍스트 응답 몫 고침</summary>
 
 - LLM 번역: 참고 대화를 「자동 · 현재 컨텍스트」로 두고 응답 길이를 아주 크게(예: 100000) 넣으면 「응답 예약량을 빼면 대화를 넣을 공간이 없어요」가 나던 것을 고쳤어요. 대화 범위를 셀 때 응답 몫은 번역 한 번에 필요한 만큼(8192토큰까지)만 떼어 두고, 실제 응답 길이 설정은 그대로 써요 (LLM 번역 2.8.2).
 
