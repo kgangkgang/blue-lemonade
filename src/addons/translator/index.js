@@ -1401,7 +1401,8 @@ const noStream = new Set();   // 흘려받기를 못 하는 듯한 연결 (이 �
  * 멈춤(signal) · 제한 시간은 예전과 같은 오류로 던진다. Request 객체로 보낸다 — 끊김 감시(perf/watchdog)는 본채팅 답용이라
  * 번역 요청을 끊으면 본채팅 답의 「끊김」 표시를 지우거나 잘못 남긴다 (번역은 제한 시간 · 예전 요청으로 되돌아가기가 따로 있다).
  */
-async function streamedReply({ body, source, onText, signal = null, timeoutMs = 0, timedOut = null, purpose = null }) {
+const STREAM_IDLE_MS = 90000;   // 7.1.2 흘려받는 번역: 글이 오다가 이만큼 멈추면 끊는다 (글이 오는 동안은 끊지 않는다)
+async function streamedReply({ body, source, onText, signal = null, timeoutMs = 0, idleMs = 0, timedOut = null, purpose = null }) {
     if (typeof onText !== 'function') return null;
     try { streamParts ??= await import('./translation-stream.js'); } catch { return null; }
     const family = streamParts.streamFamily(source), key = JSON.stringify([source, body?.custom_url ?? null, body?.reverse_proxy ?? null]);
@@ -1409,7 +1410,12 @@ async function streamedReply({ body, source, onText, signal = null, timeoutMs = 
     const controller = new AbortController(), abort = () => controller.abort(signal?.reason);
     signal?.addEventListener('abort', abort, { once: true });
     if (signal?.aborted) abort();
-    const timer = timeoutMs > 0 ? setTimeout(() => controller.abort(), timeoutMs) : 0;
+    // 7.1.2: 시작부터 세는 고정 시간 제한이 글이 잘 흘러오는 긴 번역(7.0.9 큰 묶음)도 90초에 끊었다 — 첫 글은 timeoutMs 까지 기다리고,
+    //        글이 오기 시작하면 조각이 올 때마다 시계를 다시 세서 idleMs 동안 글이 더 안 올 때만 끊는다
+    let timer = 0, idle = false;
+    const arm = (ms, isIdle) => { clearTimeout(timer); idle = isIdle; timer = ms > 0 ? setTimeout(() => controller.abort(), ms) : 0; };
+    arm(timeoutMs, false);
+    const watchText = text => { if (idleMs > 0) arm(idleMs, true); return onText(text); };
     try {
         const response = await fetch(new Request('/api/backends/chat-completions/generate', { method: 'POST', headers: { ...getRequestHeaders(), 'Content-Type': 'application/json' },
             cache: 'no-cache', body: JSON.stringify({ ...body, stream: true }), signal: controller.signal }), purpose ? { requestLog: { caller: 'llm-translator-custom', purpose } } : undefined);
@@ -1420,12 +1426,12 @@ async function streamedReply({ body, source, onText, signal = null, timeoutMs = 
             if ([404, 405, 415, 501].includes(response.status)) noStream.add(key);
             return null;
         }
-        const read = await streamParts.readStream(response, { family, source, onText });
+        const read = await streamParts.readStream(response, { family, source, onText: watchText });
         if ('raw' in read) { noStream.add(key); return { replay: { ok: true, status: response.status, statusText: response.statusText, text: async () => read.raw } }; }
         return read;
     } catch (error) {
         if (signal?.aborted) throw signal.reason;
-        if (controller.signal.aborted) throw timedOut?.() ?? error;
+        if (controller.signal.aborted) throw timedOut?.(idle ? idleMs : timeoutMs, idle) ?? error;
         if (error?.unsupported) noStream.add(key);
         console.warn('[LLM Translator] 묶음 번역을 흘려받지 못해 예전처럼 한꺼번에 받아요:', error?.message);
         return null;
@@ -1463,9 +1469,9 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
             log: globalThis[Symbol.for('st.request-log.v1')],
             preparePayload: payload => prepareAutoTranslationPayload(payload, overrides, Number(getContext().chatCompletionSettings?.openai_max_context) || null),
             // 2.6.2 묶음 번역 흘려받기 — 실리태번 ChatCompletionService 와 같은 본문 · 같은 오류 (null = 예전 요청 그대로)
-            stream: typeof overrides.onStream === 'function' ? async (live, payload, signal) => {
+            stream: typeof overrides.onStream === 'function' ? async (live, payload, signal, touch) => {   // 7.1.3 touch: 글이 올 때마다 현재 연결의 제한 시간을 다시 센다
                 const body = typeof live.ChatCompletionService?.createRequestData === 'function' ? live.ChatCompletionService.createRequestData(payload) : payload;
-                const reply = await streamedReply({ body, source: body.chat_completion_source, onText: overrides.onStream, signal });
+                const reply = await streamedReply({ body, source: body.chat_completion_source, onText: text => { touch?.(); return overrides.onStream(text); }, signal });
                 if (!reply) return null;
                 const json = reply.data ?? JSON.parse(await reply.replay.text());
                 if (reply.replay?.ok === false || json?.error) throw new Error(String(json?.error?.message || 'Response not OK'));
@@ -1590,11 +1596,14 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
     const preparedParameters = await prepareAutoTranslationPayload(parameters, overrides);
     overrides.signal?.throwIfAborted?.();
     // [1.8.7] 호출별 제한 시간 (중계 서버 앞의 Cloudflare 는 100초에 524로 끊는다)
-    const timeoutMs = overrides.timeoutMs > 0 ? overrides.timeoutMs : 90000;
-    const timedOut = () => Object.assign(new Error(`${Math.round(timeoutMs / 1000)}초 안에 답이 없어 끊었어요. 요청을 더 작게 나누거나 잠시 뒤 다시 해 주세요.`), { timeout: true });
+    // 7.1.2: 기본 제한 시간을 응답 길이에 맞춘다 — 7.0.9 부터 묶음이 응답 길이만큼 커져 큰 번역은 90초를 넘는 게 정상이다.
+    //        90초 + 응답 토큰당 10ms (초당 100토큰보다 느린 모델도 버티게), 10분까지. 흘려받기는 글이 오는 동안 끊지 않고 90초 멈출 때만 (STREAM_IDLE_MS)
+    const replyTokens = Number(preparedParameters.max_completion_tokens ?? preparedParameters.max_tokens) || 0;
+    const timeoutMs = overrides.timeoutMs > 0 ? overrides.timeoutMs : Math.min(600000, 90000 + Math.max(0, replyTokens) * 10);
+    const timedOut = (ms = timeoutMs, idle = false) => Object.assign(new Error(idle ? `${Math.round(ms / 1000)}초 동안 번역 글이 더 오지 않아 끊었어요. 받은 문단은 남아 있어요 — 다시 누르면 나머지만 보내요.` : `${Math.round(ms / 1000)}초 안에 답이 없어 끊었어요. 요청을 더 작게 나누거나 잠시 뒤 다시 해 주세요.`), { timeout: true });
     // 2.6.2 묶음 번역은 되면 흘려받는다 — 못 쓰는 공급자 · 실패 · 중간에 끊김이면 아래 예전 요청 그대로 (묶음 끝에 한꺼번에)
     const streamed = typeof overrides.onStream === 'function' ? await streamedReply({ body: preparedParameters, source: chatCompletionSource, onText: overrides.onStream,
-        signal: overrides.signal, timeoutMs, timedOut, purpose: overrides.requestPurpose || 'translation.chat' }) : null;
+        signal: overrides.signal, timeoutMs, idleMs: STREAM_IDLE_MS, timedOut, purpose: overrides.requestPurpose || 'translation.chat' }) : null;
     if (streamed?.data) return extractTranslationResult(streamed.data, provider);
     let response;
     const controller = new AbortController();

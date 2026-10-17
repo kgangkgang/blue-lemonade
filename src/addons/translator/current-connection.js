@@ -11,11 +11,17 @@ const PARSE_FAILURE=/unexpected token|not valid json|unexpected end of json|<!do
 const isTransient=(error,reason)=>!CLOUDFLARE_524.test(reason)&&(error?.name==='SyntaxError'||PARSE_FAILURE.test(reason)?TRANSIENT_CODE.test(reason):TRANSIENT_MESSAGE.test(reason));
 export async function requestCurrentConnection({context,messages,overrides={},maxTokens=0,buildChat,buildText,log,preparePayload,stream}) {
     const ctx=context(), controller=new AbortController();
-    const timeout=overrides.timeoutMs>0?overrides.timeoutMs:90000;
+    // 7.1.3 시작부터 세는 90초 고정 제한이 흘려받는 긴 번역도 끊었다 — 기본 제한은 응답 길이에 맞추고(90초 + 응답 토큰당 10ms, 10분까지 · 직접 연결과 같은 셈),
+    //       흘려받는 동안은 글이 올 때마다 다시 세서 90초 멈출 때만 끊는다 (touch)
+    const IDLE=90000;
+    let timeout=overrides.timeoutMs>0?overrides.timeoutMs:90000, idle=false;
     const abort=()=>controller.abort(overrides.signal?.reason);
     overrides.signal?.addEventListener('abort',abort,{once:true});
     if(overrides.signal?.aborted)abort();
-    const timer=setTimeout(()=>controller.abort(),timeout);
+    let timer=setTimeout(()=>controller.abort(),timeout);
+    const rearm=(ms,isIdle)=>{clearTimeout(timer);timeout=ms;idle=isIdle;timer=setTimeout(()=>controller.abort(),ms);};
+    const sized=tokens=>{if(!(overrides.timeoutMs>0))rearm(Math.min(600000,90000+Math.max(0,Number(tokens)||0)*10),false);};
+    const touch=()=>rearm(IDLE,true);
     const release=log?.begin?.({caller:'llm-translator-custom',purpose:overrides.requestPurpose||'translation.chat',user:messages[0]?.content});
     const limit=overrides.maxTokens>0?overrides.maxTokens:maxTokens>0?maxTokens:undefined;
     try{
@@ -26,8 +32,10 @@ export async function requestCurrentConnection({context,messages,overrides={},ma
             if(Number.isFinite(overrides.temperature))payload.temperature=overrides.temperature;
             if(preparePayload)payload=await preparePayload(payload);
             controller.signal.throwIfAborted();
+            sized(payload.max_completion_tokens??payload.max_tokens);
             // 2.6.2 묶음 번역 흘려받기 (stream 을 넘겼을 때): null 이면 못 씀 · 실패 · 중간에 끊김 → 아래 예전 요청 그대로. 오류는 아래 catch 가 예전처럼 읽는다
-            const streamed=stream?await stream(ctx,payload,controller.signal):null;
+            const streamed=stream?await stream(ctx,payload,controller.signal,touch):null;
+            if(!streamed)sized(payload.max_completion_tokens??payload.max_tokens);   // 흘려받기를 못 썼으면 예전 요청은 다시 응답 길이만큼
             if(streamed)return streamed;
             return await ctx.ChatCompletionService.processRequest(payload,{},false,controller.signal);
         }
@@ -38,13 +46,14 @@ export async function requestCurrentConnection({context,messages,overrides={},ma
             if(Number.isFinite(overrides.temperature))payload.temperature=overrides.temperature;
             if(preparePayload)payload=await preparePayload(payload);
             controller.signal.throwIfAborted();
+            sized(payload.max_new_tokens??payload.max_tokens);
             return await ctx.TextCompletionService.processRequest(payload,{},false,controller.signal);
         }
         throw new Error('현재 연결의 API 방식은 아직 지원하지 않아요. 채팅 완성 또는 텍스트 완성 연결을 사용하거나 API 중 선택으로 전환해 주세요.');
     }catch(error){
         if(error?.name==='ContextSelectionError')throw error;
         if(overrides.signal?.aborted)throw overrides.signal.reason;
-        if(controller.signal.aborted)throw Object.assign(new Error(`${Math.round(timeout/1000)}초 안에 번역 답이 오지 않았어요.`),{timeout:true});
+        if(controller.signal.aborted)throw Object.assign(new Error(idle?`${Math.round(timeout/1000)}초 동안 번역 글이 더 오지 않아 끊었어요. 받은 문단은 남아 있어요 — 다시 누르면 나머지만 보내요.`:`${Math.round(timeout/1000)}초 안에 번역 답이 오지 않았어요.`),{timeout:true});
         if(/^bad request$/i.test(String(error?.message||'').trim())){
             const rejected=new Error('요청이 거절됐어요 (400 Bad Request). 내용 차단(PROHIBITED_CONTENT) 또는 현재 연결의 요청 설정을 확인해 주세요. 원문은 그대로예요.');
             rejected.refused=true;throw rejected;

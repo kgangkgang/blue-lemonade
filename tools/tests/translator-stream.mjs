@@ -203,7 +203,8 @@ function directFixture({ provider = 'claude', serve }) {
         extensionSettings: settings, document: { getElementById: () => null }, secret_state: new Proxy({}, { get: () => 'key' }), SECRET_KEYS: new Proxy({}, { get: (_, k) => String(k) }),
         getProviderSpecificParams: () => ({}), LiveModels, prepareAutoTranslationPayload: async payload => payload, oai_settings: {}, getRequestHeaders: () => ({ 'X-CSRF-Token': 't' }),
         getCustomEndpointConfig: () => ({ url: 'http://relay.invalid/v1', inheritExtras: false }), getCustomModelName: () => 'test-model', substituteParams: x => x, Request: FakeRequest,
-        streamParts: stream, noStream: new Set(), console: { warn: (...a) => warnings.push(a.join(' ')), info() {}, debug() {}, error() {} },
+        streamParts: stream, noStream: new Set(), STREAM_IDLE_MS: 90000,   // 2.9.3 흘려받기 멈춤 시간 (index.js 맨 위 상수)
+        console: { warn: (...a) => warnings.push(a.join(' ')), info() {}, debug() {}, error() {} },
         fetch: async (input, init) => {
             const request = input instanceof FakeRequest ? input : { url: input, ...init };
             const body = JSON.parse(request.body);
@@ -278,7 +279,8 @@ await check('callLLMAPI 직접: 멈춤 · 시간 초과는 예전 요청 없이 
     outer.abort(reason); release();
     await assert.rejects(run, e => e === reason);
     assert.equal(f.fetches.length, 1);
-    const g = directFixture({ provider: 'openai', serve: (b, signal) => new Response(byteStream(body, { pieces: 6, signal, before: i => (i === 2 ? new Promise(() => {}) : null) })) });
+    // 2.9.3 첫 글이 오기 전에 멈춘 답만 제한 시간으로 끊는다 (글이 오기 시작하면 90초 멈춤으로 — translator-stream-idle.mjs)
+    const g = directFixture({ provider: 'openai', serve: (b, signal) => new Response(byteStream(body, { pieces: 6, signal, before: i => (i === 0 ? new Promise(() => {}) : null) })) });
     await assert.rejects(g.env.callLLMAPI('p', { onStream() {}, timeoutMs: 60 }), e => e.timeout && /0초 안에 답이 없어/.test(e.message));
     assert.equal(g.fetches.length, 1);
 });
@@ -313,7 +315,7 @@ await check('requestCurrentConnection(현재 연결): 실리태번 ChatCompletio
     const busy = make(() => jsonResponse({ error: { message: 'Too Many Requests' } }, 429));
     await assert.rejects(busy.call(), e => e.transient === true); assert.equal(busy.processed.length, 0);
     const connection = fs.readFileSync(path.join(dir, 'current-connection.js'), 'utf8');
-    assert(connection.includes('const streamed=stream?await stream(ctx,payload,controller.signal):null;'), 'chat completion only');
+    assert(connection.includes('const streamed=stream?await stream(ctx,payload,controller.signal,touch):null;'), 'chat completion only');   // 2.9.3 touch
     assert.equal(connection.split('stream(ctx').length - 1, 1, 'text completion stays stream:false');
 });
 
