@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.0.7/blue-lemonade-7.0.7.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.0.8/blue-lemonade-7.0.8.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
@@ -20,7 +20,14 @@ AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·�
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.0.7 · 최신 업데이트</summary>
+<summary>7.0.8 · 최신 업데이트</summary>
+
+- LLM 번역: 참고 대화를 「자동 · 현재 컨텍스트」로 두고 응답 길이를 아주 크게(예: 100000) 넣으면 「응답 예약량을 빼면 대화를 넣을 공간이 없어요」가 나던 것을 고쳤어요. 대화 범위를 셀 때 응답 몫은 번역 한 번에 필요한 만큼(8192토큰까지)만 떼어 두고, 실제 응답 길이 설정은 그대로 써요 (LLM 번역 2.8.2).
+
+</details>
+
+<details>
+<summary>7.0.7 · 에셋 떼기 글자 · 연동 정규식 다시 그리기 · 번역 응답 길이</summary>
 
 - 캐릭터 에셋: 확장 창 머리의 지우개 단추 옆에 「에셋 떼기」 글자를 붙여, 아이콘만 보고 무엇인지 헷갈리지 않게 했어요. 단추 높이는 그대로예요 (캐릭터 에셋 1.7.4).
 - 캐릭터 이름 연동: 연동된 캐릭터의 채팅을 열 때 프리셋 정규식이 글을 그린 뒤에 켜지면, 이미 보이는 메시지가 정규식이 꺼진 모양으로 남던 것을 고쳤어요. 이제 정규식이 켜진 뒤 채팅을 한 번 다시 그려요.

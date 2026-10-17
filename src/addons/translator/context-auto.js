@@ -1,7 +1,12 @@
 import { ContextSelectionError, createSillyTavernContextServices, selectRecentContext } from '../../recent-context.js';
+import { THINK_MIN_TOKENS } from '../../live-models.js';
 
 // Resolved only after the final request messages and reply reservation are known.
 export const AUTO_CONTEXT = Object.freeze({ chat: '\uE000BL_CONTEXT_CHAT\uE001', input: '\uE000BL_CONTEXT_INPUT\uE001', send: '\uE000BL_CONTEXT_SEND\uE001' });
+// 2.8.2 대화 범위를 셀 때 떼어 두는 응답 몫의 상한. 번역 요청 하나의 답은 묶음 상한(index.js groupLimit = CHUNK_TARGET × 2 = 3600자,
+//   응답 길이 토큰당 1.2자로 잡음 → 3000토큰)을 넘지 않고, 생각하는 모델은 번역기가 출력 한도를 THINK_MIN_TOKENS(8192)까지 올려 생각 몫을 둔다 —
+//   그래서 상한은 그 바닥값. 응답 길이를 100000 처럼 크게 두면 컨텍스트 − 응답 길이가 0 이하라 대화를 한 줄도 못 넣었다. 예약만 묶고 실제 요청의 max_tokens 는 그대로 둔다
+export const AUTO_REPLY_RESERVE_MAX = THINK_MIN_TOKENS;
 export const hasAutoContext = text => typeof text === 'string' && Object.values(AUTO_CONTEXT).some(marker => text.includes(marker));
 export function markAutoContext(prompt, isInputTranslation = false) {
     return prompt.replace(/\{\{llmContext\}\}/g, () => AUTO_CONTEXT[isInputTranslation ? 'input' : 'chat']);
@@ -60,7 +65,7 @@ export async function prepareTranslatorAutoContext({ payload, getContext, getSet
         return { ...message, text };
     });
     const services = createSillyTavernContextServices({ getMaxPromptTokens, getMaxContextTokens, countTokensOpenAIAsync,
-        getMainApi: () => getContext().mainApi, replyTokens, targetContextTokens });
+        getMainApi: () => getContext().mainApi, replyTokens: Math.min(replyTokens, AUTO_REPLY_RESERVE_MAX), targetContextTokens });
     try {
         const selected = await selectRecentContext({ history, ...services, isCurrent: guard.isCurrent, signal,
             // A first translation may have no earlier history; its actual translation body remains in the base payload.
