@@ -23,7 +23,11 @@ const verification=await verifyFiles({ok:digest('good'),changed:digest('old'),mi
 assert.equal(verification.checked,3);assert.deepEqual(verification.failures.sort((a,b)=>a.path.localeCompare(b.path)),[{path:'changed',kind:'mismatch'},{path:'missing',kind:'unavailable'}]);assert(peak<=4);
 const {fileFingerprint}=await import(new URL('src/file-fingerprint.js',root));
 const {FILE_HASHES}=await import(new URL('src/build-info.js',root));
-const installed=await verifyFiles(FILE_HASHES,p=>fs.readFileSync(new URL(p,root)),fileFingerprint);assert.equal(installed.failures.length,0);
+// 7.0.3 흔들림: 작업 트리를 고치는 중(파일은 새것, 지문표는 아직)에 돌면 잠깐 어긋났다 — 지문표를 새로 읽어 몇 번 더 보고,
+// 그래도 다르면 지문표가 낡은 것(정상 실패)이라 STALE 로 따로 알리고 나머지 검사는 끝까지 돈다.
+const {recheckInstalled,staleMessage,readHashesFresh}=await import(new URL('../integrity-recheck.mjs',import.meta.url));
+const installed=await recheckInstalled({hashes:FILE_HASHES,reloadHashes:()=>readHashesFresh(fs.readFileSync(new URL('src/build-info.js',root),'utf8')),verify:h=>verifyFiles(h,p=>fs.readFileSync(new URL(p,root)),fileFingerprint)});
+const stale=installed.failures.length?staleMessage(installed.failures):'';
 assert.notEqual(fileFingerprint(new TextEncoder().encode('blue')),fileFingerprint(new TextEncoder().encode('bluf')));
 const stateSource=fs.readFileSync('docs/playground-state.js','utf8');
 let saved=JSON.stringify({version:1,reading:{dialogue:{font:{ko:'ridibatang',en:'auto',ja:'auto',zh:'auto'}},size:21},palette:{selected:'peach'}});
@@ -39,4 +43,5 @@ const ctx=vm.createContext({document:{querySelector:q=>q==='#reading-sample'?sam
 vm.runInContext(fs.readFileSync('docs/personal-preview.js','utf8'),ctx);input.value='<img src=x> **굵게** *속마음* "대사" `코드`';input.handlers.input();
 const nodes=sample.children[0].children[0].children;assert(!nodes.some(n=>n.tag==='img'));for(const tag of ['strong','em','q','code'])assert(nodes.some(n=>n.tag===tag));assert(nodes.some(n=>n.text?.includes('<img src=x>')));
 reset.handlers.click();assert.equal(input.value,'');
-console.log('PASS style/preset locks, file mismatch detection, persistence, malformed storage and safe personal preview');
+if(stale){console.error(stale);console.log('PASS style/preset locks, file mismatch detection, persistence, malformed storage and safe personal preview — only the integrity manifest is stale');process.exitCode=1;}
+else console.log('PASS style/preset locks, file mismatch detection, persistence, malformed storage and safe personal preview');

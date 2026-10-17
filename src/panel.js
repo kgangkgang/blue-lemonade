@@ -1432,6 +1432,7 @@ function tabChat(s, sub) {
             ${row('설명 ? 단추', toggle('chat.helpMarks', s.chat.helpMarks !== false), '월드인포 설정 · 한글화 패널 칸 옆의 ? 를 보여요 · 끄면 숨겨요')}
             ${row('이전 메시지 저절로 불러오기', toggle('chat.showMoreAuto', s.chat.showMoreAuto !== false), '채팅 맨 위 「이전 메시지 더 보기」가 화면에 다 들어오면 누르지 않아도 이어서 불러와요')}
             ${row('새 답 첫 줄로 가는 단추', toggle('chat.replyTop', !!s.chat.replyTop), '긴 답이 끝나 첫 줄이 위로 지나가 있으면 ↑ 아이콘이 떠요 · 첫 줄이 보이면 사라져요')}
+            ${row('메시지 토큰에 보낸 양도', toggle('chat.sentTokens', s.chat.sentTokens !== false), '토큰 수 옆에 다음 답에 다시 보내는 양(정규식 뒤 · 생각 빠짐) · 숨긴 메시지는 0 · 누르면 설명')}
             ${row('웹 검색 · 출처 표시', toggle('chat.webSearchMarks', s.chat.webSearchMarks !== false), '웹 검색을 쓴 답에 지구 표시 · 답의 낱말을 꾹 누르면 어디서 왔는지 한 줄')}
             ${row('페르소나 입력창 높이 2배', toggle('chat.personaTall', !!s.chat.personaTall), '페르소나 본문 칸을 세로로 늘려요 · 끄면 기존 높이')}
             ${splashRow()}

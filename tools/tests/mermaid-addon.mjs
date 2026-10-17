@@ -157,7 +157,7 @@ await test('No blocks: six events never request vendor; camelCase eventTypes sup
  const w=world({camel:true});await loadAddon();await w.fire(...Object.values(TYPES));await settle();assert.equal(w.scripts.length,0);assert.equal(Object.keys(w.handlers).length,6);
 });
 await test('Single lazy load; one render despite simultaneous events; later blocks render on MORE_MESSAGES_LOADED',async()=>{
- const w=world();const m=await loadAddon();assert.equal(m.VERSION,'1.0.0');const code=w.add('flowchart TD; A-->B');await w.fire('cmr','cc','mu');assert.equal(w.scripts.length,1);
+ const w=world();const m=await loadAddon();assert.equal(m.VERSION,'1.0.1');const code=w.add('flowchart TD; A-->B');await w.fire('cmr','cc','mu');assert.equal(w.scripts.length,1);
  w.execute(w.scripts[0]);await settle();assert.equal(w.renders.length,1);assert.equal(code.hidden,true);assert.equal(code.textContent,'flowchart TD; A-->B');assert.equal(w.config.securityLevel,'strict');assert.equal(w.config.startOnLoad,false);
  await w.fire('cmr','umr','ms','mu','cc');await settle();assert.equal(w.renders.length,1);w.add('sequenceDiagram\n A->>B: ok');await w.fire('mml');await settle();assert.equal(w.renders.length,2);assert.equal(w.scripts.length,1);assert.equal(w.chat.scrollTop,20,'reader scroll does not jump');
 });

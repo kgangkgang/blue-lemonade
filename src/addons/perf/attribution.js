@@ -2,6 +2,10 @@ export const LOG_BRIDGE=Symbol.for('st.request-log.v1');
 const clean=s=>String(s??'').replace(/\s+/g,' ').trim();
 const safe=s=>String(s??'').replace(/[^a-zA-Z0-9_.-]/g,'').slice(0,90);
 // 6.9.8 begin 의 label: 다른 확장이 요청을 용도별로 나눠 보이게 붙이는 짧은 글(40자) — 요청 로그 · 용도별 표에서 purposeLabel 대신 보인다. 공개 코드엔 일반 이름만
+// 1.5.1 붙이는 길 두 가지 (요청 로그가 꺼져 있거나 옛 테마면 그냥 버려진다):
+//   ① fetch(url, { …, requestLog: { label, caller?, purpose? } }) — 요청을 직접 보내는 확장. purpose 는 몰라도 된다(용도는 전처럼 추정하고 이름표만 붙음)
+//   ② globalThis[Symbol.for('st.request-log.v1')]?.begin({ caller, purpose, label, user }) → 끝낼 때 부르는 함수 — 실리태번 생성 함수를 거치는 확장(user = 보낼 글 한 조각)
+//   요청 머리(header)는 쓰지 않는다 — 다른 주소로 바로 보내는 요청에 붙으면 CORS 사전 요청이 생겨 막힐 수 있다
 const label=s=>clean(s).slice(0,40);
 export const PURPOSES={
  'chat.generate':'채팅 응답','chat.swipe':'채팅 스와이프','chat.regenerate':'채팅 재생성','chat.continue':'채팅 이어쓰기','chat.impersonate':'유저 대신 쓰기','chat.quiet':'채팅 보조 생성',
@@ -27,14 +31,20 @@ export function createAttribution() {
   active.add(row);return ()=>active.delete(row);
  }
  function resolve({explicit,caller,type,kind,body}) {
-  if(explicit?.purpose&&PURPOSES[explicit.purpose]){const tag=label(explicit.label);return {caller:safe(explicit.caller)||caller,purpose:explicit.purpose,attribution:'explicit',...(tag?{label:tag}:{})};}
+  const tag=label(explicit?.label);
+  if(explicit?.purpose&&PURPOSES[explicit.purpose])return {caller:safe(explicit.caller)||caller,purpose:explicit.purpose,attribution:'explicit',...(tag?{label:tag}:{})};
+  const found=infer({caller:explicit&&tag?safe(explicit.caller)||caller:caller,type,kind,body});
+  return tag?{...found,label:tag}:found;   // 1.5.1 이름표만 붙인 요청: 용도는 추정한 그대로, 이름표가 begin 쪽 글보다 앞선다
+ }
+ function infer({caller,type,kind,body}) {
   // 맞춰 볼 줄이 없으면 프롬프트 전체 정리(수백 KB)를 건너뛴다
   const rows=[...active].filter(r=>r.user);
   if(rows.length){
    const content=[...(Array.isArray(body.messages)?body.messages:[]).map(m=>typeof m.content==='string'?m.content:JSON.stringify(m.content)),body.prompt,...(body.contents||[]).flatMap(c=>(c.parts||[]).map(p=>p.text)),...(body.systemInstruction?.parts||[]).map(p=>p.text)].filter(Boolean).map(clean).join(' ');
    const matches=rows.filter(r=>content.includes(r.user)&&(!r.system||content.includes(r.system)));
    const keys=new Set(matches.map(r=>r.caller+'|'+r.purpose));
-   if(keys.size===1)return {caller:matches[0].caller,purpose:matches[0].purpose,attribution:'matched',...(matches[0].label?{label:matches[0].label}:{})};
+   const tags=new Set(matches.map(r=>r.label));   // 1.5.1 용도가 같아도 이름표가 서로 다르면 이름표는 뺀다
+   if(keys.size===1)return {caller:matches[0].caller,purpose:matches[0].purpose,attribution:'matched',...(tags.size===1&&matches[0].label?{label:matches[0].label}:{})};
    if(keys.size>1)return {caller,purpose:'unknown',attribution:'ambiguous'};
   }
   if(kind!=='text')return {caller,purpose:kind||'other',attribution:'endpoint'};

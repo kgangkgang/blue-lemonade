@@ -8,6 +8,7 @@
 //   3) 추천 폴더가 하나면 바로 preview, 없으면 새 폴더(추천 이름), 여럿이면 고를 때까지 기다림 · 새 폴더 이름은 앞뒤 공백 뗌
 //   4) 설치 · 삭제 · 복원 요청 본문은 표(token)/폴더/백업 id 만 · 일하는 동안 다시 눌러도 한 번만 보냄
 //   5) 오류 문구 · 화면이 기대하는 도우미 판 = 서버 판 · JS/CSS 판 · 요술봉 메뉴 켜고 끄기(addonUI.zipinstallMenu)
+//   6) 1.1.2 여러 개: 파일 고르기 multiple · 끌어 놓기 여러 개 → 한 목록 · 모두 설치는 확장마다 inspect → preview → install · 같은 폴더 두 번이면 막음 · 끝에 성공/실패와 새로고침 한 번
 // 지어낸 확장 이름만 쓴다.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -32,7 +33,7 @@ export async function resolve(spec, ctx, next) {
 
 // ── 작은 가짜 문서: innerHTML 의 data-* 붙은 태그만 자식으로 만든다
 class El {
-    constructor(tag) { this.tagName = tag; this.children = []; this.listeners = {}; this.attrs = {}; this.dataset = {}; this.parent = null; this.isConnected = true; this.html = ''; }
+    constructor(tag) { this.tagName = tag; this.children = []; this.listeners = {}; this.attrs = {}; this.dataset = {}; this.parent = null; this.isConnected = true; this.html = ''; this.classList = { add() {}, remove() {} }; }
     set innerHTML(html) {
         this.html = html;
         for (const c of this.children) c.isConnected = false;
@@ -257,6 +258,84 @@ await test('요술봉 메뉴: 켜면 하나만 붙고 · addonUI.zipinstallMenu=
     T.settings.addons.zipinstall = false; Z.syncMenu(); assert.equal(items().length, 0);
     T.settings.addons.zipinstall = true; T.settings.usageMode = 'theme'; Z.syncMenu(); assert.equal(items().length, 0);
     T.settings.usageMode = 'both'; Z.syncMenu(); assert.equal(items().length, 1);
+});
+
+// ── 1.1.2 여러 개: 서버 답은 ZIP 이름(?name=)마다 다르게
+const many = (overrides = {}) => {
+    let n = 0;
+    return (route, init) => {
+        if (route === '/inspect') {
+            const name = decodeURIComponent(/name=([^&]+)/.exec(calls.at(-1).url)[1]).replace(/\.zip$/i, '');
+            if (overrides.inspect?.[name]) return overrides.inspect[name];
+            return { body: PLAN({ token: `t-${name}-${++n}`, manifest: { display_name: name, version: '2.0.0' }, suggested: overrides.folder?.[name] || name, matches: [] }) };
+        }
+        const body = JSON.parse(init.body);
+        if (route === '/preview') return { body: { ...PREVIEW, folder: body.folder, current: null, incoming: { display_name: body.folder, version: '2.0.0' }, replaced: 0, kept: 0 } };
+        if (route === '/install') return overrides.install?.(body) || { body: { folder: body.token, backup: null, reload: true } };
+        return { body: {} };
+    };
+};
+const pickMany = async list => { view.querySelector('[data-file]').fire('change', { target: { files: list } }); await flush(); };
+
+await test('여러 개 고르기: input multiple · 확장마다 inspect → preview 를 차례로 · 한 목록 · 모두 설치 단추', async () => {
+    assert.match(view.innerHTML, /<input type="file" accept="\.zip,application\/zip" multiple hidden data-file>/);
+    calls = []; serve = many();
+    await pickMany([new File(['a'], 'moss-clock.zip'), new File(['b'], 'fern-map.zip')]);
+    assert.deepEqual(calls.map(c => c.url.replace(API, '')), ['/inspect?name=moss-clock.zip', '/preview', '/inspect?name=fern-map.zip', '/preview']);
+    assert.deepEqual(json(calls[1]), { token: 't-moss-clock-1', folder: 'moss-clock' });
+    assert.ok(view.querySelector('[data-batch]'), 'batch list shown');
+    assert.match(view.innerHTML, /<b>moss-clock<\/b><span class="blzi-tag">새 설치<\/span>/);
+    assert.match(view.innerHTML, /moss-clock · v2\.0\.0 · 교체 0 · 추가 3 · 유지 0/);
+    assert.match(status(view), /확장 2개를 확인했어요/);
+    assert.equal(button(view, 'install'), null, 'no single install button in batch mode');
+    assert.ok(button(view, 'install-all').attrs.disabled === undefined);
+    assert.match(view.innerHTML, />모두 설치</);
+});
+
+await test('모두 설치: 확장마다 다시 inspect → preview → install(방금 받은 표) · 끝에 성공/실패 · 새로고침 단추 하나', async () => {
+    calls = [];
+    serve = many({ install: body => (body.token.startsWith('t-fern-map') ? { status: 500, body: { error: '파일 작업을 마치지 못했어요. 저장 공간과 폴더 권한을 확인해 주세요.' } } : null) });
+    button(view, 'install-all').click(); await flush();
+    assert.deepEqual(calls.map(c => c.url.replace(API, '').split('?')[0]), ['/inspect', '/preview', '/install', '/inspect', '/preview', '/install']);
+    assert.deepEqual(json(calls[2]), { token: 't-moss-clock-1' });
+    assert.deepEqual(json(calls[5]), { token: 't-fern-map-2' });
+    assert.match(status(view), /^1개 설치했어요 · 1개 실패\. 새로고침하면 적용돼요\.$/);
+    assert.match(view.innerHTML, /성공 1개 · 실패 1개/);
+    assert.match(view.innerHTML, /fern-map: 파일 작업을 마치지 못했어요/);
+    assert.match(view.innerHTML, /<b>moss-clock<\/b><span class="blzi-tag">설치함<\/span>/);
+    assert.match(view.innerHTML, /<b>fern-map<\/b><span class="blzi-tag">실패<\/span>/);
+    assert.equal(view.querySelectorAll('[data-action="reload"]').length, 1);
+    assert.equal(button(view, 'install-all'), null, 'no second run from the same list');
+});
+
+await test('끌어 놓기 여러 개 → 한 목록 (예전의 「하나씩」 안내 없음) · 같은 폴더가 두 번이면 모두 설치를 막고 알린다', async () => {
+    calls = []; serve = many({ folder: { 'moss-clock-copy': 'Moss-Clock' } });
+    view.querySelector('[data-drop]').fire('drop', { dataTransfer: { files: [new File(['a'], 'moss-clock.zip'), new File(['b'], 'moss-clock-copy.zip')] } });
+    await flush();
+    assert.equal(calls.filter(c => c.url.includes('/inspect')).length, 2);
+    assert.match(status(view), /같은 폴더가 두 번 들어 있어요: moss-clock/);
+    assert.ok(button(view, 'install-all').attrs.disabled !== undefined);
+    assert.match(view.innerHTML, /폴더 겹침/);
+    calls = []; button(view, 'install-all').click(); await flush();
+    assert.equal(calls.length, 0);
+});
+
+await test('목록 안 확인 실패 · 폴더 고르기: 실패는 건너뛰고 나머지만 설치 · 추천이 여럿인 확장은 고르면 다시 확인', async () => {
+    calls = [];
+    serve = many({ inspect: { 'broken-leaf': { status: 400, body: { error: 'manifest.json에 적힌 js 파일이 없어요.' } }, 'quill-pad': { body: PLAN({ token: 'q-1', manifest: { display_name: 'Quill Pad', version: '1.1.0' }, suggested: 'quill-pad', matches: [{ folder: 'quill', display_name: 'Quill Pad' }, { folder: 'quill-old', display_name: 'Quill Pad' }] }) } } });
+    await pickMany([new File(['a'], 'broken-leaf.zip'), new File(['b'], 'quill-pad.zip'), new File(['c'], 'fern-map.zip'), { name: 'notes.rar', size: 3 }]);
+    assert.match(view.innerHTML, /확인 실패/);
+    assert.match(view.innerHTML, /\.zip 파일이 아니에요\./);
+    assert.match(status(view), /설치할 폴더를 골라 주세요/);
+    assert.ok(button(view, 'install-all').attrs.disabled !== undefined, 'waits for the folder choice');
+    calls = [];
+    view.querySelector('[data-batch-choice]').fire('change', { target: { value: 'quill-old' } }); await flush();
+    assert.deepEqual(calls.map(c => c.url.replace(API, '')), ['/inspect?name=quill-pad.zip', '/preview']);
+    assert.deepEqual(json(calls[1]), { token: 'q-1', folder: 'quill-old' });
+    assert.match(view.innerHTML, />2개 설치</);
+    calls = []; button(view, 'install-all').click(); await flush();
+    assert.equal(calls.filter(c => c.url.endsWith('/install')).length, 2);
+    assert.match(view.innerHTML, /성공 2개 · 실패 2개/);
 });
 
 console.log(`zipinstall-client: ${pass} passed, ${fail} failed`);

@@ -135,7 +135,7 @@
 
 /* ===== 요청 로그 (parts/request-log.css) ===== */
 /* 요청 로그 (Request Log) — 설정 서랍 · 로그·집계 창 */
-:root { --rl-css-version: "1.5.0"; }
+:root { --rl-css-version: "1.5.1"; }
 .rl-price-sync-controls { display:flex; flex-wrap:wrap; align-items:center; gap:.65em 1em; margin:.65em 0; }
 .rl-price-sync-controls label { display:flex; align-items:center; gap:.4em; min-width:0; }
 .rl-price-sync-controls input { flex:0 0 auto; }
@@ -726,7 +726,7 @@
 }
 
 /* ===== 설정 톱니바퀴 (hub.js, 2.0.0) — 확장 서랍 맨 위 버튼 줄의 단추와 탭 창 ===== */
-:root { --pa-hub-css-version: "2.2.7"; }
+:root { --pa-hub-css-version: "2.2.8"; }
 
 .pa-hub-open {
     display: inline-flex;

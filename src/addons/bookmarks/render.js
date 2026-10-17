@@ -220,10 +220,10 @@ export function renderImagesHtml(fav, { removable = true } = {}) {
         const remove = removable
             ? '<button type="button" class="cg-image-remove" data-card-act="image-remove" aria-label="그림 떼기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>'
             : '';
-        // 주소가 깨진 칸(손으로 고친 jsonl 등)도 자리표로 보여 떼게 한다
+        // 주소가 깨진 칸(손으로 고친 jsonl 등)도 자리표로 보여 떼게 한다. 1.6.0 그림-빗금(image-slash) 아이콘은 Pro 전용이라(실리태번은 Free) 빈 네모였다 → link-slash
         const body = src
             ? `<button type="button" class="cg-image-open" data-card-act="image-open" aria-label="그림 크게 보기"><img src="${escapeHtml(src)}" alt="" loading="lazy" decoding="async"></button>`
-            : '<span class="cg-image-open" role="img" aria-label="주소가 잘못된 그림"><i class="fa-solid fa-image-slash" aria-hidden="true"></i></span>';
+            : '<span class="cg-image-open" role="img" aria-label="주소가 잘못된 그림"><i class="fa-solid fa-link-slash" aria-hidden="true"></i></span>';
         return `<figure class="cg-image${src ? '' : ' is-broken'}" role="listitem" data-image-src="${escapeHtml(item.src)}">${body}${remove}</figure>`;
     }).filter(Boolean).join('');
     return items ? `<div class="cg-images" role="list" aria-label="붙인 그림">${items}</div>` : '';

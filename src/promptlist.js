@@ -1,4 +1,5 @@
 import { groupedNumber } from './numbers.js';
+import { alignHistory, chatCandidates, labelOf } from './prompt-history-label.js';
 // 검사 창 "프롬프트 목록" 줄 다시 짜기
 //
 // 실리태번은 이름 · 역할 · 토큰을 스팬 하나에 문장으로 넣는다 (PromptManager.js:1441):
@@ -52,12 +53,49 @@ function rewrite(span) {
     const history = /^chatHistory-(\d+)$/.exec(parts.name);
     name.textContent = history ? `대화 ${history[1]}` : parts.name;
     name.title = parts.name;               // 잘렸을 때 전체를 볼 수 있게
+    if (history) name.dataset.blHist = history[1];   // 7.0.3 아래 labelHistory 가 원래 채팅 번호 · 「끼운 글」로 바꾼다 (모르면 「대화 N」 그대로)
     span.append(role, name, tok);
 }
 
 function sweep(root) {
     root?.querySelectorAll?.(ROW).forEach(rewrite);
     if (root?.matches?.(ROW)) rewrite(root);
+    void labelHistory(root);
+}
+
+// 7.0.3 「채팅 기록」 줄 이름 = 원래 채팅 번호 (src/prompt-history-label.js). 보낸 글은 프롬프트용 정규식을 거쳤을 수 있어
+// 실리태번 정규식 엔진을 그때만 불러 같은 처리를 한 글도 후보로 쓴다 (못 부르면 원문 · 매크로만으로 맞춤)
+let engine = null, labeling = null;
+function regexEngine() {
+    engine ??= import(new URL('../../../../extensions/regex/engine.js', import.meta.url).href).catch(() => null);
+    return engine;
+}
+async function labelHistory(list) {
+    const rows = [...(list?.querySelectorAll?.('.bl-prow-name[data-bl-hist]') || [])];
+    if (!rows.length || rows.every(row => row.dataset.blHistDone)) return;
+    const token = labeling = {};
+    const items = rows.map(name => ({
+        role: name.parentElement?.querySelector('.bl-prow-role')?.dataset.role || '',
+        content: name.closest('.completion_prompt_manager_prompt')?.querySelector('.inline-drawer-content')?.textContent ?? '',
+    }));
+    const regex = await regexEngine();
+    if (token !== labeling) return;
+    let labels = [];
+    try {
+        const ctx = globalThis.SillyTavern?.getContext?.();
+        const place = regex?.regex_placement;
+        const chat = chatCandidates(ctx?.chat, {
+            regexed: regex?.getRegexedString && place ? (text, message, depth) => regex.getRegexedString(text, message.is_user ? place.USER_INPUT : place.AI_OUTPUT, { isPrompt: true, depth }) : null,
+            substitute: typeof ctx?.substituteParams === 'function' ? text => ctx.substituteParams(text) : null,
+            tail: rows.length,
+        });
+        labels = alignHistory(items, chat);
+    } catch (error) { console.warn('[Blue Lemonade] 채팅 기록 번호', error); }
+    rows.forEach((name, i) => {
+        name.dataset.blHistDone = '1';
+        const text = labelOf(labels[i]);
+        if (text && name.isConnected) name.textContent = text;
+    });
 }
 
 let watcher = null;

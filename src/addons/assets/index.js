@@ -184,7 +184,7 @@ export async function openPanel() {
     dialog = document.createElement('dialog');
     dialog.className = 'bl-assets-dialog';
     dialog.setAttribute('aria-label', TITLE);
-    dialog.innerHTML = '<header><b>캐릭터 에셋</b><button type="button" aria-label="캐릭터 에셋 닫기">×</button></header><div class="bl-assets-body"></div>';
+    dialog.innerHTML = `<header><b><i class="fa-solid fa-images" aria-hidden="true"></i> 캐릭터 에셋 <span class="ext-version">v${VERSION}</span></b><button type="button" aria-label="캐릭터 에셋 닫기">×</button></header><div class="bl-assets-body"></div>`;
     document.body.append(dialog);
     dialog.querySelector('.bl-assets-body').append(drawer);
     dialog.querySelector('header button').onclick = () => dialog.close();

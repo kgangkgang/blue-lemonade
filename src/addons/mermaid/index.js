@@ -1,6 +1,6 @@
 // Blue Lemonade 2026-10-14 · AGPL-3.0. Source, exact vendor patches and licenses: NOTICE.md.
 // No diagram => no vendor request. This wrapper is the only event/render owner.
-export const VERSION = '1.0.0';
+export const VERSION = '1.0.1';
 const BLOCK = '#chat pre code.language-mermaid, #chat pre code.custom-language-mermaid, #chat pre code.bl-mermaid-source';
 const EVENTS = ['CHARACTER_MESSAGE_RENDERED', 'USER_MESSAGE_RENDERED', 'CHAT_CHANGED', 'MESSAGE_SWIPED', 'MESSAGE_UPDATED', 'MORE_MESSAGES_LOADED'];
 const VENDOR = new URL('./vendor/', import.meta.url).href;
@@ -146,7 +146,7 @@ export async function openPanel() {
     const { showThemeModal } = await import('../../modal.js');
     const dialog = document.createElement('dialog');
     dialog.className = 'bl-mermaid-dialog'; dialog.setAttribute('aria-label', 'Mermaid 도표');
-    dialog.innerHTML = '<header><b>Mermaid 도표</b><button type="button" aria-label="닫기">×</button></header>';
+    dialog.innerHTML = `<header><b><i class="fa-solid fa-diagram-project" aria-hidden="true"></i> Mermaid 도표 <span class="ext-version">v${VERSION}</span></b><button type="button" aria-label="닫기">×</button></header>`;
     const box = statusView(); dialog.append(box);
     dialog.querySelector('header button').onclick = () => dialog.close();
     dialog.addEventListener('close', () => { views.delete(box); dialog.remove(); }, { once: true });

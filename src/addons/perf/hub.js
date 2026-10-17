@@ -7,8 +7,8 @@
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
 import { getSettings, saveSettings } from '../../settings.js';
 
-export const SUITE_TITLE = '설정';
-export const SUITE_VERSION = '2.2.7';
+export const SUITE_TITLE = '성능 보조';   // 7.0.3 창 제목이 「설정」이라 무슨 창인지 몰랐다 — 애드온 이름으로
+export const SUITE_VERSION = '2.2.8';
 const BUTTON_ID = 'pa-hub-open';
 const TAB_KEY = 'pa_hub_tab';
 
@@ -32,7 +32,7 @@ document.body.append(holder);
 const root = document.createElement('div');
 root.className = 'pa-hub';
 root.innerHTML = `
-    <h3 class="pa-hub-title"><i class="fa-solid fa-gear"></i> ${SUITE_TITLE} <span class="pa-hub-version ext-version">v${SUITE_VERSION}</span></h3>
+    <h3 class="pa-hub-title"><i class="fa-solid fa-gauge-high"></i> ${SUITE_TITLE} <span class="pa-hub-version ext-version">v${SUITE_VERSION}</span></h3>
     <div class="pa-hub-tabs" role="tablist">
         ${TABS.map(tab => `<button type="button" class="pa-hub-tab" role="tab" data-tab="${tab.id}" aria-selected="false"><i class="fa-solid ${tab.icon}"></i><span>${esc(tab.title)}</span></button>`).join('')}
     </div>

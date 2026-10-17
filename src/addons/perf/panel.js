@@ -418,7 +418,7 @@ function buildDialog() {
             ${providerCoverage()}
             <div class="rl-filters">
                 <select class="text_pole rl-filter-caller"><option value="">모두</option></select>
-                <select class="text_pole rl-filter-purpose" aria-label="사용 용도"><option value="">모든 용도</option>${Object.entries(PURPOSES).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select>
+                <select class="text_pole rl-filter-purpose" aria-label="사용 용도">${purposeOptions([])}</select>
                 <select class="text_pole rl-filter-status">
                     <option value="">성공·오류</option>
                     <option value="ok">성공만</option>
@@ -488,6 +488,7 @@ export async function openDialog({ tab = 'log' } = {}) {
         const last = state.entries.at(-1);
         if (state.exhausted || !last || entry.at >= last.at) state.entries = mergeEntries(state.entries, [entry]);
         renderCallerFilter(state);
+        renderPurposeFilter(state);
         if (!state.detailId) renderList(state);
     });
     const stopBudget = budget.onBudget(() => {
@@ -697,6 +698,7 @@ async function loadFirstPage(state) {
     const note = state.root?.querySelector('.rl-top-note');
     if (note) note.textContent = isMemoryOnly() ? '이 창을 닫으면 사라져요 (저장소 없음)' : '이 기기에만 남아요';
     renderCallerFilter(state);
+    renderPurposeFilter(state);
     renderList(state);
 }
 
@@ -715,7 +717,23 @@ async function loadMore(state) {
     }
     if (dialog !== state) return;
     renderCallerFilter(state);
+    renderPurposeFilter(state);
     renderList(state);
+}
+
+// 1.5.1 다른 확장이 붙인 이름표(label)도 용도 고르기에 — 값은 'label:' + 글 (용도 키에는 ':' 가 없다)
+function purposeOptions(labels) {
+    return '<option value="">모든 용도</option>' + Object.entries(PURPOSES).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')
+        + (labels.length ? `<optgroup label="이름표">${labels.map(text => `<option value="${esc('label:' + text)}">${esc(text)}</option>`).join('')}</optgroup>` : '');
+}
+
+function renderPurposeFilter(state) {
+    const select = state.root.querySelector('.rl-filter-purpose');
+    const labels = [...new Set(state.entries.map(entry => entry.label).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ko'));
+    const current = state.purposeFilter || '';
+    select.innerHTML = purposeOptions(labels);
+    select.value = current;
+    if (select.value !== current) state.purposeFilter = select.value;
 }
 
 function renderCallerFilter(state) {
@@ -729,7 +747,7 @@ function renderCallerFilter(state) {
 
 function visibleEntries(state) {
     return state.entries.filter((entry) => {
-        if(state.purposeFilter&&(entry.purpose||'unknown')!==state.purposeFilter)return false;
+        if(state.purposeFilter&&(state.purposeFilter.startsWith('label:')?(entry.label||'')!==state.purposeFilter.slice(6):(entry.purpose||'unknown')!==state.purposeFilter))return false;
         if (state.callerFilter && (entry.caller || 'unknown') !== state.callerFilter) return false;
         if (state.statusFilter === 'ok' && !entry.ok) return false;
         if (state.statusFilter === 'error' && entry.ok) return false;

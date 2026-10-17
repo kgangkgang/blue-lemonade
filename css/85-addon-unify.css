@@ -1,0 +1,168 @@
+/* ===== css/85-addon-unify.css =====
+   7.0.3 테마 확장 창 모양 통일 (사용자 승인 「모양 통일 ㄱㄱ」) — 새 모양은 만들지 않고, 창 19개 가운데 가장 많이 쓰는 모양으로 맞춘다.
+   기준(../blue-lemonade-audit/ui-unify-audit-20261017/TABLE.md):
+   · 머리 = 왼쪽 아이콘 + 제목(메뉴 글자 크기 · 600) + 회색 테 판 알약(확장 서랍 .ext-version 과 같은 값) · 오른쪽 위 × 하나(34px · 22px 글자)
+     실리태번 팝업에 뜨는 창은 아래 「닫기」 단추 줄을 숨기고 실리태번 자신의 닫기(×)를 머리 오른쪽에 — Esc · 바깥 누르기 · 뒤로 가기 그대로
+   · 탭 = 머리 바로 아래 한 줄 · 아이콘 위 글자 아래(다시 쓰기 · 한글화 · 성능 보조 모양), 고른 탭 = 포인트 13% 면 + 포인트 글자
+   · 고르기 단추의 고른 칸 = 꽉 찬 포인트(캐릭터 에셋 · 북마크 모양) / 카드 = 모서리 12 · 1px 테 / 창 폭 = 실리태번 넓은 팝업 폭(채팅 폭, 폰은 화면 − 12px)
+   · 색 · 글꼴 · 자간 · 글자 크기(제목 말고) · 줄 간격 · 기능 · 설정 열쇠는 그대로. 테마 설정 창 안에 붙는 같은 설정(인라인)은 건드리지 않는다
+   애드온 CSS 는 style.css 뒤에 붙으므로 겹치는 칸은 html body.salty + !important.
+   시험: tools/tests/addon-unify.mjs */
+
+/* ---------- 창 폭 ---------- */
+html body.salty :is(
+  dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings, #model-switch-settings, .po-dialog, .pa-hub, .rl-root, #regex-link-settings)),
+  dialog:is(.bl-translator-dialog, .bl-assets-dialog, .bl-ctsi-dialog, .bl-direction-dialog, .blzi-dialog, .bl-mermaid-dialog, .blpt-dialog)
+) {
+  /* 실리태번 넓은 팝업과 같은 폭: 폰은 화면 − 12px(378 @390), PC 는 채팅 폭(기본 720) — --sheldWidth 는 폰에서 작은 값이라 min 만 쓰면 반 폭이 된다 */
+  width: max(min(var(--sheldWidth, 720px), 100vw - 12px), min(100vw - 12px, 720px)) !important;
+  max-width: calc(100vw - 12px) !important;
+  min-width: 0 !important;
+}
+
+/* ---------- 창 안쪽 여백: 위 12 · 왼쪽 12 · 오른쪽 10 (× 와 제목 줄이 같은 높이에) ---------- */
+html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings, #model-switch-settings, .po-dialog, .pa-hub, .rl-root, #regex-link-settings)) { padding: 12px 10px 12px 10px !important; }
+html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings, #model-switch-settings, .po-dialog, .pa-hub, .rl-root, #regex-link-settings)) > .popup-body { padding-top: 0 !important; }
+html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings, #model-switch-settings, .po-dialog, .pa-hub, .rl-root, #regex-link-settings)) > .popup-body > .popup-content { padding-top: 0 !important; margin-top: 0 !important; }
+html body.salty dialog:is(.bl-assets-dialog, .bl-ctsi-dialog, .bl-direction-dialog, .bl-mermaid-dialog) { padding: 12px 10px 12px 12px !important; }
+html body.salty dialog:is(.bl-translator-dialog, .blzi-dialog, .blpt-dialog) > header { padding: 12px 10px 0 12px !important; }
+
+/* ---------- 머리 줄 ---------- */
+html body.salty :is(
+  dialog.popup > .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings) > .inline-drawer > .inline-drawer-header,
+  dialog.popup > .popup-body > .popup-content > :is(#model-switch-settings, #regex-link-settings) > .inline-drawer-header,
+  dialog.popup > .popup-body > .popup-content > .po-dialog > .po-title,
+  dialog.popup > .popup-body > .popup-content > .pa-hub > .pa-hub-title
+) {
+  display: flex !important; align-items: center !important; justify-content: flex-start !important;
+  min-height: 34px !important; height: auto !important; margin: 0 0 8px !important; padding: 0 40px 0 2px !important;
+  border: 0 !important; cursor: default !important;
+}
+html body.salty :is(
+  dialog.popup > .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings) > .inline-drawer > .inline-drawer-header,
+  dialog.popup > .popup-body > .popup-content > :is(#model-switch-settings, #regex-link-settings) > .inline-drawer-header
+) > .inline-drawer-icon { display: none !important; }
+html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog) > header {
+  display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 12px !important;
+  min-height: 34px !important; height: auto !important; margin: 0 0 8px !important; padding-top: 0; padding-bottom: 0;
+  border: 0 !important; background: none !important;
+}
+html body.salty #pt-panel > #pt-panel-header { min-height: 34px !important; }
+
+/* ---------- 머리: 제목 (아이콘 + 이름) ---------- */
+html body.salty :is(
+  dialog.popup > .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings) > .inline-drawer > .inline-drawer-header > b,
+  dialog.popup > .popup-body > .popup-content > :is(#model-switch-settings, #regex-link-settings) > .inline-drawer-header > b,
+  dialog.popup > .popup-body > .popup-content > .po-dialog > .po-title,
+  dialog.popup > .popup-body > .popup-content > .pa-hub > .pa-hub-title,
+  dialog:is(.bl-translator-dialog, .bl-assets-dialog, .bl-ctsi-dialog, .bl-direction-dialog, .blzi-dialog, .bl-mermaid-dialog, .blpt-dialog) > header > b,
+  dialog.bl-notes-dialog > header > b,
+  #pt-panel > #pt-panel-header > h3
+) {
+  display: inline-flex !important; align-items: center !important; flex-wrap: wrap !important; gap: 0 6px !important;
+  flex: 1 1 auto !important; min-width: 0 !important; margin: 0 !important; padding: 0 !important;
+  color: var(--salty-text) !important; font-size: var(--bl-ts-ui, 14.5px) !important; font-weight: 600 !important; line-height: 1.55 !important;
+  text-align: left !important;
+}
+/* 아이콘 없던 한글화 패널 — 테마 설정 창과 같은 아이콘 */
+html body.salty #pt-panel > #pt-panel-header > h3::before { content: "\f022"; font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 1em; line-height: 1; }
+
+/* ---------- 머리: 판 알약 (확장 서랍 css/09 의 .ext-version 과 같은 값) ---------- */
+html body.salty :is(
+  dialog.popup > .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings) > .inline-drawer > .inline-drawer-header,
+  dialog.popup > .popup-body > .popup-content > :is(#model-switch-settings, #regex-link-settings) > .inline-drawer-header,
+  dialog.popup > .popup-body > .popup-content > .po-dialog > .po-title,
+  dialog.popup > .popup-body > .popup-content > .pa-hub > .pa-hub-title,
+  dialog:is(.bl-translator-dialog, .bl-assets-dialog, .bl-ctsi-dialog, .bl-direction-dialog, .blzi-dialog, .bl-mermaid-dialog, .blpt-dialog) > header,
+  dialog.bl-notes-dialog > header,
+  #pt-panel > #pt-panel-header
+) :is(.ext-version, .pt-version, .bl-notes-ver):not([hidden]) {
+  display: inline-block !important; flex: none !important;
+  width: auto !important; height: auto !important; min-width: 0 !important; min-height: 0 !important;
+  margin: 0 !important; padding: 2px 8px 0 !important;
+  border: 1px solid color-mix(in srgb, var(--salty-text) 16%, transparent) !important;
+  border-radius: var(--bl-r-pill, 999px) !important;
+  background: var(--bl-fill-hover, var(--bl-hover)) !important; box-shadow: none !important;
+  color: var(--salty-muted) !important; font-size: var(--bl-fs-micro) !important; font-weight: 400 !important; line-height: 1.5 !important;
+  vertical-align: middle !important;
+}
+
+/* ---------- 머리: 닫기 × 하나 ---------- */
+html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog) > header > button,
+html body.salty #pt-panel #pt-panel-close,
+html body.salty dialog.bl-notes-dialog .bl-note-btn:has(> i.fa-xmark),
+html body.salty #cg-panel .cg-icon-btn[data-act="close"] {
+  flex: none !important; width: 34px !important; height: 34px !important; min-width: 34px !important; min-height: 34px !important;
+  margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 8px !important;
+  background: transparent !important; box-shadow: none !important; color: var(--salty-text) !important;
+  font: 400 22px/34px sans-serif !important; text-align: center !important;
+}
+/* 글리프 하나: 아이콘 글꼴 × 대신 글자 × */
+html body.salty :is(#pt-panel #pt-panel-close, dialog.bl-notes-dialog .bl-note-btn:has(> i.fa-xmark), #cg-panel .cg-icon-btn[data-act="close"]) > i { display: none !important; }
+html body.salty :is(#pt-panel #pt-panel-close, dialog.bl-notes-dialog .bl-note-btn:has(> i.fa-xmark), #cg-panel .cg-icon-btn[data-act="close"])::before { content: "×"; font: inherit; }
+/* 실리태번 팝업에 뜨는 창: 아래 「닫기」 줄 대신 실리태번 자신의 닫기(×) — 누르면 실리태번이 창을 닫는다 */
+html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings, #model-switch-settings, .po-dialog, .pa-hub, .rl-root, #regex-link-settings)) > .popup-body > .popup-controls { display: none !important; }
+html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings, #model-switch-settings, .po-dialog, .pa-hub, .rl-root, #regex-link-settings)) > .popup-button-close {
+  display: block !important; position: absolute !important;
+  top: 12px !important; right: 10px !important; width: 34px !important; height: 34px !important; z-index: 2 !important;
+  margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 8px !important;
+  background: transparent !important; color: var(--salty-text) !important; opacity: 1 !important; filter: none !important;
+  font: 400 22px/34px sans-serif !important; text-align: center !important;
+}
+html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings, #model-switch-settings, .po-dialog, .pa-hub, .rl-root, #regex-link-settings)) > .popup-button-close::before { content: "×" !important; font: inherit !important; }
+/* 머리가 없는 요청 로그 창: × 자리만큼 위 줄을 비운다 */
+html body.salty dialog.popup > .popup-body > .popup-content > .rl-root > .rl-top { padding-right: 40px !important; }
+
+/* ---------- 탭: 머리 바로 아래 · 한 줄 · 아이콘 위 글자 아래 ---------- */
+/* TTS · 번역: 탭을 맨 위로, 「확장 탭에 보이기」 줄은 탭 바로 아래 — 나머지 차례는 그대로 */
+html body.salty dialog.popup:not(.bl-settings-dialog) #lv_settings > .inline-drawer > .inline-drawer-content,
+html body.salty dialog.bl-translator-dialog .llmt-settings .inline-drawer-content { display: flex !important; flex-direction: column !important; }
+html body.salty dialog.popup:not(.bl-settings-dialog) #lv_settings .inline-drawer-content > .lv-body { display: contents !important; }
+html body.salty dialog.popup:not(.bl-settings-dialog) #lv_settings .lv-body > .lv-tabs,
+html body.salty dialog.bl-translator-dialog .llmt-settings .inline-drawer-content > .llmt-tabs { order: -2; }
+html body.salty :is(dialog.popup:not(.bl-settings-dialog) #lv_settings, dialog.bl-translator-dialog .llmt-settings) .inline-drawer-content > .bl-hs-row { order: -1; }
+/* 다시 쓰기: 기능 카드 아래 → 맨 위 */
+html body.salty dialog.popup:not(.bl-settings-dialog) .bwr_settings .bwr_body { display: flex !important; flex-direction: column !important; }
+html body.salty dialog.popup:not(.bl-settings-dialog) .bwr_settings .bwr_body > .bwr_tabs { order: -1; }
+/* 요청 로그: 탭 줄을 가로 꽉, 「이 기기에만 남아요」는 아래 줄 */
+html body.salty dialog.popup:not(.bl-settings-dialog) .rl-root > .rl-top { flex-wrap: wrap !important; row-gap: 4px !important; }
+html body.salty dialog.popup:not(.bl-settings-dialog) .rl-root > .rl-top > .rl-tabs { flex: 1 1 100% !important; }
+/* 탭 줄 · 탭 한 칸 */
+html body.salty :is(dialog.popup:not(.bl-settings-dialog) #lv_settings .lv-tabs, dialog.bl-translator-dialog .llmt-tabs, dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs, dialog.popup:not(.bl-settings-dialog) .bwr_settings .bwr_tabs, dialog.popup:not(.bl-settings-dialog) .pa-hub > .pa-hub-tabs, dialog.popup:not(.bl-settings-dialog) .rl-root .rl-tabs, #pt-panel > #pt-tabs) {
+  display: grid !important; grid-auto-flow: column !important; grid-auto-columns: minmax(0, 1fr) !important; grid-template-columns: none !important;
+  gap: 4px !important; width: auto !important; margin: 0 0 10px !important; padding: 0 !important;
+  background: none !important; border: 0 !important; border-radius: 0 !important;
+}
+html body.salty :is(dialog.popup:not(.bl-settings-dialog) #lv_settings .lv-tab, dialog.bl-translator-dialog .llmt-tab, dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button, dialog.popup:not(.bl-settings-dialog) .bwr_settings .bwr_tab, dialog.popup:not(.bl-settings-dialog) .pa-hub > .pa-hub-tabs > .pa-hub-tab, dialog.popup:not(.bl-settings-dialog) .rl-root .rl-tab, #pt-panel > #pt-tabs > .pt-tab) {
+  position: relative; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important;
+  gap: 4px !important; min-width: 0 !important; min-height: 50px !important; height: auto !important; margin: 0 !important;
+  padding: 9px 2px 5px !important; border: 0 !important; border-radius: 8px !important; opacity: 1 !important;
+  background: var(--bl-hover) !important; color: var(--salty-muted) !important; box-shadow: none !important; outline-offset: -2px;
+  font-size: var(--bl-ts-meta) !important; font-weight: 400 !important; line-height: 1.35 !important; white-space: nowrap !important;
+}
+html body.salty :is(dialog.popup:not(.bl-settings-dialog) #lv_settings .lv-tab, dialog.bl-translator-dialog .llmt-tab, dialog.popup:not(.bl-settings-dialog) .bwr_settings .bwr_tab, dialog.popup:not(.bl-settings-dialog) .pa-hub > .pa-hub-tabs > .pa-hub-tab, dialog.popup:not(.bl-settings-dialog) .rl-root .rl-tab, #pt-panel > #pt-tabs > .pt-tab) > i,
+html body.salty dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button::before { margin: 0 !important; font-size: 1.1em !important; line-height: 1 !important; }
+html body.salty :is(dialog.popup:not(.bl-settings-dialog) #lv_settings .lv-tab, dialog.bl-translator-dialog .llmt-tab, dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button, dialog.popup:not(.bl-settings-dialog) .bwr_settings .bwr_tab, dialog.popup:not(.bl-settings-dialog) .pa-hub > .pa-hub-tabs > .pa-hub-tab, dialog.popup:not(.bl-settings-dialog) .rl-root .rl-tab, #pt-panel > #pt-tabs > .pt-tab):is(.active, [aria-pressed="true"], [aria-selected="true"]) {
+  background: color-mix(in srgb, var(--salty-accent) 13%, transparent) !important; color: var(--salty-accent) !important;
+}
+/* 글자만 있던 탭에 아이콘 (확장 순서: 확장 설정 · 요술봉 · 채팅 메뉴) */
+html body.salty dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button::before { font-family: "Font Awesome 6 Free"; font-weight: 900; }
+html body.salty dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button:nth-child(1)::before { content: "\f12e"; }
+html body.salty dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button:nth-child(2)::before { content: "\e2ca"; }
+html body.salty dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button:nth-child(3)::before { content: "\f086"; }
+
+/* ---------- 고르기 단추: 고른 칸 = 꽉 찬 포인트 (캐릭터 에셋 · 북마크와 같은 값) ---------- */
+html body.salty dialog.popup:not(.bl-settings-dialog) .bwr_settings .bwr_segment > .bwr_seg.active,
+html body.salty dialog.bl-notes-look .bl-look-seg > .bl-look-segbtn.on,
+html body.salty dialog[open] .bl-look-seg > .bl-look-segbtn.on {
+  background: var(--salty-accent) !important; color: var(--salty-on-accent, #fff) !important; box-shadow: none !important; font-weight: 700 !important;
+}
+
+/* ---------- 카드: 모서리 12 · 1px 테 ---------- */
+html body.salty :is(dialog.popup:not(.bl-settings-dialog) #lv_settings .lv-card, dialog.bl-translator-dialog .llmt-card, dialog.popup:not(.bl-settings-dialog) .bwr_settings .bwr_card, dialog.popup:not(.bl-settings-dialog) #model_register_settings .mr-item, dialog.popup:not(.bl-settings-dialog) #regex-link-settings .rl-module, dialog.popup:not(.bl-settings-dialog) .po-dialog .po-item, dialog.bl-direction-dialog :is(.jj-card, .jj-status), dialog.blzi-dialog .blzi-card, dialog.bl-assets-dialog .eh-card) {
+  border-radius: 12px !important; border-width: 1px !important; border-style: solid !important;
+}
+/* 테가 없던 카드만 테 색을 준다 — 원래 색이 있는 테(번역 「설정 프리셋」 · 전개 지시 켜짐 · 고른 모델)는 그 색 그대로 */
+html body.salty :is(dialog.popup:not(.bl-settings-dialog) #model_register_settings .mr-item:not(.is-picked), dialog.popup:not(.bl-settings-dialog) #regex-link-settings .rl-module, dialog.popup:not(.bl-settings-dialog) .po-dialog .po-item) {
+  border-color: var(--salty-line) !important;
+}

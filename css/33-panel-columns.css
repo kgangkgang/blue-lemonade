@@ -111,8 +111,10 @@ html body .salty-panel.bl-editor .bl-backup-actions > .salty-row { align-self:st
   .salty-panel.bl-editor .bl-mespins { grid-template-columns:repeat(4,minmax(0,1fr)); }
 }
 
-/* 짧은 슬라이더도 큰 글씨에서 이름과 숫자칸을 억지로 한 칸에 끼우지 않는다. */
-@container bl-controls (width < 24em) {
+/* 짧은 슬라이더도 큰 글씨에서 이름과 숫자칸을 억지로 한 칸에 끼우지 않는다.
+   7.0.3 24em → 22em: 폰 360 기본 글씨(설정 칸 316px = 23.9em)에서 「두께 · 진하기」 같은 짝이 한 열로 내려갔다(2열 규칙 위반).
+   이름은 윗줄 · 숫자칸은 아랫줄(아래 24~44em 규칙)이라 칸 148px 에도 눌리지 않는다. 큰 글씨 · 폰 320 은 그대로 한 열 */
+@container bl-controls (width < 22em) {
   html body .salty-panel.bl-editor .salty-sec .salty-group:has(> .salty-slider + .salty-slider) { display:block; }
 }
 
@@ -127,7 +129,7 @@ html body .salty-panel.bl-editor .salty-sec .salty-group:has(> .salty-slider + .
 html body .salty-panel.bl-editor .salty-sec .salty-group:has(> .salty-slider + .salty-slider) > .salty-slider > header > .salty-num {
   align-self:end; justify-self:end;
 }
-@container bl-controls (24em <= width < 44em) {
+@container bl-controls (22em <= width < 44em) {
   html body .salty-panel.bl-editor .salty-sec .salty-group:has(> .salty-slider + .salty-slider) > .salty-slider > header {
     grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(min-content,1fr) auto;
   }

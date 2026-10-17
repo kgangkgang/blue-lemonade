@@ -10,11 +10,11 @@ body.salty #rm_extensions_block .inline-drawer-header > :is(b,strong) > i {
   width:1.2em; height:1.2em; line-height:1; margin:0;
 }
 body.salty #rm_extensions_block .inline-drawer-header > :is(b,strong) > .ext-version { margin-inline:0; }
-body.salty :is(#rm_extensions_block, .bl-assets-dialog) .bl-hs-row { padding:3px 0 7px; gap:8px; line-height:1.45; }
-body.salty :is(#rm_extensions_block, .bl-assets-dialog) .bl-hs-row > span { min-width:0; overflow-wrap:anywhere; }
+body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row { padding:3px 0 7px; gap:8px; line-height:1.45; }
+body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row > span { min-width:0; overflow-wrap:anywhere; }
 /* 스위치 모양은 유지하며 실제 누르는 범위만 늘린다. */
-body.salty :is(#rm_extensions_block, .bl-assets-dialog) .bl-hs-switch::before { content:''; position:absolute; inset:-7px 0; }
-body.salty :is(#rm_extensions_block, .bl-assets-dialog) .bl-hs-switch:focus-visible { outline:2px solid var(--salty-accent); outline-offset:3px; }
+body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch::before { content:''; position:absolute; inset:-7px 0; }
+body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch:focus-visible { outline:2px solid var(--salty-accent); outline-offset:3px; }
 body.salty .bl-pbind .menu_button { display:inline-flex; align-items:center; justify-content:center; min-height:36px; line-height:1.4; }
 body.salty .bl-pbind-x { position:relative; flex:none; }
 body.salty .bl-pbind-x::before { content:''; position:absolute; inset:-6px; }

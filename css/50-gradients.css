@@ -3,6 +3,10 @@
 .bl-gradient-control { padding: 0 0 14px; margin: 0 0 12px; border-bottom: 1px solid var(--salty-line); }
 .bl-gradient-control .salty-seg { margin: 8px 0 12px; }
 .bl-gradient-control .salty-slider { margin-top: 12px; }
+/* 7.0.3 단색 · 테마 따르기면 고르기 단추만 남는다 — 그 아래 여백 12px 를 빼고, 묶음 맨 끝이면 구분선 · 아래 여백도 없앤다
+   (전엔 「기본 설정」 묶음 끝에 빈 띠 40px 와 선이 남았다) */
+.bl-gradient-control .salty-seg:last-child { margin-bottom: 0; }
+.bl-gradient-control:last-child { padding-bottom: 0; margin-bottom: 0; border-bottom: 0; }
 .bl-gradient-colors { display:flex; align-items:center; flex-wrap:wrap; gap:12px; padding:8px 0; }
 .bl-gradient-colors label { display:flex; align-items:center; gap:8px; }
 .bl-mix-swatches { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:8px; margin:12px 0; }

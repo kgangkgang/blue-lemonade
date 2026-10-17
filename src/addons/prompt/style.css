@@ -615,6 +615,9 @@ body.salty #pt-panel #pt-page-localization { padding:0 var(--pt-pad-x) 8px; gap:
 body.salty #pt-panel #pt-page-localization > .pt-bl-help { margin:0; font-size:var(--bl-ts-meta,12.5px); line-height:1.5; }
 body.salty #pt-panel #pt-page-localization .pt-localization-list { border-color:var(--salty-line,var(--pt-border)); border-radius:var(--bl-r-md,12px); }
 body.salty #pt-panel #pt-page-localization .pt-localization-list .pt-card { gap:0 8px; min-height:0; padding:0 10px; }
+/* 7.0.3 세로가 짧은 화면(가로 폰 844×390)에서 목록 · 카드가 줄어들어 이름과 설명이 겹쳤다 — 줄지 않고 페이지가 스크롤 */
+body.salty #pt-panel #pt-page-localization .pt-localization-list,
+body.salty #pt-panel #pt-page-localization .pt-localization-list .pt-card { flex-shrink:0; }
 body.salty #pt-panel #pt-page-localization .pt-localization-list .pt-check { gap:8px; min-height:36px; margin:0; }
 body.salty #pt-panel #pt-page-localization .pt-localization-list .pt-check > input { margin:0; }
 body.salty #pt-panel #pt-page-localization .pt-localization-list .pt-bl-help { margin:0 0 8px; padding-left:26px; font-size:var(--bl-ts-meta,12.5px); line-height:1.5; }

@@ -7,7 +7,7 @@ import { folderBase } from '../../extension-folder.js';   // 6.4.2 판 번호가
 
 export const MODULE = 'request_log';
 export const FOLDER = 'blue-lemonade'; // 2.0.0 성능 보조로 합침
-export const VERSION = '1.5.0';
+export const VERSION = '1.5.1';
 export const TITLE = '요청 로그';
 
 const DEFAULTS = Object.freeze({

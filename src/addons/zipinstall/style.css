@@ -1,4 +1,4 @@
-.blzi { --blzi-css-version:'1.1.1'; color:var(--salty-text, var(--SmartThemeBodyColor)); font-size:var(--bl-ts-ui, 14px); line-height:1.5; min-width:0; text-align:left; }
+.blzi { --blzi-css-version:'1.1.2'; color:var(--salty-text, var(--SmartThemeBodyColor)); font-size:var(--bl-ts-ui, 14px); line-height:1.5; min-width:0; text-align:left; }
 .blzi-dialog { width:min(640px, calc(100vw - 24px)); max-width:none; max-height:calc(100dvh - 24px); padding:0; border:1px solid var(--salty-line, var(--SmartThemeBorderColor)); border-radius:20px; background:var(--salty-bg, var(--SmartThemeBlurTintColor)); color:var(--salty-text, var(--SmartThemeBodyColor)); box-shadow:0 18px 60px color-mix(in srgb, var(--salty-text, black) 18%, transparent); }
 .blzi-dialog::backdrop { background:color-mix(in srgb, var(--salty-bg, black) 65%, transparent); backdrop-filter:blur(5px); }
 .blzi-dialog > header { display:flex; align-items:center; gap:8px; padding:8px 8px 8px 12px; border-bottom:1px solid var(--salty-line, var(--SmartThemeBorderColor)); }
@@ -13,6 +13,8 @@
 .blzi .blzi-help { display:inline-grid; place-items:center; box-sizing:border-box; width:18px; height:18px; min-width:0; min-height:0; padding:0; margin-left:4px; vertical-align:-2px; border:1px solid currentColor; border-radius:50%; background:transparent; color:var(--salty-muted, currentColor); font-size:11px; font-weight:700; line-height:1; }
 .blzi h3 { font-size:var(--bl-ts-ui, 14px); font-weight:600; margin:0 0 8px; color:inherit; }
 .blzi p { margin:6px 0; overflow-wrap:anywhere; }
+/* 7.0.3 안내 글이 낱말 가운데서 꺾여 마지막 줄에 「요.」 한 글자만 남았다 — 낱말 단위 */
+.blzi p,.blzi li,.blzi small { word-break:keep-all; overflow-wrap:anywhere; }
 .blzi small,.blzi .blzi-muted { color:var(--salty-muted, var(--SmartThemeBodyColor)); }
 .blzi p.blzi-muted,.blzi .blzi-card > p,.blzi details > p { font-size:var(--bl-ts-meta, 12.5px); line-height:1.5; }
 .blzi-card { border:1px solid var(--salty-line, var(--SmartThemeBorderColor)); border-radius:var(--bl-r-md, 12px); padding:10px; margin:12px 0; background:var(--salty-surface, var(--SmartThemeBlurTintColor)); }
@@ -35,3 +37,11 @@
 
 .blzi pre { margin:8px 0; padding:10px; min-width:0; max-width:100%; white-space:pre-wrap; overflow-wrap:anywhere; border-radius:var(--bl-r-sm, 8px); background:var(--salty-bg, var(--SmartThemeBlurTintColor)); color:inherit; user-select:text; }
 .blzi h4 { margin:10px 0 6px; font-size:var(--bl-ts-meta, 12.5px); font-weight:600; color:inherit; }
+.blzi-batch { list-style:none; margin:0; padding:0; }
+.blzi-item { display:grid; gap:2px; min-width:0; padding:8px 0; border-bottom:1px solid var(--salty-line, var(--SmartThemeBorderColor)); }
+.blzi-item:last-child { border-bottom:0; }
+.blzi-item > div { display:flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:0; }
+.blzi-item b { overflow-wrap:anywhere; }
+.blzi-item small { font-size:var(--bl-ts-meta, 12.5px); overflow-wrap:anywhere; }
+.blzi-tag { font-size:var(--bl-ts-meta, 12.5px); padding:0 6px; border:1px solid var(--salty-line, var(--SmartThemeBorderColor)); border-radius:var(--bl-r-sm, 8px); color:var(--salty-muted, var(--SmartThemeBodyColor)); }
+.blzi-bad .blzi-tag { color:var(--salty-accent-ink, var(--SmartThemeBodyColor)); border-color:currentColor; }

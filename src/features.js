@@ -81,6 +81,9 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     if (showMore || modules.showmore) load('showmore', './show-more-auto.js').then(m => m?.syncShowMoreAuto(showMore));
     const replyTop = on && !!s.chat?.replyTop;
     if (replyTop || modules.replytop) load('replytop', './reply-top.js').then(m => m?.syncReplyTop(replyTop));
+    // 7.0.3 메시지 토큰 옆 「보냄」 (sent-tokens.js, 기본 켬)
+    const sentTokens = on && s.chat?.sentTokens !== false;
+    if (sentTokens || modules.senttokens) load('senttokens', './sent-tokens.js').then(m => m?.syncSentTokens(sentTokens));
     const replyNotify = on && !!s.replyNotify?.on;
     if (replyNotify || modules.replynotify) load('replynotify', './reply-notify.js').then(m => m?.syncReplyNotify(replyNotify));
     const onehand = on && !!s.onehand?.on;

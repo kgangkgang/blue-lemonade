@@ -41,7 +41,9 @@ export async function openPanel() {
     if (!findRoot()) { globalThis.toastr?.error('번역 설정을 찾지 못했어요. 새로고침해 주세요.', 'LLM 번역'); return; }
     dialog = document.createElement('dialog'); dialog.className = 'bl-translator-dialog';
     dialog.setAttribute('aria-label','LLM 번역 설정');
-    dialog.innerHTML = '<header><b>LLM 번역</b><button type="button" aria-label="번역 설정 닫기">×</button></header><div class="bl-translator-dialog-body"></div>';
+    dialog.innerHTML = '<header><b><i class="fa-solid fa-language" aria-hidden="true"></i> LLM 번역 <span class="ext-version" hidden></span></b><button type="button" aria-label="번역 설정 닫기">×</button></header><div class="bl-translator-dialog-body"></div>';
+    // 7.0.3 창 머리 통일: 다른 확장 창처럼 판 알약 — 판은 manifest 에만 있다
+    fetch(new URL('./manifest.json', import.meta.url)).then(r => r.ok ? r.json() : null).then(m => { const v = dialog.querySelector('header .ext-version'); if (v && m?.version) { v.textContent = `v${m.version}`; v.hidden = false; } }).catch(() => {});
     document.body.append(dialog);
     const release = take(dialog.querySelector('.bl-translator-dialog-body'));
     dialog.querySelector('button').onclick = () => dialog.close();

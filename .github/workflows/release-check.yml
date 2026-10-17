@@ -100,6 +100,7 @@ jobs:
           node tools/tests/zipinstall-archive.mjs .
           node tools/tests/zipinstall-client.mjs .
           node tools/tests/zipinstall-install.mjs .
+          node tools/tests/zipinstall-batch.mjs .
           node tools/tests/translation-tag-pairs.mjs .
           node tools/tests/translator-auto-skip.mjs .
           node tools/tests/translator-group-glossary.mjs .
@@ -115,6 +116,10 @@ jobs:
           node tools/tests/tts-paragraph-pair.mjs .
           node tools/tests/tts-italic-quote.mjs .
           node tools/tests/bughunt2-addons.mjs .
+          node tools/tests/fa-free-icons.mjs .
+          node tools/tests/reader-sync-strip.mjs .
+          node tools/tests/prompt-history-label.mjs .
+          node tools/tests/sent-tokens.mjs .
           node tools/tests/tts-background.mjs .
           node tools/tests/modelswitch-fallback-pick.mjs .
           node tools/tests/tts-integration.mjs .
@@ -168,6 +173,7 @@ jobs:
           node tools/tests/ink-contrast.mjs .
           node tools/tests/style-break.mjs .
           node tools/tests/param-two-columns.mjs .
+          node tools/tests/addon-unify.mjs .
           node tools/tests/param-dimensions.mjs .
           node tools/tests/after-work.mjs .
           node tools/tests/show-more-auto.mjs .
@@ -242,6 +248,7 @@ jobs:
           node tools/tests/chat-graph.mjs .
           node tools/tests/audit-regressions.mjs .
           node tools/tests/optimization-cache.mjs
+          node tools/tests/integrity-recheck.mjs .
           node tools/tests/preferences-safety.mjs .
           node tools/tests/appearance-comfort.mjs .
           node tools/tests/gradients-core.mjs .

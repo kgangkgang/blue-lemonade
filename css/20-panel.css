@@ -1375,4 +1375,8 @@ body.salty-dark .salty-shapes button.on {
 .salty-panel .bl-prompt-tools .bl-prompt-name-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(8em,12em);align-items:center;column-gap:10px;padding-left:16px}
 .salty-panel .bl-prompt-tools .bl-prompt-name-row[hidden]{display:none}
 .salty-panel .bl-prompt-tools .bl-prompt-name-row>input{width:100%;min-width:0;margin:0;min-height:var(--bl-settings-control);font:inherit}
+/* 7.0.3 큰 글씨(1.5배) · 두 칸 격자에서 입력칸 최소 8em 이 자리를 다 먹어 「빠른 설정 이름」이 한 글자씩 세로로 꺾였다
+   → 격자 대신 flex: 96-param-stack 의 「이름 위 · 칸 아래」(이름 칸 글 높이만)를 다른 줄처럼 따른다 */
+.salty-panel .bl-prompt-tools .bl-prompt-name-row:not([hidden]){display:flex;flex-direction:column;align-items:stretch;row-gap:6px}
+.salty-panel .bl-prompt-tools .bl-prompt-name-row>span{flex:0 0 auto;min-width:0}
 .salty-panel .bl-prompt-source{overflow-wrap:anywhere;word-break:normal}

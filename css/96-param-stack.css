@@ -29,7 +29,7 @@ body.salty #user-settings-block #user-settings-block-content { container: bl-use
 
 /* ---------- 2. 이름 | 칸 한 줄 → 이름 위 · 칸 아래 ---------- */
 /* BL 설정 창: 이름 왼쪽 + 세그먼트 · 선택칸 · 글자칸 (20-panel .salty-row · .salty-stack, 33 .bl-control-grid > .salty-stack) */
-.salty-panel .salty-row:has(> .salty-seg:not(.salty-mini), > select, > input:not([type="checkbox"]):not([type="radio"]):not([type="button"])):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+.salty-panel .salty-row:has(> .salty-seg:not(.salty-mini), > select, > input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="color"])):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
 .salty-panel .salty-stack:has(> .salty-seg):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
 .bl-editor .bl-control-grid > .salty-stack:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
   flex-direction: column !important;
@@ -38,7 +38,16 @@ body.salty #user-settings-block #user-settings-block-content { container: bl-use
   justify-content: flex-start !important;
   gap: var(--bl-s2) !important;
 }
-.salty-panel :is(.salty-row, .salty-stack) > :is(.salty-seg:not(.salty-mini), select, input:not([type="checkbox"]):not([type="radio"]):not([type="button"])) {
+/* 7.0.3 색 고르기(input type=color)는 다른 색 칸처럼 이름 왼쪽 · 동그라미 오른쪽 — 전엔 이 절이 색 칸까지 세로로 쌓고 가로 꽉 채워
+   글자 그림자 · 외곽선 · 투명 그림 그림자의 「색」이 화면 폭 검은 타원(346×34)이 됐다 */
+/* 7.0.3 세로로 쌓은 줄의 이름 칸: 가로일 때 쓰던 flex 기준(33-panel-columns 의 1 1 80px)이 높이가 되어
+   「캐릭터 메시지」 · 「이름 줄」 · 「자리」 · 「넘기기」 아래 빈 칸 50px 안팎이 생겼다 → 이름 칸은 글 높이만 */
+.salty-panel .salty-row:has(> .salty-seg:not(.salty-mini), > select, > input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="color"])):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) > span,
+.salty-panel .salty-stack:has(> .salty-seg):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) > span,
+.bl-editor .bl-control-grid > .salty-stack:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) > span {
+  flex: 0 0 auto !important;
+}
+.salty-panel :is(.salty-row, .salty-stack) > :is(.salty-seg:not(.salty-mini), select, input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="color"])) {
   width: 100% !important;
   max-width: none !important;
   margin-left: 0 !important;
@@ -71,6 +80,8 @@ body.salty #user-settings-block #user-settings-block-content { container: bl-use
   flex: 1 1 0 !important;
   min-width: 0 !important;
 }
+/* 7.0.3 다섯 칸 넘는 고르기는 똑같이 나누면 긴 이름이 「은은한 / 빛」처럼 두 줄로 꺾였다(테두리 모양) — 글자 길이만큼 나눠 한 줄에 */
+.salty-panel .salty-sec .salty-seg:not(.salty-shapes):not(.salty-mini):has(> button:nth-child(5)) > button { flex: 1 1 auto !important; }
 
 /* 줄 칸으로 쓰는 작은 세그먼트 · 에셋 · 북마크 세그먼트도 가로 꽉 */
 .salty-panel :is(.salty-row, .salty-stack) > .salty-seg.salty-mini:not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
@@ -286,6 +297,8 @@ body.salty .jj-card .jj-row:has(> .jj-stepper, > .jj-color-row) {
   align-items: stretch !important;
   gap: var(--bl-s2) !important;
 }
+/* 7.0.3 세로로 쌓으면 이름 칸의 flex 기준(8em)이 높이가 되어 이름 아래 빈 칸 90px 가 생겼다 → 이름 칸은 글 높이만 */
+body.salty .jj-card .jj-row:has(> .jj-stepper, > .jj-color-row) > .jj-row-label { flex: 0 0 auto !important; }
 body.salty .jj-card .jj-row > .jj-stepper:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) { display: flex !important; width: 100% !important; }
 body.salty .jj-card .jj-row > .jj-stepper > input { flex: 1 1 auto !important; width: auto !important; }
 body.salty .jj-card .jj-row > .jj-color-row { width: 100% !important; }

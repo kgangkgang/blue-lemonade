@@ -506,8 +506,11 @@ body.salty.salty-char-bubble .salty-preview[data-prev="chat"] .mes[is_user="fals
    · 빈 메시지 · 편집 중(.edit_textarea 가 .mes_text 바로 아래) · 눈 길게 누르기로 접어 둔 숨긴 글(닫힌 제목 없는 <details> 틀, mes-fold.js — 틀 앞뒤에 숨겨 둔 빈 <p> 가 붙는다)엔 말풍선 없음 — 편집 칸은 가로 꽉.
      :has 는 .mes_text 에만 건다 (자식만 봄 — 스트리밍 조각마다 메시지 전체를 다시 맞춰 보지 않게, 05-chat 편집 줄과 같은 이유).
    · 글자색 그라데이션: 말풍선 면이 .mes_text 의 글자 모양 바탕을 덮지 않게 문단 말풍선과 같은 --bl-cb-fill · --bl-cb-clip (gradients.js).
-   · 첫 줄 들여쓰기 · 문단 간격은 보통 화면 그대로 (말풍선 하나 안의 문단이니까). 줄 나눔은 앞에서부터 채우기 — 문단 말풍선과 같은 이유. */
-body.salty.salty-char-bubble.salty-bubble-whole :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="false"]:not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])) .mes_text:not(:empty, :has(> .edit_textarea), .mes[is_system="true"] > .mes_block > .mes_text:has(> details:not([class], [open]) > summary:empty)) {
+   · 첫 줄 들여쓰기 · 문단 간격은 보통 화면 그대로 (말풍선 하나 안의 문단이니까). 줄 나눔은 앞에서부터 채우기 — 문단 말풍선과 같은 이유.
+   · 7.0.3 숨긴 글 틀 판정의 :has 안에서 [class] 를 뺐다 (details:not([class], [open]) → details:not([open]), 특이도 같음). :has 안에 class 속성 선택자가 있으면
+     문서 어디서든 class 하나만 바뀌어도 크롬이 문서 전체 스타일을 다시 계산했다 — 긴 채팅에서 새 답 · 더 보기 · 번역 도착마다 수 초.
+     틀은 실리태번이 그린 <details><summary></summary> 라 class 가 없고, 닫혀 있고 제목이 빈 class 달린 칸은 숨긴 글 맨 위에 오지 않는다. */
+body.salty.salty-char-bubble.salty-bubble-whole :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="false"]:not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])) .mes_text:not(:empty, :has(> .edit_textarea), .mes[is_system="true"] > .mes_block > .mes_text:has(> details:not([open]) > summary:empty)) {
   width: fit-content !important;
   max-width: var(--bl-cb-max, 86%) !important; /* 5.8.4: 정보 정렬 오른쪽 · 가운데면 글 칸이 이미 말풍선 칸(최대 86%)이라 100% (css/62-name-row-align) */
   padding: 9px 16px 11px !important;

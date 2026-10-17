@@ -201,7 +201,7 @@ await t('⑤ 배선: 확인 → 백업(실패하면 적용 안 함) → 적용 �
 });
 
 await t('판 · CI: 커스텀 CSS 0.1.1 · 번역 2.7.5 · 이 시험 등록', () => {
-    assert.match(read('src/addons/customstyle/manifest.json'), /"version": "0\.1\.1"/);
+    assert.ok(atLeast(read('src/addons/customstyle/manifest.json').match(/"version": "([\d.]+)"/)[1], '0.1.1'));   // 7.0.3 0.1.2
     assert.ok(atLeast(read('src/addons/translator/manifest.json').match(/"version": "([\d.]+)"/)[1], '2.7.5'));
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/undo-701\.mjs \./);
 });

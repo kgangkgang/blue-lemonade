@@ -210,6 +210,16 @@ body.salty .salty-sample :is(code, pre) {
   border-radius: 8px !important;
   color: var(--salty-text) !important;
 }
+/* 7.0.3 애드온 창 · 확장 서랍 · 설정 창 안 설명 글의 code(<scene_plan> · {{direction}} · server-plugin/…)도 밝은 팔레트에선
+   실리태번 전역 글자색(--white70a)이 1.8 : 1 로 거의 안 보였다 → 글자색만 테마 글자색 (바탕 칩 · 어두운 팔레트는 그대로) */
+body.salty:not(.salty-dark) :is(dialog, .salty-panel, #rm_extensions_block) code:not(.mes_text code) { color: var(--salty-text); }
+/* 7.0.3 다시 쓰기 리롤 「마지막 요청: 아직 없음」 — 실리태번 --warning(순수 빨강 90%)이라 나이트에서 대비 2.5 → 테마 경고 빨강 */
+body.salty .bwr_settings .bwr_no { color: var(--bl-danger, var(--warning)); }
+/* 7.0.3 안내 글이 낱말 가운데서 꺾여 마지막 줄에 「요.」 한 글자만 남던 곳(폰 360 · 390) — 낱말 단위로 */
+body.salty #bl-deus-popover .dq-note,
+body.salty .bl-mermaid-dialog .salty-note,
+body.salty dialog.lvs-dialog :is(.lvs-description, p),
+body.salty #cg-panel .cg-setting small { word-break: keep-all; overflow-wrap: anywhere; }
 /* 설정 창의 그림자 색 칸: 네이티브 color 입력을 스와치처럼 */
 .salty-panel input[type="color"][data-color-path] {
   width: 46px;
