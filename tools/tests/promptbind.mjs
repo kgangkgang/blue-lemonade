@@ -314,7 +314,10 @@ await test('7.0.7 다시 그리기를 잃지 않는다: 프리셋 저장 중에 
     // 연동된 캐릭터의 채팅을 열 때 프리셋 정규식이 글을 그린 뒤 again 맞추기에서 켜지면, 이미 그린 글이 정규식이 꺼진 모양으로 남았다
     const sleep = ms => new Promise(r => setTimeout(r, ms));
     const until = async (cond, ms = 3200) => { for (let t = 0; t < ms && !cond(); t += 50) await sleep(50); };
-    await sleep(1600);   // 앞 시험의 다시 그리기 간격(1.5초) · 미뤄 둔 되맞춤 타이머 밖으로 — 묶음을 만들기 전에
+    // 앞 시험이 미뤄 둔 다시 그리기 타이머가 느린 러너에선 1.6초 뒤에도 터져 이 시험의 셈에 들어갔다 (CI 에서 2 !== 1) —
+    // 셈을 먼저 걸고, 1.7초(다시 그리기 간격 1.5초 + 여유) 동안 한 번도 안 터질 때까지 기다린 뒤 0 에서 센다
+    ctx.reloads = 0; ctx.reloadCurrentChat = async () => { ctx.reloads++; }; ctx.saveChat = async () => {};
+    for (let seen = -1; seen !== ctx.reloads;) { seen = ctx.reloads; await sleep(1700); }
     ctx.characterId = 0; ctx.chatId = 'chat-a'; ctx.extensionSettings.regex = [];
     const presetList = [{ id: 'r-tt', scriptName: 'thought colours', disabled: true }];
     const pmgr = { stored: presetList, getSelectedPresetName: () => 'P', getCompletionPresetByName: n => (n === 'P' ? { extensions: { regex_scripts: pmgr.stored } } : null),
