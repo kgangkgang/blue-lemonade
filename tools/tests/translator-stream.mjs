@@ -418,7 +418,7 @@ await check('translate: 여러 묶음 — 둘째 묶음 문단도 제자리 · �
         }
     } finally { delete S.connection_mode; delete S.llm_provider; delete S.parameters; }
 });
-await check('translate: 흘려받다 끊긴 묶음의 글은 캐시에 안 들어감 (다시 번역하면 그 문단을 다시 요청) · 실패한 문단은 원문 + 표시', async () => {
+await check('translate: 흘려받다 끊긴 묶음 — 2.9.0 부터 닫힌 문단은 하루 이어 하기로 남아 다시 번역하면 남은 문단만 (30일 캐시에는 안 들어감) · 실패한 문단은 원문 + 표시', async () => {
     frames.clear();
     await seg.clearSegmentCache();
     const a = translateEnv(); a.T.cutAfter = true;
@@ -428,7 +428,7 @@ await check('translate: 흘려받다 끊긴 묶음의 글은 캐시에 안 들�
     const b = translateEnv(); b.T.streamMode = false;
     await b.env.translate([LINE(1), LINE(2), LINE(3)].join('\n\n'), { segmentCache: true });
     assert.equal(b.T.sent.length, 1);
-    assert(b.T.sent[0].body.includes(LINE(1)) && b.T.sent[0].body.includes(LINE(3)), 'nothing from the streamed attempt was cached');
+    assert(!b.T.sent[0].body.includes(LINE(1)) && !b.T.sent[0].body.includes(LINE(2)) && b.T.sent[0].body.includes(LINE(3)), 'closed paragraphs resumed, only the rest sent');   // 2.9.0 · 2.9.2
 });
 await check('translate: 번역 중단 감시(채팅 바뀜)가 흘려받는 중에 멈추면 같은 멈춤 오류 · 그 뒤 진행 · 바로 보기 알림 없음', async () => {
     frames.clear();

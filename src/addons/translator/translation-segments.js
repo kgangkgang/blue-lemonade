@@ -994,7 +994,8 @@ export async function translateSegments({ parts, signature, request, check = () 
             // 2.6.2 count: 흘려받는 묶음은 닫힌 문단까지 센다 (문단마다 — 「수정 문단 1/71」). 묶음 끝 알림은 예전처럼 배열 길이
             results = await request(pending.map(row => row.body), (done, count = done?.length ?? 0, safe = count) => {
                 const finished = Math.min(count, pending.length);
-                if (Array.isArray(done)) closedRows = done.slice(0, Math.min(safe, finished));   // 2.9.0
+                // 2.9.0 · 2.9.2 받은 글만 더한다 — 실패한 묶음은 끝에 null 배열로 한 번 더 알리는데(index.js done(translated)), 그때 앞서 닫힌 문단을 지워 이어 하기가 비었다
+                if (Array.isArray(done)) done.slice(0, Math.min(safe, finished)).forEach((text, n) => { if (typeof text === 'string' && text.trim()) closedRows[n] = text; });
                 progress({ stage: 'segments', done: reused + finished, total, reused, translated, pending: pending.length, batch: pending.length, finished });
                 if (finished < pending.length) tell(done);
             });

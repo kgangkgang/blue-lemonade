@@ -31,6 +31,16 @@ await test('10문단 묶음 중 6문단까지 흘려받고 끊김 → 다시 번
     const whole = await go(async bodies => bodies.map(ko));
     assert.equal(again.text, whole.text, '이어 한 결과 = 한 번에 받은 결과');
 });
+await test('2.9.2 실패한 묶음의 끝 알림(null 배열)이 앞서 닫힌 문단을 지우지 않는다 (리그에서 찾음: 시간 초과 · 연결 끊김 뒤 이어 하기가 비었다)', async () => {
+    await clearSegmentCache();
+    await assert.rejects(go(async (bodies, done) => {
+        for (let k = 1; k <= 6; k++) done(bodies.slice(0, k).map(ko), k, k);   // 흘려받는 동안 하나씩 닫힘
+        done(bodies.map(() => null));                                        // index.js: 실패한 묶음은 null 로 채워 한 번 더 알린다
+        throw Object.assign(Error('90초 안에 답이 없어 끊었어요'), { timeout: true });
+    }), /90초/);
+    let asked = 0; await go(async bodies => { asked = bodies.length; return bodies.map(ko); });
+    assert.equal(asked, 4, '닫힌 6문단은 남고 나머지 4문단만 (10문단 글)');
+});
 await test('중지(cancelled)로 멈춰도 닫힌 문단은 남는다', async () => {
     await clearSegmentCache();
     await assert.rejects(go(async (bodies, done) => { done(bodies.slice(0, 3).map(ko), 3, 3); throw Object.assign(Error('멈춤'), { cancelled: true }); }));
