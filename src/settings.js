@@ -110,7 +110,7 @@ export const DEFAULTS = {
         // 기본은 전부 켬 — 지금 쓰던 대로 돌아가고, 안 쓰는 도구를 끄면 그만큼 시작이 가벼워진다.
         perfLoad: { watchdog:true, timer:true, perf:true, log:true, dedupe:true } },
     wordTools: { messageView: 'translation', rules: [], presets: [], syntax: 'comma', caseSensitive: false, wholeWords: false, particles: true, maskWords: '' }, // maskWords: 6.0.4 잠시 가리기 낱말(한 줄에 하나 · 쉼표) — 스위치는 세션 안에서만, 저장하지 않는다 (wordmask.js)
-    captureTools: { replace: false, preset: '', redact: false, names: [], mask: 'auto', maskStyles: {}, format:'image', duration:6, maxMB:8, maxParagraphs:4, resolution:1080, backgroundTint:60, includeWeather:true, includeBackground:true, showName:true, showAvatar:true, showAssets:true, showTimestamp:true, showModel:true, showMessageId:true, showTokens:true, showGenerationTime:true, filterPreset:'none', grain:0, brightness:0, contrast:0, saturation:0, temperature:0, vignette:0 }, // filterPreset · grain … vignette: 5.5.3 캡처 필터 (프리셋 none|mono|film|vintage|cool|warm|custom · 전부 0 이면 결과 픽셀 그대로)
+    captureTools: { replace: false, preset: '', redact: false, names: [], mask: 'auto', maskStyles: {}, format:'image', imagePages:false, duration:6, maxMB:8, maxParagraphs:4, resolution:1080, backgroundTint:60, includeWeather:true, includeBackground:true, showName:true, showAvatar:true, showAssets:true, showTimestamp:true, showModel:true, showMessageId:true, showTokens:true, showGenerationTime:true, filterPreset:'none', grain:0, brightness:0, contrast:0, saturation:0, temperature:0, vignette:0 }, // filterPreset · grain … vignette: 5.5.3 캡처 필터 (프리셋 none|mono|film|vintage|cool|warm|custom · 전부 0 이면 결과 픽셀 그대로)
     onehand: { on: false, swipe: true, imp: true, cont: true, regen: true },
     replyNotify: { on: false }, // 4.8.7 답 완료 알림: 다른 앱을 보고 있을 때 답이 끝나면 폰 알림 · 진동 (reply-notify.js)
     bgWindow: { on: false, mode: 'audio' }, // 4.3.2 백그라운드 창 (실험): 답을 기다리는 동안 PIP 작은 창을 띄워 다른 앱을 봐도 생성 · 번역이 이어지게
@@ -694,6 +694,7 @@ export function getSettings() {
     }
     if(!isObj(s.captureTools))s.captureTools=structuredClone(DEFAULTS.captureTools);
     s.captureTools.format=['video','gif','apng','webp'].includes(s.captureTools.format)?s.captureTools.format:'image';
+    s.captureTools.imagePages=s.captureTools.imagePages===true;
     s.captureTools.resolution=Number(s.captureTools.resolution)===1440?1440:1080;
     s.captureTools.backgroundTint=Math.min(100,Math.max(0,Number(s.captureTools.backgroundTint??60)||0));
     s.captureTools.maxParagraphs=Math.min(20,Math.max(1,Math.floor(Number(s.captureTools.maxParagraphs)||4)));

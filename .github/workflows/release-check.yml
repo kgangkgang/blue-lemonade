@@ -249,9 +249,12 @@ jobs:
           node tools/tests/capture-editor.mjs .
           node tools/tests/capture-resources.mjs
           node tools/tests/capture-paint.mjs
+          node tools/tests/capture-pages.mjs
+          node tools/tests/notice-screen-actions.mjs
           node tools/tests/capture-picker.mjs
           node tools/tests/capture-open.mjs
           node tools/tests/translator-style-profiles.mjs
+          node tools/tests/translator-access-tools.mjs
           node tools/tests/translator-review-board.mjs
           node tools/tests/capture-range.mjs
           node tools/tests/dialogue-tildes.mjs
@@ -273,6 +276,7 @@ jobs:
           node tools/tests/appearance-workflow.mjs .
           node tools/tests/markdown-settings.mjs .
           node tools/tests/chat-graph.mjs .
+          node tools/tests/chat-library.mjs
           node tools/tests/audit-regressions.mjs .
           node tools/tests/optimization-cache.mjs
           node tools/tests/integrity-recheck.mjs .

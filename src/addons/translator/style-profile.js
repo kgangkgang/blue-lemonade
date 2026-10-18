@@ -10,6 +10,18 @@ export function styleProfiles(metadata) {
         .map(e=>({id:String(e.id),speaker:e.speaker,listener:e.listener||'',mutual:!!e.mutual&&!!e.listener,mode:e.mode,note:e.note}));
 }
 export function styleProfileSignature(metadata) { return styleProfiles(metadata).map(({speaker,listener,mutual,mode,note})=>[speaker,listener,mutual,mode,note]); }
+export function styleProfileOverlaps(metadata) {
+    const entries=styleProfiles(metadata),out=[];
+    const directions=e=>e.listener?(e.mutual?[[e.speaker,e.listener],[e.listener,e.speaker]]:[[e.speaker,e.listener]]):[[e.speaker,'']];
+    for(let i=0;i<entries.length;i++)for(let j=i+1;j<entries.length;j++){
+        const a=entries[i],b=entries[j];
+        if(!directions(a).some(([s,t])=>directions(b).some(([u,v])=>glossaryFold(s)===glossaryFold(u)&&(!t||!v||glossaryFold(t)===glossaryFold(v)))))continue;
+        const rank=e=>!e.listener?0:e.mutual?1:2,ra=rank(a),rb=rank(b);
+        out.push({ids:[a.id,b.id],kind:ra===rb?'same-condition':'override',preferred:ra===rb?null:ra>rb?a.id:b.id,
+            text:ra===rb?'같은 조건의 지침이 겹쳐요. 원하는 지침 한 개만 남겨 주세요.':'더 구체적인 지침을 먼저 써요. 정상적인 예외 설정일 수 있어요.'});
+    }
+    return out;
+}
 export function planStyleProfile(metadata, value) {
     const speaker=String(value.speaker??'').trim(),listener=String(value.listener??'').trim(),note=String(value.note??'').trim(),mode=value.mode;
     if(!nameOK(speaker)||listener&&!nameOK(listener)||listener&&glossaryFold(listener)===glossaryFold(speaker)) throw Error('서로 구분되는 원문 인물 표기를 80자 안으로 적어 주세요.');

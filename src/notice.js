@@ -4,6 +4,7 @@
 //
 // 본문 표는 src/notice-data.js 에 있다 — 팝업을 열 때만 읽는다(4.5.0, 부팅 JS 에서 뺌).
 import { getSettings, saveSettings } from './settings.js';
+import { noticeActions, openNoticeAction } from './notice-actions.js';
 
 
 let version = '';
@@ -47,10 +48,10 @@ function groupByDate(list) {
     const groups = [];
     for (const notice of list) {
         const last = groups.at(-1);
-        if (last && last.date === notice.date) { last.first = notice.version; last.items.push(...notice.items); last.count++; }
-        else groups.push({ date: notice.date, version: notice.version, first: notice.version, items: [...notice.items], count: 1 });
+        if (last && last.date === notice.date) { last.first = notice.version; last.items.push(...notice.items); last.actions.push(...(notice.actions||[])); last.count++; }
+        else groups.push({ date: notice.date, version: notice.version, first: notice.version, items: [...notice.items], actions:[...(notice.actions||[])], count: 1 });
     }
-    return groups.map(g => ({ date: g.date, items: g.items, version: g.count > 1 ? `${g.first} ~ v${g.version}` : g.version, note: g.count > 1 ? ` · 업데이트 ${g.count}번` : '' }));
+    return groups.map(g => ({ date: g.date, items: g.items, actions:noticeActions(g.actions), version: g.count > 1 ? `${g.first} ~ v${g.version}` : g.version, note: g.count > 1 ? ` · 업데이트 ${g.count}번` : '' }));
 }
 
 async function noticeHtml() {
@@ -63,6 +64,7 @@ async function noticeHtml() {
                 <i aria-hidden="true"></i>
             </button>
             <ul>${notice.items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
+            <div class="bl-notice-actions">${notice.actions.map(({id,label})=>`<button type="button" class="salty-btn" data-notice-action="${id}">${label}</button>`).join('')}</div>
         </div>`).join('');
     return `<div class="salty-notice">
         <div class="salty-notice-head"><b>공지사항</b><span>Blue Lemonade</span></div>
@@ -85,8 +87,12 @@ export async function openNotice(onSeen) {
     onSeen?.();
     const ctx = SillyTavern.getContext();
     const wrap = document.createElement('div');
+    let pending='',resolvePopup;
+    const popupReady=new Promise(resolve=>{resolvePopup=resolve;});
     wrap.innerHTML = html;
     wrap.addEventListener('click', (event) => {
+        const action=event.target.closest('[data-notice-action]')?.dataset.noticeAction;
+        if(action&&!pending){pending=action;void popupReady.then(popup=>popup?.completeAffirmative()).catch(error=>{pending='';globalThis.toastr?.error(error.message);});return;}
         const toggle = event.target.closest('.salty-notice-toggle');
         if (!toggle) return;
         const item = toggle.parentElement;
@@ -94,5 +100,7 @@ export async function openNotice(onSeen) {
         item.classList.toggle('open', open);
         toggle.setAttribute('aria-expanded', String(open));
     });
-    await ctx.callGenericPopup(wrap, ctx.POPUP_TYPE.TEXT, '', { allowVerticalScrolling: true, okButton: '닫기', onOpen: popup => popup?.dlg?.classList.add('bl-roomy-dialog') });
+    try { await ctx.callGenericPopup(wrap, ctx.POPUP_TYPE.TEXT, '', { allowVerticalScrolling: true, okButton: '닫기', onOpen: opened => {resolvePopup(opened);opened?.dlg?.classList.add('bl-roomy-dialog');} }); }
+    finally { resolvePopup(null); }
+    if(pending)try{await openNoticeAction(pending);}catch(error){globalThis.toastr?.error(error.message||'기능을 열지 못했어요.','Blue Lemonade');}
 }

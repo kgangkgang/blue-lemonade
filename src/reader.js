@@ -15,6 +15,7 @@ const TAP_IGNORE = 'a, button, input, textarea, select, label, summary, video, a
 
 const mq = window.matchMedia('(max-width: 1000px)');
 let wanted = false;
+let override = null;
 let active = false;
 let chat = null;
 let form = null;
@@ -145,7 +146,7 @@ function stop() {
 }
 
 function sync() {
-    const want = wanted && mq.matches;
+    const want = (override??wanted) && mq.matches;
     if (want && !active) start();
     else if (!want && active) stop();
 }
@@ -157,6 +158,9 @@ export function syncReader(on) {
     wanted = !!on;
     sync();
 }
+
+/** Temporary screen mode; never replaces the saved reader preference. */
+export function overrideReader(value) { override=typeof value==='boolean'?value:null;sync();if(override===false)show(); }
 
 /** 시험 · 콘솔용 */
 export function readerState() {

@@ -48,6 +48,7 @@ function noticeSeenChanged() {
     document.querySelectorAll('#salty-drawer .bl-version').forEach(badge => badge.classList.toggle('is-new', unseen));
 }
 import { loadVersion, hasUnseenNotice, openNotice } from './src/notice.js';
+import { startScreenModes } from './src/screen-modes.js';
 import { badgeTextHit } from './src/badge-hit.js';
 import { setFeatureHooks } from './src/features.js';
 import { startThemeSettingsSync } from './src/settings-sync.js';
@@ -149,6 +150,7 @@ function addMenuItem() {
     item.innerHTML = `<div class="fa-fw fa-solid fa-lemon extensionsMenuExtensionButton"></div><span>Blue Lemonade</span>`;
     item.addEventListener('click', () => openPopup());
     menu.appendChild(item);
+    startScreenModes();
 }
 
 import { DEVICE_QUERY } from './src/device-layouts.js';

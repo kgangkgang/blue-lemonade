@@ -53,7 +53,9 @@ export function capturePagePlan(root,width,maxParagraphs=4){
     root.querySelectorAll('img,svg,canvas').forEach(el=>add(el.getBoundingClientRect()));
     occupied.sort((a,b)=>a[0]-b[0]);const merged=[];
     for(const interval of occupied){const last=merged.at(-1);if(last&&interval[0]<=last[1]+1)last[1]=Math.max(last[1],interval[1]);else merged.push([...interval]);}
-    const gaps=merged.slice(0,-1).map((item,i)=>(item[1]+merged[i+1][0])/2);
+    // Pick an integer inside the empty interval. Rounding its fractional
+    // midpoint upward later can cross the next glyph when the gap is narrow.
+    const gaps=merged.slice(0,-1).map((item,i)=>Math.min(Math.floor(merged[i+1][0]),Math.ceil((item[1]+merged[i+1][0])/2)));
     const blocks=[...root.querySelectorAll('.mes_text')].flatMap(el=>[...el.childNodes]).filter(node=>node.nodeType!==1||!node.matches('style,script'));
     const ends=blocks.flatMap(node=>{const range=document.createRange();range.selectNode(node);const rect=range.getBoundingClientRect();return rect.height&&rect.width?[rect.bottom-origin]:[];}).sort((a,b)=>a-b);
     const pages=[];let top=0;
@@ -66,12 +68,12 @@ export function capturePagePlan(root,width,maxParagraphs=4){
         let bottom=target>=height?height:gaps.filter(y=>y>top+8&&y<=target).at(-1);
         if(!bottom){
             const next=merged.find(([start,end])=>end>top+1);
-            if(next&&next[1]-top>limit+1)throw Error('한 줄 또는 이미지가 영상 한 화면보다 커요. 글자·이미지 크기를 줄인 뒤 다시 만들어 주세요.');
+            if(next&&next[1]-top>limit+1)throw Error('한 줄 또는 이미지가 한 페이지보다 커요. 글자·이미지 크기를 줄인 뒤 다시 만들어 주세요.');
             bottom=Math.min(height,next?.[1]+2||target);
         }
-        bottom=Math.ceil(bottom);if(bottom<=top)throw Error('영상 페이지를 나누지 못했어요. 문단을 줄여 주세요.');
+        bottom=Math.ceil(bottom);if(bottom<=top)throw Error('페이지를 나누지 못했어요. 문단을 줄여 주세요.');
         pages.push({top,height:bottom-top});top=bottom;
-        if(pages.length>40)throw Error('나뉜 영상이 40개를 넘어요. 선택한 메시지를 줄여 주세요.');
+        if(pages.length>40)throw Error('나뉜 파일이 40개를 넘어요. 선택한 메시지를 줄여 주세요.');
     }
     return pages;
 }

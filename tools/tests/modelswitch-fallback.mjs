@@ -207,7 +207,7 @@ await test('번역: 배치를 바꿔도 막힌 묶음만 · 다른 모델도 막
     const wrap = src.slice(src.indexOf('const callWithLayouts = async (body, layouts) => {'), src.indexOf('let checkpointComplete = false;'));
     assert.equal((wrap.match(/fallbackSpent = true;/g) || []).length, 2, '실패 · 거절 둘 다 다시는 안 보냄');
     assert.match(wrap, /looksLikeInputBlock\(out\) \|\| looksLikeRefusal\(/, '다른 모델의 거절문도 번역으로 붙이지 않음');
-    assert.match(src, /const request = async \(prompt, extra = \{\}\) => \{\n        watcher\.check\(\);\n        autoContextGuard\?\.assert\(\);\n        const result = await callLLMAPI\(prompt, \{ signal: watcher\.signal, \.\.\.extra \}\);/);
+    assert.match(src, /const request = async \(prompt, extra = \{\}\) => \{\n        watcher\.check\(\);\n        autoContextGuard\?\.assert\(\);\n        options\.onRequest\?\.\(\);\n        const result = await callLLMAPI\(prompt, \{ signal: watcher\.signal, \.\.\.extra \}\);/);
 });
 
 await test('CI 목록에 이 시험', () => {

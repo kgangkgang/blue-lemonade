@@ -125,3 +125,23 @@ body.salty #bl-onehand .bl-onehand-btn:focus-visible {
 body.salty #bl-onehand.is-busy .bl-onehand-btn {
   opacity: 0.45;
 }
+/* Temporary reading/writing modes keep message geometry and saved settings intact. */
+body.bl-screen-reading #chat .mes:not(:focus-within):not(:has(.edit_textarea)) .mes_buttons,
+body.bl-screen-reading #chat .mes:not(:focus-within):not(:has(.edit_textarea)) .extraMesButtons {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+body.bl-screen-writing #send_textarea {
+  min-height: min(7em, 25dvh) !important;
+}
+.bl-notice-actions, .bl-screen-modes > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 12px;
+}
+.salty-notice-item:not(.open) .bl-notice-actions { display: none; }
+.bl-notice-actions > .salty-btn,
+.bl-screen-modes .salty-btn,
+.salty-notice-toggle { min-height:44px; min-width:44px; }
+body.salty .popup:has(.salty-notice,.bl-screen-modes) .popup-button-ok { min-height:44px !important; min-width:44px; }

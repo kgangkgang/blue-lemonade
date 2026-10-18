@@ -121,7 +121,7 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
             clone.querySelectorAll('script,iframe,video,audio,.mes_buttons,.mes_edit_buttons,.swipe_left,.swipe_right,.swipes-counter,.mes_ghost,.del_checkbox,.for_checkbox').forEach(el=>el.remove());
             applyCaptureDisplay(clone,options,window.SillyTavern?.getContext?.().chat?.[ids[i]]?.extra?.model||'');
             reflowCaptureText(clone);
-            if(options.videoLayer)for(const image of clone.querySelectorAll('.mes_text img')){
+            if(options.videoLayer||options.imagePages===true)for(const image of clone.querySelectorAll('.mes_text img')){
                 // An oversized illustration occupies its own page instead of forcing the text smaller.
                 image.style.setProperty('max-height',`${width*1.45}px`,'important');image.style.setProperty('max-block-size',`${width*1.45}px`,'important');image.style.objectFit='contain';
             }
@@ -132,7 +132,7 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
         wrapper.append(fragment);
         const privacy=preparePrivacy(wrapper,options);
         const fullHeight=Math.ceil(wrapper.getBoundingClientRect().height);
-        const pages=options.videoLayer?capturePagePlan(wrapper,width,options.maxParagraphs):[{top:0,height:fullHeight}];
+        const pages=options.videoLayer||options.imagePages===true?capturePagePlan(wrapper,width,options.maxParagraphs):[{top:0,height:fullHeight}];
         const pageIndex=Math.min(pages.length-1,Math.max(0,Math.floor(Number(options.pageIndex)||0))),page=pages[pageIndex];
         if(options.planOnly)return {pages,width,height:fullHeight};
         // Embed used webfonts; inaccessible stylesheets are left to platform font fallbacks.

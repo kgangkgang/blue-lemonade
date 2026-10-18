@@ -244,6 +244,16 @@ html body .bl-tool-heading { gap:10px; font:inherit; font-size:.9em; line-height
 .bl-mask-customize .bl-mask-number { font-size:.85em; gap:8px; }
 .bl-mask-customize .bl-mask-number-head { flex-wrap:wrap; gap:8px 10px; }
 .bl-mask-customize .bl-mask-number input[type=number] { flex:0 1 5em; width:5em; height:auto; font:inherit; letter-spacing:inherit; }
+/* Keep capture controls at the existing large touch target size, including
+   enlarged UI text; preserve the current tool surfaces and spacing tokens. */
+.bl-capture-dialog .salty-btn,
+.bl-capture-dialog .bl-word-actions button,
+.bl-capture-dialog .bl-tool-heading,
+.bl-capture-dialog .bl-tool-field :is(input[type=number],select) { min-height:44px; }
+.bl-capture-dialog .bl-addon-toggle { min-height:44px; }
+.bl-capture-dialog [data-image-option] { display:grid; gap:8px; }
+.bl-capture-dialog [data-capture-close] { width:44px; min-width:44px; height:44px; padding:0; flex:none; }
+.bl-capture-dialog .salty-btn { word-break:keep-all; overflow-wrap:normal; }
 .bl-mask-color { font-size:.85em; }
 .bl-capture-empty b { font-size:.95em; font-weight:inherit; }
 .bl-capture-empty p { font-size:.85em; }

@@ -263,7 +263,7 @@ async function askResetGroups() {
 export function mountPanel(container, { popup = false, onFullscreen = null, initialExtension = null } = {}) {
     // Route before creating any preview/font cards; opening capture must not
     // render the previously visited settings page and then throw it away.
-    if (popup && ['words','capture'].includes(initialExtension)) {
+    if (popup && SUBS.extensions.some(([id])=>id===initialExtension)) {
         ui.tab='extensions';ui.subs.extensions=initialExtension;ui.picker=null;
         store('salty_tab',ui.tab);store('salty_subs',JSON.stringify(ui.subs));
     }

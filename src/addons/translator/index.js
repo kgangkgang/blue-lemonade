@@ -22,6 +22,7 @@ import { makePersonaBridge } from './persona-bridge.js';
 import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey, glossaryLinesFor, enforceGlossaryNames, dropDanglingOpenQuote } from './glossary-match.js';
 import { chatGlossaryEntries, chatGlossarySignature, createChatTermCachePolicy } from './chat-glossary.js';
 import { styleProfileBlock, styleProfileSignature } from './style-profile.js';
+import { glossaryPriority } from './glossary-priority.js';
 import { saveTermChat } from './selection/term-save.js';
 const chatTermCachePolicy = createChatTermCachePolicy();
 import { glossarySignature, glossaryGone, mergeGlossary, glossaryMessage, renameGlossaryScope, GONE_KEY as GLOSSARY_GONE } from './glossary-sync.js';   // 2.7.5 다른 기기의 옛 설정 저장에 덮이지 않게 (updated · 지운 기록 · 합치기)
@@ -1838,6 +1839,7 @@ async function translate(text, options = {}) {
     const request = async (prompt, extra = {}) => {
         watcher.check();
         autoContextGuard?.assert();
+        options.onRequest?.();
         const result = await callLLMAPI(prompt, { signal: watcher.signal, ...extra });
         watcher.check(); autoContextGuard?.assert(); return result;
     };
@@ -3985,13 +3987,18 @@ function updateInputTranslateButton() {
     }
 }
 
+export async function openCharacterSpeechPreferences() {
+    await syncSelection(true);
+    const { openStyleProfileManager } = await import('./selection/style-profile-ui.js');
+    return openStyleProfileManager();
+}
 let selectionModule = null;
-function syncSelection() {
-    if (!selectionModule && extensionSettings.selection_retranslate !== true && extensionSettings.selection_delete === false) return;   // 6.4.4 고른 글 지우기도 이 모듈
+function syncSelection(force = false) {
+    if (!force && !selectionModule && extensionSettings.selection_retranslate !== true && extensionSettings.selection_delete === false) return;   // 6.4.4 고른 글 지우기도 이 모듈
     selectionModule ??= import('./selection/index.js');
-    selectionModule.then(module => module.syncSelectionRetranslate({
+    return selectionModule.then(module => module.syncSelectionRetranslate({
         settings: extensionSettings, translate, render: processTranslationText,
-        termHooks: { busy: () => Object.values(translationInProgress).some(token => token && token.chatGuard?.valid()) || isChatTranslationInProgress, enabled: () => extensionSettings.glossary_enabled !== false, entries: () => activeGlossaryEntries(), save: job => saveTermChat(getContext(), job), changed: publishGlossaryNames },
+        termHooks: { busy: () => Object.values(translationInProgress).some(token => token && token.chatGuard?.valid()) || isChatTranslationInProgress, enabled: () => extensionSettings.glossary_enabled !== false, entries: () => activeGlossaryEntries(), priority: () => glossaryPriority({entries:glossaryEntries(),chatEntries:chatGlossaryEntries(getContext().chatMetadata),scopes:glossaryScopeKeys(),enabled:extensionSettings.glossary_enabled!==false}), save: job => saveTermChat(getContext(), job), changed: publishGlossaryNames },
         // 6.2.5 이어 붙인 번역을 보여 주기 전에 걷는다 (저장된 번역을 보여 줄 때와 같게) — 손으로 고친 번역은 그대로
         clean: (text, source, message) => message?.extra?.translation_edited === originalHashOf(source) ? text : tidyGlossaryOutput(source, dropStrayWords(text, source)),
         remember: (extra, source, raw, display) => rememberSource(extra, { original: source, raw, display, hash: getStringHash }), // 6.9.5 고른 글 다시 번역한 결과도 채팅 파일에
@@ -4018,7 +4025,7 @@ function syncSelection() {
                 chatId: getContext().chatId, originalText: source, translatedText: message.extra.display_text, type: 'retranslation' });
             publishArchiveReady(message, message.mes, getContext().chatId, 'retranslation');
         },
-    })).catch(error => { selectionModule = null; console.warn('[LLM Translator] 선택 재번역 초기화 실패:', error); });
+    })).catch(error => { selectionModule = null; console.warn('[LLM Translator] 선택 재번역 초기화 실패:', error); if (force) throw error; });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -5842,6 +5849,10 @@ function initializeEventHandlers() {
         saveSettingsDebounced();
     });
 
+    if (!document.getElementById('llm_style_profiles')) {
+        const anchor = document.getElementById('llm_translation_check')?.closest('label');
+        if (anchor) { const button=document.createElement('button');button.id='llm_style_profiles';button.type='button';button.className='menu_button';button.textContent='인물별 말투·호칭';button.addEventListener('click',async()=>{try{await openCharacterSpeechPreferences();}catch(error){toastr.error(error.message);}});anchor.after(button); }
+    }
     // The board reuses cached checks; opening it never translates the chat.
     if (!document.getElementById('llm_check_board')) {
         const anchor = document.getElementById('llm_translation_check')?.closest('label');
