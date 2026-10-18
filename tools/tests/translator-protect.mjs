@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+globalThis.keepChatReadingPosition = (await import(pathToFileURL(path.resolve(process.argv[2] || '.', 'src/chat-reading-position.js')))).keepChatReadingPosition;
 
 const dev = path.resolve(process.argv[2] || '.');
 const dir = path.join(dev, 'src/addons/translator');

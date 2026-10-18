@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.1.4";
+export const BUILD_VERSION = "7.1.5";
 export const FILE_HASHES = {
   "index.js": "19832:e9ecf3ab:d2bfb1ac",
-  "manifest.json": "365:98564161:dc0fe602",
+  "manifest.json": "365:fd3c6572:58d7d7f9",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -205,15 +205,16 @@ export const FILE_HASHES = {
   "src/addons/rewrite/defaults.js": "20934:cad6318c:c1ef6de9",
   "src/addons/rewrite/guards.js": "1499:f0178952:b01b475d",
   "src/addons/rewrite/guide.js": "16018:6f264fc4:f79884af",
-  "src/addons/rewrite/index.js": "105231:87a9d46b:8b7602ce",
+  "src/addons/rewrite/index.js": "105867:fb828615:9281d534",
   "src/addons/rewrite/multilingual.js": "12119:a4c98688:7f7d8c74",
   "src/addons/rewrite/providers.js": "8767:15d78664:ce4229dc",
   "src/addons/rewrite/quick-ban.js": "5687:12251d55:8cda0086",
+  "src/addons/rewrite/reading-position.js": "1486:5f601dcc:16ac4ccd",
   "src/addons/rewrite/reroll.js": "12571:4f82a854:2ba67ab7",
   "src/addons/rewrite/settings-html.js": "18191:ecd689a3:fb6be06f",
   "src/addons/rewrite/spans-worker.js": "991:ea17d03b:8c0ccf3e",
   "src/addons/rewrite/spans.js": "6761:867f9697:c609e837",
-  "src/addons/rewrite/style.css": "26284:1af63c9e:e4ab9783",
+  "src/addons/rewrite/style.css": "26284:7975b35d:63b2ce52",
   "src/addons/rewrite/undo.js": "2633:931380a4:1ad3330f",
   "src/addons/rewrite/upgrades.js": "10155:2bf069d9:1358f7e9",
   "src/addons/translator/archive-bridge.js": "1842:85820c61:8fc7ab69",
@@ -227,8 +228,8 @@ export const FILE_HASHES = {
   "src/addons/translator/glossary-match.js": "24972:28841d7f:d4d75f0e",
   "src/addons/translator/glossary-suggest.js": "37892:84fb105c:16cf3cc9",
   "src/addons/translator/glossary-sync.js": "4410:86799b24:8d1eafff",
-  "src/addons/translator/index.html": "56603:3d46a2f3:93467f11",
-  "src/addons/translator/index.js": "533410:796b537e:9d292bc3",
+  "src/addons/translator/index.html": "56603:64b4bf30:86756339",
+  "src/addons/translator/index.js": "533702:8f4c7788:2f9b7f7a",
   "src/addons/translator/korean-keep.js": "3875:e48e9ac8:e1078d76",
   "src/addons/translator/leftover-fix.js": "20498:0b439369:67fb78c8",
   "src/addons/translator/menu-visibility.js": "1137:ae729d76:8ea71da6",
@@ -455,6 +456,7 @@ export const FILE_HASHES = {
   "src/chat-graph-data.js": "8289:3f2d1d2b:75b72334",
   "src/chat-graph-launcher.js": "3664:ee3b37aa:d29e7858",
   "src/chat-graph.js": "23774:b7f8730a:7dd8321a",
+  "src/chat-reading-position.js": "6369:05d7499b:5b96c7b7",
   "src/chat-sync.js": "24276:61c86022:f57e5095",
   "src/checks.js": "3042:368ec3ff:509f89cc",
   "src/colorpick.js": "29852:5b5d8858:3ec727e4",
@@ -529,7 +531,7 @@ export const FILE_HASHES = {
   "src/modal.js": "1449:da5093fd:8b8c4b3c",
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "267332:17b973c2:97193e4a",
+  "src/notice-data.js": "267686:56b127d1:68bd86fa",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -651,5 +653,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "37252:989206a6:6181d71d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1514319:fdc956e4:cba34029"
+  "style.css": "1514319:18a757d9:01de8549"
 };

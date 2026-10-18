@@ -264,7 +264,7 @@ await test('번역기: import · refreshMessageBlock 이 다시 그린 뒤 알�
 await test('다시 쓰기: 씬 플랜 다시 생성 뒤 다시 그리면 알린다 (고치기 길은 notifyTextChanged 의 MESSAGE_UPDATED 가 이미 헬퍼를 깨운다)', () => {
     const js = read('src/addons/rewrite/index.js');
     assert.match(js, /import \{ notifyRerender \} from '\.\.\/\.\.\/rerender-notify\.js';/);
-    assert.match(js, /\/\/ 1\.7\.5: 편집 중이면 다시 그리지 않는다\n\s*updateMessageBlock\(messageId, message\);\n\s*await notifyRerender\(messageId\);/);
+    assert.match(js, /\/\/ 1\.7\.5: 편집 중이면 다시 그리지 않는다\n\s*updateMessageBlock\(messageId, message\);\n\s*await keepChatReadingPosition\([^\n]+=> notifyRerender\(messageId\)\);/);
     assert.equal((js.match(/notifyRerender\(/g) || []).length, 1, '고치기 길(manual → notifyTextChanged)에는 더하지 않는다 — 두 번 보내지 않게');
 });
 await test('북마크: 고치기 뒤 번역문을 지우고 다시 그릴 때 · 북마크 창에서 번역한 뒤 채팅을 다시 그릴 때 알린다', () => {

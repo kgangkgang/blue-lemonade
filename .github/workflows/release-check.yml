@@ -59,6 +59,8 @@ jobs:
           node tools/tests/chat-sync-local.mjs .
           node tools/tests/translator-preview-frames.mjs .
           node tools/tests/translator-preview-steady.mjs .
+          node tools/tests/chat-reading-position.mjs .
+          node tools/tests/rewrite-reading-position.mjs .
           node tools/tests/translator-stream.mjs .
           node tools/tests/prompt-hide-worlds.mjs .
           node tools/tests/translator-midword.mjs .

@@ -2,6 +2,7 @@
 import { isPreset, validSettings, validImport, validPromptList, validPresetList, exportPresets, restoreTranslationRows } from './preset-data.js';
 import { createGuards, watchGuard } from './translation-guard.js';
 import { observeEventCompletion } from './render-completion.js';
+import { keepChatReadingPosition } from '../../chat-reading-position.js';
 import { notifyRerender, isRerenderNotify, canNotifyRerender } from '../../rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe) · 그 알림의 MESSAGE_UPDATED 는 건너뛴다 · 6.9.7 알림이 갈 환경인가
 import { paintPreview, previewShown, adoptPainted } from './preview-frames.js';   // 2.5.5 번역 중 미리 보기가 헬퍼가 그린 상태창(iframe)을 지우지 않게 · 6.9.6 바뀐 문단만 갈아 끼우기
 import { typesetRoot } from '../../typography.js';   // 6.9.6 미리 보기가 넣은 문단을 그 자리에서 조판
@@ -2543,13 +2544,15 @@ function translationPreview(messageId, message, sourceMes, chatId, originalText,
             const now = getContext().chat[index];
             try { adoptPainted(host, getContext().messageFormatting(now?.extra?.display_text ?? now?.mes, message.name, message.is_system, message.is_user, index), { keep: isProgressBadge }); } catch { /* 못 맞추면 전부 새로 */ }
         }
-        if (!paintPreview(host, html, { keep: isProgressBadge })) return;   // 2.5.5 헬퍼가 그린 상태창 틀(iframe)은 제자리에 두고 글만 — 못 지키면 지금 화면 그대로 · 6.9.6 진행 표시도 제자리
-        lastPaint = Date.now();
-        dressPainted(host, { ...message, extra: { ...message.extra, display_text: text } });   // 감정 대사는 이 글(미리 보기)에서 찾는다
-        host.dataset.llmtPreview = '1';
-        display = text;
-        shown = true;
-        livePreviews.add(record);
+        keepChatReadingPosition(host, () => {
+            if (!paintPreview(host, html, { keep: isProgressBadge })) return;   // 2.5.5 헬퍼가 그린 상태창 틀(iframe)은 제자리에 두고 글만 — 못 지키면 지금 화면 그대로 · 6.9.6 진행 표시도 제자리
+            lastPaint = Date.now();
+            dressPainted(host, { ...message, extra: { ...message.extra, display_text: text } });   // 감정 대사는 이 글(미리 보기)에서 찾는다
+            host.dataset.llmtPreview = '1';
+            display = text;
+            shown = true;
+            livePreviews.add(record);
+        });
     };
     const schedule = () => {
         if (wait) return;
@@ -2655,24 +2658,26 @@ function afterGeneration(callback, quietMs = 300) {
 function refreshMessageBlock(messageId, message, { gently = false } = {}) {
     const element = document.querySelector(`#chat .mes[mesid="${messageId}"]`);
     if (!element || element.querySelector('.edit_textarea')) return;
-    // 6.9.6 gently: 번역 중 미리 보기가 그려 둔 메시지면 실리태번과 같은 글(display_text ?? mes)을 바뀐 문단만 갈아 끼우고 나머지 뒷일(생각 칸 · 코드 복사 단추 · 그림)은
-    //       실리태번에 맡긴다 — 끝날 때 통째로 다시 그려 이미 보인 문단까지 한 번 더 움직였다. 미리 보기가 지워졌거나 못 하면 예전처럼 통째로
-    const host = gently ? element.querySelector('.mes_text') : null;
-    let kept = false;
-    if (host && previewShown(host, { keep: isProgressBadge })) {
-        try { kept = paintPreview(host, getContext().messageFormatting(message?.extra?.display_text ?? message.mes, message.name, message.is_system, message.is_user, messageId), { keep: isProgressBadge, final: canNotifyRerender(messageId) }); }   // 6.9.7 코드가 바뀐 상태창 틀은 새 코드 블록으로 → 아래 알림으로 helper 가 번역된 글로 다시 그림 (알림이 못 가는 환경이면 틀 그대로)
-        catch { kept = false; }
-        if (kept) dressPainted(host, message);
-    }
-    const result = updateMessageBlock(messageId, message, kept ? { rerenderMessage: false } : undefined);
-    // 6.1.8 다시 그린 뒤 알림 — 다른 확장이 본문 안의 자기 블록(그림 자리 등)을 다시 그릴 수 있게. 원문 표시 · 지운 번역 · 실패한 재번역 뒤에도 온다.
-    //       (EXTENSION_LLM_TRANSLATE_UI_UPDATED 는 '새 번역' 뜻으로 TTS 가 듣기 때문에 따로 둔다)
-    try { document.dispatchEvent(new CustomEvent('llm-translator:rendered', { detail: { messageId: Number(messageId) } })); } catch { /* 알림은 그리기를 막지 않는다 */ }
-    // 6.5.2 실리태번 헬퍼(JS-Slash-Runner)가 코드 블록(상태 카드)을 iframe 으로 다시 그리게 MESSAGE_UPDATED 를 보낸다 (src/rerender-notify.js — 헬퍼가 없거나
-    //       그릴 코드가 없으면 아무것도 안 한다). 실리태번의 updateMessageBlock 은 이벤트를 내지 않아 헬퍼가 「이미 그린 메시지」로 알고 건너뛰었다 → 번역이
-    //       끝나면 카드가 원시 코드로 남았다. 이 알림으로 온 MESSAGE_UPDATED 는 handleMessageEdit 이 건너뛴다 (다시 그리기 ↔ 알림이 돌지 않게).
-    //       기다리는 쪽(await)은 청취자들이 끝난 뒤 이어 가고, 안 기다리는 쪽은 전과 같다.
-    return notifyRerender(messageId, { element }).then(() => result);
+    return keepChatReadingPosition(element, () => {
+        // 6.9.6 gently: 번역 중 미리 보기가 그려 둔 메시지면 실리태번과 같은 글(display_text ?? mes)을 바뀐 문단만 갈아 끼우고 나머지 뒷일(생각 칸 · 코드 복사 단추 · 그림)은
+        //       실리태번에 맡긴다 — 끝날 때 통째로 다시 그려 이미 보인 문단까지 한 번 더 움직였다. 미리 보기가 지워졌거나 못 하면 예전처럼 통째로
+        const host = gently ? element.querySelector('.mes_text') : null;
+        let kept = false;
+        if (host && previewShown(host, { keep: isProgressBadge })) {
+            try { kept = paintPreview(host, getContext().messageFormatting(message?.extra?.display_text ?? message.mes, message.name, message.is_system, message.is_user, messageId), { keep: isProgressBadge, final: canNotifyRerender(messageId) }); }   // 6.9.7 코드가 바뀐 상태창 틀은 새 코드 블록으로 → 아래 알림으로 helper 가 번역된 글로 다시 그림 (알림이 못 가는 환경이면 틀 그대로)
+            catch { kept = false; }
+            if (kept) dressPainted(host, message);
+        }
+        const result = updateMessageBlock(messageId, message, kept ? { rerenderMessage: false } : undefined);
+        // 6.1.8 다시 그린 뒤 알림 — 다른 확장이 본문 안의 자기 블록(그림 자리 등)을 다시 그릴 수 있게. 원문 표시 · 지운 번역 · 실패한 재번역 뒤에도 온다.
+        //       (EXTENSION_LLM_TRANSLATE_UI_UPDATED 는 '새 번역' 뜻으로 TTS 가 듣기 때문에 따로 둔다)
+        try { document.dispatchEvent(new CustomEvent('llm-translator:rendered', { detail: { messageId: Number(messageId) } })); } catch { /* 알림은 그리기를 막지 않는다 */ }
+        // 6.5.2 실리태번 헬퍼(JS-Slash-Runner)가 코드 블록(상태 카드)을 iframe 으로 다시 그리게 MESSAGE_UPDATED 를 보낸다 (src/rerender-notify.js — 헬퍼가 없거나
+        //       그릴 코드가 없으면 아무것도 안 한다). 실리태번의 updateMessageBlock 은 이벤트를 내지 않아 헬퍼가 「이미 그린 메시지」로 알고 건너뛰었다 → 번역이
+        //       끝나면 카드가 원시 코드로 남았다. 이 알림으로 온 MESSAGE_UPDATED 는 handleMessageEdit 이 건너뛴다 (다시 그리기 ↔ 알림이 돌지 않게).
+        //       기다리는 쪽(await)은 청취자들이 끝난 뒤 이어 가고, 안 기다리는 쪽은 전과 같다.
+        return notifyRerender(messageId, { element }).then(() => result);
+    });
 }
 
 // 재번역 함수 (교정 또는 문단 맞추기)

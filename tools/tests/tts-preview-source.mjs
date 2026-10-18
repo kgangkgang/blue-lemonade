@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import { register } from 'node:module';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+globalThis.keepChatReadingPosition = (await import(pathToFileURL(path.resolve(process.argv[2] || '.', 'src/chat-reading-position.js')))).keepChatReadingPosition;
 
 const theme = path.resolve(process.argv[2] || '.');
 const root = path.join(theme, 'src/addons/tts/src');

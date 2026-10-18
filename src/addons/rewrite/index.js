@@ -8,7 +8,7 @@ import {
     saveChatConditional,
     saveSettingsDebounced,
     substituteParams,
-    updateMessageBlock,
+    updateMessageBlock as updateHostMessageBlock,
 } from '../../../../../../../script.js';
 import { extension_settings, getContext } from '../../../../../../extensions.js';
 import { ChatCompletionService } from '../../../../../../custom-request.js';
@@ -43,6 +43,12 @@ import { DEFAULT_SETTINGS } from './defaults.js';
 import { badgeTextHit } from '../../badge-hit.js';
 import { markRewrite } from '../../edit-origin.js';
 import { notifyRerender } from '../../rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe)
+import { keepChatReadingPosition } from '../../chat-reading-position.js';
+import { watchRewriteReadingPosition } from './reading-position.js';
+
+function updateMessageBlock(messageId, message) {
+    return keepChatReadingPosition(document.querySelector(`#chat .mes[mesid="${messageId}"]`), () => updateHostMessageBlock(messageId, message));
+}
 import { withNameAliases } from '../../name-aliases.js';   // 6.3.x 예외 캐릭터를 다른 표기(영 · 한 · 일)로도 찾는다
 import { PERSONAL } from './defaults-personal.js';
 import { isEditingMessage } from './guards.js';
@@ -58,7 +64,7 @@ import { attachUndo } from '../../ask.js';
 import { touch, listGone, registerAddonMerge } from '../list-sync.js';   // 7.0.2 기기 간 합치기   // 7.0.1 알림 끝 ↶ 단추
 import { startQuickBan, setQuickBanEnabled } from './quick-ban.js';
 
-const VERSION = '2.1.7';
+const VERSION = '2.1.8';
 const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];
@@ -511,7 +517,7 @@ function watchStaleTranslation(messageId) {
 /** Tells LLM Translator the message text changed, including when it is still translating the old text. */
 async function notifyTextChanged(messageId) {
     watchStaleTranslation(messageId);
-    await eventSource.emit(event_types.MESSAGE_UPDATED, messageId);
+    await keepChatReadingPosition(document.querySelector(`#chat .mes[mesid="${messageId}"]`), () => eventSource.emit(event_types.MESSAGE_UPDATED, messageId));
 }
 
 // ── Rewriting ─────────────────────────────────────────
@@ -973,7 +979,7 @@ async function ensureScenePlan(messageId, end, stopSignal) {
             delete globalThis[Symbol.for('st.stream-watchdog.cut')];
             if ($(`#chat .mes[mesid="${messageId}"]`).length > 0 && !isEditingMessage(document, messageId)) { // 1.7.5: 편집 중이면 다시 그리지 않는다
                 updateMessageBlock(messageId, message);
-                await notifyRerender(messageId);   // 6.5.2 새 답을 그린 뒤 실리태번 헬퍼에 알림 (여기는 CHARACTER_MESSAGE_RENDERED 가 안 온다)
+                await keepChatReadingPosition(document.querySelector(`#chat .mes[mesid="${messageId}"]`), () => notifyRerender(messageId));   // 6.5.2 새 답을 그린 뒤 실리태번 헬퍼에 알림 (여기는 CHARACTER_MESSAGE_RENDERED 가 안 온다)
             }
             if (settings.notify) {
                 const times = outcome.attempts > 1 ? `${outcome.attempts}번 만에 ` : '';
@@ -1956,6 +1962,7 @@ function ensureUi() {
 
 function start() {
     runSteps({
+        '읽던 자리': () => watchRewriteReadingPosition({ getContext, document }),
         '요술봉 메뉴': addWandButton,
         '요청 지켜보기': () => watchRequests(() => {
             if ($('.bwr_settings .bwr_panel[data-panel="reroll"]').hasClass('active')) renderSceneStatus();
