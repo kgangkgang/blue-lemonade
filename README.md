@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.1.9/blue-lemonade-7.1.9.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.2.0/blue-lemonade-7.2.0.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
@@ -20,7 +20,14 @@ AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·�
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.1.9 · 최신 업데이트</summary>
+<summary>7.2.0 · 최신 업데이트</summary>
+
+- 화면 모드의 채팅 스타일이 설정 창 미리 보기에도 맞게 반영되도록 고쳤어요.
+
+</details>
+
+<details>
+<summary>7.1.9 · 채팅 정리와 읽기 도구</summary>
 
 - 인물별 말투·호칭을 번역 설정에서 바로 열어요. 현재 채팅의 규칙 우선순위와 겹침도 확인할 수 있어요.
 - 선택한 문단을 자연스럽게·원문에 가깝게·말투 중심으로 번역해 비교하고, 고른 후보만 적용하거나 되돌릴 수 있어요. 직접 시작할 때만 AI를 호출해요.
