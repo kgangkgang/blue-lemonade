@@ -20,6 +20,9 @@ import { updateReasoningUI } from '../../../../../../reasoning.js';   // 2.6.0 �
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
 import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey, glossaryLinesFor, enforceGlossaryNames, dropDanglingOpenQuote } from './glossary-match.js';
+import { chatGlossaryEntries, chatGlossarySignature, createChatTermCachePolicy } from './chat-glossary.js';
+import { saveTermChat } from './selection/term-save.js';
+const chatTermCachePolicy = createChatTermCachePolicy();
 import { glossarySignature, glossaryGone, mergeGlossary, glossaryMessage, renameGlossaryScope, GONE_KEY as GLOSSARY_GONE } from './glossary-sync.js';   // 2.7.5 다른 기기의 옛 설정 저장에 덮이지 않게 (updated · 지운 기록 · 합치기)
 import { registerSettingsMerge, startSettingsMerge } from '../../settings-merge.js';
 import { linesToFix, fixNoteFor, stillLeftover } from './leftover-fix.js';   // 6.4.2 다시 보낼 줄 = 남은 가나 + 원문에 있던 한자 덩이
@@ -1820,11 +1823,15 @@ function activeConnectionFields(c) {
 
 // 통합된 번역 함수 (고정 패턴 + 스마트 보정 적용 + 프롬프트/매크로 로직 복구)
 async function translate(text, options = {}) {
+    chatTermCachePolicy.mark(getContext().chatMetadata);
+    const chatTermStamp = JSON.stringify(chatGlossarySignature(getContext().chatMetadata));
+    if (options.report) { options.report.chatTermScoped = chatTermCachePolicy.blocked(getContext().chatMetadata); options.report.requestMetadata = getContext().chatMetadata; }
     const chatGuard = guards.capture();
     const connection = connectionSignature();
     let autoContextGuard = null;
     const watcher = watchGuard(() => {
         chatGuard.assert(); options.assertValid?.();
+        if (JSON.stringify(chatGlossarySignature(getContext().chatMetadata)) !== chatTermStamp) throw Object.assign(Error('이 채팅의 표기가 바뀌어 번역을 멈췄어요. 다시 번역해 주세요.'), {cancelled:true});
         if (connectionSignature() !== connection) throw Object.assign(new Error('번역 연결이나 모델 설정이 바뀌어 멈췄어요. 같은 설정으로 다시 번역하면 저장한 문단부터 이어가요.'), { cancelled: true });
     }, 500); // 5.3.4: 100ms → 500ms (매번 연결 설정을 문자열화한다. 단계마다 check() 도 따로 부른다)
     const request = async (prompt, extra = {}) => {
@@ -1873,7 +1880,7 @@ async function translate(text, options = {}) {
         const cardChat = getContext(), chatPrompt = String(extensionSettings.llm_prompt_chat ?? '');
         const cardLocal = !options.isInputTranslation && /korean|한국어|한국말/i.test(String(options.prompt ?? chatPrompt)) ? cardValues({
             scope: String(getStringHash(JSON.stringify([chatPrompt, extensionSettings.glossary_enabled === false ? null
-                : [cardChat?.groupId ?? null, cardChat?.characters?.[cardChat?.characterId]?.avatar ?? null, glossarySignature(extensionSettings.glossary_entries)]]))),   // 2.7.5 updated 는 서명에서 뺀다
+                : [cardChat?.groupId ?? null, cardChat?.characters?.[cardChat?.characterId]?.avatar ?? null, glossarySignature(extensionSettings.glossary_entries), ...chatGlossarySignature(cardChat?.chatMetadata)]]))),   // 2.7.5 updated 는 서명에서 뺀다
             remember: options.isRetranslation !== true,
         }) : null;
         // Keep card keys/markup local and send only their visible values after explicit user protection.
@@ -1977,7 +1984,7 @@ async function translate(text, options = {}) {
         // 문단 캐시 · 이어하기 키의 서명: 준비된 프롬프트 전체 대신 연결 · 프롬프트 · 지침 · 용어집(범위 + 항목) 요약 하나 (paragraph-v2)
         const chatCtx = getContext();
         const setupDigest = await checkpointKey(JSON.stringify([connection, finalPrompt, rulePrompt, additionalGuidance, extensionSettings.glossary_enabled === false ? null
-            : [chatCtx?.groupId ?? null, chatCtx?.characters?.[chatCtx?.characterId]?.avatar ?? null, glossarySignature(extensionSettings.glossary_entries)], ...(displayCards.count ? ['display-cards-v1'] : []), ...(autoContextGuard ? ['auto-context-v1', autoContextGuard.stamp] : []), ...(keptKorean.size ? ['korean-keep-v1'] : [])]));
+            : [chatCtx?.groupId ?? null, chatCtx?.characters?.[chatCtx?.characterId]?.avatar ?? null, glossarySignature(extensionSettings.glossary_entries), ...chatGlossarySignature(chatCtx?.chatMetadata)], ...(displayCards.count ? ['display-cards-v1'] : []), ...(autoContextGuard ? ['auto-context-v1', autoContextGuard.stamp] : []), ...(keptKorean.size ? ['korean-keep-v1'] : [])]));
         const key = chunks.length > 1 ? await checkpointKey(JSON.stringify([setupDigest, text, ...(/<!--[\s\S]*?-->/.test(text) ? ['comments-v1'] : [])])) : '';   // 2.5.1 주석을 보호하기 전 덩이로 이어 쓰지 않게
         watcher.check();
         // 5.4.2: 번역문 삭제 — 이 글의 문단 캐시 · 이어하기 줄만 지우고 요청은 하지 않는다 (키는 번역할 때와 같은 재료로)
@@ -2804,7 +2811,7 @@ async function retranslateMessage(messageId, promptType, forceRetranslate = fals
         //         addTranslationToDB 가 이제 같은 원문의 줄을 고쳐 쓴다.
         // [2.1.3] 일부 문단이 차단돼 원문으로 남았으면 캐시에 넣지 않는다 (translateMessage 와 같게)
         if (report.partial) toastr.warning(`문단 ${report.blockedChunks}/${report.chunks}덩이는 차단돼 원문으로 남겼어요. 다시 번역하면 다시 시도해요.`, '번역', { timeOut: 8000 });
-        else if (!report.restoredBlocks) await storeTranslationQuietly(originalText, retranslation); // 6.1.8 빠진 보호 블록을 되돌린 답은 캐시하지 않는다
+        else if (!report.restoredBlocks) await storeTranslationQuietly(originalText, retranslation, report); // 6.1.8 빠진 보호 블록을 되돌린 답은 캐시하지 않는다
 
         // [1.9.2] 재번역하는 동안 채팅 · 스와이프 · 글이 바뀌었으면 붙이지 않는다 (캐시에는 남음)
         const targetIndex = runToken.guard.index();
@@ -3004,7 +3011,7 @@ function checkStateOf(id, mes) {
     if ((mes !== undefined && mes !== shown) || isTranslationInProgress(id)) return null;
     const source = substituteParams(message.mes, context.name1, message.name);
     if (shown === source || !extra.original_text_hash || extra.original_text_hash !== originalHashOf(source)) return null;
-    return { source, translation: shown, protect: getCombinedRegexes(), key: `${extra.original_text_hash}:${getStringHash(shown)}:${shown.length}` };
+    return { source, translation: shown, chatTermScoped: chatTermCachePolicy.blocked(context.chatMetadata), requestMetadata: context.chatMetadata, protect: getCombinedRegexes(), key: `${extra.original_text_hash}:${getStringHash(shown)}:${shown.length}` };
 }
 // 판정 · 화면 모듈(translation-check.js 21KB + check-view.js 15KB)은 필요할 때만 불러온다 — 점검할 번역문이 처음 그려질 때.
 //   그 전까지 checkView 는 껍데기: 그리기 훅은 글을 그대로 두고 불러오기만 걸어 두며, 불러오면 그 메시지를 한가할 때 점검한다
@@ -3040,7 +3047,7 @@ async function saveCheckedTranslation(id, message, state, next, { cache = true }
     message.extra.display_text = processTranslationText(state.source, next);
     markTranslatedOriginal(message, state.source);
     rememberTranslation(message, state.source, next); // 6.9.5
-    if (cache) await storeTranslationQuietly(state.source, next);   // 원문 되풀이 · 깨진 주석이 남은 글은 storeTranslationQuietly 가 거른다
+    if (cache) await storeTranslationQuietly(state.source, next, state);   // 원문 되풀이 · 깨진 주석이 남은 글은 storeTranslationQuietly 가 거른다
     refreshMessageBlock(id, message);
     eventSource.emit('EXTENSION_LLM_TRANSLATE_DONE', { messageId: id, message, sourceText: message.mes, chatId: context.chatId, originalText: state.source, translatedText: message.extra.display_text, type: 'retranslation' });
     emitTranslationUIUpdate(id, 'retranslation');
@@ -3227,7 +3234,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                 }
                 translation = dropStrayWords(translation, originalText); // 6.2.4 원문에 없는 낱말 한 줄 — 캐시에도 걷은 글을
                 if (report.partial) toastr.warning(`문단 ${report.blockedChunks}/${report.chunks}덩이는 차단돼 원문으로 남겼어요. 다시 번역하면 다시 시도해요.`, '번역', { timeOut: 8000 });
-                else if (!report.restoredBlocks) await storeTranslationQuietly(originalText, translation); // 6.1.8 빠진 보호 블록을 되돌린 답은 캐시하지 않는다
+                else if (!report.restoredBlocks) await storeTranslationQuietly(originalText, translation, report); // 6.1.8 빠진 보호 블록을 되돌린 답은 캐시하지 않는다
                 // 5.4.2: 문단이 모두 캐시에서 왔으면(요청 0) 알린다 — 전엔 '번역을 시작합니다' 뒤 같은 글만 조용히 다시 붙었다
                 if (source !== 'auto' && source !== 'batch' && !report.partial && report.reusedParagraphs > 0 && !report.translatedParagraphs) toastr.info('IndexedDB에서 번역문을 가져왔습니다.');
             }
@@ -3951,6 +3958,7 @@ function syncSelection() {
     selectionModule ??= import('./selection/index.js');
     selectionModule.then(module => module.syncSelectionRetranslate({
         settings: extensionSettings, translate, render: processTranslationText,
+        termHooks: { busy: () => Object.values(translationInProgress).some(token => token && token.chatGuard?.valid()) || isChatTranslationInProgress, enabled: () => extensionSettings.glossary_enabled !== false, entries: () => activeGlossaryEntries(), save: job => saveTermChat(getContext(), job), changed: publishGlossaryNames },
         // 6.2.5 이어 붙인 번역을 보여 주기 전에 걷는다 (저장된 번역을 보여 줄 때와 같게) — 손으로 고친 번역은 그대로
         clean: (text, source, message) => message?.extra?.translation_edited === originalHashOf(source) ? text : tidyGlossaryOutput(source, dropStrayWords(text, source)),
         remember: (extra, source, raw, display) => rememberSource(extra, { original: source, raw, display, hash: getStringHash }), // 6.9.5 고른 글 다시 번역한 결과도 채팅 파일에
@@ -4727,6 +4735,7 @@ function activeGlossaryEntries(scopes = glossaryScopeKeys()) {
         for (const form of forms) claimed.add(form);
         chosen.push(entry);
     };
+    if (arguments.length === 0) for (const entry of chatGlossaryEntries(getContext().chatMetadata)) take(entry);
     for (const key of keys) { if (key === 'global') continue; for (const entry of entries) if (entry?.scope === key) take(entry); }
     for (const entry of entries) if (entry?.scope === 'global') take(entry);
     return chosen;
@@ -6112,9 +6121,14 @@ function openDB() {
 }
 
 // 데이터 추가 함수 수정
-async function addTranslationToDB(originalText, translation) {
+async function addTranslationToDB(originalText, translation, cacheContext = {}) {
+    const requestMetadata = cacheContext.requestMetadata ?? getContext().chatMetadata;
+    // Legacy full-message cache is keyed only by source. Keep chat-specific
+    // choices in the message and scoped segment cache, never in that global row.
+    if (cacheContext.chatTermScoped || requestMetadata !== getContext().chatMetadata || chatTermCachePolicy.blocked(requestMetadata)) return;
     if (hasFailMark(translation)) return 'skipped';   // 6.9.6 실패 표시가 든 글은 어느 길(수정 저장 · 고른 글 지우기 · 가져오기 …)로도 캐시에 넣지 않는다
     const db = await openDB();
+    if (requestMetadata !== getContext().chatMetadata || chatTermCachePolicy.blocked(requestMetadata)) { db.close(); return; }
     const provider = extensionSettings.llm_provider;
     const model = extensionSettings.llm_model;
 
@@ -6137,6 +6151,7 @@ async function addTranslationToDB(originalText, translation) {
         //         새 번역을 넣어도 계속 '없음' 으로 보여 번역할 때마다 API 를 다시 부르고 줄만 늘었다.
         const lookup = store.index('originalText').getAllKeys(originalText);
         lookup.onsuccess = () => {
+            if (requestMetadata !== getContext().chatMetadata || chatTermCachePolicy.blocked(requestMetadata)) { resolve("skipped"); return; }
             const [first, ...rest] = lookup.result || [];
             rest.forEach(key => store.delete(key));
             const request = first === undefined ? store.add(record) : store.put({ ...record, id: first });
@@ -6470,16 +6485,20 @@ async function deleteCachedTranslation(originalText) {
     await forgetParagraphCache(originalText);
     return deleteTranslationByOriginalText(originalText);
 }
-async function storeTranslationQuietly(originalText, translation) {
+async function storeTranslationQuietly(originalText, translation, cacheContext = {}) {
+    if (cacheContext.chatTermScoped) return;
     if (hasFailMark(translation)) { console.warn('[LLM Translator] 번역 실패 표시가 남은 글이라 캐시에 넣지 않았어요 (다시 번역하면 그 문단만 다시 보내요)'); return; }   // 6.9.6
     // 5.4.1: 원문을 베껴 품은 번역(원문+화살표+번역 · ⟦n] 표시)은 캐시에 넣지 않는다 — 다시 번역해도 캐시에서 같은 글이 나왔다
     if (hasSourceEcho(originalText, translation)) { console.warn('[LLM Translator] 번역문에 원문이 섞여 있어 캐시에 넣지 않았어요'); return; }
-    try { await addTranslationToDB(originalText, translation); }
+    try { await addTranslationToDB(originalText, translation, cacheContext); }
     catch (error) { console.warn('[LLM Translator] 번역 캐시 저장 실패 — 번역문은 붙였어요:', error?.message || error); }
 }
 
 async function getTranslationFromDB(originalText) {
+    const requestMetadata = getContext().chatMetadata;
+    if (chatTermCachePolicy.blocked(requestMetadata)) return null;
     const db = await openDB();
+    if (requestMetadata !== getContext().chatMetadata || chatTermCachePolicy.blocked(requestMetadata)) { db.close(); return null; }
     return new Promise((resolve, reject) => {
         const transaction = db.transaction(STORE_NAME, 'readonly');
         const store = transaction.objectStore(STORE_NAME);
@@ -6487,6 +6506,7 @@ async function getTranslationFromDB(originalText) {
         const request = index.getAll(originalText);
 
         request.onsuccess = (event) => {
+            if (requestMetadata !== getContext().chatMetadata || chatTermCachePolicy.blocked(requestMetadata)) { resolve(null); return; }
             // [1.9.0] 예전 버전이 캐시에 넣어 둔 거절문은 없는 셈 친다 (다시 번역하게)
             // [1.9.2] 같은 원문 줄이 여럿이면(예전 버전의 중복) 가장 새 줄부터 거절문이 아닌 것을 쓴다 — 가장 오래된 줄이 거절문이면
             //         뒤에 넣은 좋은 번역이 있어도 '없음' 이었다

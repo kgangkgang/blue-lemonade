@@ -1,0 +1,32 @@
+// Stay in the host's serialized save lane. Its helper swallows failures, so
+// read the original chat back and verify only our message and metadata field.
+import { CHAT_GLOSSARY_KEY } from '../chat-glossary.js';
+const owned = extra => Object.fromEntries(['display_text','original_translation_backup','translation_edited','translation_source'].map(k=>[k,extra?.[k]]));
+export async function saveTermChat(ctx, job) {
+    const chatId = ctx.getCurrentChatId?.();
+    if (!chatId || ctx.chatMetadata !== job.metadata || ctx.chat[job.id] !== job.message || job.message.swipe_id !== job.swipe) throw Error('채팅이 바뀌어 저장을 멈췄어요.');
+    const group = ctx.groupId != null;
+    const character = ctx.characters?.[ctx.characterId];
+    if (!group && !character?.avatar) throw Error('현재 캐릭터를 확인하지 못했어요.');
+    const payload = group ? {id:chatId} : {ch_name:character.name,file_name:chatId,avatar_url:character.avatar};
+    const expected = JSON.stringify([ctx.chatMetadata[CHAT_GLOSSARY_KEY], owned(job.message.extra),job.message.mes,job.message.swipe_id]);
+    const headers = ctx.getRequestHeaders();
+    // Once saving has started, a failed readback is an unknown outcome. Never
+    // roll back locally and silently overwrite a successful server save later.
+    try {
+        await ctx.saveChat();
+        const controller = new AbortController(); let timer;
+        try {
+            return await Promise.race([
+                (async()=>{
+                    const response = await fetch(group ? '/api/chats/group/get' : '/api/chats/get', {method:'POST',headers,body:JSON.stringify(payload),signal:controller.signal});
+                    if (!response.ok) return {confirmed:false};
+                    const saved = await response.json(), message = saved?.[job.id+1];
+                    const actual = JSON.stringify([saved?.[0]?.chat_metadata?.[CHAT_GLOSSARY_KEY],owned(message?.extra),message?.mes,message?.swipe_id]);
+                    return {confirmed:actual === expected};
+                })(),
+                new Promise(resolve=>{timer=setTimeout(()=>{controller.abort();resolve({confirmed:false});},8000);}),
+            ]);
+        } finally { clearTimeout(timer); controller.abort(); }
+    } catch { return {confirmed:false}; }
+}

@@ -1,6 +1,8 @@
 // Owned by LLM Translator; uses its current translate function and cache.
 import { context, chatKey, enabled, exclusive, adapter, captureGuard } from './state.js';
 import { paragraphSpan, alignedParagraphs, replaceSpan, jsonAnswer } from './core.js';
+import { chatGlossarySignature } from '../chat-glossary.js';
+import { correctionSelection } from './delete.js';
 async function openCache() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open('LLMtranslatorDB');
@@ -41,6 +43,7 @@ function assertAlive(job) {
     if (document.body.classList.contains('cg-previewing')) throw Object.assign(Error('북마크 미리보기를 닫은 뒤 현재 채팅에서 선택해 주세요.'), { cancelled: true });
     job.guard?.assert();
     const ctx = context();
+    if (job.termStamp !== undefined && job.termStamp !== JSON.stringify(chatGlossarySignature(ctx.chatMetadata))) throw Object.assign(Error('기억한 표기가 바뀌었어요. 다시 선택해 주세요.'), {cancelled:true});
     if (!enabled('retranslate') || chatKey() !== job.chatKey || ctx.chat[job.id] !== job.message || job.message.mes !== job.mes || job.message.swipe_id !== job.swipe || job.message.extra?.display_text !== job.display) throw Object.assign(Error('메시지나 번역이 바뀌었어요. 현재 글에서 다시 선택해 주세요.'), { cancelled: true });
 }
 export function selectionSnapshot() {
@@ -53,11 +56,13 @@ export function selectionSnapshot() {
     if (!start || start !== end || !element(range.startContainer)?.closest('.mes_text') || !element(range.endContainer)?.closest('.mes_text')) return null;
     const id = Number(start.getAttribute('mesid')), message = context().chat[id], text = selected.toString().trim();
     if (!message || !text || text.length > 6000) return null;
-    return { guard: captureGuard(message), id, message, text, mes: message.mes, display: message.extra?.display_text, swipe: message.swipe_id, chatKey: chatKey() };
+    const correction = correctionSelection();
+    return { guard: captureGuard(message), id, message, text, mes: message.mes, display: message.extra?.display_text, swipe: message.swipe_id, chatKey: chatKey(), correction: correction?.message===message ? correction : null };
 }
 export async function prepareTranslation(selection, isClosed) {
     if (!selection) throw Error('번역된 본문에서 문장이나 문단을 선택해 주세요.');
-    const job = { ...selection };
+    const termRules = chatGlossarySignature(context().chatMetadata);
+    const job = { ...selection, chatScoped:termRules.length > 0, termStamp:JSON.stringify(termRules) };
     const alive = () => {
         if (isClosed?.()) throw Object.assign(Error('메시지나 번역이 바뀌었어요. 현재 글에서 다시 선택해 주세요.'), { cancelled: true });
         assertAlive(job);
@@ -67,7 +72,7 @@ export async function prepareTranslation(selection, isClosed) {
         if (!job.display) throw Error('번역문을 표시한 상태에서 선택해 주세요.');
         const api = await adapter();
         const source = context().substituteParams(job.mes, context().name1, job.message.name);
-        const translated = await cached(source);
+        const translated = job.chatScoped ? await api.rawTranslation(job.message, source) : await cached(source);
         if (!translated) throw Error('이 브라우저에 원문과 연결된 번역 기록이 없어요. 해당 답변을 한 번 번역해 주세요.');
         const span = paragraphSpan(translated, job.text);
         if (!span) throw Error('선택한 글이 반복되거나 서식 때문에 범위를 찾지 못했어요. 문단 전체를 선택해 주세요.');
@@ -93,9 +98,9 @@ export async function applyTranslation(job) {
         const shown = typeof job.clean === 'function' ? job.clean(translation, job.source, job.message) : translation;   // 6.9.5 기록할 번역 글 (위 줄과 같은 글)
         if (!display) throw Error('번역 표시를 만들지 못했어요.');
         // Cache compare-and-swap prevents overwriting a concurrent translation.
-        await updateCache(job.source, job.translated, translation);
+        if (!job.chatScoped) await updateCache(job.source, job.translated, translation);
         try { assertAlive(job); } catch (error) {
-            await updateCache(job.source, translation, job.translated).catch(() => {}); throw error;
+            if (!job.chatScoped) await updateCache(job.source, translation, job.translated).catch(() => {}); throw error;
         }
         const ctx = context(), extra = job.message.extra, before = { ...extra };
         extra.display_text = display;
@@ -111,7 +116,7 @@ export async function applyTranslation(job) {
             job.guard?.acceptDisplay();
             core.syncMesToSwipe?.(job.id);
             await job.refresh?.(job.id, job.message);
-            await updateCache(job.source, translation, job.translated).catch(() => {});
+            if (!job.chatScoped) await updateCache(job.source, translation, job.translated).catch(() => {});
             throw Error('번역 저장을 마치지 못했어요. 다시 확인해 주세요.');
         }
         if (chatKey() === job.chatKey && context().chat[job.id] === job.message) {

@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {isDialogueElongation,hasDialogueTildeSource} from '../../src/dialogue-tildes.js';
+let passed=0;const test=(name,fn)=>{fn();passed++;console.log('PASS '+name);};
+test('reported spaced hesitation keeps tildes',()=>assert.ok(isDialogueElongation('"헉! 어',' 음','"',true)));
+test('Japanese or English dialogue elongation retains suffixes',()=>{assert.ok(isDialogueElongation('「あ',' う','」',true));assert.ok(isDialogueElongation('"Uh',' um','"',true));});
+test('previous punctuation repair stays supported',()=>assert.ok(isDialogueElongation('안녕','! 반가워','!')));
+test('ordinary deliberate strike stays formatted',()=>{assert.equal(isDialogueElongation('"','지울 글','"',true),false);assert.equal(isDialogueElongation('말 ','지울 글',' 뒤',true),false);assert.equal(isDialogueElongation('말','지울 글','"',true),false);});
+test('unquoted narration is not newly repaired',()=>assert.equal(isDialogueElongation('어',' 음','.',false),false));
+test('multiple lines or empty text not rewritten',()=>{assert.equal(isDialogueElongation('어',' \n음','"',true),false);assert.equal(isDialogueElongation('어','','"',true),false);});
+test('numerical interval is not classified as a spoken hesitation',()=>assert.equal(isDialogueElongation('1',' 2','"',true),false));
+test('consecutive speech fragments are supported',()=>assert.ok(isDialogueElongation('어',' 음',' 그래~~"',true)));
+test('displayed source confirms elongation without changing stored text',()=>{const raw='"헉! 어~~ 음~~"';assert.ok(hasDialogueTildeSource(raw,' 음'));assert.equal(raw,'"헉! 어~~ 음~~"');});
+test('explicit HTML deletion with identical rendered DOM is preserved',()=>assert.equal(hasDialogueTildeSource('"헉! 어<del> 음</del>"',' 음'),false));
+test('ambiguous mixed HTML deletion and tildes is conservatively preserved',()=>assert.equal(hasDialogueTildeSource('"어~~ 음~~ 그리고 <del>지움</del>"',' 음'),false));
+test('missing or stale raw source cannot invent tildes',()=>{assert.equal(hasDialogueTildeSource(null,' 음'),false);assert.equal(hasDialogueTildeSource('"말이 바뀌었다."',' 음'),false);});
+console.log(`${passed} checks passed`);

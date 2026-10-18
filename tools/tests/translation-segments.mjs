@@ -113,7 +113,7 @@ for(const t of ['가나다 라마바 사아자.\n```\nreturn\n```\n차카타.','
 assert.equal(dropStrayWords('<font color="#aabbcc">가나다 라마바</font>\nValladolid\n<span style="color:#123456">사아자</span>','A.'),'<font color="#aabbcc">가나다 라마바</font>\n<span style="color:#123456">사아자</span>');
 const idx=(await import('node:fs')).readFileSync(new URL('src/addons/translator/index.js',root),'utf8');
 assert.ok(/translation = await translate\(originalText,[^\n]*\n[^\n]*\} finally \{\n[^\n]*badge\.remove\(\);\n[^\n]*\}\n[\t ]*translation = dropStrayWords\(translation, originalText\);/.test(idx),'새 번역은 캐시에 넣기 전에 걷는다');
-assert.ok(/retranslation = dropStrayWords\(retranslation, originalText\);[^\n]*\n[\s\S]{0,600}storeTranslationQuietly\(originalText, retranslation\)/.test(idx),'다시 번역도 캐시에 넣기 전에');
+assert.ok(/retranslation = dropStrayWords\(retranslation, originalText\);[^\n]*\n[\s\S]{0,600}storeTranslationQuietly\(originalText, retranslation, report\)/.test(idx),'다시 번역도 캐시에 넣기 전에 걷고 요청의 채팅 범위를 함께 전달');
 assert.ok(/if \(cachedTranslation && !editedByHand\) translation = tidyGlossaryOutput\(originalText, dropStrayWords\(translation, originalText\)\);/.test(idx),'캐시에서 온 옛 번역도 (손으로 고친 것 빼고) · 6.4.0 용어집 이름까지');
 assert.ok(/extra\.translation_edited === extra\.original_text_hash \? shown : tidyGlossaryOutput\(original, dropStrayWords\(shown, original\)\)/.test(idx),'보여 줄 때 고치기 — 손으로 고친 번역은 그대로 · 6.4.0 용어집 이름까지');
 assert.ok(/addTranslationToDB\(originalTextForDbKey, newText\);\n[\t ]*message\.extra\.translation_edited = originalHashOf\(originalTextForDbKey\);/.test(idx),'손으로 고치면 표시');

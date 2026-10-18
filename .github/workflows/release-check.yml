@@ -248,6 +248,10 @@ jobs:
           node tools/tests/capture-editor.mjs .
           node tools/tests/capture-resources.mjs
           node tools/tests/capture-paint.mjs
+          node tools/tests/capture-picker.mjs
+          node tools/tests/capture-range.mjs
+          node tools/tests/dialogue-tildes.mjs
+          node tools/tests/translator-chat-terms.mjs
           node tools/tests/weather-budget.mjs
           node tools/tests/weather-styles.mjs .
           node tools/tests/weather-simple.mjs .

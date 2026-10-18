@@ -3,13 +3,14 @@ let options = null;
 export function configure(next) { options = next; }
 export const adapter = () => {
     if (!options) throw Error('번역 기능을 초기화하지 못했어요. 새로고침해 주세요.');
-    return { command: { callback: (args, text) => options.translate(text, { prompt: args.prompt || undefined, assertValid: args.assertValid, noChunks: true }) }, render: options.render, clean: options.clean, remember: options.remember, refresh: options.refresh, complete: options.complete };
+    return { command: { callback: (args, text) => options.translate(text, { prompt: args.prompt || undefined, assertValid: args.assertValid, noChunks: true }) }, render: options.render, clean: options.clean, remember: options.remember, refresh: options.refresh, complete: options.complete, rawTranslation: options.deleteHooks?.rawTranslation };
 };
 export const context = () => SillyTavern.getContext();
 export const enabled = () => options?.settings?.selection_retranslate === true;
 // 6.4.4 고른 글 지우기: 번역 설정의 selection_delete (기본 켬) · 번역기가 넘긴 도구 (index.js syncSelection 의 deleteHooks)
 export const deleteEnabled = () => !!options && options.settings?.selection_delete !== false;
 export const deleteHooks = () => options?.deleteHooks ?? null;
+export const termHooks = () => options?.termHooks ?? null;
 export const chatKey = () => String(context().groupId ?? context().characterId ?? '') + ':' + String(context().getCurrentChatId?.() ?? context().chatId ?? '');
 let busy = false;
 export async function exclusive(task) {

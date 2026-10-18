@@ -37,3 +37,5 @@ Modified 2026-10-18 (2.9.3): a streamed translation is no longer cut after a fix
 Modified 2026-10-18 (2.9.4): a Han character sitting inside a Korean word (Hangul on both sides, e.g. 특注품 for 特注品) is treated as a leftover even when it is a single character or not in the source, so the line is sent again with the kanji fix note and the paragraph is not cached. Han characters from a Korean source line, glossary forms and intentional spans (parentheses, quotes, readings) are kept; hanja followed only by a particle (會議에) stays as before.
 
 Modified 2026-10-18 (2.9.5): preserve the visible paragraph and its reading position when translation previews or final text change the message height. Follow new text only when already at the bottom; user scrolling cancels pending layout corrections.
+
+Modified 2026-10-18 (2.9.6): remember a manually corrected name or term for the current chat from the existing selection tool. Validate the source term locally, preserve the selected occurrence, and support undo and removal. Chat rules override broader glossary scopes without additional model calls; cache ownership and asynchronous save verification keep other chats isolated.

@@ -68,11 +68,11 @@ const fakeDb = () => ({
 const BRACKET_NOTE = /\nconst BRACKET_NOTE = '([^']*)'/.exec(source)?.[1] ?? '';
 const S = { llm_prompt_chat: 'Translate visible text.', glossary_enabled: false, user_defined_regexes: [], user_no_fold_regexes: [], translation_display_mode: 'disabled',
     connection_mode: 'direct', llm_provider: 'x', parameters: { x: { max_length: 300 } } };   // 출력 한도를 작게 — 묶음이 여럿으로 나뉜다
-const T = { chat: [], saved: 0, warnings: [] };
+const T = { chat: [], chatMetadata: {}, saved: 0, warnings: [] };
 const PREFIX = 'Translate visible text.\n\n';
 const hash = t => String([...String(t)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0));
 const env = { ...KOREAN_KEEP_ENV, ...card, ...seg, ...resume, ...auto, ...notify, ...check, cardValues: cardValueModule.cardValues, getStringHash: hash, extensionSettings: S,
-    getContext: () => ({ chatMetadata: {}, chat: T.chat, chatId: 'chat-A', name1: 'You', saveChat: async () => { T.saved++; } }),
+    getContext: () => ({ chatMetadata: T.chatMetadata, chat: T.chat, chatId: 'chat-A', name1: 'You', saveChat: async () => { T.saved++; } }),
     guards: { capture: () => ({ assert() {}, valid: () => true, settled: () => true }) }, connectionSignature: () => '', watchGuard: () => ({ check() {}, close() {}, signal: null }),
     document: { getElementById: () => null, querySelector: () => null, querySelectorAll: () => [] },
     MASK_PATTERN: '[[__VAR_{index}__]]', DEBUG_MODE: false, RULE_PROMPT_KEY: 'rules', substituteCustomPlaceholders: x => x, substituteParams: x => x,

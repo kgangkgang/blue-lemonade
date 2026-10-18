@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.1.6/blue-lemonade-7.1.6.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.1.7/blue-lemonade-7.1.7.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
@@ -20,7 +20,17 @@ AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·�
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.1.6 · 최신 업데이트</summary>
+<summary>7.1.7 · 최신 업데이트</summary>
+
+- 캡처 목록을 최신 메시지부터 50개씩 보여 주고, 원문·번역 미리보기를 다시 쓸 때 불필요한 처리를 줄였어요. 페이지를 넘겨도 선택은 유지돼요.
+- 캡처할 메시지의 시작과 끝을 고르면 사이 구간을 한 번에 선택할 수 있어요.
+- 번역문에서 고친 이름·호칭을 이 채팅의 다음 번역에도 사용할 수 있어요.
+- 대사의 ‘어~~ 음~~’처럼 말을 늘이는 물결표가 취소선으로 표시되던 경우를 고쳤어요.
+
+</details>
+
+<details>
+<summary>7.1.6 · 채팅 캡처 멈춤 개선</summary>
 
 - 채팅을 이미지로 만들 때 화면이 오래 멈추는 구간을 줄였어요.
 

@@ -7,4 +7,12 @@ const source = fs.readFileSync(new URL('index.js', dir), 'utf8');
 const target = /\nconst KOREAN_TARGET = (\/.+\/i);/.exec(source)?.[1];
 if (!target) throw new Error('KOREAN_TARGET not found in index.js');
 
-export const KOREAN_KEEP_ENV = { ...await import(new URL('korean-keep.js', dir)), KOREAN_TARGET: new Function(`return ${target};`)() };
+// Extracted translate/check functions also use the production chat-term policy.
+// Keep the real scope/signature logic; empty synthetic metadata follows the
+// existing path without replacing the policy with a permissive no-op stub.
+const chatTerms = await import(new URL('chat-glossary.js', dir));
+export const KOREAN_KEEP_ENV = {
+    ...await import(new URL('korean-keep.js', dir)), KOREAN_TARGET: new Function(`return ${target};`)(),
+    chatGlossarySignature: chatTerms.chatGlossarySignature,
+    chatTermCachePolicy: chatTerms.createChatTermCachePolicy(),
+};

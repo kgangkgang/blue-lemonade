@@ -3,6 +3,7 @@ import { toolSection } from './addon-layout.js';
 import { getSettings, saveSettings } from './settings.js';
 import { replaceText, importRuleSets } from './word-tools-core.js';
 import { captureOptionsMarkup, bindCaptureOptions, openCapturePreview } from './capture-options.js';
+import { capturePickerControlsMarkup, bindCapturePickerControls } from './capture-picker-controls.js';
 import { wordMaskModule } from './features.js';
 import { ask, attachUndo } from './ask.js';
 import { notifyRerender } from './rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe)
@@ -12,11 +13,14 @@ const esc = v => String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>
 const selected = new Set();
 let chatKey, draft='', undoDraft=null, proposal=null, undoChat=null;
 let previewGen=0; // 2026-10-06: 전후 보기가 번역 캐시를 읽는 사이 규칙·선택·채팅이 바뀌면 그 미리보기는 버린다
+let previewCache=new WeakMap();
+let capturePage=null;
+const CAPTURE_PAGE_SIZE=50;
 const context = () => SillyTavern.getContext();
 const userError = message => Object.assign(Error(message), { user: true });
 function syncChat() {
     const key=context().chatId;
-    if(key!==chatKey){chatKey=key;selected.clear();proposal=null;previewGen++;undoChat=null;}
+    if(key!==chatKey){chatKey=key;selected.clear();proposal=null;previewGen++;undoChat=null;previewCache=new WeakMap();capturePage=null;}
 }
 function previewText(raw) {
     let text=String(raw??'');
@@ -31,26 +35,41 @@ export function messagePreview(message, view='translation') {
     const translated=typeof message.extra?.display_text==='string'&&message.extra.display_text.trim();
     const useTranslation=view==='translation'&&!!translated;
     // 2026-10-06: 원문 보기 상태면 display_text 는 원문 사본이고 번역문은 original_translation_backup 에 있다 (번역기 · 북마크와 같은 순서로 읽음)
-    return {text:previewText(useTranslation?(message.extra.original_translation_backup||message.extra.display_text):message.mes),label:useTranslation?'번역본':view==='translation'?'번역 없음 · 원문':'원문'};
+    const raw=useTranslation?(message.extra.original_translation_backup||message.extra.display_text):message.mes;
+    const slot=useTranslation?'translation':'original';
+    const cached=previewCache.get(message)||{};
+    // Keep at most the two currently displayed variants for this message. Exact
+    // source comparison invalidates edits, swipes and translations immediately.
+    if(!cached[slot]||cached[slot].raw!==raw){cached[slot]={raw,text:previewText(raw)};previewCache.set(message,cached);}
+    return {text:cached[slot].text,label:useTranslation?'번역본':view==='translation'?'번역 없음 · 원문':'원문'};
 }
 function updateMessageView(section){
     const view=getSettings().wordTools.messageView;
+    const messages=context().chat;
     for(const button of section.querySelectorAll('[data-message-view]'))button.setAttribute('aria-pressed',String(button.dataset.messageView===view));
     for(const row of section.querySelectorAll('[data-message-row]')){
-        const message=context().chat?.[Number(row.dataset.messageRow)];if(!message)continue;
+        const message=messages?.[Number(row.dataset.messageRow)];if(!message)continue;
         const preview=messagePreview(message,view);
-        row.querySelector('[data-message-excerpt]').textContent=preview.text;
-        row.querySelector('[data-message-language]').textContent=preview.label;
+        const excerpt=row.querySelector('[data-message-excerpt]'),label=row.querySelector('[data-message-language]');
+        if(excerpt.textContent!==preview.text)excerpt.textContent=preview.text;
+        if(label.textContent!==preview.label)label.textContent=preview.label;
     }
 }
-function choices() {
+function loadedMessageIds(){const chat=context().chat;return [...document.querySelectorAll('#chat .mes[mesid]')].map(el=>Number(el.getAttribute('mesid'))).filter(id=>Number.isSafeInteger(id)&&chat?.[id]).sort((a,b)=>a-b);}
+function selectionSummary(section){
+    const status=section.querySelector('[data-capture-selection-count]');
+    if(status)status.textContent=`선택 ${selected.size}개 · 불러온 메시지 ${loadedMessageIds().length}개`;
+}
+function choices(mode) {
     syncChat();
-    const ctx=context();
-    return [...document.querySelectorAll('#chat .mes[mesid]')].map(el=>{
-        const id=Number(el.getAttribute('mesid')),m=ctx.chat?.[id]; if(!m)return '';
-        const preview=messagePreview(m,getSettings().wordTools.messageView);
+    const ctx=context(),ids=loadedMessageIds(),paged=mode==='capture',pages=Math.max(1,Math.ceil(ids.length/CAPTURE_PAGE_SIZE));
+    capturePage=capturePage===null?pages-1:Math.max(0,Math.min(capturePage,pages-1));
+    const shown=paged?ids.slice(capturePage*CAPTURE_PAGE_SIZE,(capturePage+1)*CAPTURE_PAGE_SIZE):ids;
+    const rows=shown.map(id=>{
+        const m=ctx.chat[id],preview=messagePreview(m,getSettings().wordTools.messageView);
         return `<label class="bl-message-choice" data-message-row="${id}"><input type="checkbox" data-word-message="${id}" ${selected.has(id)?'checked':''}><span><b>#${id} ${esc(m.name|| (m.is_user?'나':'AI'))}</b><em class="bl-message-language" data-message-language>${preview.label}</em><small data-message-excerpt>${esc(preview.text)}</small></span></label>`;
     }).join('') || '<p class="salty-note">열린 채팅이 없어요.</p>';
+    return `<div data-message-picker="${mode||'words'}">${paged?`<p class="salty-note" data-capture-selection-count role="status">선택 ${selected.size}개 · 불러온 메시지 ${ids.length}개</p><div class="bl-message-actions" aria-label="메시지 목록 페이지"><button type="button" class="salty-btn" data-capture-page="previous" ${capturePage===0?'disabled':''}>이전 50개</button><span>${capturePage+1} / ${pages}쪽${shown.length?` · #${shown[0]}–#${shown.at(-1)}`:''}</span><button type="button" class="salty-btn" data-capture-page="next" ${capturePage>=pages-1?'disabled':''}>다음 50개</button></div>`:''}<div class="bl-message-choices">${rows}</div></div>`;
 }
 // 2026-10-06: 전후 보기가 원문만 보여 줘서 번역문만 바뀌는 메시지가 '0곳 변경'에 같은 글로 보였다 — 번역문이 바뀌면 그 전후도 보여 준다
 //             (원문 보기 상태면 번역문은 original_translation_backup 칸에 있다). 원문이 그대로면 같은 글 두 칸은 뺀다
@@ -76,7 +95,7 @@ function comparisonMarkup(r) {
 }
 export function wordToolsMarkup(s, mode) {
     const cfg=s.wordTools, sets=importRuleSets(context().extensionSettings);
-    const picker=`<p class="salty-note">이전 메시지를 더 불러오고, 필요한 대화만 골라요.</p><div class="bl-message-actions" role="group" aria-label="메시지 선택 도구"><button type="button" class="salty-btn" data-word-action="load-older">이전 채팅 불러오기</button><button type="button" class="salty-btn" data-word-action="all">모두 선택</button><button type="button" class="salty-btn" data-word-action="none">선택 해제</button>${mode==='words'?'<button type="button" class="salty-btn" data-word-action="pull-original">원문 가져오기</button><button type="button" class="salty-btn" data-word-action="pull-translation">번역문 가져오기</button>':''}</div><div class="bl-message-view" role="group" aria-label="메시지 목록 언어">${[['translation','번역본 보기'],['original','원문 보기']].map(([key,title])=>`<button type="button" class="salty-btn" data-message-view="${key}" aria-pressed="${cfg.messageView===key}">${title}</button>`).join('')}</div><p class="salty-note">목록에 표시할 글만 바꿔요. 번역이 없는 메시지는 원문으로 표시해요.</p><div class="bl-message-choices">${choices()}</div>`;
+    const picker=`<p class="salty-note">이전 메시지를 더 불러오고, 필요한 대화만 골라요.</p>${mode==='capture'?capturePickerControlsMarkup():''}<div class="bl-message-actions" role="group" aria-label="메시지 선택 도구"><button type="button" class="salty-btn" data-word-action="load-older">이전 채팅 불러오기</button><button type="button" class="salty-btn" data-word-action="all">모두 선택</button><button type="button" class="salty-btn" data-word-action="none">선택 해제</button>${mode==='words'?'<button type="button" class="salty-btn" data-word-action="pull-original">원문 가져오기</button><button type="button" class="salty-btn" data-word-action="pull-translation">번역문 가져오기</button>':''}</div><div class="bl-message-view" role="group" aria-label="메시지 목록 언어">${[['translation','번역본 보기'],['original','원문 보기']].map(([key,title])=>`<button type="button" class="salty-btn" data-message-view="${key}" aria-pressed="${cfg.messageView===key}">${title}</button>`).join('')}</div><p class="salty-note">목록에 표시할 글만 바꿔요. 번역이 없는 메시지는 원문으로 표시해요.</p>${choices(mode)}`;
     const capture=`<div data-capture-stage><div class="bl-capture-empty"><span aria-hidden="true">▧</span><b>저장할 장면을 먼저 확인해요</b><p>메시지를 고른 뒤 미리보기를 만들어요.<br>원문과 번역문은 바뀌지 않아요.</p></div></div><button type="button" class="salty-btn bl-tool-primary" data-word-action="capture">캡처 미리보기 만들기</button>`;
     const menu=toolSection('display','바로가기',`<label class="bl-addon-toggle"><input type="checkbox" data-addon-menu="${mode}" ${s.addonUI[mode+'Menu']?'checked':''}>별 두 개 메뉴에 표시</label><div class="bl-wand-preview"><div class="bl-wand-preview-input"><strong>✦₊</strong><span>메시지를 입력하세요</span></div><p>${mode==='words'?'단어 치환':'채팅 캡처'}</p></div>`,false,'입력창 옆 메뉴 위치');
     const main=mode==='capture'
@@ -145,6 +164,7 @@ export function bindWordTools(root, refresh) {
         getSettings().wordTools.messageView=button.dataset.messageView;saveSettings();updateMessageView(section);
     }));
     const invalidate=()=>{proposal=null;previewGen++;};
+    bindCapturePickerControls(section,{loadedIds:()=>[...document.querySelectorAll('#chat .mes[mesid]')].map(el=>Number(el.getAttribute('mesid'))),selected,chatKey:()=>context().chatId,blocked:()=>document.body.classList.contains('cg-previewing'),onChange:()=>{invalidate();selectionSummary(section);section.querySelector('[data-word-action="apply"]')?.setAttribute('disabled','');section.dispatchEvent(new CustomEvent('bl:capture-options-changed'));}});
     section.querySelectorAll('[data-rule-field]').forEach(input=>input.addEventListener('input',()=>{
         const rule=getSettings().wordTools.rules[Number(input.closest('[data-rule-index]').dataset.ruleIndex)];
         rule[input.dataset.ruleField]=input.type==='checkbox'?input.checked:input.value;invalidate();saveSettings();
@@ -159,7 +179,8 @@ export function bindWordTools(root, refresh) {
     }));
     section.querySelectorAll('[data-rule-delete]').forEach(button=>button.addEventListener('click',()=>{getSettings().wordTools.rules.splice(Number(button.dataset.ruleDelete),1);invalidate();saveSettings();refresh();}));
     section.querySelectorAll('[data-word-option]').forEach(input=>input.addEventListener('change',()=>{getSettings().wordTools[input.dataset.wordOption]=input.checked;invalidate();saveSettings();refresh();}));
-    section.querySelectorAll('[data-word-message]').forEach(input=>input.addEventListener('change',()=>{input.checked?selected.add(Number(input.dataset.wordMessage)):selected.delete(Number(input.dataset.wordMessage));invalidate();section.querySelector('[data-word-action="apply"]')?.setAttribute('disabled','');}));
+    section.addEventListener('change',event=>{const input=event.target;if(!input.matches('[data-word-message]'))return;const key=chatKey;syncChat();if(key!==chatKey){refresh();return;}input.checked?selected.add(Number(input.dataset.wordMessage)):selected.delete(Number(input.dataset.wordMessage));invalidate();selectionSummary(section);section.querySelector('[data-word-action="apply"]')?.setAttribute('disabled','');});
+    section.addEventListener('click',event=>{const button=event.target.closest('[data-capture-page]');if(!button||button.disabled)return;const key=chatKey;syncChat();if(key!==chatKey){refresh();return;}capturePage+=button.dataset.capturePage==='next'?1:-1;const picker=section.querySelector('[data-message-picker]');picker.outerHTML=choices('capture');const next=section.querySelector(`[data-capture-page="${button.dataset.capturePage}"]:not(:disabled)`)||section.querySelector('[data-capture-page]:not(:disabled)');next?.focus({preventScroll:true});});
     section.querySelector('[data-word-import]')?.addEventListener('change',event=>{if(event.target.value==='')return;getSettings().wordTools.rules.push(...structuredClone(importRuleSets(context().extensionSettings)[Number(event.target.value)].rules));invalidate();saveSettings();refresh();});
     section.querySelector('[data-word-draft]')?.addEventListener('input',event=>{draft=event.target.value;});
     // 6.0.4 잠시 가리기: 낱말 목록은 저장, 스위치는 세션 안에서만. 켜 둔 채 목록을 고치면 잠시 뒤 새 목록으로 다시 가린다
@@ -183,7 +204,7 @@ export function bindWordTools(root, refresh) {
                 if(first===0){globalThis.toastr?.info('이전 메시지를 모두 불러왔어요.','Blue Lemonade');return;}
                 const host=await import('../../../../../script.js');
                 if(context().chatId!==oldKey)throw userError('채팅이 바뀌었어요. 다시 선택해 주세요.');
-                await host.showMoreMessages(count);syncChat();
+                await host.showMoreMessages(count);syncChat();capturePage=0;
             }
             if(action==='save-preset') {
                 const name=section.querySelector('[data-word-preset-name]').value.trim();
@@ -215,7 +236,7 @@ export function bindWordTools(root, refresh) {
             }
             if(action==='add'){cfg.rules.push({from:'',to:'',enabled:true});saveSettings();}
             if(action==='none')selected.clear();
-            if(action==='all')section.querySelectorAll('[data-word-message]').forEach(input=>selected.add(Number(input.dataset.wordMessage)));
+            if(action==='all')for(const id of loadedMessageIds())selected.add(id);
             if(action==='pull-original'||action==='pull-translation') {
                 if(!ids.length)throw userError('가져올 메시지를 먼저 선택해 주세요.');
                 const translated=action==='pull-translation';

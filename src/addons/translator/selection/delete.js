@@ -198,6 +198,8 @@ function snapshotOf(target) {
         viewingOriginal: showingOriginal(message, source),
     };
 }
+// The correction tool shares the same visible-side/ordinal checks as deletion.
+export function correctionSelection() { return snapshotOf(currentSelection()); }
 
 // ── 지울 자리 정하기 ────────────────────────────────────────
 

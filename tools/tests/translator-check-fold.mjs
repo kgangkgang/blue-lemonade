@@ -10,6 +10,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { KOREAN_KEEP_ENV } from './korean-keep-env.mjs';
 
 const root = path.resolve(process.argv[2] || '.'), dir = path.join(root, 'src/addons/translator');
 const source = fs.readFileSync(path.join(dir, 'index.js'), 'utf8');
@@ -35,6 +36,7 @@ const hash = t => String([...String(t)].reduce((h, c) => (h * 31 + c.charCodeAt(
 const S = { translation_display_mode: 'folded', translation_check: true, user_defined_regexes: [], user_no_fold_regexes: [] };
 const T = { chat: [], busy: false };
 const env = {
+    ...KOREAN_KEEP_ENV,
     ...card, ...seg, extensionSettings: S, getContext: () => ({ chatMetadata: {}, chat: T.chat, name1: '나', name2: '미나' }), runtimeProtections: new Map(), console,
     correctBackticks: x => x, window: {}, MASK_PATTERN: '[[__VAR_{index}__]]', substituteParams: x => x, originalHashOf: hash, getStringHash: hash,
     isTranslationInProgress: () => T.busy, getCombinedRegexes: () => [],
