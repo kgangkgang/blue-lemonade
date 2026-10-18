@@ -18,6 +18,7 @@ import { gradientControls, mixControls, gradientAction, bindGradientColors } fro
 import { bindEditor, openEditorCatalog, arrangeEditor, revealEditorTarget, selectEditorGroup } from './settings-editor.js';
 import { SettingsHistory } from './settings-history.js';
 import { bindTouchSliders } from './touch-sliders.js';
+import { restorePreviewRules } from './lite.js';
 import { changedSettings, settingChanged, settingDefault, resetSetting, settingRoute } from './settings-differences.js';
 import { SETTING_LABELS, SETTING_VALUES } from './settings-labels.js';
 import { syncProfileClip } from './profile-clip.js';
@@ -259,7 +260,13 @@ async function askResetGroups() {
     return Object.values(groups).some(Boolean) ? groups : null;
 }
 
-export function mountPanel(container, { popup = false, onFullscreen = null } = {}) {
+export function mountPanel(container, { popup = false, onFullscreen = null, initialExtension = null } = {}) {
+    // Route before creating any preview/font cards; opening capture must not
+    // render the previously visited settings page and then throw it away.
+    if (popup && ['words','capture'].includes(initialExtension)) {
+        ui.tab='extensions';ui.subs.extensions=initialExtension;ui.picker=null;
+        store('salty_tab',ui.tab);store('salty_subs',JSON.stringify(ui.subs));
+    }
     const root = document.createElement('div');
     root.className = popup ? 'salty-panel in-popup bl-editor' : 'salty-panel bl-editor';
     root._onFullscreen = onFullscreen;
@@ -1844,6 +1851,9 @@ function restoreFocus(root, snap) {
 }
 
 function render(root) {
+    // A direct capture opening needs no appearance samples. If the user later
+    // navigates to appearance settings, enable the original preview CSS then.
+    if (ui.tab!=='extensions' || !['words','capture'].includes(subOf(ui.tab))) restorePreviewRules();
     const focusSnap = focusSnapshot(root);
     root._mdFolds ??= new Map();
     for (const item of root.querySelectorAll('details[data-md-fold]')) root._mdFolds.set(item.dataset.mdFold,item.open);

@@ -29,6 +29,7 @@ import { startChatGraph } from './src/chat-graph-launcher.js';
 import { startInlineTone, retoneAll } from './src/tone.js';
 import { startStreamFade, streamFadeState } from './src/streamfade.js';
 import { startStreamFollow } from './src/stream-follow.js';
+import { startReadingResume } from './src/reading-resume.js';
 import { startMainChatRules } from './src/main-chat-rules.js';
 import { startNaturalSlash } from './src/natural-slash.js';
 import { startWorldInfoHelp } from './src/wi-help.js';
@@ -117,21 +118,21 @@ async function showVersion(badge) {
 }
 
 async function openPopup(fullscreen = false, extension = null) {
-    restorePreviewRules();
+    const directCapture = extension === 'capture';
+    if (!directCapture) restorePreviewRules();
     const ctx = SillyTavern.getContext();
     let api;
     try { api = await loadPanel(); } catch (error) { console.error('[Blue Lemonade] 설정 창을 불러오지 못했어요', error); panelFailed(); return; }
     const { mountPanel, unmountPanel, setPanelFullscreen } = api;
     const wrap = document.createElement('div');
     wrap.style.textAlign = 'left';
-    const panel = mountPanel(wrap, { popup: true });
+    const panel = mountPanel(wrap, { popup: true, initialExtension: extension });
     const dialog = bindSettingsDialog(panel);
 
-    setTimeout(retoneAll, 400); // 정규식 카드 미리보기의 색 글자도 톤 맞춤 (tone.js)
+    if (!directCapture) setTimeout(retoneAll, 400); // 캡처는 이미 표시된 채팅을 쓰므로 전체 채팅을 다시 톤 맞추지 않는다.
     try {
         await ctx.callGenericPopup(wrap, ctx.POPUP_TYPE.TEXT, '', { wide: true, allowVerticalScrolling: true, okButton: false, onOpen: popup => {
             dialog.opened(popup);
-    if(['words','capture'].includes(extension))panel.querySelector(`[data-act="editor-route"][data-tab="extensions"][data-sub="${extension}"]`)?.click();
             setPanelFullscreen(panel, fullscreen);
         } });
     } finally { dialog.closed(); unmountPanel(panel); refreshPanels(); }
@@ -212,6 +213,7 @@ jQuery(() => {
     startInlineTone();  // 본문 글자색의 채도 · 밝기 맞춤 (2.6.0)
     startStreamFade();  // 스트리밍 중 새 글자만 가볍게 페이드 인 (2.9.5)
     startStreamFollow(); // 새 글 뒤에 늦게 온 scroll 이벤트가 자동 스크롤을 잠그지 않게
+    startReadingResume({isEnabled:()=>themeEnabled(getSettings())});
     $(document).on('change', 'input[data-toggle="chat.toneInline"], input[data-toggle="chat.unifyInline"]', () => setTimeout(retoneAll, 50));
 
     const { eventSource, event_types } = SillyTavern.getContext();

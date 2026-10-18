@@ -1,5 +1,6 @@
 // Explicit corrections belong to one chat's metadata, never global settings.
 import { glossaryFold, glossaryAlternatives, glossaryOccursIn } from './glossary-match.js';
+import { styleProfileSignature } from './style-profile.js';
 export const CHAT_GLOSSARY_KEY = 'llmt_chat_glossary_v1';
 export const CHAT_GLOSSARY_LIMIT = 100;
 const term = value => typeof value === 'string' && value.trim() && value.length <= 100 && !/[\r\n<>*_`~\[\]{}\\\u0000-\u001f]/.test(value);
@@ -10,15 +11,15 @@ export function chatGlossaryEntries(metadata) {
     return entries.slice(0, CHAT_GLOSSARY_LIMIT).filter(e => e && term(e.src) && term(e.dst) && glossaryAlternatives(e.src).length === 1)
         .map(e => ({ id: String(e.id ?? e.src), scope: 'chat', src: e.src, dst: e.dst }));
 }
-export function chatGlossarySignature(metadata) { return chatGlossaryEntries(metadata).map(({src,dst}) => [src,dst]); }
+export function chatGlossarySignature(metadata) { const terms=chatGlossaryEntries(metadata).map(({src,dst})=>[src,dst]),styles=styleProfileSignature(metadata);return styles.length?[...terms,['speech-preferences-v1',styles]]:terms; }
 // Once a loaded chat starts a scoped translation, later rule deletion cannot
 // make its in-flight result eligible for the legacy source-only global cache.
 // Weak ownership has no persistent setting or unbounded source-text collection.
 export function createChatTermCachePolicy() {
     const scoped = new WeakSet();
     return {
-        mark(metadata) { if (metadata && chatGlossaryEntries(metadata).length) scoped.add(metadata); },
-        blocked(metadata) { return !!metadata && (scoped.has(metadata) || chatGlossaryEntries(metadata).length > 0); },
+        mark(metadata) { if (metadata && chatGlossarySignature(metadata).length) scoped.add(metadata); },
+        blocked(metadata) { return !!metadata && (scoped.has(metadata) || chatGlossarySignature(metadata).length > 0); },
     };
 }
 export function proposeChatTerm(entries, selected, source) {

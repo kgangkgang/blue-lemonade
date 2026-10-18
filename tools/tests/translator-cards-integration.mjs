@@ -127,4 +127,18 @@ await test('6.5.4 Korean target: fixed status values and remembered values are f
  await env.translate(korean('English prose.'));assert(sent.some(x=>x.includes('上午 07:15')),'another target language sends everything');
  Object.keys(S).forEach(key=>delete S[key]);Object.assign(S,beforeSettings);env.callLLMAPI=beforeCall;delete globalThis.localStorage;cardValueModule.forgetCardValueMemory();
 });
+await test('actual translate applies explicit chat speech preferences only to matching source, even when glossary is off',async()=>{
+    const savedMetadata=ctx.chatMetadata,savedReply=reply,savedCheckpoint=env.checkpointKey;
+    const signatures=[];env.checkpointKey=async text=>{signatures.push(text);return text;};
+    ctx.chatMetadata={llmt_style_profiles_v1:[{id:'pair',speaker:'Mina',listener:'Rex',mutual:true,mode:'casual',note:'서로 이름으로 부르기'}]};
+    reply=()=> '미나가 렉스에게 인사했다.';
+    try{
+        events.length=0;await env.translate('Mina said hello to Rex.',{noChunks:true});
+        assert(events.some(p=>p.includes('[Character speech preferences]')&&p.includes('both directions')&&p.includes('반말')));
+        assert(signatures.some(s=>s.includes('speech-v1')),'style preferences are part of the cache signature with glossary off');
+        events.length=0;await env.translate('Another person waved.',{noChunks:true});assert(events.every(p=>!p.includes('[Character speech preferences]')));
+        events.length=0;await env.translate('Mina said hello to Rex.',{noChunks:true,isInputTranslation:true});assert(events.every(p=>!p.includes('[Character speech preferences]')));
+        ctx.chatMetadata={};events.length=0;await env.translate('Mina said hello to Rex.',{noChunks:true});assert(events.every(p=>!p.includes('[Character speech preferences]')));
+    }finally{ctx.chatMetadata=savedMetadata;reply=savedReply;env.checkpointKey=savedCheckpoint;}
+});
 console.log(`${checks} translator card integration checks passed`);

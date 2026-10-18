@@ -6,6 +6,8 @@
 //   마크다운 뒤 훅에서 작은 span 으로 바꾼다 — 닫는 태그 꼴이라 빠진 대사 괄호 되살리기(줄 끝 껍데기)가 건너뛰고, 혹시 남아도 정화기가 지운다.
 import { checkTranslation, markParagraphs, paragraphAt, paragraphRange, standaloneParagraphs, cleanLeaks, CHECK_REASONS, MESSAGE_REASONS } from './translation-check.js';
 
+import { createCheckReview } from './check-review.js';
+
 const MARK = n => `</llmt-mark-${n}>`;
 const MARK_FOUND = /<\/llmt-mark-(\d+)>|&lt;\/llmt-mark-(\d+)&gt;/g;
 const LIMIT = 300;
@@ -22,7 +24,7 @@ const plainText = text => String(text ?? '').replace(/<!--[\s\S]*?(?:-->|$)/g, '
  *  rerender(id) — 표시를 달려고 그 메시지를 다시 그린다.
  *  act(kind, id, index, row) → Promise — 'retry' 이 문단만 다시 번역 · 'fill' 빠진 문단 채우기 · 'clean' 초안 걷어 내기 · 'whole' 메시지 전체 다시 번역.
  */
-export function createCheckView({ stateOf, rerender, act }) {
+export function createCheckView({ stateOf, rerender, act, scope }) {
     const results = new Map();
     const remember = (key, value) => { results.delete(key); results.set(key, value); while (results.size > LIMIT) results.delete(results.keys().next().value); };
     const resultOf = state => {
@@ -65,6 +67,7 @@ export function createCheckView({ stateOf, rerender, act }) {
             const state = stateOf(id);
             if (!state) { paintBadge(id, null); continue; }
             const fresh = !results.has(state.key), result = resultOf(state);
+            review.observe(id, state, result);
             done++;
             paintBadge(id, result);
             if (fresh && result?.flagged) { rerender(id); autoFix(id, state, result); }
@@ -102,6 +105,7 @@ export function createCheckView({ stateOf, rerender, act }) {
         if (!state) { later(() => paintBadge(id, null)); return mes; }
         if (!results.has(state.key)) { schedule(id); return mes; }
         const result = results.get(state.key);
+        review.observe(id, state, result);
         later(() => paintBadge(id, result));
         if (!result?.flagged) return mes;
         return markParagraphs(mes, result.paragraphs.map(row => row.index), MARK, state.protect);
@@ -233,5 +237,14 @@ export function createCheckView({ stateOf, rerender, act }) {
         const state = stateOf(Number(id));
         if (state) results.delete(state.key);
     }
-    return { mark, finish, paintFromCache, schedule, close, forget, resultOf };
+    const review = createCheckReview({ stateOf, resultOf, forget, actionFor, scope, act: (kind, id, index, row, options) => {
+        // A board action is one explicit repair. Its rerender must not enqueue
+        // the existing automatic follow-up repairs for this same source.
+        if (options.manualReview) {
+            autoTries.set(`${id}\u0001${options.expectedState.source}`, AUTO_MAX);
+            while (autoTries.size > 200) autoTries.delete(autoTries.keys().next().value);
+        }
+        return act(kind, id, index, row, options);
+    } });
+    return { mark, finish, paintFromCache, schedule, close, forget, resultOf, review };
 }

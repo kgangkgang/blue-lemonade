@@ -35,7 +35,7 @@ await check('a clean translation triggers nothing and paints no badge', async ()
 });
 await check('wiring: runCheckAction takes { auto } and the setting text says it fixes automatically', () => {
     const src = fs.readFileSync(path.join(root, 'src/addons/translator/index.js'), 'utf8');
-    assert.match(src, /async function runCheckAction\(kind, id, index, row, \{ auto = false \} = \{\}\)/);
+    assert.match(src, /async function runCheckAction\(kind, id, index, row, \{ auto = false, expectedState = null, manualReview = false \} = \{\}\)/);
     assert.match(fs.readFileSync(path.join(root, 'src/addons/translator/index.html'), 'utf8'), /번역 점검 · 자동 고치기/);
 });
 console.log(`translator-autofix: ${passed} passed, 0 failed`);

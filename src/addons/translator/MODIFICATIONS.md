@@ -39,3 +39,5 @@ Modified 2026-10-18 (2.9.4): a Han character sitting inside a Korean word (Hangu
 Modified 2026-10-18 (2.9.5): preserve the visible paragraph and its reading position when translation previews or final text change the message height. Follow new text only when already at the bottom; user scrolling cancels pending layout corrections.
 
 Modified 2026-10-18 (2.9.6): remember a manually corrected name or term for the current chat from the existing selection tool. Validate the source term locally, preserve the selected occurrence, and support undo and removal. Chat rules override broader glossary scopes without additional model calls; cache ownership and asynchronous save verification keep other chats isolated.
+
+Modified 2026-10-18 (2.9.7): add current-chat character speech preferences for explicitly identified speakers and optional addressees, with local management and undo. Reuse existing translation checks in a read-only review list; any repair targets an explicitly chosen item and validates current message, chat, and policy state. Listing and saving preferences do not request model responses.

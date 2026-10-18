@@ -40,6 +40,8 @@
 .llmt-term-memory label { display:block; margin:12px 0; }
 .llmt-term-memory input { display:block; width:100%; min-width:0; margin-top:5px; padding:10px; border:1px solid color-mix(in srgb,var(--ba-fg) 20%,transparent); border-radius:10px; background:var(--ba-card); color:var(--ba-fg); font:inherit; }
 .llmt-term-memory p { font-size:.9em; overflow-wrap:anywhere; }
+.llmt-term-memory input[type="checkbox"] { display:inline-block; width:auto; margin-right:6px; }
+.llmt-term-memory select { max-width:100%; padding:8px; background:var(--ba-card); color:var(--ba-fg); border-radius:8px; }
 @media(hover:hover) { .llmt-selection button:not(:disabled):hover { box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--ba-fg) 10%,transparent); } .llmt-selection button[data-close]:hover { background:var(--ba-card); } }
 @media(max-width:480px) { .llmt-selection { width:calc(100vw - 24px); max-width:calc(100vw - 24px); } .llmt-selection header { padding:12px 14px 8px; } .llmt-selection-body { padding:0 14px 14px; } }
 

@@ -3,6 +3,7 @@ import { LABELS, esc } from './core.js';
 import { enabled, termHooks } from './state.js';
 import { prepareTranslation, applyTranslation } from './translation.js';
 import { prepareTermMemory, applyTermMemory, undoTermMemory, prepareTermList, removeTermRule } from './term-memory.js';
+import { attachStyleProfiles } from './style-profile-ui.js';
 let selected = null, dialog = null;
 export function setSelection(value) { selected = value; }
 export function clearSelection() { selected = null; }
@@ -45,6 +46,7 @@ export async function openTool(id) {
     if (id === 'retranslate') {
         body.innerHTML = '<p>선택한 문단을 원문으로 다시 번역해요. 확인한 뒤 교체하세요.</p>' + (snapshot ? textBlock('선택한 번역문', snapshot.text) : '<p>창을 닫고 채팅 본문에서 문장이나 문단을 선택한 뒤, 나타나는 언어 버튼을 눌러 주세요.</p>') + '<button data-translate data-primary><i class="fa-solid fa-language" aria-hidden="true"></i> 다시 번역</button><div data-preview></div>';
         const button = body.querySelector('[data-translate]'); button.disabled = !snapshot;
+        attachStyleProfiles(body,snapshot,()=>closed||!box.open);
         const terms = document.createElement('details'); terms.className = 'llmt-term-memory';
         terms.innerHTML = '<summary>다음에도 이 표기로</summary><p>이 채팅에서만 기억해요. 원문 표기 한 가지와 원하는 표기를 확인해 주세요. 이름·호칭도 말하는 사람에 따라 달라진다면 원문을 더 구체적으로 적어 주세요.</p><button data-term-open>선택한 표기 고치기</button><div data-term-form></div>';
         body.append(terms); terms.querySelector('[data-term-open]').disabled = !snapshot;

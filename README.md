@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.1.7/blue-lemonade-7.1.7.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.1.8/blue-lemonade-7.1.8.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
@@ -20,7 +20,17 @@ AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·�
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.1.7 · 최신 업데이트</summary>
+<summary>7.1.8 · 최신 업데이트</summary>
+
+- 채팅을 다시 열거나 새로고침할 때 읽던 문단으로 돌아가요. 직접 스크롤하면 복귀를 멈춰요.
+- 현재 채팅에서 인물별 말투·상대 호칭을 번역 지침으로 기억할 수 있어요.
+- 의심 번역을 한곳에 모아 원문과 비교하고, 고른 항목만 처리할 수 있어요.
+- 캡처 메뉴를 열 때 이전 설정 화면을 거치지 않고 바로 열도록 바꿨어요.
+
+</details>
+
+<details>
+<summary>7.1.7 · 캡처 구간 선택과 채팅별 표기 기억</summary>
 
 - 캡처 목록을 최신 메시지부터 50개씩 보여 주고, 원문·번역 미리보기를 다시 쓸 때 불필요한 처리를 줄였어요. 페이지를 넘겨도 선택은 유지돼요.
 - 캡처할 메시지의 시작과 끝을 고르면 사이 구간을 한 번에 선택할 수 있어요.

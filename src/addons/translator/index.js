@@ -21,6 +21,7 @@ import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
 import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey, glossaryLinesFor, enforceGlossaryNames, dropDanglingOpenQuote } from './glossary-match.js';
 import { chatGlossaryEntries, chatGlossarySignature, createChatTermCachePolicy } from './chat-glossary.js';
+import { styleProfileBlock, styleProfileSignature } from './style-profile.js';
 import { saveTermChat } from './selection/term-save.js';
 const chatTermCachePolicy = createChatTermCachePolicy();
 import { glossarySignature, glossaryGone, mergeGlossary, glossaryMessage, renameGlossaryScope, GONE_KEY as GLOSSARY_GONE } from './glossary-sync.js';   // 2.7.5 다른 기기의 옛 설정 저장에 덮이지 않게 (updated · 지운 기록 · 합치기)
@@ -1879,7 +1880,7 @@ async function translate(text, options = {}) {
         //       기억 범위 = 채팅 번역 프롬프트 · 용어집(문단 캐시 서명과 같은 재료). 재번역은 기억을 읽지 않고 새 결과로 고친다.
         const cardChat = getContext(), chatPrompt = String(extensionSettings.llm_prompt_chat ?? '');
         const cardLocal = !options.isInputTranslation && /korean|한국어|한국말/i.test(String(options.prompt ?? chatPrompt)) ? cardValues({
-            scope: String(getStringHash(JSON.stringify([chatPrompt, extensionSettings.glossary_enabled === false ? null
+            scope: String(getStringHash(JSON.stringify([chatPrompt, ...(styleProfileSignature(cardChat?.chatMetadata).length ? ['speech-v1',styleProfileSignature(cardChat?.chatMetadata)] : []), extensionSettings.glossary_enabled === false ? null
                 : [cardChat?.groupId ?? null, cardChat?.characters?.[cardChat?.characterId]?.avatar ?? null, glossarySignature(extensionSettings.glossary_entries), ...chatGlossarySignature(cardChat?.chatMetadata)]]))),   // 2.7.5 updated 는 서명에서 뺀다
             remember: options.isRetranslation !== true,
         }) : null;
@@ -1956,6 +1957,9 @@ async function translate(text, options = {}) {
             }
             if (layout === 2) built = `[Fiction translation request]\n\n${built}`;
 
+            const speechPreferences = !isInputTranslation ? styleProfileBlock(getContext().chatMetadata, options.checkSource ?? body) : '';
+            if (speechPreferences) built += `\n\n${speechPreferences}`;
+
             // 추가 지침(가이던스) 추가
             if (additionalGuidance && additionalGuidance.trim()) {
                 built += `\n\n[Additional Guidance]:\n${additionalGuidance}`;
@@ -1983,7 +1987,7 @@ async function translate(text, options = {}) {
         const prepared = { get(body) { if (!built.has(body)) { watcher.check(); built.set(body, PROMPT_LAYOUTS.map(layout => buildFullPrompt(layout, body))); } return built.get(body); } };
         // 문단 캐시 · 이어하기 키의 서명: 준비된 프롬프트 전체 대신 연결 · 프롬프트 · 지침 · 용어집(범위 + 항목) 요약 하나 (paragraph-v2)
         const chatCtx = getContext();
-        const setupDigest = await checkpointKey(JSON.stringify([connection, finalPrompt, rulePrompt, additionalGuidance, extensionSettings.glossary_enabled === false ? null
+        const setupDigest = await checkpointKey(JSON.stringify([connection, finalPrompt, rulePrompt, additionalGuidance, ...(styleProfileSignature(chatCtx?.chatMetadata).length ? ['speech-v1',styleProfileSignature(chatCtx?.chatMetadata)] : []), extensionSettings.glossary_enabled === false ? null
             : [chatCtx?.groupId ?? null, chatCtx?.characters?.[chatCtx?.characterId]?.avatar ?? null, glossarySignature(extensionSettings.glossary_entries), ...chatGlossarySignature(chatCtx?.chatMetadata)], ...(displayCards.count ? ['display-cards-v1'] : []), ...(autoContextGuard ? ['auto-context-v1', autoContextGuard.stamp] : []), ...(keptKorean.size ? ['korean-keep-v1'] : [])]));
         const key = chunks.length > 1 ? await checkpointKey(JSON.stringify([setupDigest, text, ...(/<!--[\s\S]*?-->/.test(text) ? ['comments-v1'] : [])])) : '';   // 2.5.1 주석을 보호하기 전 덩이로 이어 쓰지 않게
         watcher.check();
@@ -3011,7 +3015,8 @@ function checkStateOf(id, mes) {
     if ((mes !== undefined && mes !== shown) || isTranslationInProgress(id)) return null;
     const source = substituteParams(message.mes, context.name1, message.name);
     if (shown === source || !extra.original_text_hash || extra.original_text_hash !== originalHashOf(source)) return null;
-    return { source, translation: shown, chatTermScoped: chatTermCachePolicy.blocked(context.chatMetadata), requestMetadata: context.chatMetadata, protect: getCombinedRegexes(), key: `${extra.original_text_hash}:${getStringHash(shown)}:${shown.length}` };
+    const protect = getCombinedRegexes(), policySignature = JSON.stringify(protect.map(rule => [rule.source, rule.flags]));
+    return { message, swipe: message.swipe_id, source, translation: shown, chatTermScoped: chatTermCachePolicy.blocked(context.chatMetadata), requestMetadata: context.chatMetadata, protect, policySignature, key: `${extra.original_text_hash}:${getStringHash(shown)}:${shown.length}:${getStringHash(policySignature)}` };
 }
 // 판정 · 화면 모듈(translation-check.js 21KB + check-view.js 15KB)은 필요할 때만 불러온다 — 점검할 번역문이 처음 그려질 때.
 //   그 전까지 checkView 는 껍데기: 그리기 훅은 글을 그대로 두고 불러오기만 걸어 두며, 불러오면 그 메시지를 한가할 때 점검한다
@@ -3020,7 +3025,7 @@ const loadCheckLib = () => import('./translation-check.js');
 let checkViewReal = null, checkViewLoading = null;
 function loadCheckView() {
     checkViewLoading ??= import('./check-view.js').then(({ createCheckView }) => (checkViewReal = createCheckView({
-        stateOf: checkStateOf,
+        stateOf: checkStateOf, scope: () => getContext().chatMetadata,
         rerender: id => { const message = getContext().chat?.[id]; if (message) refreshMessageBlock(id, message); },
         act: runCheckAction,
     }))).catch(error => { console.warn('[LLM Translator] 번역 점검을 불러오지 못했어요:', error); checkViewLoading = null; return null; });
@@ -3040,14 +3045,25 @@ const checkView = {
     paintFromCache: id => checkViewReal?.paintFromCache(id),
     close: () => checkViewReal?.close(),
 };
+async function openTranslationCheckBoard() {
+    const view = await loadCheckView();
+    if (!view) return;
+    const { openCheckBoard } = await import('./check-board.js');
+    openCheckBoard({ review: view.review, context: getContext, unavailable: () => extensionSettings.translation_check === false
+        ? '번역 점검이 꺼져 있어요. 번역 점검을 켜고 표시 중인 번역을 확인해 주세요.'
+        : (extensionSettings.translation_display_mode || 'disabled') !== 'disabled' ? '원문 함께 보기를 사용 중인 메시지는 기존 점검 대상에서 제외돼요.' : '' });
+}
 /** 점검으로 고친 번역문을 붙이고 저장한다 (다시 번역 · 걷어 내기와 같은 뒷일: 캐시 · 다시 그리기 · 알림 · 스와이프 · 저장) */
-async function saveCheckedTranslation(id, message, state, next, { cache = true } = {}) {
+async function saveCheckedTranslation(id, message, state, next, { cache = true, guard = null } = {}) {
     const context = getContext();
     next = tidyGlossaryOutput(state.source, next);   // 2.7.0 문단 다시 번역 · 빠진 문단 채우기도 이름 지키기
+    guard?.assert();
     message.extra.display_text = processTranslationText(state.source, next);
+    guard?.acceptDisplay();
     markTranslatedOriginal(message, state.source);
     rememberTranslation(message, state.source, next); // 6.9.5
-    if (cache) await storeTranslationQuietly(state.source, next, state);   // 원문 되풀이 · 깨진 주석이 남은 글은 storeTranslationQuietly 가 거른다
+    if (cache) await storeTranslationQuietly(state.source, next, state);
+    guard?.assert();   // 원문 되풀이 · 깨진 주석이 남은 글은 storeTranslationQuietly 가 거른다
     refreshMessageBlock(id, message);
     eventSource.emit('EXTENSION_LLM_TRANSLATE_DONE', { messageId: id, message, sourceText: message.mes, chatId: context.chatId, originalText: state.source, translatedText: message.extra.display_text, type: 'retranslation' });
     emitTranslationUIUpdate(id, 'retranslation');
@@ -3060,17 +3076,30 @@ async function saveCheckedTranslation(id, message, state, next, { cache = true }
  * 문단 번역은 메시지 번역과 같은 translate() (프롬프트 · 용어집 · 보호 규칙 · 끊김 · 누출 검사 · 문단 캐시) — 그 문단의 옛 캐시 줄은 먼저 잊는다.
  * 그 사이 번역문이 바뀌었으면(다른 기기 · 편집 · 다시 번역) 붙이지 않는다. 실패하면 던져서 창의 단추를 되살린다.
  */
-async function runCheckAction(kind, id, index, row, { auto = false } = {}) {   // 2.6.6 auto: 점검이 스스로 부른 것 — 안내 토스트는 줄인다
+async function runCheckAction(kind, id, index, row, { auto = false, expectedState = null, manualReview = false } = {}) {   // 2.6.6 auto: 점검이 스스로 부른 것 — 안내 토스트는 줄인다
     const context = getContext(), message = context.chat?.[id];
+    const reviewGuard = manualReview && message ? guards.capture(message) : null;
+    const assertReview = () => {
+        if (!expectedState) return;
+        reviewGuard?.assert();
+        const now = checkStateOf(id);
+        if (!now || now.message !== expectedState.message || now.swipe !== expectedState.swipe || now.requestMetadata !== expectedState.requestMetadata
+            || now.source !== expectedState.source || now.translation !== expectedState.translation || now.key !== expectedState.key || now.policySignature !== expectedState.policySignature) throw Error('메시지나 번역이 바뀌었어요. 의심 번역 목록을 새로고침해 주세요.');
+    };
+    const assertReviewPolicy = () => {
+        if (expectedState && expectedState.policySignature !== JSON.stringify(getCombinedRegexes().map(rule => [rule.source, rule.flags]))) throw Object.assign(Error('보호 규칙이 바뀌어 번역을 붙이지 않았어요. 다시 검사해 주세요.'), { cancelled: true });
+    };
+    assertReview();
     const info = auto ? () => {} : (text, title) => toastr.info(text, title);
     if (kind === 'whole') { await translateMessage(id, true, 'handleTranslateButtonClick_retranslate'); return; }
     const state = checkStateOf(id);
     if (!message || !state) { info('번역문이 바뀌었어요. 표시가 다시 붙으면 그때 눌러 주세요.', '번역 점검'); return; }
     const { paragraphRange, replaceParagraph, insertAfterParagraph, cleanLeaks, standaloneParagraphs } = await loadCheckLib();
+    assertReview();
     if (kind === 'clean') {
         const cleaned = cleanLeaks(state.source, state.translation);
         if (cleaned === state.translation) { info('걷어 낼 것이 없어요.', '번역 점검'); return; }
-        await saveCheckedTranslation(id, message, state, cleaned);
+        await saveCheckedTranslation(id, message, state, cleaned, { guard: reviewGuard });
         toastr.success(auto ? '번역에 섞인 초안 · 혼잣말을 자동으로 걷어 냈어요.' : '초안 · 혼잣말을 걷어 냈어요.', '번역 점검');
         return;
     }
@@ -3083,17 +3112,21 @@ async function runCheckAction(kind, id, index, row, { auto = false } = {}) {   /
     try {
         // 옛 (의심) 번역이 캐시에서 그대로 나오지 않게 — 메시지 전체로 나눈 문단 키 · 이 문단만 보낸 키 둘 다
         const numbers = Array.from({ length: to - from + 1 }, (_, n) => from + n);
+        assertReviewPolicy();
         await translate(state.source, { segmentCache: true, forget: numbers });
+        assertReviewPolicy();
         await translate(srcText, { segmentCache: true, forget: true });
+        assertReviewPolicy();
         const report = {};
-        let out = await translate(srcText, { segmentCache: true, assertValid: () => runToken.guard.assert(), onProgress: badge.update, report });
+        let out = await translate(srcText, { segmentCache: true, assertValid: () => { runToken.guard.assert(); assertReviewPolicy(); }, onProgress: badge.update, report });
         out = dropStrayWords(out, srcText);
         runToken.guard.assert();
+        assertReviewPolicy();
         if (report.partial) { toastr.warning('이번에도 번역이 막혀서 바꾸지 않았어요.', '번역 점검', { timeOut: 8000 }); return; }
         if (message.extra?.display_text !== state.translation) { toastr.warning('그 사이 번역문이 바뀌어서 붙이지 않았어요.', '번역 점검'); return; }
         const next = kind === 'fill' ? insertAfterParagraph(state.translation, index, out, state.protect) : replaceParagraph(state.translation, index, out, state.protect);
         if (!next) throw new Error('번역 답이 비어 있어요.');
-        await saveCheckedTranslation(id, message, state, next, { cache: !report.restoredBlocks });
+        await saveCheckedTranslation(id, message, state, next, { cache: !report.restoredBlocks, guard: reviewGuard });
         toastr.success(kind === 'fill' ? `빠진 문단을 ${auto ? '자동으로 ' : ''}번역해 넣었어요.` : auto ? `이상한 ${index + 1}번째 문단을 자동으로 다시 번역했어요.` : '이 문단을 다시 번역했어요.', '번역 점검');
     } catch (error) {
         runToken.error = error;
@@ -5809,6 +5842,11 @@ function initializeEventHandlers() {
         saveSettingsDebounced();
     });
 
+    // The board reuses cached checks; opening it never translates the chat.
+    if (!document.getElementById('llm_check_board')) {
+        const anchor = document.getElementById('llm_translation_check')?.closest('label');
+        if (anchor) { const button = document.createElement('button'); button.id = 'llm_check_board'; button.type = 'button'; button.className = 'menu_button'; button.textContent = '의심 번역 모아보기'; button.addEventListener('click', () => { void openTranslationCheckBoard().catch(error => toastr.error(error.message, '번역 점검')); }); anchor.after(button); }
+    }
     // 2.6.0 번역 점검 표시 · 생각 블록 번역 단추 — 바꾸면 그려진 메시지를 다시 그린다 (표시 · 단추를 달거나 뗀다)
     $('#llm_translation_check, #llm_reasoning_translate').on('change', function () {
         extensionSettings[this.id === 'llm_translation_check' ? 'translation_check' : 'reasoning_translate'] = $(this).is(':checked');
