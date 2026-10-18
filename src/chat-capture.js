@@ -30,25 +30,53 @@ const limited = (promise, ms, message) => new Promise((resolve,reject)=>{
 });
 const BLANK='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; // 1×1 투명
 async function copyPaint(source, clone, resources, signal, options={}, skip=()=>{}) {
-    signal.throwIfAborted();
-    // 모델 아이콘 SVG 안의 잉크스케이프 메타 요소(sodipodi:namedview 등)는 style 이 없는 맨 Element — 그릴 것도 없으니 건너뛴다
-    if(!clone?.style||!source.style)return;
-    if(source.matches('script,iframe,video,audio,.mes_buttons,.mes_edit_buttons,.swipe_left,.swipe_right,.swipes-counter')||(options.showAssets===false&&source.closest('.mes_text')&&source.matches('img,picture,svg,canvas'))||(options.showAvatar===false&&source.matches('.avatar'))||(options.showName===false&&source.matches('.name_text,.mes_name')))return;
-    const bg=resources.paint(source,clone);
-    clone.style.animation='none';clone.style.transition='none';clone.style.contentVisibility='visible';
-    clone.removeAttribute('id');clone.removeAttribute('onclick');
-    // 못 읽는 그림 하나 때문에 캡처 전체가 멈추지 않게: 그 그림만 투명한 빈칸으로 두고 센다 (취소 · 시간 초과는 그대로 멈춘다)
-    const embedded=url=>resources.embed(url,signal).catch(error=>{if(signal.aborted||error?.name==='AbortError')throw error;skip();return BLANK;});
-    if(source.tagName==='IMG') {
-        clone.removeAttribute('srcset');clone.removeAttribute('loading');
-        if(source.currentSrc||source.src)clone.src=await embedded(source.currentSrc||source.src);
+    // Pair source and clone nodes before the first yield. A later insertion in
+    // the live chat must not shift the indices and style a different clone.
+    const pairs=[], stack=[[source,clone,-1]], pending=[];
+    while(stack.length){const [source,clone,parent]=stack.pop(),index=pairs.length;pairs.push({source,clone,parent,sourceParent:source.parentNode,skip:false});for(let i=source.children.length-1;i>=0;i--)stack.push([source.children[i],clone?.children[i],index]);}
+    let deadline=performance.now()+8, failed=null;
+    // Nested timers are clamped and can add seconds to a long capture. Prefer
+    // the browser's cooperative scheduler, then an unclamped message task.
+    const yieldTask=()=>{
+        signal.throwIfAborted();
+        if(typeof globalThis.scheduler?.yield==='function')return globalThis.scheduler.yield();
+        if(typeof MessageChannel!=='function')return new Promise(resolve=>setTimeout(resolve,0));
+        return new Promise((resolve,reject)=>{
+            const channel=new MessageChannel();
+            const close=()=>{channel.port1.onmessage=null;channel.port1.close();channel.port2.close();signal.removeEventListener('abort',abort);};
+            const abort=()=>{close();reject(signal.reason||new DOMException('캡처를 취소했어요.','AbortError'));};
+            channel.port1.onmessage=()=>{close();resolve();};signal.addEventListener('abort',abort,{once:true});
+            try{channel.port2.postMessage(null);}catch(error){close();reject(error);}
+        });
+    };
+    // Network requests stay parallel. Attach rejection handlers immediately so
+    // yielding the UI never leaves a rejected image request unobserved.
+    const queue=task=>pending.push(task.catch(error=>{failed ||= error;}));
+    for(let index=0;index<pairs.length;index++){
+        signal.throwIfAborted();if(failed)throw failed;
+        const pair=pairs[index],{source,clone,parent}=pair;
+        if((parent>=0&&pairs[parent].skip)||!clone?.style||!source.style){pair.skip=true;continue;}
+        if(source.parentNode!==pair.sourceParent||source.isConnected===false)throw Error('저장 중 메시지가 바뀌었어요. 답변·번역이 끝난 뒤 다시 만들어 주세요.');
+        if(source.matches('script,iframe,video,audio,.mes_buttons,.mes_edit_buttons,.swipe_left,.swipe_right,.swipes-counter')||(options.showAssets===false&&source.closest('.mes_text')&&source.matches('img,picture,svg,canvas'))||(options.showAvatar===false&&source.matches('.avatar'))||(options.showName===false&&source.matches('.name_text,.mes_name'))){pair.skip=true;continue;}
+        const bg=resources.paint(source,clone);
+        clone.style.animation='none';clone.style.transition='none';clone.style.contentVisibility='visible';
+        clone.removeAttribute('id');clone.removeAttribute('onclick');
+        const embedded=url=>resources.embed(url,signal).catch(error=>{if(signal.aborted||error?.name==='AbortError')throw error;skip();return BLANK;});
+        if(source.tagName==='IMG'){
+            clone.removeAttribute('srcset');clone.removeAttribute('loading');
+            if(source.currentSrc||source.src)queue(embedded(source.currentSrc||source.src).then(value=>{clone.src=value;}));
+        }
+        if(bg.includes('url('))queue((async()=>{
+            let output=bg;
+            for(const match of urls(bg))output=output.replace(match.raw,`url("${await embedded(new URL(match.url,location.href).href)}")`);
+            clone.style.backgroundImage=output;
+        })());
+        if(index+1<pairs.length&&performance.now()>=deadline){
+            await yieldTask();
+            deadline=performance.now()+8;
+        }
     }
-    if(bg.includes('url(')) {
-        let output=bg;
-        for(const match of urls(bg))output=output.replace(match.raw,`url("${await embedded(new URL(match.url,location.href).href)}")`);
-        clone.style.backgroundImage=output;
-    }
-    await Promise.all([...source.children].map((child,i)=>copyPaint(child,clone.children[i],resources,signal,options,skip)));
+    await Promise.all(pending);signal.throwIfAborted();if(failed)throw failed;
 }
 export async function captureMessages(ids, progress=()=>{}, options={}, signal=null) {
     signal?.throwIfAborted();
@@ -69,7 +97,7 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
     const abort=()=>controller.abort();
     signal?.addEventListener("abort",abort,{once:true});
     const timer=setTimeout(abort,25000);
-    const moving=[];
+    const moving=[], fragment=document.createDocumentFragment();
     let skippedImages=0;
     let rasterImage=null,rasterCanvas=null,filterUsed=false;
     try {
@@ -98,8 +126,10 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
                 image.style.setProperty('max-height',`${width*1.45}px`,'important');image.style.setProperty('max-block-size',`${width*1.45}px`,'important');image.style.objectFit='contain';
             }
             clone.style.width=`${width}px`;clone.style.maxWidth='none';clone.style.height='auto';clone.style.contentVisibility='visible';clone.style.margin='0';
-            wrapper.append(clone);
+            fragment.append(clone);
         }
+        // Commit off-screen clones once, after all live style reads are done.
+        wrapper.append(fragment);
         const privacy=preparePrivacy(wrapper,options);
         const fullHeight=Math.ceil(wrapper.getBoundingClientRect().height);
         const pages=options.videoLayer?capturePagePlan(wrapper,width,options.maxParagraphs):[{top:0,height:fullHeight}];

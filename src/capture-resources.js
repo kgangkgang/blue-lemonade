@@ -38,7 +38,17 @@ export function createCaptureResources() {
                 const style = getComputedStyle(source);
                 // Resolved properties already contain their var() values. Inherited custom
                 // properties can contain whole frame images and need not repeat on every node.
-                for (const property of style) if (!property.startsWith('--')) clone.style.setProperty(property, style.getPropertyValue(property));
+                // Parsing hundreds of single-property edits on every element blocks
+                // the capture dialog on long messages. Keep the same declarations
+                // and order, but let CSSOM parse the complete snapshot once.
+                const properties = [...style].filter(property => !property.startsWith('--'));
+                const resolved = new Set(properties);
+                let css = '';
+                // setProperty used to replace an authored !important declaration.
+                // Do not leave that older priority ahead of the resolved snapshot.
+                for (const property of clone.style) if (!resolved.has(property)) css += `${property}:${clone.style.getPropertyValue(property)}${clone.style.getPropertyPriority(property) ? ' !important' : ''};`;
+                for (const property of properties) css += `${property}:${style.getPropertyValue(property)};`;
+                clone.style.cssText = css;
                 bakeMarker(style, clone.style);
                 if (source.tagName === 'Q' && ['none', 'normal', '""', "''"].includes(getComputedStyle(source, '::before').content)) clone.style.quotes = 'none';
                 entry = { css: clone.style.cssText, background: style.backgroundImage };

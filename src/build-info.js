@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.1.5";
+export const BUILD_VERSION = "7.1.6";
 export const FILE_HASHES = {
   "index.js": "19832:e9ecf3ab:d2bfb1ac",
-  "manifest.json": "365:fd3c6572:58d7d7f9",
+  "manifest.json": "365:8561097b:bc2460fc",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -445,14 +445,14 @@ export const FILE_HASHES = {
   "src/capture-motion.js": "6745:7ed96b99:85635c33",
   "src/capture-options.js": "54619:64b2f548:79007345",
   "src/capture-privacy.js": "7791:246dbc8a:af3bd5cd",
-  "src/capture-resources.js": "5565:6a64340c:b96c48c8",
+  "src/capture-resources.js": "6373:059f3d9d:fe8a8393",
   "src/capture-share.js": "2132:b8d68ecf:e2e62118",
   "src/capture-style.js": "2366:f3137eba:cf0a5c05",
   "src/capture-video.js": "2823:b8ab15ff:193d39d3",
   "src/cardink.js": "8613:df1eabd4:56db36b2",
   "src/catalog.js": "162883:31aed559:cba2a2dd",
   "src/charstyle.js": "5861:243a66e1:6cc554d3",
-  "src/chat-capture.js": "15283:a59a2497:e4860989",
+  "src/chat-capture.js": "17454:7c59a8de:dcd8fa6d",
   "src/chat-graph-data.js": "8289:3f2d1d2b:75b72334",
   "src/chat-graph-launcher.js": "3664:ee3b37aa:d29e7858",
   "src/chat-graph.js": "23774:b7f8730a:7dd8321a",
@@ -531,7 +531,7 @@ export const FILE_HASHES = {
   "src/modal.js": "1449:da5093fd:8b8c4b3c",
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-data.js": "267686:56b127d1:68bd86fa",
+  "src/notice-data.js": "267829:c3469a20:5e7b5da5",
   "src/notice.js": "4685:d7695526:9b92ac9b",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -653,5 +653,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "37252:989206a6:6181d71d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1514319:18a757d9:01de8549"
+  "style.css": "1514319:e5384817:2f8ad025"
 };

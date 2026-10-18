@@ -5,6 +5,18 @@ globalThis.fetch=async(_url,{signal}={})=>{calls++;signal?.throwIfAborted();if(m
 globalThis.FileReader=class {readAsDataURL(){queueMicrotask(()=>{this.result=mode==='large'?'data:image/png;base64,'+'A'.repeat(7*1024*1024):'data:image/png;base64,example';this.onload();});}};
 let styleReads=0;
 globalThis.getComputedStyle=()=>{styleReads++;return {backgroundImage:'none',getPropertyValue:()=> 'red',*[Symbol.iterator](){yield 'color';}};};
+// Minimal CSSStyleDeclaration contract. Real parsing/priority equivalence is
+// checked in browser fixtures; this mock only records declarations and reads.
+const inlineStyle=(values={})=>{
+    const serialize=()=>Object.entries(values).map(([k,v])=>`${k}:${v.value}${v.priority?' !important':''};`).join('');
+    return {
+        cssText:serialize(),
+        *[Symbol.iterator](){yield* Object.keys(values);},
+        getPropertyValue(name){return values[name]?.value || '';},
+        getPropertyPriority(name){return values[name]?.priority || '';},
+        setProperty(k,v,priority=''){values[k]={value:v,priority};this.cssText=serialize();},
+    };
+};
 let passed=0;const test=async(name,run)=>{await run();passed++;console.log('PASS '+name);};
 await test('parallel and sequential URLs share one fetch',async()=>{const r=createCaptureResources();calls=0;await Promise.all([r.embed('/a'),r.embed('/a')]);await r.embed('/a');assert.equal(calls,1);r.close();});
 await test('separate exports refetch content',async()=>{calls=0;for(let i=0;i<2;i++){const r=createCaptureResources();await r.embed('/a');r.close();}assert.equal(calls,2);});
@@ -14,5 +26,7 @@ await test('pre-aborted calls do not fetch',async()=>{const r=createCaptureResou
 await test('closed batch refuses new work',async()=>{const r=createCaptureResources();r.close();await assert.rejects(r.embed('/a'),{name:'AbortError'});assert.throws(()=>r.paint({},{}),{name:'AbortError'});});
 await test('data URLs do not fetch',async()=>{const r=createCaptureResources();calls=0;assert.equal(await r.embed('data:image/png,x'),'data:image/png,x');assert.equal(calls,0);r.close();});
 await test('large images evict old cached payloads',async()=>{const r=createCaptureResources();mode='large';calls=0;await r.embed('/a');await r.embed('/b');await r.embed('/a');assert.equal(calls,3);mode='ok';r.close();});
-await test('paint snapshot is reused for same node only',async()=>{const r=createCaptureResources(),source={tagName:'P'},clone=()=>({style:{cssText:'',setProperty(k,v){this.cssText+=`${k}:${v};`;}}});styleReads=0;const a=clone(),b=clone();r.paint(source,a);r.paint(source,b);assert.equal(styleReads,1);assert.equal(a.style.cssText,b.style.cssText);r.paint({tagName:'P'},clone());assert.equal(styleReads,2);r.close();});
+await test('paint snapshot is reused for same node only',async()=>{const r=createCaptureResources(),source={tagName:'P'},clone=()=>({style:inlineStyle()});styleReads=0;const a=clone(),b=clone();r.paint(source,a);r.paint(source,b);assert.equal(styleReads,1);assert.equal(a.style.cssText,b.style.cssText);r.paint({tagName:'P'},clone());assert.equal(styleReads,2);r.close();});
+await test('authored custom properties survive but resolved important values are replaced',async()=>{const r=createCaptureResources(),clone={style:inlineStyle({'--local':{value:'"a;b"',priority:'important'},color:{value:'blue',priority:'important'}})};r.paint({tagName:'P'},clone);assert.match(clone.style.cssText,/--local:"a;b" !important;/);assert.match(clone.style.cssText,/color:red;/);assert.doesNotMatch(clone.style.cssText,/blue|color:red !important/);r.close();});
+await test('closing an in-flight batch does not retain results in a later export',async()=>{const r=createCaptureResources();mode='wait';calls=0;const job=r.embed('/late');r.close();release();await job;mode='ok';const next=createCaptureResources();await next.embed('/late');assert.equal(calls,2);next.close();});
 console.log(`${passed} checks passed`);
