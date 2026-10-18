@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.1.3/blue-lemonade-7.1.3.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.1.4/blue-lemonade-7.1.4.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
@@ -20,7 +20,14 @@ AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·�
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.1.3 · 최신 업데이트</summary>
+<summary>7.1.4 · 최신 업데이트</summary>
+
+- LLM 번역: 번역문의 한국어 낱말 안에 한자가 섞여 남으면(예: 특注품) 그 줄을 한국어로 다시 고쳐요. 한국어 원문에 원래 있던 한자 · 용어집 표기 · 괄호 병기는 그대로 둬요 (LLM 번역 2.9.4).
+
+</details>
+
+<details>
+<summary>7.1.3 · 흘러오는 번역은 끊지 않기</summary>
 
 - LLM 번역: 긴 메시지를 한 번에 번역할 때 90초가 지나면 잘 흘러오던 번역도 끊던 것을 고쳤어요. 이제 글이 오는 동안은 끊지 않고, 90초 동안 멈출 때만 끊어요. 흘려받지 않는 요청은 응답 길이에 맞춰 더 기다려요 (LLM 번역 2.9.3).
 

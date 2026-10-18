@@ -13,6 +13,7 @@
 const KANA = /[ぁ-ゖァ-ヺ]/;
 const HAN = /\p{Script=Han}/u;
 const HAN_RUN = /\p{Script=Han}{2,}/gu;
+const HAN_ANY = /\p{Script=Han}+/gu;   // 2.9.4 한글 낱말 한가운데 낀 한자 (한 글자도)
 const HANGUL = /[가-힣]/;
 const LATIN = /[A-Za-z]/;
 const count = (s, re) => (String(s).match(new RegExp(re.source, re.flags.includes('g') ? re.flags : re.flags + 'g')) || []).length;
@@ -57,6 +58,17 @@ export function leftoverHan(line, source, keep = []) {
         if (keep.some(k => String(k).includes(run))) continue;
         if (keptAt(s, from, to, spans)) continue;
         if (!runs.includes(run)) runs.push(run);
+    }
+    // 2.9.4 한글 낱말 한가운데 낀 한자 (앞뒤가 모두 한글 · 한 글자라도 · 원문에 없어도): 「특注품」(特注品) — 낱말 안의 한자는 일부러 쓴 표기가 아니다.
+    //   한자 뒤에 조사만 붙은 것(會議에 · 室은)은 한자 섞어 쓰기일 수 있어 예전처럼 둔다(6.4.2). 한국어 원문 줄에 그대로 있던 한자 · 용어집 표기 · 일부러 둔 자리는 뺀다
+    for (const m of s.matchAll(HAN_ANY)) {
+        const run = m[0], from = m.index, to = m.index + run.length;
+        if (!HANGUL.test(s[from - 1] ?? '') || !HANGUL.test(s[to] ?? '')) continue;
+        if (runs.includes(run) || runs.some(r => r.includes(run))) continue;
+        if (src.includes(run) && !fromForeign(run, src)) continue;
+        if (keep.some(k => String(k).includes(run))) continue;
+        if (keptAt(s, from, to, spans)) continue;
+        runs.push(run);
     }
     return runs;
 }

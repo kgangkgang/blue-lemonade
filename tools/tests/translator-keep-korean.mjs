@@ -187,14 +187,14 @@ await check('user-protected blocks keep their numbers (Korean placeholders come 
     assert.ok(prompts[0].includes('[[__VAR_0__]] ') && prompts[0].includes('[[__VAR_1__]]'), prompts[0].slice(-120));
     assert.equal(out, `<note>keep this</note> ${KO.map}\n\n${DLG}`);
 });
-await check('wiring: setting default on, checkbox, only for Korean-target message translation (not retranslation · input · check source), manifest 2.9.3', () => {
+await check('wiring: setting default on, checkbox, only for Korean-target message translation (not retranslation · input · check source), manifest 2.9.4', () => {
     assert.match(source, /keep_korean_source: true,/);
     assert.match(source, /\$\('#llm_keep_korean'\)\.prop\('checked', extensionSettings\.keep_korean_source !== false\)/);
     assert.match(source, /extensionSettings\.keep_korean_source !== false && !options\.isInputTranslation && !options\.isRetranslation && options\.checkSource === undefined\s+&& KOREAN_TARGET\.test/);
     const html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');
     assert.match(html, /id="llm_keep_korean"><span>이미 한국어인 부분은 보내지 않기<\/span>/);
-    assert.match(html, /ext-version">v2\.9\.3</, 'version shown in the drawer head');   // 7.1.3 흘려받기 시간 제한
-    assert.match(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'), /"version": "2\.9\.3"/);
+    assert.match(html, /ext-version">v2\.9\.4</, 'version shown in the drawer head');   // 7.1.4 낱말 속 한자
+    assert.match(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'), /"version": "2\.9\.4"/);
 });
 
 // ── 3. 어림 토큰 (보고용) ──

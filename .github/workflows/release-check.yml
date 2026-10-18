@@ -227,6 +227,7 @@ jobs:
           node tools/tests/translator-resume-stream.mjs .
           node tools/tests/translator-whole-stream.mjs .
           node tools/tests/translator-stream-idle.mjs .
+          node tools/tests/translator-han-in-word.mjs .
           node tools/tests/conversation-assist.mjs .
           node tools/tests/addon-menu-routing.mjs .
           node tools/tests/order-menus.mjs .
