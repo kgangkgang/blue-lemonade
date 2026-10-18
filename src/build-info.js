@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.2.0";
+export const BUILD_VERSION = "7.2.3";
 export const FILE_HASHES = {
-  "index.js": "20039:06144433:fb9900fd",
-  "manifest.json": "365:1fe4f72c:50574339",
+  "index.js": "20460:659b5f95:83d38315",
+  "manifest.json": "365:e5ea7571:2177fd62",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -546,8 +546,8 @@ export const FILE_HASHES = {
   "src/modal.js": "1449:da5093fd:8b8c4b3c",
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
-  "src/notice-actions.js": "1449:37851a71:bc66478c",
-  "src/notice-data.js": "269979:294ae2f7:7bead83e",
+  "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
+  "src/notice-data.js": "271191:3a20c4d6:8dfa94fa",
   "src/notice.js": "5647:427a7a6b:dcf06534",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -570,7 +570,7 @@ export const FILE_HASHES = {
   "src/readability.js": "4402:c34b7d47:0d00993d",
   "src/reader.js": "8889:26a62b1b:40ce2513",
   "src/reading-resume-anchor.js": "4927:487a9eff:ca0131aa",
-  "src/reading-resume.js": "6892:2264aa26:07400528",
+  "src/reading-resume.js": "6871:de938279:6da0f17b",
   "src/recent-context.js": "16290:98c34053:c6b55f4b",
   "src/reply-notify.js": "7905:952f939d:7a58dfa5",
   "src/reply-top.js": "5771:c5f79831:283f889f",
@@ -641,6 +641,7 @@ export const FILE_HASHES = {
   "src/show-more-auto.js": "3516:57ba900f:9c30b70e",
   "src/splash.js": "19344:c97fc557:9dcea6a3",
   "src/squared-buttons.js": "5435:fd834990:4d0705a3",
+  "src/st-solid.js": "4864:1c9f6b36:6986f86e",
   "src/stream-follow.js": "5049:55e57322:4b17c247",
   "src/streamfade.js": "14136:0e2127b6:06593cf1",
   "src/sttheme.js": "21112:b0503cd0:8e5dcb5b",
@@ -670,7 +671,7 @@ export const FILE_HASHES = {
   "src/wi-help.js": "4110:3ad5e5ef:5bfb6bbb",
   "src/wi-link.js": "6848:9a852a37:3c23d647",
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
-  "src/word-tools.js": "40442:f287dfa2:d418767f",
+  "src/word-tools.js": "40459:a17944bd:beb7384d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1519299:be8c010f:17dd817f"
+  "style.css": "1521971:e3da04a6:815ca7a9"
 };

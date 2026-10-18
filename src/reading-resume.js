@@ -3,7 +3,7 @@ const STORAGE_KEY='bl-reading-positions-v1';
 let running=null;
 
 /** Browser-local view state only: no chat/settings writes or model requests. */
-export function installReadingResume({getContext,getAccount,isEnabled=()=>true,doc=document,win=window,storage=localStorage,notify=()=>{}}) {
+export function installReadingResume({getContext,getAccount,isEnabled=()=>true,doc=document,win=window,storage=localStorage}) {
     const chat=doc.getElementById('chat'),ctx=getContext(),types=ctx?.eventTypes||ctx?.event_types;
     if(!chat||!types||!ctx.eventSource)return null;
     let entries={};try{entries=normalizeReadingEntries(JSON.parse(storage.getItem(STORAGE_KEY)||'{}'));}catch{/* unavailable browser storage */}
@@ -33,7 +33,8 @@ export function installReadingResume({getContext,getAccount,isEnabled=()=>true,d
         const target=readingAnchorTarget(chat,now,job.entry);
         if(target.missing){
             if(target.missing==='unloaded'&&Date.now()<job.until){clearTimeout(job.timer);job.timer=setTimeout(()=>attempt(job),200);return;}
-            if(target.missing==='unloaded'&&!notified.has(job.key)){notified.add(job.key);notify('읽던 메시지가 아직 불러와지지 않아 위치를 옮기지 않았어요. 이전 메시지를 불러온 뒤 채팅을 다시 열면 복귀할 수 있어요.');}
+            // 7.2.1 복귀하지 못해도 알림은 띄우지 않는다 (사용자 요청) — 콘솔 기록만
+            if(target.missing==='unloaded'&&!notified.has(job.key)){notified.add(job.key);console.debug('[Blue Lemonade] 읽던 메시지가 아직 불러와지지 않아 위치를 옮기지 않았어요.');}
             stop();return;
         }
         if(Math.abs(chat.scrollTop-target.top)>1)chat.scrollTop=target.top;
@@ -74,7 +75,7 @@ export async function startReadingResume({isEnabled=()=>true}={}) {
     try{
         const {getCurrentUserHandle}=await import('../../../../user.js');
         if(typeof getCurrentUserHandle!=='function')return null;
-        running=installReadingResume({getContext:()=>globalThis.SillyTavern.getContext(),getAccount:getCurrentUserHandle,isEnabled,notify:text=>globalThis.toastr?.info?.(text,'읽던 위치')});
+        running=installReadingResume({getContext:()=>globalThis.SillyTavern.getContext(),getAccount:getCurrentUserHandle,isEnabled});
     }catch(error){console.warn('[Blue Lemonade] 읽던 위치 복귀를 시작하지 못했어요.',error);}
     return running;
 }

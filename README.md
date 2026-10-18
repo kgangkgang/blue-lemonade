@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.2.0/blue-lemonade-7.2.0.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.2.3/blue-lemonade-7.2.3.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
@@ -20,7 +20,31 @@ AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·�
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.2.0 · 최신 업데이트</summary>
+<summary>7.2.3 · 최신 업데이트</summary>
+
+- 7.2.2와 같은 기능이에요. 설정 창 미리 보기 규칙을 만드는 도구가 확장만 전용 채팅 바탕 규칙을 미리 보기로 옮기지 않게 정리했어요.
+
+</details>
+
+<details>
+<summary>7.2.2 · 확장만 채팅 바탕</summary>
+
+- 확장만 · 테마 끔에서 ‘실리태번 설정 맞추기’가 남긴 투명 채팅 바탕 때문에 채팅 칸이 비쳐 보이면, 그 값을 바꾸지 않고 채팅 칸만 불투명하게 깔아요. 직접 고른 투명 바탕은 그대로예요.
+
+</details>
+
+<details>
+<summary>7.2.1 · 읽던 위치 알림 · 채팅 캡처 간격 · 확장만 서랍</summary>
+
+- 채팅을 열 때 읽던 위치를 못 찾아도 알림을 띄우지 않아요. 찾으면 전처럼 그 자리로 돌아가요.
+- 채팅 캡처 창의 「선택한 처음부터 끝까지 담기」·「번호로 구간 고르기」, 목록 쪽 넘기기, 이름 가림 칸이 서로 붙거나 겹쳐 보이던 것을 고쳤어요.
+- 요술봉의 화면 모드 항목을 뺐어요.
+- 확장만 · 테마 끔에서 실리태번 테마 판이 반투명하고 흐림이 꺼져 있으면 확장 서랍 글자가 채팅 위에 겹쳐 보이던 것을 고쳤어요. 그때만 같은 색을 불투명하게 칠해요.
+
+</details>
+
+<details>
+<summary>7.2.0 · 설정 미리 보기 CSS 동기화</summary>
 
 - 화면 모드의 채팅 스타일이 설정 창 미리 보기에도 맞게 반영되도록 고쳤어요.
 

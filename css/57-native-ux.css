@@ -130,3 +130,8 @@ html body.salty > .picker[pick-colors-theme] :is(input,.label) {
   }
   html body.salty dialog.popup:not(.bl-settings-dialog) .popup-content { margin-inline:0; padding-inline:2px; scrollbar-gutter:auto!important; }
 }
+/* 7.2.1 테마가 빠져 있을 때(확장만 · 테마 끔): 실리태번 판 색이 반투명인데 흐림이 꺼져 있으면 서랍 글자가 채팅 위에 겹쳐 읽히지 않았다.
+   src/st-solid.js 가 그때만 html.bl-st-solid 와 같은 색의 불투명 값(--bl-st-solid-tint)을 단다 — 테마가 켜져 있으면(body.salty) 안 붙는다. */
+html.bl-st-solid body:not(.salty) :is(.drawer-content, #top-bar, #send_form) { background-color: var(--bl-st-solid-tint) !important; }
+/* 7.2.2 채팅 칸: '맞추기'가 넣은 투명 채팅 바탕이 남아 있을 때만 (st-solid.js 가 sttheme.js restoreState 로 판정) */
+html.bl-st-solid-chat body:not(.salty) #chat { background-color: var(--bl-st-solid-tint) !important; }

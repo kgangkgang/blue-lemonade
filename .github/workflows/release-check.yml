@@ -257,6 +257,7 @@ jobs:
           node tools/tests/translator-access-tools.mjs
           node tools/tests/translator-review-board.mjs
           node tools/tests/capture-range.mjs
+          node tools/tests/quiet-resume-capture-layout.mjs
           node tools/tests/dialogue-tildes.mjs
           node tools/tests/translator-chat-terms.mjs
           node tools/tests/weather-budget.mjs

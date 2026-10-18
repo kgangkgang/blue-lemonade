@@ -265,3 +265,33 @@ html body .bl-tool-heading { gap:10px; font:inherit; font-size:.9em; line-height
 .bl-tool-section { border-radius:var(--bl-r-md,12px); }
 .bl-tool-body .bl-tool-section { border-radius:var(--bl-r-sm,8px); }
 .bl-extension-page .bl-addon-position-preview,.bl-extension-page .bl-wand-preview { border-radius:var(--bl-r-sm,8px); padding:8px; }
+/* 7.2.1 채팅 캡처 · 구간 고르기 / 목록 쪽 넘기기 / 이름 가림: 블록 사이 간격이 0 이라 「선택한 처음부터 끝까지 담기」가
+   아래 「번호로 구간 고르기」에 붙어(큰 글씨에선 겹쳐) 보였다. 도구 칸(.bl-tool-body)과 같은 8px 간격 · 같은 구분선을 쓴다. */
+.bl-tool-body [data-capture-range] { display:grid; grid-template-columns:minmax(0,1fr); gap:8px; min-width:0; padding:0 0 12px; border-bottom:1px solid var(--salty-line); }
+[data-capture-range] > * { min-width:0; margin:0; }
+[data-capture-range] > .salty-btn,[data-capture-range] [data-capture-range-apply] { justify-self:start; margin:0; }
+[data-capture-range] > details { display:block; }
+[data-capture-range] > details > summary { display:flex; align-items:center; gap:8px; min-height:36px; box-sizing:border-box; padding:0; list-style:none; cursor:pointer; color:var(--salty-text); font:inherit; font-size:.9em; line-height:1.45; }
+[data-capture-range] > details > summary::-webkit-details-marker { display:none; }
+[data-capture-range] > details > summary::after { content:'⌄'; flex:none; margin-left:auto; padding:0 2px; opacity:.6; line-height:1; transform:translateY(-.2em); transition:transform .15s; }
+[data-capture-range] > details:not([open]) > summary::after { transform:rotate(-90deg); }
+[data-capture-range] > details[open] > summary { margin-bottom:8px; }
+[data-capture-range] > details > .bl-tool-grid { margin:0 0 8px; }
+[data-capture-range] > details > [data-capture-range-apply] { display:flex; }
+/* 손가락 화면: 설정 창의 번호 · 고르기 칸도 캡처 창(.bl-capture-dialog)과 같은 44px (보이는 모양 · 글자는 그대로) */
+@media (pointer: coarse) {
+  [data-capture-range] > details > summary { min-height:44px; }
+  .salty-panel .bl-tool-field :is(input[type=number],select) { min-height:44px; }
+}
+@media(prefers-reduced-motion:reduce) { [data-capture-range] > details > summary::after { transition:none; } }
+/* 쪽 넘기기: 쪽 표시가 2칸 격자의 한 칸을 차지해 「다음 50개」가 아랫줄로 밀렸다 → 쪽 표시는 윗줄 가운데, 단추 둘은 아랫줄 */
+.salty-panel .bl-message-actions.bl-capture-pager { grid-template-columns:repeat(2,minmax(0,1fr)); margin:0 0 8px; }
+.bl-capture-pager > span { grid-column:1 / -1; grid-row:1; min-width:0; text-align:center; color:var(--salty-muted); font-size:.85em; line-height:1.45; overflow-wrap:anywhere; }
+[data-message-picker] > [data-capture-selection-count] { margin:0 0 8px; }
+/* 이름 가림: 「＋ 이름 추가」와 「가리는 방법」 · 꾸미기와 안내 글이 붙어 있었다 */
+.bl-capture-options [data-redact-options] { display:grid; grid-template-columns:minmax(0,1fr); gap:8px; min-width:0; }
+.bl-capture-options [data-redact-options] > * { min-width:0; margin:0; }
+.bl-capture-options [data-redact-options] > [data-capture-add] { justify-self:start; }
+.bl-capture-options [data-redact-options][hidden] { display:none; }
+/* 저장 방식: 「날씨 효과 포함」 같은 스위치를 옆 칸 입력 상자 높이에 맞춘다 (위로 떠 보이던 것) */
+.bl-capture-options .bl-tool-grid > .bl-addon-toggle { align-self:end; }

@@ -48,7 +48,6 @@ function noticeSeenChanged() {
     document.querySelectorAll('#salty-drawer .bl-version').forEach(badge => badge.classList.toggle('is-new', unseen));
 }
 import { loadVersion, hasUnseenNotice, openNotice } from './src/notice.js';
-import { startScreenModes } from './src/screen-modes.js';
 import { badgeTextHit } from './src/badge-hit.js';
 import { setFeatureHooks } from './src/features.js';
 import { startThemeSettingsSync } from './src/settings-sync.js';
@@ -150,7 +149,7 @@ function addMenuItem() {
     item.innerHTML = `<div class="fa-fw fa-solid fa-lemon extensionsMenuExtensionButton"></div><span>Blue Lemonade</span>`;
     item.addEventListener('click', () => openPopup());
     menu.appendChild(item);
-    startScreenModes();
+    // 7.2.1 요술봉의 「화면 모드」 항목은 뺐다 (사용자 요청) — 어디서도 화면 모드를 열지 않는다
 }
 
 import { DEVICE_QUERY } from './src/device-layouts.js';
@@ -190,6 +189,8 @@ jQuery(() => {
     for (const id of ['extensions-settings-button', 'extensionsMenuButton']) document.getElementById(id)?.addEventListener('pointerdown', () => { loadPanel().catch(() => {}); }, { capture: true, passive: true });
     syncAddonIcons();
     addMenuItem();
+    // 7.2.1 확장만 · 테마 끔: 실리태번 판이 반투명 + 흐림 꺼짐이면 서랍 글자가 채팅 위에 겹친다 — 그때만 같은 색을 불투명하게 (st-solid.js, 테마가 켜지면 스스로 뗀다)
+    import('./src/st-solid.js').then(m => m.startStSolid()).catch(error => console.warn('[Blue Lemonade] 실리태번 판 불투명', error));
     let themeRuntimeStarted = false;
     const startThemeRuntime = () => {
         if (themeRuntimeStarted || !themeEnabled(getSettings())) return;

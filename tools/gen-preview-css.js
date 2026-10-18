@@ -57,6 +57,8 @@ const DENY = [
     'custom-dem-card', 'custom-dem-expressive', '.lastInContext', '.last_mes', '.mes.selected', '.smallSysMes', '.bl-pinned', '.bl-menu-empty',
     // 5.3.4: 몰입 읽기(폰)의 채팅 칸 배치 — 위 바 · 입력판 높이만큼 위아래 여백을 준다. 미리보기 상자로 옮기면 그 여백이 표본을 거의 덮었다
     '.bl-reader',
+    // 7.2.3 테마가 빠져 있을 때(확장만 · 테마 끔)만 채팅 칸을 불투명하게 까는 규칙 — 테마 미리보기에는 해당이 없다 (st-solid.js)
+    '.bl-st-solid-chat',
 ];
 
 // ───────── 닻 (이 이름이 사본에 하나도 없으면 미리보기가 조용히 빈다) ─────────
