@@ -148,8 +148,9 @@
       ]
     },
     "siliconflow-cn": {
-      "url": "https://siliconflow.cn/pricing",
+      "url": "https://www.siliconflow.cn/pricing",
       "hosts": [
+        "www.siliconflow.cn",
         "siliconflow.cn"
       ]
     },
@@ -483,14 +484,8 @@
         "docs.perplexity.ai"
       ]
     },
-    "cometapi": {
-      "url": "https://www.cometapi.com/pricing/",
-      "hosts": [
-        "www.cometapi.com"
-      ]
-    },
-    "comet-models": {
-      "url": "https://www.cometapi.com/models/",
+    "cometapi-catalog": {
+      "url": "https://www.cometapi.com/api/models",
       "hosts": [
         "www.cometapi.com"
       ]
@@ -520,7 +515,7 @@
         "openrouter-catalog"
       ],
       "contracts": {
-        "openrouter-catalog": "5a6c17a486974914c73388c06790c7315c2e26a083ef0a21adabf87e1b2ca49d"
+        "openrouter-catalog": "b07d329a7126a026589230642a19ed0f9bb8b69d5fd1f0b3f610ade4b635dda0"
       },
       "apiShapes": [
         "02571f12d52ea8d75090e95e2139f9c7ca5a52906139bf623f4196abfbd76228",
@@ -558,7 +553,7 @@
         "nanogpt-catalog"
       ],
       "contracts": {
-        "nanogpt-catalog": "b7383d4bde3b8950de5d9d1b5e2e5417d369d0e43f6db2a635b8459ae277aa73"
+        "nanogpt-catalog": "840f0505c0e9367296c19640117ed4ea095e923ba803835ea08a710da82cc679"
       },
       "apiShapes": [
         "025b8aa822d7f0b50ad9efc567e972d8309fa07f9634f865ac0b0d9d11541254",
@@ -587,7 +582,7 @@
         "electronhub-catalog"
       ],
       "contracts": {
-        "electronhub-catalog": "d59eb0724344b37272b6f43e10f5fae516a3ef43e9bede5f838cc09dad479dd3"
+        "electronhub-catalog": "436d06b31568bf47898ea3115b34b1d41a540cbb8d0dfb3cc88cb351d2fa64cd"
       },
       "apiShapes": [
         "24d7e0ed82c01db9fc0a48866f2c51e96e3fdab34868d320ed9180af1a91cf03",
@@ -621,71 +616,87 @@
         "chutes-catalog"
       ],
       "contracts": {
-        "chutes-catalog": "6fbf5d81478d3836d4d0d502bd62667f90c1665356495b4f66119260c46b9f96"
+        "chutes-catalog": "2d7c18d2c0977065982d7d0cf53a79fb2a0e1e5777da6e2655331ec75fa17afe"
       },
       "apiShapes": [
         "01f8878835fbd5e5995baaa29c26cd50f14b33f682fc0083248b2beb298973d8"
-      ]
+      ],
+      "reviewed": {
+        "date": "2026-10-19",
+        "rates": {
+          "Qwen/Qwen3.8-27B-TEE": {
+            "input": 0.039,
+            "output": 1.25,
+            "cacheRead": 0.0039
+          }
+        }
+      }
     },
     "pollinations": {
       "sources": [
         "pollinations-catalog"
       ],
       "contracts": {
-        "pollinations-catalog": "fd904b5db00134a37347573529e67fba70b466397afe98b583bd3e3d591cd933"
+        "pollinations-catalog": "83123aad76c9527af48b5cf5f05ccebf300f117f0d578f3240f7ad5a9ce67b21"
       },
-      "apiShapes": [
-        "0795762f2555e56ad9b23eab8ef31360c489c8e98d19df0c24c46086e1ad5397",
-        "1175652f375ffc05bed56da44831c7696da04cb5ae7c1b8fae34d0ee3bd1152b",
-        "174aa85babc082de4f594b60da67a43f8c71ba7e54302bcb3d4c07b0bb4c4b2e",
-        "1847083d52832aaf001df23ddbd3ddf7b93f48f532bdb9b26ea68c2100e4adf2",
-        "192c98585c42c83d264f5d3dec7287ea8a80750043b75a576b40e8aceb72f777",
-        "2499aaeb84b0f0b6a0af52a67002aa83e16f33cbd9e5ef545237904dd0e3e857",
-        "278c3df6b898b672de8261186d7f2c97825dc58d223ddd4cd094de3b5f34800d",
-        "2b2756109eff2595311d92f3439dca8ff3e8cd12eb2a6a18dd1b2ac62447327b",
-        "2f7e70a31b4c5b6990852d7dafff9982db1dd36287af0a770ca0c4cf3b9b1300",
-        "446ef5c490957f4f9d78604692b99083e0a027f08922c400607ac5c732058b45",
-        "452b0c96743f022fc381d8a9ad7c2814e49ec7c6704c192f4e82e5d67f786c11",
-        "471250e9baa905e6e6bbed9b243569ca3767d4e1431c43cf8cfbe3e2afc38ff9",
-        "49034af22e419d5831edbea23121c7d4ccf7ba56806b659d1ff8c355b28a9a17",
-        "50b3abc7ebd72de5a5b6ce82345955d3676098836421014a16fd971ef555006c",
-        "5107a8a16ff91f143aea85207c55bfcc8027b8f04d419a6c9f4af77db771bbed",
-        "54d9e418041754ffe5ec7ef18bdabda2ed12fd97bfd80be0d7560a5a970b3af2",
-        "70da38df6bb9290bb7de6df38ddc084b0baec5c651def15610ccfb2053065f37",
-        "716d86b62073d0cf79de8c71303c8b9ed2c78e51fb073b678b911945eae80bd4",
-        "880f7e08da94ebb4f78049c5249ea6b11fba3a20d9fe6392ecce9c39a7dce44c",
-        "9057ce692ae8c961fa4e09a9024a8e0eddba1b27d217491ce93a7a08c7b220a1",
-        "995581a84ac1b22ba6142b9ef62545d18fae87a7352b71df73a4f2a4a52b7842",
-        "9a653cfbe9160211ae18c74391b8abc01ae7c8a609634505cf24e33f24291cad",
-        "9c3cf94792aa9ff3159d62cedf24ada2765736874def0b16482df9fc9ec60dc9",
-        "a24cdd499a01a643aa47cced14528f770992443b0c3ee54bde8a7664891a40ac",
-        "a60e79467c0ad904dbc261fccf8085703d1f2aa975efd1e326478249d7b797df",
-        "a9c51a9db898f800bef32454a967fa9acdf005cb92824c00b737b51ff324ac65",
-        "ad6f3c54d8150998fa08ae362f5c876a52f1b9fea19dbf5dbdc5583654cefcc5",
-        "ae8fe45955c1a1809d2522a54ad10a82f4065c2fd08a9079c71a814eb66b61de",
-        "b4600756c5869040d784d271c86188e3c39bd14648ad8c95b6ba62b90ed863fa",
-        "bb8b5409900bd1fc6e0f7a0fb1558d704df9988ac81a95a0992f63ea2c25d221",
-        "c8bf6b418ce9af3937543ad7ab63c4784850746a6f42789f18fd9b93d1523d36",
-        "cbc6084de1536dceced685de645cd6c49261d431ad349847da2ea9b2ca710c00",
-        "cd0c51ab89284e67f7b926d2267bae54649d53a2525f4f31f542b38663e53065",
-        "cfd876c6dc9c3db949de490162cf6e36a3fa8fce0a555d670cc705bad9685859",
-        "d69f1606d7ebc0599f7b05584091698d7f86057cc283d908cad40e1fc1fe739c",
-        "e4a8786da94f86b3402569dcd888fba418a329e973e13eebb35c7dfac055f8c9",
-        "e87516caf2e548c8b4103a190c48b51998384c0b5b366a77b16260cd27a2ad5c",
-        "ec6c92d3aceae864cf6fe567aeca6afc3b312e60b51cb53686c41e1707d2f69d",
-        "f16df0bc1bb4435a2bab65df40f062df7190bf8a0f1730e209748490595b3823",
-        "f4f863d7aa0b1b4efc351b12caa0be72bfa3d6c04193a6ee234a7ee5df4ccfa9",
-        "f887e7f837b4061dd485e082b65f52099d7abca22c4ba1529df3f8d93bf0b83f",
-        "fadeee53c38afb0a3b42dc8242609878049c5cc3d339dc5cc371e384ccb28356",
-        "ff37cbc954a1a50ac3cfe6ca74422e49912cecfe0ad051be6a2fd8f6a4324b25"
-      ]
+      "apiShapes": [],
+      "apiFields": {
+        "currency": [
+          "pollen"
+        ],
+        "promptTextTokens": [
+          "NUMBER"
+        ],
+        "completionTextTokens": [
+          "NUMBER"
+        ],
+        "promptCachedTokens": [
+          "NUMBER"
+        ],
+        "promptCacheWriteTokens": [
+          "NUMBER"
+        ],
+        "promptImageTokens": [
+          "NUMBER"
+        ],
+        "promptAudioTokens": [
+          "NUMBER"
+        ],
+        "promptVideoTokens": [
+          "NUMBER"
+        ],
+        "promptAudioSeconds": [
+          "NUMBER"
+        ],
+        "promptVideoSeconds": [
+          "NUMBER"
+        ],
+        "completionImageTokens": [
+          "NUMBER"
+        ],
+        "completionAudioTokens": [
+          "NUMBER"
+        ],
+        "completionReasoningTokens": [
+          "NUMBER"
+        ],
+        "completionVideoTokens": [
+          "NUMBER"
+        ],
+        "completionAudioSeconds": [
+          "NUMBER"
+        ],
+        "completionVideoSeconds": [
+          "NUMBER"
+        ]
+      }
     },
     "mancer": {
       "sources": [
         "mancer-catalog"
       ],
       "contracts": {
-        "mancer-catalog": "824f353aeb2f90cbd1c6ce45d3a1ad7980befcdbe43e2be14b559ba75b83a5dc"
+        "mancer-catalog": "d96fde987fcaf4ff82a4e4096e02db8b7e2795e4f4adf9e535bd874f739017fc"
       },
       "apiShapes": [
         "f652c41b2f1ee9160d9b9f48ac738564ea2097bb066512778756e598fbbdf471"
@@ -696,7 +707,16 @@
         "aimlapi-price"
       ],
       "contracts": {
-        "aimlapi-price": "009cc6bafc599422f293991f5266c079cf9405d547f62839f926d901cb69beae"
+        "aimlapi-price": "e3c0e6fc66511d75309e76708b87cbb994530f640de0819860d9ac7279d7c85b"
+      },
+      "reviewed": {
+        "date": "2026-10-19",
+        "rates": {
+          "alibaba/qwen3-235b-a22b-thinking-2507": {
+            "input": 0.61893,
+            "output": 4.8139
+          }
+        }
       }
     },
     "workers": {
@@ -704,7 +724,7 @@
         "workers"
       ],
       "contracts": {
-        "workers": "99f079674a4ccade803630a36596fc2781ed4bc5e4fa9fd77a942c139961182b"
+        "workers": "d2133b59a93c052fbeec125a1a6cee043d8a9d57083016f09dba05dab8a0f3f7"
       }
     },
     "together": {
@@ -713,8 +733,8 @@
         "together"
       ],
       "contracts": {
-        "together-models": "d7a07f0ae69bfe3deeebdc2d29a78787a7ca07a67eb84ad4fb2c7dfe595850d6",
-        "together": "1f45ce3ac34a096e6c73318776d079d9ba0b1a74d393ae6aa9b2602331b3ad79"
+        "together-models": "ef17dd967b7855531f3009a6735d10fe694bc1113076677cd179007a7c2c479f",
+        "together": "4467e1d15b466bc4ef8c8cc4d48fd5eb6bc6ec6b80acfc4b6caeab7657e3ff0c"
       }
     },
     "fireworks": {
@@ -722,7 +742,7 @@
         "fireworks-doc"
       ],
       "contracts": {
-        "fireworks-doc": "ae869a2383edd9e455ee5e1eaadc133d032e64c14a428a66f57f347a2cb57ec6"
+        "fireworks-doc": "f0f6bc75cba491410fab740708c0b3b9146e3b36f45a1957fceaf5d82b3d5307"
       }
     },
     "deepseek": {
@@ -730,7 +750,7 @@
         "deepseek"
       ],
       "contracts": {
-        "deepseek": "fcff26d46ec047667cfc4775588ab71c90f31b718e246b4dd9b77eb49738abda"
+        "deepseek": "3dff1c12c79e20b1c5c8f77c37feaf0034d0e6a0678d1b1faf95faebf9f4ec6a"
       }
     },
     "ai21": {
@@ -760,7 +780,7 @@
         "xai-price"
       ],
       "contracts": {
-        "xai-price": "1d2923eca23b07cf463f3001be9afa43b78ad366599200468ab14cf80f9e84c0"
+        "xai-price": "1902b61aca296fe0943bd16a51c92d3831609612fd1e4ffd6d606ed6fd198723"
       }
     },
     "minimax": {
@@ -769,8 +789,8 @@
         "minimax-cn"
       ],
       "contracts": {
-        "minimax-pay": "0bed902a4f5a9196270b407247a0a8d03e7ab734bdf2796a585a9abcd27d9154",
-        "minimax-cn": "945b099bd2ebbc4301cb18c57db21ed2dfae595a225ff73f12bb0add6119933a"
+        "minimax-pay": "f9e28cc7d894a165bc7f7abd95ef095770ed64ec365925ecddda68d69d69d790",
+        "minimax-cn": "723b8b03a632d69012ed5f0489dee38d4969a53ed1fb617f4577b6e0dae0cf1d"
       }
     },
     "minimax_cn": {
@@ -779,8 +799,8 @@
         "minimax-cn"
       ],
       "contracts": {
-        "minimax-pay": "0bed902a4f5a9196270b407247a0a8d03e7ab734bdf2796a585a9abcd27d9154",
-        "minimax-cn": "945b099bd2ebbc4301cb18c57db21ed2dfae595a225ff73f12bb0add6119933a"
+        "minimax-pay": "f9e28cc7d894a165bc7f7abd95ef095770ed64ec365925ecddda68d69d69d790",
+        "minimax-cn": "723b8b03a632d69012ed5f0489dee38d4969a53ed1fb617f4577b6e0dae0cf1d"
       }
     },
     "moonshot": {
@@ -790,7 +810,7 @@
       ],
       "contracts": {
         "moonshot": "331a17419abde03e7e2f59a7429eda9fbe116ffe7c4be98d11cf19f16f1b7d82",
-        "moonshot-cn": "e60f9b87df0330c96817ba1f20dcf6fc04ba9fa10775fbcbdd7b3f0ea62967c0"
+        "moonshot-cn": "6c9442e526d36388f2f812467867592f3f003233c0f26685f471553c3db98671"
       }
     },
     "moonshot_cn": {
@@ -800,7 +820,7 @@
       ],
       "contracts": {
         "moonshot": "331a17419abde03e7e2f59a7429eda9fbe116ffe7c4be98d11cf19f16f1b7d82",
-        "moonshot-cn": "e60f9b87df0330c96817ba1f20dcf6fc04ba9fa10775fbcbdd7b3f0ea62967c0"
+        "moonshot-cn": "6c9442e526d36388f2f812467867592f3f003233c0f26685f471553c3db98671"
       }
     },
     "zai": {
@@ -816,7 +836,7 @@
         "gemini"
       ],
       "contracts": {
-        "gemini": "ad0eff376e634e0912cf560c23a72056093bc92d16ced1f4ddbc86f781f14d4b"
+        "gemini": "cda44052a2f6900ae941c4de68228d737c99f2f056f7b57e6a51d50dda6898d2"
       }
     },
     "vertex": {
@@ -824,7 +844,7 @@
         "vertex"
       ],
       "contracts": {
-        "vertex": "1af49eaed2aa20a66d2185f7d23837f05d6c783a3cc518b546b903d16cff51d1"
+        "vertex": "af6b73d11e4a4c55c26588c344cffb45ec51e0292654ff2c98fc59f2fc5ad426"
       }
     },
     "siliconflow_cn": {
@@ -832,7 +852,7 @@
         "siliconflow-cn"
       ],
       "contracts": {
-        "siliconflow-cn": "346f5830dbf3b6d0f245899f20a1f4e899117d6fced4dcd726fc2cf249812f2d"
+        "siliconflow-cn": "71d49809af6c8d1766316bf10e568ed58886ea8b5fcb768b3f1256404f64ff1d"
       }
     },
     "groq": {
@@ -840,7 +860,7 @@
         "groq"
       ],
       "contracts": {
-        "groq": "e1fa91ba33c2275c5a96c782d8bcd0fee5f84d8b52835ff0416bcef2b85bdd7e"
+        "groq": "c06fdaafae78ac99ef0e804f902e643bce901cb0f434948729998c4ce8234ce9"
       }
     },
     "mistral": {
@@ -876,7 +896,7 @@
         "mistral-model-ocr-4-1": "48be322ecf8de25a01b077d9860330dd2f56361753444ce5125c18af67368a96",
         "mistral-model-voxtral-mini-transcribe-26-02": "dca728f93aac210cf2f91083e6e6a33359228f2c212aafe864cdbcf95048de23",
         "mistral-model-voxtral-tts-26-03": "898a9ee2efca519558d1aff701b0351dc5cdb9f538d47b66450c93dcdb2dffa3",
-        "mistral-model-zai-glm-5-3": "a04948e8a543dc3f2cc213216d4c76e3203df522fd5dc9094990fc633b13625d"
+        "mistral-model-zai-glm-5-3": "16f6a045741ec7322ad8c664de5ddcb2f9838246c5ca2f306b859a7633ae6e3d"
       }
     },
     "siliconflow": {
@@ -966,17 +986,88 @@
         "perplexity-models"
       ],
       "contracts": {
-        "perplexity-models": "7dff00a36857063668f393f44cbb55365127d755ade7a5f8fb6afe69843537c8"
+        "perplexity-models": "71baedf27a007ca0a57635f0eb56f5021f48aca861260356a722e97788d323fa"
+      },
+      "reviewed": {
+        "date": "2026-10-19",
+        "removed": [
+          "anthropic/claude-haiku-4-5",
+          "anthropic/claude-opus-4-5",
+          "anthropic/claude-opus-4-6",
+          "anthropic/claude-opus-4-7",
+          "anthropic/claude-opus-4-8",
+          "anthropic/claude-sonnet-4-5",
+          "anthropic/claude-sonnet-4-6",
+          "google/gemini-3-flash-preview",
+          "google/gemini-3.1-flash-lite",
+          "google/gemini-3.1-pro-preview",
+          "google/gemini-3.5-flash",
+          "google/gemini-3.5-flash-lite",
+          "perplexity/nemotron-3-ultra-550b-a55b",
+          "xai/grok-4.20-multi-agent",
+          "xai/grok-4.20-non-reasoning",
+          "xai/grok-4.20-reasoning",
+          "xai/grok-4.3"
+        ]
       }
     },
     "cometapi": {
       "sources": [
-        "cometapi",
-        "comet-models"
+        "cometapi-catalog"
       ],
       "contracts": {
-        "cometapi": "a5b844cc15d4f94f8c3bb5dc0cbf5b1007bdfc231c06a3aa60cbc792bb35756d",
-        "comet-models": "2ebc08a169a8d4e52f5320afbc0ceb3f04984027d03621e32a9a50667c68f49b"
+        "cometapi-catalog": "ff22c7254bc01530d18c5c66b34af74443670df3b4b0cc18332bd802ababe139"
+      },
+      "apiShapes": [],
+      "apiFields": {
+        "currency": [
+          "USD / M Tokens"
+        ],
+        "input": [
+          "int",
+          "float",
+          "NoneType"
+        ],
+        "output": [
+          "int",
+          "float",
+          "NoneType"
+        ],
+        "cached_input": [
+          "int",
+          "float",
+          "NoneType"
+        ],
+        "cache_write": [
+          "int",
+          "float",
+          "NoneType"
+        ],
+        "per_request": [
+          "int",
+          "float",
+          "NoneType"
+        ],
+        "per_second": [
+          "int",
+          "float",
+          "NoneType"
+        ],
+        "web_search": [
+          "int",
+          "float",
+          "NoneType"
+        ],
+        "ratio": [
+          "int",
+          "float"
+        ],
+        "billing_mode": [
+          "tiered_expr"
+        ],
+        "billing_expr": [
+          "STRING"
+        ]
       }
     },
     "openai": {
@@ -992,7 +1083,7 @@
         "anthropic"
       ],
       "contracts": {
-        "anthropic": "95728beb16feb0c46c61be25ff4b4b2775fd1cdd4cdcecb2f0da5d867a31301d"
+        "anthropic": "719718f2b627fbf0d32f5a1014b7848ee4ea0c6d710fd39fecc4d6b3d756c683"
       }
     }
   }

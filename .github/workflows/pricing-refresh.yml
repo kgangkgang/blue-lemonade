@@ -50,15 +50,6 @@ jobs:
           path: ${{ runner.temp }}/pricing/report.json
           retention-days: 30
       - name: Flag official sources that need attention
-        run: |
-          python - <<'PY'
-          import json,os,sys
-          from pathlib import Path
-          report=json.loads((Path(os.environ['RUNNER_TEMP'])/'pricing/report.json').read_text())
-          bad={k:v for k,v in report.items() if v['status']!='ok'}
-          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
-              f.write('| Provider | Result |\n|---|---|\n'+''.join(f"| {k} | {v['status']} |\n" for k,v in report.items()))
-          if bad:
-              print('::error::Kept last verified prices for: '+', '.join(bad))
-              sys.exit(1)
-          PY
+        # Fails only for a provider that newly needs a human or has stayed unverified past the grace period;
+        # held prices and known reviews stay visible as warnings in the step summary (see tools/pricing/README.md).
+        run: python tools/pricing/summarize.py --report "$RUNNER_TEMP/pricing/report.json" --previous "$RUNNER_TEMP/pricing/previous.json" --feed "$RUNNER_TEMP/pricing/official-prices.json"

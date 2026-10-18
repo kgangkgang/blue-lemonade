@@ -1,0 +1,85 @@
+<!doctype html><html><head><title>fixture</title></head><body><main>
+<div class="heading-group"><h2 id="gemini-4-argon">Gemini 4 Argon</h2><em><a href="/gemini-api/docs/models/gemini-4-argon"><code>gemini-4-argon</code></a></em></div>
+<h3>Standard</h3>
+<table>
+<tr><td>Input price</td><td>Not available</td><td>$2.00 through November 30, 2026. $4.00 starting December 1, 2026.</td></tr>
+<tr><td>Output price (including thinking tokens)</td><td>Not available</td><td>$10.00 through November 30, 2026. $20.00 starting December 1, 2026.</td></tr>
+<tr><td>Context caching price</td><td>Not available</td><td>$0.10 through November 30, 2026. $0.20 starting December 1, 2026. Implicit caching only (explicit caching is not supported).</td></tr>
+<tr><td>Used to improve our products</td><td>Not available</td><td>No</td></tr>
+</table>
+<h3>Batch</h3>
+<table>
+<tr><td>Input price</td><td>Not available</td><td>$1.00 through November 30, 2026. $2.00 starting December 1, 2026.</td></tr>
+<tr><td>Output price (including thinking tokens)</td><td>Not available</td><td>$5.00 through November 30, 2026. $10.00 starting December 1, 2026.</td></tr>
+<tr><td>Context caching price</td><td>Not available</td><td>$0.05 through November 30, 2026. $0.10 starting December 1, 2026. Implicit caching only (explicit caching is not supported).</td></tr>
+<tr><td>Used to improve our products</td><td>Not available</td><td>No</td></tr>
+</table>
+<h3>Flex</h3>
+<table>
+<tr><td>Input price</td><td>Not available</td><td>$1.00 through November 30, 2026. $2.00 starting December 1, 2026.</td></tr>
+<tr><td>Output price (including thinking tokens)</td><td>Not available</td><td>$5.00 through November 30, 2026. $10.00 starting December 1, 2026.</td></tr>
+<tr><td>Context caching price</td><td>Not available</td><td>$0.05 through November 30, 2026. $0.10 starting December 1, 2026. Implicit caching only (explicit caching is not supported).</td></tr>
+<tr><td>Used to improve our products</td><td>Not available</td><td>No</td></tr>
+</table>
+<h3>Priority</h3>
+<table>
+<tr><td>Input price</td><td>Not available</td><td>$3.60 through November 30, 2026. $7.20 starting December 1, 2026.</td></tr>
+<tr><td>Output price (including thinking tokens)</td><td>Not available</td><td>$18.00 through November 30, 2026. $36.00 starting December 1, 2026.</td></tr>
+<tr><td>Context caching price</td><td>Not available</td><td>$0.18 through November 30, 2026. $0.36 starting December 1, 2026. Implicit caching only (explicit caching is not supported).</td></tr>
+<tr><td>Used to improve our products</td><td>Not available</td><td>No</td></tr>
+</table>
+<h3>Contributor</h3>
+<table>
+<tr><td>Input price</td><td>Not available</td><td>$1.00 through November 30, 2026. $2.00 starting December 1, 2026.</td></tr>
+<tr><td>Output price (including thinking tokens)</td><td>Not available</td><td>$5.00 through November 30, 2026. $10.00 starting December 1, 2026.</td></tr>
+<tr><td>Context caching price</td><td>Not available</td><td>$0.05 through November 30, 2026. $0.10 starting December 1, 2026. Implicit caching only (explicit caching is not supported).</td></tr>
+<tr><td>Used to improve our products</td><td>Not available</td><td>Yes</td></tr>
+</table>
+<div class="heading-group"><h2 id="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</h2><em><a href="/gemini-api/docs/models/gemini-3.1-pro-preview"><code>gemini-3.1-pro-preview</code></a></em></div>
+<h3>Standard</h3>
+<table>
+<tr><td>Input price</td><td>Not available</td><td>$2.00, prompts &lt;= 200k tokens $4.00, prompts &gt; 200k tokens</td></tr>
+<tr><td>Output price (including thinking tokens)</td><td>Not available</td><td>$12.00, prompts &lt;= 200k tokens $18.00, prompts &gt; 200k</td></tr>
+<tr><td>Context caching price</td><td>Not available</td><td>$0.20, prompts &lt;= 200k tokens $0.40, prompts &gt; 200k $4.50 / 1,000,000 tokens per hour (storage price)</td></tr>
+<tr><td>Used to improve our products</td><td>N/A</td><td>No</td></tr>
+</table>
+<h3>Batch</h3>
+<table>
+<tr><td>Input price</td><td>Not available</td><td>$1.00, prompts &lt;= 200k tokens $2.00, prompts &gt; 200k tokens</td></tr>
+<tr><td>Output price (including thinking tokens)</td><td>Not available</td><td>$6.00, prompts &lt;= 200k tokens $9.00, prompts &gt; 200k</td></tr>
+<tr><td>Context caching price</td><td>Not available</td><td>Same as Standard $0.20, prompts &lt;= 200k tokens $0.40, prompts &gt; 200k $4.50 / 1,000,000 tokens per hour (storage price)</td></tr>
+<tr><td>Used to improve our products</td><td>Yes</td><td>No</td></tr>
+</table>
+<h3>Flex</h3>
+<table>
+<tr><td>Input price</td><td>Not available</td><td>$1.00, prompts &lt;= 200k tokens $2.00, prompts &gt; 200k tokens</td></tr>
+<tr><td>Output price (including thinking tokens)</td><td>Not available</td><td>$6.00, prompts &lt;= 200k tokens $9.00, prompts &gt; 200k</td></tr>
+<tr><td>Context caching price</td><td>Not available</td><td>Same as Standard $0.20, prompts &lt;= 200k tokens $0.40, prompts &gt; 200k $4.50 / 1,000,000 tokens per hour (storage price)</td></tr>
+<tr><td>Used to improve our products</td><td>Yes</td><td>No</td></tr>
+</table>
+<h3>Priority</h3>
+<table>
+<tr><td>Input price</td><td>Not available</td><td>$3.60, prompts &lt;= 200k tokens $7.20, prompts &gt; 200k tokens</td></tr>
+<tr><td>Output price (including thinking tokens)</td><td>Not available</td><td>$21.60, prompts &lt;= 200k tokens $32.40, prompts &gt; 200k</td></tr>
+<tr><td>Context caching price</td><td>Not available</td><td>$0.36, prompts &lt;= 200k tokens $0.72, prompts &gt; 200k $8.10 / 1,000,000 tokens per hour (storage price)</td></tr>
+<tr><td>Used to improve our products</td><td>Yes</td><td>No</td></tr>
+</table>
+<h3>Contributor</h3>
+<table>
+<tr><td>Input price</td><td>Not available</td><td>$1.00, prompts &lt;= 200k tokens $2.00, prompts &gt; 200k tokens</td></tr>
+<tr><td>Output price (including thinking tokens)</td><td>Not available</td><td>$6.00, prompts &lt;= 200k tokens $9.00, prompts &gt; 200k tokens</td></tr>
+<tr><td>Context caching price</td><td>Not available</td><td>$0.10, prompts &lt;= 200k tokens $0.20, prompts &gt; 200k tokens $4.50 / 1,000,000 tokens per hour (storage price)</td></tr>
+<tr><td>Used to improve our products</td><td>N/A</td><td>Yes</td></tr>
+</table>
+<div class="heading-group"><h2 id="gemini-4-argon">Pricing for tools</h2><em><a href="/gemini-api/docs/models/gemini-4-argon"><code>gemini-4-argon</code></a></em></div>
+<h3>Standard</h3>
+<table>
+
+</table>
+<div class="heading-group"><h2 id="gemini-4-argon">Pricing for agents</h2><em><a href="/gemini-api/docs/models/gemini-4-argon"><code>gemini-4-argon</code></a></em></div>
+<h3>Standard</h3>
+<table>
+
+</table>
+<div class="heading-group"><h2 id="gemini-4-argon">Notes</h2><em><a href="/gemini-api/docs/models/gemini-4-argon"><code>gemini-4-argon</code></a></em></div>
+</main></body></html>

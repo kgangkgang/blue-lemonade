@@ -2,6 +2,7 @@
 from pathlib import Path
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse, parse_qs
+from datetime import datetime
 import json, re
 
 def parse_generic(target, source_dir):
@@ -162,7 +163,12 @@ def parse_generic(target, source_dir):
      row['longAbove']=200000;long={'input':ins[1],'output':outs[1],'cacheRead':cached[1]}
      if tier=='standard':row['longRates']=long
      else:row.setdefault('longTiers',{})[tier]=long
-    if 'January 1, 2027' in fields[ik]:row['expires']='2026-12-31T23:59:59Z';row['note']='2026-12-31까지의 할인 단가예요. 이후에는 공식 요금표 갱신이 필요해요.'
+    # A promotional rate is listed first with its end date; the later list price is not published early.
+    promo=re.search(r'through ([A-Z][a-z]+ \d{1,2}, \d{4})\.',fields[ik])
+    if promo:
+     if 'longAbove' in row:raise ValueError('Gemini promotional long-context pricing needs parser review')
+     until=datetime.strptime(promo[1],'%B %d, %Y')
+     row['expires']=until.strftime('%Y-%m-%dT23:59:59Z');row['note']=until.strftime('%Y-%m-%d')+'까지의 할인 단가예요. 이후에는 공식 요금표 갱신이 필요해요.'
  if target == 'siliconflow_cn':
   # SiliconFlow CN: rendered prices, including visible context tiers (the page's old metadata differs).
   for a in soup('siliconflow-cn').select('a[href*="models?target="]'):
@@ -220,27 +226,7 @@ def parse_generic(target, source_dir):
    add('perplexity',c[0],ins[0],outs[0],cached)
    if 'k)' in c[1]:DATA['perplexity'][c[0]]['note']='짧은 문맥 기본 단가예요. 긴 문맥·도구 비용은 응답 총액을 확인하세요.'
  if target == 'cometapi':
-  # React server component data is public source data, never executed as JavaScript.
-  def rsc(name):
-   chunks=[]
-   for script in soup(name).find_all('script'):
-    m=re.fullmatch(r'self\.__next_f\.push\((\[.*\])\)',script.text.strip(),re.S)
-    if m:
-     a=json.loads(m[1])
-     if len(a)>1 and isinstance(a[1],str):chunks.append(a[1])
-   d={}
-   for line in ''.join(chunks).splitlines():
-    m=re.match(r'^([0-9a-f]+):([\[{].*)$',line)
-    if m:
-     try:d[m[1]]=json.loads(m[2])
-     except ValueError:pass
-   return d
-  def descend(x):
-   if isinstance(x,dict):
-    if x.get('model_type'):yield x
-    for v in x.values():yield from descend(v)
-   elif isinstance(x,list):
-    for v in x:yield from descend(v)
+  # The public catalog JSON lists USD list prices per million tokens with a pay ratio; tiered models carry a billing expression.
   def comet_rates(expr,ratio):
    terms=expr.split(' + ');rates={}
    keys={'p':'input','c':'output','cr':'cacheRead','cc':'cacheWrite','cc1h':'cacheWrite1h'}
@@ -250,21 +236,19 @@ def parse_generic(target, source_dir):
     rates[keys[m[1]]]=float(m[2])*ratio
    if 'cacheWrite1h' in rates:rates['cacheWrite5m']=rates.pop('cacheWrite',None)
    return rates if 'input' in rates and 'output' in rates else None
-  for source in ['cometapi','comet-models']:
-   d=rsc(source)
-   for x in descend(d):
-    if x.get('model_type')!='text' or x.get('upcoming') or x.get('is_router'):continue
-    p=x.get('pricing',{});p=d.get(p[1:],{}) if isinstance(p,str) and p.startswith('$') else p
-    if not isinstance(p,dict) or p.get('currency')!='USD / M Tokens':continue
-    model=x['id'];ratio=p.get('ratio',1)
-    if not isinstance(ratio,(int,float)) or not 0<=ratio<=10:continue
-    if p.get('input') is not None and p.get('output') is not None:
-     add('cometapi',model,p['input']*ratio,p['output']*ratio,p['cached_input']*ratio if p.get('cached_input') is not None else None,p['cache_write']*ratio if p.get('cache_write') is not None else None)
-    elif p.get('billing_mode')=='tiered_expr':
-     m=re.fullmatch(r'len <= (\d+) \? tier\("short_context", (.*?)\) : tier\("long_context", (.*?)\)',p.get('billing_expr',''))
-     if m:
-      short=comet_rates(m[2],ratio);long=comet_rates(m[3],ratio)
-      if short and long:DATA.setdefault('cometapi',{})[model]={'rates':short,'longAbove':int(m[1]),'longRates':long}
+  for x in rows('cometapi'):
+   if x.get('model_type')!='text' or x.get('upcoming') or x.get('is_router'):continue
+   p=x.get('pricing');model=x.get('id')
+   if not isinstance(p,dict) or p.get('currency')!='USD / M Tokens' or not isinstance(model,str):continue
+   ratio=p.get('ratio',1)
+   if isinstance(ratio,bool) or not isinstance(ratio,(int,float)) or not 0<=ratio<=10:continue
+   if p.get('input') is not None and p.get('output') is not None:
+    add('cometapi',model,p['input']*ratio,p['output']*ratio,p['cached_input']*ratio if p.get('cached_input') is not None else None,p['cache_write']*ratio if p.get('cache_write') is not None else None)
+   elif p.get('billing_mode')=='tiered_expr':
+    m=re.fullmatch(r'len <= (\d+) \? tier\("short_context", (.*?)\) : tier\("long_context", (.*?)\)',p.get('billing_expr',''))
+    if m:
+     short=comet_rates(m[2],ratio);long=comet_rates(m[3],ratio)
+     if short and long:DATA.setdefault('cometapi',{})[model]={'rates':short,'longAbove':int(m[1]),'longRates':long}
 
  return DATA.get(target, {})
 

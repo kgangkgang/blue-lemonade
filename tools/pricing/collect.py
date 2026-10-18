@@ -13,11 +13,26 @@ from parsers import parse_generic
 
 ROOT = Path(__file__).resolve().parent
 BAD_KEYS = {'__proto__', 'constructor', 'prototype'}
-API_PROVIDERS = {'openrouter', 'nanogpt', 'electronhub', 'chutes', 'pollinations', 'mancer'}
+API_PROVIDERS = {'openrouter', 'nanogpt', 'electronhub', 'chutes', 'pollinations', 'mancer', 'cometapi'}
 REVIEW_PROVIDERS = {'vertex', 'cohere', 'ai21'}
+# Large catalogs churn daily. Models that vanish from a fully parsed catalog are dropped up to this share of
+# the previous list, and an out-of-band rate change keeps that model's last verified price (reported as held)
+# instead of blocking the whole provider. Curated tables keep the stricter whole-provider review.
+CATALOG_PROVIDERS = API_PROVIDERS | {'aimlapi', 'perplexity', 'siliconflow_cn'}
+REMOVAL_CAP = 0.15
 
-def api_shapes(provider, raw):
-    data=json.loads(raw);rows=data if isinstance(data,list) else data['data'];out=set()
+def shape_allowed(shape, fields):
+    """A flat pricing object matches a field contract when every key is listed with its value shape."""
+    if not isinstance(shape,dict) or not fields:return False
+    for key,value in shape.items():
+        allowed=fields.get(key)
+        if allowed is None or isinstance(value,(dict,list)):return False
+        if value not in allowed and not (isinstance(value,str) and 'STRING' in allowed):return False
+    return True
+
+def api_shapes(provider, raw, fields=None):
+    """Digest every pricing shape that the optional field contract does not already cover."""
+    data=json.loads(raw);rows=data if isinstance(data,list) else data['data'];out=set();priced=0
     def shape(v):
         if isinstance(v,dict):return {k:shape(x) for k,x in sorted(v.items())}
         if isinstance(v,list):return [shape(x) for x in v]
@@ -27,7 +42,10 @@ def api_shapes(provider, raw):
         return type(v).__name__
     for row in rows:
         value=row.get('price' if provider=='chutes' else 'pricing')
-        if value:out.add(digest(shape(value)))
+        if value:
+            priced+=1;current=shape(value)
+            if not shape_allowed(current,fields):out.add(digest(current))
+    if not priced:raise ValueError('API price unit or fields changed')
     return sorted(out)
 
 def digest(value):
@@ -52,10 +70,10 @@ def text_contract(provider, name, raw):
     else:
         if '<html' in raw.lower() or '<!doctype' in raw.lower():
             soup=BeautifulSoup(raw,'html.parser')
-            if provider=='cometapi':
+            if provider in ['perplexity','aimlapi']:
+                # Marketplace tables churn daily: keep headers, units and billing prose, not the catalog rows.
                 for tr in soup.select('tr'):
-                    cells=tr.find_all('td')
-                    if len(cells)>1 and cells[1].get_text(' ',strip=True) in ['audio','image','video']:tr.decompose()
+                    if tr.find('td'):tr.decompose()
             for el in soup(['script','style','nav','footer','header','head']):el.decompose()
             raw=(soup.find('main') or soup).get_text(' ',strip=True)
         if provider not in REVIEW_PROVIDERS:
@@ -118,11 +136,14 @@ def read_models(provider, directory, old):
         return result
     return parse_generic(provider, directory)
 
-def validate_models(new, old, kind, api=False):
+def validate_models(new, old, kind, catalog=False, reviewed=None):
+    """Fail closed on drift; for catalogs return removed models and reset held models to their last verified row."""
+    reviewed=reviewed or {}
     if not isinstance(new,dict) or not new or len(new)>15000:raise ValueError('Empty/oversized model catalog')
     # Missing rows may mean a partial HTML response. Never silently replace an entire catalog.
-    missing=set(old)-set(new)
-    if missing:raise ValueError(f'{len(missing)} models disappeared; review required')
+    missing=sorted(set(old)-set(new));accepted=set(reviewed.get('removed',[]))
+    unexpected=[m for m in missing if m not in accepted]
+    if unexpected and (not catalog or len(unexpected)>math.ceil(REMOVAL_CAP*len(old))):raise ValueError(f'{len(unexpected)} models disappeared; review required')
     def walk(v):
         if isinstance(v,dict):
             for k,x in v.items():
@@ -149,7 +170,16 @@ def validate_models(new, old, kind, api=False):
             for x,y in zip(a,b):compare(x,y,path)
         elif isinstance(a,(int,float)) and not isinstance(a,bool) and isinstance(b,(int,float)) and not isinstance(b,bool):
             if (a==0)!=(b==0) or (a and not .5<=b/a<=2):raise ValueError('Unusual rate change '+path)
-    compare(old,new)
+    held={}
+    for model in sorted(set(old)&set(new)):
+        row=new[model];rates=row.get('rates') if isinstance(row,dict) else row
+        # An explicitly reviewed rate is accepted once, exactly as recorded; later moves are measured from it.
+        if model in reviewed.get('rates',{}) and reviewed['rates'][model]==rates:continue
+        try:compare(old[model],row,'/'+model)
+        except ValueError:
+            if not catalog:raise
+            held[model]={'kept':copy.deepcopy(old[model]),'seen':row};new[model]=copy.deepcopy(old[model])
+    return {'removed':missing,'held':held}
 
 def fetch_source(item):
     name, spec=item;url=spec['url'];allowed=set(spec['hosts'])
@@ -195,14 +225,14 @@ def collect(previous, contracts, directory, fetch=True):
         try:
             if any(name in errors for name in spec['sources']):raise OSError('Official source unavailable')
             if provider in API_PROVIDERS:
-                shapes=api_shapes(provider,raws[spec['sources'][0]])
-                if not shapes or not set(shapes)<=set(spec['apiShapes']):raise ValueError('API price unit or fields changed')
+                shapes=api_shapes(provider,raws[spec['sources'][0]],spec.get('apiFields'))
+                if not set(shapes)<=set(spec.get('apiShapes',[])):raise ValueError('API price unit or fields changed')
             if provider not in API_PROVIDERS:
                 if any(text_contract(provider,name,raws[name])!=spec['contracts'][name] for name in spec['sources']):raise ValueError('Billing page changed; parser review required')
             models=read_models(provider,directory,old['models'])
-            validate_models(models,old['models'],entry['format'],provider in API_PROVIDERS)
+            outcome=validate_models(models,old['models'],entry['format'],provider in CATALOG_PROVIDERS,spec.get('reviewed'))
             entry.update(models=models,checkedAt=now,status='ok',revision=digest(models),sourceDigest=digest({n:digest(raws[n]) for n in spec['sources']}))
-            report[provider]={'status':'ok','models':len(models),'changed':models!=old['models']}
+            report[provider]={'status':'ok','models':len(models),'changed':models!=old['models'],'added':sorted(set(models)-set(old['models'])),'removed':outcome['removed'],'held':outcome['held']}
         except (OSError,requests.RequestException) as e:
             entry['status']='error';report[provider]={'status':'error','reason':str(e)}
         except Exception as e:
@@ -227,7 +257,7 @@ def main():
     feed,report=collect(previous,contracts,args.sources,not args.offline)
     atomic_json(args.output,feed);atomic_json(args.report,report)
     print(json.dumps({k:v['status'] for k,v in report.items()}))
-    # The workflow publishes last-good partial results before flagging review-required providers.
+    # The workflow publishes last-good partial results; summarize.py then decides whether a human must look.
     return 0
 
 if __name__=='__main__':raise SystemExit(main())

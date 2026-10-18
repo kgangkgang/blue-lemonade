@@ -1,0 +1,157 @@
+{
+ "data": [
+  {
+   "id": "auto",
+   "code": "auto",
+   "name": "AUTO",
+   "model_type": "text",
+   "upcoming": false,
+   "is_router": true,
+   "pricing": {
+    "currency": "USD / M Tokens",
+    "input": 75,
+    "output": 75,
+    "per_request": null,
+    "per_second": null,
+    "ratio": 0.8
+   },
+   "endpoints": {
+    "openai-chat": {
+     "path": "/v1/chat/completions",
+     "method": "POST",
+     "api_doc_url": "https://apidoc.cometapi.com/api/text/chat"
+    }
+   }
+  },
+  {
+   "id": "muse-wonder",
+   "code": "muse-wonder",
+   "name": "Muse Wonder",
+   "model_type": "text",
+   "upcoming": false,
+   "is_router": false,
+   "pricing": {
+    "currency": "USD / M Tokens",
+    "input": 4,
+    "output": 20,
+    "per_request": null,
+    "per_second": null,
+    "ratio": 0.8
+   },
+   "endpoints": {
+    "chat": {
+     "path": "/v1/chat/completions",
+     "method": "POST",
+     "api_doc_url": "https://dev.meta.ai/docs/protocols/chat-completions"
+    },
+    "messages": {
+     "path": "/v1/messages",
+     "method": "POST",
+     "api_doc_url": "https://dev.meta.ai/docs/protocols/messages"
+    },
+    "responses": {
+     "path": "/v1/responses",
+     "method": "POST",
+     "api_doc_url": "https://dev.meta.ai/docs/protocols/responses"
+    }
+   }
+  },
+  {
+   "id": "claude-haiku-5-5",
+   "code": "claude-haiku-5-5",
+   "name": "Claude Haiku 5.5",
+   "model_type": "text",
+   "upcoming": false,
+   "is_router": false,
+   "pricing": {
+    "currency": "USD / M Tokens",
+    "input": null,
+    "output": null,
+    "per_request": null,
+    "per_second": null,
+    "billing_mode": "tiered_expr",
+    "billing_expr": "len <= 100000 ? tier(\"short_context\", p * 0.1 + c * 0.5 + cr * 0.01 + cc * 0.125 + cc1h * 0.2) : tier(\"long_context\", p * 0.5 + c * 2.5 + cr * 0.05 + cc * 0.625 + cc1h * 1)",
+    "ratio": 0.8,
+    "web_search": 10
+   },
+   "endpoints": "{\n  \"anthropic-messages\": {\n    \"api_doc_url\": \"https://apidoc.cometapi.com/api/text/anthropic-messages\",\n    \"method\": \"POST\",\n    \"path\": \"/v1/messages\"\n  },\n  \"openai-chat\": {\n    \"api_doc_url\": \"https://apidoc.cometapi.com/api/text/chat\",\n    \"method\": \"POST\",\n    \"path\": \"/v1/chat/completions\"\n  }\n}"
+  },
+  {
+   "id": "claude-sonnet-5-5",
+   "code": "claude-sonnet-5-5",
+   "name": "Claude Sonnet 5.5",
+   "model_type": "text",
+   "upcoming": false,
+   "is_router": false,
+   "pricing": {
+    "currency": "USD / M Tokens",
+    "input": 2,
+    "output": 10,
+    "per_request": null,
+    "per_second": null,
+    "ratio": 0.8,
+    "cached_input": 0.2,
+    "cache_write": 2.5,
+    "web_search": 10
+   },
+   "endpoints": {
+    "openai-chat": {
+     "path": "/v1/chat/completions",
+     "method": "POST",
+     "api_doc_url": "https://apidoc.cometapi.com/api/text/chat"
+    },
+    "anthropic-messages": {
+     "path": "/v1/messages",
+     "method": "POST",
+     "api_doc_url": "https://apidoc.cometapi.com/api/text/anthropic-messages"
+    }
+   }
+  },
+  {
+   "id": "gpt-image-2-all",
+   "code": "gpt-image-2-all",
+   "name": "GPT Image 2 ALL",
+   "model_type": "text",
+   "upcoming": false,
+   "is_router": false,
+   "pricing": {
+    "currency": "USD / M Tokens",
+    "input": null,
+    "output": null,
+    "per_request": 0.05,
+    "per_second": null,
+    "ratio": 0.8,
+    "web_search": 10
+   },
+   "endpoints": "{\n  \"openai-image-edit\": {\n    \"path\": \"/v1/images/edits\",\n    \"method\": \"POST\",\n    \"api_doc_url\": \"https://apidoc.cometapi.com/api/image/openai/image-editing\"\n  },\n  \"openai-image\": {\n    \"path\": \"/v1/images/generations\",\n    \"method\": \"POST\",\n    \"api_doc_url\": \"https://apidoc.cometapi.com/api/image/openai/images\"\n  },\n  \"openai-chat\": {\n    \"path\": \"/v1/chat/completions\",\n    \"method\": \"POST\",\n    \"api_doc_url\": \"https://apidoc.cometapi.com/chat\"\n  }\n}"
+  },
+  {
+   "id": "gemini-nano-banana-2.1",
+   "code": "nano-banana-2-1",
+   "name": "Nano Banana 2.1",
+   "model_type": "image",
+   "upcoming": false,
+   "is_router": false,
+   "pricing": {
+    "currency": "USD / M Tokens",
+    "input": 1.5,
+    "output": 7.5,
+    "per_request": null,
+    "per_second": null,
+    "ratio": 0.8,
+    "web_search": 10
+   },
+   "endpoints": {
+    "gemini": {
+     "path": "/v1beta/models/{model}:generateContent",
+     "method": "POST",
+     "api_doc_url": "https://apidoc.cometapi.com/api/image/gemini/gemini-generates-image"
+    }
+   }
+  }
+ ],
+ "page": 0,
+ "page_size": 0,
+ "success": true,
+ "total": 6
+}

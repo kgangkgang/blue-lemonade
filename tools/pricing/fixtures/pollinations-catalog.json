@@ -1,0 +1,69 @@
+[
+ {
+  "name": "openai/gpt-5.4-nano",
+  "category": "text",
+  "pricing": {
+   "currency": "pollen",
+   "promptTextTokens": "0.00000015",
+   "promptCachedTokens": "0.000000015",
+   "completionTextTokens": "0.0000009375"
+  },
+  "aliases": [
+   "gpt-5.4-nano",
+   "openai"
+  ],
+  "output_modalities": [
+   "text"
+  ]
+ },
+ {
+  "name": "community/MarcosFRG/gemini-3-flash-preview:paid",
+  "category": "text",
+  "pricing": {
+   "currency": "pollen",
+   "promptTextTokens": "0.0000004",
+   "promptCachedTokens": "0.00000004",
+   "promptCacheWriteTokens": "0.00000042",
+   "promptAudioTokens": "0.0000007",
+   "promptImageTokens": "0.0000004",
+   "completionTextTokens": "0.0000025",
+   "completionReasoningTokens": "0.00000125"
+  },
+  "aliases": [
+   "MarcosFRG/gemini-3-flash-preview:paid"
+  ],
+  "output_modalities": [
+   "text"
+  ]
+ },
+ {
+  "name": "qwen/qwen3guard-gen-8b",
+  "category": "text",
+  "pricing": {
+   "currency": "pollen"
+  },
+  "aliases": [
+   "qwen3guard-gen-8b",
+   "qwen-safety"
+  ],
+  "output_modalities": [
+   "text"
+  ]
+ },
+ {
+  "name": "tongyi-mai/z-image-turbo",
+  "category": "image",
+  "pricing": {
+   "currency": "pollen",
+   "completionImageTokens": "0.004"
+  },
+  "aliases": [
+   "z-image",
+   "z-image-turbo",
+   "zimage"
+  ],
+  "output_modalities": [
+   "image"
+  ]
+ }
+]
