@@ -55,7 +55,7 @@ export async function pruneNative(lists = null) {
         applyOne(source.id);
         changed.push({ source: source.id, gone: step.gone, back: step.back });
     }
-    saveSettings();
+    if (changed.length) saveSettings();   // 7.2.6 바뀐 게 없으면 새로고침마다 설정을 저장하지 않는다 (api-audit #13)
     const names = changed.flatMap(item => item.gone);
     if (names.length && typeof toastr !== 'undefined') toastr.info(`실리태번 목록에 들어온 모델은 등록에서 뺐어요: ${names.join(', ')}`, TITLE, { timeOut: 6000 });
     return changed;

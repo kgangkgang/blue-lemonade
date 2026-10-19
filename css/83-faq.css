@@ -1,0 +1,62 @@
+/* ===== css/83-faq.css =====
+   7.2.6 설정 창 › 테마 › 자주 묻는 질문 (src/panel.js faqMarkup · 글은 src/faq-data.js).
+   질문 하나가 접기 카드 하나: 질문(summary) → 답 두세 문단 → 「지금」 상태 한 줄 → 바로 고치는 단추 → README 링크.
+   확장 탭 안내 아래의 「블루레몬에이드 사용 켜기」 · 「사용 모드 바꾸러 가기」 단추 줄(.bl-faq-actions)도 같은 모양.
+   폰(375)에서 단추는 한 줄 가득 · 44px, 글씨 130% 에서도 줄이 넘칠 뿐 잘리지 않게 overflow-wrap.
+   ===== */
+.salty-panel .bl-faq { display: flex; flex-direction: column; gap: 10px; }
+.salty-panel .bl-faq-lead { margin: 0 2px 2px; }
+.salty-panel .bl-faq-item {
+  display: block;
+  margin: 0;
+  padding: 0 12px;
+  border: 1px solid var(--salty-line);
+  border-radius: 10px;
+  background: var(--salty-fill-bg, var(--salty-bg));
+}
+.salty-panel.in-popup .bl-faq-item { background: var(--salty-fill-shade, var(--shade)); }
+.salty-panel .bl-faq-item > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 0;
+  cursor: pointer;
+  list-style: none;
+  color: var(--salty-text);
+  font-size: calc(14 * var(--sp));
+  font-weight: 600;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+.salty-panel .bl-faq-item > summary::-webkit-details-marker { display: none; }
+.salty-panel .bl-faq-item > summary::before {
+  content: "\f078";
+  flex: 0 0 auto;
+  width: 1em;
+  color: var(--salty-muted);
+  font: var(--fa-font-solid, 900 .8em/1 "Font Awesome 6 Free");
+  transition: transform .15s ease;
+}
+.salty-panel .bl-faq-item[open] > summary::before { transform: rotate(180deg); }
+.salty-panel .bl-faq-item > summary:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 2px; border-radius: 6px; }
+.salty-panel .bl-faq-body { display: flex; flex-direction: column; gap: 8px; padding: 0 0 12px; border-top: 1px solid var(--salty-line); }
+.salty-panel .bl-faq-body > :first-child { margin-top: 10px; }
+.salty-panel .bl-faq-body p { margin: 0; color: var(--salty-text); font-size: calc(13.5 * var(--sp)); line-height: 1.6; overflow-wrap: anywhere; word-break: keep-all; }
+.salty-panel .bl-faq-status {
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--salty-accent) 10%, transparent);
+  color: var(--salty-text) !important;
+  font-size: calc(12.5 * var(--sp)) !important;
+}
+.salty-panel .bl-faq-status b { margin-right: .4em; color: var(--salty-accent-ink, var(--salty-accent)); font-weight: 700; }
+.salty-panel .bl-faq-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 0; }
+.salty-panel .bl-faq-actions .salty-btn { flex: 1 1 200px; min-height: 44px; }
+.salty-panel .salty-note + .bl-faq-actions { margin: 10px 4px 0; }
+.salty-panel .bl-faq-readme { align-self: flex-start; color: var(--salty-accent-ink, var(--salty-accent)); font-size: calc(12.5 * var(--sp)); line-height: 1.5; text-decoration: none; overflow-wrap: anywhere; }
+.salty-panel .bl-faq-readme:hover { text-decoration: underline; }
+@media (max-width: 760px), (pointer: coarse) {
+  .salty-panel .bl-faq-actions .salty-btn { flex-basis: 100%; }
+}

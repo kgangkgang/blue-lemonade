@@ -175,6 +175,7 @@ const defaultSettings = {
     hide_paragraph_button: true,
     hide_edit_button: false,
     translation_check: true,     // 2.6.0 번역 점검 표시 (의심 문단 · 번역 단추의 메시지 상태)
+    translation_autofix: false,  // 7.2.6 점검이 의심 문단을 자동으로 다시 번역(유료 요청 ≤3/메시지)할지 — 전에는 점검과 한 스위치였다 (api-audit #5). 끄면 표시 · 단추만
     reasoning_translate: true,   // 2.6.0 생각 블록 카드의 「번역해서 보기」
     keep_korean_source: true,    // 2.7.9 한국어로 옮길 때 이미 한국어인 문단 · 대사는 보내지 않고 그대로 (korean-keep.js)
     hide_delete_button: true,
@@ -535,6 +536,7 @@ function loadSettings() {
     
     $('#force_sequential_matching').prop('checked', extensionSettings.force_sequential_matching);
     $('#llm_translation_check').prop('checked', extensionSettings.translation_check !== false);   // 2.6.0
+    $('#llm_translation_autofix').prop('checked', extensionSettings.translation_autofix === true);   // 7.2.6
     $('#llm_reasoning_translate').prop('checked', extensionSettings.reasoning_translate !== false);   // 2.6.0
     $('#llm_keep_korean').prop('checked', extensionSettings.keep_korean_source !== false);   // 2.7.9
 
@@ -2139,7 +2141,7 @@ async function translate(text, options = {}) {
                     const watch = done && (onProgress || showPreview) ? streamWatch({ done, settled: () => translated, shape: tidyKana }) : null;
                     // 5.1.5: 묶음이 거절되면 그 자리에서 반으로 나눠 다시 보낸다 — 사용자가 화살표로 다시 번역하면
                     // 통과하던 것과 같은 작은 요청이다. 문단 하나까지 막히면 그 문단만 null(차단 표시). 나누기는 메시지당 SPLIT_CAP 번까지.
-                    const SPLIT_CAP = 6;
+                    const SPLIT_CAP = options.auto ? 2 : 6;   // 7.2.6 자동 번역은 2번까지(요청 ≤ 7) — 손으로 누른 번역은 예전처럼 6번 (api-audit #6)
                     // 2026-10-06: 문단별 거절 판정은 거절 말투 + 모델 목소리 낱말(번역 · 정책 · 가이드라인)이 있을 때만 — 짧게 줄어든 사과 대사
                     //             ("죄송합니다, 폐하. 그 명령은 따를 수 없습니다." · "그 요청은 들어드릴 수 없습니다.")를 거절로 버리지 않게.
                     //             요청 · 내용 · 텍스트는 대사에도 흔해서 안 보고, 원문에도 그 얘기(번역 · 규칙)가 있으면 대사로 본다.
@@ -3029,7 +3031,7 @@ function loadCheckView() {
     checkViewLoading ??= import('./check-view.js').then(({ createCheckView }) => (checkViewReal = createCheckView({
         stateOf: checkStateOf, scope: () => getContext().chatMetadata,
         rerender: id => { const message = getContext().chat?.[id]; if (message) refreshMessageBlock(id, message); },
-        act: runCheckAction,
+        act: runCheckAction, autoFixOn: () => extensionSettings.translation_autofix === true,   // 7.2.6
     }))).catch(error => { console.warn('[LLM Translator] 번역 점검을 불러오지 못했어요:', error); checkViewLoading = null; return null; });
     return checkViewLoading;
 }
@@ -3263,7 +3265,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                 const segmentCache = source !== 'handleTranslateButtonClick_retranslate' || String(message.extra.display_text || '').includes(MARK_TAIL);
                 try {
                     // 6.5.2 같은 채팅을 다시 불러오는 사이(배열이 빈 순간)는 「바뀜」이 아니다 — 가라앉은 뒤에 판단한다
-                    translation = await translate(originalText, { segmentCache, collectNames: true, assertValid: () => { if (runToken.guard.settled()) runToken.guard.assert(); }, onProgress: badge.update, onPreview: preview.show, report });
+                    translation = await translate(originalText, { segmentCache, collectNames: true, auto: source === 'auto', assertValid: () => { if (runToken.guard.settled()) runToken.guard.assert(); }, onProgress: badge.update, onPreview: preview.show, report });
                 } finally {
                     preview.stop(); badge.remove();
                 }
@@ -5859,6 +5861,7 @@ function initializeEventHandlers() {
         if (anchor) { const button = document.createElement('button'); button.id = 'llm_check_board'; button.type = 'button'; button.className = 'menu_button'; button.textContent = '의심 번역 모아보기'; button.addEventListener('click', () => { void openTranslationCheckBoard().catch(error => toastr.error(error.message, '번역 점검')); }); anchor.after(button); }
     }
     // 2.6.0 번역 점검 표시 · 생각 블록 번역 단추 — 바꾸면 그려진 메시지를 다시 그린다 (표시 · 단추를 달거나 뗀다)
+    $('#llm_translation_autofix').on('change', function () { extensionSettings.translation_autofix = $(this).is(':checked'); saveSettingsDebounced(); });   // 7.2.6 표시는 그대로라 다시 그리지 않는다
     $('#llm_translation_check, #llm_reasoning_translate').on('change', function () {
         extensionSettings[this.id === 'llm_translation_check' ? 'translation_check' : 'reasoning_translate'] = $(this).is(':checked');
         saveSettingsDebounced();

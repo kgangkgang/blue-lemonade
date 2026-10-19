@@ -69,7 +69,10 @@ export async function clearSegmentCache() {
 }
 
 const paragraphKey = (signature, body) => checkpointKey(JSON.stringify(['paragraph-v2', signature, body]));
-const skipBody = body => !body.trim() || /^(\s*\[\[__VAR_\d+__\]\]\s*)+$/.test(body);
+// 7.2.6 글자(\p{L})가 하나도 없는 문단 — 자리표시자 · 태그 · 기호뿐(그림 한 장 `<img …>` 같은 것) — 은 보내지 않고 그대로 둔다 (token-audit 번역 1)
+const bareLetters = body => /\p{L}/u.test(String(body).replace(/\[\[__VAR_\d+__\]\]/g, '').replace(/<[^>]*>/g, '').replace(/⟦\d+⟧/g, ''));
+const skipBody = body => !body.trim() || /^(\s*\[\[__VAR_\d+__\]\]\s*)+$/.test(body) || !bareLetters(body);
+export const skipsBody = skipBody;   // 시험용
 /** 5.4.2: 한 메시지의 문단 캐시 줄을 지운다 (사용자가 번역문을 지웠을 때) — 남아 있으면 다시 번역해도 요청 없이 옛 번역이 그대로 나왔다 */
 export async function forgetSegments(parts, signature) {
     const keys = [];

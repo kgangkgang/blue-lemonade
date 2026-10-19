@@ -34,7 +34,8 @@ const hasDocument = () => typeof document !== 'undefined' && typeof document.get
  *  scope: 'local'(내 계정 폴더) · 'global'(전역 public 폴더) · 'unknown'(못 읽음) · null / others: 다른 이름 폴더에 있는 같은 확장 [{ name, type }]
  *  git: true(실리태번 확장 관리 · git 설치본) · false · 'unknown'(확인 실패 — 오프라인 git fetch 500 등) / active: 지금 이 페이지에 실려 있음
  *  disabled: 확장 관리에서 끔 / done: '' | 'installed' | 'removed' (새로고침 대기) */
-export const state = { helper: null, installed: null, scope: null, others: [], git: false, active: false, disabled: false, busy: false, message: '', done: '', error: '' };
+const REFRESH_TTL = 5 * 60 * 1000;   // 7.2.6
+export const state = { helper: null, installed: null, refreshedAt: 0, scope: null, others: [], git: false, active: false, disabled: false, busy: false, message: '', done: '', error: '' };
 
 /** 7.0.1: 덮어쓰거나 지우면 안 되는 까닭 (없으면 '') — git 설치본이거나 확인 실패, 전역 설치본, 다른 폴더에 같은 확장 */
 export function blockedReason(s = state) {
@@ -173,6 +174,7 @@ export async function refresh({ probeGit = true } = {}) {
     state.scope = state.installed ? (where.scope ?? 'unknown') : null;
     state.git = state.installed && probeGit ? await isGit(state.scope === 'global') : false;
     if (state.helper === null) await checkHelper();
+    state.refreshedAt = Date.now();   // 7.2.6
     renderAll();
     return state;
 }
@@ -317,7 +319,8 @@ async function act(name, button) {
 }
 export function mountInline(host) {
     const root = document.createElement('div'); root.className = 'blpt'; host.append(root); views.add(root); render(root);
-    if (!state.busy) refresh().catch(() => {});
+    // 7.2.6 창을 열 때마다 설치 상태 · 확장 목록 · 서버 git 확인(≈4~84 요청)을 다시 하지 않는다 — 5분 안이면 받아 둔 상태 그대로 (설치 · 삭제 뒤는 refresh 가 다시 적는다)
+    if (!state.busy && (state.installed === null || Date.now() - state.refreshedAt > REFRESH_TTL)) refresh().catch(() => {});
     return () => { views.delete(root); root.remove(); };
 }
 export function openPanel() {

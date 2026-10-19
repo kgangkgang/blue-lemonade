@@ -38,7 +38,8 @@ import { classifyAll } from './assets.js';
 import { CUT_EDGE_RANGES, cutEdgeDefaults, imageFrameOn } from './cutedge.js';
 import { openNotice, currentVersion, hasUnseenNotice } from './notice.js';
 import { COPYRIGHT_ICON } from './credits.js';
-import { customCssReport, buildDiagnosis } from './diagnose.js';
+import { customCssReport, otherCssReport, buildDiagnosis } from './diagnose.js';
+import { FAQ } from './faq-data.js';   // 7.2.6 자주 묻는 질문 (글만)
 import { PRESETS, MAX_STYLES, captureStyle, applyStyleData, sameStyle, sharePayload, encodeStyle, decodeStyle, newStyleId, uniqueName, mergeFonts, currentKey, keyLabel } from './styles.js';
 import { charStyleModule } from './features.js';
 import { splashState, checkSplash, SPLASH_COMMAND, SPLASH_IMPORT, faviconFileState, checkFaviconFile, prepareFaviconCommand, FAVICON_FILE } from './splash.js';
@@ -61,7 +62,7 @@ const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 // 2.7.0: 글꼴 탭을 글자 탭에 합침 — 역할(본문 · 대사 · 메뉴 · 속마음 · 강조 · 코드)마다 한 화면에서 글꼴 · 크기 · 굵기 · 자간을 다 만짐
 const TABS = [['theme', '테마'], ['text', '글자'], ['chat', '채팅'], ['image', '이미지'], ['prompt', '프롬프트'], ['extensions', '확장']];
 const SUBS = {
-    theme: [['palette', '색'], ['colors', '색 고치기'], ['styles', '스타일'], ['changes', '변경한 설정'], ['backup', '백업'], ['update', '업데이트'], ['etc', '기타 설정']],
+    theme: [['palette', '색'], ['colors', '색 고치기'], ['styles', '스타일'], ['changes', '변경한 설정'], ['backup', '백업'], ['update', '업데이트'], ['etc', '기타 설정'], ['faq', '자주 묻는 질문']],
     text: [['text', '본문'], ['dialogue', '대사'], ['ui', '메뉴'], ['em', '속마음'], ['strike', '취소선'], ['strong', '강조'], ['code', '코드'], ['para', '문단'], ['markdown', '마크다운'], ['shadow', '그림자 · 외곽선']],
     chat: [['message', '메시지'], ['profile', '캐릭터 프로필'], ['user-profile', '내 프로필'], ['name', '캐릭터 이름·시간'], ['user-name', '내 이름·시간'], ['screen', '화면'], ['etc', '기타']],
     image: [['layout', '배치'], ['shape', '모양'], ['frame', '테두리'], ['size', '크기'], ['fade', '흐림'], ['cutedge', '투명 그림']],
@@ -999,11 +1000,78 @@ function fontBlock(s, slot) {
         ${rows}`;
 }
 
+// ───────── 7.2.6 자주 묻는 질문 (글은 faq-data.js) ─────────
+// 단추는 새 동작을 만들지 않는다: 설정 창의 기존 스위치 · 단추와 같은 길(update → 되돌리기 기록 · 적용 · 저장 · 다시 그리기)로 같은 값을 남긴다.
+const modeLabel = s => ({ both: '테마 + 확장', theme: '테마만', extensions: '확장만' })[usageMode(s)];
+function faqStatus(s, key) {
+    try {
+        if (key === 'usage-mode') return `사용 모드 「${modeLabel(s)}」 · 블루레몬에이드 사용 ${s.enabled === false ? '꺼짐' : '켜짐'}`;
+        if (key === 'other-css') { const r = otherCssReport(s); return r.total ? (r.on ? `다른 CSS ${r.on}개 켬 (${r.items.filter(x => x.on).map(x => `${x.label} ${x.detail}`).join(' · ')})` : `다른 CSS ${r.total}개 있음 · 「커스텀 CSS 끄기」로 꺼 둠`) : '다른 CSS 없음'; }
+        if (key === 'enabled') return `블루레몬에이드 사용 ${s.enabled === false ? '꺼짐' : '켜짐'} · 사용 모드 「${modeLabel(s)}」`;
+        if (key === 'quiet-notes') { const on = !(SillyTavern.getContext().extensionSettings?.disabledExtensions || []).includes('quiet-notes') && !!document.querySelector('script[src*="/quiet-notes/"], link[href*="/quiet-notes/"]'); return `블루레몬에이드 ${currentVersion() || '?'} · 일코 모드 확장 ${on ? '켜짐' : '안 보임'} · 사용 모드 「${modeLabel(s)}」`; }
+        if (key === 'addons') { const on = [['translator', 'LLM 번역'], ['tts', 'TTS']].map(([id, label]) => `${label} ${s.addons?.[id] ? '켬' : '끔'}`); return `${on.join(' · ')}${addonsEnabled(s) ? '' : ' · 지금 모드에서는 확장이 쉬어요'}`; }
+        if (key === 'version') return `지금 ${currentVersion() || '?'}${hasUpdate() ? ` · 새 판 ${latestVersion()} 있음` : ''}`;
+    } catch (error) { console.warn('[Blue Lemonade] FAQ 상태', error); }
+    return '';
+}
+const FAQ_README = 'https://github.com/kgangkgang/blue-lemonade#readme';
+function faqMarkup(s) {
+    const items = FAQ.map(item => {
+        const status = item.status ? faqStatus(s, item.status) : '';
+        const button = item.action && item.label ? `<div class="bl-faq-actions"><button type="button" class="salty-btn${item.action === 'diag-copy' ? '' : ' bl-tool-primary'}" data-act="faq" data-faq="${esc(item.action)}">${esc(item.label)}</button></div>` : '';
+        return `<details class="bl-faq-item" data-md-fold="faq:${esc(item.id)}"><summary data-search-anchor="${esc(item.q)}">${esc(item.q)}</summary><div class="bl-faq-body">${(item.a || []).map(p => `<p>${esc(p)}</p>`).join('')}${status ? `<p class="bl-faq-status"><b>지금</b> ${esc(status)}</p>` : ''}${button}${item.readme ? `<a class="bl-faq-readme" href="${FAQ_README}" target="_blank" rel="noopener">README 에서 「${esc(item.readme)}」 찾아보기 ↗</a>` : ''}</div></details>`;
+    }).join('');
+    return `<div class="bl-faq"><p class="salty-note bl-faq-lead">커뮤니티에서 가장 자주 묻는 것들이에요. 단추는 설정 창의 그 스위치를 대신 눌러 줄 뿐이라 언제든 되돌릴 수 있어요.</p>${items}</div>`;
+}
+async function copyDiagnosis() {
+    const text = await buildDiagnosis();
+    if (await copyText(text)) toastr.success('진단을 복사했어요. 제보 글에 붙여 넣으면 돼요', 'Blue Lemonade');
+    else toastr.info(esc(text).replace(/\n/g, '<br>'), '진단 (직접 복사)', { escapeHtml: false, timeOut: 20000, extendedTimeOut: 20000 });
+}
+/** 설정 창 안에서 다른 탭 · 소분류로 (목록의 editor-route 와 같은 길) */
+function faqRoute(root, tab, sub, anchor = '') {
+    ui.tab = tab; if (sub) ui.subs[tab] = sub; ui.picker = null; root._catalogOpen = false;
+    store('salty_tab', ui.tab); store('salty_subs', JSON.stringify(ui.subs));
+    refreshPanels();
+    const sec = root.querySelector('.salty-sec'); if (sec) sec.scrollTop = 0;
+    const target = anchor ? [...root.querySelectorAll('[data-search-anchor]')].find(el => el.dataset.searchAnchor === anchor) : null;
+    if (!target) { root.querySelector('[data-act="editor-catalog"]')?.focus({ preventScroll: true }); return; }
+    const fold = target.closest('details'); if (fold) fold.open = true;
+    revealEditorTarget(root, target); target.classList.add('bl-search-target'); target.tabIndex = -1; target.focus({ preventScroll: true });
+    requestAnimationFrame(() => requestAnimationFrame(() => { if (sec && target.isConnected) sec.scrollTop += target.getBoundingClientRect().top - sec.getBoundingClientRect().top - 16; }));
+    setTimeout(() => target.classList.remove('bl-search-target'), 2200);
+}
+async function faqAction(root, name) {
+    switch (name) {
+        case 'usage-mode': {   // 테마 › 기타 설정 › 사용 모드 (펼쳐서 고르기 칸으로)
+            faqRoute(root, 'theme', 'etc');
+            const fold = root.querySelector('details.bl-usage-mode'); if (fold) { fold.open = true; fold.querySelector('[data-usage-mode]')?.focus({ preventScroll: true }); }
+            break;
+        }
+        case 'mute-css':   // 채팅 › 기타 › 「커스텀 CSS 끄기」 스위치와 같은 값
+            if (getSettings().compat?.muteCustomCss) { toastr.info('다른 CSS 는 이미 꺼 둔 상태예요', 'Blue Lemonade'); break; }
+            update(st => { st.compat.muteCustomCss = true; });
+            toastr.success('다른 CSS 를 껐어요. 되돌리려면 채팅 › 기타 › 다른 CSS 에서 「커스텀 CSS 끄기」를 끄면 돼요', 'Blue Lemonade', { timeOut: 7000 });
+            break;
+        case 'enable':   // 맨 아래 「블루레몬에이드 사용」 스위치와 같은 값
+            if (getSettings().enabled !== false) { toastr.info('「블루레몬에이드 사용」은 이미 켜져 있어요', 'Blue Lemonade'); break; }
+            update(st => { st.enabled = true; });
+            await syncChangedAddons(['enabled']);
+            toastr.success('「블루레몬에이드 사용」을 켰어요', 'Blue Lemonade');
+            break;
+        case 'open-addons': faqRoute(root, 'extensions', ''); break;
+        case 'open-update': faqRoute(root, 'theme', 'update'); break;
+        case 'diag-copy': await copyDiagnosis(); break;
+        default: console.warn('[Blue Lemonade] 모르는 FAQ 단추', name);
+    }
+}
+
 // ───────── 테마 ─────────
 function tabTheme(s, sub) {
     if(sub==='etc')return `<div class="bl-etc-grid"><details class="bl-usage-mode"><summary>사용 모드: <strong>${({both:'테마 + 확장',theme:'테마만',extensions:'확장만'})[usageMode(s)]}</strong></summary><div class="bl-usage-mode-body"><label>사용 모드<select data-usage-mode aria-label="사용 모드">${[['both','테마 + 확장'],['theme','테마만'],['extensions','확장만']].map(([v,label])=>`<option value="${v}" ${usageMode(s)===v?'selected':''}>${label}</option>`).join('')}</select></label><p>선택한 모드만 실행해요. 기존 설정은 보관해요.</p><button type="button" class="salty-btn" data-usage-apply>저장하고 새로고침</button><span role="status" data-usage-status></span></div></details>
         <div class="salty-group bl-ext-colors">${row('다른 확장 색 유지', toggle('compat.preserveExtensionColors', !!s.compat?.preserveExtensionColors), '확장 설정창과 지원되는 팝업이 원래 색을 써요')}${s.compat?.preserveExtensionColors ? extColorList(s) : ''}</div>
         <div class="salty-group bl-first-run-row" data-search-anchor="처음 설정 다시 보기">${row('처음 설정 다시 보기', '<button type="button" class="salty-btn" data-act="first-run" aria-label="처음 설정 다시 보기"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i></button>', '팔레트 · 글꼴 · 읽기 방식')}</div></div>`;
+    if (sub === 'faq') return faqMarkup(s);   // 7.2.6
     if(sub==='update')return `<div class="salty-group">${row('새 버전 자동 확인', toggle('updateCheck', s.updateCheck !== false), '6시간에 한 번 · 새 버전이면 버전 표시가 노랗게 빛나요')}</div>`+updateMarkup()+healthMarkup();
     if (sub === 'changes') return settingsChanges(s);
     if (sub === 'custom') return customBuilder(s);
@@ -1595,7 +1663,7 @@ function weatherSeg(s) {
 // ───────── 프롬프트 (3.4.0) ─────────
 // 프리셋마다 한 칸. 지금은 데우스 엑스 마키나 — 호환을 켜야 카드 표본 · 카드 설정 · 트래커 설정이 보이고 적용된다
 // 7.2.4 확장 탭 안내: 스위치가 꺼진 것과 사용 모드가 「테마만」인 것을 나눠 말한다 (제보 10-19: 「확장만」으로 바꿨는데도 이 안내가 떠서 헤맴 — 맨 아래 「블루레몬에이드 사용」이 꺼져 있던 것)
-function tabExtensions(s, sub) { if(!addonsEnabled(s))return s.enabled===false ? '<p class="salty-note">「블루레몬에이드 사용」 스위치가 꺼져 있어서 내장 확장도 쉬고 있어요. 이 창 맨 아래의 「블루레몬에이드 사용」을 켜면 저장한 설정 그대로 확장이 다시 켜져요. 사용 모드(테마 → 기타 설정)는 스위치를 켠 다음에 봐요.</p>' : '<p class="salty-note">사용 모드가 「테마만」이라 내장 확장을 실행하지 않아요. 테마 → 기타 설정 → 사용 모드에서 「테마 + 확장」이나 「확장만」을 고르면 저장한 설정으로 다시 사용할 수 있어요.</p>';  return addonMarkup(s,sub) + (['words','capture'].includes(sub) && s.addons[sub] ? wordToolsMarkup(s,sub) : ''); }
+function tabExtensions(s, sub) { if(!addonsEnabled(s))return s.enabled===false ? '<p class="salty-note">「블루레몬에이드 사용」 스위치가 꺼져 있어서 내장 확장도 쉬고 있어요. 이 창 맨 아래의 「블루레몬에이드 사용」을 켜면 저장한 설정 그대로 확장이 다시 켜져요. 사용 모드(테마 → 기타 설정)는 스위치를 켠 다음에 봐요.</p><div class="bl-faq-actions"><button type="button" class="salty-btn bl-tool-primary" data-act="faq" data-faq="enable">블루레몬에이드 사용 켜기</button></div>' : '<p class="salty-note">사용 모드가 「테마만」이라 내장 확장을 실행하지 않아요. 테마 → 기타 설정 → 사용 모드에서 「테마 + 확장」이나 「확장만」을 고르면 저장한 설정으로 다시 사용할 수 있어요.</p><div class="bl-faq-actions"><button type="button" class="salty-btn" data-act="faq" data-faq="usage-mode">사용 모드 바꾸러 가기</button></div>';  return addonMarkup(s,sub) + (['words','capture'].includes(sub) && s.addons[sub] ? wordToolsMarkup(s,sub) : ''); }
 
 function tabPrompt(s,sub) {
     if(sub==='fruit')return fruitPromptMarkup();
@@ -2583,12 +2651,8 @@ function bind(root) {
                     update((st) => { const target = st.styles.find(x => x.id === style.id); if (target) target.name = uniqueName(name, st.styles, style.id); });
                     break;
                 }
-                case 'diag-copy': {
-                    const text = await buildDiagnosis();
-                    if (await copyText(text)) toastr.success('진단을 복사했어요. 제보 글에 붙여 넣으면 돼요', 'Blue Lemonade');
-                    else toastr.info(esc(text).replace(/\n/g, '<br>'), '진단 (직접 복사)', { escapeHtml: false, timeOut: 20000, extendedTimeOut: 20000 });
-                    break;
-                }
+                case 'diag-copy': await copyDiagnosis(); break;
+                case 'faq': await faqAction(root, el.dataset.faq); break;   // 7.2.6 자주 묻는 질문의 단추 — 기존 단추 · 스위치와 같은 저장값
                 case 'first-run': { // 6.9.5 처음 설정 안내 다시 보기 (누를 때만 불러온다)
                     try { await (await import('./first-run.js')).openFirstRun(); } catch (error) { console.error('[Blue Lemonade] 처음 설정 안내', error); toastr.error('처음 설정 안내를 열지 못했어요', 'Blue Lemonade'); }
                     break;

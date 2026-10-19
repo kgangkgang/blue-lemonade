@@ -3,7 +3,7 @@ import { holdPreviewRules, releasePreviewRules } from '../../lite.js';
 let holdingPreviewRules = false;   // 5.6.6 (점검 PAB-4): 창을 여는 동안만 채팅 서식 사본 규칙을 켠다
 import { typesetBatch } from '../../typography.js';
 import { hooks, settings, saveSettings, applyTheme, applyColors, colorsFor, currentChatKey, iconName } from './state.js';
-import { getOwner, currentRecord, listOtherChats, loadRecord, findBookmark, bookmarkAt, addBookmark, bookmarkMessage, removeExcerptFrom, removeImageFrom } from './data.js';
+import { getOwner, currentRecord, otherRecord, listOtherChats, loadRecord, findBookmark, bookmarkAt, addBookmark, bookmarkMessage, removeExcerptFrom, removeImageFrom } from './data.js';
 import { escapeHtml, formatDate, renderMessageHtml, renderReasoningHtml, renderNoteHtml, noteToPlainText, messageText, avatarForMessage, hydrateHtmlBlocks, highlightMatches, clearHighlights, renderExcerptsHtml, renderImagesHtml, safeImageSrc } from './render.js';
 import { excerptsText } from './excerpts.js';
 import { imageList, imageKey } from './images.js';
@@ -215,6 +215,7 @@ export function closePanel({ keepColors = false } = {}) {
     if (!view.open) return;
     view.open = false;
     unwatchBack();
+    othersCache.clear();   // 7.2.6 다시 열면 목록을 새로 받는다
     if (!keepColors) {
         // 닫은 뒤 늦게 도착한 다른 채팅 목록도 버린다. 미리보기에서 돌아올 때만 재사용한다.
         view.session++;
@@ -265,18 +266,40 @@ function lastMesTime(record) {
     return Number.isFinite(time) ? time : 0;
 }
 
+// 7.2.6 패널이 열린 채 같은 캐릭터(그룹)의 다른 채팅으로 옮기면 목록을 다시 받지 않는다 (api-audit #12: 그룹은 채팅 수만큼 파일을 통째로) —
+//   주인(owner.key)마다 5분 · 패널을 닫으면 버린다. 방금 떠난 채팅은 마지막으로 그린 북마크(currentSnap)로 목록에 올린다.
+const OTHERS_TTL = 5 * 60 * 1000;
+const othersCache = new Map();
+function snapCurrent() {
+    const cur = view.records.find(record => record.isCurrent);
+    if (cur && view.owner) view.currentSnap = { ownerKey: view.owner.key, key: cur.key, favorites: [...cur.favorites], messageCount: cur.messageCount, lastMes: new Date().toISOString() };
+}
+function cachedOthers() {
+    const cached = view.open && view.owner ? othersCache.get(view.owner.key) : null;
+    if (!cached || Date.now() - cached.at > OTHERS_TTL) return null;
+    const currentKey = currentChatKey();
+    const others = cached.others.filter(record => record.key !== currentKey);
+    const snap = view.currentSnap;
+    if (snap && snap.ownerKey === view.owner.key && snap.key !== currentKey && !others.some(record => record.key === snap.key)) {
+        const record = otherRecord(view.owner, snap.key, { favorites: snap.favorites, messageCount: snap.messageCount, lastMes: snap.lastMes });
+        others.push(record); cached.others.push(record);
+    }
+    return others;
+}
 async function loadOthers() {
     const session = view.session;
     view.loadingOthers = true;
     view.progress = '';
     renderSidebar();
     try {
-        const others = await listOtherChats(view.owner, (done, total) => {
+        const cached = cachedOthers();
+        const others = cached || await listOtherChats(view.owner, (done, total) => {
             if (session !== view.session) return;
             view.progress = `${done}/${total}`;
             renderSidebar();
         });
         if (session !== view.session) return;
+        if (!cached) othersCache.set(view.owner.key, { at: Date.now(), others: [...others] });
         others.sort((a, b) => lastMesTime(b) - lastMesTime(a) || a.key.localeCompare(b.key));
         // 목록을 읽는 사이에 번역이 끝난 채팅은(그룹 채팅은 여기서 이미 읽어 둔다) 골랐을 때 다시 불러온다.
         for (const record of others) {
@@ -354,6 +377,7 @@ function renderHeader() {
 }
 
 function renderSidebar() {
+    snapCurrent();   // 7.2.6 채팅을 옮긴 뒤 목록 캐시가 쓸 현재 채팅의 북마크
     const records = listedRecords();
     const total = records.reduce((sum, record) => sum + record.favorites.length, 0);
     $('.cg-side-total').textContent = view.loadingOthers ? '' : `${total}`;

@@ -1,4 +1,5 @@
 // 2.6.6 번역 점검: 의심 문단은 자동으로 고치고(같은 원문에 3번까지) · 이상 없으면 번역 단추에 아무것도 안 그린다 (가상 문장).
+// 7.2.6 자동으로 고치기는 별도 스위치(translation_autofix, 기본 끔) — 끄면 표시만 달고 요청은 내지 않는다 (api-audit #5).
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -20,11 +21,22 @@ await check('a suspicious translation is fixed automatically, once per try, up t
     assert(r.warn && r.flagged >= 1, JSON.stringify(r.paragraphs.map(p => p.reasons)));
     const calls = [];
     let translation = missing;
-    const view = createCheckView({ stateOf: () => ({ source, translation, protect: [], key: `k${calls.length}` }), rerender() {}, act: (...args) => { calls.push(args); return Promise.resolve(); } });
+    const view = createCheckView({ stateOf: () => ({ source, translation, protect: [], key: `k${calls.length}` }), rerender() {}, act: (...args) => { calls.push(args); return Promise.resolve(); }, autoFixOn: () => true });
     view.schedule(5); await wait(400);
     assert.equal(calls.length, 1); assert(['fill', 'retry', 'clean'].includes(calls[0][0]), calls[0][0]); assert.equal(calls[0][1], 5); assert.deepEqual(calls[0][4], { auto: true });
     for (let n = 0; n < 4; n++) { view.schedule(5); await wait(350); }   // 같은 원문 · 여전히 이상 → 3번에서 멈춘다
     assert.equal(calls.length, 3);
+});
+await check('7.2.6 with the auto-fix switch off (the default) a suspicious translation is only marked: rerender, no request', async () => {
+    const calls = []; let rerenders = 0;
+    const view = createCheckView({ stateOf: () => ({ source, translation: missing, protect: [], key: 'off' }), rerender() { rerenders++; }, act: (...args) => { calls.push(args); return Promise.resolve(); } });
+    view.schedule(9); await wait(400);
+    assert.equal(calls.length, 0, 'no automatic request');
+    assert.equal(rerenders, 1, 'the marks are still drawn');
+    let on = false; const calls2 = [];
+    const view2 = createCheckView({ stateOf: () => ({ source, translation: missing, protect: [], key: 'toggle' }), rerender() {}, act: (...args) => { calls2.push(args); return Promise.resolve(); }, autoFixOn: () => on });
+    view2.schedule(10); await wait(400); assert.equal(calls2.length, 0);
+    on = true; view2.schedule(10); await wait(400); assert.equal(calls2.length, 0, 'the same key is not fresh again — no retroactive fix');
 });
 await check('a clean translation triggers nothing and paints no badge', async () => {
     const calls = []; const button = { style: {}, dataset: {}, setAttribute() {}, removeAttribute() {} };
@@ -36,6 +48,12 @@ await check('a clean translation triggers nothing and paints no badge', async ()
 await check('wiring: runCheckAction takes { auto } and the setting text says it fixes automatically', () => {
     const src = fs.readFileSync(path.join(root, 'src/addons/translator/index.js'), 'utf8');
     assert.match(src, /async function runCheckAction\(kind, id, index, row, \{ auto = false, expectedState = null, manualReview = false \} = \{\}\)/);
-    assert.match(fs.readFileSync(path.join(root, 'src/addons/translator/index.html'), 'utf8'), /번역 점검 · 자동 고치기/);
+    const html = fs.readFileSync(path.join(root, 'src/addons/translator/index.html'), 'utf8');
+    assert.match(html, /id="llm_translation_check"><span>번역 점검<\/span>/);
+    assert.match(html, /id="llm_translation_autofix"><span>의심 문단 자동으로 다시 번역<\/span>/);
+    assert.match(src, /translation_autofix: false,/, '기본 끔');
+    assert.match(src, /autoFixOn: \(\) => extensionSettings\.translation_autofix === true/, 'check-view 에 스위치를 넘긴다');
+    assert.match(src, /\$\('#llm_translation_autofix'\)\.prop\('checked', extensionSettings\.translation_autofix === true\)/);
+    assert.match(src, /\$\('#llm_translation_autofix'\)\.on\('change'/);
 });
 console.log(`translator-autofix: ${passed} passed, 0 failed`);

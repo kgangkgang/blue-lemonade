@@ -6,7 +6,6 @@ import { priceSnapshot } from './pricing-live.js';
 import { LOG_BRIDGE, createAttribution, requestKind } from './attribution.js';
 const attribution=createAttribution();
 import { getCurrentChatId, name2 } from '../../../../../../../script.js';
-import { getTokenCountAsync } from '../../../../../../tokenizers.js';
 import { settings, priceFor } from './state.js';
 import { connectionFor, mergeTokenUsage, quoteRequest, manualPriceForConnection } from './pricing.js';
 import { addEntry, bumpDaily, trimEntries } from './store.js';
@@ -356,13 +355,12 @@ function firstNonEmpty(...values) {
     return values.find(value => typeof value === 'string' && value.trim()) ?? '';
 }
 
-async function estimateTokens(text) {
+// 7.2.6 usage 가 없는 응답의 토큰 수는 글자로 어림한다 (api-audit #13: 실리태번 토크나이저가 서버형이면 요청마다 /api/tokenizers 를 또 불렀다) — 한중일 글자 1 · 그 밖 4자 1. estimated 표시는 그대로
+const CJK = /[\u1100-\u11ff\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af]/g;
+export function estimateTokens(text) {
     if (!text) return 0;
-    try {
-        return await getTokenCountAsync(text);
-    } catch {
-        return Math.ceil(text.length / 3);
-    }
+    const s = String(text), cjk = (s.match(CJK) || []).length;
+    return Math.max(1, Math.ceil(cjk + (s.length - cjk) / 4));
 }
 
 async function finishEntry(context, response, acc, marks, failure) {

@@ -92,7 +92,7 @@ await test('요청: 지금 채팅 하나만 pinned · max 0 으로 묻는다 (�
     assert.equal(w.sync.state.base.items, 5);
     // 주기 확인은 ①만
     w.calls.length = 0;
-    await w.tick(60000);
+    await w.tick(S.PERIOD);
     assert.deepEqual(w.calls.map(c => c.url), ['/api/chats/recent']);
 });
 
@@ -102,7 +102,7 @@ await test('다른 기기에서 바뀌면 띠가 뜨고, 다시 같은 값이면
     await w.tick(1600);
     assert.ok(!stale(w));
     w.server.last_mes = 2000; w.server.file_size = '1.30kb';
-    await w.tick(60000);   // 60초 주기
+    await w.tick(S.PERIOD);   // 주기 (7.2.6 5분)
     assert.ok(stale(w));
     assert.deepEqual(w.strip, [true]);
 });
@@ -131,16 +131,16 @@ await test('우리 저장은 바뀜으로 치지 않는다 (저장 뒤 기준을
     await w.tick(2000);   // REBASE
     assert.ok(!stale(w));
     assert.equal(w.sync.state.base.charMtime, 50500);
-    await w.tick(60000);
+    await w.tick(S.PERIOD);
     assert.ok(!stale(w));
     assert.equal(w.asked, 0);
 });
 
-await test('저장 직전 확인: 10초 넘게 안 봤으면 먼저 보고, 바뀌었으면 묻는다 → 새로 불러오기면 보내지 않고 다시 불러온다', async () => {
+await test('저장 직전 확인: FRESH(7.2.6 60초) 넘게 안 봤으면 먼저 보고, 바뀌었으면 묻는다 → 새로 불러오기면 보내지 않고 다시 불러온다', async () => {
     const w = world({ answer: 'reload' });
     w.sync.setOn(true);
     await w.tick(1600);
-    w.now += 20000;
+    w.now += S.FRESH + 10000;   // 7.2.6 저장 직전 확인 건너뛰기 60초 (10초 → 60초)
     w.server.last_mes = 9000;
     const r = await w.save();
     assert.equal(r.status, 200, '실리태번에는 성공으로');
@@ -156,7 +156,7 @@ await test('그래도 저장을 고르면 보내고 띠를 걷는다 · 같은 �
     w.sync.setOn(true);
     await w.tick(1600);
     w.server.last_mes = 9000;
-    await w.tick(60000);
+    await w.tick(S.PERIOD);
     assert.ok(stale(w));
     await w.save();
     assert.equal(w.sends, 1);
@@ -173,7 +173,7 @@ await test('창을 닫으면 이번 저장만 미루고 띠는 남는다 → 다
     w.sync.setOn(true);
     await w.tick(1600);
     w.server.last_mes = 9000;
-    await w.tick(60000);
+    await w.tick(S.PERIOD);
     await w.save();
     assert.equal(w.sends, 0);
     assert.ok(stale(w));
@@ -186,7 +186,7 @@ await test('같이 온 저장은 한 번만 묻는다', async () => {
     w.sync.setOn(true);
     await w.tick(1600);
     w.server.last_mes = 9000;
-    await w.tick(60000);
+    await w.tick(S.PERIOD);
     const both = await Promise.all([w.save(), w.save()]);
     assert.deepEqual(both.map(r => r.status), [200, 200]);
     assert.equal(w.asked, 1);
@@ -198,7 +198,7 @@ await test('서버 파일이 다른 채팅(integrity 다름)이면 묻지 않고
     w.sync.setOn(true);
     await w.tick(1600);
     w.server.last_mes = 9000;
-    await w.tick(60000);
+    await w.tick(S.PERIOD);
     assert.ok(stale(w));
     await w.save();
     assert.equal(w.asked, 0);
@@ -210,7 +210,7 @@ await test('다른 채팅 파일 저장(북마크 · 분기)은 건드리지 않
     w.sync.setOn(true);
     await w.tick(1600);
     w.server.last_mes = 9000;
-    await w.tick(60000);
+    await w.tick(S.PERIOD);
     await w.sync.onSave('/api/chats/save', { body: saveBody('Mina - branch') }, async () => { w.sends++; return new Response('{}'); });
     assert.equal(w.asked, 0);
     assert.equal(w.sends, 1);
@@ -248,7 +248,7 @@ await test('옛 실리태번(API 없음)이면 조용히 멈춘다 · 끄면 그
     off.sync.setOn(true);
     await off.tick(1600);
     off.server.last_mes = 9;
-    await off.tick(60000);
+    await off.tick(S.PERIOD);
     off.sync.setOn(false);
     assert.ok(!stale(off));
     assert.equal(off.strip.at(-1), false, '끄면 띠도 걷음');
@@ -262,7 +262,7 @@ await test('새로 불러오기는 답을 받는 중이면 끝난 뒤에 · 채�
     w.sync.setOn(true);
     await w.tick(1600);
     w.server.last_mes = 9000;
-    await w.tick(60000);
+    await w.tick(S.PERIOD);
     w.busy = true;
     const p = w.sync.reloadNow();
     await w.tick(2000);
@@ -281,7 +281,7 @@ await test('가운데 메시지 번역만 고침(메시지 수 · 크기 글 · 
     w.sync.setOn(true);
     await w.tick(1600);
     w.server.mtime = 77777; w.server.bytes = 1260;   // 파일만 바뀜
-    await w.tick(60000);
+    await w.tick(S.PERIOD);
     assert.ok(!stale(w), '①만 보는 주기 확인은 못 봄');
     w.sync.onVisible();
     await w.tick(10);
@@ -290,7 +290,7 @@ await test('가운데 메시지 번역만 고침(메시지 수 · 크기 글 · 
     v.sync.setOn(true);
     await v.tick(1600);
     v.server.mtime = 88888;
-    v.now += 20000;
+    v.now += S.FRESH + 10000;
     await v.save();
     assert.equal(v.asked, 1, '저장 직전 확인도 정확한 값');
     assert.equal(v.sends, 0);

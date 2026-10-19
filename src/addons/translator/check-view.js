@@ -23,8 +23,9 @@ const plainText = text => String(text ?? '').replace(/<!--[\s\S]*?(?:-->|$)/g, '
  *    mes 를 주면 그 글이 저장된 번역문일 때만.
  *  rerender(id) — 표시를 달려고 그 메시지를 다시 그린다.
  *  act(kind, id, index, row) → Promise — 'retry' 이 문단만 다시 번역 · 'fill' 빠진 문단 채우기 · 'clean' 초안 걷어 내기 · 'whole' 메시지 전체 다시 번역.
+ *  autoFixOn() → boolean — 7.2.6 의심 문단을 스스로 고칠지 (기본 false: 표시만 달고 단추로 고친다)
  */
-export function createCheckView({ stateOf, rerender, act, scope }) {
+export function createCheckView({ stateOf, rerender, act, scope, autoFixOn = () => false }) {   // 7.2.6 autoFixOn: 의심 문단을 자동으로 고칠지 (설정 translation_autofix, 기본 끔)
     const results = new Map();
     const remember = (key, value) => { results.delete(key); results.set(key, value); while (results.size > LIMIT) results.delete(results.keys().next().value); };
     const resultOf = state => {
@@ -70,7 +71,7 @@ export function createCheckView({ stateOf, rerender, act, scope }) {
             review.observe(id, state, result);
             done++;
             paintBadge(id, result);
-            if (fresh && result?.flagged) { rerender(id); autoFix(id, state, result); }
+            if (fresh && result?.flagged) { rerender(id); if (autoFixOn()) autoFix(id, state, result); }
         }
         if (pending.size && !waiting) { waiting = true; idle(drain); }
     }

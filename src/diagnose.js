@@ -24,6 +24,22 @@ export function customCssReport(css = SillyTavern.getContext().powerUserSettings
     return { lines, rules, chat };
 }
 
+// 7.2.6 「다른 CSS」 — 블루레몬에이드 테마와 같이 켜면 글자가 깨지거나 겹치는 바깥 CSS 목록. 지금은 실리태번 사용자 설정 › 커스텀 CSS 하나
+//   (다른 테마를 쓰다 넘어온 사람은 그 테마가 통째로 여기 들어 있다 — 제보 10-19 의 원인). 켜짐 = 규칙이 있고 「커스텀 CSS 끄기」로 꺼 두지 않았을 때.
+//   fingerprint 는 그 CSS 묶음의 지문 — 첫 실행 · 업데이트 팝업이 「그대로 두기」한 묶음을 기억해 같은 묶음이면 다시 묻지 않는다 (글은 담지 않음).
+const fnv = text => { let h = 2166136261; for (let i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); };
+export function otherCssReport(s = getSettings(), css) {
+    const report = customCssReport(css);
+    const muted = !!(s?.enabled !== false && s?.compat?.muteCustomCss);
+    const items = report.rules ? [{ id: 'custom', label: '실리태번 커스텀 CSS', detail: `${report.lines}줄 · ${report.rules}규칙`, on: !muted }] : [];
+    return { items, on: items.filter(x => x.on).length, total: items.length, lines: report.lines, rules: report.rules, chat: report.chat, muted };
+}
+/** 켜진 다른 CSS 묶음의 지문 (없으면 '') — 규칙 · 줄 수가 같은 고침은 같은 묶음으로 본다 */
+export function otherCssFingerprint(css = SillyTavern.getContext().powerUserSettings?.custom_css || '') {
+    const text = String(css || '').replace(/\s+/g, ' ').trim();
+    return text ? `custom:${fnv(text)}:${text.length}` : '';
+}
+
 const short = (s) => String(s || '').replace(/^.*?(Chrome\/[\d.]+|Firefox\/[\d.]+|Version\/[\d.]+).*$/, '$1');
 
 /** 제보에 붙여 넣을 한 덩어리 — 버전 · 화면 · 실리태번 표시 옵션 · 테마 모드 · 커스텀 CSS · 확장 */

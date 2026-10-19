@@ -71,7 +71,8 @@ const LANG_HINT = {
     ko: 'natural spoken Korean keeping the character\'s tone and speech level',
 };
 const SYSTEM = 'You prepare game dialogue for text-to-speech. Reply with JSON only.';
-const SAVE_MS = 1000;        // saveChat 디바운스
+const SAVE_MS = 1000;        // saveChat 디바운스 (지움 · 옮김)
+export const STORE_SAVE_MS = 5000;   // 7.2.6 분석 결과 저장은 5초 모아서 — 답마다 채팅 통째 저장 +1(그룹 +2)이던 것을 묶는다 (api-audit #7). 화면을 숨기거나 떠날 땐 바로
 const IDLE_POLL_MS = 300;    // 생성이 끝나기를 기다리는 간격
 const IDLE_MAX_MS = 180000;  // 그래도 안 끝나면 포기
 const HTTP_TIMEOUT = 120000;
@@ -344,7 +345,8 @@ export function buildPrompt(mes, opts = {}) {
         const i = lines.length;
         const text = String(seg.text).trim();
         const h = hash(normText(text));
-        lines.push({ i, h, text, speaker: speakerOf(seg, mes, charName, userName), ask: askSpeaker && speakerUnknown(seg, mes, charName, userName) });
+        const known = Array.isArray(opts.known) && opts.known.includes(i);   // 7.2.6 이어 쓰기 전 분석이 있는 줄 (doAnalyze 가 순번 · 해시를 맞춘 뒤 준다)
+        lines.push({ i, h, text, speaker: speakerOf(seg, mes, charName, userName), ask: !known && askSpeaker && speakerUnknown(seg, mes, charName, userName), known });
         const own = detectLang(text);
         const want = langs.filter(l => l !== own && !lineDone(opts.done, i, h, l));   // 1.7.0 보충 요청: 이미 옮긴 줄은 빼고
         if (want.length) needs[i] = want;
@@ -431,7 +433,7 @@ function joinByLine(segs) {
 export function composePrompt(parts) {
     const { lines = [], needs = {}, context = '', display = '', emotion = true, charName = '', userName = '', speakers = [], extras = false, sfxLibrary = [], sceneText = '', italics = [] } = parts || {};
     const sfx = sfxLibrary.length > 0 && !!sceneText;
-    const asked = lines.filter(l => emotion || (needs[l.i] && needs[l.i].length) || l.ask);
+    const asked = lines.filter(l => !l.known && (emotion || (needs[l.i] && needs[l.i].length) || l.ask));   // 7.2.6 known 줄은 묻지 않는다
     const askLines = asked.filter(l => l.ask);
     const langsUsed = [...new Set(Object.values(needs).flat())].filter(l => LANGS.includes(l));
     const unvoiced = extras && asked.length ? (parts.unvoiced || []).filter(n => asked.some(l => !l.ask && cleanName(l.speaker) === n)) : [];
@@ -1079,9 +1081,13 @@ export async function translateLines(lines, target, { signal } = {}) {
 // ---------- 저장
 
 let saveTimer = 0;
-function scheduleSave() {
+function scheduleSave(ms = SAVE_MS) {
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(flushSave, SAVE_MS);
+    saveTimer = setTimeout(flushSave, ms);
+}
+if (typeof globalThis.document?.addEventListener === 'function' && typeof globalThis.window?.addEventListener === 'function') {   // 7.2.6 모아 둔 저장은 탭을 숨기거나 떠날 때 바로
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && saveTimer) saveNow(); });
+    window.addEventListener('pagehide', () => { if (saveTimer) saveNow(); });
 }
 /** 분석 하나를 저장: 생성 중이 아니면 바로 (1초 안에 채팅을 바꾸면 새 채팅이 저장돼 분석을 잃는다), 생성 중이면 끝난 뒤 */
 function saveNow() {
@@ -1259,7 +1265,7 @@ function store(id, mes, analysis) {
     if (id >= 0) keepAnalysis(mes, analysis);
     if (id < 0) return;   // 외부 글은 이 세션 메모리에만; 현재 채팅을 저장하지 않는다.
     try { if (typeof ST.syncMesToSwipe === 'function') ST.syncMesToSwipe(id); } catch { /* 스와이프 정보 없음 */ }
-    saveNow();
+    scheduleSave(STORE_SAVE_MS);   // 7.2.6 값을 치른 답은 보관함(keepAnalysis)에도 있어 몇 초 모아 저장해도 잃지 않는다
 }
 /** 분석 지우기. remember = 글이 바뀌어 지움 (옛것을 carryOver 용으로 기억 — 손으로 지운 것은 기억하지 않음) */
 function drop(id, mes, remember = false) {
@@ -1282,6 +1288,26 @@ function drop(id, mes, remember = false) {
 // 대화문 수가 다르면(맞추기 실패) 지금처럼 지운다. 사람이 고친 글은 표시가 없어 지금처럼 지우고 다시 분석한다.
 
 /** 메시지의 대화문 줄 [{ i, h }] — buildPrompt 와 같은 나누기 · 같은 해시 (통신 없음) */
+/** 7.2.6 이어 쓰기 전 분석 — 옛 분석(지금 줄 · 지운 기억)의 모든 줄이 새 글의 앞줄과 순번 · 해시가 같을 때만 (감정도 다 있어야). 아니면 null */
+function continuedFrom(mes) {
+    const old = previousOf(mes);
+    if (!old || !Array.isArray(old.segs) || !old.segs.length) return null;
+    let lines = [];
+    try { lines = dialogueLines(mes); } catch { return null; }
+    if (old.segs.length > lines.length) return null;
+    const emotion = !!(settings().analysis || {}).emotion;
+    for (let k = 0; k < old.segs.length; k++) {
+        const g = old.segs[k];
+        if (!isObj(g) || g.i !== k || g.h !== lines[k].h || (emotion && !EMOTION_SET.has(g.emotion))) return null;
+    }
+    return old;
+}
+/** known 줄은 옛 seg 그대로 (새 답의 번역이 있으면 더한다) */
+function reuseKnown(g, prior) {
+    const o = prior && g ? prior.segs[g.i] : null;
+    if (!o || o.i !== g.i || o.h !== g.h) return g;
+    return { ...o, text: { ...(isObj(o.text) ? o.text : {}), ...(isObj(g.text) ? g.text : {}) } };
+}
 function dialogueLines(mes) {
     const s = settings();
     const { ctx, userName, charName } = chatCtx(mes);
@@ -1519,6 +1545,8 @@ async function doAnalyze(entry) {
     if (aborted(signal)) throw abortErr(signal);
     if (msgOf(id) !== mes || textHash(mes) !== entry.hash || swipeOf(mes) !== swipe) return null;
     const previous = force ? null : getAnalysis(id);
+    // 7.2.6 이어 쓰기(continue): 글이 뒤로 늘기만 했으면(옛 분석의 모든 줄이 새 글의 앞줄과 순번 · 해시가 같음) 그 줄의 감정 · 화자 · 번역은 그대로 두고 새 줄만 묻는다 (tts-reanalysis P4)
+    const prior = !previous && !force ? continuedFrom(mes) : null;
     const fill = previous ? italicsToFill(mes, previous) : [];   // 1.9.2 기울임만 묻는 보충 (메시지당 한 번)
     if (previous && analysisCovers(previous, entry.langs) && !fill.length) return previous;
     const cfg = { ...(settings().analysis || {}) };
@@ -1528,7 +1556,7 @@ async function doAnalyze(entry) {
     // 이미 끝난 메시지는 새로 필요한 번역만 보충한다. 감정·화자·효과음과 이전 언어의 완료 기록은 그대로 유지한다.
     const promptOpts = { langs: requestLangs, emotion: !previous && !!cfg.emotion, translate: !!cfg.translate, context_chars: cfg.context_chars, speaker: !previous && cfg.speaker !== false, extras: !previous && extrasOn(), sfx: !previous, done: previous ? { segs: previous.segs, langs: previous.langs || [], redo: previous.redo || null } : null,
         italics: previous ? fill.length > 0 : cfg.speaker !== false && settings().join_paragraph !== false,   // 1.9.1 기울임 조각도 · 1.9.2 보충이면 답이 없는 것만
-        italicsOnly: previous ? fill : null, display: previous && fill.length && !requestLangs.length ? false : undefined };
+        italicsOnly: previous ? fill : null, display: previous && fill.length && !requestLangs.length ? false : undefined, known: prior ? prior.segs.map(g => g.i) : null };
     const built = buildPrompt(mes, promptOpts);
     entry.lines = built.lines.length;   // 1.7.0 받는 사이 다시 쓰기가 끼면 대화문 수가 같을 때만 끝까지 받는다 (onMessageChanged)
     const failedKey = failureKey(mes);
@@ -1543,15 +1571,15 @@ async function doAnalyze(entry) {
     // profile · baseProfile 은 옛 판(1.6.3 이하)이 읽을 수 있게 적을 뿐, 1.6.4 는 꺼낼 때 보지 않는다 (번역문 없는 키 = 1.6.0 규칙)
     const dt = mes?.extra?.display_text;
     const keyBuilt = typeof dt === 'string' && dt.trim() && dt !== mes.mes ? buildPrompt(mes, { ...promptOpts, display: false }) : built;
-    const base = { ...(previous || {}), hash: h, swipe, profile: profileOf(mes, cfg, langs, keyBuilt), langs, model, at: Date.now(), speaker: previous ? previous.speaker : cfg.speaker !== false, segs: built.lines.map(l => previous?.segs.find(g => g.i === l.i && g.h === l.h) || ({ i: l.i, h: l.h, emotion: '', text: {} })) };
+    const base = { ...(previous || {}), hash: h, swipe, profile: profileOf(mes, cfg, langs, keyBuilt), langs, model, at: Date.now(), speaker: previous ? previous.speaker : cfg.speaker !== false, segs: built.lines.map(l => previous?.segs.find(g => g.i === l.i && g.h === l.h) || ({ i: l.i, h: l.h, emotion: '', text: {} })).map(g => reuseKnown(g, prior)) };   // 7.2.6 이어 쓰기 전 분석의 앞줄 재사용
     if (isObj(base.redo)) {   // 1.7.0 이번에 물은 언어의 다시 옮길 줄은 끝 (받으면 저장, 실패하면 base 는 버려진다)
         const redo = { ...base.redo };
         for (const l of requestLangs) delete redo[l];
         if (Object.keys(redo).length) base.redo = redo; else delete base.redo;
     }
     if (built.sfx) { base.baseProfile = profileOf(mes, cfg, langs, null, extrasOn(), false); base.sfx = []; base.lib = SFX_LIB; }   // 1.6.8 보관함 판 — 이 표시가 없는 분석의 'footsteps' 는 재생 때 daily_footsteps (sfx-library.resolveSfxId)
-    if (built.empty) { store(id, mes, base); return base; }   // 물을 게 없음 → 그것도 기억 (토큰 0)
-    log('req', `대사 분석 #${id} · ${built.asked}줄 · ${engine === 'provider' ? String(cfg.provider || '') : engine}`);
+    if (built.empty) { store(id, mes, base); if (prior) log('info', `대사 분석 #${id} · 이어 쓰기 전 분석 ${prior.segs.length}줄 재사용 (요청 없음)`); return base; }   // 물을 게 없음 → 그것도 기억 (토큰 0)
+    log('req', `대사 분석 #${id} · ${built.asked}줄${prior ? ` (앞 ${prior.segs.length}줄은 이어 쓰기 전 분석 재사용)` : ''} · ${engine === 'provider' ? String(cfg.provider || '') : engine}`);
     const t0 = Date.now();
     const onSend = () => { entry.sent = true; };               // 보낸 뒤로는 부르는 쪽이 모두 그만둬도 끝까지 받아 저장 (join)
     // 6.1.8 검열되면 다른 모델로: 내용 차단(맨 400 · 거절 글 포함)이면 골라 둔 모델로 한 번만 더. 이미 막힌 메시지 · 「다른 모델로 다시」는 그 모델로 바로
@@ -1598,7 +1626,7 @@ async function doAnalyze(entry) {
         }
         throw rejectResponse(r.truncated ? '대사 분석 응답이 길이 한도에 닿아 잘렸어요' : head ? '대사 분석 응답이 JSON 형식이 아니에요' : '대사 분석 응답이 비었어요');
     }
-    let segs = normalizeSegs(parsed, built, promptOpts.emotion);
+    let segs = normalizeSegs(parsed, built, promptOpts.emotion).map(g => reuseKnown(g, prior));   // 7.2.6 묻지 않은 앞줄은 옛 분석 그대로
     if (promptOpts.emotion && segs.some(g => !EMOTION_SET.has(g.emotion))) {
         throw rejectResponse('대사 분석 응답에 빠진 감정이 있어요');
     }
@@ -1627,7 +1655,7 @@ async function doAnalyze(entry) {
         followRewrite(id, mes);
         result = slot(mes, false)?.analysis;
         if (!isObj(result) || result.hash !== textHash(mes)) { drop(id, mes, true); scheduleSave(); log('info', `대사 분석 버림 #${id} (다시 쓰기 뒤 대사 수가 달라짐)`); return null; }
-        saveNow();   // 값을 치른 답 — 1초 안에 채팅을 바꿔도 남게 (store 와 같은 이유)
+        saveNow();   // 값을 치른 답 — 1초 안에 채팅을 바꿔도 남게 (store 와 같은 이유; 다시 쓰기 뒤 옮긴 분석은 드물어 7.2.6 에도 바로)
     } else store(id, mes, analysis);
     log('info', `대사 분석 끝 #${id} · ${Math.round((Date.now() - t0) / 100) / 10}s`);
     if (people) {   // 1.3.7 엑스트라 표에 적고 그 엔진의 기본 목소리 목록을 채운 뒤 돌려준다 (첫 줄부터 그 목소리로 — 오래 걸리면 기다리지 않음)
@@ -1669,7 +1697,7 @@ export function onMessageChanged(mesId) {
     if (r && !keep && (r.hash !== h || r.mes !== mes || r.swipe !== swipeOf(mes))) r.ctrl.abort(new DOMException('글이 바뀜', 'AbortError'));
     followRewrite(id, mes);
     const a = slot(mes, false)?.analysis;
-    if (isObj(a) && a.hash !== h && drop(id, mes, true)) scheduleSave();
+    if (isObj(a) && a.hash !== h) drop(id, mes, true);   // 7.2.6 메모리에서만 지운다 — 다음 저장(새 답 · 새 분석)이 실어 간다 (api-audit #10: 스와이프마다 채팅 저장 1)
     const f = failedOf(mes);
     if (f && f.key !== failureKey(mes)) forgetFailure(id, mes);   // 7.2.4 글이 바뀌면 옛 실패 기억은 치운다
 }

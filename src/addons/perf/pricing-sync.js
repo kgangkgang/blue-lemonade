@@ -76,13 +76,24 @@ export function refreshPrices({ force = false } = {}) {
     return inFlight;
 }
 
+// 7.2.6 30분 타이머는 자동 갱신이 켜진 동안만 돈다 (api-audit #13: 꺼도 빈 타이머가 돌았다) — 켜고 끄는 스위치가 syncPriceSync 를 부른다
+let listening = false;
+function syncTimer() {
+    const on = enabled();
+    if (on && !timer) timer = setInterval(wake, 1800000);
+    if (!on && timer) { clearInterval(timer); timer = null; }
+}
+function wake() { syncTimer(); if (globalThis.document?.visibilityState !== 'hidden') void refreshPrices(); }
 export function startPriceSync(isEnabled) {
     enabled = isEnabled;
     loadPriceCache();
-    if (timer) return;
-    const wake = () => { if (globalThis.document?.visibilityState !== 'hidden') void refreshPrices(); };
-    timer = setInterval(wake, 1800000);
-    document.addEventListener('visibilitychange', wake);
-    globalThis.addEventListener('online', wake);
+    if (!listening) {
+        listening = true;
+        document.addEventListener('visibilitychange', wake);
+        globalThis.addEventListener('online', wake);
+    }
     wake();
 }
+/** 설정(priceAutoRefresh)이 바뀐 뒤: 타이머를 켜거나 끈다 */
+export function syncPriceSync() { syncTimer(); }
+export const priceSyncTimerOn = () => !!timer;   // 시험용

@@ -48,10 +48,12 @@ function changed() {
 const lastGood = new Map();
 
 /** 지금 캐릭터의 폴더들을 다시 읽는다. 캐릭터가 없으면 비운다. */
-export function reload() {
-    const token = ++loadToken;
+export function reload({ keep = false } = {}) {
     const character = currentCharacter();
     const folder = folderOf(character);
+    // 7.2.6 keep: 같은 캐릭터(폴더)의 채팅을 오갈 때(CHAT_CHANGED)는 받아 둔 목록을 그대로 쓴다 (api-audit #13: 채팅마다 /api/sprites/get N번) — 새로고침 · 올리기 · 지우기 · 시작은 전처럼 다시 받는다
+    if (keep && folder && folder === loadedFolder && !pendingLoad && !runtime.loading && !runtime.sources.some(source => source.error)) return Promise.resolve();
+    const token = ++loadToken;
     const previous = pendingLoad;
     let supersede;
     const superseded = new Promise(resolve => { supersede = resolve; });

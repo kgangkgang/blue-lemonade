@@ -237,6 +237,20 @@ jQuery(() => {
             const { eventSource, event_types } = SillyTavern.getContext();
             if (document.getElementById('loader')) eventSource.once(event_types.APP_READY, firstRun); else firstRun();
         } catch { firstRun(); }
+    } else {
+        // 7.2.6 이미 쓰던 사람: 「테마 + 확장」인데 다른 CSS(실리태번 커스텀 CSS)가 켜져 있으면 「쓰던 테마가 있어요」를 한 번만 (first-run.js openCssPromptWhenFree —
+        //   답한 CSS 묶음은 compat.cssAsked 에 적혀 다시 안 묻는다). 모듈은 조건이 맞을 때만 받는다
+        const cssAsk = () => setTimeout(() => {
+            try {
+                const s = getSettings();
+                if (s.enabled === false || (s.usageMode || 'both') !== 'both' || s.compat?.muteCustomCss || !String(SillyTavern.getContext().powerUserSettings?.custom_css || '').trim()) return;
+            } catch { return; }
+            import('./src/first-run.js').then(m => m.openCssPromptWhenFree()).catch(error => console.warn('[Blue Lemonade] 쓰던 테마 안내', error));
+        }, 1500);
+        try {
+            const { eventSource, event_types } = SillyTavern.getContext();
+            if (document.getElementById('loader')) eventSource.once(event_types.APP_READY, cssAsk); else cssAsk();
+        } catch { cssAsk(); }
     }
     // 5.5.6: 테마가 빠져 있는데(확장만 · 테마 끔) '실리태번 설정 맞추기' 값이 실리태번에 남아 있으면 한 번 알린다 — 누르면 되돌리기 (sttheme.js)
     if (!themeEnabled(getSettings())) {

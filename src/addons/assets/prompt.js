@@ -141,7 +141,7 @@ export function setupPrompt() {
         generationType = null;
         clearMembers();   // 1.6.9 그룹 멤버 목록은 채팅마다 새로 (그 멤버 메시지가 보일 때 · 차례가 올 때 읽는다)
         syncPrompt();
-        return reload();
+        return reload({ keep: true });   // 7.2.6 같은 캐릭터의 다른 채팅이면 그림 목록을 다시 받지 않는다
     });
     for (const event of [event_types.GENERATION_ENDED, event_types.GENERATION_STOPPED]) {
         if (event) eventSource.on(event, (arg) => {

@@ -82,7 +82,7 @@ export function currentRecord() {
     };
 }
 
-function otherRecord(owner, key, { favorites = [], messageCount = 0, lastMes = '' } = {}) {
+export function otherRecord(owner, key, { favorites = [], messageCount = 0, lastMes = '' } = {}) {   // 7.2.6 패널의 목록 캐시가 방금 떠난 현재 채팅을 이걸로 만든다
     return { key, label: chatLabel(key, owner.name), isCurrent: false, owner, favorites, messages: null, header: null, loaded: false, messageCount, lastMes };
 }
 

@@ -62,7 +62,7 @@ function savedByDeviceA(mode, [ja, ko]) {
 }
 async function autoFixCalls(stateOf) {
     const calls = [];
-    const view = createCheckView({ stateOf, rerender() {}, act: (...args) => { calls.push(args.slice(0, 3)); return Promise.resolve(); } });
+    const view = createCheckView({ stateOf, rerender() {}, act: (...args) => { calls.push(args.slice(0, 3)); return Promise.resolve(); }, autoFixOn: () => true });   // 7.2.6 자동 고치기는 별도 스위치 — 이 시험은 켠 채로
     view.schedule(0);
     await wait(450);   // check-view 은 한가할 때(여기선 300ms 타이머) 판정한다
     return { calls, view };

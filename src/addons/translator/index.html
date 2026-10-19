@@ -105,9 +105,13 @@
                             <input type="checkbox" id="force_sequential_matching"><span>문단 순차 매칭 사용</span>
                         </label>
                         <label class="checkbox_label llmt-check" for="llm_translation_check">
-                            <input type="checkbox" id="llm_translation_check"><span>번역 점검 · 자동 고치기</span>
+                            <input type="checkbox" id="llm_translation_check"><span>번역 점검</span>
                         </label>
-                        <small class="llmt-desc">번역문을 원문과 문단마다 견줘, 초안이 섞이거나 끊기거나 주석 · 대사 괄호가 깨진 문단은 자동으로 고쳐요(걷어 내기 · 그 문단만 다시 번역 · 빠진 문단 채우기, 메시지마다 3번까지). 고치지 못한 문단 끝에만 작은 표시가 남고 번역 단추에 그 수가 보여요. 누르면 이유와 「원문 보기」가 나와요. 함께 보기가 「사용 안 함」일 때만 해요.</small>
+                        <small class="llmt-desc">번역문을 원문과 문단마다 견줘, 초안이 섞이거나 끊기거나 주석 · 대사 괄호가 깨진 문단 끝에 작은 표시를 달고 번역 단추에 그 수를 보여요. 누르면 이유와 「원문 보기」 · 「이 문단만 다시 번역」 같은 단추가 나와요. 함께 보기가 「사용 안 함」일 때만 해요.</small>
+                        <label class="checkbox_label llmt-check" for="llm_translation_autofix">
+                            <input type="checkbox" id="llm_translation_autofix"><span>의심 문단 자동으로 다시 번역</span>
+                        </label>
+                        <small class="llmt-desc">점검이 의심한 문단을 묻지 않고 고쳐요(걷어 내기 · 그 문단만 다시 번역 · 빠진 문단 채우기, 메시지마다 3번까지). 답 하나에 번역 요청이 최대 3번 더 갈 수 있어서 기본은 꺼 두었어요. 꺼도 표시와 단추는 그대로예요.</small>
                         <label class="checkbox_label llmt-check" for="llm_reasoning_translate">
                             <input type="checkbox" id="llm_reasoning_translate"><span>생각 블록 번역해서 보기</span>
                         </label>

@@ -277,6 +277,10 @@ jobs:
           node tools/tests/model-register-offer.mjs .
           node tools/tests/preset-sharing.mjs .
           node tools/tests/first-run.mjs .
+          node tools/tests/first-run-css.mjs .
+          node tools/tests/faq.mjs .
+          node tools/tests/call-trim-726.mjs .
+          node tools/tests/tts-continue-reuse.mjs .
           node tools/tests/settings-search.mjs .
           node tools/tests/appearance-workflow.mjs .
           node tools/tests/markdown-settings.mjs .

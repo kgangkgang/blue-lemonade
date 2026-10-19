@@ -3,6 +3,8 @@ import { buildChatGraph, collectBranchHints } from './chat-graph-data.js';
 const SVG = 'http://www.w3.org/2000/svg';
 const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
 const context = () => SillyTavern.getContext();
+// 7.2.6 그룹 채팅의 연결 정보(chat_metadata)는 채팅 파일을 통째로 받아야 안다 — 메시지 수 · 마지막 메시지가 그대로인 채팅은 다시 받지 않는다 (api-audit #4). 200개까지
+const groupMetaMemo = new Map();   // `${groupId}|${chatId}` → { stamp, metadata }
 const statusLabel = { root: '시작', linked: '분기', unknown: '연결 미확인', 'missing-parent': '원래 채팅 없음', 'self-parent': '연결 확인 필요', cycle: '연결 확인 필요', 'invalid-parent': '연결 확인 필요', 'duplicate-conflict': '연결 확인 필요' };
 
 // Iterative tree layout: deep branch chains cannot overflow the call stack.
@@ -218,12 +220,17 @@ export function createChatGraph(popup, showList) {
                 const worker = async () => {
                     while (live() && index < queue.length) {
                         const record = queue[index++];
+                        const memoKey = `${own.groupId}|${record.id}`, stamp = `${record.messageCount ?? ''}|${record.lastMes ?? ''}`;
+                        const memo = groupMetaMemo.get(memoKey);
+                        if (memo && memo.stamp === stamp) { record.metadata = memo.metadata; done++; status.textContent = `연결 확인 ${done}/${queue.length}`; continue; }   // 7.2.6 바뀐 것 없음 — 요청 없이
                         try {
                             const chat = await post('/api/chats/group/get', { id: record.id }, controller.signal);
                             if (!live()) return;
                             const header = Array.isArray(chat) ? chat.find(row => row && !('mes' in row) && row.chat_metadata) : null;
                             if (!header?.chat_metadata || typeof header.chat_metadata !== 'object' || Array.isArray(header.chat_metadata)) throw Error('채팅 연결 정보 없음');
                             record.metadata = header.chat_metadata;
+                            groupMetaMemo.delete(memoKey); groupMetaMemo.set(memoKey, { stamp, metadata: header.chat_metadata });
+                            while (groupMetaMemo.size > 200) groupMetaMemo.delete(groupMetaMemo.keys().next().value);
                         } catch (error) { if (controller.signal.aborted) return; failed++; }
                         done++; status.textContent = `연결 확인 ${done}/${queue.length}`;
                     }

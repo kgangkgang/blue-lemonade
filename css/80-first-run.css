@@ -93,6 +93,32 @@
 .bl-first-run .bl-fr-read-sample q.is-bold { font-weight: 650; }
 .bl-first-run .bl-fr-read-sample q.is-tint { color: var(--salty-accent-ink, var(--fr-accent)); }
 
+/* 7.2.6 쓰던 테마가 있어요: 설명 한 줄 · 켜진 다른 CSS 목록 · 큰 단추 둘(셋). 단추는 제목 + 한 줄 설명을 세로로, 폰에서도 한 손가락 크기 */
+.bl-first-run .bl-fr-css { display: flex; flex-direction: column; gap: 12px; padding-top: 4px; }
+.bl-first-run .bl-fr-css-lead { margin: 0; color: var(--salty-text, inherit); font-size: var(--bl-fs-body, 15px); line-height: 1.55; overflow-wrap: anywhere; word-break: keep-all; }
+.bl-first-run .bl-fr-css-list { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.bl-first-run .bl-fr-css-list li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 8px 12px; border: 1px solid var(--fr-line); border-radius: var(--bl-r-sm, 8px); background: var(--fr-card); font-size: var(--bl-fs-sub, 13px); line-height: 1.4; }
+.bl-first-run .bl-fr-css-list li b { font-weight: 650; color: var(--salty-text, inherit); }
+.bl-first-run .bl-fr-css-list li small { font-size: inherit; color: var(--fr-muted); }
+.bl-first-run .bl-fr-css-choices { display: flex; flex-direction: column; gap: 8px; }
+.bl-first-run .bl-fr-choice {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
+  width: 100%; min-height: 44px; margin: 0; padding: 11px 14px;
+  border: 1px solid var(--fr-line); border-radius: var(--bl-r-md, 12px); background: var(--fr-card); color: var(--salty-text, inherit);
+  font: inherit; text-align: left; cursor: pointer; appearance: none; -webkit-appearance: none; box-shadow: none;
+}
+.bl-first-run .bl-fr-choice b { font-size: var(--bl-fs-body, 15px); font-weight: 700; line-height: 1.35; overflow-wrap: anywhere; word-break: keep-all; }
+.bl-first-run .bl-fr-choice span { font-size: var(--bl-fs-sub, 13px); line-height: 1.45; color: var(--fr-muted); overflow-wrap: anywhere; word-break: keep-all; }
+.bl-first-run .bl-fr-choice.is-primary { border-color: var(--fr-accent); background: var(--fr-accent); color: var(--salty-on-accent, #fff); }
+.bl-first-run .bl-fr-choice.is-primary span { color: inherit; opacity: .88; }
+.bl-first-run .bl-fr-choice:disabled { opacity: .6; cursor: default; }
+.bl-first-run .bl-fr-choice:focus-visible { outline: 2px solid var(--fr-accent); outline-offset: 2px; }
+@media (hover: hover) {
+  .bl-first-run .bl-fr-choice:not(.is-primary):hover { background: var(--bl-control-hover, var(--fr-control)); }
+  .bl-first-run .bl-fr-choice.is-primary:hover { filter: brightness(1.06); }
+}
+.bl-first-run[data-step="css"] .bl-fr-body { padding-bottom: 16px; }
+
 /* 바닥: 이전 · 다음/완료 */
 .bl-first-run .bl-fr-foot { display: flex; flex: none; align-items: center; justify-content: flex-end; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--fr-line); }
 .bl-first-run .bl-fr-foot [data-fr="back"] { margin-right: auto; }

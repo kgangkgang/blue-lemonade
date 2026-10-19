@@ -14,7 +14,7 @@ import { oai_settings, getChatCompletionModel } from '../../../../../../openai.j
 import { priceFor } from './state.js';
 import { connectionFor, quoteRequest, manualPriceForConnection } from './pricing.js';
 import { priceCard, pricePreview, addCurrencyCost, providerCoverage } from './pricing-view.js';
-import { refreshPrices, pricingSyncStatus } from './pricing-sync.js';
+import { refreshPrices, pricingSyncStatus, syncPriceSync } from './pricing-sync.js';
 
 function syncStatusText() {
     if (settings().priceAutoRefresh === false) return '자동 갱신 꺼짐 · 저장된 가격 사용';
@@ -467,7 +467,7 @@ export async function openDialog({ tab = 'log' } = {}) {
     root.addEventListener('click', event => onDialogClick(event, state));
     root.querySelector('[data-act="auto-pricing"]').addEventListener('change', event => {
         settings().priceAutoRefresh=event.target.checked;
-        saveSettings(); updateSyncControls(root);
+        saveSettings(); updateSyncControls(root); syncPriceSync();   // 7.2.6 끄면 30분 타이머도 멈춘다
         if (event.target.checked) void refreshPrices();
     });
     $('.rl-filter-caller').addEventListener('change', (event) => {

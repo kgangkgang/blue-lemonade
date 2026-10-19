@@ -427,7 +427,7 @@ export const save = () => { saveSettingsDebounced(); peopleChanged(); };   // 6.
 // 타이머는 걸려 있는 동안 다시 걸지 않는다(밀리지 않게). 화면을 숨기거나 페이지를 떠날 때는 debounce 없이 바로 저장한다(안드로이드가 탭을 얼리기 전에).
 // 5.6.4 리뷰: 30초 타이머도 바로 저장한다 — debounce(1초)로 넘기면 그 1초 안에 탭을 닫을 때 밀린 숫자가 사라졌다
 //   (usagePending 은 이미 false 라 pagehide 의 flushUsage 도 건너뜀). 30초에 한 번이라 바로 저장해도 묶임이 줄지 않는다
-export const USAGE_SAVE_MS = 30000;
+export const USAGE_SAVE_MS = 120000;   // 7.2.6 30초 → 2분 (api-audit #10: 설정 전체 200KB 를 자주 썼다) — 화면을 숨기거나 떠날 땐 바로
 let usageTimer = null, usagePending = false;
 /** 설정을 debounce 없이 저장 (실리태번 saveSettings — 없는 판이면 debounce 판으로) */
 function saveUsageNow() {
