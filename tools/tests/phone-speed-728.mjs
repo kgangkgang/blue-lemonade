@@ -160,5 +160,12 @@ await test('상태 카드 찾기 기억: 같은 글을 여러 번 불러도 결�
     assert.match(read('src/addons/translator/display-cards.js'), /return hit\.map\(card => \(\{ \.\.\.card \}\)\);/);
 });
 
+await test('B1 모달이 열린 동안 알림: 테마 창 표시 · 화면 아래 · 누름 통과 · 처음 설정 창은 창 맨 아래 줄', () => {
+    assert.match(read('src/modal.js'), /dialog\.toggleAttribute\?\.\('data-bl-modal', true\);[^\n]*\n\s*try \{ dialog\.showModal\(\); \}/);
+    const css = read('style.css');
+    assert.match(css, /dialog\[data-bl-modal\]\[open\] > #toast-container \{ top: auto !important; bottom: max\(8px, env\(safe-area-inset-bottom, 0px\)\) !important; margin-top: 0 !important; pointer-events: none; \}/);
+    assert.match(css, /dialog\.bl-first-run\[data-bl-modal\]\[open\] > #toast-container \{ position: static !important; order: 99;/);
+});
+
 console.log(`phone-speed-728: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

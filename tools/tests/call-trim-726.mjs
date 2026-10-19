@@ -50,7 +50,8 @@ await test('#7 · #10 TTS: 분석 결과 저장은 5초 모아서(숨기거나 �
     assert.ok(!/drop\(id, mes, true\)\) scheduleSave\(\);/.test(A), 'onMessageChanged 의 저장 없음');
     assert.match(A, /if \(isObj\(a\) && a\.hash !== h\) drop\(id, mes, true\);/);
     assert.match(A, /visibilitychange[^\n]*saveNow\(\)/); assert.match(A, /pagehide[^\n]*saveNow\(\)/);
-    assert.match(read('src/addons/tts/src/settings.js'), /export const USAGE_SAVE_MS = 120000;/);
+    // 7.2.8 사용량은 설정 저장을 아예 부르지 않는다 (2분 타이머 · 숨길 때 저장 없음 — tools/tests/tts-usage-728.mjs)
+    assert.doesNotMatch(read('src/addons/tts/src/settings.js'), /USAGE_SAVE_MS|saveUsageLater|saveUsageNow/);
 });
 await test('#12 북마크 패널: 열린 채 같은 캐릭터의 채팅을 옮기면 목록 캐시(5분) · 닫으면 버림 · 떠난 채팅은 마지막 북마크로 올림', () => {
     const src = read('src/addons/bookmarks/panel.js');

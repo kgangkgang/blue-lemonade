@@ -16,6 +16,7 @@ export function showThemeModal(dialog) {
         dialog._blDrawerGuard = true;
         for (const type of ['touchstart', 'mousedown']) dialog.addEventListener(type, event => event.stopPropagation(), {passive:true});
     }
+    dialog.toggleAttribute?.('data-bl-modal', true);   // 7.2.8 열린 동안 알림을 아래로 (css/57-native-ux.css)
     try { dialog.showModal(); }
     catch (error) { dialog.removeEventListener('close',closed,true); throw error; }
     fixToastrForDialogs();

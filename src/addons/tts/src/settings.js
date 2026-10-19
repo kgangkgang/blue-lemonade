@@ -1,6 +1,5 @@
 // TTS 설정: 기본값 · 1.0.0 → 1.1.0 → 1.2.0 → 1.2.1 → 1.2.2 → 1.2.3 → 1.2.4 → 1.2.5 옮기기 · 저장
 import { saveSettingsDebounced } from '../../../../../../../../script.js';
-import * as stScript from '../../../../../../../../script.js';   // saveSettings (바로 저장) — 없는 판(테스트 스텁 등)이면 debounce 판으로
 import { extension_settings } from '../../../../../../../extensions.js';
 import { KNOWN_VOICES, KNOWN_SIG } from './known-voices.js';
 import { TTS_VERSION } from '../version.js';
@@ -417,48 +416,71 @@ export function settings() {
     }
     if (isObj(s.analysis)) delete s.analysis.model_lists;   // 1.2.1 개발판이 설정에 두던 모델 목록 캐시 (이제 localStorage)
     cached = s;
+    if (usageKey) restoreUsage(s); else askUsageKey();   // 7.2.8 이 기기에 남긴 사용량 사본과 합치기 (설정 객체가 바뀌었을 때도)
     return s;
 }
 
 export const save = () => { saveSettingsDebounced(); peopleChanged(); };   // 6.9.5 목소리 · 연결표가 바뀌면 인물표도
 
-// 5.6.4 사용량 숫자는 설정 객체(메모리)에 바로 더하고, 디스크에는 30초에 한 번만 쓴다.
-// 줄마다 saveSettingsDebounced(1초)를 부르면 미리 만들기가 줄을 하나씩 만드는 동안 거의 묶이지 않아 설정 전체(2 MB)를 줄마다 저장했다.
-// 타이머는 걸려 있는 동안 다시 걸지 않는다(밀리지 않게). 화면을 숨기거나 페이지를 떠날 때는 debounce 없이 바로 저장한다(안드로이드가 탭을 얼리기 전에).
-// 5.6.4 리뷰: 30초 타이머도 바로 저장한다 — debounce(1초)로 넘기면 그 1초 안에 탭을 닫을 때 밀린 숫자가 사라졌다
-//   (usagePending 은 이미 false 라 pagehide 의 flushUsage 도 건너뜀). 30초에 한 번이라 바로 저장해도 묶임이 줄지 않는다
-export const USAGE_SAVE_MS = 120000;   // 7.2.6 30초 → 2분 (api-audit #10: 설정 전체 200KB 를 자주 썼다) — 화면을 숨기거나 떠날 땐 바로
-let usageTimer = null, usagePending = false;
-/** 설정을 debounce 없이 저장 (실리태번 saveSettings — 없는 판이면 debounce 판으로) */
-function saveUsageNow() {
-    try { Promise.resolve(typeof stScript.saveSettings === 'function' ? stScript.saveSettings() : saveSettingsDebounced()).catch(e => console.error('[TTS] 사용량 저장 실패', e)); }
-    catch (e) { console.error('[TTS] 사용량 저장 실패', e); }
+// 7.2.8 사용량 숫자(usage · analysis_usage)가 바뀌어도 설정 전체를 저장하지 않는다. 예전(5.6.4~7.2.7)에는 숫자가 바뀌면 2분 뒤 · 화면을 숨길 때
+//   설정 전체(사용자에 따라 1.7MB)를 바로 저장해, 답 · 스와이프 · 그룹 차례마다 폰이 설정 파일을 통째로 올렸다.
+//   숫자는 설정 객체에 그대로 두고(화면 · 다른 기기 · 내보내기는 예전처럼 설정에서 읽음) 실리태번이 다른 일로 설정을 저장할 때 같이 실려 간다.
+//   그 전에 새로고침하거나 탭이 닫혀도 숫자가 남게, 바뀔 때마다 이 기기 localStorage 에 이번 달 숫자 사본(수백 바이트, 계정별)을 쓰고
+//   다음 시작 때 같은 달이면 칸마다 큰 값으로 합친다 (숫자는 한 달 안에서 늘기만 한다 — 줄이는 단추 없음).
+export const USAGE_STORE = 'bl-tts-usage-v1';
+const USAGE_KEYS = ['chars', 'requests', 'pre_chars', 'pre_requests', 'pre_used_chars'];
+const ANALYSIS_KEYS = ['calls', 'in_tokens', 'out_tokens'];
+let usageKey;   // undefined = 아직 안 물음 · null = 모름(계정 모듈 없음) · 문자열 = localStorage 열쇠
+const countOf = v => (Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : 0);
+/** 같은 달이면 칸마다 큰 값 · 사본이 더 새 달이면 사본 · 더 옛 달이면 지금 것 (순수 — 시험용으로 내보냄) */
+export function mergeMonthCounts(cur, saved, keys, mapKey = '') {
+    if (!isObj(saved) || typeof saved.month !== 'string' || !/^\d{4}-\d{2}$/.test(saved.month)) return cur;
+    const curMonth = isObj(cur) && typeof cur.month === 'string' ? cur.month : '';
+    if (curMonth && saved.month < curMonth) return cur;
+    const out = curMonth === saved.month ? cur : { ...(isObj(cur) ? cur : {}), month: saved.month, ...Object.fromEntries(keys.map(k => [k, 0])), ...(mapKey ? { [mapKey]: {} } : {}) };
+    for (const k of keys) out[k] = Math.max(countOf(out[k]), countOf(saved[k]));
+    if (mapKey) {
+        if (!isObj(out[mapKey])) out[mapKey] = {};
+        if (isObj(saved[mapKey])) for (const [m, v] of Object.entries(saved[mapKey])) if (!['__proto__', 'constructor', 'prototype'].includes(m)) out[mapKey][m] = Math.max(countOf(out[mapKey][m]), countOf(v));
+    }
+    return out;
 }
-function saveUsageLater() {
-    usagePending = true;
-    if (usageTimer) return;
-    usageTimer = setTimeout(() => {
-        usageTimer = null;
-        if (!usagePending) return;
-        usagePending = false;
-        saveUsageNow();
-    }, USAGE_SAVE_MS);
-    usageTimer?.unref?.();   // node 테스트가 30초를 기다리지 않게 (브라우저 타이머 번호엔 없음)
+function usageStorage() { try { return globalThis.localStorage || null; } catch { return null; } }
+/** 이 기기에 남긴 사본을 설정의 숫자와 합친다 (계정을 알 때만). 바뀐 게 있으면 true */
+export function restoreUsage(s = settings()) {
+    if (!usageKey) return false;
+    let saved = null;
+    try { saved = JSON.parse(usageStorage()?.getItem(usageKey) || 'null'); } catch { saved = null; }
+    if (!isObj(saved)) return false;
+    const before = JSON.stringify([s.usage, s.analysis_usage]);
+    s.usage = mergeMonthCounts(s.usage, saved.usage, USAGE_KEYS, 'models');
+    s.analysis_usage = mergeMonthCounts(s.analysis_usage, saved.analysis_usage, ANALYSIS_KEYS);
+    return JSON.stringify([s.usage, s.analysis_usage]) !== before;
 }
-/** 밀린 사용량을 바로 저장한다. 밀린 게 없으면 false */
-export function flushUsage() {
-    if (!usagePending) return false;
-    usagePending = false;
-    clearTimeout(usageTimer); usageTimer = null;
-    saveUsageNow();
-    return true;
+function writeUsageCopy(s = settings()) {
+    if (!usageKey) return;
+    try { usageStorage()?.setItem(usageKey, JSON.stringify({ usage: s.usage, analysis_usage: s.analysis_usage })); } catch { /* 저장소가 막혀도 숫자는 설정에 남는다 */ }
 }
-/** 저장을 기다리는 사용량이 있는지 (테스트 · 확인용) */
-export const usageSavePending = () => usagePending;
-if (typeof globalThis.document?.addEventListener === 'function' && typeof globalThis.window?.addEventListener === 'function') {
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushUsage(); });
-    window.addEventListener('pagehide', flushUsage);
+/** 계정 이름을 한 번 알아 와 열쇠를 정하고, 남긴 사본과 합친 뒤 지금 숫자를 쓴다 (실리태번 user.js — 옛 판 · 시험이면 아무것도 안 함) */
+function askUsageKey() {
+    if (usageKey !== undefined) return;
+    usageKey = null;
+    import('../../../../../../../user.js').then(m => {
+        const handle = typeof m?.getCurrentUserHandle === 'function' ? m.getCurrentUserHandle() : '';
+        if (typeof handle !== 'string' || !handle) return;
+        usageKey = `${USAGE_STORE}:${handle}`;
+        restoreUsage(settings());
+        writeUsageCopy(settings());
+    }).catch(() => { /* 계정 모듈이 없는 판 */ });
 }
+/** 사용량이 바뀌었다 — 설정 저장은 하지 않고 이 기기 사본만 쓴다 */
+function noteUsage() { askUsageKey(); writeUsageCopy(); }
+/** 7.2.7 까지의 「밀린 사용량 바로 저장」 — 이제 밀린 저장이 없다 (사본만 쓰고 false) */
+export function flushUsage() { writeUsageCopy(); return false; }
+/** 저장을 기다리는 사용량이 있는지 — 7.2.8 부터 늘 false (설정 저장을 하지 않는다) */
+export const usageSavePending = () => false;
+/** 시험용: 계정 열쇠를 바로 정한다 (null = 모름) */
+export function _setUsageKeyForTest(key) { usageKey = key; }
 
 /** 엔진 설정 (기본값을 채워서) */
 export function providerConfig(id, defaults = {}) {
@@ -521,13 +543,13 @@ export function addUsage(chars, { pre = false, model = '' } = {}) {
     if (pre) { u.pre_chars += n; u.pre_requests += 1; }
     const m = cleanModel(model);
     if (m && !['__proto__', 'constructor', 'prototype'].includes(m)) u.models[m] = (Number(u.models[m]) || 0) + n;
-    saveUsageLater();
+    noteUsage();
 }
 /** 미리 만든 소리를 실제로 들은 글자 (소리마다 한 번) */
 export function addPreUsed(chars) {
     const s = settings();
     monthUsage(s).pre_used_chars += Math.max(0, Number(chars) || 0);
-    saveUsageLater();
+    noteUsage();
 }
 
 /** 이번 달 대사 분석 사용량 더하기 (호출 수 + 토큰; 실리태번 연결은 토큰 0) */
@@ -538,5 +560,5 @@ export function addAnalysisUsage(inTokens = 0, outTokens = 0, calls = 1) {
     s.analysis_usage.calls += Math.max(1, Math.round(Number(calls) || 1));
     s.analysis_usage.in_tokens += Math.max(0, Number(inTokens) || 0);
     s.analysis_usage.out_tokens += Math.max(0, Number(outTokens) || 0);
-    saveUsageLater();
+    noteUsage();
 }

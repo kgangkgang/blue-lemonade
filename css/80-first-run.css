@@ -132,3 +132,8 @@
   .bl-first-run .bl-fr-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 8em), 1fr)); }
   .bl-first-run .bl-fr-fonts, .bl-first-run .bl-fr-readings { grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5em), 1fr)); }
 }
+
+/* 7.2.8 처음 설정 창이 열린 동안의 알림은 창의 맨 아래 줄(다음 · 이전 단추 아래)에 놓는다 — 글 칸만 줄어들고 어떤 단추도 가리지 않는다. 알림이 사라지면 줄도 없어짐 */
+dialog.bl-first-run[data-bl-modal][open] > #toast-container { position: static !important; order: 99; flex: none; inset: auto !important; width: auto !important; max-height: 38%; overflow-y: auto; margin: 0 !important; padding: 0 12px; pointer-events: auto; }
+dialog.bl-first-run[data-bl-modal][open] > #toast-container:not(:empty) { padding: 6px 12px 10px; border-top: 1px solid var(--fr-line); }
+dialog.bl-first-run[data-bl-modal][open] > #toast-container > div { width: auto !important; margin: 0 0 6px !important; pointer-events: auto; }

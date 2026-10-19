@@ -135,3 +135,8 @@ html body.salty > .picker[pick-colors-theme] :is(input,.label) {
 html.bl-st-solid body:not(.salty) :is(.drawer-content, #top-bar, #send_form) { background-color: var(--bl-st-solid-tint) !important; }
 /* 7.2.2 채팅 칸: '맞추기'가 넣은 투명 채팅 바탕이 남아 있을 때만 (st-solid.js 가 sttheme.js restoreState 로 판정) */
 html.bl-st-solid-chat body:not(.salty) #chat { background-color: var(--bl-st-solid-tint) !important; }
+
+/* 7.2.8 테마 창(모달)이 열린 동안의 알림: 실리태번은 알림 칸을 창 안으로 옮겨 위쪽(위 막대 아래)에 띄운다 — 다른 확장의 긴 알림이 창 머리의
+   닫기 · 건너뛰기 단추를 가렸다. 창이 열린 동안은 화면 아래로 내리고, 알림이 누름을 가로채지 않게 한다(창 단추가 눌리게). 처음 설정 창은 80-first-run.css 에서 창 맨 아래 줄로 */
+dialog[data-bl-modal][open] > #toast-container { top: auto !important; bottom: max(8px, env(safe-area-inset-bottom, 0px)) !important; margin-top: 0 !important; pointer-events: none; }
+dialog[data-bl-modal][open] > #toast-container > * { pointer-events: none; }

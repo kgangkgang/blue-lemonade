@@ -414,7 +414,7 @@ export const FILE_HASHES = {
   "src/addons/tts/src/scene-mix.js": "6054:0e3eb776:9ff96743",
   "src/addons/tts/src/script-editor.js": "34824:9b4a1d24:34a0e8e6",
   "src/addons/tts/src/script-store.js": "8200:d3b06584:072adfbf",
-  "src/addons/tts/src/settings.js": "36653:f1207e31:f114957d",
+  "src/addons/tts/src/settings.js": "38781:79d52660:1f4f2afa",
   "src/addons/tts/src/sfx-audio.js": "7237:eeb7e7ee:1232b1e7",
   "src/addons/tts/src/sfx-credits.js": "6587:1a7aad53:1c14435d",
   "src/addons/tts/src/sfx-daily.js": "29219:f782eea1:efd00527",
@@ -547,11 +547,11 @@ export const FILE_HASHES = {
   "src/mes-fold.js": "15542:5c43e78e:a96ce929",
   "src/mes-pins.js": "11977:4b98c0cc:16f804e2",
   "src/message-work.js": "7592:9af6cb91:7ad233df",
-  "src/modal.js": "1449:da5093fd:8b8c4b3c",
+  "src/modal.js": "1570:fc1776ad:43eb6e78",
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "279662:027e6c4a:c0482abe",
+  "src/notice-data.js": "280291:d4997cc0:89a0b54d",
   "src/notice.js": "5647:427a7a6b:dcf06534",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -677,5 +677,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40459:a17944bd:beb7384d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1537006:c1162dbb:01cae6ea"
+  "style.css": "1537809:dfed071b:a569ff72"
 };

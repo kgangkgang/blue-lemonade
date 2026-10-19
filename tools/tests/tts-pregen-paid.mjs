@@ -364,18 +364,16 @@ await test('설정 창: 목소리 엔진이 모두 유료이고 끔이면 미리
     assert.equal(pregenDesc(st({ click_play: false })), '대사 클릭·자동 읽기가 꺼져 쉬어요', '먼저 보던 까닭이 앞');
 });
 
-// ---------- 5) 사용량 저장: 30초 타이머도 debounce 없이 (그 1초 안에 탭을 닫아도 남게)
-await test('사용량 30초 타이머 → saveSettings 바로 (saveSettingsDebounced 아님)', () => {
+// ---------- 5) 사용량 저장: 7.2.8 설정 저장을 부르지 않는다 (숫자는 설정 객체에 남아 다른 저장에 실려 간다)
+await test('사용량이 바뀌어도 설정 저장 0번 · 시간이 지나도 0번 · 밀린 저장 없음', () => {
     mock.timers.enable({ apis: ['setTimeout'] });
     try {
-        S.flushUsage();
         const before = { ...T.saves };
         S.addUsage(10, { pre: true });
-        mock.timers.tick(S.USAGE_SAVE_MS - 1);
-        assert.deepEqual(T.saves, before, '30초 전엔 저장 없음');
-        mock.timers.tick(1);
-        assert.deepEqual(T.saves, { debounced: before.debounced, direct: before.direct + 1 });
+        mock.timers.tick(10 * 60 * 1000);
+        assert.deepEqual(T.saves, before, '저장 없음');
         assert.equal(S.flushUsage(), false, '밀린 게 없음');
+        assert.equal(S.usageSavePending(), false);
     } finally { mock.timers.reset(); }
 });
 
