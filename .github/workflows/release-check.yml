@@ -36,6 +36,7 @@ jobs:
           node tools/tests/promptbind.mjs .
           node tools/tests/headswitch.mjs .
           node tools/tests/usage-mode.mjs .
+          node tools/tests/forced-theme-class.mjs .
           node tools/tests/stream-follow.mjs .
           node tools/tests/stream-watchdog.mjs .
           node tools/tests/perf-bundle-645.mjs .
@@ -187,6 +188,9 @@ jobs:
           node tools/tests/addon-head-once.mjs .
           node tools/tests/param-dimensions.mjs .
           node tools/tests/touch-targets.mjs .
+          node tools/tests/addon-touch-targets.mjs .
+          node tools/tests/tts-reanalysis-guard.mjs .
+          node tools/tests/addon-note-master-off.mjs .
           node tools/tests/popup-outside-close.mjs .
           node tools/tests/assets-strip-chat.mjs .
           node tools/tests/after-work.mjs .

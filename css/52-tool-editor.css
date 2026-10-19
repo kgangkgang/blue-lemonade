@@ -154,6 +154,9 @@ html body .bl-addon-credit-all:focus-visible { outline:2px solid var(--salty-acc
 /* Desktop embeds the actual controls; mobile keeps the existing focused dialog. */
 .bl-addon-inline { display:none; }
 .bl-inline-title { margin:0; font-size:1em; font-weight:inherit; line-height:1.5; }
+/* 7.2.4 모델 전환을 PC 설정 창에 끼웠을 때 저장한 조합이 없으면 「+」(지금 조합 저장) 칩이 제목 줄 오른쪽 끝에 올라온다(modelswitch/style.css 외톨이 줄) —
+   제목 상자가 그 칩 밑까지 뻗어 겹치지 않게 (긴 제목도 칩 앞에서 멈춘다). 디자인 전수조사 7.2.4 */
+.bl-addon-inline:has(> .bl-addon-inline-content > #model-switch-settings > .inline-drawer-content > .ms-presets > .ms-chip-add:only-child) > .bl-inline-title { width:fit-content; max-width:calc(100% - 52px); }
 .bl-addon-inline-content { min-width:0; }
 .bl-addon-inline-content > * { min-width:0; max-width:100%; box-sizing:border-box; }
 .bl-addon-inline-content :is(.po-title,.pa-hub-title,.inline-drawer-header) { display:none!important; }

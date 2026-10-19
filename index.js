@@ -1,6 +1,6 @@
 import { startErrorLog } from './src/diag-errors.js';
 startErrorLog(); // 6.6.9 진단 파일용: 블루레몬에이드 오류만 최근 20줄 (주소 · 키는 가림)
-import { themeEnabled } from './src/usage-mode.js';
+import { themeEnabled, publicSettings, forcedThemeGuard } from './src/usage-mode.js';
 import { bindSettingsDialog } from './src/settings-dialog.js';
 // 5.3.2: 애플 웹킷 표시 — 여러 줄 인라인 마스크를 끝 줄 조각에만 그리는 버그 피하기용 (css/37-prompt-ink.css)
 try {
@@ -174,7 +174,8 @@ loadVersion().then(() => refreshPanels()); // 공지사항 버전 표시
 setTimeout(() => import('./src/install-health.js').then(m=>m.checkInstallation()).catch(()=>{}),6000); // 시작 후 가벼운 로컬 버전 점검
 
 // 콘솔·테스트용
-window.Salty = { ensureDrawerPanel: () => document.getElementById('salty-drawer')?._blEnsurePanel?.(), getSettings, applyAll, refreshPanels, openPopup, restorePreviewRules, deferredPreviewRuleCount, panelHasRuleCount, panelCssEnabled, streamFadeState };
+// 7.2.4 바깥 확장이 읽는 getSettings().enabled 는 테마가 화면에 켜져 있는지(사용 모드까지) — 확장만 모드에서 quiet-notes 가 body.salty 를 붙이지 않게 (usage-mode.js publicSettings)
+window.Salty = { ensureDrawerPanel: () => document.getElementById('salty-drawer')?._blEnsurePanel?.(), getSettings: () => publicSettings(getSettings()), themeOn: () => themeEnabled(getSettings()), applyAll, refreshPanels, openPopup, restorePreviewRules, deferredPreviewRuleCount, panelHasRuleCount, panelCssEnabled, streamFadeState };
 window.addEventListener('bl:addons-state', () => refreshPanels());
 
 jQuery(() => {
@@ -225,7 +226,10 @@ jQuery(() => {
         classifyAll();
     };
     startThemeRuntime();
-    new MutationObserver(startThemeRuntime).observe(document.body, {attributes:true,attributeFilter:['class']});
+    // 7.2.4 테마가 빠진 모드에서 바깥 확장이 body.salty 를 붙이면 바로 뗀다 — 테마 변수 없이 테마 규칙만 걸려 채팅 · 서랍 배경이 사라졌다 (quiet-notes 일코 OFF 제보, usage-mode.js forcedThemeGuard)
+    const guardForcedTheme = forcedThemeGuard({ themeOn: () => themeEnabled(getSettings()), warn: message => console.warn('[Blue Lemonade]', message) });
+    guardForcedTheme(document.body.classList);
+    new MutationObserver(() => { guardForcedTheme(document.body.classList); startThemeRuntime(); }).observe(document.body, {attributes:true,attributeFilter:['class']});
     // 6.9.5 처음 설정 안내: 테마 설정 칸이 없던 첫 실행에만 (기존 사용자 · 시험대처럼 설정이 있으면 안 뜬다). 실리태번이 다 뜬 뒤, 창을 열 때만 모듈을 받는다
     if (FRESH_SETTINGS) {
         const firstRun = () => setTimeout(() => import('./src/first-run.js').then(m => m.openFirstRunWhenFree()).catch(error => console.warn('[Blue Lemonade] 처음 설정 안내', error)), 900);

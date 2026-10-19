@@ -70,6 +70,7 @@ const { settings } = S;
 
 let pass = 0, fail = 0;
 async function test(name, fn) {
+    store.delete('lemon_voice.kept_analyses');   // 7.2.4 값을 치른 분석의 보관함(analysis.js keepAnalysis)은 같은 글을 요청 없이 다시 쓴다 — 사례마다 비운다 (tts-reanalysis-guard.mjs 가 그 보관함을 따로 본다)
     try { await fn(); pass++; console.log('  ok  ' + name); }
     catch (e) { fail++; console.log('  FAIL ' + name + '\n       ' + String(e.stack || e.message || e).split('\n').slice(0, 6).join('\n       ')); }
 }
@@ -252,7 +253,7 @@ await test('review: a 429 whose text says "blocked" is not a content block — n
     await assert.rejects(A.analyzeMessage(0, {}));
     assert.deepEqual(NET.requests.map(r => r.model), ['gemini-3.7-flash']);
 });
-await test('review: a bare 400 is remembered (the same request gets the same 400), an empty-candidate answer is not (the next tap tries again, as before)', async () => {
+await test('review: a bare 400 is remembered (the same request gets the same 400); an empty-candidate answer is remembered too, but only for the 7.2.4 cool-down (soft, not hard)', async () => {
     reset({ fallback: { enabled: true, provider: '', model: '' } });
     NET.replies['gemini-3.7-flash'] = { status: 400, json: { error: { message: 'Bad Request' } } };
     message();
@@ -262,7 +263,9 @@ await test('review: a bare 400 is remembered (the same request gets the same 400
     NET.replies['gemini-3.7-flash'] = { json: { error: { message: 'Candidate text empty' } } };
     message();
     await assert.rejects(A.analyzeMessage(0, {}), (e) => e.noFallback === true);
-    assert.equal(A.hasResponseFailure(0), false);
+    // 7.2.4 (tts-reanalysis): 잠깐의 실패도 식는 시간(10분) 동안은 쉰다 — 채팅의 extra 에 soft 기억으로 남고(hard 아님), 요술봉 재분석(force)은 그대로 보낸다
+    assert.equal(A.hasResponseFailure(0), true);
+    assert.equal(A.wasBlocked(0), false, 'an empty answer is not a block');
 });
 await test('review: a top-up of an analysis made by the other model goes straight to that model; 「다른 모델로 다시」 keeps finished work', async () => {
     reset();

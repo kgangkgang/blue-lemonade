@@ -1594,7 +1594,8 @@ function weatherSeg(s) {
 
 // ───────── 프롬프트 (3.4.0) ─────────
 // 프리셋마다 한 칸. 지금은 데우스 엑스 마키나 — 호환을 켜야 카드 표본 · 카드 설정 · 트래커 설정이 보이고 적용된다
-function tabExtensions(s, sub) { if(!addonsEnabled(s))return '<p class="salty-note">현재 사용 모드에서는 내장 확장을 실행하지 않아요. 테마 → 기타 설정 → 사용 모드에서 테마 + 확장 또는 확장만을 고르면 저장한 설정으로 다시 사용할 수 있어요.</p>';  return addonMarkup(s,sub) + (['words','capture'].includes(sub) && s.addons[sub] ? wordToolsMarkup(s,sub) : ''); }
+// 7.2.4 확장 탭 안내: 스위치가 꺼진 것과 사용 모드가 「테마만」인 것을 나눠 말한다 (제보 10-19: 「확장만」으로 바꿨는데도 이 안내가 떠서 헤맴 — 맨 아래 「블루레몬에이드 사용」이 꺼져 있던 것)
+function tabExtensions(s, sub) { if(!addonsEnabled(s))return s.enabled===false ? '<p class="salty-note">「블루레몬에이드 사용」 스위치가 꺼져 있어서 내장 확장도 쉬고 있어요. 이 창 맨 아래의 「블루레몬에이드 사용」을 켜면 저장한 설정 그대로 확장이 다시 켜져요. 사용 모드(테마 → 기타 설정)는 스위치를 켠 다음에 봐요.</p>' : '<p class="salty-note">사용 모드가 「테마만」이라 내장 확장을 실행하지 않아요. 테마 → 기타 설정 → 사용 모드에서 「테마 + 확장」이나 「확장만」을 고르면 저장한 설정으로 다시 사용할 수 있어요.</p>';  return addonMarkup(s,sub) + (['words','capture'].includes(sub) && s.addons[sub] ? wordToolsMarkup(s,sub) : ''); }
 
 function tabPrompt(s,sub) {
     if(sub==='fruit')return fruitPromptMarkup();

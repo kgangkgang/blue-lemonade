@@ -1,0 +1,40 @@
+/* ===== css/88-theme-off.css =====
+   7.2.4 테마가 꺼져 있을 때(확장만 · 테마 끔)의 테마 자신의 창 보정 — body.salty 가 없어 실리태번 기본 모양이 그대로 드러나는 자리.
+   디자인 전수조사(outputs/bl-724/design-audit.md)에서 확장만 모드로만 보이던 것들. 테마가 켜져 있으면 원래 규칙이 그대로다.
+   ===== */
+/* 설정 창의 맨 <button> · <small>: 실리태번은 button · small 에 자기 글자색(--SmartThemeBodyColor, 어두운 테마면 밝은 색)을 직접 준다.
+   테마가 꺼지면 판은 밝은데 「일반 이미지 · 투명 이미지 · 이전 표본 · 다음 표본」 단추와 메시지 발췌 small 이 밝은 글자로 남아 안 보였다 (대비 1.2 : 1) → 판 글자색을 따른다.
+   클래스로 색을 정한 단추(.salty-btn · .bl-tool-primary …)는 특이도가 높아 그대로다 */
+html body:not(.salty) .salty-panel :is(button, small) { color: inherit; }
+/* 커스텀 CSS 조절 창의 출처 줄(small)도 같은 이유 — 창은 흰 바탕(--salty-surface 대체값)인데 글자는 실리태번 밝은 색이었다 */
+html body:not(.salty) .bl-ctsi-dialog small { color: inherit; }
+/* 메모 창 머리: 좁은 폭에서 판 알약 · 찾기 · 단추 줄이 한 줄에 못 들어가 겹쳤다 — 테마가 켜졌을 때(notes/style.css body.salty 규칙)처럼 줄 바꿈 */
+html body:not(.salty) .bl-notes-dialog > header,
+html body:not(.salty) .bl-notes-dialog > header .bl-notes-head-tools { flex-wrap: wrap; row-gap: 8px; }
+/* 설정 창에 끼운 애드온 설정(PC 폭의 .bl-embedded-settings — 번역 · 다시 쓰기 · 모델 등록 · 모델 전환 …)은 글자 · 테두리 · 판 색을 실리태번 변수로 그린다.
+   테마가 꺼지면 설정 창은 자기 팔레트(밝음)인데 실리태번 테마가 어두우면 밝은 글자(대비 1.4 : 1)가 되어 안 보였다 →
+   설정 창 안에서는 실리태번 색 변수를 창 팔레트로 돌린다 (테마가 켜져 있을 때는 apply.js 가 이미 실리태번 변수를 덮는다) */
+html body:not(.salty) .salty-panel {
+  --SmartThemeBodyColor: var(--salty-text);
+  --SmartThemeEmColor: var(--salty-muted, var(--salty-text));
+  --SmartThemeQuoteColor: var(--salty-accent, var(--salty-text));
+  --SmartThemeUnderlineColor: var(--salty-accent, var(--salty-text));
+  --SmartThemeBorderColor: var(--salty-line, var(--salty-muted));
+  --SmartThemeBlurTintColor: var(--salty-surface);
+  --SmartThemeChatTintColor: var(--salty-surface);
+}
+/* 한글화 패널 창의 한글화 목록: 체크 줄과 설명 줄의 여백 — 테마가 켜졌을 때(prompt/style.css body.salty 규칙)와 같은 값. 테마가 꺼지면 좁은 폭에서 설명 글이 체크 줄 위로 올라와 겹쳤다 */
+html body:not(.salty) #pt-panel #pt-page-localization .pt-localization-list .pt-check { gap: 8px; min-height: 36px; margin: 0; }
+html body:not(.salty) #pt-panel #pt-page-localization .pt-localization-list .pt-check > input { margin: 0; }
+html body:not(.salty) #pt-panel #pt-page-localization .pt-localization-list .pt-bl-help { margin: 0 0 8px; padding-left: 26px; font-size: 12.5px; line-height: 1.5; }
+html body:not(.salty) #pt-panel #pt-page-localization > .pt-bl-help { margin: 0; font-size: 12.5px; line-height: 1.5; }
+/* 모델 전환 창: 저장한 조합 칩 줄과 아래 입력 칸 사이 (테마가 꺼지면 0px 로 붙었다) */
+html body:not(.salty) #model-switch-settings .ms-presets:not(:empty) { margin-bottom: 8px; }
+/* 설정 창 › 이미지 미리보기의 종류 · 표본 단추(일반 이미지 · 투명 이미지 · ‹ ›): 테마가 꺼지면 브라우저 기본 단추(밝은 면)에 창 글자색(나이트면 밝은 글자)이 올라가 안 보였다(대비 1.1 : 1) → 테마가 켜졌을 때(21-witidy.css)와 같은 모양 */
+html body:not(.salty) .salty-panel .bl-preview-tools button { min-height: 30px; padding: 4px 7px; border: 0; border-radius: 7px; background: var(--salty-field, color-mix(in srgb, currentColor 10%, transparent)); color: var(--salty-text); font: inherit; }
+html body:not(.salty) .salty-panel .bl-preview-tools button[aria-pressed="true"] { background: var(--salty-accent-13, color-mix(in srgb, var(--salty-accent) 13%, transparent)); color: var(--salty-accent); }
+/* 한글화 패널 한글화 목록(이어서): 목록 · 칸은 flex 에서 줄어들지 않게 — 테마가 꺼지면 칸이 줄어 설명 셋째 줄이 아래 칸 테두리에 잘렸다 (prompt/style.css body.salty 규칙과 같은 값) */
+html body:not(.salty) #pt-panel #pt-page-localization .pt-localization-list,
+html body:not(.salty) #pt-panel #pt-page-localization .pt-localization-list .pt-card { flex-shrink: 0; }
+html body:not(.salty) #pt-panel #pt-page-localization .pt-localization-list .pt-card { gap: 0 8px; min-height: 0; padding: 0 10px; }
+html body:not(.salty) #pt-panel #pt-page-localization .pt-localization-list small { padding: 0 6px; font-size: 12px; line-height: 1.5; }

@@ -244,6 +244,7 @@ let cacheWritable    = true;       // false when the index itself could not be r
 let saveTimer        = null;
 let saveChain        = Promise.resolve();
 let saveErrorShown   = false;
+let saveRetryMs      = 0;      // 7.2.4 저장 재시도 간격 (실패마다 두 배, 성공하면 0)
 let indexDirty       = false;
 
 // FNV-1a — a stable, filename-safe id for a namespace. A collision would only
@@ -354,7 +355,7 @@ async function doFlushLocked() {
                 indexShards.delete(file); removedShards.add(file); addedShards.delete(file); indexDirty = true;
             } else {
                 await filePutJSON(file, { entries });
-                removedShards.delete(file); addedShards.add(file); indexDirty = true;
+                removedShards.delete(file); addedShards.add(file);   // 7.2.4 색인은 샤드가 늘거나 줄 때만 다시 올린다 — 전엔 저장마다 색인 파일도 같이 올렸다 (api-audit)
                 if (!indexShards.has(file)) { indexShards.add(file); indexDirty = true; }
             }
             const live = pendingEntries.get(file);
@@ -385,9 +386,11 @@ async function doFlushLocked() {
             toastr.error('번역 캐시를 파일로 저장하지 못했습니다. 잠시 후 다시 시도합니다.');
         }
         clearTimeout(saveTimer);
-        saveTimer = setTimeout(flushTranslationCache, 10000);
+        saveRetryMs = Math.min(Math.max(saveRetryMs * 2, 10000), 5 * 60 * 1000);   // 7.2.4 10초 → 20 → 40 … 5분 까지 늘려 가며 (전엔 10초마다 끝없이) (api-audit)
+        saveTimer = setTimeout(flushTranslationCache, saveRetryMs);
     } else {
         saveErrorShown = false;
+        saveRetryMs = 0;
     }
 }
 

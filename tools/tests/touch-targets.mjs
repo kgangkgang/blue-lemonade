@@ -19,7 +19,8 @@ const listBefore = (pseudo) => {
     const lists = [...body.matchAll(new RegExp(String.raw`:is\(((?:(?!::|[{}])[\s\S])*?)\n\s*\)::${pseudo}`, 'g'))].map(m => m[1]);
     return lists.flatMap(l => l.split(/,\s*\n/).map(s => s.trim()).filter(Boolean));
 };
-const relativeList = (() => { const m = /html body\.salty :is\(([\s\S]*?)\n\s*\) \{\n\s*position: relative;/.exec(body); return m ? m[1].split(/,\s*\n/).map(s => s.trim()) : []; })();
+// 7.2.4: 기준점 규칙은 두 묶음 — html body :is(테마 자신의 칸), html body.salty :is(실리태번 쪽 칸)
+const relativeList = (() => { const m = /html body(?:\.salty)? :is\(([\s\S]*?)\n\s*\)(?:,\n\s*html body(?:\.salty)? :is\(([\s\S]*?)\n\s*\))? \{\n\s*position: relative;/.exec(body); return m ? [m[1], m[2] || ''].join(',\n').split(/,\s*\n/).map(s => s.trim()).filter(Boolean) : []; })();
 // 다른 모듈에서 이미 position 이 있는 칸 (그 선언을 실제로 확인한다)
 const ALREADY_POSITIONED = {
     '.salty-panel .bl-word-help': /\.bl-word-help[^{]*\{[^}]*position:\s*relative/,
@@ -28,8 +29,8 @@ const ALREADY_POSITIONED = {
     '.salty-panel .bl-preview-samples > button': /bl-preview-samples > button\) \{\s*position:relative/,
     '.salty-panel .bl-view-resize > button:not(.bl-view-toggle)': /bl-view-resize > button:not\(\.bl-view-toggle\)[^{]*\{\s*position:relative/,
 };
-// 다른 모듈 (23-preview.gen.css 는 86 의 #chat 규칙을 베낀 것이라 뺀다)
-const otherCss = fs.readdirSync(path.join(root, 'css')).filter(f => f.endsWith('.css') && f !== '86-touch-targets.css' && f !== '23-preview.gen.css').map(f => read('css/' + f)).join('\n');
+// 다른 모듈 (23-preview.gen.css 는 86 의 #chat 규칙을 베낀 것이라 뺀다 · 87-addon-touch.css 는 같은 투명 상자를 애드온 창에 다는 짝 모듈이라 뺀다 — tools/tests/addon-touch-targets.mjs)
+const otherCss = fs.readdirSync(path.join(root, 'css')).filter(f => f.endsWith('.css') && f !== '86-touch-targets.css' && f !== '23-preview.gen.css' && f !== '87-addon-touch.css').map(f => read('css/' + f)).join('\n');
 
 t('손가락 화면(pointer: coarse) 안에만 — 마우스 화면은 그대로', () => {
     const open = body.indexOf('@media (pointer: coarse) {');
@@ -118,7 +119,7 @@ t('확장 서랍 머리 스위치는 기존 ::before(위아래 7px)를 44×44 �
 
 t('7.0.6 가로 넘침 없음: 줄 오른쪽 끝의 스위치는 상자를 오른쪽 끝에 맞춰 왼쪽으로만 넓힌다 · 굴리는 목록은 overflow-x 를 숨기지 않는다', () => {
     // 7.0.5 는 가운데 맞춤 상자(36 → 44)가 오른쪽으로 4px 삐져나가 「설정 선택」 목록(overflow:auto)에 가로 스크롤 줄이 생겼다 (폰 제보)
-    const rule = /html body\.salty \.salty-panel label\.salty-switch::before \{([^}]*)\}/.exec(body)?.[1];
+    const rule = /html body(?:\.salty)? \.salty-panel label\.salty-switch::before \{([^}]*)\}/.exec(body)?.[1];
     assert.ok(rule, '스위치 전용 규칙');
     assert.match(rule, /right: 0;/); assert.match(rule, /left: auto;/);
     assert.match(rule, /transform: translateY\(-50%\);/, '가로로는 옮기지 않음');

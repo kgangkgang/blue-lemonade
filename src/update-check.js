@@ -85,7 +85,7 @@ export function checkForUpdate({ force = false } = {}) {
             const v = await fetchLatest();
             writeStore({ at: Date.now(), latest: v });
             setLatest(v);
-        } catch { /* 조용히 — 다음 기회에 */ }
+        } catch { writeStore({ at: Date.now() - EVERY + 30 * 60 * 1000, latest: cached?.latest || '' }); setLatest(cached?.latest || ''); }   // 7.2.4 실패 뒤 30분은 다시 묻지 않는다 — 전엔 탭이 보일 때마다 15s+20s 요청 둘을 또 보냈다 (api-audit)
         return latest;
     })().finally(() => { checking = null; });
     return checking;
@@ -129,7 +129,7 @@ export function summarizeNotes(list, max = 2) {
     const rows = Array.isArray(list) ? list.filter(n => n?.items?.length) : [];
     return { lines: rows.slice(0, max).map(n => ({ version: String(n.version), text: clip(n.items[0]) })), more: Math.max(0, rows.length - max) };
 }
-let summaryLoading = null;
+let summaryLoading = null, summaryFailedAt = 0;   // 7.2.4 요약(release-notes.json 152KB) 실패 · 빈 결과 뒤 10분은 설정 창을 그려도 다시 받지 않는다 (api-audit)
 function readSummary(key) {
     try { const v = JSON.parse(localStorage.getItem(SUMMARY_STORE) || 'null'); return v?.key === key && Array.isArray(v.lines) ? v : null; } catch { return null; }
 }
@@ -139,13 +139,14 @@ export function updateSummary(fetcher = fetch) {
     const now = currentVersion(), next = latest, key = `${now}>${next}`;
     const saved = readSummary(key);
     if (saved) return Promise.resolve(saved);
+    if (summaryFailedAt && Date.now() - summaryFailedAt < 10 * 60 * 1000) return Promise.resolve(null);
     summaryLoading ??= (async () => {
         const r = await fetcher(`${NOTES}?t=${Math.floor(Date.now() / EVERY)}`, { cache: 'no-store', signal: AbortSignal.timeout(20000) });
         if (!r.ok) throw new Error(String(r.status));
         const value = { key, ...summarizeNotes(notesBetween(await r.json(), now, next)) };
-        if (value.lines.length) writeSummary(value);
+        if (value.lines.length) writeSummary(value); else summaryFailedAt = Date.now();
         return value.lines.length ? value : null;
-    })().catch(() => null).finally(() => { summaryLoading = null; });
+    })().catch(() => { summaryFailedAt = Date.now(); return null; }).finally(() => { summaryLoading = null; });
     return summaryLoading;
 }
 function writeSummary(value) { try { localStorage.setItem(SUMMARY_STORE, JSON.stringify(value)); } catch { /* 막힌 저장소 */ } }

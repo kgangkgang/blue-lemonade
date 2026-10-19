@@ -31,6 +31,7 @@ async function listFor(folder, group) {
 /** 번역기에 자리 모양을 「번역하지 않고 제자리에 한 번만」으로 등록 (6.1.8 번역기의 protect · 없으면 아무 일도 없음). 여러 번 불러도 된다 */
 export function protectInTranslator() {
     try { globalThis[Symbol.for('blue-lemonade.translator')]?.protect?.('character-asset-slots', PROTECT_RE, { noFold: true }); } catch { /* 옛 번역기 */ }
+    try { globalThis[Symbol.for('blue-lemonade.translator')]?.protect?.('character-asset-tags', /\{\{img::\s*[^{}]+?\s*\}\}/gi, { noFold: true }); } catch { /* 옛 번역기 */ }   // 7.2.4 본문 모델이 쓴 에셋 태그도 번역에 보내지 않는다 (token-audit)
 }
 
 
@@ -91,7 +92,8 @@ async function fill(messageId, message, ids, swipe, avoid = []) {
         const list = await listFor(folder, group);   // 1.6.9 그룹은 그 답 주인의 목록
         if (!list) throw new Error('그림 목록을 읽지 못했어요');
         if (!stillHere(messageId, message)) return;
-        const reply = markedReply(splitThinking(textOf(message, swipe)).body, ids);   // 1.6.8 생각 블록은 고르는 모델에게 보내지 않는다
+        const strip = globalThis[Symbol.for('blue-lemonade.translator')]?.stripForModel ?? null;   // 7.2.4 번역이 보내지 않는 것은 고르기에도 안 보낸다
+        const reply = markedReply(splitThinking(textOf(message, swipe)).body, ids, strip);   // 1.6.8 생각 블록은 고르는 모델에게 보내지 않는다
         const context = getContext();
         const messages = pickPrompt({
             rules: rulesForPicker(settings().prompt, list.folder),
@@ -99,6 +101,7 @@ async function fill(messageId, message, ids, swipe, avoid = []) {
             reply,
             count: ids.length,
             previous: previousText(messageId),
+            strip,
             character: message.name || context.name2 || '',
             names: ownerSpellings(list.keywords),
             persona: context.name1 || '',   // 6.4.1 내 캐릭터 — 그림이 없으면 듣는 사람 그림으로

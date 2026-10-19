@@ -163,18 +163,31 @@ export function insertSlots(text, spots, makeId = newSlotId) {
     return { text: out, ids };
 }
 
+// 7.2.4 고르는 모델에게는 본문만: 번역기가 번역에 보내지 않는 것(생각 · 주석 · 사용자 보호 규칙)과 그림 쪽 표식 · 상태창 코드 · 태그 껍데기를 뗀다 (token-audit: 요청 4,430자 중 본문 아닌 480자)
+const CODE_FENCE = /(^|\n)[ \t]*(```|~~~)[^\n]*\n[\s\S]*?\n[ \t]*\2[ \t]*(?=\n|$)/g;
+const HTML_TAG = /<\/?[a-zA-Z][\w:-]*\b(?:[^>"']|"[^"]*"|'[^']*')*>/g;
+const PICTURE_MARKS = [/<!--[\s\S]*?-->/g, /<img\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi, /<pic\b[^>]*>/gi, /\{\{img::[^{}]*\}\}/gi, /<autopic\b[\s\S]*?<\/autopic>/gi, /<(think|thinking|ECoT|scene_plan|scene_reasoning|tableEdit|UpdateVariable)\b[^>]*>[\s\S]*?<\/\1\s*>/gi];
+/** 고르는 모델에게 보낼 본문 — strip = 번역기 다리의 stripForModel(있으면) 을 먼저. [ASSET n] 표식이 하나라도 사라지면 원래 글 그대로 */
+export function bodyForPicker(text, count, strip = null) {
+    let s = String(text ?? '');
+    try { if (typeof strip === 'function') s = String(strip(s) ?? ''); } catch { /* 옛 번역기 */ }
+    for (const re of PICTURE_MARKS) s = s.replace(new RegExp(re.source, re.flags), '');
+    s = s.replace(CODE_FENCE, '$1').replace(HTML_TAG, '').replace(/\n{3,}/g, '\n\n').trim();
+    for (let i = 1; i <= count; i++) if (!s.includes(`[ASSET ${i}]`)) return String(text ?? '');
+    return s;
+}
 /** 고르는 모델에게 보낼 답: 고를 자리는 [ASSET n], 다른 그림 자리는 뺀다 */
-export function markedReply(text, ids) {
+export function markedReply(text, ids, strip = null) {
     let out = String(text ?? '');
     ids.forEach((id, i) => { out = out.split(slotMarkup(id)).join(`[ASSET ${i + 1}]`); });
-    return stripSlots(out).trim();
+    return bodyForPicker(stripSlots(out).trim(), ids.length, strip);
 }
 
 /**
  * 고르는 모델에게 보내는 글. rules = 사용자의 그림 규칙(본문 모델용이던 글 — 목록 매크로 자리는 아래 목록을 가리키게), list = 켜진 그림 이름들.
  * @returns {{ role: string, content: string }[]}
  */
-export function pickPrompt({ rules = '', list = '', reply = '', count = 1, previous = '', character = '', names = '', persona = '', avoid = [] }) {
+export function pickPrompt({ rules = '', list = '', reply = '', count = 1, previous = '', character = '', names = '', persona = '', avoid = [], strip = null }) {
     const n = Math.max(1, Number(count) || 1);
     const markers = n === 1 ? 'one marker, [ASSET 1],' : `${n} markers, [ASSET 1] to [ASSET ${n}],`;
     const system = [
@@ -205,7 +218,7 @@ export function pickPrompt({ rules = '', list = '', reply = '', count = 1, previ
         // 6.4.1 예시의 2번~ 'none' 이 비우라고 부추겼다 — 예시는 모두 파일 이름, none 은 그 아래 한 줄로만
         'Write none in place of a file name only when no character from <available_images> is in that moment.',
     ].join('\n');
-    const prev = stripSlots(previous).trim();
+    const prev = bodyForPicker(stripSlots(previous), 0, strip).trim();   // 7.2.4 앞 메시지도 본문만
     const user = [
         ...(prev ? ['<previous_message>', prev.slice(-1500), '</previous_message>', ''] : []),
         `<finished_reply${character ? ` speaker="${String(character).replace(/"/g, '')}"` : ''}>`,

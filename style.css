@@ -1,6 +1,6 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 79개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 9a1c49d8594c) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 81개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build fea903b3e346) */
 /* css/00-base.css */
-:root{--bl-release:"7.2.3";}
+:root{--bl-release:"7.2.4";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -16826,30 +16826,14 @@ body.salty.salty-md-custom-accent :is(:is(#salty-nochat, .salty-preview) .mes .m
   text-decoration-color:var(--bl-md-accent,var(--salty-accent-ink,var(--salty-accent,currentColor)));
 }
 @media (pointer: coarse) {
-  html body.salty :where(.salty-panel .salty-seg > button):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *),
-html body.salty :is(.salty-panel .salty-btn):is(#bl-s, *):is(.bl-s, *),
-html body.salty :is(.salty-panel .bl-view-toggle):is(#bl-s, *):is(.bl-s, *),
-html body.salty :is(.salty-panel .bl-addon-ver):is(#bl-s, *):is(.bl-s, *),
-html body.salty :is(.salty-panel .bl-addon-credit-all):is(#bl-s, *):is(.bl-s, *),
-html body.salty :is(.salty-panel .bl-rule-swap):is(#bl-s, *):is(.bl-s, *),
-html body.salty :is(.salty-panel [data-rule-delete]):is(#bl-s, *):is(.bl-s, *),
-html body.salty :where(.salty-panel .salty-mode-switch button):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *),
-html body.salty :is(.salty-panel .bl-tool-heading):is(#bl-s, *):is(.bl-s, *),
-html body.salty :is(.salty-panel .bl-editor-group-toggle):is(#bl-s, *):is(.bl-s, *),
-html body.salty :where(.salty-panel .bl-settings-toprow button):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *),
-html body.salty :where(.salty-panel label:has(> input[type="checkbox"]):not(.salty-switch)):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *),
-html body.salty :is(:is(#salty-nochat, .salty-preview) .mes .mes_media_enlarge):is(.bl-s, *),
+  html body.salty :is(:is(#salty-nochat, .salty-preview) .mes .mes_media_enlarge):is(.bl-s, *),
 html body.salty :is(:is(#salty-nochat, .salty-preview) .mes .mes_media_container .right_menu_button),
 html body.salty :is(:is(#salty-nochat, .salty-preview) .mes .mes_buttons .mes_button),
 html body.salty :where(#left-nav-panel label.checkbox_label):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *),
 html body.salty :is(:is(#left-nav-panel, #rm_extensions_block) .menu_button):is(.bl-s, *):is(.bl-s, *) {
     position: relative;
   }
-  html body.salty :where(.salty-panel .bl-settings-toprow button):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *)::after,
-html body.salty :is(.salty-panel .bl-setting-reset):is(#bl-s, *):is(.bl-s, *)::after,
-html body.salty :where(.salty-panel .bl-preview-samples > button):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *)::after,
-html body.salty :where(.salty-panel .bl-view-resize > button:not(.bl-view-toggle)):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *)::after,
-html body.salty :is(:is(#salty-nochat, .salty-preview) .mes .mes_media_enlarge):is(.bl-s, *)::after,
+  html body.salty :is(:is(#salty-nochat, .salty-preview) .mes .mes_media_enlarge):is(.bl-s, *)::after,
 html body.salty :is(:is(#salty-nochat, .salty-preview) .mes .mes_media_container .right_menu_button)::after,
 html body.salty :is(:is(#salty-nochat, .salty-preview) .mes .mes_buttons .mes_button)::after,
 html body.salty :is(:is(#left-nav-panel, #rm_extensions_block) .menu_button):is(.bl-s, *):is(.bl-s, *)::after {
@@ -21034,6 +21018,7 @@ html body .bl-addon-credit-all:hover,html body .bl-addon-credit-all:focus-visibl
 html body .bl-addon-credit-all:focus-visible { outline:2px solid var(--salty-accent); outline-offset:2px; border-radius:var(--bl-r-sm,8px); }
 .bl-addon-inline { display:none; }
 .bl-inline-title { margin:0; font-size:1em; font-weight:inherit; line-height:1.5; }
+.bl-addon-inline:has(> .bl-addon-inline-content > #model-switch-settings > .inline-drawer-content > .ms-presets > .ms-chip-add:only-child) > .bl-inline-title { width:fit-content; max-width:calc(100% - 52px); }
 .bl-addon-inline-content { min-width:0; }
 .bl-addon-inline-content > * { min-width:0; max-width:100%; box-sizing:border-box; }
 .bl-addon-inline-content .po-title,
@@ -24923,18 +24908,18 @@ html body.salty :is(dialog.popup:not(.bl-settings-dialog) .po-dialog .po-item):i
 }
 /* css/86-touch-targets.css */
 @media (pointer: coarse) {
-  html body.salty :where(.salty-panel .salty-seg > button):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *),
-html body.salty :is(.salty-panel .salty-btn):is(#bl-s, *):is(.bl-s, *),
-html body.salty :is(.salty-panel .bl-view-toggle):is(#bl-s, *):is(.bl-s, *),
-html body.salty :is(.salty-panel .bl-addon-ver):is(#bl-s, *):is(.bl-s, *),
-html body.salty :is(.salty-panel .bl-addon-credit-all):is(#bl-s, *):is(.bl-s, *),
-html body.salty :is(.salty-panel .bl-rule-swap):is(#bl-s, *):is(.bl-s, *),
-html body.salty :is(.salty-panel [data-rule-delete]):is(#bl-s, *):is(.bl-s, *),
-html body.salty :where(.salty-panel .salty-mode-switch button):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *),
-html body.salty :is(.salty-panel .bl-tool-heading):is(#bl-s, *):is(.bl-s, *),
-html body.salty :is(.salty-panel .bl-editor-group-toggle):is(#bl-s, *):is(.bl-s, *),
-html body.salty :where(.salty-panel .bl-settings-toprow button):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *),
-html body.salty :where(.salty-panel label:has(> input[type="checkbox"]):not(.salty-switch)):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *),
+  html body :is(.salty-panel .salty-seg > button):is(.bl-s, *):is(bl-s, *),
+html body :is(.salty-panel .salty-btn):is(.bl-s, *):is(bl-s, *):is(bl-s, *),
+html body :is(.salty-panel .bl-view-toggle):is(.bl-s, *):is(bl-s, *):is(bl-s, *),
+html body :is(.salty-panel .bl-addon-ver):is(.bl-s, *):is(bl-s, *):is(bl-s, *),
+html body :is(.salty-panel .bl-addon-credit-all):is(.bl-s, *):is(bl-s, *):is(bl-s, *),
+html body :is(.salty-panel .bl-rule-swap):is(.bl-s, *):is(bl-s, *):is(bl-s, *),
+html body :is(.salty-panel [data-rule-delete]):is(.bl-s, *):is(bl-s, *):is(bl-s, *),
+html body :is(.salty-panel .salty-mode-switch button):is(.bl-s, *):is(bl-s, *),
+html body :is(.salty-panel .bl-tool-heading):is(.bl-s, *):is(bl-s, *):is(bl-s, *),
+html body :is(.salty-panel .bl-editor-group-toggle):is(.bl-s, *):is(bl-s, *):is(bl-s, *),
+html body :is(.salty-panel .bl-settings-toprow button):is(.bl-s, *):is(bl-s, *),
+html body :is(.salty-panel label:has(> input[type="checkbox"]):not(.salty-switch)),
 html body.salty :is(:is(#chat,.bl-chat-like) .mes .mes_media_enlarge):is(.bl-s, *),
 html body.salty :is(:is(#chat,.bl-chat-like) .mes .mes_media_container .right_menu_button),
 html body.salty :is(:is(#chat,.bl-chat-like) .mes .mes_buttons .mes_button),
@@ -24942,23 +24927,25 @@ html body.salty :where(#left-nav-panel label.checkbox_label):is(#bl-s, *):is(.bl
 html body.salty :is(:is(#left-nav-panel, #rm_extensions_block) .menu_button):is(.bl-s, *):is(.bl-s, *) {
     position: relative;
   }
-  html body.salty :where(.salty-panel .salty-seg > button):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
-html body.salty :where(.salty-panel .salty-btn):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
-html body.salty :where(.salty-panel .bl-view-toggle):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
-html body.salty :where(.salty-panel .bl-word-help):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
-html body.salty :where(.salty-panel .bl-addon-ver):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
-html body.salty :where(.salty-panel .bl-addon-credit-all):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
-html body.salty :where(.salty-panel .bl-rule-swap):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
-html body.salty :where(.salty-panel [data-rule-delete]):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
-html body.salty :where(.salty-panel .salty-mode-switch button):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
-html body.salty :where(.salty-panel .bl-tool-heading):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
-html body.salty :where(.salty-panel .bl-editor-group-toggle):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
-html body.salty :where(.salty-panel label:has(> input[type="checkbox"]):not(.salty-switch)):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
-html body.salty :is(#left-nav-panel label.checkbox_label)::before,
-html body.salty :where(.salty-panel .bl-settings-toprow button):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *)::after,
-html body.salty :is(.salty-panel .bl-setting-reset):is(#bl-s, *):is(.bl-s, *)::after,
-html body.salty :where(.salty-panel .bl-preview-samples > button):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *)::after,
-html body.salty :where(.salty-panel .bl-view-resize > button:not(.bl-view-toggle)):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *)::after,
+  html body :is(.salty-panel .salty-seg > button):is(.bl-s, *):is(bl-s, *)::before,
+html body :is(.salty-panel .salty-btn):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::before,
+html body :is(.salty-panel .bl-view-toggle):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::before,
+html body :is(.salty-panel .bl-word-help):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::before,
+html body :is(.salty-panel .bl-addon-ver):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::before,
+html body :is(.salty-panel .bl-addon-credit-all):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::before,
+html body :is(.salty-panel .bl-rule-swap):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::before,
+html body :is(.salty-panel [data-rule-delete]):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::before,
+html body :is(.salty-panel .salty-mode-switch button):is(.bl-s, *):is(bl-s, *)::before,
+html body :is(.salty-panel .bl-tool-heading):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::before,
+html body :is(.salty-panel .bl-editor-group-toggle):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::before,
+html body :is(.salty-panel label:has(> input[type="checkbox"]):not(.salty-switch))::before,
+html body.salty :is(
+    #left-nav-panel label.checkbox_label
+  )::before,
+html body :is(.salty-panel .bl-settings-toprow button):is(.bl-s, *)::after,
+html body :is(.salty-panel .bl-setting-reset):is(.bl-s, *):is(bl-s, *)::after,
+html body :is(.salty-panel .bl-preview-samples > button):is(.bl-s, *)::after,
+html body :is(.salty-panel .bl-view-resize > button:not(.bl-view-toggle))::after,
 html body.salty :is(:is(#chat,.bl-chat-like) .mes .mes_media_enlarge):is(.bl-s, *)::after,
 html body.salty :is(:is(#chat,.bl-chat-like) .mes .mes_media_container .right_menu_button)::after,
 html body.salty :is(:is(#chat,.bl-chat-like) .mes .mes_buttons .mes_button)::after,
@@ -24974,7 +24961,7 @@ html body.salty :is(:is(#left-nav-panel, #rm_extensions_block) .menu_button):is(
     border: 0;
     box-shadow: none;
   }
-  html body.salty .salty-panel label.salty-switch::before {
+  html body .salty-panel label.salty-switch::before {
     content: '';
     position: absolute;
     left: auto;
@@ -24993,7 +24980,7 @@ html body.salty #left-nav-panel .menu_button:not(label *) {
     position: relative;
     z-index: 1;
   }
-  html body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch::before {
+  html body :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch::before {
     inset: auto;
     left: 50%;
     top: 50%;
@@ -25001,11 +24988,199 @@ html body.salty #left-nav-panel .menu_button:not(label *) {
     height: max(100%, 44px);
     transform: translate(-50%, -50%);
   }
-  html body.salty .salty-panel .salty-slider > input[type="range"] {
+  html body .salty-panel .salty-slider > input[type="range"] {
     height: 44px !important;
     margin-block: calc((44px - 24px) / -2) !important;
   }
 }
+/* css/87-addon-touch.css */
+@media (pointer: coarse) {
+  :where(.po-move),
+:where(.po-pin),
+:where(.po-dialog .menu_button),
+:where(.ms-icon),
+:where(.ms-pull),
+:where(.ms-chip),
+:where(.ms-name),
+:where(.ms-invert),
+:where(.ms-snap),
+:where(.ms-apply),
+:where(#model-switch-settings .menu_button),
+:where(.bl-note-btn),
+:where(.bl-notes-ver),
+:where(.bl-notes-guidelink),
+:where(.eh-icon-btn),
+:where(.eh-switch),
+:where(.eh-pchip),
+:where(.eh-btn),
+:where(.bl-assets-dialog .eh-size > button),
+:where(.bl-assets-dialog button[data-value]),
+:where(.cg-icon-btn),
+:where(.cg-chip),
+:where(.jj-switch),
+:where(.jj-small-btn),
+:where(.bl-direction-dialog button[data-step]),
+:where(.jj-settings-body button[data-step]),
+:where(.lv-icon),
+:where(.lv-help-btn),
+:where(.lv-version),
+:where(.rl-chip),
+:where(.pa-hub .menu_button),
+:where(.rl-root .menu_button),
+:where(.blzi-help),
+:where(.blpt-btn),
+:where(.bwr_help),
+:where(.bwr-version),
+:where(.bwr_seg),
+:where(.bwr_settings .menu_button),
+:where(.pt-ui-button),
+:where(#pt-panel [data-help-group]),
+:where(.pt-help-dialog [data-help-group]),
+:where(#pt-panel-close),
+:where(#model_register_settings .menu_button),
+:where(#regex-link-settings .menu_button),
+:where(.bl-translator-dialog .menu_button),
+:where(.bl-ctsi-dialog .menu_button),
+:where(.bl-fr-icon),
+:where(.bl-mermaid-again),
+:where(.salty-btn),
+:where(.lv-tab),
+:where(.llmt-tab),
+:where(.bwr_tab),
+:where(.rl-tab),
+:where(.pa-hub-tab),
+:where(.pt-tab),
+:where(.po-menu-tabs > button),
+:where(.pt-version),
+:where(#pt-panel-refresh),
+:where(.salty-panel .bl-preview-kinds > button),
+:where(.salty-panel .bl-prompt-card-trigger),
+:where(.salty-panel .salty-shapes button),
+:where(:is(.bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .bl-mermaid-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog) > header > button),
+:where(:is(.bl-roomy-dialog, .bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .bl-mermaid-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog, #cg-panel, #pt-panel, .rl-root, .pa-hub, .bwr_settings, #lv_settings, #model_register_settings, #model-switch-settings, .po-dialog, #regex-link-settings, .bl-embedded-settings, .salty-panel) summary) {
+    position: relative;
+  }
+  .po-move:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.po-pin:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+:where(.po-dialog .menu_button):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.ms-icon:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.ms-pull:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.ms-chip:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.ms-name:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.ms-invert:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.ms-snap:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.ms-apply:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+:is(#model-switch-settings .menu_button):is(bl-s, *):is(bl-s, *)::after,
+.bl-note-btn:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.bl-notes-guidelink:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.eh-icon-btn:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.eh-switch:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.eh-pchip:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.eh-btn:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+:where(.bl-assets-dialog .eh-size > button):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+:where(.bl-assets-dialog button[data-value]):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.cg-icon-btn:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.cg-chip:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.jj-small-btn:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+:where(.bl-direction-dialog button[data-step]):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+:where(.jj-settings-body button[data-step]):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.lv-icon:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.lv-help-btn:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.lv-version:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.rl-chip:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+:where(.pa-hub .menu_button):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+:where(.rl-root .menu_button):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+:is(.rl-msg summary):is(#bl-s, *):is(bl-s, *)::after,
+.blzi-help:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.blpt-btn:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.bwr_help:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.bwr-version:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.bwr_seg:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+:where(.bwr_settings .menu_button):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.pt-ui-button:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+:is(#pt-panel [data-help-group]):is(bl-s, *):is(bl-s, *)::after,
+:where(.pt-help-dialog [data-help-group]):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+#pt-panel-close:is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+:is(#model_register_settings .menu_button):is(bl-s, *):is(bl-s, *)::after,
+:is(#regex-link-settings .menu_button):is(bl-s, *):is(bl-s, *)::after,
+:where(.bl-translator-dialog .menu_button):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+:where(.bl-ctsi-dialog .menu_button):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.bl-fr-icon:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.bl-mermaid-again:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.salty-btn:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.lv-tab:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.llmt-tab:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.bwr_tab:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.rl-tab:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.pa-hub-tab:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+.pt-tab:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+:is(.po-menu-tabs > button):is(#bl-s, *):is(bl-s, *)::after,
+.pt-version:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+#pt-panel-refresh:is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+:where(.salty-panel .bl-preview-kinds > button):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+:where(.salty-panel .bl-prompt-card-trigger):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+:where(.salty-panel .salty-shapes button):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
+:is(:is(.bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .bl-mermaid-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog) > header > button):is(#bl-s, *)::after,
+:is(:is(.bl-roomy-dialog, .bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog, #cg-panel, #pt-panel, .rl-root, .pa-hub, .bwr_settings, #lv_settings, #model_register_settings, #model-switch-settings, .po-dialog, #regex-link-settings, .bl-embedded-settings) summary:not(.rl-msg summary, .eh-guide summary))::after,
+.bl-notes-ver:is(.bl-s, *):is(bl-s, *):is(bl-s, *)::before,
+.jj-switch:is(.bl-s, *):is(bl-s, *):is(bl-s, *)::before,
+:is(.eh-guide summary):is(.bl-s, *):is(bl-s, *)::before,
+:is(.salty-panel .bl-md-group > summary):is(bl-s, *)::before,
+:is(.salty-panel .bl-usage-mode > summary):is(bl-s, *)::before,
+:is(.salty-panel details:not(.rl-msg) > summary)::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+    background: none;
+    border: 0;
+    box-shadow: none;
+  }
+  :is(.bl-roomy-dialog, .bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .bl-mermaid-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog, #cg-panel, #pt-panel, .rl-root, .pa-hub, .bwr_settings, #lv_settings, #model_register_settings, #model-switch-settings, .po-dialog, #regex-link-settings, .bl-embedded-settings, .bl-first-run)
+    input.text_pole:is(.bl-s, *),
+:is(.bl-roomy-dialog, .bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .bl-mermaid-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog, #cg-panel, #pt-panel, .rl-root, .pa-hub, .bwr_settings, #lv_settings, #model_register_settings, #model-switch-settings, .po-dialog, #regex-link-settings, .bl-embedded-settings, .bl-first-run)
+    select.text_pole:is(.bl-s, *),
+:is(.bl-roomy-dialog, .bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .bl-mermaid-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog, #cg-panel, #pt-panel, .rl-root, .pa-hub, .bwr_settings, #lv_settings, #model_register_settings, #model-switch-settings, .po-dialog, #regex-link-settings, .bl-embedded-settings, .bl-first-run)
+    input:is([type="text"], [type="number"], [type="search"], [type="url"], [type="password"], [type="email"]):not(.text_pole),
+:is(.bl-roomy-dialog, .bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .bl-mermaid-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog, #cg-panel, #pt-panel, .rl-root, .pa-hub, .bwr_settings, #lv_settings, #model_register_settings, #model-switch-settings, .po-dialog, #regex-link-settings, .bl-embedded-settings, .bl-first-run)
+    select:not(.text_pole):is(.bl-s, *),
+.salty-panel .salty-num input[type="number"][data-num],
+.salty-panel input.text_pole[data-link-word] {
+    min-height: 44px !important;
+    box-sizing: border-box;
+  }
+  html body .salty-panel, html body .salty-panel.bl-editor { --num-h: max(44px, calc(1.5em + 12px)); }
+  html body :is(.bl-direction-dialog, .jj-settings-body, #jj-settings) #jj_depth { min-width: 44px; }
+}
+/* css/88-theme-off.css */
+html body:not(.salty) .salty-panel button,
+html body:not(.salty) .salty-panel small { color: inherit; }
+html body:not(.salty) .bl-ctsi-dialog small { color: inherit; }
+html body:not(.salty) .bl-notes-dialog > header,
+html body:not(.salty) .bl-notes-dialog > header .bl-notes-head-tools { flex-wrap: wrap; row-gap: 8px; }
+html body:not(.salty) .salty-panel {
+  --SmartThemeBodyColor: var(--salty-text);
+  --SmartThemeEmColor: var(--salty-muted, var(--salty-text));
+  --SmartThemeQuoteColor: var(--salty-accent, var(--salty-text));
+  --SmartThemeUnderlineColor: var(--salty-accent, var(--salty-text));
+  --SmartThemeBorderColor: var(--salty-line, var(--salty-muted));
+  --SmartThemeBlurTintColor: var(--salty-surface);
+  --SmartThemeChatTintColor: var(--salty-surface);
+}
+html body:not(.salty) #pt-panel #pt-page-localization .pt-localization-list .pt-check { gap: 8px; min-height: 36px; margin: 0; }
+html body:not(.salty) #pt-panel #pt-page-localization .pt-localization-list .pt-check > input { margin: 0; }
+html body:not(.salty) #pt-panel #pt-page-localization .pt-localization-list .pt-bl-help { margin: 0 0 8px; padding-left: 26px; font-size: 12.5px; line-height: 1.5; }
+html body:not(.salty) #pt-panel #pt-page-localization > .pt-bl-help { margin: 0; font-size: 12.5px; line-height: 1.5; }
+html body:not(.salty) #model-switch-settings .ms-presets:not(:empty) { margin-bottom: 8px; }
+html body:not(.salty) .salty-panel .bl-preview-tools button { min-height: 30px; padding: 4px 7px; border: 0; border-radius: 7px; background: var(--salty-field, color-mix(in srgb, currentColor 10%, transparent)); color: var(--salty-text); font: inherit; }
+html body:not(.salty) .salty-panel .bl-preview-tools button[aria-pressed="true"] { background: var(--salty-accent-13, color-mix(in srgb, var(--salty-accent) 13%, transparent)); color: var(--salty-accent); }
+html body:not(.salty) #pt-panel #pt-page-localization .pt-localization-list,
+html body:not(.salty) #pt-panel #pt-page-localization .pt-localization-list .pt-card { flex-shrink: 0; }
+html body:not(.salty) #pt-panel #pt-page-localization .pt-localization-list .pt-card { gap: 0 8px; min-height: 0; padding: 0 10px; }
+html body:not(.salty) #pt-panel #pt-page-localization .pt-localization-list small { padding: 0 6px; font-size: 12px; line-height: 1.5; }
 /* css/96-param-stack.css */
 body.salty #left-nav-panel #range_block_openai:not([style*="display: none"]):not([style*="display:none"]) {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, max(8.5em, 40%)), 1fr));

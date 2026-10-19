@@ -1,5 +1,6 @@
 /* ===== css/86-touch-targets.css =====
    7.0.5 손가락 화면(pointer: coarse)에서만 작은 칸의 「눌리는 넓이」를 44×44 까지 — 보이는 크기 · 배치 · 글자는 그대로.
+   7.2.4 설정 창 · 테마 자신의 칸은 테마가 꺼져 있어도(확장만 모드) 같은 상자 (html body …) — 실리태번 쪽 칸만 body.salty 아래 (디자인 전수조사: 확장만 모드의 설정 창에 작은 칸 수백 개).
    칸마다 투명한 상자(가운데 맞춤, 너비 · 높이 = max(칸 크기, 44px))를 그 칸이 모양에 쓰지 않는 ::before 나 ::after 로 덧댄다
    (66-ui-rhythm.css 의 머리 스위치와 같은 방식). 상자는 칸의 일부라 누르면 그 칸이 눌린다. 이웃이 44px 보다 가까우면
    겹치는 곳은 뒤 칸이 받는다. 측정 · 사진: ../blue-lemonade-audit/touch-targets-20261017 (시험 tools/tests/touch-targets.mjs).
@@ -7,7 +8,8 @@
 @media (pointer: coarse) {
   /* 기준점: 원래 static 인 칸만 relative (이미 relative 인 스위치 · ↺ 는 그대로)
      「예시 접기」(높이 20)는 뺀다: 위는 미리보기 높이 손잡이(.bl-view-grip)라 덮으면 끌기 자리를 뺏고, 아래는 .bl-editor-stage 의 overflow:hidden 에 잘린다 */
-  html body.salty :is(
+  /* 설정 창 · 서랍 머리 등 테마 자신의 칸은 테마가 꺼져 있어도(확장만) 같은 상자 — 실리태번 쪽 칸(#chat · 왼쪽 서랍)만 테마가 켜졌을 때 */
+  html body :is(
     .salty-panel .salty-seg > button,
     .salty-panel .salty-btn,
     .salty-panel .bl-view-toggle,
@@ -19,7 +21,9 @@
     .salty-panel .bl-tool-heading,
     .salty-panel .bl-editor-group-toggle,
     .salty-panel .bl-settings-toprow button,
-    .salty-panel label:has(> input[type="checkbox"]):not(.salty-switch),
+    .salty-panel label:has(> input[type="checkbox"]):not(.salty-switch)
+  ),
+  html body.salty :is(
     #chat .mes .mes_media_enlarge,
     #chat .mes .mes_media_container .right_menu_button,
     #chat .mes .mes_buttons .mes_button,
@@ -30,7 +34,7 @@
   }
 
   /* ::before 가 비어 있는 칸 */
-  html body.salty :is(
+  html body :is(
     .salty-panel .salty-seg > button,
     .salty-panel .salty-btn,
     .salty-panel .bl-view-toggle,
@@ -42,15 +46,19 @@
     .salty-panel .salty-mode-switch button,
     .salty-panel .bl-tool-heading,
     .salty-panel .bl-editor-group-toggle,
-    .salty-panel label:has(> input[type="checkbox"]):not(.salty-switch),
+    .salty-panel label:has(> input[type="checkbox"]):not(.salty-switch)
+  )::before,
+  html body.salty :is(
     #left-nav-panel label.checkbox_label
   )::before,
   /* ::before 로 아이콘을 그리는 칸 (설정 창 머리 아이콘 · ↺ · Font Awesome 아이콘 단추) */
-  html body.salty :is(
+  html body :is(
     .salty-panel .bl-settings-toprow button,
     .salty-panel .bl-setting-reset,
     .salty-panel .bl-preview-samples > button,
-    .salty-panel .bl-view-resize > button:not(.bl-view-toggle),
+    .salty-panel .bl-view-resize > button:not(.bl-view-toggle)
+  )::after,
+  html body.salty :is(
     #chat .mes .mes_media_enlarge,
     #chat .mes .mes_media_container .right_menu_button,
     #chat .mes .mes_buttons .mes_button,
@@ -70,7 +78,7 @@
 
   /* 7.0.6 스위치(36×36)는 줄 오른쪽 끝에 붙어 있다 — 상자를 스위치 오른쪽 끝에 맞춰 왼쪽으로만 넓힌다 (44×44 그대로).
      7.0.5 는 가운데 맞춤이라 오른쪽으로 4px 삐져나가 「설정 선택」 목록(overflow:auto)에 가로 스크롤 줄이 생겼다 */
-  html body.salty .salty-panel label.salty-switch::before {
+  html body .salty-panel label.salty-switch::before {
     content: '';
     position: absolute;
     left: auto;
@@ -91,7 +99,7 @@
   }
 
   /* 확장 서랍 머리 스위치: 66-ui-rhythm.css 의 위아래 7px 를 44×44 상자로 */
-  html body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch::before {
+  html body :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch::before {
     inset: auto;
     left: 50%;
     top: 50%;
@@ -101,7 +109,7 @@
   }
 
   /* 슬라이더: 위아래로 늘리고 같은 만큼 바깥 여백을 빼서 자리 · 트랙 위치는 그대로 (바탕이 투명한 range 만) */
-  html body.salty .salty-panel .salty-slider > input[type="range"] {
+  html body .salty-panel .salty-slider > input[type="range"] {
     height: 44px !important;
     margin-block: calc((44px - 24px) / -2) !important;
   }

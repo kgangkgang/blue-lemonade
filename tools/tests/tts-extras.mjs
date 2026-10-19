@@ -55,6 +55,7 @@ try { A = await import(pathToFileURL(path.join(root, 'analysis.js')).href); } ca
 
 let pass = 0, fail = 0;
 async function test(name, fn) {
+    store.delete('lemon_voice.kept_analyses');   // 7.2.4 분석 보관함(analysis.js keepAnalysis)은 같은 글을 요청 없이 다시 쓴다 — 사례마다 비운다
     try { await fn(); pass++; console.log('  ok  ' + name); }
     catch (e) { fail++; console.log('  FAIL ' + name + '\n       ' + String(e.stack || e.message || e).split('\n').slice(0, 5).join('\n       ')); }
 }

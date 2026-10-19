@@ -6394,6 +6394,9 @@ function publishTranslatorAPI() {
         //       (사용자 규칙 뒤에 붙음 · 메모리에만 · 같은 id 는 바꿔 씀). unprotect(id) 로 뗀다. 성공하면 true
         protect: (id, regex, options) => protectBlock(id, regex, options),
         unprotect: id => unprotectBlock(id),
+        // 7.2.4 다른 애드온 · 확장이 다른 모델(그림 고르기 · 그림 지시)에 보낼 글에서 번역이 보내지 않는 것을 뗀다 — 내장 규칙(생각 · 주석 · tableEdit …) + 사용자 「보호할 텍스트」 + 등록 보호 블록. 자리표시자 대신 빈 글로 (token-audit)
+        stripForModel: text => getCombinedRegexes().reduce((s, regex) => s.replace(regex, ''), String(text ?? '')),
+        exclusionRegexes: () => getCombinedRegexes(),
         // [2.7.4] autoSkipReason(message) → 자동 번역이 이 답을 건너뛰나: 'system' | 'korean' | null (답장 자동 번역이 꺼져 있으면 늘 null) — TTS 가 대사 분석을 같이 쉰다
         autoSkipReason: message => (shouldTranslate(incomingTypes) ? autoSkipReason(message) : null),
         // 6.9.6 previewText(message) → 번역 중 미리 보기가 그 메시지에 지금 그려져 있으면 그 글(display_text 와 같은 꼴, 저장 안 함) · 아니면 null (TTS 원문 짝 찾기)
@@ -7619,7 +7622,9 @@ function getCombinedRegexes() {
         // 2.5.1 숨긴 HTML 주석(과일의 마음 자기 점검 「<!--  …⏎⏎…（…输出结果) -->」)은 번역에 보내지 않고 제자리에 원문 그대로 —
         //   보내면 주석 속 빈 줄에서 문단 · 덩이가 갈라져 닫는 --> 를 잃었고(화면에 「<!-- 쾌적 성애 점검: …」), 모델이 주석 속 지시를 따르다 답을 끊었다.
         //   위 규칙들 뒤라 주석이 없는 답의 [[__VAR_n__]] 번호 · 문단 캐시 키는 그대로다
-        /<!--[\s\S]*?-->/g
+        /<!--[\s\S]*?-->/g,
+        // 7.2.4 <img …> 태그는 번역할 글이 없다(alt 는 두지 않음) — data: 그림이 든 답에서 수천 자를 안 보낸다. 내장 규칙 맨 뒤라 앞 규칙의 [[__VAR_n__]] 번호 · 문단 캐시 키는 그대로 (token-audit)
+        /<img\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi
     ];
 
 

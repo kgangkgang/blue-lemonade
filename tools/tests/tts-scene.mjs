@@ -107,7 +107,7 @@ let passed=0, failed=0;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(fn,ms=1500) { const at=Date.now();while(!fn()){if(Date.now()-at>ms)throw Error('Timed out; warnings='+JSON.stringify(T.warnings));await sleep(5);} }
 async function idle() { await until(()=>!P.isPlaying());await sleep(8); }
-async function test(name,fn) { try{await fn();passed++;console.log('PASS '+name)}catch(e){failed++;console.error('FAIL '+name+'\n'+e.stack)}finally{P.stop();await sleep(5);} }
+async function test(name,fn) { local.delete('lemon_voice.kept_analyses'); /* 7.2.4 분석 보관함(analysis.js keepAnalysis)은 같은 글을 요청 없이 다시 쓴다 — 사례마다 비운다 */ try{await fn();passed++;console.log('PASS '+name)}catch(e){failed++;console.error('FAIL '+name+'\n'+e.stack)}finally{P.stop();await sleep(5);} }
 const voice = (id,name)=>({uid:'minimax:'+id,provider:'minimax',voiceId:id,name,aliases:[],params:{},mix:[],lang:''});
 async function reset() {
     T.sfxGate = T.renderGate = null;

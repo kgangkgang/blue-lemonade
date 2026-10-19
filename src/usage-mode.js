@@ -1,3 +1,27 @@
 export const themeEnabled = s => s.enabled !== false && s.usageMode !== 'extensions';
 export const addonsEnabled = s => s.enabled !== false && s.usageMode !== 'theme';
 export const usageMode = s => ['both','theme','extensions'].includes(s.usageMode) ? s.usageMode : 'both';
+
+// 7.2.4 바깥 확장(window.Salty.getSettings)이 읽는 설정 보기 — enabled 는 「테마가 화면에 켜져 있나」(사용 모드까지).
+// quiet-notes(일코 모드)는 enabled 만 보고 일코를 끌 때 body.salty 를 되돌리는데, 확장만 모드는 enabled=true 라
+// 테마 변수 없이 테마 규칙만 걸려 채팅 · 서랍 배경이 사라졌다. 다른 칸은 원본 그대로(고치면 원본에 적힌다).
+export function publicSettings(s) {
+    if (themeEnabled(s) || s.enabled === false) return s;
+    return new Proxy(s, { get: (target, key, receiver) => key === 'enabled' ? false : Reflect.get(target, key, receiver) });
+}
+
+// 7.2.4 테마가 빠진 모드(확장만 · 테마 끔)에서 바깥이 body.salty 를 붙이면 뗀다 — 떼기만 한다 (일코 ON 처럼 테마를 잠시 끄려고 떼는 건 그대로).
+// 서로 붙였다 뗐다 하면(2초 안 6번) 멈추고 한 번 알린다 — 끝없이 싸우며 화면을 다시 그리지 않게. classList 만 받아 시험할 수 있다.
+export function forcedThemeGuard({ themeOn, now = () => Date.now(), warn = () => {} }) {
+    const hits = [];
+    let stopped = false;
+    return classList => {
+        if (stopped || themeOn() || !classList.contains('salty')) return false;
+        const t = now();
+        while (hits.length && t - hits[0] > 2000) hits.shift();
+        hits.push(t);
+        if (hits.length > 6) { stopped = true; warn('다른 확장이 테마 클래스(body.salty)를 계속 붙여요. 이번 세션은 그대로 둡니다.'); return false; }
+        classList.remove('salty');
+        return true;
+    };
+}

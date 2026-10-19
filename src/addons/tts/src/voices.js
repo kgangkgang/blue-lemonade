@@ -499,17 +499,19 @@ export function storeStock(pid, list) {
     return rows;
 }
 const stockJobs = new Map();
+const stockFailAt = new Map(), STOCK_RETRY_MS = 10 * 60 * 1000;   // 7.2.4 목록 받기에 실패하면 10분은 다시 묻지 않는다 — 전엔 재생 준비마다(답마다 3~5번) 다시 요청했다 (api-audit)
 /** 기본 목소리 캐시가 없거나 오래됐으면 계정 목록을 받아 채운다 (같은 엔진은 한 번에 하나 · 실패하면 옛 캐시) */
 export function ensureStock(pid) {
     if (!pid || stockFresh(pid)) return Promise.resolve(stockOf(pid));
     if (stockJobs.has(pid)) return stockJobs.get(pid);
+    if (Date.now() - (stockFailAt.get(pid) || 0) < STOCK_RETRY_MS) return Promise.resolve(stockOf(pid));
     let p = null;
     try { p = getProvider(pid); } catch { p = null; }
     if (!p || typeof p.listVoices !== 'function' || !engineUsable(pid)) return Promise.resolve(stockOf(pid));
     const job = Promise.resolve()
         .then(() => p.listVoices(providerConfig(pid, p.defaults || {})))
-        .then(list => (Array.isArray(list) && list.length ? storeStock(pid, list) : stockOf(pid)))
-        .catch(() => stockOf(pid))
+        .then(list => { if (Array.isArray(list) && list.length) { stockFailAt.delete(pid); return storeStock(pid, list); } stockFailAt.set(pid, Date.now()); return stockOf(pid); })
+        .catch(() => { stockFailAt.set(pid, Date.now()); return stockOf(pid); })
         .finally(() => stockJobs.delete(pid));
     stockJobs.set(pid, job);
     return job;

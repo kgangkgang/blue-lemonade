@@ -63,7 +63,7 @@ await test('assets: the picker model never receives the thinking text', async ()
     assert.match(after, /hasAssetTag\(body\)/);
     assert.match(after, /slotSpots\(body, pickSettings\(\)\.count\)/);
     assert.match(after, /text = head \+ inserted\.text/);
-    assert.match(after, /markedReply\(splitThinking\(textOf\(message, swipe\)\)\.body, ids\)/);
+    assert.match(after, /markedReply\(splitThinking\(textOf\(message, swipe\)\)\.body, ids, strip\)/);   // 7.2.4 strip = 번역기 다리의 stripForModel (고르는 모델에게 본문만)
     assert.ok(!/slotSpots\(message\.mes/.test(after) && !/markedReply\(textOf\(/.test(after), 'no path (auto insert, ··· reroll) reads the raw reply any more');
     assert.equal((after.match(/splitThinking\(message\.mes\)/g) || []).length, 2, 'auto insert and reroll both split the thinking head');
 });

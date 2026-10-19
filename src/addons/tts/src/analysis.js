@@ -1130,6 +1130,36 @@ const sameSwipe = (a, mes) => !Number.isInteger(a?.swipe) || a.swipe === swipeOf
 const responseFailures = new WeakMap();
 // 6.1.8 내용 차단으로 막힌 메시지 (같은 글 · 스와이프) — 다른 모델을 골라 두면 다음엔 원래 모델을 건너뛰고 그 모델로 바로
 const blockedRuns = new WeakMap();
+// 7.2.4 실패 기억을 채팅에도 남긴다: mes.extra.lemon_voice.failed = { key, at, n, hard, blocked, why } (스와이프 거울에도)
+//   key = failureKey(글 · 스와이프 · 분석 설정 · 연결) — 글을 고치거나 모델을 바꾸면 자연히 풀린다.
+//   hard(차단 · 거절 · 형식 오류 · 빠진 화자/감정 — 같은 입력이면 또 그렇다)는 key 가 같은 동안 계속, 잠깐의 실패(5xx · 시간 초과 · 연결 · 빈 답)는 식는 시간 안에서만.
+//   전엔 WeakMap 만이라 채팅 다시 열기 · 새로고침 · 다른 탭마다 비어 실패한 마지막 답을 열 때마다 다시(검열이면 2번) 물었다 (tts-reanalysis 조사).
+const SOFT_COOLDOWN_MS = 10 * 60 * 1000;       // 잠깐의 실패 뒤 자동 재시도까지
+const SOFT_COOLDOWN_LONG_MS = 60 * 60 * 1000;  // 같은 글이 세 번 넘게 실패하면
+const failedOf = (mes) => { const f = slot(mes, false)?.failed; return isObj(f) && typeof f.key === 'string' ? f : null; };
+function rememberFailure(id, mes, { hard = false, blocked = false, why = '' } = {}) {
+    const key = failureKey(mes), prev = failedOf(mes), same = !!prev && prev.key === key;
+    slot(mes, true).failed = { key, at: Date.now(), n: same ? (Number(prev.n) || 0) + 1 : 1, hard: !!hard || (same && prev.hard === true), blocked: !!blocked || (same && prev.blocked === true), why: snip(scrub(why), 60) };
+    if (id < 0) return;
+    try { if (typeof ST.syncMesToSwipe === 'function') ST.syncMesToSwipe(id); } catch { /* 스와이프 정보 없음 */ }
+    scheduleSave();   // 1초 디바운스 — 실패 토스트와 함께 저장 한 번
+}
+function forgetFailure(id, mes) {
+    const lv = slot(mes, false);
+    if (!lv || !('failed' in lv)) return false;
+    delete lv.failed;
+    if (!Object.keys(lv).length) delete mes.extra.lemon_voice;
+    if (id >= 0) { try { if (typeof ST.syncMesToSwipe === 'function') ST.syncMesToSwipe(id); } catch { /* 스와이프 정보 없음 */ } }
+    return true;
+}
+/** 지금 다시 보내면 또 실패할 기억 (없으면 null) */
+function failureActive(mes) {
+    const f = failedOf(mes);
+    if (!f || f.key !== failureKey(mes)) return null;
+    if (f.hard) return f;
+    const cool = (Number(f.n) || 1) >= 3 ? SOFT_COOLDOWN_LONG_MS : SOFT_COOLDOWN_MS;
+    return Date.now() - (Number(f.at) || 0) < cool ? f : null;
+}
 /** 지금 분석 요청이 가는 곳 { provider, model, url } — 다른 모델이 같은 곳이면 다시 보내지 않는다 */
 function mainIdOf(cfg, engine) {
     try {
@@ -1145,7 +1175,9 @@ function mainIdOf(cfg, engine) {
 /** 이 메시지가 내용 차단으로 막혔나 (재생기의 「다른 모델로 다시」) */
 export function wasBlocked(mesId) {
     const mes = msgOf(Number(mesId)), b = mes && blockedRuns.get(mes);
-    return !!b && b.hash === textHash(mes) && b.swipe === swipeOf(mes);
+    if (b && b.hash === textHash(mes) && b.swipe === swipeOf(mes)) return true;
+    const f = mes && failedOf(mes);
+    return !!f && f.blocked === true && f.key === failureKey(mes);   // 7.2.4 새로고침 뒤에도 「다른 모델로 다시」 단추 · 바로 다른 모델
 }
 let fallbackToastAt = 0;
 function noteFallback(t) {
@@ -1175,8 +1207,11 @@ function failureConnection(cfg) {
 }
 const failureKey = (mes) => { const cfg = settings().analysis || {}; return hash(JSON.stringify([textHash(mes), swipeOf(mes), cfg, failureConnection(cfg)])); };
 export function hasResponseFailure(mesId) {
-    const mes = msgOf(Number(mesId)), failed = mes && responseFailures.get(mes);
-    return !!failed && failed.key === failureKey(mes);
+    const mes = msgOf(Number(mesId));
+    if (!mes) return false;
+    const failed = responseFailures.get(mes);
+    if (failed && failed.key === failureKey(mes)) return true;
+    return !!failureActive(mes);   // 7.2.4 채팅에 남긴 기억 (hard 는 계속 · soft 는 식는 시간 안)
 }
 /** 옛 분석 (같은 메시지 객체 · 같은 스와이프): 칸에 남은 것(해시가 달라도) → 지운 것 */
 function previousOf(mes) {
@@ -1197,9 +1232,31 @@ export function carryOver(segs, prev) {
         return { ...g, text };
     });
 }
+// 7.2.4 값을 치른 결과를 메시지 밖에도 잠깐 둔다 — 글 · 스와이프 · 캐릭터가 같으면 요청 없이 다시 쓴다
+//   (분석이 끝나기 전에 채팅을 바꿈 · 새 채팅의 같은 인사말 · 다른 기기/탭이 옛 채팅 파일로 덮어씀). localStorage(32개 · 6시간), 글은 담지 않음(해시만)
+const KEEP_KEY = 'lemon_voice.kept_analyses', KEEP_MAX = 32, KEEP_MS = 6 * 60 * 60 * 1000;
+const keptKey = (mes, h = textHash(mes)) => { const s = settings(); return `${h}|${swipeOf(mes)}|${chatCtx(mes).charName || ''}|${hash(JSON.stringify([s.analysis || {}, s.extras || '']))}`; };   // 같은 글 · 스와이프 · 캐릭터 · 분석 설정(엑스트라 포함)일 때만 — 설정을 바꾸면 다시 묻는다
+function forgetKept(mes) { try { const all = readKept(); if (mes && delete all[keptKey(mes)]) globalThis.localStorage?.setItem(KEEP_KEY, JSON.stringify(all)); } catch { /* 저장소 없음 */ } }   // 지우기(요술봉)는 보관함도 잊는다
+function readKept() { try { const j = JSON.parse(globalThis.localStorage?.getItem(KEEP_KEY) || '{}'); return isObj(j) ? j : {}; } catch { return {}; } }
+function keepAnalysis(mes, analysis, h) {
+    if (!isObj(analysis) || !Array.isArray(analysis.segs)) return;
+    const all = readKept(), now = Date.now();
+    for (const [k, v] of Object.entries(all)) if (!isObj(v) || now - (Number(v.at) || 0) > KEEP_MS) delete all[k];
+    all[keptKey(mes, h)] = { at: now, analysis };
+    const keys = Object.keys(all);
+    if (keys.length > KEEP_MAX) for (const k of keys.sort((a, b) => all[a].at - all[b].at).slice(0, keys.length - KEEP_MAX)) delete all[k];
+    try { globalThis.localStorage?.setItem(KEEP_KEY, JSON.stringify(all)); } catch { /* 저장소 없음 · 꽉 참 */ }
+}
+/** 보관한 같은 글의 분석 (없으면 null) — 지금 설정으로 쓸 수 있는 모양인지는 getAnalysis 가 다시 본다 */
+function keptFor(mes) {
+    const v = readKept()[keptKey(mes)];
+    return v && isObj(v.analysis) && Array.isArray(v.analysis.segs) && Date.now() - (Number(v.at) || 0) <= KEEP_MS ? v.analysis : null;
+}
 function store(id, mes, analysis) {
     responseFailures.delete(mes);
+    forgetFailure(id, mes);   // 7.2.4 성공하면 실패 기억은 지운다
     slot(mes, true).analysis = analysis;
+    if (id >= 0) keepAnalysis(mes, analysis);
     if (id < 0) return;   // 외부 글은 이 세션 메모리에만; 현재 채팅을 저장하지 않는다.
     try { if (typeof ST.syncMesToSwipe === 'function') ST.syncMesToSwipe(id); } catch { /* 스와이프 정보 없음 */ }
     saveNow();
@@ -1420,8 +1477,21 @@ export function analyzeMessage(mesId, opts = {}) {
     const langs = cfg.translate ? normLangs(opts.langs) : [];
     const cached = getAnalysis(id);
     if (cached && !opts.force && analysisCovers(cached, langs) && !italicsToFill(mes, cached).length) return Promise.resolve(cached);   // 1.9.2 기울임 보충이 남았으면 아래로
+    if (!cached && !opts.force && id >= 0) {   // 7.2.4 보관함(채팅 바꾼 뒤 도착 · 같은 인사말 · 덮어쓰인 파일)
+        const held = keptFor(mes);
+        if (held) {
+            slot(mes, true).analysis = { ...held, swipe: swipeOf(mes) };
+            try { if (typeof ST.syncMesToSwipe === 'function') ST.syncMesToSwipe(id); } catch { /* 스와이프 정보 없음 */ }
+            scheduleSave();
+            const a = getAnalysis(id);
+            if (a && analysisCovers(a, langs) && !italicsToFill(mes, a).length) { log('info', `대사 분석 보관함에서 다시 씀 #${id}`); return Promise.resolve(a); }
+        }
+    }
     if (aborted(opts.signal)) return Promise.reject(abortErr(opts.signal));
-    if (!opts.force && opts.via !== 'fallback' && hasResponseFailure(id)) return Promise.reject(responseFailures.get(mes).error);   // 6.1.8 「다른 모델로 다시」는 막힌 기억을 넘는다
+    if (!opts.force && opts.via !== 'fallback' && hasResponseFailure(id)) {   // 6.1.8 「다른 모델로 다시」는 막힌 기억을 넘는다
+        const f = failureActive(mes);
+        return Promise.reject(responseFailures.get(mes)?.error || koErr(f?.hard ? `대사 분석 실패를 기억해 건너뜀 (${f.why}). 요술봉의 재생성으로 다시 시도해 주세요` : `대사 분석 실패 뒤 잠시 쉬는 중 (${f?.why || ''})`));
+    }
     const inflight = running.get(id);
     // 1.6.4 같은 글의 진행 중인 분석이면 붙는다 — 프롬프트 지문이 그새 바뀌었어도 (앞 메시지의 분석이 엑스트라를 적어 목소리 표가 바뀌는 것만으로 다시 묻지 않게)
     if (inflight && !inflight.ctrl.signal.aborted && inflight.mes === mes && inflight.hash === textHash(mes) && inflight.swipe === swipeOf(mes) && (!opts.force || inflight.force) && (inflight.via || '') === (opts.via || '')) {
@@ -1464,7 +1534,7 @@ async function doAnalyze(entry) {
     const failedKey = failureKey(mes);
     const rejectResponse = (message) => {
         const error = koErr(`${message}. 요술봉의 재생성으로 다시 시도해 주세요`);
-        if (msgOf(id) === mes && textHash(mes) === entry.hash && swipeOf(mes) === swipe) responseFailures.set(mes, { key: failedKey, error });
+        if (msgOf(id) === mes && textHash(mes) === entry.hash && swipeOf(mes) === swipe) { responseFailures.set(mes, { key: failedKey, error }); rememberFailure(id, mes, { hard: true, why: message }); }
         return error;
     };
     const h = entry.hash;
@@ -1491,7 +1561,7 @@ async function doAnalyze(entry) {
     if (target) target = { ...target, url: target.provider === 'custom' ? stapi.customEndpoint(fallbackCfg(cfg, target)).url : '' };
     let fallbackSame = false;
     if (target && sameTarget(failed, target)) { target = null; fallbackSame = true; }
-    const seen = blockedRuns.get(mes);
+    const seen = blockedRuns.get(mes) || (failedOf(mes)?.blocked && failedOf(mes).key === failedKey ? { hash: entry.hash, swipe } : null);   // 7.2.4 새로고침 뒤에도 원래 모델을 건너뜀 (2번 → 1번)
     const via = entry.via === 'fallback' || (target && (byFallback || (seen && seen.hash === entry.hash && seen.swipe === swipe))) ? 'fallback' : '';
     const counted = (p) => p.then(x => { addAnalysisUsage(x.usage.in, x.usage.out, Math.max(1, Number(x.usage.calls) || 1)); return x; });   // 실리태번 연결도 호출 수는 센다 (토큰은 모름)
     let used = null, r;
@@ -1510,6 +1580,7 @@ async function doAnalyze(entry) {
         const hard = e?.fallback ? e.fallback.blocked === true : isContentBlock(e) || bareBadRequest(e);
         if (here && (hard || (e?.fallback && maybeBlocked(e)))) blockedRuns.set(mes, { hash: entry.hash, swipe });
         if (here && hard) responseFailures.set(mes, { key: failedKey, error: e });   // 같은 글은 누를 때마다 다시 보내지 않음 — 분석 설정(다른 모델)을 바꾸면 키가 바뀌어 다시
+        if (here) rememberFailure(id, mes, { hard, blocked: hard || !!(e?.fallback && maybeBlocked(e)), why: e?.message });   // 7.2.4 잠깐의 실패도 식는 시간 동안은 쉰다
         if (e && typeof e === 'object' && !e.fallback && !target && maybeBlocked(e)) { e.noFallback = true; if (fallbackSame) e.fallbackSame = true; }   // 재생기: 「검열되면 다른 모델로」를 알려 줌
         throw e;
     }
@@ -1522,7 +1593,7 @@ async function doAnalyze(entry) {
         log('err', `대사 분석 응답 해석 실패 #${id}${r.truncated ? ' (길이 한도)' : ''} · ${head ? '앞부분: ' + snip(scrub(head), 160) : '빈 답'}`);
         if (refusalReply(head)) {   // 6.1.8 거절 글 — 다른 모델이 없거나 같은 모델이라 그대로 왔다
             const error = Object.assign(koErr('모델이 이 내용의 분석을 거절했어요'), { blocked: true, noFallback: !target, fallbackSame });
-            if (msgOf(id) === mes && textHash(mes) === entry.hash && swipeOf(mes) === swipe) { blockedRuns.set(mes, { hash: entry.hash, swipe }); responseFailures.set(mes, { key: failedKey, error }); }
+            if (msgOf(id) === mes && textHash(mes) === entry.hash && swipeOf(mes) === swipe) { blockedRuns.set(mes, { hash: entry.hash, swipe }); responseFailures.set(mes, { key: failedKey, error }); rememberFailure(id, mes, { hard: true, blocked: true, why: error.message }); }
             throw error;
         }
         throw rejectResponse(r.truncated ? '대사 분석 응답이 길이 한도에 닿아 잘렸어요' : head ? '대사 분석 응답이 JSON 형식이 아니에요' : '대사 분석 응답이 비었어요');
@@ -1544,7 +1615,11 @@ async function doAnalyze(entry) {
     if (built.italics.length) analysis.italicsTried = [...new Set([...(Array.isArray(previous?.italicsTried) ? previous.italicsTried : []), ...built.italics.map(x => `${x.j}:${x.h}`)])];   // 1.9.2 물어본 조각 (다시 안 물음)
     if (built.sfx) analysis.sfx = normalizeSfx(parsed.sfx, built);
     // 1.6.4 받는 동안 설정이 바뀌어도 버리지 않는다 (값을 치른 답) — 글이 바뀌었을 때만
-    if (msgOf(id) !== mes || swipeOf(mes) !== swipe || (textHash(mes) !== h && !rewriteLinked(mes, h, textHash(mes)))) { log('info', `대사 분석 버림 #${id} (글·스와이프가 바뀜)`); return null; }
+    if (msgOf(id) !== mes || swipeOf(mes) !== swipe || (textHash(mes) !== h && !rewriteLinked(mes, h, textHash(mes)))) {
+        if (id >= 0 && swipeOf(mes) === swipe && textHash(mes) === h) { keepAnalysis(mes, analysis, h); log('info', `대사 분석 보관 #${id} (채팅이 바뀜 — 돌아오면 요청 없이 씀)`); }   // 7.2.4
+        else log('info', `대사 분석 버림 #${id} (글·스와이프가 바뀜)`);
+        return null;
+    }
     let result = analysis;
     if (textHash(mes) !== h) {
         // 1.7.0 받는 사이 다시 쓰기가 글을 고쳤다 (onMessageChanged 가 보낸 요청은 끊지 않음) → 옛 글의 분석으로 두고 새 글로 옮긴다. 못 맞추면 지금처럼 버림
@@ -1566,10 +1641,10 @@ export function clearAnalysis(target) {
     let n = 0;
     if (target === 'chat' || target === undefined) {
         for (const e of keptRuns) e.ctrl.abort(new DOMException('지움', 'AbortError'));
-        for (let i = 0; i < chat.length; i++) { responseFailures.delete(chat[i]); const r = running.get(i); if (r) r.ctrl.abort(new DOMException('지움', 'AbortError')); if (drop(i, chat[i])) n++; }
+        for (let i = 0; i < chat.length; i++) { responseFailures.delete(chat[i]); if (chat[i]) { blockedRuns.delete(chat[i]); forgetKept(chat[i]); } if (forgetFailure(i, chat[i])) n++; const r = running.get(i); if (r) r.ctrl.abort(new DOMException('지움', 'AbortError')); if (drop(i, chat[i])) n++; }
     } else {
         const id = Number(target);
-        if (msgOf(id)) responseFailures.delete(msgOf(id));
+        if (msgOf(id)) { responseFailures.delete(msgOf(id)); blockedRuns.delete(msgOf(id)); forgetKept(msgOf(id)); if (forgetFailure(id, msgOf(id))) n++; }
         for (const e of keptRuns) if (e.id === id) e.ctrl.abort(new DOMException('지움', 'AbortError'));
         const r = running.get(id);
         if (r) r.ctrl.abort(new DOMException('지움', 'AbortError'));
@@ -1595,6 +1670,8 @@ export function onMessageChanged(mesId) {
     followRewrite(id, mes);
     const a = slot(mes, false)?.analysis;
     if (isObj(a) && a.hash !== h && drop(id, mes, true)) scheduleSave();
+    const f = failedOf(mes);
+    if (f && f.key !== failureKey(mes)) forgetFailure(id, mes);   // 7.2.4 글이 바뀌면 옛 실패 기억은 치운다
 }
 
 /** 이번 달 분석 사용량 */

@@ -503,6 +503,7 @@ export function analysisWanted(mesId, mes, s = settings(), { quiet = false, awai
     const fill = need.italics && typeof analysis.italicsToFill === 'function' ? analysis.italicsToFill(mes, cached) : [];
     if (cached && (typeof analysis.analysisCovers === 'function' ? analysis.analysisCovers(cached, need.langs) : coversLangs(cached.langs, need.langs)) && !fill.length) return false;
     if (analysis.hasResponseFailure?.(mesId)) return false;   // 잘못된 전체 응답은 대사를 누를 때마다 다시 보내지 않음. 요술봉 재생성으로 재시도.
+    if (gaveUp.get(mes) === `${swipeOf(mes)}|${mes.mes}`) return false;   // 7.2.4 이 세션에서 포기한 글(연결 · 시간 초과 포함)도 — 요술봉 재분석(force)은 그대로
     if (!analysisReady(s)) { if (!quiet) toastSession('analysis-setup', '대사 분석 엔진을 설정하면 감정·원어 읽기가 돼요'); return false; }
     return true;
 }

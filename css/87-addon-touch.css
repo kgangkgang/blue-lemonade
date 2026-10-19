@@ -1,0 +1,77 @@
+/* ===== css/87-addon-touch.css =====
+   7.2.4 손가락 화면(pointer: coarse)에서 애드온 창 · 첫 실행 안내 · 설정 창에 남아 있던 작은 칸의 「눌리는 넓이」를 44×44 까지 —
+   86-touch-targets.css 와 같은 방식(칸이 모양에 쓰지 않는 ::before/::after 로 투명한 44×44 상자). 보이는 크기 · 배치 · 글자는 그대로.
+   애드온 창 · 첫 실행 안내는 사용 모드와 무관한 테마 자신의 화면이라 body.salty 없이 건다 (확장만 모드에서도 같은 창이 뜬다).
+   글자 칸 · 고르기 칸(input · select)은 가짜 요소를 못 가지므로 그 칸들만 높이를 44 로 — 손가락 화면에서만.
+   탭(.lv-tab 등) · 판 알약 · .salty-btn 은 테마가 꺼진 확장만 모드에서 85-addon-unify 가 안 걸려 36~41px 로 남는다 — 여기서 같이 덮는다.
+   측정 · 사진: work/bl-724 디자인 전수조사 (outputs/bl-724/design-audit.md) · 시험: tools/tests/addon-touch-targets.mjs
+   ===== */
+@media (pointer: coarse) {
+  /* 기준점: :where 라 다른 모듈이 준 position(absolute 스위치 손잡이 등)이 이기고, static 인 칸만 relative 가 된다 */
+  :where(
+    .po-move, .po-pin, .po-dialog .menu_button,
+    .ms-icon, .ms-pull, .ms-chip, .ms-name, .ms-invert, .ms-snap, .ms-apply, #model-switch-settings .menu_button,
+    .bl-note-btn, .bl-notes-ver, .bl-notes-guidelink,
+    .eh-icon-btn, .eh-switch, .eh-pchip, .eh-btn, .bl-assets-dialog .eh-size > button, .bl-assets-dialog button[data-value],
+    .cg-icon-btn, .cg-chip,
+    .jj-switch, .jj-small-btn, .bl-direction-dialog button[data-step], .jj-settings-body button[data-step],
+    .lv-icon, .lv-help-btn, .lv-version,
+    .rl-chip, .pa-hub .menu_button, .rl-root .menu_button,
+    .blzi-help, .blpt-btn, .bwr_help, .bwr-version, .bwr_seg, .bwr_settings .menu_button,
+    .pt-ui-button, #pt-panel [data-help-group], .pt-help-dialog [data-help-group], #pt-panel-close,
+    #model_register_settings .menu_button, #regex-link-settings .menu_button, .bl-translator-dialog .menu_button, .bl-ctsi-dialog .menu_button,
+    .bl-fr-icon, .bl-mermaid-again, .salty-btn,
+    .lv-tab, .llmt-tab, .bwr_tab, .rl-tab, .pa-hub-tab, .pt-tab, .po-menu-tabs > button, .pt-version, #pt-panel-refresh,
+    .salty-panel .bl-preview-kinds > button, .salty-panel .bl-prompt-card-trigger, .salty-panel .salty-shapes button,
+    :is(.bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .bl-mermaid-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog) > header > button,
+    :is(.bl-roomy-dialog, .bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .bl-mermaid-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog, #cg-panel, #pt-panel, .rl-root, .pa-hub, .bwr_settings, #lv_settings, #model_register_settings, #model-switch-settings, .po-dialog, #regex-link-settings, .bl-embedded-settings, .salty-panel) summary
+  ) {
+    position: relative;
+  }
+
+  /* ::after 가 비어 있는 칸 (아이콘은 자식 <i> 나 ::before 로 그린다) */
+  :is(
+    .po-move, .po-pin, .po-dialog .menu_button,
+    .ms-icon, .ms-pull, .ms-chip, .ms-name, .ms-invert, .ms-snap, .ms-apply, #model-switch-settings .menu_button,
+    .bl-note-btn, .bl-notes-guidelink,
+    .eh-icon-btn, .eh-switch, .eh-pchip, .eh-btn, .bl-assets-dialog .eh-size > button, .bl-assets-dialog button[data-value],
+    .cg-icon-btn, .cg-chip,
+    .jj-small-btn, .bl-direction-dialog button[data-step], .jj-settings-body button[data-step],
+    .lv-icon, .lv-help-btn, .lv-version,
+    .rl-chip, .pa-hub .menu_button, .rl-root .menu_button, .rl-msg summary,
+    .blzi-help, .blpt-btn, .bwr_help, .bwr-version, .bwr_seg, .bwr_settings .menu_button,
+    .pt-ui-button, #pt-panel [data-help-group], .pt-help-dialog [data-help-group], #pt-panel-close,
+    #model_register_settings .menu_button, #regex-link-settings .menu_button, .bl-translator-dialog .menu_button, .bl-ctsi-dialog .menu_button,
+    .bl-fr-icon, .bl-mermaid-again, .salty-btn,
+    .lv-tab, .llmt-tab, .bwr_tab, .rl-tab, .pa-hub-tab, .pt-tab, .po-menu-tabs > button, .pt-version, #pt-panel-refresh,
+    .salty-panel .bl-preview-kinds > button, .salty-panel .bl-prompt-card-trigger, .salty-panel .salty-shapes button,
+    :is(.bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .bl-mermaid-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog) > header > button,
+    :is(.bl-roomy-dialog, .bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog, #cg-panel, #pt-panel, .rl-root, .pa-hub, .bwr_settings, #lv_settings, #model_register_settings, #model-switch-settings, .po-dialog, #regex-link-settings, .bl-embedded-settings) summary:not(.rl-msg summary, .eh-guide summary)
+  )::after,
+  /* ::after 로 화살표 · 판 알약을 그리는 칸 → 비어 있는 ::before */
+  :is(.bl-notes-ver, .jj-switch, .eh-guide summary, .salty-panel .bl-md-group > summary, .salty-panel .bl-usage-mode > summary, .salty-panel details:not(.rl-msg) > summary)::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+    background: none;
+    border: 0;
+    box-shadow: none;
+  }
+
+  /* 글자 · 숫자 · 고르기 칸: 가짜 요소를 못 가지니 높이만 44 (손가락 화면). 설정 창 슬라이더의 숫자 칸(34)도 같이 */
+  :is(.bl-roomy-dialog, .bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .bl-mermaid-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog, #cg-panel, #pt-panel, .rl-root, .pa-hub, .bwr_settings, #lv_settings, #model_register_settings, #model-switch-settings, .po-dialog, #regex-link-settings, .bl-embedded-settings, .bl-first-run)
+    :is(input.text_pole, select.text_pole, input:is([type="text"], [type="number"], [type="search"], [type="url"], [type="password"], [type="email"]):not(.text_pole), select:not(.text_pole)),
+  .salty-panel .salty-num input[type="number"][data-num],
+  .salty-panel input.text_pole[data-link-word] {
+    min-height: 44px !important; /* 애드온 CSS 의 min-height(var(--bl-h-ctl) · ID 선택자)보다 뒤 · 세게 */
+    box-sizing: border-box;
+  }
+  /* 설정 창 슬라이더의 숫자 칸: 20-panel.css 가 height: var(--num-h) !important 로 그리므로 변수 자체를 44 로 (56-control-consistency.css 의 max(34px, 1.5em + 12px) 뒤) */
+  html body .salty-panel, html body .salty-panel.bl-editor { --num-h: max(44px, calc(1.5em + 12px)); }
+  /* 전개 지시 창의 「깊이」 숫자 칸(폭 35) */
+  html body :is(.bl-direction-dialog, .jj-settings-body, #jj-settings) #jj_depth { min-width: 44px; }
+}
