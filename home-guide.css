@@ -108,7 +108,7 @@ html.device-mobile .home-guide .showcase-screen video{aspect-ratio:9/19.5}
 #copy-help{color:var(--muted);font-size:12px;margin:9px 0 0}
 .zip-install,.install-faq details{border-top:1px solid var(--line-strong);font-size:14px}
 .zip-install summary,.install-faq summary{padding:16px 0;cursor:pointer;min-height:50px;color:var(--blue-strong);font-weight:600}
-.zip-install p,.install-faq p{margin:0 0 16px;max-width:70em;line-height:1.9}
+.zip-install p,.install-faq p{margin:0 0 16px;max-width:70em;line-height:1.9}.install-faq h3{margin:28px 0 6px;font-size:21px;line-height:1.4}.install-faq>p{margin:0 0 10px;font-size:14px;color:var(--muted)}.install-faq .faq-where{font-size:13px;color:var(--muted)}
 .zip-install code{overflow-wrap:anywhere}.zip-install .button{margin:0 0 20px}
 .home-guide .install .text-link{display:inline-flex;align-items:center;min-height:44px;color:var(--blue-strong);margin-top:20px}
 .home-guide #features,.home-guide #gallery,.home-guide #updates{padding-block:0}
