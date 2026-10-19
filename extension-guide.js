@@ -14,7 +14,7 @@
     figure.querySelectorAll('[data-guide-device]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.guideDevice===device)));
     const video=figure.querySelector('video'),img=figure.querySelector('img');
     if(video){video.pause();video.poster=base+'.jpg';video.width=device==='mobile'?390:1280;video.height=device==='mobile'?844:800;video.dataset.src=base+'.mp4';if(video.hasAttribute('src')){video.src=video.dataset.src;video.load();}}
-    if(img){figure.querySelector('source').media='not all';img.src=base+'.jpg';img.width=device==='mobile'?780:1920;img.height=device==='mobile'?1688:1200;}
+    if(img){const ext=figure.dataset.mediaExt||'jpg',size=(figure.dataset[device==='mobile'?'mediaSizeMobile':'mediaSizePc']||'').split('x').map(Number);figure.querySelector('source').media='not all';img.src=base+'.'+ext;img.width=size[0]||(device==='mobile'?780:1920);img.height=size[1]||(device==='mobile'?1688:1200);}
   }
   for(const figure of media){
     showDevice(figure,phone.matches?'mobile':'pc');
