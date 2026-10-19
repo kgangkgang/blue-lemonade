@@ -279,12 +279,13 @@ const fold = text => String(text ?? '').toLowerCase().replace(/\s+/g, ' ').trim(
  * 한글이 주된 줄만 · 태그와 자리표시자 밖 · 파일 이름 · 주소 속은 빼고 · 「번역(원문)」 괄호 병기와 뒤에 영어 낱말이 이어지는 자리(영어로 둔 말)도 뺀다.
  * 그 표기를 품은 더 긴 용어집 표기 자리는 건드리지 않는다. 바로 붙은 조사는 받침에 맞추고, 's 는 「의」로.
  */
-export function enforceGlossaryNames(entries, source, output, { names = [] } = {}) {
-    const out = String(output ?? '');
+/**
+ * 7.2.8 용어집 항목 · 이름에서만 나오는 것 (글과 상관없음): 바꿀 수 있는 라틴 표기 후보(항목 차례 · 표기 차례 그대로) · 라틴 글자가 든 모든 원문 표기.
+ * 채팅을 열 때 저장된 번역문 고치기(repairShownTranslations)가 메시지마다 같은 항목 목록을 다시 훑지 않게 한 번 만들어 넘긴다 — 결과는 같다
+ */
+export function prepareGlossaryNames(entries, names = []) {
     const wanted = new Set((names || []).map(fold).filter(Boolean));
-    if (!out) return out;
-    const lower = out.toLowerCase();
-    const swaps = [];
+    const candidates = [];
     for (const entry of entries || []) {
         if (!entry?.src || !entry?.dst) continue;
         const targets = glossaryAlternatives(entry.dst);
@@ -293,17 +294,28 @@ export function enforceGlossaryNames(entries, source, output, { names = [] } = {
         if (!wanted.has(fold(targets[0])) && !sources.some(form => wanted.has(fold(form))) && !transliteratedName(sources)) continue;
         for (const form of sources) {
             const spelled = String(form).trim();
-            if (LATIN_NAME.test(spelled) && lower.includes(spelled.toLowerCase())) swaps.push({ form: spelled, dst: targets[0] });
+            if (LATIN_NAME.test(spelled)) candidates.push({ form: spelled, lower: spelled.toLowerCase(), dst: targets[0] });
         }
     }
+    const latinForms = (entries || []).flatMap(entry => glossaryAlternatives(entry?.src)).map(form => String(form).trim()).filter(form => /[A-Za-z]/.test(form));
+    return { candidates, latinForms };
+}
+
+export function enforceGlossaryNames(entries, source, output, { names = [], prepared = null } = {}) {
+    const out = String(output ?? '');
+    if (!out) return out;
+    const lower = out.toLowerCase();
+    const { candidates, latinForms } = prepared ?? prepareGlossaryNames(entries, names);
+    const swaps = [];
+    for (const { form, lower: formLower, dst } of candidates) if (lower.includes(formLower)) swaps.push({ form, dst });
     if (!swaps.length) return out;
     const haystack = glossaryFold(withoutTags(source));
     const live = swaps.filter(({ form }) => glossaryOccursIn(haystack, form));
     if (!live.length) return out;
     live.sort((a, b) => b.form.length - a.form.length);
     // 더 긴 용어집 표기(그 이름을 품은 것) — 그 자리는 그대로 둔다
-    const longer = (entries || []).flatMap(entry => glossaryAlternatives(entry?.src)).map(form => String(form).trim())
-        .filter(form => /[A-Za-z]/.test(form) && live.some(swap => form.length > swap.form.length && form.toLowerCase().includes(swap.form.toLowerCase())))
+    const longer = latinForms
+        .filter(form => live.some(swap => form.length > swap.form.length && form.toLowerCase().includes(swap.form.toLowerCase())))
         .sort((a, b) => b.length - a.length);
     const patterns = live.map(({ form, dst }) => ({
         dst,

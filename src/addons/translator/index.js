@@ -19,7 +19,7 @@ import { createReasoningView } from './reasoning-view.js';   // 2.6.0 생각 블
 import { updateReasoningUI } from '../../../../../../reasoning.js';   // 2.6.0 생각 칸 다시 그리기
 import { syncTranslatorMenus, bindTranslatorMenus } from './menu-visibility.js';
 import { makePersonaBridge } from './persona-bridge.js';
-import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey, glossaryLinesFor, enforceGlossaryNames, dropDanglingOpenQuote } from './glossary-match.js';
+import { glossaryFold, glossaryAlternatives, glossaryLines, glossaryVariantTag, kanaDuplicateKey, glossaryLinesFor, enforceGlossaryNames, prepareGlossaryNames, dropDanglingOpenQuote } from './glossary-match.js';
 import { chatGlossaryEntries, chatGlossarySignature, createChatTermCachePolicy } from './chat-glossary.js';
 import { styleProfileBlock, styleProfileSignature } from './style-profile.js';
 import { glossaryPriority } from './glossary-priority.js';
@@ -2912,8 +2912,8 @@ function tidyGlossaryOutput(source, output) {
     return withDisplayCardsProtected(output, output => {
         const cleaned = dropDanglingOpenQuote(dropWrapQuotes(output, source), source);   // 6.4.5 원문 줄엔 꺾쇠가 없는데 번역문 줄만 통째로 감싼 「」
         if (extensionSettings.glossary_enabled === false) return cleaned;
-        const { entries, names } = tidyContext ?? glossaryTidyContext();
-        return enforceGlossaryNames(entries, source, cleaned, { names });
+        const { entries, names, prepared } = tidyContext ?? glossaryTidyContext();
+        return enforceGlossaryNames(entries, source, cleaned, { names, prepared });
     });
 }
 // Once restored, card keys, code and values must not enter later prose cleanup or cache repair.
@@ -2931,7 +2931,9 @@ let tidyContext = null;
 function glossaryTidyContext() {
     let names = [];
     try { const ctx = getContext(); names = [ctx.name1, ctx.name2]; } catch { names = []; }
-    return { entries: activeGlossaryEntries(), names };
+    const entries = activeGlossaryEntries();
+    let prepared = null;   // 7.2.8 항목에서만 나오는 이름 후보 — 한 번 훑고 이 문맥이 사는 동안 같이 쓴다 (repairShownTranslations 의 메시지들)
+    return { entries, names, get prepared() { return prepared ??= prepareGlossaryNames(entries, names); } };
 }
 
 function repairShownTranslation(id, message, context = getContext()) {
@@ -2975,8 +2977,8 @@ function repairShownTranslations() {
 function tidyNamesShown(source, shown) {
     if (extensionSettings.glossary_enabled === false || typeof shown !== 'string' || shown.includes('class="original_text')) return shown;
     try {
-        const { entries, names } = tidyContext ?? glossaryTidyContext();
-        return withDisplayCardsProtected(shown, value => enforceGlossaryNames(entries, source, value, { names }));
+        const { entries, names, prepared } = tidyContext ?? glossaryTidyContext();
+        return withDisplayCardsProtected(shown, value => enforceGlossaryNames(entries, source, value, { names, prepared }));
     } catch { return shown; }
 }
 let commentHookAdded = false;

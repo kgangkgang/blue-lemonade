@@ -21,9 +21,20 @@ function leftover() {
     try { return !!restoreState(); } catch { return false; }
 }
 
+function paint(root, color, want, chat) {
+    if (root.style.getPropertyValue('--bl-st-solid-tint') !== color) {
+        if (color) root.style.setProperty('--bl-st-solid-tint', color); else root.style.removeProperty('--bl-st-solid-tint');
+    }
+    if (root.classList.contains(CLASS) !== want) root.classList.toggle(CLASS, want);
+    if (root.classList.contains(CHAT) !== chat) root.classList.toggle(CHAT, chat);
+}
+
 function sync() {
     const root = document.documentElement, body = document.body;
     if (!body) return;
+    // 7.2.8 테마가 켜져 있으면(body.salty) 아래 want · chat 은 늘 false — 계산된 스타일을 읽지 않고 바로 뗀다
+    //   (테마 색을 바꿀 때마다 html style 이 바뀌어 여기서 스타일 계산을 앞당겼다: 시작 때 4배 CPU 260~400ms)
+    if (body.classList.contains('salty')) { paint(root, '', false, false); return; }
     const css = getComputedStyle(root);
     const off = !body.classList.contains('salty');
     const raw = css.getPropertyValue('--SmartThemeBlurTintColor').trim().toLowerCase();
@@ -43,11 +54,7 @@ function sync() {
     const chatAlpha = !chatRaw || chatRaw === 'transparent' ? 0 : parseColor(chatRaw)[3];
     const chat = off && valid && chatAlpha < 0.5 && leftover();
     const color = want || chat ? `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})` : '';
-    if (root.style.getPropertyValue('--bl-st-solid-tint') !== color) {
-        if (color) root.style.setProperty('--bl-st-solid-tint', color); else root.style.removeProperty('--bl-st-solid-tint');
-    }
-    if (root.classList.contains(CLASS) !== want) root.classList.toggle(CLASS, want);
-    if (root.classList.contains(CHAT) !== chat) root.classList.toggle(CHAT, chat);
+    paint(root, color, want, chat);
 }
 
 export function startStSolid() {

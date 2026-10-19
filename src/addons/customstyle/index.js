@@ -5,6 +5,7 @@ import { showThemeModal } from '../../modal.js';
 import { eventSource, event_types, saveSettingsDebounced } from '../../../../../../../script.js';
 import { extension_settings } from '../../../../../../extensions.js';
 import { ask } from '../../ask.js';   // 7.0.1 테마 확인 창 (기본 confirm 대신)
+import { isMainChatGenerating, whenMainChatIdle } from '../../main-chat-rules.js';   // 7.2.8 답을 받는 동안은 :root 를 읽지 않는다
 
 // Constants and Types
 const CSS_THEME_STYLE_VAR = '--custom-theme-style-inputs';
@@ -612,9 +613,17 @@ class CustomThemeSettingsManager {
             if (bootQuiet) { bootMissed = true; return; }
             later();
         });
+        // 7.2.8 답을 받는 동안(본채팅 생성)의 설정 저장은 생성이 끝난 뒤 한 번 본다: 글자가 들어올 때마다 스타일이 바뀌어 있어
+        //   :root 읽기가 그때마다 문서 전체 스타일 계산을 앞당겼다 (폰 4배 CPU 스트리밍 중 110~180 ms). 바뀐 설정은 끝난 뒤 그대로 반영된다
+        let afterReply = false;
         const later = () => {
             clearTimeout(settingsTimer);
+            if (isMainChatGenerating()) {
+                if (!afterReply) { afterReply = true; whenMainChatIdle({ quietMs: 300 }).then(() => { afterReply = false; later(); }); }
+                return;
+            }
             settingsTimer = setTimeout(() => {
+                if (isMainChatGenerating()) { later(); return; }   // 7.2.8 기다리는 사이 답이 시작됐으면 끝난 뒤로
                 // 5.6.4 (점검 RP-7): 저장마다 :root 계산 스타일을 그 자리에서 읽어 스타일 계산을 강제했다 (채팅 열 때 2~3번, 폰 리그 4배 71~123 ms).
                 // 화면을 한 번 그린 직후에 읽는다 — 스타일이 이미 계산돼 있어 거의 공짜. 숨은 탭은 그리기가 없으니 1초 뒤 그냥 읽는다 (부팅 boot 와 같은 방법)
                 cancelAnimationFrame(settingsFrame); clearTimeout(settingsLate);

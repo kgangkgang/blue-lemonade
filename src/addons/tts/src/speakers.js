@@ -6,7 +6,7 @@
 import { getContext, saveMetadataDebounced } from '../../../../../../../extensions.js';
 import { settings, save } from './settings.js';
 import { segmentMessage, parseRegexLines } from './text.js';
-import { peopleChanged } from '../../../people.js';   // 6.9.5 인물표 — 색 표가 바뀌면 알린다
+import { peopleChanged, invalidatePeople, peopleStamp, peopleMemoOn } from '../../../people.js';   // 6.9.5 인물표 — 색 표가 바뀌면 알린다 · 7.2.8 기억 비우기
 
 // 투표 가중치 (연구 deus.md 와 같게)
 const W = { label: 5, thought: 3, sameLine: 2, prevNarr: 1 };
@@ -32,7 +32,9 @@ function persist() {
 const fold = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, '');
 const cleanName = (s) => String(s || '').replace(/[*_`~"'“”‘’]/g, '').trim().slice(0, 40);
 const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
-const bump = (o, k, d) => { const v = (o[k] || 0) + d; if (v > 0) o[k] = v; else delete o[k]; };
+// 7.2.8 색 표(st)를 고치는 곳은 모두 dirty() — 별명표 · 인물표 기억을 그 자리에서 비운다 (bump 는 st 의 표 · 이름표에만 쓴다)
+const dirty = () => invalidatePeople();
+const bump = (o, k, d) => { const v = (o[k] || 0) + d; if (v > 0) o[k] = v; else delete o[k]; dirty(); };
 
 /** 색을 '#rrggbb' 소문자로 (#rgb 늘림, rgb() 변환); 못 읽으면 null */
 export function normColor(v) {
@@ -72,18 +74,19 @@ export function deltaE(a, b) {
 
 // ---- 채팅별 상태
 const EMPTY = () => ({ colors: {}, userColor: null, palette_at: 0, names: {}, learned: {}, seeded: false });
+const STATE_KEYS = Object.keys(EMPTY());
 let orphan = null; // 채팅이 없을 때 쓰는 임시 상태
 function state() {
     const md = ctx().chatMetadata;
     if (!md || typeof md !== 'object') return (orphan ||= EMPTY());
     let st = md.lemon_voice;
-    if (!st || typeof st !== 'object') st = md.lemon_voice = EMPTY();
-    for (const [k, v] of Object.entries(EMPTY())) if (!(k in st)) st[k] = v;
-    if (!st.seeded) seedFromCard(st);
+    if (!st || typeof st !== 'object') { st = md.lemon_voice = EMPTY(); dirty(); }
+    for (const k of STATE_KEYS) if (!(k in st)) { st[k] = EMPTY()[k]; dirty(); }
+    if (!st.seeded) { seedFromCard(st); dirty(); }
     return st;
 }
 function entry(st, c) {
-    const e = st.colors[c] || (st.colors[c] = { name: null, locked: false, auto: false, votes: {}, tvotes: {}, count: 0, aliases: [] });
+    const e = st.colors[c] || (dirty(), st.colors[c] = { name: null, locked: false, auto: false, votes: {}, tvotes: {}, count: 0, aliases: [] });
     e.votes ||= {}; e.tvotes ||= {}; e.aliases ||= []; e.count ||= 0;
     return e;
 }
@@ -151,6 +154,7 @@ export function renameCharacterKeys(s, { oldAvatar = '', newAvatar = '', oldName
         map[String(newName).trim()] = map[oldKey];
         out.voices++;
     }
+    if (out.voices) dirty();
     return out;
 }
 
@@ -158,8 +162,19 @@ export function renameCharacterKeys(s, { oldAvatar = '', newAvatar = '', oldName
 const personaName = () => String(ctx().name1 || '').trim();
 const charName = () => String(ctx().name2 || '').trim();
 
-/** 별명표: pairs = [표면 이름, 대표 이름], map = 접힌 이름 → 대표 이름 */
+/** 별명표: pairs = [표면 이름, 대표 이름], map = 접힌 이름 → 대표 이름 (돌려준 것은 읽기만 — 기억해 둔 것을 같이 쓴다)
+ *  7.2.8 기억: 인물표 · 화자 찾기 · 대사 칠하기가 이름마다 불러 채팅 열기 · 답마다 별명표를 수백 번 새로 만들었다.
+ *  같은 색 표(st) · 설정 객체 · 목소리 목록 · 연결표 · 페르소나 · 캐릭터 이름 · 이름 다리 · 판 번호(peopleStamp — dirty() · save() · peopleChanged() 가 올린다)면 그대로 */
+let tableMemo = null;
 function aliasTable(st) {
+    const s0 = settings(), c0 = ctx();
+    const keys = [peopleStamp(), st, st?.names, st?.colors, s0, s0.voices, s0.voices?.length, s0.char_map, s0.char_map ? Object.keys(s0.char_map).length : 0, c0.name1, c0.name2, globalThis[NAMES_BRIDGE]];
+    if (peopleMemoOn() && tableMemo && tableMemo.keys.length === keys.length && tableMemo.keys.every((x, i) => Object.is(x, keys[i]))) return tableMemo.table;
+    const table = buildAliasTable(st);
+    tableMemo = peopleMemoOn() ? { keys, table } : null;
+    return table;
+}
+function buildAliasTable(st) {
     const pairs = [], map = new Map();
     const put = (surface, canonName) => {
         const s = String(surface || '').trim(), k = fold(s);
@@ -277,6 +292,12 @@ export function peopleNames() {
     const u = personaName(); if (u) out.push(u);
     return out;
 }
+/** 7.2.8 인물표 기억의 열쇠 (src/people.js stamp): 알림 없이 바뀌는 것 — 채팅(메타 객체 · 색 표) · 페르소나 · 캐릭터 · 설정 객체 · 목소리 목록 · 연결표 · 나 · 「엔진」 */
+export function peopleInputs() {
+    const c = ctx(), s = settings(), md = c.chatMetadata;
+    const lv = md && typeof md === 'object' ? md.lemon_voice : undefined;
+    return [md, lv, lv?.names, lv?.colors, lv?.userColor, c.name1, c.name2, c.characterId, c.groupId, s, s.voices, s.voices?.length, s.char_map, s.char_map ? Object.keys(s.char_map).length : 0, s.user_voice, s.prefer_provider, s.prefer_keep, s.providers];
+}
 /** 나(페르소나) 이름인가 — 별명표를 거쳐 */
 export function isPersonaName(name) {
     const u = personaName();
@@ -343,7 +364,7 @@ function applyVotes(st, rec, sign) {
         bump(e.votes, name, sign * w);
         if (t) bump(e.tvotes, name, sign * w);
     }
-    for (const c of rec.k) { const e = entry(st, c); e.count = Math.max(0, e.count + sign); }
+    for (const c of rec.k) { const e = entry(st, c); e.count = Math.max(0, e.count + sign); dirty(); }
 }
 function retract(st, rec) {
     if (!rec) return;
@@ -386,6 +407,7 @@ function learnUnits(st, units) {
 // ---- 표 → 이름
 const autoClear = (e) => { if (e.auto) { e.name = null; e.auto = false; } };
 function resolveAll(st) {
+    dirty();   // 7.2.8 부르기 전에 고친 이름 · 별명(setColor · importPalette)을 별명표가 보게
     const { map } = aliasTable(st);
     const cn = (n) => canonWith(map, n);
     const USER = cn(personaName());
@@ -423,6 +445,7 @@ function resolveAll(st) {
     }
     // 표도 대화문도 이름도 없는 빈 항목은 지운다
     for (const [c, e] of Object.entries(st.colors)) if (!e.locked && !e.count && !Object.keys(e.votes).length && !e.name && c !== st.userColor) delete st.colors[c];
+    dirty();
 }
 
 // ---- text.js 옵션 (다시 배우기용; index.js · player.js 의 실시간 학습과 같은 규칙)
@@ -509,7 +532,7 @@ export function syncChat() {
     });
     let dropped = 0;
     for (const list of byHash.values()) for (const rec of list) { retract(st, rec); dropped++; }
-    st.learned = next;
+    st.learned = next; dirty();
     if (moved || dropped) { resolveAll(st); persist(); }
     return moved + dropped;
 }
@@ -552,7 +575,7 @@ export function importPalette({ deferSave = false } = {}) {
         e.name = hit ? known.get(fold(hit)) : names[0];
         e.locked = true; e.auto = false; e.aliases = names;
     }
-    st.palette_at = Date.now();
+    st.palette_at = Date.now(); dirty();
     resolveAll(st); if (!deferSave) persist();
     return found;
 }
@@ -649,6 +672,7 @@ export function setColor(color, name, locked = true) {
     //   화자 찾기 · 이름표가 어긋났다. 같은 사람의 다른 표기(aliases 안의 이름)로 바꾸는 건 그대로 둔다
     const samePerson = n && (fold(e.name || '') === fold(n) || (e.aliases || []).some(a => fold(a) === fold(n)));
     if (!samePerson) e.aliases = [];
+    dirty();
     if (!n) { e.name = null; e.locked = false; e.auto = false; rememberOnCard(c, null); }
     else { e.name = n; e.locked = !!locked; e.auto = false; rememberOnCard(c, e.locked ? n : null); }
     resolveAll(st); persist();
@@ -662,7 +686,7 @@ export function resetLearning(keepLocked = true) {
         if (keepLocked && e.locked) { e.votes = {}; e.tvotes = {}; e.count = 0; }
         else delete st.colors[c];
     }
-    st.names = {}; st.learned = {}; st.userColor = null; st.seeded = false;
+    st.names = {}; st.learned = {}; st.userColor = null; st.seeded = false; dirty();
     // palette_at 은 그대로 둔다: 비운 뒤 다음 답장에서 팔레트가 조용히 되살아나지 않도록 (다시 넣기는 "프리셋에서 불러오기" 버튼)
     seedFromCard(st);
     resolveAll(st); persist();

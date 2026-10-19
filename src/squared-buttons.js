@@ -19,12 +19,18 @@ const alpha = color => {
     return parts.length > 3 ? parseFloat(parts[3]) : 1;
 };
 
+/** 7.2.8 Checks that need no layout (same answers as the first lines of isRoundTextButton): run before offsetParent so
+ *  marked, skipped and excluded elements never ask for layout. */
+function cheapSkip(el, view) {
+    if (!(el instanceof view.HTMLElement) || el.hasAttribute(ATTR)) return true;
+    if (el.matches('input,select,textarea,img,svg') || el.closest(SKIP_AREA)) return true;
+    const cls = typeof el.className === 'string' ? el.className : '';
+    return SKIP_CLASS.test(cls) || SKIP_CLASS.test(el.id);
+}
+
 /** True when the element is a painted, clickable text control whose corners make a pill or circle. */
 export function isRoundTextButton(el, view = el.ownerDocument.defaultView) {
-    if (!(el instanceof view.HTMLElement) || el.hasAttribute(ATTR)) return false;
-    if (el.matches('input,select,textarea,img,svg') || el.closest(SKIP_AREA)) return false;
-    const cls = typeof el.className === 'string' ? el.className : '';
-    if (SKIP_CLASS.test(cls) || SKIP_CLASS.test(el.id)) return false;
+    if (cheapSkip(el, view)) return false;
     const rect = el.getBoundingClientRect();
     if (rect.height < 24 || rect.width < 24) return false;
     const text = (el.innerText || '').trim();
@@ -47,15 +53,22 @@ export function watchSquaredButtons(doc, host) {
     style.textContent = `[${ATTR}]{border-radius:var(--bl-r-btn,8px)!important}`;
     (doc.head || doc.documentElement).append(style);
     const roots = new Set(), waiting = new Set();
-    let timer = 0, stopped = false;
+    let timer = 0, frame = 0, stopped = false;
     // Measure every candidate first, then mark: marking between reads re-dirtied style and forced one recalc per button.
     function scan(root, found) {
         if (!root?.isConnected) return;
         const list = root.matches?.(CANDIDATES) ? [root, ...root.querySelectorAll(CANDIDATES)] : root.querySelectorAll(CANDIDATES);
-        for (const el of list) if (el.offsetParent !== null && isRoundTextButton(el, host)) found.push(el);
+        for (const el of list) if (!cheapSkip(el, host) && el.offsetParent !== null && isRoundTextButton(el, host)) found.push(el);
+    }
+    // 7.2.8 Measure at the start of a frame: the layout read there is the one the frame needs anyway. Read from the 300 ms timer,
+    // it forced an extra full layout whenever the page changed again before the next paint (startup, chat open: 4x CPU 250-450 ms).
+    function measure() {
+        timer = 0; if (stopped) return;
+        if (typeof host.requestAnimationFrame !== 'function') { flush(); return; }
+        if (!frame) frame = host.requestAnimationFrame(flush);
     }
     function flush() {
-        timer = 0; if (stopped) return;
+        frame = 0; timer = 0; if (stopped) return;
         const list = roots.has(doc.body) ? [doc.body] : [...roots];
         roots.clear();
         const found = [];
@@ -71,7 +84,7 @@ export function watchSquaredButtons(doc, host) {
         // A closed drawer shows nothing; opening it changes its class, which re-checks the whole drawer.
         if (el.closest?.('.drawer-content.closedDrawer')) return;
         roots.add(el);
-        if (!timer) timer = host.setTimeout(flush, 300);
+        if (!timer && !frame) timer = host.setTimeout(measure, 300);
     };
     // Drawers and popups open by class/style changes, so attribute changes re-check that subtree.
     const observer = new host.MutationObserver(records => {
@@ -85,7 +98,7 @@ export function watchSquaredButtons(doc, host) {
     host.addEventListener('resize', resize);
     queue(doc.body);
     return () => {
-        stopped = true; observer.disconnect(); host.clearTimeout(timer); host.removeEventListener('resize', resize);
+        stopped = true; observer.disconnect(); host.clearTimeout(timer); if (frame) host.cancelAnimationFrame?.(frame); host.removeEventListener('resize', resize);
         for (const el of doc.querySelectorAll(`[${ATTR}]`)) el.removeAttribute(ATTR);
         style.remove();
     };

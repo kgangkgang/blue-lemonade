@@ -24,7 +24,7 @@ import * as paint from './src/paint.js';   // 6.2.3 색 없는 대사에 화자 
 import * as pregen from './src/pregen.js';
 import * as modelswitch from './src/modelswitch.js';
 import { log } from './src/log.js';
-import { registerPeopleSource, peopleChanged } from '../../people.js';   // 6.9.5 인물표 — 대사 색 · 목소리를 이름 다리의 people 로
+import { registerPeopleSource, peopleChanged, invalidatePeople } from '../../people.js';   // 6.9.5 인물표 — 대사 색 · 목소리를 이름 다리의 people 로
 
 export { VERSION };
 export let duplicate = false;
@@ -336,6 +336,7 @@ const peopleSource = {
         return { names: speakers.namesOf(names[0]), color, voice: voice ? { uid: voice.uid, name: voice.name, provider: voice.provider, lang: voice.lang || '' } : null };
     },
     names() { return runtimeEnabled() ? speakers.peopleNames() : []; },
+    stamp: () => [runtimeEnabled(), ...speakers.peopleInputs()],   // 7.2.8 인물표 기억 — 이 값이 같고 판(peopleStamp)이 같으면 같은 답
 };
 // 글이 바뀐 메시지(편집·스와이프·다시 그림): 저장된 대사 분석은 글 해시로 묶여 있어 analysis 쪽이 낡은 것을 걸러 낸다
 function onMessageChanged(id) {
@@ -554,6 +555,6 @@ export const ready = new Promise((resolve, reject) => jQuery(() => { (async () =
     });
     setTimeout(() => verifyAddonCss({ folder: 'tts', name: '--lv-css-version', version: VERSION, title: 'TTS', selector: '.lv-settings' }), 3000);
     // 7.0.2 발음 사전 · 음소거 낱말을 다른 기기의 옛 설정 저장에 잃지 않게 — 칸마다 고친 시각(field_stamps)이 늦은 쪽 (../list-sync.js)
-    try { registerAddonMerge('tts', { module: 'lemon_voice', store: () => extension_settings.lemon_voice, text: SYNC_TEXT_FIELDS, stampKey: 'field_stamps', save: saveSettingsDebounced, onChange: () => { try { ui.refreshChat?.(); } catch { /* 설정 화면 없음 */ } } }); }
+    try { registerAddonMerge('tts', { module: 'lemon_voice', store: () => extension_settings.lemon_voice, text: SYNC_TEXT_FIELDS, stampKey: 'field_stamps', save: saveSettingsDebounced, onChange: () => { invalidatePeople(); try { ui.refreshChat?.(); } catch { /* 설정 화면 없음 */ } } }); }
     catch (e) { log('err', `기기 간 합치기 실패: ${String(e?.message || e).slice(0, 40)}`); }
 })().then(resolve, reject); }));

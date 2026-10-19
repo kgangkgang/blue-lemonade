@@ -52,7 +52,18 @@ function fenceRanges(text) {
     }
     return ranges;
 }
+// 7.2.8 같은 글을 여러 번 훑지 않게 최근 글 몇 개의 결과를 기억한다 (순수 함수 — 글이 같으면 결과가 같다). 채팅을 열 때 저장된 번역문 고치기가
+//   메시지마다 같은 원문을 세 번 · 번역문을 두세 번 훑었다. 돌려줄 때는 칸마다 새 객체 (부른 쪽이 고쳐도 기억은 그대로)
+const cardMemo = new Map();
 function outerCards(text) {
+    const hit = cardMemo.get(text);
+    if (hit) { cardMemo.delete(text); cardMemo.set(text, hit); return hit.map(card => ({ ...card })); }
+    const ranges = scanOuterCards(text);
+    if (cardMemo.size >= 16) cardMemo.delete(cardMemo.keys().next().value);
+    cardMemo.set(text, ranges.map(card => ({ ...card })));
+    return ranges;
+}
+function scanOuterCards(text) {
     const ranges = [], opaqueRanges = [], fences = fenceRanges(text), tokens = new RegExp(TAG.source,'g'); let m, active = null, depth = 0, opaque = null;
     while ((m = tokens.exec(text))) {
         const fence = fences.find(x => m.index >= x.start && m.index < x.end);

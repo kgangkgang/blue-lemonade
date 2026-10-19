@@ -13,11 +13,27 @@ const NAMES_KEY = Symbol.for('blue-lemonade.names');   // names-bridge.js 와 �
 const NAMES_EVENT = 'bl:names-changed';
 
 const fold = s => String(s ?? '').normalize('NFKC').trim().toLowerCase().replace(/[\s\-‐‑–—_·・]+/g, ' ');
-const sources = new Map();   // id → { person(names) → { names?, color?, voice? } | null, names() → string[] }
+const sources = new Map();   // id → { person(names) → { names?, color?, voice? } | null, names() → string[], stamp?() → 값 | 배열 }
 let host = globalThis, doc = () => globalThis.document, timer = 0, listening = false;
 
+// 7.2.8 get() 기억: 다른 확장이 이름마다 부른다(채팅 열기 · 답마다 수백 번). 같은 판 안에서는 같은 이름에 같은 (얼린) 객체를 돌려준다.
+//   판이 바뀌는 것: invalidatePeople()(peopleChanged() 도 바로 부른다 — 알림은 120ms 뒤라도 기억은 그 자리에서 비운다) ·
+//   이름 다리 객체 · 공급자 목록 · 공급자마다 stamp() 값(채팅 · 페르소나 · 설정 객체처럼 알림 없이 바뀌는 것).
+//   stamp() 가 없는 공급자가 하나라도 있으면 기억하지 않는다(예전처럼 부를 때마다 묻는다)
+const MEMO_MAX = 600;
+let stamp = 0, memoOn = true, memoKeys = null;
+const memo = new Map();
+/** 기억을 비운다 (알림 없이) — 인물표에 닿는 것을 바꾼 곳이 바로 부른다 */
+export function invalidatePeople() { stamp++; memo.clear(); memoKeys = null; }
+/** 지금 판 번호 — 다른 모듈이 자기 기억(TTS 별명표)을 같은 때에 비우려고 본다 */
+export function peopleStamp() { return stamp; }
+/** 기억을 쓰는가 (시험이 끄고 견준다) */
+export const peopleMemoOn = () => memoOn;
+/** 시험용: 기억 끄고 켜기 */
+export function _setPeopleMemoForTest(on) { memoOn = !!on; invalidatePeople(); }
+
 /** 시험용: 전역 · 문서를 바꿔 끼운다 */
-export function _setPeopleHostForTest(next = globalThis, nextDoc = () => globalThis.document) { host = next; doc = nextDoc; listening = false; }
+export function _setPeopleHostForTest(next = globalThis, nextDoc = () => globalThis.document) { host = next; doc = nextDoc; listening = false; invalidatePeople(); }
 
 function bridge() {
     const api = host[NAMES_KEY];
@@ -40,9 +56,30 @@ function addNames(list, more) {
     return list;
 }
 
+const sameKeys = (a, b) => a && a.length === b.length && a.every((x, i) => Array.isArray(x) ? Array.isArray(b[i]) && x.length === b[i].length && x.every((y, j) => Object.is(y, b[i][j])) : Object.is(x, b[i]));
+/** 지금 기억이 맞는 판인지 — 아니면 비운다. 기억할 수 없으면 false */
+function memoReady() {
+    if (!memoOn) return false;
+    const keys = [stamp, host[NAMES_KEY]];
+    for (const source of sources.values()) {
+        if (typeof source.stamp !== 'function') return false;
+        let k;
+        try { k = source.stamp(); } catch { return false; }
+        keys.push(Array.isArray(k) ? k.slice() : k);
+    }
+    if (!sameKeys(memoKeys, keys)) { memo.clear(); memoKeys = keys; }
+    return true;
+}
 function get(name) {
     const n = String(name ?? '').trim();
     if (!n) return null;
+    const useMemo = memoReady();
+    if (useMemo && memo.has(n)) return memo.get(n);
+    const out = lookup(n);
+    if (useMemo) { if (memo.size >= MEMO_MAX) memo.clear(); memo.set(n, out); }
+    return out;
+}
+function lookup(n) {
     const names = addNames([n], aliasesOf(n));
     let c = null, v = null;
     for (const source of sources.values()) {
@@ -82,6 +119,7 @@ export const people = Object.freeze({ version: PEOPLE_VERSION, get, list, onChan
 
 /** 무엇이 바뀌었을 때 (공급자 · 이름 다리) — 짧게 모아 한 번 알린다 (타이머만 — 숨은 탭에서도) */
 export function peopleChanged() {
+    invalidatePeople();
     if (timer) return;
     timer = setTimeout(() => {
         timer = 0;
@@ -120,8 +158,9 @@ function ensureBridge() {
 export function registerPeopleSource(id, source) {
     if (!id || !source || typeof source !== 'object') return () => {};
     sources.set(String(id), source);
+    invalidatePeople();
     ensureBridge();
     listenNames();
     peopleChanged();
-    return () => { if (sources.get(String(id)) === source) { sources.delete(String(id)); peopleChanged(); } };
+    return () => { if (sources.get(String(id)) === source) { sources.delete(String(id)); invalidatePeople(); peopleChanged(); } };
 }
