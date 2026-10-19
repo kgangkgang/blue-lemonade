@@ -9,6 +9,7 @@ import { fitHtmlFrame } from './frame-fit.js';
 import { normalizeTrackerSpacing } from './tracker-spacing.js';
 import { cleanStyle, excerptList, isCssColor } from './excerpts.js';
 import { imageList, safeImageSrc as safeImageUrl } from './images.js';
+import { reasoningHidden } from './view-mode.js';
 // lib.js의 export는 실리태번 버전마다 달라서, 예전부터 늘 있던 전역 DOMPurify를 쓴다.
 const { DOMPurify } = globalThis;
 
@@ -94,9 +95,13 @@ export function renderMessageHtml(message, index = null) {
     }
 }
 
+/**
+ * 생각 과정(extra.reasoning). 7.2.7: 채팅이 생각 칸을 숨기면(실리태번 「모델 추론 요청」 꺼짐 → body.salty-reasoning-off) 여기도 '' —
+ * 북마크 카드 · 앞뒤 문맥 창이 이 함수 하나로 그린다 (view-mode.js reasoningHidden)
+ */
 export function renderReasoningHtml(message, index = null) {
     const reasoning = message?.extra?.reasoning;
-    if (!reasoning) return '';
+    if (!reasoning || reasoningHidden()) return '';
     try {
         return messageFormatting(loosenMarkdown(reasoning), message.name, false, !!message.is_user, Number.isInteger(index) && index >= 0 ? index : -1, {}, true);
     } catch {
@@ -213,7 +218,10 @@ export function safeImageSrc(src) {
     return safeImageUrl(src, document.baseURI);
 }
 
-/** 카드의 그림 줄. 누르면 크게 보고(image-open), × 로 뗀다(image-remove). 주소가 이상한 칸은 그리지 않는다. */
+/**
+ * 카드의 그림 줄. 누르면 크게 보고(image-open), × 로 뗀다(image-remove). 주소가 이상한 칸은 그리지 않는다.
+ * 7.2.7: 잘라 낸 썸네일이 아니라 원래 비율 그대로 카드 폭에 맞춰 크게 (style.css) — 불러오기는 loading=lazy, 다 받으면 panel.js 가 is-loaded
+ */
 export function renderImagesHtml(fav, { removable = true } = {}) {
     const items = imageList(fav).map((item) => {
         const src = safeImageSrc(item.src);

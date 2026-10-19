@@ -8,7 +8,9 @@ import { escapeHtml, formatDate, renderMessageHtml, renderReasoningHtml, renderN
 import { excerptsText } from './excerpts.js';
 import { imageList, imageKey } from './images.js';
 import { openExcerptEditor } from './excerpt-editor.js';
-import { confirmSheet, openSheet } from './ui-kit.js';
+import { confirmSheet } from './ui-kit.js';
+import { normalizeViewMode, filterForView, imageTiles, viewCount, countLabel } from './view-mode.js';   // 7.2.7 글만 · 글+그림 · 그림만
+import { openImageViewer } from './image-viewer.js';   // 7.2.7 그림 크게 보기 (원본 해상도까지 확대)
 import { openNoteEditor, openMessageEditor, openContextViewer, confirmDeleteBookmark, enterPreview, isPreviewing, openTranslationEditor, confirmClearTranslation } from './viewers.js';
 import { hasTranslator, hasTranslation, isShowingOriginal, translateMessage, restoreTranslation } from './translate.js';
 import { renderSettingsPage, disposeSettingsPage } from './settings-view.js';
@@ -29,6 +31,7 @@ const view = {
     expanded: new Set(),
     sourceCollapse: null,
     sourceToggles: new Map(), // 저장값은 그대로 두고 이번 목록에서 누른 원문만 접거나 펼친다.
+    tiles: [], // 7.2.7 그림만 보기의 칸 (크게 보기에서 넘길 목록)
     subOpen: null, // 번역 줄이 펼쳐진 북마크 id (한 번에 하나만)
     session: 0, // 새로 열 때마다 늘려서, 늦게 도착한 이전 요청 결과를 버린다.
     open: false,
@@ -83,6 +86,11 @@ function buildShell() {
                         </div>
                         <button type="button" class="cg-chip" data-act="sort"><i class="fa-solid fa-arrow-down-short-wide"></i><span></span></button>
                     </div>
+                    <div class="cg-viewbar" role="group" aria-label="보기 고르기">
+                        <button type="button" class="cg-view" data-view="text" aria-pressed="false"><i class="fa-solid fa-align-left" aria-hidden="true"></i><span>글만</span></button>
+                        <button type="button" class="cg-view" data-view="all" aria-pressed="false"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>글+그림</span></button>
+                        <button type="button" class="cg-view" data-view="images" aria-pressed="false"><i class="fa-solid fa-image" aria-hidden="true"></i><span>그림만</span></button>
+                    </div>
                     <div class="cg-list"></div>
                     <nav class="cg-pager" hidden></nav>
                 </main>
@@ -98,6 +106,9 @@ function buildShell() {
         notePointer = note ? { note, x: event.clientX, y: event.clientY } : null;
     });
     root.addEventListener('click', onClick);
+    // 7.2.7 그림: 다 받으면 원래 비율 · 원래 크기(카드보다 작으면 그대로)로 — 받기 전에는 자리(2:3)만 잡아 두어 loading=lazy 가 화면 밖 그림을 미룬다
+    root.addEventListener('load', event => markImage(event.target, 'is-loaded'), true);
+    root.addEventListener('error', event => markImage(event.target, 'is-failed'), true);
     root.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' && (event.ctrlKey || event.altKey)) event.stopPropagation();
     });
@@ -123,6 +134,19 @@ function buildShell() {
             if (card) updateExpandButton(card);
         }
     });
+}
+
+function markImage(img, state) {
+    if (img?.tagName !== 'IMG') return;
+    const holder = img.closest('.cg-image, .cg-tile');
+    if (holder) holder.classList.add(state);
+}
+
+/** 이미 받아 둔(캐시) 그림은 load 를 기다리지 않는다 */
+function markLoadedImages(root) {
+    for (const img of root.querySelectorAll('.cg-image img, .cg-tile img')) {
+        if (img.complete && img.naturalWidth > 0) markImage(img, 'is-loaded');
+    }
 }
 
 // ── 열기·닫기 ────────────────────────────────────────────────
@@ -379,7 +403,8 @@ function renderHeader() {
 function renderSidebar() {
     snapCurrent();   // 7.2.6 채팅을 옮긴 뒤 목록 캐시가 쓸 현재 채팅의 북마크
     const records = listedRecords();
-    const total = records.reduce((sum, record) => sum + record.favorites.length, 0);
+    const mode = viewMode();   // 7.2.7 개수는 고른 보기 기준
+    const total = records.reduce((sum, record) => sum + viewCount(record.favorites, mode), 0);
     $('.cg-side-total').textContent = view.loadingOthers ? '' : `${total}`;
     const items = records.map((record) => {
         const active = record.key === view.selectedKey;
@@ -391,7 +416,7 @@ function renderSidebar() {
                     <span class="cg-chat-name">${escapeHtml(record.label)}</span>
                     <span class="cg-chat-meta">${record.isCurrent ? '<em>현재 채팅</em> · ' : ''}메시지 ${record.messageCount ?? 0}</span>
                 </span>
-                <span class="cg-chat-count">${record.favorites.length}</span>
+                <span class="cg-chat-count">${viewCount(record.favorites, mode)}</span>
             </button>`;
     }).join('');
     const loading = view.loadingOthers
@@ -470,13 +495,38 @@ function searchAllMessages(record, direction) {
     return items;
 }
 
+/** 7.2.7 보기: 글만(text) · 글+그림(all) · 그림만(images) — 애드온 설정에 저장(채팅마다가 아니라 전체). 전체 메시지 검색 중에는 메시지를 다 보여 준다 */
+function viewMode() {
+    return view.allMessages ? 'all' : normalizeViewMode(settings().viewMode);
+}
+
+function renderViewbar() {
+    const bar = $('.cg-viewbar');
+    bar.hidden = view.allMessages;
+    const mode = normalizeViewMode(settings().viewMode);
+    for (const button of bar.querySelectorAll('[data-view]')) button.setAttribute('aria-pressed', String(button.dataset.view === mode));
+}
+
+function setViewMode(value) {
+    const next = normalizeViewMode(value);
+    if (normalizeViewMode(settings().viewMode) === next) return;
+    settings().viewMode = next;
+    saveSettings();
+    view.page = 1;
+    view.subOpen = null;
+    renderSidebar();
+    renderMain();
+    $('.cg-list').scrollTop = 0;
+}
+
 function renderToolbar(record, counts) {
+    renderViewbar();
     $('.cg-toolbar-chat').innerHTML = record
         ? `${escapeHtml(record.label)}${record.isCurrent ? '<span class="cg-badge">현재 채팅</span>' : ''}<i class="fa-solid fa-chevron-down cg-toolbar-caret"></i>`
         : '';
     let meta = '';
     if (counts && view.allMessages) meta = view.query ? `검색 결과 ${counts.shown} / 메시지 ${counts.messages}` : `메시지 ${counts.messages}개`;
-    else if (counts) meta = view.query ? `검색 결과 ${counts.shown} / ${counts.total}` : `북마크 ${counts.total}개`;
+    else if (counts) meta = view.query ? `검색 결과 ${counts.shown} / ${counts.total}` : countLabel(counts.total, viewMode());
     $('.cg-toolbar-meta').textContent = meta;
     const sortButton = $('[data-act="sort"]');
     const descending = settings().sortOrder === 'desc';
@@ -500,6 +550,8 @@ function renderListState(state, detail = '') {
         nochat: ['fa-comments', '볼 채팅이 없어요', '왼쪽 목록에서 채팅을 골라 주세요.'],
         nomatch: ['fa-magnifying-glass', view.allMessages ? '찾는 메시지가 없어요' : '찾는 북마크가 없어요', `“${escapeHtml(view.query)}”${view.noteOnly && !view.allMessages ? ' · 메모에서만 찾았어요' : ''}`],
         typequery: ['fa-comments', '이 채팅의 모든 메시지에서 찾아요', '검색어를 넣으면 북마크가 아닌 메시지도 나와요.'],
+        notext: ['fa-file-lines', '글 북마크가 없어요', '이 채팅에는 그림 북마크만 있어요. 「글+그림」이나 「그림만」에서 볼 수 있어요.'],
+        noimages: ['fa-image', '붙인 그림이 없어요', '그림을 북마크에 담는 확장에서 그림의 별을 누르면 여기에 모여요.'],
     };
     const [icon, title, text] = states[state];
     list.innerHTML = `
@@ -528,16 +580,19 @@ function renderMain() {
         return;
     }
 
-    const items = visibleBookmarks(record);
-    renderToolbar(record, { shown: items.length, total: record.favorites.length, messages: record.messages?.length ?? record.messageCount ?? 0 });
+    const mode = viewMode();
+    const items = filterForView(visibleBookmarks(record), mode);
+    const tiles = mode === 'images' ? imageTiles(items) : null;
+    renderToolbar(record, { shown: tiles ? tiles.length : items.length, total: view.allMessages ? record.favorites.length : viewCount(record.favorites, mode), messages: record.messages?.length ?? record.messageCount ?? 0 });
     clearHighlights();
     if (view.allMessages) {
         if (!view.query) return renderListState('typequery');
         if (!items.length) return renderListState('nomatch');
     } else {
         if (!record.favorites.length) return renderListState('empty');
-        if (!items.length) return renderListState('nomatch');
+        if (!items.length || (tiles && !tiles.length)) return renderListState(view.query ? 'nomatch' : mode === 'images' ? 'noimages' : mode === 'text' ? 'notext' : 'nomatch');
     }
+    if (tiles) return renderTiles(record, tiles);
 
     const perPage = settings().itemsPerPage;
     const totalPages = Math.max(1, Math.ceil(items.length / perPage));
@@ -547,7 +602,45 @@ function renderMain() {
     const list = $('.cg-list');
     list.innerHTML = pageItems.map(({ fav, index }) => renderCard(record, fav, index)).join('');
     activateCards([...list.querySelectorAll('.cg-card')]);
+    markLoadedImages(list);
     renderPager(totalPages);
+}
+
+// ── 그림만 보기 (7.2.7) ─────────────────────────────────────
+// 원래 비율 그대로 두세 줄 격자(CSS columns). 한 쪽에 북마크 한 쪽 수의 두 배(24 이상) — 그림은 loading=lazy 라 화면에 올 때 받는다.
+const indexText = index => (Number.isFinite(index) && index !== Number.MAX_SAFE_INTEGER ? `#${index}` : '#?');
+
+function tileLabel(record, { fav, index }) {
+    const name = bookmarkMessage(record, fav)?.name ?? fav.sender ?? '';
+    return name ? `${name} · ${indexText(index)}` : indexText(index);
+}
+
+function renderTile(record, tile, at) {
+    const src = safeImageSrc(tile.image.src);
+    const label = indexText(tile.index);
+    if (!src) {
+        return `<figure class="cg-tile is-broken" role="listitem"><span class="cg-tile-open" role="img" aria-label="주소가 잘못된 그림"><i class="fa-solid fa-link-slash" aria-hidden="true"></i></span><figcaption class="cg-tile-index" aria-hidden="true">${label}</figcaption></figure>`;
+    }
+    return `<figure class="cg-tile" role="listitem"><button type="button" class="cg-tile-open" data-tile-open="${at}" aria-label="그림 크게 보기 · ${escapeHtml(tileLabel(record, tile))}"><img src="${escapeHtml(src)}" alt="" loading="lazy" decoding="async"></button><figcaption class="cg-tile-index" aria-hidden="true">${label}</figcaption></figure>`;
+}
+
+function renderTiles(record, tiles) {
+    const perPage = Math.max(24, settings().itemsPerPage * 2);
+    const totalPages = Math.max(1, Math.ceil(tiles.length / perPage));
+    view.page = Math.min(Math.max(1, view.page), totalPages);
+    const first = (view.page - 1) * perPage;
+    view.tiles = tiles;
+    const list = $('.cg-list');
+    list.innerHTML = `<div class="cg-tiles" role="list" aria-label="붙인 그림">${tiles.slice(first, first + perPage).map((tile, i) => renderTile(record, tile, first + i)).join('')}</div>`;
+    markLoadedImages(list);
+    renderPager(totalPages);
+}
+
+function openTile(at) {
+    const record = selectedRecord();
+    if (!record || !view.tiles[at]) return;
+    // 넘기기는 이 채팅의 (검색에 걸린) 그림 전부 — 쪽을 넘지 않아도 된다
+    openImageViewer(view.tiles.map(tile => ({ src: tile.image.src, prompt: tile.image.prompt, label: tileLabel(record, tile) })), at);
 }
 
 // 휴대폰에서는 버튼 여섯 개가 한 줄에 들어가도록 짧은 이름을 쓴다.
@@ -763,8 +856,8 @@ function renderCard(record, fav, index) {
     const noteContent = note ? `<div class="cg-note${sourcePreview ? '' : ' cg-note--summary'}" role="note" aria-label="메모·발췌"><div class="salty-preview cg-chatlike" data-prev="bookmark"><div class="mes" is_user="${isUser}"><div class="mes_block"><div class="cg-note-text mes_text">${note}</div></div></div></div></div>` : '';
     // 채팅에서 골라 북마크한 글 — 메모 위에, 고를 때 보이던 모양 그대로 (없으면 빈 글이라 예전 카드와 같다)
     const excerpts = renderExcerptsHtml(fav, { summary: !sourcePreview, removable: !fav.virtual });
-    // 붙인 그림(다른 확장의 즐겨찾기 — 1.4.9)은 발췌 위에. 카드가 왜 생겼는지 먼저 보이게
-    const images = renderImagesHtml(fav, { removable: !fav.virtual });
+    // 붙인 그림(다른 확장의 즐겨찾기 — 1.4.9)은 발췌 위에. 카드가 왜 생겼는지 먼저 보이게 · 7.2.7 「글만」 보기에서는 그림을 빼고 글만
+    const images = viewMode() === 'text' ? '' : renderImagesHtml(fav, { removable: !fav.virtual });
     const content = sourcePreview ? source + images + excerpts + noteContent : `
         ${images}
         ${excerpts}
@@ -1021,8 +1114,11 @@ async function onCardAction(action, card, element = null) {
     switch (action) {
         case 'image-open': {
             const src = element?.closest('[data-image-src]')?.dataset.imageSrc;
-            const item = imageList(fav).find(image => imageKey(image.src, location.origin) === imageKey(src, location.origin));
-            if (item) openImageSheet(item);
+            const images = imageList(fav);
+            const at = images.findIndex(image => imageKey(image.src, location.origin) === imageKey(src, location.origin));
+            // 7.2.7 이 북마크의 그림들을 크게 — 원본 해상도까지 확대, 여럿이면 넘긴다
+            const label = tileLabel(record, { fav, index });
+            if (at >= 0) openImageViewer(images.map(image => ({ src: image.src, prompt: image.prompt, label })), at);
             break;
         }
         case 'image-remove': {
@@ -1127,17 +1223,6 @@ async function onCardAction(action, card, element = null) {
     }
 }
 
-/** 붙인 그림을 크게 본다 (1.4.9). 그림을 만든 태그가 있으면 아래에 함께 보여 준다. */
-function openImageSheet(item) {
-    const src = safeImageSrc(item.src);
-    if (!src) return;
-    const prompt = typeof item.prompt === 'string' ? item.prompt.trim() : '';
-    openSheet({
-        title: '붙인 그림', icon: 'fa-image', size: 'lg', className: 'cg-image-sheet',
-        body: `<div class="cg-image-view"><img src="${escapeHtml(src)}" alt=""></div>${prompt ? `<pre class="cg-image-prompt">${escapeHtml(prompt)}</pre>` : ''}`,
-    });
-}
-
 /** 전체 메시지 검색을 켜고 끈다. 끌 때 북마크 없는 다른 채팅을 보고 있었으면 현재 채팅으로 돌아간다. */
 function setAllMessages(on) {
     view.allMessages = on;
@@ -1182,6 +1267,12 @@ function onClick(event) {
 
     const chatItem = target.closest('[data-chat-key]');
     if (chatItem) return selectChat(chatItem.dataset.chatKey);
+
+    // 7.2.7 보기 고르기 · 그림만 격자의 그림
+    const viewChip = target.closest('.cg-viewbar [data-view]');
+    if (viewChip) return setViewMode(viewChip.dataset.view);
+    const tileOpen = target.closest('[data-tile-open]');
+    if (tileOpen) return openTile(Number(tileOpen.dataset.tileOpen));
 
     const pageButton = target.closest('[data-page]');
     if (pageButton && !pageButton.disabled) return goToPage(Number(pageButton.dataset.page));

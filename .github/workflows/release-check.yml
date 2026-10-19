@@ -176,6 +176,7 @@ jobs:
           node tools/tests/translator-speech.mjs .
           node tools/tests/bookmark-excerpts.mjs .
           node tools/tests/bookmark-images.mjs .
+          node tools/tests/bookmark-view-727.mjs .
           node tools/tests/wi-help-data.mjs .
           node tools/tests/websearch-mark.mjs .
           node tools/tests/wi-link.mjs .

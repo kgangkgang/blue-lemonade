@@ -4,7 +4,7 @@ import { extension_settings, getContext } from '../../../../../../extensions.js'
 import { saveSettingsDebounced } from '../../../../../../../script.js';
 
 export const MODULE = 'chaekgalpi';
-export const VERSION = '1.6.0';
+export const VERSION = '1.7.0';
 
 export const DEFAULT_COLORS = Object.freeze({ accent: '#a98bd9', user: '#5aa9e6', icon: '#f2c14e' });
 const COLOR_KEYS = Object.keys(DEFAULT_COLORS);
@@ -22,6 +22,7 @@ const DEFAULTS = Object.freeze({
     followTheme: true,      // 블루 레몬에이드가 켜져 있으면 테마와 색을 그 팔레트에 맞춘다
     deusProseOnly: true,    // 데우스 엑스 마키나: 카드에 본문만 (끄면 장면 계획 · 트래커 같은 정규식 카드도 같이)
     selectionChip: true,    // 채팅에서 글을 고르면 아래에 「북마크」 단추 (selection-chip.js)
+    viewMode: 'all',        // 1.7.0 보기: text 글만 / all 글+그림 / images 그림만 (panel.js · view-mode.js) — 채팅마다가 아니라 전체
 });
 
 /** 다른 모듈이 서로를 직접 import하지 않도록 여기에 함수를 걸어 둔다. */
@@ -62,6 +63,7 @@ export function initSettings() {
     store.colors.chats ??= {};
     store.itemsPerPage = clampInt(store.itemsPerPage, 1, 50, DEFAULTS.itemsPerPage);
     store.contextRange = clampInt(store.contextRange, 0, 10, DEFAULTS.contextRange);
+    if (!['text', 'all', 'images'].includes(store.viewMode)) store.viewMode = DEFAULTS.viewMode;
     // 1.2.0: 이름을 '북마크'로 바꾸면서 아이콘도 별로 바꿨다. 예전에 저장된 모양도 한 번만 별로 바꾸고,
     // 그 뒤로는 설정에서 고른 대로 둔다.
     const upgradeIcon = !isFirstRun && !store.starIconApplied;
