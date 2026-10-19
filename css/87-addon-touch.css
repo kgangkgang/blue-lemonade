@@ -5,6 +5,8 @@
    글자 칸 · 고르기 칸(input · select)은 가짜 요소를 못 가지므로 그 칸들만 높이를 44 로 — 손가락 화면에서만.
    탭(.lv-tab 등) · 판 알약 · .salty-btn 은 테마가 꺼진 확장만 모드에서 85-addon-unify 가 안 걸려 36~41px 로 남는다 — 여기서 같이 덮는다.
    측정 · 사진: work/bl-724 디자인 전수조사 (outputs/bl-724/design-audit.md) · 시험: tools/tests/addon-touch-targets.mjs
+   7.2.5 상자(::before/::after)를 다는 칸은 반드시 아래 기준점(position: relative) 목록에도 있어야 한다 — 확장 탭에 박힌 캐릭터 에셋 패널의 「사용법」 summary(.eh-guide summary)가
+   기준점 없이 상자만 달려 서랍(#rm_extensions_block) 전체를 덮는 375×767 투명 상자가 되어 머리 단추(에셋 떼기 · 새로고침 · 압축 · 다시 그리기)가 폰에서 안 눌렸다 (제보 10-19).
    ===== */
 @media (pointer: coarse) {
   /* 기준점: :where 라 다른 모듈이 준 position(absolute 스위치 손잡이 등)이 이기고, static 인 칸만 relative 가 된다 */
@@ -12,11 +14,11 @@
     .po-move, .po-pin, .po-dialog .menu_button,
     .ms-icon, .ms-pull, .ms-chip, .ms-name, .ms-invert, .ms-snap, .ms-apply, #model-switch-settings .menu_button,
     .bl-note-btn, .bl-notes-ver, .bl-notes-guidelink,
-    .eh-icon-btn, .eh-switch, .eh-pchip, .eh-btn, .bl-assets-dialog .eh-size > button, .bl-assets-dialog button[data-value],
+    .eh-icon-btn, .eh-switch, .eh-pchip, .eh-btn, .bl-assets-dialog .eh-size > button, .bl-assets-dialog button[data-value], .eh-guide summary,
     .cg-icon-btn, .cg-chip,
     .jj-switch, .jj-small-btn, .bl-direction-dialog button[data-step], .jj-settings-body button[data-step],
     .lv-icon, .lv-help-btn, .lv-version,
-    .rl-chip, .pa-hub .menu_button, .rl-root .menu_button,
+    .rl-chip, .pa-hub .menu_button, .rl-root .menu_button, .rl-msg summary,
     .blzi-help, .blpt-btn, .bwr_help, .bwr-version, .bwr_seg, .bwr_settings .menu_button,
     .pt-ui-button, #pt-panel [data-help-group], .pt-help-dialog [data-help-group], #pt-panel-close,
     #model_register_settings .menu_button, #regex-link-settings .menu_button, .bl-translator-dialog .menu_button, .bl-ctsi-dialog .menu_button,

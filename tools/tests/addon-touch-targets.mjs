@@ -1,5 +1,5 @@
 // 7.2.4 애드온 창 · 첫 실행 안내 · 설정 창 작은 칸의 눌리는 넓이(css/87-addon-touch.css) — 손가락 화면에서만 44×44 상자를 덧대고 보이는 모양은 그대로인지.
-//   ① (pointer: coarse) 안에만 ② 상자 계산이 44 이상 ③ 상자를 다는 칸은 기준점(position) 묶음에 있음
+//   ① (pointer: coarse) 안에만 ② 상자 계산이 44 이상 ③ 상자를 다는 칸은 기준점(position) 묶음에 있음 (7.2.5 선택자마다 — 빠지면 상자가 조상 기준으로 커져 다른 단추를 덮는다)
 //   ④ 상자에 쓰는 ::before/::after 를 그 칸이 다른 CSS(애드온 style.css · 테마 모듈)에서 모양으로 쓰지 않음 ⑤ 글자 · 색 같은 보이는 속성은 안 바꿈 ⑥ style.css 에 들어감
 //   node tools/tests/addon-touch-targets.mjs <테마 루트>
 import assert from 'node:assert/strict';
@@ -37,15 +37,27 @@ t('상자: 가운데 맞춤 · max(100%, 44px) · 투명', () => {
 const afterList = innerOf(box.selector, 'after'), beforeList = innerOf(box.selector, 'before');
 const relativeRule = rules.find(r => r.selector.startsWith(':where(') && /position:\s*relative/.test(r.body));
 const relativeList = splitList(relativeRule.selector.replace(/^:where\(/, '').replace(/\)\s*$/, ''));
-t('상자를 다는 칸은 모두 기준점(position: relative, :where 로 다른 모듈의 position 을 존중) 묶음에 있음', () => {
+// 7.2.5 엄격하게: 상자를 다는 선택자 하나하나가 기준점 목록에 그대로 있거나(`.eh-guide summary` 처럼), `:is(범위) summary` · `:is(범위) > header > button` 꼴이면 그 범위가
+//   기준점 목록의 같은 꼴 범위에 다 들어 있거나, `.salty-panel … > summary` 처럼 첫 조각이 그 범위에 든 자손 summary 여야 한다.
+//   7.2.4 는 「summary 로 끝나면 아무 summary 라도 있으면 됨」이라 .eh-guide summary(확장 탭 캐릭터 에셋 「사용법」)가 기준점 없이 지나갔다 →
+//   static summary 의 ::before(absolute · max(100%,44px))가 서랍 #rm_extensions_block 을 기준으로 375×767 이 되어 머리 단추를 덮었다 (제보 10-19).
+const scopeOf = (sel, tail) => { const m = sel.match(new RegExp('^:is\\((.*)\\) ' + tail + '$')); return m ? splitList(m[1]) : null; };
+t('상자를 다는 칸은 모두 기준점(position: relative, :where 로 다른 모듈의 position 을 존중) 묶음에 있음 — 선택자마다 그대로', () => {
     assert.ok(afterList.length >= 30 && beforeList.length >= 4, `after ${afterList.length} · before ${beforeList.length}`);
     const normalize = s => s.replace(/:not\([^)]*\)$/, '').replace(/\s+/g, ' ').trim();
-    const rel = new Set(relativeList.map(normalize));
+    const rel = relativeList.map(normalize), relSet = new Set(rel);
+    const relSummaryScope = rel.flatMap(r => scopeOf(r, 'summary') || []), relHeaderScope = rel.flatMap(r => scopeOf(r, '> header > button') || []);
+    assert.ok(relSummaryScope.includes('.salty-panel') && relSummaryScope.includes('.bl-embedded-settings') && relHeaderScope.includes('.bl-assets-dialog'));
     for (const sel of [...afterList, ...beforeList]) {
         const key = normalize(sel);
-        const covered = rel.has(key) || [...rel].some(r => key.endsWith(r) || key.startsWith(r.replace(/^:is\(/, ':is('))) || /summary$/.test(key) && [...rel].some(r => /summary$/.test(r)) || /header > button$/.test(key) && [...rel].some(r => /header > button$/.test(r));
-        assert.ok(covered, '기준점 없음: ' + key);
+        if (relSet.has(key)) continue;
+        const summaryScope = scopeOf(key, 'summary'), headerScope = scopeOf(key, '> header > button');
+        if (summaryScope) { for (const s of summaryScope) assert.ok(relSummaryScope.includes(s), `summary 범위에 기준점 없음: ${s} (${key})`); continue; }
+        if (headerScope) { for (const s of headerScope) assert.ok(relHeaderScope.includes(s), `header 범위에 기준점 없음: ${s} (${key})`); continue; }
+        if (/ summary$/.test(key)) { const first = key.split(' ')[0]; assert.ok(relSummaryScope.includes(first), `기준점 없음: ${key} — :where 목록에 그대로 넣을 것 (7.2.4 .eh-guide summary 회귀)`); continue; }
+        assert.fail('기준점 없음: ' + key);
     }
+    for (const must of ['.eh-guide summary', '.rl-msg summary']) assert.ok(relSet.has(must), must + ' 가 기준점 목록에 있음');
 });
 
 // 다른 CSS 가 같은 칸의 같은 가짜 요소로 모양을 그리면 상자가 그 모양을 덮어쓴다

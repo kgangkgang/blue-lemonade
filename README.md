@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.2.4/blue-lemonade-7.2.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.2.5/blue-lemonade-7.2.5.zip)
 
 AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·출처·구성요소 고지](THIRD-PARTY-NOTICES.md).
 기반 테마: [RivelleDays / Moonlit Echoes Theme](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme).
@@ -20,7 +20,14 @@ AGPL-3.0으로 배포합니다. [라이선스 전문](LICENSE) · [원작자·�
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.2.4 · 최신 업데이트</summary>
+<summary>7.2.5 · 최신 업데이트</summary>
+
+- 7.2.4 에서 폰으로 확장 탭의 캐릭터 에셋 머리 단추(에셋 떼기 · 새로고침 · 압축 · 다시 그리기)가 안 눌리던 것을 고쳤어요. 「사용법」 접기 칸의 손가락 상자가 패널 전체를 덮고 있었어요.
+
+</details>
+
+<details>
+<summary>7.2.4 · 일코 호환 · 44px 터치 칸 · TTS 실패 기억</summary>
 
 - 일코 모드(Quiet Notes) 확장과 같이 쓸 때, 사용 모드가 「확장만」이면 일코를 꺼도 메뉴 · 채팅 밑배경이 사라지지 않아요. 다른 확장이 읽는 테마 켜짐 값이 사용 모드까지 반영되고, 테마가 빠진 모드에서 바깥이 붙인 테마 클래스는 바로 떼요.
 - 폰에서 애드온 창(모델 전환 · 확장 순서 · 메모 · 캐릭터 에셋 · TTS 등) · 처음 설정 안내 · 설정 창의 작은 단추 · 입력 칸이 44px 넓이로 눌려요. 보이는 모양은 그대로이고, 확장만 모드에서도 같아요.
