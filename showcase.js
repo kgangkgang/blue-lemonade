@@ -17,8 +17,8 @@
  }
  function sources(){
   const device=document.documentElement.classList.contains('device-mobile')?'mobile':'pc';
-    const light=`tour-20261010-${device}-reading`;
-    const night=`tour-20261010-${device}-reading-dark`;
+    const light=`tour-20261020-${device}-reading`;
+    const night=`tour-20261020-${device}-reading-dark`;
     for(const [v,file] of [[reading,light],[weather,night]]){
    const src=`media/${file}.mp4`;if(v.dataset.src===src)continue;
    v.pause();v.removeAttribute('src');v.dataset.src=src;v.poster=`media/${file}.jpg`;v.load();

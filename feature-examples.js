@@ -11,7 +11,7 @@
     figure.querySelectorAll('[data-example-device]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.exampleDevice===device)));
     const video=figure.querySelector('video'),img=figure.querySelector('img');
     if(video){video.pause();video.removeAttribute('src');video.dataset.src=base+'.mp4';video.poster=base+'.jpg';video.load();figure.querySelector('[data-example-play]').hidden=false;}
-    if(img){figure.querySelector('source').media='not all';img.src=base+'.jpg';img.width=device==='mobile'?780:1920;img.height=device==='mobile'?1688:1200;}
+    if(img){const ext=figure.dataset.exampleExt||'jpg',size=(figure.dataset[device==='mobile'?'exampleSizeMobile':'exampleSizePc']||'').split('x').map(Number);figure.querySelector('source').media='not all';img.src=base+'.'+ext;img.width=size[0]||(device==='mobile'?780:1920);img.height=size[1]||(device==='mobile'?1688:1200);}
     const label=figure.querySelector('[data-example-variant][aria-pressed=true]')?.textContent;
     const caption=variant?`${label} 효과를 켠 실제 채팅 예시예요. 채팅 › 화면에서 종류를 고르고 양·속도·크기 등을 맞출 수 있어요.`:figure.dataset.exampleCaption;
     figure.querySelector('figcaption').textContent=caption;
