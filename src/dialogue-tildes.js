@@ -8,7 +8,11 @@ const textLike = node => node?.nodeType === 3 || (node?.nodeType === 1 && INLINE
 // the suffixes in speech such as "어~~ 음~~" and turns the second sound into del.
 // Limit this repair to quoted dialogue; ordinary ~~deleted words~~ stays del.
 export function isDialogueElongation(before, content, after, quoted = false) {
-    if (!/[\p{L}\p{N}]$/u.test(before) || !/[\p{L}\p{N}]$/u.test(content)) return false;
+    if (!/[\p{L}\p{N}]$/u.test(before)) return false;
+    // 7.4.7 GFM 규칙: 글자 바로 뒤의 ~~ 는 그 뒤가 문장 부호 · 기호(물결 셋 이상의 남은 ~ 포함)면 취소선을 열지 못한다 —
+    //   「음~~~, 냄새 좋아~~~!」 에서 Showdown 이 「~, 냄새 좋아」 를 del 로 만들어 글자가 흐려지던 것 (대사 안에서만 · 한 줄 안)
+    if (quoted && /^[\p{P}\p{S}]/u.test(content) && !/^[!！?？]/u.test(content) && !/[\r\n]/.test(content) && /\S$/u.test(content)) return true;
+    if (!/[\p{L}\p{N}]$/u.test(content)) return false;
     if (/^[!！?？]/u.test(content) && /^[!！?？]/u.test(after)) return true;
     return quoted && /^[\t \u3000]+\p{L}/u.test(content) && !/[\r\n]/.test(content)
         && /^(?:[\t \u3000]|["'”’」』»＂!！?？.,。…]|$)/u.test(after);
