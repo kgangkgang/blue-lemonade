@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.4.7";
+export const BUILD_VERSION = "7.4.8";
 export const FILE_HASHES = {
   "index.js": "22928:1b0e75a7:fd80b8dd",
-  "manifest.json": "365:243088bb:6cef373b",
+  "manifest.json": "365:a784f3de:3b00a5de",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -239,10 +239,10 @@ export const FILE_HASHES = {
   "src/addons/translator/glossary-priority.js": "1166:e7040d4d:a088802d",
   "src/addons/translator/glossary-suggest.js": "37892:84fb105c:16cf3cc9",
   "src/addons/translator/glossary-sync.js": "4410:86799b24:8d1eafff",
-  "src/addons/translator/index.html": "57092:3c660b61:736d6865",
+  "src/addons/translator/index.html": "57092:e5f833f8:a2770def",
   "src/addons/translator/index.js": "544967:1c1227ed:e6a9b0a9",
   "src/addons/translator/korean-keep.js": "3875:e48e9ac8:e1078d76",
-  "src/addons/translator/leftover-fix.js": "20498:0b439369:67fb78c8",
+  "src/addons/translator/leftover-fix.js": "20816:6240412a:abd974ae",
   "src/addons/translator/menu-visibility.js": "1137:ae729d76:8ea71da6",
   "src/addons/translator/names-bridge.js": "7433:1c4e42f7:17329ef2",
   "src/addons/translator/persona-bridge.js": "3144:8b7fe451:3e6fe474",
@@ -555,7 +555,7 @@ export const FILE_HASHES = {
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "294094:3d16b4af:800296dc",
+  "src/notice-data.js": "294598:31b4d811:b6a525ee",
   "src/notice.js": "5647:427a7a6b:dcf06534",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -685,5 +685,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40459:a17944bd:beb7384d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1540568:0e7fc955:291c958a"
+  "style.css": "1540568:d9c72494:71d8dc15"
 };
