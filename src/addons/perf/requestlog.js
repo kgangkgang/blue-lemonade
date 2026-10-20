@@ -6,7 +6,9 @@ import { verifyAddonCss } from '../../addon-files-check.js';
 import { onFirstShow } from './hub.js';
 import { eventSource, event_types } from '../../../../../../../script.js';
 import { TITLE, VERSION, FOLDER, initSettings, settings } from './state.js';
-import { installCapture, setGenerationType, clearGenerationType, beginSendTrace, markSend } from './capture.js';
+import { installCapture, setGenerationType, clearGenerationType, beginSendTrace, markSend, onEntry } from './capture.js';
+import { ledgerEntryFromLog, MAIN_EXT } from '../../usage-feed.js';   // 7.4.0 사용량 장부 — 본 생성 · BL 기능
+import { record as recordUsage } from '../../usage-ledger.js';
 import { trimEntries } from './store.js';
 let budgetPromise = null;
 const budgetModule = () => (budgetPromise ??= import('./budget.js'));
@@ -15,6 +17,21 @@ initSettings();
 loadPriceCache();
 // 다른 확장보다 먼저 fetch를 감싸야 그 확장의 요청도 잡힌다 (loading_order가 낮다).
 installCapture();
+// 7.4.0 사용량 장부: 요청이 끝나 응답의 usage 를 읽으면 본 생성 · BL 기능만 장부에 적는다 (다른 확장은 스스로 적는다).
+//   본 생성은 답이 채팅에 붙은 뒤(1.5초) 그 답 번호를 같이 적는다 — 「제일 비싼 답」 묶음용. 사칭(내 대사 쓰기)은 답이 아니라 번호 없음
+onEntry((entry) => {
+    const raw = ledgerEntryFromLog(entry);
+    if (!raw) return;
+    if (raw.ext !== MAIN_EXT || entry.purpose === 'chat.impersonate') { recordUsage(raw); return; }
+    setTimeout(() => {
+        try {
+            const ctx = SillyTavern.getContext();
+            const last = ctx.chat?.length - 1;
+            if (ctx.chatId === raw.chatId && last >= 0 && !ctx.chat[last]?.is_user) raw.mesId = last;
+        } catch { /* 번호 없이 */ }
+        recordUsage(raw);
+    }, 1500);
+});
 
 function toast(kind, message, options = {}) {
     if (typeof toastr !== 'undefined') toastr[kind](message, TITLE, options);

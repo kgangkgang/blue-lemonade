@@ -44,6 +44,14 @@ import { chat, substituteParams, eventSource, event_types } from '../../../../..
 import * as stScript from '../../../../../../../../script.js';   // 1.9.7 getThumbnailUrl (없는 판 · 시험 스텁이면 직접 만든 주소)
 import { getContext } from '../../../../../../../extensions.js';
 import { settings, providerConfig, addUsage, addPreUsed, USER_AUTO } from './settings.js';
+// BL 7.4.0 사용량 장부: 받은 소리마다 엔진 · 글자 수를 적는다 (글자 과금 엔진은 글자로 — 단가는 장부가 모르면 비워 둔다). 브라우저 내장 음성은 요청이 아니라 뺀다
+function recordVoice(job, chars, model) {
+    try {
+        const id = String(job?.provider?.id || '');
+        if (!id || id === 'browser') return;
+        globalThis[Symbol.for('blue-lemonade.usage')]?.record?.({ ext: '블루레몬에이드', feature: `TTS 음성 · ${job.provider.name || id}`, model: model || '', api: `tts-${id}`, characters: chars, ok: true, at: Date.now(), chatId: getContext()?.chatId || '' });
+    } catch { /* 장부 없음 — 소리는 그대로 */ }
+}
 import { segmentMessage, pairSegments, colorsClash, detectLang, parseRegexLines, speechDisplay, markJoins, joinSpeech, italicCandidates } from './text.js';
 import { resolveSpeaker, canon, knownNames as learnedNames, colorOfName, ownerOfColor } from './speakers.js';
 import { voiceFor, findVoice, allVoices, twinOf, engineUsable, isPinned, setPersonaAuto, personaKnown, ensureStock, extraEngine, hasOwnVoice, unknownVoice, shownVoices } from './voices.js';
@@ -1299,6 +1307,7 @@ function startEntry(job, pre, prep = true) {
         const raw = res?.blob;
         if (!(raw instanceof Blob) || !raw.size) throw new Error('음성 데이터가 비어 있어요');
         addUsage(res.usage?.chars ?? job.text.length, { pre: e.sentPre, model: res.usage?.model });
+        recordVoice(job, res.usage?.chars ?? job.text.length, res.usage?.model);
         if (cache.takeEvicted?.(job.key)) noteRebuy();   // 6.4.2 한도로 지운 줄을 다시 삼
         log('req', `${e.sentPre ? '미리 · ' : `${job.provider.id} · `}${job.voice.name} · ${job.text.length}자${res.usage?.model ? ` · ${res.usage.model}` : ''}`);
         // 캐시에는 엔진이 준 원본(작음)과 잰 음량만 — 음량 고르기는 설정이 바뀌면 다시 (prepared 키에 설정이 들어 있음)
@@ -1361,6 +1370,7 @@ async function synthDirect(job, signal) {
     const raw = res?.blob;
     if (!(raw instanceof Blob) || !raw.size) throw new Error('음성 데이터가 비어 있어요');
     addUsage(res.usage?.chars ?? job.text.length, { model: res.usage?.model });
+    recordVoice(job, res.usage?.chars ?? job.text.length, res.usage?.model);
     log('req', `${job.provider.id} · ${job.voice.name} · ${job.text.length}자${res.usage?.model ? ` · ${res.usage.model}` : ''}`);
     return { raw, lufs: null, hit: false, made: true, align: res?.align || null };
 }

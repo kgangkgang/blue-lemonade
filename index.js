@@ -1,4 +1,6 @@
 import { startErrorLog } from './src/diag-errors.js';
+import { installUsageLedger } from './src/usage-ledger.js';   // 7.4.0 사용량 장부 허브 — 다른 확장이 읽기 전에 (가볍다: 장부 · 가격표는 처음 쓸 때 연다)
+installUsageLedger();
 startErrorLog(); // 6.6.9 진단 파일용: 블루레몬에이드 오류만 최근 20줄 (주소 · 키는 가림)
 import { themeEnabled, publicSettings, forcedThemeGuard } from './src/usage-mode.js';
 import { bindSettingsDialog } from './src/settings-dialog.js';
@@ -180,6 +182,8 @@ window.addEventListener('bl:addons-state', () => refreshPanels());
 
 jQuery(() => {
     installCredits();
+    // 7.4.0 저장 공간 보고 다리에 등록 (다리를 만드는 확장이 늦게 떠도 대기 줄로) — 시작이 끝난 뒤
+    setTimeout(() => { import('./src/storage-report.js').then(m => m.registerStorageReport()).catch(error => console.warn('[Blue Lemonade] 저장 공간 보고', error)); }, 4000);
     widenSelectorCache(); // 실리태번의 위임 핸들러 선택자를 jQuery 가 매번 다시 컴파일하지 않게 (2.9.4, lite.js)
     deferPreviewRules(); // 설정창 미리보기 전용 규칙은 설정창을 열 때까지 시트에서 빼 둠 (lite.js)
     deferPanelHasRules(); // 서랍 · 팝업 전용 :has() 규칙은 서랍 · 팝업이 열려 있을 때만 (lite.js, 2.8.4)

@@ -1032,7 +1032,21 @@ async function callProvider(cfg, system, user, signal, onSend) {
 }
 
 const engineOf = (c) => (c && c.engine === 'st' ? 'st' : c && c.engine === 'provider' ? 'provider' : 'compat');
-const callerOf = (engine) => (engine === 'st' ? callSt : engine === 'provider' ? callProvider : callCompat);
+const rawCallerOf = (engine) => (engine === 'st' ? callSt : engine === 'provider' ? callProvider : callCompat);
+// BL 7.4.0 요청 로그 · 사용량 장부: 이 요청이 TTS 대사 분석(또는 듣는 말 번역)인 것을 알린다 — 요청 본문에 든 사용자 글 앞부분으로 짝을 짓는다 (요청 로그 begin)
+const LOG_BRIDGE = Symbol.for('st.request-log.v1');
+function attributed(purpose, call) {
+    return (c, system, user, ...rest) => {
+        let release = null;
+        try { release = globalThis[LOG_BRIDGE]?.begin?.({ caller: 'bl-tts', purpose, user: String(user || '').slice(0, 300) }) || null; } catch { release = null; }
+        const done = () => { try { release?.(); } catch { /* 알림만 */ } };
+        let out;
+        try { out = call(c, system, user, ...rest); } catch (error) { done(); throw error; }
+        Promise.resolve(out).then(done, done);
+        return out;
+    };
+}
+const callerOf = (engine, purpose = 'tts.analysis') => attributed(purpose, rawCallerOf(engine));
 
 /** 엔진이 준비됐는지 (compat: 주소·키·모델 / st: generateRaw / provider: 공급자·모델·주소·키) */
 export function engineReady(cfg) {
@@ -1070,7 +1084,7 @@ export async function translateLines(lines, target, { signal } = {}) {
     const system = `You translate dialogue lines of a roleplay chat into ${name} for text-to-speech. Reply with JSON only: {"lines":["..."]} — exactly ${list.length} strings in the input order, one per [n] line, nothing else. Keep names, honorifics, tone, register and sentence breaks; translate everything, including explicit content, without softening; copy a line that is already ${name}; never add notes, quotation marks or numbering.`;
     const user = list.map((t, i) => `[${i}] ${t.replace(/\s*\n+\s*/g, ' ')}`).join('\n');
     log('req', `듣는 언어 · 대사 분석 엔진으로 ${list.length}줄 → ${name}`);
-    const r = await callerOf(engineOf(c))(c, system, user, signal);
+    const r = await callerOf(engineOf(c), 'tts.translate')(c, system, user, signal);
     addAnalysisUsage(r.usage.in, r.usage.out, Math.max(1, Number(r.usage.calls) || 1));
     const parsed = parseReply(r.text);
     const arr = Array.isArray(parsed?.lines) ? parsed.lines : Array.isArray(parsed) ? parsed : [];
@@ -1644,7 +1658,7 @@ async function doAnalyze(entry) {
     try {
         r = await runWithBlockFallback({
             call: () => counted(callerOf(engine)(cfg, built.system, built.user, signal, onSend)),
-            callFallback: (t) => { log('info', `대사 분석 #${id} · ${via ? '막힌 메시지' : '내용 차단'} → 다른 모델(${t.provider})로 한 번`); return counted(callProvider(fallbackCfg(cfg, t), built.system, built.user, signal, onSend)); },
+            callFallback: (t) => { log('info', `대사 분석 #${id} · ${via ? '막힌 메시지' : '내용 차단'} → 다른 모델(${t.provider})로 한 번`); return counted(attributed('tts.analysis', callProvider)(fallbackCfg(cfg, t), built.system, built.user, signal, onSend)); },
             target, failed, via,
             refused: (x) => !parseReply(x?.text) && refusalReply(x?.text),
             onUsed: (t) => { used = t; },

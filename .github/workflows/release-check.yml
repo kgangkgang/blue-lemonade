@@ -289,6 +289,8 @@ jobs:
           node tools/tests/bookmark-masonry-731.mjs .
           node tools/tests/order-keys-731.mjs .
           node tools/tests/empty-chat-guard-731.mjs .
+          node tools/tests/usage-ledger-740.mjs .
+          node tools/tests/bookmark-excerpt-740.mjs .
           node tools/tests/call-trim-726.mjs .
           node tools/tests/tts-continue-reuse.mjs .
           node tools/tests/settings-search.mjs .

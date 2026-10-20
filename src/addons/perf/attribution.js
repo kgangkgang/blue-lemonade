@@ -9,7 +9,7 @@ const safe=s=>String(s??'').replace(/[^a-zA-Z0-9_.-]/g,'').slice(0,90);
 const label=s=>clean(s).slice(0,40);
 export const PURPOSES={
  'chat.generate':'채팅 응답','chat.swipe':'채팅 스와이프','chat.regenerate':'채팅 재생성','chat.continue':'채팅 이어쓰기','chat.impersonate':'유저 대신 쓰기','chat.quiet':'채팅 보조 생성',
- 'translation.chat':'채팅 번역','translation.glossary':'번역 용어집','translation.bookmark':'북마크 번역','translation.tts':'TTS 번역',
+ 'translation.chat':'채팅 번역','translation.glossary':'번역 용어집','translation.bookmark':'북마크 번역','translation.tts':'TTS 번역','translation.retranslate':'번역 다시(교정)','translation.input':'보낼 글 번역','translation.persona':'페르소나 번역','tts.analysis':'TTS 대사 분석','tts.translate':'TTS 듣는 말 번역',
  'memory.translate':'장기기억 카드 번역','memory.translate-packet':'AI 기억 미리보기 번역','memory.record':'장기기억 생성','memory.summary':'장기기억 턴 요약','memory.arc':'장기기억 연대기','memory.regroup':'장기기억 요약 재분류','memory.curate':'장기기억 정리','memory.supervisor':'장기기억 장면 연출','memory.packet':'장기기억 주입문 작성','memory.ask':'사서에게 질문','memory.edit':'장기기억 수정 대화','memory.clock':'서사 시계','memory.test':'장기기억 연결 검사','memory.other':'장기기억 기타',
  'memory.embedding':'장기기억 임베딩','embedding':'임베딩','image.generate':'이미지 생성','image.caption':'이미지 설명','audio.speech':'음성 생성','audio.transcribe':'음성 인식','rewrite':'다시 쓰기','summary':'대화 요약','direction':'전개 지시','other':'기타 API','unknown':'용도 분류 불가'
 };
@@ -53,4 +53,17 @@ export function createAttribution() {
   return {caller,purpose,attribution:purpose==='unknown'?'unknown':'caller'};
  }
  return {begin,resolve,get size(){return active.size;}};
+}
+const MAIN_PURPOSES=new Set(['chat.generate','chat.regenerate','chat.swipe','chat.continue','chat.impersonate']);
+/** 7.4.0 recent() 의 묶음 (순수): 요청 기록 → 최근 답 n개마다 { at, purposes } (최근 답부터). 답 하나 = 본 생성 하나 + 다음 본 생성 전까지의 요청 */
+export function groupRecentReplies(rows,want=5) {
+ const list=(Array.isArray(rows)?rows:[]).filter(row=>row&&Number.isFinite(row.at)).sort((a,b)=>a.at-b.at);
+ const out=[];let current=null;
+ for(const row of list){
+  if(row.caller==='chat'&&MAIN_PURPOSES.has(row.purpose)){current={at:row.at,purposes:{}};out.push(current);}
+  if(!current)continue;
+  const key=String(row.purpose||'unknown');
+  current.purposes[key]=(current.purposes[key]||0)+1;
+ }
+ return out.slice(-Math.max(1,want)).reverse();
 }

@@ -3,12 +3,13 @@ import { priceSnapshot } from './pricing-live.js';
 //
 // 실리태번(그리고 확장들)은 모두 브라우저에서 서버의 /api/backends/…/generate 로 요청을 보낸다.
 // window.fetch를 감싸면 누가 보내든 한 곳에서 잡힌다. 응답은 clone()으로 따로 읽으니 원래 흐름은 건드리지 않는다.
-import { LOG_BRIDGE, createAttribution, requestKind } from './attribution.js';
+import { LOG_BRIDGE, createAttribution, requestKind, groupRecentReplies } from './attribution.js';
 const attribution=createAttribution();
 import { getCurrentChatId, name2 } from '../../../../../../../script.js';
 import { settings, priceFor } from './state.js';
 import { connectionFor, mergeTokenUsage, quoteRequest, manualPriceForConnection } from './pricing.js';
-import { addEntry, bumpDaily, trimEntries } from './store.js';
+import { addEntry, bumpDaily, trimEntries, listEntries } from './store.js';
+import { ledgerEnabled } from '../../usage-ledger.js';   // 7.4.0 요청 로그를 꺼도 사용량 장부가 켜져 있으면 응답의 usage 는 읽는다 (저장은 안 함)
 import { webSearchEvidence } from '../../websearch-core.js';
 import { noteWebSearchEvidence } from '../../websearch.js';
 
@@ -97,7 +98,7 @@ function notify(entry) {
 const OWN_FOLDER = new URL('../../../', import.meta.url).pathname.split('/').filter(Boolean).pop();
 /** 테마 안 애드온 폴더 → 요청 로그의 호출자 키 (CALLER_LABELS · 용도 표에 이미 있는 이름) */
 // 5.2.3: 내장 번역 · 한글화 패널도 단독판 이름으로 적는다 — 요청 로그의 '보낸 곳' 이 blue-lemonade 로 뭉뚱그려지지 않게
-const OWN_ADDONS = new Map([['rewrite', 'ban-word-rewrite'], ['bookmarks', 'chat-bookmarks'], ['translator', 'llm-translator-custom'], ['prompt', 'prompt-panel'], ['assets', 'char-assets'], ['direction', 'story-direction']]);
+const OWN_ADDONS = new Map([['rewrite', 'ban-word-rewrite'], ['bookmarks', 'chat-bookmarks'], ['translator', 'llm-translator-custom'], ['prompt', 'prompt-panel'], ['assets', 'char-assets'], ['direction', 'story-direction'], ['tts', 'bl-tts']]);   // 7.4.0 TTS 도 따로 (대사 분석 · 듣는 말 번역 — 사용량 장부)
 
 /**
  * 호출 스택에서 요청을 시작한 확장 폴더를 찾는다 (1.1.0).
@@ -454,7 +455,7 @@ async function finishEntry(context, response, acc, marks, failure) {
         else if (error && acc.error) entry.raw = acc.error;
     }
 
-    try {
+    if (store.enabled) try {   // 7.4.0 요청 로그가 꺼져 있으면(사용량 장부만 켬) 기록하지 않고 알리기만
         await addEntry(entry);
         await bumpDaily(entry);
         if (++sinceTrim >= 10) {
@@ -592,23 +593,37 @@ function safeName() {
     }
 }
 
+const ledgerOn = () => { try { return ledgerEnabled(); } catch { return false; } };
+/**
+ * 7.4.0 st.request-log.v1 recent({ replies: n }) — 최근 답 n개마다 { at, purposes: { 'chat.generate': 1, 'memory.record': 1, … } } (최근 답부터).
+ * 답 하나 = 본 생성(채팅 응답 · 재생성 · 스와이프 · 이어쓰기 · 대신 쓰기) 하나와 그 뒤 다음 본 생성 전까지의 요청. 요청 로그가 꺼져 있으면 null.
+ * 숫자만 — 글 · 모델 · 키는 주지 않는다.
+ */
+async function recent({ replies = 5 } = {}) {
+    if (!settings().enabled) return null;
+    const want = Math.max(1, Math.min(50, Math.round(Number(replies) || 5)));
+    return groupRecentReplies(await listEntries({ limit: Math.max(60, want * 40) }).catch(() => []), want);
+}
+export const recentReplies = recent;   // 시험용
+
 export function installCapture() {
     if (installed) return;
     installed = true;
-    globalThis[LOG_BRIDGE]={begin:attribution.begin};
+    globalThis[LOG_BRIDGE]={begin:attribution.begin,recent};   // 7.4.0 recent({ replies }) — 최근 답마다 용도별 요청 수
     const nativeFetch = window.fetch;
     window.fetch = function requestLogFetch(input, init) {
         try {
             const path=pathOf(input);
             const captureKind=requestKind(path);
             const row = path ? traceFetchStart(path) : null;
-            if (row && !(settings().enabled&&captureKind)) {
+            const watching = settings().enabled || ledgerOn();   // 7.4.0
+            if (row && !(watching&&captureKind)) {
                 const started = performance.now();
                 const request = nativeFetch.call(this, input, init);
                 request.then(() => { row.ms = Math.round(performance.now() - started); }, () => { row.ms = Math.round(performance.now() - started); });
                 return request;
             }
-            if (settings().enabled && init && typeof init.body === 'string' && captureKind) {
+            if (watching && init && typeof init.body === 'string' && captureKind) {
                 let body = null;
                 try {
                     body = JSON.parse(init.body);
@@ -617,11 +632,11 @@ export function installCapture() {
                 }
                 if (body && typeof body === 'object') return watch(nativeFetch, input, init, body);
             }
-            if(settings().enabled&&captureKind&&init?.body instanceof FormData) {
+            if(watching&&captureKind&&init?.body instanceof FormData) {
                 const body=Object.fromEntries([...init.body].filter(([,v])=>typeof v==='string'));
                 return watch(nativeFetch,input,init,body);
             }
-            if(settings().enabled&&captureKind&&input instanceof Request&&!init?.body) {
+            if(watching&&captureKind&&input instanceof Request&&!init?.body) {
                 const caller=callerFromStack();
                 return input.clone().text().then(text=>{
                     let body;try{body=JSON.parse(text);}catch{return nativeFetch.call(this,input,init);}

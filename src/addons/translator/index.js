@@ -1842,7 +1842,9 @@ async function translate(text, options = {}) {
         watcher.check();
         autoContextGuard?.assert();
         options.onRequest?.();
-        const result = await callLLMAPI(prompt, { signal: watcher.signal, ...extra });
+        // [BL 7.4.0] 요청 로그 · 사용량 장부의 용도: 화살표 다시 번역(교정)과 보낼 글 번역을 채팅 번역과 따로 센다
+        const purpose = options.requestPurpose || (options.isRetranslation ? 'translation.retranslate' : options.isInputTranslation ? 'translation.input' : undefined);
+        const result = await callLLMAPI(prompt, { signal: watcher.signal, ...(purpose ? { requestPurpose: purpose } : {}), ...extra });
         watcher.check(); autoContextGuard?.assert(); return result;
     };
     try {

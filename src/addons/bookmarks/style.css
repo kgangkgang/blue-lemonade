@@ -5,7 +5,7 @@
    ============================================================ */
 
 /* state.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
-:root { --cg-css-version: "1.7.1"; }
+:root { --cg-css-version: "1.7.2"; }
 
 .cg-root {
     --cg-accent-fallback: #a98bd9;
@@ -1938,10 +1938,16 @@ body.salty .cg-root .cg-setting-text small {
    테마의 색 통일 · 대사 규칙이 닿지 않고, 글자 크기 · 줄 간격 · 글꼴만 채팅 본문과 같게 맞춘다 */
 .cg-root .cg-excerpts { display: flex; flex-direction: column; gap: 6px; min-width: 0; margin: 0 0 8px; }
 .cg-root .cg-excerpt {
+    /* 7.4.0 (1.7.2) 한 줄 발췌가 위로 붙어 보였다(폰 터치 화면: 상자 최소 높이 48px > 글 한 줄 + 위아래 9px → 아래만 남음).
+       위아래 여백을 「최소 높이 − 한 줄」의 반 이상으로 같게 — 한 줄이면 글 상자가 가운데, 단추(가운데 = 첫 줄 가운데)와 같은 높이 */
+    --cg-ex-line: calc(var(--salty-lh, 1.65) * var(--bl-ts-read, var(--salty-size, 16px)));
+    --cg-ex-min: 40px;
+    --cg-ex-pad: 10px;
+    --cg-ex-padv: max(var(--cg-ex-pad), calc((var(--cg-ex-min) - var(--cg-ex-line)) / 2));
     position: relative;
     display: flow-root;
     min-width: 0;
-    padding: 10px 14px;
+    padding: var(--cg-ex-padv) 14px;
     border-radius: 3px 16px 16px 16px;
     background: var(--salty-shade, var(--cg-card));
     color: var(--cg-text);
@@ -1966,15 +1972,14 @@ body.salty .cg-root .cg-setting-text small {
 /* 단추(36px) 가운데를 첫 줄 가운데에 — 줄 높이 = 글자 크기 × --salty-lh (사용자 설정을 따라간다). 작은 글씨면 위로는 8px 까지만 (상자 안).
    아래 여백은 단추 아래 끝이 첫 줄 끝 2px 위에서 끝나게 — 둘째 줄부터는 끝까지 쓴다 */
 .cg-root .cg-excerpt-tools {
-    --cg-ex-line: calc(var(--salty-lh, 1.65) * var(--bl-ts-read, var(--salty-size, 16px)));
     --cg-ex-btn: 36px;   /* 7.2.7 터치 화면은 44px (아래 pointer: coarse) */
-    --cg-ex-lift: max(-8px, calc((var(--cg-ex-line) - var(--cg-ex-btn)) / 2));
+    --cg-ex-lift: max(calc(2px - var(--cg-ex-padv, 10px)), calc((var(--cg-ex-line) - var(--cg-ex-btn)) / 2));   /* 1.7.2 상자 위 끝 2px 안까지 (예전 −8px 고정) */
     float: right;
     display: flex;
     margin: var(--cg-ex-lift) -11px max(-12px, calc(var(--cg-ex-line) - var(--cg-ex-btn) - 2px - var(--cg-ex-lift))) 6px; /* 설정 최소보다 작은 글씨에서 둘째 줄이 단추 밑으로 들어가지 않게 */
 }
 /* 아주 작은 글씨(줄 높이 < 단추)에서도 단추가 상자 밖으로 나가지 않게 (평소 한 줄 상자는 46px 넘어 그대로) */
-.cg-root .cg-excerpts .cg-excerpt { min-height: 40px; }
+.cg-root .cg-excerpts .cg-excerpt { min-height: var(--cg-ex-min, 40px); }
 .cg-root .cg-excerpt-btn {
     display: grid;
     place-items: center;
@@ -2017,7 +2022,7 @@ body.salty .cg-root .cg-setting-text small {
     caret-color: var(--salty-accent, var(--cg-accent, currentColor));
 }
 @media (max-width: 760px) {
-    .cg-root .cg-excerpt { padding: 9px 12px; border-radius: 3px 14px 14px 14px; }
+    .cg-root .cg-excerpt { --cg-ex-pad: 9px; padding: var(--cg-ex-padv) 12px; border-radius: 3px 14px 14px 14px; }
     .cg-root .cg-excerpt-tools { margin-right: -11px; margin-left: 4px; }
     .cg-root .cg-excerpt--edit { padding: 11px 12px; border-radius: 14px; }
 }
@@ -2259,7 +2264,7 @@ body.reduced-motion .cg-root .cg-viewer-img.is-easing { transition: none; }
     .cg-root .cg-source-toggle { min-height: 44px; }
     .cg-root .cg-excerpt-tools { --cg-ex-btn: 44px; }
     .cg-root .cg-excerpt-btn { width: 44px; }
-    .cg-root .cg-excerpts .cg-excerpt { min-height: 48px; }
+    .cg-root .cg-excerpt { --cg-ex-min: 48px; }
 }
 
 /* ── 7.2.7 생각 과정: 채팅이 생각 칸을 숨기면(실리태번 「모델 추론 요청」 꺼짐 → apply.js 가 body.salty-reasoning-off) 북마크 카드 · 앞뒤 문맥 창도 숨긴다.

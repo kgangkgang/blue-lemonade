@@ -9,6 +9,7 @@
 import { oai_settings } from '../../../../../../openai.js';
 import { TITLE, settings, saveSettings, money, costOf } from './state.js';
 import { listRelayDaily, putRelayDaily, dayKeyOf, repriceDaily } from './store.js';
+import { applyRelayLogs } from '../../usage-ledger.js';
 
 const RELAY_LOG_LIMIT = 1000;
 // 키로 조회하는 두 엔드포인트(/api/usage/token, /api/log/token)는 같은 IP에서 20분에 약 20번까지만 받는다 (넘으면 429, Retry-After 초).
@@ -357,6 +358,7 @@ async function fetchKeyData() {
             try {
                 state.daily = await mergeRelayDaily(state.logs);
                 await syncPricesFromLogs(state.logs, pricingOrigin);
+                applyRelayLogs(pricingOrigin, state.logs).catch(() => {});   // 7.4.0 사용량 장부의 중계 요청에 실제 과금(쿼터)을 맞춰 적는다 (받은 기록만 — 네트워크 없음)
             } catch (error) {
                 console.warn('[요청 로그] 과금 집계를 저장하지 못했어요', error);
             }

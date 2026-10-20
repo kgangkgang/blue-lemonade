@@ -1,5 +1,6 @@
 // 요청 로그 — 설정 서랍, 마법봉 메뉴, 로그·집계 창
 import { purposeLabel, PURPOSES } from './attribution.js';
+import { ledgerMarkup, bindLedger } from './ledger-view.js';   // 7.4.0 사용량 장부 설정
 import { pane } from './hub.js';
 import { callGenericPopup, POPUP_TYPE, POPUP_RESULT } from '../../../../../../popup.js';
 import { TITLE, VERSION, settings, saveSettings, costOf, callerLabel, typeLabel, money } from './state.js';
@@ -170,6 +171,7 @@ export function buildDrawer() {
                     </div>
                     <small class="rl-hint rl-b-warning" hidden></small>
                     <small class="rl-hint">예산에는 충전한 금액을 적어요. 기준 시점 이후 쓴 금액을 예산에서 빼서 잔액을 계산하고, 경고 비율이나 하루 한도를 넘으면 한 번 알려요. 키는 settings.json에 저장돼요.</small>
+                    ${ledgerMarkup()}
                     <div class="rl-row rl-danger-row">
                         <div class="menu_button menu_button_icon rl-clear"><i class="fa-solid fa-broom"></i><span>기록 비우기</span></div>
                     </div>
@@ -177,6 +179,7 @@ export function buildDrawer() {
             </div>
         </div>`;
     container.append(drawer);
+    try { bindLedger(drawer); } catch (error) { console.warn('[요청 로그] 사용량 장부 설정', error); }   // 7.4.0
 
     const $ = selector => drawer.querySelector(selector);
     const store = settings();
