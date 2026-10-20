@@ -82,14 +82,32 @@ export async function clearSegmentCache() {
 }
 
 const paragraphKey = (signature, body) => checkpointKey(JSON.stringify(['paragraph-v2', signature, body]));
+// 3.0.1 자리표시자([[__VAR_n__]]) 번호는 메시지 전체에서 매겨져, 앞 문단에서 보호 글(색 span · 그림 자리 …)이 하나 늘거나 줄면 뒤 문단의 번호가 모두 밀려
+//   열쇠가 바뀌었다 — 대사 한 문단을 지웠는데 뒤 문단이 전부 다시 번역됨(사용자 제보). 열쇠는 문단 안 차례(0, 1, …)로 고쳐 쓴 글 + 그 자리에 든 보호 글(protection)로 만들고,
+//   저장할 때 번호를 문단 안 차례로, 꺼낼 때 지금 번호로 되돌린다. 자리표시자가 없는 문단은 예전 열쇠(paragraph-v2) 그대로라 쌓인 캐시가 산다
+const VAR_RE = /\[\[__VAR_(\d+)__\]\]/g;
+export function localizePlaceholders(body) {
+    const map = [];
+    const norm = String(body ?? '').replace(VAR_RE, (m, n) => { let j = map.indexOf(Number(n)); if (j < 0) { j = map.length; map.push(Number(n)); } return `[[__VAR_${j}__]]`; });
+    return { norm, map };
+}
+export const restorePlaceholders = (text, map) => map.length ? String(text ?? '').replace(VAR_RE, (m, j) => (Number(j) < map.length ? `[[__VAR_${map[Number(j)]}__]]` : m)) : String(text ?? '');
+const localizeOut = (text, map) => map.length ? String(text ?? '').replace(VAR_RE, (m, n) => { const j = map.indexOf(Number(n)); return j < 0 ? m : `[[__VAR_${j}__]]`; }) : String(text ?? '');
+/** 문단 캐시 · 이어 하기 열쇠 → { key, map } (map = 문단 안 차례 → 지금 번호). protection(n) = n 번 자리에 든 보호 글 */
+export async function segmentCacheKey(signature, body, protection = null) {
+    const { norm, map } = localizePlaceholders(body);
+    if (!map.length) return { key: await paragraphKey(signature(body), body), map };
+    const values = map.map(n => String(protection?.(n) ?? ''));
+    return { key: await checkpointKey(JSON.stringify(['paragraph-v3', signature(body), norm, values])), map };
+}
 // 7.2.6 글자(\p{L})가 하나도 없는 문단 — 자리표시자 · 태그 · 기호뿐(그림 한 장 `<img …>` 같은 것) — 은 보내지 않고 그대로 둔다 (token-audit 번역 1)
 const bareLetters = body => /\p{L}/u.test(String(body).replace(/\[\[__VAR_\d+__\]\]/g, '').replace(/<[^>]*>/g, '').replace(/⟦\d+⟧/g, ''));
 const skipBody = body => !body.trim() || /^(\s*\[\[__VAR_\d+__\]\]\s*)+$/.test(body) || !bareLetters(body);
 export const skipsBody = skipBody;   // 시험용
 /** 5.4.2: 한 메시지의 문단 캐시 줄을 지운다 (사용자가 번역문을 지웠을 때) — 남아 있으면 다시 번역해도 요청 없이 옛 번역이 그대로 나왔다 */
-export async function forgetSegments(parts, signature) {
+export async function forgetSegments(parts, signature, protection = null) {
     const keys = [];
-    for (let i = 0; i < parts.length; i += 2) if (!skipBody(parts[i])) keys.push(await paragraphKey(signature(parts[i]), parts[i]));
+    for (let i = 0; i < parts.length; i += 2) if (!skipBody(parts[i])) keys.push((await segmentCacheKey(signature, parts[i], protection)).key);   // 3.0.1 번역할 때와 같은 열쇠
     if (!keys.length) return 0;
     for (const key of keys) memory.delete(key);
     let handle;
@@ -960,7 +978,7 @@ export function streamWatch({ done, settled, shape = text => text, frame = globa
     };
 }
 // 2.5.1 partial(text): 캐시에서 온 문단 · 끝난 묶음의 문단은 번역문, 나머지는 원문인 글 (끝난 문단부터 번역문으로 보여 주기용)
-export async function translateSegments({ parts, signature, request, check = () => {}, progress = () => {}, cacheable = () => true, blockedMarker, partial = null }) {
+export async function translateSegments({ parts, signature, request, check = () => {}, progress = () => {}, cacheable = () => true, blockedMarker, partial = null, protection = null }) {
     const stamp = epoch, output = [...parts], total = Math.ceil(parts.length / 2), missing = new Map();
     let reused = 0, translated = 0, blocked = 0, resumedCount = 0;
     const touched = [];   // 7.3.1 캐시에서 꺼내 쓴 문단 — 끝에 시각을 새로 써서 최근에 쓴 채팅이 밀려나지 않게 (LRU)
@@ -970,18 +988,21 @@ export async function translateSegments({ parts, signature, request, check = () 
         check();
         const body = parts[i];
         if (skipBody(body)) continue;
-        keyed.push([i, body, await paragraphKey(signature(body), body)]);
+        const { key, map } = await segmentCacheKey(signature, body, protection);   // 3.0.1
+        keyed.push([i, body, key, map]);
     }
     const saved = await readMany([...new Set(keyed.map(row => row[2]))]);
     const resumed = await readMany([...new Set(keyed.map(row => RESUME + row[2]))], RESUME_TTL);   // 2.9.0 끊긴 묶음에서 남긴 문단
     check();
-    for (const [i, body, key] of keyed) {
+    for (const [i, body, key, map] of keyed) {
         // 5.4.1: 예전에 캐시에 들어간 원문 되풀이 답(원문+화살표+번역 · 망가진 ⟦n] 표시)은 없는 셈 치고 다시 요청한다
         // 6.4.2 v2 지금 규칙으로 캐시에 넣지 않을 문단(예: 6.4.1 이하가 넣은 원문 한자 남은 문단)은 다시 쓰지 않고 번역한다 — 서명은 그대로라 다른 문단 캐시는 산다
-        if (saved.has(key) && cleanParagraphEcho(saved.get(key), body) === saved.get(key).replace(/^\n+|\s+$/g, '') && cacheable(body, saved.get(key))) { output[i] = saved.get(key); reused++; touched.push([key, saved.get(key)]); continue; }
-        const kept = resumed.get(RESUME + key);
+        // 3.0.1 저장된 글의 자리표시자 번호(문단 안 차례)를 지금 번호로 되돌린 뒤 견주고 쓴다
+        const hit = saved.has(key) ? restorePlaceholders(saved.get(key), map) : null;
+        if (hit !== null && cleanParagraphEcho(hit, body) === hit.replace(/^\n+|\s+$/g, '') && cacheable(body, hit)) { output[i] = hit; reused++; touched.push([key, saved.get(key)]); continue; }
+        const kept = resumed.has(RESUME + key) ? restorePlaceholders(resumed.get(RESUME + key), map) : null;
         if (kept && cleanParagraphEcho(kept, body) === kept.replace(/^\n+|\s+$/g, '') && cacheable(body, kept)) { output[i] = kept; reused++; resumedCount++; continue; }   // 2.9.0 이어 하기 · 7.3.1 resumed = 그중 이어 하기로 온 수
-        if (!missing.has(key)) missing.set(key, { key, body, indices: [] });
+        if (!missing.has(key)) missing.set(key, { key, body, map, indices: [] });
         missing.get(key).indices.push(i);
     }
     const pending = [...missing.values()];
@@ -1007,7 +1028,7 @@ export async function translateSegments({ parts, signature, request, check = () 
                 const row = pending[n];
                 if (!row || typeof text !== 'string' || !text.trim()) return;
                 const cleaned = cleanParagraphEcho(text, row.body);
-                if (cleaned !== null && epoch === stamp && cacheable(row.body, cleaned)) rows.push([RESUME + row.key, cleaned]);
+                if (cleaned !== null && epoch === stamp && cacheable(row.body, cleaned)) rows.push([RESUME + row.key, localizeOut(cleaned, row.map)]);   // 3.0.1 문단 안 차례로 저장
             });
             if (rows.length) await writeMany(rows, stamp);
         } catch { /* 남기기 실패는 원래 오류를 바꾸지 않는다 */ }
@@ -1051,7 +1072,7 @@ export async function translateSegments({ parts, signature, request, check = () 
                         for (const i of row.indices) { output[i] = `${markOf(row.body, echoed ?? undefined)}\n${row.body}`; blocked++; }
                         continue;
                     }
-                    if (epoch === stamp && cacheable(row.body, result)) rows.push([row.key, result]);
+                    if (epoch === stamp && cacheable(row.body, result)) rows.push([row.key, localizeOut(result, row.map)]);   // 3.0.1 문단 안 차례로 저장
                     for (const i of row.indices) { output[i] = result; translated++; }
                 }
             } finally { if (epoch === stamp) rows.push(...touched.splice(0)); if (rows.length) await writeMany(rows, stamp); }   // 7.3.1 꺼내 쓴 문단도 같은 트랜잭션으로

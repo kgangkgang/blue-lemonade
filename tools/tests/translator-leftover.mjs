@@ -95,7 +95,7 @@ await test('6.4.2 v2 일부러 둔 한자를 더 뺀다 — 한자(한글 읽기
 await test('6.4.2 v2 머리말: 이름은 원어 발음으로 (한자음으로 읽지 않게) · 문단 캐시 재사용도 같은 판정', () => {
     assert.match(L.LEFTOVER_FIX_NOTE, /Japanese names in their Japanese pronunciation written in Hangul, Chinese names in their usual Korean form; follow the glossary/);
     assert.doesNotMatch(L.LEFTOVER_FIX_NOTE, /names become their Korean reading/);
-    assert.match(read('src/addons/translator/translation-segments.js'), /if \(saved\.has\(key\) && cleanParagraphEcho\(saved\.get\(key\), body\) === saved\.get\(key\)\.replace\(\/\^\\n\+\|\\s\+\$\/g, ''\) && cacheable\(body, saved\.get\(key\)\)\)/, 'a cached paragraph that would not be cached now is translated again');
+    assert.match(read('src/addons/translator/translation-segments.js'), /if \(hit !== null && cleanParagraphEcho\(hit, body\) === hit\.replace\(\/\^\\n\+\|\\s\+\$\/g, ''\) && cacheable\(body, hit\)\)/, 'a cached paragraph that would not be cached now is translated again');   // 3.0.1 hit = 번호를 되돌린 저장 글
 });
 await test('6.4.2 v3 가나만 고치고 한자를 둔 답은 받는다 — 원래 줄에 가나가 있으면 6.4.1 처럼 가나만 본다 · 남은 한자는 계속 고른다', () => {
     const src = '室長はミナに言った。';
