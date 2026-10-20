@@ -12,6 +12,9 @@ export function isDialogueElongation(before, content, after, quoted = false) {
     // 7.4.7 GFM 규칙: 글자 바로 뒤의 ~~ 는 그 뒤가 문장 부호 · 기호(물결 셋 이상의 남은 ~ 포함)면 취소선을 열지 못한다 —
     //   「응~~~, 그래~~~!」 에서 Showdown 이 「~, 그래」 를 del 로 만들어 글자가 흐려지던 것 (대사 안에서만 · 한 줄 안)
     if (quoted && /^[\p{P}\p{S}]/u.test(content) && !/^[!！?？]/u.test(content) && !/[\r\n]/.test(content) && /\S$/u.test(content)) return true;
+    // 7.5.0 대사 안에서 글자 사이에 낀 ~~…~~ — 여는 쪽도 닫는 쪽도 양옆이 모두 글자 · 숫자(「아~~앗, 대・성・공~~이다!!」): 지우려고 쓴 글이 아니라 늘임표.
+    //   띄어 쓰거나 따옴표 바로 뒤에서 여는 ~~지울 글~~ 은 그대로 취소선 (한 줄 안에서만)
+    if (quoted && /^[\p{L}\p{N}]/u.test(content) && /[\p{L}\p{N}]$/u.test(content) && /^[\p{L}\p{N}]/u.test(after) && !/[\r\n]/.test(content)) return true;
     if (!/[\p{L}\p{N}]$/u.test(content)) return false;
     if (/^[!！?？]/u.test(content) && /^[!！?？]/u.test(after)) return true;
     return quoted && /^[\t \u3000]+\p{L}/u.test(content) && !/[\r\n]/.test(content)
@@ -34,7 +37,8 @@ export function restoreDialogueTildes(root, { sourceText = displayedSource } = {
         if (!isDialogueElongation(before.textContent, del.textContent, after.textContent, !!del.closest('q'))) continue;
         // HTML authored as <del> can produce the exact same DOM as Showdown's
         // whitespace bug. Only the displayed message source can disambiguate it.
-        if (/^[\t \u3000]/u.test(del.textContent)) {
+        // 7.5.0 글자 사이에 낀 것(양옆이 글자)도 저장된 글에 ~~…~~ 가 있을 때만 (HTML <del> 로 적은 것과 구별)
+        if (/^[\t \u3000]/u.test(del.textContent) || (/^[\p{L}\p{N}]/u.test(del.textContent) && /^[\p{L}\p{N}]/u.test(after.textContent))) {
             const raw=typeof sourceText==='function'?sourceText(del):sourceText;
             if(!hasDialogueTildeSource(raw,del.textContent))continue;
         }

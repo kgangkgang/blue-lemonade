@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.4.9/blue-lemonade-7.4.9.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.5.0/blue-lemonade-7.5.0.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,14 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.4.9 · 최신 업데이트</summary>
+<summary>7.5.0 · 최신 업데이트</summary>
+
+- 대사 안에서 글자 사이에 낀 물결표(「됐다아~~앗, 대・성・공~~이다!!」)가 취소선이 되어 글자가 흐려지던 것을 고쳤어요. 여닫는 물결표 양옆이 모두 글자면 늘임표로 보고 그대로 보여요. 띄어 쓰거나 따옴표 바로 뒤에서 여는 ~~지울 글~~ 은 전처럼 취소선이에요.
+
+</details>
+
+<details>
+<summary>7.4.9 · 첫 번역 진행 문구</summary>
 
 - 번역 3.0.0: 새 답장을 처음 번역하는데 「바뀐 문단 47개만 다시 번역」 이라고 뜨던 진행 표시를 고쳤어요. 문단 캐시가 반복되는 줄 하나라도 채우면 다시 번역 문구를 쓰고 있었어요. 이제 첫 번역은 「문단 47개 번역 · 3/47 · 캐시 1개」 이고, 「바뀐 문단…」 은 번역문이 있던 메시지의 원문이 바뀌어 다시 번역할 때만 나와요. 보내는 양은 전과 같아요.
 
