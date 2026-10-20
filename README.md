@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.4.3/blue-lemonade-7.4.3.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.4.4/blue-lemonade-7.4.4.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,16 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.4.3 · 최신 업데이트</summary>
+<summary>7.4.4 · 최신 업데이트</summary>
+
+- 전개 지시 깃털이 이제 꺼졌을 때도 같은 깃털 모양이에요. 꺼짐은 회색, 하나 보내면 얇은 테두리, 둘이면 채움, 셋이면 채움에 은은한 빛이라 상태가 바뀌어도 모양이 튀지 않아요.
+- 테두리 단계의 선이 너무 두꺼워 깃털의 홈이 메워지던 것을 고쳤어요. 옆 아이콘과 비슷한 굵기의 얇은 선이라 깃 모양이 또렷하게 보여요.
+- 프롬프트 줄 옆에는 토큰 수를 숫자만 보여요(눌러 보거나 읽어 주기에는 「14 토큰」). 그만큼 제목이 덜 잘려요. 목록 아래 켠 것 합계는 그대로예요.
+
+</details>
+
+<details>
+<summary>7.4.3 · 깃털 빛 줄임 · 프롬프트 쪽 넘기기 · 토큰 수</summary>
 
 - 전개 지시 깃털의 가장 밝은 단계(셋 다 보낼 때) 빛을 줄였어요. 입력창 깃털은 보내기 줄의 다른 단추와 같은 세기로 맞췄고, 깃털 창 제목의 작은 깃털은 빛도 그만큼 작게 했어요. 테두리 · 채움 단계는 그대로예요.
 - 폰에서 프롬프트 쪽의 줄 위를 옆으로 밀어도 쪽이 넘어가지 않아 그 쪽에서 나갈 수 없던 것을 고쳤어요. 이제 줄 · 빈 곳 어디서 밀어도 항상 지시 · 전개 지시로 돌아가요. 제목 옆 점을 누르면 그 쪽으로 바로 가고, 제목을 누르면 다음 쪽(마지막에서는 처음)으로 가요.

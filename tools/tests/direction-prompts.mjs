@@ -99,7 +99,7 @@ await test('화면 · 설정 카드 · 합치기 · CSS · CI', async () => {
     assert.match(js, /lines\.push\(`프롬프트 \$\{prompts\.length\}개 켜짐/, 'button tooltip line');
     assert.doesNotMatch(js, /promptList: \[\{/, 'no shipped example prompts');
     const css = await read('src/addons/direction/style.css');
-    assert.match(css, /--jj-css-version: "1\.3\.2";/); assert.match(js, /const VERSION = '1\.3\.2';/);
+    assert.match(css, /--jj-css-version: "1\.3\.3";/); assert.match(js, /const VERSION = '1\.3\.3';/);
     assert.match(css, /\.jj-pitem-head \{[^}]*min-height: 44px/, 'row is a 44px target');
     assert.match(css, /#jj-popup \.jj-padd \{[^}]*min-height: 44px/);
     assert.match(css, /@media \(pointer: coarse\) \{\s*#jj-popup \.jj-pbtn::after \{[^}]*width: max\(100%, 44px\); height: max\(100%, 44px\)/, '36px buttons get a 44px hit box on touch');
@@ -124,7 +124,8 @@ await test('7.4.2 (1.3.1) 깃털 단계 = 보내는 것의 수 (테두리 · 채
     for (const text of [css, theme]) assert.doesNotMatch(text, /--jj-grad-|is-always/, 'no gradient rules');
     // 사용자 10-20 고른 모양: 1 테두리만(안은 12%) · 2 채움 · 3 채움 + 은은한 빛 — 테마 · 테마 없음 둘 다
     for (const text of [css, theme]) {
-        assert.match(text, /\[data-jj-level="1"\][^{]*\{[^}]*color: color-mix\(in srgb, var\(--jj-on\) 12%, transparent\);[^}]*-webkit-text-stroke: 0\.13em var\(--jj-stroke[^}]*paint-order: stroke fill;/, 'level 1 = outline');
+        assert.match(text, /\[data-jj-level="1"\][^{]*\{[^}]*color: color-mix\(in srgb, var\(--jj-on\) 12%, transparent\);[^}]*-webkit-text-stroke: 0\.08em var\(--jj-stroke[^}]*paint-order: stroke fill;/, 'level 1 = thin outline (7.4.4: .08em keeps the barb gaps open)');
+        assert.doesNotMatch(text, /-webkit-text-stroke(?:-width)?: 0\.13em/, 'no thick 7.4.3 outline');
         assert.match(text, /:is\(\[data-jj-level="2"\], \[data-jj-level="3"\]\)[^{]*\{[^}]*color: var\(--jj-on\);/, 'level 2+ = solid');
         // 7.4.3 3단계 빛은 보내기 줄의 다른 단추와 같은 세기 (4px · 65%), 작은 창 제목 깃털은 3px
         assert.match(text, /#jj-button\[data-jj-level="3"\] > i(?:, #jj-popup\[data-jj-level="3"\] \.jj-popup-title > i\))? \{\s*filter: drop-shadow\(0 0 4px color-mix\(in srgb, var\(--jj-on\) 65%, transparent\)\);/, 'button level 3 glow = send-form glow');
@@ -132,7 +133,9 @@ await test('7.4.2 (1.3.1) 깃털 단계 = 보내는 것의 수 (테두리 · 채
         assert.doesNotMatch(text, /drop-shadow\(0 0 6px/, 'no wider 7.4.2 glow');
     }
     assert.match(theme, /body\.salty \{\s*--jj-stroke: color-mix\(in srgb, var\(--jj-on\) 80%, #b08000\);\s*\}\s*body\.salty\.salty-dark \{\s*--jj-stroke: var\(--jj-on\);/, 'light themes: darker stroke');
-    assert.match(theme, /body\.salty\.salty-icons-line :is\(#jj-button:not\(\[data-jj-level="0"\]\) > i, #jj-popup:not\(\[data-jj-level="0"\]\) \.jj-popup-title > i\)::before \{\s*content: "\\f56b" !important;/, 'line icons: lit levels use the fillable glyph');
+    assert.match(theme, /body\.salty\.salty-icons-line :is\(#jj-button\[data-jj-level\] > i, #jj-popup\[data-jj-level\] \.jj-popup-title > i\)::before \{\s*content: "\\f56b" !important;/, '7.4.4 line icons: every level (off too) uses the same glyph');
+    assert.match(theme, /body\.salty :is\(#jj-button\[data-jj-level="0"\] > i, #jj-popup\[data-jj-level="0"\] \.jj-popup-title > i\) \{\s*color: var\(--salty-muted\);[^}]*-webkit-text-stroke: 0;/, '7.4.4 off = solid grey glyph');
+    assert.match(js, /now\.textContent = tokenNumber\(value\); now\.title = tokenLabel\(value\); now\.setAttribute\('aria-label', tokenLabel\(value\)\);/, '7.4.4 row badge: number only, label says 토큰');
     assert.match(js, /popup\.dataset\.jjLevel = String\(sendLevel\(\)\);/, 'popup title icon follows the same level');
     assert.match(theme, /body\.salty #jj-popup \.jj-dots b\.is-current \{\s*background: var\(--jj-on\);/, 'current-page dot: solid on-colour');
     assert.doesNotMatch(js + css, /유저 편향|성격 교정/, 'no such examples in shipped text');

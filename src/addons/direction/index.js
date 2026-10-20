@@ -12,8 +12,9 @@ import { badgeTextHit } from '../../badge-hit.js';
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
-const VERSION = '1.3.2';
+const VERSION = '1.3.3';
 // 1.1.5: 깃털 창에 두 쪽 — 전개 지시(이번 전개) · 항상 지시(적은 글 그대로 매번, 예: <OOC: …>). 옆으로 넘기거나 제목을 눌러 바꾼다
+// 1.3.3: 깃털은 모든 단계가 같은 글리프(꺼짐은 흐린 색으로 채움), 테두리를 시안 굵기로 · 줄의 토큰 수는 숫자만
 // 1.3.2: 3단계 빛을 보내기 줄의 다른 단추와 같은 세기로 (4px · 65%)
 // 1.3.1: 깃털 그라데이션을 없앴다 — 색은 켜짐 색 하나, 보내는 것(전개 지시 · 항상 지시 · 켠 프롬프트) 수만큼 1 테두리 · 2 채움 · 3 채움 + 빛 (data-jj-level)
 // 1.3.0: 세 번째 쪽 「프롬프트」 — 가끔 쓰는 프롬프트를 제목 한 줄씩 모아 두고 줄마다 켜고 끈다. 켠 것은 항상 지시 다음 · 전개 지시 앞에 같이 들어간다
@@ -966,7 +967,8 @@ async function countTokens(raw) {
     if (tokenCache.size > TOKEN_CACHE_MAX) tokenCache.delete(tokenCache.keys().next().value);
     return out;
 }
-const tokenLabel = ({ n, approx }) => `${approx ? '≈' : ''}${n.toLocaleString('ko-KR')} 토큰`;
+const tokenNumber = ({ n, approx }) => `${approx ? '≈' : ''}${n.toLocaleString('ko-KR')}`;
+const tokenLabel = value => `${tokenNumber(value)} 토큰`;
 /** 매크로 결과가 이름에 따라 달라지므로 열쇠에 지금 이름들을 붙인다 (같으면 다시 세지 않음) */
 function tokenKey(content) {
     const context = (() => { try { return getContext(); } catch { return null; } })();
@@ -991,7 +993,7 @@ async function fillPromptTokens() {
             value = await countTokens(item.content);
             if (run !== promptTokenRun || !popup) return;   // 그사이 다시 그렸으면 새 차례에 맡긴다
             const now = box.querySelector(`.jj-pitem[data-id="${item.id}"] .jj-ptok`);
-            if (now) { now.dataset.key = key; now.dataset.n = String(value.n); now.dataset.approx = value.approx ? '1' : ''; now.textContent = tokenLabel(value); }
+            if (now) { now.dataset.key = key; now.dataset.n = String(value.n); now.dataset.approx = value.approx ? '1' : ''; now.textContent = tokenNumber(value); now.title = tokenLabel(value); now.setAttribute('aria-label', tokenLabel(value)); }   // 1.3.3 줄에는 숫자만 (제목 자리를 덜 먹게)
         }
         if (item.enabled && item.content.trim()) { total += value.n; approx ||= value.approx; any = true; }
     }
@@ -1515,7 +1517,7 @@ export const ready = new Promise((resolve, reject) => jQuery(() => {
 }));
 
 export function showHelp() {
-    return callGenericPopup('<h3>전개 지시 사용방법</h3><p>깃털 버튼을 길게 누르면 전개 지시를 켜고 끌 수 있어요. 창 안의 종이비행기 단추를 누르면 창을 닫고 바로 보내요. </p><p>입력창 옆 깃털 버튼을 눌러 다음 장면이나 이야기의 방향을 적어요. 켜짐 스위치를 켜면 이후 대화 요청마다 지시가 들어가요.</p><p>깃털 창을 옆으로 넘기거나 제목을 누르면 <b>항상 지시</b> 쪽이에요. 여기 적은 글은 틀 없이 그대로 매번 들어가요 (예: &lt;OOC: 캐릭터 에셋 이미지를 2장 이상 출력하시오.&gt;).</p><p>한 번 더 넘기면 <b>프롬프트</b> 쪽이에요. 문체 다듬기처럼 가끔 쓰는 프롬프트를 제목 한 줄씩 모아 두고, 줄을 누르면 내용이 펼쳐져요. 줄 오른쪽 스위치로 켠 것만 항상 지시 다음, 전개 지시 앞에 같이 들어가요. {{char}} · {{user}} 도 이름으로 바뀌어요. 펼친 줄에서 고치기 · 지우기 · 순서 옮기기를 해요. 줄 옆 숫자는 지금 모델 기준 토큰 수예요. 제목 옆 점을 누르면 그 쪽으로 바로 가요.</p><p>깃털은 보내는 것이 있으면 켜짐 색이 돼요. 전개 지시 · 항상 지시 · 켠 프롬프트 중 하나면 은은하게, 둘이면 더, 셋 다면 가장 밝게 빛나요. 전개 지시를 꺼 둬도 다른 것을 보내는 중이면 켜짐 색으로 남아요.</p><p>책갈피 단추의 <b>저장</b>에는 자주 쓰는 지시를 모아 두고, <b>최근</b>에는 실제로 보낸 지시가 쌓여요. 누르면 입력칸에 불러와요.</p><p>한 번만 보내는 기능이 아니에요. 원하는 장면이 끝나면 끄거나 내용을 고쳐 주세요. 꺼도 적어 둔 내용은 남아요.</p><p>삽입 위치 0은 프롬프트 맨 끝, 1은 마지막 메시지 앞이에요. 세 쪽 모두 같은 자리에 들어가요. 프롬프트의 {{direction}} 자리에 전개 지시가 들어가요. 이 도구는 별도 모델을 호출하지 않고 현재 대화 요청에 지시를 추가해요.</p><p>입력창 버튼을 끄면 버튼과 지시 삽입이 함께 꺼져요. 기존 단독 전개 지시 확장과 동시에 켜지 마세요.</p>', POPUP_TYPE.TEXT, '', {okButton:'닫기'});
+    return callGenericPopup('<h3>전개 지시 사용방법</h3><p>깃털 버튼을 길게 누르면 전개 지시를 켜고 끌 수 있어요. 창 안의 종이비행기 단추를 누르면 창을 닫고 바로 보내요. </p><p>입력창 옆 깃털 버튼을 눌러 다음 장면이나 이야기의 방향을 적어요. 켜짐 스위치를 켜면 이후 대화 요청마다 지시가 들어가요.</p><p>깃털 창을 옆으로 넘기거나 제목을 누르면 <b>항상 지시</b> 쪽이에요. 여기 적은 글은 틀 없이 그대로 매번 들어가요 (예: &lt;OOC: 캐릭터 에셋 이미지를 2장 이상 출력하시오.&gt;).</p><p>한 번 더 넘기면 <b>프롬프트</b> 쪽이에요. 문체 다듬기처럼 가끔 쓰는 프롬프트를 제목 한 줄씩 모아 두고, 줄을 누르면 내용이 펼쳐져요. 줄 오른쪽 스위치로 켠 것만 항상 지시 다음, 전개 지시 앞에 같이 들어가요. {{char}} · {{user}} 도 이름으로 바뀌어요. 펼친 줄에서 고치기 · 지우기 · 순서 옮기기를 해요. 줄 옆 숫자는 지금 모델 기준 토큰 수예요. 제목 옆 점을 누르면 그 쪽으로 바로 가요.</p><p>깃털 모양으로 지금 보내는 것을 알 수 있어요. 아무것도 안 보내면 회색, 전개 지시 · 항상 지시 · 켠 프롬프트 중 하나면 켜짐 색 테두리, 둘이면 안까지 채움, 셋 다면 채움에 은은한 빛이에요. 전개 지시를 꺼 둬도 다른 것을 보내는 중이면 켜진 모양으로 남아요.</p><p>책갈피 단추의 <b>저장</b>에는 자주 쓰는 지시를 모아 두고, <b>최근</b>에는 실제로 보낸 지시가 쌓여요. 누르면 입력칸에 불러와요.</p><p>한 번만 보내는 기능이 아니에요. 원하는 장면이 끝나면 끄거나 내용을 고쳐 주세요. 꺼도 적어 둔 내용은 남아요.</p><p>삽입 위치 0은 프롬프트 맨 끝, 1은 마지막 메시지 앞이에요. 세 쪽 모두 같은 자리에 들어가요. 프롬프트의 {{direction}} 자리에 전개 지시가 들어가요. 이 도구는 별도 모델을 호출하지 않고 현재 대화 요청에 지시를 추가해요.</p><p>입력창 버튼을 끄면 버튼과 지시 삽입이 함께 꺼져요. 기존 단독 전개 지시 확장과 동시에 켜지 마세요.</p>', POPUP_TYPE.TEXT, '', {okButton:'닫기'});
 }
 let settingsDialog = null;
 export async function openPanel() {
