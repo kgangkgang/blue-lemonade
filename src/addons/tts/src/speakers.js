@@ -30,6 +30,8 @@ function persist() {
 
 // ---- 작은 도구
 const fold = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, '');
+/** 2.0.2 색 표의 이름이 {{user}} 매크로 그대로인가 (카드 팔레트 · 연결표의 「{{user}}」 줄) — 페르소나 이름과 글자가 달라도 나 */
+const isUserMacro = (s) => /^\{\{user\}\}$/i.test(String(s || '').trim());
 const cleanName = (s) => String(s || '').replace(/[*_`~"'“”‘’]/g, '').trim().slice(0, 40);
 const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
 // 7.2.8 색 표(st)를 고치는 곳은 모두 dirty() — 별명표 · 인물표 기억을 그 자리에서 비운다 (bump 는 st 의 표 · 이름표에만 쓴다)
@@ -411,7 +413,7 @@ function resolveAll(st) {
     const { map } = aliasTable(st);
     const cn = (n) => canonWith(map, n);
     const USER = cn(personaName());
-    const isUserName = (n) => !!USER && fold(cn(n)) === fold(USER);
+    const isUserName = (n) => isUserMacro(n) || (!!USER && fold(cn(n)) === fold(USER));   // 2.0.2 「{{user}}」 로 잠긴 색도 내 색
     const locked = {}; let lockedUser = null;
     for (const [c, e] of Object.entries(st.colors)) if (e.locked && e.name) { locked[c] = e.name; if (!lockedUser && isUserName(e.name)) lockedUser = c; }
     // 내 색: 서술에서 내 이름이 가리킨 표 − 그 색의 속마음 표 (나는 true_thoughts 를 받지 않는다)
@@ -586,10 +588,11 @@ export function resolveSpeaker(seg, rctx = {}) {
     const { map } = aliasTable(st);
     const cn = (n) => canonWith(map, n);
     const userName = String(rctx.userName || personaName() || '').trim();
-    const isUser = (n) => !!n && !!userName && (fold(n) === fold(userName) || fold(cn(n)) === fold(cn(userName)));
+    const isUser = (n) => !!n && (isUserMacro(n) || (!!userName && (fold(n) === fold(userName) || fold(cn(n)) === fold(cn(userName)))));
     const c = normColor(seg?.color);
     const e = c ? st.colors[c] : null;
-    if (e?.name) return { name: e.name, source: e.locked ? 'palette' : 'learned', isUser: isUser(e.name) };
+    // 2.0.2 칸 이름이 「{{user}}」 매크로면 내 이름으로 (전엔 「{{user}}」 라는 모르는 캐릭터가 되어 내 목소리를 안 쓰고 「목소리를 먼저 정해요」)
+    if (e?.name) return { name: isUserMacro(e.name) && userName ? userName : e.name, source: e.locked ? 'palette' : 'learned', isUser: isUser(e.name) };
     if (c && st.userColor === c) return { name: userName, source: 'user', isUser: true };
     const hint = String(seg?.speakerHint || '').trim();
     if (hint) { const n = cn(hint); return { name: n, source: 'hint', isUser: isUser(n) }; }
@@ -631,7 +634,7 @@ export function nearestKnown(color) {
     let best = null;
     for (const [k, e] of Object.entries(st.colors)) {
         if (k === c) continue;
-        const nm = e.name || (k === st.userColor ? personaName() : null);
+        const nm = (e.name && !isUserMacro(e.name) ? e.name : null) || (k === st.userColor || isUserMacro(e.name) ? personaName() : null);
         if (!nm) continue;
         const d = deltaE(c, k);
         if (d < NEAR_DE && (!best || d < best.dE)) best = { color: k, name: nm, dE: Math.round(d * 10) / 10 };
@@ -644,7 +647,7 @@ export function colorTable() {
     const st = state();
     const u = personaName();
     const { map } = aliasTable(st);
-    const isUserName = (n) => !!n && !!u && fold(canonWith(map, n)) === fold(canonWith(map, u));
+    const isUserName = (n) => !!n && (isUserMacro(n) || (!!u && fold(canonWith(map, n)) === fold(canonWith(map, u))));
     return Object.entries(st.colors).map(([color, e]) => {
         const user = color === st.userColor || isUserName(e.name);
         const votes = Object.fromEntries(Object.entries(e.votes || {}).sort((a, b) => b[1] - a[1]));
@@ -697,7 +700,7 @@ export function ownerOfColor(color) {
     const c = normColor(color);
     if (!c) return '';
     const st = state();
-    const nameOf = (k, e) => String(e?.name || (k === st.userColor ? personaName() : '') || '').trim();
+    const nameOf = (k, e) => String((e?.name && !isUserMacro(e.name) ? e.name : '') || (k === st.userColor || isUserMacro(e?.name) ? personaName() : '') || '').trim();
     const exact = st.colors?.[c] ? nameOf(c, st.colors[c]) : '';
     if (exact) return exact;
     const near = (a, b) => [1, 3, 5].every(i => Math.abs(parseInt(a.slice(i, i + 2), 16) - parseInt(b.slice(i, i + 2), 16)) <= 6);

@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.4.5/blue-lemonade-7.4.5.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.4.6/blue-lemonade-7.4.6.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,14 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.4.5 · 최신 업데이트</summary>
+<summary>7.4.6 · 최신 업데이트</summary>
+
+- TTS 2.0.2: 캐릭터 카드의 대화 색 표에 내 색이 페르소나 이름 대신 「{{user}}」 로 적혀 있으면, 그 색의 대사를 「나」로 보지 않아 「나」 목소리를 정해 두어도 「목소리를 먼저 정해요」 가 뜨던 것을 고쳤어요. 이제 그 색의 대사는 페르소나 이름과 상관없이 내 목소리로 읽어요.
+
+</details>
+
+<details>
+<summary>7.4.5 · 깃털 테두리 굵기</summary>
 
 - 깃털 테두리를 옆 아이콘 굵기에 맞췄어요.
 

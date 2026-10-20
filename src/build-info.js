@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.4.5";
+export const BUILD_VERSION = "7.4.6";
 export const FILE_HASHES = {
   "index.js": "22928:1b0e75a7:fd80b8dd",
-  "manifest.json": "365:e33e2aa1:65e542e6",
+  "manifest.json": "365:dd1030dc:1af911d1",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -423,7 +423,7 @@ export const FILE_HASHES = {
   "src/addons/tts/src/sfx-credits.js": "6587:1a7aad53:1c14435d",
   "src/addons/tts/src/sfx-daily.js": "29219:f782eea1:efd00527",
   "src/addons/tts/src/sfx-library.js": "33942:1d4c7858:c728f8f3",
-  "src/addons/tts/src/speakers.js": "40325:8e7bd8cd:7dd3f75e",
+  "src/addons/tts/src/speakers.js": "41061:3ba5b07b:eaf3ed55",
   "src/addons/tts/src/stapi.js": "23506:6863f689:815bbb68",
   "src/addons/tts/src/text.js": "44049:cd604ded:1c566cbd",
   "src/addons/tts/src/translation.js": "19668:814d7ac1:672d99b6",
@@ -431,8 +431,8 @@ export const FILE_HASHES = {
   "src/addons/tts/src/voice-names.js": "7708:05c816f7:b76ae520",
   "src/addons/tts/src/voices.js": "44042:ed673cbe:faa13dc9",
   "src/addons/tts/src/word-chips.js": "4504:4ccfb4ca:7e5c7f15",
-  "src/addons/tts/style.css": "47388:59a9adde:c5c11684",
-  "src/addons/tts/version.js": "36:ec30cb43:6b4ff43b",
+  "src/addons/tts/style.css": "47388:f80e8d41:9209706d",
+  "src/addons/tts/version.js": "36:f5f57658:a8fdccf4",
   "src/addons/zipinstall/batch.js": "7625:9730c8a2:060dd7dd",
   "src/addons/zipinstall/index.js": "27655:6cc3834d:0c4df8c6",
   "src/addons/zipinstall/style.css": "6209:a473af9c:0d8e5af6",
@@ -555,7 +555,7 @@ export const FILE_HASHES = {
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "293181:fb538abb:ae83dd88",
+  "src/notice-data.js": "293611:7ae27140:6a23f605",
   "src/notice.js": "5647:427a7a6b:dcf06534",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -685,5 +685,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40459:a17944bd:beb7384d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1540568:434c40c8:ad16b7f9"
+  "style.css": "1540568:90c9bc86:90d69b0b"
 };
